@@ -30,22 +30,15 @@
 
 #include "info.h"
 
-#define TAG FREERDP_TAG("core")
+#define TAG FREERDP_TAG("core.info")
 
-#define INFO_TYPE_LOGON			0x00000000
-#define INFO_TYPE_LOGON_LONG		0x00000001
-#define INFO_TYPE_LOGON_PLAIN_NOTIFY	0x00000002
-#define INFO_TYPE_LOGON_EXTENDED_INF	0x00000003
-
-/*
-static const char* const INFO_TYPE_LOGON_STRINGS[] =
+static const char* const INFO_TYPE_LOGON_STRINGS[4] =
 {
 	"Logon Info V1",
 	"Logon Info V2",
 	"Logon Plain Notify",
 	"Logon Extended Info"
 };
-*/
 
 /**
  * Read Server Auto Reconnect Cookie (ARC_SC_PRIVATE_PACKET).\n
@@ -56,6 +49,7 @@ static const char* const INFO_TYPE_LOGON_STRINGS[] =
 
 BOOL rdp_read_server_auto_reconnect_cookie(wStream* s, rdpSettings* settings)
 {
+	BYTE* p;
 	ARC_SC_PRIVATE_PACKET* autoReconnectCookie;
 
 	autoReconnectCookie = settings->ServerAutoReconnectCookie;
@@ -64,9 +58,23 @@ BOOL rdp_read_server_auto_reconnect_cookie(wStream* s, rdpSettings* settings)
 		return FALSE;
 
 	Stream_Read_UINT32(s, autoReconnectCookie->cbLen); /* cbLen (4 bytes) */
-	Stream_Read_UINT32(s, autoReconnectCookie->version); /* version (4 bytes) */
+	Stream_Read_UINT32(s, autoReconnectCookie->version); /* Version (4 bytes) */
 	Stream_Read_UINT32(s, autoReconnectCookie->logonId); /* LogonId (4 bytes) */
-	Stream_Read(s, autoReconnectCookie->arcRandomBits, 16); /* arcRandomBits (16 bytes) */
+	Stream_Read(s, autoReconnectCookie->arcRandomBits, 16); /* ArcRandomBits (16 bytes) */
+
+	if (autoReconnectCookie->cbLen != 28)
+	{
+		WLog_ERR(TAG, "ServerAutoReconnectCookie.cbLen != 28");
+		return FALSE;
+	}
+
+	p = autoReconnectCookie->arcRandomBits;
+
+	WLog_DBG(TAG, "ServerAutoReconnectCookie: Version: %d LogonId: %d SecurityVerifier: "
+			"%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
+			autoReconnectCookie->version, autoReconnectCookie->logonId,
+			p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7],
+			p[8], p[9], p[10], p[11], p[12], p[13], p[14], p[15]);
 
 	if ((settings->PrintReconnectCookie) && (autoReconnectCookie->cbLen > 0))
 	{
@@ -111,6 +119,7 @@ BOOL rdp_read_client_auto_reconnect_cookie(wStream* s, rdpSettings* settings)
 
 void rdp_write_client_auto_reconnect_cookie(wStream* s, rdpSettings* settings)
 {
+	BYTE* p;
 	CryptoHmac hmac;
 	BYTE nullRandom[32];
 	BYTE cryptSecurityVerifier[16];
@@ -132,6 +141,14 @@ void rdp_write_client_auto_reconnect_cookie(wStream* s, rdpSettings* settings)
 
 	crypto_hmac_final(hmac, cryptSecurityVerifier, 16);
 	crypto_hmac_free(hmac);
+
+	p = cryptSecurityVerifier;
+
+	WLog_DBG(TAG, "ClientAutoReconnectCookie: Version: %d LogonId: %d ArcRandomBits: "
+			"%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
+			autoReconnectCookie->version, autoReconnectCookie->logonId,
+			p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7],
+			p[8], p[9], p[10], p[11], p[12], p[13], p[14], p[15]);
 
 	Stream_Write_UINT32(s, autoReconnectCookie->cbLen); /* cbLen (4 bytes) */
 	Stream_Write_UINT32(s, autoReconnectCookie->version); /* version (4 bytes) */
@@ -651,39 +668,47 @@ BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s)
 {
 	UINT32 cbDomain;
 	UINT32 cbUserName;
+	UINT32 SessionId;
 
-	if (Stream_GetRemainingLength(s) < (4 + 52 + 4 + 512 + 4))
+	if (Stream_GetRemainingLength(s) < 576)
 		return FALSE;
 
 	Stream_Read_UINT32(s, cbDomain); /* cbDomain (4 bytes) */
 	Stream_Seek(s, 52); /* domain (52 bytes) */
 	Stream_Read_UINT32(s, cbUserName); /* cbUserName (4 bytes) */
 	Stream_Seek(s, 512); /* userName (512 bytes) */
-	Stream_Seek_UINT32(s); /* sessionId (4 bytes) */
+	Stream_Read_UINT32(s, SessionId); /* SessionId (4 bytes) */
+
+	WLog_DBG(TAG, "LogonInfoV1: SessionId: 0x%04X", SessionId);
 
 	return TRUE;
 }
 
 BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s)
 {
+	UINT16 Version;
+	UINT32 Size;
+	UINT32 SessionId;
 	UINT32 cbDomain;
 	UINT32 cbUserName;
 
-	if (Stream_GetRemainingLength(s) < (2 + 4 + 4 + 4 + 4 + 558))
+	if (Stream_GetRemainingLength(s) < 576)
 		return FALSE;
 
-	Stream_Seek_UINT16(s); /* version (2 bytes) */
-	Stream_Seek_UINT32(s); /* size (4 bytes) */
-	Stream_Seek_UINT32(s); /* sessionId (4 bytes) */
+	Stream_Read_UINT16(s, Version); /* Version (2 bytes) */
+	Stream_Read_UINT32(s, Size); /* Size (4 bytes) */
+	Stream_Read_UINT32(s, SessionId); /* SessionId (4 bytes) */
 	Stream_Read_UINT32(s, cbDomain); /* cbDomain (4 bytes) */
 	Stream_Read_UINT32(s, cbUserName); /* cbUserName (4 bytes) */
-	Stream_Seek(s, 558); /* pad */
+	Stream_Seek(s, 558); /* pad (558 bytes) */
 
-	if (Stream_GetRemainingLength(s) < cbDomain+cbUserName)
+	if (Stream_GetRemainingLength(s) < (cbDomain + cbUserName))
 		return FALSE;
 
 	Stream_Seek(s, cbDomain); /* domain */
 	Stream_Seek(s, cbUserName); /* userName */
+
+	WLog_DBG(TAG, "LogonInfoV2: SessionId: 0x%04X", SessionId);
 
 	return TRUE;
 }
@@ -693,7 +718,9 @@ BOOL rdp_recv_logon_plain_notify(rdpRdp* rdp, wStream* s)
 	if (Stream_GetRemainingLength(s) < 576)
 		return FALSE;
 
-	Stream_Seek(s, 576); /* pad */
+	Stream_Seek(s, 576); /* pad (576 bytes) */
+
+	WLog_DBG(TAG, "LogonPlainNotify");
 
 	return TRUE;
 }
@@ -709,6 +736,9 @@ BOOL rdp_recv_logon_error_info(rdpRdp* rdp, wStream* s)
 	Stream_Read_UINT32(s, errorNotificationData); /* errorNotificationData (4 bytes) */
 	Stream_Read_UINT32(s, errorNotificationType); /* errorNotificationType (4 bytes) */
 
+	WLog_DBG(TAG, "LogonErrorInfo: Data: 0x%04X Type: 0x%04X",
+			errorNotificationData, errorNotificationType);
+
 	IFCALL(rdp->instance->LogonErrorInfo, rdp->instance, errorNotificationData, errorNotificationType);
 
 	return TRUE;
@@ -723,8 +753,13 @@ BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, wStream* s)
 	if (Stream_GetRemainingLength(s) < 6)
 		return FALSE;
 
-	Stream_Read_UINT16(s, Length); /* The total size in bytes of this structure */
+	Stream_Read_UINT16(s, Length); /* Length (2 bytes) */
 	Stream_Read_UINT32(s, fieldsPresent); /* fieldsPresent (4 bytes) */
+
+	if (Stream_GetRemainingLength(s) < (Length - 6))
+		return FALSE;
+
+	WLog_DBG(TAG, "LogonInfoExtended: fieldsPresent: 0x%04X", fieldsPresent);
 
 	/* logonFields */
 
@@ -735,7 +770,7 @@ BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, wStream* s)
 
 		Stream_Read_UINT32(s, cbFieldData); /* cbFieldData (4 bytes) */
 
-		if (rdp_read_server_auto_reconnect_cookie(s, rdp->settings) == FALSE)
+		if (!rdp_read_server_auto_reconnect_cookie(s, rdp->settings))
 			return FALSE;
 	}
 
@@ -746,14 +781,14 @@ BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, wStream* s)
 
 		Stream_Read_UINT32(s, cbFieldData); /* cbFieldData (4 bytes) */
 
-		if (rdp_recv_logon_error_info(rdp, s) == FALSE)
+		if (!rdp_recv_logon_error_info(rdp, s))
 			return FALSE;
 	}
 
 	if (Stream_GetRemainingLength(s) < 570)
 		return FALSE;
 
-	Stream_Seek(s, 570); /* pad */
+	Stream_Seek(s, 570); /* pad (570 bytes) */
 
 	return TRUE;
 }
@@ -761,31 +796,41 @@ BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, wStream* s)
 BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 {
 	UINT32 infoType;
+	BOOL status = FALSE;
 
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
-	Stream_Read_UINT32(s, infoType); /* infoType (4 bytes) */
 
-	//WLog_ERR(TAG, "%s", INFO_TYPE_LOGON_STRINGS[infoType]);
+	Stream_Read_UINT32(s, infoType); /* infoType (4 bytes) */
 
 	switch (infoType)
 	{
 		case INFO_TYPE_LOGON:
-			return rdp_recv_logon_info_v1(rdp, s);
+			status = rdp_recv_logon_info_v1(rdp, s);
+			break;
 
 		case INFO_TYPE_LOGON_LONG:
-			return rdp_recv_logon_info_v2(rdp, s);
+			status = rdp_recv_logon_info_v2(rdp, s);
+			break;
 
 		case INFO_TYPE_LOGON_PLAIN_NOTIFY:
-			return rdp_recv_logon_plain_notify(rdp, s);
+			status = rdp_recv_logon_plain_notify(rdp, s);
+			break;
 
 		case INFO_TYPE_LOGON_EXTENDED_INF:
-			return rdp_recv_logon_info_extended(rdp, s);
+			status = rdp_recv_logon_info_extended(rdp, s);
+			break;
 
 		default:
 			break;
 	}
 
-	return TRUE;
+	if (!status)
+	{
+		WLog_DBG(TAG, "SaveSessionInfo error: infoType: %s (%d)",
+				infoType < 4 ? INFO_TYPE_LOGON_STRINGS[infoType % 4] : "Unknown", infoType);
+	}
+
+	return status;
 }
 
