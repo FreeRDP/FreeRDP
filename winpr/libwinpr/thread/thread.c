@@ -580,6 +580,7 @@ BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode)
 	WLog_ERR(TAG, "Function not supported on this platform!");
 #endif
 	pthread_mutex_unlock(&thread->mutex);
+	set_event(thread);
 	return TRUE;
 }
 
