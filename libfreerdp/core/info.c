@@ -40,6 +40,46 @@ static const char* const INFO_TYPE_LOGON_STRINGS[4] =
 	"Logon Extended Info"
 };
 
+BOOL rdp_compute_client_auto_reconnect_cookie(rdpRdp* rdp)
+{
+	CryptoHmac hmac;
+	BYTE ClientRandom[32];
+	BYTE AutoReconnectRandom[32];
+	ARC_SC_PRIVATE_PACKET* serverCookie;
+	ARC_CS_PRIVATE_PACKET* clientCookie;
+	rdpSettings* settings = rdp->settings;
+
+	serverCookie = settings->ServerAutoReconnectCookie;
+	clientCookie = settings->ClientAutoReconnectCookie;
+
+	clientCookie->cbLen = 28;
+	clientCookie->version = serverCookie->version;
+	clientCookie->logonId = serverCookie->logonId;
+	ZeroMemory(clientCookie->securityVerifier, 16);
+
+	ZeroMemory(AutoReconnectRandom, sizeof(AutoReconnectRandom));
+	CopyMemory(AutoReconnectRandom, serverCookie->arcRandomBits, 16);
+
+	ZeroMemory(ClientRandom, sizeof(ClientRandom));
+
+	if (settings->SelectedProtocol == PROTOCOL_RDP)
+		CopyMemory(ClientRandom, settings->ClientRandom, settings->ClientRandomLength);
+
+	hmac = crypto_hmac_new();
+
+	if (!hmac)
+		return FALSE;
+
+	/* SecurityVerifier = HMAC_MD5(AutoReconnectRandom, ClientRandom) */
+
+	crypto_hmac_md5_init(hmac, AutoReconnectRandom, 16);
+	crypto_hmac_update(hmac, ClientRandom, 32);
+	crypto_hmac_final(hmac, clientCookie->securityVerifier, 16);
+	crypto_hmac_free(hmac);
+
+	return TRUE;
+}
+
 /**
  * Read Server Auto Reconnect Cookie (ARC_SC_PRIVATE_PACKET).\n
  * @msdn{cc240540}
@@ -47,10 +87,11 @@ static const char* const INFO_TYPE_LOGON_STRINGS[4] =
  * @param settings settings
  */
 
-BOOL rdp_read_server_auto_reconnect_cookie(wStream* s, rdpSettings* settings)
+BOOL rdp_read_server_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
 {
 	BYTE* p;
 	ARC_SC_PRIVATE_PACKET* autoReconnectCookie;
+	rdpSettings* settings = rdp->settings;
 
 	autoReconnectCookie = settings->ServerAutoReconnectCookie;
 
@@ -94,9 +135,11 @@ BOOL rdp_read_server_auto_reconnect_cookie(wStream* s, rdpSettings* settings)
  * @param settings settings
  */
 
-BOOL rdp_read_client_auto_reconnect_cookie(wStream* s, rdpSettings* settings)
+BOOL rdp_read_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
 {
 	ARC_CS_PRIVATE_PACKET* autoReconnectCookie;
+	rdpSettings* settings = rdp->settings;
+
 	autoReconnectCookie = settings->ClientAutoReconnectCookie;
 
 	if (Stream_GetRemainingLength(s) < 28)
@@ -117,10 +160,11 @@ BOOL rdp_read_client_auto_reconnect_cookie(wStream* s, rdpSettings* settings)
  * @param settings settings
  */
 
-void rdp_write_client_auto_reconnect_cookie(wStream* s, rdpSettings* settings)
+void rdp_write_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
 {
 	BYTE* p;
 	ARC_CS_PRIVATE_PACKET* autoReconnectCookie;
+	rdpSettings* settings = rdp->settings;
 
 	autoReconnectCookie = settings->ClientAutoReconnectCookie;
 
@@ -145,18 +189,19 @@ void rdp_write_client_auto_reconnect_cookie(wStream* s, rdpSettings* settings)
  * @param settings settings
  */
 
-BOOL rdp_read_extended_info_packet(wStream* s, rdpSettings* settings)
+BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 {
 	UINT16 clientAddressFamily;
 	UINT16 cbClientAddress;
 	UINT16 cbClientDir;
 	UINT16 cbAutoReconnectLen;
+	rdpSettings* settings = rdp->settings;
 
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
-	Stream_Read_UINT16(s, clientAddressFamily); /* clientAddressFamily */
-	Stream_Read_UINT16(s, cbClientAddress); /* cbClientAddress */
+	Stream_Read_UINT16(s, clientAddressFamily); /* clientAddressFamily (2 bytes) */
+	Stream_Read_UINT16(s, cbClientAddress); /* cbClientAddress (2 bytes) */
 
 	settings->IPv6Enabled = (clientAddressFamily == ADDRESS_FAMILY_INET6 ? TRUE : FALSE);
 
@@ -175,7 +220,7 @@ BOOL rdp_read_extended_info_packet(wStream* s, rdpSettings* settings)
 	if (Stream_GetRemainingLength(s) < 2)
 		return FALSE;
 
-	Stream_Read_UINT16(s, cbClientDir); /* cbClientDir */
+	Stream_Read_UINT16(s, cbClientDir); /* cbClientDir (2 bytes) */
 
 	if (Stream_GetRemainingLength(s) < cbClientDir)
 		return FALSE;
@@ -195,14 +240,14 @@ BOOL rdp_read_extended_info_packet(wStream* s, rdpSettings* settings)
 	if (Stream_GetRemainingLength(s) < 10)
 		return FALSE;
 
-	Stream_Seek_UINT32(s); /* clientSessionId, should be set to 0 */
-	Stream_Read_UINT32(s, settings->PerformanceFlags); /* performanceFlags */
+	Stream_Seek_UINT32(s); /* clientSessionId (4 bytes), should be set to 0 */
+	Stream_Read_UINT32(s, settings->PerformanceFlags); /* performanceFlags (4 bytes) */
 	freerdp_performance_flags_split(settings);
 
-	Stream_Read_UINT16(s, cbAutoReconnectLen); /* cbAutoReconnectLen */
+	Stream_Read_UINT16(s, cbAutoReconnectLen); /* cbAutoReconnectLen (2 bytes) */
 
 	if (cbAutoReconnectLen > 0)
-		return rdp_read_client_auto_reconnect_cookie(s, settings); /* autoReconnectCookie */
+		return rdp_read_client_auto_reconnect_cookie(rdp, s); /* autoReconnectCookie */
 
 	/* reserved1 (2 bytes) */
 	/* reserved2 (2 bytes) */
@@ -217,7 +262,7 @@ BOOL rdp_read_extended_info_packet(wStream* s, rdpSettings* settings)
  * @param settings settings
  */
 
-void rdp_write_extended_info_packet(wStream* s, rdpSettings* settings)
+void rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 {
 	int clientAddressFamily;
 	WCHAR* clientAddress = NULL;
@@ -225,6 +270,7 @@ void rdp_write_extended_info_packet(wStream* s, rdpSettings* settings)
 	WCHAR* clientDir = NULL;
 	int cbClientDir;
 	int cbAutoReconnectCookie;
+	rdpSettings* settings = rdp->settings;
 
 	clientAddressFamily = settings->IPv6Enabled ? ADDRESS_FAMILY_INET6 : ADDRESS_FAMILY_INET;
 
@@ -259,50 +305,14 @@ void rdp_write_extended_info_packet(wStream* s, rdpSettings* settings)
 
 	if (cbAutoReconnectCookie > 0)
 	{
-		CryptoHmac hmac;
-		BYTE ClientRandom[32];
-		BYTE AutoReconnectRandom[32];
-		ARC_SC_PRIVATE_PACKET* serverCookie;
-		ARC_CS_PRIVATE_PACKET* clientCookie;
+		rdp_compute_client_auto_reconnect_cookie(rdp);
 
-		/* SecurityVerifier = HMAC(AutoReconnectRandom, ClientRandom) */
-
-		serverCookie = settings->ServerAutoReconnectCookie;
-		clientCookie = settings->ClientAutoReconnectCookie;
-
-		clientCookie->cbLen = 28;
-		clientCookie->version = serverCookie->version;
-		clientCookie->logonId = serverCookie->logonId;
-		ZeroMemory(clientCookie->securityVerifier, 16);
-
-		ZeroMemory(AutoReconnectRandom, sizeof(AutoReconnectRandom));
-		CopyMemory(AutoReconnectRandom, serverCookie->arcRandomBits, 16);
-
-		ZeroMemory(ClientRandom, sizeof(ClientRandom));
-
-		if (settings->SelectedProtocol == PROTOCOL_RDP)
-			CopyMemory(ClientRandom, settings->ClientRandom, settings->ClientRandomLength);
-
-		hmac = crypto_hmac_new();
-
-		if (!hmac)
-		{
-			WLog_ERR(TAG, "unable to allocate hmac");
-			goto out_free;
-		}
-
-		crypto_hmac_md5_init(hmac, AutoReconnectRandom, 16);
-		crypto_hmac_update(hmac, ClientRandom, 32);
-		crypto_hmac_final(hmac, clientCookie->securityVerifier, 16);
-		crypto_hmac_free(hmac);
-
-		rdp_write_client_auto_reconnect_cookie(s, settings); /* autoReconnectCookie */
+		rdp_write_client_auto_reconnect_cookie(rdp, s); /* autoReconnectCookie */
 
 		Stream_Write_UINT16(s, 0); /* reserved1 (2 bytes) */
 		Stream_Write_UINT16(s, 0); /* reserved2 (2 bytes) */
 	}
 
-out_free:
 	free(clientAddress);
 	free(clientDir);
 }
@@ -314,7 +324,7 @@ out_free:
  * @param settings settings
  */
 
-BOOL rdp_read_info_packet(wStream* s, rdpSettings* settings)
+BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s)
 {
 	UINT32 flags;
 	UINT16 cbDomain;
@@ -323,12 +333,13 @@ BOOL rdp_read_info_packet(wStream* s, rdpSettings* settings)
 	UINT16 cbAlternateShell;
 	UINT16 cbWorkingDir;
 	UINT32 CompressionLevel;
+	rdpSettings* settings = rdp->settings;
 
 	if (Stream_GetRemainingLength(s) < 18)
 		return FALSE;
 
-	Stream_Seek_UINT32(s); /* CodePage */
-	Stream_Read_UINT32(s, flags); /* flags */
+	Stream_Seek_UINT32(s); /* CodePage (4 bytes ) */
+	Stream_Read_UINT32(s, flags); /* flags (4 bytes) */
 
 	settings->AudioCapture = ((flags & INFO_AUDIOCAPTURE) ? TRUE : FALSE);
 	settings->AudioPlayback = ((flags & INFO_NOAUDIOPLAYBACK) ? FALSE : TRUE);
@@ -400,7 +411,7 @@ BOOL rdp_read_info_packet(wStream* s, rdpSettings* settings)
 	Stream_Seek(s, 2);
 
 	if (settings->RdpVersion >= 5)
-		return rdp_read_extended_info_packet(s, settings); /* extraInfo */
+		return rdp_read_extended_info_packet(rdp, s); /* extraInfo */
 
 	return TRUE;
 }
@@ -412,7 +423,7 @@ BOOL rdp_read_info_packet(wStream* s, rdpSettings* settings)
  * @param settings settings
  */
 
-void rdp_write_info_packet(wStream* s, rdpSettings* settings)
+void rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 {
 	UINT32 flags;
 	WCHAR* domainW = NULL;
@@ -426,6 +437,7 @@ void rdp_write_info_packet(wStream* s, rdpSettings* settings)
 	WCHAR* workingDirW = NULL;
 	int cbWorkingDir = 0;
 	BOOL usedPasswordCookie = FALSE;
+	rdpSettings* settings = rdp->settings;
 
 	flags = INFO_MOUSE |
 		INFO_UNICODE |
@@ -567,7 +579,7 @@ void rdp_write_info_packet(wStream* s, rdpSettings* settings)
 		free(passwordW);
 
 	if (settings->RdpVersion >= 5)
-		rdp_write_extended_info_packet(s, settings); /* extraInfo */
+		rdp_write_extended_info_packet(rdp, s); /* extraInfo */
 }
 
 /**
@@ -610,7 +622,7 @@ BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s)
 		}
 	}
 
-	return rdp_read_info_packet(s, rdp->settings);
+	return rdp_read_info_packet(rdp, s);
 }
 
 /**
@@ -629,7 +641,7 @@ BOOL rdp_send_client_info(rdpRdp* rdp)
 	s = Stream_New(NULL, 2048);
 	rdp_init_stream(rdp, s);
 
-	rdp_write_info_packet(s, rdp->settings);
+	rdp_write_info_packet(rdp, s);
 
 	status = rdp_send(rdp, s, MCS_GLOBAL_CHANNEL_ID);
 
@@ -744,7 +756,7 @@ BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, wStream* s)
 
 		Stream_Read_UINT32(s, cbFieldData); /* cbFieldData (4 bytes) */
 
-		if (!rdp_read_server_auto_reconnect_cookie(s, rdp->settings))
+		if (!rdp_read_server_auto_reconnect_cookie(rdp, s))
 			return FALSE;
 	}
 
