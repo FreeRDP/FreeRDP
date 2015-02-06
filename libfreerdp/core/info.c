@@ -120,29 +120,11 @@ BOOL rdp_read_client_auto_reconnect_cookie(wStream* s, rdpSettings* settings)
 void rdp_write_client_auto_reconnect_cookie(wStream* s, rdpSettings* settings)
 {
 	BYTE* p;
-	CryptoHmac hmac;
-	BYTE nullRandom[32];
-	BYTE cryptSecurityVerifier[16];
 	ARC_CS_PRIVATE_PACKET* autoReconnectCookie;
+
 	autoReconnectCookie = settings->ClientAutoReconnectCookie;
 
-	/* SecurityVerifier = HMAC(AutoReconnectRandom, ClientRandom) */
-
-	hmac = crypto_hmac_new();
-
-	ZeroMemory(nullRandom, sizeof(nullRandom));
-
-	crypto_hmac_md5_init(hmac, autoReconnectCookie->securityVerifier, 16);
-
-	if (settings->ClientRandomLength > 0)
-		crypto_hmac_update(hmac, settings->ClientRandom, settings->ClientRandomLength);
-	else
-		crypto_hmac_update(hmac, nullRandom, sizeof(nullRandom));
-
-	crypto_hmac_final(hmac, cryptSecurityVerifier, 16);
-	crypto_hmac_free(hmac);
-
-	p = cryptSecurityVerifier;
+	p = autoReconnectCookie->securityVerifier;
 
 	WLog_DBG(TAG, "ClientAutoReconnectCookie: Version: %d LogonId: %d ArcRandomBits: "
 			"%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
@@ -153,7 +135,7 @@ void rdp_write_client_auto_reconnect_cookie(wStream* s, rdpSettings* settings)
 	Stream_Write_UINT32(s, autoReconnectCookie->cbLen); /* cbLen (4 bytes) */
 	Stream_Write_UINT32(s, autoReconnectCookie->version); /* version (4 bytes) */
 	Stream_Write_UINT32(s, autoReconnectCookie->logonId); /* LogonId (4 bytes) */
-	Stream_Write(s, cryptSecurityVerifier, 16); /* SecurityVerifier */
+	Stream_Write(s, autoReconnectCookie->securityVerifier, 16); /* SecurityVerifier (16 bytes) */
 }
 
 /**
@@ -242,7 +224,7 @@ void rdp_write_extended_info_packet(wStream* s, rdpSettings* settings)
 	int cbClientAddress;
 	WCHAR* clientDir = NULL;
 	int cbClientDir;
-	int cbAutoReconnectLen;
+	int cbAutoReconnectCookie;
 
 	clientAddressFamily = settings->IPv6Enabled ? ADDRESS_FAMILY_INET6 : ADDRESS_FAMILY_INET;
 
@@ -250,7 +232,7 @@ void rdp_write_extended_info_packet(wStream* s, rdpSettings* settings)
 
 	cbClientDir = ConvertToUnicode(CP_UTF8, 0, settings->ClientDir, -1, &clientDir, 0) * 2;
 
-	cbAutoReconnectLen = (int) settings->ServerAutoReconnectCookie->cbLen;
+	cbAutoReconnectCookie = (int) settings->ServerAutoReconnectCookie->cbLen;
 
 	Stream_Write_UINT16(s, clientAddressFamily); /* clientAddressFamily (2 bytes) */
 
@@ -273,22 +255,33 @@ void rdp_write_extended_info_packet(wStream* s, rdpSettings* settings)
 	freerdp_performance_flags_make(settings);
 	Stream_Write_UINT32(s, settings->PerformanceFlags); /* performanceFlags (4 bytes) */
 
-	Stream_Write_UINT16(s, cbAutoReconnectLen); /* cbAutoReconnectCookie (2 bytes) */
+	Stream_Write_UINT16(s, cbAutoReconnectCookie); /* cbAutoReconnectCookie (2 bytes) */
 
-	if (cbAutoReconnectLen > 0)
+	if (cbAutoReconnectCookie > 0)
 	{
 		CryptoHmac hmac;
+		BYTE ClientRandom[32];
+		BYTE AutoReconnectRandom[32];
 		ARC_SC_PRIVATE_PACKET* serverCookie;
 		ARC_CS_PRIVATE_PACKET* clientCookie;
 
-		WLog_DBG(TAG, "Sending auto reconnect cookie");
+		/* SecurityVerifier = HMAC(AutoReconnectRandom, ClientRandom) */
 
 		serverCookie = settings->ServerAutoReconnectCookie;
 		clientCookie = settings->ClientAutoReconnectCookie;
 
-		clientCookie->cbLen = serverCookie->cbLen;
+		clientCookie->cbLen = 28;
 		clientCookie->version = serverCookie->version;
 		clientCookie->logonId = serverCookie->logonId;
+		ZeroMemory(clientCookie->securityVerifier, 16);
+
+		ZeroMemory(AutoReconnectRandom, sizeof(AutoReconnectRandom));
+		CopyMemory(AutoReconnectRandom, serverCookie->arcRandomBits, 16);
+
+		ZeroMemory(ClientRandom, sizeof(ClientRandom));
+
+		if (settings->SelectedProtocol == PROTOCOL_RDP)
+			CopyMemory(ClientRandom, settings->ClientRandom, settings->ClientRandomLength);
 
 		hmac = crypto_hmac_new();
 
@@ -298,31 +291,12 @@ void rdp_write_extended_info_packet(wStream* s, rdpSettings* settings)
 			goto out_free;
 		}
 
-		crypto_hmac_md5_init(hmac, serverCookie->arcRandomBits, 16);
-
-		if (settings->SelectedProtocol == PROTOCOL_RDP)
-		{
-			crypto_hmac_update(hmac, (BYTE*) settings->ClientRandom, 32);
-		}
-		else
-		{
-			/* Anthony Tong's version had 16 zeroes here; I'm not sure why.
-			 * I do know that 16 did not reconnect correctly vs Win2008RDVH,
-			 * and 32 did.
-			 */
-			const BYTE zeros[32] = { 0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0,
-				0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0 };
-			crypto_hmac_update(hmac, zeros, 32);
-		}
-
+		crypto_hmac_md5_init(hmac, AutoReconnectRandom, 16);
+		crypto_hmac_update(hmac, ClientRandom, 32);
 		crypto_hmac_final(hmac, clientCookie->securityVerifier, 16);
-
-		rdp_write_client_auto_reconnect_cookie(s, settings); /* autoReconnectCookie */
-
 		crypto_hmac_free(hmac);
 
-		/* mark as used */
-		settings->ServerAutoReconnectCookie->cbLen = 0;
+		rdp_write_client_auto_reconnect_cookie(s, settings); /* autoReconnectCookie */
 
 		Stream_Write_UINT16(s, 0); /* reserved1 (2 bytes) */
 		Stream_Write_UINT16(s, 0); /* reserved2 (2 bytes) */
@@ -369,11 +343,11 @@ BOOL rdp_read_info_packet(wStream* s, rdpSettings* settings)
 		settings->CompressionLevel = CompressionLevel;
 	}
 
-	Stream_Read_UINT16(s, cbDomain); /* cbDomain */
-	Stream_Read_UINT16(s, cbUserName); /* cbUserName */
-	Stream_Read_UINT16(s, cbPassword); /* cbPassword */
-	Stream_Read_UINT16(s, cbAlternateShell); /* cbAlternateShell */
-	Stream_Read_UINT16(s, cbWorkingDir); /* cbWorkingDir */
+	Stream_Read_UINT16(s, cbDomain); /* cbDomain (2 bytes) */
+	Stream_Read_UINT16(s, cbUserName); /* cbUserName (2 bytes) */
+	Stream_Read_UINT16(s, cbPassword); /* cbPassword (2 bytes) */
+	Stream_Read_UINT16(s, cbAlternateShell); /* cbAlternateShell (2 bytes) */
+	Stream_Read_UINT16(s, cbWorkingDir); /* cbWorkingDir (2 bytes) */
 
 	if (Stream_GetRemainingLength(s) < (size_t) (cbDomain + 2))
 		return FALSE;
