@@ -566,6 +566,10 @@ if(TARGET_ARCH MATCHES "x86|x64")
 	endif()
 endif()
 
+if (TARGET_ARCH MATCHES "sparc")
+	set(HAVE_ALIGNED_REQUIRED 1)
+endif()
+
 # Path to put FreeRDP data
 set(FREERDP_DATA_PATH "${CMAKE_INSTALL_PREFIX}/share/freerdp")
 

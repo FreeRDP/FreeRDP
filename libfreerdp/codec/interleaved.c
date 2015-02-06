@@ -206,7 +206,11 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, BYTE* pbOrderHdr, UINT32* adv
 #undef RLEEXTRA
 #define DESTWRITEPIXEL(_buf, _pix) ((UINT16*)(_buf))[0] = (UINT16)(_pix)
 #define DESTREADPIXEL(_pix, _buf) _pix = ((UINT16*)(_buf))[0]
+#ifdef HAVE_ALIGNED_REQUIRED
+#define SRCREADPIXEL(_pix, _buf) _pix = (_buf)[0] | ((_buf)[1] << 8)
+#else
 #define SRCREADPIXEL(_pix, _buf) _pix = ((UINT16*)(_buf))[0]
+#endif
 #define DESTNEXTPIXEL(_buf) _buf += 2
 #define SRCNEXTPIXEL(_buf) _buf += 2
 #define WRITEFGBGIMAGE WriteFgBgImage16to16
