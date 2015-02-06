@@ -26,6 +26,11 @@
 
 #include <winpr/stream.h>
 
+#define INFO_TYPE_LOGON			0x00000000
+#define INFO_TYPE_LOGON_LONG		0x00000001
+#define INFO_TYPE_LOGON_PLAIN_NOTIFY	0x00000002
+#define INFO_TYPE_LOGON_EXTENDED_INF	0x00000003
+
 /* Client Address Family */
 #define ADDRESS_FAMILY_INET		0x0002
 #define ADDRESS_FAMILY_INET6		0x0017
@@ -67,19 +72,14 @@
 #define LOGON_FAILED_OTHER		0x00000002
 #define LOGON_WARNING			0x00000003
 
-void rdp_read_system_time(wStream* s, SYSTEM_TIME* system_time);
-void rdp_write_system_time(wStream* s, SYSTEM_TIME* system_time);
-void rdp_get_client_time_zone(wStream* s, rdpSettings* settings);
-BOOL rdp_read_client_time_zone(wStream* s, rdpSettings* settings);
-void rdp_write_client_time_zone(wStream* s, rdpSettings* settings);
-BOOL rdp_read_server_auto_reconnect_cookie(wStream* s, rdpSettings* settings);
-BOOL rdp_read_client_auto_reconnect_cookie(wStream* s, rdpSettings* settings);
-void rdp_write_client_auto_reconnect_cookie(wStream* s, rdpSettings* settings);
-void rdp_write_auto_reconnect_cookie(wStream* s, rdpSettings* settings);
-BOOL rdp_read_extended_info_packet(wStream* s, rdpSettings* settings);
-void rdp_write_extended_info_packet(wStream* s, rdpSettings* settings);
-BOOL rdp_read_info_packet(wStream* s, rdpSettings* settings);
-void rdp_write_info_packet(wStream* s, rdpSettings* settings);
+BOOL rdp_read_server_auto_reconnect_cookie(rdpRdp* rdp, wStream* s);
+BOOL rdp_read_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s);
+void rdp_write_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s);
+void rdp_write_auto_reconnect_cookie(rdpRdp* rdp, wStream* s);
+BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s);
+void rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s);
+BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s);
+void rdp_write_info_packet(rdpRdp* rdp, wStream* s);
 BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s);
 BOOL rdp_send_client_info(rdpRdp* rdp);
 BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s);

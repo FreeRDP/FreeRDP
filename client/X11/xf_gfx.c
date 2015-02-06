@@ -26,58 +26,87 @@
 
 #define TAG CLIENT_TAG("x11")
 
+static int xf_call_for_each_surface(xfContext* xfc, wArrayList* surfaceList, int (*processSurface)(xfContext*, xfGfxSurface*, void*), void* param)
+{
+	int status = 1;
+	int surfaceIndex;
+	RdpgfxClientContext* context = xfc->gfx;
+
+	/* Iterating backwards to be able to remove surfaces from the list */
+	surfaceIndex = ArrayList_Count(surfaceList) - 1;
+
+	for (; surfaceIndex >= 0; surfaceIndex--)
+	{
+		UINT32 surfaceId;
+		xfGfxSurface* surface;
+
+		surfaceId = (UINT32) (ULONG_PTR) ArrayList_GetItem(xfc->gfxMappedSurfaceIds, surfaceIndex);
+		surface = (xfGfxSurface*) context->GetSurfaceData(context, surfaceId);
+
+		if (!surface)
+		{
+			ArrayList_RemoveAt(surfaceList, surfaceIndex);
+			continue;
+		}
+
+		if (processSurface(xfc, surface, param) < 0)
+			status = -1;
+	}
+
+	return status;
+}
+
+static int do_clearInvalidRegion(xfContext* xfc, xfGfxSurface* surface, void* param)
+{
+	region16_clear(&surface->invalidRegion);
+
+	return 1;
+}
+
 int xf_ResetGraphics(RdpgfxClientContext* context, RDPGFX_RESET_GRAPHICS_PDU* resetGraphics)
 {
 	xfContext* xfc = (xfContext*) context->custom;
 
 	freerdp_client_codecs_reset(xfc->codecs, FREERDP_CODEC_ALL);
 
-	region16_uninit(&(xfc->invalidRegion));
-	region16_init(&(xfc->invalidRegion));
+	xf_call_for_each_surface(xfc, xfc->gfxMappedSurfaceIds, do_clearInvalidRegion, NULL);
 
 	xfc->graphicsReset = TRUE;
 
 	return 1;
 }
 
-int xf_OutputUpdate(xfContext* xfc)
+int xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 {
 	UINT16 width, height;
-	xfGfxSurface* surface;
+	UINT32 surfaceX, surfaceY;
 	RECTANGLE_16 surfaceRect;
 	const RECTANGLE_16* extents;
 
-	if (!xfc->graphicsReset)
-		return 1;
+	surfaceX = surface->mapping.output.originX;
+	surfaceY = surface->mapping.output.originY;
 
-	surface = (xfGfxSurface*) xfc->gfx->GetSurfaceData(xfc->gfx, xfc->outputSurfaceId);
-
-	if (!surface)
-		return -1;
-
-	surfaceRect.left = 0;
-	surfaceRect.top = 0;
-	surfaceRect.right = xfc->width;
-	surfaceRect.bottom = xfc->height;
-
-	region16_intersect_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &surfaceRect);
+	surfaceRect.left = surfaceX;
+	surfaceRect.top = surfaceY;
+	surfaceRect.right = surfaceX + surface->width;
+	surfaceRect.bottom = surfaceY + surface->height;
 
 	XSetClipMask(xfc->display, xfc->gc, None);
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 
-	if (!region16_is_empty(&(xfc->invalidRegion)))
+	if (!region16_is_empty(&surface->invalidRegion))
 	{
-		extents = region16_extents(&(xfc->invalidRegion));
+		extents = region16_extents(&surface->invalidRegion);
 
 		width = extents->right - extents->left;
 		height = extents->bottom - extents->top;
 
-		if (width > xfc->width)
-			width = xfc->width;
+		if (width > surface->width)
+			width = surface->width;
 
-		if (height > xfc->height)
-			height = xfc->height;
+		if (height > surface->height)
+			height = surface->height;
 
 		if (surface->stage)
 		{
@@ -89,7 +118,7 @@ int xf_OutputUpdate(xfContext* xfc)
 		if (xfc->settings->SmartSizing || xfc->settings->MultiTouchGestures)
 		{
 			XPutImage(xfc->display, xfc->primary, xfc->gc, surface->image,
-				extents->left, extents->top, extents->left, extents->top, width, height);
+				extents->left, extents->top, extents->left + surfaceX, extents->top + surfaceY, width, height);
 
 			xf_draw_screen(xfc, extents->left, extents->top, width, height);
 		}
@@ -97,11 +126,11 @@ int xf_OutputUpdate(xfContext* xfc)
 #endif
 		{
 			XPutImage(xfc->display, xfc->drawable, xfc->gc, surface->image,
-				extents->left, extents->top, extents->left, extents->top, width, height);
+				extents->left, extents->top, extents->left + surfaceX, extents->top + surfaceY, width, height);
 		}
 	}
 
-	region16_clear(&(xfc->invalidRegion));
+	region16_clear(&surface->invalidRegion);
 
 	XSetClipMask(xfc->display, xfc->gc, None);
 	XSync(xfc->display, True);
@@ -109,8 +138,78 @@ int xf_OutputUpdate(xfContext* xfc)
 	return 1;
 }
 
+static int xf_UpdateSurface(xfContext* xfc, xfGfxSurface* surface, void* param)
+{
+	int status = 1;
+
+	switch (surface->mapping.mode)
+	{
+		case GFX_MAP_OUTPUT:
+			status = xf_OutputUpdate(xfc, surface);
+			break;
+
+		case GFX_MAP_NONE:
+			break;
+	}
+
+	return status;
+}
+
+int xf_UpdateSurfaces(xfContext* xfc)
+{
+	if (!xfc->graphicsReset)
+		return 1;
+
+	return xf_call_for_each_surface(xfc, xfc->gfxMappedSurfaceIds, xf_UpdateSurface, NULL);
+}
+
+BOOL xf_MappedSurfaceRect(xfContext* xfc, xfGfxSurface* surface, RECTANGLE_16* rect)
+{
+	BOOL mapped = FALSE;
+
+	switch (surface->mapping.mode)
+	{
+		case GFX_MAP_OUTPUT:
+			mapped = TRUE;
+			rect->left = surface->mapping.output.originX;
+			rect->top = surface->mapping.output.originY;
+			rect->right = surface->mapping.output.originX + surface->width;
+			rect->bottom = surface->mapping.output.originY + surface->height;
+			break;
+
+		case GFX_MAP_NONE:
+			break;
+	}
+
+	return mapped;
+}
+
+static int do_OutputExpose(xfContext* xfc, xfGfxSurface* surface, void* param)
+{
+	RECTANGLE_16 surfaceRect;
+	RECTANGLE_16 intersection;
+	RECTANGLE_16* invalidRect = param;
+
+	if (!xf_MappedSurfaceRect(xfc, surface, &surfaceRect))
+		return -1;
+
+	if (rectangles_intersection(invalidRect, &surfaceRect, &intersection))
+	{
+		/* Invalid rects are specified relative to surface origin */
+		intersection.left -= surfaceRect.left;
+		intersection.top -= surfaceRect.top;
+		intersection.right -= surfaceRect.left;
+		intersection.bottom -= surfaceRect.top;
+
+		region16_union_rect(&surface->invalidRegion, &surface->invalidRegion, &intersection);
+	}
+
+	return 1;
+}
+
 int xf_OutputExpose(xfContext* xfc, int x, int y, int width, int height)
 {
+	int status = 1;
 	RECTANGLE_16 invalidRect;
 
 	invalidRect.left = x;
@@ -118,11 +217,13 @@ int xf_OutputExpose(xfContext* xfc, int x, int y, int width, int height)
 	invalidRect.right = x + width;
 	invalidRect.bottom = y + height;
 
-	region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &invalidRect);
+	if (xf_call_for_each_surface(xfc, xfc->gfxMappedSurfaceIds, do_OutputExpose, &invalidRect) < 0)
+		status = -1;
 
-	xf_OutputUpdate(xfc);
+	if (xf_UpdateSurfaces(xfc) < 0)
+		status = -1;
 
-	return 1;
+	return status;
 }
 
 int xf_StartFrame(RdpgfxClientContext* context, RDPGFX_START_FRAME_PDU* startFrame)
@@ -138,7 +239,7 @@ int xf_EndFrame(RdpgfxClientContext* context, RDPGFX_END_FRAME_PDU* endFrame)
 {
 	xfContext* xfc = (xfContext*) context->custom;
 
-	xf_OutputUpdate(xfc);
+	xf_UpdateSurfaces(xfc);
 
 	xfc->inGfxFrame = FALSE;
 
@@ -163,10 +264,10 @@ int xf_SurfaceCommand_Uncompressed(xfContext* xfc, RdpgfxClientContext* context,
 	invalidRect.right = cmd->right;
 	invalidRect.bottom = cmd->bottom;
 
-	region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &invalidRect);
+	region16_union_rect(&surface->invalidRegion, &surface->invalidRegion, &invalidRect);
 
 	if (!xfc->inGfxFrame)
-		xf_OutputUpdate(xfc);
+		xf_UpdateSurfaces(xfc);
 
 	return 1;
 }
@@ -238,7 +339,7 @@ int xf_SurfaceCommand_RemoteFX(xfContext* xfc, RdpgfxClientContext* context, RDP
 					nXDst, nYDst, nWidth, nHeight,
 					tile->data, PIXEL_FORMAT_XRGB32, 64 * 4, 0, 0, NULL);
 
-			region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &updateRects[j]);
+			region16_union_rect(&surface->invalidRegion, &surface->invalidRegion, &updateRects[j]);
 		}
 
 		region16_uninit(&updateRegion);
@@ -249,7 +350,7 @@ int xf_SurfaceCommand_RemoteFX(xfContext* xfc, RdpgfxClientContext* context, RDP
 	region16_uninit(&clippingRects);
 
 	if (!xfc->inGfxFrame)
-		xf_OutputUpdate(xfc);
+		xf_UpdateSurfaces(xfc);
 
 	return 1;
 }
@@ -284,10 +385,10 @@ int xf_SurfaceCommand_ClearCodec(xfContext* xfc, RdpgfxClientContext* context, R
 	invalidRect.right = cmd->right;
 	invalidRect.bottom = cmd->bottom;
 
-	region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &invalidRect);
+	region16_union_rect(&surface->invalidRegion, &surface->invalidRegion, &invalidRect);
 
 	if (!xfc->inGfxFrame)
-		xf_OutputUpdate(xfc);
+		xf_UpdateSurfaces(xfc);
 
 	return 1;
 }
@@ -316,10 +417,10 @@ int xf_SurfaceCommand_Planar(xfContext* xfc, RdpgfxClientContext* context, RDPGF
 	invalidRect.right = cmd->right;
 	invalidRect.bottom = cmd->bottom;
 
-	region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &invalidRect);
+	region16_union_rect(&surface->invalidRegion, &surface->invalidRegion, &invalidRect);
 
 	if (!xfc->inGfxFrame)
-		xf_OutputUpdate(xfc);
+		xf_UpdateSurfaces(xfc);
 
 	return 1;
 }
@@ -364,11 +465,11 @@ int xf_SurfaceCommand_H264(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_
 
 	for (i = 0; i < meta->numRegionRects; i++)
 	{
-		region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), (RECTANGLE_16*) &(meta->regionRects[i]));
+		region16_union_rect(&surface->invalidRegion, &surface->invalidRegion, (RECTANGLE_16*) &(meta->regionRects[i]));
 	}
 
 	if (!xfc->inGfxFrame)
-		xf_OutputUpdate(xfc);
+		xf_UpdateSurfaces(xfc);
 
 	return 1;
 }
@@ -397,10 +498,10 @@ int xf_SurfaceCommand_Alpha(xfContext* xfc, RdpgfxClientContext* context, RDPGFX
 	invalidRect.right = cmd->right;
 	invalidRect.bottom = cmd->bottom;
 
-	region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &invalidRect);
+	region16_union_rect(&surface->invalidRegion, &surface->invalidRegion, &invalidRect);
 
 	if (!xfc->inGfxFrame)
-		xf_OutputUpdate(xfc);
+		xf_UpdateSurfaces(xfc);
 
 	return 1;
 }
@@ -487,7 +588,7 @@ int xf_SurfaceCommand_Progressive(xfContext* xfc, RdpgfxClientContext* context, 
 					surface->scanline, nXDst, nYDst, nWidth, nHeight,
 					tile->data, PIXEL_FORMAT_XRGB32, 64 * 4, nXSrc, nYSrc, NULL);
 
-			region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &updateRects[j]);
+			region16_union_rect(&surface->invalidRegion, &surface->invalidRegion, &updateRects[j]);
 		}
 
 		region16_uninit(&updateRegion);
@@ -496,7 +597,7 @@ int xf_SurfaceCommand_Progressive(xfContext* xfc, RdpgfxClientContext* context, 
 	region16_uninit(&clippingRects);
 
 	if (!xfc->inGfxFrame)
-		xf_OutputUpdate(xfc);
+		xf_UpdateSurfaces(xfc);
 
 	return 1;
 }
@@ -607,6 +708,10 @@ int xf_CreateSurface(RdpgfxClientContext* context, RDPGFX_CREATE_SURFACE_PDU* cr
 				(char*) surface->stage, surface->width, surface->height, xfc->scanline_pad, surface->stageStep);
 	}
 
+	surface->mapping.mode = GFX_MAP_NONE;
+
+	region16_init(&surface->invalidRegion);
+
 	context->SetSurfaceData(context, surface->surfaceId, (void*) surface);
 
 	return 1;
@@ -624,9 +729,11 @@ int xf_DeleteSurface(RdpgfxClientContext* context, RDPGFX_DELETE_SURFACE_PDU* de
 		XFree(surface->image);
 		_aligned_free(surface->data);
 		_aligned_free(surface->stage);
+		region16_uninit(&surface->invalidRegion);
 		free(surface);
 	}
 
+	ArrayList_Remove(xfc->gfxMappedSurfaceIds, (void*) (ULONG_PTR) deleteSurface->surfaceId);
 	context->SetSurfaceData(context, deleteSurface->surfaceId, NULL);
 
 	if (xfc->codecs->progressive)
@@ -673,11 +780,11 @@ int xf_SolidFill(RdpgfxClientContext* context, RDPGFX_SOLID_FILL_PDU* solidFill)
 		freerdp_image_fill(surface->data, surface->format, surface->scanline,
 				rect->left, rect->top, nWidth, nHeight, color);
 
-		region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &invalidRect);
+		region16_union_rect(&surface->invalidRegion, &surface->invalidRegion, &invalidRect);
 	}
 
 	if (!xfc->inGfxFrame)
-		xf_OutputUpdate(xfc);
+		xf_UpdateSurfaces(xfc);
 
 	return 1;
 }
@@ -733,11 +840,11 @@ int xf_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFACE_
 		invalidRect.right = destPt->x + rectSrc->right;
 		invalidRect.bottom = destPt->y + rectSrc->bottom;
 
-		region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &invalidRect);
+		region16_union_rect(&surfaceDst->invalidRegion, &surfaceDst->invalidRegion, &invalidRect);
 	}
 
 	if (!xfc->inGfxFrame)
-		xf_OutputUpdate(xfc);
+		xf_UpdateSurfaces(xfc);
 
 	return 1;
 }
@@ -818,11 +925,11 @@ int xf_CacheToSurface(RdpgfxClientContext* context, RDPGFX_CACHE_TO_SURFACE_PDU*
 		invalidRect.right = destPt->x + cacheEntry->width - 1;
 		invalidRect.bottom = destPt->y + cacheEntry->height - 1;
 
-		region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &invalidRect);
+		region16_union_rect(&surface->invalidRegion, &surface->invalidRegion, &invalidRect);
 	}
 
 	if (!xfc->inGfxFrame)
-		xf_OutputUpdate(xfc);
+		xf_UpdateSurfaces(xfc);
 
 	return 1;
 }
@@ -851,9 +958,18 @@ int xf_EvictCacheEntry(RdpgfxClientContext* context, RDPGFX_EVICT_CACHE_ENTRY_PD
 
 int xf_MapSurfaceToOutput(RdpgfxClientContext* context, RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU* surfaceToOutput)
 {
+	xfGfxSurface* surface;
 	xfContext* xfc = (xfContext*) context->custom;
 
-	xfc->outputSurfaceId = surfaceToOutput->surfaceId;
+	surface = (xfGfxSurface*) context->GetSurfaceData(context, surfaceToOutput->surfaceId);
+
+	surface->mapping.mode = GFX_MAP_OUTPUT;
+	surface->mapping.output.originX = surfaceToOutput->outputOriginX;
+	surface->mapping.output.originY = surfaceToOutput->outputOriginY;
+
+	region16_clear(&surface->invalidRegion);
+
+	ArrayList_Add(xfc->gfxMappedSurfaceIds, (void*) (ULONG_PTR) surfaceToOutput->surfaceId);
 
 	return 1;
 }
@@ -884,13 +1000,14 @@ void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx)
 	gfx->MapSurfaceToOutput = xf_MapSurfaceToOutput;
 	gfx->MapSurfaceToWindow = xf_MapSurfaceToWindow;
 
-	region16_init(&(xfc->invalidRegion));
+	xfc->gfxMappedSurfaceIds = ArrayList_New(FALSE);
 }
 
 void xf_graphics_pipeline_uninit(xfContext* xfc, RdpgfxClientContext* gfx)
 {
-	region16_uninit(&(xfc->invalidRegion));
-
-	gfx->custom = NULL;
-	xfc->gfx = NULL;
+	if (xfc->gfxMappedSurfaceIds)
+	{
+		ArrayList_Free(xfc->gfxMappedSurfaceIds);
+		xfc->gfxMappedSurfaceIds = NULL;
+	}
 }

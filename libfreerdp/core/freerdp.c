@@ -62,8 +62,8 @@
 BOOL freerdp_connect(freerdp* instance)
 {
 	rdpRdp* rdp;
+	BOOL status = TRUE;
 	rdpSettings* settings;
-	BOOL status = FALSE;
 	ConnectionResultEventArgs e;
 
 	/* We always set the return code to 0 before we start the connect sequence*/
@@ -117,6 +117,7 @@ BOOL freerdp_connect(freerdp* instance)
 		}
 
 		IFCALLRET(instance->PostConnect, status, instance);
+
 		update_post_connect(instance->update);
 
 		if (!status)
@@ -345,8 +346,10 @@ BOOL freerdp_disconnect(freerdp* instance)
 	rdpRdp* rdp;
 
 	rdp = instance->context->rdp;
+
 	rdp_client_disconnect(rdp);
 	update_post_disconnect(instance->update);
+
 	IFCALL(instance->PostDisconnect, instance);
 
 	if (instance->update->pcap_rfx)
@@ -361,8 +364,12 @@ BOOL freerdp_disconnect(freerdp* instance)
 
 BOOL freerdp_reconnect(freerdp* instance)
 {
-	freerdp_disconnect(instance);
-	return freerdp_connect(instance);
+	BOOL status;
+	rdpRdp* rdp = instance->context->rdp;
+
+	status = rdp_client_reconnect(rdp);
+
+	return status;
 }
 
 BOOL freerdp_shall_disconnect(freerdp* instance)

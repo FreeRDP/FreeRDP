@@ -122,10 +122,9 @@ struct xf_context
 	UINT32 bitmap_size;
 	BYTE* bitmap_buffer;
 	BYTE* primary_buffer;
-	REGION16 invalidRegion;
 	BOOL inGfxFrame;
 	BOOL graphicsReset;
-	UINT16 outputSurfaceId;
+	wArrayList* gfxMappedSurfaceIds;
 
 	BOOL frame_begin;
 	UINT16 frame_x1;

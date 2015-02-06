@@ -503,17 +503,20 @@ ADDIN_ARGV* freerdp_dynamic_channel_clone(ADDIN_ARGV* channel)
 	ADDIN_ARGV* _channel = NULL;
 
 	_channel = (ADDIN_ARGV*) malloc(sizeof(ADDIN_ARGV));
+
 	if (!_channel)
 		return NULL;
 
 	_channel->argc = channel->argc;
 	_channel->argv = (char**) malloc(sizeof(char*) * channel->argc);
+
 	if (!_channel->argv)
 		goto out_free;
 
 	for (index = 0; index < _channel->argc; index++)
 	{
 		_channel->argv[index] = _strdup(channel->argv[index]);
+
 		if (!_channel->argv[index])
 			goto out_release_args;
 	}

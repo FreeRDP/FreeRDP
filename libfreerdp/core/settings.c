@@ -483,6 +483,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->RemoteAssistancePassword = _strdup(settings->RemoteAssistancePassword); /* 1027 */
 		_settings->RemoteAssistanceRCTicket = _strdup(settings->RemoteAssistanceRCTicket); /* 1028 */
 		_settings->AuthenticationServiceClass = _strdup(settings->AuthenticationServiceClass); /* 1098 */
+		_settings->AllowedTlsCiphers = _strdup(settings->AllowedTlsCiphers); /* 1101 */
 		_settings->PreconnectionBlob = _strdup(settings->PreconnectionBlob); /* 1155 */
 		_settings->KerberosKdc = _strdup(settings->KerberosKdc); /* 1344 */
 		_settings->KerberosRealm = _strdup(settings->KerberosRealm); /* 1345 */
@@ -542,12 +543,19 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		{
 			_settings->ServerRandom = (BYTE*) malloc(_settings->ServerRandomLength);
 			CopyMemory(_settings->ServerRandom, settings->ServerRandom, _settings->ServerRandomLength);
+			_settings->ServerRandomLength = settings->ServerRandomLength;
 		}
 
 		if (_settings->ClientRandomLength)
 		{
 			_settings->ClientRandom = (BYTE*) malloc(_settings->ClientRandomLength);
 			CopyMemory(_settings->ClientRandom, settings->ClientRandom, _settings->ClientRandomLength);
+			_settings->ClientRandomLength = settings->ClientRandomLength;
+		}
+
+		if (settings->RdpServerCertificate)
+		{
+			_settings->RdpServerCertificate = certificate_clone(settings->RdpServerCertificate);
 		}
 
 		_settings->ChannelCount = settings->ChannelCount;
@@ -608,9 +616,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 
 		_settings->StaticChannelCount = settings->StaticChannelCount;
 		_settings->StaticChannelArraySize = settings->StaticChannelArraySize;
-		_settings->StaticChannelArray = (ADDIN_ARGV**)
-				malloc(sizeof(ADDIN_ARGV*) * _settings->StaticChannelArraySize);
-		ZeroMemory(_settings->StaticChannelArray, sizeof(ADDIN_ARGV*) * _settings->StaticChannelArraySize);
+		_settings->StaticChannelArray = (ADDIN_ARGV**) calloc(_settings->StaticChannelArraySize, sizeof(ADDIN_ARGV*));
 
 		for (index = 0; index < _settings->StaticChannelCount; index++)
 		{
@@ -619,9 +625,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 
 		_settings->DynamicChannelCount = settings->DynamicChannelCount;
 		_settings->DynamicChannelArraySize = settings->DynamicChannelArraySize;
-		_settings->DynamicChannelArray = (ADDIN_ARGV**)
-				malloc(sizeof(ADDIN_ARGV*) * _settings->DynamicChannelArraySize);
-		ZeroMemory(_settings->DynamicChannelArray, sizeof(ADDIN_ARGV*) * _settings->DynamicChannelArraySize);
+		_settings->DynamicChannelArray = (ADDIN_ARGV**) calloc(_settings->DynamicChannelArraySize, sizeof(ADDIN_ARGV*));
 
 		for (index = 0; index < _settings->DynamicChannelCount; index++)
 		{
@@ -651,7 +655,7 @@ void freerdp_settings_free(rdpSettings* settings)
 		free(settings->MonitorDefArray);
 		free(settings->ClientAddress);
 		free(settings->ClientDir);
-		free(settings->PermittedTLSCiphers);
+		free(settings->AllowedTlsCiphers);
 		free(settings->CertificateFile);
 		free(settings->PrivateKeyFile);
 		free(settings->ConnectionFile);
