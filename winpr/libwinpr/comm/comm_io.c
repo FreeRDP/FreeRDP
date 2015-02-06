@@ -55,7 +55,7 @@ BOOL _comm_set_permissive(HANDLE hDevice, BOOL permissive)
 }
 
 
-/* Computes VMIN in deciseconds from Ti in milliseconds */
+/* Computes VTIME in deciseconds from Ti in milliseconds */
 static UCHAR _vtime(ULONG Ti)
 {
 	/* FIXME: look for an equivalent math function otherwise let
@@ -91,7 +91,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	UCHAR vmin = 0;
 	UCHAR vtime = 0;
 	ULONGLONG Tmax = 0;
-	struct timeval tmaxTimeout, *pTmaxTimeout;
+	struct timeval tmaxTimeout;
 	struct termios currentTermios;
 
 	EnterCriticalSection(&pComm->ReadLock); /* KISSer by the function's beginning */
@@ -219,15 +219,11 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		}
 	}
 
-	pTmaxTimeout = NULL; /* no timeout if Tmax == 0 */
-	if (Tmax > 0)
+	ZeroMemory(&tmaxTimeout, sizeof(struct timeval));
+	if (Tmax > 0) /* no timeout if Tmax == 0 */
 	{
-		ZeroMemory(&tmaxTimeout, sizeof(struct timeval));
-
 		tmaxTimeout.tv_sec = Tmax / 1000; /* s */
 		tmaxTimeout.tv_usec = (Tmax % 1000) * 1000; /* us */
-
-		pTmaxTimeout = &tmaxTimeout;
 	}
 
 
@@ -248,7 +244,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	FD_SET(pComm->fd_read_event, &read_set);
 	FD_SET(pComm->fd_read, &read_set);
 
-	nbFds = select(biggestFd+1, &read_set, NULL, NULL, pTmaxTimeout);
+	nbFds = select(biggestFd+1, &read_set, NULL, NULL, &tmaxTimeout);
 	if (nbFds < 0)
 	{
 		CommLog_Print(WLOG_WARN, "select() failure, errno=[%d] %s\n", errno, strerror(errno));
@@ -295,6 +291,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 		assert(event == FREERDP_PURGE_RXABORT); /* no other expected event so far */
 	}
+
 
 	if (FD_ISSET(pComm->fd_read, &read_set))
 	{
@@ -361,7 +358,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 		LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped)
 {
 	WINPR_COMM* pComm = (WINPR_COMM*) hDevice;
-	struct timeval tmaxTimeout, *pTmaxTimeout;
+	struct timeval tmaxTimeout;
 
 	EnterCriticalSection(&pComm->WriteLock); /* KISSer by the function's beginning */
 
@@ -409,15 +406,12 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 	 * how much time was left. Keep the timeout variable out of
 	 * the while() */
 
-	pTmaxTimeout = NULL; /* no timeout if Tmax == 0 */
-	if (Tmax > 0)
+	 
+	ZeroMemory(&tmaxTimeout, sizeof(struct timeval));
+	if (Tmax > 0) /* no timeout if Tmax == 0 */
 	{
-		ZeroMemory(&tmaxTimeout, sizeof(struct timeval));
-
 		tmaxTimeout.tv_sec = Tmax / 1000; /* s */
 		tmaxTimeout.tv_usec = (Tmax % 1000) * 1000; /* us */
-
-		pTmaxTimeout = &tmaxTimeout;
 	}
 
 	while (*lpNumberOfBytesWritten < nNumberOfBytesToWrite)
@@ -439,7 +433,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 		FD_SET(pComm->fd_write_event, &event_set);
 		FD_SET(pComm->fd_write, &write_set);
 
-		nbFds = select(biggestFd+1, &event_set, &write_set, NULL, pTmaxTimeout);
+		nbFds = select(biggestFd+1, &event_set, &write_set, NULL, &tmaxTimeout);
 		if (nbFds < 0)
 		{
 			CommLog_Print(WLOG_WARN, "select() failure, errno=[%d] %s\n", errno, strerror(errno));
