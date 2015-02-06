@@ -132,8 +132,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "sec-tls", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "tls protocol security" },
 	{ "sec-nla", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "nla protocol security" },
 	{ "sec-ext", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "nla extended protocol security" },
-	{ "tls-ciphers", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "List of permitted openssl ciphers - see ciphers(1)" },
-	{ "tls-ciphers-netmon", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Use tls ciphers that netmon can parse" },
+	{ "tls-ciphers", COMMAND_LINE_VALUE_REQUIRED, "<netmon|ma|ciphers>", NULL, NULL, -1, NULL, "Allowed TLS ciphers" },
 	{ "cert-name", COMMAND_LINE_VALUE_REQUIRED, "<name>", NULL, NULL, -1, NULL, "certificate name" },
 	{ "cert-ignore", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "ignore certificate" },
 	{ "pcb", COMMAND_LINE_VALUE_REQUIRED, "<blob>", NULL, NULL, -1, NULL, "Preconnection Blob" },
@@ -1810,11 +1809,18 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "tls-ciphers")
 		{
-			settings->PermittedTLSCiphers = _strdup(arg->Value);
-		}
-		CommandLineSwitchCase(arg, "tls-ciphers-netmon")
-		{
-			settings->PermittedTLSCiphers = arg->Value ? _strdup("ALL:!ECDH") : NULL;
+			if (strcmp(arg->Value, "netmon") == 0)
+			{
+				settings->AllowedTlsCiphers = _strdup("ALL:!ECDH");
+			}
+			else if (strcmp(arg->Value, "ma") == 0)
+			{
+				settings->AllowedTlsCiphers = _strdup("AES128-SHA");
+			}
+			else
+			{
+				settings->AllowedTlsCiphers = _strdup(arg->Value);
+			}
 		}
 		CommandLineSwitchCase(arg, "cert-name")
 		{

@@ -73,10 +73,7 @@ BOOL freerdp_connect(freerdp* instance)
 	rdp = instance->context->rdp;
 	settings = instance->settings;
 
-	if (!rdp->reconnect)
-	{
-		IFCALLRET(instance->PreConnect, status, instance);
-	}
+	IFCALLRET(instance->PreConnect, status, instance);
 
 	if (settings->KeyboardLayout == KBD_JAPANESE_INPUT_SYSTEM_MS_IME2002)
 	{
@@ -119,10 +116,7 @@ BOOL freerdp_connect(freerdp* instance)
 				instance->update->dump_rfx = TRUE;
 		}
 
-		if (!rdp->reconnect)
-		{
-			IFCALLRET(instance->PostConnect, status, instance);
-		}
+		IFCALLRET(instance->PostConnect, status, instance);
 
 		update_post_connect(instance->update);
 
@@ -356,10 +350,7 @@ BOOL freerdp_disconnect(freerdp* instance)
 	rdp_client_disconnect(rdp);
 	update_post_disconnect(instance->update);
 
-	if (!rdp->reconnect)
-	{
-		IFCALL(instance->PostDisconnect, instance);
-	}
+	IFCALL(instance->PostDisconnect, instance);
 
 	if (instance->update->pcap_rfx)
 	{
@@ -373,17 +364,10 @@ BOOL freerdp_disconnect(freerdp* instance)
 
 BOOL freerdp_reconnect(freerdp* instance)
 {
-	BOOL status = TRUE;
+	BOOL status;
 	rdpRdp* rdp = instance->context->rdp;
 
-	rdp->reconnect = TRUE;
-
-	status = freerdp_disconnect(instance);
-
-	if (status)
-		status = freerdp_connect(instance);
-
-	rdp->reconnect = FALSE;
+	status = rdp_client_reconnect(rdp);
 
 	return status;
 }

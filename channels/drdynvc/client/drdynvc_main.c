@@ -553,7 +553,7 @@ int drdynvc_send(drdynvcPlugin* drdynvc, wStream* s)
 	if (status != CHANNEL_RC_OK)
 	{
 		Stream_Free(s, TRUE);
-		WLog_ERR(TAG,  "VirtualChannelWrite failed with %s [%08X]",
+		WLog_ERR(TAG, "VirtualChannelWrite failed with %s [%08X]",
 				 WTSErrorToString(status), status);
 	}
 
@@ -643,7 +643,7 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, BYTE* data, UIN
 	if (status != CHANNEL_RC_OK)
 	{
 		drdynvc->channel_error = status;
-		WLog_ERR(TAG,  "VirtualChannelWrite failed with %s [%08X]",
+		WLog_ERR(TAG, "VirtualChannelWrite failed with %s [%08X]",
 				 WTSErrorToString(status), status);
 		return 1;
 	}
@@ -664,7 +664,7 @@ static int drdynvc_send_capability_response(drdynvcPlugin* drdynvc)
 
 	if (status != CHANNEL_RC_OK)
 	{
-		WLog_ERR(TAG,  "VirtualChannelWrite failed with %s [%08X]",
+		WLog_ERR(TAG, "VirtualChannelWrite failed with %s [%08X]",
 				 WTSErrorToString(status), status);
 		return 1;
 	}
@@ -771,7 +771,7 @@ static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cb
 
 	if (status != CHANNEL_RC_OK)
 	{
-		WLog_ERR(TAG,  "VirtualChannelWrite failed with %s [%08X]",
+		WLog_ERR(TAG, "VirtualChannelWrite failed with %s [%08X]",
 				 WTSErrorToString(status), status);
 		return 1;
 	}
@@ -835,7 +835,7 @@ static int drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp, int cbC
 	
 	if (error != CHANNEL_RC_OK)
 	{
-		WLog_ERR(TAG,  "VirtualChannelWrite failed with %s [%08X]",
+		WLog_ERR(TAG, "VirtualChannelWrite failed with %s [%08X]",
 				 WTSErrorToString(error), error);
 		return 1;
 	}
@@ -973,7 +973,7 @@ static void drdynvc_virtual_channel_event_data_received(drdynvcPlugin* drdynvc,
 	{
 		if (Stream_Capacity(data_in) != Stream_GetPosition(data_in))
 		{
-			WLog_ERR(TAG,  "drdynvc_plugin_process_received: read error");
+			WLog_ERR(TAG, "drdynvc_plugin_process_received: read error");
 		}
 
 		drdynvc->data_in = NULL;
@@ -993,7 +993,7 @@ static VOID VCAPITYPE drdynvc_virtual_channel_open_event(DWORD openHandle, UINT 
 
 	if (!drdynvc)
 	{
-		WLog_ERR(TAG,  "drdynvc_virtual_channel_open_event: error no match");
+		WLog_ERR(TAG, "drdynvc_virtual_channel_open_event: error no match");
 		return;
 	}
 
@@ -1055,7 +1055,7 @@ static void drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 
 	if (status != CHANNEL_RC_OK)
 	{
-		WLog_ERR(TAG,  "pVirtualChannelOpen failed with %s [%08X]",
+		WLog_ERR(TAG, "pVirtualChannelOpen failed with %s [%08X]",
 				 WTSErrorToString(status), status);
 		return;
 	}
@@ -1130,7 +1130,7 @@ static VOID VCAPITYPE drdynvc_virtual_channel_init_event(LPVOID pInitHandle, UIN
 
 	if (!drdynvc)
 	{
-		WLog_ERR(TAG,  "drdynvc_virtual_channel_init_event: error no match");
+		WLog_ERR(TAG, "drdynvc_virtual_channel_init_event: error no match");
 		return;
 	}
 

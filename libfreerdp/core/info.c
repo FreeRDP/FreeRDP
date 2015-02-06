@@ -57,22 +57,25 @@ static const char* const INFO_TYPE_LOGON_STRINGS[] =
 BOOL rdp_read_server_auto_reconnect_cookie(wStream* s, rdpSettings* settings)
 {
 	ARC_SC_PRIVATE_PACKET* autoReconnectCookie;
+
 	autoReconnectCookie = settings->ServerAutoReconnectCookie;
 
-	if (Stream_GetRemainingLength(s) < 4+4+4+16)
+	if (Stream_GetRemainingLength(s) < 28)
 		return FALSE;
+
 	Stream_Read_UINT32(s, autoReconnectCookie->cbLen); /* cbLen (4 bytes) */
 	Stream_Read_UINT32(s, autoReconnectCookie->version); /* version (4 bytes) */
 	Stream_Read_UINT32(s, autoReconnectCookie->logonId); /* LogonId (4 bytes) */
 	Stream_Read(s, autoReconnectCookie->arcRandomBits, 16); /* arcRandomBits (16 bytes) */
+
 	if ((settings->PrintReconnectCookie) && (autoReconnectCookie->cbLen > 0))
 	{
-		char *base64;
-		base64 = crypto_base64_encode((BYTE *) autoReconnectCookie,
-			sizeof(ARC_SC_PRIVATE_PACKET));
-		WLog_INFO(TAG,  "Reconnect-cookie: %s", base64);
+		char* base64;
+		base64 = crypto_base64_encode((BYTE*) autoReconnectCookie, sizeof(ARC_SC_PRIVATE_PACKET));
+		WLog_INFO(TAG, "Reconnect-cookie: %s", base64);
 		free(base64);
 	}
+
 	return TRUE;
 }
 
@@ -117,6 +120,7 @@ void rdp_write_client_auto_reconnect_cookie(wStream* s, rdpSettings* settings)
 	/* SecurityVerifier = HMAC(AutoReconnectRandom, ClientRandom) */
 
 	hmac = crypto_hmac_new();
+
 	ZeroMemory(nullRandom, sizeof(nullRandom));
 
 	crypto_hmac_md5_init(hmac, autoReconnectCookie->securityVerifier, 16);
@@ -231,35 +235,37 @@ void rdp_write_extended_info_packet(wStream* s, rdpSettings* settings)
 
 	cbAutoReconnectLen = (int) settings->ServerAutoReconnectCookie->cbLen;
 
-	Stream_Write_UINT16(s, clientAddressFamily); /* clientAddressFamily */
+	Stream_Write_UINT16(s, clientAddressFamily); /* clientAddressFamily (2 bytes) */
 
-	Stream_Write_UINT16(s, cbClientAddress + 2); /* cbClientAddress */
+	Stream_Write_UINT16(s, cbClientAddress + 2); /* cbClientAddress (2 bytes) */
 
 	if (cbClientAddress > 0)
 		Stream_Write(s, clientAddress, cbClientAddress); /* clientAddress */
 	Stream_Write_UINT16(s, 0);
 
-	Stream_Write_UINT16(s, cbClientDir + 2); /* cbClientDir */
+	Stream_Write_UINT16(s, cbClientDir + 2); /* cbClientDir (2 bytes) */
 
 	if (cbClientDir > 0)
 		Stream_Write(s, clientDir, cbClientDir); /* clientDir */
 	Stream_Write_UINT16(s, 0);
 
-	rdp_write_client_time_zone(s, settings); /* clientTimeZone */
+	rdp_write_client_time_zone(s, settings); /* clientTimeZone (172 bytes) */
 
-	Stream_Write_UINT32(s, 0); /* clientSessionId, should be set to 0 */
+	Stream_Write_UINT32(s, 0); /* clientSessionId (4 bytes), should be set to 0 */
 
 	freerdp_performance_flags_make(settings);
-	Stream_Write_UINT32(s, settings->PerformanceFlags); /* performanceFlags */
+	Stream_Write_UINT32(s, settings->PerformanceFlags); /* performanceFlags (4 bytes) */
 
-	Stream_Write_UINT16(s, cbAutoReconnectLen); /* cbAutoReconnectLen */
+	Stream_Write_UINT16(s, cbAutoReconnectLen); /* cbAutoReconnectCookie (2 bytes) */
 
 	if (cbAutoReconnectLen > 0)
 	{
 		CryptoHmac hmac;
 		ARC_SC_PRIVATE_PACKET* serverCookie;
 		ARC_CS_PRIVATE_PACKET* clientCookie;
-		WLog_DBG(TAG, "Sending auto reconnect");
+
+		WLog_DBG(TAG, "Sending auto reconnect cookie");
+
 		serverCookie = settings->ServerAutoReconnectCookie;
 		clientCookie = settings->ClientAutoReconnectCookie;
 
@@ -268,9 +274,10 @@ void rdp_write_extended_info_packet(wStream* s, rdpSettings* settings)
 		clientCookie->logonId = serverCookie->logonId;
 
 		hmac = crypto_hmac_new();
+
 		if (!hmac)
 		{
-			WLog_ERR(TAG,  "unable to allocate hmac");
+			WLog_ERR(TAG, "unable to allocate hmac");
 			goto out_free;
 		}
 
@@ -278,7 +285,7 @@ void rdp_write_extended_info_packet(wStream* s, rdpSettings* settings)
 
 		if (settings->SelectedProtocol == PROTOCOL_RDP)
 		{
-			crypto_hmac_update(hmac, (BYTE*) (settings->ClientRandom), 32);
+			crypto_hmac_update(hmac, (BYTE*) settings->ClientRandom, 32);
 		}
 		else
 		{
@@ -290,16 +297,20 @@ void rdp_write_extended_info_packet(wStream* s, rdpSettings* settings)
 				0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0 };
 			crypto_hmac_update(hmac, zeros, 32);
 		}
+
 		crypto_hmac_final(hmac, clientCookie->securityVerifier, 16);
 
 		rdp_write_client_auto_reconnect_cookie(s, settings); /* autoReconnectCookie */
+
+		crypto_hmac_free(hmac);
+
 		/* mark as used */
 		settings->ServerAutoReconnectCookie->cbLen = 0;
-		crypto_hmac_free(hmac);
+
+		Stream_Write_UINT16(s, 0); /* reserved1 (2 bytes) */
+		Stream_Write_UINT16(s, 0); /* reserved2 (2 bytes) */
 	}
 
-	/* reserved1 (2 bytes) */
-	/* reserved2 (2 bytes) */
 out_free:
 	free(clientAddress);
 	free(clientDir);
@@ -527,14 +538,14 @@ void rdp_write_info_packet(wStream* s, rdpSettings* settings)
 		cbWorkingDir = ConvertToUnicode(CP_UTF8, 0, settings->RemoteAssistanceSessionId, -1, &workingDirW, 0) * 2;
 	}
 
-	Stream_Write_UINT32(s, 0); /* CodePage */
-	Stream_Write_UINT32(s, flags); /* flags */
+	Stream_Write_UINT32(s, 0); /* CodePage (4 bytes) */
+	Stream_Write_UINT32(s, flags); /* flags (4 bytes) */
 
-	Stream_Write_UINT16(s, cbDomain); /* cbDomain */
-	Stream_Write_UINT16(s, cbUserName); /* cbUserName */
-	Stream_Write_UINT16(s, cbPassword); /* cbPassword */
-	Stream_Write_UINT16(s, cbAlternateShell); /* cbAlternateShell */
-	Stream_Write_UINT16(s, cbWorkingDir); /* cbWorkingDir */
+	Stream_Write_UINT16(s, cbDomain); /* cbDomain (2 bytes) */
+	Stream_Write_UINT16(s, cbUserName); /* cbUserName (2 bytes) */
+	Stream_Write_UINT16(s, cbPassword); /* cbPassword (2 bytes) */
+	Stream_Write_UINT16(s, cbAlternateShell); /* cbAlternateShell (2 bytes) */
+	Stream_Write_UINT16(s, cbWorkingDir); /* cbWorkingDir (2 bytes) */
 
 	if (cbDomain > 0)
 		Stream_Write(s, domainW, cbDomain);
@@ -594,7 +605,7 @@ BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s)
 	{
 		if (securityFlags & SEC_REDIRECTION_PKT)
 		{
-			WLog_ERR(TAG,  "Error: SEC_REDIRECTION_PKT unsupported");
+			WLog_ERR(TAG, "Error: SEC_REDIRECTION_PKT unsupported");
 			return FALSE;
 		}
 
@@ -602,7 +613,7 @@ BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s)
 		{
 			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
 			{
-				WLog_ERR(TAG,  "rdp_decrypt failed");
+				WLog_ERR(TAG, "rdp_decrypt failed");
 				return FALSE;
 			}
 		}
@@ -755,7 +766,7 @@ BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 		return FALSE;
 	Stream_Read_UINT32(s, infoType); /* infoType (4 bytes) */
 
-	//WLog_ERR(TAG,  "%s", INFO_TYPE_LOGON_STRINGS[infoType]);
+	//WLog_ERR(TAG, "%s", INFO_TYPE_LOGON_STRINGS[infoType]);
 
 	switch (infoType)
 	{
