@@ -1083,7 +1083,7 @@ static void drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 
 static void drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
 {
-	UINT rc;
+	UINT status;
 
 	MessageQueue_PostQuit(drdynvc->queue, 0);
 	WaitForSingleObject(drdynvc->thread, INFINITE);
@@ -1094,11 +1094,12 @@ static void drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
 	drdynvc->queue = NULL;
 	drdynvc->thread = NULL;
 
-	rc = drdynvc->channelEntryPoints.pVirtualChannelClose(drdynvc->OpenHandle);
-	if (CHANNEL_RC_OK != rc)
+	status = drdynvc->channelEntryPoints.pVirtualChannelClose(drdynvc->OpenHandle);
+
+	if (status != CHANNEL_RC_OK)
 	{
 		WLog_ERR(TAG, "pVirtualChannelClose failed with %s [%08X]",
-				 WTSErrorToString(rc), rc);
+				 WTSErrorToString(status), status);
 	}
 
 	if (drdynvc->data_in)

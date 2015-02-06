@@ -96,7 +96,7 @@ struct rdp_channels
 	rdpSettings* settings;
 
 	/* true once freerdp_channels_post_connect is called */
-	int is_connected;
+	BOOL connected;
 
 	/* used for locating the channels for a given instance */
 	freerdp* instance;

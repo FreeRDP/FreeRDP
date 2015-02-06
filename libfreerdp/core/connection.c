@@ -388,10 +388,16 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 BOOL rdp_client_reconnect(rdpRdp* rdp)
 {
 	BOOL status;
+	rdpContext* context = rdp->context;
+	rdpChannels* channels = context->channels;
 
+	freerdp_channels_disconnect(channels, context->instance);
 	rdp_client_disconnect(rdp);
 
 	status = rdp_client_connect(rdp);
+
+	if (status)
+		freerdp_channels_post_connect(channels, context->instance);
 
 	return status;
 }

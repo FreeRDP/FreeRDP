@@ -22,9 +22,6 @@
 #endif
 
 #include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include <winpr/crt.h>
 #include <winpr/wlog.h>
@@ -1131,8 +1128,8 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 		if (!gfx->zgfx)
 		{
-			free (gfx);
-			free (context);
+			free(gfx);
+			free(context);
 			return -1;
 		}
 
