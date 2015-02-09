@@ -512,7 +512,6 @@ void freerdp_context_free(freerdp* instance)
 	PubSub_Free(instance->context->pubSub);
 
 	metrics_free(instance->context->metrics);
-	codecs_free(instance->context->codecs);
 
 	free(instance->context);
 	instance->context = NULL;
