@@ -205,7 +205,7 @@ struct xf_context
 	BOOL xrenderAvailable;
 };
 
-void xf_create_window(xfContext* xfc);
+BOOL xf_create_window(xfContext* xfc);
 void xf_toggle_fullscreen(xfContext* xfc);
 void xf_toggle_control(xfContext* xfc);
 BOOL xf_post_connect(freerdp* instance);
