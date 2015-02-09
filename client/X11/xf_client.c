@@ -1558,7 +1558,7 @@ DWORD xf_exit_code_from_disconnect_reason(DWORD reason)
 	else if (reason >= 0x10c9 && reason <= 0x1193)
 		reason = XF_EXIT_RDP;
 	/* There's no need to test protocol-independent codes: they match */
-	else if (!(reason <= 0xB))
+	else if (!(reason <= 0xC))
 		reason = XF_EXIT_UNKNOWN;
 
 	return reason;
