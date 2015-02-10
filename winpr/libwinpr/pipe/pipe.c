@@ -452,13 +452,16 @@ BOOL SetNamedPipeHandleState(HANDLE hNamedPipe, LPDWORD lpMode, LPDWORD lpMaxCol
 			return FALSE;
 
 		flags = fcntl(fd, F_GETFL);
+		if (flags < 0)
+			return FALSE;
 
 		if (pNamedPipe->dwPipeMode & PIPE_NOWAIT)
 			flags = (flags | O_NONBLOCK);
 		else
 			flags = (flags & ~(O_NONBLOCK));
 
-		fcntl(fd, F_SETFL, flags);
+		if (fcntl(fd, F_SETFL, flags) < 0)
+			return FALSE;
 	}
 
 	if (lpMaxCollectionCount)
