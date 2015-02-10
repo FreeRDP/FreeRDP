@@ -448,7 +448,7 @@ BOOL TerminateProcess(HANDLE hProcess, UINT uExitCode)
 
 	process = (WINPR_PROCESS*) hProcess;
 
-	if (!process)
+	if (!process || (process->pid <= 0))
 		return FALSE;
 
 	if (kill(process->pid, SIGTERM))
