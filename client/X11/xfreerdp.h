@@ -125,7 +125,6 @@ struct xf_context
 	BYTE* primary_buffer;
 	BOOL inGfxFrame;
 	BOOL graphicsReset;
-	wArrayList* gfxMappedSurfaceIds;
 
 	BOOL frame_begin;
 	UINT16 frame_x1;

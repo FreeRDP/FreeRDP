@@ -1020,6 +1020,35 @@ int rdpgfx_set_surface_data(RdpgfxClientContext* context, UINT16 surfaceId, void
 	return 1;
 }
 
+int rdpgfx_get_surface_ids(RdpgfxClientContext* context, UINT16** ppSurfaceIds)
+{
+	int count;
+	int index;
+	UINT16* pSurfaceIds;
+	ULONG_PTR* pKeys = NULL;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) context->handle;
+
+	count = HashTable_GetKeys(gfx->SurfaceTable, &pKeys);
+
+	if (count < 1)
+		return 0;
+
+	pSurfaceIds = (UINT16*) malloc(count * sizeof(UINT16));
+
+	if (!pSurfaceIds)
+		return -1;
+
+	for (index = 0; index < count; index++)
+	{
+		pSurfaceIds[index] = pKeys[index] - 1;
+	}
+
+	free(pKeys);
+	*ppSurfaceIds = pSurfaceIds;
+
+	return count;
+}
+
 void* rdpgfx_get_surface_data(RdpgfxClientContext* context, UINT16 surfaceId)
 {
 	ULONG_PTR key;
@@ -1117,6 +1146,7 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 		context->handle = (void*) gfx;
 
+		context->GetSurfaceIds = rdpgfx_get_surface_ids;
 		context->SetSurfaceData = rdpgfx_set_surface_data;
 		context->GetSurfaceData = rdpgfx_get_surface_data;
 		context->SetCacheSlotData = rdpgfx_set_cache_slot_data;
