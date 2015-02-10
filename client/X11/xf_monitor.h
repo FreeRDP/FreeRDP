@@ -44,7 +44,7 @@ typedef struct _VIRTUAL_SCREEN VIRTUAL_SCREEN;
 #include "xfreerdp.h"
 
 FREERDP_API int xf_list_monitors(xfContext* xfc);
-FREERDP_API BOOL xf_detect_monitors(xfContext* xfc, rdpSettings* settings);
-FREERDP_API void xf_monitors_free(xfContext *xfc, rdpSettings *settings);
+FREERDP_API BOOL xf_detect_monitors(xfContext* xfc);
+FREERDP_API void xf_monitors_free(xfContext* xfc);
 
 #endif /* __XF_MONITOR_H */

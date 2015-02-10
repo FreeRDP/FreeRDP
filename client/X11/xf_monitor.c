@@ -45,18 +45,19 @@ int xf_list_monitors(xfContext* xfc)
 {
 #ifdef WITH_XINERAMA
 	Display* display;
+	int major, minor;
 	int i, nmonitors = 0;
-	int ignored, ignored2;
 	XineramaScreenInfo* screen = NULL;
 
 	display = XOpenDisplay(NULL);
+
 	if (!display)
 	{
 		WLog_ERR(TAG, "failed to open X display");
 		return -1;
 	}
 
-	if (XineramaQueryExtension(display, &ignored, &ignored2))
+	if (XineramaQueryExtension(display, &major, &minor))
 	{
 		if (XineramaIsActive(display))
 		{
@@ -64,7 +65,7 @@ int xf_list_monitors(xfContext* xfc)
 
 			for (i = 0; i < nmonitors; i++)
 			{
-				WLog_DBG(TAG, "      %s [%d] %dx%d\t+%d+%d",
+				printf("      %s [%d] %dx%d\t+%d+%d\n",
 						 (i == 0) ? "*" : " ", i,
 						 screen[i].width, screen[i].height,
 						 screen[i].x_org, screen[i].y_org);
@@ -81,63 +82,83 @@ int xf_list_monitors(xfContext* xfc)
 
 	display = XOpenDisplay(NULL);
 
-	if(!display)
+	if (!display)
 	{
 		WLog_ERR(TAG, "failed to open X display");
 		return -1;
 	}
+
 	screen = ScreenOfDisplay(display, DefaultScreen(display));
-	WLog_DBG(TAG, "      * [0] %dx%d\t+%d+%d", WidthOfScreen(screen), HeightOfScreen(screen), 0, 0);
+
+	printf("      * [0] %dx%d\t+%d+%d\n", WidthOfScreen(screen), HeightOfScreen(screen), 0, 0);
+
 	XCloseDisplay(display);
 #endif
 
 	return 0;
 }
 
-BOOL xf_detect_monitors(xfContext* xfc, rdpSettings* settings)
+BOOL xf_is_monitor_id_active(xfContext* xfc, UINT32 id)
 {
-	int i, j;
+	int index;
+	rdpSettings* settings = xfc->settings;
+
+	if (!settings->NumMonitorIds)
+		return TRUE;
+
+	for (index = 0; index < settings->NumMonitorIds; index++)
+	{
+		if (settings->MonitorIds[index] == id)
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
+BOOL xf_detect_monitors(xfContext* xfc)
+{
+	int i;
 	int nmonitors;
 	int primaryMonitor;
 	int vWidth, vHeight;
 	int maxWidth, maxHeight;
 	VIRTUAL_SCREEN* vscreen;
+	rdpSettings* settings = xfc->settings;
 
 #ifdef WITH_XINERAMA
-	int ignored, ignored2;
-	XineramaScreenInfo* screen_info = NULL;
+	int major, minor;
+	XineramaScreenInfo* screenInfo = NULL;
 #endif
 
 	vscreen = &xfc->vscreen;
+	xfc->desktopWidth = settings->DesktopWidth;
+	xfc->desktopHeight = settings->DesktopHeight;
 
 #ifdef WITH_XINERAMA
-	if (XineramaQueryExtension(xfc->display, &ignored, &ignored2))
+	if (XineramaQueryExtension(xfc->display, &major, &minor))
 	{
 		if (XineramaIsActive(xfc->display))
 		{
-			screen_info = XineramaQueryScreens(xfc->display, &vscreen->nmonitors);
+			screenInfo = XineramaQueryScreens(xfc->display, &vscreen->nmonitors);
 
 			if (vscreen->nmonitors > 16)
 				vscreen->nmonitors = 0;
-
-			vscreen->monitors = malloc(sizeof(MONITOR_INFO) * vscreen->nmonitors);
-			ZeroMemory(vscreen->monitors, sizeof(MONITOR_INFO) * vscreen->nmonitors);
 
 			if (vscreen->nmonitors)
 			{
 				for (i = 0; i < vscreen->nmonitors; i++)
 				{
-					vscreen->monitors[i].area.left = screen_info[i].x_org;
-					vscreen->monitors[i].area.top = screen_info[i].y_org;
-					vscreen->monitors[i].area.right = screen_info[i].x_org + screen_info[i].width - 1;
-					vscreen->monitors[i].area.bottom = screen_info[i].y_org + screen_info[i].height - 1;
+					vscreen->monitors[i].area.left = screenInfo[i].x_org;
+					vscreen->monitors[i].area.top = screenInfo[i].y_org;
+					vscreen->monitors[i].area.right = screenInfo[i].x_org + screenInfo[i].width - 1;
+					vscreen->monitors[i].area.bottom = screenInfo[i].y_org + screenInfo[i].height - 1;
 
-					if ((screen_info[i].x_org == 0) && (screen_info[i].y_org == 0))
+					if ((screenInfo[i].x_org == 0) && (screenInfo[i].y_org == 0))
 						vscreen->monitors[i].primary = TRUE;
 				}
 			}
 
-			XFree(screen_info);
+			XFree(screenInfo);
 		}
 	}
 #endif
@@ -152,24 +173,24 @@ BOOL xf_detect_monitors(xfContext* xfc, rdpSettings* settings)
 
 	if (settings->Fullscreen)
 	{
-		settings->DesktopWidth = WidthOfScreen(xfc->screen);
-		settings->DesktopHeight = HeightOfScreen(xfc->screen);
-		maxWidth = settings->DesktopWidth;
-		maxHeight = settings->DesktopHeight;
+		xfc->desktopWidth = WidthOfScreen(xfc->screen);
+		xfc->desktopHeight = HeightOfScreen(xfc->screen);
+		maxWidth = xfc->desktopWidth;
+		maxHeight = xfc->desktopHeight;
 	}
 	else if (settings->Workarea)
 	{
-		settings->DesktopWidth = xfc->workArea.width;
-		settings->DesktopHeight = xfc->workArea.height;
-		maxWidth = settings->DesktopWidth;
-		maxHeight = settings->DesktopHeight;
+		xfc->desktopWidth = xfc->workArea.width;
+		xfc->desktopHeight = xfc->workArea.height;
+		maxWidth = xfc->desktopWidth;
+		maxHeight = xfc->desktopHeight;
 	}
 	else if (settings->PercentScreen)
 	{
-		settings->DesktopWidth = (xfc->workArea.width * settings->PercentScreen) / 100;
-		settings->DesktopHeight = (xfc->workArea.height * settings->PercentScreen) / 100;
-		maxWidth = settings->DesktopWidth;
-		maxHeight = settings->DesktopHeight;
+		xfc->desktopWidth = (xfc->workArea.width * settings->PercentScreen) / 100;
+		xfc->desktopHeight = (xfc->workArea.height * settings->PercentScreen) / 100;
+		maxWidth = xfc->desktopWidth;
+		maxHeight = xfc->desktopHeight;
 	}
 	else
 	{
@@ -188,7 +209,6 @@ BOOL xf_detect_monitors(xfContext* xfc, rdpSettings* settings)
 		if (settings->NumMonitorIds != 1)
 		{
 			settings->NumMonitorIds = 1;
-			settings->MonitorIds = (UINT32*) malloc(sizeof(UINT32) * settings->NumMonitorIds);
 			settings->MonitorIds[0] = 0;
 
 			for (i = 0; i < vscreen->nmonitors; i++)
@@ -207,24 +227,13 @@ BOOL xf_detect_monitors(xfContext* xfc, rdpSettings* settings)
 
 	for (i = 0; i < vscreen->nmonitors; i++)
 	{
-		if (settings->NumMonitorIds)
-		{
-			BOOL found = FALSE;
-
-			for (j = 0; j < settings->NumMonitorIds; j++)
-			{
-				if (settings->MonitorIds[j] == i)
-					found = TRUE;
-			}
-
-			if (!found)
-				continue;
-		}
+		if (!xf_is_monitor_id_active(xfc, i))
+			continue;
 
 		settings->MonitorDefArray[nmonitors].x = vscreen->monitors[i].area.left;
 		settings->MonitorDefArray[nmonitors].y = vscreen->monitors[i].area.top;
-		settings->MonitorDefArray[nmonitors].width = MIN(vscreen->monitors[i].area.right - vscreen->monitors[i].area.left + 1, settings->DesktopWidth);
-		settings->MonitorDefArray[nmonitors].height = MIN(vscreen->monitors[i].area.bottom - vscreen->monitors[i].area.top + 1, settings->DesktopHeight);
+		settings->MonitorDefArray[nmonitors].width = MIN(vscreen->monitors[i].area.right - vscreen->monitors[i].area.left + 1, xfc->desktopWidth);
+		settings->MonitorDefArray[nmonitors].height = MIN(vscreen->monitors[i].area.bottom - vscreen->monitors[i].area.top + 1, xfc->desktopHeight);
 		settings->MonitorDefArray[nmonitors].is_primary = vscreen->monitors[i].primary;
 
 		primaryMonitor |= vscreen->monitors[i].primary;
@@ -259,31 +268,12 @@ BOOL xf_detect_monitors(xfContext* xfc, rdpSettings* settings)
 
 	if (nmonitors && !primaryMonitor)
 		settings->MonitorDefArray[0].is_primary = TRUE;
-	
+
 	if (settings->MonitorCount)
 	{
-		settings->DesktopWidth = vscreen->area.right - vscreen->area.left + 1;
-		settings->DesktopHeight = vscreen->area.bottom - vscreen->area.top + 1;
+		xfc->desktopWidth = vscreen->area.right - vscreen->area.left + 1;
+		xfc->desktopHeight = vscreen->area.bottom - vscreen->area.top + 1;
 	}
 
 	return TRUE;
-}
-
-/** Clean up all resources allocated by functions in this file.
- */
-void xf_monitors_free(xfContext *xfc, rdpSettings *settings)
-{
-#ifdef WITH_XINERAMA
-	if (xfc->vscreen.monitors)
-	{
-		free(xfc->vscreen.monitors);
-		xfc->vscreen.monitors = NULL;
-	}
-#endif
-
-	if (settings->MonitorIds)
-	{
-		free(settings->MonitorIds);
-		settings->MonitorIds = NULL;
-	}
 }
