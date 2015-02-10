@@ -45,13 +45,13 @@ public class BookmarkBase implements Parcelable, Cloneable {
 		}
 		
 		public PerformanceFlags(Parcel parcel) {
-			remotefx = (parcel.readInt() == 1) ? true : false;
-			wallpaper = (parcel.readInt() == 1) ? true : false;			
-			theming = (parcel.readInt() == 1) ? true : false;			
-			fullWindowDrag = (parcel.readInt() == 1) ? true : false;			
-			menuAnimations = (parcel.readInt() == 1) ? true : false;			
-			fontSmoothing = (parcel.readInt() == 1) ? true : false;
-			desktopComposition = (parcel.readInt() == 1) ? true : false;
+			remotefx = parcel.readInt() == 1;
+			wallpaper = parcel.readInt() == 1;
+			theming = parcel.readInt() == 1;
+			fullWindowDrag = (parcel.readInt() == 1);
+			menuAnimations = parcel.readInt() == 1;
+			fontSmoothing = parcel.readInt() == 1;
+			desktopComposition = parcel.readInt() == 1;
 		}
 
 		public boolean getRemoteFX() {
@@ -286,10 +286,10 @@ public class BookmarkBase implements Parcelable, Cloneable {
 		}
 	// Session Settings
 		public DebugSettings(Parcel parcel) {
-			asyncChannel = (parcel.readInt() == 1) ? true : false;
-			asyncTransport = (parcel.readInt() == 1) ? true : false;
-			asyncInput = (parcel.readInt() == 1) ? true : false;
-			asyncUpdate = (parcel.readInt() == 1) ? true : false;
+			asyncChannel = parcel.readInt() == 1;
+			asyncTransport = parcel.readInt() == 1;
+			asyncInput = parcel.readInt() == 1;
+			asyncUpdate = parcel.readInt() == 1;
 			debug = parcel.readInt();
 		}
 
@@ -393,16 +393,16 @@ public class BookmarkBase implements Parcelable, Cloneable {
 		}
 
 		public AdvancedSettings(Parcel parcel) {
-			enable3GSettings = (parcel.readInt() == 1) ? true : false;
+			enable3GSettings = parcel.readInt() == 1;
 			screen3G = parcel.readParcelable(ScreenSettings.class
 					.getClassLoader());
 			performance3G = parcel.readParcelable(PerformanceFlags.class
 					.getClassLoader());
-			redirectSDCard = (parcel.readInt() == 1) ? true : false;
+			redirectSDCard = parcel.readInt() == 1;
 			redirectSound = parcel.readInt();
-			redirectMicrophone = (parcel.readInt() == 1) ? true : false;
+			redirectMicrophone = parcel.readInt() == 1;
 			security = parcel.readInt();
-			consoleMode = (parcel.readInt() == 1) ? true : false;
+			consoleMode = parcel.readInt() == 1;
 			remoteProgram = parcel.readString();
 			workDir = parcel.readString();			
 		}
