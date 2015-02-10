@@ -3,6 +3,7 @@
  * Windows Terminal Services API
  *
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -534,6 +535,16 @@ BOOL CDECL WTSIsChildSessionsEnabled(PBOOL pbEnabled)
 BOOL CDECL WTSGetChildSessionId(PULONG pSessionId)
 {
 	WTSAPI_STUB_CALL_BOOL(GetChildSessionId, pSessionId);
+}
+
+BOOL CDECL WTSLogonUser(HANDLE hServer, LPCSTR username, LPCSTR password, LPCSTR domain)
+{
+	WTSAPI_STUB_CALL_BOOL(LogonUser, hServer, username, password, domain);
+}
+
+BOOL CDECL WTSLogoffUser(HANDLE hServer)
+{
+	WTSAPI_STUB_CALL_BOOL(LogoffUser, hServer);
 }
 
 #ifndef _WIN32

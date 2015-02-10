@@ -3,6 +3,7 @@
  * Windows Terminal Services API
  *
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1078,6 +1079,12 @@ WINPR_API BOOL CDECL WTSIsChildSessionsEnabled(PBOOL pbEnabled);
 
 WINPR_API BOOL CDECL WTSGetChildSessionId(PULONG pSessionId);
 
+WINPR_API BOOL CDECL WTSLogonUser(HANDLE hServer, LPCSTR username,
+		LPCSTR password, LPCSTR domain);
+
+WINPR_API BOOL CDECL WTSLogoffUser(HANDLE hServer);
+
+
 #ifdef __cplusplus
 }
 #endif
@@ -1278,6 +1285,11 @@ typedef BOOL (CDECL * WTS_GET_CHILD_SESSION_ID_FN)(PULONG pSessionId);
 
 typedef DWORD (WINAPI * WTS_GET_ACTIVE_CONSOLE_SESSION_ID_FN)(void);
 
+typedef BOOL (WINAPI * WTS_LOGON_USER_FN)(HANDLE hServer, LPCSTR username,
+		LPCSTR password, LPCSTR domain);
+
+typedef BOOL (WINAPI * WTS_LOGOFF_USER_FN)(HANDLE hServer);
+
 struct _WtsApiFunctionTable
 {
 	DWORD dwVersion;
@@ -1346,6 +1358,8 @@ struct _WtsApiFunctionTable
 	WTS_IS_CHILD_SESSIONS_ENABLED_FN pIsChildSessionsEnabled;
 	WTS_GET_CHILD_SESSION_ID_FN pGetChildSessionId;
 	WTS_GET_ACTIVE_CONSOLE_SESSION_ID_FN pGetActiveConsoleSessionId;
+	WTS_LOGON_USER_FN pLogonUser;
+	WTS_LOGOFF_USER_FN pLogoffUser;
 };
 typedef struct _WtsApiFunctionTable WtsApiFunctionTable;
 typedef WtsApiFunctionTable* PWtsApiFunctionTable;
