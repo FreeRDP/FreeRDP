@@ -268,13 +268,13 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 		settings->ChannelCount = 0;
 		settings->ChannelDefArraySize = 32;
-		settings->ChannelDefArray = (CHANNEL_DEF*) malloc(sizeof(CHANNEL_DEF) * settings->ChannelDefArraySize);
-		ZeroMemory(settings->ChannelDefArray, sizeof(CHANNEL_DEF) * settings->ChannelDefArraySize);
+		settings->ChannelDefArray = (CHANNEL_DEF*) calloc(settings->ChannelDefArraySize, sizeof(CHANNEL_DEF));
 
 		settings->MonitorCount = 0;
 		settings->MonitorDefArraySize = 32;
-		settings->MonitorDefArray = (rdpMonitor*) malloc(sizeof(rdpMonitor) * settings->MonitorDefArraySize);
-		ZeroMemory(settings->MonitorDefArray, sizeof(rdpMonitor) * settings->MonitorDefArraySize);
+		settings->MonitorDefArray = (rdpMonitor*) calloc(settings->MonitorDefArraySize, sizeof(rdpMonitor));
+
+		settings->MonitorIds = (UINT32*) calloc(16, sizeof(UINT32));
 
 		settings_get_computer_name(settings);
 
@@ -568,6 +568,9 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->MonitorDefArray = (rdpMonitor*) malloc(sizeof(rdpMonitor) * settings->MonitorDefArraySize);
 		CopyMemory(_settings->MonitorDefArray, settings->MonitorDefArray, sizeof(rdpMonitor) * settings->MonitorDefArraySize);
 
+		_settings->MonitorIds = (UINT32*) calloc(16, sizeof(UINT32));
+		CopyMemory(_settings->MonitorIds, settings->MonitorIds, 16 * sizeof(UINT32));
+
 		_settings->ReceivedCapabilities = malloc(32);
 		_settings->OrderSupport = malloc(32);
 		CopyMemory(_settings->ReceivedCapabilities, settings->ReceivedCapabilities, 32);
@@ -653,6 +656,7 @@ void freerdp_settings_free(rdpSettings* settings)
 		free(settings->ComputerName);
 		free(settings->ChannelDefArray);
 		free(settings->MonitorDefArray);
+		free(settings->MonitorIds);
 		free(settings->ClientAddress);
 		free(settings->ClientDir);
 		free(settings->AllowedTlsCiphers);

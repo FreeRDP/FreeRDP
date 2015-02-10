@@ -1322,8 +1322,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 				p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
 
+				if (count > 16)
+					count = 16;
+
 				settings->NumMonitorIds = (UINT32) count;
-				settings->MonitorIds = (UINT32*) malloc(sizeof(UINT32) * settings->NumMonitorIds);
 
 				for (i = 0; i < settings->NumMonitorIds; i++)
 				{

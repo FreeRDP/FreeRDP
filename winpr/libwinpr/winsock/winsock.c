@@ -26,6 +26,14 @@
 
 #include <winpr/winsock.h>
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#ifndef _WIN32
+#include <fcntl.h>
+#endif
+
 /**
  * ws2_32.dll:
  * 
@@ -626,6 +634,14 @@ BOOL WSACloseEvent(HANDLE hEvent)
 
 int WSAEventSelect(SOCKET s, WSAEVENT hEventObject, LONG lNetworkEvents)
 {
+	u_long arg = 1;
+
+	if (_ioctlsocket(s, FIONBIO, &arg) != 0)
+		return SOCKET_ERROR;
+
+	if (SetEventFileDescriptor(hEventObject, s) < 0)
+		return SOCKET_ERROR;
+
 	return 0;
 }
 
@@ -684,6 +700,26 @@ int _connect(SOCKET s, const struct sockaddr* name, int namelen)
 
 int _ioctlsocket(SOCKET s, long cmd, u_long* argp)
 {
+	int fd = (int) s;
+
+	if (cmd == FIONBIO)
+	{
+		int flags;
+
+		if (!argp)
+			return SOCKET_ERROR;
+
+		flags = fcntl(fd, F_GETFL);
+
+		if (flags == -1)
+			return SOCKET_ERROR;
+
+		if (*argp)
+			fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+		else
+			fcntl(fd, F_SETFL, flags & ~(O_NONBLOCK));
+	}
+
 	return 0;
 }
 
