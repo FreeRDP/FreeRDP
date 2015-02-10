@@ -72,7 +72,7 @@ BOOL freerdp_connect(freerdp* instance)
 
 	rdp = instance->context->rdp;
 	settings = instance->settings;
-
+	instance->context->codecs = codecs_new(instance->context);
 	IFCALLRET(instance->PreConnect, status, instance);
 
 	if (settings->KeyboardLayout == KBD_JAPANESE_INPUT_SYSTEM_MS_IME2002)
@@ -189,9 +189,7 @@ BOOL freerdp_connect(freerdp* instance)
 	}
 
 	SetEvent(rdp->transport->connectedEvent);
-
-	freerdp_connect_finally:
-
+freerdp_connect_finally:
 	EventArgsInit(&e, "freerdp");
 	e.result = status ? 0 : -1;
 	PubSub_OnConnectionResult(instance->context->pubSub, instance->context, &e);
@@ -359,6 +357,7 @@ BOOL freerdp_disconnect(freerdp* instance)
 		instance->update->pcap_rfx = NULL;
 	}
 
+	codecs_free(instance->context->codecs);
 	return TRUE;
 }
 
@@ -415,18 +414,18 @@ void freerdp_get_version(int* major, int* minor, int* revision)
 
 static wEventType FreeRDP_Events[] =
 {
-		DEFINE_EVENT_ENTRY(WindowStateChange)
-		DEFINE_EVENT_ENTRY(ResizeWindow)
-		DEFINE_EVENT_ENTRY(LocalResizeWindow)
-		DEFINE_EVENT_ENTRY(EmbedWindow)
-		DEFINE_EVENT_ENTRY(PanningChange)
-		DEFINE_EVENT_ENTRY(ZoomingChange)
-		DEFINE_EVENT_ENTRY(ErrorInfo)
-		DEFINE_EVENT_ENTRY(Terminate)
-		DEFINE_EVENT_ENTRY(ConnectionResult)
-		DEFINE_EVENT_ENTRY(ChannelConnected)
-		DEFINE_EVENT_ENTRY(ChannelDisconnected)
-		DEFINE_EVENT_ENTRY(MouseEvent)
+	DEFINE_EVENT_ENTRY(WindowStateChange)
+	DEFINE_EVENT_ENTRY(ResizeWindow)
+	DEFINE_EVENT_ENTRY(LocalResizeWindow)
+	DEFINE_EVENT_ENTRY(EmbedWindow)
+	DEFINE_EVENT_ENTRY(PanningChange)
+	DEFINE_EVENT_ENTRY(ZoomingChange)
+	DEFINE_EVENT_ENTRY(ErrorInfo)
+	DEFINE_EVENT_ENTRY(Terminate)
+	DEFINE_EVENT_ENTRY(ConnectionResult)
+	DEFINE_EVENT_ENTRY(ChannelConnected)
+	DEFINE_EVENT_ENTRY(ChannelDisconnected)
+	DEFINE_EVENT_ENTRY(MouseEvent)
 };
 
 /** Allocator function for a rdp context.
@@ -455,8 +454,6 @@ int freerdp_context_new(freerdp* instance)
 	PubSub_AddEventTypes(context->pubSub, FreeRDP_Events, sizeof(FreeRDP_Events) / sizeof(wEventType));
 
 	context->metrics = metrics_new(context);
-	context->codecs = codecs_new(context);
-
 	rdp = rdp_new(context);
 	instance->input = rdp->input;
 	instance->update = rdp->update;
@@ -515,7 +512,6 @@ void freerdp_context_free(freerdp* instance)
 	PubSub_Free(instance->context->pubSub);
 
 	metrics_free(instance->context->metrics);
-	codecs_free(instance->context->codecs);
 
 	free(instance->context);
 	instance->context = NULL;
