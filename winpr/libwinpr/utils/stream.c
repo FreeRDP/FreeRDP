@@ -67,20 +67,27 @@ wStream* Stream_New(BYTE* buffer, size_t size)
 
 	s = malloc(sizeof(wStream));
 
-	if (s)
+	if (!s)
+		return NULL;
+
+
+	if (buffer)
+		s->buffer = buffer;
+	else
+		s->buffer = (BYTE*) malloc(size);
+
+	if (!s->buffer)
 	{
-		if (buffer)
-			s->buffer = buffer;
-		else
-			s->buffer = (BYTE*) malloc(size);
-
-		s->pointer = s->buffer;
-		s->capacity = size;
-		s->length = size;
-
-		s->pool = NULL;
-		s->count = 0;
+		free(s);
+		return NULL;
 	}
+
+	s->pointer = s->buffer;
+	s->capacity = size;
+	s->length = size;
+
+	s->pool = NULL;
+	s->count = 0;
 
 	return s;
 }
