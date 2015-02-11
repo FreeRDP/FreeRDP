@@ -612,39 +612,7 @@ void freerdp_tcp_get_ip_address(rdpTcp* tcp)
 	tcp->settings->ClientAddress = _strdup(tcp->ip_address);
 }
 
-void freerdp_tcp_get_mac_address(rdpTcp* tcp)
-{
-#ifdef LINUX
-	BYTE* mac;
-	struct ifreq if_req;
-	struct if_nameindex* ni;
-
-	ni = if_nameindex();
-	mac = tcp->mac_address;
-
-	while (ni->if_name != NULL)
-	{
-		if (strcmp(ni->if_name, "lo") != 0)
-			break;
-
-		ni++;
-	}
-
-	strncpy(if_req.ifr_name, ni->if_name, IF_NAMESIZE);
-
-	if (ioctl(tcp->sockfd, SIOCGIFHWADDR, &if_req) != 0)
-	{
-		WLog_ERR(TAG,  "failed to obtain MAC address");
-		return;
-	}
-
-	memmove((void*) mac, (void*) &if_req.ifr_ifru.ifru_hwaddr.sa_data[0], 6);
-#endif
-	/* WLog_ERR(TAG,  "MAC: %02X:%02X:%02X:%02X:%02X:%02X",
-		mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]); */
-}
-
-int uds_connect(const char* path)
+int freerdp_uds_connect(const char* path)
 {
 #ifndef _WIN32
 	int status;
@@ -960,7 +928,7 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeou
 
 	if (tcp->ipcSocket)
 	{
-		tcp->sockfd = uds_connect(hostname);
+		tcp->sockfd = freerdp_uds_connect(hostname);
 
 		if (tcp->sockfd < 0)
 			return FALSE;
@@ -1079,7 +1047,6 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeou
 	BIO_get_event(tcp->socketBio, &tcp->event);
 
 	freerdp_tcp_get_ip_address(tcp);
-	freerdp_tcp_get_mac_address(tcp);
 
 	option_value = 1;
 	option_len = sizeof(option_value);

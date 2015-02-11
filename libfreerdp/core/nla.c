@@ -148,7 +148,7 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 		if (instance->Authenticate)
 		{
 			BOOL proceed = instance->Authenticate(instance,
-												  &settings->Username, &settings->Password, &settings->Domain);
+						&settings->Username, &settings->Password, &settings->Domain);
 
 			if (!proceed)
 			{
@@ -174,7 +174,7 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 						free(identity->Password);
 
 					identity->PasswordLength = ConvertToUnicode(CP_UTF8, 0,
-											   settings->PasswordHash, -1, &identity->Password, 0) - 1;
+							settings->PasswordHash, -1, &identity->Password, 0) - 1;
 					/**
 					 * Multiply password hash length by 64 to obtain a length exceeding
 					 * the maximum (256) and use it this for hash identification in WinPR.

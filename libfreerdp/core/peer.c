@@ -607,30 +607,34 @@ static int freerdp_peer_drain_output_buffer(freerdp_peer* peer)
 void freerdp_peer_context_new(freerdp_peer* client)
 {
 	rdpRdp* rdp;
+	rdpContext* context;
 
-	client->context = (rdpContext*) calloc(1, client->ContextSize);
+	context = client->context = (rdpContext*) calloc(1, client->ContextSize);
 
-	client->context->ServerMode = TRUE;
+	if (!context)
+		return;
 
-	client->context->metrics = metrics_new(client->context);
+	context->ServerMode = TRUE;
 
-	rdp = rdp_new(client->context);
+	context->metrics = metrics_new(context);
+
+	rdp = rdp_new(context);
 
 	client->input = rdp->input;
 	client->update = rdp->update;
 	client->settings = rdp->settings;
 	client->autodetect = rdp->autodetect;
 
-	client->context->rdp = rdp;
-	client->context->peer = client;
-	client->context->input = client->input;
-	client->context->update = client->update;
-	client->context->settings = client->settings;
-	client->context->autodetect = client->autodetect;
+	context->rdp = rdp;
+	context->peer = client;
+	context->input = client->input;
+	context->update = client->update;
+	context->settings = client->settings;
+	context->autodetect = client->autodetect;
 
-	client->update->context = client->context;
-	client->input->context = client->context;
-	client->autodetect->context = client->context;
+	client->update->context = context;
+	client->input->context = context;
+	client->autodetect->context = context;
 
 	update_register_server_callbacks(client->update);
 	autodetect_register_server_callbacks(client->autodetect);

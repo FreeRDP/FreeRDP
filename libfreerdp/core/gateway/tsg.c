@@ -1410,16 +1410,93 @@ int tsg_check(rdpTsg* tsg)
 	return status;
 }
 
-BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
+BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, int timeout)
 {
+	int tls_status;
 	HANDLE events[2];
 	rdpRpc* rpc = tsg->rpc;
 	rdpSettings* settings = rpc->settings;
+	rdpTransport* transport = rpc->transport;
+	rdpContext* context = rpc->context;
+
+	transport->layer = TRANSPORT_LAYER_TSG;
+	transport->SplitInputOutput = TRUE;
+
+	transport->TcpIn = freerdp_tcp_new(settings);
+	transport->TcpOut = freerdp_tcp_new(settings);
+
+	if (!freerdp_tcp_connect(transport->TcpIn, settings->GatewayHostname, settings->GatewayPort, timeout) ||
+			!freerdp_tcp_set_blocking_mode(transport->TcpIn, FALSE))
+		return FALSE;
+
+	if (!freerdp_tcp_connect(transport->TcpOut, settings->GatewayHostname, settings->GatewayPort, timeout) ||
+			!freerdp_tcp_set_blocking_mode(transport->TcpOut, FALSE))
+		return FALSE;
+
+	tsg->transport = transport;
+	transport->tsg = tsg;
+
+	transport->SplitInputOutput = TRUE;
+
+	transport->TlsIn = tls_new(settings);
+
+	if (!transport->TlsIn)
+		return FALSE;
+
+	transport->TlsOut = tls_new(settings);
+
+	if (!transport->TlsOut)
+		return FALSE;
+
+	/* put a decent default value for gateway port */
+	if (!settings->GatewayPort)
+		settings->GatewayPort = 443;
+
+	transport->TlsIn->hostname = transport->TlsOut->hostname = settings->GatewayHostname;
+	transport->TlsIn->port = transport->TlsOut->port = settings->GatewayPort;
+
+	transport->TlsIn->isGatewayTransport = TRUE;
+	tls_status = tls_connect(transport->TlsIn, transport->TcpIn->bufferedBio);
+
+	if (tls_status < 1)
+	{
+		if (tls_status < 0)
+		{
+			if (!freerdp_get_last_error(context))
+				freerdp_set_last_error(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
+		}
+		else
+		{
+			if (!freerdp_get_last_error(context))
+				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
+		}
+
+		return FALSE;
+	}
+
+	transport->TlsOut->isGatewayTransport = TRUE;
+	tls_status = tls_connect(transport->TlsOut, transport->TcpOut->bufferedBio);
+
+	if (tls_status < 1)
+	{
+		if (tls_status < 0)
+		{
+			if (!freerdp_get_last_error(context))
+				freerdp_set_last_error(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
+		}
+		else
+		{
+			if (!freerdp_get_last_error(context))
+				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
+		}
+
+		return FALSE;
+	}
 
 	tsg->Port = port;
 
-	rpc->TlsIn = rpc->transport->TlsIn;
-	rpc->TlsOut = rpc->transport->TlsOut;
+	rpc->TlsIn = transport->TlsIn;
+	rpc->TlsOut = transport->TlsOut;
 
 	free(tsg->Hostname);
 	tsg->Hostname = NULL;
@@ -1455,6 +1532,8 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	tsg->transport->GatewayEvent = tsg->rpc->client->PipeEvent;
 	tsg->bio = BIO_new(BIO_s_tsg());
 	tsg->bio->ptr = tsg;
+
+	transport->frontBio = tsg->bio;
 
 	return TRUE;
 }
