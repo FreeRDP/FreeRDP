@@ -54,6 +54,8 @@ SET(_OPENSSL_ROOT_HINTS_AND_PATHS
 FIND_PATH(OPENSSL_INCLUDE_DIR
   NAMES
     openssl/ssl.h
+  PATH_SUFFIXES
+	"include"
   HINTS
     ${_OPENSSL_INCLUDEDIR}
   ${_OPENSSL_ROOT_HINTS_AND_PATHS}
@@ -83,7 +85,7 @@ IF(WIN32 AND NOT CYGWIN)
     #   * MTd for static-debug
 
     # Implementation details:
-    # We are using the libraries located in the VC subdir instead of the parent directory eventhough :
+    # We are using the libraries located in the VC subdir instead of the parent directory even though :
     # libeay32MD.lib is identical to ../libeay32.lib, and
     # ssleay32MD.lib is identical to ../ssleay32.lib
 
@@ -143,14 +145,10 @@ IF(WIN32 AND NOT CYGWIN)
         "lib/VC"
     )
 
-    if( CMAKE_CONFIGURATION_TYPES OR CMAKE_BUILD_TYPE )
-      set( OPENSSL_LIBRARIES
-        optimized ${SSL_EAY_RELEASE} debug ${SSL_EAY_DEBUG}
-        optimized ${LIB_EAY_RELEASE} debug ${LIB_EAY_DEBUG}
-        )
-    else()
-      set( OPENSSL_LIBRARIES ${SSL_EAY_RELEASE} ${LIB_EAY_RELEASE} )
-    endif()
+    set( OPENSSL_DEBUG_LIBRARIES ${SSL_EAY_DEBUG} ${LIB_EAY_DEBUG} )
+	set( OPENSSL_RELEASE_LIBRARIES ${SSL_EAY_RELEASE} ${LIB_EAY_RELEASE} )
+	set( OPENSSL_LIBRARIES ${OPENSSL_RELEASE_LIBRARIES} )
+
     MARK_AS_ADVANCED(SSL_EAY_DEBUG SSL_EAY_RELEASE)
     MARK_AS_ADVANCED(LIB_EAY_DEBUG LIB_EAY_RELEASE)
   ELSEIF(MINGW)
@@ -270,7 +268,7 @@ if (OPENSSL_INCLUDE_DIR)
     set(OPENSSL_VERSION "${_OPENSSL_VERSION}")
   elseif(OPENSSL_INCLUDE_DIR AND EXISTS "${OPENSSL_INCLUDE_DIR}/openssl/opensslv.h")
     file(STRINGS "${OPENSSL_INCLUDE_DIR}/openssl/opensslv.h" openssl_version_str
-         REGEX "^#define[\t ]+OPENSSL_VERSION_NUMBER[\t ]+0x([0-9a-fA-F])+.*")
+         REGEX "^#.?define[\t ]+OPENSSL_VERSION_NUMBER[\t ]+0x([0-9a-fA-F])+.*")
 
     # The version number is encoded as 0xMNNFFPPS: major minor fix patch status
     # The status gives if this is a developer or prerelease and is ignored here.
@@ -322,4 +320,4 @@ else (OPENSSL_VERSION)
   )
 endif (OPENSSL_VERSION)
 
-MARK_AS_ADVANCED(OPENSSL_INCLUDE_DIR OPENSSL_LIBRARIES)
+MARK_AS_ADVANCED(OPENSSL_INCLUDE_DIR OPENSSL_LIBRARIES OPENSSL_DEBUG_LIBRARIES OPENSSL_RELEASE_LIBRARIES)
