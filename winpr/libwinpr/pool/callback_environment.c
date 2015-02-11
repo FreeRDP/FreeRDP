@@ -26,6 +26,8 @@
 
 #include "pool.h"
 
+#ifdef WINPR_THREAD_POOL
+
 VOID InitializeCallbackEnvironment_V1(TP_CALLBACK_ENVIRON_V1* pcbe)
 {
 	pcbe->Version = 1;
@@ -193,3 +195,5 @@ VOID SetThreadpoolCallbackPriority(PTP_CALLBACK_ENVIRON pcbe, TP_CALLBACK_PRIORI
 #else
 #endif
 }
+
+#endif
