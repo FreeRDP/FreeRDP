@@ -163,7 +163,12 @@ BOOL xf_detect_monitors(xfContext* xfc)
 	}
 #endif
 
-	if (!xf_GetWorkArea(xfc))
+	/* WORKAROUND: With Remote Application Mode - using NET_WM_WORKAREA
+ 	 * causes issues with the ability to fully size the window vertically
+ 	 * (the bottom of the window area is never updated). So, we just set
+ 	 * the workArea to match the full Screen width/height.
+	 */
+	if (settings->RemoteApplicationMode || !xf_GetWorkArea(xfc))
 	{
 		xfc->workArea.x = 0;
 		xfc->workArea.y = 0;
