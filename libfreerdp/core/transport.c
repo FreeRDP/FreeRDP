@@ -115,8 +115,10 @@ BOOL transport_disconnect(rdpTransport* transport)
 		transport->tsg = NULL;
 	}
 
-	if (transport->TcpOut != transport->TcpIn)
+	if (transport->TcpOut && (transport->TcpOut != transport->TcpIn)) {
+		freerdp_tcp_disconnect(transport->TcpOut);
 		freerdp_tcp_free(transport->TcpOut);
+	}
 
 	transport->TcpOut = NULL;
 
@@ -125,6 +127,9 @@ BOOL transport_disconnect(rdpTransport* transport)
 		tls_free(transport->TsgTls);
 		transport->TsgTls = NULL;
 	}
+
+	freerdp_tcp_disconnect(transport->TcpIn);
+
 	transport->layer = TRANSPORT_LAYER_TCP;
 
 	return status;
