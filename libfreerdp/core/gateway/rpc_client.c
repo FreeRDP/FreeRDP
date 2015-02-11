@@ -540,7 +540,7 @@ int rpc_client_out_channel_recv(rdpRpc* rpc)
 
 	if (outChannel->State < CLIENT_OUT_CHANNEL_STATE_OPENED)
 	{
-		response = http_response_recv(rpc->TlsOut);
+		response = http_response_recv(outChannel->tls);
 
 		if (!response)
 			return -1;
@@ -594,7 +594,7 @@ int rpc_client_out_channel_recv(rdpRpc* rpc)
 	{
 		/* Receive OUT channel response */
 
-		response = http_response_recv(rpc->TlsOut);
+		response = http_response_recv(outChannel->tls);
 
 		if (!response)
 			return -1;
@@ -645,14 +645,14 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 	inChannel = rpc->VirtualConnection->DefaultInChannel;
 	outChannel = rpc->VirtualConnection->DefaultOutChannel;
 
-	BIO_get_event(rpc->TlsIn->bio, &InChannelEvent);
+	BIO_get_event(inChannel->tls->bio, &InChannelEvent);
 
 	if (WaitForSingleObject(InChannelEvent, 0) != WAIT_OBJECT_0)
 		return 1;
 
 	if (inChannel->State < CLIENT_IN_CHANNEL_STATE_OPENED)
 	{
-		response = http_response_recv(rpc->TlsIn);
+		response = http_response_recv(inChannel->tls);
 
 		if (!response)
 			return -1;

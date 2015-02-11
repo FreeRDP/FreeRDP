@@ -129,14 +129,22 @@ int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc, HttpResponse* response)
 
 int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, TSG_CHANNEL channel)
 {
+	rdpTls* tls = NULL;
 	rdpNtlm* ntlm = NULL;
+	rdpContext* context = rpc->context;
 	rdpSettings* settings = rpc->settings;
-	freerdp* instance = (freerdp*) rpc->settings->instance;
+	freerdp* instance = context->instance;
 
 	if (channel == TSG_CHANNEL_IN)
+	{
 		ntlm = rpc->NtlmHttpIn->ntlm;
+		tls = rpc->VirtualConnection->DefaultInChannel->tls;
+	}
 	else if (channel == TSG_CHANNEL_OUT)
+	{
 		ntlm = rpc->NtlmHttpOut->ntlm;
+		tls = rpc->VirtualConnection->DefaultOutChannel->tls;
+	}
 
 	if (!settings->GatewayPassword || !settings->GatewayUsername ||
 			!strlen(settings->GatewayPassword) || !strlen(settings->GatewayUsername))
@@ -149,7 +157,7 @@ int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, TSG_CHANNEL channel)
 			if (!proceed)
 			{
 				connectErrorCode = CANCELEDBYUSER;
-				freerdp_set_last_error(instance->context, FREERDP_ERROR_CONNECT_CANCELLED);
+				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
 				return 0;
 			}
 
@@ -163,7 +171,7 @@ int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, TSG_CHANNEL channel)
 	}
 
 	if (!ntlm_client_init(ntlm, TRUE, settings->GatewayUsername,
-			settings->GatewayDomain, settings->GatewayPassword, rpc->TlsIn->Bindings))
+			settings->GatewayDomain, settings->GatewayPassword, tls->Bindings))
 	{
 		return 0;
 	}

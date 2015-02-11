@@ -619,6 +619,9 @@ struct rpc_in_channel
 {
 	/* Sending Channel */
 
+	rdpTcp* tcp;
+	rdpTls* tls;
+
 	CLIENT_IN_CHANNEL_STATE State;
 
 	UINT32 PlugState;
@@ -651,6 +654,9 @@ typedef enum _CLIENT_OUT_CHANNEL_STATE CLIENT_OUT_CHANNEL_STATE;
 
 struct rpc_out_channel
 {
+	rdpTcp* tcp;
+	rdpTls* tls;
+
 	/* Receiving Channel */
 
 	CLIENT_OUT_CHANNEL_STATE State;
@@ -724,9 +730,6 @@ struct rdp_rpc
 	
 	UINT32 result;
 
-	rdpTls* TlsIn;
-	rdpTls* TlsOut;
-
 	rdpNtlm* ntlm;
 	int SendSeqNum;
 
@@ -753,10 +756,7 @@ struct rdp_rpc
 	UINT16 max_recv_frag;
 
 	UINT32 ReceiveWindow;
-
 	UINT32 ChannelLifetime;
-	UINT32 ChannelLifetimeSet;
-
 	UINT32 KeepAliveInterval;
 	UINT32 CurrentKeepAliveTime;
 	UINT32 CurrentKeepAliveInterval;

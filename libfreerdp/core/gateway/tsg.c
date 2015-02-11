@@ -1412,91 +1412,18 @@ int tsg_check(rdpTsg* tsg)
 
 BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, int timeout)
 {
-	int tls_status;
+	int tlsStatus;
 	HANDLE events[2];
 	rdpRpc* rpc = tsg->rpc;
+	RpcInChannel* inChannel;
+	RpcOutChannel* outChannel;
+	RpcVirtualConnection* connection;
 	rdpSettings* settings = rpc->settings;
 	rdpTransport* transport = rpc->transport;
 	rdpContext* context = rpc->context;
 
-	transport->layer = TRANSPORT_LAYER_TSG;
-	transport->SplitInputOutput = TRUE;
-
-	transport->TcpIn = freerdp_tcp_new(settings);
-	transport->TcpOut = freerdp_tcp_new(settings);
-
-	if (!freerdp_tcp_connect(transport->TcpIn, settings->GatewayHostname, settings->GatewayPort, timeout) ||
-			!freerdp_tcp_set_blocking_mode(transport->TcpIn, FALSE))
-		return FALSE;
-
-	if (!freerdp_tcp_connect(transport->TcpOut, settings->GatewayHostname, settings->GatewayPort, timeout) ||
-			!freerdp_tcp_set_blocking_mode(transport->TcpOut, FALSE))
-		return FALSE;
-
-	tsg->transport = transport;
-	transport->tsg = tsg;
-
-	transport->SplitInputOutput = TRUE;
-
-	transport->TlsIn = tls_new(settings);
-
-	if (!transport->TlsIn)
-		return FALSE;
-
-	transport->TlsOut = tls_new(settings);
-
-	if (!transport->TlsOut)
-		return FALSE;
-
-	/* put a decent default value for gateway port */
-	if (!settings->GatewayPort)
-		settings->GatewayPort = 443;
-
-	transport->TlsIn->hostname = transport->TlsOut->hostname = settings->GatewayHostname;
-	transport->TlsIn->port = transport->TlsOut->port = settings->GatewayPort;
-
-	transport->TlsIn->isGatewayTransport = TRUE;
-	tls_status = tls_connect(transport->TlsIn, transport->TcpIn->bufferedBio);
-
-	if (tls_status < 1)
-	{
-		if (tls_status < 0)
-		{
-			if (!freerdp_get_last_error(context))
-				freerdp_set_last_error(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
-		}
-		else
-		{
-			if (!freerdp_get_last_error(context))
-				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
-		}
-
-		return FALSE;
-	}
-
-	transport->TlsOut->isGatewayTransport = TRUE;
-	tls_status = tls_connect(transport->TlsOut, transport->TcpOut->bufferedBio);
-
-	if (tls_status < 1)
-	{
-		if (tls_status < 0)
-		{
-			if (!freerdp_get_last_error(context))
-				freerdp_set_last_error(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
-		}
-		else
-		{
-			if (!freerdp_get_last_error(context))
-				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
-		}
-
-		return FALSE;
-	}
-
 	tsg->Port = port;
-
-	rpc->TlsIn = transport->TlsIn;
-	rpc->TlsOut = transport->TlsOut;
+	tsg->transport = transport;
 
 	free(tsg->Hostname);
 	tsg->Hostname = NULL;
@@ -1506,14 +1433,84 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, int timeout)
 	tsg->MachineName = NULL;
 	ConvertToUnicode(CP_UTF8, 0, settings->ComputerName, -1, &tsg->MachineName, 0);
 
+	connection = rpc->VirtualConnection;
+	inChannel = connection->DefaultInChannel;
+	outChannel = connection->DefaultOutChannel;
+
+	inChannel->tcp = freerdp_tcp_new(settings);
+	outChannel->tcp = freerdp_tcp_new(settings);
+
+	if (!freerdp_tcp_connect(inChannel->tcp, settings->GatewayHostname, settings->GatewayPort, timeout) ||
+			!freerdp_tcp_set_blocking_mode(inChannel->tcp, FALSE))
+		return FALSE;
+
+	if (!freerdp_tcp_connect(outChannel->tcp, settings->GatewayHostname, settings->GatewayPort, timeout) ||
+			!freerdp_tcp_set_blocking_mode(outChannel->tcp, FALSE))
+		return FALSE;
+
+	inChannel->tls = tls_new(settings);
+
+	if (!inChannel->tls)
+		return FALSE;
+
+	outChannel->tls = tls_new(settings);
+
+	if (!outChannel->tls)
+		return FALSE;
+
+	/* put a decent default value for gateway port */
+	if (!settings->GatewayPort)
+		settings->GatewayPort = 443;
+
+	inChannel->tls->hostname = outChannel->tls->hostname = settings->GatewayHostname;
+	inChannel->tls->port = outChannel->tls->port = settings->GatewayPort;
+
+	inChannel->tls->isGatewayTransport = TRUE;
+	tlsStatus = tls_connect(inChannel->tls, inChannel->tcp->bufferedBio);
+
+	if (tlsStatus < 1)
+	{
+		if (tlsStatus < 0)
+		{
+			if (!freerdp_get_last_error(context))
+				freerdp_set_last_error(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
+		}
+		else
+		{
+			if (!freerdp_get_last_error(context))
+				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
+		}
+
+		return FALSE;
+	}
+
+	outChannel->tls->isGatewayTransport = TRUE;
+	tlsStatus = tls_connect(outChannel->tls, outChannel->tcp->bufferedBio);
+
+	if (tlsStatus < 1)
+	{
+		if (tlsStatus < 0)
+		{
+			if (!freerdp_get_last_error(context))
+				freerdp_set_last_error(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
+		}
+		else
+		{
+			if (!freerdp_get_last_error(context))
+				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
+		}
+
+		return FALSE;
+	}
+
 	if (!rpc_connect(rpc))
 	{
 		WLog_ERR(TAG, "rpc_connect error!");
 		return FALSE;
 	}
 
-	BIO_get_event(rpc->TlsIn->bio, &events[0]);
-	BIO_get_event(rpc->TlsOut->bio, &events[1]);
+	BIO_get_event(inChannel->tls->bio, &events[0]);
+	BIO_get_event(outChannel->tls->bio, &events[1]);
 
 	while (tsg->state != TSG_STATE_PIPE_CREATED)
 	{
@@ -1522,18 +1519,28 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, int timeout)
 		if (tsg_check(tsg) < 0)
 		{
 			WLog_ERR(TAG, "tsg_check failure");
-			rpc->transport->layer = TRANSPORT_LAYER_CLOSED;
+			transport->layer = TRANSPORT_LAYER_CLOSED;
 			return FALSE;
 		}
 	}
 
 	WLog_INFO(TAG, "TS Gateway Connection Success");
 
-	tsg->transport->GatewayEvent = tsg->rpc->client->PipeEvent;
 	tsg->bio = BIO_new(BIO_s_tsg());
-	tsg->bio->ptr = tsg;
+
+	if (!tsg->bio)
+		return FALSE;
+
+	tsg->bio->ptr = (void*) tsg;
 
 	transport->frontBio = tsg->bio;
+	transport->TcpIn = inChannel->tcp;
+	transport->TlsIn = inChannel->tls;
+	transport->TcpOut = outChannel->tcp;
+	transport->TlsOut = outChannel->tls;
+	transport->GatewayEvent = rpc->client->PipeEvent;
+	transport->SplitInputOutput = TRUE;
+	transport->layer = TRANSPORT_LAYER_TSG;
 
 	return TRUE;
 }
@@ -1679,6 +1686,8 @@ void tsg_free(rdpTsg* tsg)
 {
 	if (tsg)
 	{
+		rdpTransport* transport = tsg->transport;
+
 		if (tsg->bio)
 		{
 			BIO_free(tsg->bio);
@@ -1693,6 +1702,19 @@ void tsg_free(rdpTsg* tsg)
 
 		free(tsg->Hostname);
 		free(tsg->MachineName);
+
+		if (transport->TlsIn)
+			tls_free(transport->TlsIn);
+
+		if (transport->TcpIn)
+			freerdp_tcp_free(transport->TcpIn);
+
+		if (transport->TlsOut)
+			tls_free(transport->TlsOut);
+
+		if (transport->TcpOut)
+			freerdp_tcp_free(transport->TcpOut);
+
 		free(tsg);
 	}
 }

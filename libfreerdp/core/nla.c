@@ -190,15 +190,9 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 			 (char*) credssp->identity.User, (char*) credssp->identity.Domain, (char*) credssp->identity.Password);
 #endif
 
-	if (credssp->transport->layer == TRANSPORT_LAYER_TLS)
-	{
-		tls = credssp->transport->TlsIn;
-	}
-	else if (credssp->transport->layer == TRANSPORT_LAYER_TSG_TLS)
-	{
-		tls = credssp->transport->TsgTls;
-	}
-	else
+	tls = credssp->transport->tls;
+
+	if (!tls)
 	{
 		WLog_ERR(TAG, "Unknown NLA transport layer");
 		return 0;
@@ -211,8 +205,7 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 	sprintf(spn, "%s%s", TERMSRV_SPN_PREFIX, settings->ServerHostname);
 #ifdef UNICODE
 	credssp->ServicePrincipalName = (LPTSTR) malloc(length * 2 + 2);
-	MultiByteToWideChar(CP_UTF8, 0, spn, length,
-						(LPWSTR) credssp->ServicePrincipalName, length);
+	MultiByteToWideChar(CP_UTF8, 0, spn, length, (LPWSTR) credssp->ServicePrincipalName, length);
 	free(spn);
 #else
 	credssp->ServicePrincipalName = spn;

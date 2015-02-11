@@ -109,18 +109,6 @@ BOOL transport_disconnect(rdpTransport* transport)
 
 		tsg_free(transport->tsg);
 		transport->tsg = NULL;
-
-		if (transport->TlsIn)
-			tls_free(transport->TlsIn);
-
-		if (transport->TcpIn)
-			freerdp_tcp_free(transport->TcpIn);
-
-		if (transport->TlsOut)
-			tls_free(transport->TlsOut);
-
-		if (transport->TcpOut)
-			freerdp_tcp_free(transport->TcpOut);
 	}
 	else
 	{
@@ -156,7 +144,7 @@ BOOL transport_connect_tls(rdpTransport* transport)
 	rdpContext* context = transport->context;
 	rdpSettings* settings = transport->settings;
 
-	if (transport->layer == TRANSPORT_LAYER_TSG)
+	if (transport->GatewayEnabled)
 	{
 		transport->TsgTls = tls_new(transport->settings);
 		transport->layer = TRANSPORT_LAYER_TSG_TLS;
@@ -170,6 +158,8 @@ BOOL transport_connect_tls(rdpTransport* transport)
 		targetBio = transport->TcpIn->bufferedBio;
 		transport->layer = TRANSPORT_LAYER_TLS;
 	}
+
+	transport->tls = targetTls;
 
 	targetTls->hostname = settings->ServerHostname;
 	targetTls->port = settings->ServerPort;
@@ -280,6 +270,8 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 	if (!tsg)
 		return FALSE;
 
+	transport->tsg = tsg;
+
 	if (!tsg_connect(tsg, hostname, port, timeout))
 		return FALSE;
 
@@ -330,12 +322,14 @@ BOOL transport_accept_rdp(rdpTransport* transport)
 
 BOOL transport_accept_tls(rdpTransport* transport)
 {
+	rdpSettings* settings = transport->settings;
+
 	if (!transport->TlsIn)
 		transport->TlsIn = tls_new(transport->settings);
 
 	transport->layer = TRANSPORT_LAYER_TLS;
 
-	if (!tls_accept(transport->TlsIn, transport->TcpIn->bufferedBio, transport->settings->CertificateFile, transport->settings->PrivateKeyFile))
+	if (!tls_accept(transport->TlsIn, transport->TcpIn->bufferedBio, settings->CertificateFile, settings->PrivateKeyFile))
 		return FALSE;
 
 	transport->frontBio = transport->TlsIn->bio;
@@ -344,10 +338,8 @@ BOOL transport_accept_tls(rdpTransport* transport)
 
 BOOL transport_accept_nla(rdpTransport* transport)
 {
-	freerdp* instance;
-	rdpSettings* settings;
-	settings = transport->settings;
-	instance = (freerdp*) settings->instance;
+	rdpSettings* settings = transport->settings;
+	freerdp* instance = (freerdp*) settings->instance;
 
 	if (!transport->TlsIn)
 		transport->TlsIn = tls_new(transport->settings);
@@ -913,7 +905,7 @@ static void* transport_client_thread(void* arg)
 	HANDLE handles[64];
 	rdpTransport* transport = (rdpTransport*) arg;
 	rdpContext* context = transport->context;
-	rdpRdp* rdp = (rdpRdp*) transport->rdp;
+	rdpRdp* rdp = context->rdp;
 
 	WLog_DBG(TAG, "Starting transport thread");
 	

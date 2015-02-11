@@ -393,8 +393,9 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 int rpc_out_read(rdpRpc* rpc, BYTE* data, int length)
 {
 	int status;
+	RpcOutChannel* outChannel = rpc->VirtualConnection->DefaultOutChannel;
 
-	status = BIO_read(rpc->TlsOut->bio, data, length);
+	status = BIO_read(outChannel->tls->bio, data, length);
 
 	if (status > 0)
 	{
@@ -404,7 +405,7 @@ int rpc_out_read(rdpRpc* rpc, BYTE* data, int length)
 		return status;
 	}
 
-	if (BIO_should_retry(rpc->TlsOut->bio))
+	if (BIO_should_retry(outChannel->tls->bio))
 		return 0;
 
 	return -1;
@@ -413,14 +414,20 @@ int rpc_out_read(rdpRpc* rpc, BYTE* data, int length)
 int rpc_out_write(rdpRpc* rpc, const BYTE* data, int length)
 {
 	int status;
-	status = tls_write_all(rpc->TlsOut, data, length);
+	RpcOutChannel* outChannel = rpc->VirtualConnection->DefaultOutChannel;
+
+	status = tls_write_all(outChannel->tls, data, length);
+
 	return status;
 }
 
 int rpc_in_write(rdpRpc* rpc, const BYTE* data, int length)
 {
 	int status;
-	status = tls_write_all(rpc->TlsIn, data, length);
+	RpcInChannel* inChannel = rpc->VirtualConnection->DefaultInChannel;
+
+	status = tls_write_all(inChannel->tls, data, length);
+
 	return status;
 }
 
@@ -776,6 +783,7 @@ rdpRpc* rpc_new(rdpTransport* transport)
 	rpc->StubFragCount = 0;
 	rpc->rpc_vers = 5;
 	rpc->rpc_vers_minor = 0;
+
 	/* little-endian data representation */
 	rpc->packed_drep[0] = 0x10;
 	rpc->packed_drep[1] = 0x00;
@@ -783,9 +791,9 @@ rdpRpc* rpc_new(rdpTransport* transport)
 	rpc->packed_drep[3] = 0x00;
 	rpc->max_xmit_frag = 0x0FF8;
 	rpc->max_recv_frag = 0x0FF8;
+
 	rpc->ReceiveWindow = 0x00010000;
 	rpc->ChannelLifetime = 0x40000000;
-	rpc->ChannelLifetimeSet = 0;
 	rpc->KeepAliveInterval = 300000;
 	rpc->CurrentKeepAliveInterval = rpc->KeepAliveInterval;
 	rpc->CurrentKeepAliveTime = 0;
