@@ -131,12 +131,12 @@ int freerdp_client_old_process_plugin(rdpSettings* settings, ADDIN_ARGV* args)
 		if (args->argc < 2)
 			return 1;
 
-		args_handled++;
 		if ((strcmp(args->argv[1], "disk") == 0) ||
 			(strcmp(args->argv[1], "drive") == 0))
 		{
 			freerdp_addin_replace_argument(args, "disk", "drive");
 			freerdp_client_add_device_channel(settings, args->argc - 1, &args->argv[1]);
+			args_handled++;
 		}
 		else if (strcmp(args->argv[1], "printer") == 0)
 		{
@@ -160,16 +160,19 @@ int freerdp_client_old_process_plugin(rdpSettings* settings, ADDIN_ARGV* args)
 	else if (strcmp(args->argv[0], "drdynvc") == 0)
 	{
 		args_handled++;
+		if (args->argc < 2)
+			return args_handled;
+
 		freerdp_client_add_dynamic_channel(settings, args->argc - 1, &args->argv[1]);
 	}
 	else if (strcmp(args->argv[0], "rdpsnd") == 0)
 	{
 		args_handled++;
-		if (args->argc < 2)
-			return 1;
-
-		args_handled++;
-		freerdp_addin_replace_argument_value(args, args->argv[1], "sys", args->argv[1]);
+		if (args->argc > 2)
+		{
+			args_handled++;
+			freerdp_addin_replace_argument_value(args, args->argv[1], "sys", args->argv[1]);
+		}
 		freerdp_client_add_static_channel(settings, args->argc, args->argv);
 	}
 	else if (strcmp(args->argv[0], "rail") == 0)
@@ -208,7 +211,7 @@ int freerdp_client_old_command_line_pre_filter(void* context, int index, int arg
 			}
 			freerdp_client_old_parse_hostname((char*) argv[index], &settings->ServerHostname, &settings->ServerPort);
 
-			return 2;
+			return 1;
 		}
 		else
 		{
@@ -218,7 +221,6 @@ int freerdp_client_old_command_line_pre_filter(void* context, int index, int arg
 
 	if (strcmp("--plugin", argv[index]) == 0)
 	{
-		int args_handled = 0;
 		int length;
 		char *a, *p;
 		int i, j, t;
@@ -244,7 +246,6 @@ int freerdp_client_old_command_line_pre_filter(void* context, int index, int arg
 
 			while ((index < argc) && (strcmp("--", argv[index]) != 0))
 			{
-				args_handled ++;
 				args->argc = 1;
 				args->argv[0] = _strdup(argv[t]);
 
@@ -306,7 +307,7 @@ int freerdp_client_old_command_line_pre_filter(void* context, int index, int arg
 			if (settings)
 			{
 				args->argv[0] = _strdup(argv[t]);
-				args_handled = freerdp_client_old_process_plugin(settings, args);
+				freerdp_client_old_process_plugin(settings, args);
 				free (args->argv[0]);
 			}
 		}
@@ -314,7 +315,7 @@ int freerdp_client_old_command_line_pre_filter(void* context, int index, int arg
 		free(args->argv);
 		free(args);
 
-		return (index - old_index) + args_handled;
+		return (index - old_index);
 	}
 
 	return 0;
