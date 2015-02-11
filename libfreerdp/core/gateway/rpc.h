@@ -621,6 +621,8 @@ struct rpc_in_channel
 
 	rdpTcp* tcp;
 	rdpTls* tls;
+	rdpNtlm* ntlm;
+	HttpContext* http;
 
 	CLIENT_IN_CHANNEL_STATE State;
 
@@ -656,6 +658,8 @@ struct rpc_out_channel
 {
 	rdpTcp* tcp;
 	rdpTls* tls;
+	rdpNtlm* ntlm;
+	HttpContext* http;
 
 	/* Receiving Channel */
 
@@ -735,9 +739,6 @@ struct rdp_rpc
 
 	RpcClient* client;
 
-	rdpNtlmHttp* NtlmHttpIn;
-	rdpNtlmHttp* NtlmHttpOut;
-
 	rdpContext* context;
 	rdpSettings* settings;
 	rdpTransport* transport;
@@ -762,8 +763,6 @@ struct rdp_rpc
 	UINT32 CurrentKeepAliveInterval;
 
 	RpcVirtualConnection* VirtualConnection;
-
-	wArrayList* VirtualConnectionCookieTable;
 };
 
 void rpc_pdu_header_print(rpcconn_hdr_t* header);

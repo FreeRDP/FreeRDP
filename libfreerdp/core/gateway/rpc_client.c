@@ -549,7 +549,7 @@ int rpc_client_out_channel_recv(rdpRpc* rpc)
 		{
 			/* Receive OUT Channel Response */
 
-			if (rpc_ncacn_http_recv_out_channel_response(rpc, response) < 0)
+			if (rpc_ncacn_http_recv_out_channel_response(rpc, outChannel, response) < 0)
 			{
 				WLog_ERR(TAG, "rpc_ncacn_http_recv_out_channel_response failure");
 				return -1;
@@ -557,7 +557,7 @@ int rpc_client_out_channel_recv(rdpRpc* rpc)
 
 			/* Send OUT Channel Request */
 
-			if (rpc_ncacn_http_send_out_channel_request(rpc) < 0)
+			if (rpc_ncacn_http_send_out_channel_request(rpc, outChannel) < 0)
 			{
 				WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
 				return -1;
@@ -659,7 +659,7 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 
 		if (inChannel->State == CLIENT_IN_CHANNEL_STATE_SECURITY)
 		{
-			if (rpc_ncacn_http_recv_in_channel_response(rpc, response) < 0)
+			if (rpc_ncacn_http_recv_in_channel_response(rpc, inChannel, response) < 0)
 			{
 				WLog_ERR(TAG, "rpc_ncacn_http_recv_in_channel_response failure");
 				return -1;
@@ -667,7 +667,7 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 
 			/* Send IN Channel Request */
 
-			if (rpc_ncacn_http_send_in_channel_request(rpc) < 0)
+			if (rpc_ncacn_http_send_in_channel_request(rpc, inChannel) < 0)
 			{
 				WLog_ERR(TAG, "rpc_ncacn_http_send_in_channel_request failure");
 				return -1;

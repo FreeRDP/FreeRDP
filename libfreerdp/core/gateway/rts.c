@@ -839,7 +839,6 @@ int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
 
 int rts_recv_OUT_R1_A2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
-	int status;
 	UINT32 offset;
 	UINT32 Destination = 0;
 
@@ -849,16 +848,6 @@ int rts_recv_OUT_R1_A2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	WLog_DBG(TAG, "Destination: %d", Destination);
 
 	WLog_ERR(TAG, "TS Gateway channel recycling is incomplete");
-
-	status = rpc_http_send_replacement_out_channel_request(rpc);
-
-	if (status < 0)
-		return -1;
-
-	status = rts_send_OUT_R1_A3_pdu(rpc);
-
-	if (status < 0)
-		return -1;
 
 	return 1;
 }

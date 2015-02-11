@@ -136,7 +136,7 @@ BOOL rpc_connect(rdpRpc* rpc)
 
 	/* Send IN Channel Request */
 
-	if (rpc_ncacn_http_send_in_channel_request(rpc) < 0)
+	if (rpc_ncacn_http_send_in_channel_request(rpc, inChannel) < 0)
 	{
 		WLog_ERR(TAG, "rpc_ncacn_http_send_in_channel_request failure");
 		return FALSE;
@@ -153,7 +153,7 @@ BOOL rpc_connect(rdpRpc* rpc)
 
 	/* Send OUT Channel Request */
 
-	if (rpc_ncacn_http_send_out_channel_request(rpc) < 0)
+	if (rpc_ncacn_http_send_out_channel_request(rpc, outChannel) < 0)
 	{
 		WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
 		return FALSE;
@@ -592,6 +592,62 @@ int rpc_client_in_channel_transition_to_state(RpcInChannel* inChannel, CLIENT_IN
 	return status;
 }
 
+int rpc_client_in_channel_rpch_init(rdpRpc* rpc, RpcInChannel* inChannel)
+{
+	inChannel->ntlm = ntlm_new();
+
+	if (!inChannel->ntlm)
+		return -1;
+
+	inChannel->http = http_context_new();
+
+	if (!inChannel->http)
+		return -1;
+
+	rpc_ntlm_http_init_channel(rpc, inChannel->http, TSG_CHANNEL_IN);
+
+	return 1;
+}
+
+void rpc_client_in_channel_rpch_uninit(RpcInChannel* inChannel)
+{
+	if (inChannel->ntlm)
+	{
+		ntlm_free(inChannel->ntlm);
+		inChannel->ntlm = NULL;
+	}
+
+	if (inChannel->http)
+	{
+		http_context_free(inChannel->http);
+		inChannel->http = NULL;
+	}
+}
+
+RpcInChannel* rpc_client_in_channel_new(rdpRpc* rpc)
+{
+	RpcInChannel* inChannel = NULL;
+
+	inChannel = (RpcInChannel*) calloc(1, sizeof(RpcInChannel));
+
+	if (inChannel)
+	{
+
+	}
+
+	return inChannel;
+}
+
+void rpc_client_in_channel_free(RpcInChannel* inChannel)
+{
+	if (!inChannel)
+		return;
+
+	rpc_client_in_channel_rpch_uninit(inChannel);
+
+	free(inChannel);
+}
+
 int rpc_client_out_channel_transition_to_state(RpcOutChannel* outChannel, CLIENT_OUT_CHANNEL_STATE state)
 {
 	int status = 1;
@@ -640,6 +696,62 @@ int rpc_client_out_channel_transition_to_state(RpcOutChannel* outChannel, CLIENT
 	WLog_DBG(TAG, "%s", str);
 
 	return status;
+}
+
+int rpc_client_out_channel_rpch_init(rdpRpc* rpc, RpcOutChannel* outChannel)
+{
+	outChannel->ntlm = ntlm_new();
+
+	if (!outChannel->ntlm)
+		return -1;
+
+	outChannel->http = http_context_new();
+
+	if (!outChannel->http)
+		return -1;
+
+	rpc_ntlm_http_init_channel(rpc, outChannel->http, TSG_CHANNEL_OUT);
+
+	return 1;
+}
+
+void rpc_client_out_channel_rpch_uninit(RpcOutChannel* outChannel)
+{
+	if (outChannel->ntlm)
+	{
+		ntlm_free(outChannel->ntlm);
+		outChannel->ntlm = NULL;
+	}
+
+	if (outChannel->http)
+	{
+		http_context_free(outChannel->http);
+		outChannel->http = NULL;
+	}
+}
+
+RpcOutChannel* rpc_client_out_channel_new(rdpRpc* rpc)
+{
+	RpcOutChannel* outChannel = NULL;
+
+	outChannel = (RpcOutChannel*) calloc(1, sizeof(RpcOutChannel));
+
+	if (outChannel)
+	{
+
+	}
+
+	return outChannel;
+}
+
+void rpc_client_out_channel_free(RpcOutChannel* outChannel)
+{
+	if (!outChannel)
+		return;
+
+	rpc_client_out_channel_rpch_uninit(outChannel);
+
+	free(outChannel);
 }
 
 int rpc_client_virtual_connection_transition_to_state(rdpRpc* rpc,
@@ -693,6 +805,7 @@ void rpc_client_virtual_connection_init(rdpRpc* rpc, RpcVirtualConnection* conne
 	connection->DefaultInChannel->PingOriginator.KeepAliveInterval = 0;
 	rts_generate_cookie((BYTE*) &(connection->DefaultInChannelCookie));
 	rts_generate_cookie((BYTE*) &(connection->NonDefaultInChannelCookie));
+	rpc_client_in_channel_rpch_init(rpc, connection->DefaultInChannel);
 
 	connection->DefaultOutChannel->State = CLIENT_OUT_CHANNEL_STATE_INITIAL;
 	connection->DefaultOutChannel->BytesReceived = 0;
@@ -702,6 +815,7 @@ void rpc_client_virtual_connection_init(rdpRpc* rpc, RpcVirtualConnection* conne
 	connection->DefaultOutChannel->AvailableWindowAdvertised = rpc->ReceiveWindow;
 	rts_generate_cookie((BYTE*) &(connection->DefaultOutChannelCookie));
 	rts_generate_cookie((BYTE*) &(connection->NonDefaultOutChannelCookie));
+	rpc_client_out_channel_rpch_init(rpc, connection->DefaultOutChannel);
 }
 
 RpcVirtualConnection* rpc_client_virtual_connection_new(rdpRpc* rpc)
@@ -715,12 +829,12 @@ RpcVirtualConnection* rpc_client_virtual_connection_new(rdpRpc* rpc)
 
 	connection->State = VIRTUAL_CONNECTION_STATE_INITIAL;
 
-	connection->DefaultInChannel = (RpcInChannel*) calloc(1, sizeof(RpcInChannel));
+	connection->DefaultInChannel = rpc_client_in_channel_new(rpc);
 
 	if (!connection->DefaultInChannel)
 		goto out_free;
 
-	connection->DefaultOutChannel = (RpcOutChannel*) calloc(1, sizeof(RpcOutChannel));
+	connection->DefaultOutChannel = rpc_client_out_channel_new(rpc);
 
 	if (!connection->DefaultOutChannel)
 		goto out_default_in;
@@ -737,12 +851,13 @@ out_free:
 
 void rpc_client_virtual_connection_free(RpcVirtualConnection* virtualConnection)
 {
-	if (virtualConnection)
-	{
-		free(virtualConnection->DefaultInChannel);
-		free(virtualConnection->DefaultOutChannel);
-		free(virtualConnection);
-	}
+	if (!virtualConnection)
+		return;
+
+	rpc_client_in_channel_free(virtualConnection->DefaultInChannel);
+	rpc_client_out_channel_free(virtualConnection->DefaultOutChannel);
+
+	free(virtualConnection);
 }
 
 rdpRpc* rpc_new(rdpTransport* transport)
@@ -764,19 +879,6 @@ rdpRpc* rpc_new(rdpTransport* transport)
 
 	if (!rpc->ntlm)
 		goto out_free;
-
-	rpc->NtlmHttpIn = ntlm_http_new();
-
-	if (!rpc->NtlmHttpIn)
-		goto out_free_ntlm;
-
-	rpc->NtlmHttpOut = ntlm_http_new();
-
-	if (!rpc->NtlmHttpOut)
-		goto out_free_ntlm_http_in;
-
-	rpc_ntlm_http_init_channel(rpc, rpc->NtlmHttpIn, TSG_CHANNEL_IN);
-	rpc_ntlm_http_init_channel(rpc, rpc->NtlmHttpOut, TSG_CHANNEL_OUT);
 
 	rpc->PipeCallId = 0;
 	rpc->StubCallId = 0;
@@ -801,30 +903,18 @@ rdpRpc* rpc_new(rdpTransport* transport)
 	rpc->VirtualConnection = rpc_client_virtual_connection_new(rpc);
 
 	if (!rpc->VirtualConnection)
-		goto out_free_ntlm_http_out;
-
-	rpc->VirtualConnectionCookieTable = ArrayList_New(TRUE);
-
-	if (!rpc->VirtualConnectionCookieTable)
 		goto out_free_virtual_connection;
 
 	rpc->CallId = 2;
 
 	if (rpc_client_new(rpc) < 0)
-		goto out_free_virtualConnectionCookieTable;
+		goto out_free_rpc_client;
 
 	return rpc;
-out_free_virtualConnectionCookieTable:
+out_free_rpc_client:
 	rpc_client_free(rpc);
-	ArrayList_Free(rpc->VirtualConnectionCookieTable);
 out_free_virtual_connection:
 	rpc_client_virtual_connection_free(rpc->VirtualConnection);
-out_free_ntlm_http_out:
-	ntlm_http_free(rpc->NtlmHttpOut);
-out_free_ntlm_http_in:
-	ntlm_http_free(rpc->NtlmHttpIn);
-out_free_ntlm:
-	ntlm_free(rpc->ntlm);
 out_free:
 	free(rpc);
 	return NULL;
@@ -843,21 +933,7 @@ void rpc_free(rdpRpc* rpc)
 			rpc->ntlm = NULL;
 		}
 
-		if (rpc->NtlmHttpIn)
-		{
-			ntlm_http_free(rpc->NtlmHttpIn);
-			rpc->NtlmHttpIn = NULL;
-		}
-
-		if (rpc->NtlmHttpOut)
-		{
-			ntlm_http_free(rpc->NtlmHttpOut);
-			rpc->NtlmHttpOut = NULL;
-		}
-
 		rpc_client_virtual_connection_free(rpc->VirtualConnection);
-		ArrayList_Clear(rpc->VirtualConnectionCookieTable);
-		ArrayList_Free(rpc->VirtualConnectionCookieTable);
 
 		free(rpc);
 	}
