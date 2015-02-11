@@ -26,50 +26,30 @@
 
 #define TAG CLIENT_TAG("x11")
 
-static int xf_call_for_each_surface(xfContext* xfc, wArrayList* surfaceList, int (*processSurface)(xfContext*, xfGfxSurface*, void*), void* param)
-{
-	int status = 1;
-	int surfaceIndex;
-	RdpgfxClientContext* context = xfc->gfx;
-
-	/* Iterating backwards to be able to remove surfaces from the list */
-	surfaceIndex = ArrayList_Count(surfaceList) - 1;
-
-	for (; surfaceIndex >= 0; surfaceIndex--)
-	{
-		UINT32 surfaceId;
-		xfGfxSurface* surface;
-
-		surfaceId = (UINT32) (ULONG_PTR) ArrayList_GetItem(xfc->gfxMappedSurfaceIds, surfaceIndex);
-		surface = (xfGfxSurface*) context->GetSurfaceData(context, surfaceId);
-
-		if (!surface)
-		{
-			ArrayList_RemoveAt(surfaceList, surfaceIndex);
-			continue;
-		}
-
-		if (processSurface(xfc, surface, param) < 0)
-			status = -1;
-	}
-
-	return status;
-}
-
-static int do_clearInvalidRegion(xfContext* xfc, xfGfxSurface* surface, void* param)
-{
-	region16_clear(&surface->invalidRegion);
-
-	return 1;
-}
-
 int xf_ResetGraphics(RdpgfxClientContext* context, RDPGFX_RESET_GRAPHICS_PDU* resetGraphics)
 {
+	int count;
+	int index;
+	int status = 1;
+	xfGfxSurface* surface;
+	UINT16* pSurfaceIds = NULL;
 	xfContext* xfc = (xfContext*) context->custom;
 
 	freerdp_client_codecs_reset(xfc->codecs, FREERDP_CODEC_ALL);
 
-	xf_call_for_each_surface(xfc, xfc->gfxMappedSurfaceIds, do_clearInvalidRegion, NULL);
+	count = context->GetSurfaceIds(context, &pSurfaceIds);
+
+	for (index = 0; index < count; index++)
+	{
+		surface = (xfGfxSurface*) context->GetSurfaceData(context, pSurfaceIds[index]);
+
+		if (!surface || !surface->outputMapped)
+			continue;
+
+		region16_clear(&surface->invalidRegion);
+	}
+
+	free(pSurfaceIds);
 
 	xfc->graphicsReset = TRUE;
 
@@ -83,8 +63,8 @@ int xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 	RECTANGLE_16 surfaceRect;
 	const RECTANGLE_16* extents;
 
-	surfaceX = surface->mapping.output.originX;
-	surfaceY = surface->mapping.output.originY;
+	surfaceX = surface->outputOriginX;
+	surfaceY = surface->outputOriginY;
 
 	surfaceRect.left = surfaceX;
 	surfaceRect.top = surfaceY;
@@ -138,87 +118,82 @@ int xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 	return 1;
 }
 
-static int xf_UpdateSurface(xfContext* xfc, xfGfxSurface* surface, void* param)
+int xf_UpdateSurfaces(xfContext* xfc)
 {
+	int count;
+	int index;
 	int status = 1;
+	xfGfxSurface* surface;
+	UINT16* pSurfaceIds = NULL;
+	RdpgfxClientContext* context = xfc->gfx;
 
-	switch (surface->mapping.mode)
+	if (!xfc->graphicsReset)
+		return 1;
+
+	count = context->GetSurfaceIds(context, &pSurfaceIds);
+
+	for (index = 0; index < count; index++)
 	{
-		case GFX_MAP_OUTPUT:
-			status = xf_OutputUpdate(xfc, surface);
-			break;
+		surface = (xfGfxSurface*) context->GetSurfaceData(context, pSurfaceIds[index]);
 
-		case GFX_MAP_NONE:
+		if (!surface || !surface->outputMapped)
+			continue;
+
+		status = xf_OutputUpdate(xfc, surface);
+
+		if (status < 0)
 			break;
 	}
+
+	free(pSurfaceIds);
 
 	return status;
 }
 
-int xf_UpdateSurfaces(xfContext* xfc)
-{
-	if (!xfc->graphicsReset)
-		return 1;
-
-	return xf_call_for_each_surface(xfc, xfc->gfxMappedSurfaceIds, xf_UpdateSurface, NULL);
-}
-
-BOOL xf_MappedSurfaceRect(xfContext* xfc, xfGfxSurface* surface, RECTANGLE_16* rect)
-{
-	BOOL mapped = FALSE;
-
-	switch (surface->mapping.mode)
-	{
-		case GFX_MAP_OUTPUT:
-			mapped = TRUE;
-			rect->left = surface->mapping.output.originX;
-			rect->top = surface->mapping.output.originY;
-			rect->right = surface->mapping.output.originX + surface->width;
-			rect->bottom = surface->mapping.output.originY + surface->height;
-			break;
-
-		case GFX_MAP_NONE:
-			break;
-	}
-
-	return mapped;
-}
-
-static int do_OutputExpose(xfContext* xfc, xfGfxSurface* surface, void* param)
-{
-	RECTANGLE_16 surfaceRect;
-	RECTANGLE_16 intersection;
-	RECTANGLE_16* invalidRect = param;
-
-	if (!xf_MappedSurfaceRect(xfc, surface, &surfaceRect))
-		return -1;
-
-	if (rectangles_intersection(invalidRect, &surfaceRect, &intersection))
-	{
-		/* Invalid rects are specified relative to surface origin */
-		intersection.left -= surfaceRect.left;
-		intersection.top -= surfaceRect.top;
-		intersection.right -= surfaceRect.left;
-		intersection.bottom -= surfaceRect.top;
-
-		region16_union_rect(&surface->invalidRegion, &surface->invalidRegion, &intersection);
-	}
-
-	return 1;
-}
-
 int xf_OutputExpose(xfContext* xfc, int x, int y, int width, int height)
 {
+	int count;
+	int index;
 	int status = 1;
+	xfGfxSurface* surface;
 	RECTANGLE_16 invalidRect;
+	RECTANGLE_16 surfaceRect;
+	RECTANGLE_16 intersection;
+	UINT16* pSurfaceIds = NULL;
+	RdpgfxClientContext* context = xfc->gfx;
 
 	invalidRect.left = x;
 	invalidRect.top = y;
 	invalidRect.right = x + width;
 	invalidRect.bottom = y + height;
 
-	if (xf_call_for_each_surface(xfc, xfc->gfxMappedSurfaceIds, do_OutputExpose, &invalidRect) < 0)
-		status = -1;
+	count = context->GetSurfaceIds(context, &pSurfaceIds);
+
+	for (index = 0; index < count; index++)
+	{
+		surface = (xfGfxSurface*) context->GetSurfaceData(context, pSurfaceIds[index]);
+
+		if (!surface || !surface->outputMapped)
+			continue;
+
+		surfaceRect.left = surface->outputOriginX;
+		surfaceRect.top = surface->outputOriginY;
+		surfaceRect.right = surface->outputOriginX + surface->width;
+		surfaceRect.bottom = surface->outputOriginY + surface->height;
+
+		if (rectangles_intersection(&invalidRect, &surfaceRect, &intersection))
+		{
+			/* Invalid rects are specified relative to surface origin */
+			intersection.left -= surfaceRect.left;
+			intersection.top -= surfaceRect.top;
+			intersection.right -= surfaceRect.left;
+			intersection.bottom -= surfaceRect.top;
+
+			region16_union_rect(&surface->invalidRegion, &surface->invalidRegion, &intersection);
+		}
+	}
+
+	free(pSurfaceIds);
 
 	if (xf_UpdateSurfaces(xfc) < 0)
 		status = -1;
@@ -708,7 +683,7 @@ int xf_CreateSurface(RdpgfxClientContext* context, RDPGFX_CREATE_SURFACE_PDU* cr
 				(char*) surface->stage, surface->width, surface->height, xfc->scanline_pad, surface->stageStep);
 	}
 
-	surface->mapping.mode = GFX_MAP_NONE;
+	surface->outputMapped = FALSE;
 
 	region16_init(&surface->invalidRegion);
 
@@ -733,7 +708,6 @@ int xf_DeleteSurface(RdpgfxClientContext* context, RDPGFX_DELETE_SURFACE_PDU* de
 		free(surface);
 	}
 
-	ArrayList_Remove(xfc->gfxMappedSurfaceIds, (void*) (ULONG_PTR) deleteSurface->surfaceId);
 	context->SetSurfaceData(context, deleteSurface->surfaceId, NULL);
 
 	if (xfc->codecs->progressive)
@@ -959,17 +933,14 @@ int xf_EvictCacheEntry(RdpgfxClientContext* context, RDPGFX_EVICT_CACHE_ENTRY_PD
 int xf_MapSurfaceToOutput(RdpgfxClientContext* context, RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU* surfaceToOutput)
 {
 	xfGfxSurface* surface;
-	xfContext* xfc = (xfContext*) context->custom;
 
 	surface = (xfGfxSurface*) context->GetSurfaceData(context, surfaceToOutput->surfaceId);
 
-	surface->mapping.mode = GFX_MAP_OUTPUT;
-	surface->mapping.output.originX = surfaceToOutput->outputOriginX;
-	surface->mapping.output.originY = surfaceToOutput->outputOriginY;
+	surface->outputMapped = TRUE;
+	surface->outputOriginX = surfaceToOutput->outputOriginX;
+	surface->outputOriginY = surfaceToOutput->outputOriginY;
 
 	region16_clear(&surface->invalidRegion);
-
-	ArrayList_Add(xfc->gfxMappedSurfaceIds, (void*) (ULONG_PTR) surfaceToOutput->surfaceId);
 
 	return 1;
 }
@@ -999,15 +970,9 @@ void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx)
 	gfx->EvictCacheEntry = xf_EvictCacheEntry;
 	gfx->MapSurfaceToOutput = xf_MapSurfaceToOutput;
 	gfx->MapSurfaceToWindow = xf_MapSurfaceToWindow;
-
-	xfc->gfxMappedSurfaceIds = ArrayList_New(FALSE);
 }
 
 void xf_graphics_pipeline_uninit(xfContext* xfc, RdpgfxClientContext* gfx)
 {
-	if (xfc->gfxMappedSurfaceIds)
-	{
-		ArrayList_Free(xfc->gfxMappedSurfaceIds);
-		xfc->gfxMappedSurfaceIds = NULL;
-	}
+
 }

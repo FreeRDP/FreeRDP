@@ -99,9 +99,9 @@ rdpChannels* freerdp_channels_new(void)
 void freerdp_channels_free(rdpChannels* channels)
 {
 	int index;
-	CHANNEL_OPEN_DATA* pChannelOpenData;
-	ULONG_PTR* pKeys;
 	int nkeys;
+	ULONG_PTR* pKeys = NULL;
+	CHANNEL_OPEN_DATA* pChannelOpenData;
 
 	if (channels->queue)
 	{
@@ -126,12 +126,15 @@ void freerdp_channels_free(rdpChannels* channels)
 	if (g_OpenHandles)
 	{
 		nkeys = HashTable_GetKeys(g_OpenHandles, &pKeys);
-		free(pKeys);
-		if ( nkeys == 0 ) {
+
+		if (nkeys == 0)
+		{
 			HashTable_Free(g_OpenHandles);
 			DeleteCriticalSection(&g_channels_lock);
 			g_OpenHandles = NULL;
 		}
+
+		free(pKeys);
 	}
 
 	free(channels);

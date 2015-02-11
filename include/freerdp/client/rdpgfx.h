@@ -47,6 +47,7 @@ typedef int (*pcRdpgfxMapSurfaceToWindow)(RdpgfxClientContext* context, RDPGFX_M
 
 typedef int (*pcRdpgfxSetSurfaceData)(RdpgfxClientContext* context, UINT16 surfaceId, void* pData);
 typedef void* (*pcRdpgfxGetSurfaceData)(RdpgfxClientContext* context, UINT16 surfaceId);
+typedef int (*pcRdpgfxGetSurfaceIds)(RdpgfxClientContext* context, UINT16** ppSurfaceIds);
 typedef int (*pcRdpgfxSetCacheSlotData)(RdpgfxClientContext* context, UINT16 cacheSlot, void* pData);
 typedef void* (*pcRdpgfxGetCacheSlotData)(RdpgfxClientContext* context, UINT16 cacheSlot);
 
@@ -72,6 +73,7 @@ struct _rdpgfx_client_context
 	pcRdpgfxMapSurfaceToOutput MapSurfaceToOutput;
 	pcRdpgfxMapSurfaceToWindow MapSurfaceToWindow;
 
+	pcRdpgfxGetSurfaceIds GetSurfaceIds;
 	pcRdpgfxSetSurfaceData SetSurfaceData;
 	pcRdpgfxGetSurfaceData GetSurfaceData;
 	pcRdpgfxSetCacheSlotData SetCacheSlotData;

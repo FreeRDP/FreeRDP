@@ -337,6 +337,7 @@ static int transport_bio_simple_uninit(BIO* bio)
 	{
 		if (bio->init)
 		{
+			_shutdown(ptr->socket, SD_BOTH);
 			closesocket(ptr->socket);
 			ptr->socket = 0;
 		}
@@ -1119,19 +1120,6 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeou
 	tcp->bufferedBio->ptr = tcp;
 
 	tcp->bufferedBio = BIO_push(tcp->bufferedBio, tcp->socketBio);
-
-	return TRUE;
-}
-
-BOOL freerdp_tcp_disconnect(rdpTcp* tcp)
-{
-	if (tcp->sockfd != -1)
-	{
-		shutdown(tcp->sockfd, SHUT_RDWR);
-		close(tcp->sockfd);
-
-		tcp->sockfd = -1;
-	}
 
 	return TRUE;
 }

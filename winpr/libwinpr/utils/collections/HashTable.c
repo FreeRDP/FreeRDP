@@ -457,6 +457,14 @@ int HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys)
 	iKey = 0;
 	count = table->numOfElements;
 
+	if (count < 1)
+	{
+		if (table->synchronized)
+			LeaveCriticalSection(&table->lock);
+
+		return 0;
+	}
+
 	pKeys = (ULONG_PTR*) calloc(count, sizeof(ULONG_PTR));
 
 	if (!pKeys)

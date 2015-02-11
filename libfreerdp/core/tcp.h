@@ -70,7 +70,6 @@ struct rdp_tcp
 };
 
 BOOL freerdp_tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout);
-BOOL freerdp_tcp_disconnect(rdpTcp* tcp);
 int freerdp_tcp_read(rdpTcp* tcp, BYTE* data, int length);
 int freerdp_tcp_write(rdpTcp* tcp, BYTE* data, int length);
 int freerdp_tcp_wait_read(rdpTcp* tcp, DWORD dwMilliSeconds);
