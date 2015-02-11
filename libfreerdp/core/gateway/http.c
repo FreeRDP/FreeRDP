@@ -623,7 +623,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 			}
 
 #ifdef HAVE_VALGRIND_MEMCHECK_H
-			VALGRIND_MAKE_MEM_DEFINED(p, status);
+			VALGRIND_MAKE_MEM_DEFINED(Stream_Pointer(s), status);
 #endif
 
 			Stream_Seek(s, status);
