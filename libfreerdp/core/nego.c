@@ -918,20 +918,16 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 	bm = Stream_GetPosition(s);
 	Stream_Seek(s, length);
 
-	if ((nego->SelectedProtocol == PROTOCOL_RDP) && !settings->RdpSecurity)
+	if (nego->SelectedProtocol & PROTOCOL_FAILED_NEGO)
 	{
+		UINT32 errorCode = (nego->SelectedProtocol & ~PROTOCOL_FAILED_NEGO);
 		flags = 0;
 
 		Stream_Write_UINT8(s, TYPE_RDP_NEG_FAILURE);
 		Stream_Write_UINT8(s, flags); /* flags */
 		Stream_Write_UINT16(s, 8); /* RDP_NEG_DATA length (8) */
 
-		/*
-		 * TODO: Check for other possibilities,
-		 *       like SSL_NOT_ALLOWED_BY_SERVER.
-		 */
-		WLog_ERR(TAG, "client supports only Standard RDP Security");
-		Stream_Write_UINT32(s, SSL_REQUIRED_BY_SERVER);
+		Stream_Write_UINT32(s, errorCode);
 		length += 8;
 		status = FALSE;
 	}
