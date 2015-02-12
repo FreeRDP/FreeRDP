@@ -1485,9 +1485,7 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, int timeout)
 
 	transport->frontBio = tsg->bio;
 	transport->TcpIn = inChannel->tcp;
-	transport->TlsIn = inChannel->tls;
 	transport->TcpOut = outChannel->tcp;
-	transport->TlsOut = outChannel->tls;
 	transport->GatewayEvent = rpc->client->PipeEvent;
 	transport->SplitInputOutput = TRUE;
 	transport->layer = TRANSPORT_LAYER_TSG;
@@ -1636,8 +1634,6 @@ void tsg_free(rdpTsg* tsg)
 {
 	if (tsg)
 	{
-		rdpTransport* transport = tsg->transport;
-
 		if (tsg->bio)
 		{
 			BIO_free(tsg->bio);
@@ -1652,18 +1648,6 @@ void tsg_free(rdpTsg* tsg)
 
 		free(tsg->Hostname);
 		free(tsg->MachineName);
-
-		if (transport->TlsIn)
-			tls_free(transport->TlsIn);
-
-		if (transport->TcpIn)
-			freerdp_tcp_free(transport->TcpIn);
-
-		if (transport->TlsOut)
-			tls_free(transport->TlsOut);
-
-		if (transport->TcpOut)
-			freerdp_tcp_free(transport->TcpOut);
 
 		free(tsg);
 	}

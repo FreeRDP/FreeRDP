@@ -506,6 +506,18 @@ void rpc_in_channel_free(RpcInChannel* inChannel)
 
 	rpc_in_channel_rpch_uninit(inChannel);
 
+	if (inChannel->tls)
+	{
+		tls_free(inChannel->tls);
+		inChannel->tls = NULL;
+	}
+
+	if (inChannel->tcp)
+	{
+		freerdp_tcp_free(inChannel->tcp);
+		inChannel->tcp = NULL;
+	}
+
 	free(inChannel);
 }
 
@@ -644,6 +656,18 @@ void rpc_out_channel_free(RpcOutChannel* outChannel)
 		return;
 
 	rpc_out_channel_rpch_uninit(outChannel);
+
+	if (outChannel->tls)
+	{
+		tls_free(outChannel->tls);
+		outChannel->tls = NULL;
+	}
+
+	if (outChannel->tcp)
+	{
+		freerdp_tcp_free(outChannel->tcp);
+		outChannel->tcp = NULL;
+	}
 
 	free(outChannel);
 }

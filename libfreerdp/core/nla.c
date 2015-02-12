@@ -220,11 +220,11 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 
 int credssp_ntlm_server_init(rdpCredssp* credssp)
 {
-	freerdp* instance;
-	rdpSettings* settings = credssp->settings;
-	instance = (freerdp*) settings->instance;
-	sspi_SecBufferAlloc(&credssp->PublicKey, credssp->transport->TlsIn->PublicKeyLength);
-	CopyMemory(credssp->PublicKey.pvBuffer, credssp->transport->TlsIn->PublicKey, credssp->transport->TlsIn->PublicKeyLength);
+	rdpTls* tls = credssp->transport->tls;
+
+	sspi_SecBufferAlloc(&credssp->PublicKey, tls->PublicKeyLength);
+	CopyMemory(credssp->PublicKey.pvBuffer, tls->PublicKey, tls->PublicKeyLength);
+
 	return 1;
 }
 

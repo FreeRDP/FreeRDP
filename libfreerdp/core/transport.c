@@ -74,62 +74,6 @@ void transport_attach(rdpTransport* transport, int sockfd)
 	transport->frontBio = transport->TcpIn->bufferedBio;
 }
 
-void transport_stop(rdpTransport* transport)
-{
-	if (transport->async)
-	{
-		if (transport->stopEvent)
-		{
-			SetEvent(transport->stopEvent);
-			WaitForSingleObject(transport->thread, INFINITE);
-			CloseHandle(transport->thread);
-			CloseHandle(transport->stopEvent);
-			transport->thread = NULL;
-			transport->stopEvent = NULL;
-		}
-	}
-}
-
-BOOL transport_disconnect(rdpTransport* transport)
-{
-	BOOL status = TRUE;
-
-	if (!transport)
-		return FALSE;
-
-	transport_stop(transport);
-
-	if (transport->tsg)
-	{
-		if (transport->TsgTls)
-		{
-			tls_free(transport->TsgTls);
-			transport->TsgTls = NULL;
-		}
-
-		tsg_free(transport->tsg);
-		transport->tsg = NULL;
-	}
-	else
-	{
-		if (transport->TlsIn)
-			tls_free(transport->TlsIn);
-
-		if (transport->TcpIn)
-			freerdp_tcp_free(transport->TcpIn);
-	}
-
-	transport->TlsIn = NULL;
-	transport->TlsOut = NULL;
-
-	transport->TcpIn = NULL;
-	transport->TcpOut = NULL;
-
-	transport->layer = TRANSPORT_LAYER_TCP;
-
-	return status;
-}
-
 BOOL transport_connect_rdp(rdpTransport* transport)
 {
 	/* RDP encryption */
@@ -138,41 +82,39 @@ BOOL transport_connect_rdp(rdpTransport* transport)
 
 BOOL transport_connect_tls(rdpTransport* transport)
 {
-	int tls_status;
-	BIO* targetBio = NULL;
-	rdpTls* targetTls = NULL;
+	int tlsStatus;
+	BIO* bio = NULL;
+	rdpTls* tls = NULL;
 	rdpContext* context = transport->context;
 	rdpSettings* settings = transport->settings;
 
 	if (transport->GatewayEnabled)
 	{
-		transport->TsgTls = tls_new(transport->settings);
+		tls = transport->tls = tls_new(transport->settings);
 		transport->layer = TRANSPORT_LAYER_TSG_TLS;
-		targetTls = transport->TsgTls;
-		targetBio = transport->frontBio;
+		bio = transport->frontBio;
 	}
 	else
 	{
-		transport->TlsIn = tls_new(settings);
-		targetTls = transport->TlsIn;
-		targetBio = transport->TcpIn->bufferedBio;
+		transport->tls = tls_new(settings);
 		transport->layer = TRANSPORT_LAYER_TLS;
+		bio = transport->TcpIn->bufferedBio;
 	}
 
-	transport->tls = targetTls;
+	transport->tls = tls;
 
-	targetTls->hostname = settings->ServerHostname;
-	targetTls->port = settings->ServerPort;
+	tls->hostname = settings->ServerHostname;
+	tls->port = settings->ServerPort;
 
-	if (targetTls->port == 0)
-		targetTls->port = 3389;
+	if (tls->port == 0)
+		tls->port = 3389;
 
-	targetTls->isGatewayTransport = FALSE;
-	tls_status = tls_connect(targetTls, targetBio);
+	tls->isGatewayTransport = FALSE;
+	tlsStatus = tls_connect(tls, bio);
 
-	if (tls_status < 1)
+	if (tlsStatus < 1)
 	{
-		if (tls_status < 0)
+		if (tlsStatus < 0)
 		{
 			if (!connectErrorCode)
 				connectErrorCode = TLSCONNECTERROR;
@@ -189,7 +131,7 @@ BOOL transport_connect_tls(rdpTransport* transport)
 		return FALSE;
 	}
 
-	transport->frontBio = targetTls->bio;
+	transport->frontBio = tls->bio;
 
 	if (!transport->frontBio)
 	{
@@ -324,15 +266,16 @@ BOOL transport_accept_tls(rdpTransport* transport)
 {
 	rdpSettings* settings = transport->settings;
 
-	if (!transport->TlsIn)
-		transport->TlsIn = tls_new(transport->settings);
+	if (!transport->tls)
+		transport->tls = tls_new(transport->settings);
 
 	transport->layer = TRANSPORT_LAYER_TLS;
 
-	if (!tls_accept(transport->TlsIn, transport->TcpIn->bufferedBio, settings->CertificateFile, settings->PrivateKeyFile))
+	if (!tls_accept(transport->tls, transport->TcpIn->bufferedBio, settings->CertificateFile, settings->PrivateKeyFile))
 		return FALSE;
 
-	transport->frontBio = transport->TlsIn->bio;
+	transport->frontBio = transport->tls->bio;
+
 	return TRUE;
 }
 
@@ -341,15 +284,15 @@ BOOL transport_accept_nla(rdpTransport* transport)
 	rdpSettings* settings = transport->settings;
 	freerdp* instance = (freerdp*) settings->instance;
 
-	if (!transport->TlsIn)
-		transport->TlsIn = tls_new(transport->settings);
+	if (!transport->tls)
+		transport->tls = tls_new(transport->settings);
 
 	transport->layer = TRANSPORT_LAYER_TLS;
 
-	if (!tls_accept(transport->TlsIn, transport->TcpIn->bufferedBio, settings->CertificateFile, settings->PrivateKeyFile))
+	if (!tls_accept(transport->tls, transport->TcpIn->bufferedBio, settings->CertificateFile, settings->PrivateKeyFile))
 		return FALSE;
 
-	transport->frontBio = transport->TlsIn->bio;
+	transport->frontBio = transport->tls->bio;
 
 	/* Network Level Authentication */
 
@@ -368,7 +311,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 		transport_set_nla_mode(transport, FALSE);
 		credssp_free(transport->credssp);
 		transport->credssp = NULL;
-		tls_set_alert_code(transport->TlsIn, TLS_ALERT_LEVEL_FATAL, TLS_ALERT_DESCRIPTION_ACCESS_DENIED);
+		tls_set_alert_code(transport->tls, TLS_ALERT_LEVEL_FATAL, TLS_ALERT_DESCRIPTION_ACCESS_DENIED);
 		return FALSE;
 	}
 
@@ -896,6 +839,59 @@ void transport_set_gateway_enabled(rdpTransport* transport, BOOL GatewayEnabled)
 void transport_set_nla_mode(rdpTransport* transport, BOOL NlaMode)
 {
 	transport->NlaMode = NlaMode;
+}
+
+void transport_stop(rdpTransport* transport)
+{
+	if (transport->async)
+	{
+		if (transport->stopEvent)
+		{
+			SetEvent(transport->stopEvent);
+			WaitForSingleObject(transport->thread, INFINITE);
+			CloseHandle(transport->thread);
+			CloseHandle(transport->stopEvent);
+			transport->thread = NULL;
+			transport->stopEvent = NULL;
+		}
+	}
+}
+
+BOOL transport_disconnect(rdpTransport* transport)
+{
+	BOOL status = TRUE;
+
+	if (!transport)
+		return FALSE;
+
+	transport_stop(transport);
+
+	if (transport->tsg)
+	{
+		if (transport->tls)
+		{
+			tls_free(transport->tls);
+			transport->tls = NULL;
+		}
+
+		tsg_free(transport->tsg);
+		transport->tsg = NULL;
+	}
+	else
+	{
+		if (transport->tls)
+			tls_free(transport->tls);
+
+		if (transport->TcpIn)
+			freerdp_tcp_free(transport->TcpIn);
+	}
+
+	transport->TcpIn = NULL;
+	transport->TcpOut = NULL;
+
+	transport->layer = TRANSPORT_LAYER_TCP;
+
+	return status;
 }
 
 static void* transport_client_thread(void* arg)

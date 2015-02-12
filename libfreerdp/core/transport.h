@@ -60,9 +60,6 @@ struct rdp_transport
 	rdpTls* tls;
 	rdpTcp* TcpIn;
 	rdpTcp* TcpOut;
-	rdpTls* TlsIn;
-	rdpTls* TlsOut;
-	rdpTls* TsgTls;
 	rdpContext* context;
 	rdpCredssp* credssp;
 	rdpSettings* settings;
