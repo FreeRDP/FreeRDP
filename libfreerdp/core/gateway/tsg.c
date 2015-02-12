@@ -116,8 +116,8 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count,
 	if (buffer3Length > 0)
 		Stream_Write(s, buffer3, buffer3Length); /* buffer3 (variable) */
 
-	Stream_Length(s) = Stream_GetPosition(s);
-	status = rpc_write(tsg->rpc, Stream_Buffer(s), Stream_Length(s), TsProxySendToServerOpnum);
+	Stream_SealLength(s);
+	status = rpc_client_write_call(tsg->rpc, Stream_Buffer(s), Stream_Length(s), TsProxySendToServerOpnum);
 	Stream_Free(s, TRUE);
 
 	if (status <= 0)
@@ -215,7 +215,7 @@ BOOL TsProxyCreateTunnelWriteRequest(rdpTsg* tsg)
 	CopyMemory(&buffer[88], &NDR_UUID, sizeof(p_uuid_t));
 	*((UINT32*) &buffer[104]) = NDR_SYNTAX_IF_VERSION;
 
-	status = rpc_write(rpc, buffer, length, TsProxyCreateTunnelOpnum);
+	status = rpc_client_write_call(rpc, buffer, length, TsProxyCreateTunnelOpnum);
 
 	if (status <= 0)
 		return FALSE;
@@ -601,7 +601,7 @@ BOOL TsProxyAuthorizeTunnelWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSE
 	ZeroMemory(&buffer[offset - pad], pad);
 	*((UINT32*) &buffer[offset]) = 0x00000000; /* MaxCount */
 	offset += 4;
-	status = rpc_write(rpc, buffer, length, TsProxyAuthorizeTunnelOpnum);
+	status = rpc_client_write_call(rpc, buffer, length, TsProxyAuthorizeTunnelOpnum);
 
 	if (status <= 0)
 		return FALSE;
@@ -763,7 +763,7 @@ BOOL TsProxyMakeTunnelCallWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSER
 	*((UINT32*) &buffer[28]) = TSG_PACKET_TYPE_MSGREQUEST_PACKET; /* SwitchValue */
 	*((UINT32*) &buffer[32]) = 0x00020000; /* PacketMsgRequestPtr */
 	*((UINT32*) &buffer[36]) = 0x00000001; /* MaxMessagesPerBatch */
-	status = rpc_write(rpc, buffer, length, TsProxyMakeTunnelCallOpnum);
+	status = rpc_client_write_call(rpc, buffer, length, TsProxyMakeTunnelCallOpnum);
 
 	if (status <= 0)
 		return FALSE;
@@ -962,7 +962,7 @@ BOOL TsProxyCreateChannelWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERI
 	*((UINT32*) &buffer[52]) = 0; /* Offset */
 	*((UINT32*) &buffer[56]) = count; /* ActualCount */
 	CopyMemory(&buffer[60], tsg->Hostname, count * 2); /* Array */
-	status = rpc_write(rpc, buffer, length, TsProxyCreateChannelOpnum);
+	status = rpc_client_write_call(rpc, buffer, length, TsProxyCreateChannelOpnum);
 
 	if (status <= 0)
 		return FALSE;
@@ -1035,7 +1035,7 @@ BOOL TsProxyCloseChannelWriteRequest(rdpTsg* tsg, PCHANNEL_CONTEXT_HANDLE_NOSERI
 	/* TunnelContext */
 	CopyMemory(&buffer[0], &tsg->ChannelContext.ContextType, 4); /* ContextType */
 	CopyMemory(&buffer[4], tsg->ChannelContext.ContextUuid, 16); /* ContextUuid */
-	status = rpc_write(rpc, buffer, length, TsProxyCloseChannelOpnum);
+	status = rpc_client_write_call(rpc, buffer, length, TsProxyCloseChannelOpnum);
 
 	if (status <= 0)
 		return FALSE;
@@ -1099,7 +1099,7 @@ BOOL TsProxyCloseTunnelWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_SERIALIZ
 	/* TunnelContext */
 	CopyMemory(&buffer[0], &tsg->TunnelContext.ContextType, 4); /* ContextType */
 	CopyMemory(&buffer[4], tsg->TunnelContext.ContextUuid, 16); /* ContextUuid */
-	status = rpc_write(rpc, buffer, length, TsProxyCloseTunnelOpnum);
+	status = rpc_client_write_call(rpc, buffer, length, TsProxyCloseTunnelOpnum);
 
 	if (status <= 0)
 		return FALSE;
@@ -1163,7 +1163,7 @@ BOOL TsProxySetupReceivePipeWriteRequest(rdpTsg* tsg)
 	/* ChannelContext */
 	CopyMemory(&buffer[0], &tsg->ChannelContext.ContextType, 4); /* ContextType */
 	CopyMemory(&buffer[4], tsg->ChannelContext.ContextUuid, 16); /* ContextUuid */
-	status = rpc_write(rpc, buffer, length, TsProxySetupReceivePipeOpnum);
+	status = rpc_client_write_call(rpc, buffer, length, TsProxySetupReceivePipeOpnum);
 
 	if (status <= 0)
 		return FALSE;

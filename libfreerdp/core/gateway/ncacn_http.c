@@ -81,7 +81,7 @@ int rpc_ncacn_http_send_in_channel_request(rdpRpc* rpc, RpcInChannel* inChannel)
 	if (!s)
 		return -1;
 
-	status = rpc_in_write(rpc, Stream_Buffer(s), Stream_Length(s));
+	status = rpc_in_channel_write(inChannel, Stream_Buffer(s), Stream_Length(s));
 
 	Stream_Free(s, TRUE);
 
@@ -188,7 +188,7 @@ int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc, RpcOutChannel* outChann
 	if (!s)
 		return -1;
 
-	status = rpc_out_write(rpc, Stream_Buffer(s), Stream_Length(s));
+	status = rpc_out_channel_write(outChannel, Stream_Buffer(s), Stream_Length(s));
 
 	Stream_Free(s, TRUE);
 

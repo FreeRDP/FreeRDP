@@ -114,9 +114,11 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	RpcClientCall* clientCall;
 	p_cont_elem_t* p_cont_elem;
 	rpcconn_bind_hdr_t* bind_pdu;
-	rdpSettings* settings = rpc->settings;
 	BOOL promptPassword = FALSE;
+	rdpSettings* settings = rpc->settings;
 	freerdp* instance = (freerdp*) settings->instance;
+	RpcVirtualConnection* connection = rpc->VirtualConnection;
+	RpcInChannel* inChannel = connection->DefaultInChannel;
 
 	WLog_DBG(TAG, "Sending Bind PDU");
 
@@ -238,6 +240,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	bind_pdu->frag_length = offset;
 
 	buffer = (BYTE*) malloc(bind_pdu->frag_length);
+
 	if (!buffer)
 		return -1;
 
@@ -271,7 +274,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 		return -1;
 	}
 
-	status = rpc_send_pdu(rpc, buffer, length);
+	status = rpc_in_channel_send_pdu(inChannel, buffer, length);
 
 	free(bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes);
 	free(bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes);
@@ -347,6 +350,8 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	UINT32 length;
 	RpcClientCall* clientCall;
 	rpcconn_rpc_auth_3_hdr_t* auth_3_pdu;
+	RpcVirtualConnection* connection = rpc->VirtualConnection;
+	RpcInChannel* inChannel = connection->DefaultInChannel;
 
 	WLog_DBG(TAG, "Sending RpcAuth3 PDU");
 
@@ -397,7 +402,7 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	clientCall = rpc_client_call_new(auth_3_pdu->call_id, 0);
 	ArrayList_Add(rpc->client->ClientCallList, clientCall);
 
-	status = rpc_send_pdu(rpc, buffer, length);
+	status = rpc_in_channel_send_pdu(inChannel, buffer, length);
 
 	free(auth_3_pdu);
 	free(buffer);

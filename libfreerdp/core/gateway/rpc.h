@@ -585,6 +585,7 @@ struct rpc_client_call
 typedef struct rpc_client_call RpcClientCall;
 
 #define RPC_CHANNEL_COMMON() \
+	rdpRpc* rpc; \
 	rdpTcp* tcp; \
 	rdpTls* tls; \
 	rdpNtlm* ntlm; \
@@ -767,26 +768,24 @@ void rpc_pdu_header_init(rdpRpc* rpc, rpcconn_hdr_t* header);
 UINT32 rpc_offset_align(UINT32* offset, UINT32 alignment);
 UINT32 rpc_offset_pad(UINT32* offset, UINT32 pad);
 
-int rpc_out_read(rdpRpc* rpc, BYTE* data, int length);
-
-int rpc_out_write(rdpRpc* rpc, const BYTE* data, int length);
-int rpc_in_write(rdpRpc* rpc, const BYTE* data, int length);
-
 BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* header, UINT32* offset, UINT32* length);
 
-RpcInChannel* rpc_client_in_channel_new(rdpRpc* rpc);
-void rpc_client_in_channel_free(RpcInChannel* inChannel);
+int rpc_in_channel_write(RpcInChannel* inChannel, const BYTE* data, int length);
 
-RpcOutChannel* rpc_client_out_channel_new(rdpRpc* rpc);
+int rpc_out_channel_read(RpcOutChannel* outChannel, BYTE* data, int length);
+int rpc_out_channel_write(RpcOutChannel* outChannel, const BYTE* data, int length);
+
+RpcInChannel* rpc_client_in_channel_new(rdpRpc* rpc);
+void rpc_in_channel_free(RpcInChannel* inChannel);
+
+RpcOutChannel* rpc_out_channel_new(rdpRpc* rpc);
 void rpc_client_out_channel_free(RpcOutChannel* outChannel);
 
-int rpc_client_in_channel_transition_to_state(RpcInChannel* inChannel, CLIENT_IN_CHANNEL_STATE state);
-int rpc_client_out_channel_transition_to_state(RpcOutChannel* outChannel, CLIENT_OUT_CHANNEL_STATE state);
+int rpc_in_channel_transition_to_state(RpcInChannel* inChannel, CLIENT_IN_CHANNEL_STATE state);
+int rpc_out_channel_transition_to_state(RpcOutChannel* outChannel, CLIENT_OUT_CHANNEL_STATE state);
 
-int rpc_client_virtual_connection_transition_to_state(rdpRpc* rpc,
+int rpc_virtual_connection_transition_to_state(rdpRpc* rpc,
 		RpcVirtualConnection* connection, VIRTUAL_CONNECTION_STATE state);
-
-int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum);
 
 BOOL rpc_connect(rdpRpc* rpc);
 

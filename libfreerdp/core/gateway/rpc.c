@@ -125,11 +125,11 @@ BOOL rpc_connect(rdpRpc* rpc)
 	inChannel = rpc->VirtualConnection->DefaultInChannel;
 	outChannel = rpc->VirtualConnection->DefaultOutChannel;
 
-	rpc_client_virtual_connection_transition_to_state(rpc, rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_INITIAL);
+	rpc_virtual_connection_transition_to_state(rpc, rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_INITIAL);
 
 	/* Connect IN Channel */
 
-	rpc_client_in_channel_transition_to_state(inChannel, CLIENT_IN_CHANNEL_STATE_CONNECTED);
+	rpc_in_channel_transition_to_state(inChannel, CLIENT_IN_CHANNEL_STATE_CONNECTED);
 
 	if (rpc_ncacn_http_ntlm_init(rpc, (RpcChannel*) inChannel) < 0)
 		return FALSE;
@@ -142,11 +142,11 @@ BOOL rpc_connect(rdpRpc* rpc)
 		return FALSE;
 	}
 
-	rpc_client_in_channel_transition_to_state(inChannel, CLIENT_IN_CHANNEL_STATE_SECURITY);
+	rpc_in_channel_transition_to_state(inChannel, CLIENT_IN_CHANNEL_STATE_SECURITY);
 
 	/* Connect OUT Channel */
 
-	rpc_client_out_channel_transition_to_state(outChannel, CLIENT_OUT_CHANNEL_STATE_CONNECTED);
+	rpc_out_channel_transition_to_state(outChannel, CLIENT_OUT_CHANNEL_STATE_CONNECTED);
 
 	if (rpc_ncacn_http_ntlm_init(rpc, (RpcChannel*) outChannel) < 0)
 		return FALSE;
@@ -159,7 +159,7 @@ BOOL rpc_connect(rdpRpc* rpc)
 		return FALSE;
 	}
 
-	rpc_client_out_channel_transition_to_state(outChannel, CLIENT_OUT_CHANNEL_STATE_SECURITY);
+	rpc_out_channel_transition_to_state(outChannel, CLIENT_OUT_CHANNEL_STATE_SECURITY);
 
 	return TRUE;
 }
@@ -390,10 +390,9 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 	return TRUE;
 }
 
-int rpc_out_read(rdpRpc* rpc, BYTE* data, int length)
+int rpc_out_channel_read(RpcOutChannel* outChannel, BYTE* data, int length)
 {
 	int status;
-	RpcOutChannel* outChannel = rpc->VirtualConnection->DefaultOutChannel;
 
 	status = BIO_read(outChannel->tls->bio, data, length);
 
@@ -411,146 +410,25 @@ int rpc_out_read(rdpRpc* rpc, BYTE* data, int length)
 	return -1;
 }
 
-int rpc_out_write(rdpRpc* rpc, const BYTE* data, int length)
+int rpc_in_channel_write(RpcInChannel* inChannel, const BYTE* data, int length)
 {
 	int status;
-	RpcOutChannel* outChannel = rpc->VirtualConnection->DefaultOutChannel;
-
-	status = tls_write_all(outChannel->tls, data, length);
-
-	return status;
-}
-
-int rpc_in_write(rdpRpc* rpc, const BYTE* data, int length)
-{
-	int status;
-	RpcInChannel* inChannel = rpc->VirtualConnection->DefaultInChannel;
 
 	status = tls_write_all(inChannel->tls, data, length);
 
 	return status;
 }
 
-int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
+int rpc_out_channel_write(RpcOutChannel* outChannel, const BYTE* data, int length)
 {
-	UINT32 offset;
-	BYTE* buffer = NULL;
-	UINT32 stub_data_pad;
-	SecBuffer Buffers[2];
-	SecBufferDesc Message;
-	RpcClientCall* clientCall;
-	SECURITY_STATUS encrypt_status;
-	rpcconn_request_hdr_t* request_pdu = NULL;
-	rdpNtlm* ntlm = rpc->ntlm;
+	int status;
 
-	if (!ntlm || !ntlm->table)
-	{
-		WLog_ERR(TAG, "invalid ntlm context");
-		return -1;
-	}
+	status = tls_write_all(outChannel->tls, data, length);
 
-	if (ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes) != SEC_E_OK)
-	{
-		WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure");
-		return -1;
-	}
-
-	ZeroMemory(&Buffers, sizeof(Buffers));
-
-	request_pdu = (rpcconn_request_hdr_t*) calloc(1, sizeof(rpcconn_request_hdr_t));
-
-	if (!request_pdu)
-		return -1;
-
-	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*) request_pdu);
-	request_pdu->ptype = PTYPE_REQUEST;
-	request_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
-	request_pdu->auth_length = (UINT16) ntlm->ContextSizes.cbMaxSignature;
-	request_pdu->call_id = rpc->CallId++;
-	request_pdu->alloc_hint = length;
-	request_pdu->p_cont_id = 0x0000;
-	request_pdu->opnum = opnum;
-
-	clientCall = rpc_client_call_new(request_pdu->call_id, request_pdu->opnum);
-
-	if (!clientCall)
-		goto out_free_pdu;
-
-	if (ArrayList_Add(rpc->client->ClientCallList, clientCall) < 0)
-		goto out_free_clientCall;
-
-	if (request_pdu->opnum == TsProxySetupReceivePipeOpnum)
-		rpc->PipeCallId = request_pdu->call_id;
-
-	request_pdu->stub_data = data;
-	offset = 24;
-	stub_data_pad = 0;
-	stub_data_pad = rpc_offset_align(&offset, 8);
-	offset += length;
-	request_pdu->auth_verifier.auth_pad_length = rpc_offset_align(&offset, 4);
-	request_pdu->auth_verifier.auth_type = RPC_C_AUTHN_WINNT;
-	request_pdu->auth_verifier.auth_level = RPC_C_AUTHN_LEVEL_PKT_INTEGRITY;
-	request_pdu->auth_verifier.auth_reserved = 0x00;
-	request_pdu->auth_verifier.auth_context_id = 0x00000000;
-	offset += (8 + request_pdu->auth_length);
-	request_pdu->frag_length = offset;
-
-	buffer = (BYTE*) calloc(1, request_pdu->frag_length);
-
-	if (!buffer)
-		goto out_free_pdu;
-
-	CopyMemory(buffer, request_pdu, 24);
-	offset = 24;
-	rpc_offset_pad(&offset, stub_data_pad);
-	CopyMemory(&buffer[offset], request_pdu->stub_data, length);
-	offset += length;
-	rpc_offset_pad(&offset, request_pdu->auth_verifier.auth_pad_length);
-	CopyMemory(&buffer[offset], &request_pdu->auth_verifier.auth_type, 8);
-	offset += 8;
-	Buffers[0].BufferType = SECBUFFER_DATA; /* auth_data */
-	Buffers[1].BufferType = SECBUFFER_TOKEN; /* signature */
-	Buffers[0].pvBuffer = buffer;
-	Buffers[0].cbBuffer = offset;
-	Buffers[1].cbBuffer = ntlm->ContextSizes.cbMaxSignature;
-	Buffers[1].pvBuffer = calloc(1, Buffers[1].cbBuffer);
-
-	if (!Buffers[1].pvBuffer)
-		goto out_free_pdu;
-
-	Message.cBuffers = 2;
-	Message.ulVersion = SECBUFFER_VERSION;
-	Message.pBuffers = (PSecBuffer) &Buffers;
-	encrypt_status = ntlm->table->EncryptMessage(&ntlm->context, 0, &Message, rpc->SendSeqNum++);
-
-	if (encrypt_status != SEC_E_OK)
-	{
-		WLog_ERR(TAG, "EncryptMessage status: 0x%08X", encrypt_status);
-		goto out_free_pdu;
-	}
-
-	CopyMemory(&buffer[offset], Buffers[1].pvBuffer, Buffers[1].cbBuffer);
-	offset += Buffers[1].cbBuffer;
-	free(Buffers[1].pvBuffer);
-
-	if (rpc_send_pdu(rpc, buffer, request_pdu->frag_length) < 0)
-		length = -1;
-
-	free(request_pdu);
-	free(buffer);
-
-	return length;
-
-out_free_clientCall:
-	rpc_client_call_free(clientCall);
-out_free_pdu:
-	free(buffer);
-	free(Buffers[1].pvBuffer);
-	free(request_pdu);
-	return -1;
+	return status;
 }
 
-int rpc_client_in_channel_transition_to_state(RpcInChannel* inChannel, CLIENT_IN_CHANNEL_STATE state)
+int rpc_in_channel_transition_to_state(RpcInChannel* inChannel, CLIENT_IN_CHANNEL_STATE state)
 {
 	int status = 1;
 	const char* str = "CLIENT_IN_CHANNEL_STATE_UNKNOWN";
@@ -592,7 +470,7 @@ int rpc_client_in_channel_transition_to_state(RpcInChannel* inChannel, CLIENT_IN
 	return status;
 }
 
-int rpc_client_in_channel_rpch_init(rdpRpc* rpc, RpcInChannel* inChannel)
+int rpc_in_channel_rpch_init(rdpRpc* rpc, RpcInChannel* inChannel)
 {
 	HttpContext* http;
 
@@ -622,23 +500,24 @@ int rpc_client_in_channel_rpch_init(rdpRpc* rpc, RpcInChannel* inChannel)
 	return 1;
 }
 
-int rpc_client_in_channel_init(rdpRpc* rpc, RpcInChannel* inChannel)
+int rpc_in_channel_init(rdpRpc* rpc, RpcInChannel* inChannel)
 {
 	rts_generate_cookie((BYTE*) &inChannel->Cookie);
 
+	inChannel->rpc = rpc;
 	inChannel->State = CLIENT_IN_CHANNEL_STATE_INITIAL;
 	inChannel->BytesSent = 0;
 	inChannel->SenderAvailableWindow = rpc->ReceiveWindow;
 	inChannel->PingOriginator.ConnectionTimeout = 30;
 	inChannel->PingOriginator.KeepAliveInterval = 0;
 
-	if (rpc_client_in_channel_rpch_init(rpc, inChannel) < 0)
+	if (rpc_in_channel_rpch_init(rpc, inChannel) < 0)
 		return -1;
 
 	return 1;
 }
 
-void rpc_client_in_channel_rpch_uninit(RpcInChannel* inChannel)
+void rpc_in_channel_rpch_uninit(RpcInChannel* inChannel)
 {
 	if (inChannel->ntlm)
 	{
@@ -653,7 +532,7 @@ void rpc_client_in_channel_rpch_uninit(RpcInChannel* inChannel)
 	}
 }
 
-RpcInChannel* rpc_client_in_channel_new(rdpRpc* rpc)
+RpcInChannel* rpc_in_channel_new(rdpRpc* rpc)
 {
 	RpcInChannel* inChannel = NULL;
 
@@ -661,23 +540,23 @@ RpcInChannel* rpc_client_in_channel_new(rdpRpc* rpc)
 
 	if (inChannel)
 	{
-		rpc_client_in_channel_init(rpc, inChannel);
+		rpc_in_channel_init(rpc, inChannel);
 	}
 
 	return inChannel;
 }
 
-void rpc_client_in_channel_free(RpcInChannel* inChannel)
+void rpc_in_channel_free(RpcInChannel* inChannel)
 {
 	if (!inChannel)
 		return;
 
-	rpc_client_in_channel_rpch_uninit(inChannel);
+	rpc_in_channel_rpch_uninit(inChannel);
 
 	free(inChannel);
 }
 
-int rpc_client_out_channel_transition_to_state(RpcOutChannel* outChannel, CLIENT_OUT_CHANNEL_STATE state)
+int rpc_out_channel_transition_to_state(RpcOutChannel* outChannel, CLIENT_OUT_CHANNEL_STATE state)
 {
 	int status = 1;
 	const char* str = "CLIENT_OUT_CHANNEL_STATE_UNKNOWN";
@@ -727,7 +606,7 @@ int rpc_client_out_channel_transition_to_state(RpcOutChannel* outChannel, CLIENT
 	return status;
 }
 
-int rpc_client_out_channel_rpch_init(rdpRpc* rpc, RpcOutChannel* outChannel)
+int rpc_out_channel_rpch_init(rdpRpc* rpc, RpcOutChannel* outChannel)
 {
 	HttpContext* http;
 
@@ -759,10 +638,11 @@ int rpc_client_out_channel_rpch_init(rdpRpc* rpc, RpcOutChannel* outChannel)
 	return 1;
 }
 
-int rpc_client_out_channel_init(rdpRpc* rpc, RpcOutChannel* outChannel)
+int rpc_out_channel_init(rdpRpc* rpc, RpcOutChannel* outChannel)
 {
 	rts_generate_cookie((BYTE*) &outChannel->Cookie);
 
+	outChannel->rpc = rpc;
 	outChannel->State = CLIENT_OUT_CHANNEL_STATE_INITIAL;
 	outChannel->BytesReceived = 0;
 	outChannel->ReceiverAvailableWindow = rpc->ReceiveWindow;
@@ -770,13 +650,13 @@ int rpc_client_out_channel_init(rdpRpc* rpc, RpcOutChannel* outChannel)
 	outChannel->ReceiveWindowSize = rpc->ReceiveWindow;
 	outChannel->AvailableWindowAdvertised = rpc->ReceiveWindow;
 
-	if (rpc_client_out_channel_rpch_init(rpc, outChannel) < 0)
+	if (rpc_out_channel_rpch_init(rpc, outChannel) < 0)
 		return -1;
 
 	return 1;
 }
 
-void rpc_client_out_channel_rpch_uninit(RpcOutChannel* outChannel)
+void rpc_out_channel_rpch_uninit(RpcOutChannel* outChannel)
 {
 	if (outChannel->ntlm)
 	{
@@ -791,7 +671,7 @@ void rpc_client_out_channel_rpch_uninit(RpcOutChannel* outChannel)
 	}
 }
 
-RpcOutChannel* rpc_client_out_channel_new(rdpRpc* rpc)
+RpcOutChannel* rpc_out_channel_new(rdpRpc* rpc)
 {
 	RpcOutChannel* outChannel = NULL;
 
@@ -799,23 +679,23 @@ RpcOutChannel* rpc_client_out_channel_new(rdpRpc* rpc)
 
 	if (outChannel)
 	{
-		rpc_client_out_channel_init(rpc, outChannel);
+		rpc_out_channel_init(rpc, outChannel);
 	}
 
 	return outChannel;
 }
 
-void rpc_client_out_channel_free(RpcOutChannel* outChannel)
+void rpc_out_channel_free(RpcOutChannel* outChannel)
 {
 	if (!outChannel)
 		return;
 
-	rpc_client_out_channel_rpch_uninit(outChannel);
+	rpc_out_channel_rpch_uninit(outChannel);
 
 	free(outChannel);
 }
 
-int rpc_client_virtual_connection_transition_to_state(rdpRpc* rpc,
+int rpc_virtual_connection_transition_to_state(rdpRpc* rpc,
 		RpcVirtualConnection* connection, VIRTUAL_CONNECTION_STATE state)
 {
 	int status = 1;
@@ -854,7 +734,7 @@ int rpc_client_virtual_connection_transition_to_state(rdpRpc* rpc,
 	return status;
 }
 
-RpcVirtualConnection* rpc_client_virtual_connection_new(rdpRpc* rpc)
+RpcVirtualConnection* rpc_virtual_connection_new(rdpRpc* rpc)
 {
 	RpcVirtualConnection* connection;
 
@@ -868,12 +748,12 @@ RpcVirtualConnection* rpc_client_virtual_connection_new(rdpRpc* rpc)
 
 	connection->State = VIRTUAL_CONNECTION_STATE_INITIAL;
 
-	connection->DefaultInChannel = rpc_client_in_channel_new(rpc);
+	connection->DefaultInChannel = rpc_in_channel_new(rpc);
 
 	if (!connection->DefaultInChannel)
 		goto out_free;
 
-	connection->DefaultOutChannel = rpc_client_out_channel_new(rpc);
+	connection->DefaultOutChannel = rpc_out_channel_new(rpc);
 
 	if (!connection->DefaultOutChannel)
 		goto out_default_in;
@@ -886,16 +766,16 @@ out_free:
 	return NULL;
 }
 
-void rpc_client_virtual_connection_free(RpcVirtualConnection* connection)
+void rpc_virtual_connection_free(RpcVirtualConnection* connection)
 {
 	if (!connection)
 		return;
 
-	rpc_client_in_channel_free(connection->DefaultInChannel);
-	rpc_client_in_channel_free(connection->NonDefaultInChannel);
+	rpc_in_channel_free(connection->DefaultInChannel);
+	rpc_in_channel_free(connection->NonDefaultInChannel);
 
-	rpc_client_out_channel_free(connection->DefaultOutChannel);
-	rpc_client_out_channel_free(connection->NonDefaultOutChannel);
+	rpc_out_channel_free(connection->DefaultOutChannel);
+	rpc_out_channel_free(connection->NonDefaultOutChannel);
 
 	free(connection);
 }
@@ -940,7 +820,7 @@ rdpRpc* rpc_new(rdpTransport* transport)
 	rpc->CurrentKeepAliveInterval = rpc->KeepAliveInterval;
 	rpc->CurrentKeepAliveTime = 0;
 
-	rpc->VirtualConnection = rpc_client_virtual_connection_new(rpc);
+	rpc->VirtualConnection = rpc_virtual_connection_new(rpc);
 
 	if (!rpc->VirtualConnection)
 		goto out_free_virtual_connection;
@@ -954,7 +834,7 @@ rdpRpc* rpc_new(rdpTransport* transport)
 out_free_rpc_client:
 	rpc_client_free(rpc);
 out_free_virtual_connection:
-	rpc_client_virtual_connection_free(rpc->VirtualConnection);
+	rpc_virtual_connection_free(rpc->VirtualConnection);
 out_free:
 	free(rpc);
 	return NULL;
@@ -973,7 +853,7 @@ void rpc_free(rdpRpc* rpc)
 			rpc->ntlm = NULL;
 		}
 
-		rpc_client_virtual_connection_free(rpc->VirtualConnection);
+		rpc_virtual_connection_free(rpc->VirtualConnection);
 
 		free(rpc);
 	}
