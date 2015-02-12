@@ -584,12 +584,19 @@ struct rpc_client_call
 };
 typedef struct rpc_client_call RpcClientCall;
 
-enum _TSG_CHANNEL
+#define RPC_CHANNEL_COMMON() \
+	rdpRpc* rpc; \
+	rdpTcp* tcp; \
+	rdpTls* tls; \
+	rdpNtlm* ntlm; \
+	HttpContext* http; \
+	BYTE Cookie[16]
+
+struct rpc_channel
 {
-	TSG_CHANNEL_IN,
-	TSG_CHANNEL_OUT
+	RPC_CHANNEL_COMMON();
 };
-typedef enum _TSG_CHANNEL TSG_CHANNEL;
+typedef struct rpc_channel RpcChannel;
 
 /* Ping Originator */
 
@@ -618,6 +625,8 @@ typedef enum _CLIENT_IN_CHANNEL_STATE CLIENT_IN_CHANNEL_STATE;
 struct rpc_in_channel
 {
 	/* Sending Channel */
+
+	RPC_CHANNEL_COMMON();
 
 	CLIENT_IN_CHANNEL_STATE State;
 
@@ -653,6 +662,8 @@ struct rpc_out_channel
 {
 	/* Receiving Channel */
 
+	RPC_CHANNEL_COMMON();
+
 	CLIENT_OUT_CHANNEL_STATE State;
 
 	UINT32 ReceiveWindow;
@@ -678,17 +689,13 @@ typedef enum _VIRTUAL_CONNECTION_STATE VIRTUAL_CONNECTION_STATE;
 
 struct rpc_virtual_connection
 {
-	BYTE Cookie[16]; /* Virtual Connection Cookie */
-	VIRTUAL_CONNECTION_STATE State; /* Virtual Connection State */
-	RpcInChannel* DefaultInChannel; /* Default IN Channel */
-	RpcInChannel* NonDefaultInChannel; /* Non-Default IN Channel */
-	BYTE DefaultInChannelCookie[16]; /* Default IN Channel Cookie */
-	BYTE NonDefaultInChannelCookie[16]; /* Non-Default Default IN Channel Cookie */
-	RpcOutChannel* DefaultOutChannel; /* Default OUT Channel */
-	RpcOutChannel* NonDefaultOutChannel; /* Non-Default OUT Channel */
-	BYTE DefaultOutChannelCookie[16]; /* Default OUT Channel Cookie */
-	BYTE NonDefaultOutChannelCookie[16]; /* Non-Default Default OUT Channel Cookie */
-	BYTE AssociationGroupId[16]; /* AssociationGroupId */
+	BYTE Cookie[16];
+	BYTE AssociationGroupId[16];
+	VIRTUAL_CONNECTION_STATE State;
+	RpcInChannel* DefaultInChannel;
+	RpcInChannel* NonDefaultInChannel;
+	RpcOutChannel* DefaultOutChannel;
+	RpcOutChannel* NonDefaultOutChannel;
 };
 typedef struct rpc_virtual_connection RpcVirtualConnection;
 
@@ -724,16 +731,10 @@ struct rdp_rpc
 	
 	UINT32 result;
 
-	rdpTls* TlsIn;
-	rdpTls* TlsOut;
-
 	rdpNtlm* ntlm;
 	int SendSeqNum;
 
 	RpcClient* client;
-
-	rdpNtlmHttp* NtlmHttpIn;
-	rdpNtlmHttp* NtlmHttpOut;
 
 	rdpContext* context;
 	rdpSettings* settings;
@@ -753,17 +754,12 @@ struct rdp_rpc
 	UINT16 max_recv_frag;
 
 	UINT32 ReceiveWindow;
-
 	UINT32 ChannelLifetime;
-	UINT32 ChannelLifetimeSet;
-
 	UINT32 KeepAliveInterval;
 	UINT32 CurrentKeepAliveTime;
 	UINT32 CurrentKeepAliveInterval;
 
 	RpcVirtualConnection* VirtualConnection;
-
-	wArrayList* VirtualConnectionCookieTable;
 };
 
 void rpc_pdu_header_print(rpcconn_hdr_t* header);
@@ -772,22 +768,26 @@ void rpc_pdu_header_init(rdpRpc* rpc, rpcconn_hdr_t* header);
 UINT32 rpc_offset_align(UINT32* offset, UINT32 alignment);
 UINT32 rpc_offset_pad(UINT32* offset, UINT32 pad);
 
-int rpc_out_read(rdpRpc* rpc, BYTE* data, int length);
-
-int rpc_out_write(rdpRpc* rpc, const BYTE* data, int length);
-int rpc_in_write(rdpRpc* rpc, const BYTE* data, int length);
-
 BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* header, UINT32* offset, UINT32* length);
 
-int rpc_client_in_channel_transition_to_state(RpcInChannel* inChannel, CLIENT_IN_CHANNEL_STATE state);
-int rpc_client_out_channel_transition_to_state(RpcOutChannel* outChannel, CLIENT_OUT_CHANNEL_STATE state);
+int rpc_in_channel_write(RpcInChannel* inChannel, const BYTE* data, int length);
 
-int rpc_client_virtual_connection_transition_to_state(rdpRpc* rpc,
+int rpc_out_channel_read(RpcOutChannel* outChannel, BYTE* data, int length);
+int rpc_out_channel_write(RpcOutChannel* outChannel, const BYTE* data, int length);
+
+RpcInChannel* rpc_client_in_channel_new(rdpRpc* rpc);
+void rpc_in_channel_free(RpcInChannel* inChannel);
+
+RpcOutChannel* rpc_out_channel_new(rdpRpc* rpc);
+void rpc_client_out_channel_free(RpcOutChannel* outChannel);
+
+int rpc_in_channel_transition_to_state(RpcInChannel* inChannel, CLIENT_IN_CHANNEL_STATE state);
+int rpc_out_channel_transition_to_state(RpcOutChannel* outChannel, CLIENT_OUT_CHANNEL_STATE state);
+
+int rpc_virtual_connection_transition_to_state(rdpRpc* rpc,
 		RpcVirtualConnection* connection, VIRTUAL_CONNECTION_STATE state);
 
-int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum);
-
-BOOL rpc_connect(rdpRpc* rpc);
+BOOL rpc_connect(rdpRpc* rpc, int timeout);
 
 rdpRpc* rpc_new(rdpTransport* transport);
 void rpc_free(rdpRpc* rpc);

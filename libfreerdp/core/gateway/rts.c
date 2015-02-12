@@ -435,6 +435,8 @@ int rts_send_CONN_A1_pdu(rdpRpc* rpc)
 	UINT32 ReceiveWindowSize;
 	BYTE* OUTChannelCookie;
 	BYTE* VirtualConnectionCookie;
+	RpcVirtualConnection* connection = rpc->VirtualConnection;
+	RpcOutChannel* outChannel = connection->DefaultOutChannel;
 
 	rts_pdu_header_init(&header);
 	header.frag_length = 76;
@@ -443,9 +445,9 @@ int rts_send_CONN_A1_pdu(rdpRpc* rpc)
 
 	WLog_DBG(TAG, "Sending CONN_A1 RTS PDU");
 
-	VirtualConnectionCookie = (BYTE*) &(rpc->VirtualConnection->Cookie);
-	OUTChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie);
-	ReceiveWindowSize = rpc->VirtualConnection->DefaultOutChannel->ReceiveWindow;
+	VirtualConnectionCookie = (BYTE*) &(connection->Cookie);
+	OUTChannelCookie = (BYTE*) &(outChannel->Cookie);
+	ReceiveWindowSize = outChannel->ReceiveWindow;
 
 	buffer = (BYTE*) malloc(header.frag_length);
 
@@ -458,7 +460,7 @@ int rts_send_CONN_A1_pdu(rdpRpc* rpc)
 	rts_cookie_command_write(&buffer[48], OUTChannelCookie); /* OUTChannelCookie (20 bytes) */
 	rts_receive_window_size_command_write(&buffer[68], ReceiveWindowSize); /* ReceiveWindowSize (8 bytes) */
 
-	status = rpc_out_write(rpc, buffer, header.frag_length);
+	status = rpc_out_channel_write(outChannel, buffer, header.frag_length);
 
 	free(buffer);
 
@@ -489,6 +491,8 @@ int rts_send_CONN_B1_pdu(rdpRpc* rpc)
 	BYTE* INChannelCookie;
 	BYTE* AssociationGroupId;
 	BYTE* VirtualConnectionCookie;
+	RpcVirtualConnection* connection = rpc->VirtualConnection;
+	RpcInChannel* inChannel = connection->DefaultInChannel;
 
 	rts_pdu_header_init(&header);
 	header.frag_length = 104;
@@ -497,9 +501,9 @@ int rts_send_CONN_B1_pdu(rdpRpc* rpc)
 
 	WLog_DBG(TAG, "Sending CONN_B1 RTS PDU");
 
-	VirtualConnectionCookie = (BYTE*) &(rpc->VirtualConnection->Cookie);
-	INChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultInChannelCookie);
-	AssociationGroupId = (BYTE*) &(rpc->VirtualConnection->AssociationGroupId);
+	VirtualConnectionCookie = (BYTE*) &(connection->Cookie);
+	INChannelCookie = (BYTE*) &(inChannel->Cookie);
+	AssociationGroupId = (BYTE*) &(connection->AssociationGroupId);
 
 	buffer = (BYTE*) malloc(header.frag_length);
 
@@ -516,7 +520,7 @@ int rts_send_CONN_B1_pdu(rdpRpc* rpc)
 
 	length = header.frag_length;
 
-	status = rpc_in_write(rpc, buffer, length);
+	status = rpc_in_channel_write(inChannel, buffer, length);
 
 	free(buffer);
 
@@ -539,13 +543,8 @@ int rts_recv_CONN_C2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	WLog_DBG(TAG, "ConnectionTimeout: %d", ConnectionTimeout);
 	WLog_DBG(TAG, "ReceiveWindowSize: %d", ReceiveWindowSize);
 
-	/* TODO: verify if this is the correct protocol variable */
 	rpc->VirtualConnection->DefaultInChannel->PingOriginator.ConnectionTimeout = ConnectionTimeout;
-
 	rpc->VirtualConnection->DefaultInChannel->PeerReceiveWindow = ReceiveWindowSize;
-
-	rpc->VirtualConnection->DefaultInChannel->State = CLIENT_IN_CHANNEL_STATE_OPENED;
-	rpc->VirtualConnection->DefaultOutChannel->State = CLIENT_OUT_CHANNEL_STATE_OPENED;
 
 	return 1;
 }
@@ -558,6 +557,7 @@ int rts_send_keep_alive_pdu(rdpRpc* rpc)
 	BYTE* buffer;
 	UINT32 length;
 	rpcconn_rts_hdr_t header;
+	RpcInChannel* inChannel = rpc->VirtualConnection->DefaultInChannel;
 
 	rts_pdu_header_init(&header);
 	header.frag_length = 28;
@@ -576,7 +576,7 @@ int rts_send_keep_alive_pdu(rdpRpc* rpc)
 
 	length = header.frag_length;
 
-	status = rpc_in_write(rpc, buffer, length);
+	status = rpc_in_channel_write(inChannel, buffer, length);
 
 	free(buffer);
 
@@ -592,6 +592,9 @@ int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 	UINT32 BytesReceived;
 	UINT32 AvailableWindow;
 	BYTE* ChannelCookie;
+	RpcVirtualConnection* connection = rpc->VirtualConnection;
+	RpcInChannel* inChannel = connection->DefaultInChannel;
+	RpcOutChannel* outChannel = connection->DefaultOutChannel;
 
 	rts_pdu_header_init(&header);
 	header.frag_length = 56;
@@ -600,12 +603,11 @@ int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 
 	WLog_DBG(TAG, "Sending FlowControlAck RTS PDU");
 
-	BytesReceived = rpc->VirtualConnection->DefaultOutChannel->BytesReceived;
-	AvailableWindow = rpc->VirtualConnection->DefaultOutChannel->AvailableWindowAdvertised;
-	ChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie);
+	BytesReceived = outChannel->BytesReceived;
+	AvailableWindow = outChannel->AvailableWindowAdvertised;
+	ChannelCookie = (BYTE*) &(outChannel->Cookie);
 
-	rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow =
-			rpc->VirtualConnection->DefaultOutChannel->AvailableWindowAdvertised;
+	outChannel->ReceiverAvailableWindow = outChannel->AvailableWindowAdvertised;
 
 	buffer = (BYTE*) malloc(header.frag_length);
 
@@ -620,7 +622,7 @@ int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 
 	length = header.frag_length;
 
-	status = rpc_in_write(rpc, buffer, length);
+	status = rpc_in_channel_write(inChannel, buffer, length);
 
 	free(buffer);
 
@@ -697,6 +699,7 @@ int rts_send_ping_pdu(rdpRpc* rpc)
 	BYTE* buffer;
 	UINT32 length;
 	rpcconn_rts_hdr_t header;
+	RpcInChannel* inChannel = rpc->VirtualConnection->DefaultInChannel;
 
 	rts_pdu_header_init(&header);
 	header.frag_length = 20;
@@ -714,7 +717,7 @@ int rts_send_ping_pdu(rdpRpc* rpc)
 
 	length = header.frag_length;
 
-	status = rpc_in_write(rpc, buffer, length);
+	status = rpc_in_channel_write(inChannel, buffer, length);
 
 	free(buffer);
 
@@ -796,6 +799,70 @@ int rts_command_length(rdpRpc* rpc, UINT32 CommandType, BYTE* buffer, UINT32 len
 	return CommandLength;
 }
 
+int rts_send_OUT_R2_A7_pdu(rdpRpc* rpc)
+{
+	int status;
+	BYTE* buffer;
+	rpcconn_rts_hdr_t header;
+	BYTE* SuccessorChannelCookie;
+	RpcOutChannel* outChannel = rpc->VirtualConnection->DefaultOutChannel;
+	RpcOutChannel* nextOutChannel = rpc->VirtualConnection->NonDefaultOutChannel;
+
+	rts_pdu_header_init(&header);
+	header.frag_length = 56;
+	header.Flags = RTS_FLAG_OUT_CHANNEL;
+	header.NumberOfCommands = 3;
+
+	WLog_DBG(TAG, "Sending OUT R2/A7 RTS PDU");
+
+	SuccessorChannelCookie = (BYTE*) &(nextOutChannel->Cookie);
+
+	buffer = (BYTE*) malloc(header.frag_length);
+
+	if (!buffer)
+		return -1;
+
+	CopyMemory(buffer, ((BYTE*)&header), 20); /* RTS Header (20 bytes) */
+	rts_destination_command_write(&buffer[20], FDServer); /* Destination (8 bytes)*/
+	rts_cookie_command_write(&buffer[28], SuccessorChannelCookie); /* SuccessorChannelCookie (20 bytes) */
+	rts_version_command_write(&buffer[48]); /* Version (8 bytes) */
+
+	status = rpc_out_channel_write(outChannel, buffer, header.frag_length);
+
+	free(buffer);
+
+	return (status > 0) ? 1 : -1;
+}
+
+int rts_send_OUT_R2_C1_pdu(rdpRpc* rpc)
+{
+	int status;
+	BYTE* buffer;
+	rpcconn_rts_hdr_t header;
+	RpcOutChannel* outChannel = rpc->VirtualConnection->DefaultOutChannel;
+
+	rts_pdu_header_init(&header);
+	header.frag_length = 24;
+	header.Flags = RTS_FLAG_PING;
+	header.NumberOfCommands = 1;
+
+	WLog_DBG(TAG, "Sending OUT R2/C1 RTS PDU");
+
+	buffer = (BYTE*) malloc(header.frag_length);
+
+	if (!buffer)
+		return -1;
+
+	CopyMemory(buffer, ((BYTE*) &header), 20); /* RTS Header (20 bytes) */
+	rts_empty_command_write(&buffer[20]); /* Empty command (4 bytes) */
+
+	status = rpc_out_channel_write(outChannel, buffer, header.frag_length);
+
+	free(buffer);
+
+	return (status > 0) ? 1 : -1;
+}
+
 int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
 {
 	int status;
@@ -805,6 +872,9 @@ int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
 	BYTE* VirtualConnectionCookie;
 	BYTE* PredecessorChannelCookie;
 	BYTE* SuccessorChannelCookie;
+	RpcVirtualConnection* connection = rpc->VirtualConnection;
+	RpcOutChannel* outChannel = connection->DefaultOutChannel;
+	RpcOutChannel* nextOutChannel = connection->NonDefaultOutChannel;
 
 	rts_pdu_header_init(&header);
 	header.frag_length = 96;
@@ -813,10 +883,10 @@ int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
 
 	WLog_DBG(TAG, "Sending OUT R1/A3 RTS PDU");
 
-	VirtualConnectionCookie = (BYTE*) &(rpc->VirtualConnection->Cookie);
-	PredecessorChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie);
-	SuccessorChannelCookie = (BYTE*) &(rpc->VirtualConnection->NonDefaultOutChannelCookie);
-	ReceiveWindowSize = rpc->VirtualConnection->DefaultOutChannel->ReceiveWindow;
+	VirtualConnectionCookie = (BYTE*) &(connection->Cookie);
+	PredecessorChannelCookie = (BYTE*) &(outChannel->Cookie);
+	SuccessorChannelCookie = (BYTE*) &(nextOutChannel->Cookie);
+	ReceiveWindowSize = outChannel->ReceiveWindow;
 
 	buffer = (BYTE*) malloc(header.frag_length);
 
@@ -830,7 +900,7 @@ int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
 	rts_cookie_command_write(&buffer[68], SuccessorChannelCookie); /* SuccessorChannelCookie (20 bytes) */
 	rts_receive_window_size_command_write(&buffer[88], ReceiveWindowSize); /* ReceiveWindowSize (8 bytes) */
 
-	status = rpc_out_write(rpc, buffer, header.frag_length);
+	status = rpc_out_channel_write(outChannel, buffer, header.frag_length);
 
 	free(buffer);
 
@@ -839,9 +909,9 @@ int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
 
 int rts_recv_OUT_R1_A2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
-	int status;
 	UINT32 offset;
 	UINT32 Destination = 0;
+	RpcVirtualConnection* connection = rpc->VirtualConnection;
 
 	offset = 24;
 	offset += rts_destination_command_read(rpc, &buffer[offset], length - offset, &Destination) + 4;
@@ -850,15 +920,37 @@ int rts_recv_OUT_R1_A2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 	WLog_ERR(TAG, "TS Gateway channel recycling is incomplete");
 
-	status = rpc_http_send_replacement_out_channel_request(rpc);
+	connection->NonDefaultOutChannel = rpc_out_channel_new(rpc);
+
+	return 1;
+}
+
+int rts_recv_OUT_R2_A6_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
+{
+	int status;
+	UINT32 offset;
+	UINT32 Destination = 0;
+
+	offset = 24;
+	offset += rts_destination_command_read(rpc, &buffer[offset], length - offset, &Destination) + 4;
+	offset += rts_empty_command_read(rpc, &buffer[offset], length - offset) + 4;
+
+	WLog_DBG(TAG, "Destination: %d", Destination);
+
+	status = rts_send_OUT_R2_C1_pdu(rpc);
 
 	if (status < 0)
 		return -1;
 
-	status = rts_send_OUT_R1_A3_pdu(rpc);
+	return 1;
+}
 
-	if (status < 0)
-		return -1;
+int rts_recv_OUT_R2_B3_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
+{
+	UINT32 offset;
+
+	offset = 24;
+	offset += rts_ance_command_read(rpc, &buffer[offset], length - offset) + 4;
 
 	return 1;
 }

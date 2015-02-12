@@ -57,6 +57,7 @@ struct rdp_transport
 	TRANSPORT_LAYER layer;
 	BIO* frontBio;
 	rdpTsg* tsg;
+	rdpTls* tls;
 	rdpTcp* TcpIn;
 	rdpTcp* TcpOut;
 	rdpTls* TlsIn;
@@ -82,7 +83,6 @@ struct rdp_transport
 	BOOL GatewayEnabled;
 	CRITICAL_SECTION ReadLock;
 	CRITICAL_SECTION WriteLock;
-	void* rdp;
 };
 
 wStream* transport_send_stream_init(rdpTransport* transport, int size);

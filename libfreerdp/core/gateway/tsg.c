@@ -116,8 +116,8 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count,
 	if (buffer3Length > 0)
 		Stream_Write(s, buffer3, buffer3Length); /* buffer3 (variable) */
 
-	Stream_Length(s) = Stream_GetPosition(s);
-	status = rpc_write(tsg->rpc, Stream_Buffer(s), Stream_Length(s), TsProxySendToServerOpnum);
+	Stream_SealLength(s);
+	status = rpc_client_write_call(tsg->rpc, Stream_Buffer(s), Stream_Length(s), TsProxySendToServerOpnum);
 	Stream_Free(s, TRUE);
 
 	if (status <= 0)
@@ -215,7 +215,7 @@ BOOL TsProxyCreateTunnelWriteRequest(rdpTsg* tsg)
 	CopyMemory(&buffer[88], &NDR_UUID, sizeof(p_uuid_t));
 	*((UINT32*) &buffer[104]) = NDR_SYNTAX_IF_VERSION;
 
-	status = rpc_write(rpc, buffer, length, TsProxyCreateTunnelOpnum);
+	status = rpc_client_write_call(rpc, buffer, length, TsProxyCreateTunnelOpnum);
 
 	if (status <= 0)
 		return FALSE;
@@ -601,7 +601,7 @@ BOOL TsProxyAuthorizeTunnelWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSE
 	ZeroMemory(&buffer[offset - pad], pad);
 	*((UINT32*) &buffer[offset]) = 0x00000000; /* MaxCount */
 	offset += 4;
-	status = rpc_write(rpc, buffer, length, TsProxyAuthorizeTunnelOpnum);
+	status = rpc_client_write_call(rpc, buffer, length, TsProxyAuthorizeTunnelOpnum);
 
 	if (status <= 0)
 		return FALSE;
@@ -763,7 +763,7 @@ BOOL TsProxyMakeTunnelCallWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSER
 	*((UINT32*) &buffer[28]) = TSG_PACKET_TYPE_MSGREQUEST_PACKET; /* SwitchValue */
 	*((UINT32*) &buffer[32]) = 0x00020000; /* PacketMsgRequestPtr */
 	*((UINT32*) &buffer[36]) = 0x00000001; /* MaxMessagesPerBatch */
-	status = rpc_write(rpc, buffer, length, TsProxyMakeTunnelCallOpnum);
+	status = rpc_client_write_call(rpc, buffer, length, TsProxyMakeTunnelCallOpnum);
 
 	if (status <= 0)
 		return FALSE;
@@ -962,7 +962,7 @@ BOOL TsProxyCreateChannelWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERI
 	*((UINT32*) &buffer[52]) = 0; /* Offset */
 	*((UINT32*) &buffer[56]) = count; /* ActualCount */
 	CopyMemory(&buffer[60], tsg->Hostname, count * 2); /* Array */
-	status = rpc_write(rpc, buffer, length, TsProxyCreateChannelOpnum);
+	status = rpc_client_write_call(rpc, buffer, length, TsProxyCreateChannelOpnum);
 
 	if (status <= 0)
 		return FALSE;
@@ -1035,7 +1035,7 @@ BOOL TsProxyCloseChannelWriteRequest(rdpTsg* tsg, PCHANNEL_CONTEXT_HANDLE_NOSERI
 	/* TunnelContext */
 	CopyMemory(&buffer[0], &tsg->ChannelContext.ContextType, 4); /* ContextType */
 	CopyMemory(&buffer[4], tsg->ChannelContext.ContextUuid, 16); /* ContextUuid */
-	status = rpc_write(rpc, buffer, length, TsProxyCloseChannelOpnum);
+	status = rpc_client_write_call(rpc, buffer, length, TsProxyCloseChannelOpnum);
 
 	if (status <= 0)
 		return FALSE;
@@ -1099,7 +1099,7 @@ BOOL TsProxyCloseTunnelWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_SERIALIZ
 	/* TunnelContext */
 	CopyMemory(&buffer[0], &tsg->TunnelContext.ContextType, 4); /* ContextType */
 	CopyMemory(&buffer[4], tsg->TunnelContext.ContextUuid, 16); /* ContextUuid */
-	status = rpc_write(rpc, buffer, length, TsProxyCloseTunnelOpnum);
+	status = rpc_client_write_call(rpc, buffer, length, TsProxyCloseTunnelOpnum);
 
 	if (status <= 0)
 		return FALSE;
@@ -1163,7 +1163,7 @@ BOOL TsProxySetupReceivePipeWriteRequest(rdpTsg* tsg)
 	/* ChannelContext */
 	CopyMemory(&buffer[0], &tsg->ChannelContext.ContextType, 4); /* ContextType */
 	CopyMemory(&buffer[4], tsg->ChannelContext.ContextUuid, 16); /* ContextUuid */
-	status = rpc_write(rpc, buffer, length, TsProxySetupReceivePipeOpnum);
+	status = rpc_client_write_call(rpc, buffer, length, TsProxySetupReceivePipeOpnum);
 
 	if (status <= 0)
 		return FALSE;
@@ -1410,33 +1410,57 @@ int tsg_check(rdpTsg* tsg)
 	return status;
 }
 
-BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
+BOOL tsg_set_hostname(rdpTsg* tsg, const char* hostname)
+{
+	free(tsg->Hostname);
+	tsg->Hostname = NULL;
+
+	ConvertToUnicode(CP_UTF8, 0, hostname, -1, &tsg->Hostname, 0);
+
+	return TRUE;
+}
+
+BOOL tsg_set_machine_name(rdpTsg* tsg, const char* machineName)
+{
+	free(tsg->MachineName);
+	tsg->MachineName = NULL;
+
+	ConvertToUnicode(CP_UTF8, 0, machineName, -1, &tsg->MachineName, 0);
+
+	return TRUE;
+}
+
+BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, int timeout)
 {
 	HANDLE events[2];
 	rdpRpc* rpc = tsg->rpc;
+	RpcInChannel* inChannel;
+	RpcOutChannel* outChannel;
+	RpcVirtualConnection* connection;
 	rdpSettings* settings = rpc->settings;
+	rdpTransport* transport = rpc->transport;
 
 	tsg->Port = port;
+	tsg->transport = transport;
 
-	rpc->TlsIn = rpc->transport->TlsIn;
-	rpc->TlsOut = rpc->transport->TlsOut;
+	if (!settings->GatewayPort)
+		settings->GatewayPort = 443;
 
-	free(tsg->Hostname);
-	tsg->Hostname = NULL;
-	ConvertToUnicode(CP_UTF8, 0, hostname, -1, &tsg->Hostname, 0);
+	tsg_set_hostname(tsg, hostname);
+	tsg_set_machine_name(tsg, settings->ComputerName);
 
-	free(tsg->MachineName);
-	tsg->MachineName = NULL;
-	ConvertToUnicode(CP_UTF8, 0, settings->ComputerName, -1, &tsg->MachineName, 0);
-
-	if (!rpc_connect(rpc))
+	if (!rpc_connect(rpc, timeout))
 	{
 		WLog_ERR(TAG, "rpc_connect error!");
 		return FALSE;
 	}
 
-	BIO_get_event(rpc->TlsIn->bio, &events[0]);
-	BIO_get_event(rpc->TlsOut->bio, &events[1]);
+	connection = rpc->VirtualConnection;
+	inChannel = connection->DefaultInChannel;
+	outChannel = connection->DefaultOutChannel;
+
+	BIO_get_event(inChannel->tls->bio, &events[0]);
+	BIO_get_event(outChannel->tls->bio, &events[1]);
 
 	while (tsg->state != TSG_STATE_PIPE_CREATED)
 	{
@@ -1445,16 +1469,28 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 		if (tsg_check(tsg) < 0)
 		{
 			WLog_ERR(TAG, "tsg_check failure");
-			rpc->transport->layer = TRANSPORT_LAYER_CLOSED;
+			transport->layer = TRANSPORT_LAYER_CLOSED;
 			return FALSE;
 		}
 	}
 
 	WLog_INFO(TAG, "TS Gateway Connection Success");
 
-	tsg->transport->GatewayEvent = tsg->rpc->client->PipeEvent;
 	tsg->bio = BIO_new(BIO_s_tsg());
-	tsg->bio->ptr = tsg;
+
+	if (!tsg->bio)
+		return FALSE;
+
+	tsg->bio->ptr = (void*) tsg;
+
+	transport->frontBio = tsg->bio;
+	transport->TcpIn = inChannel->tcp;
+	transport->TlsIn = inChannel->tls;
+	transport->TcpOut = outChannel->tcp;
+	transport->TlsOut = outChannel->tls;
+	transport->GatewayEvent = rpc->client->PipeEvent;
+	transport->SplitInputOutput = TRUE;
+	transport->layer = TRANSPORT_LAYER_TSG;
 
 	return TRUE;
 }
@@ -1600,6 +1636,8 @@ void tsg_free(rdpTsg* tsg)
 {
 	if (tsg)
 	{
+		rdpTransport* transport = tsg->transport;
+
 		if (tsg->bio)
 		{
 			BIO_free(tsg->bio);
@@ -1614,6 +1652,19 @@ void tsg_free(rdpTsg* tsg)
 
 		free(tsg->Hostname);
 		free(tsg->MachineName);
+
+		if (transport->TlsIn)
+			tls_free(transport->TlsIn);
+
+		if (transport->TcpIn)
+			freerdp_tcp_free(transport->TcpIn);
+
+		if (transport->TlsOut)
+			tls_free(transport->TlsOut);
+
+		if (transport->TcpOut)
+			freerdp_tcp_free(transport->TcpOut);
+
 		free(tsg);
 	}
 }

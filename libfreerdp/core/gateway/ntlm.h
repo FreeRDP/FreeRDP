@@ -23,7 +23,6 @@
 #define FREERDP_CORE_NTLM_H
 
 typedef struct rdp_ntlm rdpNtlm;
-typedef struct rdp_ntlm_http rdpNtlmHttp;
 
 #include "../tcp.h"
 #include "../transport.h"
@@ -63,12 +62,6 @@ struct rdp_ntlm
 	SEC_WINNT_AUTH_IDENTITY identity;
 	SecPkgContext_Sizes ContextSizes;
 	SecPkgContext_Bindings* Bindings;
-};
-
-struct rdp_ntlm_http
-{
-	rdpNtlm* ntlm;
-	HttpContext* context;
 };
 
 BOOL ntlm_authenticate(rdpNtlm* ntlm);

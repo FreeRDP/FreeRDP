@@ -306,7 +306,7 @@ DWORD TsProxySendToServer(handle_t IDL_handle, BYTE pRpcMessage[], UINT32 count,
 
 int tsg_transition_to_state(rdpTsg* tsg, TSG_STATE state);
 
-BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port);
+BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, int timeout);
 BOOL tsg_disconnect(rdpTsg* tsg);
 
 int tsg_write(rdpTsg* tsg, BYTE* data, UINT32 length);

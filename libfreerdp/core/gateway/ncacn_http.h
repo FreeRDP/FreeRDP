@@ -31,20 +31,13 @@
 #include "rpc.h"
 #include "http.h"
 
-int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, TSG_CHANNEL channel);
-void rpc_ncacn_http_ntlm_uninit(rdpRpc* rpc, TSG_CHANNEL channel);
+int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, RpcChannel* channel);
+void rpc_ncacn_http_ntlm_uninit(rdpRpc* rpc, RpcChannel* channel);
 
-int rpc_ncacn_http_send_in_channel_request(rdpRpc* rpc);
-int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc, HttpResponse* response);
+int rpc_ncacn_http_send_in_channel_request(rdpRpc* rpc, RpcInChannel* inChannel);
+int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc, RpcInChannel* inChannel, HttpResponse* response);
 
-int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc);
-int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc, HttpResponse* response);
-
-void rpc_ntlm_http_init_channel(rdpRpc* rpc, rdpNtlmHttp* ntlm_http, TSG_CHANNEL channel);
-
-int rpc_http_send_replacement_out_channel_request(rdpRpc* rpc);
-
-rdpNtlmHttp* ntlm_http_new(void);
-void ntlm_http_free(rdpNtlmHttp* ntlm_http);
+int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc, RpcOutChannel* outChannel, BOOL replacement);
+int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc, RpcOutChannel* outChannel, HttpResponse* response);
 
 #endif

@@ -27,13 +27,14 @@ RpcClientCall* rpc_client_call_find_by_id(rdpRpc* rpc, UINT32 CallId);
 RpcClientCall* rpc_client_call_new(UINT32 CallId, UINT32 OpNum);
 void rpc_client_call_free(RpcClientCall* client_call);
 
-int rpc_send_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length);
-int rpc_client_recv(rdpRpc* rpc);
+int rpc_in_channel_send_pdu(RpcInChannel* inChannel, BYTE* buffer, UINT32 length);
 
 int rpc_client_in_channel_recv(rdpRpc* rpc);
 int rpc_client_out_channel_recv(rdpRpc* rpc);
 
 int rpc_client_receive_pipe_read(rdpRpc* rpc, BYTE* buffer, size_t length);
+
+int rpc_client_write_call(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum);
 
 int rpc_client_new(rdpRpc* rpc);
 void rpc_client_free(rdpRpc* rpc);

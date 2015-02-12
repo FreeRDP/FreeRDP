@@ -1338,8 +1338,6 @@ rdpRdp* rdp_new(rdpContext* context)
 
 	if (!rdp->transport)
 		goto out_free_settings;
-	
-	rdp->transport->rdp = rdp;
 
 	rdp->license = license_new(rdp);
 	if (!rdp->license)
@@ -1482,7 +1480,6 @@ void rdp_reset(rdpRdp* rdp)
 	transport_free(rdp->transport);
 
 	rdp->transport = transport_new(context);
-	rdp->transport->rdp = rdp;
 	rdp->license = license_new(rdp);
 	rdp->nego = nego_new(rdp->transport);
 	rdp->mcs = mcs_new(rdp->transport);
