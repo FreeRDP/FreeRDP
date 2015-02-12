@@ -243,7 +243,9 @@ static WtsApiFunctionTable FreeRDP_WtsApiFunctionTable =
 	FreeRDP_WTSEnableChildSessions, /* EnableChildSessions */
 	FreeRDP_WTSIsChildSessionsEnabled, /* IsChildSessionsEnabled */
 	FreeRDP_WTSGetChildSessionId, /* GetChildSessionId */
-	FreeRDP_WTSGetActiveConsoleSessionId /* GetActiveConsoleSessionId */
+	FreeRDP_WTSGetActiveConsoleSessionId, /* GetActiveConsoleSessionId */
+	FreeRDP_WTSLogonUser,
+	FreeRDP_WTSLogoffUser
 };
 
 PWtsApiFunctionTable FreeRDP_InitWtsApi(void)
