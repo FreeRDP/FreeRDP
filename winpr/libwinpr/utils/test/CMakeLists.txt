@@ -11,6 +11,7 @@ set(${MODULE_PREFIX}_TESTS
 	TestQueue.c
 	TestPrint.c
 	TestPubSub.c
+	TestStream.c
 	TestBitStream.c
 	TestArrayList.c
 	TestLinkedList.c
