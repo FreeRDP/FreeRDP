@@ -1011,20 +1011,48 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 	{
 		nego->SelectedProtocol = PROTOCOL_TLS;
 	}
-	else if ((settings->RdpSecurity) && (nego->SelectedProtocol == PROTOCOL_RDP))
+	else if ((settings->RdpSecurity) && (nego->RequestedProtocols == PROTOCOL_RDP))
 	{
 		nego->SelectedProtocol = PROTOCOL_RDP;
 	}
 	else
 	{
+		/*
+		 * when here client and server aren't compatible, we select the right
+		 * error message to return to the client in the nego failure packet
+		 */
+		nego->SelectedProtocol = PROTOCOL_FAILED_NEGO;
+
+		if (settings->RdpSecurity)
+		{
+			WLog_ERR(TAG, "server supports only Standard RDP Security");
+			nego->SelectedProtocol |= SSL_NOT_ALLOWED_BY_SERVER;
+		}
+		else
+		{
+			if (settings->NlaSecurity && !settings->TlsSecurity)
+			{
+				WLog_ERR(TAG, "server supports only NLA Security");
+				nego->SelectedProtocol |= HYBRID_REQUIRED_BY_SERVER;
+			}
+			else
+			{
+				WLog_ERR(TAG, "server supports only a SSL based Security (TLS or NLA)");
+				nego->SelectedProtocol |= SSL_REQUIRED_BY_SERVER;
+			}
+		}
+
 		WLog_ERR(TAG, "Protocol security negotiation failure");
 	}
 
-	WLog_INFO(TAG, "Negotiated Security: NLA:%d TLS:%d RDP:%d",
-			 (nego->SelectedProtocol & PROTOCOL_NLA) ? 1 : 0,
-			 (nego->SelectedProtocol & PROTOCOL_TLS) ? 1 : 0,
-			 (nego->SelectedProtocol == PROTOCOL_RDP) ? 1: 0
-			);
+	if (!(nego->SelectedProtocol & PROTOCOL_FAILED_NEGO))
+	{
+		WLog_INFO(TAG, "Negotiated Security: NLA:%d TLS:%d RDP:%d",
+				 (nego->SelectedProtocol & PROTOCOL_NLA) ? 1 : 0,
+				 (nego->SelectedProtocol & PROTOCOL_TLS) ? 1 : 0,
+				 (nego->SelectedProtocol == PROTOCOL_RDP) ? 1: 0
+				);
+	}
 
 	if (!nego_send_negotiation_response(nego))
 		return FALSE;

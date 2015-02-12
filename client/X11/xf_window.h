@@ -118,6 +118,9 @@ struct xf_app_window
 	UINT32 numVisibilityRects;
 	RECTANGLE_16* visibilityRects;
 
+	UINT32 localWindowOffsetCorrX;
+	UINT32 localWindowOffsetCorrY;
+
 	GC gc;
 	int shmid;
 	Window handle;
