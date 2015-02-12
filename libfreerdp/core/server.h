@@ -173,4 +173,7 @@ BOOL CDECL FreeRDP_WTSGetChildSessionId(PULONG pSessionId);
 
 DWORD WINAPI FreeRDP_WTSGetActiveConsoleSessionId(void);
 
+BOOL WINAPI FreeRDP_WTSLogoffUser(HANDLE hServer);
+BOOL WINAPI FreeRDP_WTSLogonUser(HANDLE hServer, LPCSTR username, LPCSTR password, LPCSTR domain);
+
 #endif /* FREERDP_CORE_SERVER_H */

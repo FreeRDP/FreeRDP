@@ -1375,3 +1375,12 @@ DWORD WINAPI FreeRDP_WTSGetActiveConsoleSessionId(void)
 {
 	return 0xFFFFFFFF;
 }
+BOOL WINAPI FreeRDP_WTSLogoffUser(HANDLE hServer)
+{
+	return FALSE;
+}
+
+BOOL WINAPI FreeRDP_WTSLogonUser(HANDLE hServer, LPCSTR username, LPCSTR password, LPCSTR domain)
+{
+	return FALSE;
+}
