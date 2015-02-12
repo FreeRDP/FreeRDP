@@ -1410,9 +1410,28 @@ int tsg_check(rdpTsg* tsg)
 	return status;
 }
 
+BOOL tsg_set_hostname(rdpTsg* tsg, const char* hostname)
+{
+	free(tsg->Hostname);
+	tsg->Hostname = NULL;
+
+	ConvertToUnicode(CP_UTF8, 0, hostname, -1, &tsg->Hostname, 0);
+
+	return TRUE;
+}
+
+BOOL tsg_set_machine_name(rdpTsg* tsg, const char* machineName)
+{
+	free(tsg->MachineName);
+	tsg->MachineName = NULL;
+
+	ConvertToUnicode(CP_UTF8, 0, machineName, -1, &tsg->MachineName, 0);
+
+	return TRUE;
+}
+
 BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, int timeout)
 {
-	int tlsStatus;
 	HANDLE events[2];
 	rdpRpc* rpc = tsg->rpc;
 	RpcInChannel* inChannel;
@@ -1420,94 +1439,25 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, int timeout)
 	RpcVirtualConnection* connection;
 	rdpSettings* settings = rpc->settings;
 	rdpTransport* transport = rpc->transport;
-	rdpContext* context = rpc->context;
 
 	tsg->Port = port;
 	tsg->transport = transport;
 
-	free(tsg->Hostname);
-	tsg->Hostname = NULL;
-	ConvertToUnicode(CP_UTF8, 0, hostname, -1, &tsg->Hostname, 0);
-
-	free(tsg->MachineName);
-	tsg->MachineName = NULL;
-	ConvertToUnicode(CP_UTF8, 0, settings->ComputerName, -1, &tsg->MachineName, 0);
-
-	connection = rpc->VirtualConnection;
-	inChannel = connection->DefaultInChannel;
-	outChannel = connection->DefaultOutChannel;
-
-	inChannel->tcp = freerdp_tcp_new(settings);
-	outChannel->tcp = freerdp_tcp_new(settings);
-
-	if (!freerdp_tcp_connect(inChannel->tcp, settings->GatewayHostname, settings->GatewayPort, timeout) ||
-			!freerdp_tcp_set_blocking_mode(inChannel->tcp, FALSE))
-		return FALSE;
-
-	if (!freerdp_tcp_connect(outChannel->tcp, settings->GatewayHostname, settings->GatewayPort, timeout) ||
-			!freerdp_tcp_set_blocking_mode(outChannel->tcp, FALSE))
-		return FALSE;
-
-	inChannel->tls = tls_new(settings);
-
-	if (!inChannel->tls)
-		return FALSE;
-
-	outChannel->tls = tls_new(settings);
-
-	if (!outChannel->tls)
-		return FALSE;
-
-	/* put a decent default value for gateway port */
 	if (!settings->GatewayPort)
 		settings->GatewayPort = 443;
 
-	inChannel->tls->hostname = outChannel->tls->hostname = settings->GatewayHostname;
-	inChannel->tls->port = outChannel->tls->port = settings->GatewayPort;
+	tsg_set_hostname(tsg, hostname);
+	tsg_set_machine_name(tsg, settings->ComputerName);
 
-	inChannel->tls->isGatewayTransport = TRUE;
-	tlsStatus = tls_connect(inChannel->tls, inChannel->tcp->bufferedBio);
-
-	if (tlsStatus < 1)
-	{
-		if (tlsStatus < 0)
-		{
-			if (!freerdp_get_last_error(context))
-				freerdp_set_last_error(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
-		}
-		else
-		{
-			if (!freerdp_get_last_error(context))
-				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
-		}
-
-		return FALSE;
-	}
-
-	outChannel->tls->isGatewayTransport = TRUE;
-	tlsStatus = tls_connect(outChannel->tls, outChannel->tcp->bufferedBio);
-
-	if (tlsStatus < 1)
-	{
-		if (tlsStatus < 0)
-		{
-			if (!freerdp_get_last_error(context))
-				freerdp_set_last_error(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
-		}
-		else
-		{
-			if (!freerdp_get_last_error(context))
-				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
-		}
-
-		return FALSE;
-	}
-
-	if (!rpc_connect(rpc))
+	if (!rpc_connect(rpc, timeout))
 	{
 		WLog_ERR(TAG, "rpc_connect error!");
 		return FALSE;
 	}
+
+	connection = rpc->VirtualConnection;
+	inChannel = connection->DefaultInChannel;
+	outChannel = connection->DefaultOutChannel;
 
 	BIO_get_event(inChannel->tls->bio, &events[0]);
 	BIO_get_event(outChannel->tls->bio, &events[1]);

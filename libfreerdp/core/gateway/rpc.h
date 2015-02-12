@@ -787,7 +787,7 @@ int rpc_out_channel_transition_to_state(RpcOutChannel* outChannel, CLIENT_OUT_CH
 int rpc_virtual_connection_transition_to_state(rdpRpc* rpc,
 		RpcVirtualConnection* connection, VIRTUAL_CONNECTION_STATE state);
 
-BOOL rpc_connect(rdpRpc* rpc);
+BOOL rpc_connect(rdpRpc* rpc, int timeout);
 
 rdpRpc* rpc_new(rdpTransport* transport);
 void rpc_free(rdpRpc* rpc);
