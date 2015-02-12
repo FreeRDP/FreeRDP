@@ -1,5 +1,5 @@
 # Copyright (c) 2010-2011, Ethan Rublee
-# Copyright (c) 2011-2013, Andrey Kamaev
+# Copyright (c) 2011-2014, Andrey Kamaev
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -12,9 +12,9 @@
 #     this list of conditions and the following disclaimer in the documentation
 #     and/or other materials provided with the distribution.
 #
-# 3.  The name of the copyright holders may be used to endorse or promote
-#     products derived from this software without specific prior written
-#     permission.
+# 3.  Neither the name of the copyright holder nor the names of its
+#     contributors may be used to endorse or promote products derived from this
+#     software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -29,7 +29,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 # ------------------------------------------------------------------------------
-#  Android CMake toolchain file, for use with the Android NDK r5-r8
+#  Android CMake toolchain file, for use with the Android NDK r5-r9
 #  Requires cmake 2.6.3 or newer (2.8.5 or newer is recommended).
 #  See home page: https://github.com/taka-no-me/android-cmake
 #
@@ -85,10 +85,15 @@
 #        "armeabi-v7a with VFPV3" - same as armeabi-v7a, but
 #            sets VFPV3 as floating-point unit (has 32 registers instead of 16).
 #        "armeabi-v6 with VFP" - tuned for ARMv6 processors having VFP.
+#        "arm64-v8a" - matches to the NDK ABI with the same name.
+#           See ${ANDROID_NDK}/docs/CPU-ARCH-ABIS.html for the documentation.
 #        "x86" - matches to the NDK ABI with the same name.
 #            See ${ANDROID_NDK}/docs/CPU-ARCH-ABIS.html for the documentation.
-#        "mips" - matches to the NDK ABI with the same name
-#            (It is not tested on real devices by the authos of this toolchain)
+#        "x86_64" - matches to the NDK ABI with the same name.
+#            See ${ANDROID_NDK}/docs/CPU-ARCH-ABIS.html for the documentation.
+#        "mips" - matches to the NDK ABI with the same name.
+#            See ${ANDROID_NDK}/docs/CPU-ARCH-ABIS.html for the documentation.
+#        "mips64" - matches to the NDK ABI with the same name.
 #            See ${ANDROID_NDK}/docs/CPU-ARCH-ABIS.html for the documentation.
 #
 #    ANDROID_NATIVE_API_LEVEL=android-8 - level of Android API compile for.
@@ -182,13 +187,13 @@
 #    ANDROID and BUILD_ANDROID will be set to true, you may test any of these
 #    variables to make necessary Android-specific configuration changes.
 #
-#    Also ARMEABI or ARMEABI_V7A or X86 or MIPS will be set true, mutually
+#    Also ARMEABI or ARMEABI_V7A or ARM64_V8A or X86 or X86_64 or MIPS or MIPS64 will be set true, mutually
 #    exclusive. NEON option will be set true if VFP is set to NEON.
 #
 #    LIBRARY_OUTPUT_PATH_ROOT should be set in cache to determine where Android
 #    libraries will be installed.
 #    Default is ${CMAKE_SOURCE_DIR}, and the android libs will always be
-#    under the ${LIBRARY_OUTPUT_PATH_ROOT}/libs/${ANDROID_NDK_ABI_NAME}
+#    under the ${LIBRARY_OUTPUT_PATH_ROOT}/libs/${ANDROID_NDK_OUTPUT_ABI_NAME}
 #    (depending on the target ABI). This is convenient for Android packaging.
 #
 #  Change Log:
@@ -294,6 +299,19 @@
 #     [~] automatically detect if explicit link to crtbegin_*.o is needed
 #   - June 2013
 #     [~] fixed stl include path for standalone toolchain made by NDK >= r8c
+#   - July 2013
+#     [+] updated for NDK r9
+#   - November 2013
+#     [+] updated for NDK r9b
+#   - December 2013
+#     [+] updated for NDK r9c
+#   - January 2014
+#     [~] fix copying of shared STL
+#   - April 2014
+#     [+] updated for NDK r9d
+#   - July 2014
+#     [+] updated for NDK r10
+#     [+] arm64_v8a, x86_64, mips64 toolchain support (experimental)
 # ------------------------------------------------------------------------------
 
 cmake_minimum_required( VERSION 2.6.3 )
@@ -326,7 +344,7 @@ endif()
 # rpath makes low sence for Android
 set( CMAKE_SKIP_RPATH TRUE CACHE BOOL "If set, runtime paths are not added when using shared libraries." )
 
-set( ANDROID_SUPPORTED_NDK_VERSIONS ${ANDROID_EXTRA_NDK_VERSIONS} -r9 -r8e -r8d -r8c -r8b -r8 -r7c -r7b -r7 -r6b -r6 -r5c -r5b -r5 "" )
+set( ANDROID_SUPPORTED_NDK_VERSIONS ${ANDROID_EXTRA_NDK_VERSIONS} -r10 -r9d -r9c -r9b -r9 -r8e -r8d -r8c -r8b -r8 -r7c -r7b -r7 -r6b -r6 -r5c -r5b -r5 "" )
 if(NOT DEFINED ANDROID_NDK_SEARCH_PATHS)
  if( CMAKE_HOST_WIN32 )
   file( TO_CMAKE_PATH "$ENV{PROGRAMFILES}" ANDROID_NDK_SEARCH_PATHS )
@@ -341,12 +359,18 @@ if(NOT DEFINED ANDROID_STANDALONE_TOOLCHAIN_SEARCH_PATH)
 endif()
 
 set( ANDROID_SUPPORTED_ABIS_arm "armeabi-v7a;armeabi;armeabi-v7a with NEON;armeabi-v7a with VFPV3;armeabi-v6 with VFP" )
+set( ANDROID_SUPPORTED_ABIS_arm64 "arm64-v8a" )
 set( ANDROID_SUPPORTED_ABIS_x86 "x86" )
+set( ANDROID_SUPPORTED_ABIS_x86_64 "x86_64" )
 set( ANDROID_SUPPORTED_ABIS_mipsel "mips" )
+set( ANDROID_SUPPORTED_ABIS_mips64el "mips64" )
 
-set( ANDROID_DEFAULT_NDK_API_LEVEL 8 )
+set( ANDROID_DEFAULT_NDK_API_LEVEL 9 )
 set( ANDROID_DEFAULT_NDK_API_LEVEL_x86 9 )
 set( ANDROID_DEFAULT_NDK_API_LEVEL_mips 9 )
+set( ANDROID_DEFAULT_NDK_API_LEVEL_arm64 "L" )
+set( ANDROID_DEFAULT_NDK_API_LEVEL_x86_64 "L" )
+set( ANDROID_DEFAULT_NDK_API_LEVEL_mips64 "L" )
 
 
 macro( __LIST_FILTER listvar regex )
@@ -472,7 +496,7 @@ endif()
 
 
 # detect current host platform
-if( NOT DEFINED ANDROID_NDK_HOST_X64 AND CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "amd64|x86_64|AMD64")
+if( NOT DEFINED ANDROID_NDK_HOST_X64 AND (CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "amd64|x86_64|AMD64" OR CMAKE_HOST_APPLE) )
  set( ANDROID_NDK_HOST_X64 1 CACHE BOOL "Try to use 64-bit compiler toolchain" )
  mark_as_advanced( ANDROID_NDK_HOST_X64 )
 endif()
@@ -600,6 +624,9 @@ if( BUILD_WITH_ANDROID_NDK )
  # try to detect change of NDK
  if( CMAKE_AR )
   string( LENGTH "${ANDROID_NDK_TOOLCHAINS_PATH}" __length )
+	message("${CMAKE_AR}")
+	message("${__length}")
+	message("${ANDROID_NDK_TOOLCHAINS_PATH}")
   string( SUBSTRING "${CMAKE_AR}" 0 ${__length} __androidNdkPreviousPath )
   if( NOT __androidNdkPreviousPath STREQUAL ANDROID_NDK_TOOLCHAINS_PATH )
    message( FATAL_ERROR "It is not possible to change the path to the NDK on subsequent CMake run. You must remove all generated files from your build folder first.
@@ -650,10 +677,16 @@ macro( __GLOB_NDK_TOOLCHAINS __availableToolchainsVar __availableToolchainsLst _
    string( REGEX MATCH "[0-9]+[.][0-9]+([.][0-9x]+)?$" __version "${__gcc_toolchain}" )
    if( __machine MATCHES i686 )
     set( __arch "x86" )
+   elseif( __machine MATCHES x86_64 )
+    set( __arch "x86_64" )
    elseif( __machine MATCHES arm )
     set( __arch "arm" )
+   elseif( __machine MATCHES aarch64 )
+    set( __arch "arm64" )
    elseif( __machine MATCHES mipsel )
     set( __arch "mipsel" )
+   elseif( __machine MATCHES mips64el )
+    set( __arch "mips64el" )
    endif()
    list( APPEND __availableToolchainMachines "${__machine}" )
    list( APPEND __availableToolchainArchs "${__arch}" )
@@ -690,6 +723,7 @@ if( BUILD_WITH_ANDROID_NDK )
   endif()
   __LIST_FILTER( __availableToolchainsLst "^[.]" )
   __LIST_FILTER( __availableToolchainsLst "llvm" )
+  __LIST_FILTER( __availableToolchainsLst "renderscript" )
   __GLOB_NDK_TOOLCHAINS( __availableToolchains __availableToolchainsLst "${ANDROID_NDK_TOOLCHAINS_SUBPATH}" )
   if( NOT __availableToolchains AND NOT ANDROID_NDK_TOOLCHAINS_SUBPATH STREQUAL ANDROID_NDK_TOOLCHAINS_SUBPATH2 )
    __GLOB_NDK_TOOLCHAINS( __availableToolchains __availableToolchainsLst "${ANDROID_NDK_TOOLCHAINS_SUBPATH2}" )
@@ -721,7 +755,7 @@ __INIT_VARIABLE( ANDROID_ABI OBSOLETE_ARM_TARGET OBSOLETE_ARM_TARGETS VALUES ${A
 # verify that target ABI is supported
 list( FIND ANDROID_SUPPORTED_ABIS "${ANDROID_ABI}" __androidAbiIdx )
 if( __androidAbiIdx EQUAL -1 )
- string( REPLACE ";" "\", \"", PRINTABLE_ANDROID_SUPPORTED_ABIS  "${ANDROID_SUPPORTED_ABIS}" )
+ string( REPLACE ";" "\", \"" PRINTABLE_ANDROID_SUPPORTED_ABIS  "${ANDROID_SUPPORTED_ABIS}" )
  message( FATAL_ERROR "Specified ANDROID_ABI = \"${ANDROID_ABI}\" is not supported by this cmake toolchain or your NDK/toolchain.
    Supported values are: \"${PRINTABLE_ANDROID_SUPPORTED_ABIS}\"
    " )
@@ -736,6 +770,13 @@ if( ANDROID_ABI STREQUAL "x86" )
  set( ANDROID_ARCH_FULLNAME "x86" )
  set( ANDROID_LLVM_TRIPLE "i686-none-linux-android" )
  set( CMAKE_SYSTEM_PROCESSOR "i686" )
+elseif( ANDROID_ABI STREQUAL "x86_64" )
+ set( X86_64 true )
+ set( ANDROID_NDK_ABI_NAME "x86_64" )
+ set( ANDROID_ARCH_NAME "x86_64" )
+ set( ANDROID_ARCH_FULLNAME "x86_64" )
+ set( ANDROID_LLVM_TRIPLE "x86_64-none-linux-android" )
+ set( CMAKE_SYSTEM_PROCESSOR "x86_64" )
 elseif( ANDROID_ABI STREQUAL "mips" )
  set( MIPS true )
  set( ANDROID_NDK_ABI_NAME "mips" )
@@ -743,6 +784,13 @@ elseif( ANDROID_ABI STREQUAL "mips" )
  set( ANDROID_ARCH_FULLNAME "mipsel" )
  set( ANDROID_LLVM_TRIPLE "mipsel-none-linux-android" )
  set( CMAKE_SYSTEM_PROCESSOR "mips" )
+elseif( ANDROID_ABI STREQUAL "mips64" )
+ set( MIPS64 true )
+ set( ANDROID_NDK_ABI_NAME "mips64" )
+ set( ANDROID_ARCH_NAME "mips64" )
+ set( ANDROID_ARCH_FULLNAME "mips64el" )
+ set( ANDROID_LLVM_TRIPLE "mips64el-none-linux-android" )
+ set( CMAKE_SYSTEM_PROCESSOR "mips64" )
 elseif( ANDROID_ABI STREQUAL "armeabi" )
  set( ARMEABI true )
  set( ANDROID_NDK_ABI_NAME "armeabi" )
@@ -783,8 +831,23 @@ elseif( ANDROID_ABI STREQUAL "armeabi-v7a with NEON" )
  set( CMAKE_SYSTEM_PROCESSOR "armv7-a" )
  set( VFPV3 true )
  set( NEON true )
+elseif( ANDROID_ABI STREQUAL "arm64-v8a" )
+ set( ARM64_V8A true )
+ set( ANDROID_NDK_ABI_NAME "arm64-v8a" )
+ set( ANDROID_ARCH_NAME "arm64" )
+ set( ANDROID_ARCH_FULLNAME "arm64" )
+ set( ANDROID_LLVM_TRIPLE "armv8-none-linux-androideabi" )
+ set( CMAKE_SYSTEM_PROCESSOR "aarch64" )
+ set( VFPV3 true )
+ set( NEON true )
 else()
  message( SEND_ERROR "Unknown ANDROID_ABI=\"${ANDROID_ABI}\" is specified." )
+endif()
+
+if( X86_64 )
+ set( ANDROID_NDK_OUTPUT_ABI_NAME "x86-64" )
+else()
+ set( ANDROID_NDK_OUTPUT_ABI_NAME ${ANDROID_NDK_ABI_NAME} )
 endif()
 
 if( CMAKE_BINARY_DIR AND EXISTS "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeSystem.cmake" )
@@ -852,38 +915,40 @@ unset( __availableToolchainCompilerVersions )
 
 # choose native API level
 __INIT_VARIABLE( ANDROID_NATIVE_API_LEVEL ENV_ANDROID_NATIVE_API_LEVEL ANDROID_API_LEVEL ENV_ANDROID_API_LEVEL ANDROID_STANDALONE_TOOLCHAIN_API_LEVEL ANDROID_DEFAULT_NDK_API_LEVEL_${ANDROID_ARCH_NAME} ANDROID_DEFAULT_NDK_API_LEVEL )
-string( REGEX MATCH "[0-9]+" ANDROID_NATIVE_API_LEVEL "${ANDROID_NATIVE_API_LEVEL}" )
-# adjust API level
-set( __real_api_level ${ANDROID_DEFAULT_NDK_API_LEVEL_${ANDROID_ARCH_NAME}} )
-foreach( __level ${ANDROID_SUPPORTED_NATIVE_API_LEVELS} )
- if( NOT __level GREATER ANDROID_NATIVE_API_LEVEL AND NOT __level LESS __real_api_level )
-  set( __real_api_level ${__level} )
- endif()
-endforeach()
-if( __real_api_level AND NOT ANDROID_NATIVE_API_LEVEL EQUAL __real_api_level )
- message( STATUS "Adjusting Android API level 'android-${ANDROID_NATIVE_API_LEVEL}' to 'android-${__real_api_level}'")
- set( ANDROID_NATIVE_API_LEVEL ${__real_api_level} )
-endif()
-unset(__real_api_level)
-# validate
-list( FIND ANDROID_SUPPORTED_NATIVE_API_LEVELS "${ANDROID_NATIVE_API_LEVEL}" __levelIdx )
-if( __levelIdx EQUAL -1 )
- message( SEND_ERROR "Specified Android native API level 'android-${ANDROID_NATIVE_API_LEVEL}' is not supported by your NDK/toolchain." )
-else()
- if( BUILD_WITH_ANDROID_NDK )
-  __DETECT_NATIVE_API_LEVEL( __realApiLevel "${ANDROID_NDK}/platforms/android-${ANDROID_NATIVE_API_LEVEL}/arch-${ANDROID_ARCH_NAME}/usr/include/android/api-level.h" )
-  if( NOT __realApiLevel EQUAL ANDROID_NATIVE_API_LEVEL )
-   message( SEND_ERROR "Specified Android API level (${ANDROID_NATIVE_API_LEVEL}) does not match to the level found (${__realApiLevel}). Probably your copy of NDK is broken." )
+if( NOT ANDROID_NATIVE_API_LEVEL STREQUAL "L" )
+  string( REGEX MATCH "[0-9]+" ANDROID_NATIVE_API_LEVEL "${ANDROID_NATIVE_API_LEVEL}" )
+  # adjust API level
+  set( __real_api_level ${ANDROID_DEFAULT_NDK_API_LEVEL_${ANDROID_ARCH_NAME}} )
+  foreach( __level ${ANDROID_SUPPORTED_NATIVE_API_LEVELS} )
+   if( NOT __level GREATER ANDROID_NATIVE_API_LEVEL AND NOT __level LESS __real_api_level )
+    set( __real_api_level ${__level} )
+   endif()
+  endforeach()
+  if( __real_api_level AND NOT ANDROID_NATIVE_API_LEVEL EQUAL __real_api_level )
+   message( STATUS "Adjusting Android API level 'android-${ANDROID_NATIVE_API_LEVEL}' to 'android-${__real_api_level}'")
+   set( ANDROID_NATIVE_API_LEVEL ${__real_api_level} )
+    endif()
+  unset(__real_api_level)
+  # validate
+  list( FIND ANDROID_SUPPORTED_NATIVE_API_LEVELS "${ANDROID_NATIVE_API_LEVEL}" __levelIdx )
+  if( __levelIdx EQUAL -1 )
+   message( SEND_ERROR "Specified Android native API level 'android-${ANDROID_NATIVE_API_LEVEL}' is not supported by your NDK/toolchain." )
+  else()
+   if( BUILD_WITH_ANDROID_NDK )
+    __DETECT_NATIVE_API_LEVEL( __realApiLevel "${ANDROID_NDK}/platforms/android-${ANDROID_NATIVE_API_LEVEL}/arch-${ANDROID_ARCH_NAME}/usr/include/android/api-level.h" )
+    if( NOT __realApiLevel EQUAL ANDROID_NATIVE_API_LEVEL )
+     message( SEND_ERROR "Specified Android API level (${ANDROID_NATIVE_API_LEVEL}) does not match to the level found (${__realApiLevel}). Probably your copy of NDK is broken." )
+    endif()
+    unset( __realApiLevel )
+   endif()
+   set( ANDROID_NATIVE_API_LEVEL "${ANDROID_NATIVE_API_LEVEL}" CACHE STRING "Android API level for native code" FORCE )
+   if( CMAKE_VERSION VERSION_GREATER "2.8" )
+    list( SORT ANDROID_SUPPORTED_NATIVE_API_LEVELS )
+    set_property( CACHE ANDROID_NATIVE_API_LEVEL PROPERTY STRINGS ${ANDROID_SUPPORTED_NATIVE_API_LEVELS} )
+   endif()
   endif()
-  unset( __realApiLevel )
- endif()
- set( ANDROID_NATIVE_API_LEVEL "${ANDROID_NATIVE_API_LEVEL}" CACHE STRING "Android API level for native code" FORCE )
- if( CMAKE_VERSION VERSION_GREATER "2.8" )
-  list( SORT ANDROID_SUPPORTED_NATIVE_API_LEVELS )
-  set_property( CACHE ANDROID_NATIVE_API_LEVEL PROPERTY STRINGS ${ANDROID_SUPPORTED_NATIVE_API_LEVELS} )
- endif()
+  unset( __levelIdx )
 endif()
-unset( __levelIdx )
 
 
 # remember target ABI
@@ -1137,15 +1202,7 @@ endif()
 # case of shared STL linkage
 if( ANDROID_STL MATCHES "shared" AND DEFINED __libstl )
  string( REPLACE "_static.a" "_shared.so" __libstl "${__libstl}" )
- if( NOT _CMAKE_IN_TRY_COMPILE AND __libstl MATCHES "[.]so$" )
-  get_filename_component( __libstlname "${__libstl}" NAME )
-  execute_process( COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${__libstl}" "${LIBRARY_OUTPUT_PATH}/${__libstlname}" RESULT_VARIABLE __fileCopyProcess )
-  if( NOT __fileCopyProcess EQUAL 0 OR NOT EXISTS "${LIBRARY_OUTPUT_PATH}/${__libstlname}")
-   message( SEND_ERROR "Failed copying of ${__libstl} to the ${LIBRARY_OUTPUT_PATH}/${__libstlname}" )
-  endif()
-  unset( __fileCopyProcess )
-  unset( __libstlname )
- endif()
+ # TODO: check if .so file exists before the renaming
 endif()
 
 
@@ -1212,7 +1269,11 @@ if( ANDROID_COMPILER_IS_CLANG )
  set( CMAKE_C_COMPILER_ID Clang)
 endif()
 set( CMAKE_C_PLATFORM_ID Linux )
-set( CMAKE_C_SIZEOF_DATA_PTR 4 )
+if( ARM64_V8A OR X86_64 OR MIPS64 )
+ set( CMAKE_C_SIZEOF_DATA_PTR 8 )
+else()
+ set( CMAKE_C_SIZEOF_DATA_PTR 4 )
+endif()
 set( CMAKE_C_HAS_ISYSROOT 1 )
 set( CMAKE_C_COMPILER_ABI ELF )
 CMAKE_FORCE_CXX_COMPILER( "${CMAKE_CXX_COMPILER}" GNU )
@@ -1220,7 +1281,11 @@ if( ANDROID_COMPILER_IS_CLANG )
  set( CMAKE_CXX_COMPILER_ID Clang)
 endif()
 set( CMAKE_CXX_PLATFORM_ID Linux )
-set( CMAKE_CXX_SIZEOF_DATA_PTR 4 )
+if( ARM64_V8A OR X86_64 OR MIPS64 )
+ set( CMAKE_CXX_SIZEOF_DATA_PTR 8 )
+else()
+ set( CMAKE_CXX_SIZEOF_DATA_PTR 4 )
+endif()
 set( CMAKE_CXX_HAS_ISYSROOT 1 )
 set( CMAKE_CXX_COMPILER_ABI ELF )
 set( CMAKE_CXX_SOURCE_FILE_EXTENSIONS cc cp cxx cpp CPP c++ C )
@@ -1277,7 +1342,7 @@ if( ARMEABI OR ARMEABI_V7A )
    set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -funswitch-loops -finline-limit=300" )
   endif()
  endif()
-elseif( X86 )
+elseif( X86 OR X86_64 )
  set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -funwind-tables" )
  if( NOT ANDROID_COMPILER_IS_CLANG )
   set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -funswitch-loops -finline-limit=300" )
@@ -1286,7 +1351,7 @@ elseif( X86 )
  endif()
  set( ANDROID_CXX_FLAGS_RELEASE "-fomit-frame-pointer -fstrict-aliasing" )
  set( ANDROID_CXX_FLAGS_DEBUG   "-fno-omit-frame-pointer -fno-strict-aliasing" )
-elseif( MIPS )
+elseif( MIPS OR MIPS64 )
  set( ANDROID_CXX_FLAGS         "${ANDROID_CXX_FLAGS} -fpic -fno-strict-aliasing -finline-functions -ffunction-sections -funwind-tables -fmessage-length=0" )
  set( ANDROID_CXX_FLAGS_RELEASE "-fomit-frame-pointer" )
  set( ANDROID_CXX_FLAGS_DEBUG   "-fno-omit-frame-pointer" )
@@ -1323,6 +1388,8 @@ elseif( ARMEABI_V6 )
  set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -march=armv6 -mfloat-abi=softfp -mfpu=vfp" ) # vfp == vfpv2
 elseif( ARMEABI )
  set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -march=armv5te -mtune=xscale -msoft-float" )
+elseif( ARM64_V8A )
+ set( ANDROID_CXX_FLAGS "${ANDROID_CXX_FLAGS} -march=armv8-a" )
 endif()
 
 if( ANDROID_STL MATCHES "gnustl" AND (EXISTS "${__libstl}" OR EXISTS "${__libsupcxx}") )
@@ -1510,7 +1577,8 @@ endif()
 
 # global includes and link directories
 include_directories( SYSTEM "${ANDROID_SYSROOT}/usr/include" ${ANDROID_STL_INCLUDE_DIRS} )
-link_directories( "${CMAKE_INSTALL_PREFIX}/libs/${ANDROID_NDK_ABI_NAME}" )
+get_filename_component(__android_install_path "${CMAKE_INSTALL_PREFIX}/libs/${ANDROID_NDK_ABI_NAME}" ABSOLUTE) # avoid CMP0015 policy warning
+link_directories( "${__android_install_path}" )
 
 # detect if need link crtbegin_so.o explicitly
 if( NOT DEFINED ANDROID_EXPLICIT_CRT_LINK )
@@ -1555,12 +1623,24 @@ set( CMAKE_INSTALL_PREFIX "${ANDROID_TOOLCHAIN_ROOT}/user" CACHE STRING "path fo
 
 if(NOT _CMAKE_IN_TRY_COMPILE)
  if( EXISTS "${CMAKE_SOURCE_DIR}/jni/CMakeLists.txt" )
-  set( EXECUTABLE_OUTPUT_PATH "${LIBRARY_OUTPUT_PATH_ROOT}/bin/${ANDROID_NDK_ABI_NAME}" CACHE PATH "Output directory for applications" )
+  set( EXECUTABLE_OUTPUT_PATH "${LIBRARY_OUTPUT_PATH_ROOT}/bin/${ANDROID_NDK_OUTPUT_ABI_NAME}" CACHE PATH "Output directory for applications" )
  else()
   set( EXECUTABLE_OUTPUT_PATH "${LIBRARY_OUTPUT_PATH_ROOT}/bin" CACHE PATH "Output directory for applications" )
  endif()
- set( LIBRARY_OUTPUT_PATH "${LIBRARY_OUTPUT_PATH_ROOT}/libs/${ANDROID_NDK_ABI_NAME}" CACHE PATH "path for android libs" )
+ set( LIBRARY_OUTPUT_PATH "${LIBRARY_OUTPUT_PATH_ROOT}/libs/${ANDROID_NDK_OUTPUT_ABI_NAME}" CACHE PATH "path for android libs" )
 endif()
+
+# copy shaed stl library to build directory
+if( NOT _CMAKE_IN_TRY_COMPILE AND __libstl MATCHES "[.]so$" )
+ get_filename_component( __libstlname "${__libstl}" NAME )
+ execute_process( COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${__libstl}" "${LIBRARY_OUTPUT_PATH}/${__libstlname}" RESULT_VARIABLE __fileCopyProcess )
+ if( NOT __fileCopyProcess EQUAL 0 OR NOT EXISTS "${LIBRARY_OUTPUT_PATH}/${__libstlname}")
+  message( SEND_ERROR "Failed copying of ${__libstl} to the ${LIBRARY_OUTPUT_PATH}/${__libstlname}" )
+ endif()
+ unset( __fileCopyProcess )
+ unset( __libstlname )
+endif()
+
 
 # set these global flags for cmake client scripts to change behavior
 set( ANDROID True )
@@ -1624,10 +1704,16 @@ macro( ANDROID_GET_ABI_RAWNAME TOOLCHAIN_FLAG VAR )
   set( ${VAR} "armeabi" )
  elseif( "${TOOLCHAIN_FLAG}" STREQUAL "ARMEABI_V7A" )
   set( ${VAR} "armeabi-v7a" )
+ elseif( "${TOOLCHAIN_FLAG}" STREQUAL "ARM64_V8A" )
+  set( ${VAR} "arm64-v8a" )
  elseif( "${TOOLCHAIN_FLAG}" STREQUAL "X86" )
   set( ${VAR} "x86" )
+ elseif( "${TOOLCHAIN_FLAG}" STREQUAL "X86_64" )
+  set( ${VAR} "x86_64" )
  elseif( "${TOOLCHAIN_FLAG}" STREQUAL "MIPS" )
   set( ${VAR} "mips" )
+ elseif( "${TOOLCHAIN_FLAG}" STREQUAL "MIPS64" )
+  set( ${VAR} "mips64" )
  else()
   set( ${VAR} "unknown" )
  endif()
@@ -1670,6 +1756,19 @@ if( NOT PROJECT_NAME STREQUAL "CMAKE_TRY_COMPILE" )
 endif()
 
 
+# force cmake to produce / instead of \ in build commands for Ninja generator
+if( CMAKE_GENERATOR MATCHES "Ninja" AND CMAKE_HOST_WIN32 )
+ # it is a bad hack after all
+ # CMake generates Ninja makefiles with UNIX paths only if it thinks that we are going to build with MinGW
+ set( CMAKE_COMPILER_IS_MINGW TRUE ) # tell CMake that we are MinGW
+ set( CMAKE_CROSSCOMPILING TRUE )    # stop recursion
+ enable_language( C )
+ enable_language( CXX )
+ # unset( CMAKE_COMPILER_IS_MINGW ) # can't unset because CMake does not convert back-slashes in response files without it
+ unset( MINGW )
+endif()
+
+
 # set some obsolete variables for backward compatibility
 set( ANDROID_SET_OBSOLETE_VARIABLES ON CACHE BOOL "Define obsolete Andrid-specific cmake variables" )
 mark_as_advanced( ANDROID_SET_OBSOLETE_VARIABLES )
@@ -1681,7 +1780,7 @@ endif()
 
 
 # Variables controlling behavior or set by cmake toolchain:
-#   ANDROID_ABI : "armeabi-v7a" (default), "armeabi", "armeabi-v7a with NEON", "armeabi-v7a with VFPV3", "armeabi-v6 with VFP", "x86", "mips"
+#   ANDROID_ABI : "armeabi-v7a" (default), "armeabi", "armeabi-v7a with NEON", "armeabi-v7a with VFPV3", "armeabi-v6 with VFP", "arm64-v8a", "x86", "x86_64", "mips", "mips64"
 #   ANDROID_NATIVE_API_LEVEL : 3,4,5,8,9,14 (depends on NDK version)
 #   ANDROID_STL : gnustl_static/gnustl_shared/stlport_static/stlport_shared/gabi++_static/gabi++_shared/system_re/system/none
 #   ANDROID_FORBID_SYGWIN : ON/OFF
@@ -1715,16 +1814,19 @@ endif()
 #   ARMEABI : TRUE for arm v6 and older devices
 #   ARMEABI_V6 : TRUE for arm v6
 #   ARMEABI_V7A : TRUE for arm v7a
+#   ARM64_V8A : TRUE for arm64 v8a
 #   NEON : TRUE if NEON unit is enabled
 #   VFPV3 : TRUE if VFP version 3 is enabled
 #   X86 : TRUE if configured for x86
+#   X86_64 : TRUE if configured for x86_64
 #   MIPS : TRUE if configured for mips
+#   MIPS64 : TRUE if configured for mips64
 #   BUILD_ANDROID : always TRUE
 #   BUILD_WITH_ANDROID_NDK : TRUE if NDK is used
 #   BUILD_WITH_STANDALONE_TOOLCHAIN : TRUE if standalone toolchain is used
 #   ANDROID_NDK_HOST_SYSTEM_NAME : "windows", "linux-x86" or "darwin-x86" depending on host platform
 #   ANDROID_NDK_ABI_NAME : "armeabi", "armeabi-v7a", "x86" or "mips" depending on ANDROID_ABI
-#   ANDROID_NDK_RELEASE : one of r5, r5b, r5c, r6, r6b, r7, r7b, r7c, r8, r8b, r8c, r8d, r8e; set only for NDK
+#   ANDROID_NDK_RELEASE : one of r5, r5b, r5c, r6, r6b, r7, r7b, r7c, r8, r8b, r8c, r8d, r8e, r9, r9b, r9c, r9d, r10; set only for NDK
 #   ANDROID_ARCH_NAME : "arm" or "x86" or "mips" depending on ANDROID_ABI
 #   ANDROID_SYSROOT : path to the compiler sysroot
 #   TOOL_OS_SUFFIX : "" or ".exe" depending on host platform
