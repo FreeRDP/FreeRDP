@@ -1,3 +1,4 @@
+include(CMakeDependentOption)
 
 if((CMAKE_SYSTEM_PROCESSOR MATCHES "i386|i686|x86|AMD64") AND (CMAKE_SIZEOF_VOID_P EQUAL 4))
 	set(TARGET_ARCH "x86")
@@ -59,6 +60,8 @@ endif()
 option(WITH_SMARTCARD_INSPECT "Enable SmartCard API Inspector" OFF)
 
 option(BUILD_TESTING "Build unit tests" OFF)
+CMAKE_DEPENDENT_OPTION(TESTS_WTSAPI_EXTRA "Build extra WTSAPI tests (interactive)" OFF "BUILD_TESTING" ON)
+
 option(WITH_SAMPLE "Build sample code" OFF)
 
 option(WITH_CLIENT "Build client binaries" ON)
