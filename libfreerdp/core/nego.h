@@ -34,7 +34,9 @@ enum RDP_NEG_PROTOCOLS
 	PROTOCOL_RDP = 0x00000000,
 	PROTOCOL_TLS = 0x00000001,
 	PROTOCOL_NLA = 0x00000002,
-	PROTOCOL_EXT = 0x00000008
+	PROTOCOL_EXT = 0x00000008,
+
+	PROTOCOL_FAILED_NEGO = 0x80000000 /* only used internally, not on the wire */
 };
 
 /* Protocol Security Negotiation Failure Codes */
