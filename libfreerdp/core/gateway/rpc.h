@@ -584,12 +584,18 @@ struct rpc_client_call
 };
 typedef struct rpc_client_call RpcClientCall;
 
-enum _TSG_CHANNEL
+#define RPC_CHANNEL_COMMON() \
+	rdpTcp* tcp; \
+	rdpTls* tls; \
+	rdpNtlm* ntlm; \
+	HttpContext* http; \
+	BYTE Cookie[16]
+
+struct rpc_channel
 {
-	TSG_CHANNEL_IN,
-	TSG_CHANNEL_OUT
+	RPC_CHANNEL_COMMON();
 };
-typedef enum _TSG_CHANNEL TSG_CHANNEL;
+typedef struct rpc_channel RpcChannel;
 
 /* Ping Originator */
 
@@ -619,10 +625,7 @@ struct rpc_in_channel
 {
 	/* Sending Channel */
 
-	rdpTcp* tcp;
-	rdpTls* tls;
-	rdpNtlm* ntlm;
-	HttpContext* http;
+	RPC_CHANNEL_COMMON();
 
 	CLIENT_IN_CHANNEL_STATE State;
 
@@ -656,12 +659,9 @@ typedef enum _CLIENT_OUT_CHANNEL_STATE CLIENT_OUT_CHANNEL_STATE;
 
 struct rpc_out_channel
 {
-	rdpTcp* tcp;
-	rdpTls* tls;
-	rdpNtlm* ntlm;
-	HttpContext* http;
-
 	/* Receiving Channel */
+
+	RPC_CHANNEL_COMMON();
 
 	CLIENT_OUT_CHANNEL_STATE State;
 
@@ -689,16 +689,14 @@ typedef enum _VIRTUAL_CONNECTION_STATE VIRTUAL_CONNECTION_STATE;
 struct rpc_virtual_connection
 {
 	BYTE Cookie[16]; /* Virtual Connection Cookie */
+	BYTE AssociationGroupId[16]; /* AssociationGroupId */
 	VIRTUAL_CONNECTION_STATE State; /* Virtual Connection State */
 	RpcInChannel* DefaultInChannel; /* Default IN Channel */
 	RpcInChannel* NonDefaultInChannel; /* Non-Default IN Channel */
-	BYTE DefaultInChannelCookie[16]; /* Default IN Channel Cookie */
 	BYTE NonDefaultInChannelCookie[16]; /* Non-Default Default IN Channel Cookie */
 	RpcOutChannel* DefaultOutChannel; /* Default OUT Channel */
 	RpcOutChannel* NonDefaultOutChannel; /* Non-Default OUT Channel */
-	BYTE DefaultOutChannelCookie[16]; /* Default OUT Channel Cookie */
 	BYTE NonDefaultOutChannelCookie[16]; /* Non-Default Default OUT Channel Cookie */
-	BYTE AssociationGroupId[16]; /* AssociationGroupId */
 };
 typedef struct rpc_virtual_connection RpcVirtualConnection;
 

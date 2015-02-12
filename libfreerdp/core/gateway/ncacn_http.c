@@ -33,7 +33,7 @@
 
 #define TAG FREERDP_TAG("core.gateway.ntlm")
 
-wStream* rpc_ntlm_http_request(rdpRpc* rpc, HttpContext* http, SecBuffer* ntlmToken, int contentLength, TSG_CHANNEL channel)
+wStream* rpc_ntlm_http_request(rdpRpc* rpc, HttpContext* http, const char* method, int contentLength, SecBuffer* ntlmToken)
 {
 	wStream* s;
 	HttpRequest* request;
@@ -44,10 +44,7 @@ wStream* rpc_ntlm_http_request(rdpRpc* rpc, HttpContext* http, SecBuffer* ntlmTo
 	if (ntlmToken)
 		base64NtlmToken = crypto_base64_encode(ntlmToken->pvBuffer, ntlmToken->cbBuffer);
 
-	if (channel == TSG_CHANNEL_IN)
-		http_request_set_method(request, "RPC_IN_DATA");
-	else if (channel == TSG_CHANNEL_OUT)
-		http_request_set_method(request, "RPC_OUT_DATA");
+	http_request_set_method(request, method);
 
 	request->ContentLength = contentLength;
 	http_request_set_uri(request, http->URI);
@@ -79,7 +76,7 @@ int rpc_ncacn_http_send_in_channel_request(rdpRpc* rpc, RpcInChannel* inChannel)
 
 	contentLength = (continueNeeded) ? 0 : 0x40000000;
 
-	s = rpc_ntlm_http_request(rpc, http, &ntlm->outputBuffer[0], contentLength, TSG_CHANNEL_IN);
+	s = rpc_ntlm_http_request(rpc, http, "RPC_IN_DATA", contentLength, &ntlm->outputBuffer[0]);
 
 	if (!s)
 		return -1;
@@ -117,24 +114,13 @@ int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc, RpcInChannel* inChannel
 	return 1;
 }
 
-int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, TSG_CHANNEL channel)
+int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, RpcChannel* channel)
 {
-	rdpTls* tls = NULL;
-	rdpNtlm* ntlm = NULL;
+	rdpTls* tls = channel->tls;
+	rdpNtlm* ntlm = channel->ntlm;
 	rdpContext* context = rpc->context;
 	rdpSettings* settings = rpc->settings;
 	freerdp* instance = context->instance;
-
-	if (channel == TSG_CHANNEL_IN)
-	{
-		tls = rpc->VirtualConnection->DefaultInChannel->tls;
-		ntlm = rpc->VirtualConnection->DefaultInChannel->ntlm;
-	}
-	else if (channel == TSG_CHANNEL_OUT)
-	{
-		tls = rpc->VirtualConnection->DefaultOutChannel->tls;
-		ntlm = rpc->VirtualConnection->DefaultOutChannel->ntlm;
-	}
 
 	if (!settings->GatewayPassword || !settings->GatewayUsername ||
 			!strlen(settings->GatewayPassword) || !strlen(settings->GatewayUsername))
@@ -174,25 +160,14 @@ int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, TSG_CHANNEL channel)
 	return 1;
 }
 
-void rpc_ncacn_http_ntlm_uninit(rdpRpc* rpc, TSG_CHANNEL channel)
+void rpc_ncacn_http_ntlm_uninit(rdpRpc* rpc, RpcChannel* channel)
 {
-	if (channel == TSG_CHANNEL_IN)
-	{
-		RpcInChannel* inChannel = rpc->VirtualConnection->DefaultInChannel;
-		ntlm_client_uninit(inChannel->ntlm);
-		ntlm_free(inChannel->ntlm);
-		inChannel->ntlm = NULL;
-	}
-	else if (channel == TSG_CHANNEL_OUT)
-	{
-		RpcOutChannel* outChannel = rpc->VirtualConnection->DefaultOutChannel;
-		ntlm_client_uninit(outChannel->ntlm);
-		ntlm_free(outChannel->ntlm);
-		outChannel->ntlm = NULL;
-	}
+	ntlm_client_uninit(channel->ntlm);
+	ntlm_free(channel->ntlm);
+	channel->ntlm = NULL;
 }
 
-int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc, RpcOutChannel* outChannel)
+int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc, RpcOutChannel* outChannel, BOOL replacement)
 {
 	wStream* s;
 	int status;
@@ -203,9 +178,12 @@ int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc, RpcOutChannel* outChann
 
 	continueNeeded = ntlm_authenticate(ntlm);
 
-	contentLength = (continueNeeded) ? 0 : 76;
+	if (!replacement)
+		contentLength = (continueNeeded) ? 0 : 76;
+	else
+		contentLength = (continueNeeded) ? 0 : 120;
 
-	s = rpc_ntlm_http_request(rpc, http, &ntlm->outputBuffer[0], contentLength, TSG_CHANNEL_OUT);
+	s = rpc_ntlm_http_request(rpc, http, "RPC_OUT_DATA", contentLength, &ntlm->outputBuffer[0]);
 
 	if (!s)
 		return -1;
@@ -241,31 +219,4 @@ int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc, RpcOutChannel* outChan
 	}
 
 	return 1;
-}
-
-void rpc_ntlm_http_init_channel(rdpRpc* rpc, HttpContext* http, TSG_CHANNEL channel)
-{
-	if (channel == TSG_CHANNEL_IN)
-		http_context_set_method(http, "RPC_IN_DATA");
-	else if (channel == TSG_CHANNEL_OUT)
-		http_context_set_method(http, "RPC_OUT_DATA");
-
-	http_context_set_uri(http, "/rpc/rpcproxy.dll?localhost:3388");
-	http_context_set_accept(http, "application/rpc");
-	http_context_set_cache_control(http, "no-cache");
-	http_context_set_connection(http, "Keep-Alive");
-	http_context_set_user_agent(http, "MSRPC");
-	http_context_set_host(http, rpc->settings->GatewayHostname);
-
-	if (channel == TSG_CHANNEL_IN)
-	{
-		http_context_set_pragma(http,
-				"ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729");
-	}
-	else if (channel == TSG_CHANNEL_OUT)
-	{
-		http_context_set_pragma(http,
-				"ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729, "
-				"SessionId=fbd9c34f-397d-471d-a109-1b08cc554624");
-	}
 }

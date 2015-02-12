@@ -444,7 +444,7 @@ int rts_send_CONN_A1_pdu(rdpRpc* rpc)
 	WLog_DBG(TAG, "Sending CONN_A1 RTS PDU");
 
 	VirtualConnectionCookie = (BYTE*) &(rpc->VirtualConnection->Cookie);
-	OUTChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie);
+	OUTChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultOutChannel->Cookie);
 	ReceiveWindowSize = rpc->VirtualConnection->DefaultOutChannel->ReceiveWindow;
 
 	buffer = (BYTE*) malloc(header.frag_length);
@@ -498,7 +498,7 @@ int rts_send_CONN_B1_pdu(rdpRpc* rpc)
 	WLog_DBG(TAG, "Sending CONN_B1 RTS PDU");
 
 	VirtualConnectionCookie = (BYTE*) &(rpc->VirtualConnection->Cookie);
-	INChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultInChannelCookie);
+	INChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultInChannel->Cookie);
 	AssociationGroupId = (BYTE*) &(rpc->VirtualConnection->AssociationGroupId);
 
 	buffer = (BYTE*) malloc(header.frag_length);
@@ -602,7 +602,7 @@ int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 
 	BytesReceived = rpc->VirtualConnection->DefaultOutChannel->BytesReceived;
 	AvailableWindow = rpc->VirtualConnection->DefaultOutChannel->AvailableWindowAdvertised;
-	ChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie);
+	ChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultOutChannel->Cookie);
 
 	rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow =
 			rpc->VirtualConnection->DefaultOutChannel->AvailableWindowAdvertised;
@@ -814,7 +814,7 @@ int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
 	WLog_DBG(TAG, "Sending OUT R1/A3 RTS PDU");
 
 	VirtualConnectionCookie = (BYTE*) &(rpc->VirtualConnection->Cookie);
-	PredecessorChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie);
+	PredecessorChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultOutChannel->Cookie);
 	SuccessorChannelCookie = (BYTE*) &(rpc->VirtualConnection->NonDefaultOutChannelCookie);
 	ReceiveWindowSize = rpc->VirtualConnection->DefaultOutChannel->ReceiveWindow;
 

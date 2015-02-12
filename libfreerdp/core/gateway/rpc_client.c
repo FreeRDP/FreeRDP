@@ -557,13 +557,13 @@ int rpc_client_out_channel_recv(rdpRpc* rpc)
 
 			/* Send OUT Channel Request */
 
-			if (rpc_ncacn_http_send_out_channel_request(rpc, outChannel) < 0)
+			if (rpc_ncacn_http_send_out_channel_request(rpc, outChannel, FALSE) < 0)
 			{
 				WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
 				return -1;
 			}
 
-			rpc_ncacn_http_ntlm_uninit(rpc, TSG_CHANNEL_OUT);
+			rpc_ncacn_http_ntlm_uninit(rpc, (RpcChannel*) outChannel);
 
 			rpc_client_out_channel_transition_to_state(outChannel,
 					CLIENT_OUT_CHANNEL_STATE_NEGOTIATED);
@@ -673,7 +673,7 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 				return -1;
 			}
 
-			rpc_ncacn_http_ntlm_uninit(rpc, TSG_CHANNEL_IN);
+			rpc_ncacn_http_ntlm_uninit(rpc, (RpcChannel*) inChannel);
 
 			rpc_client_in_channel_transition_to_state(inChannel,
 					CLIENT_IN_CHANNEL_STATE_NEGOTIATED);

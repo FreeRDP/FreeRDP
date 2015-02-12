@@ -131,7 +131,7 @@ BOOL rpc_connect(rdpRpc* rpc)
 
 	rpc_client_in_channel_transition_to_state(inChannel, CLIENT_IN_CHANNEL_STATE_CONNECTED);
 
-	if (rpc_ncacn_http_ntlm_init(rpc, TSG_CHANNEL_IN) < 0)
+	if (rpc_ncacn_http_ntlm_init(rpc, (RpcChannel*) inChannel) < 0)
 		return FALSE;
 
 	/* Send IN Channel Request */
@@ -148,12 +148,12 @@ BOOL rpc_connect(rdpRpc* rpc)
 
 	rpc_client_out_channel_transition_to_state(outChannel, CLIENT_OUT_CHANNEL_STATE_CONNECTED);
 
-	if (rpc_ncacn_http_ntlm_init(rpc, TSG_CHANNEL_OUT) < 0)
+	if (rpc_ncacn_http_ntlm_init(rpc, (RpcChannel*) outChannel) < 0)
 		return FALSE;
 
 	/* Send OUT Channel Request */
 
-	if (rpc_ncacn_http_send_out_channel_request(rpc, outChannel) < 0)
+	if (rpc_ncacn_http_send_out_channel_request(rpc, outChannel, FALSE) < 0)
 	{
 		WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
 		return FALSE;
@@ -594,6 +594,8 @@ int rpc_client_in_channel_transition_to_state(RpcInChannel* inChannel, CLIENT_IN
 
 int rpc_client_in_channel_rpch_init(rdpRpc* rpc, RpcInChannel* inChannel)
 {
+	HttpContext* http;
+
 	inChannel->ntlm = ntlm_new();
 
 	if (!inChannel->ntlm)
@@ -604,7 +606,34 @@ int rpc_client_in_channel_rpch_init(rdpRpc* rpc, RpcInChannel* inChannel)
 	if (!inChannel->http)
 		return -1;
 
-	rpc_ntlm_http_init_channel(rpc, inChannel->http, TSG_CHANNEL_IN);
+	http = inChannel->http;
+
+	http_context_set_method(http, "RPC_IN_DATA");
+
+	http_context_set_uri(http, "/rpc/rpcproxy.dll?localhost:3388");
+	http_context_set_accept(http, "application/rpc");
+	http_context_set_cache_control(http, "no-cache");
+	http_context_set_connection(http, "Keep-Alive");
+	http_context_set_user_agent(http, "MSRPC");
+	http_context_set_host(http, rpc->settings->GatewayHostname);
+
+	http_context_set_pragma(http, "ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729");
+
+	return 1;
+}
+
+int rpc_client_in_channel_init(rdpRpc* rpc, RpcInChannel* inChannel)
+{
+	rts_generate_cookie((BYTE*) &inChannel->Cookie);
+
+	inChannel->State = CLIENT_IN_CHANNEL_STATE_INITIAL;
+	inChannel->BytesSent = 0;
+	inChannel->SenderAvailableWindow = rpc->ReceiveWindow;
+	inChannel->PingOriginator.ConnectionTimeout = 30;
+	inChannel->PingOriginator.KeepAliveInterval = 0;
+
+	if (rpc_client_in_channel_rpch_init(rpc, inChannel) < 0)
+		return -1;
 
 	return 1;
 }
@@ -700,6 +729,8 @@ int rpc_client_out_channel_transition_to_state(RpcOutChannel* outChannel, CLIENT
 
 int rpc_client_out_channel_rpch_init(rdpRpc* rpc, RpcOutChannel* outChannel)
 {
+	HttpContext* http;
+
 	outChannel->ntlm = ntlm_new();
 
 	if (!outChannel->ntlm)
@@ -710,7 +741,37 @@ int rpc_client_out_channel_rpch_init(rdpRpc* rpc, RpcOutChannel* outChannel)
 	if (!outChannel->http)
 		return -1;
 
-	rpc_ntlm_http_init_channel(rpc, outChannel->http, TSG_CHANNEL_OUT);
+	http = outChannel->http;
+
+	http_context_set_method(http, "RPC_OUT_DATA");
+
+	http_context_set_uri(http, "/rpc/rpcproxy.dll?localhost:3388");
+	http_context_set_accept(http, "application/rpc");
+	http_context_set_cache_control(http, "no-cache");
+	http_context_set_connection(http, "Keep-Alive");
+	http_context_set_user_agent(http, "MSRPC");
+	http_context_set_host(http, rpc->settings->GatewayHostname);
+
+	http_context_set_pragma(http,
+			"ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729, "
+			"SessionId=fbd9c34f-397d-471d-a109-1b08cc554624");
+
+	return 1;
+}
+
+int rpc_client_out_channel_init(rdpRpc* rpc, RpcOutChannel* outChannel)
+{
+	rts_generate_cookie((BYTE*) &outChannel->Cookie);
+
+	outChannel->State = CLIENT_OUT_CHANNEL_STATE_INITIAL;
+	outChannel->BytesReceived = 0;
+	outChannel->ReceiverAvailableWindow = rpc->ReceiveWindow;
+	outChannel->ReceiveWindow = rpc->ReceiveWindow;
+	outChannel->ReceiveWindowSize = rpc->ReceiveWindow;
+	outChannel->AvailableWindowAdvertised = rpc->ReceiveWindow;
+
+	if (rpc_client_out_channel_rpch_init(rpc, outChannel) < 0)
+		return -1;
 
 	return 1;
 }
@@ -798,24 +859,11 @@ void rpc_client_virtual_connection_init(rdpRpc* rpc, RpcVirtualConnection* conne
 	rts_generate_cookie((BYTE*) &(connection->Cookie));
 	rts_generate_cookie((BYTE*) &(connection->AssociationGroupId));
 
-	connection->DefaultInChannel->State = CLIENT_IN_CHANNEL_STATE_INITIAL;
-	connection->DefaultInChannel->BytesSent = 0;
-	connection->DefaultInChannel->SenderAvailableWindow = rpc->ReceiveWindow;
-	connection->DefaultInChannel->PingOriginator.ConnectionTimeout = 30;
-	connection->DefaultInChannel->PingOriginator.KeepAliveInterval = 0;
-	rts_generate_cookie((BYTE*) &(connection->DefaultInChannelCookie));
-	rts_generate_cookie((BYTE*) &(connection->NonDefaultInChannelCookie));
-	rpc_client_in_channel_rpch_init(rpc, connection->DefaultInChannel);
+	rpc_client_in_channel_init(rpc, connection->DefaultInChannel);
+	rpc_client_out_channel_init(rpc, connection->DefaultOutChannel);
 
-	connection->DefaultOutChannel->State = CLIENT_OUT_CHANNEL_STATE_INITIAL;
-	connection->DefaultOutChannel->BytesReceived = 0;
-	connection->DefaultOutChannel->ReceiverAvailableWindow = rpc->ReceiveWindow;
-	connection->DefaultOutChannel->ReceiveWindow = rpc->ReceiveWindow;
-	connection->DefaultOutChannel->ReceiveWindowSize = rpc->ReceiveWindow;
-	connection->DefaultOutChannel->AvailableWindowAdvertised = rpc->ReceiveWindow;
-	rts_generate_cookie((BYTE*) &(connection->DefaultOutChannelCookie));
+	rts_generate_cookie((BYTE*) &(connection->NonDefaultInChannelCookie));
 	rts_generate_cookie((BYTE*) &(connection->NonDefaultOutChannelCookie));
-	rpc_client_out_channel_rpch_init(rpc, connection->DefaultOutChannel);
 }
 
 RpcVirtualConnection* rpc_client_virtual_connection_new(rdpRpc* rpc)
