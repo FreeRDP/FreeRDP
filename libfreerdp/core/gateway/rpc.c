@@ -661,7 +661,7 @@ RpcInChannel* rpc_client_in_channel_new(rdpRpc* rpc)
 
 	if (inChannel)
 	{
-
+		rpc_client_in_channel_init(rpc, inChannel);
 	}
 
 	return inChannel;
@@ -799,7 +799,7 @@ RpcOutChannel* rpc_client_out_channel_new(rdpRpc* rpc)
 
 	if (outChannel)
 	{
-
+		rpc_client_out_channel_init(rpc, outChannel);
 	}
 
 	return outChannel;
@@ -854,18 +854,6 @@ int rpc_client_virtual_connection_transition_to_state(rdpRpc* rpc,
 	return status;
 }
 
-void rpc_client_virtual_connection_init(rdpRpc* rpc, RpcVirtualConnection* connection)
-{
-	rts_generate_cookie((BYTE*) &(connection->Cookie));
-	rts_generate_cookie((BYTE*) &(connection->AssociationGroupId));
-
-	rpc_client_in_channel_init(rpc, connection->DefaultInChannel);
-	rpc_client_out_channel_init(rpc, connection->DefaultOutChannel);
-
-	rts_generate_cookie((BYTE*) &(connection->NonDefaultInChannelCookie));
-	rts_generate_cookie((BYTE*) &(connection->NonDefaultOutChannelCookie));
-}
-
 RpcVirtualConnection* rpc_client_virtual_connection_new(rdpRpc* rpc)
 {
 	RpcVirtualConnection* connection;
@@ -874,6 +862,9 @@ RpcVirtualConnection* rpc_client_virtual_connection_new(rdpRpc* rpc)
 
 	if (!connection)
 		return NULL;
+
+	rts_generate_cookie((BYTE*) &(connection->Cookie));
+	rts_generate_cookie((BYTE*) &(connection->AssociationGroupId));
 
 	connection->State = VIRTUAL_CONNECTION_STATE_INITIAL;
 
@@ -887,8 +878,6 @@ RpcVirtualConnection* rpc_client_virtual_connection_new(rdpRpc* rpc)
 	if (!connection->DefaultOutChannel)
 		goto out_default_in;
 
-	rpc_client_virtual_connection_init(rpc, connection);
-
 	return connection;
 out_default_in:
 	free(connection->DefaultInChannel);
@@ -897,15 +886,18 @@ out_free:
 	return NULL;
 }
 
-void rpc_client_virtual_connection_free(RpcVirtualConnection* virtualConnection)
+void rpc_client_virtual_connection_free(RpcVirtualConnection* connection)
 {
-	if (!virtualConnection)
+	if (!connection)
 		return;
 
-	rpc_client_in_channel_free(virtualConnection->DefaultInChannel);
-	rpc_client_out_channel_free(virtualConnection->DefaultOutChannel);
+	rpc_client_in_channel_free(connection->DefaultInChannel);
+	rpc_client_in_channel_free(connection->NonDefaultInChannel);
 
-	free(virtualConnection);
+	rpc_client_out_channel_free(connection->DefaultOutChannel);
+	rpc_client_out_channel_free(connection->NonDefaultOutChannel);
+
+	free(connection);
 }
 
 rdpRpc* rpc_new(rdpTransport* transport)

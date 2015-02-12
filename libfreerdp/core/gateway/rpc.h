@@ -688,15 +688,13 @@ typedef enum _VIRTUAL_CONNECTION_STATE VIRTUAL_CONNECTION_STATE;
 
 struct rpc_virtual_connection
 {
-	BYTE Cookie[16]; /* Virtual Connection Cookie */
-	BYTE AssociationGroupId[16]; /* AssociationGroupId */
-	VIRTUAL_CONNECTION_STATE State; /* Virtual Connection State */
-	RpcInChannel* DefaultInChannel; /* Default IN Channel */
-	RpcInChannel* NonDefaultInChannel; /* Non-Default IN Channel */
-	BYTE NonDefaultInChannelCookie[16]; /* Non-Default Default IN Channel Cookie */
-	RpcOutChannel* DefaultOutChannel; /* Default OUT Channel */
-	RpcOutChannel* NonDefaultOutChannel; /* Non-Default OUT Channel */
-	BYTE NonDefaultOutChannelCookie[16]; /* Non-Default Default OUT Channel Cookie */
+	BYTE Cookie[16];
+	BYTE AssociationGroupId[16];
+	VIRTUAL_CONNECTION_STATE State;
+	RpcInChannel* DefaultInChannel;
+	RpcInChannel* NonDefaultInChannel;
+	RpcOutChannel* DefaultOutChannel;
+	RpcOutChannel* NonDefaultOutChannel;
 };
 typedef struct rpc_virtual_connection RpcVirtualConnection;
 
@@ -775,6 +773,12 @@ int rpc_out_write(rdpRpc* rpc, const BYTE* data, int length);
 int rpc_in_write(rdpRpc* rpc, const BYTE* data, int length);
 
 BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* header, UINT32* offset, UINT32* length);
+
+RpcInChannel* rpc_client_in_channel_new(rdpRpc* rpc);
+void rpc_client_in_channel_free(RpcInChannel* inChannel);
+
+RpcOutChannel* rpc_client_out_channel_new(rdpRpc* rpc);
+void rpc_client_out_channel_free(RpcOutChannel* outChannel);
 
 int rpc_client_in_channel_transition_to_state(RpcInChannel* inChannel, CLIENT_IN_CHANNEL_STATE state);
 int rpc_client_out_channel_transition_to_state(RpcOutChannel* outChannel, CLIENT_OUT_CHANNEL_STATE state);
