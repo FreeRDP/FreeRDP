@@ -886,14 +886,20 @@ void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, RECTANG
 void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width, int height)
 {
 	int ax, ay;
+	UINT32 translatedWindowOffsetX;
+	UINT32 translatedWindowOffsetY;
 
-	ax = x + appWindow->visibleOffsetX;
-	ay = y + appWindow->visibleOffsetY;
+	/* Translate the server rail window offset to a local offset */
+	translatedWindowOffsetX = (appWindow->windowOffsetX - appWindow->localWindowOffsetCorrX);
+	translatedWindowOffsetY = (appWindow->windowOffsetY - appWindow->localWindowOffsetCorrY);
 
-	if (ax + width > appWindow->visibleOffsetX + appWindow->width)
-		width = (appWindow->visibleOffsetX + appWindow->width - 1) - ax;
-	if (ay + height > appWindow->visibleOffsetY + appWindow->height)
-		height = (appWindow->visibleOffsetY + appWindow->height - 1) - ay;
+	ax = x + translatedWindowOffsetX;
+	ay = y + translatedWindowOffsetY;
+
+	if (ax + width > translatedWindowOffsetX + appWindow->width)
+		width = (translatedWindowOffsetX + appWindow->width - 1) - ax;
+	if (ay + height > translatedWindowOffsetY + appWindow->height)
+		height = (translatedWindowOffsetY + appWindow->height - 1) - ay;
 
 	xf_lock_x11(xfc, TRUE);
 
