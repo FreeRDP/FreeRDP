@@ -504,7 +504,7 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 	 */
 	if (buf && num && !ringbuffer_write(&tcp->xmitBuffer, (const BYTE*) buf, num))
 	{
-		WLog_ERR(TAG,  "an error occured when writing (num: %d)", num);
+		WLog_ERR(TAG, "an error occured when writing (num: %d)", num);
 		return -1;
 	}
 
@@ -1182,7 +1182,7 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, rdpSettings* settings, const char* hostnam
 	if (!tcp->ipcSocket)
 	{
 		if (setsockopt(tcp->sockfd, IPPROTO_TCP, TCP_NODELAY, (void*) &option_value, option_len) < 0)
-			WLog_ERR(TAG,  "unable to set TCP_NODELAY");
+			WLog_ERR(TAG, "unable to set TCP_NODELAY");
 	}
 
 	/* receive buffer must be a least 32 K */
@@ -1195,7 +1195,7 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, rdpSettings* settings, const char* hostnam
 
 			if (setsockopt(tcp->sockfd, SOL_SOCKET, SO_RCVBUF, (void*) &option_value, option_len) < 0)
 			{
-				WLog_ERR(TAG,  "unable to set receive buffer len");
+				WLog_ERR(TAG, "unable to set receive buffer len");
 				return FALSE;
 			}
 		}

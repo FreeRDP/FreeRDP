@@ -879,162 +879,34 @@ BIO *findBufferedBio(BIO *front)
 
 int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 {
-	int i;
 	int status;
-	int nchunks;
-	int committedBytes;
-	rdpTcp *tcp;
-#ifdef HAVE_POLL_H
-	struct pollfd pollfds;
-#else
-	fd_set rset, wset;
-	fd_set *rsetPtr, *wsetPtr;
-	struct timeval tv;
-#endif
+	int offset = 0;
 	BIO* bio = tls->bio;
-	DataChunk chunks[2];
 
-	BIO* bufferedBio = findBufferedBio(bio);
-
-	if (!bufferedBio)
+	while (offset < length)
 	{
-		WLog_ERR(TAG, "error unable to retrieve the bufferedBio in the BIO chain");
-		return -1;
-	}
-
-	tcp = (rdpTcp*) bufferedBio->ptr;
-
-	do
-	{
-		status = BIO_write(bio, data, length);
+		status = BIO_write(bio, &data[offset], length - offset);
 
 		if (status > 0)
-			break;
-
-		if (!BIO_should_retry(bio))
-			return -1;
-		
-#ifdef HAVE_POLL_H
-		pollfds.fd = tcp->sockfd;
-		pollfds.revents = 0;
-		pollfds.events = 0;
-
-		if (BIO_write_blocked(bio))
 		{
-			pollfds.events |= POLLOUT;
-		}
-		else if (BIO_read_blocked(bio))
-		{
-			pollfds.events |= POLLIN;
+			offset += status;
 		}
 		else
 		{
-			WLog_ERR(TAG, "weird we're blocked but the underlying is not read or write blocked !");
-			USleep(10);
-			continue;
-		}
+			if (!BIO_should_retry(bio))
+				return -1;
 
-		do
-		{
-			status = poll(&pollfds, 1, 100);
-		}
-		while ((status < 0) && (errno == EINTR));
-#else
-		/* we try to handle SSL want_read and want_write nicely */
-		rsetPtr = wsetPtr = NULL;
+			if (BIO_write_blocked(bio))
+				status = BIO_wait_write(bio, 100);
+			else if (BIO_read_blocked(bio))
+				status = BIO_wait_read(bio, 100);
+			else
+				USleep(100);
 
-		if (BIO_write_blocked(bio))
-		{
-			wsetPtr = &wset;
-			FD_ZERO(&wset);
-			FD_SET(tcp->sockfd, &wset);
+			if (status < 0)
+				return -1;
 		}
-		else if (BIO_read_blocked(bio))
-		{
-			rsetPtr = &rset;
-			FD_ZERO(&rset);
-			FD_SET(tcp->sockfd, &rset);
-		}
-		else
-		{
-			WLog_ERR(TAG, "weird we're blocked but the underlying is not read or write blocked !");
-			USleep(10);
-			continue;
-		}
-
-		tv.tv_sec = 0;
-		tv.tv_usec = 100 * 1000;
-
-		status = _select(tcp->sockfd + 1, rsetPtr, wsetPtr, NULL, &tv);
-#endif
-		if (status < 0)
-			return -1;
 	}
-	while (TRUE);
-
-	/* make sure the output buffer is empty */
-	
-	do
-	{
-		committedBytes = 0;
-		
-		if (ringbuffer_used(&tcp->xmitBuffer) < 1)
-			break;
-		
-		nchunks = ringbuffer_peek(&tcp->xmitBuffer, chunks, ringbuffer_used(&tcp->xmitBuffer));
-		
-		if (nchunks < 1)
-			break;
-		
-		for (i = 0; i < nchunks; i++)
-		{
-			while (chunks[i].size)
-			{
-				status = BIO_write(tcp->socketBio, chunks[i].data, chunks[i].size);
-
-				if (status > 0)
-				{
-					chunks[i].size -= status;
-					chunks[i].data += status;
-					committedBytes += status;
-					continue;
-				}
-
-				if (!BIO_should_retry(tcp->socketBio))
-					goto out_fail;
-
-#ifdef HAVE_POLL_H
-				pollfds.fd = tcp->sockfd;
-				pollfds.events = POLLIN;
-				pollfds.revents = 0;
-
-				do
-				{
-					status = poll(&pollfds, 1, 100);
-				}
-				while ((status < 0) && (errno == EINTR));
-#else
-				FD_ZERO(&rset);
-				FD_SET(tcp->sockfd, &rset);
-				tv.tv_sec = 0;
-				tv.tv_usec = 100 * 1000;
-
-				status = _select(tcp->sockfd + 1, &rset, NULL, NULL, &tv);
-#endif
-				if (status < 0)
-					goto out_fail;
-			}
-
-		}
-		
-		ringbuffer_commit_read_bytes(&tcp->xmitBuffer, committedBytes);
-		continue;
-		
-out_fail:
-		ringbuffer_commit_read_bytes(&tcp->xmitBuffer, committedBytes);
-		return -1;
-	}
-	while (TRUE);
 
 	return length;
 }
