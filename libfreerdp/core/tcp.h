@@ -64,9 +64,6 @@ typedef struct rdp_tcp rdpTcp;
 
 struct rdp_tcp
 {
-	int sockfd;
-	HANDLE event;
-	BOOL ipcSocket;
 	BIO* socketBio;
 	BIO* bufferedBio;
 	BOOL readBlocked;

@@ -229,7 +229,9 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 
 static BOOL freerdp_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 {
-	rfds[*rcount] = (void*)(long)(client->context->rdp->transport->TcpIn->sockfd);
+	rdpTransport* transport = client->context->rdp->transport;
+
+	rfds[*rcount] = (void*)(long)(BIO_get_fd(transport->TcpIn->bufferedBio, NULL));
 	(*rcount)++;
 
 	return TRUE;
@@ -237,7 +239,12 @@ static BOOL freerdp_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 
 static HANDLE freerdp_peer_get_event_handle(freerdp_peer* client)
 {
-	return client->context->rdp->transport->TcpIn->event;
+	HANDLE hEvent = NULL;
+	rdpTransport* transport = client->context->rdp->transport;
+
+	BIO_get_event(transport->TcpIn->bufferedBio, &hEvent);
+
+	return hEvent;
 }
 
 static BOOL freerdp_peer_check_fds(freerdp_peer* peer)

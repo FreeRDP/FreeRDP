@@ -90,7 +90,6 @@
 
 struct _WINPR_BIO_SIMPLE_SOCKET
 {
-	BOOL win32;
 	SOCKET socket;
 	HANDLE hEvent;
 };
@@ -104,8 +103,9 @@ static void transport_bio_simple_check_reset_event(BIO* bio)
 	u_long nbytes = 0;
 	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) bio->ptr;
 
-	if (!ptr->win32)
-		return;
+#ifndef _WIN32
+	return;
+#endif
 
 	_ioctlsocket(ptr->socket, FIONREAD, &nbytes);
 
@@ -377,8 +377,7 @@ static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown)
 	bio->flags = BIO_FLAGS_SHOULD_RETRY;
 	bio->init = 1;
 
-	if (ptr->win32)
-	{
+#ifdef _WIN32
 		ptr->hEvent = WSACreateEvent(); /* creates a manual reset event */
 
 		if (!ptr->hEvent)
@@ -386,14 +385,12 @@ static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown)
 
 		/* WSAEventSelect automatically sets the socket in non-blocking mode */
 		WSAEventSelect(ptr->socket, ptr->hEvent, FD_READ | FD_CLOSE);
-	}
-	else
-	{
+#else
 		ptr->hEvent = CreateFileDescriptorEvent(NULL, FALSE, FALSE, (int) ptr->socket);
 
 		if (!ptr->hEvent)
 			return 0;
-	}
+#endif
 
 	return 1;
 }
@@ -438,10 +435,6 @@ static int transport_bio_simple_new(BIO* bio)
 		return 0;
 
 	bio->ptr = ptr;
-
-#ifdef _WIN32
-	ptr->win32 = TRUE;
-#endif
 
 	return 1;
 }
@@ -1042,20 +1035,22 @@ BOOL freerdp_tcp_set_keep_alive_mode(int sockfd)
 BOOL freerdp_tcp_connect(rdpTcp* tcp, rdpSettings* settings, const char* hostname, int port, int timeout)
 {
 	int status;
-	UINT32 option_value;
-	socklen_t option_len;
+	int sockfd;
+	UINT32 optval;
+	socklen_t optlen;
+	BOOL ipcSocket = FALSE;
 
 	if (!hostname)
 		return FALSE;
 
 	if (hostname[0] == '/')
-		tcp->ipcSocket = TRUE;
+		ipcSocket = TRUE;
 
-	if (tcp->ipcSocket)
+	if (ipcSocket)
 	{
-		tcp->sockfd = freerdp_uds_connect(hostname);
+		sockfd = freerdp_uds_connect(hostname);
 
-		if (tcp->sockfd < 0)
+		if (sockfd < 0)
 			return FALSE;
 
 		tcp->socketBio = BIO_new(BIO_s_simple_socket());
@@ -1063,32 +1058,11 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, rdpSettings* settings, const char* hostnam
 		if (!tcp->socketBio)
 			return FALSE;
 
-		BIO_set_fd(tcp->socketBio, tcp->sockfd, BIO_CLOSE);
+		BIO_set_fd(tcp->socketBio, sockfd, BIO_CLOSE);
 	}
 	else
 	{
-#ifdef NO_IPV6
-		tcp->socketBio = BIO_new(BIO_s_connect());
-
-		if (!tcp->socketBio)
-			return FALSE;
-
-		if (BIO_set_conn_hostname(tcp->socketBio, hostname) < 0 || BIO_set_conn_int_port(tcp->socketBio, &port) < 0)
-			return FALSE;
-
-		BIO_set_nbio(tcp->socketBio, 1);
-
-		status = BIO_do_connect(tcp->socketBio);
-
-		if ((status <= 0) && !BIO_should_retry(tcp->socketBio))
-			return FALSE;
-
-		tcp->sockfd = BIO_get_fd(tcp->socketBio, NULL);
-
-		if (tcp->sockfd < 0)
-			return FALSE;
-#else /* NO_IPV6 */
-		tcp->sockfd = -1;
+		sockfd = -1;
 
 		if (!settings->GatewayEnabled)
 		{
@@ -1097,7 +1071,7 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, rdpSettings* settings, const char* hostnam
 				if (settings->TargetNetAddressCount > 0)
 				{
 #ifndef _WIN32
-					tcp->sockfd = freerdp_tcp_connect_multi(settings->TargetNetAddresses,
+					sockfd = freerdp_tcp_connect_multi(settings->TargetNetAddresses,
 							settings->TargetNetAddressCount, port, timeout);
 #else
 					hostname = settings->TargetNetAddresses[0];
@@ -1106,7 +1080,7 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, rdpSettings* settings, const char* hostnam
 			}
 		}
 
-		if (tcp->sockfd <= 0)
+		if (sockfd <= 0)
 		{
 			char port_str[16];
 			struct addrinfo hints;
@@ -1127,6 +1101,7 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, rdpSettings* settings, const char* hostnam
 			}
 
 			addr = result;
+
 			if ((addr->ai_family == AF_INET6) && (addr->ai_next != 0))
 			{
 				while ((addr = addr->ai_next))
@@ -1134,18 +1109,20 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, rdpSettings* settings, const char* hostnam
 					if (addr->ai_family == AF_INET)
 						break;
 				}
+
 				if (!addr)
 					addr = result;
 			}
 
-			tcp->sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
+			sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
 
-			if (tcp->sockfd  < 0) {
+			if (sockfd  < 0)
+			{
 				freeaddrinfo(result);
 				return FALSE;
 			}
 
-			if (!freerdp_tcp_connect_timeout(tcp->sockfd, addr->ai_addr, addr->ai_addrlen, timeout))
+			if (!freerdp_tcp_connect_timeout(sockfd, addr->ai_addr, addr->ai_addrlen, timeout))
 			{
 				fprintf(stderr, "failed to connect to %s\n", hostname);
 				freeaddrinfo(result);
@@ -1155,45 +1132,37 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, rdpSettings* settings, const char* hostnam
 			freeaddrinfo(result);
 		}
 
-		tcp->socketBio = BIO_new_socket(tcp->sockfd, BIO_NOCLOSE);
-#endif /* NO_IPV6 */
-
-		(void) BIO_set_close(tcp->socketBio, BIO_NOCLOSE);
-		BIO_free(tcp->socketBio);
-
 		tcp->socketBio = BIO_new(BIO_s_simple_socket());
 
 		if (!tcp->socketBio)
 			return FALSE;
 
-		BIO_set_fd(tcp->socketBio, tcp->sockfd, BIO_CLOSE);
+		BIO_set_fd(tcp->socketBio, sockfd, BIO_CLOSE);
 	}
-
-	BIO_get_event(tcp->socketBio, &tcp->event);
 
 	settings->IPv6Enabled = FALSE;
 
 	free(settings->ClientAddress);
-	settings->ClientAddress = freerdp_tcp_get_ip_address(tcp->sockfd);
+	settings->ClientAddress = freerdp_tcp_get_ip_address(sockfd);
 
-	option_value = 1;
-	option_len = sizeof(option_value);
+	optval = 1;
+	optlen = sizeof(optval);
 
-	if (!tcp->ipcSocket)
+	if (!ipcSocket)
 	{
-		if (setsockopt(tcp->sockfd, IPPROTO_TCP, TCP_NODELAY, (void*) &option_value, option_len) < 0)
+		if (setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (void*) &optval, optlen) < 0)
 			WLog_ERR(TAG, "unable to set TCP_NODELAY");
 	}
 
 	/* receive buffer must be a least 32 K */
-	if (getsockopt(tcp->sockfd, SOL_SOCKET, SO_RCVBUF, (void*) &option_value, &option_len) == 0)
+	if (getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, (void*) &optval, &optlen) == 0)
 	{
-		if (option_value < (1024 * 32))
+		if (optval < (1024 * 32))
 		{
-			option_value = 1024 * 32;
-			option_len = sizeof(option_value);
+			optval = 1024 * 32;
+			optlen = sizeof(optval);
 
-			if (setsockopt(tcp->sockfd, SOL_SOCKET, SO_RCVBUF, (void*) &option_value, option_len) < 0)
+			if (setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, (void*) &optval, optlen) < 0)
 			{
 				WLog_ERR(TAG, "unable to set receive buffer len");
 				return FALSE;
@@ -1201,9 +1170,9 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, rdpSettings* settings, const char* hostnam
 		}
 	}
 
-	if (!tcp->ipcSocket)
+	if (!ipcSocket)
 	{
-		if (!freerdp_tcp_set_keep_alive_mode(tcp->sockfd))
+		if (!freerdp_tcp_set_keep_alive_mode(sockfd))
 			return FALSE;
 	}
 
@@ -1213,7 +1182,6 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, rdpSettings* settings, const char* hostnam
 		return FALSE;
 
 	tcp->bufferedBio->ptr = tcp;
-
 	tcp->bufferedBio = BIO_push(tcp->bufferedBio, tcp->socketBio);
 
 	return TRUE;
@@ -1221,16 +1189,7 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, rdpSettings* settings, const char* hostnam
 
 int freerdp_tcp_attach(rdpTcp* tcp, int sockfd)
 {
-	tcp->sockfd = sockfd;
-
-	ringbuffer_commit_read_bytes(&tcp->xmitBuffer, ringbuffer_used(&tcp->xmitBuffer));
-
 	if (tcp->socketBio)
-	{
-		if (BIO_set_fd(tcp->socketBio, sockfd, BIO_CLOSE) < 0)
-			return -1;
-	}
-	else
 	{
 		tcp->socketBio = BIO_new(BIO_s_simple_socket());
 
@@ -1252,7 +1211,7 @@ int freerdp_tcp_attach(rdpTcp* tcp, int sockfd)
 		tcp->bufferedBio = BIO_push(tcp->bufferedBio, tcp->socketBio);
 	}
 
-	BIO_get_event(tcp->socketBio, &tcp->event);
+	ringbuffer_commit_read_bytes(&tcp->xmitBuffer, ringbuffer_used(&tcp->xmitBuffer));
 
 	return 1;
 }
@@ -1268,8 +1227,6 @@ rdpTcp* freerdp_tcp_new()
 
 	if (!ringbuffer_init(&tcp->xmitBuffer, 0x10000))
 		goto out_free;
-
-	tcp->sockfd = -1;
 
 	return tcp;
 

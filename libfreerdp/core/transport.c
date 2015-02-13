@@ -680,10 +680,10 @@ void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 	void* pfd;
 
 #ifdef _WIN32
-	rfds[*rcount] = transport->TcpIn->event;
+	BIO_get_event(transport->TcpIn->bufferedBio, &rfds[*rcount]);
 	(*rcount)++;
 #else
-	rfds[*rcount] = (void*)(long)(transport->TcpIn->sockfd);
+	rfds[*rcount] = (void*)(long)(BIO_get_fd(transport->TcpIn->bufferedBio, NULL));
 	(*rcount)++;
 #endif
 
@@ -712,7 +712,7 @@ DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events)
 	DWORD nCount = 0;
 
 	if (events)
-		events[nCount] = transport->TcpIn->event;
+		BIO_get_event(transport->TcpIn->bufferedBio, &events[nCount]);
 	nCount++;
 
 	if (transport->ReceiveEvent)
