@@ -48,6 +48,8 @@
 #define BIO_C_SET_NONBLOCK		1104
 #define BIO_C_READ_BLOCKED		1105
 #define BIO_C_WRITE_BLOCKED		1106
+#define BIO_C_WAIT_READ			1107
+#define BIO_C_WAIT_WRITE		1108
 
 #define BIO_set_socket(b, s, c)		BIO_ctrl(b, BIO_C_SET_SOCKET, c, s);
 #define BIO_get_socket(b, c)		BIO_ctrl(b, BIO_C_GET_SOCKET, 0, (char*) c)
@@ -55,6 +57,8 @@
 #define BIO_set_nonblock(b, c)		BIO_ctrl(b, BIO_C_SET_NONBLOCK, c, NULL)
 #define BIO_read_blocked(b)		BIO_ctrl(b, BIO_C_READ_BLOCKED, 0, NULL)
 #define BIO_write_blocked(b)		BIO_ctrl(b, BIO_C_WRITE_BLOCKED, 0, NULL)
+#define BIO_wait_read(b, c)		BIO_ctrl(b, BIO_C_WAIT_READ, c, NULL)
+#define BIO_wait_write(b, c)		BIO_ctrl(b, BIO_C_WAIT_WRITE, c, NULL)
 
 typedef struct rdp_tcp rdpTcp;
 
@@ -72,9 +76,6 @@ struct rdp_tcp
 
 int freerdp_tcp_attach(rdpTcp* tcp, int sockfd);
 BOOL freerdp_tcp_connect(rdpTcp* tcp, rdpSettings* settings, const char* hostname, int port, int timeout);
-
-int freerdp_tcp_wait_read(rdpTcp* tcp, DWORD dwMilliSeconds);
-int freerdp_tcp_wait_write(rdpTcp* tcp, DWORD dwMilliSeconds);
 
 rdpTcp* freerdp_tcp_new();
 void freerdp_tcp_free(rdpTcp* tcp);

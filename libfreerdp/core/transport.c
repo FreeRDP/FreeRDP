@@ -332,11 +332,11 @@ static int transport_wait_for_read(rdpTransport* transport)
 
 	if (BIO_read_blocked(bio))
 	{
-		return freerdp_tcp_wait_read(tcpIn, 10);
+		return BIO_wait_read(bio, 10);
 	}
 	else if (BIO_write_blocked(bio))
 	{
-		return freerdp_tcp_wait_write(tcpIn, 10);
+		return BIO_wait_write(bio, 10);
 	}
 
 	USleep(1000);
@@ -353,11 +353,11 @@ static int transport_wait_for_write(rdpTransport* transport)
 
 	if (BIO_write_blocked(bio))
 	{
-		return freerdp_tcp_wait_write(tcpOut, 10);
+		return BIO_wait_write(bio, 10);
 	}
 	else if (BIO_read_blocked(bio))
 	{
-		return freerdp_tcp_wait_read(tcpOut, 10);
+		return BIO_wait_read(bio, 10);
 	}
 
 	USleep(1000);
@@ -980,7 +980,7 @@ rdpTransport* transport_new(rdpContext* context)
 	transport->ReceivePool = StreamPool_New(TRUE, BUFFER_SIZE);
 
 	if (!transport->ReceivePool)
-		goto out_free_tcpin;
+		goto out_free_transport;
 
 	/* receive buffer for non-blocking read. */
 	transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0);
@@ -1019,8 +1019,7 @@ out_free_receivebuffer:
 	StreamPool_Return(transport->ReceivePool, transport->ReceiveBuffer);
 out_free_receivepool:
 	StreamPool_Free(transport->ReceivePool);
-out_free_tcpin:
-	freerdp_tcp_free(transport->TcpIn);
+out_free_transport:
 	free(transport);
 	return NULL;
 }

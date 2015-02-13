@@ -249,6 +249,78 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 #endif
 		return 1;
 	}
+	else if (cmd == BIO_C_WAIT_READ)
+	{
+		int timeout = (int) arg1;
+		int sockfd = (int) ptr->socket;
+#ifdef HAVE_POLL_H
+		struct pollfd pollset;
+
+		pollset.fd = sockfd;
+		pollset.events = POLLIN;
+		pollset.revents = 0;
+
+		do
+		{
+			status = poll(&pollset, 1, timeout);
+		}
+		while ((status < 0) && (errno == EINTR));
+#else
+		fd_set rset;
+		struct timeval tv;
+
+		FD_ZERO(&rset);
+		FD_SET(sockfd, &rset);
+
+		if (timeout)
+		{
+			tv.tv_sec = timeout / 1000;
+			tv.tv_usec = (timeout % 1000) * 1000;
+		}
+
+		do
+		{
+			status = select(sockfd + 1, &rset, NULL, NULL, timeout ? &tv : NULL);
+		}
+		while ((status < 0) && (errno == EINTR));
+#endif
+	}
+	else if (cmd == BIO_C_WAIT_WRITE)
+	{
+		int timeout = (int) arg1;
+		int sockfd = (int) ptr->socket;
+#ifdef HAVE_POLL_H
+		struct pollfd pollset;
+
+		pollset.fd = sockfd;
+		pollset.events = POLLOUT;
+		pollset.revents = 0;
+
+		do
+		{
+			status = poll(&pollset, 1, timeout);
+		}
+		while ((status < 0) && (errno == EINTR));
+#else
+		fd_set rset;
+		struct timeval tv;
+
+		FD_ZERO(&rset);
+		FD_SET(sockfd, &rset);
+
+		if (timeout)
+		{
+			tv.tv_sec = timeout / 1000;
+			tv.tv_usec = (timeout % 1000) * 1000;
+		}
+
+		do
+		{
+			status = select(sockfd + 1, NULL, &rset, NULL, timeout ? &tv : NULL);
+		}
+		while ((status < 0) && (errno == EINTR));
+#endif
+	}
 
 	switch (cmd)
 	{
@@ -1183,82 +1255,6 @@ int freerdp_tcp_attach(rdpTcp* tcp, int sockfd)
 	BIO_get_event(tcp->socketBio, &tcp->event);
 
 	return 1;
-}
-
-int freerdp_tcp_wait_read(rdpTcp* tcp, DWORD dwMilliSeconds)
-{
-	int status;
-
-#ifdef HAVE_POLL_H
-	struct pollfd pollset;
-
-	pollset.fd = tcp->sockfd;
-	pollset.events = POLLIN;
-	pollset.revents = 0;
-
-	do
-	{
-		status = poll(&pollset, 1, dwMilliSeconds);
-	}
-	while ((status < 0) && (errno == EINTR));
-#else
-	struct timeval tv;
-	fd_set rset;
-
-	FD_ZERO(&rset);
-	FD_SET(tcp->sockfd, &rset);
-
-	if (dwMilliSeconds)
-	{
-		tv.tv_sec = dwMilliSeconds / 1000;
-		tv.tv_usec = (dwMilliSeconds % 1000) * 1000;
-	}
-
-	do
-	{
-		status = select(tcp->sockfd + 1, &rset, NULL, NULL, dwMilliSeconds ? &tv : NULL);
-	}
-	while ((status < 0) && (errno == EINTR));
-#endif
-	return status;
-}
-
-int freerdp_tcp_wait_write(rdpTcp* tcp, DWORD dwMilliSeconds)
-{
-	int status;
-
-#ifdef HAVE_POLL_H
-	struct pollfd pollset;
-
-	pollset.fd = tcp->sockfd;
-	pollset.events = POLLOUT;
-	pollset.revents = 0;
-
-	do
-	{
-		status = poll(&pollset, 1, dwMilliSeconds);
-	}
-	while ((status < 0) && (errno == EINTR));
-#else
-	struct timeval tv;
-	fd_set rset;
-
-	FD_ZERO(&rset);
-	FD_SET(tcp->sockfd, &rset);
-
-	if (dwMilliSeconds)
-	{
-		tv.tv_sec = dwMilliSeconds / 1000;
-		tv.tv_usec = (dwMilliSeconds % 1000) * 1000;
-	}
-
-	do
-	{
-		status = select(tcp->sockfd + 1, NULL, &rset, NULL, dwMilliSeconds ? &tv : NULL);
-	}
-	while ((status < 0) && (errno == EINTR));
-#endif
-	return status;
 }
 
 rdpTcp* freerdp_tcp_new()
