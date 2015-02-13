@@ -94,13 +94,13 @@ BOOL transport_connect_tls(rdpTransport* transport)
 
 	if (transport->GatewayEnabled)
 	{
-		tls = transport->tls = tls_new(transport->settings);
+		tls = transport->tls = tls_new(settings);
 		transport->layer = TRANSPORT_LAYER_TSG_TLS;
 		bio = transport->frontBio;
 	}
 	else
 	{
-		transport->tls = tls_new(settings);
+		tls = transport->tls = tls_new(settings);
 		transport->layer = TRANSPORT_LAYER_TLS;
 		bio = transport->TcpIn->bufferedBio;
 	}
@@ -709,7 +709,7 @@ DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events)
 	DWORD nCount = 0;
 
 	if (events)
-		events[nCount] = freerdp_tcp_get_event_handle(transport->TcpIn);
+		events[nCount] = transport->TcpIn->event;
 	nCount++;
 
 	if (transport->ReceiveEvent)
@@ -823,16 +823,15 @@ int transport_check_fds(rdpTransport* transport)
 
 BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking)
 {
-	BOOL status = TRUE;
-
 	transport->blocking = blocking;
 
 	if (!transport->SplitInputOutput)
 	{
-		status &= freerdp_tcp_set_blocking_mode(transport->TcpIn, blocking);
+		if (!BIO_set_nonblock(transport->TcpIn->socketBio, blocking ? FALSE : TRUE))
+			return FALSE;
 	}
 
-	return status;
+	return TRUE;
 }
 
 void transport_set_gateway_enabled(rdpTransport* transport, BOOL GatewayEnabled)
@@ -884,10 +883,16 @@ BOOL transport_disconnect(rdpTransport* transport)
 	else
 	{
 		if (transport->tls)
+		{
 			tls_free(transport->tls);
+			transport->tls = NULL;
+		}
 
 		if (transport->TcpIn)
+		{
 			freerdp_tcp_free(transport->TcpIn);
+			transport->TcpIn = NULL;
+		}
 	}
 
 	transport->TcpIn = NULL;

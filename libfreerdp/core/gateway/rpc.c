@@ -771,7 +771,7 @@ int rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 	if (!freerdp_tcp_connect(tcp, settings->GatewayHostname, settings->GatewayPort, timeout))
 		return -1;
 
-	if (!freerdp_tcp_set_blocking_mode(tcp, FALSE))
+	if (!BIO_set_nonblock(tcp->socketBio, TRUE))
 		return -1;
 
 	tls = channel->tls = tls_new(settings);

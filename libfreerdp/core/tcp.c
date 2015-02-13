@@ -1091,11 +1091,6 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeou
 	return TRUE;
 }
 
-BOOL freerdp_tcp_set_blocking_mode(rdpTcp* tcp, BOOL blocking)
-{
-	return BIO_set_nonblock(tcp->socketBio, blocking ? 0 : 1) ? TRUE : FALSE;
-}
-
 BOOL freerdp_tcp_set_keep_alive_mode(rdpTcp* tcp)
 {
 #ifndef _WIN32
@@ -1188,14 +1183,6 @@ int freerdp_tcp_attach(rdpTcp* tcp, int sockfd)
 	BIO_get_event(tcp->socketBio, &tcp->event);
 
 	return 1;
-}
-
-HANDLE freerdp_tcp_get_event_handle(rdpTcp* tcp)
-{
-	if (!tcp)
-		return NULL;
-	
-	return tcp->event;
 }
 
 int freerdp_tcp_wait_read(rdpTcp* tcp, DWORD dwMilliSeconds)
