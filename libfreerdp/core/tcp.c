@@ -22,9 +22,6 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <time.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -435,7 +432,7 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 	 */
 	if (buf && num && !ringbuffer_write(&tcp->xmitBuffer, (const BYTE*) buf, num))
 	{
-		WLog_ERR(TAG,  "an error occured when writing(toWrite=%d)", num);
+		WLog_ERR(TAG,  "an error occured when writing (num: %d)", num);
 		return -1;
 	}
 
@@ -473,6 +470,7 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 
 out:
 	ringbuffer_commit_read_bytes(&tcp->xmitBuffer, committedBytes);
+
 	return ret;
 }
 
@@ -520,24 +518,40 @@ static int transport_bio_buffered_gets(BIO* bio, char* str, int size)
 
 static long transport_bio_buffered_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 {
+	int status = -1;
 	rdpTcp* tcp = (rdpTcp*) bio->ptr;
 
 	switch (cmd)
 	{
 		case BIO_CTRL_FLUSH:
-			return 1;
+			if (!ringbuffer_used(&tcp->xmitBuffer))
+				status = 1;
+			else
+				status = (transport_bio_buffered_write(bio, NULL, 0) >= 0) ? 1 : -1;
+			break;
 
 		case BIO_CTRL_WPENDING:
-			return ringbuffer_used(&tcp->xmitBuffer);
+			status = ringbuffer_used(&tcp->xmitBuffer);
+			break;
 
 		case BIO_CTRL_PENDING:
-			return 0;
+			status = 0;
+			break;
+
+		case BIO_C_READ_BLOCKED:
+			status = (int) tcp->readBlocked;
+			break;
+
+		case BIO_C_WRITE_BLOCKED:
+			status = (int) tcp->writeBlocked;
+			break;
 
 		default:
-			return BIO_ctrl(bio->next_bio, cmd, arg1, arg2);
+			status = BIO_ctrl(bio->next_bio, cmd, arg1, arg2);
+			break;
 	}
 
-	return 0;
+	return status;
 }
 
 static int transport_bio_buffered_new(BIO* bio)
@@ -573,43 +587,27 @@ BIO_METHOD* BIO_s_buffered_socket(void)
 	return &transport_bio_buffered_socket_methods;
 }
 
-BOOL transport_bio_buffered_drain(BIO *bio)
-{
-	int status;
-	rdpTcp* tcp = (rdpTcp*) bio->ptr;
-
-	if (!ringbuffer_used(&tcp->xmitBuffer))
-		return 1;
-
-	status = transport_bio_buffered_write(bio, NULL, 0);
-
-	return status >= 0;
-}
-
-void freerdp_tcp_get_ip_address(rdpTcp* tcp)
+char* freerdp_tcp_get_ip_address(int sockfd)
 {
 	BYTE* ip;
 	socklen_t length;
+	char ipAddress[32];
 	struct sockaddr_in sockaddr;
 
 	length = sizeof(sockaddr);
 	ZeroMemory(&sockaddr, length);
 
-	if (getsockname(tcp->sockfd, (struct sockaddr*) &sockaddr, &length) == 0)
+	if (getsockname(sockfd, (struct sockaddr*) &sockaddr, &length) == 0)
 	{
 		ip = (BYTE*) (&sockaddr.sin_addr);
-		sprintf_s(tcp->ip_address, sizeof(tcp->ip_address),
-			 "%u.%u.%u.%u", ip[0], ip[1], ip[2], ip[3]);
+		sprintf_s(ipAddress, sizeof(ipAddress), "%u.%u.%u.%u", ip[0], ip[1], ip[2], ip[3]);
 	}
 	else
 	{
-		strcpy(tcp->ip_address, "127.0.0.1");
+		strcpy(ipAddress, "127.0.0.1");
 	}
 
-	tcp->settings->IPv6Enabled = 0;
-
-	free(tcp->settings->ClientAddress);
-	tcp->settings->ClientAddress = _strdup(tcp->ip_address);
+	return _strdup(ipAddress);
 }
 
 int freerdp_uds_connect(const char* path)
@@ -913,12 +911,67 @@ int freerdp_tcp_connect_multi(char** hostnames, int count, int port, int timeout
 
 #endif
 
-BOOL freerdp_tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
+BOOL freerdp_tcp_set_keep_alive_mode(int sockfd)
+{
+#ifndef _WIN32
+	UINT32 optval;
+	socklen_t optlen;
+
+	optval = 1;
+	optlen = sizeof(optval);
+
+	if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, (void*) &optval, optlen) < 0)
+	{
+		WLog_WARN(TAG, "setsockopt() SOL_SOCKET, SO_KEEPALIVE");
+	}
+
+#ifdef TCP_KEEPIDLE
+	optval = 5;
+	optlen = sizeof(optval);
+
+	if (setsockopt(sockfd, IPPROTO_TCP, TCP_KEEPIDLE, (void*) &optval, optlen) < 0)
+	{
+		WLog_WARN(TAG, "setsockopt() IPPROTO_TCP, TCP_KEEPIDLE");
+	}
+#endif
+
+#ifdef TCP_KEEPCNT
+	optval = 3;
+	optlen = sizeof(optval);
+
+	if (setsockopt(sockfd, SOL_TCP, TCP_KEEPCNT, (void*) &optval, optlen) < 0)
+	{
+		WLog_WARN(TAG, "setsockopt() SOL_TCP, TCP_KEEPCNT");
+	}
+#endif
+
+#ifdef TCP_KEEPINTVL
+	optval = 2;
+	optlen = sizeof(optval);
+
+	if (setsockopt(sockfd, SOL_TCP, TCP_KEEPINTVL, (void*) &optval, optlen) < 0)
+	{
+		WLog_WARN(TAG, "setsockopt() SOL_TCP, TCP_KEEPINTVL");
+	}
+#endif
+#endif
+
+#if defined(__MACOSX__) || defined(__IOS__)
+	optval = 1;
+	optlen = sizeof(optval);
+	if (setsockopt(sockfd, SOL_SOCKET, SO_NOSIGPIPE, (void*) &optval, optlen) < 0)
+	{
+		WLog_WARN(TAG, "setsockopt() SOL_SOCKET, SO_NOSIGPIPE");
+	}
+#endif
+	return TRUE;
+}
+
+BOOL freerdp_tcp_connect(rdpTcp* tcp, rdpSettings* settings, const char* hostname, int port, int timeout)
 {
 	int status;
 	UINT32 option_value;
 	socklen_t option_len;
-	rdpSettings* settings = tcp->settings;
 
 	if (!hostname)
 		return FALSE;
@@ -1046,7 +1099,10 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeou
 
 	BIO_get_event(tcp->socketBio, &tcp->event);
 
-	freerdp_tcp_get_ip_address(tcp);
+	settings->IPv6Enabled = FALSE;
+
+	free(settings->ClientAddress);
+	settings->ClientAddress = freerdp_tcp_get_ip_address(tcp->sockfd);
 
 	option_value = 1;
 	option_len = sizeof(option_value);
@@ -1075,7 +1131,7 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeou
 
 	if (!tcp->ipcSocket)
 	{
-		if (!freerdp_tcp_set_keep_alive_mode(tcp))
+		if (!freerdp_tcp_set_keep_alive_mode(tcp->sockfd))
 			return FALSE;
 	}
 
@@ -1088,62 +1144,6 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeou
 
 	tcp->bufferedBio = BIO_push(tcp->bufferedBio, tcp->socketBio);
 
-	return TRUE;
-}
-
-BOOL freerdp_tcp_set_keep_alive_mode(rdpTcp* tcp)
-{
-#ifndef _WIN32
-	UINT32 option_value;
-	socklen_t option_len;
-
-	option_value = 1;
-	option_len = sizeof(option_value);
-
-	if (setsockopt(tcp->sockfd, SOL_SOCKET, SO_KEEPALIVE, (void*) &option_value, option_len) < 0)
-	{
-		WLog_WARN(TAG, "setsockopt() SOL_SOCKET, SO_KEEPALIVE");
-	}
-
-#ifdef TCP_KEEPIDLE
-	option_value = 5;
-	option_len = sizeof(option_value);
-
-	if (setsockopt(tcp->sockfd, IPPROTO_TCP, TCP_KEEPIDLE, (void*) &option_value, option_len) < 0)
-	{
-		WLog_WARN(TAG, "setsockopt() IPPROTO_TCP, TCP_KEEPIDLE");
-	}
-#endif
-
-#ifdef TCP_KEEPCNT
-	option_value = 3;
-	option_len = sizeof(option_value);
-
-	if (setsockopt(tcp->sockfd, SOL_TCP, TCP_KEEPCNT, (void*) &option_value, option_len) < 0)
-	{
-		WLog_WARN(TAG, "setsockopt() SOL_TCP, TCP_KEEPCNT");
-	}
-#endif
-
-#ifdef TCP_KEEPINTVL
-	option_value = 2;
-	option_len = sizeof(option_value);
-
-	if (setsockopt(tcp->sockfd, SOL_TCP, TCP_KEEPINTVL, (void*) &option_value, option_len) < 0)
-	{
-		WLog_WARN(TAG, "setsockopt() SOL_TCP, TCP_KEEPINTVL");
-	}
-#endif
-#endif
-
-#if defined(__MACOSX__) || defined(__IOS__)
-	option_value = 1;
-	option_len = sizeof(option_value);
-	if (setsockopt(tcp->sockfd, SOL_SOCKET, SO_NOSIGPIPE, (void*) &option_value, option_len) < 0)
-	{
-		WLog_WARN(TAG, "setsockopt() SOL_SOCKET, SO_NOSIGPIPE");
-	}
-#endif
 	return TRUE;
 }
 
@@ -1261,7 +1261,7 @@ int freerdp_tcp_wait_write(rdpTcp* tcp, DWORD dwMilliSeconds)
 	return status;
 }
 
-rdpTcp* freerdp_tcp_new(rdpSettings* settings)
+rdpTcp* freerdp_tcp_new()
 {
 	rdpTcp* tcp;
 
@@ -1274,7 +1274,6 @@ rdpTcp* freerdp_tcp_new(rdpSettings* settings)
 		goto out_free;
 
 	tcp->sockfd = -1;
-	tcp->settings = settings;
 
 	return tcp;
 

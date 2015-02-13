@@ -766,12 +766,12 @@ int rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 	rdpContext* context = rpc->context;
 	rdpSettings* settings = context->settings;
 
-	tcp = channel->tcp = freerdp_tcp_new(settings);
+	tcp = channel->tcp = freerdp_tcp_new();
 
-	if (!freerdp_tcp_connect(tcp, settings->GatewayHostname, settings->GatewayPort, timeout))
+	if (!freerdp_tcp_connect(tcp, settings, settings->GatewayHostname, settings->GatewayPort, timeout))
 		return -1;
 
-	if (!BIO_set_nonblock(tcp->socketBio, TRUE))
+	if (!BIO_set_nonblock(tcp->bufferedBio, TRUE))
 		return -1;
 
 	tls = channel->tls = tls_new(settings);

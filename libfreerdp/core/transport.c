@@ -70,7 +70,7 @@ wStream* transport_send_stream_init(rdpTransport* transport, int size)
 void transport_attach(rdpTransport* transport, int sockfd)
 {
 	if (!transport->TcpIn)
-		transport->TcpIn = freerdp_tcp_new(transport->settings);
+		transport->TcpIn = freerdp_tcp_new();
 
 	freerdp_tcp_attach(transport->TcpIn, sockfd);
 
@@ -207,23 +207,6 @@ BOOL transport_connect_nla(rdpTransport* transport)
 	return TRUE;
 }
 
-BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16 port, int timeout)
-{
-	rdpTsg* tsg;
-
-	tsg = tsg_new(transport);
-
-	if (!tsg)
-		return FALSE;
-
-	transport->tsg = tsg;
-
-	if (!tsg_connect(tsg, hostname, port, timeout))
-		return FALSE;
-
-	return TRUE;
-}
-
 BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 port, int timeout)
 {
 	BOOL status = FALSE;
@@ -233,18 +216,34 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 
 	if (transport->GatewayEnabled)
 	{
-		if (!transport_tsg_connect(transport, hostname, port, timeout))
+		transport->tsg = tsg_new(transport);
+
+		if (!transport->tsg)
 			return FALSE;
+
+		if (!tsg_connect(transport->tsg, hostname, port, timeout))
+			return FALSE;
+
+		transport->frontBio = transport->tsg->bio;
+		transport->SplitInputOutput = TRUE;
+		transport->layer = TRANSPORT_LAYER_TSG;
 
 		status = TRUE;
 	}
 	else
 	{
-		transport->TcpIn = freerdp_tcp_new(settings);
+		transport->TcpIn = freerdp_tcp_new();
 
-		status = freerdp_tcp_connect(transport->TcpIn, hostname, port, timeout);
-		transport->SplitInputOutput = FALSE;
+		if (!transport->TcpIn)
+			return FALSE;
+
+		if (!freerdp_tcp_connect(transport->TcpIn, settings, hostname, port, timeout))
+			return FALSE;
+
 		transport->frontBio = transport->TcpIn->bufferedBio;
+		transport->SplitInputOutput = FALSE;
+
+		status = TRUE;
 	}
 
 	if (status)
@@ -326,13 +325,16 @@ BOOL transport_accept_nla(rdpTransport* transport)
 
 static int transport_wait_for_read(rdpTransport* transport)
 {
+	BIO* bio;
 	rdpTcp* tcpIn = transport->TcpIn;
 
-	if (tcpIn->readBlocked)
+	bio = tcpIn->bufferedBio;
+
+	if (BIO_read_blocked(bio))
 	{
 		return freerdp_tcp_wait_read(tcpIn, 10);
 	}
-	else if (tcpIn->writeBlocked)
+	else if (BIO_write_blocked(bio))
 	{
 		return freerdp_tcp_wait_write(tcpIn, 10);
 	}
@@ -343,14 +345,17 @@ static int transport_wait_for_read(rdpTransport* transport)
 
 static int transport_wait_for_write(rdpTransport* transport)
 {
+	BIO* bio;
 	rdpTcp* tcpOut;
-	tcpOut = transport->SplitInputOutput ? transport->TcpOut : transport->TcpIn;
 
-	if (tcpOut->writeBlocked)
+	tcpOut = transport->SplitInputOutput ? transport->TcpOut : transport->TcpIn;
+	bio = tcpOut->bufferedBio;
+
+	if (BIO_write_blocked(bio))
 	{
 		return freerdp_tcp_wait_write(tcpOut, 10);
 	}
-	else if (tcpOut->readBlocked)
+	else if (BIO_read_blocked(bio))
 	{
 		return freerdp_tcp_wait_read(tcpOut, 10);
 	}
@@ -584,8 +589,6 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 	return Stream_Length(s);
 }
 
-BOOL transport_bio_buffered_drain(BIO* bio);
-
 int transport_write(rdpTransport* transport, wStream* s)
 {
 	int length;
@@ -639,7 +642,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 			/* blocking transport, we must ensure the write buffer is really empty */
 			rdpTcp* out = transport->SplitInputOutput ? transport->TcpOut : transport->TcpIn;
 
-			while (out->writeBlocked)
+			while (BIO_write_blocked(out->bufferedBio))
 			{
 				if (transport_wait_for_write(transport) < 0)
 				{
@@ -647,9 +650,9 @@ int transport_write(rdpTransport* transport, wStream* s)
 					return -1;
 				}
 
-				if (!transport_bio_buffered_drain(out->bufferedBio))
+				if (BIO_flush(out->bufferedBio) < 1)
 				{
-					WLog_ERR(TAG, "error when draining outputBuffer");
+					WLog_ERR(TAG, "error when flushing outputBuffer");
 					return -1;
 				}
 			}
@@ -731,12 +734,11 @@ DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events)
 
 BOOL tranport_is_write_blocked(rdpTransport* transport)
 {
-	if (transport->TcpIn->writeBlocked)
+	if (BIO_write_blocked(transport->TcpIn->bufferedBio))
 		return TRUE;
 
 	return transport->SplitInputOutput &&
-		   transport->TcpOut &&
-		   transport->TcpOut->writeBlocked;
+			transport->TcpOut && BIO_write_blocked(transport->TcpOut->bufferedBio);
 }
 
 int tranport_drain_output_buffer(rdpTransport* transport)
@@ -744,20 +746,20 @@ int tranport_drain_output_buffer(rdpTransport* transport)
 	BOOL status = FALSE;
 
 	/* First try to send some accumulated bytes in the send buffer */
-	if (transport->TcpIn->writeBlocked)
+	if (BIO_write_blocked(transport->TcpIn->bufferedBio))
 	{
-		if (!transport_bio_buffered_drain(transport->TcpIn->bufferedBio))
+		if (BIO_flush(transport->TcpIn->bufferedBio) < 1)
 			return -1;
 
-		status |= transport->TcpIn->writeBlocked;
+		status |= BIO_write_blocked(transport->TcpIn->bufferedBio);
 	}
 
-	if (transport->SplitInputOutput && transport->TcpOut && transport->TcpOut->writeBlocked)
+	if (transport->SplitInputOutput && transport->TcpOut && BIO_write_blocked(transport->TcpOut->bufferedBio))
 	{
-		if (!transport_bio_buffered_drain(transport->TcpOut->bufferedBio))
+		if (BIO_flush(transport->TcpOut->bufferedBio) < 1)
 			return -1;
 
-		status |= transport->TcpOut->writeBlocked;
+		status |= BIO_write_blocked(transport->TcpOut->bufferedBio);
 	}
 
 	return status;
@@ -827,7 +829,7 @@ BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking)
 
 	if (!transport->SplitInputOutput)
 	{
-		if (!BIO_set_nonblock(transport->TcpIn->socketBio, blocking ? FALSE : TRUE))
+		if (!BIO_set_nonblock(transport->TcpIn->bufferedBio, blocking ? FALSE : TRUE))
 			return FALSE;
 	}
 

@@ -919,11 +919,11 @@ int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 		pollfds.revents = 0;
 		pollfds.events = 0;
 
-		if (tcp->writeBlocked)
+		if (BIO_write_blocked(bio))
 		{
 			pollfds.events |= POLLOUT;
 		}
-		else if (tcp->readBlocked)
+		else if (BIO_read_blocked(bio))
 		{
 			pollfds.events |= POLLIN;
 		}
@@ -943,13 +943,13 @@ int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 		/* we try to handle SSL want_read and want_write nicely */
 		rsetPtr = wsetPtr = NULL;
 
-		if (tcp->writeBlocked)
+		if (BIO_write_blocked(bio))
 		{
 			wsetPtr = &wset;
 			FD_ZERO(&wset);
 			FD_SET(tcp->sockfd, &wset);
 		}
-		else if (tcp->readBlocked)
+		else if (BIO_read_blocked(bio))
 		{
 			rsetPtr = &rset;
 			FD_ZERO(&rset);
