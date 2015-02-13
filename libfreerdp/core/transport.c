@@ -69,7 +69,11 @@ wStream* transport_send_stream_init(rdpTransport* transport, int size)
 
 void transport_attach(rdpTransport* transport, int sockfd)
 {
+	if (!transport->TcpIn)
+		transport->TcpIn = freerdp_tcp_new(transport->settings);
+
 	freerdp_tcp_attach(transport->TcpIn, sockfd);
+
 	transport->SplitInputOutput = FALSE;
 	transport->frontBio = transport->TcpIn->bufferedBio;
 }
