@@ -567,6 +567,12 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 
 static BOOL freerdp_peer_close(freerdp_peer* client)
 {
+	/** if negotiation has failed, we're not MCS connected. So don't
+	 * 	send anything else, or some mstsc will consider that as an error
+	 */
+	if (client->context->rdp->nego->SelectedProtocol & PROTOCOL_FAILED_NEGO)
+		return TRUE;
+
 	/**
 	 * [MS-RDPBCGR] 1.3.1.4.2 User-Initiated Disconnection Sequence on Server
 	 * The server first sends the client a Deactivate All PDU followed by an
