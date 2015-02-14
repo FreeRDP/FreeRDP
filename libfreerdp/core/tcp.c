@@ -476,6 +476,16 @@ BIO_METHOD* BIO_s_simple_socket(void)
 
 /* Buffered Socket BIO */
 
+struct _WINPR_BIO_BUFFERED_SOCKET
+{
+	BIO* socketBio;
+	BIO* bufferedBio;
+	BOOL readBlocked;
+	BOOL writeBlocked;
+	RingBuffer xmitBuffer;
+};
+typedef struct _WINPR_BIO_BUFFERED_SOCKET WINPR_BIO_BUFFERED_SOCKET;
+
 long transport_bio_buffered_callback(BIO* bio, int mode, const char* argp, int argi, long argl, long ret)
 {
 	return 1;
@@ -483,26 +493,28 @@ long transport_bio_buffered_callback(BIO* bio, int mode, const char* argp, int a
 
 static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 {
-	int status, ret;
-	rdpTcp* tcp = (rdpTcp*) bio->ptr;
-	int nchunks, committedBytes, i;
+	int i, ret;
+	int status;
+	int nchunks;
+	int committedBytes;
 	DataChunk chunks[2];
+	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*) bio->ptr;
 
 	ret = num;
-	tcp->writeBlocked = FALSE;
+	ptr->writeBlocked = FALSE;
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
 
 	/* we directly append extra bytes in the xmit buffer, this could be prevented
 	 * but for now it makes the code more simple.
 	 */
-	if (buf && num && !ringbuffer_write(&tcp->xmitBuffer, (const BYTE*) buf, num))
+	if (buf && num && !ringbuffer_write(&ptr->xmitBuffer, (const BYTE*) buf, num))
 	{
 		WLog_ERR(TAG, "an error occured when writing (num: %d)", num);
 		return -1;
 	}
 
 	committedBytes = 0;
-	nchunks = ringbuffer_peek(&tcp->xmitBuffer, chunks, ringbuffer_used(&tcp->xmitBuffer));
+	nchunks = ringbuffer_peek(&ptr->xmitBuffer, chunks, ringbuffer_used(&ptr->xmitBuffer));
 
 	for (i = 0; i < nchunks; i++)
 	{
@@ -522,7 +534,7 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 				if (BIO_should_write(bio->next_bio))
 				{
 					BIO_set_flags(bio, BIO_FLAGS_WRITE);
-					tcp->writeBlocked = TRUE;
+					ptr->writeBlocked = TRUE;
 					goto out; /* EWOULDBLOCK */
 				}
 			}
@@ -534,7 +546,7 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 	}
 
 out:
-	ringbuffer_commit_read_bytes(&tcp->xmitBuffer, committedBytes);
+	ringbuffer_commit_read_bytes(&ptr->xmitBuffer, committedBytes);
 
 	return ret;
 }
@@ -542,9 +554,9 @@ out:
 static int transport_bio_buffered_read(BIO* bio, char* buf, int size)
 {
 	int status;
-	rdpTcp* tcp = (rdpTcp*) bio->ptr;
+	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*) bio->ptr;
 
-	tcp->readBlocked = FALSE;
+	ptr->readBlocked = FALSE;
 	BIO_clear_flags(bio, BIO_FLAGS_READ);
 
 	status = BIO_read(bio->next_bio, buf, size);
@@ -562,7 +574,7 @@ static int transport_bio_buffered_read(BIO* bio, char* buf, int size)
 		if (BIO_should_read(bio->next_bio))
 		{
 			BIO_set_flags(bio, BIO_FLAGS_READ);
-			tcp->readBlocked = TRUE;
+			ptr->readBlocked = TRUE;
 			goto out;
 		}
 	}
@@ -584,19 +596,19 @@ static int transport_bio_buffered_gets(BIO* bio, char* str, int size)
 static long transport_bio_buffered_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 {
 	int status = -1;
-	rdpTcp* tcp = (rdpTcp*) bio->ptr;
+	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*) bio->ptr;
 
 	switch (cmd)
 	{
 		case BIO_CTRL_FLUSH:
-			if (!ringbuffer_used(&tcp->xmitBuffer))
+			if (!ringbuffer_used(&ptr->xmitBuffer))
 				status = 1;
 			else
 				status = (transport_bio_buffered_write(bio, NULL, 0) >= 0) ? 1 : -1;
 			break;
 
 		case BIO_CTRL_WPENDING:
-			status = ringbuffer_used(&tcp->xmitBuffer);
+			status = ringbuffer_used(&ptr->xmitBuffer);
 			break;
 
 		case BIO_CTRL_PENDING:
@@ -604,11 +616,11 @@ static long transport_bio_buffered_ctrl(BIO* bio, int cmd, long arg1, void* arg2
 			break;
 
 		case BIO_C_READ_BLOCKED:
-			status = (int) tcp->readBlocked;
+			status = (int) ptr->readBlocked;
 			break;
 
 		case BIO_C_WRITE_BLOCKED:
-			status = (int) tcp->writeBlocked;
+			status = (int) ptr->writeBlocked;
 			break;
 
 		default:
@@ -621,15 +633,38 @@ static long transport_bio_buffered_ctrl(BIO* bio, int cmd, long arg1, void* arg2
 
 static int transport_bio_buffered_new(BIO* bio)
 {
+	WINPR_BIO_BUFFERED_SOCKET* ptr;
+
 	bio->init = 1;
 	bio->num = 0;
 	bio->ptr = NULL;
 	bio->flags = BIO_FLAGS_SHOULD_RETRY;
+
+	ptr = (WINPR_BIO_BUFFERED_SOCKET*) calloc(1, sizeof(WINPR_BIO_BUFFERED_SOCKET));
+
+	if (!ptr)
+		return -1;
+
+	bio->ptr = (void*) ptr;
+
+	if (!ringbuffer_init(&ptr->xmitBuffer, 0x10000))
+		return -1;
+
 	return 1;
 }
 
 static int transport_bio_buffered_free(BIO* bio)
 {
+	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*) bio->ptr;
+
+	if (ptr->socketBio)
+	{
+		BIO_free(ptr->socketBio);
+		ptr->socketBio = NULL;
+	}
+
+	ringbuffer_destroy(&ptr->xmitBuffer);
+
 	return 1;
 }
 
@@ -1032,7 +1067,7 @@ BOOL freerdp_tcp_set_keep_alive_mode(int sockfd)
 	return TRUE;
 }
 
-BOOL freerdp_tcp_connect(rdpTcp* tcp, rdpSettings* settings, const char* hostname, int port, int timeout)
+int freerdp_tcp_connect(rdpSettings* settings, const char* hostname, int port, int timeout)
 {
 	int status;
 	int sockfd;
@@ -1041,7 +1076,7 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, rdpSettings* settings, const char* hostnam
 	BOOL ipcSocket = FALSE;
 
 	if (!hostname)
-		return FALSE;
+		return -1;
 
 	if (hostname[0] == '/')
 		ipcSocket = TRUE;
@@ -1051,14 +1086,7 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, rdpSettings* settings, const char* hostnam
 		sockfd = freerdp_uds_connect(hostname);
 
 		if (sockfd < 0)
-			return FALSE;
-
-		tcp->socketBio = BIO_new(BIO_s_simple_socket());
-
-		if (!tcp->socketBio)
-			return FALSE;
-
-		BIO_set_fd(tcp->socketBio, sockfd, BIO_CLOSE);
+			return -1;
 	}
 	else
 	{
@@ -1095,9 +1123,10 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, rdpSettings* settings, const char* hostnam
 
 			status = getaddrinfo(hostname, port_str, &hints, &result);
 
-			if (status) {
+			if (status)
+			{
 				WLog_ERR(TAG, "getaddrinfo: %s", gai_strerror(status));
-				return FALSE;
+				return -1;
 			}
 
 			addr = result;
@@ -1119,25 +1148,18 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, rdpSettings* settings, const char* hostnam
 			if (sockfd  < 0)
 			{
 				freeaddrinfo(result);
-				return FALSE;
+				return -1;
 			}
 
 			if (!freerdp_tcp_connect_timeout(sockfd, addr->ai_addr, addr->ai_addrlen, timeout))
 			{
 				fprintf(stderr, "failed to connect to %s\n", hostname);
 				freeaddrinfo(result);
-				return FALSE;
+				return -1;
 			}
 
 			freeaddrinfo(result);
 		}
-
-		tcp->socketBio = BIO_new(BIO_s_simple_socket());
-
-		if (!tcp->socketBio)
-			return FALSE;
-
-		BIO_set_fd(tcp->socketBio, sockfd, BIO_CLOSE);
 	}
 
 	settings->IPv6Enabled = FALSE;
@@ -1165,7 +1187,7 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, rdpSettings* settings, const char* hostnam
 			if (setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, (void*) &optval, optlen) < 0)
 			{
 				WLog_ERR(TAG, "unable to set receive buffer len");
-				return FALSE;
+				return -1;
 			}
 		}
 	}
@@ -1173,86 +1195,8 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, rdpSettings* settings, const char* hostnam
 	if (!ipcSocket)
 	{
 		if (!freerdp_tcp_set_keep_alive_mode(sockfd))
-			return FALSE;
-	}
-
-	tcp->bufferedBio = BIO_new(BIO_s_buffered_socket());
-
-	if (!tcp->bufferedBio)
-		return FALSE;
-
-	tcp->bufferedBio->ptr = tcp;
-	tcp->bufferedBio = BIO_push(tcp->bufferedBio, tcp->socketBio);
-
-	return TRUE;
-}
-
-int freerdp_tcp_attach(rdpTcp* tcp, int sockfd)
-{
-	if (tcp->socketBio)
-	{
-		tcp->socketBio = BIO_new(BIO_s_simple_socket());
-
-		if (!tcp->socketBio)
 			return -1;
-
-		BIO_set_fd(tcp->socketBio, sockfd, BIO_CLOSE);
 	}
 
-	if (!tcp->bufferedBio)
-	{
-		tcp->bufferedBio = BIO_new(BIO_s_buffered_socket());
-
-		if (!tcp->bufferedBio)
-			return FALSE;
-
-		tcp->bufferedBio->ptr = tcp;
-
-		tcp->bufferedBio = BIO_push(tcp->bufferedBio, tcp->socketBio);
-	}
-
-	ringbuffer_commit_read_bytes(&tcp->xmitBuffer, ringbuffer_used(&tcp->xmitBuffer));
-
-	return 1;
-}
-
-rdpTcp* freerdp_tcp_new()
-{
-	rdpTcp* tcp;
-
-	tcp = (rdpTcp*) calloc(1, sizeof(rdpTcp));
-
-	if (!tcp)
-		return NULL;
-
-	if (!ringbuffer_init(&tcp->xmitBuffer, 0x10000))
-		goto out_free;
-
-	return tcp;
-
-out_free:
-	free(tcp);
-	return NULL;
-}
-
-void freerdp_tcp_free(rdpTcp* tcp)
-{
-	if (!tcp)
-		return;
-
-	ringbuffer_destroy(&tcp->xmitBuffer);
-
-	if (tcp->socketBio)
-	{
-		BIO_free(tcp->socketBio);
-		tcp->socketBio = NULL;
-	}
-
-	if (tcp->bufferedBio)
-	{
-		BIO_free(tcp->bufferedBio);
-		tcp->bufferedBio = NULL;
-	}
-
-	free(tcp);
+	return sockfd;
 }

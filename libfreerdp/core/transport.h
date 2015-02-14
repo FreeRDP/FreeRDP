@@ -58,8 +58,8 @@ struct rdp_transport
 	BIO* frontBio;
 	rdpTsg* tsg;
 	rdpTls* tls;
-	rdpTcp* TcpIn;
-	rdpTcp* TcpOut;
+	BIO* bioIn;
+	BIO* bioOut;
 	rdpContext* context;
 	rdpCredssp* credssp;
 	rdpSettings* settings;
@@ -84,7 +84,7 @@ struct rdp_transport
 
 wStream* transport_send_stream_init(rdpTransport* transport, int size);
 BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 port, int timeout);
-void transport_attach(rdpTransport* transport, int sockfd);
+BOOL transport_attach(rdpTransport* transport, int sockfd);
 BOOL transport_disconnect(rdpTransport* transport);
 BOOL transport_connect_rdp(rdpTransport* transport);
 BOOL transport_connect_tls(rdpTransport* transport);

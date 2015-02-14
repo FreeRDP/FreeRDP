@@ -1483,8 +1483,9 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, int timeout)
 
 	tsg->bio->ptr = (void*) tsg;
 
-	transport->TcpIn = inChannel->tcp;
-	transport->TcpOut = outChannel->tcp;
+	transport->bioIn = inChannel->bio;
+	transport->bioOut = outChannel->bio;
+
 	transport->GatewayEvent = rpc->client->PipeEvent;
 
 	return TRUE;

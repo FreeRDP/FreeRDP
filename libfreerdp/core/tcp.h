@@ -31,12 +31,9 @@
 #include <winpr/stream.h>
 #include <winpr/winsock.h>
 
-#include <freerdp/utils/ringbuffer.h>
 #include <openssl/bio.h>
 
-#ifndef MSG_NOSIGNAL
-#define MSG_NOSIGNAL 0
-#endif
+#include <freerdp/utils/ringbuffer.h>
 
 #define BIO_TYPE_TSG			65
 #define BIO_TYPE_SIMPLE			66
@@ -60,21 +57,9 @@
 #define BIO_wait_read(b, c)		BIO_ctrl(b, BIO_C_WAIT_READ, c, NULL)
 #define BIO_wait_write(b, c)		BIO_ctrl(b, BIO_C_WAIT_WRITE, c, NULL)
 
-typedef struct rdp_tcp rdpTcp;
+BIO_METHOD* BIO_s_simple_socket(void);
+BIO_METHOD* BIO_s_buffered_socket(void);
 
-struct rdp_tcp
-{
-	BIO* socketBio;
-	BIO* bufferedBio;
-	BOOL readBlocked;
-	BOOL writeBlocked;
-	RingBuffer xmitBuffer;
-};
-
-int freerdp_tcp_attach(rdpTcp* tcp, int sockfd);
-BOOL freerdp_tcp_connect(rdpTcp* tcp, rdpSettings* settings, const char* hostname, int port, int timeout);
-
-rdpTcp* freerdp_tcp_new();
-void freerdp_tcp_free(rdpTcp* tcp);
+int freerdp_tcp_connect(rdpSettings* settings, const char* hostname, int port, int timeout);
 
 #endif /* __TCP_H */
