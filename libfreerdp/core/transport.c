@@ -158,62 +158,51 @@ BOOL transport_connect_tls(rdpTransport* transport)
 
 BOOL transport_connect_nla(rdpTransport* transport)
 {
-	rdpNla* nla;
-	freerdp* instance;
-	rdpSettings* settings;
-	settings = transport->settings;
-	instance = (freerdp*) settings->instance;
+	rdpContext* context = transport->context;
+	rdpSettings* settings = context->settings;
+	freerdp* instance = context->instance;
+	rdpRdp* rdp = context->rdp;
 
 	if (!transport_connect_tls(transport))
 		return FALSE;
 
-	/* Network Level Authentication */
-
 	if (!settings->Authentication)
 		return TRUE;
 
-	if (!transport->nla)
+	rdp->nla = nla_new(instance, transport, settings);
+
+	if (!rdp->nla)
+		return FALSE;
+
+	transport_set_nla_mode(transport, TRUE);
+
+	if (settings->AuthenticationServiceClass)
 	{
-		transport->nla = nla_new(instance, transport, settings);
+		rdp->nla->ServicePrincipalName =
+			nla_make_spn(settings->AuthenticationServiceClass, settings->ServerHostname);
 
-		if (!transport->nla)
+		if (!rdp->nla->ServicePrincipalName)
 			return FALSE;
-
-		transport_set_nla_mode(transport, TRUE);
-
-		if (settings->AuthenticationServiceClass)
-		{
-			transport->nla->ServicePrincipalName =
-				nla_make_spn(settings->AuthenticationServiceClass, settings->ServerHostname);
-
-			if (!transport->nla->ServicePrincipalName)
-				return FALSE;
-		}
 	}
 
-	nla = transport->nla;
-
-	if (nla_authenticate(nla) < 0)
+	if (nla_client_begin(rdp->nla) < 0)
 	{
 		if (!connectErrorCode)
 			connectErrorCode = AUTHENTICATIONERROR;
 
-		if (!freerdp_get_last_error(instance->context))
-		{
-			freerdp_set_last_error(instance->context, FREERDP_ERROR_AUTHENTICATION_FAILED);
-		}
+		if (!freerdp_get_last_error(context))
+			freerdp_set_last_error(context, FREERDP_ERROR_AUTHENTICATION_FAILED);
 
 		WLog_ERR(TAG, "Authentication failure, check credentials."
 				 "If credentials are valid, the NTLMSSP implementation may be to blame.");
+
 		transport_set_nla_mode(transport, FALSE);
-		nla_free(nla);
-		transport->nla = NULL;
+
 		return FALSE;
 	}
 
-	transport_set_nla_mode(transport, FALSE);
-	nla_free(nla);
-	transport->nla = NULL;
+	rdp_client_transition_to_state(rdp, CONNECTION_STATE_NLA);
+
 	return TRUE;
 }
 

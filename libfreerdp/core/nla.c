@@ -251,59 +251,63 @@ int nla_client_init(rdpNla* nla)
 	return 1;
 }
 
-int nla_client_authenticate(rdpNla* nla)
+int nla_client_begin(rdpNla* nla)
 {
 	if (nla_client_init(nla) < 1)
 		return -1;
 
-	if (nla->state == NLA_STATE_INITIAL)
+	if (nla->state != NLA_STATE_INITIAL)
+		return -1;
+
+	nla->outputBufferDesc.ulVersion = SECBUFFER_VERSION;
+	nla->outputBufferDesc.cBuffers = 1;
+	nla->outputBufferDesc.pBuffers = &nla->outputBuffer;
+	nla->outputBuffer.BufferType = SECBUFFER_TOKEN;
+	nla->outputBuffer.cbBuffer = nla->cbMaxToken;
+	nla->outputBuffer.pvBuffer = malloc(nla->outputBuffer.cbBuffer);
+
+	if (!nla->outputBuffer.pvBuffer)
+		return -1;
+
+	nla->status = nla->table->InitializeSecurityContext(&nla->credentials,
+			NULL, nla->ServicePrincipalName, nla->fContextReq, 0,
+			SECURITY_NATIVE_DREP, NULL, 0, &nla->context,
+			&nla->outputBufferDesc, &nla->pfContextAttr, &nla->expiration);
+
+	if ((nla->status == SEC_I_COMPLETE_AND_CONTINUE) || (nla->status == SEC_I_COMPLETE_NEEDED))
 	{
-		nla->outputBufferDesc.ulVersion = SECBUFFER_VERSION;
-		nla->outputBufferDesc.cBuffers = 1;
-		nla->outputBufferDesc.pBuffers = &nla->outputBuffer;
-		nla->outputBuffer.BufferType = SECBUFFER_TOKEN;
-		nla->outputBuffer.cbBuffer = nla->cbMaxToken;
-		nla->outputBuffer.pvBuffer = malloc(nla->outputBuffer.cbBuffer);
+		if (nla->table->CompleteAuthToken)
+			nla->table->CompleteAuthToken(&nla->context, &nla->outputBufferDesc);
 
-		if (!nla->outputBuffer.pvBuffer)
-			return -1;
-
-		nla->status = nla->table->InitializeSecurityContext(&nla->credentials,
-				NULL, nla->ServicePrincipalName, nla->fContextReq, 0,
-				SECURITY_NATIVE_DREP, NULL, 0, &nla->context,
-				&nla->outputBufferDesc, &nla->pfContextAttr, &nla->expiration);
-
-		if ((nla->status == SEC_I_COMPLETE_AND_CONTINUE) || (nla->status == SEC_I_COMPLETE_NEEDED))
-		{
-			if (nla->table->CompleteAuthToken)
-				nla->table->CompleteAuthToken(&nla->context, &nla->outputBufferDesc);
-
-			if (nla->status == SEC_I_COMPLETE_NEEDED)
-				nla->status = SEC_E_OK;
-			else if (nla->status == SEC_I_COMPLETE_AND_CONTINUE)
-				nla->status = SEC_I_CONTINUE_NEEDED;
-		}
-
-		if (nla->status != SEC_I_CONTINUE_NEEDED)
-			return -1;
-
-		if (nla->outputBuffer.cbBuffer < 1)
-			return -1;
-
-		nla->negoToken.pvBuffer = nla->outputBuffer.pvBuffer;
-		nla->negoToken.cbBuffer = nla->outputBuffer.cbBuffer;
-
-		WLog_DBG(TAG, "Sending Authentication Token");
-		winpr_HexDump(TAG, WLOG_DEBUG, nla->negoToken.pvBuffer, nla->negoToken.cbBuffer);
-
-		nla_send(nla);
-		nla_buffer_free(nla);
-
-		nla->state = NLA_STATE_NEGO_TOKEN;
+		if (nla->status == SEC_I_COMPLETE_NEEDED)
+			nla->status = SEC_E_OK;
+		else if (nla->status == SEC_I_COMPLETE_AND_CONTINUE)
+			nla->status = SEC_I_CONTINUE_NEEDED;
 	}
 
-	if (nla_recv(nla) < 0)
+	if (nla->status != SEC_I_CONTINUE_NEEDED)
 		return -1;
+
+	if (nla->outputBuffer.cbBuffer < 1)
+		return -1;
+
+	nla->negoToken.pvBuffer = nla->outputBuffer.pvBuffer;
+	nla->negoToken.cbBuffer = nla->outputBuffer.cbBuffer;
+
+	WLog_DBG(TAG, "Sending Authentication Token");
+	winpr_HexDump(TAG, WLOG_DEBUG, nla->negoToken.pvBuffer, nla->negoToken.cbBuffer);
+
+	nla_send(nla);
+	nla_buffer_free(nla);
+
+	nla->state = NLA_STATE_NEGO_TOKEN;
+
+	return 1;
+}
+
+int nla_client_recv(rdpNla* nla)
+{
+	int status = -1;
 
 	if (nla->state == NLA_STATE_NEGO_TOKEN)
 	{
@@ -369,12 +373,9 @@ int nla_client_authenticate(rdpNla* nla)
 		nla_buffer_free(nla);
 
 		nla->state = NLA_STATE_PUB_KEY_AUTH;
+		status = 1;
 	}
-
-	if (nla_recv(nla) < 0)
-		return -1;
-
-	if (nla->state == NLA_STATE_PUB_KEY_AUTH)
+	else if (nla->state == NLA_STATE_PUB_KEY_AUTH)
 	{
 		/* Verify Server Public Key Echo */
 		nla->status = nla_decrypt_public_key_echo(nla);
@@ -398,12 +399,46 @@ int nla_client_authenticate(rdpNla* nla)
 		nla_send(nla);
 		nla_buffer_free(nla);
 
-		nla->state = NLA_STATE_AUTH_INFO;
-
-		/* Free resources */
 		nla->table->FreeCredentialsHandle(&nla->credentials);
 		nla->table->FreeContextBuffer(nla->pPackageInfo);
+
+		nla->state = NLA_STATE_AUTH_INFO;
+		status = 1;
 	}
+
+	return status;
+}
+
+int nla_client_authenticate(rdpNla* nla)
+{
+	wStream* s;
+	int status;
+
+	s = Stream_New(NULL, 4096);
+
+	if (nla_client_begin(nla) < 1)
+		return -1;
+
+	while (nla->state < NLA_STATE_AUTH_INFO)
+	{
+		Stream_SetPosition(s, 0);
+
+		status = transport_read_pdu(nla->transport, s);
+
+		if (status < 0)
+		{
+			WLog_ERR(TAG, "nla_client_authenticate failure");
+			Stream_Free(s, TRUE);
+			return -1;
+		}
+
+		status = nla_recv_pdu(nla, s);
+
+		if (status < 0)
+			return -1;
+	}
+
+	Stream_Free(s, TRUE);
 
 	return 1;
 }
@@ -1110,7 +1145,7 @@ void nla_send(rdpNla* nla)
 	Stream_Free(s, TRUE);
 }
 
-int nla_recv_ts_request(rdpNla* nla, wStream* s)
+int nla_decode_ts_request(rdpNla* nla, wStream* s)
 {
 	int length;
 	UINT32 version;
@@ -1175,6 +1210,17 @@ int nla_recv_ts_request(rdpNla* nla, wStream* s)
 	return 1;
 }
 
+int nla_recv_pdu(rdpNla* nla, wStream* s)
+{
+	if (nla_decode_ts_request(nla, s) < 1)
+		return -1;
+
+	if (nla_client_recv(nla) < 1)
+		return -1;
+
+	return 1;
+}
+
 int nla_recv(rdpNla* nla)
 {
 	wStream* s;
@@ -1191,7 +1237,7 @@ int nla_recv(rdpNla* nla)
 		return -1;
 	}
 
-	if (nla_recv_ts_request(nla, s) < 1)
+	if (nla_recv_pdu(nla, s) < 1)
 		return -1;
 
 	Stream_Free(s, TRUE);

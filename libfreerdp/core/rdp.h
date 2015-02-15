@@ -25,6 +25,7 @@
 #include "config.h"
 #endif
 
+#include "nla.h"
 #include "mcs.h"
 #include "tpkt.h"
 #include "bulk.h"
@@ -132,6 +133,7 @@ struct rdp_rdp
 	int state;
 	freerdp* instance;
 	rdpContext* context;
+	rdpNla* nla;
 	rdpMcs* mcs;
 	rdpNego* nego;
 	rdpBulk* bulk;

@@ -186,6 +186,8 @@ BOOL mcs_send_disconnect_provider_ultimatum(rdpMcs* mcs);
 BOOL mcs_read_domain_mcspdu_header(wStream* s, enum DomainMCSPDU* domainMCSPDU, UINT16* length);
 void mcs_write_domain_mcspdu_header(wStream* s, enum DomainMCSPDU domainMCSPDU, UINT16 length, BYTE options);
 
+BOOL mcs_client_begin(rdpMcs* mcs);
+
 rdpMcs* mcs_new(rdpTransport* transport);
 void mcs_free(rdpMcs* mcs);
 

@@ -1187,6 +1187,23 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 
 	switch (rdp->state)
 	{
+		case CONNECTION_STATE_NLA:
+			if (nla_recv_pdu(rdp->nla, s) < 1)
+				return -1;
+
+			if (rdp->nla->state == NLA_STATE_AUTH_INFO)
+			{
+				transport_set_nla_mode(rdp->transport, FALSE);
+
+				nla_free(rdp->nla);
+				rdp->nla = NULL;
+
+				if (!mcs_client_begin(rdp->mcs))
+					return -1;
+			}
+
+			break;
+
 		case CONNECTION_STATE_MCS_CONNECT:
 			if (!mcs_recv_connect_response(rdp->mcs, s))
 			{
@@ -1528,6 +1545,7 @@ void rdp_free(rdpRdp* rdp)
 		fastpath_free(rdp->fastpath);
 		nego_free(rdp->nego);
 		mcs_free(rdp->mcs);
+		nla_free(rdp->nla);
 		redirection_free(rdp->redirection);
 		autodetect_free(rdp->autodetect);
 		heartbeat_free(rdp->heartbeat);

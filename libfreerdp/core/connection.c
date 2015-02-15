@@ -289,22 +289,10 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	rdp->transport->ReceiveExtra = rdp;
 	transport_set_blocking_mode(rdp->transport, FALSE);
 
-	rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CONNECT);
-
-	if (!mcs_send_connect_initial(rdp->mcs))
+	if (rdp->state != CONNECTION_STATE_NLA)
 	{
-		if (!connectErrorCode)
-		{
-			connectErrorCode = MCSCONNECTINITIALERROR;
-		}
-
-		if (!freerdp_get_last_error(rdp->context))
-		{
-			freerdp_set_last_error(rdp->context, FREERDP_ERROR_MCS_CONNECT_INITIAL_ERROR);
-		}
-
-		WLog_ERR(TAG, "Error: unable to send MCS Connect Initial");
-		return FALSE;
+		if (!mcs_client_begin(rdp->mcs))
+			return FALSE;
 	}
 
 	while (rdp->state != CONNECTION_STATE_ACTIVE)
@@ -896,6 +884,10 @@ int rdp_client_transition_to_state(rdpRdp* rdp, int state)
 
 		case CONNECTION_STATE_NEGO:
 			rdp->state = CONNECTION_STATE_NEGO;
+			break;
+
+		case CONNECTION_STATE_NLA:
+			rdp->state = CONNECTION_STATE_NLA;
 			break;
 
 		case CONNECTION_STATE_MCS_CONNECT:

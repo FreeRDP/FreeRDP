@@ -85,6 +85,9 @@ struct rdp_nla
 int nla_authenticate(rdpNla* nla);
 LPTSTR nla_make_spn(const char* ServiceClass, const char* hostname);
 
+int nla_client_begin(rdpNla* nla);
+int nla_recv_pdu(rdpNla* nla, wStream* s);
+
 rdpNla* nla_new(freerdp* instance, rdpTransport* transport, rdpSettings* settings);
 void nla_free(rdpNla* nla);
 
