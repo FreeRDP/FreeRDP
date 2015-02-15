@@ -435,7 +435,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 	/* Make sure there is enough space for the longest header within the stream */
 	Stream_EnsureCapacity(s, 4);
 
-	/* Make sure at least two bytes are read for futher processing */
+	/* Make sure at least two bytes are read for further processing */
 	if (position < 2 && (status = transport_read_layer_bytes(transport, s, 2 - position)) != 1)
 	{
 		/* No data available at the moment */

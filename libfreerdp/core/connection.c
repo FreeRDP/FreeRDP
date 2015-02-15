@@ -263,6 +263,8 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 			return FALSE;
 	}
 
+	rdp_client_transition_to_state(rdp, CONNECTION_STATE_NEGO);
+
 	if (!nego_connect(rdp->nego))
 	{
 		if (!freerdp_get_last_error(rdp->context))
@@ -281,10 +283,13 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 			settings->AutoLogonEnabled = TRUE;
 	}
 
-	rdp_set_blocking_mode(rdp, FALSE);
+	/* everything beyond this point is event-driven and non blocking */
 
-	rdp_client_transition_to_state(rdp, CONNECTION_STATE_NEGO);
-	rdp->finalize_sc_pdus = 0;
+	rdp->transport->ReceiveCallback = rdp_recv_callback;
+	rdp->transport->ReceiveExtra = rdp;
+	transport_set_blocking_mode(rdp->transport, FALSE);
+
+	rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CONNECT);
 
 	if (!mcs_send_connect_initial(rdp->mcs))
 	{
@@ -646,38 +651,6 @@ end2:
 		free(client_random);
 
 	return ret;
-}
-
-BOOL rdp_client_connect_mcs_connect_response(rdpRdp* rdp, wStream* s)
-{
-	if (!mcs_recv_connect_response(rdp->mcs, s))
-	{
-		WLog_ERR(TAG, "rdp_client_connect_mcs_connect_response: mcs_recv_connect_response failed");
-		return FALSE;
-	}
-
-	if (!mcs_send_erect_domain_request(rdp->mcs))
-		return FALSE;
-
-	if (!mcs_send_attach_user_request(rdp->mcs))
-		return FALSE;
-
-	rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_ATTACH_USER);
-
-	return TRUE;
-}
-
-BOOL rdp_client_connect_mcs_attach_user_confirm(rdpRdp* rdp, wStream* s)
-{
-	if (!mcs_recv_attach_user_confirm(rdp->mcs, s))
-		return FALSE;
-
-	if (!mcs_send_channel_join_request(rdp->mcs, rdp->mcs->userId))
-		return FALSE;
-
-	rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CHANNEL_JOIN);
-
-	return TRUE;
 }
 
 BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)

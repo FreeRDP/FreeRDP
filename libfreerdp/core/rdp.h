@@ -213,7 +213,8 @@ int rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s);
 
 void rdp_read_flow_control_pdu(wStream* s, UINT16* type);
 
-void rdp_set_blocking_mode(rdpRdp* rdp, BOOL blocking);
+int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra);
+
 int rdp_check_fds(rdpRdp* rdp);
 
 rdpRdp* rdp_new(rdpContext* context);

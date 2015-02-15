@@ -35,9 +35,20 @@ typedef struct rdp_nla rdpNla;
 
 #include "transport.h"
 
+enum _NLA_STATE
+{
+	NLA_STATE_INITIAL,
+	NLA_STATE_NEGO_TOKEN,
+	NLA_STATE_PUB_KEY_AUTH,
+	NLA_STATE_AUTH_INFO,
+	NLA_STATE_FINAL
+};
+typedef enum _NLA_STATE NLA_STATE;
+
 struct rdp_nla
 {
 	BOOL server;
+	NLA_STATE state;
 	int sendSeqNum;
 	int recvSeqNum;
 	freerdp* instance;
