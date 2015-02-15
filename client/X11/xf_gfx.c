@@ -30,7 +30,6 @@ int xf_ResetGraphics(RdpgfxClientContext* context, RDPGFX_RESET_GRAPHICS_PDU* re
 {
 	int count;
 	int index;
-	int status = 1;
 	xfGfxSurface* surface;
 	UINT16* pSurfaceIds = NULL;
 	xfContext* xfc = (xfContext*) context->custom;

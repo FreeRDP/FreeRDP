@@ -86,9 +86,7 @@ BOOL transport_attach(rdpTransport* transport, int sockfd)
 
 	bufferedBio = BIO_push(bufferedBio, socketBio);
 
-	transport->bioIn = bufferedBio;
-	transport->frontBio = transport->bioIn;
-	transport->SplitInputOutput = FALSE;
+	transport->frontBio = bufferedBio;
 
 	return TRUE;
 }
@@ -102,7 +100,6 @@ BOOL transport_connect_rdp(rdpTransport* transport)
 BOOL transport_connect_tls(rdpTransport* transport)
 {
 	int tlsStatus;
-	BIO* bio = NULL;
 	rdpTls* tls = NULL;
 	rdpContext* context = transport->context;
 	rdpSettings* settings = transport->settings;
@@ -111,13 +108,11 @@ BOOL transport_connect_tls(rdpTransport* transport)
 	{
 		tls = transport->tls = tls_new(settings);
 		transport->layer = TRANSPORT_LAYER_TSG_TLS;
-		bio = transport->frontBio;
 	}
 	else
 	{
 		tls = transport->tls = tls_new(settings);
 		transport->layer = TRANSPORT_LAYER_TLS;
-		bio = transport->bioIn;
 	}
 
 	transport->tls = tls;
@@ -129,7 +124,7 @@ BOOL transport_connect_tls(rdpTransport* transport)
 		tls->port = 3389;
 
 	tls->isGatewayTransport = FALSE;
-	tlsStatus = tls_connect(tls, bio);
+	tlsStatus = tls_connect(tls, transport->frontBio);
 
 	if (tlsStatus < 1)
 	{
@@ -241,7 +236,6 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 			return FALSE;
 
 		transport->frontBio = transport->tsg->bio;
-		transport->SplitInputOutput = TRUE;
 		transport->layer = TRANSPORT_LAYER_TSG;
 
 		status = TRUE;
@@ -286,7 +280,7 @@ BOOL transport_accept_tls(rdpTransport* transport)
 
 	transport->layer = TRANSPORT_LAYER_TLS;
 
-	if (!tls_accept(transport->tls, transport->bioIn, settings->CertificateFile, settings->PrivateKeyFile))
+	if (!tls_accept(transport->tls, transport->frontBio, settings->CertificateFile, settings->PrivateKeyFile))
 		return FALSE;
 
 	transport->frontBio = transport->tls->bio;
@@ -304,7 +298,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 
 	transport->layer = TRANSPORT_LAYER_TLS;
 
-	if (!tls_accept(transport->tls, transport->bioIn, settings->CertificateFile, settings->PrivateKeyFile))
+	if (!tls_accept(transport->tls, transport->frontBio, settings->CertificateFile, settings->PrivateKeyFile))
 		return FALSE;
 
 	transport->frontBio = transport->tls->bio;
@@ -335,40 +329,6 @@ BOOL transport_accept_nla(rdpTransport* transport)
 	return TRUE;
 }
 
-static int transport_wait_for_read(rdpTransport* transport)
-{
-	if (BIO_read_blocked(transport->bioIn))
-	{
-		return BIO_wait_read(transport->bioIn, 10);
-	}
-	else if (BIO_write_blocked(transport->bioIn))
-	{
-		return BIO_wait_write(transport->bioIn, 10);
-	}
-
-	USleep(1000);
-	return 0;
-}
-
-static int transport_wait_for_write(rdpTransport* transport)
-{
-	BIO* bio;
-
-	bio = transport->SplitInputOutput ? transport->bioOut : transport->bioIn;
-
-	if (BIO_write_blocked(bio))
-	{
-		return BIO_wait_write(bio, 10);
-	}
-	else if (BIO_read_blocked(bio))
-	{
-		return BIO_wait_read(bio, 10);
-	}
-
-	USleep(1000);
-	return 0;
-}
-
 int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 {
 	int read = 0;
@@ -397,9 +357,8 @@ int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 			if (!transport->blocking)
 				return read;
 
-			/* blocking means that we can't continue until we have read the number of
-			 * requested bytes */
-			if (transport_wait_for_read(transport) < 0)
+			/* blocking means that we can't continue until we have read the number of requested bytes */
+			if (BIO_wait_read(transport->frontBio, 100) < 0)
 			{
 				WLog_ERR(TAG, "error when selecting for read");
 				return -1;
@@ -462,6 +421,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 	int position;
 	int pduLength;
 	BYTE* header;
+
 	position = 0;
 	pduLength = 0;
 
@@ -575,17 +535,6 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 	if (status != 1)
 		return status;
 
-#ifdef WITH_DEBUG_TRANSPORT
-
-	/* dump when whole PDU is read */
-	if (Stream_GetPosition(s) >= pduLength)
-	{
-		WLog_DBG(TAG,  "Local < Remote");
-		winpr_HexDump(TAG, WLOG_DEBUG, Stream_Buffer(s), pduLength);
-	}
-
-#endif
-
 	if (Stream_GetPosition(s) >= pduLength)
 		WLog_Packet(WLog_Get(TAG), WLOG_TRACE, Stream_Buffer(s), pduLength, WLOG_PACKET_INBOUND);
 
@@ -598,18 +547,11 @@ int transport_write(rdpTransport* transport, wStream* s)
 {
 	int length;
 	int status = -1;
+
 	EnterCriticalSection(&(transport->WriteLock));
+
 	length = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
-#ifdef WITH_DEBUG_TRANSPORT
-
-	if (length > 0)
-	{
-		WLog_DBG(TAG,  "Local > Remote");
-		winpr_HexDump(TAG, WLOG_DEBUG, Stream_Buffer(s), length);
-	}
-
-#endif
 
 	if (length > 0)
 	{
@@ -633,7 +575,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 			if (!transport->blocking)
 				return status;
 
-			if (transport_wait_for_write(transport) < 0)
+			if (BIO_wait_write(transport->frontBio, 100) < 0)
 			{
 				WLog_ERR(TAG, "error when selecting for write");
 				return -1;
@@ -644,18 +586,15 @@ int transport_write(rdpTransport* transport, wStream* s)
 
 		if (transport->blocking || transport->settings->WaitForOutputBufferFlush)
 		{
-			/* blocking transport, we must ensure the write buffer is really empty */
-			BIO* bio = transport->SplitInputOutput ? transport->bioOut : transport->bioIn;
-
-			while (BIO_write_blocked(bio))
+			while (BIO_write_blocked(transport->frontBio))
 			{
-				if (transport_wait_for_write(transport) < 0)
+				if (BIO_wait_write(transport->frontBio, 100) < 0)
 				{
 					WLog_ERR(TAG, "error when selecting for write");
 					return -1;
 				}
 
-				if (BIO_flush(bio) < 1)
+				if (BIO_flush(transport->frontBio) < 1)
 				{
 					WLog_ERR(TAG, "error when flushing outputBuffer");
 					return -1;
@@ -680,90 +619,54 @@ int transport_write(rdpTransport* transport, wStream* s)
 	return status;
 }
 
-void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
+UINT32 transport_get_event_handles(rdpTransport* transport, HANDLE* events)
 {
-	void* pfd;
+	UINT32 nCount = 0;
 
-#ifdef _WIN32
-	BIO_get_event(transport->bioIn, &rfds[*rcount]);
-	(*rcount)++;
-#else
-	rfds[*rcount] = (void*)(long)(BIO_get_fd(transport->bioIn, NULL));
-	(*rcount)++;
-#endif
-
-	pfd = GetEventWaitObject(transport->ReceiveEvent);
-
-	if (pfd)
-	{
-		rfds[*rcount] = pfd;
-		(*rcount)++;
-	}
-
-	if (transport->GatewayEvent)
-	{
-		pfd = GetEventWaitObject(transport->GatewayEvent);
-
-		if (pfd)
-		{
-			rfds[*rcount] = pfd;
-			(*rcount)++;
-		}
-	}
-}
-
-DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events)
-{
-	DWORD nCount = 0;
-
-	if (events)
-		BIO_get_event(transport->bioIn, &events[nCount]);
-	nCount++;
-
-	if (transport->ReceiveEvent)
+	if (!transport->GatewayEnabled)
 	{
 		if (events)
-			events[nCount] = transport->ReceiveEvent;
+			BIO_get_event(transport->frontBio, &events[nCount]);
 		nCount++;
 	}
-
-	if (transport->GatewayEvent)
+	else
 	{
-		if (events)
-			events[nCount] = transport->GatewayEvent;
-		nCount++;
+		nCount += tsg_get_event_handles(transport->tsg, events);
 	}
 
 	return nCount;
 }
 
+void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
+{
+	UINT32 index;
+	UINT32 nCount;
+	HANDLE events[64];
+
+	nCount = transport_get_event_handles(transport, events);
+
+	for (index = 0; index < nCount; index++)
+	{
+		rfds[*rcount] = GetEventWaitObject(events[index]);
+		(*rcount)++;
+	}
+}
+
 BOOL tranport_is_write_blocked(rdpTransport* transport)
 {
-	if (BIO_write_blocked(transport->bioIn))
-		return TRUE;
-
-	return transport->SplitInputOutput && BIO_write_blocked(transport->bioOut);
+	return BIO_write_blocked(transport->frontBio);
 }
 
 int tranport_drain_output_buffer(rdpTransport* transport)
 {
 	BOOL status = FALSE;
 
-	/* First try to send some accumulated bytes in the send buffer */
-	if (BIO_write_blocked(transport->bioIn))
+	if (BIO_write_blocked(transport->frontBio))
 	{
-		if (BIO_flush(transport->bioIn) < 1)
+		if (BIO_flush(transport->frontBio) < 1)
 			return -1;
 
-		status |= BIO_write_blocked(transport->bioIn);
-	}
-
-	if (transport->SplitInputOutput && BIO_write_blocked(transport->bioOut))
-	{
-		if (BIO_flush(transport->bioOut) < 1)
-			return -1;
-
-		status |= BIO_write_blocked(transport->bioOut);
+		status |= BIO_write_blocked(transport->frontBio);
 	}
 
 	return status;
@@ -777,8 +680,6 @@ int transport_check_fds(rdpTransport* transport)
 
 	if (!transport)
 		return -1;
-
-	ResetEvent(transport->ReceiveEvent);
 
 	/**
 	 * Loop through and read all available PDUs.  Since multiple
@@ -831,11 +732,8 @@ BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking)
 {
 	transport->blocking = blocking;
 
-	if (!transport->SplitInputOutput)
-	{
-		if (!BIO_set_nonblock(transport->bioIn, blocking ? FALSE : TRUE))
-			return FALSE;
-	}
+	if (!BIO_set_nonblock(transport->frontBio, blocking ? FALSE : TRUE))
+		return FALSE;
 
 	return TRUE;
 }
@@ -893,16 +791,9 @@ BOOL transport_disconnect(rdpTransport* transport)
 			tls_free(transport->tls);
 			transport->tls = NULL;
 		}
-
-		if (transport->bioIn)
-		{
-			BIO_free(transport->bioIn);
-			transport->bioIn = NULL;
-		}
 	}
 
-	transport->bioIn = NULL;
-	transport->bioOut = NULL;
+	transport->frontBio = NULL;
 
 	transport->layer = TRANSPORT_LAYER_TCP;
 
@@ -979,8 +870,6 @@ rdpTransport* transport_new(rdpContext* context)
 	transport->context = context;
 	transport->settings = context->settings;
 
-	/* a small 0.1ms delay when transport is blocking. */
-	transport->SleepInterval = 100;
 	transport->ReceivePool = StreamPool_New(TRUE, BUFFER_SIZE);
 
 	if (!transport->ReceivePool)
@@ -992,15 +881,10 @@ rdpTransport* transport_new(rdpContext* context)
 	if (!transport->ReceiveBuffer)
 		goto out_free_receivepool;
 
-	transport->ReceiveEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-
-	if (!transport->ReceiveEvent || transport->ReceiveEvent == INVALID_HANDLE_VALUE)
-		goto out_free_receivebuffer;
-
 	transport->connectedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 	if (!transport->connectedEvent || transport->connectedEvent == INVALID_HANDLE_VALUE)
-		goto out_free_receiveEvent;
+		goto out_free_receivebuffer;
 
 	transport->blocking = TRUE;
 	transport->GatewayEnabled = FALSE;
@@ -1017,8 +901,6 @@ out_free_readlock:
 	DeleteCriticalSection(&(transport->ReadLock));
 out_free_connectedEvent:
 	CloseHandle(transport->connectedEvent);
-out_free_receiveEvent:
-	CloseHandle(transport->ReceiveEvent);
 out_free_receivebuffer:
 	StreamPool_Return(transport->ReceivePool, transport->ReceiveBuffer);
 out_free_receivepool:
@@ -1039,7 +921,6 @@ void transport_free(rdpTransport* transport)
 		Stream_Release(transport->ReceiveBuffer);
 
 	StreamPool_Free(transport->ReceivePool);
-	CloseHandle(transport->ReceiveEvent);
 	CloseHandle(transport->connectedEvent);
 	DeleteCriticalSection(&(transport->ReadLock));
 	DeleteCriticalSection(&(transport->WriteLock));

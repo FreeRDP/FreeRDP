@@ -665,6 +665,8 @@ static int transport_bio_buffered_free(BIO* bio)
 
 	ringbuffer_destroy(&ptr->xmitBuffer);
 
+	free(ptr);
+
 	return 1;
 }
 

@@ -58,25 +58,19 @@ struct rdp_transport
 	BIO* frontBio;
 	rdpTsg* tsg;
 	rdpTls* tls;
-	BIO* bioIn;
-	BIO* bioOut;
 	rdpContext* context;
 	rdpCredssp* credssp;
 	rdpSettings* settings;
-	UINT32 SleepInterval;
 	void* ReceiveExtra;
 	wStream* ReceiveBuffer;
 	TransportRecv ReceiveCallback;
-	HANDLE ReceiveEvent;
-	HANDLE GatewayEvent;
-	BOOL blocking;
-	BOOL SplitInputOutput;
 	wStreamPool* ReceivePool;
 	HANDLE connectedEvent;
 	HANDLE stopEvent;
 	HANDLE thread;
 	BOOL async;
 	BOOL NlaMode;
+	BOOL blocking;
 	BOOL GatewayEnabled;
 	CRITICAL_SECTION ReadLock;
 	CRITICAL_SECTION WriteLock;
@@ -99,7 +93,7 @@ int transport_write(rdpTransport* transport, wStream* s);
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount);
 int transport_check_fds(rdpTransport* transport);
 
-DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events);
+UINT32 transport_get_event_handles(rdpTransport* transport, HANDLE* events);
 
 BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking);
 void transport_set_gateway_enabled(rdpTransport* transport, BOOL GatewayEnabled);

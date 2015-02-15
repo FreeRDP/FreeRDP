@@ -231,7 +231,7 @@ static BOOL freerdp_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 {
 	rdpTransport* transport = client->context->rdp->transport;
 
-	rfds[*rcount] = (void*)(long)(BIO_get_fd(transport->bioIn, NULL));
+	rfds[*rcount] = (void*)(long)(BIO_get_fd(transport->frontBio, NULL));
 	(*rcount)++;
 
 	return TRUE;
@@ -242,7 +242,7 @@ static HANDLE freerdp_peer_get_event_handle(freerdp_peer* client)
 	HANDLE hEvent = NULL;
 	rdpTransport* transport = client->context->rdp->transport;
 
-	BIO_get_event(transport->bioIn, &hEvent);
+	BIO_get_event(transport->frontBio, &hEvent);
 
 	return hEvent;
 }
@@ -591,7 +591,8 @@ static BOOL freerdp_peer_close(freerdp_peer* client)
 
 static void freerdp_peer_disconnect(freerdp_peer* client)
 {
-	transport_disconnect(client->context->rdp->transport);
+	rdpTransport* transport = client->context->rdp->transport;
+	transport_disconnect(transport);
 }
 
 static int freerdp_peer_send_channel_data(freerdp_peer* client, UINT16 channelId, BYTE* data, int size)
@@ -601,13 +602,13 @@ static int freerdp_peer_send_channel_data(freerdp_peer* client, UINT16 channelId
 
 static BOOL freerdp_peer_is_write_blocked(freerdp_peer* peer)
 {
-	return tranport_is_write_blocked(peer->context->rdp->transport);
+	rdpTransport* transport = peer->context->rdp->transport;
+	return tranport_is_write_blocked(transport);
 }
 
 static int freerdp_peer_drain_output_buffer(freerdp_peer* peer)
 {
 	rdpTransport* transport = peer->context->rdp->transport;
-
 	return tranport_drain_output_buffer(transport);
 }
 

@@ -1393,7 +1393,7 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 	return status;
 }
 
-int tsg_check(rdpTsg* tsg)
+int tsg_check_event_handles(rdpTsg* tsg)
 {
 	int status;
 
@@ -1408,6 +1408,47 @@ int tsg_check(rdpTsg* tsg)
 		return -1;
 
 	return status;
+}
+
+DWORD tsg_get_event_handles(rdpTsg* tsg, HANDLE* events)
+{
+	DWORD nCount = 0;
+	rdpRpc* rpc = tsg->rpc;
+	RpcVirtualConnection* connection = rpc->VirtualConnection;
+
+	if (events)
+		events[nCount] = rpc->client->PipeEvent;
+	nCount++;
+
+	if (connection->DefaultInChannel && connection->DefaultInChannel->tls)
+	{
+		if (events)
+			BIO_get_event(connection->DefaultInChannel->tls->bio, &events[nCount]);
+		nCount++;
+	}
+
+	if (connection->NonDefaultInChannel && connection->NonDefaultInChannel->tls)
+	{
+		if (events)
+			BIO_get_event(connection->NonDefaultInChannel->tls->bio, &events[nCount]);
+		nCount++;
+	}
+
+	if (connection->DefaultOutChannel && connection->DefaultOutChannel->tls)
+	{
+		if (events)
+			BIO_get_event(connection->DefaultOutChannel->tls->bio, &events[nCount]);
+		nCount++;
+	}
+
+	if (connection->NonDefaultOutChannel && connection->NonDefaultOutChannel->tls)
+	{
+		if (events)
+			BIO_get_event(connection->NonDefaultOutChannel->tls->bio, &events[nCount]);
+		nCount++;
+	}
+
+	return nCount;
 }
 
 BOOL tsg_set_hostname(rdpTsg* tsg, const char* hostname)
@@ -1432,7 +1473,8 @@ BOOL tsg_set_machine_name(rdpTsg* tsg, const char* machineName)
 
 BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, int timeout)
 {
-	HANDLE events[2];
+	DWORD nCount;
+	HANDLE events[64];
 	rdpRpc* rpc = tsg->rpc;
 	RpcInChannel* inChannel;
 	RpcOutChannel* outChannel;
@@ -1459,14 +1501,13 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, int timeout)
 	inChannel = connection->DefaultInChannel;
 	outChannel = connection->DefaultOutChannel;
 
-	BIO_get_event(inChannel->tls->bio, &events[0]);
-	BIO_get_event(outChannel->tls->bio, &events[1]);
+	nCount = tsg_get_event_handles(tsg, events);
 
 	while (tsg->state != TSG_STATE_PIPE_CREATED)
 	{
-		WaitForMultipleObjects(2, events, FALSE, 100);
+		WaitForMultipleObjects(nCount, events, FALSE, 100);
 
-		if (tsg_check(tsg) < 0)
+		if (tsg_check_event_handles(tsg) < 0)
 		{
 			WLog_ERR(TAG, "tsg_check failure");
 			transport->layer = TRANSPORT_LAYER_CLOSED;
@@ -1482,11 +1523,6 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, int timeout)
 		return FALSE;
 
 	tsg->bio->ptr = (void*) tsg;
-
-	transport->bioIn = inChannel->bio;
-	transport->bioOut = outChannel->bio;
-
-	transport->GatewayEvent = rpc->client->PipeEvent;
 
 	return TRUE;
 }
@@ -1575,7 +1611,7 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 		{
 			while (WaitForSingleObject(rpc->client->PipeEvent, 0) != WAIT_OBJECT_0)
 			{
-				if (tsg_check(tsg) < 0)
+				if (tsg_check_event_handles(tsg) < 0)
 					return -1;
 
 				WaitForSingleObject(rpc->client->PipeEvent, 100);
@@ -1720,12 +1756,64 @@ static int transport_bio_tsg_gets(BIO* bio, char* str, int size)
 
 static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 {
+	int status = 0;
+	rdpTsg* tsg = (rdpTsg*) bio->ptr;
+	RpcVirtualConnection* connection = tsg->rpc->VirtualConnection;
+	RpcInChannel* inChannel = connection->DefaultInChannel;
+	RpcOutChannel* outChannel = connection->DefaultOutChannel;
+
 	if (cmd == BIO_CTRL_FLUSH)
 	{
-		return 1;
+		status = 1;
+	}
+	else if (cmd == BIO_C_GET_EVENT)
+	{
+		if (arg2)
+		{
+			*((ULONG_PTR*) arg2) = (ULONG_PTR) tsg->rpc->client->PipeEvent;
+			status = 1;
+		}
+	}
+	else if (cmd == BIO_C_SET_NONBLOCK)
+	{
+		status = 1;
+	}
+	else if (cmd == BIO_C_READ_BLOCKED)
+	{
+		BIO* bio = outChannel->bio;
+		status = BIO_read_blocked(bio);
+	}
+	else if (cmd == BIO_C_WRITE_BLOCKED)
+	{
+		BIO* bio = inChannel->bio;
+		status = BIO_write_blocked(bio);
+	}
+	else if (cmd == BIO_C_WAIT_READ)
+	{
+		int timeout = (int) arg1;
+		BIO* bio = outChannel->bio;
+
+		if (BIO_read_blocked(bio))
+			return BIO_wait_read(bio, timeout);
+		else if (BIO_write_blocked(bio))
+			return BIO_wait_write(bio, timeout);
+		else
+			status = 1;
+	}
+	else if (cmd == BIO_C_WAIT_WRITE)
+	{
+		int timeout = (int) arg1;
+		BIO* bio = inChannel->bio;
+
+		if (BIO_write_blocked(bio))
+			status = BIO_wait_write(bio, timeout);
+		else if (BIO_read_blocked(bio))
+			status = BIO_wait_read(bio, timeout);
+		else
+			status = 1;
 	}
 
-	return 0;
+	return status;
 }
 
 static int transport_bio_tsg_new(BIO* bio)

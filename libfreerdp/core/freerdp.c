@@ -199,11 +199,8 @@ freerdp_connect_finally:
 
 BOOL freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
 {
-	rdpRdp* rdp;
-
-	rdp = instance->context->rdp;
+	rdpRdp* rdp = instance->context->rdp;
 	transport_get_fds(rdp->transport, rfds, rcount);
-
 	return TRUE;
 }
 
@@ -240,9 +237,9 @@ BOOL freerdp_check_fds(freerdp* instance)
 	return TRUE;
 }
 
-DWORD freerdp_get_event_handles(rdpContext* context, HANDLE* events)
+UINT32 freerdp_get_event_handles(rdpContext* context, HANDLE* events)
 {
-	DWORD nCount = 0;
+	UINT32 nCount = 0;
 
 	nCount += transport_get_event_handles(context->rdp->transport, events);
 
