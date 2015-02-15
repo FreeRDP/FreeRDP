@@ -158,9 +158,9 @@ BOOL transport_connect_tls(rdpTransport* transport)
 
 BOOL transport_connect_nla(rdpTransport* transport)
 {
+	rdpNla* nla;
 	freerdp* instance;
 	rdpSettings* settings;
-	rdpCredssp* credSsp;
 	settings = transport->settings;
 	instance = (freerdp*) settings->instance;
 
@@ -172,28 +172,28 @@ BOOL transport_connect_nla(rdpTransport* transport)
 	if (!settings->Authentication)
 		return TRUE;
 
-	if (!transport->credssp)
+	if (!transport->nla)
 	{
-		transport->credssp = credssp_new(instance, transport, settings);
+		transport->nla = nla_new(instance, transport, settings);
 
-		if (!transport->credssp)
+		if (!transport->nla)
 			return FALSE;
 
 		transport_set_nla_mode(transport, TRUE);
 
 		if (settings->AuthenticationServiceClass)
 		{
-			transport->credssp->ServicePrincipalName =
-				credssp_make_spn(settings->AuthenticationServiceClass, settings->ServerHostname);
+			transport->nla->ServicePrincipalName =
+				nla_make_spn(settings->AuthenticationServiceClass, settings->ServerHostname);
 
-			if (!transport->credssp->ServicePrincipalName)
+			if (!transport->nla->ServicePrincipalName)
 				return FALSE;
 		}
 	}
 
-	credSsp = transport->credssp;
+	nla = transport->nla;
 
-	if (credssp_authenticate(credSsp) < 0)
+	if (nla_authenticate(nla) < 0)
 	{
 		if (!connectErrorCode)
 			connectErrorCode = AUTHENTICATIONERROR;
@@ -206,14 +206,14 @@ BOOL transport_connect_nla(rdpTransport* transport)
 		WLog_ERR(TAG, "Authentication failure, check credentials."
 				 "If credentials are valid, the NTLMSSP implementation may be to blame.");
 		transport_set_nla_mode(transport, FALSE);
-		credssp_free(credSsp);
-		transport->credssp = NULL;
+		nla_free(nla);
+		transport->nla = NULL;
 		return FALSE;
 	}
 
 	transport_set_nla_mode(transport, FALSE);
-	credssp_free(credSsp);
-	transport->credssp = NULL;
+	nla_free(nla);
+	transport->nla = NULL;
 	return TRUE;
 }
 
@@ -308,23 +308,23 @@ BOOL transport_accept_nla(rdpTransport* transport)
 	if (!settings->Authentication)
 		return TRUE;
 
-	if (!transport->credssp)
+	if (!transport->nla)
 	{
-		transport->credssp = credssp_new(instance, transport, settings);
+		transport->nla = nla_new(instance, transport, settings);
 		transport_set_nla_mode(transport, TRUE);
 	}
 
-	if (credssp_authenticate(transport->credssp) < 0)
+	if (nla_authenticate(transport->nla) < 0)
 	{
 		WLog_ERR(TAG, "client authentication failure");
 		transport_set_nla_mode(transport, FALSE);
-		credssp_free(transport->credssp);
-		transport->credssp = NULL;
+		nla_free(transport->nla);
+		transport->nla = NULL;
 		tls_set_alert_code(transport->tls, TLS_ALERT_LEVEL_FATAL, TLS_ALERT_DESCRIPTION_ACCESS_DENIED);
 		return FALSE;
 	}
 
-	/* don't free credssp module yet, we need to copy the credentials from it first */
+	/* don't free nla module yet, we need to copy the credentials from it first */
 	transport_set_nla_mode(transport, FALSE);
 	return TRUE;
 }

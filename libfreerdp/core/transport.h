@@ -59,7 +59,7 @@ struct rdp_transport
 	rdpTsg* tsg;
 	rdpTls* tls;
 	rdpContext* context;
-	rdpCredssp* credssp;
+	rdpNla* nla;
 	rdpSettings* settings;
 	void* ReceiveExtra;
 	wStream* ReceiveBuffer;
