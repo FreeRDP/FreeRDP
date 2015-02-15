@@ -298,10 +298,7 @@ int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 	}
 	else if (rpc->State >= RPC_CLIENT_STATE_CONTEXT_NEGOTIATED)
 	{
-		if (tsg->state != TSG_STATE_PIPE_CREATED)
-		{
-			status = tsg_recv_pdu(tsg, pdu);
-		}
+		status = tsg_recv_pdu(tsg, pdu);
 	}
 
 	return status;
