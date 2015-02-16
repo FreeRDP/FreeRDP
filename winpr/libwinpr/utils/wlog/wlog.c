@@ -632,6 +632,14 @@ wLog* WLog_GetRoot()
 	return g_RootLog;
 }
 
+static int WLog_CmpFull(const void *a, const void *b)
+{
+	const wLog *ac = (wLog*)a;
+	const wLog *bc = (wLog*)b;
+
+	return strcmp(ac->Name, bc->Name);
+}
+
 int WLog_AddChild(wLog* parent, wLog* child)
 {
 	if (parent->ChildrenCount >= parent->ChildrenSize)
@@ -664,40 +672,34 @@ int WLog_AddChild(wLog* parent, wLog* child)
 
 	parent->Children[parent->ChildrenCount++] = child;
 	child->Parent = parent;
+
+	qsort(parent->Children, parent->ChildrenCount, sizeof(wLog*), WLog_CmpFull);
 	return 0;
+}
+
+static int WLog_Cmp(const void *what, const void *c)
+{
+	const wLog *child = (wLog*)c;
+
+	return strcmp(what, child->Name);
 }
 
 wLog* WLog_FindChild(LPCSTR name)
 {
-	DWORD index;
-	wLog* root;
-	wLog* child = NULL;
-	BOOL found = FALSE;
-	root = WLog_GetRoot();
+	wLog* root = WLog_GetRoot();
 
-	for (index = 0; index < root->ChildrenCount; index++)
-	{
-		child = root->Children[index];
-
-		if (strcmp(child->Name, name) == 0)
-		{
-			found = TRUE;
-			break;
-		}
-	}
-
-	return (found) ? child : NULL;
+	return bsearch(name, root->Children, root->ChildrenCount, sizeof(wLog*), WLog_Cmp);
 }
 
 wLog* WLog_Get(LPCSTR name)
 {
 	wLog* log;
 	wLog* root;
-	root = WLog_GetRoot();
 	log = WLog_FindChild(name);
 
 	if (!log)
 	{
+		root = WLog_GetRoot();
 		log = WLog_New(name,root);
 		WLog_AddChild(root, log);
 	}
