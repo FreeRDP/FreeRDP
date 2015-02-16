@@ -280,14 +280,11 @@ int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 
 			rpc_client_transition_to_state(rpc, RPC_CLIENT_STATE_CONTEXT_NEGOTIATED);
 
-			if (!TsProxyCreateTunnel(tsg, NULL, NULL, NULL, NULL))
+			if (tsg_proxy_begin(tsg))
 			{
-				WLog_ERR(TAG, "TsProxyCreateTunnel failure");
-				tsg->state = TSG_STATE_FINAL;
+				WLog_ERR(TAG, "tsg_proxy_begin failure");
 				return -1;
 			}
-
-			tsg_transition_to_state(tsg, TSG_STATE_INITIAL);
 
 			status = 1;
 		}

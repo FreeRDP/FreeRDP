@@ -206,15 +206,15 @@ BOOL TsProxyCreateTunnelWriteRequest(rdpTsg* tsg, PTSG_PACKET tsgPacket)
 
 		status = rpc_client_write_call(rpc, buffer, length, TsProxyCreateTunnelOpnum);
 
+		free(buffer);
+
 		if (status <= 0)
 			return FALSE;
-
-		free(buffer);
 	}
-	else if (tsgPacket->packetId == TSG_PACKET_TYPE_VERSIONCAPS)
+	else if (tsgPacket->packetId == TSG_PACKET_TYPE_REAUTH)
 	{
 		PTSG_PACKET_REAUTH packetReauth = tsgPacket->tsgPacket.packetReauth;
-		PTSG_PACKET_VERSIONCAPS packetVersionCaps = tsgPacket->tsgPacket.packetVersionCaps;
+		PTSG_PACKET_VERSIONCAPS packetVersionCaps = packetReauth->tsgInitialPacket.packetVersionCaps;
 		PTSG_CAPABILITY_NAP tsgCapNap = &packetVersionCaps->tsgCaps->tsgPacket.tsgCapNap;
 
 		length = 72;
@@ -230,12 +230,12 @@ BOOL TsProxyCreateTunnelWriteRequest(rdpTsg* tsg, PTSG_PACKET tsgPacket)
 		*((UINT64*) &buffer[16]) = packetReauth->tunnelContext; /* TunnelContext (8 bytes) */
 		offset = 24;
 
-		*((UINT32*) &buffer[offset + 0]) = tsgPacket->packetId; /* PacketId (4 bytes) */
-		*((UINT32*) &buffer[offset + 4]) = tsgPacket->packetId; /* SwitchValue (4 bytes) */
-		*((UINT32*) &buffer[offset + 8]) = 0x00020000; /* PacketVersionCapsPtr (4 bytes) */
+		*((UINT32*) &buffer[offset + 0]) = TSG_PACKET_TYPE_VERSIONCAPS; /* PacketId (4 bytes) */
+		*((UINT32*) &buffer[offset + 4]) = TSG_PACKET_TYPE_VERSIONCAPS; /* SwitchValue (4 bytes) */
+		*((UINT32*) &buffer[offset + 8]) = 0x00020004; /* PacketVersionCapsPtr (4 bytes) */
 		*((UINT16*) &buffer[offset + 12]) = packetVersionCaps->tsgHeader.ComponentId; /* ComponentId (2 bytes) */
 		*((UINT16*) &buffer[offset + 14]) = packetVersionCaps->tsgHeader.PacketId; /* PacketId (2 bytes) */
-		*((UINT32*) &buffer[offset + 16]) = 0x00020004; /* TsgCapsPtr (4 bytes) */
+		*((UINT32*) &buffer[offset + 16]) = 0x00020008; /* TsgCapsPtr (4 bytes) */
 		*((UINT32*) &buffer[offset + 20]) = packetVersionCaps->numCapabilities; /* NumCapabilities (4 bytes) */
 		*((UINT16*) &buffer[offset + 24]) = packetVersionCaps->majorVersion; /* MajorVersion (2 bytes) */
 		*((UINT16*) &buffer[offset + 26]) = packetVersionCaps->minorVersion; /* MinorVersion (2 bytes) */
@@ -248,7 +248,12 @@ BOOL TsProxyCreateTunnelWriteRequest(rdpTsg* tsg, PTSG_PACKET tsgPacket)
 		*((UINT32*) &buffer[offset + 44]) = tsgCapNap->capabilities; /* capabilities (4 bytes) */
 		offset += 48;
 
+		status = rpc_client_write_call(rpc, buffer, length, TsProxyCreateTunnelOpnum);
+
 		free(buffer);
+
+		if (status <= 0)
+			return FALSE;
 	}
 
 	return TRUE;
@@ -575,73 +580,11 @@ BOOL TsProxyCreateTunnel(rdpTsg* tsg, PTSG_PACKET tsgPacket, PTSG_PACKET* tsgPac
 
 	WLog_DBG(TAG, "TsProxyCreateTunnel");
 
-	tsgPacket = (PTSG_PACKET) calloc(1, sizeof(TSG_PACKET));
-
-	if (!tsgPacket)
-		return FALSE;
-
-	tsgPacket->packetId = TSG_PACKET_TYPE_VERSIONCAPS;
-
-	if (tsgPacket->packetId == TSG_PACKET_TYPE_VERSIONCAPS)
-	{
-		PTSG_CAPABILITY_NAP tsgCapNap;
-		PTSG_PACKET_CAPABILITIES tsgCaps;
-		PTSG_PACKET_VERSIONCAPS packetVersionCaps;
-
-		packetVersionCaps = (PTSG_PACKET_VERSIONCAPS) calloc(1, sizeof(TSG_PACKET_VERSIONCAPS));
-
-		if (!packetVersionCaps)
-			return FALSE;
-
-		tsgCaps = (PTSG_PACKET_CAPABILITIES) calloc(1, sizeof(TSG_PACKET_CAPABILITIES));
-
-		if (!tsgCaps)
-			return FALSE;
-
-		tsgCapNap = &tsgCaps->tsgPacket.tsgCapNap;
-		packetVersionCaps->tsgCaps = tsgCaps;
-
-		tsgPacket->tsgPacket.packetVersionCaps = packetVersionCaps;
-
-		packetVersionCaps->tsgHeader.ComponentId = TS_GATEWAY_TRANSPORT;
-		packetVersionCaps->tsgHeader.PacketId = tsgPacket->packetId;
-
-		packetVersionCaps->numCapabilities = 1;
-		packetVersionCaps->majorVersion = 1;
-		packetVersionCaps->minorVersion = 1;
-		packetVersionCaps->quarantineCapabilities = 0;
-
-		packetVersionCaps->tsgCaps->capabilityType = TSG_CAPABILITY_TYPE_NAP;
-
-		/*
-		 * Using reduced capabilities appears to trigger
-		 * TSG_PACKET_TYPE_QUARENC_RESPONSE instead of TSG_PACKET_TYPE_CAPS_RESPONSE
-		 *
-		 * However, reduced capabilities may break connectivity with servers enforcing features, such as
-		 * "Only allow connections from Remote Desktop Services clients that support RD Gateway messaging"
-		 */
-
-		tsgCapNap->capabilities =
-			TSG_NAP_CAPABILITY_QUAR_SOH |
-			TSG_NAP_CAPABILITY_IDLE_TIMEOUT |
-			TSG_MESSAGING_CAP_CONSENT_SIGN |
-			TSG_MESSAGING_CAP_SERVICE_MSG |
-			TSG_MESSAGING_CAP_REAUTH;
-	}
-
 	if (!TsProxyCreateTunnelWriteRequest(tsg, tsgPacket))
 	{
 		WLog_ERR(TAG, "error writing request");
 		return FALSE;
 	}
-
-	if (tsgPacket->packetId == TSG_PACKET_TYPE_VERSIONCAPS)
-	{
-		free(tsgPacket->tsgPacket.packetVersionCaps->tsgCaps);
-		free(tsgPacket->tsgPacket.packetVersionCaps);
-	}
-
-	free(tsgPacket);
 
 	return TRUE;
 }
@@ -875,7 +818,7 @@ BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	PTSG_PACKET packet;
 	BOOL status = TRUE;
 	char* messageText = NULL;
-	PTSG_PACKET_MSG_RESPONSE packetMsgResponse;
+	PTSG_PACKET_MSG_RESPONSE packetMsgResponse = NULL;
 	PTSG_PACKET_STRING_MESSAGE packetStringMessage = NULL;
 	PTSG_PACKET_REAUTH_MESSAGE packetReauthMessage = NULL;
 
@@ -969,7 +912,10 @@ BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 
 			packetMsgResponse->messagePacket.reauthMessage = packetReauthMessage;
 			Pointer = *((UINT32*) &buffer[offset + 28]); /* ReauthMessagePtr (4 bytes) */
-			packetReauthMessage->tunnelContext = *((UINT64*) &buffer[offset + 32]); /* TunnelContext (8 bytes) */
+			/* ??? (4 bytes) */
+			packetReauthMessage->tunnelContext = *((UINT64*) &buffer[offset + 36]); /* TunnelContext (8 bytes) */
+			/* ReturnValue (4 bytes) */
+			tsg->ReauthTunnelContext = packetReauthMessage->tunnelContext;
 			break;
 
 		default:
@@ -1337,6 +1283,86 @@ int tsg_transition_to_state(rdpTsg* tsg, TSG_STATE state)
 	return 1;
 }
 
+int tsg_proxy_begin(rdpTsg* tsg)
+{
+	TSG_PACKET tsgPacket;
+	PTSG_CAPABILITY_NAP tsgCapNap;
+	PTSG_PACKET_VERSIONCAPS packetVersionCaps;
+
+	packetVersionCaps = &tsg->packetVersionCaps;
+	packetVersionCaps->tsgCaps = &tsg->tsgCaps;
+	tsgCapNap = &tsg->tsgCaps.tsgPacket.tsgCapNap;
+
+	tsgPacket.packetId = TSG_PACKET_TYPE_VERSIONCAPS;
+	tsgPacket.tsgPacket.packetVersionCaps = packetVersionCaps;
+
+	packetVersionCaps->tsgHeader.ComponentId = TS_GATEWAY_TRANSPORT;
+	packetVersionCaps->tsgHeader.PacketId = TSG_PACKET_TYPE_VERSIONCAPS;
+
+	packetVersionCaps->numCapabilities = 1;
+	packetVersionCaps->majorVersion = 1;
+	packetVersionCaps->minorVersion = 1;
+	packetVersionCaps->quarantineCapabilities = 0;
+
+	packetVersionCaps->tsgCaps->capabilityType = TSG_CAPABILITY_TYPE_NAP;
+
+	/*
+	 * Using reduced capabilities appears to trigger
+	 * TSG_PACKET_TYPE_QUARENC_RESPONSE instead of TSG_PACKET_TYPE_CAPS_RESPONSE
+	 *
+	 * However, reduced capabilities may break connectivity with servers enforcing features, such as
+	 * "Only allow connections from Remote Desktop Services clients that support RD Gateway messaging"
+	 */
+
+	tsgCapNap->capabilities =
+		TSG_NAP_CAPABILITY_QUAR_SOH |
+		TSG_NAP_CAPABILITY_IDLE_TIMEOUT |
+		TSG_MESSAGING_CAP_CONSENT_SIGN |
+		TSG_MESSAGING_CAP_SERVICE_MSG |
+		TSG_MESSAGING_CAP_REAUTH;
+
+	if (!TsProxyCreateTunnel(tsg, &tsgPacket, NULL, NULL, NULL))
+	{
+		WLog_ERR(TAG, "TsProxyCreateTunnel failure");
+		tsg->state = TSG_STATE_FINAL;
+		return -1;
+	}
+
+	tsg_transition_to_state(tsg, TSG_STATE_INITIAL);
+
+	return 1;
+}
+
+int tsg_proxy_reauth(rdpTsg* tsg)
+{
+	TSG_PACKET tsgPacket;
+	PTSG_PACKET_REAUTH packetReauth;
+	PTSG_PACKET_VERSIONCAPS packetVersionCaps;
+
+	fprintf(stderr, "TsgProxyReauth\n");
+
+	packetReauth = &tsg->packetReauth;
+	packetVersionCaps = &tsg->packetVersionCaps;
+
+	tsgPacket.packetId = TSG_PACKET_TYPE_REAUTH;
+	tsgPacket.tsgPacket.packetReauth = &tsg->packetReauth;
+
+	packetReauth->tunnelContext = tsg->ReauthTunnelContext;
+	packetReauth->packetId = TSG_PACKET_TYPE_VERSIONCAPS;
+	packetReauth->tsgInitialPacket.packetVersionCaps = packetVersionCaps;
+
+	if (!TsProxyCreateTunnel(tsg, &tsgPacket, NULL, NULL, NULL))
+	{
+		WLog_ERR(TAG, "TsProxyCreateTunnel failure");
+		tsg->state = TSG_STATE_FINAL;
+		return -1;
+	}
+
+	tsg_transition_to_state(tsg, TSG_STATE_INITIAL);
+
+	return 1;
+}
+
 int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 {
 	int status = -1;
@@ -1449,6 +1475,12 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 				{
 					WLog_ERR(TAG, "TsProxyMakeTunnelCallReadResponse failure");
 					return -1;
+				}
+
+				if (tsg->ReauthTunnelContext)
+				{
+					tsg_proxy_reauth(tsg);
+					tsg->ReauthTunnelContext = 0;
 				}
 
 				status = 1;

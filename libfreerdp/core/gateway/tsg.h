@@ -53,20 +53,6 @@ enum _TSG_STATE
 };
 typedef enum _TSG_STATE TSG_STATE;
 
-struct rdp_tsg
-{
-	BIO* bio;
-	rdpRpc* rpc;
-	UINT16 Port;
-	LPWSTR Hostname;
-	LPWSTR MachineName;
-	TSG_STATE state;
-	rdpSettings* settings;
-	rdpTransport* transport;
-	CONTEXT_HANDLE TunnelContext;
-	CONTEXT_HANDLE ChannelContext;
-};
-
 typedef WCHAR* RESOURCENAME;
 
 #define TsProxyCreateTunnelOpnum		1
@@ -298,6 +284,27 @@ typedef struct _TSG_PACKET
 	UINT32 packetId;
 	TSG_PACKET_TYPE_UNION tsgPacket;
 } TSG_PACKET, *PTSG_PACKET;
+
+struct rdp_tsg
+{
+	BIO* bio;
+	rdpRpc* rpc;
+	UINT16 Port;
+	LPWSTR Hostname;
+	LPWSTR MachineName;
+	TSG_STATE state;
+	rdpSettings* settings;
+	rdpTransport* transport;
+	CONTEXT_HANDLE TunnelContext;
+	CONTEXT_HANDLE ChannelContext;
+	UINT64 ReauthTunnelContext;
+	TSG_PACKET_REAUTH packetReauth;
+	TSG_PACKET_CAPABILITIES tsgCaps;
+	TSG_PACKET_VERSIONCAPS packetVersionCaps;
+};
+
+int tsg_proxy_begin(rdpTsg* tsg);
+int tsg_proxy_reauth(rdpTsg* tsg);
 
 BOOL TsProxyCreateTunnel(rdpTsg* tsg, PTSG_PACKET tsgPacket, PTSG_PACKET* tsgPacketResponse,
 			PTUNNEL_CONTEXT_HANDLE_SERIALIZE* tunnelContext, UINT32* tunnelId);
