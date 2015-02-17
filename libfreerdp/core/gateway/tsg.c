@@ -129,6 +129,17 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count,
 	return length;
 }
 
+/**
+ * OpNum = 1
+ *
+ * HRESULT TsProxyCreateTunnel(
+ * [in, ref] PTSG_PACKET tsgPacket,
+ * [out, ref] PTSG_PACKET* tsgPacketResponse,
+ * [out] PTUNNEL_CONTEXT_HANDLE_SERIALIZE* tunnelContext,
+ * [out] unsigned long* tunnelId
+ * );
+ */
+
 BOOL TsProxyCreateTunnelWriteRequest(rdpTsg* tsg, PTSG_PACKET tsgPacket)
 {
 	int status;
@@ -261,7 +272,7 @@ BOOL TsProxyCreateTunnelWriteRequest(rdpTsg* tsg, PTSG_PACKET tsgPacket)
 	return TRUE;
 }
 
-BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
+BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu, CONTEXT_HANDLE* tunnelContext, UINT32* tunnelId)
 {
 	BYTE* buffer;
 	UINT32 count;
@@ -459,12 +470,14 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 		}
 
 		rpc_offset_align(&offset, 4);
+
 		/* TunnelContext (20 bytes) */
-		CopyMemory(&tsg->TunnelContext.ContextType, &buffer[offset], 4); /* ContextType (4 bytes) */
-		CopyMemory(tsg->TunnelContext.ContextUuid, &buffer[offset + 4], 16); /* ContextUuid (16 bytes) */
+		CopyMemory(&tunnelContext->ContextType, &buffer[offset], 4); /* ContextType (4 bytes) */
+		CopyMemory(&tunnelContext->ContextUuid, &buffer[offset + 4], 16); /* ContextUuid (16 bytes) */
 		offset += 20;
-		// UINT32 TunnelId
-		// HRESULT ReturnValue
+
+		*tunnelId = *((UINT32*) &buffer[offset]); /* TunnelId (4 bytes) */
+		/* ReturnValue (4 bytes) */
 
 		free(tsgCaps);
 		free(versionCaps);
@@ -548,9 +561,10 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 		offset += 4; /* 0x00000001 (4 bytes) */
 		offset += 4; /* 0x00000001 (4 bytes) */
 		offset += 4; /* 0x00000002 (4 bytes) */
+
 		/* TunnelContext (20 bytes) */
-		CopyMemory(&tsg->TunnelContext.ContextType, &buffer[offset], 4); /* ContextType (4 bytes) */
-		CopyMemory(tsg->TunnelContext.ContextUuid, &buffer[offset + 4], 16); /* ContextUuid (16 bytes) */
+		CopyMemory(&tunnelContext->ContextType, &buffer[offset], 4); /* ContextType (4 bytes) */
+		CopyMemory(&tunnelContext->ContextUuid, &buffer[offset + 4], 16); /* ContextUuid (16 bytes) */
 		offset += 20;
 
 		free(versionCaps);
@@ -568,30 +582,18 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	return TRUE;
 }
 
-BOOL TsProxyCreateTunnel(rdpTsg* tsg, PTSG_PACKET tsgPacket, PTSG_PACKET* tsgPacketResponse,
-			PTUNNEL_CONTEXT_HANDLE_SERIALIZE* tunnelContext, UINT32* tunnelId)
-{
-	/**
-	 * OpNum = 1
-	 *
-	 * HRESULT TsProxyCreateTunnel(
-	 * [in, ref] PTSG_PACKET tsgPacket,
-	 * [out, ref] PTSG_PACKET* tsgPacketResponse,
-	 * [out] PTUNNEL_CONTEXT_HANDLE_SERIALIZE* tunnelContext,
-	 * [out] unsigned long* tunnelId
-	 * );
-	 */
+/**
+ * OpNum = 2
+ *
+ * HRESULT TsProxyAuthorizeTunnel(
+ * [in] PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
+ * [in, ref] PTSG_PACKET tsgPacket,
+ * [out, ref] PTSG_PACKET* tsgPacketResponse
+ * );
+ *
+ */
 
-	if (!TsProxyCreateTunnelWriteRequest(tsg, tsgPacket))
-	{
-		WLog_ERR(TAG, "error writing request");
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-BOOL TsProxyAuthorizeTunnelWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext)
+BOOL TsProxyAuthorizeTunnelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* tunnelContext)
 {
 	UINT32 pad;
 	int status;
@@ -599,7 +601,6 @@ BOOL TsProxyAuthorizeTunnelWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSE
 	UINT32 count;
 	UINT32 length;
 	UINT32 offset;
-	CONTEXT_HANDLE* handle;
 	rdpRpc* rpc = tsg->rpc;
 
 	WLog_DBG(TAG, "TsProxyAuthorizeTunnelWriteRequest");
@@ -615,10 +616,9 @@ BOOL TsProxyAuthorizeTunnelWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSE
 	if (!buffer)
 		return FALSE;
 
-	/* TunnelContext */
-	handle = (CONTEXT_HANDLE*) tunnelContext;
-	CopyMemory(&buffer[0], &handle->ContextType, 4); /* ContextType (4 bytes) */
-	CopyMemory(&buffer[4], handle->ContextUuid, 16); /* ContextUuid (16 bytes) */
+	/* TunnelContext (20 bytes) */
+	CopyMemory(&buffer[0], &tunnelContext->ContextType, 4); /* ContextType (4 bytes) */
+	CopyMemory(&buffer[4], &tunnelContext->ContextUuid, 16); /* ContextUuid (16 bytes) */
 	/* 4-byte alignment */
 	*((UINT32*) &buffer[20]) = TSG_PACKET_TYPE_QUARREQUEST; /* PacketId (4 bytes) */
 	*((UINT32*) &buffer[24]) = TSG_PACKET_TYPE_QUARREQUEST; /* SwitchValue (4 bytes) */
@@ -756,35 +756,22 @@ BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	return TRUE;
 }
 
-BOOL TsProxyAuthorizeTunnel(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
-				PTSG_PACKET tsgPacket, PTSG_PACKET* tsgPacketResponse)
-{
-	/**
-	 * OpNum = 2
-	 *
-	 * HRESULT TsProxyAuthorizeTunnel(
-	 * [in] PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
-	 * [in, ref] PTSG_PACKET tsgPacket,
-	 * [out, ref] PTSG_PACKET* tsgPacketResponse
-	 * );
-	 *
-	 */
+/**
+ * OpNum = 3
+ *
+ * HRESULT TsProxyMakeTunnelCall(
+ * [in] PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
+ * [in] unsigned long procId,
+ * [in, ref] PTSG_PACKET tsgPacket,
+ * [out, ref] PTSG_PACKET* tsgPacketResponse
+ * );
+ */
 
-	if (!TsProxyAuthorizeTunnelWriteRequest(tsg, tunnelContext))
-	{
-		WLog_ERR(TAG, "error writing request");
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-BOOL TsProxyMakeTunnelCallWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext, unsigned long procId)
+BOOL TsProxyMakeTunnelCallWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* tunnelContext, UINT32 procId)
 {
 	int status;
 	BYTE* buffer;
 	UINT32 length;
-	CONTEXT_HANDLE* handle;
 	rdpRpc* rpc = tsg->rpc;
 
 	WLog_DBG(TAG, "TsProxyMakeTunnelCallWriteRequest");
@@ -795,10 +782,9 @@ BOOL TsProxyMakeTunnelCallWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSER
 	if (!buffer)
 		return FALSE;
 
-	/* TunnelContext */
-	handle = (CONTEXT_HANDLE*) tunnelContext;
-	CopyMemory(&buffer[0], &handle->ContextType, 4); /* ContextType (4 bytes) */
-	CopyMemory(&buffer[4], handle->ContextUuid, 16); /* ContextUuid (16 bytes) */
+	/* TunnelContext (20 bytes) */
+	CopyMemory(&buffer[0], &tunnelContext->ContextType, 4); /* ContextType (4 bytes) */
+	CopyMemory(&buffer[4], &tunnelContext->ContextUuid, 16); /* ContextUuid (16 bytes) */
 	*((UINT32*) &buffer[20]) = procId; /* ProcId (4 bytes) */
 	/* 4-byte alignment */
 	*((UINT32*) &buffer[24]) = TSG_PACKET_TYPE_MSGREQUEST_PACKET; /* PacketId (4 bytes) */
@@ -952,36 +938,23 @@ BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	return status;
 }
 
-BOOL TsProxyMakeTunnelCall(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
-			UINT32 procId, PTSG_PACKET tsgPacket, PTSG_PACKET* tsgPacketResponse)
-{
-	/**
-	 * OpNum = 3
-	 *
-	 * HRESULT TsProxyMakeTunnelCall(
-	 * [in] PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
-	 * [in] unsigned long procId,
-	 * [in, ref] PTSG_PACKET tsgPacket,
-	 * [out, ref] PTSG_PACKET* tsgPacketResponse
-	 * );
-	 */
+/**
+ * OpNum = 4
+ *
+ * HRESULT TsProxyCreateChannel(
+ * [in] PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
+ * [in, ref] PTSENDPOINTINFO tsEndPointInfo,
+ * [out] PCHANNEL_CONTEXT_HANDLE_SERIALIZE* channelContext,
+ * [out] unsigned long* channelId
+ * );
+ */
 
-	if (!TsProxyMakeTunnelCallWriteRequest(tsg, tunnelContext, procId))
-	{
-		WLog_ERR(TAG, "error writing request");
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-BOOL TsProxyCreateChannelWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext)
+BOOL TsProxyCreateChannelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* tunnelContext)
 {
 	int status;
 	UINT32 count;
 	BYTE* buffer;
 	UINT32 length;
-	CONTEXT_HANDLE* handle;
 	rdpRpc* rpc = tsg->rpc;
 	count = _wcslen(tsg->Hostname) + 1;
 
@@ -993,10 +966,9 @@ BOOL TsProxyCreateChannelWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERI
 	if (!buffer)
 		return FALSE;
 
-	/* TunnelContext */
-	handle = (CONTEXT_HANDLE*) tunnelContext;
-	CopyMemory(&buffer[0], &handle->ContextType, 4); /* ContextType (4 bytes) */
-	CopyMemory(&buffer[4], handle->ContextUuid, 16); /* ContextUuid (16 bytes) */
+	/* TunnelContext (20 bytes) */
+	CopyMemory(&buffer[0], &tunnelContext->ContextType, 4); /* ContextType (4 bytes) */
+	CopyMemory(&buffer[4], &tunnelContext->ContextUuid, 16); /* ContextUuid (16 bytes) */
 	/* TSENDPOINTINFO */
 	*((UINT32*) &buffer[20]) = 0x00020000; /* ResourceNamePtr (4 bytes) */
 	*((UINT32*) &buffer[24]) = 0x00000001; /* NumResourceNames (4 bytes) */
@@ -1023,7 +995,7 @@ BOOL TsProxyCreateChannelWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERI
 	return TRUE;
 }
 
-BOOL TsProxyCreateChannelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
+BOOL TsProxyCreateChannelReadResponse(rdpTsg* tsg, RPC_PDU* pdu, CONTEXT_HANDLE* channelContext, UINT32* channelId)
 {
 	BYTE* buffer;
 	UINT32 length;
@@ -1041,37 +1013,25 @@ BOOL TsProxyCreateChannelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 		buffer = &buffer[24];
 
 	offset = 0;
+
 	/* ChannelContext (20 bytes) */
-	CopyMemory(&tsg->ChannelContext.ContextType, &buffer[offset], 4); /* ContextType (4 bytes) */
-	CopyMemory(tsg->ChannelContext.ContextUuid, &buffer[offset + 4], 16); /* ContextUuid (16 bytes) */
+	CopyMemory(&channelContext->ContextType, &buffer[offset], 4); /* ContextType (4 bytes) */
+	CopyMemory(&channelContext->ContextUuid, &buffer[offset + 4], 16); /* ContextUuid (16 bytes) */
+	offset += 20;
+
+	*channelId = *((UINT32*) &buffer[offset]); /* ChannelId (4 bytes) */
+	/* ReturnValue (4 bytes) */
 
 	return TRUE;
 }
 
-BOOL TsProxyCreateChannel(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext, PTSENDPOINTINFO tsEndPointInfo,
-					PCHANNEL_CONTEXT_HANDLE_SERIALIZE* channelContext, UINT32* channelId)
-{
-	/**
-	 * OpNum = 4
-	 *
-	 * HRESULT TsProxyCreateChannel(
-	 * [in] PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnelContext,
-	 * [in, ref] PTSENDPOINTINFO tsEndPointInfo,
-	 * [out] PCHANNEL_CONTEXT_HANDLE_SERIALIZE* channelContext,
-	 * [out] unsigned long* channelId
-	 * );
-	 */
+/**
+ * HRESULT TsProxyCloseChannel(
+ * [in, out] PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE* context
+ * );
+ */
 
-	if (!TsProxyCreateChannelWriteRequest(tsg, tunnelContext))
-	{
-		WLog_ERR(TAG, "error writing request");
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-BOOL TsProxyCloseChannelWriteRequest(rdpTsg* tsg, PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE* context)
+BOOL TsProxyCloseChannelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* context)
 {
 	int status;
 	BYTE* buffer;
@@ -1086,9 +1046,9 @@ BOOL TsProxyCloseChannelWriteRequest(rdpTsg* tsg, PCHANNEL_CONTEXT_HANDLE_NOSERI
 	if (!buffer)
 		return FALSE;
 
-	/* TunnelContext */
-	CopyMemory(&buffer[0], &tsg->ChannelContext.ContextType, 4); /* ContextType (4 bytes) */
-	CopyMemory(&buffer[4], tsg->ChannelContext.ContextUuid, 16); /* ContextUuid (16 bytes) */
+	/* ChannelContext (20 bytes) */
+	CopyMemory(&buffer[0], &context->ContextType, 4); /* ContextType (4 bytes) */
+	CopyMemory(&buffer[4], &context->ContextUuid, 16); /* ContextUuid (16 bytes) */
 
 	status = rpc_client_write_call(rpc, buffer, length, TsProxyCloseChannelOpnum);
 
@@ -1100,7 +1060,7 @@ BOOL TsProxyCloseChannelWriteRequest(rdpTsg* tsg, PCHANNEL_CONTEXT_HANDLE_NOSERI
 	return TRUE;
 }
 
-BOOL TsProxyCloseChannelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
+BOOL TsProxyCloseChannelReadResponse(rdpTsg* tsg, RPC_PDU* pdu, CONTEXT_HANDLE* context)
 {
 	BYTE* buffer;
 	UINT32 length;
@@ -1119,27 +1079,23 @@ BOOL TsProxyCloseChannelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 
 	offset = 0;
 
-	return TRUE;
-}
+	/* ChannelContext (20 bytes) */
+	CopyMemory(&context->ContextType, &buffer[offset], 4); /* ContextType (4 bytes) */
+	CopyMemory(&context->ContextUuid, &buffer[offset + 4], 16); /* ContextUuid (16 bytes) */
+	offset += 20;
 
-HRESULT TsProxyCloseChannel(rdpTsg* tsg, PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE* context)
-{
-	/**
-	 * HRESULT TsProxyCloseChannel(
-	 * [in, out] PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE* context
-	 * );
-	 */
-
-	if (!TsProxyCloseChannelWriteRequest(tsg, context))
-	{
-		WLog_ERR(TAG, "error writing request");
-		return FALSE;
-	}
+	/* ReturnValue (4 bytes) */
 
 	return TRUE;
 }
 
-BOOL TsProxyCloseTunnelWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_SERIALIZE* context)
+/**
+ * HRESULT TsProxyCloseTunnel(
+ * [in, out] PTUNNEL_CONTEXT_HANDLE_SERIALIZE* context
+ * );
+ */
+
+BOOL TsProxyCloseTunnelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* context)
 {
 	int status;
 	BYTE* buffer;
@@ -1154,9 +1110,9 @@ BOOL TsProxyCloseTunnelWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_SERIALIZ
 	if (!buffer)
 		return FALSE;
 
-	/* TunnelContext */
-	CopyMemory(&buffer[0], &tsg->TunnelContext.ContextType, 4); /* ContextType (4 bytes) */
-	CopyMemory(&buffer[4], tsg->TunnelContext.ContextUuid, 16); /* ContextUuid (16 bytes) */
+	/* TunnelContext (20 bytes) */
+	CopyMemory(&buffer[0], &context->ContextType, 4); /* ContextType (4 bytes) */
+	CopyMemory(&buffer[4], &context->ContextUuid, 16); /* ContextUuid (16 bytes) */
 
 	status = rpc_client_write_call(rpc, buffer, length, TsProxyCloseTunnelOpnum);
 
@@ -1168,7 +1124,7 @@ BOOL TsProxyCloseTunnelWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_SERIALIZ
 	return TRUE;
 }
 
-BOOL TsProxyCloseTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
+BOOL TsProxyCloseTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu, CONTEXT_HANDLE* context)
 {
 	BYTE* buffer;
 	UINT32 length;
@@ -1187,27 +1143,25 @@ BOOL TsProxyCloseTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 
 	offset = 0;
 
-	return TRUE;
-}
+	/* TunnelContext (20 bytes) */
+	CopyMemory(&context->ContextType, &buffer[offset], 4); /* ContextType (4 bytes) */
+	CopyMemory(&context->ContextUuid, &buffer[offset + 4], 16); /* ContextUuid (16 bytes) */
+	offset += 20;
 
-HRESULT TsProxyCloseTunnel(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_SERIALIZE* context)
-{
-	/**
-	 * HRESULT TsProxyCloseTunnel(
-	 * [in, out] PTUNNEL_CONTEXT_HANDLE_SERIALIZE* context
-	 * );
-	 */
-
-	if (!TsProxyCloseTunnelWriteRequest(tsg, context))
-	{
-		WLog_ERR(TAG, "error writing request");
-		return FALSE;
-	}
+	/* ReturnValue (4 bytes) */
 
 	return TRUE;
 }
 
-BOOL TsProxySetupReceivePipeWriteRequest(rdpTsg* tsg)
+/**
+ * OpNum = 8
+ *
+ * DWORD TsProxySetupReceivePipe(
+ * [in, max_is(32767)] byte pRpcMessage[]
+ * );
+ */
+
+BOOL TsProxySetupReceivePipeWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* channelContext)
 {
 	int status;
 	BYTE* buffer;
@@ -1222,9 +1176,9 @@ BOOL TsProxySetupReceivePipeWriteRequest(rdpTsg* tsg)
 	if (!buffer)
 		return FALSE;
 
-	/* ChannelContext */
-	CopyMemory(&buffer[0], &tsg->ChannelContext.ContextType, 4); /* ContextType (4 bytes) */
-	CopyMemory(&buffer[4], tsg->ChannelContext.ContextUuid, 16); /* ContextUuid (16 bytes) */
+	/* ChannelContext (20 bytes) */
+	CopyMemory(&buffer[0], &channelContext->ContextType, 4); /* ContextType (4 bytes) */
+	CopyMemory(&buffer[4], &channelContext->ContextUuid, 16); /* ContextUuid (16 bytes) */
 
 	status = rpc_client_write_call(rpc, buffer, length, TsProxySetupReceivePipeOpnum);
 
@@ -1239,27 +1193,6 @@ BOOL TsProxySetupReceivePipeWriteRequest(rdpTsg* tsg)
 BOOL TsProxySetupReceivePipeReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 {
 	WLog_DBG(TAG, "TsProxySetupReceivePipeReadResponse");
-
-	return TRUE;
-}
-
-BOOL TsProxySetupReceivePipe(handle_t IDL_handle, BYTE* pRpcMessage)
-{
-	rdpTsg* tsg = (rdpTsg*) IDL_handle;
-
-	/**
-	 * OpNum = 8
-	 *
-	 * DWORD TsProxySetupReceivePipe(
-	 * [in, max_is(32767)] byte pRpcMessage[]
-	 * );
-	 */
-
-	if (!TsProxySetupReceivePipeWriteRequest(tsg))
-	{
-		WLog_ERR(TAG, "error writing request");
-		return FALSE;
-	}
 
 	return TRUE;
 }
@@ -1347,7 +1280,7 @@ int tsg_proxy_begin(rdpTsg* tsg)
 		TSG_MESSAGING_CAP_SERVICE_MSG |
 		TSG_MESSAGING_CAP_REAUTH;
 
-	if (!TsProxyCreateTunnel(tsg, &tsgPacket, NULL, NULL, NULL))
+	if (!TsProxyCreateTunnelWriteRequest(tsg, &tsgPacket))
 	{
 		WLog_ERR(TAG, "TsProxyCreateTunnel failure");
 		tsg->state = TSG_STATE_FINAL;
@@ -1379,14 +1312,14 @@ int tsg_proxy_reauth(rdpTsg* tsg)
 	packetReauth->packetId = TSG_PACKET_TYPE_VERSIONCAPS;
 	packetReauth->tsgInitialPacket.packetVersionCaps = packetVersionCaps;
 
-	if (!TsProxyCreateTunnel(tsg, &tsgPacket, NULL, NULL, NULL))
+	if (!TsProxyCreateTunnelWriteRequest(tsg, &tsgPacket))
 	{
 		WLog_ERR(TAG, "TsProxyCreateTunnel failure");
 		tsg->state = TSG_STATE_FINAL;
 		return -1;
 	}
 
-	if (!TsProxyMakeTunnelCall(tsg, &tsg->TunnelContext, TSG_TUNNEL_CALL_ASYNC_MSG_REQUEST, NULL, NULL))
+	if (!TsProxyMakeTunnelCallWriteRequest(tsg, &tsg->TunnelContext, TSG_TUNNEL_CALL_ASYNC_MSG_REQUEST))
 	{
 		WLog_ERR(TAG, "TsProxyMakeTunnelCall failure");
 		tsg->state = TSG_STATE_FINAL;
@@ -1408,7 +1341,7 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 	{
 		case TSG_STATE_INITIAL:
 
-			if (!TsProxyCreateTunnelReadResponse(tsg, pdu))
+			if (!TsProxyCreateTunnelReadResponse(tsg, pdu, &tsg->TunnelContext, &tsg->TunnelId))
 			{
 				WLog_ERR(TAG, "TsProxyCreateTunnelReadResponse failure");
 				return -1;
@@ -1416,7 +1349,7 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 
 			tsg_transition_to_state(tsg, TSG_STATE_CONNECTED);
 
-			if (!TsProxyAuthorizeTunnel(tsg, &tsg->TunnelContext, NULL, NULL))
+			if (!TsProxyAuthorizeTunnelWriteRequest(tsg, &tsg->TunnelContext))
 			{
 				WLog_ERR(TAG, "TsProxyAuthorizeTunnel failure");
 				return -1;
@@ -1438,14 +1371,14 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 
 			if (!tsg->reauthSequence)
 			{
-				if (!TsProxyMakeTunnelCall(tsg, &tsg->TunnelContext, TSG_TUNNEL_CALL_ASYNC_MSG_REQUEST, NULL, NULL))
+				if (!TsProxyMakeTunnelCallWriteRequest(tsg, &tsg->TunnelContext, TSG_TUNNEL_CALL_ASYNC_MSG_REQUEST))
 				{
 					WLog_ERR(TAG, "TsProxyMakeTunnelCall failure");
 					return -1;
 				}
 			}
 
-			if (!TsProxyCreateChannel(tsg, &tsg->TunnelContext, NULL, NULL, NULL))
+			if (!TsProxyCreateChannelWriteRequest(tsg, &tsg->TunnelContext))
 			{
 				WLog_ERR(TAG, "TsProxyCreateChannel failure");
 				return -1;
@@ -1473,7 +1406,7 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 			}
 			else if (call->OpNum == TsProxyCreateChannelOpnum)
 			{
-				if (!TsProxyCreateChannelReadResponse(tsg, pdu))
+				if (!TsProxyCreateChannelReadResponse(tsg, pdu, &tsg->ChannelContext, &tsg->ChannelId))
 				{
 					WLog_ERR(TAG, "TsProxyCreateChannelReadResponse failure");
 					return -1;
@@ -1483,7 +1416,7 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 
 				if (!tsg->reauthSequence)
 				{
-					if (!TsProxySetupReceivePipe((handle_t) tsg, NULL))
+					if (!TsProxySetupReceivePipeWriteRequest(tsg, &tsg->ChannelContext))
 					{
 						WLog_ERR(TAG, "TsProxySetupReceivePipe failure");
 						return -1;
@@ -1527,43 +1460,47 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 			break;
 
 		case TSG_STATE_TUNNEL_CLOSE_PENDING:
-
-			if (!TsProxyCloseChannelReadResponse(tsg, pdu))
 			{
-				WLog_ERR(TAG, "TsProxyCloseChannelReadResponse failure");
-				return FALSE;
+				CONTEXT_HANDLE ChannelContext;
+
+				if (!TsProxyCloseChannelReadResponse(tsg, pdu, &ChannelContext))
+				{
+					WLog_ERR(TAG, "TsProxyCloseChannelReadResponse failure");
+					return FALSE;
+				}
+
+				tsg_transition_to_state(tsg, TSG_STATE_CHANNEL_CLOSE_PENDING);
+
+				if (!TsProxyCloseChannelWriteRequest(tsg, NULL))
+				{
+					WLog_ERR(TAG, "TsProxyCloseChannelWriteRequest failure");
+					return FALSE;
+				}
+
+				if (!TsProxyMakeTunnelCallWriteRequest(tsg, &tsg->TunnelContext, TSG_TUNNEL_CANCEL_ASYNC_MSG_REQUEST))
+				{
+					WLog_ERR(TAG, "TsProxyMakeTunnelCall failure");
+					return FALSE;
+				}
+
+				status = 1;
 			}
-
-			tsg_transition_to_state(tsg, TSG_STATE_CHANNEL_CLOSE_PENDING);
-
-			if (!TsProxyCloseChannelWriteRequest(tsg, NULL))
-			{
-				WLog_ERR(TAG, "TsProxyCloseChannelWriteRequest failure");
-				return FALSE;
-			}
-
-			if (!TsProxyMakeTunnelCall(tsg, &tsg->TunnelContext, TSG_TUNNEL_CANCEL_ASYNC_MSG_REQUEST, NULL, NULL))
-			{
-				WLog_ERR(TAG, "TsProxyMakeTunnelCall failure");
-				return FALSE;
-			}
-
-			status = 1;
-
 			break;
 
 		case TSG_STATE_CHANNEL_CLOSE_PENDING:
-
-			if (!TsProxyCloseTunnelReadResponse(tsg, pdu))
 			{
-				WLog_ERR(TAG, "TsProxyCloseTunnelReadResponse failure");
-				return FALSE;
+				CONTEXT_HANDLE TunnelContext;
+
+				if (!TsProxyCloseTunnelReadResponse(tsg, pdu, &TunnelContext))
+				{
+					WLog_ERR(TAG, "TsProxyCloseTunnelReadResponse failure");
+					return FALSE;
+				}
+
+				tsg_transition_to_state(tsg, TSG_STATE_FINAL);
+
+				status = 1;
 			}
-
-			tsg_transition_to_state(tsg, TSG_STATE_FINAL);
-
-			status = 1;
-
 			break;
 
 		case TSG_STATE_FINAL:
@@ -1734,7 +1671,7 @@ BOOL tsg_disconnect(rdpTsg* tsg)
 
 	if (tsg->state != TSG_STATE_TUNNEL_CLOSE_PENDING)
 	{
-		if (!TsProxyCloseChannel(tsg, NULL))
+		if (!TsProxyCloseChannelWriteRequest(tsg, &tsg->ChannelContext))
 			return FALSE;
 
 		tsg->state = TSG_STATE_CHANNEL_CLOSE_PENDING;

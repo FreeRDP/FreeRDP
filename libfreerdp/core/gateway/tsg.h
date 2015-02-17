@@ -293,12 +293,16 @@ struct rdp_tsg
 	LPWSTR Hostname;
 	LPWSTR MachineName;
 	TSG_STATE state;
+	UINT32 TunnelId;
+	UINT32 ChannelId;
 	BOOL reauthSequence;
 	rdpSettings* settings;
 	rdpTransport* transport;
+	UINT64 ReauthTunnelContext;
 	CONTEXT_HANDLE TunnelContext;
 	CONTEXT_HANDLE ChannelContext;
-	UINT64 ReauthTunnelContext;
+	CONTEXT_HANDLE NewTunnelContext;
+	CONTEXT_HANDLE NewChannelContext;
 	TSG_PACKET_REAUTH packetReauth;
 	TSG_PACKET_CAPABILITIES tsgCaps;
 	TSG_PACKET_VERSIONCAPS packetVersionCaps;
@@ -306,9 +310,6 @@ struct rdp_tsg
 
 int tsg_proxy_begin(rdpTsg* tsg);
 int tsg_proxy_reauth(rdpTsg* tsg);
-
-BOOL TsProxyCreateTunnel(rdpTsg* tsg, PTSG_PACKET tsgPacket, PTSG_PACKET* tsgPacketResponse,
-			PTUNNEL_CONTEXT_HANDLE_SERIALIZE* tunnelContext, UINT32* tunnelId);
 
 DWORD TsProxySendToServer(handle_t IDL_handle, BYTE pRpcMessage[], UINT32 count, UINT32* lengths);
 
