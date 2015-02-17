@@ -42,6 +42,36 @@
  * RPC NDR Interface Reference: http://msdn.microsoft.com/en-us/library/windows/desktop/hh802752/
  */
 
+/**
+ * call sequence with silent reauth:
+ *
+ * TsProxyCreateTunnelRequest()
+ * TsProxyCreateTunnelResponse(TunnelContext)
+ * TsProxyAuthorizeTunnelRequest(TunnelContext)
+ * TsProxyAuthorizeTunnelResponse()
+ * TsProxyMakeTunnelCallRequest(TunnelContext)
+ * TsProxyCreateChannelRequest(TunnelContext)
+ * TsProxyCreateChannelResponse(ChannelContext)
+ * TsProxySetupReceivePipeRequest(ChannelContext)
+ * TsProxySendToServerRequest(ChannelContext)
+ *
+ * ...
+ *
+ * TsProxyMakeTunnelCallResponse(reauth)
+ * TsProxyCreateTunnelRequest()
+ * TsProxyMakeTunnelCallRequest(TunnelContext)
+ * TsProxyCreateTunnelResponse(NewTunnelContext)
+ * TsProxyAuthorizeTunnelRequest(NewTunnelContext)
+ * TsProxyAuthorizeTunnelResponse()
+ * TsProxyCreateChannelRequest(NewTunnelContext)
+ * TsProxyCreateChannelResponse(NewChannelContext)
+ * TsProxyCloseChannelRequest(NewChannelContext)
+ * TsProxyCloseTunnelRequest(NewTunnelContext)
+ * TsProxyCloseChannelResponse(NullChannelContext)
+ * TsProxyCloseTunnelResponse(NullTunnelContext)
+ * TsProxySendToServerRequest(ChannelContext)
+ */
+
 DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count, UINT32* lengths)
 {
 	wStream* s;
@@ -1298,8 +1328,6 @@ int tsg_proxy_reauth(rdpTsg* tsg)
 	PTSG_PACKET_REAUTH packetReauth;
 	PTSG_PACKET_VERSIONCAPS packetVersionCaps;
 
-	fprintf(stderr, "TsgProxyReauth\n");
-
 	tsg->reauthSequence = TRUE;
 
 	packetReauth = &tsg->packetReauth;
@@ -1340,52 +1368,60 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 	switch (tsg->state)
 	{
 		case TSG_STATE_INITIAL:
-
-			if (!TsProxyCreateTunnelReadResponse(tsg, pdu, &tsg->TunnelContext, &tsg->TunnelId))
 			{
-				WLog_ERR(TAG, "TsProxyCreateTunnelReadResponse failure");
-				return -1;
+				CONTEXT_HANDLE* TunnelContext;
+
+				TunnelContext = (tsg->reauthSequence) ? &tsg->NewTunnelContext : &tsg->TunnelContext;
+
+				if (!TsProxyCreateTunnelReadResponse(tsg, pdu, TunnelContext, &tsg->TunnelId))
+				{
+					WLog_ERR(TAG, "TsProxyCreateTunnelReadResponse failure");
+					return -1;
+				}
+
+				tsg_transition_to_state(tsg, TSG_STATE_CONNECTED);
+
+				if (!TsProxyAuthorizeTunnelWriteRequest(tsg, TunnelContext))
+				{
+					WLog_ERR(TAG, "TsProxyAuthorizeTunnel failure");
+					return -1;
+				}
+
+				status = 1;
 			}
-
-			tsg_transition_to_state(tsg, TSG_STATE_CONNECTED);
-
-			if (!TsProxyAuthorizeTunnelWriteRequest(tsg, &tsg->TunnelContext))
-			{
-				WLog_ERR(TAG, "TsProxyAuthorizeTunnel failure");
-				return -1;
-			}
-
-			status = 1;
-
 			break;
 
 		case TSG_STATE_CONNECTED:
-
-			if (!TsProxyAuthorizeTunnelReadResponse(tsg, pdu))
 			{
-				WLog_ERR(TAG, "TsProxyAuthorizeTunnelReadResponse failure");
-				return -1;
-			}
+				CONTEXT_HANDLE* TunnelContext;
 
-			tsg_transition_to_state(tsg, TSG_STATE_AUTHORIZED);
+				TunnelContext = (tsg->reauthSequence) ? &tsg->NewTunnelContext : &tsg->TunnelContext;
 
-			if (!tsg->reauthSequence)
-			{
-				if (!TsProxyMakeTunnelCallWriteRequest(tsg, &tsg->TunnelContext, TSG_TUNNEL_CALL_ASYNC_MSG_REQUEST))
+				if (!TsProxyAuthorizeTunnelReadResponse(tsg, pdu))
 				{
-					WLog_ERR(TAG, "TsProxyMakeTunnelCall failure");
+					WLog_ERR(TAG, "TsProxyAuthorizeTunnelReadResponse failure");
 					return -1;
 				}
+
+				tsg_transition_to_state(tsg, TSG_STATE_AUTHORIZED);
+
+				if (!tsg->reauthSequence)
+				{
+					if (!TsProxyMakeTunnelCallWriteRequest(tsg, TunnelContext, TSG_TUNNEL_CALL_ASYNC_MSG_REQUEST))
+					{
+						WLog_ERR(TAG, "TsProxyMakeTunnelCall failure");
+						return -1;
+					}
+				}
+
+				if (!TsProxyCreateChannelWriteRequest(tsg, TunnelContext))
+				{
+					WLog_ERR(TAG, "TsProxyCreateChannel failure");
+					return -1;
+				}
+
+				status = 1;
 			}
-
-			if (!TsProxyCreateChannelWriteRequest(tsg, &tsg->TunnelContext))
-			{
-				WLog_ERR(TAG, "TsProxyCreateChannel failure");
-				return -1;
-			}
-
-			status = 1;
-
 			break;
 
 		case TSG_STATE_AUTHORIZED:
@@ -1406,11 +1442,18 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 			}
 			else if (call->OpNum == TsProxyCreateChannelOpnum)
 			{
-				if (!TsProxyCreateChannelReadResponse(tsg, pdu, &tsg->ChannelContext, &tsg->ChannelId))
+				CONTEXT_HANDLE ChannelContext;
+
+				if (!TsProxyCreateChannelReadResponse(tsg, pdu, &ChannelContext, &tsg->ChannelId))
 				{
 					WLog_ERR(TAG, "TsProxyCreateChannelReadResponse failure");
 					return -1;
 				}
+
+				if (!tsg->reauthSequence)
+					CopyMemory(&tsg->ChannelContext, &ChannelContext, sizeof(CONTEXT_HANDLE));
+				else
+					CopyMemory(&tsg->NewChannelContext, &ChannelContext, sizeof(CONTEXT_HANDLE));
 
 				tsg_transition_to_state(tsg, TSG_STATE_CHANNEL_CREATED);
 
@@ -1419,6 +1462,20 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 					if (!TsProxySetupReceivePipeWriteRequest(tsg, &tsg->ChannelContext))
 					{
 						WLog_ERR(TAG, "TsProxySetupReceivePipe failure");
+						return -1;
+					}
+				}
+				else
+				{
+					if (!TsProxyCloseChannelWriteRequest(tsg, &tsg->NewChannelContext))
+					{
+						WLog_ERR(TAG, "TsProxyCloseChannelWriteRequest failure");
+						return -1;
+					}
+
+					if (!TsProxyCloseTunnelWriteRequest(tsg, &tsg->NewTunnelContext))
+					{
+						WLog_ERR(TAG, "TsProxyCloseTunnelWriteRequest failure");
 						return -1;
 					}
 				}
@@ -1457,6 +1514,31 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 
 				status = 1;
 			}
+			else if (call->OpNum == TsProxyCloseChannelOpnum)
+			{
+				CONTEXT_HANDLE ChannelContext;
+
+				if (!TsProxyCloseChannelReadResponse(tsg, pdu, &ChannelContext))
+				{
+					WLog_ERR(TAG, "TsProxyCloseChannelReadResponse failure");
+					return -1;
+				}
+
+				status = 1;
+			}
+			else if (call->OpNum == TsProxyCloseTunnelOpnum)
+			{
+				CONTEXT_HANDLE TunnelContext;
+
+				if (!TsProxyCloseTunnelReadResponse(tsg, pdu, &TunnelContext))
+				{
+					WLog_ERR(TAG, "TsProxyCloseTunnelReadResponse failure");
+					return -1;
+				}
+
+				status = 1;
+			}
+
 			break;
 
 		case TSG_STATE_TUNNEL_CLOSE_PENDING:
