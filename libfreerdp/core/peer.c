@@ -603,13 +603,13 @@ static int freerdp_peer_send_channel_data(freerdp_peer* client, UINT16 channelId
 static BOOL freerdp_peer_is_write_blocked(freerdp_peer* peer)
 {
 	rdpTransport* transport = peer->context->rdp->transport;
-	return tranport_is_write_blocked(transport);
+	return transport_is_write_blocked(transport);
 }
 
 static int freerdp_peer_drain_output_buffer(freerdp_peer* peer)
 {
 	rdpTransport* transport = peer->context->rdp->transport;
-	return tranport_drain_output_buffer(transport);
+	return transport_drain_output_buffer(transport);
 }
 
 void freerdp_peer_context_new(freerdp_peer* client)

@@ -641,12 +641,12 @@ void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 	}
 }
 
-BOOL tranport_is_write_blocked(rdpTransport* transport)
+BOOL transport_is_write_blocked(rdpTransport* transport)
 {
 	return BIO_write_blocked(transport->frontBio);
 }
 
-int tranport_drain_output_buffer(rdpTransport* transport)
+int transport_drain_output_buffer(rdpTransport* transport)
 {
 	BOOL status = FALSE;
 

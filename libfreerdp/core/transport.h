@@ -98,8 +98,8 @@ UINT32 transport_get_event_handles(rdpTransport* transport, HANDLE* events);
 BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking);
 void transport_set_gateway_enabled(rdpTransport* transport, BOOL GatewayEnabled);
 void transport_set_nla_mode(rdpTransport* transport, BOOL NlaMode);
-BOOL tranport_is_write_blocked(rdpTransport* transport);
-int tranport_drain_output_buffer(rdpTransport* transport);
+BOOL transport_is_write_blocked(rdpTransport* transport);
+int transport_drain_output_buffer(rdpTransport* transport);
 
 wStream* transport_receive_pool_take(rdpTransport* transport);
 int transport_receive_pool_return(rdpTransport* transport, wStream* pdu);
