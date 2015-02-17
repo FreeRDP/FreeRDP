@@ -293,6 +293,7 @@ struct rdp_tsg
 	LPWSTR Hostname;
 	LPWSTR MachineName;
 	TSG_STATE state;
+	BOOL reauthSequence;
 	rdpSettings* settings;
 	rdpTransport* transport;
 	CONTEXT_HANDLE TunnelContext;
