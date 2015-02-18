@@ -3,6 +3,7 @@
  * Virtual Channels
  *
  * Copyright 2011 Vic Lee
+ * Copyright 2015 Copyright 2015 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -245,7 +246,9 @@ static WtsApiFunctionTable FreeRDP_WtsApiFunctionTable =
 	FreeRDP_WTSGetChildSessionId, /* GetChildSessionId */
 	FreeRDP_WTSGetActiveConsoleSessionId, /* GetActiveConsoleSessionId */
 	FreeRDP_WTSLogonUser,
-	FreeRDP_WTSLogoffUser
+	FreeRDP_WTSLogoffUser,
+	FreeRDP_WTSStartRemoteControlSessionExW,
+	FreeRDP_WTSStartRemoteControlSessionExA
 };
 
 PWtsApiFunctionTable FreeRDP_InitWtsApi(void)
