@@ -44,6 +44,7 @@ set(${MODULE_PREFIX}_TESTS
 		TestWtsApiExtraLogoffSession.c
 		TestWtsApiExtraSendMessage.c
 		TestWtsApiExtraVirtualChannel.c
+		TestWtsApiExtraStartRemoteSessionEx.c
 		)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
