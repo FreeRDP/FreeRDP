@@ -84,17 +84,10 @@ BOOL freerdp_connect(freerdp* instance)
 
 	if (!status)
 	{
-		if (!connectErrorCode)
-		{
-			connectErrorCode = PREECONNECTERROR;
-		}
-
 		if (!freerdp_get_last_error(rdp->context))
-		{
 			freerdp_set_last_error(instance->context, FREERDP_ERROR_PRE_CONNECT_FAILED);
-		}
 
-		WLog_ERR(TAG,  "freerdp_pre_connect failed");
+		WLog_ERR(TAG, "freerdp_pre_connect failed");
 		goto freerdp_connect_finally;
 	}
 
@@ -103,7 +96,7 @@ BOOL freerdp_connect(freerdp* instance)
 	/* --authonly tests the connection without a UI */
 	if (instance->settings->AuthenticationOnly)
 	{
-		WLog_ERR(TAG,  "Authentication only, exit status %d", !status);
+		WLog_ERR(TAG, "Authentication only, exit status %d", !status);
 		goto freerdp_connect_finally;
 	}
 
@@ -122,17 +115,10 @@ BOOL freerdp_connect(freerdp* instance)
 
 		if (!status)
 		{
-			WLog_ERR(TAG,  "freerdp_post_connect failed");
-
-			if (!connectErrorCode)
-			{
-				connectErrorCode = POSTCONNECTERROR;
-			}
+			WLog_ERR(TAG, "freerdp_post_connect failed");
 
 			if (!freerdp_get_last_error(rdp->context))
-			{
 				freerdp_set_last_error(instance->context, FREERDP_ERROR_POST_CONNECT_FAILED);
-			}
 
 			goto freerdp_connect_finally;
 		}
@@ -183,10 +169,7 @@ BOOL freerdp_connect(freerdp* instance)
 	}
 
 	if (rdp->errorInfo == ERRINFO_SERVER_INSUFFICIENT_PRIVILEGES)
-	{
-		connectErrorCode = INSUFFICIENTPRIVILEGESERROR;
 		freerdp_set_last_error(instance->context, FREERDP_ERROR_INSUFFICIENT_PRIVILEGES);
-	}
 
 	SetEvent(rdp->transport->connectedEvent);
 freerdp_connect_finally:
@@ -199,11 +182,8 @@ freerdp_connect_finally:
 
 BOOL freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
 {
-	rdpRdp* rdp;
-
-	rdp = instance->context->rdp;
+	rdpRdp* rdp = instance->context->rdp;
 	transport_get_fds(rdp->transport, rfds, rcount);
-
 	return TRUE;
 }
 
@@ -240,9 +220,9 @@ BOOL freerdp_check_fds(freerdp* instance)
 	return TRUE;
 }
 
-DWORD freerdp_get_event_handles(rdpContext* context, HANDLE* events)
+UINT32 freerdp_get_event_handles(rdpContext* context, HANDLE* events)
 {
-	DWORD nCount = 0;
+	UINT32 nCount = 0;
 
 	nCount += transport_get_event_handles(context->rdp->transport, events);
 
@@ -534,9 +514,64 @@ UINT32 freerdp_get_last_error(rdpContext* context)
 void freerdp_set_last_error(rdpContext* context, UINT32 lastError)
 {
 	if (lastError)
-		WLog_ERR(TAG,  "freerdp_set_last_error 0x%04X", lastError);
+		WLog_ERR(TAG, "freerdp_set_last_error 0x%04X", lastError);
 
 	context->LastError = lastError;
+
+	switch (lastError)
+	{
+		case FREERDP_ERROR_PRE_CONNECT_FAILED:
+			connectErrorCode = PREECONNECTERROR;
+			break;
+
+		case FREERDP_ERROR_CONNECT_UNDEFINED:
+			connectErrorCode = UNDEFINEDCONNECTERROR;
+			break;
+
+		case FREERDP_ERROR_POST_CONNECT_FAILED:
+			connectErrorCode = POSTCONNECTERROR;
+			break;
+
+		case FREERDP_ERROR_DNS_ERROR:
+			connectErrorCode = DNSERROR;
+			break;
+
+		case FREERDP_ERROR_DNS_NAME_NOT_FOUND:
+			connectErrorCode = DNSNAMENOTFOUND;
+			break;
+
+		case FREERDP_ERROR_CONNECT_FAILED:
+			connectErrorCode = CONNECTERROR;
+			break;
+
+		case FREERDP_ERROR_MCS_CONNECT_INITIAL_ERROR:
+			connectErrorCode = MCSCONNECTINITIALERROR;
+			break;
+
+		case FREERDP_ERROR_TLS_CONNECT_FAILED:
+			connectErrorCode = TLSCONNECTERROR;
+			break;
+
+		case FREERDP_ERROR_AUTHENTICATION_FAILED:
+			connectErrorCode = AUTHENTICATIONERROR;
+			break;
+
+		case FREERDP_ERROR_INSUFFICIENT_PRIVILEGES:
+			connectErrorCode = INSUFFICIENTPRIVILEGESERROR;
+			break;
+
+		case FREERDP_ERROR_CONNECT_CANCELLED:
+			connectErrorCode = CANCELEDBYUSER;
+			break;
+
+		case FREERDP_ERROR_SECURITY_NEGO_CONNECT_FAILED:
+			connectErrorCode = CONNECTERROR;
+			break;
+
+		case FREERDP_ERROR_CONNECT_TRANSPORT_FAILED:
+			connectErrorCode = CONNECTERROR;
+			break;
+	}
 }
 
 /** Allocator function for the rdp_freerdp structure.

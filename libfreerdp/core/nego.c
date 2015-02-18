@@ -1033,8 +1033,6 @@ void nego_init(rdpNego* nego)
 {
 	nego->state = NEGO_STATE_INITIAL;
 	nego->RequestedProtocols = PROTOCOL_RDP;
-	nego->transport->ReceiveCallback = nego_recv;
-	nego->transport->ReceiveExtra = (void*) nego;
 	nego->CookieMaxLength = DEFAULT_COOKIE_MAX_LENGTH;
 	nego->sendNegoData = FALSE;
 	nego->flags = 0;
@@ -1049,11 +1047,12 @@ void nego_init(rdpNego* nego)
 rdpNego* nego_new(rdpTransport* transport)
 {
 	rdpNego* nego = (rdpNego*) calloc(1, sizeof(rdpNego));
+
 	if (!nego)
 		return NULL;
 
-
 	nego->transport = transport;
+
 	nego_init(nego);
 
 	return nego;

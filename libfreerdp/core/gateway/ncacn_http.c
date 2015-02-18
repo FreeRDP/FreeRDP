@@ -132,7 +132,6 @@ int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, RpcChannel* channel)
 
 			if (!proceed)
 			{
-				connectErrorCode = CANCELEDBYUSER;
 				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
 				return 0;
 			}

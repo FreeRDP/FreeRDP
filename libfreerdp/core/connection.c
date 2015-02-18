@@ -263,12 +263,12 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 			return FALSE;
 	}
 
+	rdp_client_transition_to_state(rdp, CONNECTION_STATE_NEGO);
+
 	if (!nego_connect(rdp->nego))
 	{
 		if (!freerdp_get_last_error(rdp->context))
-		{
 			freerdp_set_last_error(rdp->context, FREERDP_ERROR_SECURITY_NEGO_CONNECT_FAILED);
-		}
 
 		WLog_ERR(TAG, "Error: protocol security negotiation or connection failure");
 		return FALSE;
@@ -281,25 +281,16 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 			settings->AutoLogonEnabled = TRUE;
 	}
 
-	rdp_set_blocking_mode(rdp, FALSE);
+	/* everything beyond this point is event-driven and non blocking */
 
-	rdp_client_transition_to_state(rdp, CONNECTION_STATE_NEGO);
-	rdp->finalize_sc_pdus = 0;
+	rdp->transport->ReceiveCallback = rdp_recv_callback;
+	rdp->transport->ReceiveExtra = rdp;
+	transport_set_blocking_mode(rdp->transport, FALSE);
 
-	if (!mcs_send_connect_initial(rdp->mcs))
+	if (rdp->state != CONNECTION_STATE_NLA)
 	{
-		if (!connectErrorCode)
-		{
-			connectErrorCode = MCSCONNECTINITIALERROR;
-		}
-
-		if (!freerdp_get_last_error(rdp->context))
-		{
-			freerdp_set_last_error(rdp->context, FREERDP_ERROR_MCS_CONNECT_INITIAL_ERROR);
-		}
-
-		WLog_ERR(TAG, "Error: unable to send MCS Connect Initial");
-		return FALSE;
+		if (!mcs_client_begin(rdp->mcs))
+			return FALSE;
 	}
 
 	while (rdp->state != CONNECTION_STATE_ACTIVE)
@@ -307,9 +298,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		if (rdp_check_fds(rdp) < 0)
 		{
 			if (!freerdp_get_last_error(rdp->context))
-			{
 				freerdp_set_last_error(rdp->context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
-			}
 
 			return FALSE;
 		}
@@ -648,38 +637,6 @@ end2:
 	return ret;
 }
 
-BOOL rdp_client_connect_mcs_connect_response(rdpRdp* rdp, wStream* s)
-{
-	if (!mcs_recv_connect_response(rdp->mcs, s))
-	{
-		WLog_ERR(TAG, "rdp_client_connect_mcs_connect_response: mcs_recv_connect_response failed");
-		return FALSE;
-	}
-
-	if (!mcs_send_erect_domain_request(rdp->mcs))
-		return FALSE;
-
-	if (!mcs_send_attach_user_request(rdp->mcs))
-		return FALSE;
-
-	rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_ATTACH_USER);
-
-	return TRUE;
-}
-
-BOOL rdp_client_connect_mcs_attach_user_confirm(rdpRdp* rdp, wStream* s)
-{
-	if (!mcs_recv_attach_user_confirm(rdp->mcs, s))
-		return FALSE;
-
-	if (!mcs_send_channel_join_request(rdp->mcs, rdp->mcs->userId))
-		return FALSE;
-
-	rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CHANNEL_JOIN);
-
-	return TRUE;
-}
-
 BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 {
 	UINT32 i;
@@ -923,6 +880,10 @@ int rdp_client_transition_to_state(rdpRdp* rdp, int state)
 
 		case CONNECTION_STATE_NEGO:
 			rdp->state = CONNECTION_STATE_NEGO;
+			break;
+
+		case CONNECTION_STATE_NLA:
+			rdp->state = CONNECTION_STATE_NLA;
 			break;
 
 		case CONNECTION_STATE_MCS_CONNECT:

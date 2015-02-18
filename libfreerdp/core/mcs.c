@@ -30,6 +30,7 @@
 #include "tpdu.h"
 #include "tpkt.h"
 #include "client.h"
+#include "connection.h"
 
 #define TAG FREERDP_TAG("core")
 
@@ -1047,6 +1048,23 @@ BOOL mcs_send_disconnect_provider_ultimatum(rdpMcs* mcs)
 	Stream_Free(s, TRUE);
 
 	return (status < 0) ? FALSE : TRUE;
+}
+
+BOOL mcs_client_begin(rdpMcs* mcs)
+{
+	rdpContext* context = mcs->transport->context;
+
+	if (!mcs_send_connect_initial(mcs))
+	{
+		if (!freerdp_get_last_error(context))
+			freerdp_set_last_error(context, FREERDP_ERROR_MCS_CONNECT_INITIAL_ERROR);
+
+		WLog_ERR(TAG, "Error: unable to send MCS Connect Initial");
+		return FALSE;
+	}
+
+	rdp_client_transition_to_state(context->rdp, CONNECTION_STATE_MCS_CONNECT);
+	return TRUE;
 }
 
 /**

@@ -173,6 +173,8 @@ int tfreerdp_run(freerdp* instance)
 		FD_ZERO(&rfds_set);
 		FD_ZERO(&wfds_set);
 
+		fprintf(stderr, "rcount: %d\n", rcount);
+
 		for (i = 0; i < rcount; i++)
 		{
 			fds = (int)(long)(rfds[i]);
@@ -237,7 +239,11 @@ void* tf_client_thread_proc(freerdp* instance)
 
 	channels = instance->context->channels;
 
-	freerdp_connect(instance);
+	if (!freerdp_connect(instance))
+	{
+		WLog_ERR(TAG, "connection failure");
+		return NULL;
+	}
 
 	while (1)
 	{

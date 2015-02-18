@@ -586,7 +586,7 @@ typedef struct rpc_client_call RpcClientCall;
 
 #define RPC_CHANNEL_COMMON() \
 	rdpRpc* rpc; \
-	rdpTcp* tcp; \
+	BIO* bio; \
 	rdpTls* tls; \
 	rdpNtlm* ntlm; \
 	HttpContext* http; \

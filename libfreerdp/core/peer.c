@@ -229,7 +229,9 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 
 static BOOL freerdp_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 {
-	rfds[*rcount] = (void*)(long)(client->context->rdp->transport->TcpIn->sockfd);
+	rdpTransport* transport = client->context->rdp->transport;
+
+	rfds[*rcount] = (void*)(long)(BIO_get_fd(transport->frontBio, NULL));
 	(*rcount)++;
 
 	return TRUE;
@@ -237,7 +239,12 @@ static BOOL freerdp_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 
 static HANDLE freerdp_peer_get_event_handle(freerdp_peer* client)
 {
-	return client->context->rdp->transport->TcpIn->event;
+	HANDLE hEvent = NULL;
+	rdpTransport* transport = client->context->rdp->transport;
+
+	BIO_get_event(transport->frontBio, &hEvent);
+
+	return hEvent;
 }
 
 static BOOL freerdp_peer_check_fds(freerdp_peer* peer)
@@ -453,10 +460,10 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 
 			if (rdp->nego->SelectedProtocol & PROTOCOL_NLA)
 			{
-				sspi_CopyAuthIdentity(&client->identity, &(rdp->nego->transport->credssp->identity));
+				sspi_CopyAuthIdentity(&client->identity, &(rdp->nego->transport->nla->identity));
 				IFCALLRET(client->Logon, client->authenticated, client, &client->identity, TRUE);
-				credssp_free(rdp->nego->transport->credssp);
-				rdp->nego->transport->credssp = NULL;
+				nla_free(rdp->nego->transport->nla);
+				rdp->nego->transport->nla = NULL;
 			}
 			else
 			{
@@ -590,7 +597,8 @@ static BOOL freerdp_peer_close(freerdp_peer* client)
 
 static void freerdp_peer_disconnect(freerdp_peer* client)
 {
-	transport_disconnect(client->context->rdp->transport);
+	rdpTransport* transport = client->context->rdp->transport;
+	transport_disconnect(transport);
 }
 
 static int freerdp_peer_send_channel_data(freerdp_peer* client, UINT16 channelId, BYTE* data, int size)
@@ -600,14 +608,14 @@ static int freerdp_peer_send_channel_data(freerdp_peer* client, UINT16 channelId
 
 static BOOL freerdp_peer_is_write_blocked(freerdp_peer* peer)
 {
-	return tranport_is_write_blocked(peer->context->rdp->transport);
+	rdpTransport* transport = peer->context->rdp->transport;
+	return transport_is_write_blocked(transport);
 }
 
 static int freerdp_peer_drain_output_buffer(freerdp_peer* peer)
 {
 	rdpTransport* transport = peer->context->rdp->transport;
-
-	return tranport_drain_output_buffer(transport);
+	return transport_drain_output_buffer(transport);
 }
 
 void freerdp_peer_context_new(freerdp_peer* client)

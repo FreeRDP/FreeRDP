@@ -53,20 +53,6 @@ enum _TSG_STATE
 };
 typedef enum _TSG_STATE TSG_STATE;
 
-struct rdp_tsg
-{
-	BIO* bio;
-	rdpRpc* rpc;
-	UINT16 Port;
-	LPWSTR Hostname;
-	LPWSTR MachineName;
-	TSG_STATE state;
-	rdpSettings* settings;
-	rdpTransport* transport;
-	CONTEXT_HANDLE TunnelContext;
-	CONTEXT_HANDLE ChannelContext;
-};
-
 typedef WCHAR* RESOURCENAME;
 
 #define TsProxyCreateTunnelOpnum		1
@@ -299,8 +285,31 @@ typedef struct _TSG_PACKET
 	TSG_PACKET_TYPE_UNION tsgPacket;
 } TSG_PACKET, *PTSG_PACKET;
 
-BOOL TsProxyCreateTunnel(rdpTsg* tsg, PTSG_PACKET tsgPacket, PTSG_PACKET* tsgPacketResponse,
-			PTUNNEL_CONTEXT_HANDLE_SERIALIZE* tunnelContext, UINT32* tunnelId);
+struct rdp_tsg
+{
+	BIO* bio;
+	rdpRpc* rpc;
+	UINT16 Port;
+	LPWSTR Hostname;
+	LPWSTR MachineName;
+	TSG_STATE state;
+	UINT32 TunnelId;
+	UINT32 ChannelId;
+	BOOL reauthSequence;
+	rdpSettings* settings;
+	rdpTransport* transport;
+	UINT64 ReauthTunnelContext;
+	CONTEXT_HANDLE TunnelContext;
+	CONTEXT_HANDLE ChannelContext;
+	CONTEXT_HANDLE NewTunnelContext;
+	CONTEXT_HANDLE NewChannelContext;
+	TSG_PACKET_REAUTH packetReauth;
+	TSG_PACKET_CAPABILITIES tsgCaps;
+	TSG_PACKET_VERSIONCAPS packetVersionCaps;
+};
+
+int tsg_proxy_begin(rdpTsg* tsg);
+int tsg_proxy_reauth(rdpTsg* tsg);
 
 DWORD TsProxySendToServer(handle_t IDL_handle, BYTE pRpcMessage[], UINT32 count, UINT32* lengths);
 
@@ -313,7 +322,9 @@ int tsg_write(rdpTsg* tsg, BYTE* data, UINT32 length);
 int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length);
 
 int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu);
-int tsg_check(rdpTsg* tsg);
+
+int tsg_check_event_handles(rdpTsg* tsg);
+UINT32 tsg_get_event_handles(rdpTsg* tsg, HANDLE* events);
 
 rdpTsg* tsg_new(rdpTransport* transport);
 void tsg_free(rdpTsg* tsg);

@@ -58,28 +58,19 @@ struct rdp_transport
 	BIO* frontBio;
 	rdpTsg* tsg;
 	rdpTls* tls;
-	rdpTcp* TcpIn;
-	rdpTcp* TcpOut;
-	rdpTls* TlsIn;
-	rdpTls* TlsOut;
-	rdpTls* TsgTls;
 	rdpContext* context;
-	rdpCredssp* credssp;
+	rdpNla* nla;
 	rdpSettings* settings;
-	UINT32 SleepInterval;
 	void* ReceiveExtra;
 	wStream* ReceiveBuffer;
 	TransportRecv ReceiveCallback;
-	HANDLE ReceiveEvent;
-	HANDLE GatewayEvent;
-	BOOL blocking;
-	BOOL SplitInputOutput;
 	wStreamPool* ReceivePool;
 	HANDLE connectedEvent;
 	HANDLE stopEvent;
 	HANDLE thread;
 	BOOL async;
 	BOOL NlaMode;
+	BOOL blocking;
 	BOOL GatewayEnabled;
 	CRITICAL_SECTION ReadLock;
 	CRITICAL_SECTION WriteLock;
@@ -87,7 +78,7 @@ struct rdp_transport
 
 wStream* transport_send_stream_init(rdpTransport* transport, int size);
 BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 port, int timeout);
-void transport_attach(rdpTransport* transport, int sockfd);
+BOOL transport_attach(rdpTransport* transport, int sockfd);
 BOOL transport_disconnect(rdpTransport* transport);
 BOOL transport_connect_rdp(rdpTransport* transport);
 BOOL transport_connect_tls(rdpTransport* transport);
@@ -102,13 +93,13 @@ int transport_write(rdpTransport* transport, wStream* s);
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount);
 int transport_check_fds(rdpTransport* transport);
 
-DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events);
+UINT32 transport_get_event_handles(rdpTransport* transport, HANDLE* events);
 
 BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking);
 void transport_set_gateway_enabled(rdpTransport* transport, BOOL GatewayEnabled);
 void transport_set_nla_mode(rdpTransport* transport, BOOL NlaMode);
-BOOL tranport_is_write_blocked(rdpTransport* transport);
-int tranport_drain_output_buffer(rdpTransport* transport);
+BOOL transport_is_write_blocked(rdpTransport* transport);
+int transport_drain_output_buffer(rdpTransport* transport);
 
 wStream* transport_receive_pool_take(rdpTransport* transport);
 int transport_receive_pool_return(rdpTransport* transport, wStream* pdu);

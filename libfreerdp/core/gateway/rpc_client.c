@@ -280,14 +280,11 @@ int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 
 			rpc_client_transition_to_state(rpc, RPC_CLIENT_STATE_CONTEXT_NEGOTIATED);
 
-			if (!TsProxyCreateTunnel(tsg, NULL, NULL, NULL, NULL))
+			if (tsg_proxy_begin(tsg) < 0)
 			{
-				WLog_ERR(TAG, "TsProxyCreateTunnel failure");
-				tsg->state = TSG_STATE_FINAL;
+				WLog_ERR(TAG, "tsg_proxy_begin failure");
 				return -1;
 			}
-
-			tsg_transition_to_state(tsg, TSG_STATE_INITIAL);
 
 			status = 1;
 		}
@@ -298,10 +295,7 @@ int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 	}
 	else if (rpc->State >= RPC_CLIENT_STATE_CONTEXT_NEGOTIATED)
 	{
-		if (tsg->state != TSG_STATE_PIPE_CREATED)
-		{
-			status = tsg_recv_pdu(tsg, pdu);
-		}
+		status = tsg_recv_pdu(tsg, pdu);
 	}
 
 	return status;
@@ -531,13 +525,8 @@ int rpc_client_out_channel_recv(rdpRpc* rpc)
 
 			if (response->StatusCode == HTTP_STATUS_DENIED)
 			{
-				if (!connectErrorCode)
-					connectErrorCode = AUTHENTICATIONERROR;
-
 				if (!freerdp_get_last_error(rpc->context))
-				{
 					freerdp_set_last_error(rpc->context, FREERDP_ERROR_AUTHENTICATION_FAILED);
-				}
 			}
 
 			return -1;

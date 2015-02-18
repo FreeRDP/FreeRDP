@@ -39,8 +39,6 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <net/if.h>
-#else
-#define close(_fd) closesocket(_fd)
 #endif
 
 #include "listener.h"
@@ -144,26 +142,20 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 		ioctlsocket(sockfd, FIONBIO, &arg);
 #endif
 
-		status = bind(sockfd, ai->ai_addr, ai->ai_addrlen);
+		status = _bind((SOCKET) sockfd, ai->ai_addr, ai->ai_addrlen);
 
 		if (status != 0)
 		{
-#ifdef _WIN32
-			WLog_ERR(TAG, "bind() failed with error: %d", (int) WSAGetLastError());
-			WSACleanup();
-#else
-			WLog_ERR(TAG, "bind");
-			close(sockfd);
-#endif
+			closesocket((SOCKET) sockfd);
 			continue;
 		}
 
-		status = listen(sockfd, 10);
+		status = _listen((SOCKET) sockfd, 10);
 
 		if (status != 0)
 		{
 			WLog_ERR(TAG, "listen");
-			close(sockfd);
+			closesocket((SOCKET) sockfd);
 			continue;
 		}
 
@@ -203,28 +195,28 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 	strncpy(addr.sun_path, path, sizeof(addr.sun_path));
 	unlink(path);
 
-	status = bind(sockfd, (struct sockaddr*) &addr, sizeof(addr));
+	status = _bind(sockfd, (struct sockaddr*) &addr, sizeof(addr));
 
 	if (status != 0)
 	{
 		WLog_ERR(TAG, "bind");
-		close(sockfd);
+		closesocket((SOCKET) sockfd);
 		return FALSE;
 	}
 
-	status = listen(sockfd, 10);
+	status = _listen(sockfd, 10);
 
 	if (status != 0)
 	{
 		WLog_ERR(TAG, "listen");
-		close(sockfd);
+		closesocket((SOCKET) sockfd);
 		return FALSE;
 	}
 
 	listener->sockfds[listener->num_sockfds] = sockfd;
 	listener->events[listener->num_sockfds] = CreateFileDescriptorEvent(NULL, FALSE, FALSE, sockfd);
 	listener->num_sockfds++;
-	WLog_INFO(TAG,  "Listening on socket %s.", addr.sun_path);
+	WLog_INFO(TAG, "Listening on socket %s.", addr.sun_path);
 	return TRUE;
 #else
 	return TRUE;
@@ -239,7 +231,7 @@ static void freerdp_listener_close(freerdp_listener* instance)
 
 	for (i = 0; i < listener->num_sockfds; i++)
 	{
-		close(listener->sockfds[i]);
+		closesocket((SOCKET) listener->sockfds[i]);
 		CloseHandle(listener->events[i]);
 	}
 

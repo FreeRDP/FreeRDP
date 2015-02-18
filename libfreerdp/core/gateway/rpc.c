@@ -506,6 +506,18 @@ void rpc_in_channel_free(RpcInChannel* inChannel)
 
 	rpc_in_channel_rpch_uninit(inChannel);
 
+	if (inChannel->tls)
+	{
+		tls_free(inChannel->tls);
+		inChannel->tls = NULL;
+	}
+
+	if (inChannel->bio)
+	{
+		BIO_free(inChannel->bio);
+		inChannel->bio = NULL;
+	}
+
 	free(inChannel);
 }
 
@@ -645,6 +657,18 @@ void rpc_out_channel_free(RpcOutChannel* outChannel)
 
 	rpc_out_channel_rpch_uninit(outChannel);
 
+	if (outChannel->tls)
+	{
+		tls_free(outChannel->tls);
+		outChannel->tls = NULL;
+	}
+
+	if (outChannel->bio)
+	{
+		BIO_free(outChannel->bio);
+		outChannel->bio = NULL;
+	}
+
 	free(outChannel);
 }
 
@@ -735,20 +759,38 @@ void rpc_virtual_connection_free(RpcVirtualConnection* connection)
 
 int rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 {
-	rdpTcp* tcp;
+	int sockfd;
 	rdpTls* tls;
 	int tlsStatus;
+	BIO* socketBio;
+	BIO* bufferedBio;
 	rdpRpc* rpc = channel->rpc;
 	rdpContext* context = rpc->context;
 	rdpSettings* settings = context->settings;
 
-	tcp = channel->tcp = freerdp_tcp_new(settings);
+	sockfd = freerdp_tcp_connect(settings, settings->GatewayHostname, settings->GatewayPort, timeout);
 
-	if (!freerdp_tcp_connect(tcp, settings->GatewayHostname, settings->GatewayPort, timeout))
+	if (sockfd < 1)
 		return -1;
 
-	if (!freerdp_tcp_set_blocking_mode(tcp, FALSE))
+	socketBio = BIO_new(BIO_s_simple_socket());
+
+	if (!socketBio)
+		return FALSE;
+
+	BIO_set_fd(socketBio, sockfd, BIO_CLOSE);
+
+	bufferedBio = BIO_new(BIO_s_buffered_socket());
+
+	if (!bufferedBio)
+		return FALSE;
+
+	bufferedBio = BIO_push(bufferedBio, socketBio);
+
+	if (!BIO_set_nonblock(bufferedBio, TRUE))
 		return -1;
+
+	channel->bio = bufferedBio;
 
 	tls = channel->tls = tls_new(settings);
 
@@ -759,7 +801,7 @@ int rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 	tls->port = settings->GatewayPort;
 	tls->isGatewayTransport = TRUE;
 
-	tlsStatus = tls_connect(tls, tcp->bufferedBio);
+	tlsStatus = tls_connect(tls, bufferedBio);
 
 	if (tlsStatus < 1)
 	{

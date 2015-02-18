@@ -7,7 +7,7 @@
 
 static void *test_thread(void *arg)
 {
-	long timeout = random();
+	long timeout = rand();
 	timeout %= 1000;
 	timeout += 100;
 	Sleep(timeout);
