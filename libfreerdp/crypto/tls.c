@@ -576,9 +576,9 @@ out_free:
 
 
 #if defined(__APPLE__)
-BOOL tls_prepare(rdpTls* tls, BIO *underlying, SSL_METHOD *method, int options, BOOL clientMode)
+BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method, int options, BOOL clientMode)
 #else
-BOOL tls_prepare(rdpTls* tls, BIO *underlying, const SSL_METHOD *method, int options, BOOL clientMode)
+BOOL tls_prepare(rdpTls* tls, BIO* underlying, const SSL_METHOD* method, int options, BOOL clientMode)
 #endif
 {
 	rdpSettings* settings = tls->settings;
@@ -614,6 +614,7 @@ BOOL tls_prepare(rdpTls* tls, BIO *underlying, const SSL_METHOD *method, int opt
 	}
 
 	BIO_push(tls->bio, underlying);
+	tls->underlying = underlying;
 
 	return TRUE;
 }
@@ -721,7 +722,7 @@ out:
 	return verify_status;
 }
 
-int tls_connect(rdpTls* tls, BIO *underlying)
+int tls_connect(rdpTls* tls, BIO* underlying)
 {
 	int options = 0;
 
@@ -760,7 +761,7 @@ int tls_connect(rdpTls* tls, BIO *underlying)
 	return tls_do_handshake(tls, TRUE);
 }
 
-BOOL tls_accept(rdpTls* tls, BIO *underlying, const char* cert_file, const char* privatekey_file)
+BOOL tls_accept(rdpTls* tls, BIO* underlying, const char* cert_file, const char* privatekey_file)
 {
 	long options = 0;
 
@@ -1271,6 +1272,12 @@ void tls_free(rdpTls* tls)
 	{
 		BIO_free(tls->bio);
 		tls->bio = NULL;
+	}
+
+	if (tls->underlying)
+	{
+		BIO_free(tls->underlying);
+		tls->underlying = NULL;
 	}
 
 	if (tls->PublicKey)
