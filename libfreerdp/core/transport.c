@@ -130,9 +130,6 @@ BOOL transport_connect_tls(rdpTransport* transport)
 	{
 		if (tlsStatus < 0)
 		{
-			if (!connectErrorCode)
-				connectErrorCode = TLSCONNECTERROR;
-
 			if (!freerdp_get_last_error(context))
 				freerdp_set_last_error(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
 		}
@@ -187,14 +184,8 @@ BOOL transport_connect_nla(rdpTransport* transport)
 
 	if (nla_client_begin(rdp->nla) < 0)
 	{
-		if (!connectErrorCode)
-			connectErrorCode = AUTHENTICATIONERROR;
-
 		if (!freerdp_get_last_error(context))
 			freerdp_set_last_error(context, FREERDP_ERROR_AUTHENTICATION_FAILED);
-
-		WLog_ERR(TAG, "Authentication failure, check credentials."
-				 "If credentials are valid, the NTLMSSP implementation may be to blame.");
 
 		transport_set_nla_mode(transport, FALSE);
 

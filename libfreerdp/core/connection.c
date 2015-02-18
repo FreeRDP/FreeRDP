@@ -268,9 +268,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	if (!nego_connect(rdp->nego))
 	{
 		if (!freerdp_get_last_error(rdp->context))
-		{
 			freerdp_set_last_error(rdp->context, FREERDP_ERROR_SECURITY_NEGO_CONNECT_FAILED);
-		}
 
 		WLog_ERR(TAG, "Error: protocol security negotiation or connection failure");
 		return FALSE;
@@ -300,9 +298,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		if (rdp_check_fds(rdp) < 0)
 		{
 			if (!freerdp_get_last_error(rdp->context))
-			{
 				freerdp_set_last_error(rdp->context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
-			}
 
 			return FALSE;
 		}

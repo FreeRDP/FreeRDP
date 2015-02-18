@@ -109,13 +109,10 @@ int nla_client_init(rdpNla* nla)
 {
 	char* spn;
 	int length;
-	BOOL PromptPassword;
 	rdpTls* tls = NULL;
-	freerdp* instance;
-	rdpSettings* settings;
-	PromptPassword = FALSE;
-	settings = nla->settings;
-	instance = (freerdp*) settings->instance;
+	BOOL PromptPassword = FALSE;
+	freerdp* instance = nla->instance;
+	rdpSettings* settings = nla->settings;
 
 	nla->state = NLA_STATE_INITIAL;
 
@@ -129,7 +126,6 @@ int nla_client_init(rdpNla* nla)
 	}
 
 #ifndef _WIN32
-
 	if (PromptPassword)
 	{
 		if (settings->RestrictedAdminModeRequired)
@@ -138,7 +134,6 @@ int nla_client_init(rdpNla* nla)
 				PromptPassword = FALSE;
 		}
 	}
-
 #endif
 
 	if (PromptPassword)
@@ -150,7 +145,6 @@ int nla_client_init(rdpNla* nla)
 
 			if (!proceed)
 			{
-				connectErrorCode = CANCELEDBYUSER;
 				freerdp_set_last_error(instance->context, FREERDP_ERROR_CONNECT_CANCELLED);
 				return 0;
 			}
@@ -158,6 +152,7 @@ int nla_client_init(rdpNla* nla)
 	}
 
 	sspi_SetAuthIdentity(&(nla->identity), settings->Username, settings->Domain, settings->Password);
+
 #ifndef _WIN32
 	{
 		SEC_WINNT_AUTH_IDENTITY* identity = &(nla->identity);
@@ -184,9 +179,6 @@ int nla_client_init(rdpNla* nla)
 	}
 #endif
 
-	WLog_DBG(TAG, "User: %s Domain: %s Password: %s",
-			 (char*) nla->identity.User, (char*) nla->identity.Domain, (char*) nla->identity.Password);
-
 	tls = nla->transport->tls;
 
 	if (!tls)
@@ -205,15 +197,16 @@ int nla_client_init(rdpNla* nla)
 		return -1;
 
 	sprintf(spn, "%s%s", TERMSRV_SPN_PREFIX, settings->ServerHostname);
+
 #ifdef UNICODE
-	nla->ServicePrincipalName = (LPTSTR) malloc(length * 2 + 2);
-	MultiByteToWideChar(CP_UTF8, 0, spn, length, (LPWSTR) nla->ServicePrincipalName, length);
+	nla->ServicePrincipalName = NULL;
+	ConvertToUnicode(CP_UTF8, 0, spn, -1, &nla->ServicePrincipalName, 0);
 	free(spn);
 #else
 	nla->ServicePrincipalName = spn;
 #endif
 
-	nla->table = InitSecurityInterfaceEx(0);
+	nla->table = InitSecurityInterfaceEx(SSPI_INTERFACE_WINPR);
 	nla->status = nla->table->QuerySecurityPackageInfo(NLA_PKG_NAME, &nla->pPackageInfo);
 
 	if (nla->status != SEC_E_OK)
@@ -771,9 +764,9 @@ SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla)
 	SecBufferDesc Message;
 	SECURITY_STATUS status;
 
-	if (nla->PublicKey.cbBuffer + nla->ContextSizes.cbMaxSignature != nla->pubKeyAuth.cbBuffer)
+	if ((nla->PublicKey.cbBuffer + nla->ContextSizes.cbMaxSignature) != nla->pubKeyAuth.cbBuffer)
 	{
-		WLog_ERR(TAG, "unexpected pubKeyAuth buffer size:%d", (int) nla->pubKeyAuth.cbBuffer);
+		WLog_ERR(TAG, "unexpected pubKeyAuth buffer size: %d", (int) nla->pubKeyAuth.cbBuffer);
 		return SEC_E_INVALID_TOKEN;
 	}
 
