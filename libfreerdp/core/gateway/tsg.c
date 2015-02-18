@@ -1867,12 +1867,6 @@ void tsg_free(rdpTsg* tsg)
 {
 	if (tsg)
 	{
-		if (tsg->bio)
-		{
-			BIO_free(tsg->bio);
-			tsg->bio = NULL;
-		}
-
 		if (tsg->rpc)
 		{
 			rpc_free(tsg->rpc);

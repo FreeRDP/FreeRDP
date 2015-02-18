@@ -753,24 +753,21 @@ BOOL transport_disconnect(rdpTransport* transport)
 
 	transport_stop(transport);
 
-	if (transport->tsg)
+	if (transport->tls)
 	{
-		if (transport->tls)
-		{
-			tls_free(transport->tls);
-			transport->tls = NULL;
-		}
-
-		tsg_free(transport->tsg);
-		transport->tsg = NULL;
+		tls_free(transport->tls);
+		transport->tls = NULL;
 	}
 	else
 	{
-		if (transport->tls)
-		{
-			tls_free(transport->tls);
-			transport->tls = NULL;
-		}
+		if (transport->frontBio)
+			BIO_free(transport->frontBio);
+	}
+
+	if (transport->tsg)
+	{
+		tsg_free(transport->tsg);
+		transport->tsg = NULL;
 	}
 
 	transport->frontBio = NULL;

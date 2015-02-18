@@ -478,7 +478,6 @@ BIO_METHOD* BIO_s_simple_socket(void)
 
 struct _WINPR_BIO_BUFFERED_SOCKET
 {
-	BIO* socketBio;
 	BIO* bufferedBio;
 	BOOL readBlocked;
 	BOOL writeBlocked;
@@ -657,10 +656,10 @@ static int transport_bio_buffered_free(BIO* bio)
 {
 	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*) bio->ptr;
 
-	if (ptr->socketBio)
+	if (bio->next_bio)
 	{
-		BIO_free(ptr->socketBio);
-		ptr->socketBio = NULL;
+		BIO_free(bio->next_bio);
+		bio->next_bio = NULL;
 	}
 
 	ringbuffer_destroy(&ptr->xmitBuffer);

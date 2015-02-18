@@ -76,6 +76,7 @@ struct rdp_tls
 	rdpSettings* settings;
 	SecPkgContext_Bindings* Bindings;
 	rdpCertificateStore* certificate_store;
+	BIO* underlying;
 	char* hostname;
 	int port;
 	int alertLevel;

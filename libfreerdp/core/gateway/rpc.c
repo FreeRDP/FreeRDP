@@ -512,12 +512,6 @@ void rpc_in_channel_free(RpcInChannel* inChannel)
 		inChannel->tls = NULL;
 	}
 
-	if (inChannel->bio)
-	{
-		BIO_free(inChannel->bio);
-		inChannel->bio = NULL;
-	}
-
 	free(inChannel);
 }
 
@@ -661,12 +655,6 @@ void rpc_out_channel_free(RpcOutChannel* outChannel)
 	{
 		tls_free(outChannel->tls);
 		outChannel->tls = NULL;
-	}
-
-	if (outChannel->bio)
-	{
-		BIO_free(outChannel->bio);
-		outChannel->bio = NULL;
 	}
 
 	free(outChannel);

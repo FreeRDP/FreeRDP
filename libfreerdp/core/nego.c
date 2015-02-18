@@ -864,11 +864,11 @@ void nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 	switch (failureCode)
 	{
 		case SSL_REQUIRED_BY_SERVER:
-			WLog_ERR(TAG, "Error: SSL_REQUIRED_BY_SERVER");
+			WLog_WARN(TAG, "Error: SSL_REQUIRED_BY_SERVER");
 			break;
 
 		case SSL_NOT_ALLOWED_BY_SERVER:
-			WLog_ERR(TAG, "Error: SSL_NOT_ALLOWED_BY_SERVER");
+			WLog_WARN(TAG, "Error: SSL_NOT_ALLOWED_BY_SERVER");
 			nego->sendNegoData = TRUE;
 			break;
 
@@ -882,7 +882,7 @@ void nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 			break;
 
 		case HYBRID_REQUIRED_BY_SERVER:
-			WLog_ERR(TAG, "Error: HYBRID_REQUIRED_BY_SERVER");
+			WLog_WARN(TAG, "Error: HYBRID_REQUIRED_BY_SERVER");
 			break;
 
 		default:
