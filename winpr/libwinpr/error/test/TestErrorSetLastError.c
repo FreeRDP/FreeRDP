@@ -19,6 +19,7 @@
  */
 
 #include <winpr/crt.h>
+#include <winpr/wlog.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/interlocked.h>
