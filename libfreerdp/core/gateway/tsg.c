@@ -1609,9 +1609,9 @@ int tsg_check_event_handles(rdpTsg* tsg)
 	return status;
 }
 
-DWORD tsg_get_event_handles(rdpTsg* tsg, HANDLE* events)
+UINT32 tsg_get_event_handles(rdpTsg* tsg, HANDLE* events)
 {
-	DWORD nCount = 0;
+	UINT32 nCount = 0;
 	rdpRpc* rpc = tsg->rpc;
 	RpcVirtualConnection* connection = rpc->VirtualConnection;
 
