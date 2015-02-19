@@ -34,6 +34,11 @@
 
 #include "wlog/Layout.h"
 
+#if defined __linux__ && !defined ANDROID
+#include <unistd.h>
+#include <sys/syscall.h>
+#endif
+
 extern const char* WLOG_LEVELS[7];
 
 /**
@@ -126,28 +131,38 @@ void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 				{
 					args[argc++] = (void*) (size_t) message->LineNumber;
 					format[index++] = '%';
-					format[index++] = 'd';
+					format[index++] = 'u';
 					p++;
 				}
 				else if ((p[0] == 'p') && (p[1] == 'i') && (p[2] == 'd')) /* process id */
 				{
 					args[argc++] = (void*) (size_t) GetCurrentProcessId();
 					format[index++] = '%';
-					format[index++] = 'd';
+					format[index++] = 'u';
 					p += 2;
 				}
 				else if ((p[0] == 't') && (p[1] == 'i') && (p[2] == 'd')) /* thread id */
 				{
+#if defined __linux__ && !defined ANDROID
+					/* On Linux we prefer to see the LWP id */
+					args[argc++] = (void*) (size_t) syscall(SYS_gettid);;
+					format[index++] = '%';
+					format[index++] = 'l';
+					format[index++] = 'd';
+#else
 					args[argc++] = (void*) (size_t) GetCurrentThreadId();
 					format[index++] = '%';
-					format[index++] = 'd';
+					format[index++] = '0';
+					format[index++] = '8';
+					format[index++] = 'x';
+#endif
 					p += 2;
 				}
 				else if ((p[0] == 'y') && (p[1] == 'r')) /* year */
 				{
 					args[argc++] = (void*) (size_t) localTime.wYear;
 					format[index++] = '%';
-					format[index++] = 'd';
+					format[index++] = 'u';
 					p++;
 				}
 				else if ((p[0] == 'm') && (p[1] == 'o')) /* month */
@@ -156,7 +171,7 @@ void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 					format[index++] = '%';
 					format[index++] = '0';
 					format[index++] = '2';
-					format[index++] = 'd';
+					format[index++] = 'u';
 					p++;
 				}
 				else if ((p[0] == 'd') && (p[1] == 'w')) /* day of week */
@@ -165,7 +180,7 @@ void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 					format[index++] = '%';
 					format[index++] = '0';
 					format[index++] = '2';
-					format[index++] = 'd';
+					format[index++] = 'u';
 					p++;
 				}
 				else if ((p[0] == 'd') && (p[1] == 'y')) /* day */
@@ -174,7 +189,7 @@ void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 					format[index++] = '%';
 					format[index++] = '0';
 					format[index++] = '2';
-					format[index++] = 'd';
+					format[index++] = 'u';
 					p++;
 				}
 				else if ((p[0] == 'h') && (p[1] == 'r')) /* hours */
@@ -183,7 +198,7 @@ void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 					format[index++] = '%';
 					format[index++] = '0';
 					format[index++] = '2';
-					format[index++] = 'd';
+					format[index++] = 'u';
 					p++;
 				}
 				else if ((p[0] == 'm') && (p[1] == 'i')) /* minutes */
@@ -192,7 +207,7 @@ void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 					format[index++] = '%';
 					format[index++] = '0';
 					format[index++] = '2';
-					format[index++] = 'd';
+					format[index++] = 'u';
 					p++;
 				}
 				else if ((p[0] == 's') && (p[1] == 'e')) /* seconds */
@@ -201,7 +216,7 @@ void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 					format[index++] = '%';
 					format[index++] = '0';
 					format[index++] = '2';
-					format[index++] = 'd';
+					format[index++] = 'u';
 					p++;
 				}
 				else if ((p[0] == 'm') && (p[1] == 'l')) /* milliseconds */
@@ -210,7 +225,7 @@ void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 					format[index++] = '%';
 					format[index++] = '0';
 					format[index++] = '3';
-					format[index++] = 'd';
+					format[index++] = 'u';
 					p++;
 				}
 			}
