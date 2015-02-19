@@ -779,7 +779,8 @@ RpcInChannel* rpc_client_in_channel_new(rdpRpc* rpc);
 void rpc_in_channel_free(RpcInChannel* inChannel);
 
 RpcOutChannel* rpc_out_channel_new(rdpRpc* rpc);
-void rpc_client_out_channel_free(RpcOutChannel* outChannel);
+int rpc_out_channel_replacement_connect(RpcOutChannel* outChannel, int timeout);
+void rpc_out_channel_free(RpcOutChannel* outChannel);
 
 int rpc_in_channel_transition_to_state(RpcInChannel* inChannel, CLIENT_IN_CHANNEL_STATE state);
 int rpc_out_channel_transition_to_state(RpcOutChannel* outChannel, CLIENT_OUT_CHANNEL_STATE state);

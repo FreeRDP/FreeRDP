@@ -805,7 +805,7 @@ int rts_send_OUT_R2_A7_pdu(rdpRpc* rpc)
 	BYTE* buffer;
 	rpcconn_rts_hdr_t header;
 	BYTE* SuccessorChannelCookie;
-	RpcOutChannel* outChannel = rpc->VirtualConnection->DefaultOutChannel;
+	RpcInChannel* inChannel = rpc->VirtualConnection->DefaultInChannel;
 	RpcOutChannel* nextOutChannel = rpc->VirtualConnection->NonDefaultOutChannel;
 
 	rts_pdu_header_init(&header);
@@ -827,7 +827,7 @@ int rts_send_OUT_R2_A7_pdu(rdpRpc* rpc)
 	rts_cookie_command_write(&buffer[28], SuccessorChannelCookie); /* SuccessorChannelCookie (20 bytes) */
 	rts_version_command_write(&buffer[48]); /* Version (8 bytes) */
 
-	status = rpc_out_channel_write(outChannel, buffer, header.frag_length);
+	status = rpc_in_channel_write(inChannel, buffer, header.frag_length);
 
 	free(buffer);
 
@@ -839,7 +839,7 @@ int rts_send_OUT_R2_C1_pdu(rdpRpc* rpc)
 	int status;
 	BYTE* buffer;
 	rpcconn_rts_hdr_t header;
-	RpcOutChannel* outChannel = rpc->VirtualConnection->DefaultOutChannel;
+	RpcOutChannel* nextOutChannel = rpc->VirtualConnection->NonDefaultOutChannel;
 
 	rts_pdu_header_init(&header);
 	header.frag_length = 24;
@@ -856,7 +856,7 @@ int rts_send_OUT_R2_C1_pdu(rdpRpc* rpc)
 	CopyMemory(buffer, ((BYTE*) &header), 20); /* RTS Header (20 bytes) */
 	rts_empty_command_write(&buffer[20]); /* Empty command (4 bytes) */
 
-	status = rpc_out_channel_write(outChannel, buffer, header.frag_length);
+	status = rpc_out_channel_write(nextOutChannel, buffer, header.frag_length);
 
 	free(buffer);
 
@@ -900,7 +900,7 @@ int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
 	rts_cookie_command_write(&buffer[68], SuccessorChannelCookie); /* SuccessorChannelCookie (20 bytes) */
 	rts_receive_window_size_command_write(&buffer[88], ReceiveWindowSize); /* ReceiveWindowSize (8 bytes) */
 
-	status = rpc_out_channel_write(outChannel, buffer, header.frag_length);
+	status = rpc_out_channel_write(nextOutChannel, buffer, header.frag_length);
 
 	free(buffer);
 
@@ -921,6 +921,12 @@ int rts_recv_OUT_R1_A2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	WLog_ERR(TAG, "TS Gateway channel recycling is incomplete");
 
 	connection->NonDefaultOutChannel = rpc_out_channel_new(rpc);
+	rpc_out_channel_replacement_connect(connection->NonDefaultOutChannel, 5000);//TODO: check for timeout value.
+
+	rts_send_OUT_R1_A3_pdu(rpc);
+
+	rpc_out_channel_transition_to_state(connection->NonDefaultOutChannel, CLIENT_OUT_CHANNEL_STATE_OPENED_A6W);
+	rpc_out_channel_transition_to_state(connection->DefaultOutChannel, CLIENT_OUT_CHANNEL_STATE_OPENED_A6W);
 
 	return 1;
 }
@@ -928,19 +934,28 @@ int rts_recv_OUT_R1_A2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 int rts_recv_OUT_R2_A6_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
 	int status;
-	UINT32 offset;
-	UINT32 Destination = 0;
+	rpcconn_rts_hdr_t* header = (rpcconn_rts_hdr_t*)buffer;
 
-	offset = 24;
-	offset += rts_destination_command_read(rpc, &buffer[offset], length - offset, &Destination) + 4;
-	offset += rts_empty_command_read(rpc, &buffer[offset], length - offset) + 4;
-
-	WLog_DBG(TAG, "Destination: %d", Destination);
+	if (rpc->VirtualConnection->DefaultOutChannel->State != CLIENT_OUT_CHANNEL_STATE_OPENED_A6W)
+	{
+		/* Wrong state to receive this PDU. */
+		return -1;
+	}
 
 	status = rts_send_OUT_R2_C1_pdu(rpc);
-
 	if (status < 0)
+	{
 		return -1;
+	}
+
+	status = rts_send_OUT_R2_A7_pdu(rpc);
+	if (status < 0)
+	{
+		return -1;
+	}
+
+	rpc_out_channel_transition_to_state(rpc->VirtualConnection->NonDefaultOutChannel, CLIENT_OUT_CHANNEL_STATE_OPENED_B3W);
+	rpc_out_channel_transition_to_state(rpc->VirtualConnection->DefaultOutChannel, CLIENT_OUT_CHANNEL_STATE_OPENED_B3W);
 
 	return 1;
 }
@@ -948,9 +963,30 @@ int rts_recv_OUT_R2_A6_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 int rts_recv_OUT_R2_B3_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
 	UINT32 offset;
+	RpcOutChannel* temp;
+	HttpResponse* response;
+	int status;
 
-	offset = 24;
-	offset += rts_ance_command_read(rpc, &buffer[offset], length - offset) + 4;
+	if (rpc->VirtualConnection->DefaultOutChannel->State != CLIENT_OUT_CHANNEL_STATE_OPENED_B3W)
+	{
+		/* Wrong state to receive this PDU. */
+		return -1;
+	}
+
+
+	rpc_out_channel_free(rpc->VirtualConnection->DefaultOutChannel);
+	rpc->VirtualConnection->DefaultOutChannel = rpc->VirtualConnection->NonDefaultOutChannel;
+	rpc->VirtualConnection->NonDefaultOutChannel = NULL;
+
+	rpc_out_channel_transition_to_state(rpc->VirtualConnection->DefaultOutChannel, CLIENT_OUT_CHANNEL_STATE_OPENED);
+
+	response = http_response_recv(rpc->VirtualConnection->DefaultOutChannel->tls);
+
+	if (!response)
+		return -1;
+
+	status = rpc_ncacn_http_recv_out_channel_response(rpc, rpc->VirtualConnection->DefaultOutChannel, response);
+	http_response_free(response);
 
 	return 1;
 }
@@ -983,6 +1019,14 @@ int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 		case RTS_PDU_OUT_R1_A2:
 			status = rts_recv_OUT_R1_A2_pdu(rpc, buffer, length);
+			break;
+
+		case RTS_PDU_OUT_R2_A6:
+			status = rts_recv_OUT_R2_A6_pdu(rpc, buffer, length);
+			break;
+
+		case RTS_PDU_OUT_R2_B3:
+			status = rts_recv_OUT_R2_B3_pdu(rpc, buffer, length);
 			break;
 
 		default:

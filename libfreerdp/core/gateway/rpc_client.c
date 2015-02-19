@@ -604,6 +604,9 @@ int rpc_client_out_channel_recv(rdpRpc* rpc)
 
 				status = rpc_client_recv_fragment(rpc, fragment);
 
+				/* In case the channel recycling completed, reinitialise the local outChannel pointer. */
+				outChannel = rpc->VirtualConnection->DefaultOutChannel;
+
 				if (status < 0)
 					return status;
 
