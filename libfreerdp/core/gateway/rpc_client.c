@@ -413,7 +413,6 @@ int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 			if (rpc->VirtualConnection->State < VIRTUAL_CONNECTION_STATE_OPENED)
 				WLog_ERR(TAG, "warning: unhandled RTS PDU");
 
-			WLog_DBG(TAG, "Receiving Out-of-Sequence RTS PDU");
 			rts_recv_out_of_sequence_pdu(rpc, buffer, header->common.frag_length);
 		}
 
@@ -452,9 +451,10 @@ int rpc_client_out_channel_recv(rdpRpc* rpc)
 	HttpResponse* response;
 	RpcInChannel* inChannel;
 	RpcOutChannel* outChannel;
+	RpcVirtualConnection* connection = rpc->VirtualConnection;
 
-	inChannel = rpc->VirtualConnection->DefaultInChannel;
-	outChannel = rpc->VirtualConnection->DefaultOutChannel;
+	inChannel = connection->DefaultInChannel;
+	outChannel = connection->DefaultOutChannel;
 
 	if (outChannel->State < CLIENT_OUT_CHANNEL_STATE_OPENED)
 	{
@@ -500,7 +500,7 @@ int rpc_client_out_channel_recv(rdpRpc* rpc)
 			if (inChannel->State == CLIENT_IN_CHANNEL_STATE_OPENED)
 			{
 				rpc_virtual_connection_transition_to_state(rpc,
-					rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT);
+					connection, VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT);
 			}
 
 			status = 1;
@@ -508,7 +508,7 @@ int rpc_client_out_channel_recv(rdpRpc* rpc)
 
 		http_response_free(response);
 	}
-	else if (rpc->VirtualConnection->State == VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT)
+	else if (connection->State == VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT)
 	{
 		/* Receive OUT channel response */
 
@@ -604,6 +604,10 @@ int rpc_client_out_channel_recv(rdpRpc* rpc)
 
 				status = rpc_client_recv_fragment(rpc, fragment);
 
+				/* channel recycling may update channel pointers */
+				inChannel = connection->DefaultInChannel;
+				outChannel = connection->DefaultOutChannel;
+
 				if (status < 0)
 					return status;
 
@@ -622,9 +626,10 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 	RpcInChannel* inChannel;
 	RpcOutChannel* outChannel;
 	HANDLE InChannelEvent = NULL;
+	RpcVirtualConnection* connection = rpc->VirtualConnection;
 
-	inChannel = rpc->VirtualConnection->DefaultInChannel;
-	outChannel = rpc->VirtualConnection->DefaultOutChannel;
+	inChannel = connection->DefaultInChannel;
+	outChannel = connection->DefaultOutChannel;
 
 	BIO_get_event(inChannel->tls->bio, &InChannelEvent);
 
@@ -673,7 +678,7 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 			if (outChannel->State == CLIENT_OUT_CHANNEL_STATE_OPENED)
 			{
 				rpc_virtual_connection_transition_to_state(rpc,
-					rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT);
+					connection, VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT);
 			}
 
 			status = 1;
