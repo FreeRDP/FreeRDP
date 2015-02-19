@@ -443,7 +443,7 @@ int rts_send_CONN_A1_pdu(rdpRpc* rpc)
 	header.Flags = RTS_FLAG_NONE;
 	header.NumberOfCommands = 4;
 
-	WLog_DBG(TAG, "Sending CONN_A1 RTS PDU");
+	WLog_DBG(TAG, "Sending CONN/A1 RTS PDU");
 
 	VirtualConnectionCookie = (BYTE*) &(connection->Cookie);
 	OUTChannelCookie = (BYTE*) &(outChannel->Cookie);
@@ -473,7 +473,7 @@ int rts_recv_CONN_A3_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 	rts_connection_timeout_command_read(rpc, &buffer[24], length - 24, &ConnectionTimeout);
 
-	WLog_DBG(TAG, "ConnectionTimeout: %d", ConnectionTimeout);
+	WLog_DBG(TAG, "Receiving CONN/A3 RTS PDU: ConnectionTimeout: %d", ConnectionTimeout);
 
 	rpc->VirtualConnection->DefaultInChannel->PingOriginator.ConnectionTimeout = ConnectionTimeout;
 
@@ -499,7 +499,7 @@ int rts_send_CONN_B1_pdu(rdpRpc* rpc)
 	header.Flags = RTS_FLAG_NONE;
 	header.NumberOfCommands = 6;
 
-	WLog_DBG(TAG, "Sending CONN_B1 RTS PDU");
+	WLog_DBG(TAG, "Sending CONN/B1 RTS PDU");
 
 	VirtualConnectionCookie = (BYTE*) &(connection->Cookie);
 	INChannelCookie = (BYTE*) &(inChannel->Cookie);
@@ -540,8 +540,8 @@ int rts_recv_CONN_C2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	offset += rts_receive_window_size_command_read(rpc, &buffer[offset], length - offset, &ReceiveWindowSize) + 4;
 	offset += rts_connection_timeout_command_read(rpc, &buffer[offset], length - offset, &ConnectionTimeout) + 4;
 
-	WLog_DBG(TAG, "ConnectionTimeout: %d", ConnectionTimeout);
-	WLog_DBG(TAG, "ReceiveWindowSize: %d", ReceiveWindowSize);
+	WLog_DBG(TAG, "Receiving CONN/C2 RTS PDU: ConnectionTimeout: %d ReceiveWindowSize: %d",
+			ConnectionTimeout, ReceiveWindowSize);
 
 	rpc->VirtualConnection->DefaultInChannel->PingOriginator.ConnectionTimeout = ConnectionTimeout;
 	rpc->VirtualConnection->DefaultInChannel->PeerReceiveWindow = ReceiveWindowSize;
@@ -640,11 +640,8 @@ int rts_recv_flow_control_ack_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	offset += rts_flow_control_ack_command_read(rpc, &buffer[offset], length - offset,
 			&BytesReceived, &AvailableWindow, (BYTE*) &ChannelCookie) + 4;
 
-#if 0
-	WLog_ERR(TAG, "BytesReceived: %d AvailableWindow: %d",
-			 BytesReceived, AvailableWindow);
-	WLog_ERR(TAG, "ChannelCookie: " RPC_UUID_FORMAT_STRING "", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
-#endif
+	WLog_ERR(TAG, "Receiving FlowControlAck RTS PDU: BytesReceived: %d AvailableWindow: %d",
+			BytesReceived, AvailableWindow);
 
 	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow =
 		AvailableWindow - (rpc->VirtualConnection->DefaultInChannel->BytesSent - BytesReceived);
@@ -681,11 +678,8 @@ int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, BYTE* buffer, UI
 	offset += rts_flow_control_ack_command_read(rpc, &buffer[offset], length - offset,
 			&BytesReceived, &AvailableWindow, (BYTE*) &ChannelCookie) + 4;
 
-#if 0
-	WLog_ERR(TAG, "Destination: %d BytesReceived: %d AvailableWindow: %d",
-			 Destination, BytesReceived, AvailableWindow);
-	WLog_ERR(TAG, "ChannelCookie: " RPC_UUID_FORMAT_STRING "", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
-#endif
+	WLog_ERR(TAG, "Receiving FlowControlAckWithDestination RTS PDU: BytesReceived: %d AvailableWindow: %d",
+			BytesReceived, AvailableWindow);
 
 	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow =
 		AvailableWindow - (rpc->VirtualConnection->DefaultInChannel->BytesSent - BytesReceived);
@@ -813,7 +807,7 @@ int rts_send_OUT_R2_A7_pdu(rdpRpc* rpc)
 	header.Flags = RTS_FLAG_OUT_CHANNEL;
 	header.NumberOfCommands = 3;
 
-	WLog_DBG(TAG, "Sending OUT R2/A7 RTS PDU");
+	WLog_DBG(TAG, "Sending OUT_R2/A7 RTS PDU");
 
 	SuccessorChannelCookie = (BYTE*) &(nextOutChannel->Cookie);
 
@@ -846,7 +840,7 @@ int rts_send_OUT_R2_C1_pdu(rdpRpc* rpc)
 	header.Flags = RTS_FLAG_PING;
 	header.NumberOfCommands = 1;
 
-	WLog_DBG(TAG, "Sending OUT R2/C1 RTS PDU");
+	WLog_DBG(TAG, "Sending OUT_R2/C1 RTS PDU");
 
 	buffer = (BYTE*) malloc(header.frag_length);
 
@@ -881,7 +875,7 @@ int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
 	header.Flags = RTS_FLAG_RECYCLE_CHANNEL;
 	header.NumberOfCommands = 5;
 
-	WLog_DBG(TAG, "Sending OUT R1/A3 RTS PDU");
+	WLog_DBG(TAG, "Sending OUT_R1/A3 RTS PDU");
 
 	VirtualConnectionCookie = (BYTE*) &(connection->Cookie);
 	PredecessorChannelCookie = (BYTE*) &(outChannel->Cookie);
@@ -909,21 +903,36 @@ int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
 
 int rts_recv_OUT_R1_A2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
+	int status;
 	UINT32 offset;
 	UINT32 Destination = 0;
 	RpcVirtualConnection* connection = rpc->VirtualConnection;
 
+	WLog_DBG(TAG, "Receiving OUT R1/A2 RTS PDU");
+
 	offset = 24;
 	offset += rts_destination_command_read(rpc, &buffer[offset], length - offset, &Destination) + 4;
 
-	WLog_DBG(TAG, "Destination: %d", Destination);
-
-	WLog_ERR(TAG, "TS Gateway channel recycling is incomplete");
-
 	connection->NonDefaultOutChannel = rpc_out_channel_new(rpc);
-	rpc_out_channel_replacement_connect(connection->NonDefaultOutChannel, 5000);//TODO: check for timeout value.
 
-	rts_send_OUT_R1_A3_pdu(rpc);
+	if (!connection->NonDefaultOutChannel)
+		return -1;
+
+	status = rpc_out_channel_replacement_connect(connection->NonDefaultOutChannel, 5000);
+
+	if (status < 0)
+	{
+		WLog_ERR(TAG, "rpc_out_channel_replacement_connect failure");
+		return -1;
+	}
+
+	status = rts_send_OUT_R1_A3_pdu(rpc);
+
+	if (status < 0)
+	{
+		WLog_ERR(TAG, "rts_send_OUT_R1/A3_pdu failure");
+		return -1;
+	}
 
 	rpc_out_channel_transition_to_state(connection->NonDefaultOutChannel, CLIENT_OUT_CHANNEL_STATE_OPENED_A6W);
 	rpc_out_channel_transition_to_state(connection->DefaultOutChannel, CLIENT_OUT_CHANNEL_STATE_OPENED_A6W);
@@ -934,58 +943,65 @@ int rts_recv_OUT_R1_A2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 int rts_recv_OUT_R2_A6_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
 	int status;
-	rpcconn_rts_hdr_t* header = (rpcconn_rts_hdr_t*)buffer;
+	RpcVirtualConnection* connection = rpc->VirtualConnection;
 
-	if (rpc->VirtualConnection->DefaultOutChannel->State != CLIENT_OUT_CHANNEL_STATE_OPENED_A6W)
+	WLog_DBG(TAG, "Receiving OUT R2/A6 RTS PDU");
+
+	if (connection->DefaultOutChannel->State != CLIENT_OUT_CHANNEL_STATE_OPENED_A6W)
 	{
-		/* Wrong state to receive this PDU. */
+		WLog_ERR(TAG, "unexpected OUT_R2/A6 pdu");
 		return -1;
 	}
 
 	status = rts_send_OUT_R2_C1_pdu(rpc);
+
 	if (status < 0)
 	{
+		WLog_ERR(TAG, "rts_send_OUT_R2_C1_pdu failure");
 		return -1;
 	}
 
 	status = rts_send_OUT_R2_A7_pdu(rpc);
+
 	if (status < 0)
 	{
+		WLog_ERR(TAG, "rts_send_OUT_R2_A7_pdu failure");
 		return -1;
 	}
 
-	rpc_out_channel_transition_to_state(rpc->VirtualConnection->NonDefaultOutChannel, CLIENT_OUT_CHANNEL_STATE_OPENED_B3W);
-	rpc_out_channel_transition_to_state(rpc->VirtualConnection->DefaultOutChannel, CLIENT_OUT_CHANNEL_STATE_OPENED_B3W);
+	rpc_out_channel_transition_to_state(connection->NonDefaultOutChannel, CLIENT_OUT_CHANNEL_STATE_OPENED_B3W);
+	rpc_out_channel_transition_to_state(connection->DefaultOutChannel, CLIENT_OUT_CHANNEL_STATE_OPENED_B3W);
 
 	return 1;
 }
 
 int rts_recv_OUT_R2_B3_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
-	UINT32 offset;
-	RpcOutChannel* temp;
-	HttpResponse* response;
 	int status;
+	HttpResponse* response;
+	RpcVirtualConnection* connection = rpc->VirtualConnection;
 
-	if (rpc->VirtualConnection->DefaultOutChannel->State != CLIENT_OUT_CHANNEL_STATE_OPENED_B3W)
+	WLog_DBG(TAG, "Receiving OUT R2/B3 RTS PDU");
+
+	if (connection->DefaultOutChannel->State != CLIENT_OUT_CHANNEL_STATE_OPENED_B3W)
 	{
-		/* Wrong state to receive this PDU. */
+		WLog_ERR(TAG, "unexpected OUT_R2/B3 pdu");
 		return -1;
 	}
 
+	rpc_out_channel_free(connection->DefaultOutChannel);
+	connection->DefaultOutChannel = connection->NonDefaultOutChannel;
+	connection->NonDefaultOutChannel = NULL;
 
-	rpc_out_channel_free(rpc->VirtualConnection->DefaultOutChannel);
-	rpc->VirtualConnection->DefaultOutChannel = rpc->VirtualConnection->NonDefaultOutChannel;
-	rpc->VirtualConnection->NonDefaultOutChannel = NULL;
+	rpc_out_channel_transition_to_state(connection->DefaultOutChannel, CLIENT_OUT_CHANNEL_STATE_OPENED);
 
-	rpc_out_channel_transition_to_state(rpc->VirtualConnection->DefaultOutChannel, CLIENT_OUT_CHANNEL_STATE_OPENED);
-
-	response = http_response_recv(rpc->VirtualConnection->DefaultOutChannel->tls);
+	response = http_response_recv(connection->DefaultOutChannel->tls);
 
 	if (!response)
 		return -1;
 
-	status = rpc_ncacn_http_recv_out_channel_response(rpc, rpc->VirtualConnection->DefaultOutChannel, response);
+	status = rpc_ncacn_http_recv_out_channel_response(rpc, connection->DefaultOutChannel, response);
+
 	http_response_free(response);
 
 	return 1;
