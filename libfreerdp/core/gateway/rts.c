@@ -947,12 +947,6 @@ int rts_recv_OUT_R2_A6_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 	WLog_DBG(TAG, "Receiving OUT R2/A6 RTS PDU");
 
-	if (connection->DefaultOutChannel->State != CLIENT_OUT_CHANNEL_STATE_OPENED_A6W)
-	{
-		WLog_ERR(TAG, "unexpected OUT_R2/A6 pdu");
-		return -1;
-	}
-
 	status = rts_send_OUT_R2_C1_pdu(rpc);
 
 	if (status < 0)
@@ -983,12 +977,6 @@ int rts_recv_OUT_R2_B3_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 	WLog_DBG(TAG, "Receiving OUT R2/B3 RTS PDU");
 
-	if (connection->DefaultOutChannel->State != CLIENT_OUT_CHANNEL_STATE_OPENED_B3W)
-	{
-		WLog_ERR(TAG, "unexpected OUT_R2/B3 pdu");
-		return -1;
-	}
-
 	rpc_out_channel_free(connection->DefaultOutChannel);
 	connection->DefaultOutChannel = connection->NonDefaultOutChannel;
 	connection->NonDefaultOutChannel = NULL;
@@ -1013,42 +1001,54 @@ int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	UINT32 SignatureId;
 	rpcconn_rts_hdr_t* rts;
 	RtsPduSignature signature;
+	RpcVirtualConnection* connection = rpc->VirtualConnection;
 
 	rts = (rpcconn_rts_hdr_t*) buffer;
 
 	rts_extract_pdu_signature(rpc, &signature, rts);
 	SignatureId = rts_identify_pdu_signature(rpc, &signature, NULL);
 
-	switch (SignatureId)
+	if (rts_match_pdu_signature(rpc, &RTS_PDU_FLOW_CONTROL_ACK_SIGNATURE, rts))
 	{
-		case RTS_PDU_FLOW_CONTROL_ACK:
-			status = rts_recv_flow_control_ack_pdu(rpc, buffer, length);
-			break;
+		status = rts_recv_flow_control_ack_pdu(rpc, buffer, length);
+	}
+	else if (rts_match_pdu_signature(rpc, &RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION_SIGNATURE, rts))
+	{
+		status = rts_recv_flow_control_ack_with_destination_pdu(rpc, buffer, length);
+	}
+	else if (rts_match_pdu_signature(rpc, &RTS_PDU_PING_SIGNATURE, rts))
+	{
+		status = rts_send_ping_pdu(rpc);
+	}
+	else
+	{
+		if (connection->DefaultOutChannel->State == CLIENT_OUT_CHANNEL_STATE_OPENED)
+		{
+			if (rts_match_pdu_signature(rpc, &RTS_PDU_OUT_R1_A2_SIGNATURE, rts))
+			{
+				status = rts_recv_OUT_R1_A2_pdu(rpc, buffer, length);
+			}
+		}
+		else if (connection->DefaultOutChannel->State == CLIENT_OUT_CHANNEL_STATE_OPENED_A6W)
+		{
+			if (rts_match_pdu_signature(rpc, &RTS_PDU_OUT_R2_A6_SIGNATURE, rts))
+			{
+				status = rts_recv_OUT_R2_A6_pdu(rpc, buffer, length);
+			}
+		}
+		else if (connection->DefaultOutChannel->State == CLIENT_OUT_CHANNEL_STATE_OPENED_B3W)
+		{
+			if (rts_match_pdu_signature(rpc, &RTS_PDU_OUT_R2_B3_SIGNATURE, rts))
+			{
+				status = rts_recv_OUT_R2_B3_pdu(rpc, buffer, length);
+			}
+		}
+	}
 
-		case RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION:
-			status = rts_recv_flow_control_ack_with_destination_pdu(rpc, buffer, length);
-			break;
-
-		case RTS_PDU_PING:
-			status = rts_send_ping_pdu(rpc);
-			break;
-
-		case RTS_PDU_OUT_R1_A2:
-			status = rts_recv_OUT_R1_A2_pdu(rpc, buffer, length);
-			break;
-
-		case RTS_PDU_OUT_R2_A6:
-			status = rts_recv_OUT_R2_A6_pdu(rpc, buffer, length);
-			break;
-
-		case RTS_PDU_OUT_R2_B3:
-			status = rts_recv_OUT_R2_B3_pdu(rpc, buffer, length);
-			break;
-
-		default:
-			WLog_ERR(TAG, "unimplemented signature id: 0x%08X", SignatureId);
-			rts_print_pdu_signature(rpc, &signature);
-			break;
+	if (status < 0)
+	{
+		WLog_ERR(TAG, "error parsing RTS PDU with signature id: 0x%08X", SignatureId);
+		rts_print_pdu_signature(rpc, &signature);
 	}
 
 	return status;
