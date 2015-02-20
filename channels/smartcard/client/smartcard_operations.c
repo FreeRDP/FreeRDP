@@ -913,8 +913,10 @@ static UINT32 smartcard_Transmit_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPE
 	}
 
 	ret.pioRecvPci = call->pioRecvPci;
+
 	status = ret.ReturnCode = SCardTransmit(operation->hCard, call->pioSendPci, call->pbSendBuffer,
 				call->cbSendLength, ret.pioRecvPci, ret.pbRecvBuffer, &(ret.cbRecvLength));
+
 	smartcard_trace_transmit_return(smartcard, &ret);
 	status = smartcard_pack_transmit_return(smartcard, irp->output, &ret);
 
