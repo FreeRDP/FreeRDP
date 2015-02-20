@@ -1065,6 +1065,17 @@ BOOL freerdp_tcp_set_keep_alive_mode(int sockfd)
 		WLog_WARN(TAG, "setsockopt() SOL_SOCKET, SO_NOSIGPIPE");
 	}
 #endif
+
+#ifdef TCP_USER_TIMEOUT
+	optval = 4000;
+	optlen = sizeof(optval);
+
+	if (setsockopt(sockfd, SOL_TCP, TCP_USER_TIMEOUT, (void*) &optval, optlen) < 0)
+	{
+		WLog_WARN(TAG, "setsockopt() SOL_TCP, TCP_USER_TIMEOUT");
+	}
+#endif
+
 	return TRUE;
 }
 
