@@ -422,6 +422,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 		return status;
 	}
 
+	position = Stream_GetPosition(s);
 	header = Stream_Buffer(s);
 
 	if (transport->NlaMode)
@@ -439,7 +440,8 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 			{
 				if ((header[1] & ~(0x80)) == 1)
 				{
-					if ((status = transport_read_layer_bytes(transport, s, 1)) != 1)
+					if (position < (2 + 1)
+							&& (status = transport_read_layer_bytes(transport, s, 2 + 1 - position)) != 1)
 						return status;
 
 					pduLength = header[2];
@@ -447,7 +449,8 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 				}
 				else if ((header[1] & ~(0x80)) == 2)
 				{
-					if ((status = transport_read_layer_bytes(transport, s, 2)) != 1)
+					if (position < (2 + 2)
+							&& (status = transport_read_layer_bytes(transport, s, 2 + 2 - position)) != 1)
 						return status;
 
 					pduLength = (header[2] << 8) | header[3];
@@ -471,7 +474,8 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 		if (header[0] == 0x03)
 		{
 			/* TPKT header */
-			if ((status = transport_read_layer_bytes(transport, s, 2)) != 1)
+			if (position < (2 + 2)
+					&& (status = transport_read_layer_bytes(transport, s, 2 + 2 - position)) != 1)
 				return status;
 
 			pduLength = (header[2] << 8) | header[3];
@@ -488,7 +492,8 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 			/* Fast-Path Header */
 			if (header[1] & 0x80)
 			{
-				if ((status = transport_read_layer_bytes(transport, s, 1)) != 1)
+				if (position < (2 + 1)
+						&& (status = transport_read_layer_bytes(transport, s, 2 + 1 - position)) != 1)
 					return status;
 
 				pduLength = ((header[1] & 0x7F) << 8) | header[2];
