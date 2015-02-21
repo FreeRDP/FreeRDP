@@ -298,6 +298,7 @@ int android_AudioOut(OPENSL_STREAM *p, const short *buffer,int size)
 
 	void *data = calloc(size, sizeof(short));
 	memcpy(data, buffer, size * sizeof(short));
+	Queue_Enqueue(p->queue, data);
  	(*p->bqPlayerBufferQueue)->Enqueue(p->bqPlayerBufferQueue, 
 	 	data, sizeof(short) * size);
   
