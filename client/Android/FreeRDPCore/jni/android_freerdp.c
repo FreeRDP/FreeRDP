@@ -132,8 +132,8 @@ void android_end_paint(rdpContext* context)
 	cinvalid = ctx->rdpCtx.gdi->primary->hdc->hwnd->cinvalid;
 
 	x1 = cinvalid[0].x;
-	y1 = cinvalid[0].x + cinvalid[0].y;
-	x2 = cinvalid[0].w;
+	y1 = cinvalid[0].y;
+	x2 = cinvalid[0].x + cinvalid[0].w;
 	y2 = cinvalid[0].y + cinvalid[0].h;
 
 	for (i = 0; i < ninvalid; i++)
