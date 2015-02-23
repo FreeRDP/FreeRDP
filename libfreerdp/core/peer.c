@@ -62,7 +62,7 @@ static HANDLE freerdp_peer_virtual_channel_open(freerdp_peer* client, const char
 		if (!mcsChannel->joined)
 			continue;
 
-		if (strncmp(name, mcsChannel->Name, length) == 0)
+		if (_strnicmp(name, mcsChannel->Name, length) == 0)
 		{
 			joined = TRUE;
 			break;
