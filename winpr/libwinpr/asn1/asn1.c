@@ -313,4 +313,15 @@ void ASN1_FreeDecoded(ASN1decoding_t pDecoderInfo, void* pDataStruct, ASN1uint32
 	return;
 }
 
+ASN1error_e ASN1_CreateDecoder(ASN1module_t pModule, ASN1decoding_t* ppDecoderInfo,
+        ASN1octet_t* pbBuf, ASN1uint32_t cbBufSize, ASN1decoding_t pParent)
+{
+        return ASN1_ERR_BADARGS;
+}
+
+ASN1error_e ASN1_Decode(ASN1decoding_t pDecoderInfo,void **ppDataStruct,ASN1uint32_t nPduNum,ASN1uint32_t dwFlags,ASN1octet_t *pbBuf,ASN1uint32_t cbBufSize)
+{
+    return ASN1_ERR_BADARGS;
+}
+
 #endif
