@@ -86,7 +86,7 @@ if (${GIT_REVISION} STREQUAL "n/a")
   git_rev_parse(GIT_REVISION --short)
 endif()
 if(ANDROID OR IOS)
-	SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY)
+    SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY)
 endif(ANDROID OR IOS)
 
 message(STATUS "Git Revision ${GIT_REVISION}")
@@ -219,6 +219,21 @@ if("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
 endif()
 
 if(MSVC)
+	# Remove previous warning definitions,
+	# NMake is otherwise complaining.
+	foreach (flags_var_to_scrub
+		CMAKE_C_FLAGS
+		CMAKE_CXX_FLAGS
+		CMAKE_CXX_FLAGS_RELEASE
+		CMAKE_CXX_FLAGS_RELWITHDEBINFO
+		CMAKE_CXX_FLAGS_MINSIZEREL
+		CMAKE_C_FLAGS_RELEASE
+		CMAKE_C_FLAGS_RELWITHDEBINFO
+		CMAKE_C_FLAGS_MINSIZEREL)
+		string (REGEX REPLACE "(^| )[/-]W[ ]*[1-9]" " "
+		"${flags_var_to_scrub}" "${${flags_var_to_scrub}}")
+	endforeach()
+
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Gd")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W3")
 
@@ -266,7 +281,7 @@ if(WIN32)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWINVER=0x0602 -DWIN32_WINNT=0x0602")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWINVER=0x0602 -DWIN32_WINNT=0x0602")
 	endif()
-	
+
 	if (FREERDP_EXTERNAL_SSL_PATH)
 		set(OPENSSL_ROOT_DIR ${FREERDP_EXTERNAL_SSL_PATH})
 	endif()
@@ -349,13 +364,13 @@ if(ANDROID)
 	endif()
 	set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -llog")
 
-    if (NOT FREERDP_EXTERNAL_JPEG_PATH)
+	if (NOT FREERDP_EXTERNAL_JPEG_PATH)
 		if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/external/jpeg8d")
-            set(FREERDP_EXTERNAL_JPEG_PATH "${CMAKE_CURRENT_SOURCE_DIR}/external/jpeg8d")
+			set(FREERDP_EXTERNAL_JPEG_PATH "${CMAKE_CURRENT_SOURCE_DIR}/external/jpeg8d")
 		else()
 			message(STATUS "FREERDP_EXTERNAL_SSL_PATH not set! - Needs to be set if openssl is not found in the android NDK (which usually isn't)")
 		endif()
-    endif()
+	endif()
 	if (NOT FREERDP_EXTERNAL_SSL_PATH)
 		if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/external/openssl")
 			set(FREERDP_EXTERNAL_SSL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/external/openssl")
@@ -616,11 +631,11 @@ endif()
 
 include(CTest)
 
-if(BUILD_TESTING)	
+if(BUILD_TESTING)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFREERDP_TEST_EXPORTS")
-	
+
 	enable_testing()
-	
+
 	if(MSVC)
 		set(TESTING_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 	else()
