@@ -111,20 +111,44 @@ void android_begin_paint(rdpContext* context)
 
 void android_end_paint(rdpContext* context)
 {
+	int i;
+	int ninvalid;
+	HGDI_RGN cinvalid;
+	int x1, y1, x2, y2;
 	androidContext *ctx = (androidContext*)context;
 	rdpSettings* settings = context->instance->settings;
 	
-	DEBUG_ANDROID("ui_update");
-
 	assert(ctx);
 	assert(settings);
 	assert(context->instance);
 
-	DEBUG_ANDROID("width=%d, height=%d, bpp=%d", settings->DesktopWidth,
-			settings->DesktopHeight, settings->ColorDepth);
+	ninvalid = ctx->rdpCtx.gdi->primary->hdc->hwnd->ninvalid;
+	if (ninvalid == 0)
+	{
+		DEBUG_ANDROID("ui_update: ninvalid=%d", ninvalid);
+		return;
+	}
+
+	cinvalid = ctx->rdpCtx.gdi->primary->hdc->hwnd->cinvalid;
+
+	x1 = cinvalid[0].x;
+	y1 = cinvalid[0].y;
+	x2 = cinvalid[0].x + cinvalid[0].w;
+	y2 = cinvalid[0].y + cinvalid[0].h;
+
+	for (i = 0; i < ninvalid; i++)
+	{
+		x1 = MIN(x1, cinvalid[i].x);
+		y1 = MIN(y1, cinvalid[i].y);
+		x2 = MAX(x2, cinvalid[i].x + cinvalid[i].w);
+		y2 = MAX(y2, cinvalid[i].y + cinvalid[i].h);
+	}
+
+	DEBUG_ANDROID("ui_update: ninvalid=%d x=%d, y=%d, width=%d, height=%d, bpp=%d",
+			ninvalid, x1, y1, x2 - x1, y2 - y1, settings->ColorDepth);
 	
 	freerdp_callback("OnGraphicsUpdate", "(IIIII)V", context->instance,
-		0, 0, settings->DesktopWidth, settings->DesktopHeight);
+		x1, y1, x2 - x1, y2 - y1);
 }
 
 void android_desktop_resize(rdpContext* context)
