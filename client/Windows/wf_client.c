@@ -631,7 +631,6 @@ void* wf_input_thread(void* arg)
 DWORD WINAPI wf_client_thread(LPVOID lpParam)
 {
 	MSG msg;
-	int index;
 	int width;
 	int height;
 	BOOL msg_ret;
@@ -741,8 +740,6 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 
 		if (quit_msg)
 			break;
-
-		Sleep(100);
 	}
 
 	/* cleanup */
