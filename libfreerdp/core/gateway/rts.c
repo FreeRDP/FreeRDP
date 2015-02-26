@@ -926,15 +926,6 @@ int rts_recv_OUT_R1_A2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 		return -1;
 	}
 
-	status = rts_send_OUT_R1_A3_pdu(rpc);
-
-	if (status < 0)
-	{
-		WLog_ERR(TAG, "rts_send_OUT_R1/A3_pdu failure");
-		return -1;
-	}
-
-	rpc_out_channel_transition_to_state(connection->NonDefaultOutChannel, CLIENT_OUT_CHANNEL_STATE_OPENED_A6W);
 	rpc_out_channel_transition_to_state(connection->DefaultOutChannel, CLIENT_OUT_CHANNEL_STATE_OPENED_A6W);
 
 	return 1;
@@ -971,26 +962,11 @@ int rts_recv_OUT_R2_A6_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 int rts_recv_OUT_R2_B3_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
-	int status;
-	HttpResponse* response;
 	RpcVirtualConnection* connection = rpc->VirtualConnection;
 
 	WLog_DBG(TAG, "Receiving OUT R2/B3 RTS PDU");
 
-	rpc_out_channel_free(connection->DefaultOutChannel);
-	connection->DefaultOutChannel = connection->NonDefaultOutChannel;
-	connection->NonDefaultOutChannel = NULL;
-
-	rpc_out_channel_transition_to_state(connection->DefaultOutChannel, CLIENT_OUT_CHANNEL_STATE_OPENED);
-
-	response = http_response_recv(connection->DefaultOutChannel->tls);
-
-	if (!response)
-		return -1;
-
-	status = rpc_ncacn_http_recv_out_channel_response(rpc, connection->DefaultOutChannel, response);
-
-	http_response_free(response);
+	rpc_out_channel_transition_to_state(connection->DefaultOutChannel, CLIENT_OUT_CHANNEL_STATE_RECYCLED);
 
 	return 1;
 }

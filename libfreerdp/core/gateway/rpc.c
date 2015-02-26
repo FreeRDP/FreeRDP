@@ -890,34 +890,6 @@ int rpc_out_channel_replacement_connect(RpcOutChannel* outChannel, int timeout)
 
 	rpc_out_channel_transition_to_state(outChannel, CLIENT_OUT_CHANNEL_STATE_SECURITY);
 
-	/* Receive response. */
-	response = http_response_recv(outChannel->tls);
-
-	if (!response)
-		return -1;
-
-	status = rpc_ncacn_http_recv_out_channel_response(rpc, outChannel, response);
-
-	http_response_free(response);
-
-	if ( status < 0)
-	{
-		WLog_ERR(TAG, "rpc_ncacn_http_recv_out_channel_response failure");
-		return -1;
-	}
-
-	/* Send OUT Channel Request */
-
-	if (rpc_ncacn_http_send_out_channel_request(rpc, outChannel, TRUE) < 0)
-	{
-		WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
-		return -1;
-	}
-
-	rpc_ncacn_http_ntlm_uninit(rpc, (RpcChannel*) outChannel);
-
-	rpc_out_channel_transition_to_state(outChannel, CLIENT_OUT_CHANNEL_STATE_NEGOTIATED);
-
 	return 1;
 }
 
