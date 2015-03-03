@@ -8,6 +8,10 @@
 if(OPENSLES_INCLUDE_DIR)
 	# Already in cache, be silent
 	set(OPENSLES_FIND_QUIETLY TRUE)
+elseif(ANDROID)
+	# Android has no pkgconfig - fallback to default paths
+	set(PC_OPENSLES_INCLUDE_DIR "${ANDROID_SYSROOT}/usr/include")
+	set(PC_OPENSLES_LIBDIR      "${ANDROID_SYSROOT}/usr/lib"    )
 else()
 	find_package(PkgConfig)
 	pkg_check_modules(PC_OPENSLES QUIET OpenSLES)
@@ -17,7 +21,7 @@ find_path(OPENSLES_INCLUDE_DIR SLES/OpenSLES.h
 	HINTS ${PC_OPENSLES_INCLUDE_DIR})
 
 find_library(OPENSLES_LIBRARY NAMES OpenSLES
-	HINTS ${PC_OPENSLES_LIBDIR} ${PC_OPENSLES_LIBARRY_DIRS})
+	HINTS ${PC_OPENSLES_LIBDIR} ${PC_OPENSLES_LIBRARY_DIRS})
 
 # Handle the QUIETLY and REQUIRED arguments and set OPENSL_FOUND to TRUE if
 # all listed variables are TRUE.
