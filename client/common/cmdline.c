@@ -175,6 +175,12 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "buildconfig", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_BUILDCONFIG, NULL, NULL, NULL, -1, NULL, "print the build configuration" },
 	{ "log-level", COMMAND_LINE_VALUE_REQUIRED, "[OFF|FATAL|ERROR|WARN|INFO|DEBUG|TRACE]", NULL, NULL, -1, NULL, "Set the default log level" },
 	{ "log-filters", COMMAND_LINE_VALUE_REQUIRED, "<logger tag>:<log level>[, <logger tag>:<log level>][, ...]]", NULL, NULL, -1, NULL, "Set logger filters" },
+	{ "pwidth", COMMAND_LINE_VALUE_REQUIRED, "<physical width (mm)>", NULL, NULL, -1, NULL, "Physical width of display (in millimeters)" },
+	{ "pheight", COMMAND_LINE_VALUE_REQUIRED, "<physical height (mm)>", NULL, NULL, -1, NULL, "Physical height of display (in millimeters)" },
+	{ "orientation", COMMAND_LINE_VALUE_REQUIRED, "<orientation>", NULL, NULL, -1, NULL, "Orientation of display in degrees (0, 90, 180, 270)" },
+	{ "scale", COMMAND_LINE_VALUE_REQUIRED, "<scale amount (%%)>", "100", NULL, -1, NULL, "Scaling factor of the display (value of 100, 140, or 180)" },
+	{ "scale-desktop", COMMAND_LINE_VALUE_REQUIRED, "<scale amount (%%)>", "100", NULL, -1, NULL, "Scaling factor for desktop applications (value between 100 and 500)" },
+	{ "scale-device", COMMAND_LINE_VALUE_REQUIRED, "<scale amount (%%)>", "100", NULL, -1, NULL, "Scaling factor for app store applications (100, 140, or 180)" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
@@ -2288,6 +2294,55 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			settings->RemoteAssistanceMode = TRUE;
 			if (!(settings->RemoteAssistancePassword = _strdup(arg->Value)))
 				return COMMAND_LINE_ERROR_MEMORY;
+		}
+		CommandLineSwitchCase(arg, "pwidth")
+		{
+			settings->DesktopPhysicalWidth = atoi(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "pheight")
+		{
+			settings->DesktopPhysicalHeight = atoi(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "orientation")
+		{
+			settings->DesktopOrientation = atoi(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "scale")
+		{
+			int scaleFactor = atoi(arg->Value);
+			if (scaleFactor == 100 || scaleFactor == 140 || scaleFactor == 180) {
+				settings->DesktopScaleFactor = scaleFactor;
+				settings->DeviceScaleFactor = scaleFactor;
+			} else {
+				WLog_ERR(TAG, "scale:  invalid scale factor (%d)", scaleFactor);
+				return COMMAND_LINE_ERROR;
+			}
+		}
+		CommandLineSwitchCase(arg, "scale-desktop")
+		{
+			int desktopScaleFactor = atoi(arg->Value);
+			if (desktopScaleFactor >= 100 && desktopScaleFactor <= 500)
+			{
+				settings->DesktopScaleFactor = desktopScaleFactor;
+			}
+			else
+			{
+				WLog_ERR(TAG, "scale:  invalid desktop scale factor (%d)", desktopScaleFactor);
+				return COMMAND_LINE_ERROR;
+			}
+		}
+		CommandLineSwitchCase(arg, "scale-device")
+		{
+			int deviceScaleFactor = atoi(arg->Value);
+			if (deviceScaleFactor == 100 || deviceScaleFactor == 140 || deviceScaleFactor == 180)
+			{
+				settings->DeviceScaleFactor = deviceScaleFactor;
+			}
+			else
+			{
+				WLog_ERR(TAG, "scale:  invalid device scale factor (%d)", deviceScaleFactor);
+				return COMMAND_LINE_ERROR;
+			}
 		}
 		CommandLineSwitchDefault(arg)
 		{
