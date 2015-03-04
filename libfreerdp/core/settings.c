@@ -440,6 +440,12 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		settings->HomePath = GetKnownPath(KNOWN_PATH_HOME);
 		settings->ConfigPath = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, "freerdp");
 
+		settings->DesktopPhysicalHeight = 0;
+		settings->DesktopPhysicalWidth = 0;
+		settings->DesktopOrientation = ORIENTATION_LANDSCAPE;
+		settings->DesktopScaleFactor = 0;
+		settings->DeviceScaleFactor = 0;
+
 		settings_load_hkey_local_machine(settings);
 
 		settings->SettingsModified = (BYTE*) malloc(sizeof(rdpSettings) / 8 );
