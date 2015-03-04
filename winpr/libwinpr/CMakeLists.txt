@@ -75,7 +75,7 @@ endmacro()
 
 # Level "1" API as defined for MinCore.lib
 set(WINPR_CORE synch locale library file comm pipe interlocked security 
-	environment crypto registry credentials path io memory input 
+	environment crypto registry credentials path io memory input shell
 	heap utils error com timezone sysinfo pool handle thread) 
 
 foreach(DIR ${WINPR_CORE})
