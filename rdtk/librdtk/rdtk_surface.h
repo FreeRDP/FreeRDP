@@ -33,17 +33,5 @@ struct rdtk_surface
 	BYTE* data;
 	BOOL owner;
 };
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-rdtkSurface* rdtk_surface_new(rdtkEngine* engine, BYTE* data, int width, int height, int scanline);
-void rdtk_surface_free(rdtkSurface* surface);
-
-#ifdef __cplusplus
-}
-#endif
-
 #endif /* RDTK_SURFACE_PRIVATE_H */
 

@@ -63,7 +63,6 @@ FREERDP_API BOOL ber_read_universal_tag(wStream* s, BYTE tag, BOOL pc);
 FREERDP_API int ber_write_universal_tag(wStream* s, BYTE tag, BOOL pc);
 FREERDP_API BOOL ber_read_application_tag(wStream* s, BYTE tag, int* length);
 FREERDP_API void ber_write_application_tag(wStream* s, BYTE tag, int length);
-FREERDP_API BOOL ber_read_application_tag(wStream* s, BYTE tag, int* length);
 FREERDP_API BOOL ber_read_enumerated(wStream* s, BYTE* enumerated, BYTE count);
 FREERDP_API void ber_write_enumerated(wStream* s, BYTE enumerated, BYTE count);
 FREERDP_API BOOL ber_read_contextual_tag(wStream* s, BYTE tag, int* length, BOOL pc);
