@@ -24,7 +24,6 @@
 #include <freerdp/primitives.h>
 #include <freerdp/codec/color.h>
 
-#include "prim_internal.h"
 #include "prim_YUV.h"
 
 /**
@@ -265,9 +264,111 @@ pstatus_t general_YUV420ToRGB_8u_P3AC4R(const BYTE* pSrc[3], int srcStep[3],
 	return PRIMITIVES_SUCCESS;
 }
 
+pstatus_t general_RGBToYUV420_8u_P3AC4R(const BYTE* pSrc, INT32 srcStep,
+		BYTE* pDst[3], INT32 dstStep[3], const prim_size_t* roi)
+{
+	int x, y;
+	int dstPad[3];
+	int halfWidth;
+	int halfHeight;
+	BYTE* pY;
+	BYTE* pU;
+	BYTE* pV;
+	int Y, U, V;
+	int R, G, B;
+	int Ra, Ga, Ba;
+	const BYTE* pRGB;
+	int nWidth, nHeight;
+
+	pU = pDst[1];
+	pV = pDst[2];
+
+	nWidth = (roi->width + 1) & ~0x0001;
+	nHeight = (roi->height + 1) & ~0x0001;
+
+	halfWidth = nWidth / 2;
+	halfHeight = nHeight / 2;
+
+	dstPad[0] = (dstStep[0] - nWidth);
+	dstPad[1] = (dstStep[1] - halfWidth);
+	dstPad[2] = (dstStep[2] - halfWidth);
+
+	for (y = 0; y < halfHeight; y++)
+	{
+		for (x = 0; x < halfWidth; x++)
+		{
+			/* 1st pixel */
+			pRGB = pSrc + y * 2 * srcStep + x * 2 * 4;
+			pY = pDst[0] + y * 2 * dstStep[0] + x * 2;
+			Ba = B = pRGB[0];
+			Ga = G = pRGB[1];
+			Ra = R = pRGB[2];
+			Y = (54 * R + 183 * G + 18 * B) >> 8;
+			pY[0] = (BYTE) Y;
+
+			if (x * 2 + 1 < roi->width)
+			{
+				/* 2nd pixel */
+				Ba += B = pRGB[4];
+				Ga += G = pRGB[5];
+				Ra += R = pRGB[6];
+				Y = (54 * R + 183 * G + 18 * B) >> 8;
+				pY[1] = (BYTE) Y;
+			}
+
+			if (y * 2 + 1 < roi->height)
+			{
+				/* 3rd pixel */
+				pRGB += srcStep;
+				pY += dstStep[0];
+				Ba += B = pRGB[0];
+				Ga += G = pRGB[1];
+				Ra += R = pRGB[2];
+				Y = (54 * R + 183 * G + 18 * B) >> 8;
+				pY[0] = (BYTE) Y;
+
+				if (x * 2 + 1 < roi->width)
+				{
+					/* 4th pixel */
+					Ba += B = pRGB[4];
+					Ga += G = pRGB[5];
+					Ra += R = pRGB[6];
+					Y = (54 * R + 183 * G + 18 * B) >> 8;
+					pY[1] = (BYTE) Y;
+				}
+			}
+
+			/* U */
+			Ba >>= 2;
+			Ga >>= 2;
+			Ra >>= 2;
+			U = ((-29 * Ra - 99 * Ga + 128 * Ba) >> 8) + 128;
+			if (U < 0)
+				U = 0;
+			else if (U > 255)
+				U = 255;
+			*pU++ = (BYTE) U;
+
+			/* V */
+			V = ((128 * Ra - 116 * Ga - 12 * Ba) >> 8) + 128;
+			if (V < 0)
+				V = 0;
+			else if (V > 255)
+				V = 255;
+			*pV++ = (BYTE) V;
+		}
+
+		pU += dstPad[1];
+		pV += dstPad[2];
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
 void primitives_init_YUV(primitives_t* prims)
 {
 	prims->YUV420ToRGB_8u_P3AC4R = general_YUV420ToRGB_8u_P3AC4R;
+	prims->RGBToYUV420_8u_P3AC4R = general_RGBToYUV420_8u_P3AC4R;
 	
 	primitives_init_YUV_opt(prims);
 }

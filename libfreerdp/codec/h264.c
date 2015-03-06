@@ -70,6 +70,8 @@ static H264_CONTEXT_SUBSYSTEM g_Subsystem_dummy =
 struct _H264_CONTEXT_OPENH264
 {
 	ISVCDecoder* pDecoder;
+	ISVCEncoder* pEncoder;
+	SEncParamBase EncParamBase;
 };
 typedef struct _H264_CONTEXT_OPENH264 H264_CONTEXT_OPENH264;
 
@@ -148,6 +150,86 @@ static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSiz
 	return 1;
 }
 
+static int openh264_compress(H264_CONTEXT* h264, UINT32 TargetFrameSizeInBits, BYTE** ppDstData, UINT32* pDstSize)
+{
+	int i, j;
+	int status;
+	SFrameBSInfo info;
+	SSourcePicture pic;
+	SBitrateInfo bitrate;
+	H264_CONTEXT_OPENH264* sys = (H264_CONTEXT_OPENH264*) h264->pSystemData;
+
+	if (!sys->pEncoder)
+		return -1;
+
+	if (!h264->pYUVData[0] || !h264->pYUVData[1] || !h264->pYUVData[2])
+		return -1;
+
+	if (sys->EncParamBase.iPicWidth != h264->width ||
+		sys->EncParamBase.iPicHeight != h264->height)
+	{
+		sys->EncParamBase.iUsageType = SCREEN_CONTENT_REAL_TIME;
+		sys->EncParamBase.iPicWidth = h264->width;
+		sys->EncParamBase.iPicHeight = h264->height;
+		sys->EncParamBase.iTargetBitrate = TargetFrameSizeInBits * 30;
+		sys->EncParamBase.iRCMode = RC_BITRATE_MODE;
+		sys->EncParamBase.fMaxFrameRate = 30.0f;
+
+		status = (*sys->pEncoder)->Initialize(sys->pEncoder, &sys->EncParamBase);
+
+		if (status < 0)
+		{
+			WLog_ERR(TAG, "Failed to initialize OpenH264 encoder (status=%ld)", status);
+			return status;
+		}
+	}
+	else if (sys->EncParamBase.iTargetBitrate != TargetFrameSizeInBits * 30)
+	{
+		sys->EncParamBase.iTargetBitrate = TargetFrameSizeInBits * 30;
+		bitrate.iLayer = SPATIAL_LAYER_ALL;
+		bitrate.iBitrate = TargetFrameSizeInBits * 30;
+
+		status = (*sys->pEncoder)->SetOption(sys->pEncoder, ENCODER_OPTION_BITRATE, &bitrate);
+
+		if (status < 0)
+		{
+			WLog_ERR(TAG, "Failed to set encoder bitrate (status=%ld)", status);
+			return status;
+		}
+	}
+
+	memset(&info, 0, sizeof(SFrameBSInfo));
+	memset(&pic, 0, sizeof(SSourcePicture));
+	pic.iPicWidth = h264->width;
+	pic.iPicHeight = h264->height;
+	pic.iColorFormat = videoFormatI420;
+	pic.iStride[0] = h264->iStride[0];
+	pic.iStride[1] = h264->iStride[1];
+	pic.iStride[2] = h264->iStride[2];
+	pic.pData[0] = h264->pYUVData[0];
+	pic.pData[1] = h264->pYUVData[1];
+	pic.pData[2] = h264->pYUVData[2];
+
+	status = (*sys->pEncoder)->EncodeFrame(sys->pEncoder, &pic, &info);
+
+	if (status < 0)
+	{
+		WLog_ERR(TAG, "Failed to encode frame (status=%ld)", status);
+		return status;
+	}
+	*ppDstData = info.sLayerInfo[0].pBsBuf;
+	*pDstSize = 0;
+	for (i = 0; i < info.iLayerNum; i++)
+	{
+		for (j = 0; j < info.sLayerInfo[i].iNalCount; j++)
+		{
+			*pDstSize += info.sLayerInfo[i].pNalLengthInByte[j];
+		}
+	}
+
+	return 1;
+}
+
 static void openh264_uninit(H264_CONTEXT* h264)
 {
 	H264_CONTEXT_OPENH264* sys = (H264_CONTEXT_OPENH264*) h264->pSystemData;
@@ -159,6 +241,13 @@ static void openh264_uninit(H264_CONTEXT* h264)
 			(*sys->pDecoder)->Uninitialize(sys->pDecoder);
 			WelsDestroyDecoder(sys->pDecoder);
 			sys->pDecoder = NULL;
+		}
+
+		if (sys->pEncoder)
+		{
+			(*sys->pEncoder)->Uninitialize(sys->pEncoder);
+			WelsDestroySVCEncoder(sys->pEncoder);
+			sys->pEncoder = NULL;
 		}
 
 		free(sys);
@@ -184,55 +273,68 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 
 	h264->pSystemData = (void*) sys;
 
-	WelsCreateDecoder(&sys->pDecoder);
-
-	if (!sys->pDecoder)
+	if (h264->Compressor)
 	{
-		WLog_ERR(TAG, "Failed to create OpenH264 decoder");
-		goto EXCEPTION;
-	}
+		WelsCreateSVCEncoder(&sys->pEncoder);
 
-	ZeroMemory(&sDecParam, sizeof(sDecParam));
-	sDecParam.eOutputColorFormat  = videoFormatI420;
-	sDecParam.eEcActiveIdc = ERROR_CON_FRAME_COPY;
-	sDecParam.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_DEFAULT;
-
-	status = (*sys->pDecoder)->Initialize(sys->pDecoder, &sDecParam);
-
-	if (status != 0)
-	{
-		WLog_ERR(TAG, "Failed to initialize OpenH264 decoder (status=%ld)", status);
-		goto EXCEPTION;
-	}
-
-	status = (*sys->pDecoder)->SetOption(sys->pDecoder, DECODER_OPTION_DATAFORMAT, &videoFormat);
-
-	if (status != 0)
-	{
-		WLog_ERR(TAG, "Failed to set data format option on OpenH264 decoder (status=%ld)", status);
-	}
-
-	if (g_openh264_trace_enabled)
-	{
-		status = (*sys->pDecoder)->SetOption(sys->pDecoder, DECODER_OPTION_TRACE_LEVEL, &traceLevel);
-
-		if (status != 0)
+		if (!sys->pEncoder)
 		{
-			WLog_ERR(TAG, "Failed to set trace level option on OpenH264 decoder (status=%ld)", status);
+			WLog_ERR(TAG, "Failed to create OpenH264 encoder");
+			goto EXCEPTION;
+		}
+	}
+	else
+	{
+		WelsCreateDecoder(&sys->pDecoder);
+
+		if (!sys->pDecoder)
+		{
+			WLog_ERR(TAG, "Failed to create OpenH264 decoder");
+			goto EXCEPTION;
 		}
 
-		status = (*sys->pDecoder)->SetOption(sys->pDecoder, DECODER_OPTION_TRACE_CALLBACK, &traceCallback);
+		ZeroMemory(&sDecParam, sizeof(sDecParam));
+		sDecParam.eOutputColorFormat  = videoFormatI420;
+		sDecParam.eEcActiveIdc = ERROR_CON_FRAME_COPY;
+		sDecParam.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_DEFAULT;
+
+		status = (*sys->pDecoder)->Initialize(sys->pDecoder, &sDecParam);
 
 		if (status != 0)
 		{
-			WLog_ERR(TAG, "Failed to set trace callback option on OpenH264 decoder (status=%ld)", status);
+			WLog_ERR(TAG, "Failed to initialize OpenH264 decoder (status=%ld)", status);
+			goto EXCEPTION;
 		}
 
-		status = (*sys->pDecoder)->SetOption(sys->pDecoder, DECODER_OPTION_TRACE_CALLBACK_CONTEXT, &h264);
+		status = (*sys->pDecoder)->SetOption(sys->pDecoder, DECODER_OPTION_DATAFORMAT, &videoFormat);
 
 		if (status != 0)
 		{
-			WLog_ERR(TAG, "Failed to set trace callback context option on OpenH264 decoder (status=%ld)", status);
+			WLog_ERR(TAG, "Failed to set data format option on OpenH264 decoder (status=%ld)", status);
+		}
+
+		if (g_openh264_trace_enabled)
+		{
+			status = (*sys->pDecoder)->SetOption(sys->pDecoder, DECODER_OPTION_TRACE_LEVEL, &traceLevel);
+
+			if (status != 0)
+			{
+				WLog_ERR(TAG, "Failed to set trace level option on OpenH264 decoder (status=%ld)", status);
+			}
+
+			status = (*sys->pDecoder)->SetOption(sys->pDecoder, DECODER_OPTION_TRACE_CALLBACK, &traceCallback);
+
+			if (status != 0)
+			{
+				WLog_ERR(TAG, "Failed to set trace callback option on OpenH264 decoder (status=%ld)", status);
+			}
+
+			status = (*sys->pDecoder)->SetOption(sys->pDecoder, DECODER_OPTION_TRACE_CALLBACK_CONTEXT, &h264);
+
+			if (status != 0)
+			{
+				WLog_ERR(TAG, "Failed to set trace callback context option on OpenH264 decoder (status=%ld)", status);
+			}
 		}
 	}
 
@@ -249,7 +351,8 @@ static H264_CONTEXT_SUBSYSTEM g_Subsystem_OpenH264 =
 	"OpenH264",
 	openh264_init,
 	openh264_uninit,
-	openh264_decompress
+	openh264_decompress,
+	openh264_compress
 };
 
 #endif
@@ -494,9 +597,45 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 	return 1;
 }
 
-int h264_compress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize)
+int h264_compress(H264_CONTEXT* h264, BYTE* pSrcData, DWORD SrcFormat,
+		int nSrcStep, int nSrcWidth, int nSrcHeight, UINT32 TargetFrameSizeInBits,
+		BYTE** ppDstData, UINT32* pDstSize)
 {
-	return 1;
+	int status;
+	prim_size_t roi;
+	int nWidth, nHeight;
+	primitives_t *prims = primitives_get();
+
+	if (!h264)
+		return -1;
+	if (!h264->subsystem->Compress)
+		return -1;
+
+	nWidth = (nSrcWidth + 1) & ~1;
+	nHeight = (nSrcHeight + 1) & ~1;
+	h264->pYUVData[0] = (BYTE*) malloc(nWidth * nHeight);
+	h264->iStride[0] = nWidth;
+	h264->pYUVData[1] = (BYTE*) malloc(nWidth * nHeight / 4);
+	h264->iStride[1] = nWidth / 2;
+	h264->pYUVData[2] = (BYTE*) malloc(nWidth * nHeight / 4);
+	h264->iStride[2] = nWidth / 2;
+	h264->width = nWidth;
+	h264->height = nHeight;
+	roi.width = nSrcWidth;
+	roi.height = nSrcHeight;
+
+	prims->RGBToYUV420_8u_P3AC4R(pSrcData, nSrcStep, h264->pYUVData, h264->iStride, &roi);
+
+	status = h264->subsystem->Compress(h264, TargetFrameSizeInBits, ppDstData, pDstSize);
+
+	free(h264->pYUVData[0]);
+	free(h264->pYUVData[1]);
+	free(h264->pYUVData[2]);
+	h264->pYUVData[0] = NULL;
+	h264->pYUVData[1] = NULL;
+	h264->pYUVData[2] = NULL;
+
+	return status;
 }
 
 BOOL h264_context_init(H264_CONTEXT* h264)

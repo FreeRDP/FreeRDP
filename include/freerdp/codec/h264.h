@@ -30,6 +30,7 @@ typedef BOOL (*pfnH264SubsystemInit)(H264_CONTEXT* h264);
 typedef void (*pfnH264SubsystemUninit)(H264_CONTEXT* h264);
 
 typedef int (*pfnH264SubsystemDecompress)(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize);
+typedef int (*pfnH264SubsystemCompress)(H264_CONTEXT* h264, UINT32 TargetFrameSizeInBits, BYTE** ppDstData, UINT32* pDstSize);
 
 struct _H264_CONTEXT_SUBSYSTEM
 {
@@ -37,6 +38,7 @@ struct _H264_CONTEXT_SUBSYSTEM
 	pfnH264SubsystemInit Init;
 	pfnH264SubsystemUninit Uninit;
 	pfnH264SubsystemDecompress Decompress;
+	pfnH264SubsystemCompress Compress;
 };
 typedef struct _H264_CONTEXT_SUBSYSTEM H264_CONTEXT_SUBSYSTEM;
 
@@ -58,7 +60,9 @@ struct _H264_CONTEXT
 extern "C" {
 #endif
 
-FREERDP_API int h264_compress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize);
+FREERDP_API int h264_compress(H264_CONTEXT* h264, BYTE* pSrcData, DWORD SrcFormat,
+		int nSrcStep, int nSrcWidth, int nSrcHeight, UINT32 TargetFrameSizeInBits,
+		BYTE** ppDstData, UINT32* pDstSize);
 
 FREERDP_API int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nDstWidth, int nDstHeight,
