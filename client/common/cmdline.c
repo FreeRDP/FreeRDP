@@ -1173,8 +1173,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 	COMMAND_LINE_ARGUMENT_A* arg;
        char* username = NULL;
        char* gw_username = NULL;
-       char* user;
-       char* domain;
+       char* user = NULL;
+       char* domain = NULL;
 
 	compatibility = freerdp_client_detect_command_line(argc, argv, &flags);
 
@@ -1962,22 +1962,22 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
        {
 	  freerdp_parse_username(username, &user, &domain);
          
-	  settings->Username = user;
-	  settings->Domain = domain;
+	  settings->Username = _strdup(user);
+	  settings->Domain = _strdup(domain);
        }
        else
-	  settings->Username = username;
+	  settings->Username = _strdup(username);
        
        // Same as above for Gateway Username and Domain.
        if (gw_username && !settings->GatewayDomain)
        {
 	  freerdp_parse_username(gw_username, &user, &domain);
          
-	  settings->GatewayUsername = user;
-	  settings->GatewayDomain = domain;
+	  settings->GatewayUsername = _strdup(user);
+	  settings->GatewayDomain = _strdup(domain);
        }
        else
-	  settings->GatewayUsername = gw_username;
+	  settings->GatewayUsername = _strdup(gw_username);
        
        if (user != NULL)
 	 free(user);
