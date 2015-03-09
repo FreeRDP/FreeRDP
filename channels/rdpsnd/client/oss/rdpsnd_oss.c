@@ -318,8 +318,6 @@ static void rdpsnd_oss_wave_decode(rdpsndDevicePlugin *device, RDPSND_WAVE *wave
 
 	wave->data = (BYTE*)malloc(size);
 	CopyMemory(wave->data, data, size);
-	if (wave->length != size)
-		WLog_ERR(TAG, "wave->length = %i, size = %i!!!\n", wave->length, size);
 	wave->length = size;
 }
 
@@ -374,7 +372,6 @@ static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin *device, ADDIN_ARGV *a
 	arg = rdpsnd_oss_args;
 
 	do {
-		WLog_ERR(TAG, "arg: %s\n", arg->Name);
 		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
 			continue;
 
