@@ -91,7 +91,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	UCHAR vmin = 0;
 	UCHAR vtime = 0;
 	ULONGLONG Tmax = 0;
-	struct timeval tmaxTimeout;
+	struct timeval tmaxTimeout, *pTmaxTimeout;
 	struct termios currentTermios;
 
 	EnterCriticalSection(&pComm->ReadLock); /* KISSer by the function's beginning */
@@ -144,13 +144,13 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	 * http://msdn.microsoft.com/en-us/library/windows/hardware/hh439614%28v=vs.85%29.aspx
 	 *
 	 * ReadIntervalTimeout  | ReadTotalTimeoutMultiplier | ReadTotalTimeoutConstant | VMIN | VTIME | TMAX  |
-	 *         0            |            0               |           0              |   N  |   0   |   0   | Blocks for N bytes available.
-         *   0< Ti <MAXULONG    |            0               |           0              |   N  |   Ti  |   0   | Block on first byte, then use Ti between bytes.
+	 *         0            |            0               |           0              |   N  |   0   | INDEF | Blocks for N bytes available.
+         *   0< Ti <MAXULONG    |            0               |           0              |   N  |   Ti  | INDEF | Blocks on first byte, then use Ti between bytes.
 	 *       MAXULONG       |            0               |           0              |   0  |   0   |   0   | Returns immediately with bytes available (don't block)
 	 *       MAXULONG       |         MAXULONG           |      0< Tc <MAXULONG     |   N  |   0   |   Tc  | Blocks on first byte during Tc or returns immediately whith bytes available
 	 *       MAXULONG       |            m               |        MAXULONG          |                      | Invalid
-	 *         0            |            m               |      0< Tc <MAXULONG     |   N  |   0   |  Tmax | Block on first byte during Tmax or returns immediately whith bytes available
-	 *   0< Ti <MAXULONG    |            m               |      0< Tc <MAXULONG     |   N  |   Ti  |  Tmax | Block on first byte, then use Ti between bytes. Tmax is use for the whole system call.
+	 *         0            |            m               |      0< Tc <MAXULONG     |   N  |   0   |  Tmax | Blocks on first byte during Tmax or returns immediately whith bytes available
+	 *   0< Ti <MAXULONG    |            m               |      0< Tc <MAXULONG     |   N  |   Ti  |  Tmax | Blocks on first byte, then use Ti between bytes. Tmax is used for the whole system call.
 	 */
 
 	/* NB: timeouts are in milliseconds, VTIME are in deciseconds and is an unsigned char */
@@ -195,6 +195,8 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 	/* TMAX */
 
+        pTmaxTimeout = &tmaxTimeout;
+
 	if ((pTimeouts->ReadIntervalTimeout == MAXULONG) && (pTimeouts->ReadTotalTimeoutMultiplier == MAXULONG))
 	{
 		/* Tc */
@@ -204,6 +206,10 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	{
 		/* Tmax */
 		Tmax = nNumberOfBytesToRead * pTimeouts->ReadTotalTimeoutMultiplier + pTimeouts->ReadTotalTimeoutConstant;
+
+		/* INDEFinitely */
+		if((Tmax == 0) && (pTimeouts->ReadIntervalTimeout < MAXULONG) && (pTimeouts->ReadTotalTimeoutMultiplier == 0))
+			pTmaxTimeout = NULL;
 	}
 
 	if ((currentTermios.c_cc[VMIN] != vmin) || (currentTermios.c_cc[VTIME] != vtime))
@@ -219,11 +225,16 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		}
 	}
 
-	ZeroMemory(&tmaxTimeout, sizeof(struct timeval));
-	if (Tmax > 0) /* no timeout if Tmax == 0 */
+        /* wait indefinitely if pTmaxTimeout is NULL */
+
+	if(pTmaxTimeout != NULL) 
 	{
-		tmaxTimeout.tv_sec = Tmax / 1000; /* s */
-		tmaxTimeout.tv_usec = (Tmax % 1000) * 1000; /* us */
+	    ZeroMemory(pTmaxTimeout, sizeof(struct timeval));
+	    if (Tmax > 0) /* return immdiately if Tmax == 0 */
+	    {
+		pTmaxTimeout->tv_sec = Tmax / 1000; /* s */
+		pTmaxTimeout->tv_usec = (Tmax % 1000) * 1000; /* us */
+	    }
 	}
 
 
@@ -244,7 +255,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	FD_SET(pComm->fd_read_event, &read_set);
 	FD_SET(pComm->fd_read, &read_set);
 
-	nbFds = select(biggestFd+1, &read_set, NULL, NULL, &tmaxTimeout);
+	nbFds = select(biggestFd+1, &read_set, NULL, NULL, pTmaxTimeout);
 	if (nbFds < 0)
 	{
 		CommLog_Print(WLOG_WARN, "select() failure, errno=[%d] %s\n", errno, strerror(errno));
@@ -358,7 +369,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 		LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped)
 {
 	WINPR_COMM* pComm = (WINPR_COMM*) hDevice;
-	struct timeval tmaxTimeout;
+	struct timeval tmaxTimeout, *pTmaxTimeout;
 
 	EnterCriticalSection(&pComm->WriteLock); /* KISSer by the function's beginning */
 
@@ -406,13 +417,18 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 	 * how much time was left. Keep the timeout variable out of
 	 * the while() */
 
-	 
-	ZeroMemory(&tmaxTimeout, sizeof(struct timeval));
-	if (Tmax > 0) /* no timeout if Tmax == 0 */
+	pTmaxTimeout = &tmaxTimeout; 
+	ZeroMemory(pTmaxTimeout, sizeof(struct timeval));
+	if (Tmax > 0) 
 	{
-		tmaxTimeout.tv_sec = Tmax / 1000; /* s */
-		tmaxTimeout.tv_usec = (Tmax % 1000) * 1000; /* us */
+		pTmaxTimeout->tv_sec = Tmax / 1000; /* s */
+		pTmaxTimeout->tv_usec = (Tmax % 1000) * 1000; /* us */
 	}
+	else if ((pComm->timeouts.WriteTotalTimeoutMultiplier == 0) && (pComm->timeouts.WriteTotalTimeoutConstant == 0))
+	{
+		pTmaxTimeout = NULL;
+	}
+	/* else return immdiately */
 
 	while (*lpNumberOfBytesWritten < nNumberOfBytesToWrite)
 	{
@@ -433,7 +449,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 		FD_SET(pComm->fd_write_event, &event_set);
 		FD_SET(pComm->fd_write, &write_set);
 
-		nbFds = select(biggestFd+1, &event_set, &write_set, NULL, &tmaxTimeout);
+		nbFds = select(biggestFd+1, &event_set, &write_set, NULL, pTmaxTimeout);
 		if (nbFds < 0)
 		{
 			CommLog_Print(WLOG_WARN, "select() failure, errno=[%d] %s\n", errno, strerror(errno));

@@ -849,6 +849,12 @@ static BOOL _set_timeouts(WINPR_COMM *pComm, const SERIAL_TIMEOUTS *pTimeouts)
 	pComm->timeouts.WriteTotalTimeoutMultiplier = pTimeouts->WriteTotalTimeoutMultiplier;
 	pComm->timeouts.WriteTotalTimeoutConstant   = pTimeouts->WriteTotalTimeoutConstant;
 
+	CommLog_Print(WLOG_DEBUG, "ReadIntervalTimeout %d", pComm->timeouts.ReadIntervalTimeout);
+	CommLog_Print(WLOG_DEBUG, "ReadTotalTimeoutMultiplier %d", pComm->timeouts.ReadTotalTimeoutMultiplier);
+	CommLog_Print(WLOG_DEBUG, "ReadTotalTimeoutConstant %d", pComm->timeouts.ReadTotalTimeoutConstant);
+	CommLog_Print(WLOG_DEBUG, "WriteTotalTimeoutMultiplier %d", pComm->timeouts.WriteTotalTimeoutMultiplier);
+	CommLog_Print(WLOG_DEBUG, "WriteTotalTimeoutConstant %d", pComm->timeouts.WriteTotalTimeoutConstant);
+
 	return TRUE;
 }
 
