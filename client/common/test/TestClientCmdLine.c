@@ -108,6 +108,11 @@ int TestClientCmdLine(int argc, char* argv[])
 	char* cmd22[] = { "xfreerdp", "-g", "1920x1200", "-d", "domain", "-u", "username", "-D", "-a", "16", "--plugin", "rdpsnd", "--plugin", "rdpdr", "--data", "disk:media:/home/username/media/", "--", "-x", "l", "--rfx", "--ignore-certificate", "--plugin", "cliprdr", "some.host.name.com"};
 	TESTCASE_SUCCESS(cmd22);
 
+#if 0
+	char* cmd23[] = {"xfreerdp -z --plugin cliprdr --plugin rdpsnd --data alsa latency:100 -- --plugin rdpdr --data disk:w7share:/home/w7share -- --plugin drdynvc --data tsmf:decoder:gstreamer -- -u test host.example.com"};
+	TESTCASE(cmd23, COMMAND_LINE_STATUS_PRINT);
+#endif
+
 	return 0;
 }
 
