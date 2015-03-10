@@ -1968,6 +1968,17 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
        else
 	  settings->Username = _strdup(username);
        
+	if (user != NULL)
+	{
+		free(user);
+		user = NULL;
+	}
+	if (domain != NULL)
+	{
+		free(domain);
+		domain = NULL;
+	}
+       
        // Same as above for Gateway Username and Domain.
        if (gw_username && !settings->GatewayDomain)
        {
