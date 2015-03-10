@@ -921,83 +921,63 @@ int BitBlt_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeigh
 	{
 		case GDI_BLACKNESS:
 			return BitBlt_BLACKNESS_32bpp(hdcDest, nXDest, nYDest, nWidth, nHeight);
-			break;
 
 		case GDI_WHITENESS:
 			return BitBlt_WHITENESS_32bpp(hdcDest, nXDest, nYDest, nWidth, nHeight);
-			break;
 
 		case GDI_SRCCOPY:
 			return BitBlt_SRCCOPY_32bpp(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
-			break;
 
 		case GDI_SPna:
 			return BitBlt_SPna_32bpp(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
-			break;
 
 		case GDI_DSna:
 			return BitBlt_DSna_32bpp(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
-			break;
 
 		case GDI_DSPDxax:
 			return BitBlt_DSPDxax_32bpp(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
-			break;
-			
+
 		case GDI_PSDPxax:
 			return BitBlt_PSDPxax_32bpp(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
-			break;
 
 		case GDI_SPDSxax:
 			return BitBlt_SPDSxax_32bpp(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
-			break;
 
 		case GDI_NOTSRCCOPY:
 			return BitBlt_NOTSRCCOPY_32bpp(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
-			break;
 
 		case GDI_DSTINVERT:
 			return BitBlt_DSTINVERT_32bpp(hdcDest, nXDest, nYDest, nWidth, nHeight);
-			break;
 
 		case GDI_SRCERASE:
 			return BitBlt_SRCERASE_32bpp(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
-			break;
 
 		case GDI_NOTSRCERASE:
 			return BitBlt_NOTSRCERASE_32bpp(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
-			break;
 
 		case GDI_SRCINVERT:
 			return BitBlt_SRCINVERT_32bpp(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
-			break;
 
 		case GDI_SRCAND:
 			return BitBlt_SRCAND_32bpp(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
-			break;
 
 		case GDI_SRCPAINT:
 			return BitBlt_SRCPAINT_32bpp(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
-			break;
 
 		case GDI_MERGECOPY:
 			return BitBlt_MERGECOPY_32bpp(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
-			break;
 
 		case GDI_MERGEPAINT:
 			return BitBlt_MERGEPAINT_32bpp(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
-			break;
 
 		case GDI_PATCOPY:
 			return BitBlt_PATCOPY_32bpp(hdcDest, nXDest, nYDest, nWidth, nHeight);
-			break;
 
 		case GDI_PATINVERT:
 			return BitBlt_PATINVERT_32bpp(hdcDest, nXDest, nYDest, nWidth, nHeight);
-			break;
 
 		case GDI_PATPAINT:
 			return BitBlt_PATPAINT_32bpp(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
-			break;
 	}
 
 	WLog_ERR(TAG,  "BitBlt: unknown rop: 0x%08X", rop);
@@ -1015,31 +995,24 @@ int PatBlt_32bpp(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, i
 	{
 		case GDI_PATCOPY:
 			return BitBlt_PATCOPY_32bpp(hdc, nXLeft, nYLeft, nWidth, nHeight);
-			break;
 
 		case GDI_PATINVERT:
 			return BitBlt_PATINVERT_32bpp(hdc, nXLeft, nYLeft, nWidth, nHeight);
-			break;
-			
+
 		case GDI_DSTINVERT:
 			return BitBlt_DSTINVERT_32bpp(hdc, nXLeft, nYLeft, nWidth, nHeight);
-			break;
 
 		case GDI_BLACKNESS:
 			return BitBlt_BLACKNESS_32bpp(hdc, nXLeft, nYLeft, nWidth, nHeight);
-			break;
 
 		case GDI_WHITENESS:
 			return BitBlt_WHITENESS_32bpp(hdc, nXLeft, nYLeft, nWidth, nHeight);
-			break;
 
 		case GDI_DPa:
 			return BitBlt_DPa_32bpp(hdc, nXLeft, nYLeft, nWidth, nHeight);
-			break;
 
 		case GDI_PDxn:
 			return BitBlt_PDxn_32bpp(hdc, nXLeft, nYLeft, nWidth, nHeight);
-			break;
 
 		default:
 			break;
