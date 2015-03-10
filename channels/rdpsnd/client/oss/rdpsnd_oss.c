@@ -37,6 +37,7 @@
 #include <limits.h>
 #include <unistd.h>
 #include <sys/soundcard.h>
+#include <sys/ioctl.h>
 
 #include <freerdp/types.h>
 #include <freerdp/codec/dsp.h>
@@ -119,8 +120,6 @@ static BOOL rdpsnd_oss_format_supported(rdpsndDevicePlugin *device, AUDIO_FORMAT
 	if (oss->pcm_handle != -1) { /* Check really supported formats by dev. */
 		if ((req_fmt & oss->supported_formats) == 0)
 			return FALSE;
-		if ((AFMT_STEREO & oss->supported_formats) == 0 && format->nChannels == 2)
-			return FALSE;
 	} else {
 		if (req_fmt == 0)
 			return FALSE;
@@ -176,7 +175,6 @@ static void rdpsnd_oss_open_mixer(rdpsndOssPlugin *oss) {
 }
 
 static void rdpsnd_oss_open(rdpsndDevicePlugin *device, AUDIO_FORMAT *format, int latency) {
-	int mask = 0;
 	char dev_name[PATH_MAX] = "/dev/dsp";
 	rdpsndOssPlugin *oss = (rdpsndOssPlugin*)device;
 
@@ -191,6 +189,8 @@ static void rdpsnd_oss_open(rdpsndDevicePlugin *device, AUDIO_FORMAT *format, in
 		return;
 	}
 #if 0 /* FreeBSD OSS implementation at this moment (2015.03) does not set PCM_CAP_OUTPUT flag. */
+	int mask = 0;
+
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_GETCAPS, &mask) == -1) {
 		OSS_LOG_ERR("SNDCTL_DSP_GETCAPS failed, try ignory.", errno);
 	} else if ((mask & PCM_CAP_OUTPUT) == 0) {
