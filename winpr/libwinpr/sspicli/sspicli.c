@@ -69,10 +69,6 @@
 
 #include "../security/security.h"
 
-static pthread_once_t logon_user_initialized = PTHREAD_ONCE_INIT;
-
-static HANDLE_CLOSE_CB _LogonUserHandleCloseCb;
-
 static BOOL LogonUserCloseHandle(HANDLE handle);
 
 static BOOL LogonUserIsHandled(HANDLE handle)
@@ -88,11 +84,17 @@ static BOOL LogonUserIsHandled(HANDLE handle)
 	return TRUE;
 }
 
-static void LogonUserInitialize(void)
+static int LogonUserGetFd(HANDLE handle)
 {
-	_LogonUserHandleCloseCb.IsHandled = LogonUserIsHandled;
-	_LogonUserHandleCloseCb.CloseHandle = LogonUserCloseHandle;
-	RegisterHandleCloseCb(&_LogonUserHandleCloseCb);
+	WINPR_ACCESS_TOKEN *pLogonUser = (WINPR_ACCESS_TOKEN *)handle;
+
+	if (!LogonUserIsHandled(handle))
+		return -1;
+
+	/* TODO: File fd not supported */
+	(void)pLogonUser;
+
+	return -1;
 }
 
 BOOL LogonUserCloseHandle(HANDLE handle) {
@@ -118,9 +120,6 @@ BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword,
 	struct passwd* pw;
 	WINPR_ACCESS_TOKEN* token;
 
-	if (pthread_once(&logon_user_initialized, LogonUserInitialize))
-		return FALSE;
-
 	if (!lpszUsername)
 		return FALSE;
 
@@ -132,6 +131,10 @@ BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword,
 	ZeroMemory(token, sizeof(WINPR_ACCESS_TOKEN));
 
 	WINPR_HANDLE_SET_TYPE(token, HANDLE_TYPE_ACCESS_TOKEN);
+
+	token->cb.GetFd = LogonUserGetFd;
+	token->cb.CloseHandle = LogonUserCloseHandle;
+	token->cb.IsHandled = LogonUserIsHandled;
 
 	token->Username = _strdup(lpszUsername);
 
