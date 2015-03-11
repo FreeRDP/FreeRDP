@@ -84,6 +84,8 @@ wReference* ReferenceTable_GetFreeEntry(wReferenceTable* referenceTable)
 		new_size = referenceTable->size * 2;
 		new_ref = (wReference*) realloc(referenceTable->array,
 				sizeof(wReference) * new_size);
+		if (!new_ref)
+			return NULL;
 
 		referenceTable->size = new_size;
 		referenceTable->array = new_ref;
