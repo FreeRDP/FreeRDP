@@ -61,7 +61,7 @@ wEventType* PubSub_FindEventType(wPubSub* pubSub, const char* EventName)
 	int index;
 	wEventType* event = NULL;
 
-	for (index = 0; pubSub->count; index++)
+	for (index = 0; index < pubSub->count; index++)
 	{
 		if (strcmp(pubSub->events[index].EventName, EventName) == 0)
 		{
@@ -144,7 +144,7 @@ int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, pEventHandler Eve
 				event->EventHandlers[index] = NULL;
 				event->EventHandlerCount--;
 				MoveMemory(&event->EventHandlers[index], &event->EventHandlers[index + 1],
-						(MAX_EVENT_HANDLERS - index - 1) * sizeof(wEventType));
+						(MAX_EVENT_HANDLERS - index - 1) * sizeof(pEventHandler));
 				status = 1;
 			}
 		}
