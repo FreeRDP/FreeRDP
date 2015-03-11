@@ -71,10 +71,6 @@ typedef struct _NamedPipeServerSocketEntry
 	int references;
 } NamedPipeServerSocketEntry;
 
-static pthread_once_t pipe_initialized = PTHREAD_ONCE_INIT;
-
-static HANDLE_CLOSE_CB _PipeHandleCloseCb;
-
 static BOOL PipeCloseHandle(HANDLE handle);
 
 static BOOL PipeIsHandled(HANDLE handle)
@@ -90,11 +86,14 @@ static BOOL PipeIsHandled(HANDLE handle)
 	return TRUE;
 }
 
-static void PipeInitialize(void)
+static int PipeGetFd(HANDLE handle)
 {
-	_PipeHandleCloseCb.IsHandled = PipeIsHandled;
-	_PipeHandleCloseCb.CloseHandle = PipeCloseHandle;
-	RegisterHandleCloseCb(&_PipeHandleCloseCb);
+	WINPR_PIPE *pipe = (WINPR_PIPE *)handle;
+
+	if (!PipeIsHandled(handle))
+		return -1;
+
+	return pipe->fd;
 }
 
 BOOL PipeCloseHandle(HANDLE handle) {
@@ -133,9 +132,6 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
 	pipe_fd[0] = -1;
 	pipe_fd[1] = -1;
 
-	if (pthread_once(&pipe_initialized, PipeInitialize))
-		return FALSE;
-
 	if (pipe(pipe_fd) < 0)
 	{
 		WLog_ERR(TAG, "failed to create pipe");
@@ -159,8 +155,15 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
 	pReadPipe->fd = pipe_fd[0];
 	pWritePipe->fd = pipe_fd[1];
 	WINPR_HANDLE_SET_TYPE(pReadPipe, HANDLE_TYPE_ANONYMOUS_PIPE);
+	pReadPipe->cb.GetFd = PipeGetFd;
+	pReadPipe->cb.CloseHandle = PipeCloseHandle;
+	pReadPipe->cb.IsHandled = PipeIsHandled;
+
 	*((ULONG_PTR*) hReadPipe) = (ULONG_PTR) pReadPipe;
 	WINPR_HANDLE_SET_TYPE(pWritePipe, HANDLE_TYPE_ANONYMOUS_PIPE);
+	pWritePipe->cb.GetFd = PipeGetFd;
+	pWritePipe->cb.CloseHandle = PipeCloseHandle;
+	pWritePipe->cb.IsHandled = PipeIsHandled;
 	*((ULONG_PTR*) hWritePipe) = (ULONG_PTR) pWritePipe;
 	return TRUE;
 }
