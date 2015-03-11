@@ -60,6 +60,8 @@
 #include <unistd.h>
 #endif
 
+#include <pthread.h>
+
 #include <pwd.h>
 #include <grp.h>
 
@@ -67,11 +69,57 @@
 
 #include "../security/security.h"
 
+static pthread_once_t logon_user_initialized = PTHREAD_ONCE_INIT;
+
+static HANDLE_CLOSE_CB _LogonUserHandleCloseCb;
+
+static BOOL LogonUserCloseHandle(HANDLE handle);
+
+static BOOL LogonUserIsHandled(HANDLE handle)
+{
+	WINPR_ACCESS_TOKEN* pLogonUser = (WINPR_ACCESS_TOKEN*) handle;
+
+	if (!pLogonUser || pLogonUser->Type != HANDLE_TYPE_ACCESS_TOKEN)
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static void LogonUserInitialize(void)
+{
+	_LogonUserHandleCloseCb.IsHandled = LogonUserIsHandled;
+	_LogonUserHandleCloseCb.CloseHandle = LogonUserCloseHandle;
+	RegisterHandleCloseCb(&_LogonUserHandleCloseCb);
+}
+
+BOOL LogonUserCloseHandle(HANDLE handle) {
+	WINPR_ACCESS_TOKEN *token = (WINPR_ACCESS_TOKEN *) handle;
+
+	if (!LogonUserIsHandled(handle))
+		return FALSE;
+
+	if (token->Username)
+		free(token->Username);
+
+	if (token->Domain)
+		free(token->Domain);
+
+	free(token);
+
+	return TRUE;
+}
+
 BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword,
 		DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken)
 {
 	struct passwd* pw;
 	WINPR_ACCESS_TOKEN* token;
+
+	if (pthread_once(&logon_user_initialized, LogonUserInitialize))
+		return FALSE;
 
 	if (!lpszUsername)
 		return FALSE;
