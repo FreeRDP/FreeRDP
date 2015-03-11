@@ -202,8 +202,6 @@ static CRITICAL_SECTION _HandleCreatorsLock;
 
 static pthread_once_t _HandleCreatorsInitialized = PTHREAD_ONCE_INIT;
 
-static HANDLE_CLOSE_CB _FileHandleCloseCb;
-
 static BOOL FileCloseHandle(HANDLE handle);
 
 static BOOL FileIsHandled(HANDLE handle)
@@ -255,6 +253,19 @@ BOOL FileCloseHandle(HANDLE handle) {
 	return TRUE;
 }
 
+static int FileGetFd(HANDLE handle)
+{
+	WINPR_NAMED_PIPE *file = (WINPR_NAMED_PIPE *)handle;
+
+	if (!FileIsHandled(handle))
+		return -1;
+
+	if (file->ServerMode)
+		return file->serverfd;
+	else
+		return file->clientfd;
+}
+
 static void _HandleCreatorsInit()
 {
 	/* NB: error management to be done outside of this function */
@@ -262,10 +273,6 @@ static void _HandleCreatorsInit()
 	_HandleCreators = (HANDLE_CREATOR**)calloc(HANDLE_CREATOR_MAX+1, sizeof(HANDLE_CREATOR*));
 	InitializeCriticalSection(&_HandleCreatorsLock);
 	assert(_HandleCreators != NULL);
-
-	_FileHandleCloseCb.IsHandled = FileIsHandled;
-	_FileHandleCloseCb.CloseHandle = FileCloseHandle;
-	RegisterHandleCloseCb(&_FileHandleCloseCb);
 }
 
 /**
@@ -409,6 +416,10 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 	s.sun_family = AF_UNIX;
 	strcpy(s.sun_path, pNamedPipe->lpFilePath);
 	status = connect(pNamedPipe->clientfd, (struct sockaddr*) &s, sizeof(struct sockaddr_un));
+
+	pNamedPipe->cb.IsHandled = FileIsHandled;
+	pNamedPipe->cb.CloseHandle = FileCloseHandle;
+	pNamedPipe->cb.GetFd = FileGetFd;
 
 	if (status != 0)
 	{
