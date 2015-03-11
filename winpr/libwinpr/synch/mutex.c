@@ -28,11 +28,53 @@
 #ifndef _WIN32
 
 #include "../handle/handle.h"
+static pthread_once_t mutex_initialized = PTHREAD_ONCE_INIT;
+
+static HANDLE_CLOSE_CB _MutexHandleCloseCb;
+
+static BOOL MutexCloseHandle(HANDLE handle);
+
+static BOOL MutexIsHandled(HANDLE handle)
+{
+	WINPR_TIMER* pMutex = (WINPR_TIMER*) handle;
+
+	if (!pMutex || pMutex->Type != HANDLE_TYPE_MUTEX)
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static void MutexInitialize(void)
+{
+	_MutexHandleCloseCb.IsHandled = MutexIsHandled;
+	_MutexHandleCloseCb.CloseHandle = MutexCloseHandle;
+	RegisterHandleCloseCb(&_MutexHandleCloseCb);
+}
+
+BOOL MutexCloseHandle(HANDLE handle) {
+	WINPR_MUTEX *mutex = (WINPR_MUTEX *) handle;
+
+	if (!MutexIsHandled(handle))
+		return FALSE;
+
+	if(pthread_mutex_destroy(&mutex->mutex))
+		return FALSE;
+
+	free(handle);
+
+	return TRUE;
+}
 
 HANDLE CreateMutexW(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner, LPCWSTR lpName)
 {
 	HANDLE handle = NULL;
 	WINPR_MUTEX* mutex;
+
+	if (pthrea_once(&mutex_initialized, MutexInitialize))
+		return NULL;
 
 	mutex = (WINPR_MUTEX*) malloc(sizeof(WINPR_MUTEX));
 
