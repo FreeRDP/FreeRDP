@@ -1359,13 +1359,18 @@ static void wf_cliprdr_array_ensure_capacity(wfClipboard* clipboard)
 		WCHAR **new_name;
 
 		new_size = clipboard->file_array_size * 2;
+
 		new_fd = (FILEDESCRIPTORW**) realloc(clipboard->fileDescriptor, new_size * sizeof(FILEDESCRIPTORW*));
+		if (new_fd)
+			clipboard->fileDescriptor = new_fd;
+
 		new_name = (WCHAR**) realloc(clipboard->file_names, new_size * sizeof(WCHAR*));
+		if (new_name)
+			clipboard->file_names = new_name;
+
 		if (!new_fd || !new_name)
 			return;
 
-		clipboard->fileDescriptor = new_fd;
-		clipboard->file_names = new_name;
 		clipboard->file_array_size *= new_size;
 	}
 }
