@@ -545,7 +545,6 @@ static char** freerdp_command_line_parse_comma_separated_values_offset(char* lis
 {
 	char** p;
 	char** t;
-	int s;
 
 	p = freerdp_command_line_parse_comma_separated_values(list, count);
 	if (!p)

@@ -75,12 +75,13 @@ void MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message)
 	{
 		int old_capacity;
 		int new_capacity;
+		wMessage* new_arr;
 
 		old_capacity = queue->capacity;
 		new_capacity = queue->capacity * 2;
 
 		new_arr = (wMessage*) realloc(queue->array, sizeof(wMessage) * new_capacity);
-		if (!new-arr)
+		if (!new_arr)
 			return;
 		queue->array = new_arr;
 		queue->capacity = new_capacity;
