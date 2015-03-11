@@ -43,90 +43,16 @@
 
 #include "../handle/handle.h"
 
-/* _HandleCreators is a NULL-terminated array with a maximun of HANDLE_CREATOR_MAX HANDLE_CREATOR */
-#define HANDLE_CLOSE_CB_MAX 128
-static HANDLE_CLOSE_CB** _HandleCloseCbs = NULL;
-static CRITICAL_SECTION _HandleCloseCbsLock;
-
-static pthread_once_t _HandleCloseCbsInitialized = PTHREAD_ONCE_INIT;
-static void _HandleCloseCbsInit()
-{
-	/* NB: error management to be done outside of this function */
-	assert(_HandleCloseCbs == NULL);
-	_HandleCloseCbs = (HANDLE_CLOSE_CB**)calloc(HANDLE_CLOSE_CB_MAX+1, sizeof(HANDLE_CLOSE_CB*));
-	InitializeCriticalSection(&_HandleCloseCbsLock);
-	assert(_HandleCloseCbs != NULL);
-}
-
-/**
- * Returns TRUE on success, FALSE otherwise.
- */
-BOOL RegisterHandleCloseCb(HANDLE_CLOSE_CB* pHandleCloseCb)
-{
-	int i;
-
-	if (pthread_once(&_HandleCloseCbsInitialized, _HandleCloseCbsInit) != 0)
-	{
-		return FALSE;
-	}
-
-	if (_HandleCloseCbs == NULL)
-	{
-		return FALSE;
-	}
-
-	EnterCriticalSection(&_HandleCloseCbsLock);
-
-	for (i=0; i<HANDLE_CLOSE_CB_MAX; i++)
-	{
-		if (_HandleCloseCbs[i] == NULL)
-		{
-			_HandleCloseCbs[i] = pHandleCloseCb;
-			LeaveCriticalSection(&_HandleCloseCbsLock);
-			return TRUE;
-		}
-	}
-
-	LeaveCriticalSection(&_HandleCloseCbsLock);
-	return FALSE;
-}
-
-
-
 BOOL CloseHandle(HANDLE hObject)
 {
-	int i;
 	ULONG Type;
-	PVOID Object;
+	WINPR_HANDLE *Object;
 
-	if (!winpr_Handle_GetInfo(hObject, &Type, &Object))
+	if (!winpr_Handle_GetInfo(hObject, &Type, (PVOID*)&Object))
 		return FALSE;
 
-	if (pthread_once(&_HandleCloseCbsInitialized, _HandleCloseCbsInit) != 0)
-	{
-		return FALSE;
-	}
-
-	if (_HandleCloseCbs == NULL)
-	{
-		return FALSE;
-	}
-
-	EnterCriticalSection(&_HandleCloseCbsLock);
-
-	for (i=0; _HandleCloseCbs[i] != NULL; i++)
-	{
-		HANDLE_CLOSE_CB* close_cb = (HANDLE_CLOSE_CB*)_HandleCloseCbs[i];
-
-		if (close_cb && close_cb->IsHandled(hObject))
-		{
-			BOOL result = close_cb->CloseHandle(hObject);
-			LeaveCriticalSection(&_HandleCloseCbsLock);
-			return result;
-		}
-	}
-
-	LeaveCriticalSection(&_HandleCloseCbsLock);
+	if (Object && Object->cb.CloseHandle)
+		return Object->cb.CloseHandle(hObject);
 
 	return FALSE;
 }
