@@ -93,9 +93,6 @@
 #include "../log.h"
 #define TAG WINPR_TAG("thread")
 
-static pthread_once_t thread_initialized = PTHREAD_ONCE_INIT;
-
-static HANDLE_CLOSE_CB _ThreadHandleCloseCb;
 static wListDictionary* thread_list = NULL;
 
 static BOOL ThreadCloseHandle(HANDLE handle);
@@ -114,11 +111,44 @@ static BOOL ThreadIsHandled(HANDLE handle)
 	return TRUE;
 }
 
-static void ThreadInitialize(void)
+static int ThreadGetFd(HANDLE handle)
 {
-	_ThreadHandleCloseCb.IsHandled = ThreadIsHandled;
-	_ThreadHandleCloseCb.CloseHandle = ThreadCloseHandle;
-	RegisterHandleCloseCb(&_ThreadHandleCloseCb);
+	WINPR_THREAD* pThread = (WINPR_THREAD*) handle;
+
+	if (!ThreadIsHandled(handle))
+		return -1;
+
+	return pThread->pipe_fd[0];
+}
+
+static DWORD ThreadCleanupHandle(HANDLE handle)
+{
+	WINPR_THREAD* thread = (WINPR_THREAD*) handle;
+
+	if (!ThreadIsHandled(handle))
+		return WAIT_FAILED;
+
+	pthread_mutex_lock(&thread->mutex);
+
+	if (!thread->joined)
+	{
+		int status;
+		status = pthread_join(thread->thread, NULL);
+
+		if (status != 0)
+		{
+			WLog_ERR(TAG, "pthread_join failure: [%d] %s",
+					status, strerror(status));
+			pthread_mutex_unlock(&thread->mutex);
+			return WAIT_FAILED;
+		}
+		else
+			thread->joined = TRUE;
+	}
+
+	pthread_mutex_unlock(&thread->mutex);
+
+	return WAIT_OBJECT_0;
 }
 
 static void dump_thread(WINPR_THREAD* thread)
@@ -305,11 +335,14 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 	if (!thread)
 		return NULL;
 
-	pthread_once(&thread_initialized, ThreadInitialize);
 	thread->dwStackSize = dwStackSize;
 	thread->lpParameter = lpParameter;
 	thread->lpStartAddress = lpStartAddress;
 	thread->lpThreadAttributes = lpThreadAttributes;
+	thread->cb.IsHandled = ThreadIsHandled;
+	thread->cb.CloseHandle = ThreadCloseHandle;
+	thread->cb.GetFd = ThreadGetFd;
+	thread->cb.CleanupHandle = ThreadCleanupHandle;
 
 #if defined(WITH_DEBUG_THREADS)
 	thread->create_stack = winpr_backtrace(20);
