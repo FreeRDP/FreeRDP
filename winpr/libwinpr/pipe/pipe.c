@@ -42,6 +42,7 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <assert.h>
+#include <pthread.h>
 
 #include "pipe.h"
 
@@ -70,6 +71,47 @@ typedef struct _NamedPipeServerSocketEntry
 	int references;
 } NamedPipeServerSocketEntry;
 
+static pthread_once_t pipe_initialized = PTHREAD_ONCE_INIT;
+
+static HANDLE_CLOSE_CB _PipeHandleCloseCb;
+
+static BOOL PipeCloseHandle(HANDLE handle);
+
+static BOOL PipeIsHandled(HANDLE handle)
+{
+	WINPR_PIPE* pPipe = (WINPR_PIPE*) handle;
+
+	if (!pPipe || pPipe->Type != HANDLE_TYPE_ANONYMOUS_PIPE)
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static void PipeInitialize(void)
+{
+	_PipeHandleCloseCb.IsHandled = PipeIsHandled;
+	_PipeHandleCloseCb.CloseHandle = PipeCloseHandle;
+	RegisterHandleCloseCb(&_PipeHandleCloseCb);
+}
+
+BOOL PipeCloseHandle(HANDLE handle) {
+	WINPR_PIPE* pipe = (WINPR_PIPE *)handle;
+
+	if (!PipeIsHandled(handle))
+		return FALSE;
+
+	if (pipe->fd != -1)
+	{
+		close(pipe->fd);
+	}
+
+	free(handle);
+	return TRUE;
+}
+
 static void InitWinPRPipeModule()
 {
 	if (g_NamedPipeServerSockets)
@@ -90,6 +132,9 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
 	WINPR_PIPE* pWritePipe;
 	pipe_fd[0] = -1;
 	pipe_fd[1] = -1;
+
+	if (pthread_once(&pipe_initialized, PipeInitialize))
+		return FALSE;
 
 	if (pipe(pipe_fd) < 0)
 	{
