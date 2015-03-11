@@ -201,6 +201,60 @@ static HANDLE_CREATOR** _HandleCreators = NULL;
 static CRITICAL_SECTION _HandleCreatorsLock;
 
 static pthread_once_t _HandleCreatorsInitialized = PTHREAD_ONCE_INIT;
+
+static HANDLE_CLOSE_CB _FileHandleCloseCb;
+
+static BOOL FileCloseHandle(HANDLE handle);
+
+static BOOL FileIsHandled(HANDLE handle)
+{
+	WINPR_NAMED_PIPE* pFile = (WINPR_NAMED_PIPE*) handle;
+
+	if (!pFile || pFile->Type != HANDLE_TYPE_NAMED_PIPE)
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+BOOL FileCloseHandle(HANDLE handle) {
+	WINPR_NAMED_PIPE* pNamedPipe = (WINPR_NAMED_PIPE*) handle;
+
+
+	if (!FileIsHandled(handle))
+		return FALSE;
+
+	if (pNamedPipe->clientfd != -1)
+	{
+		//WLOG_DBG(TAG, "closing clientfd %d", pNamedPipe->clientfd);
+		close(pNamedPipe->clientfd);
+	}
+
+	if (pNamedPipe->serverfd != -1)
+	{
+		//WLOG_DBG(TAG, "closing serverfd %d", pNamedPipe->serverfd);
+		close(pNamedPipe->serverfd);
+	}
+
+	if (pNamedPipe->pfnUnrefNamedPipe)
+		pNamedPipe->pfnUnrefNamedPipe(pNamedPipe);
+
+	if (pNamedPipe->lpFileName)
+		free((void*)pNamedPipe->lpFileName);
+
+	if (pNamedPipe->lpFilePath)
+		free((void*)pNamedPipe->lpFilePath);
+
+	if (pNamedPipe->name)
+		free((void*)pNamedPipe->name);
+
+	free(pNamedPipe);
+
+	return TRUE;
+}
+
 static void _HandleCreatorsInit()
 {
 	/* NB: error management to be done outside of this function */
@@ -208,6 +262,10 @@ static void _HandleCreatorsInit()
 	_HandleCreators = (HANDLE_CREATOR**)calloc(HANDLE_CREATOR_MAX+1, sizeof(HANDLE_CREATOR*));
 	InitializeCriticalSection(&_HandleCreatorsLock);
 	assert(_HandleCreators != NULL);
+
+	_FileHandleCloseCb.IsHandled = FileIsHandled;
+	_FileHandleCloseCb.CloseHandle = FileCloseHandle;
+	RegisterHandleCloseCb(&_FileHandleCloseCb);
 }
 
 /**
