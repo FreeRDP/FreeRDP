@@ -144,7 +144,7 @@ int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, pEventHandler Eve
 				event->EventHandlers[index] = NULL;
 				event->EventHandlerCount--;
 				MoveMemory(&event->EventHandlers[index], &event->EventHandlers[index + 1],
-						(MAX_EVENT_HANDLERS - index - 1) * sizeof(wEventType));
+						(MAX_EVENT_HANDLERS - index - 1) * sizeof(pEventHandler));
 				status = 1;
 			}
 		}
