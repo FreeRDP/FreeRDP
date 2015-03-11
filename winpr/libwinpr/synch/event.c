@@ -48,10 +48,6 @@
 
 CRITICAL_SECTION cs = { NULL, 0, 0, NULL, NULL, 0 };
 
-static pthread_once_t event_initialized = PTHREAD_ONCE_INIT;
-
-static HANDLE_CLOSE_CB _EventHandleCloseCb;
-
 static BOOL EventCloseHandle(HANDLE handle);
 
 static BOOL EventIsHandled(HANDLE handle)
@@ -67,11 +63,12 @@ static BOOL EventIsHandled(HANDLE handle)
 	return TRUE;
 }
 
-static void EventInitialize(void)
-{
-	_EventHandleCloseCb.IsHandled = EventIsHandled;
-	_EventHandleCloseCb.CloseHandle = EventCloseHandle;
-	RegisterHandleCloseCb(&_EventHandleCloseCb);
+static int EventGetFd(HANDLE handle) {
+	WINPR_EVENT *event = (WINPR_EVENT *)handle;
+	if (!EventIsHandled(handle))
+		return -1;
+
+	return event->pipe_fd[0];
 }
 
 BOOL EventCloseHandle(HANDLE handle) {
@@ -103,14 +100,14 @@ HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 {
 	WINPR_EVENT* event;
 
-	if (pthread_once(&event_initialized, EventInitialize))
-		return NULL;
-
 	event = (WINPR_EVENT*) calloc(1, sizeof(WINPR_EVENT));
 	if (event)
 	{
 		event->bAttached = FALSE;
 		event->bManualReset = bManualReset;
+		event->cb.IsHandled = EventIsHandled;
+		event->cb.CloseHandle = EventCloseHandle;
+		event->cb.GetFd = EventGetFd;
 
 		if (!event->bManualReset)
 		{
@@ -279,7 +276,7 @@ HANDLE CreateFileDescriptorEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL 
 #ifndef _WIN32
 	WINPR_EVENT* event;
 	HANDLE handle = NULL;
-	event = (WINPR_EVENT*) malloc(sizeof(WINPR_EVENT));
+	event = (WINPR_EVENT*) calloc(1, sizeof(WINPR_EVENT));
 
 	if (event)
 	{
@@ -287,6 +284,9 @@ HANDLE CreateFileDescriptorEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL 
 		event->bManualReset = bManualReset;
 		event->pipe_fd[0] = FileDescriptor;
 		event->pipe_fd[1] = -1;
+		event->cb.CloseHandle = EventCloseHandle;
+		event->cb.GetFd = EventGetFd;
+		event->cb.IsHandled = EventIsHandled;
 		WINPR_HANDLE_SET_TYPE(event, HANDLE_TYPE_EVENT);
 		handle = (HANDLE) event;
 	}
