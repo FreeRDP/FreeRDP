@@ -48,11 +48,65 @@
 
 CRITICAL_SECTION cs = { NULL, 0, 0, NULL, NULL, 0 };
 
+static pthread_once_t event_initialized = PTHREAD_ONCE_INIT;
+
+static HANDLE_CLOSE_CB _EventHandleCloseCb;
+
+static BOOL EventCloseHandle(HANDLE handle);
+
+static BOOL EventIsHandled(HANDLE handle)
+{
+	WINPR_TIMER* pEvent = (WINPR_TIMER*) handle;
+
+	if (!pEvent || pEvent->Type != HANDLE_TYPE_EVENT)
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static void EventInitialize(void)
+{
+	_EventHandleCloseCb.IsHandled = EventIsHandled;
+	_EventHandleCloseCb.CloseHandle = EventCloseHandle;
+	RegisterHandleCloseCb(&_EventHandleCloseCb);
+}
+
+BOOL EventCloseHandle(HANDLE handle) {
+	WINPR_EVENT* event = (WINPR_EVENT*) handle;
+
+	if (!EventIsHandled(handle))
+		return FALSE;
+
+    if (!event->bAttached)
+    {
+        if (event->pipe_fd[0] != -1)
+        {
+        	close(event->pipe_fd[0]);
+        	event->pipe_fd[0] = -1;
+        }
+
+        if (event->pipe_fd[1] != -1)
+        {
+        	close(event->pipe_fd[1]);
+        	event->pipe_fd[1] = -1;
+        }
+    }
+
+    free(event);
+    return TRUE;
+}
+
 HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCWSTR lpName)
 {
 	WINPR_EVENT* event;
-	event = (WINPR_EVENT*) calloc(1, sizeof(WINPR_EVENT));
 
+	if (pthread_once(&event_initialized, EventInitialize))
+		return NULL;
+
+	event = (WINPR_EVENT*) calloc(1, sizeof(WINPR_EVENT));
 	if (event)
 	{
 		event->bAttached = FALSE;
