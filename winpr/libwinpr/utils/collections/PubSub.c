@@ -61,7 +61,7 @@ wEventType* PubSub_FindEventType(wPubSub* pubSub, const char* EventName)
 	int index;
 	wEventType* event = NULL;
 
-	for (index = 0; pubSub->count; index++)
+	for (index = 0; index < pubSub->count; index++)
 	{
 		if (strcmp(pubSub->events[index].EventName, EventName) == 0)
 		{
