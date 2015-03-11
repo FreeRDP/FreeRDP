@@ -116,7 +116,7 @@ HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lIniti
 	HANDLE handle;
 	WINPR_SEMAPHORE* semaphore;
 
-	semaphore = (WINPR_SEMAPHORE*) malloc(sizeof(WINPR_SEMAPHORE));
+	semaphore = (WINPR_SEMAPHORE*) calloc(1, sizeof(WINPR_SEMAPHORE));
 
 	if (!semaphore)
 		return NULL;

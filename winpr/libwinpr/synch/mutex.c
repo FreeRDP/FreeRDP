@@ -73,7 +73,7 @@ HANDLE CreateMutexW(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner,
 	HANDLE handle = NULL;
 	WINPR_MUTEX* mutex;
 
-	mutex = (WINPR_MUTEX*) malloc(sizeof(WINPR_MUTEX));
+	mutex = (WINPR_MUTEX*) calloc(1, sizeof(WINPR_MUTEX));
 
 	if (mutex)
 	{

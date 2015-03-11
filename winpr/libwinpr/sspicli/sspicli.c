@@ -123,12 +123,10 @@ BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword,
 	if (!lpszUsername)
 		return FALSE;
 
-	token = (WINPR_ACCESS_TOKEN*) malloc(sizeof(WINPR_ACCESS_TOKEN));
+	token = (WINPR_ACCESS_TOKEN*) calloc(1, sizeof(WINPR_ACCESS_TOKEN));
 
 	if (!token)
 		return FALSE;
-
-	ZeroMemory(token, sizeof(WINPR_ACCESS_TOKEN));
 
 	WINPR_HANDLE_SET_TYPE(token, HANDLE_TYPE_ACCESS_TOKEN);
 

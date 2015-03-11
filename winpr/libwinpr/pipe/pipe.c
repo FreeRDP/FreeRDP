@@ -138,8 +138,8 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
 		return FALSE;
 	}
 
-	pReadPipe = (WINPR_PIPE*) malloc(sizeof(WINPR_PIPE));
-	pWritePipe = (WINPR_PIPE*) malloc(sizeof(WINPR_PIPE));
+	pReadPipe = (WINPR_PIPE*) calloc(1, sizeof(WINPR_PIPE));
+	pWritePipe = (WINPR_PIPE*) calloc(1, sizeof(WINPR_PIPE));
 
 	if (!pReadPipe || !pWritePipe)
 	{
