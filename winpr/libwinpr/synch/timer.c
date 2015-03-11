@@ -42,10 +42,6 @@
 #include "../log.h"
 #define TAG WINPR_TAG("synch.timer")
 
-static pthread_once_t timer_initialized = PTHREAD_ONCE_INIT;
-
-static HANDLE_CLOSE_CB _TimerHandleCloseCb;
-
 static BOOL TimerCloseHandle(HANDLE handle);
 
 static BOOL TimerIsHandled(HANDLE handle)
@@ -61,11 +57,45 @@ static BOOL TimerIsHandled(HANDLE handle)
 	return TRUE;
 }
 
-static void TimerInitialize(void)
+static int TimerGetFd(HANDLE handle)
 {
-	_TimerHandleCloseCb.IsHandled = TimerIsHandled;
-	_TimerHandleCloseCb.CloseHandle = TimerCloseHandle;
-	RegisterHandleCloseCb(&_TimerHandleCloseCb);
+	WINPR_TIMER *timer = (WINPR_TIMER *)handle;
+
+	if (!TimerIsHandled(handle))
+		return -1;
+
+	return timer->fd;
+}
+
+static DWORD  TimerCleanupHandle(HANDLE handle)
+{
+	int length;
+	UINT64 expirations;
+	WINPR_TIMER *timer = (WINPR_TIMER *)handle;
+
+	if (!TimerIsHandled(handle))
+		return WAIT_FAILED;
+
+	length = read(timer->fd, (void *) &expirations, sizeof(UINT64));
+
+	if (length != 8)
+	{
+		if (length == -1)
+		{
+			if (errno == ETIMEDOUT)
+				return WAIT_TIMEOUT;
+
+			WLog_ERR(TAG, "timer read() failure [%d] %s", errno, strerror(errno));
+		}
+		else
+		{
+			WLog_ERR(TAG, "timer read() failure - incorrect number of bytes read");
+		}
+
+		return WAIT_FAILED;
+	}
+
+	return WAIT_OBJECT_0;
 }
 
 BOOL TimerCloseHandle(HANDLE handle) {
@@ -188,9 +218,6 @@ HANDLE CreateWaitableTimerA(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManua
 	HANDLE handle = NULL;
 	WINPR_TIMER* timer;
 
-	if (pthread_once(&timer_initialized, TimerInitialize))
-		return NULL;
-
 	timer = (WINPR_TIMER*) calloc(1, sizeof(WINPR_TIMER));
 	if (timer)
 	{
@@ -202,6 +229,10 @@ HANDLE CreateWaitableTimerA(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManua
 		timer->pfnCompletionRoutine = NULL;
 		timer->lpArgToCompletionRoutine = NULL;
 		timer->bInit = FALSE;
+		timer->cb.GetFd = TimerGetFd;
+		timer->cb.CloseHandle = TimerCloseHandle;
+		timer->cb.IsHandled = TimerIsHandled;
+		timer->cb.CleanupHandle = TimerCleanupHandle;
 	}
 
 	return handle;
