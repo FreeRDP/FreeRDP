@@ -42,6 +42,50 @@
 #include "../log.h"
 #define TAG WINPR_TAG("synch.timer")
 
+static pthread_once_t timer_initialized = PTHREAD_ONCE_INIT;
+
+static HANDLE_CLOSE_CB _TimerHandleCloseCb;
+
+static BOOL TimerCloseHandle(HANDLE handle);
+
+static BOOL TimerIsHandled(HANDLE handle)
+{
+	WINPR_TIMER* pTimer = (WINPR_TIMER*) handle;
+
+	if (!pTimer || pTimer->Type != HANDLE_TYPE_TIMER)
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static void TimerInitialize(void)
+{
+	_TimerHandleCloseCb.IsHandled = TimerIsHandled;
+	_TimerHandleCloseCb.CloseHandle = TimerCloseHandle;
+	RegisterHandleCloseCb(&_TimerHandleCloseCb);
+}
+
+BOOL TimerCloseHandle(HANDLE handle) {
+	WINPR_TIMER* timer;
+	timer = (WINPR_TIMER*) handle;
+
+  if (!TimerIsHandled(handle))
+    return FALSE;
+
+#ifdef __linux__
+
+	if (timer->fd != -1)
+		close(timer->fd);
+
+#endif
+	free(timer);
+
+  return TRUE;
+}
+
 #ifdef WITH_POSIX_TIMER
 
 static BOOL g_WaitableTimerSignalHandlerInstalled = FALSE;
@@ -143,8 +187,11 @@ HANDLE CreateWaitableTimerA(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManua
 {
 	HANDLE handle = NULL;
 	WINPR_TIMER* timer;
-	timer = (WINPR_TIMER*) malloc(sizeof(WINPR_TIMER));
 
+	if (pthread_once(&timer_initialized, TimerInitialize))
+		return NULL;
+
+	timer = (WINPR_TIMER*) calloc(1, sizeof(WINPR_TIMER));
 	if (timer)
 	{
 		WINPR_HANDLE_SET_TYPE(timer, HANDLE_TYPE_TIMER);
