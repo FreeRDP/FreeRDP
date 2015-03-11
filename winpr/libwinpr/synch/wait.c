@@ -418,7 +418,11 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 			else
 				idx = index;
 
-			winpr_Handle_GetInfo(lpHandles[idx], &Type, &Object);
+			if (!winpr_Handle_GetInfo(lpHandles[idx], &Type, &Object))
+			{
+					WLog_ERR(TAG, "invalid hHandle.");
+					return WAIT_FAILED;
+			}
 
 			fd = winpr_Handle_getFd(lpHandles[idx]);
 
