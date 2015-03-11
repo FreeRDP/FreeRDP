@@ -34,11 +34,71 @@
 #include "../handle/handle.h"
 #include "../log.h"
 #define TAG WINPR_TAG("synch.semaphore")
+static pthread_once_t semaphore_initialized = PTHREAD_ONCE_INIT;
+
+static HANDLE_CLOSE_CB _SemaphoreHandleCloseCb;
+
+static BOOL SemaphoreCloseHandle(HANDLE handle);
+
+static BOOL SemaphoreIsHandled(HANDLE handle)
+{
+	WINPR_TIMER* pSemaphore = (WINPR_TIMER*) handle;
+
+	if (!pSemaphore || pSemaphore->Type != HANDLE_TYPE_SEMAPHORE)
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static void SemaphoreInitialize(void)
+{
+	_SemaphoreHandleCloseCb.IsHandled = SemaphoreIsHandled;
+	_SemaphoreHandleCloseCb.CloseHandle = SemaphoreCloseHandle;
+	RegisterHandleCloseCb(&_SemaphoreHandleCloseCb);
+}
+
+BOOL SemaphoreCloseHandle(HANDLE handle) {
+	WINPR_SEMAPHORE *semaphore = (WINPR_SEMAPHORE *) handle;
+
+	if (!SemaphoreIsHandled(handle))
+		return FALSE;
+
+#ifdef WINPR_PIPE_SEMAPHORE
+
+	if (semaphore->pipe_fd[0] != -1)
+	{
+		close(semaphore->pipe_fd[0]);
+		semaphore->pipe_fd[0] = -1;
+
+		if (semaphore->pipe_fd[1] != -1)
+		{
+			close(semaphore->pipe_fd[1]);
+			semaphore->pipe_fd[1] = -1;
+		}
+	}
+
+#else
+#if defined __APPLE__
+	semaphore_destroy(mach_task_self(), *((winpr_sem_t*) semaphore->sem));
+#else
+	sem_destroy((winpr_sem_t*) semaphore->sem);
+#endif
+#endif
+	free(semaphore);
+	return TRUE;
+}
 
 HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCWSTR lpName)
 {
 	HANDLE handle;
 	WINPR_SEMAPHORE* semaphore;
+
+	if (pthread_once(&semaphore_initialized, SemaphoreInitialize))
+		return NULL;
+
 	semaphore = (WINPR_SEMAPHORE*) malloc(sizeof(WINPR_SEMAPHORE));
 
 	if (!semaphore)
