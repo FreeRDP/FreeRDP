@@ -545,6 +545,7 @@ static BOOL xf_event_FocusOut(xfContext* xfc, XEvent* event, BOOL app)
 	if (event->xfocus.mode == NotifyWhileGrabbed)
 		XUngrabKeyboard(xfc->display, CurrentTime);
 
+	xf_keyboard_release_all_keypress(xfc);
 	xf_keyboard_clear(xfc);
 
 	if (app)
