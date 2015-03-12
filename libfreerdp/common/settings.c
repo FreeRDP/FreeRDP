@@ -138,6 +138,9 @@ int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, char* previous, char*
 
 void freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device)
 {
+	if (!settings->DeviceArray)
+		return;
+
 	if (settings->DeviceArraySize < (settings->DeviceCount + 1))
 	{
 		settings->DeviceArraySize *= 2;
@@ -391,6 +394,9 @@ void freerdp_device_collection_free(rdpSettings* settings)
 
 void freerdp_static_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel)
 {
+	if (!settings->StaticChannelArray)
+		return;
+
 	if (settings->StaticChannelArraySize < (settings->StaticChannelCount + 1))
 	{
 		settings->StaticChannelArraySize *= 2;
@@ -471,6 +477,9 @@ void freerdp_static_channel_collection_free(rdpSettings* settings)
 
 void freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel)
 {
+	if (!settings->DynamicChannelArray)
+		return;
+
 	if (settings->DynamicChannelArraySize < (settings->DynamicChannelCount + 1))
 	{
 		settings->DynamicChannelArraySize *= 2;
