@@ -450,7 +450,7 @@ static void audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 
 static COMMAND_LINE_ARGUMENT_A audin_pulse_args[] =
 {
-	{ "audio-dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "audio device name" },
+	{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "audio device name" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
@@ -461,7 +461,7 @@ static void audin_pulse_parse_addin_args(AudinPulseDevice* device, ADDIN_ARGV* a
 	COMMAND_LINE_ARGUMENT_A* arg;
 	AudinPulseDevice* pulse = (AudinPulseDevice*) device;
 
-	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
+	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
 
 	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv, audin_pulse_args, flags, pulse, NULL, NULL);
 
@@ -474,7 +474,7 @@ static void audin_pulse_parse_addin_args(AudinPulseDevice* device, ADDIN_ARGV* a
 
 		CommandLineSwitchStart(arg)
 
-		CommandLineSwitchCase(arg, "audio-dev")
+		CommandLineSwitchCase(arg, "dev")
 		{
 			pulse->device_name = _strdup(arg->Value);
 		}

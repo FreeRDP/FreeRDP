@@ -64,7 +64,7 @@ struct rdpsnd_oss_plugin {
 
 #define OSS_LOG_ERR(_text, _error) \
 	if (_error != 0) \
-		WLog_ERR(TAG, "%s: %i - %s\n", _text, _error, strerror(_error));
+		WLog_ERR(TAG, "%s: %i - %s", _text, _error, strerror(_error));
 
 
 static int rdpsnd_oss_get_format(AUDIO_FORMAT *format) {
@@ -140,16 +140,16 @@ static void rdpsnd_oss_set_format(rdpsndDevicePlugin *device, AUDIO_FORMAT *form
 
 	tmp = rdpsnd_oss_get_format(format);
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_SETFMT, &tmp) == -1)
-		OSS_LOG_ERR("SNDCTL_DSP_SETFMT failed.", errno);
+		OSS_LOG_ERR("SNDCTL_DSP_SETFMT failed", errno);
 	tmp = format->nChannels;
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_CHANNELS, &tmp) == -1)
-		OSS_LOG_ERR("SNDCTL_DSP_CHANNELS failed.", errno);
+		OSS_LOG_ERR("SNDCTL_DSP_CHANNELS failed", errno);
 	tmp = format->nSamplesPerSec;
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_SPEED, &tmp) == -1)
-		OSS_LOG_ERR("SNDCTL_DSP_SPEED failed.", errno);
+		OSS_LOG_ERR("SNDCTL_DSP_SPEED failed", errno);
 	tmp = format->nBlockAlign;
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_SETFRAGMENT, &tmp) == -1)
-		OSS_LOG_ERR("SNDCTL_DSP_SETFRAGMENT failed.", errno);
+		OSS_LOG_ERR("SNDCTL_DSP_SETFRAGMENT failed", errno);
 }
 
 static void rdpsnd_oss_open_mixer(rdpsndOssPlugin *oss) {
@@ -183,6 +183,7 @@ static void rdpsnd_oss_open(rdpsndDevicePlugin *device, AUDIO_FORMAT *format, in
 
 	if (oss->dev_unit != -1)
 		snprintf(dev_name, PATH_MAX - 1, "/dev/dsp%i", oss->dev_unit);
+	WLog_INFO(TAG, "open: %s", dev_name);
 	if ((oss->pcm_handle = open(dev_name, O_WRONLY)) < 0) {
 		OSS_LOG_ERR("sound dev open failed", errno);
 		oss->pcm_handle = -1;
@@ -192,7 +193,7 @@ static void rdpsnd_oss_open(rdpsndDevicePlugin *device, AUDIO_FORMAT *format, in
 	int mask = 0;
 
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_GETCAPS, &mask) == -1) {
-		OSS_LOG_ERR("SNDCTL_DSP_GETCAPS failed, try ignory.", errno);
+		OSS_LOG_ERR("SNDCTL_DSP_GETCAPS failed, try ignory", errno);
 	} else if ((mask & PCM_CAP_OUTPUT) == 0) {
 		OSS_LOG_ERR("Device does not supports playback", EOPNOTSUPP);
 		close(oss->pcm_handle);
@@ -201,7 +202,7 @@ static void rdpsnd_oss_open(rdpsndDevicePlugin *device, AUDIO_FORMAT *format, in
 	}
 #endif
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_GETFMTS, &oss->supported_formats) == -1) {
-		OSS_LOG_ERR("SNDCTL_DSP_GETFMTS failed.", errno);
+		OSS_LOG_ERR("SNDCTL_DSP_GETFMTS failed", errno);
 		close(oss->pcm_handle);
 		oss->pcm_handle = -1;
 		return;
@@ -363,7 +364,7 @@ static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin *device, ADDIN_ARGV *a
 	COMMAND_LINE_ARGUMENT_A *arg;
 	rdpsndOssPlugin *oss = (rdpsndOssPlugin*)device;
 
-	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
+	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
 
 	status = CommandLineParseArgumentsA(args->argc, (const char**)args->argv, rdpsnd_oss_args, flags, oss, NULL, NULL);
 	if (status < 0)
@@ -386,8 +387,7 @@ static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin *device, ADDIN_ARGV *a
 		}
 
 		CommandLineSwitchEnd(arg)
-	}
-	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 
 	return status;
 }
