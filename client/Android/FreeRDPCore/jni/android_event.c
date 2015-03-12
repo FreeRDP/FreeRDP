@@ -75,9 +75,16 @@ void android_push_event(freerdp * inst, ANDROID_EVENT* event)
 	androidContext* aCtx = (androidContext*)inst->context;
 	if (aCtx->event_queue->count >= aCtx->event_queue->size)
 	{
-		aCtx->event_queue->size = aCtx->event_queue->size * 2;
-		aCtx->event_queue->events = realloc((void*) aCtx->event_queue->events,
-				sizeof(ANDROID_EVENT*) * aCtx->event_queue->size);
+		int new_size;
+		int new_events;
+
+		new_size = aCtx->event_queue->size * 2;
+		new_events = realloc((void*) aCtx->event_queue->events,
+				sizeof(ANDROID_EVENT*) * new_size);
+		if (!new_events)
+			return;
+		aCtx->event_queue->events = new_events;
+		aCtx->event_queue->size = new_size;
 	}
 
 	aCtx->event_queue->events[(aCtx->event_queue->count)++] = event;

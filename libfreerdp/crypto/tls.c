@@ -22,6 +22,7 @@
 #endif
 
 #include <assert.h>
+#include <string.h>
 
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
@@ -924,7 +925,7 @@ BOOL tls_match_hostname(char *pattern, int pattern_length, char *hostname)
 {
 	if (strlen(hostname) == pattern_length)
 	{
-		if (memcmp((void*) hostname, (void*) pattern, pattern_length) == 0)
+		if (_strnicmp( hostname, pattern, pattern_length) == 0)
 			return TRUE;
 	}
 
@@ -932,7 +933,7 @@ BOOL tls_match_hostname(char *pattern, int pattern_length, char *hostname)
 	{
 		char* check_hostname = &hostname[strlen(hostname) - pattern_length + 1];
 
-		if (memcmp((void*) check_hostname, (void*) &pattern[1], pattern_length - 1) == 0)
+		if (_strnicmp( check_hostname, &pattern[1], pattern_length - 1) == 0)
 		{
 			return TRUE;
 		}
@@ -1000,8 +1001,15 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 
 		while (offset >= length)
 		{
-			length *= 2;
-			pemCert = (BYTE*) realloc(pemCert, length + 1);
+			int new_len;
+			BYTE *new_cert;
+
+			new_len = length * 2;
+			new_cert = (BYTE*) realloc(pemCert, new_len + 1);
+			if (!new_cert)
+				return -1;
+			length = new_len;
+			pemCert = new_cert;
 
 			status = BIO_read(bio, &pemCert[offset], length);
 

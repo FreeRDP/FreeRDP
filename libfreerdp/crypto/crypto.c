@@ -523,7 +523,7 @@ BOOL x509_verify_certificate(CryptoCert cert, char* certificate_store_path)
 
 	if (certificate_store_path != NULL)
 	{
-		X509_LOOKUP_add_dir(lookup, certificate_store_path, X509_FILETYPE_ASN1);
+		X509_LOOKUP_add_dir(lookup, certificate_store_path, X509_FILETYPE_PEM);
 	}
 
 	csc = X509_STORE_CTX_new();

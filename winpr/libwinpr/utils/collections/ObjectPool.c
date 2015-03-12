@@ -74,8 +74,15 @@ void ObjectPool_Return(wObjectPool* pool, void* obj)
 
 	if ((pool->size + 1) >= pool->capacity)
 	{
-		pool->capacity *= 2;
-		pool->array = (void**) realloc(pool->array, sizeof(void*) * pool->capacity);
+		int new_cap;
+		void **new_arr;
+
+		new_cap = pool->capacity * 2;
+		new_arr = (void**) realloc(pool->array, sizeof(void*) * new_cap);
+		if (!new_arr)
+			return;
+		pool->array = new_arr;
+		pool->capacity = new_cap;
 	}
 
 	pool->array[(pool->size)++] = obj;

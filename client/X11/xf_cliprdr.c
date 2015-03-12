@@ -403,8 +403,13 @@ static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
 		{
 			if (clipboard->incr_starts)
 			{
+				BYTE *new_data;
+
 				bytes_left = length * format_property / 8;
-				clipboard->incr_data = (BYTE*) realloc(clipboard->incr_data, clipboard->incr_data_length + bytes_left);
+				new_data = (BYTE*) realloc(clipboard->incr_data, clipboard->incr_data_length + bytes_left);
+				if (!new_data)
+					return FALSE;
+				clipboard->incr_data = new_data;
 				CopyMemory(clipboard->incr_data + clipboard->incr_data_length, data, bytes_left);
 				clipboard->incr_data_length += bytes_left;
 				XFree(data);

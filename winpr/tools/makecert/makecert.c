@@ -544,8 +544,19 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 
 			while (offset >= length)
 			{
-				length *= 2;
-				x509_str = (BYTE*) realloc(x509_str, length);
+				int new_len;
+				BYTE *new_str;
+
+				new_len = length * 2;
+				new_str = (BYTE*) realloc(x509_str, new_len);
+				if (!new_str)
+				{
+					status = -1;
+					break;
+				}
+
+				length = new_len;
+				x509_str = new_str;
 
 				status = BIO_read(bio, &x509_str[offset], length);
 
@@ -557,7 +568,7 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 
 			if (status < 0)
 			{
-			free(x509_str);
+				free(x509_str);
 				free(filename);
 				free(fullpath);
 				fclose (fp);
@@ -602,8 +613,19 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 
 			while (offset >= length)
 			{
-				length *= 2;
-				x509_str = (BYTE*) realloc(x509_str, length);
+				int new_len;
+				BYTE *new_str;
+
+				new_len = length * 2;
+				new_str = (BYTE*) realloc(x509_str, new_len);
+				if (!new_str)
+				{
+					status = -1;
+					break;
+				}
+
+				length = new_len;
+				x509_str = new_str;
 
 				status = BIO_read(bio, &x509_str[offset], length);
 
@@ -664,8 +686,19 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 
 				while (offset >= length)
 				{
-					length *= 2;
-					x509_str = (BYTE*) realloc(x509_str, length);
+					int new_len;
+					BYTE *new_str;
+
+					new_len = length * 2;
+					new_str = (BYTE*) realloc(x509_str, new_len);
+					if (!new_str)
+					{
+						status = -1;
+						break;
+					}
+
+					length = new_len;
+					x509_str = new_str;
 
 					status = BIO_read(bio, &x509_str[offset], length);
 
@@ -770,8 +803,19 @@ int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, char* pa
 
 		while (offset >= length)
 		{
-			length *= 2;
-			x509_str = (BYTE*) realloc(x509_str, length);
+			int new_len;
+			BYTE *new_str;
+
+			new_len = length * 2;
+			new_str = (BYTE*) realloc(x509_str, new_len);
+			if (!new_str)
+			{
+				status = -1;
+				break;
+			}
+
+			length = new_len;
+			x509_str = new_str;
 
 			status = BIO_read(bio, &x509_str[offset], length);
 
@@ -980,8 +1024,19 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 
 		while (offset >= length)
 		{
-			length *= 2;
-			x509_str = (BYTE*) realloc(x509_str, length + 1);
+			int new_len;
+			BYTE *new_str;
+
+			new_len = length * 2;
+			new_str = (BYTE*) realloc(x509_str, new_len);
+			if (!new_str)
+			{
+				status = -1;
+				break;
+			}
+
+			length = new_len;
+			x509_str = new_str;
 
 			status = BIO_read(bio, &x509_str[offset], length);
 

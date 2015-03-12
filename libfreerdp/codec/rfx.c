@@ -728,6 +728,8 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 	Stream_Read_UINT32(s, tilesDataSize); /* tilesDataSize (4 bytes) */
 
 	context->quants = (UINT32 *)realloc((void*) context->quants, context->numQuant * 10 * sizeof(UINT32));
+	if (!context->quants)
+		return FALSE;
 
 	quants = context->quants;
 
