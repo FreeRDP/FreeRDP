@@ -28,19 +28,62 @@
 #ifndef _WIN32
 
 #include "../handle/handle.h"
+static BOOL MutexCloseHandle(HANDLE handle);
+
+static BOOL MutexIsHandled(HANDLE handle)
+{
+	WINPR_TIMER* pMutex = (WINPR_TIMER*) handle;
+
+	if (!pMutex || pMutex->Type != HANDLE_TYPE_MUTEX)
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static int MutexGetFd(HANDLE handle)
+{
+	WINPR_MUTEX *mux = (WINPR_MUTEX *)handle;
+	if (!MutexIsHandled(handle))
+		return -1;
+
+	/* TODO: Mutex does not support file handles... */
+	(void)mux;
+	return -1;
+}
+
+BOOL MutexCloseHandle(HANDLE handle) {
+	WINPR_MUTEX *mutex = (WINPR_MUTEX *) handle;
+
+	if (!MutexIsHandled(handle))
+		return FALSE;
+
+	if(pthread_mutex_destroy(&mutex->mutex))
+		return FALSE;
+
+	free(handle);
+
+	return TRUE;
+}
 
 HANDLE CreateMutexW(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner, LPCWSTR lpName)
 {
 	HANDLE handle = NULL;
 	WINPR_MUTEX* mutex;
 
-	mutex = (WINPR_MUTEX*) malloc(sizeof(WINPR_MUTEX));
+	mutex = (WINPR_MUTEX*) calloc(1, sizeof(WINPR_MUTEX));
 
 	if (mutex)
 	{
 		pthread_mutex_init(&mutex->mutex, 0);
 
 		WINPR_HANDLE_SET_TYPE(mutex, HANDLE_TYPE_MUTEX);
+		mutex->cb.GetFd = MutexGetFd;
+		mutex->cb.CloseHandle = MutexCloseHandle;
+		mutex->cb.IsHandled = MutexIsHandled;
+
 		handle = (HANDLE) mutex;
 
 		if (bInitialOwner)
