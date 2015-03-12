@@ -37,9 +37,7 @@ struct _RDPSND_WAVE
 	UINT16 wTimeStampA;
 	UINT16 wTimeStampB;
 
-	UINT16 wLatency;
 	UINT16 wAudioLength;
-	UINT16 wPlaybackDelay;
 
 	UINT32 wLocalTimeA;
 	UINT32 wLocalTimeB;

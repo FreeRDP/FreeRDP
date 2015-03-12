@@ -61,7 +61,7 @@
 
 #ifndef _WIN32
 
-#include <alloca.h>
+#include <stdlib.h>
 #include <time.h>
 #include <sys/time.h>
 #include <sys/wait.h>

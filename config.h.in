@@ -51,6 +51,7 @@
 #cmakedefine WITH_GSTREAMER_0_10
 #cmakedefine WITH_WINMM
 #cmakedefine WITH_MACAUDIO
+#cmakedefine WITH_OSS
 #cmakedefine WITH_ALSA
 #cmakedefine WITH_PULSE
 #cmakedefine WITH_IOSAUDIO
