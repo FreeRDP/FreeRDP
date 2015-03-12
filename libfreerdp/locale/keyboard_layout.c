@@ -225,15 +225,24 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types)
 {
 	int num, length, i;
 	RDP_KEYBOARD_LAYOUT* layouts;
+	RDP_KEYBOARD_LAYOUT* new;
 
 	num = 0;
 	layouts = (RDP_KEYBOARD_LAYOUT*) malloc((num + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
+	if (!layouts)
+		return NULL;
 
 	if ((types & RDP_KEYBOARD_LAYOUT_TYPE_STANDARD) != 0)
 	{
 		length = ARRAYSIZE(RDP_KEYBOARD_LAYOUT_TABLE);
-		layouts = (RDP_KEYBOARD_LAYOUT*) realloc(layouts, (num + length + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
+		new = (RDP_KEYBOARD_LAYOUT*) realloc(layouts, (num + length + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
+		if (!new)
+		{
+			free(layouts);
+			return NULL;
+		}
 
+		layouts = new;
 		for (i = 0; i < length; i++, num++)
 		{
 			layouts[num].code = RDP_KEYBOARD_LAYOUT_TABLE[i].code;
@@ -243,8 +252,14 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types)
 	if ((types & RDP_KEYBOARD_LAYOUT_TYPE_VARIANT) != 0)
 	{
 		length = ARRAYSIZE(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE);
-		layouts = (RDP_KEYBOARD_LAYOUT*) realloc(layouts, (num + length + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
+		new = (RDP_KEYBOARD_LAYOUT*) realloc(layouts, (num + length + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
+		if (!new)
+		{
+			free(layouts);
+			return NULL;
+		}
 
+		layouts = new;
 		for (i = 0; i < length; i++, num++)
 		{
 			layouts[num].code = RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i].code;
@@ -254,8 +269,14 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types)
 	if ((types & RDP_KEYBOARD_LAYOUT_TYPE_IME) != 0)
 	{
 		length = ARRAYSIZE(RDP_KEYBOARD_IME_TABLE);
-		layouts = (RDP_KEYBOARD_LAYOUT*) realloc(layouts, (num + length + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
+		new = (RDP_KEYBOARD_LAYOUT*) realloc(layouts, (num + length + 1) * sizeof(RDP_KEYBOARD_LAYOUT));
+		if (!new)
+		{
+			free(layouts);
+			return NULL;
+		}
 
+		layouts = new;
 		for (i = 0; i < length; i++, num++)
 		{
 			layouts[num].code = RDP_KEYBOARD_IME_TABLE[i].code;

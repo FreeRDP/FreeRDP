@@ -71,9 +71,19 @@ static COMM_DEVICE **_CommDevices = NULL;
 static CRITICAL_SECTION _CommDevicesLock;
 
 static HANDLE_CREATOR *_CommHandleCreator = NULL;
-static HANDLE_CLOSE_CB *_CommHandleCloseCb = NULL;
 
 static pthread_once_t _CommInitialized = PTHREAD_ONCE_INIT;
+
+static int CommGetFd(HANDLE handle)
+{
+	WINPR_COMM *comm = (WINPR_COMM *)handle;
+
+	if (!CommIsHandled(handle))
+		return -1;
+
+	return comm->fd;
+}
+
 static void _CommInit()
 {
 	/* NB: error management to be done outside of this function */
@@ -81,7 +91,6 @@ static void _CommInit()
 	assert(_Log == NULL);
 	assert(_CommDevices == NULL);
 	assert(_CommHandleCreator == NULL);
-	assert(_CommHandleCloseCb == NULL);
 
 	_Log = WLog_Get("com.winpr.comm");
 
@@ -97,19 +106,9 @@ static void _CommInit()
 		RegisterHandleCreator(_CommHandleCreator);
 	}
 
-	_CommHandleCloseCb = (HANDLE_CLOSE_CB*)malloc(sizeof(HANDLE_CLOSE_CB));
-	if (_CommHandleCloseCb)
-	{
-		_CommHandleCloseCb->IsHandled = CommIsHandled;
-		_CommHandleCloseCb->CloseHandle = CommCloseHandle;
-		
-		RegisterHandleCloseCb(_CommHandleCloseCb);
-	}
-
 	assert(_Log != NULL);
 	assert(_CommDevices != NULL);
 	assert(_CommHandleCreator != NULL);
-	assert(_CommHandleCloseCb != NULL);
 }
 
 
@@ -1321,6 +1320,10 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 
 	WINPR_HANDLE_SET_TYPE(pComm, HANDLE_TYPE_COMM);
 
+	pComm->cb.GetFd = CommGetFd;
+	pComm->cb.CloseHandle = CommCloseHandle;
+	pComm->cb.IsHandled = CommIsHandled;
+
 	/* error_handle */
 
 	pComm->fd = open(devicePath, O_RDWR | O_NOCTTY | O_NONBLOCK);
@@ -1451,7 +1454,6 @@ BOOL CommIsHandled(HANDLE handle)
 
 	return TRUE;
 }
-
 
 BOOL CommCloseHandle(HANDLE handle)
 {

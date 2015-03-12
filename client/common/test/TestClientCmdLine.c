@@ -88,6 +88,11 @@ int TestClientCmdLine(int argc, char* argv[])
 	char* cmd19[] = {"xfreerdp", "/monitor-list"};
 	TESTCASE(cmd19, COMMAND_LINE_STATUS_PRINT);
 
+#if 0
+	char* cmd20[] = {"-z --plugin cliprdr --plugin rdpsnd --data alsa latency:100 -- --plugin rdpdr --data disk:w7share:/home/w7share -- --plugin drdynvc --data tsmf:decoder:gstreamer -- -u test host.example.com"};
+	TESTCASE(cmd20, COMMAND_LINE_STATUS_PRINT);
+#endif
+
 	return 0;
 }
 

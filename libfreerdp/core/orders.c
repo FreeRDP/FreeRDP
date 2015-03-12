@@ -1314,24 +1314,28 @@ BOOL update_write_line_to_order(wStream* s, ORDER_INFO* orderInfo, LINE_TO_ORDER
 BOOL update_read_polyline_order(wStream* s, ORDER_INFO* orderInfo, POLYLINE_ORDER* polyline)
 {
 	UINT16 word;
+	UINT32 new_num;
 
 	ORDER_FIELD_COORD(1, polyline->xStart);
 	ORDER_FIELD_COORD(2, polyline->yStart);
 	ORDER_FIELD_BYTE(3, polyline->bRop2);
 	ORDER_FIELD_UINT16(4, word);
 	ORDER_FIELD_COLOR(5, polyline->penColor);
-	ORDER_FIELD_BYTE(6, polyline->numDeltaEntries);
+	ORDER_FIELD_BYTE(6, new_num);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_07)
 	{
+		DELTA_POINT *new_points;
+
 		if (Stream_GetRemainingLength(s) < 1)
 			return FALSE;
 		Stream_Read_UINT8(s, polyline->cbData);
 
-		if (polyline->points == NULL)
-			polyline->points = (DELTA_POINT*) malloc(sizeof(DELTA_POINT) * polyline->numDeltaEntries);
-		else
-			polyline->points = (DELTA_POINT*) realloc(polyline->points, sizeof(DELTA_POINT) * polyline->numDeltaEntries);
+		new_points = (DELTA_POINT*) realloc(polyline->points, sizeof(DELTA_POINT) * new_num);
+		if (!new_points)
+			return FALSE;
+		polyline->points = new_points;
+		polyline->numDeltaEntries = new_num;
 
 		return update_read_delta_points(s, polyline->points, polyline->numDeltaEntries, polyline->xStart, polyline->yStart);
 	}
@@ -1661,6 +1665,7 @@ BOOL update_read_fast_glyph_order(wStream* s, ORDER_INFO* orderInfo, FAST_GLYPH_
 
 		if (fastGlyph->cbData > 1)
 		{
+			UINT32 new_cb;
 			/* parse optional glyph data */
 			glyph->cacheIndex = fastGlyph->data[0];
 
@@ -1673,12 +1678,20 @@ BOOL update_read_fast_glyph_order(wStream* s, ORDER_INFO* orderInfo, FAST_GLYPH_
 			glyph->cb = ((glyph->cx + 7) / 8) * glyph->cy;
 			glyph->cb += ((glyph->cb % 4) > 0) ? 4 - (glyph->cb % 4) : 0;
 
-			if (Stream_GetRemainingLength(s) < glyph->cb)
+			new_cb = ((glyph->cx + 7) / 8) * glyph->cy;
+			new_cb += ((new_cb % 4) > 0) ? 4 - (new_cb % 4) : 0;
+			if (Stream_GetRemainingLength(s) < new_cb)
 				return FALSE;
 
-			if (glyph->cb)
+			if (new_cb)
 			{
-				glyph->aj = (BYTE*) realloc(glyph->aj, glyph->cb);
+				BYTE *new_aj;
+				new_aj = (BYTE*) realloc(glyph->aj, new_cb);
+				if (!new_aj)
+					return FALSE;
+
+				glyph->aj = new_aj;
+				glyph->cb = new_cb;
 				Stream_Read(s, glyph->aj, glyph->cb);
 			}
 		}
@@ -1701,24 +1714,30 @@ BOOL update_write_fast_glyph_order(wStream* s, ORDER_INFO* orderInfo, FAST_GLYPH
 
 BOOL update_read_polygon_sc_order(wStream* s, ORDER_INFO* orderInfo, POLYGON_SC_ORDER* polygon_sc)
 {
+	UINT32 num;
+
 	ORDER_FIELD_COORD(1, polygon_sc->xStart);
 	ORDER_FIELD_COORD(2, polygon_sc->yStart);
 	ORDER_FIELD_BYTE(3, polygon_sc->bRop2);
 	ORDER_FIELD_BYTE(4, polygon_sc->fillMode);
 	ORDER_FIELD_COLOR(5, polygon_sc->brushColor);
-	ORDER_FIELD_BYTE(6, polygon_sc->numPoints);
+	ORDER_FIELD_BYTE(6, num);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_07)
 	{
+		DELTA_POINT *newpoints;
+
 		if (Stream_GetRemainingLength(s) < 1)
 			return FALSE;
 
 		Stream_Read_UINT8(s, polygon_sc->cbData);
 
-		if (!polygon_sc->points)
-			polygon_sc->points = (DELTA_POINT*) malloc(sizeof(DELTA_POINT) * polygon_sc->numPoints);
-		else
-			polygon_sc->points = (DELTA_POINT*) realloc(polygon_sc->points, sizeof(DELTA_POINT) * polygon_sc->numPoints);
+		newpoints = (DELTA_POINT*) realloc(polygon_sc->points, sizeof(DELTA_POINT) * num);
+		if (!newpoints)
+			return FALSE;
+
+		polygon_sc->points = newpoints;
+		polygon_sc->numPoints = num;
 
 		return update_read_delta_points(s, polygon_sc->points, polygon_sc->numPoints, polygon_sc->xStart, polygon_sc->yStart);
 	}
@@ -1738,6 +1757,8 @@ BOOL update_write_polygon_sc_order(wStream* s, ORDER_INFO* orderInfo, POLYGON_SC
 
 BOOL update_read_polygon_cb_order(wStream* s, ORDER_INFO* orderInfo, POLYGON_CB_ORDER* polygon_cb)
 {
+	UINT32 num;
+
 	ORDER_FIELD_COORD(1, polygon_cb->xStart);
 	ORDER_FIELD_COORD(2, polygon_cb->yStart);
 	ORDER_FIELD_BYTE(3, polygon_cb->bRop2);
@@ -1748,20 +1769,23 @@ BOOL update_read_polygon_cb_order(wStream* s, ORDER_INFO* orderInfo, POLYGON_CB_
 	if (!update_read_brush(s, &polygon_cb->brush, orderInfo->fieldFlags >> 6))
 		return FALSE;
 
-	ORDER_FIELD_BYTE(12, polygon_cb->numPoints);
+	ORDER_FIELD_BYTE(12, num);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_13)
 	{
+		DELTA_POINT *newpoints;
+
 		if (Stream_GetRemainingLength(s) < 1)
 			return FALSE;
 
 		Stream_Read_UINT8(s, polygon_cb->cbData);
 
-		if (!polygon_cb->points)
-			polygon_cb->points = (DELTA_POINT*) malloc(sizeof(DELTA_POINT) * polygon_cb->numPoints);
-		else
-			polygon_cb->points = (DELTA_POINT*) realloc(polygon_cb->points, sizeof(DELTA_POINT) * polygon_cb->numPoints);
+		newpoints = (DELTA_POINT*) realloc(polygon_cb->points, sizeof(DELTA_POINT) * num);
+		if (!newpoints)
+			return FALSE;
 
+		polygon_cb->points = newpoints;
+		polygon_cb->numPoints = num;
 		if (!update_read_delta_points(s, polygon_cb->points, polygon_cb->numPoints, polygon_cb->xStart, polygon_cb->yStart))
 			return FALSE;
 	}
@@ -2065,6 +2089,8 @@ BOOL update_read_cache_bitmap_v3_order(wStream* s, CACHE_BITMAP_V3_ORDER* cache_
 {
 	BYTE bitsPerPixelId;
 	BITMAP_DATA_EX* bitmapData;
+	UINT32 new_len;
+	BYTE *new_data;
 
 	cache_bitmap_v3->cacheId = flags & 0x00000003;
 	cache_bitmap_v3->flags = (flags & 0x0000FF80) >> 7;
@@ -2092,16 +2118,16 @@ BOOL update_read_cache_bitmap_v3_order(wStream* s, CACHE_BITMAP_V3_ORDER* cache_
 	Stream_Read_UINT8(s, bitmapData->codecID); /* codecID (1 byte) */
 	Stream_Read_UINT16(s, bitmapData->width); /* width (2 bytes) */
 	Stream_Read_UINT16(s, bitmapData->height); /* height (2 bytes) */
-	Stream_Read_UINT32(s, bitmapData->length); /* length (4 bytes) */
+	Stream_Read_UINT32(s, new_len); /* length (4 bytes) */
 
-	if (Stream_GetRemainingLength(s) < bitmapData->length)
+	if (Stream_GetRemainingLength(s) < new_len)
 		return FALSE;
 
-	if (bitmapData->data == NULL)
-		bitmapData->data = (BYTE*) malloc(bitmapData->length);
-	else
-		bitmapData->data = (BYTE*) realloc(bitmapData->data, bitmapData->length);
-
+	new_data = (BYTE*) realloc(bitmapData->data, new_len);
+	if (!new_data)
+		return FALSE;
+	bitmapData->data = new_data;
+	bitmapData->length = new_len;
 	Stream_Read(s, bitmapData->data, bitmapData->length);
 
 	return TRUE;
@@ -2596,8 +2622,14 @@ BOOL update_read_create_offscreen_bitmap_order(wStream* s, CREATE_OFFSCREEN_BITM
 
 		if (deleteList->cIndices > deleteList->sIndices)
 		{
+			UINT16 *new_indices;
+
+			new_indices = (UINT16 *)realloc(deleteList->indices, deleteList->cIndices);
+			if (!new_indices)
+				return FALSE;
+
 			deleteList->sIndices = deleteList->cIndices;
-			deleteList->indices = realloc(deleteList->indices, deleteList->sIndices * 2);
+			deleteList->indices = new_indices;
 		}
 
 		if (Stream_GetRemainingLength(s) < 2 * deleteList->cIndices)

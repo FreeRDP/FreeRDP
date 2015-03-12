@@ -30,18 +30,33 @@
 
 static BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 {
+	UINT16 new_length;
+
 	if (Stream_GetRemainingLength(s) < 2)
 		return FALSE;
 
-	Stream_Read_UINT16(s, unicode_string->length); /* cbString (2 bytes) */
+	Stream_Read_UINT16(s, new_length); /* cbString (2 bytes) */
 
-	if (Stream_GetRemainingLength(s) < unicode_string->length)
+	if (Stream_GetRemainingLength(s) < new_length)
 		return FALSE;
 
 	if (!unicode_string->string)
-		unicode_string->string = (BYTE*) malloc(unicode_string->length);
+	{
+		unicode_string->string = (BYTE*) malloc(new_length);
+		if (!unicode_string->string)
+			return FALSE;
+		unicode_string->length = new_length;
+	}
 	else
-		unicode_string->string = (BYTE*) realloc(unicode_string->string, unicode_string->length);
+	{
+		BYTE *new_str;
+
+		new_str = (BYTE*) realloc(unicode_string->string, new_length);
+		if (!new_str)
+			return FALSE;
+		unicode_string->string = new_str;
+		unicode_string->length = new_length;
+	}
 
 	Stream_Read(s, unicode_string->string, unicode_string->length);
 

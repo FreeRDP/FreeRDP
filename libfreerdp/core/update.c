@@ -172,11 +172,16 @@ BOOL update_read_bitmap_update(rdpUpdate* update, wStream* s, BITMAP_UPDATE* bit
 	if (bitmapUpdate->number > bitmapUpdate->count)
 	{
 		UINT16 count;
+		BITMAP_DATA *newdata;
 
 		count = bitmapUpdate->number * 2;
 
-		bitmapUpdate->rectangles = (BITMAP_DATA*) realloc(bitmapUpdate->rectangles,
+		newdata = (BITMAP_DATA*) realloc(bitmapUpdate->rectangles,
 				sizeof(BITMAP_DATA) * count);
+		if (!newdata)
+			return FALSE;
+
+		bitmapUpdate->rectangles = newdata;
 
 		ZeroMemory(&bitmapUpdate->rectangles[bitmapUpdate->count],
 				sizeof(BITMAP_DATA) * (count - bitmapUpdate->count));

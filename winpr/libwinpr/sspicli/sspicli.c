@@ -60,12 +60,59 @@
 #include <unistd.h>
 #endif
 
+#include <pthread.h>
+
 #include <pwd.h>
 #include <grp.h>
 
 #include "../handle/handle.h"
 
 #include "../security/security.h"
+
+static BOOL LogonUserCloseHandle(HANDLE handle);
+
+static BOOL LogonUserIsHandled(HANDLE handle)
+{
+	WINPR_ACCESS_TOKEN* pLogonUser = (WINPR_ACCESS_TOKEN*) handle;
+
+	if (!pLogonUser || pLogonUser->Type != HANDLE_TYPE_ACCESS_TOKEN)
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static int LogonUserGetFd(HANDLE handle)
+{
+	WINPR_ACCESS_TOKEN *pLogonUser = (WINPR_ACCESS_TOKEN *)handle;
+
+	if (!LogonUserIsHandled(handle))
+		return -1;
+
+	/* TODO: File fd not supported */
+	(void)pLogonUser;
+
+	return -1;
+}
+
+BOOL LogonUserCloseHandle(HANDLE handle) {
+	WINPR_ACCESS_TOKEN *token = (WINPR_ACCESS_TOKEN *) handle;
+
+	if (!LogonUserIsHandled(handle))
+		return FALSE;
+
+	if (token->Username)
+		free(token->Username);
+
+	if (token->Domain)
+		free(token->Domain);
+
+	free(token);
+
+	return TRUE;
+}
 
 BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword,
 		DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken)
@@ -76,14 +123,16 @@ BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword,
 	if (!lpszUsername)
 		return FALSE;
 
-	token = (WINPR_ACCESS_TOKEN*) malloc(sizeof(WINPR_ACCESS_TOKEN));
+	token = (WINPR_ACCESS_TOKEN*) calloc(1, sizeof(WINPR_ACCESS_TOKEN));
 
 	if (!token)
 		return FALSE;
 
-	ZeroMemory(token, sizeof(WINPR_ACCESS_TOKEN));
-
 	WINPR_HANDLE_SET_TYPE(token, HANDLE_TYPE_ACCESS_TOKEN);
+
+	token->cb.GetFd = LogonUserGetFd;
+	token->cb.CloseHandle = LogonUserCloseHandle;
+	token->cb.IsHandled = LogonUserIsHandled;
 
 	token->Username = _strdup(lpszUsername);
 

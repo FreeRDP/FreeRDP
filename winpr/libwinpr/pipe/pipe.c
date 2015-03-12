@@ -42,6 +42,7 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <assert.h>
+#include <pthread.h>
 
 #include "pipe.h"
 
@@ -70,6 +71,46 @@ typedef struct _NamedPipeServerSocketEntry
 	int references;
 } NamedPipeServerSocketEntry;
 
+static BOOL PipeCloseHandle(HANDLE handle);
+
+static BOOL PipeIsHandled(HANDLE handle)
+{
+	WINPR_PIPE* pPipe = (WINPR_PIPE*) handle;
+
+	if (!pPipe || pPipe->Type != HANDLE_TYPE_ANONYMOUS_PIPE)
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static int PipeGetFd(HANDLE handle)
+{
+	WINPR_PIPE *pipe = (WINPR_PIPE *)handle;
+
+	if (!PipeIsHandled(handle))
+		return -1;
+
+	return pipe->fd;
+}
+
+BOOL PipeCloseHandle(HANDLE handle) {
+	WINPR_PIPE* pipe = (WINPR_PIPE *)handle;
+
+	if (!PipeIsHandled(handle))
+		return FALSE;
+
+	if (pipe->fd != -1)
+	{
+		close(pipe->fd);
+	}
+
+	free(handle);
+	return TRUE;
+}
+
 static void InitWinPRPipeModule()
 {
 	if (g_NamedPipeServerSockets)
@@ -97,8 +138,8 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
 		return FALSE;
 	}
 
-	pReadPipe = (WINPR_PIPE*) malloc(sizeof(WINPR_PIPE));
-	pWritePipe = (WINPR_PIPE*) malloc(sizeof(WINPR_PIPE));
+	pReadPipe = (WINPR_PIPE*) calloc(1, sizeof(WINPR_PIPE));
+	pWritePipe = (WINPR_PIPE*) calloc(1, sizeof(WINPR_PIPE));
 
 	if (!pReadPipe || !pWritePipe)
 	{
@@ -114,8 +155,15 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
 	pReadPipe->fd = pipe_fd[0];
 	pWritePipe->fd = pipe_fd[1];
 	WINPR_HANDLE_SET_TYPE(pReadPipe, HANDLE_TYPE_ANONYMOUS_PIPE);
+	pReadPipe->cb.GetFd = PipeGetFd;
+	pReadPipe->cb.CloseHandle = PipeCloseHandle;
+	pReadPipe->cb.IsHandled = PipeIsHandled;
+
 	*((ULONG_PTR*) hReadPipe) = (ULONG_PTR) pReadPipe;
 	WINPR_HANDLE_SET_TYPE(pWritePipe, HANDLE_TYPE_ANONYMOUS_PIPE);
+	pWritePipe->cb.GetFd = PipeGetFd;
+	pWritePipe->cb.CloseHandle = PipeCloseHandle;
+	pWritePipe->cb.IsHandled = PipeIsHandled;
 	*((ULONG_PTR*) hWritePipe) = (ULONG_PTR) pWritePipe;
 	return TRUE;
 }

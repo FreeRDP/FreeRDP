@@ -273,6 +273,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		settings->MonitorCount = 0;
 		settings->MonitorDefArraySize = 32;
 		settings->MonitorDefArray = (rdpMonitor*) calloc(settings->MonitorDefArraySize, sizeof(rdpMonitor));
+		settings->MonitorLocalShiftX = 0;
+		settings->MonitorLocalShiftY = 0;
 
 		settings->MonitorIds = (UINT32*) calloc(16, sizeof(UINT32));
 
