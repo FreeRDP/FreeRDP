@@ -399,6 +399,7 @@ struct rdp_monitor
 	INT32 width;
 	INT32 height;
 	UINT32 is_primary;
+	UINT32 orig_screen;
 };
 typedef struct rdp_monitor rdpMonitor;
 
@@ -897,7 +898,10 @@ struct rdp_settings
 	ALIGN64 BOOL ListMonitors; /* 392 */
 	ALIGN64 UINT32* MonitorIds; /* 393 */
 	ALIGN64 UINT32 NumMonitorIds; /* 394 */
-	UINT64 padding0448[448 - 395]; /* 395 */
+	ALIGN64 UINT32 MonitorLocalShiftX; /*395 */
+	ALIGN64 UINT32 MonitorLocalShiftY; /* 396 */
+	UINT64 padding0448[448 - 397]; /* 397 */
+
 
 	/* Client Message Channel Data */
 	UINT64 padding0512[512 - 448]; /* 448 */

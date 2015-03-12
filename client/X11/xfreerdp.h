@@ -38,6 +38,15 @@ typedef struct xf_context xfContext;
 #include <freerdp/codec/progressive.h>
 #include <freerdp/codec/region.h>
 
+struct xf_FullscreenMonitors
+{
+	UINT32 top;
+	UINT32 bottom;
+	UINT32 left;
+	UINT32 right;
+};
+typedef struct xf_FullscreenMonitors xfFullscreenMonitors;
+
 struct xf_WorkArea
 {
 	UINT32 x;
@@ -111,6 +120,7 @@ struct xf_context
 	xfAppWindow* appWindow;
 	xfPointer* pointer;
 	xfWorkArea workArea;
+	xfFullscreenMonitors fullscreenMonitors;
 	int current_desktop;
 	BOOL remote_app;
 	BOOL disconnect;
@@ -180,6 +190,8 @@ struct xf_context
 	Atom _NET_WM_STATE_FULLSCREEN;
 	Atom _NET_WM_STATE_SKIP_TASKBAR;
 	Atom _NET_WM_STATE_SKIP_PAGER;
+
+	Atom _NET_WM_FULLSCREEN_MONITORS;
 
 	Atom _NET_WM_WINDOW_TYPE;
 	Atom _NET_WM_WINDOW_TYPE_NORMAL;

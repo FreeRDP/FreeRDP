@@ -139,19 +139,57 @@ void xf_SendClientEvent(xfContext* xfc, Window window, Atom atom, unsigned int n
 
 void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 {
-	if (fullscreen)
+	int i;
+	int startX = xfc->instance->settings->DesktopPosX;
+	int startY = xfc->instance->settings->DesktopPosY;
+
+	window->decorations = xfc->decorations;
+	xf_SetWindowDecorations(xfc, window->handle, window->decorations);
+
+	/* Determine the x,y starting location for the fullscreen window */
+	if (xfc->instance->settings->MonitorCount)
 	{
-		rdpSettings* settings = xfc->settings;
+		/* Initialize startX and startY with reasonable values */
+		startX = xfc->instance->settings->MonitorDefArray[0].x;
+		startY = xfc->instance->settings->MonitorDefArray[0].y;
 
-		xf_SetWindowDecorations(xfc, window->handle, FALSE);
+		/* Search all monitors to find the lowest startX and startY values */
+		for (i=0; i < xfc->instance->settings->MonitorCount; i++)
+		{
+			startX = MIN(startX, xfc->instance->settings->MonitorDefArray[i].x);
+			startY = MIN(startY, xfc->instance->settings->MonitorDefArray[i].y);
+		}
 
-		XMoveResizeWindow(xfc->display, window->handle,
-				settings->DesktopPosX, settings->DesktopPosY, window->width, window->height);
-
-		XMapRaised(xfc->display, window->handle);
-
-		window->fullscreen = TRUE;
+		/* Lastly apply any monitor shift(translation from remote to local coordinate system)
+		 *  to startX and startY values
+		 */
+		startX = startX + xfc->instance->settings->MonitorLocalShiftX;
+		startY = startY + xfc->instance->settings->MonitorLocalShiftY;
 	}
+
+	XMoveResizeWindow(xfc->display, window->handle, startX, startY, window->width, window->height);
+	XMapRaised(xfc->display, window->handle);
+
+	/* Set the fullscreen state */
+	xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
+				fullscreen ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE,
+				xfc->_NET_WM_STATE_FULLSCREEN, 0, 0);
+
+	/* Only send monitor bounds if they are valid */
+	if ((xfc->fullscreenMonitors.top >= 0) &&
+			(xfc->fullscreenMonitors.bottom >= 0) &&
+			(xfc->fullscreenMonitors.left >= 0) &&
+			(xfc->fullscreenMonitors.right >= 0))
+	{
+		xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_FULLSCREEN_MONITORS, 5,
+				xfc->fullscreenMonitors.top,
+				xfc->fullscreenMonitors.bottom,
+				xfc->fullscreenMonitors.left,
+				xfc->fullscreenMonitors.right,
+				1);
+	}
+
+	window->fullscreen = TRUE;
 }
 
 /* http://tronche.com/gui/x/xlib/window-information/XGetWindowProperty.html */
@@ -283,7 +321,7 @@ static const char* get_shm_id()
 	return shm_id;
 }
 
-xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int height, BOOL decorations)
+xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int height)
 {
 	XEvent xevent;
 	int input_mask;
@@ -303,7 +341,7 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 	window->width = width;
 	window->height = height;
 	window->fullscreen = FALSE;
-	window->decorations = decorations;
+	window->decorations = xfc->decorations;
 	window->is_mapped = FALSE;
 	window->is_transient = FALSE;
 
@@ -354,8 +392,14 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 	}
 
 	xf_ResizeDesktopWindow(xfc, window, width, height);
-	xf_SetWindowDecorations(xfc, window->handle, decorations);
+	xf_SetWindowDecorations(xfc, window->handle, window->decorations);
 	xf_SetWindowPID(xfc, window->handle, 0);
+
+	/* Set the window hints to allow minimal resize, so fullscreen
+	 * changes can work in window managers that might disallow otherwise. 
+	 * We will set back afterwards.
+	 */
+	xf_SetWindowSizeHints(xfc, window, TRUE, xfc->width, xfc->height);
 
 	input_mask =
 		KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask |
@@ -407,13 +451,19 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 
 void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width, int height)
 {
+	xf_SetWindowSizeHints(xfc, window, FALSE, width, height);
+}
+
+void xf_SetWindowSizeHints(xfContext* xfc, xfWindow *window, BOOL can_resize, int width, int height)
+{
 	XSizeHints* size_hints;
 	size_hints = XAllocSizeHints();
 
 	if (size_hints)
 	{
-		size_hints->flags = PMinSize | PMaxSize;
+		size_hints->flags = PMinSize | PMaxSize | PWinGravity;
 
+		size_hints->win_gravity = NorthWestGravity;
 		size_hints->min_width = size_hints->max_width = width;
 		size_hints->min_height = size_hints->max_height = height;
 
@@ -424,6 +474,17 @@ void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width, int hei
 			size_hints->max_width = size_hints->max_height = 16384;
 		}
 #endif
+
+		/* Allows the window to resize larger by 1 pixel - so we can
+		 * fullscreen the window with no worries about window manager disallowing based
+		 * on size parameters
+		 */
+		if (can_resize)
+		{
+			size_hints->width_inc = size_hints->height_inc = 1;
+			size_hints->max_width = xfc->width + 1;
+			size_hints->max_height = xfc->height + 1;
+		}
 
 		XSetWMNormalHints(xfc->display, window->handle, size_hints);
 		XResizeWindow(xfc->display, window->handle, width, height);
