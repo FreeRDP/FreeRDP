@@ -80,8 +80,15 @@ void PubSub_AddEventTypes(wPubSub* pubSub, wEventType* events, int count)
 
 	while (pubSub->count + count >= pubSub->size)
 	{
-		pubSub->size *= 2;
-		pubSub->events = (wEventType*) realloc(pubSub->events, pubSub->size);
+		int new_size;
+		wEventType *new_event;
+
+		new_size = pubSub->size * 2;
+		new_event = (wEventType*) realloc(pubSub->events, new_size);
+		if (!new_event)
+			return;
+		pubSub->size = new_size;
+		pubSub->events = new_event;
 	}
 
 	CopyMemory(&pubSub->events[pubSub->count], events, count * sizeof(wEventType));

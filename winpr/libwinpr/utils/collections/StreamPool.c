@@ -35,8 +35,15 @@ void StreamPool_ShiftUsed(wStreamPool* pool, int index, int count)
 	{
 		if (pool->uSize + count > pool->uCapacity)
 		{
-			pool->uCapacity *= 2;
-			pool->uArray = (wStream**) realloc(pool->uArray, sizeof(wStream*) * pool->uCapacity);
+			int new_cap;
+			wStream **new_arr;
+
+			new_cap = pool->uCapacity * 2;
+			new_arr = (wStream**) realloc(pool->uArray, sizeof(wStream*) * new_cap);
+			if (!new_arr)
+				return;
+			pool->uCapacity = new_cap;
+			pool->uArray = new_arr;
 		}
 
 		MoveMemory(&pool->uArray[index + count], &pool->uArray[index], (pool->uSize - index) * sizeof(wStream*));
@@ -62,8 +69,15 @@ void StreamPool_AddUsed(wStreamPool* pool, wStream* s)
 {
 	if ((pool->uSize + 1) >= pool->uCapacity)
 	{
-		pool->uCapacity *= 2;
-		pool->uArray = (wStream**) realloc(pool->uArray, sizeof(wStream*) * pool->uCapacity);
+		int new_cap;
+		wStream **new_arr;
+
+		new_cap = pool->uCapacity * 2;
+		new_arr = (wStream**) realloc(pool->uArray, sizeof(wStream*) * new_cap);
+		if (!new_arr)
+			return;
+		pool->uCapacity = new_cap;
+		pool->uArray = new_arr;
 	}
 
 	pool->uArray[(pool->uSize)++] = s;
@@ -97,8 +111,15 @@ void StreamPool_ShiftAvailable(wStreamPool* pool, int index, int count)
 	{
 		if (pool->aSize + count > pool->aCapacity)
 		{
-			pool->aCapacity *= 2;
-			pool->aArray = (wStream**) realloc(pool->aArray, sizeof(wStream*) * pool->aCapacity);
+			int new_cap;
+			wStream **new_arr;
+
+			new_cap = pool->aCapacity * 2;
+			new_arr = (wStream**) realloc(pool->aArray, sizeof(wStream*) * new_cap);
+			if (!new_arr)
+				return;
+			pool->aCapacity = new_cap;
+			pool->aArray = new_arr;
 		}
 
 		MoveMemory(&pool->aArray[index + count], &pool->aArray[index], (pool->aSize - index) * sizeof(wStream*));
@@ -179,13 +200,27 @@ void StreamPool_Return(wStreamPool* pool, wStream* s)
 
 	if ((pool->aSize + 1) >= pool->aCapacity)
 	{
-		pool->aCapacity *= 2;
-		pool->aArray = (wStream**) realloc(pool->aArray, sizeof(wStream*) * pool->aCapacity);
+		int new_cap;
+		wStream **new_arr;
+
+		new_cap = pool->aCapacity * 2;
+		new_arr = (wStream**) realloc(pool->aArray, sizeof(wStream*) * new_cap);
+		if (!new_arr)
+			return;
+		pool->aCapacity = new_cap;
+		pool->aArray = new_arr;
 	}
 	else if ((pool->aSize + 1) * 3 < pool->aCapacity)
 	{
-		pool->aCapacity /= 2;
-		pool->aArray = (wStream**) realloc(pool->aArray, sizeof(wStream*) * pool->aCapacity);
+		int new_cap;
+		wStream **new_arr;
+
+		new_cap = pool->aCapacity / 2;
+		new_arr = (wStream**) realloc(pool->aArray, sizeof(wStream*) * new_cap);
+		if (!new_arr)
+			return;
+		pool->aCapacity = new_cap;
+		pool->aArray = new_arr;
 	}
 
 	pool->aArray[(pool->aSize)++] = s;

@@ -213,8 +213,13 @@ static BOOL audin_winmm_format_supported(IAudinDevice* device, audinFormat* form
 		{
 			if (winmm->cFormats >= winmm->ppwfx_size)
 			{
+				PWAVEFORMATEX *tmp_ppwfx;
+				tmp_ppwfx = realloc(winmm->ppwfx, sizeof(PWAVEFORMATEX) * winmm->ppwfx_size * 2);
+				if (!tmp_ppwfx)
+					return 0;
+
 				winmm->ppwfx_size *= 2;
-				winmm->ppwfx = realloc(winmm->ppwfx, sizeof(PWAVEFORMATEX) * winmm->ppwfx_size);
+				winmm->ppwfx = tmp_ppwfx;
 			}
 			winmm->ppwfx[winmm->cFormats++] = pwfx;
 	

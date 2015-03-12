@@ -1001,8 +1001,15 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 
 		while (offset >= length)
 		{
-			length *= 2;
-			pemCert = (BYTE*) realloc(pemCert, length + 1);
+			int new_len;
+			BYTE *new_cert;
+
+			new_len = length * 2;
+			new_cert = (BYTE*) realloc(pemCert, new_len + 1);
+			if (!new_cert)
+				return -1;
+			length = new_len;
+			pemCert = new_cert;
 
 			status = BIO_read(bio, &pemCert[offset], length);
 

@@ -384,8 +384,15 @@ INLINE int gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h)
 
 	if ((hdc->hwnd->ninvalid + 1) > hdc->hwnd->count)
 	{
-		hdc->hwnd->count *= 2;
-		cinvalid = (HGDI_RGN) realloc(cinvalid, sizeof(GDI_RGN) * (hdc->hwnd->count));
+		int new_cnt;
+		HGDI_RGN new_rgn;
+
+		new_cnt = hdc->hwnd->count * 2;
+		new_rgn = (HGDI_RGN) realloc(cinvalid, sizeof(GDI_RGN) * new_cnt);
+		if (!new_rgn)
+			return -1;
+		hdc->hwnd->count = new_cnt;
+		cinvalid = new_rgn;
 	}
 
 	gdi_SetRgn(&cinvalid[hdc->hwnd->ninvalid++], x, y, w, h);
