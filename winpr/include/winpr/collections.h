@@ -623,6 +623,41 @@ WINPR_API int PubSub_OnEvent(wPubSub* pubSub, const char* EventName, void* conte
 WINPR_API wPubSub* PubSub_New(BOOL synchronized);
 WINPR_API void PubSub_Free(wPubSub* pubSub);
 
+/* BipBuffer */
+
+struct _wBipBuffer
+{
+	size_t size;
+	BYTE* buffer;
+	size_t headA;
+	size_t sizeA;
+	size_t headB;
+	size_t sizeB;
+	size_t headR;
+	size_t sizeR;
+};
+typedef struct _wBipBuffer wBipBuffer;
+
+WINPR_API BOOL BipBuffer_Grow(wBipBuffer* bb, size_t size);
+WINPR_API void BipBuffer_Clear(wBipBuffer* bb);
+
+WINPR_API size_t BipBuffer_BufferSize(wBipBuffer* bb);
+WINPR_API size_t BipBuffer_CommittedSize(wBipBuffer* bb);
+WINPR_API size_t BipBuffer_ReservedSize(wBipBuffer* bb);
+
+WINPR_API BYTE* BipBuffer_Reserve(wBipBuffer* bb, size_t size);
+WINPR_API BYTE* BipBuffer_TryReserve(wBipBuffer* bb, size_t size, size_t* reserved);
+WINPR_API void BipBuffer_Commit(wBipBuffer* bb, size_t size);
+
+WINPR_API BYTE* BipBuffer_PeekBlock(wBipBuffer* bb, size_t* size);
+WINPR_API void BipBuffer_Decommit(wBipBuffer* bb, size_t size);
+
+WINPR_API int BipBuffer_Read(wBipBuffer* bb, BYTE* data, size_t size);
+WINPR_API int BipBuffer_Write(wBipBuffer* bb, BYTE* data, size_t size);
+
+WINPR_API wBipBuffer* BipBuffer_New(size_t size);
+WINPR_API void BipBuffer_Free(wBipBuffer* bb);
+
 #ifdef __cplusplus
 }
 #endif
