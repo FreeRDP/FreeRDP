@@ -290,6 +290,8 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 
 	WINPR_HANDLE_SET_TYPE(pNamedPipe, HANDLE_TYPE_NAMED_PIPE);
 
+	pNamedPipe->serverfd = -1;
+	pNamedPipe->clientfd = -1;
 	if (!(pNamedPipe->name = _strdup(lpName)))
 		goto out;
 
