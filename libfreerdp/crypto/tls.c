@@ -504,6 +504,7 @@ static CryptoCert tls_get_certificate(rdpTls* tls, BOOL peer)
 {
 	CryptoCert cert;
 	X509* remote_cert;
+	STACK_OF(X509) *chain;
 
 	if (peer)
 		remote_cert = SSL_get_peer_certificate(tls->ssl);
@@ -524,6 +525,11 @@ static CryptoCert tls_get_certificate(rdpTls* tls, BOOL peer)
 	}
 
 	cert->px509 = remote_cert;
+
+	/* Get the peer's chain. If it does not exist, we're setting NULL (clean data either way) */
+	chain = SSL_get_peer_cert_chain(tls->ssl);
+	cert->px509chain = chain;
+
 	return cert;
 }
 
