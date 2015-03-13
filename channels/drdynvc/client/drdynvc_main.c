@@ -45,7 +45,7 @@ static int dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
 
 	if (dvcman->num_listeners < MAX_PLUGINS)
 	{
-		WLog_DBG(TAG, "%d.%s.", dvcman->num_listeners, pszChannelName);
+		WLog_DBG(TAG, "create_listener: %d.%s.", dvcman->num_listeners, pszChannelName);
 
 		listener = (DVCMAN_LISTENER*) malloc(sizeof(DVCMAN_LISTENER));
 		ZeroMemory(listener, sizeof(DVCMAN_LISTENER));
@@ -67,7 +67,7 @@ static int dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
 	}
 	else
 	{
-		WLog_WARN(TAG, "Maximum DVC listener number reached.");
+		WLog_WARN(TAG, "create_listener: Maximum DVC listener number reached.");
 		return 1;
 	}
 }
@@ -78,14 +78,14 @@ static int dvcman_register_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const cha
 
 	if (dvcman->num_plugins < MAX_PLUGINS)
 	{
-		WLog_DBG(TAG, "num_plugins %d", dvcman->num_plugins);
 		dvcman->plugin_names[dvcman->num_plugins] = name;
 		dvcman->plugins[dvcman->num_plugins++] = pPlugin;
+		WLog_DBG(TAG, "register_plugin: num_plugins %d", dvcman->num_plugins);
 		return 0;
 	}
 	else
 	{
-		WLog_WARN(TAG, "Maximum DVC plugin number reached.");
+		WLog_WARN(TAG, "register_plugin: Maximum DVC plugin number reached.");
 		return 1;
 	}
 }
@@ -335,7 +335,7 @@ static int dvcman_close_channel_iface(IWTSVirtualChannel* pChannel)
 {
 	DVCMAN_CHANNEL* channel = (DVCMAN_CHANNEL*) pChannel;
 
-	WLog_DBG(TAG, "id=%d", channel->channel_id);
+	WLog_DBG(TAG, "close_channel_iface: id=%d", channel->channel_id);
 
 	return 1;
 }
@@ -409,6 +409,7 @@ int dvcman_open_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId
 		pCallback = channel->channel_callback;
 		if (pCallback->OnOpen)
 			pCallback->OnOpen(pCallback);
+		WLog_DBG(TAG, "open_channel: ChannelId %d", ChannelId);
 	}
 
 	return 0;
@@ -569,7 +570,7 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, BYTE* data, UIN
 	UINT32 chunkLength;
 	int status;
 
-	WLog_DBG(TAG, "ChannelId=%d size=%d", ChannelId, dataSize);
+	WLog_DBG(TAG, "write_data: ChannelId=%d size=%d", ChannelId, dataSize);
 
 	if (drdynvc->channel_error != CHANNEL_RC_OK)
 		return 1;
@@ -656,6 +657,7 @@ static int drdynvc_send_capability_response(drdynvcPlugin* drdynvc)
 	int status;
 	wStream* s;
 
+	WLog_DBG(TAG, "capability_response");
 	s = Stream_New(NULL, 4);
 	Stream_Write_UINT16(s, 0x0050); /* Cmd+Sp+cbChId+Pad. Note: MSTSC sends 0x005c */
 	Stream_Write_UINT16(s, drdynvc->version);
@@ -676,7 +678,7 @@ static int drdynvc_process_capability_request(drdynvcPlugin* drdynvc, int Sp, in
 {
 	int status;
 
-	WLog_DBG(TAG, "Sp=%d cbChId=%d", Sp, cbChId);
+	WLog_DBG(TAG, "capability_request Sp=%d cbChId=%d", Sp, cbChId);
 
 	Stream_Seek(s, 1); /* pad */
 	Stream_Read_UINT16(s, drdynvc->version);
@@ -746,7 +748,7 @@ static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cb
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
 	pos = Stream_GetPosition(s);
-	WLog_DBG(TAG, "ChannelId=%d ChannelName=%s", ChannelId, Stream_Pointer(s));
+	WLog_DBG(TAG, "process_create_request: ChannelId=%d ChannelName=%s", ChannelId, Stream_Pointer(s));
 
 	channel_status = dvcman_create_channel(drdynvc->channel_mgr, ChannelId, (char*) Stream_Pointer(s));
 
@@ -792,7 +794,7 @@ static int drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChId
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
 	Length = drdynvc_read_variable_uint(s, Sp);
-	WLog_DBG(TAG, "ChannelId=%d Length=%d", ChannelId, Length);
+	WLog_DBG(TAG, "process_data_first: Sp=%d cbChId=%d, ChannelId=%d Length=%d", Sp, cbChId, ChannelId, Length);
 
 	status = dvcman_receive_channel_data_first(drdynvc->channel_mgr, ChannelId, Length);
 
@@ -807,7 +809,7 @@ static int drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStr
 	UINT32 ChannelId;
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
-	WLog_DBG(TAG, "ChannelId=%d", ChannelId);
+	WLog_DBG(TAG, "process_data: Sp=%d cbChId=%d, ChannelId=%d", Sp, cbChId, ChannelId);
 
 	return dvcman_receive_channel_data(drdynvc->channel_mgr, ChannelId, s);
 }
@@ -821,7 +823,7 @@ static int drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp, int cbC
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
 
-	WLog_DBG(TAG, "ChannelId=%d", ChannelId);
+	WLog_DBG(TAG, "process_close_request: Sp=%d cbChId=%d, ChannelId=%d", Sp, cbChId, ChannelId);
 
 	dvcman_close_channel(drdynvc->channel_mgr, ChannelId);
 	
@@ -858,7 +860,7 @@ static void drdynvc_order_recv(drdynvcPlugin* drdynvc, wStream* s)
 	Sp = (value & 0x0c) >> 2;
 	cbChId = (value & 0x03) >> 0;
 
-	WLog_DBG(TAG, "Cmd=0x%x", Cmd);
+	WLog_DBG(TAG, "order_recv: Cmd=0x%x, Sp=%d cbChId=%d, ChannelId=%d", Cmd, Sp, cbChId);
 
 	switch (Cmd)
 	{

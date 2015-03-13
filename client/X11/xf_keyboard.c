@@ -173,6 +173,12 @@ void xf_keyboard_release_all_keypress(xfContext* xfc)
 		if (xfc->KeyboardState[keycode] != NoSymbol)
 		{
 			rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(keycode);
+
+			// release tab before releasing the windows key.
+			// this stops the start menu from opening on unfocus event.
+			if (rdp_scancode == RDP_SCANCODE_LWIN)
+				freerdp_input_send_keyboard_event_ex(xfc->instance->input, FALSE, RDP_SCANCODE_TAB);
+
 			freerdp_input_send_keyboard_event_ex(xfc->instance->input, FALSE, rdp_scancode);
 			xfc->KeyboardState[keycode] = NoSymbol;
 		}

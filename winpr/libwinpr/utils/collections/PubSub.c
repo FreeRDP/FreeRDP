@@ -61,7 +61,7 @@ wEventType* PubSub_FindEventType(wPubSub* pubSub, const char* EventName)
 	int index;
 	wEventType* event = NULL;
 
-	for (index = 0; pubSub->count; index++)
+	for (index = 0; index < pubSub->count; index++)
 	{
 		if (strcmp(pubSub->events[index].EventName, EventName) == 0)
 		{
@@ -80,8 +80,15 @@ void PubSub_AddEventTypes(wPubSub* pubSub, wEventType* events, int count)
 
 	while (pubSub->count + count >= pubSub->size)
 	{
-		pubSub->size *= 2;
-		pubSub->events = (wEventType*) realloc(pubSub->events, pubSub->size);
+		int new_size;
+		wEventType *new_event;
+
+		new_size = pubSub->size * 2;
+		new_event = (wEventType*) realloc(pubSub->events, new_size);
+		if (!new_event)
+			return;
+		pubSub->size = new_size;
+		pubSub->events = new_event;
 	}
 
 	CopyMemory(&pubSub->events[pubSub->count], events, count * sizeof(wEventType));
@@ -144,7 +151,7 @@ int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, pEventHandler Eve
 				event->EventHandlers[index] = NULL;
 				event->EventHandlerCount--;
 				MoveMemory(&event->EventHandlers[index], &event->EventHandlers[index + 1],
-						(MAX_EVENT_HANDLERS - index - 1) * sizeof(wEventType));
+						(MAX_EVENT_HANDLERS - index - 1) * sizeof(pEventHandler));
 				status = 1;
 			}
 		}

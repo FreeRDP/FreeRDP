@@ -61,7 +61,7 @@
 
 #ifndef _WIN32
 
-#include <alloca.h>
+#include <stdlib.h>
 #include <time.h>
 #include <sys/time.h>
 #include <sys/wait.h>
@@ -199,41 +199,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		return WAIT_FAILED;
 	}
 
-	if (Type == HANDLE_TYPE_THREAD)
-	{
-		int status;
-		WINPR_THREAD *thread = (WINPR_THREAD *)Object;
-		status = waitOnFd(thread->pipe_fd[0], dwMilliseconds);
-
-		if (status < 0)
-		{
-			WLog_ERR(TAG, "waitOnFd() failure [%d] %s", errno, strerror(errno));
-			return WAIT_FAILED;
-		}
-
-		if (status != 1)
-			return WAIT_TIMEOUT;
-
-		pthread_mutex_lock(&thread->mutex);
-
-		if (!thread->joined)
-		{
-			status = pthread_join(thread->thread, NULL);
-
-			if (status != 0)
-			{
-				WLog_ERR(TAG, "pthread_join failure: [%d] %s",
-						 status, strerror(status));
-				pthread_mutex_unlock(&thread->mutex);
-				return WAIT_FAILED;
-			}
-			else
-				thread->joined = TRUE;
-		}
-
-		pthread_mutex_unlock(&thread->mutex);
-	}
-	else if (Type == HANDLE_TYPE_PROCESS)
+	if (Type == HANDLE_TYPE_PROCESS)
 	{
 		WINPR_PROCESS *process;
 		process = (WINPR_PROCESS *) Object;
@@ -245,6 +211,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		}
 
 		process->dwExitCode = (DWORD) process->status;
+		return WAIT_OBJECT_0;
 	}
 	else if (Type == HANDLE_TYPE_MUTEX)
 	{
@@ -266,144 +233,31 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		{
 			pthread_mutex_lock(&mutex->mutex);
 		}
+
+		return WAIT_OBJECT_0;
 	}
-	else if (Type == HANDLE_TYPE_EVENT)
+	else
 	{
 		int status;
-		WINPR_EVENT *event;
-		event = (WINPR_EVENT *) Object;
-		status = waitOnFd(event->pipe_fd[0], dwMilliseconds);
-
-		if (status < 0)
-		{
-			WLog_ERR(TAG, "event select() failure [%d] %s", errno, strerror(errno));
+		int fd = winpr_Handle_getFd(Object);
+		if (fd < 0)
 			return WAIT_FAILED;
-		}
-
-		if (status != 1)
-			return WAIT_TIMEOUT;
-	}
-	else if (Type == HANDLE_TYPE_SEMAPHORE)
-	{
-		WINPR_SEMAPHORE *semaphore;
-		semaphore = (WINPR_SEMAPHORE *) Object;
-#ifdef WINPR_PIPE_SEMAPHORE
-
-		if (semaphore->pipe_fd[0] != -1)
-		{
-			int status;
-			int length;
-			status = waitOnFd(semaphore->pipe_fd[0], dwMilliseconds);
-
-			if (status < 0)
-			{
-				WLog_ERR(TAG, "semaphore select() failure [%d] %s", errno, strerror(errno));
-				return WAIT_FAILED;
-			}
-
-			if (status != 1)
-				return WAIT_TIMEOUT;
-
-			length = read(semaphore->pipe_fd[0], &length, 1);
-
-			if (length != 1)
-			{
-				WLog_ERR(TAG, "semaphore read failure [%d] %s", errno, strerror(errno));
-				return WAIT_FAILED;
-			}
-		}
-
-#else
-#if defined __APPLE__
-		semaphore_wait(*((winpr_sem_t *) semaphore->sem));
-#else
-		sem_wait((winpr_sem_t *) semaphore->sem);
-#endif
-#endif
-	}
-	else if (Type == HANDLE_TYPE_TIMER)
-	{
-		WINPR_TIMER *timer;
-		timer = (WINPR_TIMER *) Object;
-#ifdef HAVE_EVENTFD_H
-
-		if (timer->fd != -1)
-		{
-			int status;
-			UINT64 expirations;
-			status = waitOnFd(timer->fd, dwMilliseconds);
-
-			if (status < 0)
-			{
-				WLog_ERR(TAG, "timer select() failure [%d] %s", errno, strerror(errno));
-				return WAIT_FAILED;
-			}
-
-			if (status != 1)
-				return WAIT_TIMEOUT;
-
-			status = read(timer->fd, (void *) &expirations, sizeof(UINT64));
-
-			if (status != 8)
-			{
-				if (status == -1)
-				{
-					if (errno == ETIMEDOUT)
-						return WAIT_TIMEOUT;
-
-					WLog_ERR(TAG, "timer read() failure [%d] %s", errno, strerror(errno));
-				}
-				else
-				{
-					WLog_ERR(TAG, "timer read() failure - incorrect number of bytes read");
-				}
-
-				return WAIT_FAILED;
-			}
-		}
-		else
-		{
-			WLog_ERR(TAG, "invalid timer file descriptor");
-			return WAIT_FAILED;
-		}
-
-#else
-		WLog_ERR(TAG, "file descriptors not supported");
-		return WAIT_FAILED;
-#endif
-	}
-	else if (Type == HANDLE_TYPE_NAMED_PIPE)
-	{
-		int fd;
-		int status;
-		WINPR_NAMED_PIPE *pipe = (WINPR_NAMED_PIPE *) Object;
-		fd = (pipe->ServerMode) ? pipe->serverfd : pipe->clientfd;
-
-		if (fd == -1)
-		{
-			WLog_ERR(TAG, "invalid pipe file descriptor");
-			return WAIT_FAILED;
-		}
 
 		status = waitOnFd(fd, dwMilliseconds);
 
 		if (status < 0)
 		{
-			WLog_ERR(TAG, "named pipe select() failure [%d] %s", errno, strerror(errno));
+			WLog_ERR(TAG, "waitOnFd() failure [%d] %s", errno, strerror(errno));
 			return WAIT_FAILED;
 		}
 
 		if (status != 1)
-		{
 			return WAIT_TIMEOUT;
-		}
-	}
-	else
-	{
-		WLog_ERR(TAG, "unknown handle type %d", (int) Type);
+
+		return winpr_Handle_cleanup(Object);
 	}
 
-	return WAIT_OBJECT_0;
+	return WAIT_FAILED;
 }
 
 DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertable)
@@ -482,63 +336,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 				return WAIT_FAILED;
 			}
 
-			if (Type == HANDLE_TYPE_EVENT)
-			{
-				fd = ((WINPR_EVENT *) Object)->pipe_fd[0];
-
-				if (fd == -1)
-				{
-					WLog_ERR(TAG, "invalid event file descriptor");
-					return WAIT_FAILED;
-				}
-			}
-			else if (Type == HANDLE_TYPE_SEMAPHORE)
-			{
-#ifdef WINPR_PIPE_SEMAPHORE
-				fd = ((WINPR_SEMAPHORE *) Object)->pipe_fd[0];
-#else
-				WLog_ERR(TAG, "semaphore not supported");
-				return WAIT_FAILED;
-#endif
-			}
-			else if (Type == HANDLE_TYPE_TIMER)
-			{
-				WINPR_TIMER *timer = (WINPR_TIMER *) Object;
-				fd = timer->fd;
-
-				if (fd == -1)
-				{
-					WLog_ERR(TAG, "invalid timer file descriptor");
-					return WAIT_FAILED;
-				}
-			}
-			else if (Type == HANDLE_TYPE_THREAD)
-			{
-				WINPR_THREAD *thread = (WINPR_THREAD *) Object;
-				fd = thread->pipe_fd[0];
-
-				if (fd == -1)
-				{
-					WLog_ERR(TAG, "invalid thread file descriptor");
-					return WAIT_FAILED;
-				}
-			}
-			else if (Type == HANDLE_TYPE_NAMED_PIPE)
-			{
-				WINPR_NAMED_PIPE *pipe = (WINPR_NAMED_PIPE *) Object;
-				fd = (pipe->ServerMode) ? pipe->serverfd : pipe->clientfd;
-
-				if (fd == -1)
-				{
-					WLog_ERR(TAG, "invalid timer file descriptor");
-					return WAIT_FAILED;
-				}
-			}
-			else
-			{
-				WLog_ERR(TAG, "unknown handle type %d", (int) Type);
-				return WAIT_FAILED;
-			}
+			fd = winpr_Handle_getFd(Object);
 
 			if (fd == -1)
 			{
@@ -620,30 +418,18 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 			else
 				idx = index;
 
-			winpr_Handle_GetInfo(lpHandles[idx], &Type, &Object);
+			if (!winpr_Handle_GetInfo(lpHandles[idx], &Type, &Object))
+			{
+					WLog_ERR(TAG, "invalid hHandle.");
+					return WAIT_FAILED;
+			}
 
-			if (Type == HANDLE_TYPE_EVENT)
+			fd = winpr_Handle_getFd(lpHandles[idx]);
+
+			if (fd == -1)
 			{
-				fd = ((WINPR_EVENT *) Object)->pipe_fd[0];
-			}
-			else if (Type == HANDLE_TYPE_SEMAPHORE)
-			{
-				fd = ((WINPR_SEMAPHORE *) Object)->pipe_fd[0];
-			}
-			else if (Type == HANDLE_TYPE_TIMER)
-			{
-				WINPR_TIMER *timer = (WINPR_TIMER *) Object;
-				fd = timer->fd;
-			}
-			else if (Type == HANDLE_TYPE_THREAD)
-			{
-				WINPR_THREAD *thread = (WINPR_THREAD *) Object;
-				fd = thread->pipe_fd[0];
-			}
-			else if (Type == HANDLE_TYPE_NAMED_PIPE)
-			{
-				WINPR_NAMED_PIPE *pipe = (WINPR_NAMED_PIPE *) Object;
-				fd = (pipe->ServerMode) ? pipe->serverfd : pipe->clientfd;
+				WLog_ERR(TAG, "invalid file descriptor");
+				return WAIT_FAILED;
 			}
 
 #ifdef HAVE_POLL_H
@@ -653,63 +439,9 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 			if (FD_ISSET(fd, &fds))
 #endif
 			{
-				if (Type == HANDLE_TYPE_SEMAPHORE)
-				{
-					int length;
-					length = read(fd, &length, 1);
-
-					if (length != 1)
-					{
-						WLog_ERR(TAG, "semaphore read() failure [%d] %s", errno, strerror(errno));
-						return WAIT_FAILED;
-					}
-				}
-				else if (Type == HANDLE_TYPE_TIMER)
-				{
-					int length;
-					UINT64 expirations;
-					length = read(fd, (void *) &expirations, sizeof(UINT64));
-
-					if (length != 8)
-					{
-						if (length == -1)
-						{
-							if (errno == ETIMEDOUT)
-								return WAIT_TIMEOUT;
-
-							WLog_ERR(TAG, "timer read() failure [%d] %s", errno, strerror(errno));
-						}
-						else
-						{
-							WLog_ERR(TAG, "timer read() failure - incorrect number of bytes read");
-						}
-
-						return WAIT_FAILED;
-					}
-				}
-				else if (Type == HANDLE_TYPE_THREAD)
-				{
-					WINPR_THREAD *thread = (WINPR_THREAD *)Object;
-					pthread_mutex_lock(&thread->mutex);
-
-					if (!thread->joined)
-					{
-						int status;
-						status = pthread_join(thread->thread, NULL);
-
-						if (status != 0)
-						{
-							WLog_ERR(TAG, "pthread_join failure: [%d] %s",
-									 status, strerror(status));
-							pthread_mutex_unlock(&thread->mutex);
-							return WAIT_FAILED;
-						}
-						else
-							thread->joined = TRUE;
-					}
-
-					pthread_mutex_unlock(&thread->mutex);
-				}
+				DWORD rc = winpr_Handle_cleanup(lpHandles[idx]);
+				if (rc != WAIT_OBJECT_0)
+					return rc;
 
 				if (bWaitAll)
 				{

@@ -160,8 +160,11 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 		if ((sigil_length > 0) || (flags & COMMAND_LINE_SIGIL_NONE) ||
 				(flags & COMMAND_LINE_SIGIL_NOT_ESCAPED))
 		{
-			if (length < (sigil_length + 1))
+			if (length < (sigil_length + 1)) {
+				if ((flags & COMMAND_LINE_IGN_UNKNOWN_KEYWORD))
+					continue;
 				return COMMAND_LINE_ERROR_NO_KEYWORD;
+			}
 
 			keyword_index = sigil_index + sigil_length;
 			keyword = (char*) &argv[i][keyword_index];
@@ -362,7 +365,7 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 						return COMMAND_LINE_STATUS_PRINT_VERSION;
 			}
 			
-			if (!found)
+			if (!found && (flags & COMMAND_LINE_IGN_UNKNOWN_KEYWORD) == 0)
 				return COMMAND_LINE_ERROR_NO_KEYWORD;
 		}
 	}

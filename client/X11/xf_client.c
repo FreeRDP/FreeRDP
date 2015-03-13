@@ -516,7 +516,7 @@ BOOL xf_create_window(xfContext* xfc)
 		xfc->attribs.background_pixel = BlackPixelOfScreen(xfc->screen);
 		xfc->attribs.border_pixel = WhitePixelOfScreen(xfc->screen);
 		xfc->attribs.backing_store = xfc->primary ? NotUseful : Always;
-		xfc->attribs.override_redirect = xfc->grab_keyboard ? xfc->fullscreen : False;
+		xfc->attribs.override_redirect = False;
 		xfc->attribs.colormap = xfc->colormap;
 		xfc->attribs.bit_gravity = NorthWestGravity;
 		xfc->attribs.win_gravity = NorthWestGravity;
@@ -571,7 +571,7 @@ BOOL xf_create_window(xfContext* xfc)
 		}
 #endif
 
-		xfc->window = xf_CreateDesktopWindow(xfc, windowTitle, width, height, xfc->decorations);
+		xfc->window = xf_CreateDesktopWindow(xfc, windowTitle, width, height);
 
 		free(windowTitle);
 
@@ -579,6 +579,10 @@ BOOL xf_create_window(xfContext* xfc)
 			xf_SetWindowFullscreen(xfc, xfc->window, xfc->fullscreen);
 
 		xfc->unobscured = (xevent.xvisibility.state == VisibilityUnobscured);
+
+		/* Disallow resize now that any initial fullscreen window operation is complete */
+		xf_SetWindowSizeHints(xfc, xfc->window, FALSE, xfc->width, xfc->height);
+
 		XSetWMProtocols(xfc->display, xfc->window->handle, &(xfc->WM_DELETE_WINDOW), 1);
 		xfc->drawable = xfc->window->handle;
 	}
@@ -686,16 +690,12 @@ void xf_toggle_fullscreen(xfContext* xfc)
 	rdpContext* context = (rdpContext*) xfc;
 	rdpSettings* settings = context->settings;
 
-	xf_lock_x11(xfc, TRUE);
-
-	xf_window_free(xfc);
-
 	xfc->fullscreen = (xfc->fullscreen) ? FALSE : TRUE;
 	xfc->decorations = (xfc->fullscreen) ? FALSE : settings->Decorations;
 
-	xf_create_window(xfc);
-
-	xf_unlock_x11(xfc, TRUE);
+	xf_SetWindowSizeHints(xfc, xfc->window, TRUE, xfc->width, xfc->height);
+	xf_SetWindowFullscreen(xfc, xfc->window, xfc->fullscreen);
+	xf_SetWindowSizeHints(xfc, xfc->window, FALSE, xfc->width, xfc->height);
 
 	EventArgsInit(&e, "xfreerdp");
 	e.state = xfc->fullscreen ? FREERDP_WINDOW_STATE_FULLSCREEN : 0;
@@ -1697,6 +1697,7 @@ static int xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xfc->_NET_WORKAREA = XInternAtom(xfc->display, "_NET_WORKAREA", False);
 	xfc->_NET_WM_STATE = XInternAtom(xfc->display, "_NET_WM_STATE", False);
 	xfc->_NET_WM_STATE_FULLSCREEN = XInternAtom(xfc->display, "_NET_WM_STATE_FULLSCREEN", False);
+	xfc->_NET_WM_FULLSCREEN_MONITORS = XInternAtom(xfc->display, "_NET_WM_FULLSCREEN_MONITORS", False);
 	xfc->_NET_WM_WINDOW_TYPE = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE", False);
 	xfc->_NET_WM_WINDOW_TYPE_NORMAL = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE_NORMAL", False);
 	xfc->_NET_WM_WINDOW_TYPE_DIALOG = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE_DIALOG", False);

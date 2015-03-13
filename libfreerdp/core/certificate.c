@@ -688,6 +688,7 @@ rdpRsaKey* key_new(const char* keyfile)
 
 	fread((void*) buffer, length, 1, fp);
 	fclose(fp);
+	fp = NULL;
 
 	bio = BIO_new_mem_buf((void*) buffer, length);
 

@@ -80,9 +80,6 @@
 #include "../handle/handle.h"
 #include "../security/security.h"
 
-static HANDLE_CLOSE_CB _ProcessHandleCloseCb;
-static pthread_once_t process_initialized = PTHREAD_ONCE_INIT;
-
 char** EnvironmentBlockToEnvpA(LPCH lpszEnvironmentBlock)
 {
 	char* p;
@@ -478,11 +475,16 @@ static BOOL ProcessHandleIsHandle(HANDLE handle)
 	return TRUE;
 }
 
-static void ProcessHandleInitialize(void)
+static int ProcessGetFd(HANDLE handle)
 {
-	_ProcessHandleCloseCb.IsHandled = ProcessHandleIsHandle;
-	_ProcessHandleCloseCb.CloseHandle = ProcessHandleCloseHandle;
-	RegisterHandleCloseCb(&_ProcessHandleCloseCb);
+	WINPR_PROCESS *process = (WINPR_PROCESS *)handle;
+
+	if (!ProcessHandleIsHandle(handle))
+		return -1;
+
+	/* TODO: Process does not support fd... */
+	(void)process;
+	return -1;
 }
 
 HANDLE CreateProcessHandle(pid_t pid)
@@ -493,9 +495,11 @@ HANDLE CreateProcessHandle(pid_t pid)
 	if (!process)
 		return NULL;
 
-	pthread_once(&process_initialized, ProcessHandleInitialize);
 	process->pid = pid;
 	process->Type = HANDLE_TYPE_PROCESS;
+	process->cb.GetFd = ProcessGetFd;
+	process->cb.CloseHandle = ProcessHandleCloseHandle;
+	process->cb.IsHandled = ProcessHandleIsHandle;
 
 	return (HANDLE)process;
 }

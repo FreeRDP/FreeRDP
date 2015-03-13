@@ -22,6 +22,7 @@
 
 #include <winpr/handle.h>
 #include <winpr/file.h>
+#include <winpr/synch.h>
 
 #define HANDLE_TYPE_NONE			0
 #define HANDLE_TYPE_PROCESS			1
@@ -39,7 +40,21 @@
 #define HANDLE_TYPE_COMM			13
 
 #define WINPR_HANDLE_DEF() \
-	ULONG Type
+	ULONG Type; \
+	HANDLE_CLOSE_CB cb
+
+typedef BOOL (*pcIsHandled)(HANDLE handle);
+typedef BOOL (*pcCloseHandle)(HANDLE handle);
+typedef int (*pcGetFd)(HANDLE handle);
+typedef DWORD (*pcCleanupHandle)(HANDLE handle);
+
+typedef struct _HANDLE_CLOSE_CB
+{
+	pcIsHandled IsHandled;
+	pcCloseHandle CloseHandle;
+	pcGetFd GetFd;
+	pcCleanupHandle CleanupHandle;
+} HANDLE_CLOSE_CB;
 
 struct winpr_handle
 {
@@ -65,15 +80,36 @@ static INLINE BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, PVOID* pObj
 	return TRUE;
 }
 
-typedef BOOL (*pcIsHandled)(HANDLE handle);
-typedef BOOL (*pcCloseHandle)(HANDLE handle);
-
-typedef struct _HANDLE_CLOSE_CB
+static INLINE int winpr_Handle_getFd(HANDLE handle)
 {
-	pcIsHandled IsHandled;
-	pcCloseHandle CloseHandle;
-} HANDLE_CLOSE_CB;
+	WINPR_HANDLE *hdl;
+	ULONG type;
 
-BOOL RegisterHandleCloseCb(HANDLE_CLOSE_CB *pHandleClose);
+	if (!winpr_Handle_GetInfo(handle, &type, (PVOID*)&hdl))
+		return -1;
+
+	if (!hdl || !hdl->cb.GetFd)
+		return -1;
+
+	return hdl->cb.GetFd(handle);
+}
+
+static INLINE DWORD winpr_Handle_cleanup(HANDLE handle)
+{
+	WINPR_HANDLE *hdl;
+	ULONG type;
+
+	if (!winpr_Handle_GetInfo(handle, &type, (PVOID*)&hdl))
+		return WAIT_FAILED;
+
+	if (!hdl)
+		return WAIT_FAILED;
+
+	/* If there is no cleanup function, assume all ok. */
+	if (!hdl->cb.CleanupHandle)
+		return WAIT_OBJECT_0;
+
+	return hdl->cb.CleanupHandle(handle);
+}
 
 #endif /* WINPR_HANDLE_PRIVATE_H */

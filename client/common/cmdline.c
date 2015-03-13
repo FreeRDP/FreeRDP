@@ -544,10 +544,16 @@ static char** freerdp_command_line_parse_comma_separated_values(char* list, int*
 static char** freerdp_command_line_parse_comma_separated_values_offset(char* list, int* count)
 {
 	char** p;
+	char** t;
 
 	p = freerdp_command_line_parse_comma_separated_values(list, count);
+	if (!p)
+		return NULL;
 
-	p = (char**) realloc(p, sizeof(char*) * (*count + 1));
+	t = (char**) realloc(p, sizeof(char*) * (*count + 1));
+	if (!t)
+		return NULL;
+	p = t;
 	MoveMemory(&p[1], p, sizeof(char*) * *count);
 	(*count)++;
 
@@ -2020,7 +2026,6 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	UINT32 index;
 	ADDIN_ARGV* args;
 
-	settings->DynamicChannelCount = 0;
 	if ((freerdp_static_channel_collection_find(settings, "rdpsnd")) ||
 			(freerdp_dynamic_channel_collection_find(settings, "tsmf")))
 	{

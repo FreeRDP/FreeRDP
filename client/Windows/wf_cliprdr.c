@@ -906,9 +906,16 @@ static void map_ensure_capacity(wfClipboard* clipboard)
 {
 	if (clipboard->map_size >= clipboard->map_capacity)
 	{
-		clipboard->map_capacity *= 2;
-		clipboard->format_mappings = (formatMapping*) realloc(clipboard->format_mappings,
-			sizeof(formatMapping) * clipboard->map_capacity);
+		int new_size;
+		formatMapping *new_map;
+
+		new_size = clipboard->map_capacity * 2;
+		new_map = (formatMapping*) realloc(clipboard->format_mappings,
+				sizeof(formatMapping) * new_size);
+		if (!new_map)
+			return;
+		clipboard->format_mappings = new_map;
+		clipboard->map_capacity = new_size;
 	}
 }
 
@@ -1348,9 +1355,24 @@ static void wf_cliprdr_array_ensure_capacity(wfClipboard* clipboard)
 {
 	if (clipboard->nFiles == clipboard->file_array_size)
 	{
-		clipboard->file_array_size *= 2;
-		clipboard->fileDescriptor = (FILEDESCRIPTORW**) realloc(clipboard->fileDescriptor, clipboard->file_array_size * sizeof(FILEDESCRIPTORW*));
-		clipboard->file_names = (WCHAR**) realloc(clipboard->file_names, clipboard->file_array_size * sizeof(WCHAR*));
+		int new_size;
+		FILEDESCRIPTORW **new_fd;
+		WCHAR **new_name;
+
+		new_size = clipboard->file_array_size * 2;
+
+		new_fd = (FILEDESCRIPTORW**) realloc(clipboard->fileDescriptor, new_size * sizeof(FILEDESCRIPTORW*));
+		if (new_fd)
+			clipboard->fileDescriptor = new_fd;
+
+		new_name = (WCHAR**) realloc(clipboard->file_names, new_size * sizeof(WCHAR*));
+		if (new_name)
+			clipboard->file_names = new_name;
+
+		if (!new_fd || !new_name)
+			return;
+
+		clipboard->file_array_size *= new_size;
 	}
 }
 
@@ -1678,12 +1700,7 @@ static int wf_cliprdr_server_format_data_request(CliprdrClientContext* context, 
 					clipboard->file_names[clipboard->nFiles] = (LPWSTR) malloc(cchWideChar * 2);
 					MultiByteToWideChar(CP_ACP, MB_COMPOSITE, p, len, clipboard->file_names[clipboard->nFiles], cchWideChar);
 
-					if (clipboard->nFiles == clipboard->file_array_size)
-					{
-						clipboard->file_array_size *= 2;
-						clipboard->fileDescriptor = (FILEDESCRIPTORW**) realloc(clipboard->fileDescriptor, clipboard->file_array_size * sizeof(FILEDESCRIPTORW*));
-						clipboard->file_names = (WCHAR**) realloc(clipboard->file_names, clipboard->file_array_size * sizeof(WCHAR*));
-					}
+					map_ensure_capacity(clipboard);
 				}
 			}
 

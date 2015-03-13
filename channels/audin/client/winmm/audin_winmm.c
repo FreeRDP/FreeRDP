@@ -213,8 +213,13 @@ static BOOL audin_winmm_format_supported(IAudinDevice* device, audinFormat* form
 		{
 			if (winmm->cFormats >= winmm->ppwfx_size)
 			{
+				PWAVEFORMATEX *tmp_ppwfx;
+				tmp_ppwfx = realloc(winmm->ppwfx, sizeof(PWAVEFORMATEX) * winmm->ppwfx_size * 2);
+				if (!tmp_ppwfx)
+					return 0;
+
 				winmm->ppwfx_size *= 2;
-				winmm->ppwfx = realloc(winmm->ppwfx, sizeof(PWAVEFORMATEX) * winmm->ppwfx_size);
+				winmm->ppwfx = tmp_ppwfx;
 			}
 			winmm->ppwfx[winmm->cFormats++] = pwfx;
 	
@@ -241,7 +246,7 @@ static void audin_winmm_open(IAudinDevice* device, AudinReceive receive, void* u
 
 static COMMAND_LINE_ARGUMENT_A audin_winmm_args[] =
 {
-	{ "audio-dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "audio device name" },
+	{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "audio device name" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
@@ -252,7 +257,7 @@ static void audin_winmm_parse_addin_args(AudinWinmmDevice* device, ADDIN_ARGV* a
 	COMMAND_LINE_ARGUMENT_A* arg;
 	AudinWinmmDevice* winmm = (AudinWinmmDevice*) device;
 
-	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
+	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
 
 	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv, audin_winmm_args, flags, winmm, NULL, NULL);
 
@@ -265,7 +270,7 @@ static void audin_winmm_parse_addin_args(AudinWinmmDevice* device, ADDIN_ARGV* a
 
 		CommandLineSwitchStart(arg)
 
-		CommandLineSwitchCase(arg, "audio-dev")
+		CommandLineSwitchCase(arg, "dev")
 		{
 			winmm->device_name = _strdup(arg->Value);
 		}

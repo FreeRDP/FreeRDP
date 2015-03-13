@@ -36,6 +36,7 @@
 int freerdp_addin_set_argument(ADDIN_ARGV* args, char* argument)
 {
 	int i;
+	char **new_argv;
 
 	for (i = 0; i < args->argc; i++)
 	{
@@ -45,8 +46,11 @@ int freerdp_addin_set_argument(ADDIN_ARGV* args, char* argument)
 		}
 	}
 
+	new_argv = (char**) realloc(args->argv, sizeof(char*) * (args->argc + 1));
+	if (!new_argv)
+		return -1;
+	args->argv = new_argv;
 	args->argc++;
-	args->argv = (char**) realloc(args->argv, sizeof(char*) * args->argc);
 	args->argv[args->argc - 1] = _strdup(argument);
 
 	return 0;
@@ -55,6 +59,7 @@ int freerdp_addin_set_argument(ADDIN_ARGV* args, char* argument)
 int freerdp_addin_replace_argument(ADDIN_ARGV* args, char* previous, char* argument)
 {
 	int i;
+	char **new_argv;
 
 	for (i = 0; i < args->argc; i++)
 	{
@@ -67,8 +72,11 @@ int freerdp_addin_replace_argument(ADDIN_ARGV* args, char* previous, char* argum
 		}
 	}
 
+	new_argv = (char**) realloc(args->argv, sizeof(char*) * (args->argc + 1));
+	if (!new_argv)
+		return -1;
+	args->argv = new_argv;
 	args->argc++;
-	args->argv = (char**) realloc(args->argv, sizeof(char*) * args->argc);
 	args->argv[args->argc - 1] = _strdup(argument);
 
 	return 0;
@@ -80,6 +88,7 @@ int freerdp_addin_set_argument_value(ADDIN_ARGV* args, char* option, char* value
 	char* p;
 	char* str;
 	int length;
+	char **new_argv;
 
 	length = strlen(option) + strlen(value) + 1;
 	str = (char*) malloc(length + 1);
@@ -101,8 +110,11 @@ int freerdp_addin_set_argument_value(ADDIN_ARGV* args, char* option, char* value
 		}
 	}
 
+	new_argv = (char**) realloc(args->argv, sizeof(char*) * (args->argc + 1));
+	if (!new_argv)
+		return -1;
+	args->argv = new_argv;
 	args->argc++;
-	args->argv = (char**) realloc(args->argv, sizeof(char*) * args->argc);
 	args->argv[args->argc - 1] = str;
 
 	return 0;
@@ -113,6 +125,7 @@ int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, char* previous, char*
 	int i;
 	char* str;
 	int length;
+	char **new_argv;
 
 	length = strlen(option) + strlen(value) + 1;
 	str = (char*) malloc(length + 1);
@@ -129,8 +142,11 @@ int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, char* previous, char*
 		}
 	}
 
+	new_argv = (char**) realloc(args->argv, sizeof(char*) * (args->argc + 1));
+	if (!new_argv)
+		return -1;
+	args->argv = new_argv;
 	args->argc++;
-	args->argv = (char**) realloc(args->argv, sizeof(char*) * args->argc);
 	args->argv[args->argc - 1] = str;
 
 	return 0;
@@ -138,11 +154,21 @@ int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, char* previous, char*
 
 void freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device)
 {
+	if (!settings->DeviceArray)
+		return;
+
 	if (settings->DeviceArraySize < (settings->DeviceCount + 1))
 	{
-		settings->DeviceArraySize *= 2;
-		settings->DeviceArray = (RDPDR_DEVICE**)
-				realloc(settings->DeviceArray, settings->DeviceArraySize * sizeof(RDPDR_DEVICE*));
+		UINT32 new_size;
+		RDPDR_DEVICE **new_array;
+
+		new_size = settings->DeviceArraySize * 2;
+		new_array = (RDPDR_DEVICE**)
+				realloc(settings->DeviceArray, new_size * sizeof(RDPDR_DEVICE*));
+		if (!new_array)
+			return;
+		settings->DeviceArray = new_array;
+		settings->DeviceArraySize = new_size;
 	}
 
 	settings->DeviceArray[settings->DeviceCount++] = device;
@@ -391,11 +417,21 @@ void freerdp_device_collection_free(rdpSettings* settings)
 
 void freerdp_static_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel)
 {
+	if (!settings->StaticChannelArray)
+		return;
+
 	if (settings->StaticChannelArraySize < (settings->StaticChannelCount + 1))
 	{
-		settings->StaticChannelArraySize *= 2;
-		settings->StaticChannelArray = (ADDIN_ARGV**)
-				realloc(settings->StaticChannelArray, settings->StaticChannelArraySize * sizeof(ADDIN_ARGV*));
+		UINT32 new_size;
+		ADDIN_ARGV **new_array;
+
+		new_size = settings->StaticChannelArraySize * 2;
+		new_array = (ADDIN_ARGV**)
+				realloc(settings->StaticChannelArray, new_size * sizeof(ADDIN_ARGV*));
+		if (!new_array)
+			return;
+		settings->StaticChannelArray = new_array;
+		settings->StaticChannelArraySize = new_size;
 	}
 
 	settings->StaticChannelArray[settings->StaticChannelCount++] = channel;
@@ -471,11 +507,25 @@ void freerdp_static_channel_collection_free(rdpSettings* settings)
 
 void freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel)
 {
+	if (!settings->DynamicChannelArray)
+		return;
+
 	if (settings->DynamicChannelArraySize < (settings->DynamicChannelCount + 1))
 	{
+		UINT32 new_size;
+		ADDIN_ARGV **new_array;
+
 		settings->DynamicChannelArraySize *= 2;
 		settings->DynamicChannelArray = (ADDIN_ARGV**)
 				realloc(settings->DynamicChannelArray, settings->DynamicChannelArraySize * sizeof(ADDIN_ARGV*));
+
+		new_size = settings->DynamicChannelArraySize * 2;
+		new_array = (ADDIN_ARGV**)
+				realloc(settings->DynamicChannelArray, new_size * sizeof(ADDIN_ARGV*));
+		if (!new_array)
+			return;
+		settings->DynamicChannelArray = new_array;
+		settings->DynamicChannelArraySize = new_size;
 	}
 
 	settings->DynamicChannelArray[settings->DynamicChannelCount++] = channel;

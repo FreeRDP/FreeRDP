@@ -224,8 +224,15 @@ wIniFileSection* IniFile_AddSection(wIniFile* ini, const char* name)
 	{
 		if ((ini->nSections + 1) >= (ini->cSections))
 		{
-			ini->cSections *= 2;
-			ini->sections = (wIniFileSection**) realloc(ini->sections, sizeof(wIniFileSection*) * ini->cSections);
+			int new_size;
+			wIniFileSection** new_sect;
+
+			new_size = ini->cSections * 2;
+			new_sect = (wIniFileSection**) realloc(ini->sections, sizeof(wIniFileSection*) * new_size);
+			if (!new_sect)
+				return NULL;
+			ini->cSections = new_size;
+			ini->sections = new_sect;
 		}
 
 		section = IniFile_Section_New(name);
@@ -269,8 +276,15 @@ wIniFileKey* IniFile_AddKey(wIniFile* ini, wIniFileSection* section, const char*
 	{
 		if ((section->nKeys + 1) >= (section->cKeys))
 		{
-			section->cKeys *= 2;
-			section->keys = (wIniFileKey**) realloc(section->keys, sizeof(wIniFileKey*) * section->cKeys);
+			int new_size;
+			wIniFileKey** new_key;
+
+			new_size = section->cKeys * 2;
+			new_key = (wIniFileKey**) realloc(section->keys, sizeof(wIniFileKey*) * new_size);
+			if (!new_key)
+				return NULL;
+			section->cKeys = new_size;
+			section->keys = new_key;
 		}
 
 		key = IniFile_Key_New(name, value);

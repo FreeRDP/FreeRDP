@@ -114,6 +114,10 @@ if(UNIX)
 	winpr_library_add(m)
 endif()
 
+if(BSD)
+	winpr_library_add(execinfo)
+endif()
+
 if(WIN32)
 	winpr_library_add(Dbghelp)
 endif()

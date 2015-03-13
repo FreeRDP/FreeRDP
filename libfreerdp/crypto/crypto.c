@@ -523,7 +523,7 @@ BOOL x509_verify_certificate(CryptoCert cert, char* certificate_store_path)
 
 	if (certificate_store_path != NULL)
 	{
-		X509_LOOKUP_add_dir(lookup, certificate_store_path, X509_FILETYPE_ASN1);
+		X509_LOOKUP_add_dir(lookup, certificate_store_path, X509_FILETYPE_PEM);
 	}
 
 	csc = X509_STORE_CTX_new();
@@ -533,7 +533,7 @@ BOOL x509_verify_certificate(CryptoCert cert, char* certificate_store_path)
 
 	X509_STORE_set_flags(cert_ctx, 0);
 
-	if (!X509_STORE_CTX_init(csc, cert_ctx, xcert, 0))
+	if (!X509_STORE_CTX_init(csc, cert_ctx, xcert, cert->px509chain))
 		goto end;
 
 	if (X509_verify_cert(csc) == 1)
