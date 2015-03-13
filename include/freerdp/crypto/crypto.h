@@ -72,6 +72,7 @@ struct crypto_hmac_struct
 struct crypto_cert_struct
 {
 	X509 * px509;
+	STACK_OF(X509) *px509chain;
 };
 
 #ifdef __cplusplus
