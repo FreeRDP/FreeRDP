@@ -350,6 +350,7 @@ LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge)
 				free(mergeStrings);
 				return NULL;
 			}
+			mergeStrings = new_str;
 		}
 
 		mergeStrings[mergeStringLength] = cp;
