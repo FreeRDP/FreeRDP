@@ -909,6 +909,7 @@ static void map_ensure_capacity(wfClipboard* clipboard)
 		int new_size;
 		formatMapping *new_map;
 
+		new_size = clipboard->map_capacity * 2;
 		new_map = (formatMapping*) realloc(clipboard->format_mappings,
 				sizeof(formatMapping) * new_size);
 		if (!new_map)
