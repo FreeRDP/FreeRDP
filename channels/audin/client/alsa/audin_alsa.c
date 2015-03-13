@@ -376,7 +376,7 @@ static void audin_alsa_close(IAudinDevice* device)
 
 COMMAND_LINE_ARGUMENT_A audin_alsa_args[] =
 {
-	{ "audio-dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "audio device name" },
+	{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "audio device name" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
@@ -387,7 +387,7 @@ static void audin_alsa_parse_addin_args(AudinALSADevice* device, ADDIN_ARGV* arg
 	COMMAND_LINE_ARGUMENT_A* arg;
 	AudinALSADevice* alsa = (AudinALSADevice*) device;
 
-	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
+	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
 
 	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv, audin_alsa_args, flags, alsa, NULL, NULL);
 
@@ -400,7 +400,7 @@ static void audin_alsa_parse_addin_args(AudinALSADevice* device, ADDIN_ARGV* arg
 
 		CommandLineSwitchStart(arg)
 
-		CommandLineSwitchCase(arg, "audio-dev")
+		CommandLineSwitchCase(arg, "dev")
 		{
 			alsa->device_name = _strdup(arg->Value);
 		}

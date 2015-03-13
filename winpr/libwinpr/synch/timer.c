@@ -28,6 +28,7 @@
 #include <winpr/synch.h>
 
 #ifndef _WIN32
+#include <unistd.h>
 #include <errno.h>
 #include <sys/time.h>
 #include <signal.h>
