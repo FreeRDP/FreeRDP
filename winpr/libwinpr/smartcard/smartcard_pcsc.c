@@ -2178,7 +2178,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardTransmit(SCARDHANDLE hCard,
 	}
 
 	status = (LONG) g_PCSC.pfnSCardTransmit(hCard, pcsc_pioSendPci, pbSendBuffer,
-											pcsc_cbSendLength, pcsc_pioRecvPci, pbRecvBuffer, &pcsc_cbRecvLength);
+				pcsc_cbSendLength, pcsc_pioRecvPci, pbRecvBuffer, &pcsc_cbRecvLength);
 	status = PCSC_MapErrorCodeToWinSCard(status);
 	*pcbRecvLength = (DWORD) pcsc_cbRecvLength;
 
@@ -2186,7 +2186,13 @@ WINSCARDAPI LONG WINAPI PCSC_SCardTransmit(SCARDHANDLE hCard,
 		free(pcsc_pioSendPci); /* pcsc_pioSendPci is dynamically allocated only when pioSendPci is non null */
 
 	if (pioRecvPci)
+	{
+		cbExtraBytes = pioRecvPci->cbPciLength - sizeof(SCARD_IO_REQUEST);
+		pbExtraBytes = &((BYTE*) pioRecvPci)[sizeof(SCARD_IO_REQUEST)];
+		pcsc_pbExtraBytes = &((BYTE*) pcsc_pioRecvPci)[sizeof(PCSC_SCARD_IO_REQUEST)];
+		CopyMemory(pbExtraBytes, pcsc_pbExtraBytes, cbExtraBytes); /* copy extra bytes */
 		free(pcsc_pioRecvPci); /* pcsc_pioRecvPci is dynamically allocated only when pioRecvPci is non null */
+	}
 
 	return status;
 }
