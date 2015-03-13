@@ -130,11 +130,35 @@ static DWORD GetNumberOfProcessors()
 	return numCPUs;
 }
 
+static DWORD GetSystemPageSize()
+{
+	DWORD dwPageSize = 0;
+	long sc_page_size = -1;
+
+#if defined(_SC_PAGESIZE)
+	if (sc_page_size < 0)
+		sc_page_size = sysconf(_SC_PAGESIZE);
+#endif
+
+#if defined(_SC_PAGE_SIZE)
+	if (sc_page_size < 0)
+		sc_page_size = sysconf(_SC_PAGE_SIZE);
+#endif
+
+	if (sc_page_size > 0)
+		dwPageSize = (DWORD) sc_page_size;
+
+	if (dwPageSize < 4096)
+		dwPageSize = 4096;
+
+	return dwPageSize;
+}
+
 void GetSystemInfo(LPSYSTEM_INFO lpSystemInfo)
 {
 	lpSystemInfo->wProcessorArchitecture = GetProcessorArchitecture();
 	lpSystemInfo->wReserved = 0;
-	lpSystemInfo->dwPageSize = 0;
+	lpSystemInfo->dwPageSize = GetSystemPageSize();
 	lpSystemInfo->lpMinimumApplicationAddress = NULL;
 	lpSystemInfo->lpMaximumApplicationAddress = NULL;
 	lpSystemInfo->dwActiveProcessorMask = 0;

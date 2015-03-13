@@ -625,6 +625,13 @@ WINPR_API void PubSub_Free(wPubSub* pubSub);
 
 /* BipBuffer */
 
+struct _wBipBlock
+{
+	BYTE* data;
+	size_t size;
+};
+typedef struct _wBipBlock wBipBlock;
+
 struct _wBipBuffer
 {
 	size_t size;
@@ -635,22 +642,23 @@ struct _wBipBuffer
 	size_t sizeB;
 	size_t headR;
 	size_t sizeR;
+	size_t pageSize;
 };
 typedef struct _wBipBuffer wBipBuffer;
 
 WINPR_API BOOL BipBuffer_Grow(wBipBuffer* bb, size_t size);
 WINPR_API void BipBuffer_Clear(wBipBuffer* bb);
 
+WINPR_API size_t BipBuffer_UsedSize(wBipBuffer* bb);
 WINPR_API size_t BipBuffer_BufferSize(wBipBuffer* bb);
-WINPR_API size_t BipBuffer_CommittedSize(wBipBuffer* bb);
-WINPR_API size_t BipBuffer_ReservedSize(wBipBuffer* bb);
 
-WINPR_API BYTE* BipBuffer_Reserve(wBipBuffer* bb, size_t size);
-WINPR_API BYTE* BipBuffer_TryReserve(wBipBuffer* bb, size_t size, size_t* reserved);
-WINPR_API void BipBuffer_Commit(wBipBuffer* bb, size_t size);
+WINPR_API BYTE* BipBuffer_WriteReserve(wBipBuffer* bb, size_t size);
+WINPR_API BYTE* BipBuffer_WriteTryReserve(wBipBuffer* bb, size_t size, size_t* reserved);
+WINPR_API void BipBuffer_WriteCommit(wBipBuffer* bb, size_t size);
 
-WINPR_API BYTE* BipBuffer_PeekBlock(wBipBuffer* bb, size_t* size);
-WINPR_API void BipBuffer_Decommit(wBipBuffer* bb, size_t size);
+WINPR_API BYTE* BipBuffer_ReadReserve(wBipBuffer* bb, size_t size);
+WINPR_API BYTE* BipBuffer_ReadTryReserve(wBipBuffer* bb, size_t size, size_t* reserved);
+WINPR_API void BipBuffer_ReadCommit(wBipBuffer* bb, size_t size);
 
 WINPR_API int BipBuffer_Read(wBipBuffer* bb, BYTE* data, size_t size);
 WINPR_API int BipBuffer_Write(wBipBuffer* bb, BYTE* data, size_t size);
