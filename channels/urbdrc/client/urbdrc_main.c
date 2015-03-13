@@ -52,7 +52,7 @@ static int func_hardware_id_format(IUDEVICE* pdev, char(*HardwareIds)[DEVICE_HAR
 
 	sprintf(str, "USB\\VID_%04X&PID_%04X", idVendor, idProduct);
 	strcpy(HardwareIds[1], str);
-	sprintf(str, "%s&REV_%04X", str, bcdDevice);
+	sprintf(str, "%s&REV_%04X", HardwareIds[1], bcdDevice);
 	strcpy(HardwareIds[0], str);
 
 	return 0;
@@ -71,18 +71,18 @@ static int func_compat_id_format(IUDEVICE* pdev, char (*CompatibilityIds)[DEVICE
 	{
 		sprintf(str, "USB\\Class_%02X", bDeviceClass);
 		strcpy(CompatibilityIds[2], str);
-		sprintf(str, "%s&SubClass_%02X", str, bDeviceSubClass);
+		sprintf(str, "%s&SubClass_%02X", CompatibilityIds[2], bDeviceSubClass);
 		strcpy(CompatibilityIds[1], str);
-		sprintf(str, "%s&Prot_%02X", str, bDeviceProtocol);
+		sprintf(str, "%s&Prot_%02X", CompatibilityIds[1], bDeviceProtocol);
 		strcpy(CompatibilityIds[0], str);
 	}
 	else
 	{
 		sprintf(str, "USB\\DevClass_00");
 		strcpy(CompatibilityIds[2], str);
-		sprintf(str, "%s&SubClass_00", str);
+		sprintf(str, "%s&SubClass_00", CompatibilityIds[2]);
 		strcpy(CompatibilityIds[1], str);
-		sprintf(str, "%s&Prot_00", str);
+		sprintf(str, "%s&Prot_00", CompatibilityIds[1]);
 		strcpy(CompatibilityIds[0], str);
 	}
 
