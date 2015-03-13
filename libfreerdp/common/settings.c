@@ -512,11 +512,12 @@ void freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* c
 
 	if (settings->DynamicChannelArraySize < (settings->DynamicChannelCount + 1))
 	{
+		UINT32 new_size;
+		ADDIN_ARGV **new_array;
+
 		settings->DynamicChannelArraySize *= 2;
 		settings->DynamicChannelArray = (ADDIN_ARGV**)
 				realloc(settings->DynamicChannelArray, settings->DynamicChannelArraySize * sizeof(ADDIN_ARGV*));
-		UINT32 new_size;
-		ADDIN_ARGV **new_array;
 
 		new_size = settings->DynamicChannelArraySize * 2;
 		new_array = (ADDIN_ARGV**)
