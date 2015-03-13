@@ -47,9 +47,9 @@ struct winpr_named_pipe
 	int clientfd;
 	int serverfd;
 
-	const char* name;
-	const char* lpFileName;
-	const char* lpFilePath;
+	char* name;
+	char* lpFileName;
+	char* lpFilePath;
 
 	BOOL ServerMode;
 	DWORD dwOpenMode;
