@@ -111,6 +111,62 @@ BOOL PipeCloseHandle(HANDLE handle) {
 	return TRUE;
 }
 
+static BOOL NamedPipeCloseHandle(HANDLE handle);
+
+static BOOL NamedPipeIsHandled(HANDLE handle)
+{
+	WINPR_NAMED_PIPE* pPipe = (WINPR_NAMED_PIPE*) handle;
+
+	if (!pPipe || pPipe->Type != HANDLE_TYPE_NAMED_PIPE)
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static int NamedPipeGetFd(HANDLE handle)
+{
+	WINPR_NAMED_PIPE *pipe = (WINPR_NAMED_PIPE *)handle;
+
+	if (!NamedPipeIsHandled(handle))
+		return -1;
+
+	if (pipe->ServerMode)
+		return pipe->serverfd;
+	return pipe->clientfd;
+}
+
+BOOL NamedPipeCloseHandle(HANDLE handle) {
+	WINPR_NAMED_PIPE* pNamedPipe = (WINPR_NAMED_PIPE *)handle;
+
+	if (!NamedPipeIsHandled(handle))
+		return FALSE;
+
+	if (pNamedPipe->pfnUnrefNamedPipe)
+		pNamedPipe->pfnUnrefNamedPipe(pNamedPipe);
+
+	if (pNamedPipe->name)
+		free(pNamedPipe->name);
+
+	if (pNamedPipe->lpFileName)
+		free((void*)pNamedPipe->lpFileName);
+
+	if (pNamedPipe->lpFilePath)
+		free((void*)pNamedPipe->lpFilePath);
+
+	if (pNamedPipe->serverfd != -1)
+		close(pNamedPipe->serverfd);
+	
+	if (pNamedPipe->clientfd != -1)
+		close(pNamedPipe->clientfd);
+	
+	free(handle);
+
+	return TRUE;
+}
+
 static void InitWinPRPipeModule()
 {
 	if (g_NamedPipeServerSockets)
@@ -234,6 +290,8 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 
 	WINPR_HANDLE_SET_TYPE(pNamedPipe, HANDLE_TYPE_NAMED_PIPE);
 
+	pNamedPipe->serverfd = -1;
+	pNamedPipe->clientfd = -1;
 	if (!(pNamedPipe->name = _strdup(lpName)))
 		goto out;
 
@@ -252,6 +310,9 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 	pNamedPipe->dwFlagsAndAttributes = dwOpenMode;
 	pNamedPipe->clientfd = -1;
 	pNamedPipe->ServerMode = TRUE;
+	pNamedPipe->cb.GetFd = NamedPipeGetFd;
+	pNamedPipe->cb.CloseHandle = NamedPipeCloseHandle;
+	pNamedPipe->cb.IsHandled = NamedPipeIsHandled;
 	ArrayList_Lock(g_NamedPipeServerSockets);
 
 	for (index = 0; index < ArrayList_Count(g_NamedPipeServerSockets); index++)
@@ -347,13 +408,7 @@ out:
 
 	if (hNamedPipe == INVALID_HANDLE_VALUE)
 	{
-		if (pNamedPipe)
-		{
-			free((void*)pNamedPipe->name);
-			free((void*)pNamedPipe->lpFileName);
-			free((void*)pNamedPipe->lpFilePath);
-			free(pNamedPipe);
-		}
+		NamedPipeCloseHandle(hNamedPipe);
 
 		if (serverfd != -1)
 			close(serverfd);
