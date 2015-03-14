@@ -627,7 +627,7 @@ WINPR_API void PubSub_Free(wPubSub* pubSub);
 
 struct _wBipBlock
 {
-	BYTE* data;
+	size_t index;
 	size_t size;
 };
 typedef struct _wBipBlock wBipBlock;
@@ -636,13 +636,11 @@ struct _wBipBuffer
 {
 	size_t size;
 	BYTE* buffer;
-	size_t headA;
-	size_t sizeA;
-	size_t headB;
-	size_t sizeB;
-	size_t headR;
-	size_t sizeR;
 	size_t pageSize;
+	wBipBlock blockA;
+	wBipBlock blockB;
+	wBipBlock readR;
+	wBipBlock writeR;
 };
 typedef struct _wBipBuffer wBipBuffer;
 
