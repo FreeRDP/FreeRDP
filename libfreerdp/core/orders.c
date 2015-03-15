@@ -2624,7 +2624,7 @@ BOOL update_read_create_offscreen_bitmap_order(wStream* s, CREATE_OFFSCREEN_BITM
 		{
 			UINT16 *new_indices;
 
-			new_indices = (UINT16 *)realloc(deleteList->indices, deleteList->cIndices);
+			new_indices = (UINT16 *)realloc(deleteList->indices, deleteList->sIndices * 2);
 			if (!new_indices)
 				return FALSE;
 
