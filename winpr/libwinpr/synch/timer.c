@@ -210,6 +210,14 @@ int InitializeWaitableTimer(WINPR_TIMER* timer)
 	return 0;
 }
 
+
+static HANDLE_OPS ops = {
+		TimerIsHandled,
+		TimerCloseHandle,
+		TimerGetFd,
+		TimerCleanupHandle
+};
+
 /**
  * Waitable Timer
  */
@@ -230,10 +238,7 @@ HANDLE CreateWaitableTimerA(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManua
 		timer->pfnCompletionRoutine = NULL;
 		timer->lpArgToCompletionRoutine = NULL;
 		timer->bInit = FALSE;
-		timer->cb.GetFd = TimerGetFd;
-		timer->cb.CloseHandle = TimerCloseHandle;
-		timer->cb.IsHandled = TimerIsHandled;
-		timer->cb.CleanupHandle = TimerCleanupHandle;
+		timer->ops = &ops;
 	}
 
 	return handle;

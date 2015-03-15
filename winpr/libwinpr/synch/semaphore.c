@@ -111,6 +111,13 @@ BOOL SemaphoreCloseHandle(HANDLE handle) {
 	return TRUE;
 }
 
+static HANDLE_OPS ops = {
+		SemaphoreIsHandled,
+		SemaphoreCloseHandle,
+		SemaphoreGetFd,
+		SemaphoreCleanupHandle
+};
+
 HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCWSTR lpName)
 {
 	HANDLE handle;
@@ -124,10 +131,7 @@ HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lIniti
 	semaphore->pipe_fd[0] = -1;
 	semaphore->pipe_fd[0] = -1;
 	semaphore->sem = (winpr_sem_t*) NULL;
-	semaphore->cb.IsHandled = SemaphoreIsHandled;
-	semaphore->cb.CloseHandle = SemaphoreCloseHandle;
-	semaphore->cb.GetFd = SemaphoreGetFd;
-	semaphore->cb.CleanupHandle = SemaphoreCleanupHandle;
+	semaphore->ops = &ops;
 
 	if (semaphore)
 	{
@@ -220,6 +224,7 @@ BOOL ReleaseSemaphore(HANDLE hSemaphore, LONG lReleaseCount, LPLONG lpPreviousCo
 		return TRUE;
 	}
 
+	WLog_ERR(TAG, "calling %s on a handle that is not a semaphore");
 	return FALSE;
 }
 

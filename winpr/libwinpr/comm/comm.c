@@ -1218,6 +1218,13 @@ void _comm_setServerSerialDriver(HANDLE hComm, SERIAL_DRIVER_ID driverId)
 	pComm->serverSerialDriverId = driverId;
 }
 
+static HANDLE_OPS ops = {
+		CommIsHandled,
+		CommCloseHandle,
+		CommGetFd,
+		NULL /* CleanupHandle */
+};
+
 
 /**
  * http://msdn.microsoft.com/en-us/library/windows/desktop/aa363198%28v=vs.85%29.aspx
@@ -1320,9 +1327,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 
 	WINPR_HANDLE_SET_TYPE(pComm, HANDLE_TYPE_COMM);
 
-	pComm->cb.GetFd = CommGetFd;
-	pComm->cb.CloseHandle = CommCloseHandle;
-	pComm->cb.IsHandled = CommIsHandled;
+	pComm->ops = &ops;
 
 	/* error_handle */
 
