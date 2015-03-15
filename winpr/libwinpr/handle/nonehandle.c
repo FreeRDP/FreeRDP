@@ -56,6 +56,13 @@ static int NoneHandleGetFd(HANDLE handle)
 	return -1;
 }
 
+static HANDLE_OPS ops = {
+		NoneHandleIsHandle,
+		NoneHandleCloseHandle,
+		NoneHandleGetFd,
+		NULL /* CleanupHandle */
+};
+
 HANDLE CreateNoneHandle()
 {
 	WINPR_NONE_HANDLE* none;
@@ -64,9 +71,7 @@ HANDLE CreateNoneHandle()
 	if (!none)
 		return NULL;
 
-	none->cb.IsHandled = NoneHandleIsHandle;
-	none->cb.CloseHandle = NoneHandleCloseHandle;
-	none->cb.GetFd = NoneHandleGetFd;
+	none->ops = &ops;
 
 	return (HANDLE)none;
 }

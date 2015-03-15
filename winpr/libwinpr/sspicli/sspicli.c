@@ -114,6 +114,13 @@ BOOL LogonUserCloseHandle(HANDLE handle) {
 	return TRUE;
 }
 
+static HANDLE_OPS ops = {
+		LogonUserIsHandled,
+		LogonUserCloseHandle,
+		LogonUserGetFd,
+		NULL /* CleanupHandle */
+};
+
 BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword,
 		DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken)
 {
@@ -130,9 +137,7 @@ BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword,
 
 	WINPR_HANDLE_SET_TYPE(token, HANDLE_TYPE_ACCESS_TOKEN);
 
-	token->cb.GetFd = LogonUserGetFd;
-	token->cb.CloseHandle = LogonUserCloseHandle;
-	token->cb.IsHandled = LogonUserIsHandled;
+	token->ops = &ops;
 
 	token->Username = _strdup(lpszUsername);
 
