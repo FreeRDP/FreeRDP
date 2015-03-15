@@ -105,6 +105,7 @@ BOOL PipeCloseHandle(HANDLE handle) {
 	if (pipe->fd != -1)
 	{
 		close(pipe->fd);
+		pipe->fd = -1;
 	}
 
 	free(handle);
@@ -175,6 +176,13 @@ static void InitWinPRPipeModule()
 	g_NamedPipeServerSockets = ArrayList_New(FALSE);
 }
 
+static HANDLE_OPS ops = {
+		PipeIsHandled,
+		PipeCloseHandle,
+		PipeGetFd,
+		NULL /* CleanupHandle */
+};
+
 
 /*
  * Unnamed pipe
@@ -211,15 +219,11 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
 	pReadPipe->fd = pipe_fd[0];
 	pWritePipe->fd = pipe_fd[1];
 	WINPR_HANDLE_SET_TYPE(pReadPipe, HANDLE_TYPE_ANONYMOUS_PIPE);
-	pReadPipe->cb.GetFd = PipeGetFd;
-	pReadPipe->cb.CloseHandle = PipeCloseHandle;
-	pReadPipe->cb.IsHandled = PipeIsHandled;
+	pReadPipe->ops = &ops;
 
 	*((ULONG_PTR*) hReadPipe) = (ULONG_PTR) pReadPipe;
 	WINPR_HANDLE_SET_TYPE(pWritePipe, HANDLE_TYPE_ANONYMOUS_PIPE);
-	pWritePipe->cb.GetFd = PipeGetFd;
-	pWritePipe->cb.CloseHandle = PipeCloseHandle;
-	pWritePipe->cb.IsHandled = PipeIsHandled;
+	pWritePipe->ops = &ops;
 	*((ULONG_PTR*) hWritePipe) = (ULONG_PTR) pWritePipe;
 	return TRUE;
 }
