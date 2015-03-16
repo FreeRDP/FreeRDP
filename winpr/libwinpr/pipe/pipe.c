@@ -273,6 +273,13 @@ static void winpr_unref_named_pipe(WINPR_NAMED_PIPE* pNamedPipe)
 	ArrayList_Unlock(g_NamedPipeServerSockets);
 }
 
+static HANDLE_OPS namedOps = {
+		NamedPipeIsHandled,
+		NamedPipeCloseHandle,
+		NamedPipeGetFd,
+		NULL /* CleanupHandle */
+};
+
 HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD nMaxInstances,
 						DWORD nOutBufferSize, DWORD nInBufferSize, DWORD nDefaultTimeOut, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
@@ -314,9 +321,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 	pNamedPipe->dwFlagsAndAttributes = dwOpenMode;
 	pNamedPipe->clientfd = -1;
 	pNamedPipe->ServerMode = TRUE;
-	pNamedPipe->cb.GetFd = NamedPipeGetFd;
-	pNamedPipe->cb.CloseHandle = NamedPipeCloseHandle;
-	pNamedPipe->cb.IsHandled = NamedPipeIsHandled;
+	pNamedPipe->ops = &namedOps;
 	ArrayList_Lock(g_NamedPipeServerSockets);
 
 	for (index = 0; index < ArrayList_Count(g_NamedPipeServerSockets); index++)
