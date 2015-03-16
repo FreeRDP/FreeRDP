@@ -343,11 +343,14 @@ int InstallAioSignalHandler()
 
 #endif /* HAVE_AIO_H */
 
+
 static HANDLE_OPS ops = {
 		FileIsHandled,
 		FileCloseHandle,
 		FileGetFd,
-		NULL /* CleanupHandle */
+		NULL, /* CleanupHandle */
+		NamedPipeRead,
+		NamedPipeWrite
 };
 
 HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
@@ -473,12 +476,10 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 {
 	ULONG Type;
 	PVOID Object;
-	BOOL status = TRUE;
+	WINPR_HANDLE *handle;
 
 	if (hFile == INVALID_HANDLE_VALUE)
-	{
 		return FALSE;
-	}
 
 	/*
 	 * from http://msdn.microsoft.com/en-us/library/windows/desktop/aa365467%28v=vs.85%29.aspx
@@ -491,119 +492,11 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	if (!winpr_Handle_GetInfo(hFile, &Type, &Object))
 		return FALSE;
 
-	if (Type == HANDLE_TYPE_ANONYMOUS_PIPE)
-	{
-		int io_status;
-		WINPR_PIPE* pipe;
-		pipe = (WINPR_PIPE*) Object;
+	handle = (WINPR_HANDLE *)hFile;
+	if (handle->ops->ReadFile)
+		return handle->ops->ReadFile(Object, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
 
-		do
-		{
-			io_status = read(pipe->fd, lpBuffer, nNumberOfBytesToRead);
-		}
-		while ((io_status < 0) && (errno == EINTR));
-
-		if (io_status < 0)
-		{
-			status = FALSE;
-
-			switch (errno)
-			{
-				case EWOULDBLOCK:
-					SetLastError(ERROR_NO_DATA);
-					break;
-			}
-		}
-
-		if (lpNumberOfBytesRead)
-			*lpNumberOfBytesRead = io_status;
-
-		return status;
-	}
-	else if (Type == HANDLE_TYPE_NAMED_PIPE)
-	{
-		int io_status;
-		WINPR_NAMED_PIPE* pipe;
-		pipe = (WINPR_NAMED_PIPE*) Object;
-
-		if (!(pipe->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED))
-		{
-			if (pipe->clientfd == -1)
-				return FALSE;
-
-			do
-			{
-				io_status = read(pipe->clientfd, lpBuffer, nNumberOfBytesToRead);
-			}
-			while ((io_status < 0) && (errno == EINTR));
-
-			if (io_status == 0)
-			{
-				SetLastError(ERROR_BROKEN_PIPE);
-				status = FALSE;
-			}
-			else if (io_status < 0)
-			{
-				status = FALSE;
-
-				switch (errno)
-				{
-					case EWOULDBLOCK:
-						SetLastError(ERROR_NO_DATA);
-						break;
-
-					default:
-						SetLastError(ERROR_BROKEN_PIPE);
-						break;
-				}
-			}
-
-			if (lpNumberOfBytesRead)
-				*lpNumberOfBytesRead = io_status;
-		}
-		else
-		{
-			/* Overlapped I/O */
-			if (!lpOverlapped)
-				return FALSE;
-
-			if (pipe->clientfd == -1)
-				return FALSE;
-
-			pipe->lpOverlapped = lpOverlapped;
-#ifdef HAVE_AIO_H
-			{
-				int aio_status;
-				struct aiocb cb;
-				ZeroMemory(&cb, sizeof(struct aiocb));
-				cb.aio_fildes = pipe->clientfd;
-				cb.aio_buf = lpBuffer;
-				cb.aio_nbytes = nNumberOfBytesToRead;
-				cb.aio_offset = lpOverlapped->Offset;
-				cb.aio_sigevent.sigev_notify = SIGEV_SIGNAL;
-				cb.aio_sigevent.sigev_signo = SIGIO;
-				cb.aio_sigevent.sigev_value.sival_ptr = (void*) lpOverlapped;
-				InstallAioSignalHandler();
-				aio_status = aio_read(&cb);
-				WLog_DBG(TAG, "aio_read status: %d", aio_status);
-
-				if (aio_status < 0)
-					status = FALSE;
-
-				return status;
-			}
-#else
-			/* synchronous behavior */
-			lpOverlapped->Internal = 0;
-			lpOverlapped->InternalHigh = (ULONG_PTR) nNumberOfBytesToRead;
-			lpOverlapped->Pointer = (PVOID) lpBuffer;
-			SetEvent(lpOverlapped->hEvent);
-#endif
-		}
-
-		return status;
-	}
-
+	WLog_ERR(TAG, "ReadFile operation not implemented");
 	return FALSE;
 }
 
@@ -624,114 +517,19 @@ BOOL WriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 {
 	ULONG Type;
 	PVOID Object;
-	BOOL status = TRUE;
+	WINPR_HANDLE *handle;
 
 	if (hFile == INVALID_HANDLE_VALUE)
-	{
 		return FALSE;
-	}
 
 	if (!winpr_Handle_GetInfo(hFile, &Type, &Object))
 		return FALSE;
 
-	if (Type == HANDLE_TYPE_ANONYMOUS_PIPE)
-	{
-		int io_status;
-		WINPR_PIPE* pipe;
-		pipe = (WINPR_PIPE*) Object;
+	handle = (WINPR_HANDLE *)hFile;
+	if (handle->ops->WriteFile)
+		return handle->ops->WriteFile(Object, lpBuffer, nNumberOfBytesToWrite, lpNumberOfBytesWritten, lpOverlapped);
 
-		do
-		{
-			io_status = write(pipe->fd, lpBuffer, nNumberOfBytesToWrite);
-		}
-		while ((io_status < 0) && (errno == EINTR));
-
-		if ((io_status < 0) && (errno == EWOULDBLOCK))
-			io_status = 0;
-
-		*lpNumberOfBytesWritten = io_status;
-		return TRUE;
-	}
-	else if (Type == HANDLE_TYPE_NAMED_PIPE)
-	{
-		int io_status;
-		WINPR_NAMED_PIPE* pipe;
-		pipe = (WINPR_NAMED_PIPE*) Object;
-
-		if (!(pipe->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED))
-		{
-			io_status = nNumberOfBytesToWrite;
-
-			if (pipe->clientfd == -1)
-				return FALSE;
-
-			do
-			{
-				io_status = write(pipe->clientfd, lpBuffer, nNumberOfBytesToWrite);
-			}
-			while ((io_status < 0) && (errno == EINTR));
-
-			if (io_status < 0)
-			{
-				*lpNumberOfBytesWritten = 0;
-
-				switch (errno)
-				{
-					case EWOULDBLOCK:
-						io_status = 0;
-						status = TRUE;
-						break;
-
-					default:
-						status = FALSE;
-				}
-			}
-
-			*lpNumberOfBytesWritten = io_status;
-			return status;
-		}
-		else
-		{
-			/* Overlapped I/O */
-			if (!lpOverlapped)
-				return FALSE;
-
-			if (pipe->clientfd == -1)
-				return FALSE;
-
-			pipe->lpOverlapped = lpOverlapped;
-#ifdef HAVE_AIO_H
-			{
-				struct aiocb cb;
-				ZeroMemory(&cb, sizeof(struct aiocb));
-				cb.aio_fildes = pipe->clientfd;
-				cb.aio_buf = (void*) lpBuffer;
-				cb.aio_nbytes = nNumberOfBytesToWrite;
-				cb.aio_offset = lpOverlapped->Offset;
-				cb.aio_sigevent.sigev_notify = SIGEV_SIGNAL;
-				cb.aio_sigevent.sigev_signo = SIGIO;
-				cb.aio_sigevent.sigev_value.sival_ptr = (void*) lpOverlapped;
-				InstallAioSignalHandler();
-				io_status = aio_write(&cb);
-				WLog_DBG("aio_write status: %d", io_status);
-
-				if (io_status < 0)
-					status = FALSE;
-
-				return status;
-			}
-#else
-			/* synchronous behavior */
-			lpOverlapped->Internal = 1;
-			lpOverlapped->InternalHigh = (ULONG_PTR) nNumberOfBytesToWrite;
-			lpOverlapped->Pointer = (PVOID) lpBuffer;
-			SetEvent(lpOverlapped->hEvent);
-#endif
-		}
-
-		return TRUE;
-	}
-
+	WLog_ERR(TAG, "ReadFile operation not implemented");
 	return FALSE;
 }
 
