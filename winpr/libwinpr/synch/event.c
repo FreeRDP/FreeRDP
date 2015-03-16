@@ -96,6 +96,13 @@ BOOL EventCloseHandle(HANDLE handle) {
     return TRUE;
 }
 
+static HANDLE_OPS ops = {
+		EventIsHandled,
+		EventCloseHandle,
+		EventGetFd,
+		NULL /* CleanupHandle */
+};
+
 HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCWSTR lpName)
 {
 	WINPR_EVENT* event;
@@ -105,9 +112,7 @@ HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 	{
 		event->bAttached = FALSE;
 		event->bManualReset = bManualReset;
-		event->cb.IsHandled = EventIsHandled;
-		event->cb.CloseHandle = EventCloseHandle;
-		event->cb.GetFd = EventGetFd;
+		event->ops = &ops;
 
 		if (!event->bManualReset)
 		{
@@ -271,6 +276,7 @@ BOOL ResetEvent(HANDLE hEvent)
 
 #endif
 
+
 HANDLE CreateFileDescriptorEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, int FileDescriptor)
 {
 #ifndef _WIN32
@@ -284,9 +290,7 @@ HANDLE CreateFileDescriptorEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL 
 		event->bManualReset = bManualReset;
 		event->pipe_fd[0] = FileDescriptor;
 		event->pipe_fd[1] = -1;
-		event->cb.CloseHandle = EventCloseHandle;
-		event->cb.GetFd = EventGetFd;
-		event->cb.IsHandled = EventIsHandled;
+		event->ops = &ops;
 		WINPR_HANDLE_SET_TYPE(event, HANDLE_TYPE_EVENT);
 		handle = (HANDLE) event;
 	}

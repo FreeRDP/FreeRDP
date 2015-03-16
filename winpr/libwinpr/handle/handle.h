@@ -41,20 +41,20 @@
 
 #define WINPR_HANDLE_DEF() \
 	ULONG Type; \
-	HANDLE_CLOSE_CB cb
+	HANDLE_OPS *ops
 
 typedef BOOL (*pcIsHandled)(HANDLE handle);
 typedef BOOL (*pcCloseHandle)(HANDLE handle);
 typedef int (*pcGetFd)(HANDLE handle);
 typedef DWORD (*pcCleanupHandle)(HANDLE handle);
 
-typedef struct _HANDLE_CLOSE_CB
+typedef struct _HANDLE_OPS
 {
 	pcIsHandled IsHandled;
 	pcCloseHandle CloseHandle;
 	pcGetFd GetFd;
 	pcCleanupHandle CleanupHandle;
-} HANDLE_CLOSE_CB;
+} HANDLE_OPS;
 
 struct winpr_handle
 {
@@ -88,10 +88,10 @@ static INLINE int winpr_Handle_getFd(HANDLE handle)
 	if (!winpr_Handle_GetInfo(handle, &type, (PVOID*)&hdl))
 		return -1;
 
-	if (!hdl || !hdl->cb.GetFd)
+	if (!hdl || !hdl->ops->GetFd)
 		return -1;
 
-	return hdl->cb.GetFd(handle);
+	return hdl->ops->GetFd(handle);
 }
 
 static INLINE DWORD winpr_Handle_cleanup(HANDLE handle)
@@ -106,10 +106,10 @@ static INLINE DWORD winpr_Handle_cleanup(HANDLE handle)
 		return WAIT_FAILED;
 
 	/* If there is no cleanup function, assume all ok. */
-	if (!hdl->cb.CleanupHandle)
+	if (!hdl->ops->CleanupHandle)
 		return WAIT_OBJECT_0;
 
-	return hdl->cb.CleanupHandle(handle);
+	return hdl->ops->CleanupHandle(handle);
 }
 
 #endif /* WINPR_HANDLE_PRIVATE_H */
