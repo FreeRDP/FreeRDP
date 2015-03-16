@@ -146,7 +146,10 @@ UINT32 smartcard_pack_write_size_align(SMARTCARD_DEVICE* smartcard, wStream* s, 
 	pad = size - pad;
 
 	if (pad)
+	{
+		Stream_EnsureRemainingCapacity(s, pad);
 		Stream_Zero(s, pad);
+	}
 
 	return pad;
 }
@@ -2423,9 +2426,11 @@ UINT32 smartcard_pack_transmit_return(SMARTCARD_DEVICE* smartcard, wStream* s, T
 		Stream_Write_UINT32(s, pbExtraBytesNdrPtr); /* pbExtraBytesNdrPtr (4 bytes) */
 
 		if (pbExtraBytesNdrPtr)
+		{
+			Stream_Write_UINT32(s, cbExtraBytes); /* Length (4 bytes) */
 			Stream_Write(s, pbExtraBytes, cbExtraBytes);
-
-		smartcard_pack_write_size_align(smartcard, s, cbExtraBytes, 4);
+			smartcard_pack_write_size_align(smartcard, s, cbExtraBytes, 4);
+		}
 	}
 
 	if (pbRecvBufferNdrPtr)

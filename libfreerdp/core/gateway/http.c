@@ -717,15 +717,15 @@ HttpResponse* http_response_recv(rdpTls* tls)
 			if (response->ContentType)
 			{
 				if (_stricmp(response->ContentType, "text/plain") == 0)
-				{
 					bodyLength = response->ContentLength;
-				}
+				else if (_stricmp(response->ContentType, "text/html") == 0)
+					bodyLength = response->ContentLength;
 			}
 
 			if (bodyLength != response->BodyLength)
 			{
 				WLog_WARN(TAG, "http_response_recv: %s unexpected body length: actual: %d, expected: %d",
-						response->ContentType, response->ContentLength, response->BodyLength);
+						response->ContentType, bodyLength, response->BodyLength);
 			}
 
 			break;

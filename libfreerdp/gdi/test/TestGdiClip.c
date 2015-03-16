@@ -180,13 +180,13 @@ int test_gdi_InvalidateRegion(void)
 	gdi_SelectObject(hdc, (HGDIOBJECT) bmp);
 	gdi_SetNullClipRgn(hdc);
 
-	hdc->hwnd = (HGDI_WND) malloc(sizeof(GDI_WND));
+	hdc->hwnd = (HGDI_WND) calloc(1, sizeof(GDI_WND));
 	hdc->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0);
 	hdc->hwnd->invalid->null = 1;
 	invalid = hdc->hwnd->invalid;
 
 	hdc->hwnd->count = 16;
-	hdc->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * hdc->hwnd->count);
+	hdc->hwnd->cinvalid = (HGDI_RGN) calloc(hdc->hwnd->count, sizeof(GDI_RGN));
 
 	rgn1 = gdi_CreateRectRgn(0, 0, 0, 0);
 	rgn2 = gdi_CreateRectRgn(0, 0, 0, 0);
@@ -338,8 +338,12 @@ int test_gdi_InvalidateRegion(void)
 
 int TestGdiClip(int argc, char* argv[])
 {
+	fprintf(stderr, "test_gdi_ClipCoords()\n");
+
 	if (test_gdi_ClipCoords() < 0)
 		return -1;
+
+	fprintf(stderr, "test_gdi_InvalidateRegion()\n");
 
 	if (test_gdi_InvalidateRegion() < 0)
 		return -1;

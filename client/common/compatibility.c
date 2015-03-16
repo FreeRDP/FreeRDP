@@ -340,8 +340,10 @@ int freerdp_detect_old_command_line_syntax(int argc, char** argv, int* count)
 	flags |= COMMAND_LINE_SIGIL_DASH | COMMAND_LINE_SIGIL_DOUBLE_DASH;
 	flags |= COMMAND_LINE_SIGIL_NOT_ESCAPED;
 
-	settings = (rdpSettings*) malloc(sizeof(rdpSettings));
-	ZeroMemory(settings, sizeof(rdpSettings));
+	settings = (rdpSettings*) calloc(1, sizeof(rdpSettings));
+
+	if (!settings)
+		return -1;
 
 	CommandLineClearArgumentsA(old_args);
 
