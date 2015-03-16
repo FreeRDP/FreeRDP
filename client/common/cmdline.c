@@ -988,7 +988,8 @@ int freerdp_detect_command_line_pre_filter(void* context, int index, int argc, L
 	return 0;
 }
 
-int freerdp_detect_windows_style_command_line_syntax(int argc, char** argv, int* count)
+int freerdp_detect_windows_style_command_line_syntax(int argc, char** argv,
+	int* count, BOOL ignoreUnknown)
 {
 	int status;
 	DWORD flags;
@@ -997,6 +998,10 @@ int freerdp_detect_windows_style_command_line_syntax(int argc, char** argv, int*
 
 	flags = COMMAND_LINE_SEPARATOR_COLON;
 	flags |= COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SIGIL_PLUS_MINUS;
+	if (ignoreUnknown)
+	{
+		flags |= COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
+	}
 
 	*count = 0;
 	detect_status = 0;
@@ -1025,7 +1030,8 @@ int freerdp_detect_windows_style_command_line_syntax(int argc, char** argv, int*
 	return detect_status;
 }
 
-int freerdp_detect_posix_style_command_line_syntax(int argc, char** argv, int* count)
+int freerdp_detect_posix_style_command_line_syntax(int argc, char** argv,
+	int* count, BOOL ignoreUnknown)
 {
 	int status;
 	DWORD flags;
@@ -1035,6 +1041,10 @@ int freerdp_detect_posix_style_command_line_syntax(int argc, char** argv, int* c
 	flags = COMMAND_LINE_SEPARATOR_SPACE;
 	flags |= COMMAND_LINE_SIGIL_DASH | COMMAND_LINE_SIGIL_DOUBLE_DASH;
 	flags |= COMMAND_LINE_SIGIL_ENABLE_DISABLE;
+	if (ignoreUnknown)
+	{
+		flags |= COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
+	}
 
 	*count = 0;
 	detect_status = 0;
@@ -1063,7 +1073,8 @@ int freerdp_detect_posix_style_command_line_syntax(int argc, char** argv, int* c
 	return detect_status;
 }
 
-BOOL freerdp_client_detect_command_line(int argc, char** argv, DWORD* flags)
+static BOOL freerdp_client_detect_command_line(int argc, char** argv,
+	DWORD* flags, BOOL ignoreUnknown)
 {
 	int old_cli_status;
 	int old_cli_count;
@@ -1073,8 +1084,8 @@ BOOL freerdp_client_detect_command_line(int argc, char** argv, DWORD* flags)
 	int windows_cli_count;
 	BOOL compatibility = FALSE;
 
-	windows_cli_status = freerdp_detect_windows_style_command_line_syntax(argc, argv, &windows_cli_count);
-	posix_cli_status = freerdp_detect_posix_style_command_line_syntax(argc, argv, &posix_cli_count);
+	windows_cli_status = freerdp_detect_windows_style_command_line_syntax(argc, argv, &windows_cli_count, ignoreUnknown);
+	posix_cli_status = freerdp_detect_posix_style_command_line_syntax(argc, argv, &posix_cli_count, ignoreUnknown);
 	old_cli_status = freerdp_detect_old_command_line_syntax(argc, argv, &old_cli_count);
 
 	/* Default is POSIX syntax */
@@ -1179,7 +1190,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 	BOOL compatibility;
 	COMMAND_LINE_ARGUMENT_A* arg;
 
-	compatibility = freerdp_client_detect_command_line(argc, argv, &flags);
+	compatibility = freerdp_client_detect_command_line(argc, argv, &flags, allowUnknown);
 
 	if (compatibility)
 	{
