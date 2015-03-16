@@ -1720,6 +1720,74 @@ int freerdp_image1_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst
 int freerdp_image4_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,
 		int nWidth, int nHeight, BYTE* pSrcData, DWORD SrcFormat, int nSrcStep, int nXSrc, int nYSrc, BYTE* palette)
 {
+	int x, y;
+	int nSrcPad;
+	int nDstPad;
+	int nAlignedWidth;
+	int dstBitsPerPixel;
+	int dstBytesPerPixel;
+	BOOL vFlip = FALSE;
+	BOOL invert = FALSE;
+
+	dstBitsPerPixel = FREERDP_PIXEL_FORMAT_DEPTH(DstFormat);
+	dstBytesPerPixel = (FREERDP_PIXEL_FORMAT_BPP(DstFormat) / 8);
+
+	nAlignedWidth = nWidth + (nWidth % 2);
+
+	if (nSrcStep < 0)
+		nSrcStep = nAlignedWidth / 2;
+
+	if (nDstStep < 0)
+		nDstStep = dstBytesPerPixel * nWidth;
+
+	nSrcPad = (nSrcStep - (nAlignedWidth / 2));
+	nDstPad = (nDstStep - (nWidth * dstBytesPerPixel));
+
+	if (FREERDP_PIXEL_FORMAT_IS_ABGR(DstFormat))
+		invert = TRUE;
+
+	if (FREERDP_PIXEL_FORMAT_FLIP(DstFormat) == FREERDP_PIXEL_FLIP_VERTICAL)
+		vFlip = TRUE;
+
+	if (dstBytesPerPixel == 4)
+	{
+		BYTE* pSrcPixel;
+		UINT32* pDstPixel;
+		UINT32* values = (UINT32*) palette;
+
+		if (!invert)
+		{
+			if (!vFlip)
+			{
+				pSrcPixel = &pSrcData[nYSrc * nSrcStep];
+				pDstPixel = (UINT32*) &pDstData[(nYDst * nDstStep) + (nXDst * 4)];
+
+				for (y = 0; y < nHeight; y++)
+				{
+					for (x = 0; x < nWidth / 2; x++)
+					{
+						pDstPixel[0] = values[*pSrcPixel >> 4];
+						pDstPixel[1] = values[*pSrcPixel & 0xF];
+						pDstPixel += 2;
+						pSrcPixel++;
+					}
+
+					if (nWidth % 2)
+					{
+						pDstPixel[0] = values[*pSrcPixel >> 4];
+						pDstPixel++;
+						pSrcPixel++;
+					}
+
+					pSrcPixel += nSrcPad;
+					pDstPixel = (UINT32*) &((BYTE*) pDstPixel)[nDstPad];
+				}
+			}
+		}
+
+		return 1;
+	}
+
 	return 1;
 }
 
