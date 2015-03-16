@@ -402,7 +402,7 @@ static void* named_pipe_single_thread(void* arg)
 		goto out;
 	}
 
-	if (WriteFile(clients[i], sndbuf, sizeof(sndbuf), &dwWritten, NULL))
+	if (WriteFile(servers[i], sndbuf, sizeof(sndbuf), &dwWritten, NULL))
 	{
 		printf("%s: Error WriteFile on server end should have failed after CloseHandle on client\n", __FUNCTION__);
 		goto out;
