@@ -105,9 +105,66 @@ BOOL PipeCloseHandle(HANDLE handle) {
 	if (pipe->fd != -1)
 	{
 		close(pipe->fd);
+		pipe->fd = -1;
 	}
 
 	free(handle);
+	return TRUE;
+}
+
+static BOOL NamedPipeCloseHandle(HANDLE handle);
+
+static BOOL NamedPipeIsHandled(HANDLE handle)
+{
+	WINPR_NAMED_PIPE* pPipe = (WINPR_NAMED_PIPE*) handle;
+
+	if (!pPipe || pPipe->Type != HANDLE_TYPE_NAMED_PIPE)
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static int NamedPipeGetFd(HANDLE handle)
+{
+	WINPR_NAMED_PIPE *pipe = (WINPR_NAMED_PIPE *)handle;
+
+	if (!NamedPipeIsHandled(handle))
+		return -1;
+
+	if (pipe->ServerMode)
+		return pipe->serverfd;
+	return pipe->clientfd;
+}
+
+BOOL NamedPipeCloseHandle(HANDLE handle) {
+	WINPR_NAMED_PIPE* pNamedPipe = (WINPR_NAMED_PIPE *)handle;
+
+	if (!NamedPipeIsHandled(handle))
+		return FALSE;
+
+	if (pNamedPipe->pfnUnrefNamedPipe)
+		pNamedPipe->pfnUnrefNamedPipe(pNamedPipe);
+
+	if (pNamedPipe->name)
+		free(pNamedPipe->name);
+
+	if (pNamedPipe->lpFileName)
+		free((void*)pNamedPipe->lpFileName);
+
+	if (pNamedPipe->lpFilePath)
+		free((void*)pNamedPipe->lpFilePath);
+
+	if (pNamedPipe->serverfd != -1)
+		close(pNamedPipe->serverfd);
+	
+	if (pNamedPipe->clientfd != -1)
+		close(pNamedPipe->clientfd);
+	
+	free(handle);
+
 	return TRUE;
 }
 
@@ -118,6 +175,13 @@ static void InitWinPRPipeModule()
 
 	g_NamedPipeServerSockets = ArrayList_New(FALSE);
 }
+
+static HANDLE_OPS ops = {
+		PipeIsHandled,
+		PipeCloseHandle,
+		PipeGetFd,
+		NULL /* CleanupHandle */
+};
 
 
 /*
@@ -155,15 +219,11 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
 	pReadPipe->fd = pipe_fd[0];
 	pWritePipe->fd = pipe_fd[1];
 	WINPR_HANDLE_SET_TYPE(pReadPipe, HANDLE_TYPE_ANONYMOUS_PIPE);
-	pReadPipe->cb.GetFd = PipeGetFd;
-	pReadPipe->cb.CloseHandle = PipeCloseHandle;
-	pReadPipe->cb.IsHandled = PipeIsHandled;
+	pReadPipe->ops = &ops;
 
 	*((ULONG_PTR*) hReadPipe) = (ULONG_PTR) pReadPipe;
 	WINPR_HANDLE_SET_TYPE(pWritePipe, HANDLE_TYPE_ANONYMOUS_PIPE);
-	pWritePipe->cb.GetFd = PipeGetFd;
-	pWritePipe->cb.CloseHandle = PipeCloseHandle;
-	pWritePipe->cb.IsHandled = PipeIsHandled;
+	pWritePipe->ops = &ops;
 	*((ULONG_PTR*) hWritePipe) = (ULONG_PTR) pWritePipe;
 	return TRUE;
 }
@@ -213,6 +273,13 @@ static void winpr_unref_named_pipe(WINPR_NAMED_PIPE* pNamedPipe)
 	ArrayList_Unlock(g_NamedPipeServerSockets);
 }
 
+static HANDLE_OPS namedOps = {
+		NamedPipeIsHandled,
+		NamedPipeCloseHandle,
+		NamedPipeGetFd,
+		NULL /* CleanupHandle */
+};
+
 HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD nMaxInstances,
 						DWORD nOutBufferSize, DWORD nInBufferSize, DWORD nDefaultTimeOut, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
@@ -234,6 +301,8 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 
 	WINPR_HANDLE_SET_TYPE(pNamedPipe, HANDLE_TYPE_NAMED_PIPE);
 
+	pNamedPipe->serverfd = -1;
+	pNamedPipe->clientfd = -1;
 	if (!(pNamedPipe->name = _strdup(lpName)))
 		goto out;
 
@@ -252,6 +321,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 	pNamedPipe->dwFlagsAndAttributes = dwOpenMode;
 	pNamedPipe->clientfd = -1;
 	pNamedPipe->ServerMode = TRUE;
+	pNamedPipe->ops = &namedOps;
 	ArrayList_Lock(g_NamedPipeServerSockets);
 
 	for (index = 0; index < ArrayList_Count(g_NamedPipeServerSockets); index++)
@@ -347,13 +417,7 @@ out:
 
 	if (hNamedPipe == INVALID_HANDLE_VALUE)
 	{
-		if (pNamedPipe)
-		{
-			free((void*)pNamedPipe->name);
-			free((void*)pNamedPipe->lpFileName);
-			free((void*)pNamedPipe->lpFilePath);
-			free(pNamedPipe);
-		}
+		NamedPipeCloseHandle(hNamedPipe);
 
 		if (serverfd != -1)
 			close(serverfd);

@@ -487,6 +487,13 @@ static int ProcessGetFd(HANDLE handle)
 	return -1;
 }
 
+static HANDLE_OPS ops = {
+		ProcessHandleIsHandle,
+		ProcessHandleCloseHandle,
+		ProcessGetFd,
+		NULL /* CleanupHandle */
+};
+
 HANDLE CreateProcessHandle(pid_t pid)
 {
 	WINPR_PROCESS* process;
@@ -497,9 +504,7 @@ HANDLE CreateProcessHandle(pid_t pid)
 
 	process->pid = pid;
 	process->Type = HANDLE_TYPE_PROCESS;
-	process->cb.GetFd = ProcessGetFd;
-	process->cb.CloseHandle = ProcessHandleCloseHandle;
-	process->cb.IsHandled = ProcessHandleIsHandle;
+	process->ops = &ops;
 
 	return (HANDLE)process;
 }

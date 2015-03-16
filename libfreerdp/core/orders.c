@@ -1314,7 +1314,7 @@ BOOL update_write_line_to_order(wStream* s, ORDER_INFO* orderInfo, LINE_TO_ORDER
 BOOL update_read_polyline_order(wStream* s, ORDER_INFO* orderInfo, POLYLINE_ORDER* polyline)
 {
 	UINT16 word;
-	UINT32 new_num;
+	UINT32 new_num = polyline->numDeltaEntries;
 
 	ORDER_FIELD_COORD(1, polyline->xStart);
 	ORDER_FIELD_COORD(2, polyline->yStart);
@@ -1714,7 +1714,7 @@ BOOL update_write_fast_glyph_order(wStream* s, ORDER_INFO* orderInfo, FAST_GLYPH
 
 BOOL update_read_polygon_sc_order(wStream* s, ORDER_INFO* orderInfo, POLYGON_SC_ORDER* polygon_sc)
 {
-	UINT32 num;
+	UINT32 num = polygon_sc->numPoints;
 
 	ORDER_FIELD_COORD(1, polygon_sc->xStart);
 	ORDER_FIELD_COORD(2, polygon_sc->yStart);
@@ -1757,7 +1757,7 @@ BOOL update_write_polygon_sc_order(wStream* s, ORDER_INFO* orderInfo, POLYGON_SC
 
 BOOL update_read_polygon_cb_order(wStream* s, ORDER_INFO* orderInfo, POLYGON_CB_ORDER* polygon_cb)
 {
-	UINT32 num;
+	UINT32 num = polygon_cb->numPoints;
 
 	ORDER_FIELD_COORD(1, polygon_cb->xStart);
 	ORDER_FIELD_COORD(2, polygon_cb->yStart);
@@ -2624,7 +2624,7 @@ BOOL update_read_create_offscreen_bitmap_order(wStream* s, CREATE_OFFSCREEN_BITM
 		{
 			UINT16 *new_indices;
 
-			new_indices = (UINT16 *)realloc(deleteList->indices, deleteList->cIndices);
+			new_indices = (UINT16 *)realloc(deleteList->indices, deleteList->sIndices * 2);
 			if (!new_indices)
 				return FALSE;
 

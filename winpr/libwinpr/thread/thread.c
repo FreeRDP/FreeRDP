@@ -151,6 +151,14 @@ static DWORD ThreadCleanupHandle(HANDLE handle)
 	return WAIT_OBJECT_0;
 }
 
+static HANDLE_OPS ops = {
+		ThreadIsHandled,
+		ThreadCloseHandle,
+		ThreadGetFd,
+		ThreadCleanupHandle
+};
+
+
 static void dump_thread(WINPR_THREAD* thread)
 {
 #if defined(WITH_DEBUG_THREADS)
@@ -339,10 +347,7 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 	thread->lpParameter = lpParameter;
 	thread->lpStartAddress = lpStartAddress;
 	thread->lpThreadAttributes = lpThreadAttributes;
-	thread->cb.IsHandled = ThreadIsHandled;
-	thread->cb.CloseHandle = ThreadCloseHandle;
-	thread->cb.GetFd = ThreadGetFd;
-	thread->cb.CleanupHandle = ThreadCleanupHandle;
+	thread->ops = &ops;
 
 #if defined(WITH_DEBUG_THREADS)
 	thread->create_stack = winpr_backtrace(20);

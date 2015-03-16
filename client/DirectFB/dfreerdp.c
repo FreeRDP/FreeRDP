@@ -468,7 +468,7 @@ int main(int argc, char* argv[])
 	instance->context->argc = argc;
 	instance->context->argv = argv;
 
-	status = freerdp_client_settings_parse_command_line(instance->settings, argc, argv);
+	status = freerdp_client_settings_parse_command_line(instance->settings, argc, argv, FALSE);
 
 	if (status < 0)
 		exit(0);

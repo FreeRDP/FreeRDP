@@ -343,6 +343,13 @@ int InstallAioSignalHandler()
 
 #endif /* HAVE_AIO_H */
 
+static HANDLE_OPS ops = {
+		FileIsHandled,
+		FileCloseHandle,
+		FileGetFd,
+		NULL /* CleanupHandle */
+};
+
 HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
 				   DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
@@ -417,9 +424,7 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 	strcpy(s.sun_path, pNamedPipe->lpFilePath);
 	status = connect(pNamedPipe->clientfd, (struct sockaddr*) &s, sizeof(struct sockaddr_un));
 
-	pNamedPipe->cb.IsHandled = FileIsHandled;
-	pNamedPipe->cb.CloseHandle = FileCloseHandle;
-	pNamedPipe->cb.GetFd = FileGetFd;
+	pNamedPipe->ops = &ops;
 
 	if (status != 0)
 	{

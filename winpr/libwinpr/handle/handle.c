@@ -51,8 +51,14 @@ BOOL CloseHandle(HANDLE hObject)
 	if (!winpr_Handle_GetInfo(hObject, &Type, (PVOID*)&Object))
 		return FALSE;
 
-	if (Object && Object->cb.CloseHandle)
-		return Object->cb.CloseHandle(hObject);
+	if (!Object)
+		return FALSE;
+
+	if (!Object->ops)
+		return FALSE;
+
+	if(Object->ops->CloseHandle)
+		return Object->ops->CloseHandle(hObject);
 
 	return FALSE;
 }
