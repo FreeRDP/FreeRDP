@@ -326,6 +326,9 @@ BYTE* BipBuffer_ReadReserve(wBipBuffer* bb, size_t size)
 
 	block = BipBuffer_ReadTryReserve(bb, size, &reserved);
 
+	if (reserved != size)
+		return NULL;
+
 	return block;
 }
 
