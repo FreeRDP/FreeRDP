@@ -521,9 +521,11 @@ BYTE* freerdp_image_convert_8bpp(BYTE* srcData, BYTE* dstData, int width, int he
 		{
 			pixel = *src8;
 			src8++;
+
 			red = clrconv->palette->entries[pixel].red;
 			green = clrconv->palette->entries[pixel].green;
 			blue = clrconv->palette->entries[pixel].blue;
+
 			if (clrconv->alpha)
 			{
 				pixel = (clrconv->invert) ? ABGR32(0xFF, red, green, blue) : ARGB32(0xFF, red, green, blue);
@@ -532,6 +534,7 @@ BYTE* freerdp_image_convert_8bpp(BYTE* srcData, BYTE* dstData, int width, int he
 			{
 				pixel = (clrconv->invert) ? BGR32(red, green, blue) : RGB32(red, green, blue);
 			}
+
 			*dst32 = pixel;
 			dst32++;
 		}

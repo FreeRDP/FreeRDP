@@ -70,10 +70,22 @@ static const GDI_PALETTEENTRY default_system_palette[20] =
 
 HGDI_PALETTE gdi_CreatePalette(HGDI_PALETTE palette)
 {
-	HGDI_PALETTE hPalette = (HGDI_PALETTE) malloc(sizeof(GDI_PALETTE));
+	HGDI_PALETTE hPalette = (HGDI_PALETTE) calloc(1, sizeof(GDI_PALETTE));
+
+	if (!hPalette)
+		return NULL;
+
 	hPalette->count = palette->count;
-	hPalette->entries = (GDI_PALETTEENTRY*) malloc(sizeof(GDI_PALETTEENTRY) * hPalette->count);
-	memcpy(hPalette->entries, palette->entries, sizeof(GDI_PALETTEENTRY) * hPalette->count);
+	hPalette->entries = (GDI_PALETTEENTRY*) calloc(hPalette->count, sizeof(GDI_PALETTEENTRY));
+
+	if (!hPalette->entries)
+	{
+		free(hPalette);
+		return NULL;
+	}
+
+	CopyMemory(hPalette->entries, palette->entries, sizeof(GDI_PALETTEENTRY) * hPalette->count);
+
 	return hPalette;
 }
 
@@ -84,14 +96,22 @@ HGDI_PALETTE gdi_CreatePalette(HGDI_PALETTE palette)
 
 HGDI_PALETTE CreateSystemPalette()
 {
-	HGDI_PALETTE palette = (HGDI_PALETTE) malloc(sizeof(GDI_PALETTE));
+	HGDI_PALETTE palette = (HGDI_PALETTE) calloc(1, sizeof(GDI_PALETTE));
+
+	if (!palette)
+		return NULL;
 
 	palette->count = 256;
-	palette->entries = (GDI_PALETTEENTRY*) malloc(sizeof(GDI_PALETTEENTRY) * 256);
-	memset(palette->entries, 0, sizeof(GDI_PALETTEENTRY) * 256);
+	palette->entries = (GDI_PALETTEENTRY*) calloc(256, sizeof(GDI_PALETTEENTRY));
 
-	memcpy(&palette->entries[0], &default_system_palette[0], 10 * sizeof(GDI_PALETTEENTRY));
-	memcpy(&palette->entries[256 - 10], &default_system_palette[10], 10 * sizeof(GDI_PALETTEENTRY));
+	if (!palette->entries)
+	{
+		free(palette);
+		return NULL;
+	}
+
+	CopyMemory(&palette->entries[0], &default_system_palette[0], 10 * sizeof(GDI_PALETTEENTRY));
+	CopyMemory(&palette->entries[256 - 10], &default_system_palette[10], 10 * sizeof(GDI_PALETTEENTRY));
 
 	return palette;
 }
@@ -103,7 +123,7 @@ HGDI_PALETTE CreateSystemPalette()
 
 HGDI_PALETTE gdi_GetSystemPalette()
 {
-	if (hSystemPalette == NULL)
+	if (!hSystemPalette)
 		hSystemPalette = CreateSystemPalette();
 
 	return hSystemPalette;
