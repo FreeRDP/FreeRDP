@@ -4,13 +4,13 @@
 #include <winpr/cmdline.h>
 #include <winpr/spec.h>
 
-#define TESTCASE(cmd, expected_return) status = freerdp_client_settings_parse_command_line(settings, ARRAYSIZE(cmd), cmd); \
+#define TESTCASE(cmd, expected_return) status = freerdp_client_settings_parse_command_line(settings, ARRAYSIZE(cmd), cmd, FALSE); \
    if (status != expected_return) { \
       printf("Test argument %s failed\n", #cmd); \
        return -1; \
     }
 
-#define TESTCASE_SUCCESS(cmd) status = freerdp_client_settings_parse_command_line(settings, ARRAYSIZE(cmd), cmd); \
+#define TESTCASE_SUCCESS(cmd) status = freerdp_client_settings_parse_command_line(settings, ARRAYSIZE(cmd), cmd, FALSE); \
    if (status < 0) { \
      printf("Test argument %s failed\n", #cmd); \
      return -1; \

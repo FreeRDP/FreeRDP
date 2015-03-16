@@ -1168,7 +1168,8 @@ int freerdp_client_settings_command_line_status_print(rdpSettings* settings, int
 	return 0;
 }
 
-int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, int argc, char** argv)
+int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
+	int argc, char** argv, BOOL allowUnknown)
 {
 	char* p;
 	char* str;
@@ -1189,6 +1190,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 	{
 		CommandLineClearArgumentsA(args);
 
+		if (allowUnknown)
+		{
+			flags |= COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
+		}
 		status = CommandLineParseArgumentsA(argc, (const char**) argv, args, flags, settings,
 				freerdp_client_command_line_pre_filter, freerdp_client_command_line_post_filter);
 

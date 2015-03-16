@@ -269,7 +269,7 @@ int main(int argc, char* argv[])
 	instance->ContextFree = wl_context_free;
 	freerdp_context_new(instance);
 
-	status = freerdp_client_settings_parse_command_line_arguments(instance->settings, argc, argv);
+	status = freerdp_client_settings_parse_command_line_arguments(instance->settings, argc, argv, FALSE);
 
 	status = freerdp_client_settings_command_line_status_print(instance->settings, status, argc, argv);
 

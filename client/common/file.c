@@ -1040,7 +1040,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		char* ConnectionFile = settings->ConnectionFile;
 
 		settings->ConnectionFile = NULL;
-		freerdp_client_settings_parse_command_line(settings, file->argc, file->argv);
+		freerdp_client_settings_parse_command_line(settings, file->argc, file->argv, FALSE);
 		settings->ConnectionFile = ConnectionFile;
 	}
 
