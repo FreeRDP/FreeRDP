@@ -158,14 +158,14 @@ static void rdpsnd_oss_set_format(rdpsndDevicePlugin *device, AUDIO_FORMAT *form
 
 static void rdpsnd_oss_open_mixer(rdpsndOssPlugin *oss) {
 	int devmask = 0;
-	char mixer[PATH_MAX] = "/dev/mixer";
+	char mixer_name[PATH_MAX] = "/dev/mixer";
 
 	if (oss->mixer_handle != -1)
 		return;
 
 	if (oss->dev_unit != -1)
-		snprintf(mixer, PATH_MAX - 1, "/dev/mixer%i", oss->dev_unit);
-	if ((oss->mixer_handle = open(mixer, O_RDWR)) < 0) {
+		snprintf(mixer_name, PATH_MAX - 1, "/dev/mixer%i", oss->dev_unit);
+	if ((oss->mixer_handle = open(mixer_name, O_RDWR)) < 0) {
 		OSS_LOG_ERR("mixer open failed", errno);
 		oss->mixer_handle = -1;
 		return;
@@ -223,11 +223,13 @@ static void rdpsnd_oss_close(rdpsndDevicePlugin *device) {
 		return;
 
 	if (oss->pcm_handle != -1) {
+		WLog_INFO(TAG, "close: dsp");
 		close(oss->pcm_handle);
 		oss->pcm_handle = -1;
 	}
 
 	if (oss->mixer_handle != -1) {
+		WLog_INFO(TAG, "close: mixer");
 		close(oss->mixer_handle);
 		oss->mixer_handle = -1;
 	}
@@ -278,8 +280,8 @@ static void rdpsnd_oss_set_volume(rdpsndDevicePlugin *device, UINT32 value) {
 	if (device == NULL || oss->mixer_handle == -1)
 		return;
 
-	left = (value & 0xFFFF);
-	right = ((value >> 16) & 0xFFFF);
+	left = (((value & 0xFFFF) * 100) / 0xFFFF);
+	right = ((((value >> 16) & 0xFFFF) * 100) / 0xFFFF);
 
 	if (left < 0)
 		left = 0;

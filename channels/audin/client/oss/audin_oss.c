@@ -52,7 +52,7 @@
 typedef struct _AudinOSSDevice {
 	IAudinDevice iface;
 
-	FREERDP_DSP_CONTEXT* dsp_context;
+	FREERDP_DSP_CONTEXT *dsp_context;
 
 	HANDLE thread;
 	HANDLE stopEvent;
@@ -145,7 +145,8 @@ static void audin_oss_set_format(IAudinDevice *device, audinFormat *format, UINT
 static void *audin_oss_thread_func(void *arg)
 {
 	char dev_name[PATH_MAX] = "/dev/dsp";
-	int pcm_handle = -1;
+	char mixer_name[PATH_MAX] = "/dev/mixer";
+	int pcm_handle = -1, mixer_handle;
 	BYTE *buffer = NULL, *encoded_data;
 	int tmp, buffer_size, encoded_size;
 	AudinOSSDevice *oss = (AudinOSSDevice*)arg;
@@ -153,12 +154,27 @@ static void *audin_oss_thread_func(void *arg)
 	if (arg == NULL)
 		goto err_out;
 
-	if (oss->dev_unit != -1)
+	if (oss->dev_unit != -1) {
 		snprintf(dev_name, (PATH_MAX - 1), "/dev/dsp%i", oss->dev_unit);
+		snprintf(mixer_name, PATH_MAX - 1, "/dev/mixer%i", oss->dev_unit);
+	}
 	WLog_INFO(TAG, "open: %s", dev_name);
 	if ((pcm_handle = open(dev_name, O_RDONLY)) < 0) {
 		OSS_LOG_ERR("sound dev open failed", errno);
 		goto err_out;
+	}
+
+	/* Set rec volume to 100%. */
+	if ((mixer_handle = open(mixer_name, O_RDWR)) < 0) {
+		OSS_LOG_ERR("mixer open failed, not critical", errno);
+	} else {
+		tmp = (100 | (100 << 8));
+		if (ioctl(mixer_handle, MIXER_WRITE(SOUND_MIXER_MIC), &tmp) == -1)
+			OSS_LOG_ERR("WRITE_MIXER - SOUND_MIXER_MIC, not critical", errno);
+		tmp = (100 | (100 << 8));
+		if (ioctl(mixer_handle, MIXER_WRITE(SOUND_MIXER_RECLEV), &tmp) == -1)
+			OSS_LOG_ERR("WRITE_MIXER - SOUND_MIXER_RECLEV, not critical", errno);
+		close(mixer_handle);
 	}
 #if 0 /* FreeBSD OSS implementation at this moment (2015.03) does not set PCM_CAP_INPUT flag. */
 	tmp = 0;
@@ -220,13 +236,15 @@ static void *audin_oss_thread_func(void *arg)
 			encoded_size = buffer_size;
 			break;
 		}
-		if (0 != oss->receive(encoded_data, encoded_size, oss->user_data))
+		if (0 == oss->receive(encoded_data, encoded_size, oss->user_data))
 			break;
 	}
 
 err_out:
-	if (pcm_handle != -1)
+	if (pcm_handle != -1) {
+		WLog_INFO(TAG, "close: %s", dev_name);
 		close(pcm_handle);
+	}
 	free(buffer);
 
 	ExitThread(0);
