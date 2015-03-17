@@ -59,7 +59,7 @@ BOOL rdg_write_packet(rdpRdg* rdg, wStream* sPacket)
 	char chunkSize[11];
 	int status;
 
-	sprintf(chunkSize, "%X\r\n", Stream_Length(sPacket));
+	sprintf_s(chunkSize, sizeof(chunkSize), "%X\r\n", (unsigned int) Stream_Length(sPacket));
 	sChunk = Stream_New(NULL, strlen(chunkSize) + Stream_Length(sPacket) + 2);
 	if (!sChunk)
 	{
@@ -492,7 +492,6 @@ BOOL rdg_process_handshake_response(rdpRdg* rdg, wStream* s)
 BOOL rdg_process_tunnel_response(rdpRdg* rdg, wStream* s)
 {
 	HRESULT errorCode;
-	UINT16 fieldsPresent = 0;
 
 	WLog_WARN(TAG, "Tunnel response received");
 
@@ -516,7 +515,6 @@ BOOL rdg_process_tunnel_response(rdpRdg* rdg, wStream* s)
 BOOL rdg_process_tunnel_authorization_response(rdpRdg* rdg, wStream* s)
 {
 	HRESULT errorCode;
-	UINT16 fieldsPresent = 0;
 
 	WLog_WARN(TAG, "Tunnel authorization response received");
 
@@ -540,7 +538,6 @@ BOOL rdg_process_tunnel_authorization_response(rdpRdg* rdg, wStream* s)
 BOOL rdg_process_channel_response(rdpRdg* rdg, wStream* s)
 {
 	HRESULT errorCode;
-	UINT16 fieldsPresent = 0;
 
 	WLog_WARN(TAG, "Channel create response received");
 
@@ -678,14 +675,14 @@ UINT32 rdg_get_event_handles(rdpRdg* rdg, HANDLE* events)
 		events[nCount] = rdg->readEvent;
 	nCount++;
 
-	if (rdg->tlsOut)
+	if (rdg->tlsOut && rdg->tlsOut->bio)
 	{
 		if (events)
 			BIO_get_event(rdg->tlsOut->bio, &events[nCount]);
 		nCount++;
 	}
 
-	if (rdg->tlsIn)
+	if (rdg->tlsIn && rdg->tlsIn->bio)
 	{
 		if (events)
 			BIO_get_event(rdg->tlsIn->bio, &events[nCount]);
@@ -1448,7 +1445,7 @@ rdpRdg* rdg_new(rdpTransport* transport)
 		}
 		rdg->frontBio->ptr = rdg;
 
-		rdg->readEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+		rdg->readEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 		if (!rdg->readEvent)
 		{
 			goto rdg_alloc_error;
