@@ -125,7 +125,8 @@ typedef struct rdp_transport rdpTransport;
 typedef struct rdp_rdg rdpRdg;
 struct rdp_rdg
 {
-	rdpContext* context;   /* Shortcut to parent context. */
+	rdpContext* context;
+	rdpSettings* settings;
 	BIO* bioIn;
 	BIO* bioOut;
 	BIO* frontBio;

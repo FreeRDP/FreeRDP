@@ -302,5 +302,7 @@ void ntlm_free(rdpNtlm* ntlm)
 		ntlm->outputBuffer[0].pvBuffer = NULL;
 	}
 
+	ntlm_client_uninit(ntlm);
+
 	free(ntlm);
 }
