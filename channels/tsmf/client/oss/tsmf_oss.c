@@ -122,7 +122,6 @@ static BOOL tsmf_oss_set_format(ITSMFAudioDevice *audio, UINT32 sample_rate, UIN
 	int tmp;
 	TSMFOssAudioDevice *oss = (TSMFOssAudioDevice*)audio;
 
-	WLog_INFO(TAG, "tsmf_oss_set_format");
 	if (oss == NULL || oss->pcm_handle == -1)
 		return FALSE;
 
@@ -136,16 +135,14 @@ static BOOL tsmf_oss_set_format(ITSMFAudioDevice *audio, UINT32 sample_rate, UIN
 	tmp = channels;
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_CHANNELS, &tmp) == -1)
 		OSS_LOG_ERR("SNDCTL_DSP_CHANNELS failed", errno);
-	tmp = bits_per_sample;
+	tmp = sample_rate;
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_SPEED, &tmp) == -1)
 		OSS_LOG_ERR("SNDCTL_DSP_SPEED failed", errno);
-	tmp = 4096;//((bits_per_sample / 8) * channels * sample_rate);
+	tmp = ((bits_per_sample / 8) * channels * sample_rate);
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_SETFRAGMENT, &tmp) == -1)
 		OSS_LOG_ERR("SNDCTL_DSP_SETFRAGMENT failed", errno);
 
 	DEBUG_TSMF("sample_rate %d channels %d bits_per_sample %d",
-	    sample_rate, channels, bits_per_sample);
-	WLog_INFO(TAG, "tsmf_oss_set_format: sample_rate %d channels %d bits_per_sample %d",
 	    sample_rate, channels, bits_per_sample);
 
 	return TRUE;
@@ -157,7 +154,6 @@ static BOOL tsmf_oss_play(ITSMFAudioDevice *audio, BYTE *data, UINT32 data_size)
 	TSMFOssAudioDevice *oss = (TSMFOssAudioDevice*)audio;
 
 	DEBUG_TSMF("tsmf_oss_play: data_size %d", data_size);
-	WLog_INFO(TAG, "tsmf_oss_play: data_size %d", data_size);
 
 	if (oss == NULL || oss->pcm_handle == -1)
 		return FALSE;
@@ -177,7 +173,6 @@ static BOOL tsmf_oss_play(ITSMFAudioDevice *audio, BYTE *data, UINT32 data_size)
 		}
 		offset += status;
 	}
-	WLog_INFO(TAG, "tsmf_oss_play");
 
 	free(data);
 	return TRUE;
@@ -191,7 +186,7 @@ static UINT64 tsmf_oss_get_latency(ITSMFAudioDevice *audio) {
 		return 0;
 
 	//latency = ((oss->data_size_last / (oss->bits_per_sample / 8)) * oss->sample_rate);
-	WLog_INFO(TAG, "latency: %zu", latency);
+	//WLog_INFO(TAG, "latency: %zu", latency);
 	return latency;
 }
 
