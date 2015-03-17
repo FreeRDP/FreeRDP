@@ -174,6 +174,17 @@ BOOL http_context_set_pragma(HttpContext* context, const char* Pragma)
 	return TRUE;
 }
 
+BOOL http_context_set_rdg_connection_id(HttpContext* context, const char* RdgConnectionId)
+{
+	free(context->RdgConnectionId);
+	context->RdgConnectionId = _strdup(RdgConnectionId);
+
+	if (!context->RdgConnectionId)
+		return FALSE;
+
+	return TRUE;
+}
+
 void http_context_free(HttpContext* context)
 {
 	if (context)
@@ -186,6 +197,7 @@ void http_context_free(HttpContext* context)
 		free(context->CacheControl);
 		free(context->Connection);
 		free(context->Pragma);
+		free(context->RdgConnectionId);
 		free(context);
 	}
 }
@@ -229,6 +241,17 @@ BOOL http_request_set_auth_param(HttpRequest* request, const char* AuthParam)
 	request->AuthParam = _strdup(AuthParam);
 
 	if (!request->AuthParam)
+		return FALSE;
+
+	return TRUE;
+}
+
+BOOL http_request_set_transfer_encoding(HttpRequest* request, const char* TransferEncoding)
+{
+	free(request->TransferEncoding);
+	request->TransferEncoding = _strdup(TransferEncoding);
+
+	if (!request->TransferEncoding)
 		return FALSE;
 
 	return TRUE;
@@ -323,6 +346,26 @@ wStream* http_request_write(HttpContext* context, HttpRequest* request)
 	{
 		if (!lines[i])
 			goto out_free;
+	}
+
+	if (context->RdgConnectionId)
+	{
+		lines[count] = http_encode_body_line("RDG-Connection-Id", context->RdgConnectionId);
+
+		if (!lines[count])
+			goto out_free;
+
+		count++;
+	}
+
+	if (request->TransferEncoding)
+	{
+		lines[count] = http_encode_body_line("Transfer-Encoding", request->TransferEncoding);
+
+		if (!lines[count])
+			goto out_free;
+
+		count++;
 	}
 
 	if (request->Authorization)
