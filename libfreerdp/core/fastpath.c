@@ -264,7 +264,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 		case FASTPATH_UPDATETYPE_ORDERS:
 			if (!fastpath_recv_orders(fastpath, s))
 			{
-				WLog_DBG(TAG, "FASTPATH_UPDATETYPE_ORDERS - fastpath_recv_orders()");
+				WLog_DBG(TAG, "fastpath_recv_update: FASTPATH_UPDATETYPE_ORDERS - fastpath_recv_orders()");
 				return -1;
 			}
 			break;
@@ -273,14 +273,14 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 		case FASTPATH_UPDATETYPE_PALETTE:
 			if (!fastpath_recv_update_common(fastpath, s))
 			{
-				WLog_DBG(TAG, "FASTPATH_UPDATETYPE_ORDERS - fastpath_recv_orders()");
+				WLog_DBG(TAG, "fastpath_recv_update: FASTPATH_UPDATETYPE_ORDERS - fastpath_recv_orders()");
 				return -1;
 			}
 			break;
 
 		case FASTPATH_UPDATETYPE_SYNCHRONIZE:
 			if (!fastpath_recv_update_synchronize(fastpath, s))
-				WLog_ERR(TAG,  "fastpath_recv_update_synchronize failure but we continue");
+				WLog_ERR(TAG,  "fastpath_recv_update: fastpath_recv_update_synchronize failure but we continue");
 			else
 				IFCALL(update->Synchronize, context);			
 			break;
@@ -288,7 +288,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 		case FASTPATH_UPDATETYPE_SURFCMDS:
 			status = update_recv_surfcmds(update, size, s);
 			if (status < 0)
-				WLog_DBG(TAG, "FASTPATH_UPDATETYPE_SURFCMDS - update_recv_surfcmds() - %i", status);
+				WLog_DBG(TAG, "fastpath_recv_update: FASTPATH_UPDATETYPE_SURFCMDS - update_recv_surfcmds() - %i", status);
 			break;
 
 		case FASTPATH_UPDATETYPE_PTR_NULL:
@@ -304,7 +304,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 		case FASTPATH_UPDATETYPE_PTR_POSITION:
 			if (!update_read_pointer_position(s, &pointer->pointer_position))
 			{
-				WLog_DBG(TAG, "FASTPATH_UPDATETYPE_PTR_POSITION - update_read_pointer_position()");
+				WLog_DBG(TAG, "fastpath_recv_update: FASTPATH_UPDATETYPE_PTR_POSITION - update_read_pointer_position()");
 				return -1;
 			}
 			IFCALL(pointer->PointerPosition, context, &pointer->pointer_position);
@@ -313,7 +313,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 		case FASTPATH_UPDATETYPE_COLOR:
 			if (!update_read_pointer_color(s, &pointer->pointer_color, 24))
 			{
-				WLog_DBG(TAG, "FASTPATH_UPDATETYPE_COLOR - update_read_pointer_color()");
+				WLog_DBG(TAG, "fastpath_recv_update: FASTPATH_UPDATETYPE_COLOR - update_read_pointer_color()");
 				return -1;
 			}
 			IFCALL(pointer->PointerColor, context, &pointer->pointer_color);
@@ -322,7 +322,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 		case FASTPATH_UPDATETYPE_CACHED:
 			if (!update_read_pointer_cached(s, &pointer->pointer_cached))
 			{
-				WLog_DBG(TAG, "FASTPATH_UPDATETYPE_CACHED - update_read_pointer_cached()");
+				WLog_DBG(TAG, "fastpath_recv_update: FASTPATH_UPDATETYPE_CACHED - update_read_pointer_cached()");
 				return -1;
 			}
 			IFCALL(pointer->PointerCached, context, &pointer->pointer_cached);
@@ -331,7 +331,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 		case FASTPATH_UPDATETYPE_POINTER:
 			if (!update_read_pointer_new(s, &pointer->pointer_new))
 			{
-				WLog_DBG(TAG, "FASTPATH_UPDATETYPE_POINTER - update_read_pointer_new()");
+				WLog_DBG(TAG, "fastpath_recv_update: FASTPATH_UPDATETYPE_POINTER - update_read_pointer_new()");
 				return -1;
 			}
 			IFCALL(pointer->PointerNew, context, &pointer->pointer_new);
@@ -391,7 +391,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 	if (Stream_GetRemainingLength(s) < size)
 	{
-		WLog_DBG(TAG, "Stream_GetRemainingLength() < size");
+		WLog_DBG(TAG, "fastpath_recv_update_data: Stream_GetRemainingLength() < size");
 		return -1;
 	}
 
@@ -402,7 +402,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 	if (bulkStatus < 0)
 	{
-		WLog_ERR(TAG, "bulk_decompress() failed");
+		WLog_ERR(TAG, "fastpath_recv_update_data: bulk_decompress() failed");
 		return -1;
 	}
 
@@ -453,7 +453,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 			if (totalSize > transport->settings->MultifragMaxRequestSize)
 			{
-				WLog_ERR(TAG, "Total size (%d) exceeds MultifragMaxRequestSize (%d)",
+				WLog_ERR(TAG, "fastpath_recv_update_data: Total size (%d) exceeds MultifragMaxRequestSize (%d)",
 						 totalSize, transport->settings->MultifragMaxRequestSize);
 				goto out_fail;
 			}
@@ -480,7 +480,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 			if (totalSize > transport->settings->MultifragMaxRequestSize)
 			{
-				WLog_ERR(TAG, "Total size (%d) exceeds MultifragMaxRequestSize (%d)",
+				WLog_ERR(TAG, "fastpath_recv_update_data: Total size (%d) exceeds MultifragMaxRequestSize (%d)",
 						 totalSize, transport->settings->MultifragMaxRequestSize);
 				goto out_fail;
 			}
@@ -508,7 +508,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 			if (totalSize > transport->settings->MultifragMaxRequestSize)
 			{
-				WLog_ERR(TAG, "Total size (%d) exceeds MultifragMaxRequestSize (%d)",
+				WLog_ERR(TAG, "fastpath_recv_update_data: Total size (%d) exceeds MultifragMaxRequestSize (%d)",
 						 totalSize, transport->settings->MultifragMaxRequestSize);
 				goto out_fail;
 			}
@@ -562,7 +562,7 @@ int fastpath_recv_updates(rdpFastPath* fastpath, wStream* s)
 	{
 		if (fastpath_recv_update_data(fastpath, s) < 0)
 		{
-			WLog_DBG(TAG, "fastpath_recv_update_data() fail");
+			WLog_DBG(TAG, "fastpath_recv_updates: fastpath_recv_update_data() fail");
 			return -1;
 		}
 	}

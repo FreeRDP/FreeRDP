@@ -1122,7 +1122,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 	{
-		WLog_ERR(TAG, "Incorrect RDP header.");
+		WLog_ERR(TAG, "rdp_recv_tpkt_pdu: Incorrect RDP header.");
 		return -1;
 	}
 
@@ -1138,7 +1138,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	{
 		if (!rdp_read_security_header(s, &securityFlags))
 		{
-			WLog_DBG(TAG, "rdp_read_security_header() fail");
+			WLog_DBG(TAG, "rdp_recv_tpkt_pdu: rdp_read_security_header() fail");
 			return -1;
 		}
 
@@ -1146,7 +1146,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 		{
 			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
 			{
-				WLog_ERR(TAG, "rdp_decrypt failed");
+				WLog_ERR(TAG, "rdp_recv_tpkt_pdu: rdp_decrypt failed");
 				return -1;
 			}
 		}
@@ -1171,7 +1171,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 
 			if (!rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource))
 			{
-				WLog_DBG(TAG, "rdp_read_share_control_header() fail");
+				WLog_DBG(TAG, "rdp_recv_tpkt_pdu: rdp_read_share_control_header() fail");
 				return -1;
 			}
 
@@ -1192,7 +1192,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 				case PDU_TYPE_DEACTIVATE_ALL:
 					if (!rdp_recv_deactivate_all(rdp, s))
 					{
-						WLog_DBG(TAG, "rdp_recv_deactivate_all() fail");
+						WLog_DBG(TAG, "rdp_recv_tpkt_pdu: rdp_recv_deactivate_all() fail");
 						return -1;
 					}
 					break;
@@ -1222,7 +1222,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	{
 		if (!freerdp_channel_process(rdp->instance, s, channelId))
 		{
-			WLog_DBG(TAG, "freerdp_channel_process() fail");
+			WLog_DBG(TAG, "rdp_recv_tpkt_pdu: freerdp_channel_process() fail");
 			return -1;
 		}
 	}
@@ -1239,7 +1239,7 @@ static int rdp_recv_fastpath_pdu(rdpRdp* rdp, wStream* s)
 
 	if (!fastpath_read_header_rdp(fastpath, s, &length))
 	{
-		WLog_DBG(TAG, "fastpath_read_header_rdp() fail");
+		WLog_DBG(TAG, "rdp_recv_fastpath_pdu: fastpath_read_header_rdp() fail");
 		return -1;
 	}
 
@@ -1260,7 +1260,7 @@ static int rdp_recv_fastpath_pdu(rdpRdp* rdp, wStream* s)
 
 		if (!rdp_decrypt(rdp, s, length, flags))
 		{
-			WLog_DBG(TAG, "rdp_decrypt() fail");
+			WLog_DBG(TAG, "rdp_recv_fastpath_pdu: rdp_decrypt() fail");
 			return -1;
 		}
 	}
@@ -1298,7 +1298,7 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 		case CONNECTION_STATE_NLA:
 			if (nla_recv_pdu(rdp->nla, s) < 1)
 			{
-				WLog_DBG(TAG, "CONNECTION_STATE_NLA - nla_recv_pdu() fail");
+				WLog_DBG(TAG, "rdp_recv_callback: CONNECTION_STATE_NLA - nla_recv_pdu() fail");
 				return -1;
 			}
 
@@ -1311,7 +1311,7 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 
 				if (!mcs_client_begin(rdp->mcs))
 				{
-					WLog_DBG(TAG, "CONNECTION_STATE_NLA - mcs_client_begin() fail");
+					WLog_DBG(TAG, "rdp_recv_callback: CONNECTION_STATE_NLA - mcs_client_begin() fail");
 					return -1;
 				}
 			}
@@ -1359,7 +1359,7 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 		case CONNECTION_STATE_MCS_CHANNEL_JOIN:
 			if (!rdp_client_connect_mcs_channel_join_confirm(rdp, s))
 			{
-				WLog_DBG(TAG, "CONNECTION_STATE_MCS_CHANNEL_JOIN - rdp_client_connect_mcs_channel_join_confirm() fail");
+				WLog_DBG(TAG, "rdp_recv_callback: CONNECTION_STATE_MCS_CHANNEL_JOIN - rdp_client_connect_mcs_channel_join_confirm() fail");
 				status = -1;
 			}
 			break;
@@ -1367,13 +1367,13 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 		case CONNECTION_STATE_LICENSING:
 			status = rdp_client_connect_license(rdp, s);
 			if (status < 0)
-				WLog_DBG(TAG, "CONNECTION_STATE_LICENSING - rdp_client_connect_license() - %i", status);
+				WLog_DBG(TAG, "rdp_recv_callback: CONNECTION_STATE_LICENSING - rdp_client_connect_license() - %i", status);
 			break;
 
 		case CONNECTION_STATE_CAPABILITIES_EXCHANGE:
 			status = rdp_client_connect_demand_active(rdp, s);
 			if (status < 0)
-				WLog_DBG(TAG, "CONNECTION_STATE_CAPABILITIES_EXCHANGE - rdp_client_connect_demand_active() - %i", status);
+				WLog_DBG(TAG, "rdp_recv_callback: CONNECTION_STATE_CAPABILITIES_EXCHANGE - rdp_client_connect_demand_active() - %i", status);
 			break;
 
 		case CONNECTION_STATE_FINALIZATION:
@@ -1385,13 +1385,13 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				return 2;
 			}
 			if (status < 0)
-				WLog_DBG(TAG, "CONNECTION_STATE_FINALIZATION - rdp_recv_pdu() - %i", status);
+				WLog_DBG(TAG, "rdp_recv_callback: CONNECTION_STATE_FINALIZATION - rdp_recv_pdu() - %i", status);
 			break;
 
 		case CONNECTION_STATE_ACTIVE:
 			status = rdp_recv_pdu(rdp, s);
 			if (status < 0)
-				WLog_DBG(TAG, "CONNECTION_STATE_ACTIVE - rdp_recv_pdu() - %i", status);
+				WLog_DBG(TAG, "rdp_recv_callback: CONNECTION_STATE_ACTIVE - rdp_recv_pdu() - %i", status);
 			break;
 
 		default:
@@ -1438,7 +1438,7 @@ int rdp_check_fds(rdpRdp* rdp)
 
 		if (status < 0)
 		{
-			WLog_DBG(TAG, "tsg_check_event_handles() - %i", status);
+			WLog_DBG(TAG, "rdp_check_fds: tsg_check_event_handles() - %i", status);
 			return -1;
 		}
 
@@ -1453,7 +1453,7 @@ int rdp_check_fds(rdpRdp* rdp)
 		status = rdp_client_redirect(rdp); /* session redirection */
 	}
 	if (status < 0)
-		WLog_DBG(TAG, "transport_check_fds() - %i", status);
+		WLog_DBG(TAG, "rdp_check_fds: transport_check_fds() - %i", status);
 
 	return status;
 }

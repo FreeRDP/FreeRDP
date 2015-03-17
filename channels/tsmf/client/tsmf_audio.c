@@ -45,8 +45,7 @@ static ITSMFAudioDevice* tsmf_load_audio_device_by_name(const char* name, const 
 		return NULL;
 	}
 
-	if (!audio->Open(audio, device))
-	{
+	if (!audio->Open(audio, device)) {
 		audio->Free(audio);
 		audio = NULL;
 		WLog_ERR(TAG, "failed to open, name: %s, device: %s", name, device);
@@ -85,6 +84,7 @@ ITSMFAudioDevice* tsmf_load_audio_device(const char* name, const char* device)
 #endif
 	}
 	
+<<<<<<< HEAD
 	if (audio == NULL)
 	{
 		WLog_ERR(TAG, "no sound device.");
@@ -92,6 +92,12 @@ ITSMFAudioDevice* tsmf_load_audio_device(const char* name, const char* device)
 	else
 	{
 		WLog_DBG(TAG, "name: %s, device: %s", name, device);
+=======
+	if (audio == NULL) {
+		WLog_ERR(TAG, "no sound device.");
+	} else {
+		WLog_DBG(TAG, "tsmf_load_audio_device: name: %s, device: %s", name, device);
+>>>>>>> + tsmf: OSS initial suppot (not work yet)
 	}
 
 	return audio;
