@@ -39,6 +39,10 @@
 #include <poll.h>
 #endif
 
+#ifdef HAVE_VALGRIND_MEMCHECK_H
+#include <valgrind/memcheck.h>
+#endif
+
 #define TAG FREERDP_TAG("crypto")
 
 struct _BIO_RDP_TLS
@@ -179,6 +183,13 @@ static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 				break;
 		}
 	}
+
+#ifdef HAVE_VALGRIND_MEMCHECK_H
+	if (status > 0)
+	{
+		VALGRIND_MAKE_MEM_DEFINED(buf, status);
+	}
+#endif
 
 	return status;
 }

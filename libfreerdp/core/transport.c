@@ -802,6 +802,12 @@ BOOL transport_disconnect(rdpTransport* transport)
 		transport->tsg = NULL;
 	}
 
+	if (transport->rdg)
+	{
+		rdg_free(transport->rdg);
+		transport->rdg = NULL;
+	}
+
 	transport->frontBio = NULL;
 
 	transport->layer = TRANSPORT_LAYER_TCP;

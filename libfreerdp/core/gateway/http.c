@@ -446,6 +446,9 @@ void http_request_free(HttpRequest* request)
 	free(request->Content);
 	free(request->Method);
 	free(request->URI);
+
+	free(request->TransferEncoding);
+
 	free(request);
 }
 
@@ -759,7 +762,9 @@ HttpResponse* http_response_recv(rdpTls* tls)
 
 			if (response->ContentType)
 			{
-				if (_stricmp(response->ContentType, "text/plain") == 0)
+				if (_stricmp(response->ContentType, "application/rpc") != 0)
+					bodyLength = response->ContentLength;
+				else if (_stricmp(response->ContentType, "text/plain") == 0)
 					bodyLength = response->ContentLength;
 				else if (_stricmp(response->ContentType, "text/html") == 0)
 					bodyLength = response->ContentLength;
@@ -829,8 +834,11 @@ void http_response_free(HttpResponse* response)
 
 	ListDictionary_Free(response->Authenticates);
 
-	if (response->ContentLength > 0)
+	if (response->BodyContent)
+	{
 		free(response->BodyContent);
+		response->BodyContent = NULL;
+	}
 
 	free(response);
 }
