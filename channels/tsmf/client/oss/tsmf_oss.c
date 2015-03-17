@@ -132,7 +132,6 @@ static BOOL tsmf_oss_set_format(ITSMFAudioDevice *audio, UINT32 sample_rate, UIN
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_SPEED, &tmp) == -1)
 		OSS_LOG_ERR("SNDCTL_DSP_SPEED failed", errno);
 	tmp = ((bits_per_sample / 8) * channels * sample_rate);
-
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_SETFRAGMENT, &tmp) == -1)
 		OSS_LOG_ERR("SNDCTL_DSP_SETFRAGMENT failed", errno);
 
