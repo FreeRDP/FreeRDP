@@ -207,16 +207,31 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 
 	if (transport->GatewayEnabled)
 	{
-		transport->tsg = tsg_new(transport);
-
-		if (!transport->tsg)
+		/* New RDP 8 gateway test. */
+		transport->rdg = rdg_new(transport);
+		if (!transport->rdg)
+		{
 			return FALSE;
-
-		if (!tsg_connect(transport->tsg, hostname, port, timeout))
+		}
+		status = rdg_connect(transport->rdg, hostname, port, timeout);
+		if (!status)
+		{
 			return FALSE;
-
-		transport->frontBio = transport->tsg->bio;
+		}
+		transport->frontBio = transport->rdg->frontBio;
+		BIO_set_nonblock(transport->frontBio, 0);
 		transport->layer = TRANSPORT_LAYER_TSG;
+
+		//transport->tsg = tsg_new(transport);
+
+		//if (!transport->tsg)
+		//	return FALSE;
+
+		//if (!tsg_connect(transport->tsg, hostname, port, timeout))
+		//	return FALSE;
+
+		//transport->frontBio = transport->tsg->bio;
+		//transport->layer = TRANSPORT_LAYER_TSG;
 
 		status = TRUE;
 	}
@@ -621,7 +636,14 @@ UINT32 transport_get_event_handles(rdpTransport* transport, HANDLE* events)
 	}
 	else
 	{
-		nCount += tsg_get_event_handles(transport->tsg, events);
+		if (transport->rdg)
+		{
+			nCount += rdg_get_event_handles(transport->rdg, events);
+		}
+		else if (transport->tsg)
+		{
+			nCount += tsg_get_event_handles(transport->tsg, events);
+		}
 	}
 
 	return nCount;
