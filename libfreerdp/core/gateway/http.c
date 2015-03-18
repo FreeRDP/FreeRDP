@@ -769,6 +769,10 @@ HttpResponse* http_response_recv(rdpTls* tls)
 				else if (_stricmp(response->ContentType, "text/html") == 0)
 					bodyLength = response->ContentLength;
 			}
+			else
+			{
+				bodyLength = response->BodyLength;
+			}
 
 			if (bodyLength != response->BodyLength)
 			{
