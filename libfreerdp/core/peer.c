@@ -328,7 +328,7 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s)
 			break;
 
 		default:
-			WLog_ERR(TAG,  "Data PDU type %d", type);
+			WLog_ERR(TAG, "Data PDU type %d", type);
 			break;
 	}
 
@@ -349,7 +349,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 	{
-		WLog_ERR(TAG,  "Incorrect RDP header.");
+		WLog_ERR(TAG, "Incorrect RDP header.");
 		return -1;
 	}
 
@@ -365,7 +365,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 		{
 			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
 			{
-				WLog_ERR(TAG,  "rdp_decrypt failed");
+				WLog_ERR(TAG, "rdp_decrypt failed");
 				return -1;
 			}
 		}
@@ -396,7 +396,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 				break;
 
 			default:
-				WLog_ERR(TAG,  "Client sent pduType %d", pduType);
+				WLog_ERR(TAG, "Client sent pduType %d", pduType);
 				return -1;
 		}
 	}
@@ -426,7 +426,7 @@ static int peer_recv_fastpath_pdu(freerdp_peer* client, wStream* s)
 
 	if ((length == 0) || (length > Stream_GetRemainingLength(s)))
 	{
-		WLog_ERR(TAG,  "incorrect FastPath PDU header length %d", length);
+		WLog_ERR(TAG, "incorrect FastPath PDU header length %d", length);
 		return -1;
 	}
 
@@ -456,7 +456,7 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 	{
 		case CONNECTION_STATE_INITIAL:
 			if (!rdp_server_accept_nego(rdp, s)) {
-				WLog_DBG(TAG, "peer_recv_callback: CONNECTION_STATE_INITIAL - rdp_server_accept_nego() fail");
+				WLog_DBG(TAG, "CONNECTION_STATE_INITIAL - rdp_server_accept_nego() fail");
 				return -1;
 			}
 
@@ -476,28 +476,28 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 
 		case CONNECTION_STATE_NEGO:
 			if (!rdp_server_accept_mcs_connect_initial(rdp, s)) {
-				WLog_DBG(TAG, "peer_recv_callback: CONNECTION_STATE_NEGO - rdp_server_accept_mcs_connect_initial() fail");
+				WLog_DBG(TAG, "CONNECTION_STATE_NEGO - rdp_server_accept_mcs_connect_initial() fail");
 				return -1;
 			}
 			break;
 
 		case CONNECTION_STATE_MCS_CONNECT:
 			if (!rdp_server_accept_mcs_erect_domain_request(rdp, s)) {
-				WLog_DBG(TAG, "peer_recv_callback: CONNECTION_STATE_MCS_CONNECT - rdp_server_accept_mcs_erect_domain_request() fail");
+				WLog_DBG(TAG, "CONNECTION_STATE_MCS_CONNECT - rdp_server_accept_mcs_erect_domain_request() fail");
 				return -1;
 			}
 			break;
 
 		case CONNECTION_STATE_MCS_ERECT_DOMAIN:
 			if (!rdp_server_accept_mcs_attach_user_request(rdp, s)) {
-				WLog_DBG(TAG, "peer_recv_callback: CONNECTION_STATE_MCS_ERECT_DOMAIN - rdp_server_accept_mcs_attach_user_request() fail");
+				WLog_DBG(TAG, "CONNECTION_STATE_MCS_ERECT_DOMAIN - rdp_server_accept_mcs_attach_user_request() fail");
 				return -1;
 			}
 			break;
 
 		case CONNECTION_STATE_MCS_ATTACH_USER:
 			if (!rdp_server_accept_mcs_channel_join_request(rdp, s)) {
-				WLog_DBG(TAG, "peer_recv_callback: CONNECTION_STATE_MCS_ATTACH_USER - rdp_server_accept_mcs_channel_join_request() fail");
+				WLog_DBG(TAG, "CONNECTION_STATE_MCS_ATTACH_USER - rdp_server_accept_mcs_channel_join_request() fail");
 				return -1;
 			}
 			break;
@@ -506,7 +506,7 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			if (rdp->settings->UseRdpSecurityLayer)
 			{
 				if (!rdp_server_establish_keys(rdp, s)) {
-					WLog_DBG(TAG, "peer_recv_callback: CONNECTION_STATE_RDP_SECURITY_COMMENCEMENT - rdp_server_establish_keys() fail");
+					WLog_DBG(TAG, "CONNECTION_STATE_RDP_SECURITY_COMMENCEMENT - rdp_server_establish_keys() fail");
 					return -1;
 				}
 			}
@@ -518,7 +518,7 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 
 		case CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE:
 			if (!rdp_recv_client_info(rdp, s)) {
-				WLog_DBG(TAG, "peer_recv_callback: CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE - rdp_recv_client_info() fail");
+				WLog_DBG(TAG, "CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE - rdp_recv_client_info() fail");
 				return -1;
 			}
 
@@ -529,7 +529,7 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 
 		case CONNECTION_STATE_LICENSING:
 			if (!license_send_valid_client_error_packet(rdp->license)) {
-				WLog_DBG(TAG, "peer_recv_callback: CONNECTION_STATE_LICENSING - license_send_valid_client_error_packet() fail");
+				WLog_DBG(TAG, "CONNECTION_STATE_LICENSING - license_send_valid_client_error_packet() fail");
 				return FALSE;
 			}
 
@@ -545,7 +545,7 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				IFCALL(client->Capabilities, client);
 
 				if (!rdp_send_demand_active(rdp)) {
-					WLog_DBG(TAG, "peer_recv_callback: CONNECTION_STATE_CAPABILITIES_EXCHANGE - rdp_send_demand_active() fail");
+					WLog_DBG(TAG, "CONNECTION_STATE_CAPABILITIES_EXCHANGE - rdp_send_demand_active() fail");
 					return -1;
 				}
 
@@ -554,7 +554,7 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				if (s)
 				{
 					if (peer_recv_pdu(client, s) < 0) {
-						WLog_DBG(TAG, "peer_recv_callback: CONNECTION_STATE_CAPABILITIES_EXCHANGE - peer_recv_pdu() fail");
+						WLog_DBG(TAG, "CONNECTION_STATE_CAPABILITIES_EXCHANGE - peer_recv_pdu() fail");
 						return -1;
 					}
 				}
@@ -567,7 +567,7 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				 */
 
 				if (peer_recv_pdu(client, s) < 0) {
-					WLog_DBG(TAG, "peer_recv_callback: CONNECTION_STATE_CAPABILITIES_EXCHANGE - peer_recv_pdu() fail");
+					WLog_DBG(TAG, "CONNECTION_STATE_CAPABILITIES_EXCHANGE - peer_recv_pdu() fail");
 					return -1;
 				}
 			}
@@ -576,20 +576,20 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 
 		case CONNECTION_STATE_FINALIZATION:
 			if (peer_recv_pdu(client, s) < 0) {
-				WLog_DBG(TAG, "peer_recv_callback: CONNECTION_STATE_FINALIZATION - peer_recv_pdu() fail");
+				WLog_DBG(TAG, "CONNECTION_STATE_FINALIZATION - peer_recv_pdu() fail");
 				return -1;
 			}
 			break;
 
 		case CONNECTION_STATE_ACTIVE:
 			if (peer_recv_pdu(client, s) < 0) {
-				WLog_DBG(TAG, "peer_recv_callback: CONNECTION_STATE_ACTIVE - peer_recv_pdu() fail");
+				WLog_DBG(TAG, "CONNECTION_STATE_ACTIVE - peer_recv_pdu() fail");
 				return -1;
 			}
 			break;
 
 		default:
-			WLog_ERR(TAG,  "Invalid state %d", rdp->state);
+			WLog_ERR(TAG, "Invalid state %d", rdp->state);
 			return -1;
 	}
 
