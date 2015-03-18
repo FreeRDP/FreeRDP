@@ -214,26 +214,34 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 			return FALSE;
 		}
 		status = rdg_connect(transport->rdg, hostname, port, timeout);
-		if (!status)
+		if (status)
 		{
-			return FALSE;
+			transport->frontBio = transport->rdg->frontBio;
+			BIO_set_nonblock(transport->frontBio, 0);
+			transport->layer = TRANSPORT_LAYER_TSG;
+
+			status = TRUE;
 		}
-		transport->frontBio = transport->rdg->frontBio;
-		BIO_set_nonblock(transport->frontBio, 0);
-		transport->layer = TRANSPORT_LAYER_TSG;
+		else
+		{
+			if (transport->rdg->state != RDG_CLIENT_STATE_NOT_FOUND)
+			{
+				return FALSE;
+			}
 
-		//transport->tsg = tsg_new(transport);
+			transport->tsg = tsg_new(transport);
 
-		//if (!transport->tsg)
-		//	return FALSE;
+			if (!transport->tsg)
+				return FALSE;
 
-		//if (!tsg_connect(transport->tsg, hostname, port, timeout))
-		//	return FALSE;
+			if (!tsg_connect(transport->tsg, hostname, port, timeout))
+				return FALSE;
 
-		//transport->frontBio = transport->tsg->bio;
-		//transport->layer = TRANSPORT_LAYER_TSG;
+			transport->frontBio = transport->tsg->bio;
+			transport->layer = TRANSPORT_LAYER_TSG;
 
-		status = TRUE;
+			status = TRUE;
+		}
 	}
 	else
 	{
