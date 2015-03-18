@@ -216,7 +216,7 @@ int WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args)
 
 	if (message->Type == WLOG_MESSAGE_TEXT)
 	{
-		if (!strchr(message->FormatString, '%'))
+		if (!strchr(message->FormatString, '%') && message->Level != WLOG_DEBUG && message->Level != WLOG_ERROR)
 		{
 			message->TextString = (LPSTR) message->FormatString;
 			status = WLog_Write(log, message);
@@ -224,7 +224,11 @@ int WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args)
 		else
 		{
 			char formattedLogMessage[WLOG_MAX_STRING_SIZE];
-			wvsnprintfx(formattedLogMessage, WLOG_MAX_STRING_SIZE - 1, message->FormatString, args);
+			int offset = 0;
+			
+			if (message->Level == WLOG_DEBUG || message->Level == WLOG_ERROR)
+				offset = snprintf(formattedLogMessage, (WLOG_MAX_STRING_SIZE - 1), "%s, line %i: ", message->FunctionName, message->LineNumber);
+			wvsnprintfx((formattedLogMessage + offset), ((WLOG_MAX_STRING_SIZE - 1) - offset), message->FormatString, args);
 			message->TextString = formattedLogMessage;
 			status = WLog_Write(log, message);
 		}
