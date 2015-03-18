@@ -927,7 +927,7 @@ static void* transport_client_thread(void* arg)
 
 		if (transport->layer == TRANSPORT_LAYER_CLOSED)
 		{
-			WLog_DBG(TAG, "transport_client: TRANSPORT_LAYER_CLOSED");
+			WLog_DBG(TAG, "TRANSPORT_LAYER_CLOSED");
 			rdp_set_error_info(rdp, ERRINFO_PEER_DISCONNECTED);
 			break;
 		}
@@ -941,7 +941,7 @@ static void* transport_client_thread(void* arg)
 		{
 			if (!freerdp_check_event_handles(context))
 			{
-				WLog_DBG(TAG, "transport_client: freerdp_check_event_handles()");
+				WLog_DBG(TAG, "freerdp_check_event_handles()");
 				rdp_set_error_info(rdp, ERRINFO_PEER_DISCONNECTED);
 				break;
 			}

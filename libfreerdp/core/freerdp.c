@@ -210,7 +210,7 @@ BOOL freerdp_check_fds(freerdp* instance)
 		TerminateEventArgs e;
 		rdpContext* context = instance->context;
 
-		WLog_DBG(TAG, "freerdp_check_fds: rdp_check_fds() - %i", status);
+		WLog_DBG(TAG, "rdp_check_fds() - %i", status);
 		EventArgsInit(&e, "freerdp");
 		e.code = 0;
 		PubSub_OnTerminate(context->pubSub, context, &e);

@@ -1122,7 +1122,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 	{
-		WLog_ERR(TAG, "rdp_recv_tpkt_pdu: Incorrect RDP header.");
+		WLog_ERR(TAG, "Incorrect RDP header.");
 		return -1;
 	}
 
@@ -1146,7 +1146,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 		{
 			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
 			{
-				WLog_ERR(TAG, "rdp_recv_tpkt_pdu: rdp_decrypt failed");
+				WLog_ERR(TAG, "rdp_decrypt failed");
 				return -1;
 			}
 		}
@@ -1367,13 +1367,13 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 		case CONNECTION_STATE_LICENSING:
 			status = rdp_client_connect_license(rdp, s);
 			if (status < 0)
-				WLog_DBG(TAG, "rdp_recv_callback: CONNECTION_STATE_LICENSING - rdp_client_connect_license() - %i", status);
+				WLog_DBG(TAG, "CONNECTION_STATE_LICENSING - rdp_client_connect_license() - %i", status);
 			break;
 
 		case CONNECTION_STATE_CAPABILITIES_EXCHANGE:
 			status = rdp_client_connect_demand_active(rdp, s);
 			if (status < 0)
-				WLog_DBG(TAG, "rdp_recv_callback: CONNECTION_STATE_CAPABILITIES_EXCHANGE - rdp_client_connect_demand_active() - %i", status);
+				WLog_DBG(TAG, "CONNECTION_STATE_CAPABILITIES_EXCHANGE - rdp_client_connect_demand_active() - %i", status);
 			break;
 
 		case CONNECTION_STATE_FINALIZATION:
@@ -1385,13 +1385,13 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				return 2;
 			}
 			if (status < 0)
-				WLog_DBG(TAG, "rdp_recv_callback: CONNECTION_STATE_FINALIZATION - rdp_recv_pdu() - %i", status);
+				WLog_DBG(TAG, "CONNECTION_STATE_FINALIZATION - rdp_recv_pdu() - %i", status);
 			break;
 
 		case CONNECTION_STATE_ACTIVE:
 			status = rdp_recv_pdu(rdp, s);
 			if (status < 0)
-				WLog_DBG(TAG, "rdp_recv_callback: CONNECTION_STATE_ACTIVE - rdp_recv_pdu() - %i", status);
+				WLog_DBG(TAG, "CONNECTION_STATE_ACTIVE - rdp_recv_pdu() - %i", status);
 			break;
 
 		default:
@@ -1453,7 +1453,7 @@ int rdp_check_fds(rdpRdp* rdp)
 		status = rdp_client_redirect(rdp); /* session redirection */
 	}
 	if (status < 0)
-		WLog_DBG(TAG, "rdp_check_fds: transport_check_fds() - %i", status);
+		WLog_DBG(TAG, "transport_check_fds() - %i", status);
 
 	return status;
 }

@@ -84,7 +84,6 @@ ITSMFAudioDevice* tsmf_load_audio_device(const char* name, const char* device)
 #endif
 	}
 	
-<<<<<<< HEAD
 	if (audio == NULL)
 	{
 		WLog_ERR(TAG, "no sound device.");
@@ -92,12 +91,6 @@ ITSMFAudioDevice* tsmf_load_audio_device(const char* name, const char* device)
 	else
 	{
 		WLog_DBG(TAG, "name: %s, device: %s", name, device);
-=======
-	if (audio == NULL) {
-		WLog_ERR(TAG, "no sound device.");
-	} else {
-		WLog_DBG(TAG, "tsmf_load_audio_device: name: %s, device: %s", name, device);
->>>>>>> + tsmf: OSS initial suppot (not work yet)
 	}
 
 	return audio;
