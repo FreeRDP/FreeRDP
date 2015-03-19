@@ -33,15 +33,8 @@
 #include <freerdp/error.h>
 #include <freerdp/utils/ringbuffer.h>
 
-#include <openssl/bio.h>
-#include <time.h>
-#include <errno.h>
-#include <fcntl.h>
-
-#include "libfreerdp/core/transport.h"
 #include "rdg.h"
 #include "../rdp.h"
-
 
 #define TAG FREERDP_TAG("core.gateway.rdg")
 
