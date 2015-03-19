@@ -117,6 +117,7 @@ enum
 	RDG_CLIENT_STATE_OPENED,
 	RDG_CLIENT_STATE_CLOSE,
 	RDG_CLIENT_STATE_CLOSED,
+	RDG_CLIENT_STATE_NOT_FOUND,
 };
 
 
@@ -127,8 +128,6 @@ struct rdp_rdg
 {
 	rdpContext* context;
 	rdpSettings* settings;
-	BIO* bioIn;
-	BIO* bioOut;
 	BIO* frontBio;
 	rdpTls* tlsIn;
 	rdpTls* tlsOut;
@@ -138,14 +137,8 @@ struct rdp_rdg
 
 	UUID guid;
 
-	//UINT32 tunnelId;
-	//UINT32 negotiatedCapsFlags;
-	//UUID nonce;
-	//LPWSTR serverCert;
-	//LPWSTR consentMsg;
-
 	int state;
-	int packetRemainingCount;
+	UINT16 packetRemainingCount;
 	int nonBlocking;
 	int timeout;
 };
