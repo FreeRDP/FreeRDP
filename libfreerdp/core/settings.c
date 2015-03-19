@@ -397,6 +397,9 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 		settings->GatewayUseSameCredentials = FALSE;
 		settings->GatewayBypassLocal = FALSE;
+		settings->GatewayRpcTransport = TRUE;
+		settings->GatewayHttpTransport = TRUE;
+		settings->GatewayUdpTransport = TRUE;
 
 		settings->FastPathInput = TRUE;
 		settings->FastPathOutput = TRUE;

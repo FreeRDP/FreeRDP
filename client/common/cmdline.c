@@ -78,6 +78,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Gateway username" },
 	{ "gp", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Gateway password" },
 	{ "gd", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Gateway domain" },
+	{ "gt", COMMAND_LINE_VALUE_REQUIRED, "<rpc|http|auto>", NULL, NULL, -1, NULL, "Gateway transport type" },
 	{ "gateway-usage-method", COMMAND_LINE_VALUE_REQUIRED, "<direct|detect>", NULL, NULL, -1, "gum", "Gateway usage method" },
 	{ "load-balance-info", COMMAND_LINE_VALUE_REQUIRED, "<info string>", NULL, NULL, -1, NULL, "Load balance info" },
 	{ "app", COMMAND_LINE_VALUE_REQUIRED, "<executable path> or <||alias>", NULL, NULL, -1, NULL, "Remote application program" },
@@ -1510,6 +1511,24 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		{
 			settings->GatewayPassword = _strdup(arg->Value);
 			settings->GatewayUseSameCredentials = FALSE;
+		}
+		CommandLineSwitchCase(arg, "gt")
+		{
+			if (_stricmp(arg->Value, "rpc") == 0)
+			{
+				settings->GatewayRpcTransport = TRUE;
+				settings->GatewayHttpTransport = FALSE;
+			}
+			else if (_stricmp(arg->Value, "http") == 0)
+			{
+				settings->GatewayRpcTransport = FALSE;
+				settings->GatewayHttpTransport = TRUE;
+			}
+			else if (_stricmp(arg->Value, "auto") == 0)
+			{
+				settings->GatewayRpcTransport = TRUE;
+				settings->GatewayHttpTransport = TRUE;
+			}
 		}
 		CommandLineSwitchCase(arg, "gateway-usage-method")
 		{

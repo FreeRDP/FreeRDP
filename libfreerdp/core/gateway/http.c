@@ -174,6 +174,17 @@ BOOL http_context_set_pragma(HttpContext* context, const char* Pragma)
 	return TRUE;
 }
 
+BOOL http_context_set_rdg_connection_id(HttpContext* context, const char* RdgConnectionId)
+{
+	free(context->RdgConnectionId);
+	context->RdgConnectionId = _strdup(RdgConnectionId);
+
+	if (!context->RdgConnectionId)
+		return FALSE;
+
+	return TRUE;
+}
+
 void http_context_free(HttpContext* context)
 {
 	if (context)
@@ -186,6 +197,7 @@ void http_context_free(HttpContext* context)
 		free(context->CacheControl);
 		free(context->Connection);
 		free(context->Pragma);
+		free(context->RdgConnectionId);
 		free(context);
 	}
 }
@@ -229,6 +241,17 @@ BOOL http_request_set_auth_param(HttpRequest* request, const char* AuthParam)
 	request->AuthParam = _strdup(AuthParam);
 
 	if (!request->AuthParam)
+		return FALSE;
+
+	return TRUE;
+}
+
+BOOL http_request_set_transfer_encoding(HttpRequest* request, const char* TransferEncoding)
+{
+	free(request->TransferEncoding);
+	request->TransferEncoding = _strdup(TransferEncoding);
+
+	if (!request->TransferEncoding)
 		return FALSE;
 
 	return TRUE;
@@ -325,6 +348,26 @@ wStream* http_request_write(HttpContext* context, HttpRequest* request)
 			goto out_free;
 	}
 
+	if (context->RdgConnectionId)
+	{
+		lines[count] = http_encode_body_line("RDG-Connection-Id", context->RdgConnectionId);
+
+		if (!lines[count])
+			goto out_free;
+
+		count++;
+	}
+
+	if (request->TransferEncoding)
+	{
+		lines[count] = http_encode_body_line("Transfer-Encoding", request->TransferEncoding);
+
+		if (!lines[count])
+			goto out_free;
+
+		count++;
+	}
+
 	if (request->Authorization)
 	{
 		lines[count] = http_encode_body_line("Authorization", request->Authorization);
@@ -403,6 +446,9 @@ void http_request_free(HttpRequest* request)
 	free(request->Content);
 	free(request->Method);
 	free(request->URI);
+
+	free(request->TransferEncoding);
+
 	free(request);
 }
 
@@ -589,7 +635,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 	int payloadOffset;
 	HttpResponse* response;
 
-	size = 1024;
+	size = 2048;
 	payload = NULL;
 	payloadOffset = 0;
 
@@ -716,10 +762,16 @@ HttpResponse* http_response_recv(rdpTls* tls)
 
 			if (response->ContentType)
 			{
-				if (_stricmp(response->ContentType, "text/plain") == 0)
+				if (_stricmp(response->ContentType, "application/rpc") != 0)
+					bodyLength = response->ContentLength;
+				else if (_stricmp(response->ContentType, "text/plain") == 0)
 					bodyLength = response->ContentLength;
 				else if (_stricmp(response->ContentType, "text/html") == 0)
 					bodyLength = response->ContentLength;
+			}
+			else
+			{
+				bodyLength = response->BodyLength;
 			}
 
 			if (bodyLength != response->BodyLength)
@@ -786,8 +838,11 @@ void http_response_free(HttpResponse* response)
 
 	ListDictionary_Free(response->Authenticates);
 
-	if (response->ContentLength > 0)
+	if (response->BodyContent)
+	{
 		free(response->BodyContent);
+		response->BodyContent = NULL;
+	}
 
 	free(response);
 }

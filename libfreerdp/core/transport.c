@@ -207,18 +207,50 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 
 	if (transport->GatewayEnabled)
 	{
-		transport->tsg = tsg_new(transport);
+		if (!status && settings->GatewayHttpTransport)
+		{
+			transport->rdg = rdg_new(transport);
 
-		if (!transport->tsg)
-			return FALSE;
+			if (!transport->rdg)
+				return FALSE;
 
-		if (!tsg_connect(transport->tsg, hostname, port, timeout))
-			return FALSE;
+			status = rdg_connect(transport->rdg, hostname, port, timeout);
 
-		transport->frontBio = transport->tsg->bio;
-		transport->layer = TRANSPORT_LAYER_TSG;
+			if (status)
+			{
+				transport->frontBio = transport->rdg->frontBio;
+				BIO_set_nonblock(transport->frontBio, 0);
+				transport->layer = TRANSPORT_LAYER_TSG;
+				status = TRUE;
+			}
+			else
+			{
+				rdg_free(transport->rdg);
+				transport->rdg = NULL;
+			}
+		}
 
-		status = TRUE;
+		if (!status && settings->GatewayRpcTransport)
+		{
+			transport->tsg = tsg_new(transport);
+
+			if (!transport->tsg)
+				return FALSE;
+
+			status = tsg_connect(transport->tsg, hostname, port, timeout);
+
+			if (status)
+			{
+				transport->frontBio = transport->tsg->bio;
+				transport->layer = TRANSPORT_LAYER_TSG;
+				status = TRUE;
+			}
+			else
+			{
+				tsg_free(transport->tsg);
+				transport->tsg = NULL;
+			}
+		}
 	}
 	else
 	{
@@ -621,7 +653,14 @@ UINT32 transport_get_event_handles(rdpTransport* transport, HANDLE* events)
 	}
 	else
 	{
-		nCount += tsg_get_event_handles(transport->tsg, events);
+		if (transport->rdg)
+		{
+			nCount += rdg_get_event_handles(transport->rdg, events);
+		}
+		else if (transport->tsg)
+		{
+			nCount += tsg_get_event_handles(transport->tsg, events);
+		}
 	}
 
 	return nCount;
@@ -778,6 +817,12 @@ BOOL transport_disconnect(rdpTransport* transport)
 	{
 		tsg_free(transport->tsg);
 		transport->tsg = NULL;
+	}
+
+	if (transport->rdg)
+	{
+		rdg_free(transport->rdg);
+		transport->rdg = NULL;
 	}
 
 	transport->frontBio = NULL;

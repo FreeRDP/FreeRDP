@@ -54,13 +54,14 @@ static int MutexGetFd(HANDLE handle)
 	return -1;
 }
 
-BOOL MutexCloseHandle(HANDLE handle) {
-	WINPR_MUTEX *mutex = (WINPR_MUTEX *) handle;
+BOOL MutexCloseHandle(HANDLE handle)
+{
+	WINPR_MUTEX* mutex = (WINPR_MUTEX*) handle;
 
 	if (!MutexIsHandled(handle))
 		return FALSE;
 
-	if(pthread_mutex_destroy(&mutex->mutex))
+	if (!pthread_mutex_destroy(&mutex->mutex))
 		return FALSE;
 
 	free(handle);
@@ -68,11 +69,12 @@ BOOL MutexCloseHandle(HANDLE handle) {
 	return TRUE;
 }
 
-static HANDLE_OPS ops = {
-		MutexIsHandled,
-		MutexCloseHandle,
-		MutexGetFd,
-		NULL /* CleanupHandle */
+static HANDLE_OPS ops =
+{
+	MutexIsHandled,
+	MutexCloseHandle,
+	MutexGetFd,
+	NULL /* CleanupHandle */
 };
 
 HANDLE CreateMutexW(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner, LPCWSTR lpName)

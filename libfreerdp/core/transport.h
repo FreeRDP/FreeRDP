@@ -35,6 +35,7 @@ typedef struct rdp_transport rdpTransport;
 #include "nla.h"
 
 #include "gateway/tsg.h"
+#include "gateway/rdg.h"
 
 #include <winpr/sspi.h>
 #include <winpr/wlog.h>
@@ -56,6 +57,7 @@ struct rdp_transport
 {
 	TRANSPORT_LAYER layer;
 	BIO* frontBio;
+	rdpRdg* rdg;
 	rdpTsg* tsg;
 	rdpTls* tls;
 	rdpContext* context;

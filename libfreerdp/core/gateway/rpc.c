@@ -554,6 +554,10 @@ int rpc_out_channel_transition_to_state(RpcOutChannel* outChannel, CLIENT_OUT_CH
 			str = "CLIENT_OUT_CHANNEL_STATE_OPENED_B3W";
 			break;
 
+		case CLIENT_OUT_CHANNEL_STATE_RECYCLED:
+			str = "CLIENT_OUT_CHANNEL_STATE_RECYCLED";
+			break;
+
 		case CLIENT_OUT_CHANNEL_STATE_FINAL:
 			str = "CLIENT_OUT_CHANNEL_STATE_FINAL";
 			break;
@@ -866,8 +870,6 @@ int rpc_out_channel_connect(RpcOutChannel* outChannel, int timeout)
 
 int rpc_out_channel_replacement_connect(RpcOutChannel* outChannel, int timeout)
 {
-	int status = 0;
-	HttpResponse* response = NULL;
 	rdpRpc* rpc = outChannel->rpc;
 
 	/* Connect OUT Channel */

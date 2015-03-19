@@ -40,6 +40,7 @@ struct _http_context
 	char* CacheControl;
 	char* Connection;
 	char* Pragma;
+	char* RdgConnectionId;
 };
 
 BOOL http_context_set_method(HttpContext* context, const char* Method);
@@ -50,6 +51,7 @@ BOOL http_context_set_accept(HttpContext* context, const char* Accept);
 BOOL http_context_set_cache_control(HttpContext* context, const char* CacheControl);
 BOOL http_context_set_connection(HttpContext* context, const char* Connection);
 BOOL http_context_set_pragma(HttpContext* context, const char* Pragma);
+BOOL http_context_set_rdg_connection_id(HttpContext* context, const char* RdgConnectionId);
 
 HttpContext* http_context_new(void);
 void http_context_free(HttpContext* context);
@@ -63,12 +65,14 @@ struct _http_request
 	char* Authorization;
 	int ContentLength;
 	char* Content;
+	char* TransferEncoding;
 };
 
 BOOL http_request_set_method(HttpRequest* request, const char* Method);
 BOOL http_request_set_uri(HttpRequest* request, const char* URI);
 BOOL http_request_set_auth_scheme(HttpRequest* request, const char* AuthScheme);
 BOOL http_request_set_auth_param(HttpRequest* request, const char* AuthParam);
+BOOL http_request_set_transfer_encoding(HttpRequest* request, const char* TransferEncoding);
 
 wStream* http_request_write(HttpContext* context, HttpRequest* request);
 
