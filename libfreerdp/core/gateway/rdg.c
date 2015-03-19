@@ -479,6 +479,10 @@ BOOL rdg_process_in_channel_authorization(rdpRdg* rdg, HttpResponse* response)
 		return FALSE;
 
 	status = tls_write_all(rdg->tlsIn, Stream_Buffer(s), Stream_Length(s));
+    if (status <= 0)
+    {
+        return FALSE;
+    }
 	Stream_Free(s, TRUE);
 
 	return TRUE;
@@ -885,7 +889,6 @@ BOOL rdg_tls_out_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int tim
 	}
 
 	bufferedBio = BIO_push(bufferedBio, socketBio);
-	bufferedBio = bufferedBio;
 	status = BIO_set_nonblock(bufferedBio, TRUE);
 
 	if (!status)
@@ -940,7 +943,6 @@ BOOL rdg_tls_in_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int time
 	}
 
 	bufferedBio = BIO_push(bufferedBio, socketBio);
-	bufferedBio = bufferedBio;
 	status = BIO_set_nonblock(bufferedBio, TRUE);
 
 	if (!status)
@@ -1142,7 +1144,7 @@ BOOL rdg_process_unknown_packet(rdpRdg* rdg, int type)
 
 BOOL rdg_process_control_packet(rdpRdg* rdg, int type, int packetLength)
 {
-	wStream* s;
+	wStream* s = NULL;
 	int readCount = 0;
 	int status;
 	int payloadSize = packetLength - sizeof(RdgPacketHeader);
