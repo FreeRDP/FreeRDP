@@ -34,9 +34,6 @@
 
 /* Protocol-independent codes */
 
-#define ERRBASE_POSTCONNECTERROR_STRING \
-
-
 /* Special codes */
 #define ERRBASE_SUCCESS_STRING "Success."
 #define ERRBASE_NONE_STRING ""
