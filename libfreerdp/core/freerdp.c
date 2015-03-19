@@ -564,8 +564,8 @@ const char* freerdp_get_last_error_string(UINT32 code)
 void freerdp_set_last_error(rdpContext* context, UINT32 lastError)
 {
 	if (lastError)
-		WLog_ERR(TAG, "freerdp_set_last_error %s [0x%04X]", lastError,
-			freerdp_get_last_error_name(lastError));
+		WLog_ERR(TAG, "freerdp_set_last_error %s [0x%04X]",
+			freerdp_get_last_error_name(lastError), lastError);
 
 	context->LastError = lastError;
 
