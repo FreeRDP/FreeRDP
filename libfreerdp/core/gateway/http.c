@@ -635,7 +635,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 	int payloadOffset;
 	HttpResponse* response;
 
-	size = 1024;
+	size = 2048;
 	payload = NULL;
 	payloadOffset = 0;
 

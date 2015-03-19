@@ -678,7 +678,7 @@ int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, BYTE* buffer, UI
 	offset += rts_flow_control_ack_command_read(rpc, &buffer[offset], length - offset,
 			&BytesReceived, &AvailableWindow, (BYTE*) &ChannelCookie) + 4;
 
-	WLog_ERR(TAG, "Receiving FlowControlAckWithDestination RTS PDU: BytesReceived: %d AvailableWindow: %d",
+	WLog_DBG(TAG, "Receiving FlowControlAckWithDestination RTS PDU: BytesReceived: %d AvailableWindow: %d",
 			BytesReceived, AvailableWindow);
 
 	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow =

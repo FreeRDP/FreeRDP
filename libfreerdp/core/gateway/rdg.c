@@ -341,12 +341,12 @@ BOOL rdg_process_out_channel_response(rdpRdg* rdg, HttpResponse* response)
 
 	if (response->StatusCode != HTTP_STATUS_DENIED)
 	{
-		WLog_INFO(TAG, "RDG not supported");
+		WLog_DBG(TAG, "RDG not supported");
 		rdg->state = RDG_CLIENT_STATE_NOT_FOUND;
 		return FALSE;
 	}
 
-	WLog_INFO(TAG, "Out Channel authorization required");
+	WLog_DBG(TAG, "Out Channel authorization required");
 
 	if (ListDictionary_Contains(response->Authenticates, "NTLM"))
 	{
@@ -398,7 +398,7 @@ BOOL rdg_process_out_channel_authorization(rdpRdg* rdg, HttpResponse* response)
 		return FALSE;
 	}
 
-	WLog_INFO(TAG, "Out Channel authorization complete");
+	WLog_DBG(TAG, "Out Channel authorization complete");
 	rdg->state = RDG_CLIENT_STATE_OUT_CHANNEL_AUTHORIZED;
 
 	return TRUE;
@@ -413,7 +413,7 @@ BOOL rdg_process_in_channel_response(rdpRdg* rdg, HttpResponse* response)
 	BYTE* ntlmTokenData = NULL;
 	rdpNtlm* ntlm = rdg->ntlm;
 
-	WLog_INFO(TAG, "In Channel authorization required");
+	WLog_DBG(TAG, "In Channel authorization required");
 
 	if (ListDictionary_Contains(response->Authenticates, "NTLM"))
 	{
@@ -470,7 +470,7 @@ BOOL rdg_process_in_channel_authorization(rdpRdg* rdg, HttpResponse* response)
 		return FALSE;
 	}
 
-	WLog_INFO(TAG, "In Channel authorization complete");
+	WLog_DBG(TAG, "In Channel authorization complete");
 	rdg->state = RDG_CLIENT_STATE_IN_CHANNEL_AUTHORIZED;
 
 	s = rdg_build_http_request(rdg, "RDG_IN_DATA");
@@ -492,7 +492,7 @@ BOOL rdg_process_handshake_response(rdpRdg* rdg, wStream* s)
 {
 	HRESULT errorCode;
 
-	WLog_INFO(TAG, "Handshake response recieved");
+	WLog_DBG(TAG, "Handshake response recieved");
 
 	if (rdg->state != RDG_CLIENT_STATE_HANDSHAKE)
 	{
@@ -504,7 +504,7 @@ BOOL rdg_process_handshake_response(rdpRdg* rdg, wStream* s)
 
 	if (FAILED(errorCode))
 	{
-		WLog_INFO(TAG, "Handshake error %x", errorCode);
+		WLog_DBG(TAG, "Handshake error %x", errorCode);
 		return FALSE;
 	}
 
@@ -515,7 +515,7 @@ BOOL rdg_process_tunnel_response(rdpRdg* rdg, wStream* s)
 {
 	HRESULT errorCode;
 
-	WLog_INFO(TAG, "Tunnel response received");
+	WLog_DBG(TAG, "Tunnel response received");
 
 	if (rdg->state != RDG_CLIENT_STATE_TUNNEL_CREATE)
 	{
@@ -527,7 +527,7 @@ BOOL rdg_process_tunnel_response(rdpRdg* rdg, wStream* s)
 
 	if (FAILED(errorCode))
 	{
-		WLog_INFO(TAG, "Tunnel creation error %x", errorCode);
+		WLog_DBG(TAG, "Tunnel creation error %x", errorCode);
 		return FALSE;
 	}
 
@@ -538,7 +538,7 @@ BOOL rdg_process_tunnel_authorization_response(rdpRdg* rdg, wStream* s)
 {
 	HRESULT errorCode;
 
-	WLog_INFO(TAG, "Tunnel authorization received");
+	WLog_DBG(TAG, "Tunnel authorization received");
 
 	if (rdg->state != RDG_CLIENT_STATE_TUNNEL_AUTHORIZE)
 	{
@@ -550,7 +550,7 @@ BOOL rdg_process_tunnel_authorization_response(rdpRdg* rdg, wStream* s)
 
 	if (FAILED(errorCode))
 	{
-		WLog_INFO(TAG, "Tunnel authorization error %x", errorCode);
+		WLog_DBG(TAG, "Tunnel authorization error %x", errorCode);
 		return FALSE;
 	}
 
@@ -561,7 +561,7 @@ BOOL rdg_process_channel_response(rdpRdg* rdg, wStream* s)
 {
 	HRESULT errorCode;
 
-	WLog_INFO(TAG, "Channel response received");
+	WLog_DBG(TAG, "Channel response received");
 
 	if (rdg->state != RDG_CLIENT_STATE_CHANNEL_CREATE)
 	{
@@ -573,7 +573,7 @@ BOOL rdg_process_channel_response(rdpRdg* rdg, wStream* s)
 
 	if (FAILED(errorCode))
 	{
-		WLog_INFO(TAG, "Channel error %x", errorCode);
+		WLog_DBG(TAG, "Channel error %x", errorCode);
 		return FALSE;
 	}
 
@@ -1130,7 +1130,7 @@ BOOL rdg_process_close_packet(rdpRdg* rdg)
 	header->type = PKT_TYPE_CLOSE_CHANNEL_RESPONSE;
 	header->packetLength = sizeof(buffer);
 
-	WLog_INFO(TAG, "Channel Close requested");
+	WLog_DBG(TAG, "Channel Close requested");
 	rdg->state = RDG_CLIENT_STATE_CLOSED;
 	return (rdg_write_data_packet(rdg, buffer, sizeof(buffer)) > 0 ? TRUE : FALSE);
 }
@@ -1284,17 +1284,17 @@ static int rdg_bio_write(BIO* bio, const char* buf, int num)
 	int status;
 	rdpRdg* rdg = (rdpRdg*)bio->ptr;
 
+	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
+
 	status = rdg_write_data_packet(rdg, (BYTE*) buf, num);
 
 	if (status < 0)
 	{
 		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
-		BIO_clear_flags(bio, BIO_FLAGS_WRITE);
 		return -1;
 	}
 	else if (status < num)
 	{
-		BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 		BIO_set_flags(bio, BIO_FLAGS_WRITE);
 		WSASetLastError(WSAEWOULDBLOCK);
 	}
@@ -1311,17 +1311,17 @@ static int rdg_bio_read(BIO* bio, char* buf, int size)
 	int status;
 	rdpRdg* rdg = (rdpRdg*)bio->ptr;
 
+	BIO_clear_flags(bio, BIO_FLAGS_READ);
+
 	status = rdg_read_data_packet(rdg, (BYTE*) buf, size);
 
 	if (status < 0)
 	{
 		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
-		BIO_clear_flags(bio, BIO_FLAGS_READ);
 		return -1;
 	}
 	else if (status < size)
 	{
-		BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 		BIO_set_flags(bio, BIO_FLAGS_READ);
 		WSASetLastError(WSAEWOULDBLOCK);
 	}
@@ -1337,7 +1337,6 @@ static int rdg_bio_puts(BIO* bio, const char* str)
 {
 	return 1;
 }
-
 
 static int rdg_bio_gets(BIO* bio, char* str, int size)
 {

@@ -207,40 +207,49 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 
 	if (transport->GatewayEnabled)
 	{
-		/* New RDP 8 gateway test. */
-		transport->rdg = rdg_new(transport);
-		if (!transport->rdg)
+		if (!status && settings->GatewayHttpTransport)
 		{
-			return FALSE;
-		}
-		status = rdg_connect(transport->rdg, hostname, port, timeout);
-		if (status)
-		{
-			transport->frontBio = transport->rdg->frontBio;
-			BIO_set_nonblock(transport->frontBio, 0);
-			transport->layer = TRANSPORT_LAYER_TSG;
+			transport->rdg = rdg_new(transport);
 
-			status = TRUE;
-		}
-		else
-		{
-			if (transport->rdg->state != RDG_CLIENT_STATE_NOT_FOUND)
-			{
+			if (!transport->rdg)
 				return FALSE;
-			}
 
+			status = rdg_connect(transport->rdg, hostname, port, timeout);
+
+			if (status)
+			{
+				transport->frontBio = transport->rdg->frontBio;
+				BIO_set_nonblock(transport->frontBio, 0);
+				transport->layer = TRANSPORT_LAYER_TSG;
+				status = TRUE;
+			}
+			else
+			{
+				rdg_free(transport->rdg);
+				transport->rdg = NULL;
+			}
+		}
+
+		if (!status && settings->GatewayRpcTransport)
+		{
 			transport->tsg = tsg_new(transport);
 
 			if (!transport->tsg)
 				return FALSE;
 
-			if (!tsg_connect(transport->tsg, hostname, port, timeout))
-				return FALSE;
+			status = tsg_connect(transport->tsg, hostname, port, timeout);
 
-			transport->frontBio = transport->tsg->bio;
-			transport->layer = TRANSPORT_LAYER_TSG;
-
-			status = TRUE;
+			if (status)
+			{
+				transport->frontBio = transport->tsg->bio;
+				transport->layer = TRANSPORT_LAYER_TSG;
+				status = TRUE;
+			}
+			else
+			{
+				tsg_free(transport->tsg);
+				transport->tsg = NULL;
+			}
 		}
 	}
 	else
