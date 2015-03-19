@@ -34,9 +34,11 @@
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
 
+typedef struct rdp_rdg rdpRdg;
+
 #include "http.h"
 #include "ntlm.h"
-
+#include "../transport.h"
 
 /* HTTP channel response fields present flags. */
 #define HTTP_CHANNEL_RESPONSE_FIELD_CHANNELID 0x1
@@ -120,10 +122,6 @@ enum
 	RDG_CLIENT_STATE_NOT_FOUND,
 };
 
-
-typedef struct rdp_transport rdpTransport;
-
-typedef struct rdp_rdg rdpRdg;
 struct rdp_rdg
 {
 	rdpContext* context;
