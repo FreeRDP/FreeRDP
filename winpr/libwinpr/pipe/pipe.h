@@ -66,6 +66,11 @@ struct winpr_named_pipe
 
 BOOL winpr_destroy_named_pipe(WINPR_NAMED_PIPE* pNamedPipe);
 
+BOOL NamedPipeRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
+					LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
+BOOL NamedPipeWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
+						LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
+
 #endif
 
 #endif /* WINPR_PIPE_PRIVATE_H */

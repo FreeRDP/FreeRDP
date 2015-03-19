@@ -131,6 +131,7 @@ void wf_sw_desktop_resize(wfContext* wfc)
 	rdpGdi* gdi;
 	rdpContext* context;
 	rdpSettings* settings;
+	freerdp *instance = wfc->instance;
 
 	context = (rdpContext*) wfc;
 	settings = wfc->instance->settings;
@@ -138,13 +139,16 @@ void wf_sw_desktop_resize(wfContext* wfc)
 
 	wfc->width = settings->DesktopWidth;
 	wfc->height = settings->DesktopHeight;
-	gdi_resize(gdi, wfc->width, wfc->height);
 
+	gdi_free(instance);
 	if (wfc->primary)
 	{
 		wf_image_free(wfc->primary);
-		wfc->primary = wf_image_new(wfc, wfc->width, wfc->height, wfc->dstBpp, gdi->primary_buffer);
+		wfc->primary = wf_image_new(wfc, wfc->width, wfc->height, wfc->dstBpp, NULL);
 	}
+	gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP, wfc->primary->pdata);
+	gdi = instance->context->gdi;
+	wfc->hdc = gdi->primary->hdc;
 }
 
 void wf_hw_begin_paint(wfContext* wfc)
@@ -410,7 +414,7 @@ BOOL wf_post_connect(freerdp* instance)
 
 	if (settings->EmbeddedWindow)
 		settings->Decorations = FALSE;
-	
+
 	if (wfc->fullscreen)
 		dwStyle = WS_POPUP;
 	else if (!settings->Decorations)
@@ -436,13 +440,13 @@ BOOL wf_post_connect(freerdp* instance)
 	EventArgsInit(&e, "wfreerdp");
 	e.embed = FALSE;
 	e.handle = (void*) wfc->hwnd;
-	PubSub_OnEmbedWindow(context->pubSub, context, &e);		   
-	
+	PubSub_OnEmbedWindow(context->pubSub, context, &e);
+
 	ShowWindow(wfc->hwnd, SW_SHOWNORMAL);
 	UpdateWindow(wfc->hwnd);
 
 	if (settings->SoftwareGdi)
-	{											
+	{
 		instance->update->BeginPaint = (pBeginPaint) wf_sw_begin_paint;
 		instance->update->EndPaint = (pEndPaint) wf_sw_end_paint;
 		instance->update->DesktopResize = (pDesktopResize) wf_sw_desktop_resize;
@@ -699,7 +703,7 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 			}
 		}
 
-		if (freerdp_shall_disconnect(instance))	
+		if (freerdp_shall_disconnect(instance))
 			break;
 
 		quit_msg = FALSE;
@@ -890,11 +894,11 @@ void wf_size_scrollbars(wfContext* wfc, UINT32 client_width, UINT32 client_heigh
 
 		if (!horiz && client_width < wfc->instance->settings->DesktopWidth)
 		{
-			horiz = TRUE;		
+			horiz = TRUE;
 		}
 		else if (horiz && client_width >= wfc->instance->settings->DesktopWidth/* - GetSystemMetrics(SM_CXVSCROLL)*/)
 		{
-			horiz = FALSE;		
+			horiz = FALSE;
 		}
 
 		if (!vert && client_height < wfc->instance->settings->DesktopHeight)
@@ -933,32 +937,32 @@ void wf_size_scrollbars(wfContext* wfc, UINT32 client_width, UINT32 client_heigh
 
 		if (horiz)
 		{
-			// The horizontal scrolling range is defined by 
-			// (bitmap_width) - (client_width). The current horizontal 
-			// scroll value remains within the horizontal scrolling range. 
+			// The horizontal scrolling range is defined by
+			// (bitmap_width) - (client_width). The current horizontal
+			// scroll value remains within the horizontal scrolling range.
 			wfc->xMaxScroll = MAX(wfc->instance->settings->DesktopWidth - client_width, 0);
 			wfc->xCurrentScroll = MIN(wfc->xCurrentScroll, wfc->xMaxScroll);
-			si.cbSize = sizeof(si); 
-			si.fMask  = SIF_RANGE | SIF_PAGE | SIF_POS; 
+			si.cbSize = sizeof(si);
+			si.fMask  = SIF_RANGE | SIF_PAGE | SIF_POS;
 			si.nMin   = wfc->xMinScroll;
 			si.nMax   = wfc->instance->settings->DesktopWidth;
-			si.nPage  = client_width; 
+			si.nPage  = client_width;
 			si.nPos   = wfc->xCurrentScroll;
 			SetScrollInfo(wfc->hwnd, SB_HORZ, &si, TRUE);
 		}
 
 		if (vert)
 		{
-			// The vertical scrolling range is defined by 
-			// (bitmap_height) - (client_height). The current vertical 
-			// scroll value remains within the vertical scrolling range. 
+			// The vertical scrolling range is defined by
+			// (bitmap_height) - (client_height). The current vertical
+			// scroll value remains within the vertical scrolling range.
 			wfc->yMaxScroll = MAX(wfc->instance->settings->DesktopHeight - client_height, 0);
 			wfc->yCurrentScroll = MIN(wfc->yCurrentScroll, wfc->yMaxScroll);
-			si.cbSize = sizeof(si); 
-			si.fMask  = SIF_RANGE | SIF_PAGE | SIF_POS; 
+			si.cbSize = sizeof(si);
+			si.fMask  = SIF_RANGE | SIF_PAGE | SIF_POS;
 			si.nMin   = wfc->yMinScroll;
 			si.nMax   = wfc->instance->settings->DesktopHeight;
-			si.nPage  = client_height; 
+			si.nPage  = client_height;
 			si.nPos   = wfc->yCurrentScroll;
 			SetScrollInfo(wfc->hwnd, SB_VERT, &si, TRUE);
 		}

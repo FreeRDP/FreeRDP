@@ -47,6 +47,10 @@ typedef BOOL (*pcIsHandled)(HANDLE handle);
 typedef BOOL (*pcCloseHandle)(HANDLE handle);
 typedef int (*pcGetFd)(HANDLE handle);
 typedef DWORD (*pcCleanupHandle)(HANDLE handle);
+typedef BOOL (*pcReadFile)(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
+							LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
+typedef BOOL (*pcWriteFile)(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
+							LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
 
 typedef struct _HANDLE_OPS
 {
@@ -54,6 +58,8 @@ typedef struct _HANDLE_OPS
 	pcCloseHandle CloseHandle;
 	pcGetFd GetFd;
 	pcCleanupHandle CleanupHandle;
+	pcReadFile ReadFile;
+	pcWriteFile WriteFile;
 } HANDLE_OPS;
 
 struct winpr_handle
