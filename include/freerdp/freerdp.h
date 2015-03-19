@@ -268,6 +268,8 @@ FREERDP_API BOOL freerdp_focus_required(freerdp* instance);
 FREERDP_API void freerdp_set_focus(freerdp* instance);
 
 FREERDP_API UINT32 freerdp_get_last_error(rdpContext* context);
+FREERDP_API const char* freerdp_get_last_error_name(UINT32 error);
+FREERDP_API const char* freerdp_get_last_error_string(UINT32 error);
 FREERDP_API void freerdp_set_last_error(rdpContext* context, UINT32 lastError);
 
 #ifdef __cplusplus

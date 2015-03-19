@@ -29,6 +29,8 @@
 
 #define TAG FREERDP_TAG("core")
 
+#define ERRINFO_DEFINE(_code)	    { ERRINFO_##_code , "ERRINFO_" #_code , ERRINFO_##_code##_STRING }
+
 int connectErrorCode;
 
 /* Protocol-independent codes */

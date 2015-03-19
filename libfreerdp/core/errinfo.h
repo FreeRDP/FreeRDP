@@ -30,8 +30,6 @@ struct _ERRINFO
 };
 typedef struct _ERRINFO ERRINFO;
 
-#define ERRINFO_DEFINE(_code)	{ ERRINFO_##_code , "ERRINFO_" #_code , ERRINFO_##_code##_STRING }
-
 void rdp_print_errinfo(UINT32 code);
 
 #endif

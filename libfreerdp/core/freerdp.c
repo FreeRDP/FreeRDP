@@ -511,10 +511,61 @@ UINT32 freerdp_get_last_error(rdpContext* context)
 	return context->LastError;
 }
 
+const char* freerdp_get_last_error_name(UINT32 code)
+{
+	const char *name = NULL;
+	const UINT32 cls = GET_FREERDP_ERROR_CLASS(code);
+	const UINT32 type = GET_FREERDP_ERROR_TYPE(code);
+
+	switch(cls)
+	{
+		case FREERDP_ERROR_ERRBASE_CLASS:
+			name = freerdp_get_error_base_name(type);
+			break;
+		case FREERDP_ERROR_ERRINFO_CLASS:
+			name = freerdp_get_error_info_name(type);
+			break;
+		case FREERDP_ERROR_CONNECT_CLASS:
+			name = freerdp_get_error_connect_name(type);
+			break;
+		default:
+			name = "Unknown error class";
+			break;
+	}
+
+	return name;
+}
+
+const char* freerdp_get_last_error_string(UINT32 code)
+{
+	const char* string = NULL;
+	const UINT32 cls = GET_FREERDP_ERROR_CLASS(code);
+	const UINT32 type = GET_FREERDP_ERROR_TYPE(code);
+
+	switch(cls)
+	{
+		case FREERDP_ERROR_ERRBASE_CLASS:
+			string = freerdp_get_error_base_string(type);
+			break;
+		case FREERDP_ERROR_ERRINFO_CLASS:
+			string = freerdp_get_error_info_string(type);
+			break;
+		case FREERDP_ERROR_CONNECT_CLASS:
+			string = freerdp_get_error_connect_string(type);
+			break;
+		default:
+			string = "Unknown error class";
+			break;
+	}
+
+	return string;
+}
+
 void freerdp_set_last_error(rdpContext* context, UINT32 lastError)
 {
 	if (lastError)
-		WLog_ERR(TAG, "freerdp_set_last_error 0x%04X", lastError);
+		WLog_ERR(TAG, "freerdp_set_last_error %s [0x%04X]", lastError,
+			freerdp_get_last_error_name(lastError));
 
 	context->LastError = lastError;
 
