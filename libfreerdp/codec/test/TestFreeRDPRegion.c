@@ -668,11 +668,10 @@ static int test_empty_rectangle() {
 	int retCode = -1;
 	int i;
 
-	RECTANGLE_16 emptyRectangles[4] = {
+	RECTANGLE_16 emptyRectangles[3] = {
 		{   0,    0,    0,    0},
 		{  10,   10,   10,   11},
-		{  10,   10,   11,   10},
-		{ 100,  100,    0,    0}
+		{  10,   10,   11,   10}
 	};
 
 	RECTANGLE_16 firstRect = {
@@ -689,7 +688,7 @@ static int test_empty_rectangle() {
 	region16_init(&intersection);
 
 	/* Check for empty rectangles */
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < 3; i++)
 	{
 		if (!rectangle_is_empty(&emptyRectangles[i]))
 			goto out;
