@@ -632,17 +632,46 @@ static int test_norbert_case() {
 		0, 0, 1920, 1080
 	};
 	RECTANGLE_16 expected_inter_extents = {
-		0, 0, 1920, 1078
+		2, 0, 1920, 1078
 	};
 
 	region16_init(&region);
 	region16_init(&intersection);
 
+	/*
+	 * Consider following as a screen with resolution 1920*1080
+	 *      | |    |     |           |               |      |
+	 *      | |2   |53   |294        |971            |1680  |
+	 *      | |    |     |           |               |      |
+	 *    0 +=+======================================+======+
+	 *      | |                                      |      |
+	 *      |                                        |  R[0]|
+	 *  242 |            +-----------+               +------+
+	 *      | |          |           |               |      |
+	 *      |            |           |               |      |
+	 *      |            |       R[1]|               |  R[2]|
+	 *  776 | |          +-----------+               +------+
+	 *      |                                        |      |
+	 *      |                                        |  R[3]|
+	 * 1036 | |                                      +------+
+	 * 1040 | +----+                                        
+	 *      | |R[4]|                         Union of R[0-4]|
+	 * 1078 | +----+    -    -    -    -    -    -    -    -+
+	 * 1080 |                                       
+	 *   
+	 *   
+	 * The result is union of R[0] - R[4].
+	 * After intersected with the full screen rect, the 
+	 * result should keep the same.
+	 */
 	for (i = 0; i < 5; i++)
 	{
 		if (!region16_union_rect(&region, &region, &inRectangles[i]))
 			goto out;
 	}
+
+	if (!compareRectangles(region16_extents(&region), &expected_inter_extents, 1) )
+		goto out;
 
 	if (!region16_intersect_rect(&intersection, &region, &screenRect))
 		goto out;
@@ -660,6 +689,63 @@ out:
 	return retCode;
 }
 
+static int test_empty_rectangle() {
+	REGION16 region, intersection;
+	int retCode = -1;
+	int i;
+
+	RECTANGLE_16 emptyRectangles[3] = {
+		{   0,    0,    0,    0},
+		{  10,   10,   10,   11},
+		{  10,   10,   11,   10}
+	};
+
+	RECTANGLE_16 firstRect = {
+		0, 0, 100, 100
+	};
+	RECTANGLE_16 anotherRect = {
+		100, 100,  200,  200
+	};
+	RECTANGLE_16 expected_inter_extents = {
+		0, 0, 0, 0 
+	};
+
+	region16_init(&region);
+	region16_init(&intersection);
+
+	/* Check for empty rectangles */
+	for (i = 0; i < 3; i++)
+	{
+		if (!rectangle_is_empty(&emptyRectangles[i]))
+			goto out;
+	}
+
+	/* Check for non-empty rectangles */
+	if (rectangle_is_empty(&firstRect))
+		goto out;
+
+	/* Intersect 2 non-intersect rectangle, result should be empty */
+	if (!region16_union_rect(&region, &region, &firstRect))
+		goto out;
+
+	if (!region16_intersect_rect(&region, &region, &anotherRect))
+		goto out;
+
+	if (!compareRectangles(region16_extents(&region), &expected_inter_extents, 1) )
+		goto out;
+
+	if (!region16_is_empty(&region))
+		goto out;
+
+	if (!rectangle_is_empty(region16_extents(&intersection)))
+		goto out;
+
+	retCode = 0;
+out:
+	region16_uninit(&intersection);
+	region16_uninit(&region);
+	return retCode;
+}
 
 typedef int (*TestFunction)();
 struct UnitaryTest {
@@ -680,6 +766,7 @@ struct UnitaryTest tests[] = {
 	{"R1 & R3",					test_r1_inter_r3},
 	{"(R1+R3)&R11 (band merge)",test_r1_r3_inter_r11},
 	{"norbert case",			test_norbert_case},
+	{"empty rectangle case",	test_empty_rectangle},
 
 	{NULL, NULL}
 };

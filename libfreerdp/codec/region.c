@@ -132,7 +132,10 @@ static RECTANGLE_16 *region16_extents_noconst(REGION16 *region)
 
 BOOL rectangle_is_empty(const RECTANGLE_16 *rect)
 {
-	return (rect->left + rect->top + rect->right + rect->bottom) ? TRUE : FALSE;
+	/* A rectangle with width = 0 or height = 0 should be regarded
+	 * as empty.
+	 */
+	return ((rect->left == rect->right) || (rect->top == rect->bottom)) ? TRUE : FALSE;
 }
 
 BOOL region16_is_empty(const REGION16 *region)
@@ -770,10 +773,21 @@ BOOL region16_intersect_rect(REGION16 *dst, const REGION16 *src, const RECTANGLE
 			usedRects++;
 			dstPtr++;
 
-			newExtents.top = MIN(common.top, newExtents.top);
-			newExtents.left = MIN(common.left, newExtents.left);
-			newExtents.bottom = MAX(common.bottom, newExtents.bottom);
-			newExtents.right = MAX(common.right, newExtents.right);
+			if (rectangle_is_empty(&newExtents))
+			{
+				/* Check if the existing newExtents is empty. If it is empty, use 
+				 * new common directly. We do not need to check common rectangle 
+				 * because the rectangles_intersection() ensures that it is not empty.
+				 */
+				newExtents = common;
+			}
+			else
+			{
+				newExtents.top = MIN(common.top, newExtents.top);
+				newExtents.left = MIN(common.left, newExtents.left);
+				newExtents.bottom = MAX(common.bottom, newExtents.bottom);
+				newExtents.right = MAX(common.right, newExtents.right);
+			}
 		}
 	}
 
