@@ -669,17 +669,17 @@ static int test_empty_rectangle() {
 	int i;
 
 	RECTANGLE_16 emptyRectangles[4] = {
-			{   0,    0,    0,    0},
-			{  10,   10,   10,   11},
-			{  10,   10,   11,   10},
-			{ 100,  100,    0,    0}
+		{   0,    0,    0,    0},
+		{  10,   10,   10,   11},
+		{  10,   10,   11,   10},
+		{ 100,  100,    0,    0}
 	};
 
 	RECTANGLE_16 firstRect = {
-        0, 0, 100, 100
+		0, 0, 100, 100
 	};
 	RECTANGLE_16 anotherRect = {
-        100, 100,  200,  200
+		100, 100,  200,  200
 	};
 	RECTANGLE_16 expected_inter_extents = {
 		0, 0, 0, 0 
@@ -688,23 +688,23 @@ static int test_empty_rectangle() {
 	region16_init(&region);
 	region16_init(&intersection);
 
-    /* Check for empty rectangles */
+	/* Check for empty rectangles */
 	for (i = 0; i < 4; i++)
 	{
-        if (!rectangle_is_empty(&emptyRectangles[i]))
-            goto out;
+		if (!rectangle_is_empty(&emptyRectangles[i]))
+			goto out;
 	}
 
-    /* Check for non-empty rectangles */
-    if (rectangle_is_empty(&firstRect))
-        goto out;
+	/* Check for non-empty rectangles */
+	if (rectangle_is_empty(&firstRect))
+		goto out;
 
-    /* Intersect 2 non-intersect rectangle, result should be empty */
-    if (!region16_union_rect(&region, &region, &firstRect))
-        goto out;
+	/* Intersect 2 non-intersect rectangle, result should be empty */
+	if (!region16_union_rect(&region, &region, &firstRect))
+		goto out;
 
-    if (!region16_intersect_rect(&region, &region, &anotherRect))
-        goto out;
+	if (!region16_intersect_rect(&region, &region, &anotherRect))
+		goto out;
 
 	if (!compareRectangles(region16_extents(&region), &expected_inter_extents, 1) )
 		goto out;
@@ -712,8 +712,8 @@ static int test_empty_rectangle() {
 	if (!region16_is_empty(&region))
 		goto out;
 
-    if (!rectangle_is_empty(region16_extents(&intersection)))
-        goto out;
+	if (!rectangle_is_empty(region16_extents(&intersection)))
+		goto out;
 
 	retCode = 0;
 out:
@@ -741,7 +741,7 @@ struct UnitaryTest tests[] = {
 	{"R1 & R3",					test_r1_inter_r3},
 	{"(R1+R3)&R11 (band merge)",test_r1_r3_inter_r11},
 	{"norbert case",			test_norbert_case},
-	{"empty rectangle case",    test_empty_rectangle},
+	{"empty rectangle case",	test_empty_rectangle},
 
 	{NULL, NULL}
 };
