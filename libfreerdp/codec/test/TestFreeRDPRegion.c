@@ -638,6 +638,32 @@ static int test_norbert_case() {
 	region16_init(&region);
 	region16_init(&intersection);
 
+	/*
+	 * Consider following as a screen with resolution 1920*1080
+	 *      | |    |     |           |               |      |
+	 *      | |2   |53   |294        |971            |1680  |
+	 *      | |    |     |           |               |      |
+	 *    0 +=+======================================+======+
+	 *      | |                                      |      |
+	 *      |                                        |  R[0]|
+	 *  242 |            +-----------+               +------+
+	 *      | |          |           |               |      |
+	 *      |            |           |               |      |
+	 *      |            |       R[1]|               |  R[2]|
+	 *  776 | |          +-----------+               +------+
+	 *      |                                        |      |
+	 *      |                                        |  R[3]|
+	 * 1036 | |                                      +------+
+	 * 1040 | +----+                                        
+	 *      | |R[4]|                         Union of R[0-4]|
+	 * 1078 | +----+    -    -    -    -    -    -    -    -+
+	 * 1080 |                                       
+	 *   
+	 *   
+	 * The result is union of R[0] - R[4].
+	 * After intersected with the full screen rect, the 
+	 * result should keep the same.
+	 */
 	for (i = 0; i < 5; i++)
 	{
 		if (!region16_union_rect(&region, &region, &inRectangles[i]))
