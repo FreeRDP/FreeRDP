@@ -429,6 +429,9 @@ int nla_client_authenticate(rdpNla* nla)
 
 		if (status < 0)
 			return -1;
+
+		if (nla_client_recv(nla) < 0)
+			return -1;
 	}
 
 	Stream_Free(s, TRUE);
@@ -1206,9 +1209,6 @@ int nla_decode_ts_request(rdpNla* nla, wStream* s)
 int nla_recv_pdu(rdpNla* nla, wStream* s)
 {
 	if (nla_decode_ts_request(nla, s) < 1)
-		return -1;
-
-	if (nla_client_recv(nla) < 1)
 		return -1;
 
 	return 1;
