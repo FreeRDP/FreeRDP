@@ -96,16 +96,7 @@ static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 				break;
 
 			case SSL_ERROR_SYSCALL:
-				error = WSAGetLastError();
-				if ((error == WSAEWOULDBLOCK) || (error == WSAEINTR) ||
-					(error == WSAEINPROGRESS) || (error == WSAEALREADY))
-				{
-					BIO_set_flags(bio, (BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY));
-				}
-				else
-				{
-					BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
-				}
+				BIO_set_flags(bio, (BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY));
 				break;
 
 			case SSL_ERROR_SSL:
@@ -170,16 +161,7 @@ static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 				break;
 
 			case SSL_ERROR_SYSCALL:
-				error = WSAGetLastError();
-				if ((error == WSAEWOULDBLOCK) || (error == WSAEINTR) ||
-					(error == WSAEINPROGRESS) || (error == WSAEALREADY))
-				{
-					BIO_set_flags(bio, (BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY));
-				}
-				else
-				{
-					BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
-				}
+				BIO_set_flags(bio, (BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY));
 				break;
 		}
 	}
