@@ -46,9 +46,9 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 
 	if (!context->custom)
 		return;
-	
+
 	asciiNames = (msgFlags & CB_ASCII_NAMES) ? TRUE : FALSE;
-	
+
 	formatList.msgType = CB_FORMAT_LIST;
 	formatList.msgFlags = msgFlags;
 	formatList.dataLen = dataLen;
@@ -56,7 +56,7 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 	index = 0;
 	formatList.numFormats = 0;
 	position = Stream_GetPosition(s);
-	
+
 	if (!formatList.dataLen)
 	{
 		/* empty format list */
@@ -66,32 +66,32 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 	else if (!cliprdr->useLongFormatNames)
 	{
 		formatList.numFormats = (dataLen / 36);
-		
+
 		if ((formatList.numFormats * 36) != dataLen)
 		{
 			WLog_ERR(TAG, "Invalid short format list length: %d", dataLen);
 			return;
 		}
-		
+
 		if (formatList.numFormats)
 			formats = (CLIPRDR_FORMAT*) calloc(formatList.numFormats, sizeof(CLIPRDR_FORMAT));
-		
+
 		if (!formats)
 			return;
-		
+
 		formatList.formats = formats;
-		
+
 		while (dataLen)
 		{
 			Stream_Read_UINT32(s, formats[index].formatId); /* formatId (4 bytes) */
 			dataLen -= 4;
-			
+
 			formats[index].formatName = NULL;
-			
+
 			if (asciiNames)
 			{
 				szFormatName = (char*) Stream_Pointer(s);
-				
+
 				if (szFormatName[0])
 				{
 					formats[index].formatName = (char*) malloc(32 + 1);
@@ -102,14 +102,14 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 			else
 			{
 				wszFormatName = (WCHAR*) Stream_Pointer(s);
-				
+
 				if (wszFormatName[0])
 				{
 					ConvertFromUnicode(CP_UTF8, 0, wszFormatName,
 						16, &(formats[index].formatName), 0, NULL, NULL);
 				}
 			}
-			
+
 			Stream_Seek(s, 32);
 			dataLen -= 32;
 			index++;
@@ -121,17 +121,17 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 		{
 			Stream_Seek(s, 4); /* formatId (4 bytes) */
 			dataLen -= 4;
-			
+
 			wszFormatName = (WCHAR*) Stream_Pointer(s);
-			
+
 			if (!wszFormatName[0])
 				formatNameLength = 0;
 			else
 				formatNameLength = _wcslen(wszFormatName);
-			
+
 			Stream_Seek(s, (formatNameLength + 1) * 2);
 			dataLen -= ((formatNameLength + 1) * 2);
-			
+
 			formatList.numFormats++;
 		}
 
@@ -140,7 +140,7 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 
 		if (formatList.numFormats)
 			formats = (CLIPRDR_FORMAT*) calloc(formatList.numFormats, sizeof(CLIPRDR_FORMAT));
-		
+
 		if (!formats)
 			return;
 
@@ -152,9 +152,9 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 			dataLen -= 4;
 
 			formats[index].formatName = NULL;
-			
+
 			wszFormatName = (WCHAR*) Stream_Pointer(s);
-			
+
 			if (!wszFormatName[0])
 				formatNameLength = 0;
 			else
@@ -165,7 +165,7 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 				ConvertFromUnicode(CP_UTF8, 0, wszFormatName,
 					-1, &(formats[index].formatName), 0, NULL, NULL);
 			}
-			
+
 			Stream_Seek(s, (formatNameLength + 1) * 2);
 			dataLen -= ((formatNameLength + 1) * 2);
 
@@ -179,13 +179,15 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 	if (context->ServerFormatList)
 		context->ServerFormatList(context, &formatList);
 
-	for (index = 0; index < formatList.numFormats; index++)
+	if (formats)
 	{
-		if (formats[index].formatName)
+		for (index = 0; index < formatList.numFormats; index++)
+		{
 			free(formats[index].formatName);
-	}
+		}
 
-	free(formats);
+		free(formats);
+	}
 }
 
 void cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags)
@@ -230,25 +232,25 @@ void cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UI
 {
 	CLIPRDR_FORMAT_DATA_RESPONSE formatDataResponse;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
-	
+
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatDataResponse");
 
 	if (!context->custom)
 		return;
-		
+
 	formatDataResponse.msgType = CB_FORMAT_DATA_RESPONSE;
 	formatDataResponse.msgFlags = msgFlags;
 	formatDataResponse.dataLen = dataLen;
 	formatDataResponse.requestedFormatData = NULL;
-	
+
 	if (dataLen)
 	{
 		formatDataResponse.requestedFormatData = (BYTE*) malloc(dataLen);
 		Stream_Read(s, formatDataResponse.requestedFormatData, dataLen);
 	}
-	
+
 	if (context->ServerFormatDataResponse)
 		context->ServerFormatDataResponse(context, &formatDataResponse);
-	
+
 	free(formatDataResponse.requestedFormatData);
 }
