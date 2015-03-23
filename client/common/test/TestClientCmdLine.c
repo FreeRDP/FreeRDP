@@ -74,17 +74,17 @@ int TestClientCmdLine(int argc, char* argv[])
 	TESTCASE_SUCCESS(cmd12);
 
 	// password gets overwritten therefore it need to be writeable
-	cmd13[4] = malloc(5);
+	cmd13[4] = calloc(5, sizeof(char));
 	strncpy(cmd13[4], "test", 4);
 	TESTCASE_SUCCESS(cmd13);
 	free(cmd13[4]);
 
-	cmd14[4] = malloc(5);
+	cmd14[4] = calloc(5, sizeof(char));
 	strncpy(cmd14[4], "test", 4);
 	TESTCASE_SUCCESS(cmd14);
 	free(cmd14[4]);
 
-	cmd15[2] = malloc(7);
+	cmd15[2] = calloc(7, sizeof(char));
 	strncpy(cmd15[2], "/p:test", 6);
 	TESTCASE_SUCCESS(cmd15);
 	free(cmd15[2]);

@@ -658,7 +658,8 @@ out:
 
 	if (hNamedPipe == INVALID_HANDLE_VALUE)
 	{
-		NamedPipeCloseHandle(hNamedPipe);
+		if (pNamedPipe)
+			NamedPipeCloseHandle(pNamedPipe);
 
 		if (serverfd != -1)
 			close(serverfd);
