@@ -102,7 +102,7 @@ static BOOL ThreadIsHandled(HANDLE handle)
 {
 	WINPR_THREAD* pThread = (WINPR_THREAD*) handle;
 
-	if (!pThread || pThread->Type != HANDLE_TYPE_THREAD)
+	if (!pThread || (pThread->Type != HANDLE_TYPE_THREAD) || (pThread == INVALID_HANDLE_VALUE))
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;

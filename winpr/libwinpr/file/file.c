@@ -208,7 +208,7 @@ static BOOL FileIsHandled(HANDLE handle)
 {
 	WINPR_NAMED_PIPE* pFile = (WINPR_NAMED_PIPE*) handle;
 
-	if (!pFile || pFile->Type != HANDLE_TYPE_NAMED_PIPE)
+	if (!pFile || (pFile->Type != HANDLE_TYPE_NAMED_PIPE) || (pFile == INVALID_HANDLE_VALUE))
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
