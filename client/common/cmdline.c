@@ -215,7 +215,7 @@ int freerdp_client_print_command_line_help(int argc, char** argv)
 			if (arg->Format)
 			{
 				length = (int)(strlen(arg->Name) + strlen(arg->Format) + 2);
-				str = (char*) malloc(length + 1);
+				str = (char*) calloc(length + 1UL, sizeof(char));
 				sprintf_s(str, length + 1, "%s:%s", arg->Name, arg->Format);
 				printf("%-20s", str);
 				free(str);
@@ -230,7 +230,7 @@ int freerdp_client_print_command_line_help(int argc, char** argv)
 		else if (arg->Flags & COMMAND_LINE_VALUE_BOOL)
 		{
 			length = (int) strlen(arg->Name) + 32;
-			str = (char*) malloc(length + 1);
+			str = (char*) calloc(length + 1UL, sizeof(char));
 			sprintf_s(str, length + 1, "%s (default:%s)", arg->Name,
 					arg->Default ? "on" : "off");
 
@@ -473,7 +473,7 @@ int freerdp_client_add_static_channel(rdpSettings* settings, int count, char** p
 	args = (ADDIN_ARGV*) malloc(sizeof(ADDIN_ARGV));
 
 	args->argc = count;
-	args->argv = (char**) malloc(sizeof(char*) * args->argc);
+	args->argv = (char**) calloc(args->argc, sizeof(char*));
 
 	for (index = 0; index < args->argc; index++)
 		args->argv[index] = _strdup(params[index]);
@@ -491,7 +491,7 @@ int freerdp_client_add_dynamic_channel(rdpSettings* settings, int count, char** 
 	args = (ADDIN_ARGV*) malloc(sizeof(ADDIN_ARGV));
 
 	args->argc = count;
-	args->argv = (char**) malloc(sizeof(char*) * args->argc);
+	args->argv = (char**) calloc(args->argc, sizeof(char*));
 
 	for (index = 0; index < args->argc; index++)
 		args->argv[index] = _strdup(params[index]);
@@ -521,8 +521,7 @@ static char** freerdp_command_line_parse_comma_separated_values(char* list, int*
 		nCommas += (list[index] == ',') ? 1 : 0;
 
 	nArgs = nCommas + 1;
-	p = (char**) malloc(sizeof(char*) * (nArgs + 1));
-	ZeroMemory(p, sizeof(char*) * (nArgs + 1));
+	p = (char**) calloc((nArgs + 1UL), sizeof(char*));
 
 	str = (char*) list;
 
@@ -804,7 +803,7 @@ int freerdp_parse_username(char* username, char** user, char** domain)
 	if (p)
 	{
 		length = (int) (p - username);
-		*domain = (char*) malloc(length + 1);
+		*domain = (char*) calloc(length + 1UL, sizeof(char));
 		strncpy(*domain, username, length);
 		(*domain)[length] = '\0';
 		*user = _strdup(&p[1]);
@@ -832,7 +831,7 @@ int freerdp_parse_hostname(char* hostname, char** host, int* port)
 	if (p)
 	{
 		length = (p - hostname);
-		*host = (char*) malloc(length + 1);
+		*host = (char*) calloc(length + 1UL, sizeof(char));
 
 		if (!(*host))
 			return -1;
@@ -1235,7 +1234,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				{
 					length = (int) (p - arg->Value);
 					settings->ServerPort = atoi(&p[1]);
-					settings->ServerHostname = (char*) malloc(length + 1);
+					settings->ServerHostname = (char*) calloc(length + 1UL, sizeof(char));
 					strncpy(settings->ServerHostname, arg->Value, length);
 					settings->ServerHostname[length] = '\0';
 				}
@@ -1471,7 +1470,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				{
 					length = (int) (p - arg->Value);
 					settings->GatewayPort = atoi(&p[1]);
-					settings->GatewayHostname = (char*) malloc(length + 1);
+					settings->GatewayHostname = (char*) calloc(length + 1UL, sizeof(char));
 					strncpy(settings->GatewayHostname, arg->Value, length);
 					settings->GatewayHostname[length] = '\0';
 				}
