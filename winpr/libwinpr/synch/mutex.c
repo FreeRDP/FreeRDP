@@ -34,7 +34,7 @@ static BOOL MutexIsHandled(HANDLE handle)
 {
 	WINPR_TIMER* pMutex = (WINPR_TIMER*) handle;
 
-	if (!pMutex || pMutex->Type != HANDLE_TYPE_MUTEX)
+	if (!pMutex || (pMutex->Type != HANDLE_TYPE_MUTEX) || (pMutex == INVALID_HANDLE_VALUE))
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;

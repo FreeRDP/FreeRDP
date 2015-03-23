@@ -86,7 +86,7 @@ static BOOL PipeIsHandled(HANDLE handle)
 {
 	WINPR_PIPE* pPipe = (WINPR_PIPE*) handle;
 
-	if (!pPipe || pPipe->Type != HANDLE_TYPE_ANONYMOUS_PIPE)
+	if (!pPipe || (pPipe->Type != HANDLE_TYPE_ANONYMOUS_PIPE) || (pPipe == INVALID_HANDLE_VALUE))
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
@@ -190,7 +190,7 @@ static BOOL NamedPipeIsHandled(HANDLE handle)
 {
 	WINPR_NAMED_PIPE* pPipe = (WINPR_NAMED_PIPE*) handle;
 
-	if (!pPipe || pPipe->Type != HANDLE_TYPE_NAMED_PIPE)
+	if (!pPipe || (pPipe->Type != HANDLE_TYPE_NAMED_PIPE) || (pPipe == INVALID_HANDLE_VALUE))
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;

@@ -54,7 +54,7 @@ static BOOL EventIsHandled(HANDLE handle)
 {
 	WINPR_TIMER* pEvent = (WINPR_TIMER*) handle;
 
-	if (!pEvent || pEvent->Type != HANDLE_TYPE_EVENT)
+	if (!pEvent || (pEvent->Type != HANDLE_TYPE_EVENT) || (pEvent == INVALID_HANDLE_VALUE))
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;

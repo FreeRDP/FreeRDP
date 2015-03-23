@@ -1451,7 +1451,7 @@ BOOL CommIsHandled(HANDLE handle)
 
 	pComm = (WINPR_COMM*)handle;
 
-	if (!pComm || pComm->Type != HANDLE_TYPE_COMM)
+	if (!pComm || (pComm->Type != HANDLE_TYPE_COMM) || (pComm == INVALID_HANDLE_VALUE))
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
