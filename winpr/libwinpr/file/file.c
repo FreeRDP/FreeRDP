@@ -271,8 +271,14 @@ static void _HandleCreatorsInit()
 	/* NB: error management to be done outside of this function */
 	assert(_HandleCreators == NULL);
 	_HandleCreators = (HANDLE_CREATOR**)calloc(HANDLE_CREATOR_MAX+1, sizeof(HANDLE_CREATOR*));
-	InitializeCriticalSection(&_HandleCreatorsLock);
-	assert(_HandleCreators != NULL);
+	if (!_HandleCreators)
+		return;
+
+	if(!InitializeCriticalSectionEx(&_HandleCreatorsLock, 0, 0))
+	{
+		free(_HandleCreators);
+		_HandleCreators = NULL;
+	}
 }
 
 /**
@@ -407,9 +413,16 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 
 	free(name);
 	pNamedPipe = (WINPR_NAMED_PIPE*) calloc(1, sizeof(WINPR_NAMED_PIPE));
+	if (!pNamedPipe)
+		return INVALID_HANDLE_VALUE;
 	hNamedPipe = (HANDLE) pNamedPipe;
 	WINPR_HANDLE_SET_TYPE(pNamedPipe, HANDLE_TYPE_NAMED_PIPE);
 	pNamedPipe->name = _strdup(lpFileName);
+	if (!pNamedPipe->name)
+	{
+		free(pNamedPipe);
+		return INVALID_HANDLE_VALUE;
+	}
 	pNamedPipe->dwOpenMode = 0;
 	pNamedPipe->dwPipeMode = 0;
 	pNamedPipe->nMaxInstances = 0;
@@ -418,7 +431,22 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 	pNamedPipe->nDefaultTimeOut = 0;
 	pNamedPipe->dwFlagsAndAttributes = dwFlagsAndAttributes;
 	pNamedPipe->lpFileName = GetNamedPipeNameWithoutPrefixA(lpFileName);
+	if (!pNamedPipe->lpFileName)
+	{
+		free((void *)pNamedPipe->name);
+		free(pNamedPipe);
+		return INVALID_HANDLE_VALUE;
+
+	}
 	pNamedPipe->lpFilePath = GetNamedPipeUnixDomainSocketFilePathA(lpFileName);
+	if (!pNamedPipe->lpFilePath)
+	{
+		free((void *)pNamedPipe->lpFileName);
+		free((void *)pNamedPipe->name);
+		free(pNamedPipe);
+		return INVALID_HANDLE_VALUE;
+
+	}
 	pNamedPipe->clientfd = socket(PF_LOCAL, SOCK_STREAM, 0);
 	pNamedPipe->serverfd = -1;
 	pNamedPipe->ServerMode = FALSE;

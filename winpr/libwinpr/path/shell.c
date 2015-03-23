@@ -53,6 +53,8 @@ char* GetEnvAlloc(LPCSTR lpName)
 	if (length > 0)
 	{
 		env = malloc(length + 1);
+		if (!env)
+			return NULL;
 		GetEnvironmentVariableA(lpName, env, length + 1);
 		env[length] = '\0';
 	}
@@ -68,6 +70,8 @@ char* GetPath_HOME()
 	path = GetEnvAlloc("UserProfile");
 #elif defined(ANDROID)
 	path = malloc(2);
+	if (!path)
+		return NULL;
 	strcpy(path, "/");
 #else
 	path = GetEnvAlloc("HOME");
@@ -144,6 +148,11 @@ char* GetPath_XDG_CONFIG_HOME()
 		home = GetPath_TEMP();
 
 	path = (char*) malloc(strlen(home) + strlen("/.config") + 1);
+	if (!path)
+	{
+		free(home);
+		return NULL;
+	}
 	sprintf(path, "%s%s", home, "/.config");
 
 	free(home);
@@ -264,6 +273,8 @@ char* GetKnownSubPath(int id, const char* path)
 	char* knownPath;
 
 	knownPath = GetKnownPath(id);
+	if (!knownPath)
+		return NULL;
 	subPath = GetCombinedPath(knownPath, path);
 
 	free(knownPath);

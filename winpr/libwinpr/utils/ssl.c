@@ -119,7 +119,8 @@ static BOOL _winpr_openssl_initialize_locking(void)
 
 					while (i--)
 					{
-						CloseHandle(g_winpr_openssl_locks[i]);
+						if (locks[i])
+							CloseHandle(locks[i]);
 					}
 
 					free(locks);

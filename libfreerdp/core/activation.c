@@ -330,7 +330,9 @@ BOOL rdp_send_deactivate_all(rdpRdp* rdp)
 	wStream* s;
 	BOOL status;
 
-	s = Stream_New(NULL, 1024);
+	if (!(s = Stream_New(NULL, 1024)))
+		return FALSE;
+
 	rdp_init_stream_pdu(rdp, s);
 
 	Stream_Write_UINT32(s, rdp->settings->ShareId); /* shareId (4 bytes) */

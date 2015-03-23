@@ -493,8 +493,14 @@ int WLog_ParseName(wLog* log, LPCSTR name)
 	}
 
 	names = _strdup(name);
+	if (!names)
+		return -1;
 	log->NameCount = count;
-	log->Names = (LPSTR*) malloc(sizeof(LPSTR) * (count + 1));
+	if(!(log->Names = (LPSTR*) malloc(sizeof(LPSTR) * (count + 1))))
+	{
+		free(names);
+		return -1;
+	}
 	log->Names[count] = NULL;
 	count = 0;
 	p = (char*) names;
@@ -512,49 +518,46 @@ int WLog_ParseName(wLog* log, LPCSTR name)
 
 wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 {
-	wLog* log;
-	char* env;
+	wLog* log = NULL;
+	char* env = NULL;
 	DWORD nSize;
 	int iLevel;
 	log = (wLog*) calloc(1, sizeof(wLog));
 
-	if (log)
-	{
-		log->Name = _strdup(name);
+	if (!log)
+		return 0;
 
-		if (!log->Name)
-		{
-			free (log);
-			return NULL;
-		}
+    log->Name = _strdup(name);
 
-		WLog_ParseName(log, name);
-		log->Parent = rootLogger;
-		log->ChildrenCount = 0;
-		log->ChildrenSize = 16;
-		log->Children = (wLog**) calloc(log->ChildrenSize, sizeof(wLog*));
+    if (!log->Name)
+		goto out_fail;
 
-		if (!log->Children)
-		{
-			free (log->Name);
-			free (log);
-			return NULL;
-		}
+    if (WLog_ParseName(log, name) != 0)
+		goto out_fail;
 
-		log->Appender = NULL;
+    log->Parent = rootLogger;
+    log->ChildrenCount = 0;
+    log->ChildrenSize = 16;
 
-		if (rootLogger)
-		{
-			log->Level = WLOG_LEVEL_INHERIT;
-		}
-		else
-		{
-			log->Level = WLOG_INFO;
-			nSize = GetEnvironmentVariableA("WLOG_LEVEL", NULL, 0);
+    if (!(log->Children = (wLog**) calloc(log->ChildrenSize, sizeof(wLog*))))
+		goto out_fail;
 
-			if (nSize)
+    log->Appender = NULL;
+
+    if (rootLogger)
+    {
+        log->Level = WLOG_LEVEL_INHERIT;
+    }
+    else
+    {
+        log->Level = WLOG_INFO;
+        nSize = GetEnvironmentVariableA("WLOG_LEVEL", NULL, 0);
+
+        if (nSize)
+        {
+            env = (LPSTR) malloc(nSize);
+			if (env)
 			{
-				env = (LPSTR) malloc(nSize);
 				nSize = GetEnvironmentVariableA("WLOG_LEVEL", env, nSize);
 				iLevel = WLog_ParseLogLevel(env);
 
@@ -563,15 +566,21 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 
 				free(env);
 			}
-		}
+        }
+    }
 
-		iLevel = WLog_GetFilterLogLevel(log);
+    iLevel = WLog_GetFilterLogLevel(log);
 
-		if (iLevel >= 0)
-			log->Level = (DWORD) iLevel;
-	}
+    if (iLevel >= 0)
+        log->Level = (DWORD) iLevel;
 
 	return log;
+
+out_fail:
+	free (log->Children);
+	free (log->Name);
+	free (log);
+	return NULL;
 }
 
 void WLog_Free(wLog* log)
@@ -602,7 +611,9 @@ wLog* WLog_GetRoot()
 
 	if (!g_RootLog)
 	{
-		g_RootLog = WLog_New("", NULL);
+		if (!(g_RootLog = WLog_New("", NULL)))
+			return NULL;
+
 		g_RootLog->IsRoot = TRUE;
 		WLog_ParseFilters();
 		logAppenderType = WLOG_APPENDER_CONSOLE;
@@ -693,13 +704,18 @@ wLog* WLog_Get(LPCSTR name)
 {
 	wLog* log;
 	wLog* root;
-	root = WLog_GetRoot();
-	log = WLog_FindChild(name);
+	if (!(root = WLog_GetRoot()))
+		return NULL;
 
-	if (!log)
+	if (!(log = WLog_FindChild(name)))
 	{
-		log = WLog_New(name,root);
-		WLog_AddChild(root, log);
+		if (!(log = WLog_New(name, root)))
+			return NULL;
+		if (WLog_AddChild(root, log))
+		{
+			WLog_Free(log);
+			return NULL;
+		}
 	}
 
 	return log;
@@ -715,6 +731,9 @@ void WLog_Uninit()
 	DWORD index;
 	wLog* child = NULL;
 	wLog* root = WLog_GetRoot();
+
+	if (!root)
+		return;
 
 	for (index = 0; index < root->ChildrenCount; index++)
 	{

@@ -61,7 +61,8 @@ static void* transport_client_thread(void* arg);
 wStream* transport_send_stream_init(rdpTransport* transport, int size)
 {
 	wStream* s;
-	s = StreamPool_Take(transport->ReceivePool, size);
+	if (!(s = StreamPool_Take(transport->ReceivePool, size)))
+		return NULL;
 	Stream_EnsureCapacity(s, size);
 	Stream_SetPosition(s, 0);
 	return s;
@@ -734,7 +735,10 @@ int transport_check_fds(rdpTransport* transport)
 		}
 
 		received = transport->ReceiveBuffer;
-		transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0);
+		if (!(transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0)))
+		{
+			return -1;
+		}
 		/**
 		 * status:
 		 * 	-1: error

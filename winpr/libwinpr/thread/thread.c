@@ -377,13 +377,27 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 	}
 #endif
 	
-	pthread_mutex_init(&thread->mutex, 0);
+	if(pthread_mutex_init(&thread->mutex, 0) != 0)
+	{
+		WLog_ERR(TAG, "failed to initialize thread mutex");
+		close(thread->pipe_fd[0]);
+		free(thread);
+		return NULL;
+	}
+
 	WINPR_HANDLE_SET_TYPE(thread, HANDLE_TYPE_THREAD);
 	handle = (HANDLE) thread;
 
 	if (!thread_list)
 	{
 		thread_list = ListDictionary_New(TRUE);
+		if (!thread_list)
+		{
+			WLog_ERR(TAG, "Couldn't create global thread list");
+			close(thread->pipe_fd[0]);
+			free(thread);
+			return NULL;
+		}
 		thread_list->objectKey.fnObjectEquals = thread_compare;
 	}
 

@@ -632,7 +632,22 @@ void freerdp_peer_context_new(freerdp_peer* client)
 
 	context->metrics = metrics_new(context);
 
+	if (!context->metrics)
+	{
+		client->context = NULL;
+		free(context);
+		return;
+	}
+
 	rdp = rdp_new(context);
+
+	if (!rdp)
+	{
+		metrics_free(context->metrics);
+		free(context);
+		client->context = NULL;
+		return;
+	}
 
 	client->input = rdp->input;
 	client->update = rdp->update;
@@ -663,6 +678,7 @@ void freerdp_peer_context_new(freerdp_peer* client)
 	client->DrainOutputBuffer = freerdp_peer_drain_output_buffer;
 
 	IFCALL(client->ContextNew, client, client->context);
+
 }
 
 void freerdp_peer_context_free(freerdp_peer* client)
@@ -717,7 +733,10 @@ void freerdp_peer_free(freerdp_peer* client)
 	if (!client)
 		return;
 
-	rdp_free(client->context->rdp);
-	free(client->context);
+	if (client->context)
+	{
+		rdp_free(client->context->rdp);
+		free(client->context);
+	}
 	free(client);
 }

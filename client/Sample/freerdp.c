@@ -324,13 +324,22 @@ int main(int argc, char* argv[])
 	rdpChannels* channels;
 
 	instance = freerdp_new();
+	if (!instance)
+	{
+		WLog_ERR(TAG, "Couldn't create instance");
+		exit(1);
+	}
 	instance->PreConnect = tf_pre_connect;
 	instance->PostConnect = tf_post_connect;
 
 	instance->ContextSize = sizeof(tfContext);
 	instance->ContextNew = tf_context_new;
 	instance->ContextFree = tf_context_free;
-	freerdp_context_new(instance);
+	if (freerdp_context_new(instance) != 0)
+	{
+		WLog_ERR(TAG, "Couldn't create context");
+		exit(1);
+	}
 
 	channels = instance->context->channels;
 

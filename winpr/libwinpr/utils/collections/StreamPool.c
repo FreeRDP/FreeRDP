@@ -178,10 +178,12 @@ wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 		Stream_EnsureCapacity(s, size);
 	}
 
-	s->pool = pool;
-	s->count = 1;
-
-	StreamPool_AddUsed(pool, s);
+	if (s)
+	{
+		s->pool = pool;
+		s->count = 1;
+		StreamPool_AddUsed(pool, s);
+	}
 
 	if (pool->synchronized)
 		LeaveCriticalSection(&pool->lock);

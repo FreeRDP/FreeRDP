@@ -760,6 +760,8 @@ BOOL WaitNamedPipeA(LPCSTR lpNamedPipeName, DWORD nTimeOut)
 		return FALSE;
 
 	lpFilePath = GetNamedPipeUnixDomainSocketFilePathA(lpNamedPipeName);
+	if (!lpFilePath)
+		return FALSE;
 
 	if (nTimeOut == NMPWAIT_USE_DEFAULT_WAIT)
 		nTimeOut = 50;

@@ -311,6 +311,11 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 		}
 
 		client = freerdp_peer_new(peer_sockfd);
+		if (!client)
+		{
+			closesocket((SOCKET) peer_sockfd);
+			return FALSE;
+		}
 
 		sin_addr = NULL;
 		if (peer_addr.ss_family == AF_INET)

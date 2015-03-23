@@ -204,18 +204,28 @@ wPubSub* PubSub_New(BOOL synchronized)
 
 	pubSub = (wPubSub*) malloc(sizeof(wPubSub));
 
-	if (pubSub)
+	if (!pubSub)
+		return NULL;
+
+    pubSub->synchronized = synchronized;
+
+    if (pubSub->synchronized)
+		if (!InitializeCriticalSectionAndSpinCount(&pubSub->lock, 4000))
+		{
+			free(pubSub);
+			return NULL;
+		}
+
+    pubSub->count = 0;
+    pubSub->size = 64;
+
+    pubSub->events = (wEventType*) calloc(1, sizeof(wEventType) * pubSub->size);
+	if (!pubSub->events)
 	{
-		pubSub->synchronized = synchronized;
-
 		if (pubSub->synchronized)
-			InitializeCriticalSectionAndSpinCount(&pubSub->lock, 4000);
-
-		pubSub->count = 0;
-		pubSub->size = 64;
-
-		pubSub->events = (wEventType*) malloc(sizeof(wEventType) * pubSub->size);
-		ZeroMemory(pubSub->events, sizeof(wEventType) * pubSub->size);
+			DeleteCriticalSection(&pubSub->lock);
+		free(pubSub);
+		return NULL;
 	}
 
 	return pubSub;
