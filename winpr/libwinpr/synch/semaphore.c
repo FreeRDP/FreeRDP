@@ -42,7 +42,7 @@ static BOOL SemaphoreIsHandled(HANDLE handle)
 {
 	WINPR_TIMER* pSemaphore = (WINPR_TIMER*) handle;
 
-	if (!pSemaphore || (pSemaphore->Type != HANDLE_TYPE_SEMAPHORE) || (pSemaphore == INVALID_HANDLE_VALUE))
+	if (!pSemaphore || (pSemaphore->Type != HANDLE_TYPE_SEMAPHORE))
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
