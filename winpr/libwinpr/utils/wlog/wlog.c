@@ -332,7 +332,7 @@ int WLog_ParseFilter(wLogFilter* filter, LPCSTR name)
 
 	names = _strdup(name);
 	filter->NameCount = count;
-	filter->Names = (LPSTR*) malloc(sizeof(LPSTR) * (count + 1));
+	filter->Names = (LPSTR*) calloc((count + 1UL), sizeof(LPSTR));
 	filter->Names[count] = NULL;
 	count = 0;
 	p = (char*) names;
@@ -353,7 +353,8 @@ int WLog_ParseFilter(wLogFilter* filter, LPCSTR name)
 
 	while ((p = strchr(p, '.')) != NULL)
 	{
-		filter->Names[count++] = p + 1;
+		if ((p + 1) && (count < filter->NameCount))
+			filter->Names[count++] = p + 1;
 		*p = '\0';
 		p++;
 	}
@@ -368,7 +369,7 @@ int WLog_ParseFilters()
 	DWORD count;
 	DWORD nSize;
 	int status;
-	char** strs;
+	LPCSTR* strs;
 
 	nSize = GetEnvironmentVariableA("WLOG_FILTER", NULL, 0);
 
@@ -380,34 +381,39 @@ int WLog_ParseFilters()
 	if (!env)
 		return -1;
 
-	nSize = GetEnvironmentVariableA("WLOG_FILTER", env, nSize);
-	count = 1;
-	p = env;
-
-	while ((p = strchr(p, ',')) != NULL)
 	{
-		count++;
-		p++;
+		nSize = GetEnvironmentVariableA("WLOG_FILTER", env, nSize);
+		count = 1;
+		p = env;
+
+		while ((p = strchr(p, ',')) != NULL)
+		{
+			count++;
+			p++;
+		}
+
+		g_FilterCount = count;
+		p = env;
 	}
-
-	g_FilterCount = count;
-	p = env;
-	count = 0;
-	strs = (char**) calloc(g_FilterCount, sizeof(char*));
-
-	if (!strs)
 	{
-		free(env);
-		return -1;
-	}
+		count = 0;
+		strs = (LPCSTR*) calloc(g_FilterCount, sizeof(LPCSTR));
 
-	strs[count++] = p;
+		if (!strs)
+		{
+			free(env);
+			return -1;
+		}
 
-	while ((p = strchr(p, ',')) != NULL)
-	{
-		strs[count++] = p + 1;
-		*p = '\0';
-		p++;
+		strs[count++] = p;
+
+		while ((p = strchr(p, ',')) != NULL)
+		{
+			if ((p + 1) && (count < g_FilterCount))
+				strs[count++] = p + 1;
+			*p = '\0';
+			p++;
+		}
 	}
 
 	g_Filters = calloc(g_FilterCount, sizeof(wLogFilter));
@@ -496,7 +502,8 @@ int WLog_ParseName(wLog* log, LPCSTR name)
 	if (!names)
 		return -1;
 	log->NameCount = count;
-	if(!(log->Names = (LPSTR*) malloc(sizeof(LPSTR) * (count + 1))))
+	log->Names = (LPSTR*) calloc((count + 1UL), sizeof(LPSTR));
+	if(!log->Names)
 	{
 		free(names);
 		return -1;
@@ -508,7 +515,8 @@ int WLog_ParseName(wLog* log, LPCSTR name)
 
 	while ((p = strchr(p, '.')) != NULL)
 	{
-		log->Names[count++] = p + 1;
+		if ((p + 1) && (count < log->NameCount))
+			log->Names[count++] = p + 1;
 		*p = '\0';
 		p++;
 	}
