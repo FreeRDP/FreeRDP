@@ -75,7 +75,7 @@ static BOOL LogonUserIsHandled(HANDLE handle)
 {
 	WINPR_ACCESS_TOKEN* pLogonUser = (WINPR_ACCESS_TOKEN*) handle;
 
-	if (!pLogonUser || (pLogonUser->Type != HANDLE_TYPE_ACCESS_TOKEN) || (pLogonUser == INVALID_HANDLE_VALUE))
+	if (!pLogonUser || (pLogonUser->Type != HANDLE_TYPE_ACCESS_TOKEN))
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
