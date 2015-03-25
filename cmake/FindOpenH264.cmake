@@ -14,7 +14,8 @@ endif (OPENH264_INCLUDE_DIR AND OPENH264_LIBRARY)
 find_path(OPENH264_INCLUDE_DIR NAMES wels/codec_api.h wels/codec_app_def.h wels/codec_def.h 
 	PATH_SUFFIXES include
 	HINTS ${OPENH264_ROOT})
-find_library(OPENH264_LIBRARY NAMES openh264 welsdec
+find_library(OPENH264_LIBRARY
+	 NAMES openh264_dll openh264 welsdec
 	 PATH_SUFFIXES lib
 	 HINTS ${OPENH264_ROOT})
 
