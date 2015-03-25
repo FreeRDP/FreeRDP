@@ -115,8 +115,15 @@ char* GetPath_XDG_DATA_HOME()
 		return path;
 
 	home = GetPath_HOME();
+	if (!home)
+		return NULL;
 
 	path = (char*) malloc(strlen(home) + strlen("/.local/share") + 1);
+	if (!path)
+	{
+		free(home);
+		return NULL;
+	}
 	sprintf(path, "%s%s", home, "/.local/share");
 
 	free(home);
@@ -146,6 +153,9 @@ char* GetPath_XDG_CONFIG_HOME()
 
 	if (!home)
 		home = GetPath_TEMP();
+
+	if (!home)
+		return NULL;
 
 	path = (char*) malloc(strlen(home) + strlen("/.config") + 1);
 	if (!path)

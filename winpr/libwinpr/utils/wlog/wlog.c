@@ -525,7 +525,7 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 	log = (wLog*) calloc(1, sizeof(wLog));
 
 	if (!log)
-		return 0;
+		return NULL;
 
     log->Name = _strdup(name);
 
@@ -730,7 +730,7 @@ void WLog_Uninit()
 {
 	DWORD index;
 	wLog* child = NULL;
-	wLog* root = WLog_GetRoot();
+	wLog* root = g_RootLog;
 
 	if (!root)
 		return;

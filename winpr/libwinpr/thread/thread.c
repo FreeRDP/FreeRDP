@@ -380,7 +380,10 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 	if(pthread_mutex_init(&thread->mutex, 0) != 0)
 	{
 		WLog_ERR(TAG, "failed to initialize thread mutex");
-		close(thread->pipe_fd[0]);
+		if (thread->pipe_fd[0])
+			close(thread->pipe_fd[0]);
+		if (thread->pipe_fd[1])
+			close(thread->pipe_fd[1]);
 		free(thread);
 		return NULL;
 	}
@@ -394,7 +397,10 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 		if (!thread_list)
 		{
 			WLog_ERR(TAG, "Couldn't create global thread list");
-			close(thread->pipe_fd[0]);
+			if (thread->pipe_fd[0])
+				close(thread->pipe_fd[0]);
+			if (thread->pipe_fd[1])
+				close(thread->pipe_fd[1]);
 			free(thread);
 			return NULL;
 		}

@@ -84,6 +84,8 @@ char* GetDeviceFileUnixDomainSocketBaseFilePathA()
 	char* lpPipePath;
 
 	lpTempPath = GetKnownPath(KNOWN_PATH_TEMP);
+	if (!lpTempPath)
+		return NULL;
 	lpPipePath = GetCombinedPath(lpTempPath, ".device");
 
 	free(lpTempPath);

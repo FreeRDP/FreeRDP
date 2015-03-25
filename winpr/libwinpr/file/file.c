@@ -811,6 +811,8 @@ char* GetNamedPipeUnixDomainSocketBaseFilePathA()
 	char* lpTempPath;
 	char* lpPipePath;
 	lpTempPath = GetKnownPath(KNOWN_PATH_TEMP);
+	if (!lpTempPath)
+		return NULL;
 	lpPipePath = GetCombinedPath(lpTempPath, ".pipe");
 	free(lpTempPath);
 	return lpPipePath;
