@@ -236,7 +236,6 @@ OPENSL_STREAM *android_OpenRecDevice(char *name, int sr, int inchannels,
   p = (OPENSL_STREAM *) calloc(sizeof(OPENSL_STREAM),1);
   if (!p)
 	  return NULL;
-  memset(p, 0, sizeof(OPENSL_STREAM));
 
   p->inchannels = inchannels;
   p->sr = sr;
