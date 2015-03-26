@@ -375,13 +375,6 @@ static void tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 		event.frameWidth = sample->stream->width;
 		event.frameHeight = sample->stream->height;
 
-		/* The frame data ownership is passed to the event object, and is freed after the event is processed. */
-		sample->data = NULL;
-		sample->decoded_size = 0;
-
-		if (tsmf->FrameEvent)
-			tsmf->FrameEvent(tsmf, &event);
-
 #if 0
 		/* Dump a .ppm image for every 30 frames. Assuming the frame is in YUV format, we
 		   extract the Y values to create a grayscale image. */
@@ -404,6 +397,15 @@ static void tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 
 		frame_id++;
 #endif
+
+		/* The frame data ownership is passed to the event object, and is freed after the event is processed. */
+		sample->data = NULL;
+		sample->decoded_size = 0;
+
+		if (tsmf->FrameEvent)
+			tsmf->FrameEvent(tsmf, &event);
+
+		free(event.frameData);
 	}
 }
 
