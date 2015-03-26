@@ -69,6 +69,8 @@ set(${MODULE_PREFIX}_SRCS
 	license.c
 	license.h
 	errinfo.c
+	errbase.c
+	errconnect.c
 	errinfo.h
 	security.c
 	security.h
