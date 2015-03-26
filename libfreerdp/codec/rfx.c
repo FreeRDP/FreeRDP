@@ -1110,7 +1110,8 @@ static void rfx_write_message_context(RFX_CONTEXT* context, wStream* s)
 
 void rfx_compose_message_header(RFX_CONTEXT* context, wStream* s)
 {
-	Stream_EnsureRemainingCapacity(s, 12 + 10 + 12 + 13);
+	if(!Stream_EnsureRemainingCapacity(s, 12 + 10 + 12 + 13))
+		return;
 
 	rfx_write_message_sync(context, s);
 	rfx_write_message_context(context, s);
@@ -1128,7 +1129,8 @@ static void rfx_write_tile(RFX_CONTEXT* context, wStream* s, RFX_TILE* tile)
 	UINT32 blockLen;
 
 	blockLen = rfx_tile_length(tile);
-	Stream_EnsureRemainingCapacity(s, blockLen);
+	if(!Stream_EnsureRemainingCapacity(s, blockLen))
+		return;
 
 	Stream_Write_UINT16(s, CBT_TILE); /* BlockT.blockType (2 bytes) */
 	Stream_Write_UINT32(s, blockLen); /* BlockT.blockLen (4 bytes) */
@@ -1514,7 +1516,8 @@ static void rfx_write_message_tileset(RFX_CONTEXT* context, wStream* s, RFX_MESS
 	UINT32* quantVals;
 
 	blockLen = 22 + (message->numQuant * 5) + message->tilesDataSize;
-	Stream_EnsureRemainingCapacity(s, blockLen);
+	if(!Stream_EnsureRemainingCapacity(s, blockLen))
+		return;
 
 	Stream_Write_UINT16(s, WBT_EXTENSION); /* CodecChannelT.blockType (2 bytes) */
 	Stream_Write_UINT32(s, blockLen); /* set CodecChannelT.blockLen (4 bytes) */
@@ -1548,7 +1551,8 @@ static void rfx_write_message_tileset(RFX_CONTEXT* context, wStream* s, RFX_MESS
 
 void rfx_write_message_frame_begin(RFX_CONTEXT* context, wStream* s, RFX_MESSAGE* message)
 {
-	Stream_EnsureRemainingCapacity(s, 14);
+	if(!Stream_EnsureRemainingCapacity(s, 14))
+		return;
 
 	Stream_Write_UINT16(s, WBT_FRAME_BEGIN); /* CodecChannelT.blockType */
 	Stream_Write_UINT32(s, 14); /* CodecChannelT.blockLen */
@@ -1564,7 +1568,8 @@ void rfx_write_message_region(RFX_CONTEXT* context, wStream* s, RFX_MESSAGE* mes
 	UINT32 blockLen;
 
 	blockLen = 15 + (message->numRects * 8);
-	Stream_EnsureRemainingCapacity(s, blockLen);
+	if(!Stream_EnsureRemainingCapacity(s, blockLen))
+		return;
 
 	Stream_Write_UINT16(s, WBT_REGION); /* CodecChannelT.blockType (2 bytes) */
 	Stream_Write_UINT32(s, blockLen); /* set CodecChannelT.blockLen (4 bytes) */
@@ -1589,7 +1594,8 @@ void rfx_write_message_region(RFX_CONTEXT* context, wStream* s, RFX_MESSAGE* mes
 
 void rfx_write_message_frame_end(RFX_CONTEXT* context, wStream* s, RFX_MESSAGE* message)
 {
-	Stream_EnsureRemainingCapacity(s, 8);
+	if(!Stream_EnsureRemainingCapacity(s, 8))
+		return;
 
 	Stream_Write_UINT16(s, WBT_FRAME_END); /* CodecChannelT.blockType */
 	Stream_Write_UINT32(s, 8); /* CodecChannelT.blockLen */

@@ -515,7 +515,8 @@ static BYTE* rdpsnd_pulse_convert_audio(rdpsndDevicePlugin* device, BYTE* data, 
 				inSize -= 32;
 			}
 
-			Stream_EnsureRemainingCapacity(pulse->gsmBuffer, 160 * 2);
+			if(!Stream_EnsureRemainingCapacity(pulse->gsmBuffer, 160 * 2))
+				return NULL;
 			Stream_Write(pulse->gsmBuffer, (void*) gsmBlockBuffer, 160 * 2);
 		}
 
@@ -544,6 +545,8 @@ static void rdpsnd_pulse_play(rdpsndDevicePlugin* device, BYTE* data, int size)
 		return;
 
 	pcmData = rdpsnd_pulse_convert_audio(device, data, &size);
+	if (pcmData)
+		return;
 
 	pa_threaded_mainloop_lock(pulse->mainloop);
 

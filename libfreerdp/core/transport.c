@@ -63,7 +63,11 @@ wStream* transport_send_stream_init(rdpTransport* transport, int size)
 	wStream* s;
 	if (!(s = StreamPool_Take(transport->ReceivePool, size)))
 		return NULL;
-	Stream_EnsureCapacity(s, size);
+	if(!Stream_EnsureCapacity(s, size))
+	{
+		Stream_Release(s);
+		return NULL;
+	}
 	Stream_SetPosition(s, 0);
 	return s;
 }
@@ -446,7 +450,8 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 
 	position = Stream_GetPosition(s);
 	/* Make sure there is enough space for the longest header within the stream */
-	Stream_EnsureCapacity(s, 4);
+	if(!Stream_EnsureCapacity(s, 4))
+		return -1;
 
 	/* Make sure at least two bytes are read for further processing */
 	if (position < 2 && (status = transport_read_layer_bytes(transport, s, 2 - position)) != 1)
@@ -552,7 +557,8 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 		}
 	}
 
-	Stream_EnsureCapacity(s, Stream_GetPosition(s) + pduLength);
+	if(!Stream_EnsureCapacity(s, Stream_GetPosition(s) + pduLength))
+		return -1;
 	status = transport_read_layer_bytes(transport, s, pduLength - Stream_GetPosition(s));
 
 	if (status != 1)
@@ -736,9 +742,7 @@ int transport_check_fds(rdpTransport* transport)
 
 		received = transport->ReceiveBuffer;
 		if (!(transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0)))
-		{
 			return -1;
-		}
 		/**
 		 * status:
 		 * 	-1: error

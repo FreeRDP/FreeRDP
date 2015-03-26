@@ -465,6 +465,8 @@ int dvcman_receive_channel_data_first(IWTSVirtualChannelManager* pChannelMgr, UI
 		Stream_Release(channel->dvc_data);
 
 	channel->dvc_data = StreamPool_Take(channel->dvcman->pool, length);
+	if (!channel->dvc_data)
+		return 1;
 	channel->dvc_data_length = length;
 
 	return 0;
@@ -968,7 +970,13 @@ static void drdynvc_virtual_channel_event_data_received(drdynvcPlugin* drdynvc,
 	}
 
 	data_in = drdynvc->data_in;
-	Stream_EnsureRemainingCapacity(data_in, (int) dataLength);
+	if(!Stream_EnsureRemainingCapacity(data_in, (int) dataLength))
+	{
+		Stream_Free(drdynvc->data_in, TRUE);
+		drdynvc->data_in = NULL;
+		return;
+	}
+
 	Stream_Write(data_in, pData, dataLength);
 
 	if (dataFlags & CHANNEL_FLAG_LAST)

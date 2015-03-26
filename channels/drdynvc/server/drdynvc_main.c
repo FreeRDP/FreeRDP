@@ -70,7 +70,8 @@ static void* drdynvc_server_thread(void* arg)
 		WTSVirtualChannelRead(context->priv->ChannelHandle, 0, NULL, 0, &BytesReturned);
 		if (BytesReturned < 1)
 			continue;
-		Stream_EnsureRemainingCapacity(s, BytesReturned);
+		if (!Stream_EnsureRemainingCapacity(s, BytesReturned))
+			break;
 		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0,
 			(PCHAR) Stream_Buffer(s), Stream_Capacity(s), &BytesReturned))
 		{

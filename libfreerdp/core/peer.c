@@ -145,6 +145,8 @@ static int freerdp_peer_virtual_channel_write(freerdp_peer* client, HANDLE hChan
 	while (length > 0)
 	{
 		s = rdp_send_stream_init(rdp);
+		if (!s)
+			return -1;
 
 		if (length > maxChunkSize)
 		{
@@ -161,10 +163,18 @@ static int freerdp_peer_virtual_channel_write(freerdp_peer* client, HANDLE hChan
 
 		Stream_Write_UINT32(s, totalLength);
 		Stream_Write_UINT32(s, flags);
-		Stream_EnsureRemainingCapacity(s, chunkSize);
+		if(!Stream_EnsureRemainingCapacity(s, chunkSize))
+		{
+			Stream_Release(s);
+			return -1;
+		}
 		Stream_Write(s, buffer, chunkSize);
 
-		rdp_send(rdp, s, peerChannel->channelId);
+		if(!rdp_send(rdp, s, peerChannel->channelId))
+		{
+			Stream_Release(s);
+			return -1;
+		}
 
 		buffer += chunkSize;
 		length -= chunkSize;
