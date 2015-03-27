@@ -49,7 +49,7 @@ static BOOL TimerIsHandled(HANDLE handle)
 {
 	WINPR_TIMER* pTimer = (WINPR_TIMER*) handle;
 
-	if (!pTimer || (pTimer->Type != HANDLE_TYPE_TIMER) || (pTimer == INVALID_HANDLE_VALUE))
+	if (!pTimer || (pTimer->Type != HANDLE_TYPE_TIMER))
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
