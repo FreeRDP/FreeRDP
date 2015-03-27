@@ -353,7 +353,7 @@ int WLog_ParseFilter(wLogFilter* filter, LPCSTR name)
 
 	while ((p = strchr(p, '.')) != NULL)
 	{
-		if ((p + 1) && (count < filter->NameCount))
+		if (p[0] && count < filter->NameCount)
 			filter->Names[count++] = p + 1;
 		*p = '\0';
 		p++;
@@ -409,7 +409,7 @@ int WLog_ParseFilters()
 
 		while ((p = strchr(p, ',')) != NULL)
 		{
-			if ((p + 1) && (count < g_FilterCount))
+			if (p[0] && (count < g_FilterCount))
 				strs[count++] = p + 1;
 			*p = '\0';
 			p++;
@@ -515,7 +515,7 @@ int WLog_ParseName(wLog* log, LPCSTR name)
 
 	while ((p = strchr(p, '.')) != NULL)
 	{
-		if ((p + 1) && (count < log->NameCount))
+		if (p[0] && (count < log->NameCount))
 			log->Names[count++] = p + 1;
 		*p = '\0';
 		p++;
