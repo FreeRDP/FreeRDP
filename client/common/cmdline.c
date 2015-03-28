@@ -104,7 +104,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "parallel", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Redirect parallel device" },
 	{ "smartcard", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Redirect smartcard device" },
 	{ "printer", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Redirect printer device" },
-	{ "usb", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect USB device" },
+	{ "usb", COMMAND_LINE_VALUE_REQUIRED, "[dbg][dev][id|addr][auto]", NULL, NULL, -1, NULL, "Redirect USB device" },
 	{ "multitouch", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect multitouch input" },
 	{ "gestures", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Consume multitouch input locally" },
 	{ "echo", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "echo", "Echo channel" },

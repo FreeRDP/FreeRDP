@@ -62,12 +62,19 @@ typedef struct _TSMFOSSAudioDevice {
 		WLog_ERR(TAG, "%s: %i - %s", _text, _error, strerror(_error));
 
 
-static BOOL tsmf_oss_open_device(TSMFOssAudioDevice *oss) {
+static BOOL tsmf_oss_open(ITSMFAudioDevice *audio, const char *device) {
 	int tmp;
 	int error;
+	TSMFOssAudioDevice *oss = (TSMFOssAudioDevice*)audio;
 
 	if (oss == NULL || oss->pcm_handle != -1)
 		return FALSE;
+
+	if (device == NULL) { /* Default device. */
+		strncpy(oss->dev_name, "/dev/dsp", sizeof(oss->dev_name));
+	} else {
+		strncpy(oss->dev_name, device, sizeof(oss->dev_name));
+	}
 
 	if ((oss->pcm_handle = open(oss->dev_name, O_WRONLY)) < 0) {
 		OSS_LOG_ERR("sound dev open failed", errno);
@@ -102,20 +109,6 @@ static BOOL tsmf_oss_open_device(TSMFOssAudioDevice *oss) {
 	WLog_INFO(TAG, "open: %s", oss->dev_name);
 
 	return TRUE;
-}
-
-static BOOL tsmf_oss_open(ITSMFAudioDevice *audio, const char *device) {
-	TSMFOssAudioDevice *oss = (TSMFOssAudioDevice*)audio;
-
-	if (oss == NULL || oss->pcm_handle != -1)
-		return FALSE;
-
-	if (device == NULL) {
-		strncpy(oss->dev_name, "/dev/dsp", sizeof(oss->dev_name));
-	} else {
-		strncpy(oss->dev_name, device, sizeof(oss->dev_name));
-	}
-	return tsmf_oss_open_device(oss);
 }
 
 static BOOL tsmf_oss_set_format(ITSMFAudioDevice *audio, UINT32 sample_rate, UINT32 channels, UINT32 bits_per_sample) {
