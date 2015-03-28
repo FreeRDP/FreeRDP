@@ -23,7 +23,11 @@
 #ifndef __LIBUSB_UDEVICE_H
 #define __LIBUSB_UDEVICE_H
 
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
+#include <libusb.h>
+#else
 #include <libusb-1.0/libusb.h>
+#endif
 
 #include "urbdrc_types.h"
 #include "request_queue.h"

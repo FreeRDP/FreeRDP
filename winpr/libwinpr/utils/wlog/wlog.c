@@ -228,7 +228,7 @@ int WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args)
 			int offset = 0;
 			
 			if (message->Level == WLOG_DEBUG || message->Level == WLOG_ERROR)
-				offset = snprintf(formattedLogMessage, (WLOG_MAX_STRING_SIZE - 1), "%s, line %i: ", message->FunctionName, message->LineNumber);
+				offset = sprintf_s(formattedLogMessage, (WLOG_MAX_STRING_SIZE - 1), "%s, line %i: ", message->FunctionName, message->LineNumber);
 			wvsnprintfx((formattedLogMessage + offset), ((WLOG_MAX_STRING_SIZE - 1) - offset), message->FormatString, args);
 			message->TextString = formattedLogMessage;
 			status = WLog_Write(log, message);
