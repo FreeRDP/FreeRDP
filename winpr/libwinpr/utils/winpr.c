@@ -24,6 +24,8 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <winpr/crt.h>
+#include <winpr/string.h>
 #include <winpr/winpr.h>
 #include <winpr/version.h>
 
@@ -46,7 +48,7 @@ const char* winpr_get_build_date(void)
 {
 	static char build_date[64];
 
-	_snprintf(build_date, sizeof(build_date), "%s %s", __DATE__, __TIME__);
+	sprintf_s(build_date, sizeof(build_date), "%s %s", __DATE__, __TIME__);
 
 	return build_date;
 }
