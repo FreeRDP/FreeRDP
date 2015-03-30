@@ -46,7 +46,7 @@ char* winpr_get_build_date(void)
 {
 	static char build_date[64];
 
-	snprintf(build_date, sizeof(build_date), "%s %s", __DATE__, __TIME__);
+	_snprintf(build_date, sizeof(build_date), "%s %s", __DATE__, __TIME__);
 
 	return build_date;
 }
