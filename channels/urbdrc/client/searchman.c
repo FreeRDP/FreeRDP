@@ -190,6 +190,8 @@ USB_SEARCHMAN* searchman_new(void * urbdrc, UINT32 UsbDevice)
 	USB_SEARCHMAN* searchman;
 	
 	searchman = (USB_SEARCHMAN*) malloc(sizeof(USB_SEARCHMAN));
+	if (!searchman)
+		return NULL;
 
 	searchman->idev = NULL;
 	searchman->head = NULL;
@@ -199,11 +201,10 @@ USB_SEARCHMAN* searchman_new(void * urbdrc, UINT32 UsbDevice)
 	searchman->UsbDevice = UsbDevice;
 
 	ret = pthread_mutex_init(&searchman->mutex, NULL);
-
 	if (ret != 0)
 	{
-		WLog_ERR(TAG,  "searchman mutex initialization: searchman->mutex failed");
-		exit(EXIT_FAILURE);
+		WLog_ERR(TAG, "searchman mutex initialization: searchman->mutex failed");
+		goto out_error_mutex;
 	}
 	
 	/* load service */
@@ -219,7 +220,15 @@ USB_SEARCHMAN* searchman_new(void * urbdrc, UINT32 UsbDevice)
 	
 	searchman->strated = 0;
 	searchman->term_event = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (!searchman->term_event)
+		goto out_error_event;
 	sem_init(&searchman->sem_term, 0, 0);
 	
 	return searchman;
+
+out_error_event:
+	pthread_mutex_destroy(&searchman->mutex);
+out_error_mutex:
+	free(searchman);
+	return NULL;
 }

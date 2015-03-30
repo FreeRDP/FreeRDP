@@ -230,7 +230,7 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 		{
 			WLog_ERR(TAG, "Key sizes > 2048 are currently not supported for RDP security.");
 			WLog_ERR(TAG, "Set a different key file than %s", settings->RdpKeyFile);
-			exit(1);
+			return FALSE;
 		}
 	}
 
