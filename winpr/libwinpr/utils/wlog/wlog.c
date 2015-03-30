@@ -381,39 +381,36 @@ int WLog_ParseFilters()
 	if (!env)
 		return -1;
 
+	nSize = GetEnvironmentVariableA("WLOG_FILTER", env, nSize);
+	count = 1;
+	p = env;
+
+	while ((p = strchr(p, ',')) != NULL)
 	{
-		nSize = GetEnvironmentVariableA("WLOG_FILTER", env, nSize);
-		count = 1;
-		p = env;
-
-		while ((p = strchr(p, ',')) != NULL)
-		{
-			count++;
-			p++;
-		}
-
-		g_FilterCount = count;
-		p = env;
+		count++;
+		p++;
 	}
+
+	g_FilterCount = count;
+	p = env;
+
+	count = 0;
+	strs = (LPCSTR*) calloc(g_FilterCount, sizeof(LPCSTR));
+
+	if (!strs)
 	{
-		count = 0;
-		strs = (LPCSTR*) calloc(g_FilterCount, sizeof(LPCSTR));
+		free(env);
+		return -1;
+	}
 
-		if (!strs)
-		{
-			free(env);
-			return -1;
-		}
+	strs[count++] = p;
 
-		strs[count++] = p;
-
-		while ((p = strchr(p, ',')) != NULL)
-		{
-			if (count < g_FilterCount)
-				strs[count++] = p + 1;
-			*p = '\0';
-			p++;
-		}
+	while ((p = strchr(p, ',')) != NULL)
+	{
+		if (count < g_FilterCount)
+			strs[count++] = p + 1;
+		*p = '\0';
+		p++;
 	}
 
 	g_Filters = calloc(g_FilterCount, sizeof(wLogFilter));
