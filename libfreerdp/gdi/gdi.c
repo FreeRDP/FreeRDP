@@ -22,20 +22,13 @@
 #endif
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
 
 #include <winpr/crt.h>
-#include <winpr/image.h>
 
 #include <freerdp/api.h>
 #include <freerdp/log.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/constants.h>
-#include <freerdp/codec/color.h>
-#include <freerdp/codec/bitmap.h>
-#include <freerdp/codec/rfx.h>
-#include <freerdp/codec/nsc.h>
 
 #include <freerdp/gdi/dc.h>
 #include <freerdp/gdi/pen.h>
@@ -44,11 +37,8 @@
 #include <freerdp/gdi/brush.h>
 #include <freerdp/gdi/region.h>
 #include <freerdp/gdi/bitmap.h>
-#include <freerdp/gdi/palette.h>
 #include <freerdp/gdi/drawing.h>
 #include <freerdp/gdi/clipping.h>
-
-#include <freerdp/gdi/gdi.h>
 
 #include "gdi.h"
 

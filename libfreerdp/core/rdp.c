@@ -754,7 +754,8 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 
 		if (bulk_decompress(rdp->bulk, Stream_Pointer(s), SrcSize, &pDstData, &DstSize, compressedType))
 		{
-			cs = StreamPool_Take(rdp->transport->ReceivePool, DstSize);
+			if (!(cs = StreamPool_Take(rdp->transport->ReceivePool, DstSize)))
+				return -1;
 
 			Stream_SetPosition(cs, 0);
 			Stream_Write(cs, pDstData, DstSize);

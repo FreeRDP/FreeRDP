@@ -192,33 +192,31 @@ wLogConsoleAppender* WLog_ConsoleAppender_New(wLog* log)
 {
 	wLogConsoleAppender* ConsoleAppender;
 
-	ConsoleAppender = (wLogConsoleAppender*) malloc(sizeof(wLogConsoleAppender));
+	ConsoleAppender = (wLogConsoleAppender*) calloc(1, sizeof(wLogConsoleAppender));
 
-	if (ConsoleAppender)
-	{
-		ZeroMemory(ConsoleAppender, sizeof(wLogConsoleAppender));
+	if (!ConsoleAppender)
+		return NULL;
 
-		ConsoleAppender->Type = WLOG_APPENDER_CONSOLE;
+	ConsoleAppender->Type = WLOG_APPENDER_CONSOLE;
 
-		ConsoleAppender->Open = (WLOG_APPENDER_OPEN_FN) WLog_ConsoleAppender_Open;
-		ConsoleAppender->Close = (WLOG_APPENDER_OPEN_FN) WLog_ConsoleAppender_Close;
+	ConsoleAppender->Open = (WLOG_APPENDER_OPEN_FN) WLog_ConsoleAppender_Open;
+	ConsoleAppender->Close = (WLOG_APPENDER_OPEN_FN) WLog_ConsoleAppender_Close;
 
-		ConsoleAppender->WriteMessage =
-				(WLOG_APPENDER_WRITE_MESSAGE_FN) WLog_ConsoleAppender_WriteMessage;
-		ConsoleAppender->WriteDataMessage =
-				(WLOG_APPENDER_WRITE_DATA_MESSAGE_FN) WLog_ConsoleAppender_WriteDataMessage;
-		ConsoleAppender->WriteImageMessage =
-				(WLOG_APPENDER_WRITE_IMAGE_MESSAGE_FN) WLog_ConsoleAppender_WriteImageMessage;
-		ConsoleAppender->WritePacketMessage =
-				(WLOG_APPENDER_WRITE_PACKET_MESSAGE_FN) WLog_ConsoleAppender_WritePacketMessage;
+	ConsoleAppender->WriteMessage =
+			(WLOG_APPENDER_WRITE_MESSAGE_FN) WLog_ConsoleAppender_WriteMessage;
+	ConsoleAppender->WriteDataMessage =
+			(WLOG_APPENDER_WRITE_DATA_MESSAGE_FN) WLog_ConsoleAppender_WriteDataMessage;
+	ConsoleAppender->WriteImageMessage =
+			(WLOG_APPENDER_WRITE_IMAGE_MESSAGE_FN) WLog_ConsoleAppender_WriteImageMessage;
+	ConsoleAppender->WritePacketMessage =
+			(WLOG_APPENDER_WRITE_PACKET_MESSAGE_FN) WLog_ConsoleAppender_WritePacketMessage;
 
-		ConsoleAppender->outputStream = WLOG_CONSOLE_STDOUT;
+	ConsoleAppender->outputStream = WLOG_CONSOLE_STDOUT;
 
 #ifdef _WIN32
-		if (IsDebuggerPresent())
-			ConsoleAppender->outputStream = WLOG_CONSOLE_DEBUG;
+    if (IsDebuggerPresent())
+        ConsoleAppender->outputStream = WLOG_CONSOLE_DEBUG;
 #endif
-	}
 
 	return ConsoleAppender;
 }

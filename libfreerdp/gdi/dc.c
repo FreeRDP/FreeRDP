@@ -24,12 +24,10 @@
 #endif
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
-#include <freerdp/codec/color.h>
 
 #include <freerdp/gdi/region.h>
 

@@ -580,8 +580,8 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* data, int data_size, BYTE* buff
 	RFX_BITSTREAM* bs;
 	int processed_size;
 
-	bs = (RFX_BITSTREAM*) malloc(sizeof(RFX_BITSTREAM));
-	ZeroMemory(bs, sizeof(RFX_BITSTREAM));
+	if (!(bs = (RFX_BITSTREAM*) calloc(1, sizeof(RFX_BITSTREAM))))
+		return 0;
 
 	rfx_bitstream_attach(bs, buffer, buffer_size);
 

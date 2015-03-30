@@ -3687,7 +3687,9 @@ BOOL rdp_send_demand_active(rdpRdp* rdp)
 	wStream* s;
 	BOOL status;
 
-	s = Stream_New(NULL, 4096);
+	if (!(s = Stream_New(NULL, 4096)))
+		return FALSE;
+
 	rdp_init_stream_pdu(rdp, s);
 
 	rdp->settings->ShareId = 0x10000 + rdp->mcs->userId;
@@ -3903,7 +3905,9 @@ BOOL rdp_send_confirm_active(rdpRdp* rdp)
 	wStream* s;
 	BOOL status;
 
-	s = Stream_New(NULL, 4096);
+	if (!(s = Stream_New(NULL, 4096)))
+		return FALSE;
+
 	rdp_init_stream_pdu(rdp, s);
 
 	rdp_write_confirm_active(s, rdp->settings);

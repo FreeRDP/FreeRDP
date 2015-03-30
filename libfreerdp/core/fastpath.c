@@ -389,7 +389,8 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 		/* data was compressed, copy from decompression buffer */
 
 		size = DstSize;
-		cs = StreamPool_Take(transport->ReceivePool, DstSize);
+		if (!(cs = StreamPool_Take(transport->ReceivePool, DstSize)))
+			return -1;
 
 		Stream_SetPosition(cs, 0);
 		Stream_Write(cs, pDstData, DstSize);
@@ -432,7 +433,9 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 				return -1;
 			}
 
-			fastpath->updateData = StreamPool_Take(transport->ReceivePool, size);
+			if (!(fastpath->updateData = StreamPool_Take(transport->ReceivePool, size)))
+				return -1;
+
 			Stream_SetPosition(fastpath->updateData, 0);
 
 			Stream_Copy(fastpath->updateData, cs, size);

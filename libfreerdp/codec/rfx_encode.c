@@ -226,12 +226,14 @@ void rfx_encode_rgb(RFX_CONTEXT* context, RFX_TILE* tile)
 	primitives_t* prims = primitives_get();
 	static const prim_size_t roi_64x64 = { 64, 64 };
 
+	if (!(pBuffer = (BYTE*) BufferPool_Take(context->priv->BufferPool, -1)))
+		return;
+
 	YLen = CbLen = CrLen = 0;
 	YQuant = context->quants + (tile->quantIdxY * 10);
 	CbQuant = context->quants + (tile->quantIdxCb * 10);
 	CrQuant = context->quants + (tile->quantIdxCr * 10);
 
-	pBuffer = (BYTE*) BufferPool_Take(context->priv->BufferPool, -1);
 	pSrcDst[0] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 0) + 16])); /* y_r_buffer */
 	pSrcDst[1] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 1) + 16])); /* cb_g_buffer */
 	pSrcDst[2] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 2) + 16])); /* cr_b_buffer */

@@ -67,13 +67,21 @@ BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection, DWORD dwS
 	lpCriticalSection->RecursionCount = 0;
 	lpCriticalSection->OwningThread = NULL;
 	lpCriticalSection->LockSemaphore = (winpr_sem_t*) malloc(sizeof(winpr_sem_t));
+	if (!lpCriticalSection->LockSemaphore)
+		return FALSE;
 #if defined(__APPLE__)
-	semaphore_create(mach_task_self(), lpCriticalSection->LockSemaphore, SYNC_POLICY_FIFO, 0);
+	if (semaphore_create(mach_task_self(), lpCriticalSection->LockSemaphore, SYNC_POLICY_FIFO, 0) != KERN_SUCCESS)
+		goto out_fail;
 #else
-	sem_init(lpCriticalSection->LockSemaphore, 0, 0);
+	if(sem_init(lpCriticalSection->LockSemaphore, 0, 0) != 0)
+		goto out_fail;
 #endif
 	SetCriticalSectionSpinCount(lpCriticalSection, dwSpinCount);
 	return TRUE;
+
+out_fail:
+	free(lpCriticalSection->LockSemaphore);
+	return FALSE;
 }
 
 BOOL InitializeCriticalSectionAndSpinCount(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount)

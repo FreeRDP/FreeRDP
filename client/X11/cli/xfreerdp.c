@@ -49,6 +49,8 @@ int main(int argc, char* argv[])
 	RdpClientEntry(&clientEntryPoints);
 
 	context = freerdp_client_context_new(&clientEntryPoints);
+	if (!context)
+		return 1;
 
 	settings = context->settings;
 	xfc = (xfContext*) context;

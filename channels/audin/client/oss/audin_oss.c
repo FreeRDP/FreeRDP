@@ -93,7 +93,6 @@ static int audin_oss_get_format(audinFormat *format) {
 
 static BOOL audin_oss_format_supported(IAudinDevice *device, audinFormat *format) {
 	int req_fmt = 0;
-	AudinOSSDevice *oss = (AudinOSSDevice*)device;
 
 	if (device == NULL || format == NULL)
 		return FALSE;
