@@ -86,6 +86,7 @@ set(${MODULE_PREFIX}_SRCS
 	print.c
 	stream.c
 	debug.c
+	winpr.c
 	cmdline.c
 	ssl.c)
 

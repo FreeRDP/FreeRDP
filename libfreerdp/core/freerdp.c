@@ -394,6 +394,25 @@ void freerdp_get_version(int* major, int* minor, int* revision)
 		*revision = FREERDP_VERSION_REVISION;
 }
 
+char* freerdp_get_version_string(void)
+{
+	return FREERDP_VERSION_FULL;
+}
+
+char* freerdp_get_build_date(void)
+{
+	static char build_date[64];
+
+	snprintf(build_date, sizeof(build_date), "%s %s", __DATE__, __TIME__);
+
+	return build_date;
+}
+
+char* freerdp_get_build_revision(void)
+{
+	return GIT_REVISION;
+}
+
 static wEventType FreeRDP_Events[] =
 {
 	DEFINE_EVENT_ENTRY(WindowStateChange)
