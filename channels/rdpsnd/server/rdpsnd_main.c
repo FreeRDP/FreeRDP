@@ -364,7 +364,11 @@ static BOOL rdpsnd_server_send_audio_pdu(RdpsndServerContext* context, UINT16 wT
 	Stream_SetPosition(s, 0);
 
 	/* Wave PDU */
-	Stream_EnsureRemainingCapacity(s, size + fill_size);
+	if (!Stream_EnsureRemainingCapacity(s, size + fill_size))
+	{
+		status = -1;
+		goto out;
+	}
 	Stream_Write_UINT32(s, 0); /* bPad */
 	Stream_Write(s, src + 4, size - 4);
 
@@ -662,7 +666,8 @@ int rdpsnd_server_handle_messages(RdpsndServerContext *context)
 		Stream_SetPosition(s, 0);
 		if (priv->expectedBytes)
 		{
-			Stream_EnsureCapacity(s, priv->expectedBytes);
+			if (!Stream_EnsureCapacity(s, priv->expectedBytes))
+				return 0;
 			return 1;
 		}
 	}

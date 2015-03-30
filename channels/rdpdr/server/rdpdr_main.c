@@ -146,8 +146,11 @@ static int rdpdr_server_write_general_capability_set(RdpdrServerContext* context
 	UINT32 extraFlags1;
 	UINT32 SpecialTypeDeviceCap;
 	RDPDR_CAPABILITY_HEADER header;
-	header.CapabilityType = CAP_GENERAL_TYPE;
 	header.CapabilityLength = RDPDR_CAPABILITY_HEADER_LENGTH + 36;
+	if (!Stream_EnsureRemainingCapacity(s, header.CapabilityLength))
+		return -1;
+
+	header.CapabilityType = CAP_GENERAL_TYPE;
 	header.Version = GENERAL_CAPABILITY_VERSION_02;
 	ioCode1 = 0;
 	ioCode1 |= RDPDR_IRP_MJ_CREATE; /* always set */
@@ -176,7 +179,6 @@ static int rdpdr_server_write_general_capability_set(RdpdrServerContext* context
 	extraFlags1 = 0;
 	extraFlags1 |= ENABLE_ASYNCIO; /* optional */
 	SpecialTypeDeviceCap = 0;
-	Stream_EnsureRemainingCapacity(s, header.CapabilityLength);
 	rdpdr_server_write_capability_set_header(s, &header);
 	Stream_Write_UINT32(s, 0); /* osType (4 bytes), ignored on receipt */
 	Stream_Write_UINT32(s, 0); /* osVersion (4 bytes), unused and must be set to zero */
@@ -202,7 +204,8 @@ static int rdpdr_server_write_printer_capability_set(RdpdrServerContext* context
 	header.CapabilityType = CAP_PRINTER_TYPE;
 	header.CapabilityLength = RDPDR_CAPABILITY_HEADER_LENGTH;
 	header.Version = PRINT_CAPABILITY_VERSION_01;
-	Stream_EnsureRemainingCapacity(s, header.CapabilityLength);
+	if (!Stream_EnsureRemainingCapacity(s, header.CapabilityLength))
+		return -1;
 	rdpdr_server_write_capability_set_header(s, &header);
 	return 0;
 }
@@ -218,7 +221,8 @@ static int rdpdr_server_write_port_capability_set(RdpdrServerContext* context, w
 	header.CapabilityType = CAP_PORT_TYPE;
 	header.CapabilityLength = RDPDR_CAPABILITY_HEADER_LENGTH;
 	header.Version = PORT_CAPABILITY_VERSION_01;
-	Stream_EnsureRemainingCapacity(s, header.CapabilityLength);
+	if (!Stream_EnsureRemainingCapacity(s, header.CapabilityLength))
+		return -1;
 	rdpdr_server_write_capability_set_header(s, &header);
 	return 0;
 }
@@ -234,7 +238,8 @@ static int rdpdr_server_write_drive_capability_set(RdpdrServerContext* context, 
 	header.CapabilityType = CAP_DRIVE_TYPE;
 	header.CapabilityLength = RDPDR_CAPABILITY_HEADER_LENGTH;
 	header.Version = DRIVE_CAPABILITY_VERSION_02;
-	Stream_EnsureRemainingCapacity(s, header.CapabilityLength);
+	if (!Stream_EnsureRemainingCapacity(s, header.CapabilityLength))
+		return -1;
 	rdpdr_server_write_capability_set_header(s, &header);
 	return 0;
 }
@@ -250,7 +255,8 @@ static int rdpdr_server_write_smartcard_capability_set(RdpdrServerContext* conte
 	header.CapabilityType = CAP_SMARTCARD_TYPE;
 	header.CapabilityLength = RDPDR_CAPABILITY_HEADER_LENGTH;
 	header.Version = SMARTCARD_CAPABILITY_VERSION_01;
-	Stream_EnsureRemainingCapacity(s, header.CapabilityLength);
+	if (!Stream_EnsureRemainingCapacity(s, header.CapabilityLength))
+		return -1;
 	rdpdr_server_write_capability_set_header(s, &header);
 	return 0;
 }
@@ -258,7 +264,7 @@ static int rdpdr_server_write_smartcard_capability_set(RdpdrServerContext* conte
 static int rdpdr_server_send_core_capability_request(RdpdrServerContext* context)
 {
 	wStream* s;
-	BOOL status;
+	BOOL status = FALSE;
 	RDPDR_HEADER header;
 	UINT16 numCapabilities;
 	ULONG written;
@@ -267,19 +273,27 @@ static int rdpdr_server_send_core_capability_request(RdpdrServerContext* context
 	header.PacketId = PAKID_CORE_SERVER_CAPABILITY;
 	numCapabilities = 5;
 	s = Stream_New(NULL, RDPDR_HEADER_LENGTH + 512);
+	if (!s)
+		return -1;
 	Stream_Write_UINT16(s, header.Component); /* Component (2 bytes) */
 	Stream_Write_UINT16(s, header.PacketId); /* PacketId (2 bytes) */
 	Stream_Write_UINT16(s, numCapabilities); /* numCapabilities (2 bytes) */
 	Stream_Write_UINT16(s, 0); /* Padding (2 bytes) */
-	rdpdr_server_write_general_capability_set(context, s);
-	rdpdr_server_write_printer_capability_set(context, s);
-	rdpdr_server_write_port_capability_set(context, s);
-	rdpdr_server_write_drive_capability_set(context, s);
-	rdpdr_server_write_smartcard_capability_set(context, s);
+	if (rdpdr_server_write_general_capability_set(context, s) != 0)
+		goto out_error;
+	if (rdpdr_server_write_printer_capability_set(context, s) != 0)
+		goto out_error;
+	if (rdpdr_server_write_port_capability_set(context, s) != 0)
+		goto out_error;
+	if (rdpdr_server_write_drive_capability_set(context, s) != 0)
+		goto out_error;
+	if (rdpdr_server_write_smartcard_capability_set(context, s) != 0)
+		goto out_error;
 	Stream_SealLength(s);
 	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
+out_error:
 	Stream_Free(s, TRUE);
-	return 0;
+	return status ? 0 : -1;
 }
 
 static int rdpdr_server_receive_core_capability_response(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)

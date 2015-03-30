@@ -45,7 +45,8 @@ int tsmf_ifman_rim_exchange_capability_request(TSMF_IFMAN* ifman)
 
 	DEBUG_TSMF("server CapabilityValue %d", CapabilityValue);
 
-	Stream_EnsureRemainingCapacity(ifman->output, 8);
+	if (!Stream_EnsureRemainingCapacity(ifman->output, 8))
+		return -1;
 	Stream_Write_UINT32(ifman->output, 1); /* CapabilityValue */
 	Stream_Write_UINT32(ifman->output, 0); /* Result */
 
@@ -61,8 +62,9 @@ int tsmf_ifman_exchange_capability_request(TSMF_IFMAN* ifman)
 	UINT32 cbCapabilityLength;
 	UINT32 numHostCapabilities;
 
+	if (!Stream_EnsureRemainingCapacity(ifman->output, ifman->input_size + 4))
+		return -1;
 	pos = Stream_GetPosition(ifman->output);
-	Stream_EnsureRemainingCapacity(ifman->output, ifman->input_size + 4);
 	Stream_Copy(ifman->output, ifman->input, ifman->input_size);
 	Stream_SetPosition(ifman->output, pos);
 	Stream_Read_UINT32(ifman->output, numHostCapabilities);
@@ -116,7 +118,8 @@ int tsmf_ifman_check_format_support_request(TSMF_IFMAN* ifman)
 	if (FormatSupported)
 		DEBUG_TSMF("format ok.");
 
-	Stream_EnsureRemainingCapacity(ifman->output, 12);
+	if (!Stream_EnsureRemainingCapacity(ifman->output, 12))
+		return -1;
 	Stream_Write_UINT32(ifman->output, FormatSupported);
 	Stream_Write_UINT32(ifman->output, PlatformCookie);
 	Stream_Write_UINT32(ifman->output, 0); /* Result */
@@ -184,7 +187,8 @@ int tsmf_ifman_add_stream(TSMF_IFMAN* ifman)
 int tsmf_ifman_set_topology_request(TSMF_IFMAN* ifman)
 {
 	DEBUG_TSMF("");
-	Stream_EnsureRemainingCapacity(ifman->output, 8);
+	if (!Stream_EnsureRemainingCapacity(ifman->output, 8))
+		return -1;
 	Stream_Write_UINT32(ifman->output, 1); /* TopologyReady */
 	Stream_Write_UINT32(ifman->output, 0); /* Result */
 	ifman->output_interface_id = TSMF_INTERFACE_DEFAULT | STREAM_ID_STUB;
@@ -278,7 +282,8 @@ int tsmf_ifman_shutdown_presentation(TSMF_IFMAN* ifman)
 	else
 		WLog_ERR(TAG, "unknown presentation id");
 
-	Stream_EnsureRemainingCapacity(ifman->output, 4);
+	if (!Stream_EnsureRemainingCapacity(ifman->output, 4))
+		return -1;
 	Stream_Write_UINT32(ifman->output, 0); /* Result */
 	ifman->output_interface_id = TSMF_INTERFACE_DEFAULT | STREAM_ID_STUB;
 
@@ -516,7 +521,8 @@ int tsmf_ifman_on_end_of_stream(TSMF_IFMAN* ifman)
 	}
 
 	DEBUG_TSMF("StreamId %d", StreamId);
-	Stream_EnsureRemainingCapacity(ifman->output, 16);
+	if (!Stream_EnsureRemainingCapacity(ifman->output, 16))
+		return -1;
 	Stream_Write_UINT32(ifman->output, CLIENT_EVENT_NOTIFICATION); /* FunctionId */
 	Stream_Write_UINT32(ifman->output, StreamId); /* StreamId */
 	Stream_Write_UINT32(ifman->output, TSMM_CLIENT_EVENT_ENDOFSTREAM); /* EventId */
@@ -539,7 +545,8 @@ int tsmf_ifman_on_playback_started(TSMF_IFMAN* ifman)
 	else
 		WLog_ERR(TAG, "unknown presentation id");
 
-	Stream_EnsureRemainingCapacity(ifman->output, 16);
+	if (!Stream_EnsureRemainingCapacity(ifman->output, 16))
+		return -1;
 	Stream_Write_UINT32(ifman->output, CLIENT_EVENT_NOTIFICATION); /* FunctionId */
 	Stream_Write_UINT32(ifman->output, 0); /* StreamId */
 	Stream_Write_UINT32(ifman->output, TSMM_CLIENT_EVENT_START_COMPLETED); /* EventId */
@@ -598,7 +605,8 @@ int tsmf_ifman_on_playback_stopped(TSMF_IFMAN* ifman)
 	else
 		WLog_ERR(TAG, "unknown presentation id");
 
-	Stream_EnsureRemainingCapacity(ifman->output, 16);
+	if (!Stream_EnsureRemainingCapacity(ifman->output, 16))
+		return -1;
 	Stream_Write_UINT32(ifman->output, CLIENT_EVENT_NOTIFICATION); /* FunctionId */
 	Stream_Write_UINT32(ifman->output, 0); /* StreamId */
 	Stream_Write_UINT32(ifman->output, TSMM_CLIENT_EVENT_STOP_COMPLETED); /* EventId */
@@ -611,7 +619,8 @@ int tsmf_ifman_on_playback_stopped(TSMF_IFMAN* ifman)
 int tsmf_ifman_on_playback_rate_changed(TSMF_IFMAN* ifman)
 {
 	DEBUG_TSMF("");
-	Stream_EnsureRemainingCapacity(ifman->output, 16);
+	if (!Stream_EnsureRemainingCapacity(ifman->output, 16))
+		return -1;
 	Stream_Write_UINT32(ifman->output, CLIENT_EVENT_NOTIFICATION); /* FunctionId */
 	Stream_Write_UINT32(ifman->output, 0); /* StreamId */
 	Stream_Write_UINT32(ifman->output, TSMM_CLIENT_EVENT_MONITORCHANGED); /* EventId */

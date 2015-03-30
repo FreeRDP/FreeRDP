@@ -925,7 +925,8 @@ int cliprdr_server_read(CliprdrServerContext* context)
 		Stream_Read_UINT16(s, header.msgFlags); /* msgFlags (2 bytes) */
 		Stream_Read_UINT32(s, header.dataLen); /* dataLen (4 bytes) */
 
-		Stream_EnsureCapacity(s, (header.dataLen + CLIPRDR_HEADER_LENGTH));
+		if (!Stream_EnsureCapacity(s, (header.dataLen + CLIPRDR_HEADER_LENGTH)))
+			return -1;
 		Stream_SetPosition(s, position);
 
 		if (Stream_GetPosition(s) < (header.dataLen + CLIPRDR_HEADER_LENGTH))

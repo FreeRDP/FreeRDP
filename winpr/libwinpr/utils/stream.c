@@ -25,7 +25,7 @@
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
-void Stream_EnsureCapacity(wStream* s, size_t size)
+BOOL Stream_EnsureCapacity(wStream* s, size_t size)
 {
 	if (s->capacity < size)
 	{
@@ -48,7 +48,7 @@ void Stream_EnsureCapacity(wStream* s, size_t size)
 
 		new_buf = (BYTE*) realloc(s->buffer, new_capacity);
 		if (!new_buf)
-			return;
+			return FALSE;
 		s->buffer = new_buf;
 		s->capacity = new_capacity;
 		s->length = new_capacity;
@@ -56,12 +56,14 @@ void Stream_EnsureCapacity(wStream* s, size_t size)
 
 		Stream_SetPosition(s, position);
 	}
+	return TRUE;
 }
 
-void Stream_EnsureRemainingCapacity(wStream* s, size_t size)
+BOOL Stream_EnsureRemainingCapacity(wStream* s, size_t size)
 {
 	if (Stream_GetPosition(s) + size > Stream_Capacity(s))
-		Stream_EnsureCapacity(s, Stream_Capacity(s) + size);
+		return Stream_EnsureCapacity(s, Stream_Capacity(s) + size);
+	return TRUE;
 }
 
 wStream* Stream_New(BYTE* buffer, size_t size)

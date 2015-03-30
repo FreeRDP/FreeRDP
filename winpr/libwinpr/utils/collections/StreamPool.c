@@ -169,13 +169,13 @@ wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 	if (foundIndex < 0)
 	{
 		s = Stream_New(NULL, size);
+		if (!s)
+			goto out_fail;
 	}
 	else
 	{
-		StreamPool_ShiftAvailable(pool, foundIndex, -1);
-
 		Stream_SetPosition(s, 0);
-		Stream_EnsureCapacity(s, size);
+		StreamPool_ShiftAvailable(pool, foundIndex, -1);
 	}
 
 	if (s)
@@ -185,6 +185,7 @@ wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 		StreamPool_AddUsed(pool, s);
 	}
 
+out_fail:
 	if (pool->synchronized)
 		LeaveCriticalSection(&pool->lock);
 

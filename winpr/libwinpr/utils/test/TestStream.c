@@ -148,9 +148,15 @@ static BOOL TestStream_Extent(UINT32 maxSize)
 	for (i = 1; i < maxSize; i++)
 	{
 		if (i % 2)
-			Stream_EnsureRemainingCapacity(s, i);
+		{
+			if (!Stream_EnsureRemainingCapacity(s, i))
+				goto fail;
+		}
 		else
-			Stream_EnsureCapacity(s, i);
+		{
+			if (!Stream_EnsureCapacity(s, i))
+				goto fail;
+		}
 
 		Stream_SetPosition(s, i);
 		Stream_SealLength(s);

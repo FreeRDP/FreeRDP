@@ -153,12 +153,16 @@ BOOL autodetect_send_bandwidth_measure_payload(rdpContext* context, UINT16 paylo
 	/* 4-bytes aligned */
 	payloadLength &= ~3;
 
+	if (!Stream_EnsureRemainingCapacity(s, 8 + payloadLength))
+	{
+		Stream_Release(s);
+		return FALSE;
+	}
 	Stream_Write_UINT8(s, 0x08); /* headerLength (1 byte) */
 	Stream_Write_UINT8(s, TYPE_ID_AUTODETECT_REQUEST); /* headerTypeId (1 byte) */
 	Stream_Write_UINT16(s, sequenceNumber); /* sequenceNumber (2 bytes) */
 	Stream_Write_UINT16(s, RDP_BW_PAYLOAD_REQUEST_TYPE); /* requestType (2 bytes) */
 	Stream_Write_UINT16(s, payloadLength); /* payloadLength (2 bytes) */
-	Stream_EnsureRemainingCapacity(s, payloadLength);
 	/* Random data (better measurement in case the line is compressed) */
 	for (i = 0; i < payloadLength / 4; i++)
 	{
@@ -192,7 +196,11 @@ static BOOL autodetect_send_bandwidth_measure_stop(rdpContext* context, UINT16 p
 		Stream_Write_UINT16(s, payloadLength); /* payloadLength (2 bytes) */
 		if (payloadLength > 0)
 		{
-			Stream_EnsureRemainingCapacity(s, payloadLength);
+			if (!Stream_EnsureRemainingCapacity(s, payloadLength))
+			{
+				Stream_Release(s);
+				return FALSE;
+			}
 			/* Random data (better measurement in case the line is compressed) */
 			for (i = 0; i < payloadLength / 4; i++)
 			{

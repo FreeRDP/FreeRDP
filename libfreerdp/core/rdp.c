@@ -271,6 +271,8 @@ wStream* rdp_message_channel_pdu_init(rdpRdp* rdp)
 {
 	wStream* s;
 	s = transport_send_stream_init(rdp->transport, 2048);
+	if (!s)
+		return NULL;
 	Stream_Seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
 	rdp_security_stream_init(rdp, s, TRUE);
 	return s;
@@ -710,7 +712,8 @@ BOOL rdp_write_monitor_layout_pdu(wStream* s, UINT32 monitorCount, MONITOR_DEF* 
 {
 	UINT32 index;
 	MONITOR_DEF* monitor;
-	Stream_EnsureRemainingCapacity(s, 4 + (monitorCount * 20));
+	if (!Stream_EnsureRemainingCapacity(s, 4 + (monitorCount * 20)))
+		return FALSE;
 	Stream_Write_UINT32(s, monitorCount); /* monitorCount (4 bytes) */
 
 	for (index = 0; index < monitorCount; index++)
@@ -755,7 +758,10 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 		if (bulk_decompress(rdp->bulk, Stream_Pointer(s), SrcSize, &pDstData, &DstSize, compressedType))
 		{
 			if (!(cs = StreamPool_Take(rdp->transport->ReceivePool, DstSize)))
+			{
+				WLog_ERR(TAG, "Coudn't take stream from pool");
 				return -1;
+			}
 
 			Stream_SetPosition(cs, 0);
 			Stream_Write(cs, pDstData, DstSize);

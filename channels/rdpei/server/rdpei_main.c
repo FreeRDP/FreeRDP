@@ -320,7 +320,11 @@ int rdpei_server_handle_messages(RdpeiServerContext *context) {
 		Stream_SetPosition(s, 0);
 		if (priv->expectedBytes)
 		{
-			Stream_EnsureCapacity(s, priv->expectedBytes);
+			if (!Stream_EnsureCapacity(s, priv->expectedBytes))
+			{
+				fprintf(stderr, "%s: couldn't allocate memory for stream\n", __FUNCTION__);
+				return -1;
+			}
 			return 1;
 		}
 	}
@@ -376,7 +380,12 @@ int rdpei_server_send_sc_ready(RdpeiServerContext *context, UINT32 version)
 	}
 
 	Stream_SetPosition(priv->outputStream, 0);
-	Stream_EnsureCapacity(priv->outputStream, RDPINPUT_HEADER_LENGTH + 4);
+
+	if (!Stream_EnsureCapacity(priv->outputStream, RDPINPUT_HEADER_LENGTH + 4))
+	{
+		fprintf(stderr, "%s: could not re-allocate memory for stream\n", __FUNCTION__);
+		return -1;
+	}
 
 	Stream_Write_UINT16(priv->outputStream, EVENTID_SC_READY);
 	Stream_Write_UINT32(priv->outputStream, RDPINPUT_HEADER_LENGTH + 4);
@@ -411,7 +420,11 @@ int rdpei_server_suspend(RdpeiServerContext *context)
 	}
 
 	Stream_SetPosition(priv->outputStream, 0);
-	Stream_EnsureCapacity(priv->outputStream, RDPINPUT_HEADER_LENGTH);
+	if (!Stream_EnsureCapacity(priv->outputStream, RDPINPUT_HEADER_LENGTH))
+	{
+		fprintf(stderr, "%s: could not re-allocate memory for stream\n", __FUNCTION__);
+		return -1;
+	}
 
 	Stream_Write_UINT16(priv->outputStream, EVENTID_SUSPEND_TOUCH);
 	Stream_Write_UINT32(priv->outputStream, RDPINPUT_HEADER_LENGTH);
@@ -446,7 +459,11 @@ int rdpei_server_resume(RdpeiServerContext *context)
 	}
 
 	Stream_SetPosition(priv->outputStream, 0);
-	Stream_EnsureCapacity(priv->outputStream, RDPINPUT_HEADER_LENGTH);
+	if (!Stream_EnsureCapacity(priv->outputStream, RDPINPUT_HEADER_LENGTH))
+	{
+		fprintf(stderr, "%s: couldn't allocate memory for stream\n", __FUNCTION__);
+		return -1;
+	}
 
 	Stream_Write_UINT16(priv->outputStream, EVENTID_RESUME_TOUCH);
 	Stream_Write_UINT32(priv->outputStream, RDPINPUT_HEADER_LENGTH);

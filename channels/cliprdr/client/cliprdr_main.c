@@ -792,8 +792,16 @@ static void cliprdr_virtual_channel_event_data_received(cliprdrPlugin* cliprdr,
 		cliprdr->data_in = Stream_New(NULL, totalLength);
 	}
 
-	data_in = cliprdr->data_in;
-	Stream_EnsureRemainingCapacity(data_in, (int) dataLength);
+	if (!(data_in = cliprdr->data_in))
+		return;
+
+	if (!Stream_EnsureRemainingCapacity(data_in, (int) dataLength))
+	{
+		Stream_Free(cliprdr->data_in, TRUE);
+		cliprdr->data_in = NULL;
+		return;
+	}
+
 	Stream_Write(data_in, pData, dataLength);
 
 	if (dataFlags & CHANNEL_FLAG_LAST)
