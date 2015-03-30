@@ -626,6 +626,95 @@ int nego_recv(rdpTransport* transport, wStream* s, void* extra)
 	return 0;
 }
 
+
+/**
+ * Read optional routing token or cookie of X.224 Connection Request PDU.
+ * @msdn{cc240470}
+ * @param nego
+ * @param s stream
+ */
+
+static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
+{
+	/* routingToken and cookie are optional and mutually exclusive!
+	 *
+	 * routingToken (variable): An optional and variable-length routing
+	 * token (used for load balancing) terminated by a 0x0D0A two-byte
+	 * sequence: (check [MSFT-SDLBTS] for details!)
+	 * Cookie:[space]msts=[ip address].[port].[reserved][\x0D\x0A]
+	 *
+	 * cookie (variable): An optional and variable-length ANSI character
+	 * string terminated by a 0x0D0A two-byte sequence:
+	 * Cookie:[space]mstshash=[ANSISTRING][\x0D\x0A]
+	 */
+
+	BYTE *str = NULL;
+	UINT16 crlf = 0;
+	int pos, len;
+	BOOL result = FALSE;
+	BOOL isToken = FALSE;
+
+	str = Stream_Pointer(s);
+	pos = Stream_GetPosition(s);
+
+	/* minimum length for cookie is 15 */
+	if (Stream_GetRemainingLength(s) < 15)
+		return TRUE;
+
+	if (!memcmp(Stream_Pointer(s), "Cookie: msts=", 13))
+	{
+		isToken = TRUE;
+		Stream_Seek(s, 13);
+	}
+	else
+	{
+		/* not a cookie, minimum length for token is 19 */
+		if (Stream_GetRemainingLength(s) < 19)
+			return TRUE;
+
+		if (memcmp(Stream_Pointer(s), "Cookie: mstshash=", 17))
+			return TRUE;
+
+		Stream_Seek(s, 17);
+	}
+
+	while (Stream_GetRemainingLength(s) >= 2)
+	{
+		Stream_Read_UINT16(s, crlf);
+		if (crlf == 0x0A0D)
+			break;
+		Stream_Rewind(s, 1);
+	}
+
+	if (crlf == 0x0A0D)
+	{
+		Stream_Rewind(s, 2);
+		len = Stream_GetPosition(s) - pos;
+		Stream_Write_UINT16(s, 0);
+		if (strlen((char*)str) == len)
+		{
+			if (isToken)
+				result = nego_set_routing_token(nego, str, len);
+			else
+				result = nego_set_cookie(nego, (char*)str);
+		}
+	}
+
+	if (!result)
+	{
+		Stream_SetPosition(s, pos);
+		WLog_ERR(TAG, "invalid %s received",
+			isToken ? "routing token" : "cookie");
+	}
+	else
+	{
+		WLog_DBG(TAG, "received %s [%s]",
+			isToken ? "routing token" : "cookie", str);
+	}
+
+	return result;
+}
+
 /**
  * Read protocol security negotiation request message.\n
  * @param nego
@@ -635,7 +724,6 @@ int nego_recv(rdpTransport* transport, wStream* s, void* extra)
 BOOL nego_read_request(rdpNego* nego, wStream* s)
 {
 	BYTE li;
-	BYTE c;
 	BYTE type;
 
 	tpkt_read_header(s);
@@ -649,24 +737,10 @@ BOOL nego_read_request(rdpNego* nego, wStream* s)
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) > 8)
+	if (!nego_read_request_token_or_cookie(nego, s))
 	{
-		/* Optional routingToken or cookie, ending with CR+LF */
-		while (Stream_GetRemainingLength(s) > 0)
-		{
-			Stream_Read_UINT8(s, c);
-
-			if (c != '\x0D')
-				continue;
-
-			Stream_Peek_UINT8(s, c);
-
-			if (c != '\x0A')
-				continue;
-
-			Stream_Seek_UINT8(s);
-			break;
-		}
+		WLog_ERR(TAG, "Failed to parse routing token or cookie.");
+		return FALSE;
 	}
 
 	if (Stream_GetRemainingLength(s) >= 8)
