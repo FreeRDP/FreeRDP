@@ -887,7 +887,7 @@ static const XKB_LAYOUT xkbLayouts[] =
 	{ "ie",		 KBD_UNITED_KINGDOM, ie_variants }, /* Ireland */
 	{ "pk",		 0, pk_variants }, /* Pakistan */
 	{ "mv",		 0, NULL }, /* Maldives */
-	{ "za",		 0, NULL }, /* South Africa */
+	{ "za",		 KBD_US, NULL }, /* South Africa */
 	{ "epo",	 0, epo_variants }, /* Esperanto */
 	{ "np",		 KBD_NEPALI, NULL }, /* Nepal */
 	{ "ng",		 0, ng_variants }, /* Nigeria */
@@ -910,11 +910,13 @@ UINT32 find_keyboard_layout_in_xorg_rules(char* layout, char* variant)
 	{
 		if (strcmp(xkbLayouts[i].layout, layout) == 0)
 		{
-			for (j = 0; xkbLayouts[i].variants[j].variant != NULL && strlen(xkbLayouts[i].variants[j].variant) > 0; j++)
+			const XKB_VARIANT *variants = xkbLayouts[i].variants;
+			if (variants)
 			{
-				if (strcmp(xkbLayouts[i].variants[j].variant, variant) == 0)
+				for (j = 0; variants[j].variant != NULL && strlen(variants[j].variant) > 0; j++)
 				{
-					return xkbLayouts[i].variants[j].keyboardLayoutID;
+					if (strcmp(variants[j].variant, variant) == 0)
+						return variants[j].keyboardLayoutID;
 				}
 			}
 
