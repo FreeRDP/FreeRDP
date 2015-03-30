@@ -153,7 +153,7 @@ BOOL autodetect_send_bandwidth_measure_payload(rdpContext* context, UINT16 paylo
 	/* 4-bytes aligned */
 	payloadLength &= ~3;
 
-	if(!Stream_EnsureRemainingCapacity(s, 8 + payloadLength))
+	if (!Stream_EnsureRemainingCapacity(s, 8 + payloadLength))
 	{
 		Stream_Release(s);
 		return FALSE;
@@ -196,7 +196,7 @@ static BOOL autodetect_send_bandwidth_measure_stop(rdpContext* context, UINT16 p
 		Stream_Write_UINT16(s, payloadLength); /* payloadLength (2 bytes) */
 		if (payloadLength > 0)
 		{
-			if(!Stream_EnsureRemainingCapacity(s, payloadLength))
+			if (!Stream_EnsureRemainingCapacity(s, payloadLength))
 			{
 				Stream_Release(s);
 				return FALSE;

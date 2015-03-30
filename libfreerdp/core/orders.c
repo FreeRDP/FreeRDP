@@ -844,7 +844,7 @@ int update_approximate_dstblt_order(ORDER_INFO* orderInfo, DSTBLT_ORDER* dstblt)
 BOOL update_write_dstblt_order(wStream* s, ORDER_INFO* orderInfo, DSTBLT_ORDER* dstblt)
 {
 
-	if(!Stream_EnsureRemainingCapacity(s, update_approximate_dstblt_order(orderInfo, dstblt)))
+	if (!Stream_EnsureRemainingCapacity(s, update_approximate_dstblt_order(orderInfo, dstblt)))
 		return FALSE;
 
 	orderInfo->fieldFlags = 0;
@@ -887,7 +887,7 @@ int update_approximate_patblt_order(ORDER_INFO* orderInfo, PATBLT_ORDER* patblt)
 BOOL update_write_patblt_order(wStream* s, ORDER_INFO* orderInfo, PATBLT_ORDER* patblt)
 {
 
-	if(!Stream_EnsureRemainingCapacity(s, update_approximate_patblt_order(orderInfo, patblt)))
+	if (!Stream_EnsureRemainingCapacity(s, update_approximate_patblt_order(orderInfo, patblt)))
 		return FALSE;
 
 	orderInfo->fieldFlags = 0;
@@ -944,7 +944,7 @@ int update_approximate_scrblt_order(ORDER_INFO* orderInfo, SCRBLT_ORDER* scrblt)
 BOOL update_write_scrblt_order(wStream* s, ORDER_INFO* orderInfo, SCRBLT_ORDER* scrblt)
 {
 
-	if(!Stream_EnsureRemainingCapacity(s, update_approximate_scrblt_order(orderInfo, scrblt)));
+	if (!Stream_EnsureRemainingCapacity(s, update_approximate_scrblt_order(orderInfo, scrblt)));
 		return FALSE;
 
 	orderInfo->fieldFlags = 0;
@@ -1021,7 +1021,7 @@ BOOL update_write_opaque_rect_order(wStream* s, ORDER_INFO* orderInfo, OPAQUE_RE
 {
 	BYTE byte;
 
-	if(!Stream_EnsureRemainingCapacity(s, update_approximate_opaque_rect_order(orderInfo, opaque_rect)))
+	if (!Stream_EnsureRemainingCapacity(s, update_approximate_opaque_rect_order(orderInfo, opaque_rect)))
 		return FALSE;
 
 	orderInfo->fieldFlags = 0;
@@ -1281,7 +1281,7 @@ int update_approximate_line_to_order(ORDER_INFO* orderInfo, LINE_TO_ORDER* line_
 
 BOOL update_write_line_to_order(wStream* s, ORDER_INFO* orderInfo, LINE_TO_ORDER* line_to)
 {
-	if(!Stream_EnsureRemainingCapacity(s, update_approximate_line_to_order(orderInfo, line_to)))
+	if (!Stream_EnsureRemainingCapacity(s, update_approximate_line_to_order(orderInfo, line_to)))
 		return FALSE;
 
 	orderInfo->fieldFlags = 0;
@@ -1389,7 +1389,7 @@ BOOL update_write_memblt_order(wStream* s, ORDER_INFO* orderInfo, MEMBLT_ORDER* 
 {
 	UINT16 cacheId;
 
-	if(!Stream_EnsureRemainingCapacity(s, update_approximate_memblt_order(orderInfo, memblt)))
+	if (!Stream_EnsureRemainingCapacity(s, update_approximate_memblt_order(orderInfo, memblt)))
 		return FALSE;
 
 	cacheId = (memblt->cacheId & 0xFF) | ((memblt->colorIndex & 0xFF) << 8);
@@ -1527,7 +1527,7 @@ int update_approximate_glyph_index_order(ORDER_INFO* orderInfo, GLYPH_INDEX_ORDE
 BOOL update_write_glyph_index_order(wStream* s, ORDER_INFO* orderInfo, GLYPH_INDEX_ORDER* glyph_index)
 {
 
-	if(!Stream_EnsureRemainingCapacity(s, update_approximate_glyph_index_order(orderInfo, glyph_index)))
+	if (!Stream_EnsureRemainingCapacity(s, update_approximate_glyph_index_order(orderInfo, glyph_index)))
 		return FALSE;
 
 	orderInfo->fieldFlags = 0;
@@ -1923,7 +1923,7 @@ int update_approximate_cache_bitmap_order(CACHE_BITMAP_ORDER* cache_bitmap, BOOL
 BOOL update_write_cache_bitmap_order(wStream* s, CACHE_BITMAP_ORDER* cache_bitmap, BOOL compressed, UINT16* flags)
 {
 
-	if(!Stream_EnsureRemainingCapacity(s, update_approximate_cache_bitmap_order(cache_bitmap, compressed, flags)))
+	if (!Stream_EnsureRemainingCapacity(s, update_approximate_cache_bitmap_order(cache_bitmap, compressed, flags)))
 		return FALSE;
 
 	*flags = NO_BITMAP_COMPRESSION_HDR;
@@ -2041,7 +2041,7 @@ BOOL update_write_cache_bitmap_v2_order(wStream* s, CACHE_BITMAP_V2_ORDER* cache
 {
 	BYTE bitsPerPixelId;
 
-	if(!Stream_EnsureRemainingCapacity(s, update_approximate_cache_bitmap_v2_order(cache_bitmap_v2, compressed, flags)))
+	if (!Stream_EnsureRemainingCapacity(s, update_approximate_cache_bitmap_v2_order(cache_bitmap_v2, compressed, flags)))
 		return FALSE;
 
 	bitsPerPixelId = BPP_CBR2[cache_bitmap_v2->bitmapBpp];
@@ -2085,13 +2085,13 @@ BOOL update_write_cache_bitmap_v2_order(wStream* s, CACHE_BITMAP_V2_ORDER* cache
 			cache_bitmap_v2->bitmapLength = cache_bitmap_v2->cbCompMainBodySize;
 		}
 
-		if(!Stream_EnsureRemainingCapacity(s, cache_bitmap_v2->bitmapLength))
+		if (!Stream_EnsureRemainingCapacity(s, cache_bitmap_v2->bitmapLength))
 			return FALSE;
 		Stream_Write(s, cache_bitmap_v2->bitmapDataStream, cache_bitmap_v2->bitmapLength);
 	}
 	else
 	{
-		if(!Stream_EnsureRemainingCapacity(s, cache_bitmap_v2->bitmapLength))
+		if (!Stream_EnsureRemainingCapacity(s, cache_bitmap_v2->bitmapLength))
 			return FALSE;
 		Stream_Write(s, cache_bitmap_v2->bitmapDataStream, cache_bitmap_v2->bitmapLength);
 	}
@@ -2160,7 +2160,7 @@ BOOL update_write_cache_bitmap_v3_order(wStream* s, CACHE_BITMAP_V3_ORDER* cache
 	BYTE bitsPerPixelId;
 	BITMAP_DATA_EX* bitmapData;
 
-	if(!Stream_EnsureRemainingCapacity(s, update_approximate_cache_bitmap_v3_order(cache_bitmap_v3, flags)))
+	if (!Stream_EnsureRemainingCapacity(s, update_approximate_cache_bitmap_v3_order(cache_bitmap_v3, flags)))
 		return FALSE;
 
 	bitmapData = &cache_bitmap_v3->bitmapData;
@@ -2230,7 +2230,7 @@ BOOL update_write_cache_color_table_order(wStream* s, CACHE_COLOR_TABLE_ORDER* c
 	if (cache_color_table->numberColors != 256)
 		return FALSE;
 
-	if(!Stream_EnsureRemainingCapacity(s, update_approximate_cache_color_table_order(cache_color_table, flags)))
+	if (!Stream_EnsureRemainingCapacity(s, update_approximate_cache_color_table_order(cache_color_table, flags)))
 		return FALSE;
 
 	Stream_Write_UINT8(s, cache_color_table->cacheIndex); /* cacheIndex (1 byte) */
@@ -2302,7 +2302,7 @@ BOOL update_write_cache_glyph_order(wStream* s, CACHE_GLYPH_ORDER* cache_glyph, 
 	INT16 lsi16;
 	GLYPH_DATA* glyph;
 
-	if(!Stream_EnsureRemainingCapacity(s, update_approximate_cache_glyph_order(cache_glyph, flags)))
+	if (!Stream_EnsureRemainingCapacity(s, update_approximate_cache_glyph_order(cache_glyph, flags)))
 		return FALSE;
 
 	Stream_Write_UINT8(s, cache_glyph->cacheId); /* cacheId (1 byte) */
@@ -2391,7 +2391,7 @@ BOOL update_write_cache_glyph_v2_order(wStream* s, CACHE_GLYPH_V2_ORDER* cache_g
 	int i;
 	GLYPH_DATA_V2* glyph;
 
-	if(!Stream_EnsureRemainingCapacity(s, update_approximate_cache_glyph_v2_order(cache_glyph_v2, flags)))
+	if (!Stream_EnsureRemainingCapacity(s, update_approximate_cache_glyph_v2_order(cache_glyph_v2, flags)))
 		return FALSE;
 
 	*flags = (cache_glyph_v2->cacheId & 0x000F) |
@@ -2550,7 +2550,7 @@ BOOL update_write_cache_brush_order(wStream* s, CACHE_BRUSH_ORDER* cache_brush, 
 	BYTE iBitmapFormat;
 	BOOL compressed = FALSE;
 
-	if(!Stream_EnsureRemainingCapacity(s, update_approximate_cache_brush_order(cache_brush, flags)))
+	if (!Stream_EnsureRemainingCapacity(s, update_approximate_cache_brush_order(cache_brush, flags)))
 		return FALSE;
 
 	iBitmapFormat = BPP_BMF[cache_brush->bpp];
@@ -2680,7 +2680,7 @@ BOOL update_write_create_offscreen_bitmap_order(wStream* s, CREATE_OFFSCREEN_BIT
 	BOOL deleteListPresent;
 	OFFSCREEN_DELETE_LIST* deleteList;
 
-	if(!Stream_EnsureRemainingCapacity(s, update_approximate_create_offscreen_bitmap_order(create_offscreen_bitmap)))
+	if (!Stream_EnsureRemainingCapacity(s, update_approximate_create_offscreen_bitmap_order(create_offscreen_bitmap)))
 		return FALSE;
 
 	deleteList = &(create_offscreen_bitmap->deleteList);
@@ -2729,7 +2729,7 @@ int update_approximate_switch_surface_order(SWITCH_SURFACE_ORDER* switch_surface
 
 BOOL update_write_switch_surface_order(wStream* s, SWITCH_SURFACE_ORDER* switch_surface)
 {
-	if(!Stream_EnsureRemainingCapacity(s, update_approximate_switch_surface_order(switch_surface)))
+	if (!Stream_EnsureRemainingCapacity(s, update_approximate_switch_surface_order(switch_surface)))
 		return FALSE;
 
 	Stream_Write_UINT16(s, switch_surface->bitmapId); /* bitmapId (2 bytes) */

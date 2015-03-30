@@ -515,7 +515,7 @@ static BYTE* rdpsnd_pulse_convert_audio(rdpsndDevicePlugin* device, BYTE* data, 
 				inSize -= 32;
 			}
 
-			if(!Stream_EnsureRemainingCapacity(pulse->gsmBuffer, 160 * 2))
+			if (!Stream_EnsureRemainingCapacity(pulse->gsmBuffer, 160 * 2))
 				return NULL;
 			Stream_Write(pulse->gsmBuffer, (void*) gsmBlockBuffer, 160 * 2);
 		}

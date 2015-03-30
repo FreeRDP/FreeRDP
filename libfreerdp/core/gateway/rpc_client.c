@@ -365,7 +365,7 @@ int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 
 		if (call->OpNum != TsProxySetupReceivePipeOpnum)
 		{
-			if(!Stream_EnsureCapacity(pdu->s, header->response.alloc_hint))
+			if (!Stream_EnsureCapacity(pdu->s, header->response.alloc_hint))
 				return -1;
 			Stream_Write(pdu->s, &buffer[StubOffset], StubLength);
 			rpc->StubFragCount++;
@@ -403,7 +403,7 @@ int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 			pdu->Flags = 0;
 			pdu->Type = header->common.ptype;
 			pdu->CallId = header->common.call_id;
-			if(!Stream_EnsureCapacity(pdu->s, Stream_Length(fragment)))
+			if (!Stream_EnsureCapacity(pdu->s, Stream_Length(fragment)))
 				return -1;
 			Stream_Write(pdu->s, buffer, Stream_Length(fragment));
 			Stream_SealLength(pdu->s);
@@ -425,7 +425,7 @@ int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 		pdu->Flags = 0;
 		pdu->Type = header->common.ptype;
 		pdu->CallId = header->common.call_id;
-		if(Stream_EnsureCapacity(pdu->s, Stream_Length(fragment)))
+		if (Stream_EnsureCapacity(pdu->s, Stream_Length(fragment)))
 			return -1;
 		Stream_Write(pdu->s, buffer, Stream_Length(fragment));
 		Stream_SealLength(pdu->s);

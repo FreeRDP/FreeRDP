@@ -676,7 +676,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 
 			if (Stream_GetRemainingLength(s) < 1024)
 			{
-				if(!Stream_EnsureRemainingCapacity(s, 1024))
+				if (!Stream_EnsureRemainingCapacity(s, 1024))
 					goto out_error;
 				buffer = (char*) Stream_Buffer(s);
 				payload = &buffer[payloadOffset];
@@ -786,7 +786,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 
 		if (Stream_GetRemainingLength(s) < 1024)
 		{
-			if(!Stream_EnsureRemainingCapacity(s, 1024))
+			if (!Stream_EnsureRemainingCapacity(s, 1024))
 				goto out_error;
 			buffer = (char*) Stream_Buffer(s);
 			payload = &buffer[payloadOffset];

@@ -970,7 +970,7 @@ static void drdynvc_virtual_channel_event_data_received(drdynvcPlugin* drdynvc,
 	}
 
 	data_in = drdynvc->data_in;
-	if(!Stream_EnsureRemainingCapacity(data_in, (int) dataLength))
+	if (!Stream_EnsureRemainingCapacity(data_in, (int) dataLength))
 	{
 		Stream_Free(drdynvc->data_in, TRUE);
 		drdynvc->data_in = NULL;

@@ -459,7 +459,7 @@ int rdpei_server_resume(RdpeiServerContext *context)
 	}
 
 	Stream_SetPosition(priv->outputStream, 0);
-	if(!Stream_EnsureCapacity(priv->outputStream, RDPINPUT_HEADER_LENGTH))
+	if (!Stream_EnsureCapacity(priv->outputStream, RDPINPUT_HEADER_LENGTH))
 	{
 		fprintf(stderr, "%s: couldn't allocate memory for stream\n", __FUNCTION__);
 		return -1;

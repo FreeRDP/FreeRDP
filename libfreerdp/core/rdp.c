@@ -712,7 +712,7 @@ BOOL rdp_write_monitor_layout_pdu(wStream* s, UINT32 monitorCount, MONITOR_DEF* 
 {
 	UINT32 index;
 	MONITOR_DEF* monitor;
-	if(!Stream_EnsureRemainingCapacity(s, 4 + (monitorCount * 20)))
+	if (!Stream_EnsureRemainingCapacity(s, 4 + (monitorCount * 20)))
 		return FALSE;
 	Stream_Write_UINT32(s, monitorCount); /* monitorCount (4 bytes) */
 

@@ -460,7 +460,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 				return -1;
 			}
 
-			if(!Stream_EnsureCapacity(fastpath->updateData, totalSize))
+			if (!Stream_EnsureCapacity(fastpath->updateData, totalSize))
 			{
 				WLog_ERR(TAG,  "Couldn't re-allocate memory for stream");
 				return -1;
@@ -488,7 +488,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 				return -1;
 			}
 
-			if(!Stream_EnsureCapacity(fastpath->updateData, totalSize))
+			if (!Stream_EnsureCapacity(fastpath->updateData, totalSize))
 			{
 				WLog_ERR(TAG,  "Couldn't re-allocate memory for stream");
 				return -1;

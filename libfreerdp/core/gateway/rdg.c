@@ -104,7 +104,7 @@ wStream* rdg_receive_packet(rdpRdg* rdg)
 
 	if (Stream_Capacity(s) < packet->packetLength)
 	{
-		if(!Stream_EnsureCapacity(s, packet->packetLength))
+		if (!Stream_EnsureCapacity(s, packet->packetLength))
 		{
 			Stream_Free(s, TRUE);
 			return NULL;

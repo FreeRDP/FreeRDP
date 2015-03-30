@@ -100,14 +100,14 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, BYTE* data, int size)
 
 		Stream_Write_UINT32(s, size);
 		Stream_Write_UINT32(s, flags);
-		if(!Stream_EnsureCapacity(s, chunkSize))
+		if (!Stream_EnsureCapacity(s, chunkSize))
 		{
 			Stream_Release(s);
 			return FALSE;
 		}
 		Stream_Write(s, data, chunkSize);
 
-		if(!rdp_send(rdp, s, channelId))
+		if (!rdp_send(rdp, s, channelId))
 		{
 			Stream_Release(s);
 			return FALSE;

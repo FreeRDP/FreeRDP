@@ -118,7 +118,7 @@ static void audin_server_send_formats(audin_server* audin, wStream* s)
 			audin->context.server_formats[i].nChannels *
 			audin->context.server_formats[i].wBitsPerSample / 8;
 
-		if(!Stream_EnsureRemainingCapacity(s, 18))
+		if (!Stream_EnsureRemainingCapacity(s, 18))
 			return;
 
 		Stream_Write_UINT16(s, audin->context.server_formats[i].wFormatTag);
@@ -131,7 +131,7 @@ static void audin_server_send_formats(audin_server* audin, wStream* s)
 
 		if (audin->context.server_formats[i].cbSize)
 		{
-			if(!Stream_EnsureRemainingCapacity(s, audin->context.server_formats[i].cbSize))
+			if (!Stream_EnsureRemainingCapacity(s, audin->context.server_formats[i].cbSize))
 				return;
 
 			Stream_Write(s, audin->context.server_formats[i].data,
