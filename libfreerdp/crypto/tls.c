@@ -709,7 +709,7 @@ int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 		if (verify_status < 1)
 		{
 			WLog_ERR(TAG, "certificate not trusted, aborting.");
-			tls_disconnect(tls);
+			tls_send_alert(tls);
 			verify_status = 0;
 		}
 	}
@@ -819,7 +819,7 @@ BOOL tls_accept(rdpTls* tls, BIO* underlying, const char* cert_file, const char*
 	return tls_do_handshake(tls, FALSE) > 0;
 }
 
-BOOL tls_disconnect(rdpTls* tls)
+BOOL tls_send_alert(rdpTls* tls)
 {
 	if (!tls)
 		return FALSE;
@@ -850,14 +850,7 @@ BOOL tls_disconnect(rdpTls* tls)
 
 		if (tls->ssl->s3->wbuf.left == 0)
 			tls->ssl->method->ssl_dispatch_alert(tls->ssl);
-
-		SSL_shutdown(tls->ssl);
 	}
-	else
-	{
-		SSL_shutdown(tls->ssl);
-	}
-
 	return TRUE;
 }
 
