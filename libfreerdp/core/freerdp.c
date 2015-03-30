@@ -32,7 +32,7 @@
 
 #include <assert.h>
 
-#include <winpr/crt.h>
+#include <winpr/string.h>
 #include <winpr/stream.h>
 #include <winpr/wtsapi.h>
 
@@ -392,6 +392,25 @@ void freerdp_get_version(int* major, int* minor, int* revision)
 
 	if (revision != NULL)
 		*revision = FREERDP_VERSION_REVISION;
+}
+
+const char* freerdp_get_version_string(void)
+{
+	return FREERDP_VERSION_FULL;
+}
+
+const char* freerdp_get_build_date(void)
+{
+	static char build_date[64];
+
+	sprintf_s(build_date, sizeof(build_date), "%s %s", __DATE__, __TIME__);
+
+	return build_date;
+}
+
+const char* freerdp_get_build_revision(void)
+{
+	return GIT_REVISION;
 }
 
 static wEventType FreeRDP_Events[] =

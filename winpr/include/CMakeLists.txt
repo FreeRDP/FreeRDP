@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/winpr/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/winpr/version.h)
+
 file(GLOB WINPR_HEADERS "winpr/*.h")
 install(FILES ${WINPR_HEADERS} DESTINATION include/winpr COMPONENT headers)
 install(DIRECTORY winpr/tools DESTINATION include/winpr COMPONENT headers FILES_MATCHING PATTERN "*.h")

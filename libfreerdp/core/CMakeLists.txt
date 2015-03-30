@@ -140,3 +140,7 @@ else()
 endif()
 
 freerdp_library_add(${OPENSSL_LIBRARIES})
+
+if(BUILD_TESTING)
+	add_subdirectory(test)
+endif()
