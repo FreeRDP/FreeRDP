@@ -759,6 +759,19 @@ int tls_connect(rdpTls* tls, BIO* underlying)
 	return tls_do_handshake(tls, TRUE);
 }
 
+#ifndef OPENSSL_NO_TLSEXT
+static void tls_openssl_tlsext_debug_callback(SSL *s, int client_server,
+	int type, unsigned char *data, int len, void *arg)
+{
+	/* see code comment in tls_accept() below */
+
+	if (type == TLSEXT_TYPE_server_name) {
+		WLog_DBG(TAG, "Client uses SNI (extension disabled)");
+		s->servername_done = 2;
+	}
+}
+#endif
+
 BOOL tls_accept(rdpTls* tls, BIO* underlying, const char* cert_file, const char* privatekey_file)
 {
 	long options = 0;
@@ -815,6 +828,27 @@ BOOL tls_accept(rdpTls* tls, BIO* underlying, const char* cert_file, const char*
 		WLog_ERR(TAG, "SSL_use_certificate_file failed");
 		return FALSE;
 	}
+
+#ifndef OPENSSL_NO_TLSEXT
+	/**
+	 * The Microsoft iOS clients eventually send a null or even double null
+	 * terminated hostname in the SNI TLS extension!
+	 * If the length indicator does not equal the hostname strlen OpenSSL
+	 * will abort (see openssl:ssl/t1_lib.c).
+	 * Here is a tcpdump segment of Microsoft Remote Desktop Client Version
+	 * 8.1.7 running on an iPhone 4 with iOS 7.1.2 showing the transmitted
+	 * SNI hostname TLV blob when connection to server "abcd":
+	 * 00                  name_type 0x00 (host_name)
+	 * 00 06               length_in_bytes 0x0006
+	 * 61 62 63 64 00 00   host_name "abcd\0\0"
+	 *
+	 * Currently the only (runtime) workaround is setting an openssl tls
+	 * extension debug callback that sets the SSL context's servername_done
+	 * to 1 which effectively disables the parsing of that extension type.
+	 */
+
+	SSL_set_tlsext_debug_callback(tls->ssl, tls_openssl_tlsext_debug_callback);
+#endif
 
 	return tls_do_handshake(tls, FALSE) > 0;
 }
