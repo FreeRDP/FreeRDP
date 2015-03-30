@@ -394,12 +394,12 @@ void freerdp_get_version(int* major, int* minor, int* revision)
 		*revision = FREERDP_VERSION_REVISION;
 }
 
-char* freerdp_get_version_string(void)
+const char* freerdp_get_version_string(void)
 {
 	return FREERDP_VERSION_FULL;
 }
 
-char* freerdp_get_build_date(void)
+const char* freerdp_get_build_date(void)
 {
 	static char build_date[64];
 
@@ -408,7 +408,7 @@ char* freerdp_get_build_date(void)
 	return build_date;
 }
 
-char* freerdp_get_build_revision(void)
+const char* freerdp_get_build_revision(void)
 {
 	return GIT_REVISION;
 }

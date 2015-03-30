@@ -260,9 +260,9 @@ FREERDP_API UINT32 freerdp_error_info(freerdp* instance);
 FREERDP_API void freerdp_set_error_info(rdpRdp* rdp, UINT32 error);
 
 FREERDP_API void freerdp_get_version(int* major, int* minor, int* revision);
-FREERDP_API char* freerdp_get_version_string(void);
-FREERDP_API char* freerdp_get_build_date(void);
-FREERDP_API char* freerdp_get_build_revision(void);
+FREERDP_API const char* freerdp_get_version_string(void);
+FREERDP_API const char* freerdp_get_build_date(void);
+FREERDP_API const char* freerdp_get_build_revision(void);
 
 FREERDP_API freerdp* freerdp_new(void);
 FREERDP_API void freerdp_free(freerdp* instance);

@@ -37,12 +37,12 @@ void winpr_get_version(int* major, int* minor, int* revision)
 		*revision = WINPR_VERSION_REVISION;
 }
 
-char* winpr_get_version_string(void)
+const char* winpr_get_version_string(void)
 {
 	return WINPR_VERSION_FULL;
 }
 
-char* winpr_get_build_date(void)
+const char* winpr_get_build_date(void)
 {
 	static char build_date[64];
 
@@ -51,7 +51,7 @@ char* winpr_get_build_date(void)
 	return build_date;
 }
 
-char* winpr_get_build_revision(void)
+const char* winpr_get_build_revision(void)
 {
 	return GIT_REVISION;
 }
