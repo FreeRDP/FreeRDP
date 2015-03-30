@@ -3,9 +3,9 @@
 
 int TestVersion(int argc, char* argv[])
 {
-	char *version;
-	char *git;
-	char *build;
+	const char *version;
+	const char *git;
+	const char *build;
 	int major = 0, minor = 0, revision = 0;
 
 	freerdp_get_version(&major, &minor, &revision);
