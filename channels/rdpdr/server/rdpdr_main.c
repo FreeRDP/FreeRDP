@@ -264,7 +264,7 @@ static int rdpdr_server_write_smartcard_capability_set(RdpdrServerContext* conte
 static int rdpdr_server_send_core_capability_request(RdpdrServerContext* context)
 {
 	wStream* s;
-	BOOL status;
+	BOOL status = FALSE;
 	RDPDR_HEADER header;
 	UINT16 numCapabilities;
 	ULONG written;
@@ -291,13 +291,9 @@ static int rdpdr_server_send_core_capability_request(RdpdrServerContext* context
 		goto out_error;
 	Stream_SealLength(s);
 	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
-	Stream_Free(s, TRUE);
-	return status ? 0 : -1;
-
 out_error:
 	Stream_Free(s, TRUE);
-	return -1;
-
+	return status ? 0 : -1;
 }
 
 static int rdpdr_server_receive_core_capability_response(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)

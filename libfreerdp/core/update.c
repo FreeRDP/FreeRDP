@@ -115,7 +115,7 @@ BOOL update_read_bitmap_data(rdpUpdate* update, wStream* s, BITMAP_DATA* bitmapD
 BOOL update_write_bitmap_data(rdpUpdate* update, wStream* s, BITMAP_DATA* bitmapData)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 64 + bitmapData->bitmapLength))
-		return TRUE;
+		return FALSE;
 
 	bitmapData->flags = 0;
 	bitmapData->cbCompFirstRowSize = 0;
@@ -204,7 +204,7 @@ BOOL update_write_bitmap_update(rdpUpdate* update, wStream* s, BITMAP_UPDATE* bi
 	int i;
 
 	if (!Stream_EnsureRemainingCapacity(s, 32))
-		return TRUE;
+		return FALSE;
 
 	Stream_Write_UINT16(s, UPDATE_TYPE_BITMAP); /* updateType */
 

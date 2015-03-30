@@ -545,7 +545,7 @@ static void rdpsnd_pulse_play(rdpsndDevicePlugin* device, BYTE* data, int size)
 		return;
 
 	pcmData = rdpsnd_pulse_convert_audio(device, data, &size);
-	if (pcmData)
+	if (!pcmData)
 		return;
 
 	pa_threaded_mainloop_lock(pulse->mainloop);

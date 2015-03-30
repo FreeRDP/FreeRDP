@@ -667,7 +667,7 @@ int rdpsnd_server_handle_messages(RdpsndServerContext *context)
 		if (priv->expectedBytes)
 		{
 			if (!Stream_EnsureCapacity(s, priv->expectedBytes))
-				return -1;
+				return 0;
 			return 1;
 		}
 	}
