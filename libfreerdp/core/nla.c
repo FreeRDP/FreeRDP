@@ -1230,7 +1230,7 @@ int nla_recv(rdpNla* nla)
 		return -1;
 	}
 
-	if (nla_recv_pdu(nla, s) < 1)
+	if (nla_decode_ts_request(nla, s) < 1)
 		return -1;
 
 	Stream_Free(s, TRUE);
