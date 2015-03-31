@@ -319,6 +319,10 @@ int WLog_ParseFilter(wLogFilter* filter, LPCSTR name)
 	LPSTR names;
 	int iLevel;
 	count = 1;
+
+	if(!name)
+		return -1;
+
 	p = (char*) name;
 
 	if (p)
@@ -331,8 +335,16 @@ int WLog_ParseFilter(wLogFilter* filter, LPCSTR name)
 	}
 
 	names = _strdup(name);
+	if (!names)
+		return -1;
 	filter->NameCount = count;
 	filter->Names = (LPSTR*) calloc((count + 1UL), sizeof(LPSTR));
+	if(!filter->Names)
+	{
+		free(names);
+		filter->NameCount = 0;
+		return -1;
+	}
 	filter->Names[count] = NULL;
 	count = 0;
 	p = (char*) names;
@@ -340,14 +352,26 @@ int WLog_ParseFilter(wLogFilter* filter, LPCSTR name)
 	q = strrchr(p, ':');
 
 	if (!q)
+	{
+		free(names);
+		free(filter->Names);
+		filter->Names = NULL;
+		filter->NameCount = 0;
 		return -1;
+	}
 
 	*q = '\0';
 	q++;
 	iLevel = WLog_ParseLogLevel(q);
 
 	if (iLevel < 0)
+	{
+		free(names);
+		free(filter->Names);
+		filter->Names = NULL;
+		filter->NameCount = 0;
 		return -1;
+	}
 
 	filter->Level = (DWORD) iLevel;
 
