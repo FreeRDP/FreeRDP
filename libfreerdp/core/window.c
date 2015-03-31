@@ -45,7 +45,11 @@ static BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_st
 
 	new_str = (BYTE*) realloc(unicode_string->string, new_len);
 	if (!new_str)
+	{
+		free (unicode_string->string);
+		unicode_string->string = NULL;
 		return FALSE;
+	}
 
 	unicode_string->string = new_str;
 	unicode_string->length = new_len;
@@ -99,7 +103,11 @@ BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 	/* bitsMask */
 	newBitMask = (BYTE*) realloc(iconInfo->bitsMask, iconInfo->cbBitsMask);
 	if (!newBitMask)
+	{
+		free (iconInfo->bitsMask);
+		iconInfo->bitsMask = NULL;
 		return FALSE;
+	}
 	iconInfo->bitsMask = newBitMask;
 
 	Stream_Read(s, iconInfo->bitsMask, iconInfo->cbBitsMask);
@@ -116,7 +124,11 @@ BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 
 		new_tab = (BYTE*) realloc(iconInfo->colorTable, iconInfo->cbColorTable);
 		if (!new_tab)
+		{
+			free (iconInfo->colorTable);
+			iconInfo->colorTable = NULL;
 			return FALSE;
+		}
 		iconInfo->colorTable = new_tab;
 	}
 	else
@@ -131,7 +143,11 @@ BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 	/* bitsColor */
 	newBitMask = (BYTE *)realloc(iconInfo->bitsColor, iconInfo->cbBitsColor);
 	if (!newBitMask)
+	{
+		free (iconInfo->bitsColor);
+		iconInfo->bitsColor = NULL;
 		return FALSE;
+	}
 	iconInfo->bitsColor = newBitMask;
 
 	Stream_Read(s, iconInfo->bitsColor, iconInfo->cbBitsColor);
@@ -499,7 +515,12 @@ BOOL update_read_desktop_actively_monitored_order(wStream* s, WINDOW_ORDER_INFO*
 
 		newid = (UINT32*) realloc(monitored_desktop->windowIds, size);
 		if (!newid)
+		{
+			free (monitored_desktop->windowIds);
+			monitored_desktop->windowIds = NULL;
 			return FALSE;
+		}
+		monitored_desktop->windowIds = newid;
 
 		/* windowIds */
 		for (i = 0; i < (int) monitored_desktop->numWindowIds; i++)
