@@ -514,8 +514,7 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, int length)
 
 BOOL gcc_write_server_data_blocks(wStream* s, rdpMcs* mcs)
 {
-	return
-		gcc_write_server_core_data(s, mcs) && /* serverCoreData */
+	return gcc_write_server_core_data(s, mcs) && /* serverCoreData */
 		gcc_write_server_network_data(s, mcs) && /* serverNetworkData */
 		gcc_write_server_security_data(s, mcs) && /* serverSecurityData */
 		gcc_write_server_message_channel_data(s, mcs); /* serverMessageChannelData */
