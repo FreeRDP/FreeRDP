@@ -1495,7 +1495,7 @@ BOOL gcc_write_server_network_data(wStream* s, rdpMcs* mcs)
 	UINT32 i;
 	int payloadLen = 8 + mcs->channelCount * 2 + (mcs->channelCount % 2 == 1 ? 2 : 0);
 
-	if (Stream_EnsureRemainingCapacity(s, payloadLen + 4))
+	if (!Stream_EnsureRemainingCapacity(s, payloadLen + 4))
 		return FALSE;
 
 	gcc_write_user_data_header(s, SC_NET, payloadLen);
