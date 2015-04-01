@@ -688,13 +688,19 @@ BOOL mcs_send_connect_response(rdpMcs* mcs)
 	wStream* server_data;
 
 	server_data = Stream_New(NULL, 512);
-	gcc_write_server_data_blocks(server_data, mcs);
+	if (!gcc_write_server_data_blocks(server_data, mcs))
+		goto error_data_blocks;
 
-	gcc_CCrsp = Stream_New(NULL, 512);
+	gcc_CCrsp = Stream_New(NULL, 512 + Stream_Capacity(server_data));
+	if (!gcc_CCrsp)
+		goto error_data_blocks;
+
 	gcc_write_conference_create_response(gcc_CCrsp, server_data);
 	length = Stream_GetPosition(gcc_CCrsp) + 7;
 
 	s = Stream_New(NULL, length + 1024);
+	if (!s)
+		goto error_stream_s;
 
 	bm = Stream_GetPosition(s);
 	Stream_Seek(s, 7);
@@ -716,6 +722,12 @@ BOOL mcs_send_connect_response(rdpMcs* mcs)
 	Stream_Free(server_data, TRUE);
 
 	return (status < 0) ? FALSE : TRUE;
+
+error_stream_s:
+	Stream_Free(gcc_CCrsp, TRUE);
+error_data_blocks:
+	Stream_Free(s, TRUE);
+	return FALSE;
 }
 
 /**

@@ -225,13 +225,6 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 			WLog_ERR(TAG, "inavlid RDP key file %s", settings->RdpKeyFile);
 			return FALSE;
 		}
-
-		if (settings->RdpServerRsaKey->ModulusLength > 256)
-		{
-			WLog_ERR(TAG, "Key sizes > 2048 are currently not supported for RDP security.");
-			WLog_ERR(TAG, "Set a different key file than %s", settings->RdpKeyFile);
-			return FALSE;
-		}
 	}
 
 	return TRUE;

@@ -512,12 +512,13 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, int length)
 	return TRUE;
 }
 
-void gcc_write_server_data_blocks(wStream* s, rdpMcs* mcs)
+BOOL gcc_write_server_data_blocks(wStream* s, rdpMcs* mcs)
 {
-	gcc_write_server_core_data(s, mcs); /* serverCoreData */
-	gcc_write_server_network_data(s, mcs); /* serverNetworkData */
-	gcc_write_server_security_data(s, mcs); /* serverSecurityData */
-	gcc_write_server_message_channel_data(s, mcs); /* serverMessageChannelData */
+	return
+		gcc_write_server_core_data(s, mcs) && /* serverCoreData */
+		gcc_write_server_network_data(s, mcs) && /* serverNetworkData */
+		gcc_write_server_security_data(s, mcs) && /* serverSecurityData */
+		gcc_write_server_message_channel_data(s, mcs); /* serverMessageChannelData */
 
 	/* TODO: Send these GCC data blocks only when the client sent them */
 	//gcc_write_server_multitransport_channel_data(s, settings); /* serverMultitransportChannelData */
@@ -920,11 +921,14 @@ BOOL gcc_read_server_core_data(wStream* s, rdpMcs* mcs)
 	return TRUE;
 }
 
-void gcc_write_server_core_data(wStream* s, rdpMcs* mcs)
+BOOL gcc_write_server_core_data(wStream* s, rdpMcs* mcs)
 {
 	UINT32 version;
 	UINT32 earlyCapabilityFlags = 0;
 	rdpSettings* settings = mcs->settings;
+
+	if (!Stream_EnsureRemainingCapacity(s, 20))
+		return FALSE;
 
 	gcc_write_user_data_header(s, SC_CORE, 16);
 
@@ -936,6 +940,7 @@ void gcc_write_server_core_data(wStream* s, rdpMcs* mcs)
 	Stream_Write_UINT32(s, version); /* version (4 bytes) */
 	Stream_Write_UINT32(s, settings->RequestedProtocols); /* clientRequestedProtocols (4 bytes) */
 	Stream_Write_UINT32(s, earlyCapabilityFlags); /* earlyCapabilityFlags (4 bytes) */
+	return TRUE;
 }
 
 /**
@@ -1164,7 +1169,7 @@ const BYTE tssk_exponent[] =
 	0x5b, 0x7b, 0x88, 0xc0
 };
 
-void gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
+BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 {
 	CryptoMd5 md5;
 	BYTE* sigData;
@@ -1256,6 +1261,7 @@ void gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 			break;
 		default:
 			WLog_ERR(TAG, "internal error: unknown encryption level");
+			return FALSE;
 	}
 
 	/* log selected encryption method */
@@ -1278,6 +1284,7 @@ void gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 			break;
 		default:
 			WLog_ERR(TAG, "internal error: unknown encryption method");
+			return FALSE;
 	}
 
 	headerLen = 12;
@@ -1317,6 +1324,8 @@ void gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 		headerLen += serverCertLen;
 	}
 
+	if (!Stream_EnsureRemainingCapacity(s, headerLen + 4))
+		return FALSE;
 	gcc_write_user_data_header(s, SC_SECURITY, headerLen);
 
 	Stream_Write_UINT32(s, settings->EncryptionMethods); /* encryptionMethod */
@@ -1324,7 +1333,7 @@ void gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 
 	if (settings->EncryptionMethods == ENCRYPTION_METHOD_NONE)
 	{
-		return;
+		return TRUE;
 	}
 
 	Stream_Write_UINT32(s, serverRandomLen); /* serverRandomLen */
@@ -1363,7 +1372,7 @@ void gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 	if (!md5)
 	{
 		WLog_ERR(TAG,  "unable to allocate a md5");
-		return;
+		return FALSE;
 	}
 
 	crypto_md5_update(md5, sigData, sigDataLen);
@@ -1374,6 +1383,7 @@ void gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 
 	Stream_Write(s, encryptedSignature, sizeof(encryptedSignature));
 	Stream_Zero(s, 8);
+	return TRUE;
 }
 
 /**
@@ -1481,11 +1491,15 @@ BOOL gcc_read_server_network_data(wStream* s, rdpMcs* mcs)
 	return TRUE;
 }
 
-void gcc_write_server_network_data(wStream* s, rdpMcs* mcs)
+BOOL gcc_write_server_network_data(wStream* s, rdpMcs* mcs)
 {
 	UINT32 i;
+	int payloadLen = 8 + mcs->channelCount * 2 + (mcs->channelCount % 2 == 1 ? 2 : 0);
 
-	gcc_write_user_data_header(s, SC_NET, 8 + mcs->channelCount * 2 + (mcs->channelCount % 2 == 1 ? 2 : 0));
+	if (Stream_EnsureRemainingCapacity(s, payloadLen + 4))
+		return FALSE;
+
+	gcc_write_user_data_header(s, SC_NET, payloadLen);
 
 	Stream_Write_UINT16(s, MCS_GLOBAL_CHANNEL_ID); /* MCSChannelId */
 	Stream_Write_UINT16(s, mcs->channelCount); /* channelCount */
@@ -1497,6 +1511,7 @@ void gcc_write_server_network_data(wStream* s, rdpMcs* mcs)
 
 	if (mcs->channelCount % 2 == 1)
 		Stream_Write_UINT16(s, 0);
+	return TRUE;
 }
 
 /**
@@ -1735,14 +1750,18 @@ BOOL gcc_read_server_message_channel_data(wStream* s, rdpMcs* mcs)
 	return TRUE;
 }
 
-void gcc_write_server_message_channel_data(wStream* s, rdpMcs* mcs)
+BOOL gcc_write_server_message_channel_data(wStream* s, rdpMcs* mcs)
 {
 	if (mcs->messageChannelId == 0)
-		return;
+		return TRUE;
+
+	if (!Stream_EnsureRemainingCapacity(s, 6 + 4))
+		return FALSE;
 
 	gcc_write_user_data_header(s, SC_MCS_MSGCHANNEL, 6);
 
 	Stream_Write_UINT16(s, mcs->messageChannelId); /* mcsChannelId (2 bytes) */
+	return TRUE;
 }
 
 /**
