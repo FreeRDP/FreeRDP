@@ -112,19 +112,20 @@ CryptoDes3 crypto_des3_decrypt_init(const BYTE* key, const BYTE* ivec)
 	return des3;
 }
 
-void crypto_des3_encrypt(CryptoDes3 des3, UINT32 length, const BYTE* in_data, BYTE* out_data)
+BOOL crypto_des3_encrypt(CryptoDes3 des3, UINT32 length, const BYTE* in_data, BYTE* out_data)
 {
 	int len;
-	EVP_EncryptUpdate(&des3->des3_ctx, out_data, &len, in_data, length);
+	return EVP_EncryptUpdate(&des3->des3_ctx, out_data, &len, in_data, length) == 1;
 }
 
-void crypto_des3_decrypt(CryptoDes3 des3, UINT32 length, const BYTE* in_data, BYTE* out_data)
+BOOL crypto_des3_decrypt(CryptoDes3 des3, UINT32 length, const BYTE* in_data, BYTE* out_data)
 {
 	int len;
-	EVP_DecryptUpdate(&des3->des3_ctx, out_data, &len, in_data, length);
+	int ret = EVP_DecryptUpdate(&des3->des3_ctx, out_data, &len, in_data, length);
 
 	if (length != len)
 		abort(); /* TODO */
+	return ret == 1;
 }
 
 void crypto_des3_free(CryptoDes3 des3)
@@ -145,14 +146,14 @@ CryptoHmac crypto_hmac_new(void)
 	return hmac;
 }
 
-void crypto_hmac_sha1_init(CryptoHmac hmac, const BYTE* data, UINT32 length)
+BOOL crypto_hmac_sha1_init(CryptoHmac hmac, const BYTE* data, UINT32 length)
 {
-	HMAC_Init_ex(&hmac->hmac_ctx, data, length, EVP_sha1(), NULL);
+	return HMAC_Init_ex(&hmac->hmac_ctx, data, length, EVP_sha1(), NULL) == 1;
 }
 
-void crypto_hmac_md5_init(CryptoHmac hmac, const BYTE* data, UINT32 length)
+BOOL crypto_hmac_md5_init(CryptoHmac hmac, const BYTE* data, UINT32 length)
 {
-	HMAC_Init_ex(&hmac->hmac_ctx, data, length, EVP_md5(), NULL);
+	return HMAC_Init_ex(&hmac->hmac_ctx, data, length, EVP_md5(), NULL) == 1;
 }
 
 void crypto_hmac_update(CryptoHmac hmac, const BYTE* data, UINT32 length)

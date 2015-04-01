@@ -72,7 +72,8 @@ BOOL rdp_compute_client_auto_reconnect_cookie(rdpRdp* rdp)
 
 	/* SecurityVerifier = HMAC_MD5(AutoReconnectRandom, ClientRandom) */
 
-	crypto_hmac_md5_init(hmac, AutoReconnectRandom, 16);
+	if (!crypto_hmac_md5_init(hmac, AutoReconnectRandom, 16))
+		return FALSE;
 	crypto_hmac_update(hmac, ClientRandom, 32);
 	crypto_hmac_final(hmac, clientCookie->securityVerifier, 16);
 	crypto_hmac_free(hmac);

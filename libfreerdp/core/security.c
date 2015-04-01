@@ -123,7 +123,7 @@ fips_oddparity_table[256] =
 	0xf8, 0xf8, 0xfb, 0xfb, 0xfd, 0xfd, 0xfe, 0xfe
 };
 
-static void security_salted_hash(const BYTE* salt, const BYTE* input, int length,
+static BOOL security_salted_hash(const BYTE* salt, const BYTE* input, int length,
 		const BYTE* salt1, const BYTE* salt2, BYTE* output)
 {
 	CryptoMd5 md5;
@@ -137,7 +137,7 @@ static void security_salted_hash(const BYTE* salt, const BYTE* input, int length
 	if (!sha1)
 	{
 		WLog_ERR(TAG,  "unable to allocate a sha1");
-		return;
+		return FALSE;
 	}
 	crypto_sha1_update(sha1, input, length); /* Input */
 	crypto_sha1_update(sha1, salt, 48); /* Salt (48 bytes) */
@@ -150,42 +150,46 @@ static void security_salted_hash(const BYTE* salt, const BYTE* input, int length
 	if (!md5)
 	{
 		WLog_ERR(TAG,  "unable to allocate a md5");
-		return;
+		return FALSE;
 	}
 	crypto_md5_update(md5, salt, 48); /* Salt (48 bytes) */
 	crypto_md5_update(md5, sha1_digest, sizeof(sha1_digest)); /* SHA1_Digest */
 	crypto_md5_final(md5, output);
+	return TRUE;
 }
 
-static void security_premaster_hash(const char* input, int length, const BYTE* premaster_secret, const BYTE* client_random, const BYTE* server_random, BYTE* output)
+static BOOL security_premaster_hash(const char* input, int length, const BYTE* premaster_secret,
+		const BYTE* client_random, const BYTE* server_random, BYTE* output)
 {
 	/* PremasterHash(Input) = SaltedHash(PremasterSecret, Input, ClientRandom, ServerRandom) */
-	security_salted_hash(premaster_secret, (BYTE*)input, length, client_random, server_random, output);
+	return security_salted_hash(premaster_secret, (BYTE*)input, length, client_random, server_random, output);
 }
 
-void security_master_secret(const BYTE* premaster_secret, const BYTE* client_random,
+BOOL security_master_secret(const BYTE* premaster_secret, const BYTE* client_random,
 		const BYTE* server_random, BYTE* output)
 {
 	/* MasterSecret = PremasterHash('A') + PremasterHash('BB') + PremasterHash('CCC') */
-	security_premaster_hash("A", 1, premaster_secret, client_random, server_random, &output[0]);
-	security_premaster_hash("BB", 2, premaster_secret, client_random, server_random, &output[16]);
-	security_premaster_hash("CCC", 3, premaster_secret, client_random, server_random, &output[32]);
+	return
+		security_premaster_hash("A", 1, premaster_secret, client_random, server_random, &output[0]) &&
+		security_premaster_hash("BB", 2, premaster_secret, client_random, server_random, &output[16]) &&
+		security_premaster_hash("CCC", 3, premaster_secret, client_random, server_random, &output[32]);
 }
 
-static void security_master_hash(const char* input, int length, const BYTE* master_secret,
+static BOOL security_master_hash(const char* input, int length, const BYTE* master_secret,
 		const BYTE* client_random, const BYTE* server_random, BYTE* output)
 {
 	/* MasterHash(Input) = SaltedHash(MasterSecret, Input, ServerRandom, ClientRandom) */
-	security_salted_hash(master_secret, (const BYTE*)input, length, server_random, client_random, output);
+	return security_salted_hash(master_secret, (const BYTE*)input, length, server_random, client_random, output);
 }
 
-void security_session_key_blob(const BYTE* master_secret, const BYTE* client_random,
+BOOL security_session_key_blob(const BYTE* master_secret, const BYTE* client_random,
 		const BYTE* server_random, BYTE* output)
 {
 	/* MasterHash = MasterHash('A') + MasterHash('BB') + MasterHash('CCC') */
-	security_master_hash("A", 1, master_secret, client_random, server_random, &output[0]);
-	security_master_hash("BB", 2, master_secret, client_random, server_random, &output[16]);
-	security_master_hash("CCC", 3, master_secret, client_random, server_random, &output[32]);
+	return
+		security_master_hash("A", 1, master_secret, client_random, server_random, &output[0]) &&
+		security_master_hash("BB", 2, master_secret, client_random, server_random, &output[16]) &&
+		security_master_hash("CCC", 3, master_secret, client_random, server_random, &output[32]);
 }
 
 void security_mac_salt_key(const BYTE* session_key_blob, const BYTE* client_random,
@@ -195,7 +199,7 @@ void security_mac_salt_key(const BYTE* session_key_blob, const BYTE* client_rand
 	memcpy(output, session_key_blob, 16);
 }
 
-void security_md5_16_32_32(const BYTE* in0, const BYTE* in1, const BYTE* in2, BYTE* output)
+BOOL security_md5_16_32_32(const BYTE* in0, const BYTE* in1, const BYTE* in2, BYTE* output)
 {
 	CryptoMd5 md5;
 
@@ -203,19 +207,20 @@ void security_md5_16_32_32(const BYTE* in0, const BYTE* in1, const BYTE* in2, BY
 	if (!md5)
 	{
 		WLog_ERR(TAG,  "unable to allocate a md5");
-		return;
+		return FALSE;
 	}
 	crypto_md5_update(md5, in0, 16);
 	crypto_md5_update(md5, in1, 32);
 	crypto_md5_update(md5, in2, 32);
 	crypto_md5_final(md5, output);
+	return TRUE;
 }
 
-void security_licensing_encryption_key(const BYTE* session_key_blob, const BYTE* client_random,
+BOOL security_licensing_encryption_key(const BYTE* session_key_blob, const BYTE* client_random,
 		const BYTE* server_random, BYTE* output)
 {
 	/* LicensingEncryptionKey = MD5(Second128Bits(SessionKeyBlob) + ClientRandom + ServerRandom)) */
-	security_md5_16_32_32(&session_key_blob[16], client_random, server_random, output);
+	return security_md5_16_32_32(&session_key_blob[16], client_random, server_random, output);
 }
 
 void security_UINT32_le(BYTE* output, UINT32 value)
@@ -226,7 +231,7 @@ void security_UINT32_le(BYTE* output, UINT32 value)
 	output[3] = (value >> 24) & 0xFF;
 }
 
-void security_mac_data(const BYTE* mac_salt_key, const BYTE* data, UINT32 length,
+BOOL security_mac_data(const BYTE* mac_salt_key, const BYTE* data, UINT32 length,
 		BYTE* output)
 {
 	CryptoMd5 md5;
@@ -242,8 +247,8 @@ void security_mac_data(const BYTE* mac_salt_key, const BYTE* data, UINT32 length
 	sha1 = crypto_sha1_init();
 	if (!sha1)
 	{
-		WLog_ERR(TAG,  "unable to allocate a sha1");
-		return;
+		WLog_ERR(TAG, "unable to allocate a sha1");
+		return FALSE;
 	}
 	crypto_sha1_update(sha1, mac_salt_key, 16); /* MacSaltKey */
 	crypto_sha1_update(sha1, pad1, sizeof(pad1)); /* pad1 */
@@ -255,16 +260,17 @@ void security_mac_data(const BYTE* mac_salt_key, const BYTE* data, UINT32 length
 	md5 = crypto_md5_init();
 	if (!md5)
 	{
-		WLog_ERR(TAG,  "unable to allocate a md5");
-		return;
+		WLog_ERR(TAG, "unable to allocate a md5");
+		return FALSE;
 	}
 	crypto_md5_update(md5, mac_salt_key, 16); /* MacSaltKey */
 	crypto_md5_update(md5, pad2, sizeof(pad2)); /* pad2 */
 	crypto_md5_update(md5, sha1_digest, sizeof(sha1_digest)); /* SHA1_Digest */
 	crypto_md5_final(md5, output);
+	return TRUE;
 }
 
-void security_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length, BYTE* output)
+BOOL security_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length, BYTE* output)
 {
 	CryptoMd5 md5;
 	CryptoSha1 sha1;
@@ -278,8 +284,8 @@ void security_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length, BYTE* 
 	sha1 = crypto_sha1_init();
 	if (!sha1)
 	{
-		WLog_ERR(TAG,  "unable to allocate a sha1");
-		return;
+		WLog_ERR(TAG, "unable to allocate a sha1");
+		return FALSE;
 	}
 	crypto_sha1_update(sha1, rdp->sign_key, rdp->rc4_key_len); /* MacKeyN */
 	crypto_sha1_update(sha1, pad1, sizeof(pad1)); /* pad1 */
@@ -291,8 +297,8 @@ void security_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length, BYTE* 
 	md5 = crypto_md5_init();
 	if (!md5)
 	{
-		WLog_ERR(TAG,  "unable to allocate a md5");
-		return;
+		WLog_ERR(TAG, "unable to allocate a md5");
+		return FALSE;
 	}
 	crypto_md5_update(md5, rdp->sign_key, rdp->rc4_key_len); /* MacKeyN */
 	crypto_md5_update(md5, pad2, sizeof(pad2)); /* pad2 */
@@ -300,9 +306,10 @@ void security_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length, BYTE* 
 	crypto_md5_final(md5, md5_digest);
 
 	memcpy(output, md5_digest, 8);
+	return TRUE;
 }
 
-void security_salted_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length,
+BOOL security_salted_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length,
 		BOOL encryption, BYTE* output)
 {
 	CryptoMd5 md5;
@@ -331,8 +338,8 @@ void security_salted_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length,
 	sha1 = crypto_sha1_init();
 	if (!sha1)
 	{
-		WLog_ERR(TAG,  "unable to allocate a sha1");
-		return;
+		WLog_ERR(TAG, "unable to allocate a sha1");
+		return FALSE;
 	}
 	crypto_sha1_update(sha1, rdp->sign_key, rdp->rc4_key_len); /* MacKeyN */
 	crypto_sha1_update(sha1, pad1, sizeof(pad1)); /* pad1 */
@@ -345,8 +352,8 @@ void security_salted_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length,
 	md5 = crypto_md5_init();
 	if (!md5)
 	{
-		WLog_ERR(TAG,  "unable to allocate a md5");
-		return;
+		WLog_ERR(TAG, "unable to allocate a md5");
+		return FALSE;
 	}
 	crypto_md5_update(md5, rdp->sign_key, rdp->rc4_key_len); /* MacKeyN */
 	crypto_md5_update(md5, pad2, sizeof(pad2)); /* pad2 */
@@ -354,22 +361,25 @@ void security_salted_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length,
 	crypto_md5_final(md5, md5_digest);
 
 	memcpy(output, md5_digest, 8);
+	return TRUE;
 }
 
-static void security_A(BYTE* master_secret, const BYTE* client_random, BYTE* server_random,
+static BOOL security_A(BYTE* master_secret, const BYTE* client_random, BYTE* server_random,
 		BYTE* output)
 {
-	security_premaster_hash("A", 1, master_secret, client_random, server_random, &output[0]);
-	security_premaster_hash("BB", 2, master_secret, client_random, server_random, &output[16]);
-	security_premaster_hash("CCC", 3, master_secret, client_random, server_random, &output[32]);
+	return
+		security_premaster_hash("A", 1, master_secret, client_random, server_random, &output[0]) &&
+		security_premaster_hash("BB", 2, master_secret, client_random, server_random, &output[16]) &&
+		security_premaster_hash("CCC", 3, master_secret, client_random, server_random, &output[32]);
 }
 
-static void security_X(BYTE* master_secret, const BYTE* client_random, BYTE* server_random,
+static BOOL security_X(BYTE* master_secret, const BYTE* client_random, BYTE* server_random,
 		BYTE* output)
 {
-	security_premaster_hash("X", 1, master_secret, client_random, server_random, &output[0]);
-	security_premaster_hash("YY", 2, master_secret, client_random, server_random, &output[16]);
-	security_premaster_hash("ZZZ", 3, master_secret, client_random, server_random, &output[32]);
+	return
+		security_premaster_hash("X", 1, master_secret, client_random, server_random, &output[0]) &&
+		security_premaster_hash("YY", 2, master_secret, client_random, server_random, &output[16]) &&
+		security_premaster_hash("ZZZ", 3, master_secret, client_random, server_random, &output[32]);
 }
 
 static void fips_expand_key_bits(BYTE* in, BYTE* out)
@@ -413,6 +423,7 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 	BYTE* server_random;
 	BYTE salt[] = { 0xD1, 0x26, 0x9E }; /* 40 bits: 3 bytes, 56 bits: 1 byte */
 	rdpSettings* settings;
+	BOOL status;
 
 	settings = rdp->settings;
 	server_random = settings->ServerRandom;
@@ -469,25 +480,28 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 	memcpy(pre_master_secret, client_random, 24);
 	memcpy(pre_master_secret + 24, server_random, 24);
 
-	security_A(pre_master_secret, client_random, server_random, master_secret);
-	security_X(master_secret, client_random, server_random, session_key_blob);
+	if (!security_A(pre_master_secret, client_random, server_random, master_secret) ||
+		!security_X(master_secret, client_random, server_random, session_key_blob))
+	{
+		return FALSE;
+	}
 
 	memcpy(rdp->sign_key, session_key_blob, 16);
 
 	if (rdp->settings->ServerMode)
 	{
-		security_md5_16_32_32(&session_key_blob[16], client_random,
-		    server_random, rdp->encrypt_key);
-		security_md5_16_32_32(&session_key_blob[32], client_random,
-		    server_random, rdp->decrypt_key);
+		status = security_md5_16_32_32(&session_key_blob[16], client_random, server_random, rdp->encrypt_key);
+		status &= security_md5_16_32_32(&session_key_blob[32], client_random, server_random, rdp->decrypt_key);
 	}
 	else
 	{
-		security_md5_16_32_32(&session_key_blob[16], client_random,
-		    server_random, rdp->decrypt_key);
-		security_md5_16_32_32(&session_key_blob[32], client_random,
-		    server_random, rdp->encrypt_key);
+		status = security_md5_16_32_32(&session_key_blob[16], client_random, server_random, rdp->decrypt_key);
+		status &= security_md5_16_32_32(&session_key_blob[32], client_random, server_random, rdp->encrypt_key);
 	}
+
+	if (!status)
+		return FALSE;
+
 
 	if (settings->EncryptionMethods == ENCRYPTION_METHOD_40BIT)
 	{
@@ -540,7 +554,7 @@ BOOL security_key_update(BYTE* key, BYTE* update_key, int key_len, rdpRdp* rdp)
 	md5 = crypto_md5_init();
 	if (!md5)
 	{
-		WLog_ERR(TAG,  "unable to allocate a md5");
+		WLog_ERR(TAG, "unable to allocate a md5");
 		return FALSE;
 	}
 	crypto_md5_update(md5, update_key, key_len);
@@ -551,7 +565,7 @@ BOOL security_key_update(BYTE* key, BYTE* update_key, int key_len, rdpRdp* rdp)
 	rc4 = crypto_rc4_init(key, key_len);
 	if (!rc4)
 	{
-		WLog_ERR(TAG,  "unable to allocate a rc4");
+		WLog_ERR(TAG, "unable to allocate a rc4");
 		return FALSE;
 	}
 	crypto_rc4(rc4, key_len, key, key);
@@ -569,16 +583,19 @@ BOOL security_encrypt(BYTE* data, int length, rdpRdp* rdp)
 {
 	if (rdp->encrypt_use_count >= 4096)
 	{
-		security_key_update(rdp->encrypt_key, rdp->encrypt_update_key, rdp->rc4_key_len, rdp);
+		if (!security_key_update(rdp->encrypt_key, rdp->encrypt_update_key, rdp->rc4_key_len, rdp))
+			return FALSE;
+
 		crypto_rc4_free(rdp->rc4_encrypt_key);
 		rdp->rc4_encrypt_key = crypto_rc4_init(rdp->encrypt_key, rdp->rc4_key_len);
 		if (!rdp->rc4_encrypt_key)
 		{
-			WLog_ERR(TAG,  "unable to allocate rc4 encrypt key");
+			WLog_ERR(TAG, "unable to allocate rc4 encrypt key");
 			return FALSE;
 		}
 		rdp->encrypt_use_count = 0;
 	}
+
 	crypto_rc4(rdp->rc4_encrypt_key, length, data, data);
 	rdp->encrypt_use_count++;
 	rdp->encrypt_checksum_use_count++;
@@ -589,9 +606,11 @@ BOOL security_decrypt(BYTE* data, int length, rdpRdp* rdp)
 {
 	if (rdp->rc4_decrypt_key == NULL)
 		return FALSE;
+
 	if (rdp->decrypt_use_count >= 4096)
 	{
-		security_key_update(rdp->decrypt_key, rdp->decrypt_update_key, rdp->rc4_key_len, rdp);
+		if (!security_key_update(rdp->decrypt_key, rdp->decrypt_update_key, rdp->rc4_key_len, rdp))
+			return FALSE;
 		crypto_rc4_free(rdp->rc4_decrypt_key);
 		rdp->rc4_decrypt_key = crypto_rc4_init(rdp->decrypt_key, rdp->rc4_key_len);
 		if (!rdp->rc4_decrypt_key)
@@ -608,32 +627,35 @@ BOOL security_decrypt(BYTE* data, int length, rdpRdp* rdp)
 	return TRUE;
 }
 
-void security_hmac_signature(const BYTE* data, int length, BYTE* output, rdpRdp* rdp)
+BOOL security_hmac_signature(const BYTE* data, int length, BYTE* output, rdpRdp* rdp)
 {
 	BYTE buf[20];
 	BYTE use_count_le[4];
 
 	security_UINT32_le(use_count_le, rdp->encrypt_use_count);
 
-	crypto_hmac_sha1_init(rdp->fips_hmac, rdp->fips_sign_key, 20);
+	if (!crypto_hmac_sha1_init(rdp->fips_hmac, rdp->fips_sign_key, 20))
+		return FALSE;
+
 	crypto_hmac_update(rdp->fips_hmac, data, length);
 	crypto_hmac_update(rdp->fips_hmac, use_count_le, 4);
 	crypto_hmac_final(rdp->fips_hmac, buf, 20);
 
 	memmove(output, buf, 8);
+	return TRUE;
 }
 
 BOOL security_fips_encrypt(BYTE* data, int length, rdpRdp* rdp)
 {
-	crypto_des3_encrypt(rdp->fips_encrypt, length, data, data);
+	if (!crypto_des3_encrypt(rdp->fips_encrypt, length, data, data))
+		return FALSE;
 	rdp->encrypt_use_count++;
 	return TRUE;
 }
 
 BOOL security_fips_decrypt(BYTE* data, int length, rdpRdp* rdp)
 {
-	crypto_des3_decrypt(rdp->fips_decrypt, length, data, data);
-	return TRUE;
+	return crypto_des3_decrypt(rdp->fips_decrypt, length, data, data);
 }
 
 BOOL security_fips_check_signature(const BYTE* data, int length, const BYTE* sig, rdpRdp* rdp)
@@ -643,7 +665,8 @@ BOOL security_fips_check_signature(const BYTE* data, int length, const BYTE* sig
 
 	security_UINT32_le(use_count_le, rdp->decrypt_use_count);
 
-	crypto_hmac_sha1_init(rdp->fips_hmac, rdp->fips_sign_key, 20);
+	if (!crypto_hmac_sha1_init(rdp->fips_hmac, rdp->fips_sign_key, 20))
+		return FALSE;
 	crypto_hmac_update(rdp->fips_hmac, data, length);
 	crypto_hmac_update(rdp->fips_hmac, use_count_le, 4);
 	crypto_hmac_final(rdp->fips_hmac, buf, 20);

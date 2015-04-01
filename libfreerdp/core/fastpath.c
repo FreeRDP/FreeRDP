@@ -767,6 +767,7 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, int iNu
 	rdpRdp* rdp;
 	UINT16 length;
 	BYTE eventHeader;
+	BOOL status;
 
 	/*
 	 *  A maximum of 15 events are allowed per request
@@ -817,7 +818,8 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, int iNu
 			Stream_Write_UINT8(s, 0x1); /* TSFIPS_VERSION 1*/
 			Stream_Write_UINT8(s, pad); /* padding */
 
-			security_hmac_signature(fpInputEvents, fpInputEvents_length, Stream_Pointer(s), rdp);
+			if (!security_hmac_signature(fpInputEvents, fpInputEvents_length, Stream_Pointer(s), rdp))
+				return FALSE;
 
 			if (pad)
 				memset(fpInputEvents + fpInputEvents_length, 0, pad);
@@ -829,9 +831,12 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, int iNu
 		else
 		{
 			if (rdp->sec_flags & SEC_SECURE_CHECKSUM)
-				security_salted_mac_signature(rdp, fpInputEvents, fpInputEvents_length, TRUE, Stream_Pointer(s));
+				status = security_salted_mac_signature(rdp, fpInputEvents, fpInputEvents_length, TRUE, Stream_Pointer(s));
 			else
-				security_mac_signature(rdp, fpInputEvents, fpInputEvents_length, Stream_Pointer(s));
+				status = security_mac_signature(rdp, fpInputEvents, fpInputEvents_length, Stream_Pointer(s));
+
+			if (!status)
+				return FALSE;
 
 			security_encrypt(fpInputEvents, fpInputEvents_length, rdp);
 		}
@@ -1021,16 +1026,19 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 
 			if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 			{
-				security_hmac_signature(data, dataSize - pad, pSignature, rdp);
+				if (!security_hmac_signature(data, dataSize - pad, pSignature, rdp))
+					return FALSE;
 				security_fips_encrypt(data, dataSize, rdp);
 			}
 			else
 			{
 				if (rdp->sec_flags & SEC_SECURE_CHECKSUM)
-					security_salted_mac_signature(rdp, data, dataSize, TRUE, pSignature);
+					status = security_salted_mac_signature(rdp, data, dataSize, TRUE, pSignature);
 				else
-					security_mac_signature(rdp, data, dataSize, pSignature);
+					status = security_mac_signature(rdp, data, dataSize, pSignature);
 
+				if (!status)
+					return FALSE;
 				security_encrypt(data, dataSize, rdp);
 			}
 		}
