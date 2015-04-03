@@ -24,6 +24,9 @@ int TestEnvironmentSetEnvironmentVariable(int argc, char* argv[])
 	}
 
 	lpBuffer = (LPSTR) malloc(nSize);
+	if (!lpBuffer)
+		return -1;
+
 	nSize = GetEnvironmentVariableA(TEST_NAME, lpBuffer, nSize);
 
 	if (nSize != strlen(TEST_VALUE))

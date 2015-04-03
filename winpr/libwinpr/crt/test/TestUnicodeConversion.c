@@ -139,6 +139,11 @@ int convert_utf8_to_utf16(BYTE* lpMultiByteStr, BYTE* expected_lpWideCharStr, in
 	}
 
 	lpWideCharStr = (LPWSTR) malloc(cchWideChar * sizeof(WCHAR));
+	if (!lpWideCharStr)
+	{
+		printf("MultiByteToWideChar: unable to allocate memory for test\n");
+		return -1;
+	}
 	lpWideCharStr[cchWideChar - 1] = 0xFFFF; /* should be overwritten if null terminator is inserted properly */
 	length = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR) lpMultiByteStr, cbMultiByte + 1, lpWideCharStr, cchWideChar);
 
@@ -206,6 +211,11 @@ int convert_utf16_to_utf8(BYTE* lpWideCharStr, BYTE* expected_lpMultiByteStr, in
 	}
 
 	lpMultiByteStr = (LPSTR) malloc(cbMultiByte);
+	if (!lpMultiByteStr)
+	{
+		printf("WideCharToMultiByte: unable to allocate memory for test\n");
+		return -1;
+	}
 	lpMultiByteStr[cbMultiByte - 1] = 0xFF; /* should be overwritten if null terminator is inserted properly */
 	length = WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR) lpWideCharStr, cchWideChar + 1, lpMultiByteStr, cbMultiByte, NULL, NULL);
 

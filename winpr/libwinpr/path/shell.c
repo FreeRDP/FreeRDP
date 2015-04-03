@@ -189,8 +189,15 @@ char* GetPath_XDG_CACHE_HOME()
 		return path;
 
 	home = GetPath_HOME();
+	if (!home)
+		return NULL;
 
 	path = (char*) malloc(strlen(home) + strlen("/.cache") + 1);
+	if (!path)
+	{
+		free(home);
+		return NULL;
+	}
 	sprintf(path, "%s%s", home, "/.cache");
 
 	free(home);
@@ -302,6 +309,8 @@ char* GetEnvironmentPath(char* name)
 	if (nSize)
 	{
 		env = (LPSTR) malloc(nSize);
+		if (!env)
+			return NULL;
 		nSize = GetEnvironmentVariableA(name, env, nSize);
 	}
 

@@ -736,19 +736,22 @@ SECURITY_STATUS SEC_ENTRY ntlm_SetContextAttributesW(PCtxtHandle phContext, ULON
 		if (AuthNtlmMessage->type == 1)
 		{
 			sspi_SecBufferFree(&context->NegotiateMessage);
-			sspi_SecBufferAlloc(&context->NegotiateMessage, AuthNtlmMessage->length);
+			if (!sspi_SecBufferAlloc(&context->NegotiateMessage, AuthNtlmMessage->length))
+				return SEC_E_INSUFFICIENT_MEMORY;
 			CopyMemory(context->NegotiateMessage.pvBuffer, AuthNtlmMessage->buffer, AuthNtlmMessage->length);
 		}
 		else if (AuthNtlmMessage->type == 2)
 		{
 			sspi_SecBufferFree(&context->ChallengeMessage);
-			sspi_SecBufferAlloc(&context->ChallengeMessage, AuthNtlmMessage->length);
+			if (!sspi_SecBufferAlloc(&context->ChallengeMessage, AuthNtlmMessage->length))
+				return SEC_E_INSUFFICIENT_MEMORY;
 			CopyMemory(context->ChallengeMessage.pvBuffer, AuthNtlmMessage->buffer, AuthNtlmMessage->length);
 		}
 		else if (AuthNtlmMessage->type == 3)
 		{
 			sspi_SecBufferFree(&context->AuthenticateMessage);
-			sspi_SecBufferAlloc(&context->AuthenticateMessage, AuthNtlmMessage->length);
+			if (!sspi_SecBufferAlloc(&context->AuthenticateMessage, AuthNtlmMessage->length))
+				return SEC_E_INSUFFICIENT_MEMORY;
 			CopyMemory(context->AuthenticateMessage.pvBuffer, AuthNtlmMessage->buffer, AuthNtlmMessage->length);
 		}
 

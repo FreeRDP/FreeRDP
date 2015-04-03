@@ -117,6 +117,8 @@ char* winpr_BinToHexString(const BYTE* data, int length, BOOL space)
 	char bin2hex[] = "0123456789ABCDEF";
 	n = space ? 3 : 2;
 	p = (char*) malloc((length + 1) * n);
+	if (p)
+		return NULL;
 
 	for (i = 0; i < length; i++)
 	{

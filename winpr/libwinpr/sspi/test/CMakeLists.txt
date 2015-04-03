@@ -10,7 +10,7 @@ set(${MODULE_PREFIX}_TESTS
 	TestInitializeSecurityContext.c
 	TestAcquireCredentialsHandle.c
 	TestCredSSP.c
-	TestSchannel.c
+	#TestSchannel.c
 	TestNTLM.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS

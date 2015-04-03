@@ -89,6 +89,9 @@ char** EnvironmentBlockToEnvpA(LPCH lpszEnvironmentBlock)
 	char** envp = NULL;
 
 	count = 0;
+	if (!lpszEnvironmentBlock)
+		return NULL;
+
 	p = (char*) lpszEnvironmentBlock;
 
 	while (p[0] && p[1])
@@ -102,12 +105,23 @@ char** EnvironmentBlockToEnvpA(LPCH lpszEnvironmentBlock)
 	p = (char*) lpszEnvironmentBlock;
 
 	envp = (char**) calloc(count + 1, sizeof(char*));
+	if (!envp)
+		return NULL;
 	envp[count] = NULL;
 
 	while (p[0] && p[1])
 	{
 		length = strlen(p);
 		envp[index] = _strdup(p);
+		if (!envp[index])
+		{
+			for (index -= 1; index >= 0; --index)
+			{
+				free(envp[index]);
+			}
+			free(envp);
+			return NULL;
+		}
 		p += (length + 1);
 		index++;
 	}
@@ -149,6 +163,9 @@ char* FindApplicationPath(char* application)
 		return application;
 
 	lpSystemPath = (LPSTR) malloc(nSize);
+	if (!lpSystemPath)
+		return NULL;
+
 	nSize = GetEnvironmentVariableA("PATH", lpSystemPath, nSize);
 
 	save = NULL;
@@ -199,6 +216,8 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	lpszEnvironmentBlock = NULL;
 
 	pArgs = CommandLineToArgvA(lpCommandLine, &numArgs);
+	if (!pArgs)
+		return FALSE;
 
 	flags = 0;
 
@@ -213,6 +232,8 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 		lpszEnvironmentBlock = GetEnvironmentStrings();
 		envp = EnvironmentBlockToEnvpA(lpszEnvironmentBlock);
 	}
+	if (!envp)
+		goto finish;
 
 	filename = FindApplicationPath(pArgs[0]);
 	if (NULL == filename)

@@ -78,6 +78,11 @@ int TestErrorSetLastError(int argc, char* argv[])
 	}
 
 	pLoopCount = _aligned_malloc(sizeof(LONG), sizeof(LONG));
+	if (!pLoopCount)
+	{
+		printf("Unable to allocate memory\n");
+		return -1;
+	}
 	*pLoopCount = 0;
 
 	threads[0] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) test_error_thread, (void*) (size_t) 0, 0, NULL);

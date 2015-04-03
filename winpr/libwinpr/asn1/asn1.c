@@ -37,8 +37,7 @@ ASN1module_t ASN1_CreateModule(ASN1uint32_t nVersion, ASN1encodingrule_e eRule,
 	if (!((apfnEncoder) && (apfnDecoder) && (apfnFreeMemory) && (acbStructSize)))
 		return NULL;
 
-	module = (ASN1module_t) malloc(sizeof(struct tagASN1module_t));
-	ZeroMemory(module, sizeof(struct tagASN1module_t));
+	module = (ASN1module_t) calloc(1, sizeof(struct tagASN1module_t));
 
 	if (module)
 	{

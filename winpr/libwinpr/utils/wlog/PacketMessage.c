@@ -85,6 +85,8 @@ void Pcap_Read_Record(wPcap* pcap, wPcapRecord* record)
 		Pcap_Read_RecordHeader(pcap, &record->header);
 		record->length = record->header.incl_len;
 		record->data = malloc(record->length);
+		if (!record->data)
+			return;
 		fread(record->data, record->length, 1, pcap->fp);
 	}
 }
@@ -102,16 +104,18 @@ void Pcap_Add_Record(wPcap* pcap, void* data, UINT32 length)
 
 	if (!pcap->tail)
 	{
-		pcap->tail = (wPcapRecord*) malloc(sizeof(wPcapRecord));
-		ZeroMemory(pcap->tail, sizeof(wPcapRecord));
+		pcap->tail = (wPcapRecord*) calloc(1, sizeof(wPcapRecord));
+		if (!pcap->tail)
+			return;
 		pcap->head = pcap->tail;
 		pcap->record = pcap->head;
 		record = pcap->tail;
 	}
 	else
 	{
-		record = (wPcapRecord*) malloc(sizeof(wPcapRecord));
-		ZeroMemory(record, sizeof(wPcapRecord));
+		record = (wPcapRecord*) calloc(1, sizeof(wPcapRecord));
+		if (!record)
+			return;
 		pcap->tail->next = record;
 		pcap->tail = record;
 	}
@@ -168,7 +172,7 @@ BOOL Pcap_GetNext_Record(wPcap* pcap, wPcapRecord* record)
 
 wPcap* Pcap_Open(char* name, BOOL write)
 {
-	wPcap* pcap;
+	wPcap* pcap = NULL;
 	FILE* pcap_fp = fopen(name, write ? "w+b" : "rb");
 
 	if (!pcap_fp)
@@ -177,11 +181,10 @@ wPcap* Pcap_Open(char* name, BOOL write)
 		return NULL;
 	}
 
-	pcap = (wPcap*) malloc(sizeof(wPcap));
+	pcap = (wPcap*) calloc(1, sizeof(wPcap));
 
 	if (pcap)
 	{
-		ZeroMemory(pcap, sizeof(wPcap));
 		pcap->name = name;
 		pcap->write = write;
 		pcap->record_count = 0;
@@ -198,7 +201,7 @@ wPcap* Pcap_Open(char* name, BOOL write)
 			pcap->header.network = 1; /* ethernet */
 			Pcap_Write_Header(pcap, &pcap->header);
 		}
-		else if (pcap->fp)
+		else
 		{
 			fseek(pcap->fp, 0, SEEK_END);
 			pcap->file_size = (int) ftell(pcap->fp);
@@ -206,7 +209,6 @@ wPcap* Pcap_Open(char* name, BOOL write)
 			Pcap_Read_Header(pcap, &pcap->header);
 		}
 	}
-
 	return pcap;
 }
 

@@ -2781,9 +2781,16 @@ unsigned int determineMacOSXVersion()
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_OSRELEASE;
-    sysctl(mib, 2, NULL, &len, NULL, 0);
+    if (sysctl(mib, 2, NULL, &len, NULL, 0) != 0)
+      return 0;
     kernelVersion = calloc(len, sizeof(char));
-    sysctl(mib, 2, kernelVersion, &len, NULL, 0);
+    if (!kernelVersion)
+      return 0;
+    if (sysctl(mib, 2, kernelVersion, &len, NULL, 0) != 0)
+    {
+      free(kernelVersion);
+      return 0;
+    }
 
     tok = strtok(kernelVersion,".");
     while (tok)
@@ -2955,6 +2962,10 @@ int PCSC_InitializeSCardApi(void)
 	if (nSize)
 	{
 		env = (LPSTR) malloc(nSize);
+		if (!env)
+		{
+			return -1;
+		}
 		nSize = GetEnvironmentVariableA("WINPR_WINSCARD_LOCK_TRANSACTIONS", env, nSize);
 
 		if (strcmp(env, "1") == 0)
@@ -2971,6 +2982,8 @@ int PCSC_InitializeSCardApi(void)
 #ifdef __MACOSX__
 	g_PCSCModule = LoadLibraryA("/System/Library/Frameworks/PCSC.framework/PCSC");
 	OSXVersion = determineMacOSXVersion();
+	if (OSXVersion == 0)
+		return -1;
 #else
 	g_PCSCModule = LoadLibraryA("libpcsclite.so.1");
 

@@ -56,6 +56,8 @@ BOOL ShouldUseNativeSspi()
 		return TRUE;
 
 	env = (LPSTR) malloc(nSize);
+	if (!env)
+		return TRUE;
 	nSize = GetEnvironmentVariableA("WINPR_NATIVE_SSPI", env, nSize);
 
 	if (strcmp(env, "0") == 0)

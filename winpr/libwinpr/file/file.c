@@ -274,7 +274,7 @@ static void _HandleCreatorsInit()
 	if (!_HandleCreators)
 		return;
 
-	if(!InitializeCriticalSectionEx(&_HandleCreatorsLock, 0, 0))
+	if (!InitializeCriticalSectionEx(&_HandleCreatorsLock, 0, 0))
 	{
 		free(_HandleCreators);
 		_HandleCreators = NULL;
@@ -414,12 +414,17 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 	free(name);
 	pNamedPipe = (WINPR_NAMED_PIPE*) calloc(1, sizeof(WINPR_NAMED_PIPE));
 	if (!pNamedPipe)
+	{
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 		return INVALID_HANDLE_VALUE;
+	}
+
 	hNamedPipe = (HANDLE) pNamedPipe;
 	WINPR_HANDLE_SET_TYPE(pNamedPipe, HANDLE_TYPE_NAMED_PIPE);
 	pNamedPipe->name = _strdup(lpFileName);
 	if (!pNamedPipe->name)
 	{
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 		free(pNamedPipe);
 		return INVALID_HANDLE_VALUE;
 	}
@@ -636,8 +641,12 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 	struct stat fileStat;
 	WIN32_FILE_SEARCH* pFileSearch;
 	ZeroMemory(lpFindFileData, sizeof(WIN32_FIND_DATAA));
-	pFileSearch = (WIN32_FILE_SEARCH*) malloc(sizeof(WIN32_FILE_SEARCH));
-	ZeroMemory(pFileSearch, sizeof(WIN32_FILE_SEARCH));
+	pFileSearch = (WIN32_FILE_SEARCH*) calloc(1, sizeof(WIN32_FILE_SEARCH));
+	if (!pFileSearch)
+	{
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		return INVALID_HANDLE_VALUE;
+	}
 	/* Separate lpFileName into path and pattern components */
 	p = strrchr(lpFileName, '/');
 
@@ -647,10 +656,23 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 	index = (p - lpFileName);
 	length = (p - lpFileName);
 	pFileSearch->lpPath = (LPSTR) malloc(length + 1);
+	if (!pFileSearch->lpPath)
+	{
+		free(pFileSearch);
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		return INVALID_HANDLE_VALUE;
+	}
 	CopyMemory(pFileSearch->lpPath, lpFileName, length);
 	pFileSearch->lpPath[length] = '\0';
 	length = strlen(lpFileName) - index;
 	pFileSearch->lpPattern = (LPSTR) malloc(length + 1);
+	if (!pFileSearch->lpPattern)
+	{
+		free(pFileSearch->lpPath);
+		free(pFileSearch);
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		return INVALID_HANDLE_VALUE;
+	}
 	CopyMemory(pFileSearch->lpPattern, &lpFileName[index + 1], length);
 	pFileSearch->lpPattern[length] = '\0';
 

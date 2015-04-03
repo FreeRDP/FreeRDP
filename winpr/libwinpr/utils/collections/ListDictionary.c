@@ -125,7 +125,7 @@ int ListDictionary_GetKeys(wListDictionary* listDictionary, ULONG_PTR** ppKeys)
 	ULONG_PTR* pKeys = NULL;
 	wListDictionaryItem* item;
 
-	if (!ppKeys)
+	if (!ppKeys || !listDictionary)
 		return -1;
 
 	if (listDictionary->synchronized)
@@ -145,7 +145,16 @@ int ListDictionary_GetKeys(wListDictionary* listDictionary, ULONG_PTR** ppKeys)
 	}
 
 	if (count)
-		pKeys = (ULONG_PTR*) calloc(count, sizeof(ULONG_PTR));
+	{
+		pKeys = (ULONG_PTR *) calloc(count, sizeof(ULONG_PTR));
+		if (!pKeys)
+		{
+			if (listDictionary->synchronized)
+				LeaveCriticalSection(&listDictionary->lock);
+
+			return -1;
+		}
+	}
 
 	index = 0;
 
@@ -176,14 +185,14 @@ BOOL ListDictionary_Add(wListDictionary* listDictionary, void* key, void* value)
 {
 	wListDictionaryItem* item;
 	wListDictionaryItem* lastItem;
+	BOOL ret = FALSE;
 
 	if (listDictionary->synchronized)
 		EnterCriticalSection(&listDictionary->lock);
 
 	item = (wListDictionaryItem*) malloc(sizeof(wListDictionaryItem));
-
 	if (!item)
-		return FALSE;
+		goto out_error;
 
 	item->key = key;
 	item->value = value;
@@ -204,10 +213,12 @@ BOOL ListDictionary_Add(wListDictionary* listDictionary, void* key, void* value)
 		lastItem->next = item;
 	}
 
+	ret = TRUE;
+out_error:
 	if (listDictionary->synchronized)
 		LeaveCriticalSection(&listDictionary->lock);
 
-	return TRUE;
+	return ret;
 }
 
 /**

@@ -170,11 +170,25 @@ wIniFileSection* IniFile_Section_New(const char* name)
 {
 	wIniFileSection* section = malloc(sizeof(wIniFileSection));
 
+	if (!section)
+		return NULL;
+
 	section->name = _strdup(name);
+	if (!section->name)
+	{
+		free(section);
+		return NULL;
+	}
 
 	section->nKeys = 0;
 	section->cKeys = 64;
 	section->keys = (wIniFileKey**) malloc(sizeof(wIniFileKey*) * section->cKeys);
+	if (!section->keys)
+	{
+		free(section->name);
+		free(section);
+		return NULL;
+	}
 
 	return section;
 }
@@ -426,6 +440,9 @@ char** IniFile_GetSectionNames(wIniFile* ini, int* count)
 	}
 	
 	sectionNames = (char**) malloc(length);
+	if (!sectionNames)
+		return NULL;
+
 	p = (char*) &((BYTE*) sectionNames)[sizeof(char*) * ini->nSections];
 	
 	for (index = 0; index < ini->nSections; index++)
@@ -469,6 +486,9 @@ char** IniFile_GetSectionKeyNames(wIniFile* ini, const char* section, int* count
 	}
 	
 	keyNames = (char**) malloc(length);
+	if (!keyNames)
+		return NULL;
+
 	p = (char*) &((BYTE*) keyNames)[sizeof(char*) * pSection->nKeys];
 	
 	for (index = 0; index < pSection->nKeys; index++)
@@ -672,6 +692,11 @@ wIniFile* IniFile_New()
 		ini->nSections = 0;
 		ini->cSections = 64;
 		ini->sections = (wIniFileSection**) calloc(ini->cSections, sizeof(wIniFileSection*));
+		if (!ini->sections)
+		{
+			free(ini);
+			return NULL;
+		}
 	}
 
 	return ini;

@@ -243,9 +243,11 @@ void* sspi_SecBufferAlloc(PSecBuffer SecBuffer, ULONG size)
 	if (!SecBuffer)
 		return NULL;
 
-	SecBuffer->cbBuffer = size;
 	SecBuffer->pvBuffer = calloc(1, size);
+	if (!SecBuffer->pvBuffer)
+		return NULL;
 
+	SecBuffer->cbBuffer = size;
 	return SecBuffer->pvBuffer;
 }
 

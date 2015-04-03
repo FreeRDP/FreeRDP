@@ -159,11 +159,23 @@ HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lIniti
 
 #else
 		semaphore->sem = (winpr_sem_t*) malloc(sizeof(winpr_sem_t));
+		if (!semaphore->sem)
+		{
+			WLog_ERR(TAG, "failed to allocate semaphore memory");
+			free(semaphore);
+			return NULL;
+		}
 #if defined __APPLE__
-		semaphore_create(mach_task_self(), semaphore->sem, SYNC_POLICY_FIFO, lMaximumCount);
+		if (semaphore_create(mach_task_self(), semaphore->sem, SYNC_POLICY_FIFO, lMaximumCount) != KERN_SUCCESS)
 #else
-		sem_init(semaphore->sem, 0, lMaximumCount);
+		if (sem_init(semaphore->sem, 0, lMaximumCount) == -1)
 #endif
+		{
+			WLog_ERR(TAG, "failed to create semaphore");
+			free(semaphore->sem);
+			free(semaphore);
+			return NULL;
+		}
 #endif
 	}
 

@@ -678,7 +678,7 @@ static BOOL LoadAndInitialize(char* library)
 void InitializeWtsApiStubs_Env()
 {
 	DWORD nSize;
-	char* env = NULL;
+	char *env = NULL;
 
 	if (g_WtsApi)
 		return;
@@ -686,15 +686,15 @@ void InitializeWtsApiStubs_Env()
 	nSize = GetEnvironmentVariableA("WTSAPI_LIBRARY", NULL, 0);
 
 	if (!nSize)
-	{
 		return;
-	}
 
 	env = (LPSTR) malloc(nSize);
-	nSize = GetEnvironmentVariableA("WTSAPI_LIBRARY", env, nSize);
-
 	if (env)
-		LoadAndInitialize(env);
+	{
+		if (GetEnvironmentVariableA("WTSAPI_LIBRARY", env, nSize))
+			LoadAndInitialize(env);
+		free(env);
+	}
 }
 
 #define FREERDS_LIBRARY_NAME "libfreerds-fdsapi.so"

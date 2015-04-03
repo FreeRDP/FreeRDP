@@ -405,7 +405,9 @@ int WLog_ParseFilters()
 	if (!env)
 		return -1;
 
-	nSize = GetEnvironmentVariableA("WLOG_FILTER", env, nSize);
+	if (!GetEnvironmentVariableA("WLOG_FILTER", env, nSize))
+		return -1;
+
 	count = 1;
 	p = env;
 
@@ -587,12 +589,14 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
             env = (LPSTR) malloc(nSize);
 			if (env)
 			{
-				nSize = GetEnvironmentVariableA("WLOG_LEVEL", env, nSize);
-				iLevel = WLog_ParseLogLevel(env);
+				if (GetEnvironmentVariableA("WLOG_LEVEL", env, nSize))
+				{
+					iLevel = WLog_ParseLogLevel(env);
 
-				if (iLevel >= 0)
-					log->Level = (DWORD) iLevel;
+					if (iLevel >= 0)
+						log->Level = (DWORD) iLevel;
 
+				}
 				free(env);
 			}
         }
@@ -651,17 +655,17 @@ wLog* WLog_GetRoot()
 		if (nSize)
 		{
 			env = (LPSTR) malloc(nSize);
-			nSize = GetEnvironmentVariableA("WLOG_APPENDER", env, nSize);
-
 			if (env)
 			{
-				if (_stricmp(env, "CONSOLE") == 0)
-					logAppenderType = WLOG_APPENDER_CONSOLE;
-				else if (_stricmp(env, "FILE") == 0)
-					logAppenderType = WLOG_APPENDER_FILE;
-				else if (_stricmp(env, "BINARY") == 0)
-					logAppenderType = WLOG_APPENDER_BINARY;
-
+				if (GetEnvironmentVariableA("WLOG_APPENDER", env, nSize))
+				{
+					if (_stricmp(env, "CONSOLE") == 0)
+						logAppenderType = WLOG_APPENDER_CONSOLE;
+					else if (_stricmp(env, "FILE") == 0)
+						logAppenderType = WLOG_APPENDER_FILE;
+					else if (_stricmp(env, "BINARY") == 0)
+						logAppenderType = WLOG_APPENDER_BINARY;
+				}
 				free(env);
 			}
 		}
@@ -732,21 +736,15 @@ wLog* WLog_FindChild(LPCSTR name)
 wLog* WLog_Get(LPCSTR name)
 {
 	wLog* log;
-	wLog* root;
-	if (!(root = WLog_GetRoot()))
-		return NULL;
-
 	if (!(log = WLog_FindChild(name)))
 	{
+		wLog* root = WLog_GetRoot();
+		if (!root)
+			return NULL;
 		if (!(log = WLog_New(name, root)))
 			return NULL;
-		if (WLog_AddChild(root, log))
-		{
-			WLog_Free(log);
-			return NULL;
-		}
+		WLog_AddChild(root, log);
 	}
-
 	return log;
 }
 

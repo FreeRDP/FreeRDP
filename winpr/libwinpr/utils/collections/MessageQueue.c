@@ -196,11 +196,21 @@ wMessageQueue* MessageQueue_New(const wObject *callback)
 		queue->size = 0;
 
 		queue->capacity = 32;
-		queue->array = (wMessage*) malloc(sizeof(wMessage) * queue->capacity);
-		ZeroMemory(queue->array, sizeof(wMessage) * queue->capacity);
+		queue->array = (wMessage*) calloc(1, sizeof(wMessage) * queue->capacity);
+		if (!queue->array)
+		{
+			free(queue);
+			return NULL;
+		}
 
 		InitializeCriticalSectionAndSpinCount(&queue->lock, 4000);
 		queue->event = CreateEvent(NULL, TRUE, FALSE, NULL);
+		if (!queue->event)
+		{
+			free(queue->array);
+			free(queue);
+			return NULL;
+		}
 
 		if (callback)
 			queue->object = *callback;

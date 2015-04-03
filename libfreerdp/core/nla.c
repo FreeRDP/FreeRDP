@@ -187,7 +187,11 @@ int nla_client_init(rdpNla* nla)
 		return -1;
 	}
 
-	sspi_SecBufferAlloc(&nla->PublicKey, tls->PublicKeyLength);
+	if (!sspi_SecBufferAlloc(&nla->PublicKey, tls->PublicKeyLength))
+	{
+		WLog_ERR(TAG, "Failed to allocate sspic secBuffer");
+		return -1;
+	}
 	CopyMemory(nla->PublicKey.pvBuffer, tls->PublicKey, tls->PublicKeyLength);
 	length = sizeof(TERMSRV_SPN_PREFIX) + strlen(settings->ServerHostname);
 
@@ -445,7 +449,11 @@ int nla_server_init(rdpNla* nla)
 {
 	rdpTls* tls = nla->transport->tls;
 
-	sspi_SecBufferAlloc(&nla->PublicKey, tls->PublicKeyLength);
+	if (!sspi_SecBufferAlloc(&nla->PublicKey, tls->PublicKeyLength))
+	{
+		WLog_ERR(TAG, "Failed to allocate SecBuffer for public key");
+		return -1;
+	}
 	CopyMemory(nla->PublicKey.pvBuffer, tls->PublicKey, tls->PublicKeyLength);
 
 	if (nla->SspiModule)
@@ -723,9 +731,10 @@ SECURITY_STATUS nla_encrypt_public_key_echo(rdpNla* nla)
 	int public_key_length;
 
 	public_key_length = nla->PublicKey.cbBuffer;
+	if (!sspi_SecBufferAlloc(&nla->pubKeyAuth, nla->ContextSizes.cbMaxSignature + public_key_length))
+		return SEC_E_INSUFFICIENT_MEMORY;
 	Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
 	Buffers[1].BufferType = SECBUFFER_DATA; /* TLS Public Key */
-	sspi_SecBufferAlloc(&nla->pubKeyAuth, nla->ContextSizes.cbMaxSignature + public_key_length);
 	Buffers[0].cbBuffer = nla->ContextSizes.cbMaxSignature;
 	Buffers[0].pvBuffer = nla->pubKeyAuth.pvBuffer;
 	Buffers[1].cbBuffer = public_key_length;
@@ -958,7 +967,8 @@ void nla_encode_ts_credentials(rdpNla* nla)
 	}
 
 	length = ber_sizeof_sequence(nla_sizeof_ts_credentials(nla));
-	sspi_SecBufferAlloc(&nla->tsCredentials, length);
+	if (!sspi_SecBufferAlloc(&nla->tsCredentials, length))
+		return;
 	s = Stream_New((BYTE*) nla->tsCredentials.pvBuffer, length);
 	nla_write_ts_credentials(nla, s);
 
@@ -980,9 +990,10 @@ SECURITY_STATUS nla_encrypt_ts_credentials(rdpNla* nla)
 
 	nla_encode_ts_credentials(nla);
 
+	if (!sspi_SecBufferAlloc(&nla->authInfo, nla->ContextSizes.cbMaxSignature + nla->tsCredentials.cbBuffer))
+		return SEC_E_INSUFFICIENT_MEMORY;
 	Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
 	Buffers[1].BufferType = SECBUFFER_DATA; /* TSCredentials */
-	sspi_SecBufferAlloc(&nla->authInfo, nla->ContextSizes.cbMaxSignature + nla->tsCredentials.cbBuffer);
 	Buffers[0].cbBuffer = nla->ContextSizes.cbMaxSignature;
 	Buffers[0].pvBuffer = nla->authInfo.pvBuffer;
 	ZeroMemory(Buffers[0].pvBuffer, Buffers[0].cbBuffer);
@@ -1165,7 +1176,11 @@ int nla_decode_ts_request(rdpNla* nla, wStream* s)
 			return -1;
 		}
 
-		sspi_SecBufferAlloc(&nla->negoToken, length);
+		if (!sspi_SecBufferAlloc(&nla->negoToken, length))
+		{
+			Stream_Free(s, TRUE);
+			return -1;
+		}
 		Stream_Read(s, nla->negoToken.pvBuffer, length);
 		nla->negoToken.cbBuffer = length;
 	}
@@ -1180,7 +1195,11 @@ int nla_decode_ts_request(rdpNla* nla, wStream* s)
 			return -1;
 		}
 
-		sspi_SecBufferAlloc(&nla->authInfo, length);
+		if (!sspi_SecBufferAlloc(&nla->authInfo, length))
+		{
+			Stream_Free(s, TRUE);
+			return -1;
+		}
 		Stream_Read(s, nla->authInfo.pvBuffer, length);
 		nla->authInfo.cbBuffer = length;
 	}
@@ -1195,7 +1214,11 @@ int nla_decode_ts_request(rdpNla* nla, wStream* s)
 			return -1;
 		}
 
-		sspi_SecBufferAlloc(&nla->pubKeyAuth, length);
+		if (!sspi_SecBufferAlloc(&nla->pubKeyAuth, length))
+		{
+			Stream_Free(s, TRUE);
+			return -1;
+		}
 		Stream_Read(s, nla->pubKeyAuth.pvBuffer, length);
 		nla->pubKeyAuth.cbBuffer = length;
 	}

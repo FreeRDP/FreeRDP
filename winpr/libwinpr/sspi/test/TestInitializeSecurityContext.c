@@ -60,6 +60,12 @@ int TestInitializeSecurityContext(int argc, char* argv[])
 	fContextReq = ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT | ISC_REQ_CONFIDENTIALITY | ISC_REQ_DELEGATE;
 
 	output_buffer = malloc(cbMaxLen);
+	if (!output_buffer)
+	{
+		printf("Memory allocation failed\n");
+		sspi_GlobalFinish();
+		return -1;
+	}
 
 	output_SecBuffer_desc.ulVersion = 0;
 	output_SecBuffer_desc.cBuffers = 1;

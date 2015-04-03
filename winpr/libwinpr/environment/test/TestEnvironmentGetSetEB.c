@@ -20,6 +20,9 @@ int TestEnvironmentGetSetEB(int argc, char* argv[])
 
 	/* Get the variable itself */
 	p = (LPSTR) malloc(length);
+	if (!p)
+		return -1;
+
 	length = GetEnvironmentVariableEBA(lpszEnvironmentBlock,"DISPLAY", p, length);
 
 	printf("GetEnvironmentVariableA(WINPR_TEST_VARIABLE) = %s\n" , p);
@@ -97,6 +100,9 @@ int TestEnvironmentGetSetEB(int argc, char* argv[])
 	free(lpszEnvironmentBlockNew);
 
 	lpszEnvironmentBlockNew = (LPTCH) malloc(1024);
+	if (!lpszEnvironmentBlockNew)
+		return -1;
+
 	memcpy(lpszEnvironmentBlockNew,lpszEnvironmentBlock,56);
 
 	/* Set variable in empty environment block */

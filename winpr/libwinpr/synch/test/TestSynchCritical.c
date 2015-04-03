@@ -201,6 +201,11 @@ static PVOID TestSynchCritical_Main(PVOID arg)
 	dwThreadCount = sysinfo.dwNumberOfProcessors > 1 ? sysinfo.dwNumberOfProcessors : 2;
 
 	hThreads = (HANDLE*) calloc(dwThreadCount, sizeof(HANDLE));
+	if (!hThreads)
+	{
+		printf("Problem allocating memory\n");
+		goto fail;
+	}
 
 	for (j = 0; j < TEST_SYNC_CRITICAL_TEST1_RUNS; j++)
 	{

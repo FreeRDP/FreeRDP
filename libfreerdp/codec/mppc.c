@@ -837,6 +837,11 @@ MPPC_CONTEXT* mppc_context_new(DWORD CompressionLevel, BOOL Compressor)
 		}
 
 		mppc->bs = BitStream_New();
+		if (!mppc->bs)
+		{
+			free(mppc);
+			return NULL;
+		}
 
 		mppc_context_reset(mppc, FALSE);
 	}

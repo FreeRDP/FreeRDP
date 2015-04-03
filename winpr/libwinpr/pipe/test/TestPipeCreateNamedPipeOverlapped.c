@@ -45,6 +45,11 @@ static void* named_pipe_client_thread(void* arg)
 
 	lpReadBuffer = (BYTE*) malloc(PIPE_BUFFER_SIZE);
 	lpWriteBuffer = (BYTE*) malloc(PIPE_BUFFER_SIZE);
+	if (!lpReadBuffer || !lpWriteBuffer)
+	{
+		printf("Error allocating memory\n");
+		return NULL;
+	}
 	ZeroMemory(&overlapped, sizeof(OVERLAPPED));
 	hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	overlapped.hEvent = hEvent;
@@ -153,6 +158,11 @@ static void* named_pipe_server_thread(void* arg)
 
 	lpReadBuffer = (BYTE*) malloc(PIPE_BUFFER_SIZE);
 	lpWriteBuffer = (BYTE*) malloc(PIPE_BUFFER_SIZE);
+	if (!lpReadBuffer || !lpWriteBuffer)
+	{
+		printf("Error allocating memory\n");
+		return NULL;
+	}
 	nNumberOfBytesToRead = PIPE_BUFFER_SIZE;
 	ZeroMemory(lpReadBuffer, PIPE_BUFFER_SIZE);
 	fSuccess = ReadFile(hNamedPipe, lpReadBuffer, nNumberOfBytesToRead, NULL, &overlapped);

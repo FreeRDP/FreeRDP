@@ -138,10 +138,15 @@ static RegVal* reg_load_value(Reg* reg, RegKey* key)
 	length = p[1] - p[0];
 	name = (char*) malloc(length + 1);
 	if (!name)
-		return 0;
+		return NULL;
 	memcpy(name, p[0], length);
 	name[length] = '\0';
 	value = (RegVal*) malloc(sizeof(RegVal));
+	if (!value)
+	{
+		free(name);
+		return NULL;
+	}
 	value->name = name;
 	value->type = REG_NONE;
 	value->next = value->prev = NULL;
@@ -253,6 +258,11 @@ static RegKey* reg_load_key(Reg* reg, RegKey* key)
 	subkey->prev = subkey->next = NULL;
 	length = p[1] - p[0];
 	subkey->name = (char*) malloc(length + 1);
+	if (!subkey->name)
+	{
+		free(subkey);
+		return NULL;
+	}
 	memcpy(subkey->name, p[0], length);
 	subkey->name[length] = '\0';
 

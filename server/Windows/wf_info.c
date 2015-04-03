@@ -104,8 +104,7 @@ wfInfo* wf_info_init()
 {
 	wfInfo* wfi;
 
-	wfi = (wfInfo*) malloc(sizeof(wfInfo));
-	ZeroMemory(wfi, sizeof(wfInfo));
+	wfi = (wfInfo*) calloc(1, sizeof(wfInfo));
 
 	if (wfi != NULL)
 	{
@@ -117,22 +116,43 @@ wfInfo* wf_info_init()
 
 		wfi->mutex = CreateMutex(NULL, FALSE, NULL);
 
-		if (wfi->mutex == NULL) 
+		if (wfi->mutex == NULL)
 		{
 			WLog_ERR(TAG, "CreateMutex error: %d", GetLastError());
+			free(wfi);
+			return NULL;
 		}
 
 		wfi->updateSemaphore = CreateSemaphore(NULL, 0, 32, NULL);
+		if (!wfi->updateSemaphore)
+		{
+			WLog_ERR(TAG, "CreateSemaphore error: %d", GetLastError());
+			CloseHandle(wfi->mutex);
+			free(wfi);
+			return NULL;
+		}
 
 		wfi->updateThread = CreateThread(NULL, 0, wf_update_thread, wfi, CREATE_SUSPENDED, NULL);
 
 		if (!wfi->updateThread)
 		{
 			WLog_ERR(TAG, "Failed to create update thread");
+			CloseHandle(wfi->mutex);
+			CloseHandle(wfi->updateSemaphore);
+			free(wfi);
+			return NULL;
 		}
 
-		wfi->peers = (freerdp_peer**) malloc(sizeof(freerdp_peer*) * WF_INFO_MAXPEERS);
-		memset(wfi->peers, 0, sizeof(freerdp_peer*) * WF_INFO_MAXPEERS);
+		wfi->peers = (freerdp_peer**) calloc(1, sizeof(freerdp_peer*) * WF_INFO_MAXPEERS);
+		if (!wfi->peers)
+		{
+			WLog_ERR(TAG, "Failed to allocate memory for peer");
+			CloseHandle(wfi->mutex);
+			CloseHandle(wfi->updateSemaphore);
+			CloseHandle(wfi->updateThread);
+			free(wfi);
+			return NULL;
+		}
 
 		//Set FPS
 		wfi->framesPerSecond = WF_INFO_DEFAULT_FPS;
@@ -141,7 +161,7 @@ wfInfo* wf_info_init()
 		if (status == ERROR_SUCCESS)
 		{
 			if (RegQueryValueEx(hKey, _T("FramesPerSecond"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
-				wfi->framesPerSecond = dwValue;		
+				wfi->framesPerSecond = dwValue;
 		}
 		RegCloseKey(hKey);
 
@@ -249,7 +269,7 @@ void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 BOOL wf_info_have_updates(wfInfo* wfi)
 {
 #ifdef WITH_DXGI_1_2
-	if(wfi->framesWaiting == 0)
+	if (wfi->framesWaiting == 0)
 		return FALSE;
 #else
 	if (wfi->nextUpdate == wfi->lastUpdate)
@@ -358,14 +378,16 @@ BOOL CALLBACK wf_info_monEnumCB(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMo
 	wfInfo * wfi;
 
 	wfi = wf_info_get_instance();
+	if (!wfi)
+		return FALSE;
 
-	if(_IDcount == wfi->screenID)
+	if (_IDcount == wfi->screenID)
 	{
 		wfi->servscreen_xoffset = lprcMonitor->left;
 		wfi->servscreen_yoffset = lprcMonitor->top;
 	}
-	
-	_IDcount++;	
+
+	_IDcount++;
 
 	return TRUE;
 }

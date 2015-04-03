@@ -101,6 +101,8 @@ static void* clipboard_synthesize_cf_locale(wClipboard* clipboard, UINT32 format
 	UINT32* pDstData = NULL;
 
 	pDstData = (UINT32*) malloc(sizeof(UINT32));
+	if (!pDstData)
+		return NULL;
 	*pDstData = 0x0409; /* English - United States */
 
 	return (void*) pDstData;
@@ -354,10 +356,17 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 		if (!pSrcData)
 		{
 			pSrcData = (char*) calloc(1, SrcSize + 1);
+			if (!pSrcData)
+				return NULL;
 			CopyMemory(pSrcData, data, SrcSize);
 		}
 
 		pDstData = (char*) calloc(1, SrcSize + 200);
+		if (!pDstData)
+		{
+			free(pSrcData);
+			return NULL;
+		}
 
 		strcpy(pDstData,
 			"Version:0.9\r\n"
