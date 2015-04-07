@@ -231,6 +231,27 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 #endif
 }
 
+static BOOL freerdp_listener_open_from_socket(freerdp_listener* instance, int fd)
+{
+#ifndef _WIN32
+	rdpListener* listener = (rdpListener*) instance->listener;
+
+	if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
+		return FALSE;
+
+	listener->sockfds[listener->num_sockfds] = fd;
+	listener->events[listener->num_sockfds] = CreateFileDescriptorEvent(NULL, FALSE, FALSE, fd);
+	if (!listener->events[listener->num_sockfds])
+		return FALSE;
+
+	listener->num_sockfds++;
+
+	WLog_INFO(TAG, "Listening on socket %d.", fd);
+#endif
+	return TRUE;
+
+}
+
 static void freerdp_listener_close(freerdp_listener* instance)
 {
 	int i;
@@ -375,6 +396,7 @@ freerdp_listener* freerdp_listener_new(void)
 
 	instance->Open = freerdp_listener_open;
 	instance->OpenLocal = freerdp_listener_open_local;
+	instance->OpenFromSocket = freerdp_listener_open_from_socket;
 	instance->GetFileDescriptor = freerdp_listener_get_fds;
 	instance->GetEventHandles = freerdp_listener_get_event_handles;
 	instance->CheckFileDescriptor = freerdp_listener_check_fds;
