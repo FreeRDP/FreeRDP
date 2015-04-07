@@ -460,7 +460,7 @@ BOOL license_decrypt_platform_challenge(rdpLicense* license)
 {
 	CryptoRc4 rc4;
 
-	license->PlatformChallenge->data = (BYTE*) malloc(license->EncryptedPlatformChallenge->length);
+	license->PlatformChallenge->data = (BYTE *)malloc(license->EncryptedPlatformChallenge->length);
 	if (!license->PlatformChallenge->data)
 		return FALSE;
 	license->PlatformChallenge->length = license->EncryptedPlatformChallenge->length;
@@ -469,6 +469,8 @@ BOOL license_decrypt_platform_challenge(rdpLicense* license)
 	if (!rc4)
 	{
 		WLog_ERR(TAG, "unable to allocate a rc4");
+		free(license->PlatformChallenge->data);
+		license->PlatformChallenge->data = NULL;
 		return FALSE;
 	}
 
@@ -796,7 +798,6 @@ BOOL license_read_platform_challenge_packet(rdpLicense* license, wStream* s)
 {
 	BYTE MacData[16];
 	UINT32 ConnectFlags = 0;
-	BOOL ret;
 
 	DEBUG_LICENSE("Receiving Platform Challenge Packet");
 
@@ -813,7 +814,8 @@ BOOL license_read_platform_challenge_packet(rdpLicense* license, wStream* s)
 		return FALSE;
 
 	Stream_Read(s, MacData, 16); /* MACData (16 bytes) */
-	ret = license_decrypt_platform_challenge(license);
+	if (!license_decrypt_platform_challenge(license))
+		return FALSE;
 #ifdef WITH_DEBUG_LICENSE
 	WLog_DBG(TAG, "ConnectFlags: 0x%08X", ConnectFlags);
 	WLog_DBG(TAG, "EncryptedPlatformChallenge:");
@@ -823,7 +825,7 @@ BOOL license_read_platform_challenge_packet(rdpLicense* license, wStream* s)
 	WLog_DBG(TAG, "MacData:");
 	winpr_HexDump(TAG, WLOG_DEBUG, MacData, 16);
 #endif
-	return ret;
+	return TRUE;
 }
 
 /**
@@ -1033,16 +1035,16 @@ BOOL license_send_platform_challenge_response_packet(rdpLicense* license)
 	if (!status)
 		return FALSE;
 
-	buffer = (BYTE*) malloc(HWID_LENGTH);
-	if (!buffer)
-		return FALSE;
-
 	rc4 = crypto_rc4_init(license->LicensingEncryptionKey, LICENSING_ENCRYPTION_KEY_LENGTH);
 	if (!rc4)
 	{
 		WLog_ERR(TAG, "unable to allocate a rc4");
 		return FALSE;
 	}
+
+	buffer = (BYTE*) malloc(HWID_LENGTH);
+	if (!buffer)
+		return FALSE;
 
 	crypto_rc4(rc4, HWID_LENGTH, license->HardwareId, buffer);
 	crypto_rc4_free(rc4);

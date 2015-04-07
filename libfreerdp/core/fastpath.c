@@ -767,7 +767,6 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, int iNu
 	rdpRdp* rdp;
 	UINT16 length;
 	BYTE eventHeader;
-	BOOL status;
 
 	/*
 	 *  A maximum of 15 events are allowed per request
@@ -824,21 +823,22 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, int iNu
 			if (pad)
 				memset(fpInputEvents + fpInputEvents_length, 0, pad);
 
-			security_fips_encrypt(fpInputEvents, fpInputEvents_length + pad, rdp);
+			if (!security_fips_encrypt(fpInputEvents, fpInputEvents_length + pad, rdp))
+				return FALSE;
 
 			length += pad;
 		}
 		else
 		{
+			BOOL status;
+
 			if (rdp->sec_flags & SEC_SECURE_CHECKSUM)
 				status = security_salted_mac_signature(rdp, fpInputEvents, fpInputEvents_length, TRUE, Stream_Pointer(s));
 			else
 				status = security_mac_signature(rdp, fpInputEvents, fpInputEvents_length, Stream_Pointer(s));
 
-			if (!status)
+			if (!status || !security_encrypt(fpInputEvents, fpInputEvents_length, rdp))
 				return FALSE;
-
-			security_encrypt(fpInputEvents, fpInputEvents_length, rdp);
 		}
 	}
 
@@ -1037,9 +1037,8 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 				else
 					status = security_mac_signature(rdp, data, dataSize, pSignature);
 
-				if (!status)
+				if (!status || !security_encrypt(data, dataSize, rdp))
 					return FALSE;
-				security_encrypt(data, dataSize, rdp);
 			}
 		}
 

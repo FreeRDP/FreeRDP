@@ -479,7 +479,9 @@ static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, int length, UINT32 
 					return FALSE;
 
 				Stream_Seek(s, 8);
-				security_encrypt(Stream_Pointer(s), length, rdp);
+
+				if (!security_encrypt(Stream_Pointer(s), length, rdp))
+					return FALSE;
 			}
 		}
 

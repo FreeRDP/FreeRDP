@@ -162,8 +162,8 @@ BOOL crypto_hmac_md5_init(CryptoHmac hmac, const BYTE* data, UINT32 length)
 	return HMAC_Init_ex(&hmac->hmac_ctx, data, length, EVP_md5(), NULL) == 1;
 #else
 	HMAC_Init_ex(&hmac->hmac_ctx, data, length, EVP_md5(), NULL);
-#endif
 	return TRUE;
+#endif
 }
 
 void crypto_hmac_update(CryptoHmac hmac, const BYTE* data, UINT32 length)
