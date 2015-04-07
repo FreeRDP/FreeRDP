@@ -1754,7 +1754,7 @@ BOOL gcc_write_server_message_channel_data(wStream* s, rdpMcs* mcs)
 	if (mcs->messageChannelId == 0)
 		return TRUE;
 
-	if (!Stream_EnsureRemainingCapacity(s, 6 + 4))
+	if (!Stream_EnsureRemainingCapacity(s, 2 + 4))
 		return FALSE;
 
 	gcc_write_user_data_header(s, SC_MCS_MSGCHANNEL, 6);
