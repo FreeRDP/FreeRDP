@@ -547,14 +547,13 @@ static char** freerdp_command_line_parse_comma_separated_values_offset(char* lis
 	char** t;
 
 	p = freerdp_command_line_parse_comma_separated_values(list, count);
-	if (!p)
-		return NULL;
 
 	t = (char**) realloc(p, sizeof(char*) * (*count + 1));
 	if (!t)
 		return NULL;
 	p = t;
-	MoveMemory(&p[1], p, sizeof(char*) * *count);
+	if (count > 0)
+        MoveMemory(&p[1], p, sizeof(char*) * *count);
 	(*count)++;
 
 	return p;
