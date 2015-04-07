@@ -48,6 +48,8 @@ static void* named_pipe_client_thread(void* arg)
 	if (!lpReadBuffer || !lpWriteBuffer)
 	{
 		printf("Error allocating memory\n");
+		free(lpReadBuffer);
+		free(lpWriteBuffer);
 		return NULL;
 	}
 	ZeroMemory(&overlapped, sizeof(OVERLAPPED));
@@ -161,6 +163,8 @@ static void* named_pipe_server_thread(void* arg)
 	if (!lpReadBuffer || !lpWriteBuffer)
 	{
 		printf("Error allocating memory\n");
+		free(lpReadBuffer);
+		free(lpWriteBuffer);
 		return NULL;
 	}
 	nNumberOfBytesToRead = PIPE_BUFFER_SIZE;

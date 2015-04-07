@@ -230,6 +230,8 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	else
 	{
 		lpszEnvironmentBlock = GetEnvironmentStrings();
+		if (lpszEnvironmentBlock)
+			goto finish;
 		envp = EnvironmentBlockToEnvpA(lpszEnvironmentBlock);
 	}
 	if (!envp)

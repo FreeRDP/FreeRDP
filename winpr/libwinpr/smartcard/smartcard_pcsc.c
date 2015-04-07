@@ -2963,9 +2963,7 @@ int PCSC_InitializeSCardApi(void)
 	{
 		env = (LPSTR) malloc(nSize);
 		if (!env)
-		{
 			return -1;
-		}
 		nSize = GetEnvironmentVariableA("WINPR_WINSCARD_LOCK_TRANSACTIONS", env, nSize);
 
 		if (strcmp(env, "1") == 0)

@@ -203,11 +203,16 @@ wMessageQueue* MessageQueue_New(const wObject *callback)
 			return NULL;
 		}
 
-		InitializeCriticalSectionAndSpinCount(&queue->lock, 4000);
+		if (!InitializeCriticalSectionAndSpinCount(&queue->lock, 4000))
+		{
+			free(queue);
+			return NULL;
+		}
 		queue->event = CreateEvent(NULL, TRUE, FALSE, NULL);
 		if (!queue->event)
 		{
 			free(queue->array);
+			DeleteCriticalSection(&queue->lock);
 			free(queue);
 			return NULL;
 		}
