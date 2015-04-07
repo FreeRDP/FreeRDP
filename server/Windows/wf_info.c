@@ -48,16 +48,13 @@ int wf_info_lock(wfInfo* wfi)
 	case WAIT_ABANDONED:
 	case WAIT_OBJECT_0:
 		return TRUE;
-		break;
 
 	case WAIT_TIMEOUT:
 		return FALSE;
-		break;
 
 	case WAIT_FAILED:
 		WLog_ERR(TAG, "wf_info_lock failed with 0x%08X", GetLastError());
 		return -1;
-		break;
 	}
 
 	return -1;
@@ -74,16 +71,13 @@ int wf_info_try_lock(wfInfo* wfi, DWORD dwMilliseconds)
 	case WAIT_ABANDONED:
 	case WAIT_OBJECT_0:
 		return TRUE;
-		break;
 
 	case WAIT_TIMEOUT:
 		return FALSE;
-		break;
 
 	case WAIT_FAILED:
 		WLog_ERR(TAG, "wf_info_try_lock failed with 0x%08X", GetLastError());
 		return -1;
-		break;
 	}
 
 	return -1;
@@ -143,7 +137,7 @@ wfInfo* wf_info_init()
 			return NULL;
 		}
 
-		wfi->peers = (freerdp_peer**) calloc(1, sizeof(freerdp_peer*) * WF_INFO_MAXPEERS);
+		wfi->peers = (freerdp_peer**) calloc(WF_INFO_MAXPEERS, sizeof(freerdp_peer*));
 		if (!wfi->peers)
 		{
 			WLog_ERR(TAG, "Failed to allocate memory for peer");
@@ -222,7 +216,7 @@ void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 			return;
 		}
 #endif
-		//look trhough the array of peers until an empty slot
+		//look through the array of peers until an empty slot
 		for(i=0; i<WF_INFO_MAXPEERS; ++i)
 		{
 			//empty index will be our peer id

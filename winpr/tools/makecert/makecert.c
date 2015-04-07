@@ -22,14 +22,12 @@
 #include <stdlib.h>
 
 #include <winpr/crt.h>
-#include <winpr/file.h>
 #include <winpr/path.h>
 #include <winpr/cmdline.h>
 #include <winpr/sysinfo.h>
 
 #include <openssl/conf.h>
 #include <openssl/pem.h>
-#include <openssl/err.h>
 #include <openssl/pkcs12.h>
 #include <openssl/x509v3.h>
 
