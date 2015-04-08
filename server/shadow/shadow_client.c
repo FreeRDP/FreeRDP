@@ -26,6 +26,7 @@
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/sysinfo.h>
+#include <winpr/interlocked.h>
 
 #include <freerdp/log.h>
 
@@ -33,10 +34,21 @@
 
 #define TAG CLIENT_TAG("shadow")
 
+static void shadow_client_free_queued_message(void *obj)
+{
+	wMessage *message = (wMessage*)obj;
+	if (message->Free)
+	{
+		message->Free(message);
+		message->Free = NULL;
+	}
+}
+
 BOOL shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 {
 	rdpSettings* settings;
 	rdpShadowServer* server;
+	const wObject cb = { NULL, NULL, NULL, shadow_client_free_queued_message, NULL };
 
 	server = (rdpShadowServer*) peer->ContextExtra;
 	client->server = server;
@@ -89,8 +101,8 @@ BOOL shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 	if (!client->vcm || client->vcm == INVALID_HANDLE_VALUE)
 		goto fail_open_server;
 
-	if (!(client->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
-		goto fail_stop_event;
+	if (!(client->MsgQueue = MessageQueue_New(&cb)))
+		goto fail_message_queue;
 
 	if (!(client->encoder = shadow_encoder_new(client)))
 		goto fail_encoder_new;
@@ -101,9 +113,9 @@ BOOL shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 	shadow_encoder_free(client->encoder);
 	client->encoder = NULL;
 fail_encoder_new:
-	CloseHandle(client->StopEvent);
-	client->StopEvent = NULL;
-fail_stop_event:
+	MessageQueue_Free(client->MsgQueue);
+	client->MsgQueue = NULL;
+fail_message_queue:
 	WTSCloseServer((HANDLE) client->vcm);
 	client->vcm = NULL;
 fail_open_server:
@@ -134,7 +146,9 @@ void shadow_client_context_free(freerdp_peer* peer, rdpShadowClient* client)
 
 	WTSCloseServer((HANDLE) client->vcm);
 
-	CloseHandle(client->StopEvent);
+    /* Clear queued messages and free resource */
+	MessageQueue_Clear(client->MsgQueue);
+	MessageQueue_Free(client->MsgQueue);
 
 	if (client->lobby)
 	{
@@ -147,10 +161,6 @@ void shadow_client_context_free(freerdp_peer* peer, rdpShadowClient* client)
 		shadow_encoder_free(client->encoder);
 		client->encoder = NULL;
 	}
-
-	shadow_client_encomsp_uninit(client);
-
-	shadow_client_remdesk_uninit(client);
 }
 
 void shadow_client_message_free(wMessage* message)
@@ -902,8 +912,6 @@ int shadow_client_subsystem_process_message(rdpShadowClient* client, wMessage* m
 				client->pointerY = msg->yPos;
 			}
 		}
-
-		free(msg);
 	}
 	else if (message->id == SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE_ID)
 	{
@@ -936,10 +944,26 @@ int shadow_client_subsystem_process_message(rdpShadowClient* client, wMessage* m
 			free(pointerColor->xorMaskData);
 			free(pointerColor->andMaskData);
 		}
-
-		free(msg->pixels);
-		free(msg);
 	}
+	else if (message->id == SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES_ID)
+	{
+		SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES* msg = (SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES*) message->wParam;
+		if (client->activated && client->rdpsnd && client->rdpsnd->Activated)
+		{
+			client->rdpsnd->src_format = msg->audio_format;
+			IFCALL(client->rdpsnd->SendSamples, client->rdpsnd, msg->buf, msg->nFrames, msg->wTimestamp);
+		}
+	}
+	else if (message->id == SHADOW_MSG_OUT_AUDIO_OUT_VOLUME_ID)
+	{
+		SHADOW_MSG_OUT_AUDIO_OUT_VOLUME* msg = (SHADOW_MSG_OUT_AUDIO_OUT_VOLUME*) message->wParam;
+		if (client->activated && client->rdpsnd && client->rdpsnd->Activated)
+		{
+			IFCALL(client->rdpsnd->SetVolume, client->rdpsnd, msg->left, msg->right);
+		}
+	}
+
+	shadow_client_free_queued_message(message);
 
 	return 1;
 }
@@ -949,8 +973,10 @@ void* shadow_client_thread(rdpShadowClient* client)
 	DWORD status;
 	DWORD nCount;
 	wMessage message;
+	wMessage pointerPositionMsg;
+	wMessage pointerAlphaMsg;
+	wMessage audioVolumeMsg;
 	HANDLE events[32];
-	HANDLE StopEvent;
 	HANDLE ClientEvent;
 	HANDLE ChannelEvent;
 	void* UpdateSubscriber;
@@ -962,7 +988,7 @@ void* shadow_client_thread(rdpShadowClient* client)
 	rdpShadowScreen* screen;
 	rdpShadowEncoder* encoder;
 	rdpShadowSubsystem* subsystem;
-	wMessagePipe* MsgPipe = client->subsystem->MsgPipe;
+	wMessageQueue* MsgQueue = client->MsgQueue;
 
 	server = client->server;
 	screen = server->screen;
@@ -985,14 +1011,13 @@ void* shadow_client_thread(rdpShadowClient* client)
 	peer->update->SuppressOutput = (pSuppressOutput)shadow_client_suppress_output;
 	peer->update->SurfaceFrameAcknowledge = (pSurfaceFrameAcknowledge)shadow_client_surface_frame_acknowledge;
 
-	if ((!client->StopEvent) || (!client->vcm) || (!subsystem->updateEvent))
+	if ((!client->vcm) || (!subsystem->updateEvent))
 		goto out;
 
 	UpdateSubscriber = shadow_multiclient_get_subscriber(subsystem->updateEvent);
 	if (!UpdateSubscriber)
 		goto out;
 
-	StopEvent = client->StopEvent;
 	UpdateEvent = shadow_multiclient_getevent(UpdateSubscriber);
 	ClientEvent = peer->GetEventHandle(peer);
 	ChannelEvent = WTSVirtualChannelManagerGetEventHandle(client->vcm);
@@ -1000,18 +1025,12 @@ void* shadow_client_thread(rdpShadowClient* client)
 	while (1)
 	{
 		nCount = 0;
-		events[nCount++] = StopEvent;
 		events[nCount++] = UpdateEvent;
 		events[nCount++] = ClientEvent;
 		events[nCount++] = ChannelEvent;
-		events[nCount++] = MessageQueue_Event(MsgPipe->Out);
+		events[nCount++] = MessageQueue_Event(MsgQueue);
 
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
-
-		if (WaitForSingleObject(StopEvent, 0) == WAIT_OBJECT_0)
-		{
-			break;
-		}
 
 		if (WaitForSingleObject(UpdateEvent, 0) == WAIT_OBJECT_0)
 		{
@@ -1056,17 +1075,74 @@ void* shadow_client_thread(rdpShadowClient* client)
 			}
 		}
 
-		if (WaitForSingleObject(MessageQueue_Event(MsgPipe->Out), 0) == WAIT_OBJECT_0)
+		if (WaitForSingleObject(MessageQueue_Event(MsgQueue), 0) == WAIT_OBJECT_0)
 		{
-			if (MessageQueue_Peek(MsgPipe->Out, &message, TRUE))
+			/* Drain messages. Pointer update could be accumulated. */
+			pointerPositionMsg.id = 0;
+			pointerPositionMsg.Free= NULL;
+			pointerAlphaMsg.id = 0;
+			pointerAlphaMsg.Free = NULL;
+			audioVolumeMsg.id = 0;
+			audioVolumeMsg.Free = NULL;
+			while (MessageQueue_Peek(MsgQueue, &message, TRUE))
 			{
 				if (message.id == WMQ_QUIT)
+				{
 					break;
+				}
+				else if (message.id == SHADOW_MSG_OUT_POINTER_POSITION_UPDATE_ID)
+				{
+					/* Abandon previous message */
+					shadow_client_free_queued_message(&pointerPositionMsg);
+					CopyMemory(&pointerPositionMsg, &message, sizeof(wMessage));
+				}
+				else if (message.id == SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE_ID)
+				{
+					/* Abandon previous message */
+					shadow_client_free_queued_message(&pointerAlphaMsg);
+					CopyMemory(&pointerAlphaMsg, &message, sizeof(wMessage));
+				}
+				else if (message.id == SHADOW_MSG_OUT_AUDIO_OUT_VOLUME_ID)
+				{
+					/* Abandon previous message */
+					shadow_client_free_queued_message(&audioVolumeMsg);
+					CopyMemory(&audioVolumeMsg, &message, sizeof(wMessage));
+				}
+				else
+				{
+					shadow_client_subsystem_process_message(client, &message);
+				}
+			}
 
-				shadow_client_subsystem_process_message(client, &message);
+			if (message.id == WMQ_QUIT)
+			{
+				/* Release stored message */
+				shadow_client_free_queued_message(&pointerPositionMsg);
+				shadow_client_free_queued_message(&pointerAlphaMsg);
+				shadow_client_free_queued_message(&audioVolumeMsg);
+				break;
+			}
+			else
+			{
+				/* Process accumulated messages if needed */
+				if (pointerPositionMsg.id)
+				{
+					shadow_client_subsystem_process_message(client, &pointerPositionMsg);
+				}
+				if (pointerAlphaMsg.id)
+				{
+					shadow_client_subsystem_process_message(client, &pointerAlphaMsg);
+				}
+				if (audioVolumeMsg.id)
+				{
+					shadow_client_subsystem_process_message(client, &audioVolumeMsg);
+				}
 			}
 		}
 	}
+
+	/* Free channels early because we establish channels in post connect */
+	shadow_client_channels_free(client);
 
 	if (UpdateSubscriber)
 	{
@@ -1108,4 +1184,103 @@ BOOL shadow_client_accepted(freerdp_listener* listener, freerdp_peer* peer)
 	}
 
 	return TRUE;
+}
+
+static void shadow_msg_out_addref(wMessage* message)
+{
+	SHADOW_MSG_OUT* msg = (SHADOW_MSG_OUT *)message->wParam;
+	InterlockedIncrement(&(msg->refCount));
+}
+
+static void shadow_msg_out_release(wMessage* message)
+{
+	SHADOW_MSG_OUT* msg = (SHADOW_MSG_OUT *)message->wParam;
+	if (InterlockedDecrement(&(msg->refCount)) <= 0)
+	{
+		if (msg->Free)
+			msg->Free(message->id, msg);
+	}
+}
+
+static BOOL shadow_client_dispatch_msg(rdpShadowClient* client, wMessage* message)
+{
+	/* Add reference when it is posted */
+	shadow_msg_out_addref(message);
+	if (MessageQueue_Dispatch(client->MsgQueue, message))
+	{
+		return TRUE;
+	}
+	else
+	{
+		/* Release the reference since post failed */
+		shadow_msg_out_release(message);
+		return FALSE;
+	}
+}
+
+BOOL shadow_client_post_msg(rdpShadowClient* client, void* context, UINT32 type, SHADOW_MSG_OUT* msg, void* lParam)
+{
+	wMessage message = {0};
+
+	message.context = context;
+	message.id = type;
+	message.wParam = (void *)msg;
+	message.lParam = lParam;
+	message.Free = shadow_msg_out_release;
+
+	return shadow_client_dispatch_msg(client, &message);
+}
+
+int shadow_client_boardcast_msg(rdpShadowServer* server, void* context, UINT32 type, SHADOW_MSG_OUT* msg, void* lParam)
+{
+	wMessage message = {0};
+	rdpShadowClient* client = NULL;
+	int count = 0;
+	int index = 0;
+
+	message.context = context;
+	message.id = type;
+	message.wParam = (void *)msg;
+	message.lParam = lParam;
+	message.Free = shadow_msg_out_release;
+
+	/* First add reference as we reference it in this function.
+     * Therefore it would not be free'ed during post. */
+	shadow_msg_out_addref(&message);
+
+	ArrayList_Lock(server->clients);
+	for (index = 0; index < ArrayList_Count(server->clients); index++)
+	{
+		client = (rdpShadowClient*)ArrayList_GetItem(server->clients, index);
+		if (shadow_client_dispatch_msg(client, &message))
+		{
+			count++;
+		}
+	}
+	ArrayList_Unlock(server->clients);
+
+    /* Release the reference for this function */
+	shadow_msg_out_release(&message);
+
+	return count;
+}
+
+int shadow_client_boardcast_quit(rdpShadowServer* server, int nExitCode)
+{
+	wMessageQueue* queue = NULL;
+	int count = 0;
+	int index = 0;
+
+	ArrayList_Lock(server->clients);
+	for (index = 0; index < ArrayList_Count(server->clients); index++)
+	{
+		queue = ((rdpShadowClient*)ArrayList_GetItem(server->clients, index))->MsgQueue;
+		if (MessageQueue_PostQuit(queue, nExitCode))
+		{
+			count++;
+		}
+	}
+	ArrayList_Unlock(server->clients);
+
+	return count;
 }

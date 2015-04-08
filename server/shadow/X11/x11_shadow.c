@@ -348,11 +348,23 @@ void x11_shadow_input_extended_mouse_event(x11ShadowSubsystem* subsystem, UINT16
 #endif
 }
 
+static void x11_shadow_message_free(UINT32 id, SHADOW_MSG_OUT* msg)
+{
+	if (id == SHADOW_MSG_OUT_POINTER_POSITION_UPDATE_ID)
+	{
+		free(msg);
+	}
+	else if (id == SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE_ID)
+	{
+		free(((SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE*)msg)->pixels);
+		free(msg);
+	}
+}
+
 int x11_shadow_pointer_position_update(x11ShadowSubsystem* subsystem)
 {
 	SHADOW_MSG_OUT_POINTER_POSITION_UPDATE* msg;
 	UINT32 msgId = SHADOW_MSG_OUT_POINTER_POSITION_UPDATE_ID;
-	wMessagePipe* MsgPipe = subsystem->MsgPipe;
 
 	msg = (SHADOW_MSG_OUT_POINTER_POSITION_UPDATE*) calloc(1, sizeof(SHADOW_MSG_OUT_POINTER_POSITION_UPDATE));
 
@@ -361,15 +373,15 @@ int x11_shadow_pointer_position_update(x11ShadowSubsystem* subsystem)
 
 	msg->xPos = subsystem->pointerX;
 	msg->yPos = subsystem->pointerY;
+	msg->Free = x11_shadow_message_free;
 
-	return MessageQueue_Post(MsgPipe->Out, NULL, msgId, (void*) msg, NULL) ? 1 : -1;
+	return shadow_client_boardcast_msg(subsystem->server, NULL, msgId, (SHADOW_MSG_OUT*) msg, NULL) ? 1 : -1;
 }
 
 int x11_shadow_pointer_alpha_update(x11ShadowSubsystem* subsystem)
 {
 	SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* msg;
 	UINT32 msgId = SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE_ID;
-	wMessagePipe* MsgPipe = subsystem->MsgPipe;
 
 	msg = (SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE*) calloc(1, sizeof(SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE));
 
@@ -392,8 +404,9 @@ int x11_shadow_pointer_alpha_update(x11ShadowSubsystem* subsystem)
 
 	CopyMemory(msg->pixels, subsystem->cursorPixels, msg->scanline * msg->height);
 	msg->premultiplied = TRUE;
+	msg->Free = x11_shadow_message_free;
 
-	return MessageQueue_Post(MsgPipe->Out, NULL, msgId, (void*) msg, NULL) ? 1 : -1;
+	return shadow_client_boardcast_msg(subsystem->server, NULL, msgId, (SHADOW_MSG_OUT*) msg, NULL) ? 1 : -1;
 }
 
 int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)

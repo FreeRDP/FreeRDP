@@ -36,5 +36,23 @@ int shadow_client_channels_post_connect(rdpShadowClient* client)
 		shadow_client_remdesk_init(client);
 	}
 
+	if (WTSVirtualChannelManagerIsChannelJoined(client->vcm, "rdpsnd"))
+	{
+		shadow_client_rdpsnd_init(client);
+	}
+
+	shadow_client_audin_init(client);
+
 	return 1;
+}
+
+void shadow_client_channels_free(rdpShadowClient* client)
+{
+	shadow_client_audin_uninit(client);
+
+	shadow_client_rdpsnd_uninit(client);
+
+	shadow_client_remdesk_uninit(client);
+
+	shadow_client_encomsp_uninit(client);
 }
