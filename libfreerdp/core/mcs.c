@@ -570,12 +570,14 @@ void mcs_write_connect_initial(wStream* s, rdpMcs* mcs, wStream* userData)
  * @param user_data GCC Conference Create Response
  */
 
-void mcs_write_connect_response(wStream* s, rdpMcs* mcs, wStream* userData)
+BOOL mcs_write_connect_response(wStream* s, rdpMcs* mcs, wStream* userData)
 {
 	int length;
 	wStream* tmps;
 
 	tmps = Stream_New(NULL, Stream_Capacity(s));
+	if (!tmps)
+		return FALSE;
 	ber_write_enumerated(tmps, 0, MCS_Result_enum_length);
 	ber_write_integer(tmps, 0); /* calledConnectId */
 	mcs_write_domain_parameters(tmps, &(mcs->domainParameters));
@@ -586,6 +588,7 @@ void mcs_write_connect_response(wStream* s, rdpMcs* mcs, wStream* userData)
 	ber_write_application_tag(s, MCS_TYPE_CONNECT_RESPONSE, length);
 	Stream_Write(s, Stream_Buffer(tmps), length);
 	Stream_Free(tmps, TRUE);
+	return TRUE;
 }
 
 /**
@@ -688,18 +691,25 @@ BOOL mcs_send_connect_response(rdpMcs* mcs)
 	wStream* server_data;
 
 	server_data = Stream_New(NULL, 512);
-	gcc_write_server_data_blocks(server_data, mcs);
+	if (!gcc_write_server_data_blocks(server_data, mcs))
+		goto error_data_blocks;
 
-	gcc_CCrsp = Stream_New(NULL, 512);
+	gcc_CCrsp = Stream_New(NULL, 512 + Stream_Capacity(server_data));
+	if (!gcc_CCrsp)
+		goto error_data_blocks;
+
 	gcc_write_conference_create_response(gcc_CCrsp, server_data);
 	length = Stream_GetPosition(gcc_CCrsp) + 7;
 
 	s = Stream_New(NULL, length + 1024);
+	if (!s)
+		goto error_stream_s;
 
 	bm = Stream_GetPosition(s);
 	Stream_Seek(s, 7);
 
-	mcs_write_connect_response(s, mcs, gcc_CCrsp);
+	if (!mcs_write_connect_response(s, mcs, gcc_CCrsp))
+		goto error_write_connect_response;
 	em = Stream_GetPosition(s);
 	length = (em - bm);
 	Stream_SetPosition(s, bm);
@@ -716,6 +726,14 @@ BOOL mcs_send_connect_response(rdpMcs* mcs)
 	Stream_Free(server_data, TRUE);
 
 	return (status < 0) ? FALSE : TRUE;
+
+error_write_connect_response:
+	Stream_Free(s, TRUE);
+error_stream_s:
+	Stream_Free(gcc_CCrsp, TRUE);
+error_data_blocks:
+	Stream_Free(server_data, TRUE);
+	return FALSE;
 }
 
 /**

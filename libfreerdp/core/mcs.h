@@ -165,7 +165,7 @@ BOOL mcs_merge_domain_parameters(DomainParameters* targetParameters, DomainParam
 		DomainParameters* maximumParameters, DomainParameters* pOutParameters);
 
 void mcs_write_connect_initial(wStream* s, rdpMcs* mcs, wStream* userData);
-void mcs_write_connect_response(wStream* s, rdpMcs* mcs, wStream* userData);
+BOOL mcs_write_connect_response(wStream* s, rdpMcs* mcs, wStream* userData);
 
 BOOL mcs_recv_connect_initial(rdpMcs* mcs, wStream* s);
 BOOL mcs_send_connect_initial(rdpMcs* mcs);
