@@ -37,17 +37,50 @@ static BOOL g_MessagePump = FALSE;
 
 #include <freerdp/server/shadow.h>
 
+#ifdef WITH_SHADOW_X11
+extern int X11_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);
+#endif
+
+#ifdef WITH_SHADOW_MAC
+extern int Mac_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);
+#endif
+
+#ifdef WITH_SHADOW_WIN
+extern int Win_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);
+#endif
+
 int main(int argc, char** argv)
 {
 	MSG msg;
-	int status;
+	int status = 0;
 	DWORD dwExitCode;
 	rdpShadowServer* server;
+
+#ifdef WITH_SHADOW_X11
+	shadow_subsystem_set_entry(X11_ShadowSubsystemEntry);
+#endif
+
+#ifdef WITH_SHADOW_MAC
+	shadow_subsystem_set_entry(Mac_ShadowSubsystemEntry);
+#endif
+
+#ifdef WITH_SHADOW_WIN
+	shadow_subsystem_set_entry(Win_ShadowSubsystemEntry);
+#endif
 
 	server = shadow_server_new();
 
 	if (!server)
+	{
+		status = -1;
 		goto fail_server_new;
+	}
+
+#ifdef WITH_SHADOW_X11
+	server->authentication = TRUE;
+#else
+	server->authentication = FALSE;
+#endif
 
 	if ((status = shadow_server_parse_command_line(server, argc, argv)) < 0)
 	{
