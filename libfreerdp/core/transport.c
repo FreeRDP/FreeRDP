@@ -598,16 +598,17 @@ int transport_write(rdpTransport* transport, wStream* s)
 			 * is a SSL or TSG BIO in the chain.
 			 */
 			if (!BIO_should_retry(transport->frontBio))
-				return status;
+				goto out_cleanup;
 
 			/* non-blocking can live with blocked IOs */
 			if (!transport->blocking)
-				return status;
+				goto out_cleanup;
 
 			if (BIO_wait_write(transport->frontBio, 100) < 0)
 			{
 				WLog_ERR(TAG, "error when selecting for write");
-				return -1;
+				status = -1;
+				goto out_cleanup;
 			}
 
 			continue;
@@ -620,13 +621,15 @@ int transport_write(rdpTransport* transport, wStream* s)
 				if (BIO_wait_write(transport->frontBio, 100) < 0)
 				{
 					WLog_ERR(TAG, "error when selecting for write");
-					return -1;
+					status = -1;
+					goto out_cleanup;
 				}
 
 				if (BIO_flush(transport->frontBio) < 1)
 				{
 					WLog_ERR(TAG, "error when flushing outputBuffer");
-					return -1;
+					status = -1;
+					goto out_cleanup;
 				}
 			}
 		}
@@ -635,6 +638,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 		Stream_Seek(s, status);
 	}
 
+out_cleanup:
 	if (status < 0)
 	{
 		/* A write error indicates that the peer has dropped the connection */
