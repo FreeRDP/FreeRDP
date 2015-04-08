@@ -64,6 +64,8 @@ typedef int (*pfnShadowEnumMonitors)(MONITOR_DEF* monitors, int maxMonitors);
 
 typedef int (*pfnShadowAuthenticate)(rdpShadowSubsystem* subsystem,
 		const char* user, const char* domain, const char* password);
+typedef int (*pfnShadowClientConnect)(rdpShadowSubsystem* subsystem, freerdp_peer* peer);
+typedef void (*pfnShadowClientDisconnect)(rdpShadowSubsystem* subsystem, freerdp_peer* peer);
 
 typedef int (*pfnShadowSynchronizeEvent)(rdpShadowSubsystem* subsystem, UINT32 flags);
 typedef int (*pfnShadowKeyboardEvent)(rdpShadowSubsystem* subsystem, UINT16 flags, UINT16 code);
@@ -158,6 +160,8 @@ struct _RDP_SHADOW_ENTRY_POINTS
 	pfnShadowExtendedMouseEvent ExtendedMouseEvent; \
 	\
 	pfnShadowAuthenticate Authenticate; \
+	pfnShadowClientConnect ClientConnect; \
+	pfnShadowClientDisconnect ClientDisconnect; \
 	\
 	rdpShadowServer* server
 
