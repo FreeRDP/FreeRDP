@@ -205,10 +205,10 @@ BOOL license_send(rdpLicense* license, wStream* s, BYTE type);
 wStream* license_send_stream_init(rdpLicense* license);
 
 void license_generate_randoms(rdpLicense* license);
-void license_generate_keys(rdpLicense* license);
-void license_generate_hwid(rdpLicense* license);
-void license_encrypt_premaster_secret(rdpLicense* license);
-void license_decrypt_platform_challenge(rdpLicense* license);
+BOOL license_generate_keys(rdpLicense* license);
+BOOL license_generate_hwid(rdpLicense* license);
+BOOL license_encrypt_premaster_secret(rdpLicense* license);
+BOOL license_decrypt_platform_challenge(rdpLicense* license);
 
 LICENSE_PRODUCT_INFO* license_new_product_info(void);
 void license_free_product_info(LICENSE_PRODUCT_INFO* productInfo);
@@ -217,7 +217,7 @@ BOOL license_read_product_info(wStream* s, LICENSE_PRODUCT_INFO* productInfo);
 LICENSE_BLOB* license_new_binary_blob(UINT16 type);
 void license_free_binary_blob(LICENSE_BLOB* blob);
 BOOL license_read_binary_blob(wStream* s, LICENSE_BLOB* blob);
-void license_write_binary_blob(wStream* s, LICENSE_BLOB* blob);
+BOOL license_write_binary_blob(wStream* s, LICENSE_BLOB* blob);
 
 SCOPE_LIST* license_new_scope_list(void);
 void license_free_scope_list(SCOPE_LIST* scopeList);
@@ -229,11 +229,11 @@ void license_read_new_license_packet(rdpLicense* license, wStream* s);
 void license_read_upgrade_license_packet(rdpLicense* license, wStream* s);
 BOOL license_read_error_alert_packet(rdpLicense* license, wStream* s);
 
-void license_write_new_license_request_packet(rdpLicense* license, wStream* s);
-void license_send_new_license_request_packet(rdpLicense* license);
+BOOL license_write_new_license_request_packet(rdpLicense* license, wStream* s);
+BOOL license_send_new_license_request_packet(rdpLicense* license);
 
-void license_write_platform_challenge_response_packet(rdpLicense* license, wStream* s, BYTE* mac_data);
-void license_send_platform_challenge_response_packet(rdpLicense* license);
+BOOL license_write_platform_challenge_response_packet(rdpLicense* license, wStream* s, BYTE* mac_data);
+BOOL license_send_platform_challenge_response_packet(rdpLicense* license);
 
 BOOL license_send_valid_client_error_packet(rdpLicense* license);
 

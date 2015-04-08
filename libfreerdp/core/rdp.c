@@ -429,12 +429,13 @@ void rdp_write_header(rdpRdp* rdp, wStream* s, UINT16 length, UINT16 channelId)
 	Stream_Write_UINT16_BE(s, length); /* userData (OCTET_STRING) */
 }
 
-static UINT32 rdp_security_stream_out(rdpRdp* rdp, wStream* s, int length, UINT32 sec_flags)
+static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, int length, UINT32 sec_flags, UINT32 *pad)
 {
 	BYTE* data;
-	UINT32 pad = 0;
+	BOOL status;
 
 	sec_flags |= rdp->sec_flags;
+	*pad = 0;
 
 	if (sec_flags != 0)
 	{
@@ -451,17 +452,18 @@ static UINT32 rdp_security_stream_out(rdpRdp* rdp, wStream* s, int length, UINT3
 				Stream_Write_UINT8(s, 0x1); /* TSFIPS_VERSION 1*/
 
 				/* handle padding */
-				pad = 8 - (length % 8);
+				*pad = 8 - (length % 8);
 
-				if (pad == 8)
+				if (*pad == 8)
 					pad = 0;
-				if (pad)
-					memset(data+length, 0, pad);
+				if (*pad)
+					memset(data+length, 0, *pad);
 
-				Stream_Write_UINT8(s, pad);
-				security_hmac_signature(data, length, Stream_Pointer(s), rdp);
+				Stream_Write_UINT8(s, *pad);
+				if (!security_hmac_signature(data, length, Stream_Pointer(s), rdp))
+					return FALSE;
 				Stream_Seek(s, 8);
-				security_fips_encrypt(data, length + pad, rdp);
+				security_fips_encrypt(data, length + *pad, rdp);
 			}
 			else
 			{
@@ -469,19 +471,24 @@ static UINT32 rdp_security_stream_out(rdpRdp* rdp, wStream* s, int length, UINT3
 				length = length - (data - Stream_Buffer(s));
 
 				if (sec_flags & SEC_SECURE_CHECKSUM)
-					security_salted_mac_signature(rdp, data, length, TRUE, Stream_Pointer(s));
+					status = security_salted_mac_signature(rdp, data, length, TRUE, Stream_Pointer(s));
 				else
-					security_mac_signature(rdp, data, length, Stream_Pointer(s));
+					status = security_mac_signature(rdp, data, length, Stream_Pointer(s));
+
+				if (!status)
+					return FALSE;
 
 				Stream_Seek(s, 8);
-				security_encrypt(Stream_Pointer(s), length, rdp);
+
+				if (!security_encrypt(Stream_Pointer(s), length, rdp))
+					return FALSE;
 			}
 		}
 
 		rdp->sec_flags = 0;
 	}
 
-	return pad;
+	return TRUE;
 }
 
 static UINT32 rdp_get_sec_bytes(rdpRdp* rdp, UINT16 sec_flags)
@@ -516,11 +523,15 @@ static UINT32 rdp_get_sec_bytes(rdpRdp* rdp, UINT16 sec_flags)
 
 BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channel_id)
 {
+	UINT32 pad;
 	UINT16 length;
 	length = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
 	rdp_write_header(rdp, s, length, channel_id);
-	length += rdp_security_stream_out(rdp, s, length, 0);
+
+	if (!rdp_security_stream_out(rdp, s, length, 0, &pad))
+		return FALSE;
+	length += pad;
 	Stream_SetPosition(s, length);
 	Stream_SealLength(s);
 
@@ -535,6 +546,8 @@ BOOL rdp_send_pdu(rdpRdp* rdp, wStream* s, UINT16 type, UINT16 channel_id)
 	UINT16 length;
 	UINT32 sec_bytes;
 	int sec_hold;
+	UINT32 pad;
+
 	length = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
 	rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
@@ -543,7 +556,11 @@ BOOL rdp_send_pdu(rdpRdp* rdp, wStream* s, UINT16 type, UINT16 channel_id)
 	Stream_Seek(s, sec_bytes);
 	rdp_write_share_control_header(s, length - sec_bytes, type, channel_id);
 	Stream_SetPosition(s, sec_hold);
-	length += rdp_security_stream_out(rdp, s, length, 0);
+
+	if (!rdp_security_stream_out(rdp, s, length, 0, &pad))
+		return FALSE;
+
+	length += pad;
 	Stream_SetPosition(s, length);
 	Stream_SealLength(s);
 
@@ -558,6 +575,8 @@ BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id)
 	UINT16 length;
 	UINT32 sec_bytes;
 	int sec_hold;
+	UINT32 pad;
+
 	length = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
 	rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
@@ -567,7 +586,9 @@ BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id)
 	rdp_write_share_control_header(s, length - sec_bytes, PDU_TYPE_DATA, channel_id);
 	rdp_write_share_data_header(s, length - sec_bytes, type, rdp->settings->ShareId);
 	Stream_SetPosition(s, sec_hold);
-	length += rdp_security_stream_out(rdp, s, length, 0);
+	if (!rdp_security_stream_out(rdp, s, length, 0, &pad))
+		return FALSE;
+	length += pad;
 	Stream_SetPosition(s, length);
 	Stream_SealLength(s);
 
@@ -582,6 +603,8 @@ BOOL rdp_send_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 sec_flags)
 	UINT16 length;
 	UINT32 sec_bytes;
 	int sec_hold;
+	UINT32 pad;
+
 	length = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
 	rdp_write_header(rdp, s, length, rdp->mcs->messageChannelId);
@@ -589,7 +612,11 @@ BOOL rdp_send_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 sec_flags)
 	sec_hold = Stream_GetPosition(s);
 	Stream_Seek(s, sec_bytes);
 	Stream_SetPosition(s, sec_hold);
-	length += rdp_security_stream_out(rdp, s, length, sec_flags);
+
+	if (!rdp_security_stream_out(rdp, s, length, sec_flags, &pad))
+		return FALSE;
+
+	length += pad;
 	Stream_SetPosition(s, length);
 	Stream_SealLength(s);
 
@@ -956,6 +983,7 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, int length, UINT16 securityFlags)
 {
 	BYTE cmac[8];
 	BYTE wmac[8];
+	BOOL status;
 
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
@@ -1001,9 +1029,12 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, int length, UINT16 securityFlags)
 		return FALSE;
 
 	if (securityFlags & SEC_SECURE_CHECKSUM)
-		security_salted_mac_signature(rdp, Stream_Pointer(s), length, FALSE, cmac);
+		status = security_salted_mac_signature(rdp, Stream_Pointer(s), length, FALSE, cmac);
 	else
-		security_mac_signature(rdp, Stream_Pointer(s), length, cmac);
+		status = security_mac_signature(rdp, Stream_Pointer(s), length, cmac);
+
+	if (!status)
+		return FALSE;
 
 	if (memcmp(wmac, cmac, sizeof(wmac)) != 0)
 	{
