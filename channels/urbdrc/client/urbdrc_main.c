@@ -50,9 +50,9 @@ static int func_hardware_id_format(IUDEVICE* pdev, char(*HardwareIds)[DEVICE_HAR
 	idProduct = pdev->query_device_descriptor(pdev, ID_PRODUCT);
 	bcdDevice = pdev->query_device_descriptor(pdev, BCD_DEVICE);
 
-	sprintf(str, "USB\\VID_%04X&PID_%04X", idVendor, idProduct);
+	sprintf(str, "USB\\VID_%04X&PID_%04X", (unsigned int)idVendor, (unsigned int)idProduct);
 	strcpy(HardwareIds[1], str);
-	sprintf(str, "%s&REV_%04X", HardwareIds[1], bcdDevice);
+	sprintf(str, "%s&REV_%04X", HardwareIds[1], (unsigned int)bcdDevice);
 	strcpy(HardwareIds[0], str);
 
 	return 0;
@@ -71,7 +71,7 @@ static int func_compat_id_format(IUDEVICE* pdev, char (*CompatibilityIds)[DEVICE
 	{
 		sprintf(str, "USB\\Class_%02X", bDeviceClass);
 		strcpy(CompatibilityIds[2], str);
-		sprintf(str, "%s&SubClass_%02X", CompatibilityIds[2], bDeviceSubClass);
+		sprintf(str, "%s&SubClass_%02X", CompatibilityIds[2], (unsigned char)bDeviceSubClass);
 		strcpy(CompatibilityIds[1], str);
 		sprintf(str, "%s&Prot_%02X", CompatibilityIds[1], bDeviceProtocol);
 		strcpy(CompatibilityIds[0], str);
@@ -152,15 +152,15 @@ static int func_container_id_generate(IUDEVICE* pdev, char* strContainerId)
 	else
 		p = path;
 
-	sprintf(containerId, "%04X%04X%s", idVendor, idProduct, p);
+	sprintf(containerId, "%04X%04X%s", (unsigned int)idVendor, (unsigned int)idProduct, p);
 
 	/* format */
 	sprintf(strContainerId,
 		"{%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-		containerId[0], containerId[1],containerId[2], containerId[3],
-		containerId[4], containerId[5], containerId[6], containerId[7],
-		containerId[8], containerId[9], containerId[10], containerId[11],
-		containerId[12], containerId[13], containerId[14], containerId[15]);
+		(unsigned char)containerId[0], (unsigned char)containerId[1],(unsigned char)containerId[2], (unsigned char)containerId[3],
+		(unsigned char)containerId[4], (unsigned char)containerId[5], (unsigned char)containerId[6], (unsigned char)containerId[7],
+		(unsigned char)containerId[8], (unsigned char)containerId[9], (unsigned char)containerId[10], (unsigned char)containerId[11],
+		(unsigned char)containerId[12], (unsigned char)containerId[13], (unsigned char)containerId[14], (unsigned char)containerId[15]);
 
 	return 0;
 }
@@ -175,10 +175,10 @@ static int func_instance_id_generate(IUDEVICE* pdev, char* strInstanceId)
 	/* format */
 	sprintf(strInstanceId,
 		"%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-		instanceId[0], instanceId[1],instanceId[2], instanceId[3],
-		instanceId[4], instanceId[5], instanceId[6], instanceId[7],
-		instanceId[8], instanceId[9], instanceId[10], instanceId[11],
-		instanceId[12], instanceId[13], instanceId[14], instanceId[15]);
+		(unsigned char)instanceId[0], (unsigned char)instanceId[1],(unsigned char)instanceId[2], (unsigned char)instanceId[3],
+		(unsigned char)instanceId[4], (unsigned char)instanceId[5], (unsigned char)instanceId[6], (unsigned char)instanceId[7],
+		(unsigned char)instanceId[8], (unsigned char)instanceId[9], (unsigned char)instanceId[10], (unsigned char)instanceId[11],
+		(unsigned char)instanceId[12], (unsigned char)instanceId[13], (unsigned char)instanceId[14], (unsigned char)instanceId[15]);
 
 	return 0;
 }
