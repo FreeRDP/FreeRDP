@@ -357,17 +357,16 @@ BOOL shadow_client_activate(freerdp_peer* peer)
 
 BOOL shadow_client_surface_frame_acknowledge(rdpShadowClient* client, UINT32 frameId)
 {
-	SURFACE_FRAME* frame;
-	wListDictionary* frameList;
+	/*
+     * Record the last client acknowledged frame id to 
+	 * calculate how much frames are in progress.
+	 * Some rdp clients (win7 mstsc) skips frame ACK if it is 
+	 * inactive, we should not expect ACK for each frame. 
+	 * So it is OK to calculate inflight frame count according to
+	 * a latest acknowledged frame id.
+     */
+	client->encoder->lastAckframeId = frameId;
 
-	frameList = client->encoder->frameList;
-	frame = (SURFACE_FRAME*) ListDictionary_GetItemValue(frameList, (void*) (size_t) frameId);
-
-	if (frame)
-	{
-		ListDictionary_Remove(frameList, (void*) (size_t) frameId);
-		free(frame);
-	}
 	return TRUE;
 }
 
@@ -428,7 +427,7 @@ int shadow_client_send_surface_bits(rdpShadowClient* client, rdpShadowSurface* s
 	}
 
 	if (encoder->frameAck)
-		frameId = (UINT32) shadow_encoder_create_frame_id(encoder);
+		frameId = shadow_encoder_create_frame_id(encoder);
 
 	if (settings->RemoteFxCodec)
 	{
