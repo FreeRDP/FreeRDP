@@ -278,9 +278,6 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		if (!settings->MonitorDefArray)
 				goto out_fail;
 
-		settings->MonitorLocalShiftX = 0;
-		settings->MonitorLocalShiftY = 0;
-
 		settings->MonitorIds = (UINT32*) calloc(16, sizeof(UINT32));
 		if(!settings->MonitorIds)
 				goto out_fail;
