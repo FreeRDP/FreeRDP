@@ -332,9 +332,9 @@ int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 
 		if (StubLength == 4)
 		{
-			/* received a disconnect request from the server? */
 			if ((header->common.call_id == rpc->PipeCallId) && (header->common.pfc_flags & PFC_LAST_FRAG))
 			{
+				/* End of TsProxySetupReceivePipe */
 				TerminateEventArgs e;
 
 				rpc->result = *((UINT32*) &buffer[StubOffset]);
@@ -344,9 +344,14 @@ int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 				EventArgsInit(&e, "freerdp");
 				e.code = 0;
 				PubSub_OnTerminate(rpc->context->pubSub, rpc->context, &e);
+				return 0;
 			}
 
-			return 0;
+			if (header->common.call_id != rpc->PipeCallId)
+			{
+				/* Ignoring non-TsProxySetupReceivePipe Response */
+				return 0;
+			}
 		}
 
 		if (rpc->StubFragCount == 0)
