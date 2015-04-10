@@ -543,29 +543,20 @@ BOOL xf_create_window(xfContext* xfc)
 
 		if (xfc->fullscreen)
 		{
-			width = xfc->desktopWidth;
-			height = xfc->desktopHeight;
+			width = WidthOfScreen(xfc->screen);
+			height = HeightOfScreen(xfc->screen);
 		}
 
 #ifdef WITH_XRENDER
 		if (settings->SmartSizing)
 		{
-			if (xfc->fullscreen)
-			{
-				if (xfc->window)
-				{
-					settings->SmartSizingWidth = xfc->window->width;
-					settings->SmartSizingHeight = xfc->window->height;
-				}
-			}
-			else
+			if (!xfc->fullscreen)
 			{
 				if (settings->SmartSizingWidth)
 					width = settings->SmartSizingWidth;
 				if (settings->SmartSizingHeight)
 					height = settings->SmartSizingHeight;
 			}
-
 			xfc->scaledWidth = width;
 			xfc->scaledHeight = height;
 		}
@@ -682,11 +673,26 @@ void xf_window_free(xfContext* xfc)
 
 void xf_toggle_fullscreen(xfContext* xfc)
 {
+	Pixmap contents = None;
 	WindowStateChangeEventArgs e;
 	rdpContext* context = (rdpContext*) xfc;
 	rdpSettings* settings = context->settings;
 
 	xf_lock_x11(xfc, TRUE);
+
+	if (!(contents = XCreatePixmap(xfc->display, xfc->window->handle, xfc->width, xfc->height, xfc->depth)))
+		return;
+
+	XCopyArea(xfc->display, xfc->primary, contents, xfc->gc, 0, 0, xfc->width, xfc->height, 0, 0);
+
+#ifdef WITH_XRENDER
+	if (settings->SmartSizing && !xfc->fullscreen)
+	{
+		/* backup current window dimensions for next toggle */
+		settings->SmartSizingWidth = xfc->window->width;
+		settings->SmartSizingHeight = xfc->window->height;
+	}
+#endif
 
 	xf_window_free(xfc);
 
@@ -694,6 +700,9 @@ void xf_toggle_fullscreen(xfContext* xfc)
 	xfc->decorations = (xfc->fullscreen) ? FALSE : settings->Decorations;
 
 	xf_create_window(xfc);
+
+	XCopyArea(xfc->display, contents, xfc->primary, xfc->gc, 0, 0, xfc->width, xfc->height, 0, 0);
+	XFreePixmap(xfc->display, contents);
 
 	xf_unlock_x11(xfc, TRUE);
 

@@ -247,6 +247,9 @@ BOOL xf_detect_monitors(xfContext* xfc)
 
 	settings->MonitorCount = nmonitors;
 
+	if (!nmonitors)
+		return TRUE;
+
 	vWidth = vHeight = 0;
 	settings->DesktopPosX = maxWidth - 1;
 	settings->DesktopPosY = maxHeight - 1;
