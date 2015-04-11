@@ -224,6 +224,9 @@ int shadow_encoder_init_interleaved(rdpShadowEncoder* encoder)
 
 int shadow_encoder_init(rdpShadowEncoder* encoder)
 {
+	encoder->width = encoder->server->screen->width;
+	encoder->height = encoder->server->screen->height;
+
 	encoder->maxTileWidth = 64;
 	encoder->maxTileHeight = 64;
 
@@ -400,9 +403,6 @@ rdpShadowEncoder* shadow_encoder_new(rdpShadowClient* client)
 
 	encoder->fps = 16;
 	encoder->maxFps = 32;
-
-	encoder->width = server->screen->width;
-	encoder->height = server->screen->height;
 
 	if (shadow_encoder_init(encoder) < 0)
 	{

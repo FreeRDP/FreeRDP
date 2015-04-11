@@ -26,31 +26,44 @@
 
 #include "shadow_lobby.h"
 
-int shadow_client_init_lobby(rdpShadowClient* client)
+BOOL shadow_client_init_lobby(rdpShadowServer* server)
 {
 	int width;
 	int height;
 	rdtkEngine* engine;
 	rdtkSurface* surface;
 	RECTANGLE_16 invalidRect;
-	rdpShadowSurface* lobby;
-	rdpContext* context = (rdpContext*) client;
-	rdpSettings* settings = context->settings;
+	rdpShadowSurface* lobby = server->lobby;
 
-	width = settings->DesktopWidth;
-	height = settings->DesktopHeight;
+	if (!lobby)
+		return FALSE;
 
-	lobby = client->lobby = shadow_surface_new(client->server, 0, 0, width, height);
+	if (!(engine = rdtk_engine_new()))
+	{
+		return FALSE;
+	}
 
-	if (!client->lobby)
-		return -1;
+	if (!(surface = rdtk_surface_new(engine, lobby->data, lobby->width, lobby->height, lobby->scanline)))
+	{
+		rdtk_engine_free(engine);
+		return FALSE;
+	}
 
-	engine = rdtk_engine_new();
+	invalidRect.left = 0;
+	invalidRect.top = 0;
+	invalidRect.right = lobby->width;
+	invalidRect.bottom = lobby->height;
+	if (server->shareSubRect)
+	{
+		/* If we have shared sub rect setting, only fill shared rect */
+		rectangles_intersection(&invalidRect, &(server->subRect), &invalidRect);
+	}
 
-	surface = rdtk_surface_new(engine, lobby->data, lobby->width, lobby->height, lobby->scanline);
+	width = invalidRect.right - invalidRect.left;
+	height = invalidRect.bottom - invalidRect.top;
+	rdtk_surface_fill(surface, invalidRect.left, invalidRect.top, width, height, 0x3BB9FF);
 
-	rdtk_surface_fill(surface, 0, 0, width, height, 0x3BB9FF);
-	//rdtk_label_draw(surface, 16, 16, 128, 32, NULL, "label", 0, 0);
+	rdtk_label_draw(surface, invalidRect.left, invalidRect.top, width, height, NULL, "Welcome", 0, 0);
 	//rdtk_button_draw(surface, 16, 64, 128, 32, NULL, "button");
 	//rdtk_text_field_draw(surface, 16, 128, 128, 32, NULL, "text field");
 
@@ -58,12 +71,7 @@ int shadow_client_init_lobby(rdpShadowClient* client)
 
 	rdtk_engine_free(engine);
 
-	invalidRect.left = 0;
-	invalidRect.top = 0;
-	invalidRect.right = width;
-	invalidRect.bottom = height;
-
 	region16_union_rect(&(lobby->invalidRegion), &(lobby->invalidRegion), &invalidRect);
 
-	return 1;
+	return TRUE;
 }

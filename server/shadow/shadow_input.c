@@ -72,6 +72,12 @@ BOOL shadow_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 	rdpShadowClient* client = (rdpShadowClient*) input->context;
 	rdpShadowSubsystem* subsystem = client->server->subsystem;
 
+	if (client->server->shareSubRect)
+	{
+		x += client->server->subRect.left;
+		y += client->server->subRect.top;
+	}
+
 	if (!(flags & PTR_FLAGS_WHEEL))
 	{
 		client->pointerX = x;
@@ -101,6 +107,12 @@ BOOL shadow_input_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, 
 {
 	rdpShadowClient* client = (rdpShadowClient*) input->context;
 	rdpShadowSubsystem* subsystem = client->server->subsystem;
+
+	if (client->server->shareSubRect)
+	{
+		x += client->server->subRect.left;
+		y += client->server->subRect.top;
+	}
 
 	client->pointerX = x;
 	client->pointerY = y;
