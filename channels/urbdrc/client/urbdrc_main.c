@@ -42,17 +42,16 @@
 static int func_hardware_id_format(IUDEVICE* pdev, char(*HardwareIds)[DEVICE_HARDWARE_ID_SIZE])
 {
 	char str[DEVICE_HARDWARE_ID_SIZE];
-	int idVendor, idProduct, bcdDevice;
+	UINT16 idVendor, idProduct, bcdDevice;		
 
-	memset(str, 0, DEVICE_HARDWARE_ID_SIZE);
-
-	idVendor = pdev->query_device_descriptor(pdev, ID_VENDOR);
-	idProduct = pdev->query_device_descriptor(pdev, ID_PRODUCT);
-	bcdDevice = pdev->query_device_descriptor(pdev, BCD_DEVICE);
-
-	sprintf(str, "USB\\VID_%04X&PID_%04X", (UINT16)idVendor, (UINT16)idProduct);
-	strcpy(HardwareIds[1], str);
-	sprintf(str, "%s&REV_%04X", HardwareIds[1], (UINT16)bcdDevice);
+	idVendor = (UINT16)pdev->query_device_descriptor(pdev, ID_VENDOR);
+	idProduct = (UINT16)pdev->query_device_descriptor(pdev, ID_PRODUCT);
+	bcdDevice = (UINT16)pdev->query_device_descriptor(pdev, BCD_DEVICE);
+	
+	snprintf(str, sizeof(str), "USB\\VID_%04X&PID_%04X", idVendor, idProduct);	
+	strcpy(HardwareIds[1], str);	
+	
+	snprintf(str, sizeof(str), "%s&REV_%04X", HardwareIds[1], bcdDevice);	
 	strcpy(HardwareIds[0], str);
 
 	return 0;
@@ -61,28 +60,28 @@ static int func_hardware_id_format(IUDEVICE* pdev, char(*HardwareIds)[DEVICE_HAR
 static int func_compat_id_format(IUDEVICE* pdev, char (*CompatibilityIds)[DEVICE_COMPATIBILITY_ID_SIZE])
 {
 	char str[DEVICE_COMPATIBILITY_ID_SIZE];
-	int bDeviceClass, bDeviceSubClass, bDeviceProtocol;
+	UINT8 bDeviceClass, bDeviceSubClass, bDeviceProtocol;
 
-	bDeviceClass = pdev->query_device_descriptor(pdev, B_DEVICE_CLASS);
-	bDeviceSubClass = pdev->query_device_descriptor(pdev, B_DEVICE_SUBCLASS);
-	bDeviceProtocol = pdev->query_device_descriptor(pdev, B_DEVICE_PROTOCOL);
+	bDeviceClass = (UINT8)pdev->query_device_descriptor(pdev, B_DEVICE_CLASS);
+	bDeviceSubClass = (UINT8)pdev->query_device_descriptor(pdev, B_DEVICE_SUBCLASS);
+	bDeviceProtocol = (UINT8)pdev->query_device_descriptor(pdev, B_DEVICE_PROTOCOL);
 
 	if(!(pdev->isCompositeDevice(pdev)))
 	{
-		sprintf(str, "USB\\Class_%02X", bDeviceClass);
+		snprintf(str, sizeof(str),"USB\\Class_%02X", bDeviceClass);		
 		strcpy(CompatibilityIds[2], str);
-		sprintf(str, "%s&SubClass_%02X", CompatibilityIds[2], (UINT8)bDeviceSubClass);
+		snprintf(str, sizeof(str),"%s&SubClass_%02X", CompatibilityIds[2], bDeviceSubClass);
 		strcpy(CompatibilityIds[1], str);
-		sprintf(str, "%s&Prot_%02X", CompatibilityIds[1], bDeviceProtocol);
+		snprintf(str, sizeof(str),"%s&Prot_%02X", CompatibilityIds[1], bDeviceProtocol);
 		strcpy(CompatibilityIds[0], str);
 	}
 	else
 	{
-		sprintf(str, "USB\\DevClass_00");
+		snprintf(str, sizeof(str),"USB\\DevClass_00");
 		strcpy(CompatibilityIds[2], str);
-		sprintf(str, "%s&SubClass_00", CompatibilityIds[2]);
+		snprintf(str, sizeof(str),"%s&SubClass_00", CompatibilityIds[2]);
 		strcpy(CompatibilityIds[1], str);
-		sprintf(str, "%s&Prot_00", CompatibilityIds[1]);
+		snprintf(str, sizeof(str),"%s&Prot_00", CompatibilityIds[1]);
 		strcpy(CompatibilityIds[0], str);
 	}
 
@@ -139,11 +138,11 @@ static int fun_device_string_send_set(char* out_data, int out_offset, char* str)
 static int func_container_id_generate(IUDEVICE* pdev, char* strContainerId)
 {
 	char *p, *path;
-	char containerId[17];
-	int idVendor, idProduct;
+	UINT8 containerId[17];
+	UINT16 idVendor, idProduct;
 
-	idVendor = pdev->query_device_descriptor(pdev, ID_VENDOR);
-	idProduct = pdev->query_device_descriptor(pdev, ID_PRODUCT);
+	idVendor = (UINT16)pdev->query_device_descriptor(pdev, ID_VENDOR);
+	idProduct = (UINT16)pdev->query_device_descriptor(pdev, ID_PRODUCT);
 
 	path = pdev->getPath(pdev);
 
@@ -152,33 +151,35 @@ static int func_container_id_generate(IUDEVICE* pdev, char* strContainerId)
 	else
 		p = path;
 
-	sprintf(containerId, "%04X%04X%s", (UINT16)idVendor, (UINT16)idProduct, p);
+	ZeroMemory(containerId, sizeof(containerId));
+	snprintf((char*)containerId, sizeof(containerId), "%04X%04X%s", idVendor, idProduct, p);
 
 	/* format */
-	sprintf(strContainerId,
+	snprintf(strContainerId, DEVICE_CONTAINER_STR_SIZE,
 		"{%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-		(UINT8)containerId[0], (UINT8)containerId[1],(UINT8)containerId[2], (UINT8)containerId[3],
-		(UINT8)containerId[4], (UINT8)containerId[5], (UINT8)containerId[6], (UINT8)containerId[7],
-		(UINT8)containerId[8], (UINT8)containerId[9], (UINT8)containerId[10], (UINT8)containerId[11],
-		(UINT8)containerId[12], (UINT8)containerId[13], (UINT8)containerId[14], (UINT8)containerId[15]);
+		containerId[0], containerId[1],containerId[2], containerId[3],
+		containerId[4], containerId[5], containerId[6], containerId[7],
+		containerId[8], containerId[9], containerId[10], containerId[11],
+		containerId[12], containerId[13], containerId[14], containerId[15]);
 
 	return 0;
 }
 
 static int func_instance_id_generate(IUDEVICE* pdev, char* strInstanceId)
 {
-	char instanceId[17];
+	UINT8 instanceId[17];
 
 	memset(instanceId, 0, 17);
-	sprintf(instanceId, "\\%s", pdev->getPath(pdev));
+	ZeroMemory(instanceId, sizeof(instanceId));
+	snprintf((char*)instanceId, sizeof(instanceId), "\\%s", pdev->getPath(pdev));
 
 	/* format */
-	sprintf(strInstanceId,
+	snprintf(strInstanceId, DEVICE_INSTANCE_STR_SIZE,
 		"%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-		(UINT8)instanceId[0], (UINT8)instanceId[1],(UINT8)instanceId[2], (UINT8)instanceId[3],
-		(UINT8)instanceId[4], (UINT8)instanceId[5], (UINT8)instanceId[6], (UINT8)instanceId[7],
-		(UINT8)instanceId[8], (UINT8)instanceId[9], (UINT8)instanceId[10], (UINT8)instanceId[11],
-		(UINT8)instanceId[12], (UINT8)instanceId[13], (UINT8)instanceId[14], (UINT8)instanceId[15]);
+		instanceId[0], instanceId[1],instanceId[2], instanceId[3],
+		instanceId[4], instanceId[5], instanceId[6], instanceId[7],
+		instanceId[8], instanceId[9], instanceId[10], instanceId[11],
+		instanceId[12], instanceId[13], instanceId[14], instanceId[15]);
 
 	return 0;
 }
