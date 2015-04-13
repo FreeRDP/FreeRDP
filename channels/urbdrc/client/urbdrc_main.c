@@ -139,11 +139,11 @@ static int fun_device_string_send_set(char* out_data, int out_offset, char* str)
 static int func_container_id_generate(IUDEVICE* pdev, char* strContainerId)
 {
 	char *p, *path;
-	char containerId[17];
-	int idVendor, idProduct;
+	UINT8 containerId[17];
+	UINT16 idVendor, idProduct;
 
-	idVendor = pdev->query_device_descriptor(pdev, ID_VENDOR);
-	idProduct = pdev->query_device_descriptor(pdev, ID_PRODUCT);
+	idVendor = (UINT16)pdev->query_device_descriptor(pdev, ID_VENDOR);
+	idProduct = (UINT16)pdev->query_device_descriptor(pdev, ID_PRODUCT);
 
 	path = pdev->getPath(pdev);
 
@@ -152,10 +152,11 @@ static int func_container_id_generate(IUDEVICE* pdev, char* strContainerId)
 	else
 		p = path;
 
-	sprintf(containerId, "%04X%04X%s", idVendor, idProduct, p);
+	ZeroMemory(containerId, sizeof(containerId));
+	snprintf((char*)containerId, sizeof(containerId), "%04X%04X%s", idVendor, idProduct, p);
 
 	/* format */
-	sprintf(strContainerId,
+	snprintf(strContainerId, DEVICE_CONTAINER_STR_SIZE,
 		"{%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
 		containerId[0], containerId[1],containerId[2], containerId[3],
 		containerId[4], containerId[5], containerId[6], containerId[7],
@@ -167,13 +168,13 @@ static int func_container_id_generate(IUDEVICE* pdev, char* strContainerId)
 
 static int func_instance_id_generate(IUDEVICE* pdev, char* strInstanceId)
 {
-	char instanceId[17];
+	UINT8 instanceId[17];
 
-	memset(instanceId, 0, 17);
-	sprintf(instanceId, "\\%s", pdev->getPath(pdev));
+	ZeroMemory(instanceId, sizeof(instanceId));
+	snprintf((char*)instanceId, sizeof(instanceId), "\\%s", pdev->getPath(pdev));
 
 	/* format */
-	sprintf(strInstanceId,
+	snprintf(strInstanceId, DEVICE_INSTANCE_STR_SIZE,
 		"%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
 		instanceId[0], instanceId[1],instanceId[2], instanceId[3],
 		instanceId[4], instanceId[5], instanceId[6], instanceId[7],
