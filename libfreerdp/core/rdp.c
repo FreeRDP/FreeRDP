@@ -455,7 +455,7 @@ static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, int length, UINT32 
 				*pad = 8 - (length % 8);
 
 				if (*pad == 8)
-					pad = 0;
+					*pad = 0;
 				if (*pad)
 					memset(data+length, 0, *pad);
 
