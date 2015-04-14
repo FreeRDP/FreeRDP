@@ -92,8 +92,8 @@ struct xf_context
 	int bpp;
 	int xfds;
 	int depth;
-	int width;
-	int height;
+	int sessionWidth;
+	int sessionHeight;
 	int srcBpp;
 	GC gc_mono;
 	BOOL invert;

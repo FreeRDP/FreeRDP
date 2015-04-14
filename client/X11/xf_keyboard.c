@@ -490,16 +490,16 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 			switch(keysym)
 			{
 				case XK_0:	/* Ctrl-Alt-0: Reset scaling and panning */
-					xfc->scaledWidth = xfc->width;
-					xfc->scaledHeight = xfc->height;
+					xfc->scaledWidth = xfc->sessionWidth;
+					xfc->scaledHeight = xfc->sessionHeight;
 					xfc->offset_x = 0;
 					xfc->offset_y = 0;
-					if (!xfc->fullscreen && (xfc->width != xfc->window->width ||
-						 xfc->height != xfc->window->height))
+					if (!xfc->fullscreen && (xfc->sessionWidth != xfc->window->width ||
+						 xfc->sessionHeight != xfc->window->height))
 					{
-						xf_ResizeDesktopWindow(xfc, xfc->window, xfc->width, xfc->height);
+						xf_ResizeDesktopWindow(xfc, xfc->window, xfc->sessionWidth, xfc->sessionHeight);
 					}
-					xf_draw_screen(xfc, 0, 0, xfc->width, xfc->height);
+					xf_draw_screen(xfc, 0, 0, xfc->sessionWidth, xfc->sessionHeight);
 					return TRUE;
 
 				case XK_1:	/* Ctrl-Alt-1: Zoom in */

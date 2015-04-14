@@ -128,14 +128,14 @@ static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 		return;
 	}
 
-	if (xfc->width <= 0 || xfc->height <= 0)
+	if (xfc->sessionWidth <= 0 || xfc->sessionHeight <= 0)
 	{
 		WLog_ERR(TAG, "the window dimensions are invalid");
 		return;
 	}
 
-	xScalingFactor = xfc->width / (double)xfc->scaledWidth;
-	yScalingFactor = xfc->height / (double)xfc->scaledHeight;
+	xScalingFactor = xfc->sessionWidth / (double)xfc->scaledWidth;
+	yScalingFactor = xfc->sessionHeight / (double)xfc->scaledHeight;
 
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 	XSetForeground(xfc->display, xfc->gc, 0);
@@ -195,8 +195,8 @@ static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 BOOL xf_picture_transform_required(xfContext* xfc)
 {
 	if (xfc->offset_x || xfc->offset_y ||
-	    xfc->scaledWidth != xfc->width ||
-	    xfc->scaledHeight != xfc->height)
+		xfc->scaledWidth != xfc->sessionWidth ||
+		xfc->scaledHeight != xfc->sessionHeight)
 	{
 		return TRUE;
 	}
@@ -232,7 +232,7 @@ static void xf_desktop_resize(rdpContext* context)
 	{
 		BOOL same = (xfc->primary == xfc->drawing) ? TRUE : FALSE;
 		XFreePixmap(xfc->display, xfc->primary);
-		xfc->primary = XCreatePixmap(xfc->display, xfc->drawable, xfc->width, xfc->height, xfc->depth);
+		xfc->primary = XCreatePixmap(xfc->display, xfc->drawable, xfc->sessionWidth, xfc->sessionHeight, xfc->depth);
 		if (same)
 			xfc->drawing = xfc->primary;
 	}
@@ -240,8 +240,8 @@ static void xf_desktop_resize(rdpContext* context)
 #ifdef WITH_XRENDER
 	if (!xfc->settings->SmartSizing)
 	{
-		xfc->scaledWidth = xfc->width;
-		xfc->scaledHeight = xfc->height;
+		xfc->scaledWidth = xfc->sessionWidth;
+		xfc->scaledHeight = xfc->sessionHeight;
 	}
 #endif
 
@@ -343,10 +343,10 @@ void xf_sw_desktop_resize(rdpContext* context)
 
 	xf_lock_x11(xfc, TRUE);
 
-	xfc->width = context->settings->DesktopWidth;
-	xfc->height = context->settings->DesktopHeight;
+	xfc->sessionWidth = context->settings->DesktopWidth;
+	xfc->sessionHeight = context->settings->DesktopHeight;
 
-	gdi_resize(gdi, xfc->width, xfc->height);
+	gdi_resize(gdi, xfc->sessionWidth, xfc->sessionHeight);
 
 	if (xfc->image)
 	{
@@ -447,8 +447,8 @@ void xf_hw_desktop_resize(rdpContext* context)
 
 	xf_lock_x11(xfc, TRUE);
 
-	xfc->width = settings->DesktopWidth;
-	xfc->height = settings->DesktopHeight;
+	xfc->sessionWidth = settings->DesktopWidth;
+	xfc->sessionHeight = settings->DesktopHeight;
 
 	xf_desktop_resize(context);
 
@@ -505,8 +505,8 @@ BOOL xf_create_window(xfContext* xfc)
 
 	xf_detect_monitors(xfc);
 
-	width = xfc->width;
-	height = xfc->height;
+	width = xfc->sessionWidth;
+	height = xfc->sessionHeight;
 
 	if (!xfc->hdc)
 		xfc->hdc = gdi_CreateDC(CLRBUF_32BPP, xfc->bpp);
@@ -581,7 +581,7 @@ BOOL xf_create_window(xfContext* xfc)
 		xfc->unobscured = (xevent.xvisibility.state == VisibilityUnobscured);
 
 		/* Disallow resize now that any initial fullscreen window operation is complete */
-		xf_SetWindowSizeHints(xfc, xfc->window, FALSE, xfc->width, xfc->height);
+		xf_SetWindowSizeHints(xfc, xfc->window, FALSE, xfc->sessionWidth, xfc->sessionHeight);
 
 		XSetWMProtocols(xfc->display, xfc->window->handle, &(xfc->WM_DELETE_WINDOW), 1);
 		xfc->drawable = xfc->window->handle;
@@ -600,7 +600,7 @@ BOOL xf_create_window(xfContext* xfc)
 	assert(!xfc->gc);
 	xfc->gc = XCreateGC(xfc->display, xfc->drawable, GCGraphicsExposures, &gcv);
 	assert(!xfc->primary);
-	xfc->primary = XCreatePixmap(xfc->display, xfc->drawable, xfc->width, xfc->height, xfc->depth);
+	xfc->primary = XCreatePixmap(xfc->display, xfc->drawable, xfc->sessionWidth, xfc->sessionHeight, xfc->depth);
 	xfc->drawing = xfc->primary;
 	assert(!xfc->bitmap_mono);
 	xfc->bitmap_mono = XCreatePixmap(xfc->display, xfc->drawable, 8, 8, 1);
@@ -609,12 +609,12 @@ BOOL xf_create_window(xfContext* xfc)
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 	XSetForeground(xfc->display, xfc->gc, BlackPixelOfScreen(xfc->screen));
-	XFillRectangle(xfc->display, xfc->primary, xfc->gc, 0, 0, xfc->width, xfc->height);
+	XFillRectangle(xfc->display, xfc->primary, xfc->gc, 0, 0, xfc->sessionWidth, xfc->sessionHeight);
 	XFlush(xfc->display);
 	assert(!xfc->image);
 
 	xfc->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
-			(char*) xfc->primary_buffer, xfc->width, xfc->height, xfc->scanline_pad, 0);
+			(char*) xfc->primary_buffer, xfc->sessionWidth, xfc->sessionHeight, xfc->scanline_pad, 0);
 
 	return TRUE;
 }
@@ -693,9 +693,9 @@ void xf_toggle_fullscreen(xfContext* xfc)
 	xfc->fullscreen = (xfc->fullscreen) ? FALSE : TRUE;
 	xfc->decorations = (xfc->fullscreen) ? FALSE : settings->Decorations;
 
-	xf_SetWindowSizeHints(xfc, xfc->window, TRUE, xfc->width, xfc->height);
+	xf_SetWindowSizeHints(xfc, xfc->window, TRUE, xfc->sessionWidth, xfc->sessionHeight);
 	xf_SetWindowFullscreen(xfc, xfc->window, xfc->fullscreen);
-	xf_SetWindowSizeHints(xfc, xfc->window, FALSE, xfc->width, xfc->height);
+	xf_SetWindowSizeHints(xfc, xfc->window, FALSE, xfc->sessionWidth, xfc->sessionHeight);
 
 	EventArgsInit(&e, "xfreerdp");
 	e.state = xfc->fullscreen ? FREERDP_WINDOW_STATE_FULLSCREEN : 0;
@@ -1074,12 +1074,12 @@ BOOL xf_post_connect(freerdp* instance)
 		xf_gdi_register_update_callbacks(update);
 	}
 
-	xfc->width = settings->DesktopWidth;
-	xfc->height = settings->DesktopHeight;
+	xfc->sessionWidth = settings->DesktopWidth;
+	xfc->sessionHeight = settings->DesktopHeight;
 
 #ifdef WITH_XRENDER
-	xfc->scaledWidth = xfc->width;
-	xfc->scaledHeight = xfc->height;
+	xfc->scaledWidth = xfc->sessionWidth;
+	xfc->scaledHeight = xfc->sessionHeight;
 	xfc->offset_x = 0;
 	xfc->offset_y = 0;
 #endif
@@ -1557,7 +1557,7 @@ static void xf_ZoomingChangeEventHandler(rdpContext* context, ZoomingChangeEvent
 	xfc->scaledWidth = w;
 	xfc->scaledHeight = h;
 
-	xf_draw_screen(xfc, 0, 0, xfc->width, xfc->height);
+	xf_draw_screen(xfc, 0, 0, xfc->sessionWidth, xfc->sessionHeight);
 }
 
 static void xf_PanningChangeEventHandler(rdpContext* context, PanningChangeEventArgs* e)
@@ -1570,7 +1570,7 @@ static void xf_PanningChangeEventHandler(rdpContext* context, PanningChangeEvent
 	xfc->offset_x += e->dx;
 	xfc->offset_y += e->dy;
 
-	xf_draw_screen(xfc, 0, 0, xfc->width, xfc->height);
+	xf_draw_screen(xfc, 0, 0, xfc->sessionWidth, xfc->sessionHeight);
 }
 #endif
 

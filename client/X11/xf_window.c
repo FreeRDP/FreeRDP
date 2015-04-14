@@ -189,7 +189,7 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 				1);
 	}
 
-	window->fullscreen = TRUE;
+	window->fullscreen = fullscreen;
 }
 
 /* http://tronche.com/gui/x/xlib/window-information/XGetWindowProperty.html */
@@ -399,7 +399,7 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 	 * changes can work in window managers that might disallow otherwise. 
 	 * We will set back afterwards.
 	 */
-	xf_SetWindowSizeHints(xfc, window, TRUE, xfc->width, xfc->height);
+	xf_SetWindowSizeHints(xfc, window, TRUE, xfc->sessionWidth, xfc->sessionHeight);
 
 	input_mask =
 		KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask |
@@ -482,8 +482,8 @@ void xf_SetWindowSizeHints(xfContext* xfc, xfWindow *window, BOOL can_resize, in
 		if (can_resize)
 		{
 			size_hints->width_inc = size_hints->height_inc = 1;
-			size_hints->max_width = xfc->width + 1;
-			size_hints->max_height = xfc->height + 1;
+			size_hints->max_width = xfc->sessionWidth + 1;
+			size_hints->max_height = xfc->sessionHeight + 1;
 		}
 
 		XSetWMNormalHints(xfc->display, window->handle, size_hints);
