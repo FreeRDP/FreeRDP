@@ -60,18 +60,20 @@ static void tf_context_free(freerdp* instance, rdpContext* context)
 	}
 }
 
-static void tf_begin_paint(rdpContext* context)
+static BOOL tf_begin_paint(rdpContext* context)
 {
 	rdpGdi* gdi = context->gdi;
 	gdi->primary->hdc->hwnd->invalid->null = 1;
+    return TRUE;
 }
 
-static void tf_end_paint(rdpContext* context)
+static BOOL tf_end_paint(rdpContext* context)
 {
 	rdpGdi* gdi = context->gdi;
 
 	if (gdi->primary->hdc->hwnd->invalid->null)
-		return;
+		return TRUE;
+    return TRUE;
 }
 
 static BOOL tf_pre_connect(freerdp* instance)

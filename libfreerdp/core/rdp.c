@@ -239,6 +239,8 @@ wStream* rdp_data_pdu_init(rdpRdp* rdp)
 {
 	wStream* s;
 	s = transport_send_stream_init(rdp->transport, 2048);
+	if (!s)
+		return NULL;
 	rdp_init_stream_data_pdu(rdp, s);
 	return s;
 }

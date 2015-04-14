@@ -81,9 +81,11 @@ wlfDisplay* wlf_CreateDisplay(void)
 	return display;
 }
 
-void wlf_RefreshDisplay(wlfDisplay* display)
+BOOL wlf_RefreshDisplay(wlfDisplay* display)
 {
-	wl_display_dispatch(display->display);
+	if (wl_display_dispatch(display->display) == -1)
+		return FALSE;
+	return TRUE;
 }
 
 void wlf_DestroyDisplay(wlfContext* wlfc, wlfDisplay* display)

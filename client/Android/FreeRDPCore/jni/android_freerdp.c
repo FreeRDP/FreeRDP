@@ -102,14 +102,15 @@ void android_OnChannelDisconnectedEventHandler(rdpContext* context, ChannelDisco
 	}
 }
 
-void android_begin_paint(rdpContext* context)
+BOOL android_begin_paint(rdpContext* context)
 {
 	rdpGdi* gdi = context->gdi;
 	gdi->primary->hdc->hwnd->invalid->null = 1;
 	gdi->primary->hdc->hwnd->ninvalid = 0;
+	return TRUE;
 }
 
-void android_end_paint(rdpContext* context)
+BOOL android_end_paint(rdpContext* context)
 {
 	int i;
 	int ninvalid;
@@ -126,7 +127,7 @@ void android_end_paint(rdpContext* context)
 	if (ninvalid == 0)
 	{
 		DEBUG_ANDROID("ui_update: ninvalid=%d", ninvalid);
-		return;
+		return TRUE;
 	}
 
 	cinvalid = ctx->rdpCtx.gdi->primary->hdc->hwnd->cinvalid;
@@ -149,9 +150,10 @@ void android_end_paint(rdpContext* context)
 	
 	freerdp_callback("OnGraphicsUpdate", "(IIIII)V", context->instance,
 		x1, y1, x2 - x1, y2 - y1);
+	return TRUE;
 }
 
-void android_desktop_resize(rdpContext* context)
+BOOL android_desktop_resize(rdpContext* context)
 {
 	DEBUG_ANDROID("ui_desktop_resize");
 
@@ -162,6 +164,7 @@ void android_desktop_resize(rdpContext* context)
 	freerdp_callback("OnGraphicsResize", "(IIII)V",
 			context->instance, context->settings->DesktopWidth,
 			context->settings->DesktopHeight, context->settings->ColorDepth);
+	return TRUE;
 }
 
 BOOL android_pre_connect(freerdp* instance)

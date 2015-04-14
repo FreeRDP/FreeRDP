@@ -430,7 +430,7 @@ void gdi_bitmap_free_ex(gdiBitmap* bitmap)
 	}
 }
 
-static void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
+static BOOL gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 {
 	int status;
 	int nXDst;
@@ -477,7 +477,7 @@ static void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 			gdi->bitmap_buffer = (BYTE*) _aligned_realloc(gdi->bitmap_buffer, gdi->bitmap_size, 16);
 
 			if (!gdi->bitmap_buffer)
-				return;
+				return FALSE;
 		}
 
 		if (compressed)
@@ -502,7 +502,7 @@ static void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 			if (status < 0)
 			{
 				WLog_ERR(TAG, "bitmap decompression failure");
-				return;
+				return FALSE;
 			}
 
 			pSrcData = gdi->bitmap_buffer;
@@ -531,9 +531,10 @@ static void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 
 		gdi_InvalidateRegion(gdi->primary->hdc, nXDst, nYDst, nWidth, nHeight);
 	}
+	return TRUE;
 }
 
-static void gdi_palette_update(rdpContext* context, PALETTE_UPDATE* palette)
+static BOOL gdi_palette_update(rdpContext* context, PALETTE_UPDATE* palette)
 {
 	int index;
 	PALETTE_ENTRY* pe;
@@ -547,9 +548,10 @@ static void gdi_palette_update(rdpContext* context, PALETTE_UPDATE* palette)
 		pe = &(palette->entries[index]);
 		palette32[index] = RGB32(pe->red, pe->green, pe->blue);
 	}
+	return TRUE;
 }
 
-static void gdi_set_bounds(rdpContext* context, rdpBounds* bounds)
+static BOOL gdi_set_bounds(rdpContext* context, rdpBounds* bounds)
 {
 	rdpGdi* gdi = context->gdi;
 
@@ -562,17 +564,20 @@ static void gdi_set_bounds(rdpContext* context, rdpBounds* bounds)
 	{
 		gdi_SetNullClipRgn(gdi->drawing->hdc);
 	}
+	return TRUE;
 }
 
-static void gdi_dstblt(rdpContext* context, DSTBLT_ORDER* dstblt)
+static BOOL gdi_dstblt(rdpContext* context, DSTBLT_ORDER* dstblt)
 {
 	rdpGdi* gdi = context->gdi;
 
-	gdi_BitBlt(gdi->drawing->hdc, dstblt->nLeftRect, dstblt->nTopRect,
-			dstblt->nWidth, dstblt->nHeight, NULL, 0, 0, gdi_rop3_code(dstblt->bRop));
+	if (gdi_BitBlt(gdi->drawing->hdc, dstblt->nLeftRect, dstblt->nTopRect,
+			dstblt->nWidth, dstblt->nHeight, NULL, 0, 0, gdi_rop3_code(dstblt->bRop)) != 1)
+		return FALSE;
+	return TRUE;
 }
 
-static void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
+static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
 	BYTE* data;
 	rdpBrush* brush;
@@ -581,6 +586,7 @@ static void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	GDI_COLOR originalColor;
 	HGDI_BRUSH originalBrush;
 	rdpGdi* gdi = context->gdi;
+	BOOL ret = TRUE;
 
 	brush = &patblt->brush;
 
@@ -594,9 +600,15 @@ static void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 		originalBrush = gdi->drawing->hdc->brush;
 
 		gdi->drawing->hdc->brush = gdi_CreateSolidBrush(foreColor);
+		if (!gdi->drawing->hdc->brush)
+		{
+			ret = FALSE;
+			goto out_error;
+		}
 
-		gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
-				patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop));
+		if (gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
+				patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop)) != 1)
+			ret = FALSE;
 
 		gdi_DeleteObject((HGDIOBJECT) gdi->drawing->hdc->brush);
 		gdi->drawing->hdc->brush = originalBrush;
@@ -607,6 +619,11 @@ static void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 		HGDI_BITMAP hBmp;
 
 		data = (BYTE*) _aligned_malloc(8 * 8 * gdi->bytesPerPixel, 16);
+		if (!data)
+		{
+			ret = FALSE;
+			goto out_error;
+		}
 
 		hatched = GDI_BS_HATCHED_PATTERNS + (8 * brush->hatch);
 
@@ -614,12 +631,25 @@ static void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 				hatched, backColor, foreColor, gdi->palette);
 
 		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->bitsPerPixel, data);
+		if (!hBmp)
+		{
+			_aligned_free(data);
+			ret = FALSE;
+			goto out_error;
+		}
 
 		originalBrush = gdi->drawing->hdc->brush;
 		gdi->drawing->hdc->brush = gdi_CreateHatchBrush(hBmp);
+		if (!gdi->drawing->hdc->brush)
+		{
+			_aligned_free(data);
+			ret = FALSE;
+			goto out_error;
+		}
 
-		gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
-		patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop));
+		if (gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
+		patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop)) != 1)
+			ret = FALSE;
 
 		gdi_DeleteObject((HGDIOBJECT) gdi->drawing->hdc->brush);
 		gdi->drawing->hdc->brush = originalBrush;
@@ -634,6 +664,11 @@ static void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 			brushFormat = gdi_get_pixel_format(brush->bpp, FALSE);
 
 			data = (BYTE*) _aligned_malloc(8 * 8 * gdi->bytesPerPixel, 16);
+			if (!data)
+			{
+				ret = FALSE;
+				goto out_error;
+			}
 
 			freerdp_image_copy(data, gdi->format, -1, 0, 0,
 					8, 8, brush->data, brushFormat, -1, 0, 0, gdi->palette);
@@ -641,18 +676,36 @@ static void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 		else
 		{
 			data = (BYTE*) _aligned_malloc(8 * 8 * gdi->bytesPerPixel, 16);
+			if (!data)
+			{
+				ret = FALSE;
+				goto out_error;
+			}
 
 			freerdp_image_copy_from_monochrome(data, gdi->format, -1, 0, 0, 8, 8,
 					brush->data, backColor, foreColor, gdi->palette);
 		}
 
 		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->bitsPerPixel, data);
+		if (!hBmp)
+		{
+			_aligned_free(data);
+			ret = FALSE;
+			goto out_error;
+		}
 
 		originalBrush = gdi->drawing->hdc->brush;
 		gdi->drawing->hdc->brush = gdi_CreatePatternBrush(hBmp);
+		if (!gdi->drawing->hdc->brush)
+		{
+			_aligned_free(data);
+			ret = FALSE;
+			goto out_error;
+		}
 
-		gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
-				patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop));
+		if (gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
+				patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop)) != 1)
+			ret = FALSE;
 
 		gdi_DeleteObject((HGDIOBJECT) gdi->drawing->hdc->brush);
 		gdi->drawing->hdc->brush = originalBrush;
@@ -662,24 +715,29 @@ static void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 		WLog_ERR(TAG,  "unimplemented brush style:%d", brush->style);
 	}
 
+out_error:
 	gdi_SetTextColor(gdi->drawing->hdc, originalColor);
+	return ret;
 }
 
-static void gdi_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
+static BOOL gdi_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
 {
 	rdpGdi* gdi = context->gdi;
 
-	gdi_BitBlt(gdi->drawing->hdc, scrblt->nLeftRect, scrblt->nTopRect,
+	if (gdi_BitBlt(gdi->drawing->hdc, scrblt->nLeftRect, scrblt->nTopRect,
 			scrblt->nWidth, scrblt->nHeight, gdi->primary->hdc,
-			scrblt->nXSrc, scrblt->nYSrc, gdi_rop3_code(scrblt->bRop));
+			scrblt->nXSrc, scrblt->nYSrc, gdi_rop3_code(scrblt->bRop)) != 1)
+		return FALSE;
+	return TRUE;
 }
 
-static void gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
+static BOOL gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 {
 	GDI_RECT rect;
 	HGDI_BRUSH hBrush;
 	UINT32 brush_color;
 	rdpGdi* gdi = context->gdi;
+	BOOL ret = FALSE;
 
 	gdi_CRgnToRect(opaque_rect->nLeftRect, opaque_rect->nTopRect,
 			opaque_rect->nWidth, opaque_rect->nHeight, &rect);
@@ -687,12 +745,16 @@ static void gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 	brush_color = freerdp_convert_gdi_order_color(opaque_rect->color, gdi->srcBpp, gdi->format, gdi->palette);
 
 	hBrush = gdi_CreateSolidBrush(brush_color);
-	gdi_FillRect(gdi->drawing->hdc, &rect, hBrush);
-
-	gdi_DeleteObject((HGDIOBJECT) hBrush);
+	if (hBrush)
+	{
+		if (gdi_FillRect(gdi->drawing->hdc, &rect, hBrush) == 0)
+			ret = TRUE;
+		gdi_DeleteObject((HGDIOBJECT) hBrush);
+	}
+	return ret;
 }
 
-static void gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect)
+static BOOL gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect)
 {
 	int i;
 	GDI_RECT rect;
@@ -700,6 +762,7 @@ static void gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* 
 	UINT32 brush_color;
 	DELTA_RECT* rectangle;
 	rdpGdi* gdi = context->gdi;
+	BOOL ret = TRUE;
 
 	for (i = 1; i < (int) multi_opaque_rect->numRectangles + 1; i++)
 	{
@@ -711,13 +774,19 @@ static void gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* 
 		brush_color = freerdp_convert_gdi_order_color(multi_opaque_rect->color, gdi->srcBpp, gdi->format, gdi->palette);
 
 		hBrush = gdi_CreateSolidBrush(brush_color);
+		if (!hBrush)
+		{
+			ret = FALSE;
+			break;
+		}
 		gdi_FillRect(gdi->drawing->hdc, &rect, hBrush);
 
 		gdi_DeleteObject((HGDIOBJECT) hBrush);
 	}
+	return ret;
 }
 
-static void gdi_line_to(rdpContext* context, LINE_TO_ORDER* lineTo)
+static BOOL gdi_line_to(rdpContext* context, LINE_TO_ORDER* lineTo)
 {
 	UINT32 color;
 	HGDI_PEN hPen;
@@ -725,16 +794,23 @@ static void gdi_line_to(rdpContext* context, LINE_TO_ORDER* lineTo)
 
 	color = freerdp_convert_gdi_order_color(lineTo->penColor, gdi->srcBpp, gdi->format, gdi->palette);
 	hPen = gdi_CreatePen(lineTo->penStyle, lineTo->penWidth, (GDI_COLOR) color);
-	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT) hPen);
+	if (!hPen)
+		return FALSE;
+	if (!gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT) hPen))
+	{
+		gdi_DeleteObject((HGDIOBJECT) hPen);
+		return FALSE;
+	}
 	gdi_SetROP2(gdi->drawing->hdc, lineTo->bRop2);
 
 	gdi_MoveToEx(gdi->drawing->hdc, lineTo->nXStart, lineTo->nYStart, NULL);
 	gdi_LineTo(gdi->drawing->hdc, lineTo->nXEnd, lineTo->nYEnd);
 
 	gdi_DeleteObject((HGDIOBJECT) hPen);
+	return TRUE;
 }
 
-static void gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
+static BOOL gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 {
 	int i;
 	INT32 x;
@@ -746,6 +822,8 @@ static void gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 
 	color = freerdp_convert_gdi_order_color(polyline->penColor, gdi->srcBpp, gdi->format, gdi->palette);
 	hPen = gdi_CreatePen(GDI_PS_SOLID, 1, (GDI_COLOR) color);
+	if (!hPen)
+		return FALSE;
 	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT) hPen);
 	gdi_SetROP2(gdi->drawing->hdc, polyline->bRop2);
 
@@ -763,9 +841,10 @@ static void gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 	}
 
 	gdi_DeleteObject((HGDIOBJECT) hPen);
+	return TRUE;
 }
 
-static void gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
+static BOOL gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 {
 	gdiBitmap* bitmap;
 	rdpGdi* gdi = context->gdi;
@@ -775,9 +854,10 @@ static void gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 	gdi_BitBlt(gdi->drawing->hdc, memblt->nLeftRect, memblt->nTopRect,
 			memblt->nWidth, memblt->nHeight, bitmap->hdc,
 			memblt->nXSrc, memblt->nYSrc, gdi_rop3_code(memblt->bRop));
+	return TRUE;
 }
 
-static void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
+static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 {
 	BYTE* data;
 	rdpBrush* brush;
@@ -787,6 +867,7 @@ static void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	GDI_COLOR originalColor;
 	HGDI_BRUSH originalBrush;
 	rdpGdi* gdi = context->gdi;
+	BOOL ret = TRUE;
 
 	brush = &mem3blt->brush;
 	bitmap = (gdiBitmap*) mem3blt->bitmap;
@@ -800,6 +881,11 @@ static void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	{
 		originalBrush = gdi->drawing->hdc->brush;
 		gdi->drawing->hdc->brush = gdi_CreateSolidBrush(foreColor);
+		if (!gdi->drawing->hdc->brush)
+		{
+			ret = FALSE;
+			goto out_fail;
+		}
 
 		gdi_BitBlt(gdi->drawing->hdc, mem3blt->nLeftRect, mem3blt->nTopRect,
 				mem3blt->nWidth, mem3blt->nHeight, bitmap->hdc,
@@ -818,6 +904,11 @@ static void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 			brushFormat = gdi_get_pixel_format(brush->bpp, FALSE);
 
 			data = (BYTE*) _aligned_malloc(8 * 8 * gdi->bytesPerPixel, 16);
+			if (!data)
+			{
+				ret = FALSE;
+				goto out_fail;
+			}
 
 			freerdp_image_copy(data, gdi->format, -1, 0, 0,
 					8, 8, brush->data, brushFormat, -1, 0, 0, gdi->palette);
@@ -825,15 +916,31 @@ static void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 		else
 		{
 			data = (BYTE*) _aligned_malloc(8 * 8 * gdi->bytesPerPixel, 16);
+			if (!data)
+			{
+				ret = FALSE;
+				goto out_fail;
+			}
 
 			freerdp_image_copy_from_monochrome(data, gdi->format, -1, 0, 0, 8, 8,
 					brush->data, backColor, foreColor, gdi->palette);
 		}
 
 		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->bitsPerPixel, data);
+		if (!hBmp)
+		{
+			_aligned_free(data);
+			ret = FALSE;
+			goto out_fail;
+		}
 
 		originalBrush = gdi->drawing->hdc->brush;
 		gdi->drawing->hdc->brush = gdi_CreatePatternBrush(hBmp);
+		if (!gdi->drawing->hdc->brush)
+		{
+			gdi_DeleteObject((HGDIOBJECT) hBmp);
+			goto out_fail;
+		}
 
 		gdi_BitBlt(gdi->drawing->hdc, mem3blt->nLeftRect, mem3blt->nTopRect,
 				mem3blt->nWidth, mem3blt->nHeight, bitmap->hdc,
@@ -847,36 +954,41 @@ static void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 		WLog_ERR(TAG,  "Mem3Blt unimplemented brush style:%d", brush->style);
 	}
 
+out_fail:
 	gdi_SetTextColor(gdi->drawing->hdc, originalColor);
+	return ret;
 }
 
-static void gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
+static BOOL gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
 {
 	WLog_VRB(TAG,  "not implemented");
+	return TRUE;
 }
 
-static void gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
+static BOOL gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 {
 	WLog_VRB(TAG,  "not implemented");
+	return TRUE;
 }
 
-static void gdi_ellipse_sc(rdpContext* context, ELLIPSE_SC_ORDER* ellipse_sc)
+static BOOL gdi_ellipse_sc(rdpContext* context, ELLIPSE_SC_ORDER* ellipse_sc)
 {
 	WLog_VRB(TAG,  "not implemented");
+	return TRUE;
 }
 
-static void gdi_ellipse_cb(rdpContext* context, ELLIPSE_CB_ORDER* ellipse_cb)
+static BOOL gdi_ellipse_cb(rdpContext* context, ELLIPSE_CB_ORDER* ellipse_cb)
 {
 	WLog_VRB(TAG,  "not implemented");
+	return TRUE;
 }
 
-static void gdi_frame_marker(rdpContext* context, FRAME_MARKER_ORDER* frameMarker)
+static BOOL gdi_frame_marker(rdpContext* context, FRAME_MARKER_ORDER* frameMarker)
 {
-
-
+	return TRUE;
 }
 
-void gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surfaceFrameMarker)
+BOOL gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surfaceFrameMarker)
 {
 	DEBUG_GDI("frameId %d frameAction %d",
 		surfaceFrameMarker->frameId,
@@ -894,9 +1006,10 @@ void gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surface
 			}
 			break;
 	}
+	return TRUE;
 }
 
-static void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
+static BOOL gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 {
 	int i, j;
 	int tx, ty;
@@ -963,7 +1076,7 @@ static void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 			gdi->bitmap_buffer = (BYTE*) _aligned_realloc(gdi->bitmap_buffer, gdi->bitmap_size, 16);
 
 			if (!gdi->bitmap_buffer)
-				return;
+				return FALSE;
 		}
 
 		pDstData = gdi->bitmap_buffer;
@@ -988,7 +1101,7 @@ static void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 			gdi->bitmap_buffer = (BYTE*) _aligned_realloc(gdi->bitmap_buffer, gdi->bitmap_size, 16);
 
 			if (!gdi->bitmap_buffer)
-				return;
+				return FALSE;
 		}
 
 		pDstData = gdi->bitmap_buffer;
@@ -1009,6 +1122,7 @@ static void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 	{
 		WLog_ERR(TAG, "Unsupported codecID %d", cmd->codecID);
 	}
+	return TRUE;
 }
 
 /**

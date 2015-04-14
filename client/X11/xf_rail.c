@@ -272,7 +272,7 @@ void xf_rail_paint(xfContext* xfc, INT32 uleft, INT32 utop, UINT32 uright, UINT3
 
 /* RemoteApp Core Protocol Extension */
 
-static void xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* windowState)
+static BOOL xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* windowState)
 {
 	xfAppWindow* appWindow = NULL;
 	xfContext* xfc = (xfContext*) context;
@@ -283,7 +283,7 @@ static void xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 		appWindow = (xfAppWindow*) calloc(1, sizeof(xfAppWindow));
 
 		if (!appWindow)
-			return;
+			return FALSE;
 
 		appWindow->xfc = xfc;
 
@@ -317,7 +317,7 @@ static void xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 
 		xf_AppWindowInit(xfc, appWindow);
 
-		return;
+		return TRUE;
 	}
 	else
 	{
@@ -326,7 +326,7 @@ static void xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 	}
 
 	if (!appWindow)
-		return;
+		return FALSE;
 
 	/* Update Parameters */
 
@@ -421,7 +421,7 @@ static void xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 			appWindow->windowRects = (RECTANGLE_16*) calloc(appWindow->numWindowRects, sizeof(RECTANGLE_16));
 
 			if (!appWindow->windowRects)
-				return;
+				return FALSE;
 
 			CopyMemory(appWindow->windowRects, windowState->windowRects,
 					appWindow->numWindowRects * sizeof(RECTANGLE_16));
@@ -449,7 +449,7 @@ static void xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 			appWindow->visibilityRects = (RECTANGLE_16*) calloc(appWindow->numVisibilityRects, sizeof(RECTANGLE_16));
 
 			if (!appWindow->visibilityRects)
-				return;
+				return FALSE;
 
 			CopyMemory(appWindow->visibilityRects, windowState->visibilityRects,
 					appWindow->numVisibilityRects * sizeof(RECTANGLE_16));
@@ -482,7 +482,7 @@ static void xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 		 * update our local window when that rail window state is minimized
 		 */
 		if (appWindow->rail_state == WINDOW_SHOW_MINIMIZED)
-			return;
+			return TRUE;
 
 		/* Do nothing if window is already in the correct position */
 		if (appWindow->x == (appWindow->windowOffsetX - appWindow->localWindowOffsetCorrX) &&
@@ -491,7 +491,7 @@ static void xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 				appWindow->height == appWindow->windowHeight)
 		{
 			xf_UpdateWindowArea(xfc, appWindow, 0, 0, appWindow->windowWidth, appWindow->windowHeight);
-			return;
+			return TRUE;
 		}
 
 		xf_MoveWindow(xfc, appWindow, appWindow->windowOffsetX - appWindow->localWindowOffsetCorrX, appWindow->windowOffsetY - appWindow->localWindowOffsetCorrY,
@@ -507,9 +507,10 @@ static void xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 	{
 		xf_SetWindowVisibilityRects(xfc, appWindow, appWindow->visibilityRects, appWindow->numVisibilityRects);
 	}
+	return TRUE;
 }
 
-static void xf_rail_window_delete(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
+static BOOL xf_rail_window_delete(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
 {
 	xfAppWindow* appWindow = NULL;
 	xfContext* xfc = (xfContext*) context;
@@ -518,14 +519,15 @@ static void xf_rail_window_delete(rdpContext* context, WINDOW_ORDER_INFO* orderI
 			(void*) (UINT_PTR) orderInfo->windowId);
 
 	if (!appWindow)
-		return;
+		return TRUE;
 
 	HashTable_Remove(xfc->railWindows, (void*) (UINT_PTR) orderInfo->windowId);
 
 	xf_DestroyWindow(xfc, appWindow);
+	return TRUE;
 }
 
-static void xf_rail_window_icon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* windowIcon)
+static BOOL xf_rail_window_icon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* windowIcon)
 {
 	BOOL bigIcon;
 	xfAppWindow* railWindow;
@@ -535,17 +537,19 @@ static void xf_rail_window_icon(rdpContext* context, WINDOW_ORDER_INFO* orderInf
 			(void*) (UINT_PTR) orderInfo->windowId);
 
 	if (!railWindow)
-		return;
+		return FALSE;
 
 	bigIcon = (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ICON_BIG) ? TRUE : FALSE;
+
+	return TRUE;
 }
 
-static void xf_rail_window_cached_icon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_CACHED_ICON_ORDER* windowCachedIcon)
+static BOOL xf_rail_window_cached_icon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_CACHED_ICON_ORDER* windowCachedIcon)
 {
-
+	return TRUE;
 }
 
-static void xf_rail_notify_icon_common(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notifyIconState)
+static BOOL xf_rail_notify_icon_common(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_VERSION)
 	{
@@ -576,32 +580,34 @@ static void xf_rail_notify_icon_common(rdpContext* context, WINDOW_ORDER_INFO* o
 	{
 
 	}
+	return TRUE;
 }
 
-static void xf_rail_notify_icon_create(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notifyIconState)
+static BOOL xf_rail_notify_icon_create(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
-	xf_rail_notify_icon_common(context, orderInfo, notifyIconState);
+	return xf_rail_notify_icon_common(context, orderInfo, notifyIconState);
 }
 
-static void xf_rail_notify_icon_update(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notifyIconState)
+static BOOL xf_rail_notify_icon_update(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
-	xf_rail_notify_icon_common(context, orderInfo, notifyIconState);
+	return xf_rail_notify_icon_common(context, orderInfo, notifyIconState);
 }
 
-static void xf_rail_notify_icon_delete(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
+static BOOL xf_rail_notify_icon_delete(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
 {
-
+	return TRUE;
 }
 
-static void xf_rail_monitored_desktop(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitoredDesktop)
+static BOOL xf_rail_monitored_desktop(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitoredDesktop)
 {
-
+		return TRUE;
 }
 
-static void xf_rail_non_monitored_desktop(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
+static BOOL xf_rail_non_monitored_desktop(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
 {
 	xfContext* xfc = (xfContext*) context;
 	xf_rail_disable_remoteapp_mode(xfc);
+	return TRUE;
 }
 
 void xf_rail_register_update_callbacks(rdpUpdate* update)

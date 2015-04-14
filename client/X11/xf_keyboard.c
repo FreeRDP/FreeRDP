@@ -550,11 +550,10 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 	}
 #endif /* WITH_XRENDER defined */
 #endif /* pinch/zoom/pan simulation */
-
-	return FALSE;
+	return TRUE;
 }
 
-void xf_keyboard_set_indicators(rdpContext* context, UINT16 led_flags)
+BOOL xf_keyboard_set_indicators(rdpContext* context, UINT16 led_flags)
 {
 	xfContext* xfc = (xfContext*) context;
 
@@ -562,4 +561,5 @@ void xf_keyboard_set_indicators(rdpContext* context, UINT16 led_flags)
 	xf_keyboard_set_key_state(xfc, led_flags & KBD_SYNC_NUM_LOCK, XK_Num_Lock);
 	xf_keyboard_set_key_state(xfc, led_flags & KBD_SYNC_CAPS_LOCK, XK_Caps_Lock);
 	xf_keyboard_set_key_state(xfc, led_flags & KBD_SYNC_KANA_LOCK, XK_Kana_Lock);
+	return TRUE;
 }

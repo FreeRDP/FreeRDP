@@ -71,11 +71,11 @@ struct _POINTER_CACHED_UPDATE
 };
 typedef struct _POINTER_CACHED_UPDATE POINTER_CACHED_UPDATE;
 
-typedef void (*pPointerPosition)(rdpContext* context, POINTER_POSITION_UPDATE* pointer_position);
-typedef void (*pPointerSystem)(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer_system);
-typedef void (*pPointerColor)(rdpContext* context, POINTER_COLOR_UPDATE* pointer_color);
-typedef void (*pPointerNew)(rdpContext* context, POINTER_NEW_UPDATE* pointer_new);
-typedef void (*pPointerCached)(rdpContext* context, POINTER_CACHED_UPDATE* pointer_cached);
+typedef BOOL (*pPointerPosition)(rdpContext* context, POINTER_POSITION_UPDATE* pointer_position);
+typedef BOOL (*pPointerSystem)(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer_system);
+typedef BOOL (*pPointerColor)(rdpContext* context, POINTER_COLOR_UPDATE* pointer_color);
+typedef BOOL (*pPointerNew)(rdpContext* context, POINTER_NEW_UPDATE* pointer_new);
+typedef BOOL (*pPointerCached)(rdpContext* context, POINTER_CACHED_UPDATE* pointer_cached);
 
 struct rdp_pointer_update
 {

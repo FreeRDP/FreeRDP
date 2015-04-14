@@ -438,28 +438,28 @@ struct _ELLIPSE_CB_ORDER
 };
 typedef struct _ELLIPSE_CB_ORDER ELLIPSE_CB_ORDER;
 
-typedef void (*pDstBlt)(rdpContext* context, DSTBLT_ORDER* dstblt);
-typedef void (*pPatBlt)(rdpContext* context, PATBLT_ORDER* patblt);
-typedef void (*pScrBlt)(rdpContext* context, SCRBLT_ORDER* scrblt);
-typedef void (*pOpaqueRect)(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect);
-typedef void (*pDrawNineGrid)(rdpContext* context, DRAW_NINE_GRID_ORDER* draw_nine_grid);
-typedef void (*pMultiDstBlt)(rdpContext* context, MULTI_DSTBLT_ORDER* multi_dstblt);
-typedef void (*pMultiPatBlt)(rdpContext* context, MULTI_PATBLT_ORDER* multi_patblt);
-typedef void (*pMultiScrBlt)(rdpContext* context, MULTI_SCRBLT_ORDER* multi_scrblt);
-typedef void (*pMultiOpaqueRect)(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect);
-typedef void (*pMultiDrawNineGrid)(rdpContext* context, MULTI_DRAW_NINE_GRID_ORDER* multi_draw_nine_grid);
-typedef void (*pLineTo)(rdpContext* context, LINE_TO_ORDER* line_to);
-typedef void (*pPolyline)(rdpContext* context, POLYLINE_ORDER* polyline);
-typedef void (*pMemBlt)(rdpContext* context, MEMBLT_ORDER* memblt);
-typedef void (*pMem3Blt)(rdpContext* context, MEM3BLT_ORDER* memblt);
-typedef void (*pSaveBitmap)(rdpContext* context, SAVE_BITMAP_ORDER* save_bitmap);
-typedef void (*pGlyphIndex)(rdpContext* context, GLYPH_INDEX_ORDER* glyph_index);
-typedef void (*pFastIndex)(rdpContext* context, FAST_INDEX_ORDER* fast_index);
-typedef void (*pFastGlyph)(rdpContext* context, FAST_GLYPH_ORDER* fast_glyph);
-typedef void (*pPolygonSC)(rdpContext* context, POLYGON_SC_ORDER* polygon_sc);
-typedef void (*pPolygonCB)(rdpContext* context, POLYGON_CB_ORDER* polygon_cb);
-typedef void (*pEllipseSC)(rdpContext* context, ELLIPSE_SC_ORDER* ellipse_sc);
-typedef void (*pEllipseCB)(rdpContext* context, ELLIPSE_CB_ORDER* ellipse_cb);
+typedef BOOL (*pDstBlt)(rdpContext* context, DSTBLT_ORDER* dstblt);
+typedef BOOL (*pPatBlt)(rdpContext* context, PATBLT_ORDER* patblt);
+typedef BOOL (*pScrBlt)(rdpContext* context, SCRBLT_ORDER* scrblt);
+typedef BOOL (*pOpaqueRect)(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect);
+typedef BOOL (*pDrawNineGrid)(rdpContext* context, DRAW_NINE_GRID_ORDER* draw_nine_grid);
+typedef BOOL (*pMultiDstBlt)(rdpContext* context, MULTI_DSTBLT_ORDER* multi_dstblt);
+typedef BOOL (*pMultiPatBlt)(rdpContext* context, MULTI_PATBLT_ORDER* multi_patblt);
+typedef BOOL (*pMultiScrBlt)(rdpContext* context, MULTI_SCRBLT_ORDER* multi_scrblt);
+typedef BOOL (*pMultiOpaqueRect)(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect);
+typedef BOOL (*pMultiDrawNineGrid)(rdpContext* context, MULTI_DRAW_NINE_GRID_ORDER* multi_draw_nine_grid);
+typedef BOOL (*pLineTo)(rdpContext* context, LINE_TO_ORDER* line_to);
+typedef BOOL (*pPolyline)(rdpContext* context, POLYLINE_ORDER* polyline);
+typedef BOOL (*pMemBlt)(rdpContext* context, MEMBLT_ORDER* memblt);
+typedef BOOL (*pMem3Blt)(rdpContext* context, MEM3BLT_ORDER* memblt);
+typedef BOOL (*pSaveBitmap)(rdpContext* context, SAVE_BITMAP_ORDER* save_bitmap);
+typedef BOOL (*pGlyphIndex)(rdpContext* context, GLYPH_INDEX_ORDER* glyph_index);
+typedef BOOL (*pFastIndex)(rdpContext* context, FAST_INDEX_ORDER* fast_index);
+typedef BOOL (*pFastGlyph)(rdpContext* context, FAST_GLYPH_ORDER* fast_glyph);
+typedef BOOL (*pPolygonSC)(rdpContext* context, POLYGON_SC_ORDER* polygon_sc);
+typedef BOOL (*pPolygonCB)(rdpContext* context, POLYGON_CB_ORDER* polygon_cb);
+typedef BOOL (*pEllipseSC)(rdpContext* context, ELLIPSE_SC_ORDER* ellipse_sc);
+typedef BOOL (*pEllipseCB)(rdpContext* context, ELLIPSE_CB_ORDER* ellipse_cb);
 
 struct rdp_primary_update
 {

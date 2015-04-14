@@ -94,13 +94,14 @@ BOOL ios_ui_check_changed_certificate(freerdp * instance, char * subject, char *
 #pragma mark -
 #pragma mark Graphics updates
 
-void ios_ui_begin_paint(rdpContext * context)
+BOOL ios_ui_begin_paint(rdpContext * context)
 {
 	rdpGdi *gdi = context->gdi;
 	gdi->primary->hdc->hwnd->invalid->null = 1;
+    return TRUE;
 }
 
-void ios_ui_end_paint(rdpContext * context)
+BOOL ios_ui_end_paint(rdpContext * context)
 {
     mfInfo* mfi = MFI_FROM_INSTANCE(context->instance);
 	rdpGdi *gdi = context->gdi;
@@ -108,12 +109,14 @@ void ios_ui_end_paint(rdpContext * context)
 	
 	if (gdi->primary->hdc->hwnd->invalid->null == 0)
 		[mfi->session performSelectorOnMainThread:@selector(setNeedsDisplayInRectAsValue:) withObject:[NSValue valueWithCGRect:dirty_rect] waitUntilDone:NO];
+    return TRUE;
 }
 
 
-void ios_ui_resize_window(rdpContext * context)
+BOOL ios_ui_resize_window(rdpContext * context)
 {
 	ios_resize_display_buffer(MFI_FROM_INSTANCE(context->instance));
+    return TRUE;
 }
 
 

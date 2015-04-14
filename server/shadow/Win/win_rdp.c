@@ -42,7 +42,7 @@ void shw_OnChannelDisconnectedEventHandler(rdpContext* context, ChannelDisconnec
 	WLog_INFO(TAG, "OnChannelDisconnected: %s", e->name);
 }
 
-void shw_begin_paint(rdpContext* context)
+BOOL shw_begin_paint(rdpContext* context)
 {
 	shwContext* shw;
 	rdpGdi* gdi = context->gdi;
@@ -51,9 +51,10 @@ void shw_begin_paint(rdpContext* context)
 
 	gdi->primary->hdc->hwnd->invalid->null = 1;
 	gdi->primary->hdc->hwnd->ninvalid = 0;
+	return TRUE;
 }
 
-void shw_end_paint(rdpContext* context)
+BOOL shw_end_paint(rdpContext* context)
 {
 	int index;
 	int ninvalid;
@@ -79,16 +80,18 @@ void shw_end_paint(rdpContext* context)
 	SetEvent(subsystem->RdpUpdateEnterEvent);
 	WaitForSingleObject(subsystem->RdpUpdateLeaveEvent, INFINITE);
 	ResetEvent(subsystem->RdpUpdateLeaveEvent);
+	return TRUE;
 }
 
-void shw_desktop_resize(rdpContext* context)
+BOOL shw_desktop_resize(rdpContext* context)
 {
-
+	return TRUE;
 }
 
-void shw_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surfaceFrameMarker)
+BOOL shw_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surfaceFrameMarker)
 {
 	shwContext* shw = (shwContext*) context;
+	return TRUE;
 }
 
 BOOL shw_authenticate(freerdp* instance, char** username, char** password, char** domain)
@@ -249,9 +252,9 @@ void* shw_client_thread(void* arg)
  * Client Interface
  */
 
-void shw_freerdp_client_global_init(void)
+BOOL shw_freerdp_client_global_init(void)
 {
-
+	return TRUE;
 }
 
 void shw_freerdp_client_global_uninit(void)

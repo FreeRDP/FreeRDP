@@ -136,9 +136,10 @@ int update_recv_surfcmds(rdpUpdate* update, UINT32 size, wStream* s)
 	return 0;
 }
 
-void update_write_surfcmd_surface_bits_header(wStream* s, SURFACE_BITS_COMMAND* cmd)
+BOOL update_write_surfcmd_surface_bits_header(wStream* s, SURFACE_BITS_COMMAND* cmd)
 {
-	Stream_EnsureRemainingCapacity(s, SURFCMD_SURFACE_BITS_HEADER_LENGTH);
+	if (!Stream_EnsureRemainingCapacity(s, SURFCMD_SURFACE_BITS_HEADER_LENGTH))
+		return FALSE;
 
 	Stream_Write_UINT16(s, CMDTYPE_STREAM_SURFACE_BITS);
 
@@ -152,14 +153,18 @@ void update_write_surfcmd_surface_bits_header(wStream* s, SURFACE_BITS_COMMAND* 
 	Stream_Write_UINT16(s, cmd->width);
 	Stream_Write_UINT16(s, cmd->height);
 	Stream_Write_UINT32(s, cmd->bitmapDataLength);
+
+	return TRUE;
 }
 
-void update_write_surfcmd_frame_marker(wStream* s, UINT16 frameAction, UINT32 frameId)
+BOOL update_write_surfcmd_frame_marker(wStream* s, UINT16 frameAction, UINT32 frameId)
 {
-	Stream_EnsureRemainingCapacity(s, SURFCMD_FRAME_MARKER_LENGTH);
+	if (!Stream_EnsureRemainingCapacity(s, SURFCMD_FRAME_MARKER_LENGTH))
+		return FALSE;
 
 	Stream_Write_UINT16(s, CMDTYPE_FRAME_MARKER);
 
 	Stream_Write_UINT16(s, frameAction);
 	Stream_Write_UINT32(s, frameId);
+	return TRUE;
 }

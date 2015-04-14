@@ -44,9 +44,9 @@ rdpBitmap* Bitmap_Alloc(rdpContext* context)
 	return bitmap;
 }
 
-void Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
+BOOL Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 {
-
+	return TRUE;
 }
 
 void Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
@@ -77,9 +77,9 @@ void Bitmap_SetDimensions(rdpContext* context, rdpBitmap* bitmap, UINT16 width, 
 }
 
 /* static method */
-void Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL primary)
+BOOL Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL primary)
 {
-	context->graphics->Bitmap_Prototype->SetSurface(context, bitmap, primary);
+	return context->graphics->Bitmap_Prototype->SetSurface(context, bitmap, primary);
 }
 
 void graphics_register_bitmap(rdpGraphics* graphics, rdpBitmap* bitmap)
@@ -105,9 +105,9 @@ rdpPointer* Pointer_Alloc(rdpContext* context)
 	return pointer;
 }
 
-void Pointer_New(rdpContext* context, rdpPointer* pointer)
+BOOL Pointer_New(rdpContext* context, rdpPointer* pointer)
 {
-
+	return TRUE;
 }
 
 void Pointer_Free(rdpContext* context, rdpPointer* pointer)
@@ -133,24 +133,24 @@ void Pointer_Free(rdpContext* context, rdpPointer* pointer)
 }
 
 /* static method */
-void Pointer_Set(rdpContext* context, rdpPointer* pointer)
+BOOL Pointer_Set(rdpContext* context, rdpPointer* pointer)
 {
-	context->graphics->Pointer_Prototype->Set(context, pointer);
+	return context->graphics->Pointer_Prototype->Set(context, pointer);
 }
 
-void Pointer_SetNull(rdpContext* context)
+BOOL Pointer_SetNull(rdpContext* context)
 {
-	context->graphics->Pointer_Prototype->SetNull(context);
+	return context->graphics->Pointer_Prototype->SetNull(context);
 }
 
-void Pointer_SetDefault(rdpContext* context)
+BOOL Pointer_SetDefault(rdpContext* context)
 {
-	context->graphics->Pointer_Prototype->SetDefault(context);
+	return context->graphics->Pointer_Prototype->SetDefault(context);
 }
 
-void Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
+BOOL Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 {
-	IFCALL(context->graphics->Pointer_Prototype->SetPosition, context, x, y);
+	IFCALLRETURN(TRUE, context->graphics->Pointer_Prototype->SetPosition, context, x, y);
 }
 
 void graphics_register_pointer(rdpGraphics* graphics, rdpPointer* pointer)
@@ -176,9 +176,9 @@ rdpGlyph* Glyph_Alloc(rdpContext* context)
 	return glyph;
 }
 
-void Glyph_New(rdpContext* context, rdpGlyph* glyph)
+BOOL Glyph_New(rdpContext* context, rdpGlyph* glyph)
 {
-	context->graphics->Glyph_Prototype->New(context, glyph);
+	return context->graphics->Glyph_Prototype->New(context, glyph);
 }
 
 void Glyph_Free(rdpContext* context, rdpGlyph* glyph)
@@ -186,19 +186,19 @@ void Glyph_Free(rdpContext* context, rdpGlyph* glyph)
 	context->graphics->Glyph_Prototype->Free(context, glyph);
 }
 
-void Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y)
+BOOL Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y)
 {
-	context->graphics->Glyph_Prototype->Draw(context, glyph, x, y);
+	return context->graphics->Glyph_Prototype->Draw(context, glyph, x, y);
 }
 
-void Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor, BOOL fOpRedundant)
+BOOL Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor, BOOL fOpRedundant)
 {
-	context->graphics->Glyph_Prototype->BeginDraw(context, x, y, width, height, bgcolor, fgcolor, fOpRedundant);
+	return context->graphics->Glyph_Prototype->BeginDraw(context, x, y, width, height, bgcolor, fgcolor, fOpRedundant);
 }
 
-void Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor)
+BOOL Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor)
 {
-	context->graphics->Glyph_Prototype->EndDraw(context, x, y, width, height, bgcolor, fgcolor);
+	return context->graphics->Glyph_Prototype->EndDraw(context, x, y, width, height, bgcolor, fgcolor);
 }
 
 void graphics_register_glyph(rdpGraphics* graphics, rdpGlyph* glyph)

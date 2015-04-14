@@ -267,14 +267,15 @@ static void xf_desktop_resize(rdpContext* context)
 	}
 }
 
-void xf_sw_begin_paint(rdpContext* context)
+BOOL xf_sw_begin_paint(rdpContext* context)
 {
 	rdpGdi* gdi = context->gdi;
 	gdi->primary->hdc->hwnd->invalid->null = 1;
 	gdi->primary->hdc->hwnd->ninvalid = 0;
+	return TRUE;
 }
 
-void xf_sw_end_paint(rdpContext* context)
+BOOL xf_sw_end_paint(rdpContext* context)
 {
 	int i;
 	INT32 x, y;
@@ -297,7 +298,7 @@ void xf_sw_end_paint(rdpContext* context)
 		if (!xfc->complex_regions)
 		{
 			if (gdi->primary->hdc->hwnd->invalid->null)
-				return;
+				return TRUE;
 
 			xf_lock_x11(xfc, FALSE);
 
@@ -310,7 +311,7 @@ void xf_sw_end_paint(rdpContext* context)
 		else
 		{
 			if (gdi->primary->hdc->hwnd->ninvalid < 1)
-				return;
+				return TRUE;
 
 			xf_lock_x11(xfc, FALSE);
 
@@ -334,7 +335,7 @@ void xf_sw_end_paint(rdpContext* context)
 	else
 	{
 		if (gdi->primary->hdc->hwnd->invalid->null)
-			return;
+			return TRUE;
 
 		xf_lock_x11(xfc, FALSE);
 
@@ -342,9 +343,10 @@ void xf_sw_end_paint(rdpContext* context)
 
 		xf_unlock_x11(xfc, FALSE);
 	}
+	return TRUE;
 }
 
-void xf_sw_desktop_resize(rdpContext* context)
+BOOL xf_sw_desktop_resize(rdpContext* context)
 {
 	rdpGdi* gdi = context->gdi;
 	xfContext* xfc = (xfContext*) context;
@@ -368,16 +370,18 @@ void xf_sw_desktop_resize(rdpContext* context)
 	xf_desktop_resize(context);
 
 	xf_unlock_x11(xfc, TRUE);
+	return TRUE;
 }
 
-void xf_hw_begin_paint(rdpContext* context)
+BOOL xf_hw_begin_paint(rdpContext* context)
 {
 	xfContext* xfc = (xfContext*) context;
 	xfc->hdc->hwnd->invalid->null = 1;
 	xfc->hdc->hwnd->ninvalid = 0;
+	return TRUE;
 }
 
-void xf_hw_end_paint(rdpContext* context)
+BOOL xf_hw_end_paint(rdpContext* context)
 {
 	INT32 x, y;
 	UINT32 w, h;
@@ -388,7 +392,7 @@ void xf_hw_end_paint(rdpContext* context)
 		if (!xfc->complex_regions)
 		{
 			if (xfc->hdc->hwnd->invalid->null)
-				return;
+				return TRUE;
 
 			x = xfc->hdc->hwnd->invalid->x;
 			y = xfc->hdc->hwnd->invalid->y;
@@ -408,7 +412,7 @@ void xf_hw_end_paint(rdpContext* context)
 			HGDI_RGN cinvalid;
 
 			if (xfc->hdc->hwnd->ninvalid < 1)
-				return;
+				return TRUE;
 
 			ninvalid = xfc->hdc->hwnd->ninvalid;
 			cinvalid = xfc->hdc->hwnd->cinvalid;
@@ -433,7 +437,7 @@ void xf_hw_end_paint(rdpContext* context)
 	else
 	{
 		if (xfc->hdc->hwnd->invalid->null)
-			return;
+			return TRUE;
 
 		x = xfc->hdc->hwnd->invalid->x;
 		y = xfc->hdc->hwnd->invalid->y;
@@ -446,9 +450,10 @@ void xf_hw_end_paint(rdpContext* context)
 
 		xf_unlock_x11(xfc, FALSE);
 	}
+	return TRUE;
 }
 
-void xf_hw_desktop_resize(rdpContext* context)
+BOOL xf_hw_desktop_resize(rdpContext* context)
 {
 	xfContext* xfc = (xfContext*) context;
 	rdpSettings* settings = xfc->settings;
@@ -461,6 +466,7 @@ void xf_hw_desktop_resize(rdpContext* context)
 	xf_desktop_resize(context);
 
 	xf_unlock_x11(xfc, TRUE);
+	return TRUE;
 }
 
 BOOL xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
@@ -879,10 +885,11 @@ int _xf_error_handler(Display* d, XErrorEvent* ev)
 	return xf_error_handler(d, ev);
 }
 
-static void xf_play_sound(rdpContext* context, PLAY_SOUND_UPDATE* play_sound)
+static BOOL xf_play_sound(rdpContext* context, PLAY_SOUND_UPDATE* play_sound)
 {
 	xfContext* xfc = (xfContext*) context;
 	XkbBell(xfc->display, None, 100, 0);
+	return TRUE;
 }
 
 void xf_check_extensions(xfContext* context)
@@ -1582,10 +1589,12 @@ static void xf_PanningChangeEventHandler(rdpContext* context, PanningChangeEvent
  * Client Interface
  */
 
-static void xfreerdp_client_global_init()
+static BOOL xfreerdp_client_global_init()
 {
 	setlocale(LC_ALL, "");
-	freerdp_handle_signals();
+	if (freerdp_handle_signals() != 0)
+		return FALSE;
+	return TRUE;
 }
 
 static void xfreerdp_client_global_uninit()

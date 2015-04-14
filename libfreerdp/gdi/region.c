@@ -44,6 +44,8 @@
 HGDI_RGN gdi_CreateRectRgn(int nLeftRect, int nTopRect, int nRightRect, int nBottomRect)
 {
 	HGDI_RGN hRgn = (HGDI_RGN) malloc(sizeof(GDI_RGN));
+	if (!hRgn)
+		return NULL;
 	hRgn->objectType = GDIOBJECT_REGION;
 	hRgn->x = nLeftRect;
 	hRgn->y = nTopRect;

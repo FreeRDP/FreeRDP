@@ -9,9 +9,9 @@
 
 #import "ios_freerdp.h"
 
-void ios_ui_begin_paint(rdpContext * context);
-void ios_ui_end_paint(rdpContext * context);
-void ios_ui_resize_window(rdpContext * context);
+BOOL ios_ui_begin_paint(rdpContext * context);
+BOOL ios_ui_end_paint(rdpContext * context);
+BOOL ios_ui_resize_window(rdpContext * context);
 
 BOOL ios_ui_authenticate(freerdp * instance, char** username, char** password, char** domain);
 BOOL ios_ui_check_certificate(freerdp * instance, char * subject, char * issuer, char * fingerprint);

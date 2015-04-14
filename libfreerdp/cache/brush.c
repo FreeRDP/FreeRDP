@@ -34,9 +34,10 @@
 
 #define TAG FREERDP_TAG("cache.brush")
 
-void update_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
+BOOL update_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
 	BYTE style;
+	BOOL ret = TRUE;
 	rdpBrush* brush = &patblt->brush;
 	rdpCache* cache = context->cache;
 
@@ -48,21 +49,23 @@ void update_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 		brush->style = 0x03;
 	}
 
-	IFCALL(cache->brush->PatBlt, context, patblt);
+	IFCALLRET(cache->brush->PatBlt, ret, context, patblt);
 	brush->style = style;
+	return ret;
 }
 
-void update_gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
+BOOL update_gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
 {
 	rdpCache* cache = context->cache;
-	IFCALL(cache->brush->PolygonSC, context, polygon_sc);
+	IFCALLRETURN(TRUE, cache->brush->PolygonSC, context, polygon_sc);
 }
 
-void update_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
+BOOL update_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 {
 	BYTE style;
 	rdpBrush* brush = &polygon_cb->brush;
 	rdpCache* cache = context->cache;
+	BOOL ret = TRUE;
 
 	style = brush->style;
 
@@ -72,11 +75,12 @@ void update_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 		brush->style = 0x03;
 	}
 
-	IFCALL(cache->brush->PolygonCB, context, polygon_cb);
+	IFCALLRET(cache->brush->PolygonCB, ret, context, polygon_cb);
 	brush->style = style;
+	return ret;
 }
 
-static void update_gdi_cache_brush(rdpContext* context, CACHE_BRUSH_ORDER* cacheBrush)
+static BOOL update_gdi_cache_brush(rdpContext* context, CACHE_BRUSH_ORDER* cacheBrush)
 {
 	int length;
 	void* data = NULL;
@@ -85,9 +89,12 @@ static void update_gdi_cache_brush(rdpContext* context, CACHE_BRUSH_ORDER* cache
 	length = cacheBrush->bpp * 64 / 8;
 
 	data = malloc(length);
+	if (!data)
+		return FALSE;
 	CopyMemory(data, cacheBrush->data, length);
 
 	brush_cache_put(cache->brush, cacheBrush->index, data, cacheBrush->bpp);
+	return TRUE;
 }
 
 void* brush_cache_get(rdpBrushCache* brushCache, UINT32 index, UINT32* bpp)

@@ -35,16 +35,16 @@
 
 #define TAG FREERDP_TAG("cache.nine_grid")
 
-void update_gdi_draw_nine_grid(rdpContext* context, DRAW_NINE_GRID_ORDER* draw_nine_grid)
+BOOL update_gdi_draw_nine_grid(rdpContext* context, DRAW_NINE_GRID_ORDER* draw_nine_grid)
 {
 	rdpCache* cache = context->cache;
-	IFCALL(cache->nine_grid->DrawNineGrid, context, draw_nine_grid);
+	IFCALLRETURN(TRUE, cache->nine_grid->DrawNineGrid, context, draw_nine_grid);
 }
 
-void update_gdi_multi_draw_nine_grid(rdpContext* context, MULTI_DRAW_NINE_GRID_ORDER* multi_draw_nine_grid)
+BOOL update_gdi_multi_draw_nine_grid(rdpContext* context, MULTI_DRAW_NINE_GRID_ORDER* multi_draw_nine_grid)
 {
 	rdpCache* cache = context->cache;
-	IFCALL(cache->nine_grid->MultiDrawNineGrid, context, multi_draw_nine_grid);
+	IFCALLRETURN(TRUE, cache->nine_grid->MultiDrawNineGrid, context, multi_draw_nine_grid);
 }
 
 void nine_grid_cache_register_callbacks(rdpUpdate* update)

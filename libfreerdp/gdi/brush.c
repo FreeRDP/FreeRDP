@@ -24,7 +24,6 @@
 #endif
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
 
 #include <freerdp/freerdp.h>
@@ -55,6 +54,8 @@ p_PatBlt PatBlt_[5] =
 HGDI_BRUSH gdi_CreateSolidBrush(GDI_COLOR crColor)
 {
 	HGDI_BRUSH hBrush = (HGDI_BRUSH) malloc(sizeof(GDI_BRUSH));
+	if (!hBrush)
+		return NULL;
 	hBrush->objectType = GDIOBJECT_BRUSH;
 	hBrush->style = GDI_BS_SOLID;
 	hBrush->color = crColor;
@@ -71,6 +72,8 @@ HGDI_BRUSH gdi_CreateSolidBrush(GDI_COLOR crColor)
 HGDI_BRUSH gdi_CreatePatternBrush(HGDI_BITMAP hbmp)
 {
 	HGDI_BRUSH hBrush = (HGDI_BRUSH) malloc(sizeof(GDI_BRUSH));
+	if (!hBrush)
+		return NULL;
 	hBrush->objectType = GDIOBJECT_BRUSH;
 	hBrush->style = GDI_BS_PATTERN;
 	hBrush->pattern = hbmp;
@@ -80,6 +83,8 @@ HGDI_BRUSH gdi_CreatePatternBrush(HGDI_BITMAP hbmp)
 HGDI_BRUSH gdi_CreateHatchBrush(HGDI_BITMAP hbmp)
 {
 	HGDI_BRUSH hBrush = (HGDI_BRUSH) malloc(sizeof(GDI_BRUSH));
+	if (!hBrush)
+		return NULL;
 	hBrush->objectType = GDIOBJECT_BRUSH;
 	hBrush->style = GDI_BS_HATCHED;
 	hBrush->pattern = hbmp;

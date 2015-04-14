@@ -42,10 +42,17 @@
 HGDI_DC gdi_GetDC()
 {
 	HGDI_DC hDC = (HGDI_DC) malloc(sizeof(GDI_DC));
+	if (!hDC)
+		return NULL;
 	hDC->bytesPerPixel = 4;
 	hDC->bitsPerPixel = 32;
 	hDC->drawMode = GDI_R2_BLACK;
 	hDC->clip = gdi_CreateRectRgn(0, 0, 0, 0);
+	if (!hDC->clip)
+	{
+		free(hDC);
+		return NULL;
+	}
 	hDC->clip->null = 1;
 	hDC->hwnd = NULL;
 	return hDC;
@@ -94,11 +101,18 @@ HGDI_DC gdi_CreateDC(UINT32 flags, int bpp)
 HGDI_DC gdi_CreateCompatibleDC(HGDI_DC hdc)
 {
 	HGDI_DC hDC = (HGDI_DC) malloc(sizeof(GDI_DC));
+	if (!hDC)
+		return NULL;
+
+	if (!(hDC->clip = gdi_CreateRectRgn(0, 0, 0, 0)))
+	{
+		free(hDC);
+		return NULL;
+	}
+	hDC->clip->null = 1;
 	hDC->bytesPerPixel = hdc->bytesPerPixel;
 	hDC->bitsPerPixel = hdc->bitsPerPixel;
 	hDC->drawMode = hdc->drawMode;
-	hDC->clip = gdi_CreateRectRgn(0, 0, 0, 0);
-	hDC->clip->null = 1;
 	hDC->hwnd = NULL;
 	hDC->alpha = hdc->alpha;
 	hDC->invert = hdc->invert;
@@ -146,7 +160,7 @@ HGDIOBJECT gdi_SelectObject(HGDI_DC hdc, HGDIOBJECT hgdiobject)
 	else
 	{
 		/* Unknown GDI Object Type */
-		return 0;
+		return NULL;
 	}
 
 	return previousSelectedObject;
@@ -182,7 +196,7 @@ int gdi_DeleteObject(HGDIOBJECT hgdiobject)
 	{
 		HGDI_BRUSH hBrush = (HGDI_BRUSH) hgdiobject;
 
-		if(hBrush->style == GDI_BS_PATTERN)
+		if (hBrush->style == GDI_BS_PATTERN || hBrush->style == GDI_BS_HATCHED)
 		{
 			if (hBrush->pattern != NULL)
 				gdi_DeleteObject((HGDIOBJECT) hBrush->pattern);

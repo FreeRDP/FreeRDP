@@ -34,7 +34,7 @@
 
 #define TAG FREERDP_TAG("cache.bitmap")
 
-void update_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
+BOOL update_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 {
 	rdpBitmap* bitmap;
 	rdpCache* cache = context->cache;
@@ -44,18 +44,20 @@ void update_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 	else
 		bitmap = bitmap_cache_get(cache->bitmap, (BYTE) memblt->cacheId, memblt->cacheIndex);
 	/* XP-SP2 servers sometimes ask for cached bitmaps they've never defined. */
-	if (bitmap == NULL) return;
+	if (bitmap == NULL)
+		return TRUE;
 
 	memblt->bitmap = bitmap;
-	IFCALL(cache->bitmap->MemBlt, context, memblt);
+	IFCALLRETURN(TRUE, cache->bitmap->MemBlt, context, memblt);
 }
 
-void update_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
+BOOL update_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 {
 	BYTE style;
 	rdpBitmap* bitmap;
 	rdpCache* cache = context->cache;
 	rdpBrush* brush = &mem3blt->brush;
+	BOOL ret = TRUE;
 
 	if (mem3blt->cacheId == 0xFF)
 		bitmap = offscreen_cache_get(cache->offscreen, mem3blt->cacheIndex);
@@ -64,35 +66,45 @@ void update_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 
 	/* XP-SP2 servers sometimes ask for cached bitmaps they've never defined. */
 	if (!bitmap)
-		return;
+		return TRUE;
 
 	style = brush->style;
 
 	if (brush->style & CACHED_BRUSH)
 	{
 		brush->data = brush_cache_get(cache->brush, brush->index, &brush->bpp);
+		if (!brush->data)
+			return FALSE;
 		brush->style = 0x03;
 	}
 
 	mem3blt->bitmap = bitmap;
-	IFCALL(cache->bitmap->Mem3Blt, context, mem3blt);
+	IFCALLRET(cache->bitmap->Mem3Blt, ret, context, mem3blt);
 	brush->style = style;
+	return ret;
 }
 
-void update_gdi_cache_bitmap(rdpContext* context, CACHE_BITMAP_ORDER* cacheBitmap)
+BOOL update_gdi_cache_bitmap(rdpContext* context, CACHE_BITMAP_ORDER* cacheBitmap)
 {
 	rdpBitmap* bitmap;
 	rdpBitmap* prevBitmap;
 	rdpCache* cache = context->cache;
 
 	bitmap = Bitmap_Alloc(context);
+	if (!bitmap)
+		return FALSE;
+
 
 	Bitmap_SetDimensions(context, bitmap, cacheBitmap->bitmapWidth, cacheBitmap->bitmapHeight);
 
-	bitmap->Decompress(context, bitmap,
+	if (!bitmap->Decompress(context, bitmap,
 			cacheBitmap->bitmapDataStream, cacheBitmap->bitmapWidth, cacheBitmap->bitmapHeight,
 			cacheBitmap->bitmapBpp, cacheBitmap->bitmapLength,
-			cacheBitmap->compressed, RDP_CODEC_ID_NONE);
+			cacheBitmap->compressed, RDP_CODEC_ID_NONE))
+	{
+		Bitmap_Free(context, bitmap);
+		return FALSE;
+	}
 
 	bitmap->New(context, bitmap);
 
@@ -102,9 +114,11 @@ void update_gdi_cache_bitmap(rdpContext* context, CACHE_BITMAP_ORDER* cacheBitma
 		Bitmap_Free(context, prevBitmap);
 
 	bitmap_cache_put(cache->bitmap, cacheBitmap->cacheId, cacheBitmap->cacheIndex, bitmap);
+	return TRUE;
 }
 
-void update_gdi_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORDER* cacheBitmapV2)
+BOOL update_gdi_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORDER* cacheBitmapV2)
+
 {
 	rdpBitmap* bitmap;
 	rdpBitmap* prevBitmap;
@@ -112,6 +126,8 @@ void update_gdi_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORDER* cach
 	rdpSettings* settings = context->settings;
 
 	bitmap = Bitmap_Alloc(context);
+	if (!bitmap)
+		return FALSE;
 
 	Bitmap_SetDimensions(context, bitmap, cacheBitmapV2->bitmapWidth, cacheBitmapV2->bitmapHeight);
 
@@ -121,10 +137,14 @@ void update_gdi_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORDER* cach
 	if ((settings->ColorDepth == 15) && (cacheBitmapV2->bitmapBpp == 16))
 		cacheBitmapV2->bitmapBpp = settings->ColorDepth;
 
-	bitmap->Decompress(context, bitmap,
+	if (!bitmap->Decompress(context, bitmap,
 			cacheBitmapV2->bitmapDataStream, cacheBitmapV2->bitmapWidth, cacheBitmapV2->bitmapHeight,
 			cacheBitmapV2->bitmapBpp, cacheBitmapV2->bitmapLength,
-			cacheBitmapV2->compressed, RDP_CODEC_ID_NONE);
+			cacheBitmapV2->compressed, RDP_CODEC_ID_NONE))
+	{
+		Bitmap_Free(context, bitmap);
+		return FALSE;
+	}
 
 	bitmap->New(context, bitmap);
 
@@ -134,9 +154,10 @@ void update_gdi_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORDER* cach
 		Bitmap_Free(context, prevBitmap);
 
 	bitmap_cache_put(cache->bitmap, cacheBitmapV2->cacheId, cacheBitmapV2->cacheIndex, bitmap);
+	return TRUE;
 }
 
-void update_gdi_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORDER* cacheBitmapV3)
+BOOL update_gdi_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORDER* cacheBitmapV3)
 {
 	rdpBitmap* bitmap;
 	rdpBitmap* prevBitmap;
@@ -146,6 +167,8 @@ void update_gdi_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORDER* cach
 	BITMAP_DATA_EX* bitmapData = &cacheBitmapV3->bitmapData;
 
 	bitmap = Bitmap_Alloc(context);
+	if (!bitmap)
+		return FALSE;
 
 	Bitmap_SetDimensions(context, bitmap, bitmapData->width, bitmapData->height);
 
@@ -167,9 +190,10 @@ void update_gdi_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORDER* cach
 		Bitmap_Free(context, prevBitmap);
 
 	bitmap_cache_put(cache->bitmap, cacheBitmapV3->cacheId, cacheBitmapV3->cacheIndex, bitmap);
+	return TRUE;
 }
 
-void update_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
+BOOL update_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 {
 	int i;
 	BOOL reused = TRUE;
@@ -214,6 +238,7 @@ void update_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 
 		bitmap->Paint(context, bitmap);
 	}
+	return TRUE;
 }
 
 rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmapCache, UINT32 id, UINT32 index)

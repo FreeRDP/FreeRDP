@@ -26,7 +26,7 @@
 #include "xfreerdp.h"
 
 void xf_gdi_register_update_callbacks(rdpUpdate* update);
-void xf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate);
+BOOL xf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate);
 UINT32 xf_convert_rdp_order_color(xfContext* xfc, UINT32 color);
 
 #endif /* __XF_GDI_H */

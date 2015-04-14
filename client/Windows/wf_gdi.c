@@ -342,7 +342,7 @@ void wf_toggle_fullscreen(wfContext* wfc)
 	}
 }
 
-void wf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
+BOOL wf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 {
 	HDC hdc;
 	int status;
@@ -366,6 +366,8 @@ void wf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 	wfContext* wfc = (wfContext*) context;
 
 	hdc = CreateCompatibleDC(GetDC(NULL));
+	if (!hdc)
+		return FALSE;
 
 	for (index = 0; index < bitmapUpdate->number; index++)
 	{
@@ -395,7 +397,7 @@ void wf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 			wfc->bitmap_buffer = (BYTE*) _aligned_realloc(wfc->bitmap_buffer, wfc->bitmap_size, 16);
 
 			if (!wfc->bitmap_buffer)
-				return;
+				return FALSE;
 		}
 
 		if (compressed)
@@ -420,7 +422,7 @@ void wf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 			if (status < 0)
 			{
 				WLog_ERR(TAG, "bitmap decompression failure");
-				return;
+				return FALSE;
 			}
 
 			pSrcData = wfc->bitmap_buffer;
@@ -440,6 +442,7 @@ void wf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 	}
 
 	ReleaseDC(NULL, hdc);
+	return TRUE;
 }
 
 void wf_gdi_palette_update(wfContext* wfc, PALETTE_UPDATE* palette)

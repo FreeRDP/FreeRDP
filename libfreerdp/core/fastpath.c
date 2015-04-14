@@ -869,9 +869,7 @@ BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s)
 
 wStream* fastpath_update_pdu_init(rdpFastPath* fastpath)
 {
-	wStream* s;
-	s = transport_send_stream_init(fastpath->rdp->transport, FASTPATH_MAX_PACKET_SIZE);
-	return s;
+	return transport_send_stream_init(fastpath->rdp->transport, FASTPATH_MAX_PACKET_SIZE);
 }
 
 wStream* fastpath_update_pdu_init_new(rdpFastPath* fastpath)

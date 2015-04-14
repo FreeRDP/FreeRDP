@@ -593,7 +593,7 @@ void update_post_disconnect(rdpUpdate* update)
 		update_message_proxy_free(update->proxy);
 }
 
-static void update_begin_paint(rdpContext* context)
+static BOOL update_begin_paint(rdpContext* context)
 {
 	wStream* s;
 	rdpUpdate* update = context->update;
@@ -602,22 +602,25 @@ static void update_begin_paint(rdpContext* context)
 		update->EndPaint(context);
 
 	s = fastpath_update_pdu_init_new(context->rdp->fastpath);
+	if (!s)
+		return FALSE;
 	Stream_SealLength(s);
 	Stream_Seek(s, 2); /* numberOrders (2 bytes) */
 
 	update->combineUpdates = TRUE;
 	update->numberOrders = 0;
 	update->us = s;
+	return TRUE;
 }
 
-static void update_end_paint(rdpContext* context)
+static BOOL update_end_paint(rdpContext* context)
 {
 	wStream* s;
 	int headerLength;
 	rdpUpdate* update = context->update;
 
 	if (!update->us)
-		return;
+		return FALSE;
 
 	s = update->us;
 	headerLength = Stream_Length(s);
@@ -638,6 +641,7 @@ static void update_end_paint(rdpContext* context)
 	update->us = NULL;
 
 	Stream_Free(s, TRUE);
+	return TRUE;
 }
 
 static void update_flush(rdpContext* context)
@@ -684,7 +688,7 @@ static BOOL update_check_flush(rdpContext* context, int size)
 	return FALSE;
 }
 
-static void update_set_bounds(rdpContext* context, rdpBounds* bounds)
+static BOOL update_set_bounds(rdpContext* context, rdpBounds* bounds)
 {
 	rdpUpdate* update = context->update;
 
@@ -694,6 +698,7 @@ static void update_set_bounds(rdpContext* context, rdpBounds* bounds)
 		ZeroMemory(&update->currentBounds, sizeof(rdpBounds));
 	else
 		CopyMemory(&update->currentBounds, bounds, sizeof(rdpBounds));
+	return TRUE;
 }
 
 BOOL update_bounds_is_null(rdpBounds* bounds)
@@ -824,19 +829,24 @@ static void update_write_refresh_rect(wStream* s, BYTE count, RECTANGLE_16* area
 	}
 }
 
-static void update_send_refresh_rect(rdpContext* context, BYTE count, RECTANGLE_16* areas)
+static BOOL update_send_refresh_rect(rdpContext* context, BYTE count, RECTANGLE_16* areas)
 {
 	wStream* s;
 	rdpRdp* rdp = context->rdp;
 
 	if (rdp->settings->RefreshRect)
 	{
+		BOOL ret;
 		s = rdp_data_pdu_init(rdp);
+		if (!s)
+			return FALSE;
 		update_write_refresh_rect(s, count, areas);
 
-		rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_REFRESH_RECT, rdp->mcs->userId);
+		ret = rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_REFRESH_RECT, rdp->mcs->userId);
 		Stream_Release(s);
+		return ret;
 	}
+	return TRUE;
 }
 
 static void update_write_suppress_output(wStream* s, BYTE allow, RECTANGLE_16* area)
@@ -854,160 +864,228 @@ static void update_write_suppress_output(wStream* s, BYTE allow, RECTANGLE_16* a
 	}
 }
 
-static void update_send_suppress_output(rdpContext* context, BYTE allow, RECTANGLE_16* area)
+static BOOL update_send_suppress_output(rdpContext* context, BYTE allow, RECTANGLE_16* area)
 {
 	wStream* s;
 	rdpRdp* rdp = context->rdp;
 
 	if (rdp->settings->SuppressOutput)
 	{
+		BOOL ret;
 		s = rdp_data_pdu_init(rdp);
+		if (!s)
+			return FALSE;
 		update_write_suppress_output(s, allow, area);
 
-		rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SUPPRESS_OUTPUT, rdp->mcs->userId);
+		ret = rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SUPPRESS_OUTPUT, rdp->mcs->userId);
 		Stream_Release(s);
+		return ret;
 	}
+	return TRUE;
 }
 
-static void update_send_surface_command(rdpContext* context, wStream* s)
+static BOOL update_send_surface_command(rdpContext* context, wStream* s)
 {
 	wStream* update;
 	rdpRdp* rdp = context->rdp;
+	BOOL ret;
 
 	update = fastpath_update_pdu_init(rdp->fastpath);
-	Stream_EnsureRemainingCapacity(update, Stream_GetPosition(s));
+	if (!update)
+		return FALSE;
+	if (!Stream_EnsureRemainingCapacity(update, Stream_GetPosition(s)))
+	{
+		ret = FALSE;
+		goto out_fail;
+	}
 	Stream_Write(update, Stream_Buffer(s), Stream_GetPosition(s));
-	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, update, FALSE);
+	ret = fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, update, FALSE);
+
+out_fail:
 	Stream_Release(update);
+	return ret;
 }
 
-static void update_send_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surfaceBitsCommand)
+static BOOL update_send_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surfaceBitsCommand)
 {
 	wStream* s;
 	rdpRdp* rdp = context->rdp;
+	BOOL ret = FALSE;
 
 	update_force_flush(context);
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
-	Stream_EnsureRemainingCapacity(s, SURFCMD_SURFACE_BITS_HEADER_LENGTH + (int) surfaceBitsCommand->bitmapDataLength);
-	update_write_surfcmd_surface_bits_header(s, surfaceBitsCommand);
+	if (!s)
+		return FALSE;
+
+	if (!Stream_EnsureRemainingCapacity(s, SURFCMD_SURFACE_BITS_HEADER_LENGTH + (int) surfaceBitsCommand->bitmapDataLength) ||
+		!update_write_surfcmd_surface_bits_header(s, surfaceBitsCommand))
+		goto out_fail;
+
 	Stream_Write(s, surfaceBitsCommand->bitmapData, surfaceBitsCommand->bitmapDataLength);
-	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, s, surfaceBitsCommand->skipCompression);
+
+	if (!fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, s, surfaceBitsCommand->skipCompression))
+		goto out_fail;
 
 	update_force_flush(context);
 
+	ret = TRUE;
+out_fail:
 	Stream_Release(s);
+	return ret;
 }
 
-static void update_send_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surfaceFrameMarker)
+static BOOL update_send_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surfaceFrameMarker)
 {
 	wStream* s;
 	rdpRdp* rdp = context->rdp;
+	BOOL ret = FALSE;
 
 	update_force_flush(context);
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
-	update_write_surfcmd_frame_marker(s, surfaceFrameMarker->frameAction, surfaceFrameMarker->frameId);
-	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, s, FALSE);
+	if (!s)
+		return FALSE;
+
+	if (!update_write_surfcmd_frame_marker(s, surfaceFrameMarker->frameAction, surfaceFrameMarker->frameId) ||
+		!fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, s, FALSE))
+		goto out_fail;
 
 	update_force_flush(context);
 
+	ret = TRUE;
+out_fail:
 	Stream_Release(s);
+	return ret;
 }
 
-static void update_send_surface_frame_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd, BOOL first, BOOL last, UINT32 frameId)
+static BOOL update_send_surface_frame_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd, BOOL first, BOOL last, UINT32 frameId)
 {
 	wStream* s;
 	rdpRdp* rdp = context->rdp;
+	BOOL ret = FALSE;
 
 	update_force_flush(context);
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
-	Stream_EnsureRemainingCapacity(s, SURFCMD_SURFACE_BITS_HEADER_LENGTH + (int) cmd->bitmapDataLength + 16);
+	if (!s)
+		return FALSE;
+	if (!Stream_EnsureRemainingCapacity(s, SURFCMD_SURFACE_BITS_HEADER_LENGTH + (int) cmd->bitmapDataLength + 16))
+		goto out_fail;
 
 	if (first)
-		update_write_surfcmd_frame_marker(s, SURFACECMD_FRAMEACTION_BEGIN, frameId);
+	{
+		if (!update_write_surfcmd_frame_marker(s, SURFACECMD_FRAMEACTION_BEGIN, frameId))
+			goto out_fail;
+	}
 
-	update_write_surfcmd_surface_bits_header(s, cmd);
+	if (!update_write_surfcmd_surface_bits_header(s, cmd))
+		goto out_fail;
 	Stream_Write(s, cmd->bitmapData, cmd->bitmapDataLength);
 
-
 	if (last)
-		update_write_surfcmd_frame_marker(s, SURFACECMD_FRAMEACTION_END, frameId);
+	{
+		if (!update_write_surfcmd_frame_marker(s, SURFACECMD_FRAMEACTION_END, frameId))
+			return FALSE;
+	}
 
-	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, s, cmd->skipCompression);
+	ret = fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, s, cmd->skipCompression);
 
 	update_force_flush(context);
 
+out_fail:
 	Stream_Release(s);
+	return ret;
 }
 
-static void update_send_frame_acknowledge(rdpContext* context, UINT32 frameId)
+static BOOL update_send_frame_acknowledge(rdpContext* context, UINT32 frameId)
 {
 	wStream* s;
 	rdpRdp* rdp = context->rdp;
 
 	if (rdp->settings->ReceivedCapabilities[CAPSET_TYPE_FRAME_ACKNOWLEDGE])
 	{
+		BOOL ret;
 		s = rdp_data_pdu_init(rdp);
+		if (!s)
+			return FALSE;
 		Stream_Write_UINT32(s, frameId);
-		rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_FRAME_ACKNOWLEDGE, rdp->mcs->userId);
+		ret = rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_FRAME_ACKNOWLEDGE, rdp->mcs->userId);
 		Stream_Release(s);
+		return ret;
 	}
+	return TRUE;
 }
 
-static void update_send_synchronize(rdpContext* context)
+static BOOL update_send_synchronize(rdpContext* context)
 {
 	wStream* s;
 	rdpRdp* rdp = context->rdp;
+	BOOL ret;
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
+	if (!s)
+		return FALSE;
 	Stream_Zero(s, 2); /* pad2Octets (2 bytes) */
-	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SYNCHRONIZE, s, FALSE);
+	ret = fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SYNCHRONIZE, s, FALSE);
 	Stream_Release(s);
+	return ret;
 }
 
-static void update_send_desktop_resize(rdpContext* context)
+static BOOL update_send_desktop_resize(rdpContext* context)
 {
-	rdp_server_reactivate(context->rdp);
+	return rdp_server_reactivate(context->rdp);
 }
 
-static void update_send_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
+static BOOL update_send_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 {
 	wStream* s;
 	rdpRdp* rdp = context->rdp;
 	rdpUpdate* update = context->update;
+	BOOL ret = TRUE;
 
 	update_force_flush(context);
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
-	update_write_bitmap_update(update, s, bitmapUpdate);
-	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_BITMAP, s, bitmapUpdate->skipCompression);
+	if (!s)
+		return FALSE;
+	if (!update_write_bitmap_update(update, s, bitmapUpdate) ||
+		!fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_BITMAP, s, bitmapUpdate->skipCompression))
+	{
+		ret = FALSE;
+		goto out_fail;
+	}
 
 	update_force_flush(context);
 
+out_fail:
 	Stream_Release(s);
+	return ret;
 }
 
-static void update_send_play_sound(rdpContext* context, PLAY_SOUND_UPDATE* play_sound)
+static BOOL update_send_play_sound(rdpContext* context, PLAY_SOUND_UPDATE* play_sound)
 {
 	wStream* s;
 	rdpRdp* rdp = context->rdp;
+	BOOL ret;
 
 	if (!rdp->settings->ReceivedCapabilities[CAPSET_TYPE_SOUND]) {
-		return;
+		return TRUE;
 	}
 	s = rdp_data_pdu_init(rdp);
+	if (!s)
+		return FALSE;
 	Stream_Write_UINT32(s, play_sound->duration);
 	Stream_Write_UINT32(s, play_sound->frequency);
-	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_PLAY_SOUND, rdp->mcs->userId);
+	ret = rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_PLAY_SOUND, rdp->mcs->userId);
 	Stream_Release(s);
+	return ret;
 }
 /**
  * Primary Drawing Orders
  */
 
-static void update_send_dstblt(rdpContext* context, DSTBLT_ORDER* dstblt)
+static BOOL update_send_dstblt(rdpContext* context, DSTBLT_ORDER* dstblt)
 {
 	wStream* s;
 	int offset;
@@ -1020,18 +1098,23 @@ static void update_send_dstblt(rdpContext* context, DSTBLT_ORDER* dstblt)
 	update_check_flush(context, headerLength + update_approximate_dstblt_order(&orderInfo, dstblt));
 
 	s = update->us;
+	if (!s)
+		return FALSE;
 	offset = Stream_GetPosition(s);
 
-	Stream_EnsureRemainingCapacity(s, headerLength);
+	if (!Stream_EnsureRemainingCapacity(s, headerLength))
+		return FALSE;
 	Stream_Seek(s, headerLength);
 
-	update_write_dstblt_order(s, &orderInfo, dstblt);
+	if (!update_write_dstblt_order(s, &orderInfo, dstblt))
+		return FALSE;
 	update_write_order_info(context, s, &orderInfo, offset);
 
 	update->numberOrders++;
+	return TRUE;
 }
 
-static void update_send_patblt(rdpContext* context, PATBLT_ORDER* patblt)
+static BOOL update_send_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
 	wStream* s;
 	int offset;
@@ -1044,18 +1127,22 @@ static void update_send_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	update_check_flush(context, headerLength + update_approximate_patblt_order(&orderInfo, patblt));
 
 	s = update->us;
+	if (!s)
+		return FALSE;
 	offset = Stream_GetPosition(s);
 
-	Stream_EnsureRemainingCapacity(s, headerLength);
+	if (!Stream_EnsureRemainingCapacity(s, headerLength))
+		return FALSE;
 	Stream_Seek(s, headerLength);
 
 	update_write_patblt_order(s, &orderInfo, patblt);
 	update_write_order_info(context, s, &orderInfo, offset);
 
 	update->numberOrders++;
+	return TRUE;
 }
 
-static void update_send_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
+static BOOL update_send_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
 {
 	wStream* s;
 	int offset;
@@ -1068,18 +1155,22 @@ static void update_send_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
 	update_check_flush(context, headerLength + update_approximate_scrblt_order(&orderInfo, scrblt));
 
 	s = update->us;
+	if (!s)
+		return TRUE;
 	offset = Stream_GetPosition(s);
 
-	Stream_EnsureRemainingCapacity(s, headerLength);
+	if (!Stream_EnsureRemainingCapacity(s, headerLength))
+		return FALSE;
 	Stream_Seek(s, headerLength);
 
 	update_write_scrblt_order(s, &orderInfo, scrblt);
 	update_write_order_info(context, s, &orderInfo, offset);
 
 	update->numberOrders++;
+	return TRUE;
 }
 
-static void update_send_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
+static BOOL update_send_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 {
 	wStream* s;
 	int offset;
@@ -1092,18 +1183,22 @@ static void update_send_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaq
 	update_check_flush(context, headerLength + update_approximate_opaque_rect_order(&orderInfo, opaque_rect));
 
 	s = update->us;
+	if (!s)
+		return FALSE;
 	offset = Stream_GetPosition(s);
 
-	Stream_EnsureRemainingCapacity(s, headerLength);
+	if (!Stream_EnsureRemainingCapacity(s, headerLength))
+		return FALSE;
 	Stream_Seek(s, headerLength);
 
 	update_write_opaque_rect_order(s, &orderInfo, opaque_rect);
 	update_write_order_info(context, s, &orderInfo, offset);
 
 	update->numberOrders++;
+	return TRUE;
 }
 
-static void update_send_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
+static BOOL update_send_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
 {
 	wStream* s;
 	int offset;
@@ -1116,18 +1211,22 @@ static void update_send_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
 	update_check_flush(context, headerLength + update_approximate_line_to_order(&orderInfo, line_to));
 
 	s = update->us;
+	if (!s)
+		return FALSE;
 	offset = Stream_GetPosition(s);
 
-	Stream_EnsureRemainingCapacity(s, headerLength);
+	if (!Stream_EnsureRemainingCapacity(s, headerLength))
+		return FALSE;
 	Stream_Seek(s, headerLength);
 
 	update_write_line_to_order(s, &orderInfo, line_to);
 	update_write_order_info(context, s, &orderInfo, offset);
 
 	update->numberOrders++;
+	return TRUE;
 }
 
-static void update_send_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
+static BOOL update_send_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 {
 	wStream* s;
 	int offset;
@@ -1140,18 +1239,22 @@ static void update_send_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 	update_check_flush(context, headerLength + update_approximate_memblt_order(&orderInfo, memblt));
 
 	s = update->us;
+	if (!s)
+		return FALSE;
 	offset = Stream_GetPosition(s);
 
-	Stream_EnsureRemainingCapacity(s, headerLength);
+	if (!Stream_EnsureRemainingCapacity(s, headerLength))
+		return FALSE;
 	Stream_Seek(s, headerLength);
 
 	update_write_memblt_order(s, &orderInfo, memblt);
 	update_write_order_info(context, s, &orderInfo, offset);
 
 	update->numberOrders++;
+	return TRUE;
 }
 
-static void update_send_glyph_index(rdpContext* context, GLYPH_INDEX_ORDER* glyph_index)
+static BOOL update_send_glyph_index(rdpContext* context, GLYPH_INDEX_ORDER* glyph_index)
 {
 	wStream* s;
 	int offset;
@@ -1164,22 +1267,26 @@ static void update_send_glyph_index(rdpContext* context, GLYPH_INDEX_ORDER* glyp
 	update_check_flush(context, headerLength + update_approximate_glyph_index_order(&orderInfo, glyph_index));
 
 	s = update->us;
+	if (!s)
+		return FALSE;
 	offset = Stream_GetPosition(s);
 
-	Stream_EnsureRemainingCapacity(s, headerLength);
+	if (!Stream_EnsureRemainingCapacity(s, headerLength))
+		return FALSE;
 	Stream_Seek(s, headerLength);
 
 	update_write_glyph_index_order(s, &orderInfo, glyph_index);
 	update_write_order_info(context, s, &orderInfo, offset);
 
 	update->numberOrders++;
+	return TRUE;
 }
 
 /*
  * Secondary Drawing Orders
  */
 
-static void update_send_cache_bitmap(rdpContext* context, CACHE_BITMAP_ORDER* cache_bitmap)
+static BOOL update_send_cache_bitmap(rdpContext* context, CACHE_BITMAP_ORDER* cache_bitmap)
 {
 	wStream* s;
 	int bm, em;
@@ -1198,12 +1305,19 @@ static void update_send_cache_bitmap(rdpContext* context, CACHE_BITMAP_ORDER* ca
 	update_check_flush(context, headerLength + update_approximate_cache_bitmap_order(cache_bitmap, cache_bitmap->compressed, &extraFlags));
 
 	s = update->us;
+	if (!s)
+		return FALSE;
+
 	bm = Stream_GetPosition(s);
 
-	Stream_EnsureRemainingCapacity(s, headerLength);
+	if (!Stream_EnsureRemainingCapacity(s, headerLength))
+		return FALSE;
+
 	Stream_Seek(s, headerLength);
 
-	update_write_cache_bitmap_order(s, cache_bitmap, cache_bitmap->compressed, &extraFlags);
+	if (!update_write_cache_bitmap_order(s, cache_bitmap, cache_bitmap->compressed, &extraFlags))
+		return FALSE;
+
 	em = Stream_GetPosition(s);
 
 	orderLength = (em - bm) - 13;
@@ -1216,9 +1330,10 @@ static void update_send_cache_bitmap(rdpContext* context, CACHE_BITMAP_ORDER* ca
 	Stream_SetPosition(s, em);
 
 	update->numberOrders++;
+	return TRUE;
 }
 
-static void update_send_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2)
+static BOOL update_send_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2)
 {
 	wStream* s;
 	int bm, em;
@@ -1240,12 +1355,19 @@ static void update_send_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORD
 	update_check_flush(context, headerLength + update_approximate_cache_bitmap_v2_order(cache_bitmap_v2, cache_bitmap_v2->compressed, &extraFlags));
 
 	s = update->us;
+	if (!s)
+		return FALSE;
+
 	bm = Stream_GetPosition(s);
 
-	Stream_EnsureRemainingCapacity(s, headerLength);
+	if (!Stream_EnsureRemainingCapacity(s, headerLength))
+		return FALSE;
+
 	Stream_Seek(s, headerLength);
 
-	update_write_cache_bitmap_v2_order(s, cache_bitmap_v2, cache_bitmap_v2->compressed, &extraFlags);
+	if (!update_write_cache_bitmap_v2_order(s, cache_bitmap_v2, cache_bitmap_v2->compressed, &extraFlags))
+		return FALSE;
+
 	em = Stream_GetPosition(s);
 
 	orderLength = (em - bm) - 13;
@@ -1258,9 +1380,10 @@ static void update_send_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORD
 	Stream_SetPosition(s, em);
 
 	update->numberOrders++;
+	return TRUE;
 }
 
-static void update_send_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORDER* cache_bitmap_v3)
+static BOOL update_send_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORDER* cache_bitmap_v3)
 {
 	wStream* s;
 	int bm, em;
@@ -1277,12 +1400,19 @@ static void update_send_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORD
 	update_check_flush(context, headerLength + update_approximate_cache_bitmap_v3_order(cache_bitmap_v3, &extraFlags));
 
 	s = update->us;
+	if (!s)
+		return FALSE;
+
 	bm = Stream_GetPosition(s);
 
-	Stream_EnsureRemainingCapacity(s, headerLength);
+	if (!Stream_EnsureRemainingCapacity(s, headerLength))
+		return FALSE;
+
 	Stream_Seek(s, headerLength);
 
-	update_write_cache_bitmap_v3_order(s, cache_bitmap_v3, &extraFlags);
+	if (!update_write_cache_bitmap_v3_order(s, cache_bitmap_v3, &extraFlags))
+		return FALSE;
+
 	em = Stream_GetPosition(s);
 
 	orderLength = (em - bm) - 13;
@@ -1295,9 +1425,10 @@ static void update_send_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORD
 	Stream_SetPosition(s, em);
 
 	update->numberOrders++;
+	return TRUE;
 }
 
-static void update_send_cache_color_table(rdpContext* context, CACHE_COLOR_TABLE_ORDER* cache_color_table)
+static BOOL update_send_cache_color_table(rdpContext* context, CACHE_COLOR_TABLE_ORDER* cache_color_table)
 {
 	wStream* s;
 	UINT16 flags;
@@ -1312,12 +1443,19 @@ static void update_send_cache_color_table(rdpContext* context, CACHE_COLOR_TABLE
 	update_check_flush(context, headerLength + update_approximate_cache_color_table_order(cache_color_table, &flags));
 
 	s = update->us;
+	if (!s)
+		return FALSE;
+
 	bm = Stream_GetPosition(s);
 
-	Stream_EnsureRemainingCapacity(s, headerLength);
+	if (!Stream_EnsureRemainingCapacity(s, headerLength))
+		return FALSE;
+
 	Stream_Seek(s, headerLength);
 
-	update_write_cache_color_table_order(s, cache_color_table, &flags);
+	if (!update_write_cache_color_table_order(s, cache_color_table, &flags))
+		return FALSE;
+
 	em = Stream_GetPosition(s);
 
 	orderLength = (em - bm) - 13;
@@ -1330,9 +1468,10 @@ static void update_send_cache_color_table(rdpContext* context, CACHE_COLOR_TABLE
 	Stream_SetPosition(s, em);
 
 	update->numberOrders++;
+	return TRUE;
 }
 
-static void update_send_cache_glyph(rdpContext* context, CACHE_GLYPH_ORDER* cache_glyph)
+static BOOL update_send_cache_glyph(rdpContext* context, CACHE_GLYPH_ORDER* cache_glyph)
 {
 	wStream* s;
 	UINT16 flags;
@@ -1347,12 +1486,18 @@ static void update_send_cache_glyph(rdpContext* context, CACHE_GLYPH_ORDER* cach
 	update_check_flush(context, headerLength + update_approximate_cache_glyph_order(cache_glyph, &flags));
 
 	s = update->us;
+	if (!s)
+		return FALSE;
+
 	bm = Stream_GetPosition(s);
 
-	Stream_EnsureRemainingCapacity(s, headerLength);
+	if (!Stream_EnsureRemainingCapacity(s, headerLength))
+		return FALSE;
 	Stream_Seek(s, headerLength);
 
-	update_write_cache_glyph_order(s, cache_glyph, &flags);
+	if (!update_write_cache_glyph_order(s, cache_glyph, &flags))
+		return FALSE;
+
 	em = Stream_GetPosition(s);
 
 	orderLength = (em - bm) - 13;
@@ -1365,9 +1510,10 @@ static void update_send_cache_glyph(rdpContext* context, CACHE_GLYPH_ORDER* cach
 	Stream_SetPosition(s, em);
 
 	update->numberOrders++;
+	return TRUE;
 }
 
-static void update_send_cache_glyph_v2(rdpContext* context, CACHE_GLYPH_V2_ORDER* cache_glyph_v2)
+static BOOL update_send_cache_glyph_v2(rdpContext* context, CACHE_GLYPH_V2_ORDER* cache_glyph_v2)
 {
 	wStream* s;
 	UINT16 flags;
@@ -1382,12 +1528,18 @@ static void update_send_cache_glyph_v2(rdpContext* context, CACHE_GLYPH_V2_ORDER
 	update_check_flush(context, headerLength + update_approximate_cache_glyph_v2_order(cache_glyph_v2, &flags));
 
 	s = update->us;
+	if (!s)
+		return FALSE;
+
 	bm = Stream_GetPosition(s);
 
-	Stream_EnsureRemainingCapacity(s, headerLength);
+	if (!Stream_EnsureRemainingCapacity(s, headerLength))
+		return FALSE;
 	Stream_Seek(s, headerLength);
 
-	update_write_cache_glyph_v2_order(s, cache_glyph_v2, &flags);
+	if (!update_write_cache_glyph_v2_order(s, cache_glyph_v2, &flags))
+		return FALSE;
+
 	em = Stream_GetPosition(s);
 
 	orderLength = (em - bm) - 13;
@@ -1400,9 +1552,10 @@ static void update_send_cache_glyph_v2(rdpContext* context, CACHE_GLYPH_V2_ORDER
 	Stream_SetPosition(s, em);
 
 	update->numberOrders++;
+	return TRUE;
 }
 
-static void update_send_cache_brush(rdpContext* context, CACHE_BRUSH_ORDER* cache_brush)
+static BOOL update_send_cache_brush(rdpContext* context, CACHE_BRUSH_ORDER* cache_brush)
 {
 	wStream* s;
 	UINT16 flags;
@@ -1417,12 +1570,17 @@ static void update_send_cache_brush(rdpContext* context, CACHE_BRUSH_ORDER* cach
 	update_check_flush(context, headerLength + update_approximate_cache_brush_order(cache_brush, &flags));
 
 	s = update->us;
+	if (!s)
+		return FALSE;
 	bm = Stream_GetPosition(s);
 
-	Stream_EnsureRemainingCapacity(s, headerLength);
+	if (!Stream_EnsureRemainingCapacity(s, headerLength))
+		return FALSE;
 	Stream_Seek(s, headerLength);
 
-	update_write_cache_brush_order(s, cache_brush, &flags);
+	if (!update_write_cache_brush_order(s, cache_brush, &flags))
+		return FALSE;
+
 	em = Stream_GetPosition(s);
 
 	orderLength = (em - bm) - 13;
@@ -1435,13 +1593,14 @@ static void update_send_cache_brush(rdpContext* context, CACHE_BRUSH_ORDER* cach
 	Stream_SetPosition(s, em);
 
 	update->numberOrders++;
+	return TRUE;
 }
 
 /**
  * Alternate Secondary Drawing Orders
  */
 
-static void update_send_create_offscreen_bitmap_order(rdpContext* context, CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap)
+static BOOL update_send_create_offscreen_bitmap_order(rdpContext* context, CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap)
 {
 	wStream* s;
 	int bm, em;
@@ -1457,12 +1616,16 @@ static void update_send_create_offscreen_bitmap_order(rdpContext* context, CREAT
 	update_check_flush(context, headerLength + update_approximate_create_offscreen_bitmap_order(create_offscreen_bitmap));
 
 	s = update->us;
+	if (!s)
+		return FALSE;
 	bm = Stream_GetPosition(s);
 
-	Stream_EnsureRemainingCapacity(s, headerLength);
+	if (!Stream_EnsureRemainingCapacity(s, headerLength))
+		return FALSE;
 	Stream_Seek(s, headerLength);
 
-	update_write_create_offscreen_bitmap_order(s, create_offscreen_bitmap);
+	if (!update_write_create_offscreen_bitmap_order(s, create_offscreen_bitmap))
+		return FALSE;
 	em = Stream_GetPosition(s);
 
 	Stream_SetPosition(s, bm);
@@ -1470,9 +1633,10 @@ static void update_send_create_offscreen_bitmap_order(rdpContext* context, CREAT
 	Stream_SetPosition(s, em);
 
 	update->numberOrders++;
+	return TRUE;
 }
 
-static void update_send_switch_surface_order(rdpContext* context, SWITCH_SURFACE_ORDER* switch_surface)
+static BOOL update_send_switch_surface_order(rdpContext* context, SWITCH_SURFACE_ORDER* switch_surface)
 {
 	wStream* s;
 	int bm, em;
@@ -1488,12 +1652,16 @@ static void update_send_switch_surface_order(rdpContext* context, SWITCH_SURFACE
 	update_check_flush(context, headerLength + update_approximate_switch_surface_order(switch_surface));
 
 	s = update->us;
+	if (!s)
+		return FALSE;
 	bm = Stream_GetPosition(s);
 
-	Stream_EnsureRemainingCapacity(s, headerLength);
+	if (!Stream_EnsureRemainingCapacity(s, headerLength))
+		return FALSE;
 	Stream_Seek(s, headerLength);
 
-	update_write_switch_surface_order(s, switch_surface);
+	if (!update_write_switch_surface_order(s, switch_surface))
+		return FALSE;
 	em = Stream_GetPosition(s);
 
 	Stream_SetPosition(s, bm);
@@ -1501,44 +1669,56 @@ static void update_send_switch_surface_order(rdpContext* context, SWITCH_SURFACE
 	Stream_SetPosition(s, em);
 
 	update->numberOrders++;
+	return TRUE;
 }
 
-static void update_send_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer_system)
+static BOOL update_send_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer_system)
 {
 	wStream* s;
 	BYTE updateCode;
 	rdpRdp* rdp = context->rdp;
+	BOOL ret;
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
+	if (!s)
+		return FALSE;
 
 	if (pointer_system->type == SYSPTR_NULL)
 		updateCode = FASTPATH_UPDATETYPE_PTR_NULL;
 	else
 		updateCode = FASTPATH_UPDATETYPE_PTR_DEFAULT;
 
-	fastpath_send_update_pdu(rdp->fastpath, updateCode, s, FALSE);
+	ret = fastpath_send_update_pdu(rdp->fastpath, updateCode, s, FALSE);
 	Stream_Release(s);
+	return ret;
 }
 
-static void update_send_pointer_position(rdpContext* context, POINTER_POSITION_UPDATE* pointerPosition)
+static BOOL update_send_pointer_position(rdpContext* context, POINTER_POSITION_UPDATE* pointerPosition)
 {
 	wStream* s;
 	rdpRdp* rdp = context->rdp;
+	BOOL ret = FALSE;
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
+	if (!s)
+		return FALSE;
 
-	Stream_EnsureRemainingCapacity(s, 16);
+	if (!Stream_EnsureRemainingCapacity(s, 16))
+		goto out_fail;
 
 	Stream_Write_UINT16(s, pointerPosition->xPos); /* xPos (2 bytes) */
 	Stream_Write_UINT16(s, pointerPosition->yPos); /* yPos (2 bytes) */
 
-	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_PTR_POSITION, s, FALSE);
+	ret = fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_PTR_POSITION, s, FALSE);
+out_fail:
 	Stream_Release(s);
+	return ret;
 }
 
-static void update_write_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color)
+static BOOL update_write_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color)
 {
-	Stream_EnsureRemainingCapacity(s, 32 + (int) pointer_color->lengthAndMask + (int) pointer_color->lengthXorMask);
+	if (!Stream_EnsureRemainingCapacity(s, 32 + (int) pointer_color->lengthAndMask + (int) pointer_color->lengthXorMask))
+		return FALSE;
 
 	Stream_Write_UINT16(s, pointer_color->cacheIndex);
 	Stream_Write_UINT16(s, pointer_color->xPos);
@@ -1555,45 +1735,65 @@ static void update_write_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer
 		Stream_Write(s, pointer_color->andMaskData, pointer_color->lengthAndMask);
 
 	Stream_Write_UINT8(s, 0); /* pad (1 byte) */
+	return TRUE;
 }
 
-static void update_send_pointer_color(rdpContext* context, POINTER_COLOR_UPDATE* pointer_color)
+static BOOL update_send_pointer_color(rdpContext* context, POINTER_COLOR_UPDATE* pointer_color)
 {
 	wStream* s;
 	rdpRdp* rdp = context->rdp;
+	BOOL ret = FALSE;
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
-        update_write_pointer_color(s, pointer_color);
-	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_COLOR, s, FALSE);
+	if (!s)
+		return FALSE;
+
+    if (!update_write_pointer_color(s, pointer_color))
+		goto out_fail;
+
+	ret = fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_COLOR, s, FALSE);
+
+out_fail:
 	Stream_Release(s);
+	return ret;
 }
 
-static void update_send_pointer_new(rdpContext* context, POINTER_NEW_UPDATE* pointer_new)
+static BOOL update_send_pointer_new(rdpContext* context, POINTER_NEW_UPDATE* pointer_new)
 {
 	wStream* s;
 	rdpRdp* rdp = context->rdp;
+	BOOL ret = FALSE;
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
+	if (!s)
+		return FALSE;
 
-	Stream_EnsureRemainingCapacity(s, 16);
+	if (!Stream_EnsureRemainingCapacity(s, 16))
+		goto out_fail;
 
 	Stream_Write_UINT16(s, pointer_new->xorBpp); /* xorBpp (2 bytes) */
         update_write_pointer_color(s, &pointer_new->colorPtrAttr);
 
-	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_POINTER, s, FALSE);
+	ret = fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_POINTER, s, FALSE);
 
+out_fail:
 	Stream_Release(s);
+	return ret;
 }
 
-static void update_send_pointer_cached(rdpContext* context, POINTER_CACHED_UPDATE* pointer_cached)
+static BOOL update_send_pointer_cached(rdpContext* context, POINTER_CACHED_UPDATE* pointer_cached)
 {
 	wStream* s;
 	rdpRdp* rdp = context->rdp;
+	BOOL ret;
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
+	if (!s)
+		return FALSE;
 	Stream_Write_UINT16(s, pointer_cached->cacheIndex); /* cacheIndex (2 bytes) */
-	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_CACHED, s, FALSE);
+	ret = fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_CACHED, s, FALSE);
 	Stream_Release(s);
+	return ret;
 }
 
 BOOL update_read_refresh_rect(rdpUpdate* update, wStream* s)
@@ -1653,16 +1853,20 @@ BOOL update_read_suppress_output(rdpUpdate* update, wStream* s)
 	return TRUE;
 }
 
-static void update_send_set_keyboard_indicators(rdpContext* context, UINT16 led_flags)
+static BOOL update_send_set_keyboard_indicators(rdpContext* context, UINT16 led_flags)
 {
 	wStream* s;
 	rdpRdp* rdp = context->rdp;
+	BOOL ret;
 
 	s = rdp_data_pdu_init(rdp);
+	if (!s)
+		return FALSE;
 	Stream_Write_UINT16(s, 0); /* unitId should be 0 according to MS-RDPBCGR 2.2.8.2.1.1 */
 	Stream_Write_UINT16(s, led_flags); /* ledFlags (2 bytes) */
-	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SET_KEYBOARD_INDICATORS, rdp->mcs->userId);
+	ret = rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SET_KEYBOARD_INDICATORS, rdp->mcs->userId);
 	Stream_Release(s);
+	return ret;
 }
 
 void update_register_server_callbacks(rdpUpdate* update)

@@ -27,11 +27,9 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/api.h>
 #include <freerdp/log.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/primitives.h>
-#include <freerdp/codec/color.h>
 
 #define TAG FREERDP_TAG("color")
 

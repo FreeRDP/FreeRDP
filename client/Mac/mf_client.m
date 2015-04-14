@@ -30,9 +30,10 @@
  * Client Interface
  */
 
-void mfreerdp_client_global_init()
+BOOL mfreerdp_client_global_init()
 {
 	freerdp_handle_signals();
+	return TRUE;
 }
 
 void mfreerdp_client_global_uninit()

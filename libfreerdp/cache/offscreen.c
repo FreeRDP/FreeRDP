@@ -32,7 +32,7 @@
 
 #define TAG FREERDP_TAG("cache.offscreen")
 
-void update_gdi_create_offscreen_bitmap(rdpContext* context, CREATE_OFFSCREEN_BITMAP_ORDER* createOffscreenBitmap)
+BOOL update_gdi_create_offscreen_bitmap(rdpContext* context, CREATE_OFFSCREEN_BITMAP_ORDER* createOffscreenBitmap)
 {
 	int i;
 	UINT16 index;
@@ -40,11 +40,17 @@ void update_gdi_create_offscreen_bitmap(rdpContext* context, CREATE_OFFSCREEN_BI
 	rdpCache* cache = context->cache;
 
 	bitmap = Bitmap_Alloc(context);
+	if (!bitmap)
+		return FALSE;
 
 	bitmap->width = createOffscreenBitmap->cx;
 	bitmap->height = createOffscreenBitmap->cy;
 
-	bitmap->New(context, bitmap);
+	if (!bitmap->New(context, bitmap))
+	{
+		free(bitmap);
+		return FALSE;
+	}
 
 	offscreen_cache_delete(cache->offscreen, createOffscreenBitmap->id);
 	offscreen_cache_put(cache->offscreen, createOffscreenBitmap->id, bitmap);
@@ -57,9 +63,10 @@ void update_gdi_create_offscreen_bitmap(rdpContext* context, CREATE_OFFSCREEN_BI
 		index = createOffscreenBitmap->deleteList.indices[i];
 		offscreen_cache_delete(cache->offscreen, index);
 	}
+	return TRUE;
 }
 
-void update_gdi_switch_surface(rdpContext* context, SWITCH_SURFACE_ORDER* switchSurface)
+BOOL update_gdi_switch_surface(rdpContext* context, SWITCH_SURFACE_ORDER* switchSurface)
 {
 	rdpCache* cache = context->cache;
 
@@ -75,6 +82,7 @@ void update_gdi_switch_surface(rdpContext* context, SWITCH_SURFACE_ORDER* switch
 	}
 
 	cache->offscreen->currentSurface = switchSurface->bitmapId;
+	return TRUE;
 }
 
 rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreenCache, UINT32 index)
