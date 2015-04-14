@@ -79,7 +79,7 @@ typedef struct _TIME_ZONE_ENTRY TIME_ZONE_ENTRY;
 static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_3[] =
 {
 	{ 633031380000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 1, 2, 0 }, { 0, 4, 0, 1, 2, 0 }, },
-	{ 3155378292000000000ULL, 633032244000000000ULL, 60, { 0, 11, 0, 1, 2, 0 }, { 0, 3, 0, 1, 2, 0 }, }
+	{ 3155378292000000000ULL, 633032244000000000ULL, 60, { 0, 11, 0, 1, 2, 0 }, { 0, 3, 0, 2, 2, 0 }, }
 };
 
 static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_4[] =
@@ -90,7 +90,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_4[] =
 static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_5[] =
 {
 	{ 633031380000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 1, 2, 0 }, { 0, 4, 0, 1, 2, 0 }, },
-	{ 3155378292000000000ULL, 633032244000000000ULL, 60, { 0, 11, 0, 1, 2, 0 }, { 0, 3, 0, 1, 2, 0 }, }
+	{ 3155378292000000000ULL, 633032244000000000ULL, 60, { 0, 11, 0, 1, 2, 0 }, { 0, 3, 0, 2, 2, 0 }, }
 };
 
 static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_7[] =
@@ -101,13 +101,13 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_7[] =
 static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_8[] =
 {
 	{ 633031380000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 1, 2, 0 }, { 0, 4, 0, 1, 2, 0 }, },
-	{ 3155378292000000000ULL, 633032244000000000ULL, 60, { 0, 11, 0, 1, 2, 0 }, { 0, 3, 0, 1, 2, 0 }, }
+	{ 3155378292000000000ULL, 633032244000000000ULL, 60, { 0, 11, 0, 1, 2, 0 }, { 0, 3, 0, 2, 2, 0 }, }
 };
 
 static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_10[] =
 {
 	{ 633031380000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 1, 2, 0 }, { 0, 4, 0, 1, 2, 0 }, },
-	{ 3155378292000000000ULL, 633032244000000000ULL, 60, { 0, 11, 0, 1, 2, 0 }, { 0, 3, 0, 1, 2, 0 }, }
+	{ 3155378292000000000ULL, 633032244000000000ULL, 60, { 0, 11, 0, 1, 2, 0 }, { 0, 3, 0, 2, 2, 0 }, }
 };
 
 static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_11[] =
@@ -124,7 +124,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_14[] =
 static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_15[] =
 {
 	{ 633031380000000000ULL, 632716884000000000ULL, 60, { 0, 10, 0, 1, 2, 0 }, { 0, 4, 0, 1, 2, 0 }, },
-	{ 3155378292000000000ULL, 633032244000000000ULL, 60, { 0, 11, 0, 1, 2, 0 }, { 0, 3, 0, 1, 2, 0 }, }
+	{ 3155378292000000000ULL, 633032244000000000ULL, 60, { 0, 11, 0, 1, 2, 0 }, { 0, 3, 0, 2, 2, 0 }, }
 };
 
 static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_17[] =
