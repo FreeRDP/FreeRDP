@@ -697,3 +697,10 @@ void freerdp_free(freerdp* instance)
 		free(instance);
 	}
 }
+
+FREERDP_API ULONG freerdp_get_transport_sent(rdpContext* context, BOOL resetCount) {
+	ULONG written = context->rdp->transport->written;
+	if (resetCount)
+		context->rdp->transport->written = 0;
+	return written;
+}
