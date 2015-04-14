@@ -92,23 +92,41 @@ static void _CommInit()
 	assert(_CommDevices == NULL);
 	assert(_CommHandleCreator == NULL);
 
-	_Log = WLog_Get("com.winpr.comm");
 
 	_CommDevices = (COMM_DEVICE**)calloc(COMM_DEVICE_MAX+1, sizeof(COMM_DEVICE*));
-	InitializeCriticalSection(&_CommDevicesLock);
+	if (!_CommDevices)
+		return;
 
-	_CommHandleCreator = (HANDLE_CREATOR*)malloc(sizeof(HANDLE_CREATOR));
-	if (_CommHandleCreator)
+	if (!InitializeCriticalSectionEx(&_CommDevicesLock, 0, 0))
 	{
-		_CommHandleCreator->IsHandled = IsCommDevice;
-		_CommHandleCreator->CreateFileA = CommCreateFileA;
-		
-		RegisterHandleCreator(_CommHandleCreator);
+		free(_CommDevices);
+		_CommDevices = NULL;
+		return;
 	}
 
+	_CommHandleCreator = (HANDLE_CREATOR*)malloc(sizeof(HANDLE_CREATOR));
+	if (!_CommHandleCreator)
+	{
+		DeleteCriticalSection(&_CommDevicesLock);
+		free(_CommDevices);
+		_CommDevices = NULL;
+		return;
+	}
+
+	_CommHandleCreator->IsHandled = IsCommDevice;
+	_CommHandleCreator->CreateFileA = CommCreateFileA;
+
+	if (!RegisterHandleCreator(_CommHandleCreator))
+	{
+		DeleteCriticalSection(&_CommDevicesLock);
+		free(_CommDevices);
+		free(_CommHandleCreator);
+		_CommDevices = NULL;
+		_CommHandleCreator = NULL;
+		return;
+	}
+	_Log = WLog_Get("com.winpr.comm");
 	assert(_Log != NULL);
-	assert(_CommDevices != NULL);
-	assert(_CommHandleCreator != NULL);
 }
 
 
@@ -119,6 +137,12 @@ static void _CommInit()
 static BOOL CommInitialized()
 {
 	if (pthread_once(&_CommInitialized, _CommInit) != 0)
+	{
+		SetLastError(ERROR_DLL_INIT_FAILED);
+		return FALSE;
+	}
+
+	if (_CommHandleCreator == NULL)
 	{
 		SetLastError(ERROR_DLL_INIT_FAILED);
 		return FALSE;

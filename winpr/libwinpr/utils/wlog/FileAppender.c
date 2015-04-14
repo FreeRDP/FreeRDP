@@ -66,33 +66,37 @@ void WLog_FileAppender_SetOutputFilePath(wLog* log, wLogFileAppender* appender, 
 
 int WLog_FileAppender_Open(wLog* log, wLogFileAppender* appender)
 {
-	DWORD ProcessId;
-
-	ProcessId = GetCurrentProcessId();
-
 	if (!log || !appender)
 		return -1;
 
 	if (!appender->FilePath)
 	{
 		appender->FilePath = GetKnownSubPath(KNOWN_PATH_TEMP, "wlog");
-	}
-
-	if (!PathFileExistsA(appender->FilePath))
-	{
-		CreateDirectoryA(appender->FilePath, 0);
-		UnixChangeFileMode(appender->FilePath, 0xFFFF);
+		if (!appender->FilePath)
+			return -1;
 	}
 
 	if (!appender->FileName)
 	{
-		appender->FileName = (char*) malloc(256);
-		sprintf_s(appender->FileName, 256, "%u.log", (unsigned int) ProcessId);
+		appender->FileName = (char*) malloc(MAX_PATH);
+		if (!appender->FileName)
+			return -1;
+
+		sprintf_s(appender->FileName, MAX_PATH, "%u.log", (unsigned int) GetCurrentProcessId());
 	}
 
 	if (!appender->FullFileName)
 	{
 		appender->FullFileName = GetCombinedPath(appender->FilePath, appender->FileName);
+		if (!appender->FullFileName)
+			return -1;
+	}
+
+	if (!PathFileExistsA(appender->FilePath))
+	{
+		if (!CreateDirectoryA(appender->FilePath, 0))
+			return -1;
+		UnixChangeFileMode(appender->FilePath, 0xFFFF);
 	}
 
 	appender->FileDescriptor = fopen(appender->FullFileName, "a+");

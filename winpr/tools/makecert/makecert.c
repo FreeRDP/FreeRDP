@@ -22,14 +22,12 @@
 #include <stdlib.h>
 
 #include <winpr/crt.h>
-#include <winpr/file.h>
 #include <winpr/path.h>
 #include <winpr/cmdline.h>
 #include <winpr/sysinfo.h>
 
 #include <openssl/conf.h>
 #include <openssl/pem.h>
-#include <openssl/err.h>
 #include <openssl/pkcs12.h>
 #include <openssl/x509v3.h>
 
@@ -246,6 +244,8 @@ int makecert_print_command_line_help(int argc, char** argv)
 			{
 				length = strlen(arg->Name) + strlen(arg->Format) + 2;
 				str = malloc(length + 1);
+				if (!str)
+					return -1;
 				sprintf_s(str, length + 1, "%s %s", arg->Name, arg->Format);
 				printf("%-20s", str);
 				free(str);
@@ -311,6 +311,8 @@ char* x509_get_default_name()
 
 	GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize);
 	ComputerName = (char*) malloc(nSize);
+	if (!ComputerName)
+		return NULL;
 	GetComputerNameExA(ComputerNameNetBIOS, ComputerName, &nSize);
 
 	return ComputerName;
@@ -461,7 +463,11 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 	char* fullpath;
 
 	if (!context->output_file)
+	{
 		context->output_file = _strdup(context->default_name);
+		if (!context->output_file)
+			return -1;
+	}
 
 	/*
 	 * Output Certificate File
@@ -469,6 +475,8 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 
 	length = strlen(context->output_file);
 	filename = malloc(length + 8);
+	if (!filename)
+		return -1;
 	strcpy(filename, context->output_file);
 
 	if (context->crtFormat)
@@ -488,7 +496,7 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 	if (fp)
 	{
 		BIO* bio;
-		BYTE* x509_str;
+		BYTE* x509_str = NULL;
 
 		if (context->pfxFormat)
 		{
@@ -520,7 +528,6 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 			offset = 0;
 			length = 2048;
 			x509_str = (BYTE*) malloc(length);
-
 			if (!x509_str)
 			{
 				free(filename);
@@ -598,11 +605,20 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 			offset = 0;
 			length = 2048;
 			x509_str = (BYTE*) malloc(length);
+			if (!x509_str)
+			{
+				BIO_free(bio);
+				free(filename);
+				free(fullpath);
+				fclose (fp);
+				return -1;
+			}
 
 			status = BIO_read(bio, x509_str, length);
 		
 			if (status < 0)
 			{
+				BIO_free(bio);
 				free(filename);
 				free(fullpath);
 				fclose (fp);
@@ -637,8 +653,7 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 
 			if (status < 0)
 			{
-				if (x509_str)
-					free (x509_str);
+				free (x509_str);
 				free(filename);
 				free(fullpath);
 				fclose (fp);
@@ -668,14 +683,21 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 
 				offset = 0;
 				length = 2048;
-				x509_str = (BYTE*) malloc(length);
+				if (!(x509_str = (BYTE*) malloc(length)))
+				{
+					BIO_free(bio);
+					free(filename);
+					free(fullpath);
+					fclose (fp);
+					return -1;
+
+				}
 
 				status = BIO_read(bio, x509_str, length);
 		
 				if (status < 0)
 				{
-					if (x509_str)
-						free(x509_str);
+					free(x509_str);
 					free(filename);
 					free(fullpath);
 					fclose (fp);
@@ -757,6 +779,8 @@ int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, char* pa
 
 	length = strlen(context->output_file);
 	filename = malloc(length + 8);
+	if (!filename)
+		return -1;
 	strcpy(filename, context->output_file);
 	strcpy(&filename[length], ".key");
 	length = strlen(filename);
@@ -788,6 +812,13 @@ int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, char* pa
 		offset = 0;
 		length = 2048;
 		x509_str = (BYTE*) malloc(length);
+		if (!x509_str)
+		{
+			free (filename);
+			free(fullpath);
+			fclose(fp);
+			return -1;
+		}
 
 		status = BIO_read(bio, x509_str, length);
 		
@@ -1013,12 +1044,20 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 
 		offset = 0;
 		length = 2048;
-		x509_str = (BYTE*) malloc(length + 1);
+		if (!(x509_str = (BYTE*) malloc(length + 1)))
+		{
+			BIO_free(bio);
+			return -1;
+		}
 
 		status = BIO_read(bio, x509_str, length);
 		
 		if (status < 0)
+		{
+			BIO_free(bio);
+			free(x509_str);
 			return -1;
+		}
 		
 		offset += status;
 

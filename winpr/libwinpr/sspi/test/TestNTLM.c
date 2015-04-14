@@ -389,6 +389,9 @@ int test_ntlm_server_authenticate(TEST_NTLM_SERVER* ntlm)
 	ntlm->outputBuffer[0].BufferType = SECBUFFER_TOKEN;
 	ntlm->outputBuffer[0].cbBuffer = ntlm->cbMaxToken;
 	ntlm->outputBuffer[0].pvBuffer = malloc(ntlm->outputBuffer[0].cbBuffer);
+	if (!ntlm->outputBuffer[0].pvBuffer)
+		return -1;
+
 	status = ntlm->table->AcceptSecurityContext(&ntlm->credentials,
 			 ntlm->haveContext? &ntlm->context: NULL,
 			 &ntlm->inputBufferDesc, ntlm->fContextReq, SECURITY_NATIVE_DREP, &ntlm->context,
@@ -473,6 +476,11 @@ int TestNTLM(int argc, char* argv[])
 	 * Client Initialization
 	 */
 	client = test_ntlm_client_new();
+	if (!client)
+	{
+		printf("Memory allocation failed");
+		return -1;
+	}
 	status = test_ntlm_client_init(client, TEST_NTLM_USER, TEST_NTLM_DOMAIN, TEST_NTLM_PASSWORD);
 
 	if (status < 0)
@@ -485,6 +493,11 @@ int TestNTLM(int argc, char* argv[])
 	 * Server Initialization
 	 */
 	server = test_ntlm_server_new();
+	if (!server)
+	{
+		printf("Memory allocation failed\n");
+		return -1;
+	}
 	status = test_ntlm_server_init(server);
 
 	if (status < 0)
@@ -530,6 +543,12 @@ int TestNTLM(int argc, char* argv[])
 	{
 		pSecBuffer->cbBuffer = sizeof(TEST_NTLM_NEGOTIATE) -1;
 		pSecBuffer->pvBuffer = (void*) malloc(pSecBuffer->cbBuffer);
+		if (!pSecBuffer->pvBuffer)
+		{
+			printf("Memory allocation failed\n");
+			return -1;
+		}
+
 		CopyMemory(pSecBuffer->pvBuffer, TEST_NTLM_NEGOTIATE, pSecBuffer->cbBuffer);
 	}
 
@@ -578,6 +597,11 @@ int TestNTLM(int argc, char* argv[])
 		SecPkgContext_AuthNtlmMessage AuthNtlmMessage;
 		pSecBuffer->cbBuffer = sizeof(TEST_NTLM_CHALLENGE) -1;
 		pSecBuffer->pvBuffer = (void*) malloc(pSecBuffer->cbBuffer);
+		if (!pSecBuffer->pvBuffer)
+		{
+			printf("Memory allocation failed\n");
+			return -1;
+		}
 		CopyMemory(pSecBuffer->pvBuffer, TEST_NTLM_CHALLENGE, pSecBuffer->cbBuffer);
 		AuthNtlmMessage.type = 2;
 		AuthNtlmMessage.length = pSecBuffer->cbBuffer;
@@ -610,6 +634,11 @@ int TestNTLM(int argc, char* argv[])
 	{
 		pSecBuffer->cbBuffer = sizeof(TEST_NTLM_AUTHENTICATE) -1;
 		pSecBuffer->pvBuffer = (void*) malloc(pSecBuffer->cbBuffer);
+		if (!pSecBuffer->pvBuffer)
+		{
+			printf("Memory allocation failed\n");
+			return -1;
+		}
 		CopyMemory(pSecBuffer->pvBuffer, TEST_NTLM_AUTHENTICATE, pSecBuffer->cbBuffer);
 	}
 

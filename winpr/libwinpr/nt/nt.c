@@ -161,6 +161,8 @@ NTSTATUS _RtlAnsiStringToUnicodeString(PUNICODE_STRING DestinationString,
 		DestinationString->MaximumLength = SourceString->MaximumLength * 2;
 
 		DestinationString->Buffer = (PWSTR) malloc(DestinationString->MaximumLength);
+		if (!DestinationString->Buffer)
+			return STATUS_NO_MEMORY;
 
 		for (index = 0; index < SourceString->MaximumLength; index++)
 		{
@@ -214,12 +216,9 @@ NTSTATUS _NtCreateFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess,
 {
 	WINPR_FILE* pFileHandle;
 
-	pFileHandle = (WINPR_FILE*) malloc(sizeof(WINPR_FILE));
-
+	pFileHandle = (WINPR_FILE*) calloc(1, sizeof(WINPR_FILE));
 	if (!pFileHandle)
-		return 0;
-
-	ZeroMemory(pFileHandle, sizeof(WINPR_FILE));
+		return STATUS_NO_MEMORY;
 
 	pFileHandle->DesiredAccess = DesiredAccess;
 	pFileHandle->FileAttributes = FileAttributes;
@@ -248,12 +247,10 @@ NTSTATUS _NtOpenFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess,
 {
 	WINPR_FILE* pFileHandle;
 
-	pFileHandle = (WINPR_FILE*) malloc(sizeof(WINPR_FILE));
+	pFileHandle = (WINPR_FILE*) calloc(1, sizeof(WINPR_FILE));
 
 	if (!pFileHandle)
-		return 0;
-
-	ZeroMemory(pFileHandle, sizeof(WINPR_FILE));
+		return STATUS_NO_MEMORY;
 
 	pFileHandle->DesiredAccess = DesiredAccess;
 	pFileHandle->ShareAccess = ShareAccess;

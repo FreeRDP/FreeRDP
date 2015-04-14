@@ -365,6 +365,11 @@ wLogLayout* WLog_Layout_New(wLog* log)
 		if (nSize)
 		{
 			env = (LPSTR) malloc(nSize);
+			if (!env)
+			{
+				free(layout);
+				return NULL;
+			}
 			nSize = GetEnvironmentVariableA("WLOG_PREFIX", env, nSize);
 		}
 
@@ -377,6 +382,11 @@ wLogLayout* WLog_Layout_New(wLog* log)
 #else
 			layout->FormatString = _strdup("[%hr:%mi:%se:%ml] [%pid:%tid] [%lv][%mn] - ");
 #endif
+			if (!layout->FormatString)
+			{
+				free(layout);
+				return NULL;
+			}
 		}
 	}
 

@@ -127,6 +127,12 @@ wObjectPool* ObjectPool_New(BOOL synchronized)
 
 	if (pool)
 	{
+		pool->array = (void**) malloc(sizeof(void*) * pool->capacity);
+		if (!pool->array)
+		{
+			free(pool);
+			return NULL;
+		}
 		pool->synchronized = synchronized;
 
 		if (pool->synchronized)
@@ -134,7 +140,6 @@ wObjectPool* ObjectPool_New(BOOL synchronized)
 
 		pool->size = 0;
 		pool->capacity = 32;
-		pool->array = (void**) malloc(sizeof(void*) * pool->capacity);
 	}
 
 	return pool;

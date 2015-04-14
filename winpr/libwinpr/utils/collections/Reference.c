@@ -162,12 +162,16 @@ wReferenceTable* ReferenceTable_New(BOOL synchronized, void* context, REFERENCE_
 
 	if (referenceTable)
 	{
+		referenceTable->array = (wReference*) calloc(1, sizeof(wReference) * referenceTable->size);
+		if (!referenceTable->array)
+		{
+			free(referenceTable);
+			return NULL;
+		}
 		referenceTable->context = context;
 		referenceTable->ReferenceFree = ReferenceFree;
 
 		referenceTable->size = 32;
-		referenceTable->array = (wReference*) malloc(sizeof(wReference) * referenceTable->size);
-		ZeroMemory(referenceTable->array, sizeof(wReference) * referenceTable->size);
 
 		referenceTable->synchronized = synchronized;
 		InitializeCriticalSectionAndSpinCount(&referenceTable->lock, 4000);

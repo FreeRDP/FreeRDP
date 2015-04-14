@@ -41,6 +41,11 @@ int TestSynchWaitableTimerAPC(int argc, char* argv[])
 	APC_DATA* apcData = NULL;
 
 	apcData = (APC_DATA*) malloc(sizeof(APC_DATA));
+	if (!apcData)
+	{
+		printf("Memory allocation failed\n");
+		return -1;
+	}
 	g_Event = CreateEvent(NULL, TRUE, FALSE, NULL);
 	hTimer = CreateWaitableTimer(NULL, FALSE, NULL);
 

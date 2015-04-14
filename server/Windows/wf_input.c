@@ -86,6 +86,8 @@ void wf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 		wfInfo * wfi;
 		
 		wfi = wf_info_get_instance();
+		if (!wfi)
+			return;
 
 		//width and height of primary screen (even in multimon setups
 		width = (float) GetSystemMetrics(SM_CXSCREEN);
@@ -151,6 +153,8 @@ void wf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT1
 			wfInfo * wfi;
 
 			wfi = wf_info_get_instance();
+			if (!wfi)
+				return;
 			//width and height of primary screen (even in multimon setups
 			width = (float) GetSystemMetrics(SM_CXSCREEN);
 			height = (float) GetSystemMetrics(SM_CYSCREEN);

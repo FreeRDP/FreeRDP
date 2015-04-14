@@ -219,13 +219,17 @@ UINT32 ClipboardRegisterFormat(wClipboard* clipboard, const char* name)
 
 	if ((clipboard->numFormats + 1) >= clipboard->maxFormats)
 	{
-		clipboard->maxFormats *= 2;
+		UINT32 numFormats = clipboard->maxFormats * 2;
+		wClipboardFormat *tmpFormat;
 
-		clipboard->formats = (wClipboardFormat*) realloc(clipboard->formats,
-				clipboard->maxFormats * sizeof(wClipboardFormat));
+		tmpFormat = (wClipboardFormat*) realloc(clipboard->formats,
+				numFormats * sizeof(wClipboardFormat));
 
-		if (!clipboard->formats)
+		if (!tmpFormat)
 			return 0;
+
+		clipboard->formats  = tmpFormat;
+		clipboard->maxFormats = numFormats;
 	}
 
 	format = &(clipboard->formats[clipboard->numFormats]);
@@ -267,14 +271,18 @@ BOOL ClipboardRegisterSynthesizer(wClipboard* clipboard, UINT32 formatId,
 
 	if (!synthesizer)
 	{
-		index = format->numSynthesizers++;
+		wClipboardSynthesizer *tmpSynthesizer;
+		UINT32 numSynthesizers = format->numSynthesizers + 1;
 
-		format->synthesizers = (wClipboardSynthesizer*) realloc(format->synthesizers,
-				format->numSynthesizers * sizeof(wClipboardSynthesizer));
+		tmpSynthesizer = (wClipboardSynthesizer*) realloc(format->synthesizers,
+				numSynthesizers * sizeof(wClipboardSynthesizer));
 
-		if (!format->synthesizers)
+		if (!tmpSynthesizer)
 			return FALSE;
 
+		format->synthesizers  = tmpSynthesizer;
+		format->numSynthesizers = numSynthesizers;
+		index = numSynthesizers - 1;
 		synthesizer = &(format->synthesizers[index]);
 	}
 

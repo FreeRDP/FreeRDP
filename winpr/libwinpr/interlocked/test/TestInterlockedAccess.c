@@ -17,6 +17,11 @@ int TestInterlockedAccess(int argc, char* argv[])
 	/* InterlockedIncrement */
 
 	Addend = _aligned_malloc(sizeof(LONG), sizeof(LONG));
+	if (!Addend)
+	{
+		printf("Failed to allocate memory\n");
+		return -1;
+	}
 
 	*Addend = 0;
 
@@ -43,6 +48,12 @@ int TestInterlockedAccess(int argc, char* argv[])
 	/* InterlockedExchange */
 
 	Target = _aligned_malloc(sizeof(LONG), sizeof(LONG));
+
+	if (!Target)
+	{
+		printf("Failed to allocate memory\n");
+		return -1;
+	}
 
 	*Target = 0xAA;
 
@@ -81,6 +92,11 @@ int TestInterlockedAccess(int argc, char* argv[])
 	/* InterlockedCompareExchange (*Destination == Comparand) */
 
 	Destination = _aligned_malloc(sizeof(LONG), sizeof(LONG));
+	if (!Destination)
+	{
+		printf("Failed to allocate memory\n");
+		return -1;
+	}
 
 	*Destination = 0xAABBCCDD;
 
@@ -119,6 +135,11 @@ int TestInterlockedAccess(int argc, char* argv[])
 	/* InterlockedCompareExchange64 (*Destination == Comparand) */
 
 	Destination64 = _aligned_malloc(sizeof(LONGLONG), sizeof(LONGLONG));
+	if (!Destination64)
+	{
+		printf("Failed to allocate memory\n");
+		return -1;
+	}
 
 	*Destination64 = 0x66778899AABBCCDD;
 

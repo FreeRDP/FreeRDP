@@ -37,6 +37,11 @@ int wf_directsound_activate(RdpsndServerContext* context)
 	LPDIRECTSOUNDCAPTUREBUFFER  pDSCB;
 
 	wfi = wf_info_get_instance();
+	if (!wfi)
+	{
+		WLog_ERR(TAG, "Failed to wfi instance");
+		return 1;
+	}
 	WLog_DBG(TAG, "RDPSND (direct sound) Activated");
 	hr = DirectSoundCaptureCreate8(NULL, &cap, NULL);
 
@@ -95,6 +100,11 @@ DWORD WINAPI wf_rdpsnd_directsound_thread(LPVOID lpParam)
 	LONG lLockSize = 0;
 
 	wfi = wf_info_get_instance();
+	if (!wfi)
+	{
+		WLog_ERR(TAG, "Failed get instance");
+		return 1;
+	}
 
 	context = (wfPeerContext*)lpParam;
 	rate = 1000 / 24;

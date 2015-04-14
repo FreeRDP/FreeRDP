@@ -437,7 +437,8 @@ int ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 	if (context->NTLMv2)
 		size += 8; /* unknown 8-byte padding */
 
-	sspi_SecBufferAlloc(&context->AuthenticateTargetInfo, size);
+	if (!sspi_SecBufferAlloc(&context->AuthenticateTargetInfo, size))
+		return -1;
 	AuthenticateTargetInfo = (NTLM_AV_PAIR*) context->AuthenticateTargetInfo.pvBuffer;
 	ntlm_av_pair_list_init(AuthenticateTargetInfo);
 

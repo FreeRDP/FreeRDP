@@ -35,6 +35,8 @@ wKeyValuePair* KeyValuePair_New(void* key, void* value)
 	wKeyValuePair* keyValuePair;
 
 	keyValuePair = (wKeyValuePair*) malloc(sizeof(wKeyValuePair));
+	if (!keyValuePair)
+		return NULL;
 
 	keyValuePair->key = key;
 	keyValuePair->value = value;

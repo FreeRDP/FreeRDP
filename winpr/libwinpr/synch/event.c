@@ -108,47 +108,51 @@ HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 	WINPR_EVENT* event;
 
 	event = (WINPR_EVENT*) calloc(1, sizeof(WINPR_EVENT));
-	if (event)
+	if (!event)
+		return NULL;
+	event->bAttached = FALSE;
+	event->bManualReset = bManualReset;
+	event->ops = &ops;
+	WINPR_HANDLE_SET_TYPE(event, HANDLE_TYPE_EVENT);
+
+	if (!event->bManualReset)
 	{
-		event->bAttached = FALSE;
-		event->bManualReset = bManualReset;
-		event->ops = &ops;
-
-		if (!event->bManualReset)
-		{
-			WLog_ERR(TAG, "auto-reset events not yet implemented");
-		}
-
-		event->pipe_fd[0] = -1;
-		event->pipe_fd[1] = -1;
-#ifdef HAVE_EVENTFD_H
-		event->pipe_fd[0] = eventfd(0, EFD_NONBLOCK);
-
-		if (event->pipe_fd[0] < 0)
-		{
-			WLog_ERR(TAG, "failed to create event");
-			free(event);
-			return NULL;
-		}
-
-#else
-
-		if (pipe(event->pipe_fd) < 0)
-		{
-			WLog_ERR(TAG, "failed to create event");
-			free(event);
-			return NULL;
-		}
-
-#endif
-		WINPR_HANDLE_SET_TYPE(event, HANDLE_TYPE_EVENT);
-
-		if (bInitialState)
-			SetEvent(event);
+		WLog_ERR(TAG, "auto-reset events not yet implemented");
 	}
 
-	if (!cs.LockSemaphore)
-		InitializeCriticalSection(&cs);
+	event->pipe_fd[0] = -1;
+	event->pipe_fd[1] = -1;
+#ifdef HAVE_EVENTFD_H
+	event->pipe_fd[0] = eventfd(0, EFD_NONBLOCK);
+
+	if (event->pipe_fd[0] < 0)
+	{
+		WLog_ERR(TAG, "failed to create event");
+		free(event);
+		return NULL;
+	}
+
+#else
+	if (pipe(event->pipe_fd) < 0)
+	{
+		WLog_ERR(TAG, "failed to create event");
+		free(event);
+		return NULL;
+	}
+#endif
+
+	if (bInitialState)
+		SetEvent(event);
+
+	if (!cs.LockSemaphore && !InitializeCriticalSectionEx(&cs, 0, 0))
+	{
+		if (event->pipe_fd[0] != -1)
+			close(event->pipe_fd[0]);
+		if (event->pipe_fd[1] != -1)
+			close(event->pipe_fd[1]);
+		free(event);
+		return NULL;
+	}
 
 	return (HANDLE)event;
 }

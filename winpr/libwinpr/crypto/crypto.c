@@ -156,10 +156,15 @@ BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 		return FALSE;
 
 	if (!g_ProtectedMemoryBlocks)
+	{
 		g_ProtectedMemoryBlocks = ListDictionary_New(TRUE);
+		if (!g_ProtectedMemoryBlocks)
+			return FALSE;
+	}
 
-	pMemBlock = (WINPR_PROTECTED_MEMORY_BLOCK*) malloc(sizeof(WINPR_PROTECTED_MEMORY_BLOCK));
-	ZeroMemory(pMemBlock, sizeof(WINPR_PROTECTED_MEMORY_BLOCK));
+	pMemBlock = (WINPR_PROTECTED_MEMORY_BLOCK*) calloc(1, sizeof(WINPR_PROTECTED_MEMORY_BLOCK));
+	if (!pMemBlock)
+		return FALSE;
 
 	pMemBlock->pData = pData;
 	pMemBlock->cbData = cbData;
@@ -187,6 +192,11 @@ BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 
 	cbOut = pMemBlock->cbData + AES_BLOCK_SIZE - 1;
 	pCipherText = (BYTE*) malloc(cbOut);
+	if (!pCipherText)
+	{
+		free(pMemBlock);
+		return FALSE;
+	}
 
 	EVP_EncryptInit_ex(&(pMemBlock->enc), NULL, NULL, NULL, NULL);
 	EVP_EncryptUpdate(&(pMemBlock->enc), pCipherText, &cbOut, pMemBlock->pData, pMemBlock->cbData);
@@ -221,6 +231,8 @@ BOOL CryptUnprotectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 
 	cbOut = pMemBlock->cbData + AES_BLOCK_SIZE - 1;
 	pPlainText = (BYTE*) malloc(cbOut);
+	if (!pPlainText)
+		return FALSE;
 
 	EVP_DecryptInit_ex(&(pMemBlock->dec), NULL, NULL, NULL, NULL);
 	EVP_DecryptUpdate(&(pMemBlock->dec), pPlainText, &cbOut, pMemBlock->pData, pMemBlock->cbData);

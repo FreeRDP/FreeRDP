@@ -36,15 +36,12 @@
 
 #include "../handle/handle.h"
 
-#include <signal.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/un.h>
-#include <sys/stat.h>
 #include <sys/socket.h>
-#include <sys/time.h>
 #include <assert.h>
-#include <pthread.h>
+#include <unistd.h>
 
 #ifdef HAVE_AIO_H
 #undef HAVE_AIO_H /* disable for now, incomplete */
