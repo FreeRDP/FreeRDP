@@ -80,7 +80,6 @@ struct xf_window
 	int shmid;
 	Window handle;
 	Window* xfwin;
-	BOOL fullscreen;
 	BOOL decorations;
 	BOOL is_mapped;
 	BOOL is_transient;
@@ -149,7 +148,6 @@ void xf_SetWindowUnlisted(xfContext* xfc, Window window);
 
 xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int height);
 void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width, int height);
-void xf_SetWindowSizeHints(xfContext* xfc, xfWindow* window, BOOL can_resize, int width, int height);
 void xf_DestroyDesktopWindow(xfContext* xfc, xfWindow* window);
 
 BOOL xf_GetWindowProperty(xfContext* xfc, Window window, Atom property, int length,

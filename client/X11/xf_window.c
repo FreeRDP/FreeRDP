@@ -168,7 +168,6 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	}
 
 	XMoveResizeWindow(xfc->display, window->handle, startX, startY, window->width, window->height);
-	XMapRaised(xfc->display, window->handle);
 
 	/* Set the fullscreen state */
 	xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
@@ -188,8 +187,6 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 				xfc->fullscreenMonitors.right,
 				1);
 	}
-
-	window->fullscreen = fullscreen;
 }
 
 /* http://tronche.com/gui/x/xlib/window-information/XGetWindowProperty.html */
@@ -340,7 +337,6 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 
 	window->width = width;
 	window->height = height;
-	window->fullscreen = FALSE;
 	window->decorations = xfc->decorations;
 	window->is_mapped = FALSE;
 	window->is_transient = FALSE;
@@ -395,12 +391,6 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 	xf_SetWindowDecorations(xfc, window->handle, window->decorations);
 	xf_SetWindowPID(xfc, window->handle, 0);
 
-	/* Set the window hints to allow minimal resize, so fullscreen
-	 * changes can work in window managers that might disallow otherwise. 
-	 * We will set back afterwards.
-	 */
-	xf_SetWindowSizeHints(xfc, window, TRUE, xfc->sessionWidth, xfc->sessionHeight);
-
 	input_mask =
 		KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask |
 		VisibilityChangeMask | FocusChangeMask | StructureNotifyMask |
@@ -451,45 +441,34 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 
 void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width, int height)
 {
-	xf_SetWindowSizeHints(xfc, window, FALSE, width, height);
-}
-
-void xf_SetWindowSizeHints(xfContext* xfc, xfWindow *window, BOOL can_resize, int width, int height)
-{
 	XSizeHints* size_hints;
-	size_hints = XAllocSizeHints();
 
-	if (size_hints)
-	{
-		size_hints->flags = PMinSize | PMaxSize | PWinGravity;
+	if (!xfc || !window)
+			return;
 
-		size_hints->win_gravity = NorthWestGravity;
-		size_hints->min_width = size_hints->max_width = width;
-		size_hints->min_height = size_hints->max_height = height;
+	if (!(size_hints = XAllocSizeHints()))
+			return;
+
+	size_hints->flags = PMinSize | PMaxSize | PWinGravity;
+
+	size_hints->win_gravity = NorthWestGravity;
+	size_hints->min_width = size_hints->min_height = 1;
+	size_hints->max_width = size_hints->max_height = 16384;
+
+	XSetWMNormalHints(xfc->display, window->handle, size_hints);
+
+	XResizeWindow(xfc->display, window->handle, width, height);
 
 #ifdef WITH_XRENDER
-		if (xfc->settings->SmartSizing)
-		{
-			size_hints->min_width = size_hints->min_height = 1;
-			size_hints->max_width = size_hints->max_height = 16384;
-		}
+	if (!xfc->settings->SmartSizing)
 #endif
-
-		/* Allows the window to resize larger by 1 pixel - so we can
-		 * fullscreen the window with no worries about window manager disallowing based
-		 * on size parameters
-		 */
-		if (can_resize)
-		{
-			size_hints->width_inc = size_hints->height_inc = 1;
-			size_hints->max_width = xfc->sessionWidth + 1;
-			size_hints->max_height = xfc->sessionHeight + 1;
-		}
-
-		XSetWMNormalHints(xfc->display, window->handle, size_hints);
-		XResizeWindow(xfc->display, window->handle, width, height);
-		XFree(size_hints);
+	{
+		size_hints->min_width = size_hints->max_width = width;
+		size_hints->min_height = size_hints->max_height = height;
 	}
+
+	XSetWMNormalHints(xfc->display, window->handle, size_hints);
+	XFree(size_hints);
 }
 
 void xf_DestroyDesktopWindow(xfContext* xfc, xfWindow* window)

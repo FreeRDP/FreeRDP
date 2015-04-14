@@ -572,9 +572,6 @@ BOOL xf_create_window(xfContext* xfc)
 
 		xfc->unobscured = (xevent.xvisibility.state == VisibilityUnobscured);
 
-		/* Disallow resize now that any initial fullscreen window operation is complete */
-		xf_SetWindowSizeHints(xfc, xfc->window, FALSE, xfc->sessionWidth, xfc->sessionHeight);
-
 		XSetWMProtocols(xfc->display, xfc->window->handle, &(xfc->WM_DELETE_WINDOW), 1);
 		xfc->drawable = xfc->window->handle;
 	}
@@ -685,9 +682,7 @@ void xf_toggle_fullscreen(xfContext* xfc)
 	xfc->fullscreen = (xfc->fullscreen) ? FALSE : TRUE;
 	xfc->decorations = (xfc->fullscreen) ? FALSE : settings->Decorations;
 
-	xf_SetWindowSizeHints(xfc, xfc->window, TRUE, xfc->sessionWidth, xfc->sessionHeight);
 	xf_SetWindowFullscreen(xfc, xfc->window, xfc->fullscreen);
-	xf_SetWindowSizeHints(xfc, xfc->window, FALSE, xfc->sessionWidth, xfc->sessionHeight);
 
 	EventArgsInit(&e, "xfreerdp");
 	e.state = xfc->fullscreen ? FREERDP_WINDOW_STATE_FULLSCREEN : 0;
