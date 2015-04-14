@@ -263,7 +263,7 @@ int TestStream(int argc, char* argv[])
 	if (!TestStream_Extent(4096))
 		return 3;
 
-	if (!TestStream_Reading(4096))
+	if (!TestStream_Reading())
 		return 4;
 
 	/**
