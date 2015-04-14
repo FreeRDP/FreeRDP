@@ -303,3 +303,8 @@ void ios_uninit_freerdp()
 
 }
 
+/* compatibilty functions */
+size_t fwrite$UNIX2003( const void *ptr, size_t size, size_t nmemb, FILE *stream )
+{
+	return fwrite(ptr, size , nmemb, stream);
+}
