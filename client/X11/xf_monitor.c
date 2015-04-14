@@ -121,7 +121,6 @@ BOOL xf_detect_monitors(xfContext* xfc)
 	int nmonitors = 0;
 	int primaryMonitorFound = FALSE;
 	int vX, vY, vWidth, vHeight;
-	int maxWidth, maxHeight;
 	VIRTUAL_SCREEN* vscreen;
 	rdpSettings* settings = xfc->settings;
 
@@ -197,15 +196,11 @@ BOOL xf_detect_monitors(xfContext* xfc)
 	{
 		xfc->desktopWidth = WidthOfScreen(xfc->screen);
 		xfc->desktopHeight = HeightOfScreen(xfc->screen);
-		maxWidth = xfc->desktopWidth;
-		maxHeight = xfc->desktopHeight;
 	}
 	else if (settings->Workarea)
 	{
 		xfc->desktopWidth = xfc->workArea.width;
 		xfc->desktopHeight = xfc->workArea.height;
-		maxWidth = xfc->desktopWidth;
-		maxHeight = xfc->desktopHeight;
 	}
 	else if (settings->PercentScreen)
 	{
@@ -220,14 +215,6 @@ BOOL xf_detect_monitors(xfContext* xfc)
 			settings->DesktopWidth = ((vscreen->monitors[current_monitor].area.right - vscreen->monitors[current_monitor].area.left + 1) * settings->PercentScreen) / 100;
 			settings->DesktopHeight = ((vscreen->monitors[current_monitor].area.bottom - vscreen->monitors[current_monitor].area.top + 1) * settings->PercentScreen) / 100;
 		}
-
-		maxWidth = xfc->desktopWidth;
-		maxHeight = xfc->desktopHeight;
-	}
-	else
-	{
-		maxWidth = WidthOfScreen(xfc->screen);
-		maxHeight = HeightOfScreen(xfc->screen);
 	}
 
 	if (!settings->Fullscreen && !settings->Workarea && !settings->UseMultimon)
