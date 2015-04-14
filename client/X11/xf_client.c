@@ -503,8 +503,6 @@ BOOL xf_create_window(xfContext* xfc)
 
 	ZeroMemory(&xevent, sizeof(xevent));
 
-	xf_detect_monitors(xfc);
-
 	width = xfc->sessionWidth;
 	height = xfc->sessionHeight;
 
@@ -539,12 +537,6 @@ BOOL xf_create_window(xfContext* xfc)
 		{
 			windowTitle = malloc(1 + sizeof("FreeRDP: ") + strlen(settings->ServerHostname) + sizeof(":00000"));
 			sprintf(windowTitle, "FreeRDP: %s:%i", settings->ServerHostname, settings->ServerPort);
-		}
-
-		if (xfc->fullscreen)
-		{
-			width = xfc->desktopWidth;
-			height = xfc->desktopHeight;
 		}
 
 #ifdef WITH_XRENDER
@@ -1016,9 +1008,7 @@ BOOL xf_pre_connect(freerdp* instance)
 
 	xf_keyboard_init(xfc);
 
-	xf_detect_monitors(xfc);
-	settings->DesktopWidth = xfc->desktopWidth;
-	settings->DesktopHeight = xfc->desktopHeight;
+	xf_detect_monitors(xfc, &settings->DesktopWidth, &settings->DesktopHeight);
 
 	xfc->fullscreen = settings->Fullscreen;
 	xfc->decorations = settings->Decorations;

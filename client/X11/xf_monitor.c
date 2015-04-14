@@ -115,7 +115,7 @@ BOOL xf_is_monitor_id_active(xfContext* xfc, UINT32 id)
 	return FALSE;
 }
 
-BOOL xf_detect_monitors(xfContext* xfc)
+BOOL xf_detect_monitors(xfContext* xfc, UINT32* pWidth, UINT32* pHeight)
 {
 	int i;
 	int nmonitors = 0;
@@ -134,8 +134,8 @@ BOOL xf_detect_monitors(xfContext* xfc)
 #endif
 
 	vscreen = &xfc->vscreen;
-	xfc->desktopWidth = settings->DesktopWidth;
-	xfc->desktopHeight = settings->DesktopHeight;
+	*pWidth = settings->DesktopWidth;
+	*pHeight = settings->DesktopHeight;
 
 	/* get mouse location */
 	if (!XQueryPointer(xfc->display, DefaultRootWindow(xfc->display),
@@ -194,26 +194,26 @@ BOOL xf_detect_monitors(xfContext* xfc)
 
 	if (settings->Fullscreen)
 	{
-		xfc->desktopWidth = WidthOfScreen(xfc->screen);
-		xfc->desktopHeight = HeightOfScreen(xfc->screen);
+		*pWidth = WidthOfScreen(xfc->screen);
+		*pHeight = HeightOfScreen(xfc->screen);
 	}
 	else if (settings->Workarea)
 	{
-		xfc->desktopWidth = xfc->workArea.width;
-		xfc->desktopHeight = xfc->workArea.height;
+		*pWidth = xfc->workArea.width;
+		*pHeight = xfc->workArea.height;
 	}
 	else if (settings->PercentScreen)
 	{
-		xfc->desktopWidth = (xfc->workArea.width * settings->PercentScreen) / 100;
-		xfc->desktopHeight = (xfc->workArea.height * settings->PercentScreen) / 100;
+		*pWidth = (xfc->workArea.width * settings->PercentScreen) / 100;
+		*pHeight = (xfc->workArea.height * settings->PercentScreen) / 100;
 
 		/* If we have specific monitor information then limit the PercentScreen value
 		 * to only affect the current monitor vs. the entire desktop
 		 */
 		if (vscreen->nmonitors > 0)
 		{
-			settings->DesktopWidth = ((vscreen->monitors[current_monitor].area.right - vscreen->monitors[current_monitor].area.left + 1) * settings->PercentScreen) / 100;
-			settings->DesktopHeight = ((vscreen->monitors[current_monitor].area.bottom - vscreen->monitors[current_monitor].area.top + 1) * settings->PercentScreen) / 100;
+			*pWidth = ((vscreen->monitors[current_monitor].area.right - vscreen->monitors[current_monitor].area.left + 1) * settings->PercentScreen) / 100;
+			*pHeight = ((vscreen->monitors[current_monitor].area.bottom - vscreen->monitors[current_monitor].area.top + 1) * settings->PercentScreen) / 100;
 		}
 	}
 
@@ -245,8 +245,8 @@ BOOL xf_detect_monitors(xfContext* xfc)
 
 		settings->MonitorDefArray[nmonitors].x = vscreen->monitors[i].area.left;
 		settings->MonitorDefArray[nmonitors].y = vscreen->monitors[i].area.top;
-		settings->MonitorDefArray[nmonitors].width = MIN(vscreen->monitors[i].area.right - vscreen->monitors[i].area.left + 1, xfc->desktopWidth);
-		settings->MonitorDefArray[nmonitors].height = MIN(vscreen->monitors[i].area.bottom - vscreen->monitors[i].area.top + 1, xfc->desktopHeight);
+		settings->MonitorDefArray[nmonitors].width = MIN(vscreen->monitors[i].area.right - vscreen->monitors[i].area.left + 1, *pWidth);
+		settings->MonitorDefArray[nmonitors].height = MIN(vscreen->monitors[i].area.bottom - vscreen->monitors[i].area.top + 1, *pHeight);
 		settings->MonitorDefArray[nmonitors].orig_screen = i;
 
 		nmonitors++;
@@ -257,8 +257,8 @@ BOOL xf_detect_monitors(xfContext* xfc)
 	{
 		settings->MonitorDefArray[0].x = vscreen->monitors[current_monitor].area.left;
 		settings->MonitorDefArray[0].y = vscreen->monitors[current_monitor].area.top;
-		settings->MonitorDefArray[0].width = MIN(vscreen->monitors[current_monitor].area.right - vscreen->monitors[current_monitor].area.left + 1, xfc->desktopWidth);
-		settings->MonitorDefArray[0].height = MIN(vscreen->monitors[current_monitor].area.bottom - vscreen->monitors[current_monitor].area.top + 1, xfc->desktopHeight);
+		settings->MonitorDefArray[0].width = MIN(vscreen->monitors[current_monitor].area.right - vscreen->monitors[current_monitor].area.left + 1, *pWidth);
+		settings->MonitorDefArray[0].height = MIN(vscreen->monitors[current_monitor].area.bottom - vscreen->monitors[current_monitor].area.top + 1, *pHeight);
 		settings->MonitorDefArray[0].orig_screen = current_monitor;
 
 		nmonitors = 1;
@@ -355,8 +355,8 @@ BOOL xf_detect_monitors(xfContext* xfc)
 		}
 
 		/* Set the desktop width and height according to the bounding rectangle around the active monitors */
-		xfc->desktopWidth = vscreen->area.right - vscreen->area.left + 1;
-		xfc->desktopHeight = vscreen->area.bottom - vscreen->area.top + 1;
+		*pWidth = vscreen->area.right - vscreen->area.left + 1;
+		*pHeight = vscreen->area.bottom - vscreen->area.top + 1;
 	}
 
 	return TRUE;
