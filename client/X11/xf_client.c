@@ -516,7 +516,7 @@ BOOL xf_create_window(xfContext* xfc)
 		xfc->attribs.background_pixel = BlackPixelOfScreen(xfc->screen);
 		xfc->attribs.border_pixel = WhitePixelOfScreen(xfc->screen);
 		xfc->attribs.backing_store = xfc->primary ? NotUseful : Always;
-		xfc->attribs.override_redirect = False;
+		xfc->attribs.override_redirect = xfc->grab_keyboard ? xfc->fullscreen : False;
 		xfc->attribs.colormap = xfc->colormap;
 		xfc->attribs.bit_gravity = NorthWestGravity;
 		xfc->attribs.win_gravity = NorthWestGravity;
@@ -543,35 +543,26 @@ BOOL xf_create_window(xfContext* xfc)
 
 		if (xfc->fullscreen)
 		{
-			width = xfc->desktopWidth;
-			height = xfc->desktopHeight;
+			width = WidthOfScreen(xfc->screen);
+			height = HeightOfScreen(xfc->screen);
 		}
 
 #ifdef WITH_XRENDER
 		if (settings->SmartSizing)
 		{
-			if (xfc->fullscreen)
-			{
-				if (xfc->window)
-				{
-					settings->SmartSizingWidth = xfc->window->width;
-					settings->SmartSizingHeight = xfc->window->height;
-				}
-			}
-			else
+			if (!xfc->fullscreen)
 			{
 				if (settings->SmartSizingWidth)
 					width = settings->SmartSizingWidth;
 				if (settings->SmartSizingHeight)
 					height = settings->SmartSizingHeight;
 			}
-
 			xfc->scaledWidth = width;
 			xfc->scaledHeight = height;
 		}
 #endif
 
-		xfc->window = xf_CreateDesktopWindow(xfc, windowTitle, width, height);
+		xfc->window = xf_CreateDesktopWindow(xfc, windowTitle, width, height, xfc->decorations);
 
 		free(windowTitle);
 
@@ -579,10 +570,6 @@ BOOL xf_create_window(xfContext* xfc)
 			xf_SetWindowFullscreen(xfc, xfc->window, xfc->fullscreen);
 
 		xfc->unobscured = (xevent.xvisibility.state == VisibilityUnobscured);
-
-		/* Disallow resize now that any initial fullscreen window operation is complete */
-		xf_SetWindowSizeHints(xfc, xfc->window, FALSE, xfc->width, xfc->height);
-
 		XSetWMProtocols(xfc->display, xfc->window->handle, &(xfc->WM_DELETE_WINDOW), 1);
 		xfc->drawable = xfc->window->handle;
 	}
@@ -686,16 +673,38 @@ void xf_window_free(xfContext* xfc)
 
 void xf_toggle_fullscreen(xfContext* xfc)
 {
+	Pixmap contents = None;
 	WindowStateChangeEventArgs e;
 	rdpContext* context = (rdpContext*) xfc;
 	rdpSettings* settings = context->settings;
 
+	xf_lock_x11(xfc, TRUE);
+
+	if (!(contents = XCreatePixmap(xfc->display, xfc->window->handle, xfc->width, xfc->height, xfc->depth)))
+		return;
+
+	XCopyArea(xfc->display, xfc->primary, contents, xfc->gc, 0, 0, xfc->width, xfc->height, 0, 0);
+
+#ifdef WITH_XRENDER
+	if (settings->SmartSizing && !xfc->fullscreen)
+	{
+		/* backup current window dimensions for next toggle */
+		settings->SmartSizingWidth = xfc->window->width;
+		settings->SmartSizingHeight = xfc->window->height;
+	}
+#endif
+
+	xf_window_free(xfc);
+
 	xfc->fullscreen = (xfc->fullscreen) ? FALSE : TRUE;
 	xfc->decorations = (xfc->fullscreen) ? FALSE : settings->Decorations;
 
-	xf_SetWindowSizeHints(xfc, xfc->window, TRUE, xfc->width, xfc->height);
-	xf_SetWindowFullscreen(xfc, xfc->window, xfc->fullscreen);
-	xf_SetWindowSizeHints(xfc, xfc->window, FALSE, xfc->width, xfc->height);
+	xf_create_window(xfc);
+
+	XCopyArea(xfc->display, contents, xfc->primary, xfc->gc, 0, 0, xfc->width, xfc->height, 0, 0);
+	XFreePixmap(xfc->display, contents);
+
+	xf_unlock_x11(xfc, TRUE);
 
 	EventArgsInit(&e, "xfreerdp");
 	e.state = xfc->fullscreen ? FREERDP_WINDOW_STATE_FULLSCREEN : 0;
@@ -1697,7 +1706,6 @@ static int xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xfc->_NET_WORKAREA = XInternAtom(xfc->display, "_NET_WORKAREA", False);
 	xfc->_NET_WM_STATE = XInternAtom(xfc->display, "_NET_WM_STATE", False);
 	xfc->_NET_WM_STATE_FULLSCREEN = XInternAtom(xfc->display, "_NET_WM_STATE_FULLSCREEN", False);
-	xfc->_NET_WM_FULLSCREEN_MONITORS = XInternAtom(xfc->display, "_NET_WM_FULLSCREEN_MONITORS", False);
 	xfc->_NET_WM_WINDOW_TYPE = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE", False);
 	xfc->_NET_WM_WINDOW_TYPE_NORMAL = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE_NORMAL", False);
 	xfc->_NET_WM_WINDOW_TYPE_DIALOG = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE_DIALOG", False);
