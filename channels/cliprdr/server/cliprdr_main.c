@@ -629,11 +629,11 @@ static int cliprdr_server_receive_format_list(CliprdrServerContext* context, wSt
 
 	for (index = 0; index < formatList.numFormats; index++)
 	{
-		if (formats[index].formatName)
-			free(formats[index].formatName);
+		if (formatList.formats[index].formatName)
+			free(formatList.formats[index].formatName);
 	}
 
-	free(formats);
+	free(formatList.formats);
 
 	return 1;
 }
