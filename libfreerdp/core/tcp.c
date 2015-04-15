@@ -842,7 +842,7 @@ int freerdp_tcp_connect_multi(char** hostnames, int count, int port, int timeout
 	int flags;
 	int maxfds;
 	fd_set cfds;
-	int sockfd;
+	int sockfd = -1;
 	int* sockfds;
 	char port_str[16];
 	socklen_t optlen;
