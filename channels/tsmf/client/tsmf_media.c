@@ -375,6 +375,18 @@ static void tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 		event.frameWidth = sample->stream->width;
 		event.frameHeight = sample->stream->height;
 
+		event.x = presentation->x;
+		event.y = presentation->y;
+		event.width = presentation->width;
+		event.height = presentation->height;
+
+		if (presentation->nr_rects > 0)
+		{
+			event.numVisibleRects = presentation->nr_rects;
+			event.visibleRects = (RECTANGLE_16*) calloc(1, event.numVisibleRects * sizeof(RECTANGLE_16));
+			memcpy(event.visibleRects, presentation->rects, presentation->nr_rects * sizeof(RDP_RECT));
+		}
+
 #if 0
 		/* Dump a .ppm image for every 30 frames. Assuming the frame is in YUV format, we
 		   extract the Y values to create a grayscale image. */
@@ -406,6 +418,8 @@ static void tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 			tsmf->FrameEvent(tsmf, &event);
 
 		free(event.frameData);
+
+		if(event.visibleRects!=NULL) free(event.visibleRects);
 	}
 }
 
@@ -840,10 +854,12 @@ void tsmf_presentation_set_geometry_info(TSMF_PRESENTATION* presentation,
 	presentation->height = height;
 
 	tmp_rects = realloc(presentation->rects, sizeof(RDP_RECT) * num_rects);
-	if (!tmp_rects)
-		return;
+
 	presentation->nr_rects = num_rects;
 	presentation->rects = tmp_rects;
+
+	if (!tmp_rects)
+			return;
 
 	CopyMemory(presentation->rects, rects, sizeof(RDP_RECT) * num_rects);
 
