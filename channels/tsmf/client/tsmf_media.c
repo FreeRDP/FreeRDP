@@ -384,7 +384,13 @@ static void tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 		{
 			event.numVisibleRects = presentation->nr_rects;
 			event.visibleRects = (RECTANGLE_16*) calloc(1, event.numVisibleRects * sizeof(RECTANGLE_16));
-			memcpy(event.visibleRects, presentation->rects, presentation->nr_rects * sizeof(RDP_RECT));
+			if (event.visibleRects)
+				memcpy(event.visibleRects, presentation->rects, presentation->nr_rects * sizeof(RDP_RECT));
+			else
+			{
+				presentation->nr_rects=0;
+				WLog_ERR(TAG, "can't allocate memory for copy rectangles");
+			}
 		}
 
 #if 0
