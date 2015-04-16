@@ -247,11 +247,19 @@ static void xf_desktop_resize(rdpContext* context)
 
 	if (!xfc->fullscreen)
 	{
-		if (xfc->window)
-			xf_ResizeDesktopWindow(xfc, xfc->window, settings->DesktopWidth, settings->DesktopHeight);
+		xf_ResizeDesktopWindow(xfc, xfc->window, settings->DesktopWidth, settings->DesktopHeight);
 	}
 	else
 	{
+#ifdef WITH_XRENDER
+		if (!xfc->settings->SmartSizing)
+#endif
+		{
+			/* Update the saved width and height values the window will be
+			 * resized to when toggling out of fullscreen */
+			xfc->savedWidth = xfc->sessionWidth;
+			xfc->savedHeight = xfc->sessionHeight;
+		}
 		XSetFunction(xfc->display, xfc->gc, GXcopy);
 		XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 		XSetForeground(xfc->display, xfc->gc, 0);
@@ -540,26 +548,12 @@ BOOL xf_create_window(xfContext* xfc)
 		}
 
 #ifdef WITH_XRENDER
-		if (settings->SmartSizing)
+		if (settings->SmartSizing && !xfc->fullscreen)
 		{
-			if (xfc->fullscreen)
-			{
-				if (xfc->window)
-				{
-					settings->SmartSizingWidth = xfc->window->width;
-					settings->SmartSizingHeight = xfc->window->height;
-				}
-			}
-			else
-			{
-				if (settings->SmartSizingWidth)
-					width = settings->SmartSizingWidth;
-				if (settings->SmartSizingHeight)
-					height = settings->SmartSizingHeight;
-			}
-
-			xfc->scaledWidth = width;
-			xfc->scaledHeight = height;
+			if (settings->SmartSizingWidth)
+				width = settings->SmartSizingWidth;
+			if (settings->SmartSizingHeight)
+				height = settings->SmartSizingHeight;
 		}
 #endif
 
@@ -930,6 +924,9 @@ BOOL xf_pre_connect(freerdp* instance)
 	rdpSettings* settings;
 	rdpContext* context = instance->context;
 	xfContext* xfc = (xfContext*) instance->context;
+	UINT32 maxWidth = 0;
+	UINT32 maxHeight = 0;
+
 
 	xfc->codecs = context->codecs;
 	xfc->settings = instance->settings;
@@ -1003,7 +1000,26 @@ BOOL xf_pre_connect(freerdp* instance)
 
 	xf_keyboard_init(xfc);
 
-	xf_detect_monitors(xfc, &settings->DesktopWidth, &settings->DesktopHeight);
+	xf_detect_monitors(xfc, &maxWidth, &maxHeight);
+
+	if (maxWidth && maxHeight)
+	{
+		settings->DesktopWidth = maxWidth;
+		settings->DesktopHeight = maxHeight;
+	}
+
+#ifdef WITH_XRENDER
+	/**
+	 * If /f is specified in combination with /smart-sizing:widthxheight then
+	 * we run the session in the /smart-sizing dimensions scaled to full screen
+	 */
+	if (settings->Fullscreen && settings->SmartSizing &&
+		settings->SmartSizingWidth && settings->SmartSizingHeight)
+	{
+		settings->DesktopWidth = settings->SmartSizingWidth;
+		settings->DesktopHeight = settings->SmartSizingHeight;
+	}
+#endif
 
 	xfc->fullscreen = settings->Fullscreen;
 	xfc->decorations = settings->Decorations;

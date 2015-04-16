@@ -151,6 +151,11 @@ struct xf_context
 
 	int XInputOpcode;
 
+	int savedWidth;
+	int savedHeight;
+	int savedPosX;
+	int savedPosY;
+
 #ifdef WITH_XRENDER
 	int scaledWidth;
 	int scaledHeight;

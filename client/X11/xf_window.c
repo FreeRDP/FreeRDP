@@ -140,14 +140,33 @@ void xf_SendClientEvent(xfContext* xfc, Window window, Atom atom, unsigned int n
 void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 {
 	int i;
-	int startX = xfc->instance->settings->DesktopPosX;
-	int startY = xfc->instance->settings->DesktopPosY;
+	rdpSettings* settings = xfc->settings;
+	int startX, startY;
+	UINT32 width = window->width;
+	UINT32 height = window->height;
 
 	window->decorations = xfc->decorations;
 	xf_SetWindowDecorations(xfc, window->handle, window->decorations);
 
+	if (fullscreen)
+	{
+		xfc->savedWidth = xfc->window->width;
+		xfc->savedHeight = xfc->window->height;
+		xfc->savedPosX = xfc->window->left;
+		xfc->savedPosY = xfc->window->top;
+		startX = settings->DesktopPosX;
+		startY = settings->DesktopPosY;
+	}
+	else
+	{
+		width = xfc->savedWidth;
+		height = xfc->savedHeight;
+		startX = xfc->savedPosX;
+		startY = xfc->savedPosY;
+	}
+
 	/* Determine the x,y starting location for the fullscreen window */
-	if (xfc->instance->settings->MonitorCount)
+	if (fullscreen && xfc->instance->settings->MonitorCount)
 	{
 		/* Initialize startX and startY with reasonable values */
 		startX = xfc->instance->settings->MonitorDefArray[0].x;
@@ -167,7 +186,7 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		startY = startY + xfc->instance->settings->MonitorLocalShiftY;
 	}
 
-	XMoveResizeWindow(xfc->display, window->handle, startX, startY, window->width, window->height);
+	xf_ResizeDesktopWindow(xfc, window, width, height);
 
 	/* Set the fullscreen state */
 	xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
@@ -187,6 +206,8 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 				xfc->fullscreenMonitors.right,
 				1);
 	}
+
+	XMoveWindow(xfc->display, window->handle, startX, startY);
 }
 
 /* http://tronche.com/gui/x/xlib/window-information/XGetWindowProperty.html */
@@ -463,11 +484,14 @@ void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width, int hei
 	if (!xfc->settings->SmartSizing)
 #endif
 	{
-		size_hints->min_width = size_hints->max_width = width;
-		size_hints->min_height = size_hints->max_height = height;
+		if (!xfc->fullscreen)
+		{
+			size_hints->min_width = size_hints->max_width = width;
+			size_hints->min_height = size_hints->max_height = height;
+			XSetWMNormalHints(xfc->display, window->handle, size_hints);
+		}
 	}
 
-	XSetWMNormalHints(xfc->display, window->handle, size_hints);
 	XFree(size_hints);
 }
 
