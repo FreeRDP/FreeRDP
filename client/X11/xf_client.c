@@ -554,6 +554,9 @@ BOOL xf_create_window(xfContext* xfc)
 				width = settings->SmartSizingWidth;
 			if (settings->SmartSizingHeight)
 				height = settings->SmartSizingHeight;
+
+			xfc->scaledWidth = width;
+			xfc->scaledHeight = height;
 		}
 #endif
 
