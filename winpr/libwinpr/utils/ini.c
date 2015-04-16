@@ -376,7 +376,9 @@ int IniFile_Load(wIniFile* ini)
 			value = beg;
 
 			IniFile_AddKey(ini, section, name, value);
-			key = section->keys[section->nKeys - 1];
+			key = NULL;
+			if (section->keys)
+				key = section->keys[section->nKeys - 1];
 		}
 	}
 
