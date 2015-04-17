@@ -185,8 +185,8 @@ void xf_event_adjust_coordinates(xfContext* xfc, int* x, int *y)
 #ifdef WITH_XRENDER
 		if (xf_picture_transform_required(xfc))
 		{
-			double xScalingFactor = xfc->width / (double)xfc->scaledWidth;
-			double yScalingFactor = xfc->height / (double)xfc->scaledHeight;
+			double xScalingFactor = xfc->sessionWidth / (double)xfc->scaledWidth;
+			double yScalingFactor = xfc->sessionHeight / (double)xfc->scaledHeight;
 			*x = (int)((*x - xfc->offset_x) * xScalingFactor);
 			*y = (int)((*y - xfc->offset_y) * yScalingFactor);
 		}
@@ -204,8 +204,8 @@ static BOOL xf_event_Expose(xfContext* xfc, XEvent* event, BOOL app)
 	{
 		x = 0;
 		y = 0;
-		w = xfc->width;
-		h = xfc->height;
+		w = xfc->sessionWidth;
+		h = xfc->sessionHeight;
 	}
 	else
 	{
@@ -642,6 +642,12 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, XEvent* event, BOOL app)
 
 	if (!app)
 	{
+		if (xfc->window->left != event->xconfigure.x)
+			xfc->window->left = event->xconfigure.x;
+
+		if (xfc->window->top != event->xconfigure.y)
+			xfc->window->top = event->xconfigure.y;
+
 		if (xfc->window->width != event->xconfigure.width ||
 		     xfc->window->height != event->xconfigure.height)
 		{
@@ -652,17 +658,14 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, XEvent* event, BOOL app)
 			xfc->offset_y = 0;
 			if (xfc->settings->SmartSizing || xfc->settings->MultiTouchGestures)
 			{
-				if (!xfc->fullscreen)
-				{
-					xfc->scaledWidth = xfc->window->width;
-					xfc->scaledHeight = xfc->window->height;
-				}
-				xf_draw_screen(xfc, 0, 0, xfc->width, xfc->height);
+				xfc->scaledWidth = xfc->window->width;
+				xfc->scaledHeight = xfc->window->height;
+				xf_draw_screen(xfc, 0, 0, xfc->sessionWidth, xfc->sessionHeight);
 			}
 			else
 			{
-				xfc->scaledWidth = xfc->width;
-				xfc->scaledHeight = xfc->height;
+				xfc->scaledWidth = xfc->sessionWidth;
+				xfc->scaledHeight = xfc->sessionHeight;
 			}
 #endif
 		}
@@ -718,8 +721,8 @@ static BOOL xf_event_MapNotify(xfContext* xfc, XEvent* event, BOOL app)
 	{
 		rect.left = 0;
 		rect.top = 0;
-		rect.right = xfc->width;
-		rect.bottom = xfc->height;
+		rect.right = xfc->sessionWidth;
+		rect.bottom = xfc->sessionHeight;
 
 		update->SuppressOutput((rdpContext*) xfc, 1, &rect);
 	}

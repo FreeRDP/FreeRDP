@@ -92,8 +92,8 @@ struct xf_context
 	int bpp;
 	int xfds;
 	int depth;
-	int width;
-	int height;
+	int sessionWidth;
+	int sessionHeight;
 	int srcBpp;
 	GC gc_mono;
 	BOOL invert;
@@ -151,6 +151,11 @@ struct xf_context
 
 	int XInputOpcode;
 
+	int savedWidth;
+	int savedHeight;
+	int savedPosX;
+	int savedPosY;
+
 #ifdef WITH_XRENDER
 	int scaledWidth;
 	int scaledHeight;
@@ -171,8 +176,6 @@ struct xf_context
 	wArrayList* xevents;
 	char* actionScript;
 
-	UINT32 desktopWidth;
-	UINT32 desktopHeight;
 	XSetWindowAttributes attribs;
 	BOOL complex_regions;
 	VIRTUAL_SCREEN vscreen;
