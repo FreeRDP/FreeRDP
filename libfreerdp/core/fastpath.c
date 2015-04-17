@@ -733,6 +733,8 @@ wStream* fastpath_input_pdu_init_header(rdpFastPath* fastpath)
 	rdp = fastpath->rdp;
 
 	s = transport_send_stream_init(rdp->transport, 256);
+	if (!s)
+		return NULL;
 
 	Stream_Seek(s, 3); /* fpInputHeader, length1 and length2 */
 
@@ -757,6 +759,8 @@ wStream* fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE eventFlags, BYTE ev
 	rdp = fastpath->rdp;
 
 	s = fastpath_input_pdu_init_header(fastpath);
+	if (!s)
+		return NULL;
 	Stream_Write_UINT8(s, eventFlags | (eventCode << 5)); /* eventHeader (1 byte) */
 
 	return s;

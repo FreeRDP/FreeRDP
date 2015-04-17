@@ -343,7 +343,7 @@ static BOOL input_recv_sync_event(rdpInput* input, wStream* s)
 	Stream_Seek(s, 2); /* pad2Octets (2 bytes) */
 	Stream_Read_UINT32(s, toggleFlags); /* toggleFlags (4 bytes) */
 
-	IFCALLRETURN(TRUE, input->SynchronizeEvent, input, toggleFlags);
+	return IFCALLRESULT(TRUE, input->SynchronizeEvent, input, toggleFlags);
 }
 
 static BOOL input_recv_keyboard_event(rdpInput* input, wStream* s)
@@ -376,7 +376,7 @@ static BOOL input_recv_keyboard_event(rdpInput* input, wStream* s)
 	else
 		keyboardFlags |= KBD_FLAGS_DOWN;
 
-	IFCALLRETURN(TRUE, input->KeyboardEvent, input, keyboardFlags, keyCode);
+	return IFCALLRESULT(TRUE, input->KeyboardEvent, input, keyboardFlags, keyCode);
 }
 
 static BOOL input_recv_unicode_keyboard_event(rdpInput* input, wStream* s)
@@ -397,7 +397,7 @@ static BOOL input_recv_unicode_keyboard_event(rdpInput* input, wStream* s)
 	else
 		keyboardFlags |= KBD_FLAGS_DOWN;
 
-	IFCALLRETURN(TRUE, input->UnicodeKeyboardEvent, input, keyboardFlags, unicodeCode);
+	return IFCALLRESULT(TRUE, input->UnicodeKeyboardEvent, input, keyboardFlags, unicodeCode);
 }
 
 static BOOL input_recv_mouse_event(rdpInput* input, wStream* s)
@@ -411,7 +411,7 @@ static BOOL input_recv_mouse_event(rdpInput* input, wStream* s)
 	Stream_Read_UINT16(s, xPos); /* xPos (2 bytes) */
 	Stream_Read_UINT16(s, yPos); /* yPos (2 bytes) */
 
-	IFCALLRETURN(TRUE, input->MouseEvent, input, pointerFlags, xPos, yPos);
+	return IFCALLRESULT(TRUE, input->MouseEvent, input, pointerFlags, xPos, yPos);
 }
 
 static BOOL input_recv_extended_mouse_event(rdpInput* input, wStream* s)
@@ -425,7 +425,7 @@ static BOOL input_recv_extended_mouse_event(rdpInput* input, wStream* s)
 	Stream_Read_UINT16(s, xPos); /* xPos (2 bytes) */
 	Stream_Read_UINT16(s, yPos); /* yPos (2 bytes) */
 
-	IFCALLRETURN(TRUE, input->ExtendedMouseEvent, input, pointerFlags, xPos, yPos);
+	return IFCALLRESULT(TRUE, input->ExtendedMouseEvent, input, pointerFlags, xPos, yPos);
 }
 
 static BOOL input_recv_event(rdpInput* input, wStream* s)
@@ -533,12 +533,12 @@ void input_register_client_callbacks(rdpInput* input)
 
 BOOL freerdp_input_send_synchronize_event(rdpInput* input, UINT32 flags)
 {
-	IFCALLRETURN(TRUE, input->SynchronizeEvent, input, flags);
+	return IFCALLRESULT(TRUE, input->SynchronizeEvent, input, flags);
 }
 
 BOOL freerdp_input_send_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	IFCALLRETURN(TRUE, input->KeyboardEvent, input, flags, code);
+	return IFCALLRESULT(TRUE, input->KeyboardEvent, input, flags, code);
 }
 
 BOOL freerdp_input_send_keyboard_event_ex(rdpInput* input, BOOL down, UINT32 rdp_scancode)
@@ -551,27 +551,27 @@ BOOL freerdp_input_send_keyboard_event_ex(rdpInput* input, BOOL down, UINT32 rdp
 
 BOOL freerdp_input_send_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	IFCALLRETURN(TRUE, input->UnicodeKeyboardEvent, input, flags, code);
+	return IFCALLRESULT(TRUE, input->UnicodeKeyboardEvent, input, flags, code);
 }
 
 BOOL freerdp_input_send_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
-	IFCALLRETURN(TRUE, input->MouseEvent, input, flags, x, y);
+	return IFCALLRESULT(TRUE, input->MouseEvent, input, flags, x, y);
 }
 
 BOOL freerdp_input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
-	IFCALLRETURN(TRUE, input->ExtendedMouseEvent, input, flags, x, y);
+	return IFCALLRESULT(TRUE, input->ExtendedMouseEvent, input, flags, x, y);
 }
 
 BOOL freerdp_input_send_focus_in_event(rdpInput* input, UINT16 toggleStates)
 {
-	IFCALLRETURN(TRUE, input->FocusInEvent, input, toggleStates);
+	return IFCALLRESULT(TRUE, input->FocusInEvent, input, toggleStates);
 }
 
 BOOL freerdp_input_send_keyboard_pause_event(rdpInput* input)
 {
-	IFCALLRETURN(TRUE, input->KeyboardPauseEvent, input);
+	return IFCALLRESULT(TRUE, input->KeyboardPauseEvent, input);
 }
 
 int input_process_events(rdpInput* input)

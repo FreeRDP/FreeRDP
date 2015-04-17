@@ -105,7 +105,7 @@ INLINE GDI_COLOR gdi_SetPixel(HGDI_DC hdc, int X, int Y, GDI_COLOR crColor)
 {
 	HGDI_BITMAP hBmp = (HGDI_BITMAP) hdc->selectedObject;
 	*((GDI_COLOR*)&(hBmp->data[(Y * hBmp->width * hdc->bytesPerPixel) + X * hdc->bytesPerPixel])) = crColor;
-	return 0;
+	return crColor;
 }
 
 INLINE void gdi_SetPixel_8bpp(HGDI_BITMAP hBmp, int X, int Y, BYTE pixel)
@@ -195,7 +195,7 @@ HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, int nWidth, int nHeight)
  * @param nXSrc source x1
  * @param nYSrc source y1
  * @param rop raster operation code
- * @return 1 if successful, 0 otherwise
+ * @return 0 on failure, non-zero otherwise
  */
 
 int gdi_BitBlt(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc, int rop)

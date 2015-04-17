@@ -57,7 +57,7 @@ BOOL update_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 BOOL update_gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
 {
 	rdpCache* cache = context->cache;
-	IFCALLRETURN(TRUE, cache->brush->PolygonSC, context, polygon_sc);
+	return IFCALLRESULT(TRUE, cache->brush->PolygonSC, context, polygon_sc);
 }
 
 BOOL update_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)

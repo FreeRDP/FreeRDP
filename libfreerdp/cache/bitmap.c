@@ -48,7 +48,7 @@ BOOL update_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 		return TRUE;
 
 	memblt->bitmap = bitmap;
-	IFCALLRETURN(TRUE, cache->bitmap->MemBlt, context, memblt);
+	return IFCALLRESULT(TRUE, cache->bitmap->MemBlt, context, memblt);
 }
 
 BOOL update_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)

@@ -550,7 +550,7 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 	}
 #endif /* WITH_XRENDER defined */
 #endif /* pinch/zoom/pan simulation */
-	return TRUE;
+	return FALSE;
 }
 
 BOOL xf_keyboard_set_indicators(rdpContext* context, UINT16 led_flags)

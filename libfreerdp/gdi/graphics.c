@@ -149,7 +149,7 @@ BOOL gdi_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 	height = bitmap->bottom - bitmap->top + 1;
 
 	if (gdi_BitBlt(context->gdi->primary->hdc, bitmap->left, bitmap->top,
-			width, height, gdi_bitmap->hdc, 0, 0, GDI_SRCCOPY) != 0)
+			width, height, gdi_bitmap->hdc, 0, 0, GDI_SRCCOPY) == 0)
 		return FALSE;
 	return TRUE;
 }
@@ -288,7 +288,7 @@ BOOL gdi_Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y)
 	gdi_glyph = (gdiGlyph*) glyph;
 
 	if (gdi_BitBlt(gdi->drawing->hdc, x, y, gdi_glyph->bitmap->width,
-			gdi_glyph->bitmap->height, gdi_glyph->hdc, 0, 0, GDI_DSPDxax) != 0)
+			gdi_glyph->bitmap->height, gdi_glyph->hdc, 0, 0, GDI_DSPDxax) == 0)
 		return FALSE;
 	return TRUE;
 }
@@ -298,7 +298,7 @@ BOOL gdi_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int heigh
 	GDI_RECT rect;
 	HGDI_BRUSH brush;
 	rdpGdi* gdi = context->gdi;
-	int ret = 1;
+	int ret = 0;
 
 	/* TODO: handle fOpRedundant! See xf_Glyph_BeginDraw() */
 
@@ -307,10 +307,7 @@ BOOL gdi_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int heigh
 
 	brush = gdi_CreateSolidBrush(fgcolor);
 	if (!brush)
-	{
 		goto out_fail;
-		return FALSE;
-	}
 
 	gdi_CRgnToRect(x, y, width, height, &rect);
 	ret = gdi_FillRect(gdi->drawing->hdc, &rect, brush);
@@ -319,7 +316,7 @@ BOOL gdi_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int heigh
 out_fail:
 	gdi->textColor = gdi_SetTextColor(gdi->drawing->hdc, bgcolor);
 
-	if (ret != 0)
+	if (ret == 0)
 		return FALSE;
 	return TRUE;
 }

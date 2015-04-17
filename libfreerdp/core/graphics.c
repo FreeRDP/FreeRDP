@@ -150,7 +150,7 @@ BOOL Pointer_SetDefault(rdpContext* context)
 
 BOOL Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 {
-	IFCALLRETURN(TRUE, context->graphics->Pointer_Prototype->SetPosition, context, x, y);
+	return IFCALLRESULT(TRUE, context->graphics->Pointer_Prototype->SetPosition, context, x, y);
 }
 
 void graphics_register_pointer(rdpGraphics* graphics, rdpPointer* pointer)

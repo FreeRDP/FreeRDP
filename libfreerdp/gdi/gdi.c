@@ -529,7 +529,7 @@ static BOOL gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 		status = freerdp_image_copy(pDstData, gdi->format, nDstStep, nXDst, nYDst,
 				nWidth, nHeight, pSrcData, gdi->format, nSrcStep, nXSrc, nYSrc, gdi->palette);
 
-		gdi_InvalidateRegion(gdi->primary->hdc, nXDst, nYDst, nWidth, nHeight);
+		return gdi_InvalidateRegion(gdi->primary->hdc, nXDst, nYDst, nWidth, nHeight);
 	}
 	return TRUE;
 }
@@ -572,7 +572,7 @@ static BOOL gdi_dstblt(rdpContext* context, DSTBLT_ORDER* dstblt)
 	rdpGdi* gdi = context->gdi;
 
 	if (gdi_BitBlt(gdi->drawing->hdc, dstblt->nLeftRect, dstblt->nTopRect,
-			dstblt->nWidth, dstblt->nHeight, NULL, 0, 0, gdi_rop3_code(dstblt->bRop)) != 1)
+			dstblt->nWidth, dstblt->nHeight, NULL, 0, 0, gdi_rop3_code(dstblt->bRop)) == 0)
 		return FALSE;
 	return TRUE;
 }
@@ -607,7 +607,7 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 		}
 
 		if (gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
-				patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop)) != 1)
+				patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop)) == 0)
 			ret = FALSE;
 
 		gdi_DeleteObject((HGDIOBJECT) gdi->drawing->hdc->brush);
@@ -648,7 +648,7 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 		}
 
 		if (gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
-		patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop)) != 1)
+		patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop)) == 0)
 			ret = FALSE;
 
 		gdi_DeleteObject((HGDIOBJECT) gdi->drawing->hdc->brush);
@@ -704,7 +704,7 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 		}
 
 		if (gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
-				patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop)) != 1)
+				patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop)) == 0)
 			ret = FALSE;
 
 		gdi_DeleteObject((HGDIOBJECT) gdi->drawing->hdc->brush);
@@ -726,7 +726,7 @@ static BOOL gdi_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
 
 	if (gdi_BitBlt(gdi->drawing->hdc, scrblt->nLeftRect, scrblt->nTopRect,
 			scrblt->nWidth, scrblt->nHeight, gdi->primary->hdc,
-			scrblt->nXSrc, scrblt->nYSrc, gdi_rop3_code(scrblt->bRop)) != 1)
+			scrblt->nXSrc, scrblt->nYSrc, gdi_rop3_code(scrblt->bRop)) == 0)
 		return FALSE;
 	return TRUE;
 }
@@ -851,9 +851,10 @@ static BOOL gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 
 	bitmap = (gdiBitmap*) memblt->bitmap;
 
-	gdi_BitBlt(gdi->drawing->hdc, memblt->nLeftRect, memblt->nTopRect,
+	if (gdi_BitBlt(gdi->drawing->hdc, memblt->nLeftRect, memblt->nTopRect,
 			memblt->nWidth, memblt->nHeight, bitmap->hdc,
-			memblt->nXSrc, memblt->nYSrc, gdi_rop3_code(memblt->bRop));
+			memblt->nXSrc, memblt->nYSrc, gdi_rop3_code(memblt->bRop)) == 0)
+		return FALSE;
 	return TRUE;
 }
 

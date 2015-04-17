@@ -221,6 +221,8 @@ int test_gdi_CreateRect(void)
 	int y2 = 256;
 
 	HGDI_RECT hRect = gdi_CreateRect(x1, y1, x2, y2);
+	if (!hRect)
+		return -1;
 
 	if (hRect->objectType != GDIOBJECT_RECT)
 		return -1;

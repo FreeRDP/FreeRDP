@@ -67,6 +67,8 @@ HGDI_RGN gdi_CreateRectRgn(int nLeftRect, int nTopRect, int nRightRect, int nBot
 HGDI_RECT gdi_CreateRect(int xLeft, int yTop, int xRight, int yBottom)
 {
 	HGDI_RECT hRect = (HGDI_RECT) malloc(sizeof(GDI_RECT));
+	if (!hRect)
+		return NULL;
 	hRect->objectType = GDIOBJECT_RECT;
 	hRect->left = xLeft;
 	hRect->top = yTop;
@@ -363,10 +365,10 @@ INLINE int gdi_PtInRect(HGDI_RECT rc, int x, int y)
  * @param y y1
  * @param w width
  * @param h height
- * @return
+ * @return FALSE on error
  */
 
-INLINE int gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h)
+INLINE BOOL gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h)
 {
 	GDI_RECT inv;
 	GDI_RECT rgn;
@@ -374,13 +376,13 @@ INLINE int gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h)
 	HGDI_RGN cinvalid;
 
 	if (!hdc->hwnd)
-		return 0;
+		return TRUE;
 
 	if (!hdc->hwnd->invalid)
-		return 0;
+		return TRUE;
 
 	if (w == 0 || h == 0)
-		return 0;
+		return TRUE;
 
 	cinvalid = hdc->hwnd->cinvalid;
 
@@ -392,7 +394,7 @@ INLINE int gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h)
 		new_cnt = hdc->hwnd->count * 2;
 		new_rgn = (HGDI_RGN) realloc(cinvalid, sizeof(GDI_RGN) * new_cnt);
 		if (!new_rgn)
-			return -1;
+			return FALSE;
 		hdc->hwnd->count = new_cnt;
 		cinvalid = new_rgn;
 	}
@@ -409,7 +411,7 @@ INLINE int gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h)
 		invalid->w = w;
 		invalid->h = h;
 		invalid->null = 0;
-		return 0;
+		return TRUE;
 	}
 
 	gdi_CRgnToRect(x, y, w, h, &rgn);
@@ -435,5 +437,5 @@ INLINE int gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h)
 
 	gdi_RectToRgn(&inv, invalid);
 
-	return 0;
+	return TRUE;
 }

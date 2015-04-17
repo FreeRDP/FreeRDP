@@ -970,6 +970,7 @@ static BOOL update_send_surface_frame_bits(rdpContext* context, SURFACE_BITS_COM
 	s = fastpath_update_pdu_init(rdp->fastpath);
 	if (!s)
 		return FALSE;
+
 	if (!Stream_EnsureRemainingCapacity(s, SURFCMD_SURFACE_BITS_HEADER_LENGTH + (int) cmd->bitmapDataLength + 16))
 		goto out_fail;
 
@@ -986,7 +987,7 @@ static BOOL update_send_surface_frame_bits(rdpContext* context, SURFACE_BITS_COM
 	if (last)
 	{
 		if (!update_write_surfcmd_frame_marker(s, SURFACECMD_FRAMEACTION_END, frameId))
-			return FALSE;
+			goto out_fail;
 	}
 
 	ret = fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, s, cmd->skipCompression);
@@ -1748,7 +1749,7 @@ static BOOL update_send_pointer_color(rdpContext* context, POINTER_COLOR_UPDATE*
 	if (!s)
 		return FALSE;
 
-    if (!update_write_pointer_color(s, pointer_color))
+	if (!update_write_pointer_color(s, pointer_color))
 		goto out_fail;
 
 	ret = fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_COLOR, s, FALSE);

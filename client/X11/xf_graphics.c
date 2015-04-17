@@ -111,6 +111,7 @@ BOOL xf_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 	XImage* image;
 	int width, height;
 	xfContext* xfc = (xfContext*) context;
+	BOOL ret = TRUE;
 
 	width = bitmap->right - bitmap->left + 1;
 	height = bitmap->bottom - bitmap->top + 1;
@@ -127,7 +128,7 @@ BOOL xf_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 
 	XFree(image);
 
-	gdi_InvalidateRegion(xfc->hdc, bitmap->left, bitmap->top, width, height);
+	ret = gdi_InvalidateRegion(xfc->hdc, bitmap->left, bitmap->top, width, height);
 
 	xf_unlock_x11(xfc, FALSE);
 	return TRUE;
@@ -451,16 +452,15 @@ BOOL xf_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height
 BOOL xf_Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor)
 {
 	xfContext* xfc = (xfContext*) context;
+	BOOL ret = TRUE;
 
 	xf_lock_x11(xfc, FALSE);
 
 	if (xfc->drawing == xfc->primary)
-	{
-		gdi_InvalidateRegion(xfc->hdc, x, y, width, height);
-	}
+		ret = gdi_InvalidateRegion(xfc->hdc, x, y, width, height);
 
 	xf_unlock_x11(xfc, FALSE);
-	return TRUE;
+	return ret;
 }
 
 /* Graphics Module */
