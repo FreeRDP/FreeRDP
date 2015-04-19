@@ -738,51 +738,26 @@ static void test_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 
 static void test_server_mainloop(freerdp_listener* instance)
 {
-	int i;
-	int fds;
-	int max_fds;
-	int rcount;
-	void* rfds[32];
-	fd_set rfds_set;
+	HANDLE handles[32];
+	DWORD count;
+	DWORD status;
 
 	while (1)
 	{
-		rcount = 0;
+		count = 0;
 
-		memset(rfds, 0, sizeof(rfds));
-		if (instance->GetFileDescriptor(instance, rfds, &rcount) != TRUE)
+		if (instance->GetEventHandles(instance, handles, &count))
 		{
-			WLog_ERR(TAG, "Failed to get FreeRDP file descriptor");
+			WLog_ERR(TAG, "Failed to get FreeRDP event handles");
 			break;
 		}
 
-		max_fds = 0;
-		FD_ZERO(&rfds_set);
+		status = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
 
-		for (i = 0; i < rcount; i++)
+		if (WAIT_FAILED == status)
 		{
-			fds = (int)(long)(rfds[i]);
-
-			if (fds > max_fds)
-				max_fds = fds;
-
-			FD_SET(fds, &rfds_set);
-		}
-
-		if (max_fds == 0)
+			WLog_ERR(TAG, "select failed");
 			break;
-
-		if (select(max_fds + 1, &rfds_set, NULL, NULL, NULL) == -1)
-		{
-			/* these are not really errors */
-			if (!((errno == EAGAIN) ||
-				(errno == EWOULDBLOCK) ||
-				(errno == EINPROGRESS) ||
-				(errno == EINTR))) /* signal occurred */
-			{
-				WLog_ERR(TAG, "select failed");
-				break;
-			}
 		}
 
 		if (instance->CheckFileDescriptor(instance) != TRUE)
