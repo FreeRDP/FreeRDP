@@ -192,7 +192,7 @@ int winpr_image_bitmap_read_fp(wImage* image, FILE* fp)
 
 	image->bitsPerPixel = bi.biBitCount;
 	image->bytesPerPixel = (image->bitsPerPixel / 8);
-	image->scanline = (bi.biSizeImage / bi.biHeight);
+	image->scanline = (bi.biSizeImage / image->height);
 
 	image->data = (BYTE*) malloc(bi.biSizeImage);
 
