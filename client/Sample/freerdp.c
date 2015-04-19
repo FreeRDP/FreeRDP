@@ -53,7 +53,11 @@ static int tf_context_new(freerdp* instance, rdpContext* context)
 
 static void tf_context_free(freerdp* instance, rdpContext* context)
 {
-
+	if (context && context->channels)
+	{
+		freerdp_channels_close(context->channels, instance);
+		freerdp_channels_free(context->channels);
+	}
 }
 
 static void tf_begin_paint(rdpContext* context)
@@ -72,10 +76,8 @@ static void tf_end_paint(rdpContext* context)
 
 static BOOL tf_pre_connect(freerdp* instance)
 {
-	tfContext* tfc;
 	rdpSettings* settings;
 
-	tfc = (tfContext*) instance->context;
 
 	settings = instance->settings;
 
@@ -109,10 +111,7 @@ static BOOL tf_pre_connect(freerdp* instance)
 
 static BOOL tf_post_connect(freerdp* instance)
 {
-	rdpGdi* gdi;
-
 	gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT | CLRBUF_16BPP | CLRBUF_32BPP, NULL);
-	gdi = instance->context->gdi;
 
 	instance->update->BeginPaint = tf_begin_paint;
 	instance->update->EndPaint = tf_end_paint;
@@ -124,13 +123,9 @@ static BOOL tf_post_connect(freerdp* instance)
 
 static void* tf_client_thread_proc(freerdp* instance)
 {
-	int i;
 	DWORD nCount;
 	DWORD status;
 	HANDLE handles[64];
-	rdpChannels* channels;
-
-	channels = instance->context->channels;
 
 	if (!freerdp_connect(instance))
 	{
@@ -138,7 +133,7 @@ static void* tf_client_thread_proc(freerdp* instance)
 		return NULL;
 	}
 
-	while (1)
+	while (!freerdp_shall_disconnect(instance))
 	{
 		nCount = freerdp_get_event_handles(instance->context, &handles[0]);
 
@@ -158,9 +153,6 @@ static void* tf_client_thread_proc(freerdp* instance)
 	}
 
 	freerdp_disconnect(instance);
-	freerdp_channels_close(channels, instance);
-	freerdp_channels_free(channels);
-	freerdp_free(instance);
 
 	ExitThread(0);
 	return NULL;
@@ -171,7 +163,6 @@ int main(int argc, char* argv[])
 	int status;
 	HANDLE thread;
 	freerdp* instance;
-	rdpChannels* channels;
 
 	instance = freerdp_new();
 	if (!instance)
@@ -191,8 +182,6 @@ int main(int argc, char* argv[])
 		exit(1);
 	}
 
-	channels = instance->context->channels;
-
 	status = freerdp_client_settings_parse_command_line(instance->settings, argc, argv, FALSE);
 
 	if (status < 0)
@@ -206,6 +195,8 @@ int main(int argc, char* argv[])
 			tf_client_thread_proc, instance, 0, NULL);
 
 	WaitForSingleObject(thread, INFINITE);
+	freerdp_context_free(instance);
+	freerdp_free(instance);
 
 	return 0;
 }
