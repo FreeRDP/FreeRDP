@@ -656,12 +656,9 @@ static void tf_peer_suppress_output(rdpContext* context, BYTE allow, RECTANGLE_1
 
 static void* test_peer_mainloop(void* arg)
 {
-	int i;
-	int fds;
-	int max_fds;
-	int rcount;
-	void* rfds[32];
-	fd_set rfds_set;
+	HANDLE handles[32];
+	DWORD count;
+	DWORD status;
 	testPeerContext* context;
 	freerdp_peer* client = (freerdp_peer*) arg;
 
@@ -704,59 +701,16 @@ static void* test_peer_mainloop(void* arg)
 
 	while (1)
 	{
-		rcount = 0;
+		count = 0;
+		handles[count++] = client->GetEventHandle(client);
+		handles[count++] = WTSVirtualChannelManagerGetEventHandle(context->vcm);
 
-		memset(rfds, 0, sizeof(rfds));
-		if (client->GetFileDescriptor(client, rfds, &rcount) != TRUE)
+		status = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
+
+		if (status == WAIT_FAILED)
 		{
-			WLog_ERR(TAG, "Failed to get FreeRDP file descriptor");
+			WLog_ERR(TAG, "WaitForMultipleObjects failed (errno: %d)", errno);
 			break;
-		}
-
-#ifndef _WIN32
-		/* winsock's select() only works with sockets ! */
-		WTSVirtualChannelManagerGetFileDescriptor(context->vcm, rfds, &rcount);
-#endif
-
-		max_fds = 0;
-		FD_ZERO(&rfds_set);
-
-		for (i = 0; i < rcount; i++)
-		{
-			fds = (int)(long)(rfds[i]);
-
-			if (fds > max_fds)
-				max_fds = fds;
-
-			FD_SET(fds, &rfds_set);
-		}
-
-		if (max_fds == 0)
-			break;
-
-		if (select(max_fds + 1, &rfds_set, NULL, NULL, NULL) == -1)
-		{
-#ifdef _WIN32
-			/* error codes set by windows sockets are not made available through errno ! */
-			int wsa_error = WSAGetLastError();
-			if (!((wsa_error == WSAEWOULDBLOCK) ||
-				(wsa_error == WSAEINPROGRESS) ||
-				(wsa_error == WSAEINTR)))
-			{
-				WLog_ERR(TAG, "select failed (WSAGetLastError: %d)", wsa_error);
-				break;
-			}
-#else
-			/* these are not really errors */
-			if (!((errno == EAGAIN) ||
-				(errno == EWOULDBLOCK) ||
-				(errno == EINPROGRESS) ||
-				(errno == EINTR))) /* signal occurred */
-			{
-				WLog_ERR(TAG, "select failed (errno: %d)", errno);
-				break;
-			}
-#endif
 		}
 
 		if (client->CheckFileDescriptor(client) != TRUE)
