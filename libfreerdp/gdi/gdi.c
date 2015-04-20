@@ -529,7 +529,8 @@ static BOOL gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 		status = freerdp_image_copy(pDstData, gdi->format, nDstStep, nXDst, nYDst,
 				nWidth, nHeight, pSrcData, gdi->format, nSrcStep, nXSrc, nYSrc, gdi->palette);
 
-		return gdi_InvalidateRegion(gdi->primary->hdc, nXDst, nYDst, nWidth, nHeight);
+		if (!gdi_InvalidateRegion(gdi->primary->hdc, nXDst, nYDst, nWidth, nHeight))
+			return FALSE;
 	}
 	return TRUE;
 }

@@ -422,6 +422,11 @@ BOOL xf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 
 		image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
 				(char*) pSrcData, nWidth, nHeight, xfc->scanline_pad, 0);
+		if (!image)
+		{
+			xf_unlock_x11(xfc, FALSE);
+			return FALSE;
+		}
 
 		nWidth = bitmap->destRight - bitmap->destLeft + 1; /* clip width */
 		nHeight = bitmap->destBottom - bitmap->destTop + 1; /* clip height */
@@ -434,6 +439,9 @@ BOOL xf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 		ret = gdi_InvalidateRegion(xfc->hdc, nXDst, nYDst, nWidth, nHeight);
 
 		xf_unlock_x11(xfc, FALSE);
+
+		if (!ret)
+			break;
 	}
 	return ret;
 }
@@ -665,7 +673,10 @@ BOOL xf_gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* mult
 				rectangle->width, rectangle->height);
 
 		if (xfc->drawing == xfc->primary)
-			ret = gdi_InvalidateRegion(xfc->hdc, rectangle->left, rectangle->top, rectangle->width, rectangle->height);
+		{
+			if (!(ret = gdi_InvalidateRegion(xfc->hdc, rectangle->left, rectangle->top, rectangle->width, rectangle->height)))
+				break;
+		}
 	}
 
 	xf_unlock_x11(xfc, FALSE);
@@ -716,7 +727,6 @@ BOOL xf_gdi_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
 static BOOL xf_gdi_invalidate_poly_region(xfContext* xfc, XPoint* points, int npoints, BOOL autoclose)
 {
 	int i, x, y, x1, y1, x2, y2, w, h;
-	BOOL ret = TRUE;
 
 	x1 = points[0].x;
 	y1 = points[0].y;
@@ -749,9 +759,10 @@ static BOOL xf_gdi_invalidate_poly_region(xfContext* xfc, XPoint* points, int np
 		x1 = x2;
 		y1 = y2;
 
-		ret = gdi_InvalidateRegion(xfc->hdc, x, y, w, h);
+		if (!gdi_InvalidateRegion(xfc->hdc, x, y, w, h))
+			return FALSE;
 	}
-	return ret;
+	return TRUE;
 }
 
 BOOL xf_gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
