@@ -98,21 +98,6 @@ typedef struct _WINPR_BIO_SIMPLE_SOCKET WINPR_BIO_SIMPLE_SOCKET;
 static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown);
 static int transport_bio_simple_uninit(BIO* bio);
 
-static void transport_bio_simple_check_reset_event(BIO* bio)
-{
-	u_long nbytes = 0;
-	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) bio->ptr;
-
-#ifndef _WIN32
-	return;
-#endif
-
-	_ioctlsocket(ptr->socket, FIONREAD, &nbytes);
-
-	if (nbytes < 1)
-		WSAResetEvent(ptr->hEvent);
-}
-
 long transport_bio_simple_callback(BIO* bio, int mode, const char* argp, int argi, long argl, long ret)
 {
 	return 1;
@@ -164,7 +149,6 @@ static int transport_bio_simple_read(BIO* bio, char* buf, int size)
 
 	if (status > 0)
 	{
-		transport_bio_simple_check_reset_event(bio);
 		return status;
 	}
 
@@ -185,8 +169,6 @@ static int transport_bio_simple_read(BIO* bio, char* buf, int size)
 	{
 		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 	}
-
-	transport_bio_simple_check_reset_event(bio);
 
 	return -1;
 }
@@ -378,13 +360,13 @@ static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown)
 	bio->init = 1;
 
 #ifdef _WIN32
-		ptr->hEvent = WSACreateEvent(); /* creates a manual reset event */
+		ptr->hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
 		if (!ptr->hEvent)
 			return 0;
 
 		/* WSAEventSelect automatically sets the socket in non-blocking mode */
-		WSAEventSelect(ptr->socket, ptr->hEvent, FD_READ | FD_CLOSE);
+		WSAEventSelect(ptr->socket, ptr->hEvent, FD_READ | FD_WRITE | FD_CLOSE);
 #else
 		ptr->hEvent = CreateFileDescriptorEvent(NULL, FALSE, FALSE, (int) ptr->socket);
 
