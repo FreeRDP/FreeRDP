@@ -477,9 +477,8 @@ BOOL ClipboardSetData(wClipboard* clipboard, UINT32 formatId, const void* data, 
 	free(clipboard->data);
 	clipboard->data = malloc(size);
 	if (!clipboard->data)
-	{
 		return FALSE;
-	}
+
 	memcpy(clipboard->data, data, size);
 	clipboard->size = size;
 
