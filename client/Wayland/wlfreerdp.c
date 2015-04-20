@@ -26,19 +26,23 @@
 
 #include "wlfreerdp.h"
 
-int wl_context_new(freerdp* instance, rdpContext* context)
+static int wl_context_new(freerdp* instance, rdpContext* context)
 {
 	context->channels = freerdp_channels_new();
 
 	return 0;
 }
 
-void wl_context_free(freerdp* instance, rdpContext* context)
+static void wl_context_free(freerdp* instance, rdpContext* context)
 {
-
+	if (context && context->channels)
+	{
+		freerdp_channels_close(context->channels, instance);
+		freerdp_channels_free(context->channels);
+	}
 }
 
-BOOL wl_begin_paint(rdpContext* context)
+static BOOL wl_begin_paint(rdpContext* context)
 {
 	rdpGdi* gdi;
 
@@ -47,7 +51,7 @@ BOOL wl_begin_paint(rdpContext* context)
 	return TRUE;
 }
 
-BOOL wl_end_paint(rdpContext* context)
+static BOOL wl_end_paint(rdpContext* context)
 {
 	rdpGdi* gdi;
 	wlfDisplay* display;
@@ -78,26 +82,35 @@ BOOL wl_end_paint(rdpContext* context)
 	return wlf_RefreshDisplay(display);
 }
 
-BOOL wl_pre_connect(freerdp* instance)
+static BOOL wl_pre_connect(freerdp* instance)
 {
 	wlfDisplay* display;
 	wlfInput* input;
 	wlfContext* context;
 
-	freerdp_channels_pre_connect(instance->context->channels, instance);
+	if (freerdp_channels_pre_connect(instance->context->channels, instance))
+		return FALSE;
 
 	context = (wlfContext*) instance->context;
+	if (!context)
+		return FALSE;
 
 	display = wlf_CreateDisplay();
+	if (!display)
+		return FALSE;
+
 	context->display = display;
 
 	input = wlf_CreateInput(context);
+	if (!input)
+		return FALSE;
+
 	context->input = input;
 
 	return TRUE;
 }
 
-BOOL wl_post_connect(freerdp* instance)
+static BOOL wl_post_connect(freerdp* instance)
 {
 	rdpGdi* gdi;
 	wlfWindow* window;
@@ -105,12 +118,19 @@ BOOL wl_post_connect(freerdp* instance)
 
 	gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT | CLRBUF_32BPP, NULL);
 	gdi = instance->context->gdi;
+	if (!gdi)
+		return FALSE;
 
 	context = (wlfContext*) instance->context;
 	window = wlf_CreateDesktopWindow(context, "FreeRDP", gdi->width, gdi->height, FALSE);
+	if (!window)
+		return FALSE;
 
 	 /* fill buffer with first image here */
 	window->data = malloc (gdi->width * gdi->height *4);
+	if (!window->data)
+		return FALSE;
+
 	memcpy(window->data, (void*) gdi->primary_buffer, gdi->width * gdi->height * 4);
 	instance->update->BeginPaint = wl_begin_paint;
 	instance->update->EndPaint = wl_end_paint;
@@ -118,14 +138,37 @@ BOOL wl_post_connect(freerdp* instance)
 	 /* put Wayland data in the context here */
 	context->window = window;
 
-	freerdp_channels_post_connect(instance->context->channels, instance);
+	if (freerdp_channels_post_connect(instance->context->channels, instance))
+		return FALSE;
 
 	wlf_UpdateWindowArea(context, window, 0, 0, gdi->width, gdi->height);
 
 	return TRUE;
 }
 
-BOOL wl_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
+static void wl_post_disconnect(freerdp* instance)
+{
+	wlfContext *context;
+	if (!instance)
+		return;
+
+	if (!instance->context)
+		return;
+
+	context = (wlfContext*) instance->context;
+
+	if (context->display)
+		wlf_DestroyDisplay(context, context->display);
+
+	if (context->input)
+		wlf_DestroyInput(context, context->input);
+
+	gdi_free(instance);
+	if (context->window)
+		wlf_DestroyWindow(context, context->window);
+}
+
+static BOOL wl_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
 {
 	char answer;
 
@@ -263,11 +306,13 @@ int main(int argc, char* argv[])
 	instance = freerdp_new();
 	instance->PreConnect = wl_pre_connect;
 	instance->PostConnect = wl_post_connect;
+	instance->PostDisconnect = wl_post_disconnect;
 	instance->VerifyCertificate = wl_verify_certificate;
 
 	instance->ContextSize = sizeof(wlfContext);
 	instance->ContextNew = wl_context_new;
 	instance->ContextFree = wl_context_free;
+
 	freerdp_context_new(instance);
 
 	status = freerdp_client_settings_parse_command_line_arguments(instance->settings, argc, argv, FALSE);
@@ -280,6 +325,10 @@ int main(int argc, char* argv[])
 	freerdp_client_load_addins(instance->context->channels, instance->settings);
 
 	wlfreerdp_run(instance);
+
+	freerdp_context_free(instance);
+
+	freerdp_free(instance);
 
 	return 0;
 }
