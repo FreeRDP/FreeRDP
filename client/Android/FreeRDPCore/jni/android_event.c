@@ -153,7 +153,6 @@ int android_process_event(ANDROID_EVENT_QUEUE* queue, freerdp* inst)
 		}
 		else if (event->type == EVENT_TYPE_CLIPBOARD)
 		{
-			BYTE* data;
 			UINT32 size;
 			UINT32 formatId;
 			ANDROID_EVENT_CLIPBOARD* clipboard_event = (ANDROID_EVENT_CLIPBOARD*) event;
@@ -164,14 +163,7 @@ int android_process_event(ANDROID_EVENT_QUEUE* queue, freerdp* inst)
 
 			if (size)
 			{
-				data = (BYTE*) malloc(size);
-
-				if (!data)
-					return -1;
-
-				CopyMemory(data, clipboard_event->data, size);
-
-				ClipboardSetData(afc->clipboard, formatId, (void*) data, size);
+				ClipboardSetData(afc->clipboard, formatId, clipboard_event->data, size);
 			}
 			else
 			{

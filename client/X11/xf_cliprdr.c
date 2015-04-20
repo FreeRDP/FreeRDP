@@ -270,7 +270,6 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 	UINT32 DstSize;
 	UINT32 formatId;
 	UINT32 altFormatId;
-	BYTE* pSrcData = NULL;
 	BYTE* pDstData = NULL;
 	xfCliprdrFormat* format;
 
@@ -286,7 +285,6 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 	}
 
 	formatId = 0;
-	altFormatId = 0;
 
 	switch (format->formatId)
 	{
@@ -308,17 +306,8 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 	}
 
 	SrcSize = (UINT32) size;
-	pSrcData = (BYTE*) malloc(SrcSize);
 
-	if (!pSrcData)
-		return;
-
-	CopyMemory(pSrcData, data, SrcSize);
-
-	bSuccess = ClipboardSetData(clipboard->system, formatId, (void*) pSrcData, SrcSize);
-
-	if (!bSuccess)
-		free(pSrcData);
+	bSuccess = ClipboardSetData(clipboard->system, formatId, data, SrcSize);
 
 	altFormatId = clipboard->requestedFormatId;
 
@@ -909,13 +898,11 @@ static int xf_cliprdr_server_format_data_request(CliprdrClientContext* context, 
 static int xf_cliprdr_server_format_data_response(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
 {
 	BOOL bSuccess;
-	BYTE* pSrcData;
 	BYTE* pDstData;
 	UINT32 DstSize;
 	UINT32 SrcSize;
 	UINT32 formatId;
 	UINT32 altFormatId;
-	xfCliprdrFormat* format;
 	BOOL nullTerminated = FALSE;
 	UINT32 size = formatDataResponse->dataLen;
 	BYTE* data = formatDataResponse->requestedFormatData;
@@ -925,7 +912,7 @@ static int xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	if (!clipboard->respond)
 		return 1;
 
-	format = xf_cliprdr_get_format_by_id(clipboard, clipboard->requestedFormatId);
+	xf_cliprdr_get_format_by_id(clipboard, clipboard->requestedFormatId);
 
 	if (clipboard->data)
 	{
@@ -972,17 +959,8 @@ static int xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	}
 
 	SrcSize = (UINT32) size;
-	pSrcData = (BYTE*) malloc(SrcSize);
 
-	if (!pSrcData)
-		return -1;
-
-	CopyMemory(pSrcData, data, SrcSize);
-
-	bSuccess = ClipboardSetData(clipboard->system, formatId, (void*) pSrcData, SrcSize);
-
-	if (!bSuccess)
-		free (pSrcData);
+	bSuccess = ClipboardSetData(clipboard->system, formatId, data, SrcSize);
 
 	if (bSuccess && altFormatId)
 	{
