@@ -76,6 +76,7 @@ struct rdp_transport
 	BOOL GatewayEnabled;
 	CRITICAL_SECTION ReadLock;
 	CRITICAL_SECTION WriteLock;
+	ULONG written;
 };
 
 wStream* transport_send_stream_init(rdpTransport* transport, int size);

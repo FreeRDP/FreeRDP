@@ -576,10 +576,12 @@ int transport_write(rdpTransport* transport, wStream* s)
 {
 	int length;
 	int status = -1;
+	int writtenlength = 0;
 
 	EnterCriticalSection(&(transport->WriteLock));
 
 	length = Stream_GetPosition(s);
+	writtenlength = length;
 	Stream_SetPosition(s, 0);
 
 	if (length > 0)
@@ -637,8 +639,10 @@ int transport_write(rdpTransport* transport, wStream* s)
 		length -= status;
 		Stream_Seek(s, status);
 	}
+	transport->written += writtenlength;
 
 out_cleanup:
+
 	if (status < 0)
 	{
 		/* A write error indicates that the peer has dropped the connection */
