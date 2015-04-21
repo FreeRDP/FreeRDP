@@ -637,6 +637,7 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 			if (status < 0)
 			{
 				BIO_free(bio);
+				free(x509_str);
 				free(filename);
 				free(fullpath);
 				fclose (fp);
@@ -1128,7 +1129,11 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 		}
 
 		if (status < 0)
+		{
+			free(x509_str);
+			BIO_free(bio);
 			return -1;
+		}
 
 		length = offset;
 		x509_str[length] = '\0';
