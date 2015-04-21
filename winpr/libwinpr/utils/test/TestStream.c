@@ -224,7 +224,7 @@ fail:
 } while (0)
 
 
-static BOOL TestStream_Reading()
+static BOOL TestStream_Reading(void)
 {
 	BYTE src[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
 
