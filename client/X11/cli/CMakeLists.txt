@@ -28,7 +28,11 @@ set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "xfreerdp" RUNTIME_O
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} xfreerdp-client)
 
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+if(OPENBSD)
+	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS} ossaudio)
+else()
+	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+endif()
 
 install(TARGETS ${MODULE_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
 

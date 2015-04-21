@@ -106,7 +106,7 @@ static DWORD GetNumberOfProcessors()
 		int mib[4];
 		size_t length = sizeof(numCPUs);
 		mib[0] = CTL_HW;
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
 		mib[1] = HW_NCPU;
 #else
 		mib[1] = HW_AVAILCPU;

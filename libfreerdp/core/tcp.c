@@ -52,7 +52,7 @@
 #include <sys/filio.h>
 #endif
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
 #ifndef SOL_TCP
 #define SOL_TCP	IPPROTO_TCP
 #endif

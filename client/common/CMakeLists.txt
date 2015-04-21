@@ -76,7 +76,11 @@ set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
 	
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr freerdp)
 
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+if(OPENBSD)
+	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS} ossaudio)
+else()
+	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+endif()
 
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries EXPORT FreeRDPTargets)
 

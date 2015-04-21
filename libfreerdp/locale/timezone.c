@@ -1523,7 +1523,7 @@ char* freerdp_get_unix_timezone_identifier()
 		return tzid;
 	}
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
 	fp = fopen("/var/db/zoneinfo", "r");
 #else
 	fp = fopen("/etc/timezone", "r");
@@ -1682,7 +1682,7 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 	local_time = localtime(&t);
 
 #ifdef HAVE_TM_GMTOFF
-	#if defined(__FreeBSD__)
+	#if defined(__FreeBSD__) || defined(__OpenBSD__)
 		if (local_time->tm_gmtoff >= 0)
 			clientTimeZone->bias = (UINT32) (local_time->tm_gmtoff / 60);
 		else

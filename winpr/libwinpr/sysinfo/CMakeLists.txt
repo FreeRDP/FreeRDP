@@ -17,7 +17,7 @@
 
 winpr_module_add(sysinfo.c)
 
-if((NOT WIN32) AND (NOT APPLE) AND (NOT ANDROID))
+if((NOT WIN32) AND (NOT APPLE) AND (NOT ANDROID) AND (NOT OPENBSD))
 	winpr_library_add(rt)
 endif()
 
