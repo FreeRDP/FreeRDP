@@ -688,7 +688,7 @@ BOOL rdg_in_channel_recv(rdpRdg* rdg)
 
 DWORD rdg_get_event_handles(rdpRdg* rdg, HANDLE* events, DWORD count)
 {
-	UINT32 nCount = 0;
+	DWORD nCount = 0;
 
 	assert(rdg != NULL);
 
@@ -973,7 +973,7 @@ BOOL rdg_tls_in_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int time
 BOOL rdg_out_channel_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int timeout)
 {
 	BOOL status;
-	UINT32 nCount;
+	DWORD nCount;
 	HANDLE events[8];
 
 	assert(hostname != NULL);
@@ -1011,7 +1011,7 @@ BOOL rdg_out_channel_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int
 BOOL rdg_in_channel_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int timeout)
 {
 	BOOL status;
-	UINT32 nCount;
+	DWORD nCount;
 	HANDLE events[8];
 
 	assert(hostname != NULL);
@@ -1049,7 +1049,7 @@ BOOL rdg_in_channel_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int 
 BOOL rdg_tunnel_connect(rdpRdg* rdg)
 {
 	BOOL status;
-	UINT32 nCount;
+	DWORD nCount;
 	HANDLE events[8];
 
 	rdg_send_handshake(rdg);

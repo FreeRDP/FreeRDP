@@ -656,10 +656,10 @@ out_cleanup:
 	return status;
 }
 
-UINT32 transport_get_event_handles(rdpTransport* transport, HANDLE* events, DWORD count)
+DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events, DWORD count)
 {
-	UINT32 nCount = 0;
-	UINT32 tmp;
+	DWORD nCount = 0;
+	DWORD tmp;
 
 	if (!transport->GatewayEnabled)
 	{
@@ -696,8 +696,8 @@ UINT32 transport_get_event_handles(rdpTransport* transport, HANDLE* events, DWOR
 
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 {
-	UINT32 index;
-	UINT32 nCount;
+	DWORD index;
+	DWORD nCount;
 	HANDLE events[64];
 
 	nCount = transport_get_event_handles(transport, events, 64);

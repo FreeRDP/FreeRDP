@@ -224,7 +224,7 @@ BOOL freerdp_check_fds(freerdp* instance)
 
 DWORD freerdp_get_event_handles(rdpContext* context, HANDLE* events, DWORD count)
 {
-	UINT32 nCount = 0;
+	DWORD nCount = 0;
 
 	nCount += transport_get_event_handles(context->rdp->transport, events, count);
 
