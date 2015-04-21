@@ -73,7 +73,7 @@ static BOOL tf_end_paint(rdpContext* context)
 
 	if (gdi->primary->hdc->hwnd->invalid->null)
 		return TRUE;
-    return TRUE;
+	return TRUE;
 }
 
 static BOOL tf_pre_connect(freerdp* instance)

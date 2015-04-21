@@ -600,7 +600,7 @@ static BOOL xf_rail_notify_icon_delete(rdpContext* context, WINDOW_ORDER_INFO* o
 
 static BOOL xf_rail_monitored_desktop(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitoredDesktop)
 {
-		return TRUE;
+	return TRUE;
 }
 
 static BOOL xf_rail_non_monitored_desktop(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)

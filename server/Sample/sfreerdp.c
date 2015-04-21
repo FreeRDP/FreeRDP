@@ -558,7 +558,7 @@ BOOL tf_peer_activate(freerdp_peer* client)
 BOOL tf_peer_synchronize_event(rdpInput* input, UINT32 flags)
 {
 	WLog_DBG(TAG, "Client sent a synchronize event (flags:0x%X)", flags);
-    return TRUE;
+	return TRUE;
 }
 
 BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
@@ -614,26 +614,26 @@ BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 	{
 
 	}
-    return TRUE;
+	return TRUE;
 }
 
 BOOL tf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	WLog_DBG(TAG, "Client sent a unicode keyboard event (flags:0x%X code:0x%X)", flags, code);
-    return TRUE;
+	return TRUE;
 }
 
 BOOL tf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	//WLog_DBG(TAG, "Client sent a mouse event (flags:0x%X pos:%d,%d)", flags, x, y);
 	test_peer_draw_icon(input->context->peer, x + 10, y);
-    return TRUE;
+	return TRUE;
 }
 
 BOOL tf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	//WLog_DBG(TAG, "Client sent an extended mouse event (flags:0x%X pos:%d,%d)", flags, x, y);
-    return TRUE;
+	return TRUE;
 }
 
 static BOOL tf_peer_refresh_rect(rdpContext* context, BYTE count, RECTANGLE_16* areas)
@@ -645,7 +645,7 @@ static BOOL tf_peer_refresh_rect(rdpContext* context, BYTE count, RECTANGLE_16* 
 	{
 		WLog_DBG(TAG, "  (%d, %d) (%d, %d)", areas[i].left, areas[i].top, areas[i].right, areas[i].bottom);
 	}
-    return TRUE;
+	return TRUE;
 }
 
 static BOOL tf_peer_suppress_output(rdpContext* context, BYTE allow, RECTANGLE_16* area)
@@ -658,7 +658,7 @@ static BOOL tf_peer_suppress_output(rdpContext* context, BYTE allow, RECTANGLE_1
 	{
 		WLog_DBG(TAG, "Client minimized and suppress output.");
 	}
-    return TRUE;
+	return TRUE;
 }
 
 static void* test_peer_mainloop(void* arg)
