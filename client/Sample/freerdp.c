@@ -135,7 +135,13 @@ static void* tf_client_thread_proc(freerdp* instance)
 
 	while (!freerdp_shall_disconnect(instance))
 	{
-		nCount = freerdp_get_event_handles(instance->context, &handles[0]);
+		nCount = freerdp_get_event_handles(instance->context, &handles[0], 64);
+
+		if (nCount == 0)
+		{
+				WLog_ERR(TAG, "%s: freerdp_get_event_handles failed", __FUNCTION__);
+				break;
+		}
 
 		status = WaitForMultipleObjects(nCount, handles, FALSE, 100);
 
