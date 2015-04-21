@@ -313,7 +313,7 @@ void* shadow_server_thread(rdpShadowServer* server)
 
 	while (1)
 	{
-		nCount = 0;
+		nCount = 32;
 
 		if (listener->GetEventHandles(listener, events, &nCount) < 0)
 		{

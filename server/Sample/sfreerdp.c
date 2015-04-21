@@ -744,7 +744,7 @@ static void test_server_mainloop(freerdp_listener* instance)
 
 	while (1)
 	{
-		count = 0;
+		count = 32;
 
 		if (instance->GetEventHandles(instance, handles, &count))
 		{
