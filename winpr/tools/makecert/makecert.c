@@ -810,8 +810,8 @@ int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, char* pa
 	filename = calloc(length + 8, sizeof(char));
 	if (!filename)
 		return -1;
-	strncpy(filename, length + 8, context->output_file);
-	strncpy(&filename[length], 8, ".key");
+	strncpy(filename, context->output_file, length + 8);
+	strncpy(&filename[length], ".key", 8);
 
 	if (path)
 		fullpath = GetCombinedPath(path, filename);
