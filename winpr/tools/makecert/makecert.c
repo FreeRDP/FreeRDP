@@ -861,6 +861,7 @@ int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, char* pa
 
 		if (status < 0)
 		{
+			free(x509_str);
 			free (filename);
 			free(fullpath);
 			fclose(fp);
