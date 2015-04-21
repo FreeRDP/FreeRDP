@@ -313,9 +313,8 @@ void* shadow_server_thread(rdpShadowServer* server)
 
 	while (1)
 	{
-		nCount = 32;
-
-		if (listener->GetEventHandles(listener, events, &nCount) < 0)
+		nCount = listener->GetEventHandles(listener, events, 32);
+		if (0 == nCount)
 		{
 			WLog_ERR(TAG, "Failed to get FreeRDP file descriptor");
 			break;

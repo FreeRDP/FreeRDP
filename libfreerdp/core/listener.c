@@ -255,25 +255,23 @@ static BOOL freerdp_listener_get_fds(freerdp_listener* instance, void** rfds, in
 	return TRUE;
 }
 
-int freerdp_listener_get_event_handles(freerdp_listener* instance, HANDLE* events, DWORD* nCount)
+DWORD freerdp_listener_get_event_handles(freerdp_listener* instance, HANDLE* events, DWORD nCount)
 {
 	int index;
-	DWORD count = *nCount;
 	rdpListener* listener = (rdpListener*) instance->listener;
 
 	if (listener->num_sockfds < 1)
-		return -1;
+		return 0;
 
-	if (listener->num_sockfds > count)
-		return -1;
+	if (listener->num_sockfds > nCount)
+		return 0;
 
 	for (index = 0; index < listener->num_sockfds; index++)
 	{
 		events[index] = listener->events[index];
 	}
-	*nCount = listener->num_sockfds;
 
-	return 0;
+	return listener->num_sockfds;
 }
 
 static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
