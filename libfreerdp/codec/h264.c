@@ -71,7 +71,7 @@ struct _H264_CONTEXT_OPENH264
 {
 	ISVCDecoder* pDecoder;
 	ISVCEncoder* pEncoder;
-	SEncParamBase EncParamBase;
+	SEncParamExt EncParamExt;
 };
 typedef struct _H264_CONTEXT_OPENH264 H264_CONTEXT_OPENH264;
 
@@ -150,7 +150,7 @@ static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSiz
 	return 1;
 }
 
-static int openh264_compress(H264_CONTEXT* h264, UINT32 TargetFrameSizeInBits, BYTE** ppDstData, UINT32* pDstSize)
+static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstSize)
 {
 	int i, j;
 	int status;
@@ -165,17 +165,41 @@ static int openh264_compress(H264_CONTEXT* h264, UINT32 TargetFrameSizeInBits, B
 	if (!h264->pYUVData[0] || !h264->pYUVData[1] || !h264->pYUVData[2])
 		return -1;
 
-	if (sys->EncParamBase.iPicWidth != h264->width ||
-		sys->EncParamBase.iPicHeight != h264->height)
+	if (sys->EncParamExt.iPicWidth != h264->width ||
+		sys->EncParamExt.iPicHeight != h264->height)
 	{
-		sys->EncParamBase.iUsageType = SCREEN_CONTENT_REAL_TIME;
-		sys->EncParamBase.iPicWidth = h264->width;
-		sys->EncParamBase.iPicHeight = h264->height;
-		sys->EncParamBase.iTargetBitrate = TargetFrameSizeInBits * 30;
-		sys->EncParamBase.iRCMode = RC_BITRATE_MODE;
-		sys->EncParamBase.fMaxFrameRate = 30.0f;
+		status = (*sys->pEncoder)->GetDefaultParams(sys->pEncoder, &sys->EncParamExt);
 
-		status = (*sys->pEncoder)->Initialize(sys->pEncoder, &sys->EncParamBase);
+		if (status < 0)
+		{
+			WLog_ERR(TAG, "Failed to get OpenH264 default parameters (status=%ld)", status);
+			return status;
+		}
+
+		sys->EncParamExt.iUsageType = SCREEN_CONTENT_REAL_TIME;
+		sys->EncParamExt.iPicWidth = h264->width;
+		sys->EncParamExt.iPicHeight = h264->height;
+		sys->EncParamExt.iTargetBitrate = h264->BitRate;
+		sys->EncParamExt.iRCMode = RC_BITRATE_MODE;
+		sys->EncParamExt.fMaxFrameRate = h264->FrameRate;
+		sys->EncParamExt.iMaxBitrate = UNSPECIFIED_BIT_RATE;
+		sys->EncParamExt.bEnableDenoise = 0;
+		sys->EncParamExt.bEnableLongTermReference = 0;
+		sys->EncParamExt.bEnableFrameSkip = 0;
+		sys->EncParamExt.iSpatialLayerNum = 1;
+		sys->EncParamExt.iMultipleThreadIdc = h264->NumberOfThreads;
+		sys->EncParamExt.sSpatialLayers[0].fFrameRate = h264->FrameRate;
+		sys->EncParamExt.sSpatialLayers[0].iVideoWidth = sys->EncParamExt.iPicWidth;
+		sys->EncParamExt.sSpatialLayers[0].iVideoHeight = sys->EncParamExt.iPicHeight;
+		sys->EncParamExt.sSpatialLayers[0].iSpatialBitrate = sys->EncParamExt.iTargetBitrate;
+		sys->EncParamExt.sSpatialLayers[0].iMaxSpatialBitrate = sys->EncParamExt.iMaxBitrate;
+
+		if (sys->EncParamExt.iMultipleThreadIdc > 1)
+		{
+			sys->EncParamExt.sSpatialLayers[0].sSliceCfg.uiSliceMode = SM_AUTO_SLICE;
+		}
+
+		status = (*sys->pEncoder)->InitializeExt(sys->pEncoder, &sys->EncParamExt);
 
 		if (status < 0)
 		{
@@ -183,18 +207,35 @@ static int openh264_compress(H264_CONTEXT* h264, UINT32 TargetFrameSizeInBits, B
 			return status;
 		}
 	}
-	else if (sys->EncParamBase.iTargetBitrate != TargetFrameSizeInBits * 30)
+	else
 	{
-		sys->EncParamBase.iTargetBitrate = TargetFrameSizeInBits * 30;
-		bitrate.iLayer = SPATIAL_LAYER_ALL;
-		bitrate.iBitrate = TargetFrameSizeInBits * 30;
-
-		status = (*sys->pEncoder)->SetOption(sys->pEncoder, ENCODER_OPTION_BITRATE, &bitrate);
-
-		if (status < 0)
+		if (sys->EncParamExt.iTargetBitrate != h264->BitRate)
 		{
-			WLog_ERR(TAG, "Failed to set encoder bitrate (status=%ld)", status);
-			return status;
+			sys->EncParamExt.iTargetBitrate = h264->BitRate;
+			bitrate.iLayer = SPATIAL_LAYER_ALL;
+			bitrate.iBitrate = h264->BitRate;
+
+			status = (*sys->pEncoder)->SetOption(sys->pEncoder, ENCODER_OPTION_BITRATE,
+				&bitrate);
+
+			if (status < 0)
+			{
+				WLog_ERR(TAG, "Failed to set encoder bitrate (status=%ld)", status);
+				return status;
+			}
+		}
+		if (sys->EncParamExt.fMaxFrameRate != h264->FrameRate)
+		{
+			sys->EncParamExt.fMaxFrameRate = h264->FrameRate;
+
+			status = (*sys->pEncoder)->SetOption(sys->pEncoder, ENCODER_OPTION_FRAME_RATE,
+				&sys->EncParamExt.fMaxFrameRate);
+
+			if (status < 0)
+			{
+				WLog_ERR(TAG, "Failed to set encoder framerate (status=%ld)", status);
+				return status;
+			}
 		}
 	}
 
@@ -598,8 +639,7 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 }
 
 int h264_compress(H264_CONTEXT* h264, BYTE* pSrcData, DWORD SrcFormat,
-		int nSrcStep, int nSrcWidth, int nSrcHeight, UINT32 TargetFrameSizeInBits,
-		BYTE** ppDstData, UINT32* pDstSize)
+		int nSrcStep, int nSrcWidth, int nSrcHeight, BYTE** ppDstData, UINT32* pDstSize)
 {
 	int status;
 	prim_size_t roi;
@@ -626,7 +666,7 @@ int h264_compress(H264_CONTEXT* h264, BYTE* pSrcData, DWORD SrcFormat,
 
 	prims->RGBToYUV420_8u_P3AC4R(pSrcData, nSrcStep, h264->pYUVData, h264->iStride, &roi);
 
-	status = h264->subsystem->Compress(h264, TargetFrameSizeInBits, ppDstData, pDstSize);
+	status = h264->subsystem->Compress(h264, ppDstData, pDstSize);
 
 	free(h264->pYUVData[0]);
 	free(h264->pYUVData[1]);
@@ -675,6 +715,13 @@ H264_CONTEXT* h264_context_new(BOOL Compressor)
 		h264->Compressor = Compressor;
 
 		h264->subsystem = &g_Subsystem_dummy;
+
+		if (Compressor)
+		{
+			/* Default compressor settings, may be changed by caller */
+			h264->BitRate = 1000000;
+			h264->FrameRate = 30;
+		}
 
 		if (!h264_context_init(h264))
 		{
