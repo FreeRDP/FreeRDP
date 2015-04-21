@@ -707,7 +707,8 @@ char* PCSC_ConvertReaderNameToWinSCard(const char* name)
 	 */
 	if (!name)
 		return NULL;
-		
+	memset(tokens, 0, sizeof(tokens));
+	
 	length = strlen(name);
 
 	if (length < 10)
@@ -753,7 +754,7 @@ char* PCSC_ConvertReaderNameToWinSCard(const char* name)
 	if ((index < 0) || (slot < 0))
 		return NULL;
 
-	if (*(tokens[ctoken][1] - 1) == ')')
+	if (tokens[ctoken] && tokens[ctoken][1] && *(tokens[ctoken][1] - 1) == ')')
 	{
 		while ((*(tokens[ctoken][0]) != '(') && (ctoken > 0))
 			ctoken--;
@@ -2358,7 +2359,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_Internal(SCARDHANDLE hCard, DWORD dw
 WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE pbAttr, LPDWORD pcbAttrLen)
 {
 	int length = 0;
-	char* namePCSC;
+	char* namePCSC = NULL;
 	char* nameWinSCard;
 	DWORD cbAttrLen = 0;
 	char* pbAttrA = NULL;
@@ -2414,6 +2415,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWOR
 	else
 	{
 		friendlyNameA = namePCSC;
+		namePCSC = NULL;
 	}
 
 	if (dwAttrId == SCARD_ATTR_DEVICE_FRIENDLY_NAME_W)
