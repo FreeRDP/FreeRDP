@@ -376,6 +376,7 @@ if(OPENBSD)
 	set(WITH_ALSA  "OFF")
 	set(WITH_PULSE "ON")
 	set(WITH_WAYLAND "OFF")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DHAVE_PTHREAD_GNU_EXT")
 endif()
 
 # Android

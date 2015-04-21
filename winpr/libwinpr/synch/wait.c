@@ -109,7 +109,7 @@ static long long ts_difftime(const struct timespec *o,
 #if !defined(HAVE_PTHREAD_GNU_EXT)
 #include <pthread.h>
 
-#if defined(__FreeBSD__) || defined(sun) || defined(__OpenBSD__)
+#if defined(__FreeBSD__) || defined(sun)
 /*the only way to get it work is to remove the static*/
 int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *timeout)
 #else
