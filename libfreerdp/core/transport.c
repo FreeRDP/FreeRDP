@@ -656,25 +656,38 @@ out_cleanup:
 	return status;
 }
 
-UINT32 transport_get_event_handles(rdpTransport* transport, HANDLE* events)
+UINT32 transport_get_event_handles(rdpTransport* transport, HANDLE* events, DWORD count)
 {
 	UINT32 nCount = 0;
+	UINT32 tmp;
 
 	if (!transport->GatewayEnabled)
 	{
-		if (events)
+		if (events && (nCount < count))
+		{
 			BIO_get_event(transport->frontBio, &events[nCount]);
-		nCount++;
+			nCount++;
+		}
 	}
 	else
 	{
 		if (transport->rdg)
 		{
-			nCount += rdg_get_event_handles(transport->rdg, events);
+			tmp = rdg_get_event_handles(transport->rdg, events, nCount - count);
+
+			if (tmp == 0)
+				return 0;
+
+			nCount = tmp;
 		}
 		else if (transport->tsg)
 		{
-			nCount += tsg_get_event_handles(transport->tsg, events);
+			tmp = tsg_get_event_handles(transport->tsg, events, nCount - count);
+
+			if (tmp == 0)
+				return 0;
+
+			nCount = tmp;
 		}
 	}
 
@@ -687,12 +700,13 @@ void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 	UINT32 nCount;
 	HANDLE events[64];
 
-	nCount = transport_get_event_handles(transport, events);
+	nCount = transport_get_event_handles(transport, events, 64);
+
+	*rcount = nCount;
 
 	for (index = 0; index < nCount; index++)
 	{
-		rfds[*rcount] = GetEventWaitObject(events[index]);
-		(*rcount)++;
+		rfds[index] = GetEventWaitObject(events[index]);
 	}
 }
 
@@ -858,7 +872,7 @@ static void* transport_client_thread(void* arg)
 	rdpRdp* rdp = context->rdp;
 
 	WLog_DBG(TAG, "Starting transport thread");
-	
+
 	nCount = 0;
 	handles[nCount++] = transport->stopEvent;
 	handles[nCount++] = transport->connectedEvent;
@@ -876,10 +890,16 @@ static void* transport_client_thread(void* arg)
 
 	while (1)
 	{
-		nCount = 0;
+		nCount = freerdp_get_event_handles(context, &handles[nCount], 64);
+
+		if (nCount == 0)
+		{
+			WLog_ERR(TAG, "freerdp_get_event_handles failed");
+			break;
+		}
+
 		handles[nCount++] = transport->stopEvent;
-		nCount += freerdp_get_event_handles(context, &handles[nCount]);
-		
+
 		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 
 		if (transport->layer == TRANSPORT_LAYER_CLOSED)

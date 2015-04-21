@@ -222,15 +222,19 @@ BOOL freerdp_check_fds(freerdp* instance)
 	return TRUE;
 }
 
-UINT32 freerdp_get_event_handles(rdpContext* context, HANDLE* events)
+DWORD freerdp_get_event_handles(rdpContext* context, HANDLE* events, DWORD count)
 {
 	UINT32 nCount = 0;
 
-	nCount += transport_get_event_handles(context->rdp->transport, events);
+	nCount += transport_get_event_handles(context->rdp->transport, events, count);
 
-	if (events)
-		events[nCount] = freerdp_channels_get_event_handle(context->instance);
-	nCount++;
+	if (nCount == 0)
+		return 0;
+
+	if (events && (nCount < count))
+		events[nCount++] = freerdp_channels_get_event_handle(context->instance);
+	else
+		return 0;
 
 	return nCount;
 }

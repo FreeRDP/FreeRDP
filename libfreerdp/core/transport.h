@@ -96,7 +96,7 @@ int transport_write(rdpTransport* transport, wStream* s);
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount);
 int transport_check_fds(rdpTransport* transport);
 
-UINT32 transport_get_event_handles(rdpTransport* transport, HANDLE* events);
+DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events, DWORD nCount);
 
 BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking);
 void transport_set_gateway_enabled(rdpTransport* transport, BOOL GatewayEnabled);

@@ -146,7 +146,7 @@ rdpRdg* rdg_new(rdpTransport* transport);
 void rdg_free(rdpRdg* rdg);
 
 BOOL rdg_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int timeout);
-UINT32 rdg_get_event_handles(rdpRdg* rdg, HANDLE* events);
+DWORD rdg_get_event_handles(rdpRdg* rdg, HANDLE* events, DWORD count);
 BOOL rdg_check_event_handles(rdpRdg* rdg);
 
 

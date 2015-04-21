@@ -686,28 +686,37 @@ BOOL rdg_in_channel_recv(rdpRdg* rdg)
 	return status;
 }
 
-UINT32 rdg_get_event_handles(rdpRdg* rdg, HANDLE* events)
+DWORD rdg_get_event_handles(rdpRdg* rdg, HANDLE* events, DWORD count)
 {
 	UINT32 nCount = 0;
 
 	assert(rdg != NULL);
 
-	if (events)
-		events[nCount] = rdg->readEvent;
-	nCount++;
+	if (events && (nCount < count))
+		events[nCount++] = rdg->readEvent;
+	else
+		return 0;
 
 	if (rdg->tlsOut && rdg->tlsOut->bio)
 	{
-		if (events)
+		if (events && (nCount < count))
+		{
 			BIO_get_event(rdg->tlsOut->bio, &events[nCount]);
-		nCount++;
+			nCount++;
+		}
+		else
+			return 0;
 	}
 
 	if (rdg->tlsIn && rdg->tlsIn->bio)
 	{
-		if (events)
+		if (events && (nCount < count))
+		{
 			BIO_get_event(rdg->tlsIn->bio, &events[nCount]);
-		nCount++;
+			nCount++;
+		}
+		else
+			return 0;
 	}
 
 	return nCount;
@@ -979,7 +988,10 @@ BOOL rdg_out_channel_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int
 	if (!status)
 		return FALSE;
 
-	nCount = rdg_get_event_handles(rdg, events);
+	nCount = rdg_get_event_handles(rdg, events, 8);
+
+	if (nCount == 0)
+		return FALSE;
 
 	while (rdg->state <= RDG_CLIENT_STATE_OUT_CHANNEL_AUTHORIZE)
 	{
@@ -1014,7 +1026,10 @@ BOOL rdg_in_channel_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int 
 	if (!status)
 		return FALSE;
 
-	nCount = rdg_get_event_handles(rdg, events);
+	nCount = rdg_get_event_handles(rdg, events, 8);
+
+	if (nCount == 0)
+		return FALSE;
 
 	while (rdg->state <= RDG_CLIENT_STATE_IN_CHANNEL_AUTHORIZE)
 	{
@@ -1039,7 +1054,10 @@ BOOL rdg_tunnel_connect(rdpRdg* rdg)
 
 	rdg_send_handshake(rdg);
 
-	nCount = rdg_get_event_handles(rdg, events);
+	nCount = rdg_get_event_handles(rdg, events, 8);
+
+	if (nCount == 0)
+		return FALSE;
 
 	while (rdg->state < RDG_CLIENT_STATE_OPENED)
 	{

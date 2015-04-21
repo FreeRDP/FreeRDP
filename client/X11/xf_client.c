@@ -1447,7 +1447,15 @@ void* xf_client_thread(void* param)
 
 		if (!settings->AsyncTransport)
 		{
-			nCount += freerdp_get_event_handles(context, &handles[nCount]);
+			DWORD tmp = freerdp_get_event_handles(context, &handles[nCount], 64 - nCount);
+
+			if (tmp == 0)
+			{
+				WLog_ERR(TAG, "freerdp_get_event_handles failed");
+				break;
+			}
+
+			nCount += tmp;
 		}
 
 		waitStatus = WaitForMultipleObjects(nCount, handles, FALSE, 100);

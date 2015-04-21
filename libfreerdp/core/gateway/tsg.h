@@ -324,7 +324,7 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length);
 int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu);
 
 int tsg_check_event_handles(rdpTsg* tsg);
-UINT32 tsg_get_event_handles(rdpTsg* tsg, HANDLE* events);
+DWORD tsg_get_event_handles(rdpTsg* tsg, HANDLE* events, DWORD count);
 
 rdpTsg* tsg_new(rdpTransport* transport);
 void tsg_free(rdpTsg* tsg);

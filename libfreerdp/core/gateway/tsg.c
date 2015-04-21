@@ -1625,42 +1625,62 @@ int tsg_check_event_handles(rdpTsg* tsg)
 	return status;
 }
 
-UINT32 tsg_get_event_handles(rdpTsg* tsg, HANDLE* events)
+DWORD tsg_get_event_handles(rdpTsg* tsg, HANDLE* events, DWORD count)
 {
 	UINT32 nCount = 0;
 	rdpRpc* rpc = tsg->rpc;
 	RpcVirtualConnection* connection = rpc->VirtualConnection;
 
-	if (events)
+	if (events && (nCount < count))
+	{
 		events[nCount] = rpc->client->PipeEvent;
-	nCount++;
+		nCount++;
+	}
+	else
+		return 0;
 
 	if (connection->DefaultInChannel && connection->DefaultInChannel->tls)
 	{
-		if (events)
+		if (events && (nCount < count))
+		{
 			BIO_get_event(connection->DefaultInChannel->tls->bio, &events[nCount]);
-		nCount++;
+			nCount++;
+		}
+		else
+			return 0;
 	}
 
 	if (connection->NonDefaultInChannel && connection->NonDefaultInChannel->tls)
 	{
-		if (events)
+		if (events && (nCount < count))
+		{
 			BIO_get_event(connection->NonDefaultInChannel->tls->bio, &events[nCount]);
-		nCount++;
+			nCount++;
+		}
+		else
+			return 0;
 	}
 
 	if (connection->DefaultOutChannel && connection->DefaultOutChannel->tls)
 	{
-		if (events)
+		if (events && (nCount < count))
+		{
 			BIO_get_event(connection->DefaultOutChannel->tls->bio, &events[nCount]);
-		nCount++;
+			nCount++;
+		}
+		else
+			return 0;
 	}
 
 	if (connection->NonDefaultOutChannel && connection->NonDefaultOutChannel->tls)
 	{
-		if (events)
+		if (events && (nCount < count))
+		{
 			BIO_get_event(connection->NonDefaultOutChannel->tls->bio, &events[nCount]);
-		nCount++;
+			nCount++;
+		}
+		else
+			return 0;
 	}
 
 	return nCount;
@@ -1716,7 +1736,10 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, int timeout)
 	inChannel = connection->DefaultInChannel;
 	outChannel = connection->DefaultOutChannel;
 
-	nCount = tsg_get_event_handles(tsg, events);
+	nCount = tsg_get_event_handles(tsg, events, 64);
+
+	if (nCount == 0)
+		return FALSE;
 
 	while (tsg->state != TSG_STATE_PIPE_CREATED)
 	{
