@@ -269,9 +269,9 @@ int freerdp_listener_get_event_handles(freerdp_listener* instance, HANDLE* event
 
 	for (index = 0; index < listener->num_sockfds; index++)
 	{
-		events[*nCount] = listener->events[index];
-		(*nCount)++;
+		events[index] = listener->events[index];
 	}
+	*nCount = listener->num_sockfds;
 
 	return 0;
 }
