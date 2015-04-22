@@ -208,92 +208,43 @@ static BOOL wl_verify_certificate(freerdp* instance, char* subject, char* issuer
 	return FALSE;
 }
 
-int wlfreerdp_run(freerdp* instance)
+static int wlfreerdp_run(freerdp* instance)
 {
-	int i;
-	int fds;
-	int max_fds;
-	int rcount;
-	int wcount;
-	void* rfds[32];
-	void* wfds[32];
-	fd_set rfds_set;
-	fd_set wfds_set;
+	DWORD count;
+	HANDLE handles[64];
+	DWORD status;
 
-	ZeroMemory(rfds, sizeof(rfds));
-	ZeroMemory(wfds, sizeof(wfds));
-
-	freerdp_connect(instance);
-
-	while (1)
+	if (!freerdp_connect(instance))
 	{
-		rcount = 0;
-		wcount = 0;
-		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
+			printf("Failed to connect\n");
+			return -1;
+	}
+
+	while (!freerdp_shall_disconnect(instance))
+	{
+		count = freerdp_get_event_handles(instance->context, handles, 64);
+		if (!count)
 		{
-			printf("Failed to get FreeRDP file descriptor");
+			printf("Failed to get FreeRDP file descriptor\n");
 			break;
 		}
-		if (freerdp_channels_get_fds(instance->context->channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
+
+		status = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
+		if (WAIT_FAILED == status)
 		{
-			printf("Failed to get FreeRDP file descriptor");
+			printf("%s: WaitForMultipleObjects failed\n", __FUNCTION__);
 			break;
 		}
 
-		max_fds = 0;
-		FD_ZERO(&rfds_set);
-		FD_ZERO(&wfds_set);
-
-		for (i = 0; i < rcount; i++)
-		{
-			fds = (int)(long)(rfds[i]);
-
-			if (fds > max_fds)
-				max_fds = fds;
-
-			FD_SET(fds, &rfds_set);
-		}
-
-		if (max_fds == 0)
-			break;
-
-		if (select(max_fds + 1, &rfds_set, &wfds_set, NULL, NULL) == -1)
-		{
-			if (!((errno == EAGAIN) ||
-				(errno == EWOULDBLOCK) ||
-				(errno == EINPROGRESS) ||
-				(errno == EINTR)))
-			{
-				printf("wlfreerdp_run: select failed\n");
-				break;
-			}
-		}
-
-		if (freerdp_check_fds(instance) != TRUE)
+		if (freerdp_check_event_handles(instance->context) != TRUE)
 		{
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
-		if (freerdp_channels_check_fds(instance->context->channels, instance) != TRUE)
-		{
-			printf("Failed to check channel manager file descriptor\n");
-			break;
-		}
 	}
-
-	wlfContext* context;
-
-	context = (wlfContext*) instance->context;
-	wlf_DestroyWindow(context, context->window);
-	wlf_DestroyInput(context, context->input);
-	wlf_DestroyDisplay(context, context->display);
 
 	freerdp_channels_disconnect(instance->context->channels, instance);
 	freerdp_disconnect(instance);
-
-	freerdp_channels_close(instance->context->channels, instance);
-	freerdp_channels_free(instance->context->channels);
-	freerdp_free(instance);
 
 	return 0;
 }
