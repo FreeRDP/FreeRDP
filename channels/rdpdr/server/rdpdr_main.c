@@ -79,8 +79,13 @@ static int rdpdr_server_send_announce_request(RdpdrServerContext* context)
 	Stream_Write_UINT16(s, context->priv->VersionMajor); /* VersionMajor (2 bytes) */
 	Stream_Write_UINT16(s, context->priv->VersionMinor); /* VersionMinor (2 bytes) */
 	Stream_Write_UINT32(s, context->priv->ClientId); /* ClientId (4 bytes) */
+
 	Stream_SealLength(s);
+
+	winpr_HexDump(TAG, WLOG_DEBUG, Stream_Buffer(s), Stream_Length(s));
+
 	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
+
 	Stream_Free(s, TRUE);
 
 	return 0;
@@ -179,7 +184,10 @@ static int rdpdr_server_read_general_capability_set(RdpdrServerContext* context,
 	Stream_Read_UINT32(s, extendedPdu); /* extendedPdu (4 bytes) */
 	Stream_Read_UINT32(s, extraFlags1); /* extraFlags1 (4 bytes) */
 	Stream_Seek_UINT32(s); /* extraFlags2 (4 bytes), must be set to zero, reserved for future use */
-	Stream_Read_UINT32(s, SpecialTypeDeviceCap); /* SpecialTypeDeviceCap (4 bytes) */
+	if (header->Version == GENERAL_CAPABILITY_VERSION_02)
+	{
+		Stream_Read_UINT32(s, SpecialTypeDeviceCap); /* SpecialTypeDeviceCap (4 bytes) */
+	}
 
 	context->priv->UserLoggedOnPdu = (extendedPdu & RDPDR_USER_LOGGEDON_PDU) ? TRUE : FALSE;
 
@@ -449,6 +457,8 @@ static int rdpdr_server_send_client_id_confirm(RdpdrServerContext* context)
 
 	Stream_SealLength(s);
 
+	winpr_HexDump(TAG, WLOG_DEBUG, Stream_Buffer(s), Stream_Length(s));
+
 	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
 
 	Stream_Free(s, TRUE);
@@ -633,6 +643,8 @@ static int rdpdr_server_send_user_logged_on(RdpdrServerContext* context)
 	Stream_Write_UINT16(s, header.PacketId); /* PacketId (2 bytes) */
 
 	Stream_SealLength(s);
+
+	winpr_HexDump(TAG, WLOG_DEBUG, Stream_Buffer(s), Stream_Length(s));
 
 	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
 
