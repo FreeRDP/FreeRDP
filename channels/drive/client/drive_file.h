@@ -56,7 +56,7 @@
 typedef UINT32 ssize_t;
 typedef UINT32 mode_t;
 
-#elif defined(__APPLE__) || defined(__FreeBSD__)
+#elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 #define STAT stat
 #define OPEN open
 #define LSEEK lseek

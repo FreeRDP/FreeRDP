@@ -577,9 +577,11 @@ int WSAGetLastError(void)
 			break;
 #endif
 
+#if defined(EPROTO)
 		case EPROTO:
 			iError = WSAECONNRESET;
 			break;
+#endif
 	}
 
 	/**
