@@ -224,7 +224,7 @@ fail:
 } while (0)
 
 
-static BOOL TestStream_Reading()
+static BOOL TestStream_Reading(void)
 {
 	BYTE src[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
 
@@ -263,7 +263,7 @@ int TestStream(int argc, char* argv[])
 	if (!TestStream_Extent(4096))
 		return 3;
 
-	if (!TestStream_Reading(4096))
+	if (!TestStream_Reading())
 		return 4;
 
 	/**

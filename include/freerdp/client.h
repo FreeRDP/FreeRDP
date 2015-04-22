@@ -31,7 +31,7 @@ extern "C" {
  * Client Entry Points
  */
 
-typedef void (*pRdpGlobalInit)(void);
+typedef BOOL (*pRdpGlobalInit)(void);
 typedef void (*pRdpGlobalUninit)(void);
 
 typedef int (*pRdpClientNew)(freerdp* instance, rdpContext* context);

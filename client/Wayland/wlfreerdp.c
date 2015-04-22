@@ -38,15 +38,16 @@ void wl_context_free(freerdp* instance, rdpContext* context)
 
 }
 
-void wl_begin_paint(rdpContext* context)
+BOOL wl_begin_paint(rdpContext* context)
 {
 	rdpGdi* gdi;
 
 	gdi = context->gdi;
 	gdi->primary->hdc->hwnd->invalid->null = 1;
+	return TRUE;
 }
 
-void wl_end_paint(rdpContext* context)
+BOOL wl_end_paint(rdpContext* context)
 {
 	rdpGdi* gdi;
 	wlfDisplay* display;
@@ -58,7 +59,7 @@ void wl_end_paint(rdpContext* context)
 
 	gdi = context->gdi;
 	if (gdi->primary->hdc->hwnd->invalid->null)
-		return;
+		return TRUE;
 
 	x = gdi->primary->hdc->hwnd->invalid->x;
 	y = gdi->primary->hdc->hwnd->invalid->y;
@@ -74,7 +75,7 @@ void wl_end_paint(rdpContext* context)
 		       gdi->primary_buffer + ((i+y)*(gdi->width*4)) + x*4,
 		       w*4);
 
-	wlf_RefreshDisplay(display);
+	return wlf_RefreshDisplay(display);
 }
 
 BOOL wl_pre_connect(freerdp* instance)

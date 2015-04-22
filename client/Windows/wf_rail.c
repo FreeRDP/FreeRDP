@@ -420,7 +420,7 @@ LRESULT CALLBACK wf_RailWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 	WS_OVERLAPPED | WS_VSCROLL | WS_HSCROLL | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX)
 #define RAIL_DISABLED_EXTENDED_WINDOW_STYLES (WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE | WS_EX_WINDOWEDGE)
 
-static void wf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* windowState)
+static BOOL wf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* windowState)
 {
 	wfRailWindow* railWindow = NULL;
 	wfContext* wfc = (wfContext*) context;
@@ -438,7 +438,7 @@ static void wf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 		railWindow = (wfRailWindow*) calloc(1, sizeof(wfRailWindow));
 
 		if (!railWindow)
-			return;
+			return FALSE;
 
 		railWindow->wfc = wfc;
 
@@ -509,7 +509,7 @@ static void wf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 
 		UpdateWindow(railWindow->hWnd);
 
-		return;
+		return TRUE;
 	}
 	else
 	{
@@ -518,7 +518,7 @@ static void wf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 	}
 
 	if (!railWindow)
-		return;
+		return TRUE;
 
 	if ((fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET) ||
 		(fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE))
@@ -643,9 +643,10 @@ static void wf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 	}
 
 	UpdateWindow(railWindow->hWnd);
+	return TRUE;
 }
 
-static void wf_rail_window_delete(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
+static BOOL wf_rail_window_delete(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
 {
 	wfRailWindow* railWindow = NULL;
 	wfContext* wfc = (wfContext*) context;
@@ -657,16 +658,17 @@ static void wf_rail_window_delete(rdpContext* context, WINDOW_ORDER_INFO* orderI
 			(void*) (UINT_PTR) orderInfo->windowId);
 
 	if (!railWindow)
-		return;
+		return TRUE;
 
 	HashTable_Remove(wfc->railWindows, (void*) (UINT_PTR) orderInfo->windowId);
 
 	DestroyWindow(railWindow->hWnd);
 
 	free(railWindow);
+	return TRUE;
 }
 
-static void wf_rail_window_icon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* windowIcon)
+static BOOL wf_rail_window_icon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* windowIcon)
 {
 	HDC hDC;
 	int bpp;
@@ -689,7 +691,7 @@ static void wf_rail_window_icon(rdpContext* context, WINDOW_ORDER_INFO* orderInf
 			(void*) (UINT_PTR) orderInfo->windowId);
 
 	if (!railWindow)
-		return;
+		return TRUE;
 
 	bigIcon = (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ICON_BIG) ? TRUE : FALSE;
 
@@ -747,11 +749,13 @@ static void wf_rail_window_icon(rdpContext* context, WINDOW_ORDER_INFO* orderInf
 	{
 		/* icon should be cached */
 	}
+	return TRUE;
 }
 
-static void wf_rail_window_cached_icon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_CACHED_ICON_ORDER* windowCachedIcon)
+static BOOL wf_rail_window_cached_icon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_CACHED_ICON_ORDER* windowCachedIcon)
 {
 	WLog_DBG(TAG, "RailWindowCachedIcon");
+	return TRUE;
 }
 
 static void wf_rail_notify_icon_common(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notifyIconState)
@@ -789,7 +793,7 @@ static void wf_rail_notify_icon_common(rdpContext* context, WINDOW_ORDER_INFO* o
 	}
 }
 
-static void wf_rail_notify_icon_create(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notifyIconState)
+static BOOL wf_rail_notify_icon_create(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
 	wfContext* wfc = (wfContext*) context;
 	RailClientContext* rail = wfc->rail;
@@ -797,9 +801,10 @@ static void wf_rail_notify_icon_create(rdpContext* context, WINDOW_ORDER_INFO* o
 	WLog_DBG(TAG, "RailNotifyIconCreate");
 
 	wf_rail_notify_icon_common(context, orderInfo, notifyIconState);
+	return TRUE;
 }
 
-static void wf_rail_notify_icon_update(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notifyIconState)
+static BOOL wf_rail_notify_icon_update(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
 	wfContext* wfc = (wfContext*) context;
 	RailClientContext* rail = wfc->rail;
@@ -807,30 +812,34 @@ static void wf_rail_notify_icon_update(rdpContext* context, WINDOW_ORDER_INFO* o
 	WLog_DBG(TAG, "RailNotifyIconUpdate");
 
 	wf_rail_notify_icon_common(context, orderInfo, notifyIconState);
+	return TRUE;
 }
 
-static void wf_rail_notify_icon_delete(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
+static BOOL wf_rail_notify_icon_delete(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
 {
 	wfContext* wfc = (wfContext*) context;
 	RailClientContext* rail = wfc->rail;
 
 	WLog_DBG(TAG, "RailNotifyIconDelete");
+	return TRUE;
 }
 
-static void wf_rail_monitored_desktop(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitoredDesktop)
+static BOOL wf_rail_monitored_desktop(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitoredDesktop)
 {
 	wfContext* wfc = (wfContext*) context;
 	RailClientContext* rail = wfc->rail;
 
 	WLog_DBG(TAG, "RailMonitorDesktop");
+	return TRUE;
 }
 
-static void wf_rail_non_monitored_desktop(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
+static BOOL wf_rail_non_monitored_desktop(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
 {
 	wfContext* wfc = (wfContext*) context;
 	RailClientContext* rail = wfc->rail;
 
 	WLog_DBG(TAG, "RailNonMonitorDesktop");
+	return TRUE;
 }
 
 void wf_rail_register_update_callbacks(rdpUpdate* update)

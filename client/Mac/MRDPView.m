@@ -46,15 +46,15 @@
 
 #define TAG CLIENT_TAG("mac")
 
-void mf_Pointer_New(rdpContext* context, rdpPointer* pointer);
+BOOL mf_Pointer_New(rdpContext* context, rdpPointer* pointer);
 void mf_Pointer_Free(rdpContext* context, rdpPointer* pointer);
-void mf_Pointer_Set(rdpContext* context, rdpPointer* pointer);
-void mf_Pointer_SetNull(rdpContext* context);
-void mf_Pointer_SetDefault(rdpContext* context);
+BOOL mf_Pointer_Set(rdpContext* context, rdpPointer* pointer);
+BOOL mf_Pointer_SetNull(rdpContext* context);
+BOOL mf_Pointer_SetDefault(rdpContext* context);
 
-void mac_begin_paint(rdpContext* context);
-void mac_end_paint(rdpContext* context);
-void mac_desktop_resize(rdpContext* context);
+BOOL mac_begin_paint(rdpContext* context);
+BOOL mac_end_paint(rdpContext* context);
+BOOL mac_desktop_resize(rdpContext* context);
 
 static void update_activity_cb(freerdp* instance);
 static void input_activity_cb(freerdp* instance);
@@ -1000,7 +1000,7 @@ BOOL mac_authenticate(freerdp* instance, char** username, char** password, char*
 	return ok;
 }
 
-void mf_Pointer_New(rdpContext* context, rdpPointer* pointer)
+BOOL mf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 {
 	NSRect rect;
 	NSImage* image;
@@ -1019,6 +1019,8 @@ void mf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	rect.origin.y = pointer->yPos;
 	
 	cursor_data = (BYTE*) malloc(rect.size.width * rect.size.height * 4);
+	if (!cursor_data)
+		return FALSE;
 	mrdpCursor->cursor_data = cursor_data;
 	
 	freerdp_image_copy_from_pointer_data(cursor_data, PIXEL_FORMAT_ARGB32,
@@ -1056,6 +1058,7 @@ void mf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	/* save cursor for later use in mf_Pointer_Set() */
 	ma = view->cursors;
 	[ma addObject:mrdpCursor];
+	return TRUE;
 }
 
 void mf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
@@ -1078,7 +1081,7 @@ void mf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 	}
 }
 
-void mf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
+BOOL mf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 {
 	mfContext* mfc = (mfContext*) context;
 	MRDPView* view = (MRDPView*) mfc->view;
@@ -1090,23 +1093,25 @@ void mf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 		if (cursor->pointer == pointer)
 		{
 			[view setCursor:cursor->nsCursor];
-			return;
+			return TRUE;
 		}
 	}
 
 	NSLog(@"Cursor not found");
+	return TRUE;
 }
 
-void mf_Pointer_SetNull(rdpContext* context)
+BOOL mf_Pointer_SetNull(rdpContext* context)
 {
-	
+	return TRUE;
 }
 
-void mf_Pointer_SetDefault(rdpContext* context)
+BOOL mf_Pointer_SetDefault(rdpContext* context)
 {
 	mfContext* mfc = (mfContext*) context;
 	MRDPView* view = (MRDPView*) mfc->view;
 	[view setCursor:[NSCursor arrowCursor]];
+	return TRUE;
 }
 
 CGContextRef mac_create_bitmap_context(rdpContext* context)
@@ -1134,17 +1139,18 @@ CGContextRef mac_create_bitmap_context(rdpContext* context)
 	return bitmap_context;
 }
 
-void mac_begin_paint(rdpContext* context)
+BOOL mac_begin_paint(rdpContext* context)
 {
 	rdpGdi* gdi = context->gdi;
 	
 	if (!gdi)
-		return;
+		return FALSE;
 	
 	gdi->primary->hdc->hwnd->invalid->null = 1;
+	return TRUE;
 }
 
-void mac_end_paint(rdpContext* context)
+BOOL mac_end_paint(rdpContext* context)
 {
 	rdpGdi* gdi;
 	HGDI_RGN invalid;
@@ -1156,7 +1162,7 @@ void mac_end_paint(rdpContext* context)
 	gdi = context->gdi;
 	
 	if (!gdi)
-		return;
+		return FALSE;
 	
 	ww = mfc->client_width;
 	wh = mfc->client_height;
@@ -1164,10 +1170,10 @@ void mac_end_paint(rdpContext* context)
 	dh = mfc->context.settings->DesktopHeight;
 
 	if ((!context) || (!context->gdi))
-		return;
+		return FALSE;
 	
 	if (context->gdi->primary->hdc->hwnd->invalid->null)
-		return;
+		return TRUE;
 
 	invalid = gdi->primary->hdc->hwnd->invalid;
 
@@ -1196,9 +1202,10 @@ void mac_end_paint(rdpContext* context)
 	[view setNeedsDisplayInRect:newDrawRect];
 
 	gdi->primary->hdc->hwnd->ninvalid = 0;
+	return TRUE;
 }
 
-void mac_desktop_resize(rdpContext* context)
+BOOL mac_desktop_resize(rdpContext* context)
 {
 	mfContext* mfc = (mfContext*) context;
 	MRDPView* view = (MRDPView*) mfc->view;
@@ -1220,6 +1227,9 @@ void mac_desktop_resize(rdpContext* context)
 	gdi_resize(context->gdi, mfc->width, mfc->height);
 	
 	view->bitmap_context = mac_create_bitmap_context(context);
+	if (!view->bitmap_context)
+		return FALSE;
+	return TRUE;
 }
 
 static void update_activity_cb(freerdp* instance)

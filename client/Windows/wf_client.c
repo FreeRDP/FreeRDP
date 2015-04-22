@@ -69,14 +69,15 @@ int wf_create_console(void)
 	return 0;
 }
 
-void wf_sw_begin_paint(wfContext* wfc)
+BOOL wf_sw_begin_paint(wfContext* wfc)
 {
 	rdpGdi* gdi = ((rdpContext*) wfc)->gdi;
 	gdi->primary->hdc->hwnd->invalid->null = 1;
 	gdi->primary->hdc->hwnd->ninvalid = 0;
+	return TRUE;
 }
 
-void wf_sw_end_paint(wfContext* wfc)
+BOOL wf_sw_end_paint(wfContext* wfc)
 {
 	int i;
 	rdpGdi* gdi;
@@ -94,7 +95,7 @@ void wf_sw_end_paint(wfContext* wfc)
 	cinvalid = gdi->primary->hdc->hwnd->cinvalid;
 
 	if (ninvalid < 1)
-		return;
+		return TRUE;
 
 	region16_init(&invalidRegion);
 
@@ -124,9 +125,10 @@ void wf_sw_end_paint(wfContext* wfc)
 	}
 
 	region16_uninit(&invalidRegion);
+	return TRUE;
 }
 
-void wf_sw_desktop_resize(wfContext* wfc)
+BOOL wf_sw_desktop_resize(wfContext* wfc)
 {
 	rdpGdi* gdi;
 	rdpContext* context;
@@ -149,20 +151,22 @@ void wf_sw_desktop_resize(wfContext* wfc)
 	gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP, wfc->primary->pdata);
 	gdi = instance->context->gdi;
 	wfc->hdc = gdi->primary->hdc;
+	return TRUE;
 }
 
-void wf_hw_begin_paint(wfContext* wfc)
+BOOL wf_hw_begin_paint(wfContext* wfc)
 {
 	wfc->hdc->hwnd->invalid->null = 1;
 	wfc->hdc->hwnd->ninvalid = 0;
+	return TRUE;
 }
 
-void wf_hw_end_paint(wfContext* wfc)
+BOOL wf_hw_end_paint(wfContext* wfc)
 {
-
+	return TRUE;
 }
 
-void wf_hw_desktop_resize(wfContext* wfc)
+BOOL wf_hw_desktop_resize(wfContext* wfc)
 {
 	BOOL same;
 	RECT rect;
@@ -196,6 +200,7 @@ void wf_hw_desktop_resize(wfContext* wfc)
 		GetWindowRect(wfc->hwnd, &rect);
 		InvalidateRect(wfc->hwnd, &rect, TRUE);
 	}
+	return TRUE;
 }
 
 BOOL wf_pre_connect(freerdp* instance)
@@ -980,7 +985,7 @@ void wf_size_scrollbars(wfContext* wfc, UINT32 client_width, UINT32 client_heigh
 	wf_update_canvas_diff(wfc);
 }
 
-void wfreerdp_client_global_init(void)
+BOOL wfreerdp_client_global_init(void)
 {
 	WSADATA wsaData;
 
@@ -999,6 +1004,7 @@ void wfreerdp_client_global_init(void)
 #endif
 
 	freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
+	return TRUE;
 }
 
 void wfreerdp_client_global_uninit(void)

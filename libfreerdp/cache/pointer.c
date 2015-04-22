@@ -33,12 +33,12 @@
 
 #define TAG FREERDP_TAG("cache.pointer")
 
-void update_pointer_position(rdpContext* context, POINTER_POSITION_UPDATE* pointer_position)
+BOOL update_pointer_position(rdpContext* context, POINTER_POSITION_UPDATE* pointer_position)
 {
-	Pointer_SetPosition(context, pointer_position->xPos, pointer_position->yPos);
+	return Pointer_SetPosition(context, pointer_position->xPos, pointer_position->yPos);
 }
 
-void update_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer_system)
+BOOL update_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer_system)
 {
 	switch (pointer_system->type)
 	{
@@ -52,11 +52,11 @@ void update_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer_s
 
 		default:
 			WLog_ERR(TAG,  "Unknown system pointer type (0x%08X)", pointer_system->type);
-			break;
 	}
+	return TRUE;
 }
 
-void update_pointer_color(rdpContext* context, POINTER_COLOR_UPDATE* pointer_color)
+BOOL update_pointer_color(rdpContext* context, POINTER_COLOR_UPDATE* pointer_color)
 {
 	rdpPointer* pointer;
 	rdpCache* cache = context->cache;
@@ -76,21 +76,34 @@ void update_pointer_color(rdpContext* context, POINTER_COLOR_UPDATE* pointer_col
 		if (pointer->lengthAndMask && pointer_color->xorMaskData)
 		{
 			pointer->andMaskData = (BYTE*) malloc(pointer->lengthAndMask);
+			if (!pointer->andMaskData)
+				goto out_fail;
+
 			CopyMemory(pointer->andMaskData, pointer_color->andMaskData, pointer->lengthAndMask);
 		}
 
 		if (pointer->lengthXorMask && pointer_color->xorMaskData)
 		{
 			pointer->xorMaskData = (BYTE*) malloc(pointer->lengthXorMask);
+			if (!pointer->xorMaskData)
+				goto out_fail;
 			CopyMemory(pointer->xorMaskData, pointer_color->xorMaskData, pointer->lengthXorMask);
 		}
 		pointer->New(context, pointer);
 		pointer_cache_put(cache->pointer, pointer_color->cacheIndex, pointer);
 		Pointer_Set(context, pointer);
+		return TRUE;
 	}
+	return FALSE;
+
+out_fail:
+	free(pointer->andMaskData);
+	free(pointer->xorMaskData);
+	free(pointer);
+	return FALSE;
 }
 
-void update_pointer_new(rdpContext* context, POINTER_NEW_UPDATE* pointer_new)
+BOOL update_pointer_new(rdpContext* context, POINTER_NEW_UPDATE* pointer_new)
 {
 	rdpPointer* pointer;
 	rdpCache* cache = context->cache;
@@ -112,6 +125,8 @@ void update_pointer_new(rdpContext* context, POINTER_NEW_UPDATE* pointer_new)
 		if (pointer->lengthAndMask)
 		{
 			pointer->andMaskData = (BYTE*) malloc(pointer->lengthAndMask);
+			if (!pointer->andMaskData)
+				goto out_fail;
 			CopyMemory(pointer->andMaskData, pointer_new->colorPtrAttr.andMaskData, pointer->lengthAndMask);
 		}
 
@@ -124,10 +139,18 @@ void update_pointer_new(rdpContext* context, POINTER_NEW_UPDATE* pointer_new)
 		pointer->New(context, pointer);
 		pointer_cache_put(cache->pointer, pointer_new->colorPtrAttr.cacheIndex, pointer);
 		Pointer_Set(context, pointer);
+		return TRUE;
 	}
+	return FALSE;
+
+out_fail:
+	free(pointer->andMaskData);
+	free(pointer->xorMaskData);
+	free(pointer);
+	return FALSE;
 }
 
-void update_pointer_cached(rdpContext* context, POINTER_CACHED_UPDATE* pointer_cached)
+BOOL update_pointer_cached(rdpContext* context, POINTER_CACHED_UPDATE* pointer_cached)
 {
 	rdpPointer* pointer;
 	rdpCache* cache = context->cache;
@@ -135,7 +158,11 @@ void update_pointer_cached(rdpContext* context, POINTER_CACHED_UPDATE* pointer_c
 	pointer = pointer_cache_get(cache->pointer, pointer_cached->cacheIndex);
 
 	if (pointer != NULL)
+	{
 		Pointer_Set(context, pointer);
+		return TRUE;
+	}
+	return FALSE;
 }
 
 rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, UINT32 index)

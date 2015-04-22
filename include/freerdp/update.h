@@ -135,25 +135,25 @@ typedef struct rdp_update_proxy rdpUpdateProxy;
 
 /* Update Interface */
 
-typedef void (*pBeginPaint)(rdpContext* context);
-typedef void (*pEndPaint)(rdpContext* context);
-typedef void (*pSetBounds)(rdpContext* context, rdpBounds* bounds);
+typedef BOOL (*pBeginPaint)(rdpContext* context);
+typedef BOOL (*pEndPaint)(rdpContext* context);
+typedef BOOL (*pSetBounds)(rdpContext* context, rdpBounds* bounds);
 
-typedef void (*pSynchronize)(rdpContext* context);
-typedef void (*pDesktopResize)(rdpContext* context);
-typedef void (*pBitmapUpdate)(rdpContext* context, BITMAP_UPDATE* bitmap);
-typedef void (*pPalette)(rdpContext* context, PALETTE_UPDATE* palette);
-typedef void (*pPlaySound)(rdpContext* context, PLAY_SOUND_UPDATE* play_sound);
-typedef void (*pSetKeyboardIndicators)(rdpContext* context, UINT16 led_flags);
+typedef BOOL (*pSynchronize)(rdpContext* context);
+typedef BOOL (*pDesktopResize)(rdpContext* context);
+typedef BOOL (*pBitmapUpdate)(rdpContext* context, BITMAP_UPDATE* bitmap);
+typedef BOOL (*pPalette)(rdpContext* context, PALETTE_UPDATE* palette);
+typedef BOOL (*pPlaySound)(rdpContext* context, PLAY_SOUND_UPDATE* play_sound);
+typedef BOOL (*pSetKeyboardIndicators)(rdpContext* context, UINT16 led_flags);
 
-typedef void (*pRefreshRect)(rdpContext* context, BYTE count, RECTANGLE_16* areas);
-typedef void (*pSuppressOutput)(rdpContext* context, BYTE allow, RECTANGLE_16* area);
+typedef BOOL (*pRefreshRect)(rdpContext* context, BYTE count, RECTANGLE_16* areas);
+typedef BOOL (*pSuppressOutput)(rdpContext* context, BYTE allow, RECTANGLE_16* area);
 
-typedef void (*pSurfaceCommand)(rdpContext* context, wStream* s);
-typedef void (*pSurfaceBits)(rdpContext* context, SURFACE_BITS_COMMAND* surfaceBitsCommand);
-typedef void (*pSurfaceFrameMarker)(rdpContext* context, SURFACE_FRAME_MARKER* surfaceFrameMarker);
-typedef void (*pSurfaceFrameBits)(rdpContext* context, SURFACE_BITS_COMMAND* cmd, BOOL first, BOOL last, UINT32 frameId);
-typedef void (*pSurfaceFrameAcknowledge)(rdpContext* context, UINT32 frameId);
+typedef BOOL (*pSurfaceCommand)(rdpContext* context, wStream* s);
+typedef BOOL (*pSurfaceBits)(rdpContext* context, SURFACE_BITS_COMMAND* surfaceBitsCommand);
+typedef BOOL (*pSurfaceFrameMarker)(rdpContext* context, SURFACE_FRAME_MARKER* surfaceFrameMarker);
+typedef BOOL (*pSurfaceFrameBits)(rdpContext* context, SURFACE_BITS_COMMAND* cmd, BOOL first, BOOL last, UINT32 frameId);
+typedef BOOL (*pSurfaceFrameAcknowledge)(rdpContext* context, UINT32 frameId);
 
 struct rdp_update
 {

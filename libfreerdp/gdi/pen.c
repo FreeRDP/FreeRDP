@@ -24,7 +24,6 @@
 #endif
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
 
 #include <freerdp/api.h>
@@ -45,6 +44,8 @@
 HGDI_PEN gdi_CreatePen(int fnPenStyle, int nWidth, int crColor)
 {
 	HGDI_PEN hPen = (HGDI_PEN) malloc(sizeof(GDI_PEN));
+	if (!hPen)
+		return NULL;
 	hPen->objectType = GDIOBJECT_PEN;
 	hPen->style = fnPenStyle;
 	hPen->color = crColor;

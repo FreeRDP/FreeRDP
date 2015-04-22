@@ -37,7 +37,7 @@ struct wlf_display
 };
 
 wlfDisplay* wlf_CreateDisplay(void);
-void wlf_RefreshDisplay(wlfDisplay* display);
+BOOL wlf_RefreshDisplay(wlfDisplay* display);
 void wlf_DestroyDisplay(wlfContext* wlfc, wlfDisplay* display);
 
 #endif /* __WLF_DISPLAY_H */

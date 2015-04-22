@@ -36,8 +36,8 @@ enum SURFCMD_CMDTYPE
 
 int update_recv_surfcmds(rdpUpdate* update, UINT32 size, wStream* s);
 
-void update_write_surfcmd_surface_bits_header(wStream* s, SURFACE_BITS_COMMAND* cmd);
-void update_write_surfcmd_frame_marker(wStream* s, UINT16 frameAction, UINT32 frameId);
+BOOL update_write_surfcmd_surface_bits_header(wStream* s, SURFACE_BITS_COMMAND* cmd);
+BOOL update_write_surfcmd_frame_marker(wStream* s, UINT16 frameAction, UINT32 frameId);
 
 #endif /* __SURFACE */
 

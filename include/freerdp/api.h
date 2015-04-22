@@ -66,5 +66,6 @@
 
 #define IFCALL(_cb, ...) do { if (_cb != NULL) { _cb( __VA_ARGS__ ); } } while (0)
 #define IFCALLRET(_cb, _ret, ...) do { if (_cb != NULL) { _ret = _cb( __VA_ARGS__ ); } } while (0)
+#define IFCALLRESULT(_default_return, _cb, ...) (_cb != NULL) ? _cb( __VA_ARGS__ ) : (_default_return)
 
 #endif /* FREERDP_API */
