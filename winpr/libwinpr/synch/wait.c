@@ -22,10 +22,6 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_PTHREAD_GNU_EXT
-#define _GNU_SOURCE
-#endif
-
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -103,18 +99,12 @@ static long long ts_difftime(const struct timespec *o,
 	return newValue - oldValue;
 }
 
-/* Drop in replacement for the linux pthread_timedjoin_np and
- * pthread_mutex_timedlock functions.
+/* Drop in replacement for pthread_mutex_timedlock
  */
-#if !defined(HAVE_PTHREAD_GNU_EXT)
+#if !defined(HAVE_PTHREAD_MUTEX_TIMEDLOCK)
 #include <pthread.h>
 
-#if defined(__FreeBSD__) || defined(sun)
-/*the only way to get it work is to remove the static*/
-int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *timeout)
-#else
 static int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *timeout)
-#endif
 {
 	struct timespec timenow;
 	struct timespec sleepytime;
