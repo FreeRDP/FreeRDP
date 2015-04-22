@@ -376,7 +376,6 @@ if(OPENBSD)
 	set(WITH_ALSA  "OFF")
 	set(WITH_PULSE "ON")
 	set(WITH_WAYLAND "OFF")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DHAVE_PTHREAD_GNU_EXT")
 endif()
 
 # Android
@@ -436,9 +435,7 @@ if(NOT IOS AND NOT ANDROID)
 endif()
 
 if(NOT WIN32)
-	list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
-	check_library_exists(pthread pthread_tryjoin_np "" HAVE_PTHREAD_GNU_EXT)
-	list(REMOVE_ITEM CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+	check_library_exists(pthread pthread_mutex_timedlock "" HAVE_PTHREAD_MUTEX_TIMEDLOCK)
 endif()
 
 if(WITH_VALGRIND_MEMCHECK)
