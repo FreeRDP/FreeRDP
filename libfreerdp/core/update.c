@@ -896,12 +896,12 @@ static BOOL update_send_surface_command(rdpContext* context, wStream* s)
 	if (!Stream_EnsureRemainingCapacity(update, Stream_GetPosition(s)))
 	{
 		ret = FALSE;
-		goto out_fail;
+		goto out;
 	}
 	Stream_Write(update, Stream_Buffer(s), Stream_GetPosition(s));
 	ret = fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, update, FALSE);
 
-out_fail:
+out:
 	Stream_Release(update);
 	return ret;
 }
