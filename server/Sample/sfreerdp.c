@@ -157,8 +157,6 @@ static void test_peer_draw_background(freerdp_peer* client)
 	if (!client->settings->RemoteFxCodec && !client->settings->NSCodec)
 		return;
 
-	test_peer_begin_frame(client);
-
 	s = test_peer_stream_init(context);
 
 	rect.x = 0;
@@ -167,13 +165,18 @@ static void test_peer_draw_background(freerdp_peer* client)
 	rect.height = client->settings->DesktopHeight;
 
 	size = rect.width * rect.height * 3;
-	rgb_data = malloc(size);
+	if (!(rgb_data = malloc(size)))
+		return;
+
 	memset(rgb_data, 0xA0, size);
 
 	if (client->settings->RemoteFxCodec)
 	{
-		rfx_compose_message(context->rfx_context, s,
-			&rect, 1, rgb_data, rect.width, rect.height, rect.width * 3);
+		if (!rfx_compose_message(context->rfx_context, s,
+			&rect, 1, rgb_data, rect.width, rect.height, rect.width * 3))
+		{
+			goto out;
+		}
 		cmd->codecID = client->settings->RemoteFxCodecId;
 	}
 	else
@@ -192,11 +195,13 @@ static void test_peer_draw_background(freerdp_peer* client)
 	cmd->height = rect.height;
 	cmd->bitmapDataLength = Stream_GetPosition(s);
 	cmd->bitmapData = Stream_Buffer(s);
+
+	test_peer_begin_frame(client);
 	update->SurfaceBits(update->context, cmd);
-
-	free(rgb_data);
-
 	test_peer_end_frame(client);
+
+out:
+	free(rgb_data);
 }
 
 static void test_peer_load_icon(freerdp_peer* client)

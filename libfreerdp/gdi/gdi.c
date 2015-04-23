@@ -1029,7 +1029,11 @@ static BOOL gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 	{
 		freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_REMOTEFX);
 
-		message = rfx_process_message(gdi->codecs->rfx, cmd->bitmapData, cmd->bitmapDataLength);
+		if (!(message = rfx_process_message(gdi->codecs->rfx, cmd->bitmapData, cmd->bitmapDataLength)))
+		{
+			WLog_ERR(TAG, "Failed to process RemoteFX message");
+			return FALSE;
+		}
 
 		/* blit each tile */
 		for (i = 0; i < message->numTiles; i++)

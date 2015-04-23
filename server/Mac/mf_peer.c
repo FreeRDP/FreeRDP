@@ -147,8 +147,11 @@ void mf_peer_rfx_update(freerdp_peer* client)
 	mfp->rfx_context->width = mfi->servscreen_width;
 	mfp->rfx_context->height = mfi->servscreen_height;
 	
-	rfx_compose_message(mfp->rfx_context, s, &rect, 1,
-			    (BYTE*) dataBits, rect.width, rect.height, pitch);
+	if (!(rfx_compose_message(mfp->rfx_context, s, &rect, 1,
+		(BYTE*) dataBits, rect.width, rect.height, pitch)))
+	{
+		return;
+	}
 	
 	cmd->destLeft = x;
 	cmd->destTop = y;

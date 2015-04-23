@@ -384,6 +384,7 @@ int shadow_client_send_surface_bits(rdpShadowClient* client, rdpShadowSurface* s
 	{
 		RFX_RECT rect;
 		RFX_MESSAGE* messages;
+		RFX_RECT *messageRects = NULL;
 
 		shadow_encoder_prepare(encoder, FREERDP_CODEC_REMOTEFX);
 
@@ -394,9 +395,12 @@ int shadow_client_send_surface_bits(rdpShadowClient* client, rdpShadowSurface* s
 		rect.width = nWidth;
 		rect.height = nHeight;
 
-		messages = rfx_encode_messages(encoder->rfx, &rect, 1, pSrcData,
+		if (!(messages = rfx_encode_messages(encoder->rfx, &rect, 1, pSrcData,
 				surface->width, surface->height, nSrcStep, &numMessages,
-				settings->MultifragMaxRequestSize);
+				settings->MultifragMaxRequestSize)))
+		{
+			return 0;
+		}
 
 		cmd.codecID = settings->RemoteFxCodecId;
 
@@ -409,10 +413,20 @@ int shadow_client_send_surface_bits(rdpShadowClient* client, rdpShadowSurface* s
 		cmd.width = surface->width;
 		cmd.height = surface->height;
 
+		if (numMessages > 0)
+			messageRects = messages[0].rects;
+
 		for (i = 0; i < numMessages; i++)
 		{
 			Stream_SetPosition(s, 0);
-			rfx_write_message(encoder->rfx, s, &messages[i]);
+			if (!rfx_write_message(encoder->rfx, s, &messages[i]))
+			{
+				while (i < numMessages)
+				{
+					rfx_message_free(encoder->rfx, &messages[i++]);
+				}
+				break;
+			}
 			rfx_message_free(encoder->rfx, &messages[i]);
 
 			cmd.bitmapDataLength = Stream_GetPosition(s);
@@ -427,6 +441,7 @@ int shadow_client_send_surface_bits(rdpShadowClient* client, rdpShadowSurface* s
 				IFCALL(update->SurfaceFrameBits, update->context, &cmd, first, last, frameId);
 		}
 
+		free(messageRects);
 		free(messages);
 	}
 	else if (settings->NSCodec)
