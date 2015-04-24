@@ -319,8 +319,28 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 
 				if (value)
 				{
-					options[j].Value = value;
-					options[j].Flags |= COMMAND_LINE_VALUE_PRESENT;
+					/* If quotes from argument values have not been removed by the shell,
+					 * do it here. */
+					if ((value[0] == '\'') || (value[0] == '\"'))
+					{
+						if (value && (value_length > 2) &&
+								((value[value_length-1] != '\'') || (value[value_length-1] != '\"')))
+						{
+							value++;
+							value_length -= 2;
+							options[j].Value = _strdup(value);
+							if (options[j].Value)
+							{
+								options[j].Value[value_length] = '\0';
+								options[j].Flags |= COMMAND_LINE_VALUE_PRESENT | COMMAND_LINE_ALLOCATED_VALUE;
+							}
+						}
+					}
+					else
+					{
+						options[j].Value = value;
+						options[j].Flags |= COMMAND_LINE_VALUE_PRESENT;
+					}
 				}
 				else
 				{
@@ -398,6 +418,8 @@ int CommandLineClearArgumentsW(COMMAND_LINE_ARGUMENT_W* options)
 
 	for (i = 0; options[i].Name != NULL; i++)
 	{
+		if (options[i].Flags & COMMAND_LINE_ALLOCATED_VALUE)
+			free (options[i].Value);
 		options[i].Flags &= COMMAND_LINE_INPUT_FLAG_MASK;
 		options[i].Value = NULL;
 	}
