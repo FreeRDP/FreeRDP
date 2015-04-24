@@ -273,7 +273,7 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 						argument = TRUE;
 					else
 						argument = FALSE;
-					
+
 					if (value_present && argument)
 					{
 						i++;
@@ -347,7 +347,7 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 					if (options[j].Flags & COMMAND_LINE_VALUE_FLAG)
 					{
 						options[j].Value = (LPSTR) 1;
-						options[j].Flags |= COMMAND_LINE_VALUE_PRESENT;
+						options[j].Flags |= COMMAND_LINE_VALUE_PRESENT | COMMAND_LINE_VALUE_FLAG;
 					}
 					else if (options[j].Flags & COMMAND_LINE_VALUE_BOOL)
 					{
@@ -370,7 +370,7 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 								options[j].Value = BoolValueTrue;
 						}
 
-						options[j].Flags |= COMMAND_LINE_VALUE_PRESENT;
+						options[j].Flags |= COMMAND_LINE_VALUE_PRESENT | COMMAND_LINE_VALUE_BOOL;
 					}
 				}
 
@@ -384,7 +384,7 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 				else if (options[j].Flags & COMMAND_LINE_PRINT_VERSION)
 						return COMMAND_LINE_STATUS_PRINT_VERSION;
 			}
-			
+
 			if (!found && (flags & COMMAND_LINE_IGN_UNKNOWN_KEYWORD) == 0)
 				return COMMAND_LINE_ERROR_NO_KEYWORD;
 		}
