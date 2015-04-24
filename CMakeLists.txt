@@ -376,7 +376,8 @@ endif(APPLE)
 
 # OpenBSD
 if(OPENBSD)
-	set(WITH_ALSA  "OFF")
+	set(WITH_MANPAGES "ON")
+	set(WITH_ALSA "OFF")
 	set(WITH_PULSE "ON")
 	set(WITH_WAYLAND "OFF")
 endif()
