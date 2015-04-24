@@ -14,7 +14,9 @@ const char* testArgv[] =
 	"/multimon",
 	"+fonts",
 	"-wallpaper",
-	"/v:localhost:3389"
+	"/v:localhost:3389",
+	"/u:'someuser bla'",
+	"/p:\"some new password\""
 };
 
 COMMAND_LINE_ARGUMENT_A args[] =
@@ -152,13 +154,17 @@ int TestCmdLine(int argc, char* argv[])
 		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
 			continue;
 
-		printf("Argument: %s\n", arg->Name);
+		if (arg->Flags & (COMMAND_LINE_VALUE_BOOL | COMMAND_LINE_VALUE_FLAG))
+			printf("Argument: %s: %d\n", arg->Name, arg->Value);
+		else if (arg->Value)
+			printf("Argument: %s: %s\n", arg->Name, arg->Value);
+		else
+			printf("Argument: %s\n", arg->Name);
 
 		CommandLineSwitchStart(arg)
 
 		CommandLineSwitchCase(arg, "v")
 		{
-
 		}
 		CommandLineSwitchCase(arg, "w")
 		{
@@ -170,7 +176,6 @@ int TestCmdLine(int argc, char* argv[])
 		}
 		CommandLineSwitchDefault(arg)
 		{
-
 		}
 
 		CommandLineSwitchEnd(arg)
