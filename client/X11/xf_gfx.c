@@ -270,10 +270,11 @@ int xf_SurfaceCommand_RemoteFX(xfContext* xfc, RdpgfxClientContext* context, RDP
 	if (!surface)
 		return -1;
 
-	message = rfx_process_message(xfc->codecs->rfx, cmd->data, cmd->length);
-
-	if (!message)
+	if (!(message = rfx_process_message(xfc->codecs->rfx, cmd->data, cmd->length)))
+	{
+		WLog_ERR(TAG, "Failed to process RemoteFX message");
 		return -1;
+	}
 
 	region16_init(&clippingRects);
 

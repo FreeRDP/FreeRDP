@@ -129,8 +129,11 @@ void wf_update_encode(wfInfo* wfi)
 	//WLog_DBG(TAG, "x:%d y:%d w:%d h:%d", wfi->invalid.left, wfi->invalid.top, width, height);
 	Stream_Clear(wfi->s);
 
-	rfx_compose_message(wfi->rfx_context, wfi->s, &rect, 1,
-		pDataBits, width, height, stride);
+	if (!(rfx_compose_message(wfi->rfx_context, wfi->s, &rect, 1,
+		pDataBits, width, height, stride)))
+	{
+		return;
+	}
 
 	wfi->frame_idx = wfi->rfx_context->frameIdx;
 

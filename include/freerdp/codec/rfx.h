@@ -116,6 +116,13 @@ enum _RFX_STATE
 };
 typedef enum _RFX_STATE RFX_STATE;
 
+#define _RFX_DECODED_SYNC       0x00000001
+#define _RFX_DECODED_CONTEXT    0x00000002
+#define _RFX_DECODED_VERSIONS   0x00000004
+#define _RFX_DECODED_CHANNELS   0x00000008
+#define _RFX_DECODED_HEADERS    0x0000000F
+
+
 struct _RFX_CONTEXT
 {
 	RFX_STATE state;
@@ -143,6 +150,9 @@ struct _RFX_CONTEXT
 	BYTE quantIdxCb;
 	BYTE quantIdxCr;
 
+	/* decoded header blocks */
+	UINT32 decodedHeaderBlocks;
+
 	/* routines */
 	void (*quantization_decode)(INT16* buffer, const UINT32* quantization_values);
 	void (*quantization_encode)(INT16* buffer, const UINT32* quantization_values);
@@ -164,17 +174,16 @@ FREERDP_API UINT16 rfx_message_get_rect_count(RFX_MESSAGE* message);
 FREERDP_API RFX_RECT* rfx_message_get_rect(RFX_MESSAGE* message, int index);
 FREERDP_API void rfx_message_free(RFX_CONTEXT* context, RFX_MESSAGE* message);
 
-FREERDP_API void rfx_compose_message_header(RFX_CONTEXT* context, wStream* s);
-FREERDP_API void rfx_compose_message(RFX_CONTEXT* context, wStream* s,
+FREERDP_API BOOL rfx_compose_message(RFX_CONTEXT* context, wStream* s,
 	const RFX_RECT* rects, int num_rects, BYTE* image_data, int width, int height, int rowstride);
 
 FREERDP_API RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
 		int numRects, BYTE* data, int width, int height, int scanline);
 FREERDP_API RFX_MESSAGE* rfx_encode_messages(RFX_CONTEXT* context, const RFX_RECT* rects, int numRects,
 		BYTE* data, int width, int height, int scanline, int* numMessages, int maxDataSize);
-FREERDP_API void rfx_write_message(RFX_CONTEXT* context, wStream* s, RFX_MESSAGE* message);
+FREERDP_API BOOL rfx_write_message(RFX_CONTEXT* context, wStream* s, RFX_MESSAGE* message);
 
-FREERDP_API int rfx_context_reset(RFX_CONTEXT* context);
+FREERDP_API void rfx_context_reset(RFX_CONTEXT* context);
 
 FREERDP_API RFX_CONTEXT* rfx_context_new(BOOL encoder);
 FREERDP_API void rfx_context_free(RFX_CONTEXT* context);

@@ -199,10 +199,11 @@ int gdi_SurfaceCommand_RemoteFX(rdpGdi* gdi, RdpgfxClientContext* context, RDPGF
 	if (!surface)
 		return -1;
 
-	message = rfx_process_message(gdi->codecs->rfx, cmd->data, cmd->length);
-
-	if (!message)
+	if (!(message = rfx_process_message(gdi->codecs->rfx, cmd->data, cmd->length)))
+	{
+		WLog_ERR(TAG, "Failed to process RemoteFX message");
 		return -1;
+	}
 
 	region16_init(&clippingRects);
 

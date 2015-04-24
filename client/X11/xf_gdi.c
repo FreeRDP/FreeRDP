@@ -1178,7 +1178,11 @@ BOOL xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 	{
 		freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_REMOTEFX);
 
-		message = rfx_process_message(xfc->codecs->rfx, cmd->bitmapData, cmd->bitmapDataLength);
+		if (!(message = rfx_process_message(xfc->codecs->rfx, cmd->bitmapData, cmd->bitmapDataLength)))
+		{
+			WLog_ERR(TAG, "Failed to process RemoteFX message");
+			return FALSE;
+		}
 
 		XSetFunction(xfc->display, xfc->gc, GXcopy);
 		XSetFillStyle(xfc->display, xfc->gc, FillSolid);
