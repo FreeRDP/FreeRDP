@@ -116,6 +116,13 @@ enum _RFX_STATE
 };
 typedef enum _RFX_STATE RFX_STATE;
 
+#define _RFX_DECODED_SYNC       0x00000001
+#define _RFX_DECODED_CONTEXT    0x00000002
+#define _RFX_DECODED_VERSIONS   0x00000004
+#define _RFX_DECODED_CHANNELS   0x00000008
+#define _RFX_DECODED_HEADERS    0x0000000F
+
+
 struct _RFX_CONTEXT
 {
 	RFX_STATE state;
@@ -142,6 +149,9 @@ struct _RFX_CONTEXT
 	BYTE quantIdxY;
 	BYTE quantIdxCb;
 	BYTE quantIdxCr;
+
+	/* decoded header blocks */
+	UINT32 decodedHeaderBlocks;
 
 	/* routines */
 	void (*quantization_decode)(INT16* buffer, const UINT32* quantization_values);

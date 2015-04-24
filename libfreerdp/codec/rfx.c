@@ -3,6 +3,7 @@
  * RemoteFX Codec Library
  *
  * Copyright 2011 Vic Lee
+ * Copyright 2015 Thincast Technologies GmbH
  * Copyright 2015 Norbert Federa <norbert.federa@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -166,7 +167,11 @@ RFX_TILE* rfx_decoder_tile_new()
 	if (!(tile = (RFX_TILE*) calloc(1, sizeof(RFX_TILE))))
 		return NULL;
 
-	tile->data = (BYTE*) malloc(4096 * 4); /* 64x64 * 4 */
+	if (!(tile->data = (BYTE*) malloc(4 * 64 * 64))) {
+		free(tile);
+		return NULL;
+	}
+
 	tile->allocated = TRUE;
 
 	return tile;
@@ -421,7 +426,7 @@ static BOOL rfx_process_message_sync(RFX_CONTEXT* context, wStream* s)
 {
 	UINT32 magic;
 
-	context->version = 0;
+	context->decodedHeaderBlocks &= ~_RFX_DECODED_SYNC;
 
 	/* RFX_SYNC */
 	if (Stream_GetRemainingLength(s) < 6)
@@ -441,12 +446,13 @@ static BOOL rfx_process_message_sync(RFX_CONTEXT* context, wStream* s)
 
 	if (context->version != WF_VERSION_1_0)
 	{
-		WLog_ERR(TAG, "unknown version number 0x%X", context->version);
+		WLog_ERR(TAG, "invalid version number 0x%04X", context->version);
 		return FALSE;
 	}
 
 	WLog_Print(context->priv->log, WLOG_DEBUG, "version 0x%X", context->version);
 
+	context->decodedHeaderBlocks |= _RFX_DECODED_SYNC;
 	return TRUE;
 }
 
@@ -454,34 +460,39 @@ static BOOL rfx_process_message_codec_versions(RFX_CONTEXT* context, wStream* s)
 {
 	BYTE numCodecs;
 
-	context->codec_id = 0;
-	context->codec_version = 0;
+	context->decodedHeaderBlocks &= ~_RFX_DECODED_VERSIONS;
 
-	if (Stream_GetRemainingLength(s) < 1)
+	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_ERR(TAG, "RfxCodecVersion packet too small");
+		WLog_ERR(TAG, "%s: packet too small for reading codec versions", __FUNCTION__);
 		return FALSE;
 	}
+
 	Stream_Read_UINT8(s, numCodecs); /* numCodecs (1 byte), must be set to 0x01 */
+	Stream_Read_UINT8(s, context->codec_id); /* codecId (1 byte), must be set to 0x01 */
+	Stream_Read_UINT16(s, context->codec_version); /* version (2 bytes), must be set to WF_VERSION_1_0 (0x0100)  */
 
 	if (numCodecs != 1)
 	{
-		WLog_ERR(TAG, "numCodecs: %d, expected:1", numCodecs);
+		WLog_ERR(TAG, "%s: numCodes is 0x%02X (must be 0x01)", __FUNCTION__, numCodecs);
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) < (size_t) (2 * numCodecs))
+	if (context->codec_id != 0x01)
 	{
-		WLog_ERR(TAG, "RfxCodecVersion packet too small for numCodecs=%d", numCodecs);
+		WLog_ERR(TAG, "%s: invalid codec id (0x%02X)", __FUNCTION__, context->codec_id);
 		return FALSE;
 	}
 
-	/* RFX_CODEC_VERSIONT */
-	Stream_Read_UINT8(s, context->codec_id); /* codecId (1 byte) */
-	Stream_Read_UINT16(s, context->codec_version); /* version (2 bytes) */
+	if (context->codec_version != WF_VERSION_1_0)
+	{
+		WLog_ERR(TAG, "%s: invalid codec version (0x%04X)", __FUNCTION__, context->codec_version);
+		return FALSE;
+	}
 
 	WLog_Print(context->priv->log, WLOG_DEBUG, "id %d version 0x%X.", context->codec_id, context->codec_version);
 
+	context->decodedHeaderBlocks |= _RFX_DECODED_VERSIONS;
 	return TRUE;
 }
 
@@ -490,8 +501,7 @@ static BOOL rfx_process_message_channels(RFX_CONTEXT* context, wStream* s)
 	BYTE channelId;
 	BYTE numChannels;
 
-	context->width = 0;
-	context->height = 0;
+	context->decodedHeaderBlocks &= ~_RFX_DECODED_CHANNELS;
 
 	if (Stream_GetRemainingLength(s) < 1)
 	{
@@ -527,12 +537,19 @@ static BOOL rfx_process_message_channels(RFX_CONTEXT* context, wStream* s)
 	Stream_Read_UINT16(s, context->width); /* width (2 bytes) */
 	Stream_Read_UINT16(s, context->height); /* height (2 bytes) */
 
+	if (!context->width || !context->height)
+	{
+		WLog_ERR(TAG, "%s: invalid channel with/height: %ux%u", __FUNCTION__, context->width, context->height);
+		return FALSE;
+	}
+
 	/* Now, only the first monitor can be used, therefore the other channels will be ignored. */
 	Stream_Seek(s, 5 * (numChannels - 1));
 
 	WLog_Print(context->priv->log, WLOG_DEBUG, "numChannels %d id %d, %dx%d.",
 		numChannels, channelId, context->width, context->height);
 
+	context->decodedHeaderBlocks |= _RFX_DECODED_CHANNELS;
 	return TRUE;
 }
 
@@ -541,6 +558,8 @@ static BOOL rfx_process_message_context(RFX_CONTEXT* context, wStream* s)
 	BYTE ctxId;
 	UINT16 tileSize;
 	UINT16 properties;
+
+	context->decodedHeaderBlocks &= ~_RFX_DECODED_CONTEXT;
 
 	if (Stream_GetRemainingLength(s) < 5)
 	{
@@ -584,6 +603,7 @@ static BOOL rfx_process_message_context(RFX_CONTEXT* context, wStream* s)
 			return FALSE;
 	}
 
+	context->decodedHeaderBlocks |= _RFX_DECODED_CONTEXT;
 	return TRUE;
 }
 
@@ -701,8 +721,8 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* messag
 
 	if (regionType != CBT_REGION)
 	{
-		WLog_ERR(TAG, "%s: invalid region type 0x%04X", __FUNCTION__, CBT_REGION);
-		return FALSE;
+		WLog_ERR(TAG, "%s: invalid region type 0x%04X", __FUNCTION__, regionType);
+		return TRUE;
 	}
 
 	if (numTileSets != 0x0001)
@@ -826,7 +846,10 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 	}
 
 	if (!(message->tiles = (RFX_TILE**) calloc(message->numTiles, sizeof(RFX_TILE*))))
+	{
+		message->numTiles = 0;
 		return FALSE;
+	}
 
 	if (context->priv->UseThreads)
 	{
@@ -851,7 +874,14 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 	rc = TRUE;
 	for (i = 0; i < message->numTiles; i++)
 	{
-		tile = message->tiles[i] = (RFX_TILE*) ObjectPool_Take(context->priv->TilePool);
+		if (!(tile = (RFX_TILE*) ObjectPool_Take(context->priv->TilePool)))
+		{
+			WLog_ERR(TAG, "RfxMessageTileSet failed to get tile from object pool");
+			rc = FALSE;
+			break;
+		}
+
+		message->tiles[i] = tile;
 
 		/* RFX_TILE */
 		if (Stream_GetRemainingLength(s) < 6)
@@ -877,6 +907,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 		if (blockType != CBT_TILE)
 		{
 			WLog_ERR(TAG, "unknown block type 0x%X, expected CBT_TILE (0xCAC3).", blockType);
+			rc = FALSE;
 			break;
 		}
 
@@ -906,8 +937,13 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 			params[i].context = context;
 			params[i].tile = message->tiles[i];
 
-			work_objects[i] = CreateThreadpoolWork((PTP_WORK_CALLBACK) rfx_process_message_tile_work_callback,
-					(void*) &params[i], &context->priv->ThreadPoolEnv);
+			if (!(work_objects[i] = CreateThreadpoolWork((PTP_WORK_CALLBACK) rfx_process_message_tile_work_callback,
+					(void*) &params[i], &context->priv->ThreadPoolEnv)))
+			{
+				WLog_ERR(TAG, "CreateThreadpoolWork failed.");
+				rc = FALSE;
+				break;
+			}
 
 			SubmitThreadpoolWork(work_objects[i]);
 			close_cnt = i + 1;
@@ -927,14 +963,15 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 			WaitForThreadpoolWorkCallbacks(work_objects[i], FALSE);
 			CloseThreadpoolWork(work_objects[i]);
 		}
-	}
 
-	free(work_objects);
-	free(params);
+		free(work_objects);
+		free(params);
+	}
 
 	for (i = 0; i < message->numTiles; i++)
 	{
-		tile = message->tiles[i];
+		if (!(tile = message->tiles[i]))
+			continue;
 		tile->YLen = tile->CbLen = tile->CrLen = 0;
 		tile->YData = tile->CbData = tile->CrData = NULL;
 	}
@@ -982,42 +1019,10 @@ RFX_MESSAGE* rfx_process_message(RFX_CONTEXT* context, BYTE* data, UINT32 length
 
 		pos = Stream_GetPosition(s) - 6 + blockLen;
 
-		if (blockType != WBT_SYNC && context->version != WF_VERSION_1_0)
+		if (blockType > WBT_CONTEXT && context->decodedHeaderBlocks != _RFX_DECODED_HEADERS)
 		{
-			/* The TS_RFX_SYNC message MUST be the first message in any encoded stream. */
-			WLog_ERR(TAG, "%s: TS_RFX_SYNC was not processed", __FUNCTION__);
+			WLog_ERR(TAG, "%s: incomplete header blocks processing", __FUNCTION__);
 			goto fail;
-		}
-
-		if (blockType > WBT_CONTEXT)
-		{
-			if (context->mode == 0)
-			{
-				/* Unknown rlgr mode.
-				 * A valid TS_RFX_CONTEXT message should have been processed by now
-				 */
-				WLog_ERR(TAG, "%s: TS_RFX_CONTEXT was not processed", __FUNCTION__);
-				goto fail;
-			}
-
-			if (context->codec_version != WF_VERSION_1_0)
-			{
-				/* Unknown codec version.
-				 * A valid TS_RFX_CODEC_VERSIONS message should have been processed by now
-				 */
-				WLog_ERR(TAG, "%s: TS_RFX_CODEC_VERSIONS was not processed", __FUNCTION__);
-				goto fail;
-			}
-
-			if (!context->width || !context->height)
-			{
-				/* Empty plane.
-				 * A valid TS_RFX_CODEC_CHANNELS message should have been processed by now
-				 * which would have resulted in a non-zero width and height in the context
-				 */
-				WLog_ERR(TAG, "%s: TS_RFX_CODEC_CHANNELS was not processed", __FUNCTION__);
-				goto fail;
-			}
 		}
 
 		if (blockType >= WBT_CONTEXT && blockType <= WBT_EXTENSION)
@@ -1162,7 +1167,8 @@ void rfx_message_free(RFX_CONTEXT* context, RFX_MESSAGE* message)
 		{
 			for (i = 0; i < message->numTiles; i++)
 			{
-				tile = message->tiles[i];
+				if (!(tile = message->tiles[i]))
+					continue;
 
 				if (tile->YCbCrData)
 				{
@@ -1687,7 +1693,8 @@ static BOOL rfx_write_message_tileset(RFX_CONTEXT* context, wStream* s, RFX_MESS
 
 	for (i = 0; i < message->numTiles; i++)
 	{
-		tile = message->tiles[i];
+		if (!(tile = message->tiles[i]))
+			return FALSE;
 		if (!rfx_write_tile(context, s, tile))
 			return FALSE;
 	}
