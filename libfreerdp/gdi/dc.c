@@ -152,10 +152,12 @@ HGDIOBJECT gdi_SelectObject(HGDI_DC hdc, HGDIOBJECT hgdiobject)
 	else if (hgdiobject->objectType == GDIOBJECT_REGION)
 	{
 		hdc->selectedObject = hgdiobject;
+		previousSelectedObject = (HGDIOBJECT) COMPLEXREGION;
 	}
 	else if (hgdiobject->objectType == GDIOBJECT_RECT)
 	{
 		hdc->selectedObject = hgdiobject;
+		previousSelectedObject = (HGDIOBJECT) SIMPLEREGION;
 	}
 	else
 	{
@@ -231,13 +233,11 @@ int gdi_DeleteObject(HGDIOBJECT hgdiobject)
 
 int gdi_DeleteDC(HGDI_DC hdc)
 {
-	if (hdc->hwnd)
+	if (hdc && hdc->hwnd)
 	{
-		if (hdc->hwnd->cinvalid != NULL)
-			free(hdc->hwnd->cinvalid);
+		free(hdc->hwnd->cinvalid);
 
-		if (hdc->hwnd->invalid != NULL)
-			free(hdc->hwnd->invalid);
+		free(hdc->hwnd->invalid);
 
 		free(hdc->hwnd);
 	}

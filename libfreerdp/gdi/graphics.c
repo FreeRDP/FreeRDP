@@ -104,7 +104,7 @@ BOOL gdi_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 
 	gdi_bitmap = (gdiBitmap*) bitmap;
 	gdi_bitmap->hdc = gdi_CreateCompatibleDC(gdi->hdc);
-	if (!gdi->hdc)
+	if (!gdi_bitmap->hdc)
 		return FALSE;
 
 	if (!bitmap->data)
@@ -118,12 +118,7 @@ BOOL gdi_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 		return FALSE;
 	}
 
-	if (!gdi_SelectObject(gdi_bitmap->hdc, (HGDIOBJECT) gdi_bitmap->bitmap))
-	{
-		gdi_DeleteObject((HGDIOBJECT) gdi_bitmap->bitmap);
-		gdi_DeleteDC(gdi->hdc);
-		return FALSE;
-	}
+	gdi_SelectObject(gdi_bitmap->hdc, (HGDIOBJECT) gdi_bitmap->bitmap);
 	gdi_bitmap->org_bitmap = NULL;
 	return TRUE;
 }
@@ -256,12 +251,7 @@ BOOL gdi_Glyph_New(rdpContext* context, rdpGlyph* glyph)
 	gdi_glyph->bitmap->bytesPerPixel = 1;
 	gdi_glyph->bitmap->bitsPerPixel = 1;
 
-	if (!gdi_SelectObject(gdi_glyph->hdc, (HGDIOBJECT) gdi_glyph->bitmap))
-	{
-		gdi_DeleteDC(gdi_glyph->hdc);
-		_aligned_free(data);
-		return FALSE;
-	}
+	gdi_SelectObject(gdi_glyph->hdc, (HGDIOBJECT) gdi_glyph->bitmap);
 	gdi_glyph->org_bitmap = NULL;
 	return TRUE;
 }
