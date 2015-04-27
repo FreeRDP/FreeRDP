@@ -121,12 +121,17 @@
 #define GDI_FILL_WINDING		0x02
 
 /* GDI Object Types */
-#define GDIOBJECT_BITMAP		0x00
-#define GDIOBJECT_PEN			0x01
-#define GDIOBJECT_PALETTE		0x02
-#define GDIOBJECT_BRUSH			0x03
-#define GDIOBJECT_RECT			0x04
-#define GDIOBJECT_REGION		0x04
+#define GDIOBJECT_BITMAP   0x00
+#define GDIOBJECT_PEN      0x01
+#define GDIOBJECT_PALETTE  0x02
+#define GDIOBJECT_BRUSH    0x03
+#define GDIOBJECT_RECT     0x04
+#define GDIOBJECT_REGION   0x05
+
+/* Region return values */
+#define NULLREGION         0x01
+#define SIMPLEREGION       0x02
+#define COMPLEXREGION      0x03
 
 struct _GDIOBJECT
 {

@@ -797,11 +797,7 @@ static BOOL gdi_line_to(rdpContext* context, LINE_TO_ORDER* lineTo)
 	hPen = gdi_CreatePen(lineTo->penStyle, lineTo->penWidth, (GDI_COLOR) color);
 	if (!hPen)
 		return FALSE;
-	if (!gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT) hPen))
-	{
-		gdi_DeleteObject((HGDIOBJECT) hPen);
-		return FALSE;
-	}
+	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT) hPen);
 	gdi_SetROP2(gdi->drawing->hdc, lineTo->bRop2);
 
 	gdi_MoveToEx(gdi->drawing->hdc, lineTo->nXStart, lineTo->nYStart, NULL);
