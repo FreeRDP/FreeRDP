@@ -108,7 +108,11 @@ int xf_tsmf_xv_video_frame_event(TsmfClientContext* tsmf, TSMF_VIDEO_FRAME_EVENT
 		return -1001;
 
 	/* In case the player is minimized */
+#ifdef __OpenBSD__
+	if (event->x < -2048 || event->y < -2048)
+#else
 	if (event->x < -2048 || event->y < -2048 || event->numVisibleRects < 0)
+#endif
 	{
 		return -1002;
 	}

@@ -166,7 +166,11 @@ BOOL autodetect_send_bandwidth_measure_payload(rdpContext* context, UINT16 paylo
 	/* Random data (better measurement in case the line is compressed) */
 	for (i = 0; i < payloadLength / 4; i++)
 	{
+#ifdef __OpenBSD__
+		Stream_Write_UINT32(s, arc4random());
+#else
 		Stream_Write_UINT32(s, rand());
+#endif
 	}
 
 	return rdp_send_message_channel_pdu(context->rdp, s, SEC_AUTODETECT_REQ);
@@ -204,7 +208,11 @@ static BOOL autodetect_send_bandwidth_measure_stop(rdpContext* context, UINT16 p
 			/* Random data (better measurement in case the line is compressed) */
 			for (i = 0; i < payloadLength / 4; i++)
 			{
+#ifdef __OpenBSD__
+				Stream_Write_UINT32(s, arc4random());
+#else
 				Stream_Write_UINT32(s, rand());
+#endif
 			}
 		}
 	}
