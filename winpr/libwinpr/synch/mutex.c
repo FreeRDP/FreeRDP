@@ -61,6 +61,9 @@ BOOL MutexCloseHandle(HANDLE handle)
 	if (!MutexIsHandled(handle))
 		return FALSE;
 
+#ifdef __OpenBSD__
+	pthread_mutex_unlock(&mutex->mutex);
+#endif
 	if (!pthread_mutex_destroy(&mutex->mutex))
 		return FALSE;
 
