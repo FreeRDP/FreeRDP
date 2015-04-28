@@ -29,6 +29,8 @@
 
 #ifndef _WIN32
 
+#include <errno.h>
+
 #include "../handle/handle.h"
 
 #include "../log.h"
@@ -63,35 +65,53 @@ static int MutexGetFd(HANDLE handle)
 BOOL MutexCloseHandle(HANDLE handle)
 {
 	WINPR_MUTEX* mutex = (WINPR_MUTEX*) handle;
+	int rc;
 
 	if (!MutexIsHandled(handle))
 		return FALSE;
 
-	if (pthread_mutex_trylock(&mutex->mutex))
+	rc = pthread_mutex_trylock(&mutex->mutex);
+	switch(rc)
 	{
+		/* If we already own the mutex consider it a success. */
+		case EDEADLK:
+			break;
+		default:
 #if defined(WITH_DEBUG_MUTEX)
-		size_t used = 0, i;
-		void* stack = winpr_backtrace(20);
-		char **msg = NULL;
-
-		if (stack)
-			msg = winpr_backtrace_symbols(stack, &used);
-
-		if (msg)
 		{
-			for(i=0; i<used; i++)
-				WLog_ERR(TAG, "%2d: %s", i, msg[i]);
+			size_t used = 0, i;
+			void* stack = winpr_backtrace(20);
+			char **msg = NULL;
+
+			if (stack)
+				msg = winpr_backtrace_symbols(stack, &used);
+
+			if (msg)
+			{
+				for(i=0; i<used; i++)
+					WLog_ERR(TAG, "%2d: %s", i, msg[i]);
+			}
+			free (msg);
+			winpr_backtrace_free(stack);
 		}
-		free (msg);
-		winpr_backtrace_free(stack);
 #endif
+		WLog_ERR(TAG, "pthread_mutex_trylock failed with %s [%d]", strerror(rc), rc);
+		return FALSE;
 	}
 
-	if (pthread_mutex_unlock(&mutex->mutex))
+	rc = pthread_mutex_unlock(&mutex->mutex);
+	if (rc != 0)
+	{
+		WLog_ERR(TAG, "pthread_mutex_unlock failed with %s [%d]", strerror(rc), rc);
 		return FALSE;
+	}
 
-	if (!pthread_mutex_destroy(&mutex->mutex))
+	rc = pthread_mutex_destroy(&mutex->mutex);
+	if (rc != 0)
+	{
+		WLog_ERR(TAG, "pthread_mutex_destroy failed with %s [%d]", strerror(rc), rc);
 		return FALSE;
+	}
 
 	free(handle);
 
