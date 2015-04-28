@@ -511,21 +511,23 @@ BOOL update_read_desktop_actively_monitored_order(wStream* s, WINDOW_ORDER_INFO*
 		if (Stream_GetRemainingLength(s) < 4 * monitored_desktop->numWindowIds)
 			return FALSE;
 
-		size = sizeof(UINT32) * monitored_desktop->numWindowIds;
+		if (monitored_desktop->numWindowIds > 0) {
+			size = sizeof(UINT32) * monitored_desktop->numWindowIds;
 
-		newid = (UINT32*) realloc(monitored_desktop->windowIds, size);
-		if (!newid)
-		{
-			free (monitored_desktop->windowIds);
-			monitored_desktop->windowIds = NULL;
-			return FALSE;
-		}
-		monitored_desktop->windowIds = newid;
+			newid = (UINT32*)realloc(monitored_desktop->windowIds, size);
+			if (!newid)
+			{
+				free(monitored_desktop->windowIds);
+				monitored_desktop->windowIds = NULL;
+				return FALSE;
+			}
+			monitored_desktop->windowIds = newid;
 
-		/* windowIds */
-		for (i = 0; i < (int) monitored_desktop->numWindowIds; i++)
-		{
-			Stream_Read_UINT32(s, monitored_desktop->windowIds[i]);
+			/* windowIds */
+			for (i = 0; i < (int)monitored_desktop->numWindowIds; i++)
+			{
+				Stream_Read_UINT32(s, monitored_desktop->windowIds[i]);
+			}
 		}
 	}
 
