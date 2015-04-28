@@ -45,6 +45,7 @@
 #cmakedefine WITH_JPEG
 #cmakedefine WITH_WIN8
 #cmakedefine WITH_RDPSND_DSOUND
+#cmakedefine WITH_EVENTFD_READ_WRITE
 
 #cmakedefine WITH_FFMPEG
 #cmakedefine WITH_GSTREAMER_1_0

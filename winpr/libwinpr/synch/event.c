@@ -183,7 +183,7 @@ HANDLE OpenEventA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpName)
 }
 
 #ifdef HAVE_EVENTFD_H
-#if defined(__UCLIBC__)
+#if !defined(WITH_EVENTFD_READ_WRITE)
 static int eventfd_read(int fd, eventfd_t* value)
 {
 	return (read(fd, value, sizeof(*value)) == sizeof(*value)) ? 0 : -1;
