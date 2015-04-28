@@ -67,9 +67,9 @@ BOOL MutexCloseHandle(HANDLE handle)
 	if (!MutexIsHandled(handle))
 		return FALSE;
 
-#if defined(WITH_DEBUG_MUTEX)
 	if (pthread_mutex_trylock(&mutex->mutex))
 	{
+#if defined(WITH_DEBUG_MUTEX)
 		size_t used = 0, i;
 		void* stack = winpr_backtrace(20);
 		char **msg = NULL;
@@ -84,10 +84,11 @@ BOOL MutexCloseHandle(HANDLE handle)
 		}
 		free (msg);
 		winpr_backtrace_free(stack);
-	}
-	else
-		pthread_mutex_unlock(&mutex->mutex);
 #endif
+	}
+
+	if (pthread_mutex_unlock(&mutex->mutex))
+		return FALSE;
 
 	if (!pthread_mutex_destroy(&mutex->mutex))
 		return FALSE;
