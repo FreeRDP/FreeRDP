@@ -33,7 +33,7 @@
 
 #define TAG CLIENT_TAG("shadow")
 
-void shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
+BOOL shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 {
 	rdpSettings* settings;
 	rdpShadowServer* server;
@@ -62,10 +62,13 @@ void shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 	settings->TlsSecurity = TRUE;
 	settings->NlaSecurity = FALSE;
 
-	settings->CertificateFile = _strdup(server->CertificateFile);
-	settings->PrivateKeyFile = _strdup(server->PrivateKeyFile);
+	if (!(settings->CertificateFile = _strdup(server->CertificateFile)))
+		goto fail_cert_file;
+	if (!(settings->PrivateKeyFile = _strdup(server->PrivateKeyFile)))
+		goto fail_privkey_file;
+	if (!(settings->RdpKeyFile = _strdup(settings->PrivateKeyFile)))
+		goto fail_rdpkey_file;
 
-	settings->RdpKeyFile = _strdup(settings->PrivateKeyFile);
 
 	if (server->ipcSocket)
 	{
@@ -77,17 +80,45 @@ void shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 	client->mayView = server->mayView;
 	client->mayInteract = server->mayInteract;
 
-	InitializeCriticalSectionAndSpinCount(&(client->lock), 4000);
+	if (!InitializeCriticalSectionAndSpinCount(&(client->lock), 4000))
+		goto fail_client_lock;
 
 	region16_init(&(client->invalidRegion));
 
 	client->vcm = WTSOpenServerA((LPSTR) peer->context);
+	if (!client->vcm || client->vcm == INVALID_HANDLE_VALUE)
+		goto fail_open_server;
 
-	client->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (!(client->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+		goto fail_stop_event;
 
-	client->encoder = shadow_encoder_new(client);
+	if (!(client->encoder = shadow_encoder_new(client)))
+		goto fail_encoder_new;
 
 	ArrayList_Add(server->clients, (void*) client);
+
+	return TRUE;
+
+fail_encoder_new:
+	CloseHandle(client->encoder);
+	client->encoder = NULL;
+fail_stop_event:
+	WTSCloseServer((HANDLE) client->vcm);
+	client->vcm = NULL;
+fail_open_server:
+	DeleteCriticalSection(&(client->lock));
+fail_client_lock:
+	free(settings->RdpKeyFile);
+	settings->RdpKeyFile = NULL;
+fail_rdpkey_file:
+	free(settings->PrivateKeyFile);
+	settings->PrivateKeyFile = NULL;
+fail_privkey_file:
+	free(settings->CertificateFile);
+	settings->CertificateFile = NULL;
+fail_cert_file:
+
+	return FALSE;
 }
 
 void shadow_client_context_free(freerdp_peer* peer, rdpShadowClient* client)
@@ -1035,13 +1066,11 @@ void* shadow_client_thread(rdpShadowClient* client)
 	
 	freerdp_peer_context_free(peer);
 	freerdp_peer_free(peer);
-
 	ExitThread(0);
-
 	return NULL;
 }
 
-void shadow_client_accepted(freerdp_listener* listener, freerdp_peer* peer)
+BOOL shadow_client_accepted(freerdp_listener* listener, freerdp_peer* peer)
 {
 	rdpShadowClient* client;
 	rdpShadowServer* server;
@@ -1052,10 +1081,14 @@ void shadow_client_accepted(freerdp_listener* listener, freerdp_peer* peer)
 	peer->ContextSize = sizeof(rdpShadowClient);
 	peer->ContextNew = (psPeerContextNew) shadow_client_context_new;
 	peer->ContextFree = (psPeerContextFree) shadow_client_context_free;
-	freerdp_peer_context_new(peer);
+
+	if (!freerdp_peer_context_new(peer))
+		return FALSE;
 
 	client = (rdpShadowClient*) peer->context;
 
 	client->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
 			shadow_client_thread, client, 0, NULL);
+
+	return TRUE;
 }

@@ -21,7 +21,7 @@ int TestCommMonitor(int argc, char* argv[])
 	if (!hComm || (hComm == INVALID_HANDLE_VALUE))
 	{
 		printf("CreateFileA failure: %s\n", lpFileName);
-		return 0;
+		return -1;
 	}
 
 	fSuccess = SetCommMask(hComm, EV_CTS | EV_DSR);
@@ -29,11 +29,15 @@ int TestCommMonitor(int argc, char* argv[])
 	if (!fSuccess)
 	{
 		printf("SetCommMask failure: GetLastError() = %d\n", (int) GetLastError());
-		return 0;
+		return -1;
 	}
 
 	ZeroMemory(&overlapped, sizeof(OVERLAPPED));
-	overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (!(overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	{
+		printf("CreateEvent failed: GetLastError() = %d\n", (int) GetLastError());
+		return -1;
+	}
 
 	if (WaitCommEvent(hComm, &dwEvtMask, &overlapped))
 	{
@@ -58,7 +62,7 @@ int TestCommMonitor(int argc, char* argv[])
 		else
 		{
 			printf("WaitCommEvent failure: GetLastError() = %d\n", (int) dwError);
-			return 0;
+			return -1;
 		}
 	}
 

@@ -441,14 +441,15 @@ static wEventType FreeRDP_Events[] =
  *
  *  @param instance - Pointer to the rdp_freerdp structure that will be initialized with the new context.
  */
-int freerdp_context_new(freerdp* instance)
+BOOL freerdp_context_new(freerdp* instance)
 {
 	rdpRdp* rdp;
 	rdpContext* context;
+	BOOL ret = TRUE;
 
 	instance->context = (rdpContext*) calloc(1, instance->ContextSize);
 	if (!instance->context)
-		return -1;
+		return FALSE;
 
 	context = instance->context;
 	context->instance = instance;
@@ -497,8 +498,10 @@ int freerdp_context_new(freerdp* instance)
 
 	update_register_client_callbacks(rdp->update);
 
-	IFCALL(instance->ContextNew, instance, instance->context);
-	return 0;
+	IFCALLRET(instance->ContextNew, ret, instance, instance->context);
+
+	if (ret)
+		return TRUE;
 
 out_error_graphics_new:
 	rdp_free(rdp);
@@ -508,7 +511,7 @@ out_error_metrics_new:
 	PubSub_Free(context->pubSub);
 out_error_pubsub:
 	free(instance->context);
-	return -1;
+	return FALSE;
 }
 
 /** Deallocator function for a rdp context.

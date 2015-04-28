@@ -47,20 +47,19 @@ int main(int argc, char** argv)
 	server = shadow_server_new();
 
 	if (!server)
-		return 0;
+		goto fail_server_new;
 
-	status = shadow_server_parse_command_line(server, argc, argv);
+	if ((status = shadow_server_parse_command_line(server, argc, argv)) < 0)
+	{
+		shadow_server_command_line_status_print(server, argc, argv, status);
+		goto fail_parse_command_line;
+	}
 
-	status = shadow_server_command_line_status_print(server, argc, argv, status);
+	if ((status = shadow_server_init(server)) < 0)
+		goto fail_server_init;
 
-	if (status < 0)
-		return 0;
-
-	if (shadow_server_init(server) < 0)
-		return 0;
-
-	if (shadow_server_start(server) < 0)
-		return 0;
+	if ((status = shadow_server_start(server)) < 0)
+		goto fail_server_start;
 
 	if (g_MessagePump)
 	{
@@ -73,10 +72,18 @@ int main(int argc, char** argv)
 
 	WaitForSingleObject(server->thread, INFINITE);
 
-	GetExitCodeThread(server->thread, &dwExitCode);
+	if (!GetExitCodeThread(server->thread, &dwExitCode))
+		status = -1;
+	else
+		status = (int)dwExitCode;
 
+
+fail_server_start:
+	shadow_server_uninit(server);
+fail_server_init:
+fail_parse_command_line:
 	shadow_server_free(server);
-
-	return 0;
+fail_server_new:
+	return status;
 }
 

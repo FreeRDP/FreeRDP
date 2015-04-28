@@ -52,23 +52,46 @@
 static char* test_pcap_file = NULL;
 static BOOL test_dump_rfx_realtime = TRUE;
 
-void test_peer_context_new(freerdp_peer* client, testPeerContext* context)
+BOOL test_peer_context_new(freerdp_peer* client, testPeerContext* context)
 {
-	context->rfx_context = rfx_context_new(TRUE);
+	if (!(context->rfx_context = rfx_context_new(TRUE)))
+		goto fail_rfx_context;
+
 	context->rfx_context->mode = RLGR3;
 	context->rfx_context->width = SAMPLE_SERVER_DEFAULT_WIDTH;
 	context->rfx_context->height = SAMPLE_SERVER_DEFAULT_HEIGHT;
 	rfx_context_set_pixel_format(context->rfx_context, RDP_PIXEL_FORMAT_R8G8B8);
 
-	context->nsc_context = nsc_context_new();
+	if (!(context->nsc_context = nsc_context_new()))
+		goto fail_nsc_context;
+
 	nsc_context_set_pixel_format(context->nsc_context, RDP_PIXEL_FORMAT_R8G8B8);
 
-	context->s = Stream_New(NULL, 65536);
+	if (!(context->s = Stream_New(NULL, 65536)))
+		goto fail_stream_new;
 
 	context->icon_x = -1;
 	context->icon_y = -1;
 
 	context->vcm = WTSOpenServerA((LPSTR) client->context);
+
+	if (!context->vcm || context->vcm == INVALID_HANDLE_VALUE)
+		goto fail_open_server;
+
+	return TRUE;
+
+fail_open_server:
+	context->vcm = NULL;
+	Stream_Free(context->s, TRUE);
+	context->s = NULL;
+fail_stream_new:
+	nsc_context_free(context->nsc_context);
+	context->nsc_context = NULL;
+fail_nsc_context:
+	rfx_context_free(context->rfx_context);
+	context->rfx_context = NULL;
+fail_rfx_context:
+	return FALSE;
 }
 
 void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
@@ -105,12 +128,12 @@ void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
 	}
 }
 
-static void test_peer_init(freerdp_peer* client)
+static BOOL test_peer_init(freerdp_peer* client)
 {
 	client->ContextSize = sizeof(testPeerContext);
 	client->ContextNew = (psPeerContextNew) test_peer_context_new;
 	client->ContextFree = (psPeerContextFree) test_peer_context_free;
-	freerdp_peer_context_new(client);
+	return freerdp_peer_context_new(client);
 }
 
 static wStream* test_peer_stream_init(testPeerContext* context)
@@ -509,10 +532,20 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 		if (context->debug_channel != NULL)
 		{
 			WLog_DBG(TAG, "Open channel rdpdbg.");
-			context->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+			if (!(context->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+			{
+				WLog_ERR(TAG, "Failed to create stop event");
+				return FALSE;
+			}
 
-			context->debug_channel_thread = CreateThread(NULL, 0,
-					(LPTHREAD_START_ROUTINE) tf_debug_channel_thread_func, (void*) context, 0, NULL);
+			if (!(context->debug_channel_thread = CreateThread(NULL, 0,
+					(LPTHREAD_START_ROUTINE) tf_debug_channel_thread_func, (void*) context, 0, NULL)))
+			{
+				WLog_ERR(TAG, "Failed to create debug channel thread");
+				CloseHandle(context->stopEvent);
+				context->stopEvent = NULL;
+				return FALSE;
+			}
 		}
 	}
 
@@ -674,7 +707,11 @@ static void* test_peer_mainloop(void* arg)
 	testPeerContext* context;
 	freerdp_peer* client = (freerdp_peer*) arg;
 
-	test_peer_init(client);
+	if (!test_peer_init(client))
+	{
+		freerdp_peer_free(client);
+		return NULL;
+	}
 
 	/* Initialize the real server settings here */
 	client->settings->CertificateFile = _strdup("server.crt");
@@ -740,12 +777,16 @@ static void* test_peer_mainloop(void* arg)
 	return NULL;
 }
 
-static void test_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
+static BOOL test_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 {
 	HANDLE hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) test_peer_mainloop, (void*) client, 0, NULL);
+
 	if (hThread != NULL) {
 		CloseHandle(hThread);
+		return TRUE;
 	}
+
+	return FALSE;
 }
 
 static void test_server_mainloop(freerdp_listener* instance)

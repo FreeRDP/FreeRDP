@@ -64,10 +64,11 @@ BOOL xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 
 		if (depth != xfc->depth)
 		{
-			data = _aligned_malloc(bitmap->width * bitmap->height * 4, 16);
-
-			if (!data)
+			if (!(data = _aligned_malloc(bitmap->width * bitmap->height * 4, 16)))
+			{
+				xf_unlock_x11(xfc, FALSE);
 				return FALSE;
+			}
 
 			SrcFormat = gdi_get_pixel_format(bitmap->bpp, TRUE);
 
@@ -162,14 +163,16 @@ BOOL xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	{
 		if (bpp < 32)
 		{
-			freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_INTERLEAVED);
+			if (!freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_INTERLEAVED))
+				return FALSE;
 
 			status = interleaved_decompress(xfc->codecs->interleaved, pSrcData, SrcSize, bpp,
 					&pDstData, xfc->format, -1, 0, 0, width, height, xfc->palette);
 		}
 		else
 		{
-			freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_PLANAR);
+			if (!freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_PLANAR))
+				return FALSE;
 
 			status = planar_decompress(xfc->codecs->planar, pSrcData, SrcSize,
 					&pDstData, xfc->format, -1, 0, 0, width, height, TRUE);
@@ -228,10 +231,11 @@ BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	ci.xhot = pointer->xPos;
 	ci.yhot = pointer->yPos;
 
-	ci.pixels = (XcursorPixel*) calloc(1, ci.width * ci.height * 4);
-
-	if (!ci.pixels)
+	if (!(ci.pixels = (XcursorPixel*) calloc(1, ci.width * ci.height * 4)))
+	{
+		xf_unlock_x11(xfc, FALSE);
 		return FALSE;
+	}
 
 	if ((pointer->andMaskData != 0) && (pointer->xorMaskData != 0))
 	{

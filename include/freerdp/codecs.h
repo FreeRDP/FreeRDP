@@ -59,8 +59,8 @@ struct rdp_codecs
  extern "C" {
 #endif
 
-FREERDP_API int freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags);
-FREERDP_API int freerdp_client_codecs_reset(rdpCodecs* codecs, UINT32 flags);
+FREERDP_API BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags);
+FREERDP_API BOOL freerdp_client_codecs_reset(rdpCodecs* codecs, UINT32 flags);
 
 FREERDP_API rdpCodecs* codecs_new(rdpContext* context);
 FREERDP_API void codecs_free(rdpCodecs* codecs);

@@ -18,7 +18,11 @@ int TestPoolThread(int argc, char* argv[])
 {
 	TP_POOL* pool;
 
-	pool = CreateThreadpool(NULL);
+	if (!(pool = CreateThreadpool(NULL)))
+	{
+		printf("CreateThreadpool failed\n");
+		return -1;
+	}
 
 	SetThreadpoolThreadMinimum(pool, 8); /* default is 0 */
 	SetThreadpoolThreadMaximum(pool, 64); /* default is 500 */

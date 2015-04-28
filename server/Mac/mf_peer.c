@@ -175,25 +175,44 @@ void mf_peer_rfx_update(freerdp_peer* client)
 }
 
 /* Called when we have a new peer connecting */
-int mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
+BOOL mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
 {
-	context->info = mf_info_get_instance();
-	context->rfx_context = rfx_context_new(TRUE);
+	if (!(context->info = mf_info_get_instance()))
+		return FALSE;
+
+	if (!(context->rfx_context = rfx_context_new(TRUE)))
+		goto fail_rfx_context;
+
 	context->rfx_context->mode = RLGR3;
 	context->rfx_context->width = client->settings->DesktopWidth;
 	context->rfx_context->height = client->settings->DesktopHeight;
 	rfx_context_set_pixel_format(context->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
 	
-	//context->nsc_context = nsc_context_new();
+	//if (!(context->nsc_context = nsc_context_new()))
+	//	goto fail_nsc_context;
 	//nsc_context_set_pixel_format(context->nsc_context, RDP_PIXEL_FORMAT_B8G8R8A8);
 	
-	context->s = Stream_New(NULL, 0xFFFF);
+	if (!(context->s = Stream_New(NULL, 0xFFFF)))
+		goto fail_stream_new;
 	
 	context->vcm = WTSOpenServerA((LPSTR) client->context);
+
+	if (!context->vcm || context->vcm == INVALID_HANDLE_VALUE)
+		goto fail_open_server;
 	
 	mf_info_peer_register(context->info, context);
 
-	return 0;
+	return TRUE;
+
+fail_open_server:
+	Stream_Free(context->s, TRUE);
+	context->s = NULL;
+fail_stream_new:
+	rfx_context_free(context->rfx_context);
+	context->rfx_context = NULL;
+fail_rfx_context:
+
+	return FALSE;
 }
 
 /* Called after a peer disconnects */
@@ -226,12 +245,14 @@ void mf_peer_context_free(freerdp_peer* client, mfPeerContext* context)
 }
 
 /* Called when a new client connects */
-void mf_peer_init(freerdp_peer* client)
+BOOL mf_peer_init(freerdp_peer* client)
 {
 	client->ContextSize = sizeof(mfPeerContext);
 	client->ContextNew = (psPeerContextNew) mf_peer_context_new;
 	client->ContextFree = (psPeerContextFree) mf_peer_context_free;
-	freerdp_peer_context_new(client);
+
+	if (!freerdp_peer_context_new(client))
+		return FALSE;
 	
 	info_event_queue = mf_event_queue_new();
 	
@@ -249,6 +270,8 @@ void mf_peer_init(freerdp_peer* client)
 						  );
 		dispatch_resume(info_timer);
 	}
+
+	return TRUE;
 }
 
 BOOL mf_peer_post_connect(freerdp_peer* client)
@@ -330,12 +353,17 @@ static void mf_peer_suppress_output(rdpContext* context, BYTE allow, RECTANGLE_1
 
 }
 
-void mf_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
+BOOL mf_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 {
 	pthread_t th;
 	
-	pthread_create(&th, 0, mf_peer_main_loop, client);
-	pthread_detach(th);
+	if (pthread_create(&th, 0, mf_peer_main_loop, client) == 0)
+	{
+		pthread_detach(th);
+		return TRUE;
+	}
+
+	return FALSE;
 }
 
 void* mf_peer_main_loop(void* arg)
@@ -351,7 +379,11 @@ void* mf_peer_main_loop(void* arg)
 	
 	memset(rfds, 0, sizeof(rfds));
 	
-	mf_peer_init(client);
+	if (!mf_peer_init(client))
+	{
+		freerdp_peer_free(client);
+		return NULL;
+	}
 	
 	/* Initialize the real server settings here */
 	client->settings->CertificateFile = _strdup("server.crt");

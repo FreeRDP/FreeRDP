@@ -37,7 +37,7 @@ typedef BOOL (*psListenerGetFileDescriptor)(freerdp_listener* instance, void** r
 typedef DWORD (*psListenerGetEventHandles)(freerdp_listener* instance, HANDLE* events, DWORD nCount);
 typedef BOOL (*psListenerCheckFileDescriptor)(freerdp_listener* instance);
 typedef void (*psListenerClose)(freerdp_listener* instance);
-typedef void (*psPeerAccepted)(freerdp_listener* instance, freerdp_peer* client);
+typedef BOOL (*psPeerAccepted)(freerdp_listener* instance, freerdp_peer* client);
 
 struct rdp_freerdp_listener
 {

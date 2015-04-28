@@ -1398,8 +1398,14 @@ WINSCARDAPI HANDLE WINAPI PCSC_SCardAccessStartedEvent(void)
 
 	if (!g_StartedEvent)
 	{
-		g_StartedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-		SetEvent(g_StartedEvent);
+		if (!(g_StartedEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+			return NULL;
+
+		if (!SetEvent(g_StartedEvent))
+		{
+			CloseHandle(g_StartedEvent);
+			return NULL;
+		}
 	}
 
 	g_StartedEventRefCount++;

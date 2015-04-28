@@ -45,10 +45,12 @@ struct tf_context
 };
 typedef struct tf_context tfContext;
 
-static int tf_context_new(freerdp* instance, rdpContext* context)
+static BOOL tf_context_new(freerdp* instance, rdpContext* context)
 {
-	context->channels = freerdp_channels_new();
-	return 0;
+	if (!(context->channels = freerdp_channels_new()))
+		return FALSE;
+
+	return TRUE;
 }
 
 static void tf_context_free(freerdp* instance, rdpContext* context)
@@ -57,6 +59,7 @@ static void tf_context_free(freerdp* instance, rdpContext* context)
 	{
 		freerdp_channels_close(context->channels, instance);
 		freerdp_channels_free(context->channels);
+		context->channels = NULL;
 	}
 }
 
@@ -184,7 +187,8 @@ int main(int argc, char* argv[])
 	instance->ContextSize = sizeof(tfContext);
 	instance->ContextNew = tf_context_new;
 	instance->ContextFree = tf_context_free;
-	if (freerdp_context_new(instance) != 0)
+
+	if (!freerdp_context_new(instance))
 	{
 		WLog_ERR(TAG, "Couldn't create context");
 		exit(1);

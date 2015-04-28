@@ -126,32 +126,52 @@ rdpShadowSubsystem* shadow_subsystem_new(const char* name)
 
 void shadow_subsystem_free(rdpShadowSubsystem* subsystem)
 {
-	if (subsystem->ep.Free)
+	if (subsystem && subsystem->ep.Free)
 		subsystem->ep.Free(subsystem);
 }
 
 int shadow_subsystem_init(rdpShadowSubsystem* subsystem, rdpShadowServer* server)
 {
-	int status;
+	int status = -1;
+
+	if (!subsystem || !subsystem->ep.Init)
+		return -1;
 
 	subsystem->server = server;
 	subsystem->selectedMonitor = server->selectedMonitor;
 
-	subsystem->MsgPipe = MessagePipe_New();
-	subsystem->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (!(subsystem->MsgPipe = MessagePipe_New()))
+		goto fail;
+
+	if (!(subsystem->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+		goto fail;
 
 	region16_init(&(subsystem->invalidRegion));
 
-	if (!subsystem->ep.Init)
-		return -1;
+	if ((status = subsystem->ep.Init(subsystem)) >= 0)
+		return status;
 
-	status = subsystem->ep.Init(subsystem);
+fail:
+	if (subsystem->MsgPipe)
+	{
+		MessagePipe_Free(subsystem->MsgPipe);
+		subsystem->MsgPipe = NULL;
+	}
+
+	if (subsystem->updateEvent)
+	{
+		CloseHandle(subsystem->updateEvent);
+		subsystem->updateEvent = NULL;
+	}
 
 	return status;
 }
 
 void shadow_subsystem_uninit(rdpShadowSubsystem* subsystem)
 {
+	if (!subsystem)
+		return;
+
 	if (subsystem->ep.Uninit)
 		subsystem->ep.Uninit(subsystem);
 
@@ -175,7 +195,7 @@ int shadow_subsystem_start(rdpShadowSubsystem* subsystem)
 {
 	int status;
 
-	if (!subsystem->ep.Start)
+	if (!subsystem || !subsystem->ep.Start)
 		return -1;
 
 	status = subsystem->ep.Start(subsystem);
@@ -187,7 +207,7 @@ int shadow_subsystem_stop(rdpShadowSubsystem* subsystem)
 {
 	int status;
 
-	if (!subsystem->ep.Stop)
+	if (!subsystem || !subsystem->ep.Stop)
 		return -1;
 
 	status = subsystem->ep.Stop(subsystem);

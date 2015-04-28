@@ -326,12 +326,23 @@ int android_cliprdr_server_file_contents_response(CliprdrClientContext* cliprdr,
 
 int android_cliprdr_init(androidContext* afc, CliprdrClientContext* cliprdr)
 {
-	cliprdr->custom = (void*) afc;
+	wClipboard* clipboard;
+	HANDLE hevent;
+
+	if (!(hevent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+		return 0;
+
+	if (!(clipboard = ClipboardCreate()))
+	{
+		CloseHandle(hevent);
+		return 0;
+	}
+
 	afc->cliprdr = cliprdr;
+	afc->clipboard = clipboard;
+	afc->clipboardRequestEvent = hevent;
 
-	afc->clipboard = ClipboardCreate();
-	afc->clipboardRequestEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-
+	cliprdr->custom = (void*) afc;
 	cliprdr->MonitorReady = android_cliprdr_monitor_ready;
 	cliprdr->ServerCapabilities = android_cliprdr_server_capabilities;
 	cliprdr->ServerFormatList = android_cliprdr_server_format_list;
