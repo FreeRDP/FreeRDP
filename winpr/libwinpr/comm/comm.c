@@ -1535,7 +1535,7 @@ BOOL CommCloseHandle(HANDLE handle)
 	return TRUE;
 }
 
-#ifdef __UCLIBC__
+#ifndef WITH_EVENTFD_GLIBC_EXT
 int eventfd_read(int fd, eventfd_t* value)
 {
 	return (read(fd, value, sizeof(*value)) == sizeof(*value)) ? 0 : -1;
