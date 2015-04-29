@@ -75,6 +75,7 @@ BOOL MutexCloseHandle(HANDLE handle)
 	{
 		/* If we already own the mutex consider it a success. */
 		case EDEADLK:
+		case EBUSY:
 			break;
 		default:
 #if defined(WITH_DEBUG_MUTEX)
