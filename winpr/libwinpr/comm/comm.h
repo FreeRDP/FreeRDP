@@ -29,6 +29,7 @@
 #include <winpr/comm.h>
 
 #include "../handle/handle.h"
+#include "config.h"
 
 struct winpr_comm
 {
@@ -97,7 +98,7 @@ void CommLog_Print(int wlog_level, char *fmt, ...);
 BOOL CommIsHandled(HANDLE handle);
 BOOL CommCloseHandle(HANDLE handle);
 
-#ifdef __UCLIBC__
+#ifndef WITH_EVENTFD_READ_WRITE
 int eventfd_read(int fd, eventfd_t* value);
 int eventfd_write(int fd, eventfd_t value);
 #endif
