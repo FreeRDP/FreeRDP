@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#include <winpr/bcrypt.h>
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -140,8 +142,8 @@ BOOL autodetect_send_connecttime_bandwidth_measure_start(rdpContext* context, UI
 
 BOOL autodetect_send_bandwidth_measure_payload(rdpContext* context, UINT16 payloadLength, UINT16 sequenceNumber)
 {
-	UINT16 i;
 	wStream* s;
+	UCHAR *buffer = NULL;
 
 	s = rdp_message_channel_pdu_init(context->rdp);
 
@@ -163,23 +165,19 @@ BOOL autodetect_send_bandwidth_measure_payload(rdpContext* context, UINT16 paylo
 	Stream_Write_UINT16(s, sequenceNumber); /* sequenceNumber (2 bytes) */
 	Stream_Write_UINT16(s, RDP_BW_PAYLOAD_REQUEST_TYPE); /* requestType (2 bytes) */
 	Stream_Write_UINT16(s, payloadLength); /* payloadLength (2 bytes) */
+
 	/* Random data (better measurement in case the line is compressed) */
-	for (i = 0; i < payloadLength / 4; i++)
-	{
-#ifdef __OpenBSD__
-		Stream_Write_UINT32(s, arc4random());
-#else
-		Stream_Write_UINT32(s, rand());
-#endif
-	}
+	buffer = (UCHAR *)malloc(payloadLength);
+	BCryptGenRandom(NULL, buffer, payloadLength, 0L);
+	Stream_Write(s, buffer, payloadLength);
 
 	return rdp_send_message_channel_pdu(context->rdp, s, SEC_AUTODETECT_REQ);
 }
 
 static BOOL autodetect_send_bandwidth_measure_stop(rdpContext* context, UINT16 payloadLength, UINT16 sequenceNumber, UINT16 requestType)
 {
-	UINT16 i;
 	wStream* s;
+	UCHAR *buffer = NULL;
 
 	s = rdp_message_channel_pdu_init(context->rdp);
 
@@ -205,15 +203,11 @@ static BOOL autodetect_send_bandwidth_measure_stop(rdpContext* context, UINT16 p
 				Stream_Release(s);
 				return FALSE;
 			}
+
 			/* Random data (better measurement in case the line is compressed) */
-			for (i = 0; i < payloadLength / 4; i++)
-			{
-#ifdef __OpenBSD__
-				Stream_Write_UINT32(s, arc4random());
-#else
-				Stream_Write_UINT32(s, rand());
-#endif
-			}
+			buffer = malloc(payloadLength);
+			BCryptGenRandom(NULL, buffer, payloadLength, 0L);
+			Stream_Write(s, buffer, payloadLength);
 		}
 	}
 

@@ -68,6 +68,36 @@ NTSTATUS BCryptFinishHash(BCRYPT_HASH_HANDLE hHash, PUCHAR pbOutput, ULONG cbOut
 
 NTSTATUS BCryptGenRandom(BCRYPT_ALG_HANDLE hAlgorithm, PUCHAR pbBuffer, ULONG cbBuffer, ULONG dwFlags)
 {
+	/* Since rand() and arc4random() generate 32-bit values, we will take one byte */
+	/* from each value returned to fill the buffer 8-bits at a time.  We cannot    */
+	/* guarantee that we will get long-aligned buffer sizes passed into us.        */
+	ULONG i=0;
+	ULONG random_long = 0L;
+	UCHAR random_byte = 0x00;
+
+	/* Test for zero length buffer.  This is an error condition as we cannot null- */
+	/* terminate the buffer in that case.                                          */
+	if (cbBuffer == 0)
+	{
+		return -1;
+	}
+
+	/* Loop through the buffer for the number of bytes specified, filling it up. */
+	for (i=0 ; i< cbBuffer ; i++)
+	{
+#ifdef __OpenBSD__
+		random_long = arc4random();
+#else
+		random_long = rand();
+#endif
+		/* Grab just one byte from the 32-bit value. */
+		random_byte = ((UCHAR *)(&random_long))[0];
+
+		/* Copy it to the buffer, advancing the buffer. */
+		*pbBuffer = random_byte;
+		pbBuffer++;
+	}
+
 	return 0;
 }
 
