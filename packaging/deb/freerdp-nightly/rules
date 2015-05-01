@@ -1,11 +1,5 @@
 #!/usr/bin/make -f
 
-DEB_HOST_ARCH=$(shell dpkg-architecture -qDEB_HOST_ARCH)
-ifneq (,$(filter armhf,$(DEB_HOST_ARCH)))
-ARM_FLOAT_ABI = -DARM_FP_ABI=hard
-else
-ARM_FLOAT_ABI =
-endif
 NULL =
 
 DEB_CMAKE_EXTRA_FLAGS :=  -DCMAKE_SKIP_RPATH=FALSE \
@@ -26,7 +20,6 @@ DEB_CMAKE_EXTRA_FLAGS :=  -DCMAKE_SKIP_RPATH=FALSE \
                           -DCMAKE_INSTALL_PREFIX=/opt/freerdp-nightly/ \
                           -DCMAKE_INSTALL_INCLUDEDIR=include \
                           -DCMAKE_INSTALL_LIBDIR=lib \
-                          $(ARM_FLOAT_ABI) \
                           $(NULL)
 
 %:
