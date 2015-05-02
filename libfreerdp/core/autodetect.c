@@ -168,6 +168,11 @@ BOOL autodetect_send_bandwidth_measure_payload(rdpContext* context, UINT16 paylo
 
 	/* Random data (better measurement in case the line is compressed) */
 	buffer = (UCHAR *)malloc(payloadLength);
+	if (NULL == buffer)
+	{
+		return FALSE;
+	}
+
 	BCryptGenRandom(NULL, buffer, payloadLength, 0L);
 	Stream_Write(s, buffer, payloadLength);
 
@@ -206,6 +211,11 @@ static BOOL autodetect_send_bandwidth_measure_stop(rdpContext* context, UINT16 p
 
 			/* Random data (better measurement in case the line is compressed) */
 			buffer = malloc(payloadLength);
+			if (NULL == buffer)
+			{
+				return FALSE;
+			}
+
 			BCryptGenRandom(NULL, buffer, payloadLength, 0L);
 			Stream_Write(s, buffer, payloadLength);
 		}
