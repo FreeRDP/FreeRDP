@@ -244,13 +244,15 @@ BOOL freerdp_check_event_handles(rdpContext* context)
 
 	status = freerdp_check_fds(context->instance);
 
-	if (!status) {
+	if (!status)
+	{
 		WLog_DBG(TAG, "freerdp_check_fds() - %i", status);
 		return FALSE;
 	}
 
 	status = freerdp_channels_check_fds(context->channels, context->instance);
-	if (!status) {
+	if (!status)
+	{
 		WLog_DBG(TAG, "freerdp_channels_check_fds() - %i", status);
 		return FALSE;
 	}
