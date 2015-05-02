@@ -90,20 +90,23 @@ int tsmf_platform_create(TSMFGstreamerDecoder* decoder)
 		return -1;
 
 	hdl = calloc(1, sizeof(struct X11Handle));
-	if (!hdl) {
+	if (!hdl)
+	{
 		WLog_ERR(TAG, "Could not allocate handle.");
 		return -1;
 	}
 
 	decoder->platform = hdl;
 	hdl->shmid = shm_open(get_shm_id(), (O_RDWR | O_CREAT), (PROT_READ | PROT_WRITE));
-	if (hdl->shmid == -1) {
+	if (hdl->shmid == -1)
+	{
 		WLog_ERR(TAG, "failed to get access to shared memory - shmget(%s): %i - %s", get_shm_id(), errno, strerror(errno));
 		return -2;
 	}
 
 	hdl->xfwin = mmap(0, sizeof(void *), PROT_READ | PROT_WRITE, MAP_SHARED, hdl->shmid, 0);
-	if (hdl->xfwin == MAP_FAILED) {
+	if (hdl->xfwin == MAP_FAILED)
+	{
 		WLog_ERR(TAG, "shmat failed!");
 		return -3;
 	}

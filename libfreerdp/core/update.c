@@ -51,7 +51,8 @@ BOOL update_recv_orders(rdpUpdate* update, wStream* s)
 {
 	UINT16 numberOrders;
 
-	if (Stream_GetRemainingLength(s) < 6) {
+	if (Stream_GetRemainingLength(s) < 6)
+	{
 		WLog_DBG(TAG, "Stream_GetRemainingLength(s) < 6");
 		return FALSE;
 	}
@@ -62,7 +63,8 @@ BOOL update_recv_orders(rdpUpdate* update, wStream* s)
 
 	while (numberOrders > 0)
 	{
-		if (!update_recv_order(update, s)) {
+		if (!update_recv_order(update, s))
+		{
 			WLog_DBG(TAG, "update_recv_order() failed");
 			return FALSE;
 		}
@@ -489,7 +491,8 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 	UINT16 updateType;
 	rdpContext* context = update->context;
 
-	if (Stream_GetRemainingLength(s) < 2) {
+	if (Stream_GetRemainingLength(s) < 2)
+	{
 		WLog_DBG(TAG, "Stream_GetRemainingLength(s) < 2");
 		return FALSE;
 	}
@@ -511,7 +514,8 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 			break;
 
 		case UPDATE_TYPE_BITMAP:
-			if (!update_read_bitmap_update(update, s, &update->bitmap_update)) {
+			if (!update_read_bitmap_update(update, s, &update->bitmap_update))
+			{
 				WLog_DBG(TAG, "UPDATE_TYPE_BITMAP - update_read_bitmap_update() failed");
 				return FALSE;
 			}
@@ -519,7 +523,8 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 			break;
 
 		case UPDATE_TYPE_PALETTE:
-			if (!update_read_palette(update, s, &update->palette_update)) {
+			if (!update_read_palette(update, s, &update->palette_update))
+			{
 				WLog_DBG(TAG, "UPDATE_TYPE_PALETTE - update_read_palette() failed");
 				return FALSE;
 			}

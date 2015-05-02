@@ -504,19 +504,22 @@ static int udev_get_hub_handle(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_numb
 	total_device = libusb_get_device_list(NULL, &libusb_list);
 	/* Look for device. */
 	error = -1;
-	for (i = 0; i < total_device; i ++) {
+	for (i = 0; i < total_device; i ++)
+	{
 		if ((bus_number != libusb_get_bus_number(libusb_list[i])) ||
 		    (dev_number != libusb_get_device_address(libusb_list[i])))
 			continue;
 		error = libusb_open(libusb_list[i], &pdev->hub_handle);
-		if (error < 0) {
+		if (error < 0)
+		{
 			WLog_ERR(TAG,"libusb_open error: %i - %s", error, libusb_strerror(error));
 			break;
 		}
 		/* get port number */
 		error = libusb_get_port_numbers(libusb_list[i], port_numbers, sizeof(port_numbers));
 		libusb_close(pdev->hub_handle);
-		if (error < 1) { /* Prevent open hub, treat as error. */
+		if (error < 1)
+		{ /* Prevent open hub, treat as error. */
 			WLog_ERR(TAG,"libusb_get_port_numbers error: %i - %s", error, libusb_strerror(error));
 			break;
 		}
@@ -529,9 +532,11 @@ static int udev_get_hub_handle(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_numb
 		break;
 	}
 	/* Look for device hub. */
-	if (error == 0) {
+	if (error == 0)
+	{
 		error = -1;
-		for (i = 0; i < total_device; i ++) {
+		for (i = 0; i < total_device; i ++)
+		{
 			if ((bus_number != libusb_get_bus_number(libusb_list[i])) ||
 			    (1 != libusb_get_device_address(libusb_list[i]))) /* Root hub allways first on bus. */
 				continue;

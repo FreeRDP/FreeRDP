@@ -262,7 +262,8 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 	switch (updateCode)
 	{
 		case FASTPATH_UPDATETYPE_ORDERS:
-			if (!fastpath_recv_orders(fastpath, s)) {
+			if (!fastpath_recv_orders(fastpath, s))
+			{
 				WLog_DBG(TAG, "FASTPATH_UPDATETYPE_ORDERS - fastpath_recv_orders()");
 				return -1;
 			}
@@ -270,7 +271,8 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 
 		case FASTPATH_UPDATETYPE_BITMAP:
 		case FASTPATH_UPDATETYPE_PALETTE:
-			if (!fastpath_recv_update_common(fastpath, s)) {
+			if (!fastpath_recv_update_common(fastpath, s))
+			{
 				WLog_DBG(TAG, "FASTPATH_UPDATETYPE_ORDERS - fastpath_recv_orders()");
 				return -1;
 			}
@@ -300,7 +302,8 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 			break;
 
 		case FASTPATH_UPDATETYPE_PTR_POSITION:
-			if (!update_read_pointer_position(s, &pointer->pointer_position)) {
+			if (!update_read_pointer_position(s, &pointer->pointer_position))
+			{
 				WLog_DBG(TAG, "FASTPATH_UPDATETYPE_PTR_POSITION - update_read_pointer_position()");
 				return -1;
 			}
@@ -308,7 +311,8 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 			break;
 
 		case FASTPATH_UPDATETYPE_COLOR:
-			if (!update_read_pointer_color(s, &pointer->pointer_color, 24)) {
+			if (!update_read_pointer_color(s, &pointer->pointer_color, 24))
+			{
 				WLog_DBG(TAG, "FASTPATH_UPDATETYPE_COLOR - update_read_pointer_color()");
 				return -1;
 			}
@@ -316,7 +320,8 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 			break;
 
 		case FASTPATH_UPDATETYPE_CACHED:
-			if (!update_read_pointer_cached(s, &pointer->pointer_cached)) {
+			if (!update_read_pointer_cached(s, &pointer->pointer_cached))
+			{
 				WLog_DBG(TAG, "FASTPATH_UPDATETYPE_CACHED - update_read_pointer_cached()");
 				return -1;
 			}
@@ -324,7 +329,8 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 			break;
 
 		case FASTPATH_UPDATETYPE_POINTER:
-			if (!update_read_pointer_new(s, &pointer->pointer_new)) {
+			if (!update_read_pointer_new(s, &pointer->pointer_new))
+			{
 				WLog_DBG(TAG, "FASTPATH_UPDATETYPE_POINTER - update_read_pointer_new()");
 				return -1;
 			}
@@ -383,7 +389,8 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 	Stream_Read_UINT16(s, size);
 
-	if (Stream_GetRemainingLength(s) < size) {
+	if (Stream_GetRemainingLength(s) < size)
+	{
 		WLog_DBG(TAG, "Stream_GetRemainingLength() < size");
 		return -1;
 	}
@@ -423,7 +430,8 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 		totalSize = size;
 		status = fastpath_recv_update(fastpath, updateCode, totalSize, cs);
 
-		if (status < 0) {
+		if (status < 0)
+		{
 			WLog_DBG(TAG, "fastpath_recv_update() - %i", status);
 			return -1;
 		}
@@ -509,7 +517,8 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 			Stream_Release(fastpath->updateData);
 
-			if (status < 0) {
+			if (status < 0)
+			{
 				WLog_DBG(TAG, "fastpath_recv_update() - %i", status);
 				return -1;
 			}
