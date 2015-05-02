@@ -541,7 +541,8 @@ int fastpath_recv_updates(rdpFastPath* fastpath, wStream* s)
 
 	while (Stream_GetRemainingLength(s) >= 3)
 	{
-		if (fastpath_recv_update_data(fastpath, s) < 0) {
+		if (fastpath_recv_update_data(fastpath, s) < 0)
+		{
 			WLog_DBG(TAG, "fastpath_recv_update_data() fail");
 			return -1;
 		}
