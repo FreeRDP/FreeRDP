@@ -791,7 +791,8 @@ int transport_check_fds(rdpTransport* transport)
 			return recv_status;
 		}
 
-		if (recv_status < 0) {
+		if (recv_status < 0)
+		{
 			WLog_DBG(TAG, "transport->ReceiveCallback() - %i", recv_status);
 			return -1;
 		}

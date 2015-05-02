@@ -449,13 +449,15 @@ static char *devd_get_val(char *buf, size_t buf_size, const char *val_name, size
 	char *ret, *buf_end, *ptr;
 
 	buf_end = (buf + buf_size);
-	for (ret = buf; ret != NULL && ret < buf_end;) {
+	for (ret = buf; ret != NULL && ret < buf_end;)
+	{
 		ret = memmem(ret, (buf_end - ret), val_name, val_name_size);
 		if (ret == NULL)
 			return NULL;
 		/* Found. */
 		/* Check: space before or buf+1. */
-		if ((buf + 1) < ret && ret[-1] != ' ') {
+		if ((buf + 1) < ret && ret[-1] != ' ')
+		{
 			ret += val_name_size;
 			continue;
 		}
@@ -500,7 +502,8 @@ static void *urbdrc_search_usb_device(void *arg) {
 	WLog_DBG(TAG, "urbdrc_search_usb_device - devd: start");
 
 	devd_skt = socket(PF_LOCAL, SOCK_SEQPACKET, 0);
-	if (devd_skt == -1) {
+	if (devd_skt == -1)
+	{
 		WLog_ERR(TAG, "Can't create devd socket: error = %i", errno);
 		goto err_out;
 	}
@@ -508,7 +511,8 @@ static void *urbdrc_search_usb_device(void *arg) {
 	sun.sun_family = PF_LOCAL;
 	sun.sun_len = sizeof(sun);
 	strlcpy(sun.sun_path, "/var/run/devd.seqpacket.pipe", sizeof(sun.sun_path));
-	if (-1 == connect(devd_skt, (struct sockaddr*)&sun, sizeof(sun))) {
+	if (-1 == connect(devd_skt, (struct sockaddr*)&sun, sizeof(sun)))
+	{
 		WLog_ERR(TAG, "Can't connect devd socket: error = %i - %s", errno, strerror(errno));
 		goto err_out;
 	}
@@ -519,13 +523,15 @@ static void *urbdrc_search_usb_device(void *arg) {
 	listobj[0] = searchman->term_event;
 	listobj[1] = mon_fd;
 
-	while (WaitForMultipleObjects(2, listobj, FALSE, INFINITE) != WAIT_OBJECT_0) {
+	while (WaitForMultipleObjects(2, listobj, FALSE, INFINITE) != WAIT_OBJECT_0)
+	{
 		WLog_DBG(TAG, "=======  SEARCH  ======= ");
 
 		/* !system=USB subsystem=DEVICE type=ATTACH ugen=ugen3.3 cdev=ugen3.3 vendor=0x046d product=0x082d devclass=0xef devsubclass=0x02 sernum="6E7D726F" release=0x0011 mode=host port=4 parent=ugen3.1 */
 		/* !system=USB subsystem=DEVICE type=DETACH ugen=ugen3.3 cdev=ugen3.3 vendor=0x046d product=0x082d devclass=0xef devsubclass=0x02 sernum="6E7D726F" release=0x0011 mode=host port=4 parent=ugen3.1 */
 		data_size = read(devd_skt, buf, (sizeof(buf) - 1));
-		if (data_size == -1) {
+		if (data_size == -1)
+		{
 			WLog_ERR(TAG, "devd socket read: error = %i", errno);
 			break;
 		}
@@ -578,7 +584,8 @@ static void *urbdrc_search_usb_device(void *arg) {
 		/* Handle event. */
 		dvc_channel = NULL;
 
-		switch (action)	{
+		switch (action)
+		{
 		case 0: /* ATTACH */
 			sdev = NULL;
 			success = 0;
@@ -604,10 +611,12 @@ static void *urbdrc_search_usb_device(void *arg) {
 
 			dvc_channel = channel_mgr->FindChannelById(channel_mgr, urbdrc->first_channel_id);
 			searchman->rewind(searchman);
-			while (dvc_channel && searchman->has_next(searchman)) {
+			while (dvc_channel && searchman->has_next(searchman))
+			{
 				sdev = searchman->get_next(searchman);
 				if (sdev->idVendor == idVendor &&
-				    sdev->idProduct == idProduct) {
+				    sdev->idProduct == idProduct)
+				{
 					WLog_VRB(TAG, "Searchman Found Device: %04x:%04x",
 					    sdev->idVendor, sdev->idProduct);
 					found = 1;
@@ -615,18 +624,21 @@ static void *urbdrc_search_usb_device(void *arg) {
 				}
 			}
 
-			if (!found && udevman->isAutoAdd(udevman)) {
+			if (!found && udevman->isAutoAdd(udevman))
+			{
 				WLog_VRB(TAG, "Auto Find Device: %04x:%04x ",
 				    idVendor, idProduct);
 				found = 2;
 			}
 
-			if (found) {
+			if (found)
+			{
 				success = udevman->register_udevice(udevman, busnum, devnum,
 				    searchman->UsbDevice, 0, 0, UDEVMAN_FLAG_ADD_BY_ADDR);
 			}
 
-			if (success) {
+			if (success)
+			{
 				searchman->UsbDevice ++;
 
 				usleep(400000);
@@ -643,19 +655,23 @@ static void *urbdrc_search_usb_device(void *arg) {
 			usleep(500000);
 			udevman->loading_lock(udevman);
 			udevman->rewind(udevman);
-			while(udevman->has_next(udevman)) {
+			while (udevman->has_next(udevman))
+			{
 				pdev = udevman->get_next(udevman);
 				if (pdev->get_bus_number(pdev) == busnum &&
-				    pdev->get_dev_number(pdev) == devnum) {
+				    pdev->get_dev_number(pdev) == devnum)
+				{
 					dvc_channel = channel_mgr->FindChannelById(channel_mgr, pdev->get_channel_id(pdev));
 
-					if (dvc_channel == NULL) {
+					if (dvc_channel == NULL)
+					{
 						WLog_ERR(TAG, "SEARCH: dvc_channel %d is NULL!!", pdev->get_channel_id(pdev));
 						func_close_udevice(searchman, pdev);
 						break;
 					}
 
-					if (!pdev->isSigToEnd(pdev)) {
+					if (!pdev->isSigToEnd(pdev))
+					{
 						dvc_channel->Write(dvc_channel, 0, NULL, NULL); 
 						pdev->SigToEnd(pdev);
 					}
@@ -668,7 +684,10 @@ static void *urbdrc_search_usb_device(void *arg) {
 			udevman->loading_unlock(udevman);
 			usleep(300000);
 
-			if (pdev && on_close && dvc_channel && pdev->isSigToEnd(pdev) && !(pdev->isChannelClosed(pdev))) {
+			if (pdev && on_close && dvc_channel &&
+			    pdev->isSigToEnd(pdev) &&
+			    !(pdev->isChannelClosed(pdev)))
+			{
 				dvc_channel->Close(dvc_channel);
 			}
 			break;
