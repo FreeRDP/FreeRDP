@@ -46,6 +46,7 @@
 #cmakedefine WITH_WIN8
 #cmakedefine WITH_RDPSND_DSOUND
 #cmakedefine WITH_EVENTFD_READ_WRITE
+#cmakedefine HAVE_MATH_C99_LONG_DOUBLE
 
 #cmakedefine WITH_FFMPEG
 #cmakedefine WITH_GSTREAMER_1_0
