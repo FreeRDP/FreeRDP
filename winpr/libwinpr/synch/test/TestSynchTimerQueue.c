@@ -57,6 +57,11 @@ int TestSynchTimerQueue(int argc, char* argv[])
 	APC_DATA apcData[TIMER_COUNT];
 
 	g_Event = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (!g_Event)
+	{
+		printf("CreateEvent failed (%d)\n", (int) GetLastError());
+		return -1;
+	}
 
 	hTimerQueue = CreateTimerQueue();
 

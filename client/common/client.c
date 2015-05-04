@@ -29,7 +29,7 @@
 #include <freerdp/client/cmdline.h>
 #include <freerdp/client/channels.h>
 
-int freerdp_client_common_new(freerdp* instance, rdpContext* context)
+BOOL freerdp_client_common_new(freerdp* instance, rdpContext* context)
 {
 	RDP_CLIENT_ENTRY_POINTS* pEntryPoints = instance->pClientEntryPoints;
 	return pEntryPoints->ClientNew(instance, context);
@@ -64,7 +64,7 @@ rdpContext* freerdp_client_context_new(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 
 
 	CopyMemory(instance->pClientEntryPoints, pEntryPoints, pEntryPoints->Size);
-	if (freerdp_context_new(instance) != 0)
+	if (!freerdp_context_new(instance))
 		goto out_fail2;
 
 	context = instance->context;

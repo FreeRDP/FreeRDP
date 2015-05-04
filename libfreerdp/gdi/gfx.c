@@ -192,7 +192,8 @@ int gdi_SurfaceCommand_RemoteFX(rdpGdi* gdi, RdpgfxClientContext* context, RDPGF
 	REGION16 clippingRects;
 	RECTANGLE_16 clippingRect;
 
-	freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_REMOTEFX);
+	if (!freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_REMOTEFX))
+		return -1;
 
 	surface = (gdiGfxSurface*) context->GetSurfaceData(context, cmd->surfaceId);
 
@@ -264,7 +265,8 @@ int gdi_SurfaceCommand_ClearCodec(rdpGdi* gdi, RdpgfxClientContext* context, RDP
 	gdiGfxSurface* surface;
 	RECTANGLE_16 invalidRect;
 
-	freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_CLEARCODEC);
+	if (!freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_CLEARCODEC))
+		return -1;
 
 	surface = (gdiGfxSurface*) context->GetSurfaceData(context, cmd->surfaceId);
 
@@ -303,7 +305,8 @@ int gdi_SurfaceCommand_Planar(rdpGdi* gdi, RdpgfxClientContext* context, RDPGFX_
 	gdiGfxSurface* surface;
 	RECTANGLE_16 invalidRect;
 
-	freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_PLANAR);
+	if (!freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_PLANAR))
+		return -1;
 
 	surface = (gdiGfxSurface*) context->GetSurfaceData(context, cmd->surfaceId);
 
@@ -337,7 +340,8 @@ int gdi_SurfaceCommand_H264(rdpGdi* gdi, RdpgfxClientContext* context, RDPGFX_SU
 	RDPGFX_H264_METABLOCK* meta;
 	RDPGFX_H264_BITMAP_STREAM* bs;
 
-	freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_H264);
+	if (!freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_H264))
+		return -1;
 
 	bs = (RDPGFX_H264_BITMAP_STREAM*) cmd->extra;
 
@@ -380,7 +384,8 @@ int gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context, RDPGFX_S
 	gdiGfxSurface* surface;
 	RECTANGLE_16 invalidRect;
 
-	freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_ALPHACODEC);
+	if (!freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_ALPHACODEC))
+		return -1;
 
 	surface = (gdiGfxSurface*) context->GetSurfaceData(context, cmd->surfaceId);
 
@@ -426,7 +431,8 @@ int gdi_SurfaceCommand_Progressive(rdpGdi* gdi, RdpgfxClientContext* context, RD
 	RFX_PROGRESSIVE_TILE* tile;
 	PROGRESSIVE_BLOCK_REGION* region;
 
-	freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_PROGRESSIVE);
+	if (!freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_PROGRESSIVE))
+		return -1;
 
 	surface = (gdiGfxSurface*) context->GetSurfaceData(context, cmd->surfaceId);
 

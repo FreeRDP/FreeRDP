@@ -439,10 +439,26 @@ int TestPipeCreateNamedPipe(int argc, char* argv[])
 #ifndef _WIN32
 	signal(SIGPIPE, SIG_IGN);
 #endif
-	ReadyEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	SingleThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) named_pipe_single_thread, NULL, 0, NULL);
-	ClientThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) named_pipe_client_thread, NULL, 0, NULL);
-	ServerThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) named_pipe_server_thread, NULL, 0, NULL);
+	if (!(ReadyEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	{
+		printf("CreateEvent failure: (%d)\n", GetLastError());
+		return -1;
+	}
+	if (!(SingleThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) named_pipe_single_thread, NULL, 0, NULL)))
+	{
+		printf("CreateThread (SingleThread) failure: (%d)\n", GetLastError());
+		return -1;
+	}
+	if (!(ClientThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) named_pipe_client_thread, NULL, 0, NULL)))
+	{
+		printf("CreateThread (ClientThread) failure: (%d)\n", GetLastError());
+		return -1;
+	}
+	if (!(ServerThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) named_pipe_server_thread, NULL, 0, NULL)))
+	{
+		printf("CreateThread (ServerThread) failure: (%d)\n", GetLastError());
+		return -1;
+	}
 	WaitForSingleObject(SingleThread, INFINITE);
 	WaitForSingleObject(ClientThread, INFINITE);
 	WaitForSingleObject(ServerThread, INFINITE);

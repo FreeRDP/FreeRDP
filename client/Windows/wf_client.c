@@ -1012,11 +1012,15 @@ void wfreerdp_client_global_uninit(void)
 	WSACleanup();
 }
 
-int wfreerdp_client_new(freerdp* instance, rdpContext* context)
+BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 {
 	wfContext* wfc = (wfContext*) context;
 
-	wfreerdp_client_global_init();
+	if (!(wfreerdp_client_global_init()))
+		return FALSE;
+
+	if (!(context->channels = freerdp_channels_new()))
+		return FALSE;
 
 	instance->PreConnect = wf_pre_connect;
 	instance->PostConnect = wf_post_connect;
@@ -1025,20 +1029,27 @@ int wfreerdp_client_new(freerdp* instance, rdpContext* context)
 
 	wfc->instance = instance;
 	wfc->settings = instance->settings;
-	context->channels = freerdp_channels_new();
 
-	return 0;
+	return TRUE;
 }
 
 void wfreerdp_client_free(freerdp* instance, rdpContext* context)
 {
-	rdpChannels* channels = context->channels;
+	if (!context)
+		return;
+
+	if (context->channels)
+	{
+		freerdp_channels_close(context->channels, instance);
+		freerdp_channels_free(context->channels);
+		context->channels = NULL;
+	}
 
 	if (context->cache)
+	{
 		cache_free(context->cache);
-
-	freerdp_channels_close(channels, instance);
-	freerdp_channels_free(context->channels);
+		context->cache = NULL;
+	}
 }
 
 int wfreerdp_client_start(rdpContext* context)

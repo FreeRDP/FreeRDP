@@ -621,36 +621,27 @@ static int freerdp_peer_drain_output_buffer(freerdp_peer* peer)
 	return transport_drain_output_buffer(transport);
 }
 
-void freerdp_peer_context_new(freerdp_peer* client)
+BOOL freerdp_peer_context_new(freerdp_peer* client)
 {
 	rdpRdp* rdp;
 	rdpContext* context;
+	BOOL ret = TRUE;
 
-	context = client->context = (rdpContext*) calloc(1, client->ContextSize);
+	if (!client)
+		return FALSE;
 
-	if (!context)
-		return;
+	if (!(context = (rdpContext*) calloc(1, client->ContextSize)))
+		goto fail_context;
+
+	client->context = context;
 
 	context->ServerMode = TRUE;
 
-	context->metrics = metrics_new(context);
+	if (!(context->metrics = metrics_new(context)))
+		goto fail_metrics;
 
-	if (!context->metrics)
-	{
-		client->context = NULL;
-		free(context);
-		return;
-	}
-
-	rdp = rdp_new(context);
-
-	if (!rdp)
-	{
-		metrics_free(context->metrics);
-		free(context);
-		client->context = NULL;
-		return;
-	}
+	if (!(rdp = rdp_new(context)))
+		goto fail_rdp;
 
 	client->input = rdp->input;
 	client->update = rdp->update;
@@ -671,7 +662,8 @@ void freerdp_peer_context_new(freerdp_peer* client)
 	update_register_server_callbacks(client->update);
 	autodetect_register_server_callbacks(client->autodetect);
 
-	transport_attach(rdp->transport, client->sockfd);
+	if (!transport_attach(rdp->transport, client->sockfd))
+		goto fail_transport_attach;
 
 	rdp->transport->ReceiveCallback = peer_recv_callback;
 	rdp->transport->ReceiveExtra = client;
@@ -680,8 +672,24 @@ void freerdp_peer_context_new(freerdp_peer* client)
 	client->IsWriteBlocked = freerdp_peer_is_write_blocked;
 	client->DrainOutputBuffer = freerdp_peer_drain_output_buffer;
 
-	IFCALL(client->ContextNew, client, client->context);
+	IFCALLRET(client->ContextNew, ret, client, client->context);
 
+	if (ret)
+		return TRUE;
+
+	WLog_ERR(TAG, "ContextNew callback failed");
+
+fail_transport_attach:
+	rdp_free(client->context->rdp);
+fail_rdp:
+	metrics_free(context->metrics);
+fail_metrics:
+	free(client->context);
+fail_context:
+	client->context = NULL;
+
+	WLog_ERR(TAG, "Failed to create new peer context");
+	return FALSE;
 }
 
 void freerdp_peer_context_free(freerdp_peer* client)

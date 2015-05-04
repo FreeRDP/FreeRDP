@@ -25,45 +25,52 @@
 
 #include <freerdp/codecs.h>
 
-int freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags)
+#define TAG FREERDP_TAG("core.codecs")
+
+BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags)
 {
-	if (flags & FREERDP_CODEC_INTERLEAVED)
+	if (flags & FREERDP_CODEC_INTERLEAVED && !codecs->interleaved)
 	{
-		if (!codecs->interleaved)
+		if (!(codecs->interleaved = bitmap_interleaved_context_new(FALSE)))
 		{
-			codecs->interleaved = bitmap_interleaved_context_new(FALSE);
+			WLog_ERR(TAG, "Failed to create interleaved codec context");
+			return FALSE;
 		}
 	}
 
-	if (flags & FREERDP_CODEC_PLANAR)
+	if (flags & FREERDP_CODEC_PLANAR && !codecs->planar)
 	{
-		if (!codecs->planar)
+		if (!(codecs->planar = freerdp_bitmap_planar_context_new(FALSE, 64, 64)))
 		{
-			codecs->planar = freerdp_bitmap_planar_context_new(FALSE, 64, 64);
+			WLog_ERR(TAG, "Failed to create planar bitmap codec context");
+			return FALSE;
 		}
 	}
 
-	if (flags & FREERDP_CODEC_NSCODEC)
+	if (flags & FREERDP_CODEC_NSCODEC && !codecs->nsc)
 	{
-		if (!codecs->nsc)
+		if (!(codecs->nsc = nsc_context_new()))
 		{
-			codecs->nsc = nsc_context_new();
+			WLog_ERR(TAG, "Failed to create nsc codec context");
+			return FALSE;
 		}
 	}
 
-	if (flags & FREERDP_CODEC_REMOTEFX)
+	if (flags & FREERDP_CODEC_REMOTEFX && !codecs->rfx)
 	{
-		if (!codecs->rfx)
+		if (!(codecs->rfx = rfx_context_new(FALSE)))
 		{
-			codecs->rfx = rfx_context_new(FALSE);
+			WLog_ERR(TAG, "Failed to create rfx codec context");
+			return FALSE;
 		}
 	}
 
-	if (flags & FREERDP_CODEC_CLEARCODEC)
+	if (flags & FREERDP_CODEC_CLEARCODEC && !codecs->clear)
 	{
-		if (!codecs->clear)
+		if (!(codecs->clear = clear_context_new(FALSE)))
 		{
-			codecs->clear = clear_context_new(FALSE);
+			WLog_ERR(TAG, "Failed to create clear codec context");
+			return FALSE;
 		}
 	}
 
@@ -72,26 +79,28 @@ int freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags)
 
 	}
 
-	if (flags & FREERDP_CODEC_PROGRESSIVE)
+	if (flags & FREERDP_CODEC_PROGRESSIVE && !codecs->progressive)
 	{
-		if (!codecs->progressive)
+		if (!(codecs->progressive = progressive_context_new(FALSE)))
 		{
-			codecs->progressive = progressive_context_new(FALSE);
+			WLog_ERR(TAG, "Failed to create progressive codec context");
+			return FALSE;
 		}
 	}
 
-	if (flags & FREERDP_CODEC_H264)
+	if (flags & FREERDP_CODEC_H264 && !codecs->h264)
 	{
-		if (!codecs->h264)
+		if (!(codecs->h264 = h264_context_new(FALSE)))
 		{
-			codecs->h264 = h264_context_new(FALSE);
+			WLog_ERR(TAG, "Failed to create h264 codec context");
+			return FALSE;
 		}
 	}
 
-	return 1;
+	return TRUE;
 }
 
-int freerdp_client_codecs_reset(rdpCodecs* codecs, UINT32 flags)
+BOOL freerdp_client_codecs_reset(rdpCodecs* codecs, UINT32 flags)
 {
 	if (flags & FREERDP_CODEC_INTERLEAVED)
 	{
@@ -154,7 +163,7 @@ int freerdp_client_codecs_reset(rdpCodecs* codecs, UINT32 flags)
 		}
 	}
 
-	return 1;
+	return TRUE;
 }
 
 rdpCodecs* codecs_new(rdpContext* context)

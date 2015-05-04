@@ -58,7 +58,11 @@ int TestPoolWork(int argc, char* argv[])
 
 	printf("Private Thread Pool\n");
 
-	pool = CreateThreadpool(NULL);
+	if (!(pool = CreateThreadpool(NULL)))
+	{
+		printf("CreateThreadpool failure\n");
+		return -1;
+	}
 
 	SetThreadpoolThreadMinimum(pool, 4);
 	SetThreadpoolThreadMaximum(pool, 8);

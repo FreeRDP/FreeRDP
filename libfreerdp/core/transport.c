@@ -264,7 +264,8 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 		if (sockfd < 1)
 			return FALSE;
 
-		transport_attach(transport, sockfd);
+		if (!transport_attach(transport, sockfd))
+			return FALSE;
 
 		status = TRUE;
 	}
@@ -273,9 +274,20 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 	{
 		if (transport->async)
 		{
-			transport->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-			transport->thread = CreateThread(NULL, 0,
-				(LPTHREAD_START_ROUTINE) transport_client_thread, transport, 0, NULL);
+			if (!(transport->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+			{
+				WLog_ERR(TAG, "Failed to create transport stop event");
+				return FALSE;
+			}
+
+			if (!(transport->thread = CreateThread(NULL, 0,
+				(LPTHREAD_START_ROUTINE) transport_client_thread, transport, 0, NULL)))
+			{
+				WLog_ERR(TAG, "Failed to create transport client thread");
+				CloseHandle(transport->stopEvent);
+				transport->stopEvent = NULL;
+				return FALSE;
+			}
 		}
 	}
 

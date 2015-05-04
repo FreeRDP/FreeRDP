@@ -60,10 +60,12 @@ static void module_init()
 
 static TP_POOL DEFAULT_POOL =
 {
-	0, /* Minimum */
-	500, /* Maximum */
-	NULL, /* Threads */
-	0, /* ThreadCount */
+	0,    /* DWORD Minimum */
+	500,  /* DWORD Maximum */
+	NULL, /* wArrayList* Threads */
+	NULL, /* wQueue* PendingQueue */
+	NULL, /* HANDLE TerminateEvent */
+	NULL, /* wCountdownEvent* WorkComplete */
 };
 
 static void* thread_pool_work_func(void* arg)
@@ -110,33 +112,62 @@ static void threads_close(void *thread)
 	CloseHandle(thread);
 }
 
-void InitializeThreadpool(PTP_POOL pool)
+static BOOL InitializeThreadpool(PTP_POOL pool)
 {
 	int index;
 	HANDLE thread;
 
-	if (!pool->Threads)
+	if (pool->Threads)
+		return TRUE;
+
+	pool->Minimum = 0;
+	pool->Maximum = 500;
+
+	if (!(pool->PendingQueue = Queue_New(TRUE, -1, -1)))
+		goto fail_queue_new;
+
+	if (!(pool->WorkComplete = CountdownEvent_New(0)))
+		goto fail_countdown_event;
+
+	if (!(pool->TerminateEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+		goto fail_terminate_event;
+
+	if (!(pool->Threads = ArrayList_New(TRUE)))
+		goto fail_thread_array;
+
+	pool->Threads->object.fnObjectFree = threads_close;
+
+	for (index = 0; index < 4; index++)
 	{
-		pool->Minimum = 0;
-		pool->Maximum = 500;
-
-		pool->Threads = ArrayList_New(TRUE);
-		pool->Threads->object.fnObjectFree = threads_close;
-
-		pool->PendingQueue = Queue_New(TRUE, -1, -1);
-		pool->WorkComplete = CountdownEvent_New(0);
-
-		pool->TerminateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-
-		for (index = 0; index < 4; index++)
-		{
-			thread = CreateThread(NULL, 0,
+		if (!(thread = CreateThread(NULL, 0,
 					(LPTHREAD_START_ROUTINE) thread_pool_work_func,
-					(void*) pool, 0, NULL);
-
-			ArrayList_Add(pool->Threads, thread);
+					(void*) pool, 0, NULL)))
+		{
+			goto fail_create_threads;
 		}
+
+		ArrayList_Add(pool->Threads, thread);
 	}
+
+	return TRUE;
+
+fail_create_threads:
+	SetEvent(pool->TerminateEvent);
+	ArrayList_Free(pool->Threads);
+	pool->Threads = NULL;
+fail_thread_array:
+	CloseHandle(pool->TerminateEvent);
+	pool->TerminateEvent = NULL;
+fail_terminate_event:
+	CountdownEvent_Free(pool->WorkComplete);
+	pool->WorkComplete = NULL;
+fail_countdown_event:
+	Queue_Free(pool->PendingQueue);
+	pool->WorkComplete = NULL;
+fail_queue_new:
+
+	return FALSE;
+
 }
 
 PTP_POOL GetDefaultThreadpool()
@@ -145,7 +176,8 @@ PTP_POOL GetDefaultThreadpool()
 
 	pool = &DEFAULT_POOL;
 
-	InitializeThreadpool(pool);
+	if (!InitializeThreadpool(pool))
+		return NULL;
 
 	return pool;
 }
@@ -164,13 +196,17 @@ PTP_POOL CreateThreadpool(PVOID reserved)
 	if (pCreateThreadpool)
 		return pCreateThreadpool(reserved);
 #else
-	pool = (PTP_POOL) calloc(1, sizeof(TP_POOL));
+	if (!(pool = (PTP_POOL) calloc(1, sizeof(TP_POOL))))
+		return NULL;
 
-	if (pool)
-		InitializeThreadpool(pool);
-#endif
+	if (!InitializeThreadpool(pool))
+	{
+		free(pool);
+		return NULL;
+	}
 
 	return pool;
+#endif
 }
 
 VOID CloseThreadpool(PTP_POOL ptpp)
@@ -188,7 +224,17 @@ VOID CloseThreadpool(PTP_POOL ptpp)
 	CountdownEvent_Free(ptpp->WorkComplete);
 	CloseHandle(ptpp->TerminateEvent);
 
-	free(ptpp);
+	if (ptpp == &DEFAULT_POOL)
+	{
+		ptpp->Threads = NULL;
+		ptpp->PendingQueue = NULL;
+		ptpp->WorkComplete = NULL;
+		ptpp->TerminateEvent = NULL;
+	}
+	else
+	{
+		free(ptpp);
+	}
 #endif
 }
 

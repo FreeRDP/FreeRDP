@@ -1975,10 +1975,36 @@ void wf_cliprdr_init(wfContext* wfc, CliprdrClientContext* cliprdr)
 	clipboard = wfc->clipboard;
 	clipboard->wfc = wfc;
 	clipboard->context = cliprdr;
-
-	cliprdr->custom = (void*) wfc->clipboard;
-	clipboard->context = cliprdr;
 		
+	clipboard->channels = context->channels;
+	clipboard->sync = FALSE;
+
+	clipboard->map_capacity = 32;
+	clipboard->map_size = 0;
+
+	if (!(clipboard->format_mappings = (formatMapping*) calloc(1, sizeof(formatMapping) * clipboard->map_capacity)))
+		goto fail_format_mappings;
+
+	clipboard->file_array_size = 32;
+	if (!(clipboard->file_names = (WCHAR**) calloc(1, clipboard->file_array_size * sizeof(WCHAR*))))
+		goto fail_file_names;
+
+	if (!(clipboard->fileDescriptor = (FILEDESCRIPTORW**) calloc(1, clipboard->file_array_size * sizeof(FILEDESCRIPTORW*))))
+		goto fail_file_descriptor;
+
+	if (!(clipboard->response_data_event = CreateEvent(NULL, TRUE, FALSE, _T("response_data_event"))))
+		goto fail_data_event;
+
+	if (!(clipboard->req_fevent = CreateEvent(NULL, TRUE, FALSE, _T("request_filecontents_event"))))
+		goto fail_filecontents_event;
+
+	clipboard->ID_FILEDESCRIPTORW = RegisterClipboardFormatW(CFSTR_FILEDESCRIPTORW);
+	clipboard->ID_FILECONTENTS = RegisterClipboardFormatW(CFSTR_FILECONTENTS);
+	clipboard->ID_PREFERREDDROPEFFECT = RegisterClipboardFormatW(CFSTR_PREFERREDDROPEFFECT);
+
+	if (!(clipboard->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) cliprdr_thread_func, clipboard, 0, NULL)))
+		goto fail_clipboard_thread;
+
 	cliprdr->MonitorReady = wf_cliprdr_monitor_ready;
 	cliprdr->ServerCapabilities = wf_cliprdr_server_capabilities;
 	cliprdr->ServerFormatList = wf_cliprdr_server_format_list;
@@ -1989,27 +2015,30 @@ void wf_cliprdr_init(wfContext* wfc, CliprdrClientContext* cliprdr)
 	cliprdr->ServerFormatDataResponse = wf_cliprdr_server_format_data_response;
 	cliprdr->ServerFileContentsRequest = wf_cliprdr_server_file_contents_request;
 	cliprdr->ServerFileContentsResponse = wf_cliprdr_server_file_contents_response;
+	cliprdr->custom = (void*) wfc->clipboard;
 
-	clipboard->channels = context->channels;
-	clipboard->sync = FALSE;
+	return;
 
-	clipboard->map_capacity = 32;
-	clipboard->map_size = 0;
+fail_clipboard_thread:
+	CloseHandle(clipboard->req_fevent);
+	clipboard->req_fevent = NULL;
+fail_filecontents_event:
+	CloseHandle(clipboard->response_data_event);
+	clipboard->response_data_event = NULL;
+fail_data_event:
+	free(clipboard->fileDescriptor);
+	clipboard->fileDescriptor = NULL;
+fail_file_descriptor:
+	free(clipboard->file_names);
+	clipboard->file_names = NULL;
+fail_file_names:
+	free(clipboard->format_mappings);
+	clipboard->format_mappings = NULL;
+fail_format_mappings:
+	free(wfc->clipboard);
+	wfc->clipboard = NULL;
 
-	clipboard->format_mappings = (formatMapping*) calloc(1, sizeof(formatMapping) * clipboard->map_capacity);
-
-	clipboard->file_array_size = 32;
-	clipboard->file_names = (WCHAR**) calloc(1, clipboard->file_array_size * sizeof(WCHAR*));
-	clipboard->fileDescriptor = (FILEDESCRIPTORW**) calloc(1, clipboard->file_array_size * sizeof(FILEDESCRIPTORW*));
-
-	clipboard->response_data_event = CreateEvent(NULL, TRUE, FALSE, _T("response_data_event"));
-
-	clipboard->req_fevent = CreateEvent(NULL, TRUE, FALSE, _T("request_filecontents_event"));
-	clipboard->ID_FILEDESCRIPTORW = RegisterClipboardFormatW(CFSTR_FILEDESCRIPTORW);
-	clipboard->ID_FILECONTENTS = RegisterClipboardFormatW(CFSTR_FILECONTENTS);
-	clipboard->ID_PREFERREDDROPEFFECT = RegisterClipboardFormatW(CFSTR_PREFERREDDROPEFFECT);
-
-	clipboard->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) cliprdr_thread_func, clipboard, 0, NULL);
+	return;
 }
 
 void wf_cliprdr_uninit(wfContext* wfc, CliprdrClientContext* cliprdr)

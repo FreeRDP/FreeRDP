@@ -34,7 +34,7 @@ extern "C" {
 typedef BOOL (*pRdpGlobalInit)(void);
 typedef void (*pRdpGlobalUninit)(void);
 
-typedef int (*pRdpClientNew)(freerdp* instance, rdpContext* context);
+typedef BOOL (*pRdpClientNew)(freerdp* instance, rdpContext* context);
 typedef void (*pRdpClientFree)(freerdp* instance, rdpContext* context);
 
 typedef int (*pRdpClientStart)(rdpContext* context);

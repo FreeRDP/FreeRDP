@@ -406,14 +406,16 @@ BOOL wf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 
 			if (bitsPerPixel < 32)
 			{
-				freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_INTERLEAVED);
+				if (!freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_INTERLEAVED))
+					return FALSE;
 
 				status = interleaved_decompress(codecs->interleaved, pSrcData, SrcSize, bitsPerPixel,
 						&pDstData, PIXEL_FORMAT_XRGB32, nWidth * 4, 0, 0, nWidth, nHeight, NULL);
 			}
 			else
 			{
-				freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_PLANAR);
+				if (!freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_PLANAR))
+					return FALSE;
 
 				status = planar_decompress(codecs->planar, pSrcData, SrcSize, &pDstData,
 						PIXEL_FORMAT_XRGB32, nWidth * 4, 0, 0, nWidth, nHeight, TRUE);
@@ -675,7 +677,9 @@ void wf_gdi_surface_bits(wfContext* wfc, SURFACE_BITS_COMMAND* surface_bits_comm
 
 	if (surface_bits_command->codecID == RDP_CODEC_ID_REMOTEFX)
 	{
-		freerdp_client_codecs_prepare(wfc->codecs, FREERDP_CODEC_REMOTEFX);
+		if (!freerdp_client_codecs_prepare(wfc->codecs, FREERDP_CODEC_REMOTEFX))
+			return;
+
 		if (!(message = rfx_process_message(wfc->codecs->rfx, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength)))
 		{
 			WLog_ERR(TAG, "Failed to process RemoteFX message");
@@ -715,7 +719,9 @@ void wf_gdi_surface_bits(wfContext* wfc, SURFACE_BITS_COMMAND* surface_bits_comm
 	}
 	else if (surface_bits_command->codecID == RDP_CODEC_ID_NSCODEC)
 	{
-		freerdp_client_codecs_prepare(wfc->codecs, FREERDP_CODEC_NSCODEC);
+		if (!freerdp_client_codecs_prepare(wfc->codecs, FREERDP_CODEC_NSCODEC))
+			return;
+
 		nsc_process_message(wfc->codecs->nsc, surface_bits_command->bpp, surface_bits_command->width, surface_bits_command->height,
 			surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
 		ZeroMemory(&bitmap_info, sizeof(bitmap_info));

@@ -48,17 +48,22 @@
 #include "jni/prof.h"
 #endif
 
-int android_context_new(freerdp* instance, rdpContext* context)
+BOOL android_context_new(freerdp* instance, rdpContext* context)
 {
-	context->channels = freerdp_channels_new();
+	if (!(context->channels = freerdp_channels_new()))
+		return FALSE;
 	android_event_queue_init(instance);
-	return 0;
+	return TRUE;
 }
 
 void android_context_free(freerdp* instance, rdpContext* context)
 {
-	freerdp_channels_close(instance->context->channels, instance);
-	freerdp_channels_free(context->channels);
+	if (context && context->channels)
+	{
+		freerdp_channels_close(context->channels, instance);
+		freerdp_channels_free(context->channels);
+		context->channels = NULL;
+	}
 	android_event_queue_uninit(instance);
 }
 
@@ -622,7 +627,8 @@ JNIEXPORT jint JNICALL jni_freerdp_new(JNIEnv *env, jclass cls)
 #endif
 
 	// create instance
-	instance = freerdp_new();
+	if (!(instance = freerdp_new()))
+		return NULL;
 	instance->PreConnect = android_pre_connect;
 	instance->PostConnect = android_post_connect;
 	instance->PostDisconnect = android_post_disconnect;
@@ -634,7 +640,12 @@ JNIEXPORT jint JNICALL jni_freerdp_new(JNIEnv *env, jclass cls)
 	instance->ContextSize = sizeof(androidContext);
 	instance->ContextNew = android_context_new;
 	instance->ContextFree = android_context_free;
-	freerdp_context_new(instance);
+
+	if (!freerdp_context_new(instance))
+	{
+		freerdp_free(instance);
+		instance = NULL;
+	}
 
 	return (jint) instance;
 }

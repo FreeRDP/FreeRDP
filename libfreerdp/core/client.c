@@ -103,6 +103,9 @@ void freerdp_channels_free(rdpChannels* channels)
 	ULONG_PTR* pKeys = NULL;
 	CHANNEL_OPEN_DATA* pChannelOpenData;
 
+	if (!channels)
+		return;
+
 	if (channels->queue)
 	{
 		MessageQueue_Free(channels->queue);

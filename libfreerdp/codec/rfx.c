@@ -989,6 +989,9 @@ RFX_MESSAGE* rfx_process_message(RFX_CONTEXT* context, BYTE* data, UINT32 length
 	BOOL ok = TRUE;
 	UINT16 expectedDataBlockType = WBT_FRAME_BEGIN;
 
+	if (!context || !data || !length)
+		goto fail;
+
 	if (!(s = Stream_New(data, length)))
 		goto fail;
 

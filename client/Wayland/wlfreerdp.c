@@ -26,11 +26,12 @@
 
 #include "wlfreerdp.h"
 
-static int wl_context_new(freerdp* instance, rdpContext* context)
+static BOOL wl_context_new(freerdp* instance, rdpContext* context)
 {
-	context->channels = freerdp_channels_new();
+	if (!(context->channels = freerdp_channels_new()))
+		return FALSE;
 
-	return 0;
+	return TRUE;
 }
 
 static void wl_context_free(freerdp* instance, rdpContext* context)
@@ -39,6 +40,7 @@ static void wl_context_free(freerdp* instance, rdpContext* context)
 	{
 		freerdp_channels_close(context->channels, instance);
 		freerdp_channels_free(context->channels);
+		context->channels = NULL;
 	}
 }
 

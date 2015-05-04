@@ -49,15 +49,22 @@ struct thread_data
 	freerdp* instance;
 };
 
-int df_context_new(freerdp* instance, rdpContext* context)
+BOOL df_context_new(freerdp* instance, rdpContext* context)
 {
-	context->channels = freerdp_channels_new();
-	return 0;
+	if (!(context->channels = freerdp_channels_new()))
+		return FALSE;
+
+	return TRUE;
 }
 
 void df_context_free(freerdp* instance, rdpContext* context)
 {
-
+	if (context && context->channels)
+	{
+		freerdp_channels_close(context->channels, instance);
+		freerdp_channels_free(context->channels);
+		context->channels = NULL;
+	}
 }
 
 void df_begin_paint(rdpContext* context)
@@ -458,7 +465,12 @@ int main(int argc, char* argv[])
 	instance->ContextSize = sizeof(dfContext);
 	instance->ContextNew = df_context_new;
 	instance->ContextFree = df_context_free;
-	freerdp_context_new(instance);
+
+	if (!freerdp_context_new(instance))
+	{
+		WLog_ERR(TAG, "Failed to create FreeRDP context");
+		exit(1);
+	}
 
 	context = (dfContext*) instance->context;
 	channels = instance->context->channels;

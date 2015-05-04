@@ -59,7 +59,7 @@ typedef RDP_CLIENT_ENTRY_POINTS_V1 RDP_CLIENT_ENTRY_POINTS;
 extern "C" {
 #endif
 
-typedef int (*pContextNew)(freerdp* instance, rdpContext* context);
+typedef BOOL (*pContextNew)(freerdp* instance, rdpContext* context);
 typedef void (*pContextFree)(freerdp* instance, rdpContext* context);
 
 typedef BOOL (*pPreConnect)(freerdp* instance);
@@ -237,7 +237,7 @@ struct rdp_freerdp
 	UINT64 paddingE[80 - 66]; /* 66 */
 };
 
-FREERDP_API int freerdp_context_new(freerdp* instance);
+FREERDP_API BOOL freerdp_context_new(freerdp* instance);
 FREERDP_API void freerdp_context_free(freerdp* instance);
 
 FREERDP_API BOOL freerdp_connect(freerdp* instance);

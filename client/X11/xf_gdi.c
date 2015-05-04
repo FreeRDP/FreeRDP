@@ -385,14 +385,16 @@ BOOL xf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 
 			if (bitsPerPixel < 32)
 			{
-				freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_INTERLEAVED);
+				if (!freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_INTERLEAVED))
+					return FALSE;
 
 				status = interleaved_decompress(codecs->interleaved, pSrcData, SrcSize, bitsPerPixel,
 						&pDstData, xfc->format, -1, 0, 0, nWidth, nHeight, xfc->palette);
 			}
 			else
 			{
-				freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_PLANAR);
+				if (!freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_PLANAR))
+					return FALSE;
 
 				status = planar_decompress(codecs->planar, pSrcData, SrcSize, &pDstData,
 						xfc->format, -1, 0, 0, nWidth, nHeight, TRUE);
@@ -1176,11 +1178,16 @@ BOOL xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 
 	if (cmd->codecID == RDP_CODEC_ID_REMOTEFX)
 	{
-		freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_REMOTEFX);
+		if (!freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_REMOTEFX))
+		{
+			xf_unlock_x11(xfc, FALSE);
+			return FALSE;
+		}
 
 		if (!(message = rfx_process_message(xfc->codecs->rfx, cmd->bitmapData, cmd->bitmapDataLength)))
 		{
 			WLog_ERR(TAG, "Failed to process RemoteFX message");
+			xf_unlock_x11(xfc, FALSE);
 			return FALSE;
 		}
 
@@ -1196,7 +1203,12 @@ BOOL xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 			xfc->bitmap_buffer = (BYTE*) _aligned_realloc(xfc->bitmap_buffer, xfc->bitmap_size, 16);
 
 			if (!xfc->bitmap_buffer)
+			{
+				rfx_message_free(xfc->codecs->rfx, message);
+				XSetClipMask(xfc->display, xfc->gc, None);
+				xf_unlock_x11(xfc, FALSE);
 				return FALSE;
+			}
 		}
 
 		/* Draw the tiles to primary surface, each is 64x64. */
@@ -1241,7 +1253,11 @@ BOOL xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 	}
 	else if (cmd->codecID == RDP_CODEC_ID_NSCODEC)
 	{
-		freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_NSCODEC);
+		if (!freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_NSCODEC))
+		{
+			xf_unlock_x11(xfc, FALSE);
+			return FALSE;
+		}
 
 		nsc_process_message(xfc->codecs->nsc, cmd->bpp, cmd->width, cmd->height, cmd->bitmapData, cmd->bitmapDataLength);
 
@@ -1254,7 +1270,10 @@ BOOL xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 			xfc->bitmap_buffer = (BYTE*) _aligned_realloc(xfc->bitmap_buffer, xfc->bitmap_size, 16);
 
 			if (!xfc->bitmap_buffer)
+			{
+				xf_unlock_x11(xfc, FALSE);
 				return FALSE;
+			}
 		}
 
 		pSrcData = xfc->codecs->nsc->BitmapData;
@@ -1286,7 +1305,10 @@ BOOL xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 			xfc->bitmap_buffer = (BYTE*) _aligned_realloc(xfc->bitmap_buffer, xfc->bitmap_size, 16);
 
 			if (!xfc->bitmap_buffer)
+			{
+				xf_unlock_x11(xfc, FALSE);
 				return FALSE;
+			}
 		}
 
 		pSrcData = cmd->bitmapData;

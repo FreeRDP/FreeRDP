@@ -1658,10 +1658,20 @@ static int xfreerdp_client_stop(rdpContext* context)
 	return 0;
 }
 
-static int xfreerdp_client_new(freerdp* instance, rdpContext* context)
+static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 {
 	rdpSettings* settings;
 	xfContext* xfc = (xfContext*) instance->context;
+
+	assert(context);
+	assert(xfc);
+	assert(!context->channels);
+	assert(!xfc->display);
+	assert(!xfc->mutex);
+	assert(!xfc->x11event);
+
+	if (!(context->channels = freerdp_channels_new()))
+		goto fail_channels_new;
 
 	instance->PreConnect = xf_pre_connect;
 	instance->PostConnect = xf_post_connect;
@@ -1669,8 +1679,6 @@ static int xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->Authenticate = xf_authenticate;
 	instance->VerifyCertificate = xf_verify_certificate;
 	instance->LogonErrorInfo = xf_logon_error_info;
-	assert(!context->channels);
-	context->channels = freerdp_channels_new();
 
 	settings = instance->settings;
 	xfc->settings = instance->context->settings;
@@ -1693,23 +1701,21 @@ static int xfreerdp_client_new(freerdp* instance, rdpContext* context)
 		}
 	}
 
-	assert(!xfc->display);
 	xfc->display = XOpenDisplay(NULL);
 
 	if (!xfc->display)
 	{
 		WLog_ERR(TAG, "failed to open display: %s", XDisplayName(NULL));
 		WLog_ERR(TAG, "Please check that the $DISPLAY environment variable is properly set.");
-		return -1;
+		goto fail_open_display;
 	}
 
-	assert(!xfc->mutex);
 	xfc->mutex = CreateMutex(NULL, FALSE, NULL);
 
 	if (!xfc->mutex)
 	{
 		WLog_ERR(TAG, "Could not create mutex!");
-		return -1;
+		goto fail_create_mutex;
 	}
 
 	xfc->_NET_WM_ICON = XInternAtom(xfc->display, "_NET_WM_ICON", False);
@@ -1741,8 +1747,13 @@ static int xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xfc->invert = (ImageByteOrder(xfc->display) == MSBFirst) ? TRUE : FALSE;
 	xfc->complex_regions = TRUE;
 
-	assert(!xfc->x11event);
 	xfc->x11event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfc->xfds);
+	if (!xfc->x11event)
+	{
+		WLog_ERR(TAG, "Could not create xfds event");
+		goto fail_xfds_event;
+	}
+
 	xfc->colormap = DefaultColormap(xfc->display, xfc->screen_number);
 	xfc->format = PIXEL_FORMAT_XRGB32;
 
@@ -1767,14 +1778,33 @@ static int xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xf_check_extensions(xfc);
 
 	if (!xf_get_pixmap_info(xfc))
-		return -1;
+	{
+		WLog_ERR(TAG, "Failed to get pixmap info");
+		goto fail_pixmap_info;
+	}
 
 	xfc->vscreen.monitors = calloc(16, sizeof(MONITOR_INFO));
 
 	if (!xfc->vscreen.monitors)
-		return -1;
+		goto fail_vscreen_monitors;
 
-	return 0;
+	return TRUE;
+
+fail_vscreen_monitors:
+fail_pixmap_info:
+	CloseHandle(xfc->x11event);
+	xfc->x11event = NULL;
+fail_xfds_event:
+	CloseHandle(xfc->mutex);
+	xfc->mutex = NULL;
+fail_create_mutex:
+	XCloseDisplay(xfc->display);
+	xfc->display = NULL;
+fail_open_display:
+	freerdp_channels_free(context->channels);
+	context->channels = NULL;
+fail_channels_new:
+	return FALSE;
 }
 
 static void xfreerdp_client_free(freerdp* instance, rdpContext* context)
