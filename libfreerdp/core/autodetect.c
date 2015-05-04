@@ -183,6 +183,7 @@ BOOL autodetect_send_bandwidth_measure_payload(rdpContext* context, UINT16 paylo
 	{
 		Stream_Release(s);
 	}
+	free(buffer);
 
 	return bResult;
 }
@@ -236,6 +237,7 @@ static BOOL autodetect_send_bandwidth_measure_stop(rdpContext* context, UINT16 p
 	{
 		Stream_Release(s);
 	}
+	free(buffer);
 
 	return bResult;
 }
