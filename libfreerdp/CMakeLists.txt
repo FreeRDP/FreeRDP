@@ -156,7 +156,7 @@ if(WITH_SSE2)
 endif()
 
 if(WITH_NEON)
-	set_source_files_properties(${CODEC_NEON_SRCS} PROPERTIES COMPILE_FLAGS "-mfpu=neon -mfloat-abi=${ARM_FP_ABI} -Wno-unused-variable" )
+	set_source_files_properties(${CODEC_NEON_SRCS} PROPERTIES COMPILE_FLAGS "-mfpu=neon -Wno-unused-variable" )
 	set(CODEC_SRCS ${CODEC_SRCS} ${CODEC_NEON_SRCS})
 endif()
 
@@ -236,7 +236,7 @@ if(WITH_SSE2)
 	endif()
 elseif(WITH_NEON)
 	if(CMAKE_COMPILER_IS_GNUCC)
-	    set(OPTIMIZATION "${OPTIMIZATION} -mfpu=neon -mfloat-abi=${ARM_FP_ABI}")
+	    set(OPTIMIZATION "${OPTIMIZATION} -mfpu=neon")
 	endif()
 	# TODO: Add MSVC equivalent
 endif()
