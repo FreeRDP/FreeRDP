@@ -175,7 +175,7 @@ BOOL autodetect_send_bandwidth_measure_payload(rdpContext* context, UINT16 paylo
 		return FALSE;
 	}
 
-	BCryptGenRandom(NULL, buffer, payloadLength, 0L);
+	RAND_bytes(buffer, payloadLength);
 	Stream_Write(s, buffer, payloadLength);
 
 	bResult = rdp_send_message_channel_pdu(context->rdp, s, SEC_AUTODETECT_REQ);
@@ -227,7 +227,7 @@ static BOOL autodetect_send_bandwidth_measure_stop(rdpContext* context, UINT16 p
 				return FALSE;
 			}
 
-			BCryptGenRandom(NULL, buffer, payloadLength, 0L);
+			RAND_bytes(buffer, payloadLength);
 			Stream_Write(s, buffer, payloadLength);
 		}
 	}
