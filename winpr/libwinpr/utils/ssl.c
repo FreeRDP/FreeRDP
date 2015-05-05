@@ -60,12 +60,15 @@ static void _winpr_openssl_locking(int mode, int type, const char* file, int lin
 
 static struct CRYPTO_dynlock_value* _winpr_openssl_dynlock_create(const char* file, int line)
 {
-	struct CRYPTO_dynlock_value* dynlock = (struct CRYPTO_dynlock_value*)
-										   malloc(sizeof(struct CRYPTO_dynlock_value));
+	struct CRYPTO_dynlock_value* dynlock;
 
-	if (dynlock)
+	if (!(dynlock = (struct CRYPTO_dynlock_value*) malloc(sizeof(struct CRYPTO_dynlock_value))))
+		return NULL;
+
+	if (!(dynlock->mutex = CreateMutex(NULL, FALSE, NULL)))
 	{
-		dynlock->mutex = CreateMutex(NULL, FALSE, NULL);
+		free(dynlock);
+		return NULL;
 	}
 
 	return dynlock;

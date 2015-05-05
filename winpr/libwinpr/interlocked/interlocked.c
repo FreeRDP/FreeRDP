@@ -253,31 +253,36 @@ PVOID InterlockedCompareExchangePointer(PVOID volatile *Destination, PVOID Excha
 
 static volatile HANDLE mutex = NULL;
 
-int static_mutex_lock(volatile HANDLE* static_mutex)
+BOOL static_mutex_lock(volatile HANDLE* static_mutex)
 {
 	if (*static_mutex == NULL)
 	{
-		HANDLE handle = CreateMutex(NULL, FALSE, NULL);
+		HANDLE handle;
+
+		if (!(handle = CreateMutex(NULL, FALSE, NULL)))
+			return FALSE;
 
 		if (InterlockedCompareExchangePointer((PVOID*) static_mutex, (PVOID) handle, NULL) != NULL)
 			CloseHandle(handle);
 	}
 
-	return (WaitForSingleObject(*static_mutex, INFINITE) == WAIT_FAILED);
+	return (WaitForSingleObject(*static_mutex, INFINITE) == WAIT_OBJECT_0);
 }
 
 LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG Exchange, LONGLONG Comperand)
 {
 	LONGLONG previousValue = 0;
-
-	static_mutex_lock(&mutex);
+	BOOL locked = static_mutex_lock(&mutex);
 
 	previousValue = *Destination;
 
 	if (*Destination == Comperand)
 		*Destination = Exchange;
 
-	ReleaseMutex(mutex);
+	if (locked)
+		ReleaseMutex(mutex);
+	else
+		fprintf(stderr, "WARNING: InterlockedCompareExchange64 operation might have failed\n");
 
 	return previousValue;
 }
