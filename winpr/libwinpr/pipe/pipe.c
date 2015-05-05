@@ -584,7 +584,11 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 
 		if (!PathFileExistsA(lpPipePath))
 		{
-			CreateDirectoryA(lpPipePath, 0);
+			if (!CreateDirectoryA(lpPipePath, 0))
+			{
+				free(lpPipePath);
+				goto out;
+			}
 			UnixChangeFileMode(lpPipePath, 0xFFFF);
 		}
 

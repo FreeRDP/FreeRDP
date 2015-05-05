@@ -96,7 +96,8 @@ int WLog_BinaryAppender_Open(wLog* log, wLogBinaryAppender* appender)
 
 	if (!PathFileExistsA(appender->FilePath))
 	{
-		CreateDirectoryA(appender->FilePath, 0);
+		if (!CreateDirectoryA(appender->FilePath, 0))
+			return -1;
 		UnixChangeFileMode(appender->FilePath, 0xFFFF);
 	}
 

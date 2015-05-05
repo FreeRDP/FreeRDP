@@ -109,18 +109,15 @@ BOOL transport_connect_tls(rdpTransport* transport)
 	rdpContext* context = transport->context;
 	rdpSettings* settings = transport->settings;
 
-	if (transport->GatewayEnabled)
-	{
-		tls = transport->tls = tls_new(settings);
-		transport->layer = TRANSPORT_LAYER_TSG_TLS;
-	}
-	else
-	{
-		tls = transport->tls = tls_new(settings);
-		transport->layer = TRANSPORT_LAYER_TLS;
-	}
+	if (!(tls = tls_new(settings)))
+		return FALSE;
 
 	transport->tls = tls;
+
+	if (transport->GatewayEnabled)
+		transport->layer = TRANSPORT_LAYER_TSG_TLS;
+	else
+		transport->layer = TRANSPORT_LAYER_TLS;
 
 	tls->hostname = settings->ServerHostname;
 	tls->port = settings->ServerPort;
