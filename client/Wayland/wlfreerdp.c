@@ -76,10 +76,19 @@ static BOOL wl_end_paint(rdpContext* context)
 	display = context_w->display;
 	window = context_w->window;
 
-	for (i = 0; i < h; i++)
+	for (i = 0; i < h; i++) {
 		memcpy(window->data + ((i+y)*(gdi->width*4)) + x*4,
-		       gdi->primary_buffer + ((i+y)*(gdi->width*4)) + x*4,
-		       w*4);
+			gdi->primary_buffer + ((i+y)*(gdi->width*4)) + x*4,
+			w*4);
+		char *dta = window->data + ((i+y)*(gdi->width*4)) + x*4;
+		char tmp;
+		int j;
+		for (j = 0; j < w; j++) {
+			tmp = dta[2+4*j];
+			dta[2+4*j] = dta[0+4*j];
+			dta[0+4*j] = tmp;
+		}
+	}
 
 	return wlf_RefreshDisplay(display);
 }
