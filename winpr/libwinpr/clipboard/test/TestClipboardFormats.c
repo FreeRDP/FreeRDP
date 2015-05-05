@@ -41,7 +41,7 @@ int TestClipboardFormats(int argc, char* argv[])
 		char* pSrcData;
 		char* pDstData;
 
-		pSrcData = _strdup("this is a test string");
+		pSrcData = "this is a test string";
 		SrcSize = (UINT32) (strlen(pSrcData) + 1);
 
 		bSuccess = ClipboardSetData(clipboard, utf8StringFormatId, (void*) pSrcData, SrcSize);

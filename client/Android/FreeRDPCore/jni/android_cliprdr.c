@@ -281,10 +281,8 @@ int android_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr, C
 		formatId = format->formatId;
 
 	size = formatDataResponse->dataLen;
-	data = (BYTE*) malloc(size);
-	CopyMemory(data, formatDataResponse->requestedFormatData, size);
 
-	ClipboardSetData(afc->clipboard, formatId, data, size);
+	ClipboardSetData(afc->clipboard, formatId, formatDataResponse->requestedFormatData, size);
 
 	SetEvent(afc->clipboardRequestEvent);
 
