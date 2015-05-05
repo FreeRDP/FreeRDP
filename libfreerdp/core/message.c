@@ -2546,15 +2546,17 @@ static void *update_message_proxy_thread(void *arg)
 rdpUpdateProxy *update_message_proxy_new(rdpUpdate *update)
 {
 	rdpUpdateProxy *message;
-	message = (rdpUpdateProxy *) malloc(sizeof(rdpUpdateProxy));
 
-	if (message)
+	if (!(message = (rdpUpdateProxy *) calloc(1, sizeof(rdpUpdateProxy))))
+		return NULL;
+
+	message->update = update;
+	update_message_register_interface(message, update);
+	if (!(message->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) update_message_proxy_thread, update, 0, NULL)))
 	{
-		ZeroMemory(message, sizeof(rdpUpdateProxy));
-
-		message->update = update;
-		update_message_register_interface(message, update);
-		message->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) update_message_proxy_thread, update, 0, NULL);
+		WLog_ERR(TAG, "Failed to create proxy thread");
+		free(message);
+		return NULL;
 	}
 
 	return message;

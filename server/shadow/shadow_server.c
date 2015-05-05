@@ -376,10 +376,13 @@ int shadow_server_start(rdpShadowServer* server)
 	else
 		status = server->listener->OpenLocal(server->listener, server->ipcSocket);
 
-	if (status)
+	if (!status)
+		return -1;
+
+	if (!(server->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
+				shadow_server_thread, (void*) server, 0, NULL)))
 	{
-		server->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
-				shadow_server_thread, (void*) server, 0, NULL);
+		return -1;
 	}
 
 	return 0;

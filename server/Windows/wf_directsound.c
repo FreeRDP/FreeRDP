@@ -33,6 +33,7 @@ int wf_directsound_activate(RdpsndServerContext* context)
 {
 	HRESULT hr;
 	wfInfo* wfi;
+	HANDLE hThread;
 	
 	LPDIRECTSOUNDCAPTUREBUFFER  pDSCB;
 
@@ -77,7 +78,12 @@ int wf_directsound_activate(RdpsndServerContext* context)
 	pDSCB->lpVtbl->Release(pDSCB);
 	lastPos = 0;
 
-	CreateThread(NULL, 0, wf_rdpsnd_directsound_thread, latestPeer, 0, NULL);
+	if (!(hThread = CreateThread(NULL, 0, wf_rdpsnd_directsound_thread, latestPeer, 0, NULL)))
+	{
+		WLog_ERR(TAG, "Failed to create direct sound thread");
+		return 1;
+	}
+	CloseHandle(hThread);
 
 	return 0;
 }

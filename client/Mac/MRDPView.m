@@ -94,8 +94,12 @@ DWORD mac_client_thread(void* param);
 	mfc->client_height = instance->settings->DesktopHeight;
 	mfc->client_width = instance->settings->DesktopWidth;
 
-	mfc->thread = CreateThread(NULL, 0, mac_client_thread, (void*) context, 0, &mfc->mainThreadId);
-	
+	if (!(mfc->thread = CreateThread(NULL, 0, mac_client_thread, (void*) context, 0, &mfc->mainThreadId)))
+	{
+		WLog_ERR(TAG, "failed to create client thread");
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -162,9 +166,9 @@ DWORD mac_client_thread(void* param)
 		int status;
 		HANDLE events[4];
 		HANDLE inputEvent;
-		HANDLE inputThread;
+		HANDLE inputThread = NULL;
 		HANDLE updateEvent;
-		HANDLE updateThread;
+		HANDLE updateThread = NULL;
 		HANDLE channelsEvent;
 		
 		DWORD nCount;
@@ -190,7 +194,11 @@ DWORD mac_client_thread(void* param)
 		
 		if (settings->AsyncUpdate)
 		{
-			updateThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) mac_client_update_thread, context, 0, NULL);
+			if (!(updateThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) mac_client_update_thread, context, 0, NULL)))
+			{
+				WLog_ERR(TAG,  "failed to create async update thread");
+				goto disconnect;
+			}
 		}
 		else
 		{
@@ -199,7 +207,11 @@ DWORD mac_client_thread(void* param)
 		
 		if (settings->AsyncInput)
 		{
-			inputThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) mac_client_input_thread, context, 0, NULL);
+			if (!(inputThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) mac_client_input_thread, context, 0, NULL)))
+			{
+				WLog_ERR(TAG,  "failed to create async input thread");
+				goto disconnect;
+			}
 		}
 		else
 		{
@@ -214,7 +226,6 @@ DWORD mac_client_thread(void* param)
 			
 			if (WaitForSingleObject(mfc->stopEvent, 0) == WAIT_OBJECT_0)
 			{
-				freerdp_disconnect(instance);
 				break;
 			}
 			
@@ -240,19 +251,29 @@ DWORD mac_client_thread(void* param)
 			}
 		}
 		
-		if (settings->AsyncUpdate)
+disconnect:
+
+		freerdp_disconnect(instance);
+
+		if (settings->AsyncUpdate && updateThread)
 		{
 			wMessageQueue* updateQueue = freerdp_get_message_queue(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
-			MessageQueue_PostQuit(updateQueue, 0);
-			WaitForSingleObject(updateThread, INFINITE);
+			if (updateQueue)
+			{
+				MessageQueue_PostQuit(updateQueue, 0);
+				WaitForSingleObject(updateThread, INFINITE);
+			}
 			CloseHandle(updateThread);
 		}
 		
-		if (settings->AsyncInput)
+		if (settings->AsyncInput && inputThread)
 		{
 			wMessageQueue* inputQueue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
-			MessageQueue_PostQuit(inputQueue, 0);
-			WaitForSingleObject(inputThread, INFINITE);
+			if (inputQueue)
+			{
+				MessageQueue_PostQuit(inputQueue, 0);
+				WaitForSingleObject(inputThread, INFINITE);
+			}
 			CloseHandle(inputThread);
 		}
 		

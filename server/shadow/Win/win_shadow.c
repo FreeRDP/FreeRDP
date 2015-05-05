@@ -485,9 +485,13 @@ int win_shadow_subsystem_start(winShadowSubsystem* subsystem)
 	if (!subsystem)
 		return -1;
 
-	thread = CreateThread(NULL, 0,
+	if (!(thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) win_shadow_subsystem_thread,
-			(void*) subsystem, 0, NULL);
+			(void*) subsystem, 0, NULL)))
+	{
+		WLog_ERR(TAG, "Failed to create thread");
+		return -1;
+	}
 
 	return 1;
 }

@@ -203,10 +203,16 @@ int main(int argc, char* argv[])
 
 	freerdp_client_load_addins(instance->context->channels, instance->settings);
 
-	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
-			tf_client_thread_proc, instance, 0, NULL);
+	if (!(thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
+			tf_client_thread_proc, instance, 0, NULL)))
+	{
+		WLog_ERR(TAG, "Failed to create client thread");
+	}
+	else
+	{
+		WaitForSingleObject(thread, INFINITE);
+	}
 
-	WaitForSingleObject(thread, INFINITE);
 	freerdp_context_free(instance);
 	freerdp_free(instance);
 

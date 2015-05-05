@@ -60,6 +60,7 @@ int TestErrorSetLastError(int argc, char* argv[])
 {
 	DWORD error;
 	HANDLE threads[4];
+	int i;
 
 	/* We must initialize WLog here. It will check for settings
 	 * in the environment and if the variables are not set, the last
@@ -85,10 +86,14 @@ int TestErrorSetLastError(int argc, char* argv[])
 	}
 	*pLoopCount = 0;
 
-	threads[0] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) test_error_thread, (void*) (size_t) 0, 0, NULL);
-	threads[1] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) test_error_thread, (void*) (size_t) 1, 0, NULL);
-	threads[2] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) test_error_thread, (void*) (size_t) 2, 0, NULL);
-	threads[3] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) test_error_thread, (void*) (size_t) 3, 0, NULL);
+	for (i = 0; i < 4; i++)
+	{
+		if (!(threads[i] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) test_error_thread, (void*) (size_t) 0, 0, NULL)))
+		{
+			printf("Failed to create thread #%d\n", i);
+			return -1;
+		}
+	}
 
 	// let the threads run for at least 2 seconds
 	Sleep(2000);

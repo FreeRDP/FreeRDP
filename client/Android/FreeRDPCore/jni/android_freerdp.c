@@ -339,10 +339,17 @@ static void* jni_input_thread(void* arg)
 														  
 	DEBUG_ANDROID("Start.");
 
-	queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
-	event[0] = CreateFileDescriptorEvent(NULL, FALSE, FALSE, aCtx->event_queue->pipe_fd[0]);
-	event[1] = CreateFileDescriptorEvent(NULL, FALSE, FALSE, aCtx->event_queue->pipe_fd[1]);
-	event[2] = freerdp_get_message_queue_event_handle(instance, FREERDP_INPUT_MESSAGE_QUEUE);
+	if (!(queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE)))
+		goto fail_get_message_queue;
+
+	if (!(event[0] = CreateFileDescriptorEvent(NULL, FALSE, FALSE, aCtx->event_queue->pipe_fd[0])))
+		goto fail_create_event_0;
+
+	if (!(event[1] = CreateFileDescriptorEvent(NULL, FALSE, FALSE, aCtx->event_queue->pipe_fd[1])))
+		goto fail_create_event_1;
+
+	if (!(event[2] = freerdp_get_message_queue_event_handle(instance, FREERDP_INPUT_MESSAGE_QUEUE)))
+		goto fail_get_message_queue_event;
 			
 	do
 	{
@@ -364,8 +371,15 @@ static void* jni_input_thread(void* arg)
 	while(1);
 
 	DEBUG_ANDROID("Quit.");
-	
+
+fail_get_message_queue_event:
+	CloseHandle(event[1]);
+fail_create_event_1:
+	CloseHandle(event[0]);
+fail_create_event_0:
 	MessageQueue_PostQuit(queue, 0);
+fail_get_message_queue:
+
 	ExitThread(0);
 	return NULL;
 }
@@ -416,8 +430,8 @@ static int android_freerdp_run(freerdp* instance)
 
 	const rdpSettings* settings = instance->context->settings;
 
-	HANDLE input_thread;
-	HANDLE channels_thread;
+	HANDLE input_thread = NULL;
+	HANDLE channels_thread = NULL;
 	
 	BOOL async_input = settings->AsyncInput;
 	BOOL async_channels = settings->AsyncChannels;
@@ -439,14 +453,22 @@ static int android_freerdp_run(freerdp* instance)
 
 	if (async_input)
 	{
-		input_thread = CreateThread(NULL, 0,
-				(LPTHREAD_START_ROUTINE) jni_input_thread, instance, 0, NULL);
+		if (!(input_thread = CreateThread(NULL, 0,
+				(LPTHREAD_START_ROUTINE) jni_input_thread, instance, 0, NULL)))
+		{
+			DEBUG_ANDROID("Failed to create async input thread\n");
+			goto disconnect;
+		}
 	}
 	      
 	if (async_channels)
 	{
-		channels_thread = CreateThread(NULL, 0,
-				(LPTHREAD_START_ROUTINE) jni_channels_thread, instance, 0, NULL);
+		if (!(channels_thread = CreateThread(NULL, 0,
+				(LPTHREAD_START_ROUTINE) jni_channels_thread, instance, 0, NULL)))
+		{
+			DEBUG_ANDROID("Failed to create async channels thread\n");
+			goto disconnect;
+		}
 	}
 
 	((androidContext*)instance->context)->is_connected = TRUE;
@@ -568,6 +590,7 @@ static int android_freerdp_run(freerdp* instance)
 		}
 	}
 
+disconnect:
 	DEBUG_ANDROID("Prepare shutdown...");
 
 	// issue another OnDisconnecting here in case the disconnect was initiated by the server and not our client
@@ -578,17 +601,20 @@ static int android_freerdp_run(freerdp* instance)
 
 	DEBUG_ANDROID("Cleanup threads...");
 
-	if (async_channels)
+	if (async_channels && channels_thread)
 	{
 		WaitForSingleObject(channels_thread, INFINITE);
 		CloseHandle(channels_thread);
 	}
  
-	if (async_input)
+	if (async_input && input_thread)
 	{
 		wMessageQueue* input_queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
-		MessageQueue_PostQuit(input_queue, 0);
-		WaitForSingleObject(input_thread, INFINITE);
+		if (input_queue)
+		{
+			MessageQueue_PostQuit(input_queue, 0);
+			WaitForSingleObject(input_thread, INFINITE);
+		}
 		CloseHandle(input_thread);
 	}
 
@@ -670,8 +696,11 @@ JNIEXPORT jboolean JNICALL jni_freerdp_connect(JNIEnv *env, jclass cls, jint ins
 	assert(inst);
 	assert(ctx);
 
-	ctx->thread = CreateThread(NULL, 0,
-			(LPTHREAD_START_ROUTINE)android_thread_func, inst, 0, NULL);
+	if (!(ctx->thread = CreateThread(NULL, 0,
+			(LPTHREAD_START_ROUTINE)android_thread_func, inst, 0, NULL)))
+	{
+		return JNI_FALSE;
+	}
 
 	return JNI_TRUE;
 }
