@@ -236,8 +236,8 @@ wLogConsoleAppender* WLog_ConsoleAppender_New(wLog* log)
 	ConsoleAppender->outputStream = WLOG_CONSOLE_DEFAULT;
 
 #ifdef _WIN32
-		if (IsDebuggerPresent())
-				ConsoleAppender->outputStream = WLOG_CONSOLE_DEBUG;
+	if (IsDebuggerPresent())
+		ConsoleAppender->outputStream = WLOG_CONSOLE_DEBUG;
 #endif
 
 	return ConsoleAppender;
