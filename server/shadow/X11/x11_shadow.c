@@ -1236,7 +1236,8 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 			subsystem->use_xdamage = FALSE;
 	}
 
-	subsystem->event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, subsystem->xfds);
+	if (!(subsystem->event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, subsystem->xfds)))
+		return -1;
 
 	virtualScreen = &(subsystem->virtualScreen);
 
@@ -1283,9 +1284,13 @@ int x11_shadow_subsystem_start(x11ShadowSubsystem* subsystem)
 	if (!subsystem)
 		return -1;
 
-	subsystem->thread = CreateThread(NULL, 0,
+	if (!(subsystem->thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) x11_shadow_subsystem_thread,
-			(void*) subsystem, 0, NULL);
+			(void*) subsystem, 0, NULL)))
+	{
+		WLog_ERR(TAG, "Failed to create thread");
+		return -1;
+	}
 
 	return 1;
 }

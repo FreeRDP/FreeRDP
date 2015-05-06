@@ -1087,8 +1087,12 @@ BOOL shadow_client_accepted(freerdp_listener* listener, freerdp_peer* peer)
 
 	client = (rdpShadowClient*) peer->context;
 
-	client->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
-			shadow_client_thread, client, 0, NULL);
+	if (!(client->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
+			shadow_client_thread, client, 0, NULL)))
+	{
+		freerdp_peer_context_free(peer);
+		return FALSE;
+	}
 
 	return TRUE;
 }

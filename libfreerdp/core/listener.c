@@ -180,6 +180,7 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 	int sockfd;
 	struct sockaddr_un addr;
 	rdpListener* listener = (rdpListener*) instance->listener;
+	HANDLE hevent;
 
 	sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
 
@@ -213,8 +214,15 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 		return FALSE;
 	}
 
+	if (!(hevent = CreateFileDescriptorEvent(NULL, FALSE, FALSE, sockfd)))
+	{
+		WLog_ERR(TAG, "failed to create sockfd event");
+		closesocket((SOCKET) sockfd);
+		return FALSE;
+	}
+
 	listener->sockfds[listener->num_sockfds] = sockfd;
-	listener->events[listener->num_sockfds] = CreateFileDescriptorEvent(NULL, FALSE, FALSE, sockfd);
+	listener->events[listener->num_sockfds] = hevent;
 	listener->num_sockfds++;
 	WLog_INFO(TAG, "Listening on socket %s.", addr.sun_path);
 	return TRUE;

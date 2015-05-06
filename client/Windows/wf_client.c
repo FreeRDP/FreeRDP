@@ -670,9 +670,13 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 
 	if (async_input)
 	{
-		input_thread = CreateThread(NULL, 0,
+		if (!(input_thread = CreateThread(NULL, 0,
 				(LPTHREAD_START_ROUTINE) wf_input_thread,
-				instance, 0, NULL);
+				instance, 0, NULL)))
+		{
+			WLog_ERR(TAG, "Failed to create async input thread.");
+			goto disconnect;
+		}
 	}
 
 	while (1)
@@ -771,6 +775,7 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 		CloseHandle(input_thread);
 	}
 
+disconnect:
 	freerdp_disconnect(instance);
 	WLog_DBG(TAG, "Main thread exited.");
 

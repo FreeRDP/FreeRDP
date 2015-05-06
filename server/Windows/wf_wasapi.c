@@ -36,6 +36,7 @@ int wf_rdpsnd_set_latest_peer(wfPeerContext* peer)
 int wf_wasapi_activate(RdpsndServerContext* context)
 {
 	wchar_t * pattern = L"Stereo Mix";
+	HANDLE hThread;
 
 	wf_wasapi_get_device_string(pattern, &devStr);
 
@@ -46,7 +47,12 @@ int wf_wasapi_activate(RdpsndServerContext* context)
 	}
 
 	WLog_DBG(TAG, "RDPSND (WASAPI) Activated");
-	CreateThread(NULL, 0, wf_rdpsnd_wasapi_thread, latestPeer, 0, NULL);
+	if (!(hThread = CreateThread(NULL, 0, wf_rdpsnd_wasapi_thread, latestPeer, 0, NULL)))
+	{
+		WLog_ERR(TAG, "CreateThread failed");
+		return 1;
+	}
+	CloseHandle(hThread);
 
 	return 0;
 }

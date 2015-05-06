@@ -111,9 +111,7 @@ BOOL freerdp_connect(freerdp* instance)
 
 		IFCALLRET(instance->PostConnect, status, instance);
 
-		update_post_connect(instance->update);
-
-		if (!status)
+		if (!status || !update_post_connect(instance->update))
 		{
 			WLog_ERR(TAG, "freerdp_post_connect failed");
 

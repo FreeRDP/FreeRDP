@@ -446,7 +446,8 @@ static void* tf_debug_channel_thread_func(void* arg)
 		fd = *((void**) buffer);
 		WTSFreeMemory(buffer);
 
-		context->event = CreateWaitObjectEvent(NULL, TRUE, FALSE, fd);
+		if (!(context->event = CreateWaitObjectEvent(NULL, TRUE, FALSE, fd)))
+			return NULL;
 	}
 
 	s = Stream_New(NULL, 4096);
@@ -779,14 +780,13 @@ static void* test_peer_mainloop(void* arg)
 
 static BOOL test_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 {
-	HANDLE hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) test_peer_mainloop, (void*) client, 0, NULL);
+	HANDLE hThread;
 
-	if (hThread != NULL) {
-		CloseHandle(hThread);
-		return TRUE;
-	}
+	if (!(hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) test_peer_mainloop, (void*) client, 0, NULL)))
+		return FALSE;
 
-	return FALSE;
+	CloseHandle(hThread);
+	return TRUE;
 }
 
 static void test_server_mainloop(freerdp_listener* instance)

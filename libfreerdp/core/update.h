@@ -43,7 +43,7 @@ void update_free(rdpUpdate* update);
 void update_free_bitmap(BITMAP_UPDATE* bitmap_update);
 
 void update_reset_state(rdpUpdate* update);
-void update_post_connect(rdpUpdate* update);
+BOOL update_post_connect(rdpUpdate* update);
 void update_post_disconnect(rdpUpdate* update);
 
 BOOL update_read_bitmap_update(rdpUpdate* update, wStream* s, BITMAP_UPDATE* bitmapUpdate);

@@ -269,9 +269,13 @@ int shw_freerdp_client_start(rdpContext* context)
 
 	shw = (shwContext*) context;
 
-	shw->thread = CreateThread(NULL, 0,
+	if (!(shw->thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) shw_client_thread,
-			instance, 0, NULL);
+			instance, 0, NULL)))
+	{
+		WLog_ERR(TAG, "Failed to create thread");
+		return -1;
+	}
 
 	return 0;
 }

@@ -24,7 +24,12 @@ int TestPoolThread(int argc, char* argv[])
 		return -1;
 	}
 
-	SetThreadpoolThreadMinimum(pool, 8); /* default is 0 */
+	if (!SetThreadpoolThreadMinimum(pool, 8)) /* default is 0 */
+	{
+		printf("SetThreadpoolThreadMinimum failed\n");
+		return -1;
+	}
+
 	SetThreadpoolThreadMaximum(pool, 64); /* default is 500 */
 
 	CloseThreadpool(pool);

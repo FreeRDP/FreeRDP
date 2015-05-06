@@ -151,9 +151,12 @@ void wf_peer_synchronize_event(rdpInput* input, UINT32 flags)
 
 BOOL wf_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 {
-	if (!CreateThread(NULL, 0, wf_peer_main_loop, client, 0, NULL))
+	HANDLE hThread;
+
+	if (!(hThread = CreateThread(NULL, 0, wf_peer_main_loop, client, 0, NULL)))
 		return FALSE;
 
+	CloseHandle(hThread);
 	return TRUE;
 }
 

@@ -572,17 +572,20 @@ void update_reset_state(rdpUpdate* update)
 	}
 }
 
-void update_post_connect(rdpUpdate* update)
+BOOL update_post_connect(rdpUpdate* update)
 {
 	update->asynchronous = update->context->settings->AsyncUpdate;
 
 	if (update->asynchronous)
-		update->proxy = update_message_proxy_new(update);
+		if (!(update->proxy = update_message_proxy_new(update)))
+			return FALSE;
 
 	update->altsec->switch_surface.bitmapId = SCREEN_BITMAP_SURFACE;
 	IFCALL(update->altsec->SwitchSurface, update->context, &(update->altsec->switch_surface));
 
 	update->initialState = FALSE;
+
+	return TRUE;
 }
 
 void update_post_disconnect(rdpUpdate* update)

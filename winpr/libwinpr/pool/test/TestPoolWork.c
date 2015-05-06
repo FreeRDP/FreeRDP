@@ -64,7 +64,12 @@ int TestPoolWork(int argc, char* argv[])
 		return -1;
 	}
 
-	SetThreadpoolThreadMinimum(pool, 4);
+	if (!SetThreadpoolThreadMinimum(pool, 4))
+	{
+		printf("SetThreadpoolThreadMinimum failure\n");
+		return -1;
+	}
+
 	SetThreadpoolThreadMaximum(pool, 8);
 
 	InitializeThreadpoolEnvironment(&environment);

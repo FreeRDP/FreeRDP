@@ -23,6 +23,7 @@
 
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/region.h>
+#include <freerdp/log.h>
 
 #include "../shadow_screen.h"
 #include "../shadow_client.h"
@@ -32,6 +33,9 @@
 #include "../shadow_subsystem.h"
 
 #include "mac_shadow.h"
+
+#define TAG SERVER_TAG("shadow.mac")
+
 
 static macShadowSubsystem* g_Subsystem = NULL;
 
@@ -616,9 +620,13 @@ int mac_shadow_subsystem_start(macShadowSubsystem* subsystem)
 
 	mac_shadow_capture_start(subsystem);
 	
-	thread = CreateThread(NULL, 0,
+	if (!(thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) mac_shadow_subsystem_thread,
-			(void*) subsystem, 0, NULL);
+			(void*) subsystem, 0, NULL)))
+	{
+		WLog_ERR(TAG, "Failed to create thread");
+		return -1;
+	}
 
 	return 1;
 }
