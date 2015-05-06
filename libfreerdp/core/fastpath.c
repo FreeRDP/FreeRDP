@@ -410,7 +410,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 		status = fastpath_recv_update(fastpath, updateCode, totalSize, cs);
 
 		if (status < 0)
-		    goto out_fail;
+			goto out_fail;
 	}
 	else
 	{
@@ -434,7 +434,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 			}
 
 			if (!(fastpath->updateData = StreamPool_Take(transport->ReceivePool, size)))
-			    goto out_fail;
+				goto out_fail;
 
 			Stream_SetPosition(fastpath->updateData, 0);
 
@@ -504,7 +504,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 			Stream_Release(fastpath->updateData);
 
 			if (status < 0)
-			    goto out_fail;
+				goto out_fail;
 		}
 	}
 
