@@ -815,72 +815,72 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 	{
 		case DATA_PDU_TYPE_UPDATE:
 			if (!update_recv(rdp->update, cs))
-				return -1;
+			    goto out_fail;
 			break;
 
 		case DATA_PDU_TYPE_CONTROL:
 			if (!rdp_recv_server_control_pdu(rdp, cs))
-				return -1;
+			    goto out_fail;
 			break;
 
 		case DATA_PDU_TYPE_POINTER:
 			if (!update_recv_pointer(rdp->update, cs))
-				return -1;
+			    goto out_fail;
 			break;
 
 		case DATA_PDU_TYPE_SYNCHRONIZE:
 			if (!rdp_recv_synchronize_pdu(rdp, cs))
-				return -1;
+			    goto out_fail;
 			break;
 
 		case DATA_PDU_TYPE_PLAY_SOUND:
 			if (!update_recv_play_sound(rdp->update, cs))
-				return -1;
+			    goto out_fail;
 			break;
 
 		case DATA_PDU_TYPE_SHUTDOWN_DENIED:
 			if (!rdp_recv_server_shutdown_denied_pdu(rdp, cs))
-				return -1;
+			    goto out_fail;
 			break;
 
 		case DATA_PDU_TYPE_SAVE_SESSION_INFO:
 			if (!rdp_recv_save_session_info(rdp, cs))
-				return -1;
+			    goto out_fail;
 			break;
 
 		case DATA_PDU_TYPE_FONT_MAP:
 			if (!rdp_recv_font_map_pdu(rdp, cs))
-				return -1;
+				goto out_fail;
 			break;
 
 		case DATA_PDU_TYPE_SET_KEYBOARD_INDICATORS:
 			if (!rdp_recv_server_set_keyboard_indicators_pdu(rdp, cs))
-				return -1;
+			    goto out_fail;
 			break;
 
 		case DATA_PDU_TYPE_SET_KEYBOARD_IME_STATUS:
 			if (!rdp_recv_server_set_keyboard_ime_status_pdu(rdp, cs))
-				return -1;
+			    goto out_fail;
 			break;
 
 		case DATA_PDU_TYPE_SET_ERROR_INFO:
 			if (!rdp_recv_set_error_info_data_pdu(rdp, cs))
-				return -1;
+			    goto out_fail;
 			break;
 
 		case DATA_PDU_TYPE_ARC_STATUS:
 			if (!rdp_recv_server_auto_reconnect_status_pdu(rdp, cs))
-				return -1;
+			    goto out_fail;
 			break;
 
 		case DATA_PDU_TYPE_STATUS_INFO:
 			if (!rdp_recv_server_status_info_pdu(rdp, cs))
-				return -1;
+			    goto out_fail;
 			break;
 
 		case DATA_PDU_TYPE_MONITOR_LAYOUT:
 			if (!rdp_recv_monitor_layout_pdu(rdp, cs))
-				return -1;
+			    goto out_fail;
 			break;
 
 		default:
@@ -891,6 +891,11 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 		Stream_Release(cs);
 
 	return 0;
+
+out_fail:
+    if (cs != s)
+        Stream_Release(cs);
+    return -1;
 }
 
 int rdp_recv_message_channel_pdu(rdpRdp* rdp, wStream* s)

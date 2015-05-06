@@ -403,14 +403,14 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 		if (fastpath->fragmentation != -1)
 		{
 			WLog_ERR(TAG,  "Unexpected FASTPATH_FRAGMENT_SINGLE");
-			return -1;
+			goto out_fail;
 		}
 
 		totalSize = size;
 		status = fastpath_recv_update(fastpath, updateCode, totalSize, cs);
 
 		if (status < 0)
-			return -1;
+		    goto out_fail;
 	}
 	else
 	{
@@ -419,7 +419,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 			if (fastpath->fragmentation != -1)
 			{
 				WLog_ERR(TAG,  "Unexpected FASTPATH_FRAGMENT_FIRST");
-				return -1;
+				goto out_fail;
 			}
 
 			fastpath->fragmentation = FASTPATH_FRAGMENT_FIRST;
@@ -430,11 +430,11 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 			{
 				WLog_ERR(TAG,  "Total size (%d) exceeds MultifragMaxRequestSize (%d)",
 						 totalSize, transport->settings->MultifragMaxRequestSize);
-				return -1;
+				goto out_fail;
 			}
 
 			if (!(fastpath->updateData = StreamPool_Take(transport->ReceivePool, size)))
-				return -1;
+			    goto out_fail;
 
 			Stream_SetPosition(fastpath->updateData, 0);
 
@@ -446,7 +446,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 					(fastpath->fragmentation != FASTPATH_FRAGMENT_NEXT))
 			{
 				WLog_ERR(TAG,  "Unexpected FASTPATH_FRAGMENT_NEXT");
-				return -1;
+				goto out_fail;
 			}
 
 			fastpath->fragmentation = FASTPATH_FRAGMENT_NEXT;
@@ -457,13 +457,13 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 			{
 				WLog_ERR(TAG,  "Total size (%d) exceeds MultifragMaxRequestSize (%d)",
 						 totalSize, transport->settings->MultifragMaxRequestSize);
-				return -1;
+				goto out_fail;
 			}
 
 			if (!Stream_EnsureCapacity(fastpath->updateData, totalSize))
 			{
 				WLog_ERR(TAG,  "Couldn't re-allocate memory for stream");
-				return -1;
+				goto out_fail;
 			}
 
 			Stream_Copy(fastpath->updateData, cs, size);
@@ -474,7 +474,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 					(fastpath->fragmentation != FASTPATH_FRAGMENT_NEXT))
 			{
 				WLog_ERR(TAG,  "Unexpected FASTPATH_FRAGMENT_LAST");
-				return -1;
+				goto out_fail;
 			}
 
 			fastpath->fragmentation = -1;
@@ -485,13 +485,13 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 			{
 				WLog_ERR(TAG,  "Total size (%d) exceeds MultifragMaxRequestSize (%d)",
 						 totalSize, transport->settings->MultifragMaxRequestSize);
-				return -1;
+				goto out_fail;
 			}
 
 			if (!Stream_EnsureCapacity(fastpath->updateData, totalSize))
 			{
 				WLog_ERR(TAG,  "Couldn't re-allocate memory for stream");
-				return -1;
+				goto out_fail;
 			}
 
 			Stream_Copy(fastpath->updateData, cs, size);
@@ -504,7 +504,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 			Stream_Release(fastpath->updateData);
 
 			if (status < 0)
-				return -1;
+			    goto out_fail;
 		}
 	}
 
@@ -514,6 +514,14 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 		Stream_Release(cs);
 
 	return status;
+
+out_fail:
+
+    if (cs != s) {
+        Stream_Release(cs);
+    }
+
+    return -1;
 }
 
 int fastpath_recv_updates(rdpFastPath* fastpath, wStream* s)
