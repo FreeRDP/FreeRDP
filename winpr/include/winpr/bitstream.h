@@ -49,37 +49,37 @@ extern "C" {
 
 #define BitStream_Prefetch(_bs) do { \
 		(_bs->prefetch) = 0; \
-		if (((UINT32) (_bs->pointer - _bs->buffer)) < (_bs->capacity + 4)) \
+		if (((UINT32) (_bs->pointer - _bs->buffer) + 4) < (_bs->capacity)) \
 			(_bs->prefetch) |= (*(_bs->pointer + 4) << 24); \
-		if (((UINT32) (_bs->pointer - _bs->buffer)) < (_bs->capacity + 5)) \
+		if (((UINT32) (_bs->pointer - _bs->buffer) + 5) < (_bs->capacity)) \
 			(_bs->prefetch) |= (*(_bs->pointer + 5) << 16); \
-		if (((UINT32) (_bs->pointer - _bs->buffer)) < (_bs->capacity + 6)) \
+		if (((UINT32) (_bs->pointer - _bs->buffer) + 6) < (_bs->capacity)) \
 			(_bs->prefetch) |= (*(_bs->pointer + 6) << 8); \
-		if (((UINT32) (_bs->pointer - _bs->buffer)) < (_bs->capacity + 7)) \
+		if (((UINT32) (_bs->pointer - _bs->buffer) + 7) < (_bs->capacity)) \
 			(_bs->prefetch) |= (*(_bs->pointer + 7) << 0); \
 	} while(0)
 
 #define BitStream_Fetch(_bs) do { \
 		(_bs->accumulator) = 0; \
-		if (((UINT32) (_bs->pointer - _bs->buffer)) < (_bs->capacity + 0)) \
+		if (((UINT32) (_bs->pointer - _bs->buffer) + 0) < (_bs->capacity)) \
 			(_bs->accumulator) |= (*(_bs->pointer + 0) << 24); \
-		if (((UINT32) (_bs->pointer - _bs->buffer)) < (_bs->capacity + 1)) \
+		if (((UINT32) (_bs->pointer - _bs->buffer) + 1) < (_bs->capacity)) \
 			(_bs->accumulator) |= (*(_bs->pointer + 1) << 16); \
-		if (((UINT32) (_bs->pointer - _bs->buffer)) < (_bs->capacity + 2)) \
+		if (((UINT32) (_bs->pointer - _bs->buffer) + 2) < (_bs->capacity)) \
 			(_bs->accumulator) |= (*(_bs->pointer + 2) << 8); \
-		if (((UINT32) (_bs->pointer - _bs->buffer)) <(_bs->capacity + 3)) \
+		if (((UINT32) (_bs->pointer - _bs->buffer) + 3) <(_bs->capacity)) \
 			(_bs->accumulator) |= (*(_bs->pointer + 3) << 0); \
 		BitStream_Prefetch(_bs); \
 	} while(0)
 
 #define BitStream_Flush(_bs) do { \
-		if (((UINT32) (_bs->pointer - _bs->buffer)) < (_bs->capacity + 0)) \
+		if (((UINT32) (_bs->pointer - _bs->buffer) + 0) < (_bs->capacity)) \
 			*(_bs->pointer + 0) = (_bs->accumulator >> 24); \
-		if (((UINT32) (_bs->pointer - _bs->buffer)) < (_bs->capacity + 1)) \
+		if (((UINT32) (_bs->pointer - _bs->buffer) + 1) < (_bs->capacity)) \
 			*(_bs->pointer + 1) = (_bs->accumulator >> 16); \
-		if (((UINT32) (_bs->pointer - _bs->buffer)) < (_bs->capacity + 2)) \
+		if (((UINT32) (_bs->pointer - _bs->buffer) + 2) < (_bs->capacity)) \
 			*(_bs->pointer + 2) = (_bs->accumulator >> 8); \
-		if (((UINT32) (_bs->pointer - _bs->buffer)) < (_bs->capacity + 3)) \
+		if (((UINT32) (_bs->pointer - _bs->buffer) + 3) < (_bs->capacity)) \
 			*(_bs->pointer + 3) = (_bs->accumulator >> 0); \
 	} while(0)
 
