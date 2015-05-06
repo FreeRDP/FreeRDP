@@ -816,7 +816,7 @@ BOOL freerdp_tcp_connect_timeout(int sockfd, struct sockaddr* addr, socklen_t ad
 
 #ifndef _WIN32
 
-int freerdp_tcp_connect_multi(char** hostnames, int count, int port, int timeout)
+int freerdp_tcp_connect_multi(char** hostnames, UINT32* ports, int count, int port, int timeout)
 {
 	int index;
 	int sindex;
@@ -848,6 +848,9 @@ int freerdp_tcp_connect_multi(char** hostnames, int count, int port, int timeout
 		ZeroMemory(&hints, sizeof(hints));
 		hints.ai_family = AF_UNSPEC;
 		hints.ai_socktype = SOCK_STREAM;
+
+		if (ports)
+			sprintf_s(port_str, sizeof(port_str) - 1, "%u", ports[index]);
 
 		status = getaddrinfo(hostnames[index], port_str, &hints, &result);
 
@@ -1088,13 +1091,13 @@ int freerdp_tcp_connect(rdpSettings* settings, const char* hostname, int port, i
 
 		if (!settings->GatewayEnabled)
 		{
-			if (!freerdp_tcp_resolve_hostname(hostname))
+			if (!freerdp_tcp_resolve_hostname(hostname) || settings->RemoteAssistanceMode)
 			{
 				if (settings->TargetNetAddressCount > 0)
 				{
 #ifndef _WIN32
 					sockfd = freerdp_tcp_connect_multi(settings->TargetNetAddresses,
-							settings->TargetNetAddressCount, port, timeout);
+							settings->TargetNetPorts, settings->TargetNetAddressCount, port, timeout);
 #else
 					hostname = settings->TargetNetAddresses[0];
 #endif

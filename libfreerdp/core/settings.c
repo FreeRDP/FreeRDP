@@ -590,6 +590,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->RedirectionTsvUrlLength = 0;
 		_settings->TargetNetAddressCount = 0;
 		_settings->TargetNetAddresses = NULL;
+		_settings->TargetNetPorts = NULL;
 
 		if (settings->LoadBalanceInfo && settings->LoadBalanceInfoLength)
 		{
@@ -664,6 +665,14 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 
 			for (index = 0; index < settings->TargetNetAddressCount; index++)
 				_settings->TargetNetAddresses[index] = _strdup(settings->TargetNetAddresses[index]);
+
+			if (settings->TargetNetPorts)
+			{
+				_settings->TargetNetPorts = (UINT32*) malloc(sizeof(UINT32) * settings->TargetNetAddressCount);
+
+				for (index = 0; index < settings->TargetNetAddressCount; index++)
+					_settings->TargetNetPorts[index] = settings->TargetNetPorts[index];
+			}
 		}
 
 		_settings->DeviceCount = settings->DeviceCount;

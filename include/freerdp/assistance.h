@@ -47,6 +47,11 @@ struct rdp_assistance_file
 
 	char* MachineAddress;
 	UINT32 MachinePort;
+
+	UINT32 MachineCount;
+	char** MachineAddresses;
+	UINT32* MachinePorts;
+
 	char* RASessionId;
 	char* RASpecificParams;
 };

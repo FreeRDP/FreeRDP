@@ -932,33 +932,39 @@ int freerdp_map_keyboard_layout_name_to_id(char* name)
 	RDP_KEYBOARD_LAYOUT* layouts;
 
 	layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD);
+
 	for (i = 0; layouts[i].code; i++)
 	{
 		if (_stricmp(layouts[i].name, name) == 0)
 			id = layouts[i].code;
 	}
+
 	free(layouts);
 
 	if (id)
 		return id;
 
 	layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_VARIANT);
+
 	for (i = 0; layouts[i].code; i++)
 	{
 		if (_stricmp(layouts[i].name, name) == 0)
 			id = layouts[i].code;
 	}
+
 	free(layouts);
 
 	if (id)
 		return id;
 
 	layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_IME);
+
 	for (i = 0; layouts[i].code; i++)
 	{
 		if (_stricmp(layouts[i].name, name) == 0)
 			id = layouts[i].code;
 	}
+
 	free(layouts);
 
 	if (id)
@@ -982,6 +988,14 @@ int freerdp_detect_command_line_pre_filter(void* context, int index, int argc, L
 				return 1;
 			}
 		}
+
+		if (length > 13)
+		{
+			if (_stricmp(&(argv[index])[length - 13], ".msrcIncident") == 0)
+			{
+				return 1;
+			}
+		}
 	}
 
 	return 0;
@@ -997,6 +1011,7 @@ int freerdp_detect_windows_style_command_line_syntax(int argc, char** argv,
 
 	flags = COMMAND_LINE_SEPARATOR_COLON;
 	flags |= COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SIGIL_PLUS_MINUS;
+
 	if (ignoreUnknown)
 	{
 		flags |= COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
@@ -1040,6 +1055,7 @@ int freerdp_detect_posix_style_command_line_syntax(int argc, char** argv,
 	flags = COMMAND_LINE_SEPARATOR_SPACE;
 	flags |= COMMAND_LINE_SIGIL_DASH | COMMAND_LINE_SIGIL_DOUBLE_DASH;
 	flags |= COMMAND_LINE_SIGIL_ENABLE_DISABLE;
+
 	if (ignoreUnknown)
 	{
 		flags |= COMMAND_LINE_IGN_UNKNOWN_KEYWORD;

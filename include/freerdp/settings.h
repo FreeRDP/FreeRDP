@@ -1032,7 +1032,8 @@ struct rdp_settings
 	ALIGN64 UINT32 RedirectionTsvUrlLength; /* 1227 */
 	ALIGN64 UINT32 TargetNetAddressCount; /* 1228 */
 	ALIGN64 char** TargetNetAddresses; /* 1229 */
-	UINT64 padding1280[1280 - 1230]; /* 1230 */
+	ALIGN64 UINT32* TargetNetPorts; /* 1230 */
+	UINT64 padding1280[1280 - 1231]; /* 1231 */
 
 	/**
 	 * Security
