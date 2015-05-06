@@ -139,9 +139,6 @@ int WLog_ConsoleAppender_WriteMessage(wLog* log, wLogConsoleAppender* appender, 
 				case WLOG_INFO:
 					fp = stdout;
 					break;
-				case WLOG_OFF:
-					fp = NULL;
-					break;
 				default:
 					fp = stderr;
 					break;
@@ -149,7 +146,7 @@ int WLog_ConsoleAppender_WriteMessage(wLog* log, wLogConsoleAppender* appender, 
 			break;
 	}
 
-	if (fp)
+	if (message->Level != WLOG_OFF)
 		fprintf(fp, "%s%s\n", message->PrefixString, message->TextString);
 #endif
 	return 1;
