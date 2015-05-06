@@ -146,9 +146,10 @@ struct _wLogAppender
 	WLOG_APPENDER_COMMON();
 };
 
-#define WLOG_CONSOLE_STDOUT	1
-#define WLOG_CONSOLE_STDERR	2
-#define WLOG_CONSOLE_DEBUG	3
+#define WLOG_CONSOLE_DEFAULT	0
+#define WLOG_CONSOLE_STDOUT		1
+#define WLOG_CONSOLE_STDERR		2
+#define WLOG_CONSOLE_DEBUG		4
 
 struct _wLogConsoleAppender
 {
