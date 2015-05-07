@@ -1151,9 +1151,6 @@ int freerdp_client_populate_settings_from_assistance_file(rdpAssistanceFile* fil
 	{
 		settings->TargetNetAddresses[i] = _strdup(file->MachineAddresses[i]);
 		settings->TargetNetPorts[i] = file->MachinePorts[i];
-
-		fprintf(stderr, "count: %d index: %d address: %s port: %d\n",
-				settings->TargetNetAddressCount, i, settings->TargetNetAddresses[i], settings->TargetNetPorts[i]);
 	}
 
 	return 1;
