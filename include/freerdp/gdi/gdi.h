@@ -129,9 +129,11 @@
 #define GDIOBJECT_REGION   0x05
 
 /* Region return values */
+#ifndef NULLREGION
 #define NULLREGION         0x01
 #define SIMPLEREGION       0x02
 #define COMPLEXREGION      0x03
+#endif
 
 struct _GDIOBJECT
 {
