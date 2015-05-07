@@ -437,6 +437,7 @@ int shadow_server_init_config_path(rdpShadowServer* server)
 			if (!PathFileExistsA(userLibraryPath) &&
 				!CreateDirectoryA(userLibraryPath, 0))
 			{
+				WLog_ERR(TAG, "Failed to create directory '%s'", userLibraryPath);
 				free(userLibraryPath);
 				return -1;
 			}
