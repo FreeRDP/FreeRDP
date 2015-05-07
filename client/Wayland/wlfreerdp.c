@@ -118,7 +118,7 @@ static BOOL wl_post_connect(freerdp* instance)
 	wlfWindow* window;
 	wlfContext* context;
 
-	gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT | CLRBUF_32BPP, NULL);
+	gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP, NULL);
 	gdi = instance->context->gdi;
 	if (!gdi)
 		return FALSE;
