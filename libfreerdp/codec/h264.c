@@ -182,7 +182,7 @@ static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstS
 		sys->EncParamExt.iTargetBitrate = h264->BitRate;
 		sys->EncParamExt.iRCMode = RC_BITRATE_MODE;
 		sys->EncParamExt.fMaxFrameRate = h264->FrameRate;
-		sys->EncParamExt.iMaxBitrate = UNSPECIFIED_BIT_RATE;
+		sys->EncParamExt.iMaxBitrate = h264->BitRate;
 		sys->EncParamExt.bEnableDenoise = 0;
 		sys->EncParamExt.bEnableLongTermReference = 0;
 		sys->EncParamExt.bEnableFrameSkip = 0;
