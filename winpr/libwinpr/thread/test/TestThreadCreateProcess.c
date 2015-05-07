@@ -55,6 +55,12 @@ int TestThreadCreateProcess(int argc, char* argv[])
 			&StartupInfo,
 			&ProcessInformation);
 
+	if (!status)
+	{
+		printf("CreateProcess failed. error=%d\n", GetLastError());
+		return 1;
+	}
+
 	FreeEnvironmentStrings(lpszEnvironmentBlock);
 
 	WaitForSingleObject(ProcessInformation.hProcess, INFINITE);

@@ -454,7 +454,11 @@ int main(int argc, char* argv[])
 
 	setlocale(LC_ALL, "");
 
-	g_sem = CreateSemaphore(NULL, 0, 1, NULL);
+	if (!(g_sem = CreateSemaphore(NULL, 0, 1, NULL)))
+	{
+		WLog_ERR(TAG, "Failed to create semaphore");
+		exit(1);
+	}
 
 	instance = freerdp_new();
 	instance->PreConnect = df_pre_connect;
