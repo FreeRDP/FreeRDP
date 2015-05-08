@@ -115,6 +115,12 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 		if ((ai->ai_family != AF_INET) && (ai->ai_family != AF_INET6))
 			continue;
 
+		if (listener->num_sockfds == MAX_LISTENER_HANDLES)
+		{
+			WLog_ERR(TAG, "too many listening sockets");
+			continue;
+		}
+
 		sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 
 		if (sockfd == -1)
@@ -182,6 +188,12 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 	rdpListener* listener = (rdpListener*) instance->listener;
 	HANDLE hevent;
 
+	if (listener->num_sockfds == MAX_LISTENER_HANDLES)
+	{
+		WLog_ERR(TAG, "too many listening sockets");
+		return FALSE;
+	}
+
 	sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
 
 	if (sockfd == -1)
@@ -229,6 +241,36 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 #else
 	return TRUE;
 #endif
+}
+
+static BOOL freerdp_listener_open_from_socket(freerdp_listener* instance, int fd)
+{
+#ifndef _WIN32
+	rdpListener* listener = (rdpListener*) instance->listener;
+
+	if (listener->num_sockfds == MAX_LISTENER_HANDLES)
+	{
+		WLog_ERR(TAG, "too many listening sockets");
+		return FALSE;
+	}
+
+	if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
+		return FALSE;
+
+	listener->sockfds[listener->num_sockfds] = fd;
+	listener->events[listener->num_sockfds] = CreateFileDescriptorEvent(NULL, FALSE, FALSE, fd);
+	if (!listener->events[listener->num_sockfds])
+		return FALSE;
+
+	listener->num_sockfds++;
+
+	WLog_INFO(TAG, "Listening on socket %d.", fd);
+	return TRUE;
+#else
+	return FALSE;
+#endif
+
+
 }
 
 static void freerdp_listener_close(freerdp_listener* instance)
@@ -375,6 +417,7 @@ freerdp_listener* freerdp_listener_new(void)
 
 	instance->Open = freerdp_listener_open;
 	instance->OpenLocal = freerdp_listener_open_local;
+	instance->OpenFromSocket = freerdp_listener_open_from_socket;
 	instance->GetFileDescriptor = freerdp_listener_get_fds;
 	instance->GetEventHandles = freerdp_listener_get_event_handles;
 	instance->CheckFileDescriptor = freerdp_listener_check_fds;
