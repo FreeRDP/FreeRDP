@@ -265,8 +265,11 @@ static BOOL freerdp_listener_open_from_socket(freerdp_listener* instance, int fd
 	listener->num_sockfds++;
 
 	WLog_INFO(TAG, "Listening on socket %d.", fd);
-#endif
 	return TRUE;
+#else
+	return FALSE;
+#endif
+
 
 }
 
