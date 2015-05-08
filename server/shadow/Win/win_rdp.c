@@ -147,7 +147,9 @@ BOOL shw_post_connect(freerdp* instance)
 	shw = (shwContext*) instance->context;
 	settings = instance->settings;
 
-	gdi_init(instance, CLRBUF_32BPP, NULL);
+	if (!gdi_init(instance, CLRBUF_32BPP, NULL))
+		return FALSE;
+
 	gdi = instance->context->gdi;
 
 	instance->update->BeginPaint = shw_begin_paint;

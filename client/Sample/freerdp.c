@@ -116,7 +116,8 @@ static BOOL tf_pre_connect(freerdp* instance)
 
 static BOOL tf_post_connect(freerdp* instance)
 {
-	gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT | CLRBUF_16BPP | CLRBUF_32BPP, NULL);
+	if (!gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT | CLRBUF_16BPP | CLRBUF_32BPP, NULL))
+		return FALSE;
 
 	instance->update->BeginPaint = tf_begin_paint;
 	instance->update->EndPaint = tf_end_paint;

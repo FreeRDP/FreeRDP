@@ -77,7 +77,12 @@ int test_gdi_FillRect(void)
 	int right = 60;
 	int bottom = 80;
 
-	hdc = gdi_GetDC();
+	if (!(hdc = gdi_GetDC()))
+	{
+		printf("failed to get gdi device context\n");
+		return -1;
+	}
+
 	hdc->bytesPerPixel = 4;
 	hdc->bitsPerPixel = 32;
 

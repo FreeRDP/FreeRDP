@@ -825,7 +825,15 @@ int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 	 */
 	if (width != rdp->settings->DesktopWidth || height != rdp->settings->DesktopHeight)
 	{
-		IFCALL(rdp->update->DesktopResize, rdp->update->context);
+		BOOL status = TRUE;
+
+		IFCALLRET(rdp->update->DesktopResize, status, rdp->update->context);
+
+		if (!status)
+		{
+			WLog_ERR(TAG, "client desktop resize callback failed");
+			return -1;
+		}
 	}
 
 	rdp_client_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION);

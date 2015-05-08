@@ -148,7 +148,10 @@ BOOL wf_sw_desktop_resize(wfContext* wfc)
 		wf_image_free(wfc->primary);
 		wfc->primary = wf_image_new(wfc, wfc->width, wfc->height, wfc->dstBpp, NULL);
 	}
-	gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP, wfc->primary->pdata);
+
+	if (!gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP, wfc->primary->pdata))
+		return FALSE;
+
 	gdi = instance->context->gdi;
 	wfc->hdc = gdi->primary->hdc;
 	return TRUE;
@@ -378,7 +381,8 @@ BOOL wf_post_connect(freerdp* instance)
 	{
 		wfc->primary = wf_image_new(wfc, wfc->width, wfc->height, wfc->dstBpp, NULL);
 
-		gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP, wfc->primary->pdata);
+		if (!gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP, wfc->primary->pdata))
+			return FALSE;
 
 		gdi = instance->context->gdi;
 		wfc->hdc = gdi->primary->hdc;
@@ -389,7 +393,9 @@ BOOL wf_post_connect(freerdp* instance)
 		wfc->srcBpp = instance->settings->ColorDepth;
 		wfc->primary = wf_image_new(wfc, wfc->width, wfc->height, wfc->dstBpp, NULL);
 
-		wfc->hdc = gdi_GetDC();
+		if (!(wfc->hdc = gdi_GetDC()))
+			return FALSE;
+
 		wfc->hdc->bitsPerPixel = wfc->dstBpp;
 		wfc->hdc->bytesPerPixel = wfc->dstBpp / 8;
 

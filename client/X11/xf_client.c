@@ -222,7 +222,7 @@ void xf_draw_screen(xfContext* xfc, int x, int y, int w, int h)
 	XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc, x, y, w, h, x, y);
 }
 
-static void xf_desktop_resize(rdpContext* context)
+static BOOL xf_desktop_resize(rdpContext* context)
 {
 	rdpSettings* settings;
 	xfContext* xfc = (xfContext*) context;
@@ -232,7 +232,8 @@ static void xf_desktop_resize(rdpContext* context)
 	{
 		BOOL same = (xfc->primary == xfc->drawing) ? TRUE : FALSE;
 		XFreePixmap(xfc->display, xfc->primary);
-		xfc->primary = XCreatePixmap(xfc->display, xfc->drawable, xfc->sessionWidth, xfc->sessionHeight, xfc->depth);
+		if (!(xfc->primary = XCreatePixmap(xfc->display, xfc->drawable, xfc->sessionWidth, xfc->sessionHeight, xfc->depth)))
+			return FALSE;
 		if (same)
 			xfc->drawing = xfc->primary;
 	}
@@ -265,6 +266,8 @@ static void xf_desktop_resize(rdpContext* context)
 		XSetForeground(xfc->display, xfc->gc, 0);
 		XFillRectangle(xfc->display, xfc->drawable, xfc->gc, 0, 0, xfc->window->width, xfc->window->height);
 	}
+
+	return TRUE;
 }
 
 BOOL xf_sw_begin_paint(rdpContext* context)
@@ -350,27 +353,33 @@ BOOL xf_sw_desktop_resize(rdpContext* context)
 {
 	rdpGdi* gdi = context->gdi;
 	xfContext* xfc = (xfContext*) context;
+	BOOL ret = FALSE;
 
 	xf_lock_x11(xfc, TRUE);
 
 	xfc->sessionWidth = context->settings->DesktopWidth;
 	xfc->sessionHeight = context->settings->DesktopHeight;
 
-	gdi_resize(gdi, xfc->sessionWidth, xfc->sessionHeight);
+	if (!gdi_resize(gdi, xfc->sessionWidth, xfc->sessionHeight))
+		goto out;
 
 	if (xfc->image)
 	{
 		xfc->image->data = NULL;
 		XDestroyImage(xfc->image);
 
-		xfc->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
-				(char*) gdi->primary_buffer, gdi->width, gdi->height, xfc->scanline_pad, 0);
+		if (!(xfc->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
+				(char*) gdi->primary_buffer, gdi->width, gdi->height, xfc->scanline_pad, 0)))
+		{
+			goto out;
+		}
 	}
 
-	xf_desktop_resize(context);
+	ret = xf_desktop_resize(context);
 
+out:
 	xf_unlock_x11(xfc, TRUE);
-	return TRUE;
+	return ret;
 }
 
 BOOL xf_hw_begin_paint(rdpContext* context)
@@ -457,16 +466,17 @@ BOOL xf_hw_desktop_resize(rdpContext* context)
 {
 	xfContext* xfc = (xfContext*) context;
 	rdpSettings* settings = xfc->settings;
+	BOOL ret;
 
 	xf_lock_x11(xfc, TRUE);
 
 	xfc->sessionWidth = settings->DesktopWidth;
 	xfc->sessionHeight = settings->DesktopHeight;
 
-	xf_desktop_resize(context);
+	ret = xf_desktop_resize(context);
 
 	xf_unlock_x11(xfc, TRUE);
-	return TRUE;
+	return ret;
 }
 
 BOOL xf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
@@ -521,7 +531,8 @@ BOOL xf_create_window(xfContext* xfc)
 	height = xfc->sessionHeight;
 
 	if (!xfc->hdc)
-		xfc->hdc = gdi_CreateDC(CLRBUF_32BPP, xfc->bpp);
+		if (!(xfc->hdc = gdi_CreateDC(CLRBUF_32BPP, xfc->bpp)))
+			return FALSE;
 
 	if (!xfc->remote_app)
 	{
@@ -1060,7 +1071,11 @@ BOOL xf_post_connect(freerdp* instance)
 	settings = instance->settings;
 	update = context->update;
 
-	xf_register_graphics(context->graphics);
+	if (!xf_register_graphics(context->graphics))
+	{
+		WLog_ERR(TAG, "failed to register graphics");
+		return FALSE;
+	}
 
 	flags = CLRCONV_ALPHA;
 
@@ -1073,7 +1088,8 @@ BOOL xf_post_connect(freerdp* instance)
 	{
 		rdpGdi* gdi;
 
-		gdi_init(instance, flags, NULL);
+		if (!gdi_init(instance, flags, NULL))
+			return FALSE;
 
 		gdi = context->gdi;
 		xfc->primary_buffer = gdi->primary_buffer;
@@ -1112,7 +1128,11 @@ BOOL xf_post_connect(freerdp* instance)
 	if (settings->RemoteApplicationMode)
 		xfc->remote_app = TRUE;
 
-	xf_create_window(xfc);
+	if (!xf_create_window(xfc))
+	{
+		WLog_ERR(TAG, "xf_create_window failed");
+		return FALSE;
+	}
 
 	if (settings->SoftwareGdi)
 	{

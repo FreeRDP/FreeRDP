@@ -66,10 +66,16 @@ HGDI_DC gdi_GetDC()
 
 HGDI_DC gdi_CreateDC(UINT32 flags, int bpp)
 {
-	HGDI_DC hDC = (HGDI_DC) malloc(sizeof(GDI_DC));
+	HGDI_DC hDC;
+
+	if (!(hDC = (HGDI_DC) calloc(1, sizeof(GDI_DC))))
+		return NULL;
 
 	hDC->drawMode = GDI_R2_BLACK;
-	hDC->clip = gdi_CreateRectRgn(0, 0, 0, 0);
+
+	if (!(hDC->clip = gdi_CreateRectRgn(0, 0, 0, 0)))
+		goto fail;
+
 	hDC->clip->null = 1;
 	hDC->hwnd = NULL;
 
@@ -80,15 +86,26 @@ HGDI_DC gdi_CreateDC(UINT32 flags, int bpp)
 	hDC->invert = (flags & CLRCONV_INVERT) ? TRUE : FALSE;
 	hDC->rgb555 = (flags & CLRCONV_RGB555) ? TRUE : FALSE;
 
-	hDC->hwnd = (HGDI_WND) malloc(sizeof(GDI_WND));
-	hDC->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0);
+	if (!(hDC->hwnd = (HGDI_WND) calloc(1, sizeof(GDI_WND))))
+		goto fail;
+
+	if (!(hDC->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0)))
+		goto fail;
+
 	hDC->hwnd->invalid->null = 1;
 
 	hDC->hwnd->count = 32;
-	hDC->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * hDC->hwnd->count);
+	if (!(hDC->hwnd->cinvalid = (HGDI_RGN) calloc(hDC->hwnd->count, sizeof(GDI_RGN))))
+		goto fail;
+
 	hDC->hwnd->ninvalid = 0;
 
 	return hDC;
+
+fail:
+	gdi_DeleteDC(hDC);
+	free(hDC);
+	return NULL;
 }
 
 /**
@@ -233,17 +250,17 @@ int gdi_DeleteObject(HGDIOBJECT hgdiobject)
 
 int gdi_DeleteDC(HGDI_DC hdc)
 {
-	if (hdc && hdc->hwnd)
+	if (hdc)
 	{
-		free(hdc->hwnd->cinvalid);
-
-		free(hdc->hwnd->invalid);
-
-		free(hdc->hwnd);
+		if (hdc->hwnd)
+		{
+			free(hdc->hwnd->cinvalid);
+			free(hdc->hwnd->invalid);
+			free(hdc->hwnd);
+		}
+		free(hdc->clip);
+		free(hdc);
 	}
-
-	free(hdc->clip);
-	free(hdc);
 
 	return 1;
 }
