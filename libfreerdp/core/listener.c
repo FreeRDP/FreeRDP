@@ -115,6 +115,12 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 		if ((ai->ai_family != AF_INET) && (ai->ai_family != AF_INET6))
 			continue;
 
+		if (listener->num_sockfds == MAX_LISTENER_HANDLES)
+		{
+			WLog_ERR(TAG, "too many listening sockets");
+			continue;
+		}
+
 		sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 
 		if (sockfd == -1)
@@ -182,6 +188,12 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 	rdpListener* listener = (rdpListener*) instance->listener;
 	HANDLE hevent;
 
+	if (listener->num_sockfds == MAX_LISTENER_HANDLES)
+	{
+		WLog_ERR(TAG, "too many listening sockets");
+		return FALSE;
+	}
+
 	sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
 
 	if (sockfd == -1)
@@ -235,6 +247,12 @@ static BOOL freerdp_listener_open_from_socket(freerdp_listener* instance, int fd
 {
 #ifndef _WIN32
 	rdpListener* listener = (rdpListener*) instance->listener;
+
+	if (listener->num_sockfds == MAX_LISTENER_HANDLES)
+	{
+		WLog_ERR(TAG, "too many listening sockets");
+		return FALSE;
+	}
 
 	if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
 		return FALSE;
