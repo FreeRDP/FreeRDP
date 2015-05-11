@@ -20,7 +20,12 @@ int test_gdi_ClipCoords(void)
 	HGDI_RGN rgn2;
 	HGDI_BITMAP bmp;
 
-	hdc = gdi_GetDC();
+	if (!(hdc = gdi_GetDC()))
+	{
+		printf("failed to get gdi device context\n");
+		return -1;
+	}
+
 	hdc->bytesPerPixel = 4;
 	hdc->bitsPerPixel = 32;
 	bmp = gdi_CreateBitmap(1024, 768, 4, NULL);
@@ -173,7 +178,12 @@ int test_gdi_InvalidateRegion(void)
 	HGDI_RGN invalid;
 	HGDI_BITMAP bmp;
 
-	hdc = gdi_GetDC();
+	if (!(hdc = gdi_GetDC()))
+	{
+		printf("failed to get gdi device context\n");
+		return -1;
+	}
+
 	hdc->bytesPerPixel = 4;
 	hdc->bitsPerPixel = 32;
 	bmp = gdi_CreateBitmap(1024, 768, 4, NULL);

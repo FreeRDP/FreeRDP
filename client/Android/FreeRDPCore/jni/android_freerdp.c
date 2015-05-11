@@ -240,7 +240,8 @@ static BOOL android_post_connect(freerdp* instance)
 	else
 		gdi_flags = CLRBUF_16BPP;
 
-	gdi_init(instance, gdi_flags, NULL);
+	if (!gdi_init(instance, gdi_flags, NULL))
+		return FALSE;
 
 	instance->update->BeginPaint = android_begin_paint;
 	instance->update->EndPaint = android_end_paint;

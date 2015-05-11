@@ -193,7 +193,9 @@ BOOL df_post_connect(freerdp* instance)
 	context = ((dfContext*) instance->context);
 	dfi = context->dfi;
 
-	gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT | CLRBUF_16BPP | CLRBUF_32BPP, NULL);
+	if (!gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT | CLRBUF_16BPP | CLRBUF_32BPP, NULL))
+		return FALSE;
+
 	gdi = instance->context->gdi;
 
 	dfi->err = DirectFBCreate(&(dfi->dfb));
