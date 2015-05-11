@@ -85,8 +85,7 @@ static void log_recursion(const char* file, const char* fkt, int line)
 
 #endif
 
-	if (msg)
-		free(msg);
+	free(msg);
 
 	winpr_backtrace_free(bt);
 }

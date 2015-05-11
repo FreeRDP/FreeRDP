@@ -1856,16 +1856,11 @@ PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor)
 	return progressive;
 
 cleanup:
-	if (progressive->rects)
-		free(progressive->rects);
-	if (progressive->tiles)
-		free(progressive->tiles);
-	if (progressive->quantVals)
-		free(progressive->quantVals);
-	if (progressive->quantProgVals)
-		free(progressive->quantProgVals);
-	if (progressive)
-		free(progressive);
+	free(progressive->rects);
+	free(progressive->tiles);
+	free(progressive->quantVals);
+	free(progressive->quantProgVals);
+	free(progressive);
 	return NULL;
 }
 

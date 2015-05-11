@@ -263,11 +263,7 @@ void encomsp_server_context_free(EncomspServerContext* context)
 {
 	if (context)
 	{
-		if (context->priv)
-		{
-			free(context->priv);
-		}
-
+		free(context->priv);
 		free(context);
 	}
 }

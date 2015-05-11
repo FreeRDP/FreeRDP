@@ -132,11 +132,7 @@ void drdynvc_server_context_free(DrdynvcServerContext* context)
 {
 	if (context)
 	{
-		if (context->priv)
-		{
-			free(context->priv);
-		}
-
+		free(context->priv);
 		free(context);
 	}
 }

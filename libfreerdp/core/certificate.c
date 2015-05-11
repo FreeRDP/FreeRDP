@@ -345,8 +345,7 @@ void certificate_free_x509_certificate_chain(rdpX509CertChain* x509_cert_chain)
 
 	for (i = 0; i < (int)x509_cert_chain->count; i++)
 	{
-		if (x509_cert_chain->array[i].data)
-			free(x509_cert_chain->array[i].data);
+		free(x509_cert_chain->array[i].data);
 	}
 
 	free(x509_cert_chain->array);
@@ -591,8 +590,7 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 			
 			DEBUG_LICENSE("modulus length:%d", (int) cert_info.ModulusLength);
 
-			if (cert_info.Modulus)
-				free(cert_info.Modulus);
+			free(cert_info.Modulus);
 
 			if (!ret)
 			{
@@ -756,8 +754,7 @@ out_free_rsa:
 out_free:
 	if (fp)
 		fclose(fp);
-	if (buffer)
-		free(buffer);
+	free(buffer);
 	free(key);
 	return NULL;
 }
@@ -767,9 +764,7 @@ void key_free(rdpRsaKey* key)
 	if (!key)
 		return;
 
-	if (key->Modulus)
-		free(key->Modulus);
-
+	free(key->Modulus);
 	free(key->PrivateExponent);
 	free(key);
 }
@@ -840,8 +835,7 @@ void certificate_free(rdpCertificate* certificate)
 
 	certificate_free_x509_certificate_chain(certificate->x509_cert_chain);
 
-	if (certificate->cert_info.Modulus)
-		free(certificate->cert_info.Modulus);
+	free(certificate->cert_info.Modulus);
 
 	free(certificate);
 }

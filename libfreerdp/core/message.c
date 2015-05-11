@@ -1336,8 +1336,7 @@ static int update_message_free_update_class(wMessage* msg, int type)
 			break;
 
 		case Update_SetBounds:
-			if (msg->wParam)
-				free(msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case Update_Synchronize:
@@ -1379,8 +1378,7 @@ static int update_message_free_update_class(wMessage* msg, int type)
 			break;
 
 		case Update_SuppressOutput:
-			if (msg->lParam)
-				free(msg->lParam);
+			free(msg->lParam);
 			break;
 
 		case Update_SurfaceCommand:
@@ -1579,8 +1577,7 @@ static int update_message_free_primary_update_class(wMessage* msg, int type)
 		case PrimaryUpdate_FastGlyph:
 			{
 				FAST_GLYPH_ORDER* wParam = (FAST_GLYPH_ORDER*) msg->wParam;
-				if (wParam->glyphData.aj)
-					free(wParam->glyphData.aj);
+				free(wParam->glyphData.aj);
 				free(wParam);
 			}
 			break;
@@ -2871,8 +2868,5 @@ rdpInputProxy* input_message_proxy_new(rdpInput* input)
 
 void input_message_proxy_free(rdpInputProxy* proxy)
 {
-	if (proxy)
-	{
-		free(proxy);
-	}
+	free(proxy);
 }

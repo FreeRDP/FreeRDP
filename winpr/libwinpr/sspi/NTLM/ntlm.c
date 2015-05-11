@@ -141,8 +141,7 @@ int ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 
 	if (status <= 0)
 	{
-		if (TargetName)
-			free(TargetName);
+		free(TargetName);
 		return -1;
 	}
 
@@ -603,8 +602,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(PCredHandle phCredenti
 	status = ntlm_InitializeSecurityContextW(phCredential, phContext, pszTargetNameW, fContextReq,
 			 Reserved1, TargetDataRep, pInput, Reserved2, phNewContext, pOutput, pfContextAttr, ptsExpiry);
 
-	if (pszTargetNameW)
-		free(pszTargetNameW);
+	free(pszTargetNameW);
 
 	return status;
 }

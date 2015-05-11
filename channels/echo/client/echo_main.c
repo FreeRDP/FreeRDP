@@ -126,10 +126,7 @@ static int echo_plugin_terminated(IWTSPlugin* pPlugin)
 {
 	ECHO_PLUGIN* echo = (ECHO_PLUGIN*) pPlugin;
 
-	if (echo)
-	{
-		free(echo);
-	}
+	free(echo);
 
 	return 0;
 }

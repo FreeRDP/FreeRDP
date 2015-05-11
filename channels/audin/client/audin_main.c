@@ -475,17 +475,13 @@ static BOOL audin_load_device_plugin(IWTSPlugin* pPlugin, const char* name, ADDI
 
 void audin_set_subsystem(AUDIN_PLUGIN* audin, char* subsystem)
 {
-	if (audin->subsystem)
-		free(audin->subsystem);
-
+	free(audin->subsystem);
 	audin->subsystem = _strdup(subsystem);
 }
 
 void audin_set_device_name(AUDIN_PLUGIN* audin, char* device_name)
 {
-	if (audin->device_name)
-		free(audin->device_name);
-
+	free(audin->device_name);
 	audin->device_name = _strdup(device_name);
 }
 

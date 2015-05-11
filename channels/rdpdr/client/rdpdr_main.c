@@ -669,8 +669,7 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 		}
 	}
 
-	if (pKeys)
-		free(pKeys);
+	free(pKeys);
 
 	pos = (int) Stream_GetPosition(s);
 	Stream_SetPosition(s, count_pos);

@@ -130,8 +130,7 @@ static void CALLBACK rdpsnd_winmm_callback_function(HWAVEOUT hwo, UINT uMsg, DWO
 
 				winmm->device.WaveConfirm(&(winmm->device), wave);
 
-				if (lpWaveHdr->lpData)
-					free(lpWaveHdr->lpData);
+				free(lpWaveHdr->lpData);
 
 				free(wave);
 			}

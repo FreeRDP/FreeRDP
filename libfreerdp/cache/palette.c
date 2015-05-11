@@ -70,15 +70,11 @@ void palette_cache_put(rdpPaletteCache* paletteCache, UINT32 index, void* entry)
 	if (index >= paletteCache->maxEntries)
 	{
 		WLog_ERR(TAG,  "invalid color table index: 0x%04X", index);
-
-		if (entry)
-			free(entry);
-
+		free(entry);
 		return;
 	}
 
-	if (paletteCache->entries[index].entry)
-		free(paletteCache->entries[index].entry);
+	free(paletteCache->entries[index].entry);
 
 	paletteCache->entries[index].entry = entry;
 }
@@ -111,10 +107,7 @@ void palette_cache_free(rdpPaletteCache* paletteCache)
 		UINT32 i;
 
 		for (i = 0; i< paletteCache->maxEntries; i++)
-		{
-			if (paletteCache->entries[i].entry)
-				free(paletteCache->entries[i].entry);
-		}
+			free(paletteCache->entries[i].entry);
 
 		free(paletteCache->entries);
 		free(paletteCache);

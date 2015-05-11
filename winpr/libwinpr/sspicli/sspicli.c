@@ -100,15 +100,11 @@ static int LogonUserGetFd(HANDLE handle)
 BOOL LogonUserCloseHandle(HANDLE handle) {
 	WINPR_ACCESS_TOKEN *token = (WINPR_ACCESS_TOKEN *) handle;
 
-	if (!LogonUserIsHandled(handle))
+	if (!handle || !LogonUserIsHandled(handle))
 		return FALSE;
 
-	if (token->Username)
-		free(token->Username);
-
-	if (token->Domain)
-		free(token->Domain);
-
+	free(token->Username);
+	free(token->Domain);
 	free(token);
 
 	return TRUE;

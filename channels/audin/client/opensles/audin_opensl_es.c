@@ -154,8 +154,7 @@ static void audin_opensles_free(IAudinDevice* device)
 
 	freerdp_dsp_context_free(opensles->dsp_context);
 
-	if (opensles->device_name)
-		free(opensles->device_name);
+	free(opensles->device_name);
 
 	free(opensles);
 }

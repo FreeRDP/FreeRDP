@@ -415,8 +415,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 
 	/* encrypt client random */
 
-	if (settings->ClientRandom)
-		free(settings->ClientRandom);
+	free(settings->ClientRandom);
 
 	settings->ClientRandomLength = CLIENT_RANDOM_LENGTH;
 	settings->ClientRandom = malloc(settings->ClientRandomLength);
@@ -509,8 +508,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	}
 	ret = TRUE;
 end:
-	if (crypt_client_random)
-		free(crypt_client_random);
+	free(crypt_client_random);
 	return ret;
 }
 
@@ -628,11 +626,9 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	}
 	ret = TRUE;
 end:
-	if (crypt_client_random)
-		free(crypt_client_random);
+	free(crypt_client_random);
 end2:
-	if (client_random)
-		free(client_random);
+	free(client_random);
 
 	return ret;
 }

@@ -343,17 +343,10 @@ wBitStream* BitStream_New()
 	wBitStream* bs = NULL;
 	bs = (wBitStream*) calloc(1, sizeof(wBitStream));
 
-	if (bs)
-	{
-	}
-
 	return bs;
 }
 
 void BitStream_Free(wBitStream* bs)
 {
-	if (bs)
-	{
-		free(bs);
-	}
+	free(bs);
 }

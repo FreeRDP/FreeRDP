@@ -72,9 +72,6 @@ SCHANNEL_CREDENTIALS* schannel_CredentialsNew()
 
 void schannel_CredentialsFree(SCHANNEL_CREDENTIALS* credentials)
 {
-	if (!credentials)
-		return;
-
 	free(credentials);
 }
 
@@ -251,8 +248,7 @@ SECURITY_STATUS SEC_ENTRY schannel_InitializeSecurityContextA(PCredHandle phCred
 	status = schannel_InitializeSecurityContextW(phCredential, phContext, pszTargetNameW, fContextReq,
 		Reserved1, TargetDataRep, pInput, Reserved2, phNewContext, pOutput, pfContextAttr, ptsExpiry);
 
-	if (pszTargetNameW != NULL)
-		free(pszTargetNameW);
+	free(pszTargetNameW);
 
 	return status;
 }

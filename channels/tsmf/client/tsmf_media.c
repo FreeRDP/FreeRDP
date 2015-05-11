@@ -215,9 +215,7 @@ static void tsmf_sample_free(void *arg)
 	if (!sample)
 		return;
 
-	if (sample->data)
-		free(sample->data);
-
+	free(sample->data);
 	free(sample);
 }
 
@@ -916,8 +914,7 @@ void _tsmf_presentation_free(TSMF_PRESENTATION* presentation)
 	ArrayList_Clear(presentation->stream_list);
 	ArrayList_Free(presentation->stream_list);
 
-	if (presentation->rects)
-		free(presentation->rects);
+	free(presentation->rects);
 
 	ZeroMemory(presentation, sizeof(TSMF_PRESENTATION));
 	free(presentation);

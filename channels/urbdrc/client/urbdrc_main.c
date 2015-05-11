@@ -1026,9 +1026,7 @@ static int urbdrc_load_udevman_addin(IWTSPlugin* pPlugin, const char* name, ADDI
 
 void urbdrc_set_subsystem(URBDRC_PLUGIN* urbdrc, char* subsystem)
 {
-	if (urbdrc->subsystem)
-		free(urbdrc->subsystem);
-
+	free(urbdrc->subsystem);
 	urbdrc->subsystem = _strdup(subsystem);
 }
 

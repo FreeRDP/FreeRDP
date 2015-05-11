@@ -81,19 +81,13 @@ void* nine_grid_cache_get(rdpNineGridCache* nine_grid, UINT32 index)
 
 void nine_grid_cache_put(rdpNineGridCache* nine_grid, UINT32 index, void* entry)
 {
-	void* prevEntry;
-
 	if (index >= nine_grid->maxEntries)
 	{
 		WLog_ERR(TAG,  "invalid NineGrid index: 0x%04X", index);
 		return;
 	}
 
-	prevEntry = nine_grid->entries[index].entry;
-
-	if (prevEntry != NULL)
-		free(prevEntry);
-
+	free(nine_grid->entries[index].entry);
 	nine_grid->entries[index].entry = entry;
 }
 
@@ -130,10 +124,7 @@ void nine_grid_cache_free(rdpNineGridCache* nine_grid)
 		if (nine_grid->entries != NULL)
 		{
 			for (i = 0; i < (int) nine_grid->maxEntries; i++)
-			{
-				if (nine_grid->entries[i].entry != NULL)
-					free(nine_grid->entries[i].entry);
-			}
+				free(nine_grid->entries[i].entry);
 
 			free(nine_grid->entries);
 		}

@@ -202,10 +202,7 @@ wfServer* wfreerdp_server_new()
 
 void wfreerdp_server_free(wfServer* server)
 {
-	if (server)
-	{
-		free(server);
-	}
+	free(server);
 
 	WSACleanup();
 }

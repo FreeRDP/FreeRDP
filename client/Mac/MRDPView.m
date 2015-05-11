@@ -693,18 +693,14 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 	int i;
 
 	for (i = 0; i < argc; i++)
-	{
-		if (argv[i])
-			free(argv[i]);
-	}
-	
+		free(argv[i]);
+
 	if (!is_connected)
 		return;
-	
+
 	gdi_free(context->instance);
-	
-	if (pixel_data)
-		free(pixel_data);
+
+	free(pixel_data);
 }
 
 - (void) drawRect:(NSRect)rect

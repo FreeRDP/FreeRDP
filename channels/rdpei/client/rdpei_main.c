@@ -533,11 +533,8 @@ static int rdpei_plugin_terminated(IWTSPlugin* pPlugin)
 
 	DeleteCriticalSection(&rdpei->lock);
 
-	if (rdpei->listener_callback)
-		free(rdpei->listener_callback);
-
+	free(rdpei->listener_callback);
 	free(rdpei->context);
-
 	free(rdpei);
 
 	return 0;

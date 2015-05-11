@@ -60,8 +60,7 @@ ASN1module_t ASN1_CreateModule(ASN1uint32_t nVersion, ASN1encodingrule_e eRule,
 
 void ASN1_CloseModule(ASN1module_t pModule)
 {
-	if (!pModule)
-		free(pModule);
+	free(pModule);
 }
 
 ASN1error_e ASN1_CreateEncoder(ASN1module_t pModule, ASN1encoding_t* ppEncoderInfo,

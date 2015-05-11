@@ -497,10 +497,8 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 	free(lpLocalDcb);
 	return TRUE;
 
-
-  error_handle:
-	if (lpLocalDcb)
-		free(lpLocalDcb);
+error_handle:
+	free(lpLocalDcb);
 
 	return FALSE;
 }
@@ -1112,12 +1110,9 @@ BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName, LPCTSTR lpTarget
 	return TRUE;
 
 
-  error_handle:
-	if (storedDeviceName != NULL)
-		free(storedDeviceName);
-
-	if (storedTargetPath != NULL)
-		free(storedTargetPath);
+error_handle:
+	free(storedDeviceName);
+	free(storedTargetPath);
 
 	LeaveCriticalSection(&_CommDevicesLock);
 	return FALSE;

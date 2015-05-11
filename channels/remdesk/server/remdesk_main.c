@@ -540,11 +540,7 @@ void remdesk_server_context_free(RemdeskServerContext* context)
 {
 	if (context)
 	{
-		if (context->priv)
-		{
-			free(context->priv);
-		}
-
+		free(context->priv);
 		free(context);
 	}
 }

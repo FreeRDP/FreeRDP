@@ -295,8 +295,7 @@ DWORD ExpandEnvironmentStringsW(LPCWSTR lpSrc, LPWSTR lpDst, DWORD nSize)
 
 BOOL FreeEnvironmentStringsA(LPCH lpszEnvironmentBlock)
 {
-	if (lpszEnvironmentBlock)
-		free(lpszEnvironmentBlock);
+	free(lpszEnvironmentBlock);
 
 	return TRUE;
 }
@@ -424,8 +423,7 @@ LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge)
 
 						if (!tmp)
 						{
-							if (lpszEnvironmentBlock)
-								free(lpszEnvironmentBlock);
+							free(lpszEnvironmentBlock);
 							free (mergeStrings);
 							return NULL;
 						}
@@ -468,8 +466,7 @@ LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge)
 
 			if (!tmp)
 			{
-				if (lpszEnvironmentBlock)
-					free(lpszEnvironmentBlock);
+				free(lpszEnvironmentBlock);
 				free (mergeStrings);
 				return NULL;
 			}
@@ -584,9 +581,7 @@ BOOL SetEnvironmentVariableEBA(LPSTR* envBlock, LPCSTR lpName, LPCSTR lpValue)
 	newEB = MergeEnvironmentStrings((LPCSTR) *envBlock, envstr);
 
 	free(envstr);
-
-	if (*envBlock)
-		free(*envBlock);
+	free(*envBlock);
 
 	*envBlock = newEB;
 

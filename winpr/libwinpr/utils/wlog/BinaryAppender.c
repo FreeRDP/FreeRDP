@@ -218,15 +218,9 @@ void WLog_BinaryAppender_Free(wLog* log, wLogBinaryAppender* appender)
 {
 	if (appender)
 	{
-		if (appender->FileName)
-			free(appender->FileName);
-
-		if (appender->FilePath)
-			free(appender->FilePath);
-
-		if (appender->FullFileName)
-			free(appender->FullFileName);
-
+		free(appender->FileName);
+		free(appender->FilePath);
+		free(appender->FullFileName);
 		free(appender);
 	}
 }

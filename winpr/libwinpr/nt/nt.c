@@ -186,8 +186,7 @@ VOID _RtlFreeUnicodeString(PUNICODE_STRING UnicodeString)
 {
 	if (UnicodeString)
 	{
-		if (UnicodeString->Buffer)
-			free(UnicodeString->Buffer);
+		free(UnicodeString->Buffer);
 
 		UnicodeString->Length = 0;
 		UnicodeString->MaximumLength = 0;

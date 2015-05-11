@@ -194,10 +194,7 @@ BOOL CertCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 
 	certstore = (WINPR_CERTSTORE*) hCertStore;
 
-	if (certstore)
-	{
-		free(certstore);
-	}
+	free(certstore);
 
 	return TRUE;
 }

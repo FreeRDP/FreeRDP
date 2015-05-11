@@ -72,9 +72,6 @@ rdtkLabel* rdtk_label_new(rdtkEngine* engine)
 
 void rdtk_label_free(rdtkLabel* label)
 {
-	if (!label)
-		return;
-
 	free(label);
 }
 
