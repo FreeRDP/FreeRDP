@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
+
 #include "ntlm.h"
 #include "../sspi.h"
 
@@ -143,6 +145,7 @@ NTLM_AV_PAIR* ntlm_av_pair_add(NTLM_AV_PAIR* pAvPairList, NTLM_AV_ID AvId, PBYTE
 	if (!pAvPair)
 		return NULL;
 
+	assert(Value != NULL);
 	pAvPair->AvId = AvId;
 	pAvPair->AvLen = AvLen;
 	CopyMemory(ntlm_av_pair_get_value_pointer(pAvPair), Value, AvLen);
