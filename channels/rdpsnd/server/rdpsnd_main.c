@@ -602,17 +602,15 @@ void rdpsnd_server_context_free(RdpsndServerContext* context)
 	if (context->priv->ChannelHandle)
 		WTSVirtualChannelClose(context->priv->ChannelHandle);
 
-	if (context->priv->out_buffer)
-		free(context->priv->out_buffer);
+	free(context->priv->out_buffer);
 
 	if (context->priv->dsp_context)
 		freerdp_dsp_context_free(context->priv->dsp_context);
 
-  if (context->priv->input_stream)
-    Stream_Free(context->priv->input_stream, TRUE);
+	if (context->priv->input_stream)
+		Stream_Free(context->priv->input_stream, TRUE);
 
-	if (context->client_formats)
-		free(context->client_formats);
+	free(context->client_formats);
 
 	free(context);
 }

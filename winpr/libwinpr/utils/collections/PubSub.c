@@ -237,9 +237,7 @@ void PubSub_Free(wPubSub* pubSub)
 		if (pubSub->synchronized)
 			DeleteCriticalSection(&pubSub->lock);
 
-		if (pubSub->events)
-			free(pubSub->events);
-
+		free(pubSub->events);
 		free(pubSub);
 	}
 }

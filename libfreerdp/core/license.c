@@ -542,13 +542,12 @@ LICENSE_PRODUCT_INFO* license_new_product_info()
 
 void license_free_product_info(LICENSE_PRODUCT_INFO* productInfo)
 {
-	if (productInfo->pbCompanyName != NULL)
+	if (productInfo)
+	{
 		free(productInfo->pbCompanyName);
-
-	if (productInfo->pbProductId != NULL)
 		free(productInfo->pbProductId);
-
-	free(productInfo);
+		free(productInfo);
+	}
 }
 
 /**
@@ -656,10 +655,11 @@ LICENSE_BLOB* license_new_binary_blob(UINT16 type)
 
 void license_free_binary_blob(LICENSE_BLOB* blob)
 {
-	if (blob->data != NULL)
+	if (blob)
+	{
 		free(blob->data);
-
-	free(blob);
+		free(blob);
+	}
 }
 
 /**

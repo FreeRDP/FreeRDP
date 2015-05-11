@@ -230,10 +230,9 @@ enum APPLE_KEYBOARD_TYPE mac_detect_keyboard_type()
 			break;
 		}
 	}
-	
-	if (tIOHIDDeviceRefs)
-		free(tIOHIDDeviceRefs);
-	
+
+	free(tIOHIDDeviceRefs);
+
 	if (deviceCFSetRef)
 	{
 		CFRelease(deviceCFSetRef);

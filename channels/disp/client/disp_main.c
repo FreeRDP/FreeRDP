@@ -212,10 +212,7 @@ static int disp_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 {
 	DISP_CHANNEL_CALLBACK* callback = (DISP_CHANNEL_CALLBACK*) pChannelCallback;
 
-	if (callback)
-	{
-		free(callback);
-	}
+	free(callback);
 
 	return 0;
 }
@@ -270,10 +267,7 @@ static int disp_plugin_terminated(IWTSPlugin* pPlugin)
 {
 	DISP_PLUGIN* disp = (DISP_PLUGIN*) pPlugin;
 
-	if (disp)
-	{
-		free(disp);
-	}
+	free(disp);
 
 	return 0;
 }

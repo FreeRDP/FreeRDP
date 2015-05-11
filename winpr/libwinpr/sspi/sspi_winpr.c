@@ -253,6 +253,9 @@ void* sspi_SecBufferAlloc(PSecBuffer SecBuffer, ULONG size)
 
 void sspi_SecBufferFree(PSecBuffer SecBuffer)
 {
+	if (!SecBuffer)
+		return;
+
 	free(SecBuffer->pvBuffer);
 	SecBuffer->pvBuffer = NULL;
 	SecBuffer->cbBuffer = 0;
@@ -312,9 +315,6 @@ void sspi_SecureHandleSetUpperPointer(SecHandle* handle, void* pointer)
 
 void sspi_SecureHandleFree(SecHandle* handle)
 {
-	if (!handle)
-		return;
-
 	free(handle);
 }
 
@@ -324,8 +324,7 @@ int sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, const char* user, co
 
 	identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 
-	if (identity->User)
-		free(identity->User);
+	free(identity->User);
 
 	identity->User = (UINT16*) NULL;
 	identity->UserLength = 0;
@@ -340,8 +339,7 @@ int sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, const char* user, co
 		identity->UserLength = (ULONG) (status - 1);
 	}
 
-	if (identity->Domain)
-		free(identity->Domain);
+	free(identity->Domain);
 
 	identity->Domain = (UINT16*) NULL;
 	identity->DomainLength = 0;
@@ -356,8 +354,7 @@ int sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, const char* user, co
 		identity->DomainLength = (ULONG) (status - 1);
 	}
 
-	if (identity->Password)
-		free(identity->Password);
+	free(identity->Password);
 
 	identity->Password = NULL;
 	identity->PasswordLength = 0;
@@ -653,11 +650,8 @@ void FreeContextBuffer_EnumerateSecurityPackages(void* contextBuffer)
 
 	for (index = 0; index < (int) cPackages; index++)
 	{
-		if (pPackageInfo[index].Name)
-			free(pPackageInfo[index].Name);
-
-		if (pPackageInfo[index].Comment)
-			free(pPackageInfo[index].Comment);
+		free(pPackageInfo[index].Name);
+		free(pPackageInfo[index].Comment);
 	}
 
 	free(pPackageInfo);
@@ -751,12 +745,11 @@ void FreeContextBuffer_QuerySecurityPackageInfo(void* contextBuffer)
 {
 	SecPkgInfo* pPackageInfo = (SecPkgInfo*) contextBuffer;
 
-	if (pPackageInfo->Name)
-		free(pPackageInfo->Name);
+	if (!pPackageInfo)
+		return;
 
-	if (pPackageInfo->Comment)
-		free(pPackageInfo->Comment);
-
+	free(pPackageInfo->Name);
+	free(pPackageInfo->Comment);
 	free(pPackageInfo);
 }
 

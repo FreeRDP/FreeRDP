@@ -276,19 +276,13 @@ BOOL android_authenticate(freerdp* instance, char** username, char** password, c
 	if (res == JNI_TRUE)
 	{
 		// read back string values
-		if (*username != NULL)
-			free(*username);
-
+		free(*username);
 		*username = get_string_from_string_builder(env, jstr1);
 
-		if (*domain != NULL)
-			free(*domain);
-
+		free(*domain);
 		*domain = get_string_from_string_builder(env, jstr2);
 
-		if (*password == NULL)
-			free(*password);
-		
+		free(*password);
 		*password = get_string_from_string_builder(env, jstr3);
 	}
 

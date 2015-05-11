@@ -617,17 +617,13 @@ static BOOL rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name, AD
 
 void rdpsnd_set_subsystem(rdpsndPlugin* rdpsnd, char* subsystem)
 {
-	if (rdpsnd->subsystem)
-		free(rdpsnd->subsystem);
-
+	free(rdpsnd->subsystem);
 	rdpsnd->subsystem = _strdup(subsystem);
 }
 
 void rdpsnd_set_device_name(rdpsndPlugin* rdpsnd, char* device_name)
 {
-	if (rdpsnd->device_name)
-		free(rdpsnd->device_name);
-
+	free(rdpsnd->device_name);
 	rdpsnd->device_name = _strdup(device_name);
 }
 

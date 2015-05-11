@@ -198,8 +198,7 @@ void ntlm_free_unicode_string(PUNICODE_STRING string)
 	{
 		if (string->Length > 0)
 		{
-			if (string->Buffer)
-				free(string->Buffer);
+			free(string->Buffer);
 
 			string->Buffer = NULL;
 			string->Length = 0;

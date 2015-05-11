@@ -644,10 +644,8 @@ rdtkFont* rdtk_font_new(rdtkEngine* engine, const char* path, const char* file)
 	return font;
 
 cleanup:
-	if (fontImageFile)
-		free (fontImageFile);
-	if (fontDescriptorFile)
-		free (fontDescriptorFile);
+	free(fontImageFile);
+	free(fontDescriptorFile);
 	if (font)
 	{
 		if (font->image)
@@ -710,9 +708,6 @@ rdtkFont* rdtk_embedded_font_new(rdtkEngine* engine, BYTE* imageData, int imageS
 
 void rdtk_font_free(rdtkFont* font)
 {
-	if (!font)
-		return;
-
 	free(font);
 }
 

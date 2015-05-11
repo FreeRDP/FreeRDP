@@ -359,8 +359,7 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 #endif
 			WLog_DBG(TAG, "accept");
 
-			if (client)
-				free(client);
+			free(client);
 			return FALSE;
 		}
 

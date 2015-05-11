@@ -409,9 +409,6 @@ ZGFX_CONTEXT* zgfx_context_new(BOOL Compressor)
 
 void zgfx_context_free(ZGFX_CONTEXT* zgfx)
 {
-	if (zgfx)
-	{
-		free(zgfx);
-	}
+	free(zgfx);
 }
 

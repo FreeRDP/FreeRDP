@@ -102,10 +102,7 @@ void Stream_Free(wStream* s, BOOL bFreeBuffer)
 	if (s)
 	{
 		if (bFreeBuffer)
-		{
-			if (s->buffer)
-				free(s->buffer);
-		}
+			free(s->buffer);
 
 		free(s);
 	}

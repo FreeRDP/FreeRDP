@@ -52,8 +52,5 @@ rdpMetrics* metrics_new(rdpContext* context)
 
 void metrics_free(rdpMetrics* metrics)
 {
-	if (!metrics)
-		return;
-
 	free(metrics);
 }

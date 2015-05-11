@@ -153,8 +153,7 @@ BOOL WINAPI DestroyWindow(HWND hWnd)
 
 	free(pWnd->lpClassName);
 
-	if (pWnd->lpWindowName)
-		free(pWnd->lpWindowName);
+	free(pWnd->lpWindowName);
 
 	free(pWnd);
 

@@ -156,8 +156,5 @@ wLogCallbackAppender* WLog_CallbackAppender_New(wLog* log)
 
 void WLog_CallbackAppender_Free(wLog* log, wLogCallbackAppender* appender)
 {
-	if (appender)
-	{
-		free(appender);
-	}
+	free(appender);
 }

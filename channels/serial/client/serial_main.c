@@ -277,8 +277,7 @@ static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 		Stream_Write(irp->output, buffer, nbRead); /* ReadData */
 	}
 
-	if (buffer)
-		free(buffer);
+	free(buffer);
 }
 
 static void serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
@@ -389,11 +388,8 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 	/* 	Stream_Write_UINT8(irp->output, 0); /\* Padding (1 byte) *\/ */
 	/* } */
 
-	if (InputBuffer != NULL)
-		free(InputBuffer);
-
-	if (OutputBuffer != NULL)
-		free(OutputBuffer);
+	free(InputBuffer);
+	free(OutputBuffer);
 }
 
 static void serial_process_irp(SERIAL_DEVICE* serial, IRP* irp)
@@ -620,8 +616,7 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 	irp->IoStatus = STATUS_NO_MEMORY;
 	irp->Complete(irp);
 
-	if (data)
-		free(data);
+	free(data);
 }
 
 

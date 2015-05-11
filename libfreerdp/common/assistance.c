@@ -181,8 +181,9 @@ int freerdp_assistance_parse_address_list(rdpAssistanceFile* file, char* list)
 
 		break;
 	}
-	if (tokens)
-		free(tokens);
+
+	free(tokens);
+
 	return 1;
 }
 
@@ -523,10 +524,8 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 	{
 		free(PasswordW);
 		free(PassStubW);
-		if (pbIn)
-			free (pbIn);
-		if (pbOut)
-			free (pbOut);
+		free(pbIn);
+		free(pbOut);
 		return NULL;
 	}
 
@@ -534,8 +533,8 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 	{
 		free(PasswordW);
 		free(PassStubW);
-		free (pbIn);
-		free (pbOut);
+		free(pbIn);
+		free(pbOut);
 		return NULL;
 	}
 
@@ -627,8 +626,7 @@ int freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* password)
 
 	if (status < 0)
 	{
-		if (PasswordW)
-			free (PasswordW);
+		free(PasswordW);
 		return -1;
 	}
 
@@ -640,8 +638,7 @@ int freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* password)
 
 	if (status != 1)
 	{
-		if (PasswordW)
-			free (PasswordW);
+		free(PasswordW);
 		return -1;
 	}
 
@@ -652,8 +649,7 @@ int freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* password)
 
 	if (status != 1)
 	{
-		if (PasswordW)
-			free (PasswordW);
+		free(PasswordW);
 		return -1;
 	}
 
@@ -664,8 +660,7 @@ int freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* password)
 
 	if (!pbOut)
 	{
-		if (PasswordW)
-			free (PasswordW);
+		free(PasswordW);
 		return -1;
 	}
 
@@ -673,9 +668,8 @@ int freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* password)
 
 	if (status != 1)
 	{
-		if (PasswordW)
-			free (PasswordW);
-		free (pbOut);
+		free(PasswordW);
+		free(pbOut);
 		return -1;
 	}
 
@@ -684,9 +678,8 @@ int freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* password)
 	if (status != 1)
 	{
 		WLog_ERR(TAG,  "EVP_DecryptFinal_ex failure");
-		if (PasswordW)
-			free (PasswordW);
-		free (pbOut);
+		free(PasswordW);
+		free(pbOut);
 		return -1;
 	}
 

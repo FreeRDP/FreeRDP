@@ -324,10 +324,7 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	ret = TRUE;
 
 finish:
-	if (filename)
-	{
-		free(filename);
-	}
+	free(filename);
 
 	if (pArgs)
 	{

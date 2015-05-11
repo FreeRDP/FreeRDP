@@ -1990,8 +1990,7 @@ void update_free(rdpUpdate* update)
 
 		free(update->primary->polyline.points);
 		free(update->primary->polygon_sc.points);
-		if (update->primary->fast_glyph.glyphData.aj)
-			free(update->primary->fast_glyph.glyphData.aj);
+		free(update->primary->fast_glyph.glyphData.aj);
 		free(update->primary);
 
 		free(update->secondary);

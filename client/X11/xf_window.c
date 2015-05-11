@@ -667,8 +667,7 @@ int xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow)
 		XSetClassHint(xfc->display, appWindow->handle, class_hints);
 		XFree(class_hints);
 
-		if (class)
-			free(class);
+		free(class);
 	}
 
 	/* Set the input mode hint for the WM */

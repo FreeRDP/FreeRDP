@@ -697,10 +697,7 @@ freerdp* freerdp_new()
  */
 void freerdp_free(freerdp* instance)
 {
-	if (instance)
-	{
-		free(instance);
-	}
+	free(instance);
 }
 
 FREERDP_API ULONG freerdp_get_transport_sent(rdpContext* context, BOOL resetCount) {

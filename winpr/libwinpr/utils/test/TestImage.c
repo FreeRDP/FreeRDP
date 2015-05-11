@@ -66,10 +66,8 @@ static int compare(const char *src, const char *dst)
 	cmp = memcmp(a, b, asize);
 
 cleanup:
-	if (a)
-		free(a);
-	if (b)
-		free(b);
+	free(a);
+	free(b);
 
 	return cmp;
 }
@@ -201,8 +199,8 @@ cleanup:
 		winpr_image_free(image3, TRUE);
 	if (image4)
 		winpr_image_free(image4, TRUE);
-	if (buffer)
-		free(buffer);
+
+	free(buffer);
 
 	return ret;
 }

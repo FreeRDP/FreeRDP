@@ -354,9 +354,7 @@ static int tsmf_plugin_terminated(IWTSPlugin* pPlugin)
 
 	DEBUG_TSMF("");
 
-	if (tsmf->listener_callback)
-		free(tsmf->listener_callback);
-
+	free(tsmf->listener_callback);
 	free(tsmf);
 
 	return 0;

@@ -55,9 +55,6 @@ NEGOTIATE_CONTEXT* negotiate_ContextNew()
 
 void negotiate_ContextFree(NEGOTIATE_CONTEXT* context)
 {
-	if (!context)
-		return;
-
 	free(context);
 }
 

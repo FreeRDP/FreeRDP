@@ -492,8 +492,6 @@ void audin_server_context_free(audin_server_context* context)
 	if (audin->dsp_context)
 		freerdp_dsp_context_free(audin->dsp_context);
 
-	if (audin->context.client_formats)
-		free(audin->context.client_formats);
-
+	free(audin->context.client_formats);
 	free(audin);
 }

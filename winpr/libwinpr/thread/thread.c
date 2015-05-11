@@ -700,8 +700,7 @@ VOID DumpThreadHandles(void)
 			}
 		}
 
-		if (keys)
-			free(keys);
+		free(keys);
 
 		ListDictionary_Unlock(thread_list);
 	}
