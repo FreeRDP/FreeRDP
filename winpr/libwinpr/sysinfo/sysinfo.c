@@ -179,7 +179,9 @@ BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 	char* dot;
 	int length;
 	char hostname[256];
-	gethostname(hostname, sizeof(hostname));
+
+	if (gethostname(hostname, sizeof(hostname)) == -1)
+		return FALSE;
 	length = strlen(hostname);
 	dot = strchr(hostname, '.');
 
@@ -208,7 +210,8 @@ BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD l
 	if ((NameType == ComputerNameNetBIOS) || (NameType == ComputerNamePhysicalNetBIOS))
 		return GetComputerNameA(lpBuffer, lpnSize);
 
-	gethostname(hostname, sizeof(hostname));
+	if (gethostname(hostname, sizeof(hostname)) == -1)
+		return FALSE;
 	length = strlen(hostname);
 
 	switch (NameType)
