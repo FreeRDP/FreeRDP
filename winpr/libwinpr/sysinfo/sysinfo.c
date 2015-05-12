@@ -189,11 +189,11 @@ BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 	if (*lpnSize <= length)
 	{
 		*lpnSize = length + 1;
-		return 0;
+		return FALSE;
 	}
 
 	if (!lpBuffer)
-		return 0;
+		return FALSE;
 
 	CopyMemory(lpBuffer, hostname, length);
 	lpBuffer[length] = '\0';
@@ -242,7 +242,7 @@ BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD l
 BOOL GetComputerNameExW(COMPUTER_NAME_FORMAT NameType, LPWSTR lpBuffer, LPDWORD nSize)
 {
 	WLog_ERR(TAG, "GetComputerNameExW unimplemented");
-	return 0;
+	return FALSE;
 }
 
 /* OSVERSIONINFOEX Structure:
@@ -271,16 +271,16 @@ BOOL GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 			lpVersionInformationEx->wReserved = 0;
 		}
 
-		return 1;
+		return TRUE;
 	}
 
-	return 0;
+	return FALSE;
 }
 
 BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation)
 {
 	WLog_ERR(TAG, "GetVersionExW unimplemented");
-	return 1;
+	return TRUE;
 }
 
 void GetSystemTime(LPSYSTEMTIME lpSystemTime)
