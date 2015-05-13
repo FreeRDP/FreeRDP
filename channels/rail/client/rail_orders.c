@@ -28,58 +28,30 @@
 
 #include "rail_orders.h"
 
-static BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
+
+static BOOL rail_write_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 {
-	UINT16 new_length;
-
-	if (Stream_GetRemainingLength(s) < 2)
+	if (!Stream_EnsureRemainingCapacity(s, 2 + unicode_string->length))
 		return FALSE;
 
-	Stream_Read_UINT16(s, new_length); /* cbString (2 bytes) */
-
-	if (Stream_GetRemainingLength(s) < new_length)
-		return FALSE;
-
-	if (!unicode_string->string)
-	{
-		unicode_string->string = (BYTE*) malloc(new_length);
-		if (!unicode_string->string)
-			return FALSE;
-		unicode_string->length = new_length;
-	}
-	else
-	{
-		BYTE *new_str;
-
-		new_str = (BYTE*) realloc(unicode_string->string, new_length);
-		if (!new_str)
-			return FALSE;
-		unicode_string->string = new_str;
-		unicode_string->length = new_length;
-	}
-
-	Stream_Read(s, unicode_string->string, unicode_string->length);
-
+	Stream_Write_UINT16(s, unicode_string->length); /* cbString (2 bytes) */
+	Stream_Write(s, unicode_string->string, unicode_string->length); /* string */
 	return TRUE;
 }
 
-static void rail_write_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
-{
-	Stream_EnsureRemainingCapacity(s, 2 + unicode_string->length);
-	Stream_Write_UINT16(s, unicode_string->length); /* cbString (2 bytes) */
-	Stream_Write(s, unicode_string->string, unicode_string->length); /* string */
-}
-
-static void rail_write_unicode_string_value(wStream* s, RAIL_UNICODE_STRING* unicode_string)
+static BOOL rail_write_unicode_string_value(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 {
 	if (unicode_string->length > 0)
 	{
-		Stream_EnsureRemainingCapacity(s, unicode_string->length);
+		if (!Stream_EnsureRemainingCapacity(s, unicode_string->length))
+			return FALSE;
+
 		Stream_Write(s, unicode_string->string, unicode_string->length); /* string */
 	}
+	return TRUE;
 }
 
-void rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType)
+BOOL rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType)
 {
 	UINT16 orderLength;
 
@@ -92,15 +64,15 @@ void rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType)
 	WLog_Print(rail->log, WLOG_DEBUG, "Sending %s PDU, length: %d",
 			RAIL_ORDER_TYPE_STRINGS[((orderType & 0xF0) >> 3) + (orderType & 0x0F)], orderLength);
 
-	rail_send_channel_data(rail, Stream_Buffer(s), orderLength);
+	return rail_send_channel_data(rail, Stream_Buffer(s), orderLength);
 }
 
-void rail_write_high_contrast(wStream* s, RAIL_HIGH_CONTRAST* highContrast)
+BOOL rail_write_high_contrast(wStream* s, RAIL_HIGH_CONTRAST* highContrast)
 {
 	highContrast->colorSchemeLength = highContrast->colorScheme.length + 2;
 	Stream_Write_UINT32(s, highContrast->flags); /* flags (4 bytes) */
 	Stream_Write_UINT32(s, highContrast->colorSchemeLength); /* colorSchemeLength (4 bytes) */
-	rail_write_unicode_string(s, &highContrast->colorScheme); /* colorScheme */
+	return rail_write_unicode_string(s, &highContrast->colorScheme); /* colorScheme */
 }
 
 BOOL rail_read_server_exec_result_order(wStream* s, RAIL_EXEC_RESULT_ORDER* execResult)
@@ -206,20 +178,22 @@ void rail_write_client_status_order(wStream* s, RAIL_CLIENT_STATUS_ORDER* client
 	Stream_Write_UINT32(s, clientStatus->flags); /* flags (4 bytes) */
 }
 
-void rail_write_client_exec_order(wStream* s, RAIL_EXEC_ORDER* exec)
+BOOL rail_write_client_exec_order(wStream* s, RAIL_EXEC_ORDER* exec)
 {
 	Stream_Write_UINT16(s, exec->flags); /* flags (2 bytes) */
 	Stream_Write_UINT16(s, exec->exeOrFile.length); /* exeOrFileLength (2 bytes) */
 	Stream_Write_UINT16(s, exec->workingDir.length); /* workingDirLength (2 bytes) */
 	Stream_Write_UINT16(s, exec->arguments.length); /* argumentsLength (2 bytes) */
-	rail_write_unicode_string_value(s, &exec->exeOrFile); /* exeOrFile */
-	rail_write_unicode_string_value(s, &exec->workingDir); /* workingDir */
-	rail_write_unicode_string_value(s, &exec->arguments); /* arguments */
+
+	return rail_write_unicode_string_value(s, &exec->exeOrFile) && /* exeOrFile */
+			rail_write_unicode_string_value(s, &exec->workingDir) && /* workingDir */
+			rail_write_unicode_string_value(s, &exec->arguments); /* arguments */
 }
 
-void rail_write_client_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam)
+BOOL rail_write_client_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam)
 {
 	BYTE body;
+	BOOL ret = TRUE;
 
 	Stream_Write_UINT32(s, sysparam->param); /* systemParam (4 bytes) */
 
@@ -267,9 +241,11 @@ void rail_write_client_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam)
 			break;
 
 		case SPI_SET_HIGH_CONTRAST:
-			rail_write_high_contrast(s, &sysparam->highContrast);
+			ret = rail_write_high_contrast(s, &sysparam->highContrast);
 			break;
 	}
+
+	return ret;
 }
 
 void rail_write_client_activate_order(wStream* s, RAIL_ACTIVATE_ORDER* activate)
@@ -513,36 +489,54 @@ BOOL rail_order_recv(railPlugin* rail, wStream* s)
 	return TRUE;
 }
 
-void rail_send_handshake_order(railPlugin* rail, RAIL_HANDSHAKE_ORDER* handshake)
+BOOL rail_send_handshake_order(railPlugin* rail, RAIL_HANDSHAKE_ORDER* handshake)
 {
 	wStream* s;
+	BOOL ret;
+
 	s = rail_pdu_init(RAIL_HANDSHAKE_ORDER_LENGTH);
+	if (!s)
+		return FALSE;
+
 	rail_write_handshake_order(s, handshake);
-	rail_send_pdu(rail, s, RDP_RAIL_ORDER_HANDSHAKE);
+	ret = rail_send_pdu(rail, s, RDP_RAIL_ORDER_HANDSHAKE);
 	Stream_Free(s, TRUE);
+	return ret;
 }
 
-void rail_send_handshake_ex_order(railPlugin* rail, RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
+BOOL rail_send_handshake_ex_order(railPlugin* rail, RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
 {
 	wStream* s;
+	BOOL ret;
 	s = rail_pdu_init(RAIL_HANDSHAKE_EX_ORDER_LENGTH);
+	if (!s)
+		return FALSE;
+
 	rail_write_handshake_ex_order(s, handshakeEx);
-	rail_send_pdu(rail, s, RDP_RAIL_ORDER_HANDSHAKE_EX);
+	ret = rail_send_pdu(rail, s, RDP_RAIL_ORDER_HANDSHAKE_EX);
 	Stream_Free(s, TRUE);
+	return ret;
 }
 
-void rail_send_client_status_order(railPlugin* rail, RAIL_CLIENT_STATUS_ORDER* clientStatus)
+BOOL rail_send_client_status_order(railPlugin* rail, RAIL_CLIENT_STATUS_ORDER* clientStatus)
 {
 	wStream* s;
+	BOOL ret;
+
 	s = rail_pdu_init(RAIL_CLIENT_STATUS_ORDER_LENGTH);
+	if (!s)
+		return FALSE;
+
 	rail_write_client_status_order(s, clientStatus);
-	rail_send_pdu(rail, s, RDP_RAIL_ORDER_CLIENTSTATUS);
+	ret = rail_send_pdu(rail, s, RDP_RAIL_ORDER_CLIENTSTATUS);
 	Stream_Free(s, TRUE);
+	return ret;
 }
 
-void rail_send_client_exec_order(railPlugin* rail, RAIL_EXEC_ORDER* exec)
+BOOL rail_send_client_exec_order(railPlugin* rail, RAIL_EXEC_ORDER* exec)
 {
 	wStream* s;
+	BOOL ret;
 	int length;
 
 	length = RAIL_EXEC_ORDER_LENGTH +
@@ -550,16 +544,21 @@ void rail_send_client_exec_order(railPlugin* rail, RAIL_EXEC_ORDER* exec)
 			exec->workingDir.length +
 			exec->arguments.length;
 
-	s = rail_pdu_init(RAIL_EXEC_ORDER_LENGTH);
-	rail_write_client_exec_order(s, exec);
-	rail_send_pdu(rail, s, RDP_RAIL_ORDER_EXEC);
+	s = rail_pdu_init(length);
+	if (!s)
+		return FALSE;
+
+	ret = rail_write_client_exec_order(s, exec) &&
+			rail_send_pdu(rail, s, RDP_RAIL_ORDER_EXEC);
 	Stream_Free(s, TRUE);
+	return ret;
 }
 
-void rail_send_client_sysparam_order(railPlugin* rail, RAIL_SYSPARAM_ORDER* sysparam)
+BOOL rail_send_client_sysparam_order(railPlugin* rail, RAIL_SYSPARAM_ORDER* sysparam)
 {
 	wStream* s;
 	int length;
+	BOOL ret = FALSE;
 
 	length = RAIL_SYSPARAM_ORDER_LENGTH;
 
@@ -584,115 +583,166 @@ void rail_send_client_sysparam_order(railPlugin* rail, RAIL_SYSPARAM_ORDER* sysp
 	}
 
 	s = rail_pdu_init(RAIL_SYSPARAM_ORDER_LENGTH + 8);
-	rail_write_client_sysparam_order(s, sysparam);
-	rail_send_pdu(rail, s, RDP_RAIL_ORDER_SYSPARAM);
+	if (!s)
+		return FALSE;
+
+	ret = rail_write_client_sysparam_order(s, sysparam) &&
+			rail_send_pdu(rail, s, RDP_RAIL_ORDER_SYSPARAM);
+
 	Stream_Free(s, TRUE);
+	return ret;
 }
 
-void rail_send_client_sysparams_order(railPlugin* rail, RAIL_SYSPARAM_ORDER* sysparam)
+BOOL rail_send_client_sysparams_order(railPlugin* rail, RAIL_SYSPARAM_ORDER* sysparam)
 {
+	BOOL ret = TRUE;
+
 	if (sysparam->params & SPI_MASK_SET_HIGH_CONTRAST)
 	{
 		sysparam->param = SPI_SET_HIGH_CONTRAST;
-		rail_send_client_sysparam_order(rail, sysparam);
+		ret &= rail_send_client_sysparam_order(rail, sysparam);
 	}
 
 	if (sysparam->params & SPI_MASK_TASKBAR_POS)
 	{
 		sysparam->param = SPI_TASKBAR_POS;
-		rail_send_client_sysparam_order(rail, sysparam);
+		ret &= rail_send_client_sysparam_order(rail, sysparam);
 	}
 
 	if (sysparam->params & SPI_MASK_SET_MOUSE_BUTTON_SWAP)
 	{
 		sysparam->param = SPI_SET_MOUSE_BUTTON_SWAP;
-		rail_send_client_sysparam_order(rail, sysparam);
+		ret &= rail_send_client_sysparam_order(rail, sysparam);
 	}
 
 	if (sysparam->params & SPI_MASK_SET_KEYBOARD_PREF)
 	{
 		sysparam->param = SPI_SET_KEYBOARD_PREF;
-		rail_send_client_sysparam_order(rail, sysparam);
+		ret &= rail_send_client_sysparam_order(rail, sysparam);
 	}
 
 	if (sysparam->params & SPI_MASK_SET_DRAG_FULL_WINDOWS)
 	{
 		sysparam->param = SPI_SET_DRAG_FULL_WINDOWS;
-		rail_send_client_sysparam_order(rail, sysparam);
+		ret &= rail_send_client_sysparam_order(rail, sysparam);
 	}
 
 	if (sysparam->params & SPI_MASK_SET_KEYBOARD_CUES)
 	{
 		sysparam->param = SPI_SET_KEYBOARD_CUES;
-		rail_send_client_sysparam_order(rail, sysparam);
+		ret &= rail_send_client_sysparam_order(rail, sysparam);
 	}
 
 	if (sysparam->params & SPI_MASK_SET_WORK_AREA)
 	{
 		sysparam->param = SPI_SET_WORK_AREA;
-		rail_send_client_sysparam_order(rail, sysparam);
+		ret &= rail_send_client_sysparam_order(rail, sysparam);
 	}
+
+	return ret;
 }
 
-void rail_send_client_activate_order(railPlugin* rail, RAIL_ACTIVATE_ORDER* activate)
+BOOL rail_send_client_activate_order(railPlugin* rail, RAIL_ACTIVATE_ORDER* activate)
 {
 	wStream* s;
+	BOOL ret;
+
 	s = rail_pdu_init(RAIL_ACTIVATE_ORDER_LENGTH);
+	if (!s)
+		return FALSE;
+
 	rail_write_client_activate_order(s, activate);
-	rail_send_pdu(rail, s, RDP_RAIL_ORDER_ACTIVATE);
+	ret = rail_send_pdu(rail, s, RDP_RAIL_ORDER_ACTIVATE);
 	Stream_Free(s, TRUE);
+	return ret;
 }
 
-void rail_send_client_sysmenu_order(railPlugin* rail, RAIL_SYSMENU_ORDER* sysmenu)
+BOOL rail_send_client_sysmenu_order(railPlugin* rail, RAIL_SYSMENU_ORDER* sysmenu)
 {
 	wStream* s;
+	BOOL ret;
+
 	s = rail_pdu_init(RAIL_SYSMENU_ORDER_LENGTH);
+	if (!s)
+		return FALSE;
+
 	rail_write_client_sysmenu_order(s, sysmenu);
-	rail_send_pdu(rail, s, RDP_RAIL_ORDER_SYSMENU);
+	ret = rail_send_pdu(rail, s, RDP_RAIL_ORDER_SYSMENU);
 	Stream_Free(s, TRUE);
+	return ret;
 }
 
-void rail_send_client_syscommand_order(railPlugin* rail, RAIL_SYSCOMMAND_ORDER* syscommand)
+BOOL rail_send_client_syscommand_order(railPlugin* rail, RAIL_SYSCOMMAND_ORDER* syscommand)
 {
 	wStream* s;
+	BOOL ret;
+
 	s = rail_pdu_init(RAIL_SYSCOMMAND_ORDER_LENGTH);
+	if (!s)
+		return FALSE;
+
 	rail_write_client_syscommand_order(s, syscommand);
-	rail_send_pdu(rail, s, RDP_RAIL_ORDER_SYSCOMMAND);
+	ret = rail_send_pdu(rail, s, RDP_RAIL_ORDER_SYSCOMMAND);
 	Stream_Free(s, TRUE);
+	return ret;
 }
 
-void rail_send_client_notify_event_order(railPlugin* rail, RAIL_NOTIFY_EVENT_ORDER* notifyEvent)
+BOOL rail_send_client_notify_event_order(railPlugin* rail, RAIL_NOTIFY_EVENT_ORDER* notifyEvent)
 {
 	wStream* s;
+	BOOL ret;
+
 	s = rail_pdu_init(RAIL_NOTIFY_EVENT_ORDER_LENGTH);
+	if (!s)
+		return FALSE;
+
 	rail_write_client_notify_event_order(s, notifyEvent);
-	rail_send_pdu(rail, s, RDP_RAIL_ORDER_NOTIFY_EVENT);
+	ret = rail_send_pdu(rail, s, RDP_RAIL_ORDER_NOTIFY_EVENT);
 	Stream_Free(s, TRUE);
+	return ret;
 }
 
-void rail_send_client_window_move_order(railPlugin* rail, RAIL_WINDOW_MOVE_ORDER* windowMove)
+BOOL rail_send_client_window_move_order(railPlugin* rail, RAIL_WINDOW_MOVE_ORDER* windowMove)
 {
 	wStream* s;
+	BOOL ret;
+
 	s = rail_pdu_init(RAIL_WINDOW_MOVE_ORDER_LENGTH);
+	if (!s)
+		return FALSE;
+
 	rail_write_client_window_move_order(s, windowMove);
-	rail_send_pdu(rail, s, RDP_RAIL_ORDER_WINDOWMOVE);
+	ret = rail_send_pdu(rail, s, RDP_RAIL_ORDER_WINDOWMOVE);
 	Stream_Free(s, TRUE);
+	return ret;
 }
 
-void rail_send_client_get_appid_req_order(railPlugin* rail, RAIL_GET_APPID_REQ_ORDER* getAppIdReq)
+BOOL rail_send_client_get_appid_req_order(railPlugin* rail, RAIL_GET_APPID_REQ_ORDER* getAppIdReq)
 {
 	wStream* s;
+	BOOL ret;
+
 	s = rail_pdu_init(RAIL_GET_APPID_REQ_ORDER_LENGTH);
+	if (!s)
+		return FALSE;
+
 	rail_write_client_get_appid_req_order(s, getAppIdReq);
-	rail_send_pdu(rail, s, RDP_RAIL_ORDER_GET_APPID_REQ);
+	ret = rail_send_pdu(rail, s, RDP_RAIL_ORDER_GET_APPID_REQ);
 	Stream_Free(s, TRUE);
+	return ret;
 }
 
-void rail_send_client_langbar_info_order(railPlugin* rail, RAIL_LANGBAR_INFO_ORDER* langBarInfo)
+BOOL rail_send_client_langbar_info_order(railPlugin* rail, RAIL_LANGBAR_INFO_ORDER* langBarInfo)
 {
 	wStream* s;
+	BOOL ret;
+
 	s = rail_pdu_init(RAIL_LANGBAR_INFO_ORDER_LENGTH);
+	if (!s)
+		return FALSE;
+
 	rail_write_langbar_info_order(s, langBarInfo);
-	rail_send_pdu(rail, s, RDP_RAIL_ORDER_LANGBARINFO);
+	ret = rail_send_pdu(rail, s, RDP_RAIL_ORDER_LANGBARINFO);
 	Stream_Free(s, TRUE);
+	return ret;
 }

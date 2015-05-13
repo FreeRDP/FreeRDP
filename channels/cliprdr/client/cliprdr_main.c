@@ -60,6 +60,8 @@ wStream* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags, UINT32 dataLen)
 	wStream* s;
 
 	s = Stream_New(NULL, dataLen + 8);
+	if (!s)
+		return NULL;
 
 	Stream_Write_UINT16(s, msgType);
 	Stream_Write_UINT16(s, msgFlags);
@@ -586,6 +588,8 @@ int cliprdr_client_format_list_response(CliprdrClientContext* context, CLIPRDR_F
 	formatListResponse->dataLen = 0;
 
 	s = cliprdr_packet_new(formatListResponse->msgType, formatListResponse->msgFlags, formatListResponse->dataLen);
+	if (!s)
+		return -1;
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "ClientFormatListResponse");
 	cliprdr_packet_send(cliprdr, s);
@@ -719,12 +723,16 @@ int cliprdr_client_file_contents_response(CliprdrClientContext* context, CLIPRDR
 static wListDictionary* g_InitHandles = NULL;
 static wListDictionary* g_OpenHandles = NULL;
 
-void cliprdr_add_init_handle_data(void* pInitHandle, void* pUserData)
+BOOL cliprdr_add_init_handle_data(void* pInitHandle, void* pUserData)
 {
 	if (!g_InitHandles)
+	{
 		g_InitHandles = ListDictionary_New(TRUE);
+		if (!g_InitHandles)
+			return FALSE;
+	}
 
-	ListDictionary_Add(g_InitHandles, pInitHandle, pUserData);
+	return ListDictionary_Add(g_InitHandles, pInitHandle, pUserData);
 }
 
 void* cliprdr_get_init_handle_data(void* pInitHandle)
@@ -1022,13 +1030,11 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 		WLog_ERR(TAG, "pVirtualChannelInit failed with %s [%08X]",
 				 WTSErrorToString(rc), rc);
 		free(cliprdr);
-		return -1;
+		return FALSE;
 	}
 
 	cliprdr->channelEntryPoints.pInterface = *(cliprdr->channelEntryPoints.ppInterface);
 	cliprdr->channelEntryPoints.ppInterface = &(cliprdr->channelEntryPoints.pInterface);
 
-	cliprdr_add_init_handle_data(cliprdr->InitHandle, (void*) cliprdr);
-
-	return 1;
+	return cliprdr_add_init_handle_data(cliprdr->InitHandle, (void*) cliprdr);
 }

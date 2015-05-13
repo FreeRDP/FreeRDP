@@ -47,14 +47,20 @@ static int dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
 	{
 		WLog_DBG(TAG, "create_listener: %d.%s.", dvcman->num_listeners, pszChannelName);
 
-		listener = (DVCMAN_LISTENER*) malloc(sizeof(DVCMAN_LISTENER));
-		ZeroMemory(listener, sizeof(DVCMAN_LISTENER));
+		listener = (DVCMAN_LISTENER*) calloc(1, sizeof(DVCMAN_LISTENER));
+		if (!listener)
+		{
+			WLog_WARN(TAG, "create_listener: unable to allocate listener.");
+			return 1;
+		}
 
 		listener->iface.GetConfiguration = dvcman_get_configuration;
 		listener->iface.pInterface = NULL;
 
 		listener->dvcman = dvcman;
 		listener->channel_name = _strdup(pszChannelName);
+		if (!listener->channel_name)
+			goto error_strdup;
 		listener->flags = ulFlags;
 		listener->listener_callback = pListenerCallback;
 
@@ -70,6 +76,10 @@ static int dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
 		WLog_WARN(TAG, "create_listener: Maximum DVC listener number reached.");
 		return 1;
 	}
+
+error_strdup:
+	free(listener);
+	return 1;
 }
 
 static int dvcman_register_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const char* name, IWTSPlugin* pPlugin)
@@ -178,16 +188,28 @@ IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
 	DVCMAN* dvcman;
 
 	dvcman = (DVCMAN*) calloc(1, sizeof(DVCMAN));
+	if (!dvcman)
+		return NULL;
 
 	dvcman->iface.CreateListener = dvcman_create_listener;
 	dvcman->iface.FindChannelById = dvcman_find_channel_by_id;
 	dvcman->iface.GetChannelId = dvcman_get_channel_id;
 	dvcman->drdynvc = plugin;
 	dvcman->channels = ArrayList_New(TRUE);
+	if (!dvcman->channels)
+		goto error_channels;
 	dvcman->channels->object.fnObjectFree = dvcman_channel_free;
 	dvcman->pool = StreamPool_New(TRUE, 10);
+	if (!dvcman->pool)
+		goto error_pool;
 
 	return (IWTSVirtualChannelManager*) dvcman;
+
+error_pool:
+	ArrayList_Free(dvcman->channels);
+error_channels:
+	free(dvcman);
+	return NULL;
 }
 
 int dvcman_load_addin(IWTSVirtualChannelManager* pChannelMgr, ADDIN_ARGV* args, rdpSettings* settings)
@@ -227,7 +249,6 @@ static DVCMAN_CHANNEL* dvcman_channel_new(IWTSVirtualChannelManager* pChannelMgr
 	}
 
 	channel = (DVCMAN_CHANNEL*) calloc(1, sizeof(DVCMAN_CHANNEL));
-
 	if (!channel)
 		return NULL;
 
@@ -351,12 +372,12 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Channel
 	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
 
 	channel = dvcman_channel_new(pChannelMgr, ChannelId, ChannelName);
-
 	if (!channel)
 		return 1;
 
 	channel->status = 1;
-	ArrayList_Add(dvcman->channels, channel);
+	if (ArrayList_Add(dvcman->channels, channel) < 0)
+		return 1;
 
 	for (i = 0; i < dvcman->num_listeners; i++)
 	{
@@ -578,6 +599,8 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, BYTE* data, UIN
 		return 1;
 
 	data_out = Stream_New(NULL, CHANNEL_CHUNK_LENGTH);
+	if (!data_out)
+		return 1;
 	Stream_SetPosition(data_out, 1);
 	cbChId = drdynvc_write_variable_uint(data_out, ChannelId);
 
@@ -661,6 +684,9 @@ static int drdynvc_send_capability_response(drdynvcPlugin* drdynvc)
 
 	WLog_DBG(TAG, "capability_response");
 	s = Stream_New(NULL, 4);
+	if (!s)
+		return CHANNEL_RC_NO_MEMORY;
+
 	Stream_Write_UINT16(s, 0x0050); /* Cmd+Sp+cbChId+Pad. Note: MSTSC sends 0x005c */
 	Stream_Write_UINT16(s, drdynvc->version);
 
