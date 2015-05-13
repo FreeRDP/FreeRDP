@@ -752,14 +752,17 @@ void cliprdr_remove_init_handle_data(void* pInitHandle)
 	}
 }
 
-void cliprdr_add_open_handle_data(DWORD openHandle, void* pUserData)
+BOOL cliprdr_add_open_handle_data(DWORD openHandle, void* pUserData)
 {
 	void* pOpenHandle = (void*) (size_t) openHandle;
 
-	if (!g_OpenHandles)
+	if (!g_OpenHandles) {
 		g_OpenHandles = ListDictionary_New(TRUE);
+		if (!g_OpenHandles)
+			return FALSE;
+	}
 
-	ListDictionary_Add(g_OpenHandles, pOpenHandle, pUserData);
+	return ListDictionary_Add(g_OpenHandles, pOpenHandle, pUserData);
 }
 
 void* cliprdr_get_open_handle_data(DWORD openHandle)
@@ -890,7 +893,11 @@ static void cliprdr_virtual_channel_event_connected(cliprdrPlugin* cliprdr, LPVO
 	status = cliprdr->channelEntryPoints.pVirtualChannelOpen(cliprdr->InitHandle,
 		&cliprdr->OpenHandle, cliprdr->channelDef.name, cliprdr_virtual_channel_open_event);
 
-	cliprdr_add_open_handle_data(cliprdr->OpenHandle, cliprdr);
+	if (!cliprdr_add_open_handle_data(cliprdr->OpenHandle, cliprdr))
+	{
+		WLog_ERR(TAG,  "%s: unable to register open handle", __FUNCTION__);
+		return;
+	}
 
 	if (status != CHANNEL_RC_OK)
 	{

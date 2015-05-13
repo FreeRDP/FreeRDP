@@ -18,10 +18,13 @@ int TestListDictionary(int argc, char* argv[])
 	wListDictionary* list;
 
 	list = ListDictionary_New(TRUE);
+	if (!list)
+		return -1;
 
-	ListDictionary_Add(list, key1, val1);
-	ListDictionary_Add(list, key2, val2);
-	ListDictionary_Add(list, key3, val3);
+	if (!ListDictionary_Add(list, key1, val1) ||
+			!ListDictionary_Add(list, key2, val2) ||
+			!ListDictionary_Add(list, key3, val3) )
+		return -1;
 
 	count = ListDictionary_Count(list);
 
@@ -61,9 +64,10 @@ int TestListDictionary(int argc, char* argv[])
 		return -1;
 	}
 
-	ListDictionary_Add(list, key1, val1);
-	ListDictionary_Add(list, key2, val2);
-	ListDictionary_Add(list, key3, val3);
+	if (!ListDictionary_Add(list, key1, val1) ||
+			!ListDictionary_Add(list, key2, val2) ||
+			!ListDictionary_Add(list, key3, val3))
+		return -1;
 
 	count = ListDictionary_Count(list);
 
@@ -151,9 +155,9 @@ int TestListDictionary(int argc, char* argv[])
 		return -1;
 	}
 
-	ListDictionary_Add(list, key1, val1);
-	ListDictionary_Add(list, key2, val2);
-	ListDictionary_Add(list, key3, val3);
+	if (!ListDictionary_Add(list, key1, val1) || !ListDictionary_Add(list, key2, val2) ||
+			!ListDictionary_Add(list, key3, val3))
+		return -1;
 
 	ListDictionary_Clear(list);
 

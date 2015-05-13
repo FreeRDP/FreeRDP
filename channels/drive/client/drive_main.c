@@ -152,6 +152,7 @@ static void drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
 	else
 	{
 		key = (void*) (size_t) file->id;
+		// TODO: handle return value
 		ListDictionary_Add(drive->files, key, file);
 
 		switch (CreateDisposition)
@@ -627,7 +628,7 @@ static void drive_free(DEVICE* device)
 	free(drive);
 }
 
-void drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char* name, char* path)
+BOOL drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char* name, char* path)
 {
 	int i, length;
 	DRIVE_DEVICE* drive;
@@ -648,8 +649,9 @@ void drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char* 
 
 	if (name[0] && path[0])
 	{
-		drive = (DRIVE_DEVICE*) malloc(sizeof(DRIVE_DEVICE));
-		ZeroMemory(drive, sizeof(DRIVE_DEVICE));
+		drive = (DRIVE_DEVICE*) calloc(1, sizeof(DRIVE_DEVICE));
+		if (!drive)
+			return FALSE;
 
 		drive->device.type = RDPDR_DTYP_FILESYSTEM;
 		drive->device.name = name;
@@ -658,6 +660,8 @@ void drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char* 
 
 		length = (int) strlen(name);
 		drive->device.data = Stream_New(NULL, length + 1);
+		if (!drive->device.data)
+			goto error_device_data;
 
 		for (i = 0; i <= length; i++)
 			Stream_Write_UINT8(drive->device.data, name[i] < 0 ? '_' : name[i]);
@@ -665,15 +669,34 @@ void drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char* 
 		drive->path = path;
 
 		drive->files = ListDictionary_New(TRUE);
+		if (!drive->files)
+			goto error_files;
 		ListDictionary_ValueObject(drive->files)->fnObjectFree = (OBJECT_FREE_FN) drive_file_free;
 
 		drive->IrpQueue = MessageQueue_New(NULL);
+		if (!drive->IrpQueue)
+			goto error_irp_queue;
+
 		drive->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) drive_thread_func, drive, CREATE_SUSPENDED, NULL);
+		if (!drive->thread)
+			goto error_create_thread;
 
 		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*) drive);
 
 		ResumeThread(drive->thread);
 	}
+
+	return TRUE;
+
+error_create_thread:
+	MessageQueue_Free(drive->IrpQueue);
+error_irp_queue:
+	ListDictionary_Free(drive->files);
+error_files:
+	Stream_Free(drive->device.data, TRUE);
+error_device_data:
+	free(drive);
+	return FALSE;
 }
 
 #ifdef STATIC_CHANNELS
@@ -718,6 +741,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 			drive->Path = _strdup("/");
 	}
 
+	// TODO: check return value
 	drive_register_drive_path(pEntryPoints, drive->Name, drive->Path);
 
 #else

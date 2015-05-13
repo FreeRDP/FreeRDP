@@ -205,9 +205,7 @@ BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 	CopyMemory(pMemBlock->pData, pCipherText, pMemBlock->cbData);
 	free(pCipherText);
 
-	ListDictionary_Add(g_ProtectedMemoryBlocks, pData, pMemBlock);
-
-	return TRUE;
+	return ListDictionary_Add(g_ProtectedMemoryBlocks, pData, pMemBlock);
 }
 
 BOOL CryptUnprotectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
