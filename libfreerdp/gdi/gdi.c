@@ -1355,10 +1355,12 @@ BOOL gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 		goto fail_image_bitmap;
 
 	if (!instance->context->cache)
+	{
 		if (!(cache = cache_new(instance->settings)))
 			goto fail_cache;
 
-	instance->context->cache = cache;
+		instance->context->cache = cache;
+	}
 
 	gdi_register_update_callbacks(instance->update);
 
@@ -1376,7 +1378,11 @@ BOOL gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 	return TRUE;
 
 fail_register_graphics:
-	free(cache);
+	if (cache)
+	{
+		instance->context->cache = NULL;
+		free(cache);
+	}
 fail_cache:
 	gdi_bitmap_free_ex(gdi->image);
 fail_image_bitmap:
