@@ -64,6 +64,9 @@ int xf_keyboard_action_script_init(xfContext* xfc)
 		return 0;
 
 	xfc->keyCombinations = ArrayList_New(TRUE);
+	if (!xfc->keyCombinations)
+		return 0;
+
 	ArrayList_Object(xfc->keyCombinations)->fnObjectFree = free;
 
 	sprintf_s(command, sizeof(command), "%s key", xfc->actionScript);
@@ -81,7 +84,8 @@ int xf_keyboard_action_script_init(xfContext* xfc)
 	{
 		strtok(buffer, "\n");
 		keyCombination = _strdup(buffer);
-		ArrayList_Add(xfc->keyCombinations, keyCombination);
+		if (ArrayList_Add(xfc->keyCombinations, keyCombination) < 0)
+			return 0;
 	}
 
 	exitCode = pclose(keyScript);

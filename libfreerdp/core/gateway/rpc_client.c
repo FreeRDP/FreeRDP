@@ -1048,7 +1048,6 @@ int rpc_client_new(rdpRpc* rpc)
 		return -1;
 
 	client->ClientCallList = ArrayList_New(TRUE);
-
 	if (!client->ClientCallList)
 		return -1;
 

@@ -656,8 +656,7 @@ BOOL PCSC_AddReaderNameAlias(char* namePCSC, char* nameWinSCard)
 
 	reader->namePCSC = _strdup(namePCSC);
 	reader->nameWinSCard = _strdup(nameWinSCard);
-	ArrayList_Add(g_Readers, reader);
-	return TRUE;
+	return ArrayList_Add(g_Readers, reader) >= 0;
 }
 
 static int PCSC_AtoiWithLength(const char* str, int length)

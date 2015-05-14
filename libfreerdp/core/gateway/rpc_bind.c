@@ -343,7 +343,7 @@ int rpc_recv_bind_ack_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 {
-	int status;
+	int status = -1;
 	BYTE* buffer;
 	UINT32 offset;
 	UINT32 length;
@@ -399,9 +399,10 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	length = auth_3_pdu->frag_length;
 
 	clientCall = rpc_client_call_new(auth_3_pdu->call_id, 0);
-	ArrayList_Add(rpc->client->ClientCallList, clientCall);
-
-	status = rpc_in_channel_send_pdu(inChannel, buffer, length);
+	if (ArrayList_Add(rpc->client->ClientCallList, clientCall) >= 0)
+	{
+		status = rpc_in_channel_send_pdu(inChannel, buffer, length);
+	}
 
 	free(auth_3_pdu);
 	free(buffer);
