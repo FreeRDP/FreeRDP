@@ -108,8 +108,6 @@ struct _TSMF_STREAM
 	HANDLE stopEvent;
 	HANDLE ready;
 
-	BOOL started;
-
 	wQueue *sample_list;
 	wQueue *sample_ack_list;
 };
@@ -392,7 +390,7 @@ static void tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 				return;
 			}
 			memcpy(event.visibleRects, presentation->rects, presentation->nr_rects * sizeof(RDP_RECT));
-			presentation->nr_rects=0;
+			presentation->nr_rects = 0;
 		}
 
 #if 0
@@ -427,7 +425,8 @@ static void tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 
 		free(event.frameData);
 
-		if(event.visibleRects!=NULL) free(event.visibleRects);
+		if(event.visibleRects != NULL)
+			free(event.visibleRects);
 	}
 }
 
@@ -677,13 +676,6 @@ static void tsmf_stream_start(TSMF_STREAM* stream)
 	if (!stream || !stream->presentation || !stream->decoder)
 		return;
 
-	if (!stream->started)
-	{
-			ResumeThread(stream->play_thread);
-			ResumeThread(stream->ack_thread);
-			stream->started = TRUE;
-	}
-
 	if (stream->decoder->Control)
 	{
 		stream->decoder->Control(stream->decoder, Control_Resume, NULL);
@@ -698,12 +690,6 @@ static void tsmf_stream_stop(TSMF_STREAM* stream)
 	if (stream->decoder->Control)
 	{
 		stream->decoder->Control(stream->decoder, Control_Stop, NULL);
-	}
-
-	if (stream->started)
-	{
-		//SetEvent(stream->stopEvent);
-		stream->started = FALSE;
 	}
 }
 
@@ -876,6 +862,9 @@ void tsmf_presentation_set_geometry_info(TSMF_PRESENTATION* presentation,
 
 	tmp_rects = realloc(presentation->rects, sizeof(RDP_RECT) * num_rects);
 
+	if(!num_rects)
+		presentation->rects=NULL;
+
 	if (!tmp_rects&&num_rects)
 		return;
 
@@ -993,13 +982,18 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id)
 	stream->sample_ack_list = Queue_New(TRUE, -1, -1);
 	stream->sample_ack_list->object.fnObjectFree = tsmf_sample_free;
 
-	stream->started = FALSE;
 	stream->play_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) tsmf_stream_playback_func, stream, CREATE_SUSPENDED, NULL);
 	stream->ack_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)tsmf_stream_ack_func, stream, CREATE_SUSPENDED, NULL);
 
 	ArrayList_Add(presentation->stream_list, stream);
 
 	return stream;
+}
+
+void tsmf_stream_start_threads (TSMF_STREAM* stream)
+{
+	ResumeThread(stream->play_thread);
+	ResumeThread(stream->ack_thread);
 }
 
 TSMF_STREAM *tsmf_stream_find_by_id(TSMF_PRESENTATION* presentation, UINT32 stream_id)
