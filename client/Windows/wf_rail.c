@@ -1007,7 +1007,7 @@ void wf_rail_invalidate_region(wfContext* wfc, REGION16* invalidRegion)
 	region16_uninit(&windowInvalidRegion);
 }
 
-void wf_rail_init(wfContext* wfc, RailClientContext* rail)
+BOOL wf_rail_init(wfContext* wfc, RailClientContext* rail)
 {
 	rdpContext* context = (rdpContext*) wfc;
 
@@ -1026,6 +1026,10 @@ void wf_rail_init(wfContext* wfc, RailClientContext* rail)
 	wf_rail_register_update_callbacks(context->update);
 
 	wfc->railWindows = HashTable_New(TRUE);
+	if (!wfc->railWindows)
+		return FALSE;
+	return TRUE;
+
 }
 
 void wf_rail_uninit(wfContext* wfc, RailClientContext* rail)

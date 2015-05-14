@@ -723,7 +723,7 @@ HANDLE WINAPI FreeRDP_WTSOpenServerA(LPSTR pServerName)
 	return hServer;
 
 error_dynamicVirtualChannels:
-	MessagePipe_Free(vcm->queue);
+	MessageQueue_Free(vcm->queue);
 error_queue:
 	HashTable_Remove(g_ServerHandles, (void*) (UINT_PTR) vcm->SessionId);
 error_free:

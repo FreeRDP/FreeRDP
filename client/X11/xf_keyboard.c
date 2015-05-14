@@ -90,9 +90,7 @@ int xf_keyboard_action_script_init(xfContext* xfc)
 
 	exitCode = pclose(keyScript);
 
-	xf_event_action_script_init(xfc);
-
-	return 1;
+	return xf_event_action_script_init(xfc);
 }
 
 void xf_keyboard_action_script_free(xfContext* xfc)
