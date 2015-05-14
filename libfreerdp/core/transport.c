@@ -876,6 +876,7 @@ static void* transport_client_thread(void* arg)
 	DWORD dwExitCode = 0;
 	DWORD status;
 	DWORD nCount;
+	DWORD nCountTmp;
 	HANDLE handles[64];
 	rdpTransport* transport = (rdpTransport*) arg;
 	rdpContext* context = transport->context;
@@ -907,14 +908,14 @@ static void* transport_client_thread(void* arg)
 
 	while (1)
 	{
-		handles[0] = transport->stopEvent;
+		nCount = 1; /* transport->stopEvent */
 
-		if (!(nCount = freerdp_get_event_handles(context, &handles[1], 63)))
+		if (!(nCountTmp = freerdp_get_event_handles(context, &handles[nCount], 64 - nCount)))
 		{
 			WLog_ERR(TAG, "freerdp_get_event_handles failed");
 			break;
 		}
-		nCount++;
+		nCount += nCountTmp;
 
 		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 
@@ -940,13 +941,9 @@ static void* transport_client_thread(void* arg)
 		else
 		{
 			if (status == WAIT_TIMEOUT)
-			{
-				/* This happens quite frequently although we've specified an INFINITE timeout
-				 * WaitForMultipleObjects bug ?
-				 */
-				continue;
-			}
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with status 0x%08X", status);
+				WLog_ERR(TAG, "WaitForMultipleObjects returned WAIT_TIMEOUT");
+			else
+				WLog_ERR(TAG, "WaitForMultipleObjects returned 0x%08X", status);
 			dwExitCode = 1;
 			break;
 		}
