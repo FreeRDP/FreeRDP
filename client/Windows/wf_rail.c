@@ -1026,10 +1026,7 @@ BOOL wf_rail_init(wfContext* wfc, RailClientContext* rail)
 	wf_rail_register_update_callbacks(context->update);
 
 	wfc->railWindows = HashTable_New(TRUE);
-	if (!wfc->railWindows)
-		return FALSE;
-	return TRUE;
-
+	return (wfc->railWindows != NULL);
 }
 
 void wf_rail_uninit(wfContext* wfc, RailClientContext* rail)
