@@ -152,7 +152,7 @@ SECURITY_STATUS SEC_ENTRY negotiate_CompleteAuthToken(PCtxtHandle phContext, PSe
 		return SEC_E_INVALID_HANDLE;
 
 	if (context->sspiW->CompleteAuthToken)
-		status = context->sspiW->CompleteAuthToken(phContext, pToken);
+		status = context->sspiW->CompleteAuthToken(&(context->SubContext), pToken);
 
 	return status;
 }
