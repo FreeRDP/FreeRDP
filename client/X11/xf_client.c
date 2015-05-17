@@ -600,21 +600,21 @@ BOOL xf_create_window(xfContext* xfc)
 		XFreeModifiermap(xfc->modifierMap);
 
 	xfc->modifierMap = XGetModifierMapping(xfc->display);
-	if (!xfc->gc);
+	if (!xfc->gc)
 		xfc->gc = XCreateGC(xfc->display, xfc->drawable, GCGraphicsExposures, &gcv);
-	if (!xfc->primary);
+	if (!xfc->primary)
 		xfc->primary = XCreatePixmap(xfc->display, xfc->drawable, xfc->sessionWidth, xfc->sessionHeight, xfc->depth);
 	xfc->drawing = xfc->primary;
-	if (!xfc->bitmap_mono);
+	if (!xfc->bitmap_mono)
 		xfc->bitmap_mono = XCreatePixmap(xfc->display, xfc->drawable, 8, 8, 1);
-	if (!xfc->gc_mono);
+	if (!xfc->gc_mono)
 		xfc->gc_mono = XCreateGC(xfc->display, xfc->bitmap_mono, GCGraphicsExposures, &gcv);
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 	XSetForeground(xfc->display, xfc->gc, BlackPixelOfScreen(xfc->screen));
 	XFillRectangle(xfc->display, xfc->primary, xfc->gc, 0, 0, xfc->sessionWidth, xfc->sessionHeight);
 	XFlush(xfc->display);
-	if (!xfc->image);
+	if (!xfc->image)
 		xfc->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
 			(char*) xfc->primary_buffer, xfc->sessionWidth, xfc->sessionHeight, xfc->scanline_pad, 0);
 
