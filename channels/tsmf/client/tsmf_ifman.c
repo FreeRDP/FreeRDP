@@ -179,6 +179,7 @@ int tsmf_ifman_add_stream(TSMF_IFMAN* ifman)
 		stream = tsmf_stream_new(presentation, StreamId);
 		if (stream)
 			tsmf_stream_set_format(stream, ifman->decoder_name, ifman->input);
+		tsmf_stream_start_threads(stream);
 	}
 	ifman->output_pending = TRUE;
 	return status;
