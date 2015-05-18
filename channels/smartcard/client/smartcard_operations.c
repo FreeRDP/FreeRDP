@@ -444,7 +444,7 @@ static UINT32 smartcard_GetStatusChangeA_Call(SMARTCARD_DEVICE* smartcard, SMART
 		for (index = 0; index < call->cReaders; index++)
 		{
 			rgReaderState = &call->rgReaderStates[index];
-			free(rgReaderState->szReader);
+			free((void *)rgReaderState->szReader);
 		}
 
 		free(call->rgReaderStates);
@@ -507,7 +507,7 @@ static UINT32 smartcard_GetStatusChangeW_Call(SMARTCARD_DEVICE* smartcard, SMART
 		for (index = 0; index < call->cReaders; index++)
 		{
 			rgReaderState = &call->rgReaderStates[index];
-			free(rgReaderState->szReader);
+			free((void *)rgReaderState->szReader);
 		}
 
 		free(call->rgReaderStates);
