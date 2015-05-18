@@ -756,7 +756,8 @@ BOOL cliprdr_add_open_handle_data(DWORD openHandle, void* pUserData)
 {
 	void* pOpenHandle = (void*) (size_t) openHandle;
 
-	if (!g_OpenHandles) {
+	if (!g_OpenHandles)
+	{
 		g_OpenHandles = ListDictionary_New(TRUE);
 		if (!g_OpenHandles)
 			return FALSE;
