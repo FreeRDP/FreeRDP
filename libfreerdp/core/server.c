@@ -954,7 +954,11 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPS
 		channel->index = index;
 		channel->channelType = RDP_PEER_CHANNEL_TYPE_SVC;
 		channel->receiveData = Stream_New(NULL, client->settings->VirtualChannelChunkSize);
+		if (!channel->receiveData)
+			goto error_receiveData;
 		channel->queue = MessageQueue_New(NULL);
+		if (!channel->queue)
+			goto error_queue;
 
 		mcs->channels[index].handle = channel;
 	}
@@ -962,6 +966,13 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPS
 	hChannelHandle = (HANDLE) channel;
 
 	return hChannelHandle;
+
+error_queue:
+	Stream_Free(channel->receiveData, TRUE);
+error_receiveData:
+	free(channel);
+	SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+	return NULL;
 }
 
 HANDLE WINAPI FreeRDP_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualName, DWORD flags)

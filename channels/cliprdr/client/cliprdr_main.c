@@ -901,15 +901,25 @@ static void cliprdr_virtual_channel_event_connected(cliprdrPlugin* cliprdr, LPVO
 
 	if (status != CHANNEL_RC_OK)
 	{
-		WLog_ERR(TAG,  "pVirtualChannelOpen failed with %s [%08X]",
+		WLog_ERR(TAG, "pVirtualChannelOpen failed with %s [%08X]",
 				 WTSErrorToString(status), status);
 		return;
 	}
 
 	cliprdr->queue = MessageQueue_New(NULL);
+	if (!cliprdr->queue)
+	{
+		WLog_ERR(TAG, "%s: unable to create message queue", __FUNCTION__);
+		return;
+	}
 
 	cliprdr->thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) cliprdr_virtual_channel_client_thread, (void*) cliprdr, 0, NULL);
+	if (!cliprdr->thread)
+	{
+		WLog_ERR(TAG, "%s: unable to create thread", __FUNCTION__);
+		return;
+	}
 }
 
 static void cliprdr_virtual_channel_event_disconnected(cliprdrPlugin* cliprdr)

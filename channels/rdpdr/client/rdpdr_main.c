@@ -994,9 +994,19 @@ static void rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, LPVOID pDa
 	}
 
 	rdpdr->queue = MessageQueue_New(NULL);
+	if (!rdpdr->queue)
+	{
+		WLog_ERR(TAG, "%s: unable to create queue", __FUNCTION__);
+		return;
+	}
 
 	rdpdr->thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) rdpdr_virtual_channel_client_thread, (void*) rdpdr, 0, NULL);
+	if (!rdpdr->thread)
+	{
+		WLog_ERR(TAG, "%s: unable to create thread", __FUNCTION__);
+		return;
+	}
 }
 
 static void rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)

@@ -1111,8 +1111,19 @@ static void drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 	}
 
 	drdynvc->queue = MessageQueue_New(NULL);
+	if (!drdynvc->queue)
+	{
+		WLog_ERR(TAG, "%s: unable to create message queue", __FUNCTION__);
+		return;
+	}
 
 	drdynvc->channel_mgr = dvcman_new(drdynvc);
+	if (!drdynvc->channel_mgr)
+	{
+		WLog_ERR(TAG, "%s: unable to create dvcman", __FUNCTION__);
+		return;
+	}
+
 	drdynvc->channel_error = 0;
 
 	settings = (rdpSettings*) drdynvc->channelEntryPoints.pExtendedData;
@@ -1129,6 +1140,11 @@ static void drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 
 	drdynvc->thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) drdynvc_virtual_channel_client_thread, (void*) drdynvc, 0, NULL);
+	if (!drdynvc->thread)
+	{
+		WLog_ERR(TAG, "%s: unable to create thread", __FUNCTION__);
+		return;
+	}
 }
 
 static void drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)

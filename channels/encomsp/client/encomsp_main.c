@@ -865,14 +865,16 @@ static void encomsp_virtual_channel_event_connected(encomspPlugin* encomsp, LPVO
 	}
 
 	encomsp->queue = MessageQueue_New(NULL);
-	if (!encomsp->queue) {
+	if (!encomsp->queue)
+	{
 		WLog_ERR(TAG, "%s: unable to create message queue", __FUNCTION__);
 		return;
 	}
 
 	encomsp->thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) encomsp_virtual_channel_client_thread, (void*) encomsp, 0, NULL);
-	if (!encomsp->thread) {
+	if (!encomsp->thread)
+	{
 		WLog_ERR(TAG, "%s: unable to create thread", __FUNCTION__);
 		return;
 	}

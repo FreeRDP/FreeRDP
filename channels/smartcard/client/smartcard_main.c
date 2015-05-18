@@ -79,21 +79,28 @@ SMARTCARD_CONTEXT* smartcard_context_new(SMARTCARD_DEVICE* smartcard, SCARDCONTE
 	SMARTCARD_CONTEXT* pContext;
 
 	pContext = (SMARTCARD_CONTEXT*) calloc(1, sizeof(SMARTCARD_CONTEXT));
-
 	if (!pContext)
 		return pContext;
 
 	pContext->smartcard = smartcard;
-
 	pContext->hContext = hContext;
 
 	pContext->IrpQueue = MessageQueue_New(NULL);
+	if (!pContext->IrpQueue)
+		goto error_irpqueue;
 
 	pContext->thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) smartcard_context_thread,
 			pContext, 0, NULL);
-
+	if (!pContext->thread)
+		goto error_thread;
 	return pContext;
+
+error_thread:
+	MessageQueue_Free(pContext->IrpQueue);
+error_irpqueue:
+	free(pContext);
+	return NULL;
 }
 
 void smartcard_context_free(SMARTCARD_CONTEXT* pContext)
