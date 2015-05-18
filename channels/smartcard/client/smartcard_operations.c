@@ -215,6 +215,7 @@ static UINT32 smartcard_EstablishContext_Call(SMARTCARD_DEVICE* smartcard, SMART
 	{
 		SMARTCARD_CONTEXT* pContext;
 		void* key = (void*)(size_t) hContext;
+		// TODO: handle return values
 		pContext = smartcard_context_new(smartcard, hContext);
 		ListDictionary_Add(smartcard->rgSCardContextList, key, (void*) pContext);
 	}

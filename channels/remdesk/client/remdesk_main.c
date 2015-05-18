@@ -523,12 +523,16 @@ static void remdesk_process_connect(remdeskPlugin* remdesk)
 static wListDictionary* g_InitHandles = NULL;
 static wListDictionary* g_OpenHandles = NULL;
 
-void remdesk_add_init_handle_data(void* pInitHandle, void* pUserData)
+BOOL remdesk_add_init_handle_data(void* pInitHandle, void* pUserData)
 {
 	if (!g_InitHandles)
+	{
 		g_InitHandles = ListDictionary_New(TRUE);
+		if (!g_InitHandles)
+			return FALSE;
+	}
 
-	ListDictionary_Add(g_InitHandles, pInitHandle, pUserData);
+	return ListDictionary_Add(g_InitHandles, pInitHandle, pUserData);
 }
 
 void* remdesk_get_init_handle_data(void* pInitHandle)
@@ -548,14 +552,18 @@ void remdesk_remove_init_handle_data(void* pInitHandle)
 	}
 }
 
-void remdesk_add_open_handle_data(DWORD openHandle, void* pUserData)
+BOOL remdesk_add_open_handle_data(DWORD openHandle, void* pUserData)
 {
 	void* pOpenHandle = (void*) (size_t) openHandle;
 
 	if (!g_OpenHandles)
+	{
 		g_OpenHandles = ListDictionary_New(TRUE);
+		if (!g_OpenHandles)
+			return FALSE;
+	}
 
-	ListDictionary_Add(g_OpenHandles, pOpenHandle, pUserData);
+	return ListDictionary_Add(g_OpenHandles, pOpenHandle, pUserData);
 }
 
 void* remdesk_get_open_handle_data(DWORD openHandle)
@@ -704,7 +712,11 @@ static void remdesk_virtual_channel_event_connected(remdeskPlugin* remdesk, LPVO
 	status = remdesk->channelEntryPoints.pVirtualChannelOpen(remdesk->InitHandle,
 		&remdesk->OpenHandle, remdesk->channelDef.name, remdesk_virtual_channel_open_event);
 
-	remdesk_add_open_handle_data(remdesk->OpenHandle, remdesk);
+	if (!remdesk_add_open_handle_data(remdesk->OpenHandle, remdesk))
+	{
+		WLog_ERR(TAG, "%s: unable to register open handle", __FUNCTION__);
+		return;
+	}
 
 	if (status != CHANNEL_RC_OK)
 	{
@@ -714,9 +726,19 @@ static void remdesk_virtual_channel_event_connected(remdeskPlugin* remdesk, LPVO
 	}
 
 	remdesk->queue = MessageQueue_New(NULL);
+	if (!remdesk->queue)
+	{
+		WLog_ERR(TAG, "%s: unable to create message queue", __FUNCTION__);
+		return;
+	}
 
 	remdesk->thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) remdesk_virtual_channel_client_thread, (void*) remdesk, 0, NULL);
+	if (!remdesk->thread)
+	{
+		WLog_ERR(TAG, "%s: unable to create thread", __FUNCTION__);
+		return;
+	}
 }
 
 static void remdesk_virtual_channel_event_disconnected(remdeskPlugin* remdesk)
@@ -837,7 +859,5 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	remdesk->channelEntryPoints.pInterface = *(remdesk->channelEntryPoints.ppInterface);
 	remdesk->channelEntryPoints.ppInterface = &(remdesk->channelEntryPoints.pInterface);
 
-	remdesk_add_init_handle_data(remdesk->InitHandle, (void*) remdesk);
-
-	return 1;
+	return remdesk_add_init_handle_data(remdesk->InitHandle, (void*) remdesk) ? 1 : -1;
 }

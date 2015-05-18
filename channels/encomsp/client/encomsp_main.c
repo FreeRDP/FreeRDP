@@ -662,12 +662,16 @@ static void encomsp_process_connect(encomspPlugin* encomsp)
 static wListDictionary* g_InitHandles = NULL;
 static wListDictionary* g_OpenHandles = NULL;
 
-void encomsp_add_init_handle_data(void* pInitHandle, void* pUserData)
+BOOL encomsp_add_init_handle_data(void* pInitHandle, void* pUserData)
 {
 	if (!g_InitHandles)
+	{
 		g_InitHandles = ListDictionary_New(TRUE);
+		if (!g_InitHandles)
+			return FALSE;
+	}
 
-	ListDictionary_Add(g_InitHandles, pInitHandle, pUserData);
+	return ListDictionary_Add(g_InitHandles, pInitHandle, pUserData);
 }
 
 void* encomsp_get_init_handle_data(void* pInitHandle)
@@ -687,14 +691,18 @@ void encomsp_remove_init_handle_data(void* pInitHandle)
 	}
 }
 
-void encomsp_add_open_handle_data(DWORD openHandle, void* pUserData)
+BOOL encomsp_add_open_handle_data(DWORD openHandle, void* pUserData)
 {
 	void* pOpenHandle = (void*) (size_t) openHandle;
 
 	if (!g_OpenHandles)
+	{
 		g_OpenHandles = ListDictionary_New(TRUE);
+		if (!g_OpenHandles)
+			return FALSE;
+	}
 
-	ListDictionary_Add(g_OpenHandles, pOpenHandle, pUserData);
+	return ListDictionary_Add(g_OpenHandles, pOpenHandle, pUserData);
 }
 
 void* encomsp_get_open_handle_data(DWORD openHandle)
@@ -843,7 +851,11 @@ static void encomsp_virtual_channel_event_connected(encomspPlugin* encomsp, LPVO
 	status = encomsp->channelEntryPoints.pVirtualChannelOpen(encomsp->InitHandle,
 		&encomsp->OpenHandle, encomsp->channelDef.name, encomsp_virtual_channel_open_event);
 
-	encomsp_add_open_handle_data(encomsp->OpenHandle, encomsp);
+	if (!encomsp_add_open_handle_data(encomsp->OpenHandle, encomsp))
+	{
+		WLog_ERR(TAG, "%s: unable to register open handle", __FUNCTION__);
+		return;
+	}
 
 	if (status != CHANNEL_RC_OK)
 	{
@@ -853,9 +865,20 @@ static void encomsp_virtual_channel_event_connected(encomspPlugin* encomsp, LPVO
 	}
 
 	encomsp->queue = MessageQueue_New(NULL);
+	if (!encomsp->queue)
+	{
+		WLog_ERR(TAG, "%s: unable to create message queue", __FUNCTION__);
+		return;
+	}
 
 	encomsp->thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) encomsp_virtual_channel_client_thread, (void*) encomsp, 0, NULL);
+	if (!encomsp->thread)
+	{
+		WLog_ERR(TAG, "%s: unable to create thread", __FUNCTION__);
+		return;
+	}
+
 }
 
 static void encomsp_virtual_channel_event_disconnected(encomspPlugin* encomsp)
@@ -980,7 +1003,5 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	encomsp->channelEntryPoints.pInterface = *(encomsp->channelEntryPoints.ppInterface);
 	encomsp->channelEntryPoints.ppInterface = &(encomsp->channelEntryPoints.pInterface);
 
-	encomsp_add_init_handle_data(encomsp->InitHandle, (void*) encomsp);
-
-	return 1;
+	return encomsp_add_init_handle_data(encomsp->InitHandle, (void*) encomsp) ? 1 : -1;
 }

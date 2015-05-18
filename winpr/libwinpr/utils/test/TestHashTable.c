@@ -18,6 +18,8 @@ int test_hash_table_pointer()
 	wHashTable* table;
 
 	table = HashTable_New(TRUE);
+	if (!table)
+		return -1;
 
 	HashTable_Add(table, key1, val1);
 	HashTable_Add(table, key2, val2);
@@ -147,6 +149,8 @@ int test_hash_table_string()
 	wHashTable* table;
 
 	table = HashTable_New(TRUE);
+	if (!table)
+		return -1;
 
 	table->hash = HashTable_StringHash;
 	table->keyCompare = HashTable_StringCompare;

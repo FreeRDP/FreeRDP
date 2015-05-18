@@ -413,12 +413,13 @@ static HANDLE_OPS namedOps = {
 };
 
 
-static void InitWinPRPipeModule()
+static BOOL InitWinPRPipeModule()
 {
 	if (g_NamedPipeServerSockets)
-		return;
+		return TRUE;
 
 	g_NamedPipeServerSockets = ArrayList_New(FALSE);
+	return g_NamedPipeServerSockets != NULL;
 }
 
 
@@ -523,7 +524,9 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 	if (!lpName)
 		return INVALID_HANDLE_VALUE;
 
-	InitWinPRPipeModule();
+	if (!InitWinPRPipeModule())
+		return INVALID_HANDLE_VALUE;
+
 	pNamedPipe = (WINPR_NAMED_PIPE*) calloc(1, sizeof(WINPR_NAMED_PIPE));
 	if (!pNamedPipe)
 		return INVALID_HANDLE_VALUE;
@@ -625,7 +628,12 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 
 		baseSocket->serverfd = serverfd;
 		baseSocket->references = 0;
-		ArrayList_Add(g_NamedPipeServerSockets, baseSocket);
+
+		if (ArrayList_Add(g_NamedPipeServerSockets, baseSocket) < 0)
+		{
+			free(baseSocket->name);
+			goto out;
+		}
 		//WLog_DBG(TAG, "created shared socked resource for pipe %p (%s). base serverfd = %d", pNamedPipe, lpName, serverfd);
 	}
 

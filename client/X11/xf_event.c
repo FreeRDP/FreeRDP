@@ -94,6 +94,8 @@ int xf_event_action_script_init(xfContext* xfc)
 	char command[1024] = { 0 };
 
 	xfc->xevents = ArrayList_New(TRUE);
+	if (!xfc->xevents)
+		return -1;
 	ArrayList_Object(xfc->xevents)->fnObjectFree = free;
 
 	sprintf_s(command, sizeof(command), "%s xevent", xfc->actionScript);
@@ -107,7 +109,8 @@ int xf_event_action_script_init(xfContext* xfc)
 	{
 		strtok(buffer, "\n");
 		xevent = _strdup(buffer);
-		ArrayList_Add(xfc->xevents, xevent);
+		if (ArrayList_Add(xfc->xevents, xevent) < 0)
+			return -1;
 	}
 
 	exitCode = pclose(actionScript);
