@@ -30,7 +30,7 @@
 
 #define TAG FREERDP_TAG("core.window")
 
-static BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
+BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 {
 	UINT16 new_len;
 	BYTE *new_str;

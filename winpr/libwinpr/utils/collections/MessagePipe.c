@@ -52,13 +52,24 @@ wMessagePipe* MessagePipe_New()
 
 	pipe = (wMessagePipe*) malloc(sizeof(wMessagePipe));
 
-	if (pipe)
-	{
-		pipe->In = MessageQueue_New(NULL);
-		pipe->Out = MessageQueue_New(NULL);
-	}
+	if (!pipe)
+		return NULL;
+
+	pipe->In = MessageQueue_New(NULL);
+	if (!pipe->In)
+		goto error_in;
+
+	pipe->Out = MessageQueue_New(NULL);
+	if (!pipe->In)
+		goto error_out;
 
 	return pipe;
+
+error_out:
+	MessageQueue_Free(pipe->In);
+error_in:
+	free(pipe);
+	return NULL;
 }
 
 void MessagePipe_Free(wMessagePipe* pipe)

@@ -60,6 +60,8 @@ wStream* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags, UINT32 dataLen)
 	wStream* s;
 
 	s = Stream_New(NULL, dataLen + 8);
+	if (!s)
+		return NULL;
 
 	Stream_Write_UINT16(s, msgType);
 	Stream_Write_UINT16(s, msgFlags);
@@ -586,6 +588,8 @@ int cliprdr_client_format_list_response(CliprdrClientContext* context, CLIPRDR_F
 	formatListResponse->dataLen = 0;
 
 	s = cliprdr_packet_new(formatListResponse->msgType, formatListResponse->msgFlags, formatListResponse->dataLen);
+	if (!s)
+		return -1;
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "ClientFormatListResponse");
 	cliprdr_packet_send(cliprdr, s);
@@ -719,12 +723,16 @@ int cliprdr_client_file_contents_response(CliprdrClientContext* context, CLIPRDR
 static wListDictionary* g_InitHandles = NULL;
 static wListDictionary* g_OpenHandles = NULL;
 
-void cliprdr_add_init_handle_data(void* pInitHandle, void* pUserData)
+BOOL cliprdr_add_init_handle_data(void* pInitHandle, void* pUserData)
 {
 	if (!g_InitHandles)
+	{
 		g_InitHandles = ListDictionary_New(TRUE);
+		if (!g_InitHandles)
+			return FALSE;
+	}
 
-	ListDictionary_Add(g_InitHandles, pInitHandle, pUserData);
+	return ListDictionary_Add(g_InitHandles, pInitHandle, pUserData);
 }
 
 void* cliprdr_get_init_handle_data(void* pInitHandle)
@@ -744,14 +752,18 @@ void cliprdr_remove_init_handle_data(void* pInitHandle)
 	}
 }
 
-void cliprdr_add_open_handle_data(DWORD openHandle, void* pUserData)
+BOOL cliprdr_add_open_handle_data(DWORD openHandle, void* pUserData)
 {
 	void* pOpenHandle = (void*) (size_t) openHandle;
 
 	if (!g_OpenHandles)
+	{
 		g_OpenHandles = ListDictionary_New(TRUE);
+		if (!g_OpenHandles)
+			return FALSE;
+	}
 
-	ListDictionary_Add(g_OpenHandles, pOpenHandle, pUserData);
+	return ListDictionary_Add(g_OpenHandles, pOpenHandle, pUserData);
 }
 
 void* cliprdr_get_open_handle_data(DWORD openHandle)
@@ -882,19 +894,33 @@ static void cliprdr_virtual_channel_event_connected(cliprdrPlugin* cliprdr, LPVO
 	status = cliprdr->channelEntryPoints.pVirtualChannelOpen(cliprdr->InitHandle,
 		&cliprdr->OpenHandle, cliprdr->channelDef.name, cliprdr_virtual_channel_open_event);
 
-	cliprdr_add_open_handle_data(cliprdr->OpenHandle, cliprdr);
+	if (!cliprdr_add_open_handle_data(cliprdr->OpenHandle, cliprdr))
+	{
+		WLog_ERR(TAG,  "%s: unable to register open handle", __FUNCTION__);
+		return;
+	}
 
 	if (status != CHANNEL_RC_OK)
 	{
-		WLog_ERR(TAG,  "pVirtualChannelOpen failed with %s [%08X]",
+		WLog_ERR(TAG, "pVirtualChannelOpen failed with %s [%08X]",
 				 WTSErrorToString(status), status);
 		return;
 	}
 
 	cliprdr->queue = MessageQueue_New(NULL);
+	if (!cliprdr->queue)
+	{
+		WLog_ERR(TAG, "%s: unable to create message queue", __FUNCTION__);
+		return;
+	}
 
 	cliprdr->thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) cliprdr_virtual_channel_client_thread, (void*) cliprdr, 0, NULL);
+	if (!cliprdr->thread)
+	{
+		WLog_ERR(TAG, "%s: unable to create thread", __FUNCTION__);
+		return;
+	}
 }
 
 static void cliprdr_virtual_channel_event_disconnected(cliprdrPlugin* cliprdr)
@@ -1022,13 +1048,11 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 		WLog_ERR(TAG, "pVirtualChannelInit failed with %s [%08X]",
 				 WTSErrorToString(rc), rc);
 		free(cliprdr);
-		return -1;
+		return FALSE;
 	}
 
 	cliprdr->channelEntryPoints.pInterface = *(cliprdr->channelEntryPoints.ppInterface);
 	cliprdr->channelEntryPoints.ppInterface = &(cliprdr->channelEntryPoints.pInterface);
 
-	cliprdr_add_init_handle_data(cliprdr->InitHandle, (void*) cliprdr);
-
-	return 1;
+	return cliprdr_add_init_handle_data(cliprdr->InitHandle, (void*) cliprdr);
 }

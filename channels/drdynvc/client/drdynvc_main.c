@@ -47,14 +47,20 @@ static int dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
 	{
 		WLog_DBG(TAG, "create_listener: %d.%s.", dvcman->num_listeners, pszChannelName);
 
-		listener = (DVCMAN_LISTENER*) malloc(sizeof(DVCMAN_LISTENER));
-		ZeroMemory(listener, sizeof(DVCMAN_LISTENER));
+		listener = (DVCMAN_LISTENER*) calloc(1, sizeof(DVCMAN_LISTENER));
+		if (!listener)
+		{
+			WLog_WARN(TAG, "create_listener: unable to allocate listener.");
+			return 1;
+		}
 
 		listener->iface.GetConfiguration = dvcman_get_configuration;
 		listener->iface.pInterface = NULL;
 
 		listener->dvcman = dvcman;
 		listener->channel_name = _strdup(pszChannelName);
+		if (!listener->channel_name)
+			goto error_strdup;
 		listener->flags = ulFlags;
 		listener->listener_callback = pListenerCallback;
 
@@ -70,6 +76,10 @@ static int dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
 		WLog_WARN(TAG, "create_listener: Maximum DVC listener number reached.");
 		return 1;
 	}
+
+error_strdup:
+	free(listener);
+	return 1;
 }
 
 static int dvcman_register_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const char* name, IWTSPlugin* pPlugin)
@@ -178,16 +188,28 @@ IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
 	DVCMAN* dvcman;
 
 	dvcman = (DVCMAN*) calloc(1, sizeof(DVCMAN));
+	if (!dvcman)
+		return NULL;
 
 	dvcman->iface.CreateListener = dvcman_create_listener;
 	dvcman->iface.FindChannelById = dvcman_find_channel_by_id;
 	dvcman->iface.GetChannelId = dvcman_get_channel_id;
 	dvcman->drdynvc = plugin;
 	dvcman->channels = ArrayList_New(TRUE);
+	if (!dvcman->channels)
+		goto error_channels;
 	dvcman->channels->object.fnObjectFree = dvcman_channel_free;
 	dvcman->pool = StreamPool_New(TRUE, 10);
+	if (!dvcman->pool)
+		goto error_pool;
 
 	return (IWTSVirtualChannelManager*) dvcman;
+
+error_pool:
+	ArrayList_Free(dvcman->channels);
+error_channels:
+	free(dvcman);
+	return NULL;
 }
 
 int dvcman_load_addin(IWTSVirtualChannelManager* pChannelMgr, ADDIN_ARGV* args, rdpSettings* settings)
@@ -227,7 +249,6 @@ static DVCMAN_CHANNEL* dvcman_channel_new(IWTSVirtualChannelManager* pChannelMgr
 	}
 
 	channel = (DVCMAN_CHANNEL*) calloc(1, sizeof(DVCMAN_CHANNEL));
-
 	if (!channel)
 		return NULL;
 
@@ -351,12 +372,12 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Channel
 	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
 
 	channel = dvcman_channel_new(pChannelMgr, ChannelId, ChannelName);
-
 	if (!channel)
 		return 1;
 
 	channel->status = 1;
-	ArrayList_Add(dvcman->channels, channel);
+	if (ArrayList_Add(dvcman->channels, channel) < 0)
+		return 1;
 
 	for (i = 0; i < dvcman->num_listeners; i++)
 	{
@@ -578,6 +599,8 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, BYTE* data, UIN
 		return 1;
 
 	data_out = Stream_New(NULL, CHANNEL_CHUNK_LENGTH);
+	if (!data_out)
+		return 1;
 	Stream_SetPosition(data_out, 1);
 	cbChId = drdynvc_write_variable_uint(data_out, ChannelId);
 
@@ -661,6 +684,9 @@ static int drdynvc_send_capability_response(drdynvcPlugin* drdynvc)
 
 	WLog_DBG(TAG, "capability_response");
 	s = Stream_New(NULL, 4);
+	if (!s)
+		return CHANNEL_RC_NO_MEMORY;
+
 	Stream_Write_UINT16(s, 0x0050); /* Cmd+Sp+cbChId+Pad. Note: MSTSC sends 0x005c */
 	Stream_Write_UINT16(s, drdynvc->version);
 
@@ -897,12 +923,16 @@ static void drdynvc_order_recv(drdynvcPlugin* drdynvc, wStream* s)
 static wListDictionary* g_InitHandles = NULL;
 static wListDictionary* g_OpenHandles = NULL;
 
-void drdynvc_add_init_handle_data(void* pInitHandle, void* pUserData)
+BOOL drdynvc_add_init_handle_data(void* pInitHandle, void* pUserData)
 {
 	if (!g_InitHandles)
+	{
 		g_InitHandles = ListDictionary_New(TRUE);
+		if (!g_InitHandles)
+			return FALSE;
+	}
 
-	ListDictionary_Add(g_InitHandles, pInitHandle, pUserData);
+	return ListDictionary_Add(g_InitHandles, pInitHandle, pUserData);
 }
 
 void* drdynvc_get_init_handle_data(void* pInitHandle)
@@ -922,14 +952,18 @@ void drdynvc_remove_init_handle_data(void* pInitHandle)
 	}
 }
 
-void drdynvc_add_open_handle_data(DWORD openHandle, void* pUserData)
+BOOL drdynvc_add_open_handle_data(DWORD openHandle, void* pUserData)
 {
 	void* pOpenHandle = (void*) (size_t) openHandle;
 
 	if (!g_OpenHandles)
+	{
 		g_OpenHandles = ListDictionary_New(TRUE);
+		if (!g_OpenHandles)
+			return FALSE;
+	}
 
-	ListDictionary_Add(g_OpenHandles, pOpenHandle, pUserData);
+	return ListDictionary_Add(g_OpenHandles, pOpenHandle, pUserData);
 }
 
 void* drdynvc_get_open_handle_data(DWORD openHandle)
@@ -1063,7 +1097,11 @@ static void drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 	status = drdynvc->channelEntryPoints.pVirtualChannelOpen(drdynvc->InitHandle,
 		&drdynvc->OpenHandle, drdynvc->channelDef.name, drdynvc_virtual_channel_open_event);
 
-	drdynvc_add_open_handle_data(drdynvc->OpenHandle, drdynvc);
+	if (!drdynvc_add_open_handle_data(drdynvc->OpenHandle, drdynvc))
+	{
+		WLog_ERR(TAG, "%s: unable to register open handle", __FUNCTION__);
+		return;
+	}
 
 	if (status != CHANNEL_RC_OK)
 	{
@@ -1073,8 +1111,19 @@ static void drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 	}
 
 	drdynvc->queue = MessageQueue_New(NULL);
+	if (!drdynvc->queue)
+	{
+		WLog_ERR(TAG, "%s: unable to create message queue", __FUNCTION__);
+		return;
+	}
 
 	drdynvc->channel_mgr = dvcman_new(drdynvc);
+	if (!drdynvc->channel_mgr)
+	{
+		WLog_ERR(TAG, "%s: unable to create dvcman", __FUNCTION__);
+		return;
+	}
+
 	drdynvc->channel_error = 0;
 
 	settings = (rdpSettings*) drdynvc->channelEntryPoints.pExtendedData;
@@ -1091,6 +1140,11 @@ static void drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 
 	drdynvc->thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) drdynvc_virtual_channel_client_thread, (void*) drdynvc, 0, NULL);
+	if (!drdynvc->thread)
+	{
+		WLog_ERR(TAG, "%s: unable to create thread", __FUNCTION__);
+		return;
+	}
 }
 
 static void drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
@@ -1239,8 +1293,6 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	drdynvc->channelEntryPoints.pInterface = *(drdynvc->channelEntryPoints.ppInterface);
 	drdynvc->channelEntryPoints.ppInterface = &(drdynvc->channelEntryPoints.pInterface);
 
-	drdynvc_add_init_handle_data(drdynvc->InitHandle, (void*) drdynvc);
-
-	return 1;
+	return drdynvc_add_init_handle_data(drdynvc->InitHandle, (void*) drdynvc) ? 1 : -1;
 }
 

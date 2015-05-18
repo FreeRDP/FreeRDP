@@ -62,14 +62,14 @@ int rail_send(railPlugin* rail, wStream* s)
 	return status;
 }
 
-void rail_send_channel_data(railPlugin* rail, void* data, size_t length)
+BOOL rail_send_channel_data(railPlugin* rail, void* data, size_t length)
 {
 	wStream* s = NULL;
 
 	s = Stream_New(NULL, length);
 	Stream_Write(s, data, length);
 
-	rail_send(rail, s);
+	return rail_send(rail, s) == CHANNEL_RC_OK;
 }
 
 /**
@@ -96,24 +96,21 @@ int rail_client_execute(RailClientContext* context, RAIL_EXEC_ORDER* exec)
 	rail_string_to_unicode_string(exec->RemoteApplicationWorkingDir, &exec->workingDir); /* ShellWorkingDirectory */
 	rail_string_to_unicode_string(exec->RemoteApplicationArguments, &exec->arguments); /* RemoteApplicationCmdLine */
 
-	rail_send_client_exec_order(rail, exec);
-
-	return 0;
+	return rail_send_client_exec_order(rail, exec) ? 0 : -1;
 }
 
 int rail_client_activate(RailClientContext* context, RAIL_ACTIVATE_ORDER* activate)
 {
 	railPlugin* rail = (railPlugin*) context->handle;
 
-	rail_send_client_activate_order(rail, activate);
-
-	return 0;
+	return rail_send_client_activate_order(rail, activate) ? 0 : -1;
 }
 
-void rail_send_client_sysparam(RailClientContext* context, RAIL_SYSPARAM_ORDER* sysparam)
+BOOL rail_send_client_sysparam(RailClientContext* context, RAIL_SYSPARAM_ORDER* sysparam)
 {
 	wStream* s;
 	int length;
+	BOOL ret;
 	railPlugin* rail = (railPlugin*) context->handle;
 
 	length = RAIL_SYSPARAM_ORDER_LENGTH;
@@ -139,56 +136,63 @@ void rail_send_client_sysparam(RailClientContext* context, RAIL_SYSPARAM_ORDER* 
 	}
 
 	s = rail_pdu_init(RAIL_SYSPARAM_ORDER_LENGTH + 8);
-	rail_write_client_sysparam_order(s, sysparam);
-	rail_send_pdu(rail, s, RDP_RAIL_ORDER_SYSPARAM);
+	if (!s)
+		return FALSE;
+
+	ret = rail_write_client_sysparam_order(s, sysparam) &&
+			rail_send_pdu(rail, s, RDP_RAIL_ORDER_SYSPARAM);
+
 	Stream_Free(s, TRUE);
+	return ret;
 }
 
 int rail_client_system_param(RailClientContext* context, RAIL_SYSPARAM_ORDER* sysparam)
 {
+	BOOL ok = TRUE;
+
 	if (sysparam->params & SPI_MASK_SET_HIGH_CONTRAST)
 	{
 		sysparam->param = SPI_SET_HIGH_CONTRAST;
-		rail_send_client_sysparam(context, sysparam);
+		ok &= rail_send_client_sysparam(context, sysparam);
 	}
 
 	if (sysparam->params & SPI_MASK_TASKBAR_POS)
 	{
 		sysparam->param = SPI_TASKBAR_POS;
-		rail_send_client_sysparam(context, sysparam);
+		ok &= rail_send_client_sysparam(context, sysparam);
 	}
 
 	if (sysparam->params & SPI_MASK_SET_MOUSE_BUTTON_SWAP)
 	{
 		sysparam->param = SPI_SET_MOUSE_BUTTON_SWAP;
-		rail_send_client_sysparam(context, sysparam);
+		ok &= rail_send_client_sysparam(context, sysparam);
 	}
 
 	if (sysparam->params & SPI_MASK_SET_KEYBOARD_PREF)
 	{
 		sysparam->param = SPI_SET_KEYBOARD_PREF;
-		rail_send_client_sysparam(context, sysparam);
+		ok &= rail_send_client_sysparam(context, sysparam);
 	}
 
 	if (sysparam->params & SPI_MASK_SET_DRAG_FULL_WINDOWS)
 	{
 		sysparam->param = SPI_SET_DRAG_FULL_WINDOWS;
-		rail_send_client_sysparam(context, sysparam);
+		ok &= rail_send_client_sysparam(context, sysparam);
 	}
 
 	if (sysparam->params & SPI_MASK_SET_KEYBOARD_CUES)
 	{
 		sysparam->param = SPI_SET_KEYBOARD_CUES;
-		rail_send_client_sysparam(context, sysparam);
+		ok &= rail_send_client_sysparam(context, sysparam);
 	}
 
 	if (sysparam->params & SPI_MASK_SET_WORK_AREA)
 	{
 		sysparam->param = SPI_SET_WORK_AREA;
-		rail_send_client_sysparam(context, sysparam);
+		ok &= rail_send_client_sysparam(context, sysparam);
 	}
 
-	return 0;
+	return ok ? 0 : -1;
 }
 
 int rail_server_system_param(RailClientContext* context, RAIL_SYSPARAM_ORDER* sysparam)
@@ -200,18 +204,14 @@ int rail_client_system_command(RailClientContext* context, RAIL_SYSCOMMAND_ORDER
 {
 	railPlugin* rail = (railPlugin*) context->handle;
 
-	rail_send_client_syscommand_order(rail, syscommand);
-
-	return 0;
+	return rail_send_client_syscommand_order(rail, syscommand) ? 0 : -1;
 }
 
 int rail_client_handshake(RailClientContext* context, RAIL_HANDSHAKE_ORDER* handshake)
 {
 	railPlugin* rail = (railPlugin*) context->handle;
 
-	rail_send_handshake_order(rail, handshake);
-
-	return 0;
+	return rail_send_handshake_order(rail, handshake) ? 0 : -1;
 }
 
 int rail_server_handshake(RailClientContext* context, RAIL_HANDSHAKE_ORDER* handshake)
@@ -223,9 +223,7 @@ int rail_client_handshake_ex(RailClientContext* context, RAIL_HANDSHAKE_EX_ORDER
 {
 	railPlugin* rail = (railPlugin*) context->handle;
 
-	rail_send_handshake_ex_order(rail, handshakeEx);
-
-	return 0;
+	return rail_send_handshake_ex_order(rail, handshakeEx) ? 0 : -1;
 }
 
 int rail_server_handshake_ex(RailClientContext* context, RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
@@ -237,18 +235,14 @@ int rail_client_notify_event(RailClientContext* context, RAIL_NOTIFY_EVENT_ORDER
 {
 	railPlugin* rail = (railPlugin*) context->handle;
 
-	rail_send_client_notify_event_order(rail, notifyEvent);
-
-	return 0;
+	return rail_send_client_notify_event_order(rail, notifyEvent) ? 0 : -1;
 }
 
 int rail_client_window_move(RailClientContext* context, RAIL_WINDOW_MOVE_ORDER* windowMove)
 {
 	railPlugin* rail = (railPlugin*) context->handle;
 
-	rail_send_client_window_move_order(rail, windowMove);
-
-	return 0;
+	return rail_send_client_window_move_order(rail, windowMove) ? 0 : -1;
 }
 
 int rail_server_local_move_size(RailClientContext* context, RAIL_LOCALMOVESIZE_ORDER* localMoveSize)
@@ -265,27 +259,21 @@ int rail_client_information(RailClientContext* context, RAIL_CLIENT_STATUS_ORDER
 {
 	railPlugin* rail = (railPlugin*) context->handle;
 
-	rail_send_client_status_order(rail, clientStatus);
-
-	return 0;
+	return rail_send_client_status_order(rail, clientStatus) ? 0 : -1;
 }
 
 int rail_client_system_menu(RailClientContext* context, RAIL_SYSMENU_ORDER* sysmenu)
 {
 	railPlugin* rail = (railPlugin*) context->handle;
 
-	rail_send_client_sysmenu_order(rail, sysmenu);
-
-	return 0;
+	return rail_send_client_sysmenu_order(rail, sysmenu) ? 0 : -1;
 }
 
 int rail_client_language_bar_info(RailClientContext* context, RAIL_LANGBAR_INFO_ORDER* langBarInfo)
 {
 	railPlugin* rail = (railPlugin*) context->handle;
 
-	rail_send_client_langbar_info_order(rail, langBarInfo);
-
-	return 0;
+	return rail_send_client_langbar_info_order(rail, langBarInfo) ? 0 : -1;
 }
 
 int rail_server_language_bar_info(RailClientContext* context, RAIL_LANGBAR_INFO_ORDER* langBarInfo)
@@ -302,9 +290,7 @@ int rail_client_get_appid_request(RailClientContext* context, RAIL_GET_APPID_REQ
 {
 	railPlugin* rail = (railPlugin*) context->handle;
 
-	rail_send_client_get_appid_req_order(rail, getAppIdReq);
-
-	return 0;
+	return rail_send_client_get_appid_req_order(rail, getAppIdReq) ? 0 : -1;
 }
 
 int rail_server_get_appid_response(RailClientContext* context, RAIL_GET_APPID_RESP_ORDER* getAppIdResp)
@@ -317,12 +303,16 @@ int rail_server_get_appid_response(RailClientContext* context, RAIL_GET_APPID_RE
 static wListDictionary* g_InitHandles = NULL;
 static wListDictionary* g_OpenHandles = NULL;
 
-void rail_add_init_handle_data(void* pInitHandle, void* pUserData)
+BOOL rail_add_init_handle_data(void* pInitHandle, void* pUserData)
 {
 	if (!g_InitHandles)
+	{
 		g_InitHandles = ListDictionary_New(TRUE);
+		if (!g_InitHandles)
+			return FALSE;
+	}
 
-	ListDictionary_Add(g_InitHandles, pInitHandle, pUserData);
+	return ListDictionary_Add(g_InitHandles, pInitHandle, pUserData);
 }
 
 void* rail_get_init_handle_data(void* pInitHandle)
@@ -342,14 +332,18 @@ void rail_remove_init_handle_data(void* pInitHandle)
 	}
 }
 
-void rail_add_open_handle_data(DWORD openHandle, void* pUserData)
+BOOL rail_add_open_handle_data(DWORD openHandle, void* pUserData)
 {
 	void* pOpenHandle = (void*) (size_t) openHandle;
 
 	if (!g_OpenHandles)
+	{
 		g_OpenHandles = ListDictionary_New(TRUE);
+		if (!g_OpenHandles)
+			return FALSE;
+	}
 
-	ListDictionary_Add(g_OpenHandles, pOpenHandle, pUserData);
+	return ListDictionary_Add(g_OpenHandles, pOpenHandle, pUserData);
 }
 
 void* rail_get_open_handle_data(DWORD openHandle)
@@ -387,10 +381,19 @@ static void rail_virtual_channel_event_data_received(railPlugin* rail,
 			Stream_Free(rail->data_in, TRUE);
 
 		rail->data_in = Stream_New(NULL, totalLength);
+		if (!rail->data_in)
+		{
+			WLog_ERR(TAG, "%s: unable to allocate data_in", __FUNCTION__);
+			return;
+		}
 	}
 
 	data_in = rail->data_in;
-	Stream_EnsureRemainingCapacity(data_in, (int) dataLength);
+	if (!Stream_EnsureRemainingCapacity(data_in, (int) dataLength))
+	{
+		WLog_ERR(TAG, "%s: unable to grow data_in to %d", __FUNCTION__, dataLength);
+		return;
+	}
 	Stream_Write(data_in, pData, dataLength);
 
 	if (dataFlags & CHANNEL_FLAG_LAST)
@@ -455,7 +458,11 @@ static void* rail_virtual_channel_client_thread(void* arg)
 			if (message.id == 0)
 			{
 				data = (wStream*) message.wParam;
-				rail_order_recv(rail, data);
+				if (!rail_order_recv(rail, data))
+				{
+					WLog_ERR(TAG, "%s: invalid message, exiting", __FUNCTION__);
+					break;
+				}
 			}
 		}
 	}
@@ -471,7 +478,11 @@ static void rail_virtual_channel_event_connected(railPlugin* rail, LPVOID pData,
 	status = rail->channelEntryPoints.pVirtualChannelOpen(rail->InitHandle,
 		&rail->OpenHandle, rail->channelDef.name, rail_virtual_channel_open_event);
 
-	rail_add_open_handle_data(rail->OpenHandle, rail);
+	if (!rail_add_open_handle_data(rail->OpenHandle, rail))
+	{
+		WLog_ERR(TAG,  "%s: unable to register open handle", __FUNCTION__);
+		return;
+	}
 
 	if (status != CHANNEL_RC_OK)
 	{
@@ -481,6 +492,11 @@ static void rail_virtual_channel_event_connected(railPlugin* rail, LPVOID pData,
 	}
 
 	rail->queue = MessageQueue_New(NULL);
+	if (!rail->queue)
+	{
+		WLog_ERR(TAG, "%s: unable to create a message queue", __FUNCTION__);
+		return;
+	}
 
 	rail->thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) rail_virtual_channel_client_thread, (void*) rail, 0, NULL);
@@ -574,6 +590,8 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 			(pEntryPointsEx->MagicNumber == FREERDP_CHANNEL_MAGIC_NUMBER))
 	{
 		context = (RailClientContext*) calloc(1, sizeof(RailClientContext));
+		if (!context)
+			return FALSE;
 
 		context->handle = (void*) rail;
 		context->custom = NULL;
@@ -623,7 +641,5 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	rail->channelEntryPoints.pInterface = *(rail->channelEntryPoints.ppInterface);
 	rail->channelEntryPoints.ppInterface = &(rail->channelEntryPoints.pInterface);
 
-	rail_add_init_handle_data(rail->InitHandle, (void*) rail);
-
-	return 1;
+	return rail_add_init_handle_data(rail->InitHandle, (void*) rail) ? 1 : -1;
 }

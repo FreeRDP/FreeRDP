@@ -79,21 +79,28 @@ SMARTCARD_CONTEXT* smartcard_context_new(SMARTCARD_DEVICE* smartcard, SCARDCONTE
 	SMARTCARD_CONTEXT* pContext;
 
 	pContext = (SMARTCARD_CONTEXT*) calloc(1, sizeof(SMARTCARD_CONTEXT));
-
 	if (!pContext)
 		return pContext;
 
 	pContext->smartcard = smartcard;
-
 	pContext->hContext = hContext;
 
 	pContext->IrpQueue = MessageQueue_New(NULL);
+	if (!pContext->IrpQueue)
+		goto error_irpqueue;
 
 	pContext->thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) smartcard_context_thread,
 			pContext, 0, NULL);
-
+	if (!pContext->thread)
+		goto error_thread;
 	return pContext;
+
+error_thread:
+	MessageQueue_Free(pContext->IrpQueue);
+error_irpqueue:
+	free(pContext);
+	return NULL;
 }
 
 void smartcard_context_free(SMARTCARD_CONTEXT* pContext)
@@ -486,7 +493,6 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	path = device->Path;
 
 	smartcard = (SMARTCARD_DEVICE*) calloc(1, sizeof(SMARTCARD_DEVICE));
-
 	if (!smartcard)
 		return -1;
 
@@ -498,6 +504,8 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 	length = strlen(smartcard->device.name);
 	smartcard->device.data = Stream_New(NULL, length + 1);
+	if (!smartcard->device.data)
+		goto error_device_data;
 
 	Stream_Write(smartcard->device.data, "SCARD", 6);
 
@@ -518,23 +526,47 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	}
 
 	smartcard->IrpQueue = MessageQueue_New(NULL);
+	if (!smartcard->IrpQueue)
+		goto error_irp_queue;
 
 	smartcard->CompletedIrpQueue = Queue_New(TRUE, -1, -1);
+	if (!smartcard->CompletedIrpQueue)
+		goto error_completed_irp_queue;
 
 	smartcard->rgSCardContextList = ListDictionary_New(TRUE);
+	if (!smartcard->rgSCardContextList)
+		goto error_context_list;
 
 	ListDictionary_ValueObject(smartcard->rgSCardContextList)->fnObjectFree =
 			(OBJECT_FREE_FN) smartcard_context_free;
 
 	smartcard->rgOutstandingMessages = ListDictionary_New(TRUE);
+	if (!smartcard->rgOutstandingMessages)
+		goto error_outstanding_messages;
 
 	smartcard->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) smartcard_thread_func,
 			smartcard, CREATE_SUSPENDED, NULL);
+	if (!smartcard->thread)
+		goto error_thread;
 
 	pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*) smartcard);
 
 	ResumeThread(smartcard->thread);
 
 	return 0;
+
+error_thread:
+	ListDictionary_Free(smartcard->rgOutstandingMessages);
+error_outstanding_messages:
+	ListDictionary_Free(smartcard->rgSCardContextList);
+error_context_list:
+	Queue_Free(smartcard->CompletedIrpQueue);
+error_completed_irp_queue:
+	MessageQueue_Free(smartcard->IrpQueue);
+error_irp_queue:
+	Stream_Free(smartcard->device.data, TRUE);
+error_device_data:
+	free(smartcard);
+	return -1;
 }
 

@@ -239,9 +239,15 @@ OPENSL_STREAM *android_OpenRecDevice(char *name, int sr, int inchannels,
 
   p->inchannels = inchannels;
   p->sr = sr;
-	p->queue = Queue_New(TRUE, -1, -1);
-	p->buffersize = bufferframes;
-	p->bits_per_sample = bits_per_sample;
+  p->queue = Queue_New(TRUE, -1, -1);
+  if (!p->queue)
+  {
+	android_CloseRecDevice(p);
+	return NULL;
+  }
+
+  p->buffersize = bufferframes;
+  p->bits_per_sample = bits_per_sample;
 
 	if ((p->bits_per_sample != 8) && (p->bits_per_sample != 16))
 	{

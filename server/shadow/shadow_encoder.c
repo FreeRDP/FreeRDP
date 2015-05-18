@@ -53,7 +53,8 @@ int shadow_encoder_create_frame_id(rdpShadowEncoder* encoder)
 		return -1;
 
 	frameId = frame->frameId = ++encoder->frameId;
-	ListDictionary_Add(encoder->frameList, (void*) (size_t) frame->frameId, frame);
+	if (!ListDictionary_Add(encoder->frameList, (void*) (size_t) frame->frameId, frame))
+		return -1;
 
 	return (int) frame->frameId;
 }
@@ -135,6 +136,8 @@ int shadow_encoder_init_rfx(rdpShadowEncoder* encoder)
 		encoder->maxFps = 32;
 		encoder->frameId = 0;
 		encoder->frameList = ListDictionary_New(TRUE);
+		if (!encoder->frameList)
+			return -1;
 		encoder->frameAck = settings->SurfaceFrameMarkerEnabled;
 	}
 
@@ -162,6 +165,8 @@ int shadow_encoder_init_nsc(rdpShadowEncoder* encoder)
 		encoder->maxFps = 32;
 		encoder->frameId = 0;
 		encoder->frameList = ListDictionary_New(TRUE);
+		if (!encoder->frameList)
+			return -1;
 		encoder->frameAck = settings->SurfaceFrameMarkerEnabled;
 	}
 

@@ -67,7 +67,8 @@ static void* drdynvc_server_thread(void* arg)
 			break;
 		}
 
-		WTSVirtualChannelRead(context->priv->ChannelHandle, 0, NULL, 0, &BytesReturned);
+		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0, NULL, 0, &BytesReturned))
+			break;
 		if (BytesReturned < 1)
 			continue;
 		if (!Stream_EnsureRemainingCapacity(s, BytesReturned))
@@ -87,7 +88,6 @@ static void* drdynvc_server_thread(void* arg)
 static int drdynvc_server_start(DrdynvcServerContext* context)
 {
 	context->priv->ChannelHandle = WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, "drdynvc");
-
 	if (!context->priv->ChannelHandle)
 		return -1;
 

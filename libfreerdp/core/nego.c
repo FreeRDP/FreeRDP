@@ -327,6 +327,8 @@ BOOL nego_send_preconnection_pdu(rdpNego* nego)
 	}
 
 	s = Stream_New(NULL, cbSize);
+	if (!s)
+		return FALSE;
 
 	Stream_Write_UINT32(s, cbSize); /* cbSize */
 	Stream_Write_UINT32(s, 0); /* Flags */
