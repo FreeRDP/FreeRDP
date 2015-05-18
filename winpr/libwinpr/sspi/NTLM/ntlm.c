@@ -671,21 +671,27 @@ SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phContext, UL
 		context->UseSamFileDatabase = FALSE;
 		credentials = context->credentials;
 		ZeroMemory(AuthIdentity, sizeof(SecPkgContext_AuthIdentity));
-		UserA = AuthIdentity->User;
-		status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) credentials->identity.User,
-									credentials->identity.UserLength,
-									&UserA, 256, NULL, NULL);
 
-		if (status <= 0)
-			return SEC_E_INTERNAL_ERROR;
+		UserA = AuthIdentity->User;
+		if (credentials->identity.UserLength > 0) {
+			status = ConvertFromUnicode(CP_UTF8, 0,
+			    (WCHAR *)credentials->identity.User,
+			    credentials->identity.UserLength, &UserA, 256, NULL,
+			    NULL);
+			if (status <= 0)
+				return SEC_E_INTERNAL_ERROR;
+		}
 
 		DomainA = AuthIdentity->Domain;
-		status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) credentials->identity.Domain,
-									credentials->identity.DomainLength,
-									&DomainA, 256, NULL, NULL);
+		if (credentials->identity.DomainLength > 0) {
+			status = ConvertFromUnicode(CP_UTF8, 0,
+			    (WCHAR *)credentials->identity.Domain,
+			    credentials->identity.DomainLength, &DomainA, 256,
+			    NULL, NULL);
 
-		if (status <= 0)
-			return SEC_E_INTERNAL_ERROR;
+			if (status <= 0)
+				return SEC_E_INTERNAL_ERROR;
+		}
 
 		return SEC_E_OK;
 	}
