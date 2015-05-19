@@ -38,7 +38,7 @@ RemdeskClientContext* remdesk_get_client_interface(remdeskPlugin* remdesk)
 	return pInterface;
 }
 
-int remdesk_virtual_channel_write(remdeskPlugin* remdesk, wStream* s)
+static int remdesk_virtual_channel_write(remdeskPlugin* remdesk, wStream* s)
 {
 	UINT32 status = 0;
 
