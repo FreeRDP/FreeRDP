@@ -871,6 +871,8 @@ int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 	rail->ServerGetAppIdResponse = xf_rail_server_get_appid_response;
 
 	xfc->railWindows = HashTable_New(TRUE);
+	if (!xfc->railWindows)
+		return 0;
 
 	return 1;
 }

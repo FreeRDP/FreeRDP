@@ -314,7 +314,7 @@ exit:
 	return rc;
 }
 
-static void winpr_StartThread(WINPR_THREAD *thread)
+static BOOL winpr_StartThread(WINPR_THREAD *thread)
 {
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
@@ -326,10 +326,17 @@ static void winpr_StartThread(WINPR_THREAD *thread)
 	thread->started = TRUE;
 	reset_event(thread);
 
-	pthread_create(&thread->thread, &attr, thread_launcher, thread);
-	ListDictionary_Add(thread_list, &thread->thread, thread);
+	if (pthread_create(&thread->thread, &attr, thread_launcher, thread))
+		goto error;
+	if (!ListDictionary_Add(thread_list, &thread->thread, thread))
+		goto error;
 	pthread_attr_destroy(&attr);
 	dump_thread(thread);
+	return TRUE;
+
+error:
+	pthread_attr_destroy(&attr);
+	return FALSE;
 }
 
 HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
@@ -353,22 +360,22 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 	thread->create_stack = winpr_backtrace(20);
 	dump_thread(thread);
 #endif
+	thread->pipe_fd[0] = -1;
+	thread->pipe_fd[1] = -1;
 	
 #ifdef HAVE_EVENTFD_H
 	thread->pipe_fd[0] = eventfd(0, EFD_NONBLOCK);
 
 	if (thread->pipe_fd[0] < 0)
 	{
-		WLog_ERR(TAG, "failed to create thread");
-		free(thread);
-		return NULL;
+		WLog_ERR(TAG, "failed to create thread pipe fd 0");
+		goto error_pipefd0;
 	}
 #else
 	if (pipe(thread->pipe_fd) < 0)
 	{
-		WLog_ERR(TAG, "failed to create thread");
-		free(thread);
-		return NULL;
+		WLog_ERR(TAG, "failed to create thread pipe");
+		goto error_pipefd0;
 	}
 	
 	{
@@ -380,12 +387,7 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 	if(pthread_mutex_init(&thread->mutex, 0) != 0)
 	{
 		WLog_ERR(TAG, "failed to initialize thread mutex");
-		if (thread->pipe_fd[0])
-			close(thread->pipe_fd[0]);
-		if (thread->pipe_fd[1])
-			close(thread->pipe_fd[1]);
-		free(thread);
-		return NULL;
+		goto error_mutex;
 	}
 
 	WINPR_HANDLE_SET_TYPE(thread, HANDLE_TYPE_THREAD);
@@ -397,22 +399,34 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 		if (!thread_list)
 		{
 			WLog_ERR(TAG, "Couldn't create global thread list");
-			if (thread->pipe_fd[0])
-				close(thread->pipe_fd[0]);
-			if (thread->pipe_fd[1])
-				close(thread->pipe_fd[1]);
-			free(thread);
-			return NULL;
+			goto error_thread_list;
 		}
 		thread_list->objectKey.fnObjectEquals = thread_compare;
 	}
 
 	if (!(dwCreationFlags & CREATE_SUSPENDED))
-		winpr_StartThread(thread);
+	{
+		if (!winpr_StartThread(thread))
+			goto error_thread_list;
+	}
 	else
-		set_event(thread);
+	{
+		if (!set_event(thread))
+			goto error_thread_list;
+	}
 
 	return handle;
+
+error_thread_list:
+	pthread_mutex_destroy(&thread->mutex);
+error_mutex:
+	if (thread->pipe_fd[1] >= 0)
+		close(thread->pipe_fd[1]);
+	if (thread->pipe_fd[0] >= 0)
+		close(thread->pipe_fd[0]);
+error_pipefd0:
+	free(thread);
+	return NULL;
 }
 
 void cleanup_handle(void *obj)

@@ -786,12 +786,15 @@ static void rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 static wListDictionary* g_InitHandles = NULL;
 static wListDictionary* g_OpenHandles = NULL;
 
-void rdpdr_add_init_handle_data(void* pInitHandle, void* pUserData)
+BOOL rdpdr_add_init_handle_data(void* pInitHandle, void* pUserData)
 {
 	if (!g_InitHandles)
+	{
 		g_InitHandles = ListDictionary_New(TRUE);
-
-	ListDictionary_Add(g_InitHandles, pInitHandle, pUserData);
+		if (!g_InitHandles)
+			return FALSE;
+	}
+	return ListDictionary_Add(g_InitHandles, pInitHandle, pUserData);
 }
 
 void* rdpdr_get_init_handle_data(void* pInitHandle)
@@ -811,14 +814,18 @@ void rdpdr_remove_init_handle_data(void* pInitHandle)
 	}
 }
 
-void rdpdr_add_open_handle_data(DWORD openHandle, void* pUserData)
+BOOL rdpdr_add_open_handle_data(DWORD openHandle, void* pUserData)
 {
 	void* pOpenHandle = (void*) (size_t) openHandle;
 
 	if (!g_OpenHandles)
+	{
 		g_OpenHandles = ListDictionary_New(TRUE);
+		if (!g_OpenHandles)
+			return FALSE;
+	}
 
-	ListDictionary_Add(g_OpenHandles, pOpenHandle, pUserData);
+	return ListDictionary_Add(g_OpenHandles, pOpenHandle, pUserData);
 }
 
 void* rdpdr_get_open_handle_data(DWORD openHandle)
@@ -973,7 +980,11 @@ static void rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, LPVOID pDa
 	status = rdpdr->channelEntryPoints.pVirtualChannelOpen(rdpdr->InitHandle,
 		&rdpdr->OpenHandle, rdpdr->channelDef.name, rdpdr_virtual_channel_open_event);
 
-	rdpdr_add_open_handle_data(rdpdr->OpenHandle, rdpdr);
+	if (!rdpdr_add_open_handle_data(rdpdr->OpenHandle, rdpdr))
+	{
+		WLog_ERR(TAG,  "%s: unable to register open handle", __FUNCTION__);
+		return;
+	}
 
 	if (status != CHANNEL_RC_OK)
 	{
@@ -983,9 +994,19 @@ static void rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, LPVOID pDa
 	}
 
 	rdpdr->queue = MessageQueue_New(NULL);
+	if (!rdpdr->queue)
+	{
+		WLog_ERR(TAG, "%s: unable to create queue", __FUNCTION__);
+		return;
+	}
 
 	rdpdr->thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) rdpdr_virtual_channel_client_thread, (void*) rdpdr, 0, NULL);
+	if (!rdpdr->thread)
+	{
+		WLog_ERR(TAG, "%s: unable to create thread", __FUNCTION__);
+		return;
+	}
 }
 
 static void rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
@@ -1094,7 +1115,5 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 		return -1;
 	}
 
-	rdpdr_add_init_handle_data(rdpdr->InitHandle, (void*) rdpdr);
-
-	return 1;
+	return rdpdr_add_init_handle_data(rdpdr->InitHandle, (void*) rdpdr) ? 1 : -1;
 }

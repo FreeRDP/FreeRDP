@@ -51,6 +51,6 @@ struct rail_plugin
 typedef struct rail_plugin railPlugin;
 
 RailClientContext* rail_get_client_interface(railPlugin* rail);
-void rail_send_channel_data(railPlugin* rail, void* data, size_t length);
+BOOL rail_send_channel_data(railPlugin* rail, void* data, size_t length);
 
 #endif /* FREERDP_CHANNEL_CLIENT_RAIL_MAIN_H */

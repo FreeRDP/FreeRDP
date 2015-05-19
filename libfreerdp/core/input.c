@@ -590,13 +590,15 @@ rdpInput* input_new(rdpRdp* rdp)
 	const wObject cb = { NULL, NULL, NULL, input_free_queued_message, NULL };
 	rdpInput* input;
 
-	input = (rdpInput*) malloc(sizeof(rdpInput));
+	input = (rdpInput*) calloc(1, sizeof(rdpInput));
+	if (!input)
+		return NULL;
 
-	if (input != NULL)
+	input->queue = MessageQueue_New(&cb);
+	if (!input->queue)
 	{
-		ZeroMemory(input, sizeof(rdpInput));
-
-		input->queue = MessageQueue_New(&cb);
+		free(input);
+		return NULL;
 	}
 
 	return input;

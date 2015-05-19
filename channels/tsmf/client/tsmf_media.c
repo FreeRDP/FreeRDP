@@ -279,7 +279,6 @@ TSMF_PRESENTATION* tsmf_presentation_new(const BYTE* guid, IWTSVirtualChannelCal
 		return NULL;
 
 	presentation = (TSMF_PRESENTATION*) calloc(1, sizeof(TSMF_PRESENTATION));
-
 	if (!presentation)
 	{
 		WLog_ERR(TAG, "calloc failed");
@@ -290,11 +289,22 @@ TSMF_PRESENTATION* tsmf_presentation_new(const BYTE* guid, IWTSVirtualChannelCal
 	presentation->channel_callback = pChannelCallback;
 	presentation->volume = 5000; /* 50% */
 	presentation->stream_list = ArrayList_New(TRUE);
+	if (presentation->stream_list)
+		goto error_stream_list;
+
 	ArrayList_Object(presentation->stream_list)->fnObjectFree = (OBJECT_FREE_FN) _tsmf_stream_free;
 
-	ArrayList_Add(presentation_list, presentation);
+	if (ArrayList_Add(presentation_list, presentation) < 0)
+		goto error_add;
 
 	return presentation;
+
+error_add:
+	ArrayList_Free(presentation->stream_list);
+error_stream_list:
+	free(presentation);
+	return NULL;
+
 }
 
 static char* guid_to_string(const BYTE* guid, char* str, size_t len)
@@ -937,7 +947,6 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id)
 	}
 
 	stream = (TSMF_STREAM*) calloc(1, sizeof(TSMF_STREAM));
-
 	if (!stream)
 	{
 		WLog_ERR(TAG, "Calloc failed");
@@ -947,17 +956,49 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id)
 	stream->stream_id = stream_id;
 	stream->presentation = presentation;
 	stream->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (!stream->stopEvent)
+		goto error_stopEvent;
 	stream->ready = CreateEvent(NULL, TRUE, TRUE, NULL);
+	if (!stream->ready)
+		goto error_ready;
 	stream->sample_list = Queue_New(TRUE, -1, -1);
+	if (!stream->sample_list)
+		goto error_sample_list;
 	stream->sample_list->object.fnObjectFree = tsmf_sample_free;
 	stream->sample_ack_list = Queue_New(TRUE, -1, -1);
+	if (!stream->sample_ack_list)
+		goto error_sample_ack_list;
 	stream->sample_ack_list->object.fnObjectFree = tsmf_sample_free;
-	stream->play_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) tsmf_stream_playback_func, stream, 0, NULL);
-	stream->ack_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)tsmf_stream_ack_func, stream, 0, NULL);
 
-	ArrayList_Add(presentation->stream_list, stream);
+	stream->play_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) tsmf_stream_playback_func, stream, 0, NULL);
+	if (!stream->play_thread)
+		goto error_play_thread;
+	stream->ack_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)tsmf_stream_ack_func, stream, 0, NULL);
+	if (!stream->ack_thread)
+		goto error_ack_thread;
+
+	if (ArrayList_Add(presentation->stream_list, stream) < 0)
+		goto error_add;
 
 	return stream;
+
+error_add:
+	SetEvent(stream->stopEvent);
+	WaitForSingleObject(stream->ack_thread, INFINITE);
+error_ack_thread:
+	SetEvent(stream->stopEvent);
+	WaitForSingleObject(stream->play_thread, INFINITE);
+error_play_thread:
+	Queue_Free(stream->sample_ack_list);
+error_sample_ack_list:
+	Queue_Free(stream->sample_list);
+error_sample_list:
+	CloseHandle(stream->ready);
+error_ready:
+	CloseHandle(stream->stopEvent);
+error_stopEvent:
+	free(stream);
+	return NULL;
 }
 
 TSMF_STREAM *tsmf_stream_find_by_id(TSMF_PRESENTATION* presentation, UINT32 stream_id)
@@ -1151,7 +1192,7 @@ static void tsmf_signal_handler(int s)
 
 #endif
 
-void tsmf_media_init(void)
+BOOL tsmf_media_init(void)
 {
 #ifndef _WIN32
 	struct sigaction sigtrap;
@@ -1165,6 +1206,9 @@ void tsmf_media_init(void)
 	if (!presentation_list)
 	{
 		presentation_list = ArrayList_New(TRUE);
+		if (!presentation_list)
+			return FALSE;
 		ArrayList_Object(presentation_list)->fnObjectFree = (OBJECT_FREE_FN) _tsmf_presentation_free;
 	}
+	return TRUE;
 }

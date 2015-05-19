@@ -95,9 +95,7 @@ BOOL shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 	if (!(client->encoder = shadow_encoder_new(client)))
 		goto fail_encoder_new;
 
-	ArrayList_Add(server->clients, (void*) client);
-
-	return TRUE;
+	return ArrayList_Add(server->clients, (void*) client) >= 0;
 
 fail_encoder_new:
 	CloseHandle(client->encoder);
