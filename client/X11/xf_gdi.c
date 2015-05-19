@@ -726,45 +726,36 @@ BOOL xf_gdi_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
 	return ret;
 }
 
-static BOOL xf_gdi_invalidate_poly_region(xfContext* xfc, XPoint* points, int npoints, BOOL autoclose)
+static BOOL xf_gdi_invalidate_poly_region(xfContext* xfc, XPoint* points, int npoints)
 {
-	int i, x, y, x1, y1, x2, y2, w, h;
+	int x, y, x1, y1, x2, y2;
 
-	x1 = points[0].x;
-	y1 = points[0].y;
+	if (npoints < 2)
+		return FALSE;
 
-	for (i = 1; i <= npoints; i++)
+	x = x1 = x2 = points->x;
+	y = y1 = y2 = points->y;
+
+	while (--npoints)
 	{
-		if (i == npoints)
-		{
-			if (!autoclose)
-				break;
+		points++;
+		x += points->x;
+		y += points->y;
 
-			x2 = points[0].x;
-			y2 = points[0].y;
-
-			if (x2 == points[0].x && y2 == points[0].y)
-				break;
-		}
-		else
-		{
-			x2 = points[i].x + x1;
-			y2 = points[i].y + y1;
-		}
-
-		x = MIN(x1, x2);
-		y = MIN(y1, y2);
-
-		w = abs(x2 - x1) + 1;
-		h = abs(y2 - y1) + 1;
-
-		x1 = x2;
-		y1 = y2;
-
-		if (!gdi_InvalidateRegion(xfc->hdc, x, y, w, h))
-			return FALSE;
+		if (x > x2)
+			x2 = x;
+		if (x < x1)
+			x1 = x;
+		if (y > y2)
+			y2 = y;
+		if (y < y1)
+			y1 = y;
 	}
-	return TRUE;
+
+	x2++;
+	y2++;
+
+	return gdi_InvalidateRegion(xfc->hdc, x1, y1, x2 - x1, y2 - y1);
 }
 
 BOOL xf_gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
@@ -805,7 +796,7 @@ BOOL xf_gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 
 	if (xfc->drawing == xfc->primary)
 	{
-		if (!xf_gdi_invalidate_poly_region(xfc, points, npoints, FALSE))
+		if (!xf_gdi_invalidate_poly_region(xfc, points, npoints))
 			ret = FALSE;
 	}
 
@@ -911,6 +902,7 @@ BOOL xf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	return ret;
 }
 
+
 BOOL xf_gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
 {
 	int i, npoints;
@@ -964,7 +956,7 @@ BOOL xf_gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
 
 	if (xfc->drawing == xfc->primary)
 	{
-		if (!xf_gdi_invalidate_poly_region(xfc, points, npoints, TRUE))
+		if (!xf_gdi_invalidate_poly_region(xfc, points, npoints))
 			ret = FALSE;
 	}
 
@@ -1060,7 +1052,7 @@ BOOL xf_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 
 		if (xfc->drawing == xfc->primary)
 		{
-			if (!xf_gdi_invalidate_poly_region(xfc, points, npoints, TRUE))
+			if (!xf_gdi_invalidate_poly_region(xfc, points, npoints))
 				ret = FALSE;
 		}
 	}
