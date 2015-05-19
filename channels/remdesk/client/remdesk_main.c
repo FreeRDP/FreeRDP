@@ -859,5 +859,5 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	remdesk->channelEntryPoints.pInterface = *(remdesk->channelEntryPoints.ppInterface);
 	remdesk->channelEntryPoints.ppInterface = &(remdesk->channelEntryPoints.pInterface);
 
-	return remdesk_add_init_handle_data(remdesk->InitHandle, (void*) remdesk) ? 1 : -1;
+	return remdesk_add_init_handle_data(remdesk->InitHandle, (void*) remdesk);
 }

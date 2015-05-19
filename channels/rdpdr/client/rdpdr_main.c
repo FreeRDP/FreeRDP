@@ -1115,5 +1115,5 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 		return -1;
 	}
 
-	return rdpdr_add_init_handle_data(rdpdr->InitHandle, (void*) rdpdr) ? 1 : -1;
+	return rdpdr_add_init_handle_data(rdpdr->InitHandle, (void*) rdpdr);
 }

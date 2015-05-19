@@ -1184,5 +1184,5 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 		return -1;
 	}
 
-	return rdpsnd_add_init_handle_data(rdpsnd->InitHandle, (void*) rdpsnd) ? 1 : -1;
+	return rdpsnd_add_init_handle_data(rdpsnd->InitHandle, (void*) rdpsnd);
 }
