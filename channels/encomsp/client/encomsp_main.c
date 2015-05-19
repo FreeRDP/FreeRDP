@@ -1003,5 +1003,5 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	encomsp->channelEntryPoints.pInterface = *(encomsp->channelEntryPoints.ppInterface);
 	encomsp->channelEntryPoints.ppInterface = &(encomsp->channelEntryPoints.pInterface);
 
-	return encomsp_add_init_handle_data(encomsp->InitHandle, (void*) encomsp) ? 1 : -1;
+	return encomsp_add_init_handle_data(encomsp->InitHandle, (void*) encomsp);
 }

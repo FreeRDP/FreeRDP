@@ -641,5 +641,5 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	rail->channelEntryPoints.pInterface = *(rail->channelEntryPoints.ppInterface);
 	rail->channelEntryPoints.ppInterface = &(rail->channelEntryPoints.pInterface);
 
-	return rail_add_init_handle_data(rail->InitHandle, (void*) rail) ? 1 : -1;
+	return rail_add_init_handle_data(rail->InitHandle, (void*) rail);
 }
