@@ -28,6 +28,7 @@
 #include "../shadow_surface.h"
 #include "../shadow_capture.h"
 #include "../shadow_subsystem.h"
+#include "../shadow_mcevent.h"
 
 #include "win_shadow.h"
 
@@ -287,14 +288,7 @@ int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 
 	count = ArrayList_Count(server->clients);
 
-	InitializeSynchronizationBarrier(&(subsystem->barrier), count + 1, -1);
-
-	SetEvent(subsystem->updateEvent);
-
-	EnterSynchronizationBarrier(&(subsystem->barrier), 0);
-	ResetEvent(subsystem->updateEvent);
-
-	DeleteSynchronizationBarrier(&(subsystem->barrier));
+	shadow_multiclient_publish_and_wait(subsystem->updateEvent);
 
 	ArrayList_Unlock(server->clients);
 

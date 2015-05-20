@@ -46,6 +46,7 @@ typedef struct rdp_shadow_surface rdpShadowSurface;
 typedef struct rdp_shadow_encoder rdpShadowEncoder;
 typedef struct rdp_shadow_capture rdpShadowCapture;
 typedef struct rdp_shadow_subsystem rdpShadowSubsystem;
+typedef struct rdp_shadow_multiclient_event rdpShadowMultiClientEvent;
 
 typedef struct _RDP_SHADOW_ENTRY_POINTS RDP_SHADOW_ENTRY_POINTS;
 typedef int (*pfnShadowSubsystemEntry)(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);
@@ -143,11 +144,10 @@ struct _RDP_SHADOW_ENTRY_POINTS
 	int selectedMonitor; \
 	MONITOR_DEF monitors[16]; \
 	MONITOR_DEF virtualScreen; \
-	HANDLE updateEvent; \
+	rdpShadowMultiClientEvent* updateEvent; \
 	BOOL suppressOutput; \
 	REGION16 invalidRegion; \
 	wMessagePipe* MsgPipe; \
-	SYNCHRONIZATION_BARRIER barrier; \
 	UINT32 pointerX; \
 	UINT32 pointerY; \
 	\

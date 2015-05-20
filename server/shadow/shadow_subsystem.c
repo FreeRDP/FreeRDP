@@ -143,7 +143,7 @@ int shadow_subsystem_init(rdpShadowSubsystem* subsystem, rdpShadowServer* server
 	if (!(subsystem->MsgPipe = MessagePipe_New()))
 		goto fail;
 
-	if (!(subsystem->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	if (!(subsystem->updateEvent = shadow_multiclient_new()))
 		goto fail;
 
 	region16_init(&(subsystem->invalidRegion));
@@ -160,7 +160,7 @@ fail:
 
 	if (subsystem->updateEvent)
 	{
-		CloseHandle(subsystem->updateEvent);
+		shadow_multiclient_free(subsystem->updateEvent);
 		subsystem->updateEvent = NULL;
 	}
 
@@ -183,7 +183,7 @@ void shadow_subsystem_uninit(rdpShadowSubsystem* subsystem)
 
 	if (subsystem->updateEvent)
 	{
-		CloseHandle(subsystem->updateEvent);
+		shadow_multiclient_free(subsystem->updateEvent);
 		subsystem->updateEvent = NULL;
 	}
 
