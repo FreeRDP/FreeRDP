@@ -48,6 +48,8 @@ DEVMAN* devman_new(rdpdrPlugin* rdpdr)
 	DEVMAN* devman;
 
 	devman = (DEVMAN*) calloc(1, sizeof(DEVMAN));
+	if (!devman)
+		return NULL;
 
 	devman->plugin = (void*) rdpdr;
 	devman->id_sequence = 1;

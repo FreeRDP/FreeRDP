@@ -1151,9 +1151,8 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	rdpsndPlugin* rdpsnd;
 
 	rdpsnd = (rdpsndPlugin*) calloc(1, sizeof(rdpsndPlugin));
-
 	if (!rdpsnd)
-		return -1;
+		return FALSE;
 
 #if !defined(_WIN32) && !defined(ANDROID)
 	{
@@ -1181,7 +1180,7 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 		WLog_ERR(TAG, "pVirtualChannelInit failed with %s [%08X]",
 				 WTSErrorToString(rc), rc);
 		free(rdpsnd);
-		return -1;
+		return FALSE;
 	}
 
 	return rdpsnd_add_init_handle_data(rdpsnd->InitHandle, (void*) rdpsnd);

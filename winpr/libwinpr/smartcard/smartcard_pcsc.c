@@ -571,7 +571,6 @@ PCSC_SCARDHANDLE* PCSC_ConnectCardHandle(SCARDCONTEXT hSharedContext, SCARDCONTE
 
 	pCard->hSharedContext = hSharedContext;
 	pCard->hPrivateContext = hPrivateContext;
-	pContext->dwCardHandleCount++;
 
 	if (!g_CardHandles)
 	{
@@ -583,6 +582,7 @@ PCSC_SCARDHANDLE* PCSC_ConnectCardHandle(SCARDCONTEXT hSharedContext, SCARDCONTE
 	if (!ListDictionary_Add(g_CardHandles, (void*) hCard, (void*) pCard))
 		goto error;
 
+	pContext->dwCardHandleCount++;
 	return pCard;
 
 error:
@@ -650,13 +650,29 @@ BOOL PCSC_AddReaderNameAlias(char* namePCSC, char* nameWinSCard)
 		return TRUE;
 
 	reader = (PCSC_READER*) calloc(1, sizeof(PCSC_READER));
-
 	if (!reader)
-		return FALSE;
+		goto error_reader;
 
 	reader->namePCSC = _strdup(namePCSC);
+	if (!reader->namePCSC)
+		goto error_namePSC;
+
 	reader->nameWinSCard = _strdup(nameWinSCard);
-	return ArrayList_Add(g_Readers, reader) >= 0;
+	if (!reader->nameWinSCard)
+		goto error_nameWinSCard;
+	if (ArrayList_Add(g_Readers, reader) < 0)
+		goto error_add;
+	return TRUE;
+
+error_add:
+	free(reader->nameWinSCard);
+error_nameWinSCard:
+	free(reader->namePCSC);
+error_namePSC:
+	free(reader);
+error_reader:
+	return FALSE;
+
 }
 
 static int PCSC_AtoiWithLength(const char* str, int length)

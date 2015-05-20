@@ -43,7 +43,7 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
 
-int xf_keyboard_action_script_init(xfContext* xfc)
+BOOL xf_keyboard_action_script_init(xfContext* xfc)
 {
 	int exitCode;
 	FILE* keyScript;

@@ -684,13 +684,15 @@ HANDLE WINAPI FreeRDP_WTSOpenServerA(LPSTR pServerName)
 		return INVALID_HANDLE_VALUE;
 
 	client = context->peer;
-
 	if (!client)
+	{
+		SetLastError(ERROR_INVALID_DATA);
 		return INVALID_HANDLE_VALUE;
+	}
 
 	vcm = (WTSVirtualChannelManager*) calloc(1, sizeof(WTSVirtualChannelManager));
 	if (!vcm)
-		return NULL;
+		goto error_vcm_alloc;
 
 	vcm->client = client;
 	vcm->rdp = context->rdp;
@@ -719,7 +721,6 @@ HANDLE WINAPI FreeRDP_WTSOpenServerA(LPSTR pServerName)
 	client->ReceiveChannelData = WTSReceiveChannelData;
 
 	hServer = (HANDLE) vcm;
-
 	return hServer;
 
 error_dynamicVirtualChannels:
@@ -728,6 +729,8 @@ error_queue:
 	HashTable_Remove(g_ServerHandles, (void*) (UINT_PTR) vcm->SessionId);
 error_free:
 	free(vcm);
+error_vcm_alloc:
+	SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 	return INVALID_HANDLE_VALUE;
 }
 
@@ -912,15 +915,16 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPS
 	HANDLE hChannelHandle = NULL;
 
 	vcm = (WTSVirtualChannelManager*) hServer;
-
 	if (!vcm)
+	{
+		SetLastError(ERROR_INVALID_DATA);
 		return NULL;
+	}
 
 	client = vcm->client;
 	mcs = client->context->rdp->mcs;
 
 	length = strlen(pVirtualName);
-
 	if (length > 8)
 	{
 		SetLastError(ERROR_NOT_FOUND);
@@ -943,10 +947,11 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPS
 	}
 
 	channel = (rdpPeerChannel*) mcs->channels[index].handle;
-
 	if (!channel)
 	{
 		channel = (rdpPeerChannel*) calloc(1, sizeof(rdpPeerChannel));
+		if (!channel)
+			goto error_channel_alloc;
 
 		channel->vcm = vcm;
 		channel->client = client;
@@ -964,13 +969,13 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPS
 	}
 
 	hChannelHandle = (HANDLE) channel;
-
 	return hChannelHandle;
 
 error_queue:
 	Stream_Free(channel->receiveData, TRUE);
 error_receiveData:
 	free(channel);
+error_channel_alloc:
 	SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 	return NULL;
 }
