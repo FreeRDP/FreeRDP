@@ -80,8 +80,7 @@ cleanup:
 		CloseHandle(hTimer);
 	if (g_Event)
 		CloseHandle(g_Event);
-	if (apcData)
-		free(apcData);
+	free(apcData);
 
 	return status;
 }

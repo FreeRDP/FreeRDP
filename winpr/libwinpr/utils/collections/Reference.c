@@ -75,8 +75,7 @@ wReference* ReferenceTable_GetFreeEntry(wReferenceTable* referenceTable)
 
 		if (!referenceTable->size)
 		{
-			if (referenceTable->array)
-				free(referenceTable->array);
+			free(referenceTable->array);
 			referenceTable->array = NULL;
 			return NULL;
 		}

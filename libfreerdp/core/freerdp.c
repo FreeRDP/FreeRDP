@@ -111,9 +111,7 @@ BOOL freerdp_connect(freerdp* instance)
 
 		IFCALLRET(instance->PostConnect, status, instance);
 
-		update_post_connect(instance->update);
-
-		if (!status)
+		if (!status || !update_post_connect(instance->update))
 		{
 			WLog_ERR(TAG, "freerdp_post_connect failed");
 
@@ -699,10 +697,7 @@ freerdp* freerdp_new()
  */
 void freerdp_free(freerdp* instance)
 {
-	if (instance)
-	{
-		free(instance);
-	}
+	free(instance);
 }
 
 FREERDP_API ULONG freerdp_get_transport_sent(rdpContext* context, BOOL resetCount) {

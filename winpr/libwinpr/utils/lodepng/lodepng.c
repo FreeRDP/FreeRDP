@@ -2609,7 +2609,7 @@ static int lodepng_color_mode_equal(const LodePNGColorMode* a, const LodePNGColo
 
 void lodepng_palette_clear(LodePNGColorMode* info)
 {
-  if(info->palette) free(info->palette);
+  free(info->palette);
   info->palette = 0;
   info->palettesize = 0;
 }
@@ -4121,7 +4121,7 @@ static unsigned postProcessScanlines(unsigned char* out, unsigned char* in,
 static unsigned readChunk_PLTE(LodePNGColorMode* color, const unsigned char* data, size_t chunkLength)
 {
   unsigned pos = 0, i;
-  if(color->palette) free(color->palette);
+  free(color->palette);
   color->palettesize = chunkLength / 3;
   color->palette = (unsigned char*)malloc(4 * color->palettesize);
   if(!color->palette && color->palettesize)

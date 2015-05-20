@@ -141,8 +141,7 @@ int ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 
 	if (status <= 0)
 	{
-		if (TargetName)
-			free(TargetName);
+		free(TargetName);
 		return -1;
 	}
 
@@ -603,8 +602,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(PCredHandle phCredenti
 	status = ntlm_InitializeSecurityContextW(phCredential, phContext, pszTargetNameW, fContextReq,
 			 Reserved1, TargetDataRep, pInput, Reserved2, phNewContext, pOutput, pfContextAttr, ptsExpiry);
 
-	if (pszTargetNameW)
-		free(pszTargetNameW);
+	free(pszTargetNameW);
 
 	return status;
 }
@@ -673,21 +671,27 @@ SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phContext, UL
 		context->UseSamFileDatabase = FALSE;
 		credentials = context->credentials;
 		ZeroMemory(AuthIdentity, sizeof(SecPkgContext_AuthIdentity));
-		UserA = AuthIdentity->User;
-		status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) credentials->identity.User,
-									credentials->identity.UserLength,
-									&UserA, 256, NULL, NULL);
 
-		if (status <= 0)
-			return SEC_E_INTERNAL_ERROR;
+		UserA = AuthIdentity->User;
+		if (credentials->identity.UserLength > 0) {
+			status = ConvertFromUnicode(CP_UTF8, 0,
+			    (WCHAR *)credentials->identity.User,
+			    credentials->identity.UserLength, &UserA, 256, NULL,
+			    NULL);
+			if (status <= 0)
+				return SEC_E_INTERNAL_ERROR;
+		}
 
 		DomainA = AuthIdentity->Domain;
-		status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) credentials->identity.Domain,
-									credentials->identity.DomainLength,
-									&DomainA, 256, NULL, NULL);
+		if (credentials->identity.DomainLength > 0) {
+			status = ConvertFromUnicode(CP_UTF8, 0,
+			    (WCHAR *)credentials->identity.Domain,
+			    credentials->identity.DomainLength, &DomainA, 256,
+			    NULL, NULL);
 
-		if (status <= 0)
-			return SEC_E_INTERNAL_ERROR;
+			if (status <= 0)
+				return SEC_E_INTERNAL_ERROR;
+		}
 
 		return SEC_E_OK;
 	}

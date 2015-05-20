@@ -300,11 +300,8 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 		currentIndex = (p - lpCmdLine);
 	}
 
-	if (lpEscapedCmdLine)
-		free(lpEscapedCmdLine);
-
-	if (lpEscapedChars)
-		free(lpEscapedChars);
+	free(lpEscapedCmdLine);
+	free(lpEscapedChars);
 
 	*pNumArgs = numArgs;
 	return pArgs;

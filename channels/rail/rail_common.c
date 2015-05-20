@@ -54,8 +54,7 @@ void rail_string_to_unicode_string(char* string, RAIL_UNICODE_STRING* unicode_st
 	WCHAR* buffer = NULL;
 	int length = 0;
 
-	if (unicode_string->string != NULL)
-		free(unicode_string->string);
+	free(unicode_string->string);
 
 	unicode_string->string = NULL;
 	unicode_string->length = 0;

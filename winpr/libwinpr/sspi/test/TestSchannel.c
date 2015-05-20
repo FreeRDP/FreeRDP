@@ -627,7 +627,12 @@ int TestSchannel(int argc, char* argv[])
 		return -1;
 	}
 
-	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) schannel_test_server_thread, NULL, 0, NULL);
+	if (!(thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) schannel_test_server_thread, NULL, 0, NULL)))
+	{
+		printf("Failed to create server thread\n");
+		return -1;
+	}
+
 	table = InitSecurityInterface();
 	status = QuerySecurityPackageInfo(SCHANNEL_NAME, &pPackageInfo);
 

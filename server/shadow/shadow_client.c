@@ -252,14 +252,11 @@ void shadow_client_refresh_rect(rdpShadowClient* client, BYTE count, RECTANGLE_1
 	SHADOW_MSG_IN_REFRESH_OUTPUT* wParam;
 	wMessagePipe* MsgPipe = client->subsystem->MsgPipe;
 
-	wParam = (SHADOW_MSG_IN_REFRESH_OUTPUT*) calloc(1, sizeof(SHADOW_MSG_IN_REFRESH_OUTPUT));
-
-	if (!wParam || !areas)
-	{
-		if (wParam)
-			free (wParam);
+	if (!areas)
 		return;
-	}
+
+	if (!(wParam = (SHADOW_MSG_IN_REFRESH_OUTPUT*) calloc(1, sizeof(SHADOW_MSG_IN_REFRESH_OUTPUT))))
+		return;
 
 	wParam->numRects = (UINT32) count;
 
@@ -1087,8 +1084,12 @@ BOOL shadow_client_accepted(freerdp_listener* listener, freerdp_peer* peer)
 
 	client = (rdpShadowClient*) peer->context;
 
-	client->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
-			shadow_client_thread, client, 0, NULL);
+	if (!(client->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
+			shadow_client_thread, client, 0, NULL)))
+	{
+		freerdp_peer_context_free(peer);
+		return FALSE;
+	}
 
 	return TRUE;
 }

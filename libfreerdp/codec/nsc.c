@@ -310,8 +310,7 @@ void nsc_context_free(NSC_CONTEXT* context)
 		}
 	}
 
-	if (context->BitmapData)
-		free(context->BitmapData);
+	free(context->BitmapData);
 
 	BufferPool_Free(context->priv->PlanePool);
 

@@ -156,13 +156,13 @@ BOOL wfreerdp_server_start(wfServer* server)
 
 	wf_settings_read_dword(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), _T("DefaultPort"), &server->port);
 
-	if (instance->Open(instance, NULL, (UINT16) server->port))
-	{
-		server->thread = CreateThread(NULL, 0, wf_server_main_loop, (void*) instance, 0, NULL);
-		return TRUE;
-	}
+	if (!instance->Open(instance, NULL, (UINT16) server->port))
+		return FALSE;
 
-	return FALSE;
+	if (!(server->thread = CreateThread(NULL, 0, wf_server_main_loop, (void*) instance, 0, NULL)))
+		return FALSE;
+
+	return TRUE;
 }
 
 BOOL wfreerdp_server_stop(wfServer* server)
@@ -202,10 +202,7 @@ wfServer* wfreerdp_server_new()
 
 void wfreerdp_server_free(wfServer* server)
 {
-	if (server)
-	{
-		free(server);
-	}
+	free(server);
 
 	WSACleanup();
 }

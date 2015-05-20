@@ -91,7 +91,12 @@ int TestGdiEllipse(int argc, char* argv[])
 	int bitsPerPixel = 8;
 	int bytesPerPixel = 1;
 
-	hdc = gdi_GetDC();
+	if (!(hdc = gdi_GetDC()))
+	{
+		printf("failed to get gdi device context\n");
+		return -1;
+	}
+
 	hdc->bitsPerPixel = bitsPerPixel;
 	hdc->bytesPerPixel = bytesPerPixel;
 	gdi_SetNullClipRgn(hdc);

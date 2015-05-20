@@ -402,9 +402,10 @@ gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp, BYTE* 
 	bitmap = (gdiBitmap*) malloc(sizeof(gdiBitmap));
 
 	if (!bitmap)
-		return NULL;
+		goto fail_bitmap;
 
-	bitmap->hdc = gdi_CreateCompatibleDC(gdi->hdc);
+	if (!(bitmap->hdc = gdi_CreateCompatibleDC(gdi->hdc)))
+		goto fail_hdc;
 
 	DEBUG_GDI("gdi_bitmap_new: width:%d height:%d bpp:%d", width, height, bpp);
 
@@ -413,10 +414,20 @@ gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp, BYTE* 
 	else
 		bitmap->bitmap = gdi_create_bitmap(gdi, width, height, bpp, data);
 
+	if (!bitmap->bitmap)
+		goto fail_bitmap_bitmap;
+
 	gdi_SelectObject(bitmap->hdc, (HGDIOBJECT) bitmap->bitmap);
 	bitmap->org_bitmap = NULL;
 
 	return bitmap;
+
+fail_bitmap_bitmap:
+	gdi_DeleteDC(bitmap->hdc);
+fail_hdc:
+	free(bitmap);
+fail_bitmap:
+	return NULL;
 }
 
 void gdi_bitmap_free_ex(gdiBitmap* bitmap)
@@ -1173,53 +1184,75 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 	update->altsec->FrameMarker = gdi_frame_marker;
 }
 
-void gdi_init_primary(rdpGdi* gdi)
+BOOL gdi_init_primary(rdpGdi* gdi)
 {
-	gdi->primary = (gdiBitmap*) malloc(sizeof(gdiBitmap));
+	gdi->primary = (gdiBitmap*) calloc(1, sizeof(gdiBitmap));
 
 	if (!gdi->primary)
-		return;
+		goto fail_primary;
 
-	gdi->primary->hdc = gdi_CreateCompatibleDC(gdi->hdc);
+	if (!(gdi->primary->hdc = gdi_CreateCompatibleDC(gdi->hdc)))
+		goto fail_hdc;
 
 	if (!gdi->primary_buffer)
 		gdi->primary->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, gdi->width, gdi->height);
 	else
 		gdi->primary->bitmap = gdi_CreateBitmap(gdi->width, gdi->height, gdi->dstBpp, gdi->primary_buffer);
 
+	if (!gdi->primary->bitmap)
+		goto fail_bitmap;
+
 	gdi_SelectObject(gdi->primary->hdc, (HGDIOBJECT) gdi->primary->bitmap);
 	gdi->primary->org_bitmap = NULL;
 
 	gdi->primary_buffer = gdi->primary->bitmap->data;
 
-	if (!gdi->drawing)
-		gdi->drawing = gdi->primary;
-
-	gdi->primary->hdc->hwnd = (HGDI_WND) malloc(sizeof(GDI_WND));
-	gdi->primary->hdc->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0);
+	if (!(gdi->primary->hdc->hwnd = (HGDI_WND) calloc(1, sizeof(GDI_WND))))
+		goto fail_hwnd;
+	if (!(gdi->primary->hdc->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0)))
+		goto fail_hwnd;
 	gdi->primary->hdc->hwnd->invalid->null = 1;
 
 	gdi->primary->hdc->hwnd->count = 32;
-	gdi->primary->hdc->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * gdi->primary->hdc->hwnd->count);
+	if (!(gdi->primary->hdc->hwnd->cinvalid = (HGDI_RGN) calloc(gdi->primary->hdc->hwnd->count, sizeof(GDI_RGN))))
+		goto fail_hwnd;
 	gdi->primary->hdc->hwnd->ninvalid = 0;
+
+	if (!gdi->drawing)
+		gdi->drawing = gdi->primary;
+
+	return TRUE;
+
+fail_hwnd:
+	gdi_DeleteObject((HGDIOBJECT) gdi->primary->bitmap);
+fail_bitmap:
+	gdi_DeleteDC(gdi->primary->hdc);
+fail_hdc:
+	free(gdi->primary);
+	gdi->primary = NULL;
+fail_primary:
+	return FALSE;
 }
 
-void gdi_resize(rdpGdi* gdi, int width, int height)
+BOOL gdi_resize(rdpGdi* gdi, int width, int height)
 {
-	if (gdi && gdi->primary)
-	{
-		if (gdi->width != width || gdi->height != height)
-		{
-			if (gdi->drawing == gdi->primary)
-				gdi->drawing = NULL;
+	if (!gdi || !gdi->primary)
+		return FALSE;
 
-			gdi->width = width;
-			gdi->height = height;
-			gdi_bitmap_free_ex(gdi->primary);
-			gdi->primary_buffer = NULL;
-			gdi_init_primary(gdi);
-		}
-	}
+	if (gdi->width == width && gdi->height == height)
+		return TRUE;
+
+	if (gdi->drawing == gdi->primary)
+		gdi->drawing = NULL;
+
+	gdi->width = width;
+	gdi->height = height;
+	gdi_bitmap_free_ex(gdi->primary);
+
+	gdi->primary = NULL;
+	gdi->primary_buffer = NULL;
+
+	return gdi_init_primary(gdi);
 }
 
 /**
@@ -1228,21 +1261,19 @@ void gdi_resize(rdpGdi* gdi, int width, int height)
  * @return
  */
 
-int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
+BOOL gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 {
 	BOOL rgb555;
 	rdpGdi* gdi;
-	rdpCache* cache;
+	rdpCache* cache = NULL;
 
 	gdi = (rdpGdi*) calloc(1, sizeof(rdpGdi));
 
 	if (!gdi)
-		return -1;
+		goto fail_gdi;
 
 	instance->context->gdi = gdi;
 	gdi->context = instance->context;
-	cache = instance->context->cache;
-
 	gdi->codecs = instance->context->codecs;
 	gdi->width = instance->settings->DesktopWidth;
 	gdi->height = instance->settings->DesktopHeight;
@@ -1305,7 +1336,9 @@ int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 			gdi->format = PIXEL_FORMAT_BGR555;
 	}
 
-	gdi->hdc = gdi_GetDC();
+	if (!(gdi->hdc = gdi_GetDC()))
+		goto fail_get_hdc;
+
 	gdi->hdc->bitsPerPixel = gdi->dstBpp;
 	gdi->hdc->bytesPerPixel = gdi->bytesPerPixel;
 
@@ -1313,14 +1346,19 @@ int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 	gdi->hdc->invert = (flags & CLRCONV_INVERT) ? TRUE : FALSE;
 	gdi->hdc->rgb555 = (flags & CLRCONV_RGB555) ? TRUE : FALSE;
 
-	gdi_init_primary(gdi);
+	if (!gdi_init_primary(gdi))
+		goto fail_init_primary;
 
-	gdi->tile = gdi_bitmap_new_ex(gdi, 64, 64, 32, NULL);
-	gdi->image = gdi_bitmap_new_ex(gdi, 64, 64, 32, NULL);
+	if (!(gdi->tile = gdi_bitmap_new_ex(gdi, 64, 64, 32, NULL)))
+		goto fail_tile_bitmap;
+	if (!(gdi->image = gdi_bitmap_new_ex(gdi, 64, 64, 32, NULL)))
+		goto fail_image_bitmap;
 
-	if (!cache)
+	if (!instance->context->cache)
 	{
-		cache = cache_new(instance->settings);
+		if (!(cache = cache_new(instance->settings)))
+			goto fail_cache;
+
 		instance->context->cache = cache;
 	}
 
@@ -1332,11 +1370,32 @@ int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 	offscreen_cache_register_callbacks(instance->update);
 	palette_cache_register_callbacks(instance->update);
 
-	gdi_register_graphics(instance->context->graphics);
+	if (!gdi_register_graphics(instance->context->graphics))
+		goto fail_register_graphics;
 
 	instance->update->BitmapUpdate = gdi_bitmap_update;
 
-	return 0;
+	return TRUE;
+
+fail_register_graphics:
+	if (cache)
+	{
+		instance->context->cache = NULL;
+		free(cache);
+	}
+fail_cache:
+	gdi_bitmap_free_ex(gdi->image);
+fail_image_bitmap:
+	gdi_bitmap_free_ex(gdi->tile);
+fail_tile_bitmap:
+	gdi_bitmap_free_ex(gdi->primary);
+fail_init_primary:
+	gdi_DeleteDC(gdi->hdc);
+fail_get_hdc:
+	free(gdi);
+fail_gdi:
+	WLog_ERR(TAG,  "failed to initialize gdi");
+	return FALSE;
 }
 
 void gdi_free(freerdp* instance)

@@ -1336,8 +1336,7 @@ static int update_message_free_update_class(wMessage* msg, int type)
 			break;
 
 		case Update_SetBounds:
-			if (msg->wParam)
-				free(msg->wParam);
+			free(msg->wParam);
 			break;
 
 		case Update_Synchronize:
@@ -1379,8 +1378,7 @@ static int update_message_free_update_class(wMessage* msg, int type)
 			break;
 
 		case Update_SuppressOutput:
-			if (msg->lParam)
-				free(msg->lParam);
+			free(msg->lParam);
 			break;
 
 		case Update_SurfaceCommand:
@@ -1579,8 +1577,7 @@ static int update_message_free_primary_update_class(wMessage* msg, int type)
 		case PrimaryUpdate_FastGlyph:
 			{
 				FAST_GLYPH_ORDER* wParam = (FAST_GLYPH_ORDER*) msg->wParam;
-				if (wParam->glyphData.aj)
-					free(wParam->glyphData.aj);
+				free(wParam->glyphData.aj);
 				free(wParam);
 			}
 			break;
@@ -2546,15 +2543,17 @@ static void *update_message_proxy_thread(void *arg)
 rdpUpdateProxy *update_message_proxy_new(rdpUpdate *update)
 {
 	rdpUpdateProxy *message;
-	message = (rdpUpdateProxy *) malloc(sizeof(rdpUpdateProxy));
 
-	if (message)
+	if (!(message = (rdpUpdateProxy *) calloc(1, sizeof(rdpUpdateProxy))))
+		return NULL;
+
+	message->update = update;
+	update_message_register_interface(message, update);
+	if (!(message->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) update_message_proxy_thread, update, 0, NULL)))
 	{
-		ZeroMemory(message, sizeof(rdpUpdateProxy));
-
-		message->update = update;
-		update_message_register_interface(message, update);
-		message->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) update_message_proxy_thread, update, 0, NULL);
+		WLog_ERR(TAG, "Failed to create proxy thread");
+		free(message);
+		return NULL;
 	}
 
 	return message;
@@ -2869,8 +2868,5 @@ rdpInputProxy* input_message_proxy_new(rdpInput* input)
 
 void input_message_proxy_free(rdpInputProxy* proxy)
 {
-	if (proxy)
-	{
-		free(proxy);
-	}
+	free(proxy);
 }

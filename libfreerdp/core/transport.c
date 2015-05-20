@@ -109,18 +109,15 @@ BOOL transport_connect_tls(rdpTransport* transport)
 	rdpContext* context = transport->context;
 	rdpSettings* settings = transport->settings;
 
-	if (transport->GatewayEnabled)
-	{
-		tls = transport->tls = tls_new(settings);
-		transport->layer = TRANSPORT_LAYER_TSG_TLS;
-	}
-	else
-	{
-		tls = transport->tls = tls_new(settings);
-		transport->layer = TRANSPORT_LAYER_TLS;
-	}
+	if (!(tls = tls_new(settings)))
+		return FALSE;
 
 	transport->tls = tls;
+
+	if (transport->GatewayEnabled)
+		transport->layer = TRANSPORT_LAYER_TSG_TLS;
+	else
+		transport->layer = TRANSPORT_LAYER_TLS;
 
 	tls->hostname = settings->ServerHostname;
 	tls->port = settings->ServerPort;
@@ -876,14 +873,16 @@ BOOL transport_disconnect(rdpTransport* transport)
 
 static void* transport_client_thread(void* arg)
 {
+	DWORD dwExitCode = 0;
 	DWORD status;
 	DWORD nCount;
+	DWORD nCountTmp;
 	HANDLE handles[64];
 	rdpTransport* transport = (rdpTransport*) arg;
 	rdpContext* context = transport->context;
 	rdpRdp* rdp = context->rdp;
 
-	WLog_DBG(TAG, "Starting transport thread");
+	WLog_DBG(TAG, "Asynchronous transport thread started");
 
 	nCount = 0;
 	handles[nCount++] = transport->stopEvent;
@@ -891,26 +890,32 @@ static void* transport_client_thread(void* arg)
 
 	status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 
-	if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
+	switch (status)
 	{
-		WLog_DBG(TAG, "Terminating transport thread");
-		ExitThread(0);
-		return NULL;
-	}
+		case WAIT_OBJECT_0:
+			WLog_DBG(TAG, "stopEvent triggered");
+			goto out;
 
-	WLog_DBG(TAG, "Asynchronous transport activated");
+		case WAIT_OBJECT_0 + 1:
+			WLog_DBG(TAG, "connectedEvent event triggered");
+			break;
+
+		default:
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with status 0x%08X", status);
+			dwExitCode = 1;
+			goto out;
+	}
 
 	while (1)
 	{
-		nCount = freerdp_get_event_handles(context, &handles[nCount], 64);
+		nCount = 1; /* transport->stopEvent */
 
-		if (nCount == 0)
+		if (!(nCountTmp = freerdp_get_event_handles(context, &handles[nCount], 64 - nCount)))
 		{
 			WLog_ERR(TAG, "freerdp_get_event_handles failed");
 			break;
 		}
-
-		handles[nCount++] = transport->stopEvent;
+		nCount += nCountTmp;
 
 		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 
@@ -920,10 +925,12 @@ static void* transport_client_thread(void* arg)
 			break;
 		}
 
-		if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
-				break;
-
-		if (WaitForMultipleObjects(nCount - 1, &handles[1], FALSE, 0) != WAIT_TIMEOUT)
+		if (status == WAIT_OBJECT_0)
+		{
+			WLog_DBG(TAG, "stopEvent triggered");
+			break;
+		}
+		else if (status > WAIT_OBJECT_0 && status < (WAIT_OBJECT_0 + nCount))
 		{
 			if (!freerdp_check_event_handles(context))
 			{
@@ -931,10 +938,20 @@ static void* transport_client_thread(void* arg)
 				break;
 			}
 		}
+		else
+		{
+			if (status == WAIT_TIMEOUT)
+				WLog_ERR(TAG, "WaitForMultipleObjects returned WAIT_TIMEOUT");
+			else
+				WLog_ERR(TAG, "WaitForMultipleObjects returned 0x%08X", status);
+			dwExitCode = 1;
+			break;
+		}
 	}
 
+out:
 	WLog_DBG(TAG, "Terminating transport thread");
-	ExitThread(0);
+	ExitThread(dwExitCode);
 	return NULL;
 }
 

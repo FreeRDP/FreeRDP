@@ -33,6 +33,7 @@ extern "C" {
 
 typedef BOOL (*psListenerOpen)(freerdp_listener* instance, const char* bind_address, UINT16 port);
 typedef BOOL (*psListenerOpenLocal)(freerdp_listener* instance, const char* path);
+typedef BOOL (*psListenerOpenFromSocket)(freerdp_listener* instance, int fd);
 typedef BOOL (*psListenerGetFileDescriptor)(freerdp_listener* instance, void** rfds, int* rcount);
 typedef DWORD (*psListenerGetEventHandles)(freerdp_listener* instance, HANDLE* events, DWORD nCount);
 typedef BOOL (*psListenerCheckFileDescriptor)(freerdp_listener* instance);
@@ -56,6 +57,7 @@ struct rdp_freerdp_listener
 	psListenerClose Close;
 
 	psPeerAccepted PeerAccepted;
+	psListenerOpenFromSocket OpenFromSocket;
 };
 
 FREERDP_API freerdp_listener* freerdp_listener_new(void);

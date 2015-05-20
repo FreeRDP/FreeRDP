@@ -87,9 +87,6 @@ rdtkTextField* rdtk_text_field_new(rdtkEngine* engine, rdtkNinePatch* ninePatch)
 
 void rdtk_text_field_free(rdtkTextField* textField)
 {
-	if (!textField)
-		return;
-
 	free(textField);
 }
 

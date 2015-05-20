@@ -732,8 +732,7 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 
 				if (status < 0)
 				{
-					if (x509_str)
-						free(x509_str);
+					free(x509_str);
 					free(filename);
 					free(fullpath);
 					fclose (fp);

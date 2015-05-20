@@ -460,9 +460,7 @@ void glyph_cache_put(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index, rdpGlyp
 	if (prevGlyph)
 	{
 		Glyph_Free(glyphCache->context, prevGlyph);
-
-		if (prevGlyph->aj)
-			free(prevGlyph->aj);
+		free(prevGlyph->aj);
 		free(prevGlyph);
 	}
 
@@ -507,8 +505,7 @@ void glyph_cache_fragment_put(rdpGlyphCache* glyphCache, UINT32 index, UINT32 si
 	glyphCache->fragCache.entries[index].fragment = fragment;
 	glyphCache->fragCache.entries[index].size = size;
 
-	if (prevFragment)
-		free(prevFragment);
+	free(prevFragment);
 }
 
 void glyph_cache_register_callbacks(rdpUpdate* update)
@@ -568,11 +565,8 @@ void glyph_cache_free(rdpGlyphCache* glyphCache)
 				if (glyph)
 				{
 					Glyph_Free(glyphCache->context, glyph);
-
-					if (glyph->aj)
-						free(glyph->aj);
+					free(glyph->aj);
 					free(glyph);
-
 					glyphCache->glyphCache[i].entries[j] = NULL;
 				}
 			}

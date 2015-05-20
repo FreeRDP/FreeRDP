@@ -55,9 +55,6 @@ NEGOTIATE_CONTEXT* negotiate_ContextNew()
 
 void negotiate_ContextFree(NEGOTIATE_CONTEXT* context)
 {
-	if (!context)
-		return;
-
 	free(context);
 }
 
@@ -155,7 +152,7 @@ SECURITY_STATUS SEC_ENTRY negotiate_CompleteAuthToken(PCtxtHandle phContext, PSe
 		return SEC_E_INVALID_HANDLE;
 
 	if (context->sspiW->CompleteAuthToken)
-		status = context->sspiW->CompleteAuthToken(phContext, pToken);
+		status = context->sspiW->CompleteAuthToken(&(context->SubContext), pToken);
 
 	return status;
 }

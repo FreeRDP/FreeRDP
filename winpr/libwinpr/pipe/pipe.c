@@ -217,14 +217,9 @@ BOOL NamedPipeCloseHandle(HANDLE handle) {
 	if (pNamedPipe->pfnUnrefNamedPipe)
 		pNamedPipe->pfnUnrefNamedPipe(pNamedPipe);
 
-	if (pNamedPipe->name)
-		free(pNamedPipe->name);
-
-	if (pNamedPipe->lpFileName)
-		free((void*)pNamedPipe->lpFileName);
-
-	if (pNamedPipe->lpFilePath)
-		free((void*)pNamedPipe->lpFilePath);
+	free(pNamedPipe->name);
+	free(pNamedPipe->lpFileName);
+	free(pNamedPipe->lpFilePath);
 
 	if (pNamedPipe->serverfd != -1)
 		close(pNamedPipe->serverfd);
@@ -451,12 +446,8 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
 
 	if (!pReadPipe || !pWritePipe)
 	{
-		if (pReadPipe)
-			free(pReadPipe);
-
-		if (pWritePipe)
-			free(pWritePipe);
-
+		free(pReadPipe);
+		free(pWritePipe);
 		return FALSE;
 	}
 
@@ -584,7 +575,11 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 
 		if (!PathFileExistsA(lpPipePath))
 		{
-			CreateDirectoryA(lpPipePath, 0);
+			if (!CreateDirectoryA(lpPipePath, 0))
+			{
+				free(lpPipePath);
+				goto out;
+			}
 			UnixChangeFileMode(lpPipePath, 0xFFFF);
 		}
 

@@ -87,9 +87,6 @@ rdtkButton* rdtk_button_new(rdtkEngine* engine, rdtkNinePatch* ninePatch)
 
 void rdtk_button_free(rdtkButton* button)
 {
-	if (!button)
-		return;
-
 	free(button);
 }
 

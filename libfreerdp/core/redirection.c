@@ -377,29 +377,14 @@ void redirection_free(rdpRedirection* redirection)
 {
 	if (redirection)
 	{
-		if (redirection->TsvUrl)
-			free(redirection->TsvUrl);
-
-		if (redirection->Username)
-			free(redirection->Username);
-
-		if (redirection->Domain)
-			free(redirection->Domain);
-
-		if (redirection->TargetFQDN)
-			free(redirection->TargetFQDN);
-
-		if (redirection->TargetNetBiosName)
-			free(redirection->TargetNetBiosName);
-
-		if (redirection->TargetNetAddress)
-			free(redirection->TargetNetAddress);
-
-		if (redirection->LoadBalanceInfo)
-			free(redirection->LoadBalanceInfo);
-
-		if (redirection->Password)
-			free(redirection->Password);
+		free(redirection->TsvUrl);
+		free(redirection->Username);
+		free(redirection->Domain);
+		free(redirection->TargetFQDN);
+		free(redirection->TargetNetBiosName);
+		free(redirection->TargetNetAddress);
+		free(redirection->LoadBalanceInfo);
+		free(redirection->Password);
 
 		if (redirection->TargetNetAddresses)
 		{
@@ -407,8 +392,7 @@ void redirection_free(rdpRedirection* redirection)
 
 			for (i = 0; i < (int) redirection->TargetNetAddressesCount; i++)
 			{
-				if (redirection->TargetNetAddresses[i])
-					free(redirection->TargetNetAddresses[i]);
+				free(redirection->TargetNetAddresses[i]);
 			}
 
 			free(redirection->TargetNetAddresses);

@@ -114,7 +114,7 @@ BOOL gdi_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 
 	if (!gdi_bitmap->bitmap)
 	{
-		gdi_DeleteDC(gdi->hdc);
+		gdi_DeleteDC(gdi_bitmap->hdc);
 		return FALSE;
 	}
 

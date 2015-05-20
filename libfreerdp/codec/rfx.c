@@ -316,7 +316,8 @@ RFX_CONTEXT* rfx_context_new(BOOL encoder)
 		SetThreadpoolCallbackPool(&priv->ThreadPoolEnv, priv->ThreadPool);
 
 		if (priv->MinThreadCount)
-			SetThreadpoolThreadMinimum(priv->ThreadPool, priv->MinThreadCount);
+			if (!SetThreadpoolThreadMinimum(priv->ThreadPool, priv->MinThreadCount))
+				goto error_threadPool_minimum;
 
 		if (priv->MaxThreadCount)
 			SetThreadpoolThreadMaximum(priv->ThreadPool, priv->MaxThreadCount);
@@ -339,6 +340,8 @@ RFX_CONTEXT* rfx_context_new(BOOL encoder)
 	context->state = RFX_STATE_SEND_HEADERS;
 	return context;
 
+error_threadPool_minimum:
+	CloseThreadpool(priv->ThreadPool);
 error_threadPool:
 	BufferPool_Free(priv->BufferPool);
 error_BufferPool:

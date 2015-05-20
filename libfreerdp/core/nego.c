@@ -1139,9 +1139,12 @@ rdpNego* nego_new(rdpTransport* transport)
 
 void nego_free(rdpNego* nego)
 {
-	free(nego->RoutingToken);
-	free(nego->cookie);
-	free(nego);
+	if (nego)
+	{
+		free(nego->RoutingToken);
+		free(nego->cookie);
+		free(nego);
+	}
 }
 
 /**
@@ -1268,7 +1271,7 @@ BOOL nego_set_cookie(rdpNego* nego, char* cookie)
 	if (nego->cookie)
 	{
 		free(nego->cookie);
-		nego->cookie = 0;
+		nego->cookie = NULL;
 	}
 
 	if (!cookie)

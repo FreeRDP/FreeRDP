@@ -305,9 +305,7 @@ void CliprdrStream_Delete(CliprdrStream* instance)
 {
 	if (instance)
 	{
-		if (instance->iStream.lpVtbl)
-			free(instance->iStream.lpVtbl);
-
+		free(instance->iStream.lpVtbl);
 		free(instance);
 	}
 }
@@ -596,14 +594,9 @@ void CliprdrDataObject_Delete(CliprdrDataObject* instance)
 {
 	if (instance)
 	{
-		if (instance->iDataObject.lpVtbl)
-			free(instance->iDataObject.lpVtbl);
-
-		if (instance->m_pFormatEtc)
-			free(instance->m_pFormatEtc);
-
-		if (instance->m_pStgMedium)
-			free(instance->m_pStgMedium);
+		free(instance->iDataObject.lpVtbl);
+		free(instance->m_pFormatEtc);
+		free(instance->m_pStgMedium);
 
 		if (instance->m_pStream)
 		{
@@ -837,8 +830,7 @@ void CliprdrEnumFORMATETC_Delete(CliprdrEnumFORMATETC* instance)
 
 	if (instance)
 	{
-		if (instance->iEnumFORMATETC.lpVtbl)
-			free(instance->iEnumFORMATETC.lpVtbl);
+		free(instance->iEnumFORMATETC.lpVtbl);
 
 		if (instance->m_pFormatEtc)
 		{
@@ -932,11 +924,8 @@ static void clear_format_map(wfClipboard* clipboard)
 			map->remote_format_id = 0;
 			map->local_format_id = 0;
 
-			if (map->name)
-			{
-				free(map->name);
-				map->name = NULL;
-			}
+			free(map->name);
+			map->name = NULL;
 		}
 	}
 
@@ -1255,11 +1244,8 @@ static void clear_file_array(wfClipboard* clipboard)
 	{
 		for (i = 0; i < clipboard->nFiles; i++)
 		{
-			if (clipboard->file_names[i])
-			{
-				free(clipboard->file_names[i]);
-				clipboard->file_names[i] = NULL;
-			}
+			free(clipboard->file_names[i]);
+			clipboard->file_names[i] = NULL;
 		}
 	}
 
@@ -1268,11 +1254,8 @@ static void clear_file_array(wfClipboard* clipboard)
 	{
 		for (i = 0; i < clipboard->nFiles; i++)
 		{
-			if (clipboard->fileDescriptor[i])
-			{
-				free(clipboard->fileDescriptor[i]);
-				clipboard->fileDescriptor[i] = NULL;
-			}
+			free(clipboard->fileDescriptor[i]);
+			clipboard->fileDescriptor[i] = NULL;
 		}
 	}
 
@@ -2069,12 +2052,9 @@ void wf_cliprdr_uninit(wfContext* wfc, CliprdrClientContext* cliprdr)
 	clear_file_array(clipboard);
 	clear_format_map(clipboard);
 
-	if (clipboard->file_names)
-		free(clipboard->file_names);
-	if (clipboard->fileDescriptor)
-		free(clipboard->fileDescriptor);
-	if (clipboard->format_mappings)
-		free(clipboard->format_mappings);
+	free(clipboard->file_names);
+	free(clipboard->fileDescriptor);
+	free(clipboard->format_mappings);
 
 	free(clipboard);
 }

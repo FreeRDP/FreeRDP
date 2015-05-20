@@ -239,15 +239,9 @@ BOOL FileCloseHandle(HANDLE handle) {
 	if (pNamedPipe->pfnUnrefNamedPipe)
 		pNamedPipe->pfnUnrefNamedPipe(pNamedPipe);
 
-	if (pNamedPipe->lpFileName)
-		free((void*)pNamedPipe->lpFileName);
-
-	if (pNamedPipe->lpFilePath)
-		free((void*)pNamedPipe->lpFilePath);
-
-	if (pNamedPipe->name)
-		free((void*)pNamedPipe->name);
-
+	free(pNamedPipe->lpFileName);
+	free(pNamedPipe->lpFilePath);
+	free(pNamedPipe->name);
 	free(pNamedPipe);
 
 	return TRUE;
@@ -771,11 +765,8 @@ BOOL FindClose(HANDLE hFindFile)
 
 	if (pFileSearch)
 	{
-		if (pFileSearch->lpPath)
-			free(pFileSearch->lpPath);
-
-		if (pFileSearch->lpPattern)
-			free(pFileSearch->lpPattern);
+		free(pFileSearch->lpPath);
+		free(pFileSearch->lpPattern);
 
 		if (pFileSearch->pDir)
 			closedir(pFileSearch->pDir);

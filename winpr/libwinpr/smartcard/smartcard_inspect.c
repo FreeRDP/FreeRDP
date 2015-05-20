@@ -1275,14 +1275,16 @@ void Inspect_InitLog()
 	if (g_Log)
 		return;
 
-	g_Log = WLog_Get("WinSCard");
+	if (!PathFileExistsA(filepath))
+		if (!CreateDirectoryA(filepath, NULL))
+			return;
+
+	if (!(g_Log = WLog_Get("WinSCard")))
+		return;
 
 	WLog_SetLogLevel(g_Log, WLOG_DEBUG);
 	WLog_SetLogAppenderType(g_Log, WLOG_APPENDER_FILE);
 	appender = (wLogFileAppender*) WLog_GetLogAppender(g_Log);
-
-	if (!PathFileExistsA(filepath))
-		CreateDirectoryA(filepath, NULL);
 
 	WLog_FileAppender_SetOutputFileName(g_Log, appender, "WinSCard.txt");
 	WLog_FileAppender_SetOutputFilePath(g_Log, appender, filepath);

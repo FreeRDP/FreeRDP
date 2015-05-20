@@ -84,8 +84,7 @@ void crypto_rc4(CryptoRc4 rc4, UINT32 length, const BYTE* in_data, BYTE* out_dat
 
 void crypto_rc4_free(CryptoRc4 rc4)
 {
-	if (rc4)
-		free(rc4);
+	free(rc4);
 }
 
 CryptoDes3 crypto_des3_encrypt_init(const BYTE* key, const BYTE* ivec)
@@ -438,8 +437,7 @@ FREERDP_API void crypto_cert_subject_alt_name_free(int count, int *lengths,
 {
 	int i;
 
-	if (lengths)
-		free(lengths);
+	free(lengths);
 
 	if (alt_name)
 	{

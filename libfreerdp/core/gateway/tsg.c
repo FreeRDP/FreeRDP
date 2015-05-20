@@ -972,9 +972,7 @@ out:
 	{
 		if (packet->tsgPacket.packetMsgResponse)
 		{
-			if (packet->tsgPacket.packetMsgResponse->messagePacket.reauthMessage)
-				free(packet->tsgPacket.packetMsgResponse->messagePacket.reauthMessage);
-
+			free(packet->tsgPacket.packetMsgResponse->messagePacket.reauthMessage);
 			free(packet->tsgPacket.packetMsgResponse);
 		}
 

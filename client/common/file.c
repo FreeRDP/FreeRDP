@@ -718,8 +718,7 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 		status = fclose(fp);
 	}
 
-	if (buffer)
-		free(buffer);
+	free(buffer);
 
 	return (status == 0) ? TRUE : FALSE;
 }
@@ -777,11 +776,8 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		if (domain)
 			freerdp_set_param_string(settings, FreeRDP_Domain, domain);
 
-		if (user)
-			free(user);
-
-		if (domain)
-			free(domain);
+		free(user);
+		free(domain);
 	}
 
 	if (~((size_t) file->FullAddress))

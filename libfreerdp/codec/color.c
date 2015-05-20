@@ -1620,9 +1620,7 @@ void freerdp_clrconv_free(HCLRCONV clrconv)
 {
 	if (clrconv)
 	{
-		if (clrconv->palette)
-			free(clrconv->palette);
-
+		free(clrconv->palette);
 		free(clrconv);
 	}
 }

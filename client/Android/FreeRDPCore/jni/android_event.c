@@ -238,8 +238,7 @@ ANDROID_EVENT_KEY* android_event_key_new(int flags, UINT16 scancode)
 
 void android_event_key_free(ANDROID_EVENT_KEY* event)
 {
-	if (event != NULL)
-		free(event);
+	free(event);
 }
 
 ANDROID_EVENT_KEY* android_event_unicodekey_new(UINT16 key)
@@ -257,8 +256,7 @@ ANDROID_EVENT_KEY* android_event_unicodekey_new(UINT16 key)
 
 void android_event_unicodekey_free(ANDROID_EVENT_KEY* event)
 {
-	if (event != NULL)
-		free(event);
+	free(event);
 }
 
 ANDROID_EVENT_CURSOR* android_event_cursor_new(UINT16 flags, UINT16 x, UINT16 y)
@@ -278,8 +276,7 @@ ANDROID_EVENT_CURSOR* android_event_cursor_new(UINT16 flags, UINT16 x, UINT16 y)
 
 void android_event_cursor_free(ANDROID_EVENT_CURSOR* event)
 {
-	if (event != NULL)
-		free(event);
+	free(event);
 }
 
 ANDROID_EVENT* android_event_disconnect_new()
@@ -295,8 +292,7 @@ ANDROID_EVENT* android_event_disconnect_new()
 
 void android_event_disconnect_free(ANDROID_EVENT* event)
 {
-	if (event != NULL)
-		free(event);
+	free(event);
 }
 
 ANDROID_EVENT_CLIPBOARD* android_event_clipboard_new(void* data, int data_length)
@@ -319,12 +315,9 @@ ANDROID_EVENT_CLIPBOARD* android_event_clipboard_new(void* data, int data_length
 
 void android_event_clipboard_free(ANDROID_EVENT_CLIPBOARD* event)
 {
-	if (event != NULL)
+	if (event)
 	{
-		if (event->data)
-		{
-			free(event->data);
-		}
+		free(event->data);
 		free(event);
 	}
 }

@@ -340,11 +340,8 @@ wLogLayout* WLog_GetLogLayout(wLog* log)
 
 void WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* format)
 {
-	if (layout->FormatString)
-	{
-		free(layout->FormatString);
-		layout->FormatString = NULL;
-	}
+	free(layout->FormatString);
+	layout->FormatString = NULL;
 
 	if (format)
 		layout->FormatString = _strdup(format);

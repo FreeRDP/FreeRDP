@@ -42,66 +42,75 @@ static const char certificate_known_hosts_file[] = "known_hosts";
 
 #define TAG FREERDP_TAG("crypto")
 
-int certificate_store_init(rdpCertificateStore* certificate_store)
+BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 {
-	char* server_path;
+	char* server_path = NULL;
 	rdpSettings* settings;
 
 	settings = certificate_store->settings;
 
 	if (!PathFileExistsA(settings->ConfigPath))
 	{
-		CreateDirectoryA(settings->ConfigPath, 0);
+		if (!CreateDirectoryA(settings->ConfigPath, 0))
+		{
+			WLog_ERR(TAG,  "error creating directory '%s'", settings->ConfigPath);
+			goto fail;
+		}
 		WLog_INFO(TAG,  "creating directory %s", settings->ConfigPath);
 	}
 
-	certificate_store->path = GetCombinedPath(settings->ConfigPath, (char*) certificate_store_dir);
-
-	if (!certificate_store->path)
-		return -1;
+	if (!(certificate_store->path = GetCombinedPath(settings->ConfigPath, (char*) certificate_store_dir)))
+		goto fail;
 
 	if (!PathFileExistsA(certificate_store->path))
 	{
-		CreateDirectoryA(certificate_store->path, 0);
-		WLog_INFO(TAG,  "creating directory %s", certificate_store->path);
+		if (!CreateDirectoryA(certificate_store->path, 0))
+		{
+			WLog_ERR(TAG,  "error creating directory [%s]", certificate_store->path);
+			goto fail;
+		}
+		WLog_INFO(TAG,  "creating directory [%s]", certificate_store->path);
 	}
 
-	server_path = GetCombinedPath(settings->ConfigPath, (char*) certificate_server_dir);
-
-	if (!server_path)
-		return -1;
+	if (!(server_path = GetCombinedPath(settings->ConfigPath, (char*) certificate_server_dir)))
+		goto fail;
 
 	if (!PathFileExistsA(server_path))
 	{
-		CreateDirectoryA(server_path, 0);
-		WLog_INFO(TAG,  "creating directory %s", server_path);
+		if (!CreateDirectoryA(server_path, 0))
+		{
+			WLog_ERR(TAG,  "error creating directory [%s]", server_path);
+			goto fail;
+		}
+		WLog_INFO(TAG,  "created directory [%s]", server_path);
+	}
+
+	if (!(certificate_store->file = GetCombinedPath(settings->ConfigPath, (char*) certificate_known_hosts_file)))
+		goto fail;
+
+	if (!PathFileExistsA(certificate_store->file))
+		certificate_store->fp = fopen((char*) certificate_store->file, "w+");
+	else
+		certificate_store->fp = fopen((char*) certificate_store->file, "r+");
+
+	if (!certificate_store->fp)
+	{
+		WLog_ERR(TAG,  "error opening [%s]", certificate_store->file);
+		goto fail;
 	}
 
 	free(server_path);
 
-	certificate_store->file = GetCombinedPath(settings->ConfigPath, (char*) certificate_known_hosts_file);
+	return TRUE;
 
-	if (!certificate_store->file)
-		return -1;
-
-	if (PathFileExistsA(certificate_store->file) == FALSE)
-	{
-		certificate_store->fp = fopen((char*) certificate_store->file, "w+");
-
-		if (!certificate_store->fp)
-		{
-			WLog_ERR(TAG,  "certificate_store_open: error opening [%s] for writing", certificate_store->file);
-			return -1;
-		}
-
-		fflush(certificate_store->fp);
-	}
-	else
-	{
-		certificate_store->fp = fopen((char*) certificate_store->file, "r+");
-	}
-
-	return 1;
+fail:
+	WLog_ERR(TAG,  "certificate store initialization failed");
+	free(server_path);
+	free(certificate_store->path);
+	free(certificate_store->file);
+	certificate_store->path = NULL;
+	certificate_store->file = NULL;
+	return FALSE;
 }
 
 int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data)
@@ -285,7 +294,11 @@ rdpCertificateStore* certificate_store_new(rdpSettings* settings)
 
 	certificate_store->settings = settings;
 
-	certificate_store_init(certificate_store);
+	if (!certificate_store_init(certificate_store))
+	{
+		free(certificate_store);
+		return NULL;
+	}
 
 	return certificate_store;
 }

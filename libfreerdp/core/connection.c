@@ -415,8 +415,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 
 	/* encrypt client random */
 
-	if (settings->ClientRandom)
-		free(settings->ClientRandom);
+	free(settings->ClientRandom);
 
 	settings->ClientRandomLength = CLIENT_RANDOM_LENGTH;
 	settings->ClientRandom = malloc(settings->ClientRandomLength);
@@ -509,8 +508,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	}
 	ret = TRUE;
 end:
-	if (crypt_client_random)
-		free(crypt_client_random);
+	free(crypt_client_random);
 	return ret;
 }
 
@@ -628,11 +626,9 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	}
 	ret = TRUE;
 end:
-	if (crypt_client_random)
-		free(crypt_client_random);
+	free(crypt_client_random);
 end2:
-	if (client_random)
-		free(client_random);
+	free(client_random);
 
 	return ret;
 }
@@ -825,7 +821,15 @@ int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 	 */
 	if (width != rdp->settings->DesktopWidth || height != rdp->settings->DesktopHeight)
 	{
-		IFCALL(rdp->update->DesktopResize, rdp->update->context);
+		BOOL status = TRUE;
+
+		IFCALLRET(rdp->update->DesktopResize, status, rdp->update->context);
+
+		if (!status)
+		{
+			WLog_ERR(TAG, "client desktop resize callback failed");
+			return -1;
+		}
 	}
 
 	rdp_client_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION);

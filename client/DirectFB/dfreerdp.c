@@ -193,7 +193,9 @@ BOOL df_post_connect(freerdp* instance)
 	context = ((dfContext*) instance->context);
 	dfi = context->dfi;
 
-	gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT | CLRBUF_16BPP | CLRBUF_32BPP, NULL);
+	if (!gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT | CLRBUF_16BPP | CLRBUF_32BPP, NULL))
+		return FALSE;
+
 	gdi = instance->context->gdi;
 
 	dfi->err = DirectFBCreate(&(dfi->dfb));
@@ -454,7 +456,11 @@ int main(int argc, char* argv[])
 
 	setlocale(LC_ALL, "");
 
-	g_sem = CreateSemaphore(NULL, 0, 1, NULL);
+	if (!(g_sem = CreateSemaphore(NULL, 0, 1, NULL)))
+	{
+		WLog_ERR(TAG, "Failed to create semaphore");
+		exit(1);
+	}
 
 	instance = freerdp_new();
 	instance->PreConnect = df_pre_connect;

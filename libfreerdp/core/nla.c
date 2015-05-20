@@ -163,8 +163,7 @@ int nla_client_init(rdpNla* nla)
 			{
 				if (strlen(settings->PasswordHash) == 32)
 				{
-					if (identity->Password)
-						free(identity->Password);
+					free(identity->Password);
 
 					identity->PasswordLength = ConvertToUnicode(CP_UTF8, 0,
 							settings->PasswordHash, -1, &identity->Password, 0) - 1;

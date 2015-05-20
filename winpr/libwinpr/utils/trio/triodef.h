@@ -313,7 +313,7 @@ typedef void * trio_pointer_t;
 # define TRIO_COMPILER_SUPPORTS_LL
 #endif
 
-#if !defined(HAVE_MATH_C99_LONG_DOUBLE)
+#if defined(TRIO_PLATFORM_UNIX) && !defined(HAVE_MATH_C99_LONG_DOUBLE)
 # define TRIO_NO_FLOORL 1
 # define TRIO_NO_CEILL 1
 # define TRIO_NO_POWL 1

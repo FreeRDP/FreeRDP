@@ -621,11 +621,7 @@ void rdpdr_server_context_free(RdpdrServerContext* context)
 {
 	if (context)
 	{
-		if (context->priv)
-		{
-			free(context->priv);
-		}
-
+		free(context->priv);
 		free(context);
 	}
 }

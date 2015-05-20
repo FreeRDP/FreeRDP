@@ -499,14 +499,15 @@ static void tsmf_ffmpeg_free(ITSMFDecoder* decoder)
 	TSMFFFmpegDecoder* mdecoder = (TSMFFFmpegDecoder*) decoder;
 	if (mdecoder->frame)
 		av_free(mdecoder->frame);
-	if (mdecoder->decoded_data)
-		free(mdecoder->decoded_data);
+
+	free(mdecoder->decoded_data);
+
 	if (mdecoder->codec_context)
 	{
 		if (mdecoder->prepared)
 			avcodec_close(mdecoder->codec_context);
-		if (mdecoder->codec_context->extradata)
-			free(mdecoder->codec_context->extradata);
+
+		free(mdecoder->codec_context->extradata);
 		av_free(mdecoder->codec_context);
 	}
 	free(decoder);

@@ -366,8 +366,7 @@ static void audin_alsa_close(IAudinDevice* device)
 		alsa->thread = NULL;
 	}
 
-	if (alsa->buffer)
-		free(alsa->buffer);
+	free(alsa->buffer);
 	alsa->buffer = NULL;
 
 	alsa->receive = NULL;

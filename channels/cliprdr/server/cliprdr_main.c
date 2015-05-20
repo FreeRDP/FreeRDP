@@ -629,8 +629,7 @@ static int cliprdr_server_receive_format_list(CliprdrServerContext* context, wSt
 
 	for (index = 0; index < formatList.numFormats; index++)
 	{
-		if (formatList.formats[index].formatName)
-			free(formatList.formats[index].formatName);
+		free(formatList.formats[index].formatName);
 	}
 
 	free(formatList.formats);

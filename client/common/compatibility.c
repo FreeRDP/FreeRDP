@@ -395,9 +395,7 @@ int freerdp_detect_old_command_line_syntax(int argc, char** argv, int* count)
 			detect_status = 1;
 	}
 
-	if (settings->ServerHostname)
-		free(settings->ServerHostname);
-
+	free(settings->ServerHostname);
 	free(settings);
 
 	return detect_status;

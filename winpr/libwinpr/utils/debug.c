@@ -199,22 +199,19 @@ void winpr_backtrace_free(void *buffer)
 #if defined(HAVE_EXECINFO_H)
 	t_execinfo *data = (t_execinfo *)buffer;
 
-	if (data->buffer)
-		free(data->buffer);
+	free(data->buffer);
 
 	free(data);
 #elif defined(ANDROID)
 	t_corkscrew_data *data = (t_corkscrew_data *)buffer;
 
-	if (data->buffer)
-		free(data->buffer);
+	free(data->buffer);
 
 	free(data);
 #elif defined(_WIN32) || defined(_WIN64)
 	{
 		t_win_stack *data = (t_win_stack*)buffer;
-		if (data->stack)
-			free(data->stack);
+		free(data->stack);
 		free(data);
 	}
 #else

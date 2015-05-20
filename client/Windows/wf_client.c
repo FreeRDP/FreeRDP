@@ -150,8 +150,10 @@ BOOL wf_sw_desktop_resize(wfContext* wfc)
 		wf_image_free(wfc->primary);
 		wfc->primary = wf_image_new(wfc, wfc->width, wfc->height, wfc->dstBpp, NULL);
 	}
-	
-	gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP, wfc->primary->pdata);
+
+	if (!gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP, wfc->primary->pdata))
+		return FALSE;
+
 	gdi = instance->context->gdi;
 	wfc->hdc = gdi->primary->hdc;
 
@@ -382,7 +384,8 @@ BOOL wf_post_connect(freerdp* instance)
 	{
 		wfc->primary = wf_image_new(wfc, wfc->width, wfc->height, wfc->dstBpp, NULL);
 
-		gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP, wfc->primary->pdata);
+		if (!gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP, wfc->primary->pdata))
+			return FALSE;
 
 		gdi = instance->context->gdi;
 		wfc->hdc = gdi->primary->hdc;
@@ -393,7 +396,9 @@ BOOL wf_post_connect(freerdp* instance)
 		wfc->srcBpp = instance->settings->ColorDepth;
 		wfc->primary = wf_image_new(wfc, wfc->width, wfc->height, wfc->dstBpp, NULL);
 
-		wfc->hdc = gdi_GetDC();
+		if (!(wfc->hdc = gdi_GetDC()))
+			return FALSE;
+
 		wfc->hdc->bitsPerPixel = wfc->dstBpp;
 		wfc->hdc->bytesPerPixel = wfc->dstBpp / 8;
 
@@ -674,9 +679,13 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 
 	if (async_input)
 	{
-		input_thread = CreateThread(NULL, 0,
+		if (!(input_thread = CreateThread(NULL, 0,
 				(LPTHREAD_START_ROUTINE) wf_input_thread,
-				instance, 0, NULL);
+				instance, 0, NULL)))
+		{
+			WLog_ERR(TAG, "Failed to create async input thread.");
+			goto disconnect;
+		}
 	}
 
 	while (1)
@@ -775,6 +784,7 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 		CloseHandle(input_thread);
 	}
 
+disconnect:
 	freerdp_disconnect(instance);
 	WLog_DBG(TAG, "Main thread exited.");
 

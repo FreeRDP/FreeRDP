@@ -565,11 +565,19 @@ int test_gdi_BitBlt_32bpp(void)
 	int bytesPerPixel = 4;
 	int bitsPerPixel = 32;
 
-	hdcSrc = gdi_GetDC();
+	if (!(hdcSrc = gdi_GetDC()))
+	{
+		printf("failed to get gdi device context\n");
+		return -1;
+	}
 	hdcSrc->bytesPerPixel = bytesPerPixel;
 	hdcSrc->bitsPerPixel = bitsPerPixel;
 
-	hdcDst = gdi_GetDC();
+	if (!(hdcDst = gdi_GetDC()))
+	{
+		printf("failed to get gdi device context\n");
+		return -1;
+	}
 	hdcDst->bytesPerPixel = bytesPerPixel;
 	hdcDst->bitsPerPixel = bitsPerPixel;
 
@@ -853,11 +861,21 @@ int test_gdi_BitBlt_16bpp(void)
 	int bytesPerPixel = 2;
 	int bitsPerPixel = 16;
 
-	hdcSrc = gdi_GetDC();
+	if (!(hdcSrc = gdi_GetDC()))
+	{
+		printf("failed to get gdi device context\n");
+		return -1;
+	}
+
 	hdcSrc->bytesPerPixel = bytesPerPixel;
 	hdcSrc->bitsPerPixel = bitsPerPixel;
 
-	hdcDst = gdi_GetDC();
+	if (!(hdcDst = gdi_GetDC()))
+	{
+		printf("failed to get gdi device context\n");
+		return -1;
+	}
+
 	hdcDst->bytesPerPixel = bytesPerPixel;
 	hdcDst->bitsPerPixel = bitsPerPixel;
 
@@ -1141,11 +1159,21 @@ int test_gdi_BitBlt_8bpp(void)
 	int bytesPerPixel = 1;
 	int bitsPerPixel = 8;
 
-	hdcSrc = gdi_GetDC();
+	if (!(hdcSrc = gdi_GetDC()))
+	{
+		printf("failed to get gdi device context\n");
+		return -1;
+	}
+
 	hdcSrc->bytesPerPixel = bytesPerPixel;
 	hdcSrc->bitsPerPixel = bitsPerPixel;
 
-	hdcDst = gdi_GetDC();
+	if (!(hdcDst = gdi_GetDC()))
+	{
+		printf("failed to get gdi device context\n");
+		return -1;
+	}
+
 	hdcDst->bytesPerPixel = bytesPerPixel;
 	hdcDst->bitsPerPixel = bitsPerPixel;
 
