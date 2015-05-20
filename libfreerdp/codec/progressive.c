@@ -262,8 +262,8 @@ PROGRESSIVE_SURFACE_CONTEXT* progressive_surface_context_new(UINT16 surfaceId, U
 	surface->id = surfaceId;
 	surface->width = width;
 	surface->height = height;
-	surface->gridWidth = (width + (width % 64)) / 64;
-	surface->gridHeight = (height + (height % 64)) / 64;
+	surface->gridWidth = (width + (64 - width % 64)) / 64;
+	surface->gridHeight = (height + (64 - height % 64)) / 64;
 	surface->gridSize = surface->gridWidth * surface->gridHeight;
 
 	surface->tiles = (RFX_PROGRESSIVE_TILE*) calloc(surface->gridSize, sizeof(RFX_PROGRESSIVE_TILE));
