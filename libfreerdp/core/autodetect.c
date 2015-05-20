@@ -224,12 +224,13 @@ BOOL autodetect_send_connecttime_bandwidth_measure_stop(rdpContext* context, UIN
 
 static BOOL autodetect_send_bandwidth_measure_results(rdpRdp* rdp, UINT16 responseType, UINT16 sequenceNumber)
 {
+	BOOL success = TRUE;
 	wStream* s;
 	UINT32 timeDelta;
-	
+
 	/* Compute the total time */
 	timeDelta = GetTickCount() - rdp->autodetect->bandwidthMeasureStartTime;
-	
+
 	/* Send the result PDU to the server */
 
 	s = rdp_message_channel_pdu_init(rdp);
@@ -245,6 +246,12 @@ static BOOL autodetect_send_bandwidth_measure_results(rdpRdp* rdp, UINT16 respon
 	Stream_Write_UINT16(s, responseType); /* responseType (1 byte) */
 	Stream_Write_UINT32(s, timeDelta); /* timeDelta (4 bytes) */
 	Stream_Write_UINT32(s, rdp->autodetect->bandwidthMeasureByteCount); /* byteCount (4 bytes) */
+
+	IFCALLRET(rdp->autodetect->ClientBandwidthMeasureResult, success,
+						rdp->context, rdp->autodetect);
+
+	if (!success)
+		return FALSE;
 
 	return rdp_send_message_channel_pdu(rdp, s, SEC_AUTODETECT_RSP);
 }
@@ -286,7 +293,7 @@ static BOOL autodetect_send_netchar_result(rdpContext* context, UINT16 sequenceN
 BOOL autodetect_send_netchar_sync(rdpRdp* rdp, UINT16 sequenceNumber)
 {
 	wStream* s;
-	
+
 	/* Send the response PDU to the server */
 
 	s = rdp_message_channel_pdu_init(rdp);

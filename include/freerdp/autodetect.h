@@ -29,6 +29,7 @@ typedef BOOL (*pBandwidthMeasureStart)(rdpContext* context, UINT16 sequenceNumbe
 typedef BOOL (*pBandwidthMeasureStop)(rdpContext* context, UINT16 sequenceNumber);
 typedef BOOL (*pBandwidthMeasureResults)(rdpContext* context, UINT16 sequenceNumber);
 typedef BOOL (*pNetworkCharacteristicsResult)(rdpContext* context, UINT16 sequenceNumber);
+typedef BOOL (*pClientBandwidthMeasureResult)(rdpContext* context, rdpAutoDetect* data);
 
 struct rdp_autodetect
 {
@@ -52,7 +53,8 @@ struct rdp_autodetect
 	ALIGN64 pBandwidthMeasureStop BandwidthMeasureStop; /* 19 */
 	ALIGN64 pBandwidthMeasureResults BandwidthMeasureResults; /* 20 */
 	ALIGN64 pNetworkCharacteristicsResult NetworkCharacteristicsResult; /* 21 */
-	UINT64 paddingB[32 - 22]; /* 22 */
+	ALIGN64 pClientBandwidthMeasureResult ClientBandwidthMeasureResult; /* 22 */
+	UINT64 paddingB[32 - 23]; /* 23 */
 };
 
 
