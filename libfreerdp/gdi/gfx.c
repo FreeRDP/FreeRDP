@@ -250,6 +250,8 @@ int gdi_SurfaceCommand_RemoteFX(rdpGdi* gdi, RdpgfxClientContext* context, RDPGF
 		region16_uninit(&updateRegion);
 	}
 
+	region16_uninit(&clippingRects);
+
 	rfx_message_free(gdi->codecs->rfx, message);
 
 	if (!gdi->inGfxFrame)
@@ -500,6 +502,8 @@ int gdi_SurfaceCommand_Progressive(rdpGdi* gdi, RdpgfxClientContext* context, RD
 
 		region16_uninit(&updateRegion);
 	}
+
+	region16_uninit(&clippingRects);
 
 	if (!gdi->inGfxFrame)
 		gdi_OutputUpdate(gdi);
