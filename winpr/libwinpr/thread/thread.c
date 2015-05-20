@@ -585,9 +585,12 @@ DWORD GetCurrentThreadId(VOID)
 	pthread_t tid;
 	tid = pthread_self();
 
-	/* Since pthread_t can be 64-bits on some systems, take just the lower */
-	/* 32-bits of it for the thread ID returned by this function.	       */
-	return (DWORD) (tid && 0xffffffff);
+#ifdef __OpenBSD__
+	/* Since pthread_t can be 64-bits on some systems, take just the    */
+	/* lower 32-bits of it for the thread ID returned by this function. */
+        tid = tid && 0xffffffff;
+#endif
+	return (DWORD) (tid);
 }
 
 DWORD ResumeThread(HANDLE hThread)
