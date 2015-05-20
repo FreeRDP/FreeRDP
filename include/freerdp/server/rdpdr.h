@@ -2,6 +2,7 @@
  * FreeRDP: A Remote Desktop Protocol Implementation
  * Device Redirection Virtual Channel Server Interface
  *
+ * Copyright 2014 Dell Software <Mike.McDonald@software.dell.com>
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,8 +33,54 @@
 typedef struct _rdpdr_server_context RdpdrServerContext;
 typedef struct _rdpdr_server_private RdpdrServerPrivate;
 
+struct _FILE_DIRECTORY_INFORMATION
+{
+	UINT32 NextEntryOffset;
+	UINT32 FileIndex;
+	UINT64 CreationTime;
+	UINT64 LastAccessTime;
+	UINT64 LastWriteTime;
+	UINT64 ChangeTime;
+	UINT64 EndOfFile;
+	UINT64 AllocationSize;
+	UINT32 FileAttributes;
+	char FileName[512];
+};
+typedef struct _FILE_DIRECTORY_INFORMATION FILE_DIRECTORY_INFORMATION;
+
 typedef int (*psRdpdrStart)(RdpdrServerContext* context);
 typedef int (*psRdpdrStop)(RdpdrServerContext* context);
+
+typedef BOOL (*psRdpdrDriveCreateDirectory)(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path);
+typedef BOOL (*psRdpdrDriveDeleteDirectory)(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path);
+typedef BOOL (*psRdpdrDriveQueryDirectory)(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path);
+typedef BOOL (*psRdpdrDriveOpenFile)(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path, UINT32 desiredAccess, UINT32 createDisposition);
+typedef BOOL (*psRdpdrDriveReadFile)(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, UINT32 fileId, UINT32 length, UINT32 offset);
+typedef BOOL (*psRdpdrDriveWriteFile)(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, UINT32 fileId, const char* buffer, UINT32 length, UINT32 offset);
+typedef BOOL (*psRdpdrDriveCloseFile)(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, UINT32 fileId);
+typedef BOOL (*psRdpdrDriveDeleteFile)(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path);
+typedef BOOL (*psRdpdrDriveRenameFile)(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* oldPath, const char* newPath);
+
+typedef void (*psRdpdrOnDriveCreate)(RdpdrServerContext* context, UINT32 deviceId, const char* name);
+typedef void (*psRdpdrOnDriveDelete)(RdpdrServerContext* context, UINT32 deviceId);
+typedef void (*psRdpdrOnDriveCreateDirectoryComplete)(RdpdrServerContext* context, void* callbackData, UINT32 ioStatus);
+typedef void (*psRdpdrOnDriveDeleteDirectoryComplete)(RdpdrServerContext* context, void* callbackData, UINT32 ioStatus);
+typedef void (*psRdpdrOnDriveQueryDirectoryComplete)(RdpdrServerContext* context, void* callbackData, UINT32 ioStatus, FILE_DIRECTORY_INFORMATION* fdi);
+typedef void (*psRdpdrOnDriveOpenFileComplete)(RdpdrServerContext* context, void* callbackData, UINT32 ioStatus, UINT32 deviceId, UINT32 fileId);
+typedef void (*psRdpdrOnDriveReadFileComplete)(RdpdrServerContext* context, void* callbackData, UINT32 ioStatus, const char* buffer, UINT32 length);
+typedef void (*psRdpdrOnDriveWriteFileComplete)(RdpdrServerContext* context, void* callbackData, UINT32 ioStatus, UINT32 bytesWritten);
+typedef void (*psRdpdrOnDriveCloseFileComplete)(RdpdrServerContext* context, void* callbackData, UINT32 ioStatus);
+typedef void (*psRdpdrOnDriveDeleteFileComplete)(RdpdrServerContext* context, void* callbackData, UINT32 ioStatus);
+typedef void (*psRdpdrOnDriveRenameFileComplete)(RdpdrServerContext* context, void* callbackData, UINT32 ioStatus);
+
+typedef void (*psRdpdrOnPortCreate)(RdpdrServerContext* context, UINT32 deviceId, const char* name);
+typedef void (*psRdpdrOnPortDelete)(RdpdrServerContext* context, UINT32 deviceId);
+
+typedef void (*psRdpdrOnPrinterCreate)(RdpdrServerContext* context, UINT32 deviceId, const char* name);
+typedef void (*psRdpdrOnPrinterDelete)(RdpdrServerContext* context, UINT32 deviceId);
+
+typedef void (*psRdpdrOnSmartcardCreate)(RdpdrServerContext* context, UINT32 deviceId, const char* name);
+typedef void (*psRdpdrOnSmartcardDelete)(RdpdrServerContext* context, UINT32 deviceId);
 
 struct _rdpdr_server_context
 {
@@ -43,6 +90,51 @@ struct _rdpdr_server_context
 	psRdpdrStop Stop;
 
 	RdpdrServerPrivate* priv;
+
+	/* Server self-defined pointer. */
+	void* data;
+
+	/* Server supported redirections. Set by server. */
+	BOOL supportsDrives;
+	BOOL supportsPorts;
+	BOOL supportsPrinters;
+	BOOL supportsSmartcards;
+
+	/*** Drive APIs called by the server. ***/
+	psRdpdrDriveCreateDirectory DriveCreateDirectory;
+	psRdpdrDriveDeleteDirectory DriveDeleteDirectory;
+	psRdpdrDriveQueryDirectory DriveQueryDirectory;
+	psRdpdrDriveOpenFile DriveOpenFile;
+	psRdpdrDriveReadFile DriveReadFile;
+	psRdpdrDriveWriteFile DriveWriteFile;
+	psRdpdrDriveCloseFile DriveCloseFile;
+	psRdpdrDriveDeleteFile DriveDeleteFile;
+	psRdpdrDriveRenameFile DriveRenameFile;
+
+	/*** Drive callbacks registered by the server. ***/
+	psRdpdrOnDriveCreate OnDriveCreate;
+	psRdpdrOnDriveDelete OnDriveDelete;
+	psRdpdrOnDriveCreateDirectoryComplete OnDriveCreateDirectoryComplete;
+	psRdpdrOnDriveDeleteDirectoryComplete OnDriveDeleteDirectoryComplete;
+	psRdpdrOnDriveQueryDirectoryComplete OnDriveQueryDirectoryComplete;
+	psRdpdrOnDriveOpenFileComplete OnDriveOpenFileComplete;
+	psRdpdrOnDriveReadFileComplete OnDriveReadFileComplete;
+	psRdpdrOnDriveWriteFileComplete OnDriveWriteFileComplete;
+	psRdpdrOnDriveCloseFileComplete OnDriveCloseFileComplete;
+	psRdpdrOnDriveDeleteFileComplete OnDriveDeleteFileComplete;
+	psRdpdrOnDriveRenameFileComplete OnDriveRenameFileComplete;
+
+	/*** Port callbacks registered by the server. ***/
+	psRdpdrOnPortCreate OnPortCreate;
+	psRdpdrOnPortDelete OnPortDelete;
+
+	/*** Printer callbacks registered by the server. ***/
+	psRdpdrOnPrinterCreate OnPrinterCreate;
+	psRdpdrOnPrinterDelete OnPrinterDelete;
+
+	/*** Smartcard callbacks registered by the server. ***/
+	psRdpdrOnSmartcardCreate OnSmartcardCreate;
+	psRdpdrOnSmartcardDelete OnSmartcardDelete;
 };
 
 #ifdef __cplusplus
