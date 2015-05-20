@@ -1026,7 +1026,7 @@ void* shadow_client_thread(rdpShadowClient* client)
 
 			EnterSynchronizationBarrier(&(subsystem->barrier), 0);
 
-			while (WaitForSingleObject(UpdateEvent, 0) == WAIT_OBJECT_0);
+			while (WaitForSingleObject(UpdateEvent, 0) != WAIT_OBJECT_0);
 		}
 
 		if (WaitForSingleObject(ClientEvent, 0) == WAIT_OBJECT_0)
