@@ -99,9 +99,10 @@ BOOL shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 		return TRUE;
 
 	shadow_encoder_free(client->encoder);
+	client->encoder = NULL;
 fail_encoder_new:
 	CloseHandle(client->StopEvent);
-	client->encoder = NULL;
+	client->StopEvent = NULL;
 fail_stop_event:
 	WTSCloseServer((HANDLE) client->vcm);
 	client->vcm = NULL;
