@@ -598,6 +598,10 @@ DWORD GetCurrentThreadId(VOID)
 {
 	pthread_t tid;
 	tid = pthread_self();
+
+	/* Since pthread_t can be 64-bits on some systems, take just the    */
+	/* lower 32-bits of it for the thread ID returned by this function. */
+	tid = (long)tid & 0xffffffff;
 	return (DWORD) tid;
 }
 

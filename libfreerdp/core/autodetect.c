@@ -140,8 +140,9 @@ BOOL autodetect_send_connecttime_bandwidth_measure_start(rdpContext* context, UI
 
 BOOL autodetect_send_bandwidth_measure_payload(rdpContext* context, UINT16 payloadLength, UINT16 sequenceNumber)
 {
-	UINT16 i;
 	wStream* s;
+	UCHAR *buffer = NULL;
+	BOOL bResult = FALSE;
 
 	s = rdp_message_channel_pdu_init(context->rdp);
 
@@ -163,19 +164,33 @@ BOOL autodetect_send_bandwidth_measure_payload(rdpContext* context, UINT16 paylo
 	Stream_Write_UINT16(s, sequenceNumber); /* sequenceNumber (2 bytes) */
 	Stream_Write_UINT16(s, RDP_BW_PAYLOAD_REQUEST_TYPE); /* requestType (2 bytes) */
 	Stream_Write_UINT16(s, payloadLength); /* payloadLength (2 bytes) */
+
 	/* Random data (better measurement in case the line is compressed) */
-	for (i = 0; i < payloadLength / 4; i++)
+	buffer = (UCHAR *)malloc(payloadLength);
+	if (NULL == buffer)
 	{
-		Stream_Write_UINT32(s, rand());
+		Stream_Release(s);
+		return FALSE;
 	}
 
-	return rdp_send_message_channel_pdu(context->rdp, s, SEC_AUTODETECT_REQ);
+	RAND_bytes(buffer, payloadLength);
+	Stream_Write(s, buffer, payloadLength);
+
+	bResult = rdp_send_message_channel_pdu(context->rdp, s, SEC_AUTODETECT_REQ);
+	if (!bResult)
+	{
+		Stream_Release(s);
+	}
+	free(buffer);
+
+	return bResult;
 }
 
 static BOOL autodetect_send_bandwidth_measure_stop(rdpContext* context, UINT16 payloadLength, UINT16 sequenceNumber, UINT16 requestType)
 {
-	UINT16 i;
 	wStream* s;
+	UCHAR *buffer = NULL;
+	BOOL bResult = FALSE;
 
 	s = rdp_message_channel_pdu_init(context->rdp);
 
@@ -201,15 +216,28 @@ static BOOL autodetect_send_bandwidth_measure_stop(rdpContext* context, UINT16 p
 				Stream_Release(s);
 				return FALSE;
 			}
+
 			/* Random data (better measurement in case the line is compressed) */
-			for (i = 0; i < payloadLength / 4; i++)
+			buffer = malloc(payloadLength);
+			if (NULL == buffer)
 			{
-				Stream_Write_UINT32(s, rand());
+				Stream_Release(s);
+				return FALSE;
 			}
+
+			RAND_bytes(buffer, payloadLength);
+			Stream_Write(s, buffer, payloadLength);
 		}
 	}
 
-	return rdp_send_message_channel_pdu(context->rdp, s, SEC_AUTODETECT_REQ);
+	bResult = rdp_send_message_channel_pdu(context->rdp, s, SEC_AUTODETECT_REQ);
+	if (!bResult)
+	{
+		Stream_Release(s);
+	}
+	free(buffer);
+
+	return bResult;
 }
 
 static BOOL autodetect_send_continuous_bandwidth_measure_stop(rdpContext* context, UINT16 sequenceNumber)

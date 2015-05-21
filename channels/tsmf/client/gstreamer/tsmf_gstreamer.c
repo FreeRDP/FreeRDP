@@ -93,7 +93,11 @@ static gboolean tsmf_gstreamer_seek_data(GstAppSrc *src, guint64 offset, gpointe
 	return TRUE;
 }
 
+#ifdef __OpenBSD__
+static inline GstClockTime tsmf_gstreamer_timestamp_ms_to_gst(UINT64 ms_timestamp)
+#else
 static inline const GstClockTime tsmf_gstreamer_timestamp_ms_to_gst(UINT64 ms_timestamp)
+#endif
 {
 	/*
 	 * Convert Microsoft 100ns timestamps to Gstreamer 1ns units.
