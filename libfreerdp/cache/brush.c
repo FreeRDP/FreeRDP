@@ -141,8 +141,6 @@ void* brush_cache_get(rdpBrushCache* brushCache, UINT32 index, UINT32* bpp)
 
 void brush_cache_put(rdpBrushCache* brushCache, UINT32 index, void* entry, UINT32 bpp)
 {
-	void* prevEntry;
-
 	if (bpp == 1)
 	{
 		if (index >= brushCache->maxMonoEntries)

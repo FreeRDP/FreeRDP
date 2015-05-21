@@ -277,7 +277,6 @@ int nsc_context_reset(NSC_CONTEXT* context)
 
 NSC_CONTEXT* nsc_context_new(void)
 {
-	UINT8 i;
 	NSC_CONTEXT* context;
 
 	context = (NSC_CONTEXT*) calloc(1, sizeof(NSC_CONTEXT));
