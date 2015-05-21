@@ -1406,10 +1406,16 @@ rdpRdp* rdp_new(rdpContext* context)
 	}
 
 	rdp->settings = context->settings;
-	rdp->settings->instance = context->instance;
-	
 	if (context->instance)
+	{
+		rdp->settings->instance = context->instance;
 		context->instance->settings = rdp->settings;
+	}
+	else if (context->peer)
+	{
+		rdp->settings->instance = context->peer;
+		context->peer->settings = rdp->settings;
+	}
 
 	rdp->transport = transport_new(context);
 
