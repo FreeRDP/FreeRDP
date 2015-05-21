@@ -832,12 +832,16 @@ static void rdpsnd_process_disconnect(rdpsndPlugin* rdpsnd)
 static wListDictionary* g_InitHandles = NULL;
 static wListDictionary* g_OpenHandles = NULL;
 
-void rdpsnd_add_init_handle_data(void* pInitHandle, void* pUserData)
+BOOL rdpsnd_add_init_handle_data(void* pInitHandle, void* pUserData)
 {
 	if (!g_InitHandles)
+	{
 		g_InitHandles = ListDictionary_New(TRUE);
+		if (!g_InitHandles)
+			return FALSE;
+	}
 
-	ListDictionary_Add(g_InitHandles, pInitHandle, pUserData);
+	return ListDictionary_Add(g_InitHandles, pInitHandle, pUserData);
 }
 
 void* rdpsnd_get_init_handle_data(void* pInitHandle)
@@ -857,14 +861,18 @@ void rdpsnd_remove_init_handle_data(void* pInitHandle)
 	}
 }
 
-void rdpsnd_add_open_handle_data(DWORD openHandle, void* pUserData)
+BOOL rdpsnd_add_open_handle_data(DWORD openHandle, void* pUserData)
 {
 	void* pOpenHandle = (void*) (size_t) openHandle;
 
 	if (!g_OpenHandles)
+	{
 		g_OpenHandles = ListDictionary_New(TRUE);
+		if (!g_OpenHandles)
+			return FALSE;
+	}
 
-	ListDictionary_Add(g_OpenHandles, pOpenHandle, pUserData);
+	return ListDictionary_Add(g_OpenHandles, pOpenHandle, pUserData);
 }
 
 void* rdpsnd_get_open_handle_data(DWORD openHandle)
@@ -1014,7 +1022,11 @@ static void rdpsnd_virtual_channel_event_connected(rdpsndPlugin* plugin, LPVOID 
 	status = plugin->channelEntryPoints.pVirtualChannelOpen(plugin->InitHandle,
 		&plugin->OpenHandle, plugin->channelDef.name, rdpsnd_virtual_channel_open_event);
 
-	rdpsnd_add_open_handle_data(plugin->OpenHandle, plugin);
+	if (!rdpsnd_add_open_handle_data(plugin->OpenHandle, plugin))
+	{
+		WLog_ERR(TAG, "%s: unable to register opened handle", __FUNCTION__);
+		return;
+	}
 
 	if (status != CHANNEL_RC_OK)
 	{
@@ -1024,9 +1036,19 @@ static void rdpsnd_virtual_channel_event_connected(rdpsndPlugin* plugin, LPVOID 
 	}
 
 	plugin->MsgPipe = MessagePipe_New();
+	if (!plugin->MsgPipe)
+	{
+		WLog_ERR(TAG, "%s: unable to create message pipe", __FUNCTION__);
+		return;
+	}
 
 	plugin->thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) rdpsnd_virtual_channel_client_thread, (void*) plugin, 0, NULL);
+	if (!plugin->thread)
+	{
+		WLog_ERR(TAG, "%s: unable to create thread", __FUNCTION__);
+		return;
+	}
 }
 
 static void rdpsnd_virtual_channel_event_disconnected(rdpsndPlugin* rdpsnd)
@@ -1129,40 +1151,37 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	rdpsndPlugin* rdpsnd;
 
 	rdpsnd = (rdpsndPlugin*) calloc(1, sizeof(rdpsndPlugin));
+	if (!rdpsnd)
+		return FALSE;
 
-	if (rdpsnd)
-	{
 #if !defined(_WIN32) && !defined(ANDROID)
-		{
-			sigset_t mask;
-			sigemptyset(&mask);
-			sigaddset(&mask, SIGIO);
-			pthread_sigmask(SIG_BLOCK, &mask, NULL);
-		}
+	{
+		sigset_t mask;
+		sigemptyset(&mask);
+		sigaddset(&mask, SIGIO);
+		pthread_sigmask(SIG_BLOCK, &mask, NULL);
+	}
 #endif
 
-		rdpsnd->channelDef.options =
-				CHANNEL_OPTION_INITIALIZED |
-				CHANNEL_OPTION_ENCRYPT_RDP;
+	rdpsnd->channelDef.options =
+			CHANNEL_OPTION_INITIALIZED |
+			CHANNEL_OPTION_ENCRYPT_RDP;
 
-		strcpy(rdpsnd->channelDef.name, "rdpsnd");
+	strcpy(rdpsnd->channelDef.name, "rdpsnd");
 
-		CopyMemory(&(rdpsnd->channelEntryPoints), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_FREERDP));
+	CopyMemory(&(rdpsnd->channelEntryPoints), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_FREERDP));
 
-		rdpsnd->log = WLog_Get("com.freerdp.channels.rdpsnd.client");
-		
-		rc = rdpsnd->channelEntryPoints.pVirtualChannelInit(&rdpsnd->InitHandle,
-			&rdpsnd->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, rdpsnd_virtual_channel_init_event);
-		if (CHANNEL_RC_OK != rc)
-		{
-			WLog_ERR(TAG, "pVirtualChannelInit failed with %s [%08X]",
-					 WTSErrorToString(rc), rc);
-			free(rdpsnd);
-			return -1;
-		}
+	rdpsnd->log = WLog_Get("com.freerdp.channels.rdpsnd.client");
 
-		rdpsnd_add_init_handle_data(rdpsnd->InitHandle, (void*) rdpsnd);
+	rc = rdpsnd->channelEntryPoints.pVirtualChannelInit(&rdpsnd->InitHandle,
+		&rdpsnd->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, rdpsnd_virtual_channel_init_event);
+	if (CHANNEL_RC_OK != rc)
+	{
+		WLog_ERR(TAG, "pVirtualChannelInit failed with %s [%08X]",
+				 WTSErrorToString(rc), rc);
+		free(rdpsnd);
+		return FALSE;
 	}
 
-	return 1;
+	return rdpsnd_add_init_handle_data(rdpsnd->InitHandle, (void*) rdpsnd);
 }

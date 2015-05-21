@@ -796,6 +796,11 @@ HttpResponse* http_response_new()
 		return NULL;
 
 	response->Authenticates = ListDictionary_New(FALSE);
+	if (!response->Authenticates)
+	{
+		free(response);
+		return NULL;
+	}
 
 	ListDictionary_KeyObject(response->Authenticates)->fnObjectEquals = strings_equals_nocase;
 	ListDictionary_KeyObject(response->Authenticates)->fnObjectFree = string_free;

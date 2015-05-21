@@ -337,19 +337,33 @@ PCSC_SCARDCONTEXT* PCSC_EstablishCardContext(SCARDCONTEXT hContext)
 		return NULL;
 
 	pContext->hContext = hContext;
-	InitializeCriticalSectionAndSpinCount(&(pContext->lock), 4000);
+	if (!InitializeCriticalSectionAndSpinCount(&(pContext->lock), 4000))
+		goto error_spinlock;
 
 	if (!g_CardContexts)
+	{
 		g_CardContexts = ListDictionary_New(TRUE);
+		if (!g_CardContexts)
+			goto errors;
+	}
 
 	if (!g_Readers)
 	{
 		g_Readers = ArrayList_New(TRUE);
+		if (!g_Readers)
+			goto errors;
 		ArrayList_Object(g_Readers)->fnObjectFree = (OBJECT_FREE_FN) PCSC_ReaderAliasFree;
 	}
 
-	ListDictionary_Add(g_CardContexts, (void*) hContext, (void*) pContext);
+	if (!ListDictionary_Add(g_CardContexts, (void*) hContext, (void*) pContext))
+		goto errors;
 	return pContext;
+
+errors:
+	DeleteCriticalSection(&(pContext->lock));
+error_spinlock:
+	free(pContext);
+	return NULL;
 }
 
 void PCSC_ReleaseCardContext(SCARDCONTEXT hContext)
@@ -552,20 +566,28 @@ PCSC_SCARDHANDLE* PCSC_ConnectCardHandle(SCARDCONTEXT hSharedContext, SCARDCONTE
 	}
 
 	pCard = (PCSC_SCARDHANDLE*) calloc(1, sizeof(PCSC_SCARDHANDLE));
-
 	if (!pCard)
 		return NULL;
 
 	pCard->hSharedContext = hSharedContext;
 	pCard->hPrivateContext = hPrivateContext;
-	pContext->dwCardHandleCount++;
 
 	if (!g_CardHandles)
+	{
 		g_CardHandles = ListDictionary_New(TRUE);
+		if (!g_CardHandles)
+			goto error;
+	}
 
-	ListDictionary_Add(g_CardHandles, (void*) hCard, (void*) pCard);
+	if (!ListDictionary_Add(g_CardHandles, (void*) hCard, (void*) pCard))
+		goto error;
 
+	pContext->dwCardHandleCount++;
 	return pCard;
+
+error:
+	free(pCard);
+	return NULL;
 }
 
 void PCSC_DisconnectCardHandle(SCARDHANDLE hCard)
@@ -628,14 +650,29 @@ BOOL PCSC_AddReaderNameAlias(char* namePCSC, char* nameWinSCard)
 		return TRUE;
 
 	reader = (PCSC_READER*) calloc(1, sizeof(PCSC_READER));
-
 	if (!reader)
-		return FALSE;
+		goto error_reader;
 
 	reader->namePCSC = _strdup(namePCSC);
+	if (!reader->namePCSC)
+		goto error_namePSC;
+
 	reader->nameWinSCard = _strdup(nameWinSCard);
-	ArrayList_Add(g_Readers, reader);
+	if (!reader->nameWinSCard)
+		goto error_nameWinSCard;
+	if (ArrayList_Add(g_Readers, reader) < 0)
+		goto error_add;
 	return TRUE;
+
+error_add:
+	free(reader->nameWinSCard);
+error_nameWinSCard:
+	free(reader->namePCSC);
+error_namePSC:
+	free(reader);
+error_reader:
+	return FALSE;
+
 }
 
 static int PCSC_AtoiWithLength(const char* str, int length)
@@ -890,12 +927,16 @@ char* PCSC_ConvertReaderNamesToPCSC(const char* names, LPDWORD pcchReaders)
 	return namesPCSC;
 }
 
-void PCSC_AddMemoryBlock(SCARDCONTEXT hContext, void* pvMem)
+BOOL PCSC_AddMemoryBlock(SCARDCONTEXT hContext, void* pvMem)
 {
 	if (!g_MemoryBlocks)
+	{
 		g_MemoryBlocks = ListDictionary_New(TRUE);
+		if (!g_MemoryBlocks)
+			return FALSE;
+	}
 
-	ListDictionary_Add(g_MemoryBlocks, pvMem, (void*) hContext);
+	return ListDictionary_Add(g_MemoryBlocks, pvMem, (void*) hContext);
 }
 
 void* PCSC_RemoveMemoryBlock(SCARDCONTEXT hContext, void* pvMem)
@@ -914,7 +955,11 @@ void* PCSC_SCardAllocMemory(SCARDCONTEXT hContext, size_t size)
 	if (!pvMem)
 		return NULL;
 
-	PCSC_AddMemoryBlock(hContext, pvMem);
+	if (!PCSC_AddMemoryBlock(hContext, pvMem))
+	{
+		free(pvMem);
+		return NULL;
+	}
 	return pvMem;
 }
 

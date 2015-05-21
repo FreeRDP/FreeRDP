@@ -58,7 +58,7 @@ void tsmf_stream_push_sample(TSMF_STREAM *stream, IWTSVirtualChannelCallback *pC
 							 UINT32 sample_id, UINT64 start_time, UINT64 end_time, UINT64 duration, UINT32 extensions,
 							 UINT32 data_size, BYTE *data);
 
-void tsmf_media_init(void);
+BOOL tsmf_media_init(void);
 
 #endif
 

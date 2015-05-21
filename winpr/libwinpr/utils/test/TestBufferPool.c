@@ -12,10 +12,14 @@ int TestBufferPool(int argc, char* argv[])
 	DWORD DefaultSize = 1234;
 
 	pool = BufferPool_New(TRUE, -1, 16);
+	if (!pool)
+		return -1;
 
 	Buffers[0] = BufferPool_Take(pool, DefaultSize);
 	Buffers[1] = BufferPool_Take(pool, DefaultSize);
 	Buffers[2] = BufferPool_Take(pool, 2048);
+	if (!Buffers[0] || !Buffers[1] || !Buffers[2])
+		return -1;
 
 	BufferSize = BufferPool_GetBufferSize(pool, Buffers[0]);
 

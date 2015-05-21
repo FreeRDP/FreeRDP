@@ -95,12 +95,12 @@ BOOL shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 	if (!(client->encoder = shadow_encoder_new(client)))
 		goto fail_encoder_new;
 
-	ArrayList_Add(server->clients, (void*) client);
+	if (ArrayList_Add(server->clients, (void*) client) >= 0)
+		return TRUE;
 
-	return TRUE;
-
+	shadow_encoder_free(client->encoder);
 fail_encoder_new:
-	CloseHandle(client->encoder);
+	CloseHandle(client->StopEvent);
 	client->encoder = NULL;
 fail_stop_event:
 	WTSCloseServer((HANDLE) client->vcm);
