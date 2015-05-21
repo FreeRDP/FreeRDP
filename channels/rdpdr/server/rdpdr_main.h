@@ -80,7 +80,7 @@ struct _RDPDR_IRP
 	char PathName[256];
 	char ExtraBuffer[256];
 	void *CallbackData;
-	void (*Callback)(RdpdrServerContext* context, wStream* s, struct _RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus);
+	BOOL (*Callback)(RdpdrServerContext* context, wStream* s, struct _RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus);
 };
 typedef struct _RDPDR_IRP RDPDR_IRP;
 

@@ -93,7 +93,7 @@ static int rdpdr_server_send_announce_request(RdpdrServerContext* context)
 
 	Stream_Free(s, TRUE);
 
-	return 0;
+	return status ? 1 : -1;
 }
 
 static int rdpdr_server_receive_announce_response(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
@@ -101,6 +101,9 @@ static int rdpdr_server_receive_announce_response(RdpdrServerContext* context, w
 	UINT32 ClientId;
 	UINT16 VersionMajor;
 	UINT16 VersionMinor;
+
+	if (Stream_GetRemainingLength(s) < 8)
+		return -1;
 
 	Stream_Read_UINT16(s, VersionMajor); /* VersionMajor (2 bytes) */
 	Stream_Read_UINT16(s, VersionMinor); /* VersionMinor (2 bytes) */
@@ -111,7 +114,7 @@ static int rdpdr_server_receive_announce_response(RdpdrServerContext* context, w
 
 	context->priv->ClientId = ClientId;
 
-	return 0;
+	return 1;
 }
 
 static int rdpdr_server_receive_client_name_request(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
@@ -119,9 +122,15 @@ static int rdpdr_server_receive_client_name_request(RdpdrServerContext* context,
 	UINT32 UnicodeFlag;
 	UINT32 ComputerNameLen;
 
+	if (Stream_GetRemainingLength(s) < 12)
+		return -1;
+
 	Stream_Read_UINT32(s, UnicodeFlag); /* UnicodeFlag (4 bytes) */
 	Stream_Seek_UINT32(s); /* CodePage (4 bytes), MUST be set to zero */
 	Stream_Read_UINT32(s, ComputerNameLen); /* ComputerNameLen (4 bytes) */
+
+	if (Stream_GetRemainingLength(s) < ComputerNameLen)
+		return -1;
 
 	/**
 	 * Caution: ComputerNameLen is given *bytes*,
@@ -148,25 +157,31 @@ static int rdpdr_server_receive_client_name_request(RdpdrServerContext* context,
 
 	WLog_DBG(TAG, "ClientComputerName: %s", context->priv->ClientComputerName);
 
-	return 0;
+	return 1;
 }
 
 static int rdpdr_server_read_capability_set_header(wStream* s, RDPDR_CAPABILITY_HEADER* header)
 {
+	if (Stream_GetRemainingLength(s) < 8)
+		return -1;
+
 	Stream_Read_UINT16(s, header->CapabilityType); /* CapabilityType (2 bytes) */
 	Stream_Read_UINT16(s, header->CapabilityLength); /* CapabilityLength (2 bytes) */
 	Stream_Read_UINT32(s, header->Version); /* Version (4 bytes) */
 
-	return 0;
+	return 1;
 }
 
 static int rdpdr_server_write_capability_set_header(wStream* s, RDPDR_CAPABILITY_HEADER* header)
 {
+	if (Stream_GetRemainingLength(s) < 8)
+		return -1;
+
 	Stream_Write_UINT16(s, header->CapabilityType); /* CapabilityType (2 bytes) */
 	Stream_Write_UINT16(s, header->CapabilityLength); /* CapabilityLength (2 bytes) */
 	Stream_Write_UINT32(s, header->Version); /* Version (4 bytes) */
 
-	return 0;
+	return 1;
 }
 
 static int rdpdr_server_read_general_capability_set(RdpdrServerContext* context, wStream* s, RDPDR_CAPABILITY_HEADER* header)
@@ -177,6 +192,9 @@ static int rdpdr_server_read_general_capability_set(RdpdrServerContext* context,
 	UINT16 VersionMajor;
 	UINT16 VersionMinor;
 	UINT32 SpecialTypeDeviceCap;
+
+	if (Stream_GetRemainingLength(s) < 32)
+		return -1;
 
 	Stream_Seek_UINT32(s); /* osType (4 bytes), ignored on receipt */
 	Stream_Seek_UINT32(s); /* osVersion (4 bytes), unused and must be set to zero */
@@ -190,12 +208,15 @@ static int rdpdr_server_read_general_capability_set(RdpdrServerContext* context,
 
 	if (header->Version == GENERAL_CAPABILITY_VERSION_02)
 	{
+		if (Stream_GetRemainingLength(s) < 4)
+			return -1;
+
 		Stream_Read_UINT32(s, SpecialTypeDeviceCap); /* SpecialTypeDeviceCap (4 bytes) */
 	}
 
 	context->priv->UserLoggedOnPdu = (extendedPdu & RDPDR_USER_LOGGEDON_PDU) ? TRUE : FALSE;
 
-	return 0;
+	return 1;
 }
 
 static int rdpdr_server_write_general_capability_set(RdpdrServerContext* context, wStream* s)
@@ -253,12 +274,12 @@ static int rdpdr_server_write_general_capability_set(RdpdrServerContext* context
 	Stream_Write_UINT32(s, 0); /* extraFlags2 (4 bytes), must be set to zero, reserved for future use */
 	Stream_Write_UINT32(s, SpecialTypeDeviceCap); /* SpecialTypeDeviceCap (4 bytes) */
 
-	return 0;
+	return 1;
 }
 
 static int rdpdr_server_read_printer_capability_set(RdpdrServerContext* context, wStream* s, RDPDR_CAPABILITY_HEADER* header)
 {
-	return 0;
+	return 1;
 }
 
 static int rdpdr_server_write_printer_capability_set(RdpdrServerContext* context, wStream* s)
@@ -274,12 +295,12 @@ static int rdpdr_server_write_printer_capability_set(RdpdrServerContext* context
 
 	rdpdr_server_write_capability_set_header(s, &header);
 
-	return 0;
+	return 1;
 }
 
 static int rdpdr_server_read_port_capability_set(RdpdrServerContext* context, wStream* s, RDPDR_CAPABILITY_HEADER* header)
 {
-	return 0;
+	return 1;
 }
 
 static int rdpdr_server_write_port_capability_set(RdpdrServerContext* context, wStream* s)
@@ -295,12 +316,12 @@ static int rdpdr_server_write_port_capability_set(RdpdrServerContext* context, w
 
 	rdpdr_server_write_capability_set_header(s, &header);
 
-	return 0;
+	return 1;
 }
 
 static int rdpdr_server_read_drive_capability_set(RdpdrServerContext* context, wStream* s, RDPDR_CAPABILITY_HEADER* header)
 {
-	return 0;
+	return 1;
 }
 
 static int rdpdr_server_write_drive_capability_set(RdpdrServerContext* context, wStream* s)
@@ -316,12 +337,12 @@ static int rdpdr_server_write_drive_capability_set(RdpdrServerContext* context, 
 
 	rdpdr_server_write_capability_set_header(s, &header);
 
-	return 0;
+	return 1;
 }
 
 static int rdpdr_server_read_smartcard_capability_set(RdpdrServerContext* context, wStream* s, RDPDR_CAPABILITY_HEADER* header)
 {
-	return 0;
+	return 1;
 }
 
 static int rdpdr_server_write_smartcard_capability_set(RdpdrServerContext* context, wStream* s)
@@ -337,7 +358,7 @@ static int rdpdr_server_write_smartcard_capability_set(RdpdrServerContext* conte
 
 	rdpdr_server_write_capability_set_header(s, &header);
 
-	return 0;
+	return 1;
 }
 
 static int rdpdr_server_send_core_capability_request(RdpdrServerContext* context)
@@ -401,52 +422,63 @@ static int rdpdr_server_send_core_capability_request(RdpdrServerContext* context
 
 	Stream_Free(s, TRUE);
 
-	return 0;
+	return status ? 1 : -1;
 }
 
 static int rdpdr_server_receive_core_capability_response(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
 {
 	int i;
+	int status;
 	UINT16 numCapabilities;
 	RDPDR_CAPABILITY_HEADER capabilityHeader;
+
+	if (Stream_GetRemainingLength(s) < 4)
+		return -1;
 
 	Stream_Read_UINT16(s, numCapabilities); /* numCapabilities (2 bytes) */
 	Stream_Seek_UINT16(s); /* Padding (2 bytes) */
 
 	for (i = 0; i < numCapabilities; i++)
 	{
-		rdpdr_server_read_capability_set_header(s, &capabilityHeader);
+		status = rdpdr_server_read_capability_set_header(s, &capabilityHeader);
+
+		if (status < 0)
+			return -1;
 
 		switch (capabilityHeader.CapabilityType)
 		{
 			case CAP_GENERAL_TYPE:
-				rdpdr_server_read_general_capability_set(context, s, &capabilityHeader);
+				status = rdpdr_server_read_general_capability_set(context, s, &capabilityHeader);
 				break;
 
 			case CAP_PRINTER_TYPE:
-				rdpdr_server_read_printer_capability_set(context, s, &capabilityHeader);
+				status = rdpdr_server_read_printer_capability_set(context, s, &capabilityHeader);
 				break;
 
 			case CAP_PORT_TYPE:
-				rdpdr_server_read_port_capability_set(context, s, &capabilityHeader);
+				status = rdpdr_server_read_port_capability_set(context, s, &capabilityHeader);
 				break;
 
 			case CAP_DRIVE_TYPE:
-				rdpdr_server_read_drive_capability_set(context, s, &capabilityHeader);
+				status = rdpdr_server_read_drive_capability_set(context, s, &capabilityHeader);
 				break;
 
 			case CAP_SMARTCARD_TYPE:
-				rdpdr_server_read_smartcard_capability_set(context, s, &capabilityHeader);
+				status = rdpdr_server_read_smartcard_capability_set(context, s, &capabilityHeader);
 				break;
 
 			default:
 				WLog_DBG(TAG, "Unknown capabilityType %d", capabilityHeader.CapabilityType);
 				Stream_Seek(s, capabilityHeader.CapabilityLength - RDPDR_CAPABILITY_HEADER_LENGTH);
+				status = -1;
 				break;
 		}
+
+		if (status < 0)
+			return -1;
 	}
 
-	return 0;
+	return 1;
 }
 
 static int rdpdr_server_send_client_id_confirm(RdpdrServerContext* context)
@@ -480,7 +512,7 @@ static int rdpdr_server_send_client_id_confirm(RdpdrServerContext* context)
 
 	Stream_Free(s, TRUE);
 
-	return 0;
+	return status ? 1 : -1;
 }
 
 static int rdpdr_server_receive_device_list_announce_request(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
@@ -493,6 +525,9 @@ static int rdpdr_server_receive_device_list_announce_request(RdpdrServerContext*
 	UINT32 DeviceDataLength;
 	BYTE* DeviceData;
 
+	if (Stream_GetRemainingLength(s) < 4)
+		return -1;
+
 	Stream_Read_UINT32(s, DeviceCount); /* DeviceCount (4 bytes) */
 
 	WLog_DBG(TAG, "DeviceCount: %d", DeviceCount);
@@ -501,10 +536,16 @@ static int rdpdr_server_receive_device_list_announce_request(RdpdrServerContext*
 	{
 		ZeroMemory(PreferredDosName, sizeof(PreferredDosName));
 
+		if (Stream_GetRemainingLength(s) < 20)
+			return -1;
+
 		Stream_Read_UINT32(s, DeviceType); /* DeviceType (4 bytes) */
 		Stream_Read_UINT32(s, DeviceId); /* DeviceId (4 bytes) */
 		Stream_Read(s, PreferredDosName, 8); /* PreferredDosName (8 bytes) */
 		Stream_Read_UINT32(s, DeviceDataLength); /* DeviceDataLength (4 bytes) */
+
+		if (Stream_GetRemainingLength(s) < DeviceDataLength)
+			return -1;
 
 		DeviceData = Stream_Pointer(s);
 
@@ -549,7 +590,7 @@ static int rdpdr_server_receive_device_list_announce_request(RdpdrServerContext*
 		Stream_Seek(s, DeviceDataLength);
 	}
 
-	return 0;
+	return 1;
 }
 
 static int rdpdr_server_receive_device_list_remove_request(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
@@ -559,12 +600,18 @@ static int rdpdr_server_receive_device_list_remove_request(RdpdrServerContext* c
 	UINT32 DeviceType;
 	UINT32 DeviceId;
 
+	if (Stream_GetRemainingLength(s) < 4)
+		return -1;
+
 	Stream_Read_UINT32(s, DeviceCount); /* DeviceCount (4 bytes) */
 
 	WLog_DBG(TAG, "DeviceCount: %d", DeviceCount);
 
 	for (i = 0; i < DeviceCount; i++)
 	{
+		if (Stream_GetRemainingLength(s) < 4)
+			return -1;
+
 		Stream_Read_UINT32(s, DeviceId); /* DeviceId (4 bytes) */
 
 		WLog_DBG(TAG, "Device %d Id: 0x%04X", i, DeviceId);
@@ -607,7 +654,7 @@ static int rdpdr_server_receive_device_list_remove_request(RdpdrServerContext* c
 		}
 	}
 
-	return 0;
+	return 1;
 }
 
 static int rdpdr_server_receive_device_io_completion(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
@@ -616,6 +663,9 @@ static int rdpdr_server_receive_device_io_completion(RdpdrServerContext* context
 	UINT32 completionId;
 	UINT32 ioStatus;
 	RDPDR_IRP* irp;
+
+	if (Stream_GetRemainingLength(s) < 12)
+		return -1;
 
 	Stream_Read_UINT32(s, deviceId);
 	Stream_Read_UINT32(s, completionId);
@@ -637,7 +687,7 @@ static int rdpdr_server_receive_device_io_completion(RdpdrServerContext* context
 		(*irp->Callback)(context, s, irp, deviceId, completionId, ioStatus);
 	}
 
-	return 0;
+	return 1;
 }
 
 static int rdpdr_server_send_user_logged_on(RdpdrServerContext* context)
@@ -668,13 +718,16 @@ static int rdpdr_server_send_user_logged_on(RdpdrServerContext* context)
 
 	Stream_Free(s, TRUE);
 
-	return 0;
+	return status ? 1 : -1;
 }
 
 static int rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
 {
+	int status = 1;
+
 	WLog_DBG(TAG, "RdpdrServerReceivePdu: Component: 0x%04X PacketId: 0x%04X",
 			 header->Component, header->PacketId);
+
 	winpr_HexDump(TAG, WLOG_DEBUG, Stream_Buffer(s), Stream_Length(s));
 
 	if (header->Component == RDPDR_CTYP_CORE)
@@ -682,25 +735,40 @@ static int rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s, RDP
 		switch (header->PacketId)
 		{
 			case PAKID_CORE_CLIENTID_CONFIRM:
-				rdpdr_server_receive_announce_response(context, s, header);
+				status = rdpdr_server_receive_announce_response(context, s, header);
 				break;
 
 			case PAKID_CORE_CLIENT_NAME:
-				rdpdr_server_receive_client_name_request(context, s, header);
-				rdpdr_server_send_core_capability_request(context);
-				rdpdr_server_send_client_id_confirm(context);
+				status = rdpdr_server_receive_client_name_request(context, s, header);
+
+				if (status < 0)
+					return -1;
+
+				status = rdpdr_server_send_core_capability_request(context);
+
+				if (status < 0)
+					return -1;
+
+				status = rdpdr_server_send_client_id_confirm(context);
+
+				if (status < 0)
+					return -1;
+
 				break;
 
 			case PAKID_CORE_CLIENT_CAPABILITY:
-				rdpdr_server_receive_core_capability_response(context, s, header);
+				status = rdpdr_server_receive_core_capability_response(context, s, header);
+
+				if (status < 0)
+					return -1;
 
 				if (context->priv->UserLoggedOnPdu)
-					rdpdr_server_send_user_logged_on(context);
+					status = rdpdr_server_send_user_logged_on(context);
 
 				break;
 
 			case PAKID_CORE_DEVICELIST_ANNOUNCE:
-				rdpdr_server_receive_device_list_announce_request(context, s, header);
+				status = rdpdr_server_receive_device_list_announce_request(context, s, header);
 				break;
 
 			case PAKID_CORE_DEVICE_REPLY:
@@ -710,11 +778,11 @@ static int rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s, RDP
 				break;
 
 			case PAKID_CORE_DEVICE_IOCOMPLETION:
-				rdpdr_server_receive_device_io_completion(context, s, header);
+				status = rdpdr_server_receive_device_io_completion(context, s, header);
 				break;
 
 			case PAKID_CORE_DEVICELIST_REMOVE:
-				rdpdr_server_receive_device_list_remove_request(context, s, header);
+				status = rdpdr_server_receive_device_list_remove_request(context, s, header);
 				break;
 
 			default:
@@ -741,7 +809,7 @@ static int rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s, RDP
 		return -1;
 	}
 
-	return 0;
+	return status;
 }
 
 static void* rdpdr_server_thread(void* arg)
@@ -827,7 +895,7 @@ static int rdpdr_server_start(RdpdrServerContext* context)
 	context->priv->Thread = CreateThread(NULL, 0,
 				(LPTHREAD_START_ROUTINE) rdpdr_server_thread, (void*) context, 0, NULL);
 
-	return 0;
+	return 1;
 }
 
 static int rdpdr_server_stop(RdpdrServerContext* context)
@@ -835,7 +903,8 @@ static int rdpdr_server_stop(RdpdrServerContext* context)
 	SetEvent(context->priv->StopEvent);
 	WaitForSingleObject(context->priv->Thread, INFINITE);
 	CloseHandle(context->priv->Thread);
-	return 0;
+
+	return 1;
 }
 
 static void rdpdr_server_write_device_iorequest(
@@ -861,6 +930,9 @@ static BOOL rdpdr_server_read_file_directory_information(wStream* s, FILE_DIRECT
 
 	ZeroMemory(fdi, sizeof(FILE_DIRECTORY_INFORMATION));
 
+	if (Stream_GetRemainingLength(s) < 64)
+		return FALSE;
+
 	Stream_Read_UINT32(s, fdi->NextEntryOffset); /* NextEntryOffset (4 bytes) */
 	Stream_Read_UINT32(s, fdi->FileIndex); /* FileIndex (4 bytes) */
 	Stream_Read_UINT64(s, fdi->CreationTime); /* CreationTime (8 bytes) */
@@ -871,6 +943,9 @@ static BOOL rdpdr_server_read_file_directory_information(wStream* s, FILE_DIRECT
 	Stream_Read_UINT64(s, fdi->AllocationSize); /* AllocationSize (8 bytes) */
 	Stream_Read_UINT32(s, fdi->FileAttributes); /* FileAttributes (4 bytes) */
 	Stream_Read_UINT32(s, fileNameLength); /* FileNameLength (4 bytes) */
+
+	if (Stream_GetRemainingLength(s) < fileNameLength)
+		return FALSE;
 
 	WideCharToMultiByte(CP_ACP, 0, (LPCWSTR) Stream_Pointer(s), fileNameLength / 2, fdi->FileName, sizeof(fdi->FileName), NULL, NULL);
 	Stream_Seek(s, fileNameLength);
@@ -901,7 +976,7 @@ static BOOL rdpdr_server_send_device_create_request(
 	s = Stream_New(NULL, 256 + pathLength);
 
 	if (!s)
-		return -1;
+		return FALSE;
 
 	rdpdr_server_write_device_iorequest(s, deviceId, 0, completionId, IRP_MJ_CREATE, 0);
 
@@ -931,8 +1006,7 @@ static BOOL rdpdr_server_send_device_close_request(
 	RdpdrServerContext* context,
 	UINT32 deviceId,
 	UINT32 fileId,
-	UINT32 completionId
-)
+	UINT32 completionId)
 {
 	ULONG written;
 	BOOL status;
@@ -943,7 +1017,7 @@ static BOOL rdpdr_server_send_device_close_request(
 	s = Stream_New(NULL, 128);
 
 	if (!s)
-		return -1;
+		return FALSE;
 
 	rdpdr_server_write_device_iorequest(s, deviceId, fileId, completionId, IRP_MJ_CLOSE, 0);
 
@@ -964,8 +1038,7 @@ static BOOL rdpdr_server_send_device_read_request(
 	UINT32 fileId,
 	UINT32 completionId,
 	UINT32 length,
-	UINT32 offset
-)
+	UINT32 offset)
 {
 	ULONG written;
 	BOOL status;
@@ -977,7 +1050,7 @@ static BOOL rdpdr_server_send_device_read_request(
 	s = Stream_New(NULL, 128);
 
 	if (!s)
-		return -1;
+		return FALSE;
 
 	rdpdr_server_write_device_iorequest(s, deviceId, fileId, completionId, IRP_MJ_READ, 0);
 
@@ -1002,8 +1075,7 @@ static BOOL rdpdr_server_send_device_write_request(
 	UINT32 completionId,
 	const char* data,
 	UINT32 length,
-	UINT32 offset
-)
+	UINT32 offset)
 {
 	ULONG written;
 	BOOL status;
@@ -1015,7 +1087,7 @@ static BOOL rdpdr_server_send_device_write_request(
 	s = Stream_New(NULL, 64 + length);
 
 	if (!s)
-		return -1;
+		return FALSE;
 
 	rdpdr_server_write_device_iorequest(s, deviceId, fileId, completionId, IRP_MJ_WRITE, 0);
 
@@ -1039,8 +1111,7 @@ static BOOL rdpdr_server_send_device_query_directory_request(
 	UINT32 deviceId,
 	UINT32 fileId,
 	UINT32 completionId,
-	const char* path
-)
+	const char* path)
 {
 	int pathLength;
 	ULONG written;
@@ -1056,7 +1127,7 @@ static BOOL rdpdr_server_send_device_query_directory_request(
 	s = Stream_New(NULL, 64 + pathLength);
 
 	if (!s)
-		return -1;
+		return FALSE;
 
 	rdpdr_server_write_device_iorequest(s, deviceId, fileId, completionId, IRP_MJ_DIRECTORY_CONTROL, IRP_MN_QUERY_DIRECTORY);
 
@@ -1086,8 +1157,7 @@ static BOOL rdpdr_server_send_device_file_rename_request(
 	UINT32 deviceId,
 	UINT32 fileId,
 	UINT32 completionId,
-	const char* path
-)
+	const char* path)
 {
 	int pathLength;
 	ULONG written;
@@ -1103,7 +1173,7 @@ static BOOL rdpdr_server_send_device_file_rename_request(
 	s = Stream_New(NULL, 64 + pathLength);
 
 	if (!s)
-		return -1;
+		return FALSE;
 
 	rdpdr_server_write_device_iorequest(s, deviceId, fileId, completionId, IRP_MJ_SET_INFORMATION, 0);
 
@@ -1147,7 +1217,7 @@ static void rdpdr_server_convert_slashes(char* path, int size)
  * Drive Create Directory
  ************************************************/
 
-static void rdpdr_server_drive_create_directory_callback2(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+static BOOL rdpdr_server_drive_create_directory_callback2(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
 	WLog_DBG(TAG, "RdpdrServerDriveCreateDirectoryCallback2: deviceId=%d, completionId=%d, ioStatus=0x%x",
 			deviceId, completionId, ioStatus);
@@ -1157,10 +1227,13 @@ static void rdpdr_server_drive_create_directory_callback2(RdpdrServerContext* co
 
 	/* Destroy the IRP. */
 	rdpdr_server_irp_free(irp);
+
+	return TRUE;
 }
 
-static void rdpdr_server_drive_create_directory_callback1(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+static BOOL rdpdr_server_drive_create_directory_callback1(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
+	BOOL status;
 	UINT32 fileId;
 	UINT8 information;
 
@@ -1175,8 +1248,11 @@ static void rdpdr_server_drive_create_directory_callback1(RdpdrServerContext* co
 		/* Destroy the IRP. */
 		rdpdr_server_irp_free(irp);
 
-		return;
+		return TRUE;
 	}
+
+	if (Stream_GetRemainingLength(s) < 5)
+		return FALSE;
 
 	Stream_Read_UINT32(s, fileId); /* FileId (4 bytes) */
 	Stream_Read_UINT8(s, information); /* Information (1 byte) */
@@ -1187,14 +1263,20 @@ static void rdpdr_server_drive_create_directory_callback1(RdpdrServerContext* co
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
 
-	rdpdr_server_enqueue_irp(context, irp);
+	status = rdpdr_server_enqueue_irp(context, irp);
+
+	if (!status)
+		return FALSE;
 
 	/* Send a request to close the file */
-	rdpdr_server_send_device_close_request(context, deviceId, fileId, irp->CompletionId);
+	status = rdpdr_server_send_device_close_request(context, deviceId, fileId, irp->CompletionId);
+
+	return status;
 }
 
 static BOOL rdpdr_server_drive_create_directory(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path)
 {
+	BOOL status;
 	RDPDR_IRP* irp;
 
 	irp = rdpdr_server_irp_new();
@@ -1210,23 +1292,23 @@ static BOOL rdpdr_server_drive_create_directory(RdpdrServerContext* context, voi
 
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
-	rdpdr_server_enqueue_irp(context, irp);
+	status = rdpdr_server_enqueue_irp(context, irp);
+
+	if (!status)
+		return FALSE;
 
 	/* Send a request to open the file. */
-	rdpdr_server_send_device_create_request(
-		context, deviceId, irp->CompletionId, irp->PathName,
-		FILE_READ_DATA | SYNCHRONIZE,
-		FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT,
-		FILE_CREATE);
+	status = rdpdr_server_send_device_create_request(context, deviceId, irp->CompletionId, irp->PathName,
+			FILE_READ_DATA | SYNCHRONIZE, FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, FILE_CREATE);
 
-	return TRUE;
+	return status;
 }
 
 /*************************************************
  * Drive Delete Directory
  ************************************************/
 
-static void rdpdr_server_drive_delete_directory_callback2(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+static BOOL rdpdr_server_drive_delete_directory_callback2(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
 	WLog_DBG(TAG, "RdpdrServerDriveDeleteDirectoryCallback2: deviceId=%d, completionId=%d, ioStatus=0x%x",
 			deviceId, completionId, ioStatus);
@@ -1236,10 +1318,13 @@ static void rdpdr_server_drive_delete_directory_callback2(RdpdrServerContext* co
 
 	/* Destroy the IRP. */
 	rdpdr_server_irp_free(irp);
+
+	return TRUE;
 }
 
-static void rdpdr_server_drive_delete_directory_callback1(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+static BOOL rdpdr_server_drive_delete_directory_callback1(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
+	BOOL status;
 	UINT32 fileId;
 	UINT8 information;
 
@@ -1254,8 +1339,11 @@ static void rdpdr_server_drive_delete_directory_callback1(RdpdrServerContext* co
 		/* Destroy the IRP. */
 		rdpdr_server_irp_free(irp);
 
-		return;
+		return TRUE;
 	}
+
+	if (Stream_GetRemainingLength(s) < 5)
+		return FALSE;
 
 	Stream_Read_UINT32(s, fileId); /* FileId (4 bytes) */
 	Stream_Read_UINT8(s, information); /* Information (1 byte) */
@@ -1266,14 +1354,20 @@ static void rdpdr_server_drive_delete_directory_callback1(RdpdrServerContext* co
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
 
-	rdpdr_server_enqueue_irp(context, irp);
+	status = rdpdr_server_enqueue_irp(context, irp);
+
+	if (!status)
+		return FALSE;
 
 	/* Send a request to close the file */
-	rdpdr_server_send_device_close_request(context, deviceId, fileId, irp->CompletionId);
+	status = rdpdr_server_send_device_close_request(context, deviceId, fileId, irp->CompletionId);
+
+	return status;
 }
 
 static BOOL rdpdr_server_drive_delete_directory(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path)
 {
+	BOOL status;
 	RDPDR_IRP* irp;
 
 	irp = rdpdr_server_irp_new();
@@ -1289,38 +1383,48 @@ static BOOL rdpdr_server_drive_delete_directory(RdpdrServerContext* context, voi
 
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
-	rdpdr_server_enqueue_irp(context, irp);
+	status = rdpdr_server_enqueue_irp(context, irp);
+
+	if (!status)
+		return FALSE;
 
 	/* Send a request to open the file. */
-	rdpdr_server_send_device_create_request(
-		context, deviceId, irp->CompletionId, irp->PathName,
-		DELETE | SYNCHRONIZE,
-		FILE_DIRECTORY_FILE | FILE_DELETE_ON_CLOSE | FILE_SYNCHRONOUS_IO_NONALERT,
-		FILE_OPEN);
+	status = rdpdr_server_send_device_create_request(context, deviceId, irp->CompletionId, irp->PathName,
+		DELETE | SYNCHRONIZE, FILE_DIRECTORY_FILE | FILE_DELETE_ON_CLOSE | FILE_SYNCHRONOUS_IO_NONALERT, FILE_OPEN);
 
-	return TRUE;
+	return status;
 }
 
 /*************************************************
  * Drive Query Directory
  ************************************************/
 
-static void rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+static BOOL rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
-	FILE_DIRECTORY_INFORMATION fdi;
+	BOOL status;
 	UINT32 length;
+	FILE_DIRECTORY_INFORMATION fdi;
 
 	WLog_DBG(TAG, "RdpdrServerDriveQueryDirectoryCallback2: deviceId=%d, completionId=%d, ioStatus=0x%x",
 			deviceId, completionId, ioStatus);
+
+	if (Stream_GetRemainingLength(s) < 4)
+		return FALSE;
 
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 
 	if (length > 0)
 	{
-		rdpdr_server_read_file_directory_information(s, &fdi);
+		status = rdpdr_server_read_file_directory_information(s, &fdi);
+
+		if (!status)
+			return FALSE;
 	}
 	else
 	{
+		if (Stream_GetRemainingLength(s) < 1)
+			return FALSE;
+
 		Stream_Seek(s, 1); /* Padding (1 byte) */
 	}
 
@@ -1333,10 +1437,16 @@ static void rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* con
 		irp->CompletionId = context->priv->NextCompletionId++;
 		irp->Callback = rdpdr_server_drive_query_directory_callback2;
 
-		rdpdr_server_enqueue_irp(context, irp);
+		status = rdpdr_server_enqueue_irp(context, irp);
+
+		if (!status)
+			return FALSE;
 
 		/* Send a request to query the directory. */
-		rdpdr_server_send_device_query_directory_request(context, irp->DeviceId, irp->FileId, irp->CompletionId, NULL);
+		status = rdpdr_server_send_device_query_directory_request(context, irp->DeviceId, irp->FileId, irp->CompletionId, NULL);
+
+		if (!status)
+			return FALSE;
 	}
 	else
 	{
@@ -1346,10 +1456,13 @@ static void rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* con
 		/* Destroy the IRP. */
 		rdpdr_server_irp_free(irp);
 	}
+
+	return TRUE;
 }
 
-static void rdpdr_server_drive_query_directory_callback1(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+static BOOL rdpdr_server_drive_query_directory_callback1(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
+	BOOL status;
 	UINT32 fileId;
 
 	WLog_DBG(TAG, "RdpdrServerDriveQueryDirectoryCallback1: deviceId=%d, completionId=%d, ioStatus=0x%x",
@@ -1363,8 +1476,11 @@ static void rdpdr_server_drive_query_directory_callback1(RdpdrServerContext* con
 		/* Destroy the IRP. */
 		rdpdr_server_irp_free(irp);
 
-		return;
+		return TRUE;
 	}
+
+	if (Stream_GetRemainingLength(s) < 4)
+		return FALSE;
 
 	Stream_Read_UINT32(s, fileId);
 
@@ -1376,14 +1492,20 @@ static void rdpdr_server_drive_query_directory_callback1(RdpdrServerContext* con
 
 	strcat(irp->PathName, "\\*.*");
 
-	rdpdr_server_enqueue_irp(context, irp);
+	status = rdpdr_server_enqueue_irp(context, irp);
+
+	if (!status)
+		return FALSE;
 
 	/* Send a request to query the directory. */
-	rdpdr_server_send_device_query_directory_request(context, deviceId, fileId, irp->CompletionId, irp->PathName);
+	status = rdpdr_server_send_device_query_directory_request(context, deviceId, fileId, irp->CompletionId, irp->PathName);
+
+	return status;
 }
 
 static BOOL rdpdr_server_drive_query_directory(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path)
 {
+	BOOL status;
 	RDPDR_IRP* irp;
 
 	irp = rdpdr_server_irp_new();
@@ -1399,29 +1521,32 @@ static BOOL rdpdr_server_drive_query_directory(RdpdrServerContext* context, void
 
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
-	rdpdr_server_enqueue_irp(context, irp);
+	status = rdpdr_server_enqueue_irp(context, irp);
+
+	if (!status)
+		return FALSE;
 
 	/* Send a request to open the directory. */
-	rdpdr_server_send_device_create_request(
-		context, deviceId, irp->CompletionId, irp->PathName,
-		FILE_READ_DATA | SYNCHRONIZE,
-		FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT,
-		FILE_OPEN);
+	status = rdpdr_server_send_device_create_request(context, deviceId, irp->CompletionId, irp->PathName,
+			FILE_READ_DATA | SYNCHRONIZE, FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, FILE_OPEN);
 
-	return TRUE;
+	return status;
 }
 
 /*************************************************
  * Drive Open File
  ************************************************/
 
-static void rdpdr_server_drive_open_file_callback(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+static BOOL rdpdr_server_drive_open_file_callback(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
 	UINT32 fileId;
 	UINT8 information;
 
 	WLog_DBG(TAG, "RdpdrServerDriveOpenFileCallback: deviceId=%d, completionId=%d, ioStatus=0x%x",
 			deviceId, completionId, ioStatus);
+
+	if (Stream_GetRemainingLength(s) < 5)
+		return FALSE;
 
 	Stream_Read_UINT32(s, fileId); /* FileId (4 bytes) */
 	Stream_Read_UINT8(s, information); /* Information (1 byte) */
@@ -1431,10 +1556,13 @@ static void rdpdr_server_drive_open_file_callback(RdpdrServerContext* context, w
 
 	/* Destroy the IRP. */
 	rdpdr_server_irp_free(irp);
+
+	return TRUE;
 }
 
 static BOOL rdpdr_server_drive_open_file(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path, UINT32 desiredAccess, UINT32 createDisposition)
 {
+	BOOL status;
 	RDPDR_IRP* irp;
 
 	irp = rdpdr_server_irp_new();
@@ -1450,23 +1578,23 @@ static BOOL rdpdr_server_drive_open_file(RdpdrServerContext* context, void* call
 
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
-	rdpdr_server_enqueue_irp(context, irp);
+	status = rdpdr_server_enqueue_irp(context, irp);
+
+	if (!status)
+		return FALSE;
 
 	/* Send a request to open the file. */
-	rdpdr_server_send_device_create_request(
-		context, deviceId, irp->CompletionId, irp->PathName,
-		desiredAccess | SYNCHRONIZE,
-		FILE_SYNCHRONOUS_IO_NONALERT,
-		createDisposition);
+	status = rdpdr_server_send_device_create_request(context, deviceId, irp->CompletionId, irp->PathName,
+			desiredAccess | SYNCHRONIZE, FILE_SYNCHRONOUS_IO_NONALERT, createDisposition);
 
-	return TRUE;
+	return status;
 }
 
 /*************************************************
  * Drive Read File
  ************************************************/
 
-static void rdpdr_server_drive_read_file_callback(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+static BOOL rdpdr_server_drive_read_file_callback(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
 	UINT32 length;
 	char* buffer = NULL;
@@ -1474,7 +1602,14 @@ static void rdpdr_server_drive_read_file_callback(RdpdrServerContext* context, w
 	WLog_DBG(TAG, "RdpdrServerDriveReadFileCallback: deviceId=%d, completionId=%d, ioStatus=0x%x",
 			deviceId, completionId, ioStatus);
 
+	if (Stream_GetRemainingLength(s) < 4)
+		return FALSE;
+
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
+
+	if (Stream_GetRemainingLength(s) < length)
+		return FALSE;
+
 	if (length > 0)
 	{
 		buffer = (char*) Stream_Pointer(s);
@@ -1486,10 +1621,13 @@ static void rdpdr_server_drive_read_file_callback(RdpdrServerContext* context, w
 
 	/* Destroy the IRP. */
 	rdpdr_server_irp_free(irp);
+
+	return TRUE;
 }
 
 static BOOL rdpdr_server_drive_read_file(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, UINT32 fileId, UINT32 length, UINT32 offset)
 {
+	BOOL status;
 	RDPDR_IRP* irp;
 
 	irp = rdpdr_server_irp_new();
@@ -1503,37 +1641,49 @@ static BOOL rdpdr_server_drive_read_file(RdpdrServerContext* context, void* call
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
 
-	rdpdr_server_enqueue_irp(context, irp);
+	status = rdpdr_server_enqueue_irp(context, irp);
+
+	if (!status)
+		return FALSE;
 
 	/* Send a request to open the directory. */
-	rdpdr_server_send_device_read_request(context, deviceId, fileId, irp->CompletionId, length, offset);
+	status = rdpdr_server_send_device_read_request(context, deviceId, fileId, irp->CompletionId, length, offset);
 
-	return TRUE;
+	return status;
 }
 
 /*************************************************
  * Drive Write File
  ************************************************/
 
-static void rdpdr_server_drive_write_file_callback(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+static BOOL rdpdr_server_drive_write_file_callback(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
 	UINT32 length;
 
 	WLog_DBG(TAG, "RdpdrServerDriveWriteFileCallback: deviceId=%d, completionId=%d, ioStatus=0x%x",
 			deviceId, completionId, ioStatus);
 
+	if (Stream_GetRemainingLength(s) < 5)
+		return FALSE;
+
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 	Stream_Seek(s, 1); /* Padding (1 byte) */
+
+	if (Stream_GetRemainingLength(s) < length)
+		return FALSE;
 
 	/* Invoke the write file completion routine. */
 	context->OnDriveWriteFileComplete(context, irp->CallbackData, ioStatus, length);
 
 	/* Destroy the IRP. */
 	rdpdr_server_irp_free(irp);
+
+	return TRUE;
 }
 
 static BOOL rdpdr_server_drive_write_file(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, UINT32 fileId, const char* buffer, UINT32 length, UINT32 offset)
 {
+	BOOL status;
 	RDPDR_IRP* irp;
 
 	irp = rdpdr_server_irp_new();
@@ -1547,19 +1697,22 @@ static BOOL rdpdr_server_drive_write_file(RdpdrServerContext* context, void* cal
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
 
-	rdpdr_server_enqueue_irp(context, irp);
+	status = rdpdr_server_enqueue_irp(context, irp);
+
+	if (!status)
+		return FALSE;
 
 	/* Send a request to open the directory. */
-	rdpdr_server_send_device_write_request(context, deviceId, fileId, irp->CompletionId, buffer, length, offset);
+	status = rdpdr_server_send_device_write_request(context, deviceId, fileId, irp->CompletionId, buffer, length, offset);
 
-	return TRUE;
+	return status;
 }
 
 /*************************************************
  * Drive Close File
  ************************************************/
 
-static void rdpdr_server_drive_close_file_callback(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+static BOOL rdpdr_server_drive_close_file_callback(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
 	WLog_DBG(TAG, "RdpdrServerDriveCloseFileCallback: deviceId=%d, completionId=%d, ioStatus=0x%x",
 			deviceId, completionId, ioStatus);
@@ -1569,10 +1722,13 @@ static void rdpdr_server_drive_close_file_callback(RdpdrServerContext* context, 
 
 	/* Destroy the IRP. */
 	rdpdr_server_irp_free(irp);
+
+	return TRUE;
 }
 
 static BOOL rdpdr_server_drive_close_file(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, UINT32 fileId)
 {
+	BOOL status;
 	RDPDR_IRP* irp;
 
 	irp = rdpdr_server_irp_new();
@@ -1586,19 +1742,22 @@ static BOOL rdpdr_server_drive_close_file(RdpdrServerContext* context, void* cal
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
 
-	rdpdr_server_enqueue_irp(context, irp);
+	status = rdpdr_server_enqueue_irp(context, irp);
+
+	if (!status)
+		return FALSE;
 
 	/* Send a request to open the directory. */
-	rdpdr_server_send_device_close_request(context, deviceId, fileId, irp->CompletionId);
+	status = rdpdr_server_send_device_close_request(context, deviceId, fileId, irp->CompletionId);
 
-	return TRUE;
+	return status;
 }
 
 /*************************************************
  * Drive Delete File
  ************************************************/
 
-static void rdpdr_server_drive_delete_file_callback2(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+static BOOL rdpdr_server_drive_delete_file_callback2(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
 	WLog_DBG(TAG, "RdpdrServerDriveDeleteFileCallback2: deviceId=%d, completionId=%d, ioStatus=0x%x",
 			deviceId, completionId, ioStatus);
@@ -1608,10 +1767,13 @@ static void rdpdr_server_drive_delete_file_callback2(RdpdrServerContext* context
 
 	/* Destroy the IRP. */
 	rdpdr_server_irp_free(irp);
+
+	return TRUE;
 }
 
-static void rdpdr_server_drive_delete_file_callback1(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+static BOOL rdpdr_server_drive_delete_file_callback1(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
+	BOOL status;
 	UINT32 fileId;
 	UINT8 information;
 
@@ -1626,8 +1788,11 @@ static void rdpdr_server_drive_delete_file_callback1(RdpdrServerContext* context
 		/* Destroy the IRP. */
 		rdpdr_server_irp_free(irp);
 
-		return;
+		return TRUE;
 	}
+
+	if (Stream_GetRemainingLength(s) < 5)
+		return FALSE;
 
 	Stream_Read_UINT32(s, fileId); /* FileId (4 bytes) */
 	Stream_Read_UINT8(s, information); /* Information (1 byte) */
@@ -1638,14 +1803,20 @@ static void rdpdr_server_drive_delete_file_callback1(RdpdrServerContext* context
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
 
-	rdpdr_server_enqueue_irp(context, irp);
+	status = rdpdr_server_enqueue_irp(context, irp);
+
+	if (!status)
+		return FALSE;
 
 	/* Send a request to close the file */
-	rdpdr_server_send_device_close_request(context, deviceId, fileId, irp->CompletionId);
+	status = rdpdr_server_send_device_close_request(context, deviceId, fileId, irp->CompletionId);
+
+	return status;
 }
 
 static BOOL rdpdr_server_drive_delete_file(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path)
 {
+	BOOL status;
 	RDPDR_IRP* irp;
 
 	irp = rdpdr_server_irp_new();
@@ -1661,37 +1832,43 @@ static BOOL rdpdr_server_drive_delete_file(RdpdrServerContext* context, void* ca
 
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
-	rdpdr_server_enqueue_irp(context, irp);
+	status = rdpdr_server_enqueue_irp(context, irp);
+
+	if (!status)
+		return FALSE;
 
 	/* Send a request to open the file. */
-	rdpdr_server_send_device_create_request(
-		context, deviceId, irp->CompletionId, irp->PathName,
-		FILE_READ_DATA | SYNCHRONIZE,
-		FILE_DELETE_ON_CLOSE | FILE_SYNCHRONOUS_IO_NONALERT,
-		FILE_OPEN);
+	status = rdpdr_server_send_device_create_request(context, deviceId, irp->CompletionId, irp->PathName,
+			FILE_READ_DATA | SYNCHRONIZE, FILE_DELETE_ON_CLOSE | FILE_SYNCHRONOUS_IO_NONALERT, FILE_OPEN);
 
-	return TRUE;
+	return status;
 }
 
 /*************************************************
  * Drive Rename File
  ************************************************/
 
-static void rdpdr_server_drive_rename_file_callback3(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+static BOOL rdpdr_server_drive_rename_file_callback3(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
 	WLog_DBG(TAG, "RdpdrServerDriveRenameFileCallback3: deviceId=%d, completionId=%d, ioStatus=0x%x",
 			deviceId, completionId, ioStatus);
 
 	/* Destroy the IRP. */
 	rdpdr_server_irp_free(irp);
+
+	return TRUE;
 }
 
-static void rdpdr_server_drive_rename_file_callback2(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+static BOOL rdpdr_server_drive_rename_file_callback2(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
+	BOOL status;
 	UINT32 length;
 
 	WLog_DBG(TAG, "RdpdrServerDriveRenameFileCallback2: deviceId=%d, completionId=%d, ioStatus=0x%x",
 			deviceId, completionId, ioStatus);
+
+	if (Stream_GetRemainingLength(s) < 5)
+		return FALSE;
 
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 	Stream_Seek(s, 1); /* Padding (1 byte) */
@@ -1704,14 +1881,20 @@ static void rdpdr_server_drive_rename_file_callback2(RdpdrServerContext* context
 	irp->Callback = rdpdr_server_drive_rename_file_callback3;
 	irp->DeviceId = deviceId;
 
-	rdpdr_server_enqueue_irp(context, irp);
+	status = rdpdr_server_enqueue_irp(context, irp);
+
+	if (!status)
+		return FALSE;
 
 	/* Send a request to close the file */
-	rdpdr_server_send_device_close_request(context, deviceId, irp->FileId, irp->CompletionId);
+	status = rdpdr_server_send_device_close_request(context, deviceId, irp->FileId, irp->CompletionId);
+
+	return status;
 }
 
-static void rdpdr_server_drive_rename_file_callback1(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+static BOOL rdpdr_server_drive_rename_file_callback1(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
+	BOOL status;
 	UINT32 fileId;
 	UINT8 information;
 
@@ -1726,8 +1909,11 @@ static void rdpdr_server_drive_rename_file_callback1(RdpdrServerContext* context
 		/* Destroy the IRP. */
 		rdpdr_server_irp_free(irp);
 
-		return;
+		return TRUE;
 	}
+
+	if (Stream_GetRemainingLength(s) < 5)
+		return FALSE;
 
 	Stream_Read_UINT32(s, fileId); /* FileId (4 bytes) */
 	Stream_Read_UINT8(s, information); /* Information (1 byte) */
@@ -1738,14 +1924,20 @@ static void rdpdr_server_drive_rename_file_callback1(RdpdrServerContext* context
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
 
-	rdpdr_server_enqueue_irp(context, irp);
+	status = rdpdr_server_enqueue_irp(context, irp);
+
+	if (!status)
+		return FALSE;
 
 	/* Send a request to rename the file */
-	rdpdr_server_send_device_file_rename_request(context, deviceId, fileId, irp->CompletionId, irp->ExtraBuffer);
+	status = rdpdr_server_send_device_file_rename_request(context, deviceId, fileId, irp->CompletionId, irp->ExtraBuffer);
+
+	return status;
 }
 
 static BOOL rdpdr_server_drive_rename_file(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* oldPath, const char* newPath)
 {
+	BOOL status;
 	RDPDR_IRP* irp;
 
 	irp = rdpdr_server_irp_new();
@@ -1763,16 +1955,16 @@ static BOOL rdpdr_server_drive_rename_file(RdpdrServerContext* context, void* ca
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 	rdpdr_server_convert_slashes(irp->ExtraBuffer, sizeof(irp->ExtraBuffer));
 
-	rdpdr_server_enqueue_irp(context, irp);
+	status = rdpdr_server_enqueue_irp(context, irp);
+
+	if (!status)
+		return FALSE;
 
 	/* Send a request to open the file. */
-	rdpdr_server_send_device_create_request(
-		context, deviceId, irp->CompletionId, irp->PathName,
-		FILE_READ_DATA | SYNCHRONIZE,
-		FILE_SYNCHRONOUS_IO_NONALERT,
-		FILE_OPEN);
+	status = rdpdr_server_send_device_create_request(context, deviceId, irp->CompletionId, irp->PathName,
+			FILE_READ_DATA | SYNCHRONIZE, FILE_SYNCHRONOUS_IO_NONALERT, FILE_OPEN);
 
-	return TRUE;
+	return status;
 }
 
 RdpdrServerContext* rdpdr_server_context_new(HANDLE vcm)
