@@ -307,7 +307,6 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	if (name[0] && path[0])
 	{
 		parallel = (PARALLEL_DEVICE*) calloc(1, sizeof(PARALLEL_DEVICE));
-
 		if (!parallel)
 			return -1;
 
@@ -318,6 +317,8 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 		length = strlen(name);
 		parallel->device.data = Stream_New(NULL, length + 1);
+		if (!parallel->device.data)
+			goto error_device_data;
 
 		for (i = 0; i <= length; i++)
 			Stream_Write_UINT8(parallel->device.data, name[i] < 0 ? '_' : name[i]);
@@ -325,11 +326,23 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		parallel->path = path;
 
 		parallel->queue = MessageQueue_New(NULL);
+		if (!parallel->queue)
+			goto error_queue;
 
 		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*) parallel);
 
 		parallel->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) parallel_thread_func, (void*) parallel, 0, NULL);
+		if (!parallel->thread)
+			goto error_thread;
 	}
 
 	return 0;
+
+error_thread:
+	MessageQueue_Free(parallel->queue);
+error_queue:
+	Stream_Free(parallel->device.data, TRUE);
+error_device_data:
+	free(parallel);
+	return -1;
 }

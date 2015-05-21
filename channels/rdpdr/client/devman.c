@@ -47,14 +47,19 @@ DEVMAN* devman_new(rdpdrPlugin* rdpdr)
 {
 	DEVMAN* devman;
 
-	devman = (DEVMAN*) malloc(sizeof(DEVMAN));
-	ZeroMemory(devman, sizeof(DEVMAN));
+	devman = (DEVMAN*) calloc(1, sizeof(DEVMAN));
+	if (!devman)
+		return NULL;
 
 	devman->plugin = (void*) rdpdr;
 	devman->id_sequence = 1;
 
 	devman->devices = ListDictionary_New(TRUE);
-
+	if (!devman->devices)
+	{
+		free(devman);
+		return NULL;
+	}
 	ListDictionary_ValueObject(devman->devices)->fnObjectFree =
 			(OBJECT_FREE_FN) devman_device_free;
 

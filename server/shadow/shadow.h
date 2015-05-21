@@ -30,6 +30,7 @@
 #include "shadow_channels.h"
 #include "shadow_subsystem.h"
 #include "shadow_lobby.h"
+#include "shadow_mcevent.h"
 
 #ifdef __cplusplus
 extern "C" {

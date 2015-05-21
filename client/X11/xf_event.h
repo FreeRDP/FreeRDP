@@ -25,7 +25,7 @@
 #include "xf_client.h"
 #include "xfreerdp.h"
 
-int xf_event_action_script_init(xfContext* xfc);
+BOOL xf_event_action_script_init(xfContext* xfc);
 void xf_event_action_script_free(xfContext* xfc);
 
 BOOL xf_event_process(freerdp* instance, XEvent* event);

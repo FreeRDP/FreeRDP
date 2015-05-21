@@ -89,6 +89,8 @@ wStream* rail_pdu_init(int length)
 {
 	wStream* s;
 	s = Stream_New(NULL, length + RAIL_PDU_HEADER_LENGTH);
+	if (!s)
+		return NULL;
 	Stream_Seek(s, RAIL_PDU_HEADER_LENGTH);
 	return s;
 }

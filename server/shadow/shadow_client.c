@@ -95,13 +95,14 @@ BOOL shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 	if (!(client->encoder = shadow_encoder_new(client)))
 		goto fail_encoder_new;
 
-	ArrayList_Add(server->clients, (void*) client);
+	if (ArrayList_Add(server->clients, (void*) client) >= 0)
+		return TRUE;
 
-	return TRUE;
-
-fail_encoder_new:
-	CloseHandle(client->encoder);
+	shadow_encoder_free(client->encoder);
 	client->encoder = NULL;
+fail_encoder_new:
+	CloseHandle(client->StopEvent);
+	client->StopEvent = NULL;
 fail_stop_event:
 	WTSCloseServer((HANDLE) client->vcm);
 	client->vcm = NULL;
@@ -949,6 +950,7 @@ void* shadow_client_thread(rdpShadowClient* client)
 	HANDLE StopEvent;
 	HANDLE ClientEvent;
 	HANDLE ChannelEvent;
+	void* UpdateSubscriber;
 	HANDLE UpdateEvent;
 	freerdp_peer* peer;
 	rdpContext* context;
@@ -980,8 +982,15 @@ void* shadow_client_thread(rdpShadowClient* client)
 	peer->update->SuppressOutput = (pSuppressOutput) shadow_client_suppress_output;
 	peer->update->SurfaceFrameAcknowledge = (pSurfaceFrameAcknowledge) shadow_client_surface_frame_acknowledge;
 
+	if ((!client->StopEvent) || (!client->vcm) || (!subsystem->updateEvent))
+		goto out;
+
+	UpdateSubscriber = shadow_multiclient_get_subscriber(subsystem->updateEvent);
+	if (!UpdateSubscriber)
+		goto out;
+
 	StopEvent = client->StopEvent;
-	UpdateEvent = subsystem->updateEvent;
+	UpdateEvent = shadow_multiclient_getevent(UpdateSubscriber);
 	ClientEvent = peer->GetEventHandle(peer);
 	ChannelEvent = WTSVirtualChannelManagerGetEventHandle(client->vcm);
 
@@ -998,11 +1007,6 @@ void* shadow_client_thread(rdpShadowClient* client)
 
 		if (WaitForSingleObject(StopEvent, 0) == WAIT_OBJECT_0)
 		{
-			if (WaitForSingleObject(UpdateEvent, 0) == WAIT_OBJECT_0)
-			{
-				EnterSynchronizationBarrier(&(subsystem->barrier), 0);
-			}
-
 			break;
 		}
 
@@ -1024,9 +1028,11 @@ void* shadow_client_thread(rdpShadowClient* client)
 				shadow_client_send_surface_update(client);
 			}
 
-			EnterSynchronizationBarrier(&(subsystem->barrier), 0);
-
-			while (WaitForSingleObject(UpdateEvent, 0) == WAIT_OBJECT_0);
+			/* 
+			 * The return value of shadow_multiclient_consume is whether or not the subscriber really consumes the event.
+			 * It's not cared currently.
+			 */
+			(void)shadow_multiclient_consume(UpdateSubscriber);
 		}
 
 		if (WaitForSingleObject(ClientEvent, 0) == WAIT_OBJECT_0)
@@ -1059,6 +1065,13 @@ void* shadow_client_thread(rdpShadowClient* client)
 		}
 	}
 
+	if (UpdateSubscriber)
+	{
+		shadow_multiclient_release_subscriber(UpdateSubscriber);
+		UpdateSubscriber = NULL;
+	}
+
+out:
 	peer->Disconnect(peer);
 	
 	freerdp_peer_context_free(peer);

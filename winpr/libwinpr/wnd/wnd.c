@@ -36,12 +36,13 @@
 
 static wArrayList* g_WindowClasses = NULL;
 
-void InitializeWindowClasses()
+BOOL InitializeWindowClasses()
 {
 	if (g_WindowClasses)
-		return;
+		return TRUE;
 
 	g_WindowClasses = ArrayList_New(TRUE);
+	return g_WindowClasses != NULL;
 }
 
 WNDCLASSEXA* CloneWindowClass(CONST WNDCLASSEXA* lpwcx)
@@ -179,13 +180,12 @@ ATOM WINAPI RegisterClassExA(CONST WNDCLASSEXA* lpwcx)
 {
 	WNDCLASSEXA* _lpwcx;
 
-	InitializeWindowClasses();
+	if (!InitializeWindowClasses())
+		return 0;
 
 	_lpwcx = CloneWindowClass(lpwcx);
 
-	ArrayList_Add(g_WindowClasses, (void*) _lpwcx);
-
-	return 1;
+	return ArrayList_Add(g_WindowClasses, (void*) _lpwcx) >= 0;
 }
 
 ATOM WINAPI RegisterClassExW(CONST WNDCLASSEXW* lpwcx)

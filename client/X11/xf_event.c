@@ -85,7 +85,7 @@ const char* const X11_EVENT_STRINGS[] =
 #define DEBUG_X11(fmt, ...) do { } while (0)
 #endif
 
-int xf_event_action_script_init(xfContext* xfc)
+BOOL xf_event_action_script_init(xfContext* xfc)
 {
 	int exitCode;
 	char* xevent;
@@ -94,6 +94,8 @@ int xf_event_action_script_init(xfContext* xfc)
 	char command[1024] = { 0 };
 
 	xfc->xevents = ArrayList_New(TRUE);
+	if (!xfc->xevents)
+		return FALSE;
 	ArrayList_Object(xfc->xevents)->fnObjectFree = free;
 
 	sprintf_s(command, sizeof(command), "%s xevent", xfc->actionScript);
@@ -101,18 +103,19 @@ int xf_event_action_script_init(xfContext* xfc)
 	actionScript = popen(command, "r");
 
 	if (actionScript < 0)
-		return -1;
+		return FALSE;
 
 	while (fgets(buffer, sizeof(buffer), actionScript))
 	{
 		strtok(buffer, "\n");
 		xevent = _strdup(buffer);
-		ArrayList_Add(xfc->xevents, xevent);
+		if (ArrayList_Add(xfc->xevents, xevent) < 0)
+			return FALSE;
 	}
 
 	exitCode = pclose(actionScript);
 
-	return 1;
+	return TRUE;
 }
 
 void xf_event_action_script_free(xfContext* xfc)

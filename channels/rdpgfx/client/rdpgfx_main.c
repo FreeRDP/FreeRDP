@@ -1115,7 +1115,6 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		gfx->iface.Terminated = rdpgfx_plugin_terminated;
 
 		gfx->SurfaceTable = HashTable_New(TRUE);
-
 		if (!gfx->SurfaceTable)
 		{
 			free (gfx);

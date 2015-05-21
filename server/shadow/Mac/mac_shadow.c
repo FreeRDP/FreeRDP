@@ -31,6 +31,7 @@
 #include "../shadow_capture.h"
 #include "../shadow_encoder.h"
 #include "../shadow_subsystem.h"
+#include "../shadow_mcevent.h"
 
 #include "mac_shadow.h"
 
@@ -366,13 +367,7 @@ void (^mac_capture_stream_handler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfa
 			
 		count = ArrayList_Count(server->clients);
 			
-		InitializeSynchronizationBarrier(&(subsystem->barrier), count + 1, -1);
-			
-		SetEvent(subsystem->updateEvent);
-			
-		EnterSynchronizationBarrier(&(subsystem->barrier), 0);
-		
-		DeleteSynchronizationBarrier(&(subsystem->barrier));
+		shadow_multiclient_publish_and_wait(subsystem->updateEvent);
 		
 		if (count == 1)
 		{
@@ -386,8 +381,6 @@ void (^mac_capture_stream_handler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfa
 			}
 		}
 		
-		ResetEvent(subsystem->updateEvent);
-			
 		ArrayList_Unlock(server->clients);
 			
 		region16_clear(&(subsystem->invalidRegion));
