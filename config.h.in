@@ -22,6 +22,7 @@
 #cmakedefine HAVE_SYS_MODEM_H
 #cmakedefine HAVE_SYS_FILIO_H
 #cmakedefine HAVE_SYS_SELECT_H
+#cmakedefine HAVE_SYS_SOCKIO_H
 #cmakedefine HAVE_SYS_STRTIO_H
 #cmakedefine HAVE_EVENTFD_H
 #cmakedefine HAVE_TIMERFD_H
