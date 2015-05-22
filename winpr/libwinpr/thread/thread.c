@@ -294,6 +294,18 @@ static void* thread_launcher(void* arg)
 			goto exit;
 		}
 
+                /* pthread_create(3) doesn't guaranty the thread ID to be set
+                 * before to invoke the start_routine() even if this seems to be
+                 * actually done.*/
+                thread->thread = pthread_self(); 
+
+                /* also done by winpr_StartThread(). This ensures thread_list
+                 * was updated before the thread could exit */
+                if (!ListDictionary_Add(thread_list, &thread->thread, thread))
+                {
+                    WLog_ERR(TAG, "Thread function argument is %p", fkt);
+                    goto exit;
+                }
 		rc = fkt(thread->lpParameter);
 	}
 
@@ -328,7 +340,7 @@ static BOOL winpr_StartThread(WINPR_THREAD *thread)
 
 	if (pthread_create(&thread->thread, &attr, thread_launcher, thread))
 		goto error;
-	if (!ListDictionary_Add(thread_list, &thread->thread, thread))
+	if (!ListDictionary_Add(thread_list, &thread->thread, thread))  /* also done by thread_launcher() */
 		goto error;
 	pthread_attr_destroy(&attr);
 	dump_thread(thread);

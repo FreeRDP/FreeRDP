@@ -6,7 +6,8 @@ set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
 	TestThreadCommandLineToArgv.c
-	TestThreadCreateProcess.c)
+	TestThreadCreateProcess.c
+	TestThreadExitThread.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
