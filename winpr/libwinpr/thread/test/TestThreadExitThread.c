@@ -43,7 +43,7 @@ int TestThreadExitThread(int argc, char* argv[])
 			 * the end of the thread. Therefore WaitForSingleObject
 			 * never get the signal.
 			 */
-			fprintf(stderr, "Didn't quit the main thread correctly\n");
+			fprintf(stderr, "1 second should have been enough to for the thread to be in a signaled state\n");
 			return -1;
 		}
 
