@@ -92,26 +92,35 @@ static INLINE UINT64 _rotr64(UINT64 value, int shift) {
 /**
  * __lzcnt16, __lzcnt, __lzcnt64:
  * http://msdn.microsoft.com/en-us/library/bb384809/
- */
-
-#if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2))
-
-/**
- * __lzcnt16, __lzcnt, __lzcnt64:
- * http://msdn.microsoft.com/en-us/library/bb384809/
  *
  * Beware: the result of __builtin_clz(0) is undefined
  */
 
-static INLINE UINT32 __lzcnt(UINT32 _val32) {
-	return _val32 ? ((UINT32) __builtin_clz(_val32)) : 32;
+#if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2))
+#if (__GNUC__ == 4) && (__GNUC_MINOR__ < 9)
+static INLINE UINT32 __lzcnt(UINT32 _val32)
+{
+	return (UINT32) __builtin_clz(_val32);
 }
 
-static INLINE UINT16 __lzcnt16(UINT16 _val16) {
-	return _val16 ? ((UINT16) (__builtin_clz((UINT32) _val16) - 16)) : 16;
+static INLINE UINT16 __lzcnt16(UINT16 _val16)
+{
+	return (UINT16) (__builtin_clz((UINT32) _val16) - 16);
+}
+#else /* (__GNUC__ == 4) && (__GNUC_MINOR__ < 9) */
+static INLINE UINT32 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+       __lzcnt(UINT32 _val32)
+{
+       return ((UINT32) __builtin_clz(_val32));
 }
 
-#else
+static INLINE UINT16 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+       __lzcnt16(UINT16 _val16)
+{
+	return (UINT16) (__builtin_clz((UINT32) _val16) - 16);
+}
+#endif /* (__GNUC__ == 4) && (__GNUC_MINOR__ < 9) */
+#else /* (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2)) */
 
 static INLINE UINT32 __lzcnt(UINT32 x) {
 	unsigned y;
