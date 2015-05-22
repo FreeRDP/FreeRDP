@@ -141,6 +141,9 @@ int freerdp_assistance_parse_address_list(rdpAssistanceFile* file, char* list)
 
 	tokens = (char**) malloc(sizeof(char*) * count);
 
+	if (!tokens)
+		return -1;
+
 	count = 0;
 	tokens[count++] = str;
 
@@ -180,6 +183,9 @@ int freerdp_assistance_parse_address_list(rdpAssistanceFile* file, char* list)
 		file->MachineAddresses[i] = _strdup(p);
 		file->MachinePorts[i] = (UINT32) atoi(q);
 
+		if (!file->MachineAddresses[i])
+			return -1;
+
 		q[-1] = ':';
 	}
 
@@ -209,11 +215,13 @@ int freerdp_assistance_parse_address_list(rdpAssistanceFile* file, char* list)
 		file->MachineAddress = _strdup(p);
 		file->MachinePort = (UINT32) atoi(q);
 
+		if (!file->MachineAddress)
+			return -1;
+
 		break;
 	}
 
-	if (tokens)
-		free(tokens);
+	free(tokens);
 
 	return 1;
 }
@@ -1136,13 +1144,23 @@ int freerdp_client_populate_settings_from_assistance_file(rdpAssistanceFile* fil
 	freerdp_target_net_addresses_free(settings);
 
 	settings->TargetNetAddressCount = file->MachineCount;
-	settings->TargetNetAddresses = (char**) calloc(file->MachineCount, sizeof(char*));
-	settings->TargetNetPorts = (UINT32*) calloc(file->MachineCount, sizeof(UINT32));
 
-	for (i = 0; i < settings->TargetNetAddressCount; i++)
+	if (settings->TargetNetAddressCount)
 	{
-		settings->TargetNetAddresses[i] = _strdup(file->MachineAddresses[i]);
-		settings->TargetNetPorts[i] = file->MachinePorts[i];
+		settings->TargetNetAddresses = (char**) calloc(file->MachineCount, sizeof(char*));
+		settings->TargetNetPorts = (UINT32*) calloc(file->MachineCount, sizeof(UINT32));
+
+		if (!settings->TargetNetAddresses || !settings->TargetNetPorts)
+			return -1;
+
+		for (i = 0; i < settings->TargetNetAddressCount; i++)
+		{
+			settings->TargetNetAddresses[i] = _strdup(file->MachineAddresses[i]);
+			settings->TargetNetPorts[i] = file->MachinePorts[i];
+
+			if (!settings->TargetNetAddresses[i])
+				return -1;
+		}
 	}
 
 	return 1;

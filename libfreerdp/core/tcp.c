@@ -1023,7 +1023,13 @@ int freerdp_tcp_connect_multi(char** hostnames, UINT32* ports, int count, int po
 	results = (struct addrinfo**) calloc(count, sizeof(struct addrinfo*));
 
 	if (!sockfds || !events || !addrs || !results)
+	{
+		free(sockfds);
+		free(events);
+		free(addrs);
+		free(results);
 		return -1;
+	}
 
 	for (index = 0; index < count; index++)
 	{
@@ -1226,13 +1232,8 @@ int freerdp_tcp_connect(rdpSettings* settings, const char* hostname, int port, i
 			{
 				if (settings->TargetNetAddressCount > 0)
 				{
-//#ifndef _WIN32
-#if 1
 					sockfd = freerdp_tcp_connect_multi(settings->TargetNetAddresses,
 							settings->TargetNetPorts, settings->TargetNetAddressCount, port, timeout);
-#else
-					hostname = settings->TargetNetAddresses[0];
-#endif
 				}
 			}
 		}

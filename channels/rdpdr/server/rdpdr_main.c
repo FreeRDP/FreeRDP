@@ -395,23 +395,31 @@ static BOOL rdpdr_server_send_core_capability_request(RdpdrServerContext* contex
 	Stream_Write_UINT16(s, numCapabilities); /* numCapabilities (2 bytes) */
 	Stream_Write_UINT16(s, 0); /* Padding (2 bytes) */
 
-	rdpdr_server_write_general_capability_set(context, s);
+	if (!rdpdr_server_write_general_capability_set(context, s))
+		return FALSE;
 
 	if (context->supportsDrives)
 	{
-		rdpdr_server_write_drive_capability_set(context, s);
+		if (!rdpdr_server_write_drive_capability_set(context, s))
+			return FALSE;
 	}
+
 	if (context->supportsPorts)
 	{
-		rdpdr_server_write_port_capability_set(context, s);
+		if (!rdpdr_server_write_port_capability_set(context, s))
+			return FALSE;
 	}
+
 	if (context->supportsPrinters)
 	{
-		rdpdr_server_write_printer_capability_set(context, s);
+		if (!rdpdr_server_write_printer_capability_set(context, s))
+			return FALSE;
 	}
+
 	if (context->supportsSmartcards)
 	{
-		rdpdr_server_write_smartcard_capability_set(context, s);
+		if (!rdpdr_server_write_smartcard_capability_set(context, s))
+			return FALSE;
 	}
 
 	Stream_SealLength(s);
@@ -847,7 +855,8 @@ static void* rdpdr_server_thread(void* arg)
 	events[nCount++] = ChannelEvent;
 	events[nCount++] = context->priv->StopEvent;
 
-	rdpdr_server_send_announce_request(context);
+	if (!rdpdr_server_send_announce_request(context))
+		return NULL;
 
 	while (1)
 	{
@@ -875,12 +884,15 @@ static void* rdpdr_server_thread(void* arg)
 			{
 				Stream_Read_UINT16(s, header.Component); /* Component (2 bytes) */
 				Stream_Read_UINT16(s, header.PacketId); /* PacketId (2 bytes) */
-				rdpdr_server_receive_pdu(context, s, &header);
+
+				if (!rdpdr_server_receive_pdu(context, s, &header))
+					break;
 			}
 		}
 	}
 
 	Stream_Free(s, TRUE);
+
 	return NULL;
 }
 
