@@ -37,3 +37,11 @@ int shadow_client_remdesk_init(rdpShadowClient* client)
 
 	return 1;
 }
+
+void shadow_client_remdesk_uninit(rdpShadowClient* client)
+{
+	if (client->remdesk) {
+		client->remdesk->Stop(client->remdesk);
+		client->remdesk = NULL;
+	}
+}
