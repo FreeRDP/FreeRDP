@@ -441,6 +441,7 @@ int shadow_client_send_surface_bits(rdpShadowClient* client, rdpShadowSurface* s
 		cmd.bpp = 32;
 		cmd.width = surface->width;
 		cmd.height = surface->height;
+		cmd.skipCompression = TRUE;
 
 		if (numMessages > 0)
 			messageRects = messages[0].rects;
