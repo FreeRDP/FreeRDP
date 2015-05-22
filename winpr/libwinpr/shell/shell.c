@@ -47,20 +47,35 @@
 
 BOOL GetUserProfileDirectoryA(HANDLE hToken, LPSTR lpProfileDir, LPDWORD lpcchSize)
 {
+	char* buf;
+	int buflen;
+	int status;
 	DWORD cchDirSize;
-	struct passwd* pw;
+	struct passwd pwd;
+	struct passwd* pw = NULL;
 	WINPR_ACCESS_TOKEN* token;
 
 	token = (WINPR_ACCESS_TOKEN*) hToken;
 
-	if ((token == NULL) || (token->Type	!= HANDLE_TYPE_ACCESS_TOKEN) || (lpcchSize == NULL))
+	if (!token || (token->Type != HANDLE_TYPE_ACCESS_TOKEN) || !lpcchSize)
 	{
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
 
-	pw = getpwnam(token->Username);
-	if (pw == NULL)
+	buflen = sysconf(_SC_GETPW_R_SIZE_MAX);
+
+	if (buflen == -1)
+		buflen = 8196;
+
+	buf = (char*) malloc(buflen);
+
+	if (!buf)
+		return FALSE;
+
+	status = getpwnam_r(token->Username, &pwd, buf, buflen, &pw);
+
+	if ((status != 0) || !pw)
 	{
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
@@ -68,16 +83,18 @@ BOOL GetUserProfileDirectoryA(HANDLE hToken, LPSTR lpProfileDir, LPDWORD lpcchSi
 
 	cchDirSize = strlen(pw->pw_dir) + 1;
 
-	if ((lpProfileDir == NULL) || (*lpcchSize < cchDirSize))
+	if (!lpProfileDir || (*lpcchSize < cchDirSize))
 	{
 		*lpcchSize = cchDirSize;
 		SetLastError(ERROR_INSUFFICIENT_BUFFER);
+		free(buf);
 		return FALSE;
 	}
 
 	ZeroMemory(lpProfileDir, *lpcchSize);
 	strcpy(lpProfileDir, pw->pw_dir);
 	*lpcchSize = cchDirSize;
+	free(buf);
 
 	return TRUE;
 }
@@ -88,7 +105,7 @@ BOOL GetUserProfileDirectoryW(HANDLE hToken, LPWSTR lpProfileDir, LPDWORD lpcchS
 	DWORD cchSizeA;
 	LPSTR lpProfileDirA;
 
-	if (lpcchSize == NULL)
+	if (!lpcchSize)
 	{
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
@@ -100,6 +117,7 @@ BOOL GetUserProfileDirectoryW(HANDLE hToken, LPWSTR lpProfileDir, LPDWORD lpcchS
 	if (lpProfileDir)
 	{
 		lpProfileDirA = (LPSTR) malloc(cchSizeA);
+
 		if (lpProfileDirA == NULL)
 		{
 			SetLastError(ERROR_OUTOFMEMORY);
@@ -108,6 +126,7 @@ BOOL GetUserProfileDirectoryW(HANDLE hToken, LPWSTR lpProfileDir, LPDWORD lpcchS
 	}
 
 	bStatus = GetUserProfileDirectoryA(hToken, lpProfileDirA, &cchSizeA);
+
 	if (bStatus)
 	{
 		MultiByteToWideChar(CP_ACP, 0, lpProfileDirA, cchSizeA, lpProfileDir, *lpcchSize);
