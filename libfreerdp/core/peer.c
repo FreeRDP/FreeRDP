@@ -635,6 +635,7 @@ BOOL freerdp_peer_context_new(freerdp_peer* client)
 
 	client->context = context;
 
+	context->peer = client;
 	context->ServerMode = TRUE;
 
 	if (!(context->metrics = metrics_new(context)))
@@ -649,7 +650,6 @@ BOOL freerdp_peer_context_new(freerdp_peer* client)
 	client->autodetect = rdp->autodetect;
 
 	context->rdp = rdp;
-	context->peer = client;
 	context->input = client->input;
 	context->update = client->update;
 	context->settings = client->settings;
