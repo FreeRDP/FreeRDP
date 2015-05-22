@@ -402,7 +402,6 @@ int win_shadow_enum_monitors(MONITOR_DEF* monitors, int maxMonitors)
 	DWORD iDevNum = 0;
 	int numMonitors = 0;
 	MONITOR_DEF* monitor;
-	MONITOR_DEF* virtualScreen;
 	DISPLAY_DEVICE displayDevice;
 
 	ZeroMemory(&displayDevice, sizeof(DISPLAY_DEVICE));

@@ -222,12 +222,12 @@ int test_image_png_to_bmp()
 	if (!buffer)
 		return -1;
 
-	snprintf(src_png, sizeof(src_png), "%s/lodepng_32bit.png", buffer);
-	snprintf(src_bmp, sizeof(src_bmp), "%s/lodepng_32bit.bmp", buffer);
-	snprintf(dst_png, sizeof(dst_png), "%s/lodepng_32bit.png", tmp);
-	snprintf(dst_bmp, sizeof(dst_bmp), "%s/lodepng_32bit.bmp", tmp);
-	snprintf(dst_png2, sizeof(dst_png2), "%s/lodepng_32bit-2.png", tmp);
-	snprintf(dst_bmp2, sizeof(dst_bmp2), "%s/lodepng_32bit-2.bmp", tmp);
+	sprintf_s(src_png, sizeof(src_png), "%s/lodepng_32bit.png", buffer);
+	sprintf_s(src_bmp, sizeof(src_bmp), "%s/lodepng_32bit.bmp", buffer);
+	sprintf_s(dst_png, sizeof(dst_png), "%s/lodepng_32bit.png", tmp);
+	sprintf_s(dst_bmp, sizeof(dst_bmp), "%s/lodepng_32bit.bmp", tmp);
+	sprintf_s(dst_png2, sizeof(dst_png2), "%s/lodepng_32bit-2.png", tmp);
+	sprintf_s(dst_bmp2, sizeof(dst_bmp2), "%s/lodepng_32bit-2.bmp", tmp);
 
 	if (create_test(src_png, dst_png, dst_bmp))
 		return -1;

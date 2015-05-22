@@ -482,7 +482,7 @@ static BOOL gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 		compressed = bitmap->compressed;
 		bitsPerPixel = bitmap->bitsPerPixel;
 
-		if (gdi->bitmap_size < (nWidth * nHeight * 4))
+		if (gdi->bitmap_size < (UINT32) (nWidth * nHeight * 4))
 		{
 			gdi->bitmap_size = nWidth * nHeight * 4;
 			gdi->bitmap_buffer = (BYTE*) _aligned_realloc(gdi->bitmap_buffer, gdi->bitmap_size, 16);
@@ -557,7 +557,7 @@ static BOOL gdi_palette_update(rdpContext* context, PALETTE_UPDATE* palette)
 
 	palette32 = (UINT32*) gdi->palette;
 
-	for (index = 0; index < palette->number; index++)
+	for (index = 0; index < (int) palette->number; index++)
 	{
 		pe = &(palette->entries[index]);
 		palette32[index] = RGB32(pe->red, pe->green, pe->blue);

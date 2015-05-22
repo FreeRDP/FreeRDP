@@ -816,7 +816,7 @@ BOOL freerdp_tcp_connect_timeout(int sockfd, struct sockaddr* addr, socklen_t ad
 
 #ifndef _WIN32
 
-int freerdp_tcp_connect_multi(char** hostnames, int count, int port, int timeout)
+int freerdp_tcp_connect_multi(char** hostnames, UINT32* ports, int count, int port, int timeout)
 {
 	int index;
 	int sindex;
@@ -848,6 +848,9 @@ int freerdp_tcp_connect_multi(char** hostnames, int count, int port, int timeout
 		ZeroMemory(&hints, sizeof(hints));
 		hints.ai_family = AF_UNSPEC;
 		hints.ai_socktype = SOCK_STREAM;
+
+		if (ports)
+			sprintf_s(port_str, sizeof(port_str) - 1, "%u", ports[index]);
 
 		status = getaddrinfo(hostnames[index], port_str, &hints, &result);
 
@@ -992,6 +995,143 @@ int freerdp_tcp_connect_multi(char** hostnames, int count, int port, int timeout
 	return sockfd;
 }
 
+#else
+
+int freerdp_tcp_connect_multi(char** hostnames, UINT32* ports, int count, int port, int timeout)
+{
+	int index;
+	int sindex;
+	int status;
+	SOCKET sockfd;
+	SOCKET* sockfds;
+	HANDLE* events;
+	DWORD waitStatus;
+	char port_str[16];
+	struct addrinfo hints;
+	struct addrinfo* addr;
+	struct addrinfo* result;
+	struct addrinfo** addrs;
+	struct addrinfo** results;
+
+	sindex = -1;
+
+	sprintf_s(port_str, sizeof(port_str) - 1, "%u", port);
+
+	sockfds = (SOCKET*) calloc(count, sizeof(SOCKET));
+	events = (HANDLE*) calloc(count, sizeof(HANDLE));
+	addrs = (struct addrinfo**) calloc(count, sizeof(struct addrinfo*));
+	results = (struct addrinfo**) calloc(count, sizeof(struct addrinfo*));
+
+	if (!sockfds || !events || !addrs || !results)
+	{
+		free(sockfds);
+		free(events);
+		free(addrs);
+		free(results);
+		return -1;
+	}
+
+	for (index = 0; index < count; index++)
+	{
+		ZeroMemory(&hints, sizeof(hints));
+		hints.ai_family = AF_UNSPEC;
+		hints.ai_socktype = SOCK_STREAM;
+
+		if (ports)
+			sprintf_s(port_str, sizeof(port_str) - 1, "%u", ports[index]);
+
+		status = getaddrinfo(hostnames[index], port_str, &hints, &result);
+
+		if (status)
+		{
+			continue;
+		}
+
+		addr = result;
+
+		if ((addr->ai_family == AF_INET6) && (addr->ai_next != 0))
+		{
+			while ((addr = addr->ai_next))
+			{
+				if (addr->ai_family == AF_INET)
+					break;
+			}
+
+			if (!addr)
+				addr = result;
+		}
+
+		sockfds[index] = _socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
+
+		if (sockfds[index] < 0)
+		{
+			freeaddrinfo(result);
+			sockfds[index] = 0;
+			continue;
+		}
+
+		addrs[index] = addr;
+		results[index] = result;
+	}
+
+	for (index = 0; index < count; index++)
+	{
+		if (!sockfds[index])
+			continue;
+
+		sockfd = sockfds[index];
+		addr = addrs[index];
+
+		/* set socket in non-blocking mode */
+
+		WSAEventSelect(sockfd, events[index], FD_READ | FD_WRITE | FD_CONNECT | FD_CLOSE);
+
+		/* non-blocking tcp connect */
+
+		status = _connect(sockfd, addr->ai_addr, addr->ai_addrlen);
+
+		if (status >= 0)
+		{
+			/* connection success */
+			break;
+		}
+	}
+
+	waitStatus = WaitForMultipleObjects(count, events, FALSE, timeout * 1000);
+
+	sindex = waitStatus - WAIT_OBJECT_0;
+
+	for (index = 0; index < count; index++)
+	{
+		if (!sockfds[index])
+			continue;
+
+		sockfd = sockfds[index];
+
+		/* set socket in blocking mode */
+
+		WSAEventSelect(sockfd, NULL, 0);
+	}
+
+	if (sindex >= 0)
+	{
+		sockfd = sockfds[sindex];
+	}
+
+	for (index = 0; index < count; index++)
+	{
+		if (results[index])
+			freeaddrinfo(results[index]);
+	}
+
+	free(addrs);
+	free(results);
+	free(sockfds);
+	free(events);
+
+	return sockfd;
+}
+
 #endif
 
 BOOL freerdp_tcp_set_keep_alive_mode(int sockfd)
@@ -1088,16 +1228,12 @@ int freerdp_tcp_connect(rdpSettings* settings, const char* hostname, int port, i
 
 		if (!settings->GatewayEnabled)
 		{
-			if (!freerdp_tcp_resolve_hostname(hostname))
+			if (!freerdp_tcp_resolve_hostname(hostname) || settings->RemoteAssistanceMode)
 			{
 				if (settings->TargetNetAddressCount > 0)
 				{
-#ifndef _WIN32
 					sockfd = freerdp_tcp_connect_multi(settings->TargetNetAddresses,
-							settings->TargetNetAddressCount, port, timeout);
-#else
-					hostname = settings->TargetNetAddresses[0];
-#endif
+							settings->TargetNetPorts, settings->TargetNetAddressCount, port, timeout);
 				}
 			}
 		}

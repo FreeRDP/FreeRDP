@@ -2685,10 +2685,21 @@ BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, UINT16 length, rdpSetting
 						Stream_Read_UINT8(s, transformBits); /* transformBits (1 byte) */
 						Stream_Read_UINT8(s, entropyBits); /* entropyBits (1 byte) */
 
-						if (version != 0x0100)
-							return FALSE;
+						if (version == 0x0009)
+						{
+							/* Version 0.9 */
 
-						if (tileSize != 0x0040)
+							if (tileSize != 0x0080)
+								return FALSE;
+						}
+						else if (version == 0x0100)
+						{
+							/* Version 1.0 */
+
+							if (tileSize != 0x0040)
+								return FALSE;
+						}
+						else
 							return FALSE;
 
 						if (colConvBits != 1)

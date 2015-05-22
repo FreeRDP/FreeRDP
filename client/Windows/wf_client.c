@@ -133,7 +133,7 @@ BOOL wf_sw_desktop_resize(wfContext* wfc)
 	rdpGdi* gdi;
 	rdpContext* context;
 	rdpSettings* settings;
-	freerdp *instance = wfc->instance;
+	freerdp* instance = wfc->instance;
 
 	context = (rdpContext*) wfc;
 	settings = wfc->instance->settings;
@@ -142,7 +142,9 @@ BOOL wf_sw_desktop_resize(wfContext* wfc)
 	wfc->width = settings->DesktopWidth;
 	wfc->height = settings->DesktopHeight;
 
+	gdi->primary->bitmap->data = NULL;
 	gdi_free(instance);
+
 	if (wfc->primary)
 	{
 		wf_image_free(wfc->primary);
@@ -154,6 +156,7 @@ BOOL wf_sw_desktop_resize(wfContext* wfc)
 
 	gdi = instance->context->gdi;
 	wfc->hdc = gdi->primary->hdc;
+
 	return TRUE;
 }
 

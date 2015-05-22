@@ -63,19 +63,23 @@ static INLINE UINT64 _rotr64(UINT64 value, int shift) {
 
 #else
 
-#define _byteswap_ulong(_val)	(((_val) >> 24) | \
-				(((_val) & 0x00FF0000) >> 8) | \
-				(((_val) & 0x0000FF00) << 8) | \
-				((_val) << 24))
+static INLINE UINT32 _byteswap_ulong(UINT32 _val) {
+	return  (((_val) >> 24) | \
+		(((_val) & 0x00FF0000) >> 8) | \
+		(((_val) & 0x0000FF00) << 8) | \
+		((_val) << 24));
+}
 
-#define	_byteswap_uint64(_val)	(((_val) << 56) | \
-				(((_val) << 40) & 0xFF000000000000) | \
-				(((_val) << 24) & 0xFF0000000000) | \
-				(((_val) << 8)  & 0xFF00000000) | \
-				(((_val) >> 8)  & 0xFF000000) | \
-				(((_val) >> 24) & 0xFF0000) | \
-				(((_val) >> 40) & 0xFF00) | \
-				((_val)  >> 56))
+static INLINE UINT64 _byteswap_uint64(UINT64 _val) {
+	return  (((_val) << 56) | \
+		(((_val) << 40) & 0xFF000000000000) | \
+		(((_val) << 24) & 0xFF0000000000) | \
+		(((_val) << 8)  & 0xFF00000000) | \
+		(((_val) >> 8)  & 0xFF000000) | \
+		(((_val) >> 24) & 0xFF0000) | \
+		(((_val) >> 40) & 0xFF00) | \
+		((_val)  >> 56));
+}
 
 #endif
 
@@ -85,7 +89,9 @@ static INLINE UINT64 _rotr64(UINT64 value, int shift) {
 
 #else
 
-#define _byteswap_ushort(_val)	(((_val) >> 8) | ((_val) << 8))
+static INLINE UINT16 _byteswap_ushort(UINT16 _val) {
+	return (((_val) >> 8) | ((_val) << 8));
+}
 
 #endif
 

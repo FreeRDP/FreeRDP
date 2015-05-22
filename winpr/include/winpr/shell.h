@@ -1,9 +1,8 @@
 /**
  * WinPR: Windows Portable Runtime
- * WinPR Debugging helpers
+ * Shell Functions
  *
- * Copyright 2014 Armin Novak <armin.novak@thincast.com>
- * Copyright 2014 Thincast Technologies GmbH
+ * Copyright 2015 Dell Software <Mike.McDonald@software.dell.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,23 +17,36 @@
  * limitations under the License.
  */
 
-#ifndef WINPR_DEBUG_H
-#define WINPR_DEBUG_H
+#ifndef WINPR_SHELL_H
+#define WINPR_SHELL_H
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <winpr/winpr.h>
+#include <winpr/wtypes.h>
+
+#ifndef _WIN32
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <winpr/wtypes.h>
+WINPR_API BOOL GetUserProfileDirectoryA(HANDLE hToken, LPSTR lpProfileDir, LPDWORD lpcchSize);
 
-WINPR_API void* winpr_backtrace(DWORD size);
-WINPR_API void winpr_backtrace_free(void* buffer);
-WINPR_API char** winpr_backtrace_symbols(void* buffer, size_t* used);
-WINPR_API void winpr_backtrace_symbols_fd(void* buffer, int fd);
+WINPR_API BOOL GetUserProfileDirectoryW(HANDLE hToken, LPWSTR lpProfileDir, LPDWORD lpcchSize);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* WINPR_WLOG_H */
+#ifdef UNICODE
+#define GetUserProfileDirectory GetUserProfileDirectoryW
+#else
+#define GetUserProfileDirectory GetUserProfileDirectoryA
+#endif
+
+#endif
+
+#endif /* WINPR_SHELL_H */
 

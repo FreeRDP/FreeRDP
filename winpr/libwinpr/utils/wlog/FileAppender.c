@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/environment.h>
 #include <winpr/file.h>
 #include <winpr/path.h>
 #include <winpr/thread.h>
@@ -188,6 +189,9 @@ int WLog_FileAppender_WriteImageMessage(wLog* log, wLogFileAppender* appender, w
 
 wLogFileAppender* WLog_FileAppender_New(wLog* log)
 {
+	LPSTR env;
+	LPCSTR name;
+	DWORD nSize;
 	wLogFileAppender* FileAppender;
 
 	FileAppender = (wLogFileAppender*) malloc(sizeof(wLogFileAppender));
@@ -211,7 +215,33 @@ wLogFileAppender* WLog_FileAppender_New(wLog* log)
 		FileAppender->FileName = NULL;
 		FileAppender->FilePath = NULL;
 		FileAppender->FullFileName = NULL;
-	}
+
+		name = "WLOG_FILEAPPENDER_OUTPUT_FILE_PATH";
+		nSize = GetEnvironmentVariableA(name, NULL, 0);
+		if (nSize)
+		{
+			env = (LPSTR) malloc(nSize);
+			if (env)
+			{
+				nSize = GetEnvironmentVariableA(name, env, nSize);
+				WLog_FileAppender_SetOutputFilePath(log, FileAppender, env);
+				free(env);
+			}
+		}
+
+		name = "WLOG_FILEAPPENDER_OUTPUT_FILE_NAME";
+		nSize = GetEnvironmentVariableA(name, NULL, 0);
+		if (nSize)
+		{
+			env = (LPSTR) malloc(nSize);
+			if (env)
+			{
+				nSize = GetEnvironmentVariableA(name, env, nSize);
+				WLog_FileAppender_SetOutputFileName(log, FileAppender, env);
+				free(env);
+			}
+		}
+	}	
 
 	return FileAppender;
 }

@@ -610,9 +610,11 @@ void freerdp_target_net_addresses_free(rdpSettings* settings)
 		free(settings->TargetNetAddresses[index]);
 
 	free(settings->TargetNetAddresses);
+	free(settings->TargetNetPorts);
 
 	settings->TargetNetAddressCount = 0;
 	settings->TargetNetAddresses = NULL;
+	settings->TargetNetPorts = NULL;
 }
 
 void freerdp_performance_flags_make(rdpSettings* settings)

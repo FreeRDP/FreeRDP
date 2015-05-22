@@ -590,10 +590,15 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->RedirectionTsvUrlLength = 0;
 		_settings->TargetNetAddressCount = 0;
 		_settings->TargetNetAddresses = NULL;
+		_settings->TargetNetPorts = NULL;
 
 		if (settings->LoadBalanceInfo && settings->LoadBalanceInfoLength)
 		{
 			_settings->LoadBalanceInfo = (BYTE*) calloc(1, settings->LoadBalanceInfoLength + 2);
+
+			if (!_settings->LoadBalanceInfo)
+				goto out_fail;
+
 			CopyMemory(_settings->LoadBalanceInfo, settings->LoadBalanceInfo, settings->LoadBalanceInfoLength);
 			_settings->LoadBalanceInfoLength = settings->LoadBalanceInfoLength;
 		}
@@ -601,6 +606,10 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		if (_settings->ServerRandomLength)
 		{
 			_settings->ServerRandom = (BYTE*) malloc(_settings->ServerRandomLength);
+
+			if (!_settings->ServerRandom)
+				goto out_fail;
+
 			CopyMemory(_settings->ServerRandom, settings->ServerRandom, _settings->ServerRandomLength);
 			_settings->ServerRandomLength = settings->ServerRandomLength;
 		}
@@ -608,6 +617,10 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		if (_settings->ClientRandomLength)
 		{
 			_settings->ClientRandom = (BYTE*) malloc(_settings->ClientRandomLength);
+
+			if (!_settings->ClientRandom)
+				goto out_fail;
+
 			CopyMemory(_settings->ClientRandom, settings->ClientRandom, _settings->ClientRandomLength);
 			_settings->ClientRandomLength = settings->ClientRandomLength;
 		}
@@ -615,61 +628,111 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		if (settings->RdpServerCertificate)
 		{
 			_settings->RdpServerCertificate = certificate_clone(settings->RdpServerCertificate);
+
+			if (!_settings->RdpServerCertificate)
+				goto out_fail;
 		}
 
 		_settings->ChannelCount = settings->ChannelCount;
 		_settings->ChannelDefArraySize = settings->ChannelDefArraySize;
 		_settings->ChannelDefArray = (CHANNEL_DEF*) malloc(sizeof(CHANNEL_DEF) * settings->ChannelDefArraySize);
+		if (!_settings->ChannelDefArray && _settings->ChannelDefArraySize)
+			goto out_fail;
 		CopyMemory(_settings->ChannelDefArray, settings->ChannelDefArray, sizeof(CHANNEL_DEF) * settings->ChannelDefArraySize);
 
 		_settings->MonitorCount = settings->MonitorCount;
 		_settings->MonitorDefArraySize = settings->MonitorDefArraySize;
 		_settings->MonitorDefArray = (rdpMonitor*) malloc(sizeof(rdpMonitor) * settings->MonitorDefArraySize);
+		if (!_settings->MonitorDefArray && _settings->MonitorDefArraySize)
+			goto out_fail;
 		CopyMemory(_settings->MonitorDefArray, settings->MonitorDefArray, sizeof(rdpMonitor) * settings->MonitorDefArraySize);
 
 		_settings->MonitorIds = (UINT32*) calloc(16, sizeof(UINT32));
+		if (!_settings->MonitorIds)
+			goto out_fail;
 		CopyMemory(_settings->MonitorIds, settings->MonitorIds, 16 * sizeof(UINT32));
 
 		_settings->ReceivedCapabilities = malloc(32);
+		if (!_settings->ReceivedCapabilities)
+			goto out_fail;
 		_settings->OrderSupport = malloc(32);
+		if (!_settings->OrderSupport)
+			goto out_fail;
 		CopyMemory(_settings->ReceivedCapabilities, settings->ReceivedCapabilities, 32);
 		CopyMemory(_settings->OrderSupport, settings->OrderSupport, 32);
 
 		_settings->ClientHostname = malloc(32);
+		if (!_settings->ClientHostname)
+			goto out_fail;
 		_settings->ClientProductId = malloc(32);
+		if (!_settings->ClientProductId)
+			goto out_fail;
 		CopyMemory(_settings->ClientHostname, settings->ClientHostname, 32);
 		CopyMemory(_settings->ClientProductId, settings->ClientProductId, 32);
 
 		_settings->BitmapCacheV2CellInfo = (BITMAP_CACHE_V2_CELL_INFO*) malloc(sizeof(BITMAP_CACHE_V2_CELL_INFO) * 6);
+		if (!_settings->BitmapCacheV2CellInfo)
+			goto out_fail;
 		CopyMemory(_settings->BitmapCacheV2CellInfo, settings->BitmapCacheV2CellInfo, sizeof(BITMAP_CACHE_V2_CELL_INFO) * 6);
 
 		_settings->GlyphCache = malloc(sizeof(GLYPH_CACHE_DEFINITION) * 10);
+		if (!_settings->GlyphCache)
+			goto out_fail;
 		_settings->FragCache = malloc(sizeof(GLYPH_CACHE_DEFINITION));
+		if (!_settings->FragCache)
+			goto out_fail;
 		CopyMemory(_settings->GlyphCache, settings->GlyphCache, sizeof(GLYPH_CACHE_DEFINITION) * 10);
 		CopyMemory(_settings->FragCache, settings->FragCache, sizeof(GLYPH_CACHE_DEFINITION));
 
 		_settings->ClientAutoReconnectCookie = (ARC_CS_PRIVATE_PACKET*) malloc(sizeof(ARC_CS_PRIVATE_PACKET));
+		if (!_settings->ClientAutoReconnectCookie)
+			goto out_fail;
 		_settings->ServerAutoReconnectCookie = (ARC_SC_PRIVATE_PACKET*) malloc(sizeof(ARC_SC_PRIVATE_PACKET));
+		if (!_settings->ServerAutoReconnectCookie)
+			goto out_fail;
 		CopyMemory(_settings->ClientAutoReconnectCookie, settings->ClientAutoReconnectCookie, sizeof(ARC_CS_PRIVATE_PACKET));
 		CopyMemory(_settings->ServerAutoReconnectCookie, settings->ServerAutoReconnectCookie, sizeof(ARC_SC_PRIVATE_PACKET));
 
 		_settings->ClientTimeZone = (TIME_ZONE_INFO*) malloc(sizeof(TIME_ZONE_INFO));
+		if (!_settings->ClientTimeZone)
+			goto out_fail;
 		CopyMemory(_settings->ClientTimeZone, settings->ClientTimeZone, sizeof(TIME_ZONE_INFO));
 
 		_settings->TargetNetAddressCount = settings->TargetNetAddressCount;
 
 		if (settings->TargetNetAddressCount > 0)
 		{
-			_settings->TargetNetAddresses = (char**) malloc(sizeof(char*) * settings->TargetNetAddressCount);
+			_settings->TargetNetAddresses = (char**) calloc(settings->TargetNetAddressCount, sizeof(char*));
+
+			if (!_settings->TargetNetAddresses)
+				goto out_fail;
 
 			for (index = 0; index < settings->TargetNetAddressCount; index++)
+			{
 				_settings->TargetNetAddresses[index] = _strdup(settings->TargetNetAddresses[index]);
+
+				if (!_settings->TargetNetAddresses[index])
+					goto out_fail;
+			}
+
+			if (settings->TargetNetPorts)
+			{
+				_settings->TargetNetPorts = (UINT32*) calloc(settings->TargetNetAddressCount, sizeof(UINT32));
+
+				if (!_settings->TargetNetPorts)
+					goto out_fail;
+
+				for (index = 0; index < settings->TargetNetAddressCount; index++)
+					_settings->TargetNetPorts[index] = settings->TargetNetPorts[index];
+			}
 		}
 
 		_settings->DeviceCount = settings->DeviceCount;
 		_settings->DeviceArraySize = settings->DeviceArraySize;
-		_settings->DeviceArray = (RDPDR_DEVICE**) malloc(sizeof(RDPDR_DEVICE*) * _settings->DeviceArraySize);
-		ZeroMemory(_settings->DeviceArray, sizeof(RDPDR_DEVICE*) * _settings->DeviceArraySize);
+		_settings->DeviceArray = (RDPDR_DEVICE**) calloc(_settings->DeviceArraySize, sizeof(RDPDR_DEVICE*));
+
+		if (!_settings->DeviceArray && _settings->DeviceArraySize)
+			goto out_fail;
 
 		for (index = 0; index < _settings->DeviceCount; index++)
 		{
@@ -680,6 +743,9 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->StaticChannelArraySize = settings->StaticChannelArraySize;
 		_settings->StaticChannelArray = (ADDIN_ARGV**) calloc(_settings->StaticChannelArraySize, sizeof(ADDIN_ARGV*));
 
+		if (!_settings->StaticChannelArray && _settings->StaticChannelArraySize)
+			goto out_fail;
+
 		for (index = 0; index < _settings->StaticChannelCount; index++)
 		{
 			_settings->StaticChannelArray[index] = freerdp_static_channel_clone(settings->StaticChannelArray[index]);
@@ -689,16 +755,24 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->DynamicChannelArraySize = settings->DynamicChannelArraySize;
 		_settings->DynamicChannelArray = (ADDIN_ARGV**) calloc(_settings->DynamicChannelArraySize, sizeof(ADDIN_ARGV*));
 
+		if (!_settings->DynamicChannelArray && _settings->DynamicChannelArraySize)
+			goto out_fail;
+
 		for (index = 0; index < _settings->DynamicChannelCount; index++)
 		{
 			_settings->DynamicChannelArray[index] = freerdp_dynamic_channel_clone(settings->DynamicChannelArray[index]);
 		}
 
-		_settings->SettingsModified = (BYTE*) malloc(sizeof(rdpSettings) / 8);
-		ZeroMemory(_settings->SettingsModified, sizeof(rdpSettings) / 8);
+		_settings->SettingsModified = (BYTE*) calloc(1, sizeof(rdpSettings) / 8);
+
+		if (!_settings->SettingsModified)
+			goto out_fail;
 	}
 
 	return _settings;
+out_fail:
+	freerdp_settings_free(_settings);
+	return NULL;
 }
 
 void freerdp_settings_free(rdpSettings* settings)

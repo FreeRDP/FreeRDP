@@ -2,6 +2,7 @@
  * FreeRDP: A Remote Desktop Protocol Implementation
  * Device Redirection Virtual Channel Extension
  *
+ * Copyright 2014 Dell Software <Mike.McDonald@software.dell.com>
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +21,7 @@
 #ifndef FREERDP_CHANNEL_SERVER_RDPDR_MAIN_H
 #define FREERDP_CHANNEL_SERVER_RDPDR_MAIN_H
 
+#include <winpr/collections.h>
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
@@ -39,6 +41,9 @@ struct _rdpdr_server_private
 	char* ClientComputerName;
 
 	BOOL UserLoggedOnPdu;
+
+	wListDictionary* IrpList;
+	UINT32 NextCompletionId;
 };
 
 #define RDPDR_HEADER_LENGTH		4
@@ -66,5 +71,17 @@ struct _RDPDR_CAPABILITY_HEADER
 	UINT32 Version;
 };
 typedef struct _RDPDR_CAPABILITY_HEADER RDPDR_CAPABILITY_HEADER;
+
+struct _RDPDR_IRP
+{
+	UINT32 CompletionId;
+	UINT32 DeviceId;
+	UINT32 FileId;
+	char PathName[256];
+	char ExtraBuffer[256];
+	void *CallbackData;
+	BOOL (*Callback)(RdpdrServerContext* context, wStream* s, struct _RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus);
+};
+typedef struct _RDPDR_IRP RDPDR_IRP;
 
 #endif /* FREERDP_CHANNEL_SERVER_RDPDR_MAIN_H */
