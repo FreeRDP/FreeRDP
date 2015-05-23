@@ -614,8 +614,8 @@ static void drive_free(DEVICE* device)
 {
 	DRIVE_DEVICE* drive = (DRIVE_DEVICE*) device;
 
-	MessageQueue_PostQuit(drive->IrpQueue, 0);
-	WaitForSingleObject(drive->thread, INFINITE);
+	if (MessageQueue_PostQuit(drive->IrpQueue, 0))
+		WaitForSingleObject(drive->thread, INFINITE);
 
 	CloseHandle(drive->thread);
 

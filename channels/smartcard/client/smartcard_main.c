@@ -111,8 +111,8 @@ void smartcard_context_free(SMARTCARD_CONTEXT* pContext)
 	/* cancel blocking calls like SCardGetStatusChange */
 	SCardCancel(pContext->hContext);
 
-	MessageQueue_PostQuit(pContext->IrpQueue, 0);
-	WaitForSingleObject(pContext->thread, INFINITE);
+	if (MessageQueue_PostQuit(pContext->IrpQueue, 0))
+		WaitForSingleObject(pContext->thread, INFINITE);
 	CloseHandle(pContext->thread);
 
 	MessageQueue_Free(pContext->IrpQueue);
@@ -126,8 +126,8 @@ static void smartcard_free(DEVICE* device)
 
 	if (smartcard->IrpQueue)
 	{
-		MessageQueue_PostQuit(smartcard->IrpQueue, 0);
-		WaitForSingleObject(smartcard->thread, INFINITE);
+		if (MessageQueue_PostQuit(smartcard->IrpQueue, 0))
+			WaitForSingleObject(smartcard->thread, INFINITE);
 
 		MessageQueue_Free(smartcard->IrpQueue);
 		smartcard->IrpQueue = NULL;

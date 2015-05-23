@@ -779,8 +779,8 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 	{
 		wMessageQueue* input_queue;
 		input_queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
-		MessageQueue_PostQuit(input_queue, 0);
-		WaitForSingleObject(input_thread, INFINITE);
+		if (MessageQueue_PostQuit(input_queue, 0))
+			WaitForSingleObject(input_thread, INFINITE);
 		CloseHandle(input_thread);
 	}
 

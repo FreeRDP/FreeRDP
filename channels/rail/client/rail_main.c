@@ -505,8 +505,8 @@ static void rail_virtual_channel_event_connected(railPlugin* rail, LPVOID pData,
 static void rail_virtual_channel_event_disconnected(railPlugin* rail)
 {
 	UINT rc;
-	MessageQueue_PostQuit(rail->queue, 0);
-	WaitForSingleObject(rail->thread, INFINITE);
+	if (MessageQueue_PostQuit(rail->queue, 0))
+		WaitForSingleObject(rail->thread, INFINITE);
 
 	MessageQueue_Free(rail->queue);
 	CloseHandle(rail->thread);

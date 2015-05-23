@@ -251,17 +251,17 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 	return TRUE;
 }
 
-void shadow_client_refresh_rect(rdpShadowClient* client, BYTE count, RECTANGLE_16* areas)
+BOOL shadow_client_refresh_rect(rdpShadowClient* client, BYTE count, RECTANGLE_16* areas)
 {
 	wMessage message = { 0 };
 	SHADOW_MSG_IN_REFRESH_OUTPUT* wParam;
 	wMessagePipe* MsgPipe = client->subsystem->MsgPipe;
 
 	if (!areas)
-		return;
+		return FALSE;
 
 	if (!(wParam = (SHADOW_MSG_IN_REFRESH_OUTPUT*) calloc(1, sizeof(SHADOW_MSG_IN_REFRESH_OUTPUT))))
-		return;
+		return FALSE;
 
 	wParam->numRects = (UINT32) count;
 
@@ -272,7 +272,7 @@ void shadow_client_refresh_rect(rdpShadowClient* client, BYTE count, RECTANGLE_1
 		if (!wParam->rects)
 		{
 			free (wParam);
-			return;
+			return FALSE;
 		}
 	}
 
@@ -284,19 +284,18 @@ void shadow_client_refresh_rect(rdpShadowClient* client, BYTE count, RECTANGLE_1
 	message.context = (void*) client;
 	message.Free = shadow_client_message_free;
 
-	MessageQueue_Dispatch(MsgPipe->In, &message);
+	return MessageQueue_Dispatch(MsgPipe->In, &message);
 }
 
-void shadow_client_suppress_output(rdpShadowClient* client, BYTE allow, RECTANGLE_16* area)
+BOOL shadow_client_suppress_output(rdpShadowClient* client, BYTE allow, RECTANGLE_16* area)
 {
 	wMessage message = { 0 };
 	SHADOW_MSG_IN_SUPPRESS_OUTPUT* wParam;
 	wMessagePipe* MsgPipe = client->subsystem->MsgPipe;
 
 	wParam = (SHADOW_MSG_IN_SUPPRESS_OUTPUT*) calloc(1, sizeof(SHADOW_MSG_IN_SUPPRESS_OUTPUT));
-
 	if (!wParam)
-		return;
+		return FALSE;
 
 	wParam->allow = (UINT32) allow;
 
@@ -309,7 +308,7 @@ void shadow_client_suppress_output(rdpShadowClient* client, BYTE allow, RECTANGL
 	message.context = (void*) client;
 	message.Free = shadow_client_message_free;
 
-	MessageQueue_Dispatch(MsgPipe->In, &message);
+	return MessageQueue_Dispatch(MsgPipe->In, &message);
 }
 
 BOOL shadow_client_activate(freerdp_peer* peer)
@@ -334,12 +333,10 @@ BOOL shadow_client_activate(freerdp_peer* peer)
 
 	shadow_encoder_reset(client->encoder);
 
-	shadow_client_refresh_rect(client, 0, NULL);
-
-	return TRUE;
+	return shadow_client_refresh_rect(client, 0, NULL);
 }
 
-void shadow_client_surface_frame_acknowledge(rdpShadowClient* client, UINT32 frameId)
+BOOL shadow_client_surface_frame_acknowledge(rdpShadowClient* client, UINT32 frameId)
 {
 	SURFACE_FRAME* frame;
 	wListDictionary* frameList;
@@ -352,6 +349,7 @@ void shadow_client_surface_frame_acknowledge(rdpShadowClient* client, UINT32 fra
 		ListDictionary_Remove(frameList, (void*) (size_t) frameId);
 		free(frame);
 	}
+	return TRUE;
 }
 
 int shadow_client_send_surface_frame_marker(rdpShadowClient* client, UINT32 action, UINT32 id)
@@ -983,9 +981,9 @@ void* shadow_client_thread(rdpShadowClient* client)
 
 	peer->Initialize(peer);
 
-	peer->update->RefreshRect = (pRefreshRect) shadow_client_refresh_rect;
-	peer->update->SuppressOutput = (pSuppressOutput) shadow_client_suppress_output;
-	peer->update->SurfaceFrameAcknowledge = (pSurfaceFrameAcknowledge) shadow_client_surface_frame_acknowledge;
+	peer->update->RefreshRect = (pRefreshRect)shadow_client_refresh_rect;
+	peer->update->SuppressOutput = (pSuppressOutput)shadow_client_suppress_output;
+	peer->update->SurfaceFrameAcknowledge = (pSurfaceFrameAcknowledge)shadow_client_surface_frame_acknowledge;
 
 	if ((!client->StopEvent) || (!client->vcm) || (!subsystem->updateEvent))
 		goto out;

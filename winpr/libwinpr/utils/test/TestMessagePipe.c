@@ -15,7 +15,8 @@ static void* message_echo_pipe_client_thread(void* arg)
 
 	while (index < 100)
 	{
-		MessageQueue_Post(pipe->In, NULL, 0, (void*) (size_t) index, NULL);
+		if (!MessageQueue_Post(pipe->In, NULL, 0, (void*) (size_t) index, NULL))
+			break;
 
 		if (!MessageQueue_Wait(pipe->Out))
 			break;
@@ -56,7 +57,8 @@ static void* message_echo_pipe_server_thread(void* arg)
 
 			count = (int) (size_t) message.wParam;
 
-			MessageQueue_Dispatch(pipe->Out, &message);
+			if (!MessageQueue_Dispatch(pipe->Out, &message))
+				break;
 		}
 	}
 

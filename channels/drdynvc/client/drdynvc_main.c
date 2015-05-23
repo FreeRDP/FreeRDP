@@ -1097,8 +1097,8 @@ static void drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
 {
 	UINT status;
 
-	MessageQueue_PostQuit(drdynvc->queue, 0);
-	WaitForSingleObject(drdynvc->thread, INFINITE);
+	if (MessageQueue_PostQuit(drdynvc->queue, 0))
+		WaitForSingleObject(drdynvc->thread, INFINITE);
 
 	MessageQueue_Free(drdynvc->queue);
 	CloseHandle(drdynvc->thread);
