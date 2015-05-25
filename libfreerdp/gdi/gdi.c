@@ -1354,13 +1354,11 @@ BOOL gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 	if (!(gdi->image = gdi_bitmap_new_ex(gdi, 64, 64, 32, NULL)))
 		goto fail_image_bitmap;
 
-	if (!instance->context->cache)
-	{
-		if (!(cache = cache_new(instance->settings)))
-			goto fail_cache;
-
-		instance->context->cache = cache;
-	}
+    if (!instance->context->cache) {
+        if (!(cache = cache_new(instance->settings)))
+            goto fail_cache;
+        instance->context->cache = cache;
+    }
 
 	gdi_register_update_callbacks(instance->update);
 

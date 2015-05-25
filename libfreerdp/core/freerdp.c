@@ -498,7 +498,7 @@ BOOL freerdp_context_new(freerdp* instance)
 
 	IFCALLRET(instance->ContextNew, ret, instance, instance->context);
 
-	if (ret)
+	if (!ret)
 		return TRUE;
 
 out_error_graphics_new:
