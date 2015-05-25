@@ -28,7 +28,6 @@ rdpShadowScreen* shadow_screen_new(rdpShadowServer* server)
 {
 	int x, y;
 	int width, height;
-	MONITOR_DEF* primary;
 	rdpShadowScreen* screen;
 	rdpShadowSubsystem* subsystem;
 
@@ -45,12 +44,21 @@ rdpShadowScreen* shadow_screen_new(rdpShadowServer* server)
 
 	region16_init(&(screen->invalidRegion));
 
-	primary = &(subsystem->monitors[subsystem->selectedMonitor]);
+	if (server->shareSubRect) {
+		x = server->subRect.left;
+		y = server->subRect.top;
+		width = server->subRect.right - server->subRect.left;
+		height = server->subRect.bottom - server->subRect.top;
+	} else {
+		MONITOR_DEF* primary;
 
-	x = primary->left;
-	y = primary->top;
-	width = primary->right - primary->left;
-	height = primary->bottom - primary->top;
+		primary = &(subsystem->monitors[subsystem->selectedMonitor]);
+
+		x = primary->left;
+		y = primary->top;
+		width = primary->right - primary->left;
+		height = primary->bottom - primary->top;
+	}
 
 	screen->width = width;
 	screen->height = height;
