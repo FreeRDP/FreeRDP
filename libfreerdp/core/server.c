@@ -91,6 +91,8 @@ static BOOL wts_queue_receive_data(rdpPeerChannel* channel, const BYTE* Buffer, 
 	wtsChannelMessage* messageCtx;
 
 	messageCtx = (wtsChannelMessage*) malloc(sizeof(wtsChannelMessage) + Length);
+	if (!messageCtx)
+		return FALSE;
 	messageCtx->channelId = channel->channelId;
 	messageCtx->length = Length;
 	messageCtx->offset = 0;
@@ -280,7 +282,6 @@ static BOOL wts_read_drdynvc_pdu(rdpPeerChannel* channel)
 
 				case DATA_PDU:
 					return wts_read_drdynvc_data(dvc, channel->receiveData, length);
-					break;
 
 				case CLOSE_REQUEST_PDU:
 					wts_read_drdynvc_close_response(dvc);
@@ -1209,7 +1210,9 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, 
 	if (channel->channelType == RDP_PEER_CHANNEL_TYPE_SVC)
 	{
 		length = Length;
-		buffer = (BYTE*) malloc(length);
+		buffer = (BYTE *)malloc(length);
+		if (!buffer)
+			return FALSE;
 		CopyMemory(buffer, Buffer, length);
 
 		ret = wts_queue_send_item(channel, buffer, length);
