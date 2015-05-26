@@ -349,7 +349,8 @@ static BOOL winpr_StartThread(WINPR_THREAD *thread)
 		WLog_ERR(TAG, "failed to launch the thread");
 		goto error;
 	}
-        
+	assert(ListDictionary_Contains(thread_list, &thread->thread));
+
 	pthread_attr_destroy(&attr);
 	dump_thread(thread);
 	return TRUE;
