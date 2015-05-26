@@ -306,6 +306,9 @@ static void* thread_launcher(void* arg)
                     WLog_ERR(TAG, "Thread function argument is %p", fkt);
                     goto exit;
                 }
+
+		SetEvent(thread->hLaunchedEvent);
+
 		rc = fkt(thread->lpParameter);
 	}
 
@@ -340,8 +343,13 @@ static BOOL winpr_StartThread(WINPR_THREAD *thread)
 
 	if (pthread_create(&thread->thread, &attr, thread_launcher, thread))
 		goto error;
-	if (!ListDictionary_Add(thread_list, &thread->thread, thread))  /* also done by thread_launcher() */
+
+	if (WaitForSingleObject(thread->hLaunchedEvent, INFINITE) != WAIT_OBJECT_0)
+	{
+		WLog_ERR(TAG, "failed to launch the thread");
 		goto error;
+	}
+        
 	pthread_attr_destroy(&attr);
 	dump_thread(thread);
 	return TRUE;
@@ -361,6 +369,12 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 
 	if (!thread)
 		return NULL;
+
+	thread->hLaunchedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (!thread->hLaunchedEvent)
+	{
+		goto error_event;
+	}
 
 	thread->dwStackSize = dwStackSize;
 	thread->lpParameter = lpParameter;
@@ -437,6 +451,7 @@ error_mutex:
 	if (thread->pipe_fd[0] >= 0)
 		close(thread->pipe_fd[0]);
 error_pipefd0:
+error_event:
 	free(thread);
 	return NULL;
 }
@@ -449,6 +464,9 @@ void cleanup_handle(void *obj)
 	if (rc)
 		WLog_ERR(TAG, "failed to destroy mutex [%d] %s (%d)",
 				rc, strerror(errno), errno);
+
+	if (thread->hLaunchedEvent)
+		CloseHandle(thread->hLaunchedEvent);
 
 	if (thread->pipe_fd[0])
 		close(thread->pipe_fd[0]);

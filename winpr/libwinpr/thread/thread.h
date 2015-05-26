@@ -35,6 +35,7 @@ struct winpr_thread
 	WINPR_HANDLE_DEF();
 
 	BOOL started;
+	HANDLE hLaunchedEvent;
 	int pipe_fd[2];
 	BOOL mainProcess;
 	BOOL detached;
