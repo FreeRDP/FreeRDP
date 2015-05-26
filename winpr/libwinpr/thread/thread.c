@@ -299,11 +299,9 @@ static void* thread_launcher(void* arg)
                  * actually done.*/
                 thread->thread = pthread_self(); 
 
-                /* also done by winpr_StartThread(). This ensures thread_list
-                 * was updated before the thread could exit */
                 if (!ListDictionary_Add(thread_list, &thread->thread, thread))
                 {
-                    WLog_ERR(TAG, "Thread function argument is %p", fkt);
+                    WLog_ERR(TAG, "failed to add the thread to the thread list");
                     goto exit;
                 }
 
