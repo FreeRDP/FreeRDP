@@ -1,7 +1,8 @@
-
 #include <winpr/crt.h>
 #include <winpr/sysinfo.h>
 #include <winpr/windows.h>
+
+#include <winpr/intrin.h>
 
 static BOOL g_LZCNT = FALSE;
 

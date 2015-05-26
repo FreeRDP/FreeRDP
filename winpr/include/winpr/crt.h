@@ -95,50 +95,7 @@ static INLINE UINT16 _byteswap_ushort(UINT16 _val) {
 
 #endif
 
-/**
- * __lzcnt16, __lzcnt, __lzcnt64:
- * http://msdn.microsoft.com/en-us/library/bb384809/
- */
 
-#if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2))
-
-/**
- * __lzcnt16, __lzcnt, __lzcnt64:
- * http://msdn.microsoft.com/en-us/library/bb384809/
- *
- * Beware: the result of __builtin_clz(0) is undefined
- */
-
-static INLINE UINT32 __lzcnt(UINT32 _val32) {
-	return _val32 ? ((UINT32) __builtin_clz(_val32)) : 32;
-}
-
-static INLINE UINT16 __lzcnt16(UINT16 _val16) {
-	return _val16 ? ((UINT16) (__builtin_clz((UINT32) _val16) - 16)) : 16;
-}
-
-#else
-
-static INLINE UINT32 __lzcnt(UINT32 x) {
-	unsigned y;
-	int n = 32;
-	y = x >> 16;  if (y != 0) { n = n - 16; x = y; }
-	y = x >>  8;  if (y != 0) { n = n -  8; x = y; }
-	y = x >>  4;  if (y != 0) { n = n -  4; x = y; }
-	y = x >>  2;  if (y != 0) { n = n -  2; x = y; }
-	y = x >>  1;  if (y != 0) return n - 2;
-	return n - x;
-}
-
-static INLINE UINT16 __lzcnt16(UINT16 x) {
-	return ((UINT16) __lzcnt((UINT32) x));
-}
-
-#endif
-
-#endif
-
-#ifndef _WIN32
 
 #define CopyMemory(Destination, Source, Length)		memcpy((Destination), (Source), (Length))
 #define MoveMemory(Destination, Source, Length)		memmove((Destination), (Source), (Length))
