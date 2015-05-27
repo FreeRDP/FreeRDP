@@ -1,14 +1,10 @@
 
-set(MODULE_NAME "TestCrt")
-set(MODULE_PREFIX "TEST_CRT")
+set(MODULE_NAME "TestWinPR")
+set(MODULE_PREFIX "TEST_WINPR")
 
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
-set(${MODULE_PREFIX}_TESTS
-	TestTypes.c
-	TestAlignment.c
-	TestString.c
-	TestUnicodeConversion.c)
+set(${MODULE_PREFIX}_TESTS TestIntrinsics.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
@@ -26,4 +22,3 @@ foreach(test ${${MODULE_PREFIX}_TESTS})
 endforeach()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Test")
-
