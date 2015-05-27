@@ -294,18 +294,19 @@ static void* thread_launcher(void* arg)
 			goto exit;
 		}
 
-                /* pthread_create(3) doesn't guaranty the thread ID to be set
-                 * before to invoke the start_routine() even if this seems to be
-                 * actually done.*/
-                thread->thread = pthread_self(); 
+		pthread_mutex_lock(&thread->threadIsReadyMutex);
+		if (!ListDictionary_Contains(thread_list, &thread->thread))
+		{
+			if (pthread_cond_wait(&thread->threadIsReady, &thread->threadIsReadyMutex) != 0)
+			{
+				WLog_ERR(TAG, "The thread could not be made ready");
+				pthread_mutex_unlock(&thread->threadIsReadyMutex);
+				goto exit;
+			}
+		}
+		pthread_mutex_unlock(&thread->threadIsReadyMutex);
 
-                if (!ListDictionary_Add(thread_list, &thread->thread, thread))
-                {
-                    WLog_ERR(TAG, "failed to add the thread to the thread list");
-                    goto exit;
-                }
-
-		SetEvent(thread->hLaunchedEvent);
+		assert(ListDictionary_Contains(thread_list, &thread->thread));
 
 		rc = fkt(thread->lpParameter);
 	}
@@ -342,12 +343,20 @@ static BOOL winpr_StartThread(WINPR_THREAD *thread)
 	if (pthread_create(&thread->thread, &attr, thread_launcher, thread))
 		goto error;
 
-	if (WaitForSingleObject(thread->hLaunchedEvent, INFINITE) != WAIT_OBJECT_0)
+
+	pthread_mutex_lock(&thread->threadIsReadyMutex);
+	if (!ListDictionary_Add(thread_list, &thread->thread, thread))
 	{
-		WLog_ERR(TAG, "failed to launch the thread");
+		WLog_ERR(TAG, "failed to add the thread to the thread list");
 		goto error;
 	}
-	assert(ListDictionary_Contains(thread_list, &thread->thread));
+	if (pthread_cond_signal(&thread->threadIsReady) != 0)
+	{
+		WLog_ERR(TAG, "failed to signal the thread was ready");
+		pthread_mutex_unlock(&thread->threadIsReadyMutex);
+		goto error;
+	}
+	pthread_mutex_unlock(&thread->threadIsReadyMutex);
 
 	pthread_attr_destroy(&attr);
 	dump_thread(thread);
@@ -368,12 +377,6 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 
 	if (!thread)
 		return NULL;
-
-	thread->hLaunchedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	if (!thread->hLaunchedEvent)
-	{
-		goto error_event;
-	}
 
 	thread->dwStackSize = dwStackSize;
 	thread->lpParameter = lpParameter;
@@ -415,6 +418,18 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 		goto error_mutex;
 	}
 
+	if (pthread_mutex_init(&thread->threadIsReadyMutex, NULL) != 0)
+	{
+		WLog_ERR(TAG, "failed to initialize a mutex for a condition variable");
+		goto error_thread_ready_mutex;
+	}
+
+	if (pthread_cond_init(&thread->threadIsReady, NULL) != 0)
+	{
+		WLog_ERR(TAG, "failed to initialize a condition variable");
+		goto error_thread_ready;
+	}
+
 	WINPR_HANDLE_SET_TYPE(thread, HANDLE_TYPE_THREAD);
 	handle = (HANDLE) thread;
 
@@ -443,6 +458,10 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 	return handle;
 
 error_thread_list:
+	pthread_cond_destroy(&thread->threadIsReady);
+error_thread_ready:
+	pthread_mutex_destroy(&thread->threadIsReadyMutex);
+error_thread_ready_mutex:
 	pthread_mutex_destroy(&thread->mutex);
 error_mutex:
 	if (thread->pipe_fd[1] >= 0)
@@ -450,22 +469,30 @@ error_mutex:
 	if (thread->pipe_fd[0] >= 0)
 		close(thread->pipe_fd[0]);
 error_pipefd0:
-error_event:
 	free(thread);
 	return NULL;
 }
 
 void cleanup_handle(void *obj)
 {
+	int rc;
 	WINPR_THREAD* thread = (WINPR_THREAD*) obj;
-	int rc = pthread_mutex_destroy(&thread->mutex);
+	
 
+	rc = pthread_cond_destroy(&thread->threadIsReady);
+	if (rc)
+		WLog_ERR(TAG, "failed to destroy a condition variable [%d] %s (%d)",
+				rc, strerror(errno), errno);
+
+	rc = pthread_mutex_destroy(&thread->threadIsReadyMutex);
+	if (rc)
+		WLog_ERR(TAG, "failed to destroy a condition variable mutex [%d] %s (%d)",
+				rc, strerror(errno), errno);
+
+	rc = pthread_mutex_destroy(&thread->mutex);
 	if (rc)
 		WLog_ERR(TAG, "failed to destroy mutex [%d] %s (%d)",
 				rc, strerror(errno), errno);
-
-	if (thread->hLaunchedEvent)
-		CloseHandle(thread->hLaunchedEvent);
 
 	if (thread->pipe_fd[0])
 		close(thread->pipe_fd[0]);

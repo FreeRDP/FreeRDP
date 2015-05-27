@@ -35,7 +35,6 @@ struct winpr_thread
 	WINPR_HANDLE_DEF();
 
 	BOOL started;
-	HANDLE hLaunchedEvent;
 	int pipe_fd[2];
 	BOOL mainProcess;
 	BOOL detached;
@@ -46,6 +45,8 @@ struct winpr_thread
 	SIZE_T dwStackSize;
 	LPVOID lpParameter;
 	pthread_mutex_t mutex;
+	pthread_mutex_t threadIsReadyMutex;
+	pthread_cond_t threadIsReady;
 	LPTHREAD_START_ROUTINE lpStartAddress;
 	LPSECURITY_ATTRIBUTES lpThreadAttributes;
 #if defined(WITH_DEBUG_THREADS)
