@@ -53,7 +53,7 @@ int test_lzcnt()
 		return -1;
 	}
 
-	return 1;
+	return 0;
 }
 
 int test_lzcnt16()
@@ -73,7 +73,7 @@ int test_lzcnt16()
 		return -1;
 	}
 
-	return 1;
+	return 0;
 }
 
 int TestIntrinsics(int argc, char* argv[])
@@ -82,8 +82,6 @@ int TestIntrinsics(int argc, char* argv[])
 
 	printf("LZCNT available: %d\n", g_LZCNT);
 
-	test_lzcnt();
 	//test_lzcnt16();
-
-	return 0;
+	return test_lzcnt();
 }

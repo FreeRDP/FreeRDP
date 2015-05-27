@@ -1,5 +1,5 @@
 
-set(MODULE_NAME "TestWinpr")
+set(MODULE_NAME "TestWinPR")
 set(MODULE_PREFIX "TEST_WINPR")
 
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
