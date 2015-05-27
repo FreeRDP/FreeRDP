@@ -495,7 +495,7 @@ BOOL rdg_process_handshake_response(rdpRdg* rdg, wStream* s)
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) < 5)
+	if (Stream_GetRemainingLength(s) < 12)
 		return FALSE;
 
 	Stream_Seek(s, 8);
@@ -547,7 +547,7 @@ BOOL rdg_process_tunnel_authorization_response(rdpRdg* rdg, wStream* s)
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) < 5)
+	if (Stream_GetRemainingLength(s) < 12)
 		return FALSE;
 
 	Stream_Seek(s, 8);
@@ -573,7 +573,7 @@ BOOL rdg_process_channel_response(rdpRdg* rdg, wStream* s)
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) < 5)
+	if (Stream_GetRemainingLength(s) < 12)
 		return FALSE;
 
 	Stream_Seek(s, 8);
@@ -595,10 +595,11 @@ BOOL rdg_process_packet(rdpRdg* rdg, wStream* s)
 	BOOL status = TRUE;
 	UINT16 type;
 
+	Stream_SetPosition(s, 0);
+
 	if (Stream_GetRemainingLength(s) < 2)
 		return FALSE;
 
-	Stream_SetPosition(s, 0);
 	Stream_Peek_UINT16(s, type);
 
 	switch (type)
