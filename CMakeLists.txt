@@ -734,7 +734,6 @@ if(BSD)
 	endif()
 endif()
 
-
 if(WITH_CHANNELS)
 	add_subdirectory(channels)
 endif()

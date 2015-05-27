@@ -425,7 +425,11 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 		if (fastpath->fragmentation != -1)
 		{
 			WLog_ERR(TAG, "Unexpected FASTPATH_FRAGMENT_SINGLE");
+<<<<<<< HEAD
 			goto out_fail;
+=======
+			return -1;
+>>>>>>> d325a3cc4808284cd5db08b547cc40ce1472c117
 		}
 
 		totalSize = size;
@@ -433,8 +437,13 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 		if (status < 0)
 		{
+<<<<<<< HEAD
 			WLog_DBG(TAG, "fastpath_recv_update_data: fastpath_recv_update() - %i", status);
 			goto out_fail;
+=======
+			WLog_DBG(TAG, "fastpath_recv_update() - %i", status);
+			return -1;
+>>>>>>> d325a3cc4808284cd5db08b547cc40ce1472c117
 		}
 	}
 	else
@@ -443,8 +452,13 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 		{
 			if (fastpath->fragmentation != -1)
 			{
+<<<<<<< HEAD
 				WLog_ERR(TAG, "fastpath_recv_update_data: Unexpected FASTPATH_FRAGMENT_FIRST");
 				goto out_fail;
+=======
+				WLog_ERR(TAG, "Unexpected FASTPATH_FRAGMENT_FIRST");
+				return -1;
+>>>>>>> d325a3cc4808284cd5db08b547cc40ce1472c117
 			}
 
 			fastpath->fragmentation = FASTPATH_FRAGMENT_FIRST;
@@ -470,8 +484,13 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 			if ((fastpath->fragmentation != FASTPATH_FRAGMENT_FIRST) &&
 					(fastpath->fragmentation != FASTPATH_FRAGMENT_NEXT))
 			{
+<<<<<<< HEAD
 				WLog_ERR(TAG, "fastpath_recv_update_data: Unexpected FASTPATH_FRAGMENT_NEXT");
 				goto out_fail;
+=======
+				WLog_ERR(TAG, "Unexpected FASTPATH_FRAGMENT_NEXT");
+				return -1;
+>>>>>>> d325a3cc4808284cd5db08b547cc40ce1472c117
 			}
 
 			fastpath->fragmentation = FASTPATH_FRAGMENT_NEXT;
@@ -498,8 +517,13 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 			if ((fastpath->fragmentation != FASTPATH_FRAGMENT_FIRST) &&
 					(fastpath->fragmentation != FASTPATH_FRAGMENT_NEXT))
 			{
+<<<<<<< HEAD
 				WLog_ERR(TAG, "fastpath_recv_update_data: Unexpected FASTPATH_FRAGMENT_LAST");
 				goto out_fail;
+=======
+				WLog_ERR(TAG, "Unexpected FASTPATH_FRAGMENT_LAST");
+				return -1;
+>>>>>>> d325a3cc4808284cd5db08b547cc40ce1472c117
 			}
 
 			fastpath->fragmentation = -1;
@@ -530,8 +554,13 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 			if (status < 0)
 			{
+<<<<<<< HEAD
 				WLog_DBG(TAG, "fastpath_recv_update_data: fastpath_recv_update() - %i", status);
 				goto out_fail;
+=======
+				WLog_DBG(TAG, "fastpath_recv_update() - %i", status);
+				return -1;
+>>>>>>> d325a3cc4808284cd5db08b547cc40ce1472c117
 			}
 		}
 	}
