@@ -222,7 +222,7 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 
 		if (!settings->RdpServerRsaKey)
 		{
-			WLog_ERR(TAG, "inavlid RDP key file %s", settings->RdpKeyFile);
+			WLog_ERR(TAG, "invalid RDP key file %s", settings->RdpKeyFile);
 			return FALSE;
 		}
 	}
