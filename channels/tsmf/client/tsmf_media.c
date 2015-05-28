@@ -288,8 +288,7 @@ TSMF_PRESENTATION* tsmf_presentation_new(const BYTE* guid, IWTSVirtualChannelCal
 	CopyMemory(presentation->presentation_id, guid, GUID_SIZE);
 	presentation->channel_callback = pChannelCallback;
 	presentation->volume = 5000; /* 50% */
-	presentation->stream_list = ArrayList_New(TRUE);
-	if (presentation->stream_list)
+	if (!(presentation->stream_list = ArrayList_New(TRUE)))
 		goto error_stream_list;
 
 	ArrayList_Object(presentation->stream_list)->fnObjectFree = (OBJECT_FREE_FN) _tsmf_stream_free;
@@ -828,6 +827,9 @@ void tsmf_presentation_set_geometry_info(TSMF_PRESENTATION* presentation,
 	UINT32 count;
 	TSMF_STREAM* stream;
 	void *tmp_rects;
+
+	if (num_rects < 1 || !rects)
+		return;
 
 	/* The server may send messages with invalid width / height.
 	 * Ignore those messages. */
