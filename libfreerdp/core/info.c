@@ -3,6 +3,8 @@
  * RDP Client Info
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -640,6 +642,13 @@ BOOL rdp_send_client_info(rdpRdp* rdp)
 	rdp->sec_flags |= SEC_INFO_PKT;
 
 	s = Stream_New(NULL, 2048);
+
+	if (!s)
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
+		return FALSE;
+	}
+
 	rdp_init_stream(rdp, s);
 
 	rdp_write_info_packet(rdp, s);

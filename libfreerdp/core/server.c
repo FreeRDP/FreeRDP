@@ -3,7 +3,8 @@
  * Server Channels
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
- * Copyright 2015 Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -446,7 +447,8 @@ BOOL WTSVirtualChannelManagerCheckFileDescriptor(HANDLE hServer)
 
 			vcm->drdynvc_channel = channel;
 			dynvc_caps = 0x00010050; /* DYNVC_CAPS_VERSION1 (4 bytes) */
-			WTSVirtualChannelWrite(channel, (PCHAR) &dynvc_caps, sizeof(dynvc_caps), &written);
+			if (!WTSVirtualChannelWrite(channel, (PCHAR) &dynvc_caps, sizeof(dynvc_caps), &written))
+				return FALSE;
 		}
 	}
 
@@ -960,7 +962,11 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPS
 		channel->channelType = RDP_PEER_CHANNEL_TYPE_SVC;
 		channel->receiveData = Stream_New(NULL, client->settings->VirtualChannelChunkSize);
 		if (!channel->receiveData)
+		{
+			WLog_ERR(TAG, "Stream_New failed!");
 			goto error_receiveData;
+		}
+		channel->queue = MessageQueue_New(NULL);
 		channel->queue = MessageQueue_New(NULL);
 		if (!channel->queue)
 			goto error_queue;
@@ -1039,8 +1045,13 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualNam
 	channel->client = client;
 	channel->channelType = RDP_PEER_CHANNEL_TYPE_DVC;
 	channel->receiveData = Stream_New(NULL, client->settings->VirtualChannelChunkSize);
+
 	if (!channel->receiveData)
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
 		goto error_receiveData;
+	}
+
 	channel->queue = MessageQueue_New(NULL);
 	if (!channel->queue)
 		goto error_queue;
@@ -1080,6 +1091,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelClose(HANDLE hChannelHandle)
 	rdpMcs* mcs;
 	WTSVirtualChannelManager* vcm;
 	rdpPeerChannel* channel = (rdpPeerChannel*) hChannelHandle;
+	BOOL ret = TRUE;
 
 	if (channel)
 	{
@@ -1100,9 +1112,18 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelClose(HANDLE hChannelHandle)
 				ULONG written;
 
 				s = Stream_New(NULL, 8);
-				wts_write_drdynvc_header(s, CLOSE_REQUEST_PDU, channel->channelId);
-				WTSVirtualChannelWrite(vcm->drdynvc_channel, (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), &written);
-				Stream_Free(s, TRUE);
+				if (!s)
+				{
+					WLog_ERR(TAG, "Stream_New failed!");
+					ret = FALSE;
+				}
+				else
+				{
+					wts_write_drdynvc_header(s, CLOSE_REQUEST_PDU, channel->channelId);
+					ret = WTSVirtualChannelWrite(vcm->drdynvc_channel, (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), &written);
+					Stream_Free(s, TRUE);
+				}
+
 			}
 		}
 
@@ -1118,7 +1139,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelClose(HANDLE hChannelHandle)
 		free(channel);
 	}
 
-	return TRUE;
+	return ret;
 }
 
 BOOL WINAPI FreeRDP_WTSVirtualChannelRead(HANDLE hChannelHandle, ULONG TimeOut, PCHAR Buffer, ULONG BufferSize, PULONG pBytesRead)
@@ -1194,6 +1215,11 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, 
 		while (Length > 0)
 		{
 			s = Stream_New(NULL, channel->client->settings->VirtualChannelChunkSize);
+			if (!s)
+			{
+				WLog_ERR(TAG, "Stream_New failed!");
+				return FALSE;
+			}
 			buffer = Stream_Buffer(s);
 
 			Stream_Seek_UINT8(s);
