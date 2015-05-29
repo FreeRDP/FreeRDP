@@ -272,8 +272,8 @@ static void parallel_free(DEVICE* device)
 {
 	PARALLEL_DEVICE* parallel = (PARALLEL_DEVICE*) device;
 
-	MessageQueue_PostQuit(parallel->queue, 0);
-	WaitForSingleObject(parallel->thread, INFINITE);
+	if (MessageQueue_PostQuit(parallel->queue, 0))
+		WaitForSingleObject(parallel->thread, INFINITE);
 	CloseHandle(parallel->thread);
 
 	Stream_Free(parallel->device.data, TRUE);

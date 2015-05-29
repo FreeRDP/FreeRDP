@@ -745,8 +745,8 @@ static void remdesk_virtual_channel_event_disconnected(remdeskPlugin* remdesk)
 {
 	UINT rc;
 
-	MessageQueue_PostQuit(remdesk->queue, 0);
-	WaitForSingleObject(remdesk->thread, INFINITE);
+	if (MessageQueue_PostQuit(remdesk->queue, 0))
+		WaitForSingleObject(remdesk->thread, INFINITE);
 
 	MessageQueue_Free(remdesk->queue);
 	CloseHandle(remdesk->thread);

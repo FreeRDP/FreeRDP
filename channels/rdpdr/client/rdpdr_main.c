@@ -1013,8 +1013,8 @@ static void rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
 {
 	UINT rc;
 
-	MessageQueue_PostQuit(rdpdr->queue, 0);
-	WaitForSingleObject(rdpdr->thread, INFINITE);
+	if (MessageQueue_PostQuit(rdpdr->queue, 0))
+		WaitForSingleObject(rdpdr->thread, INFINITE);
 
 	MessageQueue_Free(rdpdr->queue);
 	CloseHandle(rdpdr->thread);

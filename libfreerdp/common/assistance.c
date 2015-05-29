@@ -161,7 +161,12 @@ int freerdp_assistance_parse_address_list(rdpAssistanceFile* file, char* list)
 	file->MachinePorts = (UINT32*) calloc(count, sizeof(UINT32));
 
 	if (!file->MachineAddresses || !file->MachinePorts)
+	{
+		free(file->MachineAddresses);
+		free(file->MachinePorts);
+		free(tokens);
 		return -1;
+	}
 
 	for (i = 0; i < count; i++)
 	{

@@ -42,12 +42,12 @@ int TestMessageQueue(int argc, char* argv[])
 		return 1;
 	}
 
-	MessageQueue_Post(queue, NULL, 123, NULL, NULL);
-	MessageQueue_Post(queue, NULL, 456, NULL, NULL);
-	MessageQueue_Post(queue, NULL, 789, NULL, NULL);
-	MessageQueue_PostQuit(queue, 0);
-
-	WaitForSingleObject(thread, INFINITE);
+	if (!MessageQueue_Post(queue, NULL, 123, NULL, NULL) ||
+			!MessageQueue_Post(queue, NULL, 456, NULL, NULL) ||
+			!MessageQueue_Post(queue, NULL, 789, NULL, NULL) ||
+			!MessageQueue_PostQuit(queue, 0) ||
+			WaitForSingleObject(thread, INFINITE) != WAIT_OBJECT_0)
+		return -1;
 
 	MessageQueue_Free(queue);
 	CloseHandle(thread);

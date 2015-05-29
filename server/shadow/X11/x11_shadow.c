@@ -362,9 +362,7 @@ int x11_shadow_pointer_position_update(x11ShadowSubsystem* subsystem)
 	msg->xPos = subsystem->pointerX;
 	msg->yPos = subsystem->pointerY;
 
-	MessageQueue_Post(MsgPipe->Out, NULL, msgId, (void*) msg, NULL);
-
-	return 1;
+	return MessageQueue_Post(MsgPipe->Out, NULL, msgId, (void*) msg, NULL) ? 1 : -1;
 }
 
 int x11_shadow_pointer_alpha_update(x11ShadowSubsystem* subsystem)
@@ -395,9 +393,7 @@ int x11_shadow_pointer_alpha_update(x11ShadowSubsystem* subsystem)
 	CopyMemory(msg->pixels, subsystem->cursorPixels, msg->scanline * msg->height);
 	msg->premultiplied = TRUE;
 
-	MessageQueue_Post(MsgPipe->Out, NULL, msgId, (void*) msg, NULL);
-
-	return 1;
+	return MessageQueue_Post(MsgPipe->Out, NULL, msgId, (void*) msg, NULL) ? 1 : -1;
 }
 
 int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
@@ -1295,8 +1291,8 @@ int x11_shadow_subsystem_stop(x11ShadowSubsystem* subsystem)
 
 	if (subsystem->thread)
 	{
-		MessageQueue_PostQuit(subsystem->MsgPipe->In, 0);
-		WaitForSingleObject(subsystem->thread, INFINITE);
+		if (MessageQueue_PostQuit(subsystem->MsgPipe->In, 0))
+			WaitForSingleObject(subsystem->thread, INFINITE);
 		CloseHandle(subsystem->thread);
 		subsystem->thread = NULL;
 	}
