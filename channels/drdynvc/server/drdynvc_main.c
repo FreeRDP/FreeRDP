@@ -3,6 +3,8 @@
  * Dynamic Virtual Channel Extension
  *
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +26,18 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
+#include <freerdp/channels/log.h>
+#include <winpr/win32error.h>
+
 
 #include "drdynvc_main.h"
 
+#define TAG CHANNELS_TAG("drdynvc.server")
+
+
 static void* drdynvc_server_thread(void* arg)
 {
+#if 0
 	wStream* s;
 	DWORD status;
 	DWORD nCount;
@@ -37,6 +46,7 @@ static void* drdynvc_server_thread(void* arg)
 	HANDLE ChannelEvent;
 	DWORD BytesReturned;
 	DrdynvcServerContext* context;
+	WIN32ERROR error = ERROR_INTERNAL_ERROR;
 
 	context = (DrdynvcServerContext*) arg;
 
@@ -45,6 +55,12 @@ static void* drdynvc_server_thread(void* arg)
 	ChannelEvent = NULL;
 
 	s = Stream_New(NULL, 4096);
+	if (!s)
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
+		ExitThread((DWORD) CHANNEL_RC_NO_MEMORY);
+		return NULL;
+	}
 
 	if (WTSVirtualChannelQuery(context->priv->ChannelHandle, WTSVirtualEventHandle, &buffer, &BytesReturned) == TRUE)
 	{
@@ -64,49 +80,76 @@ static void* drdynvc_server_thread(void* arg)
 
 		if (WaitForSingleObject(context->priv->StopEvent, 0) == WAIT_OBJECT_0)
 		{
+			error = CHANNEL_RC_OK;
 			break;
 		}
 
-		WTSVirtualChannelRead(context->priv->ChannelHandle, 0, NULL, 0, &BytesReturned);
+		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0, NULL, 0, &BytesReturned))
+		{
+			WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
+			break;
+		}
 		if (BytesReturned < 1)
 			continue;
 		if (!Stream_EnsureRemainingCapacity(s, BytesReturned))
+		{
+			WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
 			break;
+		}
+
 		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0,
 			(PCHAR) Stream_Buffer(s), Stream_Capacity(s), &BytesReturned))
 		{
+			WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
 			break;
 		}
 	}
 
 	Stream_Free(s, TRUE);
-
+	ExitThread((DWORD) error);
+#endif
+	// WTF ... this code only reads the stream till the stream has no place any more and then exits
+	ExitThread(0);
 	return NULL;
 }
 
-static int drdynvc_server_start(DrdynvcServerContext* context)
+static WIN32ERROR drdynvc_server_start(DrdynvcServerContext* context)
 {
 	context->priv->ChannelHandle = WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, "drdynvc");
 
 	if (!context->priv->ChannelHandle)
-		return -1;
+	{
+		WLog_ERR(TAG, "WTSVirtualChannelOpen failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
-	context->priv->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (!(context->priv->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	{
+		WLog_ERR(TAG, "CreateEvent failed!");
+		return ERROR_INTERNAL_ERROR;
+	}
+	// TODO: add mechanism that threads can signal failure
 
-	context->priv->Thread = CreateThread(NULL, 0,
-			(LPTHREAD_START_ROUTINE) drdynvc_server_thread, (void*) context, 0, NULL);
+	if (!(context->priv->Thread = CreateThread(NULL, 0,
+			(LPTHREAD_START_ROUTINE) drdynvc_server_thread, (void*) context, 0, NULL)))
+	{
+		WLog_ERR(TAG, "CreateThread failed!");
+		CloseHandle(context->priv->StopEvent);
+		context->priv->StopEvent = NULL;
+		return ERROR_INTERNAL_ERROR;
+	}
 
-	return 0;
+	return CHANNEL_RC_OK;
 }
 
-static int drdynvc_server_stop(DrdynvcServerContext* context)
+static WIN32ERROR drdynvc_server_stop(DrdynvcServerContext* context)
 {
 	SetEvent(context->priv->StopEvent);
 
 	WaitForSingleObject(context->priv->Thread, INFINITE);
 	CloseHandle(context->priv->Thread);
 
-	return 0;
+	return CHANNEL_RC_OK;
 }
 
 DrdynvcServerContext* drdynvc_server_context_new(HANDLE vcm)
@@ -123,6 +166,16 @@ DrdynvcServerContext* drdynvc_server_context_new(HANDLE vcm)
 		context->Stop = drdynvc_server_stop;
 
 		context->priv = (DrdynvcServerPrivate*) calloc(1, sizeof(DrdynvcServerPrivate));
+		if (!context->priv)
+		{
+			WLog_ERR(TAG, "calloc failed!");
+			free(context);
+			return NULL;
+		}
+	}
+	else
+	{
+		WLog_ERR(TAG, "calloc failed!");
 	}
 
 	return context;

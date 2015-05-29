@@ -3,6 +3,8 @@
  * Dynamic Virtual Channel
  *
  * Copyright 2010-2011 Vic Lee
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +26,7 @@
 #include <winpr/synch.h>
 #include <freerdp/settings.h>
 #include <winpr/collections.h>
+#include <winpr/win32error.h>
 
 #include <freerdp/api.h>
 #include <freerdp/svc.h>
@@ -129,11 +132,11 @@ struct drdynvc_plugin
 	int PriorityCharge1;
 	int PriorityCharge2;
 	int PriorityCharge3;
-	int channel_error;
+	WIN32ERROR channel_error;
 
 	IWTSVirtualChannelManager* channel_mgr;
 };
 
-int drdynvc_write_data(drdynvcPlugin* plugin, UINT32 ChannelId, BYTE* data, UINT32 data_size);
+WIN32ERROR drdynvc_write_data(drdynvcPlugin* plugin, UINT32 ChannelId, BYTE* data, UINT32 data_size);
 
 #endif
