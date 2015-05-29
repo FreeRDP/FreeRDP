@@ -330,7 +330,7 @@ static void rdpsnd_oss_wave_decode(rdpsndDevicePlugin *device, RDPSND_WAVE *wave
 
 static void rdpsnd_oss_wave_play(rdpsndDevicePlugin *device, RDPSND_WAVE *wave) {
 	BYTE *data;
-	int offset, size, status;
+	int offset, size, status, latency;
 	rdpsndOssPlugin *oss = (rdpsndOssPlugin*)device;
 
 	if (device == NULL || wave == NULL)
@@ -339,20 +339,21 @@ static void rdpsnd_oss_wave_play(rdpsndDevicePlugin *device, RDPSND_WAVE *wave) 
 	offset = 0;
 	data = wave->data;
 	size = wave->length;
+	latency = oss->latency;
 
 	while (offset < size) {
 		status = write(oss->pcm_handle, &data[offset], (size - offset));
 		if (status < 0) {
 			OSS_LOG_ERR("write fail", errno);
 			rdpsnd_oss_close(device);
-			rdpsnd_oss_open(device, NULL, 0);
+			rdpsnd_oss_open(device, NULL, latency);
 			break;
 		}
 		offset += status;
 	}
 	/* From rdpsnd_main.c */
-	wave->wTimeStampB = wave->wTimeStampA + wave->wAudioLength + 65;
-	wave->wLocalTimeB = wave->wLocalTimeA + wave->wAudioLength + 65;
+	wave->wTimeStampB = wave->wTimeStampA + wave->wAudioLength + 65 + latency;
+	wave->wLocalTimeB = wave->wLocalTimeA + wave->wAudioLength + 65 + latency;
 
 	free(data);
 }
