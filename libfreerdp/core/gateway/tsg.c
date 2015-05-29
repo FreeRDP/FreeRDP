@@ -4,6 +4,8 @@
  *
  * Copyright 2012 Fujitsu Technology Solutions GmbH
  * Copyright 2012 Dmitrij Jasnov <dmitrij.jasnov@ts.fujitsu.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,6 +124,13 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count,
 		return -1;
 
 	s = Stream_New(buffer, length);
+
+	if (!s)
+	{
+		free(buffer);
+		WLog_ERR(TAG, "Stream_New failed!");
+		return -1;
+	}
 	/* PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE_NR (20 bytes) */
 	Stream_Write(s, &tsg->ChannelContext.ContextType, 4); /* ContextType (4 bytes) */
 	Stream_Write(s, tsg->ChannelContext.ContextUuid, 16); /* ContextUuid (16 bytes) */

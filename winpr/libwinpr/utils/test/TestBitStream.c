@@ -56,6 +56,8 @@ int TestBitStream(int argc, char* argv[])
 	BYTE buffer[1024];
 	ZeroMemory(buffer, sizeof(buffer));
 	bs = BitStream_New();
+	if (!bs)
+		return 1;
 	BitStream_Attach(bs, buffer, sizeof(buffer));
 	BitStream_Write_Bits(bs, 0xAF, 8); /* 11110101 */
 	BitStream_Write_Bits(bs, 0xF, 4); /* 1111 */
