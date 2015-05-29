@@ -3,6 +3,8 @@
  * Dynamic Virtual Channel Interface
  *
  * Copyright 2010-2011 Vic Lee
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +55,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
+#include <winpr/win32error.h>
 
 typedef struct _IWTSVirtualChannelManager IWTSVirtualChannelManager;
 typedef struct _IWTSListener IWTSListener;
@@ -65,7 +68,7 @@ typedef struct _IWTSVirtualChannelCallback IWTSVirtualChannelCallback;
 struct _IWTSListener
 {
 	/* Retrieves the listener-specific configuration. */
-	int (*GetConfiguration)(IWTSListener *pListener,
+	WIN32ERROR (*GetConfiguration)(IWTSListener *pListener,
 							void **ppPropertyBag);
 
 	void *pInterface;
@@ -74,23 +77,23 @@ struct _IWTSListener
 struct _IWTSVirtualChannel
 {
 	/* Starts a write request on the channel. */
-	int (*Write)(IWTSVirtualChannel *pChannel,
-				 UINT32 cbSize,
-				 BYTE *pBuffer,
-				 void *pReserved);
+	WIN32ERROR (*Write)(IWTSVirtualChannel *pChannel,
+				ULONG cbSize,
+				BYTE *pBuffer,
+				void *pReserved);
 	/* Closes the channel. */
-	int (*Close)(IWTSVirtualChannel *pChannel);
+	WIN32ERROR (*Close)(IWTSVirtualChannel *pChannel);
 };
 
 struct _IWTSVirtualChannelManager
 {
 	/* Returns an instance of a listener object that listens on a specific
 	   endpoint, or creates a static channel. */
-	int (*CreateListener)(IWTSVirtualChannelManager *pChannelMgr,
-						  const char *pszChannelName,
-						  UINT32 ulFlags,
-						  IWTSListenerCallback *pListenerCallback,
-						  IWTSListener **ppListener);
+	WIN32ERROR (*CreateListener)(IWTSVirtualChannelManager *pChannelMgr,
+						const char *pszChannelName,
+						ULONG ulFlags,
+						IWTSListenerCallback *pListenerCallback,
+						IWTSListener **ppListener);
 	/* Find the channel or ID to send data to a specific endpoint. */
 	UINT32(*GetChannelId)(IWTSVirtualChannel *channel);
 	IWTSVirtualChannel *(*FindChannelById)(IWTSVirtualChannelManager *pChannelMgr,
@@ -100,19 +103,19 @@ struct _IWTSVirtualChannelManager
 struct _IWTSPlugin
 {
 	/* Used for the first call that is made from the client to the plug-in. */
-	int (*Initialize)(IWTSPlugin *pPlugin,
+	WIN32ERROR (*Initialize)(IWTSPlugin *pPlugin,
 					  IWTSVirtualChannelManager *pChannelMgr);
 	/* Notifies the plug-in that the Remote Desktop Connection (RDC) client
 	   has successfully connected to the Remote Desktop Session Host (RD
 	   Session Host) server. */
-	int (*Connected)(IWTSPlugin *pPlugin);
+	WIN32ERROR (*Connected)(IWTSPlugin *pPlugin);
 	/* Notifies the plug-in that the Remote Desktop Connection (RDC) client
 	   has disconnected from the RD Session Host server. */
-	int (*Disconnected)(IWTSPlugin *pPlugin,
-						UINT32 dwDisconnectCode);
+	WIN32ERROR (*Disconnected)(IWTSPlugin *pPlugin,
+						DWORD dwDisconnectCode);
 	/* Notifies the plug-in that the Remote Desktop Connection (RDC) client
 	   has terminated. */
-	int (*Terminated)(IWTSPlugin *pPlugin);
+	WIN32ERROR (*Terminated)(IWTSPlugin *pPlugin);
 
 	/* Extended */
 
@@ -123,28 +126,28 @@ struct _IWTSListenerCallback
 {
 	/* Accepts or denies a connection request for an incoming connection to
 	   the associated listener. */
-	int (*OnNewChannelConnection)(IWTSListenerCallback *pListenerCallback,
+	WIN32ERROR (*OnNewChannelConnection)(IWTSListenerCallback *pListenerCallback,
 								  IWTSVirtualChannel *pChannel,
 								  BYTE *Data,
-								  int *pbAccept,
+								  BOOL *pbAccept,
 								  IWTSVirtualChannelCallback **ppCallback);
 };
 
 struct _IWTSVirtualChannelCallback
 {
 	/* Notifies the user about data that is being received. */
-	int (*OnDataReceived) (IWTSVirtualChannelCallback* pChannelCallback, wStream* data);
+	WIN32ERROR (*OnDataReceived) (IWTSVirtualChannelCallback* pChannelCallback, wStream* data);
 	/* Notifies the user that the channel has been opened. */
-	int (*OnOpen) (IWTSVirtualChannelCallback* pChannelCallback);
+	WIN32ERROR (*OnOpen) (IWTSVirtualChannelCallback* pChannelCallback);
 	/* Notifies the user that the channel has been closed. */
-	int (*OnClose) (IWTSVirtualChannelCallback* pChannelCallback);
+	WIN32ERROR (*OnClose) (IWTSVirtualChannelCallback* pChannelCallback);
 };
 
 /* The DVC Plugin entry points */
 typedef struct _IDRDYNVC_ENTRY_POINTS IDRDYNVC_ENTRY_POINTS;
 struct _IDRDYNVC_ENTRY_POINTS
 {
-	int (*RegisterPlugin)(IDRDYNVC_ENTRY_POINTS *pEntryPoints,
+	WIN32ERROR (*RegisterPlugin)(IDRDYNVC_ENTRY_POINTS *pEntryPoints,
 						  const char *name, IWTSPlugin *pPlugin);
 	IWTSPlugin *(*GetPlugin)(IDRDYNVC_ENTRY_POINTS *pEntryPoints,
 							 const char *name);
@@ -152,7 +155,7 @@ struct _IDRDYNVC_ENTRY_POINTS
 	void* (*GetRdpSettings)(IDRDYNVC_ENTRY_POINTS* pEntryPoints);
 };
 
-typedef int (*PDVC_PLUGIN_ENTRY)(IDRDYNVC_ENTRY_POINTS *);
+typedef WIN32ERROR (*PDVC_PLUGIN_ENTRY)(IDRDYNVC_ENTRY_POINTS *);
 
 void *get_callback_by_name(const char *name, void **context);
 void add_callback_by_name(const char *name, void *fkt, void *context);
