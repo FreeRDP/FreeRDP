@@ -66,9 +66,10 @@ struct rdpsnd_oss_plugin {
 	FREERDP_DSP_CONTEXT *dsp_context;
 };
 
-#define OSS_LOG_ERR(_text, _error) \
+#define OSS_LOG_ERR(_text, _error) { \
 	if (_error != 0) \
-		WLog_ERR(TAG, "%s: %i - %s", _text, _error, strerror(_error));
+		WLog_ERR(TAG, "%s: %i - %s", _text, _error, strerror(_error)); \
+}
 
 
 static int rdpsnd_oss_get_format(AUDIO_FORMAT *format) {
@@ -298,8 +299,6 @@ static void rdpsnd_oss_set_volume(rdpsndDevicePlugin *device, UINT32 value) {
 }
 
 static void rdpsnd_oss_wave_decode(rdpsndDevicePlugin *device, RDPSND_WAVE *wave) {
-	int size;
-	BYTE *data;
 	rdpsndOssPlugin *oss = (rdpsndOssPlugin*)device;
 
 	if (device == NULL || wave == NULL)
@@ -309,23 +308,16 @@ static void rdpsnd_oss_wave_decode(rdpsndDevicePlugin *device, RDPSND_WAVE *wave
 	case WAVE_FORMAT_ADPCM:
 		oss->dsp_context->decode_ms_adpcm(oss->dsp_context,
 			wave->data, wave->length, oss->format.nChannels, oss->format.nBlockAlign);
-		size = oss->dsp_context->adpcm_size;
-		data = oss->dsp_context->adpcm_buffer;
+		wave->length = oss->dsp_context->adpcm_size;
+		wave->data = oss->dsp_context->adpcm_buffer;
 		break;
 	case WAVE_FORMAT_DVI_ADPCM:
 		oss->dsp_context->decode_ima_adpcm(oss->dsp_context,
 			wave->data, wave->length, oss->format.nChannels, oss->format.nBlockAlign);
-		size = oss->dsp_context->adpcm_size;
-		data = oss->dsp_context->adpcm_buffer;
+		wave->length = oss->dsp_context->adpcm_size;
+		wave->data = oss->dsp_context->adpcm_buffer;
 		break;
-	default:
-		size = wave->length;
-		data = wave->data;
 	}
-
-	wave->data = (BYTE*)malloc(size);
-	CopyMemory(wave->data, data, size);
-	wave->length = size;
 }
 
 static void rdpsnd_oss_wave_play(rdpsndDevicePlugin *device, RDPSND_WAVE *wave) {
@@ -354,8 +346,6 @@ static void rdpsnd_oss_wave_play(rdpsndDevicePlugin *device, RDPSND_WAVE *wave) 
 	/* From rdpsnd_main.c */
 	wave->wTimeStampB = wave->wTimeStampA + wave->wAudioLength + 65 + latency;
 	wave->wLocalTimeB = wave->wLocalTimeA + wave->wAudioLength + 65 + latency;
-
-	free(data);
 }
 
 
