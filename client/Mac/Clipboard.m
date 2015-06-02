@@ -2,6 +2,8 @@
  * FreeRDP: A Remote Desktop Protocol Implementation
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,7 +121,7 @@ int mac_cliprdr_send_client_capabilities(CliprdrClientContext* cliprdr)
 	return 1;
 }
 
-int mac_cliprdr_monitor_ready(CliprdrClientContext* cliprdr, CLIPRDR_MONITOR_READY* monitorReady)
+WIN32ERROR mac_cliprdr_monitor_ready(CliprdrClientContext* cliprdr, CLIPRDR_MONITOR_READY* monitorReady)
 {
 	mfContext* mfc = (mfContext*) cliprdr->custom;
 	
@@ -127,10 +129,10 @@ int mac_cliprdr_monitor_ready(CliprdrClientContext* cliprdr, CLIPRDR_MONITOR_REA
 	mac_cliprdr_send_client_capabilities(cliprdr);
 	mac_cliprdr_send_client_format_list(cliprdr);
 	
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-int mac_cliprdr_server_capabilities(CliprdrClientContext* cliprdr, CLIPRDR_CAPABILITIES* capabilities)
+WIN32ERROR mac_cliprdr_server_capabilities(CliprdrClientContext* cliprdr, CLIPRDR_CAPABILITIES* capabilities)
 {
 	UINT32 index;
 	CLIPRDR_CAPABILITY_SET* capabilitySet;
@@ -151,10 +153,10 @@ int mac_cliprdr_server_capabilities(CliprdrClientContext* cliprdr, CLIPRDR_CAPAB
 		}
 	}
 	
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-int mac_cliprdr_server_format_list(CliprdrClientContext* cliprdr, CLIPRDR_FORMAT_LIST* formatList)
+WIN32ERROR mac_cliprdr_server_format_list(CliprdrClientContext* cliprdr, CLIPRDR_FORMAT_LIST* formatList)
 {
 	UINT32 index;
 	CLIPRDR_FORMAT* format;
@@ -173,13 +175,13 @@ int mac_cliprdr_server_format_list(CliprdrClientContext* cliprdr, CLIPRDR_FORMAT
 	}
 	
 	if (formatList->numFormats < 1)
-		return 1;
+		return CHANNEL_RC_OK;
 	
 	mfc->numServerFormats = formatList->numFormats;
 	mfc->serverFormats = (CLIPRDR_FORMAT*) calloc(mfc->numServerFormats, sizeof(CLIPRDR_FORMAT));
 	
 	if (!mfc->serverFormats)
-		return -1;
+		return CHANNEL_RC_NO_MEMORY;
 	
 	for (index = 0; index < mfc->numServerFormats; index++)
 	{
@@ -213,25 +215,25 @@ int mac_cliprdr_server_format_list(CliprdrClientContext* cliprdr, CLIPRDR_FORMAT
 		}
 	}
 	
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-int mac_cliprdr_server_format_list_response(CliprdrClientContext* cliprdr, CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
+WIN32ERROR mac_cliprdr_server_format_list_response(CliprdrClientContext* cliprdr, CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
 {
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-int mac_cliprdr_server_lock_clipboard_data(CliprdrClientContext* cliprdr, CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
+WIN32ERROR mac_cliprdr_server_lock_clipboard_data(CliprdrClientContext* cliprdr, CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
 {
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-int mac_cliprdr_server_unlock_clipboard_data(CliprdrClientContext* cliprdr, CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
+WIN32ERROR mac_cliprdr_server_unlock_clipboard_data(CliprdrClientContext* cliprdr, CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
 {
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-int mac_cliprdr_server_format_data_request(CliprdrClientContext* cliprdr, CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
+WIN32ERROR mac_cliprdr_server_format_data_request(CliprdrClientContext* cliprdr, CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
 {
 	BYTE* data;
 	UINT32 size;
@@ -259,10 +261,10 @@ int mac_cliprdr_server_format_data_request(CliprdrClientContext* cliprdr, CLIPRD
 	
 	free(data);
 	
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-int mac_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr, CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
+WIN32ERROR mac_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr, CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
 {
 	BYTE* data;
 	UINT32 size;
@@ -275,7 +277,7 @@ int mac_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr, CLIPR
 	if (formatDataResponse->msgFlags & CB_RESPONSE_FAIL)
 	{
 		SetEvent(mfc->clipboardRequestEvent);
-		return -1;
+		return ERROR_INTERNAL_ERROR;
 	}
 	
 	for (index = 0; index < mfc->numServerFormats; index++)
@@ -287,7 +289,7 @@ int mac_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr, CLIPR
 	if (!format)
 	{
 		SetEvent(mfc->clipboardRequestEvent);
-		return -1;
+		return ERROR_INTERNAL_ERROR;
 	}
 	
 	if (format->formatName)
@@ -301,7 +303,7 @@ int mac_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr, CLIPR
 	if (!data)
 	{
 		SetEvent(mfc->clipboardRequestEvent);
-		return -1;
+		return CHANNEL_RC_NO_MEMORY;
 	}
 	
 	CopyMemory(data, formatDataResponse->requestedFormatData, size);
@@ -327,17 +329,17 @@ int mac_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr, CLIPR
 		[view->pasteboard_wr setString:str forType:NSStringPboardType];
 	}
 	
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-int mac_cliprdr_server_file_contents_request(CliprdrClientContext* cliprdr, CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
+WIN32ERROR mac_cliprdr_server_file_contents_request(CliprdrClientContext* cliprdr, CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-int mac_cliprdr_server_file_contents_response(CliprdrClientContext* cliprdr, CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
+WIN32ERROR mac_cliprdr_server_file_contents_response(CliprdrClientContext* cliprdr, CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
 {
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
 void mac_cliprdr_init(mfContext* mfc, CliprdrClientContext* cliprdr)
