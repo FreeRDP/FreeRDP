@@ -66,7 +66,6 @@ HRESULT PATH_ALLOC_COMBINE(PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFla
 			pszPathOut = (PWSTR) HeapAlloc(GetProcessHeap(), 0, sizeOfBuffer * 2);
 			if (!pszPathOut)
 				return E_OUTOFMEMORY;
-
 			swprintf_s(pszPathOut, sizeOfBuffer, L"%c:%s", pszPathIn[0], pszMore);
 
 			*ppszPathOut = pszPathOut;
@@ -146,7 +145,6 @@ HRESULT PATH_ALLOC_COMBINE(PCSTR pszPathIn, PCSTR pszMore, unsigned long dwFlags
 			pszPathOut = (PSTR) HeapAlloc(GetProcessHeap(), 0, sizeOfBuffer * 2);
 			if (!pszPathOut)
 				return E_OUTOFMEMORY;
-
 			sprintf_s(pszPathOut, sizeOfBuffer, "%c:%s", pszPathIn[0], pszMore);
 
 			*ppszPathOut = pszPathOut;

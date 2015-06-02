@@ -693,11 +693,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		CopyMemory(_settings->MonitorIds, settings->MonitorIds, 16 * sizeof(UINT32));
 
 		_settings->ReceivedCapabilities = malloc(32);
-		if (!_settings->ReceivedCapabilities)
-			goto out_fail;
 		_settings->OrderSupport = malloc(32);
-		if (!_settings->OrderSupport)
-			goto out_fail;
 
 		if (!_settings->ReceivedCapabilities || !_settings->OrderSupport)
 			goto out_fail;
