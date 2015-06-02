@@ -1427,8 +1427,8 @@ void* xf_client_thread(void* param)
 	xfContext* xfc;
 	freerdp* instance;
 	rdpContext* context;
-	HANDLE inputEvent;
-	HANDLE inputThread;
+	HANDLE inputEvent = NULL;
+	HANDLE inputThread = NULL;
 	rdpChannels* channels;
 	rdpSettings* settings;
 

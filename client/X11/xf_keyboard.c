@@ -45,7 +45,6 @@
 
 BOOL xf_keyboard_action_script_init(xfContext* xfc)
 {
-	int exitCode;
 	FILE* keyScript;
 	char* keyCombination;
 	char buffer[1024] = { 0 };
