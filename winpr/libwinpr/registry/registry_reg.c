@@ -169,6 +169,12 @@ static RegVal* reg_load_value(Reg* reg, RegKey* key)
 		p[4] = strchr(data, '"');
 		p[4][0] = '\0';
 		value->data.string = _strdup(data);
+		if (!value->data.string)
+		{
+			free(value);
+			free(name);
+			return NULL;
+		}
 	}
 	else
 	{
@@ -226,6 +232,8 @@ static void reg_insert_key(Reg* reg, RegKey* key, RegKey* subkey)
 	char* save;
 	int length;
 	path = _strdup(subkey->name);
+	if (!path)
+		return;
 	name = strtok_s(path, "\\", &save);
 
 	while (name != NULL)
@@ -235,6 +243,12 @@ static void reg_insert_key(Reg* reg, RegKey* key, RegKey* subkey)
 			length = strlen(name);
 			name += length + 1;
 			subkey->subname = _strdup(name);
+			/* TODO: free allocated memory in error case */
+			if (!subkey->subname)
+			{
+				free(path);
+				return;
+			}
 		}
 
 		name = strtok_s(NULL, "\\", &save);

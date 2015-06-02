@@ -651,7 +651,7 @@ BOOL PCSC_AddReaderNameAlias(char* namePCSC, char* nameWinSCard)
 
 	reader = (PCSC_READER*) calloc(1, sizeof(PCSC_READER));
 	if (!reader)
-		goto error_reader;
+		return FALSE;
 
 	reader->namePCSC = _strdup(namePCSC);
 	if (!reader->namePCSC)
@@ -670,9 +670,7 @@ error_nameWinSCard:
 	free(reader->namePCSC);
 error_namePSC:
 	free(reader);
-error_reader:
 	return FALSE;
-
 }
 
 static int PCSC_AtoiWithLength(const char* str, int length)

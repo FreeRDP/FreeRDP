@@ -306,6 +306,7 @@ char* GetKnownPath(int id)
 
 		case KNOWN_PATH_TEMP:
 			path = GetPath_TEMP();
+
 			break;
 
 		case KNOWN_PATH_XDG_DATA_HOME:
@@ -405,19 +406,39 @@ char* GetCombinedPath(const char* basePath, const char* subPath)
 		CopyMemory(path, basePath, basePathLength);
 	path[basePathLength] = '\0';
 
-	PathCchConvertStyleA(path, basePathLength, PATH_STYLE_NATIVE);
+	if (PathCchConvertStyleA(path, basePathLength, PATH_STYLE_NATIVE) != S_OK)
+	{
+		free(path);
+		return NULL;
+	}
 
 	if (!subPath)
 		return path;
 
 	subPathCpy = _strdup(subPath);
-	PathCchConvertStyleA(subPathCpy, subPathLength, PATH_STYLE_NATIVE);
+	if (!subPathCpy)
+	{
+		free(path);
+		return NULL;
+	}
+	if (PathCchConvertStyleA(subPathCpy, subPathLength, PATH_STYLE_NATIVE) != S_OK)
+	{
+		free(path);
+		free(subPathCpy);
+		return NULL;
+	}
 
 	status = NativePathCchAppendA(path, length + 1, subPathCpy);
 
 	free(subPathCpy);
 
-	return path;
+	if (status != S_OK)
+	{
+		free(path);
+		return NULL;
+	}
+	else
+		return path;
 }
 
 BOOL PathFileExistsA(LPCSTR pszPath)

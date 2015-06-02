@@ -552,6 +552,8 @@ BOOL xf_create_window(xfContext* xfc)
 		if (settings->WindowTitle)
 		{
 			windowTitle = _strdup(settings->WindowTitle);
+			if (!windowTitle)
+				return FALSE;
 		}
 		else if (settings->ServerPort == 3389)
 		{
@@ -999,6 +1001,8 @@ BOOL xf_pre_connect(freerdp* instance)
 		if (login_name)
 		{
 			settings->Username = _strdup(login_name);
+			if (!settings->Username)
+				return FALSE;
 			WLog_INFO(TAG, "No user name set. - Using login name: %s", settings->Username);
 		}
 	}
@@ -1018,7 +1022,8 @@ BOOL xf_pre_connect(freerdp* instance)
 	if (!context->cache)
 		context->cache = cache_new(settings);
 
-	xf_keyboard_init(xfc);
+	if (!xf_keyboard_init(xfc))
+		return FALSE;
 
 	xf_detect_monitors(xfc, &maxWidth, &maxHeight);
 

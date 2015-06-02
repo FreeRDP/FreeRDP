@@ -570,11 +570,9 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 	totalBitmapSize = 0;
 
 	bitmapUpdate.count = bitmapUpdate.number = rows * cols;
-	bitmapData = (BITMAP_DATA*) malloc(sizeof(BITMAP_DATA) * bitmapUpdate.number);
-	bitmapUpdate.rectangles = bitmapData;
-
-	if (!bitmapData)
+	if (!(bitmapData = (BITMAP_DATA*) malloc(sizeof(BITMAP_DATA) * bitmapUpdate.number)))
 		return -1;
+	bitmapUpdate.rectangles = bitmapData;
 
 	if ((nWidth % 4) != 0)
 	{

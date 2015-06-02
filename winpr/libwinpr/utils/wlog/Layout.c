@@ -338,13 +338,18 @@ wLogLayout* WLog_GetLogLayout(wLog* log)
 	return appender->Layout;
 }
 
-void WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* format)
+BOOL WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* format)
 {
 	free(layout->FormatString);
 	layout->FormatString = NULL;
 
 	if (format)
+	{
 		layout->FormatString = _strdup(format);
+		if (!layout->FormatString)
+			return FALSE;
+	}
+	return TRUE;
 }
 
 wLogLayout* WLog_Layout_New(wLog* log)

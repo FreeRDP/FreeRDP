@@ -85,6 +85,9 @@ int test_msrsc_incident_file_type1()
 
 	file = freerdp_assistance_file_new();
 
+	if (!file)
+		return -1;
+
 	status = freerdp_assistance_parse_file_buffer(file,
 			TEST_MSRC_INCIDENT_FILE_TYPE1, sizeof(TEST_MSRC_INCIDENT_FILE_TYPE1));
 
@@ -136,6 +139,9 @@ int test_msrsc_incident_file_type2()
 
 	file = freerdp_assistance_file_new();
 
+	if (!file)
+		return -1;
+
 	status = freerdp_assistance_parse_file_buffer(file,
 			TEST_MSRC_INCIDENT_FILE_TYPE2, sizeof(TEST_MSRC_INCIDENT_FILE_TYPE2));
 
@@ -174,9 +180,17 @@ int test_msrsc_incident_file_type2()
 
 int TestCommonAssistance(int argc, char* argv[])
 {
-	test_msrsc_incident_file_type1();
+	if (test_msrsc_incident_file_type1() != 0)
+	{
+		printf("test_msrsc_incident_file_type1 failed\n");
+		return -1;
+	}
 
-	test_msrsc_incident_file_type2();
+	if (test_msrsc_incident_file_type2() != 0)
+	{
+		printf("test_msrsc_incident_file_type1 failed\n");
+		return -1;
+	}
 
 	return 0;
 }

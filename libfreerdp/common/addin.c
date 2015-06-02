@@ -69,6 +69,8 @@ LPSTR freerdp_get_dynamic_addin_install_path()
 
 	cchPath = cchInstallPrefix + cchAddinPath + 2;
 	pszPath = (LPSTR) malloc(cchPath + 1);
+	if (!pszPath)
+		return NULL;
 
 	CopyMemory(pszPath, pszInstallPrefix, cchInstallPrefix);
 	pszPath[cchInstallPrefix] = '\0';
@@ -106,20 +108,39 @@ void* freerdp_load_dynamic_addin(LPCSTR pszFileName, LPCSTR pszPath, LPCSTR pszE
 	}
 
 	pszAddinInstallPath = freerdp_get_dynamic_addin_install_path();
+	if (!pszAddinInstallPath)
+		return NULL;
 	cchAddinInstallPath = strlen(pszAddinInstallPath);
 
 	cchFilePath = cchAddinInstallPath + cchFileName + 32;
 	pszFilePath = (LPSTR) malloc(cchFilePath + 1);
+	if (!pszFilePath)
+	{
+		free(pszAddinInstallPath);
+		return NULL;
+	}
 
 	if (bHasExt)
 	{
 		pszAddinFile = _strdup(pszFileName);
+		if (!pszAddinFile)
+		{
+			free(pszAddinInstallPath);
+			free(pszFilePath);
+			return NULL;
+		}
 		cchAddinFile = strlen(pszAddinFile);
 	}
 	else
 	{
 		cchAddinFile = cchFileName + cchExt + 2 + sizeof(CMAKE_SHARED_LIBRARY_PREFIX);
 		pszAddinFile = (LPSTR) malloc(cchAddinFile + 1);
+		if (!pszAddinFile)
+		{
+			free(pszAddinInstallPath);
+			free(pszFilePath);
+			return NULL;
+		}
 		sprintf_s(pszAddinFile, cchAddinFile, CMAKE_SHARED_LIBRARY_PREFIX"%s%s", pszFileName, pszExt);
 		cchAddinFile = strlen(pszAddinFile);
 	}
