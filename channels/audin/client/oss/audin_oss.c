@@ -3,6 +3,8 @@
  * Audio Input Redirection Virtual Channel - OSS implementation
  *
  * Copyright (c) 2015 Rozhuk Ivan <rozhuk.im@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +31,7 @@
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/cmdline.h>
+#include <winpr/win32error.h>
 
 #include <err.h>
 #include <errno.h>
@@ -125,11 +128,11 @@ static BOOL audin_oss_format_supported(IAudinDevice *device, audinFormat *format
 	return TRUE;
 }
 
-static void audin_oss_set_format(IAudinDevice *device, audinFormat *format, UINT32 FramesPerPacket) {
+static WIN32ERROR audin_oss_set_format(IAudinDevice *device, audinFormat *format, UINT32 FramesPerPacket) {
 	AudinOSSDevice *oss = (AudinOSSDevice*)device;
 
 	if (device == NULL || format == NULL)
-		return;
+		return ERROR_INVALID_PARAMETER;
 	
 	oss->FramesPerPacket = FramesPerPacket;
 	CopyMemory(&(oss->format), format, sizeof(audinFormat));
@@ -140,6 +143,7 @@ static void audin_oss_set_format(IAudinDevice *device, audinFormat *format, UINT
 		oss->format.wBitsPerSample *= 4;
 		break;
 	}
+	return CHANNEL_RC_OK;
 }
 
 static void *audin_oss_thread_func(void *arg)
@@ -149,6 +153,7 @@ static void *audin_oss_thread_func(void *arg)
 	BYTE *buffer = NULL, *encoded_data;
 	int tmp, buffer_size, encoded_size;
 	AudinOSSDevice *oss = (AudinOSSDevice*)arg;
+	WIN32ERROR error;
 
 	if (arg == NULL)
 		goto err_out;
@@ -184,12 +189,11 @@ static void *audin_oss_thread_func(void *arg)
 		OSS_LOG_ERR("SNDCTL_DSP_SETFRAGMENT failed", errno);
 
 	buffer_size = (oss->FramesPerPacket * oss->format.nChannels * (oss->format.wBitsPerSample / 8)); 
-	buffer = (BYTE*)malloc((buffer_size + sizeof(void*)));
+	buffer = (BYTE*)calloc(1, (buffer_size + sizeof(void*)));
 	if (NULL == buffer) {
 		OSS_LOG_ERR("malloc() fail", errno);
 		goto err_out;
 	}
-	ZeroMemory(buffer, buffer_size);
 
 	freerdp_dsp_context_reset_adpcm(oss->dsp_context);
 
@@ -220,8 +224,12 @@ static void *audin_oss_thread_func(void *arg)
 			encoded_size = buffer_size;
 			break;
 		}
-		if (0 != oss->receive(encoded_data, encoded_size, oss->user_data))
+		if ((error = oss->receive(encoded_data, encoded_size, oss->user_data)))
+		{
+			WLog_ERR(TAG, "oss->receive failed with error %lu", error);
 			break;
+		}
+
 	}
 
 err_out:
@@ -234,21 +242,35 @@ err_out:
 	return NULL;
 }
 
-static void audin_oss_open(IAudinDevice *device, AudinReceive receive, void *user_data) {
+static WIN32ERROR audin_oss_open(IAudinDevice *device, AudinReceive receive, void *user_data) {
 	AudinOSSDevice *oss = (AudinOSSDevice*)device;
 
 	oss->receive = receive;
 	oss->user_data = user_data;
 
-	oss->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	oss->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)audin_oss_thread_func, oss, 0, NULL);
+	if (!(oss->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	{
+		WLog_ERR(TAG, "CreateEvent failed!");
+		return ERROR_INTERNAL_ERROR;
+	}
+	// TODO: add mechanism that threads can signal failure
+	if (!(oss->thread = CreateThread(NULL, 0,
+		(LPTHREAD_START_ROUTINE)audin_oss_thread_func, oss, 0, NULL)))
+	{
+		WLog_ERR(TAG, "CreateThread failed!");
+		CloseHandle(oss->stopEvent);
+		oss->stopEvent = NULL;
+		return ERROR_INTERNAL_ERROR;
+	}
+
+	return CHANNEL_RC_OK;
 }
 
-static void audin_oss_close(IAudinDevice *device) {
+static WIN32ERROR audin_oss_close(IAudinDevice *device) {
 	AudinOSSDevice *oss = (AudinOSSDevice*)device;
 
 	if (device == NULL)
-		return;
+		return ERROR_INVALID_PARAMETER;
 
 	if (oss->stopEvent != NULL) {
 		SetEvent(oss->stopEvent);
@@ -263,18 +285,27 @@ static void audin_oss_close(IAudinDevice *device) {
 
 	oss->receive = NULL;
 	oss->user_data = NULL;
+
+	return CHANNEL_RC_OK;
 }
 
-static void audin_oss_free(IAudinDevice *device) {
+static WIN32ERROR audin_oss_free(IAudinDevice *device) {
 	AudinOSSDevice *oss = (AudinOSSDevice*)device;
 
-	if (device == NULL)
-		return;
+	int error;
 
-	audin_oss_close(device);
+	if (device == NULL)
+		return ERROR_INVALID_PARAMETER;
+
+	if ((error = audin_oss_close(device)))
+	{
+		WLog_ERR(TAG, "audin_oss_close failed with error code %d!", error);
+	}
 	freerdp_dsp_context_free(oss->dsp_context);
 
 	free(oss);
+
+	return CHANNEL_RC_OK;
 }
 
 COMMAND_LINE_ARGUMENT_A audin_oss_args[] = {
@@ -282,7 +313,7 @@ COMMAND_LINE_ARGUMENT_A audin_oss_args[] = {
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
-static void audin_oss_parse_addin_args(AudinOSSDevice *device, ADDIN_ARGV *args) {
+static WIN32ERROR audin_oss_parse_addin_args(AudinOSSDevice *device, ADDIN_ARGV *args) {
 	int status;
 	char *str_num, *eptr;
 	DWORD flags;
@@ -293,7 +324,7 @@ static void audin_oss_parse_addin_args(AudinOSSDevice *device, ADDIN_ARGV *args)
 
 	status = CommandLineParseArgumentsA(args->argc, (const char**)args->argv, audin_oss_args, flags, oss, NULL, NULL);
 	if (status < 0)
-		return;
+		return ERROR_INVALID_PARAMETER;
 
 	arg = audin_oss_args;
 
@@ -305,6 +336,11 @@ static void audin_oss_parse_addin_args(AudinOSSDevice *device, ADDIN_ARGV *args)
 
 		CommandLineSwitchCase(arg, "dev") {
 			str_num = _strdup(arg->Value);
+			if (!str_num)
+			{
+				WLog_ERR(TAG, "_strdup failed!");
+				return CHANNEL_RC_NO_MEMORY;
+			}
 			oss->dev_unit = strtol(str_num, &eptr, 10);
 			if (oss->dev_unit < 0 || *eptr != '\0')
 				oss->dev_unit = -1;
@@ -313,18 +349,25 @@ static void audin_oss_parse_addin_args(AudinOSSDevice *device, ADDIN_ARGV *args)
 
 		CommandLineSwitchEnd(arg)
 	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+
+	return CHANNEL_RC_OK;
 }
 
 #ifdef STATIC_CHANNELS
 #define freerdp_audin_client_subsystem_entry	oss_freerdp_audin_client_subsystem_entry
 #endif
 
-int freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints) {
+WIN32ERROR freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints) {
 	ADDIN_ARGV *args;
 	AudinOSSDevice *oss;
+	WIN32ERROR error;
 
-	oss = (AudinOSSDevice*)malloc(sizeof(AudinOSSDevice));
-	ZeroMemory(oss, sizeof(AudinOSSDevice));
+	oss = (AudinOSSDevice*)calloc(1, sizeof(AudinOSSDevice));
+	if (!oss)
+	{
+		WLog_ERR(TAG, "calloc failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	oss->iface.Open = audin_oss_open;
 	oss->iface.FormatSupported = audin_oss_format_supported;
@@ -335,11 +378,31 @@ int freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEnt
 	oss->dev_unit = -1;
 
 	args = pEntryPoints->args;
-	audin_oss_parse_addin_args(oss, args);
+
+	if ((error = audin_oss_parse_addin_args(oss, args)))
+	{
+		WLog_ERR(TAG, "audin_oss_parse_addin_args failed with errorcode %lu!", error);
+		goto error_out;
+	}
 
 	oss->dsp_context = freerdp_dsp_context_new();
+	if (!oss->dsp_context)
+	{
+		WLog_ERR(TAG, "freerdp_dsp_context_new failed!");
+		error = CHANNEL_RC_NO_MEMORY;
+		goto error_out;
+	}
 
-	pEntryPoints->pRegisterAudinDevice(pEntryPoints->plugin, (IAudinDevice*)oss);
+	if ((error = pEntryPoints->pRegisterAudinDevice(pEntryPoints->plugin, (IAudinDevice*) oss)))
+	{
+		WLog_ERR(TAG, "RegisterAudinDevice failed with error %lu!", error);
+		goto error_out;
+	}
 
-	return 0;
+	return CHANNEL_RC_OK;
+error_out:
+	freerdp_dsp_context_free(oss->dsp_context);
+	free(oss);
+	return error;
+
 }

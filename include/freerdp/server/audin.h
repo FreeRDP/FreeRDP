@@ -3,6 +3,8 @@
  * Server Audio Input Virtual Channel
  *
  * Copyright 2012 Vic Lee
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,16 +25,17 @@
 #include <freerdp/codec/audio.h>
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/rdpsnd.h>
+#include <winpr/win32error.h>
 
 typedef struct _audin_server_context audin_server_context;
 
-typedef void (*psAudinServerSelectFormat)(audin_server_context* context, int client_format_index);
+typedef WIN32ERROR (*psAudinServerSelectFormat)(audin_server_context* context, int client_format_index);
 typedef BOOL (*psAudinServerOpen)(audin_server_context* context);
 typedef BOOL (*psAudinServerClose)(audin_server_context* context);
 
-typedef void (*psAudinServerOpening)(audin_server_context* context);
-typedef void (*psAudinServerOpenResult)(audin_server_context* context, UINT32 result);
-typedef void (*psAudinServerReceiveSamples)(audin_server_context* context, const void* buf, int nframes);
+typedef WIN32ERROR (*psAudinServerOpening)(audin_server_context* context);
+typedef WIN32ERROR (*psAudinServerOpenResult)(audin_server_context* context, UINT32 result);
+typedef WIN32ERROR (*psAudinServerReceiveSamples)(audin_server_context* context, const void* buf, int nframes);
 
 struct _audin_server_context
 {

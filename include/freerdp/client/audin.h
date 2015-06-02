@@ -3,6 +3,8 @@
  * Audio Input Redirection Virtual Channel
  *
  * Copyright 2010-2011 Vic Lee
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +28,7 @@
  * Subsystem Interface
  */
 
-typedef BOOL (*AudinReceive) (BYTE* data, int size, void* userData);
+typedef WIN32ERROR (*AudinReceive) (BYTE* data, int size, void* userData);
 
 typedef struct audin_format audinFormat;
 struct audin_format
@@ -43,16 +45,16 @@ struct audin_format
 typedef struct _IAudinDevice IAudinDevice;
 struct _IAudinDevice
 {
-	void (*Open) (IAudinDevice* devplugin, AudinReceive receive, void* userData);
+	WIN32ERROR (*Open) (IAudinDevice* devplugin, AudinReceive receive, void* userData);
 	BOOL (*FormatSupported) (IAudinDevice* devplugin, audinFormat* format);
-	void (*SetFormat) (IAudinDevice* devplugin, audinFormat* format, UINT32 FramesPerPacket);
-	void (*Close) (IAudinDevice* devplugin);
-	void (*Free) (IAudinDevice* devplugin);
+	WIN32ERROR (*SetFormat) (IAudinDevice* devplugin, audinFormat* format, UINT32 FramesPerPacket);
+	WIN32ERROR (*Close) (IAudinDevice* devplugin);
+	WIN32ERROR (*Free) (IAudinDevice* devplugin);
 };
 
 #define AUDIN_DEVICE_EXPORT_FUNC_NAME "freerdp_audin_client_subsystem_entry"
 
-typedef void (*PREGISTERAUDINDEVICE)(IWTSPlugin* plugin, IAudinDevice* device);
+typedef WIN32ERROR (*PREGISTERAUDINDEVICE)(IWTSPlugin* plugin, IAudinDevice* device);
 
 struct _FREERDP_AUDIN_DEVICE_ENTRY_POINTS
 {
@@ -63,7 +65,7 @@ struct _FREERDP_AUDIN_DEVICE_ENTRY_POINTS
 typedef struct _FREERDP_AUDIN_DEVICE_ENTRY_POINTS FREERDP_AUDIN_DEVICE_ENTRY_POINTS;
 typedef FREERDP_AUDIN_DEVICE_ENTRY_POINTS* PFREERDP_AUDIN_DEVICE_ENTRY_POINTS;
 
-typedef int (*PFREERDP_AUDIN_DEVICE_ENTRY)(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints);
+typedef WIN32ERROR (*PFREERDP_AUDIN_DEVICE_ENTRY)(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints);
 
 #endif /* FREERDP_CHANNEL_CLIENT_AUDIN_H */
 
