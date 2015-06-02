@@ -474,9 +474,12 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 				goto out_fail;
 		base = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME,
 				       FREERDP_VENDOR_STRING);
-		if (base && CreateDirectoryA(base, NULL))
+		if (base)
 		{
 			settings->ConfigPath = GetCombinedPath(base, FREERDP_PRODUCT_STRING);
+			if (!PathFileExistsA(base))
+				if (!CreateDirectoryA(base, NULL))
+					settings->ConfigPath = NULL;
 		}
 		free (base);
 

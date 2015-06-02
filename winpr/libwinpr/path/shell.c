@@ -203,6 +203,9 @@ static char* GetPath_XDG_CACHE_HOME(void)
 	home = GetPath_XDG_RUNTIME_DIR();
 
 	path = GetCombinedPath(home, "cache");
+	if (!PathFileExistsA(path))
+		if (!CreateDirectoryA(path, NULL))
+			path = NULL;
 	free(home);
 #else
 	/**
