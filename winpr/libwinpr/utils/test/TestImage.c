@@ -17,23 +17,38 @@ static void *read_image(const char *src, size_t *size)
 	FILE *fsrc = fopen(src, "r");
 
 	if (!fsrc)
+	{
+		fprintf(stdout, "Failed to open file %s\n", src);
 		goto cleanup;
+	}
 
 	if (fseek(fsrc, 0, SEEK_END))
+	{
+		fprintf(stdout, "Failed to seek to file end\n");
 		goto cleanup;
+	}
 
 	src_size = ftell(fsrc);
 
 	if (fseek(fsrc, 0, SEEK_SET))
+	{
+		fprintf(stdout, "Failed to seek to SEEK_SET\n");
 		goto cleanup;
+	}
 
 	a = malloc(src_size);
 
 	if (!a)
+	{
+		fprintf(stdout, "Failed malloc %zd bytes\n", src_size);
 		goto cleanup;
+	}
 
-	if (fread(a, sizeof(char), src_size,  fsrc) != src_size)
+	if (fread(a, sizeof(char), src_size, fsrc) != src_size)
+	{
+		fprintf(stdout, "Failed read %zd bytes\n", src_size);
 		goto cleanup;
+	}
 
 	success = 1;
 	*size = src_size;
@@ -50,50 +65,49 @@ cleanup:
 	return a;
 }
 
-
-static int compare(const char *src, const char *dst)
-{
-	int cmp = -1;
-	size_t asize, bsize;
-	void *a, *b;
-
-	a = read_image(src, &asize);
-	b = read_image(dst, &bsize);
-
-	if (!a || !b || (asize != bsize))
-		goto cleanup;
-
-	cmp = memcmp(a, b, asize);
-
-cleanup:
-	free(a);
-	free(b);
-
-	return cmp;
-}
-
 static int img_compare(wImage *image, wImage *image2, BOOL ignoreType)
 {
 	int rc = -1;
 	if ((image->type != image2->type) && !ignoreType)
+	{
+		fprintf(stdout, "Image type mismatch %d:%d\n", image->type, image2->type);
 		goto cleanup;
+	}
 
 	if (image->width != image2->width)
+	{
+		fprintf(stdout, "Image width mismatch %d:%d\n", image->width, image2->width);
 		goto cleanup;
+	}
 
 	if (image->height != image2->height)
+	{
+		fprintf(stdout, "Image height mismatch %d:%d\n", image->height, image2->height);
 		goto cleanup;
+	}
 
 	if (image->scanline != image2->scanline)
+	{
+		fprintf(stdout, "Image scanline mismatch %d:%d\n", image->scanline, image2->scanline);
 		goto cleanup;
+	}
 
 	if (image->bitsPerPixel != image2->bitsPerPixel)
+	{
+		fprintf(stdout, "Image bitsPerPixel mismatch %d:%d\n", image->bitsPerPixel, image2->bitsPerPixel);
 		goto cleanup;
+	}
 
 	if (image->bytesPerPixel != image2->bytesPerPixel)
+	{
+		fprintf(stdout, "Image bytesPerPixel mismatch %d:%d\n", image->bytesPerPixel, image2->bytesPerPixel);
 		goto cleanup;
+	}
 
 	rc = memcmp(image->data, image2->data, image->scanline * image->height);
+
+	if (rc)
+		fprintf(stdout, "Image data mismatch!\n");
 
 cleanup:
 	return rc;
@@ -107,12 +121,16 @@ static wImage *get_image(const char *src)
 	image = winpr_image_new();
 
 	if (!image)
+	{
+		fprintf(stdout, "Failed to create image!");
 		goto cleanup;
+	}
 
 	status = winpr_image_read(image, src);
 
 	if (status < 0)
 	{
+		fprintf(stdout, "Failed to read image %s!", src);
 		winpr_image_free(image, TRUE);
 		image = NULL;
 	}
@@ -132,7 +150,10 @@ static int create_test(const char *src, const char *dst_png, const char *dst_bmp
 	wImage* image = NULL, *image2 = NULL, *image3 = NULL, *image4 = NULL;
 
 	if (!PathFileExistsA(src))
+	{
+		fprintf(stdout, "File %s does not exist!", src);
 		return -1;
+	}
 
 	image = get_image(src);
 
@@ -145,28 +166,43 @@ static int create_test(const char *src, const char *dst_png, const char *dst_bmp
 	status = winpr_image_write(image, dst_bmp);
 
 	if (status < 0)
+	{
+		fprintf(stdout, "Failed to write image %s!\n", dst_bmp);
 		goto cleanup;
+	}
 
 	image->type = WINPR_IMAGE_PNG;
 	status = winpr_image_write(image, dst_png);
 
 	if (status < 0)
+	{
+		fprintf(stdout, "Failed to write image %s!\n", dst_png);
 		goto cleanup;
+	}
 
 	/* Read image from buffer, compare. */
 	buffer = read_image(src, &bsize);
 	if (!buffer)
+	{
+		fprintf(stdout, "Failed to read image %s!\n", src);
 		goto cleanup;
+	}
 
 	image2 = winpr_image_new();
 
 	if (!image2)
+	{
+		fprintf(stdout, "Failed to create image!\n");
 		goto cleanup;
+	}
 
 	status = winpr_image_read_buffer(image2, buffer, bsize);
 
 	if (status < 0)
+	{
+		fprintf(stdout, "Failed to read buffer!\n");
 		goto cleanup;
+	}
 
 	rc = img_compare(image, image2, TRUE);
 	if (rc)
@@ -234,13 +270,7 @@ int test_image_png_to_bmp()
 	if (create_test(src_bmp, dst_png2, dst_bmp2))
 		return -1;
 
-	if (compare(dst_png2, dst_png))
-		return -1;
-
-	if (compare(dst_bmp2, dst_bmp))
-		return -1;
-
-	return 1;
+	return 0;
 }
 
 int TestImage(int argc, char* argv[])
