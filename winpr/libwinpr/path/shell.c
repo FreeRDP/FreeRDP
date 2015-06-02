@@ -37,7 +37,8 @@
 #include <Shlobj.h>
 #endif
 
-static char* GetPath_XDG_CONFIG_HOME();
+static char* GetPath_XDG_CONFIG_HOME(void);
+static char* GetPath_XDG_RUNTIME_DIR(void);
 
 /**
  * SHGetKnownFolderPath function:
@@ -68,7 +69,7 @@ static char* GetEnvAlloc(LPCSTR lpName)
 	return env;
 }
 
-static char* GetPath_HOME()
+static char* GetPath_HOME(void)
 {
 	char* path = NULL;
 
@@ -86,7 +87,7 @@ static char* GetPath_HOME()
 	return path;
 }
 
-static char* GetPath_TEMP()
+static char* GetPath_TEMP(void)
 {
 	char* path = NULL;
 
@@ -102,7 +103,7 @@ static char* GetPath_TEMP()
 	return path;
 }
 
-static char* GetPath_XDG_DATA_HOME()
+static char* GetPath_XDG_DATA_HOME(void)
 {
 	char* path = NULL;
 
@@ -141,7 +142,7 @@ static char* GetPath_XDG_DATA_HOME()
 	return path;
 }
 
-static char* GetPath_XDG_CONFIG_HOME()
+static char* GetPath_XDG_CONFIG_HOME(void)
 {
 	char* path = NULL;
 
@@ -193,7 +194,7 @@ static char* GetPath_XDG_CONFIG_HOME()
 	return path;
 }
 
-static char* GetPath_XDG_CACHE_HOME()
+static char* GetPath_XDG_CACHE_HOME(void)
 {
 	char* path = NULL;
 	char* home = NULL;
@@ -235,7 +236,7 @@ static char* GetPath_XDG_CACHE_HOME()
 	return path;
 }
 
-static char* GetPath_XDG_RUNTIME_DIR()
+char* GetPath_XDG_RUNTIME_DIR(void)
 {
 	char* path = NULL;
 #if defined(WIN32)
