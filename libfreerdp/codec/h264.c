@@ -179,8 +179,6 @@ static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstS
 		sys->EncParamExt.iUsageType = SCREEN_CONTENT_REAL_TIME;
 		sys->EncParamExt.iPicWidth = h264->width;
 		sys->EncParamExt.iPicHeight = h264->height;
-		sys->EncParamExt.iTargetBitrate = h264->BitRate;
-		sys->EncParamExt.iRCMode = RC_BITRATE_MODE;
 		sys->EncParamExt.fMaxFrameRate = h264->FrameRate;
 		sys->EncParamExt.iMaxBitrate = UNSPECIFIED_BIT_RATE;
 		sys->EncParamExt.bEnableDenoise = 0;
@@ -191,8 +189,19 @@ static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstS
 		sys->EncParamExt.sSpatialLayers[0].fFrameRate = h264->FrameRate;
 		sys->EncParamExt.sSpatialLayers[0].iVideoWidth = sys->EncParamExt.iPicWidth;
 		sys->EncParamExt.sSpatialLayers[0].iVideoHeight = sys->EncParamExt.iPicHeight;
-		sys->EncParamExt.sSpatialLayers[0].iSpatialBitrate = sys->EncParamExt.iTargetBitrate;
 		sys->EncParamExt.sSpatialLayers[0].iMaxSpatialBitrate = sys->EncParamExt.iMaxBitrate;
+		switch (h264->RateControlMode)
+		{
+			case H264_RATECONTROL_VBR:
+				sys->EncParamExt.iRCMode = RC_BITRATE_MODE;
+				sys->EncParamExt.iTargetBitrate = h264->BitRate;
+				sys->EncParamExt.sSpatialLayers[0].iSpatialBitrate = sys->EncParamExt.iTargetBitrate;
+				break;
+			case H264_RATECONTROL_CQP:
+				sys->EncParamExt.iRCMode = RC_OFF_MODE;
+				sys->EncParamExt.sSpatialLayers[0].iDLayerQp = h264->QP;
+				break;
+		}
 
 		if (sys->EncParamExt.iMultipleThreadIdc > 1)
 		{
@@ -206,36 +215,65 @@ static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstS
 			WLog_ERR(TAG, "Failed to initialize OpenH264 encoder (status=%ld)", status);
 			return status;
 		}
+
+		status = (*sys->pEncoder)->GetOption(sys->pEncoder, ENCODER_OPTION_SVC_ENCODE_PARAM_EXT,
+			&sys->EncParamExt);
+
+		if (status < 0)
+		{
+			WLog_ERR(TAG, "Failed to get initial OpenH264 encoder parameters (status=%ld)", status);
+			return status;
+		}
 	}
 	else
 	{
-		if (sys->EncParamExt.iTargetBitrate != h264->BitRate)
+		switch (h264->RateControlMode)
 		{
-			sys->EncParamExt.iTargetBitrate = h264->BitRate;
-			bitrate.iLayer = SPATIAL_LAYER_ALL;
-			bitrate.iBitrate = h264->BitRate;
+			case H264_RATECONTROL_VBR:
+				if (sys->EncParamExt.iTargetBitrate != h264->BitRate)
+				{
+					sys->EncParamExt.iTargetBitrate = h264->BitRate;
+					bitrate.iLayer = SPATIAL_LAYER_ALL;
+					bitrate.iBitrate = h264->BitRate;
 
-			status = (*sys->pEncoder)->SetOption(sys->pEncoder, ENCODER_OPTION_BITRATE,
-				&bitrate);
+					status = (*sys->pEncoder)->SetOption(sys->pEncoder, ENCODER_OPTION_BITRATE,
+						&bitrate);
 
-			if (status < 0)
-			{
-				WLog_ERR(TAG, "Failed to set encoder bitrate (status=%ld)", status);
-				return status;
-			}
-		}
-		if (sys->EncParamExt.fMaxFrameRate != h264->FrameRate)
-		{
-			sys->EncParamExt.fMaxFrameRate = h264->FrameRate;
+					if (status < 0)
+					{
+						WLog_ERR(TAG, "Failed to set encoder bitrate (status=%ld)", status);
+						return status;
+					}
+				}
+				if (sys->EncParamExt.fMaxFrameRate != h264->FrameRate)
+				{
+					sys->EncParamExt.fMaxFrameRate = h264->FrameRate;
 
-			status = (*sys->pEncoder)->SetOption(sys->pEncoder, ENCODER_OPTION_FRAME_RATE,
-				&sys->EncParamExt.fMaxFrameRate);
+					status = (*sys->pEncoder)->SetOption(sys->pEncoder, ENCODER_OPTION_FRAME_RATE,
+						&sys->EncParamExt.fMaxFrameRate);
 
-			if (status < 0)
-			{
-				WLog_ERR(TAG, "Failed to set encoder framerate (status=%ld)", status);
-				return status;
-			}
+					if (status < 0)
+					{
+						WLog_ERR(TAG, "Failed to set encoder framerate (status=%ld)", status);
+						return status;
+					}
+				}
+				break;
+			case H264_RATECONTROL_CQP:
+				if (sys->EncParamExt.sSpatialLayers[0].iDLayerQp != h264->QP)
+				{
+					sys->EncParamExt.sSpatialLayers[0].iDLayerQp = h264->QP;
+
+					status = (*sys->pEncoder)->SetOption(sys->pEncoder, ENCODER_OPTION_SVC_ENCODE_PARAM_EXT,
+						&sys->EncParamExt);
+
+					if (status < 0)
+					{
+						WLog_ERR(TAG, "Failed to set encoder parameters (status=%ld)", status);
+						return status;
+					}
+				}
+				break;
 		}
 	}
 

@@ -42,6 +42,13 @@ struct _H264_CONTEXT_SUBSYSTEM
 };
 typedef struct _H264_CONTEXT_SUBSYSTEM H264_CONTEXT_SUBSYSTEM;
 
+enum _H264_RATECONTROL_MODE
+{
+	H264_RATECONTROL_VBR = 0,
+	H264_RATECONTROL_CQP
+};
+typedef enum _H264_RATECONTROL_MODE H264_RATECONTROL_MODE;
+
 struct _H264_CONTEXT
 {
 	BOOL Compressor;
@@ -49,8 +56,10 @@ struct _H264_CONTEXT
 	UINT32 width;
 	UINT32 height;
 
+	H264_RATECONTROL_MODE RateControlMode;
 	UINT32 BitRate;
 	FLOAT FrameRate;
+	UINT32 QP;
 	UINT32 NumberOfThreads;
 	
 	int iStride[3];
