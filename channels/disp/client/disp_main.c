@@ -3,6 +3,8 @@
  * Display Update Virtual Channel Extension
  *
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +35,7 @@
 #include <winpr/sysinfo.h>
 #include <winpr/cmdline.h>
 #include <winpr/collections.h>
+#include <winpr/win32error.h>
 
 #include <freerdp/addin.h>
 
@@ -71,9 +74,9 @@ struct _DISP_PLUGIN
 };
 typedef struct _DISP_PLUGIN DISP_PLUGIN;
 
-int disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callback, UINT32 NumMonitors, DISPLAY_CONTROL_MONITOR_LAYOUT* Monitors)
+WIN32ERROR disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callback, UINT32 NumMonitors, DISPLAY_CONTROL_MONITOR_LAYOUT* Monitors)
 {
-	int status;
+	WIN32ERROR status;
 	wStream* s;
 	UINT32 type;
 	UINT32 index;
@@ -90,6 +93,12 @@ int disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callback
 	type = DISPLAY_CONTROL_PDU_TYPE_MONITOR_LAYOUT;
 
 	s = Stream_New(NULL, length);
+
+	if(!s)
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	Stream_Write_UINT32(s, type); /* Type (4 bytes) */
 	Stream_Write_UINT32(s, length); /* Length (4 bytes) */
@@ -154,14 +163,17 @@ int disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callback
 	return status;
 }
 
-int disp_recv_display_control_caps_pdu(DISP_CHANNEL_CALLBACK* callback, wStream* s)
+WIN32ERROR disp_recv_display_control_caps_pdu(DISP_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	DISP_PLUGIN* disp;
 
 	disp = (DISP_PLUGIN*) callback->plugin;
 
 	if (Stream_GetRemainingLength(s) < 12)
-		return -1;
+	{
+		WLog_ERR(TAG, "not enought remaining data");
+		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, disp->MaxNumMonitors); /* MaxNumMonitors (4 bytes) */
 	Stream_Read_UINT32(s, disp->MaxMonitorAreaFactorA); /* MaxMonitorAreaFactorA (4 bytes) */
@@ -169,16 +181,19 @@ int disp_recv_display_control_caps_pdu(DISP_CHANNEL_CALLBACK* callback, wStream*
 	//WLog_ERR(TAG,  "DisplayControlCapsPdu: MaxNumMonitors: %d MaxMonitorWidth: %d MaxMonitorHeight: %d",
 	//       disp->MaxNumMonitors, disp->MaxMonitorWidth, disp->MaxMonitorHeight);
 
-	return 0;
+	return CHANNEL_RC_OK;
 }
 
-int disp_recv_pdu(DISP_CHANNEL_CALLBACK* callback, wStream* s)
+WIN32ERROR disp_recv_pdu(DISP_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	UINT32 type;
 	UINT32 length;
 
 	if (Stream_GetRemainingLength(s) < 8)
-		return -1;
+	{
+		WLog_ERR(TAG, "not enought remaining data");
+		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, type); /* Type (4 bytes) */
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
@@ -188,36 +203,28 @@ int disp_recv_pdu(DISP_CHANNEL_CALLBACK* callback, wStream* s)
 	switch (type)
 	{
 		case DISPLAY_CONTROL_PDU_TYPE_CAPS:
-			disp_recv_display_control_caps_pdu(callback, s);
-			break;
+			return disp_recv_display_control_caps_pdu(callback, s);
 
 		default:
-			break;
+			WLog_ERR(TAG, "Type %d not recognized!", type);
+			return ERROR_INTERNAL_ERROR;
 	}
-
-	return 0;
 }
 
-static int disp_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream *data)
-{
-	int status = 0;
-	DISP_CHANNEL_CALLBACK* callback = (DISP_CHANNEL_CALLBACK*) pChannelCallback;
-
-	status = disp_recv_pdu(callback, data);
-
-	return status;
-}
-
-static int disp_on_close(IWTSVirtualChannelCallback* pChannelCallback)
+static WIN32ERROR disp_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream *data)
 {
 	DISP_CHANNEL_CALLBACK* callback = (DISP_CHANNEL_CALLBACK*) pChannelCallback;
 
-	free(callback);
-
-	return 0;
+	return disp_recv_pdu(callback, data);
 }
 
-static int disp_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
+static WIN32ERROR disp_on_close(IWTSVirtualChannelCallback* pChannelCallback)
+{
+	free(pChannelCallback);
+	return CHANNEL_RC_OK;
+}
+
+static WIN32ERROR disp_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
 	IWTSVirtualChannel* pChannel, BYTE* Data, int* pbAccept,
 	IWTSVirtualChannelCallback** ppCallback)
 {
@@ -227,7 +234,10 @@ static int disp_on_new_channel_connection(IWTSListenerCallback* pListenerCallbac
 	callback = (DISP_CHANNEL_CALLBACK*) calloc(1, sizeof(DISP_CHANNEL_CALLBACK));
 
 	if (!callback)
-		return -1;
+	{
+		WLog_ERR(TAG, "calloc failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	callback->iface.OnDataReceived = disp_on_data_received;
 	callback->iface.OnClose = disp_on_close;
@@ -238,18 +248,21 @@ static int disp_on_new_channel_connection(IWTSListenerCallback* pListenerCallbac
 
 	*ppCallback = (IWTSVirtualChannelCallback*) callback;
 
-	return 0;
+	return CHANNEL_RC_OK;
 }
 
-static int disp_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr)
+static WIN32ERROR disp_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr)
 {
-	int status;
+	WIN32ERROR status;
 	DISP_PLUGIN* disp = (DISP_PLUGIN*) pPlugin;
 
 	disp->listener_callback = (DISP_LISTENER_CALLBACK*) calloc(1, sizeof(DISP_LISTENER_CALLBACK));
 
 	if (!disp->listener_callback)
-		return -1;
+	{
+		WLog_ERR(TAG, "calloc failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	disp->listener_callback->iface.OnNewChannelConnection = disp_on_new_channel_connection;
 	disp->listener_callback->plugin = pPlugin;
@@ -263,36 +276,31 @@ static int disp_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager
 	return status;
 }
 
-static int disp_plugin_terminated(IWTSPlugin* pPlugin)
+static WIN32ERROR disp_plugin_terminated(IWTSPlugin* pPlugin)
 {
-	DISP_PLUGIN* disp = (DISP_PLUGIN*) pPlugin;
-
-	free(disp);
-
-	return 0;
+	free(pPlugin);
+	return CHANNEL_RC_OK;
 }
 
 /**
  * Channel Client Interface
  */
 
-int disp_send_monitor_layout(DispClientContext* context, UINT32 NumMonitors, DISPLAY_CONTROL_MONITOR_LAYOUT* Monitors)
+WIN32ERROR disp_send_monitor_layout(DispClientContext* context, UINT32 NumMonitors, DISPLAY_CONTROL_MONITOR_LAYOUT* Monitors)
 {
 	DISP_PLUGIN* disp = (DISP_PLUGIN*) context->handle;
 	DISP_CHANNEL_CALLBACK* callback = disp->listener_callback->channel_callback;
 
-	disp_send_display_control_monitor_layout_pdu(callback, NumMonitors, Monitors);
-
-	return 1;
+	return disp_send_display_control_monitor_layout_pdu(callback, NumMonitors, Monitors);
 }
 
 #ifdef STATIC_CHANNELS
 #define DVCPluginEntry		disp_DVCPluginEntry
 #endif
 
-int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+WIN32ERROR DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
-	int error = 0;
+	WIN32ERROR error = CHANNEL_RC_OK;
 	DISP_PLUGIN* disp;
 	DispClientContext* context;
 
@@ -303,7 +311,10 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		disp = (DISP_PLUGIN*) calloc(1, sizeof(DISP_PLUGIN));
 
 		if (!disp)
-			return -1;
+		{
+			WLog_ERR(TAG, "calloc failed!");
+			return CHANNEL_RC_NO_MEMORY;
+		}
 
 		disp->iface.Initialize = disp_plugin_initialize;
 		disp->iface.Connected = NULL;
@@ -314,8 +325,9 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 		if (!context)
 		{
+			WLog_ERR(TAG, "calloc failed!");
 			free(disp);
-			return -1;
+			return CHANNEL_RC_NO_MEMORY;
 		}
 
 		context->handle = (void*) disp;
@@ -329,6 +341,11 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		disp->MaxMonitorAreaFactorB = 8192;
 
 		error = pEntryPoints->RegisterPlugin(pEntryPoints, "disp", (IWTSPlugin*) disp);
+	}
+	else
+	{
+		WLog_ERR(TAG, "could not get disp Plugin.");
+		return CHANNEL_RC_BAD_CHANNEL;
 	}
 
 	return error;
