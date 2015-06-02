@@ -18,13 +18,13 @@ static void *read_image(const char *src, size_t *size)
 
 	if (!fsrc)
 	{
-		fprintf(stdout, "Failed to open file %s\n", src);
+		fprintf(stderr, "Failed to open file %s\n", src);
 		goto cleanup;
 	}
 
 	if (fseek(fsrc, 0, SEEK_END))
 	{
-		fprintf(stdout, "Failed to seek to file end\n");
+		fprintf(stderr, "Failed to seek to file end\n");
 		goto cleanup;
 	}
 
@@ -32,7 +32,7 @@ static void *read_image(const char *src, size_t *size)
 
 	if (fseek(fsrc, 0, SEEK_SET))
 	{
-		fprintf(stdout, "Failed to seek to SEEK_SET\n");
+		fprintf(stderr, "Failed to seek to SEEK_SET\n");
 		goto cleanup;
 	}
 
@@ -40,13 +40,13 @@ static void *read_image(const char *src, size_t *size)
 
 	if (!a)
 	{
-		fprintf(stdout, "Failed malloc %zd bytes\n", src_size);
+		fprintf(stderr, "Failed malloc %zd bytes\n", src_size);
 		goto cleanup;
 	}
 
 	if (fread(a, sizeof(char), src_size, fsrc) != src_size)
 	{
-		fprintf(stdout, "Failed read %zd bytes\n", src_size);
+		fprintf(stderr, "Failed read %zd bytes\n", src_size);
 		goto cleanup;
 	}
 
@@ -70,44 +70,44 @@ static int img_compare(wImage *image, wImage *image2, BOOL ignoreType)
 	int rc = -1;
 	if ((image->type != image2->type) && !ignoreType)
 	{
-		fprintf(stdout, "Image type mismatch %d:%d\n", image->type, image2->type);
+		fprintf(stderr, "Image type mismatch %d:%d\n", image->type, image2->type);
 		goto cleanup;
 	}
 
 	if (image->width != image2->width)
 	{
-		fprintf(stdout, "Image width mismatch %d:%d\n", image->width, image2->width);
+		fprintf(stderr, "Image width mismatch %d:%d\n", image->width, image2->width);
 		goto cleanup;
 	}
 
 	if (image->height != image2->height)
 	{
-		fprintf(stdout, "Image height mismatch %d:%d\n", image->height, image2->height);
+		fprintf(stderr, "Image height mismatch %d:%d\n", image->height, image2->height);
 		goto cleanup;
 	}
 
 	if (image->scanline != image2->scanline)
 	{
-		fprintf(stdout, "Image scanline mismatch %d:%d\n", image->scanline, image2->scanline);
+		fprintf(stderr, "Image scanline mismatch %d:%d\n", image->scanline, image2->scanline);
 		goto cleanup;
 	}
 
 	if (image->bitsPerPixel != image2->bitsPerPixel)
 	{
-		fprintf(stdout, "Image bitsPerPixel mismatch %d:%d\n", image->bitsPerPixel, image2->bitsPerPixel);
+		fprintf(stderr, "Image bitsPerPixel mismatch %d:%d\n", image->bitsPerPixel, image2->bitsPerPixel);
 		goto cleanup;
 	}
 
 	if (image->bytesPerPixel != image2->bytesPerPixel)
 	{
-		fprintf(stdout, "Image bytesPerPixel mismatch %d:%d\n", image->bytesPerPixel, image2->bytesPerPixel);
+		fprintf(stderr, "Image bytesPerPixel mismatch %d:%d\n", image->bytesPerPixel, image2->bytesPerPixel);
 		goto cleanup;
 	}
 
 	rc = memcmp(image->data, image2->data, image->scanline * image->height);
 
 	if (rc)
-		fprintf(stdout, "Image data mismatch!\n");
+		fprintf(stderr, "Image data mismatch!\n");
 
 cleanup:
 	return rc;
@@ -122,7 +122,7 @@ static wImage *get_image(const char *src)
 
 	if (!image)
 	{
-		fprintf(stdout, "Failed to create image!");
+		fprintf(stderr, "Failed to create image!");
 		goto cleanup;
 	}
 
@@ -130,7 +130,7 @@ static wImage *get_image(const char *src)
 
 	if (status < 0)
 	{
-		fprintf(stdout, "Failed to read image %s!", src);
+		fprintf(stderr, "Failed to read image %s!", src);
 		winpr_image_free(image, TRUE);
 		image = NULL;
 	}
@@ -151,7 +151,7 @@ static int create_test(const char *src, const char *dst_png, const char *dst_bmp
 
 	if (!PathFileExistsA(src))
 	{
-		fprintf(stdout, "File %s does not exist!", src);
+		fprintf(stderr, "File %s does not exist!", src);
 		return -1;
 	}
 
@@ -167,7 +167,7 @@ static int create_test(const char *src, const char *dst_png, const char *dst_bmp
 
 	if (status < 0)
 	{
-		fprintf(stdout, "Failed to write image %s!\n", dst_bmp);
+		fprintf(stderr, "Failed to write image %s!\n", dst_bmp);
 		goto cleanup;
 	}
 
@@ -176,7 +176,7 @@ static int create_test(const char *src, const char *dst_png, const char *dst_bmp
 
 	if (status < 0)
 	{
-		fprintf(stdout, "Failed to write image %s!\n", dst_png);
+		fprintf(stderr, "Failed to write image %s!\n", dst_png);
 		goto cleanup;
 	}
 
@@ -184,7 +184,7 @@ static int create_test(const char *src, const char *dst_png, const char *dst_bmp
 	buffer = read_image(src, &bsize);
 	if (!buffer)
 	{
-		fprintf(stdout, "Failed to read image %s!\n", src);
+		fprintf(stderr, "Failed to read image %s!\n", src);
 		goto cleanup;
 	}
 
@@ -192,7 +192,7 @@ static int create_test(const char *src, const char *dst_png, const char *dst_bmp
 
 	if (!image2)
 	{
-		fprintf(stdout, "Failed to create image!\n");
+		fprintf(stderr, "Failed to create image!\n");
 		goto cleanup;
 	}
 
@@ -200,7 +200,7 @@ static int create_test(const char *src, const char *dst_png, const char *dst_bmp
 
 	if (status < 0)
 	{
-		fprintf(stdout, "Failed to read buffer!\n");
+		fprintf(stderr, "Failed to read buffer!\n");
 		goto cleanup;
 	}
 
