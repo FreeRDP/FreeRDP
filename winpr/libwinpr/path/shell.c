@@ -201,11 +201,13 @@ static char* GetPath_XDG_CACHE_HOME(void)
 
 #if defined(WIN32)
 	home = GetPath_XDG_RUNTIME_DIR();
-
-	path = GetCombinedPath(home, "cache");
-	if (!PathFileExistsA(path))
-		if (!CreateDirectoryA(path, NULL))
-			path = NULL;
+	if (home)
+	{
+		path = GetCombinedPath(home, "cache");
+		if (!PathFileExistsA(path))
+			if (!CreateDirectoryA(path, NULL))
+				path = NULL;
+	}
 	free(home);
 #else
 	/**
