@@ -472,16 +472,36 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		settings->HomePath = GetKnownPath(KNOWN_PATH_HOME);
 		if (!settings->HomePath)
 				goto out_fail;
-		base = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME,
-				       FREERDP_VENDOR_STRING);
-		if (base)
+
+		/* For default FreeRDP continue using same config directory
+		 * as in old releases.
+		 * Custom builds use <Vendor>/<Product> as config folder. */
+		if (_stricmp(FREERDP_VENDOR_STRING, FREERDP_PRODUCT_STRING))
 		{
-			settings->ConfigPath = GetCombinedPath(base, FREERDP_PRODUCT_STRING);
-			if (!PathFileExistsA(base))
-				if (!CreateDirectoryA(base, NULL))
-					settings->ConfigPath = NULL;
+			base = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME,
+					       FREERDP_VENDOR_STRING);
+			if (base)
+			{
+				settings->ConfigPath = GetCombinedPath(
+							       base,
+							       FREERDP_PRODUCT_STRING);
+				if (!PathFileExistsA(base))
+					if (!CreateDirectoryA(base, NULL))
+						settings->ConfigPath = NULL;
+			}
+			free (base);
+		} else {
+			int i;
+			char product[MAX_PATH];
+
+			memset(product, 0, sizeof(product));
+			for (i=0; i<sizeof(FREERDP_PRODUCT_STRING); i++)
+				product[i] = tolower(FREERDP_PRODUCT_STRING[i]);
+
+			settings->ConfigPath = GetKnownSubPath(
+						       KNOWN_PATH_XDG_CONFIG_HOME,
+						       product);
 		}
-		free (base);
 
 		if (!settings->ConfigPath)
 				goto out_fail;
