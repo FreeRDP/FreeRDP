@@ -72,10 +72,10 @@ cleanup:
 	return cmp;
 }
 
-static int img_compare(wImage *image, wImage *image2)
+static int img_compare(wImage *image, wImage *image2, BOOL ignoreType)
 {
 	int rc = -1;
-	if (image->type != image2->type)
+	if ((image->type != image2->type) && !ignoreType)
 		goto cleanup;
 
 	if (image->width != image2->width)
@@ -168,7 +168,7 @@ static int create_test(const char *src, const char *dst_png, const char *dst_bmp
 	if (status < 0)
 		goto cleanup;
 
-	rc = img_compare(image, image2);
+	rc = img_compare(image, image2, TRUE);
 	if (rc)
 		goto cleanup;
 
@@ -176,7 +176,7 @@ static int create_test(const char *src, const char *dst_png, const char *dst_bmp
 	if (!image3)
 		goto cleanup;
 
-	rc = img_compare(image, image3);
+	rc = img_compare(image, image3, TRUE);
 	if (rc)
 		goto cleanup;
 
@@ -184,8 +184,7 @@ static int create_test(const char *src, const char *dst_png, const char *dst_bmp
 	if (!image4)
 		goto cleanup;
 
-	image->type = WINPR_IMAGE_BITMAP;
-	rc = img_compare(image, image4);
+	rc = img_compare(image, image4, TRUE);
 	if (rc)
 		goto cleanup;
 
@@ -235,21 +234,19 @@ int test_image_png_to_bmp()
 	if (create_test(src_bmp, dst_png2, dst_bmp2))
 		return -1;
 
-#if 0
 	if (compare(dst_png2, dst_png))
 		return -1;
 
 	if (compare(dst_bmp2, dst_bmp))
 		return -1;
-#endif
 
 	return 1;
 }
 
 int TestImage(int argc, char* argv[])
 {
-	test_image_png_to_bmp();
+	int rc = test_image_png_to_bmp();
 
-	return 0;
+	return rc;
 }
 
