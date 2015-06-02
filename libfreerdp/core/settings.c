@@ -492,10 +492,10 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 			free (base);
 		} else {
 			int i;
-			char product[MAX_PATH];
+			char product[sizeof(FREERDP_PRODUCT_STRING)];
 
 			memset(product, 0, sizeof(product));
-			for (i=0; i<sizeof(FREERDP_PRODUCT_STRING); i++)
+			for (i=0; i<sizeof(product); i++)
 				product[i] = tolower(FREERDP_PRODUCT_STRING[i]);
 
 			settings->ConfigPath = GetKnownSubPath(
