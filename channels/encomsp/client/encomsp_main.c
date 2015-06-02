@@ -884,8 +884,9 @@ static void encomsp_virtual_channel_event_connected(encomspPlugin* encomsp, LPVO
 static void encomsp_virtual_channel_event_disconnected(encomspPlugin* encomsp)
 {
 	UINT rc;
-	MessageQueue_PostQuit(encomsp->queue, 0);
-	WaitForSingleObject(encomsp->thread, INFINITE);
+
+	if (MessageQueue_PostQuit(encomsp->queue, 0))
+		WaitForSingleObject(encomsp->thread, INFINITE);
 
 	MessageQueue_Free(encomsp->queue);
 	CloseHandle(encomsp->thread);

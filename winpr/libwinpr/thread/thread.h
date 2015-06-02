@@ -3,6 +3,7 @@
  * Process Thread Functions
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Hewlett-Packard Development Company, L.P.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +46,8 @@ struct winpr_thread
 	SIZE_T dwStackSize;
 	LPVOID lpParameter;
 	pthread_mutex_t mutex;
+	pthread_mutex_t threadIsReadyMutex;
+	pthread_cond_t threadIsReady;
 	LPTHREAD_START_ROUTINE lpStartAddress;
 	LPSECURITY_ATTRIBUTES lpThreadAttributes;
 #if defined(WITH_DEBUG_THREADS)

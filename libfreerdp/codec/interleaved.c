@@ -3,6 +3,8 @@
  * Interleaved RLE Bitmap Codec
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -426,7 +428,21 @@ BITMAP_INTERLEAVED_CONTEXT* bitmap_interleaved_context_new(BOOL Compressor)
 	{
 		interleaved->TempSize = 64 * 64 * 4;
 		interleaved->TempBuffer = _aligned_malloc(interleaved->TempSize, 16);
+		if (!interleaved->TempBuffer)
+		{
+			free(interleaved);
+			WLog_ERR(TAG, "_aligned_malloc failed!");
+			return NULL;
+		}
 		interleaved->bts = Stream_New(NULL, interleaved->TempSize);
+
+		if (!interleaved->bts)
+		{
+			_aligned_free(interleaved->TempBuffer);
+			free(interleaved);
+			WLog_ERR(TAG, "Stream_New failed!");
+			return NULL;
+		}
 	}
 
 	return interleaved;

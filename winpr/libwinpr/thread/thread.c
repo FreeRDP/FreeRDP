@@ -3,6 +3,7 @@
  * Process Thread Functions
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Hewlett-Packard Development Company, L.P.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -294,6 +295,20 @@ static void* thread_launcher(void* arg)
 			goto exit;
 		}
 
+		pthread_mutex_lock(&thread->threadIsReadyMutex);
+		if (!ListDictionary_Contains(thread_list, &thread->thread))
+		{
+			if (pthread_cond_wait(&thread->threadIsReady, &thread->threadIsReadyMutex) != 0)
+			{
+				WLog_ERR(TAG, "The thread could not be made ready");
+				pthread_mutex_unlock(&thread->threadIsReadyMutex);
+				goto exit;
+			}
+		}
+		pthread_mutex_unlock(&thread->threadIsReadyMutex);
+
+		assert(ListDictionary_Contains(thread_list, &thread->thread));
+
 		rc = fkt(thread->lpParameter);
 	}
 
@@ -328,8 +343,22 @@ static BOOL winpr_StartThread(WINPR_THREAD *thread)
 
 	if (pthread_create(&thread->thread, &attr, thread_launcher, thread))
 		goto error;
+
+
+	pthread_mutex_lock(&thread->threadIsReadyMutex);
 	if (!ListDictionary_Add(thread_list, &thread->thread, thread))
+	{
+		WLog_ERR(TAG, "failed to add the thread to the thread list");
 		goto error;
+	}
+	if (pthread_cond_signal(&thread->threadIsReady) != 0)
+	{
+		WLog_ERR(TAG, "failed to signal the thread was ready");
+		pthread_mutex_unlock(&thread->threadIsReadyMutex);
+		goto error;
+	}
+	pthread_mutex_unlock(&thread->threadIsReadyMutex);
+
 	pthread_attr_destroy(&attr);
 	dump_thread(thread);
 	return TRUE;
@@ -390,6 +419,18 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 		goto error_mutex;
 	}
 
+	if (pthread_mutex_init(&thread->threadIsReadyMutex, NULL) != 0)
+	{
+		WLog_ERR(TAG, "failed to initialize a mutex for a condition variable");
+		goto error_thread_ready_mutex;
+	}
+
+	if (pthread_cond_init(&thread->threadIsReady, NULL) != 0)
+	{
+		WLog_ERR(TAG, "failed to initialize a condition variable");
+		goto error_thread_ready;
+	}
+
 	WINPR_HANDLE_SET_TYPE(thread, HANDLE_TYPE_THREAD);
 	handle = (HANDLE) thread;
 
@@ -418,6 +459,10 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 	return handle;
 
 error_thread_list:
+	pthread_cond_destroy(&thread->threadIsReady);
+error_thread_ready:
+	pthread_mutex_destroy(&thread->threadIsReadyMutex);
+error_thread_ready_mutex:
 	pthread_mutex_destroy(&thread->mutex);
 error_mutex:
 	if (thread->pipe_fd[1] >= 0)
@@ -431,9 +476,21 @@ error_pipefd0:
 
 void cleanup_handle(void *obj)
 {
+	int rc;
 	WINPR_THREAD* thread = (WINPR_THREAD*) obj;
-	int rc = pthread_mutex_destroy(&thread->mutex);
+	
 
+	rc = pthread_cond_destroy(&thread->threadIsReady);
+	if (rc)
+		WLog_ERR(TAG, "failed to destroy a condition variable [%d] %s (%d)",
+				rc, strerror(errno), errno);
+
+	rc = pthread_mutex_destroy(&thread->threadIsReadyMutex);
+	if (rc)
+		WLog_ERR(TAG, "failed to destroy a condition variable mutex [%d] %s (%d)",
+				rc, strerror(errno), errno);
+
+	rc = pthread_mutex_destroy(&thread->mutex);
 	if (rc)
 		WLog_ERR(TAG, "failed to destroy mutex [%d] %s (%d)",
 				rc, strerror(errno), errno);

@@ -344,6 +344,16 @@ void* shadow_server_thread(rdpShadowServer* server)
 
 	shadow_subsystem_stop(server->subsystem);
 
+	/* Signal to the clients that server is being stopped and wait for them
+	 * to disconnect. */
+	if (MessageQueue_PostQuit(subsystem->MsgPipe->Out, 0))
+	{
+		while(ArrayList_Count(server->clients) > 0)
+		{
+			Sleep(100);
+		}
+	}
+
 	ExitThread(0);
 
 	return NULL;

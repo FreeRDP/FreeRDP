@@ -3,6 +3,8 @@
  * WinPR Logger
  *
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -245,6 +247,8 @@ int WLog_PacketMessage_Write_EthernetHeader(wPcap* pcap, wEthernetHeader* ethern
 		return -1;
 
 	s = Stream_New(buffer, 14);
+	if (!s)
+		return -1;
 	Stream_Write(s, ethernet->Destination, 6);
 	Stream_Write(s, ethernet->Source, 6);
 	Stream_Write_UINT16_BE(s, ethernet->Type);
@@ -284,6 +288,8 @@ int WLog_PacketMessage_Write_IPv4Header(wPcap* pcap, wIPv4Header* ipv4)
 		return -1;
 
 	s = Stream_New(buffer, 20);
+	if (!s)
+		return -1;
 	Stream_Write_UINT8(s, (ipv4->Version << 4) | ipv4->InternetHeaderLength);
 	Stream_Write_UINT8(s, ipv4->TypeOfService);
 	Stream_Write_UINT16_BE(s, ipv4->TotalLength);
@@ -312,6 +318,8 @@ int WLog_PacketMessage_Write_TcpHeader(wPcap* pcap, wTcpHeader* tcp)
 		return -1;
 
 	s = Stream_New(buffer, 20);
+	if (!s)
+		return -1;
 	Stream_Write_UINT16_BE(s, tcp->SourcePort);
 	Stream_Write_UINT16_BE(s, tcp->DestinationPort);
 	Stream_Write_UINT32_BE(s, tcp->SequenceNumber);

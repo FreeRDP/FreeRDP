@@ -75,6 +75,10 @@ if(NOT ANDROID AND NOT IOS)
 	add_subdirectory(tools)
 endif()
 
+if(BUILD_TESTING)
+	add_subdirectory(test)
+endif()
+
 # Exporting
 
 if(${CMAKE_VERSION} VERSION_GREATER "2.8.10")

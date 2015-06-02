@@ -235,18 +235,33 @@ int ios_run_freerdp(freerdp* instance)
 #pragma mark -
 #pragma mark Context callbacks
 
-int ios_context_new(freerdp* instance, rdpContext* context)
+BOOL ios_context_new(freerdp* instance, rdpContext* context)
 {
-	mfInfo* mfi = (mfInfo*)calloc(1, sizeof(mfInfo));
-	((mfContext*) context)->mfi = mfi;
-	context->channels = freerdp_channels_new();
-	ios_events_create_pipe(mfi);
+	mfInfo* mfi;
+
+	if (!(mfi = (mfInfo*)calloc(1, sizeof(mfInfo))))
+		goto fail_mfi;
+
+	if (!(context->channels = freerdp_channels_new()))
+		goto fail_channels;
 	
+	if (!ios_events_create_pipe(mfi))
+		goto fail_events;
+
+	((mfContext*) context)->mfi = mfi;
 	mfi->_context = context;
 	mfi->context = (mfContext*)context;
 	mfi->context->settings = instance->settings;
 	mfi->instance = instance;
-	return 0;
+	return TRUE;
+
+fail_events:
+	freerdp_channels_free(context->channels);
+	context->channels = NULL;
+fail_channels:
+	free(mfi);
+fail_mfi:
+	return FALSE;
 }
 
 void ios_context_free(freerdp* instance, rdpContext* context)

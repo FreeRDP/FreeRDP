@@ -477,9 +477,9 @@ WINPR_API HANDLE MessageQueue_Event(wMessageQueue* queue);
 WINPR_API BOOL MessageQueue_Wait(wMessageQueue* queue);
 WINPR_API int MessageQueue_Size(wMessageQueue* queue);
 
-WINPR_API void MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message);
-WINPR_API void MessageQueue_Post(wMessageQueue* queue, void* context, UINT32 type, void* wParam, void* lParam);
-WINPR_API void MessageQueue_PostQuit(wMessageQueue* queue, int nExitCode);
+WINPR_API BOOL MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message);
+WINPR_API BOOL MessageQueue_Post(wMessageQueue* queue, void* context, UINT32 type, void* wParam, void* lParam);
+WINPR_API BOOL MessageQueue_PostQuit(wMessageQueue* queue, int nExitCode);
 
 WINPR_API int MessageQueue_Get(wMessageQueue* queue, wMessage* message);
 WINPR_API int MessageQueue_Peek(wMessageQueue* queue, wMessage* message, BOOL remove);

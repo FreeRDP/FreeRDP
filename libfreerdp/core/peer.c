@@ -222,7 +222,7 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 
 		if (!settings->RdpServerRsaKey)
 		{
-			WLog_ERR(TAG, "inavlid RDP key file %s", settings->RdpKeyFile);
+			WLog_ERR(TAG, "invalid RDP key file %s", settings->RdpKeyFile);
 			return FALSE;
 		}
 	}
@@ -635,6 +635,7 @@ BOOL freerdp_peer_context_new(freerdp_peer* client)
 
 	client->context = context;
 
+	context->peer = client;
 	context->ServerMode = TRUE;
 
 	if (!(context->metrics = metrics_new(context)))
@@ -649,7 +650,6 @@ BOOL freerdp_peer_context_new(freerdp_peer* client)
 	client->autodetect = rdp->autodetect;
 
 	context->rdp = rdp;
-	context->peer = client;
 	context->input = client->input;
 	context->update = client->update;
 	context->settings = client->settings;

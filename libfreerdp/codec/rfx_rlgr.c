@@ -34,6 +34,7 @@
 #include <winpr/print.h>
 #include <winpr/sysinfo.h>
 #include <winpr/bitstream.h>
+#include <winpr/intrin.h>
 
 #include "rfx_bitstream.h"
 
