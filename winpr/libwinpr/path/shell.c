@@ -28,6 +28,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/heap.h>
+#include <winpr/file.h>
 #include <winpr/tchar.h>
 #include <winpr/environment.h>
 
@@ -418,6 +419,50 @@ char* GetCombinedPath(const char* basePath, const char* subPath)
 	free(subPathCpy);
 
 	return path;
+}
+
+BOOL PathMakePathA(LPCSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
+{
+	size_t length;
+	const char delim = PathGetSeparatorA(0);
+	char* cur;
+	char* copy_org = _strdup(path);
+	char* copy = copy_org;
+
+	if (!copy_org)
+		return FALSE;
+
+	length = strlen(copy_org);
+
+	/* Find first path element that exists. */
+	while (copy)
+	{
+		if (!PathFileExistsA(copy))
+		{
+			cur = strrchr(copy, delim);
+			if (cur)
+				*cur = '\0';
+		}
+		else
+			break;
+	}
+
+	/* Create directories. */
+	while(copy)
+	{
+		if (!PathFileExistsA(copy))
+		{
+			if (!CreateDirectoryA(copy, NULL))
+				break;
+		}
+		if (strlen(copy) < length)
+			copy[strlen(copy)] = delim;
+		else
+			break;
+	}
+	free (copy_org);
+
+	return PathFileExistsA(path);
 }
 
 BOOL PathFileExistsA(LPCSTR pszPath)

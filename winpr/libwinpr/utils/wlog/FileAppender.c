@@ -95,7 +95,7 @@ int WLog_FileAppender_Open(wLog* log, wLogFileAppender* appender)
 
 	if (!PathFileExistsA(appender->FilePath))
 	{
-		if (!CreateDirectoryA(appender->FilePath, 0))
+		if (!PathMakePathA(appender->FilePath, 0))
 			return -1;
 		UnixChangeFileMode(appender->FilePath, 0xFFFF);
 	}

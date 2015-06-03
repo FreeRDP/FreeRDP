@@ -51,7 +51,7 @@ BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 
 	if (!PathFileExistsA(settings->ConfigPath))
 	{
-		if (!CreateDirectoryA(settings->ConfigPath, 0))
+		if (!PathMakePathA(settings->ConfigPath, 0))
 		{
 			WLog_ERR(TAG,  "error creating directory '%s'", settings->ConfigPath);
 			goto fail;
@@ -64,7 +64,7 @@ BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 
 	if (!PathFileExistsA(certificate_store->path))
 	{
-		if (!CreateDirectoryA(certificate_store->path, 0))
+		if (!PathMakePathA(certificate_store->path, 0))
 		{
 			WLog_ERR(TAG,  "error creating directory [%s]", certificate_store->path);
 			goto fail;
@@ -77,7 +77,7 @@ BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 
 	if (!PathFileExistsA(server_path))
 	{
-		if (!CreateDirectoryA(server_path, 0))
+		if (!PathMakePathA(server_path, 0))
 		{
 			WLog_ERR(TAG,  "error creating directory [%s]", server_path);
 			goto fail;
