@@ -5,6 +5,8 @@
  * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2010-2011 Vic Lee
  * Copyright 2012 Gerald Richter
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +26,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <freerdp/channels/log.h>
 
 #ifdef _WIN32
 #include <direct.h>
@@ -89,6 +92,8 @@ typedef UINT32 mode_t;
 	(_f->filename[0] == '.' ? FILE_ATTRIBUTE_HIDDEN : 0) | \
 	(_f->delete_pending ? FILE_ATTRIBUTE_TEMPORARY : 0) | \
 	(st.st_mode & S_IWUSR ? 0 : FILE_ATTRIBUTE_READONLY))
+
+#define TAG CHANNELS_TAG("drive.client")
 
 typedef struct _DRIVE_FILE DRIVE_FILE;
 
