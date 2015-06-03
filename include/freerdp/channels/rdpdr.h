@@ -4,6 +4,8 @@
  *
  * Copyright 2010-2011 Vic Lee
  * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +32,7 @@
 #include <winpr/stream.h>
 #include <winpr/interlocked.h>
 #include <winpr/collections.h>
+#include <winpr/win32error.h>
 
 #include <freerdp/freerdp.h>
 
@@ -314,8 +317,8 @@ typedef struct _DEVICE DEVICE;
 typedef struct _IRP IRP;
 typedef struct _DEVMAN DEVMAN;
 
-typedef void (*pcIRPRequest)(DEVICE* device, IRP* irp);
-typedef void (*pcInitDevice)(DEVICE* device);
+typedef WIN32ERROR (*pcIRPRequest)(DEVICE* device, IRP* irp);
+typedef WIN32ERROR (*pcInitDevice)(DEVICE* device);
 typedef void (*pcFreeDevice)(DEVICE* device);
 
 struct _DEVICE
@@ -331,7 +334,7 @@ struct _DEVICE
 	pcFreeDevice Free;
 };
 
-typedef void (*pcIRPResponse)(IRP* irp);
+typedef WIN32ERROR (*pcIRPResponse)(IRP* irp);
 
 struct _IRP
 {
@@ -362,7 +365,7 @@ struct _DEVMAN
 	wListDictionary* devices;
 };
 
-typedef void (*pcRegisterDevice)(DEVMAN* devman, DEVICE* device);
+typedef WIN32ERROR (*pcRegisterDevice)(DEVMAN* devman, DEVICE* device);
 
 struct _DEVICE_SERVICE_ENTRY_POINTS
 {
