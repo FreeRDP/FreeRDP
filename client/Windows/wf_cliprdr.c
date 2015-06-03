@@ -1576,7 +1576,7 @@ static int wf_cliprdr_server_format_data_request(CliprdrClientContext* context, 
 
 		result = OleGetClipboard(&dataObj);
 
-		if (!SUCCEEDED(result))
+		if (FAILED(result))
 			return -1;
 
 		ZeroMemory(&format_etc, sizeof(FORMATETC));
@@ -1615,7 +1615,7 @@ static int wf_cliprdr_server_format_data_request(CliprdrClientContext* context, 
 
 			result = IDataObject_GetData(dataObj, &format_etc, &stg_medium);
 
-			if (!SUCCEEDED(result)) {
+			if (FAILED(result)) {
 				DEBUG_CLIPRDR("dataObj->GetData failed.");
 			}
 
@@ -1782,7 +1782,7 @@ int wf_cliprdr_server_file_contents_request(CliprdrClientContext* context, CLIPR
 
 	hRet = OleGetClipboard(&pDataObj);
 
-	if (!SUCCEEDED(hRet))
+	if (FAILED(hRet))
 	{
 		WLog_ERR(TAG,  "filecontents: get ole clipboard failed.");
 		goto error;
