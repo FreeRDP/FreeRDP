@@ -3,14 +3,18 @@
 #include <time.h>
 
 #include <winpr/crt.h>
+#include <winpr/file.h>
 #include <winpr/path.h>
 
 int TestPathMakePath(int argc, char* argv[])
 {
 	int x;
+	size_t baseLen;
 	BOOL success;
 	char tmp[64];
 	char* path;
+	char* cur;
+	char delim = PathGetSeparatorA(0);
 	char* base = GetKnownPath(KNOWN_PATH_TEMP);
 	if (!base)
 	{
@@ -18,6 +22,7 @@ int TestPathMakePath(int argc, char* argv[])
 		return -1;
 	}
 
+	baseLen = strlen(base);
 	srand(time(NULL));
 	for (x=0; x<5; x++)
 	{
@@ -49,9 +54,22 @@ int TestPathMakePath(int argc, char* argv[])
 		free (path);
 		return -1;
 	}
-	free (path);
 
-  printf("%s success!", __FUNCTION__);
+	while (strlen(path) > baseLen)
+	{
+		if (!RemoveDirectoryA(path))
+		{
+			fprintf(stderr, "RemoveDirectoryA %s failed!\n", path);
+			free (path);
+			return -1;
+		}
+		cur = strrchr(path, delim);
+		if (cur)
+			*cur = '\0';
+	}
+
+	free (path);
+	printf("%s success!\n", __FUNCTION__);
 	return 0;
 }
 
