@@ -14,7 +14,7 @@ static void* thread_func(void* arg)
 int TestThreadExitThread(int argc, char* argv[])
 {
 	HANDLE thread; 
-	QWORD waitResult;
+	DWORD waitResult;
 	int i;
 
 	/* FIXME: create some noise to better guaranty the test validity and
