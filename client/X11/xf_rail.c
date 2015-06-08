@@ -628,7 +628,7 @@ void xf_rail_register_update_callbacks(rdpUpdate* update)
 
 /* RemoteApp Virtual Channel Extension */
 
-static int xf_rail_server_execute_result(RailClientContext* context, RAIL_EXEC_RESULT_ORDER* execResult)
+static WIN32ERROR xf_rail_server_execute_result(RailClientContext* context, RAIL_EXEC_RESULT_ORDER* execResult)
 {
 	xfContext* xfc = (xfContext*) context->custom;
 
@@ -643,15 +643,15 @@ static int xf_rail_server_execute_result(RailClientContext* context, RAIL_EXEC_R
 		xf_rail_enable_remoteapp_mode(xfc);
 	}
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-static int xf_rail_server_system_param(RailClientContext* context, RAIL_SYSPARAM_ORDER* sysparam)
+static WIN32ERROR xf_rail_server_system_param(RailClientContext* context, RAIL_SYSPARAM_ORDER* sysparam)
 {
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-static int xf_rail_server_handshake(RailClientContext* context, RAIL_HANDSHAKE_ORDER* handshake)
+static WIN32ERROR xf_rail_server_handshake(RailClientContext* context, RAIL_HANDSHAKE_ORDER* handshake)
 {
 	RAIL_EXEC_ORDER exec;
 	RAIL_SYSPARAM_ORDER sysparam;
@@ -713,15 +713,15 @@ static int xf_rail_server_handshake(RailClientContext* context, RAIL_HANDSHAKE_O
 
 	context->ClientExecute(context, &exec);
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-static int xf_rail_server_handshake_ex(RailClientContext* context, RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
+static WIN32ERROR xf_rail_server_handshake_ex(RailClientContext* context, RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
 {
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-static int xf_rail_server_local_move_size(RailClientContext* context, RAIL_LOCALMOVESIZE_ORDER* localMoveSize)
+static WIN32ERROR xf_rail_server_local_move_size(RailClientContext* context, RAIL_LOCALMOVESIZE_ORDER* localMoveSize)
 {
 	int x = 0, y = 0;
 	int direction = 0;
@@ -733,7 +733,7 @@ static int xf_rail_server_local_move_size(RailClientContext* context, RAIL_LOCAL
 			(void*) (UINT_PTR) localMoveSize->windowId);
 
 	if (!appWindow)
-		return -1;
+		return ERROR_INTERNAL_ERROR;
 
 	switch (localMoveSize->moveSizeType)
 	{
@@ -797,7 +797,7 @@ static int xf_rail_server_local_move_size(RailClientContext* context, RAIL_LOCAL
 			x = localMoveSize->posX;
 			y = localMoveSize->posY;
 			/* FIXME: local keyboard moves not working */
-			return 1;
+			return CHANNEL_RC_OK;
 			break;
 
 		case RAIL_WMSZ_KEYSIZE:
@@ -805,7 +805,7 @@ static int xf_rail_server_local_move_size(RailClientContext* context, RAIL_LOCAL
 			x = localMoveSize->posX;
 			y = localMoveSize->posY;
 			/* FIXME: local keyboard moves not working */
-			return 1;
+			return CHANNEL_RC_OK;
 			break;
 	}
 
@@ -818,10 +818,10 @@ static int xf_rail_server_local_move_size(RailClientContext* context, RAIL_LOCAL
 		xf_EndLocalMoveSize(xfc, appWindow);
 	}
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-static int xf_rail_server_min_max_info(RailClientContext* context, RAIL_MINMAXINFO_ORDER* minMaxInfo)
+static WIN32ERROR xf_rail_server_min_max_info(RailClientContext* context, RAIL_MINMAXINFO_ORDER* minMaxInfo)
 {
 	xfAppWindow* appWindow = NULL;
 	xfContext* xfc = (xfContext*) context->custom;
@@ -830,7 +830,7 @@ static int xf_rail_server_min_max_info(RailClientContext* context, RAIL_MINMAXIN
 			(void*) (UINT_PTR) minMaxInfo->windowId);
 
 	if (!appWindow)
-		return -1;
+		return ERROR_INTERNAL_ERROR;
 
 	xf_SetWindowMinMaxInfo(xfc, appWindow,
 			minMaxInfo->maxWidth, minMaxInfo->maxHeight,
@@ -838,17 +838,17 @@ static int xf_rail_server_min_max_info(RailClientContext* context, RAIL_MINMAXIN
 			minMaxInfo->minTrackWidth, minMaxInfo->minTrackHeight,
 			minMaxInfo->maxTrackWidth, minMaxInfo->maxTrackHeight);
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-static int xf_rail_server_language_bar_info(RailClientContext* context, RAIL_LANGBAR_INFO_ORDER* langBarInfo)
+static WIN32ERROR xf_rail_server_language_bar_info(RailClientContext* context, RAIL_LANGBAR_INFO_ORDER* langBarInfo)
 {
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-static int xf_rail_server_get_appid_response(RailClientContext* context, RAIL_GET_APPID_RESP_ORDER* getAppIdResp)
+static WIN32ERROR xf_rail_server_get_appid_response(RailClientContext* context, RAIL_GET_APPID_RESP_ORDER* getAppIdResp)
 {
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
 int xf_rail_init(xfContext* xfc, RailClientContext* rail)
