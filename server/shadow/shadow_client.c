@@ -257,7 +257,7 @@ BOOL shadow_client_refresh_rect(rdpShadowClient* client, BYTE count, RECTANGLE_1
 	SHADOW_MSG_IN_REFRESH_OUTPUT* wParam;
 	wMessagePipe* MsgPipe = client->subsystem->MsgPipe;
 
-	if (!areas)
+	if (count && !areas)
 		return FALSE;
 
 	if (!(wParam = (SHADOW_MSG_IN_REFRESH_OUTPUT*) calloc(1, sizeof(SHADOW_MSG_IN_REFRESH_OUTPUT))))
@@ -274,9 +274,9 @@ BOOL shadow_client_refresh_rect(rdpShadowClient* client, BYTE count, RECTANGLE_1
 			free (wParam);
 			return FALSE;
 		}
-	}
 
-	CopyMemory(wParam->rects, areas, wParam->numRects * sizeof(RECTANGLE_16));
+		CopyMemory(wParam->rects, areas, wParam->numRects * sizeof(RECTANGLE_16));
+	}
 
 	message.id = SHADOW_MSG_IN_REFRESH_OUTPUT_ID;
 	message.wParam = (void*) wParam;
