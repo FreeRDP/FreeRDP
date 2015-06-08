@@ -811,13 +811,13 @@ HRESULT PathCchConvertStyleA(PSTR pszPath, size_t cchPath, unsigned long dwFlags
 		else
 		{
 			/* Unexpected error */
-			return S_FALSE;
+			return E_FAIL;
 		}
 	}
 	else
 	{
 		/* Gangnam style? */
-		return S_FALSE;
+		return E_FAIL;
 	}
 
 	return S_OK;
@@ -868,13 +868,13 @@ HRESULT PathCchConvertStyleW(PWSTR pszPath, size_t cchPath, unsigned long dwFlag
 		else
 		{
 			/* Unexpected error */
-			return S_FALSE;
+			return E_FAIL;
 		}
 	}
 	else
 	{
 		/* Gangnam style? */
-		return S_FALSE;
+		return E_FAIL;
 	}
 
 	return S_OK;
