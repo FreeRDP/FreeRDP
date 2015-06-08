@@ -12,7 +12,7 @@ HRESULT PATH_CCH_ADD_SEPARATOR_EX(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
 	size_t pszPathLength;
 
 	if (!pszPath)
-		return S_FALSE;
+		return E_INVALIDARG;
 
 	pszPathLength = lstrlenW(pszPath);
 
@@ -27,7 +27,7 @@ HRESULT PATH_CCH_ADD_SEPARATOR_EX(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
 		return S_OK;
 	}
 
-	return S_FALSE;
+	return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
 }
 
 #else
@@ -37,7 +37,7 @@ HRESULT PATH_CCH_ADD_SEPARATOR_EX(PSTR pszPath, size_t cchPath, PSTR* ppszEnd, s
 	size_t pszPathLength;
 
 	if (!pszPath)
-		return S_FALSE;
+		return E_INVALIDARG;
 
 	pszPathLength = lstrlenA(pszPath);
 
@@ -52,7 +52,7 @@ HRESULT PATH_CCH_ADD_SEPARATOR_EX(PSTR pszPath, size_t cchPath, PSTR* ppszEnd, s
 		return S_OK;
 	}
 
-	return S_FALSE;
+	return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
 }
 
 #endif

@@ -634,27 +634,29 @@ HRESULT PathCchStripToRootW(PWSTR pszPath, size_t cchPath)
 HRESULT PathCchStripPrefixA(PSTR pszPath, size_t cchPath)
 {
 	BOOL hasPrefix;
-	BOOL deviceNamespace;
 
 	if (!pszPath)
-		return S_FALSE;
+		return E_INVALIDARG;
 
-	if (cchPath < 4)
-		return S_FALSE;
+	if (cchPath < 4 || cchPath > PATHCCH_MAX_CCH)
+		return E_INVALIDARG;
 
 	hasPrefix = ((pszPath[0] == '\\') && (pszPath[1] == '\\') &&
 		(pszPath[2] == '?') && (pszPath[3] == '\\')) ? TRUE : FALSE;
 
 	if (hasPrefix)
 	{
-		if (cchPath < 7)
+		if (cchPath < 6)
 			return S_FALSE;
 
-		deviceNamespace = ((pszPath[5] == ':') && (pszPath[6] == '\\')) ? TRUE : FALSE;
-
-		if (deviceNamespace)
+		if (IsCharAlpha(pszPath[4]) && (pszPath[5] == ':')) /* like C: */
 		{
 			memmove_s(pszPath, cchPath, &pszPath[4], cchPath - 4);
+			/* since the passed pszPath must not necessarily be null terminated
+			 * and we always have enough space after the strip we can always
+			 * ensure the null termination of the stripped result
+			 */
+			pszPath[cchPath - 4] = 0;
 			return S_OK;
 		}
 	}
@@ -665,27 +667,32 @@ HRESULT PathCchStripPrefixA(PSTR pszPath, size_t cchPath)
 HRESULT PathCchStripPrefixW(PWSTR pszPath, size_t cchPath)
 {
 	BOOL hasPrefix;
-	BOOL deviceNamespace;
 
 	if (!pszPath)
-		return S_FALSE;
+		return E_INVALIDARG;
 
-	if (cchPath < 4)
-		return S_FALSE;
+	if (cchPath < 4 || cchPath > PATHCCH_MAX_CCH)
+		return E_INVALIDARG;
 
 	hasPrefix = ((pszPath[0] == '\\') && (pszPath[1] == '\\') &&
 		(pszPath[2] == '?') && (pszPath[3] == '\\')) ? TRUE : FALSE;
 
 	if (hasPrefix)
 	{
-		if (cchPath < 7)
+		if (cchPath < 6)
 			return S_FALSE;
 
-		deviceNamespace = ((pszPath[5] == ':') && (pszPath[6] == '\\')) ? TRUE : FALSE;
+		if (cchPath < (lstrlenW(&pszPath[4]) + 1))
+			return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
 
-		if (deviceNamespace)
+		if (IsCharAlpha(pszPath[4]) && (pszPath[5] == ':')) /* like C: */
 		{
 			wmemmove_s(pszPath, cchPath, &pszPath[4], cchPath - 4);
+			/* since the passed pszPath must not necessarily be null terminated
+			 * and we always have enough space after the strip we can always
+			 * ensure the null termination of the stripped result
+			 */
+			pszPath[cchPath - 4] = 0;
 			return S_OK;
 		}
 	}
