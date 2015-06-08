@@ -257,7 +257,7 @@ BOOL shadow_client_refresh_rect(rdpShadowClient* client, BYTE count, RECTANGLE_1
 	SHADOW_MSG_IN_REFRESH_OUTPUT* wParam;
 	wMessagePipe* MsgPipe = client->subsystem->MsgPipe;
 
-	if (!areas)
+	if (count && !areas)
 		return FALSE;
 
 	if (!(wParam = (SHADOW_MSG_IN_REFRESH_OUTPUT*) calloc(1, sizeof(SHADOW_MSG_IN_REFRESH_OUTPUT))))
