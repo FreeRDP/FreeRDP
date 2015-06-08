@@ -274,9 +274,9 @@ BOOL shadow_client_refresh_rect(rdpShadowClient* client, BYTE count, RECTANGLE_1
 			free (wParam);
 			return FALSE;
 		}
-	}
 
-	CopyMemory(wParam->rects, areas, wParam->numRects * sizeof(RECTANGLE_16));
+		CopyMemory(wParam->rects, areas, wParam->numRects * sizeof(RECTANGLE_16));
+	}
 
 	message.id = SHADOW_MSG_IN_REFRESH_OUTPUT_ID;
 	message.wParam = (void*) wParam;
