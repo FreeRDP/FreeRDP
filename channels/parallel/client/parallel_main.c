@@ -4,6 +4,8 @@
  *
  * Copyright 2010 O.S. Systems Software Ltda.
  * Copyright 2010 Eduardo Fiss Beloni <beloni@ossystems.com.br>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +56,9 @@
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
 #include <freerdp/channels/rdpdr.h>
+#include <freerdp/channels/log.h>
+
+#define TAG CHANNELS_TAG("drive.client")
 
 struct _PARALLEL_DEVICE
 {
@@ -68,7 +73,7 @@ struct _PARALLEL_DEVICE
 };
 typedef struct _PARALLEL_DEVICE PARALLEL_DEVICE;
 
-static void parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
+static WIN32ERROR parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 {
 	char* path = NULL;
 	int status;
@@ -83,7 +88,11 @@ static void parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 			PathLength / 2, &path, 0, NULL, NULL);
 
 	if (status < 1)
-		path = (char*) calloc(1, 1);
+		if (!(path = (char*) calloc(1, 1)))
+		{
+			WLog_ERR(TAG, "calloc failed!");
+			return CHANNEL_RC_NO_MEMORY;
+		}
 
 	parallel->id = irp->devman->id_sequence++;
 	parallel->file = open(parallel->path, O_RDWR);
@@ -107,10 +116,10 @@ static void parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 
 	free(path);
 
-	irp->Complete(irp);
+	return irp->Complete(irp);
 }
 
-static void parallel_process_irp_close(PARALLEL_DEVICE* parallel, IRP* irp)
+static WIN32ERROR parallel_process_irp_close(PARALLEL_DEVICE* parallel, IRP* irp)
 {
 	if (close(parallel->file) < 0)
 	{
@@ -123,10 +132,10 @@ static void parallel_process_irp_close(PARALLEL_DEVICE* parallel, IRP* irp)
 
 	Stream_Zero(irp->output, 5); /* Padding(5) */
 
-	irp->Complete(irp);
+	return irp->Complete(irp);
 }
 
-static void parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
+static WIN32ERROR parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 {
 	UINT32 Length;
 	UINT64 Offset;
@@ -137,6 +146,11 @@ static void parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 	Stream_Read_UINT64(irp->input, Offset);
 
 	buffer = (BYTE*) malloc(Length);
+	if (!buffer)
+	{
+		WLog_ERR(TAG, "malloc failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	status = read(parallel->file, buffer, Length);
 
@@ -156,16 +170,21 @@ static void parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 
 	if (Length > 0)
 	{
-		Stream_EnsureRemainingCapacity(irp->output, Length);
+		if (!Stream_EnsureRemainingCapacity(irp->output, Length))
+		{
+			WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
+			free(buffer);
+			return CHANNEL_RC_NO_MEMORY;
+		}
 		Stream_Write(irp->output, buffer, Length);
 	}
 
 	free(buffer);
 
-	irp->Complete(irp);
+	return irp->Complete(irp);
 }
 
-static void parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
+static WIN32ERROR parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 {
 	UINT32 len;
 	UINT32 Length;
@@ -196,44 +215,67 @@ static void parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 	Stream_Write_UINT32(irp->output, Length);
 	Stream_Write_UINT8(irp->output, 0); /* Padding */
 
-	irp->Complete(irp);
+	return irp->Complete(irp);
 }
 
-static void parallel_process_irp_device_control(PARALLEL_DEVICE* parallel, IRP* irp)
+static WIN32ERROR parallel_process_irp_device_control(PARALLEL_DEVICE* parallel, IRP* irp)
 {
 	Stream_Write_UINT32(irp->output, 0); /* OutputBufferLength */
-	irp->Complete(irp);
+	return irp->Complete(irp);
 }
 
-static void parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
+static int parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
 {
+	WIN32ERROR error;
+
 	switch (irp->MajorFunction)
 	{
 		case IRP_MJ_CREATE:
-			parallel_process_irp_create(parallel, irp);
+			if ((error = parallel_process_irp_create(parallel, irp)))
+			{
+				WLog_ERR(TAG, "parallel_process_irp_create failed with error %d!", error);
+				return error;
+			}
 			break;
 
 		case IRP_MJ_CLOSE:
-			parallel_process_irp_close(parallel, irp);
+			if ((error = parallel_process_irp_close(parallel, irp)))
+			{
+				WLog_ERR(TAG, "parallel_process_irp_close failed with error %d!", error);
+				return error;
+			}
 			break;
 
 		case IRP_MJ_READ:
-			parallel_process_irp_read(parallel, irp);
+			if ((error = parallel_process_irp_read(parallel, irp)))
+			{
+				WLog_ERR(TAG, "parallel_process_irp_read failed with error %d!", error);
+				return error;
+			}
 			break;
 
 		case IRP_MJ_WRITE:
-			parallel_process_irp_write(parallel, irp);
+			if ((error = parallel_process_irp_write(parallel, irp)))
+			{
+				WLog_ERR(TAG, "parallel_process_irp_write failed with error %d!", error);
+				return error;
+			}
 			break;
 
 		case IRP_MJ_DEVICE_CONTROL:
-			parallel_process_irp_device_control(parallel, irp);
+			if ((error = parallel_process_irp_device_control(parallel, irp)))
+			{
+				WLog_ERR(TAG, "parallel_process_irp_device_control failed with error %d!", error);
+				return error;
+			}
 			break;
 
 		default:
 			irp->IoStatus = STATUS_NOT_SUPPORTED;
-			irp->Complete(irp);
+			return irp->Complete(irp);
 			break;
 	}
+	return CHANNEL_RC_OK;
 }
 
 static void* parallel_thread_func(void* arg)
@@ -241,31 +283,45 @@ static void* parallel_thread_func(void* arg)
 	IRP* irp;
 	wMessage message;
 	PARALLEL_DEVICE* parallel = (PARALLEL_DEVICE*) arg;
+	WIN32ERROR error = CHANNEL_RC_OK;
 
 	while (1)
 	{
 		if (!MessageQueue_Wait(parallel->queue))
+		{
+			WLog_ERR(TAG, "MessageQueue_Wait failed!");
+			error = ERROR_INTERNAL_ERROR;
 			break;
+		}
 
 		if (!MessageQueue_Peek(parallel->queue, &message, TRUE))
+		{
+			WLog_ERR(TAG, "MessageQueue_Peek failed!");
+			error = ERROR_INTERNAL_ERROR;
 			break;
+		}
 
 		if (message.id == WMQ_QUIT)
 			break;
 
 		irp = (IRP*) message.wParam;
 
-		parallel_process_irp(parallel, irp);
+		if ((error = parallel_process_irp(parallel, irp)))
+		{
+			WLog_ERR(TAG, "parallel_process_irp failed with error %d!", error);
+			break;
+		}
 	}
-
+	ExitThread((DWORD)error);
 	return NULL;
 }
 
-static void parallel_irp_request(DEVICE* device, IRP* irp)
+static WIN32ERROR parallel_irp_request(DEVICE* device, IRP* irp)
 {
 	PARALLEL_DEVICE* parallel = (PARALLEL_DEVICE*) device;
 
 	MessageQueue_Post(parallel->queue, NULL, 0, (void*) irp, NULL);
+	return CHANNEL_RC_OK;
 }
 
 static void parallel_free(DEVICE* device)
@@ -286,13 +342,15 @@ static void parallel_free(DEVICE* device)
 #define DeviceServiceEntry	parallel_DeviceServiceEntry
 #endif
 
-int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
+WIN32ERROR DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	char* name;
 	char* path;
-	int i, length;
+	int i;
+	size_t length;
 	RDPDR_PARALLEL* device;
 	PARALLEL_DEVICE* parallel;
+	WIN32ERROR error;
 
 	device = (RDPDR_PARALLEL*) pEntryPoints->device;
 	name = device->Name;
@@ -301,14 +359,17 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	if (!name || (name[0] == '*'))
 	{
 		/* TODO: implement auto detection of parallel ports */
-		return 0;
+		return CHANNEL_RC_OK;
 	}
 
 	if (name[0] && path[0])
 	{
 		parallel = (PARALLEL_DEVICE*) calloc(1, sizeof(PARALLEL_DEVICE));
 		if (!parallel)
-			return -1;
+		{
+			WLog_ERR(TAG, "calloc failed!");
+			return CHANNEL_RC_NO_MEMORY;
+		}
 
 		parallel->device.type = RDPDR_DTYP_PARALLEL;
 		parallel->device.name = name;
@@ -318,7 +379,11 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		length = strlen(name);
 		parallel->device.data = Stream_New(NULL, length + 1);
 		if (!parallel->device.data)
-			goto error_device_data;
+		{
+			WLog_ERR(TAG, "Stream_New failed!");
+			error = CHANNEL_RC_NO_MEMORY;
+			goto error_out;
+		}
 
 		for (i = 0; i <= length; i++)
 			Stream_Write_UINT8(parallel->device.data, name[i] < 0 ? '_' : name[i]);
@@ -327,22 +392,31 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 		parallel->queue = MessageQueue_New(NULL);
 		if (!parallel->queue)
-			goto error_queue;
+		{
+			WLog_ERR(TAG, "MessageQueue_New failed!");
+			error = CHANNEL_RC_NO_MEMORY;
+			goto error_out;
+		}
 
-		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*) parallel);
+		if ((error = pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*) parallel)))
+		{
+			WLog_ERR(TAG, "RegisterDevice failed with error %lu!", error);
+			goto error_out;
+		}
 
-		parallel->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) parallel_thread_func, (void*) parallel, 0, NULL);
-		if (!parallel->thread)
-			goto error_thread;
+
+		if (!(parallel->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) parallel_thread_func, (void*) parallel, 0, NULL)))
+		{
+			WLog_ERR(TAG, "CreateThread failed!");
+			error = ERROR_INTERNAL_ERROR;
+			goto error_out;
+		}
 	}
 
-	return 0;
-
-error_thread:
+	return CHANNEL_RC_OK;
+error_out:
 	MessageQueue_Free(parallel->queue);
-error_queue:
 	Stream_Free(parallel->device.data, TRUE);
-error_device_data:
 	free(parallel);
-	return -1;
+	return error;
 }
