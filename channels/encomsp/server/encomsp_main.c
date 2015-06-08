@@ -3,6 +3,8 @@
  * Multiparty Virtual Channel
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,15 +33,15 @@
 
 #define TAG CHANNELS_TAG("encomsp.server")
 
-static int encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
+static WIN32ERROR encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	if (Stream_GetRemainingLength(s) < ENCOMSP_ORDER_HEADER_SIZE)
-		return -1;
+		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, header->Type); /* Type (2 bytes) */
 	Stream_Read_UINT16(s, header->Length); /* Length (2 bytes) */
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
 #if 0
@@ -74,17 +76,21 @@ static int encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str)
 
 #endif
 
-static int encomsp_recv_change_participant_control_level_pdu(EncomspServerContext* context, wStream* s, ENCOMSP_ORDER_HEADER* header)
+static WIN32ERROR encomsp_recv_change_participant_control_level_pdu(EncomspServerContext* context, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU pdu;
+	WIN32ERROR error = CHANNEL_RC_OK;
 
 	beg = ((int) Stream_GetPosition(s)) - ENCOMSP_ORDER_HEADER_SIZE;
 
 	CopyMemory(&pdu, header, sizeof(ENCOMSP_ORDER_HEADER));
 
 	if (Stream_GetRemainingLength(s) < 6)
-		return -1;
+	{
+		WLog_ERR(TAG, "Not enought data!");
+		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT16(s, pdu.Flags); /* Flags (2 bytes) */
 	Stream_Read_UINT32(s, pdu.ParticipantId); /* ParticipantId (4 bytes) */
@@ -92,58 +98,68 @@ static int encomsp_recv_change_participant_control_level_pdu(EncomspServerContex
 	end = (int) Stream_GetPosition(s);
 
 	if ((beg + header->Length) < end)
-		return -1;
+	{
+		WLog_ERR(TAG, "Not enought data!");
+		return ERROR_INVALID_DATA;
+	}
 
 	if ((beg + header->Length) > end)
 	{
 		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
-			return -1;
+		{
+			WLog_ERR(TAG, "Not enought data!");
+			return ERROR_INVALID_DATA;
+		}
 
 		Stream_SetPosition(s, (beg + header->Length));
 	}
 
-	if (context->ChangeParticipantControlLevel)
-	{
-		return context->ChangeParticipantControlLevel(context, &pdu);
-	}
+	IFCALLRET(context->ChangeParticipantControlLevel, error, context, &pdu);
+	if (error)
+		WLog_ERR(TAG, "context->ChangeParticipantControlLevel failed with error %lu", error);
 
-	return 1;
+	return error;
 }
 
-static int encomsp_server_receive_pdu(EncomspServerContext* context, wStream* s)
+static WIN32ERROR encomsp_server_receive_pdu(EncomspServerContext* context, wStream* s)
 {
-	int status = 1;
+	WIN32ERROR error = CHANNEL_RC_OK;
 	ENCOMSP_ORDER_HEADER header;
 
 	while (Stream_GetRemainingLength(s) > 0)
 	{
-		if (encomsp_read_header(s, &header) < 0)
-			return -1;
+		if ((error = encomsp_read_header(s, &header)))
+		{
+			WLog_ERR(TAG, "encomsp_read_header failed with error %lu!", error);
+			return error;
+		}
 
 		WLog_INFO(TAG, "EncomspReceive: Type: %d Length: %d", header.Type, header.Length);
 
 		switch (header.Type)
 		{
 			case ODTYPE_PARTICIPANT_CTRL_CHANGED:
-				status = encomsp_recv_change_participant_control_level_pdu(context, s, &header);
+				if ((error = encomsp_recv_change_participant_control_level_pdu(context, s, &header)))
+				{
+					WLog_ERR(TAG, "encomsp_recv_change_participant_control_level_pdu failed with error %lu!", error);
+					return error;
+				}
+
 				break;
 
 			default:
-				status = -1;
+				WLog_ERR(TAG, "header.Type unknown %d!", header.Type);
+				return ERROR_INVALID_DATA;
 				break;
 		}
-
-		if (status < 0)
-			return -1;
 	}
 
-	return status;
+	return error;
 }
 
 static void* encomsp_server_thread(void* arg)
 {
 	wStream* s;
-	DWORD status;
 	DWORD nCount;
 	void* buffer;
 	HANDLE events[8];
@@ -151,6 +167,7 @@ static void* encomsp_server_thread(void* arg)
 	DWORD BytesReturned;
 	ENCOMSP_ORDER_HEADER* header;
 	EncomspServerContext* context;
+	WIN32ERROR error = CHANNEL_RC_OK;
 
 	context = (EncomspServerContext*) arg;
 
@@ -159,6 +176,12 @@ static void* encomsp_server_thread(void* arg)
 	ChannelEvent = NULL;
 
 	s = Stream_New(NULL, 4096);
+	if (!s)
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
+		ExitThread((DWORD) CHANNEL_RC_NO_MEMORY);
+		return NULL;
+	}
 
 	if (WTSVirtualChannelQuery(context->priv->ChannelHandle, WTSVirtualEventHandle, &buffer, &BytesReturned) == TRUE)
 	{
@@ -174,7 +197,7 @@ static void* encomsp_server_thread(void* arg)
 
 	while (1)
 	{
-		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+		WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
 		if (WaitForSingleObject(context->priv->StopEvent, 0) == WAIT_OBJECT_0)
 		{
@@ -184,10 +207,17 @@ static void* encomsp_server_thread(void* arg)
 		WTSVirtualChannelRead(context->priv->ChannelHandle, 0, NULL, 0, &BytesReturned);
 		if (BytesReturned < 1)
 			continue;
-		Stream_EnsureRemainingCapacity(s, BytesReturned);
+		if (!Stream_EnsureRemainingCapacity(s, BytesReturned))
+		{
+			WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
+			error = CHANNEL_RC_NO_MEMORY;
+			break;
+		}
 		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0,
 			(PCHAR) Stream_Buffer(s), Stream_Capacity(s), &BytesReturned))
 		{
+			WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
+			error = ERROR_INTERNAL_ERROR;
 			break;
 		}
 
@@ -199,40 +229,54 @@ static void* encomsp_server_thread(void* arg)
 			{
 				Stream_SealLength(s);
 				Stream_SetPosition(s, 0);
-				encomsp_server_receive_pdu(context, s);
+				if ((error = encomsp_server_receive_pdu(context, s)))
+				{
+					WLog_ERR(TAG, "encomsp_server_receive_pdu failed with error %lu!", error);
+					break;
+				}
 				Stream_SetPosition(s, 0);
 			}
 		}
 	}
 
 	Stream_Free(s, TRUE);
-
+	ExitThread((DWORD)error);
 	return NULL;
 }
 
-static int encomsp_server_start(EncomspServerContext* context)
+static WIN32ERROR encomsp_server_start(EncomspServerContext* context)
 {
 	context->priv->ChannelHandle = WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, "encomsp");
 
 	if (!context->priv->ChannelHandle)
-		return -1;
+		return CHANNEL_RC_BAD_CHANNEL;
 
-	context->priv->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (!(context->priv->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	{
+		WLog_ERR(TAG, "CreateEvent failed!");
+		return ERROR_INTERNAL_ERROR;
+	}
 
-	context->priv->Thread = CreateThread(NULL, 0,
-			(LPTHREAD_START_ROUTINE) encomsp_server_thread, (void*) context, 0, NULL);
+	if (!(context->priv->Thread = CreateThread(NULL, 0,
+			(LPTHREAD_START_ROUTINE) encomsp_server_thread, (void*) context, 0, NULL)))
+	{
+		WLog_ERR(TAG, "CreateThread failed!");
+		CloseHandle(context->priv->StopEvent);
+		context->priv->StopEvent = NULL;
+		return ERROR_INTERNAL_ERROR;
+	}
 
-	return 0;
+	return CHANNEL_RC_OK;
 }
 
-static int encomsp_server_stop(EncomspServerContext* context)
+static WIN32ERROR encomsp_server_stop(EncomspServerContext* context)
 {
 	SetEvent(context->priv->StopEvent);
 
 	WaitForSingleObject(context->priv->Thread, INFINITE);
 	CloseHandle(context->priv->Thread);
 
-	return 0;
+	return CHANNEL_RC_OK;
 }
 
 EncomspServerContext* encomsp_server_context_new(HANDLE vcm)
@@ -250,9 +294,11 @@ EncomspServerContext* encomsp_server_context_new(HANDLE vcm)
 
 		context->priv = (EncomspServerPrivate*) calloc(1, sizeof(EncomspServerPrivate));
 
-		if (context->priv)
+		if (!context->priv)
 		{
-
+			WLog_ERR(TAG, "calloc failed!");
+			free(context);
+			return NULL;
 		}
 	}
 

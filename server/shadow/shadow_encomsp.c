@@ -27,7 +27,7 @@
 
 #define TAG SERVER_TAG("shadow")
 
-static int encomsp_change_participant_control_level(EncomspServerContext* context,
+static WIN32ERROR encomsp_change_participant_control_level(EncomspServerContext* context,
 		ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU* pdu)
 {
 	BOOL inLobby;
@@ -90,7 +90,7 @@ static int encomsp_change_participant_control_level(EncomspServerContext* contex
 		client->inLobby = inLobby;
 	}
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
 int shadow_client_encomsp_init(rdpShadowClient* client)

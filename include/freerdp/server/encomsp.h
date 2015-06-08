@@ -3,6 +3,8 @@
  * Multiparty Virtual Channel
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,20 +35,20 @@
 typedef struct _encomsp_server_context EncomspServerContext;
 typedef struct _encomsp_server_private EncomspServerPrivate;
 
-typedef int (*psEncomspStart)(EncomspServerContext* context);
-typedef int (*psEncomspStop)(EncomspServerContext* context);
+typedef WIN32ERROR (*psEncomspStart)(EncomspServerContext* context);
+typedef WIN32ERROR (*psEncomspStop)(EncomspServerContext* context);
 
-typedef int (*psEncomspFilterUpdated)(EncomspServerContext* context, ENCOMSP_FILTER_UPDATED_PDU* filterUpdated);
-typedef int (*psEncomspApplicationCreated)(EncomspServerContext* context, ENCOMSP_APPLICATION_CREATED_PDU* applicationCreated);
-typedef int (*psEncomspApplicationRemoved)(EncomspServerContext* context, ENCOMSP_APPLICATION_REMOVED_PDU* applicationRemoved);
-typedef int (*psEncomspWindowCreated)(EncomspServerContext* context, ENCOMSP_WINDOW_CREATED_PDU* windowCreated);
-typedef int (*psEncomspWindowRemoved)(EncomspServerContext* context, ENCOMSP_WINDOW_REMOVED_PDU* windowRemoved);
-typedef int (*psEncomspShowWindow)(EncomspServerContext* context, ENCOMSP_SHOW_WINDOW_PDU* showWindow);
-typedef int (*psEncomspParticipantCreated)(EncomspServerContext* context, ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated);
-typedef int (*psEncomspParticipantRemoved)(EncomspServerContext* context, ENCOMSP_PARTICIPANT_REMOVED_PDU* participantRemoved);
-typedef int (*psEncomspChangeParticipantControlLevel)(EncomspServerContext* context, ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU* changeParticipantControlLevel);
-typedef int (*psEncomspGraphicsStreamPaused)(EncomspServerContext* context, ENCOMSP_GRAPHICS_STREAM_PAUSED_PDU* graphicsStreamPaused);
-typedef int (*psEncomspGraphicsStreamResumed)(EncomspServerContext* context, ENCOMSP_GRAPHICS_STREAM_RESUMED_PDU* graphicsStreamResumed);
+typedef WIN32ERROR (*psEncomspFilterUpdated)(EncomspServerContext* context, ENCOMSP_FILTER_UPDATED_PDU* filterUpdated);
+typedef WIN32ERROR (*psEncomspApplicationCreated)(EncomspServerContext* context, ENCOMSP_APPLICATION_CREATED_PDU* applicationCreated);
+typedef WIN32ERROR (*psEncomspApplicationRemoved)(EncomspServerContext* context, ENCOMSP_APPLICATION_REMOVED_PDU* applicationRemoved);
+typedef WIN32ERROR (*psEncomspWindowCreated)(EncomspServerContext* context, ENCOMSP_WINDOW_CREATED_PDU* windowCreated);
+typedef WIN32ERROR (*psEncomspWindowRemoved)(EncomspServerContext* context, ENCOMSP_WINDOW_REMOVED_PDU* windowRemoved);
+typedef WIN32ERROR (*psEncomspShowWindow)(EncomspServerContext* context, ENCOMSP_SHOW_WINDOW_PDU* showWindow);
+typedef WIN32ERROR (*psEncomspParticipantCreated)(EncomspServerContext* context, ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated);
+typedef WIN32ERROR (*psEncomspParticipantRemoved)(EncomspServerContext* context, ENCOMSP_PARTICIPANT_REMOVED_PDU* participantRemoved);
+typedef WIN32ERROR (*psEncomspChangeParticipantControlLevel)(EncomspServerContext* context, ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU* changeParticipantControlLevel);
+typedef WIN32ERROR (*psEncomspGraphicsStreamPaused)(EncomspServerContext* context, ENCOMSP_GRAPHICS_STREAM_PAUSED_PDU* graphicsStreamPaused);
+typedef WIN32ERROR (*psEncomspGraphicsStreamResumed)(EncomspServerContext* context, ENCOMSP_GRAPHICS_STREAM_RESUMED_PDU* graphicsStreamResumed);
 
 struct _encomsp_server_context
 {

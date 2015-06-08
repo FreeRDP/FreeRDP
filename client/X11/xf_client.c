@@ -723,9 +723,9 @@ void xf_toggle_control(xfContext* xfc)
 	xfc->controlToggle = !xfc->controlToggle;
 }
 
-int xf_encomsp_participant_created(EncomspClientContext* context, ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated)
+WIN32ERROR xf_encomsp_participant_created(EncomspClientContext* context, ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated)
 {
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
 void xf_encomsp_init(xfContext* xfc, EncomspClientContext* encomsp)
