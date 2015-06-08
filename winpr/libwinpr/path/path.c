@@ -493,6 +493,9 @@ HRESULT PathCchFindExtensionA(PCSTR pszPath, size_t cchPath, PCSTR* ppszExt)
 {
 	char* p = (char*) pszPath;
 
+	if (!pszPath || !cchPath || !ppszExt)
+		return E_INVALIDARG;
+
 	/* find end of string */
 
 	while (*p && cchPath)
@@ -501,6 +504,15 @@ HRESULT PathCchFindExtensionA(PCSTR pszPath, size_t cchPath, PCSTR* ppszExt)
 		p++;
 	}
 
+	if (*p)
+	{
+		/* pszPath is not null terminated within the cchPath range */
+		return E_INVALIDARG;
+	}
+
+	/* If no extension is found, ppszExt must point to the string's terminating null */
+	*ppszExt = p;
+
 	/* search backwards for '.' */
 
 	while (p > pszPath)
@@ -508,21 +520,21 @@ HRESULT PathCchFindExtensionA(PCSTR pszPath, size_t cchPath, PCSTR* ppszExt)
 		if (*p == '.')
 		{
 			*ppszExt = (PCSTR) p;
-			return S_OK;
+			break;
 		}
 
 		if ((*p == '\\') || (*p == '/') || (*p == ':'))
-			return S_FALSE;
+			break;
 
 		p--;
 	}
 
-	return S_FALSE;
+	return S_OK;
 }
 
 HRESULT PathCchFindExtensionW(PCWSTR pszPath, size_t cchPath, PCWSTR* ppszExt)
 {
-	return 0;
+	return E_NOTIMPL;
 }
 
 /**
