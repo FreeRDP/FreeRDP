@@ -195,13 +195,14 @@ void settings_get_computer_name(rdpSettings* settings)
 
 	GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize);
 	settings->ComputerName = (char*) malloc(nSize);
-    if (!settings->ComputerName)
-        return;
+	if (!settings->ComputerName)
+		return;
 	GetComputerNameExA(ComputerNameNetBIOS, settings->ComputerName, &nSize);
 }
 
 rdpSettings* freerdp_settings_new(DWORD flags)
 {
+	char* base;
 	rdpSettings* settings;
 
 	settings = (rdpSettings*) calloc(1, sizeof(rdpSettings));
@@ -471,7 +472,37 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		settings->HomePath = GetKnownPath(KNOWN_PATH_HOME);
 		if (!settings->HomePath)
 				goto out_fail;
-		settings->ConfigPath = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, "freerdp");
+
+		/* For default FreeRDP continue using same config directory
+		 * as in old releases.
+		 * Custom builds use <Vendor>/<Product> as config folder. */
+		if (_stricmp(FREERDP_VENDOR_STRING, FREERDP_PRODUCT_STRING))
+		{
+			base = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME,
+					       FREERDP_VENDOR_STRING);
+			if (base)
+			{
+				settings->ConfigPath = GetCombinedPath(
+							       base,
+							       FREERDP_PRODUCT_STRING);
+				if (!PathFileExistsA(base))
+					if (!CreateDirectoryA(base, NULL))
+						settings->ConfigPath = NULL;
+			}
+			free (base);
+		} else {
+			int i;
+			char product[sizeof(FREERDP_PRODUCT_STRING)];
+
+			memset(product, 0, sizeof(product));
+			for (i=0; i<sizeof(product); i++)
+				product[i] = tolower(FREERDP_PRODUCT_STRING[i]);
+
+			settings->ConfigPath = GetKnownSubPath(
+						       KNOWN_PATH_XDG_CONFIG_HOME,
+						       product);
+		}
+
 		if (!settings->ConfigPath)
 				goto out_fail;
 
@@ -778,7 +809,7 @@ out_fail:
 void freerdp_settings_free(rdpSettings* settings)
 {
     if (!settings)
-        return;
+	return;
     free(settings->ServerHostname);
     free(settings->Username);
     free(settings->Password);
