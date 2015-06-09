@@ -485,9 +485,6 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 				settings->ConfigPath = GetCombinedPath(
 							       base,
 							       FREERDP_PRODUCT_STRING);
-				if (!PathFileExistsA(base))
-					if (!CreateDirectoryA(base, NULL))
-						settings->ConfigPath = NULL;
 			}
 			free (base);
 		} else {
