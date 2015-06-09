@@ -555,7 +555,7 @@ end:
 	return status;
 }
 
-rdpCertificateData* crypto_get_certificate_data(X509* xcert, char* hostname)
+rdpCertificateData* crypto_get_certificate_data(X509* xcert, char* hostname, UINT16 port)
 {
 	char* fp;
 	rdpCertificateData* certdata;
@@ -564,7 +564,7 @@ rdpCertificateData* crypto_get_certificate_data(X509* xcert, char* hostname)
 	if (!fp)
 		return NULL;
 
-	certdata = certificate_data_new(hostname, fp);
+	certdata = certificate_data_new(hostname, port, fp);
 	free(fp);
 
 	return certdata;

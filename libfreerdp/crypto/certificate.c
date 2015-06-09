@@ -35,12 +35,15 @@
 
 static const char certificate_store_dir[] = "certs";
 static const char certificate_server_dir[] = "server";
-static const char certificate_known_hosts_file[] = "known_hosts";
+static const char certificate_known_hosts_file[] = "known_hosts.v2";
 
 #include <freerdp/log.h>
 #include <freerdp/crypto/certificate.h>
 
 #define TAG FREERDP_TAG("crypto")
+
+static BOOL certificate_split_line(char* line, char** host,
+																	 UINT16* port, char** fingerprint);
 
 BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 {
@@ -53,10 +56,10 @@ BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 	{
 		if (!CreateDirectoryA(settings->ConfigPath, 0))
 		{
-			WLog_ERR(TAG,  "error creating directory '%s'", settings->ConfigPath);
+			WLog_ERR(TAG, "error creating directory '%s'", settings->ConfigPath);
 			goto fail;
 		}
-		WLog_INFO(TAG,  "creating directory %s", settings->ConfigPath);
+		WLog_INFO(TAG, "creating directory %s", settings->ConfigPath);
 	}
 
 	if (!(certificate_store->path = GetCombinedPath(settings->ConfigPath, (char*) certificate_store_dir)))
@@ -66,10 +69,10 @@ BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 	{
 		if (!CreateDirectoryA(certificate_store->path, 0))
 		{
-			WLog_ERR(TAG,  "error creating directory [%s]", certificate_store->path);
+			WLog_ERR(TAG, "error creating directory [%s]", certificate_store->path);
 			goto fail;
 		}
-		WLog_INFO(TAG,  "creating directory [%s]", certificate_store->path);
+		WLog_INFO(TAG, "creating directory [%s]", certificate_store->path);
 	}
 
 	if (!(server_path = GetCombinedPath(settings->ConfigPath, (char*) certificate_server_dir)))
@@ -79,10 +82,10 @@ BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 	{
 		if (!CreateDirectoryA(server_path, 0))
 		{
-			WLog_ERR(TAG,  "error creating directory [%s]", server_path);
+			WLog_ERR(TAG, "error creating directory [%s]", server_path);
 			goto fail;
 		}
-		WLog_INFO(TAG,  "created directory [%s]", server_path);
+		WLog_INFO(TAG, "created directory [%s]", server_path);
 	}
 
 	if (!(certificate_store->file = GetCombinedPath(settings->ConfigPath, (char*) certificate_known_hosts_file)))
@@ -95,7 +98,7 @@ BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 
 	if (!certificate_store->fp)
 	{
-		WLog_ERR(TAG,  "error opening [%s]", certificate_store->file);
+		WLog_ERR(TAG, "error opening [%s]", certificate_store->file);
 		goto fail;
 	}
 
@@ -104,7 +107,7 @@ BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 	return TRUE;
 
 fail:
-	WLog_ERR(TAG,  "certificate store initialization failed");
+	WLog_ERR(TAG, "certificate store initialization failed");
 	free(server_path);
 	free(certificate_store->path);
 	free(certificate_store->file);
@@ -118,9 +121,13 @@ int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificat
 	FILE* fp;
 	int length;
 	char* data;
+	char* mdata;
 	char* pline;
 	int match = 1;
 	long int size;
+	char* hostname = NULL;
+	char* fingerprint = NULL;
+	unsigned short port = 0;
 
 	fp = certificate_store->fp;
 
@@ -134,8 +141,11 @@ int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificat
 	if (size < 1)
 		return match;
 
-	data = (char*) malloc(size + 2);
+	mdata = (char*) malloc(size + 2);
+	if (!mdata)
+		return match;
 
+	data = mdata;
 	if (fread(data, size, 1, fp) != 1)
 	{
 		free(data);
@@ -144,7 +154,7 @@ int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificat
 
 	data[size] = '\n';
 	data[size + 1] = '\0';
-	pline = strtok(data, "\n");
+	pline = StrSep(&data, "\r\n");
 
 	while (pline != NULL)
 	{
@@ -152,62 +162,69 @@ int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificat
 
 		if (length > 0)
 		{
-			length = strcspn(pline, " \t");
-			pline[length] = '\0';
-
-			if (strcmp(pline, certificate_data->hostname) == 0)
+			if (!certificate_split_line(pline, &hostname, &port, &fingerprint))
+				WLog_WARN(TAG, "Invalid %s entry %s!", certificate_known_hosts_file, pline);
+			else if (strcmp(pline, certificate_data->hostname) == 0)
 			{
-				pline = &pline[length + 1];
-
-				if (strcmp(pline, certificate_data->fingerprint) == 0)
-					match = 0;
-				else
-					match = -1;
-				break;
+				if (port == certificate_data->port)
+				{
+					match = strcmp(fingerprint, certificate_data->fingerprint);
+					break;
+				}
 			}
 		}
 
-		pline = strtok(NULL, "\n");
+		pline = StrSep(&data, "\r\n");
 	}
-	free(data);
+	free(mdata);
 
 	return match;
 }
 
-void certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data)
+BOOL certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data)
 {
 	FILE* fp;
 	int length;
 	char* data;
+	char* sdata;
 	char* pline;
 	long int size;
 
 	fp = certificate_store->fp;
 
 	if (!fp)
-		return;
-	
+		return FALSE;
+
 	/* Read the current contents of the file. */
 	fseek(fp, 0, SEEK_END);
 	size = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
 
 	if (size < 1)
-		return;
+		return FALSE;
 
 	data = (char*) malloc(size + 2);
+	if (!data)
+		return FALSE;
 
 	if (fread(data, size, 1, fp) != 1)
 	{
 		free(data);
-		return;
+		return FALSE;
 	}
-	
+
 	/* Write the file back out, with appropriate fingerprint substitutions */
 	fp = fopen(certificate_store->file, "w+");
+	if (!fp)
+	{
+		free(data);
+		return FALSE;
+	}
+
 	data[size] = '\n';
 	data[size + 1] = '\0';
-	pline = strtok(data, "\n"); // xxx: use strsep
+	sdata = data;
+	pline = StrSep(&sdata, "\r\n");
 
 	while (pline != NULL)
 	{
@@ -215,28 +232,61 @@ void certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 
 		if (length > 0)
 		{
-			char* hostname = pline, *fingerprint;
-			
-			length = strcspn(pline, " \t");
-			hostname[length] = '\0';
+			UINT16 port = 0;
+			char* hostname = NULL, *fingerprint;
 
-			/* If this is the replaced hostname, use the updated fingerprint. */
-			if (strcmp(hostname, certificate_data->hostname) == 0)
-				fingerprint = certificate_data->fingerprint;
+			if (!certificate_split_line(pline, &hostname, &port, &fingerprint))
+				WLog_WARN(TAG, "Skipping invalid %s entry %s!", certificate_known_hosts_file, pline);
 			else
-				fingerprint = &hostname[length + 1];
-			
-			fprintf(fp, "%s %s\n", hostname, fingerprint);
+			{
+				/* If this is the replaced hostname, use the updated fingerprint. */
+				if ((strcmp(hostname, certificate_data->hostname) == 0) && (port == certificate_data->port))
+					fingerprint = certificate_data->fingerprint;
+				else
+					fingerprint = &hostname[length + 1];
+				fprintf(fp, "%s %hu %s\n", hostname, port, fingerprint);
+			}
 		}
 
-		pline = strtok(NULL, "\n");
+		pline = StrSep(&sdata, "\r\n");
 	}
-	
+
 	fclose(fp);
-	free(data);	
+	free(data);
+
+	return TRUE;
 }
 
-void certificate_data_print(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data)
+BOOL certificate_split_line(char* line, char** host, UINT16* port, char** fingerprint)
+{
+		char* cur;
+		size_t length = strlen(line);
+
+		if (length <= 0)
+			return FALSE;
+
+		cur = StrSep(&line, " \t");
+		if (!cur)
+			return FALSE;
+		*host = cur;
+
+		cur = StrSep(&line, " \t");
+		if (!cur)
+			return FALSE;
+
+		if(sscanf(cur, "%hu", port) != 1)
+			return FALSE;
+
+		cur = StrSep(&line, " \t");
+		if (!cur)
+			return FALSE;
+
+		*fingerprint = cur;
+
+		return TRUE;
+}
+
+BOOL certificate_data_print(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data)
 {
 	FILE* fp;
 
@@ -244,13 +294,17 @@ void certificate_data_print(rdpCertificateStore* certificate_store, rdpCertifica
 	fp = fopen(certificate_store->file, "a");
 
 	if (!fp)
-		return;
+		return FALSE;
 
-	fprintf(fp, "%s %s\n", certificate_data->hostname, certificate_data->fingerprint);
+	fprintf(fp, "%s %hu %s\n", certificate_data->hostname, certificate_data->port,
+					certificate_data->fingerprint);
+
 	fclose(fp);
+
+	return TRUE;
 }
 
-rdpCertificateData* certificate_data_new(char* hostname, char* fingerprint)
+rdpCertificateData* certificate_data_new(char* hostname, UINT16 port, char* fingerprint)
 {
 	rdpCertificateData* certdata;
 
@@ -258,6 +312,7 @@ rdpCertificateData* certificate_data_new(char* hostname, char* fingerprint)
 	if (!certdata)
 		return NULL;
 
+	certdata->port = port;
 	certdata->hostname = _strdup(hostname);
 	if (!certdata->hostname)
 		goto out_free;

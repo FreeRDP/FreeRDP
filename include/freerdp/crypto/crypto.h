@@ -133,7 +133,7 @@ FREERDP_API void crypto_cert_print_info(X509* xcert);
 FREERDP_API void crypto_cert_free(CryptoCert cert);
 
 FREERDP_API BOOL x509_verify_certificate(CryptoCert cert, char* certificate_store_path);
-FREERDP_API rdpCertificateData* crypto_get_certificate_data(X509* xcert, char* hostname);
+FREERDP_API rdpCertificateData* crypto_get_certificate_data(X509* xcert, char* hostname, UINT16 port);
 FREERDP_API BOOL crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* PublicKeyLength);
 
 #define	TSSK_KEY_LENGTH	64

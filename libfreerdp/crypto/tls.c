@@ -1082,7 +1082,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 	certificate_status = x509_verify_certificate(cert, tls->certificate_store->path);
 
 	/* verify certificate name match */
-	certificate_data = crypto_get_certificate_data(cert->px509, hostname);
+	certificate_data = crypto_get_certificate_data(cert->px509, hostname, port);
 
 	/* extra common name and alternative names */
 	common_name = crypto_cert_subject_common_name(cert->px509, &common_name_length);
@@ -1162,15 +1162,14 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 			else
 			{
 				/* user accepted certificate, add entry in known_hosts file */
-				certificate_data_print(tls->certificate_store, certificate_data);
-				verification_status = TRUE; /* success! */
+				verification_status = certificate_data_print(tls->certificate_store, certificate_data);
 			}
 		}
 		else if (match == -1)
 		{
 			/* entry was found in known_hosts file, but fingerprint does not match. ask user to use it */
 			tls_print_certificate_error(hostname, fingerprint, tls->certificate_store->file);
-			
+
 			if (instance->VerifyChangedCertificate)
 			{
 				accept_certificate = instance->VerifyChangedCertificate(instance, subject, issuer, fingerprint, "");
@@ -1184,8 +1183,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 			else
 			{
 				/* user accepted new certificate, add replace fingerprint for this host in known_hosts file */
-				certificate_data_replace(tls->certificate_store, certificate_data);
-				verification_status = TRUE; /* success! */
+				verification_status = certificate_data_replace(tls->certificate_store, certificate_data);
 			}
 		}
 		else if (match == 0)
