@@ -75,31 +75,46 @@ NSString* TSXSessionDidFailToConnectNotification = @"TSXSessionDidFailToConnect"
 		settings->ConsoleSession = 1;
 
 	// connection info	
-    settings->ServerHostname = strdup([_params UTF8StringForKey:@"hostname"]);
+	if (!(settings->ServerHostname = strdup([_params UTF8StringForKey:@"hostname"])))
+		goto out_free;
 	
 	// String settings
 	if ([[_params StringForKey:@"username"] length])
+	{
 		settings->Username = strdup([_params UTF8StringForKey:@"username"]);
-    
+		if (!settings->Username)
+			goto out_free;
+	}
+
 	if ([[_params StringForKey:@"password"] length])
+	{
 		settings->Password = strdup([_params UTF8StringForKey:@"password"]);
-	
+		if (!settings->Password)
+			goto out_free;
+	}
+
 	if ([[_params StringForKey:@"domain"] length])
+	{
 		settings->Domain = strdup([_params UTF8StringForKey:@"domain"]);
-    
+		if (!settings->Domain)
+			goto out_free;
+	}
+
 	settings->ShellWorkingDirectory = strdup([_params UTF8StringForKey:@"working_directory"]);
 	settings->AlternateShell = strdup([_params UTF8StringForKey:@"remote_program"]);
 	
-	
-	// RemoteFX
+	if (!settings->ShellWorkingDirectory || !settings->AlternateShell)
+		goto out_free;
+
+// RemoteFX
 	if ([_params boolForKey:@"perf_remotefx" with3GEnabled:connected_via_3g])
 	{
 		settings->RemoteFxCodec = TRUE;
 		settings->FastPathOutput = TRUE;
 		settings->ColorDepth = 32;
 		settings->LargePointerFlag = TRUE;
-        settings->FrameMarkerCommandEnabled = TRUE;
-        settings->FrameAcknowledge = 10;
+		settings->FrameMarkerCommandEnabled = TRUE;
+		settings->FrameAcknowledge = 10;
 	}
 	else
 	{
@@ -176,6 +191,12 @@ NSString* TSXSessionDidFailToConnectNotification = @"TSXSessionDidFailToConnect"
         settings->GatewayUsageMethod = TSC_PROXY_MODE_DIRECT;
         settings->GatewayEnabled = TRUE;
         settings->GatewayUseSameCredentials = FALSE;
+
+        if (!settings->GatewayHostname || !settings->GatewayUsername || !settings->GatewayPassword
+            || !settings->GatewayDomain)
+        {
+            goto out_free;
+        }
     }
     
 	// Remote keyboard layout
@@ -187,6 +208,10 @@ NSString* TSXSessionDidFailToConnectNotification = @"TSXSessionDidFailToConnect"
 	
 	[self mfi]->session = self;
 	return self;
+
+out_free:
+    [self release];
+    return nil;
 }
 
 - (void)dealloc
