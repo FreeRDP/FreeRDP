@@ -36,6 +36,7 @@
 static const char certificate_store_dir[] = "certs";
 static const char certificate_server_dir[] = "server";
 static const char certificate_known_hosts_file[] = "known_hosts.v2";
+static const char certificate_legacy_hosts_file[] = "known_hosts";
 
 #include <freerdp/log.h>
 #include <freerdp/crypto/certificate.h>
@@ -91,6 +92,10 @@ BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 	if (!(certificate_store->file = GetCombinedPath(settings->ConfigPath, (char*) certificate_known_hosts_file)))
 		goto fail;
 
+	if (!(certificate_store->legacy_file = GetCombinedPath(settings->ConfigPath,
+								(char*) certificate_known_hosts_file)))
+		goto fail;
+
 	if (!PathFileExistsA(certificate_store->file))
 		certificate_store->fp = fopen((char*) certificate_store->file, "w+");
 	else
@@ -116,8 +121,93 @@ fail:
 	return FALSE;
 }
 
+static int certificate_data_match_legacy(rdpCertificateStore* certificate_store,
+					 rdpCertificateData* certificate_data)
+{
+	FILE* fp;
+	int match = 1;
+	char* data;
+	char* mdata;
+	char* pline;
+	char* hostname;
+	long size;
+	size_t length;
+
+	fp = fopen(certificate_store->legacy_file, "r");
+	if (!fp)
+		return match;
+
+	fseek(fp, 0, SEEK_END);
+	size = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+
+	if (size < 1)
+	{
+		fclose(fp);
+		return match;
+	}
+
+	mdata = (char*) malloc(size + 2);
+	if (!mdata)
+	{
+		fclose(fp);
+		return match;
+	}
+
+	data = mdata;
+	if (fread(data, size, 1, fp) != 1)
+	{
+		free(data);
+		fclose(fp);
+		return match;
+	}
+
+	fclose(fp);
+
+	data[size] = '\n';
+	data[size + 1] = '\0';
+	pline = StrSep(&data, "\r\n");
+
+	while (pline != NULL)
+	{
+		length = strlen(pline);
+
+		if (length > 0)
+		{
+			hostname = StrSep(&pline, " \t");
+			if (!hostname || !pline)
+				WLog_WARN(TAG, "Invalid %s entry %s %s!", certificate_legacy_hosts_file,
+					hostname, pline);
+			else if (strcmp(hostname, certificate_data->hostname) == 0)
+			{
+				match = strcmp(pline, certificate_data->fingerprint);
+				break;
+			}
+		}
+
+		pline = StrSep(&data, "\r\n");
+	}
+	free(mdata);
+
+	/* Found a valid fingerprint in legacy file,
+	 * copy to new file in new format. */
+	if (0 == match)
+	{
+		rdpCertificateData* data = certificate_data_new(hostname,
+						certificate_data->port,
+						pline);
+		if (data)
+			match = certificate_data_print(certificate_store, data) ? 0 : 1;
+		certificate_data_free(data);
+	}
+
+	return match;
+
+}
+
 int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data)
 {
+	BOOL found = FALSE;
 	FILE* fp;
 	int length;
 	char* data;
@@ -168,6 +258,7 @@ int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificat
 			{
 				if (port == certificate_data->port)
 				{
+					found = TRUE;
 					match = strcmp(fingerprint, certificate_data->fingerprint);
 					break;
 				}
@@ -177,6 +268,9 @@ int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificat
 		pline = StrSep(&data, "\r\n");
 	}
 	free(mdata);
+
+	if ((match != 0) && !found)
+		match = certificate_data_match_legacy(certificate_store, certificate_data);
 
 	return match;
 }
