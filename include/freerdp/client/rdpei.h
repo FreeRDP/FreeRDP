@@ -3,6 +3,8 @@
  * Dynamic Virtual Channel Extension
  *
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +23,7 @@
 #define FREERDP_CHANNEL_CLIENT_RDPEI_H
 
 #include <freerdp/channels/rdpei.h>
+#include <winpr/win32error.h>
 
 /**
  * Client Interface
@@ -28,14 +31,15 @@
 
 typedef struct _rdpei_client_context RdpeiClientContext;
 
-typedef int (*pcRdpeiGetVersion)(RdpeiClientContext* context);typedef int (*pcRdpeiAddContact)(RdpeiClientContext* context, RDPINPUT_CONTACT_DATA* contact);
+typedef int (*pcRdpeiGetVersion)(RdpeiClientContext* context);
+typedef WIN32ERROR (*pcRdpeiAddContact)(RdpeiClientContext* context, RDPINPUT_CONTACT_DATA* contact);
 
-typedef int (*pcRdpeiTouchBegin)(RdpeiClientContext* context, int externalId, int x, int y);
-typedef int (*pcRdpeiTouchUpdate)(RdpeiClientContext* context, int externalId, int x, int y);
-typedef int (*pcRdpeiTouchEnd)(RdpeiClientContext* context, int externalId, int x, int y);
+typedef WIN32ERROR (*pcRdpeiTouchBegin)(RdpeiClientContext* context, int externalId, int x, int y, int* contactId);
+typedef WIN32ERROR (*pcRdpeiTouchUpdate)(RdpeiClientContext* context, int externalId, int x, int y, int* contactId);
+typedef WIN32ERROR (*pcRdpeiTouchEnd)(RdpeiClientContext* context, int externalId, int x, int y, int* contactId);
 
-typedef int (*pcRdpeiSuspendTouch)(RdpeiClientContext* context);
-typedef int (*pcRdpeiResumeTouch)(RdpeiClientContext* context);
+typedef WIN32ERROR (*pcRdpeiSuspendTouch)(RdpeiClientContext* context);
+typedef WIN32ERROR (*pcRdpeiResumeTouch)(RdpeiClientContext* context);
 
 struct _rdpei_client_context
 {

@@ -604,17 +604,17 @@ int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtype)
 	if (evtype == XI_TouchBegin)
 	{
 		WLog_DBG(TAG, "TouchBegin: %d", touchId);
-		contactId = rdpei->TouchBegin(rdpei, touchId, x, y);
+		rdpei->TouchBegin(rdpei, touchId, x, y, &contactId);
 	}
 	else if (evtype == XI_TouchUpdate)
 	{
 		WLog_DBG(TAG, "TouchUpdate: %d", touchId);
-		contactId = rdpei->TouchUpdate(rdpei, touchId, x, y);
+		rdpei->TouchUpdate(rdpei, touchId, x, y, &contactId);
 	}
 	else if (evtype == XI_TouchEnd)
 	{
 		WLog_DBG(TAG, "TouchEnd: %d", touchId);
-		contactId = rdpei->TouchEnd(rdpei, touchId, x, y);
+		rdpei->TouchEnd(rdpei, touchId, x, y, &contactId);
 	}
 
 	return 0;

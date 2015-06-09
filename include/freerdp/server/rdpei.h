@@ -4,6 +4,8 @@
  *
  * Copyright 2014 Thincast Technologies Gmbh.
  * Copyright 2014 David FORT <contact@hardening-consulting.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,9 +41,9 @@ struct _rdpei_server_context
 	UINT32 protocolFlags;
 
 	/** callbacks that can be set by the user */
-	void (*onClientReady)(RdpeiServerContext *context);
-	void (*onTouchEvent)(RdpeiServerContext *context, RDPINPUT_TOUCH_EVENT *touchEvent);
-	void (*onTouchReleased)(RdpeiServerContext *context, BYTE contactId);
+	WIN32ERROR (*onClientReady)(RdpeiServerContext *context);
+	WIN32ERROR (*onTouchEvent)(RdpeiServerContext *context, RDPINPUT_TOUCH_EVENT *touchEvent);
+	WIN32ERROR (*onTouchReleased)(RdpeiServerContext *context, BYTE contactId);
 
 	void *user_data; /* user data, useful for callbacks */
 };
@@ -54,12 +56,12 @@ FREERDP_API RdpeiServerContext* rdpei_server_context_new(HANDLE vcm);
 FREERDP_API void rdpei_server_context_reset(RdpeiServerContext *context);
 FREERDP_API void rdpei_server_context_free(RdpeiServerContext* context);
 FREERDP_API HANDLE rdpei_server_get_event_handle(RdpeiServerContext *context);
-FREERDP_API int rdpei_server_init(RdpeiServerContext *context);
-FREERDP_API int rdpei_server_handle_messages(RdpeiServerContext *context);
+FREERDP_API WIN32ERROR rdpei_server_init(RdpeiServerContext *context);
+FREERDP_API WIN32ERROR rdpei_server_handle_messages(RdpeiServerContext *context);
 
-FREERDP_API int rdpei_server_send_sc_ready(RdpeiServerContext *context, UINT32 version);
-FREERDP_API int rdpei_server_suspend(RdpeiServerContext *context);
-FREERDP_API int rdpei_server_resume(RdpeiServerContext *context);
+FREERDP_API WIN32ERROR rdpei_server_send_sc_ready(RdpeiServerContext *context, UINT32 version);
+FREERDP_API WIN32ERROR rdpei_server_suspend(RdpeiServerContext *context);
+FREERDP_API WIN32ERROR rdpei_server_resume(RdpeiServerContext *context);
 
 #ifdef __cplusplus
 }
