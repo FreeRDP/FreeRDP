@@ -96,17 +96,6 @@ BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 								(char*) certificate_legacy_hosts_file)))
 		goto fail;
 
-	if (!PathFileExistsA(certificate_store->file))
-		certificate_store->fp = fopen((char*) certificate_store->file, "w+");
-	else
-		certificate_store->fp = fopen((char*) certificate_store->file, "r+");
-
-	if (!certificate_store->fp)
-	{
-		WLog_ERR(TAG, "error opening [%s]", certificate_store->file);
-		goto fail;
-	}
-
 	free(server_path);
 
 	return TRUE;
@@ -219,7 +208,7 @@ int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificat
 	char* fingerprint = NULL;
 	unsigned short port = 0;
 
-	fp = certificate_store->fp;
+	fp = fopen(certificate_store->path, "r");
 
 	if (!fp)
 		return match;
@@ -229,18 +218,26 @@ int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificat
 	fseek(fp, 0, SEEK_SET);
 
 	if (size < 1)
+	{
+		fclose(fp);
 		return match;
+	}
 
 	mdata = (char*) malloc(size + 2);
 	if (!mdata)
+	{
+		fclose(fp);
 		return match;
+	}
 
 	data = mdata;
 	if (fread(data, size, 1, fp) != 1)
 	{
+		fclose(fp);
 		free(data);
 		return match;
 	}
+	fclose(fp);
 
 	data[size] = '\n';
 	data[size + 1] = '\0';
@@ -285,7 +282,7 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 	char* pline;
 	long int size;
 
-	fp = certificate_store->fp;
+	fp = fopen(certificate_store->path, "w+");
 
 	if (!fp)
 		return FALSE;
@@ -296,26 +293,26 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 	fseek(fp, 0, SEEK_SET);
 
 	if (size < 1)
+	{
+		fclose(fp);
 		return FALSE;
+	}
 
 	data = (char*) malloc(size + 2);
 	if (!data)
+	{
+		fclose(fp);
 		return FALSE;
+	}
 
 	if (fread(data, size, 1, fp) != 1)
 	{
+		fclose(fp);
 		free(data);
 		return FALSE;
 	}
 
 	/* Write the file back out, with appropriate fingerprint substitutions */
-	fp = fopen(certificate_store->file, "w+");
-	if (!fp)
-	{
-		free(data);
-		return FALSE;
-	}
-
 	data[size] = '\n';
 	data[size + 1] = '\0';
 	sdata = data;
@@ -458,9 +455,6 @@ void certificate_store_free(rdpCertificateStore* certstore)
 {
 	if (certstore != NULL)
 	{
-		if (certstore->fp != NULL)
-			fclose(certstore->fp);
-
 		free(certstore->path);
 		free(certstore->file);
 		free(certstore);
