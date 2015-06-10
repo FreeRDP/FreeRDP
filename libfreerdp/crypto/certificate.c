@@ -93,7 +93,7 @@ BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 		goto fail;
 
 	if (!(certificate_store->legacy_file = GetCombinedPath(settings->ConfigPath,
-								(char*) certificate_known_hosts_file)))
+								(char*) certificate_legacy_hosts_file)))
 		goto fail;
 
 	if (!PathFileExistsA(certificate_store->file))
@@ -278,6 +278,7 @@ int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificat
 BOOL certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data)
 {
 	FILE* fp;
+	BOOL rc = FALSE;
 	int length;
 	char* data;
 	char* sdata;
@@ -335,9 +336,10 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 			{
 				/* If this is the replaced hostname, use the updated fingerprint. */
 				if ((strcmp(hostname, certificate_data->hostname) == 0) && (port == certificate_data->port))
+				{
 					fingerprint = certificate_data->fingerprint;
-				else
-					fingerprint = &hostname[length + 1];
+					rc = TRUE;
+				}
 				fprintf(fp, "%s %hu %s\n", hostname, port, fingerprint);
 			}
 		}
@@ -348,7 +350,7 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 	fclose(fp);
 	free(data);
 
-	return TRUE;
+	return rc;
 }
 
 BOOL certificate_split_line(char* line, char** host, UINT16* port, char** fingerprint)
