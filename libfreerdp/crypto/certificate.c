@@ -122,7 +122,7 @@ static int certificate_data_match_legacy(rdpCertificateStore* certificate_store,
 	long size;
 	size_t length;
 
-	fp = fopen(certificate_store->legacy_file, "r");
+	fp = fopen(certificate_store->legacy_file, "rb");
 	if (!fp)
 		return match;
 
@@ -208,7 +208,7 @@ int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificat
 	char* fingerprint = NULL;
 	unsigned short port = 0;
 
-	fp = fopen(certificate_store->file, "r");
+	fp = fopen(certificate_store->file, "rb");
 
 	if (!fp)
 		return match;
@@ -282,7 +282,7 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 	char* pline;
 	long int size;
 
-	fp = fopen(certificate_store->file, "w+");
+	fp = fopen(certificate_store->file, "wb+");
 
 	if (!fp)
 		return FALSE;
@@ -384,7 +384,7 @@ BOOL certificate_data_print(rdpCertificateStore* certificate_store, rdpCertifica
 	FILE* fp;
 
 	/* reopen in append mode */
-	fp = fopen(certificate_store->file, "a");
+	fp = fopen(certificate_store->file, "ab");
 
 	if (!fp)
 		return FALSE;
