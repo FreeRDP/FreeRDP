@@ -37,6 +37,8 @@
 #include <winpr/registry.h>
 
 #include <freerdp/settings.h>
+#include <ctype.h>
+
 
 #ifdef _WIN32
 #pragma warning(push)

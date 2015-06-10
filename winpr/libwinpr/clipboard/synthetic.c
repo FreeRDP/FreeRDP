@@ -381,7 +381,7 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 			body = strstr(pSrcData, "<BODY");
 
 		/* StartHTML */
-		sprintf_s(num, sizeof(num), "%010lu", strlen(pDstData));
+		sprintf_s(num, sizeof(num), "%010lu", (unsigned long int)strlen(pDstData));
 		CopyMemory(&pDstData[23], num, 10);
 
 		if (!body)
@@ -390,12 +390,12 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 		strcat(pDstData, "<!--StartFragment-->");
 
 		/* StartFragment */
-		sprintf_s(num, sizeof(num), "%010lu", strlen(pDstData));
+		sprintf_s(num, sizeof(num), "%010lu", (unsigned long int)strlen(pDstData));
 		CopyMemory(&pDstData[69], num, 10);
 		strcat(pDstData, pSrcData);
 
 		/* EndFragment */
-		sprintf_s(num, sizeof(num), "%010lu", strlen(pDstData));
+		sprintf_s(num, sizeof(num), "%010lu", (unsigned long int)strlen(pDstData));
 		CopyMemory(&pDstData[93], num, 10);
 		strcat(pDstData, "<!--EndFragment-->");
 
@@ -403,7 +403,7 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 			strcat(pDstData, "</BODY></HTML>");
 
 		/* EndHTML */
-		sprintf_s(num, sizeof(num), "%010lu", strlen(pDstData));
+		sprintf_s(num, sizeof(num), "%010lu", (unsigned long int)strlen(pDstData));
 		CopyMemory(&pDstData[43], num, 10);
 
 		*pSize = (UINT32) strlen(pDstData) + 1;
