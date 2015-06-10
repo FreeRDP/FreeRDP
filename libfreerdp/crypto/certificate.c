@@ -186,7 +186,7 @@ void certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 
 	if (!fp)
 		return;
-	
+
 	/* Read the current contents of the file. */
 	fseek(fp, 0, SEEK_END);
 	size = ftell(fp);
@@ -202,7 +202,7 @@ void certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 		free(data);
 		return;
 	}
-	
+
 	/* Write the file back out, with appropriate fingerprint substitutions */
 	fp = fopen(certificate_store->file, "w+");
 	data[size] = '\n';
@@ -216,7 +216,7 @@ void certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 		if (length > 0)
 		{
 			char* hostname = pline, *fingerprint;
-			
+
 			length = strcspn(pline, " \t");
 			hostname[length] = '\0';
 
@@ -225,15 +225,15 @@ void certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 				fingerprint = certificate_data->fingerprint;
 			else
 				fingerprint = &hostname[length + 1];
-			
+
 			fprintf(fp, "%s %s\n", hostname, fingerprint);
 		}
 
 		pline = strtok(NULL, "\n");
 	}
-	
+
 	fclose(fp);
-	free(data);	
+	free(data);
 }
 
 void certificate_data_print(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data)
