@@ -208,7 +208,7 @@ int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificat
 	char* fingerprint = NULL;
 	unsigned short port = 0;
 
-	fp = fopen(certificate_store->path, "r");
+	fp = fopen(certificate_store->file, "r");
 
 	if (!fp)
 		return match;
@@ -282,7 +282,7 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 	char* pline;
 	long int size;
 
-	fp = fopen(certificate_store->path, "w+");
+	fp = fopen(certificate_store->file, "w+");
 
 	if (!fp)
 		return FALSE;
