@@ -1172,14 +1172,22 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 		}
 		else if (match == -1)
 		{
+            char* old_fingerprint = NULL;
+
 			/* entry was found in known_hosts file, but fingerprint does not match. ask user to use it */
 			tls_print_certificate_error(hostname, port, fingerprint,
 						    tls->certificate_store->file);
 
+            if (!certificate_get_fingerprint(tls->certificate_store, certificate_data, &old_fingerprint))
+                WLog_WARN(TAG, "Failed to get certificate entry for %s:hu", hostname, port);
+
 			if (instance->VerifyChangedCertificate)
 			{
-				accept_certificate = instance->VerifyChangedCertificate(instance, subject, issuer, fingerprint, "");
+				accept_certificate = instance->VerifyChangedCertificate(instance, subject, issuer,
+                        fingerprint, old_fingerprint);
 			}
+
+            free(old_fingerprint);
 
 			if (!accept_certificate)
 			{

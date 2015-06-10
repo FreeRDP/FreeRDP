@@ -194,7 +194,8 @@ static int certificate_data_match_legacy(rdpCertificateStore* certificate_store,
 
 }
 
-int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data)
+static int certificate_data_match_raw(rdpCertificateStore* certificate_store,
+        rdpCertificateData* certificate_data, char** fprint)
 {
 	BOOL found = FALSE;
 	FILE* fp;
@@ -257,6 +258,8 @@ int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificat
 				{
 					found = TRUE;
 					match = strcmp(fingerprint, certificate_data->fingerprint);
+                    if ((match == 0) && fprint)
+                        *fprint = _strdup(fingerprint);
 					break;
 				}
 			}
@@ -270,6 +273,21 @@ int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificat
 		match = certificate_data_match_legacy(certificate_store, certificate_data);
 
 	return match;
+}
+
+BOOL certificate_get_fingerprint(rdpCertificateStore* certificate_store,
+        rdpCertificateData* certificate_data, char** fingerprint)
+{
+    int rc = certificate_data_match_raw(certificate_store, certificate_data, fingerprint);
+    
+    if (rc == 0)
+        return TRUE;
+    return FALSE;
+}
+
+int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data)
+{
+    return certificate_data_match_raw(certificate_store, certificate_data, NULL);
 }
 
 BOOL certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data)

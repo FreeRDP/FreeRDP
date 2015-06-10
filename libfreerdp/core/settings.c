@@ -28,6 +28,8 @@
 #include <unistd.h>
 #endif
 
+#include <ctype.h>
+
 #include <winpr/crt.h>
 #include <winpr/file.h>
 #include <winpr/path.h>
