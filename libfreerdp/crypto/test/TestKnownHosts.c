@@ -23,70 +23,52 @@
 
 static int prepare(const char* currentFileV2, const char* legacyFileV2, const char* legacyFile)
 {
-	char buffer[1024];
-	HANDLE fp = NULL;
-	HANDLE fl = NULL;
-	HANDLE fc = NULL;
-	DWORD read = 0;
-	char* srcV2 = _strdup("known_hosts/known_hosts.v2");
-	char* src = _strdup("known_hosts/known_hosts");
+	char* legacy[] = {
+		"someurl ff:11:22:dd\r\n",
+		"otherurl aa:bb:cc:dd\r",
+		"legacyurl aa:bb:cc:dd\n"
+	};
+	char* hosts[] = {
+		"someurl 3389 ff:11:22:dd\r\n",
+		"otherurl\t3389\taa:bb:cc:dd\r",
+	};
+	FILE* fl = NULL;
+	FILE* fc = NULL;
+	size_t i;
 
-	if (!src || !srcV2)
-		goto finish;
-
-	PathCchConvertStyleA(srcV2, strlen(srcV2), PATH_STYLE_NATIVE);
-	PathCchConvertStyleA(src, strlen(src), PATH_STYLE_NATIVE);
-
-	fp = CreateFileA(srcV2, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (!fp)
-		goto finish;
-
-	fl = CreateFileA(currentFileV2, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	fc = fopen(currentFileV2, "w+");
 	if (!fc)
 		goto finish;
 
-	fl = CreateFileA(legacyFileV2, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	fl = fopen(legacyFileV2, "w+");
 	if (!fl)
 		goto finish;
 
-	while(ReadFile(fp, buffer, sizeof(buffer), &read, NULL))
+	for (i=0; i<sizeof(hosts)/sizeof(hosts[0]); i++)
 	{
-		WriteFile(fc, buffer, read, NULL, NULL);
-		WriteFile(fl, buffer, read, NULL, NULL);
+		fwrite(hosts[i], strlen(hosts[i]), sizeof(char), fl);
+		fwrite(hosts[i], strlen(hosts[i]), sizeof(char), fc);
 	}
 
-	CloseHandle(fp);
-	fp = NULL;
-
-	CloseHandle(fc);
+	fclose(fc);
 	fc = NULL;
 
-	CloseHandle(fl);
+	fclose(fl);
 	fl = NULL;
 
-	fp = CreateFileA(src, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (!fp)
-		goto finish;
-
-	fl = CreateFileA(legacyFile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	fl = fopen(legacyFile, "w+");
 	if (!fl)
 		goto finish;
 
-	while(ReadFile(fp, buffer, sizeof(buffer), &read, NULL))
-		WriteFile(fl, buffer, read, NULL, NULL);
+	for (i=0; i<sizeof(legacy)/sizeof(legacy[0]); i++)
+		fwrite(legacy[i], strlen(legacy[i]), sizeof(char), fl);
 
-	CloseHandle(fp);
-	CloseHandle(fl);
-	free(src);
-	free(srcV2);
+	fclose(fl);
 	return 0;
 
 finish:
-	free(src);
-	free(srcV2);
-	CloseHandle(fp);
-	CloseHandle(fl);
-	CloseHandle(fc);
+	fclose(fl);
+	fclose(fc);
 
 	return -1;
 }
@@ -105,16 +87,22 @@ int TestKnownHosts(int argc, char* argv[])
 	current.ConfigPath = GetKnownSubPath(KNOWN_PATH_TEMP, "TestKnownHostsCurrent");
 	legacy.ConfigPath = GetKnownSubPath(KNOWN_PATH_TEMP, "TestKnownHostsLegacy");
 
-	if (!CreateDirectoryA(current.ConfigPath, NULL))
+	if (!PathFileExistsA(current.ConfigPath))
 	{
-		fprintf(stderr, "Could not create %s!\n", current.ConfigPath);
-	//	goto finish;
+		if (!CreateDirectoryA(current.ConfigPath, NULL))
+		{
+			fprintf(stderr, "Could not create %s!\n", current.ConfigPath);
+			goto finish;
+		}
 	}
 
-	if (!CreateDirectoryA(legacy.ConfigPath, NULL))
+	if (!PathFileExistsA(legacy.ConfigPath))
 	{
-		fprintf(stderr, "Could not create %s!\n", legacy.ConfigPath);
-	//	goto finish;
+		if (!CreateDirectoryA(legacy.ConfigPath, NULL))
+		{
+			fprintf(stderr, "Could not create %s!\n", legacy.ConfigPath);
+			goto finish;
+		}
 	}
 
 	currentFileV2 = GetCombinedPath(current.ConfigPath, "known_hosts.v2");
@@ -194,9 +182,9 @@ int TestKnownHosts(int argc, char* argv[])
 		goto finish;
 	}
 
-	if (0 == certificate_data_match(store, data))
+	if (0 != certificate_data_match(store, data))
 	{
-		fprintf(stderr, "Invalid host found in v2 file!\n");
+		fprintf(stderr, "Could not find host written in v2 file!\n");
 		goto finish;
 	}
 
@@ -216,6 +204,28 @@ int TestKnownHosts(int argc, char* argv[])
 		goto finish;
 	}
 
+	if (0 != certificate_data_match(store, data))
+	{
+		fprintf(stderr, "Invalid host found in v2 file!\n");
+		goto finish;
+	}
+
+	certificate_data_free(data);
+
+	/* Test host replace invalid entry in current file. */
+	data = certificate_data_new("somehostXXXX", 1234, "ff:aa:bb:dd:ee");
+	if (!data)
+	{
+		fprintf(stderr, "Could not create certificate data!\n");
+		goto finish;
+	}
+
+	if (certificate_data_replace(store, data))
+	{
+		fprintf(stderr, "Invalid return for replace invalid entry!\n");
+		goto finish;
+	}
+
 	if (0 == certificate_data_match(store, data))
 	{
 		fprintf(stderr, "Invalid host found in v2 file!\n");
@@ -223,6 +233,7 @@ int TestKnownHosts(int argc, char* argv[])
 	}
 
 	certificate_data_free(data);
+
 
 	certificate_store_free(store);
 
@@ -234,7 +245,7 @@ int TestKnownHosts(int argc, char* argv[])
 	}
 
 	/* test if host found in legacy file. */
-	data = certificate_data_new("someurl", 1234, "ff:11:22:dd");
+	data = certificate_data_new("legacyurl", 1234, "aa:bb:cc:dd");
 	if (!data)
 	{
 		fprintf(stderr, "Could not create certificate data!\n");
