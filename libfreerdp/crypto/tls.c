@@ -602,7 +602,7 @@ BOOL tls_prepare(rdpTls* tls, BIO* underlying, const SSL_METHOD* method, int opt
 			return FALSE;
 		}
 	}
- 
+
 	tls->bio = BIO_new_rdp_tls(tls->ctx, clientMode);
 
 	if (BIO_get_ssl(tls->bio, &tls->ssl) < 0)
@@ -796,7 +796,7 @@ BOOL tls_accept(rdpTls* tls, BIO* underlying, const char* cert_file, const char*
 #ifdef SSL_OP_NO_COMPRESSION
 	options |= SSL_OP_NO_COMPRESSION;
 #endif
-	 
+
 	/**
 	 * SSL_OP_TLS_BLOCK_PADDING_BUG:
 	 *
@@ -994,7 +994,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 		 */
 
 		bio = BIO_new(BIO_s_mem());
-		
+
 		if (!bio)
 		{
 			WLog_ERR(TAG, "BIO_new() failure");
@@ -1008,19 +1008,19 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 			WLog_ERR(TAG, "PEM_write_bio_X509 failure: %d", status);
 			return -1;
 		}
-		
+
 		offset = 0;
 		length = 2048;
 		pemCert = (BYTE*) malloc(length + 1);
 
 		status = BIO_read(bio, pemCert, length);
-		
+
 		if (status < 0)
 		{
 			WLog_ERR(TAG, "failed to read certificate");
 			return -1;
 		}
-		
+
 		offset += status;
 
 		while (offset >= length)
@@ -1048,17 +1048,17 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 			WLog_ERR(TAG, "failed to read certificate");
 			return -1;
 		}
-		
+
 		length = offset;
 		pemCert[length] = '\0';
 
 		status = -1;
-		
+
 		if (instance->VerifyX509Certificate)
 		{
 			status = instance->VerifyX509Certificate(instance, pemCert, length, hostname, port, tls->isGatewayTransport);
 		}
-		
+
 		WLog_ERR(TAG, "(length = %d) status: %d%s",	length, status, pemCert);
 
 		free(pemCert);
@@ -1124,7 +1124,9 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 
 	/* if the certificate is valid but the certificate name does not match, warn user, do not accept */
 	if (certificate_status && !hostname_match)
-		tls_print_certificate_name_mismatch_error(hostname, common_name, alt_names, alt_names_count);
+		tls_print_certificate_name_mismatch_error(hostname, port,
+							  common_name, alt_names,
+							  alt_names_count);
 
 	/* verification could not succeed with OpenSSL, use known_hosts file and prompt user for manual verification */
 
@@ -1147,7 +1149,10 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 		{
 			/* no entry was found in known_hosts file, prompt user for manual verification */
 			if (!hostname_match)
-				tls_print_certificate_name_mismatch_error(hostname, common_name, alt_names, alt_names_count);
+				tls_print_certificate_name_mismatch_error(
+							hostname, port,
+							common_name, alt_names,
+							alt_names_count);
 
 			if (instance->VerifyCertificate)
 			{
@@ -1168,7 +1173,8 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 		else if (match == -1)
 		{
 			/* entry was found in known_hosts file, but fingerprint does not match. ask user to use it */
-			tls_print_certificate_error(hostname, fingerprint, tls->certificate_store->file);
+			tls_print_certificate_error(hostname, port, fingerprint,
+						    tls->certificate_store->file);
 
 			if (instance->VerifyChangedCertificate)
 			{
@@ -1214,9 +1220,10 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 	return (verification_status == 0) ? 0 : 1;
 }
 
-void tls_print_certificate_error(char* hostname, char* fingerprint, char *hosts_file)
+void tls_print_certificate_error(char* hostname, UINT16 port, char* fingerprint,
+				 char *hosts_file)
 {
-	WLog_ERR(TAG, "The host key for %s has changed", hostname);
+	WLog_ERR(TAG, "The host key for %s:%hu has changed", hostname, port);
 	WLog_ERR(TAG, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 	WLog_ERR(TAG, "@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @");
 	WLog_ERR(TAG, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
@@ -1230,7 +1237,9 @@ void tls_print_certificate_error(char* hostname, char* fingerprint, char *hosts_
 	WLog_ERR(TAG, "Host key verification failed.");
 }
 
-void tls_print_certificate_name_mismatch_error(char* hostname, char* common_name, char** alt_names, int alt_names_count)
+void tls_print_certificate_name_mismatch_error(char* hostname, UINT16 port,
+					       char* common_name, char** alt_names,
+					       int alt_names_count)
 {
 	int index;
 
@@ -1238,8 +1247,10 @@ void tls_print_certificate_name_mismatch_error(char* hostname, char* common_name
 	WLog_ERR(TAG, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 	WLog_ERR(TAG, "@           WARNING: CERTIFICATE NAME MISMATCH!           @");
 	WLog_ERR(TAG, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-	WLog_ERR(TAG, "The hostname used for this connection (%s) ", hostname);
-	WLog_ERR(TAG, "does not match %s given in the certificate:", alt_names_count < 1 ? "the name" : "any of the names");
+	WLog_ERR(TAG, "The hostname used for this connection (%s:%hu) ",
+		 hostname, port);
+	WLog_ERR(TAG, "does not match %s given in the certificate:",
+		 alt_names_count < 1 ? "the name" : "any of the names");
 	WLog_ERR(TAG, "Common Name (CN):");
 	WLog_ERR(TAG, "\t%s", common_name ? common_name : "no CN found in certificate");
 	if (alt_names_count > 0)
