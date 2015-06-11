@@ -73,7 +73,7 @@ static BOOL autodetect_send_rtt_measure_request(rdpContext* context, UINT16 sequ
 	Stream_Write_UINT16(s, sequenceNumber); /* sequenceNumber (2 bytes) */
 	Stream_Write_UINT16(s, requestType); /* requestType (2 bytes) */
 
-	context->rdp->autodetect->rttMeasureStartTime = GetTickCount();
+	context->rdp->autodetect->rttMeasureStartTime = GetTickCountPrecise();
 
 	return rdp_send_message_channel_pdu(context->rdp, s, SEC_AUTODETECT_REQ);
 }
@@ -257,7 +257,7 @@ static BOOL autodetect_send_bandwidth_measure_results(rdpRdp* rdp, UINT16 respon
 	UINT32 timeDelta;
 
 	/* Compute the total time */
-	timeDelta = GetTickCount() - rdp->autodetect->bandwidthMeasureStartTime;
+	timeDelta = GetTickCountPrecise() - rdp->autodetect->bandwidthMeasureStartTime;
 
 	/* Send the result PDU to the server */
 
@@ -361,7 +361,7 @@ static BOOL autodetect_recv_rtt_measure_response(rdpRdp* rdp, wStream* s, AUTODE
 
 	WLog_VRB(AUTODETECT_TAG, "received RTT Measure Response PDU");
 
-	rdp->autodetect->netCharAverageRTT = GetTickCount() - rdp->autodetect->rttMeasureStartTime;
+	rdp->autodetect->netCharAverageRTT = GetTickCountPrecise() - rdp->autodetect->rttMeasureStartTime;
 	if (rdp->autodetect->netCharBaseRTT == 0 || rdp->autodetect->netCharBaseRTT > rdp->autodetect->netCharAverageRTT)
 		rdp->autodetect->netCharBaseRTT = rdp->autodetect->netCharAverageRTT;
 
@@ -375,10 +375,10 @@ static BOOL autodetect_recv_bandwidth_measure_start(rdpRdp* rdp, wStream* s, AUT
 	if (autodetectReqPdu->headerLength != 0x06)
 		return FALSE;
 
-	WLog_VRB(AUTODETECT_TAG, "received Bandwidth Measure Start PDU - time=%lu", GetTickCount());
+	WLog_VRB(AUTODETECT_TAG, "received Bandwidth Measure Start PDU - time=%lu", GetTickCountPrecise());
 
 	/* Initialize bandwidth measurement parameters */
-	rdp->autodetect->bandwidthMeasureStartTime = GetTickCount();
+	rdp->autodetect->bandwidthMeasureStartTime = GetTickCountPrecise();
 	rdp->autodetect->bandwidthMeasureByteCount = 0;
 
 	/* Continuous Auto-Detection: mark the start of the measurement */
