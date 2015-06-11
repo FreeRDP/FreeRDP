@@ -45,8 +45,8 @@ static const char certificate_legacy_hosts_file[] = "known_hosts";
 #define TAG FREERDP_TAG("crypto")
 
 static BOOL certificate_split_line(char* line, char** host, UINT16* port,
-				   char**subject, char**issuer,
-				   char** fingerprint);
+					 char**subject, char**issuer,
+					 char** fingerprint);
 
 BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 {
@@ -198,9 +198,9 @@ static int certificate_data_match_legacy(rdpCertificateStore* certificate_store,
 }
 
 static int certificate_data_match_raw(rdpCertificateStore* certificate_store,
-				      rdpCertificateData* certificate_data,
-				      char** psubject, char** pissuer,
-				      char** fprint)
+							rdpCertificateData* certificate_data,
+							char** psubject, char** pissuer,
+							char** fprint)
 {
 	BOOL found = FALSE;
 	FILE* fp;
@@ -258,9 +258,9 @@ static int certificate_data_match_raw(rdpCertificateStore* certificate_store,
 		if (length > 0)
 		{
 			if (!certificate_split_line(pline, &hostname, &port,
-						    &subject, &issuer, &fingerprint))
+								&subject, &issuer, &fingerprint))
 				WLog_WARN(TAG, "Invalid %s entry %s!",
-					  certificate_known_hosts_file, pline);
+						certificate_known_hosts_file, pline);
 			else if (strcmp(pline, certificate_data->hostname) == 0)
 			{
 				int outLen;
@@ -272,9 +272,9 @@ static int certificate_data_match_raw(rdpCertificateStore* certificate_store,
 					if (fingerprint && fprint)
 						*fprint = _strdup(fingerprint);
 					if (subject && psubject)
-						crypto_base64_decode(subject, strlen(subject), psubject, &outLen);
+						crypto_base64_decode(subject, strlen(subject), (BYTE**)psubject, &outLen);
 					if (issuer && pissuer)
-						crypto_base64_decode(issuer, strlen(issuer), pissuer, &outLen);
+						crypto_base64_decode(issuer, strlen(issuer), (BYTE**)pissuer, &outLen);
 					break;
 				}
 			}
@@ -296,7 +296,7 @@ BOOL certificate_get_stored_data(rdpCertificateStore* certificate_store,
 				 char** fingerprint)
 {
 	int rc = certificate_data_match_raw(certificate_store, certificate_data,
-					    subject, issuer, fingerprint);
+							subject, issuer, fingerprint);
 
 	if ((rc == 0) || (rc == -1))
 		return TRUE;
@@ -304,14 +304,14 @@ BOOL certificate_get_stored_data(rdpCertificateStore* certificate_store,
 }
 
 int certificate_data_match(rdpCertificateStore* certificate_store,
-			   rdpCertificateData* certificate_data)
+				 rdpCertificateData* certificate_data)
 {
 	return certificate_data_match_raw(certificate_store, certificate_data,
-					  NULL, NULL, NULL);
+						NULL, NULL, NULL);
 }
 
 BOOL certificate_data_replace(rdpCertificateStore* certificate_store,
-			      rdpCertificateData* certificate_data)
+						rdpCertificateData* certificate_data)
 {
 	FILE* fp;
 	BOOL rc = FALSE;
@@ -381,7 +381,7 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store,
 
 			if (!certificate_split_line(pline, &hostname, &port, &subject, &issuer, &fingerprint))
 				WLog_WARN(TAG, "Skipping invalid %s entry %s!",
-					  certificate_known_hosts_file, pline);
+						certificate_known_hosts_file, pline);
 			else
 			{
 				/* If this is the replaced hostname, use the updated fingerprint. */
@@ -405,7 +405,7 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store,
 }
 
 BOOL certificate_split_line(char* line, char** host, UINT16* port, char** subject,
-			    char** issuer, char** fingerprint)
+					char** issuer, char** fingerprint)
 {
 		char* cur;
 		size_t length = strlen(line);
@@ -469,18 +469,30 @@ rdpCertificateData* certificate_data_new(char* hostname, UINT16 port, char* subj
 {
 	rdpCertificateData* certdata;
 
+	if (!hostname)
+		return NULL;
+
+	if (!fingerprint)
+		return NULL;
+
 	certdata = (rdpCertificateData *)calloc(1, sizeof(rdpCertificateData));
 	if (!certdata)
 		return NULL;
 
 	certdata->port = port;
 	certdata->hostname = _strdup(hostname);
-	certdata->subject = crypto_base64_encode(subject, strlen(subject));
-	certdata->issuer = crypto_base64_encode(issuer, strlen(subject));
+	if (subject)
+		certdata->subject = crypto_base64_encode((BYTE*)subject, strlen(subject));
+	else
+		certdata->subject = crypto_base64_encode((BYTE*)"", 0);
+	if (issuer)
+		certdata->issuer = crypto_base64_encode((BYTE*)issuer, strlen(subject));
+	else
+		certdata->issuer = crypto_base64_encode((BYTE*)"", 0);
 	certdata->fingerprint = _strdup(fingerprint);
 
 	if (!certdata->hostname || !certdata->subject ||
-	    !certdata->issuer || !certdata->fingerprint)
+			!certdata->issuer || !certdata->fingerprint)
 		goto fail;
 
 	return certdata;
