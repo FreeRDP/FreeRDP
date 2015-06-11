@@ -300,7 +300,7 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 	char* pline;
 	long int size;
 
-	fp = fopen(certificate_store->file, "wb+");
+	fp = fopen(certificate_store->file, "rb");
 
 	if (!fp)
 		return FALSE;
@@ -326,6 +326,16 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 	if (fread(data, size, 1, fp) != 1)
 	{
 		fclose(fp);
+		free(data);
+		return FALSE;
+	}
+
+	fclose(fp);
+
+	fp = fopen(certificate_store->file, "wb+");
+
+	if (!fp)
+	{
 		free(data);
 		return FALSE;
 	}
