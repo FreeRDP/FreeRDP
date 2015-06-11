@@ -83,6 +83,8 @@ int TestKnownHosts(int argc, char* argv[])
 	char* currentFileV2 = NULL;
 	char* legacyFileV2 = NULL;
 	char* legacyFile = NULL;
+	char* subject = NULL;
+	char* issuer = NULL;
 	char* fp = NULL;
 
 	current.ConfigPath = GetKnownSubPath(KNOWN_PATH_TEMP, "TestKnownHostsCurrent");
@@ -152,13 +154,17 @@ int TestKnownHosts(int argc, char* argv[])
 	}
 
 	/* Test if we can read out the old fingerprint. */
-	if (!certificate_get_fingerprint(store, data, &fp))
+	if (!certificate_get_stored_data(store, data, &subject, &issuer, &fp))
 	{
 		fprintf(stderr, "Could not read old fingerprint!\n");
 		goto finish;
 	}
-	printf("Got '%s'\n", fp);
+	printf("Got %s, %s '%s'\n", subject, issuer, fp);
+	free(subject);
+	free(issuer);
 	free(fp);
+	subject = NULL;
+	issuer = NULL;
 	fp = NULL;
 	certificate_data_free(data);
 
@@ -177,7 +183,7 @@ int TestKnownHosts(int argc, char* argv[])
 	}
 
 	/* Test if we read out the old fingerprint fails. */
-	if (certificate_get_fingerprint(store, data, &fp))
+	if (certificate_get_stored_data(store, data, &subject, &issuer, &fp))
 	{
 		fprintf(stderr, "Read out not existing old fingerprint succeeded?!\n");
 		goto finish;
@@ -308,6 +314,8 @@ finish:
 	free (currentFileV2);
 	free (legacyFileV2);
 	free (legacyFile);
+	free(subject);
+	free(issuer);
 	free(fp);
 
 	return rc;

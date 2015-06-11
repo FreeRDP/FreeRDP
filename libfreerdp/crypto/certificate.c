@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <winpr/crypto.h>
 #include <winpr/crt.h>
 #include <winpr/file.h>
 #include <winpr/path.h>
@@ -43,8 +44,9 @@ static const char certificate_legacy_hosts_file[] = "known_hosts";
 
 #define TAG FREERDP_TAG("crypto")
 
-static BOOL certificate_split_line(char* line, char** host,
-																	 UINT16* port, char** fingerprint);
+static BOOL certificate_split_line(char* line, char** host, UINT16* port,
+				   char**subject, char**issuer,
+				   char** fingerprint);
 
 BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 {
@@ -184,7 +186,8 @@ static int certificate_data_match_legacy(rdpCertificateStore* certificate_store,
 	{
 		rdpCertificateData* data = certificate_data_new(hostname,
 						certificate_data->port,
-						pline);
+								NULL, NULL,
+								pline);
 		if (data)
 			match = certificate_data_print(certificate_store, data) ? 0 : 1;
 		certificate_data_free(data);
@@ -195,7 +198,9 @@ static int certificate_data_match_legacy(rdpCertificateStore* certificate_store,
 }
 
 static int certificate_data_match_raw(rdpCertificateStore* certificate_store,
-	rdpCertificateData* certificate_data, char** fprint)
+				      rdpCertificateData* certificate_data,
+				      char** psubject, char** pissuer,
+				      char** fprint)
 {
 	BOOL found = FALSE;
 	FILE* fp;
@@ -206,6 +211,8 @@ static int certificate_data_match_raw(rdpCertificateStore* certificate_store,
 	int match = 1;
 	long int size;
 	char* hostname = NULL;
+	char* subject = NULL;
+	char* issuer = NULL;
 	char* fingerprint = NULL;
 	unsigned short port = 0;
 
@@ -250,16 +257,24 @@ static int certificate_data_match_raw(rdpCertificateStore* certificate_store,
 
 		if (length > 0)
 		{
-			if (!certificate_split_line(pline, &hostname, &port, &fingerprint))
-				WLog_WARN(TAG, "Invalid %s entry %s!", certificate_known_hosts_file, pline);
+			if (!certificate_split_line(pline, &hostname, &port,
+						    &subject, &issuer, &fingerprint))
+				WLog_WARN(TAG, "Invalid %s entry %s!",
+					  certificate_known_hosts_file, pline);
 			else if (strcmp(pline, certificate_data->hostname) == 0)
 			{
+				int outLen;
+
 				if (port == certificate_data->port)
 				{
 					found = TRUE;
 					match = strcmp(certificate_data->fingerprint, fingerprint);
 					if (fingerprint && fprint)
 						*fprint = _strdup(fingerprint);
+					if (subject && psubject)
+						crypto_base64_decode(subject, strlen(subject), psubject, &outLen);
+					if (issuer && pissuer)
+						crypto_base64_decode(issuer, strlen(issuer), pissuer, &outLen);
 					break;
 				}
 			}
@@ -275,22 +290,28 @@ static int certificate_data_match_raw(rdpCertificateStore* certificate_store,
 	return match;
 }
 
-BOOL certificate_get_fingerprint(rdpCertificateStore* certificate_store,
-	rdpCertificateData* certificate_data, char** fingerprint)
+BOOL certificate_get_stored_data(rdpCertificateStore* certificate_store,
+				 rdpCertificateData* certificate_data,
+				 char** subject, char** issuer,
+				 char** fingerprint)
 {
-	int rc = certificate_data_match_raw(certificate_store, certificate_data, fingerprint);
+	int rc = certificate_data_match_raw(certificate_store, certificate_data,
+					    subject, issuer, fingerprint);
 
 	if ((rc == 0) || (rc == -1))
 		return TRUE;
 	return FALSE;
 }
 
-int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data)
+int certificate_data_match(rdpCertificateStore* certificate_store,
+			   rdpCertificateData* certificate_data)
 {
-	return certificate_data_match_raw(certificate_store, certificate_data, NULL);
+	return certificate_data_match_raw(certificate_store, certificate_data,
+					  NULL, NULL, NULL);
 }
 
-BOOL certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data)
+BOOL certificate_data_replace(rdpCertificateStore* certificate_store,
+			      rdpCertificateData* certificate_data)
 {
 	FILE* fp;
 	BOOL rc = FALSE;
@@ -353,9 +374,12 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 		if (length > 0)
 		{
 			UINT16 port = 0;
-			char* hostname = NULL, *fingerprint;
+			char* hostname = NULL;
+			char* fingerprint = NULL;
+			char* subject = NULL;
+			char* issuer = NULL;
 
-			if (!certificate_split_line(pline, &hostname, &port, &fingerprint))
+			if (!certificate_split_line(pline, &hostname, &port, &subject, &issuer, &fingerprint))
 				WLog_WARN(TAG, "Skipping invalid %s entry %s!",
 					  certificate_known_hosts_file, pline);
 			else
@@ -367,7 +391,7 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 					fingerprint = certificate_data->fingerprint;
 					rc = TRUE;
 				}
-				fprintf(fp, "%s %hu %s\n", hostname, port, fingerprint);
+				fprintf(fp, "%s %hu %s %s %s\n", hostname, port, fingerprint, subject, issuer);
 			}
 		}
 
@@ -380,7 +404,8 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 	return rc;
 }
 
-BOOL certificate_split_line(char* line, char** host, UINT16* port, char** fingerprint)
+BOOL certificate_split_line(char* line, char** host, UINT16* port, char** subject,
+			    char** issuer, char** fingerprint)
 {
 		char* cur;
 		size_t length = strlen(line);
@@ -406,6 +431,18 @@ BOOL certificate_split_line(char* line, char** host, UINT16* port, char** finger
 
 		*fingerprint = cur;
 
+		cur = StrSep(&line, " \t");
+		if (!cur)
+			return FALSE;
+
+		*subject = cur;
+
+		cur = StrSep(&line, " \t");
+		if (!cur)
+			return FALSE;
+
+		*issuer = cur;
+
 		return TRUE;
 }
 
@@ -419,15 +456,16 @@ BOOL certificate_data_print(rdpCertificateStore* certificate_store, rdpCertifica
 	if (!fp)
 		return FALSE;
 
-	fprintf(fp, "%s %hu %s\n", certificate_data->hostname, certificate_data->port,
-					certificate_data->fingerprint);
+	fprintf(fp, "%s %hu %s %s %s\n", certificate_data->hostname, certificate_data->port,
+					 certificate_data->fingerprint, certificate_data->subject,
+					 certificate_data->issuer);
 
 	fclose(fp);
 
 	return TRUE;
 }
 
-rdpCertificateData* certificate_data_new(char* hostname, UINT16 port, char* fingerprint)
+rdpCertificateData* certificate_data_new(char* hostname, UINT16 port, char* subject, char* issuer, char* fingerprint)
 {
 	rdpCertificateData* certdata;
 
@@ -437,16 +475,21 @@ rdpCertificateData* certificate_data_new(char* hostname, UINT16 port, char* fing
 
 	certdata->port = port;
 	certdata->hostname = _strdup(hostname);
-	if (!certdata->hostname)
-		goto out_free;
+	certdata->subject = crypto_base64_encode(subject, strlen(subject));
+	certdata->issuer = crypto_base64_encode(issuer, strlen(subject));
 	certdata->fingerprint = _strdup(fingerprint);
-	if (!certdata->fingerprint)
-		goto out_free_hostname;
+
+	if (!certdata->hostname || !certdata->subject ||
+	    !certdata->issuer || !certdata->fingerprint)
+		goto fail;
+
 	return certdata;
 
-out_free_hostname:
+fail:
 	free(certdata->hostname);
-out_free:
+	free(certdata->subject);
+	free(certdata->issuer);
+	free(certdata->fingerprint);
 	free(certdata);
 	return NULL;
 }
@@ -456,6 +499,8 @@ void certificate_data_free(rdpCertificateData* certificate_data)
 	if (certificate_data != NULL)
 	{
 		free(certificate_data->hostname);
+		free(certificate_data->subject);
+		free(certificate_data->issuer);
 		free(certificate_data->fingerprint);
 		free(certificate_data);
 	}

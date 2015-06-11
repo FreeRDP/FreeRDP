@@ -761,7 +761,7 @@ int tls_connect(rdpTls* tls, BIO* underlying)
 
 #ifndef OPENSSL_NO_TLSEXT
 static void tls_openssl_tlsext_debug_callback(SSL *s, int client_server,
-	int type, unsigned char *data, int len, void *arg)
+					      int type, unsigned char *data, int len, void *arg)
 {
 	/* see code comment in tls_accept() below */
 
@@ -1172,14 +1172,17 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 		}
 		else if (match == -1)
 		{
+			char* old_subject = NULL;
+			char* old_issuer = NULL;
 			char* old_fingerprint = NULL;
 
 			/* entry was found in known_hosts file, but fingerprint does not match. ask user to use it */
 			tls_print_certificate_error(hostname, port, fingerprint,
 						    tls->certificate_store->file);
 
-			if (!certificate_get_fingerprint(tls->certificate_store,
-							 certificate_data, &old_fingerprint))
+			if (!certificate_get_stored_data(tls->certificate_store,
+							 certificate_data, &old_subject,
+							 &old_issuer, &old_fingerprint))
 				WLog_WARN(TAG, "Failed to get certificate entry for %s:hu",
 					  hostname, port);
 
@@ -1187,7 +1190,8 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 			{
 				accept_certificate = instance->VerifyChangedCertificate(
 							     instance, subject, issuer,
-							     fingerprint, old_fingerprint);
+							     fingerprint, old_subject, old_issuer,
+							     old_fingerprint);
 			}
 
 			free(old_fingerprint);
@@ -1226,7 +1230,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 
 	if (alt_names)
 		crypto_cert_subject_alt_name_free(alt_names_count, alt_names_lengths,
-				alt_names);
+						  alt_names);
 
 	return (verification_status == 0) ? 0 : 1;
 }
