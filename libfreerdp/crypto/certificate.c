@@ -195,7 +195,7 @@ static int certificate_data_match_legacy(rdpCertificateStore* certificate_store,
 }
 
 static int certificate_data_match_raw(rdpCertificateStore* certificate_store,
-        rdpCertificateData* certificate_data, char** fprint)
+	rdpCertificateData* certificate_data, char** fprint)
 {
 	BOOL found = FALSE;
 	FILE* fp;
@@ -257,9 +257,9 @@ static int certificate_data_match_raw(rdpCertificateStore* certificate_store,
 				if (port == certificate_data->port)
 				{
 					found = TRUE;
-					match = strcmp(fingerprint, certificate_data->fingerprint);
-                    if ((match == 0) && fprint)
-                        *fprint = _strdup(fingerprint);
+					match = strcmp(certificate_data->fingerprint, fingerprint);
+					if (fingerprint && fprint)
+						*fprint = _strdup(fingerprint);
 					break;
 				}
 			}
@@ -276,18 +276,18 @@ static int certificate_data_match_raw(rdpCertificateStore* certificate_store,
 }
 
 BOOL certificate_get_fingerprint(rdpCertificateStore* certificate_store,
-        rdpCertificateData* certificate_data, char** fingerprint)
+	rdpCertificateData* certificate_data, char** fingerprint)
 {
-    int rc = certificate_data_match_raw(certificate_store, certificate_data, fingerprint);
-    
-    if (rc == 0)
-        return TRUE;
-    return FALSE;
+	int rc = certificate_data_match_raw(certificate_store, certificate_data, fingerprint);
+
+	if ((rc == 0) || (rc == -1))
+		return TRUE;
+	return FALSE;
 }
 
 int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data)
 {
-    return certificate_data_match_raw(certificate_store, certificate_data, NULL);
+	return certificate_data_match_raw(certificate_store, certificate_data, NULL);
 }
 
 BOOL certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data)
@@ -332,7 +332,7 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 
 	fclose(fp);
 
-	fp = fopen(certificate_store->file, "wb+");
+	fp = fopen(certificate_store->file, "wb");
 
 	if (!fp)
 	{
@@ -356,11 +356,13 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 			char* hostname = NULL, *fingerprint;
 
 			if (!certificate_split_line(pline, &hostname, &port, &fingerprint))
-				WLog_WARN(TAG, "Skipping invalid %s entry %s!", certificate_known_hosts_file, pline);
+				WLog_WARN(TAG, "Skipping invalid %s entry %s!",
+					  certificate_known_hosts_file, pline);
 			else
 			{
 				/* If this is the replaced hostname, use the updated fingerprint. */
-				if ((strcmp(hostname, certificate_data->hostname) == 0) && (port == certificate_data->port))
+				if ((strcmp(hostname, certificate_data->hostname) == 0) &&
+						(port == certificate_data->port))
 				{
 					fingerprint = certificate_data->fingerprint;
 					rc = TRUE;
