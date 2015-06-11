@@ -63,6 +63,9 @@
 #define SHARED_LIBRARY_EXT		SHARED_LIBRARY_EXT_SO
 #endif
 
+#include "../log.h"
+#define TAG WINPR_TAG("path")
+
 /*
  * PathCchAddBackslash
  */
@@ -127,12 +130,14 @@
 
 HRESULT PathCchRemoveBackslashA(PSTR pszPath, size_t cchPath)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 HRESULT PathCchRemoveBackslashW(PWSTR pszPath, size_t cchPath)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 /*
@@ -195,12 +200,14 @@ HRESULT PathCchRemoveBackslashW(PWSTR pszPath, size_t cchPath)
 
 HRESULT PathCchRemoveBackslashExA(PSTR pszPath, size_t cchPath, PSTR* ppszEnd, size_t* pcchRemaining)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 HRESULT PathCchRemoveBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd, size_t* pcchRemaining)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 /*
@@ -337,12 +344,14 @@ HRESULT PathCchRemoveBackslashExW(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
 
 HRESULT PathCchAppendExA(PSTR pszPath, size_t cchPath, PCSTR pszMore, unsigned long dwFlags)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 HRESULT PathCchAppendExW(PWSTR pszPath, size_t cchPath, PCWSTR pszMore, unsigned long dwFlags)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 /*
@@ -351,12 +360,14 @@ HRESULT PathCchAppendExW(PWSTR pszPath, size_t cchPath, PCWSTR pszMore, unsigned
 
 HRESULT PathCchCanonicalizeA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 HRESULT PathCchCanonicalizeW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 /*
@@ -365,12 +376,14 @@ HRESULT PathCchCanonicalizeW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPath
 
 HRESULT PathCchCanonicalizeExA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn, unsigned long dwFlags)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 HRESULT PathCchCanonicalizeExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn, unsigned long dwFlags)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 /*
@@ -379,12 +392,14 @@ HRESULT PathCchCanonicalizeExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPa
 
 HRESULT PathAllocCanonicalizeA(PCSTR pszPathIn, unsigned long dwFlags, PSTR* ppszPathOut)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 HRESULT PathAllocCanonicalizeW(PCWSTR pszPathIn, unsigned long dwFlags, PWSTR* ppszPathOut)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 /*
@@ -393,12 +408,14 @@ HRESULT PathAllocCanonicalizeW(PCWSTR pszPathIn, unsigned long dwFlags, PWSTR* p
 
 HRESULT PathCchCombineA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn, PCSTR pszMore)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 HRESULT PathCchCombineW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn, PCWSTR pszMore)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 /*
@@ -407,12 +424,14 @@ HRESULT PathCchCombineW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn, P
 
 HRESULT PathCchCombineExA(PSTR pszPathOut, size_t cchPathOut, PCSTR pszPathIn, PCSTR pszMore, unsigned long dwFlags)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 HRESULT PathCchCombineExW(PWSTR pszPathOut, size_t cchPathOut, PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFlags)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 /*
@@ -493,6 +512,9 @@ HRESULT PathCchFindExtensionA(PCSTR pszPath, size_t cchPath, PCSTR* ppszExt)
 {
 	char* p = (char*) pszPath;
 
+	if (!pszPath || !cchPath || !ppszExt)
+		return E_INVALIDARG;
+
 	/* find end of string */
 
 	while (*p && cchPath)
@@ -501,6 +523,15 @@ HRESULT PathCchFindExtensionA(PCSTR pszPath, size_t cchPath, PCSTR* ppszExt)
 		p++;
 	}
 
+	if (*p)
+	{
+		/* pszPath is not null terminated within the cchPath range */
+		return E_INVALIDARG;
+	}
+
+	/* If no extension is found, ppszExt must point to the string's terminating null */
+	*ppszExt = p;
+
 	/* search backwards for '.' */
 
 	while (p > pszPath)
@@ -508,21 +539,22 @@ HRESULT PathCchFindExtensionA(PCSTR pszPath, size_t cchPath, PCSTR* ppszExt)
 		if (*p == '.')
 		{
 			*ppszExt = (PCSTR) p;
-			return S_OK;
+			break;
 		}
 
 		if ((*p == '\\') || (*p == '/') || (*p == ':'))
-			return S_FALSE;
+			break;
 
 		p--;
 	}
 
-	return S_FALSE;
+	return S_OK;
 }
 
 HRESULT PathCchFindExtensionW(PCWSTR pszPath, size_t cchPath, PCWSTR* ppszExt)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 /**
@@ -531,12 +563,14 @@ HRESULT PathCchFindExtensionW(PCWSTR pszPath, size_t cchPath, PCWSTR* ppszExt)
 
 HRESULT PathCchRenameExtensionA(PSTR pszPath, size_t cchPath, PCSTR pszExt)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 HRESULT PathCchRenameExtensionW(PWSTR pszPath, size_t cchPath, PCWSTR pszExt)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 /**
@@ -545,12 +579,14 @@ HRESULT PathCchRenameExtensionW(PWSTR pszPath, size_t cchPath, PCWSTR pszExt)
 
 HRESULT PathCchRemoveExtensionA(PSTR pszPath, size_t cchPath)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 HRESULT PathCchRemoveExtensionW(PWSTR pszPath, size_t cchPath)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 /**
@@ -559,12 +595,14 @@ HRESULT PathCchRemoveExtensionW(PWSTR pszPath, size_t cchPath)
 
 BOOL PathCchIsRootA(PCSTR pszPath)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 BOOL PathCchIsRootW(PCWSTR pszPath)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 /**
@@ -605,12 +643,14 @@ BOOL PathIsUNCExW(PCWSTR pszPath, PCWSTR* ppszServer)
 
 HRESULT PathCchSkipRootA(PCSTR pszPath, PCSTR* ppszRootEnd)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 HRESULT PathCchSkipRootW(PCWSTR pszPath, PCWSTR* ppszRootEnd)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 /**
@@ -619,12 +659,14 @@ HRESULT PathCchSkipRootW(PCWSTR pszPath, PCWSTR* ppszRootEnd)
 
 HRESULT PathCchStripToRootA(PSTR pszPath, size_t cchPath)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 HRESULT PathCchStripToRootW(PWSTR pszPath, size_t cchPath)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 /**
@@ -706,12 +748,14 @@ HRESULT PathCchStripPrefixW(PWSTR pszPath, size_t cchPath)
 
 HRESULT PathCchRemoveFileSpecA(PSTR pszPath, size_t cchPath)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 HRESULT PathCchRemoveFileSpecW(PWSTR pszPath, size_t cchPath)
 {
-	return 0;
+	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	return E_NOTIMPL;
 }
 
 /*
@@ -767,13 +811,13 @@ HRESULT PathCchConvertStyleA(PSTR pszPath, size_t cchPath, unsigned long dwFlags
 		else
 		{
 			/* Unexpected error */
-			return S_FALSE;
+			return E_FAIL;
 		}
 	}
 	else
 	{
 		/* Gangnam style? */
-		return S_FALSE;
+		return E_FAIL;
 	}
 
 	return S_OK;
@@ -824,13 +868,13 @@ HRESULT PathCchConvertStyleW(PWSTR pszPath, size_t cchPath, unsigned long dwFlag
 		else
 		{
 			/* Unexpected error */
-			return S_FALSE;
+			return E_FAIL;
 		}
 	}
 	else
 	{
 		/* Gangnam style? */
-		return S_FALSE;
+		return E_FAIL;
 	}
 
 	return S_OK;
