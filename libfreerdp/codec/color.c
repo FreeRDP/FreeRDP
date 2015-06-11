@@ -1512,11 +1512,18 @@ int freerdp_image_copy_from_pointer_data(BYTE* pDstData, UINT32 DstFormat, int n
 
 			return 1;
 		}
-		else if (xorBpp == 24 || xorBpp == 32 || xorBpp == 16)
+		else if (xorBpp == 24 || xorBpp == 32 || xorBpp == 16 || xorBpp == 8)
 		{
 			int xorBytesPerPixel = xorBpp >> 3;
 			xorStep = nWidth * xorBytesPerPixel;
 			pDstPixel = (UINT32*) &pDstData[(nYDst * nDstStep) + (nXDst * 4)];
+
+			if (xorBpp == 8 && !palette)
+			{
+				WLog_ERR(TAG, "null palette in convertion from %d bpp to %d bpp",
+						 xorBpp, dstBitsPerPixel);
+				return -1;
+			}
 
 			for (y = 0; y < nHeight; y++)
 			{
@@ -1544,6 +1551,10 @@ int freerdp_image_copy_from_pointer_data(BYTE* pDstData, UINT32 DstFormat, int n
 						UINT16 r, g, b;
 						GetRGB16(r, g, b, *(UINT16*)xorBits);
 						xorPixel = ARGB32(0xFF, r, g, b);
+					}
+					else if (xorBpp == 8)
+					{
+						xorPixel = 0xFF << 24 | ((UINT32*)palette)[xorBits[0]];
 					}
 					else
 					{
