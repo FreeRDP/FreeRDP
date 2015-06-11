@@ -155,7 +155,7 @@ int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificat
 			length = strcspn(pline, " \t");
 			pline[length] = '\0';
 
-			if (strcmp(pline, certificate_data->hostname) == 0)
+			if (strcmp(pline, certificate_data->hostnamePort) == 0)
 			{
 				pline = &pline[length + 1];
 
@@ -186,7 +186,7 @@ void certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 
 	if (!fp)
 		return;
-	
+
 	/* Read the current contents of the file. */
 	fseek(fp, 0, SEEK_END);
 	size = ftell(fp);
@@ -202,7 +202,7 @@ void certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 		free(data);
 		return;
 	}
-	
+
 	/* Write the file back out, with appropriate fingerprint substitutions */
 	fp = fopen(certificate_store->file, "w+");
 	data[size] = '\n';
@@ -216,24 +216,24 @@ void certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertifi
 		if (length > 0)
 		{
 			char* hostname = pline, *fingerprint;
-			
+
 			length = strcspn(pline, " \t");
 			hostname[length] = '\0';
 
 			/* If this is the replaced hostname, use the updated fingerprint. */
-			if (strcmp(hostname, certificate_data->hostname) == 0)
+			if (strcmp(hostname, certificate_data->hostnamePort) == 0)
 				fingerprint = certificate_data->fingerprint;
 			else
 				fingerprint = &hostname[length + 1];
-			
+
 			fprintf(fp, "%s %s\n", hostname, fingerprint);
 		}
 
 		pline = strtok(NULL, "\n");
 	}
-	
+
 	fclose(fp);
-	free(data);	
+	free(data);
 }
 
 void certificate_data_print(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data)
@@ -246,13 +246,14 @@ void certificate_data_print(rdpCertificateStore* certificate_store, rdpCertifica
 	if (!fp)
 		return;
 
-	fprintf(fp, "%s %s\n", certificate_data->hostname, certificate_data->fingerprint);
+	fprintf(fp, "%s %s\n", certificate_data->hostnamePort, certificate_data->fingerprint);
 	fclose(fp);
 }
 
-rdpCertificateData* certificate_data_new(char* hostname, char* fingerprint)
+rdpCertificateData* certificate_data_new(char* hostname, int port, char* fingerprint)
 {
 	rdpCertificateData* certdata;
+	size_t size;
 
 	certdata = (rdpCertificateData *)calloc(1, sizeof(rdpCertificateData));
 	if (!certdata)
@@ -261,11 +262,22 @@ rdpCertificateData* certificate_data_new(char* hostname, char* fingerprint)
 	certdata->hostname = _strdup(hostname);
 	if (!certdata->hostname)
 		goto out_free;
+	certdata->port = port;
+
+	size = strlen(hostname) + 32 + 1;
+	certdata->hostnamePort = calloc(1, size);
+	if (!certdata->hostnamePort)
+		goto out_free_hostname;
+	snprintf(certdata->hostnamePort, size, "%s:%d", hostname, port);
+
 	certdata->fingerprint = _strdup(fingerprint);
 	if (!certdata->fingerprint)
-		goto out_free_hostname;
+		goto out_free_hostname_port;
+
 	return certdata;
 
+out_free_hostname_port:
+	free(certdata->hostnamePort);
 out_free_hostname:
 	free(certdata->hostname);
 out_free:
@@ -277,6 +289,7 @@ void certificate_data_free(rdpCertificateData* certificate_data)
 {
 	if (certificate_data != NULL)
 	{
+		free(certificate_data->hostnamePort);
 		free(certificate_data->hostname);
 		free(certificate_data->fingerprint);
 		free(certificate_data);

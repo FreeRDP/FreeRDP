@@ -35,6 +35,8 @@ typedef struct rdp_certificate_store rdpCertificateStore;
 struct rdp_certificate_data
 {
 	char* hostname;
+	int port;
+	char* hostnamePort;
 	char* fingerprint;
 };
 
@@ -51,7 +53,7 @@ struct rdp_certificate_store
  extern "C" {
 #endif
 
-FREERDP_API rdpCertificateData* certificate_data_new(char* hostname, char* fingerprint);
+FREERDP_API rdpCertificateData* certificate_data_new(char* hostname, int port, char* fingerprint);
 FREERDP_API void certificate_data_free(rdpCertificateData* certificate_data);
 FREERDP_API rdpCertificateStore* certificate_store_new(rdpSettings* settings);
 FREERDP_API void certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data);

@@ -1082,7 +1082,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 	certificate_status = x509_verify_certificate(cert, tls->certificate_store->path);
 
 	/* verify certificate name match */
-	certificate_data = crypto_get_certificate_data(cert->px509, hostname);
+	certificate_data = crypto_get_certificate_data(cert->px509, hostname, port);
 
 	/* extra common name and alternative names */
 	common_name = crypto_cert_subject_common_name(cert->px509, &common_name_length);
