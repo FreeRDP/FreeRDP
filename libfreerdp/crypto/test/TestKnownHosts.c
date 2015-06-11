@@ -29,8 +29,8 @@ static int prepare(const char* currentFileV2, const char* legacyFileV2, const ch
 		"legacyurl aa:bb:cc:dd\n"
 	};
 	char* hosts[] = {
-		"someurl 3389 ff:11:22:dd\r\n",
-		"otherurl\t3389\taa:bb:cc:dd\r",
+		"someurl 3389 ff:11:22:dd subject issuer\r\n",
+		"otherurl\t3389\taa:bb:cc:dd\tsubject2\tissuer2\r",
 	};
 	FILE* fl = NULL;
 	FILE* fc = NULL;
@@ -140,7 +140,7 @@ int TestKnownHosts(int argc, char* argv[])
 		goto finish;
 
 	/* Test if host is found in current file. */
-	data = certificate_data_new("someurl", 3389, "ff:11:22:dd");
+	data = certificate_data_new("someurl", 3389, "subject", "issuer", "ff:11:22:dd");
 	if (!data)
 	{
 		fprintf(stderr, "Could not create certificate data!\n");
@@ -169,7 +169,7 @@ int TestKnownHosts(int argc, char* argv[])
 	certificate_data_free(data);
 
 	/* Test if host not found in current file. */
-	data = certificate_data_new("somehost", 1234, "ff:aa:bb:cc");
+	data = certificate_data_new("somehost", 1234, "", "", "ff:aa:bb:cc");
 	if (!data)
 	{
 		fprintf(stderr, "Could not create certificate data!\n");
@@ -192,7 +192,7 @@ int TestKnownHosts(int argc, char* argv[])
 	certificate_data_free(data);
 
 	/* Test host add current file. */
-	data = certificate_data_new("somehost", 1234, "ff:aa:bb:cc");
+	data = certificate_data_new("somehost", 1234, "", "", "ff:aa:bb:cc");
 	if (!data)
 	{
 		fprintf(stderr, "Could not create certificate data!\n");
@@ -214,7 +214,7 @@ int TestKnownHosts(int argc, char* argv[])
 	certificate_data_free(data);
 
 	/* Test host replace current file. */
-	data = certificate_data_new("somehost", 1234, "ff:aa:bb:dd:ee");
+	data = certificate_data_new("somehost", 1234, "", "", "ff:aa:bb:dd:ee");
 	if (!data)
 	{
 		fprintf(stderr, "Could not create certificate data!\n");
@@ -236,7 +236,7 @@ int TestKnownHosts(int argc, char* argv[])
 	certificate_data_free(data);
 
 	/* Test host replace invalid entry in current file. */
-	data = certificate_data_new("somehostXXXX", 1234, "ff:aa:bb:dd:ee");
+	data = certificate_data_new("somehostXXXX", 1234, "", "", "ff:aa:bb:dd:ee");
 	if (!data)
 	{
 		fprintf(stderr, "Could not create certificate data!\n");
@@ -268,7 +268,7 @@ int TestKnownHosts(int argc, char* argv[])
 	}
 
 	/* test if host found in legacy file. */
-	data = certificate_data_new("legacyurl", 1234, "aa:bb:cc:dd");
+	data = certificate_data_new("legacyurl", 1234, "", "", "aa:bb:cc:dd");
 	if (!data)
 	{
 		fprintf(stderr, "Could not create certificate data!\n");
@@ -284,7 +284,7 @@ int TestKnownHosts(int argc, char* argv[])
 	certificate_data_free(data);
 
 	/* test if host not found. */
-	data = certificate_data_new("somehost-not-in-file", 1234, "ff:aa:bb:cc");
+	data = certificate_data_new("somehost-not-in-file", 1234, "", "", "ff:aa:bb:cc");
 	if (!data)
 	{
 		fprintf(stderr, "Could not create certificate data!\n");
