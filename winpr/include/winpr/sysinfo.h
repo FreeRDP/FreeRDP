@@ -295,6 +295,8 @@ WINPR_API ULONGLONG GetTickCount64(void);
 
 #endif
 
+WINPR_API DWORD GetTickCountPrecise(void);
+
 WINPR_API BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature);
 
 /* extended flags */
