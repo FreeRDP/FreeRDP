@@ -1093,9 +1093,11 @@ BOOL xf_post_connect(freerdp* instance)
 
 		gdi = context->gdi;
 		xfc->primary_buffer = gdi->primary_buffer;
+		xfc->palette = gdi->palette;
 	}
 	else
 	{
+		xfc->palette = xfc->palette_hwgdi;
 		xfc->srcBpp = settings->ColorDepth;
 		xf_gdi_register_update_callbacks(update);
 	}
