@@ -40,6 +40,9 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/channels/rdpdr.h>
+#include <freerdp/channels/log.h>
+
+#define TAG CHANNELS_TAG("serial.client")
 
 /* TODO: all #ifdef __linux__ could be removed once only some generic
  * functions will be used. Replace CommReadFile by ReadFile,
@@ -226,7 +229,7 @@ static void serial_process_irp_close(SERIAL_DEVICE* serial, IRP* irp)
 	Stream_Zero(irp->output, 5); /* Padding (5 bytes) */
 }
 
-static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
+static WIN32ERROR serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 {
 	UINT32 Length;
 	UINT64 Offset;
@@ -273,11 +276,17 @@ static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 
 	if (nbRead > 0)
 	{
-		Stream_EnsureRemainingCapacity(irp->output, nbRead);
+		if (!Stream_EnsureRemainingCapacity(irp->output, nbRead))
+		{
+			WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
+			free(buffer);
+			return CHANNEL_RC_NO_MEMORY;
+		}
 		Stream_Write(irp->output, buffer, nbRead); /* ReadData */
 	}
 
 	free(buffer);
+	return CHANNEL_RC_OK;
 }
 
 static void serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
@@ -318,7 +327,7 @@ static void serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 }
 
 
-static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
+static WIN32ERROR serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 {
 	UINT32 IoControlCode;
 	UINT32 InputBufferLength;
@@ -376,7 +385,14 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 
 	if (BytesReturned > 0)
 	{
-		Stream_EnsureRemainingCapacity(irp->output, BytesReturned);
+		if (!Stream_EnsureRemainingCapacity(irp->output, BytesReturned))
+		{
+			WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
+			free(InputBuffer);
+			free(OutputBuffer);
+			return CHANNEL_RC_NO_MEMORY;
+		}
+
 		Stream_Write(irp->output, OutputBuffer, BytesReturned); /* OutputBuffer */
 	}
 	/* FIXME: Why at least Windows 2008R2 gets lost with this
@@ -390,10 +406,12 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 
 	free(InputBuffer);
 	free(OutputBuffer);
+	return CHANNEL_RC_OK;
 }
 
-static void serial_process_irp(SERIAL_DEVICE* serial, IRP* irp)
+static WIN32ERROR serial_process_irp(SERIAL_DEVICE* serial, IRP* irp)
 {
+	WIN32ERROR error = CHANNEL_RC_OK;
 	WLog_Print(serial->log, WLOG_DEBUG, "IRP MajorFunction: 0x%04X MinorFunction: 0x%04X\n",
 		irp->MajorFunction, irp->MinorFunction);
 
@@ -408,7 +426,8 @@ static void serial_process_irp(SERIAL_DEVICE* serial, IRP* irp)
 			break;
 
 		case IRP_MJ_READ:
-			serial_process_irp_read(serial, irp);
+			if ((error = serial_process_irp_read(serial, irp)))
+				WLog_ERR(TAG, "serial_process_irp_read failed with error %lu!", error);
 			break;
 
 		case IRP_MJ_WRITE:
@@ -416,22 +435,26 @@ static void serial_process_irp(SERIAL_DEVICE* serial, IRP* irp)
 			break;
 
 		case IRP_MJ_DEVICE_CONTROL:
-			serial_process_irp_device_control(serial, irp);
+			if ((error = serial_process_irp_device_control(serial, irp)))
+				WLog_ERR(TAG, "serial_process_irp_device_control failed with error %lu!", error);
 			break;
 
 		default:
 			irp->IoStatus = STATUS_NOT_SUPPORTED;
 			break;
 	}
+	return error;
 }
 
 
 static void* irp_thread_func(void* arg)
 {
 	IRP_THREAD_DATA *data = (IRP_THREAD_DATA*)arg;
+	WIN32ERROR error;
 
 	/* blocks until the end of the request */
-	serial_process_irp(data->serial, data->irp);
+	if ((error = serial_process_irp(data->serial, data->irp)))
+		WLog_ERR(TAG, "serial_process_irp failed with error %lu", error);
 
 	EnterCriticalSection(&data->serial->TerminatingIrpThreadsLock);
 	data->serial->IrpThreadToBeTerminatedCount++;
@@ -680,14 +703,14 @@ static void* serial_thread_func(void* arg)
 }
 
 
-static void serial_irp_request(DEVICE* device, IRP* irp)
+static WIN32ERROR serial_irp_request(DEVICE* device, IRP* irp)
 {
 	SERIAL_DEVICE* serial = (SERIAL_DEVICE*) device;
 
 	assert(irp != NULL);
 
 	if (irp == NULL)
-		return;
+		return CHANNEL_RC_OK;
 
 	/* NB: ENABLE_ASYNCIO is set, (MS-RDPEFS 2.2.2.7.2) this
 	 * allows the server to send multiple simultaneous read or
@@ -695,6 +718,7 @@ static void serial_irp_request(DEVICE* device, IRP* irp)
 	 */
 
 	MessageQueue_Post(serial->MainIrpQueue, NULL, 0, (void*) irp, NULL);
+	return CHANNEL_RC_OK;
 }
 
 
@@ -726,7 +750,7 @@ static void serial_free(DEVICE* device)
 #define DeviceServiceEntry	serial_DeviceServiceEntry
 #endif
 
-int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
+WIN32ERROR DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	char* name;
 	char* path;
@@ -736,6 +760,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	int i, len;
 	SERIAL_DEVICE* serial;
 #endif /* __linux__ */
+	WIN32ERROR error = CHANNEL_RC_OK;
 
 	device = (RDPDR_SERIAL*) pEntryPoints->device;
 	name = device->Name;
@@ -745,7 +770,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	if (!name || (name[0] == '*'))
 	{
 		/* TODO: implement auto detection of serial ports */
-		return 0;
+		return CHANNEL_RC_OK;
 	}
 
 	if ((name && name[0]) && (path && path[0]))
@@ -759,7 +784,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 #ifndef __linux__ /* to be removed */
 
 		WLog_Print(log, WLOG_WARN, "Serial ports redirection not supported on this platform.");
-		return -1;
+		return CHANNEL_RC_INITIALIZATION_ERROR;
 
 #else /* __linux __ */
 
@@ -767,12 +792,16 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 		if (!DefineCommDevice(name /* eg: COM1 */, path /* eg: /dev/ttyS0 */))
 		{
-			return -1;
+			WLog_ERR(TAG, "DefineCommDevice failed!");
+			return ERROR_INTERNAL_ERROR;
 		}
 
 		serial = (SERIAL_DEVICE*) calloc(1, sizeof(SERIAL_DEVICE));
 		if (!serial)
-			return -1;
+		{
+			WLog_ERR(TAG, "calloc failed!");
+			return CHANNEL_RC_NO_MEMORY;
+		}
 
 		serial->log = log;
 
@@ -783,6 +812,12 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 		len = strlen(name);
 		serial->device.data = Stream_New(NULL, len + 1);
+		if (!serial->device.data)
+		{
+			WLog_ERR(TAG, "calloc failed!");
+			error = CHANNEL_RC_NO_MEMORY;
+			goto error_out;
+		}
 
 		for (i = 0; i <= len; i++)
 			Stream_Write_UINT8(serial->device.data, name[i] < 0 ? '_' : name[i]);
@@ -828,22 +863,49 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		/* TODO: implement auto detection of the server's serial driver */
 
 		serial->MainIrpQueue = MessageQueue_New(NULL);
+		if (!serial->MainIrpQueue)
+		{
+			WLog_ERR(TAG, "MessageQueue_New failed!");
+			error = CHANNEL_RC_NO_MEMORY;
+			goto error_out;
+		}
 
 		/* IrpThreads content only modified by create_irp_thread() */
 		serial->IrpThreads = ListDictionary_New(FALSE);
+		if(!serial->IrpThreads)
+		{
+			WLog_ERR(TAG, "ListDictionary_New failed!");
+			error = CHANNEL_RC_NO_MEMORY;
+			goto error_out;
+		}
 		serial->IrpThreadToBeTerminatedCount = 0;
 		InitializeCriticalSection(&serial->TerminatingIrpThreadsLock);
 
-		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*) serial);
+		if ((error = pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*) serial)))
+		{
+			WLog_ERR(TAG, "EntryPoints->RegisterDevice failed with error %lu!", error);
+			goto error_out;
+		}
 
-		serial->MainThread = CreateThread(NULL,
+		if (!(serial->MainThread = CreateThread(NULL,
 						0,
 						(LPTHREAD_START_ROUTINE) serial_thread_func,
 						(void*) serial,
 						0,
-						NULL);
+						NULL)))
+		{
+			WLog_ERR(TAG, "CreateThread failed!");
+			error = ERROR_INTERNAL_ERROR;
+			goto error_out;
+		}
 #endif /* __linux __ */
 	}
 
-	return 0;
+	return error;
+error_out:
+	ListDictionary_Free(serial->IrpThreads);
+	MessageQueue_Free(serial->MainIrpQueue);
+	Stream_Free(serial->device.data, TRUE);
+	free(serial);
+	return error;
 }
