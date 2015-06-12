@@ -35,8 +35,6 @@ override_dh_strip:
 	dh_strip --dbg-package=freerdp-nightly-dbg
 
 override_dh_install:
-	rm -f debian/tmp/opt/freerdp-nightly/lib/libwinpr-makecert-tool.a
-	rm -f debian/tmp/opt/freerdp-nightly/lib/freerdp/*.a
 	mkdir -p debian/tmp/opt/freerdp-nightly/lib/cmake/
 
 	dh_install --fail-missing
