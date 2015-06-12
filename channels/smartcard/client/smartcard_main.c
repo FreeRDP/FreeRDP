@@ -160,7 +160,7 @@ static void smartcard_free(DEVICE* device)
  * At that time, we need to cancel all outstanding IRPs.
  */
 
-static void smartcard_init(DEVICE* device)
+static WIN32ERROR smartcard_init(DEVICE* device)
 {
 	int index;
 	int keyCount;
@@ -229,6 +229,7 @@ static void smartcard_init(DEVICE* device)
 
 		free(pKeys);
 	}
+	return CHANNEL_RC_OK;
 }
 
 void smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
@@ -470,10 +471,11 @@ static void* smartcard_thread_func(void* arg)
 	return NULL;
 }
 
-static void smartcard_irp_request(DEVICE* device, IRP* irp)
+static WIN32ERROR smartcard_irp_request(DEVICE* device, IRP* irp)
 {
 	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) device;
 	MessageQueue_Post(smartcard->IrpQueue, NULL, 0, (void*) irp, NULL);
+	return CHANNEL_RC_OK;
 }
 
 /* smartcard is always built-in */
