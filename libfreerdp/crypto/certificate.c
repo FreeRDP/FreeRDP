@@ -36,7 +36,7 @@
 
 static const char certificate_store_dir[] = "certs";
 static const char certificate_server_dir[] = "server";
-static const char certificate_known_hosts_file[] = "known_hosts.v2";
+static const char certificate_known_hosts_file[] = "known_hosts2";
 static const char certificate_legacy_hosts_file[] = "known_hosts";
 
 #include <freerdp/log.h>

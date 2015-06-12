@@ -108,14 +108,14 @@ int TestKnownHosts(int argc, char* argv[])
 		}
 	}
 
-	currentFileV2 = GetCombinedPath(current.ConfigPath, "known_hosts.v2");
+	currentFileV2 = GetCombinedPath(current.ConfigPath, "known_hosts2");
 	if (!currentFileV2)
 	{
 		fprintf(stderr, "Could not get file path!\n");
 		goto finish;
 	}
 
-	legacyFileV2 = GetCombinedPath(legacy.ConfigPath, "known_hosts.v2");
+	legacyFileV2 = GetCombinedPath(legacy.ConfigPath, "known_hosts2");
 	if (!legacyFileV2)
 	{
 		fprintf(stderr, "Could not get file path!\n");
