@@ -73,11 +73,11 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "dvc", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Dynamic virtual channel" },
 	{ "u", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Username" },
 	{ "p", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Password" },
-	{ "d", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Domain" },
+	{ "d", COMMAND_LINE_VALUE_REQUIRED, "<domain>", "TARGET", NULL, -1, NULL, "Domain" },
 	{ "g", COMMAND_LINE_VALUE_OPTIONAL, "<gateway>[:port]", NULL, NULL, -1, NULL, "Gateway Hostname" },
 	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Gateway username" },
 	{ "gp", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Gateway password" },
-	{ "gd", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Gateway domain" },
+	{ "gd", COMMAND_LINE_VALUE_REQUIRED, "<domain>", "TARGET", NULL, -1, NULL, "Gateway domain" },
 	{ "gt", COMMAND_LINE_VALUE_REQUIRED, "<rpc|http|auto>", NULL, NULL, -1, NULL, "Gateway transport type" },
 	{ "gateway-usage-method", COMMAND_LINE_VALUE_REQUIRED, "<direct|detect>", NULL, NULL, -1, "gum", "Gateway usage method" },
 	{ "load-balance-info", COMMAND_LINE_VALUE_REQUIRED, "<info string>", NULL, NULL, -1, NULL, "Load balance info" },
@@ -553,7 +553,7 @@ static char** freerdp_command_line_parse_comma_separated_values_offset(char* lis
 		return NULL;
 	p = t;
 	if (count > 0)
-        MoveMemory(&p[1], p, sizeof(char*) * *count);
+	MoveMemory(&p[1], p, sizeof(char*) * *count);
 	(*count)++;
 
 	return p;
@@ -1233,7 +1233,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 	do
 	{
-		if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+		if (arg->Default && !(COMMAND_LINE_VALUE_BOOL | COMMAND_LINE_VALUE_FLAG & arg->Flags))
+		{
+		}
+		else if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
 			continue;
 
 		CommandLineSwitchStart(arg)
@@ -1296,15 +1299,24 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "w")
 		{
-			settings->DesktopWidth = atoi(arg->Value);
+			if (arg->Value)
+				settings->DesktopWidth = atoi(arg->Value);
+			else
+				settings->DesktopWidth = atoi(arg->Default);
 		}
 		CommandLineSwitchCase(arg, "h")
 		{
-			settings->DesktopHeight = atoi(arg->Value);
+			if (arg->Value)
+				settings->DesktopHeight = atoi(arg->Value);
+			else
+				settings->DesktopHeight = atoi(arg->Default);
 		}
 		CommandLineSwitchCase(arg, "size")
 		{
-			str = _strdup(arg->Value);
+			if (arg->Value)
+				str = _strdup(arg->Value);
+			else
+				str = _strdup(arg->Default);
 
 			p = strchr(str, 'x');
 
@@ -1402,7 +1414,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "bpp")
 		{
-			settings->ColorDepth = atoi(arg->Value);
+			if (arg->Value)
+				settings->ColorDepth = atoi(arg->Value);
+			else
+				settings->ColorDepth = atoi(arg->Default);
 		}
 		CommandLineSwitchCase(arg, "admin")
 		{
@@ -1427,8 +1442,12 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		{
 			unsigned long int id;
 			char* pEnd;
+			char* value = arg->Value;
 
-			id = strtoul(arg->Value, &pEnd, 16);
+			if (!arg->Value)
+				value = arg->Default;
+
+			id = strtoul(value, &pEnd, 16);
 
 			if (pEnd != (arg->Value + strlen(arg->Value)))
 				id = 0;
@@ -1465,11 +1484,19 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			freerdp_parse_username(arg->Value, &user, &domain);
 
 			settings->Username = user;
-			settings->Domain = domain;
+			if (domain)
+			{
+				free(settings->Domain);
+				settings->Domain = domain;
+			}
 		}
 		CommandLineSwitchCase(arg, "d")
 		{
-			settings->Domain = _strdup(arg->Value);
+			free(settings->Domain);
+			if (arg->Value)
+				settings->Domain = _strdup(arg->Value);
+			else
+				settings->Domain = _strdup(arg->Default);
 		}
 		CommandLineSwitchCase(arg, "p")
 		{
@@ -1512,13 +1539,21 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			freerdp_parse_username(arg->Value, &user, &domain);
 
 			settings->GatewayUsername = user;
-			settings->GatewayDomain = domain;
+			if (domain)
+			{
+				free (settings->GatewayDomain);
+				settings->GatewayDomain = domain;
+			}
 
 			settings->GatewayUseSameCredentials = FALSE;
 		}
 		CommandLineSwitchCase(arg, "gd")
 		{
-			settings->GatewayDomain = _strdup(arg->Value);
+			free(settings->GatewayDomain);
+			if (arg->Value)
+				settings->GatewayDomain = _strdup(arg->Value);
+			else
+				settings->GatewayDomain = _strdup(arg->Default);
 			settings->GatewayUseSameCredentials = FALSE;
 		}
 		CommandLineSwitchCase(arg, "gp")
