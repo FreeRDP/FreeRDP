@@ -67,7 +67,10 @@ typedef BOOL (*pPostConnect)(freerdp* instance);
 typedef void (*pPostDisconnect)(freerdp* instance);
 typedef BOOL (*pAuthenticate)(freerdp* instance, char** username, char** password, char** domain);
 typedef BOOL (*pVerifyCertificate)(freerdp* instance, char* subject, char* issuer, char* fingerprint);
-typedef BOOL (*pVerifyChangedCertificate)(freerdp* instance, char* subject, char* issuer, char* new_fingerprint, char* old_fingerprint);
+typedef BOOL (*pVerifyChangedCertificate)(freerdp* instance, char* subject,
+                                          char* issuer, char* new_fingerprint,
+                                          char* old_subject, char* old_issuer,
+                                          char* old_fingerprint);
 typedef int (*pVerifyX509Certificate)(freerdp* instance, BYTE* data, int length, const char* hostname, int port, DWORD flags);
 
 typedef int (*pLogonErrorInfo)(freerdp* instance, UINT32 data, UINT32 type);
@@ -207,7 +210,7 @@ struct rdp_freerdp
 											   Callback for certificate validation.
 											   Used to verify that an unknown certificate is trusted. */
 	ALIGN64 pVerifyChangedCertificate VerifyChangedCertificate; /**< (offset 52)
-															 Callback for changed certificate validation. 
+															 Callback for changed certificate validation.
 															 Used when a certificate differs from stored fingerprint.
 															 If returns TRUE, the new fingerprint will be trusted and old thrown out. */
 
