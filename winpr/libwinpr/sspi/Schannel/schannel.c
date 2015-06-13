@@ -34,13 +34,15 @@ SCHANNEL_CONTEXT* schannel_ContextNew()
 {
 	SCHANNEL_CONTEXT* context;
 
-	context = (SCHANNEL_CONTEXT*) malloc(sizeof(SCHANNEL_CONTEXT));
+	context = (SCHANNEL_CONTEXT*) calloc(1, sizeof(SCHANNEL_CONTEXT));
+	if (!context)
+		return NULL;
 
-	if (context != NULL)
+	context->openssl = schannel_openssl_new();
+	if (!context->openssl)
 	{
-		ZeroMemory(context, sizeof(SCHANNEL_CONTEXT));
-
-		context->openssl = schannel_openssl_new();
+		free(context);
+		return NULL;
 	}
 
 	return context;
@@ -60,12 +62,7 @@ SCHANNEL_CREDENTIALS* schannel_CredentialsNew()
 {
 	SCHANNEL_CREDENTIALS* credentials;
 
-	credentials = (SCHANNEL_CREDENTIALS*) malloc(sizeof(SCHANNEL_CREDENTIALS));
-
-	if (credentials != NULL)
-	{
-		ZeroMemory(credentials, sizeof(SCHANNEL_CREDENTIALS));
-	}
+	credentials = (SCHANNEL_CREDENTIALS*) calloc(1, sizeof(SCHANNEL_CREDENTIALS));
 
 	return credentials;
 }

@@ -359,38 +359,37 @@ wLogLayout* WLog_Layout_New(wLog* log)
 	wLogLayout* layout;
 
 	layout = (wLogLayout*) calloc(1, sizeof(wLogLayout));
+	if (!layout)
+		return NULL;
 
-	if (layout)
+	nSize = GetEnvironmentVariableA("WLOG_PREFIX", NULL, 0);
+	if (nSize)
 	{
-		nSize = GetEnvironmentVariableA("WLOG_PREFIX", NULL, 0);
-
-		if (nSize)
+		env = (LPSTR) malloc(nSize);
+		if (!env)
 		{
-			env = (LPSTR) malloc(nSize);
-			if (!env)
-			{
-				free(layout);
-				return NULL;
-			}
-			nSize = GetEnvironmentVariableA("WLOG_PREFIX", env, nSize);
+			free(layout);
+			return NULL;
 		}
+		nSize = GetEnvironmentVariableA("WLOG_PREFIX", env, nSize);
+	}
 
-		if (env)
-			layout->FormatString = env;
-		else
-		{
+	if (env)
+		layout->FormatString = env;
+	else
+	{
 #ifdef ANDROID
-			layout->FormatString = _strdup("[pid=%pid:tid=%tid] - ");
+		layout->FormatString = _strdup("[pid=%pid:tid=%tid] - ");
 #else
-			layout->FormatString = _strdup("[%hr:%mi:%se:%ml] [%pid:%tid] [%lv][%mn] - ");
+		layout->FormatString = _strdup("[%hr:%mi:%se:%ml] [%pid:%tid] [%lv][%mn] - ");
 #endif
-			if (!layout->FormatString)
-			{
-				free(layout);
-				return NULL;
-			}
+		if (!layout->FormatString)
+		{
+			free(layout);
+			return NULL;
 		}
 	}
+
 
 	return layout;
 }

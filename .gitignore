@@ -132,6 +132,9 @@ TAGS
 
 # packaging related files
 !packaging/scripts/prepare_deb_freerdp-nightly.sh
+packaging/deb/freerdp-nightly/freerdp-nightly
+packaging/deb/freerdp-nightly/freerdp-nightly-dev
+packaging/deb/freerdp-nightly/freerdp-nightly-dbg
 
 #
 .idea

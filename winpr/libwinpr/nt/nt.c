@@ -84,12 +84,9 @@ PTEB NtCurrentTeb(void)
 	{
 		if ((teb = pthread_getspecific(_TebKey)) == NULL)
 		{
-			teb = malloc(sizeof(TEB));
+			teb = calloc(1, sizeof(TEB));
 			if (teb)
-			{
-				ZeroMemory(teb, sizeof(TEB));
 				pthread_setspecific(_TebKey, teb);
-			}
 		}
 	}
 	return teb;
