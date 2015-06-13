@@ -1204,6 +1204,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 	DWORD flags;
 	BOOL compatibility;
 	COMMAND_LINE_ARGUMENT_A* arg;
+       char* username = NULL;
+       char* gw_username = NULL;
+       char* user = NULL;
+       char* domain = NULL;
 
 	compatibility = freerdp_client_detect_command_line(argc, argv, &flags, allowUnknown);
 
@@ -1459,13 +1463,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "u")
 		{
-			char* user;
-			char* domain;
-
-			freerdp_parse_username(arg->Value, &user, &domain);
-
-			settings->Username = user;
-			settings->Domain = domain;
+			username = _strdup(arg->Value);
 		}
 		CommandLineSwitchCase(arg, "d")
 		{
@@ -1506,14 +1504,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "gu")
 		{
-			char* user;
-			char* domain;
-
-			freerdp_parse_username(arg->Value, &user, &domain);
-
-			settings->GatewayUsername = user;
-			settings->GatewayDomain = domain;
-
+			gw_username = _strdup(arg->Value);
 			settings->GatewayUseSameCredentials = FALSE;
 		}
 		CommandLineSwitchCase(arg, "gd")
@@ -2017,6 +2008,51 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchEnd(arg)
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+	
+       
+       // Check if Username is set and Domain is missing.
+       // If this is the case we should split Username and Domain at the @ sign (e.g. for Kerberos)
+       // Else we should let the username string as it is (e.g. for UPN Suffix)
+       if (username && !settings->Domain)
+       {
+	  freerdp_parse_username(username, &user, &domain);
+         
+	  settings->Username = _strdup(user);
+	  settings->Domain = _strdup(domain);
+       }
+       else
+	  settings->Username = _strdup(username);
+       
+	if (user != NULL)
+	{
+		free(user);
+		user = NULL;
+	}
+	if (domain != NULL)
+	{
+		free(domain);
+		domain = NULL;
+	}
+       
+       // Same as above for Gateway Username and Domain.
+       if (gw_username && !settings->GatewayDomain)
+       {
+	  freerdp_parse_username(gw_username, &user, &domain);
+         
+	  settings->GatewayUsername = _strdup(user);
+	  settings->GatewayDomain = _strdup(domain);
+       }
+       else
+	  settings->GatewayUsername = _strdup(gw_username);
+       
+       if (user != NULL)
+	 free(user);
+       if (domain != NULL)
+	 free(domain);
+       if (username != NULL)
+	 free(username);
+       if (gw_username != NULL)
+	 free(gw_username);
 
 	freerdp_performance_flags_make(settings);
 

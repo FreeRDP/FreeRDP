@@ -344,7 +344,9 @@ int sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, const char* user, co
 	identity->Domain = (UINT16*) NULL;
 	identity->DomainLength = 0;
 
-	if (domain)
+	//      edited this line for handling UPN Suffixes. 
+	//      If Username is in UPN format we shouldn't send the Domain in NTLM authentication
+	if (domain && (strstr(user, "@")) == NULL)
 	{
 		status = ConvertToUnicode(CP_UTF8, 0, domain, -1, (LPWSTR*) &(identity->Domain), 0);
 
