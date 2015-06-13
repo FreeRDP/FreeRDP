@@ -192,28 +192,19 @@ wLogBinaryAppender* WLog_BinaryAppender_New(wLog* log)
 {
 	wLogBinaryAppender* BinaryAppender;
 
-	BinaryAppender = (wLogBinaryAppender*) malloc(sizeof(wLogBinaryAppender));
+	BinaryAppender = (wLogBinaryAppender*) calloc(1, sizeof(wLogBinaryAppender));
+	if (!BinaryAppender)
+		return NULL;
 
-	if (BinaryAppender)
-	{
-		ZeroMemory(BinaryAppender, sizeof(wLogBinaryAppender));
-
-		BinaryAppender->Type = WLOG_APPENDER_BINARY;
-
-		BinaryAppender->Open = (WLOG_APPENDER_OPEN_FN) WLog_BinaryAppender_Open;
-		BinaryAppender->Close = (WLOG_APPENDER_OPEN_FN) WLog_BinaryAppender_Close;
-
-		BinaryAppender->WriteMessage =
-				(WLOG_APPENDER_WRITE_MESSAGE_FN) WLog_BinaryAppender_WriteMessage;
-		BinaryAppender->WriteDataMessage =
-				(WLOG_APPENDER_WRITE_DATA_MESSAGE_FN) WLog_BinaryAppender_WriteDataMessage;
-		BinaryAppender->WriteImageMessage =
-				(WLOG_APPENDER_WRITE_IMAGE_MESSAGE_FN) WLog_BinaryAppender_WriteImageMessage;
-
-		BinaryAppender->FileName = NULL;
-		BinaryAppender->FilePath = NULL;
-		BinaryAppender->FullFileName = NULL;
-	}
+	BinaryAppender->Type = WLOG_APPENDER_BINARY;
+	BinaryAppender->Open = (WLOG_APPENDER_OPEN_FN) WLog_BinaryAppender_Open;
+	BinaryAppender->Close = (WLOG_APPENDER_OPEN_FN) WLog_BinaryAppender_Close;
+	BinaryAppender->WriteMessage =
+			(WLOG_APPENDER_WRITE_MESSAGE_FN) WLog_BinaryAppender_WriteMessage;
+	BinaryAppender->WriteDataMessage =
+			(WLOG_APPENDER_WRITE_DATA_MESSAGE_FN) WLog_BinaryAppender_WriteDataMessage;
+	BinaryAppender->WriteImageMessage =
+			(WLOG_APPENDER_WRITE_IMAGE_MESSAGE_FN) WLog_BinaryAppender_WriteImageMessage;
 
 	return BinaryAppender;
 }

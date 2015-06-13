@@ -552,8 +552,8 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 	char* env = NULL;
 	DWORD nSize;
 	int iLevel;
-	log = (wLog*) calloc(1, sizeof(wLog));
 
+	log = (wLog*) calloc(1, sizeof(wLog));
 	if (!log)
 		return NULL;
 
@@ -586,18 +586,21 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
         if (nSize)
         {
             env = (LPSTR) malloc(nSize);
-			if (env)
+			if (!env)
+				goto out_fail;
+
+			if (!GetEnvironmentVariableA("WLOG_LEVEL", env, nSize))
 			{
-				if (GetEnvironmentVariableA("WLOG_LEVEL", env, nSize))
-				{
-					iLevel = WLog_ParseLogLevel(env);
-
-					if (iLevel >= 0)
-						log->Level = (DWORD) iLevel;
-
-				}
+				fprintf(stderr, "WLOG_LEVEL environment variable changed in my back !\n");
 				free(env);
+				goto out_fail;
 			}
+
+			iLevel = WLog_ParseLogLevel(env);
+			free(env);
+
+			if (iLevel >= 0)
+				log->Level = (DWORD) iLevel;
         }
     }
 
@@ -654,25 +657,36 @@ wLog* WLog_GetRoot()
 		if (nSize)
 		{
 			env = (LPSTR) malloc(nSize);
-			if (env)
+			if (!env)
+				goto fail;
+
+			if (!GetEnvironmentVariableA("WLOG_APPENDER", env, nSize))
 			{
-				if (GetEnvironmentVariableA("WLOG_APPENDER", env, nSize))
-				{
-					if (_stricmp(env, "CONSOLE") == 0)
-						logAppenderType = WLOG_APPENDER_CONSOLE;
-					else if (_stricmp(env, "FILE") == 0)
-						logAppenderType = WLOG_APPENDER_FILE;
-					else if (_stricmp(env, "BINARY") == 0)
-						logAppenderType = WLOG_APPENDER_BINARY;
-				}
+				fprintf(stderr, "WLOG_APPENDER environment variable modified in my back");
 				free(env);
+				goto fail;
 			}
+
+			if (_stricmp(env, "CONSOLE") == 0)
+				logAppenderType = WLOG_APPENDER_CONSOLE;
+			else if (_stricmp(env, "FILE") == 0)
+				logAppenderType = WLOG_APPENDER_FILE;
+			else if (_stricmp(env, "BINARY") == 0)
+				logAppenderType = WLOG_APPENDER_BINARY;
+
+			free(env);
 		}
 
-		WLog_SetLogAppenderType(g_RootLog, logAppenderType);
+		if (!WLog_SetLogAppenderType(g_RootLog, logAppenderType))
+			goto fail;
 	}
 
 	return g_RootLog;
+
+fail:
+	free(g_RootLog);
+	g_RootLog = NULL;
+	return NULL;
 }
 
 int WLog_AddChild(wLog* parent, wLog* child)
@@ -747,9 +761,9 @@ wLog* WLog_Get(LPCSTR name)
 	return log;
 }
 
-void WLog_Init()
+BOOL WLog_Init()
 {
-	WLog_GetRoot();
+	return WLog_GetRoot() != NULL;
 }
 
 void WLog_Uninit()

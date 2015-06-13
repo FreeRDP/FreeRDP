@@ -608,11 +608,10 @@ HANDLE CreateTimerQueue(void)
 {
 	HANDLE handle = NULL;
 	WINPR_TIMER_QUEUE* timerQueue;
-	timerQueue = (WINPR_TIMER_QUEUE*) malloc(sizeof(WINPR_TIMER_QUEUE));
+	timerQueue = (WINPR_TIMER_QUEUE*) calloc(1, sizeof(WINPR_TIMER_QUEUE));
 
 	if (timerQueue)
 	{
-		ZeroMemory(timerQueue, sizeof(WINPR_TIMER_QUEUE));
 		WINPR_HANDLE_SET_TYPE(timerQueue, HANDLE_TYPE_TIMER_QUEUE);
 		handle = (HANDLE) timerQueue;
 		timerQueue->activeHead = NULL;

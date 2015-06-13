@@ -323,16 +323,7 @@ wLinkedList* LinkedList_New()
 {
 	wLinkedList* list = NULL;
 
-	list = (wLinkedList*) malloc(sizeof(wLinkedList));
-
-	if (list)
-	{
-		list->count = 0;
-		list->initial = 0;
-		list->head = NULL;
-		list->tail = NULL;
-		list->current = NULL;
-	}
+	list = (wLinkedList*) calloc(1, sizeof(wLinkedList));
 
 	return list;
 }
