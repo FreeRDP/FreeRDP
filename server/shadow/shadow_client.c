@@ -165,17 +165,21 @@ void shadow_client_context_free(freerdp_peer* peer, rdpShadowClient* client)
 
 void shadow_client_message_free(wMessage* message)
 {
-	if (message->id == SHADOW_MSG_IN_REFRESH_OUTPUT_ID)
+	switch(message->id)
 	{
-		SHADOW_MSG_IN_REFRESH_OUTPUT* wParam = (SHADOW_MSG_IN_REFRESH_OUTPUT*) message->wParam;
+		case SHADOW_MSG_IN_REFRESH_OUTPUT_ID:
+			free(((SHADOW_MSG_IN_REFRESH_OUTPUT*)message->wParam)->rects);
+			free(message->wParam);
+			break;
 
-		free(wParam->rects);
-		free(wParam);
-	}
-	else if (message->id == SHADOW_MSG_IN_SUPPRESS_OUTPUT_ID)
-	{
-		SHADOW_MSG_IN_SUPPRESS_OUTPUT* wParam = (SHADOW_MSG_IN_SUPPRESS_OUTPUT*) message->wParam;
-		free(wParam);
+		case SHADOW_MSG_IN_SUPPRESS_OUTPUT_ID:
+			free(message->wParam);
+			break;
+
+		default:
+			WLog_ERR(TAG, "Unknown message id: %u", message->id);
+			free(message->wParam);
+			break;
 	}
 }
 
@@ -894,73 +898,83 @@ int shadow_client_subsystem_process_message(rdpShadowClient* client, wMessage* m
 
 	/* FIXME: the pointer updates appear to be broken when used with bulk compression and mstsc */
 
-	if (message->id == SHADOW_MSG_OUT_POINTER_POSITION_UPDATE_ID)
+	switch(message->id)
 	{
-		POINTER_POSITION_UPDATE pointerPosition;
-		SHADOW_MSG_OUT_POINTER_POSITION_UPDATE* msg = (SHADOW_MSG_OUT_POINTER_POSITION_UPDATE*) message->wParam;
-
-		pointerPosition.xPos = msg->xPos;
-		pointerPosition.yPos = msg->yPos;
-
-		if (client->activated)
+		case SHADOW_MSG_OUT_POINTER_POSITION_UPDATE_ID:
 		{
-			if ((msg->xPos != client->pointerX) || (msg->yPos != client->pointerY))
+			POINTER_POSITION_UPDATE pointerPosition;
+			SHADOW_MSG_OUT_POINTER_POSITION_UPDATE* msg = (SHADOW_MSG_OUT_POINTER_POSITION_UPDATE*) message->wParam;
+
+			pointerPosition.xPos = msg->xPos;
+			pointerPosition.yPos = msg->yPos;
+
+			if (client->activated)
 			{
-				IFCALL(update->pointer->PointerPosition, context, &pointerPosition);
+				if ((msg->xPos != client->pointerX) || (msg->yPos != client->pointerY))
+				{
+					IFCALL(update->pointer->PointerPosition, context, &pointerPosition);
 
-				client->pointerX = msg->xPos;
-				client->pointerY = msg->yPos;
+					client->pointerX = msg->xPos;
+					client->pointerY = msg->yPos;
+				}
 			}
+			break;
 		}
-	}
-	else if (message->id == SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE_ID)
-	{
-		POINTER_NEW_UPDATE pointerNew;
-		POINTER_COLOR_UPDATE* pointerColor;
-		POINTER_CACHED_UPDATE pointerCached;
-		SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* msg = (SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE*) message->wParam;
-
-		ZeroMemory(&pointerNew, sizeof(POINTER_NEW_UPDATE));
-
-		pointerNew.xorBpp = 24;
-		pointerColor = &(pointerNew.colorPtrAttr);
-
-		pointerColor->cacheIndex = 0;
-		pointerColor->xPos = msg->xHot;
-		pointerColor->yPos = msg->yHot;
-		pointerColor->width = msg->width;
-		pointerColor->height = msg->height;
-
-		pointerCached.cacheIndex = pointerColor->cacheIndex;
-
-		if (client->activated)
+		case SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE_ID:
 		{
-			shadow_client_convert_alpha_pointer_data(msg->pixels, msg->premultiplied,
-					msg->width, msg->height, pointerColor);
+			POINTER_NEW_UPDATE pointerNew;
+			POINTER_COLOR_UPDATE* pointerColor;
+			POINTER_CACHED_UPDATE pointerCached;
+			SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* msg = (SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE*) message->wParam;
 
-			IFCALL(update->pointer->PointerNew, context, &pointerNew);
-			IFCALL(update->pointer->PointerCached, context, &pointerCached);
+			ZeroMemory(&pointerNew, sizeof(POINTER_NEW_UPDATE));
 
-			free(pointerColor->xorMaskData);
-			free(pointerColor->andMaskData);
+			pointerNew.xorBpp = 24;
+			pointerColor = &(pointerNew.colorPtrAttr);
+
+			pointerColor->cacheIndex = 0;
+			pointerColor->xPos = msg->xHot;
+			pointerColor->yPos = msg->yHot;
+			pointerColor->width = msg->width;
+			pointerColor->height = msg->height;
+
+			pointerCached.cacheIndex = pointerColor->cacheIndex;
+
+			if (client->activated)
+			{
+				shadow_client_convert_alpha_pointer_data(msg->pixels, msg->premultiplied,
+						msg->width, msg->height, pointerColor);
+
+				IFCALL(update->pointer->PointerNew, context, &pointerNew);
+				IFCALL(update->pointer->PointerCached, context, &pointerCached);
+
+				free(pointerColor->xorMaskData);
+				free(pointerColor->andMaskData);
+			}
+			break;
 		}
-	}
-	else if (message->id == SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES_ID)
-	{
-		SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES* msg = (SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES*) message->wParam;
-		if (client->activated && client->rdpsnd && client->rdpsnd->Activated)
+		case SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES_ID:
 		{
-			client->rdpsnd->src_format = msg->audio_format;
-			IFCALL(client->rdpsnd->SendSamples, client->rdpsnd, msg->buf, msg->nFrames, msg->wTimestamp);
+			SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES* msg = (SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES*) message->wParam;
+			if (client->activated && client->rdpsnd && client->rdpsnd->Activated)
+			{
+				client->rdpsnd->src_format = msg->audio_format;
+				IFCALL(client->rdpsnd->SendSamples, client->rdpsnd, msg->buf, msg->nFrames, msg->wTimestamp);
+			}
+			break;
 		}
-	}
-	else if (message->id == SHADOW_MSG_OUT_AUDIO_OUT_VOLUME_ID)
-	{
-		SHADOW_MSG_OUT_AUDIO_OUT_VOLUME* msg = (SHADOW_MSG_OUT_AUDIO_OUT_VOLUME*) message->wParam;
-		if (client->activated && client->rdpsnd && client->rdpsnd->Activated)
+		case SHADOW_MSG_OUT_AUDIO_OUT_VOLUME_ID:
 		{
-			IFCALL(client->rdpsnd->SetVolume, client->rdpsnd, msg->left, msg->right);
+			SHADOW_MSG_OUT_AUDIO_OUT_VOLUME* msg = (SHADOW_MSG_OUT_AUDIO_OUT_VOLUME*) message->wParam;
+			if (client->activated && client->rdpsnd && client->rdpsnd->Activated)
+			{
+				IFCALL(client->rdpsnd->SetVolume, client->rdpsnd, msg->left, msg->right);
+			}
+			break;
 		}
+		default:
+			WLog_ERR(TAG, "Unknown message id: %u", message->id);
+			break;
 	}
 
 	shadow_client_free_queued_message(message);
@@ -1090,27 +1104,30 @@ void* shadow_client_thread(rdpShadowClient* client)
 				{
 					break;
 				}
-				else if (message.id == SHADOW_MSG_OUT_POINTER_POSITION_UPDATE_ID)
+
+				switch(message.id)
 				{
-					/* Abandon previous message */
-					shadow_client_free_queued_message(&pointerPositionMsg);
-					CopyMemory(&pointerPositionMsg, &message, sizeof(wMessage));
-				}
-				else if (message.id == SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE_ID)
-				{
-					/* Abandon previous message */
-					shadow_client_free_queued_message(&pointerAlphaMsg);
-					CopyMemory(&pointerAlphaMsg, &message, sizeof(wMessage));
-				}
-				else if (message.id == SHADOW_MSG_OUT_AUDIO_OUT_VOLUME_ID)
-				{
-					/* Abandon previous message */
-					shadow_client_free_queued_message(&audioVolumeMsg);
-					CopyMemory(&audioVolumeMsg, &message, sizeof(wMessage));
-				}
-				else
-				{
-					shadow_client_subsystem_process_message(client, &message);
+					case SHADOW_MSG_OUT_POINTER_POSITION_UPDATE_ID:
+						/* Abandon previous message */
+						shadow_client_free_queued_message(&pointerPositionMsg);
+						CopyMemory(&pointerPositionMsg, &message, sizeof(wMessage));
+						break;
+
+					case SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE_ID:
+						/* Abandon previous message */
+						shadow_client_free_queued_message(&pointerAlphaMsg);
+						CopyMemory(&pointerAlphaMsg, &message, sizeof(wMessage));
+						break;
+
+					case SHADOW_MSG_OUT_AUDIO_OUT_VOLUME_ID:
+						/* Abandon previous message */
+						shadow_client_free_queued_message(&audioVolumeMsg);
+						CopyMemory(&audioVolumeMsg, &message, sizeof(wMessage));
+						break;
+
+					default:
+						shadow_client_subsystem_process_message(client, &message);
+						break;
 				}
 			}
 
