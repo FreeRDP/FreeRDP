@@ -463,7 +463,7 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 
 			if (rdp->nego->SelectedProtocol & PROTOCOL_NLA)
 			{
-				sspi_CopyAuthIdentity(&client->identity, &(rdp->nego->transport->nla->identity));
+				sspi_CopyAuthIdentity(&client->identity, rdp->nego->transport->nla->identity);
 				IFCALLRET(client->Logon, client->authenticated, client, &client->identity, TRUE);
 				nla_free(rdp->nego->transport->nla);
 				rdp->nego->transport->nla = NULL;
