@@ -250,10 +250,7 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 
 	if (subsystem->ClientConnect)
 	{
-		if (subsystem->ClientConnect(subsystem, peer))
-			return TRUE;
-		else
-			return FALSE;
+		return subsystem->ClientConnect(subsystem, client);
 	}
 
 	return TRUE;
@@ -1084,7 +1081,7 @@ void* shadow_client_thread(rdpShadowClient* client)
 
 	if (peer->connected && subsystem->ClientDisconnect)
 	{
-		subsystem->ClientDisconnect(subsystem, peer);
+		subsystem->ClientDisconnect(subsystem, client);
 	}
 
 out:
