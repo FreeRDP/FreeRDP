@@ -88,7 +88,7 @@ int shadow_server_print_command_line_help(int argc, char** argv)
 			{
 				length = (int) (strlen(arg->Name) + strlen(arg->Format) + 2);
 				str = (char*) malloc(length + 1);
-				if (str)
+				if (!str)
 					return -1;
 				sprintf_s(str, length + 1, "%s:%s", arg->Name, arg->Format);
 				WLog_INFO(TAG, "%-20s", str);

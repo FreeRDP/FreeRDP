@@ -193,15 +193,19 @@ void settings_load_hkey_local_machine(rdpSettings* settings)
 		settings_client_load_hkey_local_machine(settings);
 }
 
-void settings_get_computer_name(rdpSettings* settings)
+BOOL settings_get_computer_name(rdpSettings* settings)
 {
-	DWORD nSize = 0;
+	DWORD nSize = MAX_COMPUTERNAME_LENGTH + 1;
+	TCHAR computerName[MAX_COMPUTERNAME_LENGTH + 1];
 
-	GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize);
-	settings->ComputerName = (char*) malloc(nSize);
+	if (!GetComputerNameExA(ComputerNameNetBIOS, computerName, &nSize))
+		return FALSE;
+
+	settings->ComputerName = _strdup(computerName);
 	if (!settings->ComputerName)
-		return;
-	GetComputerNameExA(ComputerNameNetBIOS, settings->ComputerName, &nSize);
+		return FALSE;
+
+	return TRUE;
 }
 
 rdpSettings* freerdp_settings_new(DWORD flags)
@@ -290,7 +294,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		if(!settings->MonitorIds)
 				goto out_fail;
 
-		settings_get_computer_name(settings);
+		if (!settings_get_computer_name(settings))
+			goto out_fail;
 
 		settings->ReceivedCapabilities = calloc(1, 32);
 		if (!settings->ReceivedCapabilities)
@@ -685,7 +690,11 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		CopyMemory(_settings->MonitorIds, settings->MonitorIds, 16 * sizeof(UINT32));
 
 		_settings->ReceivedCapabilities = malloc(32);
+		if (!_settings->ReceivedCapabilities)
+			goto out_fail;
 		_settings->OrderSupport = malloc(32);
+		if (!_settings->OrderSupport)
+			goto out_fail;
 
 		if (!_settings->ReceivedCapabilities || !_settings->OrderSupport)
 			goto out_fail;

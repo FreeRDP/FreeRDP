@@ -2960,9 +2960,14 @@ int test_individual_planes_encoding_rle()
 	CopyMemory(planar->planes[1], (BYTE*) TEST_64X64_RED_PLANE, planeSize);  /* Red */
 	CopyMemory(planar->planes[2], (BYTE*) TEST_64X64_GREEN_PLANE, planeSize);  /* Green */
 	CopyMemory(planar->planes[3], (BYTE*) TEST_64X64_BLUE_PLANE, planeSize);  /* Blue */
-	freerdp_bitmap_planar_delta_encode_plane(planar->planes[1], width, height, planar->deltaPlanes[1]); /* Red */
-	freerdp_bitmap_planar_delta_encode_plane(planar->planes[2], width, height, planar->deltaPlanes[2]); /* Green */
-	freerdp_bitmap_planar_delta_encode_plane(planar->planes[3], width, height, planar->deltaPlanes[3]); /* Blue */
+
+	if (!freerdp_bitmap_planar_delta_encode_plane(planar->planes[1], width, height, planar->deltaPlanes[1]) || /* Red */
+		!freerdp_bitmap_planar_delta_encode_plane(planar->planes[2], width, height, planar->deltaPlanes[2]) || /* Green */
+		!freerdp_bitmap_planar_delta_encode_plane(planar->planes[3], width, height, planar->deltaPlanes[3])) /* Blue */
+	{
+		return -1;
+	}
+
 	pOutput = planar->rlePlanesBuffer;
 	availableSize = planeSize * 3;
 	/* Red */
@@ -3101,11 +3106,15 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 		width = i;
 		height = i;
 		whiteBitmap = (BYTE*) malloc(width * height * 4);
+		if (!whiteBitmap)
+			return -1;
 		FillMemory(whiteBitmap, width * height * 4, 0xFF);
 		fill_bitmap_alpha_channel(whiteBitmap, width, height, 0x00);
 		compressedBitmap = freerdp_bitmap_compress_planar(planar, whiteBitmap, format, width, height, width * 4, NULL, &dstSize);
-		decompressedBitmap = (BYTE*) malloc(width * height * 4);
-		ZeroMemory(decompressedBitmap, width * height * 4);
+
+		decompressedBitmap = (BYTE*) calloc(width * height, 4);
+		if (!decompressedBitmap)
+			return -1;
 
 		pDstData = decompressedBitmap;
 
@@ -3138,12 +3147,14 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 	{
 		width = i;
 		height = i;
-		blackBitmap = (BYTE*) malloc(width * height * 4);
-		ZeroMemory(blackBitmap, width * height * 4);
+		blackBitmap = (BYTE*) calloc(width * height, 4);
+		if (!blackBitmap)
+			return -1;
 		fill_bitmap_alpha_channel(blackBitmap, width, height, 0x00);
 		compressedBitmap = freerdp_bitmap_compress_planar(planar, blackBitmap, format, width, height, width * 4, NULL, &dstSize);
-		decompressedBitmap = (BYTE*) malloc(width * height * 4);
-		ZeroMemory(decompressedBitmap, width * height * 4);
+		decompressedBitmap = (BYTE*) calloc(width * height, 4);
+		if (!decompressedBitmap)
+			return -1;
 
 		pDstData = decompressedBitmap;
 
@@ -3179,8 +3190,9 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 	height = 64;
 	compressedBitmap = freerdp_bitmap_compress_planar(planar, (BYTE*) TEST_RLE_BITMAP_EXPERIMENTAL_01,
 					   format, width, height, width * 4, NULL, &dstSize);
-	decompressedBitmap = (BYTE*) malloc(width * height * 4);
-	ZeroMemory(decompressedBitmap, width * height * 4);
+	decompressedBitmap = (BYTE*) calloc(width * height, 4);
+	if (!decompressedBitmap)
+		return -1;
 
 	pDstData = decompressedBitmap;
 
@@ -3217,8 +3229,9 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 	height = 64;
 	compressedBitmap = freerdp_bitmap_compress_planar(planar, (BYTE*) TEST_RLE_BITMAP_EXPERIMENTAL_02,
 					   format, width, height, width * 4, NULL, &dstSize);
-	decompressedBitmap = (BYTE*) malloc(width * height * 4);
-	ZeroMemory(decompressedBitmap, width * height * 4);
+	decompressedBitmap = (BYTE*) calloc(width * height, 4);
+	if (!decompressedBitmap)
+		return -1;
 
 	pDstData = decompressedBitmap;
 
@@ -3262,8 +3275,9 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 	height = 64;
 	compressedBitmap = freerdp_bitmap_compress_planar(planar, (BYTE*) TEST_RLE_BITMAP_EXPERIMENTAL_03,
 					   format, width, height, width * 4, NULL, &dstSize);
-	decompressedBitmap = (BYTE*) malloc(width * height * 4);
-	ZeroMemory(decompressedBitmap, width * height * 4);
+	decompressedBitmap = (BYTE*) calloc(width * height, 4);
+	if (!decompressedBitmap)
+		return -1;
 
 	pDstData = decompressedBitmap;
 

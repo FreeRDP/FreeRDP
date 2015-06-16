@@ -683,6 +683,11 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 		BITMAP_DATA* fragBitmapData;
 
 		fragBitmapData = (BITMAP_DATA*) malloc(sizeof(BITMAP_DATA) * k);
+		if (!fragBitmapData)
+		{
+			free(bitmapData);
+			return -1;
+		}
 		bitmapUpdate.rectangles = fragBitmapData;
 
 		i = j = 0;

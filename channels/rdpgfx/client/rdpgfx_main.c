@@ -851,6 +851,8 @@ static int rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 	}
 
 	s = Stream_New(pDstData, DstSize);
+	if (!s)
+		return 0;
 
 	while (((size_t) Stream_GetPosition(s)) < Stream_Length(s))
 	{

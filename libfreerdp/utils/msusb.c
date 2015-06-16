@@ -36,9 +36,7 @@
 
 static MSUSB_PIPE_DESCRIPTOR* msusb_mspipe_new()
 {
-	MSUSB_PIPE_DESCRIPTOR* MsPipe = (MSUSB_PIPE_DESCRIPTOR*) malloc(sizeof(MSUSB_PIPE_DESCRIPTOR));
-	memset(MsPipe, 0, sizeof(MSUSB_PIPE_DESCRIPTOR));
-	return MsPipe;
+	return (MSUSB_PIPE_DESCRIPTOR*) calloc(1, sizeof(MSUSB_PIPE_DESCRIPTOR));
 }
 
 static void msusb_mspipes_free(MSUSB_PIPE_DESCRIPTOR** MsPipes, UINT32 NumberOfPipes)
@@ -69,11 +67,15 @@ static MSUSB_PIPE_DESCRIPTOR** msusb_mspipes_read(BYTE* data, UINT32 data_size, 
 	int pnum, move = 0;
 	MSUSB_PIPE_DESCRIPTOR** MsPipes;
 		
-	MsPipes = (MSUSB_PIPE_DESCRIPTOR**) malloc(NumberOfPipes * sizeof(MSUSB_PIPE_DESCRIPTOR*));
+	MsPipes = (MSUSB_PIPE_DESCRIPTOR**) calloc(NumberOfPipes, sizeof(MSUSB_PIPE_DESCRIPTOR*));
+	if (!MsPipes)
+		return NULL;
 	
 	for (pnum = 0; pnum < NumberOfPipes; pnum++)
 	{
-		MSUSB_PIPE_DESCRIPTOR * MsPipe = msusb_mspipe_new();
+		MSUSB_PIPE_DESCRIPTOR *MsPipe = msusb_mspipe_new();
+		if (!MsPipe)
+			goto out_error;
 		
 		data_read_UINT16(data + move, MsPipe->MaximumPacketSize);
 		data_read_UINT32(data + move + 4, MsPipe->MaximumTransferSize);
@@ -92,13 +94,19 @@ static MSUSB_PIPE_DESCRIPTOR** msusb_mspipes_read(BYTE* data, UINT32 data_size, 
 	*offset += move;
 	
 	return MsPipes;
+
+out_error:
+	for (pnum = 0; pnum < NumberOfPipes; pnum++)
+	{
+		free(MsPipes[pnum]);
+	}
+	free(MsPipes);
+	return NULL;
 }
 
 static MSUSB_INTERFACE_DESCRIPTOR* msusb_msinterface_new()
 {
-	MSUSB_INTERFACE_DESCRIPTOR* MsInterface = (MSUSB_INTERFACE_DESCRIPTOR*) malloc(sizeof(MSUSB_INTERFACE_DESCRIPTOR));
-	memset(MsInterface, 0, sizeof(MSUSB_INTERFACE_DESCRIPTOR));
-	return MsInterface;
+	return (MSUSB_INTERFACE_DESCRIPTOR*) calloc(1, sizeof(MSUSB_INTERFACE_DESCRIPTOR));
 }
 
 static void msusb_msinterface_free(MSUSB_INTERFACE_DESCRIPTOR* MsInterface)
@@ -137,6 +145,8 @@ MSUSB_INTERFACE_DESCRIPTOR* msusb_msinterface_read(BYTE* data, UINT32 data_size,
 	MSUSB_INTERFACE_DESCRIPTOR* MsInterface;
 	
 	MsInterface = msusb_msinterface_new();
+	if (!MsInterface)
+		return NULL;
 	
 	data_read_UINT16(data, MsInterface->Length);
 	data_read_UINT16(data + 2, MsInterface->NumberOfPipesExpected);
@@ -156,9 +166,15 @@ MSUSB_INTERFACE_DESCRIPTOR* msusb_msinterface_read(BYTE* data, UINT32 data_size,
 	{
 		MsInterface->MsPipes = 
 			msusb_mspipes_read(data+(*offset), data_size-(*offset), MsInterface->NumberOfPipes, offset);
+		if (!MsInterface->MsPipes)
+			goto out_error;
 	}
 	
 	return MsInterface;
+
+out_error:
+	msusb_msinterface_free(MsInterface);
+	return NULL;
 }
 
 int msusb_msinterface_write(MSUSB_INTERFACE_DESCRIPTOR* MsInterface, BYTE* data, int* offset)
@@ -219,7 +235,9 @@ static MSUSB_INTERFACE_DESCRIPTOR** msusb_msinterface_read_list(BYTE * data, UIN
 	int inum, offset = 0;
 	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces;
 	
-	MsInterfaces = (MSUSB_INTERFACE_DESCRIPTOR**) malloc(NumInterfaces * sizeof(MSUSB_INTERFACE_DESCRIPTOR*));
+	MsInterfaces = (MSUSB_INTERFACE_DESCRIPTOR**) calloc(NumInterfaces, sizeof(MSUSB_INTERFACE_DESCRIPTOR*));
+	if (!MsInterfaces)
+		return NULL;
 	
 	for (inum = 0; inum < NumInterfaces; inum++)
 	{
@@ -257,11 +275,7 @@ int msusb_msconfig_write(MSUSB_CONFIG_DESCRIPTOR* MsConfg, BYTE* data, int* offs
 
 MSUSB_CONFIG_DESCRIPTOR* msusb_msconfig_new()
 {
-	MSUSB_CONFIG_DESCRIPTOR* MsConfig = NULL;
-	MsConfig = (MSUSB_CONFIG_DESCRIPTOR*) malloc(sizeof(MSUSB_CONFIG_DESCRIPTOR));
-	memset(MsConfig, 0, sizeof(MSUSB_CONFIG_DESCRIPTOR));
-	
-	return MsConfig;
+	return (MSUSB_CONFIG_DESCRIPTOR*) calloc(1, sizeof(MSUSB_CONFIG_DESCRIPTOR));
 }
 
 void msusb_msconfig_free(MSUSB_CONFIG_DESCRIPTOR* MsConfig)

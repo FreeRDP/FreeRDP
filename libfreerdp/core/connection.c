@@ -400,7 +400,7 @@ BOOL rdp_client_reconnect(rdpRdp* rdp)
 	status = rdp_client_connect(rdp);
 
 	if (status)
-		freerdp_channels_post_connect(channels, context->instance);
+		status = (freerdp_channels_post_connect(channels, context->instance) >= 0);
 
 	return status;
 }
@@ -838,7 +838,11 @@ int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 	if (!rdp_send_confirm_active(rdp))
 		return -1;
 
-	input_register_client_callbacks(rdp->input);
+	if (!input_register_client_callbacks(rdp->input))
+	{
+		WLog_ERR(TAG, "error registering client callbacks");
+		return -1;
+	}
 
 	/**
 	 * The server may request a different desktop size during Deactivation-Reactivation sequence.

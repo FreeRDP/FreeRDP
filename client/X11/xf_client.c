@@ -1020,7 +1020,10 @@ BOOL xf_pre_connect(freerdp* instance)
 	}
 
 	if (!context->cache)
-		context->cache = cache_new(settings);
+	{
+		if (!(context->cache = cache_new(settings)))
+			return FALSE;
+	}
 
 	if (!xf_keyboard_init(xfc))
 		return FALSE;
@@ -1170,7 +1173,8 @@ BOOL xf_post_connect(freerdp* instance)
 	update->SetKeyboardIndicators = xf_keyboard_set_indicators;
 
 	xfc->clipboard = xf_clipboard_new(xfc);
-	freerdp_channels_post_connect(channels, instance);
+	if (freerdp_channels_post_connect(channels, instance) < 0)
+		return FALSE;
 
 	EventArgsInit(&e, "xfreerdp");
 	e.width = settings->DesktopWidth;

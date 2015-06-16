@@ -883,31 +883,47 @@ BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s)
 	}
 
 	/* TSPasswordCreds (SEQUENCE) */
-	ber_read_sequence_tag(s, &length);
+	if (!ber_read_sequence_tag(s, &length) ||
 
-	/* [0] domainName (OCTET STRING) */
-	ber_read_contextual_tag(s, 0, &length, TRUE);
-	ber_read_octet_string_tag(s, &length);
+		/* [0] domainName (OCTET STRING) */
+		!ber_read_contextual_tag(s, 0, &length, TRUE) ||
+		!ber_read_octet_string_tag(s, &length))
+	{
+		return FALSE;
+	}
+
 	nla->identity->DomainLength = (UINT32) length;
 	nla->identity->Domain = (UINT16*) malloc(length);
+	if (!nla->identity->Domain)
+		return FALSE;
 	CopyMemory(nla->identity->Domain, Stream_Pointer(s), nla->identity->DomainLength);
 	Stream_Seek(s, nla->identity->DomainLength);
 	nla->identity->DomainLength /= 2;
 
 	/* [1] userName (OCTET STRING) */
-	ber_read_contextual_tag(s, 1, &length, TRUE);
-	ber_read_octet_string_tag(s, &length);
+	if (!ber_read_contextual_tag(s, 1, &length, TRUE) ||
+		!ber_read_octet_string_tag(s, &length))
+	{
+		return FALSE;
+	}
 	nla->identity->UserLength = (UINT32) length;
 	nla->identity->User = (UINT16*) malloc(length);
+	if (!nla->identity->User)
+		return FALSE;
 	CopyMemory(nla->identity->User, Stream_Pointer(s), nla->identity->UserLength);
 	Stream_Seek(s, nla->identity->UserLength);
 	nla->identity->UserLength /= 2;
 
 	/* [2] password (OCTET STRING) */
-	ber_read_contextual_tag(s, 2, &length, TRUE);
-	ber_read_octet_string_tag(s, &length);
+	if (!ber_read_contextual_tag(s, 2, &length, TRUE) ||
+		!ber_read_octet_string_tag(s, &length))
+	{
+		return FALSE;
+	}
 	nla->identity->PasswordLength = (UINT32) length;
 	nla->identity->Password = (UINT16*) malloc(length);
+	if (!nla->identity->Password)
+		return FALSE;
 	CopyMemory(nla->identity->Password, Stream_Pointer(s), nla->identity->PasswordLength);
 	Stream_Seek(s, nla->identity->PasswordLength);
 	nla->identity->PasswordLength /= 2;
@@ -951,10 +967,10 @@ int nla_sizeof_ts_credentials(rdpNla* nla)
 
 static BOOL nla_read_ts_credentials(rdpNla* nla, PSecBuffer ts_credentials)
 {
-	BOOL rc;
 	wStream* s;
 	int length;
 	int ts_password_creds_length;
+	BOOL ret;
 
 	s = Stream_New(ts_credentials->pvBuffer, ts_credentials->cbBuffer);
 
@@ -965,21 +981,21 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, PSecBuffer ts_credentials)
 	}
 
 
-	/* TSCredentials (SEQUENCE) */
-	ber_read_sequence_tag(s, &length);
+		/* TSCredentials (SEQUENCE) */
+	ret = ber_read_sequence_tag(s, &length) &&
 
-	/* [0] credType (INTEGER) */
-	ber_read_contextual_tag(s, 0, &length, TRUE);
-	ber_read_integer(s, NULL);
+		/* [0] credType (INTEGER) */
+		ber_read_contextual_tag(s, 0, &length, TRUE) &&
+		ber_read_integer(s, NULL) &&
 
-	/* [1] credentials (OCTET STRING) */
-	ber_read_contextual_tag(s, 1, &length, TRUE);
-	ber_read_octet_string_tag(s, &ts_password_creds_length);
+		/* [1] credentials (OCTET STRING) */
+		ber_read_contextual_tag(s, 1, &length, TRUE) &&
+		ber_read_octet_string_tag(s, &ts_password_creds_length) &&
 
-	rc = nla_read_ts_password_creds(nla, s);
+		nla_read_ts_password_creds(nla, s);
 
 	Stream_Free(s, FALSE);
-	return rc;
+	return ret;
 }
 
 int nla_write_ts_credentials(rdpNla* nla, wStream* s)
@@ -1474,6 +1490,7 @@ rdpNla* nla_new(freerdp* instance, rdpTransport* transport, rdpSettings* setting
 	nla->transport = transport;
 	nla->sendSeqNum = 0;
 	nla->recvSeqNum = 0;
+
 	ZeroMemory(&nla->negoToken, sizeof(SecBuffer));
 	ZeroMemory(&nla->pubKeyAuth, sizeof(SecBuffer));
 	ZeroMemory(&nla->authInfo, sizeof(SecBuffer));
@@ -1482,24 +1499,29 @@ rdpNla* nla_new(freerdp* instance, rdpTransport* transport, rdpSettings* setting
 	if (nla->server)
 	{
 		status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"),
-								0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+							  0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+
+		if (status != ERROR_SUCCESS)
+			return nla;
+
+		status = RegQueryValueEx(hKey, _T("SspiModule"), NULL, &dwType, NULL, &dwSize);
+		if (status != ERROR_SUCCESS)
+			return nla;
+
+		nla->SspiModule = (LPTSTR) malloc(dwSize + sizeof(TCHAR));
+		if (!nla->SspiModule)
+		{
+			free(nla);
+			return NULL;
+		}
+
+		status = RegQueryValueEx(hKey, _T("SspiModule"), NULL, &dwType,
+								 (BYTE*) nla->SspiModule, &dwSize);
 
 		if (status == ERROR_SUCCESS)
 		{
-			status = RegQueryValueEx(hKey, _T("SspiModule"), NULL, &dwType, NULL, &dwSize);
-
-			if (status == ERROR_SUCCESS)
-			{
-				nla->SspiModule = (LPTSTR) malloc(dwSize + sizeof(TCHAR));
-				status = RegQueryValueEx(hKey, _T("SspiModule"), NULL, &dwType,
-										 (BYTE*) nla->SspiModule, &dwSize);
-
-				if (status == ERROR_SUCCESS)
-				{
-					WLog_INFO(TAG, "Using SSPI Module: %s", nla->SspiModule);
-					RegCloseKey(hKey);
-				}
-			}
+			WLog_INFO(TAG, "Using SSPI Module: %s", nla->SspiModule);
+			RegCloseKey(hKey);
 		}
 	}
 

@@ -829,6 +829,8 @@ char* freerdp_assistance_bin_to_hex_string(const BYTE* data, int size)
 	char bin2hex[] = "0123456789ABCDEF";
 
 	p = (char*) malloc((size + 1) * 2);
+	if (!p)
+		return NULL;
 
 	for (i = 0; i < size; i++)
 	{

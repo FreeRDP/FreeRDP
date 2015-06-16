@@ -325,7 +325,6 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store,
 
 	if (!fp)
 		return FALSE;
-
 	/* Read the current contents of the file. */
 	fseek(fp, 0, SEEK_END);
 	size = ftell(fp);
