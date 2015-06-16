@@ -368,7 +368,8 @@ static void x11_shadow_message_free(UINT32 id, SHADOW_MSG_OUT* msg)
 			break;
 
 		case SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE_ID:
-			free(((SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE*)msg)->pixels);
+			free(((SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE*)msg)->xorMaskData);
+			free(((SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE*)msg)->andMaskData);
 			free(msg);
 			break;
 
@@ -396,6 +397,89 @@ int x11_shadow_pointer_position_update(x11ShadowSubsystem* subsystem)
 	return shadow_client_boardcast_msg(subsystem->server, NULL, msgId, (SHADOW_MSG_OUT*) msg, NULL) ? 1 : -1;
 }
 
+static int x11_shadow_pointer_convert_alpha_pointer_data(BYTE* pixels, BOOL premultiplied,
+		UINT32 width, UINT32 height, SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* pointerColor)
+{
+	UINT32 x, y;
+	BYTE* pSrc8;
+	BYTE* pDst8;
+	int xorStep;
+	int andStep;
+	UINT32 andBit;
+	BYTE* andBits;
+	UINT32 andPixel;
+	BYTE A, R, G, B;
+
+	xorStep = (width * 3);
+	xorStep += (xorStep % 2);
+
+	andStep = ((width + 7) / 8);
+	andStep += (andStep % 2);
+
+	pointerColor->lengthXorMask = height * xorStep;
+	pointerColor->xorMaskData = (BYTE*) calloc(1, pointerColor->lengthXorMask);
+
+	if (!pointerColor->xorMaskData)
+		return -1;
+
+	pointerColor->lengthAndMask = height * andStep;
+	pointerColor->andMaskData = (BYTE*) calloc(1, pointerColor->lengthAndMask);
+
+	if (!pointerColor->andMaskData)
+	{
+		free(pointerColor->xorMaskData);
+		pointerColor->xorMaskData = NULL;
+		return -1;
+	}
+
+	for (y = 0; y < height; y++)
+	{
+		pSrc8 = &pixels[(width * 4) * (height - 1 - y)];
+		pDst8 = &(pointerColor->xorMaskData[y * xorStep]);
+
+		andBit = 0x80;
+		andBits = &(pointerColor->andMaskData[andStep * y]);
+
+		for (x = 0; x < width; x++)
+		{
+			B = *pSrc8++;
+			G = *pSrc8++;
+			R = *pSrc8++;
+			A = *pSrc8++;
+
+			andPixel = 0;
+
+			if (A < 64)
+				A = 0; /* pixel cannot be partially transparent */
+
+			if (!A)
+			{
+				/* transparent pixel: XOR = black, AND = 1 */
+				andPixel = 1;
+				B = G = R = 0;
+			}
+			else
+			{
+				if (premultiplied)
+				{
+					B = (B * 0xFF ) / A;
+					G = (G * 0xFF ) / A;
+					R = (R * 0xFF ) / A;
+				}
+			}
+
+			*pDst8++ = B;
+			*pDst8++ = G;
+			*pDst8++ = R;
+
+			if (andPixel) *andBits |= andBit;
+			if (!(andBit >>= 1)) { andBits++; andBit = 0x80; }
+		}
+	}
+
+	return 1;
+}
+
 int x11_shadow_pointer_alpha_update(x11ShadowSubsystem* subsystem)
 {
 	SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* msg;
@@ -410,18 +494,14 @@ int x11_shadow_pointer_alpha_update(x11ShadowSubsystem* subsystem)
 	msg->yHot = subsystem->cursorHotY;
 	msg->width = subsystem->cursorWidth;
 	msg->height = subsystem->cursorHeight;
-	msg->scanline = msg->width * 4;
 
-	msg->pixels = (BYTE*) malloc(msg->scanline * msg->height);
-
-	if (!msg->pixels)
+	if (x11_shadow_pointer_convert_alpha_pointer_data(subsystem->cursorPixels, TRUE,
+			msg->width, msg->height, msg) < 0)
 	{
 		free (msg);
 		return -1;
 	}
 
-	CopyMemory(msg->pixels, subsystem->cursorPixels, msg->scanline * msg->height);
-	msg->premultiplied = TRUE;
 	msg->Free = x11_shadow_message_free;
 
 	return shadow_client_boardcast_msg(subsystem->server, NULL, msgId, (SHADOW_MSG_OUT*) msg, NULL) ? 1 : -1;

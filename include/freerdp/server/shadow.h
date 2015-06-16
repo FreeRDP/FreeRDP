@@ -231,9 +231,10 @@ struct _SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE
 	UINT32 yHot;
 	UINT32 width;
 	UINT32 height;
-	BYTE* pixels;
-	int scanline;
-	BOOL premultiplied;
+	UINT32 lengthAndMask;
+	UINT32 lengthXorMask;
+	BYTE* xorMaskData;
+	BYTE* andMaskData;
 };
 typedef struct _SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE;
 
