@@ -182,8 +182,10 @@ char* freerdp_detect_keymap_from_xkb()
 
 				length = (end - beg);
 				keymap = (char*) malloc(length + 1);
-				strncpy(keymap, beg, length);
-				keymap[length] = '\0';
+				if (keymap) {
+					strncpy(keymap, beg, length);
+					keymap[length] = '\0';
+				}
 
 				break;
 			}

@@ -275,7 +275,8 @@ BOOL wf_pre_connect(freerdp* instance)
 	wfc->clrconv->palette = NULL;
 	wfc->clrconv->alpha = FALSE;
 
-	instance->context->cache = cache_new(settings);
+	if (!(instance->context->cache = cache_new(settings)))
+		return FALSE;
 
 	desktopWidth = settings->DesktopWidth;
 	desktopHeight = settings->DesktopHeight;
@@ -484,7 +485,8 @@ BOOL wf_post_connect(freerdp* instance)
 		instance->update->BitmapUpdate = wf_gdi_bitmap_update;
 	}
 
-	freerdp_channels_post_connect(context->channels, instance);
+	if (freerdp_channels_post_connect(context->channels, instance) < 0)
+		return FALSE;
 
 	if (wfc->fullscreen)
 		floatbar_window_create(wfc);

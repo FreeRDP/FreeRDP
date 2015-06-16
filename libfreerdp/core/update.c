@@ -1816,6 +1816,8 @@ BOOL update_read_refresh_rect(rdpUpdate* update, wStream* s)
 		return FALSE;
 
 	areas = (RECTANGLE_16*) malloc(sizeof(RECTANGLE_16) * numberOfAreas);
+	if (!areas)
+		return FALSE;
 
 	for (index = 0; index < numberOfAreas; index++)
 	{

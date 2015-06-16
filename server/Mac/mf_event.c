@@ -167,6 +167,8 @@ void mf_event_region_free(mfEventRegion* event_region)
 mfEvent* mf_event_new(int type)
 {
 	mfEvent* event = malloc(sizeof(mfEvent));
+	if (!event)
+		return NULL;
 	event->type = type;
 	return event;
 }

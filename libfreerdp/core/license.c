@@ -423,6 +423,8 @@ BOOL license_get_server_rsa_public_key(rdpLicense* license)
 	CopyMemory(license->Exponent, Exponent, 4);
 	license->ModulusLength = ModulusLength;
 	license->Modulus = (BYTE*) malloc(ModulusLength);
+	if (!license->Modulus)
+		return FALSE;
 	CopyMemory(license->Modulus, Modulus, ModulusLength);
 	return TRUE;
 }
@@ -501,19 +503,24 @@ BOOL license_read_product_info(wStream* s, LICENSE_PRODUCT_INFO* productInfo)
 		return FALSE;
 
 	productInfo->pbCompanyName = (BYTE*) malloc(productInfo->cbCompanyName);
+	if (!productInfo->pbCompanyName)
+		return FALSE;
 	Stream_Read(s, productInfo->pbCompanyName, productInfo->cbCompanyName);
 	Stream_Read_UINT32(s, productInfo->cbProductId); /* cbProductId (4 bytes) */
 
 	if (Stream_GetRemainingLength(s) < productInfo->cbProductId)
-	{
-		free(productInfo->pbCompanyName);
-		productInfo->pbCompanyName = NULL;
-		return FALSE;
-	}
+		goto out_fail;
 
 	productInfo->pbProductId = (BYTE*) malloc(productInfo->cbProductId);
+	if (!productInfo->pbProductId)
+		goto out_fail;
 	Stream_Read(s, productInfo->pbProductId, productInfo->cbProductId);
 	return TRUE;
+
+out_fail:
+	free(productInfo->pbCompanyName);
+	productInfo->pbCompanyName = NULL;
+	return FALSE;
 }
 
 /**
@@ -526,6 +533,8 @@ LICENSE_PRODUCT_INFO* license_new_product_info()
 {
 	LICENSE_PRODUCT_INFO* productInfo;
 	productInfo = (LICENSE_PRODUCT_INFO*) malloc(sizeof(LICENSE_PRODUCT_INFO));
+	if (!productInfo)
+		return NULL;
 	productInfo->dwVersion = 0;
 	productInfo->cbCompanyName = 0;
 	productInfo->pbCompanyName = NULL;
@@ -584,6 +593,8 @@ BOOL license_read_binary_blob(wStream* s, LICENSE_BLOB* blob)
 
 	blob->type = wBlobType;
 	blob->data = (BYTE*) malloc(blob->length);
+	if (!blob->data)
+		return FALSE;
 	Stream_Read(s, blob->data, blob->length); /* blobData */
 	return TRUE;
 }
@@ -640,10 +651,9 @@ BOOL license_write_encrypted_premaster_secret_blob(wStream* s, LICENSE_BLOB* blo
 LICENSE_BLOB* license_new_binary_blob(UINT16 type)
 {
 	LICENSE_BLOB* blob;
-	blob = (LICENSE_BLOB*) malloc(sizeof(LICENSE_BLOB));
-	blob->type = type;
-	blob->length = 0;
-	blob->data = NULL;
+	blob = (LICENSE_BLOB*) calloc(1, sizeof(LICENSE_BLOB));
+	if (blob)
+		blob->type = type;
 	return blob;
 }
 
@@ -684,6 +694,8 @@ BOOL license_read_scope_list(wStream* s, SCOPE_LIST* scopeList)
 
 	scopeList->count = scopeCount;
 	scopeList->array = (LICENSE_BLOB*) malloc(sizeof(LICENSE_BLOB) * scopeCount);
+	if (!scopeList->array)
+		return FALSE;
 
 	/* ScopeArray */
 	for (i = 0; i < scopeCount; i++)
@@ -705,11 +717,7 @@ BOOL license_read_scope_list(wStream* s, SCOPE_LIST* scopeList)
 
 SCOPE_LIST* license_new_scope_list()
 {
-	SCOPE_LIST* scopeList;
-	scopeList = (SCOPE_LIST*) malloc(sizeof(SCOPE_LIST));
-	scopeList->count = 0;
-	scopeList->array = NULL;
-	return scopeList;
+	return (SCOPE_LIST*) calloc(1, sizeof(SCOPE_LIST));
 }
 
 /**
@@ -721,6 +729,9 @@ SCOPE_LIST* license_new_scope_list()
 void license_free_scope_list(SCOPE_LIST* scopeList)
 {
 	UINT32 i;
+
+	if (!scopeList)
+		return;
 
 	/*
 	 * We must NOT call license_free_binary_blob() on each scopelist->array[i] element,
@@ -1093,29 +1104,44 @@ BOOL license_send_valid_client_error_packet(rdpLicense* license)
 rdpLicense* license_new(rdpRdp* rdp)
 {
 	rdpLicense* license;
-	license = (rdpLicense*) malloc(sizeof(rdpLicense));
+	license = (rdpLicense*) calloc(1, sizeof(rdpLicense));
+	if (!license)
+		return NULL;
 
-	if (license != NULL)
-	{
-		ZeroMemory(license, sizeof(rdpLicense));
-		license->rdp = rdp;
-		license->state = LICENSE_STATE_AWAIT;
-		license->certificate = certificate_new();
-		license->ProductInfo = license_new_product_info();
-		license->ErrorInfo = license_new_binary_blob(BB_ERROR_BLOB);
-		license->KeyExchangeList = license_new_binary_blob(BB_KEY_EXCHG_ALG_BLOB);
-		license->ServerCertificate = license_new_binary_blob(BB_CERTIFICATE_BLOB);
-		license->ClientUserName = license_new_binary_blob(BB_CLIENT_USER_NAME_BLOB);
-		license->ClientMachineName = license_new_binary_blob(BB_CLIENT_MACHINE_NAME_BLOB);
-		license->PlatformChallenge = license_new_binary_blob(BB_ANY_BLOB);
-		license->EncryptedPlatformChallenge = license_new_binary_blob(BB_ANY_BLOB);
-		license->EncryptedPremasterSecret = license_new_binary_blob(BB_ANY_BLOB);
-		license->EncryptedHardwareId = license_new_binary_blob(BB_ENCRYPTED_DATA_BLOB);
-		license->ScopeList = license_new_scope_list();
-		license_generate_randoms(license);
-	}
+	license->rdp = rdp;
+	license->state = LICENSE_STATE_AWAIT;
+	if (!(license->certificate = certificate_new()))
+		goto out_error;
+	if (!(license->ProductInfo = license_new_product_info()))
+		goto out_error;
+	if (!(license->ErrorInfo = license_new_binary_blob(BB_ERROR_BLOB)))
+		goto out_error;
+	if (!(license->KeyExchangeList = license_new_binary_blob(BB_KEY_EXCHG_ALG_BLOB)))
+		goto out_error;
+	if (!(license->ServerCertificate = license_new_binary_blob(BB_CERTIFICATE_BLOB)))
+		goto out_error;
+	if (!(license->ClientUserName = license_new_binary_blob(BB_CLIENT_USER_NAME_BLOB)))
+		goto out_error;
+	if (!(license->ClientMachineName = license_new_binary_blob(BB_CLIENT_MACHINE_NAME_BLOB)))
+		goto out_error;
+	if (!(license->PlatformChallenge = license_new_binary_blob(BB_ANY_BLOB)))
+		goto out_error;
+	if (!(license->EncryptedPlatformChallenge = license_new_binary_blob(BB_ANY_BLOB)))
+		goto out_error;
+	if (!(license->EncryptedPremasterSecret = license_new_binary_blob(BB_ANY_BLOB)))
+		goto out_error;
+	if (!(license->EncryptedHardwareId = license_new_binary_blob(BB_ENCRYPTED_DATA_BLOB)))
+		goto out_error;
+	if (!(license->ScopeList = license_new_scope_list()))
+		goto out_error;
+
+	license_generate_randoms(license);
 
 	return license;
+
+out_error:
+	license_free(license);
+	return NULL;
 }
 
 /**

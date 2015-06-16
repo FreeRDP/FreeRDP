@@ -471,16 +471,33 @@ int freerdp_client_add_static_channel(rdpSettings* settings, int count, char** p
 	ADDIN_ARGV* args;
 
 	args = (ADDIN_ARGV*) malloc(sizeof(ADDIN_ARGV));
+	if (!args)
+		return -1;
 
 	args->argc = count;
 	args->argv = (char**) calloc(args->argc, sizeof(char*));
+	if (!args->argv)
+		goto error_argv;
 
 	for (index = 0; index < args->argc; index++)
+	{
 		args->argv[index] = _strdup(params[index]);
+		if (!args->argv[index])
+			goto error_argv_index;
+	}
 
-	freerdp_static_channel_collection_add(settings, args);
+	if (!freerdp_static_channel_collection_add(settings, args))
+		goto error_argv_index;
 
 	return 0;
+
+error_argv_index:
+	for (index = 0; index < args->argc; index++)
+		free(args->argv[index]);
+	free(args->argv);
+error_argv:
+	free(args);
+	return -1;
 }
 
 int freerdp_client_add_dynamic_channel(rdpSettings* settings, int count, char** params)
@@ -489,16 +506,33 @@ int freerdp_client_add_dynamic_channel(rdpSettings* settings, int count, char** 
 	ADDIN_ARGV* args;
 
 	args = (ADDIN_ARGV*) malloc(sizeof(ADDIN_ARGV));
+	if (!args)
+		return -1;
 
 	args->argc = count;
 	args->argv = (char**) calloc(args->argc, sizeof(char*));
+	if (!args->argv)
+		goto error_argv;
 
 	for (index = 0; index < args->argc; index++)
+	{
 		args->argv[index] = _strdup(params[index]);
+		if (!args->argv[index])
+			goto error_argv_index;
+	}
 
-	freerdp_dynamic_channel_collection_add(settings, args);
+	if (!freerdp_dynamic_channel_collection_add(settings, args))
+		goto error_argv_index;
 
 	return 0;
+
+error_argv_index:
+	for (index = 0; index < args->argc; index++)
+		free(args->argv[index]);
+	free(args->argv);
+error_argv:
+	free(args);
+	return -1;
 }
 
 static char** freerdp_command_line_parse_comma_separated_values(char* list, int* count)
@@ -562,6 +596,7 @@ static char** freerdp_command_line_parse_comma_separated_values_offset(char* lis
 int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT_A* arg)
 {
 	rdpSettings* settings = (rdpSettings*) context;
+	int status = 0;
 
 	CommandLineSwitchStart(arg)
 
@@ -586,7 +621,7 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 
 		p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
 
-		freerdp_client_add_static_channel(settings, count, p);
+		status = freerdp_client_add_static_channel(settings, count, p);
 
 		free(p);
 	}
@@ -712,7 +747,7 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 			p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
 			p[0] = "rdpsnd";
 
-			freerdp_client_add_static_channel(settings, count, p);
+			status = freerdp_client_add_static_channel(settings, count, p);
 
 			free(p);
 		}
@@ -724,7 +759,7 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 			count = 1;
 			p[0] = "rdpsnd";
 
-			freerdp_client_add_static_channel(settings, count, p);
+			status = freerdp_client_add_static_channel(settings, count, p);
 		}
 	}
 	CommandLineSwitchCase(arg, "microphone")
@@ -789,7 +824,7 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 
 	CommandLineSwitchEnd(arg)
 
-	return 0;
+	return status;
 }
 
 int freerdp_parse_username(char* username, char** user, char** domain)

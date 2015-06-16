@@ -253,6 +253,8 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 			return -1;
 
 		redirection->LoadBalanceInfo = (BYTE*) malloc(redirection->LoadBalanceInfoLength);
+		if (!redirection->LoadBalanceInfo)
+			return -1;
 		Stream_Read(s, redirection->LoadBalanceInfo, redirection->LoadBalanceInfoLength);
 
 		WLog_DBG(TAG, "loadBalanceInfo:");
@@ -283,6 +285,8 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 		Stream_Read_UINT32(s, redirection->PasswordLength);
 		redirection->Password = (BYTE*) malloc(redirection->PasswordLength);
+		if (!redirection->Password)
+			return -1;
 		Stream_Read(s, redirection->Password, redirection->PasswordLength);
 
 		WLog_DBG(TAG, "PasswordCookie:");
@@ -316,6 +320,8 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 			return -1;
 
 		redirection->TsvUrl = (BYTE*) malloc(redirection->TsvUrlLength);
+		if (!redirection->TsvUrl)
+			return -1;
 		Stream_Read(s, redirection->TsvUrl, redirection->TsvUrlLength);
 
 		WLog_DBG(TAG, "TsvUrl:");

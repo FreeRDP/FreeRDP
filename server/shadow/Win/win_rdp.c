@@ -157,9 +157,7 @@ BOOL shw_post_connect(freerdp* instance)
 	instance->update->DesktopResize = shw_desktop_resize;
 	instance->update->SurfaceFrameMarker = shw_surface_frame_marker;
 
-	freerdp_channels_post_connect(instance->context->channels, instance);
-
-	return TRUE;
+	return (freerdp_channels_post_connect(instance->context->channels, instance) >= 0) ;
 }
 
 void* shw_client_thread(void* arg)

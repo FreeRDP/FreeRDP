@@ -498,7 +498,7 @@ BOOL input_recv(rdpInput* input, wStream* s)
 	return TRUE;
 }
 
-void input_register_client_callbacks(rdpInput* input)
+BOOL input_register_client_callbacks(rdpInput* input)
 {
 	rdpSettings* settings = input->context->settings;
 
@@ -528,7 +528,10 @@ void input_register_client_callbacks(rdpInput* input)
 	if (input->asynchronous)
 	{
 		input->proxy = input_message_proxy_new(input);
+		if (!input->proxy)
+			return FALSE;
 	}
+	return TRUE;
 }
 
 BOOL freerdp_input_send_synchronize_event(rdpInput* input, UINT32 flags)

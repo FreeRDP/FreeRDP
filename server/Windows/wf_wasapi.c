@@ -131,8 +131,9 @@ int wf_wasapi_get_device_string(LPWSTR pattern, LPWSTR * deviceStr)
 			WLog_INFO(TAG, "Using sound ouput endpoint: [%s] (%s)", nameVar.pwszVal, pwszID);
 			//WLog_INFO(TAG, "matched %d characters", wcscmp(pattern, nameVar.pwszVal);
 			devStrLen = wcslen(pwszID);
-			*deviceStr = (LPWSTR) malloc((devStrLen * 2) + 2);
-			ZeroMemory(*deviceStr, (devStrLen * 2) + 2);
+			*deviceStr = (LPWSTR) calloc(1, (devStrLen * 2) + 2);
+			if (!deviceStr)
+				return -1;
 			wcscpy_s(*deviceStr, devStrLen+1, pwszID);
 		}
 		CoTaskMemFree(pwszID);

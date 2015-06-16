@@ -95,21 +95,23 @@ rdpNineGridCache* nine_grid_cache_new(rdpSettings* settings)
 {
 	rdpNineGridCache* nine_grid;
 
-	nine_grid = (rdpNineGridCache*) malloc(sizeof(rdpNineGridCache));
-	ZeroMemory(nine_grid, sizeof(rdpNineGridCache));
+	nine_grid = (rdpNineGridCache*) calloc(1, sizeof(rdpNineGridCache));
+	if (!nine_grid)
+		return NULL;
 
-	if (nine_grid != NULL)
+	nine_grid->settings = settings;
+
+	nine_grid->maxSize = 2560;
+	nine_grid->maxEntries = 256;
+
+	nine_grid->settings->DrawNineGridCacheSize = nine_grid->maxSize;
+	nine_grid->settings->DrawNineGridCacheEntries = nine_grid->maxEntries;
+
+	nine_grid->entries = (NINE_GRID_ENTRY*) calloc(nine_grid->maxEntries, sizeof(NINE_GRID_ENTRY));
+	if (!nine_grid->entries)
 	{
-		nine_grid->settings = settings;
-
-		nine_grid->maxSize = 2560;
-		nine_grid->maxEntries = 256;
-
-		nine_grid->settings->DrawNineGridCacheSize = nine_grid->maxSize;
-		nine_grid->settings->DrawNineGridCacheEntries = nine_grid->maxEntries;
-
-		nine_grid->entries = (NINE_GRID_ENTRY*) malloc(sizeof(NINE_GRID_ENTRY) * nine_grid->maxEntries);
-		ZeroMemory(nine_grid->entries, sizeof(NINE_GRID_ENTRY) * nine_grid->maxEntries);
+		free(nine_grid);
+		return NULL;
 	}
 
 	return nine_grid;

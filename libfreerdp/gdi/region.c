@@ -46,6 +46,7 @@ HGDI_RGN gdi_CreateRectRgn(int nLeftRect, int nTopRect, int nRightRect, int nBot
 	HGDI_RGN hRgn = (HGDI_RGN) malloc(sizeof(GDI_RGN));
 	if (!hRgn)
 		return NULL;
+
 	hRgn->objectType = GDIOBJECT_REGION;
 	hRgn->x = nLeftRect;
 	hRgn->y = nTopRect;
@@ -69,6 +70,7 @@ HGDI_RECT gdi_CreateRect(int xLeft, int yTop, int xRight, int yBottom)
 	HGDI_RECT hRect = (HGDI_RECT) malloc(sizeof(GDI_RECT));
 	if (!hRect)
 		return NULL;
+
 	hRect->objectType = GDIOBJECT_RECT;
 	hRect->left = xLeft;
 	hRect->top = yTop;

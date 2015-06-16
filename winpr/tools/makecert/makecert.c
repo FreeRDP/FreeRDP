@@ -306,16 +306,19 @@ char* x509_name_parse(char* name, char* txt, int* length)
 
 char* x509_get_default_name()
 {
-	DWORD nSize = 0;
-	char* ComputerName;
+	TCHAR computerName[MAX_COMPUTERNAME_LENGTH + 1];
+	DWORD nSize = MAX_COMPUTERNAME_LENGTH;
 
-	GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize);
-	ComputerName = (char*) malloc(nSize);
-	if (!ComputerName)
+	char* ret;
+
+	if (!GetComputerNameExA(ComputerNameNetBIOS, computerName, &nSize))
 		return NULL;
-	GetComputerNameExA(ComputerNameNetBIOS, ComputerName, &nSize);
 
-	return ComputerName;
+	ret = strdup(computerName);
+	if (!ret)
+		return NULL;
+
+	return ret;
 }
 
 int command_line_pre_filter(MAKECERT_CONTEXT* context, int index, int argc, LPCSTR* argv)

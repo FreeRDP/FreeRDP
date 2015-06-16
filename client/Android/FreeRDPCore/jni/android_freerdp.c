@@ -240,7 +240,8 @@ static BOOL android_post_connect(freerdp* instance)
 			settings->DesktopWidth, settings->DesktopHeight,
 			settings->ColorDepth);
 
-	instance->context->cache = cache_new(settings);
+	if (!(instance->context->cache = cache_new(settings)))
+		return FALSE;
 
 	if (instance->settings->ColorDepth > 16)
 		gdi_flags = CLRBUF_32BPP | CLRCONV_ALPHA | CLRCONV_INVERT;
@@ -254,7 +255,8 @@ static BOOL android_post_connect(freerdp* instance)
 	instance->update->EndPaint = android_end_paint;
 	instance->update->DesktopResize = android_desktop_resize;
 
-	freerdp_channels_post_connect(instance->context->channels, instance);
+	if (freerdp_channels_post_connect(instance->context->channels, instance) < 0)
+		return FALSE;
 
 	freerdp_callback("OnConnectionSuccess", "(I)V", instance);
 

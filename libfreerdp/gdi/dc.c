@@ -44,6 +44,7 @@ HGDI_DC gdi_GetDC()
 	HGDI_DC hDC = (HGDI_DC) malloc(sizeof(GDI_DC));
 	if (!hDC)
 		return NULL;
+
 	hDC->bytesPerPixel = 4;
 	hDC->bitsPerPixel = 32;
 	hDC->drawMode = GDI_R2_BLACK;
