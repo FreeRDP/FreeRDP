@@ -43,7 +43,7 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* 
 	ntlm->http = http;
 	ntlm->Bindings = Bindings;
 
-	ntlm->table = InitSecurityInterface();
+	ntlm->table = InitSecurityInterfaceEx(0);
 
 	if (!ntlm->table)
 		return FALSE;

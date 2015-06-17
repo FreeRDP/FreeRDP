@@ -211,7 +211,7 @@ int nla_client_init(rdpNla* nla)
 	nla->ServicePrincipalName = spn;
 #endif
 
-	nla->table = InitSecurityInterface();
+	nla->table = InitSecurityInterfaceEx(0);
 	nla->status = nla->table->QuerySecurityPackageInfo(NLA_PKG_NAME, &nla->pPackageInfo);
 
 	if (nla->status != SEC_E_OK)
@@ -498,7 +498,7 @@ int nla_server_init(rdpNla* nla)
 	}
 	else
 	{
-		nla->table = InitSecurityInterface();
+		nla->table = InitSecurityInterfaceEx(0);
 	}
 
 	nla->status = nla->table->QuerySecurityPackageInfo(NLA_PKG_NAME, &nla->pPackageInfo);
