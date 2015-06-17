@@ -40,7 +40,7 @@ rdpCache* cache_new(rdpSettings* settings)
 	if (!cache->glyph)
 		goto error_glyph;
 	cache->brush = brush_cache_new(settings);
-	if (cache->brush)
+	if (!cache->brush)
 		goto error_brush;
 	cache->pointer = pointer_cache_new(settings);
 	if (!cache->pointer)
