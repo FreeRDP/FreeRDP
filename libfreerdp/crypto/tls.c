@@ -1012,6 +1012,11 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 		offset = 0;
 		length = 2048;
 		pemCert = (BYTE*) malloc(length + 1);
+		if (!pemCert)
+		{
+			WLog_ERR(TAG, "error allocating pemCert");
+			return -1;
+		}
 
 		status = BIO_read(bio, pemCert, length);
 

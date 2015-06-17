@@ -780,9 +780,24 @@ BOOL rdg_ncacn_http_ntlm_init(rdpRdg* rdg, rdpTls* tls)
 
 			if (settings->GatewayUseSameCredentials)
 			{
-				settings->Username = _strdup(settings->GatewayUsername);
-				settings->Domain = _strdup(settings->GatewayDomain);
-				settings->Password = _strdup(settings->GatewayPassword);
+				if (settings->GatewayUsername)
+				{
+					free(settings->Username);
+					if (!(settings->Username = _strdup(settings->GatewayUsername)))
+						return FALSE;
+				}
+				if (settings->GatewayDomain)
+				{
+					free(settings->Domain);
+					if (!(settings->Domain = _strdup(settings->GatewayDomain)))
+						return FALSE;
+				}
+				if (settings->GatewayPassword)
+				{
+					free(settings->Password);
+					if (!(settings->Password = _strdup(settings->GatewayPassword)))
+						return FALSE;
+				}
 			}
 		}
 	}

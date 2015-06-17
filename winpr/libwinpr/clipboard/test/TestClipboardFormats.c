@@ -42,6 +42,11 @@ int TestClipboardFormats(int argc, char* argv[])
 		char* pDstData;
 
 		pSrcData = _strdup("this is a test string");
+		if (!pSrcData)
+		{
+			fprintf(stderr, "Memory allocation failed\n");
+			return -1;
+		}
 		SrcSize = (UINT32) (strlen(pSrcData) + 1);
 
 		bSuccess = ClipboardSetData(clipboard, utf8StringFormatId, (void*) pSrcData, SrcSize);

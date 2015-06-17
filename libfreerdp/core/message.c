@@ -2770,15 +2770,13 @@ rdpInputProxy* input_message_proxy_new(rdpInput* input)
 {
 	rdpInputProxy* proxy;
 
-	proxy = (rdpInputProxy*) malloc(sizeof(rdpInputProxy));
+	proxy = (rdpInputProxy*) calloc(1, sizeof(rdpInputProxy));
 
-	if (proxy)
-	{
-		ZeroMemory(proxy, sizeof(rdpInputProxy));
+	if (!proxy)
+		return NULL;
 
-		proxy->input = input;
-		input_message_proxy_register(proxy, input);
-	}
+	proxy->input = input;
+	input_message_proxy_register(proxy, input);
 
 	return proxy;
 }

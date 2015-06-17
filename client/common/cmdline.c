@@ -471,16 +471,33 @@ int freerdp_client_add_static_channel(rdpSettings* settings, int count, char** p
 	ADDIN_ARGV* args;
 
 	args = (ADDIN_ARGV*) malloc(sizeof(ADDIN_ARGV));
+	if (!args)
+		return -1;
 
 	args->argc = count;
 	args->argv = (char**) calloc(args->argc, sizeof(char*));
+	if (!args->argv)
+		goto error_argv;
 
 	for (index = 0; index < args->argc; index++)
+	{
 		args->argv[index] = _strdup(params[index]);
+		if (!args->argv[index])
+			goto error_argv_index;
+	}
 
-	freerdp_static_channel_collection_add(settings, args);
+	if (!freerdp_static_channel_collection_add(settings, args))
+		goto error_argv_index;
 
 	return 0;
+
+error_argv_index:
+	for (index = 0; index < args->argc; index++)
+		free(args->argv[index]);
+	free(args->argv);
+error_argv:
+	free(args);
+	return -1;
 }
 
 int freerdp_client_add_dynamic_channel(rdpSettings* settings, int count, char** params)
@@ -489,16 +506,33 @@ int freerdp_client_add_dynamic_channel(rdpSettings* settings, int count, char** 
 	ADDIN_ARGV* args;
 
 	args = (ADDIN_ARGV*) malloc(sizeof(ADDIN_ARGV));
+	if (!args)
+		return -1;
 
 	args->argc = count;
 	args->argv = (char**) calloc(args->argc, sizeof(char*));
+	if (!args->argv)
+		goto error_argv;
 
 	for (index = 0; index < args->argc; index++)
+	{
 		args->argv[index] = _strdup(params[index]);
+		if (!args->argv[index])
+			goto error_argv_index;
+	}
 
-	freerdp_dynamic_channel_collection_add(settings, args);
+	if (!freerdp_dynamic_channel_collection_add(settings, args))
+		goto error_argv_index;
 
 	return 0;
+
+error_argv_index:
+	for (index = 0; index < args->argc; index++)
+		free(args->argv[index]);
+	free(args->argv);
+error_argv:
+	free(args);
+	return -1;
 }
 
 static char** freerdp_command_line_parse_comma_separated_values(char* list, int* count)
@@ -562,6 +596,7 @@ static char** freerdp_command_line_parse_comma_separated_values_offset(char* lis
 int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT_A* arg)
 {
 	rdpSettings* settings = (rdpSettings*) context;
+	int status = 0;
 
 	CommandLineSwitchStart(arg)
 
@@ -586,7 +621,7 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 
 		p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
 
-		freerdp_client_add_static_channel(settings, count, p);
+		status = freerdp_client_add_static_channel(settings, count, p);
 
 		free(p);
 	}
@@ -712,7 +747,7 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 			p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
 			p[0] = "rdpsnd";
 
-			freerdp_client_add_static_channel(settings, count, p);
+			status = freerdp_client_add_static_channel(settings, count, p);
 
 			free(p);
 		}
@@ -724,7 +759,7 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 			count = 1;
 			p[0] = "rdpsnd";
 
-			freerdp_client_add_static_channel(settings, count, p);
+			status = freerdp_client_add_static_channel(settings, count, p);
 		}
 	}
 	CommandLineSwitchCase(arg, "microphone")
@@ -789,7 +824,7 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 
 	CommandLineSwitchEnd(arg)
 
-	return 0;
+	return status;
 }
 
 int freerdp_parse_username(char* username, char** user, char** domain)
@@ -803,9 +838,16 @@ int freerdp_parse_username(char* username, char** user, char** domain)
 	{
 		length = (int) (p - username);
 		*domain = (char*) calloc(length + 1UL, sizeof(char));
+		if (!(*domain))
+			return -1;
 		strncpy(*domain, username, length);
 		(*domain)[length] = '\0';
 		*user = _strdup(&p[1]);
+		if (!(*user))
+		{
+			free(*domain);
+			return -1;
+		}
 	}
 	else
 	{
@@ -813,7 +855,8 @@ int freerdp_parse_username(char* username, char** user, char** domain)
 		 * ClientInfo PDU expect 'user@corp.net' to be transmitted
 		 * as username 'user@corp.net', domain empty.
 		 */
-		*user = _strdup(username);
+		if (!(*user = _strdup(username)))
+			return -1;
 		*domain = NULL;
 	}
 
@@ -932,6 +975,8 @@ int freerdp_map_keyboard_layout_name_to_id(char* name)
 	RDP_KEYBOARD_LAYOUT* layouts;
 
 	layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD);
+	if (!layouts)
+		return -1;
 
 	for (i = 0; layouts[i].code; i++)
 	{
@@ -945,6 +990,8 @@ int freerdp_map_keyboard_layout_name_to_id(char* name)
 		return id;
 
 	layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_VARIANT);
+	if (!layouts)
+		return -1;
 
 	for (i = 0; layouts[i].code; i++)
 	{
@@ -958,6 +1005,8 @@ int freerdp_map_keyboard_layout_name_to_id(char* name)
 		return id;
 
 	layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_IME);
+	if (!layouts)
+		return -1;
 
 	for (i = 0; layouts[i].code; i++)
 	{
@@ -1156,18 +1205,21 @@ int freerdp_client_settings_command_line_status_print(rdpSettings* settings, int
 			RDP_KEYBOARD_LAYOUT* layouts;
 
 			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD);
+			//if (!layouts) /* FIXME*/
 			printf("\nKeyboard Layouts\n");
 			for (i = 0; layouts[i].code; i++)
 				printf("0x%08X\t%s\n", (int) layouts[i].code, layouts[i].name);
 			free(layouts);
 
 			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_VARIANT);
+			//if (!layouts) /* FIXME*/
 			printf("\nKeyboard Layout Variants\n");
 			for (i = 0; layouts[i].code; i++)
 				printf("0x%08X\t%s\n", (int) layouts[i].code, layouts[i].name);
 			free(layouts);
 
 			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_IME);
+			//if (!layouts) /* FIXME*/
 			printf("\nKeyboard Input Method Editors (IMEs)\n");
 			for (i = 0; layouts[i].code; i++)
 				printf("0x%08X\t%s\n", (int) layouts[i].code, layouts[i].name);
@@ -1436,11 +1488,16 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			if (id == 0)
 			{
 				id = (unsigned long int) freerdp_map_keyboard_layout_name_to_id(arg->Value);
-
-				if (!id)
+				if (id == -1)
+					WLog_ERR(TAG, "A problem occured while mapping the layout name to id");
+				else if (id == 0)
 				{
-					WLog_ERR(TAG,  "Could not identify keyboard layout: %s", arg->Value);
+					WLog_ERR(TAG, "Could not identify keyboard layout: %s", arg->Value);
+					WLog_ERR(TAG, "Use /kbd-list to list available layouts");
+
 				}
+				if (id <= 0)
+					return COMMAND_LINE_STATUS_PRINT;
 			}
 
 			settings->KeyboardLayout = (UINT32) id;

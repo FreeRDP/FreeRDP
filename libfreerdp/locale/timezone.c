@@ -1541,6 +1541,12 @@ char* freerdp_get_unix_timezone_identifier()
 		}
 
 		tzid = (char*) malloc(length + 1);
+		if (!tzid)
+		{
+			fclose(fp);
+			return NULL;
+		}
+
 		fread(tzid, length, 1, fp);
 		tzid[length] = '\0';
 
@@ -1579,6 +1585,9 @@ char* freerdp_get_unix_timezone_identifier()
 		}
 
 		tzid = (char*) malloc(len - pos + 1);
+		if (!tzid)
+			return NULL;
+
 		strncpy(tzid, buf + pos + 1, len - pos);
 
 		return tzid;	
@@ -1597,6 +1606,8 @@ BOOL freerdp_match_unix_timezone_identifier_with_list(const char* tzid, const ch
 	char* list_copy;
 
 	list_copy = _strdup(list);
+	if (!list_copy)
+		return FALSE;
 
 	p = strtok(list_copy, " ");
 
@@ -1636,10 +1647,13 @@ TIME_ZONE_ENTRY* freerdp_detect_windows_time_zone(UINT32 bias)
 
 			if (freerdp_match_unix_timezone_identifier_with_list(tzid, WindowsTimeZoneIdTable[j].tzid))
 			{
+				free(tzid);
+
 				timezone = (TIME_ZONE_ENTRY*) malloc(sizeof(TIME_ZONE_ENTRY));
+				if (!timezone)
+					return NULL;
 				memcpy((void*) timezone, (void*) &TimeZoneTable[i], sizeof(TIME_ZONE_ENTRY));
 				timezone->Bias = bias;
-				free(tzid);
 				return timezone;
 			}
 		}

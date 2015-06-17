@@ -161,12 +161,10 @@ HCERTSTORE CertOpenStore(LPCSTR lpszStoreProvider, DWORD dwMsgAndCertEncodingTyp
 {
 	WINPR_CERTSTORE* certstore;
 
-	certstore = (WINPR_CERTSTORE*) malloc(sizeof(WINPR_CERTSTORE));
+	certstore = (WINPR_CERTSTORE*) calloc(1, sizeof(WINPR_CERTSTORE));
 
 	if (certstore)
 	{
-		ZeroMemory(certstore, sizeof(WINPR_CERTSTORE));
-
 		certstore->lpszStoreProvider = lpszStoreProvider;
 		certstore->dwMsgAndCertEncodingType = dwMsgAndCertEncodingType;
 	}

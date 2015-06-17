@@ -73,6 +73,8 @@ BOOL wf_settings_read_string_ascii(HKEY key, LPTSTR subkey, LPTSTR name, char** 
 	if (status == ERROR_SUCCESS)
 	{
 		strX = (LPTSTR) malloc(dwSize + sizeof(TCHAR));
+		if (!strX)
+			return FALSE;
 		status = RegQueryValueEx(hKey, name, NULL, &dwType, (BYTE*) strX, &dwSize);
 
 		if (status != ERROR_SUCCESS)

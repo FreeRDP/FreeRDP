@@ -632,6 +632,11 @@ SECURITY_STATUS SEC_ENTRY winpr_EnumerateSecurityPackagesA(ULONG* pcPackages, PS
 		pPackageInfo[index].cbMaxToken = SecPkgInfoA_LIST[index]->cbMaxToken;
 		pPackageInfo[index].Name = _strdup(SecPkgInfoA_LIST[index]->Name);
 		pPackageInfo[index].Comment = _strdup(SecPkgInfoA_LIST[index]->Comment);
+		if (!pPackageInfo[index].Name || !pPackageInfo[index].Comment)
+		{
+			sspi_ContextBufferFree(pPackageInfo);
+			return SEC_E_INSUFFICIENT_MEMORY;
+		}
 	}
 
 	*(pcPackages) = cPackages;
@@ -729,6 +734,11 @@ SECURITY_STATUS SEC_ENTRY winpr_QuerySecurityPackageInfoA(SEC_CHAR* pszPackageNa
 			pPackageInfo->cbMaxToken = SecPkgInfoA_LIST[index]->cbMaxToken;
 			pPackageInfo->Name = _strdup(SecPkgInfoA_LIST[index]->Name);
 			pPackageInfo->Comment = _strdup(SecPkgInfoA_LIST[index]->Comment);
+			if (!pPackageInfo->Name || !pPackageInfo->Comment)
+			{
+				sspi_ContextBufferFree(pPackageInfo);
+				return SEC_E_INSUFFICIENT_MEMORY;
+			}
 
 			*(ppPackageInfo) = pPackageInfo;
 

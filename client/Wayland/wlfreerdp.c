@@ -142,7 +142,7 @@ static BOOL wl_post_connect(freerdp* instance)
 	 /* put Wayland data in the context here */
 	context->window = window;
 
-	if (freerdp_channels_post_connect(instance->context->channels, instance))
+	if (freerdp_channels_post_connect(instance->context->channels, instance) < 0)
 		return FALSE;
 
 	wlf_UpdateWindowArea(context, window, 0, 0, gdi->width, gdi->height);

@@ -92,18 +92,20 @@ mfInfo* mf_info_init()
 {
 	mfInfo* mfi;
 	
-	mfi = (mfInfo*) malloc(sizeof(mfInfo));
-	memset(mfi, 0, sizeof(mfInfo));
+	mfi = (mfInfo*) calloc(1, sizeof(mfInfo));
 	
 	if (mfi != NULL)
 	{
 		pthread_mutex_init(&mfi->mutex, NULL);
 		
-		mfi->peers = (freerdp_peer**) malloc(sizeof(freerdp_peer*) * MF_INFO_MAXPEERS);
-		memset(mfi->peers, 0, sizeof(freerdp_peer*) * MF_INFO_MAXPEERS);
+		mfi->peers = (freerdp_peer**) calloc(MF_INFO_MAXPEERS, sizeof(freerdp_peer*));
+		if (!mfi->peers)
+		{
+			free(mfi);
+			return NULL;
+		}
 		
 		mfi->framesPerSecond = MF_INFO_DEFAULT_FPS;
-		
 		mfi->input_disabled = FALSE;
 	}
 	

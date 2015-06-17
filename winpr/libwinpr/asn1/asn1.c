@@ -73,11 +73,10 @@ ASN1error_e ASN1_CreateEncoder(ASN1module_t pModule, ASN1encoding_t* ppEncoderIn
 	if (pModule && ppEncoderInfo)
 	{
 		*ppEncoderInfo = 0;
-		encoder = (ASN1encoding_t) malloc(sizeof(struct ASN1encoding_s));
+		encoder = (ASN1encoding_t) calloc(1, sizeof(struct ASN1encoding_s));
 
 		if (encoder)
 		{
-			ZeroMemory(encoder, sizeof(struct ASN1encoding_s));
 			encoder->magic = 0x44434E45;
 			encoder->err = ASN1_SUCCESS;
 			encoder->dwFlags = pModule->dwFlags;

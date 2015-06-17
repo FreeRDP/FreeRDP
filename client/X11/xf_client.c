@@ -552,6 +552,8 @@ BOOL xf_create_window(xfContext* xfc)
 		if (settings->WindowTitle)
 		{
 			windowTitle = _strdup(settings->WindowTitle);
+			if (!windowTitle)
+				return FALSE;
 		}
 		else if (settings->ServerPort == 3389)
 		{
@@ -999,6 +1001,8 @@ BOOL xf_pre_connect(freerdp* instance)
 		if (login_name)
 		{
 			settings->Username = _strdup(login_name);
+			if (!settings->Username)
+				return FALSE;
 			WLog_INFO(TAG, "No user name set. - Using login name: %s", settings->Username);
 		}
 	}
@@ -1016,9 +1020,13 @@ BOOL xf_pre_connect(freerdp* instance)
 	}
 
 	if (!context->cache)
-		context->cache = cache_new(settings);
+	{
+		if (!(context->cache = cache_new(settings)))
+			return FALSE;
+	}
 
-	xf_keyboard_init(xfc);
+	if (!xf_keyboard_init(xfc))
+		return FALSE;
 
 	xf_detect_monitors(xfc, &maxWidth, &maxHeight);
 
@@ -1165,7 +1173,8 @@ BOOL xf_post_connect(freerdp* instance)
 	update->SetKeyboardIndicators = xf_keyboard_set_indicators;
 
 	xfc->clipboard = xf_clipboard_new(xfc);
-	freerdp_channels_post_connect(channels, instance);
+	if (freerdp_channels_post_connect(channels, instance) < 0)
+		return FALSE;
 
 	EventArgsInit(&e, "xfreerdp");
 	e.width = settings->DesktopWidth;
@@ -1422,8 +1431,8 @@ void* xf_client_thread(void* param)
 	xfContext* xfc;
 	freerdp* instance;
 	rdpContext* context;
-	HANDLE inputEvent;
-	HANDLE inputThread;
+	HANDLE inputEvent = NULL;
+	HANDLE inputThread = NULL;
 	rdpChannels* channels;
 	rdpSettings* settings;
 

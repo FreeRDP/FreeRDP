@@ -271,6 +271,11 @@ int TestClientRdpFile(int argc, char* argv[])
 	/* Unicode */
 
 	file = freerdp_client_rdp_file_new();
+	if (!file)
+	{
+		printf("rdp_file_new failed\n");
+		return -1;
+	}
 	freerdp_client_parse_rdp_file_buffer(file, testRdpFileUTF16, sizeof(testRdpFileUTF16));
 
 	if (file->UseMultiMon != 0)
@@ -331,7 +336,12 @@ int TestClientRdpFile(int argc, char* argv[])
 	}
 
 	iValue = freerdp_client_rdp_file_get_integer_option(file, "vendor integer");
-	freerdp_client_rdp_file_set_integer_option(file, "vendor integer", 456);
+	if (freerdp_client_rdp_file_set_integer_option(file, "vendor integer", 456) == -1)
+	{
+		printf("failed to set integer: vendor integer");
+		return -1;
+	}
+
 	iValue = freerdp_client_rdp_file_get_integer_option(file, "vendor integer");
 
 	sValue = (char*) freerdp_client_rdp_file_get_string_option(file, "vendor string");
@@ -339,7 +349,11 @@ int TestClientRdpFile(int argc, char* argv[])
 	sValue = (char*) freerdp_client_rdp_file_get_string_option(file, "vendor string");
 
 	freerdp_client_rdp_file_set_string_option(file, "fruits", "banana,oranges");
-	freerdp_client_rdp_file_set_integer_option(file, "numbers", 123456789);
+	if (freerdp_client_rdp_file_set_integer_option(file, "numbers", 123456789) == -1)
+	{
+		printf("failed to set integer: numbers");
+		return -1;
+	}
 
 	for (index = 0; index < file->lineCount; index++)
 	{

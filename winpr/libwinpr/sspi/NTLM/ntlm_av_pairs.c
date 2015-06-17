@@ -29,6 +29,7 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/sysinfo.h>
+#include <winpr/tchar.h>
 
 #include "ntlm_compute.h"
 
@@ -171,14 +172,14 @@ int ntlm_get_target_computer_name(PUNICODE_STRING pName, COMPUTER_NAME_FORMAT ty
 {
 	char* name;
 	int status;
-	DWORD nSize = 0;
-	GetComputerNameExA(type, NULL, &nSize);
-	name = (char*) malloc(nSize);
+	TCHAR computerName[MAX_COMPUTERNAME_LENGTH + 1];
+	DWORD nSize = MAX_COMPUTERNAME_LENGTH;
 
-	if (!name)
+	if (!GetComputerNameExA(type, computerName, &nSize))
 		return -1;
 
-	if (!GetComputerNameExA(type, name, &nSize))
+	name = strdup(computerName);
+	if (!name)
 		return -1;
 
 	if (type == ComputerNameNetBIOS)

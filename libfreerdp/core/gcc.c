@@ -1590,11 +1590,12 @@ BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	Stream_Read_UINT32(s, flags); /* flags */
 	Stream_Read_UINT32(s, monitorCount); /* monitorCount */
 
-	if (blockLength < (8 + (monitorCount * 20)))
+	if (((blockLength - 8)  / 20) < monitorCount)
 		return FALSE;
 
-	monitorDefArray = (MONITOR_DEF*) malloc(sizeof(MONITOR_DEF) * monitorCount);
-	ZeroMemory(monitorDefArray, sizeof(MONITOR_DEF) * monitorCount);
+	monitorDefArray = (MONITOR_DEF*) calloc(monitorCount, sizeof(MONITOR_DEF));
+	if (!monitorDefArray)
+		return FALSE;
 
 	for (index = 0; index < monitorCount; index++)
 	{
@@ -1657,7 +1658,7 @@ BOOL gcc_read_client_monitor_extended_data(wStream* s, rdpMcs* mcs, UINT16 block
 	UINT32 monitorAttributeSize;
 	MONITOR_ATTRIBUTES* monitorAttributesArray;
 
-	if (blockLength < 8)
+	if (blockLength < 12)
 		return FALSE;
 
 	Stream_Read_UINT32(s, flags); /* flags */
@@ -1667,11 +1668,12 @@ BOOL gcc_read_client_monitor_extended_data(wStream* s, rdpMcs* mcs, UINT16 block
 	if (monitorAttributeSize != 20)
 		return FALSE;
 
-	if (blockLength < (12 + (monitorCount * monitorAttributeSize)))
+	if ((blockLength - 12) / monitorAttributeSize < monitorCount)
 		return FALSE;
 
-	monitorAttributesArray = (MONITOR_ATTRIBUTES*) malloc(sizeof(MONITOR_ATTRIBUTES) * monitorCount);
-	ZeroMemory(monitorAttributesArray, sizeof(MONITOR_ATTRIBUTES) * monitorCount);
+	monitorAttributesArray = (MONITOR_ATTRIBUTES*) calloc(monitorCount, sizeof(MONITOR_ATTRIBUTES));
+	if (!monitorAttributesArray)
+		return FALSE;
 
 	for (index = 0; index < monitorCount; index++)
 	{

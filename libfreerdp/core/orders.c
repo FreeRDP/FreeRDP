@@ -2280,6 +2280,8 @@ BOOL update_read_cache_glyph_order(wStream* s, CACHE_GLYPH_ORDER* cache_glyph_or
 			return FALSE;
 
 		glyph->aj = (BYTE*) malloc(glyph->cb);
+		if (!glyph->aj)
+			return FALSE;
 		Stream_Read(s, glyph->aj, glyph->cb);
 	}
 
@@ -2370,6 +2372,8 @@ BOOL update_read_cache_glyph_v2_order(wStream* s, CACHE_GLYPH_V2_ORDER* cache_gl
 			return FALSE;
 
 		glyph->aj = (BYTE*) malloc(glyph->cb);
+		if (!glyph->aj)
+			return FALSE;
 		Stream_Read(s, glyph->aj, glyph->cb);
 	}
 

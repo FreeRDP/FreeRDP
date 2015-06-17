@@ -43,13 +43,7 @@ int rdp_recv_multitransport_packet(rdpRdp* rdp, wStream* s)
 
 rdpMultitransport* multitransport_new(void)
 {
-	rdpMultitransport* multitransport = (rdpMultitransport*)malloc(sizeof(rdpMultitransport));
-	if (multitransport)
-	{
-		memset(multitransport, 0, sizeof(rdpMultitransport));
-	}
-	
-	return multitransport;
+	return (rdpMultitransport*)calloc(1, sizeof(rdpMultitransport));
 }
 
 void multitransport_free(rdpMultitransport* multitransport)

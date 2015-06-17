@@ -55,8 +55,8 @@ struct rdp_certificate_store
 #endif
 
 FREERDP_API rdpCertificateData* certificate_data_new(
-        char* hostname, UINT16 port, char*subject,
-        char*issuer, char* fingerprint);
+        char* hostname, UINT16 port, char* subject,
+        char* issuer, char* fingerprint);
 FREERDP_API void certificate_data_free(
         rdpCertificateData* certificate_data);
 FREERDP_API rdpCertificateStore* certificate_store_new(

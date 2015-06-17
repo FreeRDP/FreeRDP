@@ -41,6 +41,7 @@
 #include "OpenGL/gl.h"
 
 #include "CoreVideo/CoreVideo.h"
+#include "../../../../../../srv/scratch2/dev/freerdp/FreeRDP-master/include/freerdp/peer.h"
 
 //refactor these
 int info_last_sec = 0;
@@ -388,6 +389,13 @@ void* mf_peer_main_loop(void* arg)
 	/* Initialize the real server settings here */
 	client->settings->CertificateFile = _strdup("server.crt");
 	client->settings->PrivateKeyFile = _strdup("server.key");
+	if (!client->settings->CertificateFile || !client->settings->PrivateKeyFile)
+	{
+		freerdp_peer_free(client);
+		return NULL;
+	}
+
+
 	client->settings->NlaSecurity = FALSE;
 	client->settings->RemoteFxCodec = TRUE;
 	client->settings->ColorDepth = 32;

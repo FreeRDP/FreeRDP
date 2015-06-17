@@ -247,6 +247,14 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types)
 		{
 			layouts[num].code = RDP_KEYBOARD_LAYOUT_TABLE[i].code;
 			layouts[num].name = _strdup(RDP_KEYBOARD_LAYOUT_TABLE[i].name);
+			if (!layouts[num].name)
+			{
+				for (--i; i >=0; --i)
+					free(layouts[num].name);
+
+				free(layouts);
+				return NULL;
+			}
 		}
 	}
 	if ((types & RDP_KEYBOARD_LAYOUT_TYPE_VARIANT) != 0)
@@ -264,6 +272,14 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types)
 		{
 			layouts[num].code = RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i].code;
 			layouts[num].name = _strdup(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i].name);
+			if (!layouts[num].name)
+			{
+				for (--i; i >=0; --i)
+					free(layouts[num].name);
+
+				free(layouts);
+				return NULL;
+			}
 		}
 	}
 	if ((types & RDP_KEYBOARD_LAYOUT_TYPE_IME) != 0)
@@ -281,6 +297,14 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types)
 		{
 			layouts[num].code = RDP_KEYBOARD_IME_TABLE[i].code;
 			layouts[num].name = _strdup(RDP_KEYBOARD_IME_TABLE[i].name);
+			if (!layouts[num].name)
+			{
+				for (--i; i >=0; --i)
+					free(layouts[num].name);
+
+				free(layouts);
+				return NULL;
+			}
 		}
 	}
 
