@@ -963,6 +963,8 @@ int freerdp_map_keyboard_layout_name_to_id(char* name)
 	RDP_KEYBOARD_LAYOUT* layouts;
 
 	layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD);
+	if (!layouts)
+		return -1;
 
 	for (i = 0; layouts[i].code; i++)
 	{
@@ -976,6 +978,8 @@ int freerdp_map_keyboard_layout_name_to_id(char* name)
 		return id;
 
 	layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_VARIANT);
+	if (!layouts)
+		return -1;
 
 	for (i = 0; layouts[i].code; i++)
 	{
@@ -989,6 +993,8 @@ int freerdp_map_keyboard_layout_name_to_id(char* name)
 		return id;
 
 	layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_IME);
+	if (!layouts)
+		return -1;
 
 	for (i = 0; layouts[i].code; i++)
 	{
@@ -1187,18 +1193,21 @@ int freerdp_client_settings_command_line_status_print(rdpSettings* settings, int
 			RDP_KEYBOARD_LAYOUT* layouts;
 
 			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD);
+			//if (!layouts) /* FIXME*/
 			printf("\nKeyboard Layouts\n");
 			for (i = 0; layouts[i].code; i++)
 				printf("0x%08X\t%s\n", (int) layouts[i].code, layouts[i].name);
 			free(layouts);
 
 			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_VARIANT);
+			//if (!layouts) /* FIXME*/
 			printf("\nKeyboard Layout Variants\n");
 			for (i = 0; layouts[i].code; i++)
 				printf("0x%08X\t%s\n", (int) layouts[i].code, layouts[i].name);
 			free(layouts);
 
 			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_IME);
+			//if (!layouts) /* FIXME*/
 			printf("\nKeyboard Input Method Editors (IMEs)\n");
 			for (i = 0; layouts[i].code; i++)
 				printf("0x%08X\t%s\n", (int) layouts[i].code, layouts[i].name);
@@ -1469,11 +1478,15 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			if (id == 0)
 			{
 				id = (unsigned long int) freerdp_map_keyboard_layout_name_to_id(arg->Value);
-
-				if (!id)
+				if (id == -1)
+					WLog_ERR(TAG, "A problem occured while mapping the layout name to id");
+				else if (id == 0)
 				{
 					WLog_ERR(TAG, "Could not identify keyboard layout: %s", arg->Value);
+					WLog_ERR(TAG, "Use /kbd-list to list available layouts");
 				}
+				if (id <= 0)
+					return COMMAND_LINE_STATUS_PRINT;
 			}
 
 			settings->KeyboardLayout = (UINT32) id;

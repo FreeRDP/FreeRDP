@@ -41,32 +41,32 @@
  * Binary Appender
  */
 
-void WLog_BinaryAppender_SetOutputFileName(wLog* log, wLogBinaryAppender* appender, const char* filename)
+BOOL WLog_BinaryAppender_SetOutputFileName(wLog* log, wLogBinaryAppender* appender, const char* filename)
 {
-	if (!appender)
-		return;
+	if (!appender || !filename)
+		return FALSE;
 
 	if (appender->Type != WLOG_APPENDER_BINARY)
-		return;
-
-	if (!filename)
-		return;
+		return FALSE;
 
 	appender->FileName = _strdup(filename);
+	if (!appender->FileName)
+		return FALSE;
+	return TRUE;
 }
 
-void WLog_BinaryAppender_SetOutputFilePath(wLog* log, wLogBinaryAppender* appender, const char* filepath)
+BOOL WLog_BinaryAppender_SetOutputFilePath(wLog* log, wLogBinaryAppender* appender, const char* filepath)
 {
-	if (!appender)
-		return;
+	if (!appender || !filepath)
+		return FALSE;
 
 	if (appender->Type != WLOG_APPENDER_BINARY)
-		return;
-
-	if (!filepath)
-		return;
+		return FALSE;
 
 	appender->FilePath = _strdup(filepath);
+	if (!appender->FilePath)
+		return FALSE;
+	return TRUE;
 }
 
 int WLog_BinaryAppender_Open(wLog* log, wLogBinaryAppender* appender)

@@ -1398,6 +1398,12 @@ LPTSTR nla_make_spn(const char* ServiceClass, const char* hostname)
 	hostnameX = _strdup(hostname);
 	ServiceClassX = _strdup(ServiceClass);
 #endif
+	if (!hostnameX || !ServiceClassX)
+	{
+		free(hostnameX);
+		free(ServiceClassX);
+		return NULL;
+	}
 
 	if (!ServiceClass)
 	{

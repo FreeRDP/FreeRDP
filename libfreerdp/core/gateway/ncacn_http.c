@@ -138,9 +138,24 @@ int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, RpcChannel* channel)
 
 			if (settings->GatewayUseSameCredentials)
 			{
-				settings->Username = _strdup(settings->GatewayUsername);
-				settings->Domain = _strdup(settings->GatewayDomain);
-				settings->Password = _strdup(settings->GatewayPassword);
+				if (settings->GatewayUsername)
+				{
+					free(settings->Username);
+					if (!(settings->Username = _strdup(settings->GatewayUsername)))
+						return -1;
+				}
+				if (settings->GatewayDomain)
+				{
+					free(settings->Domain);
+					if (!(settings->Domain = _strdup(settings->GatewayDomain)))
+						return -1;
+				}
+				if (settings->GatewayPassword)
+				{
+					free(settings->Password);
+					if (!(settings->Password = _strdup(settings->GatewayPassword)))
+						return -1;
+				}
 			}
 		}
 	}

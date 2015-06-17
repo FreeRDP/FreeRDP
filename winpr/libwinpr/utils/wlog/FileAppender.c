@@ -37,32 +37,34 @@
  * File Appender
  */
 
-void WLog_FileAppender_SetOutputFileName(wLog* log, wLogFileAppender* appender, const char* filename)
+BOOL WLog_FileAppender_SetOutputFileName(wLog* log, wLogFileAppender* appender, const char* filename)
 {
-	if (!appender)
-		return;
+	if (!appender || !filename)
+		return FALSE;
 
 	if (appender->Type != WLOG_APPENDER_FILE)
-		return;
-
-	if (!filename)
-		return;
+		return FALSE;
 
 	appender->FileName = _strdup(filename);
+	if (!appender->FileName)
+		return FALSE;
+
+	return TRUE;
 }
 
-void WLog_FileAppender_SetOutputFilePath(wLog* log, wLogFileAppender* appender, const char* filepath)
+BOOL WLog_FileAppender_SetOutputFilePath(wLog* log, wLogFileAppender* appender, const char* filepath)
 {
-	if (!appender)
-		return;
+	if (!appender || !filepath)
+		return FALSE;
 
 	if (appender->Type != WLOG_APPENDER_FILE)
-		return;
-
-	if (!filepath)
-		return;
+		return FALSE;
 
 	appender->FilePath = _strdup(filepath);
+	if (!appender->FilePath)
+		return FALSE;
+
+	return TRUE;
 }
 
 int WLog_FileAppender_Open(wLog* log, wLogFileAppender* appender)

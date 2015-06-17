@@ -1597,6 +1597,8 @@ BOOL freerdp_match_unix_timezone_identifier_with_list(const char* tzid, const ch
 	char* list_copy;
 
 	list_copy = _strdup(list);
+	if (!list_copy)
+		return FALSE;
 
 	p = strtok(list_copy, " ");
 

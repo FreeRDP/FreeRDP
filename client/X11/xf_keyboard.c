@@ -61,11 +61,11 @@ BOOL xf_keyboard_action_script_init(xfContext* xfc)
 		xfc->actionScript = _strdup("/usr/share/freerdp/action.sh");
 
 	if (!xfc->actionScript)
-		return 0;
+		return FALSE;
 
 	xfc->keyCombinations = ArrayList_New(TRUE);
 	if (!xfc->keyCombinations)
-		return 0;
+		return FALSE;
 
 	ArrayList_Object(xfc->keyCombinations)->fnObjectFree = free;
 
@@ -77,20 +77,26 @@ BOOL xf_keyboard_action_script_init(xfContext* xfc)
 	{
 		free(xfc->actionScript);
 		xfc->actionScript = NULL;
-		return 0;
+		return FALSE;
 	}
 
 	while (fgets(buffer, sizeof(buffer), keyScript) != NULL)
 	{
 		strtok(buffer, "\n");
 		keyCombination = _strdup(buffer);
-		if (ArrayList_Add(xfc->keyCombinations, keyCombination) < 0)
-			return 0;
+		if (!keyCombination || ArrayList_Add(xfc->keyCombinations, keyCombination) < 0)
+		{
+			ArrayList_Free(xfc->keyCombinations);
+			free(xfc->actionScript);
+			xfc->actionScript = NULL;
+			pclose(keyScript);
+			return FALSE;
+		}
 	}
 
-	exitCode = pclose(keyScript);
-
+	pclose(keyScript);
 	return xf_event_action_script_init(xfc);
+
 }
 
 void xf_keyboard_action_script_free(xfContext* xfc)
@@ -110,7 +116,7 @@ void xf_keyboard_action_script_free(xfContext* xfc)
 	}
 }
 
-void xf_keyboard_init(xfContext* xfc)
+BOOL xf_keyboard_init(xfContext* xfc)
 {
 	xf_keyboard_clear(xfc);
 
@@ -121,9 +127,11 @@ void xf_keyboard_init(xfContext* xfc)
 	if (xfc->modifierMap)
 		XFreeModifiermap(xfc->modifierMap);
 
-	xfc->modifierMap = XGetModifierMapping(xfc->display);
+	if (!(xfc->modifierMap = XGetModifierMapping(xfc->display)))
+		return FALSE;
 
 	xf_keyboard_action_script_init(xfc);
+	return TRUE;
 }
 
 void xf_keyboard_free(xfContext* xfc)
