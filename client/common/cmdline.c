@@ -2040,13 +2040,13 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 	if (!settings->Domain && user)
 	{
-		freerdp_parse_username(arg->Value, &settings->Username, &settings->Domain);
+		freerdp_parse_username(user, &settings->Username, &settings->Domain);
 		free(user);
 	}
 
 	if (!settings->GatewayDomain && gwUser)
 	{
-		freerdp_parse_username(arg->Value, &settings->GatewayUsername,
+		freerdp_parse_username(gwUser, &settings->GatewayUsername,
 				 &settings->GatewayDomain);
 		free(gwUser);
 	}
