@@ -1080,8 +1080,8 @@ static WIN32ERROR cliprdr_virtual_channel_event_disconnected(cliprdrPlugin* clip
 {
 	UINT rc;
 
-	MessageQueue_PostQuit(cliprdr->queue, 0);
-	WaitForSingleObject(cliprdr->thread, INFINITE);
+	if (MessageQueue_PostQuit(cliprdr->queue, 0))
+		WaitForSingleObject(cliprdr->thread, INFINITE);
 
 	MessageQueue_Free(cliprdr->queue);
 	CloseHandle(cliprdr->thread);

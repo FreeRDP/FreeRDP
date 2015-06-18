@@ -285,6 +285,8 @@ WINPR_API char* GetEnvironmentPath(char* name);
 WINPR_API char* GetEnvironmentSubPath(char* name, const char* path);
 WINPR_API char* GetCombinedPath(const char* basePath, const char* subPath);
 
+WINPR_API BOOL PathMakePathA(LPCSTR path, LPSECURITY_ATTRIBUTES lpAttributes);
+
 WINPR_API BOOL PathFileExistsA(LPCSTR pszPath);
 WINPR_API BOOL PathFileExistsW(LPCWSTR pszPath);
 

@@ -463,3 +463,22 @@ char* ConvertLineEndingToCRLF(const char* str, int* size)
 	return newStr;
 }
 
+char* StrSep(char** stringp, const char* delim)
+{
+	char* start = *stringp;
+	char* p;
+
+	p = (start != NULL) ? strpbrk(start, delim) : NULL;
+
+	if (!p)
+		*stringp = NULL;
+	else
+	{
+		*p = '\0';
+		*stringp = p + 1;
+	}
+
+	return start;
+}
+
+

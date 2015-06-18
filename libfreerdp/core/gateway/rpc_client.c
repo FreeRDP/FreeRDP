@@ -321,7 +321,8 @@ int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 
 		if (rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow < (rpc->ReceiveWindow / 2))
 		{
-			rts_send_flow_control_ack_pdu(rpc);
+			if (rts_send_flow_control_ack_pdu(rpc) < 0)
+				return -1;
 		}
 
 		if (!rpc_get_stub_data_info(rpc, buffer, &StubOffset, &StubLength))
@@ -412,7 +413,8 @@ int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 				return -1;
 			Stream_Write(pdu->s, buffer, Stream_Length(fragment));
 			Stream_SealLength(pdu->s);
-			rpc_client_recv_pdu(rpc, pdu);
+			if (rpc_client_recv_pdu(rpc, pdu) < 0)
+				return -1;
 			rpc_pdu_reset(pdu);
 		}
 		else
@@ -420,7 +422,8 @@ int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 			if (rpc->VirtualConnection->State < VIRTUAL_CONNECTION_STATE_OPENED)
 				WLog_ERR(TAG, "warning: unhandled RTS PDU");
 
-			rts_recv_out_of_sequence_pdu(rpc, buffer, header->common.frag_length);
+			if (rts_recv_out_of_sequence_pdu(rpc, buffer, header->common.frag_length) < 0)
+				return -1;
 		}
 
 		return 1;
@@ -434,7 +437,8 @@ int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 			return -1;
 		Stream_Write(pdu->s, buffer, Stream_Length(fragment));
 		Stream_SealLength(pdu->s);
-		rpc_client_recv_pdu(rpc, pdu);
+		if (rpc_client_recv_pdu(rpc, pdu) < 0)
+			return -1;
 		rpc_pdu_reset(pdu);
 
 		return 1;

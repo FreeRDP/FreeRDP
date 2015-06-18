@@ -1093,9 +1093,11 @@ BOOL xf_post_connect(freerdp* instance)
 
 		gdi = context->gdi;
 		xfc->primary_buffer = gdi->primary_buffer;
+		xfc->palette = gdi->palette;
 	}
 	else
 	{
+		xfc->palette = xfc->palette_hwgdi;
 		xfc->srcBpp = settings->ColorDepth;
 		xf_gdi_register_update_callbacks(update);
 	}
@@ -1532,8 +1534,8 @@ void* xf_client_thread(void* param)
 	if (settings->AsyncInput)
 	{
 		wMessageQueue* inputQueue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
-		MessageQueue_PostQuit(inputQueue, 0);
-		WaitForSingleObject(inputThread, INFINITE);
+		if (MessageQueue_PostQuit(inputQueue, 0))
+			WaitForSingleObject(inputThread, INFINITE);
 		CloseHandle(inputThread);
 	}
 

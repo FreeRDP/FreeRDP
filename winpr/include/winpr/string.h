@@ -186,6 +186,8 @@ WINPR_API void ByteSwapUnicode(WCHAR* wstr, int length);
 WINPR_API int ConvertLineEndingToLF(char* str, int size);
 WINPR_API char* ConvertLineEndingToCRLF(const char* str, int* size);
 
+WINPR_API char* StrSep(char** stringp, const char* delim);
+
 #ifdef __cplusplus
 }
 #endif

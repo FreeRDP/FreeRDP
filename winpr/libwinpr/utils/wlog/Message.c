@@ -44,7 +44,7 @@ char* WLog_Message_GetOutputFileName(int id, const char* ext)
 
 	if (!PathFileExistsA(FilePath))
 	{
-		if (!CreateDirectoryA(FilePath, NULL))
+		if (!PathMakePathA(FilePath, NULL))
 		{
 			free(FileName);
 			free(FilePath);

@@ -1305,8 +1305,8 @@ static WIN32ERROR drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdy
 {
 	WIN32ERROR status;
 
-	MessageQueue_PostQuit(drdynvc->queue, 0);
-	WaitForSingleObject(drdynvc->thread, INFINITE);
+	if (MessageQueue_PostQuit(drdynvc->queue, 0))
+		WaitForSingleObject(drdynvc->thread, INFINITE);
 
 	MessageQueue_Free(drdynvc->queue);
 	CloseHandle(drdynvc->thread);
