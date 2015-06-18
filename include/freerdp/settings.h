@@ -1435,7 +1435,7 @@ FREERDP_API int freerdp_addin_replace_argument(ADDIN_ARGV* args, char* previous,
 FREERDP_API int freerdp_addin_set_argument_value(ADDIN_ARGV* args, char* option, char* value);
 FREERDP_API int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, char* previous, char* option, char* value);
 
-FREERDP_API void freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device);
+FREERDP_API BOOL freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device);
 FREERDP_API RDPDR_DEVICE* freerdp_device_collection_find(rdpSettings* settings, const char* name);
 FREERDP_API RDPDR_DEVICE* freerdp_device_clone(RDPDR_DEVICE* device);
 FREERDP_API void freerdp_device_collection_free(rdpSettings* settings);

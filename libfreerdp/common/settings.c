@@ -159,10 +159,10 @@ int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, char* previous, char*
 	return 0;
 }
 
-void freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device)
+BOOL freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device)
 {
 	if (!settings->DeviceArray)
-		return;
+		return FALSE;
 
 	if (settings->DeviceArraySize < (settings->DeviceCount + 1))
 	{
@@ -173,12 +173,13 @@ void freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device)
 		new_array = (RDPDR_DEVICE**)
 				realloc(settings->DeviceArray, new_size * sizeof(RDPDR_DEVICE*));
 		if (!new_array)
-			return;
+			return FALSE;
 		settings->DeviceArray = new_array;
 		settings->DeviceArraySize = new_size;
 	}
 
 	settings->DeviceArray[settings->DeviceCount++] = device;
+	return TRUE;
 }
 
 RDPDR_DEVICE* freerdp_device_collection_find(rdpSettings* settings, const char* name)
