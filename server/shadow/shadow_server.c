@@ -445,7 +445,7 @@ int shadow_server_init_config_path(rdpShadowServer* server)
 		if (userLibraryPath)
 		{
 			if (!PathFileExistsA(userLibraryPath) &&
-				!CreateDirectoryA(userLibraryPath, 0))
+				!PathMakePathA(userLibraryPath, 0))
 			{
 				WLog_ERR(TAG, "Failed to create directory '%s'", userLibraryPath);
 				free(userLibraryPath);
@@ -457,7 +457,7 @@ int shadow_server_init_config_path(rdpShadowServer* server)
 			if (userApplicationSupportPath)
 			{
 				if (!PathFileExistsA(userApplicationSupportPath) &&
-					!CreateDirectoryA(userApplicationSupportPath, 0))
+					!PathMakePathA(userApplicationSupportPath, 0))
 				{
 					WLog_ERR(TAG, "Failed to create directory '%s'", userApplicationSupportPath);
 					free(userLibraryPath);
@@ -482,7 +482,7 @@ int shadow_server_init_config_path(rdpShadowServer* server)
 		if (configHome)
 		{
 			if (!PathFileExistsA(configHome) &&
-				!CreateDirectoryA(configHome, 0))
+				!PathMakePathA(configHome, 0))
 			{
 				WLog_ERR(TAG, "Failed to create directory '%s'", configHome);
 				free(configHome);
@@ -516,7 +516,7 @@ int shadow_server_init_certificate(rdpShadowServer* server)
 	int makecert_argc = (sizeof(makecert_argv) / sizeof(char*));
 
 	if (!PathFileExistsA(server->ConfigPath) &&
-		!CreateDirectoryA(server->ConfigPath, 0))
+		!PathMakePathA(server->ConfigPath, 0))
 	{
 		WLog_ERR(TAG, "Failed to create directory '%s'", server->ConfigPath);
 		return -1;
@@ -526,7 +526,7 @@ int shadow_server_init_certificate(rdpShadowServer* server)
 		return -1;
 
 	if (!PathFileExistsA(filepath) &&
-		!CreateDirectoryA(filepath, 0))
+		!PathMakePathA(filepath, 0))
 	{
 		WLog_ERR(TAG, "Failed to create directory '%s'", filepath);
 		free(filepath);
