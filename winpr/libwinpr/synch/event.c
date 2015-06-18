@@ -37,8 +37,9 @@
 
 #ifdef HAVE_EVENTFD_H
 #include <sys/eventfd.h>
-#include <errno.h>
 #endif
+
+#include <errno.h>
 
 #include "../handle/handle.h"
 #include "../pipe/pipe.h"
@@ -219,7 +220,6 @@ BOOL SetEvent(HANDLE hEvent)
 
 		status = (length == 0) ? TRUE : FALSE;
 #else
-
 		if (WaitForSingleObject(hEvent, 0) != WAIT_OBJECT_0)
 		{
 			length = write(event->pipe_fd[1], "-", 1);
@@ -243,36 +243,29 @@ BOOL ResetEvent(HANDLE hEvent)
 	ULONG Type;
 	PVOID Object;
 	int length;
-	BOOL status;
+	BOOL status = TRUE;
 	WINPR_EVENT* event;
-	status = FALSE;
 
-	if (winpr_Handle_GetInfo(hEvent, &Type, &Object))
+	if (!winpr_Handle_GetInfo(hEvent, &Type, &Object))
+		return FALSE;
+
+	event = (WINPR_EVENT*) Object;
+
+	while (status && WaitForSingleObject(hEvent, 0) == WAIT_OBJECT_0)
 	{
-		event = (WINPR_EVENT*) Object;
-
-		while (WaitForSingleObject(hEvent, 0) == WAIT_OBJECT_0)
+		do
 		{
 #ifdef HAVE_EVENTFD_H
 			eventfd_t value;
-
-			do
-			{
-				length = eventfd_read(event->pipe_fd[0], &value);
-			}
-			while ((length < 0) && (errno == EINTR));
-
-			if ((length > 0) && (!status))
-				status = TRUE;
-
+			length = eventfd_read(event->pipe_fd[0], &value);
 #else
 			length = read(event->pipe_fd[0], &length, 1);
-
-			if ((length == 1) && (!status))
-				status = TRUE;
-
 #endif
 		}
+		while ((length < 0) && (errno == EINTR));
+
+		if (length < 0)
+			status = FALSE;
 	}
 
 	return status;
