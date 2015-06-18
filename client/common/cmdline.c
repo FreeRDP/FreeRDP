@@ -553,7 +553,7 @@ static char** freerdp_command_line_parse_comma_separated_values_offset(char* lis
 		return NULL;
 	p = t;
 	if (count > 0)
-				MoveMemory(&p[1], p, sizeof(char*) * *count);
+		MoveMemory(&p[1], p, sizeof(char*) * *count);
 	(*count)++;
 
 	return p;
@@ -799,7 +799,7 @@ int freerdp_parse_username(char* username, char** user, char** domain)
 	int length = 0;
 
 	p = strchr(username, '\\');
-	u = strchr(username, '@');
+	u = strrchr(username, '@');
 
 	if (p)
 	{
@@ -1229,6 +1229,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 	int argc, char** argv, BOOL allowUnknown)
 {
 	char* p;
+	char* user = NULL;
+	char* gwUser = NULL;
 	char* str;
 	int length;
 	int status;
@@ -1490,13 +1492,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "u")
 		{
-			char* user;
-			char* domain;
-
-			freerdp_parse_username(arg->Value, &user, &domain);
-
-			settings->Username = user;
-			settings->Domain = domain;
+			user = _strdup(arg->Value);
 		}
 		CommandLineSwitchCase(arg, "d")
 		{
@@ -1537,14 +1533,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "gu")
 		{
-			char* user;
-			char* domain;
-
-			freerdp_parse_username(arg->Value, &user, &domain);
-
-			settings->GatewayUsername = user;
-			settings->GatewayDomain = domain;
-
+			gwUser = _strdup(arg->Value);
 			settings->GatewayUseSameCredentials = FALSE;
 		}
 		CommandLineSwitchCase(arg, "gd")
@@ -2048,6 +2037,19 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchEnd(arg)
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+
+	if (!settings->Domain && user)
+	{
+		freerdp_parse_username(arg->Value, &settings->Username, &settings->Domain);
+		free(user);
+	}
+
+	if (!settings->GatewayDomain && gwUser)
+	{
+		freerdp_parse_username(arg->Value, &settings->GatewayUsername,
+				 &settings->GatewayDomain);
+		free(gwUser);
+	}
 
 	freerdp_performance_flags_make(settings);
 
