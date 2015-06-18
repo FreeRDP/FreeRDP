@@ -799,7 +799,10 @@ int freerdp_parse_username(char* username, char** user, char** domain)
 	int length = 0;
 
 	p = strchr(username, '\\');
-	u = strrchr(username, '@');
+	p = strrchr(username, '@');
+
+	*user = NULL;
+	*domain = NULL;
 
 	if (p)
 	{
@@ -819,34 +822,34 @@ int freerdp_parse_username(char* username, char** user, char** domain)
 		strncpy(*domain, username, length);
 		(*domain)[length] = '\0';
 	}
-	else if (u)
-	{
-		length = (int) (u - username);
-		*domain = _strdup(&u[1]);
-		if (!*domain)
-			return -1;
-
-		*user = (char*) calloc(length + 1UL, sizeof(char));
-		if (!*user)
-		{
-			free(*domain);
-			*domain = NULL;
-		}
-		strncpy(*user, username, length);
-		(*user)[length] = '\0';
-	}
-	else
+	else if (username)
 	{
 		/* Do not break up the name for '@'; both credSSP and the
 		 * ClientInfo PDU expect 'user@corp.net' to be transmitted
-		 * as username 'user@corp.net', domain empty.
+		 * as username 'user@corp.net', domain empty (not NULL!).
 		 */
 		*user = _strdup(username);
 		if (!*user)
 			return -1;
 
-		*domain = NULL;
+		/* If only username is given, prefix that with 'TARGET'
+		 * otherwise set the domain to an empty string.
+		 * NOTE: Domain NULL will result in undefined behavior.
+		 */
+		if (!u)
+			*domain = _strdup("TARGET");
+		else
+			*domain = _strdup("\0");
+
+		if (!*domain)
+		{
+			free(*user);
+			*user = NULL;
+			return -1;
+		}
 	}
+	else
+			return -1;
 
 	return 0;
 }
