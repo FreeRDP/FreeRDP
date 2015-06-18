@@ -537,6 +537,8 @@ BOOL wf_authenticate(freerdp* instance, char** username, char** password, char**
 
 	if (strlen(Domain) > 0)
 		*domain = _strdup(Domain);
+	else
+		*domain = _strdup("\0");
 
 	*password = _strdup(Password);
 
