@@ -799,7 +799,7 @@ int freerdp_parse_username(char* username, char** user, char** domain)
 	int length = 0;
 
 	p = strchr(username, '\\');
-	p = strrchr(username, '@');
+	u = strrchr(username, '@');
 
 	*user = NULL;
 	*domain = NULL;
@@ -836,10 +836,7 @@ int freerdp_parse_username(char* username, char** user, char** domain)
 		 * otherwise set the domain to an empty string.
 		 * NOTE: Domain NULL will result in undefined behavior.
 		 */
-		if (!u)
-			*domain = _strdup("TARGET");
-		else
-			*domain = _strdup("\0");
+		*domain = _strdup("\0");
 
 		if (!*domain)
 		{
@@ -2052,7 +2049,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 	if (!settings->GatewayDomain && gwUser)
 	{
 		freerdp_parse_username(gwUser, &settings->GatewayUsername,
-				 &settings->GatewayDomain);
+				       &settings->GatewayDomain);
 		free(gwUser);
 	}
 	else
