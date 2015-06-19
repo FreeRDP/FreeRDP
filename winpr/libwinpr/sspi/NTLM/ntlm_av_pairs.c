@@ -188,7 +188,10 @@ int ntlm_get_target_computer_name(PUNICODE_STRING pName, COMPUTER_NAME_FORMAT ty
 	status = ConvertToUnicode(CP_UTF8, 0, name, -1, &pName->Buffer, 0);
 
 	if (status <= 0)
+	{
+		free(name);
 		return status;
+	}
 
 	pName->Length = (USHORT)((status - 1) * 2);
 	pName->MaximumLength = pName->Length;

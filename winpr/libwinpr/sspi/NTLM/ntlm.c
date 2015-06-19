@@ -114,7 +114,7 @@ int ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 	DWORD nSize = MAX_COMPUTERNAME_LENGTH;
 	char* name = TargetName;
 
-	if (!TargetName)
+	if (!name)
 	{
 
 		if (!GetComputerNameExA(ComputerNameDnsHostname, computerName, &nSize))
@@ -124,7 +124,7 @@ int ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 		if (!name)
 			return -1;
 
-		CharUpperA(TargetName);
+		CharUpperA(name);
 	}
 
 	context->TargetName.pvBuffer = NULL;
@@ -132,7 +132,8 @@ int ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 
 	if (status <= 0)
 	{
-		free(TargetName);
+		if (!TargetName)
+			free(name);
 		return -1;
 	}
 
