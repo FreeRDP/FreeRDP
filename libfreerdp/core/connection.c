@@ -755,7 +755,12 @@ BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s)
 		{
 			if (channelId == rdp->mcs->messageChannelId)
 			{
-				if (rdp_recv_message_channel_pdu(rdp, s) == 0)
+				UINT16 securityFlags;
+
+				if (!rdp_read_security_header(s, &securityFlags))
+					return FALSE;
+
+				if (rdp_recv_message_channel_pdu(rdp, s, securityFlags) == 0)
 					return TRUE;
 			}
 		}
