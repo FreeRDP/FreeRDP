@@ -30,8 +30,10 @@ double metrics_write_bytes(rdpMetrics* metrics, UINT32 UncompressedBytes, UINT32
 	metrics->TotalUncompressedBytes += UncompressedBytes;
 	metrics->TotalCompressedBytes += CompressedBytes;
 
-	CompressionRatio = ((double) CompressedBytes) / ((double) UncompressedBytes);
-	metrics->TotalCompressionRatio = ((double) metrics->TotalCompressedBytes) / ((double) metrics->TotalUncompressedBytes);
+	if (UncompressedBytes != 0)
+		CompressionRatio = ((double) CompressedBytes) / ((double) UncompressedBytes);
+	if (metrics->TotalUncompressedBytes != 0)
+		metrics->TotalCompressionRatio = ((double) metrics->TotalCompressedBytes) / ((double) metrics->TotalUncompressedBytes);
 
 	return CompressionRatio;
 }
