@@ -248,6 +248,11 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 		}
 	}
 
+	if (subsystem->ClientConnect)
+	{
+		return subsystem->ClientConnect(subsystem, client);
+	}
+
 	return TRUE;
 }
 
@@ -1072,6 +1077,11 @@ void* shadow_client_thread(rdpShadowClient* client)
 	{
 		shadow_multiclient_release_subscriber(UpdateSubscriber);
 		UpdateSubscriber = NULL;
+	}
+
+	if (peer->connected && subsystem->ClientDisconnect)
+	{
+		subsystem->ClientDisconnect(subsystem, client);
 	}
 
 out:
