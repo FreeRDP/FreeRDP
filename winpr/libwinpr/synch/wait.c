@@ -327,13 +327,14 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 	do
 	{
 #ifdef HAVE_POLL_H
-		FD_ZERO(&rfds);
-		FD_ZERO(&wfds);
 		ZeroMemory(&timeout, sizeof(timeout));
 #else
 		fd_set* prfds = NULL;
 		fd_set* pwfds = NULL;
 		maxfd = 0;
+
+		FD_ZERO(&rfds);
+		FD_ZERO(&wfds);
 #endif
 		if (bWaitAll && (dwMilliseconds != INFINITE))
 			clock_gettime(CLOCK_MONOTONIC, &starttime);
