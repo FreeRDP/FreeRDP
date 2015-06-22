@@ -1019,7 +1019,9 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames,
 
 #else
 
-static int freerdp_tcp_connect_multi(char** hostnames, UINT32* ports, int count, int port, int timeout)
+static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames,
+				     UINT32* ports, int count, int port,
+				     int timeout)
 {
 	int index;
 	int sindex;
@@ -1040,7 +1042,7 @@ static int freerdp_tcp_connect_multi(char** hostnames, UINT32* ports, int count,
 	sprintf_s(port_str, sizeof(port_str) - 1, "%u", port);
 
 	sockfds = (SOCKET*) calloc(count, sizeof(SOCKET));
-	events = (HANDLE*) calloc(count, sizeof(HANDLE));
+	events = (HANDLE*) calloc(count + 1, sizeof(HANDLE));
 	addrs = (struct addrinfo**) calloc(count, sizeof(struct addrinfo*));
 	results = (struct addrinfo**) calloc(count, sizeof(struct addrinfo*));
 
@@ -1119,7 +1121,9 @@ static int freerdp_tcp_connect_multi(char** hostnames, UINT32* ports, int count,
 		}
 	}
 
-	waitStatus = WaitForMultipleObjects(count, events, FALSE, timeout * 1000);
+	events[count] = context->abortEvent;
+
+	waitStatus = WaitForMultipleObjects(count + 1, events, FALSE, timeout * 1000);
 
 	sindex = waitStatus - WAIT_OBJECT_0;
 
@@ -1135,7 +1139,7 @@ static int freerdp_tcp_connect_multi(char** hostnames, UINT32* ports, int count,
 		WSAEventSelect(sockfd, NULL, 0);
 	}
 
-	if (sindex >= 0)
+	if ((sindex >= 0) && (sindex < count))
 	{
 		sockfd = sockfds[sindex];
 	}
