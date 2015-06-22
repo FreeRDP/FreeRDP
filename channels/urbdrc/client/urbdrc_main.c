@@ -472,7 +472,9 @@ static void* urbdrc_search_usb_device(void* arg)
 
 	/* Get the file descriptor (fd) for the monitor.
 	   This fd will get passed to select() */
-	if (!(mon_fd = CreateFileDescriptorEvent(NULL, TRUE, FALSE, udev_monitor_get_fd(mon))))
+	mon_fd = CreateFileDescriptorEvent(NULL, TRUE, FALSE,
+				udev_monitor_get_fd(mon), FD_READ);
+	if (!mon_fd)
 		goto fail_create_monfd_event;
 
 	while (1)
