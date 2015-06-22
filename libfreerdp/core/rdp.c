@@ -898,13 +898,8 @@ out_fail:
     return -1;
 }
 
-int rdp_recv_message_channel_pdu(rdpRdp* rdp, wStream* s)
+int rdp_recv_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 securityFlags)
 {
-	UINT16 securityFlags;
-
-	if (!rdp_read_security_header(s, &securityFlags))
-		return -1;
-
 	if (securityFlags & SEC_AUTODETECT_REQ)
 	{
 		/* Server Auto-Detect Request PDU */
@@ -1162,7 +1157,11 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	}
 	else if (rdp->mcs->messageChannelId && channelId == rdp->mcs->messageChannelId)
 	{
-		return rdp_recv_message_channel_pdu(rdp, s);
+		if (!rdp->settings->UseRdpSecurityLayer)
+			if (!rdp_read_security_header(s, &securityFlags))
+				return -1;
+
+		return rdp_recv_message_channel_pdu(rdp, s, securityFlags);
 	}
 	else
 	{

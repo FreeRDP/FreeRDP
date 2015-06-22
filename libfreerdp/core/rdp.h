@@ -209,7 +209,7 @@ int rdp_send_channel_data(rdpRdp* rdp, UINT16 channelId, BYTE* data, int size);
 
 wStream* rdp_message_channel_pdu_init(rdpRdp* rdp);
 BOOL rdp_send_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 sec_flags);
-int rdp_recv_message_channel_pdu(rdpRdp* rdp, wStream* s);
+int rdp_recv_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 securityFlags);
 
 int rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s);
 
