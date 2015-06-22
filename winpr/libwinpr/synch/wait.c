@@ -275,7 +275,8 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 	struct pollfd *pollfds;
 #else
 	int maxfd;
-	fd_set fds;
+	fd_set rfds;
+	fd_set wfds;
 	struct timeval timeout;
 #endif
 
@@ -305,7 +306,8 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 
 #ifndef HAVE_POLL_H
 		maxfd = 0;
-		FD_ZERO(&fds);
+		FD_ZERO(&rfds);
+		FD_ZERO(&wfds);
 		ZeroMemory(&timeout, sizeof(timeout));
 #endif
 		polled = 0;
@@ -336,10 +338,11 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 
 #ifdef HAVE_POLL_H
 			pollfds[polled].fd = fd;
-			pollfds[polled].events = POLLIN;
+			pollfds[polled].events = POLLIN | POLLOUT;
 			pollfds[polled].revents = 0;
 #else
-			FD_SET(fd, &fds);
+			FD_SET(fd, &rfds);
+			FD_SET(fd, &wfds);
 
 			if (fd > maxfd)
 				maxfd = fd;
@@ -366,8 +369,8 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 
 		do
 		{
-			status = select(maxfd + 1, &fds, 0, 0,
-							(dwMilliseconds == INFINITE) ? NULL : &timeout);
+			status = select(maxfd + 1, &rfds, &wfds, 0,
+					(dwMilliseconds == INFINITE) ? NULL : &timeout);
 		}
 		while (status < 0 && errno == EINTR);
 
@@ -424,9 +427,9 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 
 #ifdef HAVE_POLL_H
 
-			if (pollfds[index].revents & POLLIN)
+			if (pollfds[index].revents & (POLLIN | POLLOUT))
 #else
-			if (FD_ISSET(fd, &fds))
+			if (FD_ISSET(fd, &rfds) || FD_ISSET(fd, &wfds)
 #endif
 			{
 				DWORD rc = winpr_Handle_cleanup(lpHandles[idx]);

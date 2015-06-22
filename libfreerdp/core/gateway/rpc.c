@@ -760,7 +760,8 @@ int rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 	rdpContext* context = rpc->context;
 	rdpSettings* settings = context->settings;
 
-	sockfd = freerdp_tcp_connect(settings, settings->GatewayHostname, settings->GatewayPort, timeout);
+	sockfd = freerdp_tcp_connect(context, settings, settings->GatewayHostname,
+					settings->GatewayPort, timeout);
 
 	if (sockfd < 1)
 		return -1;
