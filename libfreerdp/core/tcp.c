@@ -744,72 +744,102 @@ BOOL freerdp_tcp_resolve_hostname(const char* hostname)
 	return TRUE;
 }
 
-BOOL freerdp_tcp_connect_timeout(int sockfd, struct sockaddr* addr, socklen_t addrlen, int timeout)
+static BOOL freerdp_tcp_connect_timeout(int sockfd, struct sockaddr* addr, socklen_t addrlen, int timeout)
 {
 	int status;
+	u_long nonblock = 1;
 
-#ifndef _WIN32
-	int flags;
-	fd_set cfds;
-	socklen_t optlen;
-	struct timeval tv;
-
-	/* set socket in non-blocking mode */
-
-	flags = fcntl(sockfd, F_GETFL);
-
-	if (flags < 0)
+	status = _ioctlsocket(sockfd, FIONBIO, &nonblock);
+	if (status)
 		return FALSE;
 
-	fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
-
-	/* non-blocking tcp connect */
-
-	status = connect(sockfd, addr, addrlen);
-
-	if (status >= 0)
-		return TRUE; /* connection success */
-
-	if (errno != EINPROGRESS)
-		return FALSE;
-
-	FD_ZERO(&cfds);
-	FD_SET(sockfd, &cfds);
-
-	tv.tv_sec = timeout;
-	tv.tv_usec = 0;
-
-	status = _select(sockfd + 1, NULL, &cfds, NULL, &tv);
-
-	if (status != 1)
-		return FALSE; /* connection timeout or error */
-
-	status = 0;
-	optlen = sizeof(status);
-
-	if (getsockopt(sockfd, SOL_SOCKET, SO_ERROR, (void*) &status, &optlen) < 0)
-		return FALSE;
-
-	if (status != 0)
-		return FALSE;
-
-	/* set socket in blocking mode */
-
-	flags = fcntl(sockfd, F_GETFL);
-
-	if (flags < 0)
-		return FALSE;
-
-	fcntl(sockfd, F_SETFL, flags & ~O_NONBLOCK);
-
+	status = _connect(sockfd, addr, addrlen);
+	if (status < 0)
+	{
+#if defined(WIN32)
+		status = WSAGetLastError();
+		switch(status)
+		{
+			case WSAEWOULDBLOCK:
+				break;
+			default:
+				return FALSE;
+		}
 #else
-	status = connect(sockfd, addr, addrlen);
+		switch(errno)
+		{
+			case EINPROGRESS:
+				break;
+			default:
+				return FALSE;
+		}
 
-	if (status >= 0)
-		return TRUE;
-
-	return FALSE;
 #endif
+	}
+
+#if defined(HAVE_POLL_H)
+	{
+		struct pollfd pollfds;
+		int tout = (timeout > 0) ? timeout * 1000 : -1;
+
+		pollfds.fd = sockfd;
+		pollfds.events = POLLIN | POLLHUP | POLLOUT | POLLERR | POLLNVAL;
+		pollfds.revents = 0;
+
+		do
+		{
+			status = poll(&pollfds, 1, tout);
+		}
+		while ((status < 0) && (errno == EINTR));
+
+		if (status <= 0)
+			return FALSE;
+	}
+#else /* Win32 and non poll */
+	{
+		struct timeval tv;
+		struct timeval* ptv = NULL;
+		fd_set wfds;
+		fd_set rfds;
+
+		ZeroMemory(&timeout, sizeof(timeout));
+		tv.tv_sec = timeout;
+		tv.tv_usec = 0;
+
+		FD_ZERO(&wfds);
+		FD_SET(sockfd, &wfds);
+		FD_ZERO(&rfds);
+		FD_SET(sockfd, &rfds);
+
+		if (timeout > 0)
+			ptv = &tv;
+
+		status = _select(sockfd + 1, &rfds, &wfds, NULL, ptv);
+
+		if ((status < 0) || (!FD_ISSET(sockfd, &rfds) && !FD_ISSET(sockfd, &wfds)))
+			return FALSE;
+	}
+#endif
+
+	status = recv(sockfd, NULL, 0, 0);
+#if defined(WIN32)
+	if (status == SOCKET_ERROR)
+	{
+		if (WSAGetLastError() == WSAECONNRESET)
+			return FALSE;
+	}
+#else
+	if (status < 0)
+	{
+		if (errno == ENOTCONN)
+			return FALSE;
+	}
+#endif
+
+	nonblock = 0;
+	status = _ioctlsocket(sockfd, FIONBIO, &nonblock);
+	if (status)
+		return FALSE;
 
 	return TRUE;
 }
@@ -1275,7 +1305,7 @@ int freerdp_tcp_connect(rdpSettings* settings, const char* hostname, int port, i
 
 			sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
 
-			if (sockfd  < 0)
+			if (sockfd < 0)
 			{
 				freeaddrinfo(result);
 				return -1;
