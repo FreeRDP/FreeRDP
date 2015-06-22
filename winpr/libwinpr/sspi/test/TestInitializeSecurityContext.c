@@ -51,9 +51,9 @@ int TestInitializeSecurityContext(int argc, char* argv[])
 		return -1;
 	}
 
-	identity.UserLength = sizeof(test_User);
-	identity.DomainLength = sizeof(test_Domain);
-	identity.PasswordLength = sizeof(test_Password);
+	identity.UserLength = strlen(test_User);
+	identity.DomainLength = strlen(test_Domain);
+	identity.PasswordLength = strlen(test_Password);
 	identity.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
 
 	status = table->AcquireCredentialsHandle(NULL, NTLMSP_NAME,

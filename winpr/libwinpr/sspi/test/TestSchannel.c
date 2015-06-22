@@ -297,7 +297,7 @@ int schannel_recv(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phCont
 	ZeroMemory(&StreamSizes, sizeof(SecPkgContext_StreamSizes));
 	status = table->QueryContextAttributes(phContext, SECPKG_ATTR_STREAM_SIZES, &StreamSizes);
 	ioBufferLength = StreamSizes.cbHeader + StreamSizes.cbMaximumMessage + StreamSizes.cbTrailer;
-	ioBuffer = (BYTE*) malloc(1, ioBufferLength);
+	ioBuffer = (BYTE*) calloc(1, ioBufferLength);
 	if (!ioBuffer)
 		return -1;
 

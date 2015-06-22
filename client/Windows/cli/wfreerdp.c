@@ -79,6 +79,8 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		if (!context->argv[index])
 		{
 			ret = 1;
+			for (--index; index > = 0; --index)
+				free(context->argv[index]);
 			free(context->argv);
 			context->argv = NULL;
 			goto out;

@@ -52,7 +52,7 @@ LPSTR freerdp_get_library_install_path()
 	CopyMemory(pszPath, pszInstallPrefix, cchInstallPrefix);
 	pszPath[cchInstallPrefix] = '\0';
 
-	if (NativePathCchAppendA(pszPath, cchPath + 1, pszLibraryPath) != S_OK)
+	if (FAILED(NativePathCchAppendA(pszPath, cchPath + 1, pszLibraryPath)))
 	{
 		free(pszPath);
 		return NULL;
@@ -81,7 +81,7 @@ LPSTR freerdp_get_dynamic_addin_install_path()
 	CopyMemory(pszPath, pszInstallPrefix, cchInstallPrefix);
 	pszPath[cchInstallPrefix] = '\0';
 
-	if (NativePathCchAppendA(pszPath, cchPath + 1, pszAddinPath) != S_OK)
+	if (FAILED(NativePathCchAppendA(pszPath, cchPath + 1, pszAddinPath)))
 	{
 		free(pszPath);
 		return NULL;
@@ -110,7 +110,7 @@ void* freerdp_load_dynamic_addin(LPCSTR pszFileName, LPCSTR pszPath, LPCSTR pszE
 	bHasExt = TRUE;
 	cchFileName = strlen(pszFileName);
 
-	if (PathCchFindExtensionA(pszFileName, cchFileName + 1, &pszExt) != S_OK)
+	if (FAILED(PathCchFindExtensionA(pszFileName, cchFileName + 1, &pszExt)))
 	{
 		pszExt = PathGetSharedLibraryExtensionA(PATH_SHARED_LIB_EXT_WITH_DOT);
 		cchExt = strlen(pszExt);

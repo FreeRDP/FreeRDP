@@ -50,7 +50,7 @@ int ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 	int status;
 	DWORD nSize = MAX_COMPUTERNAME_LENGTH;
 	char* ws = Workstation;
-	TCHAR computerName[MAX_COMPUTERNAME_LENGTH + 1];
+	CHAR computerName[MAX_COMPUTERNAME_LENGTH + 1];
 
 	if (!Workstation)
 	{
@@ -110,7 +110,7 @@ int ntlm_SetContextServicePrincipalNameA(NTLM_CONTEXT* context, char* ServicePri
 int ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 {
 	int status;
-	TCHAR computerName[MAX_COMPUTERNAME_LENGTH + 1];
+	CHAR computerName[MAX_COMPUTERNAME_LENGTH + 1];
 	DWORD nSize = MAX_COMPUTERNAME_LENGTH;
 	char* name = TargetName;
 

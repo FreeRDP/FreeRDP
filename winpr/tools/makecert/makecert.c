@@ -306,7 +306,7 @@ char* x509_name_parse(char* name, char* txt, int* length)
 
 char* x509_get_default_name()
 {
-	TCHAR computerName[MAX_COMPUTERNAME_LENGTH + 1];
+	CHAR computerName[MAX_COMPUTERNAME_LENGTH + 1];
 	DWORD nSize = MAX_COMPUTERNAME_LENGTH;
 
 	char* ret;

@@ -983,15 +983,12 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, PSecBuffer ts_credentials)
 
 		/* TSCredentials (SEQUENCE) */
 	ret = ber_read_sequence_tag(s, &length) &&
-
 		/* [0] credType (INTEGER) */
 		ber_read_contextual_tag(s, 0, &length, TRUE) &&
 		ber_read_integer(s, NULL) &&
-
 		/* [1] credentials (OCTET STRING) */
 		ber_read_contextual_tag(s, 1, &length, TRUE) &&
 		ber_read_octet_string_tag(s, &ts_password_creds_length) &&
-
 		nla_read_ts_password_creds(nla, s);
 
 	Stream_Free(s, FALSE);
@@ -1467,10 +1464,6 @@ LPTSTR nla_make_spn(const char* ServiceClass, const char* hostname)
 
 rdpNla* nla_new(freerdp* instance, rdpTransport* transport, rdpSettings* settings)
 {
-	HKEY hKey;
-	LONG status;
-	DWORD dwType;
-	DWORD dwSize;
 
 	rdpNla* nla = (rdpNla*) calloc(1, sizeof(rdpNla));
 
@@ -1498,6 +1491,11 @@ rdpNla* nla_new(freerdp* instance, rdpTransport* transport, rdpSettings* setting
 
 	if (nla->server)
 	{
+		LONG status;
+		HKEY hKey;
+		DWORD dwType;
+		DWORD dwSize;
+
 		status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"),
 							  0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
@@ -1506,11 +1504,15 @@ rdpNla* nla_new(freerdp* instance, rdpTransport* transport, rdpSettings* setting
 
 		status = RegQueryValueEx(hKey, _T("SspiModule"), NULL, &dwType, NULL, &dwSize);
 		if (status != ERROR_SUCCESS)
+		{
+			RegCloseKey(hKey);
 			return nla;
+		}
 
 		nla->SspiModule = (LPTSTR) malloc(dwSize + sizeof(TCHAR));
 		if (!nla->SspiModule)
 		{
+			RegCloseKey(hKey);
 			free(nla);
 			return NULL;
 		}
@@ -1519,10 +1521,9 @@ rdpNla* nla_new(freerdp* instance, rdpTransport* transport, rdpSettings* setting
 								 (BYTE*) nla->SspiModule, &dwSize);
 
 		if (status == ERROR_SUCCESS)
-		{
 			WLog_INFO(TAG, "Using SSPI Module: %s", nla->SspiModule);
-			RegCloseKey(hKey);
-		}
+
+		RegCloseKey(hKey);
 	}
 
 	return nla;

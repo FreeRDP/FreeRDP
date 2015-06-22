@@ -258,7 +258,7 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	settings->NSCodec = FALSE;
 	settings->JpegCodec = FALSE;
 	if (!wf_peer_read_settings(client))
-	 goto fail_peer_init;
+		goto fail_peer_init;
 
 	client->PostConnect = wf_peer_post_connect;
 	client->Activate = wf_peer_activate;

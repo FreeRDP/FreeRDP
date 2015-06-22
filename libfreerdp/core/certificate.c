@@ -836,11 +836,11 @@ rdpCertificate* certificate_clone(rdpCertificate* certificate)
 	return _certificate;
 
 out_fail:
-	if (certificate->x509_cert_chain->count)
+	if (_certificate->x509_cert_chain)
 	{
 		free(_certificate->x509_cert_chain->array);
+		free(_certificate->x509_cert_chain);
 	}
-	free(_certificate->x509_cert_chain);
 	free(_certificate->cert_info.Modulus);
 	free(_certificate);
 	return NULL;

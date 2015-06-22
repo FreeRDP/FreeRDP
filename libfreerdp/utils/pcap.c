@@ -64,7 +64,7 @@ BOOL pcap_write_header(rdpPcap* pcap, pcap_header* header)
 
 BOOL pcap_read_record_header(rdpPcap* pcap, pcap_record_header* record)
 {
-	return fread((void*) record, sizeof(pcap_record_header), 1, pcap->fp) > 0;
+	return fread((void*) record, sizeof(pcap_record_header), 1, pcap->fp) == 1;
 }
 
 void pcap_write_record_header(rdpPcap* pcap, pcap_record_header* record)
@@ -82,7 +82,7 @@ BOOL pcap_read_record(rdpPcap* pcap, pcap_record* record)
 	if (!record->data)
 		return FALSE;
 
-	if (!fread(record->data, record->length, 1, pcap->fp))
+	if (fread(record->data, record->length, 1, pcap->fp) != 1)
 	{
 		free(record->data);
 		record->data = NULL;

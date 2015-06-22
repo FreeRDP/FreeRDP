@@ -89,7 +89,13 @@ BOOL Pcap_Read_Record(wPcap* pcap, wPcapRecord* record)
 		record->data = malloc(record->length);
 		if (!record->data)
 			return FALSE;
-		fread(record->data, record->length, 1, pcap->fp);
+		if (fread(record->data, record->length, 1, pcap->fp) != 1)
+		{
+			free(record->data);
+			record->length = 0;
+			record->data = NULL;
+			return FALSE;
+		}
 	}
 	return TRUE;
 }

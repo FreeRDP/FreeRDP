@@ -2445,238 +2445,201 @@ char* freerdp_get_param_string(rdpSettings* settings, int id)
 
 int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 {
-#define CHECKED_STRDUP(name) if (param && !(settings->name = _strdup(param))) return -1
+	char **tmp = NULL;
+
+	if (!param)
+		return -1;
+
 	switch (id)
 	{
 		case FreeRDP_ServerHostname:
-			free(settings->ServerHostname);
-			CHECKED_STRDUP(ServerHostname);
+			tmp = &settings->ServerHostname;
 			break;
 
 		case FreeRDP_Username:
-			free(settings->Username);
-			CHECKED_STRDUP(Username);
+			tmp = &settings->Username;
 			break;
 
 		case FreeRDP_Password:
-			free(settings->Password);
-			CHECKED_STRDUP(Password);
+			tmp = &settings->Password;
 			break;
 
 		case FreeRDP_Domain:
-			free(settings->Domain);
-			CHECKED_STRDUP(Domain);
+			tmp = &settings->Domain;
 			break;
 
 		case FreeRDP_PasswordHash:
-			free(settings->PasswordHash);
-			CHECKED_STRDUP(PasswordHash);
+			tmp = &settings->PasswordHash;
 			break;
 
 		case FreeRDP_ClientHostname:
-			free(settings->ClientHostname);
-			CHECKED_STRDUP(ClientHostname);
+			tmp = &settings->ClientHostname;
 			break;
 
 		case FreeRDP_ClientProductId:
-			free(settings->ClientProductId);
-			CHECKED_STRDUP(ClientProductId);
+			tmp = &settings->ClientProductId;
 			break;
 
 		case FreeRDP_AlternateShell:
-			free(settings->AlternateShell);
-			CHECKED_STRDUP(AlternateShell);
+			tmp = &settings->AlternateShell;
 			break;
 
 		case FreeRDP_ShellWorkingDirectory:
-			free(settings->ShellWorkingDirectory);
-			CHECKED_STRDUP(ShellWorkingDirectory);
+			tmp = &settings->ShellWorkingDirectory;
 			break;
 
 		case FreeRDP_ClientAddress:
-			free(settings->ClientAddress);
-			CHECKED_STRDUP(ClientAddress);
+			tmp = &settings->ClientAddress;
 			break;
 
 		case FreeRDP_ClientDir:
-			free(settings->ClientDir);
-			CHECKED_STRDUP(ClientDir);
+			tmp = &settings->ClientDir;
 			break;
 
 		case FreeRDP_DynamicDSTTimeZoneKeyName:
-			free(settings->DynamicDSTTimeZoneKeyName);
-			CHECKED_STRDUP(DynamicDSTTimeZoneKeyName);
+			tmp = &settings->DynamicDSTTimeZoneKeyName;
 			break;
 
 		case FreeRDP_RemoteAssistanceSessionId:
-			free(settings->RemoteAssistanceSessionId);
-			CHECKED_STRDUP(RemoteAssistanceSessionId);
+			tmp = &settings->RemoteAssistanceSessionId;
 			break;
 
 		case FreeRDP_RemoteAssistancePassStub:
-			free(settings->RemoteAssistancePassStub);
-			CHECKED_STRDUP(RemoteAssistancePassStub);
+			tmp = &settings->RemoteAssistancePassStub;
 			break;
 
 		case FreeRDP_RemoteAssistancePassword:
-			free(settings->RemoteAssistancePassword);
-			CHECKED_STRDUP(RemoteAssistancePassword);
+			tmp = &settings->RemoteAssistancePassword;
 			break;
 
 		case FreeRDP_RemoteAssistanceRCTicket:
-			free(settings->RemoteAssistanceRCTicket);
-			CHECKED_STRDUP(RemoteAssistanceRCTicket);
+			tmp = &settings->RemoteAssistanceRCTicket;
 			break;
 
 		case FreeRDP_AuthenticationServiceClass:
-			free(settings->AuthenticationServiceClass);
-			CHECKED_STRDUP(AuthenticationServiceClass);
+			tmp = &settings->AuthenticationServiceClass;
 			break;
 
 		case FreeRDP_PreconnectionBlob:
-			free(settings->PreconnectionBlob);
-			CHECKED_STRDUP(PreconnectionBlob);
+			tmp = &settings->PreconnectionBlob;
 			break;
 
 		case FreeRDP_KerberosKdc:
-			free(settings->KerberosKdc);
-			CHECKED_STRDUP(KerberosKdc);
+			tmp = &settings->KerberosKdc;
 			break;
 
 		case FreeRDP_KerberosRealm:
-			free(settings->KerberosRealm);
-			CHECKED_STRDUP(KerberosRealm);
+			tmp = &settings->KerberosRealm;
 			break;
 
 		case FreeRDP_CertificateName:
-			free(settings->CertificateName);
-			CHECKED_STRDUP(CertificateName);
+			tmp = &settings->CertificateName;
 			break;
 
 		case FreeRDP_CertificateFile:
-			free(settings->CertificateFile);
-			CHECKED_STRDUP(CertificateFile);
+			tmp = &settings->CertificateFile;
 			break;
 
 		case FreeRDP_PrivateKeyFile:
-			free(settings->PrivateKeyFile);
-			CHECKED_STRDUP(PrivateKeyFile);
+			tmp = &settings->PrivateKeyFile;
 			break;
 
 		case FreeRDP_RdpKeyFile:
-			free(settings->RdpKeyFile);
-			CHECKED_STRDUP(RdpKeyFile);
+			tmp = &settings->RdpKeyFile;
 			break;
 
 		case FreeRDP_WindowTitle:
-			free(settings->WindowTitle);
-			CHECKED_STRDUP(WindowTitle);
+			tmp = &settings->WindowTitle;
 			break;
 
 		case FreeRDP_ComputerName:
-			free(settings->ComputerName);
-			CHECKED_STRDUP(ComputerName);
+			tmp = &settings->ComputerName;
 			break;
 
 		case FreeRDP_ConnectionFile:
-			free(settings->ConnectionFile);
-			CHECKED_STRDUP(ConnectionFile);
+			tmp = &settings->ConnectionFile;
 			break;
 
 		case FreeRDP_AssistanceFile:
-			free(settings->AssistanceFile);
-			CHECKED_STRDUP(AssistanceFile);
+			tmp = &settings->AssistanceFile;
 			break;
 
 		case FreeRDP_HomePath:
-			free(settings->HomePath);
-			CHECKED_STRDUP(HomePath);
+			tmp = &settings->HomePath;
 			break;
 
 		case FreeRDP_ConfigPath:
-			free(settings->ConfigPath);
-			CHECKED_STRDUP(ConfigPath);
+			tmp = &settings->ConfigPath;
 			break;
 
 		case FreeRDP_CurrentPath:
-			free(settings->CurrentPath);
-			CHECKED_STRDUP(CurrentPath);
+			tmp = &settings->CurrentPath;
 			break;
 
 		case FreeRDP_DumpRemoteFxFile:
-			free(settings->DumpRemoteFxFile);
-			CHECKED_STRDUP(DumpRemoteFxFile);
+			tmp = &settings->DumpRemoteFxFile;
 			break;
 
 		case FreeRDP_PlayRemoteFxFile:
-			free(settings->PlayRemoteFxFile);
-			CHECKED_STRDUP(PlayRemoteFxFile);
+			tmp = &settings->PlayRemoteFxFile;
 			break;
 
 		case FreeRDP_GatewayHostname:
-			free(settings->GatewayHostname);
-			CHECKED_STRDUP(GatewayHostname);
+			tmp = &settings->GatewayHostname;
 			break;
 
 		case FreeRDP_GatewayUsername:
-			free(settings->GatewayUsername);
-			CHECKED_STRDUP(GatewayUsername);
+			tmp = &settings->GatewayUsername;
 			break;
 
 		case FreeRDP_GatewayPassword:
-			free(settings->GatewayPassword);
-			CHECKED_STRDUP(GatewayPassword);
+			tmp = &settings->GatewayPassword;
 			break;
 
 		case FreeRDP_GatewayDomain:
-			free(settings->GatewayDomain);
-			CHECKED_STRDUP(GatewayDomain);
+			tmp = &settings->GatewayDomain;
 			break;
 
 		case FreeRDP_RemoteApplicationName:
-			free(settings->RemoteApplicationName);
-			CHECKED_STRDUP(RemoteApplicationName);
+			tmp = &settings->RemoteApplicationName;
 			break;
 
 		case FreeRDP_RemoteApplicationIcon:
-			free(settings->RemoteApplicationIcon);
-			CHECKED_STRDUP(RemoteApplicationIcon);
+			tmp = &settings->RemoteApplicationIcon;
 			break;
 
 		case FreeRDP_RemoteApplicationProgram:
-			free(settings->RemoteApplicationProgram);
-			CHECKED_STRDUP(RemoteApplicationProgram);
+			tmp = &settings->RemoteApplicationProgram;
 			break;
 
 		case FreeRDP_RemoteApplicationFile:
-			free(settings->RemoteApplicationFile);
-			CHECKED_STRDUP(RemoteApplicationFile);
+			tmp = &settings->RemoteApplicationFile;
 			break;
 
 		case FreeRDP_RemoteApplicationGuid:
-			free(settings->RemoteApplicationGuid);
-			CHECKED_STRDUP(RemoteApplicationGuid);
+			tmp = &settings->RemoteApplicationGuid;
 			break;
 
 		case FreeRDP_RemoteApplicationCmdLine:
-			free(settings->RemoteApplicationCmdLine);
-			CHECKED_STRDUP(RemoteApplicationCmdLine);
+			tmp = &settings->RemoteApplicationCmdLine;
 			break;
 
 		case FreeRDP_ImeFileName:
-			free(settings->ImeFileName);
-			CHECKED_STRDUP(ImeFileName);
+			tmp = &settings->ImeFileName;
 			break;
 
 		case FreeRDP_DrivesToRedirect:
-			free(settings->DrivesToRedirect);
-			CHECKED_STRDUP(DrivesToRedirect);
+			tmp = &settings->DrivesToRedirect;
 			break;
 
 		default:
 			WLog_ERR(TAG, "unknown id %d (param = %s)", id, param);
 			return -1;
 	}
+
+	free(*tmp);
+	if (!(*tmp = _strdup(param)))
+		return -1;
 
 	/* Mark field as modified */
 	settings->SettingsModified[id] = 1;

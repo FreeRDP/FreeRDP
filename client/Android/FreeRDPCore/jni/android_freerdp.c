@@ -36,6 +36,7 @@
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/primitives.h>
 #include <freerdp/version.h>
+#include <freerdp/settings.h>
 
 #include <android/bitmap.h>
 
@@ -715,13 +716,20 @@ JNIEXPORT jboolean JNICALL jni_freerdp_disconnect(JNIEnv *env, jclass cls, jint 
 	freerdp* inst = (freerdp*)instance;
 	androidContext* ctx = (androidContext*)inst->context;
 	ANDROID_EVENT* event = (ANDROID_EVENT*)android_event_disconnect_new();
+	if (!event)
+		return JNI_FALSE;
+
 	DEBUG_ANDROID("DISCONNECT!");
 
 	assert(inst);
 	assert(ctx);
 	assert(event);
 
-	android_push_event(inst, event);
+	if (!android_push_event(inst, event))
+	{
+		android_event_disconnect_free(event);
+		return JNI_FALSE;
+	}
 
 	WaitForSingleObject(ctx->thread, INFINITE);
 	CloseHandle(ctx->thread);
@@ -748,6 +756,7 @@ JNIEXPORT jboolean JNICALL jni_freerdp_set_data_directory(JNIEnv *env, jclass cl
 
 	free(settings->HomePath);
 	free(settings->ConfigPath);
+	settings->HomePath = settings->ConfigPath = NULL;
 
 	int config_dir_len = strlen(directory) + 10; /* +9 chars for /.freerdp and +1 for \0 */
 	char* config_dir_buf = (char*)malloc(config_dir_len);
@@ -1019,8 +1028,6 @@ out_fail:
 JNIEXPORT jboolean JNICALL jni_freerdp_set_sound_redirection(JNIEnv *env,
 		jclass cls, jint instance, jint redirect)
 {
-	char** p;
-	int count = 1;
 	freerdp* inst = (freerdp*)instance;
 	rdpSettings * settings = inst->settings;
 
@@ -1031,16 +1038,10 @@ JNIEXPORT jboolean JNICALL jni_freerdp_set_sound_redirection(JNIEnv *env,
 	if (settings->AudioPlayback)
 	{
 		int ret;
-		p = malloc(sizeof(char*));
-		if (!p)
-		{
-			settings->AudioPlayback = FALSE;
-			return JNI_FALSE;
-		}
-		p[0] = "rdpsnd";
+		char* p[1] = {"rdpsnd"};
+		int count = 1;
 
 		ret = freerdp_client_add_static_channel(settings, count, p);
-		free(p);
 
 		if(ret == -1)
 			return JNI_FALSE;
@@ -1052,8 +1053,6 @@ JNIEXPORT jboolean JNICALL jni_freerdp_set_sound_redirection(JNIEnv *env,
 JNIEXPORT jboolean JNICALL jni_freerdp_set_microphone_redirection(JNIEnv *env,
 		jclass cls, jint instance, jboolean enable)
 {
-	char** p;
-	int count = 1;
 	freerdp* inst = (freerdp*)instance;
 	rdpSettings * settings = inst->settings;
 
@@ -1063,16 +1062,10 @@ JNIEXPORT jboolean JNICALL jni_freerdp_set_microphone_redirection(JNIEnv *env,
 	if (enable)
 	{
 		int ret;
-		p = malloc(sizeof(char*));
-		if (!p)
-		{
-			settings->AudioCapture = FALSE;
-			return JNI_FALSE;
-		}
-		p[0] = "audin";
+		char* p[1] = {"audin"};
+		int count = 1;
 
 		ret = freerdp_client_add_dynamic_channel(settings, count, p);
-		free(p);
 
 		if (ret == -1)
 			return JNI_FALSE;

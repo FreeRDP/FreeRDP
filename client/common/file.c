@@ -61,7 +61,7 @@ static WCHAR CR_LF_STR_W[] = { '\r', '\n', '\0' };
 
 static int freerdp_client_rdp_file_set_integer(rdpFile* file, const char* name, int value, int index)
 {
-	int bStandard = 1;
+	int standard = 1;
 
 #ifdef DEBUG_CLIENT_FILE
 	WLog_DBG(TAG,  "%s:i:%d", name, value);
@@ -196,7 +196,7 @@ static int freerdp_client_rdp_file_set_integer(rdpFile* file, const char* name, 
 	else if (_stricmp(name, "rdgiskdcproxy") == 0)
 		file->RdgIsKdcProxy = value;
 	else
-		bStandard = 1;
+		standard = 1;
 
 	if (index >= 0)
 	{
@@ -208,13 +208,13 @@ static int freerdp_client_rdp_file_set_integer(rdpFile* file, const char* name, 
 		file->lines[index].flags = RDP_FILE_LINE_FLAG_FORMATTED;
 		file->lines[index].flags |= RDP_FILE_LINE_FLAG_TYPE_INTEGER;
 
-		if (bStandard)
+		if (standard)
 			file->lines[index].flags |= RDP_FILE_LINE_FLAG_STANDARD;
 
 		file->lines[index].valueLength = 0;
 	}
 
-	return bStandard;
+	return standard;
 }
 
 static BOOL freerdp_client_parse_rdp_file_integer_unicode(rdpFile* file, WCHAR* name, WCHAR* value, int index)
@@ -270,7 +270,7 @@ static BOOL freerdp_client_parse_rdp_file_integer_ascii(rdpFile* file, const cha
 
 static int freerdp_client_rdp_file_set_string(rdpFile* file, const char* name, const char* value, int index)
 {
-	int bStandard = 0;
+	int standard = 0;
 	LPSTR *tmp = NULL;
 
 #ifdef DEBUG_CLIENT_FILE
@@ -316,7 +316,7 @@ static int freerdp_client_rdp_file_set_string(rdpFile* file, const char* name, c
 	else if (_stricmp(name, "winposstr") == 0)
 		tmp = &file->WinPosStr;
 	else
-		bStandard = 1;
+		standard = 1;
 
 	if (tmp && !(*tmp = strdup(value)))
 		return -1;
@@ -335,13 +335,13 @@ static int freerdp_client_rdp_file_set_string(rdpFile* file, const char* name, c
 		file->lines[index].flags = RDP_FILE_LINE_FLAG_FORMATTED;
 		file->lines[index].flags |= RDP_FILE_LINE_FLAG_TYPE_STRING;
 
-		if (bStandard == 0)
+		if (standard == 0)
 			file->lines[index].flags |= RDP_FILE_LINE_FLAG_STANDARD;
 
 		file->lines[index].valueLength = 0;
 	}
 
-	return bStandard;
+	return standard;
 }
 
 static BOOL freerdp_client_add_option(rdpFile* file, char* option)
