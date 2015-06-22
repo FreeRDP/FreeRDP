@@ -77,7 +77,7 @@ struct rdp_nla
 	SecBuffer tsCredentials;
 	CryptoRc4 rc4SealState;
 	LPTSTR ServicePrincipalName;
-	SEC_WINNT_AUTH_IDENTITY identity;
+	SEC_WINNT_AUTH_IDENTITY* identity;
 	PSecurityFunctionTable table;
 	SecPkgContext_Sizes ContextSizes;
 };
