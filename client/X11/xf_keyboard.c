@@ -72,7 +72,7 @@ BOOL xf_keyboard_action_script_init(xfContext* xfc)
 
 	keyScript = popen(command, "r");
 
-	if (keyScript < 0)
+	if (!keyScript)
 	{
 		free(xfc->actionScript);
 		xfc->actionScript = NULL;
@@ -414,7 +414,7 @@ int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* mod, Key
 
 	keyScript = popen(command, "r");
 
-	if (keyScript < 0)
+	if (!keyScript)
 		return -1;
 
 	while (fgets(buffer, sizeof(buffer), keyScript) != NULL)

@@ -101,7 +101,7 @@ BOOL xf_event_action_script_init(xfContext* xfc)
 
 	actionScript = popen(command, "r");
 
-	if (actionScript <= 0)
+	if (!actionScript)
 		return FALSE;
 
 	while (fgets(buffer, sizeof(buffer), actionScript))
@@ -170,7 +170,7 @@ static BOOL xf_event_execute_action_script(xfContext* xfc, XEvent* event)
 
 	actionScript = popen(command, "r");
 
-	if (actionScript < 0)
+	if (!actionScript)
 		return FALSE;
 
 	while (fgets(buffer, sizeof(buffer), actionScript))

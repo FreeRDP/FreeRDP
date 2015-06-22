@@ -48,7 +48,8 @@ int freerdp_detect_keyboard_layout_from_xkb(DWORD* keyboardLayoutId)
 
 	/* We start by looking for _XKB_RULES_NAMES_BACKUP which appears to be used by libxklavier */
 
-        xprop = popen("xprop -root _XKB_RULES_NAMES_BACKUP", "r");
+    if (!(xprop = popen("xprop -root _XKB_RULES_NAMES_BACKUP", "r")))
+		return 0;
 
 	/* Sample output for "Canadian Multilingual Standard"
 	 *
@@ -100,7 +101,8 @@ int freerdp_detect_keyboard_layout_from_xkb(DWORD* keyboardLayoutId)
 
 	/* Check _XKB_RULES_NAMES if _XKB_RULES_NAMES_BACKUP fails */
 
-	xprop = popen("xprop -root _XKB_RULES_NAMES", "r");
+	if (!(xprop = popen("xprop -root _XKB_RULES_NAMES", "r")))
+		return 0;
 
 	while (fgets(buffer, sizeof(buffer), xprop) != NULL)
 	{
@@ -156,6 +158,9 @@ char* freerdp_detect_keymap_from_xkb()
 
 	/* this tells us about the current XKB configuration, if XKB is available */
 	setxkbmap = popen("setxkbmap -print", "r");
+
+	if (!setxkbmap)
+		return NULL;
 
 	while (fgets(buffer, sizeof(buffer), setxkbmap) != NULL)
 	{
