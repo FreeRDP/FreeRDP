@@ -677,7 +677,6 @@ JNIEXPORT jint JNICALL jni_freerdp_new(JNIEnv *env, jclass cls)
 		freerdp_free(instance);
 		instance = NULL;
 	}
-	WLog_SetLogLevel(WLog_GetRoot(), WLOG_DEBUG);
 
 	return (jint) instance;
 }
@@ -717,7 +716,6 @@ JNIEXPORT jboolean JNICALL jni_freerdp_disconnect(JNIEnv *env, jclass cls, jint 
 	androidContext* ctx = (androidContext*)inst->context;
 	ANDROID_EVENT* event = (ANDROID_EVENT*)android_event_disconnect_new();
 	DEBUG_ANDROID("DISCONNECT!");
-	WLog_ERR(ANDROID_TAG, "Disconnect shit");
 
 	assert(inst);
 	assert(ctx);
