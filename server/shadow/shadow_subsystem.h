@@ -67,7 +67,7 @@ typedef struct _SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE SHADOW_MSG_OUT_POINTER_ALPHA
 extern "C" {
 #endif
 
-rdpShadowSubsystem* shadow_subsystem_new(const char* name);
+rdpShadowSubsystem* shadow_subsystem_new();
 void shadow_subsystem_free(rdpShadowSubsystem* subsystem);
 
 int shadow_subsystem_init(rdpShadowSubsystem* subsystem, rdpShadowServer* server);

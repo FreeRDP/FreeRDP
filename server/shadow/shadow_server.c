@@ -254,7 +254,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		int numMonitors;
 		MONITOR_DEF monitors[16];
 
-		numMonitors = shadow_enum_monitors(monitors, 16, 0);
+		numMonitors = shadow_enum_monitors(monitors, 16);
 
 		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 		{
@@ -594,7 +594,7 @@ int shadow_server_init(rdpShadowServer* server)
 	server->listener->info = (void*) server;
 	server->listener->PeerAccepted = shadow_client_accepted;
 
-	server->subsystem = shadow_subsystem_new(NULL);
+	server->subsystem = shadow_subsystem_new();
 
 	if (!server->subsystem)
 		goto fail_subsystem_new;
@@ -674,11 +674,7 @@ rdpShadowServer* shadow_server_new()
 	server->mayView = TRUE;
 	server->mayInteract = TRUE;
 
-#ifdef WITH_SHADOW_X11
-	server->authentication = TRUE;
-#else
 	server->authentication = FALSE;
-#endif
 
 	return server;
 }

@@ -174,6 +174,8 @@ struct rdp_shadow_subsystem
 extern "C" {
 #endif
 
+FREERDP_API void shadow_subsystem_set_entry(pfnShadowSubsystemEntry pEntry);
+
 FREERDP_API int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** argv);
 FREERDP_API int shadow_server_command_line_status_print(rdpShadowServer* server, int argc, char** argv, int status);
 
@@ -183,7 +185,7 @@ FREERDP_API int shadow_server_stop(rdpShadowServer* server);
 FREERDP_API int shadow_server_init(rdpShadowServer* server);
 FREERDP_API int shadow_server_uninit(rdpShadowServer* server);
 
-FREERDP_API int shadow_enum_monitors(MONITOR_DEF* monitors, int maxMonitors, const char* name);
+FREERDP_API int shadow_enum_monitors(MONITOR_DEF* monitors, int maxMonitors);
 
 FREERDP_API rdpShadowServer* shadow_server_new();
 FREERDP_API void shadow_server_free(rdpShadowServer* server);
