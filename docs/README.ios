@@ -30,10 +30,8 @@ different install/build directory you specify it as first parameter:
 
 In the example above the output can then be found in /tmp/openssl.
 
-The script uses oldest iOS/iPhoneSimulator SDK found on the build machine per default. If you need to build against a different SDK you can set USER_OS_SDK
-and/or USER_SIM_SDK in the top of the build script to the SDK version you need. E.g.:
-
-USER_SIM_SDK="iPhoneSimulator6.0.sdk"
+The script uses oldest iOS/iPhoneSimulator SDK found on the build machine per default. If it is required to build against a specific SDK version
+the variable SDK_VERSION can be used to specify it. The minimum SDK version that should be used can be set with MIN_SDK_VERSION within the script.
 
 When the script is finished you will find libcrypto.a and libssl.at, both universal libraries containing all openssl/lib 
 subfolder in the specified
