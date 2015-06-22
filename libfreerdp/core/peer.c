@@ -405,7 +405,11 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 	}
 	else if (rdp->mcs->messageChannelId && channelId == rdp->mcs->messageChannelId)
 	{
-		return rdp_recv_message_channel_pdu(rdp, s);
+		if (!rdp->settings->UseRdpSecurityLayer)
+			if (!rdp_read_security_header(s, &securityFlags))
+				return -1;
+
+		return rdp_recv_message_channel_pdu(rdp, s, securityFlags);
 	}
 	else
 	{
@@ -463,7 +467,7 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 
 			if (rdp->nego->SelectedProtocol & PROTOCOL_NLA)
 			{
-				sspi_CopyAuthIdentity(&client->identity, &(rdp->nego->transport->nla->identity));
+				sspi_CopyAuthIdentity(&client->identity, rdp->nego->transport->nla->identity);
 				IFCALLRET(client->Logon, client->authenticated, client, &client->identity, TRUE);
 				nla_free(rdp->nego->transport->nla);
 				rdp->nego->transport->nla = NULL;

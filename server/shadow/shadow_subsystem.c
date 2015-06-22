@@ -24,92 +24,32 @@
 
 #include "shadow_subsystem.h"
 
-struct _RDP_SHADOW_SUBSYSTEM
+static pfnShadowSubsystemEntry pSubsystemEntry = NULL;
+
+void shadow_subsystem_set_entry(pfnShadowSubsystemEntry pEntry)
 {
-	const char* name;
-	pfnShadowSubsystemEntry entry;
-};
-typedef struct _RDP_SHADOW_SUBSYSTEM RDP_SHADOW_SUBSYSTEM;
-
-
-#ifdef WITH_SHADOW_X11
-extern int X11_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);
-#endif
-
-#ifdef WITH_SHADOW_MAC
-extern int Mac_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);
-#endif
-
-#ifdef WITH_SHADOW_WIN
-extern int Win_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);
-#endif
-
-
-static RDP_SHADOW_SUBSYSTEM g_Subsystems[] =
-{
-
-#ifdef WITH_SHADOW_X11
-	{ "X11", X11_ShadowSubsystemEntry },
-#endif
-
-#ifdef WITH_SHADOW_MAC
-	{ "Mac", Mac_ShadowSubsystemEntry },
-#endif
-
-#ifdef WITH_SHADOW_WIN
-	{ "Win", Win_ShadowSubsystemEntry },
-#endif
-
-	{ "", NULL }
-};
-
-static int g_SubsystemCount = (sizeof(g_Subsystems) / sizeof(g_Subsystems[0]));
-
-pfnShadowSubsystemEntry shadow_subsystem_load_static_entry(const char* name)
-{
-	int index;
-
-	if (!name)
-	{
-		for (index = 0; index < g_SubsystemCount; index++)
-		{
-			if (g_Subsystems[index].name)
-				return g_Subsystems[index].entry;
-		}
-	}
-
-	for (index = 0; index < g_SubsystemCount; index++)
-	{
-		if (strcmp(name, g_Subsystems[index].name) == 0)
-			return g_Subsystems[index].entry;
-	}
-
-	return NULL;
+	pSubsystemEntry = pEntry;
 }
 
-int shadow_subsystem_load_entry_points(RDP_SHADOW_ENTRY_POINTS* pEntryPoints, const char* name)
+static int shadow_subsystem_load_entry_points(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
 {
-	pfnShadowSubsystemEntry entry;
-
-	entry = shadow_subsystem_load_static_entry(name);
-
 	ZeroMemory(pEntryPoints, sizeof(RDP_SHADOW_ENTRY_POINTS));
 
-	if (!entry)
+	if (!pSubsystemEntry)
 		return -1;
 
-	if (entry(pEntryPoints) < 0)
+	if (pSubsystemEntry(pEntryPoints) < 0)
 		return -1;
 
 	return 1;
 }
 
-rdpShadowSubsystem* shadow_subsystem_new(const char* name)
+rdpShadowSubsystem* shadow_subsystem_new()
 {
 	RDP_SHADOW_ENTRY_POINTS ep;
 	rdpShadowSubsystem* subsystem = NULL;
 
-	shadow_subsystem_load_entry_points(&ep, name);
+	shadow_subsystem_load_entry_points(&ep);
 
 	if (!ep.New)
 		return NULL;
@@ -167,6 +107,16 @@ fail:
 	return status;
 }
 
+static void shadow_subsystem_free_queued_message(void *obj)
+{
+	wMessage *message = (wMessage*)obj;
+	if (message->Free)
+	{
+		message->Free(message);
+		message->Free = NULL;
+	}
+}
+
 void shadow_subsystem_uninit(rdpShadowSubsystem* subsystem)
 {
 	if (!subsystem)
@@ -177,6 +127,11 @@ void shadow_subsystem_uninit(rdpShadowSubsystem* subsystem)
 
 	if (subsystem->MsgPipe)
 	{
+		/* Release resource in messages before free */
+		subsystem->MsgPipe->In->object.fnObjectFree = shadow_subsystem_free_queued_message;
+		MessageQueue_Clear(subsystem->MsgPipe->In);
+		subsystem->MsgPipe->Out->object.fnObjectFree = shadow_subsystem_free_queued_message;
+		MessageQueue_Clear(subsystem->MsgPipe->Out);
 		MessagePipe_Free(subsystem->MsgPipe);
 		subsystem->MsgPipe = NULL;
 	}
@@ -215,12 +170,12 @@ int shadow_subsystem_stop(rdpShadowSubsystem* subsystem)
 	return status;
 }
 
-int shadow_enum_monitors(MONITOR_DEF* monitors, int maxMonitors, const char* name)
+int shadow_enum_monitors(MONITOR_DEF* monitors, int maxMonitors)
 {
 	int numMonitors = 0;
 	RDP_SHADOW_ENTRY_POINTS ep;
 
-	if (shadow_subsystem_load_entry_points(&ep, name) < 0)
+	if (shadow_subsystem_load_entry_points(&ep) < 0)
 		return -1;
 
 	numMonitors = ep.EnumMonitors(monitors, maxMonitors);

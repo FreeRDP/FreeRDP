@@ -154,8 +154,9 @@ typedef unsigned int UINT32;
 typedef unsigned __int64 UINT64;
 typedef ULONG *PULONG;
 
-typedef ULONG HRESULT;
-typedef ULONG SCODE;
+typedef LONG HRESULT;
+typedef LONG SCODE;
+typedef SCODE *PSCODE;
 
 typedef ULONG_PTR DWORD_PTR, *PDWORD_PTR;
 typedef ULONG_PTR SIZE_T;

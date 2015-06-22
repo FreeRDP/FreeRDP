@@ -254,7 +254,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		int numMonitors;
 		MONITOR_DEF monitors[16];
 
-		numMonitors = shadow_enum_monitors(monitors, 16, 0);
+		numMonitors = shadow_enum_monitors(monitors, 16);
 
 		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 		{
@@ -346,7 +346,7 @@ void* shadow_server_thread(rdpShadowServer* server)
 
 	/* Signal to the clients that server is being stopped and wait for them
 	 * to disconnect. */
-	if (MessageQueue_PostQuit(subsystem->MsgPipe->Out, 0))
+	if (shadow_client_boardcast_quit(server, 0))
 	{
 		while(ArrayList_Count(server->clients) > 0)
 		{
@@ -445,7 +445,7 @@ int shadow_server_init_config_path(rdpShadowServer* server)
 		if (userLibraryPath)
 		{
 			if (!PathFileExistsA(userLibraryPath) &&
-				!CreateDirectoryA(userLibraryPath, 0))
+				!PathMakePathA(userLibraryPath, 0))
 			{
 				WLog_ERR(TAG, "Failed to create directory '%s'", userLibraryPath);
 				free(userLibraryPath);
@@ -457,7 +457,7 @@ int shadow_server_init_config_path(rdpShadowServer* server)
 			if (userApplicationSupportPath)
 			{
 				if (!PathFileExistsA(userApplicationSupportPath) &&
-					!CreateDirectoryA(userApplicationSupportPath, 0))
+					!PathMakePathA(userApplicationSupportPath, 0))
 				{
 					WLog_ERR(TAG, "Failed to create directory '%s'", userApplicationSupportPath);
 					free(userLibraryPath);
@@ -482,7 +482,7 @@ int shadow_server_init_config_path(rdpShadowServer* server)
 		if (configHome)
 		{
 			if (!PathFileExistsA(configHome) &&
-				!CreateDirectoryA(configHome, 0))
+				!PathMakePathA(configHome, 0))
 			{
 				WLog_ERR(TAG, "Failed to create directory '%s'", configHome);
 				free(configHome);
@@ -516,7 +516,7 @@ int shadow_server_init_certificate(rdpShadowServer* server)
 	int makecert_argc = (sizeof(makecert_argv) / sizeof(char*));
 
 	if (!PathFileExistsA(server->ConfigPath) &&
-		!CreateDirectoryA(server->ConfigPath, 0))
+		!PathMakePathA(server->ConfigPath, 0))
 	{
 		WLog_ERR(TAG, "Failed to create directory '%s'", server->ConfigPath);
 		return -1;
@@ -526,7 +526,7 @@ int shadow_server_init_certificate(rdpShadowServer* server)
 		return -1;
 
 	if (!PathFileExistsA(filepath) &&
-		!CreateDirectoryA(filepath, 0))
+		!PathMakePathA(filepath, 0))
 	{
 		WLog_ERR(TAG, "Failed to create directory '%s'", filepath);
 		free(filepath);
@@ -594,7 +594,7 @@ int shadow_server_init(rdpShadowServer* server)
 	server->listener->info = (void*) server;
 	server->listener->PeerAccepted = shadow_client_accepted;
 
-	server->subsystem = shadow_subsystem_new(NULL);
+	server->subsystem = shadow_subsystem_new();
 
 	if (!server->subsystem)
 		goto fail_subsystem_new;
@@ -674,11 +674,7 @@ rdpShadowServer* shadow_server_new()
 	server->mayView = TRUE;
 	server->mayInteract = TRUE;
 
-#ifdef WITH_SHADOW_X11
-	server->authentication = TRUE;
-#else
 	server->authentication = FALSE;
-#endif
 
 	return server;
 }

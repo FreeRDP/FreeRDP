@@ -17,10 +17,13 @@ HRESULT PATH_CCH_APPEND(PWSTR pszPath, size_t cchPath, PCWSTR pszMore)
 	size_t pszPathLength;
 
 	if (!pszPath)
-		return S_FALSE;
+		return E_INVALIDARG;
 
 	if (!pszMore)
-		return S_FALSE;
+		return E_INVALIDARG;
+
+	if (cchPath == 0 || cchPath > PATHCCH_MAX_CCH)
+		return E_INVALIDARG;
 
 	pszMoreLength = lstrlenW(pszMore);
 	pszPathLength = lstrlenW(pszPath);
@@ -54,7 +57,7 @@ HRESULT PATH_CCH_APPEND(PWSTR pszPath, size_t cchPath, PCWSTR pszMore)
 	}
 #endif
 
-	return S_FALSE;
+	return HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE);
 }
 
 #else
@@ -67,10 +70,13 @@ HRESULT PATH_CCH_APPEND(PSTR pszPath, size_t cchPath, PCSTR pszMore)
 	size_t pszPathLength;
 
 	if (!pszPath)
-		return S_FALSE;
+		return E_INVALIDARG;
 
 	if (!pszMore)
-		return S_FALSE;
+		return E_INVALIDARG;
+
+	if (cchPath == 0 || cchPath > PATHCCH_MAX_CCH)
+		return E_INVALIDARG;
 
 	pszMoreLength = lstrlenA(pszMore);
 	pszPathLength = lstrlenA(pszPath);
@@ -103,7 +109,7 @@ HRESULT PATH_CCH_APPEND(PSTR pszPath, size_t cchPath, PCSTR pszMore)
 		}
 	}
 
-	return S_FALSE;
+	return HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE);
 }
 
 #endif

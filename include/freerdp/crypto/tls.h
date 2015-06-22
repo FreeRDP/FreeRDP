@@ -98,8 +98,11 @@ FREERDP_API int tls_set_alert_code(rdpTls* tls, int level, int description);
 
 FREERDP_API BOOL tls_match_hostname(char *pattern, int pattern_length, char *hostname);
 FREERDP_API int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int port);
-FREERDP_API void tls_print_certificate_error(char* hostname, char* fingerprint, char* hosts_file);
-FREERDP_API void tls_print_certificate_name_mismatch_error(char* hostname, char* common_name, char** alt_names, int alt_names_count);
+FREERDP_API void tls_print_certificate_error(char* hostname, UINT16 port,
+                                             char* fingerprint, char* hosts_file);
+FREERDP_API void tls_print_certificate_name_mismatch_error(
+        char* hostname, UINT16 port, char* common_name, char** alt_names,
+        int alt_names_count);
 
 FREERDP_API BOOL tls_print_error(char* func, SSL* connection, int value);
 

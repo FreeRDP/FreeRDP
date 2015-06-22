@@ -43,7 +43,7 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* 
 	ntlm->http = http;
 	ntlm->Bindings = Bindings;
 
-	ntlm->table = InitSecurityInterfaceEx(SSPI_INTERFACE_WINPR);
+	ntlm->table = InitSecurityInterfaceEx(0);
 
 	if (!ntlm->table)
 		return FALSE;
@@ -85,7 +85,7 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* 
 	}
 	else
 	{
-		/** 
+		/**
 		 * flags for RPC authentication:
 		 * RPC_C_AUTHN_LEVEL_PKT_INTEGRITY:
 		 * ISC_REQ_USE_DCE_STYLE | ISC_REQ_DELEGATE | ISC_REQ_MUTUAL_AUTH |
@@ -122,7 +122,7 @@ BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, char* hostname)
 
 		if (!ntlm->ServicePrincipalName)
 			return FALSE;
-		
+
 		return TRUE;
 	}
 

@@ -104,14 +104,14 @@ HRESULT STDMETHODCALLTYPE CliprdrStream_Read(IStream* This, void *pv, ULONG cb, 
 	*pcbRead = 0;
 
 	if (instance->m_lOffset.QuadPart >= instance->m_lSize.QuadPart)
-		return S_FALSE;
+		return E_FAIL;
 
 	ret = cliprdr_send_request_filecontents(clipboard, (void*) This,
 			instance->m_lIndex, FILECONTENTS_RANGE,
 			instance->m_lOffset.HighPart, instance->m_lOffset.LowPart, cb);
 
 	if (ret < 0)
-		return S_FALSE;
+		return E_FAIL;
 
 	if (clipboard->req_fdata)
 	{
@@ -123,7 +123,7 @@ HRESULT STDMETHODCALLTYPE CliprdrStream_Read(IStream* This, void *pv, ULONG cb, 
 	instance->m_lOffset.QuadPart += clipboard->req_fsize;
 
 	if (clipboard->req_fsize < cb)
-		return S_FALSE;
+		return E_FAIL;
 
 	return S_OK;
 }
@@ -154,11 +154,11 @@ HRESULT STDMETHODCALLTYPE CliprdrStream_Seek(IStream* This, LARGE_INTEGER dlibMo
 			newoffset = instance->m_lSize.QuadPart + dlibMove.QuadPart;
 			break;
 		default:
-			return S_FALSE;
+			return E_INVALIDARG;
 	}
 
 	if (newoffset < 0 || newoffset >= instance->m_lSize.QuadPart)
-		return FALSE;
+		return E_FAIL;
 
 	instance->m_lOffset.QuadPart = newoffset;
 
@@ -736,7 +736,7 @@ HRESULT STDMETHODCALLTYPE CliprdrEnumFORMATETC_Next(IEnumFORMATETC* This, ULONG 
 	if (pceltFetched != 0)
 		*pceltFetched = copied;
 
-	return (copied == celt) ? S_OK : S_FALSE;
+	return (copied == celt) ? S_OK : E_FAIL;
 }
 
 HRESULT STDMETHODCALLTYPE CliprdrEnumFORMATETC_Skip(IEnumFORMATETC* This, ULONG celt)
@@ -744,7 +744,7 @@ HRESULT STDMETHODCALLTYPE CliprdrEnumFORMATETC_Skip(IEnumFORMATETC* This, ULONG 
 	CliprdrEnumFORMATETC* instance = (CliprdrEnumFORMATETC*) This;
 
 	if (instance->m_nIndex + (LONG) celt > instance->m_nNumFormats)
-		return S_FALSE;
+		return E_FAIL;
 
 	instance->m_nIndex += celt;
 
@@ -1576,7 +1576,7 @@ static int wf_cliprdr_server_format_data_request(CliprdrClientContext* context, 
 
 		result = OleGetClipboard(&dataObj);
 
-		if (!SUCCEEDED(result))
+		if (FAILED(result))
 			return -1;
 
 		ZeroMemory(&format_etc, sizeof(FORMATETC));
@@ -1615,7 +1615,7 @@ static int wf_cliprdr_server_format_data_request(CliprdrClientContext* context, 
 
 			result = IDataObject_GetData(dataObj, &format_etc, &stg_medium);
 
-			if (!SUCCEEDED(result)) {
+			if (FAILED(result)) {
 				DEBUG_CLIPRDR("dataObj->GetData failed.");
 			}
 
@@ -1782,7 +1782,7 @@ int wf_cliprdr_server_file_contents_request(CliprdrClientContext* context, CLIPR
 
 	hRet = OleGetClipboard(&pDataObj);
 
-	if (!SUCCEEDED(hRet))
+	if (FAILED(hRet))
 	{
 		WLog_ERR(TAG,  "filecontents: get ole clipboard failed.");
 		goto error;

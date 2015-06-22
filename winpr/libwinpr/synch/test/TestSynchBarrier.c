@@ -3,6 +3,8 @@
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 
+#include "../synch.h"
+
 static int g_Count;
 static HANDLE g_Event;
 static CRITICAL_SECTION g_Lock;
@@ -29,10 +31,19 @@ static void* test_synch_barrier_thread_func(void* arg)
 	return NULL;
 }
 
+static void* barrier_deleter_thread_func(void* arg)
+{
+	/* Blocks until all threads are released from the barrier. */
+	DeleteSynchronizationBarrier(&g_Barrier);
+
+	return NULL;
+}
+
 int TestSynchBarrier(int argc, char* argv[])
 {
 	int index;
 	HANDLE threads[5];
+	HANDLE deleter_thread = NULL;
 
 	g_Count = 0;
 
@@ -65,9 +76,29 @@ int TestSynchBarrier(int argc, char* argv[])
 			printf("%s: CreateThread failed for thread #%d. GetLastError() = 0x%08x\n", __FUNCTION__, index, GetLastError());
 			while (index)
 				CloseHandle(threads[--index]);
+			CloseHandle(deleter_thread);
 			DeleteCriticalSection(&g_Lock);
 			CloseHandle(g_Event);
 			return -1;
+		}
+
+		if (index == 0)
+		{
+			/* Make sure first thread has already entered the barrier... */
+			while (((WINPR_BARRIER*) g_Barrier.Reserved3[0])->count == 0)
+				Sleep(100);
+
+			/* Now spawn the deleter thread. */
+			if (!(deleter_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
+					barrier_deleter_thread_func, NULL, 0, NULL)))
+			{
+				printf("%s: CreateThread failed for deleter thread. GetLastError() = 0x%08x\n", __FUNCTION__, GetLastError());
+				while (index)
+					CloseHandle(threads[--index]);
+				DeleteCriticalSection(&g_Lock);
+				CloseHandle(g_Event);
+				return -1;
+			}
 		}
 	}
 
@@ -83,7 +114,7 @@ int TestSynchBarrier(int argc, char* argv[])
 		CloseHandle(threads[index]);
 	}
 
-	DeleteSynchronizationBarrier(&g_Barrier);
+	CloseHandle(deleter_thread);
 
 	DeleteCriticalSection(&g_Lock);
 

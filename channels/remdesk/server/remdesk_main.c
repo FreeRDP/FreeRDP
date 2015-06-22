@@ -27,7 +27,7 @@
 
 #include "remdesk_main.h"
 
-int remdesk_virtual_channel_write(RemdeskServerContext* context, wStream* s)
+static int remdesk_virtual_channel_write(RemdeskServerContext* context, wStream* s)
 {
 	BOOL status;
 	ULONG BytesWritten = 0;

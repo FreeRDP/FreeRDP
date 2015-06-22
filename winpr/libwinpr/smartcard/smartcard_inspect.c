@@ -1276,7 +1276,7 @@ void Inspect_InitLog()
 		return;
 
 	if (!PathFileExistsA(filepath))
-		if (!CreateDirectoryA(filepath, NULL))
+		if (!PathMakePathA(filepath, NULL))
 			return;
 
 	if (!(g_Log = WLog_Get("WinSCard")))

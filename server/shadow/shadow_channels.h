@@ -26,12 +26,15 @@
 
 #include "shadow_encomsp.h"
 #include "shadow_remdesk.h"
+#include "shadow_rdpsnd.h"
+#include "shadow_audin.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 int shadow_client_channels_post_connect(rdpShadowClient* client);
+void shadow_client_channels_free(rdpShadowClient* client);
 
 #ifdef __cplusplus
 }

@@ -492,8 +492,6 @@ BOOL wf_post_connect(freerdp* instance)
 	return TRUE;
 }
 
-static const char wfTargetName[] = "TARGET";
-
 static CREDUI_INFOA wfUiInfo =
 {
 	sizeof(CREDUI_INFOA),
@@ -518,7 +516,9 @@ BOOL wf_authenticate(freerdp* instance, char** username, char** password, char**
 	ZeroMemory(Password, sizeof(Password));
 	dwFlags = CREDUI_FLAGS_DO_NOT_PERSIST | CREDUI_FLAGS_EXCLUDE_CERTIFICATES;
 
-	status = CredUIPromptForCredentialsA(&wfUiInfo, wfTargetName, NULL, 0,
+	status = CredUIPromptForCredentialsA(&wfUiInfo,
+					     instance->settings->ServerHostname,
+					     NULL, 0,
 		UserName, CREDUI_MAX_USERNAME_LENGTH + 1,
 		Password, CREDUI_MAX_PASSWORD_LENGTH + 1, &fSave, dwFlags);
 
@@ -537,6 +537,8 @@ BOOL wf_authenticate(freerdp* instance, char** username, char** password, char**
 
 	if (strlen(Domain) > 0)
 		*domain = _strdup(Domain);
+	else
+		*domain = _strdup("\0");
 
 	*password = _strdup(Password);
 

@@ -28,10 +28,18 @@
 
 #include <winpr/crt.h>
 #include <winpr/heap.h>
+#include <winpr/file.h>
 #include <winpr/tchar.h>
 #include <winpr/environment.h>
 
 #include <winpr/path.h>
+
+#if defined(WIN32)
+#include <Shlobj.h>
+#endif
+
+static char* GetPath_XDG_CONFIG_HOME(void);
+static char* GetPath_XDG_RUNTIME_DIR(void);
 
 /**
  * SHGetKnownFolderPath function:
@@ -43,7 +51,7 @@
  * http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
  */
 
-char* GetEnvAlloc(LPCSTR lpName)
+static char* GetEnvAlloc(LPCSTR lpName)
 {
 	DWORD length;
 	char* env = NULL;
@@ -62,7 +70,7 @@ char* GetEnvAlloc(LPCSTR lpName)
 	return env;
 }
 
-char* GetPath_HOME()
+static char* GetPath_HOME(void)
 {
 	char* path = NULL;
 
@@ -80,7 +88,7 @@ char* GetPath_HOME()
 	return path;
 }
 
-char* GetPath_TEMP()
+static char* GetPath_TEMP(void)
 {
 	char* path = NULL;
 
@@ -96,11 +104,14 @@ char* GetPath_TEMP()
 	return path;
 }
 
-char* GetPath_XDG_DATA_HOME()
+static char* GetPath_XDG_DATA_HOME(void)
 {
 	char* path = NULL;
-	char* home = NULL;
 
+#if defined(WIN32)
+	path = GetPath_XDG_CONFIG_HOME();
+#else
+	char* home = NULL;
 	/**
 	 * There is a single base directory relative to which user-specific data files should be written.
 	 * This directory is defined by the environment variable $XDG_DATA_HOME.
@@ -127,15 +138,28 @@ char* GetPath_XDG_DATA_HOME()
 	sprintf(path, "%s%s", home, "/.local/share");
 
 	free(home);
+#endif
 
 	return path;
 }
 
-char* GetPath_XDG_CONFIG_HOME()
+static char* GetPath_XDG_CONFIG_HOME(void)
 {
 	char* path = NULL;
-	char* home = NULL;
 
+#if defined(WIN32)
+	path = calloc(MAX_PATH, sizeof(char));
+	if (!path)
+		return NULL;
+
+	if (SHGetFolderPathA(0, CSIDL_APPDATA, NULL,
+			     SHGFP_TYPE_CURRENT, path) != S_OK)
+	{
+		free(path);
+		return NULL;
+	}
+#else
+	char* home = NULL;
 	/**
 	 * There is a single base directory relative to which user-specific configuration files should be written.
 	 * This directory is defined by the environment variable $XDG_CONFIG_HOME.
@@ -166,15 +190,27 @@ char* GetPath_XDG_CONFIG_HOME()
 	sprintf(path, "%s%s", home, "/.config");
 
 	free(home);
+#endif
 
 	return path;
 }
 
-char* GetPath_XDG_CACHE_HOME()
+static char* GetPath_XDG_CACHE_HOME(void)
 {
 	char* path = NULL;
 	char* home = NULL;
 
+#if defined(WIN32)
+	home = GetPath_XDG_RUNTIME_DIR();
+	if (home)
+	{
+		path = GetCombinedPath(home, "cache");
+		if (!PathFileExistsA(path))
+			if (!CreateDirectoryA(path, NULL))
+				path = NULL;
+	}
+	free(home);
+#else
 	/**
 	 * There is a single base directory relative to which user-specific non-essential (cached) data should be written.
 	 * This directory is defined by the environment variable $XDG_CACHE_HOME.
@@ -201,14 +237,26 @@ char* GetPath_XDG_CACHE_HOME()
 	sprintf(path, "%s%s", home, "/.cache");
 
 	free(home);
+#endif
 
 	return path;
 }
 
-char* GetPath_XDG_RUNTIME_DIR()
+char* GetPath_XDG_RUNTIME_DIR(void)
 {
 	char* path = NULL;
+#if defined(WIN32)
+	path = calloc(MAX_PATH, sizeof(char));
+	if (!path)
+		return NULL;
 
+	if (SHGetFolderPathA(0, CSIDL_LOCAL_APPDATA, NULL,
+			     SHGFP_TYPE_CURRENT, path) != S_OK)
+	{
+		free(path);
+		return NULL;
+	}
+#else
 	/**
 	 * There is a single base directory relative to which user-specific runtime files and other file objects should be placed.
 	 * This directory is defined by the environment variable $XDG_RUNTIME_DIR.
@@ -237,6 +285,7 @@ char* GetPath_XDG_RUNTIME_DIR()
 	 */
 
 	path = GetEnvAlloc("XDG_RUNTIME_DIR");
+#endif
 
 	if (path)
 		return path;
@@ -370,6 +419,50 @@ char* GetCombinedPath(const char* basePath, const char* subPath)
 	free(subPathCpy);
 
 	return path;
+}
+
+BOOL PathMakePathA(LPCSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
+{
+	size_t length;
+	const char delim = PathGetSeparatorA(0);
+	char* cur;
+	char* copy_org = _strdup(path);
+	char* copy = copy_org;
+
+	if (!copy_org)
+		return FALSE;
+
+	length = strlen(copy_org);
+
+	/* Find first path element that exists. */
+	while (copy)
+	{
+		if (!PathFileExistsA(copy))
+		{
+			cur = strrchr(copy, delim);
+			if (cur)
+				*cur = '\0';
+		}
+		else
+			break;
+	}
+
+	/* Create directories. */
+	while(copy)
+	{
+		if (!PathFileExistsA(copy))
+		{
+			if (!CreateDirectoryA(copy, NULL))
+				break;
+		}
+		if (strlen(copy) < length)
+			copy[strlen(copy)] = delim;
+		else
+			break;
+	}
+	free (copy_org);
+
+	return PathFileExistsA(path);
 }
 
 BOOL PathFileExistsA(LPCSTR pszPath)

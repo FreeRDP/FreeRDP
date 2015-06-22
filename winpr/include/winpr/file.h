@@ -291,6 +291,9 @@ WINPR_API BOOL FindClose(HANDLE hFindFile);
 WINPR_API BOOL CreateDirectoryA(LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes);
 WINPR_API BOOL CreateDirectoryW(LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes);
 
+WINPR_API BOOL RemoveDirectoryA(LPCSTR lpPathName);
+WINPR_API BOOL RemoveDirectoryW(LPCWSTR lpPathName);
+
 #ifdef __cplusplus
 }
 #endif
@@ -302,6 +305,7 @@ WINPR_API BOOL CreateDirectoryW(LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecu
 #define FindFirstFileEx		FindFirstFileExW
 #define FindNextFile		FindNextFileW
 #define CreateDirectory		CreateDirectoryW
+#define RemoveDirectory		RemoveDirectoryW
 #else
 #define CreateFile		CreateFileA
 #define DeleteFile		DeleteFileA
@@ -309,6 +313,7 @@ WINPR_API BOOL CreateDirectoryW(LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecu
 #define FindFirstFileEx		FindFirstFileExA
 #define FindNextFile		FindNextFileA
 #define CreateDirectory		CreateDirectoryA
+#define RemoveDirectory		RemoveDirectoryA
 #endif
 
 

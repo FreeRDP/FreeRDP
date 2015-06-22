@@ -26,6 +26,10 @@ if(NOT DEFINED VENDOR)
 	set(VENDOR "FreeRDP" CACHE STRING "FreeRDP package vendor")
 endif()
 
+if(NOT DEFINED PRODUCT)
+	set(PRODUCT "FreeRDP" CACHE STRING "FreeRDP package name")
+endif()
+
 if(NOT DEFINED FREERDP_VENDOR)
 	set(FREERDP_VENDOR 1)
 endif()
@@ -225,7 +229,7 @@ if(CMAKE_COMPILER_IS_GNUCC)
 	endif()
 endif()
 
-if("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
+if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-parameter")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-macros -Wno-padded")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-c11-extensions -Wno-gnu")
@@ -284,8 +288,8 @@ if(WIN32)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWIN32_LEAN_AND_MEAN")
 
   # Set product and vendor for dll and exe version information.
-  set(RC_VERSION_VENDOR "FreeRDP")
-  set(RC_VERSION_PRODUCT "FreeRDP")
+  set(RC_VERSION_VENDOR ${VENDOR})
+  set(RC_VERSION_PRODUCT ${PRODUCT})
   set(RC_VERSION_PATCH ${BUILD_NUMBER})
   set(RC_VERSION_DESCRIPTION ${GIT_REVISION})
 
