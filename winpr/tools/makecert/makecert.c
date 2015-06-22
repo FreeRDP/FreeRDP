@@ -314,7 +314,7 @@ char* x509_get_default_name()
 	if (!GetComputerNameExA(ComputerNameNetBIOS, computerName, &nSize))
 		return NULL;
 
-	ret = strdup(computerName);
+	ret = _strdup(computerName);
 	if (!ret)
 		return NULL;
 

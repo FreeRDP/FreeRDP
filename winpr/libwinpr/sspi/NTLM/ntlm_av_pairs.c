@@ -178,7 +178,7 @@ int ntlm_get_target_computer_name(PUNICODE_STRING pName, COMPUTER_NAME_FORMAT ty
 	if (!GetComputerNameExA(type, computerName, &nSize))
 		return -1;
 
-	name = strdup(computerName);
+	name = _strdup(computerName);
 	if (!name)
 		return -1;
 

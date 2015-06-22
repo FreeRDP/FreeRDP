@@ -318,7 +318,7 @@ static int freerdp_client_rdp_file_set_string(rdpFile* file, const char* name, c
 	else
 		standard = 1;
 
-	if (tmp && !(*tmp = strdup(value)))
+	if (tmp && !(*tmp = _strdup(value)))
 		return -1;
 
 	if (index >= 0)

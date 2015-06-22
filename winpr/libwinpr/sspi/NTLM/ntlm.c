@@ -120,7 +120,7 @@ int ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 		if (!GetComputerNameExA(ComputerNameDnsHostname, computerName, &nSize))
 			return -1;
 
-		name = strdup(computerName);
+		name = _strdup(computerName);
 		if (!name)
 			return -1;
 

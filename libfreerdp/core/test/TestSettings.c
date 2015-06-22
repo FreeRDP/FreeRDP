@@ -11,8 +11,8 @@ int TestSettings(int argc, char* argv[])
 		printf("Couldn't create settings\n");
 		return -1;
 	}
-	settings->Username = strdup("abcdefg");
-	settings->Password = strdup("xyz");
+	settings->Username = _strdup("abcdefg");
+	settings->Password = _strdup("xyz");
 	cloned = freerdp_settings_clone(settings);
 	if (!cloned)
 	{
