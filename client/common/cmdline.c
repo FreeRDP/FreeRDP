@@ -553,7 +553,7 @@ static char** freerdp_command_line_parse_comma_separated_values_offset(char* lis
 		return NULL;
 	p = t;
 	if (count > 0)
-        MoveMemory(&p[1], p, sizeof(char*) * *count);
+		MoveMemory(&p[1], p, sizeof(char*) * *count);
 	(*count)++;
 
 	return p;
@@ -795,27 +795,58 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 int freerdp_parse_username(char* username, char** user, char** domain)
 {
 	char* p;
-	int length;
+	char* u;
+	int length = 0;
 
 	p = strchr(username, '\\');
+	u = strrchr(username, '@');
+
+	*user = NULL;
+	*domain = NULL;
 
 	if (p)
 	{
 		length = (int) (p - username);
+		*user = _strdup(&p[1]);
+		if (!*user)
+			return -1;
+
 		*domain = (char*) calloc(length + 1UL, sizeof(char));
+		if (!*domain)
+		{
+			free (*user);
+			*user = NULL;
+			return -1;
+		}
+
 		strncpy(*domain, username, length);
 		(*domain)[length] = '\0';
-		*user = _strdup(&p[1]);
 	}
-	else
+	else if (username)
 	{
 		/* Do not break up the name for '@'; both credSSP and the
 		 * ClientInfo PDU expect 'user@corp.net' to be transmitted
-		 * as username 'user@corp.net', domain empty.
+		 * as username 'user@corp.net', domain empty (not NULL!).
 		 */
 		*user = _strdup(username);
-		*domain = NULL;
+		if (!*user)
+			return -1;
+
+		/* If only username is given, prefix that with 'TARGET'
+		 * otherwise set the domain to an empty string.
+		 * NOTE: Domain NULL will result in undefined behavior.
+		 */
+		*domain = _strdup("\0");
+
+		if (!*domain)
+		{
+			free(*user);
+			*user = NULL;
+			return -1;
+		}
 	}
+	else
+			return -1;
 
 	return 0;
 }
@@ -1198,6 +1229,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 	int argc, char** argv, BOOL allowUnknown)
 {
 	char* p;
+	char* user = NULL;
+	char* gwUser = NULL;
 	char* str;
 	int length;
 	int status;
@@ -1209,7 +1242,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 	if (compatibility)
 	{
-		WLog_WARN(TAG,  "Using deprecated command-line interface!");
+		WLog_WARN(TAG, "Using deprecated command-line interface!");
 		return freerdp_client_parse_old_command_line_arguments(argc, argv, settings);
 	}
 	else
@@ -1439,7 +1472,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 				if (!id)
 				{
-					WLog_ERR(TAG,  "Could not identify keyboard layout: %s", arg->Value);
+					WLog_ERR(TAG, "Could not identify keyboard layout: %s", arg->Value);
 				}
 			}
 
@@ -1459,13 +1492,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "u")
 		{
-			char* user;
-			char* domain;
-
-			freerdp_parse_username(arg->Value, &user, &domain);
-
-			settings->Username = user;
-			settings->Domain = domain;
+			user = _strdup(arg->Value);
 		}
 		CommandLineSwitchCase(arg, "d")
 		{
@@ -1506,14 +1533,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "gu")
 		{
-			char* user;
-			char* domain;
-
-			freerdp_parse_username(arg->Value, &user, &domain);
-
-			settings->GatewayUsername = user;
-			settings->GatewayDomain = domain;
-
+			gwUser = _strdup(arg->Value);
 			settings->GatewayUseSameCredentials = FALSE;
 		}
 		CommandLineSwitchCase(arg, "gd")
@@ -1818,7 +1838,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			}
 			else
 			{
-				WLog_ERR(TAG,  "unknown protocol security: %s", arg->Value);
+				WLog_ERR(TAG, "unknown protocol security: %s", arg->Value);
 			}
 		}
 		CommandLineSwitchCase(arg, "encryption-methods")
@@ -1842,7 +1862,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 					else if (!strcmp(p[i], "FIPS"))
 						settings->EncryptionMethods |= ENCRYPTION_METHOD_FIPS;
 					else
-						WLog_ERR(TAG,  "unknown encryption method '%s'", p[i]);
+						WLog_ERR(TAG, "unknown encryption method '%s'", p[i]);
 				}
 
 				free(p);
@@ -1998,7 +2018,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			}
 			else
 			{
-				WLog_ERR(TAG,  "reconnect-cookie:  invalid base64 '%s'", arg->Value);
+				WLog_ERR(TAG, "reconnect-cookie:  invalid base64 '%s'", arg->Value);
 			}
 		}
 		CommandLineSwitchCase(arg, "print-reconnect-cookie")
@@ -2017,6 +2037,23 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchEnd(arg)
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+
+	if (!settings->Domain && user)
+	{
+		freerdp_parse_username(user, &settings->Username, &settings->Domain);
+		free(user);
+	}
+	else
+		settings->Username = user;
+
+	if (!settings->GatewayDomain && gwUser)
+	{
+		freerdp_parse_username(gwUser, &settings->GatewayUsername,
+				       &settings->GatewayDomain);
+		free(gwUser);
+	}
+	else
+		settings->GatewayUsername = gwUser;
 
 	freerdp_performance_flags_make(settings);
 
@@ -2062,7 +2099,7 @@ int freerdp_client_load_static_channel_addin(rdpChannels* channels, rdpSettings*
 	{
 		if (freerdp_channels_client_load(channels, settings, entry, data) == 0)
 		{
-			WLog_INFO(TAG,  "loading channel %s", name);
+			WLog_INFO(TAG, "loading channel %s", name);
 			return 0;
 		}
 	}
