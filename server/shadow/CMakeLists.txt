@@ -169,6 +169,10 @@ set(${MODULE_PREFIX}_SRCS
 	shadow_encomsp.h
 	shadow_remdesk.c
 	shadow_remdesk.h
+	shadow_rdpsnd.c
+	shadow_rdpsnd.h
+	shadow_audin.c
+	shadow_audin.h
 	shadow_subsystem.c
 	shadow_subsystem.h
 	shadow_mcevent.c

@@ -107,6 +107,16 @@ fail:
 	return status;
 }
 
+static void shadow_subsystem_free_queued_message(void *obj)
+{
+	wMessage *message = (wMessage*)obj;
+	if (message->Free)
+	{
+		message->Free(message);
+		message->Free = NULL;
+	}
+}
+
 void shadow_subsystem_uninit(rdpShadowSubsystem* subsystem)
 {
 	if (!subsystem)
@@ -117,6 +127,11 @@ void shadow_subsystem_uninit(rdpShadowSubsystem* subsystem)
 
 	if (subsystem->MsgPipe)
 	{
+		/* Release resource in messages before free */
+		subsystem->MsgPipe->In->object.fnObjectFree = shadow_subsystem_free_queued_message;
+		MessageQueue_Clear(subsystem->MsgPipe->In);
+		subsystem->MsgPipe->Out->object.fnObjectFree = shadow_subsystem_free_queued_message;
+		MessageQueue_Clear(subsystem->MsgPipe->Out);
 		MessagePipe_Free(subsystem->MsgPipe);
 		subsystem->MsgPipe = NULL;
 	}
