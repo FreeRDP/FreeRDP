@@ -1,4 +1,5 @@
 #include <winpr/sysinfo.h>
+#include <winpr/path.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/client/cmdline.h>
 
@@ -65,6 +66,7 @@ static int testTimeout(void)
     if (diff < 14000)
         return -1;
 
+    printf("%s: Success!\n", __FUNCTION__);
     return 0;
 }
 
@@ -114,11 +116,68 @@ static int testAbort(void)
     if (WAIT_OBJECT_0 != status)
         return -1;
 
+    printf("%s: Success!\n", __FUNCTION__);
     return 0;
 }
 
 static int testSuccess(void)
 {
+    int rc;
+    STARTUPINFO si;
+    PROCESS_INFORMATION process;
+    char* argv[] =
+    {
+        "test",
+        "/v:127.0.0.1",
+        "/cert-ignore",
+        "/u:foo",
+        NULL
+    };
+    char* path = TESTING_OUTPUT_DIRECTORY;
+    char* exe = GetCombinedPath(path, "server");
+
+    if (!exe)
+        return -2;
+
+    path = GetCombinedPath(exe, "Sample");
+    free(exe);
+
+    if (!path)
+        return -2;
+
+    exe = GetCombinedPath(path, "sfreerdp-server");
+
+    if (!exe)
+    {
+        free(path);
+        return -2;
+    }
+
+    // Start sample server locally. 
+    if (!CreateProcessA(exe, exe, NULL, NULL, FALSE, 0, NULL,
+                path, &si, &process))
+    {
+        free(exe);
+        free(path);
+        return -2;
+    }
+   
+    free(exe);
+    free(path);
+
+    rc = runInstance(4, argv, NULL);
+
+    if (!TerminateProcess(process.hProcess, 0))
+        return -2;
+
+    WaitForSingleObject(process.hProcess, INFINITE);
+    CloseHandle(process.hProcess);
+    CloseHandle(process.hThread);
+
+    if (rc)
+        return -1;
+
+    printf("%s: Success!\n", __FUNCTION__);
     return 0;
 }
 
@@ -126,8 +185,8 @@ int TestConnect(int argc, char* argv[])
 {
     /* Test connect to not existing server,
      * check if timeout is honored. */
-//    if (testTimeout())
-//        return -1;
+    if (testTimeout())
+        return -1;
 
     /* Test connect to not existing server,
      * check if connection abort is working. */
