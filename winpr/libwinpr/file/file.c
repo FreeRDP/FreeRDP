@@ -414,7 +414,7 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 	}
 
 	hNamedPipe = (HANDLE) pNamedPipe;
-	WINPR_HANDLE_SET_TYPE(pNamedPipe, HANDLE_TYPE_NAMED_PIPE);
+	WINPR_HANDLE_SET_TYPE_AND_MODE(pNamedPipe, HANDLE_TYPE_NAMED_PIPE, FD_READ);
 	pNamedPipe->name = _strdup(lpFileName);
 	if (!pNamedPipe->name)
 	{

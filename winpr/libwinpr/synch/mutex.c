@@ -138,7 +138,7 @@ HANDLE CreateMutexW(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner,
 	{
 		pthread_mutex_init(&mutex->mutex, 0);
 
-		WINPR_HANDLE_SET_TYPE(mutex, HANDLE_TYPE_MUTEX);
+		WINPR_HANDLE_SET_TYPE_AND_MODE(mutex, HANDLE_TYPE_MUTEX, FD_READ);
 		mutex->ops = &ops;
 
 		handle = (HANDLE) mutex;
@@ -178,7 +178,7 @@ HANDLE OpenMutexW(DWORD dwDesiredAccess, BOOL bInheritHandle,LPCWSTR lpName)
 BOOL ReleaseMutex(HANDLE hMutex)
 {
 	ULONG Type;
-	PVOID Object;
+	WINPR_HANDLE* Object;
 	WINPR_MUTEX* mutex;
 
 	if (!winpr_Handle_GetInfo(hMutex, &Type, &Object))

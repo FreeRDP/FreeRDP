@@ -642,12 +642,15 @@ BOOL WSACloseEvent(HANDLE hEvent)
 
 int WSAEventSelect(SOCKET s, WSAEVENT hEventObject, LONG lNetworkEvents)
 {
-	u_long arg = 1;
+	u_long arg = lNetworkEvents ? 1 : 0;
 
 	if (_ioctlsocket(s, FIONBIO, &arg) != 0)
 		return SOCKET_ERROR;
 
-	if (SetEventFileDescriptor(hEventObject, s) < 0)
+	if (arg == 0)
+		return 0;
+
+	if (SetEventFileDescriptor(hEventObject, s, lNetworkEvents) < 0)
 		return SOCKET_ERROR;
 
 	return 0;
