@@ -994,7 +994,7 @@ BOOL xf_pre_connect(freerdp* instance)
 	freerdp_client_load_addins(channels, instance->settings);
 	freerdp_channels_pre_connect(channels, instance);
 
-	if (!settings->Username)
+	if (!settings->Username && !settings->CredentialsFromStdin)
 	{
 		char* login_name = getlogin();
 
@@ -1228,16 +1228,72 @@ static void xf_post_disconnect(freerdp* instance)
  *  @param domain - unused
  *  @return TRUE if a password was successfully entered. See freerdp_passphrase_read() for more details.
  */
-BOOL xf_authenticate(freerdp* instance, char** username, char** password, char** domain)
+static BOOL xf_authenticate_raw(freerdp* instance, BOOL gateway, char** username,
+		char** password, char** domain)
 {
-	// FIXME: seems this callback may be called when 'username' is not known.
-	// But it doesn't do anything to fix it...
-	*password = malloc(password_size * sizeof(char));
+	const char* auth[] =
+	{
+		"Username: ",
+		"Domain:   ",
+		"Password: "
+	};
+	const char* gw[] =
+	{
+		"GatewayUsername: ",
+		"GatewayDomain:   ",
+		"GatewayPassword: "
+	};
+	const char** prompt = (gateway) ? gw : auth;
 
-	if (freerdp_passphrase_read("Password: ", *password, password_size, instance->settings->CredentialsFromStdin) == NULL)
+	if (!username || !password || !domain)
 		return FALSE;
 
+	if (!*username)
+	{
+		size_t username_size = 0;
+		printf("%s", prompt[0]);
+		getline(username, &username_size, stdin);
+		if (*username)
+		{
+			*username = StrSep(username, "\r");
+			*username = StrSep(username, "\n");
+		}
+	}
+
+	if (!*domain)
+	{
+		size_t domain_size = 0;
+		printf("%s", prompt[1]);
+		getline(domain, &domain_size, stdin);
+		if (*domain)
+		{
+			*domain = StrSep(domain, "\r");
+			*domain = StrSep(domain, "\n");
+		}
+	}
+
+	if (!*password)
+	{
+		*password = calloc(password_size, sizeof(char));
+		if (!*password)
+			return FALSE;
+
+		if (freerdp_passphrase_read(prompt[2], *password, password_size,
+			instance->settings->CredentialsFromStdin) == NULL)
+			return FALSE;
+	}
+
 	return TRUE;
+}
+
+static BOOL xf_authenticate(freerdp* instance, char** username, char** password, char** domain)
+{
+	return xf_authenticate_raw(instance, FALSE, username, password, domain);
+}
+
+static BOOL xf_gw_authenticate(freerdp* instance, char** username, char** password, char** domain)
+{
+	return xf_authenticate_raw(instance, TRUE, username, password, domain);
 }
 
 /** Callback set in the rdp_freerdp structure, and used to make a certificate validation
@@ -1720,6 +1776,7 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->PostConnect = xf_post_connect;
 	instance->PostDisconnect = xf_post_disconnect;
 	instance->Authenticate = xf_authenticate;
+	instance->GatewayAuthenticate = xf_gw_authenticate;
 	instance->VerifyCertificate = xf_verify_certificate;
 	instance->LogonErrorInfo = xf_logon_error_info;
 
