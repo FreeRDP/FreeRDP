@@ -192,7 +192,7 @@ static int testSuccess(void)
 	free(exe);
 	free(path);
 
-	Sleep(500);
+	Sleep(1000);
 	rc = runInstance(3, argv, NULL);
 
 	if (!TerminateProcess(process.hProcess, 0))
@@ -202,6 +202,7 @@ static int testSuccess(void)
 	CloseHandle(process.hProcess);
 	CloseHandle(process.hThread);
 
+	printf("%s: returned %d!\n", __FUNCTION__, rc);
 	if (rc)
 		return -1;
 
