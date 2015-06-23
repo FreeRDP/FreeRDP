@@ -35,17 +35,20 @@
 static wLog* g_Log = NULL;
 
 static BOOL g_Initialized = FALSE;
+#if defined(WITH_NATIVE_SSPI)
 static HMODULE g_SspiModule = NULL;
+#endif
 
 static SecurityFunctionTableW* g_SspiW = NULL;
 static SecurityFunctionTableA* g_SspiA = NULL;
 
-static BOOL ShouldUseNativeSspi(void);
 #if defined(WITH_NATIVE_SSPI)
+static BOOL ShouldUseNativeSspi(void);
 static BOOL InitializeSspiModule_Native(void);
 #endif
 static void InitializeSspiModule(DWORD flags);
 
+#if defined(WITH_NATIVE_SSPI)
 BOOL ShouldUseNativeSspi(void)
 {
 	BOOL status = FALSE;
@@ -72,6 +75,7 @@ BOOL ShouldUseNativeSspi(void)
 #endif
 	return status;
 }
+#endif
 
 #if defined(WITH_NATIVE_SSPI)
 BOOL InitializeSspiModule_Native(void)
