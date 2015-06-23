@@ -424,13 +424,13 @@ static void tsmf_sample_playback_audio(TSMF_SAMPLE* sample)
 	DEBUG_TSMF("MessageId %d EndTime %d consumed.",
 			   sample->sample_id, (int)sample->end_time);
 
-	if (sample->stream->audio && sample->data)
+	if (stream->audio && sample->data)
 	{
-		sample->stream->audio->Play(sample->stream->audio, sample->data, sample->decoded_size);
+		stream->audio->Play(stream->audio, sample->data, sample->decoded_size);
 		sample->data = NULL;
 		sample->decoded_size = 0;
 
-		if (stream->audio && stream->audio->GetLatency)
+		if (stream->audio->GetLatency)
 			latency = stream->audio->GetLatency(stream->audio);
 	}
 	else

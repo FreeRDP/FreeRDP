@@ -66,9 +66,10 @@ struct rdpsnd_oss_plugin {
 	FREERDP_DSP_CONTEXT *dsp_context;
 };
 
-#define OSS_LOG_ERR(_text, _error) \
+#define OSS_LOG_ERR(_text, _error) { \
 	if (_error != 0) \
-		WLog_ERR(TAG, "%s: %i - %s", _text, _error, strerror(_error));
+		WLog_ERR(TAG, "%s: %i - %s", _text, _error, strerror(_error)); \
+}
 
 
 static int rdpsnd_oss_get_format(AUDIO_FORMAT *format) {
@@ -158,14 +159,14 @@ static void rdpsnd_oss_set_format(rdpsndDevicePlugin *device, AUDIO_FORMAT *form
 
 static void rdpsnd_oss_open_mixer(rdpsndOssPlugin *oss) {
 	int devmask = 0;
-	char mixer[PATH_MAX] = "/dev/mixer";
+	char mixer_name[PATH_MAX] = "/dev/mixer";
 
 	if (oss->mixer_handle != -1)
 		return;
 
 	if (oss->dev_unit != -1)
-		snprintf(mixer, PATH_MAX - 1, "/dev/mixer%i", oss->dev_unit);
-	if ((oss->mixer_handle = open(mixer, O_RDWR)) < 0) {
+		snprintf(mixer_name, PATH_MAX - 1, "/dev/mixer%i", oss->dev_unit);
+	if ((oss->mixer_handle = open(mixer_name, O_RDWR)) < 0) {
 		OSS_LOG_ERR("mixer open failed", errno);
 		oss->mixer_handle = -1;
 		return;
@@ -223,11 +224,13 @@ static void rdpsnd_oss_close(rdpsndDevicePlugin *device) {
 		return;
 
 	if (oss->pcm_handle != -1) {
+		WLog_INFO(TAG, "close: dsp");
 		close(oss->pcm_handle);
 		oss->pcm_handle = -1;
 	}
 
 	if (oss->mixer_handle != -1) {
+		WLog_INFO(TAG, "close: mixer");
 		close(oss->mixer_handle);
 		oss->mixer_handle = -1;
 	}
@@ -278,8 +281,8 @@ static void rdpsnd_oss_set_volume(rdpsndDevicePlugin *device, UINT32 value) {
 	if (device == NULL || oss->mixer_handle == -1)
 		return;
 
-	left = (value & 0xFFFF);
-	right = ((value >> 16) & 0xFFFF);
+	left = (((value & 0xFFFF) * 100) / 0xFFFF);
+	right = ((((value >> 16) & 0xFFFF) * 100) / 0xFFFF);
 
 	if (left < 0)
 		left = 0;
@@ -296,8 +299,6 @@ static void rdpsnd_oss_set_volume(rdpsndDevicePlugin *device, UINT32 value) {
 }
 
 static void rdpsnd_oss_wave_decode(rdpsndDevicePlugin *device, RDPSND_WAVE *wave) {
-	int size;
-	BYTE *data;
 	rdpsndOssPlugin *oss = (rdpsndOssPlugin*)device;
 
 	if (device == NULL || wave == NULL)
@@ -307,28 +308,21 @@ static void rdpsnd_oss_wave_decode(rdpsndDevicePlugin *device, RDPSND_WAVE *wave
 	case WAVE_FORMAT_ADPCM:
 		oss->dsp_context->decode_ms_adpcm(oss->dsp_context,
 			wave->data, wave->length, oss->format.nChannels, oss->format.nBlockAlign);
-		size = oss->dsp_context->adpcm_size;
-		data = oss->dsp_context->adpcm_buffer;
+		wave->length = oss->dsp_context->adpcm_size;
+		wave->data = oss->dsp_context->adpcm_buffer;
 		break;
 	case WAVE_FORMAT_DVI_ADPCM:
 		oss->dsp_context->decode_ima_adpcm(oss->dsp_context,
 			wave->data, wave->length, oss->format.nChannels, oss->format.nBlockAlign);
-		size = oss->dsp_context->adpcm_size;
-		data = oss->dsp_context->adpcm_buffer;
+		wave->length = oss->dsp_context->adpcm_size;
+		wave->data = oss->dsp_context->adpcm_buffer;
 		break;
-	default:
-		size = wave->length;
-		data = wave->data;
 	}
-
-	wave->data = (BYTE*)malloc(size);
-	CopyMemory(wave->data, data, size);
-	wave->length = size;
 }
 
 static void rdpsnd_oss_wave_play(rdpsndDevicePlugin *device, RDPSND_WAVE *wave) {
 	BYTE *data;
-	int offset, size, status;
+	int offset, size, status, latency;
 	rdpsndOssPlugin *oss = (rdpsndOssPlugin*)device;
 
 	if (device == NULL || wave == NULL)
@@ -337,22 +331,21 @@ static void rdpsnd_oss_wave_play(rdpsndDevicePlugin *device, RDPSND_WAVE *wave) 
 	offset = 0;
 	data = wave->data;
 	size = wave->length;
+	latency = oss->latency;
 
 	while (offset < size) {
 		status = write(oss->pcm_handle, &data[offset], (size - offset));
 		if (status < 0) {
 			OSS_LOG_ERR("write fail", errno);
 			rdpsnd_oss_close(device);
-			rdpsnd_oss_open(device, NULL, 0);
+			rdpsnd_oss_open(device, NULL, latency);
 			break;
 		}
 		offset += status;
 	}
 	/* From rdpsnd_main.c */
-	wave->wTimeStampB = wave->wTimeStampA + wave->wAudioLength + 65;
-	wave->wLocalTimeB = wave->wLocalTimeA + wave->wAudioLength + 65;
-
-	free(data);
+	wave->wTimeStampB = wave->wTimeStampA + wave->wAudioLength + 65 + latency;
+	wave->wLocalTimeB = wave->wLocalTimeA + wave->wAudioLength + 65 + latency;
 }
 
 
