@@ -368,6 +368,12 @@ wLogLayout* WLog_Layout_New(wLog* log)
 				return NULL;
 			}
 			nSize = GetEnvironmentVariableA("WLOG_PREFIX", env, nSize);
+			if (0 == nSize)
+			{
+				free(layout);
+				free(env);
+				return NULL;
+			}
 		}
 
 		if (env)

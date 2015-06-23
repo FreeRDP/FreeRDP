@@ -46,7 +46,7 @@ DWORD TlsAlloc(VOID)
 
 	dwTlsIndex = (DWORD) key;
 
-	return key;
+	return dwTlsIndex;
 }
 
 LPVOID TlsGetValue(DWORD dwTlsIndex)
