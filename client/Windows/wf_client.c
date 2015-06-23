@@ -519,7 +519,7 @@ static BOOL wf_authenticate_raw(freerdp* instance, const char* title,
 	ZeroMemory(Password, sizeof(Password));
 	dwFlags = CREDUI_FLAGS_DO_NOT_PERSIST | CREDUI_FLAGS_EXCLUDE_CERTIFICATES;
 
-	status = CredUIPromptForCredentialsA(&wfUiInfo, title, NULL, 0
+	status = CredUIPromptForCredentialsA(&wfUiInfo, title, NULL, 0,
 		UserName, CREDUI_MAX_USERNAME_LENGTH + 1,
 		Password, CREDUI_MAX_PASSWORD_LENGTH + 1, &fSave, dwFlags);
 
