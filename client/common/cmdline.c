@@ -969,7 +969,6 @@ int freerdp_parse_username(char* username, char** user, char** domain)
 	int length = 0;
 
 	p = strchr(username, '\\');
-	u = strrchr(username, '@');
 
 	*user = NULL;
 	*domain = NULL;
@@ -1002,10 +1001,6 @@ int freerdp_parse_username(char* username, char** user, char** domain)
 		if (!*user)
 			return -1;
 
-		/* If only username is given, prefix that with 'TARGET'
-		 * otherwise set the domain to an empty string.
-		 * NOTE: Domain NULL will result in undefined behavior.
-		 */
 		*domain = _strdup("\0");
 
 		if (!*domain)
