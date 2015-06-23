@@ -180,6 +180,14 @@ static int testSuccess(void)
 		return -2;
 	}
 
+	printf("Sample Server: %s\n", exe);
+	if (!PathFileExistsA(exe))
+	{
+		free(path);
+		free(exe);
+		return -2;
+	}
+
 	// Start sample server locally. 
 	if (!CreateProcessA(exe, exe, NULL, NULL, FALSE, 0, NULL,
 				path, &si, &process))
