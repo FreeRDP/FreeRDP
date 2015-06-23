@@ -152,8 +152,8 @@ static char* GetPath_XDG_CONFIG_HOME(void)
 	if (!path)
 		return NULL;
 
-	if (SHGetFolderPathA(0, CSIDL_APPDATA, NULL,
-			     SHGFP_TYPE_CURRENT, path) != S_OK)
+	if (FAILED(SHGetFolderPathA(0, CSIDL_APPDATA, NULL,
+			     SHGFP_TYPE_CURRENT, path)))
 	{
 		free(path);
 		return NULL;
@@ -250,8 +250,8 @@ char* GetPath_XDG_RUNTIME_DIR(void)
 	if (!path)
 		return NULL;
 
-	if (SHGetFolderPathA(0, CSIDL_LOCAL_APPDATA, NULL,
-			     SHGFP_TYPE_CURRENT, path) != S_OK)
+	if (FAILED(SHGetFolderPathA(0, CSIDL_LOCAL_APPDATA, NULL,
+			     SHGFP_TYPE_CURRENT, path)))
 	{
 		free(path);
 		return NULL;
@@ -307,6 +307,7 @@ char* GetKnownPath(int id)
 
 		case KNOWN_PATH_TEMP:
 			path = GetPath_TEMP();
+
 			break;
 
 		case KNOWN_PATH_XDG_DATA_HOME:
@@ -406,19 +407,39 @@ char* GetCombinedPath(const char* basePath, const char* subPath)
 		CopyMemory(path, basePath, basePathLength);
 	path[basePathLength] = '\0';
 
-	PathCchConvertStyleA(path, basePathLength, PATH_STYLE_NATIVE);
+	if (FAILED(PathCchConvertStyleA(path, basePathLength, PATH_STYLE_NATIVE)))
+	{
+		free(path);
+		return NULL;
+	}
 
 	if (!subPath)
 		return path;
 
 	subPathCpy = _strdup(subPath);
-	PathCchConvertStyleA(subPathCpy, subPathLength, PATH_STYLE_NATIVE);
+	if (!subPathCpy)
+	{
+		free(path);
+		return NULL;
+	}
+	if (FAILED(PathCchConvertStyleA(subPathCpy, subPathLength, PATH_STYLE_NATIVE)))
+	{
+		free(path);
+		free(subPathCpy);
+		return NULL;
+	}
 
 	status = NativePathCchAppendA(path, length + 1, subPathCpy);
 
 	free(subPathCpy);
 
-	return path;
+	if (FAILED(status))
+	{
+		free(path);
+		return NULL;
+	}
+	else
+		return path;
 }
 
 BOOL PathMakePathA(LPCSTR path, LPSECURITY_ATTRIBUTES lpAttributes)

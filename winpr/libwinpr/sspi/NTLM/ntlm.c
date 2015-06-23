@@ -33,6 +33,7 @@
 #include <winpr/print.h>
 #include <winpr/sysinfo.h>
 #include <winpr/registry.h>
+#include <winpr/tchar.h>
 
 #include "ntlm.h"
 #include "../sspi.h"
@@ -47,22 +48,17 @@ char* NTLM_PACKAGE_NAME = "NTLM";
 int ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 {
 	int status;
-	DWORD nSize = 0;
+	DWORD nSize = MAX_COMPUTERNAME_LENGTH;
 	char* ws = Workstation;
+	CHAR computerName[MAX_COMPUTERNAME_LENGTH + 1];
 
 	if (!Workstation)
 	{
-		GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize);
-		ws = (char*) malloc(nSize);
-
+		if (!GetComputerNameExA(ComputerNameNetBIOS, computerName, &nSize))
+			return -1;
+		ws = _strdup(computerName);
 		if (!ws)
 			return -1;
-
-		if (!GetComputerNameExA(ComputerNameNetBIOS, ws, &nSize))
-		{
-			free(ws);
-			return 0;
-		}
 	}
 
 	context->Workstation.Buffer = NULL;
@@ -114,26 +110,21 @@ int ntlm_SetContextServicePrincipalNameA(NTLM_CONTEXT* context, char* ServicePri
 int ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 {
 	int status;
-	DWORD nSize = 0;
+	CHAR computerName[MAX_COMPUTERNAME_LENGTH + 1];
+	DWORD nSize = MAX_COMPUTERNAME_LENGTH;
 	char* name = TargetName;
 
-	if (!TargetName)
+	if (!name)
 	{
-		if (!GetComputerNameExA(ComputerNameDnsHostname, NULL, &nSize))
+
+		if (!GetComputerNameExA(ComputerNameDnsHostname, computerName, &nSize))
 			return -1;
 
-		name = (char*) malloc(nSize);
-
+		name = _strdup(computerName);
 		if (!name)
 			return -1;
 
-		if (!GetComputerNameExA(ComputerNameDnsHostname, name, &nSize))
-		{
-			free(name);
-			return -1;
-		}
-
-		CharUpperA(TargetName);
+		CharUpperA(name);
 	}
 
 	context->TargetName.pvBuffer = NULL;
@@ -141,7 +132,8 @@ int ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 
 	if (status <= 0)
 	{
-		free(TargetName);
+		if (!TargetName)
+			free(name);
 		return -1;
 	}
 

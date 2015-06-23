@@ -80,7 +80,7 @@ void Pcap_Write_RecordContent(wPcap* pcap, wPcapRecord* record)
 		fwrite(record->data, record->length, 1, pcap->fp);
 }
 
-void Pcap_Read_Record(wPcap* pcap, wPcapRecord* record)
+BOOL Pcap_Read_Record(wPcap* pcap, wPcapRecord* record)
 {
 	if (pcap && pcap->fp)
 	{
@@ -88,9 +88,16 @@ void Pcap_Read_Record(wPcap* pcap, wPcapRecord* record)
 		record->length = record->header.incl_len;
 		record->data = malloc(record->length);
 		if (!record->data)
-			return;
-		fread(record->data, record->length, 1, pcap->fp);
+			return FALSE;
+		if (fread(record->data, record->length, 1, pcap->fp) != 1)
+		{
+			free(record->data);
+			record->length = 0;
+			record->data = NULL;
+			return FALSE;
+		}
 	}
+	return TRUE;
 }
 
 void Pcap_Write_Record(wPcap* pcap, wPcapRecord* record)
@@ -168,8 +175,7 @@ BOOL Pcap_GetNext_Record(wPcap* pcap, wPcapRecord* record)
 	if (Pcap_HasNext_Record(pcap) != TRUE)
 		return FALSE;
 
-	Pcap_Read_Record(pcap, record);
-	return TRUE;
+	return Pcap_Read_Record(pcap, record);
 }
 
 wPcap* Pcap_Open(char* name, BOOL write)

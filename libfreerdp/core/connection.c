@@ -334,11 +334,13 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	rdpSettings* settings = rdp->settings;
 
 	rdp_client_disconnect(rdp);
-	rdp_redirection_apply_settings(rdp);
+	if (rdp_redirection_apply_settings(rdp) != 0)
+		return FALSE;
 
 	if (settings->RedirectionFlags & LB_LOAD_BALANCE_INFO)
 	{
-		nego_set_routing_token(rdp->nego, settings->LoadBalanceInfo, settings->LoadBalanceInfoLength);
+		if (!nego_set_routing_token(rdp->nego, settings->LoadBalanceInfo, settings->LoadBalanceInfoLength))
+			return FALSE;
 	}
 	else
 	{
@@ -346,16 +348,22 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 		{
 			free(settings->ServerHostname);
 			settings->ServerHostname = _strdup(settings->RedirectionTargetFQDN);
+			if (!settings->ServerHostname)
+				return FALSE;
 		}
 		else if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
 		{
 			free(settings->ServerHostname);
 			settings->ServerHostname = _strdup(settings->TargetNetAddress);
+			if (!settings->ServerHostname)
+				return FALSE;
 		}
 		else if (settings->RedirectionFlags & LB_TARGET_NETBIOS_NAME)
 		{
 			free(settings->ServerHostname);
 			settings->ServerHostname = _strdup(settings->RedirectionTargetNetBiosName);
+			if (!settings->ServerHostname)
+				return FALSE;
 		}
 	}
 
@@ -363,12 +371,16 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	{
 		free(settings->Username);
 		settings->Username = _strdup(settings->RedirectionUsername);
+		if (!settings->Username)
+			return FALSE;
 	}
 
 	if (settings->RedirectionFlags & LB_DOMAIN)
 	{
 		free(settings->Domain);
 		settings->Domain = _strdup(settings->RedirectionDomain);
+		if (!settings->Domain)
+			return FALSE;
 	}
 
 	status = rdp_client_connect(rdp);
@@ -388,7 +400,7 @@ BOOL rdp_client_reconnect(rdpRdp* rdp)
 	status = rdp_client_connect(rdp);
 
 	if (status)
-		freerdp_channels_post_connect(channels, context->instance);
+		status = (freerdp_channels_post_connect(channels, context->instance) >= 0);
 
 	return status;
 }
@@ -826,7 +838,11 @@ int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 	if (!rdp_send_confirm_active(rdp))
 		return -1;
 
-	input_register_client_callbacks(rdp->input);
+	if (!input_register_client_callbacks(rdp->input))
+	{
+		WLog_ERR(TAG, "error registering client callbacks");
+		return -1;
+	}
 
 	/**
 	 * The server may request a different desktop size during Deactivation-Reactivation sequence.

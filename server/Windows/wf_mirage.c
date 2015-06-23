@@ -54,6 +54,8 @@ BOOL wf_mirror_driver_find_display_device(wfInfo* wfi)
 			{
 				deviceKeyLength = _tcslen(deviceInfo.DeviceKey) - deviceKeyPrefixLength;
 				wfi->deviceKey = (LPTSTR) malloc((deviceKeyLength + 1) * sizeof(TCHAR));
+				if (!wfi->deviceKey)
+					return FALSE;
 
 				_tcsncpy_s(wfi->deviceKey, deviceKeyLength + 1,
 					&deviceInfo.DeviceKey[deviceKeyPrefixLength], deviceKeyLength);
@@ -210,6 +212,8 @@ BOOL wf_mirror_driver_update(wfInfo* wfi, int mode)
 	}
 	
 	deviceMode = (DEVMODE*) malloc(sizeof(DEVMODE) + EXT_DEVMODE_SIZE_MAX);
+	if (!deviceMode)
+		return FALSE;
 	deviceMode->dmDriverExtra = 2 * sizeof(DWORD);
 
 	extHdr = (DWORD*)((BYTE*) &deviceMode + sizeof(DEVMODE)); 
@@ -278,8 +282,9 @@ BOOL wf_mirror_driver_map_memory(wfInfo* wfi)
 		return FALSE;
 	}
 
-	wfi->changeBuffer = malloc(sizeof(GETCHANGESBUF));
-	ZeroMemory(wfi->changeBuffer, sizeof(GETCHANGESBUF));
+	wfi->changeBuffer = calloc(1, sizeof(GETCHANGESBUF));
+	if (!wfi->changeBuffer)
+		return FALSE;
 
 	status = ExtEscape(wfi->driverDC, dmf_esc_usm_pipe_map, 0, 0, sizeof(GETCHANGESBUF), (LPSTR) wfi->changeBuffer);
 

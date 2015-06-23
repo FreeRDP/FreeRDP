@@ -679,7 +679,7 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 int h264_compress(H264_CONTEXT* h264, BYTE* pSrcData, DWORD SrcFormat,
 		int nSrcStep, int nSrcWidth, int nSrcHeight, BYTE** ppDstData, UINT32* pDstSize)
 {
-	int status;
+	int status = -1;
 	prim_size_t roi;
 	int nWidth, nHeight;
 	primitives_t *prims = primitives_get();
@@ -691,12 +691,19 @@ int h264_compress(H264_CONTEXT* h264, BYTE* pSrcData, DWORD SrcFormat,
 
 	nWidth = (nSrcWidth + 1) & ~1;
 	nHeight = (nSrcHeight + 1) & ~1;
-	h264->pYUVData[0] = (BYTE*) malloc(nWidth * nHeight);
+
+	if (!(h264->pYUVData[0] = (BYTE*) malloc(nWidth * nHeight)))
+		return -1;
 	h264->iStride[0] = nWidth;
-	h264->pYUVData[1] = (BYTE*) malloc(nWidth * nHeight / 4);
+
+	if (!(h264->pYUVData[1] = (BYTE*) malloc(nWidth * nHeight / 4)))
+		goto error_1;
 	h264->iStride[1] = nWidth / 2;
-	h264->pYUVData[2] = (BYTE*) malloc(nWidth * nHeight / 4);
+
+	if (!(h264->pYUVData[2] = (BYTE*) malloc(nWidth * nHeight / 4)))
+		goto error_2;
 	h264->iStride[2] = nWidth / 2;
+
 	h264->width = nWidth;
 	h264->height = nHeight;
 	roi.width = nSrcWidth;
@@ -706,12 +713,14 @@ int h264_compress(H264_CONTEXT* h264, BYTE* pSrcData, DWORD SrcFormat,
 
 	status = h264->subsystem->Compress(h264, ppDstData, pDstSize);
 
-	free(h264->pYUVData[0]);
-	free(h264->pYUVData[1]);
 	free(h264->pYUVData[2]);
-	h264->pYUVData[0] = NULL;
-	h264->pYUVData[1] = NULL;
 	h264->pYUVData[2] = NULL;
+error_2:
+	free(h264->pYUVData[1]);
+	h264->pYUVData[1] = NULL;
+error_1:
+	free(h264->pYUVData[0]);
+	h264->pYUVData[0] = NULL;
 
 	return status;
 }

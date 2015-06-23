@@ -170,7 +170,7 @@ static void* named_pipe_server_thread(void* arg)
 		return NULL;
 	}
 
-	lpReadBuffer = (BYTE*) malloc(PIPE_BUFFER_SIZE);
+	lpReadBuffer = (BYTE*) calloc(1, PIPE_BUFFER_SIZE);
 	lpWriteBuffer = (BYTE*) malloc(PIPE_BUFFER_SIZE);
 	if (!lpReadBuffer || !lpWriteBuffer)
 	{
@@ -180,7 +180,6 @@ static void* named_pipe_server_thread(void* arg)
 		return NULL;
 	}
 	nNumberOfBytesToRead = PIPE_BUFFER_SIZE;
-	ZeroMemory(lpReadBuffer, PIPE_BUFFER_SIZE);
 	fSuccess = ReadFile(hNamedPipe, lpReadBuffer, nNumberOfBytesToRead, NULL, &overlapped);
 
 	if (!fSuccess)

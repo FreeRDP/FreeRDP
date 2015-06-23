@@ -337,6 +337,8 @@ int zgfx_decompress(ZGFX_CONTEXT* zgfx, BYTE* pSrcData, UINT32 SrcSize, BYTE** p
 		status = zgfx_decompress_segment(zgfx, &pSrcData[1], SrcSize - 1);
 
 		*ppDstData = (BYTE*) malloc(zgfx->OutputCount);
+		if (!*ppDstData)
+			return -1;
 		*pDstSize = zgfx->OutputCount;
 
 		CopyMemory(*ppDstData, zgfx->OutputBuffer, zgfx->OutputCount);
@@ -355,6 +357,8 @@ int zgfx_decompress(ZGFX_CONTEXT* zgfx, BYTE* pSrcData, UINT32 SrcSize, BYTE** p
 		uncompressedSize = *((UINT32*) &pSrcData[3]); /* uncompressedSize (4 bytes) */
 
 		pConcatenated = (BYTE*) malloc(uncompressedSize);
+		if (!pConcatenated)
+			return -1;
 
 		*ppDstData = pConcatenated;
 		*pDstSize = uncompressedSize;

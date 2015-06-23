@@ -99,6 +99,8 @@ char* get_string_from_string_builder(JNIEnv* env, jobject strBuilder)
 
 	// read string
 	native_str = (*env)->GetStringUTFChars(env, strObj, NULL);
+	if (!native_str)
+		return NULL;
 	result = strdup(native_str);
 	(*env)->ReleaseStringUTFChars(env, strObj, native_str);
 

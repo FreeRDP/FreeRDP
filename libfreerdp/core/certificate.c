@@ -791,6 +791,8 @@ rdpCertificate* certificate_clone(rdpCertificate* certificate)
 	if (certificate->cert_info.ModulusLength)
 	{
 		_certificate->cert_info.Modulus = (BYTE*) malloc(certificate->cert_info.ModulusLength);
+		if (!_certificate->cert_info.Modulus)
+			goto out_fail;
 		CopyMemory(_certificate->cert_info.Modulus, certificate->cert_info.Modulus, certificate->cert_info.ModulusLength);
 		_certificate->cert_info.ModulusLength = certificate->cert_info.ModulusLength;
 	}
@@ -798,11 +800,15 @@ rdpCertificate* certificate_clone(rdpCertificate* certificate)
 	if (certificate->x509_cert_chain)
 	{
 		_certificate->x509_cert_chain = (rdpX509CertChain*) malloc(sizeof(rdpX509CertChain));
+		if (!_certificate->x509_cert_chain)
+			goto out_fail;
 		CopyMemory(_certificate->x509_cert_chain, certificate->x509_cert_chain, sizeof(rdpX509CertChain));
 
 		if (certificate->x509_cert_chain->count)
 		{
 			_certificate->x509_cert_chain->array = (rdpCertBlob*) calloc(certificate->x509_cert_chain->count, sizeof(rdpCertBlob));
+			if (!_certificate->x509_cert_chain->array)
+				goto out_fail;
 
 			for (index = 0; index < certificate->x509_cert_chain->count; index++)
 			{
@@ -811,6 +817,15 @@ rdpCertificate* certificate_clone(rdpCertificate* certificate)
 				if (certificate->x509_cert_chain->array[index].length)
 				{
 					_certificate->x509_cert_chain->array[index].data = (BYTE*) malloc(certificate->x509_cert_chain->array[index].length);
+					if (!_certificate->x509_cert_chain->array[index].data)
+					{
+						for (--index; index >= 0; --index)
+						{
+							if (certificate->x509_cert_chain->array[index].length)
+								free(_certificate->x509_cert_chain->array[index].data);
+						}
+						goto out_fail;
+					}
 					CopyMemory(_certificate->x509_cert_chain->array[index].data, certificate->x509_cert_chain->array[index].data,
 							_certificate->x509_cert_chain->array[index].length);
 				}
@@ -819,6 +834,16 @@ rdpCertificate* certificate_clone(rdpCertificate* certificate)
 	}
 
 	return _certificate;
+
+out_fail:
+	if (_certificate->x509_cert_chain)
+	{
+		free(_certificate->x509_cert_chain->array);
+		free(_certificate->x509_cert_chain);
+	}
+	free(_certificate->cert_info.Modulus);
+	free(_certificate);
+	return NULL;
 }
 
 /**

@@ -151,6 +151,13 @@ wIniFileKey* IniFile_Key_New(const char* name, const char* value)
 	{
 		key->name = _strdup(name);
 		key->value = _strdup(value);
+		if (!key->name || !key->value)
+		{
+			free(key->name);
+			free(key->value);
+			free(key);
+			return NULL;
+		}
 	}
 
 	return key;
@@ -278,12 +285,9 @@ wIniFileKey* IniFile_AddKey(wIniFile* ini, wIniFileSection* section, const char*
 {
 	wIniFileKey* key;
 
-	if (!section)
+	if (!section || !name)
 		return NULL;
 	
-	if (!name)
-		return NULL;
-
 	key = IniFile_GetKey(ini, section, name);
 
 	if (!key)
@@ -302,6 +306,8 @@ wIniFileKey* IniFile_AddKey(wIniFile* ini, wIniFileSection* section, const char*
 		}
 
 		key = IniFile_Key_New(name, value);
+		if (!key)
+			return NULL;
 		section->keys[section->nKeys] = key;
 		section->nKeys++;
 	}
@@ -309,6 +315,8 @@ wIniFileKey* IniFile_AddKey(wIniFile* ini, wIniFileSection* section, const char*
 	{
 		free(key->value);
 		key->value = _strdup(value);
+		if (!key->value)
+			return NULL;
 	}
 
 	return key;
@@ -375,7 +383,11 @@ int IniFile_Load(wIniFile* ini)
 			
 			value = beg;
 
-			IniFile_AddKey(ini, section, name, value);
+			if (!IniFile_AddKey(ini, section, name, value))
+			{
+				return -1;
+			}
+
 			key = NULL;
 			if (section && section->keys)
 				key = section->keys[section->nKeys - 1];
@@ -412,6 +424,8 @@ int IniFile_ReadFile(wIniFile* ini, const char* filename)
 
 	free(ini->filename);
 	ini->filename = _strdup(filename);
+	if (!ini->filename)
+		return -1;
 
 	status = IniFile_Load_File(ini, filename);
 	

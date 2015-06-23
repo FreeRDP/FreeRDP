@@ -4,14 +4,21 @@ set(MODULE_PREFIX "TEST_WTSAPI")
 
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
+set(UNIX_ONLY
+	TestWtsApiShutdownSystem.c
+	TestWtsApiWaitSystemEvent.c
+	)
+
 set(${MODULE_PREFIX}_TESTS
 	TestWtsApiEnumerateProcesses.c
 	TestWtsApiEnumerateSessions.c
 	TestWtsApiQuerySessionInformation.c
-	TestWtsApiShutdownSystem.c
 	TestWtsApiSessionNotification.c
-	TestWtsApiWaitSystemEvent.c
 	)
+
+if(NOT WIN32)
+	set(${MODULE_PREFIX}_TESTS ${${MODULE_PREFIX}_TESTS} ${UNIX_ONLY})
+endif()
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}

@@ -7,4 +7,5 @@
 !/Sample
 !/Windows
 !/X11
+!/Wayland
 !/CMakeLists.txt

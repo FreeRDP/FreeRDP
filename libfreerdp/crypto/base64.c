@@ -125,6 +125,8 @@ static void* base64_decode(const char* s, int length, int* data_len)
 		return NULL;
 
 	q = data = (BYTE*) malloc(length / 4 * 3);
+	if (!q)
+		return NULL;
 
 	/* first treat complete blocks */
 	nBlocks = (length / 4);

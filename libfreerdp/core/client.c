@@ -237,6 +237,8 @@ int freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 			pChannelClientData->pChannelInitEventProc(pChannelClientData->pInitHandle, CHANNEL_EVENT_CONNECTED, hostname, hostnameLength);
 
 			name = (char*) malloc(9);
+			if (!name)
+				return -1;
 			CopyMemory(name, pChannelOpenData->name, 8);
 			name[8] = '\0';
 
@@ -449,6 +451,8 @@ int freerdp_channels_disconnect(rdpChannels* channels, freerdp* instance)
 		pChannelOpenData = &channels->openDataList[index];
 
 		name = (char*) malloc(9);
+		if (!name)
+			return -1;
 		CopyMemory(name, pChannelOpenData->name, 8);
 		name[8] = '\0';
 

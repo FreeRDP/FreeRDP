@@ -135,7 +135,7 @@ static void* named_pipe_server_thread(void* arg)
 		goto out;
 	}
 
-	if (!(lpReadBuffer = (BYTE*) malloc(PIPE_BUFFER_SIZE)))
+	if (!(lpReadBuffer = (BYTE*) calloc(1, PIPE_BUFFER_SIZE)))
 	{
 		printf("%s: Error allocating read buffer\n", __FUNCTION__);
 		goto out;
@@ -149,7 +149,6 @@ static void* named_pipe_server_thread(void* arg)
 
 	lpNumberOfBytesRead = 0;
 	nNumberOfBytesToRead = PIPE_BUFFER_SIZE;
-	ZeroMemory(lpReadBuffer, PIPE_BUFFER_SIZE);
 
 	if (!ReadFile(hNamedPipe, lpReadBuffer, nNumberOfBytesToRead, &lpNumberOfBytesRead, NULL) ||
 			lpNumberOfBytesRead != nNumberOfBytesToRead)

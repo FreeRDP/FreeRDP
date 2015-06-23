@@ -88,6 +88,8 @@ int shadow_server_print_command_line_help(int argc, char** argv)
 			{
 				length = (int) (strlen(arg->Name) + strlen(arg->Format) + 2);
 				str = (char*) malloc(length + 1);
+				if (!str)
+					return -1;
 				sprintf_s(str, length + 1, "%s:%s", arg->Name, arg->Format);
 				WLog_INFO(TAG, "%-20s", str);
 				free(str);
@@ -103,6 +105,8 @@ int shadow_server_print_command_line_help(int argc, char** argv)
 		{
 			length = (int) strlen(arg->Name) + 32;
 			str = (char*) malloc(length + 1);
+			if (!str)
+				return -1;
 			sprintf_s(str, length + 1, "%s (default:%s)", arg->Name,
 					arg->Default ? "on" : "off");
 
@@ -132,7 +136,8 @@ int shadow_server_command_line_status_print(rdpShadowServer* server, int argc, c
 	}
 	else if (status < 0)
 	{
-		shadow_server_print_command_line_help(argc, argv);
+		if (shadow_server_print_command_line_help(argc, argv) < 0)
+			return -1;
 		return COMMAND_LINE_STATUS_PRINT_HELP;
 	}
 
@@ -174,6 +179,8 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		CommandLineSwitchCase(arg, "ipc-socket")
 		{
 			server->ipcSocket = _strdup(arg->Value);
+			if (!server->ipcSocket)
+				return -1;
 		}
 		CommandLineSwitchCase(arg, "may-view")
 		{
@@ -189,7 +196,6 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			char* tok[4];
 			int x, y, w, h;
 			char* str = _strdup(arg->Value);
-
 			if (!str)
 				return -1;
 
@@ -499,10 +505,11 @@ int shadow_server_init_config_path(rdpShadowServer* server)
 	return 1;
 }
 
-int shadow_server_init_certificate(rdpShadowServer* server)
+static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 {
 	char* filepath;
-	MAKECERT_CONTEXT* makecert;
+	MAKECERT_CONTEXT* makecert = NULL;
+	BOOL ret = FALSE;
 
 	const char* makecert_argv[6] =
 	{
@@ -519,44 +526,58 @@ int shadow_server_init_certificate(rdpShadowServer* server)
 		!PathMakePathA(server->ConfigPath, 0))
 	{
 		WLog_ERR(TAG, "Failed to create directory '%s'", server->ConfigPath);
-		return -1;
+		return FALSE;
 	}
 
 	if (!(filepath = GetCombinedPath(server->ConfigPath, "shadow")))
-		return -1;
+		return FALSE;
 
 	if (!PathFileExistsA(filepath) &&
 		!PathMakePathA(filepath, 0))
 	{
-		WLog_ERR(TAG, "Failed to create directory '%s'", filepath);
-		free(filepath);
-		return -1;
+		if (!CreateDirectoryA(filepath, 0))
+		{
+			WLog_ERR(TAG, "Failed to create directory '%s'", filepath);
+			goto out_fail;
+		}
 	}
 
 	server->CertificateFile = GetCombinedPath(filepath, "shadow.crt");
 	server->PrivateKeyFile = GetCombinedPath(filepath, "shadow.key");
+	if (!server->CertificateFile || !server->PrivateKeyFile)
+		goto out_fail;
 
 	if ((!PathFileExistsA(server->CertificateFile)) ||
 			(!PathFileExistsA(server->PrivateKeyFile)))
 	{
 		makecert = makecert_context_new();
+		if (!makecert)
+			goto out_fail;
 
-		makecert_context_process(makecert, makecert_argc, (char**) makecert_argv);
+		if (makecert_context_process(makecert, makecert_argc, (char**) makecert_argv) != 1)
+			goto out_fail;
 
-		makecert_context_set_output_file_name(makecert, "shadow");
+		if (!makecert_context_set_output_file_name(makecert, "shadow") != 1)
+			goto out_fail;
 
 		if (!PathFileExistsA(server->CertificateFile))
-			makecert_context_output_certificate_file(makecert, filepath);
+		{
+			if (makecert_context_output_certificate_file(makecert, filepath) != 1)
+				goto out_fail;
+		}
 
 		if (!PathFileExistsA(server->PrivateKeyFile))
-			makecert_context_output_private_key_file(makecert, filepath);
-
-		makecert_context_free(makecert);
+		{
+			if (makecert_context_output_private_key_file(makecert, filepath) != 1)
+				goto out_fail;
+		}
 	}
-
+	ret = TRUE;
+out_fail:
+	makecert_context_free(makecert);
 	free(filepath);
 
-	return 1;
+	return ret;
 }
 
 int shadow_server_init(rdpShadowServer* server)

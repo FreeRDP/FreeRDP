@@ -240,10 +240,9 @@ int schannel_send(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phCont
 	ZeroMemory(&StreamSizes, sizeof(SecPkgContext_StreamSizes));
 	status = table->QueryContextAttributes(phContext, SECPKG_ATTR_STREAM_SIZES, &StreamSizes);
 	ioBufferLength = StreamSizes.cbHeader + StreamSizes.cbMaximumMessage + StreamSizes.cbTrailer;
-	ioBuffer = (BYTE*) malloc(ioBufferLength);
+	ioBuffer = (BYTE*) calloc(1, ioBufferLength);
 	if (!ioBuffer)
 		return -1;
-	ZeroMemory(ioBuffer, ioBufferLength);
 	pMessageBuffer = ioBuffer + StreamSizes.cbHeader;
 	CopyMemory(pMessageBuffer, buffer, length);
 	Buffers[0].pvBuffer = ioBuffer;
@@ -298,10 +297,9 @@ int schannel_recv(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phCont
 	ZeroMemory(&StreamSizes, sizeof(SecPkgContext_StreamSizes));
 	status = table->QueryContextAttributes(phContext, SECPKG_ATTR_STREAM_SIZES, &StreamSizes);
 	ioBufferLength = StreamSizes.cbHeader + StreamSizes.cbMaximumMessage + StreamSizes.cbTrailer;
-	ioBuffer = (BYTE*) malloc(ioBufferLength);
+	ioBuffer = (BYTE*) calloc(1, ioBufferLength);
 	if (!ioBuffer)
 		return -1;
-	ZeroMemory(ioBuffer, ioBufferLength);
 
 	if (!ReadFile(hPipe, ioBuffer, ioBufferLength, &NumberOfBytesRead, NULL))
 	{

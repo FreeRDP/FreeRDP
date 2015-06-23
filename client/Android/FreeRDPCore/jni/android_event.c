@@ -69,20 +69,20 @@ void android_clear_event(ANDROID_EVENT_QUEUE * queue)
 	}
 }
 
-void android_push_event(freerdp * inst, ANDROID_EVENT* event)
+BOOL android_push_event(freerdp * inst, ANDROID_EVENT* event)
 {
 
 	androidContext* aCtx = (androidContext*)inst->context;
 	if (aCtx->event_queue->count >= aCtx->event_queue->size)
 	{
 		int new_size;
-		int new_events;
+		void* new_events;
 
 		new_size = aCtx->event_queue->size * 2;
 		new_events = realloc((void*) aCtx->event_queue->events,
 				sizeof(ANDROID_EVENT*) * new_size);
 		if (!new_events)
-			return;
+			return FALSE;
 		aCtx->event_queue->events = new_events;
 		aCtx->event_queue->size = new_size;
 	}
@@ -90,6 +90,7 @@ void android_push_event(freerdp * inst, ANDROID_EVENT* event)
 	aCtx->event_queue->events[(aCtx->event_queue->count)++] = event;
 
 	android_set_event(aCtx->event_queue);
+	return TRUE;
 }
 
 ANDROID_EVENT* android_peek_event(ANDROID_EVENT_QUEUE * queue)
@@ -226,8 +227,9 @@ ANDROID_EVENT_KEY* android_event_key_new(int flags, UINT16 scancode)
 {
 	ANDROID_EVENT_KEY* event;
 
-	event = (ANDROID_EVENT_KEY*) malloc(sizeof(ANDROID_EVENT_KEY));
-	memset(event, 0, sizeof(ANDROID_EVENT_KEY));
+	event = (ANDROID_EVENT_KEY*) calloc(1, sizeof(ANDROID_EVENT_KEY));
+	if (!event)
+		return NULL;
 
 	event->type = EVENT_TYPE_KEY;
 	event->flags = flags;
@@ -245,8 +247,9 @@ ANDROID_EVENT_KEY* android_event_unicodekey_new(UINT16 key)
 {
 	ANDROID_EVENT_KEY* event;
 
-	event = (ANDROID_EVENT_KEY*) malloc(sizeof(ANDROID_EVENT_KEY));
-	memset(event, 0, sizeof(ANDROID_EVENT_KEY));
+	event = (ANDROID_EVENT_KEY*) calloc(1, sizeof(ANDROID_EVENT_KEY));
+	if (!event)
+		return NULL;
 
 	event->type = EVENT_TYPE_KEY_UNICODE;
 	event->scancode = key;
@@ -263,8 +266,9 @@ ANDROID_EVENT_CURSOR* android_event_cursor_new(UINT16 flags, UINT16 x, UINT16 y)
 {
 	ANDROID_EVENT_CURSOR* event;
 
-	event = (ANDROID_EVENT_CURSOR*) malloc(sizeof(ANDROID_EVENT_CURSOR));
-	memset(event, 0, sizeof(ANDROID_EVENT_CURSOR));
+	event = (ANDROID_EVENT_CURSOR*) calloc(1, sizeof(ANDROID_EVENT_CURSOR));
+	if (!event)
+		return NULL;
 
 	event->type = EVENT_TYPE_CURSOR;
 	event->x = x;
@@ -283,8 +287,9 @@ ANDROID_EVENT* android_event_disconnect_new()
 {
 	ANDROID_EVENT* event;
 
-	event = (ANDROID_EVENT*) malloc(sizeof(ANDROID_EVENT));
-	memset(event, 0, sizeof(ANDROID_EVENT));
+	event = (ANDROID_EVENT*) calloc(1, sizeof(ANDROID_EVENT));
+	if (!event)
+		return NULL;
 
 	event->type = EVENT_TYPE_DISCONNECT;
 	return event;
@@ -299,13 +304,19 @@ ANDROID_EVENT_CLIPBOARD* android_event_clipboard_new(void* data, int data_length
 {
 	ANDROID_EVENT_CLIPBOARD* event;
 
-	event = (ANDROID_EVENT_CLIPBOARD*) malloc(sizeof(ANDROID_EVENT_CLIPBOARD));
-	memset(event, 0, sizeof(ANDROID_EVENT_CLIPBOARD));
+	event = (ANDROID_EVENT_CLIPBOARD*) calloc(1, sizeof(ANDROID_EVENT_CLIPBOARD));
+	if (!event)
+		return NULL;
 
 	event->type = EVENT_TYPE_CLIPBOARD;
 	if (data)
 	{
 		event->data = malloc(data_length);
+		if (!event->data)
+		{
+			free(event);
+			return NULL;
+		}
 		memcpy(event->data, data, data_length);
 		event->data_length = data_length;
 	}
@@ -322,12 +333,16 @@ void android_event_clipboard_free(ANDROID_EVENT_CLIPBOARD* event)
 	}
 }
 
-void android_event_queue_init(freerdp * inst)
+BOOL android_event_queue_init(freerdp * inst)
 {
 	androidContext* aCtx = (androidContext*)inst->context;
 
-	aCtx->event_queue = (ANDROID_EVENT_QUEUE*) malloc(sizeof(ANDROID_EVENT_QUEUE));
-	memset(aCtx->event_queue, 0, sizeof(ANDROID_EVENT_QUEUE));
+	aCtx->event_queue = (ANDROID_EVENT_QUEUE*) calloc(1, sizeof(ANDROID_EVENT_QUEUE));
+	if (!aCtx->event_queue)
+	{
+		WLog_ERR(TAG, "android_event_queue_init: memory allocation failed");
+		return FALSE;
+	}
 
 	aCtx->event_queue->pipe_fd[0] = -1;
 	aCtx->event_queue->pipe_fd[1] = -1;
@@ -335,9 +350,21 @@ void android_event_queue_init(freerdp * inst)
 	aCtx->event_queue->size = 16;
 	aCtx->event_queue->count = 0;
 	aCtx->event_queue->events = (ANDROID_EVENT**) malloc(sizeof(ANDROID_EVENT*) * aCtx->event_queue->size);
+	if (!aCtx->event_queue->events)
+	{
+		WLog_ERR(TAG, "android_event_queue_init: memory allocation failed");
+		free(aCtx->event_queue);
+		return FALSE;
+	}
 
 	if (pipe(aCtx->event_queue->pipe_fd) < 0)
-		WLog_ERR(TAG, "android_pre_connect: pipe failed");
+	{
+		WLog_ERR(TAG, "android_event_queue_init: pipe creation failed");
+		free(aCtx->event_queue->events);
+		free(aCtx->event_queue);
+		return FALSE;
+	}
+	return TRUE;
 }
 
 void android_event_queue_uninit(freerdp * inst)

@@ -1010,6 +1010,11 @@ int TestFreeRDPCodecProgressive(int argc, char* argv[])
 	char* ms_sample_path;
 
 	ms_sample_path = _strdup("/tmp/EGFX_PROGRESSIVE_MS_SAMPLE");
+	if (!ms_sample_path)
+	{
+		printf("Memory allocation failed\n");
+		return -1;
+	}
 
 	if (PathFileExistsA(ms_sample_path))
 		return test_progressive_ms_sample(ms_sample_path);
