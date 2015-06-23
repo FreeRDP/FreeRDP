@@ -891,14 +891,18 @@ BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s)
 	{
 		return FALSE;
 	}
-
 	nla->identity->DomainLength = (UINT32) length;
-	nla->identity->Domain = (UINT16*) malloc(length);
-	if (!nla->identity->Domain)
-		return FALSE;
-	CopyMemory(nla->identity->Domain, Stream_Pointer(s), nla->identity->DomainLength);
-	Stream_Seek(s, nla->identity->DomainLength);
-	nla->identity->DomainLength /= 2;
+	if (nla->identity->DomainLength > 0)
+	{
+		nla->identity->Domain = (UINT16*) malloc(length);
+		if (!nla->identity->Domain)
+			return FALSE;
+		CopyMemory(nla->identity->Domain, Stream_Pointer(s), nla->identity->DomainLength);
+		Stream_Seek(s, nla->identity->DomainLength);
+		nla->identity->DomainLength /= 2;
+	}
+	else
+		nla->identity->Domain = NULL;
 
 	/* [1] userName (OCTET STRING) */
 	if (!ber_read_contextual_tag(s, 1, &length, TRUE) ||
@@ -907,12 +911,17 @@ BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s)
 		return FALSE;
 	}
 	nla->identity->UserLength = (UINT32) length;
-	nla->identity->User = (UINT16*) malloc(length);
-	if (!nla->identity->User)
-		return FALSE;
-	CopyMemory(nla->identity->User, Stream_Pointer(s), nla->identity->UserLength);
-	Stream_Seek(s, nla->identity->UserLength);
-	nla->identity->UserLength /= 2;
+	if (nla->identity->PasswordLength > 0)
+	{
+		nla->identity->User = (UINT16 *) malloc(length);
+		if (!nla->identity->User)
+			return FALSE;
+		CopyMemory(nla->identity->User, Stream_Pointer(s), nla->identity->UserLength);
+		Stream_Seek(s, nla->identity->UserLength);
+		nla->identity->UserLength /= 2;
+	}
+	else
+		nla->identity->User = NULL;
 
 	/* [2] password (OCTET STRING) */
 	if (!ber_read_contextual_tag(s, 2, &length, TRUE) ||
@@ -921,12 +930,18 @@ BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s)
 		return FALSE;
 	}
 	nla->identity->PasswordLength = (UINT32) length;
-	nla->identity->Password = (UINT16*) malloc(length);
-	if (!nla->identity->Password)
-		return FALSE;
-	CopyMemory(nla->identity->Password, Stream_Pointer(s), nla->identity->PasswordLength);
-	Stream_Seek(s, nla->identity->PasswordLength);
-	nla->identity->PasswordLength /= 2;
+	if (nla->identity->PasswordLength > 0)
+	{
+		nla->identity->Password = (UINT16 *) malloc(length);
+		if (!nla->identity->Password)
+			return FALSE;
+		CopyMemory(nla->identity->Password, Stream_Pointer(s), nla->identity->PasswordLength);
+		Stream_Seek(s, nla->identity->PasswordLength);
+		nla->identity->PasswordLength /= 2;
+	}
+	else
+		nla->identity->Password = NULL;
+
 	nla->identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 
 	return TRUE;
