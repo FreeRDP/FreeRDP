@@ -794,7 +794,7 @@ int transport_check_fds(rdpTransport* transport)
 
 		if (recv_status < 0)
 		{
-			WLog_DBG(TAG, "transport_check_fds: transport->ReceiveCallback() - %i", recv_status);
+			WLog_ERR(TAG, "transport_check_fds: transport->ReceiveCallback() - %i", recv_status);
 			return -1;
 		}
 	}
@@ -941,7 +941,7 @@ static void* transport_client_thread(void* arg)
 		{
 			if (!freerdp_check_event_handles(context))
 			{
-				WLog_DBG(TAG, "freerdp_check_event_handles()");
+				WLog_ERR(TAG, "freerdp_check_event_handles()");
 				rdp_set_error_info(rdp, ERRINFO_PEER_DISCONNECTED);
 				break;
 			}

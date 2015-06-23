@@ -246,14 +246,14 @@ BOOL freerdp_check_event_handles(rdpContext* context)
 
 	if (!status)
 	{
-		WLog_DBG(TAG, "freerdp_check_event_handles: freerdp_check_fds() - %i", status);
+		WLog_ERR(TAG, "freerdp_check_fds() failed - %i", status);
 		return FALSE;
 	}
 
 	status = freerdp_channels_check_fds(context->channels, context->instance);
 	if (!status)
 	{
-		WLog_DBG(TAG, "freerdp_check_event_handles: freerdp_channels_check_fds() - %i", status);
+		WLog_ERR(TAG, "freerdp_channels_check_fds() failed - %i", status);
 		return FALSE;
 	}
 

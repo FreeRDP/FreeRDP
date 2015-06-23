@@ -53,7 +53,7 @@ BOOL update_recv_orders(rdpUpdate* update, wStream* s)
 
 	if (Stream_GetRemainingLength(s) < 6)
 	{
-		WLog_DBG(TAG, "Stream_GetRemainingLength(s) < 6");
+		WLog_ERR(TAG, "Stream_GetRemainingLength(s) < 6");
 		return FALSE;
 	}
 
@@ -65,7 +65,7 @@ BOOL update_recv_orders(rdpUpdate* update, wStream* s)
 	{
 		if (!update_recv_order(update, s))
 		{
-			WLog_DBG(TAG, "update_recv_order() failed");
+			WLog_ERR(TAG, "update_recv_order() failed");
 			return FALSE;
 		}
 
@@ -495,7 +495,7 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 
 	if (Stream_GetRemainingLength(s) < 2)
 	{
-		WLog_DBG(TAG, "Stream_GetRemainingLength(s) < 2");
+		WLog_ERR(TAG, "Stream_GetRemainingLength(s) < 2");
 		return FALSE;
 	}
 
@@ -510,7 +510,7 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 			if (!update_recv_orders(update, s))
 			{
 				/* XXX: Do we have to call EndPaint? */
-				WLog_DBG(TAG, "UPDATE_TYPE_ORDERS - update_recv_orders() failed");
+				WLog_ERR(TAG, "UPDATE_TYPE_ORDERS - update_recv_orders() failed");
 				return FALSE;
 			}
 			break;
@@ -518,7 +518,7 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 		case UPDATE_TYPE_BITMAP:
 			if (!update_read_bitmap_update(update, s, &update->bitmap_update))
 			{
-				WLog_DBG(TAG, "UPDATE_TYPE_BITMAP - update_read_bitmap_update() failed");
+				WLog_ERR(TAG, "UPDATE_TYPE_BITMAP - update_read_bitmap_update() failed");
 				return FALSE;
 			}
 			IFCALL(update->BitmapUpdate, context, &update->bitmap_update);
@@ -527,7 +527,7 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 		case UPDATE_TYPE_PALETTE:
 			if (!update_read_palette(update, s, &update->palette_update))
 			{
-				WLog_DBG(TAG, "UPDATE_TYPE_PALETTE - update_read_palette() failed");
+				WLog_ERR(TAG, "UPDATE_TYPE_PALETTE - update_read_palette() failed");
 				return FALSE;
 			}
 			IFCALL(update->Palette, context, &update->palette_update);

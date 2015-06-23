@@ -769,7 +769,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 
 	if (!rdp_read_share_data_header(s, &length, &type, &shareId, &compressedType, &compressedLength))
 	{
-		WLog_DBG(TAG, "rdp_read_share_data_header() failed");
+		WLog_ERR(TAG, "rdp_read_share_data_header() failed");
 		return -1;
 	}
 
@@ -819,7 +819,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 		case DATA_PDU_TYPE_UPDATE:
 			if (!update_recv(rdp->update, cs))
 			{
-				WLog_DBG(TAG, "DATA_PDU_TYPE_UPDATE - update_recv() failed");
+				WLog_ERR(TAG, "DATA_PDU_TYPE_UPDATE - update_recv() failed");
 				goto out_fail;
 			}
 			break;
@@ -827,7 +827,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 		case DATA_PDU_TYPE_CONTROL:
 			if (!rdp_recv_server_control_pdu(rdp, cs))
 			{
-				WLog_DBG(TAG, "DATA_PDU_TYPE_CONTROL - rdp_recv_server_control_pdu() failed");
+				WLog_ERR(TAG, "DATA_PDU_TYPE_CONTROL - rdp_recv_server_control_pdu() failed");
 				goto out_fail;
 			}
 			break;
@@ -835,7 +835,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 		case DATA_PDU_TYPE_POINTER:
 			if (!update_recv_pointer(rdp->update, cs))
 			{
-				WLog_DBG(TAG, "DATA_PDU_TYPE_POINTER - update_recv_pointer() failed");
+				WLog_ERR(TAG, "DATA_PDU_TYPE_POINTER - update_recv_pointer() failed");
 				goto out_fail;
 			}
 			break;
@@ -843,7 +843,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 		case DATA_PDU_TYPE_SYNCHRONIZE:
 			if (!rdp_recv_synchronize_pdu(rdp, cs))
 			{
-				WLog_DBG(TAG, "DATA_PDU_TYPE_SYNCHRONIZE - rdp_recv_synchronize_pdu() failed");
+				WLog_ERR(TAG, "DATA_PDU_TYPE_SYNCHRONIZE - rdp_recv_synchronize_pdu() failed");
 				goto out_fail;
 			}
 			break;
@@ -851,7 +851,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 		case DATA_PDU_TYPE_PLAY_SOUND:
 			if (!update_recv_play_sound(rdp->update, cs))
 			{
-				WLog_DBG(TAG, "DATA_PDU_TYPE_PLAY_SOUND - update_recv_play_sound() failed");
+				WLog_ERR(TAG, "DATA_PDU_TYPE_PLAY_SOUND - update_recv_play_sound() failed");
 				goto out_fail;
 			}
 			break;
@@ -859,7 +859,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 		case DATA_PDU_TYPE_SHUTDOWN_DENIED:
 			if (!rdp_recv_server_shutdown_denied_pdu(rdp, cs))
 			{
-				WLog_DBG(TAG, "DATA_PDU_TYPE_SHUTDOWN_DENIED - rdp_recv_server_shutdown_denied_pdu() failed");
+				WLog_ERR(TAG, "DATA_PDU_TYPE_SHUTDOWN_DENIED - rdp_recv_server_shutdown_denied_pdu() failed");
 				goto out_fail;
 			}
 			break;
@@ -867,7 +867,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 		case DATA_PDU_TYPE_SAVE_SESSION_INFO:
 			if (!rdp_recv_save_session_info(rdp, cs))
 			{
-				WLog_DBG(TAG, "DATA_PDU_TYPE_SAVE_SESSION_INFO - rdp_recv_save_session_info() failed");
+				WLog_ERR(TAG, "DATA_PDU_TYPE_SAVE_SESSION_INFO - rdp_recv_save_session_info() failed");
 				goto out_fail;
 			}
 			break;
@@ -875,7 +875,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 		case DATA_PDU_TYPE_FONT_MAP:
 			if (!rdp_recv_font_map_pdu(rdp, cs))
 			{
-				WLog_DBG(TAG, "DATA_PDU_TYPE_FONT_MAP - rdp_recv_font_map_pdu() failed");
+				WLog_ERR(TAG, "DATA_PDU_TYPE_FONT_MAP - rdp_recv_font_map_pdu() failed");
 				goto out_fail;
 			}
 			break;
@@ -883,7 +883,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 		case DATA_PDU_TYPE_SET_KEYBOARD_INDICATORS:
 			if (!rdp_recv_server_set_keyboard_indicators_pdu(rdp, cs))
 			{
-				WLog_DBG(TAG, "DATA_PDU_TYPE_SET_KEYBOARD_INDICATORS - rdp_recv_server_set_keyboard_indicators_pdu() failed");
+				WLog_ERR(TAG, "DATA_PDU_TYPE_SET_KEYBOARD_INDICATORS - rdp_recv_server_set_keyboard_indicators_pdu() failed");
 				goto out_fail;
 			}
 			break;
@@ -891,7 +891,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 		case DATA_PDU_TYPE_SET_KEYBOARD_IME_STATUS:
 			if (!rdp_recv_server_set_keyboard_ime_status_pdu(rdp, cs))
 			{
-				WLog_DBG(TAG, "DATA_PDU_TYPE_SET_KEYBOARD_IME_STATUS - rdp_recv_server_set_keyboard_ime_status_pdu() failed");
+				WLog_ERR(TAG, "DATA_PDU_TYPE_SET_KEYBOARD_IME_STATUS - rdp_recv_server_set_keyboard_ime_status_pdu() failed");
 				goto out_fail;
 			}
 			break;
@@ -899,7 +899,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 		case DATA_PDU_TYPE_SET_ERROR_INFO:
 			if (!rdp_recv_set_error_info_data_pdu(rdp, cs))
 			{
-				WLog_DBG(TAG, "DATA_PDU_TYPE_SET_ERROR_INFO - rdp_recv_set_error_info_data_pdu() failed");
+				WLog_ERR(TAG, "DATA_PDU_TYPE_SET_ERROR_INFO - rdp_recv_set_error_info_data_pdu() failed");
 				goto out_fail;
 			}
 			break;
@@ -907,7 +907,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 		case DATA_PDU_TYPE_ARC_STATUS:
 			if (!rdp_recv_server_auto_reconnect_status_pdu(rdp, cs))
 			{
-				WLog_DBG(TAG, "DATA_PDU_TYPE_ARC_STATUS - rdp_recv_server_auto_reconnect_status_pdu() failed");
+				WLog_ERR(TAG, "DATA_PDU_TYPE_ARC_STATUS - rdp_recv_server_auto_reconnect_status_pdu() failed");
 				goto out_fail;
 			}
 			break;
@@ -915,7 +915,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 		case DATA_PDU_TYPE_STATUS_INFO:
 			if (!rdp_recv_server_status_info_pdu(rdp, cs))
 			{
-				WLog_DBG(TAG, "DATA_PDU_TYPE_STATUS_INFO - rdp_recv_server_status_info_pdu() failed");
+				WLog_ERR(TAG, "DATA_PDU_TYPE_STATUS_INFO - rdp_recv_server_status_info_pdu() failed");
 				goto out_fail;
 			}
 			break;
@@ -923,7 +923,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 		case DATA_PDU_TYPE_MONITOR_LAYOUT:
 			if (!rdp_recv_monitor_layout_pdu(rdp, cs))
 			{
-				WLog_DBG(TAG, "DATA_PDU_TYPE_MONITOR_LAYOUT - rdp_recv_monitor_layout_pdu() failed");
+				WLog_ERR(TAG, "DATA_PDU_TYPE_MONITOR_LAYOUT - rdp_recv_monitor_layout_pdu() failed");
 				goto out_fail;
 			}
 			break;
@@ -1138,7 +1138,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	{
 		if (!rdp_read_security_header(s, &securityFlags))
 		{
-			WLog_DBG(TAG, "rdp_recv_tpkt_pdu: rdp_read_security_header() fail");
+			WLog_ERR(TAG, "rdp_recv_tpkt_pdu: rdp_read_security_header() fail");
 			return -1;
 		}
 
@@ -1171,7 +1171,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 
 			if (!rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource))
 			{
-				WLog_DBG(TAG, "rdp_recv_tpkt_pdu: rdp_read_share_control_header() fail");
+				WLog_ERR(TAG, "rdp_recv_tpkt_pdu: rdp_read_share_control_header() fail");
 				return -1;
 			}
 
@@ -1192,7 +1192,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 				case PDU_TYPE_DEACTIVATE_ALL:
 					if (!rdp_recv_deactivate_all(rdp, s))
 					{
-						WLog_DBG(TAG, "rdp_recv_tpkt_pdu: rdp_recv_deactivate_all() fail");
+						WLog_ERR(TAG, "rdp_recv_tpkt_pdu: rdp_recv_deactivate_all() fail");
 						return -1;
 					}
 					break;
@@ -1222,7 +1222,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	{
 		if (!freerdp_channel_process(rdp->instance, s, channelId))
 		{
-			WLog_DBG(TAG, "rdp_recv_tpkt_pdu: freerdp_channel_process() fail");
+			WLog_ERR(TAG, "rdp_recv_tpkt_pdu: freerdp_channel_process() fail");
 			return -1;
 		}
 	}
@@ -1239,7 +1239,7 @@ static int rdp_recv_fastpath_pdu(rdpRdp* rdp, wStream* s)
 
 	if (!fastpath_read_header_rdp(fastpath, s, &length))
 	{
-		WLog_DBG(TAG, "rdp_recv_fastpath_pdu: fastpath_read_header_rdp() fail");
+		WLog_ERR(TAG, "rdp_recv_fastpath_pdu: fastpath_read_header_rdp() fail");
 		return -1;
 	}
 
@@ -1260,7 +1260,7 @@ static int rdp_recv_fastpath_pdu(rdpRdp* rdp, wStream* s)
 
 		if (!rdp_decrypt(rdp, s, length, flags))
 		{
-			WLog_DBG(TAG, "rdp_recv_fastpath_pdu: rdp_decrypt() fail");
+			WLog_ERR(TAG, "rdp_recv_fastpath_pdu: rdp_decrypt() fail");
 			return -1;
 		}
 	}
@@ -1298,7 +1298,7 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 		case CONNECTION_STATE_NLA:
 			if (nla_recv_pdu(rdp->nla, s) < 1)
 			{
-				WLog_DBG(TAG, "rdp_recv_callback: CONNECTION_STATE_NLA - nla_recv_pdu() fail");
+				WLog_ERR(TAG, "rdp_recv_callback: CONNECTION_STATE_NLA - nla_recv_pdu() fail");
 				return -1;
 			}
 
@@ -1311,7 +1311,7 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 
 				if (!mcs_client_begin(rdp->mcs))
 				{
-					WLog_DBG(TAG, "rdp_recv_callback: CONNECTION_STATE_NLA - mcs_client_begin() fail");
+					WLog_ERR(TAG, "rdp_recv_callback: CONNECTION_STATE_NLA - mcs_client_begin() fail");
 					return -1;
 				}
 			}
@@ -1359,7 +1359,7 @@ int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 		case CONNECTION_STATE_MCS_CHANNEL_JOIN:
 			if (!rdp_client_connect_mcs_channel_join_confirm(rdp, s))
 			{
-				WLog_DBG(TAG, "rdp_recv_callback: CONNECTION_STATE_MCS_CHANNEL_JOIN - rdp_client_connect_mcs_channel_join_confirm() fail");
+				WLog_ERR(TAG, "rdp_recv_callback: CONNECTION_STATE_MCS_CHANNEL_JOIN - rdp_client_connect_mcs_channel_join_confirm() fail");
 				status = -1;
 			}
 			break;
@@ -1438,7 +1438,7 @@ int rdp_check_fds(rdpRdp* rdp)
 
 		if (status < 0)
 		{
-			WLog_DBG(TAG, "rdp_check_fds: tsg_check_event_handles() - %i", status);
+			WLog_ERR(TAG, "rdp_check_fds: tsg_check_event_handles() - %i", status);
 			return -1;
 		}
 
