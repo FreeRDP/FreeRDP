@@ -207,7 +207,7 @@ int rdp_redirection_apply_settings(rdpRdp* rdp)
 			settings->TargetNetAddresses[i] = _strdup(redirection->TargetNetAddresses[i]);
 			if (!settings->TargetNetAddresses[i])
 			{
-				for (--i; i >= 0; --i)
+				for (; i > 0; --i)
 					free(settings->TargetNetAddresses[i]);
 				return -1;
 			}

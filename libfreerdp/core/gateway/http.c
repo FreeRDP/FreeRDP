@@ -615,7 +615,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 	int position;
 	char* line;
 	char* buffer;
-	char* header;
+	char* header = NULL;
 	char* payload;
 	int bodyLength;
 	int payloadOffset;
@@ -728,8 +728,6 @@ HttpResponse* http_response_recv(rdpTls* tls)
 				count++;
 			}
 
-			free(header);
-
 			if (!http_response_parse_header(response))
 				goto out_error;
 
@@ -779,10 +777,12 @@ HttpResponse* http_response_recv(rdpTls* tls)
 		}
 	}
 
+	free(header);
 	Stream_Free(s, TRUE);
 	return response;
 out_error:
 	http_response_free(response);
+	free(header);
 out_free:
 	Stream_Free(s, TRUE);
 	return NULL;

@@ -19,10 +19,10 @@ static LPTSTR lpszPipeName = _T("\\\\.\\pipe\\winpr_test_pipe_overlapped");
 static void* named_pipe_client_thread(void* arg)
 {
 	DWORD status;
-	HANDLE hEvent;
-	HANDLE hNamedPipe;
-	BYTE* lpReadBuffer;
-	BYTE* lpWriteBuffer;
+	HANDLE hEvent = NULL;
+	HANDLE hNamedPipe = NULL;
+	BYTE* lpReadBuffer = NULL;
+	BYTE* lpWriteBuffer = NULL;
 	BOOL fSuccess = FALSE;
 	OVERLAPPED overlapped;
 	DWORD nNumberOfBytesToRead;

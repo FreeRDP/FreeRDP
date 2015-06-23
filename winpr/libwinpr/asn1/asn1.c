@@ -117,7 +117,8 @@ LABEL_ENCODER_COMPLETE:
 			{
 				//if (ASN1BEREncCheck(encoder, 1))
 				{
-					*encoder->buf = 0;
+					if (encoder->buf)
+						*encoder->buf = 0;
 LABEL_SET_BUFFER:
 					if (pParent)
 						pParent[1].version = (ASN1uint32_t) encoder;

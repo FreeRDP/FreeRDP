@@ -184,7 +184,7 @@ int freerdp_assistance_parse_address_list(rdpAssistanceFile* file, char* list)
 		file->MachinePorts[i] = (UINT32) atoi(q);
 
 		if (!file->MachineAddresses[i])
-			return -1;
+			goto out;
 
 		q[-1] = ':';
 	}
