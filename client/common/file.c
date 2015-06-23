@@ -277,6 +277,9 @@ static int freerdp_client_rdp_file_set_string(rdpFile* file, const char* name, c
 	WLog_DBG(TAG,  "%s:s:%s", name, value);
 #endif
 
+	if (!file)
+		return -1;
+
 	if (_stricmp(name, "username") == 0)
 		tmp = &file->Username;
 	else if (_stricmp(name, "domain") == 0)
@@ -323,6 +326,9 @@ static int freerdp_client_rdp_file_set_string(rdpFile* file, const char* name, c
 
 	if (index >= 0)
 	{
+		if (!file->lines)
+			return -1;
+
 		file->lines[index].name = _strdup(name);
 		file->lines[index].sValue = _strdup(value);
 		if (!file->lines[index].name || !file->lines[index].sValue)

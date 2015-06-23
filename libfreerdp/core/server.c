@@ -200,7 +200,7 @@ static BOOL wts_read_drdynvc_data_first(rdpPeerChannel* channel, wStream* s, int
 
 static BOOL wts_read_drdynvc_data(rdpPeerChannel* channel, wStream* s, UINT32 length)
 {
-	BOOL ret;
+	BOOL ret = FALSE;
 	if (channel->dvc_total_length > 0)
 	{
 		if (Stream_GetPosition(channel->receiveData) + length > channel->dvc_total_length)

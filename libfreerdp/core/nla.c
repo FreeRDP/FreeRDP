@@ -167,6 +167,12 @@ int nla_client_init(rdpNla* nla)
 	{
 		SEC_WINNT_AUTH_IDENTITY* identity = nla->identity;
 
+		if (!identity)
+		{
+			WLog_ERR(TAG, "NLA identity=%p", identity);
+			return -1;
+		}
+
 		if (settings->RestrictedAdminModeRequired)
 		{
 			if (settings->PasswordHash)
