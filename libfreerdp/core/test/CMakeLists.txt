@@ -22,6 +22,7 @@ create_test_sourcelist(${MODULE_PREFIX}_SRCS
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 add_definitions(-DTESTING_OUTPUT_DIRECTORY="${CMAKE_BINARY_DIR}")
+add_definitions(-DTESTING_SRC_DIRECTORY="${CMAKE_SOURCE_DIR}")
 
 target_link_libraries(${MODULE_NAME} freerdp-client freerdp winpr)
 

@@ -161,44 +161,61 @@ static int testSuccess(void)
 		NULL
 	};
 	char* path = TESTING_OUTPUT_DIRECTORY;
+	char* wpath = TESTING_SRC_DIRECTORY;
 	char* exe = GetCombinedPath(path, "server");
+	char* wexe = GetCombinedPath(wpath, "server");
 
-	if (!exe)
+	if (!exe || !wexe)
+	{
+		free(exe);
+		free(wexe);
 		return -2;
+	}
 
 	path = GetCombinedPath(exe, "Sample");
+	wpath = GetCombinedPath(wexe, "Sample");
 	free(exe);
+	free(wexe);
 
-	if (!path)
+	if (!path || !wpath)
+	{
+		free(path);
+		free(wpath);
 		return -2;
+	}
 
 	exe = GetCombinedPath(path, "sfreerdp-server");
 
 	if (!exe)
 	{
 		free(path);
+		free(wpath);
 		return -2;
 	}
 
 	printf("Sample Server: %s\n", exe);
+	printf("Workspace: %s\n", wpath);
 	if (!PathFileExistsA(exe))
 	{
 		free(path);
+		free(wpath);
 		free(exe);
 		return -2;
 	}
 
 	// Start sample server locally. 
 	if (!CreateProcessA(exe, exe, NULL, NULL, FALSE, 0, NULL,
-				path, &si, &process))
+				wpath, &si, &process))
 	{
 		free(exe);
 		free(path);
+		free(wpath);
 		return -2;
 	}
 
 	free(exe);
 	free(path);
+	free(wpath);
 
 	Sleep(1000);
 	rc = runInstance(3, argv, NULL);
