@@ -239,7 +239,7 @@ static BOOL test_peer_load_icon(freerdp_peer* client)
 	FILE* fp;
 	int i;
 	char line[50];
-	BYTE* rgb_data;
+	BYTE* rgb_data = NULL;
 	int c;
 
 	if (!client->settings->RemoteFxCodec && !client->settings->NSCodec)
