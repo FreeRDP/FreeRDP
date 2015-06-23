@@ -66,7 +66,6 @@ typedef struct _TSMFOSSAudioDevice
 static BOOL tsmf_oss_open(ITSMFAudioDevice* audio, const char* device)
 {
 	int tmp;
-	int error;
 	TSMFOssAudioDevice* oss = (TSMFOssAudioDevice*)audio;
 
 	if (oss == NULL || oss->pcm_handle != -1)
