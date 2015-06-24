@@ -4,9 +4,9 @@
 
 #include <freerdp/assistance.h>
 
-const char* TEST_MSRC_INCIDENT_PASSWORD_TYPE1 = "Password1";
+const char TEST_MSRC_INCIDENT_PASSWORD_TYPE1[] = "Password1";
 
-static const char* TEST_MSRC_INCIDENT_FILE_TYPE1 =
+static const char TEST_MSRC_INCIDENT_FILE_TYPE1[] =
 "<?xml version=\"1.0\" encoding=\"Unicode\" ?>"
 "<UPLOADINFO TYPE=\"Escalated\">"
 "<UPLOADDATA "
@@ -24,9 +24,9 @@ const BYTE TEST_MSRC_INCIDENT_EXPERT_BLOB_TYPE1[32] =
 	"\x3C\x9C\xAE\x0B\xCE\x7A\xB1\x5C\x8A\xAC\x01\xD6\x76\x04\x5E\xDF"
 	"\x3F\xFA\xF0\x92\xE2\xDE\x36\x8A\x20\x17\xE6\x8A\x0D\xED\x7C\x90";
 
-const char* TEST_MSRC_INCIDENT_PASSWORD_TYPE2 = "48BJQ853X3B4";
+const char TEST_MSRC_INCIDENT_PASSWORD_TYPE2[] = "48BJQ853X3B4";
 
-static const char* TEST_MSRC_INCIDENT_FILE_TYPE2 =
+static const char TEST_MSRC_INCIDENT_FILE_TYPE2[] =
 "<?xml version=\"1.0\"?>"
 "<UPLOADINFO TYPE=\"Escalated\">"
 "<UPLOADDATA USERNAME=\"awake\" "
