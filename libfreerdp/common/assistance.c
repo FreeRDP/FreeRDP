@@ -124,7 +124,6 @@ int freerdp_assistance_parse_address_list(rdpAssistanceFile* file, char* list)
 	int count;
 	int length;
 	char** tokens;
-	int ret = -1;
 
 	count = 1;
 	str = _strdup(list);
@@ -222,7 +221,9 @@ int freerdp_assistance_parse_address_list(rdpAssistanceFile* file, char* list)
 		break;
 	}
 
-	ret = 1;
+	free(tokens);
+	free(str);
+	return 1;
 out:
 	if (file->MachineAddresses)
 	{
@@ -238,7 +239,7 @@ out:
 
 	free(tokens);
 	free(str);
-	return ret;
+	return -1;
 }
 
 int freerdp_assistance_parse_connection_string1(rdpAssistanceFile* file)
