@@ -224,6 +224,18 @@ int freerdp_assistance_parse_address_list(rdpAssistanceFile* file, char* list)
 
 	ret = 1;
 out:
+	if (file->MachineAddresses)
+	{
+		for (i=0; i<count; i++)
+			free (file->MachineAddresses[i]);
+	}
+	free (file->MachineAddresses);
+	free (file->MachinePorts);
+
+	file->MachineCount = 0;
+	file->MachinePorts = NULL;
+	file->MachineAddresses = NULL;
+
 	free(tokens);
 	free(str);
 	return ret;
