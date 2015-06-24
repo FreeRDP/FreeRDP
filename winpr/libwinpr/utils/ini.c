@@ -91,12 +91,18 @@ int IniFile_Load_File(wIniFile* ini, const char* filename)
 	ini->buffer = (char*) malloc(fileSize + 2);
 
 	if (!ini->buffer)
+	{
+		fclose(ini->fp);
+		ini->fp = NULL;
 		return -1;
+	}
 
 	if (fread(ini->buffer, fileSize, 1, ini->fp) != 1)
 	{
 		free(ini->buffer);
+		fclose(ini->fp);
 		ini->buffer = NULL;
+		ini->fp = NULL;
 		return -1;
 	}
 
@@ -107,7 +113,7 @@ int IniFile_Load_File(wIniFile* ini, const char* filename)
 	ini->buffer[fileSize + 1] = '\0';
 
 	ini->nextLine = strtok(ini->buffer, "\n");
-	
+
 	return 1;
 }
 
