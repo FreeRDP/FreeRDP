@@ -279,6 +279,9 @@ FREERDP_API BOOL shadow_client_post_msg(rdpShadowClient* client, void* context, 
 FREERDP_API int shadow_client_boardcast_msg(rdpShadowServer* server, void* context, UINT32 type, SHADOW_MSG_OUT* msg, void* lParam);
 FREERDP_API int shadow_client_boardcast_quit(rdpShadowServer* server, int nExitCode);
 
+FREERDP_API int shadow_encoder_preferred_fps(rdpShadowEncoder* encoder);
+FREERDP_API UINT32 shadow_encoder_inflight_frames(rdpShadowEncoder* encoder);
+
 #ifdef __cplusplus
 }
 #endif

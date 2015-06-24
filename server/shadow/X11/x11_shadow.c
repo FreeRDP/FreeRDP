@@ -42,7 +42,6 @@
 
 #include "../shadow_screen.h"
 #include "../shadow_client.h"
-#include "../shadow_encoder.h"
 #include "../shadow_capture.h"
 #include "../shadow_surface.h"
 #include "../shadow_subsystem.h"
@@ -747,7 +746,7 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 
 			if (client)
 			{
-				subsystem->captureFrameRate = client->encoder->fps;
+				subsystem->captureFrameRate = shadow_encoder_preferred_fps(client->encoder);
 			}
 		}
 
