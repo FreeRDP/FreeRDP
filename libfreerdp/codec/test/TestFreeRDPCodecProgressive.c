@@ -281,6 +281,7 @@ BYTE* test_progressive_load_file(char* path, char* file, UINT32* size)
 
 	if (fread(buffer, *size, 1, fp) != 1)
 	{
+		free(buffer);
 		fclose(fp);
 		return NULL;
 	}
