@@ -374,9 +374,12 @@ BOOL ClipboardInitFormats(wClipboard* clipboard)
 
 		if (!format->formatName)
 		{
-			for (--formatId; formatId >= 0; --formatId)
+			int i;
+			for(i = formatId-1; i >= 0; --i)
+			{
+				format = &(clipboard->formats[--clipboard->numFormats]);
 				free((void *)format->formatName);
-			clipboard->numFormats = 0;
+			}
 			return FALSE;
 		}
 	}

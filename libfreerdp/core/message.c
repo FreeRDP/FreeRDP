@@ -107,10 +107,10 @@ static BOOL update_message_BitmapUpdate(rdpContext* context, BITMAP_UPDATE* bitm
 		wParam->rectangles[index].bitmapDataStream = (BYTE*) malloc(wParam->rectangles[index].bitmapLength);
 		if (!wParam->rectangles[index].bitmapDataStream)
 		{
-			for (index -= 1; index >= 0; --index)
-			{
-				free(wParam->rectangles[index].bitmapDataStream);
-			}
+			UINT32 i;
+			for (i = 0; i < index; ++i)
+				free(wParam->rectangles[i].bitmapDataStream);
+
 			free(wParam->rectangles);
 			free(wParam);
 			return FALSE;
