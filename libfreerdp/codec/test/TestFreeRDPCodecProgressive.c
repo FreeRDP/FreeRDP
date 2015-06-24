@@ -258,8 +258,11 @@ BYTE* test_progressive_load_file(char* path, char* file, UINT32* size)
 	char* filename;
 
 	filename = GetCombinedPath(path, file);
+	if (!filename)
+		return NULL;
 
 	fp = fopen(filename, "r");
+	free(filename);
 
 	if (!fp)
 		return NULL;
@@ -271,12 +274,17 @@ BYTE* test_progressive_load_file(char* path, char* file, UINT32* size)
 	buffer = (BYTE*) malloc(*size);
 
 	if (!buffer)
+	{
+		fclose(fp);
 		return NULL;
+	}
 
 	if (fread(buffer, *size, 1, fp) != 1)
+	{
+		fclose(fp);
 		return NULL;
+	}
 
-	free(filename);
 	fclose(fp);
 
 	return buffer;
