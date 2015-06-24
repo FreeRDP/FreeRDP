@@ -44,6 +44,9 @@
 
 #define TAG FREERDP_TAG("core.nla")
 
+#define SERVER_KEY "Software\\"FREERDP_VENDOR_STRING"\\" \
+		     FREERDP_PRODUCT_STRING"\\Server"
+
 /**
  * TSRequest ::= SEQUENCE {
  * 	version    [0] INTEGER,
@@ -1517,8 +1520,8 @@ rdpNla* nla_new(freerdp* instance, rdpTransport* transport, rdpSettings* setting
 		DWORD dwType;
 		DWORD dwSize;
 
-		status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"),
-							  0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+		status = RegOpenKeyExA(HKEY_LOCAL_MACHINE, SERVER_KEY,
+					  0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
 		if (status != ERROR_SUCCESS)
 			return nla;

@@ -43,6 +43,9 @@
 #include "../../log.h"
 #define TAG WINPR_TAG("sspi.NTLM")
 
+#define WINPR_KEY "Software\\"FREERDP_VENDOR_STRING \
+	"\\"FREERDP_PRODUCT_STRING"\\WinPR\\NTLM"
+
 char* NTLM_PACKAGE_NAME = "NTLM";
 
 int ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
@@ -165,7 +168,7 @@ NTLM_CONTEXT* ntlm_ContextNew()
 	context->SendWorkstationName = TRUE;
 	context->NegotiateKeyExchange = TRUE;
 	context->UseSamFileDatabase = TRUE;
-	status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\WinPR\\NTLM"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+	status = RegOpenKeyExA(HKEY_LOCAL_MACHINE, WINPR_KEY, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
 	if (status == ERROR_SUCCESS)
 	{

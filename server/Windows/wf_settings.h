@@ -22,7 +22,7 @@
 
 #include "wf_interface.h"
 
-BOOL wf_settings_read_dword(HKEY key, LPTSTR subkey, LPTSTR name, DWORD* value);
-BOOL wf_settings_read_string_ascii(HKEY key, LPTSTR subkey, LPTSTR name, char** value);
+BOOL wf_settings_read_dword(HKEY key, LPCSTR subkey, LPTSTR name, DWORD* value);
+BOOL wf_settings_read_string_ascii(HKEY key, LPCSTR subkey, LPTSTR name, char** value);
 
 #endif /* WF_SETTINGS_H */

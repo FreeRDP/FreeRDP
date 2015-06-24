@@ -38,6 +38,9 @@
 
 #include "wf_interface.h"
 
+#define SERVER_KEY "Software\\"FREERDP_VENDOR_STRING"\\" \
+		FREERDP_PRODUCT_STRING"\\Server"
+
 cbCallback cbEvent;
 
 int get_screen_info(int id, _TCHAR* name, int* width, int* height, int* bpp)
@@ -130,7 +133,7 @@ DWORD WINAPI wf_server_main_loop(LPVOID lpParam)
 		if (max_fds == 0)
 			break;
 
-		
+
 		select(max_fds + 1, &rfds_set, NULL, NULL, NULL);
 
 		if (instance->CheckFileDescriptor(instance) != TRUE)
@@ -154,7 +157,8 @@ BOOL wfreerdp_server_start(wfServer* server)
 	server->instance->PeerAccepted = wf_peer_accepted;
 	instance = server->instance;
 
-	wf_settings_read_dword(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), _T("DefaultPort"), &server->port);
+	wf_settings_read_dword(HKEY_LOCAL_MACHINE, SERVER_KEY,
+				_T("DefaultPort"), &server->port);
 
 	if (!instance->Open(instance, NULL, (UINT16) server->port))
 		return FALSE;
@@ -289,7 +293,7 @@ FREERDP_API BOOL wfreerdp_server_peer_is_connected(int pId)
 		return FALSE;
 	peer = wfi->peers[pId];
 
-	
+
 	if (peer)
 	{
 		return peer->connected;
@@ -309,7 +313,7 @@ FREERDP_API BOOL wfreerdp_server_peer_is_activated(int pId)
 	if (!wfi)
 		return FALSE;
 	peer = wfi->peers[pId];
-	
+
 	if (peer)
 	{
 		return peer->activated;
