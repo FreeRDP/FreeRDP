@@ -132,28 +132,45 @@ static BOOL rdpsnd_oss_format_supported(rdpsndDevicePlugin *device, AUDIO_FORMAT
 	return TRUE;
 }
 
-static void rdpsnd_oss_set_format(rdpsndDevicePlugin *device, AUDIO_FORMAT *format, int latency) {
+static BOOL rdpsnd_oss_set_format(rdpsndDevicePlugin *device, AUDIO_FORMAT *format, int latency) {
 	int tmp;
 	rdpsndOssPlugin *oss = (rdpsndOssPlugin*)device;
 
 	if (device == NULL || oss->pcm_handle == -1 || format == NULL)
-		return;
+		return FALSE;
 	
 	oss->latency = latency;
 	CopyMemory(&(oss->format), format, sizeof(AUDIO_FORMAT));
 
 	tmp = rdpsnd_oss_get_format(format);
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_SETFMT, &tmp) == -1)
+	{
 		OSS_LOG_ERR("SNDCTL_DSP_SETFMT failed", errno);
+		return FALSE;
+	}
+
 	tmp = format->nChannels;
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_CHANNELS, &tmp) == -1)
+	{
 		OSS_LOG_ERR("SNDCTL_DSP_CHANNELS failed", errno);
+		return FALSE;
+	}
+
 	tmp = format->nSamplesPerSec;
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_SPEED, &tmp) == -1)
+	{
 		OSS_LOG_ERR("SNDCTL_DSP_SPEED failed", errno);
+		return FALSE;
+	}
+
 	tmp = format->nBlockAlign;
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_SETFRAGMENT, &tmp) == -1)
+	{
 		OSS_LOG_ERR("SNDCTL_DSP_SETFRAGMENT failed", errno);
+		return FALSE;
+	}
+
+	return TRUE;
 }
 
 static void rdpsnd_oss_open_mixer(rdpsndOssPlugin *oss) {
@@ -178,21 +195,23 @@ static void rdpsnd_oss_open_mixer(rdpsndOssPlugin *oss) {
 	}
 }
 
-static void rdpsnd_oss_open(rdpsndDevicePlugin *device, AUDIO_FORMAT *format, int latency) {
+static BOOL rdpsnd_oss_open(rdpsndDevicePlugin *device, AUDIO_FORMAT *format, int latency) {
 	char dev_name[PATH_MAX] = "/dev/dsp";
 	rdpsndOssPlugin *oss = (rdpsndOssPlugin*)device;
 
 	if (device == NULL || oss->pcm_handle != -1)
-		return;
+		return TRUE;
 
 	if (oss->dev_unit != -1)
 		snprintf(dev_name, PATH_MAX - 1, "/dev/dsp%i", oss->dev_unit);
+
 	WLog_INFO(TAG, "open: %s", dev_name);
 	if ((oss->pcm_handle = open(dev_name, O_WRONLY)) < 0) {
 		OSS_LOG_ERR("sound dev open failed", errno);
 		oss->pcm_handle = -1;
-		return;
+		return FALSE;
 	}
+
 #if 0 /* FreeBSD OSS implementation at this moment (2015.03) does not set PCM_CAP_OUTPUT flag. */
 	int mask = 0;
 
@@ -205,15 +224,18 @@ static void rdpsnd_oss_open(rdpsndDevicePlugin *device, AUDIO_FORMAT *format, in
 		return;
 	}
 #endif
+
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_GETFMTS, &oss->supported_formats) == -1) {
 		OSS_LOG_ERR("SNDCTL_DSP_GETFMTS failed", errno);
 		close(oss->pcm_handle);
 		oss->pcm_handle = -1;
-		return;
+		return FALSE;
 	}
+
 	freerdp_dsp_context_reset_adpcm(oss->dsp_context);
 	rdpsnd_oss_set_format(device, format, latency);
 	rdpsnd_oss_open_mixer(oss);
+	return TRUE;
 }
 
 static void rdpsnd_oss_close(rdpsndDevicePlugin *device) {
@@ -271,12 +293,12 @@ static UINT32 rdpsnd_oss_get_volume(rdpsndDevicePlugin *device) {
 	return dwVolume;
 }
 
-static void rdpsnd_oss_set_volume(rdpsndDevicePlugin *device, UINT32 value) {
+static BOOL rdpsnd_oss_set_volume(rdpsndDevicePlugin *device, UINT32 value) {
 	int left, right;
 	rdpsndOssPlugin *oss = (rdpsndOssPlugin*)device;
 
 	if (device == NULL || oss->mixer_handle == -1)
-		return;
+		return FALSE;
 
 	left = (value & 0xFFFF);
 	right = ((value >> 16) & 0xFFFF);
@@ -292,16 +314,21 @@ static void rdpsnd_oss_set_volume(rdpsndDevicePlugin *device, UINT32 value) {
 
 	left |= (right << 8);
 	if (ioctl(oss->mixer_handle, MIXER_WRITE(SOUND_MIXER_VOLUME), &left) == -1)
+	{
 		OSS_LOG_ERR("WRITE_MIXER", errno);
+		return FALSE;
+	}
+
+	return TRUE;
 }
 
-static void rdpsnd_oss_wave_decode(rdpsndDevicePlugin *device, RDPSND_WAVE *wave) {
+static BOOL rdpsnd_oss_wave_decode(rdpsndDevicePlugin *device, RDPSND_WAVE *wave) {
 	int size;
 	BYTE *data;
 	rdpsndOssPlugin *oss = (rdpsndOssPlugin*)device;
 
 	if (device == NULL || wave == NULL)
-		return;
+		return FALSE;
 
 	switch (oss->format.wFormatTag) {
 	case WAVE_FORMAT_ADPCM:
@@ -322,8 +349,12 @@ static void rdpsnd_oss_wave_decode(rdpsndDevicePlugin *device, RDPSND_WAVE *wave
 	}
 
 	wave->data = (BYTE*)malloc(size);
+	if (!wave->data)
+		return FALSE;
+
 	CopyMemory(wave->data, data, size);
 	wave->length = size;
+	return TRUE;
 }
 
 static void rdpsnd_oss_wave_play(rdpsndDevicePlugin *device, RDPSND_WAVE *wave) {
