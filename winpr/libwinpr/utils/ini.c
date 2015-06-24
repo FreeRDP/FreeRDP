@@ -86,7 +86,11 @@ int IniFile_Load_File(wIniFile* ini, const char* filename)
 	ini->buffer = NULL;
 
 	if (fileSize < 1)
+	{
+		fclose(ini->fp);
+		ini->fp = NULL;
 		return -1;
+	}
 
 	ini->buffer = (char*) malloc(fileSize + 2);
 
