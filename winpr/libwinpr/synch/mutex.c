@@ -73,6 +73,8 @@ BOOL MutexCloseHandle(HANDLE handle)
 	rc = pthread_mutex_trylock(&mutex->mutex);
 	switch(rc)
 	{
+		case 0: /* The mutex is now locked. */
+			break;
 		/* If we already own the mutex consider it a success. */
 		case EDEADLK:
 		case EBUSY:
