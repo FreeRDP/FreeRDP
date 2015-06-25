@@ -364,9 +364,9 @@ BOOL ClipboardInitFormats(wClipboard* clipboard)
 	if (!clipboard)
 		return FALSE;
 
-	for (formatId = 0; formatId < CF_MAX; formatId++)
+	for (formatId = 0; formatId < CF_MAX; formatId++, clipboard->numFormats++)
 	{
-		format = &(clipboard->formats[clipboard->numFormats++]);
+		format = &(clipboard->formats[clipboard->numFormats]);
 		ZeroMemory(format, sizeof(wClipboardFormat));
 
 		format->formatId = formatId;
@@ -374,9 +374,12 @@ BOOL ClipboardInitFormats(wClipboard* clipboard)
 
 		if (!format->formatName)
 		{
-			for (--formatId; formatId >= 0; --formatId)
+			int i;
+			for (i = formatId-1; i >= 0; --i)
+			{
+				format = &(clipboard->formats[--clipboard->numFormats]);
 				free((void *)format->formatName);
-			clipboard->numFormats = 0;
+			}
 			return FALSE;
 		}
 	}
