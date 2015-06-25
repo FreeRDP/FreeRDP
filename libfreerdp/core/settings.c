@@ -755,9 +755,9 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 				_settings->TargetNetAddresses[index] = _strdup(settings->TargetNetAddresses[index]);
 				if (!_settings->TargetNetAddresses[index])
 				{
-					UINT32 i;
-					for (i = 0; i < index; ++i)
-						free(_settings->TargetNetAddresses[i]);
+					while(index)
+						free(_settings->TargetNetAddresses[--index]);
+
 					free(_settings->TargetNetAddresses);
 					_settings->TargetNetAddresses = NULL;
 					_settings->TargetNetAddressCount = 0;
