@@ -27,13 +27,13 @@
  extern "C" {
 #endif
 
-FREERDP_API int gdi_Ellipse(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect, int nBottomRect);
-FREERDP_API int gdi_FillRect(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr);
-FREERDP_API int gdi_Polygon(HGDI_DC hdc, GDI_POINT *lpPoints, int nCount);
-FREERDP_API int gdi_PolyPolygon(HGDI_DC hdc, GDI_POINT *lpPoints, int *lpPolyCounts, int nCount);
-FREERDP_API int gdi_Rectangle(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect, int nBottomRect);
+FREERDP_API BOOL gdi_Ellipse(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect, int nBottomRect);
+FREERDP_API BOOL gdi_FillRect(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr);
+FREERDP_API BOOL gdi_Polygon(HGDI_DC hdc, GDI_POINT *lpPoints, int nCount);
+FREERDP_API BOOL gdi_PolyPolygon(HGDI_DC hdc, GDI_POINT *lpPoints, int *lpPolyCounts, int nCount);
+FREERDP_API BOOL gdi_Rectangle(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect, int nBottomRect);
 
-typedef int (*p_FillRect)(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr);
+typedef BOOL (*p_FillRect)(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr);
 
 #ifdef __cplusplus
  }

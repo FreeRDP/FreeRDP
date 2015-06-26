@@ -45,7 +45,7 @@
 #define TAG FREERDP_TAG("gdi")
 
 /* Ternary Raster Operation Table */
-static const UINT32 rop3_code_table[] =
+static const DWORD rop3_code_table[] =
 {
 	0x00000042, /* 0 */
 	0x00010289, /* DPSoon */
@@ -318,7 +318,7 @@ static BYTE GDI_BS_HATCHED_PATTERNS[] =
 
 /* GDI Helper Functions */
 
-INLINE UINT32 gdi_rop3_code(BYTE code)
+INLINE DWORD gdi_rop3_code(BYTE code)
 {
 	return rop3_code_table[code];
 }
@@ -585,10 +585,9 @@ static BOOL gdi_dstblt(rdpContext* context, DSTBLT_ORDER* dstblt)
 {
 	rdpGdi* gdi = context->gdi;
 
-	if (gdi_BitBlt(gdi->drawing->hdc, dstblt->nLeftRect, dstblt->nTopRect,
-			dstblt->nWidth, dstblt->nHeight, NULL, 0, 0, gdi_rop3_code(dstblt->bRop)) == 0)
-		return FALSE;
-	return TRUE;
+	return gdi_BitBlt(gdi->drawing->hdc, dstblt->nLeftRect, dstblt->nTopRect,
+			dstblt->nWidth, dstblt->nHeight, NULL, 0, 0,
+			gdi_rop3_code(dstblt->bRop));
 }
 
 static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
@@ -620,9 +619,11 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 			goto out_error;
 		}
 
-		if (gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
-				patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop)) == 0)
+		if (!gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
+				patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop)))
+		{
 			ret = FALSE;
+		}
 
 		gdi_DeleteObject((HGDIOBJECT) gdi->drawing->hdc->brush);
 		gdi->drawing->hdc->brush = originalBrush;
@@ -661,9 +662,11 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 			goto out_error;
 		}
 
-		if (gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
-		patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop)) == 0)
+		if (!gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
+				patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop)))
+		{
 			ret = FALSE;
+		}
 
 		gdi_DeleteObject((HGDIOBJECT) gdi->drawing->hdc->brush);
 		gdi->drawing->hdc->brush = originalBrush;
@@ -717,9 +720,11 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 			goto out_error;
 		}
 
-		if (gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
-				patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop)) == 0)
+		if (!gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
+				patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop)))
+		{
 			ret = FALSE;
+		}
 
 		gdi_DeleteObject((HGDIOBJECT) gdi->drawing->hdc->brush);
 		gdi->drawing->hdc->brush = originalBrush;
@@ -738,11 +743,9 @@ static BOOL gdi_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
 {
 	rdpGdi* gdi = context->gdi;
 
-	if (gdi_BitBlt(gdi->drawing->hdc, scrblt->nLeftRect, scrblt->nTopRect,
+	return gdi_BitBlt(gdi->drawing->hdc, scrblt->nLeftRect, scrblt->nTopRect,
 			scrblt->nWidth, scrblt->nHeight, gdi->primary->hdc,
-			scrblt->nXSrc, scrblt->nYSrc, gdi_rop3_code(scrblt->bRop)) == 0)
-		return FALSE;
-	return TRUE;
+			scrblt->nXSrc, scrblt->nYSrc, gdi_rop3_code(scrblt->bRop));
 }
 
 static BOOL gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
@@ -751,20 +754,19 @@ static BOOL gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 	HGDI_BRUSH hBrush;
 	UINT32 brush_color;
 	rdpGdi* gdi = context->gdi;
-	BOOL ret = FALSE;
+	BOOL ret;
 
 	gdi_CRgnToRect(opaque_rect->nLeftRect, opaque_rect->nTopRect,
 			opaque_rect->nWidth, opaque_rect->nHeight, &rect);
 
 	brush_color = freerdp_convert_gdi_order_color(opaque_rect->color, gdi->srcBpp, gdi->format, gdi->palette);
 
-	hBrush = gdi_CreateSolidBrush(brush_color);
-	if (hBrush)
-	{
-		if (gdi_FillRect(gdi->drawing->hdc, &rect, hBrush) == 0)
-			ret = TRUE;
-		gdi_DeleteObject((HGDIOBJECT) hBrush);
-	}
+	if (!(hBrush = gdi_CreateSolidBrush(brush_color)))
+		return FALSE;
+
+	ret = gdi_FillRect(gdi->drawing->hdc, &rect, hBrush);
+	gdi_DeleteObject((HGDIOBJECT) hBrush);
+
 	return ret;
 }
 
@@ -807,9 +809,9 @@ static BOOL gdi_line_to(rdpContext* context, LINE_TO_ORDER* lineTo)
 	rdpGdi* gdi = context->gdi;
 
 	color = freerdp_convert_gdi_order_color(lineTo->penColor, gdi->srcBpp, gdi->format, gdi->palette);
-	hPen = gdi_CreatePen(lineTo->penStyle, lineTo->penWidth, (GDI_COLOR) color);
-	if (!hPen)
+	if (!(hPen = gdi_CreatePen(lineTo->penStyle, lineTo->penWidth, (GDI_COLOR) color)))
 		return FALSE;
+
 	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT) hPen);
 	gdi_SetROP2(gdi->drawing->hdc, lineTo->bRop2);
 
@@ -831,9 +833,9 @@ static BOOL gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 	rdpGdi* gdi = context->gdi;
 
 	color = freerdp_convert_gdi_order_color(polyline->penColor, gdi->srcBpp, gdi->format, gdi->palette);
-	hPen = gdi_CreatePen(GDI_PS_SOLID, 1, (GDI_COLOR) color);
-	if (!hPen)
+	if (!(hPen = gdi_CreatePen(GDI_PS_SOLID, 1, (GDI_COLOR) color)))
 		return FALSE;
+
 	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT) hPen);
 	gdi_SetROP2(gdi->drawing->hdc, polyline->bRop2);
 
@@ -861,11 +863,9 @@ static BOOL gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 
 	bitmap = (gdiBitmap*) memblt->bitmap;
 
-	if (gdi_BitBlt(gdi->drawing->hdc, memblt->nLeftRect, memblt->nTopRect,
+	return gdi_BitBlt(gdi->drawing->hdc, memblt->nLeftRect, memblt->nTopRect,
 			memblt->nWidth, memblt->nHeight, bitmap->hdc,
-			memblt->nXSrc, memblt->nYSrc, gdi_rop3_code(memblt->bRop)) == 0)
-		return FALSE;
-	return TRUE;
+			memblt->nXSrc, memblt->nYSrc, gdi_rop3_code(memblt->bRop));
 }
 
 static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
@@ -972,25 +972,25 @@ out_fail:
 
 static BOOL gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
 {
-	WLog_VRB(TAG,  "not implemented");
+	WLog_VRB(TAG, "%s: not implemented", __FUNCTION__);
 	return TRUE;
 }
 
 static BOOL gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 {
-	WLog_VRB(TAG,  "not implemented");
+	WLog_VRB(TAG, "%s: not implemented", __FUNCTION__);
 	return TRUE;
 }
 
 static BOOL gdi_ellipse_sc(rdpContext* context, ELLIPSE_SC_ORDER* ellipse_sc)
 {
-	WLog_VRB(TAG,  "not implemented");
+	WLog_VRB(TAG, "%s: not implemented", __FUNCTION__);
 	return TRUE;
 }
 
 static BOOL gdi_ellipse_cb(rdpContext* context, ELLIPSE_CB_ORDER* ellipse_cb)
 {
-	WLog_VRB(TAG,  "not implemented");
+	WLog_VRB(TAG, "%s: not implemented", __FUNCTION__);
 	return TRUE;
 }
 

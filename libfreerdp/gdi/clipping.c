@@ -32,7 +32,7 @@
 
 #include <freerdp/gdi/clipping.h>
 
-int gdi_SetClipRgn(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight)
+BOOL gdi_SetClipRgn(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight)
 {
 	return gdi_SetRgn(hdc->clip, nXLeft, nYLeft, nWidth, nHeight);
 }
@@ -52,14 +52,14 @@ HGDI_RGN gdi_GetClipRgn(HGDI_DC hdc)
 /**
  * Set the current clipping region to null.
  * @param hdc device context
- * @return
+ * @return nonzero on success, 0 otherwise
  */
 
-int gdi_SetNullClipRgn(HGDI_DC hdc)
+BOOL gdi_SetNullClipRgn(HGDI_DC hdc)
 {
 	gdi_SetClipRgn(hdc, 0, 0, 0, 0);
 	hdc->clip->null = 1;
-	return 0;
+	return TRUE;
 }
 
 /**
@@ -71,10 +71,10 @@ int gdi_SetNullClipRgn(HGDI_DC hdc)
  * @param h height
  * @param srcx source x1
  * @param srcy source y1
- * @return 1 if there is something to draw, 0 otherwise
+ * @return nonzero if there is something to draw, 0 otherwise
  */
 
-int gdi_ClipCoords(HGDI_DC hdc, int *x, int *y, int *w, int *h, int *srcx, int *srcy)
+BOOL gdi_ClipCoords(HGDI_DC hdc, int *x, int *y, int *w, int *h, int *srcx, int *srcy)
 {
 	GDI_RECT bmp;
 	GDI_RECT clip;
@@ -83,10 +83,10 @@ int gdi_ClipCoords(HGDI_DC hdc, int *x, int *y, int *w, int *h, int *srcx, int *
 
 	int dx = 0;
 	int dy = 0;
-	int draw = 1;
+	BOOL draw = TRUE;
 
 	if (hdc == NULL)
-		return 0;
+		return FALSE;
 
 	hBmp = (HGDI_BITMAP) hdc->selectedObject;
 
@@ -152,7 +152,7 @@ int gdi_ClipCoords(HGDI_DC hdc, int *x, int *y, int *w, int *h, int *srcx, int *
 		coords.right = 0;
 		coords.top = 0;
 		coords.bottom = 0;
-		draw = 0;
+		draw = FALSE;
 	}
 
 	if (srcx != NULL)
