@@ -24,7 +24,16 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <errno.h>
+#include <err.h>
+#endif
+#if defined(__linux__)
 #include <libudev.h>
+#endif
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -435,6 +444,266 @@ static int urbdrc_exchange_capabilities(URBDRC_CHANNEL_CALLBACK* callback, char*
 	return error;
 }
 
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
+static char *devd_get_val(char *buf, size_t buf_size, const char *val_name, size_t val_name_size, size_t *val_size) {
+	char *ret, *buf_end, *ptr;
+
+	buf_end = (buf + buf_size);
+	for (ret = buf; ret != NULL && ret < buf_end;)
+	{
+		ret = memmem(ret, (buf_end - ret), val_name, val_name_size);
+		if (ret == NULL)
+			return NULL;
+		/* Found. */
+		/* Check: space before or buf+1. */
+		if ((buf + 1) < ret && ret[-1] != ' ')
+		{
+			ret += val_name_size;
+			continue;
+		}
+		/* Check: = after name and size for value. */
+		ret += val_name_size;
+		if ((ret + 1) >= buf_end)
+			return NULL;
+		if (ret[0] != '=')
+			continue;
+		ret ++;
+		break;
+	}
+	if (ret == NULL || val_size == NULL)
+		return ret;
+	/* Calc value data size. */
+	ptr = memchr(ret, ' ', (buf_end - ret));
+	if (ptr == NULL) /* End of string/last value. */
+		ptr = buf_end;
+	(*val_size) = (ptr - ret);
+	return ret;
+}
+
+static void *urbdrc_search_usb_device(void *arg) {
+	USB_SEARCHMAN *searchman = (USB_SEARCHMAN*)arg;
+	URBDRC_PLUGIN *urbdrc = (URBDRC_PLUGIN*)searchman->urbdrc;
+	IUDEVMAN *udevman = urbdrc->udevman;
+	IWTSVirtualChannelManager *channel_mgr = urbdrc->listener_callback->channel_mgr;
+	IWTSVirtualChannel *dvc_channel;
+	USB_SEARCHDEV *sdev;
+	IUDEVICE *pdev;
+	HANDLE listobj[2];
+	HANDLE mon_fd;
+	int devd_skt;
+	char buf[4096], *val, *ptr, *end_val;
+	ssize_t data_size;
+	size_t val_size, tm;
+	int idVendor, idProduct;
+	int busnum, devnum;
+	int action, success, error, found, on_close;
+	struct sockaddr_un sun;
+
+	WLog_DBG(TAG, "urbdrc_search_usb_device - devd: start");
+
+	devd_skt = socket(PF_LOCAL, SOCK_SEQPACKET, 0);
+	if (devd_skt == -1)
+	{
+		WLog_ERR(TAG, "Can't create devd socket: error = %i", errno);
+		goto err_out;
+	}
+	memset(&sun, 0, sizeof(sun));
+	sun.sun_family = PF_LOCAL;
+	sun.sun_len = sizeof(sun);
+	strlcpy(sun.sun_path, "/var/run/devd.seqpacket.pipe", sizeof(sun.sun_path));
+	if (-1 == connect(devd_skt, (struct sockaddr*)&sun, sizeof(sun)))
+	{
+		WLog_ERR(TAG, "Can't connect devd socket: error = %i - %s", errno, strerror(errno));
+		goto err_out;
+	}
+
+	/* Get the file descriptor (fd) for the monitor.
+	   This fd will get passed to select() */
+	mon_fd = CreateFileDescriptorEvent(NULL, TRUE, FALSE, devd_skt);
+	listobj[0] = searchman->term_event;
+	listobj[1] = mon_fd;
+
+	while (WaitForMultipleObjects(2, listobj, FALSE, INFINITE) != WAIT_OBJECT_0)
+	{
+		WLog_DBG(TAG, "=======  SEARCH  ======= ");
+
+		/* !system=USB subsystem=DEVICE type=ATTACH ugen=ugen3.3 cdev=ugen3.3 vendor=0x046d product=0x082d devclass=0xef devsubclass=0x02 sernum="6E7D726F" release=0x0011 mode=host port=4 parent=ugen3.1 */
+		/* !system=USB subsystem=DEVICE type=DETACH ugen=ugen3.3 cdev=ugen3.3 vendor=0x046d product=0x082d devclass=0xef devsubclass=0x02 sernum="6E7D726F" release=0x0011 mode=host port=4 parent=ugen3.1 */
+		data_size = read(devd_skt, buf, (sizeof(buf) - 1));
+		if (data_size == -1)
+		{
+			WLog_ERR(TAG, "devd socket read: error = %i", errno);
+			break;
+		}
+		buf[data_size] = 0;
+		WLog_DBG(TAG, "devd event: %s", buf);
+		
+		if (buf[0] != '!') /* Skeep non notify events. */
+			continue;
+		/* Check: system=USB */
+		val = devd_get_val(buf, data_size, "system", 6, &val_size);
+		if (val == NULL || val_size != 3 || memcmp(val, "USB", 3) != 0)
+			continue;
+		/* Check: subsystem=DEVICE */
+		val = devd_get_val(buf, data_size, "subsystem", 9, &val_size);
+		if (val == NULL || val_size != 6 || memcmp(val, "DEVICE", 6) != 0)
+			continue;
+		/* Get event type. */
+		val = devd_get_val(buf, data_size, "type", 4, &val_size);
+		if (val == NULL || val_size != 6)
+			continue;
+		action = -1;
+		if (memcmp(val, "ATTACH", 6) == 0)
+			action = 0;
+		if (memcmp(val, "DETACH", 6) == 0)
+			action = 1;
+		if (action == -1)
+			continue; /* Skeep other actions. */
+
+		/* Get bus and dev num. */
+		/* ugen=ugen3.3 */
+		val = devd_get_val(buf, data_size, "ugen", 4, &val_size);
+		if (val == NULL || val_size < 7 || memcmp(val, "ugen", 4) != 0)
+			continue;
+		val += 4;
+		val_size -= 4;
+		ptr = memchr(val, '.', val_size);
+		if (ptr == NULL)
+			continue;
+		/* Prepare strings. */
+		ptr[0] = 0;
+		ptr ++;
+		val[val_size] = 0;
+		/* Extract numbers. */
+		busnum = atoi(val);
+		devnum = atoi(ptr);
+		/* Restore spaces. */
+		ptr[-1] = ' ';
+		val[val_size] = ' ';
+
+		/* Handle event. */
+		dvc_channel = NULL;
+
+		switch (action)
+		{
+		case 0: /* ATTACH */
+			sdev = NULL;
+			success = 0;
+			found = 0;
+
+			/* vendor=0x046d */
+			val = devd_get_val(buf, data_size, "vendor", 6, &val_size);
+			if (val == NULL || val_size < 1)
+				continue;
+			val[val_size] = 0;
+			idVendor = strtol(val, NULL, 16);
+			val[val_size] = ' ';
+
+			/* product=0x082d */
+			val = devd_get_val(buf, data_size, "product", 7, &val_size);
+			if (val == NULL || val_size < 1)
+				continue;
+			val[val_size] = 0;
+			idProduct = strtol(val, NULL, 16);
+			val[val_size] = ' ';
+			
+			WLog_DBG(TAG, "ATTACH: bus: %i, dev: %i, ven: %i, prod: %i", busnum, devnum, idVendor, idProduct);
+
+			dvc_channel = channel_mgr->FindChannelById(channel_mgr, urbdrc->first_channel_id);
+			searchman->rewind(searchman);
+			while (dvc_channel && searchman->has_next(searchman))
+			{
+				sdev = searchman->get_next(searchman);
+				if (sdev->idVendor == idVendor &&
+				    sdev->idProduct == idProduct)
+				{
+					WLog_VRB(TAG, "Searchman Found Device: %04x:%04x",
+					    sdev->idVendor, sdev->idProduct);
+					found = 1;
+					break;
+				}
+			}
+
+			if (!found && udevman->isAutoAdd(udevman))
+			{
+				WLog_VRB(TAG, "Auto Find Device: %04x:%04x ",
+				    idVendor, idProduct);
+				found = 2;
+			}
+
+			if (found)
+			{
+				success = udevman->register_udevice(udevman, busnum, devnum,
+				    searchman->UsbDevice, 0, 0, UDEVMAN_FLAG_ADD_BY_ADDR);
+			}
+
+			if (success)
+			{
+				searchman->UsbDevice ++;
+
+				usleep(400000);
+				error = urdbrc_send_virtual_channel_add(dvc_channel, 0);
+				if (found == 1)
+					searchman->remove(searchman, sdev->idVendor, sdev->idProduct);
+			}
+			break;
+		case 1: /* DETACH */
+			pdev = NULL;
+			on_close = 0;
+			WLog_DBG(TAG, "DETACH: bus: %i, dev: %i", busnum, devnum);
+
+			usleep(500000);
+			udevman->loading_lock(udevman);
+			udevman->rewind(udevman);
+			while (udevman->has_next(udevman))
+			{
+				pdev = udevman->get_next(udevman);
+				if (pdev->get_bus_number(pdev) == busnum &&
+				    pdev->get_dev_number(pdev) == devnum)
+				{
+					dvc_channel = channel_mgr->FindChannelById(channel_mgr, pdev->get_channel_id(pdev));
+
+					if (dvc_channel == NULL)
+					{
+						WLog_ERR(TAG, "SEARCH: dvc_channel %d is NULL!!", pdev->get_channel_id(pdev));
+						func_close_udevice(searchman, pdev);
+						break;
+					}
+
+					if (!pdev->isSigToEnd(pdev))
+					{
+						dvc_channel->Write(dvc_channel, 0, NULL, NULL); 
+						pdev->SigToEnd(pdev);
+					}
+
+					on_close = 1;
+					break;
+				}
+			}
+
+			udevman->loading_unlock(udevman);
+			usleep(300000);
+
+			if (pdev && on_close && dvc_channel &&
+			    pdev->isSigToEnd(pdev) &&
+			    !(pdev->isChannelClosed(pdev)))
+			{
+				dvc_channel->Close(dvc_channel);
+			}
+			break;
+		}
+	}
+
+	CloseHandle(mon_fd);
+err_out:
+	close(devd_skt);
+	sem_post(&searchman->sem_term);
+	WLog_DBG(TAG, "urbdrc_search_usb_device - devd: end");
+
+	return 0;	
+}
+#endif
+#if defined (__linux__)
 static void* urbdrc_search_usb_device(void* arg)
 {
 	USB_SEARCHMAN* searchman = (USB_SEARCHMAN*) arg;
@@ -658,6 +927,7 @@ fail_create_monfd_event:
 
 	return 0;
 }
+#endif
 
 void* urbdrc_new_device_create(void* arg)
 {
@@ -674,8 +944,10 @@ void* urbdrc_new_device_create(void* arg)
 	UINT32 FunctionId;
 	int i = 0, found = 0;
 
+	WLog_DBG(TAG, "...");
+
 	channel_mgr = urbdrc->listener_callback->channel_mgr;
-	ChannelId =  channel_mgr->GetChannelId(callback->channel);
+	ChannelId = channel_mgr->GetChannelId(callback->channel);
 
 	data_read_UINT32(pBuffer + 0, MessageId);
 	data_read_UINT32(pBuffer + 4, FunctionId);
@@ -743,6 +1015,8 @@ static int urbdrc_process_channel_notification(URBDRC_CHANNEL_CALLBACK* callback
 	UINT32 FunctionId;
 	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*) callback->plugin;
 
+	WLog_DBG(TAG, "...");
+
 	data_read_UINT32(pBuffer + 0, MessageId);
 	data_read_UINT32(pBuffer + 4, FunctionId);
 
@@ -793,7 +1067,7 @@ static int urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 	UINT32 Mask;
 	int error = 0;
 	char* pBuffer = (char*)Stream_Pointer(data);
-  UINT32 cbSize = Stream_GetRemainingLength(data);
+	UINT32 cbSize = Stream_GetRemainingLength(data);
 
 	if (callback == NULL)
 		return 0;

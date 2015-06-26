@@ -610,5 +610,7 @@ int freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS p
 
 	pEntryPoints->pRegisterUDEVMAN(pEntryPoints->plugin, (IUDEVMAN*) udevman);
 
+	WLog_DBG(TAG, "UDEVMAN device registered.");
+
 	return 0;
 }
