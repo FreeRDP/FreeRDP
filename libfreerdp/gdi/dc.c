@@ -105,7 +105,6 @@ HGDI_DC gdi_CreateDC(UINT32 flags, int bpp)
 
 fail:
 	gdi_DeleteDC(hDC);
-	free(hDC);
 	return NULL;
 }
 

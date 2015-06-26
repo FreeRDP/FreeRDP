@@ -25,7 +25,7 @@
 
 double metrics_write_bytes(rdpMetrics* metrics, UINT32 UncompressedBytes, UINT32 CompressedBytes)
 {
-	double CompressionRatio;
+	double CompressionRatio = 0.0;
 
 	metrics->TotalUncompressedBytes += UncompressedBytes;
 	metrics->TotalCompressedBytes += CompressedBytes;

@@ -799,6 +799,13 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 			goto out_fail;
 		}
 
+ 		if (_settings->DeviceArraySize < _settings->DeviceCount)
+		{
+			_settings->DeviceCount = 0;
+			_settings->DeviceArraySize = 0;
+			goto out_fail;
+		}
+
 		for (index = 0; index < _settings->DeviceCount; index++)
 		{
 			_settings->DeviceArray[index] = freerdp_device_clone(settings->DeviceArray[index]);
@@ -816,6 +823,13 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 			goto out_fail;
 		}
 
+		if (_settings->StaticChannelArraySize < _settings->StaticChannelCount)
+		{
+			_settings->StaticChannelArraySize  = 0;
+			_settings->ChannelCount = 0;
+			goto out_fail;
+		}
+
 		for (index = 0; index < _settings->StaticChannelCount; index++)
 		{
 			_settings->StaticChannelArray[index] = freerdp_static_channel_clone(settings->StaticChannelArray[index]);
@@ -827,6 +841,13 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->DynamicChannelArraySize = settings->DynamicChannelArraySize;
 		_settings->DynamicChannelArray = (ADDIN_ARGV**) calloc(_settings->DynamicChannelArraySize, sizeof(ADDIN_ARGV*));
 		if (!_settings->DynamicChannelArray && _settings->DynamicChannelArraySize)
+		{
+			_settings->DynamicChannelCount = 0;
+			_settings->DynamicChannelArraySize = 0;
+			goto out_fail;
+		}
+
+		if (_settings->DynamicChannelArraySize < _settings->DynamicChannelCount)
 		{
 			_settings->DynamicChannelCount = 0;
 			_settings->DynamicChannelArraySize = 0;

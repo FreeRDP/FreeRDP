@@ -969,10 +969,9 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 			WaitForThreadpoolWorkCallbacks(work_objects[i], FALSE);
 			CloseThreadpoolWork(work_objects[i]);
 		}
-
-		free(work_objects);
-		free(params);
 	}
+	free(work_objects);
+	free(params);
 
 	for (i = 0; i < message->numTiles; i++)
 	{

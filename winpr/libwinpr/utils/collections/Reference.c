@@ -157,18 +157,18 @@ wReferenceTable* ReferenceTable_New(BOOL synchronized, void* context, REFERENCE_
 {
 	wReferenceTable* referenceTable;
 
-	referenceTable = (wReferenceTable*) malloc(sizeof(wReferenceTable));
+	referenceTable = (wReferenceTable*) calloc(1, sizeof(wReferenceTable));
 	if (!referenceTable)
 		return NULL;
-
-	referenceTable->array = (wReference*) calloc(1, sizeof(wReference) * referenceTable->size);
-	if (!referenceTable->array)
-		goto error_array;
 
 	referenceTable->context = context;
 	referenceTable->ReferenceFree = ReferenceFree;
 
 	referenceTable->size = 32;
+
+	referenceTable->array = (wReference*) calloc(referenceTable->size, sizeof(wReference));
+	if (!referenceTable->array)
+		goto error_array;
 
 	referenceTable->synchronized = synchronized;
 	if (synchronized && !InitializeCriticalSectionAndSpinCount(&referenceTable->lock, 4000))
