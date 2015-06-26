@@ -322,7 +322,7 @@ BOOL wf_pre_connect(freerdp* instance)
 		(settings->DesktopWidth > 4096) || (settings->DesktopHeight > 4096))
 	{
 		WLog_ERR(TAG, "invalid dimensions %d %d", settings->DesktopWidth, settings->DesktopHeight);
-		return 1;
+		return FALSE;
 	}
 
 	freerdp_set_param_uint32(settings, FreeRDP_KeyboardLayout, (int) GetKeyboardLayout(0) & 0x0000FFFF);
