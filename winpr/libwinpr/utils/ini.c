@@ -77,38 +77,28 @@ int IniFile_Load_File(wIniFile* ini, const char* filename)
 	if (IniFile_Open_File(ini, filename) < 0)
 		return -1;
 
-	fseek(ini->fp, 0, SEEK_END);
+	if (fseek(ini->fp, 0, SEEK_END) < 0)
+		goto out_file;
 	fileSize = ftell(ini->fp);
-	fseek(ini->fp, 0, SEEK_SET);
+	if (fileSize < 0)
+		goto out_file;
+	if (fseek(ini->fp, 0, SEEK_SET) < 0)
+		goto out_file;
 
 	ini->line = NULL;
 	ini->nextLine = NULL;
 	ini->buffer = NULL;
 
 	if (fileSize < 1)
-	{
-		fclose(ini->fp);
-		ini->fp = NULL;
-		return -1;
-	}
+		goto out_file;
 
 	ini->buffer = (char*) malloc(fileSize + 2);
 
 	if (!ini->buffer)
-	{
-		fclose(ini->fp);
-		ini->fp = NULL;
-		return -1;
-	}
+		goto out_file;
 
 	if (fread(ini->buffer, fileSize, 1, ini->fp) != 1)
-	{
-		free(ini->buffer);
-		fclose(ini->fp);
-		ini->buffer = NULL;
-		ini->fp = NULL;
-		return -1;
-	}
+		goto out_buffer;
 
 	fclose(ini->fp);
 	ini->fp = NULL;
@@ -119,6 +109,14 @@ int IniFile_Load_File(wIniFile* ini, const char* filename)
 	ini->nextLine = strtok(ini->buffer, "\n");
 
 	return 1;
+
+out_buffer:
+	free(ini->buffer);
+	ini->buffer = NULL;
+out_file:
+	fclose(ini->fp);
+	ini->fp = NULL;
+	return -1;
 }
 
 void IniFile_Load_Finish(wIniFile* ini)
@@ -681,6 +679,7 @@ int IniFile_WriteFile(wIniFile* ini, const char* filename)
 {
 	int length;
 	char* buffer;
+	int ret = 1;
 
 	buffer = IniFile_WriteBuffer(ini);
 
@@ -700,13 +699,14 @@ int IniFile_WriteFile(wIniFile* ini, const char* filename)
 		return -1;
 	}
 
-	fwrite((void*) buffer, length, 1, ini->fp);
+	if (fwrite((void*) buffer, length, 1, ini->fp) != 1)
+		ret = -1;
 
 	fclose(ini->fp);
 
 	free(buffer);
 
-	return 1;
+	return ret;
 }
 
 wIniFile* IniFile_New()

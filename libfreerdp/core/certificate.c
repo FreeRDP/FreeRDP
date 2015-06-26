@@ -684,16 +684,20 @@ rdpRsaKey* key_new(const char* keyfile)
 		goto out_free;
 	}
 
-	fseek(fp, 0, SEEK_END);
-	length = ftell(fp);
-	fseek(fp, 0, SEEK_SET);
+	if (fseek(fp, 0, SEEK_END) < 0)
+		goto out_free;
+	if ((length = ftell(fp)) < 0)
+		goto out_free;
+	if (fseek(fp, 0, SEEK_SET) < 0)
+		goto out_free;
 
 	buffer = (BYTE*) malloc(length);
 
 	if (!buffer)
 		goto out_free;
 
-	fread((void*) buffer, length, 1, fp);
+	if (fread((void*) buffer, length, 1, fp) != 1)
+		goto out_free;
 	fclose(fp);
 	fp = NULL;
 
@@ -703,7 +707,6 @@ rdpRsaKey* key_new(const char* keyfile)
 		goto out_free;
 
 	rsa = PEM_read_bio_RSAPrivateKey(bio, NULL, NULL, NULL);
-
 	BIO_free(bio);
 	free(buffer);
 	buffer = NULL;
@@ -756,6 +759,7 @@ rdpRsaKey* key_new(const char* keyfile)
 	crypto_reverse(key->exponent, sizeof(key->exponent));
 	RSA_free(rsa);
 	return key;
+
 out_free_modulus:
 	free(key->Modulus);
 out_free_rsa:

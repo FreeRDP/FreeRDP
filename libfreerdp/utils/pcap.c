@@ -52,27 +52,27 @@ int gettimeofday(struct timeval* tp, void* tz)
 
 #define PCAP_MAGIC	0xA1B2C3D4
 
-BOOL pcap_read_header(rdpPcap* pcap, pcap_header* header)
+static BOOL pcap_read_header(rdpPcap* pcap, pcap_header* header)
 {
 	return fread((void*) header, sizeof(pcap_header), 1, pcap->fp) == 1;
 }
 
-BOOL pcap_write_header(rdpPcap* pcap, pcap_header* header)
+static BOOL pcap_write_header(rdpPcap* pcap, pcap_header* header)
 {
 	return fwrite((void*) header, sizeof(pcap_header), 1, pcap->fp) == 1;
 }
 
-BOOL pcap_read_record_header(rdpPcap* pcap, pcap_record_header* record)
+static BOOL pcap_read_record_header(rdpPcap* pcap, pcap_record_header* record)
 {
 	return fread((void*) record, sizeof(pcap_record_header), 1, pcap->fp) == 1;
 }
 
-void pcap_write_record_header(rdpPcap* pcap, pcap_record_header* record)
+static BOOL pcap_write_record_header(rdpPcap* pcap, pcap_record_header* record)
 {
-	fwrite((void*) record, sizeof(pcap_record_header), 1, pcap->fp);
+	return fwrite((void*) record, sizeof(pcap_record_header), 1, pcap->fp) == 1;
 }
 
-BOOL pcap_read_record(rdpPcap* pcap, pcap_record* record)
+static BOOL pcap_read_record(rdpPcap* pcap, pcap_record* record)
 {
 	if (!pcap_read_record_header(pcap, &record->header))
 		return FALSE;
@@ -91,10 +91,10 @@ BOOL pcap_read_record(rdpPcap* pcap, pcap_record* record)
 	return TRUE;
 }
 
-void pcap_write_record(rdpPcap* pcap, pcap_record* record)
+static BOOL pcap_write_record(rdpPcap* pcap, pcap_record* record)
 {
-	pcap_write_record_header(pcap, &record->header);
-	fwrite(record->data, record->length, 1, pcap->fp);
+	return pcap_write_record_header(pcap, &record->header) &&
+			(fwrite(record->data, record->length, 1, pcap->fp) == 1);
 }
 
 BOOL pcap_add_record(rdpPcap* pcap, void* data, UINT32 length)
