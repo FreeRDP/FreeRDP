@@ -102,9 +102,34 @@ static SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla);
 static SECURITY_STATUS nla_encrypt_ts_credentials(rdpNla* nla);
 static SECURITY_STATUS nla_decrypt_ts_credentials(rdpNla* nla);
 static BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s);
+static void nla_identity_free(SEC_WINNT_AUTH_IDENTITY* identity);
 
 #define ber_sizeof_sequence_octet_string(length) ber_sizeof_contextual_tag(ber_sizeof_octet_string(length)) + ber_sizeof_octet_string(length)
 #define ber_write_sequence_octet_string(stream, context, value, length) ber_write_contextual_tag(stream, context, ber_sizeof_octet_string(length), TRUE) + ber_write_octet_string(stream, value, length)
+
+void nla_identity_free(SEC_WINNT_AUTH_IDENTITY* identity)
+{
+	if (identity)
+	{
+		if (identity->User)
+		{
+			memset(identity->User, 0, identity->UserLength*2);
+			free(identity->User);
+		}
+		if (identity->Password)
+		{
+			memset(identity->Password, 0, identity->PasswordLength*2);
+			free(identity->Password);
+		}
+		if (identity->Domain)
+		{
+			memset(identity->Domain, 0, identity->DomainLength*2);
+			free(identity->Domain);
+		}
+	}
+	free(identity);
+
+}
 
 /**
  * Initialize NTLMSSP authentication module (client).
@@ -159,7 +184,7 @@ int nla_client_init(rdpNla* nla)
 
 	if (!settings->Username)
 	{
-		free (nla->identity);
+		nla_identity_free(nla->identity);
 		nla->identity = NULL;
 	}
 	else
@@ -1570,13 +1595,6 @@ void nla_free(rdpNla* nla)
 	sspi_SecBufferFree(&nla->tsCredentials);
 
 	free(nla->ServicePrincipalName);
-	if (nla->identity)
-	{
-		free(nla->identity->User);
-		free(nla->identity->Domain);
-		free(nla->identity->Password);
-	}
-	free(nla->identity);
-
+	nla_identity_free(nla->identity);
 	free(nla);
 }

@@ -543,6 +543,7 @@ void certificate_store_free(rdpCertificateStore* certstore)
 	{
 		free(certstore->path);
 		free(certstore->file);
+		free(certstore->legacy_file);
 		free(certstore);
 	}
 }
