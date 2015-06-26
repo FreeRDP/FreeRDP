@@ -72,7 +72,7 @@ int FillRect_32bpp(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr)
 	gdi_RectToCRgn(rect, &nXDest, &nYDest, &nWidth, &nHeight);
 	
 	if (gdi_ClipCoords(hdc, &nXDest, &nYDest, &nWidth, &nHeight, NULL, NULL) == 0)
-		return 0;
+		return 1;
 
 	color32 = gdi_get_color_32bpp(hdc, hbr->color);
 
@@ -905,12 +905,12 @@ int BitBlt_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeigh
 	if (hdcSrc != NULL)
 	{
 		if (gdi_ClipCoords(hdcDest, &nXDest, &nYDest, &nWidth, &nHeight, &nXSrc, &nYSrc) == 0)
-			return 0;
+			return 1;
 	}
 	else
 	{
 		if (gdi_ClipCoords(hdcDest, &nXDest, &nYDest, &nWidth, &nHeight, NULL, NULL) == 0)
-			return 0;
+			return 1;
 	}
 	
 	if (!gdi_InvalidateRegion(hdcDest, nXDest, nYDest, nWidth, nHeight))
@@ -986,7 +986,7 @@ int BitBlt_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeigh
 int PatBlt_32bpp(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, int rop)
 {
 	if (gdi_ClipCoords(hdc, &nXLeft, &nYLeft, &nWidth, &nHeight, NULL, NULL) == 0)
-		return 0;
+		return 1;
 	
 	if (!gdi_InvalidateRegion(hdc, nXLeft, nYLeft, nWidth, nHeight))
 		return 0;
