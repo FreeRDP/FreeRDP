@@ -31,8 +31,8 @@ FREERDP_API HGDI_DC gdi_GetDC(void);
 FREERDP_API HGDI_DC gdi_CreateDC(UINT32 flags, int bpp);
 FREERDP_API HGDI_DC gdi_CreateCompatibleDC(HGDI_DC hdc);
 FREERDP_API HGDIOBJECT gdi_SelectObject(HGDI_DC hdc, HGDIOBJECT hgdiobject);
-FREERDP_API int gdi_DeleteObject(HGDIOBJECT hgdiobject);
-FREERDP_API int gdi_DeleteDC(HGDI_DC hdc);
+FREERDP_API BOOL gdi_DeleteObject(HGDIOBJECT hgdiobject);
+FREERDP_API BOOL gdi_DeleteDC(HGDI_DC hdc);
 
 #ifdef __cplusplus
  }

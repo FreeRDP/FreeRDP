@@ -49,17 +49,17 @@ p_LineTo LineTo_[5] =
  * @param hdc device context
  * @param nXEnd ending x position
  * @param nYEnd ending y position
- * @return 1 if successful, 0 otherwise
+ * @return nonzero if successful, 0 otherwise
  */
 
-int gdi_LineTo(HGDI_DC hdc, int nXEnd, int nYEnd)
+BOOL gdi_LineTo(HGDI_DC hdc, int nXEnd, int nYEnd)
 {
 	p_LineTo _LineTo = LineTo_[IBPP(hdc->bitsPerPixel)];
 
-	if (_LineTo != NULL)
-		return _LineTo(hdc, nXEnd, nYEnd);
-	else
-		return 0;
+	if (_LineTo == NULL)
+		return FALSE;
+
+	return _LineTo(hdc, nXEnd, nYEnd);
 }
 
 /**
@@ -67,19 +67,21 @@ int gdi_LineTo(HGDI_DC hdc, int nXEnd, int nYEnd)
  * @param hdc device context
  * @param lppt array of points
  * @param cCount number of points
- * @return
+ * @return nonzero on success, 0 otherwise
  */
-int gdi_PolylineTo(HGDI_DC hdc, GDI_POINT *lppt, int cCount)
+BOOL gdi_PolylineTo(HGDI_DC hdc, GDI_POINT *lppt, DWORD cCount)
 {
-	int i;
+	DWORD i;
 
 	for (i = 0; i < cCount; i++)
 	{
-		gdi_LineTo(hdc, lppt[i].x, lppt[i].y);
-		gdi_MoveToEx(hdc, lppt[i].x, lppt[i].y, NULL);
+		if (!gdi_LineTo(hdc, lppt[i].x, lppt[i].y))
+			return FALSE;
+		if (!gdi_MoveToEx(hdc, lppt[i].x, lppt[i].y, NULL))
+			return FALSE;
 	}
 
-	return 1;
+	return TRUE;
 }
 
 /**
@@ -87,27 +89,31 @@ int gdi_PolylineTo(HGDI_DC hdc, GDI_POINT *lppt, int cCount)
  * @param hdc device context
  * @param lppt array of points
  * @param cPoints number of points
- * @return
+ * @return nonzero on success, 0 otherwise
  */
-int gdi_Polyline(HGDI_DC hdc, GDI_POINT *lppt, int cPoints)
+BOOL gdi_Polyline(HGDI_DC hdc, GDI_POINT *lppt, int cPoints)
 {
 	if (cPoints > 0)
 	{
 		int i;
 		GDI_POINT pt;
 
-		gdi_MoveToEx(hdc, lppt[0].x, lppt[0].y, &pt);
+		if (!gdi_MoveToEx(hdc, lppt[0].x, lppt[0].y, &pt))
+			return FALSE;
 
 		for (i = 0; i < cPoints; i++)
 		{
-			gdi_LineTo(hdc, lppt[i].x, lppt[i].y);
-			gdi_MoveToEx(hdc, lppt[i].x, lppt[i].y, NULL);
+			if (!gdi_LineTo(hdc, lppt[i].x, lppt[i].y))
+				return FALSE;
+			if (!gdi_MoveToEx(hdc, lppt[i].x, lppt[i].y, NULL))
+				return FALSE;
 		}
 
-		gdi_MoveToEx(hdc, pt.x, pt.y, NULL);
+		if (!gdi_MoveToEx(hdc, pt.x, pt.y, NULL))
+			return FALSE;
 	}
 
-	return 1;
+	return TRUE;
 }
 
 /**
@@ -116,21 +122,22 @@ int gdi_Polyline(HGDI_DC hdc, GDI_POINT *lppt, int cPoints)
  * @param lppt array of points
  * @param lpdwPolyPoints array of numbers of points per series
  * @param cCount count of entries in lpdwPolyPoints
- * @return
+ * @return nonzero on success, 0 otherwise
  */
-int gdi_PolyPolyline(HGDI_DC hdc, GDI_POINT *lppt, int *lpdwPolyPoints, int cCount)
+BOOL gdi_PolyPolyline(HGDI_DC hdc, GDI_POINT *lppt, int *lpdwPolyPoints, DWORD cCount)
 {
 	int cPoints;
-	int i, j = 0;
+	DWORD i, j = 0;
 
 	for (i = 0; i < cCount; i++)
 	{
 		cPoints = lpdwPolyPoints[i];
-		gdi_Polyline(hdc, &lppt[j], cPoints);
+		if (!gdi_Polyline(hdc, &lppt[j], cPoints))
+			return FALSE;
 		j += cPoints;
 	}
 
-	return 1;
+	return TRUE;
 }
 
 /**
@@ -138,10 +145,10 @@ int gdi_PolyPolyline(HGDI_DC hdc, GDI_POINT *lppt, int *lpdwPolyPoints, int cCou
  * @param hdc device context
  * @param X x position
  * @param Y y position
- * @return 1 if successful, 0 otherwise
+ * @return nonzero on success, 0 otherwise
  */
 
-int gdi_MoveToEx(HGDI_DC hdc, int X, int Y, HGDI_POINT lpPoint)
+BOOL gdi_MoveToEx(HGDI_DC hdc, int X, int Y, HGDI_POINT lpPoint)
 {
 	if (lpPoint != NULL)
 	{
@@ -152,5 +159,5 @@ int gdi_MoveToEx(HGDI_DC hdc, int X, int Y, HGDI_POINT lpPoint)
 	hdc->pen->posX = X;
 	hdc->pen->posY = Y;
 
-	return 1;
+	return TRUE;
 }

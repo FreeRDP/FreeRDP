@@ -968,7 +968,6 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 int freerdp_parse_username(char* username, char** user, char** domain)
 {
 	char* p;
-	char* u;
 	int length = 0;
 
 	p = strchr(username, '\\');

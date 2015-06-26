@@ -101,7 +101,12 @@ int TestGdiEllipse(int argc, char* argv[])
 	hdc->bytesPerPixel = bytesPerPixel;
 	gdi_SetNullClipRgn(hdc);
 
-	pen = gdi_CreatePen(1, 1, 0);
+	if (!(pen = gdi_CreatePen(1, 1, 0)))
+	{
+		printf("gdi_CreatePen failed\n");
+		return -1;
+	}
+
 	gdi_SelectObject(hdc, (HGDIOBJECT) pen);
 
 	hBmp = gdi_CreateCompatibleBitmap(hdc, 16, 16);
@@ -124,7 +129,11 @@ int TestGdiEllipse(int argc, char* argv[])
 	hBmp_Ellipse_3 = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
 
 	/* Test Case 1: (0,0) -> (16, 16) */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_Ellipse(hdc, 0, 0, 16, 16);
 
 	return 0;
