@@ -108,9 +108,21 @@ void nla_identity_free(SEC_WINNT_AUTH_IDENTITY* identity)
 {
 	if (identity)
 	{
-		free(identity->User);
-		free(identity->Domain);
-		free(identity->Password);
+		if (identity->User)
+		{
+			memset(identity->User, 0, identity->UserLength*2);
+			free(identity->User);
+		}
+		if (identity->Password)
+		{
+			memset(identity->Password, 0, identity->PasswordLength*2);
+			free(identity->Password);
+		}
+		if (identity->Domain)
+		{
+			memset(identity->Domain, 0, identity->DomainLength*2);
+			free(identity->Domain);
+		}
 	}
 	free(identity);
 
