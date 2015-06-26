@@ -23,9 +23,9 @@ public class LibFreeRDP
 	private static native void freerdp_free(int inst);
 	private static native boolean freerdp_connect(int inst);
 	private static native boolean freerdp_disconnect(int inst);
-	private static native void freerdp_cancel_connection(int inst);
+	private static native boolean freerdp_cancel_connection(int inst);
 	
-	private static native void freerdp_set_connection_info(int inst,
+	private static native boolean freerdp_set_connection_info(int inst,
 		String hostname, String username, String password, String domain,
 		int width, int height, int color_depth, int port, boolean console,
 		int security, String certname);
@@ -35,27 +35,27 @@ public class LibFreeRDP
 		boolean disableMenuAnimations, boolean disableTheming,
 		boolean enableFontSmoothing, boolean enableDesktopComposition);
 
-	private static native void freerdp_set_advanced_settings(int inst,
+	private static native boolean freerdp_set_advanced_settings(int inst,
 			String remoteProgram, String workDir, boolean async_channel,
 			boolean async_transport, boolean async_input, boolean async_update);
 	
-	private static native void freerdp_set_data_directory(int inst, String directory);
+	private static native boolean freerdp_set_data_directory(int inst, String directory);
 	
 	private static native void freerdp_set_clipboard_redirection(int inst, boolean enable);
-	private static native void freerdp_set_sound_redirection(int inst, int redirect);
-	private static native void freerdp_set_microphone_redirection(int inst, boolean enable);
-	private static native void freerdp_set_drive_redirection(int inst, String path);
+	private static native boolean freerdp_set_sound_redirection(int inst, int redirect);
+	private static native boolean freerdp_set_microphone_redirection(int inst, boolean enable);
+	private static native boolean freerdp_set_drive_redirection(int inst, String path);
 	
-	private static native void freerdp_set_gateway_info(int inst, String gatewayhostname, int port, 
+	private static native boolean freerdp_set_gateway_info(int inst, String gatewayhostname, int port,
 			String gatewayusername, String gatewaypassword, String gatewaydomain);
 	
 	private static native boolean freerdp_update_graphics(int inst,
 			Bitmap bitmap, int x, int y, int width, int height);
 	
-	private static native void freerdp_send_cursor_event(int inst, int x, int y, int flags);
-	private static native void freerdp_send_key_event(int inst, int keycode, boolean down);
-	private static native void freerdp_send_unicodekey_event(int inst, int keycode);
-	private static native void freerdp_send_clipboard_data(int inst, String data);
+	private static native boolean freerdp_send_cursor_event(int inst, int x, int y, int flags);
+	private static native boolean freerdp_send_key_event(int inst, int keycode, boolean down);
+	private static native boolean freerdp_send_unicodekey_event(int inst, int keycode);
+	private static native boolean  freerdp_send_clipboard_data(int inst, String data);
 	
 	private static native String freerdp_get_version();
 	
@@ -106,9 +106,9 @@ public class LibFreeRDP
 		return freerdp_disconnect(inst);
 	}
 
-	public static void cancelConnection(int inst)
+	public static boolean cancelConnection(int inst)
 	{
-		freerdp_cancel_connection(inst);
+		return freerdp_cancel_connection(inst);
 	}
 
 	public static boolean setConnectionInfo(int inst, BookmarkBase bookmark)
@@ -185,9 +185,9 @@ public class LibFreeRDP
 		return true;
 	}
 	
-	public static void setDataDirectory(int inst, String directory)
+	public static boolean setDataDirectory(int inst, String directory)
 	{
-		freerdp_set_data_directory(inst, directory);
+		return freerdp_set_data_directory(inst, directory);
 	}
 	
 	public static boolean updateGraphics(int inst, Bitmap bitmap, int x, int y, int width, int height)
@@ -195,24 +195,24 @@ public class LibFreeRDP
 		return freerdp_update_graphics(inst, bitmap, x, y, width, height);
 	}		
 	
-	public static void sendCursorEvent(int inst, int x, int y, int flags)
+	public static boolean sendCursorEvent(int inst, int x, int y, int flags)
 	{
-		freerdp_send_cursor_event(inst, x, y, flags);
+		return freerdp_send_cursor_event(inst, x, y, flags);
 	}
 
-	public static void sendKeyEvent(int inst, int keycode, boolean down)
+	public static boolean sendKeyEvent(int inst, int keycode, boolean down)
 	{
-		freerdp_send_key_event(inst, keycode, down);
+		return freerdp_send_key_event(inst, keycode, down);
 	}
 
-	public static void sendUnicodeKeyEvent(int inst, int keycode)
+	public static boolean sendUnicodeKeyEvent(int inst, int keycode)
 	{
-		freerdp_send_unicodekey_event(inst, keycode);
+		return freerdp_send_unicodekey_event(inst, keycode);
 	}
 
-	public static void sendClipboardData(int inst, String data)
+	public static boolean sendClipboardData(int inst, String data)
     {
-		freerdp_send_clipboard_data(inst, data);
+		return freerdp_send_clipboard_data(inst, data);
     }
 	
 	private static void OnConnectionSuccess(int inst)

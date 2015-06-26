@@ -125,31 +125,22 @@ wLogCallbackAppender* WLog_CallbackAppender_New(wLog* log)
 {
 	wLogCallbackAppender* CallbackAppender;
 
-	CallbackAppender = (wLogCallbackAppender*) malloc(sizeof(wLogCallbackAppender));
+	CallbackAppender = (wLogCallbackAppender*) calloc(1, sizeof(wLogCallbackAppender));
+	if (!CallbackAppender)
+		return NULL;
 
-	if (CallbackAppender)
-	{
-		ZeroMemory(CallbackAppender, sizeof(wLogCallbackAppender));
+	CallbackAppender->Type = WLOG_APPENDER_CALLBACK;
 
-		CallbackAppender->Type = WLOG_APPENDER_CALLBACK;
-
-		CallbackAppender->Open = (WLOG_APPENDER_OPEN_FN) WLog_CallbackAppender_Open;
-		CallbackAppender->Close = (WLOG_APPENDER_OPEN_FN) WLog_CallbackAppender_Close;
-
-		CallbackAppender->WriteMessage =
-				(WLOG_APPENDER_WRITE_MESSAGE_FN) WLog_CallbackAppender_WriteMessage;
-		CallbackAppender->WriteDataMessage =
-				(WLOG_APPENDER_WRITE_DATA_MESSAGE_FN) WLog_CallbackAppender_WriteDataMessage;
-		CallbackAppender->WriteImageMessage =
-				(WLOG_APPENDER_WRITE_IMAGE_MESSAGE_FN) WLog_CallbackAppender_WriteImageMessage;
-		CallbackAppender->WritePacketMessage =
-				(WLOG_APPENDER_WRITE_PACKET_MESSAGE_FN) WLog_CallbackAppender_WritePacketMessage;
-
-		CallbackAppender->message = NULL;
-		CallbackAppender->image = NULL;
-		CallbackAppender->package = NULL;
-		CallbackAppender->data = NULL;
-	}
+	CallbackAppender->Open = (WLOG_APPENDER_OPEN_FN) WLog_CallbackAppender_Open;
+	CallbackAppender->Close = (WLOG_APPENDER_OPEN_FN) WLog_CallbackAppender_Close;
+	CallbackAppender->WriteMessage =
+			(WLOG_APPENDER_WRITE_MESSAGE_FN) WLog_CallbackAppender_WriteMessage;
+	CallbackAppender->WriteDataMessage =
+			(WLOG_APPENDER_WRITE_DATA_MESSAGE_FN) WLog_CallbackAppender_WriteDataMessage;
+	CallbackAppender->WriteImageMessage =
+			(WLOG_APPENDER_WRITE_IMAGE_MESSAGE_FN) WLog_CallbackAppender_WriteImageMessage;
+	CallbackAppender->WritePacketMessage =
+			(WLOG_APPENDER_WRITE_PACKET_MESSAGE_FN) WLog_CallbackAppender_WritePacketMessage;
 
 	return CallbackAppender;
 }

@@ -78,6 +78,7 @@ BOOL GetUserProfileDirectoryA(HANDLE hToken, LPSTR lpProfileDir, LPDWORD lpcchSi
 	if ((status != 0) || !pw)
 	{
 		SetLastError(ERROR_INVALID_PARAMETER);
+		free (buf);
 		return FALSE;
 	}
 

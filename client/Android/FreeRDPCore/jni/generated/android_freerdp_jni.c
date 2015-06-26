@@ -40,32 +40,32 @@ JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_free
 	return jni_freerdp_disconnect(env, cls, instance);
 }
 
-JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1cancel_1connection(JNIEnv *env, jclass cls, jint instance)
+JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1cancel_1connection(JNIEnv *env, jclass cls, jint instance)
 {
-	jni_freerdp_cancel_connection(env, cls, instance);
+	return jni_freerdp_cancel_connection(env, cls, instance);
 }
 
-JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1connection_1info(JNIEnv *env, jclass cls, jint instance,
+JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1connection_1info(JNIEnv *env, jclass cls, jint instance,
 	jstring jhostname, jstring jusername, jstring jpassword, jstring jdomain, jint width, jint height, jint color_depth, jint port,
 	jboolean console, jint security, jstring certname)
 {
-	jni_freerdp_set_connection_info(env, cls, instance, jhostname, jusername, jpassword, jdomain,
+	return jni_freerdp_set_connection_info(env, cls, instance, jhostname, jusername, jpassword, jdomain,
 			width, height, color_depth, port, console, security, certname);
 }
 
-JNIEXPORT void JNICALL
+JNIEXPORT jboolean JNICALL
 Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1advanced_1settings(
 		JNIEnv *env, jclass cls, jint instance, jstring remote_program, jstring work_dir,
 		jboolean async_channel, jboolean async_transport, jboolean async_input,
 		jboolean async_update)
 {
-	jni_freerdp_set_advanced_settings(env, cls, instance, remote_program, work_dir,
+	return jni_freerdp_set_advanced_settings(env, cls, instance, remote_program, work_dir,
 			async_channel, async_transport, async_input, async_update);
 }
 
-JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1data_1directory(JNIEnv *env, jclass cls, jint instance, jstring directory)
+JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1data_1directory(JNIEnv *env, jclass cls, jint instance, jstring directory)
 {
-	jni_freerdp_set_data_directory(env, cls, instance, directory);
+	return jni_freerdp_set_data_directory(env, cls, instance, directory);
 }
 
 JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1performance_1flags(
@@ -81,28 +81,28 @@ JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_
 	jni_freerdp_set_clipboard_redirection(env, cls, inst, enable);
 }
 
-JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1sound_1redirection
+JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1sound_1redirection
   (JNIEnv *env, jclass cls, jint inst, jint redirect)
 {
-	jni_freerdp_set_sound_redirection(env, cls, inst, redirect);
+	return jni_freerdp_set_sound_redirection(env, cls, inst, redirect);
 }
 
-JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1microphone_1redirection
+JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1microphone_1redirection
   (JNIEnv *env, jclass cls, jint inst, jboolean redirect)
 {
-	jni_freerdp_set_microphone_redirection(env, cls, inst, redirect);
+	return jni_freerdp_set_microphone_redirection(env, cls, inst, redirect);
 }
 
-JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1drive_1redirection
+JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1drive_1redirection
   (JNIEnv *env, jclass cls, jint inst, jstring path)
 {
-	jni_freerdp_set_drive_redirection(env, cls, inst, path);
+	return jni_freerdp_set_drive_redirection(env, cls, inst, path);
 }
 
-JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1gateway_1info
+JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1gateway_1info
   (JNIEnv *env, jclass cls, jint inst, jstring hostname, jint port, jstring username, jstring password, jstring domain)
 {
-	jni_freerdp_set_gateway_info(env, cls, inst, hostname, port, username, password, domain);
+	return jni_freerdp_set_gateway_info(env, cls, inst, hostname, port, username, password, domain);
 }
 
 JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1update_1graphics(
@@ -111,28 +111,28 @@ JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_free
 	return jni_freerdp_update_graphics(env, cls, instance, bitmap, x, y, width, height);
 }
 
-JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1cursor_1event(
+JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1cursor_1event(
 	JNIEnv *env, jclass cls, jint instance, jint x, jint y, jint flags)
 {
-	jni_freerdp_send_cursor_event(env, cls, instance, x, y, flags);
+	return jni_freerdp_send_cursor_event(env, cls, instance, x, y, flags);
 }
 
-JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1key_1event(
+JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1key_1event(
 	JNIEnv *env, jclass cls, jint instance, jint keycode, jboolean down)
 {
-	jni_freerdp_send_key_event(env, cls, instance, keycode, down);
+	return jni_freerdp_send_key_event(env, cls, instance, keycode, down);
 }
 
-JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1unicodekey_1event
+JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1unicodekey_1event
   (JNIEnv *env, jclass cls, jint instance, jint keycode)
 {
-	jni_freerdp_send_unicodekey_event(env, cls, instance, keycode);
+	return jni_freerdp_send_unicodekey_event(env, cls, instance, keycode);
 }
 
-JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1clipboard_1data
+JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1clipboard_1data
   (JNIEnv *env, jclass cls, jint instance, jstring data)
 {	
-	jni_freerdp_send_clipboard_data(env, cls, instance, data);
+	return jni_freerdp_send_clipboard_data(env, cls, instance, data);
 }
 
 JNIEXPORT jstring JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1get_1version(JNIEnv *env, jclass cls)

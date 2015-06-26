@@ -107,10 +107,9 @@ static BOOL update_message_BitmapUpdate(rdpContext* context, BITMAP_UPDATE* bitm
 		wParam->rectangles[index].bitmapDataStream = (BYTE*) malloc(wParam->rectangles[index].bitmapLength);
 		if (!wParam->rectangles[index].bitmapDataStream)
 		{
-			for (index -= 1; index >= 0; --index)
-			{
-				free(wParam->rectangles[index].bitmapDataStream);
-			}
+			while(index)
+				free(wParam->rectangles[--index].bitmapDataStream);
+
 			free(wParam->rectangles);
 			free(wParam);
 			return FALSE;
@@ -2770,15 +2769,13 @@ rdpInputProxy* input_message_proxy_new(rdpInput* input)
 {
 	rdpInputProxy* proxy;
 
-	proxy = (rdpInputProxy*) malloc(sizeof(rdpInputProxy));
+	proxy = (rdpInputProxy*) calloc(1, sizeof(rdpInputProxy));
 
-	if (proxy)
-	{
-		ZeroMemory(proxy, sizeof(rdpInputProxy));
+	if (!proxy)
+		return NULL;
 
-		proxy->input = input;
-		input_message_proxy_register(proxy, input);
-	}
+	proxy->input = input;
+	input_message_proxy_register(proxy, input);
 
 	return proxy;
 }

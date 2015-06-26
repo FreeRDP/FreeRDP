@@ -404,7 +404,9 @@ int rdtk_font_parse_descriptor_buffer(rdtkFont* font, BYTE* buffer, int size)
 	}
 
 	font->glyphCount = count;
-	font->glyphs = (rdtkGlyph*) calloc(font->glyphCount, sizeof(rdtkGlyph));
+	font->glyphs = NULL;
+	if (count > 0)
+		font->glyphs = (rdtkGlyph*) calloc(font->glyphCount, sizeof(rdtkGlyph));
 
 	if (!font->glyphs)
 		return -1;

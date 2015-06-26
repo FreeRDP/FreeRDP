@@ -500,7 +500,10 @@ static INLINE BOOL update_read_delta(wStream* s, INT32* value)
 	BYTE byte;
 
 	if (Stream_GetRemainingLength(s) < 1)
+	{
+		WLog_ERR(TAG, "Stream_GetRemainingLength(s) < 1");
 		return FALSE;
+	}
 	Stream_Read_UINT8(s, byte);
 
 	if (byte & 0x40)
@@ -511,7 +514,10 @@ static INLINE BOOL update_read_delta(wStream* s, INT32* value)
 	if (byte & 0x80)
 	{
 		if (Stream_GetRemainingLength(s) < 1)
+		{
+			WLog_ERR(TAG, "Stream_GetRemainingLength(s) < 1");
 			return FALSE;
+		}
 		Stream_Read_UINT8(s, byte);
 		*value = (*value << 8) | byte;
 	}
@@ -723,7 +729,10 @@ static INLINE BOOL update_read_delta_points(wStream* s, DELTA_POINT* points, int
 	zeroBitsSize = ((number + 3) / 4);
 
 	if (Stream_GetRemainingLength(s) < zeroBitsSize)
+	{
+		WLog_ERR(TAG, "Stream_GetRemainingLength(s) < %i", zeroBitsSize);
 		return FALSE;
+	}
 
 	Stream_GetPointer(s, zeroBits);
 	Stream_Seek(s, zeroBitsSize);
@@ -736,10 +745,16 @@ static INLINE BOOL update_read_delta_points(wStream* s, DELTA_POINT* points, int
 			flags = zeroBits[i / 4];
 
 		if ((~flags & 0x80) && !update_read_delta(s, &points[i].x))
+		{
+			WLog_ERR(TAG, "update_read_delta(x) failed");
 			return FALSE;
+		}
 
 		if ((~flags & 0x40) && !update_read_delta(s, &points[i].y))
+		{
+			WLog_ERR(TAG, "update_read_delta(y) failed");
 			return FALSE;
+		}
 
 		flags <<= 2;
 	}
@@ -1336,12 +1351,18 @@ BOOL update_read_polyline_order(wStream* s, ORDER_INFO* orderInfo, POLYLINE_ORDE
 		DELTA_POINT *new_points;
 
 		if (Stream_GetRemainingLength(s) < 1)
+		{
+			WLog_ERR(TAG, "Stream_GetRemainingLength(s) < 1");
 			return FALSE;
+		}
 		Stream_Read_UINT8(s, polyline->cbData);
 
 		new_points = (DELTA_POINT*) realloc(polyline->points, sizeof(DELTA_POINT) * new_num);
 		if (!new_points)
+		{
+			WLog_ERR(TAG, "realloc(%i) failed", new_num);
 			return FALSE;
+		}
 		polyline->points = new_points;
 		polyline->numDeltaEntries = new_num;
 
@@ -2280,6 +2301,8 @@ BOOL update_read_cache_glyph_order(wStream* s, CACHE_GLYPH_ORDER* cache_glyph_or
 			return FALSE;
 
 		glyph->aj = (BYTE*) malloc(glyph->cb);
+		if (!glyph->aj)
+			return FALSE;
 		Stream_Read(s, glyph->aj, glyph->cb);
 	}
 
@@ -2370,6 +2393,8 @@ BOOL update_read_cache_glyph_v2_order(wStream* s, CACHE_GLYPH_V2_ORDER* cache_gl
 			return FALSE;
 
 		glyph->aj = (BYTE*) malloc(glyph->cb);
+		if (!glyph->aj)
+			return FALSE;
 		Stream_Read(s, glyph->aj, glyph->cb);
 	}
 
@@ -3135,14 +3160,20 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 	if (!update_read_field_flags(s, &(orderInfo->fieldFlags), flags,
 				PRIMARY_DRAWING_ORDER_FIELD_BYTES[orderInfo->orderType]))
+	{
+		WLog_ERR(TAG, "update_read_field_flags() failed");
 		return FALSE;
+	}
 
 	if (flags & ORDER_BOUNDS)
 	{
 		if (!(flags & ORDER_ZERO_BOUNDS_DELTAS))
 		{
 			if (!update_read_bounds(s, &orderInfo->bounds))
+			{
+				WLog_ERR(TAG, "update_read_bounds() failed");
 				return FALSE;
+			}
 		}
 
 		IFCALL(update->SetBounds, context, &orderInfo->bounds);
@@ -3158,154 +3189,220 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 	{
 		case ORDER_TYPE_DSTBLT:
 			if (!update_read_dstblt_order(s, orderInfo, &(primary->dstblt)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_DSTBLT - update_read_dstblt_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "DstBlt");
 			IFCALL(primary->DstBlt, context, &primary->dstblt);
 			break;
 
 		case ORDER_TYPE_PATBLT:
 			if (!update_read_patblt_order(s, orderInfo, &(primary->patblt)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_PATBLT - update_read_patblt_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "PatBlt");
 			IFCALL(primary->PatBlt, context, &primary->patblt);
 			break;
 
 		case ORDER_TYPE_SCRBLT:
 			if (!update_read_scrblt_order(s, orderInfo, &(primary->scrblt)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_SCRBLT - update_read_scrblt_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "ScrBlt");
 			IFCALL(primary->ScrBlt, context, &primary->scrblt);
 			break;
 
 		case ORDER_TYPE_OPAQUE_RECT:
 			if (!update_read_opaque_rect_order(s, orderInfo, &(primary->opaque_rect)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_OPAQUE_RECT - update_read_opaque_rect_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "OpaqueRect");
 			IFCALL(primary->OpaqueRect, context, &primary->opaque_rect);
 			break;
 
 		case ORDER_TYPE_DRAW_NINE_GRID:
 			if (!update_read_draw_nine_grid_order(s, orderInfo, &(primary->draw_nine_grid)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_DRAW_NINE_GRID - update_read_draw_nine_grid_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "DrawNineGrid");
 			IFCALL(primary->DrawNineGrid, context, &primary->draw_nine_grid);
 			break;
 
 		case ORDER_TYPE_MULTI_DSTBLT:
 			if (!update_read_multi_dstblt_order(s, orderInfo, &(primary->multi_dstblt)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_MULTI_DSTBLT - update_read_multi_dstblt_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "MultiDstBlt");
 			IFCALL(primary->MultiDstBlt, context, &primary->multi_dstblt);
 			break;
 
 		case ORDER_TYPE_MULTI_PATBLT:
 			if (!update_read_multi_patblt_order(s, orderInfo, &(primary->multi_patblt)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_MULTI_PATBLT - update_read_multi_patblt_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "MultiPatBlt");
 			IFCALL(primary->MultiPatBlt, context, &primary->multi_patblt);
 			break;
 
 		case ORDER_TYPE_MULTI_SCRBLT:
 			if (!update_read_multi_scrblt_order(s, orderInfo, &(primary->multi_scrblt)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_MULTI_SCRBLT - update_read_multi_scrblt_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "MultiScrBlt");
 			IFCALL(primary->MultiScrBlt, context, &primary->multi_scrblt);
 			break;
 
 		case ORDER_TYPE_MULTI_OPAQUE_RECT:
 			if (!update_read_multi_opaque_rect_order(s, orderInfo, &(primary->multi_opaque_rect)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_MULTI_OPAQUE_RECT - update_read_multi_opaque_rect_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "MultiOpaqueRect");
 			IFCALL(primary->MultiOpaqueRect, context, &primary->multi_opaque_rect);
 			break;
 
 		case ORDER_TYPE_MULTI_DRAW_NINE_GRID:
 			if (!update_read_multi_draw_nine_grid_order(s, orderInfo, &(primary->multi_draw_nine_grid)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_MULTI_DRAW_NINE_GRID - update_read_multi_draw_nine_grid_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "MultiDrawNineGrid");
 			IFCALL(primary->MultiDrawNineGrid, context, &primary->multi_draw_nine_grid);
 			break;
 
 		case ORDER_TYPE_LINE_TO:
 			if (!update_read_line_to_order(s, orderInfo, &(primary->line_to)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_LINE_TO - update_read_line_to_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "LineTo");
 			IFCALL(primary->LineTo, context, &primary->line_to);
 			break;
 
 		case ORDER_TYPE_POLYLINE:
 			if (!update_read_polyline_order(s, orderInfo, &(primary->polyline)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_POLYLINE - update_read_polyline_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "Polyline");
 			IFCALL(primary->Polyline, context, &primary->polyline);
 			break;
 
 		case ORDER_TYPE_MEMBLT:
 			if (!update_read_memblt_order(s, orderInfo, &(primary->memblt)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_MEMBLT - update_read_memblt_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "MemBlt");
 			IFCALL(primary->MemBlt, context, &primary->memblt);
 			break;
 
 		case ORDER_TYPE_MEM3BLT:
 			if (!update_read_mem3blt_order(s, orderInfo, &(primary->mem3blt)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_MEM3BLT - update_read_mem3blt_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "Mem3Blt");
 			IFCALL(primary->Mem3Blt, context, &primary->mem3blt);
 			break;
 
 		case ORDER_TYPE_SAVE_BITMAP:
 			if (!update_read_save_bitmap_order(s, orderInfo, &(primary->save_bitmap)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_SAVE_BITMAP - update_read_save_bitmap_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "SaveBitmap");
 			IFCALL(primary->SaveBitmap, context, &primary->save_bitmap);
 			break;
 
 		case ORDER_TYPE_GLYPH_INDEX:
 			if (!update_read_glyph_index_order(s, orderInfo, &(primary->glyph_index)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_GLYPH_INDEX - update_read_glyph_index_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "GlyphIndex");
 			IFCALL(primary->GlyphIndex, context, &primary->glyph_index);
 			break;
 
 		case ORDER_TYPE_FAST_INDEX:
 			if (!update_read_fast_index_order(s, orderInfo, &(primary->fast_index)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_FAST_INDEX - update_read_fast_index_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "FastIndex");
 			IFCALL(primary->FastIndex, context, &primary->fast_index);
 			break;
 
 		case ORDER_TYPE_FAST_GLYPH:
 			if (!update_read_fast_glyph_order(s, orderInfo, &(primary->fast_glyph)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_FAST_GLYPH - update_read_fast_glyph_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "FastGlyph");
 			IFCALL(primary->FastGlyph, context, &primary->fast_glyph);
 			break;
 
 		case ORDER_TYPE_POLYGON_SC:
 			if (!update_read_polygon_sc_order(s, orderInfo, &(primary->polygon_sc)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_POLYGON_SC - update_read_polygon_sc_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "PolygonSC");
 			IFCALL(primary->PolygonSC, context, &primary->polygon_sc);
 			break;
 
 		case ORDER_TYPE_POLYGON_CB:
 			if (!update_read_polygon_cb_order(s, orderInfo, &(primary->polygon_cb)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_POLYGON_CB - update_read_polygon_cb_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "PolygonCB");
 			IFCALL(primary->PolygonCB, context, &primary->polygon_cb);
 			break;
 
 		case ORDER_TYPE_ELLIPSE_SC:
 			if (!update_read_ellipse_sc_order(s, orderInfo, &(primary->ellipse_sc)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_ELLIPSE_SC - update_read_ellipse_sc_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "EllipseSC");
 			IFCALL(primary->EllipseSC, context, &primary->ellipse_sc);
 			break;
 
 		case ORDER_TYPE_ELLIPSE_CB:
 			if (!update_read_ellipse_cb_order(s, orderInfo, &(primary->ellipse_cb)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_ELLIPSE_CB - update_read_ellipse_cb_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "EllipseCB");
 			IFCALL(primary->EllipseCB, context, &primary->ellipse_cb);
 			break;
@@ -3332,7 +3429,10 @@ BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flags)
 	rdpSecondaryUpdate* secondary = update->secondary;
 
 	if (Stream_GetRemainingLength(s) < 5)
+	{
+		WLog_ERR(TAG, "Stream_GetRemainingLength(s) < 5");
 		return FALSE;
+	}
 
 	Stream_Read_UINT16(s, orderLength); /* orderLength (2 bytes) */
 	Stream_Read_UINT16(s, extraFlags); /* extraFlags (2 bytes) */
@@ -3351,42 +3451,60 @@ BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flags)
 	{
 		case ORDER_TYPE_BITMAP_UNCOMPRESSED:
 			if (!update_read_cache_bitmap_order(s, &(secondary->cache_bitmap_order), FALSE, extraFlags))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_BITMAP_UNCOMPRESSED - update_read_cache_bitmap_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "CacheBitmapUncompressed");
 			IFCALL(secondary->CacheBitmap, context, &(secondary->cache_bitmap_order));
 			break;
 
 		case ORDER_TYPE_CACHE_BITMAP_COMPRESSED:
 			if (!update_read_cache_bitmap_order(s, &(secondary->cache_bitmap_order), TRUE, extraFlags))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_CACHE_BITMAP_COMPRESSED - update_read_cache_bitmap_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "CacheBitmapCompressed");
 			IFCALL(secondary->CacheBitmap, context, &(secondary->cache_bitmap_order));
 			break;
 
 		case ORDER_TYPE_BITMAP_UNCOMPRESSED_V2:
 			if (!update_read_cache_bitmap_v2_order(s, &(secondary->cache_bitmap_v2_order), FALSE, extraFlags))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_BITMAP_UNCOMPRESSED_V2 - update_read_cache_bitmap_v2_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "CacheBitmapUncompressedV2");
 			IFCALL(secondary->CacheBitmapV2, context, &(secondary->cache_bitmap_v2_order));
 			break;
 
 		case ORDER_TYPE_BITMAP_COMPRESSED_V2:
 			if (!update_read_cache_bitmap_v2_order(s, &(secondary->cache_bitmap_v2_order), TRUE, extraFlags))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_BITMAP_COMPRESSED_V2 - update_read_cache_bitmap_v2_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "CacheBitmapCompressedV2");
 			IFCALL(secondary->CacheBitmapV2, context, &(secondary->cache_bitmap_v2_order));
 			break;
 
 		case ORDER_TYPE_BITMAP_COMPRESSED_V3:
 			if (!update_read_cache_bitmap_v3_order(s, &(secondary->cache_bitmap_v3_order), extraFlags))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_BITMAP_COMPRESSED_V3 - update_read_cache_bitmap_v3_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "CacheBitmapCompressedV3");
 			IFCALL(secondary->CacheBitmapV3, context, &(secondary->cache_bitmap_v3_order));
 			break;
 
 		case ORDER_TYPE_CACHE_COLOR_TABLE:
 			if (!update_read_cache_color_table_order(s, &(secondary->cache_color_table_order), extraFlags))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_CACHE_COLOR_TABLE - update_read_cache_color_table_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "CacheColorTable");
 			IFCALL(secondary->CacheColorTable, context, &(secondary->cache_color_table_order));
 			break;
@@ -3395,14 +3513,20 @@ BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			if (secondary->glyph_v2)
 			{
 				if (!update_read_cache_glyph_v2_order(s, &(secondary->cache_glyph_v2_order), extraFlags))
+				{
+					WLog_ERR(TAG, "ORDER_TYPE_CACHE_GLYPH - update_read_cache_glyph_v2_order() failed");
 					return FALSE;
+				}
 				WLog_Print(update->log, WLOG_DEBUG, "CacheGlyphV2");
 				IFCALL(secondary->CacheGlyphV2, context, &(secondary->cache_glyph_v2_order));
 			}
 			else
 			{
 				if (!update_read_cache_glyph_order(s, &(secondary->cache_glyph_order), extraFlags))
+				{
+					WLog_ERR(TAG, "ORDER_TYPE_CACHE_GLYPH - update_read_cache_glyph_order() failed");
 					return FALSE;
+				}
 				WLog_Print(update->log, WLOG_DEBUG, "CacheGlyph");
 				IFCALL(secondary->CacheGlyph, context, &(secondary->cache_glyph_order));
 			}
@@ -3410,7 +3534,10 @@ BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 		case ORDER_TYPE_CACHE_BRUSH:
 			if (!update_read_cache_brush_order(s, &(secondary->cache_brush_order), extraFlags))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_CACHE_BRUSH - update_read_cache_brush_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "CacheBrush");
 			IFCALL(secondary->CacheBrush, context, &(secondary->cache_brush_order));
 			break;
@@ -3434,37 +3561,49 @@ BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 #ifdef WITH_DEBUG_ORDERS
 	if (orderType < ALTSEC_DRAWING_ORDER_COUNT)
-		WLog_DBG(TAG,  "%s Alternate Secondary Drawing Order (0x%02X)", ALTSEC_DRAWING_ORDER_STRINGS[orderType], orderType);
+		WLog_DBG(TAG, "%s Alternate Secondary Drawing Order (0x%02X)", ALTSEC_DRAWING_ORDER_STRINGS[orderType], orderType);
 	else
-		WLog_DBG(TAG,  "Unknown Alternate Secondary Drawing Order: 0x%02X", orderType);
+		WLog_DBG(TAG, "Unknown Alternate Secondary Drawing Order: 0x%02X", orderType);
 #endif
 
 	switch (orderType)
 	{
 		case ORDER_TYPE_CREATE_OFFSCREEN_BITMAP:
 			if (!update_read_create_offscreen_bitmap_order(s, &(altsec->create_offscreen_bitmap)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_CREATE_OFFSCREEN_BITMAP - update_read_create_offscreen_bitmap_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "CreateOffscreenBitmap");
 			IFCALL(altsec->CreateOffscreenBitmap, context, &(altsec->create_offscreen_bitmap));
 			break;
 
 		case ORDER_TYPE_SWITCH_SURFACE:
 			if (!update_read_switch_surface_order(s, &(altsec->switch_surface)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_SWITCH_SURFACE - update_read_switch_surface_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "SwitchSurface");
 			IFCALL(altsec->SwitchSurface, context, &(altsec->switch_surface));
 			break;
 
 		case ORDER_TYPE_CREATE_NINE_GRID_BITMAP:
 			if (!update_read_create_nine_grid_bitmap_order(s, &(altsec->create_nine_grid_bitmap)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_CREATE_NINE_GRID_BITMAP - update_read_create_nine_grid_bitmap_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "CreateNineGridBitmap");
 			IFCALL(altsec->CreateNineGridBitmap, context, &(altsec->create_nine_grid_bitmap));
 			break;
 
 		case ORDER_TYPE_FRAME_MARKER:
 			if (!update_read_frame_marker_order(s, &(altsec->frame_marker)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_FRAME_MARKER - update_read_frame_marker_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "AltSecFrameMarker: action: %s (%d)",
 					(!altsec->frame_marker.action) ? "Begin" : "End", altsec->frame_marker.action);
 			IFCALL(altsec->FrameMarker, context, &(altsec->frame_marker));
@@ -3472,56 +3611,80 @@ BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 		case ORDER_TYPE_STREAM_BITMAP_FIRST:
 			if (!update_read_stream_bitmap_first_order(s, &(altsec->stream_bitmap_first)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_STREAM_BITMAP_FIRST - update_read_stream_bitmap_first_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "StreamBitmapFirst");
 			IFCALL(altsec->StreamBitmapFirst, context, &(altsec->stream_bitmap_first));
 			break;
 
 		case ORDER_TYPE_STREAM_BITMAP_NEXT:
 			if (!update_read_stream_bitmap_next_order(s, &(altsec->stream_bitmap_next)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_STREAM_BITMAP_NEXT - update_read_stream_bitmap_next_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "StreamBitmapNext");
 			IFCALL(altsec->StreamBitmapNext, context, &(altsec->stream_bitmap_next));
 			break;
 
 		case ORDER_TYPE_GDIPLUS_FIRST:
 			if (!update_read_draw_gdiplus_first_order(s, &(altsec->draw_gdiplus_first)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_GDIPLUS_FIRST - update_read_draw_gdiplus_first_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "DrawGdiPlusFirst");
 			IFCALL(altsec->DrawGdiPlusFirst, context, &(altsec->draw_gdiplus_first));
 			break;
 
 		case ORDER_TYPE_GDIPLUS_NEXT:
 			if (!update_read_draw_gdiplus_next_order(s, &(altsec->draw_gdiplus_next)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_GDIPLUS_NEXT - update_read_draw_gdiplus_next_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "DrawGdiPlusNext");
 			IFCALL(altsec->DrawGdiPlusNext, context, &(altsec->draw_gdiplus_next));
 			break;
 
 		case ORDER_TYPE_GDIPLUS_END:
 			if (update_read_draw_gdiplus_end_order(s, &(altsec->draw_gdiplus_end)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_GDIPLUS_END - update_read_draw_gdiplus_end_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "DrawGdiPlusEnd");
 			IFCALL(altsec->DrawGdiPlusEnd, context, &(altsec->draw_gdiplus_end));
 			break;
 
 		case ORDER_TYPE_GDIPLUS_CACHE_FIRST:
 			if (!update_read_draw_gdiplus_cache_first_order(s, &(altsec->draw_gdiplus_cache_first)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_GDIPLUS_CACHE_FIRST - update_read_draw_gdiplus_cache_first_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "DrawGdiPlusCacheFirst");
 			IFCALL(altsec->DrawGdiPlusCacheFirst, context, &(altsec->draw_gdiplus_cache_first));
 			break;
 
 		case ORDER_TYPE_GDIPLUS_CACHE_NEXT:
 			if (!update_read_draw_gdiplus_cache_next_order(s, &(altsec->draw_gdiplus_cache_next)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_GDIPLUS_CACHE_NEXT - update_read_draw_gdiplus_cache_next_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "DrawGdiPlusCacheNext");
 			IFCALL(altsec->DrawGdiPlusCacheNext, context, &(altsec->draw_gdiplus_cache_next));
 			break;
 
 		case ORDER_TYPE_GDIPLUS_CACHE_END:
 			if (!update_read_draw_gdiplus_cache_end_order(s, &(altsec->draw_gdiplus_cache_end)))
+			{
+				WLog_ERR(TAG, "ORDER_TYPE_GDIPLUS_CACHE_END - update_read_draw_gdiplus_cache_end_order() failed");
 				return FALSE;
+			}
 			WLog_Print(update->log, WLOG_DEBUG, "DrawGdiPlusCacheEnd");
 			IFCALL(altsec->DrawGdiPlusCacheEnd, context, &(altsec->draw_gdiplus_cache_end));
 			break;
@@ -3544,7 +3707,10 @@ BOOL update_recv_order(rdpUpdate* update, wStream* s)
 	BYTE controlFlags;
 
 	if (Stream_GetRemainingLength(s) < 1)
+	{
+		WLog_ERR(TAG, "Stream_GetRemainingLength(s) < 1");
 		return FALSE;
+	}
 
 	Stream_Read_UINT8(s, controlFlags); /* controlFlags (1 byte) */
 

@@ -22,7 +22,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#if defined(__linux__)
 #include <libudev.h>
+#endif
 
 #include "libusb_udevice.h"
 
@@ -455,8 +457,7 @@ static void print_status(enum libusb_transfer_status status)
 
 static LIBUSB_DEVICE* udev_get_libusb_dev(int bus_number, int dev_number)
 {
-	int i;
-	ssize_t total_device;
+	ssize_t i, total_device;
 	LIBUSB_DEVICE** libusb_list;
 
 	total_device = libusb_get_device_list(NULL, &libusb_list); 
@@ -492,7 +493,69 @@ static LIBUSB_DEVICE_DESCRIPTOR* udev_new_descript(LIBUSB_DEVICE* libusb_dev)
 	return descriptor;
 }
 
- /* Get HUB handle */
+/* Get HUB handle */
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
+static int udev_get_hub_handle(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_number) {
+	int error;
+	ssize_t i, total_device, ports_cnt;
+	uint8_t port_numbers[16];
+	LIBUSB_DEVICE **libusb_list;
+
+	total_device = libusb_get_device_list(NULL, &libusb_list);
+	/* Look for device. */
+	error = -1;
+	for (i = 0; i < total_device; i ++)
+	{
+		if ((bus_number != libusb_get_bus_number(libusb_list[i])) ||
+		    (dev_number != libusb_get_device_address(libusb_list[i])))
+			continue;
+		error = libusb_open(libusb_list[i], &pdev->hub_handle);
+		if (error < 0)
+		{
+			WLog_ERR(TAG,"libusb_open error: %i - %s", error, libusb_strerror(error));
+			break;
+		}
+		/* get port number */
+		error = libusb_get_port_numbers(libusb_list[i], port_numbers, sizeof(port_numbers));
+		libusb_close(pdev->hub_handle);
+		if (error < 1)
+		{ /* Prevent open hub, treat as error. */
+			WLog_ERR(TAG,"libusb_get_port_numbers error: %i - %s", error, libusb_strerror(error));
+			break;
+		}
+		pdev->port_number = port_numbers[(error - 1)];
+		error = 0;
+		WLog_DBG(TAG, "  Port: %d", pdev->port_number);
+		/* gen device path */
+		sprintf(pdev->path, "ugen%d.%d", bus_number, dev_number);
+		WLog_DBG(TAG, "  DevPath: %s", pdev->path);
+		break;
+	}
+	/* Look for device hub. */
+	if (error == 0)
+	{
+		error = -1;
+		for (i = 0; i < total_device; i ++)
+		{
+			if ((bus_number != libusb_get_bus_number(libusb_list[i])) ||
+			    (1 != libusb_get_device_address(libusb_list[i]))) /* Root hub allways first on bus. */
+				continue;
+			WLog_DBG(TAG, "  Open hub: %d", bus_number);
+			error = libusb_open(libusb_list[i], &pdev->hub_handle);
+			if (error < 0)
+				WLog_ERR(TAG,"libusb_open error: %i - %s", error, libusb_strerror(error));
+			break;
+		}
+	}
+	libusb_free_device_list(libusb_list, 1);
+
+	if (error < 0)
+		return -1;
+	WLog_DBG(TAG, "libusb_open success!");
+	return 0;
+}
+#endif
+#if defined(__linux__)
 static int udev_get_hub_handle(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_number)
 {
 	struct udev* udev;
@@ -627,6 +690,7 @@ static int udev_get_hub_handle(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_numb
 	/* Success! */
 	return 0;
 }
+#endif
 
 static int libusb_udev_select_interface(IUDEVICE* idev, BYTE InterfaceNumber, BYTE AlternateSetting)
 {
@@ -1211,6 +1275,7 @@ static int libusb_udev_query_device_port_status(IUDEVICE* idev, UINT32* UsbdStat
 	UDEVICE* pdev = (UDEVICE*) idev;
 	int success = 0, ret;
 
+	WLog_DBG(TAG,"...");
 	if (pdev->hub_handle != NULL)
 	{
 		ret = idev->control_transfer(idev, 0xffff, 0, 0, 
@@ -1815,10 +1880,10 @@ int udev_new_by_id(UINT16 idVendor, UINT16 idProduct, IUDEVICE*** devArray)
 	UDEVICE** array;
 	UINT16 bus_number;
 	UINT16 dev_number;
-	ssize_t total_device;
-	int i, status, num = 0;
+	ssize_t i, total_device;
+	int status, num = 0;
 
-	WLog_ERR(TAG,  "VID: 0x%04X PID: 0x%04X", idVendor, idProduct);
+	WLog_INFO(TAG, "VID: 0x%04X, PID: 0x%04X", idVendor, idProduct);
 
 	array = (UDEVICE**) malloc(16 * sizeof(UDEVICE*));
 
@@ -1839,7 +1904,7 @@ int udev_new_by_id(UINT16 idVendor, UINT16 idProduct, IUDEVICE*** devArray)
 
 			if (status < 0)
 			{
-				WLog_ERR(TAG,  "libusb_open: (by id) error: 0x%08X (%d)", status, status);
+				WLog_ERR(TAG, "libusb_open: (by id) error: 0x%08X (%d)", status, status);
 				zfree(descriptor);
 				zfree(array[num]);
 				continue;

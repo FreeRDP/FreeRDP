@@ -62,7 +62,7 @@ typedef struct _ANDROID_EVENT_QUEUE ANDROID_EVENT_QUEUE;
 int android_is_event_set(ANDROID_EVENT_QUEUE * queue);
 void android_set_event(ANDROID_EVENT_QUEUE * queue);
 void android_clear_event(ANDROID_EVENT_QUEUE * queue);
-void android_push_event(freerdp * inst, ANDROID_EVENT* event);
+BOOL android_push_event(freerdp * inst, ANDROID_EVENT* event);
 ANDROID_EVENT* android_peek_event(ANDROID_EVENT_QUEUE * queue);
 ANDROID_EVENT* android_pop_event(ANDROID_EVENT_QUEUE * queue);
 int android_process_event(ANDROID_EVENT_QUEUE * queue, freerdp * inst);
@@ -79,7 +79,7 @@ void android_event_unicodekey_free(ANDROID_EVENT_KEY* event);
 void android_event_cursor_free(ANDROID_EVENT_CURSOR* event);
 void android_event_disconnect_free(ANDROID_EVENT* event);
 void android_event_clipboard_free(ANDROID_EVENT_CLIPBOARD* event);
-void android_event_queue_init(freerdp * inst);
+BOOL android_event_queue_init(freerdp * inst);
 void android_event_queue_uninit(freerdp * inst);
 
 #endif /* FREERDP_ANDROID_EVENT_H */

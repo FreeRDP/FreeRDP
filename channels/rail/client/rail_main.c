@@ -575,6 +575,8 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	CHANNEL_ENTRY_POINTS_FREERDP* pEntryPointsEx;
 
 	rail = (railPlugin*) calloc(1, sizeof(railPlugin));
+	if (!rail)
+		return FALSE;
 
 	rail->channelDef.options =
 			CHANNEL_OPTION_INITIALIZED |
@@ -591,7 +593,10 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	{
 		context = (RailClientContext*) calloc(1, sizeof(RailClientContext));
 		if (!context)
+		{
+			free(rail);
 			return FALSE;
+		}
 
 		context->handle = (void*) rail;
 		context->custom = NULL;

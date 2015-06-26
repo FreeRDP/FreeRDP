@@ -42,17 +42,17 @@ JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_free
 /*
  * Class:     com_freerdp_freerdpcore_services_LibFreeRDP
  * Method:    freerdp_cancel_connection
- * Signature: (I)V
+ * Signature: (I)Z
  */
-JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1cancel_1connection
+JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1cancel_1connection
   (JNIEnv *, jclass, jint);
 
 /*
  * Class:     com_freerdp_freerdpcore_services_LibFreeRDP
  * Method:    freerdp_set_connection_info
- * Signature: (ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IIIIZILjava/lang/String;)V
+ * Signature: (ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IIIIZILjava/lang/String;)Z
  */
-JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1connection_1info
+JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1connection_1info
   (JNIEnv *, jclass, jint, jstring, jstring, jstring, jstring, jint, jint, jint, jint, jboolean, jint, jstring);
 
 /*
@@ -66,17 +66,17 @@ JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_
 /*
  * Class:     com_freerdp_freerdpcore_services_LibFreeRDP
  * Method:    freerdp_set_advanced_settings
- * Signature: (ILjava/lang/String;Ljava/lang/String;ZZZZ)V
+ * Signature: (ILjava/lang/String;Ljava/lang/String;ZZZZ)Z
  */
-JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1advanced_1settings
+JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1advanced_1settings
   (JNIEnv *, jclass, jint, jstring, jstring, jboolean, jboolean, jboolean, jboolean);
 
 /*
  * Class:     com_freerdp_freerdpcore_services_LibFreeRDP
  * Method:    freerdp_set_data_directory
- * Signature: (ILjava/lang/String;)V
+ * Signature: (ILjava/lang/String;)Z
  */
-JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1data_1directory
+JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1data_1directory
   (JNIEnv *, jclass, jint, jstring);
 
 /*
@@ -90,33 +90,33 @@ JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_
 /*
  * Class:     com_freerdp_freerdpcore_services_LibFreeRDP
  * Method:    freerdp_set_sound_redirection
- * Signature: (IZ)V
+ * Signature: (II)Z
  */
-JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1sound_1redirection
+JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1sound_1redirection
   (JNIEnv *, jclass, jint, jint);
 
 /*
  * Class:     com_freerdp_freerdpcore_services_LibFreeRDP
  * Method:    freerdp_set_microphone_redirection
- * Signature: (IZ)V
+ * Signature: (IZ)Z
  */
-JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1microphone_1redirection
+JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1microphone_1redirection
   (JNIEnv *, jclass, jint, jboolean);
 
 /*
  * Class:     com_freerdp_freerdpcore_services_LibFreeRDP
  * Method:    freerdp_set_drive_redirection
- * Signature: (ILjava/lang/String;)V
+ * Signature: (ILjava/lang/String;)Z
  */
-JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1drive_1redirection
+JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1drive_1redirection
   (JNIEnv *, jclass, jint, jstring);
 
 /*
  * Class:     com_freerdp_freerdpcore_services_LibFreeRDP
  * Method:    freerdp_set_gateway_info
- * Signature: (ILjava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+ * Signature: (ILjava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)Z
  */
-JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1gateway_1info
+JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1set_1gateway_1info
   (JNIEnv *, jclass, jint, jstring, jint, jstring, jstring, jstring);
 
 /*
@@ -130,33 +130,33 @@ JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_free
 /*
  * Class:     com_freerdp_freerdpcore_services_LibFreeRDP
  * Method:    freerdp_send_cursor_event
- * Signature: (IIII)V
+ * Signature: (IIII)Z
  */
-JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1cursor_1event
+JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1cursor_1event
   (JNIEnv *, jclass, jint, jint, jint, jint);
 
 /*
  * Class:     com_freerdp_freerdpcore_services_LibFreeRDP
  * Method:    freerdp_send_key_event
- * Signature: (IIZ)V
+ * Signature: (IIZ)Z
  */
-JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1key_1event
+JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1key_1event
   (JNIEnv *, jclass, jint, jint, jboolean);
 
 /*
  * Class:     com_freerdp_freerdpcore_services_LibFreeRDP
  * Method:    freerdp_send_unicodekey_event
- * Signature: (II)V
+ * Signature: (II)Z
  */
-JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1unicodekey_1event
+JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1unicodekey_1event
   (JNIEnv *, jclass, jint, jint);
 
 /*
  * Class:     com_freerdp_freerdpcore_services_LibFreeRDP
  * Method:    freerdp_send_clipboard_data
- * Signature: (ILjava/lang/String;)V
+ * Signature: (ILjava/lang/String;)Z
  */
-JNIEXPORT void JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1clipboard_1data
+JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1send_1clipboard_1data
   (JNIEnv *, jclass, jint, jstring);
 
 /*

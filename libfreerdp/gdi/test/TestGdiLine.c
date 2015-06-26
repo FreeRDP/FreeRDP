@@ -648,7 +648,12 @@ int TestGdiLine(int argc, char* argv[])
 	hdc->bytesPerPixel = bytesPerPixel;
 	gdi_SetNullClipRgn(hdc);
 
-	pen = gdi_CreatePen(1, 1, 0);
+	if (!(pen = gdi_CreatePen(1, 1, 0)))
+	{
+		printf("gdi_CreatePen failed\n");
+		return -1;
+	}
+
 	gdi_SelectObject(hdc, (HGDIOBJECT) pen);
 
 	hBmp = gdi_CreateCompatibleBitmap(hdc, 16, 16);
@@ -746,7 +751,11 @@ int TestGdiLine(int argc, char* argv[])
 	hBmp_LineTo_R2_WHITE = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
 
 	/* Test Case 1: (0,0) -> (15, 15) */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_MoveToEx(hdc, 0, 0, NULL);
 	gdi_LineTo(hdc, 15, 15);
 
@@ -754,7 +763,11 @@ int TestGdiLine(int argc, char* argv[])
 		return -1;
 
 	/* Test Case 2: (15,15) -> (0,0) */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_MoveToEx(hdc, 15, 15, NULL);
 	gdi_LineTo(hdc, 0, 0);
 
@@ -762,7 +775,11 @@ int TestGdiLine(int argc, char* argv[])
 		return -1;
 
 	/* Test Case 3: (15,0) -> (0,15) */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_MoveToEx(hdc, 15, 0, NULL);
 	gdi_LineTo(hdc, 0, 15);
 
@@ -770,7 +787,11 @@ int TestGdiLine(int argc, char* argv[])
 		return -1;
 
 	/* Test Case 4: (0,15) -> (15,0) */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_MoveToEx(hdc, 0, 15, NULL);
 	gdi_LineTo(hdc, 15, 0);
 
@@ -778,7 +799,11 @@ int TestGdiLine(int argc, char* argv[])
 		return -1;
 
 	/* Test Case 5: (0,8) -> (15,8) */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_MoveToEx(hdc, 0, 8, NULL);
 	gdi_LineTo(hdc, 15, 8);
 
@@ -786,7 +811,11 @@ int TestGdiLine(int argc, char* argv[])
 		return -1;
 
 	/* Test Case 6: (15,8) -> (0,8) */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_MoveToEx(hdc, 15, 8, NULL);
 	gdi_LineTo(hdc, 0, 8);
 
@@ -794,7 +823,11 @@ int TestGdiLine(int argc, char* argv[])
 		return -1;
 
 	/* Test Case 7: (8,0) -> (8,15) */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_MoveToEx(hdc, 8, 0, NULL);
 	gdi_LineTo(hdc, 8, 15);
 
@@ -802,7 +835,11 @@ int TestGdiLine(int argc, char* argv[])
 		return -1;
 
 	/* Test Case 8: (8,15) -> (8,0) */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_MoveToEx(hdc, 8, 15, NULL);
 	gdi_LineTo(hdc, 8, 0);
 
@@ -810,7 +847,11 @@ int TestGdiLine(int argc, char* argv[])
 		return -1;
 
 	/* Test Case 9: (4,4) -> (12,12) */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_MoveToEx(hdc, 4, 4, NULL);
 	gdi_LineTo(hdc, 12, 12);
 
@@ -818,7 +859,11 @@ int TestGdiLine(int argc, char* argv[])
 		return -1;
 
 	/* Test Case 10: (12,12) -> (4,4) */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_MoveToEx(hdc, 12, 12, NULL);
 	gdi_LineTo(hdc, 4, 4);
 
@@ -826,7 +871,11 @@ int TestGdiLine(int argc, char* argv[])
 		return -1;
 
 	/* Test Case 11: (0,0) -> (+10,+10) */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_SetClipRgn(hdc, 0, 0, 16, 16);
 	gdi_MoveToEx(hdc, 0, 0, NULL);
 	gdi_LineTo(hdc, 16 + 10, 16 + 10);
@@ -835,7 +884,11 @@ int TestGdiLine(int argc, char* argv[])
 		return -1;
 
 	/* Test Case 12: (0,0) -> (16,16), R2_BLACK */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_SetClipRgn(hdc, 0, 0, 16, 16);
 	gdi_MoveToEx(hdc, 0, 0, NULL);
 	gdi_SetROP2(hdc, GDI_R2_BLACK);
@@ -845,7 +898,11 @@ int TestGdiLine(int argc, char* argv[])
 		return -1;
 
 	/* Test Case 13: (0,0) -> (16,16), R2_NOTMERGEPEN */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_SetClipRgn(hdc, 0, 0, 16, 16);
 	gdi_MoveToEx(hdc, 0, 0, NULL);
 	gdi_SetROP2(hdc, GDI_R2_NOTMERGEPEN);
@@ -855,7 +912,11 @@ int TestGdiLine(int argc, char* argv[])
 		return -1;
 
 	/* Test Case 14: (0,0) -> (16,16), R2_MASKNOTPEN */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_SetClipRgn(hdc, 0, 0, 16, 16);
 	gdi_MoveToEx(hdc, 0, 0, NULL);
 	gdi_SetROP2(hdc, GDI_R2_MASKNOTPEN);
@@ -865,7 +926,11 @@ int TestGdiLine(int argc, char* argv[])
 		return -1;
 
 	/* Test Case 15: (0,0) -> (16,16), R2_NOTCOPYPEN */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_SetClipRgn(hdc, 0, 0, 16, 16);
 	gdi_MoveToEx(hdc, 0, 0, NULL);
 	gdi_SetROP2(hdc, GDI_R2_NOTCOPYPEN);
@@ -875,7 +940,11 @@ int TestGdiLine(int argc, char* argv[])
 		return -1;
 
 	/* Test Case 16: (0,0) -> (16,16), R2_MASKPENNOT */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_SetClipRgn(hdc, 0, 0, 16, 16);
 	gdi_MoveToEx(hdc, 0, 0, NULL);
 	gdi_SetROP2(hdc, GDI_R2_MASKPENNOT);
@@ -885,7 +954,11 @@ int TestGdiLine(int argc, char* argv[])
 		return -1;
 
 	/* Test Case 17: (0,0) -> (16,16), R2_NOT */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_SetClipRgn(hdc, 0, 0, 16, 16);
 	gdi_MoveToEx(hdc, 0, 0, NULL);
 	gdi_SetROP2(hdc, GDI_R2_NOT);
@@ -895,7 +968,11 @@ int TestGdiLine(int argc, char* argv[])
 		return -1;
 
 	/* Test Case 18: (0,0) -> (16,16), R2_XORPEN */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_SetClipRgn(hdc, 0, 0, 16, 16);
 	gdi_MoveToEx(hdc, 0, 0, NULL);
 	gdi_SetROP2(hdc, GDI_R2_XORPEN);
@@ -905,7 +982,11 @@ int TestGdiLine(int argc, char* argv[])
 		return -1;
 
 	/* Test Case 19: (0,0) -> (16,16), R2_NOTMASKPEN */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_SetClipRgn(hdc, 0, 0, 16, 16);
 	gdi_MoveToEx(hdc, 0, 0, NULL);
 	gdi_SetROP2(hdc, GDI_R2_NOTMASKPEN);
@@ -915,7 +996,11 @@ int TestGdiLine(int argc, char* argv[])
 		return -1;
 
 	/* Test Case 20: (0,0) -> (16,16), R2_MASKPEN */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_SetClipRgn(hdc, 0, 0, 16, 16);
 	gdi_MoveToEx(hdc, 0, 0, NULL);
 	gdi_SetROP2(hdc, GDI_R2_MASKPEN);
@@ -925,7 +1010,11 @@ int TestGdiLine(int argc, char* argv[])
 		return -1;
 
 	/* Test Case 21: (0,0) -> (16,16), R2_NOTXORPEN */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_SetClipRgn(hdc, 0, 0, 16, 16);
 	gdi_MoveToEx(hdc, 0, 0, NULL);
 	gdi_SetROP2(hdc, GDI_R2_NOTXORPEN);
@@ -935,7 +1024,11 @@ int TestGdiLine(int argc, char* argv[])
 		return -1;
 
 	/* Test Case 22: (0,0) -> (16,16), R2_NOP */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_SetClipRgn(hdc, 0, 0, 16, 16);
 	gdi_MoveToEx(hdc, 0, 0, NULL);
 	gdi_SetROP2(hdc, GDI_R2_NOP);
@@ -945,7 +1038,11 @@ int TestGdiLine(int argc, char* argv[])
 		return -1;
 
 	/* Test Case 23: (0,0) -> (16,16), R2_MERGENOTPEN */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_SetClipRgn(hdc, 0, 0, 16, 16);
 	gdi_MoveToEx(hdc, 0, 0, NULL);
 	gdi_SetROP2(hdc, GDI_R2_MERGENOTPEN);
@@ -955,7 +1052,11 @@ int TestGdiLine(int argc, char* argv[])
 		return -1;
 
 	/* Test Case 24: (0,0) -> (16,16), R2_COPYPEN */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_SetClipRgn(hdc, 0, 0, 16, 16);
 	gdi_MoveToEx(hdc, 0, 0, NULL);
 	gdi_SetROP2(hdc, GDI_R2_COPYPEN);
@@ -965,7 +1066,11 @@ int TestGdiLine(int argc, char* argv[])
 		return -1;
 
 	/* Test Case 25: (0,0) -> (16,16), R2_MERGEPENNOT */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_SetClipRgn(hdc, 0, 0, 16, 16);
 	gdi_MoveToEx(hdc, 0, 0, NULL);
 	gdi_SetROP2(hdc, GDI_R2_MERGEPENNOT);
@@ -975,7 +1080,11 @@ int TestGdiLine(int argc, char* argv[])
 		return -1;
 
 	/* Test Case 26: (0,0) -> (16,16), R2_MERGEPEN */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_SetClipRgn(hdc, 0, 0, 16, 16);
 	gdi_MoveToEx(hdc, 0, 0, NULL);
 	gdi_SetROP2(hdc, GDI_R2_MERGEPEN);
@@ -985,7 +1094,11 @@ int TestGdiLine(int argc, char* argv[])
 		return -1;
 
 	/* Test Case 27: (0,0) -> (16,16), R2_WHITE */
-	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
+	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
+	{
+		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		return -1;
+	}
 	gdi_SetClipRgn(hdc, 0, 0, 16, 16);
 	gdi_MoveToEx(hdc, 0, 0, NULL);
 	gdi_SetROP2(hdc, GDI_R2_WHITE);

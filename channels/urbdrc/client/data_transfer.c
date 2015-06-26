@@ -1281,7 +1281,7 @@ static int urb_os_feature_descriptor_request(URBDRC_CHANNEL_CALLBACK * callback,
 
 	data_read_UINT32(data + 0, RequestId);
 	data_read_BYTE(data + 4, Recipient); /** Recipient */
-	Recipient = Recipient && 0x1f;
+	Recipient = (Recipient & 0x1f); /* XXX: origin: Recipient && 0x1f !? */
 	data_read_BYTE(data + 5, InterfaceNumber); /** InterfaceNumber */
 	data_read_BYTE(data + 6, Ms_PageIndex); /** Ms_PageIndex */
 	data_read_UINT16(data + 7, Ms_featureDescIndex); /** Ms_featureDescIndex */

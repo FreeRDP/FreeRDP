@@ -61,6 +61,9 @@
 #define RFX_INIT_SIMD(_rfx_context) do { } while (0)
 #endif
 
+#define RFX_KEY "Software\\"FREERDP_VENDOR_STRING"\\" \
+		     FREERDP_PRODUCT_STRING"\\RemoteFX"
+
 /**
  * The quantization values control the compression rate and quality. The value
  * range is between 6 and 15. The higher value, the higher compression rate
@@ -251,7 +254,7 @@ RFX_CONTEXT* rfx_context_new(BOOL encoder)
 	 * dwt_buffer: 32 * 32 * 2 * 2 * sizeof(INT16) = 8192, maximum sub-band width is 32
 	 *
 	 * Additionally we add 32 bytes (16 in front and 16 at the back of the buffer)
-	 * in order to allow optimized functions (SEE, NEON) to read from positions 
+	 * in order to allow optimized functions (SEE, NEON) to read from positions
 	 * that are actually in front/beyond the buffer. Offset calculations are
 	 * performed at the BufferPool_Take function calls in rfx_encode/decode.c.
 	 *
@@ -284,7 +287,7 @@ RFX_CONTEXT* rfx_context_new(BOOL encoder)
 	priv->MinThreadCount = sysinfo.dwNumberOfProcessors;
 	priv->MaxThreadCount = 0;
 
-	status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\RemoteFX"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+	status = RegOpenKeyExA(HKEY_LOCAL_MACHINE, RFX_KEY, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
 	if (status == ERROR_SUCCESS)
 	{
@@ -328,15 +331,15 @@ RFX_CONTEXT* rfx_context_new(BOOL encoder)
 
 	/* create profilers for default decoding routines */
 	rfx_profiler_create(context);
-	
+
 	/* set up default routines */
-	context->quantization_decode = rfx_quantization_decode;	
-	context->quantization_encode = rfx_quantization_encode;	
+	context->quantization_decode = rfx_quantization_decode;
+	context->quantization_encode = rfx_quantization_encode;
 	context->dwt_2d_decode = rfx_dwt_2d_decode;
 	context->dwt_2d_encode = rfx_dwt_2d_encode;
 
 	RFX_INIT_SIMD(context);
-	
+
 	context->state = RFX_STATE_SEND_HEADERS;
 	return context;
 
@@ -514,7 +517,7 @@ static BOOL rfx_process_message_channels(RFX_CONTEXT* context, wStream* s)
 
 	Stream_Read_UINT8(s, numChannels); /* numChannels (1 byte), must bet set to 0x01 */
 
-	/* In RDVH sessions, numChannels will represent the number of virtual monitors 
+	/* In RDVH sessions, numChannels will represent the number of virtual monitors
 	 * configured and does not always be set to 0x01 as [MS-RDPRFX] said.
 	 */
 	if (numChannels < 1)
@@ -966,10 +969,9 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 			WaitForThreadpoolWorkCallbacks(work_objects[i], FALSE);
 			CloseThreadpoolWork(work_objects[i]);
 		}
-
-		free(work_objects);
-		free(params);
 	}
+	free(work_objects);
+	free(params);
 
 	for (i = 0; i < message->numTiles; i++)
 	{

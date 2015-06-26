@@ -157,6 +157,13 @@ HANDLE WINAPI Win32_WTSVirtualChannelOpen_Internal(HANDLE hServer, DWORD Session
 	pChannel->SessionId = SessionId;
 	pChannel->hFile = hFile;
 	pChannel->VirtualName = _strdup(pVirtualName);
+	if (!pChannel->VirtualName)
+	{
+		CloseHandle(hFile);
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		free(pChannel);
+		return NULL;
+	}
 
 	pChannel->flags = flags;
 	pChannel->dynamic = (flags & WTS_CHANNEL_OPTION_DYNAMIC) ? TRUE : FALSE;

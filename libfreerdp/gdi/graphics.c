@@ -143,10 +143,8 @@ BOOL gdi_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 	width = bitmap->right - bitmap->left + 1;
 	height = bitmap->bottom - bitmap->top + 1;
 
-	if (gdi_BitBlt(context->gdi->primary->hdc, bitmap->left, bitmap->top,
-			width, height, gdi_bitmap->hdc, 0, 0, GDI_SRCCOPY) == 0)
-		return FALSE;
-	return TRUE;
+	return gdi_BitBlt(context->gdi->primary->hdc, bitmap->left, bitmap->top,
+			width, height, gdi_bitmap->hdc, 0, 0, GDI_SRCCOPY);
 }
 
 BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
@@ -279,10 +277,8 @@ BOOL gdi_Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y)
 
 	gdi_glyph = (gdiGlyph*) glyph;
 
-	if (gdi_BitBlt(gdi->drawing->hdc, x, y, gdi_glyph->bitmap->width,
-			gdi_glyph->bitmap->height, gdi_glyph->hdc, 0, 0, GDI_DSPDxax) == 0)
-		return FALSE;
-	return TRUE;
+	return gdi_BitBlt(gdi->drawing->hdc, x, y, gdi_glyph->bitmap->width,
+			gdi_glyph->bitmap->height, gdi_glyph->hdc, 0, 0, GDI_DSPDxax);
 }
 
 BOOL gdi_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor, BOOL fOpRedundant)
@@ -290,27 +286,23 @@ BOOL gdi_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int heigh
 	GDI_RECT rect;
 	HGDI_BRUSH brush;
 	rdpGdi* gdi = context->gdi;
-	int ret = 0;
+	BOOL ret = FALSE;
 
 	/* TODO: handle fOpRedundant! See xf_Glyph_BeginDraw() */
 
 	bgcolor = freerdp_convert_gdi_order_color(bgcolor, gdi->srcBpp, gdi->format, gdi->palette);
 	fgcolor = freerdp_convert_gdi_order_color(fgcolor, gdi->srcBpp, gdi->format, gdi->palette);
 
-	brush = gdi_CreateSolidBrush(fgcolor);
-	if (!brush)
-		goto out_fail;
+	if (!(brush = gdi_CreateSolidBrush(fgcolor)))
+		goto out;
 
 	gdi_CRgnToRect(x, y, width, height, &rect);
 	ret = gdi_FillRect(gdi->drawing->hdc, &rect, brush);
 	gdi_DeleteObject((HGDIOBJECT) brush);
 
-out_fail:
+out:
 	gdi->textColor = gdi_SetTextColor(gdi->drawing->hdc, bgcolor);
-
-	if (ret == 0)
-		return FALSE;
-	return TRUE;
+	return ret;
 }
 
 BOOL gdi_Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor)

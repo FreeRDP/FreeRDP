@@ -213,13 +213,20 @@ int freerdp_client_settings_parse_command_line(rdpSettings* settings, int argc,
 int freerdp_client_settings_parse_connection_file(rdpSettings* settings, const char* filename)
 {
 	rdpFile* file;
+	int ret = -1;
 
 	file = freerdp_client_rdp_file_new();
-	freerdp_client_parse_rdp_file(file, filename);
-	freerdp_client_populate_settings_from_rdp_file(file, settings);
-	freerdp_client_rdp_file_free(file);
+	if (!file)
+		return -1;
+	if (!freerdp_client_parse_rdp_file(file, filename))
+		goto out;
+	if (!freerdp_client_populate_settings_from_rdp_file(file, settings))
+		goto out;
 
-	return 0;
+	ret = 0;
+out:
+	freerdp_client_rdp_file_free(file);
+	return ret;
 }
 
 int freerdp_client_settings_parse_connection_file_buffer(rdpSettings* settings, const BYTE* buffer, size_t size)
@@ -228,6 +235,8 @@ int freerdp_client_settings_parse_connection_file_buffer(rdpSettings* settings, 
 	int status = -1;
 
 	file = freerdp_client_rdp_file_new();
+	if (!file)
+		return -1;
 
 	if (freerdp_client_parse_rdp_file_buffer(file, buffer, size)
 			&& freerdp_client_populate_settings_from_rdp_file(file, settings))
@@ -243,18 +252,23 @@ int freerdp_client_settings_parse_connection_file_buffer(rdpSettings* settings, 
 int freerdp_client_settings_write_connection_file(const rdpSettings* settings, const char* filename, BOOL unicode)
 {
 	rdpFile* file;
+	int ret = -1;
 
 	file = freerdp_client_rdp_file_new();
+	if (!file)
+		return -1;
 
 	if (!freerdp_client_populate_rdp_file_from_settings(file, settings))
-		return -1;
+		goto out;
 
 	if (!freerdp_client_write_rdp_file(file, filename, unicode))
-		return -1;
+		goto out;
 
+	ret = 0;
+out:
 	freerdp_client_rdp_file_free(file);
 
-	return 0;
+	return ret;
 }
 
 int freerdp_client_settings_parse_assistance_file(rdpSettings* settings, const char* filename)

@@ -24,6 +24,7 @@
 #include <freerdp/listener.h>
 #include <freerdp/codec/rfx.h>
 #include <winpr/stream.h>
+#include <freerdp/peer.h>
 
 #include <winpr/crt.h>
 
@@ -388,6 +389,13 @@ void* mf_peer_main_loop(void* arg)
 	/* Initialize the real server settings here */
 	client->settings->CertificateFile = _strdup("server.crt");
 	client->settings->PrivateKeyFile = _strdup("server.key");
+	if (!client->settings->CertificateFile || !client->settings->PrivateKeyFile)
+	{
+		freerdp_peer_free(client);
+		return NULL;
+	}
+
+
 	client->settings->NlaSecurity = FALSE;
 	client->settings->RemoteFxCodec = TRUE;
 	client->settings->ColorDepth = 32;

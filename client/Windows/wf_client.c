@@ -275,7 +275,8 @@ BOOL wf_pre_connect(freerdp* instance)
 	wfc->clrconv->palette = NULL;
 	wfc->clrconv->alpha = FALSE;
 
-	instance->context->cache = cache_new(settings);
+	if (!(instance->context->cache = cache_new(settings)))
+		return FALSE;
 
 	desktopWidth = settings->DesktopWidth;
 	desktopHeight = settings->DesktopHeight;
@@ -321,7 +322,7 @@ BOOL wf_pre_connect(freerdp* instance)
 		(settings->DesktopWidth > 4096) || (settings->DesktopHeight > 4096))
 	{
 		WLog_ERR(TAG, "invalid dimensions %d %d", settings->DesktopWidth, settings->DesktopHeight);
-		return 1;
+		return FALSE;
 	}
 
 	freerdp_set_param_uint32(settings, FreeRDP_KeyboardLayout, (int) GetKeyboardLayout(0) & 0x0000FFFF);
@@ -484,7 +485,8 @@ BOOL wf_post_connect(freerdp* instance)
 		instance->update->BitmapUpdate = wf_gdi_bitmap_update;
 	}
 
-	freerdp_channels_post_connect(context->channels, instance);
+	if (freerdp_channels_post_connect(context->channels, instance) < 0)
+		return FALSE;
 
 	if (wfc->fullscreen)
 		floatbar_window_create(wfc);
@@ -534,13 +536,31 @@ BOOL wf_authenticate(freerdp* instance, char** username, char** password, char**
 	status = CredUIParseUserNameA(UserName, User, sizeof(User), Domain, sizeof(Domain));
 	//WLog_ERR(TAG, "User: %s Domain: %s Password: %s", User, Domain, Password);
 	*username = _strdup(User);
+	if (!(*username))
+	{
+		WLog_ERR(TAG, "strdup failed", status);
+		return FALSE;
+	}
 
 	if (strlen(Domain) > 0)
 		*domain = _strdup(Domain);
 	else
 		*domain = _strdup("\0");
 
+	if (!(*domain))
+	{
+		free(*username);
+		WLog_ERR(TAG, "strdup failed", status);
+		return FALSE;
+	}
+
 	*password = _strdup(Password);
+	if (!(*password))
+	{
+		free(*username);
+		free(*domain);
+		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -873,6 +893,10 @@ int freerdp_client_load_settings_from_rdp_file(wfContext* wfc, char* filename)
 	if (filename)
 	{
 		settings->ConnectionFile = _strdup(filename);
+		if (!settings->ConnectionFile)
+		{
+			return 3;
+		}
 
 		// free old settings file
 		freerdp_client_rdp_file_free(wfc->connectionRdpFile);

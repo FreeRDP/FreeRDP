@@ -24,33 +24,37 @@ int test_gdi_PtInRect(void)
 	int right = 60;
 	int bottom = 80;
 
-	hRect = gdi_CreateRect(left, top, right, bottom);
+	if (!(hRect = gdi_CreateRect(left, top, right, bottom)))
+	{
+		printf("gdi_CreateRect failed\n");
+		return -1;
+	}
 
-	if (gdi_PtInRect(hRect, 0, 0) != 0)
+	if (gdi_PtInRect(hRect, 0, 0))
 		return -1;
 
-	if (gdi_PtInRect(hRect, 500, 500) != 0)
+	if (gdi_PtInRect(hRect, 500, 500))
 		return -1;
 
-	if (gdi_PtInRect(hRect, 40, 100) != 0)
+	if (gdi_PtInRect(hRect, 40, 100))
 		return -1;
 
-	if (gdi_PtInRect(hRect, 10, 40) != 0)
+	if (gdi_PtInRect(hRect, 10, 40))
 		return -1;
 
-	if (gdi_PtInRect(hRect, 30, 50) != 1)
+	if (!gdi_PtInRect(hRect, 30, 50))
 		return -1;
 
-	if (gdi_PtInRect(hRect, left, top) != 1)
+	if (!gdi_PtInRect(hRect, left, top))
 		return -1;
 
-	if (gdi_PtInRect(hRect, right, bottom) != 1)
+	if (!gdi_PtInRect(hRect, right, bottom))
 		return -1;
 
-	if (gdi_PtInRect(hRect, right, 60) != 1)
+	if (!gdi_PtInRect(hRect, right, 60))
 		return -1;
 
-	if (gdi_PtInRect(hRect, 40, bottom) != 1)
+	if (!gdi_PtInRect(hRect, 40, bottom))
 		return -1;
 
 	return 0;
@@ -86,7 +90,11 @@ int test_gdi_FillRect(void)
 	hdc->bytesPerPixel = 4;
 	hdc->bitsPerPixel = 32;
 
-	hRect = gdi_CreateRect(left, top, right, bottom);
+	if (!(hRect = gdi_CreateRect(left, top, right, bottom)))
+	{
+		printf("gdi_CreateRect failed\n");
+		return -1;
+	}
 
 	hBitmap = gdi_CreateCompatibleBitmap(hdc, width, height);
 	ZeroMemory(hBitmap->data, width * height * hdc->bytesPerPixel);

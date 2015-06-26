@@ -37,32 +37,34 @@
  * File Appender
  */
 
-void WLog_FileAppender_SetOutputFileName(wLog* log, wLogFileAppender* appender, const char* filename)
+BOOL WLog_FileAppender_SetOutputFileName(wLog* log, wLogFileAppender* appender, const char* filename)
 {
-	if (!appender)
-		return;
+	if (!appender || !filename)
+		return FALSE;
 
 	if (appender->Type != WLOG_APPENDER_FILE)
-		return;
-
-	if (!filename)
-		return;
+		return FALSE;
 
 	appender->FileName = _strdup(filename);
+	if (!appender->FileName)
+		return FALSE;
+
+	return TRUE;
 }
 
-void WLog_FileAppender_SetOutputFilePath(wLog* log, wLogFileAppender* appender, const char* filepath)
+BOOL WLog_FileAppender_SetOutputFilePath(wLog* log, wLogFileAppender* appender, const char* filepath)
 {
-	if (!appender)
-		return;
+	if (!appender || !filepath)
+		return FALSE;
 
 	if (appender->Type != WLOG_APPENDER_FILE)
-		return;
-
-	if (!filepath)
-		return;
+		return FALSE;
 
 	appender->FilePath = _strdup(filepath);
+	if (!appender->FilePath)
+		return FALSE;
+
+	return TRUE;
 }
 
 int WLog_FileAppender_Open(wLog* log, wLogFileAppender* appender)
@@ -193,57 +195,62 @@ wLogFileAppender* WLog_FileAppender_New(wLog* log)
 	LPCSTR name;
 	DWORD nSize;
 	wLogFileAppender* FileAppender;
+	BOOL status;
 
-	FileAppender = (wLogFileAppender*) malloc(sizeof(wLogFileAppender));
+	FileAppender = (wLogFileAppender*) calloc(1, sizeof(wLogFileAppender));
+	if (!FileAppender)
+		return NULL;
 
-	if (FileAppender)
+	FileAppender->Type = WLOG_APPENDER_FILE;
+
+	FileAppender->Open = (WLOG_APPENDER_OPEN_FN) WLog_FileAppender_Open;
+	FileAppender->Close = (WLOG_APPENDER_OPEN_FN) WLog_FileAppender_Close;
+	FileAppender->WriteMessage =
+			(WLOG_APPENDER_WRITE_MESSAGE_FN) WLog_FileAppender_WriteMessage;
+	FileAppender->WriteDataMessage =
+			(WLOG_APPENDER_WRITE_DATA_MESSAGE_FN) WLog_FileAppender_WriteDataMessage;
+	FileAppender->WriteImageMessage =
+			(WLOG_APPENDER_WRITE_IMAGE_MESSAGE_FN) WLog_FileAppender_WriteImageMessage;
+
+	name = "WLOG_FILEAPPENDER_OUTPUT_FILE_PATH";
+	nSize = GetEnvironmentVariableA(name, NULL, 0);
+	if (nSize)
 	{
-		ZeroMemory(FileAppender, sizeof(wLogFileAppender));
+		env = (LPSTR) malloc(nSize);
+		if (!env)
+			goto error_free;
 
-		FileAppender->Type = WLOG_APPENDER_FILE;
+		nSize = GetEnvironmentVariableA(name, env, nSize);
+		status = WLog_FileAppender_SetOutputFilePath(log, FileAppender, env);
+		free(env);
 
-		FileAppender->Open = (WLOG_APPENDER_OPEN_FN) WLog_FileAppender_Open;
-		FileAppender->Close = (WLOG_APPENDER_OPEN_FN) WLog_FileAppender_Close;
+		if (!status)
+			goto error_free;
+	}
 
-		FileAppender->WriteMessage =
-				(WLOG_APPENDER_WRITE_MESSAGE_FN) WLog_FileAppender_WriteMessage;
-		FileAppender->WriteDataMessage =
-				(WLOG_APPENDER_WRITE_DATA_MESSAGE_FN) WLog_FileAppender_WriteDataMessage;
-		FileAppender->WriteImageMessage =
-				(WLOG_APPENDER_WRITE_IMAGE_MESSAGE_FN) WLog_FileAppender_WriteImageMessage;
+	name = "WLOG_FILEAPPENDER_OUTPUT_FILE_NAME";
+	nSize = GetEnvironmentVariableA(name, NULL, 0);
+	if (nSize)
+	{
+		env = (LPSTR) malloc(nSize);
+		if (!env)
+			goto error_output_file_name;
 
-		FileAppender->FileName = NULL;
-		FileAppender->FilePath = NULL;
-		FileAppender->FullFileName = NULL;
+		nSize = GetEnvironmentVariableA(name, env, nSize);
+		status = WLog_FileAppender_SetOutputFileName(log, FileAppender, env);
+		free(env);
 
-		name = "WLOG_FILEAPPENDER_OUTPUT_FILE_PATH";
-		nSize = GetEnvironmentVariableA(name, NULL, 0);
-		if (nSize)
-		{
-			env = (LPSTR) malloc(nSize);
-			if (env)
-			{
-				nSize = GetEnvironmentVariableA(name, env, nSize);
-				WLog_FileAppender_SetOutputFilePath(log, FileAppender, env);
-				free(env);
-			}
-		}
-
-		name = "WLOG_FILEAPPENDER_OUTPUT_FILE_NAME";
-		nSize = GetEnvironmentVariableA(name, NULL, 0);
-		if (nSize)
-		{
-			env = (LPSTR) malloc(nSize);
-			if (env)
-			{
-				nSize = GetEnvironmentVariableA(name, env, nSize);
-				WLog_FileAppender_SetOutputFileName(log, FileAppender, env);
-				free(env);
-			}
-		}
-	}	
+		if (!status)
+			goto error_output_file_name;
+	}
 
 	return FileAppender;
+
+error_output_file_name:
+	free(FileAppender->FilePath);
+error_free:
+	free(FileAppender);
+	return NULL;
 }
 
 void WLog_FileAppender_Free(wLog* log, wLogFileAppender* appender)

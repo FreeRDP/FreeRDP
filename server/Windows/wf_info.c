@@ -34,6 +34,9 @@
 #include <freerdp/log.h>
 #define TAG SERVER_TAG("windows")
 
+#define SERVER_KEY "Software\\"FREERDP_VENDOR_STRING"\\" \
+		FREERDP_PRODUCT_STRING"\\Server"
+
 static wfInfo* wfInfoInstance = NULL;
 static int _IDcount = 0;
 
@@ -151,7 +154,8 @@ wfInfo* wf_info_init()
 		//Set FPS
 		wfi->framesPerSecond = WF_INFO_DEFAULT_FPS;
 
-		status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+		status = RegOpenKeyExA(HKEY_LOCAL_MACHINE, SERVER_KEY, 0,
+					KEY_READ | KEY_WOW64_64KEY, &hKey);
 		if (status == ERROR_SUCCESS)
 		{
 			if (RegQueryValueEx(hKey, _T("FramesPerSecond"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
@@ -162,7 +166,8 @@ wfInfo* wf_info_init()
 		//Set input toggle
 		wfi->input_disabled = FALSE;
 
-		status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+		status = RegOpenKeyExA(HKEY_LOCAL_MACHINE, SERVER_KEY,
+					0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 		if (status == ERROR_SUCCESS)
 		{
 			if (RegQueryValueEx(hKey, _T("DisableInput"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)

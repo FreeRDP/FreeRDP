@@ -335,7 +335,7 @@ static void xf_SetWindowPID(xfContext* xfc, Window window, pid_t pid)
 static const char* get_shm_id()
 {
 	static char shm_id[64];
-	snprintf(shm_id, sizeof(shm_id), "com.freerdp.xfreerdp.tsmf_%016X", GetCurrentProcessId());
+	snprintf(shm_id, sizeof(shm_id), "/com.freerdp.xfreerdp.tsmf_%016X", GetCurrentProcessId());
 	return shm_id;
 }
 
@@ -368,7 +368,7 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 			CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap |
 			CWBorderPixel | CWWinGravity | CWBitGravity, &xfc->attribs);
 
-	window->shmid = shm_open(get_shm_id(), O_CREAT | O_EXCL | O_RDWR, S_IREAD | S_IWRITE);
+	window->shmid = shm_open(get_shm_id(), (O_CREAT | O_RDWR), (S_IREAD | S_IWRITE));
 
 	if (window->shmid < 0)
 	{
@@ -382,7 +382,7 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 
 		mem = mmap(0, sizeof(window->handle), PROT_READ | PROT_WRITE, MAP_SHARED, window->shmid, 0);
 
-		if (mem == ((int*) -1))
+		if (mem == MAP_FAILED)
 		{
 			DEBUG_X11("xf_CreateDesktopWindow: failed to assign pointer to the memory address - shmat()\n");
 		}

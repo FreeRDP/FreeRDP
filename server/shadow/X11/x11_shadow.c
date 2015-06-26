@@ -42,7 +42,6 @@
 
 #include "../shadow_screen.h"
 #include "../shadow_client.h"
-#include "../shadow_encoder.h"
 #include "../shadow_capture.h"
 #include "../shadow_surface.h"
 #include "../shadow_subsystem.h"
@@ -76,16 +75,14 @@ typedef struct _SHADOW_PAM_AUTH_INFO SHADOW_PAM_AUTH_INFO;
 int x11_shadow_pam_conv(int num_msg, const struct pam_message** msg, struct pam_response** resp, void* appdata_ptr)
 {
 	int index;
-	int pam_status = PAM_SUCCESS;
+	int pam_status = PAM_BUF_ERR;
 	SHADOW_PAM_AUTH_DATA* appdata;
 	struct pam_response* response;
 
 	appdata = (SHADOW_PAM_AUTH_DATA*) appdata_ptr;
 
-	response = (struct pam_response*) calloc(num_msg, sizeof(struct pam_response));
-
-	if (!response)
-		return PAM_CONV_ERR;
+	if (!(response = (struct pam_response*) calloc(num_msg, sizeof(struct pam_response))))
+		return PAM_BUF_ERR;
 
 	for (index = 0; index < num_msg; index++)
 	{
@@ -93,29 +90,40 @@ int x11_shadow_pam_conv(int num_msg, const struct pam_message** msg, struct pam_
 		{
 			case PAM_PROMPT_ECHO_ON:
 				response[index].resp = _strdup(appdata->user);
+				if (!response[index].resp)
+					goto out_fail;
 				response[index].resp_retcode = PAM_SUCCESS;
 				break;
 
 			case PAM_PROMPT_ECHO_OFF:
 				response[index].resp = _strdup(appdata->password);
+				if (!response[index].resp)
+					goto out_fail;
 				response[index].resp_retcode = PAM_SUCCESS;
 				break;
 
 			default:
 				pam_status = PAM_CONV_ERR;
-				break;
+				goto out_fail;
 		}
 	}
 
-	if (pam_status != PAM_SUCCESS)
-	{
-		free(response);
-		return pam_status;
-	}
-
 	*resp = response;
+	return PAM_SUCCESS;
 
-	return pam_status;
+out_fail:
+	for (index = 0; index < num_msg; ++index)
+	{
+		if (response[index].resp)
+		{
+			memset(response[index].resp, 0, strlen(response[index].resp));
+			free(response[index].resp);
+		}
+	}
+	memset(response, 0, sizeof(struct pam_response) * num_msg);
+	free(response);
+	*resp = NULL;
+	return PAM_CONV_ERR;
 }
 
 int x11_shadow_pam_get_service_name(SHADOW_PAM_AUTH_INFO* info)
@@ -144,6 +152,9 @@ int x11_shadow_pam_get_service_name(SHADOW_PAM_AUTH_INFO* info)
 	{
 		return -1;
 	}
+
+	if (!info->service_name)
+		return -1;
 
 	return 1;
 }
@@ -735,7 +746,7 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 
 			if (client)
 			{
-				subsystem->captureFrameRate = client->encoder->fps;
+				subsystem->captureFrameRate = shadow_encoder_preferred_fps(client->encoder);
 			}
 		}
 

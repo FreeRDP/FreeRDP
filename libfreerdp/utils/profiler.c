@@ -34,9 +34,16 @@ PROFILER* profiler_create(char* name)
 	PROFILER* profiler;
 
 	profiler = (PROFILER*) malloc(sizeof(PROFILER));
+	if (!profiler)
+		return NULL;
 	
 	profiler->name = name;
 	profiler->stopwatch = stopwatch_create();
+	if (!profiler->stopwatch)
+	{
+		free(profiler);
+		return NULL;
+	}
 
 	return profiler;
 }

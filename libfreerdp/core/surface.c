@@ -128,6 +128,7 @@ int update_recv_surfcmds(rdpUpdate* update, UINT32 size, wStream* s)
 
 		if (update->dump_rfx)
 		{
+			/* TODO: treat return values */
 			pcap_add_record(update->pcap_rfx, mark, cmdLength + 2);
 			pcap_flush(update->pcap_rfx);
 		}

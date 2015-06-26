@@ -30,7 +30,11 @@
 #include <freerdp/channels/log.h>
 #include <freerdp/utils/msusb.h>
 
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
+#include <uuid.h>
+#else
 #include <uuid/uuid.h>
+#endif
 #include <pthread.h>
 #include <semaphore.h>
 

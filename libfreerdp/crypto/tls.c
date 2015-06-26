@@ -1012,6 +1012,11 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 		offset = 0;
 		length = 2048;
 		pemCert = (BYTE*) malloc(length + 1);
+		if (!pemCert)
+		{
+			WLog_ERR(TAG, "error allocating pemCert");
+			return -1;
+		}
 
 		status = BIO_read(bio, pemCert, length);
 
@@ -1083,6 +1088,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 
 	/* verify certificate name match */
 	certificate_data = crypto_get_certificate_data(cert->px509, hostname, port);
+
 
 	/* extra common name and alternative names */
 	common_name = crypto_cert_subject_common_name(cert->px509, &common_name_length);
@@ -1217,12 +1223,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 		free(fingerprint);
 	}
 
-	if (certificate_data)
-	{
-		free(certificate_data->fingerprint);
-		free(certificate_data->hostname);
-		free(certificate_data);
-	}
+	certificate_data_free(certificate_data);
 
 #ifndef _WIN32
 	free(common_name);

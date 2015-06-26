@@ -167,7 +167,7 @@ static void test_peer_end_frame(freerdp_peer* client)
 	context->frame_id++;
 }
 
-static void test_peer_draw_background(freerdp_peer* client)
+static BOOL test_peer_draw_background(freerdp_peer* client)
 {
 	int size;
 	wStream* s;
@@ -176,9 +176,10 @@ static void test_peer_draw_background(freerdp_peer* client)
 	rdpUpdate* update = client->update;
 	SURFACE_BITS_COMMAND* cmd = &update->surface_bits_command;
 	testPeerContext* context = (testPeerContext*) client->context;
+	BOOL ret= FALSE;
 
 	if (!client->settings->RemoteFxCodec && !client->settings->NSCodec)
-		return;
+		return FALSE;
 
 	s = test_peer_stream_init(context);
 
@@ -189,7 +190,10 @@ static void test_peer_draw_background(freerdp_peer* client)
 
 	size = rect.width * rect.height * 3;
 	if (!(rgb_data = malloc(size)))
-		return;
+	{
+		WLog_ERR(TAG, "Problem allocating memory");
+		return FALSE;
+	}
 
 	memset(rgb_data, 0xA0, size);
 
@@ -223,24 +227,32 @@ static void test_peer_draw_background(freerdp_peer* client)
 	update->SurfaceBits(update->context, cmd);
 	test_peer_end_frame(client);
 
+	ret = TRUE;
 out:
 	free(rgb_data);
+	return ret;
 }
 
-static void test_peer_load_icon(freerdp_peer* client)
+static BOOL test_peer_load_icon(freerdp_peer* client)
 {
 	testPeerContext* context = (testPeerContext*) client->context;
 	FILE* fp;
 	int i;
 	char line[50];
-	BYTE* rgb_data;
+	BYTE* rgb_data = NULL;
 	int c;
 
 	if (!client->settings->RemoteFxCodec && !client->settings->NSCodec)
-		return;
+	{
+		WLog_ERR(TAG, "Client doesn't support RemoteFX or NSCodec");
+		return FALSE;
+	}
 
 	if ((fp = fopen("test_icon.ppm", "r")) == NULL)
-		return;
+	{
+		WLog_ERR(TAG, "Unable to open test icon");
+		return FALSE;
+	}
 
 	/* P3 */
 	fgets(line, sizeof(line), fp);
@@ -248,26 +260,40 @@ static void test_peer_load_icon(freerdp_peer* client)
 	fgets(line, sizeof(line), fp);
 	/* width height */
 	fgets(line, sizeof(line), fp);
-	sscanf(line, "%d %d", &context->icon_width, &context->icon_height);
+	if (sscanf(line, "%d %d", &context->icon_width, &context->icon_height) < 2)
+	{
+		WLog_ERR(TAG, "Problem while extracting width/height from the icon file");
+		goto out_fail;
+	}
 	/* Max */
 	fgets(line, sizeof(line), fp);
 
-	rgb_data = malloc(context->icon_width * context->icon_height * 3);
+	if (!(rgb_data = malloc(context->icon_width * context->icon_height * 3)))
+		goto out_fail;
 
 	for (i = 0; i < context->icon_width * context->icon_height * 3; i++)
 	{
-		if (fgets(line, sizeof(line), fp))
-		{
-			sscanf(line, "%d", &c);
-			rgb_data[i] = (BYTE)c;
-		}
+		if (!fgets(line, sizeof(line), fp) || (sscanf(line, "%d", &c) != 1))
+			goto out_fail;
+
+		rgb_data[i] = (BYTE)c;
 	}
 
-	context->icon_data = rgb_data;
 
 	/* background with same size, which will be used to erase the icon from old position */
-	context->bg_data = malloc(context->icon_width * context->icon_height * 3);
+	if (!(context->bg_data = malloc(context->icon_width * context->icon_height * 3)))
+		goto out_fail;
 	memset(context->bg_data, 0xA0, context->icon_width * context->icon_height * 3);
+	context->icon_data = rgb_data;
+
+	fclose(fp);
+	return TRUE;
+
+out_fail:
+	free(rgb_data);
+	context->bg_data =  NULL;
+	fclose(fp);
+	return FALSE;
 }
 
 static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
@@ -392,7 +418,7 @@ static BOOL test_sleep_tsdiff(UINT32 *old_sec, UINT32 *old_usec, UINT32 new_sec,
 	return TRUE;
 }
 
-void tf_peer_dump_rfx(freerdp_peer* client)
+BOOL tf_peer_dump_rfx(freerdp_peer* client)
 {
 	wStream* s;
 	UINT32 prev_seconds;
@@ -402,20 +428,26 @@ void tf_peer_dump_rfx(freerdp_peer* client)
 	pcap_record record;
 
 	s = Stream_New(NULL, 512);
-	update = client->update;
-	client->update->pcap_rfx = pcap_open(test_pcap_file, FALSE);
-	pcap_rfx = client->update->pcap_rfx;
+	if (!s)
+		return FALSE;
 
-	if (pcap_rfx == NULL)
-		return;
+	update = client->update;
+	if (!(pcap_rfx = pcap_open(test_pcap_file, FALSE)))
+		return FALSE;
 
 	prev_seconds = prev_useconds = 0;
 
 	while (pcap_has_next_record(pcap_rfx))
 	{
-		pcap_get_next_record_header(pcap_rfx, &record);
+		BYTE* tmp = NULL;
+		if (!pcap_get_next_record_header(pcap_rfx, &record))
+			break;
 
-		Stream_Buffer(s) = realloc(Stream_Buffer(s), record.length);
+		tmp = realloc(Stream_Buffer(s), record.length);
+		if (!tmp)
+			break;
+
+		Stream_Buffer(s) = tmp;
 		record.data = Stream_Buffer(s);
 		Stream_Capacity(s) = record.length;
 
@@ -430,6 +462,11 @@ void tf_peer_dump_rfx(freerdp_peer* client)
 		if (client->CheckFileDescriptor(client) != TRUE)
 			break;
 	}
+
+
+	Stream_Free(s, TRUE);
+	pcap_close(pcap_rfx);
+	return TRUE;
 }
 
 static void* tf_debug_channel_thread_func(void* arg)
@@ -524,7 +561,12 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 #endif
 
 	/* A real server should tag the peer as activated here and start sending updates in main loop. */
-	test_peer_load_icon(client);
+	if (!test_peer_load_icon(client))
+	{
+		WLog_DBG(TAG, "Unable to load icon");
+		return FALSE;
+	}
+
 
 	if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, "rdpdbg"))
 	{
@@ -584,12 +626,11 @@ BOOL tf_peer_activate(freerdp_peer* client)
 	if (test_pcap_file != NULL)
 	{
 		client->update->dump_rfx = TRUE;
-		tf_peer_dump_rfx(client);
+		if (!tf_peer_dump_rfx(client))
+			return FALSE;
 	}
 	else
-	{
 		test_peer_draw_background(client);
-	}
 
 	return TRUE;
 }
@@ -718,6 +759,12 @@ static void* test_peer_mainloop(void* arg)
 	client->settings->CertificateFile = _strdup("server.crt");
 	client->settings->PrivateKeyFile = _strdup("server.key");
 	client->settings->RdpKeyFile = _strdup("server.key");
+	if (!client->settings->CertificateFile || !client->settings->PrivateKeyFile || !client->settings->RdpKeyFile)
+	{
+		WLog_ERR(TAG, "Memory allocation failed (strdup)");
+		freerdp_peer_free(client);
+		return NULL;
+	}
 	client->settings->RdpSecurity = TRUE;
 	client->settings->TlsSecurity = TRUE;
 	client->settings->NlaSecurity = FALSE;

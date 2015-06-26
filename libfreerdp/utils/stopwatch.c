@@ -55,6 +55,8 @@ STOPWATCH* stopwatch_create()
 #endif
 
 	sw = (STOPWATCH*) malloc(sizeof(STOPWATCH));
+	if (!sw)
+		return NULL;
 	stopwatch_reset(sw);
 
 	return sw;

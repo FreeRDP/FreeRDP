@@ -210,6 +210,7 @@ BOOL freerdp_check_fds(freerdp* instance)
 		TerminateEventArgs e;
 		rdpContext* context = instance->context;
 
+		WLog_DBG(TAG, "rdp_check_fds() - %i", status);
 		EventArgsInit(&e, "freerdp");
 		e.code = 0;
 		PubSub_OnTerminate(context->pubSub, context, &e);
@@ -244,9 +245,17 @@ BOOL freerdp_check_event_handles(rdpContext* context)
 	status = freerdp_check_fds(context->instance);
 
 	if (!status)
+	{
+		WLog_ERR(TAG, "freerdp_check_fds() failed - %i", status);
 		return FALSE;
+	}
 
 	status = freerdp_channels_check_fds(context->channels, context->instance);
+	if (!status)
+	{
+		WLog_ERR(TAG, "freerdp_channels_check_fds() failed - %i", status);
+		return FALSE;
+	}
 
 	return status;
 }
