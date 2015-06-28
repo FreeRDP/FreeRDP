@@ -40,6 +40,11 @@
 #include <fcntl.h>
 #endif
 
+#ifdef __APPLE__
+#define WSAIOCTL_IFADDRS
+#include <ifaddrs.h>
+#endif
+
 /**
  * ws2_32.dll:
  * 
@@ -706,6 +711,103 @@ int WSAIoctl(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer,
 	fd = (int) s;
 	pInterfaces = (INTERFACE_INFO*) lpvOutBuffer;
 	maxNumInterfaces = cbOutBuffer / sizeof(INTERFACE_INFO);
+
+#ifdef WSAIOCTL_IFADDRS
+	{
+		struct ifaddrs* ifa = NULL;
+		struct ifaddrs* ifap = NULL;
+
+		if (getifaddrs(&ifap) != 0)
+		{
+			WSASetLastError(WSAENETDOWN);
+			return SOCKET_ERROR;
+		}
+
+		index = 0;
+		numInterfaces = 0;
+
+		for (ifa = ifap; ifa; ifa = ifa->ifa_next)
+		{
+			pInterface = &pInterfaces[index];
+			pAddress = (struct sockaddr_in*) &pInterface->iiAddress;
+			pBroadcast = (struct sockaddr_in*) &pInterface->iiBroadcastAddress;
+			pNetmask = (struct sockaddr_in*) &pInterface->iiNetmask;
+
+			nFlags = 0;
+
+			if (ifa->ifa_flags & IFF_UP)
+				nFlags |= _IFF_UP;
+
+			if (ifa->ifa_flags & IFF_BROADCAST)
+				nFlags |= _IFF_BROADCAST;
+
+			if (ifa->ifa_flags & IFF_LOOPBACK)
+				nFlags |= _IFF_LOOPBACK;
+
+			if (ifa->ifa_flags & IFF_POINTOPOINT)
+				nFlags |= _IFF_POINTTOPOINT;
+
+			if (ifa->ifa_flags & IFF_MULTICAST)
+				nFlags |= _IFF_MULTICAST;
+
+			pInterface->iiFlags = nFlags;
+
+			if (ifa->ifa_addr)
+			{
+				if ((ifa->ifa_addr->sa_family != AF_INET) && (ifa->ifa_addr->sa_family != AF_INET6))
+					continue;
+
+				getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr),
+						address, sizeof(address), 0, 0, NI_NUMERICHOST);
+
+				inet_pton(ifa->ifa_addr->sa_family, address, (void*) &pAddress->sin_addr);
+			}
+			else
+			{
+				ZeroMemory(pAddress, sizeof(struct sockaddr_in));
+			}
+
+			if (ifa->ifa_dstaddr)
+			{
+				if ((ifa->ifa_dstaddr->sa_family != AF_INET) && (ifa->ifa_dstaddr->sa_family != AF_INET6))
+					continue;
+
+				getnameinfo(ifa->ifa_dstaddr, sizeof(struct sockaddr),
+						broadcast, sizeof(broadcast), 0, 0, NI_NUMERICHOST);
+
+				inet_pton(ifa->ifa_dstaddr->sa_family, broadcast, (void*) &pBroadcast->sin_addr);
+			}
+			else
+			{
+				ZeroMemory(pBroadcast, sizeof(struct sockaddr_in));
+			}
+
+			if (ifa->ifa_netmask)
+			{
+				if ((ifa->ifa_netmask->sa_family != AF_INET) && (ifa->ifa_netmask->sa_family != AF_INET6))
+					continue;
+
+				getnameinfo(ifa->ifa_netmask, sizeof(struct sockaddr),
+						netmask, sizeof(netmask), 0, 0, NI_NUMERICHOST);
+
+				inet_pton(ifa->ifa_netmask->sa_family, netmask, (void*) &pNetmask->sin_addr);
+			}
+			else
+			{
+				ZeroMemory(pNetmask, sizeof(struct sockaddr_in));
+			}
+
+			numInterfaces++;
+			index++;
+		}
+
+		*lpcbBytesReturned = (DWORD) (numInterfaces * sizeof(INTERFACE_INFO));
+
+		freeifaddrs(ifap);
+
+		return 0;
+	}
+#endif
 
 	ifconf.ifc_len = sizeof(buffer);
 	ifconf.ifc_buf = buffer;
