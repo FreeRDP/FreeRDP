@@ -276,7 +276,7 @@ PROGRESSIVE_SURFACE_CONTEXT* progressive_surface_context_new(UINT16 surfaceId, U
 
 	if (!surface->tiles)
 	{
-		free (surface);
+		free(surface);
 		return NULL;
 	}
 
@@ -1541,6 +1541,14 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 	BYTE* block;
 	BYTE* blocks;
 	UINT16 index;
+	UINT16 boxLeft;
+	UINT16 boxTop;
+	UINT16 boxRight;
+	UINT16 boxBottom;
+	UINT16 idxLeft;
+	UINT16 idxTop;
+	UINT16 idxRight;
+	UINT16 idxBottom;
 	UINT32 boffset;
 	UINT16 blockType;
 	UINT32 blockLen;
@@ -1772,11 +1780,11 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 				if ((blockLen - boffset) < region->tileDataSize)
 					return -1021;
 
-				if (region->numTiles > progressive->cTiles)
+				if (progressive->cTiles < surface->gridSize)
 				{
 					progressive->tiles = (RFX_PROGRESSIVE_TILE**) realloc(progressive->tiles,
-							region->numTiles * sizeof(RFX_PROGRESSIVE_TILE*));
-					progressive->cTiles = region->numTiles;
+							surface->gridSize * sizeof(RFX_PROGRESSIVE_TILE*));
+					progressive->cTiles = surface->gridSize;
 				}
 
 				region->tiles = progressive->tiles;
@@ -1792,9 +1800,32 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 					WLog_WARN(TAG, "RFX_DWT_REDUCE_EXTRAPOLATE is not set");
 				}
 
+				boxLeft = surface->gridWidth;
+				boxTop = surface->gridHeight;
+				boxRight = 0;
+				boxBottom = 0;
+
 				for (index = 0; index < region->numRects; index++)
 				{
 					rect = &(region->rects[index]);
+
+					idxLeft = rect->x / 64;
+					idxTop = rect->y / 64;
+					idxRight = (rect->x + rect->width + 63) / 64;
+					idxBottom = (rect->y + rect->height + 63) / 64;
+
+					if (idxLeft < boxLeft)
+						boxLeft = idxLeft;
+
+					if (idxTop < boxTop)
+						boxTop = idxTop;
+
+					if (idxRight > boxRight)
+						boxRight = idxRight;
+
+					if (idxBottom > boxBottom)
+						boxBottom = idxBottom;
+
 					WLog_DBG(TAG, "rect[%d]: x: %d y: %d w: %d h: %d",
 							index, rect->x, rect->y, rect->width, rect->height);
 				}
@@ -1803,6 +1834,24 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 
 				if (status < 0)
 					return status;
+
+				region->numTiles = 0;
+
+				for (index = 0; index < surface->gridSize; index++)
+				{
+					RFX_PROGRESSIVE_TILE* tile = &(surface->tiles[index]);
+
+					if (!tile->data)
+						continue;
+
+					if ((tile->xIdx < boxLeft) || (tile->xIdx > boxRight))
+						continue;
+
+					if ((tile->yIdx < boxTop) || (tile->yIdx > boxBottom))
+						continue;
+
+					region->tiles[region->numTiles++] = tile;
+				}
 
 				boffset += (UINT32) status;
 
