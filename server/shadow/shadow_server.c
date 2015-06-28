@@ -554,10 +554,10 @@ static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 		if (!makecert)
 			goto out_fail;
 
-		if (makecert_context_process(makecert, makecert_argc, (char**) makecert_argv) != 1)
+		if (makecert_context_process(makecert, makecert_argc, (char**) makecert_argv) < 0)
 			goto out_fail;
 
-		if (!makecert_context_set_output_file_name(makecert, "shadow") != 1)
+		if (makecert_context_set_output_file_name(makecert, "shadow") != 1)
 			goto out_fail;
 
 		if (!PathFileExistsA(server->CertificateFile))
