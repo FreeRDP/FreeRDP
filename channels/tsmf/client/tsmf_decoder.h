@@ -47,16 +47,16 @@ struct _ITSMFDecoder
 	/* Free the decoder */
 	void (*Free)(ITSMFDecoder *decoder);
 	/* Optional Contol function */
-	void (*Control)(ITSMFDecoder *decoder, ITSMFControlMsg control_msg, UINT32 *arg);
+	BOOL (*Control)(ITSMFDecoder *decoder, ITSMFControlMsg control_msg, UINT32 *arg);
 	/* Decode a sample with extended interface. */
 	int (*DecodeEx)(ITSMFDecoder *decoder, const BYTE *data, UINT32 data_size, UINT32 extensions,
 					UINT64 start_time, UINT64 end_time, UINT64 duration);
 	/* Get current play time */
 	UINT64(*GetRunningTime)(ITSMFDecoder *decoder);
 	/* Update Gstreamer Rendering Area */
-	void (*UpdateRenderingArea)(ITSMFDecoder *decoder, int newX, int newY, int newWidth, int newHeight, int numRectangles, RDP_RECT *rectangles);
+	BOOL (*UpdateRenderingArea)(ITSMFDecoder *decoder, int newX, int newY, int newWidth, int newHeight, int numRectangles, RDP_RECT *rectangles);
 	/* Change Gstreamer Audio Volume */
-	void (*ChangeVolume)(ITSMFDecoder *decoder, UINT32 newVolume, UINT32 muted);
+	BOOL (*ChangeVolume)(ITSMFDecoder *decoder, UINT32 newVolume, UINT32 muted);
 	/* Check buffer level */
 	BOOL (*BufferFilled)(ITSMFDecoder *decoder);
 	/* Register a callback for frame ack. */

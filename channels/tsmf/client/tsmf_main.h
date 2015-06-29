@@ -58,7 +58,7 @@ struct _TSMF_PLUGIN
 	const char* audio_device;
 };
 
-void tsmf_playback_ack(IWTSVirtualChannelCallback* pChannelCallback,
+BOOL tsmf_playback_ack(IWTSVirtualChannelCallback* pChannelCallback,
 		UINT32 message_id, UINT64 duration, UINT32 data_size);
 
 #endif
