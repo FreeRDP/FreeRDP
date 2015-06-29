@@ -327,10 +327,10 @@ int command_line_pre_filter(MAKECERT_CONTEXT* context, int index, int argc, LPCS
 	{
 		if (argv[index][0] != '-')
 		{
-            context->output_file = _strdup(argv[index]);
-            if (!context->output_file)
-                return -1;
-        }
+			context->output_file = _strdup(argv[index]);
+			if (!context->output_file)
+				return -1;
+		}
 
 		return 1;
 	}
@@ -733,10 +733,10 @@ int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, char* pa
 
 	if (!context->output_file)
 	{
-        context->output_file = _strdup(context->default_name);
-        if (context->output_file)
-            return -1;
-    }
+		context->output_file = _strdup(context->default_name);
+		if (context->output_file)
+			return -1;
+	}
 
 	/**
 	 * Output Private Key File
@@ -1092,9 +1092,9 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 
 		if (context->crtFormat)
 		{	
-            if (makecert_context_output_private_key_file(context, context->output_path) < 0)
-                return -1;
-        }
+			if (makecert_context_output_private_key_file(context, context->output_path) < 0)
+				return -1;
+		}
 	}
 
 	return 0;
