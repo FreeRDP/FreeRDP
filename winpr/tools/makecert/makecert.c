@@ -326,7 +326,7 @@ int command_line_pre_filter(MAKECERT_CONTEXT* context, int index, int argc, LPCS
 	if (index == (argc - 1))
 	{
 		if (argv[index][0] != '-')
-			context->output_file = (char*) argv[index];
+			context->output_file = _strdup(argv[index]);
 
 		return 1;
 	}
@@ -728,7 +728,7 @@ int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, char* pa
 		return 1;
 
 	if (!context->output_file)
-		context->output_file = context->default_name;
+		context->output_file = _strdup(context->default_name);
 
 	/**
 	 * Output Private Key File
