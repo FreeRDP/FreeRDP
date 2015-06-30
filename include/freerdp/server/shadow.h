@@ -204,7 +204,7 @@ typedef struct _SHADOW_MSG_OUT SHADOW_MSG_OUT;
 typedef void (*MSG_OUT_FREE_FN)(UINT32 id, SHADOW_MSG_OUT* msg);
 #define RDP_SHADOW_MSG_OUT_COMMON() \
 	int refCount; \
-	MSG_OUT_FREE_FN Free; /* function to free SHADOW_MSG_OUT */
+	MSG_OUT_FREE_FN Free /* function to free SHADOW_MSG_OUT */
 
 struct _SHADOW_MSG_OUT
 {
