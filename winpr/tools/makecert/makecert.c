@@ -734,7 +734,7 @@ int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, char* pa
 	if (!context->output_file)
 	{
 		context->output_file = _strdup(context->default_name);
-		if (context->output_file)
+		if (!context->output_file)
 			return -1;
 	}
 
