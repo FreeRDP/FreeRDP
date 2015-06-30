@@ -360,7 +360,7 @@ static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown)
 	bio->init = 1;
 
 #ifdef _WIN32
-		ptr->hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+		ptr->hEvent = WSACreateEvent();
 
 		if (!ptr->hEvent)
 			return 0;
