@@ -1033,11 +1033,73 @@ WINSCARDAPI LONG WINAPI PCSC_SCardIsValidContext(SCARDCONTEXT hContext)
 	return status;
 }
 
+WINSCARDAPI LONG WINAPI PCSC_SCardListReaderGroups_Internal(SCARDCONTEXT hContext,
+		LPSTR mszGroups, LPDWORD pcchGroups)
+{
+	LONG status = SCARD_S_SUCCESS;
+	char* mszGroupsWinSCard = NULL;
+	BOOL pcchGroupsAlloc = FALSE;
+	LPSTR* pMszGroups = (LPSTR*) mszGroups;
+	PCSC_DWORD pcsc_cchGroups = 0;
+
+	if (!pcchGroups)
+		return SCARD_E_INVALID_PARAMETER;
+
+	if (!g_PCSC.pfnSCardListReaderGroups)
+		return SCARD_E_NO_SERVICE;
+
+	if (*pcchGroups == SCARD_AUTOALLOCATE)
+		pcchGroupsAlloc = TRUE;
+
+	pcsc_cchGroups = pcchGroupsAlloc ? PCSC_SCARD_AUTOALLOCATE : (PCSC_DWORD) *pcchGroups;
+
+	if (pcchGroupsAlloc && !g_SCardAutoAllocate)
+	{
+		pcsc_cchGroups = 0;
+		status = (LONG) g_PCSC.pfnSCardListReaderGroups(hContext, NULL, &pcsc_cchGroups);
+
+		if (status == SCARD_S_SUCCESS)
+		{
+			*pMszGroups = calloc(1, pcsc_cchGroups);
+
+			if (!*pMszGroups)
+				return SCARD_E_NO_MEMORY;
+
+			status = (LONG) g_PCSC.pfnSCardListReaderGroups(hContext, *pMszGroups, &pcsc_cchGroups);
+
+			if (status != SCARD_S_SUCCESS)
+				free(*pMszGroups);
+			else
+				PCSC_AddMemoryBlock(hContext, *pMszGroups);
+		}
+	}
+	else
+	{
+		status = (LONG) g_PCSC.pfnSCardListReaderGroups(hContext, mszGroups, &pcsc_cchGroups);
+	}
+
+	status = PCSC_MapErrorCodeToWinSCard(status);
+	*pcchGroups = (DWORD) pcsc_cchGroups;
+
+	if (status == SCARD_S_SUCCESS)
+	{
+		mszGroupsWinSCard = PCSC_ConvertReaderNamesToWinSCard(*pMszGroups, pcchGroups);
+
+		if (mszGroupsWinSCard)
+		{
+			PCSC_SCardFreeMemory_Internal(hContext, *pMszGroups);
+			*pMszGroups = mszGroupsWinSCard;
+			PCSC_AddMemoryBlock(hContext, *pMszGroups);
+		}
+	}
+
+	return status;
+}
+
 WINSCARDAPI LONG WINAPI PCSC_SCardListReaderGroupsA(SCARDCONTEXT hContext,
 		LPSTR mszGroups, LPDWORD pcchGroups)
 {
 	LONG status = SCARD_S_SUCCESS;
-	PCSC_DWORD pcsc_cchGroups = (PCSC_DWORD) *pcchGroups;
 
 	if (!g_PCSC.pfnSCardListReaderGroups)
 		return SCARD_E_NO_SERVICE;
@@ -1045,9 +1107,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReaderGroupsA(SCARDCONTEXT hContext,
 	if (!PCSC_LockCardContext(hContext))
 		return SCARD_E_INVALID_HANDLE;
 
-	status = (LONG) g_PCSC.pfnSCardListReaderGroups(hContext, mszGroups, &pcsc_cchGroups);
-	status = PCSC_MapErrorCodeToWinSCard(status);
-	*pcchGroups = (DWORD) pcsc_cchGroups;
+	status = PCSC_SCardListReaderGroups_Internal(hContext, mszGroups, pcchGroups);
 
 	if (!PCSC_UnlockCardContext(hContext))
 		return SCARD_E_INVALID_HANDLE;
@@ -1058,8 +1118,9 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReaderGroupsA(SCARDCONTEXT hContext,
 WINSCARDAPI LONG WINAPI PCSC_SCardListReaderGroupsW(SCARDCONTEXT hContext,
 		LPWSTR mszGroups, LPDWORD pcchGroups)
 {
+	LPSTR mszGroupsA = NULL;
+	LPSTR* pMszGroupsA = &mszGroupsA;
 	LONG status = SCARD_S_SUCCESS;
-	PCSC_DWORD pcsc_cchGroups = (PCSC_DWORD) *pcchGroups;
 
 	if (!g_PCSC.pfnSCardListReaderGroups)
 		return SCARD_E_NO_SERVICE;
@@ -1067,13 +1128,14 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReaderGroupsW(SCARDCONTEXT hContext,
 	if (!PCSC_LockCardContext(hContext))
 		return SCARD_E_INVALID_HANDLE;
 
-	mszGroups = NULL;
-	pcchGroups = 0;
-	/* FIXME: unicode conversion */
-	status = (LONG) g_PCSC.pfnSCardListReaderGroups(hContext, (LPSTR) mszGroups, &pcsc_cchGroups);
-	status = PCSC_MapErrorCodeToWinSCard(status);
-	if (pcchGroups)
-		*pcchGroups = (DWORD) pcsc_cchGroups;
+	status = PCSC_SCardListReaderGroups_Internal(hContext, (LPSTR) &mszGroupsA, pcchGroups);
+
+	if (status == SCARD_S_SUCCESS)
+	{
+		*pcchGroups = ConvertToUnicode(CP_UTF8, 0, *pMszGroupsA, *pcchGroups, (WCHAR**) mszGroups, 0);
+		PCSC_AddMemoryBlock(hContext, mszGroups);
+		PCSC_SCardFreeMemory_Internal(hContext, *pMszGroupsA);
+	}
 
 	if (!PCSC_UnlockCardContext(hContext))
 		return SCARD_E_INVALID_HANDLE;

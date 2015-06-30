@@ -285,6 +285,95 @@ static UINT32 smartcard_IsValidContext_Call(SMARTCARD_DEVICE* smartcard, SMARTCA
 	return ret.ReturnCode;
 }
 
+
+static UINT32 smartcard_ListReaderGroupsA_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation, ListReaderGroups_Call* call)
+{
+	UINT32 status;
+	IRP* irp = operation->irp;
+
+	if (!call)
+		return STATUS_NO_MEMORY;
+
+	status = smartcard_unpack_list_reader_groups_call(smartcard, irp->input, call);
+	smartcard_trace_list_reader_groups_call(smartcard, call, FALSE);
+	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
+	return status;
+}
+
+static UINT32 smartcard_ListReaderGroupsA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation, ListReaderGroups_Call* call)
+{
+	UINT32 status;
+	ListReaderGroups_Return ret;
+	LPSTR mszGroups = NULL;
+	DWORD cchGroups = 0;
+	IRP* irp = operation->irp;
+
+	cchGroups = SCARD_AUTOALLOCATE;
+
+	status = ret.ReturnCode = SCardListReaderGroupsA(operation->hContext, (LPSTR) &mszGroups, &cchGroups);
+
+	ret.msz = (BYTE*) mszGroups;
+	ret.cBytes = cchGroups;
+
+	if (status != SCARD_S_SUCCESS)
+		return status;
+
+	smartcard_trace_list_reader_groups_return(smartcard, &ret, FALSE);
+	status = smartcard_pack_list_reader_groups_return(smartcard, irp->output, &ret);
+
+	if (status != SCARD_S_SUCCESS)
+		return status;
+
+	if (mszGroups)
+		SCardFreeMemory(operation->hContext, mszGroups);
+
+	return ret.ReturnCode;
+}
+
+static UINT32 smartcard_ListReaderGroupsW_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation, ListReaderGroups_Call* call)
+{
+	UINT32 status;
+	IRP* irp = operation->irp;
+
+	if (!call)
+		return STATUS_NO_MEMORY;
+
+	status = smartcard_unpack_list_reader_groups_call(smartcard, irp->input, call);
+	smartcard_trace_list_reader_groups_call(smartcard, call, TRUE);
+	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
+	return status;
+}
+
+static UINT32 smartcard_ListReaderGroupsW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation, ListReaderGroups_Call* call)
+{
+	UINT32 status;
+	ListReaderGroups_Return ret;
+	LPWSTR mszGroups = NULL;
+	DWORD cchGroups = 0;
+	IRP* irp = operation->irp;
+
+	cchGroups = SCARD_AUTOALLOCATE;
+
+	status = ret.ReturnCode = SCardListReaderGroupsW(operation->hContext, (LPWSTR) &mszGroups, &cchGroups);
+
+	ret.msz = (BYTE*) mszGroups;
+	ret.cBytes = cchGroups;
+
+	if (status != SCARD_S_SUCCESS)
+		return status;
+
+	smartcard_trace_list_reader_groups_return(smartcard, &ret, TRUE);
+	status = smartcard_pack_list_reader_groups_return(smartcard, irp->output, &ret);
+
+	if (status != SCARD_S_SUCCESS)
+		return status;
+
+	if (mszGroups)
+		SCardFreeMemory(operation->hContext, mszGroups);
+
+	return ret.ReturnCode;
+}
+
 static UINT32 smartcard_ListReadersA_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation, ListReaders_Call* call)
 {
 	UINT32 status;
@@ -1246,11 +1335,13 @@ UINT32 smartcard_irp_device_control_decode(SMARTCARD_DEVICE* smartcard, SMARTCAR
 			break;
 
 		case SCARD_IOCTL_LISTREADERGROUPSA:
-			status = SCARD_F_INTERNAL_ERROR;
+			call = calloc(1, sizeof(ListReaderGroups_Call));
+			status = smartcard_ListReaderGroupsA_Decode(smartcard, operation, (ListReaderGroups_Call*) call);
 			break;
 
 		case SCARD_IOCTL_LISTREADERGROUPSW:
-			status = SCARD_F_INTERNAL_ERROR;
+			call = calloc(1, sizeof(ListReaderGroups_Call));
+			status = smartcard_ListReaderGroupsW_Decode(smartcard, operation, (ListReaderGroups_Call*) call);
 			break;
 
 		case SCARD_IOCTL_LISTREADERSA:
@@ -1531,11 +1622,11 @@ UINT32 smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, SMARTCARD_
 			break;
 
 		case SCARD_IOCTL_LISTREADERGROUPSA:
-			result = SCARD_F_INTERNAL_ERROR;
+			result = smartcard_ListReaderGroupsA_Call(smartcard, operation, (ListReaderGroups_Call*) call);
 			break;
 
 		case SCARD_IOCTL_LISTREADERGROUPSW:
-			result = SCARD_F_INTERNAL_ERROR;
+			result = smartcard_ListReaderGroupsW_Call(smartcard, operation, (ListReaderGroups_Call*) call);
 			break;
 
 		case SCARD_IOCTL_LISTREADERSA:
