@@ -31,8 +31,9 @@
 int WLog_DataMessage_Write(char* filename, void* data, int length)
 {
 	FILE* fp;
-	fp = fopen(filename, "w+b");
 	int ret = 0;
+
+	fp = fopen(filename, "w+b");
 
 	if (!fp)
 	{
