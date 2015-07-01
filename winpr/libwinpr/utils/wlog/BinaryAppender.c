@@ -131,6 +131,7 @@ int WLog_BinaryAppender_WriteMessage(wLog* log, wLogBinaryAppender* appender, wL
 	int FileNameLength;
 	int FunctionNameLength;
 	int TextStringLength;
+	int ret = 1;
 
 	if (!log || !appender || !message)
 		return -1;
@@ -171,11 +172,12 @@ int WLog_BinaryAppender_WriteMessage(wLog* log, wLogBinaryAppender* appender, wL
 
 	Stream_SealLength(s);
 
-	fwrite(Stream_Buffer(s), MessageLength, 1, fp);
+	if (fwrite(Stream_Buffer(s), MessageLength, 1, fp) != 1)
+		ret = -1;
 
 	Stream_Free(s, TRUE);
 
-	return 1;
+	return ret;
 }
 
 int WLog_BinaryAppender_WriteDataMessage(wLog* log, wLogBinaryAppender* appender, wLogMessage* message)

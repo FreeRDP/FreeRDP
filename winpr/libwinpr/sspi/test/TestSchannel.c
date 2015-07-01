@@ -549,34 +549,42 @@ static void* schannel_test_server_thread(void* arg)
 int dump_test_certificate_files()
 {
 	FILE* fp;
-	char* fullpath;
+	char* fullpath = NULL;
+	int ret = -1;
+
 	/*
 	 * Output Certificate File
 	 */
 	fullpath = GetCombinedPath("/tmp", "localhost.crt");
-	fp = fopen(fullpath, "w+");
+	if (!fullpath)
+		return -1;
 
+	fp = fopen(fullpath, "w+");
 	if (fp)
 	{
-		fwrite((void*) test_localhost_crt, sizeof(test_localhost_crt), 1, fp);
+		if (fwrite((void*) test_localhost_crt, sizeof(test_localhost_crt), 1, fp) != 1)
+			goto out_fail;
 		fclose(fp);
+		fp = NULL;
 	}
-
 	free(fullpath);
+
 	/*
 	 * Output Private Key File
 	 */
 	fullpath = GetCombinedPath("/tmp", "localhost.key");
+	if (!fullpath)
+		return -1;
 	fp = fopen(fullpath, "w+");
+	if (fp && fwrite((void*) test_localhost_key, sizeof(test_localhost_key), 1, fp) != 1)
+			goto out_fail;
 
-	if (fp)
-	{
-		fwrite((void*) test_localhost_key, sizeof(test_localhost_key), 1, fp);
-		fclose(fp);
-	}
-
+	ret = 1;
+out_fail:
 	free(fullpath);
-	return 1;
+	if (fp)
+		fclose(fp);
+	return ret;
 }
 
 int TestSchannel(int argc, char* argv[])

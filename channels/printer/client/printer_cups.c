@@ -91,7 +91,7 @@ static void printer_cups_write_printjob(rdpPrintJob* printjob, BYTE* data, int s
 
 		if (fwrite(data, 1, size, fp) < size)
 		{
-
+			// FIXME once this function doesn't return void anymore!
 		}
 
 		fclose(fp);

@@ -362,6 +362,7 @@ unsigned lodepng_load_file(unsigned char** out, size_t* outsize, const char* fil
   if(size && (*out)) (*outsize) = fread(*out, 1, (size_t)size, file);
 
   fclose(file);
+  if (*outsize != size) return 91;
   if(!(*out) && size) return 83; /*the above malloc failed*/
   return 0;
 }
@@ -370,11 +371,13 @@ unsigned lodepng_load_file(unsigned char** out, size_t* outsize, const char* fil
 unsigned lodepng_save_file(const unsigned char* buffer, size_t buffersize, const char* filename)
 {
   FILE* file;
+  int ret = 0;
   file = fopen(filename, "wb" );
   if(!file) return 79;
-  fwrite((char*)buffer , 1 , buffersize, file);
+  if (fwrite((char*)buffer , 1 , buffersize, file) != buffersize)
+    ret = 91;
   fclose(file);
-  return 0;
+  return ret;
 }
 
 #endif /*LODEPNG_COMPILE_DISK*/
@@ -5894,6 +5897,7 @@ const char* lodepng_error_text(unsigned code)
     case 89: return "text chunk keyword too short or long: must have size 1-79";
     /*the windowsize in the LodePNGCompressSettings. Requiring POT(==> & instead of %) makes encoding 12% faster.*/
     case 90: return "windowsize must be a power of two";
+    case 91: return "fwrite failed";
   }
   return "unknown error code";
 }

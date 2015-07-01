@@ -800,17 +800,28 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 			ConvertToUnicode(CP_UTF8, 0, buffer, length, &unicodestr, 0);
 
 			/* Write multi-byte header */
-			fwrite(BOM_UTF16_LE, sizeof(BYTE), 2, fp);
-			fwrite(unicodestr, 2, length, fp);
+			if (fwrite(BOM_UTF16_LE, sizeof(BYTE), 2, fp) != 2 ||
+					fwrite(unicodestr, 2, length, fp) != length)
+			{
+				free(buffer);
+				free(unicodestr);
+				fclose(fp);
+				return FALSE;
+			}
 
 			free(unicodestr);
 		}
 		else
 		{
-			fwrite(buffer, 1, length, fp);
+			if (fwrite(buffer, 1, length, fp) != length)
+			{
+				free(buffer);
+				fclose(fp);
+				return FALSE;
+			}
 		}
 
-		status = fflush(fp);
+		fflush(fp);
 		status = fclose(fp);
 	}
 

@@ -764,21 +764,24 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	WLog_INFO(TAG, "ConnectionString: %s", file->ConnectionString2);
 
-	if (0)
+#if 0
+	FILE* fp;
+	size_t size;
+
+	fp = fopen("inv.xml", "w+b");
+
+	if (fp)
 	{
-		FILE* fp;
-		size_t size;
-
-		fp = fopen("inv.xml", "w+b");
-
-		if (fp)
+		size = strlen(file->ConnectionString2);
+		if (fwrite(file->ConnectionString2, size, 1, fp) != 1 || fwrite("\r\n", 2, 1, fp) != 1)
 		{
-			size = strlen(file->ConnectionString2);
-			fwrite(file->ConnectionString2, 1, size, fp);
-			fwrite("\r\n", 1, 2, fp);
 			fclose(fp);
+			WLog_ERR(TAG, "Problem writing to inv.xml");
+			return -1;
 		}
+		fclose(fp);
 	}
+#endif
 
 	status = win_shadow_rdp_init(subsystem);
 
