@@ -633,6 +633,13 @@ void smartcard_trace_list_reader_groups_return(SMARTCARD_DEVICE* smartcard, List
 	{
 		length = ret->cBytes;
 		mszA = (char*) malloc(length);
+
+		if (!mszA)
+		{
+			WLog_WARN(TAG, "trace ListReaderGroupsW_Return out of memory error (mszA)");
+			return;
+		}
+
 		CopyMemory(mszA, ret->msz, ret->cBytes);
 	}
 
@@ -804,6 +811,13 @@ void smartcard_trace_list_readers_return(SMARTCARD_DEVICE* smartcard, ListReader
 	{
 		length = ret->cBytes;
 		mszA = (char*) malloc(length);
+
+		if (!mszA)
+		{
+			WLog_WARN(TAG, "trace ListReadersW_Return out of memory error (mszA)");
+			return;
+		}
+
 		CopyMemory(mszA, ret->msz, ret->cBytes);
 	}
 
@@ -1840,6 +1854,13 @@ void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, Status_Return* r
 	{
 		length = (int) ret->cBytes;
 		mszReaderNamesA = (char*) malloc(length);
+
+		if (!mszReaderNamesA)
+		{
+			WLog_WARN(TAG, "trace StatusW_Return out of memory error (mszReaderNamesA)");
+			return;
+		}
+
 		CopyMemory(mszReaderNamesA, ret->mszReaderNames, ret->cBytes);
 	}
 
