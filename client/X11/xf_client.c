@@ -1790,7 +1790,7 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xfc->invert = (ImageByteOrder(xfc->display) == MSBFirst) ? TRUE : FALSE;
 	xfc->complex_regions = TRUE;
 
-	xfc->x11event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfc->xfds);
+	xfc->x11event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfc->xfds, FD_READ);
 	if (!xfc->x11event)
 	{
 		WLog_ERR(TAG, "Could not create xfds event");

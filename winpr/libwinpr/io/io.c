@@ -50,7 +50,7 @@
 BOOL GetOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped, LPDWORD lpNumberOfBytesTransferred, BOOL bWait)
 {
 	ULONG Type;
-	PVOID Object;
+	WINPR_HANDLE* Object;
 
 	if (!winpr_Handle_GetInfo(hFile, &Type, &Object))
 		return FALSE;

@@ -30,6 +30,7 @@
 #include <winpr/wtypes.h>
 #include <winpr/error.h>
 #include <winpr/handle.h>
+#include <winpr/winsock.h>
 
 #include <winpr/nt.h>
 
@@ -338,9 +339,9 @@ WINPR_API BOOL WINAPI DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpB
 WINPR_API VOID USleep(DWORD dwMicroseconds);
 
 WINPR_API HANDLE CreateFileDescriptorEventW(LPSECURITY_ATTRIBUTES lpEventAttributes,
-		BOOL bManualReset, BOOL bInitialState, int FileDescriptor);
+		BOOL bManualReset, BOOL bInitialState, int FileDescriptor, ULONG mode);
 WINPR_API HANDLE CreateFileDescriptorEventA(LPSECURITY_ATTRIBUTES lpEventAttributes,
-		BOOL bManualReset, BOOL bInitialState, int FileDescriptor);
+		BOOL bManualReset, BOOL bInitialState, int FileDescriptor, ULONG mode);
 
 WINPR_API HANDLE CreateWaitObjectEvent(LPSECURITY_ATTRIBUTES lpEventAttributes,
 		BOOL bManualReset, BOOL bInitialState, void* pObject);
@@ -352,7 +353,7 @@ WINPR_API HANDLE CreateWaitObjectEvent(LPSECURITY_ATTRIBUTES lpEventAttributes,
 #endif
 
 WINPR_API int GetEventFileDescriptor(HANDLE hEvent);
-WINPR_API int SetEventFileDescriptor(HANDLE hEvent, int FileDescriptor);
+WINPR_API int SetEventFileDescriptor(HANDLE hEvent, int FileDescriptor, ULONG mode);
 
 WINPR_API void* GetEventWaitObject(HANDLE hEvent);
 

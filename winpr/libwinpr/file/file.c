@@ -414,7 +414,7 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 	}
 
 	hNamedPipe = (HANDLE) pNamedPipe;
-	WINPR_HANDLE_SET_TYPE(pNamedPipe, HANDLE_TYPE_NAMED_PIPE);
+	WINPR_HANDLE_SET_TYPE_AND_MODE(pNamedPipe, HANDLE_TYPE_NAMED_PIPE, FD_READ);
 	pNamedPipe->name = _strdup(lpFileName);
 	if (!pNamedPipe->name)
 	{
@@ -502,7 +502,6 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 			  LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped)
 {
 	ULONG Type;
-	PVOID Object;
 	WINPR_HANDLE *handle;
 
 	if (hFile == INVALID_HANDLE_VALUE)
@@ -516,12 +515,12 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	if (!lpNumberOfBytesRead && !lpOverlapped)
 		return FALSE;
 
-	if (!winpr_Handle_GetInfo(hFile, &Type, &Object))
+	if (!winpr_Handle_GetInfo(hFile, &Type, &handle))
 		return FALSE;
 
 	handle = (WINPR_HANDLE *)hFile;
 	if (handle->ops->ReadFile)
-		return handle->ops->ReadFile(Object, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
+		return handle->ops->ReadFile(handle, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
 
 	WLog_ERR(TAG, "ReadFile operation not implemented");
 	return FALSE;
@@ -543,18 +542,17 @@ BOOL WriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 			   LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped)
 {
 	ULONG Type;
-	PVOID Object;
 	WINPR_HANDLE *handle;
 
 	if (hFile == INVALID_HANDLE_VALUE)
 		return FALSE;
 
-	if (!winpr_Handle_GetInfo(hFile, &Type, &Object))
+	if (!winpr_Handle_GetInfo(hFile, &Type, &handle))
 		return FALSE;
 
 	handle = (WINPR_HANDLE *)hFile;
 	if (handle->ops->WriteFile)
-		return handle->ops->WriteFile(Object, lpBuffer, nNumberOfBytesToWrite, lpNumberOfBytesWritten, lpOverlapped);
+		return handle->ops->WriteFile(handle, lpBuffer, nNumberOfBytesToWrite, lpNumberOfBytesWritten, lpOverlapped);
 
 	WLog_ERR(TAG, "ReadFile operation not implemented");
 	return FALSE;
