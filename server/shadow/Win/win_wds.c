@@ -773,7 +773,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 	if (fp)
 	{
 		size = strlen(file->ConnectionString2);
-		if (fwrite(file->ConnectionString2, 1, size, fp) != size || fwrite("\r\n", 1, 2, fp) != 2)
+		if (fwrite(file->ConnectionString2, size, 1, fp) != 1 || fwrite("\r\n", 2, 1, fp) != 1)
 		{
 			fclose(fp);
 			WLog_ERR(TAG, "Problem writing to inv.xml");

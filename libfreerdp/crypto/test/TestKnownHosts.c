@@ -46,8 +46,8 @@ static int prepare(const char* currentFileV2, const char* legacyFileV2, const ch
 
 	for (i=0; i<sizeof(hosts)/sizeof(hosts[0]); i++)
 	{
-		if (fwrite(hosts[i], strlen(hosts[i]), sizeof(char), fl) != sizeof(char) ||
-			fwrite(hosts[i], strlen(hosts[i]), sizeof(char), fc) != sizeof(char))
+		if (fwrite(hosts[i], strlen(hosts[i]), 1, fl) != 1 ||
+			fwrite(hosts[i], strlen(hosts[i]), 1, fc) != 1)
 			goto finish;
 	}
 
@@ -63,7 +63,7 @@ static int prepare(const char* currentFileV2, const char* legacyFileV2, const ch
 
 	for (i=0; i<sizeof(legacy)/sizeof(legacy[0]); i++)
 	{
-		if (fwrite(legacy[i], strlen(legacy[i]), sizeof(char), fl) != sizeof(char))
+		if (fwrite(legacy[i], strlen(legacy[i]), 1, fl) != 1)
 			goto finish;
 	}
 
