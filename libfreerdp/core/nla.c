@@ -945,7 +945,7 @@ BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s)
 		return FALSE;
 	}
 	nla->identity->UserLength = (UINT32) length;
-	if (nla->identity->PasswordLength > 0)
+	if (nla->identity->UserLength > 0)
 	{
 		nla->identity->User = (UINT16 *) malloc(length);
 		if (!nla->identity->User)
