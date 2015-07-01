@@ -929,9 +929,12 @@ BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s)
 	nla->identity->Password = NULL;
 	nla->identity->PasswordLength = (UINT32) 0;
 
+	if (!ber_read_sequence_tag(s, &length))
+		return FALSE;
+
 	/* The sequence is empty, return early,
 	 * TSPasswordCreds (SEQUENCE) is optional. */
-	if (!ber_read_sequence_tag(s, &length))
+	if (length == 0)
 		return TRUE;
 
 	/* [0] domainName (OCTET STRING) */
