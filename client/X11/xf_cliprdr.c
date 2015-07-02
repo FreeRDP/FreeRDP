@@ -835,16 +835,19 @@ static int xf_cliprdr_server_format_list(CliprdrClientContext* context, CLIPRDR_
 	{
 		format = &formatList->formats[i];
 		clipboard->serverFormats[i].formatId = format->formatId;
-		clipboard->serverFormats[i].formatName = _strdup(format->formatName);
-		if (!clipboard->serverFormats[i].formatName)
+		if (format->formatName)
 		{
-			for (--i; i >= 0; --i)
-				free(clipboard->serverFormats[i].formatName);
+			clipboard->serverFormats[i].formatName = _strdup(format->formatName);
+			if (!clipboard->serverFormats[i].formatName)
+			{
+				for (--i; i >= 0; --i)
+					free(clipboard->serverFormats[i].formatName);
 
-			clipboard->numServerFormats = 0;
-			free(clipboard->serverFormats);
-			clipboard->serverFormats = NULL;
-			return -1;
+				clipboard->numServerFormats = 0;
+				free(clipboard->serverFormats);
+				clipboard->serverFormats = NULL;
+				return -1;
+			}
 		}
 	}
 
