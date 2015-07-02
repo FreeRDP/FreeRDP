@@ -241,7 +241,7 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	else
 	{
 		lpszEnvironmentBlock = GetEnvironmentStrings();
-		if (lpszEnvironmentBlock)
+		if (!lpszEnvironmentBlock)
 			goto finish;
 		envp = EnvironmentBlockToEnvpA(lpszEnvironmentBlock);
 	}
@@ -279,7 +279,7 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 
 		/* set default signal handlers */
 		memset(&act, 0, sizeof(act));
-		act.sa_sigaction = SIG_DFL;
+		act.sa_handler = SIG_DFL;
 		act.sa_flags = 0;
 		sigemptyset(&act.sa_mask);
 		for (sig = 1; sig < NSIG; sig++)
@@ -317,10 +317,11 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 			if (token->UserId)
 				setuid((uid_t) token->UserId);
 
-			/* TODO: add better cwd handling and error checking */
-			if (lpCurrentDirectory && strlen(lpCurrentDirectory) > 0)
-				chdir(lpCurrentDirectory);
 		}
+
+		/* TODO: add better cwd handling and error checking */
+		if (lpCurrentDirectory && strlen(lpCurrentDirectory) > 0)
+			chdir(lpCurrentDirectory);
 
 		if (execve(filename, pArgs, envp) < 0)
 		{
