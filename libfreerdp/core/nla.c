@@ -404,9 +404,10 @@ int nla_client_recv(rdpNla* nla)
 			}
 
 			nla_encrypt_public_key_echo(nla);
-		}
 
-		if (nla->outputBuffer.cbBuffer < 1)
+
+		}
+		else if (nla->outputBuffer.cbBuffer < 1)
 			return -1;
 
 		nla->negoToken.pvBuffer = nla->outputBuffer.pvBuffer;
@@ -422,7 +423,8 @@ int nla_client_recv(rdpNla* nla)
 		}
 		nla_buffer_free(nla);
 
-		nla->state = NLA_STATE_PUB_KEY_AUTH;
+		if (nla->status == SEC_E_OK)
+			nla->state = NLA_STATE_PUB_KEY_AUTH;
 		status = 1;
 	}
 	else if (nla->state == NLA_STATE_PUB_KEY_AUTH)
@@ -654,6 +656,21 @@ int nla_server_authenticate(rdpNla* nla)
 
 		if (nla->status == SEC_E_OK)
 		{
+			if (nla->outputBuffer.cbBuffer != 0)
+			{
+				if (!nla_send(nla))
+				{
+					nla_buffer_free(nla);
+					return -1;
+				}
+
+				if (nla_recv(nla) < 0)
+					return -1;
+
+				WLog_DBG(TAG, "Receiving pubkey Token");
+				nla_buffer_print(nla);
+			}
+
 			nla->havePubKeyAuth = TRUE;
 
 			if (nla->table->QueryContextAttributes(&nla->context, SECPKG_ATTR_SIZES, &nla->ContextSizes) != SEC_E_OK)
