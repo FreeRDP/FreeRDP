@@ -204,6 +204,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 	int sockfd;
 	BOOL status = FALSE;
 	rdpSettings* settings = transport->settings;
+	rdpContext* context = transport->context;
 
 	transport->async = settings->AsyncTransport;
 
@@ -256,7 +257,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 	}
 	else
 	{
-		sockfd = freerdp_tcp_connect(settings, hostname, port, timeout);
+		sockfd = freerdp_tcp_connect(context, settings, hostname, port, timeout);
 
 		if (sockfd < 1)
 			return FALSE;

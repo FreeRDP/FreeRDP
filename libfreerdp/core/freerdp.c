@@ -181,6 +181,14 @@ freerdp_connect_finally:
 	return status;
 }
 
+BOOL freerdp_abort_connect(freerdp* instance)
+{
+	if (!instance || !instance->context)
+		return FALSE;
+
+	return SetEvent(instance->context->abortEvent);
+}
+
 BOOL freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
 {
 	rdpRdp* rdp = instance->context->rdp;
@@ -526,6 +534,10 @@ BOOL freerdp_context_new(freerdp* instance)
 
 	update_register_client_callbacks(rdp->update);
 
+	instance->context->abortEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (!instance->context->abortEvent)
+		goto out_error_abort_event;
+
 	IFCALLRET(instance->ContextNew, ret, instance, instance->context);
 
 	if (ret)
@@ -575,6 +587,9 @@ void freerdp_context_free(freerdp* instance)
 
 	CloseHandle(instance->context->channelErrorEvent);
 	free(instance->context->errorDescription);
+
+	CloseHandle(instance->context->abortEvent);
+	instance->context->abortEvent = NULL;
 
 	free(instance->context);
 	instance->context = NULL;
