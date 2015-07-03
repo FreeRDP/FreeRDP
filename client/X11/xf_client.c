@@ -1252,7 +1252,12 @@ static BOOL xf_authenticate_raw(freerdp* instance, BOOL gateway, char** username
 	{
 		size_t username_size = 0;
 		printf("%s", prompt[0]);
-		getline(username, &username_size, stdin);
+		if (getline(username, &username_size, stdin) < 0)
+		{
+			WLog_ERR(TAG, "getline returned %s [%d]", strerror(errno), errno);
+			goto fail;
+		}
+
 		if (*username)
 		{
 			*username = StrSep(username, "\r");
@@ -1264,7 +1269,12 @@ static BOOL xf_authenticate_raw(freerdp* instance, BOOL gateway, char** username
 	{
 		size_t domain_size = 0;
 		printf("%s", prompt[1]);
-		getline(domain, &domain_size, stdin);
+		if (getline(domain, &domain_size, stdin) < 0)
+		{
+			WLog_ERR(TAG, "getline returned %s [%d]", strerror(errno), errno);
+			goto fail;
+		}
+
 		if (*domain)
 		{
 			*domain = StrSep(domain, "\r");
@@ -1276,14 +1286,25 @@ static BOOL xf_authenticate_raw(freerdp* instance, BOOL gateway, char** username
 	{
 		*password = calloc(password_size, sizeof(char));
 		if (!*password)
-			return FALSE;
+			goto fail;
 
 		if (freerdp_passphrase_read(prompt[2], *password, password_size,
 			instance->settings->CredentialsFromStdin) == NULL)
-			return FALSE;
+			goto fail;
 	}
 
 	return TRUE;
+
+fail:
+	free(*username);
+	free(*domain);
+	free(*password);
+
+	*username = NULL;
+	*domain = NULL;
+	*password = NULL;
+
+	return FALSE;
 }
 
 static BOOL xf_authenticate(freerdp* instance, char** username, char** password, char** domain)
