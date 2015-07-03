@@ -591,7 +591,7 @@ COMMAND_LINE_ARGUMENT_A rdpsnd_pulse_args[] =
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
-static void rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* args)
+static WIN32ERROR rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
@@ -603,7 +603,7 @@ static void rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV
 	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
 			rdpsnd_pulse_args, flags, pulse, NULL, NULL);
 	if (status < 0)
-		return;
+		return ERROR_INVALID_DATA;
 
 	arg = rdpsnd_pulse_args;
 	do
@@ -616,11 +616,15 @@ static void rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV
 		CommandLineSwitchCase(arg, "dev")
 		{
 			pulse->device_name = _strdup(arg->Value);
+			if (!pulse->device_name)
+				return ERROR_OUTOFMEMORY;
 		}
 
 		CommandLineSwitchEnd(arg)
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+
+	return CHANNEL_RC_OK;
 }
 
 #ifdef STATIC_CHANNELS
@@ -631,9 +635,9 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 {
 	ADDIN_ARGV* args;
 	rdpsndPulsePlugin* pulse;
+	WIN32ERROR ret;
 
 	pulse = (rdpsndPulsePlugin*) calloc(1, sizeof(rdpsndPulsePlugin));
-
 	if (!pulse)
 		return -1;
 
@@ -647,39 +651,45 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	pulse->device.Free = rdpsnd_pulse_free;
 
 	args = pEntryPoints->args;
-	rdpsnd_pulse_parse_addin_args((rdpsndDevicePlugin*) pulse, args);
+	ret = rdpsnd_pulse_parse_addin_args((rdpsndDevicePlugin*) pulse, args);
+	if (ret != CHANNEL_RC_OK)
+	{
+		WLog_ERR(TAG, "error parsing arguments");
+		goto error;
+	}
 
+	ret = ERROR_OUTOFMEMORY;
 	pulse->dsp_context = freerdp_dsp_context_new();
+	if (!pulse->dsp_context)
+		goto error;
 
 #ifdef WITH_GSM
 	pulse->gsmBuffer = Stream_New(NULL, 4096);
+	if (!pulse->gsmBuffer)
+		goto error;
 #endif
+
 
 	pulse->mainloop = pa_threaded_mainloop_new();
 
 	if (!pulse->mainloop)
-	{
-		rdpsnd_pulse_free((rdpsndDevicePlugin*)pulse);
-		return 1;
-	}
+		goto error;
 
 	pulse->context = pa_context_new(pa_threaded_mainloop_get_api(pulse->mainloop), "freerdp");
 
 	if (!pulse->context)
-	{
-		rdpsnd_pulse_free((rdpsndDevicePlugin*)pulse);
-		return 1;
-	}
+		goto error;
 
 	pa_context_set_state_callback(pulse->context, rdpsnd_pulse_context_state_callback, pulse);
 
+	ret = ERROR_INVALID_OPERATION;
 	if (!rdpsnd_pulse_connect((rdpsndDevicePlugin*)pulse))
-	{
-		rdpsnd_pulse_free((rdpsndDevicePlugin*)pulse);
-		return 1;
-	}
+		goto error;
 
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*) pulse);
+	return CHANNEL_RC_OK;
 
-	return 0;
+error:
+	rdpsnd_pulse_free((rdpsndDevicePlugin*)pulse);
+	return ret;
 }

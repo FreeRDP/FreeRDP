@@ -415,6 +415,9 @@ static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin *device, ADDIN_ARGV *a
 
 		CommandLineSwitchCase(arg, "dev") {
 			str_num = _strdup(arg->Value);
+			if (!str_num)
+				return ERROR_OUTOFMEMORY;
+
 			oss->dev_unit = strtol(str_num, &eptr, 10);
 			if (oss->dev_unit < 0 || *eptr != '\0')
 				oss->dev_unit = -1;

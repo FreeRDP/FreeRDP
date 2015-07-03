@@ -416,6 +416,8 @@ static int rdpsnd_opensles_parse_addin_args(rdpsndDevicePlugin* device,
 		CommandLineSwitchCase(arg, "dev")
 		{
 			opensles->device_name = _strdup(arg->Value);
+			if (!opensles->device_name)
+				return ERROR_OUTOFMEMORY;
 		}
 
 		CommandLineSwitchEnd(arg)
@@ -455,7 +457,11 @@ int freerdp_rdpsnd_client_subsystem_entry(
 	rdpsnd_opensles_parse_addin_args((rdpsndDevicePlugin*) opensles, args);
 
 	if (!opensles->device_name)
+	{
 		opensles->device_name = _strdup("default");
+		if (!opensles->device_name)
+			return ERROR_OUTOFMEMORY;
+	}
 
 	opensles->rate = 44100;
 	opensles->channels = 2;
