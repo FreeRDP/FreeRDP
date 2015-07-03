@@ -29,6 +29,7 @@
 #include <err.h>
 #include <errno.h>
 #include <winpr/thread.h>
+#include <winpr/string.h>
 
 #include <gst/gst.h>
 #if GST_VERSION_MAJOR > 0
@@ -65,7 +66,7 @@ struct X11Handle
 static const char* get_shm_id()
 {
 	static char shm_id[128];
-	snprintf(shm_id, sizeof(shm_id), "/com.freerdp.xfreerdp.tsmf_%016X", GetCurrentProcessId());
+	sprintf_s(shm_id, sizeof(shm_id), "/com.freerdp.xfreerdp.tsmf_%016X", GetCurrentProcessId());
 	return shm_id;
 }
 

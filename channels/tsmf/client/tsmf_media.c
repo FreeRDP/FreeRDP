@@ -37,6 +37,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <winpr/string.h>
 #include <winpr/thread.h>
 #include <winpr/stream.h>
 #include <winpr/collections.h>
@@ -314,7 +315,7 @@ static char* guid_to_string(const BYTE* guid, char* str, size_t len)
 		return NULL;
 
 	for (i=0; i<GUID_SIZE && len > 2*i; i++)
-		snprintf(str + (2*i), len - 2*i, "%02X", guid[i]);
+		sprintf_s(str + (2*i), len - 2*i, "%02X", guid[i]);
 
 	return str;
 }
@@ -391,10 +392,10 @@ static void tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 
 		if ((frame_id % 30) == 0)
 		{
-			snprintf(buf, sizeof(buf), "/tmp/FreeRDP_Frame_%d.ppm", frame_id);
+			sprintf_s(buf, sizeof(buf), "/tmp/FreeRDP_Frame_%d.ppm", frame_id);
 			fp = fopen(buf, "wb");
 			fwrite("P5\n", 1, 3, fp);
-			snprintf(buf, sizeof(buf), "%d %d\n", sample->stream->width, sample->stream->height);
+			sprintf_s(buf, sizeof(buf), "%d %d\n", sample->stream->width, sample->stream->height);
 			fwrite(buf, 1, strlen(buf), fp);
 			fwrite("255\n", 1, 4, fp);
 			fwrite(sample->data, 1, sample->stream->width * sample->stream->height, fp);

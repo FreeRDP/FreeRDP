@@ -27,6 +27,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <winpr/string.h>
 #include <winpr/thread.h>
 #include <winpr/cmdline.h>
 
@@ -171,8 +172,8 @@ static void* audin_oss_thread_func(void* arg)
 
 	if (oss->dev_unit != -1)
 	{
-		snprintf(dev_name, (PATH_MAX - 1), "/dev/dsp%i", oss->dev_unit);
-		snprintf(mixer_name, PATH_MAX - 1, "/dev/mixer%i", oss->dev_unit);
+		sprintf_s(dev_name, (PATH_MAX - 1), "/dev/dsp%i", oss->dev_unit);
+		sprintf_s(mixer_name, PATH_MAX - 1, "/dev/mixer%i", oss->dev_unit);
 	}
 
 	WLog_INFO(TAG, "open: %s", dev_name);

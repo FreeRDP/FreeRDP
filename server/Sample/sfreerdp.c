@@ -913,7 +913,7 @@ int main(int argc, char* argv[])
 	}
 
 	/* Open the server socket and start listening. */
-	snprintf(name, sizeof(name), "tfreerdp-server.%d", port);
+	sprintf_s(name, sizeof(name), "tfreerdp-server.%d", port);
 	file = GetKnownSubPath(KNOWN_PATH_TEMP, name);
 	if (!file)
 	{
