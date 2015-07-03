@@ -168,7 +168,8 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 		/* FIXME: these file descriptors do not work on Windows */
 
 		listener->sockfds[listener->num_sockfds] = sockfd;
-		listener->events[listener->num_sockfds] = CreateFileDescriptorEvent(NULL, FALSE, FALSE, sockfd);
+		listener->events[listener->num_sockfds] =
+			CreateFileDescriptorEvent(NULL, FALSE, FALSE, sockfd, FD_READ);
 		listener->num_sockfds++;
 
 		WLog_INFO(TAG, "Listening on %s:%s", addr, servname);
@@ -226,7 +227,8 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 		return FALSE;
 	}
 
-	if (!(hevent = CreateFileDescriptorEvent(NULL, FALSE, FALSE, sockfd)))
+	hevent = CreateFileDescriptorEvent(NULL, FALSE, FALSE, sockfd, FD_READ);
+	if (!hevent)
 	{
 		WLog_ERR(TAG, "failed to create sockfd event");
 		closesocket((SOCKET) sockfd);
@@ -258,7 +260,8 @@ static BOOL freerdp_listener_open_from_socket(freerdp_listener* instance, int fd
 		return FALSE;
 
 	listener->sockfds[listener->num_sockfds] = fd;
-	listener->events[listener->num_sockfds] = CreateFileDescriptorEvent(NULL, FALSE, FALSE, fd);
+	listener->events[listener->num_sockfds] =
+		CreateFileDescriptorEvent(NULL, FALSE, FALSE, fd, FD_READ);
 	if (!listener->events[listener->num_sockfds])
 		return FALSE;
 

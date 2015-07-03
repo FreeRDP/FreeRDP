@@ -431,7 +431,7 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 		goto error_thread_ready;
 	}
 
-	WINPR_HANDLE_SET_TYPE(thread, HANDLE_TYPE_THREAD);
+	WINPR_HANDLE_SET_TYPE_AND_MODE(thread, HANDLE_TYPE_THREAD, FD_READ);
 	handle = (HANDLE) thread;
 
 	if (!thread_list)
@@ -613,7 +613,7 @@ VOID ExitThread(DWORD dwExitCode)
 BOOL GetExitCodeThread(HANDLE hThread, LPDWORD lpExitCode)
 {
 	ULONG Type;
-	PVOID Object;
+	WINPR_HANDLE* Object;
 	WINPR_THREAD* thread;
 
 	if (!winpr_Handle_GetInfo(hThread, &Type, &Object))
@@ -665,8 +665,8 @@ DWORD GetCurrentThreadId(VOID)
 DWORD ResumeThread(HANDLE hThread)
 {
 	ULONG Type;
-	PVOID Object;
-	WINPR_THREAD *thread;
+	WINPR_HANDLE* Object;
+	WINPR_THREAD* thread;
 
 	if (!winpr_Handle_GetInfo(hThread, &Type, &Object))
 		return 0;
@@ -697,7 +697,7 @@ BOOL SwitchToThread(VOID)
 BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode)
 {
 	ULONG Type;
-	PVOID Object;
+	WINPR_HANDLE* Object;
 	WINPR_THREAD* thread;
 
 	if (!winpr_Handle_GetInfo(hThread, &Type, &Object))
