@@ -28,6 +28,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <winpr/string.h>
 #include <winpr/path.h>
 #include <winpr/winsock.h>
 
