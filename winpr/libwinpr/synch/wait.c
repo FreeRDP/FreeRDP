@@ -217,10 +217,8 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 	{
 		WINPR_PROCESS *process;
 		process = (WINPR_PROCESS *) Object;
-		int rc;
 
-		rc = waitpid(process->pid, &(process->status), 0);
-		if (rc != process->pid)
+		if (process->pid != waitpid(process->pid, &(process->status), 0))
 		{
 			WLog_ERR(TAG, "waitpid failure [%d] %s", errno, strerror(errno));
 			return WAIT_FAILED;
