@@ -4,6 +4,8 @@
  *
  * Copyright 2011 O.S. Systems Software Ltda.
  * Copyright 2011 Eduardo Fiss Beloni <beloni@ossystems.com.br>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,11 +124,11 @@ struct _SMARTCARD_DEVICE
 SMARTCARD_CONTEXT* smartcard_context_new(SMARTCARD_DEVICE* smartcard, SCARDCONTEXT hContext);
 void smartcard_context_free(SMARTCARD_CONTEXT* pContext);
 
-void smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp);
-void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp);
+WIN32ERROR smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp);
+WIN32ERROR smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp);
 
-UINT32 smartcard_irp_device_control_decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation);
-UINT32 smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation);
+LONG smartcard_irp_device_control_decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation);
+LONG smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation);
 
 #include "smartcard_pack.h"
 
