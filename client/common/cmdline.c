@@ -169,6 +169,12 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "multitransport", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Support multitransport protocol" },
 	{ "assistance", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Remote assistance password" },
 	{ "encryption-methods", COMMAND_LINE_VALUE_REQUIRED, "<40,56,128,FIPS>", NULL, NULL, -1, NULL, "RDP standard security encryption methods" },
+	{ "pwidth", COMMAND_LINE_VALUE_REQUIRED, "<physical width (mm)>", NULL, NULL, -1, NULL, "Physical width of display (in millimeters)" },
+	{ "pheight", COMMAND_LINE_VALUE_REQUIRED, "<physical height (mm)>", NULL, NULL, -1, NULL, "Physical height of display (in millimeters)" },
+	{ "orientation", COMMAND_LINE_VALUE_REQUIRED, "<orientation>", NULL, NULL, -1, NULL, "Orientation of display in degrees (0, 90, 180, 270)" },
+	{ "scale", COMMAND_LINE_VALUE_REQUIRED, "<scale amount (%)>", "100", NULL, -1, NULL, "Scaling factor of the display (value of 100, 140, or 180)" },
+	{ "scale-desktop", COMMAND_LINE_VALUE_REQUIRED, "<scale amount (%)>", "100", NULL, -1, NULL, "Scaling factor for desktop applications (value between 100 and 500)" },
+	{ "scale-device", COMMAND_LINE_VALUE_REQUIRED, "<scale amount (%)>", "100", NULL, -1, NULL, "Scaling factor for app store applications (100, 140, or 180)" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
@@ -2250,6 +2256,31 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			settings->RemoteAssistanceMode = TRUE;
 			if (!(settings->RemoteAssistancePassword = _strdup(arg->Value)))
 				return COMMAND_LINE_ERROR_MEMORY;
+		}
+		CommandLineSwitchCase(arg, "pwidth")
+		{
+			settings->DesktopPhysicalWidth = atoi(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "pheight")
+		{
+			settings->DesktopPhysicalHeight = atoi(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "orientation")
+		{
+			settings->DesktopOrientation = atoi(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "scale")
+		{
+			settings->DesktopScaleFactor = atoi(arg->Value);
+			settings->DeviceScaleFactor = atoi(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "scale-desktop")
+		{
+			settings->DesktopScaleFactor = atoi(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "scale-device")
+		{
+			settings->DeviceScaleFactor = atoi(arg->Value);
 		}
 		CommandLineSwitchDefault(arg)
 		{

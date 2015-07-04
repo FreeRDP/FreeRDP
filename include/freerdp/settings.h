@@ -263,6 +263,12 @@ typedef struct _TARGET_NET_ADDRESS TARGET_NET_ADDRESS;
 #define PACKET_COMPR_TYPE_RDP61			0x03
 #define PACKET_COMPR_TYPE_RDP8			0x04
 
+/* Desktop Rotation Flags */
+#define ORIENTATION_LANDSCAPE			0
+#define ORIENTATION_PORTRAIT			90
+#define ORIENTATION_LANDSCAPE_FLIPPED	180
+#define ORIENTATION_PORTRAIT_FLIPPED	270
+
 /* SYSTEM_TIME */
 typedef struct
 {
@@ -1408,6 +1414,13 @@ struct rdp_settings
 	/*
 	 * Extensions
 	 */
+
+	/* Scaling Support in TS_UD_CS_CORE */
+	ALIGN64 UINT32 DesktopPhysicalWidth;	/* Physical height of desktop in mm. Valid if 10<=X<=10000 */
+	ALIGN64 UINT32 DesktopPhysicalHeight;	/* Physical width of desktop in mm. Valid if 10<=X<=10000 */
+	ALIGN64 UINT16 DesktopOrientation;		/* One of the ORIENTATION_* flags */
+	ALIGN64 UINT32 DesktopScaleFactor;		/* Scale factor in % for desktop applications. Valid if 100<=X<=500 && DeviceScaleFactor is valid */
+	ALIGN64 UINT32 DeviceScaleFactor;		/* Scale factor in % for windows store apps. Valid if (==100 || ==140 || ==180) && DesktopScaleFactor is valid */
 
 	/* Extensions */
 	ALIGN64 int num_extensions; /*  */

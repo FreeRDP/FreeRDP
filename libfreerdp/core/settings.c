@@ -524,6 +524,12 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		if (!settings->ConfigPath)
 				goto out_fail;
 
+		settings->DesktopPhysicalHeight = 0;
+		settings->DesktopPhysicalWidth = 0;
+		settings->DesktopOrientation = ORIENTATION_LANDSCAPE;
+		settings->DesktopScaleFactor = 0;
+		settings->DeviceScaleFactor = 0;
+
 		settings_load_hkey_local_machine(settings);
 
 		settings->SettingsModified = (BYTE*) calloc(1, sizeof(rdpSettings) / 8 );
