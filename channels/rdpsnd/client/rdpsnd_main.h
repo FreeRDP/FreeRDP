@@ -21,6 +21,8 @@
 #ifndef __RDPSND_MAIN_H
 #define __RDPSND_MAIN_H
 
+#include <winpr/win32error.h>
+
 #include <freerdp/api.h>
 #include <freerdp/svc.h>
 #include <freerdp/addin.h>
@@ -35,6 +37,6 @@
 #define DEBUG_SND(fmt, ...) do { } while (0)
 #endif
 
-int rdpsnd_virtual_channel_write(rdpsndPlugin* rdpsnd, wStream* s);
+WIN32ERROR rdpsnd_virtual_channel_write(rdpsndPlugin* rdpsnd, wStream* s);
 
 #endif /* __RDPSND_MAIN_H */

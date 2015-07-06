@@ -120,7 +120,7 @@ static int rdpsnd_opensles_set_params(rdpsndopenslesPlugin* opensles)
 	return 0;
 }
 
-static void rdpsnd_opensles_set_format(rdpsndDevicePlugin* device,
+static BOOL rdpsnd_opensles_set_format(rdpsndDevicePlugin* device,
 		AUDIO_FORMAT* format, int latency)
 {
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
@@ -168,10 +168,10 @@ static void rdpsnd_opensles_set_format(rdpsndDevicePlugin* device,
 
 	opensles->latency = latency;
 
-	rdpsnd_opensles_set_params(opensles);
+	return (rdpsnd_opensles_set_params(opensles) == 0);
 }
 
-static void rdpsnd_opensles_open(rdpsndDevicePlugin* device,
+static BOOL rdpsnd_opensles_open(rdpsndDevicePlugin* device,
 		AUDIO_FORMAT* format, int latency)
 {
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
@@ -179,11 +179,10 @@ static void rdpsnd_opensles_open(rdpsndDevicePlugin* device,
 	DEBUG_SND("opensles=%p format=%p, latency=%d, rate=%d",
 			opensles, format, latency, opensles->rate);
 	
-	if( rdpsnd_opensles_check_handle(opensles))
-		return;
+	if (rdpsnd_opensles_check_handle(opensles))
+		return TRUE;
 
-	opensles->stream = android_OpenAudioDevice(
-		opensles->rate, opensles->channels, 20);
+	opensles->stream = android_OpenAudioDevice(opensles->rate, opensles->channels, 20);
 	assert(opensles->stream);
 
 	if (!opensles->stream)
@@ -192,6 +191,7 @@ static void rdpsnd_opensles_open(rdpsndDevicePlugin* device,
 		rdpsnd_opensles_set_volume(device, opensles->volume);
 
 	rdpsnd_opensles_set_format(device, format, latency);
+	return TRUE;
 }
 
 static void rdpsnd_opensles_close(rdpsndDevicePlugin* device)
@@ -290,7 +290,7 @@ static UINT32 rdpsnd_opensles_get_volume(rdpsndDevicePlugin* device)
 	return opensles->volume;
 }
 
-static void rdpsnd_opensles_set_volume(rdpsndDevicePlugin* device,
+static BOOL rdpsnd_opensles_set_volume(rdpsndDevicePlugin* device,
 		UINT32 value)
 {
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
@@ -313,6 +313,8 @@ static void rdpsnd_opensles_set_volume(rdpsndDevicePlugin* device,
 			android_SetOutputVolume(opensles->stream, vol);
 		}
 	}
+
+	return TRUE;
 }
 
 static void rdpsnd_opensles_play(rdpsndDevicePlugin* device,
@@ -414,6 +416,8 @@ static int rdpsnd_opensles_parse_addin_args(rdpsndDevicePlugin* device,
 		CommandLineSwitchCase(arg, "dev")
 		{
 			opensles->device_name = _strdup(arg->Value);
+			if (!opensles->device_name)
+				return ERROR_OUTOFMEMORY;
 		}
 
 		CommandLineSwitchEnd(arg)
@@ -453,7 +457,11 @@ int freerdp_rdpsnd_client_subsystem_entry(
 	rdpsnd_opensles_parse_addin_args((rdpsndDevicePlugin*) opensles, args);
 
 	if (!opensles->device_name)
+	{
 		opensles->device_name = _strdup("default");
+		if (!opensles->device_name)
+			return ERROR_OUTOFMEMORY;
+	}
 
 	opensles->rate = 44100;
 	opensles->channels = 2;

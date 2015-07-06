@@ -589,6 +589,8 @@ int freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS p
 	libusb_init(NULL);
 
 	udevman = (PUDEVMAN) malloc(sizeof(UDEVMAN));
+	if (!udevman)
+		return -1;
 	udevman->device_num = 0;
 	udevman->idev = NULL;
 	udevman->head = NULL;

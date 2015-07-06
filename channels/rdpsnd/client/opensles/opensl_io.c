@@ -297,6 +297,11 @@ int android_AudioOut(OPENSL_STREAM *p, const short *buffer,int size)
 		WaitForSingleObject(p->queue->event, INFINITE);
 
 	void *data = calloc(size, sizeof(short));
+	if (!data)
+	{
+		DEBUG_SND("unable to allocate a buffer");
+		return -1;
+	}
 	memcpy(data, buffer, size * sizeof(short));
  	(*p->bqPlayerBufferQueue)->Enqueue(p->bqPlayerBufferQueue, 
 	 	data, sizeof(short) * size);

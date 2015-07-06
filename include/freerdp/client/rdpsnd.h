@@ -51,18 +51,18 @@ typedef struct rdpsnd_plugin rdpsndPlugin;
 typedef struct rdpsnd_device_plugin rdpsndDevicePlugin;
 
 typedef BOOL (*pcFormatSupported) (rdpsndDevicePlugin* device, AUDIO_FORMAT* format);
-typedef void (*pcOpen) (rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency);
-typedef void (*pcSetFormat) (rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency);
+typedef BOOL (*pcOpen) (rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency);
+typedef BOOL (*pcSetFormat) (rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency);
 typedef UINT32 (*pcGetVolume) (rdpsndDevicePlugin* device);
-typedef void (*pcSetVolume) (rdpsndDevicePlugin* device, UINT32 value);
+typedef BOOL (*pcSetVolume) (rdpsndDevicePlugin* device, UINT32 value);
 typedef void (*pcPlay) (rdpsndDevicePlugin* device, BYTE* data, int size);
 typedef void (*pcStart) (rdpsndDevicePlugin* device);
 typedef void (*pcClose) (rdpsndDevicePlugin* device);
 typedef void (*pcFree) (rdpsndDevicePlugin* device);
 
-typedef void (*pcWaveDecode) (rdpsndDevicePlugin* device, RDPSND_WAVE* wave);
+typedef BOOL (*pcWaveDecode) (rdpsndDevicePlugin* device, RDPSND_WAVE* wave);
 typedef void (*pcWavePlay) (rdpsndDevicePlugin* device, RDPSND_WAVE* wave);
-typedef void (*pcWaveConfirm) (rdpsndDevicePlugin* device, RDPSND_WAVE* wave);
+typedef WIN32ERROR (*pcWaveConfirm) (rdpsndDevicePlugin* device, RDPSND_WAVE* wave);
 
 struct rdpsnd_device_plugin
 {

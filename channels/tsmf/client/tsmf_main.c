@@ -34,7 +34,7 @@
 
 #include "tsmf_main.h"
 
-void tsmf_playback_ack(IWTSVirtualChannelCallback *pChannelCallback,
+BOOL tsmf_playback_ack(IWTSVirtualChannelCallback *pChannelCallback,
 			UINT32 message_id, UINT64 duration, UINT32 data_size)
 {
 	wStream *s;
@@ -42,6 +42,8 @@ void tsmf_playback_ack(IWTSVirtualChannelCallback *pChannelCallback,
 	TSMF_CHANNEL_CALLBACK *callback = (TSMF_CHANNEL_CALLBACK *) pChannelCallback;
 
 	s = Stream_New(NULL, 32);
+	if (!s)
+		return FALSE;
 
 	Stream_Write_UINT32(s, TSMF_INTERFACE_CLIENT_NOTIFICATIONS | STREAM_ID_PROXY);
 	Stream_Write_UINT32(s, message_id);
@@ -70,6 +72,7 @@ void tsmf_playback_ack(IWTSVirtualChannelCallback *pChannelCallback,
 	}
 
 	Stream_Free(s, TRUE);
+	return (status == 0);
 }
 
 static WIN32ERROR tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream *data)
@@ -95,6 +98,8 @@ static WIN32ERROR tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCall
 
 	input = data;
 	output = Stream_New(NULL, 256);
+	if (!output)
+		return ERROR_OUTOFMEMORY;
 	Stream_Seek(output, 8);
 	Stream_Read_UINT32(input, InterfaceId); /* InterfaceId (4 bytes) */
 	Stream_Read_UINT32(input, MessageId); /* MessageId (4 bytes) */
@@ -140,6 +145,11 @@ static WIN32ERROR tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCall
 			switch (FunctionId)
 			{
 				case SET_CHANNEL_PARAMS:
+					if (Stream_GetRemainingLength(input) < GUID_SIZE + 4)
+					{
+						error = ERROR_INVALID_DATA;
+						goto out;
+					}
 					CopyMemory(callback->presentation_id, Stream_Pointer(input), GUID_SIZE);
 					Stream_Seek(input, GUID_SIZE);
 					Stream_Read_UINT32(input, callback->stream_id);
@@ -292,6 +302,7 @@ static WIN32ERROR tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCall
 		}
 	}
 
+out:
 	Stream_Free(output, TRUE);
 	return error;
 }
@@ -392,7 +403,7 @@ COMMAND_LINE_ARGUMENT_A tsmf_args[] =
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
-static void tsmf_process_addin_args(IWTSPlugin *pPlugin, ADDIN_ARGV *args)
+static WIN32ERROR tsmf_process_addin_args(IWTSPlugin *pPlugin, ADDIN_ARGV *args)
 {
 	int status;
 	DWORD flags;
@@ -403,6 +414,9 @@ static void tsmf_process_addin_args(IWTSPlugin *pPlugin, ADDIN_ARGV *args)
 
 	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
 						tsmf_args, flags, tsmf, NULL, NULL);
+	if (status != 0)
+		return ERROR_INVALID_DATA;
+
 	arg = tsmf_args;
 
 	do
@@ -413,14 +427,20 @@ static void tsmf_process_addin_args(IWTSPlugin *pPlugin, ADDIN_ARGV *args)
 		CommandLineSwitchCase(arg, "audio")
 		{
 			tsmf->audio_name = _strdup(arg->Value);
+			if (!tsmf->audio_name)
+				return ERROR_OUTOFMEMORY;
 		}
 		CommandLineSwitchCase(arg, "audio-dev")
 		{
 			tsmf->audio_device = _strdup(arg->Value);
+			if (!tsmf->audio_device)
+				return ERROR_OUTOFMEMORY;
 		}
 		CommandLineSwitchCase(arg, "decoder")
 		{
 			tsmf->decoder_name = _strdup(arg->Value);
+			if (!tsmf->decoder_name)
+				return ERROR_OUTOFMEMORY;
 		}
 		CommandLineSwitchDefault(arg)
 		{
@@ -428,17 +448,20 @@ static void tsmf_process_addin_args(IWTSPlugin *pPlugin, ADDIN_ARGV *args)
 		CommandLineSwitchEnd(arg)
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+
+	return CHANNEL_RC_OK;
 }
 
 #ifdef STATIC_CHANNELS
 #define DVCPluginEntry	tsmf_DVCPluginEntry
 #endif
 
-int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+WIN32ERROR DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
-	int status = 0;
+	WIN32ERROR status = 0;
 	TSMF_PLUGIN* tsmf;
 	TsmfClientContext* context;
+	WIN32ERROR error = ERROR_OUTOFMEMORY;
 
 	tsmf = (TSMF_PLUGIN*) pEntryPoints->GetPlugin(pEntryPoints, "tsmf");
 
@@ -446,7 +469,7 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	{
 		tsmf = (TSMF_PLUGIN*) calloc(1, sizeof(TSMF_PLUGIN));
 		if (!tsmf)
-			return -1;
+			return ERROR_OUTOFMEMORY;
 
 		tsmf->iface.Initialize = tsmf_plugin_initialize;
 		tsmf->iface.Connected = NULL;
@@ -461,14 +484,17 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		tsmf->iface.pInterface = (void*) context;
 
 		if (!tsmf_media_init())
+		{
+			error = ERROR_INVALID_OPERATION;
 			goto error_init;
+		}
 
 		status = pEntryPoints->RegisterPlugin(pEntryPoints, "tsmf", (IWTSPlugin*) tsmf);
 	}
 
 	if (status == 0)
 	{
-		tsmf_process_addin_args((IWTSPlugin*) tsmf, pEntryPoints->GetPluginData(pEntryPoints));
+		status = tsmf_process_addin_args((IWTSPlugin*) tsmf, pEntryPoints->GetPluginData(pEntryPoints));
 	}
 
 	return status;
@@ -477,5 +503,5 @@ error_init:
 	free(context);
 error_context:
 	free(tsmf);
-	return -1;
+	return error;
 }
