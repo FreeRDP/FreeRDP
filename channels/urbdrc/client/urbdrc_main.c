@@ -169,7 +169,6 @@ static int func_instance_id_generate(IUDEVICE* pdev, char* strInstanceId)
 {
 	UINT8 instanceId[17];
 
-	memset(instanceId, 0, 17);
 	ZeroMemory(instanceId, sizeof(instanceId));
 	snprintf((char*)instanceId, sizeof(instanceId), "\\%s", pdev->getPath(pdev));
 
@@ -223,31 +222,36 @@ static void func_lock_isoch_mutex(TRANSFER_DATA*  transfer_data)
 
 #endif
 
-static int urbdrc_process_capability_request(URBDRC_CHANNEL_CALLBACK* callback, char* data, UINT32 data_sizem, UINT32 MessageId)
+static WIN32ERROR urbdrc_process_capability_request(URBDRC_CHANNEL_CALLBACK* callback, char* data, UINT32 data_sizem, UINT32 MessageId)
 {
 	UINT32 InterfaceId;
 	UINT32 Version;
 	UINT32 out_size;
 	char * out_data;
+	WIN32ERROR ret;
+
 	WLog_VRB(TAG, "");
 	data_read_UINT32(data + 0, Version);
 
 	InterfaceId = ((STREAM_ID_NONE<<30) | CAPABILITIES_NEGOTIATOR);
 
 	out_size = 16;
-	out_data = (char *) malloc(out_size);
-	memset(out_data, 0, out_size);
+	out_data = (char *) calloc(1, out_size);
+	if (!out_data)
+		return ERROR_OUTOFMEMORY;
+
 	data_write_UINT32(out_data + 0, InterfaceId); /* interface id */
 	data_write_UINT32(out_data + 4, MessageId); /* message id */
 	data_write_UINT32(out_data + 8, Version); /* usb protocol version */
 	data_write_UINT32(out_data + 12, 0x00000000); /* HRESULT */
-	callback->channel->Write(callback->channel, out_size, (BYTE*) out_data, NULL);
+
+	ret = callback->channel->Write(callback->channel, out_size, (BYTE*) out_data, NULL);
 	zfree(out_data);
 
-	return 0;
+	return ret;
 }
 
-static int urbdrc_process_channel_create(URBDRC_CHANNEL_CALLBACK* callback, char* data, UINT32 data_sizem, UINT32 MessageId)
+static WIN32ERROR urbdrc_process_channel_create(URBDRC_CHANNEL_CALLBACK* callback, char* data, UINT32 data_sizem, UINT32 MessageId)
 {
 	UINT32 InterfaceId;
 	UINT32 out_size;
@@ -255,6 +259,8 @@ static int urbdrc_process_channel_create(URBDRC_CHANNEL_CALLBACK* callback, char
 	UINT32 MinorVersion;
 	UINT32 Capabilities;
 	char* out_data;
+	WIN32ERROR ret;
+
 	WLog_VRB(TAG, "");
 	data_read_UINT32(data + 0, MajorVersion);
 	data_read_UINT32(data + 4, MinorVersion);
@@ -263,8 +269,9 @@ static int urbdrc_process_channel_create(URBDRC_CHANNEL_CALLBACK* callback, char
 	InterfaceId = ((STREAM_ID_PROXY<<30) | CLIENT_CHANNEL_NOTIFICATION);
 
 	out_size = 24;
-	out_data = (char*) malloc(out_size);
-	memset(out_data, 0, out_size);
+	out_data = (char*) calloc(1, out_size);
+	if (!out_data)
+		return ERROR_OUTOFMEMORY;
 
 	data_write_UINT32(out_data + 0, InterfaceId); /* interface id */
 	data_write_UINT32(out_data + 4, MessageId); /* message id */
@@ -272,10 +279,10 @@ static int urbdrc_process_channel_create(URBDRC_CHANNEL_CALLBACK* callback, char
 	data_write_UINT32(out_data + 12, MajorVersion);
 	data_write_UINT32(out_data + 16, MinorVersion);
 	data_write_UINT32(out_data + 20, Capabilities); /* capabilities version */
-	callback->channel->Write(callback->channel, out_size, (BYTE *)out_data, NULL);
+	ret = callback->channel->Write(callback->channel, out_size, (BYTE *)out_data, NULL);
 	zfree(out_data);
 
-	return 0;
+	return ret;
 }
 
 static int urdbrc_send_virtual_channel_add(IWTSVirtualChannel* channel, UINT32 MessageId)
@@ -303,7 +310,7 @@ static int urdbrc_send_virtual_channel_add(IWTSVirtualChannel* channel, UINT32 M
 	return 0;
 }
 
-static int urdbrc_send_usb_device_add(URBDRC_CHANNEL_CALLBACK* callback, IUDEVICE* pdev)
+static WIN32ERROR urdbrc_send_usb_device_add(URBDRC_CHANNEL_CALLBACK* callback, IUDEVICE* pdev)
 {
 	char* out_data;
 	UINT32 InterfaceId;
@@ -313,6 +320,9 @@ static int urdbrc_send_usb_device_add(URBDRC_CHANNEL_CALLBACK* callback, IUDEVIC
 	char strInstanceId[DEVICE_INSTANCE_STR_SIZE];
 	char* composite_str = "USB\\COMPOSITE";
 	int size, out_offset, cchCompatIds, bcdUSB;
+	ISOCH_CALLBACK_QUEUE *cb_queue;
+	WIN32ERROR ret;
+
 	WLog_VRB(TAG, "");
 	InterfaceId = ((STREAM_ID_PROXY<<30) | CLIENT_DEVICE_SINK);
 
@@ -321,7 +331,10 @@ static int urdbrc_send_usb_device_add(URBDRC_CHANNEL_CALLBACK* callback, IUDEVIC
 
 #if ISOCH_FIFO
 	/* create/initial isoch queue */
-	pdev->set_isoch_queue(pdev, (void *)isoch_queue_new());
+	cb_queue = isoch_queue_new();
+	if (!cb_queue)
+		return ERROR_OUTOFMEMORY;
+	pdev->set_isoch_queue(pdev, (void *)cb_queue);
 #endif
 
 	func_hardware_id_format(pdev, HardwareIds);
@@ -345,11 +358,12 @@ static int urdbrc_send_usb_device_add(URBDRC_CHANNEL_CALLBACK* callback, IUDEVIC
 			4 + (cchCompatIds) * 2 +
 			(strlen(strContainerId) + 1) * 2 + 4 + 28;
 
-	out_data = (char*) malloc(size);
-	memset(out_data, 0, size);
+	out_data = (char *)calloc(1, size);
+	if (!out_data)
+		return ERROR_OUTOFMEMORY;
 
 	data_write_UINT32(out_data + 0, InterfaceId); /* interface */
-	data_write_UINT32(out_data + 4, 0); /* message id */
+	/* data_write_UINT32(out_data + 4, 0);*/ /* message id */
 	data_write_UINT32(out_data + 8, ADD_DEVICE); /* function id */
 	data_write_UINT32(out_data + 12, 0x00000001); /* NumUsbDevice */
 	data_write_UINT32(out_data + 16, pdev->get_UsbDevice(pdev)); /* UsbDevice */
@@ -363,7 +377,7 @@ static int urdbrc_send_usb_device_add(URBDRC_CHANNEL_CALLBACK* callback, IUDEVIC
 	out_offset = fun_device_string_send_set(out_data, out_offset, HardwareIds[0]);
 	/* HardwareIds 2 */
 	out_offset = fun_device_string_send_set(out_data, out_offset, HardwareIds[1]);
-	data_write_UINT16(out_data + out_offset, 0x0000); /* add "\0" */
+	/*data_write_UINT16(out_data + out_offset, 0x0000);*/ /* add "\0" */
 	out_offset += 2;
 
 	data_write_UINT32(out_data + out_offset, cchCompatIds); /* cchCompatIds */
@@ -378,7 +392,7 @@ static int urdbrc_send_usb_device_add(URBDRC_CHANNEL_CALLBACK* callback, IUDEVIC
 	if (pdev->isCompositeDevice(pdev))
 		out_offset = fun_device_string_send_set(out_data, out_offset, composite_str);
 
-	data_write_UINT16(out_data + out_offset, 0x0000); /* add "\0" */
+	/*data_write_UINT16(out_data + out_offset, 0x0000);*/ /* add "\0" */
 	out_offset += 2;
 
 	data_write_UINT32(out_data + out_offset, 0x00000027); /* cchContainerId */
@@ -404,18 +418,18 @@ static int urdbrc_send_usb_device_add(URBDRC_CHANNEL_CALLBACK* callback, IUDEVIC
 	data_write_UINT32(out_data + out_offset + 24, 0x50); /* NoAckIsochWriteJitterBufferSizeInMs, >=10 or <=512 */
 	out_offset += 28;
 
-	callback->channel->Write(callback->channel, out_offset, (BYTE *)out_data, NULL);
+	ret = callback->channel->Write(callback->channel, out_offset, (BYTE *)out_data, NULL);
 	zfree(out_data);
 
-	return 0;
+	return ret;
 }
 
-static int urbdrc_exchange_capabilities(URBDRC_CHANNEL_CALLBACK* callback, char* pBuffer, UINT32 cbSize)
+static WIN32ERROR urbdrc_exchange_capabilities(URBDRC_CHANNEL_CALLBACK* callback, char* pBuffer, UINT32 cbSize)
 {
 	UINT32 MessageId;
 	UINT32 FunctionId;
 
-	int error = 0;
+	WIN32ERROR error = CHANNEL_RC_OK;
 
 	data_read_UINT32(pBuffer + 0, MessageId);
 	data_read_UINT32(pBuffer + 4, FunctionId);
@@ -428,7 +442,7 @@ static int urbdrc_exchange_capabilities(URBDRC_CHANNEL_CALLBACK* callback, char*
 
 		default:
 			WLog_ERR(TAG, "unknown FunctionId 0x%X", FunctionId);
-			error = 1;
+			error = ERROR_NOT_FOUND;
 			break;
 	}
 
@@ -686,7 +700,11 @@ void* urbdrc_new_device_create(void* arg)
 	{
 		case INIT_CHANNEL_IN:
 			urbdrc->first_channel_id = ChannelId;
-			searchman->start(searchman, urbdrc_search_usb_device);
+			if (!searchman->start(searchman, urbdrc_search_usb_device))
+			{
+				WLog_ERR(TAG, "unable to start searchman thread");
+				return 0;
+			}
 			
 			for (i = 0; i < udevman->get_device_num(udevman); i++)
 				error = urdbrc_send_virtual_channel_add(callback->channel, MessageId);
@@ -736,11 +754,12 @@ void* urbdrc_new_device_create(void* arg)
 	return 0;
 }
 
-static int urbdrc_process_channel_notification(URBDRC_CHANNEL_CALLBACK* callback, char* pBuffer, UINT32 cbSize)
+static WIN32ERROR urbdrc_process_channel_notification(URBDRC_CHANNEL_CALLBACK* callback, char* pBuffer, UINT32 cbSize)
 {
-	int i, error = 0;
+	int i;
 	UINT32 MessageId;
 	UINT32 FunctionId;
+	WIN32ERROR error = CHANNEL_RC_OK;
 	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*) callback->plugin;
 
 	data_read_UINT32(pBuffer + 0, MessageId);
@@ -754,24 +773,36 @@ static int urbdrc_process_channel_notification(URBDRC_CHANNEL_CALLBACK* callback
 
 		case RIMCALL_RELEASE:
 			WLog_VRB(TAG, "recv RIMCALL_RELEASE");
-			pthread_t   thread;
+			pthread_t thread;
 
 			TRANSFER_DATA*  transfer_data;
 
 			transfer_data = (TRANSFER_DATA*)malloc(sizeof(TRANSFER_DATA));
+			if (!transfer_data)
+				return ERROR_OUTOFMEMORY;
 			transfer_data->callback = callback;
 			transfer_data->urbdrc = urbdrc;
 			transfer_data->udevman = urbdrc->udevman;
 			transfer_data->urbdrc = urbdrc;
 			transfer_data->cbSize = cbSize;
 			transfer_data->pBuffer = (BYTE*) malloc((cbSize));
+			if (!transfer_data->pBuffer)
+			{
+				free(transfer_data);
+				return ERROR_OUTOFMEMORY;
+			}
 
 			for (i = 0; i < (cbSize); i++)
 			{
 				transfer_data->pBuffer[i] = pBuffer[i];
 			}
 
-			pthread_create(&thread, 0, urbdrc_new_device_create, transfer_data);
+			if (pthread_create(&thread, 0, urbdrc_new_device_create, transfer_data) != 0)
+			{
+				free(transfer_data->pBuffer);
+				free(transfer_data);
+				return ERROR_INVALID_OPERATION;
+			}
 			pthread_detach(thread);
 			break;
 
@@ -783,7 +814,7 @@ static int urbdrc_process_channel_notification(URBDRC_CHANNEL_CALLBACK* callback
 	return error;
 }
 
-static int urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
+static WIN32ERROR urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
 {
 	URBDRC_CHANNEL_CALLBACK* callback = (URBDRC_CHANNEL_CALLBACK*) pChannelCallback;
 	URBDRC_PLUGIN* urbdrc;
@@ -791,7 +822,7 @@ static int urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 	UINT32 InterfaceTemp;
 	UINT32 InterfaceId;
 	UINT32 Mask;
-	int error = 0;
+	WIN32ERROR error = CHANNEL_RC_OK;
 	char* pBuffer = (char*)Stream_Pointer(data);
   UINT32 cbSize = Stream_GetRemainingLength(data);
 
@@ -828,12 +859,11 @@ static int urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 			pthread_t thread;
 			TRANSFER_DATA* transfer_data;
 
-			transfer_data = (TRANSFER_DATA*) malloc(sizeof(TRANSFER_DATA));
-
-			if (transfer_data == NULL)
+			transfer_data = (TRANSFER_DATA *)malloc(sizeof(TRANSFER_DATA));
+			if (!transfer_data)
 			{
-				WLog_ERR(TAG,  "transfer_data is NULL!!");
-				return 0;
+				WLog_ERR(TAG, "transfer_data is NULL!!");
+				return ERROR_OUTOFMEMORY;
 			}
 
 			transfer_data->callback = callback;
@@ -842,6 +872,11 @@ static int urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 			transfer_data->cbSize = cbSize - 4;
 			transfer_data->UsbDevice = InterfaceId;
 			transfer_data->pBuffer = (BYTE *)malloc((cbSize - 4));
+			if (!transfer_data->pBuffer)
+			{
+				free(transfer_data);
+				return ERROR_OUTOFMEMORY;
+			}
 
 			memcpy(transfer_data->pBuffer, pBuffer + 4, (cbSize - 4));
 
@@ -854,19 +889,22 @@ static int urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 #endif
 
 			error = pthread_create(&thread, 0, urbdrc_process_udev_data_transfer, transfer_data);
-
-			if (error < 0)
+			if (error != 0)
+			{
 				WLog_ERR(TAG, "Create Data Transfer Thread got error = %d", error);
-			else
-				pthread_detach(thread);
+				free(transfer_data->pBuffer);
+				free(transfer_data);
+				return ERROR_INVALID_OPERATION;
+			}
 
+			pthread_detach(thread);
 			break;
 	}
 
 	return 0;
 }
 
-static int urbdrc_on_close(IWTSVirtualChannelCallback * pChannelCallback)
+static WIN32ERROR urbdrc_on_close(IWTSVirtualChannelCallback * pChannelCallback)
 {
 	URBDRC_CHANNEL_CALLBACK* callback = (URBDRC_CHANNEL_CALLBACK*) pChannelCallback;
 	URBDRC_PLUGIN* urbdrc  = (URBDRC_PLUGIN*) callback->plugin;
@@ -902,17 +940,19 @@ static int urbdrc_on_close(IWTSVirtualChannelCallback * pChannelCallback)
 
 	zfree(callback);
 	WLog_DBG(TAG, "success");
-	return 0;
+	return CHANNEL_RC_OK;
 }
 
-static int urbdrc_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
+static WIN32ERROR urbdrc_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
 	IWTSVirtualChannel * pChannel, BYTE* pData, int* pbAccept, IWTSVirtualChannelCallback** ppCallback)
 {
 	URBDRC_LISTENER_CALLBACK* listener_callback = (URBDRC_LISTENER_CALLBACK*) pListenerCallback;
 	URBDRC_CHANNEL_CALLBACK* callback;
+
 	WLog_VRB(TAG, "");
-	callback = (URBDRC_CHANNEL_CALLBACK*) malloc(sizeof(URBDRC_CHANNEL_CALLBACK));
-	memset(callback, 0, sizeof(URBDRC_CHANNEL_CALLBACK));
+	callback = (URBDRC_CHANNEL_CALLBACK*) calloc(1, sizeof(URBDRC_CHANNEL_CALLBACK));
+	if (!callback)
+		return ERROR_OUTOFMEMORY;
 
 	callback->iface.OnDataReceived = urbdrc_on_data_received;
 	callback->iface.OnClose = urbdrc_on_close;
@@ -921,17 +961,19 @@ static int urbdrc_on_new_channel_connection(IWTSListenerCallback* pListenerCallb
 	callback->channel = pChannel;
 	*ppCallback = (IWTSVirtualChannelCallback*) callback;
 
-	return 0;
+	return CHANNEL_RC_OK;
 }
 
-static int urbdrc_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr)
+static WIN32ERROR urbdrc_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr)
 {
 	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*) pPlugin;
 	IUDEVMAN* udevman = NULL;
 	USB_SEARCHMAN* searchman = NULL;
+
 	WLog_VRB(TAG, "");
-	urbdrc->listener_callback = (URBDRC_LISTENER_CALLBACK*) malloc(sizeof(URBDRC_LISTENER_CALLBACK));
-	memset(urbdrc->listener_callback, 0, sizeof(URBDRC_LISTENER_CALLBACK));
+	urbdrc->listener_callback = (URBDRC_LISTENER_CALLBACK*) calloc(1, sizeof(URBDRC_LISTENER_CALLBACK));
+	if (!urbdrc->listener_callback)
+		return CHANNEL_RC_NO_MEMORY;
 
 	urbdrc->listener_callback->iface.OnNewChannelConnection = urbdrc_on_new_channel_connection;
 	urbdrc->listener_callback->plugin = pPlugin;
@@ -940,17 +982,24 @@ static int urbdrc_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManag
 	/* Init searchman */
 	udevman = urbdrc->udevman;
 	searchman = searchman_new((void*) urbdrc, udevman->get_defUsbDevice(udevman));
+	if (!searchman)
+	{
+		free(urbdrc->listener_callback);
+		urbdrc->listener_callback = NULL;
+		return CHANNEL_RC_NO_MEMORY;
+	}
 	urbdrc->searchman = searchman;
 
 	return pChannelMgr->CreateListener(pChannelMgr, "URBDRC", 0,
 		(IWTSListenerCallback*) urbdrc->listener_callback, NULL);
 }
 
-static int urbdrc_plugin_terminated(IWTSPlugin* pPlugin)
+static WIN32ERROR urbdrc_plugin_terminated(IWTSPlugin* pPlugin)
 {
 	URBDRC_PLUGIN*	urbdrc = (URBDRC_PLUGIN*) pPlugin;
 	IUDEVMAN* udevman = urbdrc->udevman;
 	USB_SEARCHMAN* searchman = urbdrc->searchman;
+
 	WLog_VRB(TAG, "");
 
 	if (searchman)
@@ -959,7 +1008,7 @@ static int urbdrc_plugin_terminated(IWTSPlugin* pPlugin)
 		searchman->close(searchman);
 
 		/* free searchman */
-		if (searchman->strated)
+		if (searchman->started)
 		{
 			struct timespec ts;
 			ts.tv_sec = time(NULL)+10;
@@ -983,7 +1032,7 @@ static int urbdrc_plugin_terminated(IWTSPlugin* pPlugin)
 	if(urbdrc)
 		zfree(urbdrc);
 
-	return 0;
+	return CHANNEL_RC_OK;
 }
 
 static void urbdrc_register_udevman_addin(IWTSPlugin* pPlugin, IUDEVMAN* udevman)
@@ -1001,15 +1050,14 @@ static void urbdrc_register_udevman_addin(IWTSPlugin* pPlugin, IUDEVMAN* udevman
 	urbdrc->udevman = udevman;
 }
 
-static int urbdrc_load_udevman_addin(IWTSPlugin* pPlugin, const char* name, ADDIN_ARGV* args)
+static WIN32ERROR urbdrc_load_udevman_addin(IWTSPlugin* pPlugin, const char* name, ADDIN_ARGV* args)
 {
 	PFREERDP_URBDRC_DEVICE_ENTRY entry;
 	FREERDP_URBDRC_SERVICE_ENTRY_POINTS entryPoints;
 
 	entry = (PFREERDP_URBDRC_DEVICE_ENTRY) freerdp_load_channel_addin_entry("urbdrc", (LPSTR) name, NULL, 0);
-
-	if (entry == NULL)
-		return FALSE;
+	if (!entry)
+		return ERROR_INVALID_OPERATION;
 
 	entryPoints.plugin = pPlugin;
 	entryPoints.pRegisterUDEVMAN = urbdrc_register_udevman_addin;
@@ -1018,16 +1066,17 @@ static int urbdrc_load_udevman_addin(IWTSPlugin* pPlugin, const char* name, ADDI
 	if (entry(&entryPoints) != 0)
 	{
 		WLog_ERR(TAG, "%s entry returns error.", name);
-		return FALSE;
+		return ERROR_INVALID_OPERATION;
 	}
 
-	return TRUE;
+	return CHANNEL_RC_OK;
 }
 
-void urbdrc_set_subsystem(URBDRC_PLUGIN* urbdrc, char* subsystem)
+BOOL urbdrc_set_subsystem(URBDRC_PLUGIN* urbdrc, char* subsystem)
 {
 	free(urbdrc->subsystem);
 	urbdrc->subsystem = _strdup(subsystem);
+	return (urbdrc->subsystem != NULL);
 }
 
 COMMAND_LINE_ARGUMENT_A urbdrc_args[] =
@@ -1037,7 +1086,7 @@ COMMAND_LINE_ARGUMENT_A urbdrc_args[] =
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
-static void urbdrc_process_addin_args(URBDRC_PLUGIN* urbdrc, ADDIN_ARGV* args)
+static WIN32ERROR urbdrc_process_addin_args(URBDRC_PLUGIN* urbdrc, ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
@@ -1047,6 +1096,8 @@ static void urbdrc_process_addin_args(URBDRC_PLUGIN* urbdrc, ADDIN_ARGV* args)
 
 	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
 			urbdrc_args, flags, urbdrc, NULL, NULL);
+	if (status < 0)
+		return ERROR_INVALID_DATA;
 
 	arg = urbdrc_args;
 
@@ -1063,7 +1114,8 @@ static void urbdrc_process_addin_args(URBDRC_PLUGIN* urbdrc, ADDIN_ARGV* args)
 		}
 		CommandLineSwitchCase(arg, "sys")
 		{
-			urbdrc_set_subsystem(urbdrc, arg->Value);
+			if (!urbdrc_set_subsystem(urbdrc, arg->Value))
+				return ERROR_OUTOFMEMORY;
 		}
 		CommandLineSwitchDefault(arg)
 		{
@@ -1073,15 +1125,16 @@ static void urbdrc_process_addin_args(URBDRC_PLUGIN* urbdrc, ADDIN_ARGV* args)
 		CommandLineSwitchEnd(arg)
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+	return CHANNEL_RC_OK;
 }
 
 #ifdef STATIC_CHANNELS
 #define DVCPluginEntry urbdrc_DVCPluginEntry
 #endif
 
-int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+WIN32ERROR DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
-	int status = 0;
+	WIN32ERROR status = 0;
 	ADDIN_ARGV* args;
 	URBDRC_PLUGIN* urbdrc;
 
@@ -1090,8 +1143,9 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 	if (urbdrc == NULL)
 	{
-		urbdrc = (URBDRC_PLUGIN*) malloc(sizeof(URBDRC_PLUGIN));
-		ZeroMemory(urbdrc, sizeof(URBDRC_PLUGIN));
+		urbdrc = (URBDRC_PLUGIN*) calloc(1, sizeof(URBDRC_PLUGIN));
+		if (!urbdrc)
+			return CHANNEL_RC_NO_MEMORY;
 
 		urbdrc->iface.Initialize = urbdrc_plugin_initialize;
 		urbdrc->iface.Connected = NULL;
@@ -1101,15 +1155,29 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		urbdrc->vchannel_status = INIT_CHANNEL_IN;
 
 		status = pEntryPoints->RegisterPlugin(pEntryPoints, "urbdrc", (IWTSPlugin*) urbdrc);
+		if (status != CHANNEL_RC_OK)
+			goto error_register;
 	}
 
-	if (status == 0)
-		urbdrc_process_addin_args(urbdrc, args);
+	status = urbdrc_process_addin_args(urbdrc, args);
+	if (status != CHANNEL_RC_OK)
+	{
+		/* TODO: we should unregister the plugin ? */
+		WLog_ERR(TAG, "error processing arguments");
+		//return status;
+	}
 
-	if (!urbdrc->subsystem)
-		urbdrc_set_subsystem(urbdrc, "libusb");
 
-	urbdrc_load_udevman_addin((IWTSPlugin*) urbdrc, urbdrc->subsystem, args);
+	if (!urbdrc->subsystem && !urbdrc_set_subsystem(urbdrc, "libusb"))
+	{
+		/* TODO: we should unregister the plugin ? */
+		WLog_ERR(TAG, "error setting subsystem");
+		return ERROR_OUTOFMEMORY;
+	}
 
+	return urbdrc_load_udevman_addin((IWTSPlugin*) urbdrc, urbdrc->subsystem, args);
+
+error_register:
+	free(urbdrc);
 	return status;
 }
