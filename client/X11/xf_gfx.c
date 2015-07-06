@@ -353,7 +353,7 @@ int xf_SurfaceCommand_ClearCodec(xfContext* xfc, RdpgfxClientContext* context, R
 
 	if (status < 0)
 	{
-		WLog_ERR(TAG, "clear_decompress failure: %d\n", status);
+		WLog_ERR(TAG, "clear_decompress failure: %d", status);
 		return -1;
 	}
 
@@ -467,7 +467,7 @@ int xf_SurfaceCommand_Alpha(xfContext* xfc, RdpgfxClientContext* context, RDPGFX
 	if (!surface)
 		return -1;
 
-	WLog_DBG(TAG, "xf_SurfaceCommand_Alpha: status: %d\n", status);
+	WLog_DBG(TAG, "xf_SurfaceCommand_Alpha: status: %d", status);
 	/* fill with green for now to distinguish from the rest */
 
 	freerdp_image_fill(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline,
