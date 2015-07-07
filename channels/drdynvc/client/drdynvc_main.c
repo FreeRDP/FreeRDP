@@ -781,7 +781,7 @@ static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cb
 	else
 	{
 		WLog_DBG(TAG, "no listener");
-		Stream_Write_UINT32(data_out, 0xFFFFFFFF);
+		Stream_Write_UINT32(data_out, 0xC0000001); /* same code used by mstsc */
 	}
 
 	status = drdynvc_send(drdynvc, data_out);
