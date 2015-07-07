@@ -61,6 +61,12 @@ struct X11Handle
 #endif
 	Display *disp;
 	Window subwin;
+	BOOL subwinMapped;
+	GstXOverlay *overlay;
+	int subwinWidth;
+	int subwinHeight;
+	int subwinX;
+	int subwinY;
 };
 
 static const char* get_shm_id()
@@ -70,13 +76,73 @@ static const char* get_shm_id()
 	return shm_id;
 }
 
+static GstBusSyncReply tsmf_platform_bus_sync_handler(GstBus *bus, GstMessage *message, gpointer user_data)
+{
+	struct X11Handle* hdl;
+
+	TSMFGstreamerDecoder* decoder = user_data;
+
+	if (GST_MESSAGE_TYPE (message) != GST_MESSAGE_ELEMENT)
+		return GST_BUS_PASS;
+
+	if (!gst_structure_has_name (message->structure, "prepare-xwindow-id"))
+		return GST_BUS_PASS;
+
+	hdl = (struct X11Handle*) decoder->platform;
+
+	if (hdl->subwin)
+	{
+		hdl->overlay = GST_X_OVERLAY (GST_MESSAGE_SRC (message));
+
+#if GST_VERSION_MAJOR > 0
+		gst_video_overlay_set_window_handle(hdl->overlay, hdl->subwin);
+#else
+		gst_x_overlay_set_window_handle(hdl->overlay, hdl->subwin);
+#endif
+#if GST_VERSION_MAJOR > 0
+		gst_video_overlay_handle_events(hdl->overlay, TRUE);
+#else
+		gst_x_overlay_handle_events(hdl->overlay, TRUE);
+#endif
+
+		if (hdl->subwinWidth != -1 && hdl->subwinHeight != -1 && hdl->subwinX != -1 && hdl->subwinY != -1)
+		{
+#if GST_VERSION_MAJOR > 0
+
+			if (!gst_video_overlay_set_render_rectangle(hdl->overlay, 0, 0, hdl->swubwinWidth, hdl->subwinHeight))
+			{
+				WLog_ERR(TAG, "Could not resize overlay!");
+			}
+
+			gst_video_overlay_expose(hdl->overlay);
+#else
+			if (!gst_x_overlay_set_render_rectangle(hdl->overlay, 0, 0, hdl->subwinWidth, hdl->subwinHeight))
+			{
+				WLog_ERR(TAG, "Could not resize overlay!");
+			}
+
+			gst_x_overlay_expose(hdl->overlay);
+#endif
+			XMoveResizeWindow(hdl->disp, hdl->subwin, hdl->subwinX, hdl->subwinY, hdl->subwinWidth, hdl->subwinHeight);
+			XSync(hdl->disp, FALSE);
+		}
+	} else {
+		g_warning ("Window was not available before retrieving the overlay!");
+	}
+
+	gst_message_unref (message);
+
+	return GST_BUS_DROP;
+}
+
 const char* tsmf_platform_get_video_sink(void)
 {
-	return "xvimagesink";
+	return "autovideosink";
 }
 
 const char* tsmf_platform_get_audio_sink(void)
 {
+	//return "alsasink";
 	return "autoaudiosink";
 }
 
@@ -119,6 +185,12 @@ int tsmf_platform_create(TSMFGstreamerDecoder* decoder)
 		return -4;
 	}
 
+	hdl->subwinMapped = FALSE;
+	hdl->subwinX = -1;
+	hdl->subwinY = -1;
+	hdl->subwinWidth = -1;
+	hdl->subwinHeight = -1;
+
 	return 0;
 }
 
@@ -147,11 +219,15 @@ int tsmf_platform_register_handler(TSMFGstreamerDecoder* decoder)
 
 	bus = gst_pipeline_get_bus(GST_PIPELINE(decoder->pipe));
 
+	gst_bus_set_sync_handler (bus, (GstBusSyncHandler) tsmf_platform_bus_sync_handler, decoder);
+
 	if (!bus)
 	{
 		WLog_ERR(TAG, "gst_pipeline_get_bus failed!");
 		return 1;
 	}
+
+	gst_object_unref (bus);
 
 	return 0;
 }
@@ -189,12 +265,6 @@ int tsmf_window_create(TSMFGstreamerDecoder* decoder)
 	}
 	else
 	{
-#if GST_VERSION_MAJOR > 0
-		GstVideoOverlay *overlay = GST_VIDEO_OVERLAY(decoder->outsink);
-#else
-		GstXOverlay *overlay = GST_X_OVERLAY(decoder->outsink);
-#endif
-
 		if (!decoder)
 			return -1;
 
@@ -205,38 +275,28 @@ int tsmf_window_create(TSMFGstreamerDecoder* decoder)
 
 		if (!hdl->subwin)
 		{
-			int event, error;
 			hdl->subwin = XCreateSimpleWindow(hdl->disp, *(int *)hdl->xfwin, 0, 0, 1, 1, 0, 0, 0);
 
 			if (!hdl->subwin)
 			{
 				WLog_ERR(TAG, "Could not create subwindow!");
 			}
-
-			XMapWindow(hdl->disp, hdl->subwin);
-			XSync(hdl->disp, FALSE);
-#if GST_VERSION_MAJOR > 0
-			gst_video_overlay_set_window_handle(overlay, hdl->subwin);
-#else
-			gst_x_overlay_set_window_handle(overlay, hdl->subwin);
-#endif
-			decoder->ready = TRUE;
-#if defined(WITH_XEXT)
-			hdl->has_shape = XShapeQueryExtension(hdl->disp, &event, &error);
-#endif
 		}
 
-#if GST_VERSION_MAJOR > 0
-		gst_video_overlay_handle_events(overlay, TRUE);
-#else
-		gst_x_overlay_handle_events(overlay, TRUE);
+		tsmf_window_map(decoder);
+
+		decoder->ready = TRUE;
+#if defined(WITH_XEXT)
+	int event, error;
+	hdl->has_shape = XShapeQueryExtension(hdl->disp, &event, &error);
 #endif
-		return 0;
 	}
+
+	return 0;
 }
 
 int tsmf_window_resize(TSMFGstreamerDecoder* decoder, int x, int y, int width,
-					   int height, int nr_rects, RDP_RECT *rects)
+				   int height, int nr_rects, RDP_RECT *rects)
 {
 	struct X11Handle* hdl;
 
@@ -259,26 +319,33 @@ int tsmf_window_resize(TSMFGstreamerDecoder* decoder, int x, int y, int width,
 	hdl = (struct X11Handle*) decoder->platform;
 	DEBUG_TSMF("resize: x=%d, y=%d, w=%d, h=%d", x, y, width, height);
 
+	if (hdl->overlay)
+	{
 #if GST_VERSION_MAJOR > 0
 
-	if (!gst_video_overlay_set_render_rectangle(overlay, 0, 0, width, height))
-	{
-		WLog_ERR(TAG, "Could not resize overlay!");
-	}
+		if (!gst_video_overlay_set_render_rectangle(overlay, 0, 0, width, height))
+		{
+			WLog_ERR(TAG, "Could not resize overlay!");
+		}
 
-	gst_video_overlay_expose(overlay);
+		gst_video_overlay_expose(overlay);
 #else
-	if (!gst_x_overlay_set_render_rectangle(overlay, 0, 0, width, height))
-	{
-		WLog_ERR(TAG, "Could not resize overlay!");
-	}
+		if (!gst_x_overlay_set_render_rectangle(overlay, 0, 0, width, height))
+		{
+			WLog_ERR(TAG, "Could not resize overlay!");
+		}
 
-	gst_x_overlay_expose(overlay);
+		gst_x_overlay_expose(overlay);
 #endif
+	}
 
 	if (hdl->subwin)
 	{
-		XMoveResizeWindow(hdl->disp, hdl->subwin, x, y, width, height);
+		hdl->subwinX = x;
+		hdl->subwinY = y;
+		hdl->subwinWidth = width;
+		hdl->subwinHeight = height;
+		XMoveResizeWindow(hdl->disp, hdl->subwin, hdl->subwinX, hdl->subwinY, hdl->subwinWidth, hdl->subwinHeight);
 #if defined(WITH_XEXT)
 
 		if (hdl->has_shape)
@@ -299,7 +366,6 @@ int tsmf_window_resize(TSMFGstreamerDecoder* decoder, int x, int y, int width,
 			XShapeCombineRectangles(hdl->disp, hdl->subwin, ShapeBounding, x, y, xrects, nr_rects, ShapeSet, 0);
 			free(xrects);
 		}
-
 #endif
 		XSync(hdl->disp, FALSE);
 	}
@@ -323,6 +389,49 @@ int tsmf_window_resume(TSMFGstreamerDecoder* decoder)
 	return 0;
 }
 
+int tsmf_window_map(TSMFGstreamerDecoder* decoder)
+{
+	struct X11Handle* hdl;
+	if (!decoder)
+		return -1;
+
+	hdl = (struct X11Handle*) decoder->platform;
+
+	// Only need to map the window if it is not currently mapped
+	if ((hdl->subwin) && (!hdl->subwinMapped))
+	{
+		XLockDisplay(hdl->disp);
+		XMapWindow(hdl->disp, hdl->subwin);
+		hdl->subwinMapped = TRUE;
+		XSync(hdl->disp, FALSE);
+		XUnlockDisplay(hdl->disp);
+	}
+
+	return 0;
+}
+
+int tsmf_window_unmap(TSMFGstreamerDecoder* decoder)
+{
+	struct X11Handle* hdl;
+	if (!decoder)
+		return -1;
+
+	hdl = (struct X11Handle*) decoder->platform;
+
+	// only need to unmap window if it is currently mapped
+	if ((hdl->subwin) && (hdl->subwinMapped))
+	{
+		XLockDisplay(hdl->disp);
+		XUnmapWindow(hdl->disp, hdl->subwin);
+		hdl->subwinMapped = FALSE; 
+		XSync(hdl->disp, FALSE); 
+		XUnlockDisplay(hdl->disp);
+	}
+
+	return 0;
+}
+
+
 int tsmf_window_destroy(TSMFGstreamerDecoder* decoder)
 {
 	struct X11Handle* hdl;
@@ -345,7 +454,13 @@ int tsmf_window_destroy(TSMFGstreamerDecoder* decoder)
 		XSync(hdl->disp, FALSE);
 	}
 
+	hdl->overlay = NULL;
 	hdl->subwin = 0;
+	hdl->subwinMapped = FALSE;
+	hdl->subwinX = -1;
+	hdl->subwinY = -1;
+	hdl->subwinWidth = -1;
+	hdl->subwinHeight = -1;
 	return 0;
 }
 

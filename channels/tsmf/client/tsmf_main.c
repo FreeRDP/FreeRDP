@@ -36,7 +36,47 @@
 
 #include "tsmf_main.h"
 
-BOOL tsmf_playback_ack(IWTSVirtualChannelCallback *pChannelCallback,
+void tsmf_send_eos_response(IWTSVirtualChannelCallback* pChannelCallback, UINT32 message_id)
+{
+	wStream* s;
+	int status;
+	TSMF_CHANNEL_CALLBACK* callback = (TSMF_CHANNEL_CALLBACK*) pChannelCallback;
+
+	s = Stream_New(NULL, 24);
+	if (!s)
+		return FALSE;
+
+	if (!callback)
+	{
+		DEBUG_TSMF("No callback reference - unable to send eos response!");
+		return;
+	}
+
+	if (callback && callback->stream_id && callback->channel && callback->channel->Write)
+	{
+		s = Stream_New(NULL, 24);
+		if (!s)
+                	return FALSE;
+		Stream_Write_UINT32(s, TSMF_INTERFACE_CLIENT_NOTIFICATIONS | STREAM_ID_PROXY);
+                Stream_Write_UINT32(s, message_id);
+                Stream_Write_UINT32(s, CLIENT_EVENT_NOTIFICATION); /* FunctionId */
+                Stream_Write_UINT32(s, callback->stream_id); /* StreamId */
+                Stream_Write_UINT32(s, TSMM_CLIENT_EVENT_ENDOFSTREAM); /* EventId */
+                Stream_Write_UINT32(s, 0); /* cbData */
+		DEBUG_TSMF("response size %i", Stream_GetPosition(s));
+
+		status = callback->channel->Write(callback->channel, Stream_GetPosition(s), Stream_Buffer(s), NULL);
+		if (status)
+		{
+			WLog_ERR(TAG, "response error %d", status);
+		}
+		Stream_Free(s, TRUE);
+	}
+
+	return (status == 0);
+}
+
+void tsmf_playback_ack(IWTSVirtualChannelCallback *pChannelCallback,
 			UINT32 message_id, UINT64 duration, UINT32 data_size)
 {
 	wStream *s;

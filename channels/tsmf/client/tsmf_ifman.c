@@ -553,6 +553,7 @@ UINT tsmf_ifman_set_allocator(TSMF_IFMAN* ifman)
 UINT tsmf_ifman_notify_preroll(TSMF_IFMAN* ifman)
 {
 	DEBUG_TSMF("");
+	tsmf_ifman_on_playback_paused(ifman);
 	ifman->output_pending = TRUE;
 	return CHANNEL_RC_OK;
 }
@@ -637,6 +638,7 @@ UINT tsmf_ifman_on_flush(TSMF_IFMAN* ifman)
 {
 	UINT32 StreamId;
 	TSMF_PRESENTATION* presentation;
+	TSMF_STREAM* stream;
 
 	if (Stream_GetRemainingLength(ifman->input) < 20)
 		return ERROR_INVALID_DATA;
@@ -653,8 +655,15 @@ UINT tsmf_ifman_on_flush(TSMF_IFMAN* ifman)
 		return ERROR_NOT_FOUND;
 	}
 
-	if (!tsmf_presentation_flush(presentation))
-		return ERROR_INVALID_OPERATION;
+	// Flush message is for a stream, not the entire presentation
+	// therefore we only flush the stream as intended per the MS-RDPEV spec
+	stream = tsmf_stream_find_by_id(presentation, StreamId);
+	if (stream)
+		if (!tsmf_stream_flush(stream))
+			return ERROR_INVALID_OPERATION;
+	else
+		WLog_ERR(TAG, "unknown stream id");
+
 	ifman->output_pending = TRUE;
 
 	return CHANNEL_RC_OK;
@@ -668,7 +677,7 @@ UINT tsmf_ifman_on_flush(TSMF_IFMAN* ifman)
 UINT tsmf_ifman_on_end_of_stream(TSMF_IFMAN* ifman)
 {
 	UINT32 StreamId;
-	TSMF_STREAM* stream;
+	TSMF_STREAM* stream = NULL;
 	TSMF_PRESENTATION* presentation;
 
 	if (Stream_GetRemainingLength(ifman->input) < 20)
@@ -684,17 +693,12 @@ UINT tsmf_ifman_on_end_of_stream(TSMF_IFMAN* ifman)
 		stream = tsmf_stream_find_by_id(presentation, StreamId);
 
 		if (stream)
-			tsmf_stream_end(stream);
+                	tsmf_stream_end(stream, ifman->message_id, ifman->channel_callback);
 	}
 
 	DEBUG_TSMF("StreamId %d", StreamId);
-	if (!Stream_EnsureRemainingCapacity(ifman->output, 16))
-		return ERROR_OUTOFMEMORY;
 
-	Stream_Write_UINT32(ifman->output, CLIENT_EVENT_NOTIFICATION); /* FunctionId */
-	Stream_Write_UINT32(ifman->output, StreamId); /* StreamId */
-	Stream_Write_UINT32(ifman->output, TSMM_CLIENT_EVENT_ENDOFSTREAM); /* EventId */
-	Stream_Write_UINT32(ifman->output, 0); /* cbData */
+	ifman->output_pending = TRUE;
 
 	ifman->output_interface_id = TSMF_INTERFACE_CLIENT_NOTIFICATIONS | STREAM_ID_PROXY;
 	return CHANNEL_RC_OK;

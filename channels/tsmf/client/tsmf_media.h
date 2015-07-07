@@ -55,8 +55,9 @@ void tsmf_presentation_free(TSMF_PRESENTATION *presentation);
 TSMF_STREAM *tsmf_stream_new(TSMF_PRESENTATION *presentation, UINT32 stream_id, rdpContext* rdpcontext);
 TSMF_STREAM *tsmf_stream_find_by_id(TSMF_PRESENTATION *presentation, UINT32 stream_id);
 BOOL tsmf_stream_set_format(TSMF_STREAM *stream, const char *name, wStream *s);
-void tsmf_stream_end(TSMF_STREAM *stream);
+void tsmf_stream_end(TSMF_STREAM *stream, UINT32 message_id, IWTSVirtualChannelCallback* pChannelCallback);
 void tsmf_stream_free(TSMF_STREAM *stream);
+void tsmf_stream_flush(TSMF_STREAM* stream);
 
 BOOL tsmf_stream_push_sample(TSMF_STREAM *stream, IWTSVirtualChannelCallback *pChannelCallback,
 							 UINT32 sample_id, UINT64 start_time, UINT64 end_time, UINT64 duration, UINT32 extensions,

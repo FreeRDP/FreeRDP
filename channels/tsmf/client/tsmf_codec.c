@@ -75,6 +75,13 @@ static const TSMFMediaTypeMap tsmf_sub_type_map[] =
 		TSMF_SUB_TYPE_WVC1
 	},
 
+        /* 00000160-0000-0010-8000-00AA00389B71 */
+	{
+		{ 0x60, 0x01, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 },
+		"MEDIASUBTYPE_WMAudioV1", /* V7, V8 has the same GUID */
+		TSMF_SUB_TYPE_WMA1
+	},
+
 	/* 00000161-0000-0010-8000-00AA00389B71 */
 	{
 		{ 0x61, 0x01, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 },
@@ -171,6 +178,13 @@ static const TSMFMediaTypeMap tsmf_sub_type_map[] =
 		{ 0x4D, 0x50, 0x34, 0x32, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 },
 		"MEDIASUBTYPE_MP42",
 		TSMF_SUB_TYPE_MP42
+	},
+
+	/* 3253344D-0000-0010-8000-00AA00389B71 */
+	{
+		{ 0x4D, 0x34, 0x53, 0x32, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 },
+		"MEDIASUBTYPE_MP42",
+		TSMF_SUB_TYPE_M4S2
 	},
 
 	/* E436EB81-524F-11CE-9F53-0020AF0BA770 */
@@ -605,11 +619,22 @@ BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, wStream* s)
 BOOL tsmf_codec_check_media_type(const char* decoder_name, wStream* s)
 {
 	BYTE* m;
-	BOOL ret;
+	BOOL ret = FALSE;
 	TS_AM_MEDIA_TYPE mediatype;
 
+	static BOOL decoderAvailable = FALSE;
+	static BOOL firstRun = TRUE;
+
+	if (firstRun)
+	{
+		firstRun =FALSE;
+		if (tsmf_check_decoder_available(decoder_name))
+			decoderAvailable = TRUE;
+	}
+
 	Stream_GetPointer(s, m);
-	ret = tsmf_codec_parse_media_type(&mediatype, s);
+	if (decoderAvailable)
+		ret = tsmf_codec_parse_media_type(&mediatype, s);
 	Stream_SetPointer(s, m);
 
 	if (ret)
