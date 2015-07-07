@@ -228,8 +228,27 @@ SSPI_CREDENTIALS* sspi_CredentialsNew()
 
 void sspi_CredentialsFree(SSPI_CREDENTIALS* credentials)
 {
+	size_t userLength;
+	size_t domainLength;
+	size_t passwordLength;
+
 	if (!credentials)
 		return;
+
+	userLength = credentials->identity.UserLength;
+	domainLength = credentials->identity.DomainLength;
+	passwordLength = credentials->identity.PasswordLength;
+
+	if (credentials->identity.Flags & SEC_WINNT_AUTH_IDENTITY_UNICODE)
+	{
+		userLength *= 2;
+		domainLength *= 2;
+		passwordLength *= 2;
+	}
+
+	memset(credentials->identity.User, 0, userLength);
+	memset(credentials->identity.Domain, 0, domainLength);
+	memset(credentials->identity.Password, 0, passwordLength);
 
 	free(credentials->identity.User);
 	free(credentials->identity.Domain);
@@ -256,6 +275,7 @@ void sspi_SecBufferFree(PSecBuffer SecBuffer)
 	if (!SecBuffer)
 		return;
 
+	memset(SecBuffer->pvBuffer, 0, SecBuffer->cbBuffer);
 	free(SecBuffer->pvBuffer);
 	SecBuffer->pvBuffer = NULL;
 	SecBuffer->cbBuffer = 0;
