@@ -370,6 +370,9 @@ int rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 		context->EndFrame(context, &pdu);
 	}
 
+	gfx->UnacknowledgedFrames--;
+	gfx->TotalDecodedFrames++;
+
 	ack.frameId = pdu.frameId;
 	ack.totalFramesDecoded = gfx->TotalDecodedFrames;
 
@@ -377,7 +380,7 @@ int rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 	{
 		ack.queueDepth = SUSPEND_FRAME_ACKNOWLEDGEMENT;
 
-		if (gfx->TotalDecodedFrames == 0)
+		if (gfx->TotalDecodedFrames == 1)
 			rdpgfx_send_frame_acknowledge_pdu(callback, &ack);
 	}
 	else
@@ -385,9 +388,6 @@ int rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 		ack.queueDepth = QUEUE_DEPTH_UNAVAILABLE;
 		rdpgfx_send_frame_acknowledge_pdu(callback, &ack);
 	}
-
-	gfx->UnacknowledgedFrames--;
-	gfx->TotalDecodedFrames++;
 
 	return 1;
 }
