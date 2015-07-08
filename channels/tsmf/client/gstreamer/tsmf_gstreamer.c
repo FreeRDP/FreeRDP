@@ -45,8 +45,8 @@
 #include <inttypes.h>
 #endif
 
-// 1 second
-#define SEEK_TOLERANCE 10000000
+/* 1 second = 10,000,000 100ns units*/
+#define SEEK_TOLERANCE 10*1000*1000
 
 static BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder* mdecoder);
 static void tsmf_gstreamer_clean_up(TSMFGstreamerDecoder* mdecoder);
@@ -59,12 +59,15 @@ const char* get_type(TSMFGstreamerDecoder* mdecoder)
 	if (!mdecoder)
 		return NULL;
 
-	if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
-		return "VIDEO";
-	else if (mdecoder->media_type == TSMF_MAJOR_TYPE_AUDIO)
-		return "AUDIO";
-	else
-		return "UNKNOWN";
+	switch (mdecoder->media_type)
+	{
+		case TSMF_MAJOR_TYPE_VIDEO:
+			return "VIDEO";
+		case TSMF_MAJOR_TYPE_AUDIO:
+			return "AUDIO";
+		default:
+			return "UNKNOWN";
+	}
 }
 
 static void cb_child_added(GstChildProxy *child_proxy, GObject *object, TSMFGstreamerDecoder* mdecoder)
@@ -73,20 +76,20 @@ static void cb_child_added(GstChildProxy *child_proxy, GObject *object, TSMFGstr
 
 	if (!g_strcmp0(G_OBJECT_TYPE_NAME(object), "GstXvImageSink") || !g_strcmp0(G_OBJECT_TYPE_NAME(object), "GstXImageSink") || !g_strcmp0(G_OBJECT_TYPE_NAME(object), "GstFluVAAutoSink"))
 	{
-		gst_base_sink_set_max_lateness((GstBaseSink *) object, 10000000); //nanoseconds
-		g_object_set(G_OBJECT(object), "sync", TRUE, NULL); //synchronize on the clock
-		g_object_set(G_OBJECT(object), "async", TRUE, NULL); //no async state changes - doc says not to do for streams synced to clock
+		gst_base_sink_set_max_lateness((GstBaseSink *) object, 10000000); /* nanoseconds */
+		g_object_set(G_OBJECT(object), "sync", TRUE, NULL); /* synchronize on the clock */
+		g_object_set(G_OBJECT(object), "async", TRUE, NULL); /* no async state changes */
 	}
 
 	else if (!g_strcmp0(G_OBJECT_TYPE_NAME(object), "GstAlsaSink") || !g_strcmp0(G_OBJECT_TYPE_NAME(object), "GstPulseSink"))
 	{
-		gst_base_sink_set_max_lateness((GstBaseSink *) object, 10000000); //nanoseconds
-		g_object_set(G_OBJECT(object), "slave-method", 1, NULL); //DEFAULT
-		g_object_set(G_OBJECT(object), "buffer-time", (gint64) 20000, NULL); //microseconds
-		g_object_set(G_OBJECT(object), "drift-tolerance", (gint64) 20000, NULL); //microseconds
-		g_object_set(G_OBJECT(object), "latency-time", (gint64) 10000, NULL); //microseconds
-		g_object_set(G_OBJECT(object), "sync", TRUE, NULL); //synchronize on the clock
-		g_object_set(G_OBJECT(object), "async", TRUE, NULL); //no async state changes - doc says not to do for streams synced to clock
+		gst_base_sink_set_max_lateness((GstBaseSink *) object, 10000000); /* nanoseconds */
+		g_object_set(G_OBJECT(object), "slave-method", 1, NULL);
+		g_object_set(G_OBJECT(object), "buffer-time", (gint64) 20000, NULL); /* microseconds */
+		g_object_set(G_OBJECT(object), "drift-tolerance", (gint64) 20000, NULL); /* microseconds */
+		g_object_set(G_OBJECT(object), "latency-time", (gint64) 10000, NULL); /* microseconds */
+		g_object_set(G_OBJECT(object), "sync", TRUE, NULL); /* synchronize on the clock */
+		g_object_set(G_OBJECT(object), "async", TRUE, NULL); /* no async state changes */
 	}
 }
 
@@ -256,7 +259,11 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* m
 								 "width", G_TYPE_INT, media_type->Width,
 								 "height", G_TYPE_INT, media_type->Height,
 								 "wmvversion", G_TYPE_INT, 3,
+#if GST_VERSION_MAJOR > 0
+								 "format", G_TYPE_STRING, "WVC1",
+#else
 								 "format", GST_TYPE_FOURCC, GST_MAKE_FOURCC ('W', 'V', 'C', '1'),
+#endif
 								 "framerate", GST_TYPE_FRACTION, media_type->SamplesPerSecond.Numerator, media_type->SamplesPerSecond.Denominator,
 								 "pixel-aspect-ratio", GST_TYPE_FRACTION, 1 , 1,
 								 NULL);
@@ -267,7 +274,11 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* m
 								  "bitrate", G_TYPE_UINT, media_type->BitRate,
 								  "width", G_TYPE_INT, media_type->Width,
 								  "height", G_TYPE_INT, media_type->Height,
+#if GST_VERSION_MAJOR > 0
+								  "format", G_TYPE_STRING, "MP42",
+#else  
 								  "format", GST_TYPE_FOURCC, GST_MAKE_FOURCC ('M', 'P', '4', '2'),
+#endif
 								  "framerate", GST_TYPE_FRACTION, media_type->SamplesPerSecond.Numerator, media_type->SamplesPerSecond.Denominator,
 								  NULL);
 			break;
@@ -277,7 +288,11 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* m
 								  "bitrate", G_TYPE_UINT, media_type->BitRate,
 								  "width", G_TYPE_INT, media_type->Width,
 								  "height", G_TYPE_INT, media_type->Height,
-								  "format", GST_TYPE_FOURCC, GST_MAKE_FOURCC ('M', 'P', '4', '2'),
+#if GST_VERSION_MAJOR > 0                                         
+                                                                  "format", G_TYPE_STRING, "MP42",
+#else
+                                                                  "format", GST_TYPE_FOURCC, GST_MAKE_FOURCC ('M', 'P', '4', '2'),
+#endif
 								  "framerate", GST_TYPE_FRACTION, media_type->SamplesPerSecond.Numerator, media_type->SamplesPerSecond.Denominator,
 								  NULL);
 			break;
@@ -287,7 +302,11 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* m
 								  "bitrate", G_TYPE_UINT, media_type->BitRate,
 								  "width", G_TYPE_INT, media_type->Width,
 								  "height", G_TYPE_INT, media_type->Height,
+#if GST_VERSION_MAJOR > 0                                         
+								  "format", G_TYPE_STRING, "MP43",
+#else   
 								  "format", GST_TYPE_FOURCC, GST_MAKE_FOURCC ('M', 'P', '4', '3'),
+#endif
 								  "framerate", GST_TYPE_FRACTION, media_type->SamplesPerSecond.Numerator, media_type->SamplesPerSecond.Denominator,
 								  NULL);
 			break;
@@ -296,7 +315,11 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* m
 								   "mpegversion", G_TYPE_INT, 4,
 								   "width", G_TYPE_INT, media_type->Width,
 								   "height", G_TYPE_INT, media_type->Height,
+#if GST_VERSION_MAJOR > 0                                         
+								   "format", G_TYPE_STRING, "M4S2",
+#else   
 								   "format", GST_TYPE_FOURCC, GST_MAKE_FOURCC ('M', '4', 'S', '2'),
+#endif
 								   "framerate", GST_TYPE_FRACTION, media_type->SamplesPerSecond.Numerator, media_type->SamplesPerSecond.Denominator,
 								   NULL);
 			break;
@@ -347,7 +370,11 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* m
 								 "width", G_TYPE_INT, media_type->Width,
 								 "height", G_TYPE_INT, media_type->Height,
 								 "wmvversion", G_TYPE_INT, 1,
+#if GST_VERSION_MAJOR > 0                                         
+								 "format", G_TYPE_STRING, "WMV1",
+#else   
 								 "format", GST_TYPE_FOURCC, GST_MAKE_FOURCC ('W', 'M', 'V', '1'),
+#endif
 								 "framerate", GST_TYPE_FRACTION, media_type->SamplesPerSecond.Numerator, media_type->SamplesPerSecond.Denominator,
 								 NULL);
 			break;
@@ -356,7 +383,11 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* m
 								 "width", G_TYPE_INT, media_type->Width,
 								 "height", G_TYPE_INT, media_type->Height,
 								 "wmvversion", G_TYPE_INT, 2,
+#if GST_VERSION_MAJOR > 0                                         
+								 "format", G_TYPE_STRING, "WMV2",
+#else
 								 "format", GST_TYPE_FOURCC, GST_MAKE_FOURCC ('W', 'M', 'V', '2'),
+#endif
 								 "framerate", GST_TYPE_FRACTION, media_type->SamplesPerSecond.Numerator, media_type->SamplesPerSecond.Denominator,
 								 "pixel-aspect-ratio", GST_TYPE_FRACTION, 1 , 1,
 								 NULL);
@@ -367,7 +398,11 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* m
 								 "width", G_TYPE_INT, media_type->Width,
 								 "height", G_TYPE_INT, media_type->Height,
 								 "wmvversion", G_TYPE_INT, 3,
+#if GST_VERSION_MAJOR > 0                                         
+								  "format", G_TYPE_STRING, "WMV3",
+#else
 								 "format", GST_TYPE_FOURCC, GST_MAKE_FOURCC ('W', 'M', 'V', '3'),
+#endif
 								 "framerate", GST_TYPE_FRACTION, media_type->SamplesPerSecond.Numerator, media_type->SamplesPerSecond.Denominator,
 								 "pixel-aspect-ratio", GST_TYPE_FRACTION, 1 , 1,
 								 NULL);
@@ -506,8 +541,13 @@ void tsmf_gstreamer_clean_up(TSMFGstreamerDecoder* mdecoder)
 
 BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder* mdecoder)
 {
+#if GST_VERSION_MAJOR > 0
+	const char* video = "appsrc name=videosource ! queue2 name=videoqueue ! decodebin name=videodecoder !";
+        const char* audio = "appsrc name=audiosource ! queue2 name=audioqueue ! decodebin name=audiodecoder ! audioconvert ! audiorate ! audioresample ! volume name=audiovolume !";
+#else
 	const char* video = "appsrc name=videosource ! queue2 name=videoqueue ! decodebin2 name=videodecoder !";
 	const char* audio = "appsrc name=audiosource ! queue2 name=audioqueue ! decodebin2 name=audiodecoder ! audioconvert ! audiorate ! audioresample ! volume name=audiovolume !";
+#endif
 	char pipeline[1024];
 
 	if (!mdecoder)
@@ -601,23 +641,23 @@ BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder* mdecoder)
 	g_object_set(G_OBJECT(mdecoder->queue), "max-size-bytes", 0, NULL);
 	g_object_set(G_OBJECT(mdecoder->queue), "max-size-time", (guint64) 0, NULL);
 
-	// Only set these properties if not an autosink, otherwise we will set properties when real sinks are added
+	/* Only set these properties if not an autosink, otherwise we will set properties when real sinks are added */
 	if (!g_strcmp0(G_OBJECT_TYPE_NAME(mdecoder->outsink), "GstAutoVideoSink") && !g_strcmp0(G_OBJECT_TYPE_NAME(mdecoder->outsink), "GstAutoAudioSink"))
 	{
 		if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
 		{
-			gst_base_sink_set_max_lateness((GstBaseSink *) mdecoder->outsink, 10000000); //nanoseconds
+			gst_base_sink_set_max_lateness((GstBaseSink *) mdecoder->outsink, 10000000); /* nanoseconds */
 		}
 		else
 		{
-			gst_base_sink_set_max_lateness((GstBaseSink *) mdecoder->outsink, 10000000); //nanoseconds
-			g_object_set(G_OBJECT(mdecoder->outsink), "buffer-time", (gint64) 20000, NULL); //microseconds
-			g_object_set(G_OBJECT(mdecoder->outsink), "drift-tolerance", (gint64) 20000, NULL); //microseconds
-			g_object_set(G_OBJECT(mdecoder->outsink), "latency-time", (gint64) 10000, NULL); //microseconds
+			gst_base_sink_set_max_lateness((GstBaseSink *) mdecoder->outsink, 10000000); /* nanoseconds */
+			g_object_set(G_OBJECT(mdecoder->outsink), "buffer-time", (gint64) 20000, NULL); /* microseconds */
+			g_object_set(G_OBJECT(mdecoder->outsink), "drift-tolerance", (gint64) 20000, NULL); /* microseconds */
+			g_object_set(G_OBJECT(mdecoder->outsink), "latency-time", (gint64) 10000, NULL); /* microseconds */
 			g_object_set(G_OBJECT(mdecoder->outsink), "slave-method", 1, NULL);
 		}
-		g_object_set(G_OBJECT(mdecoder->outsink), "sync", TRUE, NULL); //synchronize on the clock
-		g_object_set(G_OBJECT(mdecoder->outsink), "async", TRUE, NULL); //no async state changes
+		g_object_set(G_OBJECT(mdecoder->outsink), "sync", TRUE, NULL); /* synchronize on the clock */
+		g_object_set(G_OBJECT(mdecoder->outsink), "async", TRUE, NULL); /* no async state changes */
 	}
 
 	tsmf_window_create(mdecoder);
@@ -685,22 +725,23 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder* decoder, const BYTE *data, UIN
 		return FALSE;
 	}
 
-	// Relative timestamping will sometimes be set to 0
-	// so we ignore these timestamps just to be safe(bit 8)
+	/* Relative timestamping will sometimes be set to 0
+	 * so we ignore these timestamps just to be safe(bit 8)
+	 */
 	if (extensions & 0x00000080)
 	{
 		DEBUG_TSMF("Ignoring the timestamps - relative - bit 8");
 		useTimestamps = FALSE;
 	}
 
-	//If no timestamps exist then we dont want to look at the timestamp values (bit 7)
+	/* If no timestamps exist then we dont want to look at the timestamp values (bit 7) */
 	if (extensions & 0x00000040)
 	{
 		DEBUG_TSMF("Ignoring the timestamps - none - bit 7");
 		useTimestamps = FALSE;
 	}
 
-	// If performing a seek
+	/* If performing a seek */
 	if (mdecoder->seeking)
 	{
 		mdecoder->seeking = FALSE;
@@ -710,17 +751,18 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder* decoder, const BYTE *data, UIN
 
 	if (mdecoder->pipeline_start_time_valid)
 	{
-		// Adjusted the condition for a seek to be based on start time only
-		// WMV1 and WMV2 files in particular have bad end time and duration values
-		// there seems to be no real side effects of just using the start time instead
+		/* Adjusted the condition for a seek to be based on start time only
+		 * WMV1 and WMV2 files in particular have bad end time and duration values
+		 * there seems to be no real side effects of just using the start time instead
+		 */
 		UINT64 minTime = mdecoder->last_sample_start_time - (UINT64) SEEK_TOLERANCE;
 		UINT64 maxTime = mdecoder->last_sample_start_time + (UINT64) SEEK_TOLERANCE;
 
-		// Make sure the minTime stops at 0 , should we be at the beginning of the stream 
+		/* Make sure the minTime stops at 0 , should we be at the beginning of the stream */ 
 		if (mdecoder->last_sample_start_time < (UINT64) SEEK_TOLERANCE)
 			minTime = 0;    
 
-		// If the start_time is valid and different from the previous start time by more than the seek tolerance, then we have a seek condition
+		/* If the start_time is valid and different from the previous start time by more than the seek tolerance, then we have a seek condition */
 		if (((start_time > maxTime) || (start_time < minTime)) && useTimestamps)
 		{
 			DEBUG_TSMF("tsmf_gstreamer_decodeEx: start_time=[%d] > last_sample_start_time=[%d] OR ", (int)start_time, (int)mdecoder->last_sample_start_time);
@@ -729,22 +771,24 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder* decoder, const BYTE *data, UIN
 
 			mdecoder->seeking = TRUE;
 
-			// since we cant make the gstreamer pipeline jump to the new start time after a seek - we just maintain
-			// a offset between realtime and gstreamer time
+			/* since we cant make the gstreamer pipeline jump to the new start time after a seek - we just maintain
+			 * a offset between realtime and gstreamer time
+			 */
 			mdecoder->seek_offset = start_time;
 		}
 	}
 	else
 	{
 		DEBUG_TSMF("%s start time %d", get_type(mdecoder), start_time);
-		// Always set base/start time to 0. Will use seek offset to translate real buffer times
-		// back to 0. This allows the video to be started from anywhere and the ability to handle seeks
-		// without rebuilding the pipeline, etc. since that is costly
+		/* Always set base/start time to 0. Will use seek offset to translate real buffer times
+		 * back to 0. This allows the video to be started from anywhere and the ability to handle seeks
+		 * without rebuilding the pipeline, etc. since that is costly
+		 */
 		gst_element_set_base_time(mdecoder->pipe, tsmf_gstreamer_timestamp_ms_to_gst(0));
 		gst_element_set_start_time(mdecoder->pipe, tsmf_gstreamer_timestamp_ms_to_gst(0));
 		mdecoder->pipeline_start_time_valid = 1;
 
-		// Set the seek offset if buffer has valid timestamps.
+		/* Set the seek offset if buffer has valid timestamps. */
 		if (useTimestamps)
 			mdecoder->seek_offset = start_time;
 
@@ -769,13 +813,13 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder* decoder, const BYTE *data, UIN
 #endif
 	GST_BUFFER_DURATION(gst_buf) = GST_CLOCK_TIME_NONE;
 	GST_BUFFER_OFFSET(gst_buf) = GST_BUFFER_OFFSET_NONE;
+#if GST_VERSION_MAJOR > 0
+#else
 	gst_buffer_set_caps(gst_buf, mdecoder->gst_caps);
+#endif
 	gst_app_src_push_buffer(GST_APP_SRC(mdecoder->src), gst_buf);
 
-	if (mdecoder->ack_cb)
-		mdecoder->ack_cb(mdecoder->stream, FALSE);
-
-	// Should only update the last timestamps if the current ones are valid
+	/* Should only update the last timestamps if the current ones are valid */
 	if (useTimestamps)
 	{
 		mdecoder->last_sample_start_time = start_time;
@@ -948,7 +992,7 @@ BOOL tsmf_gstreamer_ack(ITSMFDecoder* decoder, BOOL (*cb)(void *, BOOL), void *s
 {
 	TSMFGstreamerDecoder* mdecoder = (TSMFGstreamerDecoder *) decoder;
 	DEBUG_TSMF("");
-	mdecoder->ack_cb = NULL;//cb;
+	mdecoder->ack_cb = NULL;
 	mdecoder->stream = stream;
 	return TRUE;
 }

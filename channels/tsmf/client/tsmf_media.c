@@ -56,8 +56,8 @@
 
 #define AUDIO_TOLERANCE 10000000LL
 
-// 1 second
-#define VIDEO_ADJUST_MAX 10000000
+/* 1 second = 10,000,000 100ns units*/
+#define VIDEO_ADJUST_MAX 10*1000*1000
 
 #define MAX_ACK_TIME 666667
 
@@ -193,8 +193,9 @@ static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 				if (stream->major_type == TSMF_MAJOR_TYPE_AUDIO)
 				{
 					/* Check if some other stream has earlier sample that needs to be played first */
-					// Start time is more reliable than end time as some stream types seem to have incorrect
-					// end times from the server
+					/* Start time is more reliable than end time as some stream types seem to have incorrect
+					 * end times from the server
+					 */
 					if (stream->last_start_time > AUDIO_TOLERANCE)
 					{
 						ArrayList_Lock(presentation->stream_list);
@@ -204,8 +205,9 @@ static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 						{
 							s = (TSMF_STREAM *) ArrayList_GetItem(presentation->stream_list, index);
 
-							// Start time is more reliable than end time as some stream types seem to have incorrect
-							// end times from the server
+							/* Start time is more reliable than end time as some stream types seem to have incorrect
+							 * end times from the server
+							 */
 							if (s != stream && !s->eos && s->last_start_time &&
 								s->last_start_time < stream->last_start_time - AUDIO_TOLERANCE)
 							{
@@ -220,8 +222,9 @@ static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 				}
 				else
 				{
-					// Start time is more reliable than end time as some stream types seem to have incorrect
-					// end times from the server
+					/* Start time is more reliable than end time as some stream types seem to have incorrect
+					 * end times from the server
+					 */
 					if (stream->last_start_time > presentation->audio_start_time)
 					{
 						DEBUG_TSMF("Pending due to stream start time > audio start time");
@@ -237,11 +240,11 @@ static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 
 	sample = (TSMF_SAMPLE *) Queue_Dequeue(stream->sample_list);
 
-	// Only update stream last end time if the sample end time is valid and greater than the current stream end time
+	/* Only update stream last end time if the sample end time is valid and greater than the current stream end time */
 	if (sample && (sample->end_time > stream->last_end_time) && (!sample->invalidTimestamps))
 		stream->last_end_time = sample->end_time;
 
-	// Only update stream last start time if the sample start time is valid and greater than the current stream start time     
+	/* Only update stream last start time if the sample start time is valid and greater than the current stream start time */
 	if (sample && (sample->start_time > stream->last_start_time) && (!sample->invalidTimestamps))
 		stream->last_start_time = sample->start_time;
 
@@ -278,8 +281,9 @@ static BOOL tsmf_sample_queue_ack(TSMF_SAMPLE* sample)
 	return Queue_Enqueue(sample->stream->sample_ack_list, sample);
 }
 
-// Returns TRUE if no more samples are currently available
-// Returns FALSE otherwise
+/* Returns TRUE if no more samples are currently available
+ * Returns FALSE otherwise
+ */
 static BOOL tsmf_stream_process_ack(void* arg, BOOL force)
 {
 	TSMF_STREAM* stream = arg;
@@ -301,18 +305,18 @@ static BOOL tsmf_stream_process_ack(void* arg, BOOL force)
 
 	if (!force)
 	{
-		// Do some min/max ack limiting if we have access to Buffer level information
+		/* Do some min/max ack limiting if we have access to Buffer level information */
 		if (stream->decoder->BufferLevel)
 		{
-			// Try to keep buffer level below max by withholding acks
+			/* Try to keep buffer level below max by withholding acks */
 			if (stream->currentBufferLevel > stream->maxBufferLevel)
 				goto finally;
-			// Try to keep buffer level above min by pushing acks through quickly
+			/* Try to keep buffer level above min by pushing acks through quickly */
 			else if (stream->currentBufferLevel < stream->minBufferLevel)
 				goto dequeue;
 		}
 
-		// Time based acks only
+		/* Time based acks only */
 		ack_time = get_current_time();
 
 		if (sample->ack_time > ack_time)
@@ -427,8 +431,9 @@ static BOOL tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 	{
 		t = get_current_time();
 
-		// Start time is more reliable than end time as some stream types seem to have incorrect
-		// end times from the server
+		/* Start time is more reliable than end time as some stream types seem to have incorrect
+		 * end times from the server
+		 */
 		if (stream->next_start_time > t &&
 				((sample->start_time >= presentation->audio_start_time) ||
 				((sample->start_time < stream->last_start_time) && (!sample->invalidTimestamps))))
@@ -507,7 +512,7 @@ static BOOL tsmf_sample_playback_audio(TSMF_SAMPLE* sample)
 
 	sample->ack_time = latency + get_current_time();
 
-	//Only update stream times if the sample timestamps are valid
+	/* Only update stream times if the sample timestamps are valid */
 	if (!sample->invalidTimestamps)
 	{
 		stream->last_start_time = sample->start_time + latency;
@@ -530,9 +535,10 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 	{
 		if (stream->decoder->DecodeEx)
 		{
-			// Try to "sync" video buffers to audio buffers by looking at the running time for each stream
-			// The difference between the two running times causes an offset between audio and video actual
-			// render times. So, we try to adjust timestamps on the video buffer to match those on the audio buffer.
+			/* Try to "sync" video buffers to audio buffers by looking at the running time for each stream
+			 * The difference between the two running times causes an offset between audio and video actual
+			 * render times. So, we try to adjust timestamps on the video buffer to match those on the audio buffer.
+			 */
 			if (stream->major_type == TSMF_MAJOR_TYPE_VIDEO)
 			{	
 				TSMF_STREAM* temp_stream = NULL;
@@ -633,7 +639,7 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 		UINT64 ack_anticipation_time = get_current_time();
 		BOOL buffer_filled = TRUE;
 
-		// Classify the buffer as filled once it reaches minimum level
+		/* Classify the buffer as filled once it reaches minimum level */
 		if (stream->decoder->BufferLevel)
 		{
 			if (stream->currentBufferLevel < stream->minBufferLevel)
@@ -720,7 +726,7 @@ static void* tsmf_stream_ack_func(void *arg)
 			}
 		}
 
-		// Stream stopped force all of the acks to happen
+		/* Stream stopped force all of the acks to happen */
 		if (ev == WAIT_OBJECT_0)
 		{
 			DEBUG_TSMF("ack: Stream stopped!");
@@ -852,16 +858,17 @@ static BOOL tsmf_stream_stop(TSMF_STREAM* stream)
 	if (!stream || !stream->decoder || !stream->decoder->Control)
 		return TRUE;
 
-	// If stopping after eos - we delay until the eos has been processed
-	// this allows us to process any buffers that have been acked even though
-	// they have not actually been completely processes by the decoder
+	/* If stopping after eos - we delay until the eos has been processed
+	 * this allows us to process any buffers that have been acked even though
+	 * they have not actually been completely processes by the decoder
+	 */
 	if (stream->eos)
 	{
 		DEBUG_TSMF("Setting up a delayed stop for once the eos has been processed.");
 		stream->delayed_stop = 1;
 		return TRUE;
 	}
-	// Otherwise force stop immediately
+	/* Otherwise force stop immediately */
 	else
 	{
 		DEBUG_TSMF("Stop with no pending eos response, so do it immediately.");
@@ -1059,8 +1066,9 @@ BOOL tsmf_presentation_set_geometry_info(TSMF_PRESENTATION* presentation,
 	if (!width || !height)
 		return TRUE;
 
-	// Streams can be added/removed from the presentation and the server will resend geometry info when a new stream is 
-	// added to the presentation.
+	/* Streams can be added/removed from the presentation and the server will resend geometry info when a new stream is 
+	 * added to the presentation.
+	 */
 	/*
 	if ((width == presentation->width) && (height == presentation->height) &&
 			(x == presentation->x) && (y == presentation->y) &&

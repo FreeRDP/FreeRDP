@@ -655,8 +655,9 @@ UINT tsmf_ifman_on_flush(TSMF_IFMAN* ifman)
 		return ERROR_NOT_FOUND;
 	}
 
-	// Flush message is for a stream, not the entire presentation
-	// therefore we only flush the stream as intended per the MS-RDPEV spec
+	/* Flush message is for a stream, not the entire presentation
+	 * therefore we only flush the stream as intended per the MS-RDPEV spec
+	 */
 	stream = tsmf_stream_find_by_id(presentation, StreamId);
 	if (stream)
 		if (!tsmf_stream_flush(stream))

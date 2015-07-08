@@ -38,7 +38,7 @@
 
 void tsmf_send_eos_response(IWTSVirtualChannelCallback* pChannelCallback, UINT32 message_id)
 {
-	wStream* s;
+	wStream* s = NULL;
 	int status;
 	TSMF_CHANNEL_CALLBACK* callback = (TSMF_CHANNEL_CALLBACK*) pChannelCallback;
 
@@ -79,13 +79,19 @@ void tsmf_send_eos_response(IWTSVirtualChannelCallback* pChannelCallback, UINT32
 void tsmf_playback_ack(IWTSVirtualChannelCallback *pChannelCallback,
 			UINT32 message_id, UINT64 duration, UINT32 data_size)
 {
-	wStream *s;
+	wStream *s = NULL;
 	int status = -1;
 	TSMF_CHANNEL_CALLBACK *callback = (TSMF_CHANNEL_CALLBACK *) pChannelCallback;
 
 	s = Stream_New(NULL, 32);
 	if (!s)
 		return FALSE;
+
+	if (s == NULL)
+	{
+		WLog_ERR(TAG, "Stream creation error!");
+		return;
+	}
 
 	Stream_Write_UINT32(s, TSMF_INTERFACE_CLIENT_NOTIFICATIONS | STREAM_ID_PROXY);
 	Stream_Write_UINT32(s, message_id);

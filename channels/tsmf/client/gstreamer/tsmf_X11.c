@@ -62,7 +62,11 @@ struct X11Handle
 	Display *disp;
 	Window subwin;
 	BOOL subwinMapped;
+#if GST_VERSION_MAJOR > 0
+	GstVideoOverlay *overlay;
+#else
 	GstXOverlay *overlay;
+#endif
 	int subwinWidth;
 	int subwinHeight;
 	int subwinX;
@@ -85,31 +89,32 @@ static GstBusSyncReply tsmf_platform_bus_sync_handler(GstBus *bus, GstMessage *m
 	if (GST_MESSAGE_TYPE (message) != GST_MESSAGE_ELEMENT)
 		return GST_BUS_PASS;
 
+#if GST_VERSION_MAJOR > 0
+	if (!gst_is_video_overlay_prepare_window_handle_message (message))
+		return GST_BUS_PASS;
+#else
 	if (!gst_structure_has_name (message->structure, "prepare-xwindow-id"))
 		return GST_BUS_PASS;
+#endif
 
 	hdl = (struct X11Handle*) decoder->platform;
 
 	if (hdl->subwin)
 	{
-		hdl->overlay = GST_X_OVERLAY (GST_MESSAGE_SRC (message));
-
 #if GST_VERSION_MAJOR > 0
+		hdl->overlay = GST_VIDEO_OVERLAY (GST_MESSAGE_SRC (message));
 		gst_video_overlay_set_window_handle(hdl->overlay, hdl->subwin);
-#else
-		gst_x_overlay_set_window_handle(hdl->overlay, hdl->subwin);
-#endif
-#if GST_VERSION_MAJOR > 0
 		gst_video_overlay_handle_events(hdl->overlay, TRUE);
 #else
+		hdl->overlay = GST_X_OVERLAY (GST_MESSAGE_SRC (message));
+		gst_x_overlay_set_window_handle(hdl->overlay, hdl->subwin);
 		gst_x_overlay_handle_events(hdl->overlay, TRUE);
 #endif
 
 		if (hdl->subwinWidth != -1 && hdl->subwinHeight != -1 && hdl->subwinX != -1 && hdl->subwinY != -1)
 		{
 #if GST_VERSION_MAJOR > 0
-
-			if (!gst_video_overlay_set_render_rectangle(hdl->overlay, 0, 0, hdl->swubwinWidth, hdl->subwinHeight))
+			if (!gst_video_overlay_set_render_rectangle(hdl->overlay, 0, 0, hdl->subwinWidth, hdl->subwinHeight))
 			{
 				WLog_ERR(TAG, "Could not resize overlay!");
 			}
@@ -142,7 +147,6 @@ const char* tsmf_platform_get_video_sink(void)
 
 const char* tsmf_platform_get_audio_sink(void)
 {
-	//return "alsasink";
 	return "autoaudiosink";
 }
 
@@ -219,7 +223,11 @@ int tsmf_platform_register_handler(TSMFGstreamerDecoder* decoder)
 
 	bus = gst_pipeline_get_bus(GST_PIPELINE(decoder->pipe));
 
+#if GST_VERSION_MAJOR > 0
+	gst_bus_set_sync_handler (bus, (GstBusSyncHandler) tsmf_platform_bus_sync_handler, decoder, NULL);
+#else
 	gst_bus_set_sync_handler (bus, (GstBusSyncHandler) tsmf_platform_bus_sync_handler, decoder);
+#endif
 
 	if (!bus)
 	{
@@ -397,7 +405,7 @@ int tsmf_window_map(TSMFGstreamerDecoder* decoder)
 
 	hdl = (struct X11Handle*) decoder->platform;
 
-	// Only need to map the window if it is not currently mapped
+	/* Only need to map the window if it is not currently mapped */
 	if ((hdl->subwin) && (!hdl->subwinMapped))
 	{
 		XLockDisplay(hdl->disp);
@@ -418,7 +426,7 @@ int tsmf_window_unmap(TSMFGstreamerDecoder* decoder)
 
 	hdl = (struct X11Handle*) decoder->platform;
 
-	// only need to unmap window if it is currently mapped
+	/* only need to unmap window if it is currently mapped */
 	if ((hdl->subwin) && (hdl->subwinMapped))
 	{
 		XLockDisplay(hdl->disp);
