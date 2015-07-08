@@ -45,7 +45,7 @@
 #define TAG FREERDP_TAG("core.nla")
 
 #define SERVER_KEY "Software\\"FREERDP_VENDOR_STRING"\\" \
-		     FREERDP_PRODUCT_STRING"\\Server"
+			 FREERDP_PRODUCT_STRING"\\Server"
 
 /**
  * TSRequest ::= SEQUENCE {
@@ -430,9 +430,9 @@ int nla_client_recv(rdpNla* nla)
 				return -1;
 			}
 
-			nla_encrypt_public_key_echo(nla);
-
-
+			nla->status = nla_encrypt_public_key_echo(nla);
+			if (nla->status != SEC_E_OK)
+				return -1;
 		}
 		else if (nla->outputBuffer.cbBuffer < 1)
 			return -1;
@@ -746,7 +746,9 @@ int nla_server_authenticate(rdpNla* nla)
 			sspi_SecBufferFree(&nla->negoToken);
 			nla->negoToken.pvBuffer = NULL;
 			nla->negoToken.cbBuffer = 0;
-			nla_encrypt_public_key_echo(nla);
+			nla->status = nla_encrypt_public_key_echo(nla);
+			if (nla->status != SEC_E_OK)
+				return -1;
 		}
 
 		if ((nla->status != SEC_E_OK) && (nla->status != SEC_I_CONTINUE_NEEDED))
@@ -908,7 +910,7 @@ SECURITY_STATUS nla_encrypt_public_key_echo(rdpNla* nla)
 	if (status != SEC_E_OK)
 	{
 		WLog_ERR(TAG, "EncryptMessage status %s [%08X]",
-			 GetSecurityStatusString(nla->status), nla->status);
+			 GetSecurityStatusString(status), status);
 		return status;
 	}
 
