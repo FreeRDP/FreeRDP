@@ -488,14 +488,14 @@ int nla_client_recv(rdpNla* nla)
 		if (nla->status != SEC_E_OK)
 		{
 			WLog_ERR(TAG, "FreeCredentialsHandle status %s [%08X]",
-				  GetSecurityStatusString(status), status);
+				  GetSecurityStatusString(nla->status), nla->status);
 		}
 
 		nla->status = nla->table->FreeContextBuffer(nla->pPackageInfo);
 		if (nla->status != SEC_E_OK)
 		{
 			WLog_ERR(TAG, "FreeContextBuffer status %s [%08X]",
-				  GetSecurityStatusString(status), status);
+				  GetSecurityStatusString(nla->status), nla->status);
 		}
 
 		if (nla->status != SEC_E_OK)
@@ -781,16 +781,10 @@ int nla_server_authenticate(rdpNla* nla)
 	if (nla_recv(nla) < 0)
 		return -1;
 
-	if (nla_decrypt_ts_credentials(nla) != SEC_E_OK)
-	{
-		WLog_ERR(TAG, "Could not decrypt TSCredentials status %s [%08X]",
-			 GetSecurityStatusString(nla->status), nla->status);
-		return -1;
-	}
-
+	nla->status = nla_decrypt_ts_credentials(nla);
 	if (nla->status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "AcceptSecurityContext status %s [%08X]",
+		WLog_ERR(TAG, "Could not decrypt TSCredentials status %s [%08X]",
 			 GetSecurityStatusString(nla->status), nla->status);
 		return -1;
 	}
