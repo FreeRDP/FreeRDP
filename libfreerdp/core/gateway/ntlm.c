@@ -244,6 +244,7 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 			{
 				WLog_WARN(TAG, "CompleteAuthToken status  %s [%08X]",
 					  GetSecurityStatusString(cStatus), cStatus);
+				return FALSE;
 			}
 		}
 
