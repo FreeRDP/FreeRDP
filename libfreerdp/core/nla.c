@@ -331,6 +331,7 @@ int nla_client_begin(rdpNla* nla)
 			{
 				WLog_WARN(TAG, "CompleteAuthToken status %s [%08X]",
 					  GetSecurityStatusString(status), status);
+				return -1;
 			}
 		}
 
@@ -409,6 +410,7 @@ int nla_client_recv(rdpNla* nla)
 				{
 					WLog_WARN(TAG, "CompleteAuthToken status %s [%08X]",
 						  GetSecurityStatusString(status), status);
+					return -1;
 				}
 			}
 
@@ -434,8 +436,6 @@ int nla_client_recv(rdpNla* nla)
 			if (nla->status != SEC_E_OK)
 				return -1;
 		}
-		else if (nla->outputBuffer.cbBuffer < 1)
-			return -1;
 
 		nla->negoToken.pvBuffer = nla->outputBuffer.pvBuffer;
 		nla->negoToken.cbBuffer = nla->outputBuffer.cbBuffer;
@@ -700,6 +700,7 @@ int nla_server_authenticate(rdpNla* nla)
 				{
 					WLog_WARN(TAG, "CompleteAuthToken status %s [%08X]",
 						  GetSecurityStatusString(status), status);
+					return -1;
 				}
 			}
 			if (nla->status == SEC_I_COMPLETE_NEEDED)
