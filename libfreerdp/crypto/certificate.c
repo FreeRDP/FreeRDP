@@ -98,15 +98,28 @@ BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 								(char*) certificate_legacy_hosts_file)))
 		goto fail;
 
+	if (!(certificate_store->fStore = fopen(certificate_store->file, "rb+")))
+		goto fail;
+
+	if (!(certificate_store->fLegacyStore = fopen(certificate_store->legacy_file, "rb+")))
+		goto fail;
+
 	free(server_path);
 
 	return TRUE;
 
 fail:
 	WLog_ERR(TAG, "certificate store initialization failed");
+	if (certificate_store->fStore)
+		fclose(certificate_store->fStore);
+	if (certificate_store->fLegacyStore)
+		fclose(certificate_store->fLegacyStore);
 	free(server_path);
 	free(certificate_store->path);
 	free(certificate_store->file);
+
+	certificate_store->fLegacyStore = NULL;
+	certificate_store->fStore = NULL;
 	certificate_store->path = NULL;
 	certificate_store->file = NULL;
 	return FALSE;
@@ -124,36 +137,42 @@ static int certificate_data_match_legacy(rdpCertificateStore* certificate_store,
 	long size;
 	size_t length;
 
-	fp = fopen(certificate_store->legacy_file, "rb");
+	fp = certificate_store->fLegacyStore;
 	if (!fp)
 		return match;
 
-	fseek(fp, 0, SEEK_END);
-	size = ftell(fp);
-	fseek(fp, 0, SEEK_SET);
-
-	if (size < 1)
+	if (fseek(fp, 0, SEEK_END) < 0)
 	{
-		fclose(fp);
+		WLog_ERR(TAG, "fseek(%s) returned %s [%08X]",
+			 certificate_store->legacy_file, strerror(errno), errno);
 		return match;
 	}
+	if ((size = ftell(fp)) < 0)
+	{
+		WLog_ERR(TAG, "ftell(%s) returned %s [%08X]",
+			 certificate_store->legacy_file, strerror(errno), errno);
+		return match;
+	}
+	if (fseek(fp, 0, SEEK_SET) < 0)
+	{
+		WLog_ERR(TAG, "fseek(%s) returned %s [%08X]",
+			 certificate_store->legacy_file, strerror(errno), errno);
+		return match;
+	}
+
+	if (size < 1)
+		return match;
 
 	mdata = (char*) malloc(size + 2);
 	if (!mdata)
-	{
-		fclose(fp);
 		return match;
-	}
 
 	data = mdata;
 	if (fread(data, size, 1, fp) != 1)
 	{
 		free(data);
-		fclose(fp);
 		return match;
 	}
-
-	fclose(fp);
 
 	data[size] = '\n';
 	data[size + 1] = '\0';
@@ -178,20 +197,27 @@ static int certificate_data_match_legacy(rdpCertificateStore* certificate_store,
 
 		pline = StrSep(&data, "\r\n");
 	}
-	free(mdata);
 
 	/* Found a valid fingerprint in legacy file,
 	 * copy to new file in new format. */
 	if (0 == match)
 	{
-		rdpCertificateData* data = certificate_data_new(hostname,
-						certificate_data->port,
-								NULL, NULL,
-								pline);
+		rdpCertificateData* data = certificate_data_new(
+						   hostname,
+						   certificate_data->port,
+						   NULL, NULL,
+						   certificate_data->fingerprint);
 		if (data)
+		{
+			free (data->subject);
+			free (data->issuer);
+			data->subject = _strdup(certificate_data->subject);
+			data->issuer = _strdup(certificate_data->issuer);
 			match = certificate_data_print(certificate_store, data) ? 0 : 1;
+		}
 		certificate_data_free(data);
 	}
+	free(mdata);
 
 	return match;
 
@@ -204,7 +230,7 @@ static int certificate_data_match_raw(rdpCertificateStore* certificate_store,
 {
 	BOOL found = FALSE;
 	FILE* fp;
-	int length;
+	size_t length;
 	char* data;
 	char* mdata;
 	char* pline;
@@ -216,36 +242,43 @@ static int certificate_data_match_raw(rdpCertificateStore* certificate_store,
 	char* fingerprint = NULL;
 	unsigned short port = 0;
 
-	fp = fopen(certificate_store->file, "rb");
+	fp = certificate_store->fStore;
 
 	if (!fp)
 		return match;
 
-	fseek(fp, 0, SEEK_END);
-	size = ftell(fp);
-	fseek(fp, 0, SEEK_SET);
-
-	if (size < 1)
+	if (fseek(fp, 0, SEEK_END) < 0)
 	{
-		fclose(fp);
+		WLog_ERR(TAG, "fseek(%s) returned %s [%08X]",
+			 certificate_store->file, strerror(errno), errno);
 		return match;
 	}
+	if ((size = ftell(fp)) < 0)
+	{
+		WLog_ERR(TAG, "ftell(%s) returned %s [%08X]",
+			 certificate_store->file, strerror(errno), errno);
+		return match;
+	}
+	if (fseek(fp, 0, SEEK_SET) < 0)
+	{
+		WLog_ERR(TAG, "fseek(%s) returned %s [%08X]",
+			 certificate_store->file, strerror(errno), errno);
+		return match;
+	}
+
+	if (size < 1)
+		return match;
 
 	mdata = (char*) malloc(size + 2);
 	if (!mdata)
-	{
-		fclose(fp);
 		return match;
-	}
 
 	data = mdata;
 	if (fread(data, size, 1, fp) != 1)
 	{
-		fclose(fp);
 		free(data);
 		return match;
 	}
-	fclose(fp);
 
 	data[size] = '\n';
 	data[size + 1] = '\0';
@@ -315,47 +348,55 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store,
 {
 	FILE* fp;
 	BOOL rc = FALSE;
-	int length;
+	size_t length;
 	char* data;
 	char* sdata;
 	char* pline;
 	long int size;
 
-	fp = fopen(certificate_store->file, "rb");
+	fp = certificate_store->fStore;
 
 	if (!fp)
 		return FALSE;
 	/* Read the current contents of the file. */
-	fseek(fp, 0, SEEK_END);
-	size = ftell(fp);
-	fseek(fp, 0, SEEK_SET);
-
-	if (size < 1)
+	if (fseek(fp, 0, SEEK_END) < 0)
 	{
-		fclose(fp);
+		WLog_ERR(TAG, "fseek(%s) returned %s [%08X]",
+			 certificate_store->file, strerror(errno), errno);
+		return FALSE;
+	}
+
+	if ((size = ftell(fp)) < 0)
+	{
+		WLog_ERR(TAG, "ftell(%s) returned %s [%08X]",
+			 certificate_store->file, strerror(errno), errno);
+		return FALSE;
+	}
+
+	if (fseek(fp, 0, SEEK_SET) < 0)
+	{
+		WLog_ERR(TAG, "fseek(%s) returned %s [%08X]",
+			 certificate_store->file, strerror(errno), errno);
 		return FALSE;
 	}
 
 	data = (char*) malloc(size + 2);
 	if (!data)
 	{
-		fclose(fp);
 		return FALSE;
 	}
 
 	if (fread(data, size, 1, fp) != 1)
 	{
-		fclose(fp);
 		free(data);
 		return FALSE;
 	}
 
-	fclose(fp);
-
-	fp = fopen(certificate_store->file, "wb");
-
-	if (!fp)
+	fp = freopen(certificate_store->file, "wb+", fp);
+	if (fp == NULL)
 	{
+		WLog_ERR(TAG, "freopen(%s) returned %s [%08X]",
+			 certificate_store->file, strerror(errno), errno);
 		free(data);
 		return FALSE;
 	}
@@ -390,14 +431,24 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store,
 					fingerprint = certificate_data->fingerprint;
 					rc = TRUE;
 				}
-				fprintf(fp, "%s %hu %s %s %s\n", hostname, port, fingerprint, subject, issuer);
+				if (fprintf(fp, "%s %hu %s %s %s\n", hostname, port, fingerprint, subject, issuer) < 0)
+				{
+					WLog_ERR(TAG, "fprintf(%s) returned %s [%08X]",
+						 certificate_store->file, strerror(errno), errno);
+					return FALSE;
+				}
 			}
 		}
 
 		pline = StrSep(&sdata, "\r\n");
 	}
 
-	fclose(fp);
+	if (fflush(fp) != 0)
+	{
+		WLog_WARN(TAG, "fflush(%s) returned %s [%08X]",
+			 certificate_store->file, strerror(errno), errno);
+	}
+
 	free(data);
 
 	return rc;
@@ -449,17 +500,32 @@ BOOL certificate_data_print(rdpCertificateStore* certificate_store, rdpCertifica
 {
 	FILE* fp;
 
-	/* reopen in append mode */
-	fp = fopen(certificate_store->file, "ab");
+	fp = certificate_store->fStore;
 
 	if (!fp)
 		return FALSE;
 
-	fprintf(fp, "%s %hu %s %s %s\n", certificate_data->hostname, certificate_data->port,
-					 certificate_data->fingerprint, certificate_data->subject,
-					 certificate_data->issuer);
+	if (fseek(fp, 0, SEEK_END) < 0)
+	{
+		WLog_ERR(TAG, "fseek(%s) returned %s [%08X]",
+			 certificate_store->file, strerror(errno), errno);
+		return FALSE;
+	}
 
-	fclose(fp);
+	if (fprintf(fp, "%s %hu %s %s %s\n", certificate_data->hostname, certificate_data->port,
+					 certificate_data->fingerprint, certificate_data->subject,
+					 certificate_data->issuer) < 0)
+	{
+		WLog_ERR(TAG, "fprintf(%s) returned %s [%08X]",
+			 certificate_store->file, strerror(errno), errno);
+		return FALSE;
+	}
+
+	if (fflush(fp) != 0)
+	{
+		WLog_WARN(TAG, "fflush(%s) returned %s [%08X]",
+			 certificate_store->file, strerror(errno), errno);
+	}
 
 	return TRUE;
 }
@@ -541,6 +607,24 @@ void certificate_store_free(rdpCertificateStore* certstore)
 {
 	if (certstore != NULL)
 	{
+		if (certstore->fStore)
+		{
+			if (fclose(certstore->fStore) < 0)
+			{
+				WLog_WARN(TAG, "fclose(%s) returned %s [%08X]",
+					 certstore->file, strerror(errno), errno);
+			}
+		}
+
+		if (certstore->fLegacyStore)
+		{
+			if (fclose(certstore->fLegacyStore) < 0)
+			{
+				WLog_WARN(TAG, "fclose(%s) returned %s [%08X]",
+					 certstore->legacy_file, strerror(errno), errno);
+			}
+		}
+
 		free(certstore->path);
 		free(certstore->file);
 		free(certstore->legacy_file);
