@@ -315,7 +315,7 @@ static int certificate_data_match_raw(rdpCertificateStore* certificate_store,
 				if (port == certificate_data->port)
 				{
 					found = TRUE;
-					match = strcmp(certificate_data->fingerprint, fingerprint);
+					match = (strcmp(certificate_data->fingerprint, fingerprint) == 0) ? 0 : -1;
 					if (fingerprint && fprint)
 						*fprint = _strdup(fingerprint);
 					if (subject && psubject)
