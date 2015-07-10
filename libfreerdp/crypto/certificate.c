@@ -98,11 +98,11 @@ BOOL certificate_store_init(rdpCertificateStore* certificate_store)
 								(char*) certificate_legacy_hosts_file)))
 		goto fail;
 
-	if (!(certificate_store->fStore = fopen(certificate_store->file, "rb+")))
+	if (!(certificate_store->fStore = fopen(certificate_store->file, "ab+")))
 		goto fail;
 
-	if (!(certificate_store->fLegacyStore = fopen(certificate_store->legacy_file, "rb+")))
-		goto fail;
+	/* Note: This file may not exist, so igonre a failure here. */
+	certificate_store->fLegacyStore = fopen(certificate_store->legacy_file, "rb");
 
 	free(server_path);
 
@@ -211,10 +211,24 @@ static int certificate_data_match_legacy(rdpCertificateStore* certificate_store,
 		{
 			free (data->subject);
 			free (data->issuer);
-			data->subject = _strdup(certificate_data->subject);
-			data->issuer = _strdup(certificate_data->issuer);
+
+			data->subject = NULL;
+			data->issuer = NULL;
+			if (certificate_data->subject)
+			{
+				data->subject = _strdup(certificate_data->subject);
+				if (!data->subject)
+					goto out;
+			}
+			if (certificate_data->issuer)
+			{
+				data->issuer = _strdup(certificate_data->issuer);
+				if (!data->issuer)
+					goto out;
+			}
 			match = certificate_data_print(certificate_store, data) ? 0 : 1;
 		}
+out:
 		certificate_data_free(data);
 	}
 	free(mdata);
