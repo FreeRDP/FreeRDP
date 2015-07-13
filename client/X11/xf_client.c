@@ -35,6 +35,7 @@
 #endif
 
 #ifdef WITH_XI
+#include <X11/extensions/XInput.h>
 #include <X11/extensions/XInput2.h>
 #endif
 
@@ -935,6 +936,92 @@ void xf_check_extensions(xfContext* context)
 #endif
 }
 
+#ifdef WITH_XI
+/* Input device which does NOT have the correct mapping. We must disregard */
+/* this device when trying to find the input device which is the pointer.  */
+static const char TEST_PTR_STR [] = "Virtual core XTEST pointer";
+static const size_t TEST_PTR_LEN = sizeof (TEST_PTR_STR) / sizeof (char);
+
+/* Invalid device identifier which indicate failure. */
+static const int INVALID_XID = -1;
+#endif /* WITH_XI */
+
+static void xf_get_x11_button_map (xfContext* xfc, unsigned char* x11_map)
+{
+#ifdef WITH_XI
+	int opcode, event, error;
+	int xid;
+	XDevice* ptr_dev;
+	XExtensionVersion* version;
+	XDeviceInfo* devices1;
+	XIDeviceInfo* devices2;
+	int i, num_devices;
+
+	if (XQueryExtension (xfc->display, "XInputExtension", &opcode, &event, &error))
+	{
+		WLog_DBG(TAG, "Searching for XInput pointer device");
+		xid = INVALID_XID;
+		/* loop through every device, looking for a pointer */
+		version = XGetExtensionVersion (xfc->display, INAME);
+		if (version->major_version >= 2)
+		{
+			/* XID of pointer device using XInput version 2 */
+			devices2 = XIQueryDevice (xfc->display, XIAllDevices, &num_devices);
+			if (devices2)
+			{
+				for (i = 0; i < num_devices; ++i)
+				{
+					if ((devices2[i].use == XISlavePointer) &&
+					    (strncmp (devices2[i].name, TEST_PTR_STR, TEST_PTR_LEN) != 0))
+					{
+						xid = devices2[i].deviceid;
+						break;
+					}
+				}
+				XIFreeDeviceInfo (devices2);
+			}
+		}
+		else
+		{
+			/* XID of pointer device using XInput version 1 */
+			devices1 = XListInputDevices (xfc->display, &num_devices);
+			if (devices1)
+			{
+				for (i = 0; i < num_devices; ++i)
+				{
+					if ((devices1[i].use == IsXExtensionPointer) &&
+					    (strncmp (devices1[i].name, TEST_PTR_STR, TEST_PTR_LEN) != 0))
+					{
+						xid = devices1[i].id;
+						break;
+					}
+				}
+				XFreeDeviceList (devices1);
+			}
+		}
+		XFree (version);
+		/* get button mapping from input extension if there is a pointer device; */
+		/* otherwise leave unchanged.                                            */
+		if (xid != INVALID_XID)
+		{
+			WLog_DBG(TAG, "Pointer device: %d", xid);
+			ptr_dev = XOpenDevice (xfc->display, xid);
+			XGetDeviceButtonMapping (xfc->display, ptr_dev, x11_map, NUM_BUTTONS_MAPPED);
+			XCloseDevice (xfc->display, ptr_dev);
+		}
+		else
+		{
+			WLog_DBG(TAG, "No pointer device found!");
+		}
+	}
+	else
+#endif /* WITH_XI */
+	{
+		WLog_DBG(TAG, "Get global pointer mapping (no XInput)");
+		XGetPointerMapping (xfc->display, x11_map, NUM_BUTTONS_MAPPED);
+	}
+}
+
 /* Assignment of physical (not logical) mouse buttons to wire flags. */
 /* Notice that the middle button is 2 in X11, but 3 in RDP.          */
 static const int xf_button_flags[NUM_BUTTONS_MAPPED] = {
@@ -956,6 +1043,9 @@ static void xf_button_map_init (xfContext* xfc)
 		Button2,
 		Button3
 	};
+
+	/* query system for actual remapping */
+	xf_get_x11_button_map (xfc, x11_map);
 
 	/* iterate over all (mapped) physical buttons; for each of them */
 	/* find the logical button in X11, and assign to this the       */
