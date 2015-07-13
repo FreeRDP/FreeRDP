@@ -25,6 +25,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 #include <winpr/crypto.h>
 #include <winpr/crt.h>
@@ -571,6 +572,7 @@ BOOL certificate_data_print(rdpCertificateStore* certificate_store, rdpCertifica
 
 rdpCertificateData* certificate_data_new(char* hostname, UINT16 port, char* subject, char* issuer, char* fingerprint)
 {
+	size_t i;
 	rdpCertificateData* certdata;
 
 	if (!hostname)
@@ -590,7 +592,7 @@ rdpCertificateData* certificate_data_new(char* hostname, UINT16 port, char* subj
 	else
 		certdata->subject = crypto_base64_encode((BYTE*)"", 0);
 	if (issuer)
-		certdata->issuer = crypto_base64_encode((BYTE*)issuer, strlen(subject));
+		certdata->issuer = crypto_base64_encode((BYTE*)issuer, strlen(issuer));
 	else
 		certdata->issuer = crypto_base64_encode((BYTE*)"", 0);
 	certdata->fingerprint = _strdup(fingerprint);
@@ -598,6 +600,9 @@ rdpCertificateData* certificate_data_new(char* hostname, UINT16 port, char* subj
 	if (!certdata->hostname || !certdata->subject ||
 			!certdata->issuer || !certdata->fingerprint)
 		goto fail;
+
+	for (i=0; i<strlen(hostname); i++)
+		certdata->hostname[i] = tolower(certdata->hostname[i]);
 
 	return certdata;
 
