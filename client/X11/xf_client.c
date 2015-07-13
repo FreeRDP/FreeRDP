@@ -1045,7 +1045,10 @@ static void xf_button_map_init (xfContext* xfc)
 	};
 
 	/* query system for actual remapping */
-	xf_get_x11_button_map (xfc, x11_map);
+	if (!xfc->settings->UnmapButtons)
+	{
+		xf_get_x11_button_map (xfc, x11_map);
+	}
 
 	/* iterate over all (mapped) physical buttons; for each of them */
 	/* find the logical button in X11, and assign to this the       */

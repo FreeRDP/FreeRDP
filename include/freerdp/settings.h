@@ -1422,6 +1422,7 @@ struct rdp_settings
 	/*
 	 * Extensions
 	 */
+	ALIGN64 BOOL UnmapButtons;
 
 	/* Extensions */
 	ALIGN64 int num_extensions; /*  */

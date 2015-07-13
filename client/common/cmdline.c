@@ -107,6 +107,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "usb", COMMAND_LINE_VALUE_REQUIRED, "[dbg][dev][id|addr][auto]", NULL, NULL, -1, NULL, "Redirect USB device" },
 	{ "multitouch", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect multitouch input" },
 	{ "gestures", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Consume multitouch input locally" },
+	{ "unmap-buttons", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Let server see real physical pointer button"},
 	{ "echo", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "echo", "Echo channel" },
 	{ "disp", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Display control" },
 	{ "fonts", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Smooth fonts (ClearType)" },
@@ -2141,6 +2142,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchCase(arg, "grab-keyboard")
 		{
 			settings->GrabKeyboard = arg->Value ? TRUE : FALSE;
+		}
+		CommandLineSwitchCase(arg, "unmap-buttons")
+		{
+			settings->UnmapButtons = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchCase(arg, "toggle-fullscreen")
 		{
