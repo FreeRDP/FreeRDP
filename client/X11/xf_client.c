@@ -935,6 +935,46 @@ void xf_check_extensions(xfContext* context)
 #endif
 }
 
+/* Assignment of physical (not logical) mouse buttons to wire flags. */
+/* Notice that the middle button is 2 in X11, but 3 in RDP.          */
+static const int xf_button_flags[NUM_BUTTONS_MAPPED] = {
+	PTR_FLAGS_BUTTON1,
+	PTR_FLAGS_BUTTON3,
+	PTR_FLAGS_BUTTON2
+};
+
+static void xf_button_map_init (xfContext* xfc)
+{
+	/* loop counter for array initialization */
+	int physical;
+	int logical;
+
+	/* logical mouse button which is used for each physical mouse  */
+	/* button (indexed from zero). This is the default map.        */
+	unsigned char x11_map[NUM_BUTTONS_MAPPED] = {
+		Button1,
+		Button2,
+		Button3
+	};
+
+	/* iterate over all (mapped) physical buttons; for each of them */
+	/* find the logical button in X11, and assign to this the       */
+	/* appropriate value to send over the RDP wire.                 */
+	for (physical = 0; physical < NUM_BUTTONS_MAPPED; ++physical)
+	{
+		logical = x11_map[physical];
+		if (Button1 <= logical && logical <= Button3)
+		{
+			xfc->button_map[logical-BUTTON_BASE] = xf_button_flags[physical];
+		}
+		else
+		{
+			WLog_ERR(TAG,"Mouse physical button %d is mapped to logical button %d",
+				physical, logical);
+		}
+	}
+}
+
 /**
  * Callback given to freerdp_connect() to process the pre-connect operations.
  * It will fill the rdp_freerdp structure (instance) with the appropriate options to use for the connection.
@@ -1058,6 +1098,7 @@ BOOL xf_pre_connect(freerdp* instance)
 	xfc->decorations = settings->Decorations;
 	xfc->grab_keyboard = settings->GrabKeyboard;
 	xfc->fullscreen_toggle = settings->ToggleFullscreen;
+	xf_button_map_init (xfc);
 
 	return TRUE;
 }

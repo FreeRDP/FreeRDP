@@ -312,16 +312,10 @@ BOOL xf_generic_ButtonPress(xfContext* xfc, int x, int y, int button, Window win
 
 	switch (button)
 	{
-		case 1:
-			flags = PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1;
-			break;
-
-		case 2:
-			flags = PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON3;
-			break;
-
-		case 3:
-			flags = PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON2;
+		case Button1:
+		case Button2:
+		case Button3:
+			flags = PTR_FLAGS_DOWN | xfc->button_map[button-BUTTON_BASE];
 			break;
 
 		case 4:
@@ -422,16 +416,10 @@ BOOL xf_generic_ButtonRelease(xfContext* xfc, int x, int y, int button, Window w
 
 	switch (button)
 	{
-		case 1:
-			flags = PTR_FLAGS_BUTTON1;
-			break;
-
-		case 2:
-			flags = PTR_FLAGS_BUTTON3;
-			break;
-
-		case 3:
-			flags = PTR_FLAGS_BUTTON2;
+		case Button1:
+		case Button2:
+		case Button3:
+			flags = xfc->button_map[button-BUTTON_BASE];
 			break;
 
 		case 6:
