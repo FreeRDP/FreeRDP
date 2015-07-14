@@ -365,7 +365,11 @@ static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown)
 		return 0;
 
 	/* WSAEventSelect automatically sets the socket in non-blocking mode */
-	WSAEventSelect(ptr->socket, ptr->hEvent, FD_READ | FD_WRITE | FD_CLOSE);
+	if (WSAEventSelect(ptr->socket, ptr->hEvent, FD_READ | FD_WRITE | FD_CLOSE))
+	{
+		WLog_ERR(TAG, "WSAEventSelect returned %08X", WSAGetLastError());
+		return 0;
+	}
 
 	return 1;
 }
@@ -744,6 +748,7 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd,
 	HANDLE handles[2];
 	int status = 0;
 	int count = 0;
+	u_long arg = 0;
 	DWORD tout = (timeout) ? timeout * 1000 : INFINITE;
 
 	handles[count] = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -755,7 +760,7 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd,
 	{
 		WLog_ERR(TAG, "WSAEventSelect failed with %lX", WSAGetLastError());
 		return FALSE;
-}
+	}
 
 	handles[count++] = context->abortEvent;
 
@@ -797,6 +802,9 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd,
 		WLog_ERR(TAG, "WSAEventSelect failed with %lX", WSAGetLastError());
 		return FALSE;
 	}
+
+	if (_ioctlsocket(sockfd, FIONBIO, &arg) != 0)
+		return FALSE;
 
 	return TRUE;
 }
@@ -888,7 +896,11 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames,
 
 		/* set socket in non-blocking mode */
 
-		WSAEventSelect(sockfd, events[index], FD_READ | FD_WRITE | FD_CONNECT | FD_CLOSE);
+		if (WSAEventSelect(sockfd, events[index], FD_READ | FD_WRITE | FD_CONNECT | FD_CLOSE))
+		{
+			WLog_ERR(TAG, "WSAEventSelect returned %08X", WSAGetLastError());
+			continue;
+		}
 
 		/* non-blocking tcp connect */
 
@@ -909,14 +921,24 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames,
 
 	for (index = 0; index < count; index++)
 	{
+		u_long arg = 0;
+
 		if (!sockfds[index])
 			continue;
 
 		sockfd = sockfds[index];
 
 		/* set socket in blocking mode */
+		if (WSAEventSelect(sockfd, NULL, 0))
+		{
+			WLog_ERR(TAG, "WSAEventSelect returned %08X", WSAGetLastError());
+			continue;
+		}
 
-		WSAEventSelect(sockfd, NULL, 0);
+		if (_ioctlsocket(sockfd, FIONBIO, &arg))
+		{
+			WLog_ERR(TAG, "_ioctlsocket failed");
+		}
 	}
 
 	if ((sindex >= 0) && (sindex < count))
