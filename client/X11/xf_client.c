@@ -1195,6 +1195,8 @@ static void xf_post_disconnect(freerdp* instance)
 	context = instance->context;
 	xfc = (xfContext*) context;
 
+	freerdp_channels_disconnect(context->channels, instance);
+
 	gdi_free(instance);
 
 	if (xfc->clipboard)
@@ -1212,8 +1214,6 @@ static void xf_post_disconnect(freerdp* instance)
 	}
 
 	xf_keyboard_free(xfc);
-
-	freerdp_channels_disconnect(context->channels, instance);
 }
 
 /** Callback set in the rdp_freerdp structure, and used to get the user's password,
