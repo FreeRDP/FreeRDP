@@ -31,6 +31,12 @@
 extern "C" {
 #endif
 
+#define WINPR_FD_READ_BIT				0
+#define WINPR_FD_READ					(1 << WINPR_FD_READ_BIT)
+
+#define WINPR_FD_WRITE_BIT				1
+#define WINPR_FD_WRITE					(1 << WINPR_FD_WRITE_BIT)
+
 #ifndef _WIN32
 
 #define DUPLICATE_CLOSE_SOURCE			0x00000001
@@ -38,12 +44,6 @@ extern "C" {
 
 #define HANDLE_FLAG_INHERIT			0x00000001
 #define HANDLE_FLAG_PROTECT_FROM_CLOSE		0x00000002
-
-#define WINPR_FD_READ_BIT				0
-#define WINPR_FD_READ					(1 << WINPR_FD_READ_BIT)
-
-#define WINPR_FD_WRITE_BIT				1
-#define WINPR_FD_WRITE					(1 << WINPR_FD_WRITE_BIT)
 
 WINPR_API BOOL CloseHandle(HANDLE hObject);
 
