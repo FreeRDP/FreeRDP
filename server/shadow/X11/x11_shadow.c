@@ -1265,7 +1265,7 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 	}
 
 	if (!(subsystem->event = CreateFileDescriptorEvent(NULL, FALSE, FALSE,
-							subsystem->xfds, FD_READ)))
+							subsystem->xfds, WINPR_FD_READ)))
 		return -1;
 
 	virtualScreen = &(subsystem->virtualScreen);

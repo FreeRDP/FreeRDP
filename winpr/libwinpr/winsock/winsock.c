@@ -648,6 +648,7 @@ BOOL WSACloseEvent(HANDLE hEvent)
 int WSAEventSelect(SOCKET s, WSAEVENT hEventObject, LONG lNetworkEvents)
 {
 	u_long arg = lNetworkEvents ? 1 : 0;
+	ULONG mode = 0;
 
 	if (_ioctlsocket(s, FIONBIO, &arg) != 0)
 		return SOCKET_ERROR;
@@ -655,7 +656,12 @@ int WSAEventSelect(SOCKET s, WSAEVENT hEventObject, LONG lNetworkEvents)
 	if (arg == 0)
 		return 0;
 
-	if (SetEventFileDescriptor(hEventObject, s, lNetworkEvents) < 0)
+	if (lNetworkEvents & FD_READ)
+		mode |= WINPR_FD_READ;
+	if (lNetworkEvents & FD_WRITE)
+		mode |= WINPR_FD_WRITE;
+
+	if (SetEventFileDescriptor(hEventObject, s, mode) < 0)
 		return SOCKET_ERROR;
 
 	return 0;

@@ -31,6 +31,12 @@
 extern "C" {
 #endif
 
+#define WINPR_FD_READ_BIT				0
+#define WINPR_FD_READ					(1 << WINPR_FD_READ_BIT)
+
+#define WINPR_FD_WRITE_BIT				1
+#define WINPR_FD_WRITE					(1 << WINPR_FD_WRITE_BIT)
+
 #ifndef _WIN32
 
 #define DUPLICATE_CLOSE_SOURCE			0x00000001

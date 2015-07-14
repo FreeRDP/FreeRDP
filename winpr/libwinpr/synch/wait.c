@@ -137,9 +137,9 @@ static int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec
 static DWORD handle_mode_to_pollevent(ULONG mode)
 {
 	DWORD event = 0;
-	if (mode & FD_READ)
+	if (mode & WINPR_FD_READ)
 		event |= POLLIN;
-	if (mode & FD_WRITE)
+	if (mode & WINPR_FD_WRITE)
 		event |= POLLOUT;
 
 	return event;
@@ -181,9 +181,9 @@ static int waitOnFd(int fd, ULONG mode, DWORD dwMilliseconds)
 	FD_SET(fd, &wfds);
 	ZeroMemory(&timeout, sizeof(timeout));
 
-	if (mode & FD_READ)
+	if (mode & WINPR_FD_READ)
 		prfds = &rfds;
-	if (mode & FD_WRITE)
+	if (mode & WINPR_FD_WRITE)
 		pwfds = &wfds;
 
 	if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
@@ -372,9 +372,9 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 			FD_SET(fd, &rfds);
 			FD_SET(fd, &wfds);
 
-			if (Object->Mode & FD_READ)
+			if (Object->Mode & WINPR_FD_READ)
 				prfds = &rfds;
-			if (Object->Mode & FD_WRITE)
+			if (Object->Mode & WINPR_FD_WRITE)
 				pwfds = &wfds;
 
 			if (fd > maxfd)
@@ -464,9 +464,9 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 #ifdef HAVE_POLL_H
 			signal_set = pollfds[index].revents & pollfds[index].events;
 #else
-			if (Object->Mode & FD_READ)
+			if (Object->Mode & WINPR_FD_READ)
 				signal_set = FD_ISSET(fd, &rfds);
-			if (Object->Mode & FD_WRITE)
+			if (Object->Mode & WINPR_FD_WRITE)
 				signal_set = FD_ISSET(fd, &wfds);
 #endif
 			if (signal_set)

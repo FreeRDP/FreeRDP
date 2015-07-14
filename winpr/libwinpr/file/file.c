@@ -42,6 +42,7 @@
 
 #include "../log.h"
 #define TAG WINPR_TAG("file")
+#include <winpr/handle.h>
 
 /**
  * api-ms-win-core-file-l1-2-0.dll:
@@ -414,7 +415,7 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 	}
 
 	hNamedPipe = (HANDLE) pNamedPipe;
-	WINPR_HANDLE_SET_TYPE_AND_MODE(pNamedPipe, HANDLE_TYPE_NAMED_PIPE, FD_READ);
+	WINPR_HANDLE_SET_TYPE_AND_MODE(pNamedPipe, HANDLE_TYPE_NAMED_PIPE, WINPR_FD_READ);
 	pNamedPipe->name = _strdup(lpFileName);
 	if (!pNamedPipe->name)
 	{

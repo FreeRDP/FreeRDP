@@ -41,7 +41,10 @@
 #include <net/if.h>
 #endif
 
+#include <winpr/handle.h>
+
 #include "listener.h"
+
 
 #define TAG FREERDP_TAG("core.listener")
 
@@ -169,7 +172,7 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 
 		listener->sockfds[listener->num_sockfds] = sockfd;
 		listener->events[listener->num_sockfds] =
-			CreateFileDescriptorEvent(NULL, FALSE, FALSE, sockfd, FD_READ);
+			CreateFileDescriptorEvent(NULL, FALSE, FALSE, sockfd, WINPR_FD_READ);
 		listener->num_sockfds++;
 
 		WLog_INFO(TAG, "Listening on %s:%s", addr, servname);
@@ -227,7 +230,7 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 		return FALSE;
 	}
 
-	hevent = CreateFileDescriptorEvent(NULL, FALSE, FALSE, sockfd, FD_READ);
+	hevent = CreateFileDescriptorEvent(NULL, FALSE, FALSE, sockfd, WINPR_FD_READ);
 	if (!hevent)
 	{
 		WLog_ERR(TAG, "failed to create sockfd event");
@@ -261,7 +264,7 @@ static BOOL freerdp_listener_open_from_socket(freerdp_listener* instance, int fd
 
 	listener->sockfds[listener->num_sockfds] = fd;
 	listener->events[listener->num_sockfds] =
-		CreateFileDescriptorEvent(NULL, FALSE, FALSE, fd, FD_READ);
+		CreateFileDescriptorEvent(NULL, FALSE, FALSE, fd, WINPR_FD_READ);
 	if (!listener->events[listener->num_sockfds])
 		return FALSE;
 
