@@ -140,7 +140,7 @@ HANDLE CreateMutexW(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner,
 	{
 		pthread_mutex_init(&mutex->mutex, 0);
 
-		WINPR_HANDLE_SET_TYPE_AND_MODE(mutex, HANDLE_TYPE_MUTEX, FD_READ);
+		WINPR_HANDLE_SET_TYPE_AND_MODE(mutex, HANDLE_TYPE_MUTEX, WINPR_FD_READ);
 		mutex->ops = &ops;
 
 		handle = (HANDLE) mutex;

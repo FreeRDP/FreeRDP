@@ -30,7 +30,6 @@
 #include <winpr/wtypes.h>
 #include <winpr/error.h>
 #include <winpr/handle.h>
-#include <winpr/winsock.h>
 
 #include <winpr/nt.h>
 
@@ -333,7 +332,6 @@ WINPR_API BOOL WINAPI EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBa
 WINPR_API BOOL WINAPI DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier);
 
 #endif
-
 /* Extended API */
 
 WINPR_API VOID USleep(DWORD dwMicroseconds);
