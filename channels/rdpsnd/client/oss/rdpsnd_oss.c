@@ -3,6 +3,8 @@
  * Audio Output Virtual Channel
  *
  * Copyright (c) 2015 Rozhuk Ivan <rozhuk.im@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -434,12 +436,13 @@ static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin *device, ADDIN_ARGV *a
 #define freerdp_rdpsnd_client_subsystem_entry	oss_freerdp_rdpsnd_client_subsystem_entry
 #endif
 
-int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints) {
+WIN32ERROR freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints) {
 	ADDIN_ARGV *args;
 	rdpsndOssPlugin *oss;
 
-	oss = (rdpsndOssPlugin*)malloc(sizeof(rdpsndOssPlugin));
-	ZeroMemory(oss, sizeof(rdpsndOssPlugin));
+	oss = (rdpsndOssPlugin*)calloc(1, sizeof(rdpsndOssPlugin));
+	if (!oss)
+		return CHANNEL_RC_NO_MEMORY;
 
 	oss->device.Open = rdpsnd_oss_open;
 	oss->device.FormatSupported = rdpsnd_oss_format_supported;
@@ -459,8 +462,13 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	rdpsnd_oss_parse_addin_args((rdpsndDevicePlugin*)oss, args);
 
 	oss->dsp_context = freerdp_dsp_context_new();
+	if (!oss->dsp_context)
+	{
+		free(oss);
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*)oss);
 
-	return 0;
+	return CHANNEL_RC_OK;
 }

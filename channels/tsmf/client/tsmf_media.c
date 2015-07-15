@@ -4,6 +4,8 @@
  *
  * Copyright 2010-2011 Vic Lee
  * Copyright 2012 Hewlett-Packard Development Company, L.P.
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,6 +112,7 @@ struct _TSMF_STREAM
 
 	wQueue *sample_list;
 	wQueue *sample_ack_list;
+	rdpContext* rdpcontext;
 };
 
 struct _TSMF_SAMPLE
@@ -596,6 +599,7 @@ static void* tsmf_stream_ack_func(void *arg)
 {
 	HANDLE hdl[2];
 	TSMF_STREAM* stream = (TSMF_STREAM*) arg;
+	WIN32ERROR error = CHANNEL_RC_OK;
 	DEBUG_TSMF("in %d", stream->stream_id);
 
 	hdl[0] = stream->stopEvent;
@@ -615,8 +619,16 @@ static void* tsmf_stream_ack_func(void *arg)
 			continue;
 
 		if (tsmf_stream_process_ack(stream, FALSE))
+		{
+			error = ERROR_INTERNAL_ERROR;
+			WLog_ERR(TAG, "tsmf_stream_process_ack failed!");
 			break;
+		}
+
 	}
+
+	if (error && stream->rdpcontext)
+		setChannelError(stream->rdpcontext, error, "tsmf_stream_ack_func reported an error");
 
 	DEBUG_TSMF("out %d", stream->stream_id);
 	ExitThread(0);
@@ -629,6 +641,7 @@ static void* tsmf_stream_playback_func(void *arg)
 	TSMF_SAMPLE* sample;
 	TSMF_STREAM* stream = (TSMF_STREAM *) arg;
 	TSMF_PRESENTATION* presentation = stream->presentation;
+	WIN32ERROR error = CHANNEL_RC_OK;
 
 	DEBUG_TSMF("in %d", stream->stream_id);
 
@@ -661,6 +674,7 @@ static void* tsmf_stream_playback_func(void *arg)
 		if (sample && !tsmf_sample_playback(sample))
 		{
 			WLog_ERR(TAG, "error playing sample");
+			error = ERROR_INTERNAL_ERROR;
 			break;
 		}
 	}
@@ -670,6 +684,9 @@ static void* tsmf_stream_playback_func(void *arg)
 		stream->audio->Free(stream->audio);
 		stream->audio = NULL;
 	}
+
+	if (error && stream->rdpcontext)
+		setChannelError(stream->rdpcontext, error, "tsmf_stream_playback_func reported an error");
 
 	DEBUG_TSMF("out %d", stream->stream_id);
 	ExitThread(0);
@@ -972,7 +989,7 @@ void tsmf_presentation_free(TSMF_PRESENTATION* presentation)
 	ArrayList_Remove(presentation_list, presentation);
 }
 
-TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id)
+TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id, rdpContext* rdpcontext)
 {
 	TSMF_STREAM* stream;
 	stream = tsmf_stream_find_by_id(presentation, stream_id);
@@ -1016,6 +1033,8 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id)
 
 	if (ArrayList_Add(presentation->stream_list, stream) < 0)
 		goto error_add;
+
+	stream->rdpcontext = rdpcontext;
 
 	return stream;
 

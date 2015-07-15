@@ -4,6 +4,8 @@
  *
  * Copyright 2009-2011 Jay Sorg
  * Copyright 2010-2011 Vic Lee
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -601,7 +603,7 @@ static COMMAND_LINE_ARGUMENT_A rdpsnd_alsa_args[] =
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
-static int rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* args)
+static WIN32ERROR rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
@@ -612,7 +614,10 @@ static int rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* 
 
 	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv, rdpsnd_alsa_args, flags, alsa, NULL, NULL);
 	if (status < 0)
-		return status;
+	{
+		WLog_ERR(TAG, "CommandLineParseArgumentsA failed!");
+		return CHANNEL_RC_INITIALIZATION_ERROR;
+	}
 
 	arg = rdpsnd_alsa_args;
 
@@ -634,21 +639,25 @@ static int rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* 
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 
-	return status;
+	return CHANNEL_RC_OK;
 }
 
 #ifdef STATIC_CHANNELS
 #define freerdp_rdpsnd_client_subsystem_entry	alsa_freerdp_rdpsnd_client_subsystem_entry
 #endif
 
-int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+WIN32ERROR freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	ADDIN_ARGV* args;
 	rdpsndAlsaPlugin* alsa;
+	WIN32ERROR error;
 
 	alsa = (rdpsndAlsaPlugin*) calloc(1, sizeof(rdpsndAlsaPlugin));
 	if (!alsa)
-		return -1;
+	{
+		WLog_ERR(TAG, "calloc failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	alsa->device.Open = rdpsnd_alsa_open;
 	alsa->device.FormatSupported = rdpsnd_alsa_format_supported;
@@ -661,14 +670,22 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	alsa->device.Free = rdpsnd_alsa_free;
 
 	args = pEntryPoints->args;
-	if (rdpsnd_alsa_parse_addin_args((rdpsndDevicePlugin*) alsa, args) != 0)
+	if ((error = rdpsnd_alsa_parse_addin_args((rdpsndDevicePlugin*) alsa, args)))
+	{
+		WLog_ERR(TAG, "rdpsnd_alsa_parse_addin_args failed with error %lu", error);
 		goto error_parse_args;
+	}
+
 
 	if (!alsa->device_name)
 	{
 		alsa->device_name = _strdup("default");
 		if (!alsa->device_name)
+		{
+			WLog_ERR(TAG, "_strdup failed!");
+			error = CHANNEL_RC_NO_MEMORY;
 			goto error_strdup;
+		}
 	}
 
 	alsa->pcm_handle = 0;
@@ -681,11 +698,15 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 
 	alsa->dsp_context = freerdp_dsp_context_new();
 	if (!alsa->dsp_context)
+	{
+		WLog_ERR(TAG, "freerdp_dsp_context_new failed!");
+		error = CHANNEL_RC_NO_MEMORY;
 		goto error_dsp_context;
+	}
 
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*) alsa);
 
-	return 0;
+	return CHANNEL_RC_OK;
 
 error_dsp_context:
 	free(alsa->device_name);
@@ -693,5 +714,5 @@ error_strdup:
 	free(alsa->device_name);
 error_parse_args:
 	free(alsa);
-	return -1;
+	return error;
 }

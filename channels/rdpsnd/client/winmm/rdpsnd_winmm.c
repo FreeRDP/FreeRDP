@@ -4,6 +4,8 @@
  *
  * Copyright 2009-2012 Jay Sorg
  * Copyright 2010-2012 Vic Lee
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +33,12 @@
 
 #include <winpr/crt.h>
 #include <winpr/cmdline.h>
+#include <winpr/win32error.h>
 
 #include <freerdp/types.h>
 #include <freerdp/codec/dsp.h>
 #include <freerdp/channels/log.h>
+#include <winpr/win32error.h>
 
 #include "rdpsnd_main.h"
 
@@ -335,7 +339,7 @@ static void rdpsnd_winmm_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV
 #define freerdp_rdpsnd_client_subsystem_entry	winmm_freerdp_rdpsnd_client_subsystem_entry
 #endif
 
-int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+WIN32ERROR freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	ADDIN_ARGV* args;
 	rdpsndWinmmPlugin* winmm;
@@ -343,7 +347,7 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	winmm = (rdpsndWinmmPlugin*) calloc(1, sizeof(rdpsndWinmmPlugin));
 
 	if (!winmm)
-		return -1;
+		return CHANNEL_RC_NO_MEMORY;
 
 	winmm->device.DisableConfirmThread = TRUE;
 
@@ -362,8 +366,13 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	rdpsnd_winmm_parse_addin_args((rdpsndDevicePlugin*) winmm, args);
 
 	winmm->dsp_context = freerdp_dsp_context_new();
+	if (!winmm->dsp_context)
+	{
+		free(winmm);
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*) winmm);
 
-	return 0;
+	return CHANNEL_RC_OK;
 }

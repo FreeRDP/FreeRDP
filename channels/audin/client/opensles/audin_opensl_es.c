@@ -39,6 +39,7 @@
 #include <freerdp/channels/rdpsnd.h>
 
 #include <SLES/OpenSLES.h>
+#include <freerdp/client/audin.h>
 
 #include "audin_main.h"
 #include "opensl_io.h"
@@ -66,6 +67,8 @@ typedef struct _AudinOpenSLESDevice
 	HANDLE stopEvent;
 
 	void* user_data;
+
+	rdpContext* rdpcontext;
 } AudinOpenSLESDevice;
 
 static void* audin_opensles_thread_func(void* arg)
@@ -79,6 +82,7 @@ static void* audin_opensles_thread_func(void* arg)
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) arg;
 	const size_t raw_size = opensles->frames_per_packet * opensles->bytes_per_channel;
 	int rc = CHANNEL_RC_OK;
+	WIN32ERROR error = CHANNEL_RC_OK;
 
 	DEBUG_DVC("opensles=%p", opensles);
 	
@@ -92,7 +96,8 @@ static void* audin_opensles_thread_func(void* arg)
 	if (!buffer.v)
 	{
 		WLog_ERR(TAG, "calloc failed!");
-		//TODO: signal error to freerdp
+		if (opensles->rdpcontext)
+			setChannelError(opensles->rdpcontext, CHANNEL_RC_NO_MEMORY, "audin_opensles_thread_func reported an error");
 		ExitThread((DWORD)CHANNEL_RC_NO_MEMORY);
 		return NULL;
 	}
@@ -114,17 +119,25 @@ static void* audin_opensles_thread_func(void* arg)
 		assert(rc == raw_size);
 		if (opensles->format == WAVE_FORMAT_ADPCM)
 		{
-			opensles->dsp_context->encode_ms_adpcm(opensles->dsp_context,
-				buffer.b, rc, opensles->channels, opensles->block_size);
+			if (!opensles->dsp_context->encode_ms_adpcm(opensles->dsp_context,
+				buffer.b, rc, opensles->channels, opensles->block_size))
+			{
+				error = ERROR_INTERNAL_ERROR;
+				break;
+			}
 
 			encoded_data = opensles->dsp_context->adpcm_buffer;
 			encoded_size = opensles->dsp_context->adpcm_size;
 		}
 		else if (opensles->format == WAVE_FORMAT_DVI_ADPCM)
 		{
-			opensles->dsp_context->encode_ima_adpcm(opensles->dsp_context,
+			if (!opensles->dsp_context->encode_ima_adpcm(opensles->dsp_context,
 				buffer.b, rc,
-				opensles->channels, opensles->block_size);
+				opensles->channels, opensles->block_size))
+			{
+				error = ERROR_INTERNAL_ERROR;
+				break;
+			}
 
 			encoded_data = opensles->dsp_context->adpcm_buffer;
 			encoded_size = opensles->dsp_context->adpcm_size;
@@ -135,8 +148,8 @@ static void* audin_opensles_thread_func(void* arg)
 			encoded_size = rc;
 		}
 
-		rc = opensles->receive(encoded_data, encoded_size, opensles->user_data);
-		if (rc)
+		error = opensles->receive(encoded_data, encoded_size, opensles->user_data);
+		if (error)
 			break;
 	}
 
@@ -144,7 +157,10 @@ static void* audin_opensles_thread_func(void* arg)
 
 	DEBUG_DVC("thread shutdown.");
 
-	ExitThread((DWORD)rc);
+	if (error && opensles->rdpcontext)
+		setChannelError(opensles->rdpcontext, error, "audin_opensles_thread_func reported an error");
+
+	ExitThread((DWORD)error);
 	return NULL;
 }
 
@@ -312,7 +328,6 @@ static WIN32ERROR audin_opensles_open(IAudinDevice* device, AudinReceive receive
 		WLog_ERR(TAG, "CreateEvent failed!");
 		goto error_out;
 	}
-	// TODO: add mechanism that threads can signal failure
 	if (!(opensles->thread = CreateThread(NULL, 0,
 		(LPTHREAD_START_ROUTINE) audin_opensles_thread_func,
 		opensles, 0, NULL)))
@@ -441,6 +456,7 @@ WIN32ERROR freerdp_audin_client_subsystem_entry(
 	opensles->iface.SetFormat = audin_opensles_set_format;
 	opensles->iface.Close = audin_opensles_close;
 	opensles->iface.Free = audin_opensles_free;
+	opensles->rdpcontext = pEntryPoints->rdpcontext;
 
 	args = pEntryPoints->args;
 

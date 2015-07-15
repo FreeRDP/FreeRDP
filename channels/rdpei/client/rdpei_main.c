@@ -36,6 +36,7 @@
 #include <winpr/collections.h>
 
 #include <freerdp/addin.h>
+#include <freerdp/freerdp.h>
 
 #include "rdpei_common.h"
 
@@ -105,6 +106,7 @@ struct _RDPEI_PLUGIN
 	HANDLE thread;
 
 	CRITICAL_SECTION lock;
+	rdpContext* rdpcontext;
 };
 typedef struct _RDPEI_PLUGIN RDPEI_PLUGIN;
 
@@ -162,19 +164,19 @@ static void* rdpei_schedule_thread(void* arg)
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) arg;
 	RdpeiClientContext* context = (RdpeiClientContext*) rdpei->iface.pInterface;
 	HANDLE hdl[] = {rdpei->event, rdpei->stopEvent};
-	WIN32ERROR error;
+	WIN32ERROR error = CHANNEL_RC_OK;
 
 	if (!rdpei)
 	{
-		ExitThread((DWORD)ERROR_INVALID_PARAMETER);
-		return NULL;
+		error = ERROR_INVALID_PARAMETER;
+		goto out;
 	}
 
 
 	if (!context)
 	{
-		ExitThread((DWORD)ERROR_INVALID_PARAMETER);
-		return NULL;
+		error = ERROR_INVALID_PARAMETER;
+		goto out;
 	}
 
 	while (1)
@@ -188,8 +190,7 @@ static void* rdpei_schedule_thread(void* arg)
 		if ((error = rdpei_add_frame(context)))
 		{
 			WLog_ERR(TAG, "rdpei_add_frame failed with error %lu!", error);
-			ExitThread((DWORD)error);
-			return NULL;
+			break;
 		}
 
 		if (rdpei->frame.contactCount > 0)
@@ -197,17 +198,19 @@ static void* rdpei_schedule_thread(void* arg)
 			if ((error = rdpei_send_frame(context)))
 			{
 				WLog_ERR(TAG, "rdpei_send_frame failed with error %lu!", error);
-				ExitThread((DWORD)error);
-				return NULL;
+				break;
 			}
 		}
-
 
 		if (status == WAIT_OBJECT_0)
 			ResetEvent(rdpei->event);
 
 		LeaveCriticalSection(&rdpei->lock);
 	}
+
+out:
+	if (error && rdpei->rdpcontext)
+		setChannelError(rdpei->rdpcontext, error, "rdpei_schedule_thread reported an error");
 
 	ExitThread(0);
 
@@ -874,6 +877,10 @@ WIN32ERROR DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		rdpei->maxTouchContacts = 10;
 		size = rdpei->maxTouchContacts * sizeof(RDPINPUT_CONTACT_POINT);
 		rdpei->contactPoints = (RDPINPUT_CONTACT_POINT*) calloc(1, size);
+
+		rdpei->rdpcontext = ((freerdp*)((rdpSettings*) pEntryPoints->GetRdpSettings(pEntryPoints))->instance)->context;
+
+
 		if (!rdpei->contactPoints)
 		{
 			WLog_ERR(TAG, "calloc failed!");

@@ -67,7 +67,7 @@ struct rdpdr_plugin
 #else
 	HANDLE stopEvent;
 #endif
-	WIN32ERROR error;
+	rdpContext* rdpcontext;
 };
 
 WIN32ERROR rdpdr_send(rdpdrPlugin* rdpdr, wStream* s);

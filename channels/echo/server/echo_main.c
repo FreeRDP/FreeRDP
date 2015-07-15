@@ -111,8 +111,7 @@ static void* echo_server_thread_func(void* arg)
 	{
 		IFCALLRET(echo->context.OpenResult, error, &echo->context, ECHO_SERVER_OPEN_RESULT_NOTSUPPORTED);
 		WLog_ERR(TAG, "echo_server_open_channel failed with error %lu!", error);
-		ExitThread((DWORD)error);
-		return NULL;
+		goto out;
 	}
 
 	buffer = NULL;
@@ -205,10 +204,13 @@ static void* echo_server_thread_func(void* arg)
 			break;
 		}
 	}
-
 	Stream_Free(s, TRUE);
 	WTSVirtualChannelClose(echo->echo_channel);
 	echo->echo_channel = NULL;
+out:
+	if (error && echo->context.rdpcontext)
+		setChannelError(echo->context.rdpcontext, error, "echo_server_thread_func reported an error");
+
 	ExitThread((DWORD)error);
 	return NULL;
 }

@@ -3,6 +3,8 @@
  * FreeRDP Sample Server (Audio Output)
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +45,7 @@ static void sf_peer_rdpsnd_activated(RdpsndServerContext* context)
 BOOL sf_peer_rdpsnd_init(testPeerContext* context)
 {
 	context->rdpsnd = rdpsnd_server_context_new(context->vcm);
+	context->rdpsnd->rdpcontext = &context->_p;
 	context->rdpsnd->data = context;
 
 	context->rdpsnd->server_formats = test_audio_formats;
@@ -56,7 +59,10 @@ BOOL sf_peer_rdpsnd_init(testPeerContext* context)
 
 	context->rdpsnd->Activated = sf_peer_rdpsnd_activated;
 
-	context->rdpsnd->Initialize(context->rdpsnd, TRUE);
+	if (context->rdpsnd->Initialize(context->rdpsnd, TRUE) != CHANNEL_RC_OK)
+	{
+		return FALSE;
+	}
 
 	return TRUE;
 }

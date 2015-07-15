@@ -68,6 +68,7 @@ struct _SERIAL_DEVICE
 	wListDictionary *IrpThreads;
 	UINT32 IrpThreadToBeTerminatedCount;
 	CRITICAL_SECTION TerminatingIrpThreadsLock;
+	rdpContext* rdpcontext;
 };
 
 typedef struct _IRP_THREAD_DATA IRP_THREAD_DATA;
@@ -454,14 +455,21 @@ static void* irp_thread_func(void* arg)
 
 	/* blocks until the end of the request */
 	if ((error = serial_process_irp(data->serial, data->irp)))
+	{
 		WLog_ERR(TAG, "serial_process_irp failed with error %lu", error);
+		goto error_out;
+	}
 
 	EnterCriticalSection(&data->serial->TerminatingIrpThreadsLock);
 	data->serial->IrpThreadToBeTerminatedCount++;
 
-	data->irp->Complete(data->irp);
+	error = data->irp->Complete(data->irp);
 
 	LeaveCriticalSection(&data->serial->TerminatingIrpThreadsLock);
+
+error_out:
+	if (error && data->serial->rdpcontext)
+		setChannelError(data->serial->rdpcontext, error, "irp_thread_func reported an error");
 
 	/* NB: At this point, the server might already being reusing
 	 * the CompletionId whereas the thread is not yet
@@ -469,7 +477,7 @@ static void* irp_thread_func(void* arg)
 
 	free(data);
 
-	ExitThread(0);
+	ExitThread((DWORD)error);
 	return NULL;
 }
 
@@ -477,7 +485,7 @@ static void* irp_thread_func(void* arg)
 static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 {
 	IRP_THREAD_DATA *data = NULL;
-	HANDLE irpThread = INVALID_HANDLE_VALUE;
+	HANDLE irpThread;
 	HANDLE previousIrpThread;
 	uintptr_t key;
 
@@ -630,7 +638,11 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 
 
 	key = irp->CompletionId;
-	ListDictionary_Add(serial->IrpThreads, (void*)key, irpThread);
+	if (!ListDictionary_Add(serial->IrpThreads, (void*)key, irpThread))
+	{
+		WLog_ERR(TAG, "ListDictionary_Add failed!");
+		goto error_handle;
+	}
 
 	return;
 
@@ -677,14 +689,23 @@ static void* serial_thread_func(void* arg)
 	IRP* irp;
 	wMessage message;
 	SERIAL_DEVICE* serial = (SERIAL_DEVICE*) arg;
+	WIN32ERROR error = CHANNEL_RC_OK;
 
 	while (1)
 	{
 		if (!MessageQueue_Wait(serial->MainIrpQueue))
+		{
+			WLog_ERR(TAG, "MessageQueue_Wait failed!");
+			error = ERROR_INTERNAL_ERROR;
 			break;
+		}
 
 		if (!MessageQueue_Peek(serial->MainIrpQueue, &message, TRUE))
+		{
+			WLog_ERR(TAG, "MessageQueue_Peek failed!");
+			error = ERROR_INTERNAL_ERROR;
 			break;
+		}
 
 		if (message.id == WMQ_QUIT)
 		{
@@ -698,7 +719,10 @@ static void* serial_thread_func(void* arg)
 			create_irp_thread(serial, irp);
 	}
 
-	ExitThread(0);
+	if (error && serial->rdpcontext)
+		setChannelError(serial->rdpcontext, error, "serial_thread_func reported an error");
+
+	ExitThread((DWORD) error);
 	return NULL;
 }
 
@@ -717,7 +741,11 @@ static WIN32ERROR serial_irp_request(DEVICE* device, IRP* irp)
 	 * write requests.
 	 */
 
-	MessageQueue_Post(serial->MainIrpQueue, NULL, 0, (void*) irp, NULL);
+	if (!MessageQueue_Post(serial->MainIrpQueue, NULL, 0, (void*) irp, NULL))
+	{
+		WLog_ERR(TAG, "MessageQueue_Post failed!");
+		return ERROR_INTERNAL_ERROR;
+	}
 	return CHANNEL_RC_OK;
 }
 
@@ -809,6 +837,7 @@ WIN32ERROR DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		serial->device.name = name;
 		serial->device.IRPRequest = serial_irp_request;
 		serial->device.Free = serial_free;
+		serial->rdpcontext = pEntryPoints->rdpcontext;
 
 		len = strlen(name);
 		serial->device.data = Stream_New(NULL, len + 1);

@@ -27,6 +27,7 @@
 
 #include <freerdp/message.h>
 #include <freerdp/channels/cliprdr.h>
+#include <freerdp/freerdp.h>
 
 /**
  * Client Interface
@@ -80,6 +81,8 @@ struct _cliprdr_client_context
 	pcCliprdrServerFileContentsRequest ServerFileContentsRequest;
 	pcCliprdrClientFileContentsResponse ClientFileContentsResponse;
 	pcCliprdrServerFileContentsResponse ServerFileContentsResponse;
+
+	rdpContext* rdpcontext;
 };
 
 struct _CLIPRDR_FORMAT_NAME

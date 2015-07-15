@@ -65,6 +65,8 @@ typedef struct _AudinALSADevice
 
 	AudinReceive receive;
 	void* user_data;
+
+	rdpContext* rdpcontext;
 } AudinALSADevice;
 
 static BOOL audin_alsa_set_params(AudinALSADevice* alsa, snd_pcm_t* capture_handle)
@@ -148,9 +150,13 @@ static WIN32ERROR audin_alsa_thread_receive(AudinALSADevice* alsa, BYTE* src, in
 		{
 			if (alsa->wformat == WAVE_FORMAT_DVI_ADPCM)
 			{
-				alsa->dsp_context->encode_ima_adpcm(alsa->dsp_context,
+				if (!alsa->dsp_context->encode_ima_adpcm(alsa->dsp_context,
 					alsa->buffer, alsa->buffer_frames * tbytes_per_frame,
-					alsa->target_channels, alsa->block_size);
+					alsa->target_channels, alsa->block_size))
+				{
+					ret = ERROR_INTERNAL_ERROR;
+					break;
+				}
 
 				encoded_data = alsa->dsp_context->adpcm_buffer;
 				encoded_size = alsa->dsp_context->adpcm_size;
@@ -204,7 +210,8 @@ static void* audin_alsa_thread_func(void* arg)
 	if (!buffer)
 	{
 		WLog_ERR(TAG, "calloc failed!");
-		//TODO: signal error to freerdp
+		if (alsa->rdpcontext)
+			setChannelError(alsa->rdpcontext, CHANNEL_RC_NO_MEMORY, "calloc failed!");
 		ExitThread((DWORD)CHANNEL_RC_NO_MEMORY);
 		return NULL;
 	}
@@ -255,6 +262,8 @@ static void* audin_alsa_thread_func(void* arg)
 		snd_pcm_close(capture_handle);
 
 	DEBUG_DVC("out");
+	if (error && alsa->rdpcontext)
+		setChannelError(alsa->rdpcontext, error, "audin_alsa_thread_func reported an error");
 	ExitThread((DWORD)error);
 
 	return NULL;
@@ -363,7 +372,6 @@ static WIN32ERROR audin_alsa_open(IAudinDevice* device, AudinReceive receive, vo
 		WLog_ERR(TAG, "CreateEvent failed!");
 		goto error_out;
 	}
-	// TODO: add mechanism that threads can signal failure
 	if (!(alsa->thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) audin_alsa_thread_func, alsa, 0, NULL)))
 	{
@@ -469,6 +477,7 @@ WIN32ERROR freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POIN
 	alsa->iface.SetFormat = audin_alsa_set_format;
 	alsa->iface.Close = audin_alsa_close;
 	alsa->iface.Free = audin_alsa_free;
+	alsa->rdpcontext = pEntryPoints->rdpcontext;
 
 	args = pEntryPoints->args;
 

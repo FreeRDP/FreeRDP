@@ -91,6 +91,8 @@ struct _audin_server_context
 	 * server must be careful of thread synchronization.
 	 */
 	psAudinServerReceiveSamples ReceiveSamples;
+
+	rdpContext* rdpcontext;
 };
 
 #ifdef __cplusplus

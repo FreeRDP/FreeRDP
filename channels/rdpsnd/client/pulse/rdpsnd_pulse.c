@@ -3,6 +3,8 @@
  * Audio Output Virtual Channel
  *
  * Copyright 2011 Vic Lee
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +39,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/codec/dsp.h>
+#include <winpr/win32error.h>
 
 #include "rdpsnd_main.h"
 
@@ -631,7 +634,7 @@ static WIN32ERROR rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, ADDI
 #define freerdp_rdpsnd_client_subsystem_entry	pulse_freerdp_rdpsnd_client_subsystem_entry
 #endif
 
-int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+WIN32ERROR freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	ADDIN_ARGV* args;
 	rdpsndPulsePlugin* pulse;
@@ -639,7 +642,7 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 
 	pulse = (rdpsndPulsePlugin*) calloc(1, sizeof(rdpsndPulsePlugin));
 	if (!pulse)
-		return -1;
+		return CHANNEL_RC_NO_MEMORY;
 
 	pulse->device.Open = rdpsnd_pulse_open;
 	pulse->device.FormatSupported = rdpsnd_pulse_format_supported;
@@ -658,7 +661,7 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 		goto error;
 	}
 
-	ret = ERROR_OUTOFMEMORY;
+	ret = CHANNEL_RC_NO_MEMORY;
 	pulse->dsp_context = freerdp_dsp_context_new();
 	if (!pulse->dsp_context)
 		goto error;

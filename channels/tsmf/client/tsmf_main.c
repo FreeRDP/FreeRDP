@@ -3,6 +3,8 @@
  * Video Redirection Virtual Channel
  *
  * Copyright 2010-2011 Vic Lee
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -170,7 +172,7 @@ static WIN32ERROR tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCall
 					processed = TRUE;
 					break;
 				case ADD_STREAM:
-					error = tsmf_ifman_add_stream(&ifman);
+					error = tsmf_ifman_add_stream(&ifman, ((TSMF_PLUGIN*) callback->plugin)->rdpcontext);
 					processed = TRUE;
 					break;
 				case SET_TOPOLOGY_REQ:
@@ -461,7 +463,7 @@ WIN32ERROR DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	WIN32ERROR status = 0;
 	TSMF_PLUGIN* tsmf;
 	TsmfClientContext* context;
-	WIN32ERROR error = ERROR_OUTOFMEMORY;
+	WIN32ERROR error = CHANNEL_RC_NO_MEMORY;
 
 	tsmf = (TSMF_PLUGIN*) pEntryPoints->GetPlugin(pEntryPoints, "tsmf");
 
@@ -469,16 +471,25 @@ WIN32ERROR DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	{
 		tsmf = (TSMF_PLUGIN*) calloc(1, sizeof(TSMF_PLUGIN));
 		if (!tsmf)
-			return ERROR_OUTOFMEMORY;
+		{
+			WLog_ERR(TAG, "calloc failed!");
+			return CHANNEL_RC_NO_MEMORY;
+		}
+
 
 		tsmf->iface.Initialize = tsmf_plugin_initialize;
 		tsmf->iface.Connected = NULL;
 		tsmf->iface.Disconnected = NULL;
 		tsmf->iface.Terminated = tsmf_plugin_terminated;
+		tsmf->rdpcontext = ((freerdp*)((rdpSettings*) pEntryPoints->GetRdpSettings(pEntryPoints))->instance)->context;
 
 		context = (TsmfClientContext*) calloc(1, sizeof(TsmfClientContext));
 		if (!context)
+		{
+			WLog_ERR(TAG, "calloc failed!");
 			goto error_context;
+		}
+
 
 		context->handle = (void*) tsmf;
 		tsmf->iface.pInterface = (void*) context;
@@ -492,7 +503,7 @@ WIN32ERROR DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		status = pEntryPoints->RegisterPlugin(pEntryPoints, "tsmf", (IWTSPlugin*) tsmf);
 	}
 
-	if (status == 0)
+	if (status == CHANNEL_RC_OK)
 	{
 		status = tsmf_process_addin_args((IWTSPlugin*) tsmf, pEntryPoints->GetPluginData(pEntryPoints));
 	}

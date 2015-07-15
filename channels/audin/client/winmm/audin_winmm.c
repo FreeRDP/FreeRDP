@@ -33,6 +33,7 @@
 #include <winpr/crt.h>
 #include <winpr/cmdline.h>
 #include <freerdp/addin.h>
+#include <freerdp/client/audin.h>
 
 #include "audin_main.h"
 
@@ -51,6 +52,7 @@ typedef struct _AudinWinmmDevice
 	UINT32 ppwfx_size;
 	UINT32 cFormats;
 	UINT32 frames_per_packet;
+	rdpContext* rdpcontext;
 } AudinWinmmDevice;
 
 static void CALLBACK waveInProc(HWAVEIN hWaveIn, UINT uMsg, DWORD_PTR dwInstance,
@@ -58,6 +60,8 @@ static void CALLBACK waveInProc(HWAVEIN hWaveIn, UINT uMsg, DWORD_PTR dwInstance
 {
 	AudinWinmmDevice* winmm = (AudinWinmmDevice*) dwInstance;
 	PWAVEHDR pWaveHdr;
+	WIN32ERROR error = CHANNEL_RC_OK;
+	MMRESULT mmResult;
 
 	switch(uMsg)
 	{
@@ -71,8 +75,11 @@ static void CALLBACK waveInProc(HWAVEIN hWaveIn, UINT uMsg, DWORD_PTR dwInstance
 				if (pWaveHdr->dwBytesRecorded
 					&& !(WaitForSingleObject(winmm->stopEvent, 0) == WAIT_OBJECT_0))
 				{
-					winmm->receive(pWaveHdr->lpData, pWaveHdr->dwBytesRecorded, winmm->user_data);
-					waveInAddBuffer(hWaveIn, pWaveHdr, sizeof(WAVEHDR));
+					if ((error = winmm->receive(pWaveHdr->lpData, pWaveHdr->dwBytesRecorded, winmm->user_data)))
+						break;
+					mmResult = waveInAddBuffer(hWaveIn, pWaveHdr, sizeof(WAVEHDR));
+					if (mmResult != MMSYSERR_NOERROR)
+						error = ERROR_INTERNAL_ERROR;
 				}
 			}
 			break;
@@ -83,6 +90,8 @@ static void CALLBACK waveInProc(HWAVEIN hWaveIn, UINT uMsg, DWORD_PTR dwInstance
 		default:
 			break;
 	}
+	if (error && winmm->rdpcontext)
+		setChannelError(winmm->rdpcontext, error, "waveInProc reported an error");
 }
 
 static DWORD audin_winmm_thread_func(void* arg)
@@ -97,6 +106,8 @@ static DWORD audin_winmm_thread_func(void* arg)
 		if (MMSYSERR_NOERROR != waveInOpen(&winmm->hWaveIn, WAVE_MAPPER, winmm->pwfx_cur,
 			(DWORD_PTR)waveInProc, (DWORD_PTR)winmm, CALLBACK_FUNCTION))
 		{
+			if (winmm->rdpcontext)
+				setChannelError(winmm->rdpcontext, ERROR_INTERNAL_ERROR, "audin_winmm_thread_func reported an error");
 			return 0;
 		}
 	}
@@ -113,10 +124,14 @@ static DWORD audin_winmm_thread_func(void* arg)
 		if (MMSYSERR_NOERROR != waveInPrepareHeader(winmm->hWaveIn, &waveHdr[i], sizeof(waveHdr[i])))
 		{
 			DEBUG_DVC("waveInPrepareHeader failed.");
+			if (winmm->rdpcontext)
+				setChannelError(winmm->rdpcontext, ERROR_INTERNAL_ERROR, "audin_winmm_thread_func reported an error");
 		}
 		if (MMSYSERR_NOERROR != waveInAddBuffer(winmm->hWaveIn, &waveHdr[i], sizeof(waveHdr[i])))
 		{
 			DEBUG_DVC("waveInAddBuffer failed.");
+			if (winmm->rdpcontext)
+				setChannelError(winmm->rdpcontext, ERROR_INTERNAL_ERROR, "audin_winmm_thread_func reported an error");
 		}
 	}
 	waveInStart(winmm->hWaveIn);
@@ -130,6 +145,8 @@ static DWORD audin_winmm_thread_func(void* arg)
 		if (MMSYSERR_NOERROR != waveInUnprepareHeader(winmm->hWaveIn, &waveHdr[i], sizeof(waveHdr[i])))
 		{
 			DEBUG_DVC("waveInUnprepareHeader failed.");
+			if (winmm->rdpcontext)
+				setChannelError(winmm->rdpcontext, ERROR_INTERNAL_ERROR, "audin_winmm_thread_func reported an error");
 		}
 		free(waveHdr[i].lpData);
 	}
@@ -252,7 +269,7 @@ static WIN32ERROR audin_winmm_open(IAudinDevice* device, AudinReceive receive, v
 		WLog_ERR(TAG, "CreateEvent failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
-	// TODO: add mechanism that threads can signal failure
+
 	if (!(winmm->thread = CreateThread(NULL, 0,
 		(LPTHREAD_START_ROUTINE) audin_winmm_thread_func, winmm, 0, NULL)))
 	{
@@ -329,6 +346,7 @@ WIN32ERROR freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POIN
 	winmm->iface.SetFormat = audin_winmm_set_format;
 	winmm->iface.Close = audin_winmm_close;
 	winmm->iface.Free = audin_winmm_free;
+	winmm->rdpcontext = pEntryPoints->rdpcontext;
 
 	args = pEntryPoints->args;
 

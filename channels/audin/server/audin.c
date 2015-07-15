@@ -497,6 +497,9 @@ out_capacity:
 out:
 	WTSVirtualChannelClose(audin->audin_channel);
 	audin->audin_channel = NULL;
+	if (error && audin->context.rdpcontext)
+		setChannelError(audin->context.rdpcontext, error, "audin_server_thread_func reported an error");
+
 	ExitThread((DWORD)error);
 	return NULL;
 }
@@ -534,7 +537,6 @@ static BOOL audin_server_open(audin_server_context* context)
 			return FALSE;
 		}
 
-		// TODO: implement signaling an error
 		if (!(audin->thread = CreateThread(NULL, 0,
 				(LPTHREAD_START_ROUTINE) audin_server_thread_func, (void*) audin, 0, NULL)))
 		{

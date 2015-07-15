@@ -95,6 +95,8 @@ struct _cliprdr_server_context
 	psCliprdrServerFileContentsRequest ServerFileContentsRequest;
 	psCliprdrClientFileContentsResponse ClientFileContentsResponse;
 	psCliprdrServerFileContentsResponse ServerFileContentsResponse;
+
+	rdpContext* rdpcontext;
 };
 
 #ifdef __cplusplus

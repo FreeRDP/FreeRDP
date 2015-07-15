@@ -5,6 +5,8 @@
  * Copyright 2009-2011 Jay Sorg
  * Copyright 2010-2011 Vic Lee
  * Copyright 2012-2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,6 +95,7 @@ struct rdpsnd_plugin
 
 	/* Device plugin */
 	rdpsndDevicePlugin* device;
+	rdpContext* rdpcontext;
 };
 
 static WIN32ERROR rdpsnd_confirm_wave(rdpsndPlugin* rdpsnd, RDPSND_WAVE* wave);
@@ -106,6 +109,7 @@ static void* rdpsnd_schedule_thread(void* arg)
 	RDPSND_WAVE* wave;
 	rdpsndPlugin* rdpsnd = (rdpsndPlugin*) arg;
 	HANDLE events[2];
+	WIN32ERROR error = CHANNEL_RC_OK;
 
 	events[0] = MessageQueue_Event(rdpsnd->MsgPipe->Out);
 	events[1] = rdpsnd->stopEvent;
@@ -113,7 +117,11 @@ static void* rdpsnd_schedule_thread(void* arg)
 	while (WaitForMultipleObjects(2, events, FALSE, INFINITE) == WAIT_OBJECT_0)
 	{
 		if (!MessageQueue_Peek(rdpsnd->MsgPipe->Out, &message, TRUE))
+		{
+			WLog_ERR(TAG, "MessageQueue_Peek failed!");
+			error = ERROR_INTERNAL_ERROR;
 			break;
+		}
 
 		if (message.id == WMQ_QUIT)
 			break;
@@ -128,18 +136,20 @@ static void* rdpsnd_schedule_thread(void* arg)
 			Sleep(wTimeDiff);
 		}
 
-		if (rdpsnd_confirm_wave(rdpsnd, wave) != CHANNEL_RC_OK)
+		if ((error = rdpsnd_confirm_wave(rdpsnd, wave)))
 		{
 			WLog_ERR(TAG, "error confirming wave");
 			break;
 		}
 
-
 		message.wParam = NULL;
 		free(wave);
 	}
 
-	ExitThread(0);
+	if (error && rdpsnd->rdpcontext)
+		setChannelError(rdpsnd->rdpcontext, error, "rdpsnd_schedule_thread reported an error");
+
+	ExitThread((DWORD)error);
 	return NULL;
 }
 
@@ -149,7 +159,10 @@ WIN32ERROR rdpsnd_send_quality_mode_pdu(rdpsndPlugin* rdpsnd)
 
 	pdu = Stream_New(NULL, 8);
 	if (!pdu)
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
 		return CHANNEL_RC_NO_MEMORY;
+	}
 	Stream_Write_UINT8(pdu, SNDC_QUALITYMODE); /* msgType */
 	Stream_Write_UINT8(pdu, 0); /* bPad */
 	Stream_Write_UINT16(pdu, 4); /* BodySize */
@@ -244,7 +257,10 @@ WIN32ERROR rdpsnd_send_client_audio_formats(rdpsndPlugin* rdpsnd)
 
 	pdu = Stream_New(NULL, length);
 	if (!pdu)
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
 		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	Stream_Write_UINT8(pdu, SNDC_FORMATS); /* msgType */
 	Stream_Write_UINT8(pdu, 0); /* bPad */
@@ -370,7 +386,10 @@ WIN32ERROR rdpsnd_send_training_confirm_pdu(rdpsndPlugin* rdpsnd, UINT16 wTimeSt
 
 	pdu = Stream_New(NULL, 8);
 	if (!pdu)
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
 		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	Stream_Write_UINT8(pdu, SNDC_TRAINING); /* msgType */
 	Stream_Write_UINT8(pdu, 0); /* bPad */
@@ -457,7 +476,10 @@ WIN32ERROR rdpsnd_send_wave_confirm_pdu(rdpsndPlugin* rdpsnd, UINT16 wTimeStamp,
 
 	pdu = Stream_New(NULL, 8);
 	if (!pdu)
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
 		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	Stream_Write_UINT8(pdu, SNDC_WAVECONFIRM);
 	Stream_Write_UINT8(pdu, 0);
@@ -483,7 +505,10 @@ static WIN32ERROR rdpsnd_device_send_wave_confirm_pdu(rdpsndDevicePlugin* device
 		return rdpsnd_confirm_wave(device->rdpsnd, wave);
 
 	if (!MessageQueue_Post(device->rdpsnd->MsgPipe->Out, NULL, 0, (void*) wave, NULL))
-		return CHANNEL_RC_NO_MEMORY;
+	{
+		WLog_ERR(TAG, "MessageQueue_Post failed!");
+		return ERROR_INTERNAL_ERROR;
+	}
 
 	return CHANNEL_RC_OK;
 
@@ -511,9 +536,12 @@ static WIN32ERROR rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 	data = Stream_Buffer(s);
 	size = (int) Stream_Capacity(s);
 
-	wave = (RDPSND_WAVE*) malloc(sizeof(RDPSND_WAVE));
+	wave = (RDPSND_WAVE*) calloc(1, sizeof(RDPSND_WAVE));
 	if (!wave)
+	{
+		WLog_ERR(TAG, "calloc failed!");
 		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	wave->wLocalTimeA = GetTickCount();
 	wave->wTimeStampA = rdpsnd->wTimeStamp;
@@ -668,27 +696,25 @@ static void rdpsnd_register_device_plugin(rdpsndPlugin* rdpsnd, rdpsndDevicePlug
 	device->WaveConfirm = rdpsnd_device_send_wave_confirm_pdu;
 }
 
-static BOOL rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name, ADDIN_ARGV* args)
+static WIN32ERROR rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name, ADDIN_ARGV* args)
 {
 	PFREERDP_RDPSND_DEVICE_ENTRY entry;
-	FREERDP_RDPSND_DEVICE_ENTRY_POINTS entryPoints;
+	FREERDP_RDPSND_DEVICE_ENTRY_POINTS entryPoints;\
+	WIN32ERROR error;
 
 	entry = (PFREERDP_RDPSND_DEVICE_ENTRY) freerdp_load_channel_addin_entry("rdpsnd", (LPSTR) name, NULL, 0);
 
 	if (!entry)
-		return FALSE;
+		return ERROR_INTERNAL_ERROR;
 
 	entryPoints.rdpsnd = rdpsnd;
 	entryPoints.pRegisterRdpsndDevice = rdpsnd_register_device_plugin;
 	entryPoints.args = args;
 
-	if (entry(&entryPoints) != 0)
-	{
-		WLog_ERR(TAG, "%s entry returns error.", name);
-		return FALSE;
-	}
+	if ((error = entry(&entryPoints)))
+		WLog_ERR(TAG, "%s entry returns error %lu", name, error);
 
-	return TRUE;
+	return error;
 }
 
 BOOL rdpsnd_set_subsystem(rdpsndPlugin* rdpsnd, const char* subsystem)
@@ -819,10 +845,10 @@ static WIN32ERROR rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 		if (strcmp(rdpsnd->subsystem, "fake") == 0)
 			return CHANNEL_RC_OK;
 
-		if (!rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args))
+		if ((status = rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args)))
 		{
-			WLog_ERR(TAG, "unable to load the %s subsystem plugin", rdpsnd->subsystem);
-			return CHANNEL_RC_INITIALIZATION_ERROR;
+			WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu", rdpsnd->subsystem, status);
+			return status;
 		}
 	}
 	else
@@ -832,7 +858,11 @@ static WIN32ERROR rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 		{
 			subsystem_name = "ios";
 			device_name = "";
-			rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args);
+			if ((status = rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args)))
+			{
+				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu", rdpsnd->subsystem, status);
+				return status;
+			}
 		}
 #endif
 
@@ -841,7 +871,11 @@ static WIN32ERROR rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 		{
 			subsystem_name = "opensles";
 			device_name = "";
-			rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args);
+			if ((status = rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args)))
+			{
+				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu", rdpsnd->subsystem, status);
+				return status;
+			}
 		}
 #endif
 
@@ -850,7 +884,11 @@ static WIN32ERROR rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 		{
 			subsystem_name = "pulse";
 			device_name = "";
-			rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args);
+			if ((status = rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args)))
+			{
+				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu", rdpsnd->subsystem, status);
+				return status;
+			}
 		}
 #endif
 
@@ -859,7 +897,11 @@ static WIN32ERROR rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 		{
 			subsystem_name = "alsa";
 			device_name = "default";
-			rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args);
+			if ((status = rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args)))
+			{
+				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu", rdpsnd->subsystem, status);
+				return status;
+			}
 		}
 #endif
 
@@ -868,7 +910,11 @@ static WIN32ERROR rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 		{
 			subsystem_name = "oss";
 			device_name = "";
-			rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args);
+			if ((status = rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args)))
+			{
+				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu", rdpsnd->subsystem, status);
+				return status;
+			}
 		}
 #endif
 
@@ -878,7 +924,11 @@ static WIN32ERROR rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 		{
 			subsystem_name = "mac";
 			device_name = "default";
-			rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args);
+			if ((status = rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args)))
+			{
+				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu", rdpsnd->subsystem, status);
+				return status;
+			}
 		}
 #endif
 
@@ -887,7 +937,11 @@ static WIN32ERROR rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 		{
 			subsystem_name = "winmm";
 			device_name = "";
-			rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args);
+			if ((status = rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args)))
+			{
+				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu", rdpsnd->subsystem, status);
+				return status;
+			}
 		}
 #endif
 
@@ -909,13 +963,19 @@ static WIN32ERROR rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 	{
 		rdpsnd->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 		if (!rdpsnd->stopEvent)
+		{
+			WLog_ERR(TAG, "CreateEvent failed!");
 			return CHANNEL_RC_INITIALIZATION_ERROR;
+		}
 
 		rdpsnd->ScheduleThread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) rdpsnd_schedule_thread,
 			(void*) rdpsnd, 0, NULL);
 		if (!rdpsnd->ScheduleThread)
+		{
+			WLog_ERR(TAG, "CreateThread failed!");
 			return CHANNEL_RC_INITIALIZATION_ERROR;
+		}
 	}
 
 	return CHANNEL_RC_OK;
@@ -1002,7 +1062,7 @@ void rdpsnd_remove_open_handle_data(DWORD openHandle)
 
 WIN32ERROR rdpsnd_virtual_channel_write(rdpsndPlugin* rdpsnd, wStream* s)
 {
-	WIN32ERROR status = CHANNEL_RC_OK;
+	WIN32ERROR status;
 
 	if (!rdpsnd)
 	{
@@ -1024,14 +1084,14 @@ WIN32ERROR rdpsnd_virtual_channel_write(rdpsndPlugin* rdpsnd, wStream* s)
 	return status;
 }
 
-static void rdpsnd_virtual_channel_event_data_received(rdpsndPlugin* plugin,
+static WIN32ERROR rdpsnd_virtual_channel_event_data_received(rdpsndPlugin* plugin,
 		void* pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	wStream* s;
 
 	if ((dataFlags & CHANNEL_FLAG_SUSPEND) || (dataFlags & CHANNEL_FLAG_RESUME))
 	{
-		return;
+		return CHANNEL_RC_OK;
 	}
 
 	if (dataFlags & CHANNEL_FLAG_FIRST)
@@ -1040,10 +1100,21 @@ static void rdpsnd_virtual_channel_event_data_received(rdpsndPlugin* plugin,
 			Stream_Free(plugin->data_in, TRUE);
 
 		plugin->data_in = Stream_New(NULL, totalLength);
+		if (!plugin->data_in)
+		{
+			WLog_ERR(TAG,  "Stream_New failed!");
+			return CHANNEL_RC_NO_MEMORY;
+		}
 	}
 
 	s = plugin->data_in;
-	Stream_EnsureRemainingCapacity(s, (int) dataLength);
+
+	if (!Stream_EnsureRemainingCapacity(s, (int) dataLength))
+	{
+		WLog_ERR(TAG,  "Stream_EnsureRemainingCapacity failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
+
 	Stream_Write(s, pData, dataLength);
 
 	if (dataFlags & CHANNEL_FLAG_LAST)
@@ -1051,20 +1122,27 @@ static void rdpsnd_virtual_channel_event_data_received(rdpsndPlugin* plugin,
 		if (Stream_Capacity(s) != Stream_GetPosition(s))
 		{
 			WLog_ERR(TAG,  "rdpsnd_virtual_channel_event_data_received: read error");
+			return ERROR_INTERNAL_ERROR;
 		}
 
 		plugin->data_in = NULL;
 		Stream_SealLength(s);
 		Stream_SetPosition(s, 0);
 
-		MessageQueue_Post(plugin->MsgPipe->In, NULL, 0, (void*) s, NULL);
+		if (!MessageQueue_Post(plugin->MsgPipe->In, NULL, 0, (void*) s, NULL))
+		{
+			WLog_ERR(TAG,  "MessageQueue_Post failed!");
+			return ERROR_INTERNAL_ERROR;
+		}
 	}
+	return CHANNEL_RC_OK;
 }
 
 static VOID VCAPITYPE rdpsnd_virtual_channel_open_event(DWORD openHandle, UINT event,
 		LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	rdpsndPlugin* rdpsnd;
+	WIN32ERROR error = CHANNEL_RC_OK;
 
 	rdpsnd = (rdpsndPlugin*) rdpsnd_get_open_handle_data(openHandle);
 
@@ -1077,7 +1155,8 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_open_event(DWORD openHandle, UINT e
 	switch (event)
 	{
 		case CHANNEL_EVENT_DATA_RECEIVED:
-			rdpsnd_virtual_channel_event_data_received(rdpsnd, pData, dataLength, totalLength, dataFlags);
+			if ((error = rdpsnd_virtual_channel_event_data_received(rdpsnd, pData, dataLength, totalLength, dataFlags)))
+				WLog_ERR(TAG, "rdpsnd_virtual_channel_event_data_received failed with error %lu", error);
 			break;
 
 		case CHANNEL_EVENT_WRITE_COMPLETE:
@@ -1087,6 +1166,9 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_open_event(DWORD openHandle, UINT e
 		case CHANNEL_EVENT_USER:
 			break;
 	}
+	if (error && rdpsnd->rdpcontext)
+		setChannelError(rdpsnd->rdpcontext, error, "rdpsnd_virtual_channel_open_event reported an error");
+
 }
 
 static void* rdpsnd_virtual_channel_client_thread(void* arg)
@@ -1094,8 +1176,9 @@ static void* rdpsnd_virtual_channel_client_thread(void* arg)
 	wStream* data;
 	wMessage message;
 	rdpsndPlugin* rdpsnd = (rdpsndPlugin*) arg;
+	WIN32ERROR error;
 
-	if (rdpsnd_process_connect(rdpsnd) != CHANNEL_RC_OK)
+	if ((error = rdpsnd_process_connect(rdpsnd)))
 	{
 		WLog_ERR(TAG, "error connecting sound channel");
 		goto out;
@@ -1104,71 +1187,86 @@ static void* rdpsnd_virtual_channel_client_thread(void* arg)
 	while (1)
 	{
 		if (!MessageQueue_Wait(rdpsnd->MsgPipe->In))
+		{
+			WLog_ERR(TAG, "MessageQueue_Wait failed!");
+			error = ERROR_INTERNAL_ERROR;
+			break;
+		}
+
+		if (!MessageQueue_Peek(rdpsnd->MsgPipe->In, &message, TRUE))
+		{
+			WLog_ERR(TAG, "MessageQueue_Peek failed!");
+			error = ERROR_INTERNAL_ERROR;
+			break;
+		}
+
+		if (message.id == WMQ_QUIT)
 			break;
 
-		if (MessageQueue_Peek(rdpsnd->MsgPipe->In, &message, TRUE))
+		if (message.id == 0)
 		{
-			if (message.id == WMQ_QUIT)
-				break;
-
-			if (message.id == 0)
+			data = (wStream*) message.wParam;
+			if ((error = rdpsnd_recv_pdu(rdpsnd, data)))
 			{
-				data = (wStream*) message.wParam;
-				if (rdpsnd_recv_pdu(rdpsnd, data) != CHANNEL_RC_OK)
-				{
-					WLog_ERR(TAG, "error treating sound channel message");
-					break;
-				}
+				WLog_ERR(TAG, "error treating sound channel message");
+				break;
 			}
 		}
 	}
 
 out:
+	if (error && rdpsnd->rdpcontext)
+		setChannelError(rdpsnd->rdpcontext, error, "rdpsnd_virtual_channel_client_thread reported an error");
+
 	rdpsnd_process_disconnect(rdpsnd);
 
-	ExitThread(0);
+	ExitThread((DWORD)error);
 	return NULL;
 }
 
-static void rdpsnd_virtual_channel_event_connected(rdpsndPlugin* plugin, LPVOID pData, UINT32 dataLength)
+static WIN32ERROR rdpsnd_virtual_channel_event_connected(rdpsndPlugin* plugin, LPVOID pData, UINT32 dataLength)
 {
 	UINT32 status;
 
 	status = plugin->channelEntryPoints.pVirtualChannelOpen(plugin->InitHandle,
 		&plugin->OpenHandle, plugin->channelDef.name, rdpsnd_virtual_channel_open_event);
 
-	if (!rdpsnd_add_open_handle_data(plugin->OpenHandle, plugin))
-	{
-		WLog_ERR(TAG, "%s: unable to register opened handle", __FUNCTION__);
-		return;
-	}
-
 	if (status != CHANNEL_RC_OK)
 	{
 		WLog_ERR(TAG, "pVirtualChannelOpen failed with %s [%08X]",
 				 WTSErrorToString(status), status);
-		return;
+		return status;
+	}
+
+	if (!rdpsnd_add_open_handle_data(plugin->OpenHandle, plugin))
+	{
+		WLog_ERR(TAG, "unable to register opened handle");
+		return  ERROR_INTERNAL_ERROR;
 	}
 
 	plugin->MsgPipe = MessagePipe_New();
 	if (!plugin->MsgPipe)
 	{
-		WLog_ERR(TAG, "%s: unable to create message pipe", __FUNCTION__);
-		return;
+		WLog_ERR(TAG, "unable to create message pipe");
+		return CHANNEL_RC_NO_MEMORY;
 	}
 
 	plugin->thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) rdpsnd_virtual_channel_client_thread, (void*) plugin, 0, NULL);
 	if (!plugin->thread)
 	{
-		WLog_ERR(TAG, "%s: unable to create thread", __FUNCTION__);
-		return;
+		WLog_ERR(TAG, "unable to create thread");
+		MessagePipe_Free(plugin->MsgPipe);
+		plugin->MsgPipe = NULL;
+		return ERROR_INTERNAL_ERROR;
 	}
+
+	return CHANNEL_RC_OK;
 }
 
-static void rdpsnd_virtual_channel_event_disconnected(rdpsndPlugin* rdpsnd)
+static WIN32ERROR rdpsnd_virtual_channel_event_disconnected(rdpsndPlugin* rdpsnd)
 {
-	UINT rc;
+	WIN32ERROR error;
 
 	MessagePipe_PostQuit(rdpsnd->MsgPipe, 0);
 	WaitForSingleObject(rdpsnd->thread, INFINITE);
@@ -1176,11 +1274,12 @@ static void rdpsnd_virtual_channel_event_disconnected(rdpsndPlugin* rdpsnd)
 	CloseHandle(rdpsnd->thread);
 	rdpsnd->thread = NULL;
 
-	rc = rdpsnd->channelEntryPoints.pVirtualChannelClose(rdpsnd->OpenHandle);
-	if (CHANNEL_RC_OK != rc)
+	error = rdpsnd->channelEntryPoints.pVirtualChannelClose(rdpsnd->OpenHandle);
+	if (CHANNEL_RC_OK != error)
 	{
 		WLog_ERR(TAG, "pVirtualChannelClose failed with %s [%08X]",
-				 WTSErrorToString(rc), rc);
+				 WTSErrorToString(error), error);
+		return error;
 	}
 
 	if (rdpsnd->data_in)
@@ -1219,6 +1318,8 @@ static void rdpsnd_virtual_channel_event_disconnected(rdpsndPlugin* rdpsnd)
 	}
 
 	rdpsnd_remove_open_handle_data(rdpsnd->OpenHandle);
+
+	return CHANNEL_RC_OK;
 }
 
 static void rdpsnd_virtual_channel_event_terminated(rdpsndPlugin* rdpsnd)
@@ -1231,6 +1332,7 @@ static void rdpsnd_virtual_channel_event_terminated(rdpsndPlugin* rdpsnd)
 static VOID VCAPITYPE rdpsnd_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
 {
 	rdpsndPlugin* plugin;
+	WIN32ERROR error = CHANNEL_RC_OK;
 
 	plugin = (rdpsndPlugin*) rdpsnd_get_init_handle_data(pInitHandle);
 
@@ -1243,17 +1345,21 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_init_event(LPVOID pInitHandle, UINT
 	switch (event)
 	{
 		case CHANNEL_EVENT_CONNECTED:
-			rdpsnd_virtual_channel_event_connected(plugin, pData, dataLength);
+			if ((error = rdpsnd_virtual_channel_event_connected(plugin, pData, dataLength)))
+				WLog_ERR(TAG, "rdpsnd_virtual_channel_event_connected failed with error %lu!", error);
 			break;
 
 		case CHANNEL_EVENT_DISCONNECTED:
-			rdpsnd_virtual_channel_event_disconnected(plugin);
+			if ((error = rdpsnd_virtual_channel_event_disconnected(plugin)))
+				WLog_ERR(TAG, "rdpsnd_virtual_channel_event_disconnected failed with error %lu!", error);
 			break;
 
 		case CHANNEL_EVENT_TERMINATED:
 			rdpsnd_virtual_channel_event_terminated(plugin);
 			break;
 	}
+	if (error && plugin->rdpcontext)
+		setChannelError(plugin->rdpcontext, error, "rdpsnd_virtual_channel_init_event reported an error");
 }
 
 /* rdpsnd is always built-in */
@@ -1264,10 +1370,15 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	UINT rc;
 
 	rdpsndPlugin* rdpsnd;
+	CHANNEL_ENTRY_POINTS_FREERDP* pEntryPointsEx;
+
 
 	rdpsnd = (rdpsndPlugin*) calloc(1, sizeof(rdpsndPlugin));
 	if (!rdpsnd)
+	{
+		WLog_ERR(TAG, "calloc failed!");
 		return FALSE;
+	}
 
 #if !defined(_WIN32) && !defined(ANDROID)
 	{
@@ -1283,6 +1394,14 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 			CHANNEL_OPTION_ENCRYPT_RDP;
 
 	strcpy(rdpsnd->channelDef.name, "rdpsnd");
+
+	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP*) pEntryPoints;
+
+	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP)) &&
+		(pEntryPointsEx->MagicNumber == FREERDP_CHANNEL_MAGIC_NUMBER))
+	{
+		rdpsnd->rdpcontext = pEntryPointsEx->context;
+	}
 
 	CopyMemory(&(rdpsnd->channelEntryPoints), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_FREERDP));
 

@@ -3,6 +3,8 @@
  * Client Channels
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -721,6 +723,7 @@ int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings, P
 	EntryPoints.MagicNumber = FREERDP_CHANNEL_MAGIC_NUMBER;
 	EntryPoints.ppInterface = &g_pInterface;
 	EntryPoints.pExtendedData = data;
+	EntryPoints.context = ((freerdp*)settings->instance)->context;
 
 	/* enable VirtualChannelInit */
 	channels->can_call_init = TRUE;

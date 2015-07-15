@@ -119,6 +119,7 @@ struct _SMARTCARD_DEVICE
 	wQueue* CompletedIrpQueue;
 	wListDictionary* rgSCardContextList;
 	wListDictionary* rgOutstandingMessages;
+	rdpContext* rdpcontext;
 };
 
 SMARTCARD_CONTEXT* smartcard_context_new(SMARTCARD_DEVICE* smartcard, SCARDCONTEXT hContext);

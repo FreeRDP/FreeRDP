@@ -3,6 +3,8 @@
  * Video Redirection Virtual Channel - Interface Manipulation
  *
  * Copyright 2010-2011 Vic Lee
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +21,8 @@
 
 #ifndef __TSMF_IFMAN_H
 #define __TSMF_IFMAN_H
+
+#include <freerdp/freerdp.h>
 
 typedef struct _TSMF_IFMAN TSMF_IFMAN;
 struct _TSMF_IFMAN
@@ -42,7 +46,7 @@ WIN32ERROR tsmf_ifman_rim_exchange_capability_request(TSMF_IFMAN* ifman);
 WIN32ERROR tsmf_ifman_exchange_capability_request(TSMF_IFMAN* ifman);
 WIN32ERROR tsmf_ifman_check_format_support_request(TSMF_IFMAN* ifman);
 WIN32ERROR tsmf_ifman_on_new_presentation(TSMF_IFMAN* ifman);
-WIN32ERROR tsmf_ifman_add_stream(TSMF_IFMAN* ifman);
+WIN32ERROR tsmf_ifman_add_stream(TSMF_IFMAN* ifman, rdpContext* rdpcontext);
 WIN32ERROR tsmf_ifman_set_topology_request(TSMF_IFMAN* ifman);
 WIN32ERROR tsmf_ifman_remove_stream(TSMF_IFMAN* ifman);
 WIN32ERROR tsmf_ifman_set_source_video_rect(TSMF_IFMAN* ifman);

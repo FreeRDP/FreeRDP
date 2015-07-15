@@ -62,6 +62,7 @@ static WIN32ERROR sf_peer_audin_receive_samples(audin_server_context* context, c
 void sf_peer_audin_init(testPeerContext* context)
 {
 	context->audin = audin_server_context_new(context->vcm);
+	context->audin->rdpcontext = &context->_p;
 	context->audin->data = context;
 
 	context->audin->server_formats = test_audio_formats;

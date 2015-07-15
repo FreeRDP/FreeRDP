@@ -1381,6 +1381,7 @@ WIN32ERROR DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 		gfx->MaxCacheSlot = (gfx->ThinClient) ? 4096 : 25600;
 
+
 		context = (RdpgfxClientContext*) calloc(1, sizeof(RdpgfxClientContext));
 
 		if (!context)

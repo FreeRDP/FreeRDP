@@ -179,8 +179,8 @@ static void* encomsp_server_thread(void* arg)
 	if (!s)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
-		ExitThread((DWORD) CHANNEL_RC_NO_MEMORY);
-		return NULL;
+		error = CHANNEL_RC_NO_MEMORY;
+		goto out;
 	}
 
 	if (WTSVirtualChannelQuery(context->priv->ChannelHandle, WTSVirtualEventHandle, &buffer, &BytesReturned) == TRUE)
@@ -240,6 +240,10 @@ static void* encomsp_server_thread(void* arg)
 	}
 
 	Stream_Free(s, TRUE);
+out:
+	if (error && context->rdpcontext)
+		setChannelError(context->rdpcontext, error, "encomsp_server_thread reported an error");
+
 	ExitThread((DWORD)error);
 	return NULL;
 }

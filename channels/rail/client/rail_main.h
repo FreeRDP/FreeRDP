@@ -49,7 +49,7 @@ struct rail_plugin
 	void* InitHandle;
 	DWORD OpenHandle;
 	wMessageQueue* queue;
-	WIN32ERROR error;
+	rdpContext* rdpcontext;
 };
 typedef struct rail_plugin railPlugin;
 

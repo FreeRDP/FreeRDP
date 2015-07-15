@@ -108,7 +108,7 @@ static void* drdynvc_server_thread(void* arg)
 	Stream_Free(s, TRUE);
 	ExitThread((DWORD) error);
 #endif
-	// WTF ... this code only reads the stream till the stream has no place any more and then exits
+	// WTF ... this code only reads data into the stream until there is no more memory
 	ExitThread(0);
 	return NULL;
 }
@@ -128,8 +128,6 @@ static WIN32ERROR drdynvc_server_start(DrdynvcServerContext* context)
 		WLog_ERR(TAG, "CreateEvent failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
-	// TODO: add mechanism that threads can signal failure
-
 	if (!(context->priv->Thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) drdynvc_server_thread, (void*) context, 0, NULL)))
 	{

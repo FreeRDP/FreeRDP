@@ -3,6 +3,8 @@
  * Audio Output Virtual Channel
  *
  * Copyright 2012 Laxmikant Rashinkar <LK.Rashinkar@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +31,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/codec/dsp.h>
+#include <winpr/win32error.h>
 
 #include <AudioToolbox/AudioToolbox.h>
 #include <AudioToolbox/AudioQueue.h>
@@ -133,7 +136,7 @@ static BOOL rdpsnd_mac_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
 	UInt32 DecodeBufferSizeFrames;
 	UInt32 propertySize = sizeof(DecodeBufferSizeFrames);
 	
-	AudioQueueGetProperty(mac->audioQueue,
+	status = AudioQueueGetProperty(mac->audioQueue,
 			      kAudioQueueProperty_DecodeBufferSizeFrames,
 			      &DecodeBufferSizeFrames,
 			      &propertySize);
@@ -288,14 +291,14 @@ static void rdpsnd_mac_play(rdpsndDevicePlugin* device, BYTE* data, int size)
 #define freerdp_rdpsnd_client_subsystem_entry	mac_freerdp_rdpsnd_client_subsystem_entry
 #endif
 
-int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+WIN32ERROR freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	rdpsndMacPlugin* mac;
     
 	mac = (rdpsndMacPlugin*) calloc(1, sizeof(rdpsndMacPlugin));
 	
 	if (!mac)
-		return -1;
+		return CHANNEL_RC_NO_MEMORY;
 	
 	mac->device.Open = rdpsnd_mac_open;
 	mac->device.FormatSupported = rdpsnd_mac_format_supported;
@@ -308,5 +311,5 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*) mac);
 
-	return 0;
+	return CHANNEL_RC_OK;
 }

@@ -120,7 +120,7 @@ static char SMARTCARD_SERVICE_NAME[] = "smartcard";
 static char SERIAL_SERVICE_NAME[] = "serial";
 static char PARALLEL_SERVICE_NAME[] = "parallel";
 
-WIN32ERROR devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device)
+WIN32ERROR devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device, rdpContext* rdpcontext)
 {
 	char* ServiceName = NULL;
 	DEVICE_SERVICE_ENTRY_POINTS ep;
@@ -155,8 +155,7 @@ WIN32ERROR devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device)
 	ep.devman = devman;
 	ep.RegisterDevice = devman_register_device;
 	ep.device = device;
+	ep.rdpcontext = rdpcontext;
 
-	entry(&ep);
-
-	return CHANNEL_RC_OK;
+	return entry(&ep);
 }

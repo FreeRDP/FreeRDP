@@ -36,6 +36,7 @@
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
 #include <freerdp/codec/dsp.h>
+#include <freerdp/client/audin.h>
 
 #include "audin_main.h"
 
@@ -60,6 +61,8 @@ typedef struct _AudinPulseDevice
 
 	AudinReceive receive;
 	void* user_data;
+
+	rdpContext* rdpcontext;
 } AudinPulseDevice;
 
 static void audin_pulse_context_state_callback(pa_context* context, void* userdata)
@@ -280,12 +283,12 @@ static void audin_pulse_stream_request_callback(pa_stream* stream, size_t length
 {
 	int frames;
 	int cframes;
-	BOOL ret;
 	const void* data;
 	const BYTE* src;
 	int encoded_size;
 	BYTE* encoded_data;
 	AudinPulseDevice* pulse = (AudinPulseDevice*) userdata;
+	WIN32ERROR error = CHANNEL_RC_OK;
 
 	/* There is a race condition here where we may receive this callback
 	 * before the buffer has been set up in the main code.  It's probably
@@ -316,9 +319,13 @@ static void audin_pulse_stream_request_callback(pa_stream* stream, size_t length
 		{
 			if (pulse->format == 0x11)
 			{
-				pulse->dsp_context->encode_ima_adpcm(pulse->dsp_context,
+				if (!pulse->dsp_context->encode_ima_adpcm(pulse->dsp_context,
 					pulse->buffer, pulse->buffer_frames * pulse->bytes_per_frame,
-					pulse->sample_spec.channels, pulse->block_size);
+					pulse->sample_spec.channels, pulse->block_size))
+				{
+					error = ERROR_INTERNAL_ERROR;
+					break;
+				}
 				encoded_data = pulse->dsp_context->adpcm_buffer;
 				encoded_size = pulse->dsp_context->adpcm_size;
 			}
@@ -331,9 +338,9 @@ static void audin_pulse_stream_request_callback(pa_stream* stream, size_t length
 			DEBUG_DVC("encoded %d [%d] to %d [%X]",
 				pulse->buffer_frames, pulse->bytes_per_frame, encoded_size,
 				pulse->format);
-			ret = pulse->receive(encoded_data, encoded_size, pulse->user_data);
+			error = pulse->receive(encoded_data, encoded_size, pulse->user_data);
 			pulse->buffer_frames = 0;
-			if (!ret)
+			if (!error)
 				break;
 		}
 		src += cframes * pulse->bytes_per_frame;
@@ -341,6 +348,9 @@ static void audin_pulse_stream_request_callback(pa_stream* stream, size_t length
 	}
 
 	pa_stream_drop(stream);
+
+	if (error && pulse->rdpcontext)
+		setChannelError(pulse->rdpcontext, error, "audin_oss_thread_func reported an error");
 }
 
 
@@ -434,7 +444,7 @@ static WIN32ERROR audin_pulse_open(IAudinDevice* device, AudinReceive receive, v
 	pulse->buffer = calloc(1, pulse->bytes_per_frame * pulse->frames_per_packet);
 	if (!pulse->buffer) {
 		WLog_ERR(TAG, "calloc failed!");
-		return CHANNEL_RC_OK;
+		return CHANNEL_RC_NO_MEMORY;
 	}
 	pulse->buffer_frames = 0;
 	DEBUG_DVC("connected");
@@ -506,6 +516,7 @@ WIN32ERROR freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POIN
 	pulse->iface.SetFormat = audin_pulse_set_format;
 	pulse->iface.Close = audin_pulse_close;
 	pulse->iface.Free = audin_pulse_free;
+	pulse->rdpcontext = pEntryPoints->rdpcontext;
 
 	args = pEntryPoints->args;
 

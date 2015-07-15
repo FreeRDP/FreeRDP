@@ -66,6 +66,8 @@ typedef struct _AudinOSSDevice {
 
 	AudinReceive receive;
 	void* user_data;
+
+	rdpContext* rdpcontext;
 } AudinOSSDevice;
 
 #define OSS_LOG_ERR(_text, _error) \
@@ -156,13 +158,17 @@ static void *audin_oss_thread_func(void *arg)
 	WIN32ERROR error;
 
 	if (arg == NULL)
+	{
+		error = ERROR_INVALID_PARAMETER;
 		goto err_out;
+	}
 
 	if (oss->dev_unit != -1)
 		snprintf(dev_name, (PATH_MAX - 1), "/dev/dsp%i", oss->dev_unit);
 	WLog_INFO(TAG, "open: %s", dev_name);
 	if ((pcm_handle = open(dev_name, O_RDONLY)) < 0) {
 		OSS_LOG_ERR("sound dev open failed", errno);
+		error = (WIN32ERROR)errno;
 		goto err_out;
 	}
 #if 0 /* FreeBSD OSS implementation at this moment (2015.03) does not set PCM_CAP_INPUT flag. */
@@ -192,6 +198,7 @@ static void *audin_oss_thread_func(void *arg)
 	buffer = (BYTE*)calloc(1, (buffer_size + sizeof(void*)));
 	if (NULL == buffer) {
 		OSS_LOG_ERR("malloc() fail", errno);
+		error = ERROR_NOT_ENOUGH_MEMORY;
 		goto err_out;
 	}
 
@@ -208,14 +215,22 @@ static void *audin_oss_thread_func(void *arg)
 		/* Process. */
 		switch (oss->format.wFormatTag) {
 		case WAVE_FORMAT_ADPCM:
-			oss->dsp_context->encode_ms_adpcm(oss->dsp_context,
-			    buffer, buffer_size, oss->format.nChannels, oss->format.nBlockAlign);
+			if (!oss->dsp_context->encode_ms_adpcm(oss->dsp_context,
+			    buffer, buffer_size, oss->format.nChannels, oss->format.nBlockAlign))
+			{
+				error = ERROR_INTERNAL_ERROR;
+				break;
+			}
 			encoded_data = oss->dsp_context->adpcm_buffer;
 			encoded_size = oss->dsp_context->adpcm_size;
 			break;
 		case WAVE_FORMAT_DVI_ADPCM:
-			oss->dsp_context->encode_ima_adpcm(oss->dsp_context,
-			    buffer, buffer_size, oss->format.nChannels, oss->format.nBlockAlign);
+			if (!oss->dsp_context->encode_ima_adpcm(oss->dsp_context,
+			    buffer, buffer_size, oss->format.nChannels, oss->format.nBlockAlign))
+			{
+				error = ERROR_INTERNAL_ERROR;
+				break;
+			}
 			encoded_data = oss->dsp_context->adpcm_buffer;
 			encoded_size = oss->dsp_context->adpcm_size;
 			break;
@@ -233,6 +248,10 @@ static void *audin_oss_thread_func(void *arg)
 	}
 
 err_out:
+
+	if (error && oss->rdpcontext)
+		setChannelError(oss->rdpcontext, error, "audin_oss_thread_func reported an error");
+
 	if (pcm_handle != -1)
 		close(pcm_handle);
 	free(buffer);
@@ -253,7 +272,6 @@ static WIN32ERROR audin_oss_open(IAudinDevice *device, AudinReceive receive, voi
 		WLog_ERR(TAG, "CreateEvent failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
-	// TODO: add mechanism that threads can signal failure
 	if (!(oss->thread = CreateThread(NULL, 0,
 		(LPTHREAD_START_ROUTINE)audin_oss_thread_func, oss, 0, NULL)))
 	{
@@ -374,6 +392,7 @@ WIN32ERROR freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POIN
 	oss->iface.SetFormat = audin_oss_set_format;
 	oss->iface.Close = audin_oss_close;
 	oss->iface.Free = audin_oss_free;
+	oss->rdpcontext = pEntryPoints->rdpcontext;
 
 	oss->dev_unit = -1;
 

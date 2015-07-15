@@ -4,6 +4,8 @@
  *
  * Copyright 2010-2011 Vic Lee
  * Copyright 2012 Hewlett-Packard Development Company, L.P.
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +27,8 @@
 
 #ifndef __TSMF_MEDIA_H
 #define __TSMF_MEDIA_H
+
+#include <freerdp/freerdp.h>
 
 typedef struct _TSMF_PRESENTATION TSMF_PRESENTATION;
 
@@ -48,7 +52,7 @@ void tsmf_presentation_set_audio_device(TSMF_PRESENTATION *presentation,
 BOOL tsmf_presentation_flush(TSMF_PRESENTATION *presentation);
 void tsmf_presentation_free(TSMF_PRESENTATION *presentation);
 
-TSMF_STREAM *tsmf_stream_new(TSMF_PRESENTATION *presentation, UINT32 stream_id);
+TSMF_STREAM *tsmf_stream_new(TSMF_PRESENTATION *presentation, UINT32 stream_id, rdpContext* rdpcontext);
 TSMF_STREAM *tsmf_stream_find_by_id(TSMF_PRESENTATION *presentation, UINT32 stream_id);
 BOOL tsmf_stream_set_format(TSMF_STREAM *stream, const char *name, wStream *s);
 void tsmf_stream_end(TSMF_STREAM *stream);

@@ -974,7 +974,11 @@ static WIN32ERROR encomsp_virtual_channel_event_data_received(encomspPlugin* enc
 		Stream_SealLength(data_in);
 		Stream_SetPosition(data_in, 0);
 
-		MessageQueue_Post(encomsp->queue, NULL, 0, (void*) data_in, NULL);
+		if (!MessageQueue_Post(encomsp->queue, NULL, 0, (void*) data_in, NULL))
+		{
+			WLog_ERR(TAG, "MessageQueue_Post failed!");
+			return ERROR_INTERNAL_ERROR;
+		}
 	}
 	return CHANNEL_RC_OK;
 }
@@ -983,26 +987,21 @@ static VOID VCAPITYPE encomsp_virtual_channel_open_event(DWORD openHandle, UINT 
 		LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	encomspPlugin* encomsp;
+	WIN32ERROR error = CHANNEL_RC_OK;
 
 	encomsp = (encomspPlugin*) encomsp_get_open_handle_data(openHandle);
 
 	if (!encomsp)
 	{
 		WLog_ERR(TAG,  "encomsp_virtual_channel_open_event: error no match");
-		encomsp->error = CHANNEL_RC_BAD_CHANNEL;
 		return;
 	}
-
-	encomsp->error = CHANNEL_RC_OK;
 
 	switch (event)
 	{
 		case CHANNEL_EVENT_DATA_RECEIVED:
-			if ((encomsp->error = encomsp_virtual_channel_event_data_received(encomsp, pData, dataLength, totalLength, dataFlags)))
-			{
-				WLog_ERR(TAG,  "encomsp_virtual_channel_event_data_received failed with error %lu", encomsp->error);
-				return;
-			}
+			if ((error = encomsp_virtual_channel_event_data_received(encomsp, pData, dataLength, totalLength, dataFlags)))
+				WLog_ERR(TAG,  "encomsp_virtual_channel_event_data_received failed with error %lu", error);
 			break;
 
 		case CHANNEL_EVENT_WRITE_COMPLETE:
@@ -1012,8 +1011,10 @@ static VOID VCAPITYPE encomsp_virtual_channel_open_event(DWORD openHandle, UINT 
 		case CHANNEL_EVENT_USER:
 			break;
 	}
+	if (error && encomsp->rdpcontext)
+		setChannelError(encomsp->rdpcontext, error, "encomsp_virtual_channel_open_event reported an error");
+
 	return;
-	//TODO erport error
 }
 
 static void* encomsp_virtual_channel_client_thread(void* arg)
@@ -1028,24 +1029,35 @@ static void* encomsp_virtual_channel_client_thread(void* arg)
 	while (1)
 	{
 		if (!MessageQueue_Wait(encomsp->queue))
+		{
+			WLog_ERR(TAG, "MessageQueue_Wait failed!");
+			error = ERROR_INTERNAL_ERROR;
+			break;
+		}
+
+		if (!MessageQueue_Peek(encomsp->queue, &message, TRUE))
+		{
+			WLog_ERR(TAG, "MessageQueue_Peek failed!");
+			error = ERROR_INTERNAL_ERROR;
+			break;
+		}
+
+		if (message.id == WMQ_QUIT)
 			break;
 
-		if (MessageQueue_Peek(encomsp->queue, &message, TRUE))
+		if (message.id == 0)
 		{
-			if (message.id == WMQ_QUIT)
-				break;
-
-			if (message.id == 0)
+			data = (wStream*) message.wParam;
+			if ((error = encomsp_process_receive(encomsp, data)))
 			{
-				data = (wStream*) message.wParam;
-				if ((error = encomsp_process_receive(encomsp, data)))
-				{
-					WLog_ERR(TAG, "encomsp_process_receive failed with error %lu!", error);
-					break;
-				}
+				WLog_ERR(TAG, "encomsp_process_receive failed with error %lu!", error);
+				break;
 			}
 		}
 	}
+
+	if (error && encomsp->rdpcontext)
+		setChannelError(encomsp->rdpcontext, error, "encomsp_virtual_channel_client_thread reported an error");
 
 	ExitThread((DWORD)error);
 	return NULL;
@@ -1131,34 +1143,26 @@ static WIN32ERROR encomsp_virtual_channel_event_terminated(encomspPlugin* encoms
 static void VCAPITYPE encomsp_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
 {
 	encomspPlugin* encomsp;
+	WIN32ERROR error = CHANNEL_RC_OK;
 
 	encomsp = (encomspPlugin*) encomsp_get_init_handle_data(pInitHandle);
 
 	if (!encomsp)
 	{
 		WLog_ERR(TAG,  "encomsp_virtual_channel_init_event: error no match");
-		encomsp->error = CHANNEL_RC_BAD_CHANNEL;
 		return;
 	}
-
-	encomsp->error = CHANNEL_RC_OK;
 
 	switch (event)
 	{
 		case CHANNEL_EVENT_CONNECTED:
-			if ((encomsp->error = encomsp_virtual_channel_event_connected(encomsp, pData, dataLength)))
-			{
-				WLog_ERR(TAG, "encomsp_virtual_channel_event_connected failed with error %lu", encomsp->error);
-				return;
-			}
+			if ((error = encomsp_virtual_channel_event_connected(encomsp, pData, dataLength)))
+				WLog_ERR(TAG, "encomsp_virtual_channel_event_connected failed with error %lu", error);
 			break;
 
 		case CHANNEL_EVENT_DISCONNECTED:
-			if ((encomsp->error = encomsp_virtual_channel_event_disconnected(encomsp)))
-			{
-				WLog_ERR(TAG, "encomsp_virtual_channel_event_disconnected failed with error %lu", encomsp->error);
-				return;
-			}
+			if ((error = encomsp_virtual_channel_event_disconnected(encomsp)))
+				WLog_ERR(TAG, "encomsp_virtual_channel_event_disconnected failed with error %lu", error);
 			break;
 
 		case CHANNEL_EVENT_TERMINATED:
@@ -1166,11 +1170,13 @@ static void VCAPITYPE encomsp_virtual_channel_init_event(LPVOID pInitHandle, UIN
 			break;
 		default:
 			WLog_ERR(TAG, "uknown event type %d", event);
-			encomsp->error = ERROR_INVALID_DATA;
-			return;
+			error = ERROR_INVALID_DATA;
 	}
+
+	if (error && encomsp->rdpcontext)
+		setChannelError(encomsp->rdpcontext, error, "encomsp_virtual_channel_init_event reported an error");
+
 	return;
-	//TODO report error
 }
 
 /* encomsp is always built-in */
@@ -1183,6 +1189,7 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	EncomspClientContext* context;
 	CHANNEL_ENTRY_POINTS_FREERDP* pEntryPointsEx;
 	BOOL isFreerdp = FALSE;
+	WIN32ERROR error;
 
 	encomsp = (encomspPlugin*) calloc(1, sizeof(encomspPlugin));
 	if (!encomsp)
@@ -1227,6 +1234,7 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 		*(pEntryPointsEx->ppInterface) = (void*) context;
 		encomsp->context = context;
+		encomsp->rdpcontext = pEntryPointsEx->context;
 		isFreerdp = TRUE;
 	}
 
@@ -1244,9 +1252,9 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	encomsp->channelEntryPoints.pInterface = *(encomsp->channelEntryPoints.ppInterface);
 	encomsp->channelEntryPoints.ppInterface = &(encomsp->channelEntryPoints.pInterface);
 
-	if ((encomsp->error = encomsp_add_init_handle_data(encomsp->InitHandle, (void*) encomsp)))
+	if ((error = encomsp_add_init_handle_data(encomsp->InitHandle, (void*) encomsp)))
 	{
-		WLog_ERR(TAG, "encomsp_add_init_handle_data failed with error %lu!", encomsp->error);
+		WLog_ERR(TAG, "encomsp_add_init_handle_data failed with error %lu!", error);
 		goto error_out;
 	}
 

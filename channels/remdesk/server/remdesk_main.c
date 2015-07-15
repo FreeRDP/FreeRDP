@@ -543,8 +543,8 @@ static void* remdesk_server_thread(void* arg)
 	if (!s)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
-		ExitThread(CHANNEL_RC_NO_MEMORY);
-		return NULL;
+		error = CHANNEL_RC_NO_MEMORY;
+		goto out;
 	}
 
 	if (WTSVirtualChannelQuery(context->priv->ChannelHandle, WTSVirtualEventHandle, &buffer, &BytesReturned) == TRUE)
@@ -557,8 +557,8 @@ static void* remdesk_server_thread(void* arg)
 	else
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelQuery failed!");
-		ExitThread(ERROR_INTERNAL_ERROR);
-		return NULL;
+		error = ERROR_INTERNAL_ERROR;
+		goto out;
 	}
 
 	nCount = 0;
@@ -568,8 +568,7 @@ static void* remdesk_server_thread(void* arg)
 	if ((error = remdesk_send_ctl_version_info_pdu(context)))
 	{
 		WLog_ERR(TAG, "remdesk_send_ctl_version_info_pdu failed with error %lu!", error);
-		ExitThread((DWORD)error);
-		return NULL;
+		goto out;
 	}
 
 	while (1)
@@ -617,7 +616,10 @@ static void* remdesk_server_thread(void* arg)
 	}
 
 	Stream_Free(s, TRUE);
-	//TODO signal error
+out:
+	if (error && context->rdpcontext)
+		setChannelError(context->rdpcontext, error, "remdesk_server_thread reported an error");
+
 	ExitThread((DWORD)error);
 	return NULL;
 }
@@ -638,7 +640,6 @@ static WIN32ERROR remdesk_server_start(RemdeskServerContext* context)
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	//TODO implement error reporting
 	if (!(context->priv->Thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) remdesk_server_thread, (void*) context, 0, NULL)))
 	{

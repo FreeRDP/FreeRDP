@@ -70,6 +70,7 @@ struct _PARALLEL_DEVICE
 
 	HANDLE thread;
 	wMessageQueue* queue;
+	rdpContext* rdpcontext;
 };
 typedef struct _PARALLEL_DEVICE PARALLEL_DEVICE;
 
@@ -224,7 +225,7 @@ static WIN32ERROR parallel_process_irp_device_control(PARALLEL_DEVICE* parallel,
 	return irp->Complete(irp);
 }
 
-static int parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
+static WIN32ERROR parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
 {
 	WIN32ERROR error;
 
@@ -312,6 +313,9 @@ static void* parallel_thread_func(void* arg)
 			break;
 		}
 	}
+	if (error && parallel->rdpcontext)
+		setChannelError(parallel->rdpcontext, error, "parallel_thread_func reported an error");
+
 	ExitThread((DWORD)error);
 	return NULL;
 }
@@ -320,7 +324,11 @@ static WIN32ERROR parallel_irp_request(DEVICE* device, IRP* irp)
 {
 	PARALLEL_DEVICE* parallel = (PARALLEL_DEVICE*) device;
 
-	MessageQueue_Post(parallel->queue, NULL, 0, (void*) irp, NULL);
+	if (!MessageQueue_Post(parallel->queue, NULL, 0, (void*) irp, NULL))
+	{
+		WLog_ERR(TAG, "MessageQueue_Post failed!");
+		return ERROR_INTERNAL_ERROR;
+	}
 	return CHANNEL_RC_OK;
 }
 
@@ -375,6 +383,7 @@ WIN32ERROR DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		parallel->device.name = name;
 		parallel->device.IRPRequest = parallel_irp_request;
 		parallel->device.Free = parallel_free;
+		parallel->rdpcontext = pEntryPoints->rdpcontext;
 
 		length = strlen(name);
 		parallel->device.data = Stream_New(NULL, length + 1);

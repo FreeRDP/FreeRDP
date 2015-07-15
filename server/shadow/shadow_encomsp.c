@@ -2,6 +2,8 @@
  * FreeRDP: A Remote Desktop Protocol Implementation
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,6 +100,8 @@ int shadow_client_encomsp_init(rdpShadowClient* client)
 	EncomspServerContext* encomsp;
 
 	encomsp = client->encomsp = encomsp_server_context_new(client->vcm);
+
+	encomsp->rdpcontext = &client->context;
 
 	encomsp->custom = (void*) client;
 

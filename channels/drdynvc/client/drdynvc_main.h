@@ -34,6 +34,7 @@
 #include <freerdp/addin.h>
 #include <freerdp/channels/log.h>
 #include <freerdp/client/drdynvc.h>
+#include <freerdp/freerdp.h>
 
 typedef struct drdynvc_plugin drdynvcPlugin;
 
@@ -132,7 +133,8 @@ struct drdynvc_plugin
 	int PriorityCharge1;
 	int PriorityCharge2;
 	int PriorityCharge3;
-	WIN32ERROR channel_error;
+	rdpContext* rdpcontext;
+
 
 	IWTSVirtualChannelManager* channel_mgr;
 };

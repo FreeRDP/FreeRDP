@@ -49,7 +49,7 @@ struct encomsp_plugin
 	void* InitHandle;
 	DWORD OpenHandle;
 	wMessageQueue* queue;
-	WIN32ERROR error;
+	rdpContext* rdpcontext;
 };
 typedef struct encomsp_plugin encomspPlugin;
 

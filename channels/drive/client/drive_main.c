@@ -61,6 +61,8 @@ struct _DRIVE_DEVICE
 	wMessageQueue* IrpQueue;
 
 	DEVMAN* devman;
+
+	rdpContext* rdpcontext;
 };
 
 static UINT32 drive_map_posix_err(int fs_errno)
@@ -619,15 +621,23 @@ static void* drive_thread_func(void* arg)
 	IRP* irp;
 	wMessage message;
 	DRIVE_DEVICE* drive = (DRIVE_DEVICE*) arg;
-	WIN32ERROR error;
+	WIN32ERROR error = CHANNEL_RC_OK;
 
 	while (1)
 	{
 		if (!MessageQueue_Wait(drive->IrpQueue))
+		{
+			WLog_ERR(TAG, "MessageQueue_Wait failed!");
+			error = ERROR_INTERNAL_ERROR;
 			break;
+		}
 
 		if (!MessageQueue_Peek(drive->IrpQueue, &message, TRUE))
+		{
+			WLog_ERR(TAG, "MessageQueue_Peek failed!");
+			error = ERROR_INTERNAL_ERROR;
 			break;
+		}
 
 		if (message.id == WMQ_QUIT)
 			break;
@@ -638,19 +648,24 @@ static void* drive_thread_func(void* arg)
 			if ((error = drive_process_irp(drive, irp)))
 			{
 				WLog_ERR(TAG, "drive_process_irp failed with error %lu!", error);
-				ExitThread((DWORD)error);
-				return NULL;
+				break;
 			}
 	}
 
-	ExitThread(0);
+	if (error && drive->rdpcontext)
+		setChannelError(drive->rdpcontext, error, "drive_thread_func reported an error");
+	ExitThread((DWORD)error);
 	return NULL;
 }
 
 static WIN32ERROR drive_irp_request(DEVICE* device, IRP* irp)
 {
 	DRIVE_DEVICE* drive = (DRIVE_DEVICE*) device;
-	MessageQueue_Post(drive->IrpQueue, NULL, 0, (void*) irp, NULL);
+	if (!MessageQueue_Post(drive->IrpQueue, NULL, 0, (void*) irp, NULL))
+	{
+		WLog_ERR(TAG, "MessageQueue_Post failed!");
+		return ERROR_INTERNAL_ERROR;
+	}
 	return CHANNEL_RC_OK;
 }
 
@@ -704,6 +719,7 @@ WIN32ERROR drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, 
 		drive->device.name = name;
 		drive->device.IRPRequest = drive_irp_request;
 		drive->device.Free = drive_free;
+		drive->rdpcontext = pEntryPoints->rdpcontext;
 
 		length = (int) strlen(name);
 		drive->device.data = Stream_New(NULL, length + 1);

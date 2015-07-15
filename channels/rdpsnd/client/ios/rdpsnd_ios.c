@@ -3,6 +3,8 @@
  * Audio Output Virtual Channel
  *
  * Copyright 2013 Dell Software <Mike.McDonald@software.dell.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +27,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/codec/dsp.h>
+#include <winpr/win32error.h>
 
 #import <AudioToolbox/AudioToolbox.h>
 
@@ -281,12 +284,12 @@ static void rdpsnd_ios_free(rdpsndDevicePlugin* device)
 #define freerdp_rdpsnd_client_subsystem_entry	ios_freerdp_rdpsnd_client_subsystem_entry
 #endif
 
-int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+WIN32ERROR freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	rdpsndIOSPlugin* p = (rdpsndIOSPlugin*) calloc(1, sizeof(rdpsndIOSPlugin));
 
 	if (!p)
-		return -1;
+		return CHANNEL_RC_NO_MEMORY;
 
 	p->device.Open = rdpsnd_ios_open;
 	p->device.FormatSupported = rdpsnd_ios_format_supported;
@@ -299,5 +302,5 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*)p);
 
-	return 0;
+	return CHANNEL_RC_OK;
 }

@@ -50,7 +50,6 @@ struct cliprdr_plugin
 	BOOL streamFileClipEnabled;
 	BOOL fileClipNoFilePaths;
 	BOOL canLockClipData;
-	WIN32ERROR error;
 };
 typedef struct cliprdr_plugin cliprdrPlugin;
 

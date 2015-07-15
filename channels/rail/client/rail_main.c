@@ -401,7 +401,7 @@ WIN32ERROR rail_add_open_handle_data(DWORD openHandle, void* pUserData)
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	ListDictionary_Add(g_OpenHandles, pOpenHandle, pUserData);
+	if (!ListDictionary_Add(g_OpenHandles, pOpenHandle, pUserData))
 	{
 		WLog_ERR(TAG, "ListDictionary_Add failed!");
 		return ERROR_INTERNAL_ERROR;
@@ -471,7 +471,11 @@ static WIN32ERROR rail_virtual_channel_event_data_received(railPlugin* rail,
 		Stream_SealLength(data_in);
 		Stream_SetPosition(data_in, 0);
 
-		MessageQueue_Post(rail->queue, NULL, 0, (void*) data_in, NULL);
+		if (!MessageQueue_Post(rail->queue, NULL, 0, (void*) data_in, NULL))
+		{
+			WLog_ERR(TAG, "MessageQueue_Post failed!");
+			return ERROR_INTERNAL_ERROR;
+		}
 	}
 	return CHANNEL_RC_OK;
 }
@@ -480,25 +484,21 @@ static VOID VCAPITYPE rail_virtual_channel_open_event(DWORD openHandle, UINT eve
 		LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	railPlugin* rail;
+	WIN32ERROR error = CHANNEL_RC_OK;
 
 	rail = (railPlugin*) rail_get_open_handle_data(openHandle);
 
 	if (!rail)
 	{
 		WLog_ERR(TAG, "rail_virtual_channel_open_event: error no match");
-		rail->error = CHANNEL_RC_BAD_CHANNEL;
 		return;
 	}
-	rail->error = CHANNEL_RC_OK;
 
 	switch (event)
 	{
 		case CHANNEL_EVENT_DATA_RECEIVED:
-			if ((rail->error = rail_virtual_channel_event_data_received(rail, pData, dataLength, totalLength, dataFlags)))
-			{
-				WLog_ERR(TAG, "rail_virtual_channel_event_data_received failed with error %lu!", rail->error);
-				return;
-			}
+			if ((error = rail_virtual_channel_event_data_received(rail, pData, dataLength, totalLength, dataFlags)))
+				WLog_ERR(TAG, "rail_virtual_channel_event_data_received failed with error %lu!", error);
 			break;
 
 		case CHANNEL_EVENT_WRITE_COMPLETE:
@@ -508,8 +508,11 @@ static VOID VCAPITYPE rail_virtual_channel_open_event(DWORD openHandle, UINT eve
 		case CHANNEL_EVENT_USER:
 			break;
 	}
+
+	if (error && rail->rdpcontext)
+		setChannelError(rail->rdpcontext, error, "rail_virtual_channel_open_event reported an error");
+
 	return;
-	//TODO report error
 }
 
 static void* rail_virtual_channel_client_thread(void* arg)
@@ -522,24 +525,34 @@ static void* rail_virtual_channel_client_thread(void* arg)
 	while (1)
 	{
 		if (!MessageQueue_Wait(rail->queue))
+		{
+			WLog_ERR(TAG, "MessageQueue_Wait failed!");
+			error = ERROR_INTERNAL_ERROR;
+			break;
+		}
+
+		if (!MessageQueue_Peek(rail->queue, &message, TRUE))
+		{
+			WLog_ERR(TAG, "MessageQueue_Peek failed!");
+			error = ERROR_INTERNAL_ERROR;
+			break;
+		}
+		if (message.id == WMQ_QUIT)
 			break;
 
-		if (MessageQueue_Peek(rail->queue, &message, TRUE))
+		if (message.id == 0)
 		{
-			if (message.id == WMQ_QUIT)
-				break;
-
-			if (message.id == 0)
+			data = (wStream*) message.wParam;
+			if ((error = rail_order_recv(rail, data)))
 			{
-				data = (wStream*) message.wParam;
-				if ((error = rail_order_recv(rail, data)))
-				{
-					WLog_ERR(TAG, "rail_order_recv failed with error %d!", error);
-					break;
-				}
+				WLog_ERR(TAG, "rail_order_recv failed with error %d!", error);
+				break;
 			}
 		}
 	}
+
+	if (error && rail->rdpcontext)
+		setChannelError(rail->rdpcontext, error, "rail_virtual_channel_client_thread reported an error");
 
 	ExitThread((DWORD)error);
 	return NULL;
@@ -620,24 +633,22 @@ static void rail_virtual_channel_event_terminated(railPlugin* rail)
 static VOID VCAPITYPE rail_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
 {
 	railPlugin* rail;
+	WIN32ERROR error = CHANNEL_RC_OK;
 
 	rail = (railPlugin*) rail_get_init_handle_data(pInitHandle);
 
 	if (!rail)
 	{
 		WLog_ERR(TAG,  "rail_virtual_channel_init_event: error no match");
-		rail->error = CHANNEL_RC_BAD_CHANNEL;
 		return;
 	}
-
-	rail->error = CHANNEL_RC_OK;
 
 	switch (event)
 	{
 		case CHANNEL_EVENT_CONNECTED:
-			if ((rail->error = rail_virtual_channel_event_connected(rail, pData, dataLength)))
+			if ((error = rail_virtual_channel_event_connected(rail, pData, dataLength)))
 			{
-				WLog_ERR(TAG, "rail_virtual_channel_event_connected failed with error %lu!", rail->error);
+				WLog_ERR(TAG, "rail_virtual_channel_event_connected failed with error %lu!", error);
 				return;
 			}
 			break;
@@ -650,8 +661,11 @@ static VOID VCAPITYPE rail_virtual_channel_init_event(LPVOID pInitHandle, UINT e
 			rail_virtual_channel_event_terminated(rail);
 			break;
 	}
+
+	if(error && rail->rdpcontext)
+		setChannelError(rail->rdpcontext, error, "rail_virtual_channel_init_event reported an error");
+
 	return;
-	//TODO report error
 }
 
 /* rail is always built-in */
@@ -717,6 +731,7 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 		context->ServerExecuteResult = rail_server_execute_result;
 		context->ClientGetAppIdRequest = rail_client_get_appid_request;
 		context->ServerGetAppIdResponse = rail_server_get_appid_response;
+		rail->rdpcontext = pEntryPointsEx->context;
 
 		*(pEntryPointsEx->ppInterface) = (void*) context;
 		rail->context = context;

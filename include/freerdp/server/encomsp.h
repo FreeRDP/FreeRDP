@@ -71,6 +71,8 @@ struct _encomsp_server_context
 	psEncomspGraphicsStreamResumed GraphicsStreamResumed;
 
 	EncomspServerPrivate* priv;
+
+	rdpContext* rdpcontext;
 };
 
 #ifdef __cplusplus

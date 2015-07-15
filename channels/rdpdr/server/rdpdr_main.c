@@ -947,8 +947,8 @@ static void* rdpdr_server_thread(void* arg)
 	if (!s)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
-		ExitThread((DWORD) CHANNEL_RC_NO_MEMORY);
-		return NULL;
+		error = CHANNEL_RC_NO_MEMORY;
+		goto out;
 	}
 
 	if (WTSVirtualChannelQuery(context->priv->ChannelHandle, WTSVirtualEventHandle, &buffer, &BytesReturned) == TRUE)
@@ -965,9 +965,7 @@ static void* rdpdr_server_thread(void* arg)
 	if ((error = rdpdr_server_send_announce_request(context)))
 	{
 		WLog_ERR(TAG, "rdpdr_server_send_announce_request failed with error %lu!", error);
-		Stream_Free(s, TRUE);
-		ExitThread((DWORD) error);
-		return NULL;
+		goto out_stream;
 	}
 
 	while (1)
@@ -976,14 +974,13 @@ static void* rdpdr_server_thread(void* arg)
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
 		if (WaitForSingleObject(context->priv->StopEvent, 0) == WAIT_OBJECT_0)
-		{
 			break;
-		}
 
 		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0,
 				(PCHAR) Stream_Buffer(s), Stream_Capacity(s), &BytesReturned))
 		{
 			WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
+			error = ERROR_INTERNAL_ERROR;
 			break;
 		}
 
@@ -1001,16 +998,18 @@ static void* rdpdr_server_thread(void* arg)
 				if ((error = rdpdr_server_receive_pdu(context, s, &header)))
 				{
 					WLog_ERR(TAG, "rdpdr_server_receive_pdu failed with error %lu!", error);
-					Stream_Free(s, TRUE);
-					ExitThread((DWORD) error);
-					return NULL;
+					goto out_stream;
 				}
 			}
 		}
 	}
-
+out_stream:
 	Stream_Free(s, TRUE);
-	ExitThread((DWORD) CHANNEL_RC_OK);
+out:
+	if (error && context->rdpcontext)
+		setChannelError(context->rdpcontext, error, "rdpdr_server_thread reported an error");
+
+	ExitThread((DWORD) error);
 	return NULL;
 }
 

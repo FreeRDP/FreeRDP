@@ -47,6 +47,7 @@ struct _remdesk_server_context
 	psRemdeskStop Stop;
 
 	RemdeskServerPrivate* priv;
+	rdpContext* rdpcontext;
 };
 
 #ifdef __cplusplus

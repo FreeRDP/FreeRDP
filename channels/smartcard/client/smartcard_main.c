@@ -41,6 +41,7 @@ void* smartcard_context_thread(SMARTCARD_CONTEXT* pContext)
 	wMessage message;
 	SMARTCARD_DEVICE* smartcard;
 	SMARTCARD_OPERATION* operation;
+	WIN32ERROR error = CHANNEL_RC_OK;
 
 	smartcard = pContext->smartcard;
 
@@ -54,7 +55,12 @@ void* smartcard_context_thread(SMARTCARD_CONTEXT* pContext)
 		if (WaitForSingleObject(MessageQueue_Event(pContext->IrpQueue), 0) == WAIT_OBJECT_0)
 		{
 			if (!MessageQueue_Peek(pContext->IrpQueue, &message, TRUE))
+			{
+				WLog_ERR(TAG, "MessageQueue_Peek failed!");
+				status = ERROR_INTERNAL_ERROR;
 				break;
+			}
+
 
 			if (message.id == WMQ_QUIT)
 				break;
@@ -69,14 +75,23 @@ void* smartcard_context_thread(SMARTCARD_CONTEXT* pContext)
 					break;
 				}
 
-				Queue_Enqueue(smartcard->CompletedIrpQueue, (void*) operation->irp);
+				if (!Queue_Enqueue(smartcard->CompletedIrpQueue, (void*) operation->irp))
+				{
+					WLog_ERR(TAG, "Queue_Enqueue failed!");
+					status = ERROR_INTERNAL_ERROR;
+					break;
+
+				}
 
 				free(operation);
 			}
 		}
 	}
 
-	ExitThread(0);
+	if (status && smartcard->rdpcontext)
+		setChannelError(smartcard->rdpcontext, error, "smartcard_context_thread reported an error");
+
+	ExitThread((DWORD)status);
 	return NULL;
 }
 
@@ -86,20 +101,30 @@ SMARTCARD_CONTEXT* smartcard_context_new(SMARTCARD_DEVICE* smartcard, SCARDCONTE
 
 	pContext = (SMARTCARD_CONTEXT*) calloc(1, sizeof(SMARTCARD_CONTEXT));
 	if (!pContext)
+	{
+		WLog_ERR(TAG, "calloc failed!");
 		return pContext;
+	}
 
 	pContext->smartcard = smartcard;
 	pContext->hContext = hContext;
 
 	pContext->IrpQueue = MessageQueue_New(NULL);
 	if (!pContext->IrpQueue)
+	{
+		WLog_ERR(TAG, "MessageQueue_New failed!");
 		goto error_irpqueue;
+	}
 
 	pContext->thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) smartcard_context_thread,
 			pContext, 0, NULL);
 	if (!pContext->thread)
+	{
+		WLog_ERR(TAG, "CreateThread failed!");
 		goto error_thread;
+	}
+
 	return pContext;
 
 error_thread:
@@ -246,29 +271,6 @@ WIN32ERROR smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	ListDictionary_Remove(smartcard->rgOutstandingMessages, key);
 
 	return irp->Complete(irp);
-}
-
-void* smartcard_process_irp_worker_proc(SMARTCARD_OPERATION* operation)
-{
-	IRP* irp;
-	LONG status;
-	SMARTCARD_DEVICE* smartcard;
-
-	irp = operation->irp;
-	smartcard = (SMARTCARD_DEVICE*) irp->device;
-
-	if ((status = smartcard_irp_device_control_call(smartcard, operation)))
-	{
-		WLog_ERR(TAG, "smartcard_irp_device_control_call failed with error %lu", status);
-		//TODO report error
-	}
-
-	Queue_Enqueue(smartcard->CompletedIrpQueue, (void*) irp);
-
-	free(operation);
-
-	ExitThread(0);
-	return NULL;
 }
 
 /**
@@ -456,7 +458,12 @@ static void* smartcard_thread_func(void* arg)
 		if (WaitForSingleObject(MessageQueue_Event(smartcard->IrpQueue), 0) == WAIT_OBJECT_0)
 		{
 			if (!MessageQueue_Peek(smartcard->IrpQueue, &message, TRUE))
+			{
+				WLog_ERR(TAG, "MessageQueue_Peek failed!");
+				error = ERROR_INTERNAL_ERROR;
 				break;
+			}
+
 
 			if (message.id == WMQ_QUIT)
 			{
@@ -518,7 +525,9 @@ static void* smartcard_thread_func(void* arg)
 		}
 	}
 out:
-	//TODO signal error
+	if (error && smartcard->rdpcontext)
+		setChannelError(smartcard->rdpcontext, error, "smartcard_thread_func reported an error");
+
 	ExitThread((DWORD)error);
 	return NULL;
 }
@@ -526,7 +535,11 @@ out:
 static WIN32ERROR smartcard_irp_request(DEVICE* device, IRP* irp)
 {
 	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) device;
-	MessageQueue_Post(smartcard->IrpQueue, NULL, 0, (void*) irp, NULL);
+	if (!MessageQueue_Post(smartcard->IrpQueue, NULL, 0, (void*) irp, NULL))
+	{
+		WLog_ERR(TAG, "MessageQueue_Post failed!");
+		return ERROR_INTERNAL_ERROR;
+	}
 	return CHANNEL_RC_OK;
 }
 
@@ -560,6 +573,7 @@ WIN32ERROR DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	smartcard->device.IRPRequest = smartcard_irp_request;
 	smartcard->device.Init = smartcard_init;
 	smartcard->device.Free = smartcard_free;
+	smartcard->rdpcontext = pEntryPoints->rdpcontext;
 
 	length = strlen(smartcard->device.name);
 	smartcard->device.data = Stream_New(NULL, length + 1);

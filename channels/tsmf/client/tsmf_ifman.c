@@ -4,6 +4,8 @@
  *
  * Copyright 2010-2011 Vic Lee
  * Copyright 2012 Hewlett-Packard Development Company, L.P.
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,7 +182,7 @@ WIN32ERROR tsmf_ifman_on_new_presentation(TSMF_IFMAN* ifman)
 	return status;
 }
 
-WIN32ERROR tsmf_ifman_add_stream(TSMF_IFMAN* ifman)
+WIN32ERROR tsmf_ifman_add_stream(TSMF_IFMAN* ifman, rdpContext* rdpcontext)
 {
 	UINT32 StreamId;
 	WIN32ERROR status = CHANNEL_RC_OK;
@@ -203,7 +205,7 @@ WIN32ERROR tsmf_ifman_add_stream(TSMF_IFMAN* ifman)
 	{
 		Stream_Read_UINT32(ifman->input, StreamId);
 		Stream_Seek_UINT32(ifman->input); /* numMediaType */
-		stream = tsmf_stream_new(presentation, StreamId);
+		stream = tsmf_stream_new(presentation, StreamId, rdpcontext);
 		if (!stream)
 			return ERROR_OUTOFMEMORY;
 

@@ -72,6 +72,8 @@ struct _echo_server_context
 	 * Receive echo response PDU.
 	 */
 	psEchoServerResponse Response;
+
+	rdpContext* rdpcontext;
 };
 
 #ifdef __cplusplus

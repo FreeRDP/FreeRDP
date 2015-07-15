@@ -62,6 +62,7 @@ struct _PRINTER_DEVICE
 	HANDLE stopEvent;
 
 	HANDLE thread;
+	rdpContext* rdpcontext;
 };
 
 static WIN32ERROR printer_process_irp_create(PRINTER_DEVICE* printer_dev, IRP* irp)
@@ -225,6 +226,8 @@ static void* printer_thread_func(void* arg)
 			break;
 		}
 	}
+	if (error && printer_dev->rdpcontext)
+		setChannelError(printer_dev->rdpcontext, error, "printer_thread_func reported an error");
 
 	ExitThread((DWORD) error);
 
@@ -299,6 +302,7 @@ WIN32ERROR printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinte
 	printer_dev->device.name = port;
 	printer_dev->device.IRPRequest = printer_irp_request;
 	printer_dev->device.Free = printer_free;
+	printer_dev->rdpcontext = pEntryPoints->rdpcontext;
 
 	printer_dev->printer = printer;
 

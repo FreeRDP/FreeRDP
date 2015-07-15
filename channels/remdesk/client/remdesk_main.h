@@ -56,7 +56,7 @@ struct remdesk_plugin
 	char* ExpertBlob;
 	BYTE* EncryptedPassStub;
 	int EncryptedPassStubSize;
-	WIN32ERROR error;
+	rdpContext* rdpcontext;
 };
 typedef struct remdesk_plugin remdeskPlugin;
 

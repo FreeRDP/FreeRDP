@@ -1147,8 +1147,7 @@ static void* cliprdr_server_thread(void* arg)
 	if ((error = cliprdr_server_init(context)))
 	{
 		WLog_ERR(TAG, "cliprdr_server_init failed with error %lu!", error);
-		ExitThread((DWORD)error);
-		return NULL;
+		goto out;
 	}
 
 	while (1)
@@ -1156,9 +1155,7 @@ static void* cliprdr_server_thread(void* arg)
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
 		if (WaitForSingleObject(cliprdr->StopEvent, 0) == WAIT_OBJECT_0)
-		{
 			break;
-		}
 
 		if (WaitForSingleObject(ChannelEvent, 0) == WAIT_OBJECT_0)
 		{
@@ -1169,6 +1166,10 @@ static void* cliprdr_server_thread(void* arg)
 			}
 		}
 	}
+out:
+	if (error && context->rdpcontext)
+		setChannelError(context->rdpcontext, error, "cliprdr_server_thread reported an error");
+
 	ExitThread((DWORD)error);
 	return NULL;
 }
@@ -1250,7 +1251,6 @@ static WIN32ERROR cliprdr_server_start(CliprdrServerContext* context)
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	// TODO: add mechanism that threads can signal failure
 	if (!(cliprdr->Thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) cliprdr_server_thread, (void*) context, 0, NULL)))
 	{

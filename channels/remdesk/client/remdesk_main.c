@@ -589,7 +589,7 @@ static WIN32ERROR remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s, REMDE
 
 static WIN32ERROR remdesk_process_receive(remdeskPlugin* remdesk, wStream* s)
 {
-	WIN32ERROR status = CHANNEL_RC_OK;
+	WIN32ERROR status;
 	REMDESK_CHANNEL_HEADER header;
 
 #if 0
@@ -775,7 +775,11 @@ static WIN32ERROR remdesk_virtual_channel_event_data_received(remdeskPlugin* rem
 		Stream_SealLength(data_in);
 		Stream_SetPosition(data_in, 0);
 
-		MessageQueue_Post(remdesk->queue, NULL, 0, (void*) data_in, NULL);
+		if (!MessageQueue_Post(remdesk->queue, NULL, 0, (void*) data_in, NULL))
+		{
+			WLog_ERR(TAG, "MessageQueue_Post failed!");
+			return ERROR_INTERNAL_ERROR;
+		}
 	}
 	return CHANNEL_RC_OK;
 }
@@ -784,23 +788,21 @@ static VOID VCAPITYPE remdesk_virtual_channel_open_event(DWORD openHandle, UINT 
 		LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	remdeskPlugin* remdesk;
+	WIN32ERROR error;
 
 	remdesk = (remdeskPlugin*) remdesk_get_open_handle_data(openHandle);
 
 	if (!remdesk)
 	{
 		WLog_ERR(TAG,  "error no match");
-		remdesk->error = CHANNEL_RC_BAD_CHANNEL;
-		//TODO report error
 		return;
 	}
-	remdesk->error = CHANNEL_RC_OK;
 
 	switch (event)
 	{
 		case CHANNEL_EVENT_DATA_RECEIVED:
-			if ((remdesk->error = remdesk_virtual_channel_event_data_received(remdesk, pData, dataLength, totalLength, dataFlags)))
-				WLog_ERR(TAG, "remdesk_virtual_channel_event_data_received failed with error %lu!", remdesk->error);
+			if ((error = remdesk_virtual_channel_event_data_received(remdesk, pData, dataLength, totalLength, dataFlags)))
+				WLog_ERR(TAG, "remdesk_virtual_channel_event_data_received failed with error %lu!", error);
 			break;
 
 		case CHANNEL_EVENT_WRITE_COMPLETE:
@@ -810,7 +812,9 @@ static VOID VCAPITYPE remdesk_virtual_channel_open_event(DWORD openHandle, UINT 
 		case CHANNEL_EVENT_USER:
 			break;
 	}
-	//TODO report error
+	if (error && remdesk->rdpcontext)
+		setChannelError(remdesk->rdpcontext, error, "remdesk_virtual_channel_open_event reported an error");
+
 }
 
 static void* remdesk_virtual_channel_client_thread(void* arg)
@@ -825,24 +829,33 @@ static void* remdesk_virtual_channel_client_thread(void* arg)
 	while (1)
 	{
 		if (!MessageQueue_Wait(remdesk->queue))
+		{
+			WLog_ERR(TAG, "MessageQueue_Wait failed!");
+			error = ERROR_INTERNAL_ERROR;
+			break;
+		}
+
+		if (!MessageQueue_Peek(remdesk->queue, &message, TRUE)) {
+			WLog_ERR(TAG, "MessageQueue_Peek failed!");
+			error = ERROR_INTERNAL_ERROR;
+			break;
+		}
+		if (message.id == WMQ_QUIT)
 			break;
 
-		if (MessageQueue_Peek(remdesk->queue, &message, TRUE))
+		if (message.id == 0)
 		{
-			if (message.id == WMQ_QUIT)
-				break;
-
-			if (message.id == 0)
+			data = (wStream*) message.wParam;
+			if ((error = remdesk_process_receive(remdesk, data)))
 			{
-				data = (wStream*) message.wParam;
-				if ((error = remdesk_process_receive(remdesk, data)))
-				{
-					WLog_ERR(TAG, "remdesk_process_receive failed with error %lu!", error);
-					break;
-				}
+				WLog_ERR(TAG, "remdesk_process_receive failed with error %lu!", error);
+				break;
 			}
 		}
 	}
+
+	if (error && remdesk->rdpcontext)
+		setChannelError(remdesk->rdpcontext, error, "remdesk_virtual_channel_client_thread reported an error");
 
 	ExitThread((DWORD)error);
 	return NULL;
@@ -933,36 +946,34 @@ static void remdesk_virtual_channel_event_terminated(remdeskPlugin* remdesk)
 static VOID VCAPITYPE remdesk_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
 {
 	remdeskPlugin* remdesk;
+	WIN32ERROR error = CHANNEL_RC_OK;
 
 	remdesk = (remdeskPlugin*) remdesk_get_init_handle_data(pInitHandle);
 
 	if (!remdesk)
 	{
 		WLog_ERR(TAG,  "error no match");
-		remdesk->error = CHANNEL_RC_BAD_CHANNEL;
-		//TODO report error
 		return;
 	}
-
-	remdesk->error = CHANNEL_RC_OK;
 
 	switch (event)
 	{
 		case CHANNEL_EVENT_CONNECTED:
-			if ((remdesk->error = remdesk_virtual_channel_event_connected(remdesk, pData, dataLength)))
-				WLog_ERR(TAG,  "remdesk_virtual_channel_event_connected failed with error %lu", remdesk->error);
+			if ((error = remdesk_virtual_channel_event_connected(remdesk, pData, dataLength)))
+				WLog_ERR(TAG,  "remdesk_virtual_channel_event_connected failed with error %lu", error);
 			break;
 
 		case CHANNEL_EVENT_DISCONNECTED:
-			if ((remdesk->error = remdesk_virtual_channel_event_disconnected(remdesk)))
-				WLog_ERR(TAG,  "remdesk_virtual_channel_event_disconnected failed with error %lu", remdesk->error);
+			if ((error = remdesk_virtual_channel_event_disconnected(remdesk)))
+				WLog_ERR(TAG,  "remdesk_virtual_channel_event_disconnected failed with error %lu", error);
 			break;
 
 		case CHANNEL_EVENT_TERMINATED:
 			remdesk_virtual_channel_event_terminated(remdesk);
 			break;
 	}
-	//TODO report error
+	if (error && remdesk->rdpcontext)
+		setChannelError(remdesk->rdpcontext, error, "remdesk_virtual_channel_init_event reported an error");
 }
 
 /* remdesk is always built-in */
@@ -1011,6 +1022,7 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 		*(pEntryPointsEx->ppInterface) = (void*) context;
 		remdesk->context = context;
+		remdesk->rdpcontext = pEntryPointsEx->context;
 	}
 
 	CopyMemory(&(remdesk->channelEntryPoints), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_FREERDP));

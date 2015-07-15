@@ -3,6 +3,8 @@
  * Audio Output Virtual Channel
  *
  * Copyright 2013 Armin Novak <armin.novak@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +34,7 @@
 #include <winpr/cmdline.h>
 #include <winpr/sysinfo.h>
 #include <winpr/collections.h>
+#include <winpr/win32error.h>
 
 #include <freerdp/types.h>
 #include <freerdp/codec/dsp.h>
@@ -432,16 +435,18 @@ static int rdpsnd_opensles_parse_addin_args(rdpsndDevicePlugin* device,
 	opensles_freerdp_rdpsnd_client_subsystem_entry
 #endif
 
-int freerdp_rdpsnd_client_subsystem_entry(
+WIN32ERROR freerdp_rdpsnd_client_subsystem_entry(
 		PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	ADDIN_ARGV* args;
 	rdpsndopenslesPlugin* opensles;
+	WIN32ERROR error;
 
 	DEBUG_SND("pEntryPoints=%p", pEntryPoints);
 
-	opensles = (rdpsndopenslesPlugin*) malloc(sizeof(rdpsndopenslesPlugin));
-	ZeroMemory(opensles, sizeof(rdpsndopenslesPlugin));
+	opensles = (rdpsndopenslesPlugin*) calloc(1, sizeof(rdpsndopenslesPlugin));
+	if (!opensles)
+		return CHANNEL_RC_NO_MEMORY;
 
 	opensles->device.Open = rdpsnd_opensles_open;
 	opensles->device.FormatSupported = rdpsnd_opensles_format_supported;
@@ -460,7 +465,10 @@ int freerdp_rdpsnd_client_subsystem_entry(
 	{
 		opensles->device_name = _strdup("default");
 		if (!opensles->device_name)
-			return ERROR_OUTOFMEMORY;
+		{
+			error = CHANNEL_RC_NO_MEMORY;
+			goto outstrdup;
+		}
 	}
 
 	opensles->rate = 44100;
@@ -468,10 +476,20 @@ int freerdp_rdpsnd_client_subsystem_entry(
 	opensles->format = WAVE_FORMAT_ADPCM;
 
 	opensles->dsp_context = freerdp_dsp_context_new();
+	if (!opensles->dsp_context)
+	{
+		error = CHANNEL_RC_NO_MEMORY;
+		goto out_dsp_new;
+	}
 
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd,
 			(rdpsndDevicePlugin*) opensles);
 
 	DEBUG_SND("success");
-	return 0;
+	return CHANNEL_RC_OK;
+out_dsp_new:
+	free(opensles->device_name);
+outstrdup:
+	free(opensles);
+	return error;
 }

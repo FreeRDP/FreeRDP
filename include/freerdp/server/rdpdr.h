@@ -137,6 +137,8 @@ struct _rdpdr_server_context
 	/*** Smartcard callbacks registered by the server. ***/
 	psRdpdrOnSmartcardCreate OnSmartcardCreate;
 	psRdpdrOnSmartcardDelete OnSmartcardDelete;
+
+	rdpContext* rdpcontext;
 };
 
 #ifdef __cplusplus

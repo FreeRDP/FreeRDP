@@ -35,6 +35,7 @@
 
 #include <winpr/stream.h>
 #include <winpr/win32error.h>
+#include <freerdp/freerdp.h>
 #include "audin_main.h"
 
 #define MSG_SNDIN_VERSION       0x01
@@ -88,6 +89,8 @@ struct _AUDIN_PLUGIN
 
 	/* Device interface */
 	IAudinDevice* device;
+
+	rdpContext* rdpcontext;
 };
 
 static WIN32ERROR audin_process_version(IWTSVirtualChannelCallback* pChannelCallback, wStream* s)
@@ -577,6 +580,7 @@ static WIN32ERROR audin_load_device_plugin(IWTSPlugin* pPlugin, const char* name
 	entryPoints.plugin = pPlugin;
 	entryPoints.pRegisterAudinDevice = audin_register_device_plugin;
 	entryPoints.args = args;
+	entryPoints.rdpcontext = ((AUDIN_PLUGIN*)pPlugin)->rdpcontext;
 
 	if ((error = entry(&entryPoints)))
 	{
@@ -715,6 +719,7 @@ WIN32ERROR DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	}
 
 	args = pEntryPoints->GetPluginData(pEntryPoints);
+	audin->rdpcontext = ((freerdp*)((rdpSettings*) pEntryPoints->GetRdpSettings(pEntryPoints))->instance)->context;
 
 	if (error == CHANNEL_RC_OK)
 		audin_process_addin_args((IWTSPlugin*) audin, args);

@@ -23,6 +23,7 @@
 #define FREERDP_CHANNEL_CLIENT_AUDIN_H
 
 #include <freerdp/channels/audin.h>
+#include <freerdp/freerdp.h>
 
 /**
  * Subsystem Interface
@@ -61,6 +62,7 @@ struct _FREERDP_AUDIN_DEVICE_ENTRY_POINTS
 	IWTSPlugin* plugin;
 	PREGISTERAUDINDEVICE pRegisterAudinDevice;
 	ADDIN_ARGV* args;
+	rdpContext* rdpcontext;
 };
 typedef struct _FREERDP_AUDIN_DEVICE_ENTRY_POINTS FREERDP_AUDIN_DEVICE_ENTRY_POINTS;
 typedef FREERDP_AUDIN_DEVICE_ENTRY_POINTS* PFREERDP_AUDIN_DEVICE_ENTRY_POINTS;
