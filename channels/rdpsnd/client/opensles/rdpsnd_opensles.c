@@ -105,7 +105,7 @@ static bool rdpsnd_opensles_check_handle(const rdpsndopenslesPlugin *hdl)
 	return rc;
 }
 
-static void rdpsnd_opensles_set_volume(rdpsndDevicePlugin* device,
+static BOOL rdpsnd_opensles_set_volume(rdpsndDevicePlugin* device,
 		UINT32 volume);
 
 static int rdpsnd_opensles_set_params(rdpsndopenslesPlugin* opensles)

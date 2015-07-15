@@ -49,6 +49,7 @@ typedef RDP_CLIENT_ENTRY_POINTS_V1 RDP_CLIENT_ENTRY_POINTS;
 #include <freerdp/extension.h>
 
 #include <winpr/stream.h>
+#include <winpr/win32error.h>
 
 #include <freerdp/input.h>
 #include <freerdp/update.h>

@@ -932,9 +932,11 @@ WIN32ERROR DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 	return error;
 error_out:
+#ifdef __linux__ /* to be removed */
 	ListDictionary_Free(serial->IrpThreads);
 	MessageQueue_Free(serial->MainIrpQueue);
 	Stream_Free(serial->device.data, TRUE);
 	free(serial);
+#endif /* __linux __ */
 	return error;
 }

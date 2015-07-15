@@ -334,7 +334,7 @@ WIN32ERROR freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POIN
 	AudinWinmmDevice* winmm;
 	WIN32ERROR error;
 
-	winmm = (AudinWinmmDevice*) calloc(sizeof(AudinWinmmDevice));
+	winmm = (AudinWinmmDevice*) calloc(1, sizeof(AudinWinmmDevice));
 	if (!winmm)
 	{
 		WLog_ERR(TAG, "calloc failed!");
