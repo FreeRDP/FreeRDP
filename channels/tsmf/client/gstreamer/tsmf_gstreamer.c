@@ -31,6 +31,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <winpr/string.h>
+
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
 #include <gst/app/gstappsink.h>
@@ -422,9 +424,9 @@ BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder* mdecoder)
 	 *       The only fixed elements necessary are appsrc and the volume element for audio streams.
 	 *       The rest could easily be provided in gstreamer pipeline notation from command line. */
 	if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
-		snprintf(pipeline, sizeof(pipeline), "%s %s %s name=outsink", appsrc, video, tsmf_platform_get_video_sink());
+		sprintf_s(pipeline, sizeof(pipeline), "%s %s %s name=outsink", appsrc, video, tsmf_platform_get_video_sink());
 	else
-		snprintf(pipeline, sizeof(pipeline), "%s %s %s name=outsink", appsrc, audio, tsmf_platform_get_audio_sink());
+		sprintf_s(pipeline, sizeof(pipeline), "%s %s %s name=outsink", appsrc, audio, tsmf_platform_get_audio_sink());
 
 	DEBUG_TSMF("pipeline=%s", pipeline);
 	mdecoder->pipe = gst_parse_launch(pipeline, NULL);

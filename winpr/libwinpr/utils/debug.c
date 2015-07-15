@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 #include <fcntl.h>
+#include <winpr/string.h>
 
 #if defined(HAVE_EXECINFO_H)
 #include <execinfo.h>
@@ -394,10 +395,10 @@ char** winpr_backtrace_symbols(void* buffer, size_t* used)
 
 			if (SymGetLineFromAddr64(process, address, &displacement, line))
 			{
-				_snprintf(vlines[i], line_len, "%08lX: %s in %s:%lu", symbol->Address, symbol->Name, line->FileName, line->LineNumber);
+				sprintf_s(vlines[i], line_len, "%08lX: %s in %s:%lu", symbol->Address, symbol->Name, line->FileName, line->LineNumber);
 			}
 			else
-				_snprintf(vlines[i], line_len, "%08lX: %s", symbol->Address, symbol->Name);
+				sprintf_s(vlines[i], line_len, "%08lX: %s", symbol->Address, symbol->Name);
 			}
 
 			if (used)
