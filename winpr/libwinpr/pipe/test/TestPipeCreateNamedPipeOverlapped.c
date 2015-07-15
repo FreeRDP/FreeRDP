@@ -19,28 +19,30 @@ static LPTSTR lpszPipeName = _T("\\\\.\\pipe\\winpr_test_pipe_overlapped");
 static void* named_pipe_client_thread(void* arg)
 {
 	DWORD status;
-	HANDLE hEvent;
-	HANDLE hNamedPipe;
-	BYTE* lpReadBuffer;
-	BYTE* lpWriteBuffer;
+	HANDLE hEvent = NULL;
+	HANDLE hNamedPipe = NULL;
+	BYTE* lpReadBuffer = NULL;
+	BYTE* lpWriteBuffer = NULL;
 	BOOL fSuccess = FALSE;
 	OVERLAPPED overlapped;
 	DWORD nNumberOfBytesToRead;
 	DWORD nNumberOfBytesToWrite;
 	DWORD NumberOfBytesTransferred;
+
 	WaitForSingleObject(ReadyEvent, INFINITE);
-	hNamedPipe = CreateFile(lpszPipeName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+	hNamedPipe = CreateFile(lpszPipeName, GENERIC_READ | GENERIC_WRITE,
+				0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
 
 	if (!hNamedPipe)
 	{
 		printf("Named Pipe CreateFile failure: NULL handle\n");
-		return NULL;
+		goto finish;
 	}
 
 	if (hNamedPipe == INVALID_HANDLE_VALUE)
 	{
 		printf("Named Pipe CreateFile failure: INVALID_HANDLE_VALUE\n");
-		return NULL;
+		goto finish;
 	}
 
 	lpReadBuffer = (BYTE*) malloc(PIPE_BUFFER_SIZE);
@@ -48,16 +50,14 @@ static void* named_pipe_client_thread(void* arg)
 	if (!lpReadBuffer || !lpWriteBuffer)
 	{
 		printf("Error allocating memory\n");
-		free(lpReadBuffer);
-		free(lpWriteBuffer);
-		return NULL;
+		goto finish;
 	}
 	ZeroMemory(&overlapped, sizeof(OVERLAPPED));
 
 	if (!(hEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 	{
 		printf("CreateEvent failure: (%d)\n", GetLastError());
-		return NULL;
+		goto finish;
 	}
 
 	overlapped.hEvent = hEvent;
@@ -71,17 +71,14 @@ static void* named_pipe_client_thread(void* arg)
 	if (!fSuccess)
 	{
 		printf("Client NamedPipe WriteFile failure: %d\n", GetLastError());
-		free(lpReadBuffer);
-		free(lpWriteBuffer);
-		CloseHandle(hNamedPipe);
-		CloseHandle(hEvent);
-		return NULL;
+		goto finish;
 	}
 
 	status = WaitForMultipleObjects(1, &hEvent, FALSE, INFINITE);
 	NumberOfBytesTransferred = 0;
 	fSuccess = GetOverlappedResult(hNamedPipe, &overlapped, &NumberOfBytesTransferred, TRUE);
-	printf("Client GetOverlappedResult: fSuccess: %d NumberOfBytesTransferred: %d\n", fSuccess, NumberOfBytesTransferred);
+	printf("Client GetOverlappedResult: fSuccess: %d NumberOfBytesTransferred: %d\n",
+		fSuccess, NumberOfBytesTransferred);
 	nNumberOfBytesToRead = PIPE_BUFFER_SIZE;
 	ZeroMemory(lpReadBuffer, PIPE_BUFFER_SIZE);
 	fSuccess = ReadFile(hNamedPipe, lpReadBuffer, nNumberOfBytesToRead, NULL, &overlapped);
@@ -92,23 +89,25 @@ static void* named_pipe_client_thread(void* arg)
 	if (!fSuccess)
 	{
 		printf("Client NamedPipe ReadFile failure: %d\n", GetLastError());
-		free(lpReadBuffer);
-		free(lpWriteBuffer);
-		CloseHandle(hNamedPipe);
-		CloseHandle(hEvent);
-		return NULL;
+		goto finish;
 	}
 
 	status = WaitForMultipleObjects(1, &hEvent, FALSE, INFINITE);
 	NumberOfBytesTransferred = 0;
 	fSuccess = GetOverlappedResult(hNamedPipe, &overlapped, &NumberOfBytesTransferred, TRUE);
-	printf("Client GetOverlappedResult: fSuccess: %d NumberOfBytesTransferred: %d\n", fSuccess, NumberOfBytesTransferred);
+	printf("Client GetOverlappedResult: fSuccess: %d NumberOfBytesTransferred: %d\n",
+		fSuccess, NumberOfBytesTransferred);
 	printf("Client ReadFile (%d):\n", NumberOfBytesTransferred);
 	winpr_HexDump("pipe.test", WLOG_DEBUG, lpReadBuffer, NumberOfBytesTransferred);
+
+finish:
 	free(lpReadBuffer);
 	free(lpWriteBuffer);
-	CloseHandle(hNamedPipe);
-	CloseHandle(hEvent);
+	if (hNamedPipe)
+		CloseHandle(hNamedPipe);
+	if (hEvent)
+		CloseHandle(hEvent);
+
 	return NULL;
 }
 
@@ -170,7 +169,7 @@ static void* named_pipe_server_thread(void* arg)
 		return NULL;
 	}
 
-	lpReadBuffer = (BYTE*) malloc(PIPE_BUFFER_SIZE);
+	lpReadBuffer = (BYTE*) calloc(1, PIPE_BUFFER_SIZE);
 	lpWriteBuffer = (BYTE*) malloc(PIPE_BUFFER_SIZE);
 	if (!lpReadBuffer || !lpWriteBuffer)
 	{
@@ -180,7 +179,6 @@ static void* named_pipe_server_thread(void* arg)
 		return NULL;
 	}
 	nNumberOfBytesToRead = PIPE_BUFFER_SIZE;
-	ZeroMemory(lpReadBuffer, PIPE_BUFFER_SIZE);
 	fSuccess = ReadFile(hNamedPipe, lpReadBuffer, nNumberOfBytesToRead, NULL, &overlapped);
 
 	if (!fSuccess)

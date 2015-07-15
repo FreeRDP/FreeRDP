@@ -29,6 +29,11 @@ int TestLibraryFreeLibrary(int argc, char* argv[])
 	BasePath[length] = 0;
 #else
 	BasePath = _strdup(str);
+	if (!BasePath)
+	{
+		printf("Memory allocation failed");
+		return -1;
+	}
 	length = strlen(BasePath);
 #endif
 

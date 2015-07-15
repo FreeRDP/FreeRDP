@@ -146,26 +146,27 @@ rdpOffscreenCache* offscreen_cache_new(rdpSettings* settings)
 {
 	rdpOffscreenCache* offscreenCache;
 
-	offscreenCache = (rdpOffscreenCache*) malloc(sizeof(rdpOffscreenCache));
+	offscreenCache = (rdpOffscreenCache*) calloc(1, sizeof(rdpOffscreenCache));
 
-	if (offscreenCache)
+	if (!offscreenCache)
+		return NULL;
+
+	offscreenCache->settings = settings;
+	offscreenCache->update = ((freerdp*) settings->instance)->update;
+
+	offscreenCache->currentSurface = SCREEN_BITMAP_SURFACE;
+	offscreenCache->maxSize = 7680;
+	offscreenCache->maxEntries = 2000;
+
+	settings->OffscreenCacheSize = offscreenCache->maxSize;
+	settings->OffscreenCacheEntries = offscreenCache->maxEntries;
+
+	offscreenCache->entries = (rdpBitmap**) calloc(offscreenCache->maxEntries, sizeof(rdpBitmap*));
+	if (!offscreenCache->entries)
 	{
-		ZeroMemory(offscreenCache, sizeof(rdpOffscreenCache));
-
-		offscreenCache->settings = settings;
-		offscreenCache->update = ((freerdp*) settings->instance)->update;
-
-		offscreenCache->currentSurface = SCREEN_BITMAP_SURFACE;
-		offscreenCache->maxSize = 7680;
-		offscreenCache->maxEntries = 2000;
-
-		settings->OffscreenCacheSize = offscreenCache->maxSize;
-		settings->OffscreenCacheEntries = offscreenCache->maxEntries;
-
-		offscreenCache->entries = (rdpBitmap**) malloc(sizeof(rdpBitmap*) * offscreenCache->maxEntries);
-		ZeroMemory(offscreenCache->entries, sizeof(rdpBitmap*) * offscreenCache->maxEntries);
+		free(offscreenCache);
+		return NULL;
 	}
-
 	return offscreenCache;
 }
 

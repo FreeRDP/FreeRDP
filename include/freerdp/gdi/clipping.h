@@ -27,10 +27,10 @@
  extern "C" {
 #endif
 
-FREERDP_API int gdi_SetClipRgn(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight);
+FREERDP_API BOOL gdi_SetClipRgn(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight);
 FREERDP_API HGDI_RGN gdi_GetClipRgn(HGDI_DC hdc);
-FREERDP_API int gdi_SetNullClipRgn(HGDI_DC hdc);
-FREERDP_API int gdi_ClipCoords(HGDI_DC hdc, int *x, int *y, int *w, int *h, int *srcx, int *srcy);
+FREERDP_API BOOL gdi_SetNullClipRgn(HGDI_DC hdc);
+FREERDP_API BOOL gdi_ClipCoords(HGDI_DC hdc, int *x, int *y, int *w, int *h, int *srcx, int *srcy);
 
 #ifdef __cplusplus
  }

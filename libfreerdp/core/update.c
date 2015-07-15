@@ -52,7 +52,10 @@ BOOL update_recv_orders(rdpUpdate* update, wStream* s)
 	UINT16 numberOrders;
 
 	if (Stream_GetRemainingLength(s) < 6)
+	{
+		WLog_ERR(TAG, "Stream_GetRemainingLength(s) < 6");
 		return FALSE;
+	}
 
 	Stream_Seek_UINT16(s); /* pad2OctetsA (2 bytes) */
 	Stream_Read_UINT16(s, numberOrders); /* numberOrders (2 bytes) */
@@ -61,7 +64,10 @@ BOOL update_recv_orders(rdpUpdate* update, wStream* s)
 	while (numberOrders > 0)
 	{
 		if (!update_recv_order(update, s))
+		{
+			WLog_ERR(TAG, "update_recv_order() failed");
 			return FALSE;
+		}
 
 		numberOrders--;
 	}
@@ -488,7 +494,10 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 	rdpContext* context = update->context;
 
 	if (Stream_GetRemainingLength(s) < 2)
+	{
+		WLog_ERR(TAG, "Stream_GetRemainingLength(s) < 2");
 		return FALSE;
+	}
 
 	Stream_Read_UINT16(s, updateType); /* updateType (2 bytes) */
 	//WLog_DBG(TAG, "%s Update Data PDU", UPDATE_TYPE_STRINGS[updateType]);
@@ -501,19 +510,26 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 			if (!update_recv_orders(update, s))
 			{
 				/* XXX: Do we have to call EndPaint? */
+				WLog_ERR(TAG, "UPDATE_TYPE_ORDERS - update_recv_orders() failed");
 				return FALSE;
 			}
 			break;
 
 		case UPDATE_TYPE_BITMAP:
 			if (!update_read_bitmap_update(update, s, &update->bitmap_update))
+			{
+				WLog_ERR(TAG, "UPDATE_TYPE_BITMAP - update_read_bitmap_update() failed");
 				return FALSE;
+			}
 			IFCALL(update->BitmapUpdate, context, &update->bitmap_update);
 			break;
 
 		case UPDATE_TYPE_PALETTE:
 			if (!update_read_palette(update, s, &update->palette_update))
+			{
+				WLog_ERR(TAG, "UPDATE_TYPE_PALETTE - update_read_palette() failed");
 				return FALSE;
+			}
 			IFCALL(update->Palette, context, &update->palette_update);
 			break;
 
@@ -1816,6 +1832,8 @@ BOOL update_read_refresh_rect(rdpUpdate* update, wStream* s)
 		return FALSE;
 
 	areas = (RECTANGLE_16*) malloc(sizeof(RECTANGLE_16) * numberOfAreas);
+	if (!areas)
+		return FALSE;
 
 	for (index = 0; index < numberOfAreas; index++)
 	{

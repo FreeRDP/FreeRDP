@@ -329,7 +329,7 @@ static const XKB_VARIANT fr_variants[] =
 	{ "latin9",		0 }, /* (Legacy) Alternative */
 	{ "latin9_nodeadkeys",	0 }, /* (Legacy) Alternative, eliminate dead keys */
 	{ "latin9_sundeadkeys",	0 }, /* (Legacy) Alternative, Sun dead keys */
-	{ "bepo",		0 }, /* Bepo, ergonomic, Dvorak way */
+	{ "bepo",		KBD_FRENCH_BEPO }, /* Bepo, ergonomic, Dvorak way */
 	{ "bepo_latin9",	0 }, /* Bepo, ergonomic, Dvorak way, latin-9 only */
 	{ "dvorak",		0 }, /* Dvorak */
 	{ "mac",		0 }, /* Macintosh */

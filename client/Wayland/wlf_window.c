@@ -149,9 +149,9 @@ wlfWindow* wlf_CreateDesktopWindow(wlfContext* wlfc, char* name, int width, int 
 		wlf_ResizeDesktopWindow(wlfc, window, width, height);
 
 		wl_surface_damage(window->surface, 0, 0, window->width, window->height);
-	}
 
-	wlf_SetWindowText(wlfc, window, name);
+		wlf_SetWindowText(wlfc, window, name);
+	}
 
 	return window;
 }

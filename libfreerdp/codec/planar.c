@@ -873,6 +873,8 @@ BYTE* freerdp_bitmap_planar_compress_plane_rle(BYTE* inPlane, int width, int hei
 	{
 		outBufferSize = width * height;
 		outPlane = malloc(outBufferSize);
+		if (!outPlane)
+			return NULL;
 	}
 	else
 	{
@@ -968,7 +970,10 @@ BYTE* freerdp_bitmap_planar_delta_encode_plane(BYTE* inPlane, int width, int hei
 	BYTE *outPtr, *srcPtr, *prevLinePtr;
 
 	if (!outPlane)
-		outPlane = (BYTE*) malloc(width * height);
+	{
+		if (!(outPlane = (BYTE*) malloc(width * height)))
+			return NULL;
+	}
 
 	// first line is copied as is
 	CopyMemory(outPlane, inPlane, width);
@@ -994,14 +999,18 @@ BYTE* freerdp_bitmap_planar_delta_encode_plane(BYTE* inPlane, int width, int hei
 	return outPlane;
 }
 
-int freerdp_bitmap_planar_delta_encode_planes(BYTE* inPlanes[4], int width, int height, BYTE* outPlanes[4])
+BOOL freerdp_bitmap_planar_delta_encode_planes(BYTE* inPlanes[4], int width, int height, BYTE* outPlanes[4])
 {
-	outPlanes[0] = freerdp_bitmap_planar_delta_encode_plane(inPlanes[0], width, height, outPlanes[0]);
-	outPlanes[1] = freerdp_bitmap_planar_delta_encode_plane(inPlanes[1], width, height, outPlanes[1]);
-	outPlanes[2] = freerdp_bitmap_planar_delta_encode_plane(inPlanes[2], width, height, outPlanes[2]);
-	outPlanes[3] = freerdp_bitmap_planar_delta_encode_plane(inPlanes[3], width, height, outPlanes[3]);
+	int i;
 
-	return 0;
+	for (i = 0; i < 4; i++)
+	{
+		outPlanes[i] = freerdp_bitmap_planar_delta_encode_plane(inPlanes[i], width, height, outPlanes[i]);
+		if (!outPlanes[i])
+			return FALSE;
+	}
+
+	return TRUE;
 }
 
 BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context, BYTE* data, UINT32 format,
@@ -1025,7 +1034,8 @@ BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context, BYTE* data,
 
 	if (context->AllowRunLengthEncoding)
 	{
-		freerdp_bitmap_planar_delta_encode_planes(context->planes, width, height, context->deltaPlanes);
+		if (!freerdp_bitmap_planar_delta_encode_planes(context->planes, width, height, context->deltaPlanes))
+			return NULL;;
 
 		if (freerdp_bitmap_planar_compress_planes_rle(context->deltaPlanes, width, height,
 				context->rlePlanesBuffer, (int*) &dstSizes, context->AllowSkipAlpha) > 0)
@@ -1071,6 +1081,8 @@ BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context, BYTE* data,
 			size++;
 
 		dstData = malloc(size);
+		if (!dstData)
+			return NULL;
 		*pDstSize = size;
 	}
 
@@ -1157,12 +1169,9 @@ BITMAP_PLANAR_CONTEXT* freerdp_bitmap_planar_context_new(DWORD flags, int maxWid
 {
 	BITMAP_PLANAR_CONTEXT* context;
 
-	context = (BITMAP_PLANAR_CONTEXT*) malloc(sizeof(BITMAP_PLANAR_CONTEXT));
-
+	context = (BITMAP_PLANAR_CONTEXT*) calloc(1, sizeof(BITMAP_PLANAR_CONTEXT));
 	if (!context)
 		return NULL;
-
-	ZeroMemory(context, sizeof(BITMAP_PLANAR_CONTEXT));
 
 	if (flags & PLANAR_FORMAT_HEADER_NA)
 		context->AllowSkipAlpha = TRUE;
@@ -1183,20 +1192,34 @@ BITMAP_PLANAR_CONTEXT* freerdp_bitmap_planar_context_new(DWORD flags, int maxWid
 	context->maxPlaneSize = context->maxWidth * context->maxHeight;
 
 	context->planesBuffer = malloc(context->maxPlaneSize * 4);
+	if (!context->planesBuffer)
+		goto error_planesBuffer;
 	context->planes[0] = &context->planesBuffer[context->maxPlaneSize * 0];
 	context->planes[1] = &context->planesBuffer[context->maxPlaneSize * 1];
 	context->planes[2] = &context->planesBuffer[context->maxPlaneSize * 2];
 	context->planes[3] = &context->planesBuffer[context->maxPlaneSize * 3];
 
 	context->deltaPlanesBuffer = malloc(context->maxPlaneSize * 4);
+	if (!context->deltaPlanesBuffer)
+		goto error_deltaPlanesBuffer;
 	context->deltaPlanes[0] = &context->deltaPlanesBuffer[context->maxPlaneSize * 0];
 	context->deltaPlanes[1] = &context->deltaPlanesBuffer[context->maxPlaneSize * 1];
 	context->deltaPlanes[2] = &context->deltaPlanesBuffer[context->maxPlaneSize * 2];
 	context->deltaPlanes[3] = &context->deltaPlanesBuffer[context->maxPlaneSize * 3];
 
 	context->rlePlanesBuffer = malloc(context->maxPlaneSize * 4);
+	if (!context->rlePlanesBuffer)
+		goto error_rlePlanesBuffer;
 
 	return context;
+
+error_rlePlanesBuffer:
+	free(context->deltaPlanesBuffer);
+error_deltaPlanesBuffer:
+	free(context->planesBuffer);
+error_planesBuffer:
+	free(context);
+	return NULL;
 }
 
 void freerdp_bitmap_planar_context_free(BITMAP_PLANAR_CONTEXT* context)

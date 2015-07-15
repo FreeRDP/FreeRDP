@@ -73,6 +73,8 @@ BOOL MutexCloseHandle(HANDLE handle)
 	rc = pthread_mutex_trylock(&mutex->mutex);
 	switch(rc)
 	{
+		case 0: /* The mutex is now locked. */
+			break;
 		/* If we already own the mutex consider it a success. */
 		case EDEADLK:
 		case EBUSY:
@@ -138,7 +140,7 @@ HANDLE CreateMutexW(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner,
 	{
 		pthread_mutex_init(&mutex->mutex, 0);
 
-		WINPR_HANDLE_SET_TYPE(mutex, HANDLE_TYPE_MUTEX);
+		WINPR_HANDLE_SET_TYPE_AND_MODE(mutex, HANDLE_TYPE_MUTEX, WINPR_FD_READ);
 		mutex->ops = &ops;
 
 		handle = (HANDLE) mutex;
@@ -178,7 +180,7 @@ HANDLE OpenMutexW(DWORD dwDesiredAccess, BOOL bInheritHandle,LPCWSTR lpName)
 BOOL ReleaseMutex(HANDLE hMutex)
 {
 	ULONG Type;
-	PVOID Object;
+	WINPR_HANDLE* Object;
 	WINPR_MUTEX* mutex;
 
 	if (!winpr_Handle_GetInfo(hMutex, &Type, &Object))

@@ -230,7 +230,7 @@ HANDLE CreateWaitableTimerA(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManua
 	timer = (WINPR_TIMER*) calloc(1, sizeof(WINPR_TIMER));
 	if (timer)
 	{
-		WINPR_HANDLE_SET_TYPE(timer, HANDLE_TYPE_TIMER);
+		WINPR_HANDLE_SET_TYPE_AND_MODE(timer, HANDLE_TYPE_TIMER, WINPR_FD_READ);
 		handle = (HANDLE) timer;
 		timer->fd = -1;
 		timer->lPeriod = 0;
@@ -265,7 +265,7 @@ BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPerio
 					  PTIMERAPCROUTINE pfnCompletionRoutine, LPVOID lpArgToCompletionRoutine, BOOL fResume)
 {
 	ULONG Type;
-	PVOID Object;
+	WINPR_HANDLE* Object;
 	WINPR_TIMER* timer;
 #ifdef WITH_POSIX_TIMER
 	LONGLONG seconds = 0;
@@ -365,7 +365,7 @@ BOOL SetWaitableTimerEx(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPer
 						PTIMERAPCROUTINE pfnCompletionRoutine, LPVOID lpArgToCompletionRoutine, PREASON_CONTEXT WakeContext, ULONG TolerableDelay)
 {
 	ULONG Type;
-	PVOID Object;
+	WINPR_HANDLE* Object;
 	WINPR_TIMER* timer;
 
 	if (!winpr_Handle_GetInfo(hTimer, &Type, &Object))
@@ -608,12 +608,11 @@ HANDLE CreateTimerQueue(void)
 {
 	HANDLE handle = NULL;
 	WINPR_TIMER_QUEUE* timerQueue;
-	timerQueue = (WINPR_TIMER_QUEUE*) malloc(sizeof(WINPR_TIMER_QUEUE));
+	timerQueue = (WINPR_TIMER_QUEUE*) calloc(1, sizeof(WINPR_TIMER_QUEUE));
 
 	if (timerQueue)
 	{
-		ZeroMemory(timerQueue, sizeof(WINPR_TIMER_QUEUE));
-		WINPR_HANDLE_SET_TYPE(timerQueue, HANDLE_TYPE_TIMER_QUEUE);
+		WINPR_HANDLE_SET_TYPE_AND_MODE(timerQueue, HANDLE_TYPE_TIMER_QUEUE, WINPR_FD_READ);
 		handle = (HANDLE) timerQueue;
 		timerQueue->activeHead = NULL;
 		timerQueue->inactiveHead = NULL;
@@ -707,7 +706,7 @@ BOOL CreateTimerQueueTimer(PHANDLE phNewTimer, HANDLE TimerQueue,
 	if (!timer)
 		return FALSE;
 
-	WINPR_HANDLE_SET_TYPE(timer, HANDLE_TYPE_TIMER_QUEUE_TIMER);
+	WINPR_HANDLE_SET_TYPE_AND_MODE(timer, HANDLE_TYPE_TIMER_QUEUE_TIMER, WINPR_FD_READ);
 	*((UINT_PTR*) phNewTimer) = (UINT_PTR)(HANDLE) timer;
 	timespec_copy(&(timer->StartTime), &CurrentTime);
 	timespec_add_ms(&(timer->StartTime), DueTime);

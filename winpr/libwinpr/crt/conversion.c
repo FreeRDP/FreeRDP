@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/string.h>
 
 /* Data Conversion: http://msdn.microsoft.com/en-us/library/0heszx3w/ */
 
@@ -31,12 +32,12 @@ errno_t _itoa_s(int value, char* buffer, size_t sizeInCharacters, int radix)
 {
 	int length;
 
-	length = snprintf(NULL, 0, "%d", value);
+	length = sprintf_s(NULL, 0, "%d", value);
 
 	if (sizeInCharacters < length)
 		return -1;
 
-	snprintf(buffer, length + 1, "%d", value);
+	sprintf_s(buffer, length + 1, "%d", value);
 
 	return 0;
 }

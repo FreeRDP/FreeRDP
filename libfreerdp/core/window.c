@@ -124,7 +124,11 @@ BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 	if (iconInfo->colorTable == NULL)
 	{
 		if (iconInfo->cbColorTable)
+		{
 			iconInfo->colorTable = (BYTE*) malloc(iconInfo->cbColorTable);
+			if (!iconInfo->colorTable)
+				return FALSE;
+		}
 	}
 	else if (iconInfo->cbColorTable)
 	{
@@ -292,6 +296,8 @@ BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WI
 
 		size = sizeof(RECTANGLE_16) * windowState->numWindowRects;
 		windowState->windowRects = (RECTANGLE_16*) malloc(size);
+		if (!windowState->windowRects)
+			return FALSE;
 
 		if (Stream_GetRemainingLength(s) < 8 * windowState->numWindowRects)
 			return FALSE;
@@ -324,6 +330,8 @@ BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WI
 
 		size = sizeof(RECTANGLE_16) * windowState->numVisibilityRects;
 		windowState->visibilityRects = (RECTANGLE_16*) malloc(size);
+		if (!windowState->visibilityRects)
+			return FALSE;
 
 		if (Stream_GetRemainingLength(s) < windowState->numVisibilityRects * 8)
 			return FALSE;
@@ -342,8 +350,9 @@ BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WI
 
 BOOL update_read_window_icon_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* window_icon)
 {
-	window_icon->iconInfo = (ICON_INFO*) malloc(sizeof(ICON_INFO));
-	ZeroMemory(window_icon->iconInfo, sizeof(ICON_INFO));
+	window_icon->iconInfo = (ICON_INFO*) calloc(1, sizeof(ICON_INFO));
+	if (!window_icon->iconInfo)
+		return FALSE;
 
 	return update_read_icon_info(s, window_icon->iconInfo); /* iconInfo (ICON_INFO) */
 }

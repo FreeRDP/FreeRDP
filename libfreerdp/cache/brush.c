@@ -189,25 +189,31 @@ rdpBrushCache* brush_cache_new(rdpSettings* settings)
 {
 	rdpBrushCache* brushCache;
 
-	brushCache = (rdpBrushCache*) malloc(sizeof(rdpBrushCache));
+	brushCache = (rdpBrushCache*) calloc(1, sizeof(rdpBrushCache));
 
-	if (brushCache)
-	{
-		ZeroMemory(brushCache, sizeof(rdpBrushCache));
+	if (!brushCache)
+		return NULL;
 
-		brushCache->settings = settings;
+	brushCache->settings = settings;
 
-		brushCache->maxEntries = 64;
-		brushCache->maxMonoEntries = 64;
+	brushCache->maxEntries = 64;
+	brushCache->maxMonoEntries = 64;
 
-		brushCache->entries = (BRUSH_ENTRY*) malloc(sizeof(BRUSH_ENTRY) * brushCache->maxEntries);
-		ZeroMemory(brushCache->entries, sizeof(BRUSH_ENTRY) * brushCache->maxEntries);
+	brushCache->entries = (BRUSH_ENTRY*)calloc(brushCache->maxEntries, sizeof(BRUSH_ENTRY));
+	if (!brushCache->entries)
+		goto error_entries;
 
-		brushCache->monoEntries = (BRUSH_ENTRY*) malloc(sizeof(BRUSH_ENTRY) * brushCache->maxMonoEntries);
-		ZeroMemory(brushCache->monoEntries, sizeof(BRUSH_ENTRY) * brushCache->maxMonoEntries);
-	}
+	brushCache->monoEntries = (BRUSH_ENTRY*) calloc(brushCache->maxMonoEntries, sizeof(BRUSH_ENTRY));
+	if (!brushCache->monoEntries)
+		goto error_mono;
 
 	return brushCache;
+
+error_mono:
+	free(brushCache->entries);
+error_entries:
+	free(brushCache);
+	return NULL;
 }
 
 void brush_cache_free(rdpBrushCache* brushCache)

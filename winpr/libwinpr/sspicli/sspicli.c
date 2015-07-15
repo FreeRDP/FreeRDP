@@ -131,14 +131,27 @@ BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword,
 	if (!token)
 		return FALSE;
 
-	WINPR_HANDLE_SET_TYPE(token, HANDLE_TYPE_ACCESS_TOKEN);
+	WINPR_HANDLE_SET_TYPE_AND_MODE(token, HANDLE_TYPE_ACCESS_TOKEN, WINPR_FD_READ);
 
 	token->ops = &ops;
 
 	token->Username = _strdup(lpszUsername);
+	if (!token->Username)
+	{
+		free(token);
+		return FALSE;
+	}
 
 	if (lpszDomain)
+	{
 		token->Domain = _strdup(lpszDomain);
+		if (!token->Domain)
+		{
+			free(token->Username);
+			free(token);
+			return FALSE;
+		}
+	}
 
 	pw = getpwnam(lpszUsername);
 

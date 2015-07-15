@@ -198,12 +198,12 @@ HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, int nWidth, int nHeight)
  * @return 0 on failure, non-zero otherwise
  */
 
-int gdi_BitBlt(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc, int rop)
+BOOL gdi_BitBlt(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc, DWORD rop)
 {
 	p_BitBlt _BitBlt = BitBlt_[IBPP(hdcDest->bitsPerPixel)];
 
-	if (_BitBlt != NULL)
-		return _BitBlt(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, rop);
-	else
-		return 0;
+	if (_BitBlt == NULL)
+		return FALSE;
+
+	return _BitBlt(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, rop);
 }

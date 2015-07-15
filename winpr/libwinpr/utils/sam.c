@@ -239,7 +239,10 @@ WINPR_SAM_ENTRY* SamLookupUserA(WINPR_SAM* sam, LPSTR User, UINT32 UserLength, L
 		return NULL;
 
 	if (!SamLookupStart(sam))
+	{
+		free(entry);
 		return NULL;
+	}
 
 	while (sam->line != NULL)
 	{

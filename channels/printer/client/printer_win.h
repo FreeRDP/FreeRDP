@@ -33,7 +33,3 @@ rdpPrinterDriver* printer_win_get_driver(void);
 
 #endif
 
-#ifdef WIN32
-#define snprintf _snprintf
-#endif
-

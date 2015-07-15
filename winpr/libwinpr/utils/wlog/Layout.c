@@ -338,13 +338,18 @@ wLogLayout* WLog_GetLogLayout(wLog* log)
 	return appender->Layout;
 }
 
-void WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* format)
+BOOL WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* format)
 {
 	free(layout->FormatString);
 	layout->FormatString = NULL;
 
 	if (format)
+	{
 		layout->FormatString = _strdup(format);
+		if (!layout->FormatString)
+			return FALSE;
+	}
+	return TRUE;
 }
 
 wLogLayout* WLog_Layout_New(wLog* log)
@@ -354,38 +359,37 @@ wLogLayout* WLog_Layout_New(wLog* log)
 	wLogLayout* layout;
 
 	layout = (wLogLayout*) calloc(1, sizeof(wLogLayout));
+	if (!layout)
+		return NULL;
 
-	if (layout)
+	nSize = GetEnvironmentVariableA("WLOG_PREFIX", NULL, 0);
+	if (nSize)
 	{
-		nSize = GetEnvironmentVariableA("WLOG_PREFIX", NULL, 0);
-
-		if (nSize)
+		env = (LPSTR) malloc(nSize);
+		if (!env)
 		{
-			env = (LPSTR) malloc(nSize);
-			if (!env)
-			{
-				free(layout);
-				return NULL;
-			}
-			nSize = GetEnvironmentVariableA("WLOG_PREFIX", env, nSize);
+			free(layout);
+			return NULL;
 		}
+		nSize = GetEnvironmentVariableA("WLOG_PREFIX", env, nSize);
+	}
 
-		if (env)
-			layout->FormatString = env;
-		else
-		{
+	if (env)
+		layout->FormatString = env;
+	else
+	{
 #ifdef ANDROID
-			layout->FormatString = _strdup("[pid=%pid:tid=%tid] - ");
+		layout->FormatString = _strdup("[pid=%pid:tid=%tid] - ");
 #else
-			layout->FormatString = _strdup("[%hr:%mi:%se:%ml] [%pid:%tid] [%lv][%mn] - ");
+		layout->FormatString = _strdup("[%hr:%mi:%se:%ml] [%pid:%tid] [%lv][%mn] - ");
 #endif
-			if (!layout->FormatString)
-			{
-				free(layout);
-				return NULL;
-			}
+		if (!layout->FormatString)
+		{
+			free(layout);
+			return NULL;
 		}
 	}
+
 
 	return layout;
 }

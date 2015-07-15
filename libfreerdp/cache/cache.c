@@ -31,22 +31,50 @@ rdpCache* cache_new(rdpSettings* settings)
 {
 	rdpCache* cache;
 
-	cache = (rdpCache*) malloc(sizeof(rdpCache));
-	ZeroMemory(cache, sizeof(rdpCache));
+	cache = (rdpCache*) calloc(1, sizeof(rdpCache));
+	if (!cache)
+		return NULL;
 
-	if (cache != NULL)
-	{
-		cache->settings = settings;
-		cache->glyph = glyph_cache_new(settings);
-		cache->brush = brush_cache_new(settings);
-		cache->pointer = pointer_cache_new(settings);
-		cache->bitmap = bitmap_cache_new(settings);
-		cache->offscreen = offscreen_cache_new(settings);
-		cache->palette = palette_cache_new(settings);
-		cache->nine_grid = nine_grid_cache_new(settings);
-	}
+	cache->settings = settings;
+	cache->glyph = glyph_cache_new(settings);
+	if (!cache->glyph)
+		goto error_glyph;
+	cache->brush = brush_cache_new(settings);
+	if (!cache->brush)
+		goto error_brush;
+	cache->pointer = pointer_cache_new(settings);
+	if (!cache->pointer)
+		goto error_pointer;
+	cache->bitmap = bitmap_cache_new(settings);
+	if (!cache->bitmap)
+		goto error_bitmap;
+	cache->offscreen = offscreen_cache_new(settings);
+	if (!cache->offscreen)
+		goto error_offscreen;
+	cache->palette = palette_cache_new(settings);
+	if (!cache->palette)
+		goto error_palette;
+	cache->nine_grid = nine_grid_cache_new(settings);
+	if (!cache->nine_grid)
+		goto error_ninegrid;
 
 	return cache;
+
+error_ninegrid:
+	palette_cache_free(cache->palette);
+error_palette:
+	offscreen_cache_free(cache->offscreen);
+error_offscreen:
+	bitmap_cache_free(cache->bitmap);
+error_bitmap:
+	pointer_cache_free(cache->pointer);
+error_pointer:
+	brush_cache_free(cache->brush);
+error_brush:
+	glyph_cache_free(cache->glyph);
+error_glyph:
+	free(cache);
+	return NULL;
 }
 
 void cache_free(rdpCache* cache)

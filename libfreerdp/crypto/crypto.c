@@ -231,6 +231,11 @@ BOOL crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* Public
 	*PublicKeyLength = (DWORD) length;
 	*PublicKey = (BYTE*) malloc(length);
 	ptr = (BYTE*) (*PublicKey);
+	if (!ptr)
+	{
+		status = FALSE;
+		goto exit;
+	}
 
 	i2d_PublicKey(pkey, &ptr);
 
@@ -380,9 +385,9 @@ char* crypto_print_name(X509_NAME* name)
 	if (X509_NAME_print_ex(outBIO, name, 0, XN_FLAG_ONELINE) > 0)
 	{
 		unsigned long size = BIO_number_written(outBIO);
-		buffer = malloc(size + 1);
-		ZeroMemory(buffer, size + 1);
-		memset(buffer, 0, size + 1);
+		buffer = calloc(1, size + 1);
+		if (!buffer)
+			return NULL;
 		BIO_read(outBIO, buffer, size);
 	}
 
@@ -471,7 +476,16 @@ char** crypto_cert_subject_alt_name(X509* xcert, int* count, int** lengths)
 	if (num_subject_alt_names)
 	{
 		strings = (char**) malloc(sizeof(char*) * num_subject_alt_names);
+		if (!strings)
+			goto out;
+
 		*lengths = (int*) malloc(sizeof(int) * num_subject_alt_names);
+		if (!*lengths)
+		{
+			free(strings);
+			strings = NULL;
+			goto out;
+		}
 	}
 
 	for (index = 0; index < num_subject_alt_names; ++index)
@@ -494,6 +508,8 @@ char** crypto_cert_subject_alt_name(X509* xcert, int* count, int** lengths)
 		*lengths = NULL ;
 		return NULL;
 	}
+
+out:
 	GENERAL_NAMES_free(subject_alt_names);
 
 	return strings;

@@ -23,6 +23,7 @@
 #include <winpr/handle.h>
 #include <winpr/file.h>
 #include <winpr/synch.h>
+#include <winpr/winsock.h>
 
 #define HANDLE_TYPE_NONE			0
 #define HANDLE_TYPE_PROCESS			1
@@ -41,6 +42,7 @@
 
 #define WINPR_HANDLE_DEF() \
 	ULONG Type; \
+	ULONG Mode; \
 	HANDLE_OPS *ops
 
 typedef BOOL (*pcIsHandled)(HANDLE handle);
@@ -68,10 +70,16 @@ struct winpr_handle
 };
 typedef struct winpr_handle WINPR_HANDLE;
 
-#define WINPR_HANDLE_SET_TYPE(_handle, _type) \
-	_handle->Type = _type
+static INLINE void WINPR_HANDLE_SET_TYPE_AND_MODE(void* _handle,
+						 ULONG _type, ULONG _mode)
+{
+	WINPR_HANDLE* hdl = (WINPR_HANDLE*)_handle;
 
-static INLINE BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, PVOID* pObject)
+	hdl->Type = _type;
+	hdl->Mode = _mode;
+}
+
+static INLINE BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, WINPR_HANDLE** pObject)
 {
 	WINPR_HANDLE* wHandle;
 
@@ -91,7 +99,7 @@ static INLINE int winpr_Handle_getFd(HANDLE handle)
 	WINPR_HANDLE *hdl;
 	ULONG type;
 
-	if (!winpr_Handle_GetInfo(handle, &type, (PVOID*)&hdl))
+	if (!winpr_Handle_GetInfo(handle, &type, &hdl))
 		return -1;
 
 	if (!hdl || !hdl->ops->GetFd)
@@ -105,7 +113,7 @@ static INLINE DWORD winpr_Handle_cleanup(HANDLE handle)
 	WINPR_HANDLE *hdl;
 	ULONG type;
 
-	if (!winpr_Handle_GetInfo(handle, &type, (PVOID*)&hdl))
+	if (!winpr_Handle_GetInfo(handle, &type, &hdl))
 		return WAIT_FAILED;
 
 	if (!hdl)

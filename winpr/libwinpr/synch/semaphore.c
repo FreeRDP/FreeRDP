@@ -179,7 +179,7 @@ HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lIniti
 #endif
 	}
 
-	WINPR_HANDLE_SET_TYPE(semaphore, HANDLE_TYPE_SEMAPHORE);
+	WINPR_HANDLE_SET_TYPE_AND_MODE(semaphore, HANDLE_TYPE_SEMAPHORE, WINPR_FD_READ);
 	handle = (HANDLE) semaphore;
 	return handle;
 }
@@ -204,7 +204,7 @@ HANDLE OpenSemaphoreA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpName)
 BOOL ReleaseSemaphore(HANDLE hSemaphore, LONG lReleaseCount, LPLONG lpPreviousCount)
 {
 	ULONG Type;
-	PVOID Object;
+	WINPR_HANDLE* Object;
 	WINPR_SEMAPHORE* semaphore;
 
 	if (!winpr_Handle_GetInfo(hSemaphore, &Type, &Object))

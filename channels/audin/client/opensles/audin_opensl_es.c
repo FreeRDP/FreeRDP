@@ -190,7 +190,9 @@ static WIN32ERROR audin_opensles_free(IAudinDevice* device)
 
 static BOOL audin_opensles_format_supported(IAudinDevice* device, audinFormat* format)
 {
+#ifdef WITH_DEBUG_DVC
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) device;
+#endif
 	
 	DEBUG_DVC("device=%p, format=%p", opensles, format);
 

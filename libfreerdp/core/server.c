@@ -200,7 +200,7 @@ static BOOL wts_read_drdynvc_data_first(rdpPeerChannel* channel, wStream* s, int
 
 static BOOL wts_read_drdynvc_data(rdpPeerChannel* channel, wStream* s, UINT32 length)
 {
-	BOOL ret;
+	BOOL ret = FALSE;
 	if (channel->dvc_total_length > 0)
 	{
 		if (Stream_GetPosition(channel->receiveData) + length > channel->dvc_total_length)
@@ -852,6 +852,11 @@ BOOL WINAPI FreeRDP_WTSQuerySessionInformationA(HANDLE hServer, DWORD SessionId,
 
 		BytesReturned = sizeof(ULONG);
 		pBuffer = (ULONG*) malloc(sizeof(BytesReturned));
+		if (!pBuffer)
+		{
+			SetLastError(E_OUTOFMEMORY);
+			return FALSE;
+		}
 
 		*pBuffer = vcm->SessionId;
 
@@ -1212,7 +1217,10 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, 
 		length = Length;
 		buffer = (BYTE *)malloc(length);
 		if (!buffer)
+		{
+			SetLastError(E_OUTOFMEMORY);
 			return FALSE;
+		}
 		CopyMemory(buffer, Buffer, length);
 
 		ret = wts_queue_send_item(channel, buffer, length);
@@ -1232,6 +1240,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, 
 			if (!s)
 			{
 				WLog_ERR(TAG, "Stream_New failed!");
+				SetLastError(E_OUTOFMEMORY);
 				return FALSE;
 			}
 
@@ -1309,16 +1318,26 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CL
 			}
 
 			*ppBuffer = malloc(sizeof(void*));
-			CopyMemory(*ppBuffer, &fds[0], sizeof(void*));
-			*pBytesReturned = sizeof(void*);
-			status = TRUE;
+			if (!*ppBuffer)
+			{
+				SetLastError(E_OUTOFMEMORY);
+			} else {
+				CopyMemory(*ppBuffer, &fds[0], sizeof(void*));
+				*pBytesReturned = sizeof(void*);
+				status = TRUE;
+			}
 			break;
 
 		case WTSVirtualEventHandle:
 			*ppBuffer = malloc(sizeof(HANDLE));
-			CopyMemory(*ppBuffer, &(hEvent), sizeof(HANDLE));
-			*pBytesReturned = sizeof(void*);
-			status = TRUE;
+			if (!*ppBuffer)
+			{
+				SetLastError(E_OUTOFMEMORY);
+			} else {
+				CopyMemory(*ppBuffer, &(hEvent), sizeof(HANDLE));
+				*pBytesReturned = sizeof(void*);
+				status = TRUE;
+			}
 			break;
 
 		case WTSVirtualChannelReady:
@@ -1349,8 +1368,14 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CL
 			}
 
 			*ppBuffer = malloc(sizeof(BOOL));
-			CopyMemory(*ppBuffer, &bval, sizeof(BOOL));
-			*pBytesReturned = sizeof(BOOL);
+			if (!*ppBuffer)
+			{
+				SetLastError(E_OUTOFMEMORY);
+				status = FALSE;
+			} else {
+				CopyMemory(*ppBuffer, &bval, sizeof(BOOL));
+				*pBytesReturned = sizeof(BOOL);
+			}
 			break;
 
 		default:

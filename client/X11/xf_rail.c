@@ -312,6 +312,11 @@ static BOOL xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 		{
 			appWindow->title = _strdup("RdpRailWindow");
 		}
+		if (!appWindow->title)
+		{
+			free(appWindow);
+			return FALSE;
+		}
 
 		HashTable_Add(xfc->railWindows, (void*) (UINT_PTR) orderInfo->windowId, (void*) appWindow);
 

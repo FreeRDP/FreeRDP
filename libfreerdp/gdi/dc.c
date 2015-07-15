@@ -44,6 +44,7 @@ HGDI_DC gdi_GetDC()
 	HGDI_DC hDC = (HGDI_DC) malloc(sizeof(GDI_DC));
 	if (!hDC)
 		return NULL;
+
 	hDC->bytesPerPixel = 4;
 	hDC->bitsPerPixel = 32;
 	hDC->drawMode = GDI_R2_BLACK;
@@ -104,7 +105,6 @@ HGDI_DC gdi_CreateDC(UINT32 flags, int bpp)
 
 fail:
 	gdi_DeleteDC(hDC);
-	free(hDC);
 	return NULL;
 }
 
@@ -189,13 +189,13 @@ HGDIOBJECT gdi_SelectObject(HGDI_DC hdc, HGDIOBJECT hgdiobject)
  * Delete a GDI object.\n
  * @msdn{dd183539}
  * @param hgdiobject GDI object
- * @return 1 if successful, 0 otherwise
+ * @return nonzero if successful, 0 otherwise
  */
 
-int gdi_DeleteObject(HGDIOBJECT hgdiobject)
+BOOL gdi_DeleteObject(HGDIOBJECT hgdiobject)
 {
 	if (!hgdiobject)
-		return 0;
+		return FALSE;
 
 	if (hgdiobject->objectType == GDIOBJECT_BITMAP)
 	{
@@ -235,20 +235,20 @@ int gdi_DeleteObject(HGDIOBJECT hgdiobject)
 	{
 		/* Unknown GDI Object Type */
 		free(hgdiobject);
-		return 0;
+		return FALSE;
 	}
 
-	return 1;
+	return TRUE;
 }
 
 /**
  * Delete device context.\n
  * @msdn{dd183533}
  * @param hdc device context
- * @return 1 if successful, 0 otherwise
+ * @return nonzero if successful, 0 otherwise
  */
 
-int gdi_DeleteDC(HGDI_DC hdc)
+BOOL gdi_DeleteDC(HGDI_DC hdc)
 {
 	if (hdc)
 	{
@@ -262,5 +262,5 @@ int gdi_DeleteDC(HGDI_DC hdc)
 		free(hdc);
 	}
 
-	return 1;
+	return TRUE;
 }

@@ -107,16 +107,17 @@ int gdi_GetBkMode(HGDI_DC hdc)
  * @msdn{dd162965}
  * @param hdc device context
  * @param iBkMode background mode
- * @return
+ * @return previous background mode on success, 0 on failure
  */
 
 int gdi_SetBkMode(HGDI_DC hdc, int iBkMode)
 {
 	if (iBkMode == GDI_OPAQUE || iBkMode == GDI_TRANSPARENT)
+	{
+		int previousBkMode = hdc->bkMode;
 		hdc->bkMode = iBkMode;
-	else
-		hdc->bkMode = GDI_OPAQUE;
-
+		return previousBkMode;
+	}
 	return 0;
 }
 

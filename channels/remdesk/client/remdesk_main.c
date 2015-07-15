@@ -40,7 +40,7 @@ RemdeskClientContext* remdesk_get_client_interface(remdeskPlugin* remdesk)
 	return pInterface;
 }
 
-WIN32ERROR remdesk_virtual_channel_write(remdeskPlugin* remdesk, wStream* s)
+static WIN32ERROR remdesk_virtual_channel_write(remdeskPlugin* remdesk, wStream* s)
 {
 	UINT32 status;
 

@@ -24,7 +24,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 
-typedef int (*pLineTo_16bpp)(HGDI_DC hdc, int nXEnd, int nYEnd);
+typedef BOOL (*pLineTo_16bpp)(HGDI_DC hdc, int nXEnd, int nYEnd);
 
 #ifdef __cplusplus
  extern "C" {
@@ -32,10 +32,10 @@ typedef int (*pLineTo_16bpp)(HGDI_DC hdc, int nXEnd, int nYEnd);
 
 FREERDP_API UINT16 gdi_get_color_16bpp(HGDI_DC hdc, GDI_COLOR color);
 
-FREERDP_API int FillRect_16bpp(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr);
-FREERDP_API int BitBlt_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc, int rop);
-FREERDP_API int PatBlt_16bpp(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, int rop);
-FREERDP_API int LineTo_16bpp(HGDI_DC hdc, int nXEnd, int nYEnd);
+FREERDP_API BOOL FillRect_16bpp(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr);
+FREERDP_API BOOL BitBlt_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc, DWORD rop);
+FREERDP_API BOOL PatBlt_16bpp(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, DWORD rop);
+FREERDP_API BOOL LineTo_16bpp(HGDI_DC hdc, int nXEnd, int nYEnd);
 
 #ifdef __cplusplus
  }

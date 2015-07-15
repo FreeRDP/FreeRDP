@@ -41,6 +41,7 @@
 #include <winpr/comm.h>
 #include <winpr/tchar.h>
 #include <winpr/wlog.h>
+#include <winpr/handle.h>
 
 #include "comm_ioctl.h"
 
@@ -1221,7 +1222,7 @@ BOOL IsCommDevice(LPCTSTR lpDeviceName)
 void _comm_setServerSerialDriver(HANDLE hComm, SERIAL_DRIVER_ID driverId)
 {
 	ULONG Type;
-	PVOID Object;
+	WINPR_HANDLE* Object;
 	WINPR_COMM* pComm;
 
 	if (!CommInitialized())
@@ -1344,7 +1345,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 		return INVALID_HANDLE_VALUE;
 	}
 
-	WINPR_HANDLE_SET_TYPE(pComm, HANDLE_TYPE_COMM);
+	WINPR_HANDLE_SET_TYPE_AND_MODE(pComm, HANDLE_TYPE_COMM, WINPR_FD_READ);
 
 	pComm->ops = &ops;
 

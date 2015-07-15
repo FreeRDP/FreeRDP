@@ -332,15 +332,14 @@ WINPR_API BOOL WINAPI EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBa
 WINPR_API BOOL WINAPI DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier);
 
 #endif
-
 /* Extended API */
 
 WINPR_API VOID USleep(DWORD dwMicroseconds);
 
 WINPR_API HANDLE CreateFileDescriptorEventW(LPSECURITY_ATTRIBUTES lpEventAttributes,
-		BOOL bManualReset, BOOL bInitialState, int FileDescriptor);
+		BOOL bManualReset, BOOL bInitialState, int FileDescriptor, ULONG mode);
 WINPR_API HANDLE CreateFileDescriptorEventA(LPSECURITY_ATTRIBUTES lpEventAttributes,
-		BOOL bManualReset, BOOL bInitialState, int FileDescriptor);
+		BOOL bManualReset, BOOL bInitialState, int FileDescriptor, ULONG mode);
 
 WINPR_API HANDLE CreateWaitObjectEvent(LPSECURITY_ATTRIBUTES lpEventAttributes,
 		BOOL bManualReset, BOOL bInitialState, void* pObject);
@@ -352,7 +351,7 @@ WINPR_API HANDLE CreateWaitObjectEvent(LPSECURITY_ATTRIBUTES lpEventAttributes,
 #endif
 
 WINPR_API int GetEventFileDescriptor(HANDLE hEvent);
-WINPR_API int SetEventFileDescriptor(HANDLE hEvent, int FileDescriptor);
+WINPR_API int SetEventFileDescriptor(HANDLE hEvent, int FileDescriptor, ULONG mode);
 
 WINPR_API void* GetEventWaitObject(HANDLE hEvent);
 

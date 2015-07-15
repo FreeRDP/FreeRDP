@@ -156,17 +156,18 @@ static void Ellipse_Bresenham(HGDI_DC hdc, int x1, int y1, int x2, int y2)
 
 /**
  * Draw an ellipse
+ * @msdn{dd162510}
  * @param hdc device context
  * @param nLeftRect x1
  * @param nTopRect y1
  * @param nRightRect x2
  * @param nBottomRect y2
- * @return
+ * @return nonzero if successful, 0 otherwise
  */
-int gdi_Ellipse(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect, int nBottomRect)
+BOOL gdi_Ellipse(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect, int nBottomRect)
 {
 	Ellipse_Bresenham(hdc, nLeftRect, nTopRect, nRightRect, nBottomRect);
-	return 1;
+	return TRUE;
 }
 
 /**
@@ -175,54 +176,57 @@ int gdi_Ellipse(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect, int nB
  * @param hdc device context
  * @param rect rectangle
  * @param hbr brush
- * @return 1 if successful, 0 otherwise
+ * @return nonzero if successful, 0 otherwise
  */
 
-int gdi_FillRect(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr)
+BOOL gdi_FillRect(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr)
 {
 	p_FillRect _FillRect = FillRect_[IBPP(hdc->bitsPerPixel)];
 
-	if (_FillRect != NULL)
-		return _FillRect(hdc, rect, hbr);
-	else
-		return 0;
+	if (_FillRect == NULL)
+		return FALSE;
+
+	return _FillRect(hdc, rect, hbr);
 }
 
 /**
- *
+ * Draw a polygon
+ * @msdn{dd162814}
  * @param hdc device context
  * @param lpPoints array of points
  * @param nCount number of points
- * @return
+ * @return nonzero if successful, 0 otherwise
  */
-int gdi_Polygon(HGDI_DC hdc, GDI_POINT *lpPoints, int nCount)
+BOOL gdi_Polygon(HGDI_DC hdc, GDI_POINT *lpPoints, int nCount)
 {
-	return 1;
+	return TRUE;
 }
 
 /**
  * Draw a series of closed polygons
+ * @msdn{dd162818}
  * @param hdc device context
  * @param lpPoints array of series of points
  * @param lpPolyCounts array of number of points in each series
  * @param nCount count of number of points in lpPolyCounts
- * @return
+ * @return nonzero if successful, 0 otherwise
  */
-int gdi_PolyPolygon(HGDI_DC hdc, GDI_POINT *lpPoints, int *lpPolyCounts, int nCount)
+BOOL gdi_PolyPolygon(HGDI_DC hdc, GDI_POINT *lpPoints, int *lpPolyCounts, int nCount)
 {
-	return 1;
+	return TRUE;
 }
 
 /**
  * Draw a rectangle
+ * @msdn{dd162898}
  * @param hdc device context
  * @param nLeftRect x1
  * @param nTopRect y1
  * @param nRightRect x2
  * @param nBottomRect y2
- * @return
+ * @return nonzero if successful, 0 otherwise
  */
-int gdi_Rectangle(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect, int nBottomRect)
+BOOL gdi_Rectangle(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect, int nBottomRect)
 {
-	return 1;
+	return TRUE;
 }

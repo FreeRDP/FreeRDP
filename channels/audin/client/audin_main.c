@@ -102,7 +102,7 @@ static WIN32ERROR audin_process_version(IWTSVirtualChannelCallback* pChannelCall
 
 	Stream_Read_UINT32(s, Version);
 
-	DEBUG_DVC("process_version: Version=%d", Version);
+	DEBUG_DVC("Version=%d", Version);
 
 	out = Stream_New(NULL, 5);
 
@@ -142,7 +142,7 @@ static WIN32ERROR audin_process_formats(IWTSVirtualChannelCallback* pChannelCall
 	UINT32 cbSizeFormatsPacket;
 
 	Stream_Read_UINT32(s, NumFormats);
-	DEBUG_DVC("process_formats: NumFormats %d", NumFormats);
+	DEBUG_DVC("NumFormats %d", NumFormats);
 	if ((NumFormats < 1) || (NumFormats > 1000))
 	{
 		WLog_ERR(TAG, "bad NumFormats %d", NumFormats);
@@ -182,7 +182,7 @@ static WIN32ERROR audin_process_formats(IWTSVirtualChannelCallback* pChannelCall
 		format.data = Stream_Pointer(s);
 		Stream_Seek(s, format.cbSize);
 		
-		DEBUG_DVC("process_formats: wFormatTag=%d nChannels=%d nSamplesPerSec=%d "
+		DEBUG_DVC("wFormatTag=%d nChannels=%d nSamplesPerSec=%d "
 			"nBlockAlign=%d wBitsPerSample=%d cbSize=%d",
 			format.wFormatTag, format.nChannels, format.nSamplesPerSec,
 			format.nBlockAlign, format.wBitsPerSample, format.cbSize);
@@ -195,7 +195,7 @@ static WIN32ERROR audin_process_formats(IWTSVirtualChannelCallback* pChannelCall
 			continue;
 		if (audin->device && audin->device->FormatSupported(audin->device, &format))
 		{
-			DEBUG_DVC("process_formats: format ok");
+			DEBUG_DVC("format ok");
 
 			/* Store the agreed format in the corresponding index */
 			callback->formats[callback->formats_count++] = format;
@@ -321,7 +321,7 @@ static WIN32ERROR audin_process_open(IWTSVirtualChannelCallback* pChannelCallbac
 	Stream_Read_UINT32(s, FramesPerPacket);
 	Stream_Read_UINT32(s, initialFormat);
 
-	DEBUG_DVC("process_open: FramesPerPacket=%d initialFormat=%d",
+	DEBUG_DVC("FramesPerPacket=%d initialFormat=%d",
 		FramesPerPacket, initialFormat);
 
 	if (initialFormat >= (UINT32) callback->formats_count)
@@ -370,7 +370,7 @@ static WIN32ERROR audin_process_format_change(IWTSVirtualChannelCallback* pChann
 
 	Stream_Read_UINT32(s, NewFormat);
 
-	DEBUG_DVC("process_format_change: NewFormat=%d", NewFormat);
+	DEBUG_DVC("NewFormat=%d", NewFormat);
 
 	if (NewFormat >= (UINT32) callback->formats_count)
 	{
@@ -416,7 +416,7 @@ static WIN32ERROR audin_on_data_received(IWTSVirtualChannelCallback* pChannelCal
 
 	Stream_Read_UINT8(data, MessageId);
 
-	DEBUG_DVC("on_data_received: MessageId=0x%x", MessageId);
+	DEBUG_DVC("MessageId=0x%x", MessageId);
 
 	switch (MessageId)
 	{
@@ -451,7 +451,7 @@ static WIN32ERROR audin_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	AUDIN_PLUGIN* audin = (AUDIN_PLUGIN*) callback->plugin;
 	WIN32ERROR error = CHANNEL_RC_OK;
 
-	DEBUG_DVC("on_close");
+	DEBUG_DVC("...");
 
 	if (audin->device)
 	{
@@ -476,7 +476,7 @@ static WIN32ERROR audin_on_new_channel_connection(IWTSListenerCallback* pListene
 	AUDIN_CHANNEL_CALLBACK* callback;
 	AUDIN_LISTENER_CALLBACK* listener_callback = (AUDIN_LISTENER_CALLBACK*) pListenerCallback;
 
-	DEBUG_DVC("on_new_channel_connection");
+	DEBUG_DVC("...");
 
 	callback = (AUDIN_CHANNEL_CALLBACK*) calloc(1, sizeof(AUDIN_CHANNEL_CALLBACK));
 	if (!callback)
@@ -500,7 +500,7 @@ static WIN32ERROR audin_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChanne
 {
 	AUDIN_PLUGIN* audin = (AUDIN_PLUGIN*) pPlugin;
 
-	DEBUG_DVC("plugin_initialize");
+	DEBUG_DVC("...");
 
 	audin->listener_callback = (AUDIN_LISTENER_CALLBACK*) calloc(1, sizeof(AUDIN_LISTENER_CALLBACK));
 	if (!audin->listener_callback)
@@ -522,7 +522,7 @@ static WIN32ERROR audin_plugin_terminated(IWTSPlugin* pPlugin)
 	AUDIN_PLUGIN* audin = (AUDIN_PLUGIN*) pPlugin;
 	WIN32ERROR error = CHANNEL_RC_OK;
 
-	DEBUG_DVC("plugin_terminated");
+	DEBUG_DVC("...");
 
 	if (audin->device)
 	{
@@ -557,7 +557,7 @@ static WIN32ERROR audin_register_device_plugin(IWTSPlugin* pPlugin, IAudinDevice
 		return ERROR_ALREADY_EXISTS;
 	}
 
-	DEBUG_DVC("register_device_plugin: device registered.");
+	DEBUG_DVC("device registered.");
 
 	audin->device = device;
 	return CHANNEL_RC_OK;

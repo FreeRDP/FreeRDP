@@ -51,6 +51,14 @@ BOOL ios_ui_authenticate(freerdp * instance, char** username, char** password, c
 	*username = strdup([[params objectForKey:@"username"] UTF8String]);
 	*password = strdup([[params objectForKey:@"password"] UTF8String]);
 	*domain = strdup([[params objectForKey:@"domain"] UTF8String]);
+
+	if (!(*username) || !(*password) || !(*domain))
+	{
+		free(*username);
+		free(*password);
+		free(*domain);
+		return FALSE;
+	}
 	
 	return TRUE;
 }

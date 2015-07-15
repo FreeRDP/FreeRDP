@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/string.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/stream.h>
@@ -288,7 +289,7 @@ WIN32ERROR printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinte
 		WLog_ERR(TAG, "malloc failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
-	snprintf(port, 10, "PRN%d", printer->id);
+	sprintf_s(port, 10, "PRN%d", printer->id);
 
 	printer_dev = (PRINTER_DEVICE*) calloc(1, sizeof(PRINTER_DEVICE));
 	if (!printer_dev)

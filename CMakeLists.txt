@@ -229,7 +229,7 @@ if(CMAKE_COMPILER_IS_GNUCC)
 	endif()
 endif()
 
-if("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
+if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-parameter")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-macros -Wno-padded")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-c11-extensions -Wno-gnu")
@@ -651,17 +651,6 @@ set(FREERDP_EXTENSION_PATH "${CMAKE_INSTALL_FULL_LIBDIR}/freerdp/extensions")
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-if(BSD)
-	if(IS_DIRECTORY /usr/local/include)
-		include_directories(/usr/local/include)
-		link_directories(/usr/local/lib)
-	endif()
-	if(OPENBSD)
-		if(IS_DIRECTORY /usr/X11R6/include)
-			include_directories(/usr/X11R6/include)
-		endif()
-	endif()
-endif()
 
 # Configure files
 add_definitions("-DHAVE_CONFIG_H")
@@ -722,10 +711,6 @@ add_subdirectory(include)
 
 add_subdirectory(libfreerdp)
 
-if(WITH_CHANNELS)
-	add_subdirectory(channels)
-endif()
-
 if (IOS)
 	set(CMAKE_OSX_DEPLOYMENT_TARGET "")
 	if (IOS_PLATFORM MATCHES "SIMULATOR")
@@ -741,6 +726,22 @@ include_directories("${CMAKE_BINARY_DIR}/rdtk/include")
 
 add_subdirectory(rdtk)
 
+if(BSD)
+	if(IS_DIRECTORY /usr/local/include)
+		include_directories(/usr/local/include)
+		link_directories(/usr/local/lib)
+	endif()
+	if(OPENBSD)
+		if(IS_DIRECTORY /usr/X11R6/include)
+			include_directories(/usr/X11R6/include)
+		endif()
+	endif()
+endif()
+
+if(WITH_CHANNELS)
+	add_subdirectory(channels)
+endif()
+
 if(WITH_CLIENT)
 	add_subdirectory(client)
 endif()
@@ -748,6 +749,7 @@ endif()
 if(WITH_SERVER)
 	add_subdirectory(server)
 endif()
+
 
 # Exporting
 

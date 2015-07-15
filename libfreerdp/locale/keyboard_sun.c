@@ -227,7 +227,7 @@ int freerdp_get_solaris_keyboard_layout_and_type(int* type, int* layout)
 
 	kbd = popen("kbd -t -l", "r");
 
-	if (kbd < 0)
+	if (!kbd)
 		return -1;
 
 	while (fgets(buffer, sizeof(buffer), kbd) != NULL)

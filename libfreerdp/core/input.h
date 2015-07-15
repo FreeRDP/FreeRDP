@@ -53,7 +53,7 @@ BOOL input_send_fastpath_extended_mouse_event(rdpInput* input, UINT16 flags, UIN
 BOOL input_recv(rdpInput* input, wStream* s);
 
 int input_process_events(rdpInput* input);
-void input_register_client_callbacks(rdpInput* input);
+BOOL input_register_client_callbacks(rdpInput* input);
 
 rdpInput* input_new(rdpRdp* rdp);
 void input_free(rdpInput* input);

@@ -548,7 +548,7 @@ WIN32ERROR cliprdr_temp_directory(CliprdrClientContext* context, CLIPRDR_TEMP_DI
 	if (length > 520)
 		length = 520;
 
-	Stream_Write(s, tempDirectory->szTempDir, length * 2);
+	Stream_Write(s, wszTempDir, length * 2);
 	Stream_Zero(s, (520 - length) * 2);
 
 	free(wszTempDir);

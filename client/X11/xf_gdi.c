@@ -221,7 +221,7 @@ BOOL xf_set_rop3(xfContext* xfc, int rop3)
 
 UINT32 xf_convert_rdp_order_color(xfContext* xfc, UINT32 color)
 {
-	UINT32 r, g, b;
+	UINT32 r = 0, g = 0, b = 0;
 
 	switch (xfc->srcBpp)
 	{

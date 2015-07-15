@@ -224,6 +224,12 @@ BOOL progressive_rfx_quant_cmp_equal(RFX_COMPONENT_CODEC_QUANT* q1, RFX_COMPONEN
 	return TRUE;
 }
 
+void progressive_rfx_quant_print(RFX_COMPONENT_CODEC_QUANT* q, const char* name)
+{
+	fprintf(stderr, "%s: HL1: %d LH1: %d HH1: %d HL2: %d LH2: %d HH2: %d HL3: %d LH3: %d HH3: %d LL3: %d\n",
+			name, q->HL1, q->LH1, q->HH1, q->HL2, q->LH2, q->HH2, q->HL3, q->LH3, q->HH3, q->LL3);
+}
+
 int progressive_set_surface_data(PROGRESSIVE_CONTEXT* progressive, UINT16 surfaceId, void* pData)
 {
 	ULONG_PTR key;
@@ -270,7 +276,7 @@ PROGRESSIVE_SURFACE_CONTEXT* progressive_surface_context_new(UINT16 surfaceId, U
 
 	if (!surface->tiles)
 	{
-		free (surface);
+		free(surface);
 		return NULL;
 	}
 
@@ -727,10 +733,9 @@ int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progressive, RFX_PROG
 
 	diff = tile->flags & RFX_TILE_DIFFERENCE;
 
-#if 0
-	WLog_INFO(TAG, "ProgressiveTileFirst: quantIdx Y: %d Cb: %d Cr: %d xIdx: %d yIdx: %d flags: 0x%02X quality: %d yLen: %d cbLen: %d crLen: %d tailLen: %d",
-			 tile->quantIdxY, tile->quantIdxCb, tile->quantIdxCr, tile->xIdx, tile->yIdx, tile->flags, tile->quality, tile->yLen, tile->cbLen, tile->crLen, tile->tailLen);
-#endif
+	WLog_DBG(TAG, "ProgressiveTile%s: quantIdx Y: %d Cb: %d Cr: %d xIdx: %d yIdx: %d flags: 0x%02X quality: %d yLen: %d cbLen: %d crLen: %d tailLen: %d",
+			(tile->blockType == PROGRESSIVE_WBT_TILE_FIRST) ? "First" : "Simple",
+			tile->quantIdxY, tile->quantIdxCb, tile->quantIdxCr, tile->xIdx, tile->yIdx, tile->flags, tile->quality, tile->yLen, tile->cbLen, tile->crLen, tile->tailLen);
 
 	region = &(progressive->region);
 
@@ -824,8 +829,6 @@ int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progressive, RFX_PROG
 		prims->yCbCrToBGR_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * 2, tile->data, 64 * 4, &roi_64x64);
 
 	BufferPool_Return(progressive->bufferPool, pBuffer);
-
-	//WLog_Image(progressive->log, WLOG_TRACE, tile->data, 64, 64, 32);
 
 	return 1;
 }
@@ -1134,10 +1137,8 @@ int progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* progressive, RFX_PR
 
 	tile->pass++;
 
-#if 0
-	WLog_INFO(TAG, "ProgressiveTileUpgrade: pass: %d quantIdx Y: %d Cb: %d Cr: %d xIdx: %d yIdx: %d quality: %d ySrlLen: %d yRawLen: %d cbSrlLen: %d cbRawLen: %d crSrlLen: %d crRawLen: %d",
+	WLog_DBG(TAG, "ProgressiveTileUpgrade: pass: %d quantIdx Y: %d Cb: %d Cr: %d xIdx: %d yIdx: %d quality: %d ySrlLen: %d yRawLen: %d cbSrlLen: %d cbRawLen: %d crSrlLen: %d crRawLen: %d",
 			tile->pass, tile->quantIdxY, tile->quantIdxCb, tile->quantIdxCr, tile->xIdx, tile->yIdx, tile->quality, tile->ySrlLen, tile->yRawLen, tile->cbSrlLen, tile->cbRawLen, tile->crSrlLen, tile->crRawLen);
-#endif
 
 	region = &(progressive->region);
 
@@ -1246,8 +1247,6 @@ int progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* progressive, RFX_PR
 
 	BufferPool_Return(progressive->bufferPool, pBuffer);
 
-	//WLog_Image(progressive->log, WLOG_TRACE, tile->data, 64, 64, 32);
-
 	return 1;
 }
 
@@ -1281,7 +1280,7 @@ int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive, BYTE* blocks, UI
 		blockLen = *((UINT32*) &block[boffset + 2]); /* blockLen (4 bytes) */
 		boffset += 6;
 
-		//WLog_INFO(TAG, "%s", progressive_get_block_type_string(blockType));
+		//WLog_DBG(TAG, "%s", progressive_get_block_type_string(blockType));
 
 		if ((blocksLen - offset) < blockLen)
 			return -1003;
@@ -1507,6 +1506,11 @@ int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive, BYTE* blocks, UI
 	if (offset != blocksLen)
 		return -1041;
 
+	if (count != region->numTiles)
+	{
+		WLog_WARN(TAG, "numTiles inconsistency: actual: %d, expected: %d\n", count, region->numTiles);
+	}
+
 	for (index = 0; index < region->numTiles; index++)
 	{
 		tile = tiles[index];
@@ -1537,6 +1541,14 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 	BYTE* block;
 	BYTE* blocks;
 	UINT16 index;
+	UINT16 boxLeft;
+	UINT16 boxTop;
+	UINT16 boxRight;
+	UINT16 boxBottom;
+	UINT16 idxLeft;
+	UINT16 idxTop;
+	UINT16 idxRight;
+	UINT16 idxBottom;
 	UINT32 boffset;
 	UINT16 blockType;
 	UINT32 blockLen;
@@ -1573,7 +1585,6 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 		blockType = *((UINT16*) &block[boffset + 0]); /* blockType (2 bytes) */
 		blockLen = *((UINT32*) &block[boffset + 2]); /* blockLen (4 bytes) */
 		boffset += 6;
-		//WLog_INFO(TAG, "%s", progressive_get_block_type_string(blockType));
 
 		if ((blocksLen - offset) < blockLen)
 			return -1003;
@@ -1581,6 +1592,8 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 		switch (blockType)
 		{
 			case PROGRESSIVE_WBT_SYNC:
+
+				WLog_DBG(TAG, "ProgressiveSync");
 
 				sync.blockType = blockType;
 				sync.blockLen = blockLen;
@@ -1612,6 +1625,9 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 				frameBegin.regionCount = (UINT32) *((UINT16*) &block[boffset + 4]); /* regionCount (2 bytes) */
 				boffset += 6;
 
+				WLog_DBG(TAG, "ProgressiveFrameBegin: frameIndex: %d regionCount: %d",
+						frameBegin.frameIndex, frameBegin.regionCount);
+
 				/**
 				 * If the number of elements specified by the regionCount field is
 				 * larger than the actual number of elements in the regions field,
@@ -1621,6 +1637,8 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 				break;
 
 			case PROGRESSIVE_WBT_FRAME_END:
+
+				WLog_DBG(TAG, "ProgressiveFrameEnd");
 
 				frameEnd.blockType = blockType;
 				frameEnd.blockLen = blockLen;
@@ -1645,6 +1663,13 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 
 				if (context.tileSize != 64)
 					return -1010;
+
+				WLog_DBG(TAG, "ProgressiveContext: flags: 0x%02X", context.flags);
+
+				if (!(context.flags & RFX_SUBBAND_DIFFING))
+				{
+					WLog_WARN(TAG, "RFX_SUBBAND_DIFFING is not set");
+				}
 
 				break;
 
@@ -1755,11 +1780,11 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 				if ((blockLen - boffset) < region->tileDataSize)
 					return -1021;
 
-				if (region->numTiles > progressive->cTiles)
+				if (progressive->cTiles < surface->gridSize)
 				{
 					progressive->tiles = (RFX_PROGRESSIVE_TILE**) realloc(progressive->tiles,
-							region->numTiles * sizeof(RFX_PROGRESSIVE_TILE*));
-					progressive->cTiles = region->numTiles;
+							surface->gridSize * sizeof(RFX_PROGRESSIVE_TILE*));
+					progressive->cTiles = surface->gridSize;
 				}
 
 				region->tiles = progressive->tiles;
@@ -1767,13 +1792,66 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 				if (!region->tiles)
 					return -1;
 
-				//WLog_INFO(TAG, "numRects: %d numTiles: %d numQuant: %d numProgQuant: %d",
-				//		region->numRects, region->numTiles, region->numQuant, region->numProgQuant);
+				WLog_DBG(TAG, "ProgressiveRegion: numRects: %d numTiles: %d tileDataSize: %d flags: 0x%02X numQuant: %d numProgQuant: %d",
+						region->numRects, region->numTiles, region->tileDataSize, region->flags, region->numQuant, region->numProgQuant);
+
+				if (!(region->flags & RFX_DWT_REDUCE_EXTRAPOLATE))
+				{
+					WLog_WARN(TAG, "RFX_DWT_REDUCE_EXTRAPOLATE is not set");
+				}
+
+				boxLeft = surface->gridWidth;
+				boxTop = surface->gridHeight;
+				boxRight = 0;
+				boxBottom = 0;
+
+				for (index = 0; index < region->numRects; index++)
+				{
+					rect = &(region->rects[index]);
+
+					idxLeft = rect->x / 64;
+					idxTop = rect->y / 64;
+					idxRight = (rect->x + rect->width + 63) / 64;
+					idxBottom = (rect->y + rect->height + 63) / 64;
+
+					if (idxLeft < boxLeft)
+						boxLeft = idxLeft;
+
+					if (idxTop < boxTop)
+						boxTop = idxTop;
+
+					if (idxRight > boxRight)
+						boxRight = idxRight;
+
+					if (idxBottom > boxBottom)
+						boxBottom = idxBottom;
+
+					WLog_DBG(TAG, "rect[%d]: x: %d y: %d w: %d h: %d",
+							index, rect->x, rect->y, rect->width, rect->height);
+				}
 
 				status = progressive_process_tiles(progressive, &block[boffset], region->tileDataSize, surface);
 
 				if (status < 0)
 					return status;
+
+				region->numTiles = 0;
+
+				for (index = 0; index < surface->gridSize; index++)
+				{
+					RFX_PROGRESSIVE_TILE* tile = &(surface->tiles[index]);
+
+					if (!tile->data)
+						continue;
+
+					if ((tile->xIdx < boxLeft) || (tile->xIdx > boxRight))
+						continue;
+
+					if ((tile->yIdx < boxTop) || (tile->yIdx > boxBottom))
+						continue;
+
+					region->tiles[region->numTiles++] = tile;
+				}
 
 				boffset += (UINT32) status;
 
@@ -1816,8 +1894,6 @@ PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor)
 	if (progressive)
 	{
 		progressive->Compressor = Compressor;
-
-		progressive->log = WLog_Get(TAG);
 
 		progressive->bufferPool = BufferPool_New(TRUE, (8192 + 32) * 3, 16);
 

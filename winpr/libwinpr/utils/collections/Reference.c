@@ -157,32 +157,39 @@ wReferenceTable* ReferenceTable_New(BOOL synchronized, void* context, REFERENCE_
 {
 	wReferenceTable* referenceTable;
 
-	referenceTable = (wReferenceTable*) malloc(sizeof(wReferenceTable));
+	referenceTable = (wReferenceTable*) calloc(1, sizeof(wReferenceTable));
+	if (!referenceTable)
+		return NULL;
 
-	if (referenceTable)
-	{
-		referenceTable->array = (wReference*) calloc(1, sizeof(wReference) * referenceTable->size);
-		if (!referenceTable->array)
-		{
-			free(referenceTable);
-			return NULL;
-		}
-		referenceTable->context = context;
-		referenceTable->ReferenceFree = ReferenceFree;
+	referenceTable->context = context;
+	referenceTable->ReferenceFree = ReferenceFree;
 
-		referenceTable->size = 32;
+	referenceTable->size = 32;
 
-		referenceTable->synchronized = synchronized;
-		InitializeCriticalSectionAndSpinCount(&referenceTable->lock, 4000);
-	}
+	referenceTable->array = (wReference*) calloc(referenceTable->size, sizeof(wReference));
+	if (!referenceTable->array)
+		goto error_array;
+
+	referenceTable->synchronized = synchronized;
+	if (synchronized && !InitializeCriticalSectionAndSpinCount(&referenceTable->lock, 4000))
+		goto error_critical_section;
 
 	return referenceTable;
+
+error_critical_section:
+	free(referenceTable->array);
+error_array:
+	free(referenceTable);
+	return NULL;
 }
 
 void ReferenceTable_Free(wReferenceTable* referenceTable)
 {
 	if (referenceTable)
 	{
+		if (referenceTable->synchronized)
+			DeleteCriticalSection(&referenceTable->lock);
+
 		DeleteCriticalSection(&referenceTable->lock);
 		free(referenceTable->array);
 		free(referenceTable);

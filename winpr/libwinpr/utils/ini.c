@@ -77,28 +77,28 @@ int IniFile_Load_File(wIniFile* ini, const char* filename)
 	if (IniFile_Open_File(ini, filename) < 0)
 		return -1;
 
-	fseek(ini->fp, 0, SEEK_END);
+	if (fseek(ini->fp, 0, SEEK_END) < 0)
+		goto out_file;
 	fileSize = ftell(ini->fp);
-	fseek(ini->fp, 0, SEEK_SET);
+	if (fileSize < 0)
+		goto out_file;
+	if (fseek(ini->fp, 0, SEEK_SET) < 0)
+		goto out_file;
 
 	ini->line = NULL;
 	ini->nextLine = NULL;
 	ini->buffer = NULL;
 
 	if (fileSize < 1)
-		return -1;
+		goto out_file;
 
 	ini->buffer = (char*) malloc(fileSize + 2);
 
 	if (!ini->buffer)
-		return -1;
+		goto out_file;
 
 	if (fread(ini->buffer, fileSize, 1, ini->fp) != 1)
-	{
-		free(ini->buffer);
-		ini->buffer = NULL;
-		return -1;
-	}
+		goto out_buffer;
 
 	fclose(ini->fp);
 	ini->fp = NULL;
@@ -107,8 +107,16 @@ int IniFile_Load_File(wIniFile* ini, const char* filename)
 	ini->buffer[fileSize + 1] = '\0';
 
 	ini->nextLine = strtok(ini->buffer, "\n");
-	
+
 	return 1;
+
+out_buffer:
+	free(ini->buffer);
+	ini->buffer = NULL;
+out_file:
+	fclose(ini->fp);
+	ini->fp = NULL;
+	return -1;
 }
 
 void IniFile_Load_Finish(wIniFile* ini)
@@ -151,6 +159,13 @@ wIniFileKey* IniFile_Key_New(const char* name, const char* value)
 	{
 		key->name = _strdup(name);
 		key->value = _strdup(value);
+		if (!key->name || !key->value)
+		{
+			free(key->name);
+			free(key->value);
+			free(key);
+			return NULL;
+		}
 	}
 
 	return key;
@@ -278,12 +293,9 @@ wIniFileKey* IniFile_AddKey(wIniFile* ini, wIniFileSection* section, const char*
 {
 	wIniFileKey* key;
 
-	if (!section)
+	if (!section || !name)
 		return NULL;
 	
-	if (!name)
-		return NULL;
-
 	key = IniFile_GetKey(ini, section, name);
 
 	if (!key)
@@ -302,6 +314,8 @@ wIniFileKey* IniFile_AddKey(wIniFile* ini, wIniFileSection* section, const char*
 		}
 
 		key = IniFile_Key_New(name, value);
+		if (!key)
+			return NULL;
 		section->keys[section->nKeys] = key;
 		section->nKeys++;
 	}
@@ -309,6 +323,8 @@ wIniFileKey* IniFile_AddKey(wIniFile* ini, wIniFileSection* section, const char*
 	{
 		free(key->value);
 		key->value = _strdup(value);
+		if (!key->value)
+			return NULL;
 	}
 
 	return key;
@@ -375,7 +391,11 @@ int IniFile_Load(wIniFile* ini)
 			
 			value = beg;
 
-			IniFile_AddKey(ini, section, name, value);
+			if (!IniFile_AddKey(ini, section, name, value))
+			{
+				return -1;
+			}
+
 			key = NULL;
 			if (section && section->keys)
 				key = section->keys[section->nKeys - 1];
@@ -412,6 +432,8 @@ int IniFile_ReadFile(wIniFile* ini, const char* filename)
 
 	free(ini->filename);
 	ini->filename = _strdup(filename);
+	if (!ini->filename)
+		return -1;
 
 	status = IniFile_Load_File(ini, filename);
 	
@@ -657,6 +679,7 @@ int IniFile_WriteFile(wIniFile* ini, const char* filename)
 {
 	int length;
 	char* buffer;
+	int ret = 1;
 
 	buffer = IniFile_WriteBuffer(ini);
 
@@ -676,13 +699,14 @@ int IniFile_WriteFile(wIniFile* ini, const char* filename)
 		return -1;
 	}
 
-	fwrite((void*) buffer, length, 1, ini->fp);
+	if (fwrite((void*) buffer, length, 1, ini->fp) != 1)
+		ret = -1;
 
 	fclose(ini->fp);
 
 	free(buffer);
 
-	return 1;
+	return ret;
 }
 
 wIniFile* IniFile_New()

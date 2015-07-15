@@ -134,6 +134,16 @@ static int g_Height = 0;
 static int g_DstStep = 0;
 static BYTE* g_DstData = NULL;
 
+static void sample_file_free(EGFX_SAMPLE_FILE* file)
+{
+	if (!file)
+		return;
+
+	free(file->buffer);
+	file->buffer = NULL;
+	file->size = 0;
+}
+
 static void test_fill_image_alpha_channel(BYTE* data, int width, int height, BYTE value)
 {
 	int i, j;
@@ -258,8 +268,11 @@ BYTE* test_progressive_load_file(char* path, char* file, UINT32* size)
 	char* filename;
 
 	filename = GetCombinedPath(path, file);
+	if (!filename)
+		return NULL;
 
 	fp = fopen(filename, "r");
+	free(filename);
 
 	if (!fp)
 		return NULL;
@@ -271,12 +284,18 @@ BYTE* test_progressive_load_file(char* path, char* file, UINT32* size)
 	buffer = (BYTE*) malloc(*size);
 
 	if (!buffer)
+	{
+		fclose(fp);
 		return NULL;
+	}
 
 	if (fread(buffer, *size, 1, fp) != 1)
+	{
+		free(buffer);
+		fclose(fp);
 		return NULL;
+	}
 
-	free(filename);
 	fclose(fp);
 
 	return buffer;
@@ -931,6 +950,7 @@ int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE_FILE f
 
 int test_progressive_ms_sample(char* ms_sample_path)
 {
+	int i, j, k;
 	int count;
 	int status;
 	EGFX_SAMPLE_FILE files[3][4][4];
@@ -947,12 +967,34 @@ int test_progressive_ms_sample(char* ms_sample_path)
 	status = test_progressive_load_files(ms_sample_path, files);
 
 	if (status < 0)
+	{
+		for(i=0; i<3; i++)
+		{
+			for (j=0; j<4; j++)
+			{
+				for (k=0; k<4; k++)
+					sample_file_free(&files[i][j][k]);
+			}
+		}
+
 		return -1;
+	}
 
 	status = test_progressive_load_bitmaps(ms_sample_path, bitmaps);
 
 	if (status < 0)
+	{
+		for(i=0; i<3; i++)
+		{
+			for (j=0; j<4; j++)
+			{
+				for (k=0; k<4; k++)
+					sample_file_free(&files[i][j][k]);
+			}
+		}
+
 		return -1;
+	}
 
 	count = 4;
 
@@ -1000,6 +1042,18 @@ int test_progressive_ms_sample(char* ms_sample_path)
 
 	progressive_context_free(progressive);
 
+	for(i=0; i<3; i++)
+	{
+		for (j=0; j<4; j++)
+		{
+			for (k=0; k<4; k++)
+			{
+					sample_file_free(&bitmaps[i][j][k]);
+					sample_file_free(&files[i][j][k]);
+			}
+		}
+	}
+
 	_aligned_free(g_DstData);
 
 	return 0;
@@ -1009,7 +1063,12 @@ int TestFreeRDPCodecProgressive(int argc, char* argv[])
 {
 	char* ms_sample_path;
 
-	ms_sample_path = _strdup("/tmp/EGFX_PROGRESSIVE_MS_SAMPLE");
+	ms_sample_path = GetKnownSubPath(KNOWN_PATH_TEMP, "EGFX_PROGRESSIVE_MS_SAMPLE");
+	if (!ms_sample_path)
+	{
+		printf("Memory allocation failed\n");
+		return -1;
+	}
 
 	if (PathFileExistsA(ms_sample_path))
 		return test_progressive_ms_sample(ms_sample_path);

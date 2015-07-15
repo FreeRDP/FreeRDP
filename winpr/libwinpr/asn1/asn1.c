@@ -73,11 +73,10 @@ ASN1error_e ASN1_CreateEncoder(ASN1module_t pModule, ASN1encoding_t* ppEncoderIn
 	if (pModule && ppEncoderInfo)
 	{
 		*ppEncoderInfo = 0;
-		encoder = (ASN1encoding_t) malloc(sizeof(struct ASN1encoding_s));
+		encoder = (ASN1encoding_t) calloc(1, sizeof(struct ASN1encoding_s));
 
 		if (encoder)
 		{
-			ZeroMemory(encoder, sizeof(struct ASN1encoding_s));
 			encoder->magic = 0x44434E45;
 			encoder->err = ASN1_SUCCESS;
 			encoder->dwFlags = pModule->dwFlags;
@@ -118,7 +117,8 @@ LABEL_ENCODER_COMPLETE:
 			{
 				//if (ASN1BEREncCheck(encoder, 1))
 				{
-					*encoder->buf = 0;
+					if (encoder->buf)
+						*encoder->buf = 0;
 LABEL_SET_BUFFER:
 					if (pParent)
 						pParent[1].version = (ASN1uint32_t) encoder;

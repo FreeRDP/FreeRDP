@@ -62,6 +62,10 @@ if(WITH_GSTREAMER_0_10 OR WITH_GSTREAMER_1_0)
 	endif()
 endif()
 
+if(WITH_OSS)
+	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "oss" "audio")
+endif()
+
 if(WITH_ALSA)
 	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "alsa" "audio")
 endif()

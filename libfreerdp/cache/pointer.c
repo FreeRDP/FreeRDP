@@ -109,39 +109,37 @@ BOOL update_pointer_new(rdpContext* context, POINTER_NEW_UPDATE* pointer_new)
 	rdpCache* cache = context->cache;
 
 	pointer = Pointer_Alloc(context);
+	if (!pointer)
+		return FALSE;
 
-	if (pointer != NULL)
+	pointer->xorBpp = pointer_new->xorBpp;
+	pointer->xPos = pointer_new->colorPtrAttr.xPos;
+	pointer->yPos = pointer_new->colorPtrAttr.yPos;
+	pointer->width = pointer_new->colorPtrAttr.width;
+	pointer->height = pointer_new->colorPtrAttr.height;
+	pointer->lengthAndMask = pointer_new->colorPtrAttr.lengthAndMask;
+	pointer->lengthXorMask = pointer_new->colorPtrAttr.lengthXorMask;
+
+	if (pointer->lengthAndMask)
 	{
-		pointer->xorBpp = pointer_new->xorBpp;
-		pointer->xPos = pointer_new->colorPtrAttr.xPos;
-		pointer->yPos = pointer_new->colorPtrAttr.yPos;
-		pointer->width = pointer_new->colorPtrAttr.width;
-		pointer->height = pointer_new->colorPtrAttr.height;
-		pointer->lengthAndMask = pointer_new->colorPtrAttr.lengthAndMask;
-		pointer->lengthXorMask = pointer_new->colorPtrAttr.lengthXorMask;
-
-		pointer->andMaskData = pointer->xorMaskData = NULL;
-
-		if (pointer->lengthAndMask)
-		{
-			pointer->andMaskData = (BYTE*) malloc(pointer->lengthAndMask);
-			if (!pointer->andMaskData)
-				goto out_fail;
-			CopyMemory(pointer->andMaskData, pointer_new->colorPtrAttr.andMaskData, pointer->lengthAndMask);
-		}
-
-		if (pointer->lengthXorMask)
-		{
-			pointer->xorMaskData = (BYTE*) malloc(pointer->lengthXorMask);
-			CopyMemory(pointer->xorMaskData, pointer_new->colorPtrAttr.xorMaskData, pointer->lengthXorMask);
-		}
-
-		pointer->New(context, pointer);
-		pointer_cache_put(cache->pointer, pointer_new->colorPtrAttr.cacheIndex, pointer);
-		Pointer_Set(context, pointer);
-		return TRUE;
+		pointer->andMaskData = (BYTE*) malloc(pointer->lengthAndMask);
+		if (!pointer->andMaskData)
+			goto out_fail;
+		CopyMemory(pointer->andMaskData, pointer_new->colorPtrAttr.andMaskData, pointer->lengthAndMask);
 	}
-	return FALSE;
+
+	if (pointer->lengthXorMask)
+	{
+		pointer->xorMaskData = (BYTE*) malloc(pointer->lengthXorMask);
+		if (!pointer->xorMaskData)
+			goto out_fail;
+		CopyMemory(pointer->xorMaskData, pointer_new->colorPtrAttr.xorMaskData, pointer->lengthXorMask);
+	}
+
+	if (!pointer->New(context, pointer))
+		goto out_fail;
+	pointer_cache_put(cache->pointer, pointer_new->colorPtrAttr.cacheIndex, pointer);
+	return Pointer_Set(context, pointer);
 
 out_fail:
 	free(pointer->andMaskData);
@@ -213,18 +211,19 @@ rdpPointerCache* pointer_cache_new(rdpSettings* settings)
 {
 	rdpPointerCache* pointer_cache;
 
-	pointer_cache = (rdpPointerCache*) malloc(sizeof(rdpPointerCache));
+	pointer_cache = (rdpPointerCache*) calloc(1, sizeof(rdpPointerCache));
+	if (!pointer_cache)
+		return NULL;
 
-	if (pointer_cache != NULL)
+	pointer_cache->settings = settings;
+	pointer_cache->cacheSize = settings->PointerCacheSize;
+	pointer_cache->update = ((freerdp*) settings->instance)->update;
+
+	pointer_cache->entries = (rdpPointer**) calloc(pointer_cache->cacheSize, sizeof(rdpPointer*));
+	if (!pointer_cache->entries)
 	{
-		ZeroMemory(pointer_cache, sizeof(rdpPointerCache));
-
-		pointer_cache->settings = settings;
-		pointer_cache->cacheSize = settings->PointerCacheSize;
-		pointer_cache->update = ((freerdp*) settings->instance)->update;
-
-		pointer_cache->entries = (rdpPointer**) malloc(sizeof(rdpPointer*) * pointer_cache->cacheSize);
-		ZeroMemory(pointer_cache->entries, sizeof(rdpPointer*) * pointer_cache->cacheSize);
+		free(pointer_cache);
+		return NULL;
 	}
 
 	return pointer_cache;

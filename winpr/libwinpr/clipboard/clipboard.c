@@ -364,16 +364,24 @@ BOOL ClipboardInitFormats(wClipboard* clipboard)
 	if (!clipboard)
 		return FALSE;
 
-	for (formatId = 0; formatId < CF_MAX; formatId++)
+	for (formatId = 0; formatId < CF_MAX; formatId++, clipboard->numFormats++)
 	{
-		format = &(clipboard->formats[clipboard->numFormats++]);
+		format = &(clipboard->formats[clipboard->numFormats]);
 		ZeroMemory(format, sizeof(wClipboardFormat));
 
 		format->formatId = formatId;
 		format->formatName = _strdup(CF_STANDARD_STRINGS[formatId]);
 
 		if (!format->formatName)
+		{
+			int i;
+			for (i = formatId-1; i >= 0; --i)
+			{
+				format = &(clipboard->formats[--clipboard->numFormats]);
+				free((void *)format->formatName);
+			}
 			return FALSE;
+		}
 	}
 
 	ClipboardInitSynthesizers(clipboard);
@@ -511,7 +519,11 @@ wClipboard* ClipboardCreate()
 		clipboard->nextFormatId = 0xC000;
 		clipboard->sequenceNumber = 0;
 
-		InitializeCriticalSectionAndSpinCount(&(clipboard->lock), 4000);
+		if (!InitializeCriticalSectionAndSpinCount(&(clipboard->lock), 4000))
+		{
+			free(clipboard);
+			return NULL;
+		}
 
 		clipboard->numFormats = 0;
 		clipboard->maxFormats = 64;
@@ -519,11 +531,17 @@ wClipboard* ClipboardCreate()
 
 		if (!clipboard->formats)
 		{
+			DeleteCriticalSection(&(clipboard->lock));
 			free(clipboard);
 			return NULL;
 		}
 
-		ClipboardInitFormats(clipboard);
+		if(!ClipboardInitFormats(clipboard))
+		{
+			DeleteCriticalSection(&(clipboard->lock));
+			free(clipboard);
+			return NULL;
+		}
 	}
 
 	return clipboard;

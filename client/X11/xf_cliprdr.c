@@ -838,7 +838,20 @@ static WIN32ERROR xf_cliprdr_server_format_list(CliprdrClientContext* context, C
 	{
 		format = &formatList->formats[i];
 		clipboard->serverFormats[i].formatId = format->formatId;
-		clipboard->serverFormats[i].formatName = _strdup(format->formatName);
+		if (format->formatName)
+		{
+			clipboard->serverFormats[i].formatName = _strdup(format->formatName);
+			if (!clipboard->serverFormats[i].formatName)
+			{
+				for (--i; i >= 0; --i)
+					free(clipboard->serverFormats[i].formatName);
+
+				clipboard->numServerFormats = 0;
+				free(clipboard->serverFormats);
+				clipboard->serverFormats = NULL;
+				return -1;
+			}
+		}
 	}
 
 	clipboard->numTargets = 2;
@@ -1106,6 +1119,12 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "text/html", False);
 	clipboard->clientFormats[n].formatId = CB_FORMAT_HTML;
 	clipboard->clientFormats[n].formatName = _strdup("HTML Format");
+	if (!clipboard->clientFormats[n].formatName)
+	{
+		ClipboardDestroy(clipboard->system);
+		free(clipboard);
+		return NULL;
+	}
 	n++;
 
 	clipboard->numClientFormats = n;

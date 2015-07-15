@@ -109,7 +109,7 @@ wLogAppender* WLog_GetLogAppender(wLog* log)
 	return log->Appender;
 }
 
-void WLog_SetLogAppenderType(wLog* log, DWORD logAppenderType)
+BOOL WLog_SetLogAppenderType(wLog* log, DWORD logAppenderType)
 {
 	if (log->Appender)
 	{
@@ -118,6 +118,7 @@ void WLog_SetLogAppenderType(wLog* log, DWORD logAppenderType)
 	}
 
 	log->Appender = WLog_Appender_New(log, logAppenderType);
+	return log->Appender != NULL;
 }
 
 int WLog_OpenAppender(wLog* log)

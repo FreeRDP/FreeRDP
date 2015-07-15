@@ -46,6 +46,7 @@ HGDI_RGN gdi_CreateRectRgn(int nLeftRect, int nTopRect, int nRightRect, int nBot
 	HGDI_RGN hRgn = (HGDI_RGN) malloc(sizeof(GDI_RGN));
 	if (!hRgn)
 		return NULL;
+
 	hRgn->objectType = GDIOBJECT_REGION;
 	hRgn->x = nLeftRect;
 	hRgn->y = nTopRect;
@@ -69,6 +70,7 @@ HGDI_RECT gdi_CreateRect(int xLeft, int yTop, int xRight, int yBottom)
 	HGDI_RECT hRect = (HGDI_RECT) malloc(sizeof(GDI_RECT));
 	if (!hRect)
 		return NULL;
+
 	hRect->objectType = GDIOBJECT_RECT;
 	hRect->left = xLeft;
 	hRect->top = yTop;
@@ -221,10 +223,10 @@ INLINE void gdi_CRgnToCRect(int x, int y, int w, int h, int *left, int *top, int
  * @param height height
  * @param srcx source x1
  * @param srcy source y1
- * @return 1 if there is an overlap, 0 otherwise
+ * @return nonzero if there is an overlap, 0 otherwise
  */
 
-INLINE int gdi_CopyOverlap(int x, int y, int width, int height, int srcx, int srcy)
+INLINE BOOL gdi_CopyOverlap(int x, int y, int width, int height, int srcx, int srcy)
 {
 	GDI_RECT dst;
 	GDI_RECT src;
@@ -233,7 +235,7 @@ INLINE int gdi_CopyOverlap(int x, int y, int width, int height, int srcx, int sr
 	gdi_CRgnToRect(srcx, srcy, width, height, &src);
 
 	return (dst.right > src.left && dst.left < src.right &&
-		dst.bottom > src.top && dst.top < src.bottom) ? 1 : 0;
+		dst.bottom > src.top && dst.top < src.bottom) ? TRUE : FALSE;
 }
 
 /**
@@ -244,16 +246,16 @@ INLINE int gdi_CopyOverlap(int x, int y, int width, int height, int srcx, int sr
  * @param yTop y1
  * @param xRight x2
  * @param yBottom y2
- * @return 1 if successful, 0 otherwise
+ * @return nonzero if successful, 0 otherwise
  */
 
-INLINE int gdi_SetRect(HGDI_RECT rc, int xLeft, int yTop, int xRight, int yBottom)
+INLINE BOOL gdi_SetRect(HGDI_RECT rc, int xLeft, int yTop, int xRight, int yBottom)
 {
 	rc->left = xLeft;
 	rc->top = yTop;
 	rc->right = xRight;
 	rc->bottom = yBottom;
-	return 1;
+	return TRUE;
 }
 
 /**
@@ -263,17 +265,17 @@ INLINE int gdi_SetRect(HGDI_RECT rc, int xLeft, int yTop, int xRight, int yBotto
  * @param nYLeft y1
  * @param nWidth width
  * @param nHeight height
- * @return
+ * @return nonzero if successful, 0 otherwise
  */
 
-INLINE int gdi_SetRgn(HGDI_RGN hRgn, int nXLeft, int nYLeft, int nWidth, int nHeight)
+INLINE BOOL gdi_SetRgn(HGDI_RGN hRgn, int nXLeft, int nYLeft, int nWidth, int nHeight)
 {
 	hRgn->x = nXLeft;
 	hRgn->y = nYLeft;
 	hRgn->w = nWidth;
 	hRgn->h = nHeight;
 	hRgn->null = 0;
-	return 0;
+	return TRUE;
 }
 
 /**
@@ -283,14 +285,14 @@ INLINE int gdi_SetRgn(HGDI_RGN hRgn, int nXLeft, int nYLeft, int nWidth, int nHe
  * @param nTopRect y1
  * @param nRightRect x2
  * @param nBottomRect y2
- * @return
+ * @return nonzero if successful, 0 otherwise
  */
 
-INLINE int gdi_SetRectRgn(HGDI_RGN hRgn, int nLeftRect, int nTopRect, int nRightRect, int nBottomRect)
+INLINE BOOL gdi_SetRectRgn(HGDI_RGN hRgn, int nLeftRect, int nTopRect, int nRightRect, int nBottomRect)
 {
 	gdi_CRectToRgn(nLeftRect, nTopRect, nRightRect, nBottomRect, hRgn);
 	hRgn->null = 0;
-	return 0;
+	return TRUE;
 }
 
 /**
@@ -298,36 +300,37 @@ INLINE int gdi_SetRectRgn(HGDI_RGN hRgn, int nLeftRect, int nTopRect, int nRight
  * @msdn{dd162700}
  * @param hSrcRgn1 first region
  * @param hSrcRgn2 second region
- * @return 1 if both regions are equal, 0 otherwise
+ * @return nonzero if both regions are equal, 0 otherwise
  */
 
-INLINE int gdi_EqualRgn(HGDI_RGN hSrcRgn1, HGDI_RGN hSrcRgn2)
+INLINE BOOL gdi_EqualRgn(HGDI_RGN hSrcRgn1, HGDI_RGN hSrcRgn2)
 {
 	if ((hSrcRgn1->x == hSrcRgn2->x) &&
 	    (hSrcRgn1->y == hSrcRgn2->y) &&
 	    (hSrcRgn1->w == hSrcRgn2->w) &&
 	    (hSrcRgn1->h == hSrcRgn2->h))
 	{
-		return 1;
+		return TRUE;
 	}
 
-	return 0;
+	return FALSE;
 }
 
 /**
  * Copy coordinates from a rectangle to another rectangle
+ * @msdn{dd183481}
  * @param dst destination rectangle
  * @param src source rectangle
- * @return 1 if successful, 0 otherwise
+ * @return nonzero if successful, 0 otherwise
  */
 
-INLINE int gdi_CopyRect(HGDI_RECT dst, HGDI_RECT src)
+INLINE BOOL gdi_CopyRect(HGDI_RECT dst, HGDI_RECT src)
 {
 	dst->left = src->left;
 	dst->top = src->top;
 	dst->right = src->right;
 	dst->bottom = src->bottom;
-	return 1;
+	return TRUE;
 }
 
 /**
@@ -336,10 +339,10 @@ INLINE int gdi_CopyRect(HGDI_RECT dst, HGDI_RECT src)
  * @param rc rectangle
  * @param x point x position
  * @param y point y position
- * @return 1 if the point is inside, 0 otherwise
+ * @return nonzero if the point is inside, 0 otherwise
  */
 
-INLINE int gdi_PtInRect(HGDI_RECT rc, int x, int y)
+INLINE BOOL gdi_PtInRect(HGDI_RECT rc, int x, int y)
 {
 	/*
 	 * points on the left and top sides are considered in,
@@ -350,11 +353,11 @@ INLINE int gdi_PtInRect(HGDI_RECT rc, int x, int y)
 	{
 		if (y >= rc->top && y <= rc->bottom)
 		{
-			return 1;
+			return TRUE;
 		}
 	}
 
-	return 0;
+	return FALSE;
 }
 
 /**
@@ -365,7 +368,7 @@ INLINE int gdi_PtInRect(HGDI_RECT rc, int x, int y)
  * @param y y1
  * @param w width
  * @param h height
- * @return FALSE on error
+ * @return nonzero on success, 0 otherwise
  */
 
 INLINE BOOL gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h)

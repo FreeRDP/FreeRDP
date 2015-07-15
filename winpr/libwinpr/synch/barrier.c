@@ -145,6 +145,8 @@ BOOL WINAPI EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, DWO
 		status = TRUE;
 	}
 
+	InterlockedDecrement(&(pBarrier->count));
+
 	return status;
 }
 
@@ -164,6 +166,9 @@ BOOL WINAPI DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier)
 
 	if (!pBarrier)
 		return TRUE;
+
+	while (InterlockedCompareExchange(&pBarrier->count, 0, 0) != 0)
+		Sleep(100);
 
 	CloseHandle(pBarrier->event);
 

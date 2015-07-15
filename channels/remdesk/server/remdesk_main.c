@@ -29,7 +29,7 @@
 
 #include "remdesk_main.h"
 
-WIN32ERROR remdesk_virtual_channel_write(RemdeskServerContext* context, wStream* s)
+static WIN32ERROR remdesk_virtual_channel_write(RemdeskServerContext* context, wStream* s)
 {
 	BOOL status;
 	ULONG BytesWritten = 0;

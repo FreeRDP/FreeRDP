@@ -100,15 +100,15 @@ HGDI_BRUSH gdi_CreateHatchBrush(HGDI_BITMAP hbmp)
  * @param nWidth width
  * @param nHeight height
  * @param rop raster operation code
- * @return 1 if successful, 0 otherwise
+ * @return nonzero if successful, 0 otherwise
  */
 
-int gdi_PatBlt(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, int rop)
+BOOL gdi_PatBlt(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, DWORD rop)
 {
 	p_PatBlt _PatBlt = PatBlt_[IBPP(hdc->bitsPerPixel)];
 
-	if (_PatBlt != NULL)
-		return _PatBlt(hdc, nXLeft, nYLeft, nWidth, nHeight, rop);
-	else
-		return 0;
+	if (_PatBlt == NULL)
+		return FALSE;
+
+	return _PatBlt(hdc, nXLeft, nYLeft, nWidth, nHeight, rop);
 }

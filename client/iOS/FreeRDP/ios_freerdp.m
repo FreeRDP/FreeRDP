@@ -11,6 +11,7 @@
 #import <freerdp/channels/channels.h>
 #import <freerdp/client/channels.h>
 #import <freerdp/client/cmdline.h>
+#import <freerdp/freerdp.h>
 
 #import "ios_freerdp.h"
 #import "ios_freerdp_ui.h"
@@ -18,7 +19,6 @@
 
 #import "RDPSession.h"
 #import "Utils.h"
-
 
 #pragma mark Connection helpers
 
@@ -279,6 +279,8 @@ void ios_context_free(freerdp* instance, rdpContext* context)
 freerdp* ios_freerdp_new()
 {
 	freerdp* inst = freerdp_new();
+	if (!inst)
+		return NULL;
 	
 	inst->PreConnect = ios_pre_connect;
 	inst->PostConnect = ios_post_connect;
@@ -297,6 +299,14 @@ freerdp* ios_freerdp_new()
 	free(inst->settings->ConfigPath);
 	inst->settings->HomePath = strdup([home_path UTF8String]);
 	inst->settings->ConfigPath = strdup([[home_path stringByAppendingPathComponent:@".freerdp"] UTF8String]);
+	if (!inst->settings->HomePath || !inst->settings->ConfigPath)
+	{
+		free(inst->settings->HomePath);
+		free(inst->settings->ConfigPath);
+		freerdp_context_free(inst);
+		freerdp_free(inst);
+		return NULL;
+	}
 
 	return inst;
 }

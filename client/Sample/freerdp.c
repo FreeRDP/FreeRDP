@@ -122,9 +122,7 @@ static BOOL tf_post_connect(freerdp* instance)
 	instance->update->BeginPaint = tf_begin_paint;
 	instance->update->EndPaint = tf_end_paint;
 
-	freerdp_channels_post_connect(instance->context->channels, instance);
-
-	return TRUE;
+	return (freerdp_channels_post_connect(instance->context->channels, instance) >= 0);
 }
 
 static void* tf_client_thread_proc(freerdp* instance)

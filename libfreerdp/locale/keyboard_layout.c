@@ -180,6 +180,7 @@ static const RDP_KEYBOARD_LAYOUT_VARIANT RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[] =
 	{ KBD_GREEK_LATIN,				0x0019, "Greek Latin" },
 	{ KBD_US_ENGLISH_TABLE_FOR_IBM_ARABIC_238_L,	0x000B, "US English Table for IBM Arabic 238_L" },
 	{ KBD_GREEK_POLYTONIC,				0x001F, "Greek Polytonic" },
+	{ KBD_FRENCH_BEPO,				0x00C0, "French Bépo" },
 	{ KBD_GERMAN_NEO,				0x00C0, "German Neo" }
 };
 
@@ -247,6 +248,14 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types)
 		{
 			layouts[num].code = RDP_KEYBOARD_LAYOUT_TABLE[i].code;
 			layouts[num].name = _strdup(RDP_KEYBOARD_LAYOUT_TABLE[i].name);
+			if (!layouts[num].name)
+			{
+				for (--i; i >=0; --i)
+					free(layouts[num].name);
+
+				free(layouts);
+				return NULL;
+			}
 		}
 	}
 	if ((types & RDP_KEYBOARD_LAYOUT_TYPE_VARIANT) != 0)
@@ -264,6 +273,14 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types)
 		{
 			layouts[num].code = RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i].code;
 			layouts[num].name = _strdup(RDP_KEYBOARD_LAYOUT_VARIANT_TABLE[i].name);
+			if (!layouts[num].name)
+			{
+				for (--i; i >=0; --i)
+					free(layouts[num].name);
+
+				free(layouts);
+				return NULL;
+			}
 		}
 	}
 	if ((types & RDP_KEYBOARD_LAYOUT_TYPE_IME) != 0)
@@ -281,6 +298,14 @@ RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types)
 		{
 			layouts[num].code = RDP_KEYBOARD_IME_TABLE[i].code;
 			layouts[num].name = _strdup(RDP_KEYBOARD_IME_TABLE[i].name);
+			if (!layouts[num].name)
+			{
+				for (--i; i >=0; --i)
+					free(layouts[num].name);
+
+				free(layouts);
+				return NULL;
+			}
 		}
 	}
 
