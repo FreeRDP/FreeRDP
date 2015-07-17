@@ -760,7 +760,9 @@ int transport_check_fds(rdpTransport* transport)
 	 * wait for a socket to get signaled that data is available
 	 * (which may never happen).
 	 */
+#ifdef _WIN32
 	ResetEvent(event);
+#endif
 	for (;;)
 	{
 		/**
