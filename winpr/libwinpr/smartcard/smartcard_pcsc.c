@@ -150,31 +150,7 @@ static BOOL g_PnP_Notification = TRUE;
 static unsigned int OSXVersion = 0;
 #endif
 
-/**
- * g_LockTransactions: enable pcsc-lite SCardBeginTransaction/SCardEndTransaction.
- *
- * After wasting months trying to fix and work around an appalling number of serious issues
- * in both the pcsc-lite client library and the pcscd daemon, I decided to just give up on
- * the transaction system. Using them inevitably leads to multiple SCardConnect calls deadlocking.
- *
- * It is not very clear how WinSCard transactions should lock: some logs on Windows show that is
- * possible to call SCardBeginTransaction twice on the same SCARDHANDLE without the second call
- * being blocked. Worse, in this specific case one corresponding SCardEndTransaction is missing.
- *
- * pcsc-lite apparently implements these "nested" transactions as well, because it allows the same
- * SCARDHANDLE to be locked more than once with a counter. However, there must be a bug even in the
- * latest pcsc-lite daemon as we still get deadlocked on SCardConnect calls when using those.
- *
- * Trying to disable nested transactions by letting pcsc-lite know about only one transaction level
- * gives the same deadlocks on SCardConnect. In other words, there are serious deadlock issues in
- * pcsc-lite even when disabling nested transactions.
- *
- * Transactions are simply too much of a pain to support properly without deadlocking the entire
- * smartcard subsystem. In practice, there is not much of a difference if locking occurs or not.
- * We could revisit transactions later on based on the demand, but for now we just want things to work.
- */
 
-static BOOL g_LockTransactions = FALSE;
 
 static wArrayList* g_Readers = NULL;
 static wListDictionary* g_CardHandles = NULL;
@@ -743,7 +719,7 @@ char* PCSC_ConvertReaderNameToWinSCard(const char* name)
 	if (!name)
 		return NULL;
 	memset(tokens, 0, sizeof(tokens));
-	
+
 	length = strlen(name);
 
 	if (length < 10)
@@ -1876,11 +1852,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardBeginTransaction(SCARDHANDLE hCard)
 	if (pContext->isTransactionLocked)
 		return SCARD_S_SUCCESS; /* disable nested transactions */
 
-	if (g_LockTransactions)
-	{
-		status = (LONG) g_PCSC.pfnSCardBeginTransaction(hCard);
-		status = PCSC_MapErrorCodeToWinSCard(status);
-	}
+	status = (LONG) g_PCSC.pfnSCardBeginTransaction(hCard);
+	status = PCSC_MapErrorCodeToWinSCard(status);
 
 	pContext->isTransactionLocked = TRUE;
 	return status;
@@ -1911,11 +1884,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardEndTransaction(SCARDHANDLE hCard, DWORD dwDisp
 	if (!pContext->isTransactionLocked)
 		return SCARD_S_SUCCESS; /* disable nested transactions */
 
-	if (g_LockTransactions)
-	{
-		status = (LONG) g_PCSC.pfnSCardEndTransaction(hCard, pcsc_dwDisposition);
-		status = PCSC_MapErrorCodeToWinSCard(status);
-	}
+	status = (LONG) g_PCSC.pfnSCardEndTransaction(hCard, pcsc_dwDisposition);
+	status = PCSC_MapErrorCodeToWinSCard(status);
 
 	pContext->isTransactionLocked = FALSE;
 
@@ -3006,24 +2976,6 @@ PSCardApiFunctionTable PCSC_GetSCardApiFunctionTable(void)
 int PCSC_InitializeSCardApi(void)
 {
 	DWORD nSize;
-	char* env = NULL;
-
-	nSize = GetEnvironmentVariableA("WINPR_WINSCARD_LOCK_TRANSACTIONS", NULL, 0);
-
-	if (nSize)
-	{
-		env = (LPSTR) malloc(nSize);
-		if (!env)
-			return -1;
-		nSize = GetEnvironmentVariableA("WINPR_WINSCARD_LOCK_TRANSACTIONS", env, nSize);
-
-		if (strcmp(env, "1") == 0)
-			g_LockTransactions = TRUE;
-		else if (strcmp(env, "0") == 0)
-			g_LockTransactions = FALSE;
-
-		free(env);
-	}
 
 	/* Disable pcsc-lite's (poor) blocking so we can handle it ourselves */
 	SetEnvironmentVariableA("PCSCLITE_NO_BLOCKING", "1");
