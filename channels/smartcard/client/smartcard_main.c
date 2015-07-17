@@ -150,7 +150,7 @@ static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard) {
 
 			hContext = pContext->hContext;
 
-			if (SCardIsValidContext(hContext))
+			if (SCardIsValidContext(hContext) == SCARD_S_SUCCESS)
 			{
 				SCardCancel(hContext);
 			}
@@ -177,7 +177,7 @@ static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard) {
 
 			hContext = pContext->hContext;
 
-			if (SCardIsValidContext(hContext))
+			if (SCardIsValidContext(hContext) == SCARD_S_SUCCESS)
 			{
 				SCardReleaseContext(hContext);
 			}
