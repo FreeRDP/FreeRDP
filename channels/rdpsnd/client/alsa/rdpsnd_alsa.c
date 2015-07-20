@@ -670,10 +670,13 @@ WIN32ERROR freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_PO
 	alsa->device.Free = rdpsnd_alsa_free;
 
 	args = pEntryPoints->args;
-	if ((error = rdpsnd_alsa_parse_addin_args((rdpsndDevicePlugin*) alsa, args)))
+	if (args->argc > 1)
 	{
-		WLog_ERR(TAG, "rdpsnd_alsa_parse_addin_args failed with error %lu", error);
-		goto error_parse_args;
+		if ((error = rdpsnd_alsa_parse_addin_args((rdpsndDevicePlugin *) alsa, args)))
+		{
+			WLog_ERR(TAG, "rdpsnd_alsa_parse_addin_args failed with error %lu", error);
+			goto error_parse_args;
+		}
 	}
 
 

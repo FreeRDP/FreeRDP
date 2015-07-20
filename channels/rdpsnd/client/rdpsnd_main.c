@@ -36,9 +36,6 @@
 
 #include <winpr/crt.h>
 #include <winpr/wlog.h>
-#include <winpr/synch.h>
-#include <winpr/print.h>
-#include <winpr/thread.h>
 #include <winpr/stream.h>
 #include <winpr/cmdline.h>
 #include <winpr/sysinfo.h>
@@ -46,9 +43,6 @@
 
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
-#include <freerdp/constants.h>
-#include <freerdp/channels/log.h>
-#include <freerdp/utils/signal.h>
 
 #include "rdpsnd_main.h"
 
@@ -751,75 +745,78 @@ static WIN32ERROR rdpsnd_process_addin_args(rdpsndPlugin* rdpsnd, ADDIN_ARGV* ar
 
 	rdpsnd->wQualityMode = HIGH_QUALITY; /* default quality mode */
 
-	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
 
-	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
-			rdpsnd_args, flags, rdpsnd, NULL, NULL);
-
-	if (status < 0)
-		return CHANNEL_RC_INITIALIZATION_ERROR;
-
-	arg = rdpsnd_args;
-
-	do
+	if (args->argc > 1)
 	{
-		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
-			continue;
+		flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
+		status = CommandLineParseArgumentsA(args->argc, (const char **) args->argv,
+					rdpsnd_args, flags, rdpsnd, NULL, NULL);
 
-		CommandLineSwitchStart(arg)
+		if (status < 0)
+			return CHANNEL_RC_INITIALIZATION_ERROR;
 
-		CommandLineSwitchCase(arg, "sys")
-		{
-			if (!rdpsnd_set_subsystem(rdpsnd, arg->Value))
-				return CHANNEL_RC_NO_MEMORY;
-		}
-		CommandLineSwitchCase(arg, "dev")
-		{
-			if (!rdpsnd_set_device_name(rdpsnd, arg->Value))
-				return CHANNEL_RC_NO_MEMORY;
-		}
-		CommandLineSwitchCase(arg, "format")
-		{
-			rdpsnd->fixedFormat = atoi(arg->Value);
-		}
-		CommandLineSwitchCase(arg, "rate")
-		{
-			rdpsnd->fixedRate = atoi(arg->Value);
-		}
-		CommandLineSwitchCase(arg, "channel")
-		{
-			rdpsnd->fixedChannel = atoi(arg->Value);
-		}
-		CommandLineSwitchCase(arg, "latency")
-		{
-			rdpsnd->latency = atoi(arg->Value);
-		}
-		CommandLineSwitchCase(arg, "quality")
-		{
-			int wQualityMode = DYNAMIC_QUALITY;
+		arg = rdpsnd_args;
 
-			if (_stricmp(arg->Value, "dynamic") == 0)
-				wQualityMode = DYNAMIC_QUALITY;
-			else if (_stricmp(arg->Value, "medium") == 0)
-				wQualityMode = MEDIUM_QUALITY;
-			else if (_stricmp(arg->Value, "high") == 0)
-				wQualityMode = HIGH_QUALITY;
-			else
-				wQualityMode = atoi(arg->Value);
-
-			if ((wQualityMode < 0) || (wQualityMode > 2))
-				wQualityMode = DYNAMIC_QUALITY;
-
-			rdpsnd->wQualityMode = (UINT16) wQualityMode;
-		}
-		CommandLineSwitchDefault(arg)
+		do
 		{
+			if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
+				continue;
 
+			CommandLineSwitchStart(arg)
+
+			CommandLineSwitchCase(arg, "sys")
+			{
+				if (!rdpsnd_set_subsystem(rdpsnd, arg->Value))
+					return CHANNEL_RC_NO_MEMORY;
+			}
+			CommandLineSwitchCase(arg, "dev")
+			{
+				if (!rdpsnd_set_device_name(rdpsnd, arg->Value))
+					return CHANNEL_RC_NO_MEMORY;
+			}
+			CommandLineSwitchCase(arg, "format")
+			{
+				rdpsnd->fixedFormat = atoi(arg->Value);
+			}
+			CommandLineSwitchCase(arg, "rate")
+			{
+				rdpsnd->fixedRate = atoi(arg->Value);
+			}
+			CommandLineSwitchCase(arg, "channel")
+			{
+				rdpsnd->fixedChannel = atoi(arg->Value);
+			}
+			CommandLineSwitchCase(arg, "latency")
+			{
+				rdpsnd->latency = atoi(arg->Value);
+			}
+			CommandLineSwitchCase(arg, "quality")
+			{
+				int wQualityMode = DYNAMIC_QUALITY;
+
+				if (_stricmp(arg->Value, "dynamic") == 0)
+					wQualityMode = DYNAMIC_QUALITY;
+				else if (_stricmp(arg->Value, "medium") == 0)
+					wQualityMode = MEDIUM_QUALITY;
+				else if (_stricmp(arg->Value, "high") == 0)
+					wQualityMode = HIGH_QUALITY;
+				else
+					wQualityMode = atoi(arg->Value);
+
+				if ((wQualityMode < 0) || (wQualityMode > 2))
+					wQualityMode = DYNAMIC_QUALITY;
+
+				rdpsnd->wQualityMode = (UINT16) wQualityMode;
+			}
+			CommandLineSwitchDefault(arg)
+			{
+
+			}
+
+			CommandLineSwitchEnd(arg)
 		}
-
-		CommandLineSwitchEnd(arg)
+		while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 	}
-	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 
 	return CHANNEL_RC_OK;
 }
@@ -827,7 +824,7 @@ static WIN32ERROR rdpsnd_process_addin_args(rdpsndPlugin* rdpsnd, ADDIN_ARGV* ar
 static WIN32ERROR rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 {
 	ADDIN_ARGV* args;
-	WIN32ERROR status;
+	WIN32ERROR status = ERROR_INTERNAL_ERROR;
 	char *subsystem_name = NULL, *device_name = NULL;
 
 	rdpsnd->latency = -1;
@@ -859,10 +856,7 @@ static WIN32ERROR rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 			subsystem_name = "ios";
 			device_name = "";
 			if ((status = rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args)))
-			{
-				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu", rdpsnd->subsystem, status);
-				return status;
-			}
+				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu", subsystem_name, status);
 		}
 #endif
 
@@ -872,10 +866,7 @@ static WIN32ERROR rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 			subsystem_name = "opensles";
 			device_name = "";
 			if ((status = rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args)))
-			{
-				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu", rdpsnd->subsystem, status);
-				return status;
-			}
+				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu", subsystem_name, status);
 		}
 #endif
 
@@ -885,10 +876,7 @@ static WIN32ERROR rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 			subsystem_name = "pulse";
 			device_name = "";
 			if ((status = rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args)))
-			{
-				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu", rdpsnd->subsystem, status);
-				return status;
-			}
+				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu", subsystem_name, status);
 		}
 #endif
 
@@ -898,10 +886,7 @@ static WIN32ERROR rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 			subsystem_name = "alsa";
 			device_name = "default";
 			if ((status = rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args)))
-			{
-				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu", rdpsnd->subsystem, status);
-				return status;
-			}
+				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu", subsystem_name, status);
 		}
 #endif
 
@@ -911,10 +896,7 @@ static WIN32ERROR rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 			subsystem_name = "oss";
 			device_name = "";
 			if ((status = rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args)))
-			{
-				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu", rdpsnd->subsystem, status);
-				return status;
-			}
+				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu", subsystem_name, status);
 		}
 #endif
 
@@ -925,10 +907,7 @@ static WIN32ERROR rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 			subsystem_name = "mac";
 			device_name = "default";
 			if ((status = rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args)))
-			{
-				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu", rdpsnd->subsystem, status);
-				return status;
-			}
+				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu", subsystem_name, status);
 		}
 #endif
 
@@ -938,12 +917,11 @@ static WIN32ERROR rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 			subsystem_name = "winmm";
 			device_name = "";
 			if ((status = rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args)))
-			{
-				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu", rdpsnd->subsystem, status);
-				return status;
-			}
+				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu", subsystem_name, status);
 		}
 #endif
+		if (status)
+			return status;
 
 		if (rdpsnd->device)
 		{

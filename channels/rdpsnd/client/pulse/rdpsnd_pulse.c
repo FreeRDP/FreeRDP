@@ -654,11 +654,14 @@ WIN32ERROR freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_PO
 	pulse->device.Free = rdpsnd_pulse_free;
 
 	args = pEntryPoints->args;
-	ret = rdpsnd_pulse_parse_addin_args((rdpsndDevicePlugin*) pulse, args);
-	if (ret != CHANNEL_RC_OK)
+	if (args->argc > 1)
 	{
-		WLog_ERR(TAG, "error parsing arguments");
-		goto error;
+		ret = rdpsnd_pulse_parse_addin_args((rdpsndDevicePlugin *) pulse, args);
+		if (ret != CHANNEL_RC_OK)
+		{
+			WLog_ERR(TAG, "error parsing arguments");
+			goto error;
+		}
 	}
 
 	ret = CHANNEL_RC_NO_MEMORY;
