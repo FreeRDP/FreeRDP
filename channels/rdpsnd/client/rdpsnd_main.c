@@ -764,20 +764,20 @@ static void rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 	}
 #endif
 
-#if defined(WITH_OSS)
-	if (!rdpsnd->device)
-	{
-		rdpsnd_set_subsystem(rdpsnd, "oss");
-		rdpsnd_set_device_name(rdpsnd, "");
-		rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args);
-	}
-#endif
-
 #if defined(WITH_ALSA)
 	if (!rdpsnd->device)
 	{
 		rdpsnd_set_subsystem(rdpsnd, "alsa");
 		rdpsnd_set_device_name(rdpsnd, "default");
+		rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args);
+	}
+#endif
+
+#if defined(WITH_OSS)
+	if (!rdpsnd->device)
+	{
+		rdpsnd_set_subsystem(rdpsnd, "oss");
+		rdpsnd_set_device_name(rdpsnd, "");
 		rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args);
 	}
 #endif
