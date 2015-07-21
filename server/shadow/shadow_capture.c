@@ -80,6 +80,9 @@ int shadow_capture_align_clip_rect(RECTANGLE_16* rect, RECTANGLE_16* clip)
 	return 1;
 }
 
+/* this is too big to consume whole stack on some systems */
+static BOOL grid[1024][1024];
+
 int shadow_capture_compare(BYTE* pData1, int nStep1, int nWidth, int nHeight, BYTE* pData2, int nStep2, RECTANGLE_16* rect)
 {
 	BOOL equal;
@@ -91,7 +94,6 @@ int shadow_capture_compare(BYTE* pData1, int nStep1, int nWidth, int nHeight, BY
 	BYTE *p1, *p2;
 	BOOL rows[1024];
 	BOOL cols[1024];
-	BOOL grid[1024][1024];
 
 	allEqual = TRUE;
 	ZeroMemory(rect, sizeof(RECTANGLE_16));
