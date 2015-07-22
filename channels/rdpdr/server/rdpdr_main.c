@@ -810,12 +810,12 @@ static WIN32ERROR rdpdr_server_send_user_logged_on(RdpdrServerContext* context)
 
 static WIN32ERROR rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
 {
+	WIN32ERROR error = CHANNEL_RC_OK;
 
 	WLog_DBG(TAG, "RdpdrServerReceivePdu: Component: 0x%04X PacketId: 0x%04X",
 			 header->Component, header->PacketId);
 
 	winpr_HexDump(TAG, WLOG_DEBUG, Stream_Buffer(s), Stream_Length(s));
-	WIN32ERROR error = CHANNEL_RC_OK;
 
 	if (header->Component == RDPDR_CTYP_CORE)
 	{

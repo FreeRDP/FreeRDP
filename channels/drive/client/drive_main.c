@@ -564,8 +564,9 @@ static WIN32ERROR drive_process_irp_device_control(DRIVE_DEVICE* drive, IRP* irp
 
 static WIN32ERROR drive_process_irp(DRIVE_DEVICE* drive, IRP* irp)
 {
-	irp->IoStatus = STATUS_SUCCESS;
 	WIN32ERROR error;
+
+	irp->IoStatus = STATUS_SUCCESS;
 
 	switch (irp->MajorFunction)
 	{

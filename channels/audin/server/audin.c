@@ -454,9 +454,9 @@ static void* audin_server_thread_func(void* arg)
 			case MSG_SNDIN_FORMATS:
 				if ((error = audin_server_recv_formats(audin, s, BytesReturned)))
 				{
-                    WLog_ERR(TAG, "audin_server_recv_formats failed with error %lu!", error);
-                    goto out_capacity;
-                }
+					WLog_ERR(TAG, "audin_server_recv_formats failed with error %lu!", error);
+					goto out_capacity;
+				}
 				if ((error = audin_server_send_open(audin, s)))
 				{
 					WLog_ERR(TAG, "audin_server_send_open failed with error %lu!", error);

@@ -457,10 +457,7 @@ static WIN32ERROR audin_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	{
 		IFCALLRET(audin->device->Close, error, audin->device);
 		if (error != CHANNEL_RC_OK)
-		{
 			WLog_ERR(TAG, "Close failed with errorcode %lu", error);
-			return error;
-		}
 	}
 
 	free(callback->formats);

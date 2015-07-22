@@ -191,7 +191,7 @@ static void* audin_oss_thread_func(void* arg)
 	if ((pcm_handle = open(dev_name, O_RDONLY)) < 0)
 	{
 		OSS_LOG_ERR("sound dev open failed", errno);
-		error = (WIN32ERROR)errno;
+		error = (WIN32ERROR)ERROR_INTERNAL_ERROR;
 		goto err_out;
 	}
 
