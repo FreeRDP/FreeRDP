@@ -713,6 +713,7 @@ HANDLE rdpsnd_server_get_event_handle(RdpsndServerContext *context)
  * @param Server side context
  *
  * @return 0 on success
+ * 		   ERROR_NO_DATA if no data could be read this time
  *         otherwise error
  */
 WIN32ERROR rdpsnd_server_handle_messages(RdpsndServerContext *context)
@@ -726,7 +727,7 @@ WIN32ERROR rdpsnd_server_handle_messages(RdpsndServerContext *context)
 	if (!WTSVirtualChannelRead(priv->ChannelHandle, 0, (PCHAR)Stream_Pointer(s), priv->expectedBytes, &bytesReturned))
 	{
 		if (GetLastError() == ERROR_NO_DATA)
-			return CHANNEL_RC_OK;
+			return ERROR_NO_DATA;
 
 		WLog_ERR(TAG,  "channel connection closed");
 		return ERROR_INTERNAL_ERROR;
