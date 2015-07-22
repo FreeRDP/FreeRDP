@@ -323,11 +323,11 @@ static UINT32 smartcard_ListReadersA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD
 	smartcard_trace_list_readers_return(smartcard, &ret, FALSE);
 	status = smartcard_pack_list_readers_return(smartcard, irp->output, &ret);
 
-	if (status != SCARD_S_SUCCESS)
-		return status;
-
 	if (mszReaders)
 		SCardFreeMemory(operation->hContext, mszReaders);
+
+	if (status != SCARD_S_SUCCESS)
+		return status;
 
 	return ret.ReturnCode;
 }
@@ -371,14 +371,13 @@ static UINT32 smartcard_ListReadersW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD
 	}
 
 	smartcard_trace_list_readers_return(smartcard, &ret, TRUE);
-
 	status = smartcard_pack_list_readers_return(smartcard, irp->output, &ret);
-
-	if (status != SCARD_S_SUCCESS)
-		return status;
 
 	if (mszReaders)
 		SCardFreeMemory(operation->hContext, mszReaders);
+
+	if (status != SCARD_S_SUCCESS)
+		return status;
 
 	return ret.ReturnCode;
 }
