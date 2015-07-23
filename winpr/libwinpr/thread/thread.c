@@ -281,41 +281,38 @@ static void* thread_launcher(void* arg)
 	DWORD res = -1;
 	void* rc = NULL;
 	WINPR_THREAD* thread = (WINPR_THREAD*) arg;
+	void *(*fkt)(void*);
 
 	if (!thread)
 	{
 		WLog_ERR(TAG, "Called with invalid argument %p", arg);
 		goto exit;
 	}
-	else
+
+	if (!(fkt = (void*) thread->lpStartAddress))
 	{
-		void *(*fkt)(void*) = (void*) thread->lpStartAddress;
-
-		if (!fkt)
-		{
-			WLog_ERR(TAG, "Thread function argument is %p", fkt);
-			goto exit;
-		}
-
-		if (pthread_mutex_lock(&thread->threadIsReadyMutex))
-			goto exit;
-
-		if (!ListDictionary_Contains(thread_list, &thread->thread))
-		{
-			if (pthread_cond_wait(&thread->threadIsReady, &thread->threadIsReadyMutex) != 0)
-			{
-				WLog_ERR(TAG, "The thread could not be made ready");
-				pthread_mutex_unlock(&thread->threadIsReadyMutex);
-				goto exit;
-			}
-		}
-		if (pthread_mutex_unlock(&thread->threadIsReadyMutex))
-			goto exit;
-
-		assert(ListDictionary_Contains(thread_list, &thread->thread));
-
-		rc = fkt(thread->lpParameter);
+		WLog_ERR(TAG, "Thread function argument is %p", fkt);
+		goto exit;
 	}
+
+	if (pthread_mutex_lock(&thread->threadIsReadyMutex))
+		goto exit;
+
+	if (!ListDictionary_Contains(thread_list, &thread->thread))
+	{
+		if (pthread_cond_wait(&thread->threadIsReady, &thread->threadIsReadyMutex) != 0)
+		{
+			WLog_ERR(TAG, "The thread could not be made ready");
+			pthread_mutex_unlock(&thread->threadIsReadyMutex);
+			goto exit;
+		}
+	}
+	if (pthread_mutex_unlock(&thread->threadIsReadyMutex))
+		goto exit;
+
+	assert(ListDictionary_Contains(thread_list, &thread->thread));
+
+	rc = fkt(thread->lpParameter);
 
 exit:
 
@@ -331,7 +328,6 @@ exit:
 			cleanup_handle(thread);
 	}
 	pthread_exit((void*) (size_t) res);
-	return rc;
 }
 
 static BOOL winpr_StartThread(WINPR_THREAD *thread)
@@ -685,7 +681,13 @@ DWORD ResumeThread(HANDLE hThread)
 		return (DWORD)-1;
 
 	if (!thread->started)
-		winpr_StartThread(thread);
+	{
+		if (!winpr_StartThread(thread))
+		{
+			pthread_mutex_unlock(&thread->mutex);
+			return (DWORD)-1;
+		}
+	}
 	else
 		WLog_WARN(TAG, "Thread already started!");
 
@@ -703,6 +705,7 @@ DWORD SuspendThread(HANDLE hThread)
 
 BOOL SwitchToThread(VOID)
 {
+	WLog_ERR(TAG, "Function not implemented!");
 	return TRUE;
 }
 
