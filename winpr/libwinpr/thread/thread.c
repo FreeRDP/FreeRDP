@@ -327,7 +327,7 @@ exit:
 		if (thread->detached || !thread->started)
 			cleanup_handle(thread);
 	}
-	pthread_exit((void*) (size_t) res);
+	return rc;
 }
 
 static BOOL winpr_StartThread(WINPR_THREAD *thread)
