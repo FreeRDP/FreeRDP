@@ -22,6 +22,7 @@
 #define FREERDP_CHANNEL_CLIENT_RDPSND_H
 
 #include <freerdp/channels/rdpsnd.h>
+#include <winpr/win32error.h>
 
 /**
  * Subsystem Interface
