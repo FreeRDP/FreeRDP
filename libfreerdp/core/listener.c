@@ -445,11 +445,11 @@ freerdp_listener* freerdp_listener_new(void)
 
 void freerdp_listener_free(freerdp_listener* instance)
 {
-	rdpListener* listener;
 
-	listener = (rdpListener*) instance->listener;
-	free(listener);
-
-	free(instance);
+	if (instance)
+	{
+		free(instance->listener);
+		free(instance);
+	}
 }
 
