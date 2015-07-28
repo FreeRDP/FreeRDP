@@ -36,6 +36,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/string.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/stream.h>
@@ -726,7 +727,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	/* Special case: path[0] == '%' -> user home dir */
 	if (strcmp(drive->Path, "%") == 0)
 	{
-		_snprintf(buf, sizeof(buf), "%s\\", getenv("USERPROFILE"));
+		sprintf_s(buf, sizeof(buf), "%s\\", getenv("USERPROFILE"));
 		drive_register_drive_path(pEntryPoints, drive->Name, _strdup(buf));
 	}
 	else if (strcmp(drive->Path, "*") == 0)
@@ -741,7 +742,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 			if (*dev > 'B')
 			{
 				/* Suppress disk drives A and B to avoid pesty messages */
-				len = _snprintf(buf, sizeof(buf) - 4, "%s", drive->Name);
+				len = sprintf_s(buf, sizeof(buf) - 4, "%s", drive->Name);
 				buf[len] = '_';
 				buf[len + 1] = dev[0];
 				buf[len + 2] = 0;

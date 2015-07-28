@@ -112,7 +112,7 @@ int xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 	region16_clear(&surface->invalidRegion);
 
 	XSetClipMask(xfc->display, xfc->gc, None);
-	XSync(xfc->display, True);
+	XSync(xfc->display, False);
 
 	return 1;
 }

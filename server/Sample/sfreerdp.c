@@ -28,6 +28,8 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <winpr/string.h>
+#include <winpr/path.h>
 #include <winpr/winsock.h>
 
 #include <freerdp/channels/wtsvc.h>
@@ -873,30 +875,61 @@ int main(int argc, char* argv[])
 {
 	WSADATA wsaData;
 	freerdp_listener* instance;
+	char* file;
+	char name[MAX_PATH];
+	int port = 3389, i;
+
+	for (i=1; i<argc; i++)
+	{
+		char* arg = argv[i];
+
+		if (strncmp(arg, "--fast", 7) == 0)
+			test_dump_rfx_realtime = FALSE;
+		else if (strncmp(arg, "--port=", 7) == 0)
+		{
+			StrSep(&arg, "=");
+			if (!arg)
+				return -1;
+
+			port = strtol(arg, NULL, 10);
+			if ((port < 1) || (port > 0xFFFF))
+				return -1;
+		}
+		else if (strncmp(arg, "--", 2))
+			test_pcap_file = arg;
+	}
 
 	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
 	instance = freerdp_listener_new();
+	if (!instance)
+		return -1;
 
 	instance->PeerAccepted = test_peer_accepted;
 
-	if (argc > 1)
-		test_pcap_file = argv[1];
-
-	if (argc > 2 && !strcmp(argv[2], "--fast"))
-		test_dump_rfx_realtime = FALSE;
-
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
-		return 0;
+	{
+		freerdp_listener_free(instance);
+		return -1;
+	}
 
 	/* Open the server socket and start listening. */
+	sprintf_s(name, sizeof(name), "tfreerdp-server.%d", port);
+	file = GetKnownSubPath(KNOWN_PATH_TEMP, name);
+	if (!file)
+	{
+		freerdp_listener_free(instance);
+		WSACleanup();
+		return -1;
+	}
 
-	if (instance->Open(instance, NULL, 3389) &&
-		instance->OpenLocal(instance, "/tmp/tfreerdp-server.0"))
+	if (instance->Open(instance, NULL, port) &&
+		instance->OpenLocal(instance, file))
 	{
 		/* Entering the server main loop. In a real server the listener can be run in its own thread. */
 		test_server_mainloop(instance);
 	}
 
+	free (file);
 	freerdp_listener_free(instance);
 
 	WSACleanup();

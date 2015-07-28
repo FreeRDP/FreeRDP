@@ -1264,7 +1264,8 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 			subsystem->use_xdamage = FALSE;
 	}
 
-	if (!(subsystem->event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, subsystem->xfds)))
+	if (!(subsystem->event = CreateFileDescriptorEvent(NULL, FALSE, FALSE,
+							subsystem->xfds, WINPR_FD_READ)))
 		return -1;
 
 	virtualScreen = &(subsystem->virtualScreen);
@@ -1377,7 +1378,7 @@ void x11_shadow_subsystem_free(x11ShadowSubsystem* subsystem)
 	free(subsystem);
 }
 
-int X11_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
+FREERDP_API int X11_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
 {
 	pEntryPoints->New = (pfnShadowSubsystemNew) x11_shadow_subsystem_new;
 	pEntryPoints->Free = (pfnShadowSubsystemFree) x11_shadow_subsystem_free;

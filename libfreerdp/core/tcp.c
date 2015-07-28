@@ -360,7 +360,7 @@ static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown)
 	bio->init = 1;
 
 #ifdef _WIN32
-		ptr->hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+		ptr->hEvent = WSACreateEvent();
 
 		if (!ptr->hEvent)
 			return 0;
@@ -368,7 +368,7 @@ static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown)
 		/* WSAEventSelect automatically sets the socket in non-blocking mode */
 		WSAEventSelect(ptr->socket, ptr->hEvent, FD_READ | FD_WRITE | FD_CLOSE);
 #else
-		ptr->hEvent = CreateFileDescriptorEvent(NULL, FALSE, FALSE, (int) ptr->socket);
+		ptr->hEvent = CreateFileDescriptorEvent(NULL, FALSE, FALSE, (int) ptr->socket, WINPR_FD_READ);
 
 		if (!ptr->hEvent)
 			return 0;

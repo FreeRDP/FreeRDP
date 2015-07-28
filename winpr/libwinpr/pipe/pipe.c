@@ -454,11 +454,11 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
 
 	pReadPipe->fd = pipe_fd[0];
 	pWritePipe->fd = pipe_fd[1];
-	WINPR_HANDLE_SET_TYPE(pReadPipe, HANDLE_TYPE_ANONYMOUS_PIPE);
+	WINPR_HANDLE_SET_TYPE_AND_MODE(pReadPipe, HANDLE_TYPE_ANONYMOUS_PIPE, WINPR_FD_READ);
 	pReadPipe->ops = &ops;
 
 	*((ULONG_PTR*) hReadPipe) = (ULONG_PTR) pReadPipe;
-	WINPR_HANDLE_SET_TYPE(pWritePipe, HANDLE_TYPE_ANONYMOUS_PIPE);
+	WINPR_HANDLE_SET_TYPE_AND_MODE(pWritePipe, HANDLE_TYPE_ANONYMOUS_PIPE, WINPR_FD_READ);
 	pWritePipe->ops = &ops;
 	*((ULONG_PTR*) hWritePipe) = (ULONG_PTR) pWritePipe;
 	return TRUE;
@@ -531,7 +531,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 	if (!pNamedPipe)
 		return INVALID_HANDLE_VALUE;
 
-	WINPR_HANDLE_SET_TYPE(pNamedPipe, HANDLE_TYPE_NAMED_PIPE);
+	WINPR_HANDLE_SET_TYPE_AND_MODE(pNamedPipe, HANDLE_TYPE_NAMED_PIPE, WINPR_FD_READ);
 
 	pNamedPipe->serverfd = -1;
 	pNamedPipe->clientfd = -1;

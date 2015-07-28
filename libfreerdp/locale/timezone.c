@@ -1547,7 +1547,12 @@ char* freerdp_get_unix_timezone_identifier()
 			return NULL;
 		}
 
-		fread(tzid, length, 1, fp);
+		if (fread(tzid, length, 1, fp) != 1)
+		{
+			free(tzid);
+			fclose(fp);
+			return NULL;
+		}
 		tzid[length] = '\0';
 
 		if (tzid[length - 1] == '\n')

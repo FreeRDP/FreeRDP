@@ -916,15 +916,34 @@ BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s)
 		return FALSE;
 	}
 
-	/* TSPasswordCreds (SEQUENCE) */
-	if (!ber_read_sequence_tag(s, &length) ||
+	/* TSPasswordCreds (SEQUENCE)
+	 * Initialise to default values. */
+	nla->identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 
-		/* [0] domainName (OCTET STRING) */
-		!ber_read_contextual_tag(s, 0, &length, TRUE) ||
+	nla->identity->UserLength = (UINT32) 0;
+	nla->identity->User = NULL;
+
+	nla->identity->DomainLength = (UINT32) 0;
+	nla->identity->Domain = NULL;
+
+	nla->identity->Password = NULL;
+	nla->identity->PasswordLength = (UINT32) 0;
+
+	if (!ber_read_sequence_tag(s, &length))
+		return FALSE;
+
+	/* The sequence is empty, return early,
+	 * TSPasswordCreds (SEQUENCE) is optional. */
+	if (length == 0)
+		return TRUE;
+
+	/* [0] domainName (OCTET STRING) */
+	if (!ber_read_contextual_tag(s, 0, &length, TRUE) ||
 		!ber_read_octet_string_tag(s, &length))
 	{
 		return FALSE;
 	}
+
 	nla->identity->DomainLength = (UINT32) length;
 	if (nla->identity->DomainLength > 0)
 	{
@@ -935,8 +954,6 @@ BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s)
 		Stream_Seek(s, nla->identity->DomainLength);
 		nla->identity->DomainLength /= 2;
 	}
-	else
-		nla->identity->Domain = NULL;
 
 	/* [1] userName (OCTET STRING) */
 	if (!ber_read_contextual_tag(s, 1, &length, TRUE) ||
@@ -944,8 +961,9 @@ BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s)
 	{
 		return FALSE;
 	}
+
 	nla->identity->UserLength = (UINT32) length;
-	if (nla->identity->PasswordLength > 0)
+	if (nla->identity->UserLength > 0)
 	{
 		nla->identity->User = (UINT16 *) malloc(length);
 		if (!nla->identity->User)
@@ -954,8 +972,6 @@ BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s)
 		Stream_Seek(s, nla->identity->UserLength);
 		nla->identity->UserLength /= 2;
 	}
-	else
-		nla->identity->User = NULL;
 
 	/* [2] password (OCTET STRING) */
 	if (!ber_read_contextual_tag(s, 2, &length, TRUE) ||
@@ -963,6 +979,7 @@ BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s)
 	{
 		return FALSE;
 	}
+
 	nla->identity->PasswordLength = (UINT32) length;
 	if (nla->identity->PasswordLength > 0)
 	{
@@ -973,10 +990,6 @@ BOOL nla_read_ts_password_creds(rdpNla* nla, wStream* s)
 		Stream_Seek(s, nla->identity->PasswordLength);
 		nla->identity->PasswordLength /= 2;
 	}
-	else
-		nla->identity->Password = NULL;
-
-	nla->identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 
 	return TRUE;
 }

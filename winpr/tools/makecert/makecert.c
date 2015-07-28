@@ -306,19 +306,24 @@ char* x509_name_parse(char* name, char* txt, int* length)
 
 char* x509_get_default_name()
 {
-	CHAR computerName[MAX_COMPUTERNAME_LENGTH + 1];
-	DWORD nSize = MAX_COMPUTERNAME_LENGTH;
+	CHAR* computerName;
+	DWORD nSize = 0;
 
-	char* ret;
-
-	if (!GetComputerNameExA(ComputerNameNetBIOS, computerName, &nSize))
+	if (GetComputerNameExA(ComputerNamePhysicalNetBIOS, NULL, &nSize) ||
+		GetLastError() != ERROR_MORE_DATA)
 		return NULL;
 
-	ret = _strdup(computerName);
-	if (!ret)
+	computerName = (CHAR*)calloc(nSize, 1);
+	if (!computerName)
 		return NULL;
 
-	return ret;
+	if (!GetComputerNameExA(ComputerNamePhysicalNetBIOS, computerName, &nSize))
+	{
+		free(computerName);
+		return NULL;
+	}
+
+	return computerName;
 }
 
 int command_line_pre_filter(MAKECERT_CONTEXT* context, int index, int argc, LPCSTR* argv)
@@ -326,7 +331,11 @@ int command_line_pre_filter(MAKECERT_CONTEXT* context, int index, int argc, LPCS
 	if (index == (argc - 1))
 	{
 		if (argv[index][0] != '-')
-			context->output_file = (char*) argv[index];
+		{
+			context->output_file = _strdup(argv[index]);
+			if (!context->output_file)
+				return -1;
+		}
 
 		return 1;
 	}
@@ -584,7 +593,8 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 				goto out_fail;
 			length = offset;
 
-			fwrite((void*) x509_str, length, 1, fp);
+			if (fwrite((void*) x509_str, length, 1, fp) != 1)
+				goto out_fail;
 
 		}
 		else
@@ -639,7 +649,8 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 
 			length = offset;
 
-			fwrite((void*) x509_str, length, 1, fp);
+			if (fwrite((void*) x509_str, length, 1, fp) != 1)
+				goto out_fail;
 
 			free(x509_str);
 			x509_str = NULL;
@@ -696,7 +707,8 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 
 				length = offset;
 
-				fwrite((void*) x509_str, length, 1, fp);
+				if (fwrite((void*) x509_str, length, 1, fp) != 1)
+					goto out_fail;
 			}
 		}
 
@@ -717,18 +729,25 @@ out_fail:
 
 int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, char* path)
 {
-	FILE* fp;
+	FILE* fp = NULL;
 	int status;
 	int length;
 	int offset;
-	char* filename;
-	char* fullpath;
+	char* filename = NULL;
+	char* fullpath = NULL;
+	int ret = -1;
+	BIO* bio = NULL;
+	BYTE* x509_str = NULL;
 
 	if (!context->crtFormat)
 		return 1;
 
 	if (!context->output_file)
-		context->output_file = context->default_name;
+	{
+		context->output_file = _strdup(context->default_name);
+		if (!context->output_file)
+			return -1;
+	}
 
 	/**
 	 * Output Private Key File
@@ -740,7 +759,6 @@ int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, char* pa
 		return -1;
 	strcpy(filename, context->output_file);
 	strcpy(&filename[length], ".key");
-	length = strlen(filename);
 
 	if (path)
 		fullpath = GetCombinedPath(path, filename);
@@ -748,99 +766,77 @@ int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, char* pa
 		fullpath = _strdup(filename);
 
 	if (!fullpath)
-	{
-		free(filename);
-		return -1;
-	}
+		goto out_fail;
 
 	fp = fopen(fullpath, "w+");
+	if (!fp)
+		goto out_fail;
 
-	if (fp)
+	bio = BIO_new(BIO_s_mem());
+
+	if (!bio)
+		goto out_fail;
+
+	if (!PEM_write_bio_PrivateKey(bio, context->pkey, NULL, NULL, 0, NULL, NULL))
+		goto out_fail;
+
+	offset = 0;
+	length = 2048;
+	x509_str = (BYTE*) malloc(length);
+	if (!x509_str)
+		goto out_fail;
+
+	status = BIO_read(bio, x509_str, length);
+
+	if (status < 0)
+		goto out_fail;
+
+	offset += status;
+
+	while (offset >= length)
 	{
-		BIO* bio;
-		BYTE* x509_str;
+		int new_len;
+		BYTE *new_str;
 
-		bio = BIO_new(BIO_s_mem());
-
-		if (!bio)
+		new_len = length * 2;
+		new_str = (BYTE*) realloc(x509_str, new_len);
+		if (!new_str)
 		{
-			free (filename);
-			free(fullpath);
-			fclose(fp);
-			return -1;
+			status = -1;
+			break;
 		}
 
-		status = PEM_write_bio_PrivateKey(bio, context->pkey, NULL, NULL, 0, NULL, NULL);
+		length = new_len;
+		x509_str = new_str;
 
-		offset = 0;
-		length = 2048;
-		x509_str = (BYTE*) malloc(length);
-		if (!x509_str)
-		{
-			free (filename);
-			free(fullpath);
-			fclose(fp);
-			return -1;
-		}
+		status = BIO_read(bio, &x509_str[offset], length);
 
-		status = BIO_read(bio, x509_str, length);
-		
 		if (status < 0)
-		{
-			free (filename);
-			free(fullpath);
-			fclose(fp);
-			return -1;
-		}
-		
+			break;
+
 		offset += status;
-
-		while (offset >= length)
-		{
-			int new_len;
-			BYTE *new_str;
-
-			new_len = length * 2;
-			new_str = (BYTE*) realloc(x509_str, new_len);
-			if (!new_str)
-			{
-				status = -1;
-				break;
-			}
-
-			length = new_len;
-			x509_str = new_str;
-
-			status = BIO_read(bio, &x509_str[offset], length);
-
-			if (status < 0)
-				break;
-
-			offset += status;
-		}
-
-		if (status < 0)
-		{
-			free (filename);
-			free(fullpath);
-			fclose(fp);
-			return -1;
-		}
-		
-		length = offset;
-
-		fwrite((void*) x509_str, length, 1, fp);
-
-		free(x509_str);
-		BIO_free(bio);
-
-		fclose(fp);
 	}
 
+	if (status < 0)
+		goto out_fail;
+
+	length = offset;
+
+	if (fwrite((void*) x509_str, length, 1, fp) != 1)
+		goto out_fail;
+
+	ret = 1;
+
+out_fail:
+	if (fp)
+		fclose(fp);
+	if (bio)
+		BIO_free(bio);
+	free(x509_str);
 	free(filename);
 	free(fullpath);
 
-	return 1;
+	return ret;
 }
 
 int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
@@ -1083,7 +1079,10 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 		makecert_context_output_certificate_file(context, context->output_path);
 
 		if (context->crtFormat)
-			makecert_context_output_private_key_file(context, context->output_path);
+		{	
+			if (makecert_context_output_private_key_file(context, context->output_path) < 0)
+				return -1;
+		}
 	}
 
 	return 0;

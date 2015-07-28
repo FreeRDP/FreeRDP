@@ -37,6 +37,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <winpr/string.h>
 #include <winpr/cmdline.h>
 
 #include <freerdp/dvc.h>
@@ -57,10 +58,10 @@ static int func_hardware_id_format(IUDEVICE* pdev, char(*HardwareIds)[DEVICE_HAR
 	idProduct = (UINT16)pdev->query_device_descriptor(pdev, ID_PRODUCT);
 	bcdDevice = (UINT16)pdev->query_device_descriptor(pdev, BCD_DEVICE);
 	
-	snprintf(str, sizeof(str), "USB\\VID_%04X&PID_%04X", idVendor, idProduct);	
+	sprintf_s(str, sizeof(str), "USB\\VID_%04X&PID_%04X", idVendor, idProduct);	
 	strcpy(HardwareIds[1], str);	
 	
-	snprintf(str, sizeof(str), "%s&REV_%04X", HardwareIds[1], bcdDevice);	
+	sprintf_s(str, sizeof(str), "%s&REV_%04X", HardwareIds[1], bcdDevice);	
 	strcpy(HardwareIds[0], str);
 
 	return 0;
@@ -77,20 +78,20 @@ static int func_compat_id_format(IUDEVICE* pdev, char (*CompatibilityIds)[DEVICE
 
 	if(!(pdev->isCompositeDevice(pdev)))
 	{
-		snprintf(str, sizeof(str),"USB\\Class_%02X", bDeviceClass);		
+		sprintf_s(str, sizeof(str),"USB\\Class_%02X", bDeviceClass);		
 		strcpy(CompatibilityIds[2], str);
-		snprintf(str, sizeof(str),"%s&SubClass_%02X", CompatibilityIds[2], bDeviceSubClass);
+		sprintf_s(str, sizeof(str),"%s&SubClass_%02X", CompatibilityIds[2], bDeviceSubClass);
 		strcpy(CompatibilityIds[1], str);
-		snprintf(str, sizeof(str),"%s&Prot_%02X", CompatibilityIds[1], bDeviceProtocol);
+		sprintf_s(str, sizeof(str),"%s&Prot_%02X", CompatibilityIds[1], bDeviceProtocol);
 		strcpy(CompatibilityIds[0], str);
 	}
 	else
 	{
-		snprintf(str, sizeof(str),"USB\\DevClass_00");
+		sprintf_s(str, sizeof(str),"USB\\DevClass_00");
 		strcpy(CompatibilityIds[2], str);
-		snprintf(str, sizeof(str),"%s&SubClass_00", CompatibilityIds[2]);
+		sprintf_s(str, sizeof(str),"%s&SubClass_00", CompatibilityIds[2]);
 		strcpy(CompatibilityIds[1], str);
-		snprintf(str, sizeof(str),"%s&Prot_00", CompatibilityIds[1]);
+		sprintf_s(str, sizeof(str),"%s&Prot_00", CompatibilityIds[1]);
 		strcpy(CompatibilityIds[0], str);
 	}
 
@@ -161,10 +162,10 @@ static int func_container_id_generate(IUDEVICE* pdev, char* strContainerId)
 		p = path;
 
 	ZeroMemory(containerId, sizeof(containerId));
-	snprintf((char*)containerId, sizeof(containerId), "%04X%04X%s", idVendor, idProduct, p);
+	sprintf_s((char*)containerId, sizeof(containerId), "%04X%04X%s", idVendor, idProduct, p);
 
 	/* format */
-	snprintf(strContainerId, DEVICE_CONTAINER_STR_SIZE,
+	sprintf_s(strContainerId, DEVICE_CONTAINER_STR_SIZE,
 		"{%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
 		containerId[0], containerId[1],containerId[2], containerId[3],
 		containerId[4], containerId[5], containerId[6], containerId[7],
@@ -180,10 +181,10 @@ static int func_instance_id_generate(IUDEVICE* pdev, char* strInstanceId)
 
 	memset(instanceId, 0, 17);
 	ZeroMemory(instanceId, sizeof(instanceId));
-	snprintf((char*)instanceId, sizeof(instanceId), "\\%s", pdev->getPath(pdev));
+	sprintf_s((char*)instanceId, sizeof(instanceId), "\\%s", pdev->getPath(pdev));
 
 	/* format */
-	snprintf(strInstanceId, DEVICE_INSTANCE_STR_SIZE,
+	sprintf_s(strInstanceId, DEVICE_INSTANCE_STR_SIZE,
 		"%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
 		instanceId[0], instanceId[1],instanceId[2], instanceId[3],
 		instanceId[4], instanceId[5], instanceId[6], instanceId[7],
@@ -741,7 +742,9 @@ static void* urbdrc_search_usb_device(void* arg)
 
 	/* Get the file descriptor (fd) for the monitor.
 	   This fd will get passed to select() */
-	if (!(mon_fd = CreateFileDescriptorEvent(NULL, TRUE, FALSE, udev_monitor_get_fd(mon))))
+	mon_fd = CreateFileDescriptorEvent(NULL, TRUE, FALSE,
+				udev_monitor_get_fd(mon), WINPR_FD_READ);
+	if (!mon_fd)
 		goto fail_create_monfd_event;
 
 	while (1)

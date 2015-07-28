@@ -129,7 +129,8 @@ static DWORD ThreadCleanupHandle(HANDLE handle)
 	if (!ThreadIsHandled(handle))
 		return WAIT_FAILED;
 
-	pthread_mutex_lock(&thread->mutex);
+	if (pthread_mutex_lock(&thread->mutex))
+		return WAIT_FAILED;
 
 	if (!thread->joined)
 	{
@@ -147,7 +148,8 @@ static DWORD ThreadCleanupHandle(HANDLE handle)
 			thread->joined = TRUE;
 	}
 
-	pthread_mutex_unlock(&thread->mutex);
+	if (pthread_mutex_unlock(&thread->mutex))
+		return WAIT_FAILED;
 
 	return WAIT_OBJECT_0;
 }
@@ -279,38 +281,38 @@ static void* thread_launcher(void* arg)
 	DWORD res = -1;
 	void* rc = NULL;
 	WINPR_THREAD* thread = (WINPR_THREAD*) arg;
+	void *(*fkt)(void*);
 
 	if (!thread)
 	{
 		WLog_ERR(TAG, "Called with invalid argument %p", arg);
 		goto exit;
 	}
-	else
-	{
-		void *(*fkt)(void*) = (void*) thread->lpStartAddress;
 
-		if (!fkt)
+	if (!(fkt = (void*) thread->lpStartAddress))
+	{
+		WLog_ERR(TAG, "Thread function argument is %p", fkt);
+		goto exit;
+	}
+
+	if (pthread_mutex_lock(&thread->threadIsReadyMutex))
+		goto exit;
+
+	if (!ListDictionary_Contains(thread_list, &thread->thread))
+	{
+		if (pthread_cond_wait(&thread->threadIsReady, &thread->threadIsReadyMutex) != 0)
 		{
-			WLog_ERR(TAG, "Thread function argument is %p", fkt);
+			WLog_ERR(TAG, "The thread could not be made ready");
+			pthread_mutex_unlock(&thread->threadIsReadyMutex);
 			goto exit;
 		}
-
-		pthread_mutex_lock(&thread->threadIsReadyMutex);
-		if (!ListDictionary_Contains(thread_list, &thread->thread))
-		{
-			if (pthread_cond_wait(&thread->threadIsReady, &thread->threadIsReadyMutex) != 0)
-			{
-				WLog_ERR(TAG, "The thread could not be made ready");
-				pthread_mutex_unlock(&thread->threadIsReadyMutex);
-				goto exit;
-			}
-		}
-		pthread_mutex_unlock(&thread->threadIsReadyMutex);
-
-		assert(ListDictionary_Contains(thread_list, &thread->thread));
-
-		rc = fkt(thread->lpParameter);
 	}
+	if (pthread_mutex_unlock(&thread->threadIsReadyMutex))
+		goto exit;
+
+	assert(ListDictionary_Contains(thread_list, &thread->thread));
+
+	rc = fkt(thread->lpParameter);
 
 exit:
 
@@ -325,7 +327,6 @@ exit:
 		if (thread->detached || !thread->started)
 			cleanup_handle(thread);
 	}
-	pthread_exit((void*) (size_t) res);
 	return rc;
 }
 
@@ -345,10 +346,13 @@ static BOOL winpr_StartThread(WINPR_THREAD *thread)
 		goto error;
 
 
-	pthread_mutex_lock(&thread->threadIsReadyMutex);
+	if (pthread_mutex_lock(&thread->threadIsReadyMutex))
+		goto error;
+
 	if (!ListDictionary_Add(thread_list, &thread->thread, thread))
 	{
 		WLog_ERR(TAG, "failed to add the thread to the thread list");
+		pthread_mutex_unlock(&thread->threadIsReadyMutex);
 		goto error;
 	}
 	if (pthread_cond_signal(&thread->threadIsReady) != 0)
@@ -357,7 +361,8 @@ static BOOL winpr_StartThread(WINPR_THREAD *thread)
 		pthread_mutex_unlock(&thread->threadIsReadyMutex);
 		goto error;
 	}
-	pthread_mutex_unlock(&thread->threadIsReadyMutex);
+	if (pthread_mutex_unlock(&thread->threadIsReadyMutex))
+		goto error;
 
 	pthread_attr_destroy(&attr);
 	dump_thread(thread);
@@ -431,7 +436,7 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 		goto error_thread_ready;
 	}
 
-	WINPR_HANDLE_SET_TYPE(thread, HANDLE_TYPE_THREAD);
+	WINPR_HANDLE_SET_TYPE_AND_MODE(thread, HANDLE_TYPE_THREAD, WINPR_FD_READ);
 	handle = (HANDLE) thread;
 
 	if (!thread_list)
@@ -495,10 +500,10 @@ void cleanup_handle(void *obj)
 		WLog_ERR(TAG, "failed to destroy mutex [%d] %s (%d)",
 				rc, strerror(errno), errno);
 
-	if (thread->pipe_fd[0])
+	if (thread->pipe_fd[0] >= 0)
 		close(thread->pipe_fd[0]);
 
-	if (thread->pipe_fd[1])
+	if (thread->pipe_fd[1] >= 0)
 		close(thread->pipe_fd[1]);
 
 	if (thread_list && ListDictionary_Contains(thread_list, &thread->thread))
@@ -613,7 +618,7 @@ VOID ExitThread(DWORD dwExitCode)
 BOOL GetExitCodeThread(HANDLE hThread, LPDWORD lpExitCode)
 {
 	ULONG Type;
-	PVOID Object;
+	WINPR_HANDLE* Object;
 	WINPR_THREAD* thread;
 
 	if (!winpr_Handle_GetInfo(hThread, &Type, &Object))
@@ -665,21 +670,30 @@ DWORD GetCurrentThreadId(VOID)
 DWORD ResumeThread(HANDLE hThread)
 {
 	ULONG Type;
-	PVOID Object;
-	WINPR_THREAD *thread;
+	WINPR_HANDLE* Object;
+	WINPR_THREAD* thread;
 
 	if (!winpr_Handle_GetInfo(hThread, &Type, &Object))
-		return 0;
+		return (DWORD)-1;
 
 	thread = (WINPR_THREAD*) Object;
-	pthread_mutex_lock(&thread->mutex);
+	if (pthread_mutex_lock(&thread->mutex))
+		return (DWORD)-1;
 
 	if (!thread->started)
-		winpr_StartThread(thread);
+	{
+		if (!winpr_StartThread(thread))
+		{
+			pthread_mutex_unlock(&thread->mutex);
+			return (DWORD)-1;
+		}
+	}
 	else
 		WLog_WARN(TAG, "Thread already started!");
 
-	pthread_mutex_unlock(&thread->mutex);
+	if (pthread_mutex_unlock(&thread->mutex))
+		return (DWORD)-1;
+
 	return 0;
 }
 
@@ -691,28 +705,33 @@ DWORD SuspendThread(HANDLE hThread)
 
 BOOL SwitchToThread(VOID)
 {
+	WLog_ERR(TAG, "Function not implemented!");
 	return TRUE;
 }
 
 BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode)
 {
 	ULONG Type;
-	PVOID Object;
+	WINPR_HANDLE* Object;
 	WINPR_THREAD* thread;
 
 	if (!winpr_Handle_GetInfo(hThread, &Type, &Object))
-		return 0;
+		return FALSE;
 
 	thread = (WINPR_THREAD*) Object;
 	thread->exited = TRUE;
 	thread->dwExitCode = dwExitCode;
-	pthread_mutex_lock(&thread->mutex);
+	if (pthread_mutex_lock(&thread->mutex))
+		return FALSE;
+
 #ifndef ANDROID
 	pthread_cancel(thread->thread);
 #else
 	WLog_ERR(TAG, "Function not supported on this platform!");
 #endif
-	pthread_mutex_unlock(&thread->mutex);
+	if (pthread_mutex_unlock(&thread->mutex))
+		return FALSE;
+
 	set_event(thread);
 	return TRUE;
 }

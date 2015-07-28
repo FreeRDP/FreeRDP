@@ -48,7 +48,7 @@ BOOL CloseHandle(HANDLE hObject)
 	ULONG Type;
 	WINPR_HANDLE *Object;
 
-	if (!winpr_Handle_GetInfo(hObject, &Type, (PVOID*) &Object))
+	if (!winpr_Handle_GetInfo(hObject, &Type, &Object))
 		return FALSE;
 
 	if (!Object)

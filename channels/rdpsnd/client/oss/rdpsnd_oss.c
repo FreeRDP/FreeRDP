@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/string.h>
 #include <winpr/cmdline.h>
 #include <winpr/sysinfo.h>
 #include <winpr/collections.h>
@@ -190,7 +191,7 @@ static void rdpsnd_oss_open_mixer(rdpsndOssPlugin* oss)
 		return;
 
 	if (oss->dev_unit != -1)
-		snprintf(mixer_name, PATH_MAX - 1, "/dev/mixer%i", oss->dev_unit);
+		sprintf_s(mixer_name, PATH_MAX - 1, "/dev/mixer%i", oss->dev_unit);
 
 	if ((oss->mixer_handle = open(mixer_name, O_RDWR)) < 0)
 	{
@@ -217,7 +218,7 @@ static void rdpsnd_oss_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
 		return;
 
 	if (oss->dev_unit != -1)
-		snprintf(dev_name, PATH_MAX - 1, "/dev/dsp%i", oss->dev_unit);
+		sprintf_s(dev_name, PATH_MAX - 1, "/dev/dsp%i", oss->dev_unit);
 
 	WLog_INFO(TAG, "open: %s", dev_name);
 

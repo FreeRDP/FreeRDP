@@ -348,10 +348,12 @@ static void* jni_input_thread(void* arg)
 	if (!(queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE)))
 		goto fail_get_message_queue;
 
-	if (!(event[0] = CreateFileDescriptorEvent(NULL, FALSE, FALSE, aCtx->event_queue->pipe_fd[0])))
+	if (!(event[0] = CreateFileDescriptorEvent(NULL, FALSE, FALSE,
+				aCtx->event_queue->pipe_fd[0], WINPR_FD_READ)))
 		goto fail_create_event_0;
 
-	if (!(event[1] = CreateFileDescriptorEvent(NULL, FALSE, FALSE, aCtx->event_queue->pipe_fd[1])))
+	if (!(event[1] = CreateFileDescriptorEvent(NULL, FALSE, FALSE,
+				aCtx->event_queue->pipe_fd[1], WINPR_FD_READ)))
 		goto fail_create_event_1;
 
 	if (!(event[2] = freerdp_get_message_queue_event_handle(instance, FREERDP_INPUT_MESSAGE_QUEUE)))

@@ -30,6 +30,7 @@
 #include <cups/cups.h>
 
 #include <winpr/crt.h>
+#include <winpr/string.h>
 
 #include <freerdp/channels/rdpdr.h>
 
@@ -70,7 +71,7 @@ static void printer_cups_get_printjob_name(char* buf, int size)
 
 	tt = time(NULL);
 	t = localtime(&tt);
-	snprintf(buf, size - 1, "FreeRDP Print Job %d%02d%02d%02d%02d%02d",
+	sprintf_s(buf, size - 1, "FreeRDP Print Job %d%02d%02d%02d%02d%02d",
 		t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
 		t->tm_hour, t->tm_min, t->tm_sec);
 }
@@ -91,7 +92,7 @@ static void printer_cups_write_printjob(rdpPrintJob* printjob, BYTE* data, int s
 
 		if (fwrite(data, 1, size, fp) < size)
 		{
-
+			// FIXME once this function doesn't return void anymore!
 		}
 
 		fclose(fp);

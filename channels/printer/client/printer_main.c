@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/string.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/stream.h>
@@ -238,7 +239,7 @@ void printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* pri
 	PRINTER_DEVICE* printer_dev;
 
 	port = malloc(10);
-	snprintf(port, 10, "PRN%d", printer->id);
+	sprintf_s(port, 10, "PRN%d", printer->id);
 
 	printer_dev = (PRINTER_DEVICE*) malloc(sizeof(PRINTER_DEVICE));
 	ZeroMemory(printer_dev, sizeof(PRINTER_DEVICE));

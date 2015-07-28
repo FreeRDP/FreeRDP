@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/string.h>
 #include <winpr/windows.h>
 
 #include <time.h>
@@ -69,7 +70,7 @@ static void printer_win_get_printjob_name(char* buf, int size)
 
 	tt = time(NULL);
 	t = localtime(&tt);
-	snprintf(buf, size - 1, "FreeRDP Print Job %d%02d%02d%02d%02d%02d",
+	sprintf_s(buf, size - 1, "FreeRDP Print Job %d%02d%02d%02d%02d%02d",
 		t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
 		t->tm_hour, t->tm_min, t->tm_sec);
 }
