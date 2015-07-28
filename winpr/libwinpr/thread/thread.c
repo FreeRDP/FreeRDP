@@ -504,10 +504,10 @@ void cleanup_handle(void *obj)
 		WLog_ERR(TAG, "failed to destroy mutex [%d] %s (%d)",
 				rc, strerror(errno), errno);
 
-	if (thread->pipe_fd[0])
+	if (thread->pipe_fd[0] >= 0)
 		close(thread->pipe_fd[0]);
 
-	if (thread->pipe_fd[1])
+	if (thread->pipe_fd[1] >= 0)
 		close(thread->pipe_fd[1]);
 
 	if (thread_list && ListDictionary_Contains(thread_list, &thread->thread))
