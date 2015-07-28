@@ -59,6 +59,121 @@ static H264_CONTEXT_SUBSYSTEM g_Subsystem_dummy =
 };
 
 /**
+ * x264 subsystem
+ */
+
+#ifdef WITH_X264
+
+#define NAL_UNKNOWN	X264_NAL_UNKNOWN
+#define NAL_SLICE	X264_NAL_SLICE
+#define NAL_SLICE_DPA	X264_NAL_SLICE_DPA
+#define NAL_SLICE_DPB	X264_NAL_SLICE_DPB
+#define NAL_SLICE_DPC	X264_NAL_SLICE_DPC
+#define NAL_SLICE_IDR	X264_NAL_SLICE_IDR
+#define NAL_SEI		X264_NAL_SEI
+#define NAL_SPS		X264_NAL_SPS
+#define NAL_PPS		X264_NAL_PPS
+#define NAL_AUD		X264_NAL_AUD
+#define NAL_FILLER	X264_NAL_FILLER
+
+#define NAL_PRIORITY_DISPOSABLE	X264_NAL_PRIORITY_DISPOSABLE
+#define NAL_PRIORITY_LOW	X264_NAL_PRIORITY_LOW
+#define NAL_PRIORITY_HIGH	X264_NAL_PRIORITY_HIGH
+#define NAL_PRIORITY_HIGHEST	X264_NAL_PRIORITY_HIGHEST
+
+#include <stdint.h>
+#include <x264.h>
+
+struct _H264_CONTEXT_X264
+{
+	void* dummy;
+};
+typedef struct _H264_CONTEXT_X264 H264_CONTEXT_X264;
+
+static int x264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize)
+{
+	//H264_CONTEXT_X264* sys = (H264_CONTEXT_X264*) h264->pSystemData;
+
+	return 1;
+}
+
+static int x264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstSize)
+{
+	//H264_CONTEXT_X264* sys = (H264_CONTEXT_X264*) h264->pSystemData;
+
+	return 1;
+}
+
+static void x264_uninit(H264_CONTEXT* h264)
+{
+	H264_CONTEXT_X264* sys = (H264_CONTEXT_X264*) h264->pSystemData;
+
+	if (sys)
+	{
+		free(sys);
+		h264->pSystemData = NULL;
+	}
+}
+
+static BOOL x264_init(H264_CONTEXT* h264)
+{
+	H264_CONTEXT_X264* sys;
+
+	sys = (H264_CONTEXT_X264*) calloc(1, sizeof(H264_CONTEXT_X264));
+
+	if (!sys)
+	{
+		goto EXCEPTION;
+	}
+
+	h264->pSystemData = (void*) sys;
+
+	if (h264->Compressor)
+	{
+
+	}
+	else
+	{
+
+	}
+
+	return TRUE;
+
+EXCEPTION:
+	x264_uninit(h264);
+
+	return FALSE;
+}
+
+static H264_CONTEXT_SUBSYSTEM g_Subsystem_x264 =
+{
+	"x264",
+	x264_init,
+	x264_uninit,
+	x264_decompress,
+	x264_compress
+};
+
+#undef NAL_UNKNOWN
+#undef NAL_SLICE
+#undef NAL_SLICE_DPA
+#undef NAL_SLICE_DPB
+#undef NAL_SLICE_DPC
+#undef NAL_SLICE_IDR
+#undef NAL_SEI
+#undef NAL_SPS
+#undef NAL_PPS
+#undef NAL_AUD
+#undef NAL_FILLER
+
+#undef NAL_PRIORITY_DISPOSABLE
+#undef NAL_PRIORITY_LOW
+#undef NAL_PRIORITY_HIGH
+#undef NAL_PRIORITY_HIGHEST
+
+#endif
+
+/**
  * OpenH264 subsystem
  */
 
@@ -90,7 +205,7 @@ static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSiz
 	H264_CONTEXT_OPENH264* sys = (H264_CONTEXT_OPENH264*) h264->pSystemData;
 
 	if (!sys->pDecoder)
-		return -1;
+		return -2001;
 
 	/*
 	 * Decompress the image.  The RDP host only seems to send I420 format.
@@ -102,22 +217,38 @@ static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSiz
 
 	ZeroMemory(&sBufferInfo, sizeof(sBufferInfo));
 
-	state = (*sys->pDecoder)->DecodeFrame2(
-		sys->pDecoder,
-		pSrcData,
-		SrcSize,
-		h264->pYUVData,
-		&sBufferInfo);
-
-	/**
-	 * Calling DecodeFrame2 twice apparently works around Openh264 issue #1136:
-	 * https://github.com/cisco/openh264/issues/1136
-	 *
-	 * This is a hack, but it works and it is only necessary for the first frame.
-	 */
+	state = (*sys->pDecoder)->DecodeFrame2(sys->pDecoder, pSrcData, SrcSize, h264->pYUVData, &sBufferInfo);
 
 	if (sBufferInfo.iBufferStatus != 1)
-		state = (*sys->pDecoder)->DecodeFrame2(sys->pDecoder, NULL, 0, h264->pYUVData, &sBufferInfo);
+	{
+		if (state == dsNoParamSets)
+		{
+			/* this happens on the first frame due to missing parameter sets */
+			state = (*sys->pDecoder)->DecodeFrame2(sys->pDecoder, NULL, 0, h264->pYUVData, &sBufferInfo);
+		}
+		else if (state == dsErrorFree)
+		{
+			/* call DecodeFrame2 again to decode without delay */
+			state = (*sys->pDecoder)->DecodeFrame2(sys->pDecoder, NULL, 0, h264->pYUVData, &sBufferInfo);
+		}
+		else
+		{
+			WLog_WARN(TAG, "DecodeFrame2 state: 0x%02X iBufferStatus: %d", state, sBufferInfo.iBufferStatus);
+			return -2002;
+		}
+	}
+
+	if (sBufferInfo.iBufferStatus != 1)
+	{
+		WLog_WARN(TAG, "DecodeFrame2 iBufferStatus: %d", sBufferInfo.iBufferStatus);
+		return 0;
+	}
+
+	if (state != dsErrorFree)
+	{
+		WLog_WARN(TAG, "DecodeFrame2 state: 0x%02X", state);
+		return -2003;
+	}
 
 	pSystemBuffer = &sBufferInfo.UsrData.sSystemBuffer;
 
@@ -128,17 +259,11 @@ static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSiz
 		pSystemBuffer->iStride[0], pSystemBuffer->iStride[1]);
 #endif
 
-	if (state != 0)
-		return -1;
-
-	if (sBufferInfo.iBufferStatus != 1)
-		return -2;
-
 	if (pSystemBuffer->iFormat != videoFormatI420)
-		return -1;
+		return -2004;
 
 	if (!h264->pYUVData[0] || !h264->pYUVData[1] || !h264->pYUVData[2])
-		return -1;
+		return -2005;
 
 	h264->iStride[0] = pSystemBuffer->iStride[0];
 	h264->iStride[1] = pSystemBuffer->iStride[1];
@@ -165,8 +290,7 @@ static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstS
 	if (!h264->pYUVData[0] || !h264->pYUVData[1] || !h264->pYUVData[2])
 		return -1;
 
-	if (sys->EncParamExt.iPicWidth != h264->width ||
-		sys->EncParamExt.iPicHeight != h264->height)
+	if ((sys->EncParamExt.iPicWidth != h264->width) || (sys->EncParamExt.iPicHeight != h264->height))
 	{
 		status = (*sys->pEncoder)->GetDefaultParams(sys->pEncoder, &sys->EncParamExt);
 
@@ -190,6 +314,7 @@ static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstS
 		sys->EncParamExt.sSpatialLayers[0].iVideoWidth = sys->EncParamExt.iPicWidth;
 		sys->EncParamExt.sSpatialLayers[0].iVideoHeight = sys->EncParamExt.iPicHeight;
 		sys->EncParamExt.sSpatialLayers[0].iMaxSpatialBitrate = sys->EncParamExt.iMaxBitrate;
+
 		switch (h264->RateControlMode)
 		{
 			case H264_RATECONTROL_VBR:
@@ -197,6 +322,7 @@ static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstS
 				sys->EncParamExt.iTargetBitrate = h264->BitRate;
 				sys->EncParamExt.sSpatialLayers[0].iSpatialBitrate = sys->EncParamExt.iTargetBitrate;
 				break;
+
 			case H264_RATECONTROL_CQP:
 				sys->EncParamExt.iRCMode = RC_OFF_MODE;
 				sys->EncParamExt.sSpatialLayers[0].iDLayerQp = h264->QP;
@@ -259,6 +385,7 @@ static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstS
 					}
 				}
 				break;
+
 			case H264_RATECONTROL_CQP:
 				if (sys->EncParamExt.sSpatialLayers[0].iDLayerQp != h264->QP)
 				{
@@ -296,8 +423,10 @@ static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstS
 		WLog_ERR(TAG, "Failed to encode frame (status=%ld)", status);
 		return status;
 	}
+
 	*ppDstData = info.sLayerInfo[0].pBsBuf;
 	*pDstSize = 0;
+
 	for (i = 0; i < info.iLayerNum; i++)
 	{
 		for (j = 0; j < info.sLayerInfo[i].iNalCount; j++)
@@ -375,7 +504,7 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 		ZeroMemory(&sDecParam, sizeof(sDecParam));
 		sDecParam.eOutputColorFormat  = videoFormatI420;
 		sDecParam.eEcActiveIdc = ERROR_CON_FRAME_COPY;
-		sDecParam.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_DEFAULT;
+		sDecParam.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_AVC;
 
 		status = (*sys->pDecoder)->Initialize(sys->pDecoder, &sDecParam);
 
@@ -618,10 +747,10 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 	int width, height;
 	BYTE* pYUVPoint[3];
 	RDPGFX_RECT16* rect;
-	primitives_t *prims = primitives_get();
+	primitives_t* prims = primitives_get();
 
 	if (!h264)
-		return -1;
+		return -1001;
 
 #if 0
 	WLog_INFO(TAG, "h264_decompress: pSrcData=%p, SrcSize=%u, pDstData=%p, nDstStep=%d, nDstHeight=%d, numRegionRects=%d",
@@ -629,9 +758,14 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 #endif
 
 	if (!(pDstData = *ppDstData))
-		return -1;
+		return -1002;
 
-	if ((status = h264->subsystem->Decompress(h264, pSrcData, SrcSize)) < 0)
+	status = h264->subsystem->Decompress(h264, pSrcData, SrcSize);
+
+	if (status == 0)
+		return 1;
+
+	if (status < 0)
 		return status;
 
 	pYUVData = h264->pYUVData;
@@ -641,17 +775,17 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 	{
 		rect = &(regionRects[index]);
 
-		/* Check, if the ouput rectangle is valid in decoded h264 frame. */
+		/* Check, if the output rectangle is valid in decoded h264 frame. */
 		if ((rect->right > h264->width) || (rect->left > h264->width))
-			return -1;
+			return -1003;
 		if ((rect->top > h264->height) || (rect->bottom > h264->height))
-			return -1;
+			return -1004;
 
 		/* Check, if the output rectangle is valid in destination buffer. */
 		if ((rect->right > nDstWidth) || (rect->left > nDstWidth))
-			return -1;
+			return -1005;
 		if ((rect->bottom > nDstHeight) || (rect->top > nDstHeight))
-			return -1;
+			return -1006;
 
 		width = rect->right - rect->left;
 		height = rect->bottom - rect->top;
@@ -682,7 +816,7 @@ int h264_compress(H264_CONTEXT* h264, BYTE* pSrcData, DWORD SrcFormat,
 	int status = -1;
 	prim_size_t roi;
 	int nWidth, nHeight;
-	primitives_t *prims = primitives_get();
+	primitives_t* prims = primitives_get();
 
 	if (!h264)
 		return -1;
@@ -739,6 +873,14 @@ BOOL h264_context_init(H264_CONTEXT* h264)
 	if (g_Subsystem_OpenH264.Init(h264))
 	{
 		h264->subsystem = &g_Subsystem_OpenH264;
+		return TRUE;
+	}
+#endif
+
+#ifdef WITH_X264
+	if (g_Subsystem_x264.Init(h264))
+	{
+		h264->subsystem = &g_Subsystem_x264;
 		return TRUE;
 	}
 #endif
