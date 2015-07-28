@@ -110,7 +110,6 @@ void smartcard_context_free(SMARTCARD_CONTEXT* pContext)
 
 	/* cancel blocking calls like SCardGetStatusChange */
 	SCardCancel(pContext->hContext);
-
 	if (MessageQueue_PostQuit(pContext->IrpQueue, 0))
 		WaitForSingleObject(pContext->thread, INFINITE);
 	CloseHandle(pContext->thread);
@@ -120,64 +119,21 @@ void smartcard_context_free(SMARTCARD_CONTEXT* pContext)
 	free(pContext);
 }
 
-static void smartcard_free(DEVICE* device)
-{
-	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) device;
-
-	if (smartcard->IrpQueue)
-	{
-		if (MessageQueue_PostQuit(smartcard->IrpQueue, 0))
-			WaitForSingleObject(smartcard->thread, INFINITE);
-
-		MessageQueue_Free(smartcard->IrpQueue);
-		smartcard->IrpQueue = NULL;
-
-		CloseHandle(smartcard->thread);
-		smartcard->thread = NULL;
-	}
-
-	if (smartcard->device.data)
-	{
-		Stream_Free(smartcard->device.data, TRUE);
-		smartcard->device.data = NULL;
-	}
-
-	ListDictionary_Free(smartcard->rgSCardContextList);
-	ListDictionary_Free(smartcard->rgOutstandingMessages);
-	Queue_Free(smartcard->CompletedIrpQueue);
-
-	if (smartcard->StartedEvent)
-	{
-		SCardReleaseStartedEvent();
-		smartcard->StartedEvent = NULL;
-	}
-
-	free(device);
-}
-
-/**
- * Initialization occurs when the protocol server sends a device announce message.
- * At that time, we need to cancel all outstanding IRPs.
- */
-
-static void smartcard_init(DEVICE* device)
-{
+static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard) {
 	int index;
 	int keyCount;
 	ULONG_PTR* pKeys;
 	SCARDCONTEXT hContext;
 	SMARTCARD_CONTEXT* pContext;
-	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) device;
 
 	/**
 	 * On protocol termination, the following actions are performed:
-	 * For each context in rgSCardContextList, SCardCancel is called causing all outstanding messages to be processed.
-	 * After there are no more outstanding messages, SCardReleaseContext is called on each context and the context MUST
-	 * be removed from rgSCardContextList.
+	 * For each context in rgSCardContextList, SCardCancel is called causing all SCardGetStatusChange calls to be processed.
+	 * After that, SCardReleaseContext is called on each context and the context MUST be removed from rgSCardContextList.
 	 */
 
 	/**
-	 * Call SCardCancel on existing contexts, unblocking all outstanding IRPs.
+	 * Call SCardCancel on existing contexts, unblocking all outstanding SCardGetStatusChange calls.
 	 */
 
 	if (ListDictionary_Count(smartcard->rgSCardContextList) > 0)
@@ -194,7 +150,7 @@ static void smartcard_init(DEVICE* device)
 
 			hContext = pContext->hContext;
 
-			if (SCardIsValidContext(hContext))
+			if (SCardIsValidContext(hContext) == SCARD_S_SUCCESS)
 			{
 				SCardCancel(hContext);
 			}
@@ -221,7 +177,7 @@ static void smartcard_init(DEVICE* device)
 
 			hContext = pContext->hContext;
 
-			if (SCardIsValidContext(hContext))
+			if (SCardIsValidContext(hContext) == SCARD_S_SUCCESS)
 			{
 				SCardReleaseContext(hContext);
 			}
@@ -229,6 +185,64 @@ static void smartcard_init(DEVICE* device)
 
 		free(pKeys);
 	}
+
+}
+
+static void smartcard_free(DEVICE* device)
+{
+	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) device;
+
+	/**
+	 * Calling smartcard_release_all_contexts to unblock all operations waiting for transactions
+	 * to unlock.
+	 */
+	smartcard_release_all_contexts(smartcard);
+
+	/* Stopping all threads and cancelling all IRPs */
+
+	if (smartcard->IrpQueue)
+	{
+		if (MessageQueue_PostQuit(smartcard->IrpQueue, 0))
+			WaitForSingleObject(smartcard->thread, INFINITE);
+
+		MessageQueue_Free(smartcard->IrpQueue);
+		smartcard->IrpQueue = NULL;
+
+		CloseHandle(smartcard->thread);
+		smartcard->thread = NULL;
+	}
+
+	if (smartcard->device.data)
+	{
+		Stream_Free(smartcard->device.data, TRUE);
+		smartcard->device.data = NULL;
+	}
+
+	ListDictionary_Free(smartcard->rgSCardContextList);
+	ListDictionary_Free(smartcard->rgOutstandingMessages);
+	Queue_Free(smartcard->CompletedIrpQueue);
+
+
+	if (smartcard->StartedEvent)
+	{
+		SCardReleaseStartedEvent();
+		smartcard->StartedEvent = NULL;
+	}
+
+	free(device);
+}
+
+/**
+ * Initialization occurs when the protocol server sends a device announce message.
+ * At that time, we need to cancel all outstanding IRPs.
+ */
+
+static void smartcard_init(DEVICE* device)
+{
+	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) device;
+
+	smartcard_release_all_contexts(smartcard);
+
 }
 
 void smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
