@@ -764,7 +764,7 @@ int transport_check_fds(rdpTransport* transport)
 #ifdef _WIN32
 	ResetEvent(event);
 #endif
-	for (;;)
+	while(!freerdp_shall_disconnect(transport->context->instance))
 	{
 		/**
 		 * Note: transport_read_pdu tries to read one PDU from
