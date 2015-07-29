@@ -673,7 +673,10 @@ UINT VCAPITYPE FreeRDP_VirtualChannelWrite(DWORD openHandle, LPVOID pData, ULONG
 	pChannelOpenEvent->pChannelOpenData = pChannelOpenData;
 
 	if (!MessageQueue_Post(channels->queue, (void*) channels, 0, (void*) pChannelOpenEvent, NULL))
+	{
+		free(pChannelOpenEvent);
 		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	return CHANNEL_RC_OK;
 }

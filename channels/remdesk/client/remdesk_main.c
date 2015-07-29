@@ -254,7 +254,8 @@ static WIN32ERROR remdesk_send_ctl_version_info_pdu(remdeskPlugin* remdesk)
 	if ((error = remdesk_virtual_channel_write(remdesk, s)))
 		WLog_ERR(TAG, "remdesk_virtual_channel_write failed with error %lu!", error);
 
-	Stream_Free(s, TRUE);
+	if (error != CHANNEL_RC_OK)
+		Stream_Free(s, TRUE);
 	return error;
 }
 
@@ -340,7 +341,8 @@ static WIN32ERROR remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 out:
 	free(raConnectionStringW);
 	free(expertBlobW);
-	Stream_Free(s, TRUE);
+	if (error != CHANNEL_RC_OK)
+		Stream_Free(s, TRUE);
 
 	return error;
 }
@@ -387,7 +389,8 @@ static WIN32ERROR remdesk_send_ctl_remote_control_desktop_pdu(remdeskPlugin* rem
 
 out:
 	free(raConnectionStringW);
-	Stream_Free(s, TRUE);
+	if (error != CHANNEL_RC_OK)
+		Stream_Free(s, TRUE);
 
 	return error;
 }
@@ -440,7 +443,8 @@ static WIN32ERROR remdesk_send_ctl_verify_password_pdu(remdeskPlugin* remdesk)
 
 out:
 	free(expertBlobW);
-	Stream_Free(s, TRUE);
+	if (error != CHANNEL_RC_OK)
+		Stream_Free(s, TRUE);
 
 	return error;
 }
@@ -788,7 +792,7 @@ static VOID VCAPITYPE remdesk_virtual_channel_open_event(DWORD openHandle, UINT 
 		LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	remdeskPlugin* remdesk;
-	WIN32ERROR error;
+	WIN32ERROR error = CHANNEL_RC_OK;
 
 	remdesk = (remdeskPlugin*) remdesk_get_open_handle_data(openHandle);
 
@@ -811,6 +815,11 @@ static VOID VCAPITYPE remdesk_virtual_channel_open_event(DWORD openHandle, UINT 
 
 		case CHANNEL_EVENT_USER:
 			break;
+
+		default:
+			WLog_ERR(TAG, "unhandled event %lu!", event);
+			error = ERROR_INTERNAL_ERROR;
+
 	}
 	if (error && remdesk->rdpcontext)
 		setChannelError(remdesk->rdpcontext, error, "remdesk_virtual_channel_open_event reported an error");
