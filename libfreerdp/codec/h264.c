@@ -59,6 +59,245 @@ static H264_CONTEXT_SUBSYSTEM g_Subsystem_dummy =
 };
 
 /**
+ * Media Foundation subsystem
+ */
+
+#ifdef _WIN32
+
+#include <mfapi.h>
+#include <codecapi.h>
+#include <wmcodecdsp.h>
+#include <mftransform.h>
+
+#undef DEFINE_GUID
+#define INITGUID
+#include <initguid.h>
+
+DEFINE_GUID(CLSID_CMSH264DecoderMFT,0x62CE7E72,0x4C71,0x4d20,0xB1,0x5D,0x45,0x28,0x31,0xA8,0x7D,0x9D);
+DEFINE_GUID(IID_IMFTransform,0xbf94c121,0x5b05,0x4e6f,0x80,0x00,0xba,0x59,0x89,0x61,0x41,0x4d);
+DEFINE_GUID(MF_MT_MAJOR_TYPE,0x48eba18e,0xf8c9,0x4687,0xbf,0x11,0x0a,0x74,0xc9,0xf9,0x6a,0x8f);
+DEFINE_GUID(MF_MT_SUBTYPE,0xf7e34c9a,0x42e8,0x4714,0xb7,0x4b,0xcb,0x29,0xd7,0x2c,0x35,0xe5);
+DEFINE_GUID(MFMediaType_Video,0x73646976,0x0000,0x0010,0x80,0x00,0x00,0xAA,0x00,0x38,0x9B,0x71);
+DEFINE_GUID(IID_ICodecAPI,0x901db4c7,0x31ce,0x41a2,0x85,0xdc,0x8f,0xa0,0xbf,0x41,0xb8,0xda);
+DEFINE_GUID(CODECAPI_AVLowLatencyMode,0x9c27891a,0xed7a,0x40e1,0x88,0xe8,0xb2,0x27,0x27,0xa0,0x24,0xee);
+
+#ifndef FCC
+#define FCC(ch4) ((((DWORD)(ch4) & 0xFF) << 24) |     \
+                  (((DWORD)(ch4) & 0xFF00) << 8) |    \
+                  (((DWORD)(ch4) & 0xFF0000) >> 8) |  \
+                  (((DWORD)(ch4) & 0xFF000000) >> 24))
+#endif
+
+DEFINE_GUID(MFVideoFormat_H264, FCC('H264'), 0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
+DEFINE_GUID(MFVideoFormat_IYUV, FCC('IYUV'), 0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
+
+#if 0
+typedef void* IMFSample;
+typedef void* IMFTransform;
+typedef void* IMFMediaBuffer;
+typedef void* IMFMediaType;
+typedef void* IMFDXGIDeviceManager;
+#endif
+
+typedef HRESULT (__stdcall * pfnMFStartup)(ULONG Version, DWORD dwFlags);
+typedef HRESULT (__stdcall * pfnMFShutdown)(void);
+typedef HRESULT (__stdcall * pfnMFCreateSample)(IMFSample** ppIMFSample);
+typedef HRESULT (__stdcall * pfnMFCreateMemoryBuffer)(DWORD cbMaxLength, IMFMediaBuffer** ppBuffer);
+typedef HRESULT (__stdcall * pfnMFCreateMediaType)(IMFMediaType** ppMFType);
+typedef HRESULT (__stdcall * pfnMFCreateDXGIDeviceManager)(UINT* pResetToken, IMFDXGIDeviceManager** ppDXVAManager);
+
+struct _H264_CONTEXT_MF
+{
+	ICodecAPI* codecApi;
+	IMFTransform* transform;
+	IMFMediaType* inputType;
+	IMFMediaType* outputType;
+	HMODULE mfplat;
+	pfnMFStartup MFStartup;
+	pfnMFShutdown MFShutdown;
+	pfnMFCreateSample MFCreateSample;
+	pfnMFCreateMemoryBuffer MFCreateMemoryBuffer;
+	pfnMFCreateMediaType MFCreateMediaType;
+	pfnMFCreateDXGIDeviceManager MFCreateDXGIDeviceManager;
+};
+typedef struct _H264_CONTEXT_MF H264_CONTEXT_MF;
+
+static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize)
+{
+	H264_CONTEXT_MF* sys = (H264_CONTEXT_MF*) h264->pSystemData;
+
+	return 1;
+}
+
+static int mf_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstSize)
+{
+	H264_CONTEXT_MF* sys = (H264_CONTEXT_MF*) h264->pSystemData;
+
+	return 1;
+}
+
+static HRESULT mf_find_output_type(H264_CONTEXT_MF* sys, const GUID* guid, IMFMediaType** ppMediaType)
+{
+	DWORD idx = 0;
+	GUID mediaGuid;
+	HRESULT hr = S_OK;
+	IMFMediaType* pMediaType = NULL;
+
+	while (1)
+	{
+		hr = sys->transform->lpVtbl->GetOutputAvailableType(sys->transform, 0, idx, &pMediaType);
+
+		if (FAILED(hr))
+			break;
+
+		pMediaType->lpVtbl->GetGUID(pMediaType, &MF_MT_SUBTYPE, &mediaGuid);
+
+		if (IsEqualGUID(&mediaGuid, guid))
+		{
+			*ppMediaType = pMediaType;
+			return S_OK;
+		}
+
+		idx++;
+	}
+
+	return hr;
+}
+
+static void mf_uninit(H264_CONTEXT* h264)
+{
+	H264_CONTEXT_MF* sys = (H264_CONTEXT_MF*) h264->pSystemData;
+
+	if (sys)
+	{
+		if (sys->transform)
+		{
+			sys->transform->lpVtbl->Release(sys->transform);
+			sys->transform = NULL;
+		}
+
+		if (sys->mfplat)
+		{
+			FreeLibrary(sys->mfplat);
+			sys->mfplat = NULL;
+		}
+
+		free(sys);
+		h264->pSystemData = NULL;
+	}
+}
+
+static BOOL mf_init(H264_CONTEXT* h264)
+{
+	HRESULT hr;
+	H264_CONTEXT_MF* sys;
+
+	sys = (H264_CONTEXT_MF*) calloc(1, sizeof(H264_CONTEXT_MF));
+
+	if (!sys)
+		goto EXCEPTION;
+
+	h264->pSystemData = (void*) sys;
+
+	/* http://decklink-sdk-delphi.googlecode.com/svn/trunk/Blackmagic%20DeckLink%20SDK%209.7/Win/Samples/Streaming/StreamingPreview/DecoderMF.cpp */
+
+	sys->mfplat = LoadLibraryA("mfplat.dll");
+
+	if (!sys->mfplat)
+		goto EXCEPTION;
+
+	sys->MFStartup = (pfnMFStartup) GetProcAddress(sys->mfplat, "MFStartup");
+	sys->MFShutdown = (pfnMFShutdown) GetProcAddress(sys->mfplat, "MFShutdown");
+	sys->MFCreateSample = (pfnMFCreateSample) GetProcAddress(sys->mfplat, "MFCreateSample");
+	sys->MFCreateMemoryBuffer = (pfnMFCreateMemoryBuffer) GetProcAddress(sys->mfplat, "MFCreateMemoryBuffer");
+	sys->MFCreateMediaType = (pfnMFCreateMediaType) GetProcAddress(sys->mfplat, "MFCreateMediaType");
+	sys->MFCreateDXGIDeviceManager = (pfnMFCreateDXGIDeviceManager) GetProcAddress(sys->mfplat, "MFCreateDXGIDeviceManager");
+
+	if (!sys->MFStartup || !sys->MFShutdown || !sys->MFCreateSample ||
+		!sys->MFCreateMemoryBuffer || !sys->MFCreateMediaType || !sys->MFCreateDXGIDeviceManager)
+		goto EXCEPTION;
+
+	CoInitializeEx(NULL, 0);
+
+	if (h264->Compressor)
+	{
+
+	}
+	else
+	{
+		VARIANT var = { 0 };
+
+		hr = CoCreateInstance(&CLSID_CMSH264DecoderMFT, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void**) &sys->transform);
+
+		if (FAILED(hr))
+			goto EXCEPTION;
+
+		hr = sys->transform->lpVtbl->QueryInterface(sys->transform, &IID_ICodecAPI, (void**) &sys->codecApi);
+
+		if (FAILED(hr))
+			goto EXCEPTION;
+
+		var.vt = VT_UI4;
+		var.ulVal = 1;
+		
+		hr = sys->codecApi->lpVtbl->SetValue(sys->codecApi, &CODECAPI_AVLowLatencyMode, &var);
+
+		if (FAILED(hr))
+			goto EXCEPTION;
+
+		hr = sys->MFCreateMediaType(&sys->inputType);
+
+		if (FAILED(hr))
+			goto EXCEPTION;
+
+		hr = sys->inputType->lpVtbl->SetGUID(sys->inputType, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+
+		if (FAILED(hr))
+			goto EXCEPTION;
+
+		hr = sys->inputType->lpVtbl->SetGUID(sys->inputType, &MF_MT_SUBTYPE, &MFVideoFormat_H264);
+		
+		if (FAILED(hr))
+			goto EXCEPTION;
+
+		hr = sys->transform->lpVtbl->SetInputType(sys->transform, 0, sys->inputType, 0);
+
+		if (FAILED(hr))
+			goto EXCEPTION;
+
+		hr = mf_find_output_type(sys, &MFVideoFormat_IYUV, &sys->outputType);
+
+		if (FAILED(hr))
+			goto EXCEPTION;
+
+		hr = sys->transform->lpVtbl->SetOutputType(sys->transform, 0, sys->outputType, 0);
+
+		if (FAILED(hr))
+			goto EXCEPTION;
+	}
+
+	fprintf(stderr, "H264 success\n");
+	return TRUE;
+
+EXCEPTION:
+	fprintf(stderr, "H264 failure\n");
+	mf_uninit(h264);
+
+	return FALSE;
+}
+
+static H264_CONTEXT_SUBSYSTEM g_Subsystem_MF =
+{
+	"MediaFoundation",
+	mf_init,
+	mf_uninit,
+	mf_decompress,
+	mf_compress
+};
+
+#endif
+
+/**
  * x264 subsystem
  */
 
@@ -861,6 +1100,14 @@ error_1:
 
 BOOL h264_context_init(H264_CONTEXT* h264)
 {
+#ifdef _WIN32
+	if (g_Subsystem_MF.Init(h264))
+	{
+		h264->subsystem = &g_Subsystem_MF;
+		return TRUE;
+	}
+#endif
+
 #ifdef WITH_LIBAVCODEC
 	if (g_Subsystem_libavcodec.Init(h264))
 	{
