@@ -370,6 +370,9 @@ static LONG smartcard_ListReadersA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 	if (mszReaders)
 		SCardFreeMemory(operation->hContext, mszReaders);
 
+	if (status != SCARD_S_SUCCESS)
+		return status;
+
 	return ret.ReturnCode;
 }
 
@@ -428,6 +431,9 @@ static LONG smartcard_ListReadersW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 
 	if (mszReaders)
 		SCardFreeMemory(operation->hContext, mszReaders);
+
+	if (status != SCARD_S_SUCCESS)
+		return status;
 
 	return ret.ReturnCode;
 }

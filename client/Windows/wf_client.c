@@ -503,7 +503,8 @@ static CREDUI_INFOA wfUiInfo =
 	NULL
 };
 
-BOOL wf_authenticate(freerdp* instance, char** username, char** password, char** domain)
+static BOOL wf_authenticate_raw(freerdp* instance, const char* title,
+		char** username, char** password, char** domain)
 {
 	BOOL fSave;
 	DWORD status;
@@ -518,9 +519,7 @@ BOOL wf_authenticate(freerdp* instance, char** username, char** password, char**
 	ZeroMemory(Password, sizeof(Password));
 	dwFlags = CREDUI_FLAGS_DO_NOT_PERSIST | CREDUI_FLAGS_EXCLUDE_CERTIFICATES;
 
-	status = CredUIPromptForCredentialsA(&wfUiInfo,
-					     instance->settings->ServerHostname,
-					     NULL, 0,
+	status = CredUIPromptForCredentialsA(&wfUiInfo, title, NULL, 0,
 		UserName, CREDUI_MAX_USERNAME_LENGTH + 1,
 		Password, CREDUI_MAX_PASSWORD_LENGTH + 1, &fSave, dwFlags);
 
@@ -563,6 +562,22 @@ BOOL wf_authenticate(freerdp* instance, char** username, char** password, char**
 	}
 
 	return TRUE;
+}
+
+static BOOL wf_authenticate(freerdp* instance,
+		char** username, char** password, char** domain)
+{
+	return wf_authenticate_raw(instance, instance->settings->ServerHostname,
+			username, password, domain);
+}
+
+static BOOL wf_gw_authenticate(freerdp* instance,
+		char** username, char** password, char** domain)
+{
+	char tmp[MAX_PATH];
+
+	sprintf(tmp, sizeof(tmp), "Gateway %s", instance->settings->GatewayHostname);
+	return wf_authenticate_raw(instance, tmp, username, password, domain);
 }
 
 BOOL wf_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
@@ -1065,6 +1080,7 @@ BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->PreConnect = wf_pre_connect;
 	instance->PostConnect = wf_post_connect;
 	instance->Authenticate = wf_authenticate;
+	instance->GatewayAuthenticate = wf_gw_authenticate;
 	instance->VerifyCertificate = wf_verify_certificate;
 
 	wfc->instance = instance;

@@ -169,6 +169,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "multitransport", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Support multitransport protocol" },
 	{ "assistance", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Remote assistance password" },
 	{ "encryption-methods", COMMAND_LINE_VALUE_REQUIRED, "<40,56,128,FIPS>", NULL, NULL, -1, NULL, "RDP standard security encryption methods" },
+	{ "from-stdin", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Read credentials from stdin, do not use defaults." },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
@@ -2081,6 +2082,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 				free(p);
 			}
+		}
+		CommandLineSwitchCase(arg, "from-stdin")
+		{
+			settings->CredentialsFromStdin = TRUE;
 		}
 		CommandLineSwitchCase(arg, "sec-rdp")
 		{

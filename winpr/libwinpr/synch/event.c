@@ -47,8 +47,6 @@
 #include "../log.h"
 #define TAG WINPR_TAG("synch.event")
 
-CRITICAL_SECTION cs = { NULL, 0, 0, NULL, NULL, 0 };
-
 static BOOL EventCloseHandle(HANDLE handle);
 
 static BOOL EventIsHandled(HANDLE handle)
@@ -143,16 +141,6 @@ HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 
 	if (bInitialState)
 		SetEvent(event);
-
-	if (!cs.LockSemaphore && !InitializeCriticalSectionEx(&cs, 0, 0))
-	{
-		if (event->pipe_fd[0] != -1)
-			close(event->pipe_fd[0]);
-		if (event->pipe_fd[1] != -1)
-			close(event->pipe_fd[1]);
-		free(event);
-		return NULL;
-	}
 
 	return (HANDLE)event;
 }
