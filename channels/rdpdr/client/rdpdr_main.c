@@ -248,10 +248,15 @@ static void* drive_hotplug_thread_func(void* arg)
 	return NULL;
 }
 
-static void drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
+static WIN32ERROR drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 {
-	if (rdpdr->hotplug_wnd)
-		PostMessage(rdpdr->hotplug_wnd, WM_QUIT, 0, 0);
+	WIN32ERROR error = CHANNEL_RC_OK;
+	if (rdpdr->hotplug_wnd && !PostMessage(rdpdr->hotplug_wnd, WM_QUIT, 0, 0))
+	{
+		error = GetLastError();
+		WLog_ERR(TAG, "PostMessage failed with error %lu", error);
+	}
+	return error;
 }
 
 #else
