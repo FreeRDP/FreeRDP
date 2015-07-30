@@ -386,6 +386,8 @@ BOOL freerdp_reconnect(freerdp* instance)
 
 BOOL freerdp_shall_disconnect(freerdp* instance)
 {
+	if (!instance || !instance->context || !instance->context->rdp)
+		return FALSE;
 	return instance->context->rdp->disconnect;
 }
 
