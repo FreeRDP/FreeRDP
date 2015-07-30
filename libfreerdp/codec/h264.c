@@ -112,6 +112,7 @@ struct _H264_CONTEXT_MF
 	IMFTransform* transform;
 	IMFMediaType* inputType;
 	IMFMediaType* outputType;
+	IMFSample* sample;
 	HMODULE mfplat;
 	pfnMFStartup MFStartup;
 	pfnMFShutdown MFShutdown;
@@ -124,9 +125,58 @@ typedef struct _H264_CONTEXT_MF H264_CONTEXT_MF;
 
 static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize)
 {
+	HRESULT hr;
+	BYTE* pbBuffer = NULL;
+	DWORD cbMaxLength = 0;
+	DWORD cbCurrentLength = 0;
+	IMFMediaBuffer* mediaBuffer = NULL;
 	H264_CONTEXT_MF* sys = (H264_CONTEXT_MF*) h264->pSystemData;
 
+	hr = sys->MFCreateMemoryBuffer(SrcSize, &mediaBuffer);
+
+	if (FAILED(hr))
+		goto error;
+
+	hr = mediaBuffer->lpVtbl->Lock(mediaBuffer, &pbBuffer, &cbMaxLength, &cbCurrentLength);
+
+	if (FAILED(hr))
+		goto error;
+
+	CopyMemory(pbBuffer, pSrcData, SrcSize);
+
+	hr = mediaBuffer->lpVtbl->SetCurrentLength(mediaBuffer, SrcSize);
+
+	if (FAILED(hr))
+		goto error;
+
+	hr = mediaBuffer->lpVtbl->Unlock(mediaBuffer);
+
+	if (FAILED(hr))
+		goto error;
+
+	hr = sys->MFCreateSample(&sys->sample);
+
+	if (FAILED(hr))
+		goto error;
+
+	sys->sample->lpVtbl->AddBuffer(sys->sample, mediaBuffer);
+
+	if (FAILED(hr))
+		goto error;
+
+	hr = sys->transform->lpVtbl->ProcessInput(sys->transform, 0, sys->sample, 0);
+
+	if (FAILED(hr))
+		goto error;
+
+	//mediaBuffer->lpVtbl->Release(mediaBuffer);
+	//sys->sample->lpVtbl->Release(sys->sample);
+
 	return 1;
+
+error:
+	fprintf(stderr, "mf_decompress error\n");
+	return -1;
 }
 
 static int mf_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstSize)
@@ -172,8 +222,26 @@ static void mf_uninit(H264_CONTEXT* h264)
 	{
 		if (sys->transform)
 		{
-			sys->transform->lpVtbl->Release(sys->transform);
+			//sys->transform->lpVtbl->Release(sys->transform);
 			sys->transform = NULL;
+		}
+
+		if (sys->codecApi)
+		{
+			//sys->codecApi->lpVtbl->Release(sys->codecApi);
+			sys->codecApi = NULL;
+		}
+
+		if (sys->inputType)
+		{
+			sys->inputType->lpVtbl->Release(sys->inputType);
+			sys->inputType = NULL;
+		}
+
+		if (sys->outputType)
+		{
+			sys->outputType->lpVtbl->Release(sys->outputType);
+			sys->outputType = NULL;
 		}
 
 		if (sys->mfplat)
@@ -181,6 +249,8 @@ static void mf_uninit(H264_CONTEXT* h264)
 			FreeLibrary(sys->mfplat);
 			sys->mfplat = NULL;
 		}
+
+		sys->MFShutdown();
 
 		free(sys);
 		h264->pSystemData = NULL;
@@ -217,7 +287,7 @@ static BOOL mf_init(H264_CONTEXT* h264)
 		!sys->MFCreateMemoryBuffer || !sys->MFCreateMediaType || !sys->MFCreateDXGIDeviceManager)
 		goto EXCEPTION;
 
-	CoInitializeEx(NULL, 0);
+	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
 	if (h264->Compressor)
 	{
@@ -226,6 +296,11 @@ static BOOL mf_init(H264_CONTEXT* h264)
 	else
 	{
 		VARIANT var = { 0 };
+
+		hr = sys->MFStartup(MF_VERSION, 0);
+
+		if (FAILED(hr))
+			goto EXCEPTION;
 
 		hr = CoCreateInstance(&CLSID_CMSH264DecoderMFT, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void**) &sys->transform);
 
@@ -275,14 +350,11 @@ static BOOL mf_init(H264_CONTEXT* h264)
 		if (FAILED(hr))
 			goto EXCEPTION;
 	}
-
-	fprintf(stderr, "H264 success\n");
 	return TRUE;
 
 EXCEPTION:
-	fprintf(stderr, "H264 failure\n");
+	fprintf(stderr, "mf_init failure\n");
 	mf_uninit(h264);
-
 	return FALSE;
 }
 
