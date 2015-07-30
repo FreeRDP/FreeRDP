@@ -142,9 +142,15 @@ static WIN32ERROR drdynvc_server_start(DrdynvcServerContext* context)
 
 static WIN32ERROR drdynvc_server_stop(DrdynvcServerContext* context)
 {
+    WIN32ERROR error;
 	SetEvent(context->priv->StopEvent);
 
-	WaitForSingleObject(context->priv->Thread, INFINITE);
+	if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
+    {
+        error = GetLastError();
+        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+        return error;
+    }
 	CloseHandle(context->priv->Thread);
 
 	return CHANNEL_RC_OK;

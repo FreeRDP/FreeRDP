@@ -239,7 +239,24 @@ static void* rdpsnd_server_thread(void* arg)
 	{
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
-		if (WaitForSingleObject(context->priv->StopEvent, 0) == WAIT_OBJECT_0)
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+            break;
+        }
+
+        status = WaitForSingleObject(context->priv->StopEvent, 0);
+
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+            break;
+        }
+
+
+		if (status == WAIT_OBJECT_0)
 			break;
 
 		if ((error = rdpsnd_server_handle_messages(context)))
@@ -598,13 +615,19 @@ out_close:
 
 static WIN32ERROR rdpsnd_server_stop(RdpsndServerContext* context)
 {
+    WIN32ERROR error = CHANNEL_RC_OK;
 	if (context->priv->ownThread)
 	{
 		if (context->priv->StopEvent)
 		{
 			SetEvent(context->priv->StopEvent);
 
-			WaitForSingleObject(context->priv->Thread, INFINITE);
+			if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
+            {
+                error = GetLastError();
+                WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+                return error;
+            }
 			CloseHandle(context->priv->Thread);
 			CloseHandle(context->priv->StopEvent);
 		}
@@ -613,7 +636,7 @@ static WIN32ERROR rdpsnd_server_stop(RdpsndServerContext* context)
 	if (context->priv->rdpsnd_pdu)
 		Stream_Free(context->priv->rdpsnd_pdu, TRUE);
 
-	return CHANNEL_RC_OK;
+	return error;
 }
 
 RdpsndServerContext* rdpsnd_server_context_new(HANDLE vcm)

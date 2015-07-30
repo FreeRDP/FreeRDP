@@ -101,7 +101,7 @@ static WIN32ERROR devman_register_device(DEVMAN* devman, DEVICE* device)
 		WLog_INFO(TAG,  "ListDictionary_Add failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
-	return ERROR_SUCCESS;
+	return CHANNEL_RC_OK;
 }
 
 DEVICE* devman_get_device_by_id(DEVMAN* devman, UINT32 id)

@@ -204,6 +204,12 @@ static void* printer_thread_func(void* arg)
 	while (1)
 	{
 		DWORD rc = WaitForMultipleObjects(2, obj, FALSE, INFINITE);
+        if (rc == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+            break;
+        }
 
 		if (rc == WAIT_OBJECT_0 + 1)
 			break;
@@ -245,13 +251,19 @@ static WIN32ERROR printer_irp_request(DEVICE* device, IRP* irp)
 	return CHANNEL_RC_OK;
 }
 
-static void printer_free(DEVICE* device)
+static WIN32ERROR printer_free(DEVICE* device)
 {
 	IRP* irp;
 	PRINTER_DEVICE* printer_dev = (PRINTER_DEVICE*) device;
+    WIN32ERROR error;
 
 	SetEvent(printer_dev->stopEvent);
-	WaitForSingleObject(printer_dev->thread, INFINITE);
+	if (WaitForSingleObject(printer_dev->thread, INFINITE) == WAIT_FAILED)
+    {
+        error = GetLastError();
+        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+        return error;
+    }
 
 	while ((irp = (IRP*) InterlockedPopEntrySList(printer_dev->pIrpList)) != NULL)
 		irp->Discard(irp);
@@ -268,6 +280,7 @@ static void printer_free(DEVICE* device)
 	free(printer_dev->device.name);
 
 	free(printer_dev);
+    return CHANNEL_RC_OK;
 }
 
 WIN32ERROR printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* printer)

@@ -213,14 +213,17 @@ WIN32ERROR rail_write_client_exec_order(wStream* s, RAIL_EXEC_ORDER* exec)
 	Stream_Write_UINT16(s, exec->arguments.length); /* argumentsLength (2 bytes) */
 	if ((error = rail_write_unicode_string_value(s, &exec->exeOrFile)))
 	{
+        WLog_ERR(TAG, "rail_write_unicode_string_value failed with error %lu", error);
 		return error;
 	}
 	if ((error = rail_write_unicode_string_value(s, &exec->workingDir)))
 	{
+        WLog_ERR(TAG, "rail_write_unicode_string_value failed with error %lu", error);
 		return error;
 	}
 	if ((error = rail_write_unicode_string_value(s, &exec->arguments)))
 	{
+        WLog_ERR(TAG, "rail_write_unicode_string_value failed with error %lu", error);
 		return error;
 	}
 	return error;
@@ -347,7 +350,9 @@ WIN32ERROR rail_recv_handshake_order(railPlugin* rail, RAIL_HANDSHAKE_ORDER* han
 	if (context->custom)
 	{
 		IFCALLRET(context->ServerHandshake, error, context, handshake);
-	}
+        if (error)
+            WLog_ERR(TAG, "context.ServerHandshake failed with error %lu", error);
+    }
 
 	return error;
 }
@@ -366,7 +371,10 @@ WIN32ERROR rail_recv_handshake_ex_order(railPlugin* rail, RAIL_HANDSHAKE_EX_ORDE
 	if (context->custom)
 	{
 		IFCALLRET(context->ClientHandshakeEx, error, context, handshakeEx);
-	}
+        if (error)
+            WLog_ERR(TAG, "context.ClientHandshakeEx failed with error %lu", error);
+
+    }
 
 	return error;
 }
@@ -387,7 +395,10 @@ WIN32ERROR rail_recv_exec_result_order(railPlugin* rail, RAIL_EXEC_RESULT_ORDER*
 	if (context->custom)
 	{
 		IFCALLRET(context->ServerExecuteResult, error, context, execResult);
-	}
+        if (error)
+            WLog_ERR(TAG, "context.ServerExecuteResult failed with error %lu", error);
+
+    }
 
 	return error;
 }
@@ -406,7 +417,9 @@ WIN32ERROR rail_recv_server_sysparam_order(railPlugin* rail, RAIL_SYSPARAM_ORDER
 	if (context->custom)
 	{
 		IFCALLRET(context->ServerSystemParam, error, context, sysparam);
-	}
+        if (error)
+            WLog_ERR(TAG, "context.ServerSystemParam failed with error %lu", error);
+    }
 
 	return error;
 }
@@ -425,7 +438,9 @@ WIN32ERROR rail_recv_server_minmaxinfo_order(railPlugin* rail, RAIL_MINMAXINFO_O
 	if (context->custom)
 	{
 		IFCALLRET(context->ServerMinMaxInfo, error, context, minMaxInfo);
-	}
+        if (error)
+            WLog_ERR(TAG, "context.ServerMinMaxInfo failed with error %lu", error);
+    }
 
 	return error;
 }
@@ -444,7 +459,9 @@ WIN32ERROR rail_recv_server_localmovesize_order(railPlugin* rail, RAIL_LOCALMOVE
 	if (context->custom)
 	{
 		IFCALLRET(context->ServerLocalMoveSize, error, context, localMoveSize);
-	}
+        if (error)
+            WLog_ERR(TAG, "context.ServerLocalMoveSize failed with error %lu", error);
+    }
 
 	return error;
 }
@@ -463,7 +480,9 @@ WIN32ERROR rail_recv_server_get_appid_resp_order(railPlugin* rail, RAIL_GET_APPI
 	if (context->custom)
 	{
 		IFCALLRET(context->ServerGetAppIdResponse, error, context, getAppIdResp);
-	}
+        if (error)
+            WLog_ERR(TAG, "context.ServerGetAppIdResponse failed with error %lu", error);
+    }
 
 	return error;
 }
@@ -482,7 +501,9 @@ WIN32ERROR rail_recv_langbar_info_order(railPlugin* rail, RAIL_LANGBAR_INFO_ORDE
 	if (context->custom)
 	{
 		IFCALLRET(context->ServerLanguageBarInfo, error, context, langBarInfo);
-	}
+        if (error)
+            WLog_ERR(TAG, "context.ServerLanguageBarInfo failed with error %lu", error);
+    }
 
 	return error;
 }

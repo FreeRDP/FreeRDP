@@ -860,7 +860,7 @@ WIN32ERROR cliprdr_add_init_handle_data(void* pInitHandle, void* pUserData)
 		WLog_ERR(TAG, "ListDictionary_Add failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
-	return ERROR_SUCCESS;
+	return CHANNEL_RC_OK;
 }
 
 void* cliprdr_get_init_handle_data(void* pInitHandle)
@@ -899,7 +899,7 @@ WIN32ERROR cliprdr_add_open_handle_data(DWORD openHandle, void* pUserData)
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	return ERROR_SUCCESS;
+	return CHANNEL_RC_OK;
 }
 
 void* cliprdr_get_open_handle_data(DWORD openHandle)
@@ -1096,8 +1096,12 @@ static WIN32ERROR cliprdr_virtual_channel_event_disconnected(cliprdrPlugin* clip
 {
 	UINT rc;
 
-	if (MessageQueue_PostQuit(cliprdr->queue, 0))
-		WaitForSingleObject(cliprdr->thread, INFINITE);
+	if (MessageQueue_PostQuit(cliprdr->queue, 0) && (WaitForSingleObject(cliprdr->thread, INFINITE) == WAIT_FAILED))
+    {
+        rc = GetLastError();
+        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", rc);
+        return rc;
+    }
 
 	MessageQueue_Free(cliprdr->queue);
 	CloseHandle(cliprdr->thread);

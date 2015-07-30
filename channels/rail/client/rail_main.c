@@ -596,11 +596,15 @@ static WIN32ERROR rail_virtual_channel_event_connected(railPlugin* rail, LPVOID 
 	return CHANNEL_RC_OK;
 }
 
-static void rail_virtual_channel_event_disconnected(railPlugin* rail)
+static WIN32ERROR rail_virtual_channel_event_disconnected(railPlugin* rail)
 {
 	UINT rc;
-	if (MessageQueue_PostQuit(rail->queue, 0))
-		WaitForSingleObject(rail->thread, INFINITE);
+	if (MessageQueue_PostQuit(rail->queue, 0) && (WaitForSingleObject(rail->thread, INFINITE) == WAIT_FAILED))
+    {
+        rc = GetLastError();
+        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", rc);
+        return rc;
+    }
 
 	MessageQueue_Free(rail->queue);
 	CloseHandle(rail->thread);
@@ -613,6 +617,7 @@ static void rail_virtual_channel_event_disconnected(railPlugin* rail)
 	{
 		WLog_ERR(TAG, "pVirtualChannelClose failed with %s [%08X]",
 				 WTSErrorToString(rc), rc);
+        return rc;
 	}
 
 	if (rail->data_in)
@@ -622,6 +627,7 @@ static void rail_virtual_channel_event_disconnected(railPlugin* rail)
 	}
 
 	rail_remove_open_handle_data(rail->OpenHandle);
+    return CHANNEL_RC_OK;
 }
 
 static void rail_virtual_channel_event_terminated(railPlugin* rail)
@@ -647,14 +653,12 @@ static VOID VCAPITYPE rail_virtual_channel_init_event(LPVOID pInitHandle, UINT e
 	{
 		case CHANNEL_EVENT_CONNECTED:
 			if ((error = rail_virtual_channel_event_connected(rail, pData, dataLength)))
-			{
 				WLog_ERR(TAG, "rail_virtual_channel_event_connected failed with error %lu!", error);
-				return;
-			}
 			break;
 
 		case CHANNEL_EVENT_DISCONNECTED:
-			rail_virtual_channel_event_disconnected(rail);
+			if ((error = rail_virtual_channel_event_disconnected(rail)))
+                WLog_ERR(TAG, "rail_virtual_channel_event_disconnected failed with error %lu!", error);
 			break;
 
 		case CHANNEL_EVENT_TERMINATED:

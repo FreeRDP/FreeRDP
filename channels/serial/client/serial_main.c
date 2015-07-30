@@ -524,6 +524,7 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 
 			/* FIXME: not quite sure a zero timeout is a good thing to check whether a thread is stil alived or not */
 			waitResult = WaitForSingleObject(irpThread, 0);
+
 			if (waitResult == WAIT_OBJECT_0)
 			{
 				/* terminating thread */
@@ -673,7 +674,11 @@ static void terminate_pending_irp_threads(SERIAL_DEVICE *serial)
 
 		TerminateThread(irpThread, 0);
 
-		WaitForSingleObject(irpThread, INFINITE);
+		if (WaitForSingleObject(irpThread, INFINITE) == WAIT_FAILED)
+        {
+            WLog_ERR(TAG,"WaitForSingleObject failed!");
+            continue;
+        }
 
 		CloseHandle(irpThread);
 
@@ -750,14 +755,20 @@ static WIN32ERROR serial_irp_request(DEVICE* device, IRP* irp)
 }
 
 
-static void serial_free(DEVICE* device)
+static WIN32ERROR serial_free(DEVICE* device)
 {
+    WIN32ERROR error;
 	SERIAL_DEVICE* serial = (SERIAL_DEVICE*) device;
 
 	WLog_Print(serial->log, WLOG_DEBUG, "freeing");
 
 	MessageQueue_PostQuit(serial->MainIrpQueue, 0);
-	WaitForSingleObject(serial->MainThread, INFINITE);
+	if (WaitForSingleObject(serial->MainThread, INFINITE) == WAIT_FAILED)
+    {
+        error = GetLastError();
+        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+        return error;
+    }
 	CloseHandle(serial->MainThread);
 
 	if (serial->hComm)
@@ -770,6 +781,7 @@ static void serial_free(DEVICE* device)
 	DeleteCriticalSection(&serial->TerminatingIrpThreadsLock);
 
 	free(serial);
+    return CHANNEL_RC_OK;
 }
 
 #endif /* __linux__ */

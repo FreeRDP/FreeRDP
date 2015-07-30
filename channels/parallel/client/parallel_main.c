@@ -332,18 +332,24 @@ static WIN32ERROR parallel_irp_request(DEVICE* device, IRP* irp)
 	return CHANNEL_RC_OK;
 }
 
-static void parallel_free(DEVICE* device)
+static WIN32ERROR parallel_free(DEVICE* device)
 {
+    WIN32ERROR error;
 	PARALLEL_DEVICE* parallel = (PARALLEL_DEVICE*) device;
 
-	if (MessageQueue_PostQuit(parallel->queue, 0))
-		WaitForSingleObject(parallel->thread, INFINITE);
+	if (MessageQueue_PostQuit(parallel->queue, 0) && (WaitForSingleObject(parallel->thread, INFINITE) == WAIT_FAILED))
+    {
+        error = GetLastError();
+        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+        return error;
+    }
 	CloseHandle(parallel->thread);
 
 	Stream_Free(parallel->device.data, TRUE);
 	MessageQueue_Free(parallel->queue);
 
 	free(parallel);
+    return CHANNEL_RC_OK;
 }
 
 #ifdef STATIC_CHANNELS

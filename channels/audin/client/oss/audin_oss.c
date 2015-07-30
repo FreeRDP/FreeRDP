@@ -173,8 +173,9 @@ static void* audin_oss_thread_func(void* arg)
 	int tmp, buffer_size, encoded_size;
 	AudinOSSDevice* oss = (AudinOSSDevice*)arg;
 	WIN32ERROR error;
+    DWORD status;
 
-	if (arg == NULL)
+    if (arg == NULL)
 	{
 		error = ERROR_INVALID_PARAMETER;
 		goto err_out;
@@ -263,8 +264,20 @@ static void* audin_oss_thread_func(void* arg)
 	ZeroMemory(buffer, buffer_size);
 	freerdp_dsp_context_reset_adpcm(oss->dsp_context);
 
-	while (WaitForSingleObject(oss->stopEvent, 0) != WAIT_OBJECT_0)
+	while (1)
 	{
+        status = WaitForSingleObject(oss->stopEvent, 0);
+
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+            goto err_out;
+        }
+
+        if (status == WAIT_OBJECT_0)
+            break;
+
 		tmp = read(pcm_handle, buffer, buffer_size);
 
 		/* Error happen. */
@@ -353,6 +366,7 @@ static WIN32ERROR audin_oss_open(IAudinDevice *device, AudinReceive receive, voi
 
 static WIN32ERROR audin_oss_close(IAudinDevice *device)
 {
+    WIN32ERROR error;
 	AudinOSSDevice *oss = (AudinOSSDevice*)device;
 
 	if (device == NULL)
@@ -361,7 +375,12 @@ static WIN32ERROR audin_oss_close(IAudinDevice *device)
 	if (oss->stopEvent != NULL)
 	{
 		SetEvent(oss->stopEvent);
-		WaitForSingleObject(oss->thread, INFINITE);
+		if (WaitForSingleObject(oss->thread, INFINITE) == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+            return error;
+        }
 		CloseHandle(oss->stopEvent);
 		oss->stopEvent = NULL;
 		CloseHandle(oss->thread);

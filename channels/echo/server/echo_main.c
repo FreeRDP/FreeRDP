@@ -76,7 +76,12 @@ static WIN32ERROR echo_server_open_channel(echo_server* echo)
 
 	while (echo->echo_channel == NULL)
 	{
-		WaitForSingleObject(hEvent, 1000);
+		if (WaitForSingleObject(hEvent, 1000) == WAIT_FAILED)
+        {
+            Error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", Error);
+            return Error;
+        }
 
 		echo->echo_channel = WTSVirtualChannelOpenEx(echo->SessionId,
 			"ECHO", WTS_CHANNEL_OPTION_DYNAMIC);
@@ -106,6 +111,7 @@ static void* echo_server_thread_func(void* arg)
 	DWORD BytesReturned = 0;
 	echo_server* echo = (echo_server*) arg;
 	WIN32ERROR error;
+    DWORD status;
 
 	if ((error = echo_server_open_channel(echo)))
 	{
@@ -134,7 +140,16 @@ static void* echo_server_thread_func(void* arg)
 
 	while (1)
 	{
-		if (WaitForMultipleObjects(nCount, events, FALSE, 100) == WAIT_OBJECT_0)
+        status = WaitForMultipleObjects(nCount, events, FALSE, 100);
+
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
+            break;
+        }
+
+		if (status == WAIT_OBJECT_0)
 		{
 			IFCALLRET(echo->context.OpenResult, error, &echo->context, ECHO_SERVER_OPEN_RESULT_CLOSED);
 			if (error)
@@ -174,7 +189,16 @@ static void* echo_server_thread_func(void* arg)
 
 	while (ready)
 	{
-		if (WaitForMultipleObjects(nCount, events, FALSE, INFINITE) == WAIT_OBJECT_0)
+        status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
+            break;
+        }
+
+        if (status == WAIT_OBJECT_0)
 			break;
 
 		Stream_SetPosition(s, 0);
@@ -240,18 +264,26 @@ static WIN32ERROR echo_server_open(echo_server_context* context)
 
 static WIN32ERROR echo_server_close(echo_server_context* context)
 {
+    WIN32ERROR error = CHANNEL_RC_OK;
 	echo_server* echo = (echo_server*) context;
 
 	if (echo->thread)
 	{
 		SetEvent(echo->stopEvent);
-		WaitForSingleObject(echo->thread, INFINITE);
+
+		if (WaitForSingleObject(echo->thread, INFINITE) == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+            return error;
+        }
+
 		CloseHandle(echo->thread);
 		CloseHandle(echo->stopEvent);
 		echo->thread = NULL;
 		echo->stopEvent = NULL;
 	}
-	return CHANNEL_RC_OK;
+	return error;
 }
 
 static BOOL echo_server_request(echo_server_context* context, const BYTE* buffer, UINT32 length)

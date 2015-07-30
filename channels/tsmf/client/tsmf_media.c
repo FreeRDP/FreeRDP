@@ -610,6 +610,13 @@ static void* tsmf_stream_ack_func(void *arg)
 	{
 		DWORD ev = WaitForMultipleObjects(2, hdl, FALSE, INFINITE);
 
+        if (ev == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+            break;
+        }
+
 		if (ev == WAIT_OBJECT_0)
 			break;
 
@@ -643,6 +650,7 @@ static void* tsmf_stream_playback_func(void *arg)
 	TSMF_STREAM* stream = (TSMF_STREAM *) arg;
 	TSMF_PRESENTATION* presentation = stream->presentation;
 	WIN32ERROR error = CHANNEL_RC_OK;
+    DWORD status;
 
 	DEBUG_TSMF("in %d", stream->stream_id);
 
@@ -668,9 +676,30 @@ static void* tsmf_stream_playback_func(void *arg)
 	hdl[0] = stream->stopEvent;
 	hdl[1] = Queue_Event(stream->sample_list);
 
-	while (!(WaitForMultipleObjects(2, hdl, FALSE, INFINITE) == WAIT_OBJECT_0))
+	while (1)
 	{
-		sample = tsmf_stream_pop_sample(stream, 0);
+        status = WaitForMultipleObjects(2, hdl, FALSE, INFINITE);
+
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+            break;
+        }
+
+        status = WaitForSingleObject(stream->stopEvent, 0);
+
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+            break;
+        }
+
+        if (status == WAIT_OBJECT_0)
+            break;
+
+        sample = tsmf_stream_pop_sample(stream, 0);
 
 		if (sample && !tsmf_sample_playback(sample))
 		{
@@ -825,10 +854,11 @@ BOOL tsmf_presentation_start(TSMF_PRESENTATION* presentation)
 	return ret;
 }
 
-void tsmf_presentation_sync(TSMF_PRESENTATION* presentation)
+WIN32ERROR tsmf_presentation_sync(TSMF_PRESENTATION* presentation)
 {
 	UINT32 index;
 	UINT32 count;
+    WIN32ERROR error;
 
 	ArrayList_Lock(presentation->stream_list);
 	count = ArrayList_Count(presentation->stream_list);
@@ -836,10 +866,16 @@ void tsmf_presentation_sync(TSMF_PRESENTATION* presentation)
 	for (index = 0; index < count; index++)
 	{
 		TSMF_STREAM* stream = (TSMF_STREAM *) ArrayList_GetItem(presentation->stream_list, index);
-		WaitForSingleObject(stream->ready, 500);
+		if (WaitForSingleObject(stream->ready, 500) == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+            return error;
+        }
 	}
 
 	ArrayList_Unlock(presentation->stream_list);
+    return CHANNEL_RC_OK;
 }
 
 BOOL tsmf_presentation_stop(TSMF_PRESENTATION* presentation)
@@ -1041,10 +1077,12 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id, 
 
 error_add:
 	SetEvent(stream->stopEvent);
-	WaitForSingleObject(stream->ack_thread, INFINITE);
+	if (WaitForSingleObject(stream->ack_thread, INFINITE) == WAIT_FAILED)
+        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
 error_ack_thread:
 	SetEvent(stream->stopEvent);
-	WaitForSingleObject(stream->play_thread, INFINITE);
+	if (WaitForSingleObject(stream->play_thread, INFINITE) == WAIT_FAILED)
+        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
 error_play_thread:
 	Queue_Free(stream->sample_ack_list);
 error_sample_ack_list:
@@ -1160,14 +1198,23 @@ void _tsmf_stream_free(TSMF_STREAM* stream)
 
 	if (stream->play_thread)
 	{
-		WaitForSingleObject(stream->play_thread, INFINITE);
+		if (WaitForSingleObject(stream->play_thread, INFINITE) == WAIT_FAILED)
+        {
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
+            return;
+        }
+
 		CloseHandle(stream->play_thread);
 		stream->play_thread = NULL;
 	}
 
 	if (stream->ack_thread)
 	{
-		WaitForSingleObject(stream->ack_thread, INFINITE);
+		if (WaitForSingleObject(stream->ack_thread, INFINITE) == WAIT_FAILED)
+        {
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
+            return;
+        }
 		CloseHandle(stream->ack_thread);
 		stream->ack_thread = NULL;
 	}

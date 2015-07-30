@@ -100,6 +100,7 @@ static DWORD audin_winmm_thread_func(void* arg)
 	char *buffer;
 	int size, i;
 	WAVEHDR waveHdr[4];
+    DWORD status;
 
 	if (!winmm->hWaveIn)
 	{
@@ -136,7 +137,14 @@ static DWORD audin_winmm_thread_func(void* arg)
 	}
 	waveInStart(winmm->hWaveIn);
 
-	WaitForSingleObject(winmm->stopEvent, INFINITE);
+	status = WaitForSingleObject(winmm->stopEvent, INFINITE);
+
+    if (status == WAIT_FAILED)
+    {
+        DEBUG_DVC("WaitForSingleObject failed.");
+        if (winmm->rdpcontext)
+            setChannelError(winmm->rdpcontext, ERROR_INTERNAL_ERROR, "audin_winmm_thread_func reported an error");
+    }
 
 	waveInStop(winmm->hWaveIn);
 
@@ -176,11 +184,20 @@ static WIN32ERROR audin_winmm_free(IAudinDevice* device)
 
 static WIN32ERROR audin_winmm_close(IAudinDevice* device)
 {
+    DWORD status;
+    WIN32ERROR error = CHANNEL_RC_OK;
 	AudinWinmmDevice* winmm = (AudinWinmmDevice*) device;
 
 	SetEvent(winmm->stopEvent);
 
-	WaitForSingleObject(winmm->thread, INFINITE);
+	status = WaitForSingleObject(winmm->thread, INFINITE);
+
+    if (status == WAIT_FAILED)
+    {
+        error = GetLastError();
+        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+        return error;
+    }
 
 	CloseHandle(winmm->thread);
 	CloseHandle(winmm->stopEvent);
@@ -190,7 +207,7 @@ static WIN32ERROR audin_winmm_close(IAudinDevice* device)
 	winmm->receive = NULL;
 	winmm->user_data = NULL;
 
-	return CHANNEL_RC_OK;
+	return error;
 }
 
 static WIN32ERROR audin_winmm_set_format(IAudinDevice* device, audinFormat* format, UINT32 FramesPerPacket)

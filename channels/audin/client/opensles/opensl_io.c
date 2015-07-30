@@ -339,6 +339,7 @@ int android_RecIn(OPENSL_STREAM *p,short *buffer,int size)
 {
 	queue_element *e;
 	int rc;
+    DWORD status;
 
 	assert(p);
 	assert(buffer);
@@ -366,7 +367,15 @@ int android_RecIn(OPENSL_STREAM *p,short *buffer,int size)
 
 	/* Wait for queue to be filled... */
 	if (!Queue_Count(p->queue))
-		WaitForSingleObject(p->queue->event, INFINITE);
+    {
+        status = WaitForSingleObject(p->queue->event, INFINITE);
+        if (status == WAIT_FAILED)
+        {
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", GetLastError());
+            return -1;
+        }
+    }
+
 
 	e = Queue_Dequeue(p->queue);
 	if (!e)
@@ -383,6 +392,6 @@ int android_RecIn(OPENSL_STREAM *p,short *buffer,int size)
 	free(e->data);
 	free(e);
 
-  return rc;
+    return rc;
 }
 

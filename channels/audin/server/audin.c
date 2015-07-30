@@ -215,6 +215,8 @@ static WIN32ERROR audin_server_recv_formats(audin_server* audin, wStream* s, UIN
 	}
 
 	IFCALLRET(audin->context.Opening, success, &audin->context);
+    if (success)
+        WLog_ERR(TAG, "context.Opening failed with error %lu", success);
 	return success;
 }
 
@@ -266,6 +268,9 @@ static WIN32ERROR audin_server_recv_open_reply(audin_server* audin, wStream* s, 
 	Stream_Read_UINT32(s, Result);
 
 	IFCALLRET(audin->context.OpenResult, success, &audin->context, Result);
+
+    if (success)
+        WLog_ERR(TAG, "context.OpenResult failed with error %lu", success);
 
 	return success;
 }
@@ -330,7 +335,10 @@ static WIN32ERROR audin_server_recv_data(audin_server* audin, wStream* s, UINT32
 
 	IFCALLRET(audin->context.ReceiveSamples, success, &audin->context, src, frames);
 
-	return success;
+    if (success)
+        WLog_ERR(TAG, "context.ReceiveSamples failed with error %lu", success);
+
+    return success;
 }
 
 static void* audin_server_thread_func(void* arg)
@@ -345,6 +353,7 @@ static void* audin_server_thread_func(void* arg)
 	DWORD BytesReturned = 0;
 	audin_server* audin = (audin_server*) arg;
 	WIN32ERROR error = CHANNEL_RC_OK;
+	DWORD status;
 
 	buffer = NULL;
 	BytesReturned = 0;
@@ -372,8 +381,15 @@ static void* audin_server_thread_func(void* arg)
 
 	while (1)
 	{
-		if (WaitForMultipleObjects(nCount, events, FALSE, 100) == WAIT_OBJECT_0)
+		if ((status = WaitForMultipleObjects(nCount, events, FALSE, 100)) == WAIT_OBJECT_0)
 			goto out;
+
+		if (status == WAIT_FAILED)
+		{
+            error = GetLastError();
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
+			goto out;
+		}
 
 		if (WTSVirtualChannelQuery(audin->audin_channel, WTSVirtualChannelReady, &buffer, &BytesReturned) == FALSE)
 		{
@@ -410,8 +426,15 @@ static void* audin_server_thread_func(void* arg)
 
 	while (ready)
 	{
-		if (WaitForMultipleObjects(nCount, events, FALSE, INFINITE) == WAIT_OBJECT_0)
+		if ((status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE)) == WAIT_OBJECT_0)
 			break;
+
+		if (status == WAIT_FAILED)
+		{
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
+            goto out;
+		}
 
 		Stream_SetPosition(s, 0);
 
@@ -559,7 +582,12 @@ static BOOL audin_server_close(audin_server_context* context)
 	if (audin->thread)
 	{
 		SetEvent(audin->stopEvent);
-		WaitForSingleObject(audin->thread, INFINITE);
+		if (WaitForSingleObject(audin->thread, INFINITE) == WAIT_FAILED)
+        {
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", GetLastError());
+            return FALSE;
+        }
+
 		CloseHandle(audin->thread);
 		CloseHandle(audin->stopEvent);
 		audin->thread = NULL;

@@ -919,8 +919,12 @@ static WIN32ERROR remdesk_virtual_channel_event_disconnected(remdeskPlugin* remd
 {
 	UINT rc;
 
-	if (MessageQueue_PostQuit(remdesk->queue, 0))
-		WaitForSingleObject(remdesk->thread, INFINITE);
+	if (MessageQueue_PostQuit(remdesk->queue, 0) && (WaitForSingleObject(remdesk->thread, INFINITE) == WAIT_FAILED))
+    {
+        rc = GetLastError();
+        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", rc);
+        return rc;
+    }
 
 	MessageQueue_Free(remdesk->queue);
 	CloseHandle(remdesk->thread);

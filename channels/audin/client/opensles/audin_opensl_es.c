@@ -83,6 +83,7 @@ static void* audin_opensles_thread_func(void* arg)
 	const size_t raw_size = opensles->frames_per_packet * opensles->bytes_per_channel;
 	int rc = CHANNEL_RC_OK;
 	WIN32ERROR error = CHANNEL_RC_OK;
+    DWORD status;
 
 	DEBUG_DVC("opensles=%p", opensles);
 	
@@ -95,18 +96,31 @@ static void* audin_opensles_thread_func(void* arg)
 	buffer.v = calloc(1, raw_size);
 	if (!buffer.v)
 	{
+        error = CHANNEL_RC_NO_MEMORY;
 		WLog_ERR(TAG, "calloc failed!");
 		if (opensles->rdpcontext)
 			setChannelError(opensles->rdpcontext, CHANNEL_RC_NO_MEMORY, "audin_opensles_thread_func reported an error");
-		ExitThread((DWORD)CHANNEL_RC_NO_MEMORY);
-		return NULL;
+        goto out;
 	}
 
 	freerdp_dsp_context_reset_adpcm(opensles->dsp_context);
 
-	while (WAIT_OBJECT_0 != WaitForSingleObject(opensles->stopEvent, 0))
+	while (1)
 	{
-		size_t encoded_size;
+
+        status = WaitForSingleObject(opensles->stopEvent, 0);
+
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+            break;
+        }
+
+        if (status == WAIT_OBJECT_0)
+            break;
+
+        size_t encoded_size;
 		void *encoded_data;
 
 		rc = android_RecIn(opensles->stream, buffer.s, raw_size);
@@ -154,7 +168,7 @@ static void* audin_opensles_thread_func(void* arg)
 	}
 
 	free(buffer.v);
-
+out:
 	DEBUG_DVC("thread shutdown.");
 
 	if (error && opensles->rdpcontext)
@@ -348,6 +362,7 @@ error_out:
 
 static WIN32ERROR audin_opensles_close(IAudinDevice* device)
 {
+    WIN32ERROR error;
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) device;
 
 	DEBUG_DVC("device=%p", device);
@@ -367,7 +382,12 @@ static WIN32ERROR audin_opensles_close(IAudinDevice* device)
 	assert(opensles->stream);
 
 	SetEvent(opensles->stopEvent);
-	WaitForSingleObject(opensles->thread, INFINITE);
+	if (WaitForSingleObject(opensles->thread, INFINITE) == WAIT_FAILED)
+    {
+        error = GetLastError();
+        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+        return error;
+    }
 	CloseHandle(opensles->stopEvent);
 	CloseHandle(opensles->thread);
 

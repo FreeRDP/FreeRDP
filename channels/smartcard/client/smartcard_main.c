@@ -37,6 +37,7 @@ void* smartcard_context_thread(SMARTCARD_CONTEXT* pContext)
 {
 	DWORD nCount;
 	LONG status;
+    DWORD waitStatus;
 	HANDLE hEvents[2];
 	wMessage message;
 	SMARTCARD_DEVICE* smartcard;
@@ -50,9 +51,25 @@ void* smartcard_context_thread(SMARTCARD_CONTEXT* pContext)
 
 	while (1)
 	{
-		status = WaitForMultipleObjects(nCount, hEvents, FALSE, INFINITE);
+        waitStatus = WaitForMultipleObjects(nCount, hEvents, FALSE, INFINITE);
 
-		if (WaitForSingleObject(MessageQueue_Event(pContext->IrpQueue), 0) == WAIT_OBJECT_0)
+        if (waitStatus == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+            break;
+        }
+
+        waitStatus = WaitForSingleObject(MessageQueue_Event(pContext->IrpQueue), 0);
+
+        if (waitStatus == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+            break;
+        }
+
+		if (waitStatus == WAIT_OBJECT_0)
 		{
 			if (!MessageQueue_Peek(pContext->IrpQueue, &message, TRUE))
 			{
@@ -151,14 +168,19 @@ void smartcard_context_free(SMARTCARD_CONTEXT* pContext)
 	free(pContext);
 }
 
-static void smartcard_free(DEVICE* device)
+static WIN32ERROR smartcard_free(DEVICE* device)
 {
+    WIN32ERROR error;
 	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) device;
 
 	if (smartcard->IrpQueue)
 	{
-		if (MessageQueue_PostQuit(smartcard->IrpQueue, 0))
-			WaitForSingleObject(smartcard->thread, INFINITE);
+		if (MessageQueue_PostQuit(smartcard->IrpQueue, 0) && (WaitForSingleObject(smartcard->thread, INFINITE) == WAIT_FAILED))
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+            return error;
+        }
 
 		MessageQueue_Free(smartcard->IrpQueue);
 		smartcard->IrpQueue = NULL;
@@ -184,6 +206,8 @@ static void smartcard_free(DEVICE* device)
 	}
 
 	free(device);
+
+    return CHANNEL_RC_OK;
 }
 
 /**
@@ -455,7 +479,23 @@ static void* smartcard_thread_func(void* arg)
 	{
 		status = WaitForMultipleObjects(nCount, hEvents, FALSE, INFINITE);
 
-		if (WaitForSingleObject(MessageQueue_Event(smartcard->IrpQueue), 0) == WAIT_OBJECT_0)
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+            break;
+        }
+
+        status = WaitForSingleObject(MessageQueue_Event(smartcard->IrpQueue), 0);
+
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+            break;
+        }
+
+        if (status == WAIT_OBJECT_0)
 		{
 			if (!MessageQueue_Peek(smartcard->IrpQueue, &message, TRUE))
 			{
@@ -467,15 +507,35 @@ static void* smartcard_thread_func(void* arg)
 
 			if (message.id == WMQ_QUIT)
 			{
-				while (WaitForSingleObject(Queue_Event(smartcard->CompletedIrpQueue), 0) == WAIT_OBJECT_0)
+				while (1)
 				{
-					irp = (IRP*) Queue_Dequeue(smartcard->CompletedIrpQueue);
+                    status = WaitForSingleObject(Queue_Event(smartcard->CompletedIrpQueue), 0);
+
+                    if (status == WAIT_FAILED)
+                    {
+                        error = GetLastError();
+                        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+                        goto out;
+                    }
+
+                    if (status == WAIT_TIMEOUT)
+                        break;
+
+                    irp = (IRP*) Queue_Dequeue(smartcard->CompletedIrpQueue);
 
 					if (irp)
 					{
 						if (irp->thread)
 						{
-							WaitForSingleObject(irp->thread, INFINITE);
+							status = WaitForSingleObject(irp->thread, INFINITE);
+
+                            if (status == WAIT_FAILED)
+                            {
+                                error = GetLastError();
+                                WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+                                goto out;
+                            }
+
 							CloseHandle(irp->thread);
 							irp->thread = NULL;
 						}
@@ -503,15 +563,33 @@ static void* smartcard_thread_func(void* arg)
 			}
 		}
 
-		if (WaitForSingleObject(Queue_Event(smartcard->CompletedIrpQueue), 0) == WAIT_OBJECT_0)
-		{
-			irp = (IRP*) Queue_Dequeue(smartcard->CompletedIrpQueue);
+        status = WaitForSingleObject(Queue_Event(smartcard->CompletedIrpQueue), 0);
+
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+            break;
+        }
+
+        if (status == WAIT_OBJECT_0)
+        {
+
+            irp = (IRP*) Queue_Dequeue(smartcard->CompletedIrpQueue);
 
 			if (irp)
 			{
 				if (irp->thread)
 				{
-					WaitForSingleObject(irp->thread, INFINITE);
+					status = WaitForSingleObject(irp->thread, INFINITE);
+
+                    if (status == WAIT_FAILED)
+                    {
+                        error = GetLastError();
+                        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+                        break;
+                    }
+
 					CloseHandle(irp->thread);
 					irp->thread = NULL;
 				}

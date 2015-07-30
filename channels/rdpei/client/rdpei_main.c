@@ -182,6 +182,14 @@ static void* rdpei_schedule_thread(void* arg)
 	while (1)
 	{
 		status = WaitForMultipleObjects(2, hdl, FALSE, 20);
+
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+            break;
+        }
+
 		if (status == WAIT_OBJECT_0 + 1)
 			break;
 
@@ -607,6 +615,7 @@ error_out:
 static WIN32ERROR rdpei_plugin_terminated(IWTSPlugin* pPlugin)
 {
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) pPlugin;
+    WIN32ERROR error;
 
 	if (!pPlugin)
 		return ERROR_INVALID_PARAMETER;
@@ -614,7 +623,12 @@ static WIN32ERROR rdpei_plugin_terminated(IWTSPlugin* pPlugin)
 	SetEvent(rdpei->stopEvent);
 	EnterCriticalSection(&rdpei->lock);
 
-	WaitForSingleObject(rdpei->thread, INFINITE);
+	if (WaitForSingleObject(rdpei->thread, INFINITE) == WAIT_FAILED)
+    {
+        error = GetLastError();
+        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+        return error;
+    }
 
 	CloseHandle(rdpei->stopEvent);
 	CloseHandle(rdpei->event);

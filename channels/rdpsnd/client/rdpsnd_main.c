@@ -104,13 +104,46 @@ static void* rdpsnd_schedule_thread(void* arg)
 	rdpsndPlugin* rdpsnd = (rdpsndPlugin*) arg;
 	HANDLE events[2];
 	WIN32ERROR error = CHANNEL_RC_OK;
+    DWORD status;
 
 	events[0] = MessageQueue_Event(rdpsnd->MsgPipe->Out);
 	events[1] = rdpsnd->stopEvent;
 
-	while (WaitForMultipleObjects(2, events, FALSE, INFINITE) == WAIT_OBJECT_0)
+	while (1)
 	{
-		if (!MessageQueue_Peek(rdpsnd->MsgPipe->Out, &message, TRUE))
+        status = WaitForMultipleObjects(2, events, FALSE, INFINITE);
+
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+            break;
+        }
+
+        status = WaitForSingleObject(rdpsnd->stopEvent, 0);
+
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+            break;
+        }
+
+        if (status == WAIT_OBJECT_0)
+            break;
+
+
+        status = WaitForSingleObject(events[0], 0);
+
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+            break;
+        }
+
+
+        if (!MessageQueue_Peek(rdpsnd->MsgPipe->Out, &message, TRUE))
 		{
 			WLog_ERR(TAG, "MessageQueue_Peek failed!");
 			error = ERROR_INTERNAL_ERROR;
@@ -964,7 +997,11 @@ static void rdpsnd_process_disconnect(rdpsndPlugin* rdpsnd)
 	if (rdpsnd->ScheduleThread)
 	{
 		SetEvent(rdpsnd->stopEvent);
-		WaitForSingleObject(rdpsnd->ScheduleThread, INFINITE);
+		if (WaitForSingleObject(rdpsnd->ScheduleThread, INFINITE) == WAIT_FAILED)
+        {
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
+            return;
+        }
 		CloseHandle(rdpsnd->ScheduleThread);
 		CloseHandle(rdpsnd->stopEvent);
 	}
@@ -1247,7 +1284,12 @@ static WIN32ERROR rdpsnd_virtual_channel_event_disconnected(rdpsndPlugin* rdpsnd
 	WIN32ERROR error;
 
 	MessagePipe_PostQuit(rdpsnd->MsgPipe, 0);
-	WaitForSingleObject(rdpsnd->thread, INFINITE);
+	if (WaitForSingleObject(rdpsnd->thread, INFINITE) == WAIT_FAILED)
+    {
+        error = GetLastError();
+        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+        return error;
+    }
 
 	CloseHandle(rdpsnd->thread);
 	rdpsnd->thread = NULL;

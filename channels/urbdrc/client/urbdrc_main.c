@@ -513,6 +513,8 @@ static void *urbdrc_search_usb_device(void *arg) {
 	int busnum, devnum;
 	int action, success, error, found, on_close;
 	struct sockaddr_un sun;
+	DWORD status;
+	UINT32 error;
 
 	WLog_DBG(TAG, "urbdrc_search_usb_device - devd: start");
 
@@ -540,6 +542,19 @@ static void *urbdrc_search_usb_device(void *arg) {
 
 	while (WaitForMultipleObjects(2, listobj, FALSE, INFINITE) != WAIT_OBJECT_0)
 	{
+
+        status = WaitForMultipleObjects(2, listobj, FALSE, INFINITE);
+
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+            return 0;
+        }
+
+        if (status == WAIT_OBJECT_0)
+            break;
+
 		WLog_DBG(TAG, "=======  SEARCH  ======= ");
 
 		/* !system=USB subsystem=DEVICE type=ATTACH ugen=ugen3.3 cdev=ugen3.3 vendor=0x046d product=0x082d devclass=0xef devsubclass=0x02 sernum="6E7D726F" release=0x0011 mode=host port=4 parent=ugen3.1 */
@@ -735,6 +750,7 @@ static void* urbdrc_search_usb_device(void* arg)
 	int success = 0, error, on_close = 0, found = 0;
 	WLog_VRB(TAG, "");
 	channel_mgr = urbdrc->listener_callback->channel_mgr;
+    DWORD status;
 
 	/* init usb monitor */
 	struct udev* udev;
@@ -774,15 +790,41 @@ static void* urbdrc_search_usb_device(void* arg)
 		listobj[1] = mon_fd;
 		numobj = 2;
 
-		WaitForMultipleObjects(numobj, listobj, FALSE, INFINITE);
+        status = WaitForMultipleObjects(numobj, listobj, FALSE, INFINITE);
 
-		if (WaitForSingleObject(searchman->term_event, 0) == WAIT_OBJECT_0)
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+            goto out;
+        }
+
+        status = WaitForSingleObject(searchman->term_event, 0);
+
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+            goto out;
+        }
+
+        if (status == WAIT_OBJECT_0)
 		{
 			sem_post(&searchman->sem_term);
-			return 0;
+            goto out;
 		}
 
-		if (WaitForSingleObject(mon_fd, 0) == WAIT_OBJECT_0)
+        status = WaitForSingleObject(mon_fd, 0);
+
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+            goto out;
+        }
+
+
+        if (status == WAIT_OBJECT_0)
 		{
 			dev = udev_monitor_receive_device(mon);
 
@@ -856,9 +898,25 @@ static void* urbdrc_search_usb_device(void* arg)
 						numobj = 1;
 						timeout = 4000; /* milliseconds */
 
-						WaitForMultipleObjects(numobj, listobj, FALSE, timeout);
+						status = WaitForMultipleObjects(numobj, listobj, FALSE, timeout);
 
-						if (WaitForSingleObject(searchman->term_event, 0) == WAIT_OBJECT_0)
+                        if (status == WAIT_FAILED)
+                        {
+                            error = GetLastError();
+                            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+                            goto out;
+                        }
+
+                        status = WaitForSingleObject(searchman->term_event, 0);
+
+                        if (status == WAIT_FAILED)
+                        {
+                            error = GetLastError();
+                            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+                            goto out;
+                        }
+
+                        if (status == WAIT_OBJECT_0)
 						{
 							CloseHandle(mon_fd);
 							sem_post(&searchman->sem_term);
@@ -912,9 +970,25 @@ static void* urbdrc_search_usb_device(void* arg)
 					numobj = 1;
 					timeout = 3000; /* milliseconds */
 
-					WaitForMultipleObjects(numobj, listobj, FALSE, timeout);
+					status = WaitForMultipleObjects(numobj, listobj, FALSE, timeout);
 
-					if (WaitForSingleObject(searchman->term_event, 0) == WAIT_OBJECT_0)
+                    if (status == WAIT_FAILED)
+                    {
+                        error = GetLastError();
+                        WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+                        goto out;
+                    }
+
+                    status = WaitForSingleObject(searchman->term_event, 0);
+
+                    if (status == WAIT_FAILED)
+                    {
+                        error = GetLastError();
+                        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+                        goto out;
+                    }
+
+                    if (status == WAIT_OBJECT_0)
 					{
 						CloseHandle(mon_fd);
 						sem_post(&searchman->sem_term);
@@ -936,7 +1010,7 @@ static void* urbdrc_search_usb_device(void* arg)
 			}
 		}
 	}
-
+out:
 	CloseHandle(mon_fd);
 
 fail_create_monfd_event:

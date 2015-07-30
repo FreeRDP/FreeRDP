@@ -488,14 +488,15 @@ static void* drive_hotplug_thread_func(void* arg)
 	struct timeval tv;
 	int rv;
 	WIN32ERROR error;
+    DWORD status;
 
 	rdpdr = (rdpdrPlugin*) arg;
 
 	if (!(rdpdr->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 	{
 		WLog_ERR(TAG, "CreateEvent failed!");
-		ExitThread(ERROR_INTERNAL_ERROR);
-		return NULL;
+        error = ERROR_INTERNAL_ERROR;
+        goto out;
 	}
 
 	mfd = open("/proc/mounts", O_RDONLY, 0);
@@ -503,8 +504,8 @@ static void* drive_hotplug_thread_func(void* arg)
 	if (mfd < 0)
 	{
 		WLog_ERR(TAG, "ERROR: Unable to open /proc/mounts.");
-		ExitThread(ERROR_INTERNAL_ERROR);
-		return NULL;
+        error = ERROR_INTERNAL_ERROR;
+        goto out;
 	}
 
 	FD_ZERO(&rfds);
@@ -515,13 +516,19 @@ static void* drive_hotplug_thread_func(void* arg)
 	if ((error = handle_hotplug(rdpdr)))
 	{
 		WLog_ERR(TAG, "handle_hotplug failed with error %lu!", error);
-		ExitThread((DWORD)error);
-		return NULL;
+        goto out;
 	}
 
 	while ((rv = select(mfd+1, NULL, NULL, &rfds, &tv)) >= 0)
 	{
-		if (WaitForSingleObject(rdpdr->stopEvent, 0) == WAIT_OBJECT_0)
+        status = WaitForSingleObject(rdpdr->stopEvent, 0);
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+            goto out;
+        }
+		if (status == WAIT_OBJECT_0)
 			break;
 
 		if (FD_ISSET(mfd, &rfds))
@@ -530,8 +537,7 @@ static void* drive_hotplug_thread_func(void* arg)
 			if ((error = handle_hotplug(rdpdr)))
 			{
 				WLog_ERR(TAG, "handle_hotplug failed with error %lu!", error);
-				ExitThread((DWORD)error);
-				return NULL;
+                goto out;
 			}
 		}
 
@@ -541,20 +547,31 @@ static void* drive_hotplug_thread_func(void* arg)
 		tv.tv_usec = 0;
 	}
 
-	ExitThread(CHANNEL_RC_OK);
-	return NULL;
+out:
+    if (error && rdpdr->rdpcontext)
+        setChannelError(rdpdr->rdpcontext, error, "drive_hotplug_thread_func reported an error");
+
+    ExitThread((DWORD)error);
+    return NULL;
 }
 
-static void drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
+static WIN32ERROR drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 {
+    WIN32ERROR error;
 	if (rdpdr->hotplugThread)
 	{
 		if (rdpdr->stopEvent)
 			SetEvent(rdpdr->stopEvent);
 
-		WaitForSingleObject(rdpdr->hotplugThread, INFINITE);
+		if (WaitForSingleObject(rdpdr->hotplugThread, INFINITE) == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+            return error;
+        }
 		rdpdr->hotplugThread = NULL;
 	}
+    return CHANNEL_RC_OK;
 }
 
 #endif
@@ -793,7 +810,10 @@ static WIN32ERROR rdpdr_process_irp(rdpdrPlugin* rdpdr, wStream* s)
 
 	IFCALLRET(irp->device->IRPRequest, error, irp->device, irp);
 
-	return error;
+    if (error)
+        WLog_ERR(TAG, "device->IRPRequest failed with error %lu", error);
+
+    return error;
 }
 
 static WIN32ERROR rdpdr_process_init(rdpdrPlugin* rdpdr)
@@ -934,7 +954,7 @@ static WIN32ERROR rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 	}
 
 	Stream_Free(s, TRUE);
-	return ERROR_SUCCESS;
+	return CHANNEL_RC_OK;
 }
 
 
@@ -961,7 +981,7 @@ WIN32ERROR rdpdr_add_init_handle_data(void* pInitHandle, void* pUserData)
 		WLog_ERR(TAG, "ListDictionary_Add failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
-	return ERROR_SUCCESS;
+	return CHANNEL_RC_OK;
 }
 
 void* rdpdr_get_init_handle_data(void* pInitHandle)
@@ -1001,7 +1021,7 @@ WIN32ERROR rdpdr_add_open_handle_data(DWORD openHandle, void* pUserData)
 		WLog_ERR(TAG, "ListDictionary_Add failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
-	return ERROR_SUCCESS;
+	return CHANNEL_RC_OK;
 }
 
 void* rdpdr_get_open_handle_data(DWORD openHandle)
@@ -1061,7 +1081,7 @@ static WIN32ERROR rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr,
 		 * ignored in client-to-server data." Thus it would be best practice to cease data
 		 * transmission. However, simply returning here avoids a crash.
 		 */
-		return ERROR_SUCCESS;
+		return CHANNEL_RC_OK;
 	}
 
 	if (dataFlags & CHANNEL_FLAG_FIRST)
@@ -1193,17 +1213,17 @@ static WIN32ERROR rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, LPVO
 	status = rdpdr->channelEntryPoints.pVirtualChannelOpen(rdpdr->InitHandle,
 		&rdpdr->OpenHandle, rdpdr->channelDef.name, rdpdr_virtual_channel_open_event);
 
-	if ((error = rdpdr_add_open_handle_data(rdpdr->OpenHandle, rdpdr)))
+    if (status != CHANNEL_RC_OK)
+    {
+        WLog_ERR(TAG,  "pVirtualChannelOpen failed with %s [%08X]",
+                 WTSErrorToString(status), status);
+        return status;
+    }
+
+    if ((error = rdpdr_add_open_handle_data(rdpdr->OpenHandle, rdpdr)))
 	{
 		WLog_ERR(TAG, "rdpdr_add_open_handle_data failed with error %lu!", error);
 		return error;
-	}
-
-	if (status != CHANNEL_RC_OK)
-	{
-		WLog_ERR(TAG,  "pVirtualChannelOpen failed with %s [%08X]",
-				 WTSErrorToString(status), status);
-		return status;
 	}
 
 	rdpdr->queue = MessageQueue_New(NULL);
@@ -1226,8 +1246,12 @@ static WIN32ERROR rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
 {
 	WIN32ERROR error;
 
-	if (MessageQueue_PostQuit(rdpdr->queue, 0))
-		WaitForSingleObject(rdpdr->thread, INFINITE);
+	if (MessageQueue_PostQuit(rdpdr->queue, 0) && (WaitForSingleObject(rdpdr->thread, INFINITE) == WAIT_FAILED))
+    {
+        error = GetLastError();
+        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+        return error;
+    }
 
 	MessageQueue_Free(rdpdr->queue);
 	CloseHandle(rdpdr->thread);
@@ -1235,7 +1259,11 @@ static WIN32ERROR rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
 	rdpdr->queue = NULL;
 	rdpdr->thread = NULL;
 
-	drive_hotplug_thread_terminate(rdpdr);
+	if ((error = drive_hotplug_thread_terminate(rdpdr)))
+    {
+        WLog_ERR(TAG, "drive_hotplug_thread_terminate failed with error %lu!", error);
+        return error;
+    }
 
 	error = rdpdr->channelEntryPoints.pVirtualChannelClose(rdpdr->OpenHandle);
 	if (CHANNEL_RC_OK != error)

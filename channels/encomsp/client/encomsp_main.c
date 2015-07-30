@@ -1105,8 +1105,12 @@ static WIN32ERROR encomsp_virtual_channel_event_disconnected(encomspPlugin* enco
 {
 	UINT rc;
 
-	if (MessageQueue_PostQuit(encomsp->queue, 0))
-		WaitForSingleObject(encomsp->thread, INFINITE);
+	if (MessageQueue_PostQuit(encomsp->queue, 0) && (WaitForSingleObject(encomsp->thread, INFINITE) == WAIT_FAILED))
+    {
+        rc = GetLastError();
+        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", rc);
+        return rc;
+    }
 
 	MessageQueue_Free(encomsp->queue);
 	CloseHandle(encomsp->thread);

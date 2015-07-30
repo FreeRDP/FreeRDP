@@ -492,6 +492,7 @@ WIN32ERROR tsmf_ifman_on_sample(TSMF_IFMAN* ifman)
 	UINT64 ThrottleDuration;
 	UINT32 SampleExtensions;
 	UINT32 cbData;
+    WIN32ERROR error;
 
 	if (Stream_GetRemainingLength(ifman->input) < 60)
 		return ERROR_INVALID_DATA;
@@ -537,7 +538,11 @@ WIN32ERROR tsmf_ifman_on_sample(TSMF_IFMAN* ifman)
 		return ERROR_OUTOFMEMORY;
 	}
 
-	tsmf_presentation_sync(presentation);
+	if ((error = tsmf_presentation_sync(presentation)))
+    {
+        WLog_ERR(TAG, "tsmf_presentation_sync failed with error %lu", error);
+        return error;
+    }
 	ifman->output_pending = TRUE;
 
 	return CHANNEL_RC_OK;

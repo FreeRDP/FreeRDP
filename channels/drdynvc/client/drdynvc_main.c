@@ -437,6 +437,9 @@ WIN32ERROR dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 
 				context = dvcman->drdynvc->context;
 				IFCALLRET(context->OnChannelConnected, error, context, ChannelName, listener->iface.pInterface);
 
+                if (error)
+                    WLog_ERR(TAG, "context.ReceiveSamples failed with error %lu", error);
+
 				return error;
 			}
 			else
@@ -475,12 +478,11 @@ WIN32ERROR dvcman_open_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Ch
 	if (channel->status == CHANNEL_RC_OK)
 	{
 		pCallback = channel->channel_callback;
-		if (pCallback->OnOpen)
-			if ((error = pCallback->OnOpen(pCallback)))
-			{
-				WLog_ERR(TAG, "OnOpen failed with eror %lu!", error);
-				return error;
-			}
+		if ((pCallback->OnOpen) && (error = pCallback->OnOpen(pCallback)))
+		{
+			WLog_ERR(TAG, "OnOpen failed with eror %lu!", error);
+			return error;
+		}
 		WLog_DBG(TAG, "open_channel: ChannelId %d", ChannelId);
 	}
 
@@ -518,12 +520,11 @@ WIN32ERROR dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 C
 
 		ichannel = (IWTSVirtualChannel*) channel;
 
-		if (ichannel->Close)
-			if ((error = ichannel->Close(ichannel)))
-			{
-				WLog_ERR(TAG, "Close failed with eror %lu!", error);
-				return error;
-			}
+		if ((ichannel->Close) && (error = ichannel->Close(ichannel)))
+		{
+			WLog_ERR(TAG, "Close failed with eror %lu!", error);
+			return error;
+		}
 	}
 
 	ArrayList_Remove(dvcman->channels, channel);
@@ -1038,7 +1039,7 @@ WIN32ERROR drdynvc_add_init_handle_data(void* pInitHandle, void* pUserData)
 		return ERROR_INTERNAL_ERROR;
 
 	}
-	return ERROR_SUCCESS;
+	return CHANNEL_RC_OK;
 }
 
 void* drdynvc_get_init_handle_data(void* pInitHandle)
@@ -1077,7 +1078,7 @@ WIN32ERROR drdynvc_add_open_handle_data(DWORD openHandle, void* pUserData)
 		return ERROR_INTERNAL_ERROR;
 
 	}
-	return ERROR_SUCCESS;
+	return CHANNEL_RC_OK;
 }
 
 void* drdynvc_get_open_handle_data(DWORD openHandle)
@@ -1309,8 +1310,12 @@ static WIN32ERROR drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdy
 {
 	WIN32ERROR status;
 
-	if (MessageQueue_PostQuit(drdynvc->queue, 0))
-		WaitForSingleObject(drdynvc->thread, INFINITE);
+	if (MessageQueue_PostQuit(drdynvc->queue, 0) && (WaitForSingleObject(drdynvc->thread, INFINITE) == WAIT_FAILED))
+    {
+        status = GetLastError();
+        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", status);
+        return status;
+    }
 
 	MessageQueue_Free(drdynvc->queue);
 	CloseHandle(drdynvc->thread);

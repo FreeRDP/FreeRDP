@@ -671,12 +671,17 @@ static WIN32ERROR drive_irp_request(DEVICE* device, IRP* irp)
 	return CHANNEL_RC_OK;
 }
 
-static void drive_free(DEVICE* device)
+static WIN32ERROR drive_free(DEVICE* device)
 {
 	DRIVE_DEVICE* drive = (DRIVE_DEVICE*) device;
+    WIN32ERROR error = CHANNEL_RC_OK;
 
-	if (MessageQueue_PostQuit(drive->IrpQueue, 0))
-		WaitForSingleObject(drive->thread, INFINITE);
+	if (MessageQueue_PostQuit(drive->IrpQueue, 0) && (WaitForSingleObject(drive->thread, INFINITE) == WAIT_FAILED))
+    {
+        error = GetLastError();
+        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+        return error;
+    }
 
 	CloseHandle(drive->thread);
 
@@ -686,6 +691,7 @@ static void drive_free(DEVICE* device)
 	Stream_Free(drive->device.data, TRUE);
 
 	free(drive);
+    return error;
 }
 
 WIN32ERROR drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char* name, char* path)

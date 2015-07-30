@@ -319,7 +319,7 @@ typedef struct _DEVMAN DEVMAN;
 
 typedef WIN32ERROR (*pcIRPRequest)(DEVICE* device, IRP* irp);
 typedef WIN32ERROR (*pcInitDevice)(DEVICE* device);
-typedef void (*pcFreeDevice)(DEVICE* device);
+typedef WIN32ERROR (*pcFreeDevice)(DEVICE* device);
 
 struct _DEVICE
 {

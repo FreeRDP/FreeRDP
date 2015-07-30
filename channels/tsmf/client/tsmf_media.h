@@ -40,7 +40,7 @@ TSMF_PRESENTATION *tsmf_presentation_new(const BYTE *guid, IWTSVirtualChannelCal
 TSMF_PRESENTATION *tsmf_presentation_find_by_id(const BYTE *guid);
 BOOL tsmf_presentation_start(TSMF_PRESENTATION *presentation);
 BOOL tsmf_presentation_stop(TSMF_PRESENTATION *presentation);
-void tsmf_presentation_sync(TSMF_PRESENTATION *presentation);
+WIN32ERROR tsmf_presentation_sync(TSMF_PRESENTATION *presentation);
 BOOL tsmf_presentation_paused(TSMF_PRESENTATION *presentation);
 BOOL tsmf_presentation_restarted(TSMF_PRESENTATION *presentation);
 BOOL tsmf_presentation_volume_changed(TSMF_PRESENTATION *presentation, UINT32 newVolume, UINT32 muted);

@@ -95,7 +95,7 @@ static WIN32ERROR rdpdr_server_send_announce_request(RdpdrServerContext* context
 	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
 
 	Stream_Free(s, TRUE);
-	return status ? ERROR_SUCCESS : ERROR_INTERNAL_ERROR;
+	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
 static WIN32ERROR rdpdr_server_receive_announce_response(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
@@ -470,7 +470,7 @@ static WIN32ERROR rdpdr_server_send_core_capability_request(RdpdrServerContext* 
 	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
 
 	Stream_Free(s, TRUE);
-	return status ? ERROR_SUCCESS : ERROR_INTERNAL_ERROR;
+	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
 static WIN32ERROR rdpdr_server_receive_core_capability_response(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
@@ -581,7 +581,7 @@ static WIN32ERROR rdpdr_server_send_client_id_confirm(RdpdrServerContext* contex
 	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
 
 	Stream_Free(s, TRUE);
-	return status ? ERROR_SUCCESS : ERROR_INTERNAL_ERROR;
+	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
 static WIN32ERROR rdpdr_server_receive_device_list_announce_request(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
@@ -805,7 +805,7 @@ static WIN32ERROR rdpdr_server_send_user_logged_on(RdpdrServerContext* context)
 	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
 
 	Stream_Free(s, TRUE);
-	return status ? ERROR_SUCCESS : ERROR_INTERNAL_ERROR;
+	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
 static WIN32ERROR rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
@@ -973,7 +973,24 @@ static void* rdpdr_server_thread(void* arg)
 		BytesReturned = 0;
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
-		if (WaitForSingleObject(context->priv->StopEvent, 0) == WAIT_OBJECT_0)
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+            goto out_stream;
+        }
+
+        status = WaitForSingleObject(context->priv->StopEvent, 0);
+
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+            goto out_stream;
+        }
+
+
+        if (status == WAIT_OBJECT_0)
 			break;
 
 		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0,
@@ -1041,10 +1058,16 @@ static WIN32ERROR rdpdr_server_start(RdpdrServerContext* context)
 
 static WIN32ERROR rdpdr_server_stop(RdpdrServerContext* context)
 {
+    WIN32ERROR error;
 	if (context->priv->StopEvent)
 	{
 		SetEvent(context->priv->StopEvent);
-		WaitForSingleObject(context->priv->Thread, INFINITE);
+		if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+            return error;
+        }
 		CloseHandle(context->priv->Thread);
 		context->priv->Thread = NULL;
 		CloseHandle(context->priv->StopEvent);

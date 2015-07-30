@@ -168,6 +168,7 @@ static void* encomsp_server_thread(void* arg)
 	ENCOMSP_ORDER_HEADER* header;
 	EncomspServerContext* context;
 	WIN32ERROR error = CHANNEL_RC_OK;
+    DWORD status;
 
 	context = (EncomspServerContext*) arg;
 
@@ -197,9 +198,25 @@ static void* encomsp_server_thread(void* arg)
 
 	while (1)
 	{
-		WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+        status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
-		if (WaitForSingleObject(context->priv->StopEvent, 0) == WAIT_OBJECT_0)
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
+            break;
+        }
+
+        status = WaitForSingleObject(context->priv->StopEvent, 0);
+
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+            break;
+        }
+
+		if (status == WAIT_OBJECT_0)
 		{
 			break;
 		}
@@ -275,12 +292,18 @@ static WIN32ERROR encomsp_server_start(EncomspServerContext* context)
 
 static WIN32ERROR encomsp_server_stop(EncomspServerContext* context)
 {
+    WIN32ERROR error = CHANNEL_RC_OK;
 	SetEvent(context->priv->StopEvent);
 
-	WaitForSingleObject(context->priv->Thread, INFINITE);
+	if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
+    {
+        error = GetLastError();
+        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+        return error;
+    }
 	CloseHandle(context->priv->Thread);
 
-	return CHANNEL_RC_OK;
+	return error;
 }
 
 EncomspServerContext* encomsp_server_context_new(HANDLE vcm)
