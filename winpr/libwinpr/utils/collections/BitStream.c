@@ -348,5 +348,8 @@ wBitStream* BitStream_New()
 
 void BitStream_Free(wBitStream* bs)
 {
+	if (!bs)
+		return;
+
 	free(bs);
 }
