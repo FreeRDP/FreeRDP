@@ -210,6 +210,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 	if (!winpr_Handle_GetInfo(hHandle, &Type, &Object))
 	{
 		WLog_ERR(TAG, "invalid hHandle.");
+		SetLastError(ERROR_INVALID_HANDLE);
 		return WAIT_FAILED;
 	}
 
@@ -221,6 +222,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		if (process->pid != waitpid(process->pid, &(process->status), 0))
 		{
 			WLog_ERR(TAG, "waitpid failure [%d] %s", errno, strerror(errno));
+			SetLastError(ERROR_INTERNAL_ERROR);
 			return WAIT_FAILED;
 		}
 
@@ -255,13 +257,19 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		int status;
 		int fd = winpr_Handle_getFd(Object);
 		if (fd < 0)
+		{
+			WLog_ERR(TAG, "winpr_Handle_getFd did not return a fd!");
+			SetLastError(ERROR_INVALID_HANDLE);
 			return WAIT_FAILED;
+		}
+
 
 		status = waitOnFd(fd, Object->Mode, dwMilliseconds);
 
 		if (status < 0)
 		{
 			WLog_ERR(TAG, "waitOnFd() failure [%d] %s", errno, strerror(errno));
+			SetLastError(ERROR_INTERNAL_ERROR);
 			return WAIT_FAILED;
 		}
 
@@ -271,6 +279,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		return winpr_Handle_cleanup(Object);
 	}
 
+	SetLastError(ERROR_INTERNAL_ERROR);
 	return WAIT_FAILED;
 }
 
@@ -353,6 +362,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 			if (!winpr_Handle_GetInfo(lpHandles[index], &Type, &Object))
 			{
 				WLog_ERR(TAG, "invalid event file descriptor");
+				SetLastError(ERROR_INVALID_HANDLE);
 				return WAIT_FAILED;
 			}
 
@@ -361,6 +371,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 			if (fd == -1)
 			{
 				WLog_ERR(TAG, "invalid file descriptor");
+				SetLastError(ERROR_INVALID_HANDLE);
 				return WAIT_FAILED;
 			}
 
@@ -419,6 +430,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 					 strerror(errno));
 #endif
 			winpr_log_backtrace(TAG, WLOG_ERROR, 20);
+			SetLastError(ERROR_INTERNAL_ERROR);
 			return WAIT_FAILED;
 		}
 
@@ -450,6 +462,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 			if (!winpr_Handle_GetInfo(lpHandles[idx], &Type, &Object))
 			{
 					WLog_ERR(TAG, "invalid hHandle.");
+					SetLastError(ERROR_INVALID_HANDLE);
 					return WAIT_FAILED;
 			}
 
@@ -458,6 +471,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 			if (fd == -1)
 			{
 				WLog_ERR(TAG, "invalid file descriptor");
+				SetLastError(ERROR_INVALID_HANDLE);
 				return WAIT_FAILED;
 			}
 
@@ -500,6 +514,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 	while (bWaitAll || !signal_handled);
 
 	WLog_ERR(TAG, "failed (unknown error)");
+	SetLastError(ERROR_INTERNAL_ERROR);
 	return WAIT_FAILED;
 }
 
