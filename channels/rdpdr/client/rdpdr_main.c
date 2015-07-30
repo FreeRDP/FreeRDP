@@ -851,7 +851,6 @@ static WIN32ERROR rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 					WLog_ERR(TAG, "rdpdr_send_client_name_request failed with error %lu", error);
 					return error;
 				}
-
 				if ((error = rdpdr_process_init(rdpdr)))
 				{
 					WLog_ERR(TAG, "rdpdr_process_init failed with error %lu", error);
@@ -909,13 +908,28 @@ static WIN32ERROR rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 	}
 	else if (component == RDPDR_CTYP_PRN)
 	{
-		WLog_ERR(TAG, "RDPDR_CTYP_PRN unknown PacketId: 0x%04X", packetId);
-		return ERROR_INVALID_DATA;
+		switch (packetId)
+		{
+			case PAKID_PRN_CACHE_DATA:
+				{
+					UINT32 eventID;
+					Stream_Read_UINT32(s, eventID);
+					WLog_ERR(TAG, "Ignoring unhandled message PAKID_PRN_CACHE_DATA (EventID: 0x%04X)", eventID);
+				}
+				break;
+
+			case PAKID_PRN_USING_XPS:
+				WLog_ERR(TAG, "Ignoring unhandled message PAKID_PRN_USING_XPS");
+				break;
+
+			default:
+				WLog_ERR(TAG, "Unknown printing component packetID: 0x%04X", packetId);
+				return ERROR_INVALID_DATA;
+		}
 	}
 	else
 	{
-		WLog_ERR(TAG, "unknown message: Component: 0x%04X PacketId: 0x%04X",
-				component, packetId);
+		WLog_ERR(TAG, "Unknown message: Component: 0x%04X PacketId: 0x%04X", component, packetId);
 		return ERROR_INVALID_DATA;
 	}
 

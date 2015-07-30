@@ -929,6 +929,9 @@ void freerdp_settings_free(rdpSettings* settings)
     free(settings->RedirectionPassword);
     free(settings->RedirectionTsvUrl);
     free(settings->RemoteAssistanceSessionId);
+    free(settings->RemoteAssistancePassword);
+    free(settings->RemoteAssistancePassStub);
+    free(settings->RemoteAssistanceRCTicket);
     free(settings->AuthenticationServiceClass);
     free(settings->GatewayHostname);
     free(settings->GatewayUsername);
