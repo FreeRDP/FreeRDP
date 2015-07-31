@@ -182,6 +182,9 @@ fail_critical_section:
 
 void CountdownEvent_Free(wCountdownEvent* countdown)
 {
+	if (!countdown)
+		return;
+
 	DeleteCriticalSection(&countdown->lock);
 	CloseHandle(countdown->event);
 

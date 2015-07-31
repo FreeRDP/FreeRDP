@@ -46,5 +46,8 @@ wKeyValuePair* KeyValuePair_New(void* key, void* value)
 
 void KeyValuePair_Free(wKeyValuePair* keyValuePair)
 {
+	if (!keyValuePair)
+		return;
+
 	free(keyValuePair);
 }
