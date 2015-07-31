@@ -61,7 +61,7 @@ struct _MAKECERT_CONTEXT
 	int duration_months;
 };
 
-COMMAND_LINE_ARGUMENT_A args[] =
+static COMMAND_LINE_ARGUMENT_A args[] =
 {
 	/* Custom Options */
 
