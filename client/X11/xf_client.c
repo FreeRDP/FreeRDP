@@ -1782,6 +1782,10 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 {
 	rdpSettings* settings;
 	xfContext* xfc = (xfContext*) instance->context;
+	Atom property;
+	unsigned long nitems, bytes;
+	BYTE* prop;
+	int i, state;
 
 	assert(context);
 	assert(xfc);
@@ -1859,6 +1863,27 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xfc->WM_PROTOCOLS = XInternAtom(xfc->display, "WM_PROTOCOLS", False);
 	xfc->WM_DELETE_WINDOW = XInternAtom(xfc->display, "WM_DELETE_WINDOW", False);
 	xfc->WM_STATE = XInternAtom(xfc->display, "WM_STATE", False);
+
+	property = XInternAtom(xfc->display, "_NET_SUPPORTED", False);
+
+	xf_GetWindowProperty(xfc, DefaultRootWindow(xfc->display), property, 0xFFFFFFFF, &nitems, &bytes, &prop);
+
+	state = 0;
+
+	for (i = 0; i < nitems; i++)
+	{
+		if (((Atom*) prop)[i] == xfc->_NET_WM_STATE_FULLSCREEN)
+			state |= 0x01;
+
+		if (((Atom*) prop)[i] == xfc->_NET_WM_FULLSCREEN_MONITORS)
+			state |= 0x02;
+	}
+
+	if (state != 0x03)
+	{
+		xfc->_NET_WM_STATE_FULLSCREEN = None;
+		xfc->_NET_WM_FULLSCREEN_MONITORS = None;
+	}
 
 	xfc->xfds = ConnectionNumber(xfc->display);
 	xfc->screen_number = DefaultScreen(xfc->display);
