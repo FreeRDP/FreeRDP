@@ -720,7 +720,6 @@ int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings, P
 	EntryPoints.pVirtualChannelClose = FreeRDP_VirtualChannelClose;
 	EntryPoints.pVirtualChannelWrite = FreeRDP_VirtualChannelWrite;
 
-	g_pInterface = NULL;
 	EntryPoints.MagicNumber = FREERDP_CHANNEL_MAGIC_NUMBER;
 	EntryPoints.ppInterface = &g_pInterface;
 	EntryPoints.pExtendedData = data;
@@ -731,6 +730,7 @@ int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings, P
 
 	EnterCriticalSection(&g_channels_lock);
 
+	g_pInterface = NULL;
 	g_ChannelInitData.channels = channels;
 	status = pChannelClientData->entry((PCHANNEL_ENTRY_POINTS) &EntryPoints);
 
