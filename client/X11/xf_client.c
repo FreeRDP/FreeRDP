@@ -1849,6 +1849,7 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xfc->_NET_WORKAREA = XInternAtom(xfc->display, "_NET_WORKAREA", False);
 	xfc->_NET_WM_STATE = XInternAtom(xfc->display, "_NET_WM_STATE", False);
 	xfc->_NET_WM_STATE_FULLSCREEN = XInternAtom(xfc->display, "_NET_WM_STATE_FULLSCREEN", False);
+	xfc->_NET_WM_STATE_ABOVE = XInternAtom(xfc->display, "_NET_WM_STATE_ABOVE", False);
 	xfc->_NET_WM_FULLSCREEN_MONITORS = XInternAtom(xfc->display, "_NET_WM_FULLSCREEN_MONITORS", False);
 	xfc->_NET_WM_WINDOW_TYPE = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE", False);
 	xfc->_NET_WM_WINDOW_TYPE_NORMAL = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE_NORMAL", False);
@@ -1877,13 +1878,19 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 
 		if (((Atom*) prop)[i] == xfc->_NET_WM_FULLSCREEN_MONITORS)
 			state |= 0x02;
+
+		if (((Atom*) prop)[i] == xfc->_NET_WM_STATE_ABOVE)
+			state |= 0x04;
 	}
 
-	if (state != 0x03)
+	if ((state & 0x03) != 0x03)
 	{
 		xfc->_NET_WM_STATE_FULLSCREEN = None;
 		xfc->_NET_WM_FULLSCREEN_MONITORS = None;
 	}
+
+	if (!(state & 0x04))
+		xfc->_NET_WM_STATE_ABOVE = None;
 
 	xfc->xfds = ConnectionNumber(xfc->display);
 	xfc->screen_number = DefaultScreen(xfc->display);

@@ -213,7 +213,29 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	else
 	{
 		if (fullscreen)
+		{
 			xf_SetWindowDecorations(xfc, window->handle, FALSE);
+
+			if (xfc->_NET_WM_STATE_ABOVE != None)
+			{
+				xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
+							_NET_WM_STATE_ADD,
+							xfc->_NET_WM_STATE_ABOVE, 0, 0);
+			}
+			else
+			{
+				XRaiseWindow (xfc->display, window->handle);
+			}
+		}
+		else
+		{
+			if (xfc->_NET_WM_STATE_ABOVE != None)
+			{
+				xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
+							_NET_WM_STATE_REMOVE,
+							xfc->_NET_WM_STATE_ABOVE, 0, 0);
+			}
+		}
 	}
 
 	XMoveWindow(xfc->display, window->handle, startX, startY);
