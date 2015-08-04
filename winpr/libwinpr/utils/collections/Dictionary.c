@@ -128,6 +128,9 @@ wDictionary* Dictionary_New(BOOL synchronized)
 
 void Dictionary_Free(wDictionary* dictionary)
 {
+	if (!dictionary)
+		return;
+
 	free(dictionary);
 }
 

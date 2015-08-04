@@ -223,6 +223,9 @@ error_array:
 
 void MessageQueue_Free(wMessageQueue* queue)
 {
+	if (!queue)
+		return;
+
 	CloseHandle(queue->event);
 	DeleteCriticalSection(&queue->lock);
 
