@@ -124,6 +124,8 @@ struct _H264_CONTEXT_MF
 	IMFSample* sample;
 	UINT32 frameWidth;
 	UINT32 frameHeight;
+	IMFSample* outputSample;
+	IMFMediaBuffer* outputBuffer;
 	HMODULE mfplat;
 	pfnMFStartup MFStartup;
 	pfnMFShutdown MFShutdown;
@@ -156,9 +158,60 @@ static HRESULT mf_find_output_type(H264_CONTEXT_MF* sys, const GUID* guid, IMFMe
 			return S_OK;
 		}
 
+		pMediaType->lpVtbl->Release(pMediaType);
+
 		idx++;
 	}
 
+	return hr;
+}
+
+static HRESULT mf_create_output_sample(H264_CONTEXT_MF* sys)
+{
+	HRESULT hr = S_OK;
+	MFT_OUTPUT_STREAM_INFO streamInfo;
+
+	if (sys->outputSample)
+	{
+		sys->outputSample->lpVtbl->Release(sys->outputSample);
+		sys->outputSample = NULL;
+	}
+
+	hr = sys->MFCreateSample(&sys->outputSample);
+
+	if (FAILED(hr))
+	{
+		WLog_ERR(TAG, "MFCreateSample failure: 0x%04X", hr);
+		goto error;
+	}
+
+	hr = sys->transform->lpVtbl->GetOutputStreamInfo(sys->transform, 0, &streamInfo);
+
+	if (FAILED(hr))
+	{
+		WLog_ERR(TAG, "GetOutputStreamInfo failure: 0x%04X", hr);
+		goto error;
+	}
+
+	hr = sys->MFCreateMemoryBuffer(streamInfo.cbSize, &sys->outputBuffer);
+
+	if (FAILED(hr))
+	{
+		WLog_ERR(TAG, "MFCreateMemoryBuffer failure: 0x%04X", hr);
+		goto error;
+	}
+
+	sys->outputSample->lpVtbl->AddBuffer(sys->outputSample, sys->outputBuffer);
+
+	if (FAILED(hr))
+	{
+		WLog_ERR(TAG, "AddBuffer failure: 0x%04X", hr);
+		goto error;
+	}
+
+	sys->outputBuffer->lpVtbl->Release(sys->outputBuffer);
+
+error:
 	return hr;
 }
 
@@ -170,10 +223,8 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize)
 	DWORD cbCurrentLength = 0;
 	DWORD outputStatus = 0;
 	IMFSample* inputSample = NULL;
-	IMFSample* outputSample = NULL;
 	IMFMediaBuffer* inputBuffer = NULL;
 	IMFMediaBuffer* outputBuffer = NULL;
-	MFT_OUTPUT_STREAM_INFO streamInfo;
 	MFT_OUTPUT_DATA_BUFFER outputDataBuffer;
 	H264_CONTEXT_MF* sys = (H264_CONTEXT_MF*) h264->pSystemData;
 
@@ -227,6 +278,8 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize)
 		goto error;
 	}
 
+	inputBuffer->lpVtbl->Release(inputBuffer);
+
 	hr = sys->transform->lpVtbl->ProcessInput(sys->transform, 0, inputSample, 0);
 
 	if (FAILED(hr))
@@ -235,42 +288,18 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize)
 		goto error;
 	}
 
-	hr = sys->MFCreateSample(&outputSample);
+	hr = mf_create_output_sample(sys);
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "MFCreateSample failure: 0x%04X", hr);
-		goto error;
-	}
-
-	hr = sys->transform->lpVtbl->GetOutputStreamInfo(sys->transform, 0, &streamInfo);
-
-	if (FAILED(hr))
-	{
-		WLog_ERR(TAG, "GetOutputStreamInfo failure: 0x%04X", hr);
-		goto error;
-	}
-
-	hr = sys->MFCreateMemoryBuffer(streamInfo.cbSize, &outputBuffer);
-
-	if (FAILED(hr))
-	{
-		WLog_ERR(TAG, "MFCreateMemoryBuffer failure: 0x%04X", hr);
-		goto error;
-	}
-
-	outputSample->lpVtbl->AddBuffer(outputSample, outputBuffer);
-
-	if (FAILED(hr))
-	{
-		WLog_ERR(TAG, "AddBuffer failure: 0x%04X", hr);
+		WLog_ERR(TAG, "mf_create_output_sample failure: 0x%04X", hr);
 		goto error;
 	}
 
 	outputDataBuffer.dwStreamID = 0;
 	outputDataBuffer.dwStatus = 0;
 	outputDataBuffer.pEvents = NULL;
-	outputDataBuffer.pSample = outputSample;
+	outputDataBuffer.pSample = sys->outputSample;
 
 	hr = sys->transform->lpVtbl->ProcessOutput(sys->transform, 0, 1, &outputDataBuffer, &outputStatus);
 
@@ -282,7 +311,11 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize)
 		UINT64 frameSize = 0;
 		IMFAttributes* attributes = NULL;
 
-		fprintf(stderr, "MF_E_TRANSFORM_STREAM_CHANGE\n");
+		if (sys->outputType)
+		{
+			sys->outputType->lpVtbl->Release(sys->outputType);
+			sys->outputType = NULL;
+		}
 
 		hr = mf_find_output_type(sys, &MFVideoFormat_IYUV, &sys->outputType);
 
@@ -297,6 +330,14 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize)
 		if (FAILED(hr))
 		{
 			WLog_ERR(TAG, "SetOutputType failure: 0x%04X", hr);
+			goto error;
+		}
+
+		hr = mf_create_output_sample(sys);
+
+		if (FAILED(hr))
+		{
+			WLog_ERR(TAG, "mf_create_output_sample failure: 0x%04X", hr);
 			goto error;
 		}
 
@@ -319,8 +360,6 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize)
 			goto error;
 		}
 
-		fprintf(stderr, "frame width: %d height: %d stride: %d\n", sys->frameWidth, sys->frameHeight, stride);
-
 		h264->iStride[0] = stride;
 		h264->iStride[1] = stride / 2;
 		h264->iStride[2] = stride / 2;
@@ -341,7 +380,7 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize)
 	}
 	else if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
 	{
-		fprintf(stderr, "MF_E_TRANSFORM_NEED_MORE_INPUT\n");
+		
 	}
 	else if (FAILED(hr))
 	{
@@ -356,7 +395,7 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize)
 		DWORD cbMaxLength = 0;
 		DWORD cbCurrentLength = 0;
 
-		hr = outputSample->lpVtbl->GetBufferCount(outputSample, &bufferCount);
+		hr = sys->outputSample->lpVtbl->GetBufferCount(sys->outputSample, &bufferCount);
 
 		if (FAILED(hr))
 		{
@@ -364,11 +403,11 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize)
 			goto error;
 		}
 
-		hr = outputSample->lpVtbl->ConvertToContiguousBuffer(outputSample, &outputBuffer);
+		hr = sys->outputSample->lpVtbl->GetBufferByIndex(sys->outputSample, 0, &outputBuffer);
 
 		if (FAILED(hr))
 		{
-			WLog_ERR(TAG, "ConvertToContiguousBuffer failure: 0x%04X", hr);
+			WLog_ERR(TAG, "GetBufferByIndex failure: 0x%04X", hr);
 			goto error;
 		}
 
@@ -396,15 +435,11 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize)
 			WLog_ERR(TAG, "Unlock failure: 0x%04X", hr);
 			goto error;
 		}
+
+		outputBuffer->lpVtbl->Release(outputBuffer);
 	}
 
-	inputSample->lpVtbl->DeleteAllItems(inputSample);
 	inputSample->lpVtbl->Release(inputSample);
-	inputBuffer->lpVtbl->Release(inputBuffer);
-
-	outputSample->lpVtbl->DeleteAllItems(outputSample);
-	outputSample->lpVtbl->Release(outputSample);
-	outputBuffer->lpVtbl->Release(outputBuffer);
 
 	return 1;
 
@@ -428,13 +463,13 @@ static void mf_uninit(H264_CONTEXT* h264)
 	{
 		if (sys->transform)
 		{
-			//sys->transform->lpVtbl->Release(sys->transform);
+			sys->transform->lpVtbl->Release(sys->transform);
 			sys->transform = NULL;
 		}
 
 		if (sys->codecApi)
 		{
-			//sys->codecApi->lpVtbl->Release(sys->codecApi);
+			sys->codecApi->lpVtbl->Release(sys->codecApi);
 			sys->codecApi = NULL;
 		}
 
@@ -450,6 +485,12 @@ static void mf_uninit(H264_CONTEXT* h264)
 			sys->outputType = NULL;
 		}
 
+		if (sys->outputSample)
+		{
+			sys->outputSample->lpVtbl->Release(sys->outputSample);
+			sys->outputSample = NULL;
+		}
+
 		if (sys->mfplat)
 		{
 			FreeLibrary(sys->mfplat);
@@ -461,6 +502,8 @@ static void mf_uninit(H264_CONTEXT* h264)
 		h264->iStride[0] = h264->iStride[1] = h264->iStride[2] = 0;
 
 		sys->MFShutdown();
+		
+		CoUninitialize();
 
 		free(sys);
 		h264->pSystemData = NULL;
@@ -510,17 +553,26 @@ static BOOL mf_init(H264_CONTEXT* h264)
 		hr = sys->MFStartup(MF_VERSION, 0);
 
 		if (FAILED(hr))
+		{
+			WLog_ERR(TAG, "MFStartup failure: 0x%04X", hr);
 			goto error;
+		}
 
 		hr = CoCreateInstance(&CLSID_CMSH264DecoderMFT, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void**) &sys->transform);
 
 		if (FAILED(hr))
+		{
+			WLog_ERR(TAG, "CoCreateInstance(CLSID_CMSH264DecoderMFT) failure: 0x%04X", hr);
 			goto error;
+		}
 
 		hr = sys->transform->lpVtbl->QueryInterface(sys->transform, &IID_ICodecAPI, (void**) &sys->codecApi);
 
 		if (FAILED(hr))
+		{
+			WLog_ERR(TAG, "QueryInterface(IID_ICodecAPI) failure: 0x%04X", hr);
 			goto error;
+		}
 
 		var.vt = VT_UI4;
 		var.ulVal = 1;
@@ -528,37 +580,66 @@ static BOOL mf_init(H264_CONTEXT* h264)
 		hr = sys->codecApi->lpVtbl->SetValue(sys->codecApi, &CODECAPI_AVLowLatencyMode, &var);
 
 		if (FAILED(hr))
+		{
+			WLog_ERR(TAG, "SetValue(CODECAPI_AVLowLatencyMode) failure: 0x%04X", hr);
 			goto error;
+		}
 
 		hr = sys->MFCreateMediaType(&sys->inputType);
 
 		if (FAILED(hr))
+		{
+			WLog_ERR(TAG, "MFCreateMediaType failure: 0x%04X", hr);
 			goto error;
+		}
 
 		hr = sys->inputType->lpVtbl->SetGUID(sys->inputType, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
 
 		if (FAILED(hr))
+		{
+			WLog_ERR(TAG, "SetGUID(MF_MT_MAJOR_TYPE) failure: 0x%04X", hr);
 			goto error;
+		}
 
 		hr = sys->inputType->lpVtbl->SetGUID(sys->inputType, &MF_MT_SUBTYPE, &MFVideoFormat_H264);
 		
 		if (FAILED(hr))
+		{
+			WLog_ERR(TAG, "SetGUID(MF_MT_SUBTYPE) failure: 0x%04X", hr);
 			goto error;
+		}
 
 		hr = sys->transform->lpVtbl->SetInputType(sys->transform, 0, sys->inputType, 0);
 
 		if (FAILED(hr))
+		{
+			WLog_ERR(TAG, "SetInputType failure: 0x%04X", hr);
 			goto error;
+		}
 
 		hr = mf_find_output_type(sys, &MFVideoFormat_IYUV, &sys->outputType);
 
 		if (FAILED(hr))
+		{
+			WLog_ERR(TAG, "mf_find_output_type failure: 0x%04X", hr);
 			goto error;
+		}
 
 		hr = sys->transform->lpVtbl->SetOutputType(sys->transform, 0, sys->outputType, 0);
 
 		if (FAILED(hr))
+		{
+			WLog_ERR(TAG, "SetOutputType failure: 0x%04X", hr);
 			goto error;
+		}
+
+		hr = mf_create_output_sample(sys);
+
+		if (FAILED(hr))
+		{
+			WLog_ERR(TAG, "mf_create_output_sample failure: 0x%04X", hr);
+			goto error;
+		}
 	}
 	return TRUE;
 
