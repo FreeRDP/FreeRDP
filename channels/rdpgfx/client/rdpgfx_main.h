@@ -69,6 +69,7 @@ struct _RDPGFX_PLUGIN
 	ZGFX_CONTEXT* zgfx;
 	UINT32 UnacknowledgedFrames;
 	UINT32 TotalDecodedFrames;
+	BOOL suspendFrameAcks;
 
 	wHashTable* SurfaceTable;
 

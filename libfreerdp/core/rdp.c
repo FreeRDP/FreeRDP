@@ -34,7 +34,6 @@
 
 #define TAG FREERDP_TAG("core.rdp")
 
-#ifdef WITH_DEBUG_RDP
 const char* DATA_PDU_TYPE_STRINGS[80] =
 {
 		"?", "?", /* 0x00 - 0x01 */
@@ -72,7 +71,6 @@ const char* DATA_PDU_TYPE_STRINGS[80] =
 		"FrameAcknowledge", "?", "?", /* 0x38 - 0x40 */
 		"?", "?", "?", "?", "?", "?" /* 0x41 - 0x46 */
 };
-#endif
 
 /**
  * Read RDP Security Header.\n
@@ -809,10 +807,8 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 		Stream_Seek(s, SrcSize);
 	}
 
-#ifdef WITH_DEBUG_RDP
 	WLog_DBG(TAG, "recv %s Data PDU (0x%02X), length: %d",
 			 type < ARRAYSIZE(DATA_PDU_TYPE_STRINGS) ? DATA_PDU_TYPE_STRINGS[type] : "???", type, length);
-#endif
 
 	switch (type)
 	{

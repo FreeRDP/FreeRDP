@@ -119,7 +119,6 @@ int rdpgfx_recv_caps_confirm_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 	RDPGFX_CAPSET capsSet;
 	UINT32 capsDataLength;
 	RDPGFX_CAPS_CONFIRM_PDU pdu;
-	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
 
 	pdu.capsSet = &capsSet;
 
@@ -129,8 +128,6 @@ int rdpgfx_recv_caps_confirm_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 	Stream_Read_UINT32(s, capsSet.version); /* version (4 bytes) */
 	Stream_Read_UINT32(s, capsDataLength); /* capsDataLength (4 bytes) */
 	Stream_Read_UINT32(s, capsSet.flags); /* capsData (4 bytes) */
-	
-	/*TODO: interpret this answer*/
 
 	WLog_DBG(TAG, "RecvCapsConfirmPdu: version: 0x%04X flags: 0x%04X",
 			capsSet.version, capsSet.flags);
@@ -143,7 +140,6 @@ int rdpgfx_send_frame_acknowledge_pdu(RDPGFX_CHANNEL_CALLBACK* callback, RDPGFX_
 	int status;
 	wStream* s;
 	RDPGFX_HEADER header;
-	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
 
 	header.flags = 0;
 	header.cmdId = RDPGFX_CMDID_FRAMEACKNOWLEDGE;
@@ -380,10 +376,18 @@ int rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 	ack.frameId = pdu.frameId;
 	ack.totalFramesDecoded = gfx->TotalDecodedFrames;
 
-	//ack.queueDepth = SUSPEND_FRAME_ACKNOWLEDGEMENT;
-	ack.queueDepth = QUEUE_DEPTH_UNAVAILABLE;
+	if (gfx->suspendFrameAcks)
+	{
+		ack.queueDepth = SUSPEND_FRAME_ACKNOWLEDGEMENT;
 
-	rdpgfx_send_frame_acknowledge_pdu(callback, &ack);
+		if (gfx->TotalDecodedFrames == 1)
+			rdpgfx_send_frame_acknowledge_pdu(callback, &ack);
+	}
+	else
+	{
+		ack.queueDepth = QUEUE_DEPTH_UNAVAILABLE;
+		rdpgfx_send_frame_acknowledge_pdu(callback, &ack);
+	}
 
 	return 1;
 }
@@ -728,7 +732,6 @@ int rdpgfx_recv_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 	int status;
 	int beg, end;
 	RDPGFX_HEADER header;
-	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
 
 	beg = Stream_GetPosition(s);
 
@@ -873,7 +876,6 @@ static int rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 static int rdpgfx_on_open(IWTSVirtualChannelCallback* pChannelCallback)
 {
 	RDPGFX_CHANNEL_CALLBACK* callback = (RDPGFX_CHANNEL_CALLBACK*) pChannelCallback;
-	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
 
 	WLog_DBG(TAG, "OnOpen");
 
@@ -884,12 +886,61 @@ static int rdpgfx_on_open(IWTSVirtualChannelCallback* pChannelCallback)
 
 static int rdpgfx_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 {
+	int count;
+	int index;
+	ULONG_PTR* pKeys = NULL;
 	RDPGFX_CHANNEL_CALLBACK* callback = (RDPGFX_CHANNEL_CALLBACK*) pChannelCallback;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
+	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
 
 	WLog_DBG(TAG, "OnClose");
 
 	free(callback);
+
+	gfx->UnacknowledgedFrames = 0;
+	gfx->TotalDecodedFrames = 0;
+
+	if (gfx->zgfx)
+	{
+		zgfx_context_free(gfx->zgfx);
+		gfx->zgfx = zgfx_context_new(FALSE);
+
+		if (!gfx->zgfx)
+			return -1;
+	}
+
+	count = HashTable_GetKeys(gfx->SurfaceTable, &pKeys);
+
+	for (index = 0; index < count; index++)
+	{
+		RDPGFX_DELETE_SURFACE_PDU pdu;
+
+		pdu.surfaceId = ((UINT16) pKeys[index]) - 1;
+
+		if (context && context->DeleteSurface)
+		{
+			context->DeleteSurface(context, &pdu);
+		}
+	}
+
+	free(pKeys);
+
+	for (index = 0; index < gfx->MaxCacheSlot; index++)
+	{
+		if (gfx->CacheSlots[index])
+		{
+			RDPGFX_EVICT_CACHE_ENTRY_PDU pdu;
+
+			pdu.cacheSlot = (UINT16) index;
+
+			if (context && context->EvictCacheEntry)
+			{
+				context->EvictCacheEntry(context, &pdu);
+			}
+
+			gfx->CacheSlots[index] = NULL;
+		}
+	}
 
 	return 0;
 }

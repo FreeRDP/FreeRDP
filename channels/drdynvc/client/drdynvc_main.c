@@ -47,8 +47,10 @@ static int dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
 	{
 		WLog_DBG(TAG, "create_listener: %d.%s.", dvcman->num_listeners, pszChannelName);
 
-		listener = (DVCMAN_LISTENER*) malloc(sizeof(DVCMAN_LISTENER));
-		ZeroMemory(listener, sizeof(DVCMAN_LISTENER));
+		listener = (DVCMAN_LISTENER*) calloc(1, sizeof(DVCMAN_LISTENER));
+
+		if (!listener)
+			return -1;
 
 		listener->iface.GetConfiguration = dvcman_get_configuration;
 		listener->iface.pInterface = NULL;
@@ -407,8 +409,10 @@ int dvcman_open_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId
 	if (channel->status == 0)
 	{
 		pCallback = channel->channel_callback;
+
 		if (pCallback->OnOpen)
 			pCallback->OnOpen(pCallback);
+
 		WLog_DBG(TAG, "open_channel: ChannelId %d", ChannelId);
 	}
 
@@ -426,7 +430,10 @@ int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelI
 
 	if (!channel)
 	{
-		WLog_ERR(TAG, "ChannelId %d not found!", ChannelId);
+		/**
+		 * Windows 8 / Windows Server 2012 send close requests for channels that failed to be created.
+		 * Do not warn, simply return success here.
+		 */
 		return 1;
 	}
 
@@ -465,8 +472,10 @@ int dvcman_receive_channel_data_first(IWTSVirtualChannelManager* pChannelMgr, UI
 		Stream_Release(channel->dvc_data);
 
 	channel->dvc_data = StreamPool_Take(channel->dvcman->pool, length);
+
 	if (!channel->dvc_data)
 		return 1;
+
 	channel->dvc_data_length = length;
 
 	return 0;
@@ -660,7 +669,12 @@ static int drdynvc_send_capability_response(drdynvcPlugin* drdynvc)
 	wStream* s;
 
 	WLog_DBG(TAG, "capability_response");
+
 	s = Stream_New(NULL, 4);
+
+	if (!s)
+		return -1;
+
 	Stream_Write_UINT16(s, 0x0050); /* Cmd+Sp+cbChId+Pad. Note: MSTSC sends 0x005c */
 	Stream_Write_UINT16(s, drdynvc->version);
 
@@ -767,8 +781,7 @@ static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cb
 	else
 	{
 		WLog_DBG(TAG, "no listener");
-		Stream_Write_UINT32(data_out, (UINT32)(-1));
-		dvcman_close_channel(drdynvc->channel_mgr, ChannelId);
+		Stream_Write_UINT32(data_out, 0xC0000001); /* same code used by mstsc */
 	}
 
 	status = drdynvc_send(drdynvc, data_out);
@@ -783,6 +796,10 @@ static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cb
 	if (channel_status == 0)
 	{
 		dvcman_open_channel(drdynvc->channel_mgr, ChannelId);
+	}
+	else
+	{
+		dvcman_close_channel(drdynvc->channel_mgr, ChannelId);
 	}
 
 	return 0;
@@ -915,6 +932,7 @@ void* drdynvc_get_init_handle_data(void* pInitHandle)
 void drdynvc_remove_init_handle_data(void* pInitHandle)
 {
 	ListDictionary_Remove(g_InitHandles, pInitHandle);
+
 	if (ListDictionary_Count(g_InitHandles) < 1)
 	{
 		ListDictionary_Free(g_InitHandles);
@@ -944,6 +962,7 @@ void drdynvc_remove_open_handle_data(DWORD openHandle)
 {
 	void* pOpenHandle = (void*) (size_t) openHandle;
 	ListDictionary_Remove(g_OpenHandles, pOpenHandle);
+
 	if (ListDictionary_Count(g_OpenHandles) < 1)
 	{
 		ListDictionary_Free(g_OpenHandles);

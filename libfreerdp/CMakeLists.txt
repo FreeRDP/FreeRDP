@@ -165,6 +165,12 @@ if(WITH_JPEG)
 	freerdp_library_add(${JPEG_LIBRARIES})
 endif()
 
+if(WITH_X264)
+	freerdp_definition_add(-DWITH_X264)
+	freerdp_include_directory_add(${X264_INCLUDE_DIR})
+	freerdp_library_add(${X264_LIBRARIES})
+endif()
+
 if(WITH_OPENH264)
 	freerdp_definition_add(-DWITH_OPENH264)
 	freerdp_include_directory_add(${OPENH264_INCLUDE_DIR})

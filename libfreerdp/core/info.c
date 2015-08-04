@@ -726,7 +726,7 @@ BOOL rdp_recv_logon_error_info(rdpRdp* rdp, wStream* s)
 	UINT32 errorNotificationData;
 	UINT32 errorNotificationType;
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
 	Stream_Read_UINT32(s, errorNotificationData); /* errorNotificationData (4 bytes) */
