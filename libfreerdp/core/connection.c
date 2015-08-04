@@ -299,9 +299,16 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	{
 		if (rdp_check_fds(rdp) < 0)
 		{
-			if (!freerdp_get_last_error(rdp->context))
-				freerdp_set_last_error(rdp->context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
-
+			if (rdp->transport->nlaFailure == TRUE)
+			{
+				if (!freerdp_get_last_error(rdp->context))
+                                        freerdp_set_last_error(rdp->context, FREERDP_ERROR_AUTHENTICATION_FAILED);
+			}
+			else
+			{
+				if (!freerdp_get_last_error(rdp->context))
+					freerdp_set_last_error(rdp->context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
+			}
 			return FALSE;
 		}
 	}

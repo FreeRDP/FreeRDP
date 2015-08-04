@@ -293,6 +293,8 @@ FREERDP_API const char* getChannelErrorDescription(rdpContext* context);
 FREERDP_API void setChannelError(rdpContext* context, UINT errorNum, char* description);
 FREERDP_API BOOL checkChannelErrorEvent(rdpContext* context);
 
+FREERDP_API BOOL freerdp_get_nla_failure(freerdp* instance);
+
 #ifdef __cplusplus
 }
 #endif

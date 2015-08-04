@@ -1530,7 +1530,10 @@ void* xf_client_thread(void* param)
 	if (instance->settings->AuthenticationOnly || !status)
 	{
 		WLog_ERR(TAG, "Authentication only, exit status %d", !status);
-		exit_code = XF_EXIT_CONN_FAILED;
+		if (freerdp_get_nla_failure(instance))
+			exit_code = XF_EXIT_NLA_AUTH_FAILURE;
+		else
+			exit_code = XF_EXIT_CONN_FAILED;
 		goto disconnect;
 	}
 
@@ -1641,7 +1644,7 @@ disconnect:
 
 DWORD xf_exit_code_from_disconnect_reason(DWORD reason)
 {
-	if (reason == 0 || (reason >= XF_EXIT_PARSE_ARGUMENTS && reason <= XF_EXIT_CONN_FAILED))
+	if (reason == 0 || (reason >= XF_EXIT_PARSE_ARGUMENTS && reason <= XF_EXIT_NLA_AUTH_FAILURE))
 		return reason;
 	/* License error set */
 	else if (reason >= 0x100 && reason <= 0x10A)
