@@ -64,9 +64,11 @@ static H264_CONTEXT_SUBSYSTEM g_Subsystem_dummy =
 
 #ifdef _WIN32
 
+#include <ks.h>
+#include <codecapi.h>
+
 #include <mfapi.h>
 #include <mferror.h>
-#include <codecapi.h>
 #include <wmcodecdsp.h>
 #include <mftransform.h>
 
@@ -85,28 +87,42 @@ DEFINE_GUID(MF_XVP_DISABLE_FRC,0x2c0afa19,0x7a97,0x4d5a,0x9e,0xe8,0x16,0xd4,0xfc
 DEFINE_GUID(MFMediaType_Video,0x73646976,0x0000,0x0010,0x80,0x00,0x00,0xAA,0x00,0x38,0x9B,0x71);
 DEFINE_GUID(MFVideoFormat_RGB32,22,0x0000,0x0010,0x80,0x00,0x00,0xAA,0x00,0x38,0x9B,0x71);
 DEFINE_GUID(MFVideoFormat_ARGB32,21,0x0000,0x0010,0x80,0x00,0x00,0xAA,0x00,0x38,0x9B,0x71);
+DEFINE_GUID(MFVideoFormat_H264,0x34363248,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
+DEFINE_GUID(MFVideoFormat_IYUV,0x56555949,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
 DEFINE_GUID(IID_ICodecAPI,0x901db4c7,0x31ce,0x41a2,0x85,0xdc,0x8f,0xa0,0xbf,0x41,0xb8,0xda);
 DEFINE_GUID(CODECAPI_AVLowLatencyMode,0x9c27891a,0xed7a,0x40e1,0x88,0xe8,0xb2,0x27,0x27,0xa0,0x24,0xee);
 DEFINE_GUID(CODECAPI_AVDecVideoMaxCodedWidth,0x5ae557b8,0x77af,0x41f5,0x9f,0xa6,0x4d,0xb2,0xfe,0x1d,0x4b,0xca);
 DEFINE_GUID(CODECAPI_AVDecVideoMaxCodedHeight,0x7262a16a,0xd2dc,0x4e75,0x9b,0xa8,0x65,0xc0,0xc6,0xd3,0x2b,0x13);
 
-#ifndef FCC
-#define FCC(ch4) ((((DWORD)(ch4) & 0xFF) << 24) |     \
-                  (((DWORD)(ch4) & 0xFF00) << 8) |    \
-                  (((DWORD)(ch4) & 0xFF0000) >> 8) |  \
-                  (((DWORD)(ch4) & 0xFF000000) >> 24))
-#endif
+#ifndef __IMFDXGIDeviceManager_FWD_DEFINED__
+#define __IMFDXGIDeviceManager_FWD_DEFINED__
+typedef interface IMFDXGIDeviceManager IMFDXGIDeviceManager;
+#endif /* __IMFDXGIDeviceManager_FWD_DEFINED__ */
 
-DEFINE_GUID(MFVideoFormat_H264, FCC('H264'), 0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
-DEFINE_GUID(MFVideoFormat_IYUV, FCC('IYUV'), 0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
+#ifndef __IMFDXGIDeviceManager_INTERFACE_DEFINED__
+#define __IMFDXGIDeviceManager_INTERFACE_DEFINED__
 
-#if 0
-typedef void* IMFSample;
-typedef void* IMFTransform;
-typedef void* IMFMediaBuffer;
-typedef void* IMFMediaType;
-typedef void* IMFDXGIDeviceManager;
-#endif
+typedef struct IMFDXGIDeviceManagerVtbl
+{        
+	HRESULT (STDMETHODCALLTYPE * QueryInterface)(IMFDXGIDeviceManager* This, REFIID riid, void** ppvObject);
+	ULONG   (STDMETHODCALLTYPE * AddRef)(IMFDXGIDeviceManager* This);
+        ULONG   (STDMETHODCALLTYPE * Release)(IMFDXGIDeviceManager* This);
+        HRESULT (STDMETHODCALLTYPE * CloseDeviceHandle)(IMFDXGIDeviceManager* This, HANDLE hDevice);
+        HRESULT (STDMETHODCALLTYPE * GetVideoService)(IMFDXGIDeviceManager* This, HANDLE hDevice, REFIID riid, void** ppService);
+        HRESULT (STDMETHODCALLTYPE * LockDevice)(IMFDXGIDeviceManager* This, HANDLE hDevice, REFIID riid, void** ppUnkDevice, BOOL fBlock);
+        HRESULT (STDMETHODCALLTYPE * OpenDeviceHandle)(IMFDXGIDeviceManager* This, HANDLE* phDevice);
+        HRESULT (STDMETHODCALLTYPE * ResetDevice)(IMFDXGIDeviceManager* This, IUnknown* pUnkDevice, UINT resetToken);
+        HRESULT (STDMETHODCALLTYPE * TestDevice)(IMFDXGIDeviceManager* This, HANDLE hDevice);
+        HRESULT (STDMETHODCALLTYPE * UnlockDevice)(IMFDXGIDeviceManager* This, HANDLE hDevice, BOOL fSaveState);
+}
+IMFDXGIDeviceManagerVtbl;
+
+interface IMFDXGIDeviceManager
+{
+	CONST_VTBL struct IMFDXGIDeviceManagerVtbl* lpVtbl;
+};
+
+#endif /* __IMFDXGIDeviceManager_INTERFACE_DEFINED__ */
 
 typedef HRESULT (__stdcall * pfnMFStartup)(ULONG Version, DWORD dwFlags);
 typedef HRESULT (__stdcall * pfnMFShutdown)(void);
@@ -644,7 +660,7 @@ static BOOL mf_init(H264_CONTEXT* h264)
 	return TRUE;
 
 error:
-	fprintf(stderr, "mf_init failure\n");
+	WLog_ERR(TAG, "mf_init failure");
 	mf_uninit(h264);
 	return FALSE;
 }
