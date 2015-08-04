@@ -534,6 +534,133 @@ void smartcard_trace_long_return(SMARTCARD_DEVICE* smartcard, Long_Return* ret, 
 	WLog_DBG(TAG, "}");
 }
 
+UINT32 smartcard_unpack_list_reader_groups_call(SMARTCARD_DEVICE* smartcard, wStream* s, ListReaderGroups_Call* call)
+{
+	UINT32 status;
+
+	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext));
+
+	if (status)
+		return status;
+
+	if (Stream_GetRemainingLength(s) < 8)
+	{
+		WLog_WARN(TAG, "ListReaderGroups_Call is too short: %d",
+				(int) Stream_GetRemainingLength(s));
+		return STATUS_BUFFER_TOO_SMALL;
+	}
+
+	Stream_Read_UINT32(s, call->fmszGroupsIsNULL); /* fmszGroupsIsNULL (4 bytes) */
+	Stream_Read_UINT32(s, call->cchGroups); /* cchGroups (4 bytes) */
+
+	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext));
+
+	if (status)
+		return status;
+
+	return SCARD_S_SUCCESS;
+}
+
+void smartcard_trace_list_reader_groups_call(SMARTCARD_DEVICE* smartcard, ListReaderGroups_Call* call, BOOL unicode)
+{
+	BYTE* pb;
+
+	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
+		return;
+
+	WLog_DBG(TAG, "ListReaderGroups%S_Call {", unicode ? "W" : "A");
+
+	pb = (BYTE*) &(call->hContext.pbContext);
+
+	if (call->hContext.cbContext > 4)
+	{
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
+	}
+	else
+	{
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
+	}
+
+	WLog_DBG(TAG, "fmszGroupsIsNULL: %d cchGroups: 0x%08X",
+			call->fmszGroupsIsNULL, call->cchGroups);
+
+	WLog_DBG(TAG, "}");
+}
+
+UINT32 smartcard_pack_list_reader_groups_return(SMARTCARD_DEVICE* smartcard, wStream* s, ListReaderGroups_Return* ret)
+{
+	UINT32 mszNdrPtr;
+
+	mszNdrPtr = (ret->cBytes) ? 0x00020008 : 0;
+
+	Stream_EnsureRemainingCapacity(s, ret->cBytes + 32);
+
+	Stream_Write_UINT32(s, ret->cBytes); /* cBytes (4 bytes) */
+	Stream_Write_UINT32(s, mszNdrPtr); /* mszNdrPtr (4 bytes) */
+
+	if (mszNdrPtr)
+	{
+		Stream_Write_UINT32(s, ret->cBytes); /* mszNdrLen (4 bytes) */
+
+		if (ret->msz)
+			Stream_Write(s, ret->msz, ret->cBytes);
+		else
+			Stream_Zero(s, ret->cBytes);
+
+		smartcard_pack_write_size_align(smartcard, s, ret->cBytes, 4);
+	}
+
+	return SCARD_S_SUCCESS;
+}
+
+void smartcard_trace_list_reader_groups_return(SMARTCARD_DEVICE* smartcard, ListReaderGroups_Return* ret, BOOL unicode)
+{
+	int index;
+	int length;
+	char* mszA = NULL;
+
+	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
+		return;
+
+	if (unicode)
+	{
+		length = ret->cBytes / 2;
+		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) ret->msz, length, &mszA, 0, NULL, NULL);
+	}
+	else
+	{
+		length = ret->cBytes;
+		mszA = (char*) malloc(length);
+
+		if (!mszA)
+		{
+			WLog_WARN(TAG, "trace ListReaderGroupsW_Return out of memory error (mszA)");
+			return;
+		}
+
+		CopyMemory(mszA, ret->msz, ret->cBytes);
+	}
+
+	for (index = 0; index < length - 2; index++)
+	{
+		if (mszA[index] == '\0')
+			mszA[index] = ',';
+	}
+
+	WLog_DBG(TAG, "ListReaderGroups%s_Return {", unicode ? "W" : "A");
+
+	WLog_DBG(TAG, "ReturnCode: %s (0x%08X)",
+		SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
+
+	WLog_DBG(TAG, "cBytes: %d msz: %s", ret->cBytes, mszA);
+
+	WLog_DBG(TAG, "}");
+
+	free(mszA);
+}
+
 UINT32 smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* s, ListReaders_Call* call)
 {
 	UINT32 status;
@@ -684,6 +811,13 @@ void smartcard_trace_list_readers_return(SMARTCARD_DEVICE* smartcard, ListReader
 	{
 		length = ret->cBytes;
 		mszA = (char*) malloc(length);
+
+		if (!mszA)
+		{
+			WLog_WARN(TAG, "trace ListReadersW_Return out of memory error (mszA)");
+			return;
+		}
+
 		CopyMemory(mszA, ret->msz, ret->cBytes);
 	}
 
@@ -1720,6 +1854,13 @@ void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, Status_Return* r
 	{
 		length = (int) ret->cBytes;
 		mszReaderNamesA = (char*) malloc(length);
+
+		if (!mszReaderNamesA)
+		{
+			WLog_WARN(TAG, "trace StatusW_Return out of memory error (mszReaderNamesA)");
+			return;
+		}
+
 		CopyMemory(mszReaderNamesA, ret->mszReaderNames, ret->cBytes);
 	}
 
