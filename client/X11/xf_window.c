@@ -187,21 +187,26 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		startY = startY + xfc->instance->settings->MonitorLocalShiftY;
 	}
 
-	xf_ResizeDesktopWindow(xfc, window, width, height);
-
-	if (xfc->_NET_WM_FULLSCREEN_MONITORS != None)
+	if ((xfc->_NET_WM_STATE_FULLSCREEN != None) && ((xfc->_NET_WM_FULLSCREEN_MONITORS != None) || (settings->MonitorCount < 2)))
 	{
+		xf_ResizeDesktopWindow(xfc, window, width, height);
+
+		printf ("using _NET_WM_STATE_FULLSCREEN\n");
+
 		/* Set the fullscreen state */
 		xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
 					fullscreen ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE,
 					xfc->_NET_WM_STATE_FULLSCREEN, 0, 0);
 
 		/* Only send monitor bounds if they are valid */
-		if ((xfc->fullscreenMonitors.top >= 0) &&
+		if ((xfc->_NET_WM_FULLSCREEN_MONITORS != None) &&
+				(xfc->fullscreenMonitors.top >= 0) &&
 				(xfc->fullscreenMonitors.bottom >= 0) &&
 				(xfc->fullscreenMonitors.left >= 0) &&
 				(xfc->fullscreenMonitors.right >= 0))
 		{
+			printf (" using _NET_WM_FULLSCREEN_MONITORS\n");
+			
 			xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_FULLSCREEN_MONITORS, 5,
 					xfc->fullscreenMonitors.top,
 					xfc->fullscreenMonitors.bottom,
@@ -212,12 +217,16 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	}
 	else
 	{
+		printf ("using old fullscreen procedure\n");
+		
 		if (fullscreen)
 		{
 			xf_SetWindowDecorations(xfc, window->handle, FALSE);
 
 			if (xfc->_NET_WM_STATE_ABOVE != None)
 			{
+				printf (" using _NET_STATE_ABOVE\n");
+				
 				xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
 							_NET_WM_STATE_ADD,
 							xfc->_NET_WM_STATE_ABOVE, 0, 0);
@@ -226,6 +235,9 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 			{
 				XRaiseWindow (xfc->display, window->handle);
 			}
+
+			width = xfc->sessionWidth;
+			height = xfc->sessionHeight;
 		}
 		else
 		{
@@ -236,6 +248,8 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 							xfc->_NET_WM_STATE_ABOVE, 0, 0);
 			}
 		}
+
+		xf_ResizeDesktopWindow(xfc, window, width, height);
 	}
 
 	XMoveWindow(xfc->display, window->handle, startX, startY);
@@ -439,7 +453,19 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 		XFree(classHints);
 	}
 
-	xf_ResizeDesktopWindow(xfc, window, width, height);
+	/* If fullscreen is enabled, sure that next call to XMapWindow won't maximize the window,
+	 * KWin will never put it to floating state again! */
+	if (xfc->fullscreen)
+	{
+		xfc->fullscreen = FALSE;
+		xf_ResizeDesktopWindow(xfc, window, width, height);
+		xfc->fullscreen = TRUE;
+	}
+	else
+	{
+		xf_ResizeDesktopWindow(xfc, window, width, height);
+	}
+
 	xf_SetWindowDecorations(xfc, window->handle, window->decorations);
 	xf_SetWindowPID(xfc, window->handle, 0);
 

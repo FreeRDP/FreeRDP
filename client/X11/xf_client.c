@@ -1883,11 +1883,11 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 			state |= 0x04;
 	}
 
-	if ((state & 0x03) != 0x03)
-	{
+	if (!(state & 0x01))
 		xfc->_NET_WM_STATE_FULLSCREEN = None;
+
+	if (!(state & 0x02))
 		xfc->_NET_WM_FULLSCREEN_MONITORS = None;
-	}
 
 	if (!(state & 0x04))
 		xfc->_NET_WM_STATE_ABOVE = None;
