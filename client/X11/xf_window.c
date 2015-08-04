@@ -147,7 +147,6 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	UINT32 height = window->height;
 
 	window->decorations = xfc->decorations;
-	xf_SetWindowDecorations(xfc, window->handle, window->decorations);
 
 	if (fullscreen)
 	{
@@ -189,7 +188,7 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 
 	if ((xfc->_NET_WM_STATE_FULLSCREEN != None) && ((xfc->_NET_WM_FULLSCREEN_MONITORS != None) || (settings->MonitorCount < 2)))
 	{
-		xf_ResizeDesktopWindow(xfc, window, width, height);
+		xf_SetDesktopWindowSizeHints(xfc, window, width, height);
 
 		printf ("using _NET_WM_STATE_FULLSCREEN\n");
 
@@ -233,7 +232,15 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 			}
 			else
 			{
+				XSetWindowAttributes xswa;
+
+				xswa.override_redirect = True;
+				XChangeWindowAttributes(xfc->display, window->handle, CWOverrideRedirect, &xswa);
+
 				XRaiseWindow (xfc->display, window->handle);
+
+				xswa.override_redirect = False;
+				XChangeWindowAttributes(xfc->display, window->handle, CWOverrideRedirect, &xswa);
 			}
 
 			width = xfc->sessionWidth;
@@ -241,6 +248,8 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		}
 		else
 		{
+			xf_SetWindowDecorations(xfc, window->handle, window->decorations);
+
 			if (xfc->_NET_WM_STATE_ABOVE != None)
 			{
 				xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
@@ -250,9 +259,8 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		}
 
 		xf_ResizeDesktopWindow(xfc, window, width, height);
+		XMoveWindow(xfc->display, window->handle, startX, startY);
 	}
-
-	XMoveWindow(xfc->display, window->handle, startX, startY);
 }
 
 /* http://tronche.com/gui/x/xlib/window-information/XGetWindowProperty.html */
@@ -549,6 +557,37 @@ void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width, int hei
 		}
 	}
 
+	XFree(size_hints);
+}
+
+void xf_SetDesktopWindowSizeHints(xfContext* xfc, xfWindow* window, int width, int height)
+{
+	XSizeHints* size_hints;
+
+	if (!xfc || !window)
+			return;
+
+	if (!(size_hints = XAllocSizeHints()))
+			return;
+
+	size_hints->flags = PMinSize | PMaxSize | PWinGravity;
+
+	size_hints->win_gravity = NorthWestGravity;
+	size_hints->min_width = size_hints->min_height = 1;
+	size_hints->max_width = size_hints->max_height = 16384;
+
+#ifdef WITH_XRENDER
+	if (!xfc->settings->SmartSizing)
+#endif
+	{
+		if (!xfc->fullscreen)
+		{
+			size_hints->min_width = size_hints->max_width = width;
+			size_hints->min_height = size_hints->max_height = height;
+		}
+	}
+
+	XSetWMNormalHints(xfc->display, window->handle, size_hints);
 	XFree(size_hints);
 }
 

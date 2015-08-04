@@ -148,6 +148,7 @@ void xf_SetWindowUnlisted(xfContext* xfc, Window window);
 
 xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int height);
 void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width, int height);
+void xf_SetDesktopWindowSizeHints(xfContext* xfc, xfWindow* window, int width, int height);
 void xf_DestroyDesktopWindow(xfContext* xfc, xfWindow* window);
 
 BOOL xf_GetWindowProperty(xfContext* xfc, Window window, Atom property, int length,
