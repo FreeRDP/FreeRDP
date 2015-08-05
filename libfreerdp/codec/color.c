@@ -1463,12 +1463,18 @@ int freerdp_image_copy_from_pointer_data(BYTE* pDstData, UINT32 DstFormat, int n
 	andStep = (nWidth + 7) / 8;
 	andStep += (andStep % 2);
 
+	if (!xorMask)
+		return -1;
+
 	if (dstBytesPerPixel == 4)
 	{
 		UINT32* pDstPixel;
 
 		if (xorBpp == 1)
 		{
+			if (!andMask)
+				return -1;
+
 			xorStep = (nWidth + 7) / 8;
 			xorStep += (xorStep % 2);
 
@@ -1481,14 +1487,12 @@ int freerdp_image_copy_from_pointer_data(BYTE* pDstData, UINT32 DstFormat, int n
 				if (!vFlip)
 				{
 					xorBits = &xorMask[xorStep * y];
-					if (andMask)
-						andBits = &andMask[andStep * y];
+					andBits = &andMask[andStep * y];
 				}
 				else
 				{
 					xorBits = &xorMask[xorStep * (nHeight - y - 1)];
-					if (andMask)
-						andBits = &andMask[andStep * (nHeight - y - 1)];
+					andBits = &andMask[andStep * (nHeight - y - 1)];
 				}
 
 				for (x = 0; x < nWidth; x++)
