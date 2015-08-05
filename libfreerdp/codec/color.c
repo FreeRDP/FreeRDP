@@ -1481,12 +1481,14 @@ int freerdp_image_copy_from_pointer_data(BYTE* pDstData, UINT32 DstFormat, int n
 				if (!vFlip)
 				{
 					xorBits = &xorMask[xorStep * y];
-					andBits = &andMask[andStep * y];
+					if (andMask)
+						andBits = &andMask[andStep * y];
 				}
 				else
 				{
 					xorBits = &xorMask[xorStep * (nHeight - y - 1)];
-					andBits = &andMask[andStep * (nHeight - y - 1)];
+					if (andMask)
+						andBits = &andMask[andStep * (nHeight - y - 1)];
 				}
 
 				for (x = 0; x < nWidth; x++)
@@ -1531,12 +1533,14 @@ int freerdp_image_copy_from_pointer_data(BYTE* pDstData, UINT32 DstFormat, int n
 
 				if (!vFlip)
 				{
-					andBits = &andMask[andStep * y];
+					if (andMask)
+						andBits = &andMask[andStep * y];
 					xorBits = &xorMask[xorStep * y];
 				}
 				else
 				{
-					andBits = &andMask[andStep * (nHeight - y - 1)];
+					if (andMask)
+						andBits = &andMask[andStep * (nHeight - y - 1)];
 					xorBits = &xorMask[xorStep * (nHeight - y - 1)];
 				}
 
@@ -1563,8 +1567,12 @@ int freerdp_image_copy_from_pointer_data(BYTE* pDstData, UINT32 DstFormat, int n
 
 					xorBits += xorBytesPerPixel;
 
-					andPixel = (*andBits & andBit) ? 1 : 0;
-					if (!(andBit >>= 1)) { andBits++; andBit = 0x80; }
+					andPixel = 0;
+					if (andMask)
+					{
+						andPixel = (*andBits & andBit) ? 1 : 0;
+						if (!(andBit >>= 1)) { andBits++; andBit = 0x80; }
+					}
 
 					if (andPixel)
 					{
