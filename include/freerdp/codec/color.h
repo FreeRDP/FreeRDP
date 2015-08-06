@@ -452,7 +452,7 @@ FREERDP_API void freerdp_clrconv_free(HCLRCONV clrconv);
 FREERDP_API int freerdp_image_copy_from_monochrome(BYTE* pDstData, UINT32 DstFormat, int nDstStep, int nXDst, int nYDst,
 		int nWidth, int nHeight, BYTE* pSrcData, UINT32 backColor, UINT32 foreColor, BYTE* palette);
 
-FREERDP_API int int freerdp_image_copy_from_pointer_data(
+FREERDP_API int freerdp_image_copy_from_pointer_data(
 		BYTE* pDstData, UINT32 DstFormat, int nDstStep,
 		int nXDst, int nYDst, int nWidth, int nHeight, BYTE* xorMask,
 		UINT32 xorMaskLength, BYTE* andMask, UINT32 andMaskLength,
