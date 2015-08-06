@@ -237,9 +237,12 @@ BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 		return FALSE;
 	}
 
-	if (freerdp_image_copy_from_pointer_data((BYTE*) ci.pixels, PIXEL_FORMAT_ARGB32,
-				pointer->width * 4, 0, 0, pointer->width, pointer->height,
-				pointer->xorMaskData, pointer->andMaskData, pointer->xorBpp, xfc->palette) < 0)
+	if (freerdp_image_copy_from_pointer_data(
+		    (BYTE*) ci.pixels, PIXEL_FORMAT_ARGB32,
+		    pointer->width * 4, 0, 0, pointer->width, pointer->height,
+		    pointer->xorMaskData, pointer->lengthXorMask,
+		    pointer->andMaskData, pointer->lengthAndMask,
+		    pointer->xorBpp, xfc->palette) < 0)
 	{
 		free(ci.pixels);
 		xf_unlock_x11(xfc, FALSE);
