@@ -694,6 +694,9 @@ void xf_toggle_fullscreen(xfContext* xfc)
 	rdpContext* context = (rdpContext*) xfc;
 	rdpSettings* settings = context->settings;
 
+	if (xfc->remote_app)
+		return;
+
 	xfc->fullscreen = (xfc->fullscreen) ? FALSE : TRUE;
 	xfc->decorations = (xfc->fullscreen) ? FALSE : settings->Decorations;
 
@@ -1847,9 +1850,12 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xfc->_MOTIF_WM_HINTS = XInternAtom(xfc->display, "_MOTIF_WM_HINTS", False);
 	xfc->_NET_CURRENT_DESKTOP = XInternAtom(xfc->display, "_NET_CURRENT_DESKTOP", False);
 	xfc->_NET_WORKAREA = XInternAtom(xfc->display, "_NET_WORKAREA", False);
+	xfc->_NET_FRAME_EXTENTS = XInternAtom(xfc->display, "_NET_FRAME_EXTENTS", False);
 	xfc->_NET_WM_STATE = XInternAtom(xfc->display, "_NET_WM_STATE", False);
 	xfc->_NET_WM_STATE_FULLSCREEN = XInternAtom(xfc->display, "_NET_WM_STATE_FULLSCREEN", False);
 	xfc->_NET_WM_STATE_ABOVE = XInternAtom(xfc->display, "_NET_WM_STATE_ABOVE", False);
+	xfc->_NET_WM_STATE_MAXIMIZED_VERT = XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_VERT", False);
+	xfc->_NET_WM_STATE_MAXIMIZED_HORZ = XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_HORZ", False);
 	xfc->_NET_WM_FULLSCREEN_MONITORS = XInternAtom(xfc->display, "_NET_WM_FULLSCREEN_MONITORS", False);
 	xfc->_NET_WM_WINDOW_TYPE = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE", False);
 	xfc->_NET_WM_WINDOW_TYPE_NORMAL = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE_NORMAL", False);
@@ -1881,6 +1887,15 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 
 		if (((Atom*) prop)[i] == xfc->_NET_WM_STATE_ABOVE)
 			state |= 0x04;
+
+		if (((Atom*) prop)[i] == xfc->_NET_WM_STATE_MAXIMIZED_VERT)
+			state |= 0x08;
+
+		if (((Atom*) prop)[i] == xfc->_NET_WM_STATE_MAXIMIZED_HORZ)
+			state |= 0x10;
+
+		if (((Atom*) prop)[i] == xfc->_NET_FRAME_EXTENTS)
+			state |= 0x20;
 	}
 
 	if (!(state & 0x01))
@@ -1891,6 +1906,15 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 
 	if (!(state & 0x04))
 		xfc->_NET_WM_STATE_ABOVE = None;
+
+	if ((state & 0x18) != 0x18)
+	{
+		xfc->_NET_WM_STATE_MAXIMIZED_VERT = None;
+		xfc->_NET_WM_STATE_MAXIMIZED_HORZ = None;
+	}
+
+	if (!(state & 0x20))
+		xfc->_NET_FRAME_EXTENTS = None;
 
 	xfc->xfds = ConnectionNumber(xfc->display);
 	xfc->screen_number = DefaultScreen(xfc->display);

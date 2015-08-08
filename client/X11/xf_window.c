@@ -145,6 +145,8 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	int startX, startY;
 	UINT32 width = window->width;
 	UINT32 height = window->height;
+	unsigned long nitems, bytes;
+	BYTE* prop;
 
 	window->decorations = xfc->decorations;
 
@@ -152,8 +154,40 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	{
 		xfc->savedWidth = xfc->window->width;
 		xfc->savedHeight = xfc->window->height;
-		xfc->savedPosX = xfc->window->left;
-		xfc->savedPosY = xfc->window->top;
+
+		/* XMoveWindow() expects the position of the top left corner of the (frame) window including borders and
+		 * title bar, but ConfigureNotify event contains the position of the drawing area. So we have to do some
+		 * correction, but only if the borders or title bar would be visible (coordinates of drawing area > 0). */
+		if (xfc->window->left > 0 || xfc->window->top > 0)
+		{
+			if (xfc->_NET_FRAME_EXTENTS != None)
+			{
+				if (xf_GetWindowProperty(xfc, window->handle, xfc->_NET_FRAME_EXTENTS, 255, &nitems, &bytes, &prop))
+				{
+					if (nitems == 4)
+					{
+						xfc->savedPosX = xfc->window->left - ((UINT32*) prop)[0];
+						xfc->savedPosY = xfc->window->top - ((UINT32*) prop)[2];
+					}
+
+					XFree(prop);
+				}
+			}
+			else
+			{
+				Window root_return;
+				int x_return, y_return;
+				unsigned int width_return, height_return, border_width_return, depth_return;
+
+				if (XGetGeometry(xfc->display, xfc->window->handle, &root_return, &x_return, &y_return,
+							&width_return, &height_return, &border_width_return, &depth_return))
+				{
+					xfc->savedPosX = xfc->window->left - x_return;
+					xfc->savedPosY = xfc->window->top - y_return;
+				}
+			}
+		}
+
 		startX = settings->DesktopPosX;
 		startY = settings->DesktopPosY;
 	}
@@ -190,8 +224,6 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	{
 		xf_SetDesktopWindowSizeHints(xfc, window, width, height);
 
-		printf ("using _NET_WM_STATE_FULLSCREEN\n");
-
 		/* Set the fullscreen state */
 		xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
 					fullscreen ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE,
@@ -204,8 +236,6 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 				(xfc->fullscreenMonitors.left >= 0) &&
 				(xfc->fullscreenMonitors.right >= 0))
 		{
-			printf (" using _NET_WM_FULLSCREEN_MONITORS\n");
-			
 			xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_FULLSCREEN_MONITORS, 5,
 					xfc->fullscreenMonitors.top,
 					xfc->fullscreenMonitors.bottom,
@@ -216,16 +246,12 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	}
 	else
 	{
-		printf ("using old fullscreen procedure\n");
-		
 		if (fullscreen)
 		{
 			xf_SetWindowDecorations(xfc, window->handle, FALSE);
 
 			if (xfc->_NET_WM_STATE_ABOVE != None)
 			{
-				printf (" using _NET_STATE_ABOVE\n");
-				
 				xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
 							_NET_WM_STATE_ADD,
 							xfc->_NET_WM_STATE_ABOVE, 0, 0);
@@ -237,18 +263,59 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 				xswa.override_redirect = True;
 				XChangeWindowAttributes(xfc->display, window->handle, CWOverrideRedirect, &xswa);
 
-				XRaiseWindow (xfc->display, window->handle);
+				XRaiseWindow(xfc->display, window->handle);
 
 				xswa.override_redirect = False;
 				XChangeWindowAttributes(xfc->display, window->handle, CWOverrideRedirect, &xswa);
 			}
 
+			/* if window is in maximized state, save and remove */
+			if (xfc->_NET_WM_STATE_MAXIMIZED_VERT != None)
+			{
+				BYTE state;
+
+				if (xf_GetWindowProperty(xfc, window->handle, xfc->_NET_WM_STATE, 255, &nitems, &bytes, &prop))
+				{
+					state = 0;
+
+					while (nitems-- > 0)
+					{
+						if (((Atom*) prop)[nitems] == xfc->_NET_WM_STATE_MAXIMIZED_VERT)
+							state |= 0x01;
+
+						if (((Atom*) prop)[nitems] == xfc->_NET_WM_STATE_MAXIMIZED_HORZ)
+							state |= 0x02;
+					}
+
+					if (state)
+					{
+						xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
+									_NET_WM_STATE_REMOVE, xfc->_NET_WM_STATE_MAXIMIZED_VERT,
+									0, 0);
+
+						xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
+									_NET_WM_STATE_REMOVE, xfc->_NET_WM_STATE_MAXIMIZED_HORZ,
+									0, 0);
+
+						xfc->savedMaximizedState = state;
+					}
+
+					XFree(prop);
+				}
+			}
+
 			width = xfc->sessionWidth;
 			height = xfc->sessionHeight;
+
+			xf_ResizeDesktopWindow(xfc, window, width, height);
+			XMoveWindow(xfc->display, window->handle, startX, startY);
 		}
 		else
 		{
 			xf_SetWindowDecorations(xfc, window->handle, window->decorations);
+
+			xf_ResizeDesktopWindow(xfc, window, width, height);
+			XMoveWindow(xfc->display, window->handle, startX, startY);
 
 			if (xfc->_NET_WM_STATE_ABOVE != None)
 			{
@@ -256,10 +323,24 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 							_NET_WM_STATE_REMOVE,
 							xfc->_NET_WM_STATE_ABOVE, 0, 0);
 			}
-		}
 
-		xf_ResizeDesktopWindow(xfc, window, width, height);
-		XMoveWindow(xfc->display, window->handle, startX, startY);
+			/* restore maximized state, if the window was maximized before setting fullscreen */
+			if (xfc->savedMaximizedState & 0x01)
+			{
+				xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
+							_NET_WM_STATE_ADD, xfc->_NET_WM_STATE_MAXIMIZED_VERT,
+							0, 0);
+			}
+
+			if (xfc->savedMaximizedState & 0x02)
+			{
+				xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
+							_NET_WM_STATE_ADD, xfc->_NET_WM_STATE_MAXIMIZED_HORZ,
+							0, 0);
+			}
+
+			xfc->savedMaximizedState = 0;
+		}
 	}
 }
 
@@ -461,7 +542,7 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 		XFree(classHints);
 	}
 
-	/* If fullscreen is enabled, sure that next call to XMapWindow won't maximize the window,
+	/* If fullscreen is enabled, make sure that next call to XMapWindow won't maximize the window,
 	 * KWin will never put it to floating state again! */
 	if (xfc->fullscreen)
 	{
