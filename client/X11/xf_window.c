@@ -160,32 +160,39 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		 * correction, but only if the borders or title bar would be visible (coordinates of drawing area > 0). */
 		if (xfc->window->left > 0 || xfc->window->top > 0)
 		{
+			Window root_return;
+			int x_return, y_return, x, y;
+			unsigned int width_return, height_return, border_width_return, depth_return;
+
+			x = y = 0;
+			x_return = y_return = 0;
+
 			if (xfc->_NET_FRAME_EXTENTS != None)
 			{
 				if (xf_GetWindowProperty(xfc, window->handle, xfc->_NET_FRAME_EXTENTS, 255, &nitems, &bytes, &prop))
 				{
 					if (nitems == 4)
 					{
-						xfc->savedPosX = xfc->window->left - ((UINT32*) prop)[0];
-						xfc->savedPosY = xfc->window->top - ((UINT32*) prop)[2];
+						x = ((UINT32*) prop)[0];
+						y = ((UINT32*) prop)[2];
 					}
 
 					XFree(prop);
 				}
 			}
-			else
-			{
-				Window root_return;
-				int x_return, y_return;
-				unsigned int width_return, height_return, border_width_return, depth_return;
 
-				if (XGetGeometry(xfc->display, xfc->window->handle, &root_return, &x_return, &y_return,
-							&width_return, &height_return, &border_width_return, &depth_return))
+			if (XGetGeometry(xfc->display, xfc->window->handle, &root_return, &x_return, &y_return,
+						&width_return, &height_return, &border_width_return, &depth_return))
+			{
+				if ((x != x_return) && (y != y_return))
 				{
-					xfc->savedPosX = xfc->window->left - x_return;
-					xfc->savedPosY = xfc->window->top - y_return;
+					x += x_return;
+					y += y_return;
 				}
 			}
+
+			xfc->savedPosX = xfc->window->left - x;
+			xfc->savedPosY = xfc->window->top - y;
 		}
 
 		startX = settings->DesktopPosX;
