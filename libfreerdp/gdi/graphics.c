@@ -92,7 +92,7 @@ HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, int nWidth, int nHeight, int bpp, BYT
 	freerdp_image_copy(pDstData, gdi->format, nDstStep, 0, 0,
 			nWidth, nHeight, pSrcData, SrcFormat, nSrcStep, 0, 0, gdi->palette);
 
-	bitmap = gdi_CreateBitmap(nWidth, nHeight, gdi->dstBpp, pDstData);
+	bitmap = gdi_CreateBitmap(nWidth, nHeight, gdi->dstBpp, pDstData, _aligned_free);
 
 	return bitmap;
 }
@@ -241,7 +241,7 @@ BOOL gdi_Glyph_New(rdpContext* context, rdpGlyph* glyph)
 		gdi_DeleteDC(gdi_glyph->hdc);
 		return FALSE;
 	}
-	gdi_glyph->bitmap = gdi_CreateBitmap(glyph->cx, glyph->cy, 1, data);
+	gdi_glyph->bitmap = gdi_CreateBitmap(glyph->cx, glyph->cy, 1, data, _aligned_free);
 	if (!gdi_glyph->bitmap)
 	{
 		gdi_DeleteDC(gdi_glyph->hdc);
