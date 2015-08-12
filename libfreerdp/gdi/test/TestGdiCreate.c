@@ -83,7 +83,7 @@ int test_gdi_CreateBitmap(void)
 		return -1;
 	}
 
-	if (!(hBitmap = gdi_CreateBitmap(width, height, bpp, data)))
+	if (!(hBitmap = gdi_CreateBitmap(width, height, bpp, data, _aligned_free)))
 	{
 		printf("gdi_CreateBitmap failed\n");
 		return -1;
@@ -199,7 +199,7 @@ int test_gdi_CreatePatternBrush(void)
 	HGDI_BRUSH hBrush;
 	HGDI_BITMAP hBitmap;
 
-	hBitmap = gdi_CreateBitmap(64, 64, 32, NULL);
+	hBitmap = gdi_CreateBitmap(64, 64, 32, NULL, NULL);
 	hBrush = gdi_CreatePatternBrush(hBitmap);
 
 	if (hBrush->objectType != GDIOBJECT_BRUSH)

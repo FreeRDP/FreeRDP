@@ -120,13 +120,13 @@ int TestGdiEllipse(int argc, char* argv[])
 	clrconv->palette = hPalette;
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) ellipse_case_1, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_Ellipse_1 = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_Ellipse_1 = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) ellipse_case_2, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_Ellipse_2 = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_Ellipse_2 = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) ellipse_case_3, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_Ellipse_3 = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_Ellipse_3 = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	/* Test Case 1: (0,0) -> (16, 16) */
 	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))

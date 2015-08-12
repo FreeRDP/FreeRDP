@@ -667,88 +667,88 @@ int TestGdiLine(int argc, char* argv[])
 	clrconv->palette = hPalette;
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_case_1, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_1 = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_1 = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_case_2, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_2 = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_2 = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_case_3, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_3 = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_3 = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_case_4, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_4 = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_4 = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_case_5, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_5 = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_5 = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_case_5, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_5 = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_5 = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_case_6, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_6 = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_6 = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_case_7, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_7 = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_7 = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_case_8, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_8 = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_8 = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_case_9, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_9 = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_9 = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_case_10, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_10 = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_10 = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_case_11, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_11 = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_11 = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_R2_BLACK, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_R2_BLACK = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_R2_BLACK = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_R2_NOTMERGEPEN, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_R2_NOTMERGEPEN = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_R2_NOTMERGEPEN = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_R2_MASKNOTPEN, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_R2_MASKNOTPEN = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_R2_MASKNOTPEN = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_R2_NOTCOPYPEN, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_R2_NOTCOPYPEN = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_R2_NOTCOPYPEN = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_R2_MASKPENNOT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_R2_MASKPENNOT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_R2_MASKPENNOT = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_R2_NOT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_R2_NOT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_R2_NOT = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_R2_XORPEN, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_R2_XORPEN = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_R2_XORPEN = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_R2_NOTMASKPEN, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_R2_NOTMASKPEN = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_R2_NOTMASKPEN = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_R2_MASKPEN, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_R2_MASKPEN = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_R2_MASKPEN = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_R2_NOTXORPEN, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_R2_NOTXORPEN = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_R2_NOTXORPEN = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_R2_NOP, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_R2_NOP = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_R2_NOP = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_R2_MERGENOTPEN, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_R2_MERGENOTPEN = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_R2_MERGENOTPEN = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_R2_COPYPEN, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_R2_COPYPEN = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_R2_COPYPEN = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_R2_MERGEPENNOT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_R2_MERGEPENNOT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_R2_MERGEPENNOT = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_R2_MERGEPEN, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_R2_MERGEPEN = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_R2_MERGEPEN = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	data = (BYTE*) freerdp_image_convert((BYTE*) line_to_R2_WHITE, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_LineTo_R2_WHITE = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmp_LineTo_R2_WHITE = gdi_CreateBitmap(16, 16, bitsPerPixel, data, _aligned_free);
 
 	/* Test Case 1: (0,0) -> (15, 15) */
 	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))
