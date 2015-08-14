@@ -64,6 +64,8 @@ struct xf_clipboard
 	Atom clipboard_atom;
 	Atom property_atom;
 
+	Atom raw_transfer_atom;
+
 	int numClientFormats;
 	xfCliprdrFormat clientFormats[20];
 
@@ -120,6 +122,51 @@ static BOOL xf_cliprdr_is_self_owned(xfClipboard* clipboard)
 	xfContext* xfc = clipboard->xfc;
 
 	return XGetSelectionOwner(xfc->display, clipboard->clipboard_atom) == xfc->drawable;
+}
+
+static void xf_cliprdr_set_raw_transfer_enabled(xfClipboard* clipboard, BOOL enabled)
+{
+	UINT32 data = enabled;
+	xfContext* xfc = clipboard->xfc;
+
+	XChangeProperty(xfc->display, xfc->drawable, clipboard->raw_transfer_atom,
+			XA_INTEGER, 32, PropModeReplace, (BYTE*) &data, 1);
+}
+
+static BOOL xf_cliprdr_is_raw_transfer_available(xfClipboard* clipboard)
+{
+	Atom type;
+	int format;
+	int result = 0;
+	unsigned long length;
+	unsigned long bytes_left;
+	UINT32* data = NULL;
+	UINT32 is_enabled = 0;
+	Window owner = None;
+	xfContext* xfc = clipboard->xfc;
+
+	owner = XGetSelectionOwner(xfc->display, clipboard->clipboard_atom);
+
+	if (owner != None)
+	{
+		result = XGetWindowProperty(xfc->display, owner,
+			clipboard->raw_transfer_atom, 0, 4, 0, XA_INTEGER,
+			&type, &format, &length, &bytes_left, (BYTE**) &data);
+	}
+
+	if (data)
+	{
+		is_enabled = *data;
+		XFree(data);
+	}
+
+	if ((owner == None) || (owner == xfc->drawable))
+		return FALSE;
+
+	if (result != Success)
+		return FALSE;
+
+	return is_enabled ? TRUE : FALSE;
 }
 
 static BOOL xf_cliprdr_formats_equal(const CLIPRDR_FORMAT* server, const xfCliprdrFormat* client)
@@ -968,7 +1015,7 @@ static UINT xf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 	xfClipboard* clipboard = (xfClipboard*) context->custom;
 	xfContext* xfc = clipboard->xfc;
 
-	if (xf_cliprdr_is_self_owned(clipboard))
+	if (xf_cliprdr_is_raw_transfer_available(clipboard))
 	{
 		format = xf_cliprdr_get_client_format_by_id(clipboard, CF_RAW);
 
@@ -1139,6 +1186,10 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 	}
 
 	clipboard->property_atom = XInternAtom(xfc->display, "_FREERDP_CLIPRDR", FALSE);
+
+	clipboard->raw_transfer_atom = XInternAtom(xfc->display, "_FREERDP_CLIPRDR_RAW", FALSE);
+
+	xf_cliprdr_set_raw_transfer_enabled(clipboard, TRUE);
 
 	XSelectInput(xfc->display, clipboard->root_window, PropertyChangeMask);
 
