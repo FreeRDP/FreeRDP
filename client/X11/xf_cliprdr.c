@@ -222,7 +222,7 @@ static UINT xf_cliprdr_send_data_response(xfClipboard* clipboard, BYTE* data, in
 
 	ZeroMemory(&response, sizeof(CLIPRDR_FORMAT_DATA_RESPONSE));
 
-	response.msgFlags = CB_RESPONSE_OK;
+	response.msgFlags = (data) ? CB_RESPONSE_OK : CB_RESPONSE_FAIL;
 	response.dataLen = size;
 	response.requestedFormatData = data;
 
