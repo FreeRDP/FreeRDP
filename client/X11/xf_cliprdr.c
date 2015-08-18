@@ -828,24 +828,6 @@ UINT xf_cliprdr_send_client_format_list_response(xfClipboard* clipboard, BOOL st
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-int xf_cliprdr_send_client_format_data_request(xfClipboard* clipboard, UINT32 formatId)
-{
-	CLIPRDR_FORMAT_DATA_REQUEST formatDataRequest;
-
-	formatDataRequest.msgType = CB_FORMAT_DATA_REQUEST;
-	formatDataRequest.msgFlags = CB_RESPONSE_OK;
-
-	formatDataRequest.requestedFormatId = formatId;
-	clipboard->requestedFormatId = formatId;
-
-	return clipboard->context->ClientFormatDataRequest(clipboard->context, &formatDataRequest);
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
 static UINT xf_cliprdr_monitor_ready(CliprdrClientContext* context, CLIPRDR_MONITOR_READY* monitorReady)
 {
 	xfClipboard* clipboard = (xfClipboard*) context->custom;
