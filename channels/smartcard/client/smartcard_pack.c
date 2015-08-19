@@ -644,13 +644,16 @@ UINT32 smartcard_pack_list_readers_return(SMARTCARD_DEVICE* smartcard, wStream* 
 {
 	UINT32 mszNdrPtr;
 
+	if (ret->ReturnCode != SCARD_S_SUCCESS)
+		return ret->ReturnCode;
+
 	mszNdrPtr = (ret->cBytes) ? 0x00020008 : 0;
 
 	Stream_EnsureRemainingCapacity(s, ret->cBytes + 32);
 
 	Stream_Write_UINT32(s, ret->cBytes); /* cBytes (4 bytes) */
 	Stream_Write_UINT32(s, mszNdrPtr); /* mszNdrPtr (4 bytes) */
-	
+
 	if (mszNdrPtr)
 	{
 		Stream_Write_UINT32(s, ret->cBytes); /* mszNdrLen (4 bytes) */
@@ -675,6 +678,17 @@ void smartcard_trace_list_readers_return(SMARTCARD_DEVICE* smartcard, ListReader
 	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
+	WLog_DBG(TAG, "ListReaders%s_Return {", unicode ? "W" : "A");
+
+	WLog_DBG(TAG, "ReturnCode: %s (0x%08X)",
+		SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
+
+	if (ret->ReturnCode != SCARD_S_SUCCESS)
+	{
+		WLog_DBG(TAG, "}");
+		return;
+	}
+
 	if (unicode)
 	{
 		length = ret->cBytes / 2;
@@ -692,11 +706,6 @@ void smartcard_trace_list_readers_return(SMARTCARD_DEVICE* smartcard, ListReader
 		if (mszA[index] == '\0')
 			mszA[index] = ',';
 	}
-
-	WLog_DBG(TAG, "ListReaders%s_Return {", unicode ? "W" : "A");
-
-	WLog_DBG(TAG, "ReturnCode: %s (0x%08X)",
-		SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
 
 	WLog_DBG(TAG, "cBytes: %d msz: %s", ret->cBytes, mszA);
 
