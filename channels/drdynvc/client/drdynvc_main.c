@@ -50,6 +50,7 @@ static WIN32ERROR dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
 		WLog_DBG(TAG, "create_listener: %d.%s.", dvcman->num_listeners, pszChannelName);
 
 		listener = (DVCMAN_LISTENER*) calloc(1, sizeof(DVCMAN_LISTENER));
+
 		if (!listener)
 		{
 			WLog_ERR(TAG, "calloc failed!");
@@ -501,8 +502,12 @@ WIN32ERROR dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 C
 
 	if (!channel)
 	{
-		WLog_ERR(TAG, "ChannelId %d not found!", ChannelId);
-		return ERROR_INTERNAL_ERROR;
+		//WLog_ERR(TAG, "ChannelId %d not found!", ChannelId);
+		/**
+		 * Windows 8 / Windows Server 2012 send close requests for channels that failed to be created.
+		 * Do not warn, simply return success here.
+		 */
+		return CHANNEL_RC_OK;
 	}
 
 	if (channel->status == CHANNEL_RC_OK)
@@ -548,6 +553,7 @@ WIN32ERROR dvcman_receive_channel_data_first(IWTSVirtualChannelManager* pChannel
 		Stream_Release(channel->dvc_data);
 
 	channel->dvc_data = StreamPool_Take(channel->dvcman->pool, length);
+
 	if (!channel->dvc_data)
 	{
 		WLog_ERR(TAG, "StreamPool_Take failed!");
@@ -755,6 +761,7 @@ static WIN32ERROR drdynvc_send_capability_response(drdynvcPlugin* drdynvc)
 	wStream* s;
 
 	WLog_DBG(TAG, "capability_response");
+
 	s = Stream_New(NULL, 4);
 
 	if (!s)
@@ -877,12 +884,7 @@ static WIN32ERROR drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp,
 	else
 	{
 		WLog_DBG(TAG, "no listener");
-		Stream_Write_UINT32(data_out, (UINT32)(-1));
-		if ((status = dvcman_close_channel(drdynvc->channel_mgr, ChannelId)))
-		{
-			WLog_ERR(TAG, "dvcman_close_channel failed with error %lu!", status);
-			return status;
-		}
+		Stream_Write_UINT32(data_out, (UINT32) 0xC0000001); /* same code used by mstsc */
 	}
 
 	status = drdynvc_send(drdynvc, data_out);
@@ -901,6 +903,11 @@ static WIN32ERROR drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp,
 			WLog_ERR(TAG, "dvcman_open_channel failed with error %lu!", status);
 			return status;
 		}
+	}
+	else
+	{
+		if ((status = dvcman_close_channel(drdynvc->channel_mgr, ChannelId)))
+			WLog_ERR(TAG, "dvcman_close_channel failed with error %lu!", status);
 	}
 
 	return status;
@@ -1052,6 +1059,7 @@ void* drdynvc_get_init_handle_data(void* pInitHandle)
 void drdynvc_remove_init_handle_data(void* pInitHandle)
 {
 	ListDictionary_Remove(g_InitHandles, pInitHandle);
+
 	if (ListDictionary_Count(g_InitHandles) < 1)
 	{
 		ListDictionary_Free(g_InitHandles);
@@ -1093,6 +1101,7 @@ void drdynvc_remove_open_handle_data(DWORD openHandle)
 {
 	void* pOpenHandle = (void*) (size_t) openHandle;
 	ListDictionary_Remove(g_OpenHandles, pOpenHandle);
+
 	if (ListDictionary_Count(g_OpenHandles) < 1)
 	{
 		ListDictionary_Free(g_OpenHandles);

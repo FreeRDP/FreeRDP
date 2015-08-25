@@ -467,7 +467,7 @@ WIN32ERROR xf_SurfaceCommand_Alpha(xfContext* xfc, RdpgfxClientContext* context,
 	if (!surface)
 		return ERROR_INTERNAL_ERROR;
 
-	WLog_DBG(TAG, "xf_SurfaceCommand_Alpha: status: %d\n", status);
+	WLog_DBG(TAG, "xf_SurfaceCommand_Alpha: status: %d", status);
 	/* fill with green for now to distinguish from the rest */
 
 	freerdp_image_fill(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline,

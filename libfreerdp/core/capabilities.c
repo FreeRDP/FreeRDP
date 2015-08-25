@@ -3594,10 +3594,23 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 		return FALSE;
 	}
 
+	if (pduType == PDU_TYPE_DATA)
+	{
+		/**
+		 * We can receive a Save Session Info Data PDU containing a LogonErrorInfo
+		 * structure at this point from the server to indicate a connection error.
+		 */
+
+		if (rdp_recv_data_pdu(rdp, s) < 0)
+			return FALSE;
+
+		return FALSE;
+	}
+
 	if (pduType != PDU_TYPE_DEMAND_ACTIVE)
 	{
 		if (pduType != PDU_TYPE_SERVER_REDIRECTION)
-			WLog_ERR(TAG,  "expected PDU_TYPE_DEMAND_ACTIVE %04x, got %04x", PDU_TYPE_DEMAND_ACTIVE, pduType);
+			WLog_ERR(TAG, "expected PDU_TYPE_DEMAND_ACTIVE %04x, got %04x", PDU_TYPE_DEMAND_ACTIVE, pduType);
 
 		return FALSE;
 	}
