@@ -645,7 +645,7 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 		freerdp_image_copy_from_monochrome(data, gdi->format, -1, 0, 0, 8, 8,
 				hatched, backColor, foreColor, gdi->palette);
 
-		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->bitsPerPixel, data, _aligned_free);
+		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->bitsPerPixel, data);
 		if (!hBmp)
 		{
 			_aligned_free(data);
@@ -703,7 +703,7 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 					brush->data, backColor, foreColor, gdi->palette);
 		}
 
-		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->bitsPerPixel, data, _aligned_free);
+		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->bitsPerPixel, data);
 		if (!hBmp)
 		{
 			_aligned_free(data);
@@ -937,7 +937,7 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 					brush->data, backColor, foreColor, gdi->palette);
 		}
 
-		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->bitsPerPixel, data, _aligned_free);
+		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->bitsPerPixel, data);
 		if (!hBmp)
 		{
 			_aligned_free(data);
@@ -1102,8 +1102,8 @@ static BOOL gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 		freerdp_image_copy(pDstData, gdi->format, -1, 0, 0,
 				cmd->width, cmd->height, pSrcData, PIXEL_FORMAT_XRGB32_VF, -1, 0, 0, gdi->palette);
 
-		gdi_DeleteObject(gdi->image->bitmap);
-		gdi->image->bitmap = gdi_CreateBitmap(cmd->width, cmd->height, cmd->bpp, gdi->bitmap_buffer, NULL);
+		gdi_DeleteObject((HGDIOBJECT)gdi->image->bitmap);
+		gdi->image->bitmap = gdi_CreateBitmapEx(cmd->width, cmd->height, cmd->bpp, gdi->bitmap_buffer, NULL);
 		gdi_SelectObject(gdi->image->hdc, (HGDIOBJECT) gdi->image->bitmap);
 
 		gdi_BitBlt(gdi->primary->hdc, cmd->destLeft, cmd->destTop, cmd->width, cmd->height, gdi->image->hdc, 0, 0, GDI_SRCCOPY);
@@ -1125,8 +1125,8 @@ static BOOL gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 		freerdp_image_copy(pDstData, gdi->format, -1, 0, 0,
 				cmd->width, cmd->height, pSrcData, PIXEL_FORMAT_XRGB32_VF, -1, 0, 0, gdi->palette);
 
-		gdi_DeleteObject(gdi->image->bitmap);
-		gdi->image->bitmap = gdi_CreateBitmap(cmd->width, cmd->height, cmd->bpp, gdi->bitmap_buffer, NULL);
+		gdi_DeleteObject((HGDIOBJECT)gdi->image->bitmap);
+		gdi->image->bitmap = gdi_CreateBitmapEx(cmd->width, cmd->height, cmd->bpp, gdi->bitmap_buffer, NULL);
 		gdi_SelectObject(gdi->image->hdc, (HGDIOBJECT) gdi->image->bitmap);
 
 		gdi_BitBlt(gdi->primary->hdc, cmd->destLeft, cmd->destTop, cmd->width, cmd->height, gdi->image->hdc, 0, 0, GDI_SRCCOPY);
@@ -1193,7 +1193,7 @@ BOOL gdi_init_primary(rdpGdi* gdi)
 	if (!gdi->primary_buffer)
 		gdi->primary->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, gdi->width, gdi->height);
 	else
-		gdi->primary->bitmap = gdi_CreateBitmap(gdi->width, gdi->height, gdi->dstBpp,
+		gdi->primary->bitmap = gdi_CreateBitmapEx(gdi->width, gdi->height, gdi->dstBpp,
 												gdi->primary_buffer, NULL);
 
 	if (!gdi->primary->bitmap)

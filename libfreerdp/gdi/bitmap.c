@@ -134,7 +134,12 @@ INLINE void gdi_SetPixel_32bpp(HGDI_BITMAP hBmp, int X, int Y, UINT32 pixel)
  * @return new bitmap
  */
 
-HGDI_BITMAP gdi_CreateBitmap(int nWidth, int nHeight, int cBitsPerPixel, BYTE* data,
+HGDI_BITMAP gdi_CreateBitmap(int nWidth, int nHeight, int cBitsPerPixel, BYTE* data)
+{
+	return gdi_CreateBitmapEx(nWidth, nHeight, cBitsPerPixel, data, _aligned_free);
+}
+
+HGDI_BITMAP gdi_CreateBitmapEx(int nWidth, int nHeight, int cBitsPerPixel, BYTE* data,
 							void (*fkt_free)(void*))
 {
 	HGDI_BITMAP hBitmap = (HGDI_BITMAP) calloc(1, sizeof(GDI_BITMAP));
