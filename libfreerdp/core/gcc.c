@@ -418,6 +418,7 @@ void gcc_write_client_data_blocks(wStream* s, rdpMcs* mcs)
 		if (settings->UseMultimon && !settings->SpanMonitors)
 		{
 			gcc_write_client_monitor_data(s, mcs);
+			gcc_write_client_monitor_extended_data(s, mcs);
 		}
 
 		gcc_write_client_message_channel_data(s, mcs);
@@ -433,6 +434,7 @@ void gcc_write_client_data_blocks(wStream* s, rdpMcs* mcs)
 			{
 				WLog_ERR(TAG,  "Sending multi monitor information anyway (may break connectivity!)");
 				gcc_write_client_monitor_data(s, mcs);
+				gcc_write_client_monitor_extended_data(s, mcs);
 			}
 			else
 			{
@@ -1582,7 +1584,8 @@ BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	UINT32 index;
 	UINT32 flags;
 	UINT32 monitorCount;
-	MONITOR_DEF* monitorDefArray;
+	UINT32 left, top, right, bottom;
+	rdpSettings* settings = mcs->settings;
 
 	if (blockLength < 8)
 		return FALSE;
@@ -1593,20 +1596,22 @@ BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	if (((blockLength - 8)  / 20) < monitorCount)
 		return FALSE;
 
-	monitorDefArray = (MONITOR_DEF*) calloc(monitorCount, sizeof(MONITOR_DEF));
-	if (!monitorDefArray)
-		return FALSE;
+	settings->MonitorCount = monitorCount;
 
 	for (index = 0; index < monitorCount; index++)
 	{
-		Stream_Read_UINT32(s, monitorDefArray[index].left); /* left */
-		Stream_Read_UINT32(s, monitorDefArray[index].top); /* top */
-		Stream_Read_UINT32(s, monitorDefArray[index].right); /* right */
-		Stream_Read_UINT32(s, monitorDefArray[index].bottom); /* bottom */
-		Stream_Read_UINT32(s, monitorDefArray[index].flags); /* flags */
-	}
+		Stream_Read_UINT32(s, left); /* left */
+		Stream_Read_UINT32(s, top); /* top */
+		Stream_Read_UINT32(s, right); /* right */
+		Stream_Read_UINT32(s, bottom); /* bottom */
+		Stream_Read_UINT32(s, flags); /* flags */
 
-	free(monitorDefArray);
+		settings->MonitorDefArray[index].x = left;
+		settings->MonitorDefArray[index].y = top;
+		settings->MonitorDefArray[index].width = right - left + 1;
+		settings->MonitorDefArray[index].height = bottom - top + 1;
+		settings->MonitorDefArray[index].is_primary = (flags & MONITOR_PRIMARY);
+	}
 
 	return TRUE;
 }
@@ -1656,7 +1661,7 @@ BOOL gcc_read_client_monitor_extended_data(wStream* s, rdpMcs* mcs, UINT16 block
 	UINT32 flags;
 	UINT32 monitorCount;
 	UINT32 monitorAttributeSize;
-	MONITOR_ATTRIBUTES* monitorAttributesArray;
+	rdpSettings* settings = mcs->settings;
 
 	if (blockLength < 12)
 		return FALSE;
@@ -1671,27 +1676,47 @@ BOOL gcc_read_client_monitor_extended_data(wStream* s, rdpMcs* mcs, UINT16 block
 	if ((blockLength - 12) / monitorAttributeSize < monitorCount)
 		return FALSE;
 
-	monitorAttributesArray = (MONITOR_ATTRIBUTES*) calloc(monitorCount, sizeof(MONITOR_ATTRIBUTES));
-	if (!monitorAttributesArray)
+	if (settings->MonitorCount != monitorCount)
 		return FALSE;
+
+	settings->HasMonitorAttributes = TRUE;
 
 	for (index = 0; index < monitorCount; index++)
 	{
-		Stream_Read_UINT32(s, monitorAttributesArray[index].physicalWidth); /* physicalWidth */
-		Stream_Read_UINT32(s, monitorAttributesArray[index].physicalHeight); /* physicalHeight */
-		Stream_Read_UINT32(s, monitorAttributesArray[index].orientation); /* orientation */
-		Stream_Read_UINT32(s, monitorAttributesArray[index].desktopScaleFactor); /* desktopScaleFactor */
-		Stream_Read_UINT32(s, monitorAttributesArray[index].deviceScaleFactor); /* deviceScaleFactor */
+		Stream_Read_UINT32(s, settings->MonitorDefArray[index].attributes.physicalWidth); /* physicalWidth */
+		Stream_Read_UINT32(s, settings->MonitorDefArray[index].attributes.physicalHeight); /* physicalHeight */
+		Stream_Read_UINT32(s, settings->MonitorDefArray[index].attributes.orientation); /* orientation */
+		Stream_Read_UINT32(s, settings->MonitorDefArray[index].attributes.desktopScaleFactor); /* desktopScaleFactor */
+		Stream_Read_UINT32(s, settings->MonitorDefArray[index].attributes.deviceScaleFactor); /* deviceScaleFactor */
 	}
-
-	free(monitorAttributesArray);
 
 	return TRUE;
 }
 
 void gcc_write_client_monitor_extended_data(wStream* s, rdpMcs* mcs)
 {
+	int i;
+	UINT16 length;
+	rdpSettings* settings = mcs->settings;
 
+	if (settings->HasMonitorAttributes)
+	{
+		length = (20 * settings->MonitorCount) + 16;
+		gcc_write_user_data_header(s, CS_MONITOR_EX, length);
+
+		Stream_Write_UINT32(s, 0); /* flags */
+		Stream_Write_UINT32(s, 20); /* monitorAttributeSize */
+		Stream_Write_UINT32(s, settings->MonitorCount); /* monitorCount */
+
+		for (i = 0; i < settings->MonitorCount; i++)
+		{
+			Stream_Write_UINT32(s, settings->MonitorDefArray[i].attributes.physicalWidth); /* physicalWidth */
+			Stream_Write_UINT32(s, settings->MonitorDefArray[i].attributes.physicalHeight); /* physicalHeight */
+			Stream_Write_UINT32(s, settings->MonitorDefArray[i].attributes.orientation); /* orientation */
+			Stream_Write_UINT32(s, settings->MonitorDefArray[i].attributes.desktopScaleFactor); /* desktopScaleFactor */
+			Stream_Write_UINT32(s, settings->MonitorDefArray[i].attributes.deviceScaleFactor); /* deviceScaleFactor */
+		}
+	}
 }
 
 /**

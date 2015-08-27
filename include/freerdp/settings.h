@@ -392,17 +392,6 @@ typedef struct _GLYPH_CACHE_DEFINITION GLYPH_CACHE_DEFINITION;
 
 /* Monitors */
 
-struct rdp_monitor
-{
-	INT32 x;
-	INT32 y;
-	INT32 width;
-	INT32 height;
-	UINT32 is_primary;
-	UINT32 orig_screen;
-};
-typedef struct rdp_monitor rdpMonitor;
-
 struct _MONITOR_DEF
 {
 	INT32 left;
@@ -422,6 +411,18 @@ struct _MONITOR_ATTRIBUTES
 	UINT32 deviceScaleFactor;
 };
 typedef struct _MONITOR_ATTRIBUTES MONITOR_ATTRIBUTES;
+
+struct rdp_monitor
+{
+	INT32 x;
+	INT32 y;
+	INT32 width;
+	INT32 height;
+	UINT32 is_primary;
+	UINT32 orig_screen;
+	MONITOR_ATTRIBUTES attributes;
+};
+typedef struct rdp_monitor rdpMonitor;
 
 /* Device Redirection */
 
@@ -903,7 +904,8 @@ struct rdp_settings
 	ALIGN64 UINT32 NumMonitorIds; /* 394 */
 	ALIGN64 UINT32 MonitorLocalShiftX; /*395 */
 	ALIGN64 UINT32 MonitorLocalShiftY; /* 396 */
-	UINT64 padding0448[448 - 397]; /* 397 */
+	ALIGN64 BOOL HasMonitorAttributes; /* 397 */
+	UINT64 padding0448[448 - 398]; /* 398 */
 
 
 	/* Client Message Channel Data */
