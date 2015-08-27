@@ -90,7 +90,6 @@ struct rdp_shadow_client
 	CRITICAL_SECTION lock;
 	REGION16 invalidRegion;
 	rdpShadowServer* server;
-	rdpShadowSurface* lobby;
 	rdpShadowEncoder* encoder;
 	rdpShadowSubsystem* subsystem;
 
@@ -112,6 +111,7 @@ struct rdp_shadow_server
 	wArrayList* clients;
 	rdpShadowScreen* screen;
 	rdpShadowSurface* surface;
+	rdpShadowSurface* lobby;
 	rdpShadowCapture* capture;
 	rdpShadowSubsystem* subsystem;
 
@@ -281,6 +281,8 @@ FREERDP_API int shadow_client_boardcast_quit(rdpShadowServer* server, int nExitC
 
 FREERDP_API int shadow_encoder_preferred_fps(rdpShadowEncoder* encoder);
 FREERDP_API UINT32 shadow_encoder_inflight_frames(rdpShadowEncoder* encoder);
+
+FREERDP_API BOOL shadow_screen_resize(rdpShadowScreen* screen);
 
 #ifdef __cplusplus
 }

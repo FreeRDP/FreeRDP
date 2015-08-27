@@ -35,6 +35,7 @@ struct rdp_shadow_screen
 	REGION16 invalidRegion;
 
 	rdpShadowSurface* primary;
+	rdpShadowSurface* lobby;
 };
 
 #ifdef __cplusplus
