@@ -3,6 +3,8 @@
  * Display Update Virtual Channel Extension
  *
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +52,7 @@ typedef struct _DISPLAY_CONTROL_MONITOR_LAYOUT DISPLAY_CONTROL_MONITOR_LAYOUT;
 
 typedef struct _disp_client_context DispClientContext;
 
-typedef int (*pcDispSendMonitorLayout)(DispClientContext* context, UINT32 NumMonitors, DISPLAY_CONTROL_MONITOR_LAYOUT* Monitors);
+typedef UINT (*pcDispSendMonitorLayout)(DispClientContext* context, UINT32 NumMonitors, DISPLAY_CONTROL_MONITOR_LAYOUT* Monitors);
 
 struct _disp_client_context
 {

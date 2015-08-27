@@ -35,6 +35,6 @@
 #define DEBUG_SND(fmt, ...) do { } while (0)
 #endif
 
-int rdpsnd_virtual_channel_write(rdpsndPlugin* rdpsnd, wStream* s);
+UINT rdpsnd_virtual_channel_write(rdpsndPlugin* rdpsnd, wStream* s);
 
 #endif /* __RDPSND_MAIN_H */

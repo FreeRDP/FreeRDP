@@ -4,6 +4,7 @@
  *
  * Copyright 2009-2011 Jay Sorg
  * Copyright 2010-2011 Vic Lee
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +53,7 @@ struct cliprdr_plugin
 typedef struct cliprdr_plugin cliprdrPlugin;
 
 wStream* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags, UINT32 dataLen);
-void cliprdr_packet_send(cliprdrPlugin* cliprdr, wStream* data_out);
+UINT cliprdr_packet_send(cliprdrPlugin* cliprdr, wStream* data_out);
 
 CliprdrClientContext* cliprdr_get_client_interface(cliprdrPlugin* cliprdr);
 

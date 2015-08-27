@@ -3,8 +3,8 @@
  * FreeRDP Interface
  *
  * Copyright 2009-2011 Jay Sorg
- * Copyright 2014 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
- *
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,7 +110,11 @@ struct rdp_context
 
 	ALIGN64 wPubSub* pubSub; /* (offset 18) */
 
-	UINT64 paddingB[32 - 19]; /* 19 */
+	ALIGN64 HANDLE channelErrorEvent; /* (offset 19)*/
+	ALIGN64 UINT channelErrorNum; /*(offset 20)*/
+	ALIGN64 char* errorDescription; /*(offset 21)*/
+
+	UINT64 paddingB[32 - 22]; /* 22 */
 
 	ALIGN64 rdpRdp* rdp; /**< (offset 32)
 					Pointer to a rdp_rdp structure used to keep the connection's parameters.
@@ -279,6 +283,12 @@ FREERDP_API const char* freerdp_get_last_error_string(UINT32 error);
 FREERDP_API void freerdp_set_last_error(rdpContext* context, UINT32 lastError);
 
 FREERDP_API ULONG freerdp_get_transport_sent(rdpContext* context, BOOL resetCount);
+
+FREERDP_API HANDLE getChannelErrorEventHandle(rdpContext* context);
+FREERDP_API UINT getChannelError(rdpContext* context);
+FREERDP_API const char* getChannelErrorDescription(rdpContext* context);
+FREERDP_API void setChannelError(rdpContext* context, UINT errorNum, char* description);
+FREERDP_API BOOL checkChannelErrorEvent(rdpContext* context);
 
 #ifdef __cplusplus
 }

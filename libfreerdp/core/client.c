@@ -3,6 +3,8 @@
  * Client Channels
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,9 +156,14 @@ void freerdp_channels_free(rdpChannels* channels)
 	free(channels);
 }
 
-int freerdp_drdynvc_on_channel_connected(DrdynvcClientContext* context, const char* name, void* pInterface)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT freerdp_drdynvc_on_channel_connected(DrdynvcClientContext* context, const char* name, void* pInterface)
 {
-	int status = 0;
+	UINT status = CHANNEL_RC_OK;
 	ChannelConnectedEventArgs e;
 	rdpChannels* channels = (rdpChannels*) context->custom;
 	freerdp* instance = channels->instance;
@@ -169,9 +176,14 @@ int freerdp_drdynvc_on_channel_connected(DrdynvcClientContext* context, const ch
 	return status;
 }
 
-int freerdp_drdynvc_on_channel_disconnected(DrdynvcClientContext* context, const char* name, void* pInterface)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT freerdp_drdynvc_on_channel_disconnected(DrdynvcClientContext* context, const char* name, void* pInterface)
 {
-	int status = 0;
+	UINT status = CHANNEL_RC_OK;
 	ChannelDisconnectedEventArgs e;
 	rdpChannels* channels = (rdpChannels*) context->custom;
 	freerdp* instance = channels->instance;
@@ -670,7 +682,10 @@ UINT VCAPITYPE FreeRDP_VirtualChannelWrite(DWORD openHandle, LPVOID pData, ULONG
 	pChannelOpenEvent->pChannelOpenData = pChannelOpenData;
 
 	if (!MessageQueue_Post(channels->queue, (void*) channels, 0, (void*) pChannelOpenEvent, NULL))
+	{
+		free(pChannelOpenEvent);
 		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	return CHANNEL_RC_OK;
 }
@@ -723,6 +738,7 @@ int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings, P
 	EntryPoints.MagicNumber = FREERDP_CHANNEL_MAGIC_NUMBER;
 	EntryPoints.ppInterface = &g_pInterface;
 	EntryPoints.pExtendedData = data;
+	EntryPoints.context = ((freerdp*)settings->instance)->context;
 
 	/* enable VirtualChannelInit */
 	channels->can_call_init = TRUE;

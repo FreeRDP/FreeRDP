@@ -293,10 +293,18 @@ int android_AudioOut(OPENSL_STREAM *p, const short *buffer,int size)
 	assert(size > 0);
 
 	/* Assure, that the queue is not full. */
-	if (p->queuesize <= Queue_Count(p->queue))
-		WaitForSingleObject(p->queue->event, INFINITE);
+	if (p->queuesize <= Queue_Count(p->queue) && WaitForSingleObject(p->queue->event, INFINITE) == WAIT_FAILED)
+    {
+        DEBUG_SND("WaitForSingleObject failed!");
+        return -1;
+    }
 
 	void *data = calloc(size, sizeof(short));
+	if (!data)
+	{
+		DEBUG_SND("unable to allocate a buffer");
+		return -1;
+	}
 	memcpy(data, buffer, size * sizeof(short));
  	(*p->bqPlayerBufferQueue)->Enqueue(p->bqPlayerBufferQueue, 
 	 	data, sizeof(short) * size);

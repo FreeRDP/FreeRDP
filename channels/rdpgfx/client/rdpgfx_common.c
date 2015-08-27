@@ -3,6 +3,8 @@
  * Graphics Pipeline Extension
  *
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +25,9 @@
 
 #include <winpr/crt.h>
 #include <winpr/stream.h>
+#include <freerdp/channels/log.h>
+
+#define TAG CHANNELS_TAG("rdpgfx.common")
 
 #include "rdpgfx_common.h"
 
@@ -85,88 +90,140 @@ const char* rdpgfx_get_codec_id_string(UINT16 codecId)
 	return "RDPGFX_CODECID_UNKNOWN";
 }
 
-int rdpgfx_read_header(wStream* s, RDPGFX_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpgfx_read_header(wStream* s, RDPGFX_HEADER* header)
 {
 	if (Stream_GetRemainingLength(s) < 8)
-		return -1;
+	{
+		WLog_ERR(TAG, "calloc failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	Stream_Read_UINT16(s, header->cmdId); /* cmdId (2 bytes) */
 	Stream_Read_UINT16(s, header->flags); /* flags (2 bytes) */
 	Stream_Read_UINT32(s, header->pduLength); /* pduLength (4 bytes) */
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-int rdpgfx_write_header(wStream* s, RDPGFX_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpgfx_write_header(wStream* s, RDPGFX_HEADER* header)
 {
 	Stream_Write_UINT16(s, header->cmdId); /* cmdId (2 bytes) */
 	Stream_Write_UINT16(s, header->flags); /* flags (2 bytes) */
 	Stream_Write_UINT32(s, header->pduLength); /* pduLength (4 bytes) */
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-int rdpgfx_read_point16(wStream* s, RDPGFX_POINT16* pt16)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpgfx_read_point16(wStream* s, RDPGFX_POINT16* pt16)
 {
 	if (Stream_GetRemainingLength(s) < 4)
-		return -1;
+	{
+		WLog_ERR(TAG, "not enough data!");
+		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT16(s, pt16->x); /* x (2 bytes) */
 	Stream_Read_UINT16(s, pt16->y); /* y (2 bytes) */
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-int rdpgfx_write_point16(wStream* s, RDPGFX_POINT16* point16)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpgfx_write_point16(wStream* s, RDPGFX_POINT16* point16)
 {
 	Stream_Write_UINT16(s, point16->x); /* x (2 bytes) */
 	Stream_Write_UINT16(s, point16->y); /* y (2 bytes) */
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-int rdpgfx_read_rect16(wStream* s, RDPGFX_RECT16* rect16)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpgfx_read_rect16(wStream* s, RDPGFX_RECT16* rect16)
 {
 	if (Stream_GetRemainingLength(s) < 8)
-		return -1;
+	{
+		WLog_ERR(TAG, "not enough data!");
+		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT16(s, rect16->left); /* left (2 bytes) */
 	Stream_Read_UINT16(s, rect16->top); /* top (2 bytes) */
 	Stream_Read_UINT16(s, rect16->right); /* right (2 bytes) */
 	Stream_Read_UINT16(s, rect16->bottom); /* bottom (2 bytes) */
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-int rdpgfx_write_rect16(wStream* s, RDPGFX_RECT16* rect16)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpgfx_write_rect16(wStream* s, RDPGFX_RECT16* rect16)
 {
 	Stream_Write_UINT16(s, rect16->left); /* left (2 bytes) */
 	Stream_Write_UINT16(s, rect16->top); /* top (2 bytes) */
 	Stream_Write_UINT16(s, rect16->right); /* right (2 bytes) */
 	Stream_Write_UINT16(s, rect16->bottom); /* bottom (2 bytes) */
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-int rdpgfx_read_color32(wStream* s, RDPGFX_COLOR32* color32)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpgfx_read_color32(wStream* s, RDPGFX_COLOR32* color32)
 {
 	if (Stream_GetRemainingLength(s) < 4)
-		return -1;
+	{
+		WLog_ERR(TAG, "not enough data!");
+		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT8(s, color32->B); /* B (1 byte) */
 	Stream_Read_UINT8(s, color32->G); /* G (1 byte) */
 	Stream_Read_UINT8(s, color32->R); /* R (1 byte) */
 	Stream_Read_UINT8(s, color32->XA); /* XA (1 byte) */
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-int rdpgfx_write_color32(wStream* s, RDPGFX_COLOR32* color32)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpgfx_write_color32(wStream* s, RDPGFX_COLOR32* color32)
 {
 	Stream_Write_UINT8(s, color32->B); /* B (1 byte) */
 	Stream_Write_UINT8(s, color32->G); /* G (1 byte) */
 	Stream_Write_UINT8(s, color32->R); /* R (1 byte) */
 	Stream_Write_UINT8(s, color32->XA); /* XA (1 byte) */
 
-	return 1;
+	return CHANNEL_RC_OK;
 }

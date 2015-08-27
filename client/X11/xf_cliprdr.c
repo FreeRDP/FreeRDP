@@ -3,6 +3,8 @@
  * X11 Clipboard Redirection
  *
  * Copyright 2010-2011 Vic Lee
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -783,7 +785,12 @@ int xf_cliprdr_send_client_format_data_request(xfClipboard* clipboard, UINT32 fo
 	return 1;
 }
 
-static int xf_cliprdr_monitor_ready(CliprdrClientContext* context, CLIPRDR_MONITOR_READY* monitorReady)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT xf_cliprdr_monitor_ready(CliprdrClientContext* context, CLIPRDR_MONITOR_READY* monitorReady)
 {
 	xfClipboard* clipboard = (xfClipboard*) context->custom;
 
@@ -791,17 +798,27 @@ static int xf_cliprdr_monitor_ready(CliprdrClientContext* context, CLIPRDR_MONIT
 	xf_cliprdr_send_client_format_list(clipboard);
 	clipboard->sync = TRUE;
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-static int xf_cliprdr_server_capabilities(CliprdrClientContext* context, CLIPRDR_CAPABILITIES* capabilities)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT xf_cliprdr_server_capabilities(CliprdrClientContext* context, CLIPRDR_CAPABILITIES* capabilities)
 {
 	//xfClipboard* clipboard = (xfClipboard*) context->custom;
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-static int xf_cliprdr_server_format_list(CliprdrClientContext* context, CLIPRDR_FORMAT_LIST* formatList)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT xf_cliprdr_server_format_list(CliprdrClientContext* context, CLIPRDR_FORMAT_LIST* formatList)
 {
 	int i, j;
 	CLIPRDR_FORMAT* format;
@@ -829,7 +846,7 @@ static int xf_cliprdr_server_format_list(CliprdrClientContext* context, CLIPRDR_
 	clipboard->serverFormats = (CLIPRDR_FORMAT*) calloc(clipboard->numServerFormats, sizeof(CLIPRDR_FORMAT));
 
 	if (!clipboard->serverFormats)
-		return -1;
+		return CHANNEL_RC_NO_MEMORY;
 
 	for (i = 0; i < formatList->numFormats; i++)
 	{
@@ -872,17 +889,27 @@ static int xf_cliprdr_server_format_list(CliprdrClientContext* context, CLIPRDR_
 
 	XFlush(xfc->display);
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-static int xf_cliprdr_server_format_list_response(CliprdrClientContext* context, CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT xf_cliprdr_server_format_list_response(CliprdrClientContext* context, CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
 {
 	//xfClipboard* clipboard = (xfClipboard*) context->custom;
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-static int xf_cliprdr_server_format_data_request(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT xf_cliprdr_server_format_data_request(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
 {
 	xfCliprdrFormat* format = NULL;
 	UINT32 formatId = formatDataRequest->requestedFormatId;
@@ -904,7 +931,7 @@ static int xf_cliprdr_server_format_data_request(CliprdrClientContext* context, 
 	if (!format)
 	{
 		xf_cliprdr_send_data_response(clipboard, NULL, 0);
-		return 1;
+		return CHANNEL_RC_OK;
 	}
 
 	clipboard->requestedFormatId = formatId;
@@ -916,10 +943,15 @@ static int xf_cliprdr_server_format_data_request(CliprdrClientContext* context, 
 
 	/* After this point, we expect a SelectionNotify event from the clipboard owner. */
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-static int xf_cliprdr_server_format_data_response(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT xf_cliprdr_server_format_data_response(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
 {
 	BOOL bSuccess;
 	BYTE* pSrcData;
@@ -936,7 +968,7 @@ static int xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	xfContext* xfc = clipboard->xfc;
 
 	if (!clipboard->respond)
-		return 1;
+		return CHANNEL_RC_OK;
 
 	format = xf_cliprdr_get_format_by_id(clipboard, clipboard->requestedFormatId);
 
@@ -988,7 +1020,7 @@ static int xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	pSrcData = (BYTE*) malloc(SrcSize);
 
 	if (!pSrcData)
-		return -1;
+		return CHANNEL_RC_NO_MEMORY;
 
 	CopyMemory(pSrcData, data, SrcSize);
 
@@ -1017,7 +1049,7 @@ static int xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	free(clipboard->respond);
 	clipboard->respond = NULL;
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
 xfClipboard* xf_clipboard_new(xfContext* xfc)

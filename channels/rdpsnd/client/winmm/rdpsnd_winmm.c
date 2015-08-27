@@ -4,6 +4,8 @@
  *
  * Copyright 2009-2012 Jay Sorg
  * Copyright 2010-2012 Vic Lee
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,17 +82,19 @@ static BOOL rdpsnd_winmm_convert_format(const AUDIO_FORMAT* in, WAVEFORMATEX* ou
 	return result;
 }
 
-static void rdpsnd_winmm_set_format(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
+static BOOL rdpsnd_winmm_set_format(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
 {
 	rdpsndWinmmPlugin* winmm = (rdpsndWinmmPlugin*) device;
 
 	if (format)
 	{
-		rdpsnd_winmm_convert_format(format, &winmm->format);
+		if (!rdpsnd_winmm_convert_format(format, &winmm->format))
+			return FALSE;
 
 		winmm->wformat = format->wFormatTag;
 		winmm->block_size = format->nBlockAlign;
 	}
+	return TRUE;
 }
 
 static void CALLBACK rdpsnd_winmm_callback_function(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
@@ -138,13 +142,13 @@ static void CALLBACK rdpsnd_winmm_callback_function(HWAVEOUT hwo, UINT uMsg, DWO
 	}
 }
 
-static void rdpsnd_winmm_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
+static BOOL rdpsnd_winmm_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
 {
 	MMRESULT mmResult;
 	rdpsndWinmmPlugin* winmm = (rdpsndWinmmPlugin*) device;
 
 	if (winmm->hWaveOut)
-		return;
+		return TRUE;
 
 	rdpsnd_winmm_set_format(device, format, latency);
 	freerdp_dsp_context_reset_adpcm(winmm->dsp_context);
@@ -155,7 +159,10 @@ static void rdpsnd_winmm_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, 
 	if (mmResult != MMSYSERR_NOERROR)
 	{
 		WLog_ERR(TAG,  "waveOutOpen failed: %d", mmResult);
+		return FALSE;
 	}
+
+	return TRUE;
 }
 
 static void rdpsnd_winmm_close(rdpsndDevicePlugin* device)
@@ -228,14 +235,14 @@ static UINT32 rdpsnd_winmm_get_volume(rdpsndDevicePlugin* device)
 	return dwVolume;
 }
 
-static void rdpsnd_winmm_set_volume(rdpsndDevicePlugin* device, UINT32 value)
+static BOOL rdpsnd_winmm_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 {
 	rdpsndWinmmPlugin* winmm = (rdpsndWinmmPlugin*) device;
 
 	if (!winmm->hWaveOut)
-		return;
+		return FALSE;
 
-	waveOutSetVolume(winmm->hWaveOut, value);
+	return (waveOutSetVolume(winmm->hWaveOut, value) == MMSYSERR_NOERROR);
 }
 
 static void rdpsnd_winmm_wave_decode(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
@@ -265,8 +272,12 @@ static void rdpsnd_winmm_wave_decode(rdpsndDevicePlugin* device, RDPSND_WAVE* wa
 	}
 
 	wave->data = (BYTE*) malloc(length);
+	if (!wave->data)
+		return FALSE;
 	CopyMemory(wave->data, data, length);
 	wave->length = length;
+
+	return TRUE;
 }
 
 void rdpsnd_winmm_wave_play(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
@@ -326,7 +337,12 @@ static void rdpsnd_winmm_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV
 #define freerdp_rdpsnd_client_subsystem_entry	winmm_freerdp_rdpsnd_client_subsystem_entry
 #endif
 
-int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	ADDIN_ARGV* args;
 	rdpsndWinmmPlugin* winmm;
@@ -334,7 +350,7 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	winmm = (rdpsndWinmmPlugin*) calloc(1, sizeof(rdpsndWinmmPlugin));
 
 	if (!winmm)
-		return -1;
+		return CHANNEL_RC_NO_MEMORY;
 
 	winmm->device.DisableConfirmThread = TRUE;
 
@@ -353,8 +369,13 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	rdpsnd_winmm_parse_addin_args((rdpsndDevicePlugin*) winmm, args);
 
 	winmm->dsp_context = freerdp_dsp_context_new();
+	if (!winmm->dsp_context)
+	{
+		free(winmm);
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*) winmm);
 
-	return 0;
+	return CHANNEL_RC_OK;
 }

@@ -3,6 +3,8 @@
  * Dynamic Virtual Channel
  *
  * Copyright 2010-2011 Vic Lee
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +33,7 @@
 #include <freerdp/addin.h>
 #include <freerdp/channels/log.h>
 #include <freerdp/client/drdynvc.h>
+#include <freerdp/freerdp.h>
 
 typedef struct drdynvc_plugin drdynvcPlugin;
 
@@ -129,11 +132,12 @@ struct drdynvc_plugin
 	int PriorityCharge1;
 	int PriorityCharge2;
 	int PriorityCharge3;
-	int channel_error;
+	rdpContext* rdpcontext;
+
 
 	IWTSVirtualChannelManager* channel_mgr;
 };
 
-int drdynvc_write_data(drdynvcPlugin* plugin, UINT32 ChannelId, BYTE* data, UINT32 data_size);
+UINT drdynvc_write_data(drdynvcPlugin* plugin, UINT32 ChannelId, BYTE* data, UINT32 data_size);
 
 #endif

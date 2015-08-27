@@ -5,6 +5,8 @@
  * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2010-2011 Vic Lee
  * Copyright 2012 Gerald Richter
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,6 +98,11 @@ static char* drive_file_combine_fullpath(const char* base_path, const char* path
 	char* fullpath;
 
 	fullpath = (char*) malloc(strlen(base_path) + strlen(path) + 1);
+	if (!fullpath)
+	{
+		WLog_ERR(TAG, "malloc failed!");
+		return NULL;
+	}
 	strcpy(fullpath, base_path);
 	strcat(fullpath, path);
 	drive_file_fix_path(fullpath);
@@ -127,6 +134,11 @@ static BOOL drive_file_remove_dir(const char* path)
 		}
 
 		p = (char*) malloc(strlen(path) + strlen(pdirent->d_name) + 2);
+		if (!p)
+		{
+			WLog_ERR(TAG, "malloc failed!");
+			return FALSE;
+		}
 		sprintf(p, "%s/%s", path, pdirent->d_name);
 
 		if (STAT(p, &st) != 0)
@@ -299,8 +311,12 @@ DRIVE_FILE* drive_file_new(const char* base_path, const char* path, UINT32 id,
 {
 	DRIVE_FILE* file;
 
-	file = (DRIVE_FILE*) malloc(sizeof(DRIVE_FILE));
-	ZeroMemory(file, sizeof(DRIVE_FILE));
+	file = (DRIVE_FILE*) calloc(1, sizeof(DRIVE_FILE));
+	if (!file)
+	{
+		WLog_ERR(TAG, "calloc failed!");
+		return NULL;
+	}
 
 	file->id = id;
 	file->basepath = (char*) base_path;
@@ -583,9 +599,18 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 					FileNameLength / 2, &s, 0, NULL, NULL);
 
 			if (status < 1)
-				s = (char*) calloc(1, 1);
+				if (!(s = (char*) calloc(1, 1)))
+				{
+					WLog_ERR(TAG, "calloc failed!");
+					return FALSE;
+				}
 
 			fullpath = drive_file_combine_fullpath(file->basepath, s);
+			if (!fullpath)
+			{
+				WLog_ERR(TAG, "drive_file_combine_fullpath failed!");
+				return FALSE;
+			}
 			free(s);
 
 #ifdef _WIN32
@@ -636,7 +661,13 @@ BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYT
 		free(file->pattern);
 
 		if (path[0])
-			file->pattern = _strdup(strrchr(path, '\\') + 1);
+		{
+			if (!(file->pattern = _strdup(strrchr(path, '\\') + 1)))
+			{
+				WLog_ERR(TAG, "_strdup failed!");
+				return FALSE;
+			}
+		}
 		else
 			file->pattern = NULL;
 	}
@@ -670,6 +701,11 @@ BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYT
 
 	memset(&st, 0, sizeof(struct STAT));
 	ent_path = (WCHAR*) malloc(strlen(file->fullpath) + strlen(ent->d_name) + 2);
+	if (!ent_path)
+	{
+		WLog_ERR(TAG, "malloc failed!");
+		return FALSE;
+	}
 	sprintf((char*) ent_path, "%s/%s", file->fullpath, ent->d_name);
 
 	if (STAT((char*) ent_path, &st) != 0)

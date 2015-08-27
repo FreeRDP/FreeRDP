@@ -4,6 +4,8 @@
  *
  * Copyright 2010-2011 Vic Lee
  * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,8 +50,12 @@ DEVMAN* devman_new(rdpdrPlugin* rdpdr)
 	DEVMAN* devman;
 
 	devman = (DEVMAN*) calloc(1, sizeof(DEVMAN));
+
 	if (!devman)
+	{
+		WLog_INFO(TAG,  "calloc failed!");
 		return NULL;
+	}
 
 	devman->plugin = (void*) rdpdr;
 	devman->id_sequence = 1;
@@ -57,9 +63,10 @@ DEVMAN* devman_new(rdpdrPlugin* rdpdr)
 	devman->devices = ListDictionary_New(TRUE);
 	if (!devman->devices)
 	{
-		free(devman);
+		WLog_INFO(TAG,  "ListDictionary_New failed!");
 		return NULL;
 	}
+
 	ListDictionary_ValueObject(devman->devices)->fnObjectFree =
 			(OBJECT_FREE_FN) devman_device_free;
 
@@ -82,14 +89,24 @@ void devman_unregister_device(DEVMAN* devman, void* key)
 		devman_device_free(device);
 }
 
-static void devman_register_device(DEVMAN* devman, DEVICE* device)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT devman_register_device(DEVMAN* devman, DEVICE* device)
 {
 	void* key = NULL;
 
 	device->id = devman->id_sequence++;
 	key = (void*) (size_t) device->id;
 
-	ListDictionary_Add(devman->devices, key, device);
+	if (!ListDictionary_Add(devman->devices, key, device))
+	{
+		WLog_INFO(TAG,  "ListDictionary_Add failed!");
+		return ERROR_INTERNAL_ERROR;
+	}
+	return CHANNEL_RC_OK;
 }
 
 DEVICE* devman_get_device_by_id(DEVMAN* devman, UINT32 id)
@@ -108,7 +125,12 @@ static char SMARTCARD_SERVICE_NAME[] = "smartcard";
 static char SERIAL_SERVICE_NAME[] = "serial";
 static char PARALLEL_SERVICE_NAME[] = "parallel";
 
-BOOL devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device, rdpContext* rdpcontext)
 {
 	char* ServiceName = NULL;
 	DEVICE_SERVICE_ENTRY_POINTS ep;
@@ -126,19 +148,24 @@ BOOL devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device)
 		ServiceName = PARALLEL_SERVICE_NAME;
 
 	if (!ServiceName)
-		return FALSE;
+	{
+		WLog_INFO(TAG,  "ServiceName %s did not match!", ServiceName);
+		return ERROR_INVALID_NAME;
+	}
 
 	WLog_INFO(TAG,  "Loading device service %s (static)", ServiceName);
 	entry = (PDEVICE_SERVICE_ENTRY) freerdp_load_channel_addin_entry(ServiceName, NULL, "DeviceServiceEntry", 0);
 
 	if (!entry)
-		return FALSE;
+	{
+		WLog_INFO(TAG,  "freerdp_load_channel_addin_entry failed!");
+		return ERROR_INTERNAL_ERROR;
+	}
 
 	ep.devman = devman;
 	ep.RegisterDevice = devman_register_device;
 	ep.device = device;
+	ep.rdpcontext = rdpcontext;
 
-	entry(&ep);
-
-	return TRUE;
+	return entry(&ep);
 }

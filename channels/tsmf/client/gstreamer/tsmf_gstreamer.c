@@ -587,15 +587,15 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder* decoder, const BYTE *data, UIN
 	return TRUE;
 }
 
-static void tsmf_gstreamer_change_volume(ITSMFDecoder* decoder, UINT32 newVolume, UINT32 muted)
+static BOOL tsmf_gstreamer_change_volume(ITSMFDecoder* decoder, UINT32 newVolume, UINT32 muted)
 {
 	TSMFGstreamerDecoder* mdecoder = (TSMFGstreamerDecoder *) decoder;
 
 	if (!mdecoder || !mdecoder->pipe)
-		return;
+		return FALSE;
 
 	if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
-		return;
+		return TRUE;
 
 	mdecoder->gstMuted = (BOOL) muted;
 	DEBUG_TSMF("mute=[%d]", mdecoder->gstMuted);
@@ -603,21 +603,22 @@ static void tsmf_gstreamer_change_volume(ITSMFDecoder* decoder, UINT32 newVolume
 	DEBUG_TSMF("gst_new_vol=[%f]", mdecoder->gstVolume);
 
 	if (!mdecoder->volume)
-		return;
+		return FALSE;
 
 	if (!G_IS_OBJECT(mdecoder->volume))
-		return;
+		return FALSE;
 
 	g_object_set(mdecoder->volume, "mute", mdecoder->gstMuted, NULL);
 	g_object_set(mdecoder->volume, "volume", mdecoder->gstVolume, NULL);
+	return TRUE;
 }
 
-static void tsmf_gstreamer_control(ITSMFDecoder* decoder, ITSMFControlMsg control_msg, UINT32 *arg)
+static BOOL tsmf_gstreamer_control(ITSMFDecoder* decoder, ITSMFControlMsg control_msg, UINT32 *arg)
 {
 	TSMFGstreamerDecoder* mdecoder = (TSMFGstreamerDecoder *) decoder;
 
 	if (!mdecoder)
-		return;
+		return FALSE;
 
 	if (control_msg == Control_Pause)
 	{
@@ -626,7 +627,7 @@ static void tsmf_gstreamer_control(ITSMFDecoder* decoder, ITSMFControlMsg contro
 		if (mdecoder->paused)
 		{
 			WLog_ERR(TAG, "%s: Ignoring control PAUSE, already received!", get_type(mdecoder));
-			return;
+			return TRUE;
 		}
 
 		tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_PAUSED);
@@ -642,7 +643,7 @@ static void tsmf_gstreamer_control(ITSMFDecoder* decoder, ITSMFControlMsg contro
 		if (!mdecoder->paused && !mdecoder->shutdown)
 		{
 			WLog_ERR(TAG, "%s: Ignoring control RESUME, already received!", get_type(mdecoder));
-			return;
+			return TRUE;
 		}
 
 		mdecoder->paused = FALSE;
@@ -660,7 +661,7 @@ static void tsmf_gstreamer_control(ITSMFDecoder* decoder, ITSMFControlMsg contro
 		if (mdecoder->shutdown)
 		{
 			WLog_ERR(TAG, "%s: Ignoring control STOP, already received!", get_type(mdecoder));
-			return;
+			return TRUE;
 		}
 
 		mdecoder->shutdown = TRUE;
@@ -674,6 +675,8 @@ static void tsmf_gstreamer_control(ITSMFDecoder* decoder, ITSMFControlMsg contro
 	}
 	else
 		WLog_ERR(TAG, "Unknown control message %08x", control_msg);
+
+	return TRUE;
 }
 
 static BOOL tsmf_gstreamer_buffer_filled(ITSMFDecoder* decoder)
@@ -733,7 +736,7 @@ static UINT64 tsmf_gstreamer_get_running_time(ITSMFDecoder* decoder)
 	return pos/100;
 }
 
-static void tsmf_gstreamer_update_rendering_area(ITSMFDecoder* decoder,
+static BOOL tsmf_gstreamer_update_rendering_area(ITSMFDecoder* decoder,
 		int newX, int newY, int newWidth, int newHeight, int numRectangles,
 		RDP_RECT *rectangles)
 {
@@ -743,9 +746,11 @@ static void tsmf_gstreamer_update_rendering_area(ITSMFDecoder* decoder,
 
 	if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
 	{
-		tsmf_window_resize(mdecoder, newX, newY, newWidth, newHeight,
-						   numRectangles, rectangles);
+		return tsmf_window_resize(mdecoder, newX, newY, newWidth, newHeight,
+						   numRectangles, rectangles) == 0;
 	}
+
+	return TRUE;
 }
 
 BOOL tsmf_gstreamer_ack(ITSMFDecoder* decoder, BOOL (*cb)(void *, BOOL), void *stream)
@@ -803,7 +808,11 @@ ITSMFDecoder* freerdp_tsmf_client_subsystem_entry(void)
 	decoder->gstMuted = FALSE;
 	decoder->state = GST_STATE_VOID_PENDING;  /* No real state yet */
 
-	tsmf_platform_create(decoder);
+	if (tsmf_platform_create(decoder) < 0)
+	{
+		free(decoder);
+		return NULL;
+	}
 
 	return (ITSMFDecoder*) decoder;
 }

@@ -3,6 +3,8 @@
  * Audio Output Virtual Channel
  *
  * Copyright 2012 Laxmikant Rashinkar <LK.Rashinkar@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +62,7 @@ static void mac_audio_queue_output_cb(void* inUserData, AudioQueueRef inAQ, Audi
 	
 }
 
-static void rdpsnd_mac_set_format(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
+static BOOL rdpsnd_mac_set_format(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
 {
 	rdpsndMacPlugin* mac = (rdpsndMacPlugin*) device;
 	
@@ -99,9 +101,10 @@ static void rdpsnd_mac_set_format(rdpsndDevicePlugin* device, AUDIO_FORMAT* form
 	mac->audioFormat.mReserved = 0;
 	
 	rdpsnd_print_audio_format(format);
+	return TRUE;
 }
 
-static void rdpsnd_mac_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
+static BOOL rdpsnd_mac_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
 {
 	int index;
 	OSStatus status;
@@ -109,11 +112,15 @@ static void rdpsnd_mac_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
 	rdpsndMacPlugin* mac = (rdpsndMacPlugin*) device;
 	
 	if (mac->isOpen)
-		return;
+		return TRUE;
     
 	mac->audioBufferIndex = 0;
     
-	device->SetFormat(device, format, 0);
+	if (!device->SetFormat(device, format, 0))
+	{
+		WLog_ERR(TAG, "SetFormat failure\n");
+		return FALSE;
+	}
     
 	status = AudioQueueNewOutput(&(mac->audioFormat),
 				     mac_audio_queue_output_cb, mac,
@@ -121,14 +128,14 @@ static void rdpsnd_mac_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
 	
 	if (status != 0)
 	{
-		WLog_ERR(TAG,  "AudioQueueNewOutput failure\n");
-		return;
+		WLog_ERR(TAG, "AudioQueueNewOutput failure\n");
+		return FALSE;
 	}
 	
 	UInt32 DecodeBufferSizeFrames;
 	UInt32 propertySize = sizeof(DecodeBufferSizeFrames);
 	
-	AudioQueueGetProperty(mac->audioQueue,
+	status = AudioQueueGetProperty(mac->audioQueue,
 			      kAudioQueueProperty_DecodeBufferSizeFrames,
 			      &DecodeBufferSizeFrames,
 			      &propertySize);
@@ -136,6 +143,7 @@ static void rdpsnd_mac_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
 	if (status != 0)
 	{
 		WLog_DBG(TAG, "AudioQueueGetProperty failure: kAudioQueueProperty_DecodeBufferSizeFrames\n");
+		return FALSE;
 	}
     
 	for (index = 0; index < MAC_AUDIO_QUEUE_NUM_BUFFERS; index++)
@@ -145,10 +153,12 @@ static void rdpsnd_mac_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
 		if (status != 0)
 		{
 			WLog_ERR(TAG,  "AudioQueueAllocateBuffer failed\n");
+			return FALSE;
 		}
 	}
     
 	mac->isOpen = TRUE;
+	return TRUE;
 }
 
 static void rdpsnd_mac_close(rdpsndDevicePlugin* device)
@@ -199,7 +209,7 @@ static BOOL rdpsnd_mac_format_supported(rdpsndDevicePlugin* device, AUDIO_FORMAT
 	return FALSE;
 }
 
-static void rdpsnd_mac_set_volume(rdpsndDevicePlugin* device, UINT32 value)
+static BOOL rdpsnd_mac_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 {
 	OSStatus status;
 	Float32 fVolume;
@@ -208,7 +218,7 @@ static void rdpsnd_mac_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 	rdpsndMacPlugin* mac = (rdpsndMacPlugin*) device;
 	
 	if (!mac->audioQueue)
-		return;
+		return FALSE;
 		
 	volumeLeft = (value & 0xFFFF);
 	volumeRight = ((value >> 16) & 0xFFFF);
@@ -220,7 +230,10 @@ static void rdpsnd_mac_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 	if (status != 0)
 	{
 		WLog_ERR(TAG,  "AudioQueueSetParameter kAudioQueueParam_Volume failed: %f\n", fVolume);
+		return FALSE;
 	}
+
+	return TRUE;
 }
 
 static void rdpsnd_mac_start(rdpsndDevicePlugin* device)
@@ -277,14 +290,19 @@ static void rdpsnd_mac_play(rdpsndDevicePlugin* device, BYTE* data, int size)
 #define freerdp_rdpsnd_client_subsystem_entry	mac_freerdp_rdpsnd_client_subsystem_entry
 #endif
 
-int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	rdpsndMacPlugin* mac;
     
 	mac = (rdpsndMacPlugin*) calloc(1, sizeof(rdpsndMacPlugin));
 	
 	if (!mac)
-		return -1;
+		return CHANNEL_RC_NO_MEMORY;
 	
 	mac->device.Open = rdpsnd_mac_open;
 	mac->device.FormatSupported = rdpsnd_mac_format_supported;
@@ -297,5 +315,5 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*) mac);
 
-	return 0;
+	return CHANNEL_RC_OK;
 }

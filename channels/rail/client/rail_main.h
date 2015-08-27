@@ -5,6 +5,8 @@
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2011 Roman Barabanov <romanbarabanov@gmail.com>
  * Copyright 2011 Vic Lee
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,10 +49,11 @@ struct rail_plugin
 	void* InitHandle;
 	DWORD OpenHandle;
 	wMessageQueue* queue;
+	rdpContext* rdpcontext;
 };
 typedef struct rail_plugin railPlugin;
 
 RailClientContext* rail_get_client_interface(railPlugin* rail);
-BOOL rail_send_channel_data(railPlugin* rail, void* data, size_t length);
+UINT rail_send_channel_data(railPlugin* rail, void* data, size_t length);
 
 #endif /* FREERDP_CHANNEL_CLIENT_RAIL_MAIN_H */

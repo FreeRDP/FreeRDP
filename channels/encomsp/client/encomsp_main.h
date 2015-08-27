@@ -3,6 +3,8 @@
  * Multiparty Virtual Channel
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +49,7 @@ struct encomsp_plugin
 	void* InitHandle;
 	DWORD OpenHandle;
 	wMessageQueue* queue;
+	rdpContext* rdpcontext;
 };
 typedef struct encomsp_plugin encomspPlugin;
 

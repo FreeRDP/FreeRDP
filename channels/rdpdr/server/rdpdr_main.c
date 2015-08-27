@@ -4,6 +4,8 @@
  *
  * Copyright 2014 Dell Software <Mike.McDonald@software.dell.com>
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +64,12 @@ static RDPDR_IRP* rdpdr_server_dequeue_irp(RdpdrServerContext* context, UINT32 c
 	return irp;
 }
 
-static BOOL rdpdr_server_send_announce_request(RdpdrServerContext* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_send_announce_request(RdpdrServerContext* context)
 {
 	wStream* s;
 	BOOL status;
@@ -75,10 +82,11 @@ static BOOL rdpdr_server_send_announce_request(RdpdrServerContext* context)
 	header.PacketId = PAKID_CORE_SERVER_ANNOUNCE;
 
 	s = Stream_New(NULL, RDPDR_HEADER_LENGTH + 8);
-
 	if (!s)
-		return FALSE;
-
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 	Stream_Write_UINT16(s, header.Component); /* Component (2 bytes) */
 	Stream_Write_UINT16(s, header.PacketId); /* PacketId (2 bytes) */
 	Stream_Write_UINT16(s, context->priv->VersionMajor); /* VersionMajor (2 bytes) */
@@ -92,18 +100,25 @@ static BOOL rdpdr_server_send_announce_request(RdpdrServerContext* context)
 	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
 
 	Stream_Free(s, TRUE);
-
-	return status;
+	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
-static BOOL rdpdr_server_receive_announce_response(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_receive_announce_response(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
 {
 	UINT32 ClientId;
 	UINT16 VersionMajor;
 	UINT16 VersionMinor;
 
 	if (Stream_GetRemainingLength(s) < 8)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "not enough data in stream!");
+		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT16(s, VersionMajor); /* VersionMajor (2 bytes) */
 	Stream_Read_UINT16(s, VersionMinor); /* VersionMinor (2 bytes) */
@@ -113,24 +128,36 @@ static BOOL rdpdr_server_receive_announce_response(RdpdrServerContext* context, 
 			 VersionMajor, VersionMinor, ClientId);
 
 	context->priv->ClientId = ClientId;
-
-	return TRUE;
+	return CHANNEL_RC_OK;
 }
 
-static BOOL rdpdr_server_receive_client_name_request(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
 {
 	UINT32 UnicodeFlag;
 	UINT32 ComputerNameLen;
 
 	if (Stream_GetRemainingLength(s) < 12)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "not enough data in stream!");
+		return ERROR_INVALID_DATA;
+	}
+
 
 	Stream_Read_UINT32(s, UnicodeFlag); /* UnicodeFlag (4 bytes) */
 	Stream_Seek_UINT32(s); /* CodePage (4 bytes), MUST be set to zero */
 	Stream_Read_UINT32(s, ComputerNameLen); /* ComputerNameLen (4 bytes) */
 
 	if (Stream_GetRemainingLength(s) < ComputerNameLen)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "not enough data in stream!");
+		return ERROR_INVALID_DATA;
+	}
+
 
 	/**
 	 * Caution: ComputerNameLen is given *bytes*,
@@ -156,35 +183,53 @@ static BOOL rdpdr_server_receive_client_name_request(RdpdrServerContext* context
 	Stream_Seek(s, ComputerNameLen);
 
 	WLog_DBG(TAG, "ClientComputerName: %s", context->priv->ClientComputerName);
-
-	return TRUE;
+	return CHANNEL_RC_OK;
 }
 
-static BOOL rdpdr_server_read_capability_set_header(wStream* s, RDPDR_CAPABILITY_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_read_capability_set_header(wStream* s, RDPDR_CAPABILITY_HEADER* header)
 {
 	if (Stream_GetRemainingLength(s) < 8)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "not enough data in stream!");
+		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT16(s, header->CapabilityType); /* CapabilityType (2 bytes) */
 	Stream_Read_UINT16(s, header->CapabilityLength); /* CapabilityLength (2 bytes) */
 	Stream_Read_UINT32(s, header->Version); /* Version (4 bytes) */
-
-	return TRUE;
+	return CHANNEL_RC_OK;
 }
 
-static BOOL rdpdr_server_write_capability_set_header(wStream* s, RDPDR_CAPABILITY_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_write_capability_set_header(wStream* s, RDPDR_CAPABILITY_HEADER* header)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 8))
-		return FALSE;
+	{
+		WLog_ERR(TAG, "not enough data in stream!");
+		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Write_UINT16(s, header->CapabilityType); /* CapabilityType (2 bytes) */
 	Stream_Write_UINT16(s, header->CapabilityLength); /* CapabilityLength (2 bytes) */
 	Stream_Write_UINT32(s, header->Version); /* Version (4 bytes) */
-
-	return TRUE;
+	return CHANNEL_RC_OK;
 }
 
-static BOOL rdpdr_server_read_general_capability_set(RdpdrServerContext* context, wStream* s, RDPDR_CAPABILITY_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_read_general_capability_set(RdpdrServerContext* context, wStream* s, RDPDR_CAPABILITY_HEADER* header)
 {
 	UINT32 ioCode1;
 	UINT32 extraFlags1;
@@ -194,7 +239,10 @@ static BOOL rdpdr_server_read_general_capability_set(RdpdrServerContext* context
 	UINT32 SpecialTypeDeviceCap;
 
 	if (Stream_GetRemainingLength(s) < 32)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "not enough data in stream!");
+		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Seek_UINT32(s); /* osType (4 bytes), ignored on receipt */
 	Stream_Seek_UINT32(s); /* osVersion (4 bytes), unused and must be set to zero */
@@ -209,17 +257,24 @@ static BOOL rdpdr_server_read_general_capability_set(RdpdrServerContext* context
 	if (header->Version == GENERAL_CAPABILITY_VERSION_02)
 	{
 		if (Stream_GetRemainingLength(s) < 4)
-			return FALSE;
+		{
+			WLog_ERR(TAG, "not enough data in stream!");
+			return ERROR_INVALID_DATA;
+		}
 
 		Stream_Read_UINT32(s, SpecialTypeDeviceCap); /* SpecialTypeDeviceCap (4 bytes) */
 	}
 
 	context->priv->UserLoggedOnPdu = (extendedPdu & RDPDR_USER_LOGGEDON_PDU) ? TRUE : FALSE;
-
-	return TRUE;
+	return CHANNEL_RC_OK;
 }
 
-static BOOL rdpdr_server_write_general_capability_set(RdpdrServerContext* context, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_write_general_capability_set(RdpdrServerContext* context, wStream* s)
 {
 	UINT32 ioCode1;
 	UINT32 extendedPdu;
@@ -259,7 +314,10 @@ static BOOL rdpdr_server_write_general_capability_set(RdpdrServerContext* contex
 	SpecialTypeDeviceCap = 0;
 
 	if (!Stream_EnsureRemainingCapacity(s, header.CapabilityLength))
-		return FALSE;
+	{
+		WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	rdpdr_server_write_capability_set_header(s, &header);
 
@@ -273,16 +331,25 @@ static BOOL rdpdr_server_write_general_capability_set(RdpdrServerContext* contex
 	Stream_Write_UINT32(s, extraFlags1); /* extraFlags1 (4 bytes) */
 	Stream_Write_UINT32(s, 0); /* extraFlags2 (4 bytes), must be set to zero, reserved for future use */
 	Stream_Write_UINT32(s, SpecialTypeDeviceCap); /* SpecialTypeDeviceCap (4 bytes) */
-
-	return TRUE;
+	return CHANNEL_RC_OK;
 }
 
-static BOOL rdpdr_server_read_printer_capability_set(RdpdrServerContext* context, wStream* s, RDPDR_CAPABILITY_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_read_printer_capability_set(RdpdrServerContext* context, wStream* s, RDPDR_CAPABILITY_HEADER* header)
 {
-	return TRUE;
+	return CHANNEL_RC_OK;
 }
 
-static BOOL rdpdr_server_write_printer_capability_set(RdpdrServerContext* context, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_write_printer_capability_set(RdpdrServerContext* context, wStream* s)
 {
 	RDPDR_CAPABILITY_HEADER header;
 
@@ -291,19 +358,29 @@ static BOOL rdpdr_server_write_printer_capability_set(RdpdrServerContext* contex
 	header.Version = PRINT_CAPABILITY_VERSION_01;
 
 	if (!Stream_EnsureRemainingCapacity(s, header.CapabilityLength))
-		return FALSE;
-
-	rdpdr_server_write_capability_set_header(s, &header);
-
-	return TRUE;
+	{
+		WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
+	return rdpdr_server_write_capability_set_header(s, &header);
 }
 
-static BOOL rdpdr_server_read_port_capability_set(RdpdrServerContext* context, wStream* s, RDPDR_CAPABILITY_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_read_port_capability_set(RdpdrServerContext* context, wStream* s, RDPDR_CAPABILITY_HEADER* header)
 {
-	return TRUE;
+	return CHANNEL_RC_OK;
 }
 
-static BOOL rdpdr_server_write_port_capability_set(RdpdrServerContext* context, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_write_port_capability_set(RdpdrServerContext* context, wStream* s)
 {
 	RDPDR_CAPABILITY_HEADER header;
 
@@ -312,19 +389,29 @@ static BOOL rdpdr_server_write_port_capability_set(RdpdrServerContext* context, 
 	header.Version = PORT_CAPABILITY_VERSION_01;
 
 	if (!Stream_EnsureRemainingCapacity(s, header.CapabilityLength))
-		return FALSE;
-
-	rdpdr_server_write_capability_set_header(s, &header);
-
-	return TRUE;
+	{
+		WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
+	return rdpdr_server_write_capability_set_header(s, &header);
 }
 
-static BOOL rdpdr_server_read_drive_capability_set(RdpdrServerContext* context, wStream* s, RDPDR_CAPABILITY_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_read_drive_capability_set(RdpdrServerContext* context, wStream* s, RDPDR_CAPABILITY_HEADER* header)
 {
-	return TRUE;
+	return CHANNEL_RC_OK;
 }
 
-static BOOL rdpdr_server_write_drive_capability_set(RdpdrServerContext* context, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_write_drive_capability_set(RdpdrServerContext* context, wStream* s)
 {
 	RDPDR_CAPABILITY_HEADER header;
 
@@ -333,19 +420,29 @@ static BOOL rdpdr_server_write_drive_capability_set(RdpdrServerContext* context,
 	header.Version = DRIVE_CAPABILITY_VERSION_02;
 
 	if (!Stream_EnsureRemainingCapacity(s, header.CapabilityLength))
-		return FALSE;
-
-	rdpdr_server_write_capability_set_header(s, &header);
-
-	return TRUE;
+	{
+		WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
+	return rdpdr_server_write_capability_set_header(s, &header);
 }
 
-static BOOL rdpdr_server_read_smartcard_capability_set(RdpdrServerContext* context, wStream* s, RDPDR_CAPABILITY_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_read_smartcard_capability_set(RdpdrServerContext* context, wStream* s, RDPDR_CAPABILITY_HEADER* header)
 {
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-static BOOL rdpdr_server_write_smartcard_capability_set(RdpdrServerContext* context, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_write_smartcard_capability_set(RdpdrServerContext* context, wStream* s)
 {
 	RDPDR_CAPABILITY_HEADER header;
 
@@ -354,20 +451,26 @@ static BOOL rdpdr_server_write_smartcard_capability_set(RdpdrServerContext* cont
 	header.Version = SMARTCARD_CAPABILITY_VERSION_01;
 
 	if (!Stream_EnsureRemainingCapacity(s, header.CapabilityLength))
-		return FALSE;
-
-	rdpdr_server_write_capability_set_header(s, &header);
-
-	return TRUE;
+	{
+		WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
+		return CHANNEL_RC_OK;
+	}
+	return rdpdr_server_write_capability_set_header(s, &header);
 }
 
-static BOOL rdpdr_server_send_core_capability_request(RdpdrServerContext* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext* context)
 {
 	wStream* s;
 	BOOL status;
 	RDPDR_HEADER header;
 	UINT16 numCapabilities;
 	ULONG written;
+	UINT error;
 
 	WLog_DBG(TAG, "RdpdrServerSendCoreCapabilityRequest");
 
@@ -388,38 +491,56 @@ static BOOL rdpdr_server_send_core_capability_request(RdpdrServerContext* contex
 	s = Stream_New(NULL, RDPDR_HEADER_LENGTH + 512);
 
 	if (!s)
-		return FALSE;
-
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 	Stream_Write_UINT16(s, header.Component); /* Component (2 bytes) */
 	Stream_Write_UINT16(s, header.PacketId); /* PacketId (2 bytes) */
 	Stream_Write_UINT16(s, numCapabilities); /* numCapabilities (2 bytes) */
 	Stream_Write_UINT16(s, 0); /* Padding (2 bytes) */
 
-	if (!rdpdr_server_write_general_capability_set(context, s))
-		return FALSE;
+	if ((error = rdpdr_server_write_general_capability_set(context, s)))
+	{
+		WLog_ERR(TAG, "rdpdr_server_write_general_capability_set failed with error %lu!", error);
+		return error;
+	}
+
 
 	if (context->supportsDrives)
 	{
-		if (!rdpdr_server_write_drive_capability_set(context, s))
-			return FALSE;
+		if ((error = rdpdr_server_write_drive_capability_set(context, s)))
+		{
+			WLog_ERR(TAG, "rdpdr_server_write_drive_capability_set failed with error %lu!", error);
+			return error;
+		}
 	}
 
 	if (context->supportsPorts)
 	{
-		if (!rdpdr_server_write_port_capability_set(context, s))
-			return FALSE;
+		if ((error = rdpdr_server_write_port_capability_set(context, s)))
+		{
+			WLog_ERR(TAG, "rdpdr_server_write_port_capability_set failed with error %lu!", error);
+			return error;
+		}
 	}
 
 	if (context->supportsPrinters)
 	{
-		if (!rdpdr_server_write_printer_capability_set(context, s))
-			return FALSE;
+		if ((error = rdpdr_server_write_printer_capability_set(context, s)))
+		{
+			WLog_ERR(TAG, "rdpdr_server_write_printer_capability_set failed with error %lu!", error);
+			return error;
+		}
 	}
 
 	if (context->supportsSmartcards)
 	{
-		if (!rdpdr_server_write_smartcard_capability_set(context, s))
-			return FALSE;
+		if ((error = rdpdr_server_write_smartcard_capability_set(context, s)))
+		{
+			WLog_ERR(TAG, "rdpdr_server_write_printer_capability_set failed with error %lu!", error);
+			return error;
+		}
 	}
 
 	Stream_SealLength(s);
@@ -429,67 +550,97 @@ static BOOL rdpdr_server_send_core_capability_request(RdpdrServerContext* contex
 	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
 
 	Stream_Free(s, TRUE);
-
-	return status;
+	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
-static BOOL rdpdr_server_receive_core_capability_response(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
 {
 	int i;
-	int status;
+	UINT status;
 	UINT16 numCapabilities;
 	RDPDR_CAPABILITY_HEADER capabilityHeader;
 
 	if (Stream_GetRemainingLength(s) < 4)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "not enough data in stream!");
+		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT16(s, numCapabilities); /* numCapabilities (2 bytes) */
 	Stream_Seek_UINT16(s); /* Padding (2 bytes) */
 
 	for (i = 0; i < numCapabilities; i++)
 	{
-		status = rdpdr_server_read_capability_set_header(s, &capabilityHeader);
-
-		if (status < 0)
-			return FALSE;
+		if ((status = rdpdr_server_read_capability_set_header(s, &capabilityHeader)))
+		{
+			WLog_ERR(TAG, "rdpdr_server_read_capability_set_header failed with error %lu!", status);
+			return status;
+		}
 
 		switch (capabilityHeader.CapabilityType)
 		{
 			case CAP_GENERAL_TYPE:
-				status = rdpdr_server_read_general_capability_set(context, s, &capabilityHeader);
+				if ((status = rdpdr_server_read_general_capability_set(context, s, &capabilityHeader)))
+				{
+					WLog_ERR(TAG, "rdpdr_server_read_general_capability_set failed with error %lu!", status);
+					return status;
+				}
 				break;
 
 			case CAP_PRINTER_TYPE:
-				status = rdpdr_server_read_printer_capability_set(context, s, &capabilityHeader);
+				if ((status = rdpdr_server_read_printer_capability_set(context, s, &capabilityHeader)))
+				{
+					WLog_ERR(TAG, "rdpdr_server_read_printer_capability_set failed with error %lu!", status);
+					return status;
+				}
 				break;
 
 			case CAP_PORT_TYPE:
-				status = rdpdr_server_read_port_capability_set(context, s, &capabilityHeader);
+				if ((status = rdpdr_server_read_port_capability_set(context, s, &capabilityHeader)))
+				{
+					WLog_ERR(TAG, "rdpdr_server_read_port_capability_set failed with error %lu!", status);
+					return status;
+				}
 				break;
 
 			case CAP_DRIVE_TYPE:
-				status = rdpdr_server_read_drive_capability_set(context, s, &capabilityHeader);
+				if ((status = rdpdr_server_read_drive_capability_set(context, s, &capabilityHeader)))
+				{
+					WLog_ERR(TAG, "rdpdr_server_read_drive_capability_set failed with error %lu!", status);
+					return status;
+				}
 				break;
 
 			case CAP_SMARTCARD_TYPE:
-				status = rdpdr_server_read_smartcard_capability_set(context, s, &capabilityHeader);
+				if ((status = rdpdr_server_read_smartcard_capability_set(context, s, &capabilityHeader)))
+				{
+					WLog_ERR(TAG, "rdpdr_server_read_smartcard_capability_set failed with error %lu!", status);
+					return status;
+				}
 				break;
 
 			default:
 				WLog_DBG(TAG, "Unknown capabilityType %d", capabilityHeader.CapabilityType);
 				Stream_Seek(s, capabilityHeader.CapabilityLength - RDPDR_CAPABILITY_HEADER_LENGTH);
-				status = FALSE;
+				return ERROR_INVALID_DATA;
 				break;
 		}
-
-		if (!status)
-			return status;
 	}
 
-	return TRUE;
+	return CHANNEL_RC_OK;
 }
 
-static BOOL rdpdr_server_send_client_id_confirm(RdpdrServerContext* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_send_client_id_confirm(RdpdrServerContext* context)
 {
 	wStream* s;
 	BOOL status;
@@ -502,10 +653,11 @@ static BOOL rdpdr_server_send_client_id_confirm(RdpdrServerContext* context)
 	header.PacketId = PAKID_CORE_CLIENTID_CONFIRM;
 
 	s = Stream_New(NULL, RDPDR_HEADER_LENGTH + 8);
-
 	if (!s)
-		return FALSE;
-
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 	Stream_Write_UINT16(s, header.Component); /* Component (2 bytes) */
 	Stream_Write_UINT16(s, header.PacketId); /* PacketId (2 bytes) */
 	Stream_Write_UINT16(s, context->priv->VersionMajor); /* VersionMajor (2 bytes) */
@@ -519,11 +671,15 @@ static BOOL rdpdr_server_send_client_id_confirm(RdpdrServerContext* context)
 	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
 
 	Stream_Free(s, TRUE);
-
-	return status;
+	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
-static BOOL rdpdr_server_receive_device_list_announce_request(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
 {
 	int i;
 	UINT32 DeviceCount;
@@ -534,7 +690,10 @@ static BOOL rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 	BYTE* DeviceData;
 
 	if (Stream_GetRemainingLength(s) < 4)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "not enough data in stream!");
+		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, DeviceCount); /* DeviceCount (4 bytes) */
 
@@ -545,7 +704,10 @@ static BOOL rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 		ZeroMemory(PreferredDosName, sizeof(PreferredDosName));
 
 		if (Stream_GetRemainingLength(s) < 20)
-			return FALSE;
+		{
+			WLog_ERR(TAG, "not enough data in stream!");
+			return ERROR_INVALID_DATA;
+		}
 
 		Stream_Read_UINT32(s, DeviceType); /* DeviceType (4 bytes) */
 		Stream_Read_UINT32(s, DeviceId); /* DeviceId (4 bytes) */
@@ -553,7 +715,10 @@ static BOOL rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 		Stream_Read_UINT32(s, DeviceDataLength); /* DeviceDataLength (4 bytes) */
 
 		if (Stream_GetRemainingLength(s) < DeviceDataLength)
-			return FALSE;
+		{
+			WLog_ERR(TAG, "not enough data in stream!");
+			return ERROR_INVALID_DATA;
+		}
 
 		DeviceData = Stream_Pointer(s);
 
@@ -598,10 +763,15 @@ static BOOL rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 		Stream_Seek(s, DeviceDataLength);
 	}
 
-	return TRUE;
+	return CHANNEL_RC_OK;
 }
 
-static BOOL rdpdr_server_receive_device_list_remove_request(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_receive_device_list_remove_request(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
 {
 	int i;
 	UINT32 DeviceCount;
@@ -609,7 +779,10 @@ static BOOL rdpdr_server_receive_device_list_remove_request(RdpdrServerContext* 
 	UINT32 DeviceId;
 
 	if (Stream_GetRemainingLength(s) < 4)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "not enough data in stream!");
+		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, DeviceCount); /* DeviceCount (4 bytes) */
 
@@ -618,7 +791,10 @@ static BOOL rdpdr_server_receive_device_list_remove_request(RdpdrServerContext* 
 	for (i = 0; i < DeviceCount; i++)
 	{
 		if (Stream_GetRemainingLength(s) < 4)
-			return FALSE;
+		{
+			WLog_ERR(TAG, "not enough data in stream!");
+			return ERROR_INVALID_DATA;
+		}
 
 		Stream_Read_UINT32(s, DeviceId); /* DeviceId (4 bytes) */
 
@@ -662,18 +838,27 @@ static BOOL rdpdr_server_receive_device_list_remove_request(RdpdrServerContext* 
 		}
 	}
 
-	return TRUE;
+	return CHANNEL_RC_OK;
 }
 
-static BOOL rdpdr_server_receive_device_io_completion(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_receive_device_io_completion(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
 {
 	UINT32 deviceId;
 	UINT32 completionId;
 	UINT32 ioStatus;
 	RDPDR_IRP* irp;
+	UINT error = CHANNEL_RC_OK;
 
 	if (Stream_GetRemainingLength(s) < 12)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "not enough data in stream!");
+		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, deviceId);
 	Stream_Read_UINT32(s, completionId);
@@ -686,19 +871,23 @@ static BOOL rdpdr_server_receive_device_io_completion(RdpdrServerContext* contex
 	if (!irp)
 	{
 		WLog_ERR(TAG, "IRP not found for completionId=0x%x", completionId);
-		return FALSE;
+		return ERROR_INTERNAL_ERROR;
 	}
 
 	/* Invoke the callback. */
 	if (irp->Callback)
 	{
-		(*irp->Callback)(context, s, irp, deviceId, completionId, ioStatus);
+		error = (*irp->Callback)(context, s, irp, deviceId, completionId, ioStatus);
 	}
-
-	return TRUE;
+	return error;
 }
 
-static BOOL rdpdr_server_send_user_logged_on(RdpdrServerContext* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_send_user_logged_on(RdpdrServerContext* context)
 {
 	wStream* s;
 	BOOL status;
@@ -711,10 +900,11 @@ static BOOL rdpdr_server_send_user_logged_on(RdpdrServerContext* context)
 	header.PacketId = PAKID_CORE_USER_LOGGEDON;
 
 	s = Stream_New(NULL, RDPDR_HEADER_LENGTH);
-
 	if (!s)
-		return FALSE;
-
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 	Stream_Write_UINT16(s, header.Component); /* Component (2 bytes) */
 	Stream_Write_UINT16(s, header.PacketId); /* PacketId (2 bytes) */
 
@@ -725,13 +915,17 @@ static BOOL rdpdr_server_send_user_logged_on(RdpdrServerContext* context)
 	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
 
 	Stream_Free(s, TRUE);
-
-	return status;
+	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
-static BOOL rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
 {
-	BOOL status = TRUE;
+	UINT error = CHANNEL_RC_OK;
 
 	WLog_DBG(TAG, "RdpdrServerReceivePdu: Component: 0x%04X PacketId: 0x%04X",
 			 header->Component, header->PacketId);
@@ -743,40 +937,57 @@ static BOOL rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s, RD
 		switch (header->PacketId)
 		{
 			case PAKID_CORE_CLIENTID_CONFIRM:
-				status = rdpdr_server_receive_announce_response(context, s, header);
+				if ((error = rdpdr_server_receive_announce_response(context, s, header)))
+				{
+					WLog_ERR(TAG, "rdpdr_server_receive_announce_response failed with error %lu!", error);
+					return error;
+				}
 				break;
 
 			case PAKID_CORE_CLIENT_NAME:
-				status = rdpdr_server_receive_client_name_request(context, s, header);
+				if ((error = rdpdr_server_receive_client_name_request(context, s, header)))
+				{
+					WLog_ERR(TAG, "rdpdr_server_receive_client_name_request failed with error %lu!", error);
+					return error;
+				}
 
-				if (!status)
-					return FALSE;
 
-				status = rdpdr_server_send_core_capability_request(context);
+				if((error = rdpdr_server_send_core_capability_request(context)))
+				{
+					WLog_ERR(TAG, "rdpdr_server_send_core_capability_request failed with error %lu!", error);
+					return error;
+				}
 
-				if (!status)
-					return FALSE;
 
-				status = rdpdr_server_send_client_id_confirm(context);
-
-				if (!status)
-					return FALSE;
+				if ((error = rdpdr_server_send_client_id_confirm(context)))
+				{
+					WLog_ERR(TAG, "rdpdr_server_send_client_id_confirm failed with error %lu!", error);
+					return error;
+				}
 
 				break;
 
 			case PAKID_CORE_CLIENT_CAPABILITY:
-				status = rdpdr_server_receive_core_capability_response(context, s, header);
-
-				if (!status)
-					return FALSE;
+				if ((error = rdpdr_server_receive_core_capability_response(context, s, header)))
+				{
+					WLog_ERR(TAG, "rdpdr_server_receive_core_capability_response failed with error %lu!", error);
+					return error;
+				}
 
 				if (context->priv->UserLoggedOnPdu)
-					status = rdpdr_server_send_user_logged_on(context);
-
+					if((error = rdpdr_server_send_user_logged_on(context)))
+					{
+						WLog_ERR(TAG, "rdpdr_server_send_user_logged_on failed with error %lu!", error);
+						return error;
+					}
 				break;
 
 			case PAKID_CORE_DEVICELIST_ANNOUNCE:
-				status = rdpdr_server_receive_device_list_announce_request(context, s, header);
+				if ((error = rdpdr_server_receive_device_list_announce_request(context, s, header)))
+				{
+					WLog_ERR(TAG, "rdpdr_server_receive_device_list_announce_request failed with error %lu!", error);
+					return error;
+				}
 				break;
 
 			case PAKID_CORE_DEVICE_REPLY:
@@ -786,11 +997,19 @@ static BOOL rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s, RD
 				break;
 
 			case PAKID_CORE_DEVICE_IOCOMPLETION:
-				status = rdpdr_server_receive_device_io_completion(context, s, header);
+				if ((error = rdpdr_server_receive_device_io_completion(context, s, header)))
+				{
+					WLog_ERR(TAG, "rdpdr_server_receive_device_io_completion failed with error %lu!", error);
+					return error;
+				}
 				break;
 
 			case PAKID_CORE_DEVICELIST_REMOVE:
-				status = rdpdr_server_receive_device_list_remove_request(context, s, header);
+				if((error = rdpdr_server_receive_device_list_remove_request(context, s, header)))
+				{
+					WLog_ERR(TAG, "rdpdr_server_receive_device_io_completion failed with error %lu!", error);
+					return error;
+				}
 				break;
 
 			default:
@@ -814,10 +1033,10 @@ static BOOL rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s, RD
 	else
 	{
 		WLog_WARN(TAG, "Unknown RDPDR_HEADER.Component: 0x%04X", header->Component);
-		return FALSE;
+		return ERROR_INVALID_DATA;
 	}
 
-	return status;
+	return error;
 }
 
 static void* rdpdr_server_thread(void* arg)
@@ -832,6 +1051,7 @@ static void* rdpdr_server_thread(void* arg)
 	HANDLE ChannelEvent;
 	DWORD BytesReturned;
 	RdpdrServerContext* context;
+	UINT error;
 
 	context = (RdpdrServerContext*) arg;
 	buffer = NULL;
@@ -839,9 +1059,12 @@ static void* rdpdr_server_thread(void* arg)
 	ChannelEvent = NULL;
 
 	s = Stream_New(NULL, 4096);
-
 	if (!s)
-		return NULL;
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
+		error = CHANNEL_RC_NO_MEMORY;
+		goto out;
+	}
 
 	if (WTSVirtualChannelQuery(context->priv->ChannelHandle, WTSVirtualEventHandle, &buffer, &BytesReturned) == TRUE)
 	{
@@ -854,23 +1077,42 @@ static void* rdpdr_server_thread(void* arg)
 	nCount = 0;
 	events[nCount++] = ChannelEvent;
 	events[nCount++] = context->priv->StopEvent;
-
-	if (!rdpdr_server_send_announce_request(context))
-		return NULL;
+	if ((error = rdpdr_server_send_announce_request(context)))
+	{
+		WLog_ERR(TAG, "rdpdr_server_send_announce_request failed with error %lu!", error);
+		goto out_stream;
+	}
 
 	while (1)
 	{
 		BytesReturned = 0;
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
-		if (WaitForSingleObject(context->priv->StopEvent, 0) == WAIT_OBJECT_0)
-		{
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+            goto out_stream;
+        }
+
+        status = WaitForSingleObject(context->priv->StopEvent, 0);
+
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+            goto out_stream;
+        }
+
+
+        if (status == WAIT_OBJECT_0)
 			break;
-		}
 
 		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0,
 				(PCHAR) Stream_Buffer(s), Stream_Capacity(s), &BytesReturned))
 		{
+			WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
+			error = ERROR_INTERNAL_ERROR;
 			break;
 		}
 
@@ -885,51 +1127,79 @@ static void* rdpdr_server_thread(void* arg)
 				Stream_Read_UINT16(s, header.Component); /* Component (2 bytes) */
 				Stream_Read_UINT16(s, header.PacketId); /* PacketId (2 bytes) */
 
-				if (!rdpdr_server_receive_pdu(context, s, &header))
-					break;
+				if ((error = rdpdr_server_receive_pdu(context, s, &header)))
+				{
+					WLog_ERR(TAG, "rdpdr_server_receive_pdu failed with error %lu!", error);
+					goto out_stream;
+				}
 			}
 		}
 	}
-
+out_stream:
 	Stream_Free(s, TRUE);
+out:
+	if (error && context->rdpcontext)
+		setChannelError(context->rdpcontext, error, "rdpdr_server_thread reported an error");
 
+	ExitThread((DWORD) error);
 	return NULL;
 }
 
-static int rdpdr_server_start(RdpdrServerContext* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_start(RdpdrServerContext* context)
 {
 	context->priv->ChannelHandle = WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, "rdpdr");
 
 	if (!context->priv->ChannelHandle)
-		return -1;
+	{
+		WLog_ERR(TAG, "WTSVirtualChannelOpen failed!");
+		return CHANNEL_RC_BAD_CHANNEL;
+	}
 
-	context->priv->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-
-	if (!context->priv->StopEvent)
-		return -1;
-
-	context->priv->Thread = CreateThread(NULL, 0,
-				(LPTHREAD_START_ROUTINE) rdpdr_server_thread, (void*) context, 0, NULL);
-
-	if (!context->priv->Thread)
-		return -1;
-
-	return 1;
+	if (!(context->priv->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	{
+		WLog_ERR(TAG, "CreateEvent failed!");
+		return ERROR_INTERNAL_ERROR;
+	}
+	if (!(context->priv->Thread = CreateThread(NULL, 0,
+		(LPTHREAD_START_ROUTINE) rdpdr_server_thread, (void*) context, 0, NULL)))
+	{
+		WLog_ERR(TAG, "CreateThread failed!");
+		CloseHandle(context->priv->StopEvent);
+		context->priv->StopEvent = NULL;
+		return ERROR_INTERNAL_ERROR;
+	}
+	return CHANNEL_RC_OK;
 }
 
-static int rdpdr_server_stop(RdpdrServerContext* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_stop(RdpdrServerContext* context)
 {
+    UINT error;
 	if (context->priv->StopEvent)
 	{
 		SetEvent(context->priv->StopEvent);
-		WaitForSingleObject(context->priv->Thread, INFINITE);
+		if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+            return error;
+        }
 		CloseHandle(context->priv->Thread);
 		context->priv->Thread = NULL;
 		CloseHandle(context->priv->StopEvent);
 		context->priv->StopEvent = NULL;
 	}
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
 static void rdpdr_server_write_device_iorequest(
@@ -949,14 +1219,22 @@ static void rdpdr_server_write_device_iorequest(
 	Stream_Write_UINT32(s, minorFunction); /* MinorFunction (4 bytes) */
 }
 
-static BOOL rdpdr_server_read_file_directory_information(wStream* s, FILE_DIRECTORY_INFORMATION* fdi)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_read_file_directory_information(wStream* s, FILE_DIRECTORY_INFORMATION* fdi)
 {
 	UINT32 fileNameLength;
 
 	ZeroMemory(fdi, sizeof(FILE_DIRECTORY_INFORMATION));
 
 	if (Stream_GetRemainingLength(s) < 64)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "not enough data in stream!");
+		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, fdi->NextEntryOffset); /* NextEntryOffset (4 bytes) */
 	Stream_Read_UINT32(s, fdi->FileIndex); /* FileIndex (4 bytes) */
@@ -970,15 +1248,23 @@ static BOOL rdpdr_server_read_file_directory_information(wStream* s, FILE_DIRECT
 	Stream_Read_UINT32(s, fileNameLength); /* FileNameLength (4 bytes) */
 
 	if (Stream_GetRemainingLength(s) < fileNameLength)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "not enough data in stream!");
+		return ERROR_INVALID_DATA;
+	}
 
 	WideCharToMultiByte(CP_ACP, 0, (LPCWSTR) Stream_Pointer(s), fileNameLength / 2, fdi->FileName, sizeof(fdi->FileName), NULL, NULL);
 	Stream_Seek(s, fileNameLength);
 
-	return TRUE;
+	return CHANNEL_RC_OK;
 }
 
-static BOOL rdpdr_server_send_device_create_request(
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_send_device_create_request(
 	RdpdrServerContext* context,
 	UINT32 deviceId,
 	UINT32 completionId,
@@ -987,7 +1273,7 @@ static BOOL rdpdr_server_send_device_create_request(
 	UINT32 createOptions,
 	UINT32 createDisposition)
 {
-	int pathLength;
+	UINT32 pathLength;
 	ULONG written;
 	BOOL status;
 	wStream* s;
@@ -1001,7 +1287,10 @@ static BOOL rdpdr_server_send_device_create_request(
 	s = Stream_New(NULL, 256 + pathLength);
 
 	if (!s)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	rdpdr_server_write_device_iorequest(s, deviceId, 0, completionId, IRP_MJ_CREATE, 0);
 
@@ -1024,10 +1313,15 @@ static BOOL rdpdr_server_send_device_create_request(
 
 	Stream_Free(s, TRUE);
 
-	return status;
+	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
-static BOOL rdpdr_server_send_device_close_request(
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_send_device_close_request(
 	RdpdrServerContext* context,
 	UINT32 deviceId,
 	UINT32 fileId,
@@ -1042,7 +1336,10 @@ static BOOL rdpdr_server_send_device_close_request(
 	s = Stream_New(NULL, 128);
 
 	if (!s)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	rdpdr_server_write_device_iorequest(s, deviceId, fileId, completionId, IRP_MJ_CLOSE, 0);
 
@@ -1054,10 +1351,15 @@ static BOOL rdpdr_server_send_device_close_request(
 
 	Stream_Free(s, TRUE);
 
-	return status;
+	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
-static BOOL rdpdr_server_send_device_read_request(
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_send_device_read_request(
 	RdpdrServerContext* context,
 	UINT32 deviceId,
 	UINT32 fileId,
@@ -1075,7 +1377,10 @@ static BOOL rdpdr_server_send_device_read_request(
 	s = Stream_New(NULL, 128);
 
 	if (!s)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	rdpdr_server_write_device_iorequest(s, deviceId, fileId, completionId, IRP_MJ_READ, 0);
 
@@ -1090,10 +1395,15 @@ static BOOL rdpdr_server_send_device_read_request(
 
 	Stream_Free(s, TRUE);
 
-	return status;
+	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
-static BOOL rdpdr_server_send_device_write_request(
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_send_device_write_request(
 	RdpdrServerContext* context,
 	UINT32 deviceId,
 	UINT32 fileId,
@@ -1112,7 +1422,10 @@ static BOOL rdpdr_server_send_device_write_request(
 	s = Stream_New(NULL, 64 + length);
 
 	if (!s)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	rdpdr_server_write_device_iorequest(s, deviceId, fileId, completionId, IRP_MJ_WRITE, 0);
 
@@ -1128,17 +1441,22 @@ static BOOL rdpdr_server_send_device_write_request(
 
 	Stream_Free(s, TRUE);
 
-	return status;
+	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
-static BOOL rdpdr_server_send_device_query_directory_request(
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_send_device_query_directory_request(
 	RdpdrServerContext* context,
 	UINT32 deviceId,
 	UINT32 fileId,
 	UINT32 completionId,
 	const char* path)
 {
-	int pathLength;
+	UINT32 pathLength;
 	ULONG written;
 	BOOL status;
 	wStream* s;
@@ -1152,7 +1470,10 @@ static BOOL rdpdr_server_send_device_query_directory_request(
 	s = Stream_New(NULL, 64 + pathLength);
 
 	if (!s)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	rdpdr_server_write_device_iorequest(s, deviceId, fileId, completionId, IRP_MJ_DIRECTORY_CONTROL, IRP_MN_QUERY_DIRECTORY);
 
@@ -1174,17 +1495,22 @@ static BOOL rdpdr_server_send_device_query_directory_request(
 
 	Stream_Free(s, TRUE);
 
-	return status;
+	return status? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
-static BOOL rdpdr_server_send_device_file_rename_request(
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_send_device_file_rename_request(
 	RdpdrServerContext* context,
 	UINT32 deviceId,
 	UINT32 fileId,
 	UINT32 completionId,
 	const char* path)
 {
-	int pathLength;
+	UINT32 pathLength;
 	ULONG written;
 	BOOL status;
 	wStream* s;
@@ -1198,7 +1524,10 @@ static BOOL rdpdr_server_send_device_file_rename_request(
 	s = Stream_New(NULL, 64 + pathLength);
 
 	if (!s)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	rdpdr_server_write_device_iorequest(s, deviceId, fileId, completionId, IRP_MJ_SET_INFORMATION, 0);
 
@@ -1224,7 +1553,7 @@ static BOOL rdpdr_server_send_device_file_rename_request(
 
 	Stream_Free(s, TRUE);
 
-	return status;
+	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
 static void rdpdr_server_convert_slashes(char* path, int size)
@@ -1242,7 +1571,12 @@ static void rdpdr_server_convert_slashes(char* path, int size)
  * Drive Create Directory
  ************************************************/
 
-static BOOL rdpdr_server_drive_create_directory_callback2(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_drive_create_directory_callback2(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
 	WLog_DBG(TAG, "RdpdrServerDriveCreateDirectoryCallback2: deviceId=%d, completionId=%d, ioStatus=0x%x",
 			deviceId, completionId, ioStatus);
@@ -1253,12 +1587,16 @@ static BOOL rdpdr_server_drive_create_directory_callback2(RdpdrServerContext* co
 	/* Destroy the IRP. */
 	rdpdr_server_irp_free(irp);
 
-	return TRUE;
+	return CHANNEL_RC_OK;
 }
 
-static BOOL rdpdr_server_drive_create_directory_callback1(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_drive_create_directory_callback1(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
-	BOOL status;
 	UINT32 fileId;
 	UINT8 information;
 
@@ -1273,11 +1611,14 @@ static BOOL rdpdr_server_drive_create_directory_callback1(RdpdrServerContext* co
 		/* Destroy the IRP. */
 		rdpdr_server_irp_free(irp);
 
-		return TRUE;
+		return CHANNEL_RC_OK;
 	}
 
 	if (Stream_GetRemainingLength(s) < 5)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "not enough data in stream!");
+		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, fileId); /* FileId (4 bytes) */
 	Stream_Read_UINT8(s, information); /* Information (1 byte) */
@@ -1288,29 +1629,33 @@ static BOOL rdpdr_server_drive_create_directory_callback1(RdpdrServerContext* co
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
 
-	status = rdpdr_server_enqueue_irp(context, irp);
-
-	if (!status)
+	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
+		WLog_ERR(TAG, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
-		return FALSE;
+		return ERROR_INTERNAL_ERROR;
 	}
 
 	/* Send a request to close the file */
-	status = rdpdr_server_send_device_close_request(context, deviceId, fileId, irp->CompletionId);
-
-	return status;
+	return rdpdr_server_send_device_close_request(context, deviceId, fileId, irp->CompletionId);
 }
 
-static BOOL rdpdr_server_drive_create_directory(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_drive_create_directory(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path)
 {
-	BOOL status;
 	RDPDR_IRP* irp;
 
 	irp = rdpdr_server_irp_new();
 
 	if (!irp)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "rdpdr_server_irp_new failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	irp->CompletionId = context->priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_create_directory_callback1;
@@ -1320,26 +1665,28 @@ static BOOL rdpdr_server_drive_create_directory(RdpdrServerContext* context, voi
 
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
-	status = rdpdr_server_enqueue_irp(context, irp);
-
-	if (!status)
+	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
+		WLog_ERR(TAG, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
-		return FALSE;
+		return ERROR_INTERNAL_ERROR;
 	}
 
 	/* Send a request to open the file. */
-	status = rdpdr_server_send_device_create_request(context, deviceId, irp->CompletionId, irp->PathName,
+	return rdpdr_server_send_device_create_request(context, deviceId, irp->CompletionId, irp->PathName,
 			FILE_READ_DATA | SYNCHRONIZE, FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, FILE_CREATE);
-
-	return status;
 }
 
 /*************************************************
  * Drive Delete Directory
  ************************************************/
 
-static BOOL rdpdr_server_drive_delete_directory_callback2(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_drive_delete_directory_callback2(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
 	WLog_DBG(TAG, "RdpdrServerDriveDeleteDirectoryCallback2: deviceId=%d, completionId=%d, ioStatus=0x%x",
 			deviceId, completionId, ioStatus);
@@ -1350,12 +1697,16 @@ static BOOL rdpdr_server_drive_delete_directory_callback2(RdpdrServerContext* co
 	/* Destroy the IRP. */
 	rdpdr_server_irp_free(irp);
 
-	return TRUE;
+	return CHANNEL_RC_OK;
 }
 
-static BOOL rdpdr_server_drive_delete_directory_callback1(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_drive_delete_directory_callback1(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
-	BOOL status;
 	UINT32 fileId;
 	UINT8 information;
 
@@ -1370,11 +1721,14 @@ static BOOL rdpdr_server_drive_delete_directory_callback1(RdpdrServerContext* co
 		/* Destroy the IRP. */
 		rdpdr_server_irp_free(irp);
 
-		return TRUE;
+		return CHANNEL_RC_OK;
 	}
 
 	if (Stream_GetRemainingLength(s) < 5)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "not enough data in stream!");
+		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, fileId); /* FileId (4 bytes) */
 	Stream_Read_UINT8(s, information); /* Information (1 byte) */
@@ -1385,29 +1739,33 @@ static BOOL rdpdr_server_drive_delete_directory_callback1(RdpdrServerContext* co
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
 
-	status = rdpdr_server_enqueue_irp(context, irp);
-
-	if (!status)
+	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
+		WLog_ERR(TAG, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
-		return FALSE;
+		return ERROR_INTERNAL_ERROR;
 	}
 
 	/* Send a request to close the file */
-	status = rdpdr_server_send_device_close_request(context, deviceId, fileId, irp->CompletionId);
-
-	return status;
+	return rdpdr_server_send_device_close_request(context, deviceId, fileId, irp->CompletionId);
 }
 
-static BOOL rdpdr_server_drive_delete_directory(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_drive_delete_directory(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path)
 {
-	BOOL status;
 	RDPDR_IRP* irp;
 
 	irp = rdpdr_server_irp_new();
 
 	if (!irp)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "rdpdr_server_irp_new failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	irp->CompletionId = context->priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_delete_directory_callback1;
@@ -1417,28 +1775,30 @@ static BOOL rdpdr_server_drive_delete_directory(RdpdrServerContext* context, voi
 
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
-	status = rdpdr_server_enqueue_irp(context, irp);
-
-	if (!status)
+	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
+		WLog_ERR(TAG, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
-		return FALSE;
+		return ERROR_INTERNAL_ERROR;
 	}
 
 	/* Send a request to open the file. */
-	status = rdpdr_server_send_device_create_request(context, deviceId, irp->CompletionId, irp->PathName,
+	return rdpdr_server_send_device_create_request(context, deviceId, irp->CompletionId, irp->PathName,
 		DELETE | SYNCHRONIZE, FILE_DIRECTORY_FILE | FILE_DELETE_ON_CLOSE | FILE_SYNCHRONOUS_IO_NONALERT, FILE_OPEN);
-
-	return status;
 }
 
 /*************************************************
  * Drive Query Directory
  ************************************************/
 
-static BOOL rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
-	BOOL status;
+	UINT error;
 	UINT32 length;
 	FILE_DIRECTORY_INFORMATION fdi;
 
@@ -1446,21 +1806,28 @@ static BOOL rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* con
 			deviceId, completionId, ioStatus);
 
 	if (Stream_GetRemainingLength(s) < 4)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "not enough data in stream!");
+		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 
 	if (length > 0)
 	{
-		status = rdpdr_server_read_file_directory_information(s, &fdi);
-
-		if (!status)
-			return FALSE;
+		if ((error = rdpdr_server_read_file_directory_information(s, &fdi)))
+		{
+			WLog_ERR(TAG, "rdpdr_server_read_file_directory_information failed with error %lu!", error);
+			return error;
+		}
 	}
 	else
 	{
 		if (Stream_GetRemainingLength(s) < 1)
-			return FALSE;
+		{
+			WLog_ERR(TAG, "not enough data in stream!");
+			return ERROR_INVALID_DATA;
+		}
 
 		Stream_Seek(s, 1); /* Padding (1 byte) */
 	}
@@ -1474,19 +1841,15 @@ static BOOL rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* con
 		irp->CompletionId = context->priv->NextCompletionId++;
 		irp->Callback = rdpdr_server_drive_query_directory_callback2;
 
-		status = rdpdr_server_enqueue_irp(context, irp);
-
-		if (!status)
+		if (!rdpdr_server_enqueue_irp(context, irp))
 		{
+			WLog_ERR(TAG, "rdpdr_server_enqueue_irp failed!");
 			rdpdr_server_irp_free(irp);
-			return FALSE;
+			return ERROR_INTERNAL_ERROR;
 		}
 
 		/* Send a request to query the directory. */
-		status = rdpdr_server_send_device_query_directory_request(context, irp->DeviceId, irp->FileId, irp->CompletionId, NULL);
-
-		if (!status)
-			return FALSE;
+		return rdpdr_server_send_device_query_directory_request(context, irp->DeviceId, irp->FileId, irp->CompletionId, NULL);
 	}
 	else
 	{
@@ -1497,12 +1860,16 @@ static BOOL rdpdr_server_drive_query_directory_callback2(RdpdrServerContext* con
 		rdpdr_server_irp_free(irp);
 	}
 
-	return TRUE;
+	return CHANNEL_RC_OK;
 }
 
-static BOOL rdpdr_server_drive_query_directory_callback1(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_drive_query_directory_callback1(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
-	BOOL status;
 	UINT32 fileId;
 
 	WLog_DBG(TAG, "RdpdrServerDriveQueryDirectoryCallback1: deviceId=%d, completionId=%d, ioStatus=0x%x",
@@ -1516,11 +1883,14 @@ static BOOL rdpdr_server_drive_query_directory_callback1(RdpdrServerContext* con
 		/* Destroy the IRP. */
 		rdpdr_server_irp_free(irp);
 
-		return TRUE;
+		return CHANNEL_RC_OK;
 	}
 
 	if (Stream_GetRemainingLength(s) < 4)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "not enough data in stream!");
+		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, fileId);
 
@@ -1532,29 +1902,33 @@ static BOOL rdpdr_server_drive_query_directory_callback1(RdpdrServerContext* con
 
 	strcat(irp->PathName, "\\*.*");
 
-	status = rdpdr_server_enqueue_irp(context, irp);
-
-	if (!status)
+	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
+		WLog_ERR(TAG, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
-		return FALSE;
+		return ERROR_INTERNAL_ERROR;
 	}
 
 	/* Send a request to query the directory. */
-	status = rdpdr_server_send_device_query_directory_request(context, deviceId, fileId, irp->CompletionId, irp->PathName);
-
-	return status;
+	return rdpdr_server_send_device_query_directory_request(context, deviceId, fileId, irp->CompletionId, irp->PathName);
 }
 
-static BOOL rdpdr_server_drive_query_directory(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_drive_query_directory(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path)
 {
-	BOOL status;
 	RDPDR_IRP* irp;
 
 	irp = rdpdr_server_irp_new();
 
 	if (!irp)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "rdpdr_server_irp_new failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	irp->CompletionId = context->priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_query_directory_callback1;
@@ -1564,26 +1938,28 @@ static BOOL rdpdr_server_drive_query_directory(RdpdrServerContext* context, void
 
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
-	status = rdpdr_server_enqueue_irp(context, irp);
-
-	if (!status)
+	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
+		WLog_ERR(TAG, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
-		return FALSE;
+		return ERROR_INTERNAL_ERROR;
 	}
 
 	/* Send a request to open the directory. */
-	status = rdpdr_server_send_device_create_request(context, deviceId, irp->CompletionId, irp->PathName,
+	return rdpdr_server_send_device_create_request(context, deviceId, irp->CompletionId, irp->PathName,
 			FILE_READ_DATA | SYNCHRONIZE, FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, FILE_OPEN);
-
-	return status;
 }
 
 /*************************************************
  * Drive Open File
  ************************************************/
 
-static BOOL rdpdr_server_drive_open_file_callback(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_drive_open_file_callback(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
 	UINT32 fileId;
 	UINT8 information;
@@ -1592,7 +1968,10 @@ static BOOL rdpdr_server_drive_open_file_callback(RdpdrServerContext* context, w
 			deviceId, completionId, ioStatus);
 
 	if (Stream_GetRemainingLength(s) < 5)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "not enough data in stream!");
+		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, fileId); /* FileId (4 bytes) */
 	Stream_Read_UINT8(s, information); /* Information (1 byte) */
@@ -1603,18 +1982,25 @@ static BOOL rdpdr_server_drive_open_file_callback(RdpdrServerContext* context, w
 	/* Destroy the IRP. */
 	rdpdr_server_irp_free(irp);
 
-	return TRUE;
+	return CHANNEL_RC_OK;
 }
 
-static BOOL rdpdr_server_drive_open_file(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path, UINT32 desiredAccess, UINT32 createDisposition)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_drive_open_file(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path, UINT32 desiredAccess, UINT32 createDisposition)
 {
-	BOOL status;
 	RDPDR_IRP* irp;
 
 	irp = rdpdr_server_irp_new();
 
 	if (!irp)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "rdpdr_server_irp_new failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	irp->CompletionId = context->priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_open_file_callback;
@@ -1624,26 +2010,28 @@ static BOOL rdpdr_server_drive_open_file(RdpdrServerContext* context, void* call
 
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
-	status = rdpdr_server_enqueue_irp(context, irp);
-
-	if (!status)
+	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
+		WLog_ERR(TAG, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
-		return FALSE;
+		return ERROR_INTERNAL_ERROR;
 	}
 
 	/* Send a request to open the file. */
-	status = rdpdr_server_send_device_create_request(context, deviceId, irp->CompletionId, irp->PathName,
+	return rdpdr_server_send_device_create_request(context, deviceId, irp->CompletionId, irp->PathName,
 			desiredAccess | SYNCHRONIZE, FILE_SYNCHRONOUS_IO_NONALERT, createDisposition);
-
-	return status;
 }
 
 /*************************************************
  * Drive Read File
  ************************************************/
 
-static BOOL rdpdr_server_drive_read_file_callback(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_drive_read_file_callback(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
 	UINT32 length;
 	char* buffer = NULL;
@@ -1652,12 +2040,18 @@ static BOOL rdpdr_server_drive_read_file_callback(RdpdrServerContext* context, w
 			deviceId, completionId, ioStatus);
 
 	if (Stream_GetRemainingLength(s) < 4)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "not enough data in stream!");
+		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 
 	if (Stream_GetRemainingLength(s) < length)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "not enough data in stream!");
+		return ERROR_INVALID_DATA;
+	}
 
 	if (length > 0)
 	{
@@ -1671,18 +2065,25 @@ static BOOL rdpdr_server_drive_read_file_callback(RdpdrServerContext* context, w
 	/* Destroy the IRP. */
 	rdpdr_server_irp_free(irp);
 
-	return TRUE;
+	return CHANNEL_RC_OK;
 }
 
-static BOOL rdpdr_server_drive_read_file(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, UINT32 fileId, UINT32 length, UINT32 offset)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_drive_read_file(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, UINT32 fileId, UINT32 length, UINT32 offset)
 {
-	BOOL status;
 	RDPDR_IRP* irp;
 
 	irp = rdpdr_server_irp_new();
 
 	if (!irp)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "rdpdr_server_irp_new failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	irp->CompletionId = context->priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_read_file_callback;
@@ -1690,25 +2091,27 @@ static BOOL rdpdr_server_drive_read_file(RdpdrServerContext* context, void* call
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
 
-	status = rdpdr_server_enqueue_irp(context, irp);
-
-	if (!status)
+	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
+		WLog_ERR(TAG, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
-		return FALSE;
+		return ERROR_INTERNAL_ERROR;
 	}
 
 	/* Send a request to open the directory. */
-	status = rdpdr_server_send_device_read_request(context, deviceId, fileId, irp->CompletionId, length, offset);
-
-	return status;
+	return rdpdr_server_send_device_read_request(context, deviceId, fileId, irp->CompletionId, length, offset);
 }
 
 /*************************************************
  * Drive Write File
  ************************************************/
 
-static BOOL rdpdr_server_drive_write_file_callback(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_drive_write_file_callback(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
 	UINT32 length;
 
@@ -1716,13 +2119,19 @@ static BOOL rdpdr_server_drive_write_file_callback(RdpdrServerContext* context, 
 			deviceId, completionId, ioStatus);
 
 	if (Stream_GetRemainingLength(s) < 5)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "not enough data in stream!");
+		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 	Stream_Seek(s, 1); /* Padding (1 byte) */
 
 	if (Stream_GetRemainingLength(s) < length)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "not enough data in stream!");
+		return ERROR_INVALID_DATA;
+	}
 
 	/* Invoke the write file completion routine. */
 	context->OnDriveWriteFileComplete(context, irp->CallbackData, ioStatus, length);
@@ -1730,18 +2139,25 @@ static BOOL rdpdr_server_drive_write_file_callback(RdpdrServerContext* context, 
 	/* Destroy the IRP. */
 	rdpdr_server_irp_free(irp);
 
-	return TRUE;
+	return CHANNEL_RC_OK;
 }
 
-static BOOL rdpdr_server_drive_write_file(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, UINT32 fileId, const char* buffer, UINT32 length, UINT32 offset)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_drive_write_file(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, UINT32 fileId, const char* buffer, UINT32 length, UINT32 offset)
 {
-	BOOL status;
 	RDPDR_IRP* irp;
 
 	irp = rdpdr_server_irp_new();
 
 	if (!irp)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "rdpdr_server_irp_new failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	irp->CompletionId = context->priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_write_file_callback;
@@ -1749,25 +2165,27 @@ static BOOL rdpdr_server_drive_write_file(RdpdrServerContext* context, void* cal
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
 
-	status = rdpdr_server_enqueue_irp(context, irp);
-
-	if (!status)
+	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
+		WLog_ERR(TAG, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
-		return FALSE;
+		return ERROR_INTERNAL_ERROR;
 	}
 
 	/* Send a request to open the directory. */
-	status = rdpdr_server_send_device_write_request(context, deviceId, fileId, irp->CompletionId, buffer, length, offset);
-
-	return status;
+	return rdpdr_server_send_device_write_request(context, deviceId, fileId, irp->CompletionId, buffer, length, offset);
 }
 
 /*************************************************
  * Drive Close File
  ************************************************/
 
-static BOOL rdpdr_server_drive_close_file_callback(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_drive_close_file_callback(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
 	WLog_DBG(TAG, "RdpdrServerDriveCloseFileCallback: deviceId=%d, completionId=%d, ioStatus=0x%x",
 			deviceId, completionId, ioStatus);
@@ -1778,18 +2196,25 @@ static BOOL rdpdr_server_drive_close_file_callback(RdpdrServerContext* context, 
 	/* Destroy the IRP. */
 	rdpdr_server_irp_free(irp);
 
-	return TRUE;
+	return CHANNEL_RC_OK;
 }
 
-static BOOL rdpdr_server_drive_close_file(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, UINT32 fileId)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_drive_close_file(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, UINT32 fileId)
 {
-	BOOL status;
 	RDPDR_IRP* irp;
 
 	irp = rdpdr_server_irp_new();
 
 	if (!irp)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "rdpdr_server_irp_new failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	irp->CompletionId = context->priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_close_file_callback;
@@ -1797,25 +2222,27 @@ static BOOL rdpdr_server_drive_close_file(RdpdrServerContext* context, void* cal
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
 
-	status = rdpdr_server_enqueue_irp(context, irp);
-
-	if (!status)
+	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
+		WLog_ERR(TAG, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
-		return FALSE;
+		return ERROR_INTERNAL_ERROR;
 	}
 
 	/* Send a request to open the directory. */
-	status = rdpdr_server_send_device_close_request(context, deviceId, fileId, irp->CompletionId);
-
-	return status;
+	return rdpdr_server_send_device_close_request(context, deviceId, fileId, irp->CompletionId);
 }
 
 /*************************************************
  * Drive Delete File
  ************************************************/
 
-static BOOL rdpdr_server_drive_delete_file_callback2(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_drive_delete_file_callback2(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
 	WLog_DBG(TAG, "RdpdrServerDriveDeleteFileCallback2: deviceId=%d, completionId=%d, ioStatus=0x%x",
 			deviceId, completionId, ioStatus);
@@ -1826,12 +2253,16 @@ static BOOL rdpdr_server_drive_delete_file_callback2(RdpdrServerContext* context
 	/* Destroy the IRP. */
 	rdpdr_server_irp_free(irp);
 
-	return TRUE;
+	return CHANNEL_RC_OK;
 }
 
-static BOOL rdpdr_server_drive_delete_file_callback1(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_drive_delete_file_callback1(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
-	BOOL status;
 	UINT32 fileId;
 	UINT8 information;
 
@@ -1846,11 +2277,14 @@ static BOOL rdpdr_server_drive_delete_file_callback1(RdpdrServerContext* context
 		/* Destroy the IRP. */
 		rdpdr_server_irp_free(irp);
 
-		return TRUE;
+		return CHANNEL_RC_OK;
 	}
 
 	if (Stream_GetRemainingLength(s) < 5)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "not enough data in stream!");
+		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, fileId); /* FileId (4 bytes) */
 	Stream_Read_UINT8(s, information); /* Information (1 byte) */
@@ -1861,29 +2295,33 @@ static BOOL rdpdr_server_drive_delete_file_callback1(RdpdrServerContext* context
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
 
-	status = rdpdr_server_enqueue_irp(context, irp);
-
-	if (!status)
+	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
+		WLog_ERR(TAG, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
-		return FALSE;
+		return ERROR_INTERNAL_ERROR;
 	}
 
 	/* Send a request to close the file */
-	status = rdpdr_server_send_device_close_request(context, deviceId, fileId, irp->CompletionId);
-
-	return status;
+	return rdpdr_server_send_device_close_request(context, deviceId, fileId, irp->CompletionId);
 }
 
-static BOOL rdpdr_server_drive_delete_file(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_drive_delete_file(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path)
 {
-	BOOL status;
 	RDPDR_IRP* irp;
 
 	irp = rdpdr_server_irp_new();
 
 	if (!irp)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "rdpdr_server_irp_new failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	irp->CompletionId = context->priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_delete_file_callback1;
@@ -1893,26 +2331,29 @@ static BOOL rdpdr_server_drive_delete_file(RdpdrServerContext* context, void* ca
 
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 
-	status = rdpdr_server_enqueue_irp(context, irp);
-
-	if (!status)
+	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
+		WLog_ERR(TAG, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
-		return FALSE;
+		return ERROR_INTERNAL_ERROR;
 	}
 
 	/* Send a request to open the file. */
-	status = rdpdr_server_send_device_create_request(context, deviceId, irp->CompletionId, irp->PathName,
+	return rdpdr_server_send_device_create_request(context, deviceId, irp->CompletionId, irp->PathName,
 			FILE_READ_DATA | SYNCHRONIZE, FILE_DELETE_ON_CLOSE | FILE_SYNCHRONOUS_IO_NONALERT, FILE_OPEN);
 
-	return status;
 }
 
 /*************************************************
  * Drive Rename File
  ************************************************/
 
-static BOOL rdpdr_server_drive_rename_file_callback3(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_drive_rename_file_callback3(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
 	WLog_DBG(TAG, "RdpdrServerDriveRenameFileCallback3: deviceId=%d, completionId=%d, ioStatus=0x%x",
 			deviceId, completionId, ioStatus);
@@ -1920,19 +2361,26 @@ static BOOL rdpdr_server_drive_rename_file_callback3(RdpdrServerContext* context
 	/* Destroy the IRP. */
 	rdpdr_server_irp_free(irp);
 
-	return TRUE;
+	return CHANNEL_RC_OK;
 }
 
-static BOOL rdpdr_server_drive_rename_file_callback2(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_drive_rename_file_callback2(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
-	BOOL status;
 	UINT32 length;
 
 	WLog_DBG(TAG, "RdpdrServerDriveRenameFileCallback2: deviceId=%d, completionId=%d, ioStatus=0x%x",
 			deviceId, completionId, ioStatus);
 
 	if (Stream_GetRemainingLength(s) < 5)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "not enough data in stream!");
+		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 	Stream_Seek(s, 1); /* Padding (1 byte) */
@@ -1945,23 +2393,24 @@ static BOOL rdpdr_server_drive_rename_file_callback2(RdpdrServerContext* context
 	irp->Callback = rdpdr_server_drive_rename_file_callback3;
 	irp->DeviceId = deviceId;
 
-	status = rdpdr_server_enqueue_irp(context, irp);
-
-	if (!status)
+	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
+		WLog_ERR(TAG, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
-		return FALSE;
+		return ERROR_INTERNAL_ERROR;
 	}
 
 	/* Send a request to close the file */
-	status = rdpdr_server_send_device_close_request(context, deviceId, irp->FileId, irp->CompletionId);
-
-	return status;
+	return rdpdr_server_send_device_close_request(context, deviceId, irp->FileId, irp->CompletionId);
 }
 
-static BOOL rdpdr_server_drive_rename_file_callback1(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_drive_rename_file_callback1(RdpdrServerContext* context, wStream* s, RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus)
 {
-	BOOL status;
 	UINT32 fileId;
 	UINT8 information;
 
@@ -1976,11 +2425,14 @@ static BOOL rdpdr_server_drive_rename_file_callback1(RdpdrServerContext* context
 		/* Destroy the IRP. */
 		rdpdr_server_irp_free(irp);
 
-		return TRUE;
+		return CHANNEL_RC_OK;
 	}
 
 	if (Stream_GetRemainingLength(s) < 5)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "not enough data in stream!");
+		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, fileId); /* FileId (4 bytes) */
 	Stream_Read_UINT8(s, information); /* Information (1 byte) */
@@ -1991,29 +2443,33 @@ static BOOL rdpdr_server_drive_rename_file_callback1(RdpdrServerContext* context
 	irp->DeviceId = deviceId;
 	irp->FileId = fileId;
 
-	status = rdpdr_server_enqueue_irp(context, irp);
-
-	if (!status)
+	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
+		WLog_ERR(TAG, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
-		return FALSE;
+		return ERROR_INTERNAL_ERROR;
 	}
 
 	/* Send a request to rename the file */
-	status = rdpdr_server_send_device_file_rename_request(context, deviceId, fileId, irp->CompletionId, irp->ExtraBuffer);
-
-	return status;
+	return rdpdr_server_send_device_file_rename_request(context, deviceId, fileId, irp->CompletionId, irp->ExtraBuffer);
 }
 
-static BOOL rdpdr_server_drive_rename_file(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* oldPath, const char* newPath)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_server_drive_rename_file(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* oldPath, const char* newPath)
 {
-	BOOL status;
 	RDPDR_IRP* irp;
 
 	irp = rdpdr_server_irp_new();
 
 	if (!irp)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "rdpdr_server_irp_new failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	irp->CompletionId = context->priv->NextCompletionId++;
 	irp->Callback = rdpdr_server_drive_rename_file_callback1;
@@ -2025,19 +2481,16 @@ static BOOL rdpdr_server_drive_rename_file(RdpdrServerContext* context, void* ca
 	rdpdr_server_convert_slashes(irp->PathName, sizeof(irp->PathName));
 	rdpdr_server_convert_slashes(irp->ExtraBuffer, sizeof(irp->ExtraBuffer));
 
-	status = rdpdr_server_enqueue_irp(context, irp);
-
-	if (!status)
+	if (!rdpdr_server_enqueue_irp(context, irp))
 	{
+		WLog_ERR(TAG, "rdpdr_server_enqueue_irp failed!");
 		rdpdr_server_irp_free(irp);
-		return FALSE;
+		return ERROR_INTERNAL_ERROR;
 	}
 
 	/* Send a request to open the file. */
-	status = rdpdr_server_send_device_create_request(context, deviceId, irp->CompletionId, irp->PathName,
+	return rdpdr_server_send_device_create_request(context, deviceId, irp->CompletionId, irp->PathName,
 			FILE_READ_DATA | SYNCHRONIZE, FILE_SYNCHRONOUS_IO_NONALERT, FILE_OPEN);
-
-	return status;
 }
 
 RdpdrServerContext* rdpdr_server_context_new(HANDLE vcm)
@@ -2067,6 +2520,7 @@ RdpdrServerContext* rdpdr_server_context_new(HANDLE vcm)
 
 		if (!context->priv)
 		{
+			WLog_ERR(TAG, "calloc failed!");
 			free(context);
 			return NULL;
 		}
@@ -2081,10 +2535,15 @@ RdpdrServerContext* rdpdr_server_context_new(HANDLE vcm)
 
 		if (!context->priv->IrpList)
 		{
+			WLog_ERR(TAG, "ListDictionary_New failed!");
 			free(context->priv);
 			free(context);
 			return NULL;
 		}
+	}
+	else
+	{
+		WLog_ERR(TAG, "calloc failed!");
 	}
 
 	return context;

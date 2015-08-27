@@ -3,6 +3,8 @@
  * Dynamic Virtual Channel Extension
  *
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,14 +30,15 @@
 
 typedef struct _rdpei_client_context RdpeiClientContext;
 
-typedef int (*pcRdpeiGetVersion)(RdpeiClientContext* context);typedef int (*pcRdpeiAddContact)(RdpeiClientContext* context, RDPINPUT_CONTACT_DATA* contact);
+typedef int (*pcRdpeiGetVersion)(RdpeiClientContext* context);
+typedef UINT (*pcRdpeiAddContact)(RdpeiClientContext* context, RDPINPUT_CONTACT_DATA* contact);
 
-typedef int (*pcRdpeiTouchBegin)(RdpeiClientContext* context, int externalId, int x, int y);
-typedef int (*pcRdpeiTouchUpdate)(RdpeiClientContext* context, int externalId, int x, int y);
-typedef int (*pcRdpeiTouchEnd)(RdpeiClientContext* context, int externalId, int x, int y);
+typedef UINT (*pcRdpeiTouchBegin)(RdpeiClientContext* context, int externalId, int x, int y, int* contactId);
+typedef UINT (*pcRdpeiTouchUpdate)(RdpeiClientContext* context, int externalId, int x, int y, int* contactId);
+typedef UINT (*pcRdpeiTouchEnd)(RdpeiClientContext* context, int externalId, int x, int y, int* contactId);
 
-typedef int (*pcRdpeiSuspendTouch)(RdpeiClientContext* context);
-typedef int (*pcRdpeiResumeTouch)(RdpeiClientContext* context);
+typedef UINT (*pcRdpeiSuspendTouch)(RdpeiClientContext* context);
+typedef UINT (*pcRdpeiResumeTouch)(RdpeiClientContext* context);
 
 struct _rdpei_client_context
 {

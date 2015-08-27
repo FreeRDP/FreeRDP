@@ -3,6 +3,8 @@
  * Echo Virtual Channel Extension
  *
  * Copyright 2014 Vic Lee
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,12 +34,12 @@ typedef enum ECHO_SERVER_OPEN_RESULT
 
 typedef struct _echo_server_context echo_server_context;
 
-typedef void (*psEchoServerOpen)(echo_server_context* context);
-typedef void (*psEchoServerClose)(echo_server_context* context);
+typedef UINT (*psEchoServerOpen)(echo_server_context* context);
+typedef UINT (*psEchoServerClose)(echo_server_context* context);
 typedef BOOL (*psEchoServerRequest)(echo_server_context* context, const BYTE* buffer, UINT32 length);
 
-typedef void (*psEchoServerOpenResult)(echo_server_context* context, ECHO_SERVER_OPEN_RESULT result);
-typedef void (*psEchoServerResponse)(echo_server_context* context, const BYTE* buffer, UINT32 length);
+typedef UINT (*psEchoServerOpenResult)(echo_server_context* context, ECHO_SERVER_OPEN_RESULT result);
+typedef UINT (*psEchoServerResponse)(echo_server_context* context, const BYTE* buffer, UINT32 length);
 
 struct _echo_server_context
 {
@@ -69,6 +71,8 @@ struct _echo_server_context
 	 * Receive echo response PDU.
 	 */
 	psEchoServerResponse Response;
+
+	rdpContext* rdpcontext;
 };
 
 #ifdef __cplusplus
