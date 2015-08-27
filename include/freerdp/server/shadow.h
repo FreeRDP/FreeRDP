@@ -231,9 +231,10 @@ struct _SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE
 	UINT32 yHot;
 	UINT32 width;
 	UINT32 height;
-	BYTE* pixels;
-	int scanline;
-	BOOL premultiplied;
+	UINT32 lengthAndMask;
+	UINT32 lengthXorMask;
+	BYTE* xorMaskData;
+	BYTE* andMaskData;
 };
 typedef struct _SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE;
 
@@ -260,6 +261,8 @@ extern "C" {
 #endif
 
 FREERDP_API void shadow_subsystem_set_entry(pfnShadowSubsystemEntry pEntry);
+FREERDP_API int shadow_subsystem_pointer_convert_alpha_pointer_data(BYTE* pixels, BOOL premultiplied,
+		UINT32 width, UINT32 height, SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* pointerColor);
 
 FREERDP_API int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** argv);
 FREERDP_API int shadow_server_command_line_status_print(rdpShadowServer* server, int argc, char** argv, int status);

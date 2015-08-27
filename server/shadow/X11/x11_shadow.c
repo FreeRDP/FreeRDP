@@ -358,7 +358,8 @@ static void x11_shadow_message_free(UINT32 id, SHADOW_MSG_OUT* msg)
 			break;
 
 		case SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE_ID:
-			free(((SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE*)msg)->pixels);
+			free(((SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE*)msg)->xorMaskData);
+			free(((SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE*)msg)->andMaskData);
 			free(msg);
 			break;
 
@@ -400,18 +401,14 @@ int x11_shadow_pointer_alpha_update(x11ShadowSubsystem* subsystem)
 	msg->yHot = subsystem->cursorHotY;
 	msg->width = subsystem->cursorWidth;
 	msg->height = subsystem->cursorHeight;
-	msg->scanline = msg->width * 4;
 
-	msg->pixels = (BYTE*) malloc(msg->scanline * msg->height);
-
-	if (!msg->pixels)
+	if (shadow_subsystem_pointer_convert_alpha_pointer_data(subsystem->cursorPixels, TRUE,
+			msg->width, msg->height, msg) < 0)
 	{
 		free (msg);
 		return -1;
 	}
 
-	CopyMemory(msg->pixels, subsystem->cursorPixels, msg->scanline * msg->height);
-	msg->premultiplied = TRUE;
 	msg->Free = x11_shadow_message_free;
 
 	return shadow_client_boardcast_msg(subsystem->server, NULL, msgId, (SHADOW_MSG_OUT*) msg, NULL) ? 1 : -1;
