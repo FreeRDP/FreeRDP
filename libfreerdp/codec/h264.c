@@ -62,7 +62,7 @@ static H264_CONTEXT_SUBSYSTEM g_Subsystem_dummy =
  * Media Foundation subsystem
  */
 
-#ifdef _WIN32
+#if defined(_WIN32) && defined(WITH_MEDIA_FOUNDATION)
 
 #include <ks.h>
 #include <codecapi.h>
@@ -1479,7 +1479,7 @@ error_1:
 
 BOOL h264_context_init(H264_CONTEXT* h264)
 {
-#ifdef _WIN32
+#if defined(_WIN32) && defined(WITH_MEDIA_FOUNDATION)
 	if (g_Subsystem_MF.Init(h264))
 	{
 		h264->subsystem = &g_Subsystem_MF;

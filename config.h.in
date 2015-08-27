@@ -63,6 +63,7 @@
 #cmakedefine WITH_IOSAUDIO
 #cmakedefine WITH_OPENSLES
 #cmakedefine WITH_GSM
+#cmakedefine WITH_MEDIA_FOUNDATION
 
 /* Plugins */
 #cmakedefine STATIC_CHANNELS

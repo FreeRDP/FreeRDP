@@ -43,6 +43,8 @@ endif()
 
 if(NOT WIN32)
     option(WITH_VALGRIND_MEMCHECK "Compile with valgrind helpers." OFF)
+else()
+    option(WITH_MEDIA_FOUNDATION "Enable H264 media foundation decoder." ON)
 endif()
 
 if(MSVC)
