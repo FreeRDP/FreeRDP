@@ -263,6 +263,12 @@ typedef struct _TARGET_NET_ADDRESS TARGET_NET_ADDRESS;
 #define PACKET_COMPR_TYPE_RDP61			0x03
 #define PACKET_COMPR_TYPE_RDP8			0x04
 
+/* Desktop Rotation Flags */
+#define ORIENTATION_LANDSCAPE			0
+#define ORIENTATION_PORTRAIT			90
+#define ORIENTATION_LANDSCAPE_FLIPPED	180
+#define ORIENTATION_PORTRAIT_FLIPPED	270
+
 /* SYSTEM_TIME */
 typedef struct
 {
@@ -863,7 +869,12 @@ struct rdp_settings
 	ALIGN64 BOOL SupportGraphicsPipeline; /* 142 */
 	ALIGN64 BOOL SupportDynamicTimeZone; /* 143 */
 	ALIGN64 BOOL SupportHeartbeatPdu; /* 144 */
-	UINT64 padding0192[192 - 145]; /* 145 */
+	ALIGN64 UINT32 DesktopPhysicalWidth; /* 145 */
+	ALIGN64 UINT32 DesktopPhysicalHeight; /* 146 */
+	ALIGN64 UINT16 DesktopOrientation; /* 147 */
+	ALIGN64 UINT32 DesktopScaleFactor; /* 148 */
+	ALIGN64 UINT32 DeviceScaleFactor; /* 149 */
+	UINT64 padding0192[192 - 150]; /* 150 */
 
 	/* Client/Server Security Data */
 	ALIGN64 BOOL UseRdpSecurityLayer; /* 192 */

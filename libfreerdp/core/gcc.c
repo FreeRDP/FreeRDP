@@ -571,11 +571,6 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	UINT16 highColorDepth = 0;
 	UINT16 supportedColorDepths = 0;
 	UINT32 serverSelectedProtocol = 0;
-	UINT32 desktopPhysicalWidth = 0;
-	UINT32 desktopPhysicalHeight = 0;
-	UINT16 desktopOrientation = 0;
-	UINT32 desktopScaleFactor = 0;
-	UINT32 deviceScaleFactor = 0;
 	UINT16 earlyCapabilityFlags = 0;
 	rdpSettings* settings = mcs->settings;
 
@@ -675,27 +670,27 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 
 		if (blockLength < 4)
 			break;
-		Stream_Read_UINT32(s, desktopPhysicalWidth); /* desktopPhysicalWidth (4 bytes) */
+		Stream_Read_UINT32(s, settings->DesktopPhysicalWidth); /* desktopPhysicalWidth (4 bytes) */
 		blockLength -= 4;
 
 		if (blockLength < 4)
 			break;
-		Stream_Read_UINT32(s, desktopPhysicalHeight); /* desktopPhysicalHeight (4 bytes) */
+		Stream_Read_UINT32(s, settings->DesktopPhysicalHeight); /* desktopPhysicalHeight (4 bytes) */
 		blockLength -= 4;
 
 		if (blockLength < 2)
 			break;
-		Stream_Read_UINT16(s, desktopOrientation); /* desktopOrientation (2 bytes) */
+		Stream_Read_UINT16(s, settings->DesktopOrientation); /* desktopOrientation (2 bytes) */
 		blockLength -= 2;
 
 		if (blockLength < 4)
 			break;
-		Stream_Read_UINT32(s, desktopScaleFactor); /* desktopScaleFactor (4 bytes) */
+		Stream_Read_UINT32(s, settings->DesktopScaleFactor); /* desktopScaleFactor (4 bytes) */
 		blockLength -= 4;
 
 		if (blockLength < 4)
 			break;
-		Stream_Read_UINT32(s, deviceScaleFactor); /* deviceScaleFactor (4 bytes) */
+		Stream_Read_UINT32(s, settings->DeviceScaleFactor); /* deviceScaleFactor (4 bytes) */
 		blockLength -= 4;
 
 		if (settings->SelectedProtocol != serverSelectedProtocol)
@@ -796,7 +791,7 @@ void gcc_write_client_core_data(wStream* s, rdpMcs* mcs)
 	int clientDigProductIdLength;
 	rdpSettings* settings = mcs->settings;
 
-	gcc_write_user_data_header(s, CS_CORE, 216);
+	gcc_write_user_data_header(s, CS_CORE, 234);
 
 	version = settings->RdpVersion >= 5 ? RDP_VERSION_5_PLUS : RDP_VERSION_4;
 
@@ -890,6 +885,12 @@ void gcc_write_client_core_data(wStream* s, rdpMcs* mcs)
 	Stream_Write_UINT8(s, 0); /* pad1octet */
 
 	Stream_Write_UINT32(s, settings->SelectedProtocol); /* serverSelectedProtocol */
+
+	Stream_Write_UINT32(s, settings->DesktopPhysicalWidth);	/* desktopPhysicalWidth */
+	Stream_Write_UINT32(s, settings->DesktopPhysicalHeight); /* desktopPhysicalHeight */
+	Stream_Write_UINT16(s, settings->DesktopOrientation); /* desktopOrientation */
+	Stream_Write_UINT32(s, settings->DesktopScaleFactor); /* desktopScaleFactor */
+	Stream_Write_UINT32(s, settings->DeviceScaleFactor); /* deviceScaleFactor */
 }
 
 BOOL gcc_read_server_core_data(wStream* s, rdpMcs* mcs)
