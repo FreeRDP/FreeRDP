@@ -39,7 +39,6 @@
 
 #include <freerdp/types.h>
 #include <freerdp/codec/dsp.h>
-#include <winpr/win32error.h>
 
 #include "rdpsnd_main.h"
 
@@ -594,7 +593,12 @@ COMMAND_LINE_ARGUMENT_A rdpsnd_pulse_args[] =
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
-static WIN32ERROR rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* args)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
@@ -634,11 +638,16 @@ static WIN32ERROR rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, ADDI
 #define freerdp_rdpsnd_client_subsystem_entry	pulse_freerdp_rdpsnd_client_subsystem_entry
 #endif
 
-WIN32ERROR freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	ADDIN_ARGV* args;
 	rdpsndPulsePlugin* pulse;
-	WIN32ERROR ret;
+	UINT ret;
 
 	pulse = (rdpsndPulsePlugin*) calloc(1, sizeof(rdpsndPulsePlugin));
 	if (!pulse)

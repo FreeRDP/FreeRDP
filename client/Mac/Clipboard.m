@@ -121,7 +121,12 @@ int mac_cliprdr_send_client_capabilities(CliprdrClientContext* cliprdr)
 	return 1;
 }
 
-WIN32ERROR mac_cliprdr_monitor_ready(CliprdrClientContext* cliprdr, CLIPRDR_MONITOR_READY* monitorReady)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT mac_cliprdr_monitor_ready(CliprdrClientContext* cliprdr, CLIPRDR_MONITOR_READY* monitorReady)
 {
 	mfContext* mfc = (mfContext*) cliprdr->custom;
 	
@@ -132,7 +137,12 @@ WIN32ERROR mac_cliprdr_monitor_ready(CliprdrClientContext* cliprdr, CLIPRDR_MONI
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR mac_cliprdr_server_capabilities(CliprdrClientContext* cliprdr, CLIPRDR_CAPABILITIES* capabilities)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT mac_cliprdr_server_capabilities(CliprdrClientContext* cliprdr, CLIPRDR_CAPABILITIES* capabilities)
 {
 	UINT32 index;
 	CLIPRDR_CAPABILITY_SET* capabilitySet;
@@ -156,7 +166,12 @@ WIN32ERROR mac_cliprdr_server_capabilities(CliprdrClientContext* cliprdr, CLIPRD
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR mac_cliprdr_server_format_list(CliprdrClientContext* cliprdr, CLIPRDR_FORMAT_LIST* formatList)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT mac_cliprdr_server_format_list(CliprdrClientContext* cliprdr, CLIPRDR_FORMAT_LIST* formatList)
 {
 	UINT32 index;
 	CLIPRDR_FORMAT* format;
@@ -218,22 +233,42 @@ WIN32ERROR mac_cliprdr_server_format_list(CliprdrClientContext* cliprdr, CLIPRDR
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR mac_cliprdr_server_format_list_response(CliprdrClientContext* cliprdr, CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT mac_cliprdr_server_format_list_response(CliprdrClientContext* cliprdr, CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
 {
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR mac_cliprdr_server_lock_clipboard_data(CliprdrClientContext* cliprdr, CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT mac_cliprdr_server_lock_clipboard_data(CliprdrClientContext* cliprdr, CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
 {
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR mac_cliprdr_server_unlock_clipboard_data(CliprdrClientContext* cliprdr, CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT mac_cliprdr_server_unlock_clipboard_data(CliprdrClientContext* cliprdr, CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
 {
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR mac_cliprdr_server_format_data_request(CliprdrClientContext* cliprdr, CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT mac_cliprdr_server_format_data_request(CliprdrClientContext* cliprdr, CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
 {
 	BYTE* data;
 	UINT32 size;
@@ -264,7 +299,12 @@ WIN32ERROR mac_cliprdr_server_format_data_request(CliprdrClientContext* cliprdr,
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR mac_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr, CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT mac_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr, CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
 {
 	BYTE* data;
 	UINT32 size;
@@ -332,12 +372,22 @@ WIN32ERROR mac_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR mac_cliprdr_server_file_contents_request(CliprdrClientContext* cliprdr, CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT mac_cliprdr_server_file_contents_request(CliprdrClientContext* cliprdr, CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR mac_cliprdr_server_file_contents_response(CliprdrClientContext* cliprdr, CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT mac_cliprdr_server_file_contents_response(CliprdrClientContext* cliprdr, CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
 {
 	return CHANNEL_RC_OK;
 }

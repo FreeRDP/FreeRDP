@@ -759,7 +759,12 @@ FREERDP_API BOOL checkChannelErrorEvent(rdpContext* context)
 	return TRUE;
 }
 
-FREERDP_API WIN32ERROR getChannelError(rdpContext* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+FREERDP_API UINT getChannelError(rdpContext* context)
 {
 	return context->channelErrorNum;
 }
@@ -767,7 +772,7 @@ FREERDP_API const char* getChannelErrorDescription(rdpContext* context)
 {
 	return context->errorDescription;
 }
-FREERDP_API void setChannelError(rdpContext* context, WIN32ERROR errorNum, char* description)
+FREERDP_API void setChannelError(rdpContext* context, UINT errorNum, char* description)
 {
 	context->channelErrorNum = errorNum;
 	strncpy(context->errorDescription, description, 499);

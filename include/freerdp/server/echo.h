@@ -23,7 +23,6 @@
 #define FREERDP_CHANNEL_ECHO_SERVER_H
 
 #include <freerdp/channels/wtsvc.h>
-#include <winpr/win32error.h>
 
 typedef enum ECHO_SERVER_OPEN_RESULT
 {
@@ -35,12 +34,12 @@ typedef enum ECHO_SERVER_OPEN_RESULT
 
 typedef struct _echo_server_context echo_server_context;
 
-typedef WIN32ERROR (*psEchoServerOpen)(echo_server_context* context);
-typedef WIN32ERROR (*psEchoServerClose)(echo_server_context* context);
+typedef UINT (*psEchoServerOpen)(echo_server_context* context);
+typedef UINT (*psEchoServerClose)(echo_server_context* context);
 typedef BOOL (*psEchoServerRequest)(echo_server_context* context, const BYTE* buffer, UINT32 length);
 
-typedef WIN32ERROR (*psEchoServerOpenResult)(echo_server_context* context, ECHO_SERVER_OPEN_RESULT result);
-typedef WIN32ERROR (*psEchoServerResponse)(echo_server_context* context, const BYTE* buffer, UINT32 length);
+typedef UINT (*psEchoServerOpenResult)(echo_server_context* context, ECHO_SERVER_OPEN_RESULT result);
+typedef UINT (*psEchoServerResponse)(echo_server_context* context, const BYTE* buffer, UINT32 length);
 
 struct _echo_server_context
 {

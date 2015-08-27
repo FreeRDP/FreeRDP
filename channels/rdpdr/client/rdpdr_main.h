@@ -70,6 +70,6 @@ struct rdpdr_plugin
 	rdpContext* rdpcontext;
 };
 
-WIN32ERROR rdpdr_send(rdpdrPlugin* rdpdr, wStream* s);
+UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s);
 
 #endif /* FREERDP_CHANNEL_RDPDR_CLIENT_MAIN_H */

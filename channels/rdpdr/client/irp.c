@@ -35,7 +35,12 @@
 #include "devman.h"
 #include "irp.h"
 
-static WIN32ERROR irp_free(IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT irp_free(IRP* irp)
 {
 	if (!irp)
 		return CHANNEL_RC_OK;
@@ -47,11 +52,16 @@ static WIN32ERROR irp_free(IRP* irp)
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR irp_complete(IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT irp_complete(IRP* irp)
 {
 	int pos;
 	rdpdrPlugin* rdpdr;
-	WIN32ERROR error;
+	UINT error;
 
 	rdpdr = (rdpdrPlugin*) irp->devman->plugin;
 

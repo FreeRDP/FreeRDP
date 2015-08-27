@@ -60,7 +60,7 @@ static void CALLBACK waveInProc(HWAVEIN hWaveIn, UINT uMsg, DWORD_PTR dwInstance
 {
 	AudinWinmmDevice* winmm = (AudinWinmmDevice*) dwInstance;
 	PWAVEHDR pWaveHdr;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 	MMRESULT mmResult;
 
 	switch(uMsg)
@@ -165,7 +165,12 @@ static DWORD audin_winmm_thread_func(void* arg)
 	return 0;
 }
 
-static WIN32ERROR audin_winmm_free(IAudinDevice* device)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_winmm_free(IAudinDevice* device)
 {
 	UINT32 i;
 	AudinWinmmDevice* winmm = (AudinWinmmDevice*) device;
@@ -182,10 +187,15 @@ static WIN32ERROR audin_winmm_free(IAudinDevice* device)
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR audin_winmm_close(IAudinDevice* device)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_winmm_close(IAudinDevice* device)
 {
     DWORD status;
-    WIN32ERROR error = CHANNEL_RC_OK;
+    UINT error = CHANNEL_RC_OK;
 	AudinWinmmDevice* winmm = (AudinWinmmDevice*) device;
 
 	SetEvent(winmm->stopEvent);
@@ -210,7 +220,12 @@ static WIN32ERROR audin_winmm_close(IAudinDevice* device)
 	return error;
 }
 
-static WIN32ERROR audin_winmm_set_format(IAudinDevice* device, audinFormat* format, UINT32 FramesPerPacket)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_winmm_set_format(IAudinDevice* device, audinFormat* format, UINT32 FramesPerPacket)
 {
 	UINT32 i;
 	AudinWinmmDevice* winmm = (AudinWinmmDevice*) device;
@@ -274,7 +289,12 @@ static BOOL audin_winmm_format_supported(IAudinDevice* device, audinFormat* form
 	return FALSE;
 }
 
-static WIN32ERROR audin_winmm_open(IAudinDevice* device, AudinReceive receive, void* user_data)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_winmm_open(IAudinDevice* device, AudinReceive receive, void* user_data)
 {
 	AudinWinmmDevice* winmm = (AudinWinmmDevice*) device;
 
@@ -304,7 +324,12 @@ static COMMAND_LINE_ARGUMENT_A audin_winmm_args[] =
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
-static WIN32ERROR audin_winmm_parse_addin_args(AudinWinmmDevice* device, ADDIN_ARGV* args)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_winmm_parse_addin_args(AudinWinmmDevice* device, ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
@@ -345,11 +370,16 @@ static WIN32ERROR audin_winmm_parse_addin_args(AudinWinmmDevice* device, ADDIN_A
 #define freerdp_audin_client_subsystem_entry	winmm_freerdp_audin_client_subsystem_entry
 #endif
 
-WIN32ERROR freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	ADDIN_ARGV* args;
 	AudinWinmmDevice* winmm;
-	WIN32ERROR error;
+	UINT error;
 
 	winmm = (AudinWinmmDevice*) calloc(1, sizeof(AudinWinmmDevice));
 	if (!winmm)

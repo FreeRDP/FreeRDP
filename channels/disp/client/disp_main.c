@@ -35,7 +35,6 @@
 #include <winpr/sysinfo.h>
 #include <winpr/cmdline.h>
 #include <winpr/collections.h>
-#include <winpr/win32error.h>
 
 #include <freerdp/addin.h>
 
@@ -74,9 +73,14 @@ struct _DISP_PLUGIN
 };
 typedef struct _DISP_PLUGIN DISP_PLUGIN;
 
-WIN32ERROR disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callback, UINT32 NumMonitors, DISPLAY_CONTROL_MONITOR_LAYOUT* Monitors)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callback, UINT32 NumMonitors, DISPLAY_CONTROL_MONITOR_LAYOUT* Monitors)
 {
-	WIN32ERROR status;
+	UINT status;
 	wStream* s;
 	UINT32 type;
 	UINT32 index;
@@ -163,7 +167,12 @@ WIN32ERROR disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* c
 	return status;
 }
 
-WIN32ERROR disp_recv_display_control_caps_pdu(DISP_CHANNEL_CALLBACK* callback, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT disp_recv_display_control_caps_pdu(DISP_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	DISP_PLUGIN* disp;
 
@@ -184,7 +193,12 @@ WIN32ERROR disp_recv_display_control_caps_pdu(DISP_CHANNEL_CALLBACK* callback, w
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR disp_recv_pdu(DISP_CHANNEL_CALLBACK* callback, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT disp_recv_pdu(DISP_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	UINT32 type;
 	UINT32 length;
@@ -211,20 +225,35 @@ WIN32ERROR disp_recv_pdu(DISP_CHANNEL_CALLBACK* callback, wStream* s)
 	}
 }
 
-static WIN32ERROR disp_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream *data)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT disp_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream *data)
 {
 	DISP_CHANNEL_CALLBACK* callback = (DISP_CHANNEL_CALLBACK*) pChannelCallback;
 
 	return disp_recv_pdu(callback, data);
 }
 
-static WIN32ERROR disp_on_close(IWTSVirtualChannelCallback* pChannelCallback)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT disp_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 {
 	free(pChannelCallback);
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR disp_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT disp_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
 	IWTSVirtualChannel* pChannel, BYTE* Data, int* pbAccept,
 	IWTSVirtualChannelCallback** ppCallback)
 {
@@ -251,9 +280,14 @@ static WIN32ERROR disp_on_new_channel_connection(IWTSListenerCallback* pListener
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR disp_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT disp_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr)
 {
-	WIN32ERROR status;
+	UINT status;
 	DISP_PLUGIN* disp = (DISP_PLUGIN*) pPlugin;
 
 	disp->listener_callback = (DISP_LISTENER_CALLBACK*) calloc(1, sizeof(DISP_LISTENER_CALLBACK));
@@ -276,7 +310,12 @@ static WIN32ERROR disp_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannel
 	return status;
 }
 
-static WIN32ERROR disp_plugin_terminated(IWTSPlugin* pPlugin)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT disp_plugin_terminated(IWTSPlugin* pPlugin)
 {
 	free(pPlugin);
 	return CHANNEL_RC_OK;
@@ -286,7 +325,12 @@ static WIN32ERROR disp_plugin_terminated(IWTSPlugin* pPlugin)
  * Channel Client Interface
  */
 
-WIN32ERROR disp_send_monitor_layout(DispClientContext* context, UINT32 NumMonitors, DISPLAY_CONTROL_MONITOR_LAYOUT* Monitors)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT disp_send_monitor_layout(DispClientContext* context, UINT32 NumMonitors, DISPLAY_CONTROL_MONITOR_LAYOUT* Monitors)
 {
 	DISP_PLUGIN* disp = (DISP_PLUGIN*) context->handle;
 	DISP_CHANNEL_CALLBACK* callback = disp->listener_callback->channel_callback;
@@ -298,9 +342,14 @@ WIN32ERROR disp_send_monitor_layout(DispClientContext* context, UINT32 NumMonito
 #define DVCPluginEntry		disp_DVCPluginEntry
 #endif
 
-WIN32ERROR DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 	DISP_PLUGIN* disp;
 	DispClientContext* context;
 

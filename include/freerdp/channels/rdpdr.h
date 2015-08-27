@@ -32,7 +32,6 @@
 #include <winpr/stream.h>
 #include <winpr/interlocked.h>
 #include <winpr/collections.h>
-#include <winpr/win32error.h>
 
 #include <freerdp/freerdp.h>
 
@@ -317,9 +316,9 @@ typedef struct _DEVICE DEVICE;
 typedef struct _IRP IRP;
 typedef struct _DEVMAN DEVMAN;
 
-typedef WIN32ERROR (*pcIRPRequest)(DEVICE* device, IRP* irp);
-typedef WIN32ERROR (*pcInitDevice)(DEVICE* device);
-typedef WIN32ERROR (*pcFreeDevice)(DEVICE* device);
+typedef UINT (*pcIRPRequest)(DEVICE* device, IRP* irp);
+typedef UINT (*pcInitDevice)(DEVICE* device);
+typedef UINT (*pcFreeDevice)(DEVICE* device);
 
 struct _DEVICE
 {
@@ -334,7 +333,7 @@ struct _DEVICE
 	pcFreeDevice Free;
 };
 
-typedef WIN32ERROR (*pcIRPResponse)(IRP* irp);
+typedef UINT (*pcIRPResponse)(IRP* irp);
 
 struct _IRP
 {
@@ -365,7 +364,7 @@ struct _DEVMAN
 	wListDictionary* devices;
 };
 
-typedef WIN32ERROR (*pcRegisterDevice)(DEVMAN* devman, DEVICE* device);
+typedef UINT (*pcRegisterDevice)(DEVMAN* devman, DEVICE* device);
 
 struct _DEVICE_SERVICE_ENTRY_POINTS
 {
@@ -378,6 +377,6 @@ struct _DEVICE_SERVICE_ENTRY_POINTS
 typedef struct _DEVICE_SERVICE_ENTRY_POINTS DEVICE_SERVICE_ENTRY_POINTS;
 typedef DEVICE_SERVICE_ENTRY_POINTS* PDEVICE_SERVICE_ENTRY_POINTS;
 
-typedef WIN32ERROR (*PDEVICE_SERVICE_ENTRY)(PDEVICE_SERVICE_ENTRY_POINTS);
+typedef UINT (*PDEVICE_SERVICE_ENTRY)(PDEVICE_SERVICE_ENTRY_POINTS);
 
 #endif /* FREERDP_CHANNEL_RDPDR_H */

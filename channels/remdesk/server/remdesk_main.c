@@ -29,7 +29,12 @@
 
 #include "remdesk_main.h"
 
-static WIN32ERROR remdesk_virtual_channel_write(RemdeskServerContext* context, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_virtual_channel_write(RemdeskServerContext* context, wStream* s)
 {
 	BOOL status;
 	ULONG BytesWritten = 0;
@@ -40,7 +45,12 @@ static WIN32ERROR remdesk_virtual_channel_write(RemdeskServerContext* context, w
 	return (status) ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
-static WIN32ERROR remdesk_read_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_read_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
 	int status;
 	UINT32 ChannelNameLen;
@@ -90,7 +100,12 @@ static WIN32ERROR remdesk_read_channel_header(wStream* s, REMDESK_CHANNEL_HEADER
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR remdesk_write_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_write_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
 	int index;
 	UINT32 ChannelNameLen;
@@ -113,9 +128,14 @@ static WIN32ERROR remdesk_write_channel_header(wStream* s, REMDESK_CHANNEL_HEADE
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR remdesk_write_ctl_header(wStream* s, REMDESK_CTL_HEADER* ctlHeader)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_write_ctl_header(wStream* s, REMDESK_CTL_HEADER* ctlHeader)
 {
-	WIN32ERROR error;
+	UINT error;
 	if ((error = remdesk_write_channel_header(s, (REMDESK_CHANNEL_HEADER*) ctlHeader)))
 	{
 		WLog_ERR(TAG, "remdesk_write_channel_header failed with error %lu!", error);
@@ -125,7 +145,12 @@ static WIN32ERROR remdesk_write_ctl_header(wStream* s, REMDESK_CTL_HEADER* ctlHe
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR remdesk_prepare_ctl_header(REMDESK_CTL_HEADER* ctlHeader, UINT32 msgType, UINT32 msgSize)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_prepare_ctl_header(REMDESK_CTL_HEADER* ctlHeader, UINT32 msgType, UINT32 msgSize)
 {
 	ctlHeader->msgType = msgType;
 	strcpy(ctlHeader->ChannelName, REMDESK_CHANNEL_CTL_NAME);
@@ -133,11 +158,16 @@ static WIN32ERROR remdesk_prepare_ctl_header(REMDESK_CTL_HEADER* ctlHeader, UINT
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR remdesk_send_ctl_result_pdu(RemdeskServerContext* context, UINT32 result)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_send_ctl_result_pdu(RemdeskServerContext* context, UINT32 result)
 {
 	wStream* s;
 	REMDESK_CTL_RESULT_PDU pdu;
-	WIN32ERROR error;
+	UINT error;
 
 	pdu.result = result;
 
@@ -173,11 +203,16 @@ out:
 	return error;
 }
 
-static WIN32ERROR remdesk_send_ctl_version_info_pdu(RemdeskServerContext* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_send_ctl_version_info_pdu(RemdeskServerContext* context)
 {
 	wStream* s;
 	REMDESK_CTL_VERSION_INFO_PDU pdu;
-	WIN32ERROR error;
+	UINT error;
 
 	if ((error = remdesk_prepare_ctl_header(&(pdu.ctlHeader), REMDESK_CTL_VERSIONINFO, 8)))
 	{
@@ -214,7 +249,12 @@ out:
 	return error;
 }
 
-static WIN32ERROR remdesk_recv_ctl_version_info_pdu(RemdeskServerContext* context, wStream* s, REMDESK_CHANNEL_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_recv_ctl_version_info_pdu(RemdeskServerContext* context, wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
 	UINT32 versionMajor;
 	UINT32 versionMinor;
@@ -231,7 +271,12 @@ static WIN32ERROR remdesk_recv_ctl_version_info_pdu(RemdeskServerContext* contex
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR remdesk_recv_ctl_remote_control_desktop_pdu(RemdeskServerContext* context, wStream* s, REMDESK_CHANNEL_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_recv_ctl_remote_control_desktop_pdu(RemdeskServerContext* context, wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
 	int status;
 	int cchStringW;
@@ -240,7 +285,7 @@ static WIN32ERROR remdesk_recv_ctl_remote_control_desktop_pdu(RemdeskServerConte
 	int cbRaConnectionStringW = 0;
 	WCHAR* raConnectionStringW = NULL;
 	REMDESK_CTL_REMOTE_CONTROL_DESKTOP_PDU pdu;
-	WIN32ERROR error;
+	UINT error;
 
 	msgLength = header->DataLength - 4;
 
@@ -281,7 +326,12 @@ static WIN32ERROR remdesk_recv_ctl_remote_control_desktop_pdu(RemdeskServerConte
 	return error;
 }
 
-static WIN32ERROR remdesk_recv_ctl_authenticate_pdu(RemdeskServerContext* context, wStream* s, REMDESK_CHANNEL_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_recv_ctl_authenticate_pdu(RemdeskServerContext* context, wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
 	int status;
 	int cchStringW;
@@ -358,13 +408,18 @@ static WIN32ERROR remdesk_recv_ctl_authenticate_pdu(RemdeskServerContext* contex
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR remdesk_recv_ctl_verify_password_pdu(RemdeskServerContext* context, wStream* s, REMDESK_CHANNEL_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_recv_ctl_verify_password_pdu(RemdeskServerContext* context, wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
 	int status;
 	int cbExpertBlobW = 0;
 	WCHAR* expertBlobW = NULL;
 	REMDESK_CTL_VERIFY_PASSWORD_PDU pdu;
-	WIN32ERROR error;
+	UINT error;
 
 	if (Stream_GetRemainingLength(s) < 8)
 	{
@@ -391,9 +446,14 @@ static WIN32ERROR remdesk_recv_ctl_verify_password_pdu(RemdeskServerContext* con
 	return error;
 }
 
-static WIN32ERROR remdesk_recv_ctl_pdu(RemdeskServerContext* context, wStream* s, REMDESK_CHANNEL_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_recv_ctl_pdu(RemdeskServerContext* context, wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 	UINT32 msgType = 0;
 
 	if (Stream_GetRemainingLength(s) < 4)
@@ -466,9 +526,14 @@ static WIN32ERROR remdesk_recv_ctl_pdu(RemdeskServerContext* context, wStream* s
 	return error;
 }
 
-static WIN32ERROR remdesk_server_receive_pdu(RemdeskServerContext* context, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_server_receive_pdu(RemdeskServerContext* context, wStream* s)
 {
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 	REMDESK_CHANNEL_HEADER header;
 
 #if 0
@@ -531,7 +596,7 @@ static void* remdesk_server_thread(void* arg)
 	HANDLE ChannelEvent;
 	DWORD BytesReturned;
 	RemdeskServerContext* context;
-	WIN32ERROR error;
+	UINT error;
 
 	context = (RemdeskServerContext*) arg;
 
@@ -641,7 +706,12 @@ out:
 	return NULL;
 }
 
-static WIN32ERROR remdesk_server_start(RemdeskServerContext* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_server_start(RemdeskServerContext* context)
 {
 	context->priv->ChannelHandle = WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, "remdesk");
 
@@ -669,9 +739,14 @@ static WIN32ERROR remdesk_server_start(RemdeskServerContext* context)
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR remdesk_server_stop(RemdeskServerContext* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_server_stop(RemdeskServerContext* context)
 {
-    WIN32ERROR error;
+    UINT error;
 
 	SetEvent(context->priv->StopEvent);
 

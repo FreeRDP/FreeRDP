@@ -25,7 +25,6 @@
 #define FREERDP_CHANNEL_RAIL_COMMON_H
 
 #include <freerdp/rail.h>
-#include <winpr/win32error.h>
 
 extern const char* const RAIL_ORDER_TYPE_STRINGS[];
 
@@ -46,13 +45,13 @@ extern const char* const RAIL_ORDER_TYPE_STRINGS[];
 #define RAIL_LANGBAR_INFO_ORDER_LENGTH		4	/* fixed */
 
 void rail_string_to_unicode_string(char* string, RAIL_UNICODE_STRING* unicode_string);
-WIN32ERROR rail_read_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake);
+UINT rail_read_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake);
 void rail_write_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake);
-WIN32ERROR rail_read_handshake_ex_order(wStream* s, RAIL_HANDSHAKE_EX_ORDER* handshakeEx);
+UINT rail_read_handshake_ex_order(wStream* s, RAIL_HANDSHAKE_EX_ORDER* handshakeEx);
 void rail_write_handshake_ex_order(wStream* s, RAIL_HANDSHAKE_EX_ORDER* handshakeEx);
 
 wStream* rail_pdu_init(size_t length);
-WIN32ERROR rail_read_pdu_header(wStream* s, UINT16* orderType, UINT16* orderLength);
+UINT rail_read_pdu_header(wStream* s, UINT16* orderType, UINT16* orderLength);
 void rail_write_pdu_header(wStream* s, UINT16 orderType, UINT16 orderLength);
 
 #endif /* FREERDP_CHANNEL_RAIL_COMMON_H */

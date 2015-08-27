@@ -39,7 +39,12 @@
 
 #include "tsmf_ifman.h"
 
-WIN32ERROR tsmf_ifman_rim_exchange_capability_request(TSMF_IFMAN* ifman)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT tsmf_ifman_rim_exchange_capability_request(TSMF_IFMAN* ifman)
 {
 	UINT32 CapabilityValue;
 
@@ -57,7 +62,12 @@ WIN32ERROR tsmf_ifman_rim_exchange_capability_request(TSMF_IFMAN* ifman)
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR tsmf_ifman_exchange_capability_request(TSMF_IFMAN* ifman)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT tsmf_ifman_exchange_capability_request(TSMF_IFMAN* ifman)
 {
 	UINT32 i;
 	UINT32 v;
@@ -120,7 +130,12 @@ WIN32ERROR tsmf_ifman_exchange_capability_request(TSMF_IFMAN* ifman)
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR tsmf_ifman_check_format_support_request(TSMF_IFMAN* ifman)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT tsmf_ifman_check_format_support_request(TSMF_IFMAN* ifman)
 {
 	UINT32 numMediaType;
 	UINT32 PlatformCookie;
@@ -151,9 +166,14 @@ WIN32ERROR tsmf_ifman_check_format_support_request(TSMF_IFMAN* ifman)
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR tsmf_ifman_on_new_presentation(TSMF_IFMAN* ifman)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT tsmf_ifman_on_new_presentation(TSMF_IFMAN* ifman)
 {
-	WIN32ERROR status = CHANNEL_RC_OK;
+	UINT status = CHANNEL_RC_OK;
 	TSMF_PRESENTATION* presentation;
 
 	DEBUG_TSMF("");
@@ -182,10 +202,15 @@ WIN32ERROR tsmf_ifman_on_new_presentation(TSMF_IFMAN* ifman)
 	return status;
 }
 
-WIN32ERROR tsmf_ifman_add_stream(TSMF_IFMAN* ifman, rdpContext* rdpcontext)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT tsmf_ifman_add_stream(TSMF_IFMAN* ifman, rdpContext* rdpcontext)
 {
 	UINT32 StreamId;
-	WIN32ERROR status = CHANNEL_RC_OK;
+	UINT status = CHANNEL_RC_OK;
 	TSMF_STREAM* stream;
 	TSMF_PRESENTATION* presentation;
 
@@ -217,7 +242,12 @@ WIN32ERROR tsmf_ifman_add_stream(TSMF_IFMAN* ifman, rdpContext* rdpcontext)
 	return status;
 }
 
-WIN32ERROR tsmf_ifman_set_topology_request(TSMF_IFMAN* ifman)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT tsmf_ifman_set_topology_request(TSMF_IFMAN* ifman)
 {
 	DEBUG_TSMF("");
 	if (!Stream_EnsureRemainingCapacity(ifman->output, 8))
@@ -229,7 +259,12 @@ WIN32ERROR tsmf_ifman_set_topology_request(TSMF_IFMAN* ifman)
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR tsmf_ifman_remove_stream(TSMF_IFMAN* ifman)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT tsmf_ifman_remove_stream(TSMF_IFMAN* ifman)
 {
 	int status = CHANNEL_RC_OK;
 	UINT32 StreamId;
@@ -274,9 +309,14 @@ float tsmf_stream_read_float(wStream *s)
 	return fValue;
 }
 
-WIN32ERROR tsmf_ifman_set_source_video_rect(TSMF_IFMAN* ifman)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT tsmf_ifman_set_source_video_rect(TSMF_IFMAN* ifman)
 {
-	WIN32ERROR status = CHANNEL_RC_OK;
+	UINT status = CHANNEL_RC_OK;
 	float Left, Top;
 	float Right, Bottom;
 	TSMF_PRESENTATION* presentation;
@@ -309,7 +349,12 @@ WIN32ERROR tsmf_ifman_set_source_video_rect(TSMF_IFMAN* ifman)
 	return status;
 }
 
-WIN32ERROR tsmf_ifman_shutdown_presentation(TSMF_IFMAN* ifman)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT tsmf_ifman_shutdown_presentation(TSMF_IFMAN* ifman)
 {
 	TSMF_PRESENTATION* presentation;
 
@@ -336,7 +381,12 @@ WIN32ERROR tsmf_ifman_shutdown_presentation(TSMF_IFMAN* ifman)
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR tsmf_ifman_on_stream_volume(TSMF_IFMAN* ifman)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT tsmf_ifman_on_stream_volume(TSMF_IFMAN* ifman)
 {
 	TSMF_PRESENTATION* presentation;
 	UINT32 newVolume;
@@ -369,7 +419,12 @@ WIN32ERROR tsmf_ifman_on_stream_volume(TSMF_IFMAN* ifman)
 	return 0;
 }
 
-WIN32ERROR tsmf_ifman_on_channel_volume(TSMF_IFMAN* ifman)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT tsmf_ifman_on_channel_volume(TSMF_IFMAN* ifman)
 {
 	TSMF_PRESENTATION* presentation;
 
@@ -395,14 +450,24 @@ WIN32ERROR tsmf_ifman_on_channel_volume(TSMF_IFMAN* ifman)
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR tsmf_ifman_set_video_window(TSMF_IFMAN* ifman)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT tsmf_ifman_set_video_window(TSMF_IFMAN* ifman)
 {
 	DEBUG_TSMF("");
 	ifman->output_pending = TRUE;
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR tsmf_ifman_update_geometry_info(TSMF_IFMAN* ifman)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT tsmf_ifman_update_geometry_info(TSMF_IFMAN* ifman)
 {
 	TSMF_PRESENTATION* presentation;
 	UINT32 numGeometryInfo;
@@ -413,7 +478,7 @@ WIN32ERROR tsmf_ifman_update_geometry_info(TSMF_IFMAN* ifman)
 	UINT32 cbVisibleRect;
 	RDP_RECT *rects = NULL;
 	int num_rects = 0;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 	int i;
 	int pos;
 
@@ -468,21 +533,36 @@ WIN32ERROR tsmf_ifman_update_geometry_info(TSMF_IFMAN* ifman)
 	return error;
 }
 
-WIN32ERROR tsmf_ifman_set_allocator(TSMF_IFMAN* ifman)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT tsmf_ifman_set_allocator(TSMF_IFMAN* ifman)
 {
 	DEBUG_TSMF("");
 	ifman->output_pending = TRUE;
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR tsmf_ifman_notify_preroll(TSMF_IFMAN* ifman)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT tsmf_ifman_notify_preroll(TSMF_IFMAN* ifman)
 {
 	DEBUG_TSMF("");
 	ifman->output_pending = TRUE;
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR tsmf_ifman_on_sample(TSMF_IFMAN* ifman)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT tsmf_ifman_on_sample(TSMF_IFMAN* ifman)
 {
 	TSMF_PRESENTATION* presentation;
 	TSMF_STREAM* stream;
@@ -492,7 +572,7 @@ WIN32ERROR tsmf_ifman_on_sample(TSMF_IFMAN* ifman)
 	UINT64 ThrottleDuration;
 	UINT32 SampleExtensions;
 	UINT32 cbData;
-    WIN32ERROR error;
+    UINT error;
 
 	if (Stream_GetRemainingLength(ifman->input) < 60)
 		return ERROR_INVALID_DATA;
@@ -548,7 +628,12 @@ WIN32ERROR tsmf_ifman_on_sample(TSMF_IFMAN* ifman)
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR tsmf_ifman_on_flush(TSMF_IFMAN* ifman)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT tsmf_ifman_on_flush(TSMF_IFMAN* ifman)
 {
 	UINT32 StreamId;
 	TSMF_PRESENTATION* presentation;
@@ -575,7 +660,12 @@ WIN32ERROR tsmf_ifman_on_flush(TSMF_IFMAN* ifman)
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR tsmf_ifman_on_end_of_stream(TSMF_IFMAN* ifman)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT tsmf_ifman_on_end_of_stream(TSMF_IFMAN* ifman)
 {
 	UINT32 StreamId;
 	TSMF_STREAM* stream;
@@ -610,7 +700,12 @@ WIN32ERROR tsmf_ifman_on_end_of_stream(TSMF_IFMAN* ifman)
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR tsmf_ifman_on_playback_started(TSMF_IFMAN* ifman)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT tsmf_ifman_on_playback_started(TSMF_IFMAN* ifman)
 {
 	TSMF_PRESENTATION* presentation;
 
@@ -638,7 +733,12 @@ WIN32ERROR tsmf_ifman_on_playback_started(TSMF_IFMAN* ifman)
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR tsmf_ifman_on_playback_paused(TSMF_IFMAN* ifman)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT tsmf_ifman_on_playback_paused(TSMF_IFMAN* ifman)
 {
 	TSMF_PRESENTATION* presentation;
 
@@ -659,7 +759,12 @@ WIN32ERROR tsmf_ifman_on_playback_paused(TSMF_IFMAN* ifman)
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR tsmf_ifman_on_playback_restarted(TSMF_IFMAN* ifman)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT tsmf_ifman_on_playback_restarted(TSMF_IFMAN* ifman)
 {
 	TSMF_PRESENTATION* presentation;
 
@@ -679,7 +784,12 @@ WIN32ERROR tsmf_ifman_on_playback_restarted(TSMF_IFMAN* ifman)
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR tsmf_ifman_on_playback_stopped(TSMF_IFMAN* ifman)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT tsmf_ifman_on_playback_stopped(TSMF_IFMAN* ifman)
 {
 	TSMF_PRESENTATION* presentation;
 
@@ -706,7 +816,12 @@ WIN32ERROR tsmf_ifman_on_playback_stopped(TSMF_IFMAN* ifman)
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR tsmf_ifman_on_playback_rate_changed(TSMF_IFMAN* ifman)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT tsmf_ifman_on_playback_rate_changed(TSMF_IFMAN* ifman)
 {
 	DEBUG_TSMF("");
 

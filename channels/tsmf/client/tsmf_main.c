@@ -77,12 +77,17 @@ BOOL tsmf_playback_ack(IWTSVirtualChannelCallback *pChannelCallback,
 	return (status == 0);
 }
 
-static WIN32ERROR tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream *data)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream *data)
 {
 	int length;
 	wStream *input;
 	wStream *output;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 	BOOL processed = FALSE;
 	TSMF_IFMAN ifman;
 	UINT32 MessageId;
@@ -309,7 +314,12 @@ out:
 	return error;
 }
 
-static WIN32ERROR tsmf_on_close(IWTSVirtualChannelCallback *pChannelCallback)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT tsmf_on_close(IWTSVirtualChannelCallback *pChannelCallback)
 {
 	TSMF_STREAM* stream;
 	TSMF_PRESENTATION* presentation;
@@ -333,7 +343,12 @@ static WIN32ERROR tsmf_on_close(IWTSVirtualChannelCallback *pChannelCallback)
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR tsmf_on_new_channel_connection(IWTSListenerCallback *pListenerCallback,
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT tsmf_on_new_channel_connection(IWTSListenerCallback *pListenerCallback,
 		IWTSVirtualChannel *pChannel,
 		BYTE *Data,
 		int *pbAccept,
@@ -361,9 +376,14 @@ static WIN32ERROR tsmf_on_new_channel_connection(IWTSListenerCallback *pListener
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR tsmf_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT tsmf_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr)
 {
-	WIN32ERROR status;
+	UINT status;
 	TSMF_PLUGIN* tsmf = (TSMF_PLUGIN*) pPlugin;
 
 	DEBUG_TSMF("");
@@ -385,7 +405,12 @@ static WIN32ERROR tsmf_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannel
 	return status;
 }
 
-static WIN32ERROR tsmf_plugin_terminated(IWTSPlugin* pPlugin)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT tsmf_plugin_terminated(IWTSPlugin* pPlugin)
 {
 	TSMF_PLUGIN* tsmf = (TSMF_PLUGIN*) pPlugin;
 
@@ -405,7 +430,12 @@ COMMAND_LINE_ARGUMENT_A tsmf_args[] =
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
-static WIN32ERROR tsmf_process_addin_args(IWTSPlugin *pPlugin, ADDIN_ARGV *args)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT tsmf_process_addin_args(IWTSPlugin *pPlugin, ADDIN_ARGV *args)
 {
 	int status;
 	DWORD flags;
@@ -458,12 +488,17 @@ static WIN32ERROR tsmf_process_addin_args(IWTSPlugin *pPlugin, ADDIN_ARGV *args)
 #define DVCPluginEntry	tsmf_DVCPluginEntry
 #endif
 
-WIN32ERROR DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
-	WIN32ERROR status = 0;
+	UINT status = 0;
 	TSMF_PLUGIN* tsmf;
 	TsmfClientContext* context;
-	WIN32ERROR error = CHANNEL_RC_NO_MEMORY;
+	UINT error = CHANNEL_RC_NO_MEMORY;
 
 	tsmf = (TSMF_PLUGIN*) pEntryPoints->GetPlugin(pEntryPoints, "tsmf");
 

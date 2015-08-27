@@ -42,7 +42,7 @@ void* smartcard_context_thread(SMARTCARD_CONTEXT* pContext)
 	wMessage message;
 	SMARTCARD_DEVICE* smartcard;
 	SMARTCARD_OPERATION* operation;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	smartcard = pContext->smartcard;
 
@@ -238,9 +238,14 @@ static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard) {
 }
 
 
-static WIN32ERROR smartcard_free(DEVICE* device)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT smartcard_free(DEVICE* device)
 {
-	WIN32ERROR error;
+	UINT error;
 	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) device;
 
 	/**
@@ -294,7 +299,12 @@ static WIN32ERROR smartcard_free(DEVICE* device)
  * At that time, we need to cancel all outstanding IRPs.
  */
 
-static WIN32ERROR smartcard_init(DEVICE* device)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT smartcard_init(DEVICE* device)
 {
 	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) device;
 
@@ -303,7 +313,12 @@ static WIN32ERROR smartcard_init(DEVICE* device)
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	void* key;
 
@@ -318,7 +333,12 @@ WIN32ERROR smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
  * http://musclecard.996296.n3.nabble.com/Multiple-threads-and-SCardGetStatusChange-td4430.html
  */
 
-WIN32ERROR smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	void* key;
 	LONG status;
@@ -485,7 +505,7 @@ static void* smartcard_thread_func(void* arg)
 	HANDLE hEvents[2];
 	wMessage message;
 	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) arg;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	nCount = 0;
 	hEvents[nCount++] = MessageQueue_Event(smartcard->IrpQueue);
@@ -626,7 +646,12 @@ out:
 	return NULL;
 }
 
-static WIN32ERROR smartcard_irp_request(DEVICE* device, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT smartcard_irp_request(DEVICE* device, IRP* irp)
 {
 	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) device;
 	if (!MessageQueue_Post(smartcard->IrpQueue, NULL, 0, (void*) irp, NULL))
@@ -640,7 +665,12 @@ static WIN32ERROR smartcard_irp_request(DEVICE* device, IRP* irp)
 /* smartcard is always built-in */
 #define DeviceServiceEntry	smartcard_DeviceServiceEntry
 
-WIN32ERROR DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	char* name;
 	char* path;
@@ -648,7 +678,7 @@ WIN32ERROR DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	int ck;
 	RDPDR_SMARTCARD* device;
 	SMARTCARD_DEVICE* smartcard;
-	WIN32ERROR error = CHANNEL_RC_NO_MEMORY;
+	UINT error = CHANNEL_RC_NO_MEMORY;
 
 	device = (RDPDR_SMARTCARD*) pEntryPoints->device;
 

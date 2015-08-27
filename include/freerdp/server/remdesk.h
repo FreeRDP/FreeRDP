@@ -35,8 +35,8 @@
 typedef struct _remdesk_server_context RemdeskServerContext;
 typedef struct _remdesk_server_private RemdeskServerPrivate;
 
-typedef WIN32ERROR (*psRemdeskStart)(RemdeskServerContext* context);
-typedef WIN32ERROR (*psRemdeskStop)(RemdeskServerContext* context);
+typedef UINT (*psRemdeskStart)(RemdeskServerContext* context);
+typedef UINT (*psRemdeskStop)(RemdeskServerContext* context);
 
 struct _remdesk_server_context
 {

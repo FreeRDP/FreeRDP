@@ -34,7 +34,12 @@
 #include "cliprdr_main.h"
 #include "cliprdr_format.h"
 
-WIN32ERROR cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags)
 {
 	UINT32 index;
 	UINT32 position;
@@ -45,7 +50,7 @@ WIN32ERROR cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT3
 	CLIPRDR_FORMAT* formats = NULL;
 	CLIPRDR_FORMAT_LIST formatList;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	if (!context->custom)
 	{
@@ -213,11 +218,16 @@ error_out:
 	return error;
 }
 
-WIN32ERROR cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags)
 {
 	CLIPRDR_FORMAT_LIST_RESPONSE formatListResponse;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatListResponse");
 
@@ -238,11 +248,16 @@ WIN32ERROR cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, wStream*
 	return error;
 }
 
-WIN32ERROR cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags)
 {
 	CLIPRDR_FORMAT_DATA_REQUEST formatDataRequest;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatDataRequest");
 
@@ -266,11 +281,16 @@ WIN32ERROR cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* 
 	return error;
 }
 
-WIN32ERROR cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags)
 {
 	CLIPRDR_FORMAT_DATA_RESPONSE formatDataResponse;
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatDataResponse");
 

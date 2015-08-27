@@ -32,7 +32,6 @@
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/cmdline.h>
-#include <winpr/win32error.h>
 
 #include <freerdp/addin.h>
 #include <freerdp/codec/dsp.h>
@@ -82,7 +81,7 @@ static void* audin_opensles_thread_func(void* arg)
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) arg;
 	const size_t raw_size = opensles->frames_per_packet * opensles->bytes_per_channel;
 	int rc = CHANNEL_RC_OK;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
     DWORD status;
 
 	DEBUG_DVC("opensles=%p", opensles);
@@ -178,7 +177,12 @@ out:
 	return NULL;
 }
 
-static WIN32ERROR audin_opensles_free(IAudinDevice* device)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_opensles_free(IAudinDevice* device)
 {
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) device;
 
@@ -246,7 +250,12 @@ static BOOL audin_opensles_format_supported(IAudinDevice* device, audinFormat* f
 	return FALSE;
 }
 
-static WIN32ERROR audin_opensles_set_format(IAudinDevice* device,
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_opensles_set_format(IAudinDevice* device,
 		audinFormat* format, UINT32 FramesPerPacket)
 {
 	int bs;
@@ -311,7 +320,12 @@ static WIN32ERROR audin_opensles_set_format(IAudinDevice* device,
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR audin_opensles_open(IAudinDevice* device, AudinReceive receive,
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_opensles_open(IAudinDevice* device, AudinReceive receive,
 		void* user_data)
 {
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) device;
@@ -360,9 +374,14 @@ error_out:
 	return ERROR_INTERNAL_ERROR;
 }
 
-static WIN32ERROR audin_opensles_close(IAudinDevice* device)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_opensles_close(IAudinDevice* device)
 {
-    WIN32ERROR error;
+    UINT error;
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) device;
 
 	DEBUG_DVC("device=%p", device);
@@ -409,10 +428,15 @@ static COMMAND_LINE_ARGUMENT_A audin_opensles_args[] =
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
-static WIN32ERROR audin_opensles_parse_addin_args(AudinOpenSLESDevice* device,
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_opensles_parse_addin_args(AudinOpenSLESDevice* device,
 		ADDIN_ARGV* args)
 {
-	WIN32ERROR status;
+	UINT status;
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
 	AudinOpenSLESDevice* opensles = (AudinOpenSLESDevice*) device;
@@ -457,12 +481,17 @@ static WIN32ERROR audin_opensles_parse_addin_args(AudinOpenSLESDevice* device,
 	opensles_freerdp_audin_client_subsystem_entry
 #endif
 
-WIN32ERROR freerdp_audin_client_subsystem_entry(
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT freerdp_audin_client_subsystem_entry(
 		PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	ADDIN_ARGV* args;
 	AudinOpenSLESDevice* opensles;
-	WIN32ERROR error;
+	UINT error;
 
 	DEBUG_DVC("pEntryPoints=%p", pEntryPoints);
 

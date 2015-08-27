@@ -90,7 +90,12 @@ const char* rdpgfx_get_codec_id_string(UINT16 codecId)
 	return "RDPGFX_CODECID_UNKNOWN";
 }
 
-WIN32ERROR rdpgfx_read_header(wStream* s, RDPGFX_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpgfx_read_header(wStream* s, RDPGFX_HEADER* header)
 {
 	if (Stream_GetRemainingLength(s) < 8)
 	{
@@ -105,7 +110,12 @@ WIN32ERROR rdpgfx_read_header(wStream* s, RDPGFX_HEADER* header)
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR rdpgfx_write_header(wStream* s, RDPGFX_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpgfx_write_header(wStream* s, RDPGFX_HEADER* header)
 {
 	Stream_Write_UINT16(s, header->cmdId); /* cmdId (2 bytes) */
 	Stream_Write_UINT16(s, header->flags); /* flags (2 bytes) */
@@ -114,7 +124,12 @@ WIN32ERROR rdpgfx_write_header(wStream* s, RDPGFX_HEADER* header)
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR rdpgfx_read_point16(wStream* s, RDPGFX_POINT16* pt16)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpgfx_read_point16(wStream* s, RDPGFX_POINT16* pt16)
 {
 	if (Stream_GetRemainingLength(s) < 4)
 	{
@@ -128,7 +143,12 @@ WIN32ERROR rdpgfx_read_point16(wStream* s, RDPGFX_POINT16* pt16)
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR rdpgfx_write_point16(wStream* s, RDPGFX_POINT16* point16)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpgfx_write_point16(wStream* s, RDPGFX_POINT16* point16)
 {
 	Stream_Write_UINT16(s, point16->x); /* x (2 bytes) */
 	Stream_Write_UINT16(s, point16->y); /* y (2 bytes) */
@@ -136,7 +156,12 @@ WIN32ERROR rdpgfx_write_point16(wStream* s, RDPGFX_POINT16* point16)
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR rdpgfx_read_rect16(wStream* s, RDPGFX_RECT16* rect16)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpgfx_read_rect16(wStream* s, RDPGFX_RECT16* rect16)
 {
 	if (Stream_GetRemainingLength(s) < 8)
 	{
@@ -152,7 +177,12 @@ WIN32ERROR rdpgfx_read_rect16(wStream* s, RDPGFX_RECT16* rect16)
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR rdpgfx_write_rect16(wStream* s, RDPGFX_RECT16* rect16)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpgfx_write_rect16(wStream* s, RDPGFX_RECT16* rect16)
 {
 	Stream_Write_UINT16(s, rect16->left); /* left (2 bytes) */
 	Stream_Write_UINT16(s, rect16->top); /* top (2 bytes) */
@@ -162,7 +192,12 @@ WIN32ERROR rdpgfx_write_rect16(wStream* s, RDPGFX_RECT16* rect16)
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR rdpgfx_read_color32(wStream* s, RDPGFX_COLOR32* color32)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpgfx_read_color32(wStream* s, RDPGFX_COLOR32* color32)
 {
 	if (Stream_GetRemainingLength(s) < 4)
 	{
@@ -178,7 +213,12 @@ WIN32ERROR rdpgfx_read_color32(wStream* s, RDPGFX_COLOR32* color32)
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR rdpgfx_write_color32(wStream* s, RDPGFX_COLOR32* color32)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpgfx_write_color32(wStream* s, RDPGFX_COLOR32* color32)
 {
 	Stream_Write_UINT8(s, color32->B); /* B (1 byte) */
 	Stream_Write_UINT8(s, color32->G); /* G (1 byte) */

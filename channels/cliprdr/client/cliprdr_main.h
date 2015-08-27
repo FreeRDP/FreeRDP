@@ -23,7 +23,6 @@
 #define __CLIPRDR_MAIN_H
 
 #include <winpr/stream.h>
-#include <winpr/win32error.h>
 
 #include <freerdp/svc.h>
 #include <freerdp/addin.h>
@@ -54,7 +53,7 @@ struct cliprdr_plugin
 typedef struct cliprdr_plugin cliprdrPlugin;
 
 wStream* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags, UINT32 dataLen);
-WIN32ERROR cliprdr_packet_send(cliprdrPlugin* cliprdr, wStream* data_out);
+UINT cliprdr_packet_send(cliprdrPlugin* cliprdr, wStream* data_out);
 
 CliprdrClientContext* cliprdr_get_client_interface(cliprdrPlugin* cliprdr);
 

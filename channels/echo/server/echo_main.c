@@ -53,7 +53,12 @@ typedef struct _echo_server
 
 } echo_server;
 
-static WIN32ERROR echo_server_open_channel(echo_server* echo)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT echo_server_open_channel(echo_server* echo)
 {
 	DWORD Error;
 	HANDLE hEvent;
@@ -110,7 +115,7 @@ static void* echo_server_thread_func(void* arg)
 	HANDLE ChannelEvent;
 	DWORD BytesReturned = 0;
 	echo_server* echo = (echo_server*) arg;
-	WIN32ERROR error;
+	UINT error;
     DWORD status;
 
 	if ((error = echo_server_open_channel(echo)))
@@ -239,7 +244,12 @@ out:
 	return NULL;
 }
 
-static WIN32ERROR echo_server_open(echo_server_context* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT echo_server_open(echo_server_context* context)
 {
 	echo_server* echo = (echo_server*) context;
 
@@ -262,9 +272,14 @@ static WIN32ERROR echo_server_open(echo_server_context* context)
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR echo_server_close(echo_server_context* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT echo_server_close(echo_server_context* context)
 {
-    WIN32ERROR error = CHANNEL_RC_OK;
+    UINT error = CHANNEL_RC_OK;
 	echo_server* echo = (echo_server*) context;
 
 	if (echo->thread)

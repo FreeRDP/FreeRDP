@@ -22,7 +22,6 @@
 #define FREERDP_CHANNEL_CLIENT_RDPSND_H
 
 #include <freerdp/channels/rdpsnd.h>
-#include <winpr/win32error.h>
 
 /**
  * Subsystem Interface
@@ -63,7 +62,7 @@ typedef void (*pcFree) (rdpsndDevicePlugin* device);
 
 typedef BOOL (*pcWaveDecode) (rdpsndDevicePlugin* device, RDPSND_WAVE* wave);
 typedef void (*pcWavePlay) (rdpsndDevicePlugin* device, RDPSND_WAVE* wave);
-typedef WIN32ERROR (*pcWaveConfirm) (rdpsndDevicePlugin* device, RDPSND_WAVE* wave);
+typedef UINT (*pcWaveConfirm) (rdpsndDevicePlugin* device, RDPSND_WAVE* wave);
 
 struct rdpsnd_device_plugin
 {
@@ -99,7 +98,7 @@ struct _FREERDP_RDPSND_DEVICE_ENTRY_POINTS
 typedef struct _FREERDP_RDPSND_DEVICE_ENTRY_POINTS FREERDP_RDPSND_DEVICE_ENTRY_POINTS;
 typedef FREERDP_RDPSND_DEVICE_ENTRY_POINTS* PFREERDP_RDPSND_DEVICE_ENTRY_POINTS;
 
-typedef WIN32ERROR (*PFREERDP_RDPSND_DEVICE_ENTRY)(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints);
+typedef UINT (*PFREERDP_RDPSND_DEVICE_ENTRY)(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints);
 
 #endif /* FREERDP_CHANNEL_CLIENT_RDPSND_H */
 

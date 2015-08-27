@@ -31,7 +31,12 @@
 #include "rail_orders.h"
 
 
-static WIN32ERROR rail_write_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rail_write_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 2 + unicode_string->length))
 	{
@@ -44,7 +49,12 @@ static WIN32ERROR rail_write_unicode_string(wStream* s, RAIL_UNICODE_STRING* uni
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR rail_write_unicode_string_value(wStream* s, RAIL_UNICODE_STRING* unicode_string)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rail_write_unicode_string_value(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 {
 	if (unicode_string->length > 0)
 	{
@@ -59,7 +69,12 @@ static WIN32ERROR rail_write_unicode_string_value(wStream* s, RAIL_UNICODE_STRIN
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType)
 {
 	UINT16 orderLength;
 
@@ -75,7 +90,12 @@ WIN32ERROR rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType)
 	return rail_send_channel_data(rail, Stream_Buffer(s), orderLength);
 }
 
-WIN32ERROR rail_write_high_contrast(wStream* s, RAIL_HIGH_CONTRAST* highContrast)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_write_high_contrast(wStream* s, RAIL_HIGH_CONTRAST* highContrast)
 {
 	highContrast->colorSchemeLength = highContrast->colorScheme.length + 2;
 	Stream_Write_UINT32(s, highContrast->flags); /* flags (4 bytes) */
@@ -83,7 +103,12 @@ WIN32ERROR rail_write_high_contrast(wStream* s, RAIL_HIGH_CONTRAST* highContrast
 	return rail_write_unicode_string(s, &highContrast->colorScheme); /* colorScheme */
 }
 
-WIN32ERROR rail_read_server_exec_result_order(wStream* s, RAIL_EXEC_RESULT_ORDER* execResult)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_read_server_exec_result_order(wStream* s, RAIL_EXEC_RESULT_ORDER* execResult)
 {
 	if (Stream_GetRemainingLength(s) < 8)
 	{
@@ -99,7 +124,12 @@ WIN32ERROR rail_read_server_exec_result_order(wStream* s, RAIL_EXEC_RESULT_ORDER
 	return rail_read_unicode_string(s, &execResult->exeOrFile) ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR; /* exeOrFile */
 }
 
-WIN32ERROR rail_read_server_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_read_server_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam)
 {
 	BYTE body;
 
@@ -129,7 +159,12 @@ WIN32ERROR rail_read_server_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysp
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR rail_read_server_minmaxinfo_order(wStream* s, RAIL_MINMAXINFO_ORDER* minmaxinfo)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_read_server_minmaxinfo_order(wStream* s, RAIL_MINMAXINFO_ORDER* minmaxinfo)
 {
 	if (Stream_GetRemainingLength(s) < 20)
 	{
@@ -150,7 +185,12 @@ WIN32ERROR rail_read_server_minmaxinfo_order(wStream* s, RAIL_MINMAXINFO_ORDER* 
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR rail_read_server_localmovesize_order(wStream* s, RAIL_LOCALMOVESIZE_ORDER* localMoveSize)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_read_server_localmovesize_order(wStream* s, RAIL_LOCALMOVESIZE_ORDER* localMoveSize)
 {
 	UINT16 isMoveSizeStart;
 
@@ -172,7 +212,12 @@ WIN32ERROR rail_read_server_localmovesize_order(wStream* s, RAIL_LOCALMOVESIZE_O
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR rail_read_server_get_appid_resp_order(wStream* s, RAIL_GET_APPID_RESP_ORDER* getAppidResp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_read_server_get_appid_resp_order(wStream* s, RAIL_GET_APPID_RESP_ORDER* getAppidResp)
 {
 	if (Stream_GetRemainingLength(s) < 516)
 	{
@@ -186,7 +231,12 @@ WIN32ERROR rail_read_server_get_appid_resp_order(wStream* s, RAIL_GET_APPID_RESP
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR rail_read_langbar_info_order(wStream* s, RAIL_LANGBAR_INFO_ORDER* langbarInfo)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_read_langbar_info_order(wStream* s, RAIL_LANGBAR_INFO_ORDER* langbarInfo)
 {
 	if (Stream_GetRemainingLength(s) < 4)
 	{
@@ -204,9 +254,14 @@ void rail_write_client_status_order(wStream* s, RAIL_CLIENT_STATUS_ORDER* client
 	Stream_Write_UINT32(s, clientStatus->flags); /* flags (4 bytes) */
 }
 
-WIN32ERROR rail_write_client_exec_order(wStream* s, RAIL_EXEC_ORDER* exec)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_write_client_exec_order(wStream* s, RAIL_EXEC_ORDER* exec)
 {
-	WIN32ERROR error;
+	UINT error;
 	Stream_Write_UINT16(s, exec->flags); /* flags (2 bytes) */
 	Stream_Write_UINT16(s, exec->exeOrFile.length); /* exeOrFileLength (2 bytes) */
 	Stream_Write_UINT16(s, exec->workingDir.length); /* workingDirLength (2 bytes) */
@@ -229,10 +284,15 @@ WIN32ERROR rail_write_client_exec_order(wStream* s, RAIL_EXEC_ORDER* exec)
 	return error;
 }
 
-WIN32ERROR rail_write_client_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_write_client_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam)
 {
 	BYTE body;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	Stream_Write_UINT32(s, sysparam->param); /* systemParam (4 bytes) */
 
@@ -336,10 +396,15 @@ void rail_write_langbar_info_order(wStream* s, RAIL_LANGBAR_INFO_ORDER* langbarI
 	Stream_Write_UINT32(s, langbarInfo->languageBarStatus); /* languageBarStatus (4 bytes) */
 }
 
-WIN32ERROR rail_recv_handshake_order(railPlugin* rail, RAIL_HANDSHAKE_ORDER* handshake, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_recv_handshake_order(railPlugin* rail, RAIL_HANDSHAKE_ORDER* handshake, wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
-	WIN32ERROR error;
+	UINT error;
 
 	if ((error = rail_read_handshake_order(s, handshake)))
 	{
@@ -357,10 +422,15 @@ WIN32ERROR rail_recv_handshake_order(railPlugin* rail, RAIL_HANDSHAKE_ORDER* han
 	return error;
 }
 
-WIN32ERROR rail_recv_handshake_ex_order(railPlugin* rail, RAIL_HANDSHAKE_EX_ORDER* handshakeEx, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_recv_handshake_ex_order(railPlugin* rail, RAIL_HANDSHAKE_EX_ORDER* handshakeEx, wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
-	WIN32ERROR error;
+	UINT error;
 
 	if ((error = rail_read_handshake_ex_order(s, handshakeEx)))
 	{
@@ -379,10 +449,15 @@ WIN32ERROR rail_recv_handshake_ex_order(railPlugin* rail, RAIL_HANDSHAKE_EX_ORDE
 	return error;
 }
 
-WIN32ERROR rail_recv_exec_result_order(railPlugin* rail, RAIL_EXEC_RESULT_ORDER* execResult, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_recv_exec_result_order(railPlugin* rail, RAIL_EXEC_RESULT_ORDER* execResult, wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
-	WIN32ERROR error;
+	UINT error;
 
 	ZeroMemory(execResult, sizeof(RAIL_EXEC_RESULT_ORDER));
 
@@ -403,10 +478,15 @@ WIN32ERROR rail_recv_exec_result_order(railPlugin* rail, RAIL_EXEC_RESULT_ORDER*
 	return error;
 }
 
-WIN32ERROR rail_recv_server_sysparam_order(railPlugin* rail, RAIL_SYSPARAM_ORDER* sysparam, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_recv_server_sysparam_order(railPlugin* rail, RAIL_SYSPARAM_ORDER* sysparam, wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
-	WIN32ERROR error;
+	UINT error;
 
 	if ((error = rail_read_server_sysparam_order(s, sysparam)))
 	{
@@ -424,10 +504,15 @@ WIN32ERROR rail_recv_server_sysparam_order(railPlugin* rail, RAIL_SYSPARAM_ORDER
 	return error;
 }
 
-WIN32ERROR rail_recv_server_minmaxinfo_order(railPlugin* rail, RAIL_MINMAXINFO_ORDER* minMaxInfo, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_recv_server_minmaxinfo_order(railPlugin* rail, RAIL_MINMAXINFO_ORDER* minMaxInfo, wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
-	WIN32ERROR error;
+	UINT error;
 
 	if ((error = rail_read_server_minmaxinfo_order(s, minMaxInfo)))
 	{
@@ -445,10 +530,15 @@ WIN32ERROR rail_recv_server_minmaxinfo_order(railPlugin* rail, RAIL_MINMAXINFO_O
 	return error;
 }
 
-WIN32ERROR rail_recv_server_localmovesize_order(railPlugin* rail, RAIL_LOCALMOVESIZE_ORDER* localMoveSize, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_recv_server_localmovesize_order(railPlugin* rail, RAIL_LOCALMOVESIZE_ORDER* localMoveSize, wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
-	WIN32ERROR error;
+	UINT error;
 
 	if ((error = rail_read_server_localmovesize_order(s, localMoveSize)))
 	{
@@ -466,10 +556,15 @@ WIN32ERROR rail_recv_server_localmovesize_order(railPlugin* rail, RAIL_LOCALMOVE
 	return error;
 }
 
-WIN32ERROR rail_recv_server_get_appid_resp_order(railPlugin* rail, RAIL_GET_APPID_RESP_ORDER* getAppIdResp, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_recv_server_get_appid_resp_order(railPlugin* rail, RAIL_GET_APPID_RESP_ORDER* getAppIdResp, wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
-	WIN32ERROR error;
+	UINT error;
 
 	if ((error = rail_read_server_get_appid_resp_order(s, getAppIdResp)))
 	{
@@ -487,10 +582,15 @@ WIN32ERROR rail_recv_server_get_appid_resp_order(railPlugin* rail, RAIL_GET_APPI
 	return error;
 }
 
-WIN32ERROR rail_recv_langbar_info_order(railPlugin* rail, RAIL_LANGBAR_INFO_ORDER* langBarInfo, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_recv_langbar_info_order(railPlugin* rail, RAIL_LANGBAR_INFO_ORDER* langBarInfo, wStream* s)
 {
 	RailClientContext* context = rail_get_client_interface(rail);
-	WIN32ERROR error;
+	UINT error;
 
 	if ((error = rail_read_langbar_info_order(s, langBarInfo)))
 	{
@@ -508,11 +608,16 @@ WIN32ERROR rail_recv_langbar_info_order(railPlugin* rail, RAIL_LANGBAR_INFO_ORDE
 	return error;
 }
 
-WIN32ERROR rail_order_recv(railPlugin* rail, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_order_recv(railPlugin* rail, wStream* s)
 {
 	UINT16 orderType;
 	UINT16 orderLength;
-	WIN32ERROR error;
+	UINT error;
 
 	if ((error = rail_read_pdu_header(s, &orderType, &orderLength)))
 	{
@@ -582,10 +687,15 @@ WIN32ERROR rail_order_recv(railPlugin* rail, wStream* s)
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR rail_send_handshake_order(railPlugin* rail, RAIL_HANDSHAKE_ORDER* handshake)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_send_handshake_order(railPlugin* rail, RAIL_HANDSHAKE_ORDER* handshake)
 {
 	wStream* s;
-	WIN32ERROR error;
+	UINT error;
 
 	s = rail_pdu_init(RAIL_HANDSHAKE_ORDER_LENGTH);
 	if (!s)
@@ -600,10 +710,15 @@ WIN32ERROR rail_send_handshake_order(railPlugin* rail, RAIL_HANDSHAKE_ORDER* han
 	return error;
 }
 
-WIN32ERROR rail_send_handshake_ex_order(railPlugin* rail, RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_send_handshake_ex_order(railPlugin* rail, RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
 {
 	wStream* s;
-	WIN32ERROR error;
+	UINT error;
 	s = rail_pdu_init(RAIL_HANDSHAKE_EX_ORDER_LENGTH);
 	if (!s)
 	{
@@ -617,10 +732,15 @@ WIN32ERROR rail_send_handshake_ex_order(railPlugin* rail, RAIL_HANDSHAKE_EX_ORDE
 	return error;
 }
 
-WIN32ERROR rail_send_client_status_order(railPlugin* rail, RAIL_CLIENT_STATUS_ORDER* clientStatus)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_send_client_status_order(railPlugin* rail, RAIL_CLIENT_STATUS_ORDER* clientStatus)
 {
 	wStream* s;
-	WIN32ERROR error;
+	UINT error;
 
 	s = rail_pdu_init(RAIL_CLIENT_STATUS_ORDER_LENGTH);
 	if (!s)
@@ -635,10 +755,15 @@ WIN32ERROR rail_send_client_status_order(railPlugin* rail, RAIL_CLIENT_STATUS_OR
 	return error;
 }
 
-WIN32ERROR rail_send_client_exec_order(railPlugin* rail, RAIL_EXEC_ORDER* exec)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_send_client_exec_order(railPlugin* rail, RAIL_EXEC_ORDER* exec)
 {
 	wStream* s;
-	WIN32ERROR error;
+	UINT error;
 	size_t length;
 
 	length = RAIL_EXEC_ORDER_LENGTH +
@@ -667,11 +792,16 @@ WIN32ERROR rail_send_client_exec_order(railPlugin* rail, RAIL_EXEC_ORDER* exec)
 	return error;
 }
 
-WIN32ERROR rail_send_client_sysparam_order(railPlugin* rail, RAIL_SYSPARAM_ORDER* sysparam)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_send_client_sysparam_order(railPlugin* rail, RAIL_SYSPARAM_ORDER* sysparam)
 {
 	wStream* s;
 	int length;
-	WIN32ERROR error;
+	UINT error;
 
 	length = RAIL_SYSPARAM_ORDER_LENGTH;
 
@@ -718,9 +848,14 @@ WIN32ERROR rail_send_client_sysparam_order(railPlugin* rail, RAIL_SYSPARAM_ORDER
 	return error;
 }
 
-WIN32ERROR rail_send_client_sysparams_order(railPlugin* rail, RAIL_SYSPARAM_ORDER* sysparam)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_send_client_sysparams_order(railPlugin* rail, RAIL_SYSPARAM_ORDER* sysparam)
 {
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	if (sysparam->params & SPI_MASK_SET_HIGH_CONTRAST)
 	{
@@ -795,10 +930,15 @@ WIN32ERROR rail_send_client_sysparams_order(railPlugin* rail, RAIL_SYSPARAM_ORDE
 	return error;
 }
 
-WIN32ERROR rail_send_client_activate_order(railPlugin* rail, RAIL_ACTIVATE_ORDER* activate)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_send_client_activate_order(railPlugin* rail, RAIL_ACTIVATE_ORDER* activate)
 {
 	wStream* s;
-	WIN32ERROR error;
+	UINT error;
 
 	s = rail_pdu_init(RAIL_ACTIVATE_ORDER_LENGTH);
 	if (!s)
@@ -813,10 +953,15 @@ WIN32ERROR rail_send_client_activate_order(railPlugin* rail, RAIL_ACTIVATE_ORDER
 	return error;
 }
 
-WIN32ERROR rail_send_client_sysmenu_order(railPlugin* rail, RAIL_SYSMENU_ORDER* sysmenu)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_send_client_sysmenu_order(railPlugin* rail, RAIL_SYSMENU_ORDER* sysmenu)
 {
 	wStream* s;
-	WIN32ERROR error;
+	UINT error;
 
 	s = rail_pdu_init(RAIL_SYSMENU_ORDER_LENGTH);
 	if (!s)
@@ -831,10 +976,15 @@ WIN32ERROR rail_send_client_sysmenu_order(railPlugin* rail, RAIL_SYSMENU_ORDER* 
 	return error;
 }
 
-WIN32ERROR rail_send_client_syscommand_order(railPlugin* rail, RAIL_SYSCOMMAND_ORDER* syscommand)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_send_client_syscommand_order(railPlugin* rail, RAIL_SYSCOMMAND_ORDER* syscommand)
 {
 	wStream* s;
-	WIN32ERROR error;
+	UINT error;
 
 	s = rail_pdu_init(RAIL_SYSCOMMAND_ORDER_LENGTH);
 	if (!s)
@@ -849,10 +999,15 @@ WIN32ERROR rail_send_client_syscommand_order(railPlugin* rail, RAIL_SYSCOMMAND_O
 	return error;
 }
 
-WIN32ERROR rail_send_client_notify_event_order(railPlugin* rail, RAIL_NOTIFY_EVENT_ORDER* notifyEvent)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_send_client_notify_event_order(railPlugin* rail, RAIL_NOTIFY_EVENT_ORDER* notifyEvent)
 {
 	wStream* s;
-	WIN32ERROR error;
+	UINT error;
 
 	s = rail_pdu_init(RAIL_NOTIFY_EVENT_ORDER_LENGTH);
 	if (!s)
@@ -867,10 +1022,15 @@ WIN32ERROR rail_send_client_notify_event_order(railPlugin* rail, RAIL_NOTIFY_EVE
 	return error;
 }
 
-WIN32ERROR rail_send_client_window_move_order(railPlugin* rail, RAIL_WINDOW_MOVE_ORDER* windowMove)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_send_client_window_move_order(railPlugin* rail, RAIL_WINDOW_MOVE_ORDER* windowMove)
 {
 	wStream* s;
-	WIN32ERROR error;
+	UINT error;
 
 	s = rail_pdu_init(RAIL_WINDOW_MOVE_ORDER_LENGTH);
 	if (!s)
@@ -885,10 +1045,15 @@ WIN32ERROR rail_send_client_window_move_order(railPlugin* rail, RAIL_WINDOW_MOVE
 	return error;
 }
 
-WIN32ERROR rail_send_client_get_appid_req_order(railPlugin* rail, RAIL_GET_APPID_REQ_ORDER* getAppIdReq)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_send_client_get_appid_req_order(railPlugin* rail, RAIL_GET_APPID_REQ_ORDER* getAppIdReq)
 {
 	wStream* s;
-	WIN32ERROR error;
+	UINT error;
 
 	s = rail_pdu_init(RAIL_GET_APPID_REQ_ORDER_LENGTH);
 	if (!s)
@@ -903,10 +1068,15 @@ WIN32ERROR rail_send_client_get_appid_req_order(railPlugin* rail, RAIL_GET_APPID
 	return error;
 }
 
-WIN32ERROR rail_send_client_langbar_info_order(railPlugin* rail, RAIL_LANGBAR_INFO_ORDER* langBarInfo)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_send_client_langbar_info_order(railPlugin* rail, RAIL_LANGBAR_INFO_ORDER* langBarInfo)
 {
 	wStream* s;
-	WIN32ERROR error;
+	UINT error;
 
 	s = rail_pdu_init(RAIL_LANGBAR_INFO_ORDER_LENGTH);
 	if (!s)

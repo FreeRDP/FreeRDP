@@ -109,7 +109,12 @@ static DRIVE_FILE* drive_get_file_by_id(DRIVE_DEVICE* drive, UINT32 id)
 	return file;
 }
 
-static WIN32ERROR drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
 {
 	int status;
 	void* key;
@@ -200,7 +205,12 @@ static WIN32ERROR drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
 	return irp->Complete(irp);
 }
 
-static WIN32ERROR drive_process_irp_close(DRIVE_DEVICE* drive, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT drive_process_irp_close(DRIVE_DEVICE* drive, IRP* irp)
 {
 	void* key;
 	DRIVE_FILE* file;
@@ -224,7 +234,12 @@ static WIN32ERROR drive_process_irp_close(DRIVE_DEVICE* drive, IRP* irp)
 	return irp->Complete(irp);
 }
 
-static WIN32ERROR drive_process_irp_read(DRIVE_DEVICE* drive, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT drive_process_irp_read(DRIVE_DEVICE* drive, IRP* irp)
 {
 	DRIVE_FILE* file;
 	UINT32 Length;
@@ -281,7 +296,12 @@ static WIN32ERROR drive_process_irp_read(DRIVE_DEVICE* drive, IRP* irp)
 	return irp->Complete(irp);
 }
 
-static WIN32ERROR drive_process_irp_write(DRIVE_DEVICE* drive, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT drive_process_irp_write(DRIVE_DEVICE* drive, IRP* irp)
 {
 	DRIVE_FILE* file;
 	UINT32 Length;
@@ -315,7 +335,12 @@ static WIN32ERROR drive_process_irp_write(DRIVE_DEVICE* drive, IRP* irp)
 	return irp->Complete(irp);
 }
 
-static WIN32ERROR drive_process_irp_query_information(DRIVE_DEVICE* drive, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT drive_process_irp_query_information(DRIVE_DEVICE* drive, IRP* irp)
 {
 	DRIVE_FILE* file;
 	UINT32 FsInformationClass;
@@ -336,7 +361,12 @@ static WIN32ERROR drive_process_irp_query_information(DRIVE_DEVICE* drive, IRP* 
 	return irp->Complete(irp);
 }
 
-static WIN32ERROR drive_process_irp_set_information(DRIVE_DEVICE* drive, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT drive_process_irp_set_information(DRIVE_DEVICE* drive, IRP* irp)
 {
 	DRIVE_FILE* file;
 	UINT32 FsInformationClass;
@@ -365,7 +395,12 @@ static WIN32ERROR drive_process_irp_set_information(DRIVE_DEVICE* drive, IRP* ir
 	return irp->Complete(irp);
 }
 
-static WIN32ERROR drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP* irp)
 {
 	UINT32 FsInformationClass;
 	wStream* output = irp->output;
@@ -482,7 +517,12 @@ static WIN32ERROR drive_process_irp_query_volume_information(DRIVE_DEVICE* drive
 
 /* http://msdn.microsoft.com/en-us/library/cc241518.aspx */
 
-static WIN32ERROR drive_process_irp_silent_ignore(DRIVE_DEVICE* drive, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT drive_process_irp_silent_ignore(DRIVE_DEVICE* drive, IRP* irp)
 {
 	UINT32 FsInformationClass;
 	wStream* output = irp->output;
@@ -494,7 +534,12 @@ static WIN32ERROR drive_process_irp_silent_ignore(DRIVE_DEVICE* drive, IRP* irp)
 	return irp->Complete(irp);
 }
 
-static WIN32ERROR drive_process_irp_query_directory(DRIVE_DEVICE* drive, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT drive_process_irp_query_directory(DRIVE_DEVICE* drive, IRP* irp)
 {
 	char* path = NULL;
 	int status;
@@ -535,7 +580,12 @@ static WIN32ERROR drive_process_irp_query_directory(DRIVE_DEVICE* drive, IRP* ir
 	return irp->Complete(irp);
 }
 
-static WIN32ERROR drive_process_irp_directory_control(DRIVE_DEVICE* drive, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT drive_process_irp_directory_control(DRIVE_DEVICE* drive, IRP* irp)
 {
 	switch (irp->MinorFunction)
 	{
@@ -556,15 +606,25 @@ static WIN32ERROR drive_process_irp_directory_control(DRIVE_DEVICE* drive, IRP* 
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR drive_process_irp_device_control(DRIVE_DEVICE* drive, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT drive_process_irp_device_control(DRIVE_DEVICE* drive, IRP* irp)
 {
 	Stream_Write_UINT32(irp->output, 0); /* OutputBufferLength */
 	return irp->Complete(irp);
 }
 
-static WIN32ERROR drive_process_irp(DRIVE_DEVICE* drive, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT drive_process_irp(DRIVE_DEVICE* drive, IRP* irp)
 {
-	WIN32ERROR error;
+	UINT error;
 
 	irp->IoStatus = STATUS_SUCCESS;
 
@@ -623,7 +683,7 @@ static void* drive_thread_func(void* arg)
 	IRP* irp;
 	wMessage message;
 	DRIVE_DEVICE* drive = (DRIVE_DEVICE*) arg;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	while (1)
 	{
@@ -660,7 +720,12 @@ static void* drive_thread_func(void* arg)
 	return NULL;
 }
 
-static WIN32ERROR drive_irp_request(DEVICE* device, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT drive_irp_request(DEVICE* device, IRP* irp)
 {
 	DRIVE_DEVICE* drive = (DRIVE_DEVICE*) device;
 	if (!MessageQueue_Post(drive->IrpQueue, NULL, 0, (void*) irp, NULL))
@@ -671,10 +736,15 @@ static WIN32ERROR drive_irp_request(DEVICE* device, IRP* irp)
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR drive_free(DEVICE* device)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT drive_free(DEVICE* device)
 {
 	DRIVE_DEVICE* drive = (DRIVE_DEVICE*) device;
-    WIN32ERROR error = CHANNEL_RC_OK;
+    UINT error = CHANNEL_RC_OK;
 
 	if (MessageQueue_PostQuit(drive->IrpQueue, 0) && (WaitForSingleObject(drive->thread, INFINITE) == WAIT_FAILED))
     {
@@ -694,11 +764,16 @@ static WIN32ERROR drive_free(DEVICE* device)
     return error;
 }
 
-WIN32ERROR drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char* name, char* path)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char* name, char* path)
 {
 	int i, length;
 	DRIVE_DEVICE* drive;
-	WIN32ERROR error;
+	UINT error;
 
 #ifdef WIN32
 	/*
@@ -788,10 +863,15 @@ out_error:
 
 UINT sys_code_page = 0;
 
-WIN32ERROR DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	RDPDR_DRIVE* drive;
-	WIN32ERROR error;
+	UINT error;
 #ifdef WIN32
 	char* dev;
 	int len;

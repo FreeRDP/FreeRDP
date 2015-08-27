@@ -35,7 +35,6 @@
 #include <winpr/image.h>
 #include <winpr/stream.h>
 #include <winpr/clipboard.h>
-#include <winpr/win32error.h>
 
 #include <freerdp/log.h>
 #include <freerdp/client/cliprdr.h>
@@ -786,7 +785,12 @@ int xf_cliprdr_send_client_format_data_request(xfClipboard* clipboard, UINT32 fo
 	return 1;
 }
 
-static WIN32ERROR xf_cliprdr_monitor_ready(CliprdrClientContext* context, CLIPRDR_MONITOR_READY* monitorReady)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT xf_cliprdr_monitor_ready(CliprdrClientContext* context, CLIPRDR_MONITOR_READY* monitorReady)
 {
 	xfClipboard* clipboard = (xfClipboard*) context->custom;
 
@@ -797,14 +801,24 @@ static WIN32ERROR xf_cliprdr_monitor_ready(CliprdrClientContext* context, CLIPRD
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR xf_cliprdr_server_capabilities(CliprdrClientContext* context, CLIPRDR_CAPABILITIES* capabilities)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT xf_cliprdr_server_capabilities(CliprdrClientContext* context, CLIPRDR_CAPABILITIES* capabilities)
 {
 	//xfClipboard* clipboard = (xfClipboard*) context->custom;
 
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR xf_cliprdr_server_format_list(CliprdrClientContext* context, CLIPRDR_FORMAT_LIST* formatList)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT xf_cliprdr_server_format_list(CliprdrClientContext* context, CLIPRDR_FORMAT_LIST* formatList)
 {
 	int i, j;
 	CLIPRDR_FORMAT* format;
@@ -878,14 +892,24 @@ static WIN32ERROR xf_cliprdr_server_format_list(CliprdrClientContext* context, C
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR xf_cliprdr_server_format_list_response(CliprdrClientContext* context, CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT xf_cliprdr_server_format_list_response(CliprdrClientContext* context, CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
 {
 	//xfClipboard* clipboard = (xfClipboard*) context->custom;
 
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR xf_cliprdr_server_format_data_request(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT xf_cliprdr_server_format_data_request(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
 {
 	xfCliprdrFormat* format = NULL;
 	UINT32 formatId = formatDataRequest->requestedFormatId;
@@ -922,7 +946,12 @@ static WIN32ERROR xf_cliprdr_server_format_data_request(CliprdrClientContext* co
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR xf_cliprdr_server_format_data_response(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT xf_cliprdr_server_format_data_response(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
 {
 	BOOL bSuccess;
 	BYTE* pSrcData;

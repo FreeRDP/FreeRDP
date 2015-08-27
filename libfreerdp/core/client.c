@@ -28,7 +28,6 @@
 #include "rdp.h"
 
 #include "client.h"
-#include <winpr/win32error.h>
 
 #define TAG FREERDP_TAG("core.client")
 
@@ -157,9 +156,14 @@ void freerdp_channels_free(rdpChannels* channels)
 	free(channels);
 }
 
-WIN32ERROR freerdp_drdynvc_on_channel_connected(DrdynvcClientContext* context, const char* name, void* pInterface)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT freerdp_drdynvc_on_channel_connected(DrdynvcClientContext* context, const char* name, void* pInterface)
 {
-	WIN32ERROR status = CHANNEL_RC_OK;
+	UINT status = CHANNEL_RC_OK;
 	ChannelConnectedEventArgs e;
 	rdpChannels* channels = (rdpChannels*) context->custom;
 	freerdp* instance = channels->instance;
@@ -172,9 +176,14 @@ WIN32ERROR freerdp_drdynvc_on_channel_connected(DrdynvcClientContext* context, c
 	return status;
 }
 
-WIN32ERROR freerdp_drdynvc_on_channel_disconnected(DrdynvcClientContext* context, const char* name, void* pInterface)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT freerdp_drdynvc_on_channel_disconnected(DrdynvcClientContext* context, const char* name, void* pInterface)
 {
-	WIN32ERROR status = CHANNEL_RC_OK;
+	UINT status = CHANNEL_RC_OK;
 	ChannelDisconnectedEventArgs e;
 	rdpChannels* channels = (rdpChannels*) context->custom;
 	freerdp* instance = channels->instance;

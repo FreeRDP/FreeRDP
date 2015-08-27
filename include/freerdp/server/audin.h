@@ -25,17 +25,16 @@
 #include <freerdp/codec/audio.h>
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/rdpsnd.h>
-#include <winpr/win32error.h>
 
 typedef struct _audin_server_context audin_server_context;
 
-typedef WIN32ERROR (*psAudinServerSelectFormat)(audin_server_context* context, int client_format_index);
+typedef UINT (*psAudinServerSelectFormat)(audin_server_context* context, int client_format_index);
 typedef BOOL (*psAudinServerOpen)(audin_server_context* context);
 typedef BOOL (*psAudinServerClose)(audin_server_context* context);
 
-typedef WIN32ERROR (*psAudinServerOpening)(audin_server_context* context);
-typedef WIN32ERROR (*psAudinServerOpenResult)(audin_server_context* context, UINT32 result);
-typedef WIN32ERROR (*psAudinServerReceiveSamples)(audin_server_context* context, const void* buf, int nframes);
+typedef UINT (*psAudinServerOpening)(audin_server_context* context);
+typedef UINT (*psAudinServerOpenResult)(audin_server_context* context, UINT32 result);
+typedef UINT (*psAudinServerReceiveSamples)(audin_server_context* context, const void* buf, int nframes);
 
 struct _audin_server_context
 {

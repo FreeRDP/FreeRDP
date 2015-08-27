@@ -29,7 +29,12 @@
 
 #define TAG SERVER_TAG("shadow")
 
-static WIN32ERROR encomsp_change_participant_control_level(EncomspServerContext* context,
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT encomsp_change_participant_control_level(EncomspServerContext* context,
 		ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU* pdu)
 {
 	BOOL inLobby;

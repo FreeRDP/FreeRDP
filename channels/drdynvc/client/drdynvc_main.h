@@ -26,7 +26,6 @@
 #include <winpr/synch.h>
 #include <freerdp/settings.h>
 #include <winpr/collections.h>
-#include <winpr/win32error.h>
 
 #include <freerdp/api.h>
 #include <freerdp/svc.h>
@@ -139,6 +138,6 @@ struct drdynvc_plugin
 	IWTSVirtualChannelManager* channel_mgr;
 };
 
-WIN32ERROR drdynvc_write_data(drdynvcPlugin* plugin, UINT32 ChannelId, BYTE* data, UINT32 data_size);
+UINT drdynvc_write_data(drdynvcPlugin* plugin, UINT32 ChannelId, BYTE* data, UINT32 data_size);
 
 #endif

@@ -31,7 +31,6 @@
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/stream.h>
-#include <winpr/win32error.h>
 
 #include <freerdp/codec/dsp.h>
 #include <freerdp/codec/audio.h>
@@ -65,7 +64,12 @@ typedef struct _audin_server
 
 } audin_server;
 
-static WIN32ERROR audin_server_select_format(audin_server_context* context, int client_format_index)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_server_select_format(audin_server_context* context, int client_format_index)
 {
 	audin_server* audin = (audin_server*) context;
 
@@ -84,7 +88,12 @@ static WIN32ERROR audin_server_select_format(audin_server_context* context, int 
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR audin_server_send_version(audin_server* audin, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_server_send_version(audin_server* audin, wStream* s)
 {
 	ULONG written;
 
@@ -98,7 +107,12 @@ static WIN32ERROR audin_server_send_version(audin_server* audin, wStream* s)
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR audin_server_recv_version(audin_server* audin, wStream* s, UINT32 length)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_server_recv_version(audin_server* audin, wStream* s, UINT32 length)
 {
 	UINT32 Version;
 
@@ -119,7 +133,12 @@ static WIN32ERROR audin_server_recv_version(audin_server* audin, wStream* s, UIN
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR audin_server_send_formats(audin_server* audin, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_server_send_formats(audin_server* audin, wStream* s)
 {
 	int i;
 	UINT32 nAvgBytesPerSec;
@@ -166,10 +185,15 @@ static WIN32ERROR audin_server_send_formats(audin_server* audin, wStream* s)
 	return WTSVirtualChannelWrite(audin->audin_channel, (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), &written) ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
-static WIN32ERROR audin_server_recv_formats(audin_server* audin, wStream* s, UINT32 length)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_server_recv_formats(audin_server* audin, wStream* s, UINT32 length)
 {
 	int i;
-	WIN32ERROR success = CHANNEL_RC_OK;
+	UINT success = CHANNEL_RC_OK;
 
 	if (length < 8)
 	{
@@ -220,7 +244,12 @@ static WIN32ERROR audin_server_recv_formats(audin_server* audin, wStream* s, UIN
 	return success;
 }
 
-static WIN32ERROR audin_server_send_open(audin_server* audin, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_server_send_open(audin_server* audin, wStream* s)
 {
 	ULONG written;
 
@@ -253,11 +282,16 @@ static WIN32ERROR audin_server_send_open(audin_server* audin, wStream* s)
 	return WTSVirtualChannelWrite(audin->audin_channel, (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), &written) ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
-static WIN32ERROR audin_server_recv_open_reply(audin_server* audin, wStream* s, UINT32 length)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_server_recv_open_reply(audin_server* audin, wStream* s, UINT32 length)
 {
 
 	UINT32 Result;
-	WIN32ERROR success = CHANNEL_RC_OK;
+	UINT success = CHANNEL_RC_OK;
 
 	if (length < 4)
 	{
@@ -275,7 +309,12 @@ static WIN32ERROR audin_server_recv_open_reply(audin_server* audin, wStream* s, 
 	return success;
 }
 
-static WIN32ERROR audin_server_recv_data(audin_server* audin, wStream* s, UINT32 length)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_server_recv_data(audin_server* audin, wStream* s, UINT32 length)
 {
 	AUDIO_FORMAT* format;
 	int sbytes_per_sample;
@@ -283,7 +322,7 @@ static WIN32ERROR audin_server_recv_data(audin_server* audin, wStream* s, UINT32
 	BYTE* src;
 	int size;
 	int frames;
-	WIN32ERROR success = CHANNEL_RC_OK;
+	UINT success = CHANNEL_RC_OK;
 
 	if (audin->context.selected_client_format < 0)
 	{
@@ -352,7 +391,7 @@ static void* audin_server_thread_func(void* arg)
 	HANDLE ChannelEvent;
 	DWORD BytesReturned = 0;
 	audin_server* audin = (audin_server*) arg;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 	DWORD status;
 
 	buffer = NULL;

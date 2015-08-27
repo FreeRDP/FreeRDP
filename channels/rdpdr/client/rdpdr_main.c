@@ -64,9 +64,19 @@ struct _DEVICE_DRIVE_EXT
 	char* path;
 };
 
-static WIN32ERROR rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL userLoggedOn);
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL userLoggedOn);
 
-static WIN32ERROR rdpdr_send_device_list_remove_request(rdpdrPlugin* rdpdr, UINT32 count, UINT32 ids[])
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_send_device_list_remove_request(rdpdrPlugin* rdpdr, UINT32 count, UINT32 ids[])
 {
 	UINT32 i;
 	wStream* s;
@@ -96,7 +106,7 @@ LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	rdpdrPlugin *rdpdr;
 	PDEV_BROADCAST_HDR lpdb = (PDEV_BROADCAST_HDR)lParam;
-	WIN32ERROR error;
+	UINT error;
 
 	rdpdr = (rdpdrPlugin *)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 
@@ -248,9 +258,14 @@ static void* drive_hotplug_thread_func(void* arg)
 	return NULL;
 }
 
-static WIN32ERROR drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 {
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 	if (rdpdr->hotplug_wnd && !PostMessage(rdpdr->hotplug_wnd, WM_QUIT, 0, 0))
 	{
 		error = GetLastError();
@@ -355,7 +370,12 @@ static char* get_word(char* str, unsigned int* offset)
 	return word;
 }
 
-static WIN32ERROR handle_hotplug(rdpdrPlugin* rdpdr)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 {
 	FILE *f;
 	size_t len;
@@ -371,7 +391,7 @@ static WIN32ERROR handle_hotplug(rdpdrPlugin* rdpdr)
 	DEVICE_DRIVE_EXT *device_ext;
 	ULONG_PTR *keys;
 	UINT32 ids[1];
-	WIN32ERROR error;
+	UINT error;
 
 	f = fopen("/proc/mounts", "r");
 	if (f == NULL)
@@ -492,7 +512,7 @@ static void* drive_hotplug_thread_func(void* arg)
 	fd_set rfds;
 	struct timeval tv;
 	int rv;
-	WIN32ERROR error;
+	UINT error;
     DWORD status;
 
 	rdpdr = (rdpdrPlugin*) arg;
@@ -560,9 +580,14 @@ out:
     return NULL;
 }
 
-static WIN32ERROR drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 {
-    WIN32ERROR error;
+    UINT error;
 	if (rdpdr->hotplugThread)
 	{
 		if (rdpdr->stopEvent)
@@ -582,12 +607,17 @@ static WIN32ERROR drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 #endif
 
 
-static WIN32ERROR rdpdr_process_connect(rdpdrPlugin* rdpdr)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 {
 	UINT32 index;
 	RDPDR_DEVICE* device;
 	rdpSettings* settings;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	rdpdr->devman = devman_new(rdpdr);
 	if (!rdpdr->devman)
@@ -636,7 +666,12 @@ static void rdpdr_process_server_announce_request(rdpdrPlugin* rdpdr, wStream* s
 	rdpdr->sequenceId++;
 }
 
-static WIN32ERROR rdpdr_send_client_announce_reply(rdpdrPlugin* rdpdr)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_send_client_announce_reply(rdpdrPlugin* rdpdr)
 {
 	wStream* s;
 
@@ -657,7 +692,12 @@ static WIN32ERROR rdpdr_send_client_announce_reply(rdpdrPlugin* rdpdr)
 	return rdpdr_send(rdpdr, s);
 }
 
-static WIN32ERROR rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 {
 	wStream* s;
 	WCHAR* computerNameW = NULL;
@@ -711,7 +751,12 @@ static void rdpdr_process_server_clientid_confirm(rdpdrPlugin* rdpdr, wStream* s
 	}
 }
 
-static WIN32ERROR rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL userLoggedOn)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL userLoggedOn)
 {
 	int i;
 	BYTE c;
@@ -800,10 +845,15 @@ static WIN32ERROR rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BO
 	return rdpdr_send(rdpdr, s);
 }
 
-static WIN32ERROR rdpdr_process_irp(rdpdrPlugin* rdpdr, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_process_irp(rdpdrPlugin* rdpdr, wStream* s)
 {
 	IRP* irp;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	irp = irp_new(rdpdr->devman, s);
 
@@ -821,13 +871,18 @@ static WIN32ERROR rdpdr_process_irp(rdpdrPlugin* rdpdr, wStream* s)
     return error;
 }
 
-static WIN32ERROR rdpdr_process_init(rdpdrPlugin* rdpdr)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_process_init(rdpdrPlugin* rdpdr)
 {
 	int index;
 	int keyCount;
 	DEVICE* device;
 	ULONG_PTR* pKeys;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	pKeys = NULL;
 	keyCount = ListDictionary_GetKeys(rdpdr->devman->devices, &pKeys);
@@ -849,13 +904,18 @@ static WIN32ERROR rdpdr_process_init(rdpdrPlugin* rdpdr)
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 {
 	UINT16 component;
 	UINT16 packetId;
 	UINT32 deviceId;
 	UINT32 status;
-	WIN32ERROR error;
+	UINT error;
 
 	Stream_Read_UINT16(s, component); /* Component (2 bytes) */
 	Stream_Read_UINT16(s, packetId); /* PacketId (2 bytes) */
@@ -969,7 +1029,12 @@ static WIN32ERROR rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 static wListDictionary* g_InitHandles = NULL;
 static wListDictionary* g_OpenHandles = NULL;
 
-WIN32ERROR rdpdr_add_init_handle_data(void* pInitHandle, void* pUserData)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpdr_add_init_handle_data(void* pInitHandle, void* pUserData)
 {
 	if (!g_InitHandles)
 	{
@@ -1006,7 +1071,12 @@ void rdpdr_remove_init_handle_data(void* pInitHandle)
 	}
 }
 
-WIN32ERROR rdpdr_add_open_handle_data(DWORD openHandle, void* pUserData)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpdr_add_open_handle_data(DWORD openHandle, void* pUserData)
 {
 	void* pOpenHandle = (void*) (size_t) openHandle;
 
@@ -1048,9 +1118,14 @@ void rdpdr_remove_open_handle_data(DWORD openHandle)
 	}
 }
 
-WIN32ERROR rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 {
-	WIN32ERROR status;
+	UINT status;
 	rdpdrPlugin* plugin = (rdpdrPlugin*) rdpdr;
 
 	if (!plugin)
@@ -1073,7 +1148,12 @@ WIN32ERROR rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 	return status;
 }
 
-static WIN32ERROR rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr,
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr,
 		void* pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	wStream* data_in;
@@ -1135,7 +1215,7 @@ static VOID VCAPITYPE rdpdr_virtual_channel_open_event(DWORD openHandle, UINT ev
 		LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	rdpdrPlugin* rdpdr;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	rdpdr = (rdpdrPlugin*) rdpdr_get_open_handle_data(openHandle);
 
@@ -1170,7 +1250,7 @@ static void* rdpdr_virtual_channel_client_thread(void* arg)
 	wStream* data;
 	wMessage message;
 	rdpdrPlugin* rdpdr = (rdpdrPlugin*) arg;
-	WIN32ERROR error;
+	UINT error;
 
 	if ((error = rdpdr_process_connect(rdpdr)))
 	{
@@ -1210,10 +1290,15 @@ static void* rdpdr_virtual_channel_client_thread(void* arg)
 	return NULL;
 }
 
-static WIN32ERROR rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, LPVOID pData, UINT32 dataLength)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, LPVOID pData, UINT32 dataLength)
 {
 	UINT32 status;
-	WIN32ERROR error;
+	UINT error;
 
 	status = rdpdr->channelEntryPoints.pVirtualChannelOpen(rdpdr->InitHandle,
 		&rdpdr->OpenHandle, rdpdr->channelDef.name, rdpdr_virtual_channel_open_event);
@@ -1247,9 +1332,14 @@ static WIN32ERROR rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, LPVO
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
 {
-	WIN32ERROR error;
+	UINT error;
 
 	if (MessageQueue_PostQuit(rdpdr->queue, 0) && (WaitForSingleObject(rdpdr->thread, INFINITE) == WAIT_FAILED))
     {
@@ -1303,7 +1393,7 @@ static void rdpdr_virtual_channel_event_terminated(rdpdrPlugin* rdpdr)
 static VOID VCAPITYPE rdpdr_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
 {
 	rdpdrPlugin* rdpdr;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	rdpdr = (rdpdrPlugin*) rdpdr_get_init_handle_data(pInitHandle);
 

@@ -23,7 +23,6 @@
 #define FREERDP_CHANNEL_CLIENT_ENCOMSP_H
 
 #include <freerdp/channels/encomsp.h>
-#include <winpr/win32error.h>
 
 /**
  * Client Interface
@@ -31,17 +30,17 @@
 
 typedef struct _encomsp_client_context EncomspClientContext;
 
-typedef WIN32ERROR (*pcEncomspFilterUpdated)(EncomspClientContext* context, ENCOMSP_FILTER_UPDATED_PDU* filterUpdated);
-typedef WIN32ERROR (*pcEncomspApplicationCreated)(EncomspClientContext* context, ENCOMSP_APPLICATION_CREATED_PDU* applicationCreated);
-typedef WIN32ERROR (*pcEncomspApplicationRemoved)(EncomspClientContext* context, ENCOMSP_APPLICATION_REMOVED_PDU* applicationRemoved);
-typedef WIN32ERROR (*pcEncomspWindowCreated)(EncomspClientContext* context, ENCOMSP_WINDOW_CREATED_PDU* windowCreated);
-typedef WIN32ERROR (*pcEncomspWindowRemoved)(EncomspClientContext* context, ENCOMSP_WINDOW_REMOVED_PDU* windowRemoved);
-typedef WIN32ERROR (*pcEncomspShowWindow)(EncomspClientContext* context, ENCOMSP_SHOW_WINDOW_PDU* showWindow);
-typedef WIN32ERROR (*pcEncomspParticipantCreated)(EncomspClientContext* context, ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated);
-typedef WIN32ERROR (*pcEncomspParticipantRemoved)(EncomspClientContext* context, ENCOMSP_PARTICIPANT_REMOVED_PDU* participantRemoved);
-typedef WIN32ERROR (*pcEncomspChangeParticipantControlLevel)(EncomspClientContext* context, ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU* changeParticipantControlLevel);
-typedef WIN32ERROR (*pcEncomspGraphicsStreamPaused)(EncomspClientContext* context, ENCOMSP_GRAPHICS_STREAM_PAUSED_PDU* graphicsStreamPaused);
-typedef WIN32ERROR (*pcEncomspGraphicsStreamResumed)(EncomspClientContext* context, ENCOMSP_GRAPHICS_STREAM_RESUMED_PDU* graphicsStreamResumed);
+typedef UINT (*pcEncomspFilterUpdated)(EncomspClientContext* context, ENCOMSP_FILTER_UPDATED_PDU* filterUpdated);
+typedef UINT (*pcEncomspApplicationCreated)(EncomspClientContext* context, ENCOMSP_APPLICATION_CREATED_PDU* applicationCreated);
+typedef UINT (*pcEncomspApplicationRemoved)(EncomspClientContext* context, ENCOMSP_APPLICATION_REMOVED_PDU* applicationRemoved);
+typedef UINT (*pcEncomspWindowCreated)(EncomspClientContext* context, ENCOMSP_WINDOW_CREATED_PDU* windowCreated);
+typedef UINT (*pcEncomspWindowRemoved)(EncomspClientContext* context, ENCOMSP_WINDOW_REMOVED_PDU* windowRemoved);
+typedef UINT (*pcEncomspShowWindow)(EncomspClientContext* context, ENCOMSP_SHOW_WINDOW_PDU* showWindow);
+typedef UINT (*pcEncomspParticipantCreated)(EncomspClientContext* context, ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated);
+typedef UINT (*pcEncomspParticipantRemoved)(EncomspClientContext* context, ENCOMSP_PARTICIPANT_REMOVED_PDU* participantRemoved);
+typedef UINT (*pcEncomspChangeParticipantControlLevel)(EncomspClientContext* context, ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU* changeParticipantControlLevel);
+typedef UINT (*pcEncomspGraphicsStreamPaused)(EncomspClientContext* context, ENCOMSP_GRAPHICS_STREAM_PAUSED_PDU* graphicsStreamPaused);
+typedef UINT (*pcEncomspGraphicsStreamResumed)(EncomspClientContext* context, ENCOMSP_GRAPHICS_STREAM_RESUMED_PDU* graphicsStreamResumed);
 
 struct _encomsp_client_context
 {

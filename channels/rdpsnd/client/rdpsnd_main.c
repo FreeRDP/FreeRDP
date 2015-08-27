@@ -92,7 +92,12 @@ struct rdpsnd_plugin
 	rdpContext* rdpcontext;
 };
 
-static WIN32ERROR rdpsnd_confirm_wave(rdpsndPlugin* rdpsnd, RDPSND_WAVE* wave);
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_confirm_wave(rdpsndPlugin* rdpsnd, RDPSND_WAVE* wave);
 
 static void* rdpsnd_schedule_thread(void* arg)
 {
@@ -103,7 +108,7 @@ static void* rdpsnd_schedule_thread(void* arg)
 	RDPSND_WAVE* wave;
 	rdpsndPlugin* rdpsnd = (rdpsndPlugin*) arg;
 	HANDLE events[2];
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
     DWORD status;
 
 	events[0] = MessageQueue_Event(rdpsnd->MsgPipe->Out);
@@ -180,7 +185,12 @@ static void* rdpsnd_schedule_thread(void* arg)
 	return NULL;
 }
 
-WIN32ERROR rdpsnd_send_quality_mode_pdu(rdpsndPlugin* rdpsnd)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpsnd_send_quality_mode_pdu(rdpsndPlugin* rdpsnd)
 {
 	wStream* pdu;
 
@@ -254,7 +264,12 @@ static void rdpsnd_select_supported_audio_formats(rdpsndPlugin* rdpsnd)
 #endif
 }
 
-WIN32ERROR rdpsnd_send_client_audio_formats(rdpsndPlugin* rdpsnd)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpsnd_send_client_audio_formats(rdpsndPlugin* rdpsnd)
 {
 	int index;
 	wStream* pdu;
@@ -323,13 +338,18 @@ WIN32ERROR rdpsnd_send_client_audio_formats(rdpsndPlugin* rdpsnd)
 	return rdpsnd_virtual_channel_write(rdpsnd, pdu);
 }
 
-WIN32ERROR rdpsnd_recv_server_audio_formats_pdu(rdpsndPlugin* rdpsnd, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpsnd_recv_server_audio_formats_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 {
 	int index;
 	UINT16 wVersion;
 	AUDIO_FORMAT* format;
 	UINT16 wNumberOfFormats;
-	WIN32ERROR ret = ERROR_BAD_LENGTH;
+	UINT ret = ERROR_BAD_LENGTH;
 
 	rdpsnd_free_audio_formats(rdpsnd->ServerFormats, rdpsnd->NumberOfServerFormats);
 	rdpsnd->NumberOfServerFormats = 0;
@@ -407,7 +427,12 @@ out_fail:
 	return ret;
 }
 
-WIN32ERROR rdpsnd_send_training_confirm_pdu(rdpsndPlugin* rdpsnd, UINT16 wTimeStamp, UINT16 wPackSize)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpsnd_send_training_confirm_pdu(rdpsndPlugin* rdpsnd, UINT16 wTimeStamp, UINT16 wPackSize)
 {
 	wStream* pdu;
 
@@ -430,7 +455,12 @@ WIN32ERROR rdpsnd_send_training_confirm_pdu(rdpsndPlugin* rdpsnd, UINT16 wTimeSt
 	return rdpsnd_virtual_channel_write(rdpsnd, pdu);
 }
 
-static WIN32ERROR rdpsnd_recv_training_pdu(rdpsndPlugin* rdpsnd, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_recv_training_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 {
 	UINT16 wTimeStamp;
 	UINT16 wPackSize;
@@ -447,7 +477,12 @@ static WIN32ERROR rdpsnd_recv_training_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 	return rdpsnd_send_training_confirm_pdu(rdpsnd, wTimeStamp, wPackSize);
 }
 
-static WIN32ERROR rdpsnd_recv_wave_info_pdu(rdpsndPlugin* rdpsnd, wStream* s, UINT16 BodySize)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_recv_wave_info_pdu(rdpsndPlugin* rdpsnd, wStream* s, UINT16 BodySize)
 {
 	UINT16 wFormatNo;
 	AUDIO_FORMAT* format;
@@ -497,7 +532,12 @@ static WIN32ERROR rdpsnd_recv_wave_info_pdu(rdpsndPlugin* rdpsnd, wStream* s, UI
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR rdpsnd_send_wave_confirm_pdu(rdpsndPlugin* rdpsnd, UINT16 wTimeStamp, BYTE cConfirmedBlockNo)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpsnd_send_wave_confirm_pdu(rdpsndPlugin* rdpsnd, UINT16 wTimeStamp, BYTE cConfirmedBlockNo)
 {
 	wStream* pdu;
 
@@ -518,7 +558,12 @@ WIN32ERROR rdpsnd_send_wave_confirm_pdu(rdpsndPlugin* rdpsnd, UINT16 wTimeStamp,
 	return rdpsnd_virtual_channel_write(rdpsnd, pdu);
 }
 
-WIN32ERROR rdpsnd_confirm_wave(rdpsndPlugin* rdpsnd, RDPSND_WAVE* wave)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpsnd_confirm_wave(rdpsndPlugin* rdpsnd, RDPSND_WAVE* wave)
 {
 	WLog_Print(rdpsnd->log, WLOG_DEBUG, "WaveConfirm: cBlockNo: %d wTimeStamp: %d wTimeDiff: %d",
 			wave->cBlockNo, wave->wTimeStampB, wave->wTimeStampB - wave->wTimeStampA);
@@ -526,7 +571,12 @@ WIN32ERROR rdpsnd_confirm_wave(rdpsndPlugin* rdpsnd, RDPSND_WAVE* wave)
 	return rdpsnd_send_wave_confirm_pdu(rdpsnd, wave->wTimeStampB, wave->cBlockNo);
 }
 
-static WIN32ERROR rdpsnd_device_send_wave_confirm_pdu(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_device_send_wave_confirm_pdu(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 {
 	if (device->DisableConfirmThread)
 		return rdpsnd_confirm_wave(device->rdpsnd, wave);
@@ -541,13 +591,18 @@ static WIN32ERROR rdpsnd_device_send_wave_confirm_pdu(rdpsndDevicePlugin* device
 
 }
 
-static WIN32ERROR rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 {
 	int size;
 	BYTE* data;
 	RDPSND_WAVE* wave;
 	AUDIO_FORMAT* format;
-	WIN32ERROR status;
+	UINT status;
 
 	rdpsnd->expectingWave = FALSE;
 
@@ -633,7 +688,12 @@ static void rdpsnd_recv_close_pdu(rdpsndPlugin* rdpsnd)
 	rdpsnd->isOpen = FALSE;
 }
 
-static WIN32ERROR rdpsnd_recv_volume_pdu(rdpsndPlugin* rdpsnd, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_recv_volume_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 {
 	UINT32 dwVolume;
 
@@ -653,11 +713,16 @@ static WIN32ERROR rdpsnd_recv_volume_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR rdpsnd_recv_pdu(rdpsndPlugin* rdpsnd, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_recv_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 {
 	BYTE msgType;
 	UINT16 BodySize;
-	WIN32ERROR status = CHANNEL_RC_OK;
+	UINT status = CHANNEL_RC_OK;
 
 	if (rdpsnd->expectingWave)
 	{
@@ -723,11 +788,16 @@ static void rdpsnd_register_device_plugin(rdpsndPlugin* rdpsnd, rdpsndDevicePlug
 	device->WaveConfirm = rdpsnd_device_send_wave_confirm_pdu;
 }
 
-static WIN32ERROR rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name, ADDIN_ARGV* args)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name, ADDIN_ARGV* args)
 {
 	PFREERDP_RDPSND_DEVICE_ENTRY entry;
 	FREERDP_RDPSND_DEVICE_ENTRY_POINTS entryPoints;\
-	WIN32ERROR error;
+	UINT error;
 
 	entry = (PFREERDP_RDPSND_DEVICE_ENTRY) freerdp_load_channel_addin_entry("rdpsnd", (LPSTR) name, NULL, 0);
 
@@ -770,7 +840,12 @@ COMMAND_LINE_ARGUMENT_A rdpsnd_args[] =
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
-static WIN32ERROR rdpsnd_process_addin_args(rdpsndPlugin* rdpsnd, ADDIN_ARGV* args)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_process_addin_args(rdpsndPlugin* rdpsnd, ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
@@ -854,10 +929,15 @@ static WIN32ERROR rdpsnd_process_addin_args(rdpsndPlugin* rdpsnd, ADDIN_ARGV* ar
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 {
 	ADDIN_ARGV* args;
-	WIN32ERROR status = ERROR_INTERNAL_ERROR;
+	UINT status = ERROR_INTERNAL_ERROR;
 	char *subsystem_name = NULL, *device_name = NULL;
 
 	rdpsnd->latency = -1;
@@ -1075,9 +1155,14 @@ void rdpsnd_remove_open_handle_data(DWORD openHandle)
 	}
 }
 
-WIN32ERROR rdpsnd_virtual_channel_write(rdpsndPlugin* rdpsnd, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpsnd_virtual_channel_write(rdpsndPlugin* rdpsnd, wStream* s)
 {
-	WIN32ERROR status;
+	UINT status;
 
 	if (!rdpsnd)
 	{
@@ -1099,7 +1184,12 @@ WIN32ERROR rdpsnd_virtual_channel_write(rdpsndPlugin* rdpsnd, wStream* s)
 	return status;
 }
 
-static WIN32ERROR rdpsnd_virtual_channel_event_data_received(rdpsndPlugin* plugin,
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_virtual_channel_event_data_received(rdpsndPlugin* plugin,
 		void* pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	wStream* s;
@@ -1157,7 +1247,7 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_open_event(DWORD openHandle, UINT e
 		LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	rdpsndPlugin* rdpsnd;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	rdpsnd = (rdpsndPlugin*) rdpsnd_get_open_handle_data(openHandle);
 
@@ -1191,7 +1281,7 @@ static void* rdpsnd_virtual_channel_client_thread(void* arg)
 	wStream* data;
 	wMessage message;
 	rdpsndPlugin* rdpsnd = (rdpsndPlugin*) arg;
-	WIN32ERROR error;
+	UINT error;
 
 	if ((error = rdpsnd_process_connect(rdpsnd)))
 	{
@@ -1239,7 +1329,12 @@ out:
 	return NULL;
 }
 
-static WIN32ERROR rdpsnd_virtual_channel_event_connected(rdpsndPlugin* plugin, LPVOID pData, UINT32 dataLength)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_virtual_channel_event_connected(rdpsndPlugin* plugin, LPVOID pData, UINT32 dataLength)
 {
 	UINT32 status;
 
@@ -1279,9 +1374,14 @@ static WIN32ERROR rdpsnd_virtual_channel_event_connected(rdpsndPlugin* plugin, L
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR rdpsnd_virtual_channel_event_disconnected(rdpsndPlugin* rdpsnd)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_virtual_channel_event_disconnected(rdpsndPlugin* rdpsnd)
 {
-	WIN32ERROR error;
+	UINT error;
 
 	MessagePipe_PostQuit(rdpsnd->MsgPipe, 0);
 	if (WaitForSingleObject(rdpsnd->thread, INFINITE) == WAIT_FAILED)
@@ -1352,7 +1452,7 @@ static void rdpsnd_virtual_channel_event_terminated(rdpsndPlugin* rdpsnd)
 static VOID VCAPITYPE rdpsnd_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
 {
 	rdpsndPlugin* plugin;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	plugin = (rdpsndPlugin*) rdpsnd_get_init_handle_data(pInitHandle);
 

@@ -30,7 +30,6 @@
 #include "sf_audin.h"
 
 #include <freerdp/log.h>
-#include <winpr/win32error.h>
 #define TAG SERVER_TAG("sample")
 
 static const AUDIO_FORMAT test_audio_formats[] =
@@ -39,7 +38,12 @@ static const AUDIO_FORMAT test_audio_formats[] =
 	{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, 0, NULL }
 };
 
-static WIN32ERROR sf_peer_audin_opening(audin_server_context* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT sf_peer_audin_opening(audin_server_context* context)
 {
 	WLog_DBG(TAG, "AUDIN opening.");
 	/* Simply choose the first format supported by the client. */
@@ -47,13 +51,23 @@ static WIN32ERROR sf_peer_audin_opening(audin_server_context* context)
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR sf_peer_audin_open_result(audin_server_context* context, UINT32 result)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT sf_peer_audin_open_result(audin_server_context* context, UINT32 result)
 {
 	WLog_DBG(TAG, "AUDIN open result %d.", result);
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR sf_peer_audin_receive_samples(audin_server_context* context, const void* buf, int nframes)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT sf_peer_audin_receive_samples(audin_server_context* context, const void* buf, int nframes)
 {
 	WLog_DBG(TAG, "AUDIN receive %d frames.", nframes);
 	return CHANNEL_RC_OK;

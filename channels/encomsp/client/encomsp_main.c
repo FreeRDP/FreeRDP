@@ -31,7 +31,12 @@
 
 #include "encomsp_main.h"
 
-static WIN32ERROR encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	if (Stream_GetRemainingLength(s) < ENCOMSP_ORDER_HEADER_SIZE)
 	{
@@ -45,7 +50,12 @@ static WIN32ERROR encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR encomsp_write_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT encomsp_write_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	Stream_Write_UINT16(s, header->Type); /* Type (2 bytes) */
 	Stream_Write_UINT16(s, header->Length); /* Length (2 bytes) */
@@ -53,7 +63,12 @@ static WIN32ERROR encomsp_write_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str)
 {
 	ZeroMemory(str, sizeof(ENCOMSP_UNICODE_STRING));
 
@@ -89,9 +104,14 @@ EncomspClientContext* encomsp_get_client_interface(encomspPlugin* encomsp)
 	return pInterface;
 }
 
-WIN32ERROR encomsp_virtual_channel_write(encomspPlugin* encomsp, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT encomsp_virtual_channel_write(encomspPlugin* encomsp, wStream* s)
 {
-	WIN32ERROR status;
+	UINT status;
 
 	if (!encomsp)
 		return ERROR_INVALID_HANDLE;
@@ -111,12 +131,17 @@ WIN32ERROR encomsp_virtual_channel_write(encomspPlugin* encomsp, wStream* s)
 	return status;
 }
 
-static WIN32ERROR encomsp_recv_filter_updated_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT encomsp_recv_filter_updated_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
 	ENCOMSP_FILTER_UPDATED_PDU pdu;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	context = encomsp_get_client_interface(encomsp);
 
@@ -161,12 +186,17 @@ static WIN32ERROR encomsp_recv_filter_updated_pdu(encomspPlugin* encomsp, wStrea
 	return error;
 }
 
-static WIN32ERROR encomsp_recv_application_created_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT encomsp_recv_application_created_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
 	ENCOMSP_APPLICATION_CREATED_PDU pdu;
-	WIN32ERROR error;
+	UINT error;
 
 	context = encomsp_get_client_interface(encomsp);
 
@@ -218,12 +248,17 @@ static WIN32ERROR encomsp_recv_application_created_pdu(encomspPlugin* encomsp, w
 	return error;
 }
 
-static WIN32ERROR encomsp_recv_application_removed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT encomsp_recv_application_removed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
 	ENCOMSP_APPLICATION_REMOVED_PDU pdu;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	context = encomsp_get_client_interface(encomsp);
 
@@ -268,12 +303,17 @@ static WIN32ERROR encomsp_recv_application_removed_pdu(encomspPlugin* encomsp, w
 	return error;
 }
 
-static WIN32ERROR encomsp_recv_window_created_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT encomsp_recv_window_created_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
 	ENCOMSP_WINDOW_CREATED_PDU pdu;
-	WIN32ERROR error;
+	UINT error;
 
 	context = encomsp_get_client_interface(encomsp);
 
@@ -326,12 +366,17 @@ static WIN32ERROR encomsp_recv_window_created_pdu(encomspPlugin* encomsp, wStrea
 	return error;
 }
 
-static WIN32ERROR encomsp_recv_window_removed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT encomsp_recv_window_removed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
 	ENCOMSP_WINDOW_REMOVED_PDU pdu;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	context = encomsp_get_client_interface(encomsp);
 
@@ -376,12 +421,17 @@ static WIN32ERROR encomsp_recv_window_removed_pdu(encomspPlugin* encomsp, wStrea
 	return error;
 }
 
-static WIN32ERROR encomsp_recv_show_window_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT encomsp_recv_show_window_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
 	ENCOMSP_SHOW_WINDOW_PDU pdu;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	context = encomsp_get_client_interface(encomsp);
 
@@ -426,12 +476,17 @@ static WIN32ERROR encomsp_recv_show_window_pdu(encomspPlugin* encomsp, wStream* 
 	return error;
 }
 
-static WIN32ERROR encomsp_recv_participant_created_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT encomsp_recv_participant_created_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
 	ENCOMSP_PARTICIPANT_CREATED_PDU pdu;
-	WIN32ERROR error;
+	UINT error;
 
 	context = encomsp_get_client_interface(encomsp);
 
@@ -485,12 +540,17 @@ static WIN32ERROR encomsp_recv_participant_created_pdu(encomspPlugin* encomsp, w
 	return error;
 }
 
-static WIN32ERROR encomsp_recv_participant_removed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT encomsp_recv_participant_removed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
 	ENCOMSP_PARTICIPANT_REMOVED_PDU pdu;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	context = encomsp_get_client_interface(encomsp);
 
@@ -537,12 +597,17 @@ static WIN32ERROR encomsp_recv_participant_removed_pdu(encomspPlugin* encomsp, w
 	return error;
 }
 
-static WIN32ERROR encomsp_recv_change_participant_control_level_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT encomsp_recv_change_participant_control_level_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
 	ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU pdu;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	context = encomsp_get_client_interface(encomsp);
 
@@ -588,11 +653,16 @@ static WIN32ERROR encomsp_recv_change_participant_control_level_pdu(encomspPlugi
 	return error;
 }
 
-static WIN32ERROR encomsp_send_change_participant_control_level_pdu(EncomspClientContext* context, ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU* pdu)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT encomsp_send_change_participant_control_level_pdu(EncomspClientContext* context, ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU* pdu)
 {
 	wStream* s;
 	encomspPlugin* encomsp;
-	WIN32ERROR error;
+	UINT error;
 
 	encomsp = (encomspPlugin*) context->handle;
 
@@ -620,12 +690,17 @@ static WIN32ERROR encomsp_send_change_participant_control_level_pdu(EncomspClien
 	return encomsp_virtual_channel_write(encomsp, s);
 }
 
-static WIN32ERROR encomsp_recv_graphics_stream_paused_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT encomsp_recv_graphics_stream_paused_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
 	ENCOMSP_GRAPHICS_STREAM_PAUSED_PDU pdu;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	context = encomsp_get_client_interface(encomsp);
 
@@ -662,12 +737,17 @@ static WIN32ERROR encomsp_recv_graphics_stream_paused_pdu(encomspPlugin* encomsp
 	return error;
 }
 
-static WIN32ERROR encomsp_recv_graphics_stream_resumed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT encomsp_recv_graphics_stream_resumed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
 	ENCOMSP_GRAPHICS_STREAM_RESUMED_PDU pdu;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	context = encomsp_get_client_interface(encomsp);
 
@@ -704,9 +784,14 @@ static WIN32ERROR encomsp_recv_graphics_stream_resumed_pdu(encomspPlugin* encoms
 	return error;
 }
 
-static WIN32ERROR encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
 {
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 	ENCOMSP_ORDER_HEADER header;
 
 	while (Stream_GetRemainingLength(s) > 0)
@@ -829,7 +914,12 @@ static void encomsp_process_connect(encomspPlugin* encomsp)
 static wListDictionary* g_InitHandles = NULL;
 static wListDictionary* g_OpenHandles = NULL;
 
-WIN32ERROR encomsp_add_init_handle_data(void* pInitHandle, void* pUserData)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT encomsp_add_init_handle_data(void* pInitHandle, void* pUserData)
 {
 	if (!g_InitHandles)
 	{
@@ -866,7 +956,12 @@ void encomsp_remove_init_handle_data(void* pInitHandle)
 	}
 }
 
-WIN32ERROR encomsp_add_open_handle_data(DWORD openHandle, void* pUserData)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT encomsp_add_open_handle_data(DWORD openHandle, void* pUserData)
 {
 	void* pOpenHandle = (void*) (size_t) openHandle;
 
@@ -933,7 +1028,12 @@ int encomsp_send(encomspPlugin* encomsp, wStream* s)
 	return status;
 }
 
-static WIN32ERROR encomsp_virtual_channel_event_data_received(encomspPlugin* encomsp,
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT encomsp_virtual_channel_event_data_received(encomspPlugin* encomsp,
 		void* pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	wStream* data_in;
@@ -987,7 +1087,7 @@ static VOID VCAPITYPE encomsp_virtual_channel_open_event(DWORD openHandle, UINT 
 		LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	encomspPlugin* encomsp;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	encomsp = (encomspPlugin*) encomsp_get_open_handle_data(openHandle);
 
@@ -1022,7 +1122,7 @@ static void* encomsp_virtual_channel_client_thread(void* arg)
 	wStream* data;
 	wMessage message;
 	encomspPlugin* encomsp = (encomspPlugin*) arg;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	encomsp_process_connect(encomsp);
 
@@ -1063,10 +1163,15 @@ static void* encomsp_virtual_channel_client_thread(void* arg)
 	return NULL;
 }
 
-static WIN32ERROR encomsp_virtual_channel_event_connected(encomspPlugin* encomsp, LPVOID pData, UINT32 dataLength)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT encomsp_virtual_channel_event_connected(encomspPlugin* encomsp, LPVOID pData, UINT32 dataLength)
 {
 	UINT32 status;
-	WIN32ERROR error;
+	UINT error;
 
 	status = encomsp->channelEntryPoints.pVirtualChannelOpen(encomsp->InitHandle,
 		&encomsp->OpenHandle, encomsp->channelDef.name, encomsp_virtual_channel_open_event);
@@ -1101,7 +1206,12 @@ static WIN32ERROR encomsp_virtual_channel_event_connected(encomspPlugin* encomsp
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR encomsp_virtual_channel_event_disconnected(encomspPlugin* encomsp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT encomsp_virtual_channel_event_disconnected(encomspPlugin* encomsp)
 {
 	UINT rc;
 
@@ -1137,7 +1247,12 @@ static WIN32ERROR encomsp_virtual_channel_event_disconnected(encomspPlugin* enco
 }
 
 
-static WIN32ERROR encomsp_virtual_channel_event_terminated(encomspPlugin* encomsp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT encomsp_virtual_channel_event_terminated(encomspPlugin* encomsp)
 {
 	encomsp_remove_init_handle_data(encomsp->InitHandle);
 	free(encomsp);
@@ -1147,7 +1262,7 @@ static WIN32ERROR encomsp_virtual_channel_event_terminated(encomspPlugin* encoms
 static void VCAPITYPE encomsp_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
 {
 	encomspPlugin* encomsp;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	encomsp = (encomspPlugin*) encomsp_get_init_handle_data(pInitHandle);
 
@@ -1192,7 +1307,7 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	EncomspClientContext* context;
 	CHANNEL_ENTRY_POINTS_FREERDP* pEntryPointsEx;
 	BOOL isFreerdp = FALSE;
-	WIN32ERROR error;
+	UINT error;
 
 	encomsp = (encomspPlugin*) calloc(1, sizeof(encomspPlugin));
 	if (!encomsp)

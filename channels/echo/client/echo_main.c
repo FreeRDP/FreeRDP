@@ -61,7 +61,12 @@ struct _ECHO_PLUGIN
 	ECHO_LISTENER_CALLBACK* listener_callback;
 };
 
-static WIN32ERROR echo_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream *data)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT echo_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream *data)
 {
 	ECHO_CHANNEL_CALLBACK* callback = (ECHO_CHANNEL_CALLBACK*) pChannelCallback;
 	BYTE* pBuffer = Stream_Pointer(data);
@@ -71,7 +76,12 @@ static WIN32ERROR echo_on_data_received(IWTSVirtualChannelCallback* pChannelCall
 	return callback->channel->Write(callback->channel, cbSize, pBuffer, NULL);
 }
 
-static WIN32ERROR echo_on_close(IWTSVirtualChannelCallback* pChannelCallback)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT echo_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 {
 	ECHO_CHANNEL_CALLBACK* callback = (ECHO_CHANNEL_CALLBACK*) pChannelCallback;
 
@@ -80,7 +90,12 @@ static WIN32ERROR echo_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR echo_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT echo_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
 	IWTSVirtualChannel* pChannel, BYTE* Data, int* pbAccept,
 	IWTSVirtualChannelCallback** ppCallback)
 {
@@ -106,7 +121,12 @@ static WIN32ERROR echo_on_new_channel_connection(IWTSListenerCallback* pListener
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR echo_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT echo_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr)
 {
 	ECHO_PLUGIN* echo = (ECHO_PLUGIN*) pPlugin;
 
@@ -126,7 +146,12 @@ static WIN32ERROR echo_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannel
 		(IWTSListenerCallback*) echo->listener_callback, NULL);
 }
 
-static WIN32ERROR echo_plugin_terminated(IWTSPlugin* pPlugin)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT echo_plugin_terminated(IWTSPlugin* pPlugin)
 {
 	ECHO_PLUGIN* echo = (ECHO_PLUGIN*) pPlugin;
 
@@ -139,9 +164,14 @@ static WIN32ERROR echo_plugin_terminated(IWTSPlugin* pPlugin)
 #define DVCPluginEntry		echo_DVCPluginEntry
 #endif
 
-WIN32ERROR DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
-	WIN32ERROR status = CHANNEL_RC_OK;
+	UINT status = CHANNEL_RC_OK;
 	ECHO_PLUGIN* echo;
 
 	echo = (ECHO_PLUGIN*) pEntryPoints->GetPlugin(pEntryPoints, "echo");

@@ -29,7 +29,6 @@
 #include <winpr/crt.h>
 #include <winpr/tchar.h>
 #include <winpr/stream.h>
-#include <winpr/win32error.h>
 
 #include <freerdp/log.h>
 #include <freerdp/client/cliprdr.h>
@@ -1446,7 +1445,12 @@ int wf_cliprdr_send_client_capabilities(wfClipboard* clipboard)
 	return 1;
 }
 
-static WIN32ERROR wf_cliprdr_monitor_ready(CliprdrClientContext* context, CLIPRDR_MONITOR_READY* monitorReady)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT wf_cliprdr_monitor_ready(CliprdrClientContext* context, CLIPRDR_MONITOR_READY* monitorReady)
 {
 	wfClipboard* clipboard = (wfClipboard*) context->custom;
 
@@ -1457,7 +1461,12 @@ static WIN32ERROR wf_cliprdr_monitor_ready(CliprdrClientContext* context, CLIPRD
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR wf_cliprdr_server_capabilities(CliprdrClientContext* context, CLIPRDR_CAPABILITIES* capabilities)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT wf_cliprdr_server_capabilities(CliprdrClientContext* context, CLIPRDR_CAPABILITIES* capabilities)
 {
 	UINT32 index;
 	CLIPRDR_CAPABILITY_SET* capabilitySet;
@@ -1481,7 +1490,12 @@ static WIN32ERROR wf_cliprdr_server_capabilities(CliprdrClientContext* context, 
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR wf_cliprdr_server_format_list(CliprdrClientContext* context, CLIPRDR_FORMAT_LIST* formatList)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT wf_cliprdr_server_format_list(CliprdrClientContext* context, CLIPRDR_FORMAT_LIST* formatList)
 {
 	UINT32 i, j;
 	formatMapping* mapping;
@@ -1535,25 +1549,45 @@ static WIN32ERROR wf_cliprdr_server_format_list(CliprdrClientContext* context, C
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR wf_cliprdr_server_format_list_response(CliprdrClientContext* context, CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT wf_cliprdr_server_format_list_response(CliprdrClientContext* context, CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
 {
 	wfClipboard* clipboard = (wfClipboard*) context->custom;
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR wf_cliprdr_server_lock_clipboard_data(CliprdrClientContext* context, CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT wf_cliprdr_server_lock_clipboard_data(CliprdrClientContext* context, CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
 {
 	wfClipboard* clipboard = (wfClipboard*) context->custom;
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR wf_cliprdr_server_unlock_clipboard_data(CliprdrClientContext* context, CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT wf_cliprdr_server_unlock_clipboard_data(CliprdrClientContext* context, CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
 {
 	wfClipboard* clipboard = (wfClipboard*) context->custom;
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR wf_cliprdr_server_format_data_request(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT wf_cliprdr_server_format_data_request(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
 {
 	int size = 0;
 	char* buff = NULL;
@@ -1744,7 +1778,12 @@ exit:
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR wf_cliprdr_server_format_data_response(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT wf_cliprdr_server_format_data_response(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
 {
 	BYTE* data;
 	HANDLE hMem;
@@ -1761,7 +1800,12 @@ static WIN32ERROR wf_cliprdr_server_format_data_response(CliprdrClientContext* c
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR wf_cliprdr_server_file_contents_request(CliprdrClientContext* context, CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT wf_cliprdr_server_file_contents_request(CliprdrClientContext* context, CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
 	UINT32 uSize = 0;
 	BYTE* pData = NULL;
@@ -1935,7 +1979,12 @@ error:
 	return ERROR_INTERNAL_ERROR;
 }
 
-WIN32ERROR wf_cliprdr_server_file_contents_response(CliprdrClientContext* context, CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT wf_cliprdr_server_file_contents_response(CliprdrClientContext* context, CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
 {
 	wfClipboard* clipboard = (wfClipboard*) context->custom;
 

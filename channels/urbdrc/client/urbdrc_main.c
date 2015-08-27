@@ -232,13 +232,18 @@ static void func_lock_isoch_mutex(TRANSFER_DATA*  transfer_data)
 
 #endif
 
-static WIN32ERROR urbdrc_process_capability_request(URBDRC_CHANNEL_CALLBACK* callback, char* data, UINT32 data_sizem, UINT32 MessageId)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT urbdrc_process_capability_request(URBDRC_CHANNEL_CALLBACK* callback, char* data, UINT32 data_sizem, UINT32 MessageId)
 {
 	UINT32 InterfaceId;
 	UINT32 Version;
 	UINT32 out_size;
 	char * out_data;
-	WIN32ERROR ret;
+	UINT ret;
 
 	WLog_VRB(TAG, "");
 	data_read_UINT32(data + 0, Version);
@@ -261,7 +266,12 @@ static WIN32ERROR urbdrc_process_capability_request(URBDRC_CHANNEL_CALLBACK* cal
 	return ret;
 }
 
-static WIN32ERROR urbdrc_process_channel_create(URBDRC_CHANNEL_CALLBACK* callback, char* data, UINT32 data_sizem, UINT32 MessageId)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT urbdrc_process_channel_create(URBDRC_CHANNEL_CALLBACK* callback, char* data, UINT32 data_sizem, UINT32 MessageId)
 {
 	UINT32 InterfaceId;
 	UINT32 out_size;
@@ -269,7 +279,7 @@ static WIN32ERROR urbdrc_process_channel_create(URBDRC_CHANNEL_CALLBACK* callbac
 	UINT32 MinorVersion;
 	UINT32 Capabilities;
 	char* out_data;
-	WIN32ERROR ret;
+	UINT ret;
 
 	WLog_VRB(TAG, "");
 	data_read_UINT32(data + 0, MajorVersion);
@@ -320,7 +330,12 @@ static int urdbrc_send_virtual_channel_add(IWTSVirtualChannel* channel, UINT32 M
 	return 0;
 }
 
-static WIN32ERROR urdbrc_send_usb_device_add(URBDRC_CHANNEL_CALLBACK* callback, IUDEVICE* pdev)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT urdbrc_send_usb_device_add(URBDRC_CHANNEL_CALLBACK* callback, IUDEVICE* pdev)
 {
 	char* out_data;
 	UINT32 InterfaceId;
@@ -331,7 +346,7 @@ static WIN32ERROR urdbrc_send_usb_device_add(URBDRC_CHANNEL_CALLBACK* callback, 
 	char* composite_str = "USB\\COMPOSITE";
 	int size, out_offset, cchCompatIds, bcdUSB;
 	ISOCH_CALLBACK_QUEUE *cb_queue;
-	WIN32ERROR ret;
+	UINT ret;
 
 	WLog_VRB(TAG, "");
 	InterfaceId = ((STREAM_ID_PROXY<<30) | CLIENT_DEVICE_SINK);
@@ -434,12 +449,17 @@ static WIN32ERROR urdbrc_send_usb_device_add(URBDRC_CHANNEL_CALLBACK* callback, 
 	return ret;
 }
 
-static WIN32ERROR urbdrc_exchange_capabilities(URBDRC_CHANNEL_CALLBACK* callback, char* pBuffer, UINT32 cbSize)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT urbdrc_exchange_capabilities(URBDRC_CHANNEL_CALLBACK* callback, char* pBuffer, UINT32 cbSize)
 {
 	UINT32 MessageId;
 	UINT32 FunctionId;
 
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	data_read_UINT32(pBuffer + 0, MessageId);
 	data_read_UINT32(pBuffer + 4, FunctionId);
@@ -1103,12 +1123,17 @@ void* urbdrc_new_device_create(void* arg)
 	return 0;
 }
 
-static WIN32ERROR urbdrc_process_channel_notification(URBDRC_CHANNEL_CALLBACK* callback, char* pBuffer, UINT32 cbSize)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT urbdrc_process_channel_notification(URBDRC_CHANNEL_CALLBACK* callback, char* pBuffer, UINT32 cbSize)
 {
 	int i;
 	UINT32 MessageId;
 	UINT32 FunctionId;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*) callback->plugin;
 
 	WLog_DBG(TAG, "...");
@@ -1165,7 +1190,12 @@ static WIN32ERROR urbdrc_process_channel_notification(URBDRC_CHANNEL_CALLBACK* c
 	return error;
 }
 
-static WIN32ERROR urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
 {
 	URBDRC_CHANNEL_CALLBACK* callback = (URBDRC_CHANNEL_CALLBACK*) pChannelCallback;
 	URBDRC_PLUGIN* urbdrc;
@@ -1173,7 +1203,7 @@ static WIN32ERROR urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCa
 	UINT32 InterfaceTemp;
 	UINT32 InterfaceId;
 	UINT32 Mask;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 	char* pBuffer = (char*)Stream_Pointer(data);
 	UINT32 cbSize = Stream_GetRemainingLength(data);
 
@@ -1255,7 +1285,12 @@ static WIN32ERROR urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCa
 	return 0;
 }
 
-static WIN32ERROR urbdrc_on_close(IWTSVirtualChannelCallback * pChannelCallback)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT urbdrc_on_close(IWTSVirtualChannelCallback * pChannelCallback)
 {
 	URBDRC_CHANNEL_CALLBACK* callback = (URBDRC_CHANNEL_CALLBACK*) pChannelCallback;
 	URBDRC_PLUGIN* urbdrc  = (URBDRC_PLUGIN*) callback->plugin;
@@ -1294,7 +1329,12 @@ static WIN32ERROR urbdrc_on_close(IWTSVirtualChannelCallback * pChannelCallback)
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR urbdrc_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT urbdrc_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
 	IWTSVirtualChannel * pChannel, BYTE* pData, int* pbAccept, IWTSVirtualChannelCallback** ppCallback)
 {
 	URBDRC_LISTENER_CALLBACK* listener_callback = (URBDRC_LISTENER_CALLBACK*) pListenerCallback;
@@ -1315,7 +1355,12 @@ static WIN32ERROR urbdrc_on_new_channel_connection(IWTSListenerCallback* pListen
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR urbdrc_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT urbdrc_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr)
 {
 	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*) pPlugin;
 	IUDEVMAN* udevman = NULL;
@@ -1345,7 +1390,12 @@ static WIN32ERROR urbdrc_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChann
 		(IWTSListenerCallback*) urbdrc->listener_callback, NULL);
 }
 
-static WIN32ERROR urbdrc_plugin_terminated(IWTSPlugin* pPlugin)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT urbdrc_plugin_terminated(IWTSPlugin* pPlugin)
 {
 	URBDRC_PLUGIN*	urbdrc = (URBDRC_PLUGIN*) pPlugin;
 	IUDEVMAN* udevman = urbdrc->udevman;
@@ -1401,7 +1451,12 @@ static void urbdrc_register_udevman_addin(IWTSPlugin* pPlugin, IUDEVMAN* udevman
 	urbdrc->udevman = udevman;
 }
 
-static WIN32ERROR urbdrc_load_udevman_addin(IWTSPlugin* pPlugin, const char* name, ADDIN_ARGV* args)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT urbdrc_load_udevman_addin(IWTSPlugin* pPlugin, const char* name, ADDIN_ARGV* args)
 {
 	PFREERDP_URBDRC_DEVICE_ENTRY entry;
 	FREERDP_URBDRC_SERVICE_ENTRY_POINTS entryPoints;
@@ -1437,7 +1492,12 @@ COMMAND_LINE_ARGUMENT_A urbdrc_args[] =
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
-static WIN32ERROR urbdrc_process_addin_args(URBDRC_PLUGIN* urbdrc, ADDIN_ARGV* args)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT urbdrc_process_addin_args(URBDRC_PLUGIN* urbdrc, ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
@@ -1483,9 +1543,14 @@ static WIN32ERROR urbdrc_process_addin_args(URBDRC_PLUGIN* urbdrc, ADDIN_ARGV* a
 #define DVCPluginEntry urbdrc_DVCPluginEntry
 #endif
 
-WIN32ERROR DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
-	WIN32ERROR status = 0;
+	UINT status = 0;
 	ADDIN_ARGV* args;
 	URBDRC_PLUGIN* urbdrc;
 

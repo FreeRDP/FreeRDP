@@ -29,6 +29,6 @@
 
 #include "rdpgfx_main.h"
 
-WIN32ERROR rdpgfx_decode(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd);
+UINT rdpgfx_decode(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd);
 
 #endif /* FREERDP_CHANNEL_RDPGFX_CLIENT_CODEC_H */

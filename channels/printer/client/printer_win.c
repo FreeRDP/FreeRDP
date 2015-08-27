@@ -77,7 +77,12 @@ static void printer_win_get_printjob_name(char* buf, int size)
 		t->tm_hour, t->tm_min, t->tm_sec);
 }
 
-static WIN32ERROR printer_win_write_printjob(rdpPrintJob* printjob, BYTE* data, int size)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT printer_win_write_printjob(rdpPrintJob* printjob, BYTE* data, int size)
 {
 	rdpWinPrintJob* win_printjob = (rdpWinPrintJob*) printjob;
 

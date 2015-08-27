@@ -22,8 +22,6 @@
 #ifndef FREERDP_CHANNEL_CLIENT_DRDYNVC_H
 #define FREERDP_CHANNEL_CLIENT_DRDYNVC_H
 
-#include <winpr/win32error.h>
-
 /**
  * Client Interface
  */
@@ -31,8 +29,8 @@
 typedef struct _drdynvc_client_context DrdynvcClientContext;
 
 typedef int (*pcDrdynvcGetVersion)(DrdynvcClientContext* context);
-typedef WIN32ERROR (*pcDrdynvcOnChannelConnected)(DrdynvcClientContext* context, const char* name, void* pInterface);
-typedef WIN32ERROR (*pcDrdynvcOnChannelDisconnected)(DrdynvcClientContext* context, const char* name, void* pInterface);
+typedef UINT (*pcDrdynvcOnChannelConnected)(DrdynvcClientContext* context, const char* name, void* pInterface);
+typedef UINT (*pcDrdynvcOnChannelDisconnected)(DrdynvcClientContext* context, const char* name, void* pInterface);
 
 struct _drdynvc_client_context
 {

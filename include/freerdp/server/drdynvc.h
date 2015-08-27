@@ -33,8 +33,8 @@
 typedef struct _drdynvc_client_context DrdynvcServerContext;
 typedef struct _drdynvc_server_private DrdynvcServerPrivate;
 
-typedef WIN32ERROR (*psDrdynvcStart)(DrdynvcServerContext* context);
-typedef WIN32ERROR (*psDrdynvcStop)(DrdynvcServerContext* context);
+typedef UINT (*psDrdynvcStart)(DrdynvcServerContext* context);
+typedef UINT (*psDrdynvcStop)(DrdynvcServerContext* context);
 
 struct _drdynvc_client_context
 {

@@ -89,7 +89,12 @@ void devman_unregister_device(DEVMAN* devman, void* key)
 		devman_device_free(device);
 }
 
-static WIN32ERROR devman_register_device(DEVMAN* devman, DEVICE* device)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT devman_register_device(DEVMAN* devman, DEVICE* device)
 {
 	void* key = NULL;
 
@@ -120,7 +125,12 @@ static char SMARTCARD_SERVICE_NAME[] = "smartcard";
 static char SERIAL_SERVICE_NAME[] = "serial";
 static char PARALLEL_SERVICE_NAME[] = "parallel";
 
-WIN32ERROR devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device, rdpContext* rdpcontext)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device, rdpContext* rdpcontext)
 {
 	char* ServiceName = NULL;
 	DEVICE_SERVICE_ENTRY_POINTS ep;

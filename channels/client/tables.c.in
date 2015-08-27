@@ -20,7 +20,6 @@
  */
 
 #include "tables.h"
-#include <winpr/win32error.h>
 
 ${CLIENT_STATIC_ENTRY_IMPORTS}
 

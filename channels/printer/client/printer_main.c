@@ -66,7 +66,12 @@ struct _PRINTER_DEVICE
 	rdpContext* rdpcontext;
 };
 
-static WIN32ERROR printer_process_irp_create(PRINTER_DEVICE* printer_dev, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT printer_process_irp_create(PRINTER_DEVICE* printer_dev, IRP* irp)
 {
 	rdpPrintJob* printjob = NULL;
 
@@ -86,7 +91,12 @@ static WIN32ERROR printer_process_irp_create(PRINTER_DEVICE* printer_dev, IRP* i
 	return irp->Complete(irp);
 }
 
-static WIN32ERROR printer_process_irp_close(PRINTER_DEVICE* printer_dev, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT printer_process_irp_close(PRINTER_DEVICE* printer_dev, IRP* irp)
 {
 	rdpPrintJob* printjob = NULL;
 
@@ -107,12 +117,17 @@ static WIN32ERROR printer_process_irp_close(PRINTER_DEVICE* printer_dev, IRP* ir
 	return irp->Complete(irp);
 }
 
-static WIN32ERROR printer_process_irp_write(PRINTER_DEVICE* printer_dev, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT printer_process_irp_write(PRINTER_DEVICE* printer_dev, IRP* irp)
 {
 	UINT32 Length;
 	UINT64 Offset;
 	rdpPrintJob* printjob = NULL;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	Stream_Read_UINT32(irp->input, Length);
 	Stream_Read_UINT64(irp->input, Offset);
@@ -143,15 +158,25 @@ static WIN32ERROR printer_process_irp_write(PRINTER_DEVICE* printer_dev, IRP* ir
 	return irp->Complete(irp);
 }
 
-static WIN32ERROR printer_process_irp_device_control(PRINTER_DEVICE* printer_dev, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT printer_process_irp_device_control(PRINTER_DEVICE* printer_dev, IRP* irp)
 {
 	Stream_Write_UINT32(irp->output, 0); /* OutputBufferLength */
 	return irp->Complete(irp);
 }
 
-static WIN32ERROR printer_process_irp(PRINTER_DEVICE* printer_dev, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT printer_process_irp(PRINTER_DEVICE* printer_dev, IRP* irp)
 {
-	WIN32ERROR error;
+	UINT error;
 	switch (irp->MajorFunction)
 	{
 		case IRP_MJ_CREATE:
@@ -199,7 +224,7 @@ static void* printer_thread_func(void* arg)
 	IRP* irp;
 	PRINTER_DEVICE* printer_dev = (PRINTER_DEVICE*) arg;
 	HANDLE obj[] = {printer_dev->event, printer_dev->stopEvent};
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	while (1)
 	{
@@ -241,7 +266,12 @@ static void* printer_thread_func(void* arg)
 	return NULL;
 }
 
-static WIN32ERROR printer_irp_request(DEVICE* device, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT printer_irp_request(DEVICE* device, IRP* irp)
 {
 	PRINTER_DEVICE* printer_dev = (PRINTER_DEVICE*) device;
 
@@ -251,11 +281,16 @@ static WIN32ERROR printer_irp_request(DEVICE* device, IRP* irp)
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR printer_free(DEVICE* device)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT printer_free(DEVICE* device)
 {
 	IRP* irp;
 	PRINTER_DEVICE* printer_dev = (PRINTER_DEVICE*) device;
-    WIN32ERROR error;
+    UINT error;
 
 	SetEvent(printer_dev->stopEvent);
 	if (WaitForSingleObject(printer_dev->thread, INFINITE) == WAIT_FAILED)
@@ -283,7 +318,12 @@ static WIN32ERROR printer_free(DEVICE* device)
     return CHANNEL_RC_OK;
 }
 
-WIN32ERROR printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* printer)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* printer)
 {
 	char* port;
 	UINT32 Flags;
@@ -294,7 +334,7 @@ WIN32ERROR printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinte
 	UINT32 CachedFieldsLen;
 	BYTE* CachedPrinterConfigData;
 	PRINTER_DEVICE* printer_dev;
-	WIN32ERROR error;
+	UINT error;
 
 	port = malloc(10);
 	if (!port)
@@ -411,7 +451,12 @@ error_out:
 #define DeviceServiceEntry	printer_DeviceServiceEntry
 #endif
 
-WIN32ERROR DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	int i;
 	char* name;
@@ -420,7 +465,7 @@ WIN32ERROR DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	rdpPrinter** printers;
 	RDPDR_PRINTER* device;
 	rdpPrinterDriver* driver = NULL;
-	WIN32ERROR error;
+	UINT error;
 
 #ifdef WITH_CUPS
 	driver = printer_cups_get_driver();

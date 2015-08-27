@@ -35,7 +35,12 @@
 
 #include "rdpsnd_main.h"
 
-WIN32ERROR rdpsnd_server_send_formats(RdpsndServerContext* context, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpsnd_server_send_formats(RdpsndServerContext* context, wStream* s)
 {
 	int pos;
 	UINT16 i;
@@ -85,11 +90,16 @@ WIN32ERROR rdpsnd_server_send_formats(RdpsndServerContext* context, wStream* s)
 	return status ? CHANNEL_RC_OK: ERROR_INTERNAL_ERROR;
 }
 
-static WIN32ERROR rdpsnd_server_recv_waveconfirm(RdpsndServerContext* context, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_server_recv_waveconfirm(RdpsndServerContext* context, wStream* s)
 {
 	UINT16 timestamp;
 	BYTE confirmBlockNum;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
@@ -108,7 +118,12 @@ static WIN32ERROR rdpsnd_server_recv_waveconfirm(RdpsndServerContext* context, w
 	return error;
 }
 
-static WIN32ERROR rdpsnd_server_recv_quality_mode(RdpsndServerContext* context, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_server_recv_quality_mode(RdpsndServerContext* context, wStream* s)
 {
 	UINT16 quality;
 	
@@ -124,13 +139,18 @@ static WIN32ERROR rdpsnd_server_recv_quality_mode(RdpsndServerContext* context, 
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 {
 	int i, num_known_format = 0;
 	UINT32 flags, vol, pitch;
 	UINT16 udpPort;
 	BYTE lastblock;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	if (Stream_GetRemainingLength(s) < 20)
 	{
@@ -222,7 +242,7 @@ static void* rdpsnd_server_thread(void* arg)
 	DWORD nCount, status;
 	HANDLE events[8];
 	RdpsndServerContext* context;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	context = (RdpsndServerContext *)arg;
 	nCount = 0;
@@ -273,13 +293,23 @@ out:
 	return NULL;
 }
 
-static WIN32ERROR rdpsnd_server_initialize(RdpsndServerContext* context, BOOL ownThread)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_server_initialize(RdpsndServerContext* context, BOOL ownThread)
 {
 	context->priv->ownThread = ownThread;
 	return context->Start(context);
 }
 
-static WIN32ERROR rdpsnd_server_select_format(RdpsndServerContext* context, int client_format_index)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_server_select_format(RdpsndServerContext* context, int client_format_index)
 {
 	int bs;
 	int out_buffer_size;
@@ -346,7 +376,12 @@ static WIN32ERROR rdpsnd_server_select_format(RdpsndServerContext* context, int 
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR rdpsnd_server_send_audio_pdu(RdpsndServerContext* context, UINT16 wTimestamp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_server_send_audio_pdu(RdpsndServerContext* context, UINT16 wTimestamp)
 {
 	int size;
 	BYTE* src;
@@ -357,7 +392,7 @@ static WIN32ERROR rdpsnd_server_send_audio_pdu(RdpsndServerContext* context, UIN
 	int tbytes_per_frame;
 	ULONG written;
 	wStream* s = context->priv->rdpsnd_pdu;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	format = &context->client_formats[context->selected_client_format];
 	tbytes_per_frame = format->nChannels * context->priv->src_bytes_per_sample;
@@ -455,11 +490,16 @@ out:
 	return error;
 }
 
-static WIN32ERROR rdpsnd_server_send_samples(RdpsndServerContext* context, const void* buf, int nframes, UINT16 wTimestamp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_server_send_samples(RdpsndServerContext* context, const void* buf, int nframes, UINT16 wTimestamp)
 {
 	int cframes;
 	int cframesize;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	if (context->selected_client_format < 0)
 		return ERROR_INVALID_DATA;
@@ -486,7 +526,12 @@ static WIN32ERROR rdpsnd_server_send_samples(RdpsndServerContext* context, const
 	return error;
 }
 
-static WIN32ERROR rdpsnd_server_set_volume(RdpsndServerContext* context, int left, int right)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_server_set_volume(RdpsndServerContext* context, int left, int right)
 {
 	int pos;
 	BOOL status;
@@ -510,13 +555,18 @@ static WIN32ERROR rdpsnd_server_set_volume(RdpsndServerContext* context, int lef
 	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
-static WIN32ERROR rdpsnd_server_close(RdpsndServerContext* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_server_close(RdpsndServerContext* context)
 {
 	int pos;
 	BOOL status;
 	ULONG written;
 	wStream* s = context->priv->rdpsnd_pdu;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	if (context->selected_client_format < 0)
 		return ERROR_INVALID_DATA;
@@ -546,12 +596,17 @@ static WIN32ERROR rdpsnd_server_close(RdpsndServerContext* context)
 	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
-static WIN32ERROR rdpsnd_server_start(RdpsndServerContext* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_server_start(RdpsndServerContext* context)
 {
 	void *buffer = NULL;
 	DWORD bytesReturned;
 	RdpsndServerPrivate *priv = context->priv;
-	WIN32ERROR error = ERROR_INTERNAL_ERROR;
+	UINT error = ERROR_INTERNAL_ERROR;
 
 	priv->ChannelHandle = WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, "rdpsnd");
 	if (!priv->ChannelHandle)
@@ -613,9 +668,14 @@ out_close:
 	return error;
 }
 
-static WIN32ERROR rdpsnd_server_stop(RdpsndServerContext* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_server_stop(RdpsndServerContext* context)
 {
-    WIN32ERROR error = CHANNEL_RC_OK;
+    UINT error = CHANNEL_RC_OK;
 	if (context->priv->ownThread)
 	{
 		if (context->priv->StopEvent)
@@ -739,10 +799,15 @@ HANDLE rdpsnd_server_get_event_handle(RdpsndServerContext *context)
  * 		   ERROR_NO_DATA if no data could be read this time
  *         otherwise error
  */
-WIN32ERROR rdpsnd_server_handle_messages(RdpsndServerContext *context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpsnd_server_handle_messages(RdpsndServerContext *context)
 {
 	DWORD bytesReturned;
-	WIN32ERROR ret = CHANNEL_RC_OK;
+	UINT ret = CHANNEL_RC_OK;
 
 	RdpsndServerPrivate *priv = context->priv;
 	wStream *s = priv->input_stream;

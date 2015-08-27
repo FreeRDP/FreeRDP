@@ -29,7 +29,6 @@
 
 #include <winpr/crt.h>
 #include <winpr/cmdline.h>
-#include <winpr/win32error.h>
 
 #include <pulse/pulseaudio.h>
 
@@ -90,7 +89,12 @@ static void audin_pulse_context_state_callback(pa_context* context, void* userda
 	}
 }
 
-static WIN32ERROR audin_pulse_connect(IAudinDevice* device)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_pulse_connect(IAudinDevice* device)
 {
 	pa_context_state_t state;
 	AudinPulseDevice* pulse = (AudinPulseDevice*) device;
@@ -131,7 +135,12 @@ static WIN32ERROR audin_pulse_connect(IAudinDevice* device)
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR audin_pulse_free(IAudinDevice* device)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_pulse_free(IAudinDevice* device)
 {
 	AudinPulseDevice* pulse = (AudinPulseDevice*) device;
 
@@ -200,7 +209,12 @@ static BOOL audin_pulse_format_supported(IAudinDevice* device, audinFormat* form
 	return FALSE;
 }
 
-static WIN32ERROR audin_pulse_set_format(IAudinDevice* device, audinFormat* format, UINT32 FramesPerPacket)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_pulse_set_format(IAudinDevice* device, audinFormat* format, UINT32 FramesPerPacket)
 {
 	int bs;
 	pa_sample_spec sample_spec = { 0 };
@@ -288,7 +302,7 @@ static void audin_pulse_stream_request_callback(pa_stream* stream, size_t length
 	int encoded_size;
 	BYTE* encoded_data;
 	AudinPulseDevice* pulse = (AudinPulseDevice*) userdata;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	/* There is a race condition here where we may receive this callback
 	 * before the buffer has been set up in the main code.  It's probably
@@ -354,7 +368,12 @@ static void audin_pulse_stream_request_callback(pa_stream* stream, size_t length
 }
 
 
-static WIN32ERROR audin_pulse_close(IAudinDevice* device)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_pulse_close(IAudinDevice* device)
 {
 	AudinPulseDevice* pulse = (AudinPulseDevice*) device;
 
@@ -378,7 +397,12 @@ static WIN32ERROR audin_pulse_close(IAudinDevice* device)
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* user_data)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* user_data)
 {
 	pa_stream_state_t state;
 	pa_buffer_attr buffer_attr = { 0 };
@@ -457,7 +481,12 @@ static COMMAND_LINE_ARGUMENT_A audin_pulse_args[] =
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
-static WIN32ERROR audin_pulse_parse_addin_args(AudinPulseDevice* device, ADDIN_ARGV* args)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_pulse_parse_addin_args(AudinPulseDevice* device, ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
@@ -498,11 +527,16 @@ static WIN32ERROR audin_pulse_parse_addin_args(AudinPulseDevice* device, ADDIN_A
 #define freerdp_audin_client_subsystem_entry	pulse_freerdp_audin_client_subsystem_entry
 #endif
 
-WIN32ERROR freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	ADDIN_ARGV* args;
 	AudinPulseDevice* pulse;
-	WIN32ERROR error;
+	UINT error;
 
 	pulse = (AudinPulseDevice*) calloc(1, sizeof(AudinPulseDevice));
 	if (!pulse)

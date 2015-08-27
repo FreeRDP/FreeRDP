@@ -603,7 +603,12 @@ static COMMAND_LINE_ARGUMENT_A rdpsnd_alsa_args[] =
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
-static WIN32ERROR rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* args)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
@@ -646,11 +651,16 @@ static WIN32ERROR rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, ADDIN
 #define freerdp_rdpsnd_client_subsystem_entry	alsa_freerdp_rdpsnd_client_subsystem_entry
 #endif
 
-WIN32ERROR freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	ADDIN_ARGV* args;
 	rdpsndAlsaPlugin* alsa;
-	WIN32ERROR error;
+	UINT error;
 
 	alsa = (rdpsndAlsaPlugin*) calloc(1, sizeof(rdpsndAlsaPlugin));
 	if (!alsa)

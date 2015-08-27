@@ -34,7 +34,12 @@ static const AUDIO_FORMAT default_supported_audio_formats[] =
 	{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, 0, NULL }
 };
 
-static WIN32ERROR AudinServerOpening(audin_server_context* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT AudinServerOpening(audin_server_context* context)
 {
 	AUDIO_FORMAT* agreed_format = NULL;
 	int i = 0, j = 0;
@@ -64,12 +69,22 @@ static WIN32ERROR AudinServerOpening(audin_server_context* context)
 	context->SelectFormat(context, i);
 	return CHANNEL_RC_OK;
 }
-static WIN32ERROR AudinServerOpenResult(audin_server_context* context, UINT32 result)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT AudinServerOpenResult(audin_server_context* context, UINT32 result)
 {
 	WLog_INFO(TAG, "AUDIN open result %u.\n", result);
 	return CHANNEL_RC_OK;
 }
-static WIN32ERROR AudinServerReceiveSamples(audin_server_context* context, const void* buf, int nframes)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT AudinServerReceiveSamples(audin_server_context* context, const void* buf, int nframes)
 {
 	rdpShadowClient* client = (rdpShadowClient* )context->data;
 	rdpShadowSubsystem* subsystem = client->server->subsystem;

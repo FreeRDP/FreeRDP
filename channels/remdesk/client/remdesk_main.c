@@ -40,7 +40,12 @@ RemdeskClientContext* remdesk_get_client_interface(remdeskPlugin* remdesk)
 	return pInterface;
 }
 
-static WIN32ERROR remdesk_virtual_channel_write(remdeskPlugin* remdesk, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_virtual_channel_write(remdeskPlugin* remdesk, wStream* s)
 {
 	UINT32 status;
 
@@ -60,7 +65,12 @@ static WIN32ERROR remdesk_virtual_channel_write(remdeskPlugin* remdesk, wStream*
 	return status;
 }
 
-WIN32ERROR remdesk_generate_expert_blob(remdeskPlugin* remdesk)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT remdesk_generate_expert_blob(remdeskPlugin* remdesk)
 {
 	char* name;
 	char* pass;
@@ -114,7 +124,12 @@ WIN32ERROR remdesk_generate_expert_blob(remdeskPlugin* remdesk)
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR remdesk_read_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_read_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
 	int status;
 	UINT32 ChannelNameLen;
@@ -164,7 +179,12 @@ static WIN32ERROR remdesk_read_channel_header(wStream* s, REMDESK_CHANNEL_HEADER
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR remdesk_write_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_write_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
 	int index;
 	UINT32 ChannelNameLen;
@@ -187,14 +207,24 @@ static WIN32ERROR remdesk_write_channel_header(wStream* s, REMDESK_CHANNEL_HEADE
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR remdesk_write_ctl_header(wStream* s, REMDESK_CTL_HEADER* ctlHeader)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_write_ctl_header(wStream* s, REMDESK_CTL_HEADER* ctlHeader)
 {
 	remdesk_write_channel_header(s, (REMDESK_CHANNEL_HEADER*) ctlHeader);
 	Stream_Write_UINT32(s, ctlHeader->msgType); /* msgType (4 bytes) */
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR remdesk_prepare_ctl_header(REMDESK_CTL_HEADER* ctlHeader, UINT32 msgType, UINT32 msgSize)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_prepare_ctl_header(REMDESK_CTL_HEADER* ctlHeader, UINT32 msgType, UINT32 msgSize)
 {
 	ctlHeader->msgType = msgType;
 	strcpy(ctlHeader->ChannelName, REMDESK_CHANNEL_CTL_NAME);
@@ -202,12 +232,22 @@ static WIN32ERROR remdesk_prepare_ctl_header(REMDESK_CTL_HEADER* ctlHeader, UINT
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR remdesk_recv_ctl_server_announce_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_recv_ctl_server_announce_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR remdesk_recv_ctl_version_info_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_recv_ctl_version_info_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
 	UINT32 versionMajor;
 	UINT32 versionMinor;
@@ -226,11 +266,16 @@ static WIN32ERROR remdesk_recv_ctl_version_info_pdu(remdeskPlugin* remdesk, wStr
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR remdesk_send_ctl_version_info_pdu(remdeskPlugin* remdesk)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_send_ctl_version_info_pdu(remdeskPlugin* remdesk)
 {
 	wStream* s;
 	REMDESK_CTL_VERSION_INFO_PDU pdu;
-	WIN32ERROR  error;
+	UINT  error;
 
 	remdesk_prepare_ctl_header(&(pdu.ctlHeader), REMDESK_CTL_VERSIONINFO, 8);
 
@@ -259,7 +304,12 @@ static WIN32ERROR remdesk_send_ctl_version_info_pdu(remdeskPlugin* remdesk)
 	return error;
 }
 
-static WIN32ERROR remdesk_recv_ctl_result_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEADER* header, UINT32 *pResult)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_recv_ctl_result_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEADER* header, UINT32 *pResult)
 {
 	UINT32 result;
 
@@ -276,10 +326,15 @@ static WIN32ERROR remdesk_recv_ctl_result_pdu(remdeskPlugin* remdesk, wStream* s
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 {
 	int status;
-	WIN32ERROR error;
+	UINT error;
 	wStream* s = NULL;
 	int cbExpertBlobW = 0;
 	WCHAR* expertBlobW = NULL;
@@ -347,10 +402,15 @@ out:
 	return error;
 }
 
-static WIN32ERROR remdesk_send_ctl_remote_control_desktop_pdu(remdeskPlugin* remdesk)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_send_ctl_remote_control_desktop_pdu(remdeskPlugin* remdesk)
 {
 	int status;
-	WIN32ERROR error;
+	UINT error;
 	wStream* s = NULL;
 	int cbRaConnectionStringW = 0;
 	WCHAR* raConnectionStringW = NULL;
@@ -395,10 +455,15 @@ out:
 	return error;
 }
 
-static WIN32ERROR remdesk_send_ctl_verify_password_pdu(remdeskPlugin* remdesk)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_send_ctl_verify_password_pdu(remdeskPlugin* remdesk)
 {
 	int status;
-	WIN32ERROR error;
+	UINT error;
 	wStream* s;
 	int cbExpertBlobW = 0;
 	WCHAR* expertBlobW = NULL;
@@ -449,9 +514,14 @@ out:
 	return error;
 }
 
-static WIN32ERROR remdesk_send_ctl_expert_on_vista_pdu(remdeskPlugin* remdesk)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_send_ctl_expert_on_vista_pdu(remdeskPlugin* remdesk)
 {
-	WIN32ERROR error;
+	UINT error;
 	wStream* s;
 	REMDESK_CTL_EXPERT_ON_VISTA_PDU pdu;
 
@@ -483,9 +553,14 @@ static WIN32ERROR remdesk_send_ctl_expert_on_vista_pdu(remdeskPlugin* remdesk)
 	return remdesk_virtual_channel_write(remdesk, s);
 }
 
-static WIN32ERROR remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 	UINT32 msgType = 0;
 	UINT32 result = 0;
 
@@ -591,9 +666,14 @@ static WIN32ERROR remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s, REMDE
 	return error;
 }
 
-static WIN32ERROR remdesk_process_receive(remdeskPlugin* remdesk, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_process_receive(remdeskPlugin* remdesk, wStream* s)
 {
-	WIN32ERROR status;
+	UINT status;
 	REMDESK_CHANNEL_HEADER header;
 
 #if 0
@@ -649,7 +729,12 @@ static void remdesk_process_connect(remdeskPlugin* remdesk)
 static wListDictionary* g_InitHandles = NULL;
 static wListDictionary* g_OpenHandles = NULL;
 
-WIN32ERROR remdesk_add_init_handle_data(void* pInitHandle, void* pUserData)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT remdesk_add_init_handle_data(void* pInitHandle, void* pUserData)
 {
 	if (!g_InitHandles)
 	{
@@ -678,7 +763,12 @@ void remdesk_remove_init_handle_data(void* pInitHandle)
 	}
 }
 
-WIN32ERROR remdesk_add_open_handle_data(DWORD openHandle, void* pUserData)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT remdesk_add_open_handle_data(DWORD openHandle, void* pUserData)
 {
 	void* pOpenHandle = (void*) (size_t) openHandle;
 
@@ -711,9 +801,14 @@ void remdesk_remove_open_handle_data(DWORD openHandle)
 	}
 }
 
-WIN32ERROR remdesk_send(remdeskPlugin* remdesk, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT remdesk_send(remdeskPlugin* remdesk, wStream* s)
 {
-	WIN32ERROR status = 0;
+	UINT status = 0;
 	remdeskPlugin* plugin = (remdeskPlugin*) remdesk;
 
 	if (!plugin)
@@ -736,7 +831,12 @@ WIN32ERROR remdesk_send(remdeskPlugin* remdesk, wStream* s)
 	return status;
 }
 
-static WIN32ERROR remdesk_virtual_channel_event_data_received(remdeskPlugin* remdesk,
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_virtual_channel_event_data_received(remdeskPlugin* remdesk,
 		void* pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	wStream* data_in;
@@ -792,7 +892,7 @@ static VOID VCAPITYPE remdesk_virtual_channel_open_event(DWORD openHandle, UINT 
 		LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	remdeskPlugin* remdesk;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	remdesk = (remdeskPlugin*) remdesk_get_open_handle_data(openHandle);
 
@@ -831,7 +931,7 @@ static void* remdesk_virtual_channel_client_thread(void* arg)
 	wStream* data;
 	wMessage message;
 	remdeskPlugin* remdesk = (remdeskPlugin*) arg;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	remdesk_process_connect(remdesk);
 
@@ -870,10 +970,15 @@ static void* remdesk_virtual_channel_client_thread(void* arg)
 	return NULL;
 }
 
-static WIN32ERROR remdesk_virtual_channel_event_connected(remdeskPlugin* remdesk, LPVOID pData, UINT32 dataLength)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_virtual_channel_event_connected(remdeskPlugin* remdesk, LPVOID pData, UINT32 dataLength)
 {
 	UINT32 status;
-	WIN32ERROR error;
+	UINT error;
 
 	status = remdesk->channelEntryPoints.pVirtualChannelOpen(remdesk->InitHandle,
 		&remdesk->OpenHandle, remdesk->channelDef.name, remdesk_virtual_channel_open_event);
@@ -915,7 +1020,12 @@ error_out:
 	return error;
 }
 
-static WIN32ERROR remdesk_virtual_channel_event_disconnected(remdeskPlugin* remdesk)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_virtual_channel_event_disconnected(remdeskPlugin* remdesk)
 {
 	UINT rc;
 
@@ -959,7 +1069,7 @@ static void remdesk_virtual_channel_event_terminated(remdeskPlugin* remdesk)
 static VOID VCAPITYPE remdesk_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
 {
 	remdeskPlugin* remdesk;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	remdesk = (remdeskPlugin*) remdesk_get_init_handle_data(pInitHandle);
 
@@ -995,7 +1105,7 @@ static VOID VCAPITYPE remdesk_virtual_channel_init_event(LPVOID pInitHandle, UIN
 BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
 	UINT rc;
-	WIN32ERROR error;
+	UINT error;
 
 	remdeskPlugin* remdesk;
 	RemdeskClientContext* context = NULL;

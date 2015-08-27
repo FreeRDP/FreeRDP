@@ -50,18 +50,18 @@ struct _FILE_DIRECTORY_INFORMATION
 };
 typedef struct _FILE_DIRECTORY_INFORMATION FILE_DIRECTORY_INFORMATION;
 
-typedef WIN32ERROR (*psRdpdrStart)(RdpdrServerContext* context);
-typedef WIN32ERROR (*psRdpdrStop)(RdpdrServerContext* context);
+typedef UINT (*psRdpdrStart)(RdpdrServerContext* context);
+typedef UINT (*psRdpdrStop)(RdpdrServerContext* context);
 
-typedef WIN32ERROR (*psRdpdrDriveCreateDirectory)(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path);
-typedef WIN32ERROR (*psRdpdrDriveDeleteDirectory)(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path);
-typedef WIN32ERROR (*psRdpdrDriveQueryDirectory)(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path);
-typedef WIN32ERROR (*psRdpdrDriveOpenFile)(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path, UINT32 desiredAccess, UINT32 createDisposition);
-typedef WIN32ERROR (*psRdpdrDriveReadFile)(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, UINT32 fileId, UINT32 length, UINT32 offset);
-typedef WIN32ERROR (*psRdpdrDriveWriteFile)(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, UINT32 fileId, const char* buffer, UINT32 length, UINT32 offset);
-typedef WIN32ERROR (*psRdpdrDriveCloseFile)(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, UINT32 fileId);
-typedef WIN32ERROR (*psRdpdrDriveDeleteFile)(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path);
-typedef WIN32ERROR (*psRdpdrDriveRenameFile)(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* oldPath, const char* newPath);
+typedef UINT (*psRdpdrDriveCreateDirectory)(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path);
+typedef UINT (*psRdpdrDriveDeleteDirectory)(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path);
+typedef UINT (*psRdpdrDriveQueryDirectory)(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path);
+typedef UINT (*psRdpdrDriveOpenFile)(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path, UINT32 desiredAccess, UINT32 createDisposition);
+typedef UINT (*psRdpdrDriveReadFile)(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, UINT32 fileId, UINT32 length, UINT32 offset);
+typedef UINT (*psRdpdrDriveWriteFile)(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, UINT32 fileId, const char* buffer, UINT32 length, UINT32 offset);
+typedef UINT (*psRdpdrDriveCloseFile)(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, UINT32 fileId);
+typedef UINT (*psRdpdrDriveDeleteFile)(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* path);
+typedef UINT (*psRdpdrDriveRenameFile)(RdpdrServerContext* context, void* callbackData, UINT32 deviceId, const char* oldPath, const char* newPath);
 
 typedef void (*psRdpdrOnDriveCreate)(RdpdrServerContext* context, UINT32 deviceId, const char* name);
 typedef void (*psRdpdrOnDriveDelete)(RdpdrServerContext* context, UINT32 deviceId);

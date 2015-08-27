@@ -33,7 +33,12 @@
 
 #define TAG CHANNELS_TAG("encomsp.server")
 
-static WIN32ERROR encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	if (Stream_GetRemainingLength(s) < ENCOMSP_ORDER_HEADER_SIZE)
 		return ERROR_INVALID_DATA;
@@ -76,11 +81,16 @@ static int encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str)
 
 #endif
 
-static WIN32ERROR encomsp_recv_change_participant_control_level_pdu(EncomspServerContext* context, wStream* s, ENCOMSP_ORDER_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT encomsp_recv_change_participant_control_level_pdu(EncomspServerContext* context, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU pdu;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	beg = ((int) Stream_GetPosition(s)) - ENCOMSP_ORDER_HEADER_SIZE;
 
@@ -121,9 +131,14 @@ static WIN32ERROR encomsp_recv_change_participant_control_level_pdu(EncomspServe
 	return error;
 }
 
-static WIN32ERROR encomsp_server_receive_pdu(EncomspServerContext* context, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT encomsp_server_receive_pdu(EncomspServerContext* context, wStream* s)
 {
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 	ENCOMSP_ORDER_HEADER header;
 
 	while (Stream_GetRemainingLength(s) > 0)
@@ -167,7 +182,7 @@ static void* encomsp_server_thread(void* arg)
 	DWORD BytesReturned;
 	ENCOMSP_ORDER_HEADER* header;
 	EncomspServerContext* context;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
     DWORD status;
 
 	context = (EncomspServerContext*) arg;
@@ -265,7 +280,12 @@ out:
 	return NULL;
 }
 
-static WIN32ERROR encomsp_server_start(EncomspServerContext* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT encomsp_server_start(EncomspServerContext* context)
 {
 	context->priv->ChannelHandle = WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, "encomsp");
 
@@ -290,9 +310,14 @@ static WIN32ERROR encomsp_server_start(EncomspServerContext* context)
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR encomsp_server_stop(EncomspServerContext* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT encomsp_server_stop(EncomspServerContext* context)
 {
-    WIN32ERROR error = CHANNEL_RC_OK;
+    UINT error = CHANNEL_RC_OK;
 	SetEvent(context->priv->StopEvent);
 
 	if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)

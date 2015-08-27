@@ -102,11 +102,16 @@ static BOOL audin_alsa_set_params(AudinALSADevice* alsa, snd_pcm_t* capture_hand
 	return TRUE;
 }
 
-static WIN32ERROR audin_alsa_thread_receive(AudinALSADevice* alsa, BYTE* src, int size)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_alsa_thread_receive(AudinALSADevice* alsa, BYTE* src, int size)
 {
 	int frames;
 	int cframes;
-	WIN32ERROR ret = CHANNEL_RC_OK;
+	UINT ret = CHANNEL_RC_OK;
 	int encoded_size;
 	BYTE* encoded_data;
 	int rbytes_per_frame;
@@ -298,7 +303,12 @@ out:
 	return NULL;
 }
 
-static WIN32ERROR audin_alsa_free(IAudinDevice* device)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_alsa_free(IAudinDevice* device)
 {
 	AudinALSADevice* alsa = (AudinALSADevice*) device;
 
@@ -337,7 +347,12 @@ static BOOL audin_alsa_format_supported(IAudinDevice* device, audinFormat* forma
 	return FALSE;
 }
 
-static WIN32ERROR audin_alsa_set_format(IAudinDevice* device, audinFormat* format, UINT32 FramesPerPacket)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_alsa_set_format(IAudinDevice* device, audinFormat* format, UINT32 FramesPerPacket)
 {
 	int bs;
 	AudinALSADevice* alsa = (AudinALSADevice*) device;
@@ -379,7 +394,12 @@ static WIN32ERROR audin_alsa_set_format(IAudinDevice* device, audinFormat* forma
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR audin_alsa_open(IAudinDevice* device, AudinReceive receive, void* user_data)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_alsa_open(IAudinDevice* device, AudinReceive receive, void* user_data)
 {
 	int tbytes_per_frame;
 	AudinALSADevice* alsa = (AudinALSADevice*) device;
@@ -416,9 +436,14 @@ error_out:
 	return ERROR_INTERNAL_ERROR;
 }
 
-static WIN32ERROR audin_alsa_close(IAudinDevice* device)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_alsa_close(IAudinDevice* device)
 {
-    WIN32ERROR error = CHANNEL_RC_OK;
+    UINT error = CHANNEL_RC_OK;
 	AudinALSADevice* alsa = (AudinALSADevice*) device;
 
 	if (alsa->stopEvent)
@@ -453,7 +478,12 @@ COMMAND_LINE_ARGUMENT_A audin_alsa_args[] =
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
-static WIN32ERROR audin_alsa_parse_addin_args(AudinALSADevice* device, ADDIN_ARGV* args)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_alsa_parse_addin_args(AudinALSADevice* device, ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
@@ -494,11 +524,16 @@ static WIN32ERROR audin_alsa_parse_addin_args(AudinALSADevice* device, ADDIN_ARG
 #define freerdp_audin_client_subsystem_entry	alsa_freerdp_audin_client_subsystem_entry
 #endif
 
-WIN32ERROR freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	ADDIN_ARGV* args;
 	AudinALSADevice* alsa;
-	WIN32ERROR error;
+	UINT error;
 
 	alsa = (AudinALSADevice*) calloc(1, sizeof(AudinALSADevice));
 	if (!alsa)

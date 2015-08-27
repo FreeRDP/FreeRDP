@@ -33,12 +33,10 @@
 
 #include <winpr/crt.h>
 #include <winpr/cmdline.h>
-#include <winpr/win32error.h>
 
 #include <freerdp/types.h>
 #include <freerdp/codec/dsp.h>
 #include <freerdp/channels/log.h>
-#include <winpr/win32error.h>
 
 #include "rdpsnd_main.h"
 
@@ -339,7 +337,12 @@ static void rdpsnd_winmm_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV
 #define freerdp_rdpsnd_client_subsystem_entry	winmm_freerdp_rdpsnd_client_subsystem_entry
 #endif
 
-WIN32ERROR freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	ADDIN_ARGV* args;
 	rdpsndWinmmPlugin* winmm;

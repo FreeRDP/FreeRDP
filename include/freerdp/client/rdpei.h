@@ -23,7 +23,6 @@
 #define FREERDP_CHANNEL_CLIENT_RDPEI_H
 
 #include <freerdp/channels/rdpei.h>
-#include <winpr/win32error.h>
 
 /**
  * Client Interface
@@ -32,14 +31,14 @@
 typedef struct _rdpei_client_context RdpeiClientContext;
 
 typedef int (*pcRdpeiGetVersion)(RdpeiClientContext* context);
-typedef WIN32ERROR (*pcRdpeiAddContact)(RdpeiClientContext* context, RDPINPUT_CONTACT_DATA* contact);
+typedef UINT (*pcRdpeiAddContact)(RdpeiClientContext* context, RDPINPUT_CONTACT_DATA* contact);
 
-typedef WIN32ERROR (*pcRdpeiTouchBegin)(RdpeiClientContext* context, int externalId, int x, int y, int* contactId);
-typedef WIN32ERROR (*pcRdpeiTouchUpdate)(RdpeiClientContext* context, int externalId, int x, int y, int* contactId);
-typedef WIN32ERROR (*pcRdpeiTouchEnd)(RdpeiClientContext* context, int externalId, int x, int y, int* contactId);
+typedef UINT (*pcRdpeiTouchBegin)(RdpeiClientContext* context, int externalId, int x, int y, int* contactId);
+typedef UINT (*pcRdpeiTouchUpdate)(RdpeiClientContext* context, int externalId, int x, int y, int* contactId);
+typedef UINT (*pcRdpeiTouchEnd)(RdpeiClientContext* context, int externalId, int x, int y, int* contactId);
 
-typedef WIN32ERROR (*pcRdpeiSuspendTouch)(RdpeiClientContext* context);
-typedef WIN32ERROR (*pcRdpeiResumeTouch)(RdpeiClientContext* context);
+typedef UINT (*pcRdpeiSuspendTouch)(RdpeiClientContext* context);
+typedef UINT (*pcRdpeiResumeTouch)(RdpeiClientContext* context);
 
 struct _rdpei_client_context
 {

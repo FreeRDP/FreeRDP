@@ -27,8 +27,6 @@
 #include <winpr/print.h>
 #include <winpr/stream.h>
 #include <freerdp/channels/log.h>
-#include <winpr/win32error.h>
-
 
 #include "drdynvc_main.h"
 
@@ -46,7 +44,7 @@ static void* drdynvc_server_thread(void* arg)
 	HANDLE ChannelEvent;
 	DWORD BytesReturned;
 	DrdynvcServerContext* context;
-	WIN32ERROR error = ERROR_INTERNAL_ERROR;
+	UINT error = ERROR_INTERNAL_ERROR;
 
 	context = (DrdynvcServerContext*) arg;
 
@@ -113,7 +111,12 @@ static void* drdynvc_server_thread(void* arg)
 	return NULL;
 }
 
-static WIN32ERROR drdynvc_server_start(DrdynvcServerContext* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT drdynvc_server_start(DrdynvcServerContext* context)
 {
 	context->priv->ChannelHandle = WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, "drdynvc");
 
@@ -140,9 +143,14 @@ static WIN32ERROR drdynvc_server_start(DrdynvcServerContext* context)
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR drdynvc_server_stop(DrdynvcServerContext* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT drdynvc_server_stop(DrdynvcServerContext* context)
 {
-    WIN32ERROR error;
+    UINT error;
 	SetEvent(context->priv->StopEvent);
 
 	if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)

@@ -30,17 +30,17 @@
 const char* rdpgfx_get_cmd_id_string(UINT16 cmdId);
 const char* rdpgfx_get_codec_id_string(UINT16 codecId);
 
-WIN32ERROR rdpgfx_read_header(wStream* s, RDPGFX_HEADER* header);
-WIN32ERROR rdpgfx_write_header(wStream* s, RDPGFX_HEADER* header);
+UINT rdpgfx_read_header(wStream* s, RDPGFX_HEADER* header);
+UINT rdpgfx_write_header(wStream* s, RDPGFX_HEADER* header);
 
-WIN32ERROR rdpgfx_read_point16(wStream* s, RDPGFX_POINT16* pt16);
-WIN32ERROR rdpgfx_write_point16(wStream* s, RDPGFX_POINT16* point16);
+UINT rdpgfx_read_point16(wStream* s, RDPGFX_POINT16* pt16);
+UINT rdpgfx_write_point16(wStream* s, RDPGFX_POINT16* point16);
 
-WIN32ERROR rdpgfx_read_rect16(wStream* s, RDPGFX_RECT16* rect16);
-WIN32ERROR rdpgfx_write_rect16(wStream* s, RDPGFX_RECT16* rect16);
+UINT rdpgfx_read_rect16(wStream* s, RDPGFX_RECT16* rect16);
+UINT rdpgfx_write_rect16(wStream* s, RDPGFX_RECT16* rect16);
 
-WIN32ERROR rdpgfx_read_color32(wStream* s, RDPGFX_COLOR32* color32);
-WIN32ERROR rdpgfx_write_color32(wStream* s, RDPGFX_COLOR32* color32);
+UINT rdpgfx_read_color32(wStream* s, RDPGFX_COLOR32* color32);
+UINT rdpgfx_write_color32(wStream* s, RDPGFX_COLOR32* color32);
 
 #endif /* FREERDP_CHANNEL_RDPGFX_CLIENT_COMMON_H */
 

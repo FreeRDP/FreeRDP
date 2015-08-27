@@ -74,7 +74,12 @@ struct _PARALLEL_DEVICE
 };
 typedef struct _PARALLEL_DEVICE PARALLEL_DEVICE;
 
-static WIN32ERROR parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 {
 	char* path = NULL;
 	int status;
@@ -120,7 +125,12 @@ static WIN32ERROR parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* ir
 	return irp->Complete(irp);
 }
 
-static WIN32ERROR parallel_process_irp_close(PARALLEL_DEVICE* parallel, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT parallel_process_irp_close(PARALLEL_DEVICE* parallel, IRP* irp)
 {
 	if (close(parallel->file) < 0)
 	{
@@ -136,7 +146,12 @@ static WIN32ERROR parallel_process_irp_close(PARALLEL_DEVICE* parallel, IRP* irp
 	return irp->Complete(irp);
 }
 
-static WIN32ERROR parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 {
 	UINT32 Length;
 	UINT64 Offset;
@@ -185,7 +200,12 @@ static WIN32ERROR parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 	return irp->Complete(irp);
 }
 
-static WIN32ERROR parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 {
 	UINT32 len;
 	UINT32 Length;
@@ -219,15 +239,25 @@ static WIN32ERROR parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp
 	return irp->Complete(irp);
 }
 
-static WIN32ERROR parallel_process_irp_device_control(PARALLEL_DEVICE* parallel, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT parallel_process_irp_device_control(PARALLEL_DEVICE* parallel, IRP* irp)
 {
 	Stream_Write_UINT32(irp->output, 0); /* OutputBufferLength */
 	return irp->Complete(irp);
 }
 
-static WIN32ERROR parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
 {
-	WIN32ERROR error;
+	UINT error;
 
 	switch (irp->MajorFunction)
 	{
@@ -284,7 +314,7 @@ static void* parallel_thread_func(void* arg)
 	IRP* irp;
 	wMessage message;
 	PARALLEL_DEVICE* parallel = (PARALLEL_DEVICE*) arg;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	while (1)
 	{
@@ -320,7 +350,12 @@ static void* parallel_thread_func(void* arg)
 	return NULL;
 }
 
-static WIN32ERROR parallel_irp_request(DEVICE* device, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT parallel_irp_request(DEVICE* device, IRP* irp)
 {
 	PARALLEL_DEVICE* parallel = (PARALLEL_DEVICE*) device;
 
@@ -332,9 +367,14 @@ static WIN32ERROR parallel_irp_request(DEVICE* device, IRP* irp)
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR parallel_free(DEVICE* device)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT parallel_free(DEVICE* device)
 {
-    WIN32ERROR error;
+    UINT error;
 	PARALLEL_DEVICE* parallel = (PARALLEL_DEVICE*) device;
 
 	if (MessageQueue_PostQuit(parallel->queue, 0) && (WaitForSingleObject(parallel->thread, INFINITE) == WAIT_FAILED))
@@ -356,7 +396,12 @@ static WIN32ERROR parallel_free(DEVICE* device)
 #define DeviceServiceEntry	parallel_DeviceServiceEntry
 #endif
 
-WIN32ERROR DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	char* name;
 	char* path;
@@ -364,7 +409,7 @@ WIN32ERROR DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	size_t length;
 	RDPDR_PARALLEL* device;
 	PARALLEL_DEVICE* parallel;
-	WIN32ERROR error;
+	UINT error;
 
 	device = (RDPDR_PARALLEL*) pEntryPoints->device;
 	name = device->Name;

@@ -36,18 +36,33 @@ static const AUDIO_FORMAT supported_audio_formats[] =
 	{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, NULL }
 };
 
-static WIN32ERROR mf_peer_audin_opening(audin_server_context* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT mf_peer_audin_opening(audin_server_context* context)
 {
 	context->SelectFormat(context, 0);
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR mf_peer_audin_open_result(audin_server_context* context, UINT32 result)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT mf_peer_audin_open_result(audin_server_context* context, UINT32 result)
 {
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR mf_peer_audin_receive_samples(audin_server_context* context, const void* buf, int nframes)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT mf_peer_audin_receive_samples(audin_server_context* context, const void* buf, int nframes)
 {
 	return CHANNEL_RC_OK;
 }

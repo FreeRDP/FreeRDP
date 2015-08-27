@@ -49,7 +49,6 @@ typedef RDP_CLIENT_ENTRY_POINTS_V1 RDP_CLIENT_ENTRY_POINTS;
 #include <freerdp/extension.h>
 
 #include <winpr/stream.h>
-#include <winpr/win32error.h>
 
 #include <freerdp/input.h>
 #include <freerdp/update.h>
@@ -112,7 +111,7 @@ struct rdp_context
 	ALIGN64 wPubSub* pubSub; /* (offset 18) */
 
 	ALIGN64 HANDLE channelErrorEvent; /* (offset 19)*/
-	ALIGN64 WIN32ERROR channelErrorNum; /*(offset 20)*/
+	ALIGN64 UINT channelErrorNum; /*(offset 20)*/
 	ALIGN64 char* errorDescription; /*(offset 21)*/
 
 	UINT64 paddingB[32 - 22]; /* 22 */
@@ -286,9 +285,9 @@ FREERDP_API void freerdp_set_last_error(rdpContext* context, UINT32 lastError);
 FREERDP_API ULONG freerdp_get_transport_sent(rdpContext* context, BOOL resetCount);
 
 FREERDP_API HANDLE getChannelErrorEventHandle(rdpContext* context);
-FREERDP_API WIN32ERROR getChannelError(rdpContext* context);
+FREERDP_API UINT getChannelError(rdpContext* context);
 FREERDP_API const char* getChannelErrorDescription(rdpContext* context);
-FREERDP_API void setChannelError(rdpContext* context, WIN32ERROR errorNum, char* description);
+FREERDP_API void setChannelError(rdpContext* context, UINT errorNum, char* description);
 FREERDP_API BOOL checkChannelErrorEvent(rdpContext* context);
 
 #ifdef __cplusplus

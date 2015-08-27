@@ -33,32 +33,57 @@
 
 #define TAG CHANNELS_TAG("rdpgfx.client")
 
-WIN32ERROR rdpgfx_decode_uncompressed(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpgfx_decode_uncompressed(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR rdpgfx_decode_remotefx(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpgfx_decode_remotefx(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR rdpgfx_decode_clear(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpgfx_decode_clear(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR rdpgfx_decode_planar(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpgfx_decode_planar(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H264_METABLOCK* meta)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H264_METABLOCK* meta)
 {
 	UINT32 index;
 	RDPGFX_RECT16* regionRect;
 	RDPGFX_H264_QUANT_QUALITY* quantQualityVal;
-	WIN32ERROR error;
+	UINT error;
 
 	meta->regionRects = NULL;
 	meta->quantQualityVals = NULL;
@@ -136,9 +161,14 @@ error_out:
 	return error;
 }
 
-WIN32ERROR rdpgfx_decode_h264(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpgfx_decode_h264(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 {
-	WIN32ERROR error;
+	UINT error;
 	wStream* s;
 	RDPGFX_H264_BITMAP_STREAM h264;
 	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
@@ -177,19 +207,34 @@ WIN32ERROR rdpgfx_decode_h264(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 	return error;
 }
 
-WIN32ERROR rdpgfx_decode_alpha(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpgfx_decode_alpha(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR rdpgfx_decode_progressive(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpgfx_decode_progressive(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR rdpgfx_decode(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpgfx_decode(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 {
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	switch (cmd->codecId)
 	{

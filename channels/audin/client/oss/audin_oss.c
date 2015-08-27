@@ -32,7 +32,6 @@
 #include <winpr/string.h>
 #include <winpr/thread.h>
 #include <winpr/cmdline.h>
-#include <winpr/win32error.h>
 
 #include <err.h>
 #include <errno.h>
@@ -143,7 +142,12 @@ static BOOL audin_oss_format_supported(IAudinDevice* device, audinFormat* format
 	return TRUE;
 }
 
-static WIN32ERROR audin_oss_set_format(IAudinDevice* device, audinFormat* format, UINT32 FramesPerPacket)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_oss_set_format(IAudinDevice* device, audinFormat* format, UINT32 FramesPerPacket)
 {
 	AudinOSSDevice* oss = (AudinOSSDevice*)device;
 
@@ -172,7 +176,7 @@ static void* audin_oss_thread_func(void* arg)
 	BYTE* buffer = NULL, *encoded_data;
 	int tmp, buffer_size, encoded_size;
 	AudinOSSDevice* oss = (AudinOSSDevice*)arg;
-	WIN32ERROR error;
+	UINT error;
     DWORD status;
 
     if (arg == NULL)
@@ -192,7 +196,7 @@ static void* audin_oss_thread_func(void* arg)
 	if ((pcm_handle = open(dev_name, O_RDONLY)) < 0)
 	{
 		OSS_LOG_ERR("sound dev open failed", errno);
-		error = (WIN32ERROR)ERROR_INTERNAL_ERROR;
+		error = ERROR_INTERNAL_ERROR;
 		goto err_out;
 	}
 
@@ -341,7 +345,12 @@ err_out:
 	return NULL;
 }
 
-static WIN32ERROR audin_oss_open(IAudinDevice *device, AudinReceive receive, void *user_data) {
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_oss_open(IAudinDevice *device, AudinReceive receive, void *user_data) {
 	AudinOSSDevice *oss = (AudinOSSDevice*)device;
 
 	oss->receive = receive;
@@ -364,9 +373,14 @@ static WIN32ERROR audin_oss_open(IAudinDevice *device, AudinReceive receive, voi
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR audin_oss_close(IAudinDevice *device)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_oss_close(IAudinDevice *device)
 {
-    WIN32ERROR error;
+    UINT error;
 	AudinOSSDevice *oss = (AudinOSSDevice*)device;
 
 	if (device == NULL)
@@ -393,7 +407,12 @@ static WIN32ERROR audin_oss_close(IAudinDevice *device)
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR audin_oss_free(IAudinDevice* device)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_oss_free(IAudinDevice* device)
 {
 	AudinOSSDevice *oss = (AudinOSSDevice*)device;
 
@@ -418,7 +437,12 @@ COMMAND_LINE_ARGUMENT_A audin_oss_args[] =
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
-static WIN32ERROR audin_oss_parse_addin_args(AudinOSSDevice *device, ADDIN_ARGV *args)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_oss_parse_addin_args(AudinOSSDevice *device, ADDIN_ARGV *args)
 {
 	int status;
 	char* str_num, *eptr;
@@ -464,11 +488,16 @@ static WIN32ERROR audin_oss_parse_addin_args(AudinOSSDevice *device, ADDIN_ARGV 
 #define freerdp_audin_client_subsystem_entry	oss_freerdp_audin_client_subsystem_entry
 #endif
 
-WIN32ERROR freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	ADDIN_ARGV *args;
 	AudinOSSDevice *oss;
-	WIN32ERROR error;
+	UINT error;
 
 	oss = (AudinOSSDevice*)calloc(1, sizeof(AudinOSSDevice));
 	if (!oss)

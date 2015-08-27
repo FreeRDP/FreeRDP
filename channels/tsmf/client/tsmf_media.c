@@ -600,7 +600,7 @@ static void* tsmf_stream_ack_func(void *arg)
 {
 	HANDLE hdl[2];
 	TSMF_STREAM* stream = (TSMF_STREAM*) arg;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 	DEBUG_TSMF("in %d", stream->stream_id);
 
 	hdl[0] = stream->stopEvent;
@@ -649,7 +649,7 @@ static void* tsmf_stream_playback_func(void *arg)
 	TSMF_SAMPLE* sample;
 	TSMF_STREAM* stream = (TSMF_STREAM *) arg;
 	TSMF_PRESENTATION* presentation = stream->presentation;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
     DWORD status;
 
 	DEBUG_TSMF("in %d", stream->stream_id);
@@ -854,11 +854,16 @@ BOOL tsmf_presentation_start(TSMF_PRESENTATION* presentation)
 	return ret;
 }
 
-WIN32ERROR tsmf_presentation_sync(TSMF_PRESENTATION* presentation)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT tsmf_presentation_sync(TSMF_PRESENTATION* presentation)
 {
 	UINT32 index;
 	UINT32 count;
-    WIN32ERROR error;
+    UINT error;
 
 	ArrayList_Lock(presentation->stream_list);
 	count = ArrayList_Count(presentation->stream_list);

@@ -34,7 +34,6 @@
 #include <winpr/cmdline.h>
 #include <winpr/sysinfo.h>
 #include <winpr/collections.h>
-#include <winpr/win32error.h>
 
 #include <freerdp/types.h>
 #include <freerdp/codec/dsp.h>
@@ -435,12 +434,17 @@ static int rdpsnd_opensles_parse_addin_args(rdpsndDevicePlugin* device,
 	opensles_freerdp_rdpsnd_client_subsystem_entry
 #endif
 
-WIN32ERROR freerdp_rdpsnd_client_subsystem_entry(
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT freerdp_rdpsnd_client_subsystem_entry(
 		PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	ADDIN_ARGV* args;
 	rdpsndopenslesPlugin* opensles;
-	WIN32ERROR error;
+	UINT error;
 
 	DEBUG_SND("pEntryPoints=%p", pEntryPoints);
 

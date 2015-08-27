@@ -169,7 +169,12 @@ void rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
 	}
 }
 
-WIN32ERROR rdpdr_send_capability_response(rdpdrPlugin* rdpdr)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpdr_send_capability_response(rdpdrPlugin* rdpdr)
 {
 	wStream* s;
 

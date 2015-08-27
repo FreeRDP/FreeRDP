@@ -230,7 +230,12 @@ static void serial_process_irp_close(SERIAL_DEVICE* serial, IRP* irp)
 	Stream_Zero(irp->output, 5); /* Padding (5 bytes) */
 }
 
-static WIN32ERROR serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 {
 	UINT32 Length;
 	UINT64 Offset;
@@ -328,7 +333,12 @@ static void serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 }
 
 
-static WIN32ERROR serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 {
 	UINT32 IoControlCode;
 	UINT32 InputBufferLength;
@@ -410,9 +420,14 @@ static WIN32ERROR serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* 
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR serial_process_irp(SERIAL_DEVICE* serial, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT serial_process_irp(SERIAL_DEVICE* serial, IRP* irp)
 {
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 	WLog_Print(serial->log, WLOG_DEBUG, "IRP MajorFunction: 0x%04X MinorFunction: 0x%04X\n",
 		irp->MajorFunction, irp->MinorFunction);
 
@@ -451,7 +466,7 @@ static WIN32ERROR serial_process_irp(SERIAL_DEVICE* serial, IRP* irp)
 static void* irp_thread_func(void* arg)
 {
 	IRP_THREAD_DATA *data = (IRP_THREAD_DATA*)arg;
-	WIN32ERROR error;
+	UINT error;
 
 	/* blocks until the end of the request */
 	if ((error = serial_process_irp(data->serial, data->irp)))
@@ -694,7 +709,7 @@ static void* serial_thread_func(void* arg)
 	IRP* irp;
 	wMessage message;
 	SERIAL_DEVICE* serial = (SERIAL_DEVICE*) arg;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	while (1)
 	{
@@ -732,7 +747,12 @@ static void* serial_thread_func(void* arg)
 }
 
 
-static WIN32ERROR serial_irp_request(DEVICE* device, IRP* irp)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT serial_irp_request(DEVICE* device, IRP* irp)
 {
 	SERIAL_DEVICE* serial = (SERIAL_DEVICE*) device;
 
@@ -755,9 +775,14 @@ static WIN32ERROR serial_irp_request(DEVICE* device, IRP* irp)
 }
 
 
-static WIN32ERROR serial_free(DEVICE* device)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT serial_free(DEVICE* device)
 {
-    WIN32ERROR error;
+    UINT error;
 	SERIAL_DEVICE* serial = (SERIAL_DEVICE*) device;
 
 	WLog_Print(serial->log, WLOG_DEBUG, "freeing");
@@ -790,7 +815,12 @@ static WIN32ERROR serial_free(DEVICE* device)
 #define DeviceServiceEntry	serial_DeviceServiceEntry
 #endif
 
-WIN32ERROR DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	char* name;
 	char* path;
@@ -800,7 +830,7 @@ WIN32ERROR DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	int i, len;
 	SERIAL_DEVICE* serial;
 #endif /* __linux__ */
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	device = (RDPDR_SERIAL*) pEntryPoints->device;
 	name = device->Name;

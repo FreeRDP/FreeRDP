@@ -92,7 +92,12 @@ out_free:
 	return NULL;
 }
 
-WIN32ERROR rdpei_server_init(RdpeiServerContext *context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpei_server_init(RdpeiServerContext *context)
 {
 	void *buffer = NULL;
 	DWORD bytesReturned;
@@ -150,9 +155,14 @@ HANDLE rdpei_server_get_event_handle(RdpeiServerContext *context)
 }
 
 
-static WIN32ERROR read_cs_ready_message(RdpeiServerContext *context, wStream *s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT read_cs_ready_message(RdpeiServerContext *context, wStream *s)
 {
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 	if (Stream_GetRemainingLength(s) < 10)
 	{
 		WLog_ERR(TAG, "Not enought data!");
@@ -180,7 +190,12 @@ static WIN32ERROR read_cs_ready_message(RdpeiServerContext *context, wStream *s)
 	return error;
 }
 
-static WIN32ERROR read_touch_contact_data(RdpeiServerContext *context, wStream *s, RDPINPUT_CONTACT_DATA *contactData)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT read_touch_contact_data(RdpeiServerContext *context, wStream *s, RDPINPUT_CONTACT_DATA *contactData)
 {
 	if (Stream_GetRemainingLength(s) < 1)
 	{
@@ -228,11 +243,16 @@ static WIN32ERROR read_touch_contact_data(RdpeiServerContext *context, wStream *
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR read_touch_frame(RdpeiServerContext *context, wStream *s, RDPINPUT_TOUCH_FRAME *frame)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT read_touch_frame(RdpeiServerContext *context, wStream *s, RDPINPUT_TOUCH_FRAME *frame)
 {
 	int i;
 	RDPINPUT_CONTACT_DATA *contact;
-	WIN32ERROR error;
+	UINT error;
 
 	if (!rdpei_read_2byte_unsigned(s, &frame->contactCount) || !rdpei_read_8byte_unsigned(s, &frame->frameOffset))
 	{
@@ -260,13 +280,18 @@ static WIN32ERROR read_touch_frame(RdpeiServerContext *context, wStream *s, RDPI
 	return CHANNEL_RC_OK;
 }
 
-static WIN32ERROR read_touch_event(RdpeiServerContext *context, wStream *s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT read_touch_event(RdpeiServerContext *context, wStream *s)
 {
 	UINT32 frameCount;
 	int i;
 	RDPINPUT_TOUCH_EVENT *event = &context->priv->touchEvent;
 	RDPINPUT_TOUCH_FRAME *frame;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	if (!rdpei_read_4byte_unsigned(s, &event->encodeTime) || !rdpei_read_2byte_unsigned(s, &frameCount))
 	{
@@ -303,9 +328,14 @@ out_cleanup:
 }
 
 
-static WIN32ERROR read_dismiss_hovering_contact(RdpeiServerContext *context, wStream *s) {
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT read_dismiss_hovering_contact(RdpeiServerContext *context, wStream *s) {
 	BYTE contactId;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	if (Stream_GetRemainingLength(s) < 1)
 	{
@@ -323,11 +353,16 @@ static WIN32ERROR read_dismiss_hovering_contact(RdpeiServerContext *context, wSt
 }
 
 
-WIN32ERROR rdpei_server_handle_messages(RdpeiServerContext *context) {
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpei_server_handle_messages(RdpeiServerContext *context) {
 	DWORD bytesReturned;
 	RdpeiServerPrivate *priv = context->priv;
 	wStream *s = priv->inputStream;
-	WIN32ERROR error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 
 	if (!WTSVirtualChannelRead(priv->channelHandle, 0, (PCHAR)Stream_Pointer(s), priv->expectedBytes, &bytesReturned))
 	{
@@ -415,7 +450,12 @@ WIN32ERROR rdpei_server_handle_messages(RdpeiServerContext *context) {
 }
 
 
-WIN32ERROR rdpei_server_send_sc_ready(RdpeiServerContext *context, UINT32 version)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpei_server_send_sc_ready(RdpeiServerContext *context, UINT32 version)
 {
 	ULONG written;
 	RdpeiServerPrivate *priv = context->priv;
@@ -449,7 +489,12 @@ WIN32ERROR rdpei_server_send_sc_ready(RdpeiServerContext *context, UINT32 versio
 	return CHANNEL_RC_OK;
 }
 
-WIN32ERROR rdpei_server_suspend(RdpeiServerContext *context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpei_server_suspend(RdpeiServerContext *context)
 {
 	ULONG written;
 	RdpeiServerPrivate *priv = context->priv;
@@ -488,7 +533,12 @@ WIN32ERROR rdpei_server_suspend(RdpeiServerContext *context)
 }
 
 
-WIN32ERROR rdpei_server_resume(RdpeiServerContext *context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpei_server_resume(RdpeiServerContext *context)
 {
 	ULONG written;
 	RdpeiServerPrivate *priv = context->priv;

@@ -70,7 +70,12 @@ void rail_string_to_unicode_string(char* string, RAIL_UNICODE_STRING* unicode_st
 	unicode_string->length = (UINT16) length;
 }
 
-WIN32ERROR rail_read_pdu_header(wStream* s, UINT16* orderType, UINT16* orderLength)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_read_pdu_header(wStream* s, UINT16* orderType, UINT16* orderLength)
 {
 	if (Stream_GetRemainingLength(s) < 4)
 		return ERROR_INVALID_DATA;
@@ -97,7 +102,12 @@ wStream* rail_pdu_init(size_t length)
 	return s;
 }
 
-WIN32ERROR rail_read_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_read_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake)
 {
 	if (Stream_GetRemainingLength(s) < 4)
 		return ERROR_INVALID_DATA;
@@ -112,7 +122,12 @@ void rail_write_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake)
 	Stream_Write_UINT32(s, handshake->buildNumber); /* buildNumber (4 bytes) */
 }
 
-WIN32ERROR rail_read_handshake_ex_order(wStream* s, RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_read_handshake_ex_order(wStream* s, RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
 {
 	if (Stream_GetRemainingLength(s) < 8)
 		return ERROR_INVALID_DATA;
