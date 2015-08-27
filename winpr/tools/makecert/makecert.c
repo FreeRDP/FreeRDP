@@ -306,8 +306,24 @@ char* x509_name_parse(char* name, char* txt, int* length)
 
 char* x509_get_default_name()
 {
-	CHAR* computerName;
+	CHAR* computerName = NULL;
 	DWORD nSize = 0;
+
+    if (GetComputerNameExA(ComputerNamePhysicalDnsFullyQualified, NULL, &nSize) ||
+		GetLastError() != ERROR_MORE_DATA)
+		goto fallback;
+
+	computerName = (CHAR*)calloc(nSize, 1);
+	if (!computerName)
+		goto fallback;
+
+	if (!GetComputerNameExA(ComputerNamePhysicalDnsFullyQualified, computerName, &nSize))
+		goto fallback;
+
+    return computerName;
+
+fallback:
+    free(computerName);
 
 	if (GetComputerNameExA(ComputerNamePhysicalNetBIOS, NULL, &nSize) ||
 		GetLastError() != ERROR_MORE_DATA)
