@@ -722,7 +722,7 @@ UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS p
 	return CHANNEL_RC_OK;
 
 error_dsp_context:
-	free(alsa->device_name);
+	freerdp_dsp_context_free(alsa->dsp_context);
 error_strdup:
 	free(alsa->device_name);
 error_parse_args:
