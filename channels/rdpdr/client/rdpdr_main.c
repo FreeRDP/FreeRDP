@@ -468,12 +468,17 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 			if (!drive)
 			{
 				WLog_ERR(TAG, "calloc failed!");
+				free(dev_array[i].path);
+				dev_array[i].path = NULL;
+
 				return CHANNEL_RC_NO_MEMORY;
 			}
 
 			drive->Type = RDPDR_DTYP_FILESYSTEM;
 
-			drive->Path = _strdup(dev_array[i].path);
+			drive->Path = dev_array[i].path;
+			dev_array[i].path = NULL;
+
 			if (!drive->Path)
 			{
 				WLog_ERR(TAG, "_strdup failed!");
@@ -498,9 +503,6 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 				return error;
 			}
 		}
-
-		free(dev_array[i].path);
-		dev_array[i].path = NULL;
 	}
 	return rdpdr_send_device_list_announce_request(rdpdr, TRUE);
 }
