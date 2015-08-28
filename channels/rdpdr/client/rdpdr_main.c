@@ -408,7 +408,15 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 			/* copy hotpluged device mount point to the dev_array */
 			if (strstr(word, "/mnt/") != NULL || strstr(word, "/media/") != NULL)
 			{
-				dev_array[size].path = strdup(word);
+				dev_array[size].path = _strdup(word);
+				if (!dev_array[size].path)
+				{
+					fclose(f);
+					free(line);
+					error = CHANNEL_RC_NO_MEMORY;
+					goto cleanup;
+				}
+
 				dev_array[size++].to_add = TRUE;
 			}
 			free(word);
@@ -477,13 +485,6 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 			drive->Path = dev_array[i].path;
 			dev_array[i].path = NULL;
 
-			if (!drive->Path)
-			{
-				WLog_ERR(TAG, "_strdup failed!");
-				free(drive);
-				error = CHANNEL_RC_NO_MEMORY;
-				goto cleanup;
-			}
 			name = strrchr(drive->Path, '/') + 1;
 			drive->Name = _strdup(name);
 			if (!drive->Name)
@@ -506,16 +507,11 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 		}
 	}
 
-	for (i = 0; i < size; i++)
-		free (dev_array[size].path);
-
-	return rdpdr_send_device_list_announce_request(rdpdr, TRUE);
-
 cleanup:
 	for (i = 0; i < size; i++)
 		free (dev_array[size].path);
 
-	return error;
+	return error ? error : rdpdr_send_device_list_announce_request(rdpdr, TRUE);
 }
 
 static void* drive_hotplug_thread_func(void* arg)
