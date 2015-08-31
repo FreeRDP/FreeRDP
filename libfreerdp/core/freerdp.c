@@ -554,12 +554,13 @@ BOOL freerdp_context_new(freerdp* instance)
 	if (ret)
 		return TRUE;
 
-out_error_abort_event:
 	CloseHandle(context->abortEvent);
-out_error_create_event:
+out_error_abort_event:
 	CloseHandle(context->channelErrorEvent);
-out_error_description:
+out_error_create_event:
 	free(context->errorDescription);
+out_error_description:
+	graphics_free(context->graphics);
 out_error_graphics_new:
 	rdp_free(rdp);
 out_error_rdp_new:
