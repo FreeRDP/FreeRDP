@@ -680,21 +680,33 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 
 		_settings->ChannelCount = settings->ChannelCount;
 		_settings->ChannelDefArraySize = settings->ChannelDefArraySize;
-		_settings->ChannelDefArray = (CHANNEL_DEF*) malloc(sizeof(CHANNEL_DEF) * settings->ChannelDefArraySize);
 
-		if (!_settings->ChannelDefArray && _settings->ChannelDefArraySize)
-			goto out_fail;
+		if (_settings->ChannelDefArraySize > 0)
+		{
+			_settings->ChannelDefArray = (CHANNEL_DEF*) malloc(sizeof(CHANNEL_DEF) * settings->ChannelDefArraySize);
 
-		CopyMemory(_settings->ChannelDefArray, settings->ChannelDefArray, sizeof(CHANNEL_DEF) * settings->ChannelDefArraySize);
+			if (!_settings->ChannelDefArray)
+				goto out_fail;
+
+			CopyMemory(_settings->ChannelDefArray, settings->ChannelDefArray, sizeof(CHANNEL_DEF) * settings->ChannelDefArraySize);
+		}
+		else
+			_settings->ChannelDefArray = NULL;
 
 		_settings->MonitorCount = settings->MonitorCount;
 		_settings->MonitorDefArraySize = settings->MonitorDefArraySize;
-		_settings->MonitorDefArray = (rdpMonitor*) malloc(sizeof(rdpMonitor) * settings->MonitorDefArraySize);
 
-		if (!_settings->MonitorDefArray && _settings->MonitorDefArraySize)
-			goto out_fail;
+		if (_settings->MonitorDefArraySize > 0)
+		{
+			_settings->MonitorDefArray = (rdpMonitor*) malloc(sizeof(rdpMonitor) * settings->MonitorDefArraySize);
 
-		CopyMemory(_settings->MonitorDefArray, settings->MonitorDefArray, sizeof(rdpMonitor) * settings->MonitorDefArraySize);
+			if (!_settings->MonitorDefArray)
+				goto out_fail;
+
+			CopyMemory(_settings->MonitorDefArray, settings->MonitorDefArray, sizeof(rdpMonitor) * settings->MonitorDefArraySize);
+		}
+		else
+			_settings->MonitorDefArray = NULL;
 
 		_settings->MonitorIds = (UINT32*) calloc(16, sizeof(UINT32));
 		if (!_settings->MonitorIds)

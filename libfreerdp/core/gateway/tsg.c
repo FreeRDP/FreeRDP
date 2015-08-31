@@ -1093,6 +1093,9 @@ BOOL TsProxyCloseChannelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* context)
 
 	WLog_DBG(TAG, "TsProxyCloseChannelWriteRequest");
 
+	if (!context)
+		return FALSE;
+
 	length = 20;
 	buffer = (BYTE*) malloc(length);
 

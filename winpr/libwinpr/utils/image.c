@@ -116,7 +116,10 @@ int winpr_image_png_read_fp(wImage* image, FILE* fp)
 		return -1;
 
 	if (fread((void*) data, size, 1, fp) != 1)
+	{
+		free(data);
 		return -1;
+	}
 
 	lodepng_status = lodepng_decode32(&(image->data), &width, &height, data, size);
 
