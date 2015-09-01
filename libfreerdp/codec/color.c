@@ -1569,9 +1569,13 @@ int freerdp_image_copy_from_pointer_data(BYTE* pDstData, UINT32 DstFormat,
 
 				for (x = 0; x < nWidth; x++)
 				{
+					BOOL ignoreAndMask = FALSE;
+
 					if (xorBpp == 32)
 					{
 						xorPixel = *((UINT32*) xorBits);
+						if (xorPixel & 0xFF000000)
+							ignoreAndMask = TRUE;
 					}
 					else if (xorBpp == 16)
 					{
@@ -1597,11 +1601,14 @@ int freerdp_image_copy_from_pointer_data(BYTE* pDstData, UINT32 DstFormat,
 						if (!(andBit >>= 1)) { andBits++; andBit = 0x80; }
 					}
 
-					if (andPixel)
+					/* Ignore the AND mask, if the color format already supplies alpha data. */
+					if (andPixel && !ignoreAndMask)
 					{
-						if (xorPixel == 0xFF000000) /* black */
+						const UINT32 xorPixelMasked = xorPixel | 0xFF000000;
+
+						if (xorPixelMasked == 0xFF000000) /* black */
 							*pDstPixel++ = 0x00000000; /* transparent */
-						else if (xorPixel == 0xFFFFFFFF) /* white */
+						else if (xorPixelMasked == 0xFFFFFFFF) /* white */
 							*pDstPixel++ = 0xFF000000; /* inverted (set as black) */
 						else
 							*pDstPixel++ = xorPixel;
