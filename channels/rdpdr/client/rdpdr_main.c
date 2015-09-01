@@ -391,7 +391,9 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 	DEVICE_DRIVE_EXT *device_ext;
 	ULONG_PTR *keys;
 	UINT32 ids[1];
-	UINT error;
+	UINT error = 0;
+
+	memset(dev_array, 0, sizeof(dev_array));
 
 	f = fopen("/proc/mounts", "r");
 	if (f == NULL)
