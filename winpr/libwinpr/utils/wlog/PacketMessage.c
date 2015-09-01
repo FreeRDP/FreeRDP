@@ -199,7 +199,7 @@ wPcap* Pcap_Open(char* name, BOOL write)
 	pcap = (wPcap*) calloc(1, sizeof(wPcap));
 
 	if (!pcap)
-		return NULL;
+		goto out_fail;
 
 	pcap->name = name;
 	pcap->write = write;
