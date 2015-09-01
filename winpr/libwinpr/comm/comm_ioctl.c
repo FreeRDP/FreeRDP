@@ -709,7 +709,7 @@ int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios *te
 		return result;
 	}
 
-	if (memcmp(&currentState, &termios_p, sizeof(struct termios)) != 0)
+	if (memcmp(&currentState, termios_p, sizeof(struct termios)) != 0)
 	{
 		CommLog_Print(WLOG_DEBUG, "all termios parameters are not set yet, doing a second attempt...");
 		if ((result = tcsetattr(fd, optional_actions, termios_p)) < 0)
