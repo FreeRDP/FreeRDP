@@ -410,18 +410,9 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 			/* copy hotpluged device mount point to the dev_array */
 			if (strstr(word, "/mnt/") != NULL || strstr(word, "/media/") != NULL)
 			{
-				dev_array[size].path = _strdup(word);
-				if (!dev_array[size].path)
-				{
-					fclose(f);
-					free(line);
-					error = CHANNEL_RC_NO_MEMORY;
-					goto cleanup;
-				}
-
+				dev_array[size].path = word;
 				dev_array[size++].to_add = TRUE;
 			}
-			free(word);
 		}
 		free(line);
 	}
