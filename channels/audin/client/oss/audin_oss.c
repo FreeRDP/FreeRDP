@@ -173,13 +173,13 @@ static void* audin_oss_thread_func(void* arg)
 	char dev_name[PATH_MAX] = "/dev/dsp";
 	char mixer_name[PATH_MAX] = "/dev/mixer";
 	int pcm_handle = -1, mixer_handle;
-	BYTE* buffer = NULL, *encoded_data;
+	BYTE* buffer = NULL, *encoded_data = NULL;
 	int tmp, buffer_size, encoded_size;
 	AudinOSSDevice* oss = (AudinOSSDevice*)arg;
-	UINT error;
-    DWORD status;
+	UINT error = 0;
+	DWORD status;
 
-    if (arg == NULL)
+	if (arg == NULL)
 	{
 		error = ERROR_INVALID_PARAMETER;
 		goto err_out;
@@ -256,7 +256,7 @@ static void* audin_oss_thread_func(void* arg)
 		OSS_LOG_ERR("SNDCTL_DSP_SETFRAGMENT failed", errno);
 
 	buffer_size = (oss->FramesPerPacket * oss->format.nChannels * (oss->format.wBitsPerSample / 8));
-	buffer = (BYTE*)malloc((buffer_size + sizeof(void*)));
+	buffer = (BYTE*)calloc((buffer_size + sizeof(void*)), sizeof(BYTE));
 
 	if (NULL == buffer)
 	{
@@ -265,22 +265,21 @@ static void* audin_oss_thread_func(void* arg)
 		goto err_out;
 	}
 
-	ZeroMemory(buffer, buffer_size);
 	freerdp_dsp_context_reset_adpcm(oss->dsp_context);
 
 	while (1)
 	{
-        status = WaitForSingleObject(oss->stopEvent, 0);
+		status = WaitForSingleObject(oss->stopEvent, 0);
 
-        if (status == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
-            goto err_out;
-        }
+		if (status == WAIT_FAILED)
+		{
+			error = GetLastError();
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+			goto err_out;
+		}
 
-        if (status == WAIT_OBJECT_0)
-            break;
+		if (status == WAIT_OBJECT_0)
+			break;
 
 		tmp = read(pcm_handle, buffer, buffer_size);
 
@@ -301,7 +300,7 @@ static void* audin_oss_thread_func(void* arg)
 			    buffer, buffer_size, oss->format.nChannels, oss->format.nBlockAlign))
 			{
 				error = ERROR_INTERNAL_ERROR;
-				break;
+				goto err_out;
 			}
 			encoded_data = oss->dsp_context->adpcm_buffer;
 			encoded_size = oss->dsp_context->adpcm_size;
@@ -311,7 +310,7 @@ static void* audin_oss_thread_func(void* arg)
 			    buffer, buffer_size, oss->format.nChannels, oss->format.nBlockAlign))
 			{
 				error = ERROR_INTERNAL_ERROR;
-				break;
+				goto err_out;
 			}
 			encoded_data = oss->dsp_context->adpcm_buffer;
 			encoded_size = oss->dsp_context->adpcm_size;
@@ -380,7 +379,7 @@ static UINT audin_oss_open(IAudinDevice *device, AudinReceive receive, void *use
  */
 static UINT audin_oss_close(IAudinDevice *device)
 {
-    UINT error;
+	UINT error;
 	AudinOSSDevice *oss = (AudinOSSDevice*)device;
 
 	if (device == NULL)
@@ -390,11 +389,11 @@ static UINT audin_oss_close(IAudinDevice *device)
 	{
 		SetEvent(oss->stopEvent);
 		if (WaitForSingleObject(oss->thread, INFINITE) == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
-            return error;
-        }
+		{
+			error = GetLastError();
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+			return error;
+		}
 		CloseHandle(oss->stopEvent);
 		oss->stopEvent = NULL;
 		CloseHandle(oss->thread);
