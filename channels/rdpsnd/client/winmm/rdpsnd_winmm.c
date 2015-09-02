@@ -50,6 +50,7 @@ struct rdpsnd_winmm_plugin
 	WAVEFORMATEX format;
 	int wformat;
 	int block_size;
+	UINT32 volume;
 	FREERDP_DSP_CONTEXT* dsp_context;
 };
 
@@ -162,6 +163,14 @@ static BOOL rdpsnd_winmm_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, 
 		return FALSE;
 	}
 
+	mmResult = waveOutSetVolume(winmm->hWaveOut, winmm->volume);
+
+	if (mmResult != MMSYSERR_NOERROR)
+	{
+		WLog_ERR(TAG,  "waveOutSetVolume failed: %d", mmResult);
+		return FALSE;
+	}
+
 	return TRUE;
 }
 
@@ -239,13 +248,15 @@ static BOOL rdpsnd_winmm_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 {
 	rdpsndWinmmPlugin* winmm = (rdpsndWinmmPlugin*) device;
 
+	winmm->volume = value;
+
 	if (!winmm->hWaveOut)
-		return FALSE;
+		return TRUE;
 
 	return (waveOutSetVolume(winmm->hWaveOut, value) == MMSYSERR_NOERROR);
 }
 
-static void rdpsnd_winmm_wave_decode(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
+static BOOL rdpsnd_winmm_wave_decode(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 {
 	int length;
 	BYTE* data;
@@ -374,6 +385,8 @@ UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS p
 		free(winmm);
 		return CHANNEL_RC_NO_MEMORY;
 	}
+
+	winmm->volume = 0xFFFFFFFF;
 
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*) winmm);
 
