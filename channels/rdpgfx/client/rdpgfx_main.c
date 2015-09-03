@@ -50,7 +50,7 @@
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
+static UINT rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 {
 	UINT error;
 	wStream* s;
@@ -135,7 +135,7 @@ UINT rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_recv_caps_confirm_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_caps_confirm_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_CAPSET capsSet;
 	UINT32 capsDataLength;
@@ -164,7 +164,7 @@ UINT rdpgfx_recv_caps_confirm_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_send_frame_acknowledge_pdu(RDPGFX_CHANNEL_CALLBACK* callback, RDPGFX_FRAME_ACKNOWLEDGE_PDU* pdu)
+static UINT rdpgfx_send_frame_acknowledge_pdu(RDPGFX_CHANNEL_CALLBACK* callback, RDPGFX_FRAME_ACKNOWLEDGE_PDU* pdu)
 {
 	UINT error;
 	wStream* s;
@@ -207,7 +207,7 @@ UINT rdpgfx_send_frame_acknowledge_pdu(RDPGFX_CHANNEL_CALLBACK* callback, RDPGFX
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_recv_reset_graphics_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_reset_graphics_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	int pad;
 	UINT32 index;
@@ -282,7 +282,7 @@ UINT rdpgfx_recv_reset_graphics_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* 
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_recv_evict_cache_entry_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_evict_cache_entry_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_EVICT_CACHE_ENTRY_PDU pdu;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
@@ -369,7 +369,7 @@ UINT rdpgfx_recv_cache_import_reply_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStre
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_recv_create_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_create_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_CREATE_SURFACE_PDU pdu;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
@@ -437,7 +437,7 @@ UINT rdpgfx_recv_delete_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* 
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_recv_start_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_start_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_START_FRAME_PDU pdu;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
@@ -473,7 +473,7 @@ UINT rdpgfx_recv_start_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_END_FRAME_PDU pdu;
 	RDPGFX_FRAME_ACKNOWLEDGE_PDU ack;
@@ -530,12 +530,11 @@ UINT rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_recv_wire_to_surface_1_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_wire_to_surface_1_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_SURFACE_COMMAND cmd;
 	RDPGFX_WIRE_TO_SURFACE_PDU_1 pdu;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
-	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
 	UINT error;
 
 	if (Stream_GetRemainingLength(s) < 17)
@@ -584,20 +583,8 @@ UINT rdpgfx_recv_wire_to_surface_1_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStrea
 	cmd.length = pdu.bitmapDataLength;
 	cmd.data = pdu.bitmapData;
 
-	if (cmd.codecId == RDPGFX_CODECID_H264)
-	{
-		if ((error = rdpgfx_decode(gfx, &cmd)))
-			WLog_ERR(TAG, "rdpgfx_decode failed with error %lu!", error);
-	}
-	else
-	{
-		if (context)
-		{
-			IFCALLRET(context->SurfaceCommand, error, context, &cmd);
-			if (error)
-				WLog_ERR(TAG, "context->SurfaceCommand failed with error %lu", error);
-		}
-	}
+	if ((error = rdpgfx_decode(gfx, &cmd)))
+		WLog_ERR(TAG, "rdpgfx_decode failed with error %lu!", error);
 
 	return error;
 }
@@ -607,7 +594,7 @@ UINT rdpgfx_recv_wire_to_surface_1_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStrea
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_recv_wire_to_surface_2_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_wire_to_surface_2_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_SURFACE_COMMAND cmd;
 	RDPGFX_WIRE_TO_SURFACE_PDU_2 pdu;
@@ -664,7 +651,7 @@ UINT rdpgfx_recv_wire_to_surface_2_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStrea
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_recv_delete_encoding_context_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_delete_encoding_context_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_DELETE_ENCODING_CONTEXT_PDU pdu;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
@@ -766,7 +753,7 @@ UINT rdpgfx_recv_solid_fill_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_recv_surface_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_surface_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	UINT16 index;
 	RDPGFX_POINT16* destPt;
@@ -839,7 +826,7 @@ UINT rdpgfx_recv_surface_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStre
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_recv_surface_to_cache_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_surface_to_cache_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_SURFACE_TO_CACHE_PDU pdu;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
@@ -946,7 +933,7 @@ UINT rdpgfx_recv_cache_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_recv_map_surface_to_output_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_map_surface_to_output_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU pdu;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
@@ -1018,11 +1005,10 @@ UINT rdpgfx_recv_map_surface_to_window_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wS
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_recv_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+static UINT rdpgfx_recv_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	int beg, end;
 	RDPGFX_HEADER header;
-	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
 	UINT error;
 
 	beg = Stream_GetPosition(s);
@@ -1428,7 +1414,7 @@ static UINT rdpgfx_plugin_terminated(IWTSPlugin* pPlugin)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_set_surface_data(RdpgfxClientContext* context, UINT16 surfaceId, void* pData)
+static UINT rdpgfx_set_surface_data(RdpgfxClientContext* context, UINT16 surfaceId, void* pData)
 {
 	ULONG_PTR key;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) context->handle;
@@ -1448,7 +1434,7 @@ UINT rdpgfx_set_surface_data(RdpgfxClientContext* context, UINT16 surfaceId, voi
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_get_surface_ids(RdpgfxClientContext* context, UINT16** ppSurfaceIds, UINT16* count_out)
+static UINT rdpgfx_get_surface_ids(RdpgfxClientContext* context, UINT16** ppSurfaceIds, UINT16* count_out)
 {
 	int count;
 	int index;
@@ -1484,7 +1470,7 @@ UINT rdpgfx_get_surface_ids(RdpgfxClientContext* context, UINT16** ppSurfaceIds,
 	return CHANNEL_RC_OK;
 }
 
-void* rdpgfx_get_surface_data(RdpgfxClientContext* context, UINT16 surfaceId)
+static void* rdpgfx_get_surface_data(RdpgfxClientContext* context, UINT16 surfaceId)
 {
 	ULONG_PTR key;
 	void* pData = NULL;
@@ -1502,7 +1488,7 @@ void* rdpgfx_get_surface_data(RdpgfxClientContext* context, UINT16 surfaceId)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_set_cache_slot_data(RdpgfxClientContext* context, UINT16 cacheSlot, void* pData)
+static UINT rdpgfx_set_cache_slot_data(RdpgfxClientContext* context, UINT16 cacheSlot, void* pData)
 {
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) context->handle;
 
