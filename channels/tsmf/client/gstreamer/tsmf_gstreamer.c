@@ -116,15 +116,15 @@ static gboolean tsmf_gstreamer_seek_data(GstAppSrc *src, guint64 offset, gpointe
 	return TRUE;
 }
 
-static void tsmf_gstreamer_change_volume(ITSMFDecoder* decoder, UINT32 newVolume, UINT32 muted)
+static BOOL tsmf_gstreamer_change_volume(ITSMFDecoder* decoder, UINT32 newVolume, UINT32 muted)
 {
 	TSMFGstreamerDecoder* mdecoder = (TSMFGstreamerDecoder *) decoder;
 
 	if (!mdecoder || !mdecoder->pipe)
-		return;
+		return TRUE;
 
 	if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
-		return;
+		return TRUE;
 
 	mdecoder->gstMuted = (BOOL) muted;
 	DEBUG_TSMF("mute=[%d]", mdecoder->gstMuted);
@@ -132,13 +132,15 @@ static void tsmf_gstreamer_change_volume(ITSMFDecoder* decoder, UINT32 newVolume
 	DEBUG_TSMF("gst_new_vol=[%f]", mdecoder->gstVolume);
 
 	if (!mdecoder->volume)
-		return;
+		return TRUE;
 
 	if (!G_IS_OBJECT(mdecoder->volume))
-		return;
+		return TRUE;
 
 	g_object_set(mdecoder->volume, "mute", mdecoder->gstMuted, NULL);
 	g_object_set(mdecoder->volume, "volume", mdecoder->gstVolume, NULL);
+
+	return TRUE;
 }
 
 #ifdef __OpenBSD__
@@ -843,7 +845,10 @@ static BOOL tsmf_gstreamer_control(ITSMFDecoder* decoder, ITSMFControlMsg contro
 	TSMFGstreamerDecoder* mdecoder = (TSMFGstreamerDecoder *) decoder;
 
 	if (!mdecoder)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "Control called with no decoder!");
+		return TRUE;
+	}
 
 	if (control_msg == Control_Pause)
 	{

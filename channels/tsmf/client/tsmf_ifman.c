@@ -224,6 +224,7 @@ UINT tsmf_ifman_add_stream(TSMF_IFMAN* ifman, rdpContext* rdpcontext)
 
 	if (!presentation)
 	{
+		WLog_ERR(TAG, "unknown presentation id");
 		status = ERROR_NOT_FOUND;
 	}
 	else
@@ -232,10 +233,16 @@ UINT tsmf_ifman_add_stream(TSMF_IFMAN* ifman, rdpContext* rdpcontext)
 		Stream_Seek_UINT32(ifman->input); /* numMediaType */
 		stream = tsmf_stream_new(presentation, StreamId, rdpcontext);
 		if (!stream)
+		{
+			WLog_ERR(TAG, "failed to create stream");
 			return ERROR_OUTOFMEMORY;
+		}
 
 		if (!tsmf_stream_set_format(stream, ifman->decoder_name, ifman->input))
+		{
+			WLog_ERR(TAG, "failed to set stream format");
 			return ERROR_OUTOFMEMORY;
+		}
 	}
 
 	ifman->output_pending = TRUE;
@@ -660,8 +667,10 @@ UINT tsmf_ifman_on_flush(TSMF_IFMAN* ifman)
 	 */
 	stream = tsmf_stream_find_by_id(presentation, StreamId);
 	if (stream)
+	{
 		if (!tsmf_stream_flush(stream))
 			return ERROR_INVALID_OPERATION;
+	}
 	else
 		WLog_ERR(TAG, "unknown stream id");
 

@@ -313,11 +313,6 @@ int tsmf_window_resize(TSMFGstreamerDecoder* decoder, int x, int y, int width,
 		return -3;
 	}
 
-#if GST_VERSION_MAJOR > 0
-	GstVideoOverlay *overlay = GST_VIDEO_OVERLAY(decoder->outsink);
-#else
-	GstXOverlay *overlay = GST_X_OVERLAY(decoder->outsink);
-#endif
 	if (!decoder)
 		return -1;
 
@@ -331,19 +326,19 @@ int tsmf_window_resize(TSMFGstreamerDecoder* decoder, int x, int y, int width,
 	{
 #if GST_VERSION_MAJOR > 0
 
-		if (!gst_video_overlay_set_render_rectangle(overlay, 0, 0, width, height))
+		if (!gst_video_overlay_set_render_rectangle(hdl->overlay, 0, 0, width, height))
 		{
 			WLog_ERR(TAG, "Could not resize overlay!");
 		}
 
-		gst_video_overlay_expose(overlay);
+		gst_video_overlay_expose(hdl->overlay);
 #else
-		if (!gst_x_overlay_set_render_rectangle(overlay, 0, 0, width, height))
+		if (!gst_x_overlay_set_render_rectangle(hdl->overlay, 0, 0, width, height))
 		{
 			WLog_ERR(TAG, "Could not resize overlay!");
 		}
 
-		gst_x_overlay_expose(overlay);
+		gst_x_overlay_expose(hdl->overlay);
 #endif
 	}
 

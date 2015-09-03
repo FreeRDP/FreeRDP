@@ -36,7 +36,7 @@
 
 #include "tsmf_main.h"
 
-void tsmf_send_eos_response(IWTSVirtualChannelCallback* pChannelCallback, UINT32 message_id)
+BOOL tsmf_send_eos_response(IWTSVirtualChannelCallback* pChannelCallback, UINT32 message_id)
 {
 	wStream* s = NULL;
 	int status;
@@ -49,21 +49,21 @@ void tsmf_send_eos_response(IWTSVirtualChannelCallback* pChannelCallback, UINT32
 	if (!callback)
 	{
 		DEBUG_TSMF("No callback reference - unable to send eos response!");
-		return;
+		return FALSE;
 	}
 
 	if (callback && callback->stream_id && callback->channel && callback->channel->Write)
 	{
 		s = Stream_New(NULL, 24);
 		if (!s)
-                	return FALSE;
+			return FALSE;
 		Stream_Write_UINT32(s, TSMF_INTERFACE_CLIENT_NOTIFICATIONS | STREAM_ID_PROXY);
-                Stream_Write_UINT32(s, message_id);
-                Stream_Write_UINT32(s, CLIENT_EVENT_NOTIFICATION); /* FunctionId */
-                Stream_Write_UINT32(s, callback->stream_id); /* StreamId */
-                Stream_Write_UINT32(s, TSMM_CLIENT_EVENT_ENDOFSTREAM); /* EventId */
-                Stream_Write_UINT32(s, 0); /* cbData */
-		DEBUG_TSMF("response size %i", Stream_GetPosition(s));
+		Stream_Write_UINT32(s, message_id);
+		Stream_Write_UINT32(s, CLIENT_EVENT_NOTIFICATION); /* FunctionId */
+		Stream_Write_UINT32(s, callback->stream_id); /* StreamId */
+		Stream_Write_UINT32(s, TSMM_CLIENT_EVENT_ENDOFSTREAM); /* EventId */
+		Stream_Write_UINT32(s, 0); /* cbData */
+		DEBUG_TSMF("EOS response size %i", Stream_GetPosition(s));
 
 		status = callback->channel->Write(callback->channel, Stream_GetPosition(s), Stream_Buffer(s), NULL);
 		if (status)
@@ -76,7 +76,7 @@ void tsmf_send_eos_response(IWTSVirtualChannelCallback* pChannelCallback, UINT32
 	return (status == 0);
 }
 
-void tsmf_playback_ack(IWTSVirtualChannelCallback *pChannelCallback,
+BOOL tsmf_playback_ack(IWTSVirtualChannelCallback *pChannelCallback,
 			UINT32 message_id, UINT64 duration, UINT32 data_size)
 {
 	wStream *s = NULL;
@@ -87,12 +87,6 @@ void tsmf_playback_ack(IWTSVirtualChannelCallback *pChannelCallback,
 	if (!s)
 		return FALSE;
 
-	if (s == NULL)
-	{
-		WLog_ERR(TAG, "Stream creation error!");
-		return;
-	}
-
 	Stream_Write_UINT32(s, TSMF_INTERFACE_CLIENT_NOTIFICATIONS | STREAM_ID_PROXY);
 	Stream_Write_UINT32(s, message_id);
 	Stream_Write_UINT32(s, PLAYBACK_ACK); /* FunctionId */
@@ -100,7 +94,7 @@ void tsmf_playback_ack(IWTSVirtualChannelCallback *pChannelCallback,
 	Stream_Write_UINT64(s, duration); /* DataDuration */
 	Stream_Write_UINT64(s, data_size); /* cbData */
 
-	DEBUG_TSMF("response size %d", (int) Stream_GetPosition(s));
+	DEBUG_TSMF("ACK response size %d", (int) Stream_GetPosition(s));
 
 	if (!callback || !callback->channel || !callback->channel->Write)
 	{
@@ -312,6 +306,11 @@ static UINT tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 
 	input = NULL;
 	ifman.input = NULL;
+
+	if (error)
+	{
+		WLog_ERR(TAG, "ifman data received processing error %d", error);
+	}
 
 	if (!processed)
 	{

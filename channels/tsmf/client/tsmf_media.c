@@ -327,7 +327,7 @@ dequeue:
 	sample = Queue_Dequeue(stream->sample_ack_list);
 	if (sample)
 	{
-		rc = tsmf_sample_ack(sample);
+		tsmf_sample_ack(sample);
 		tsmf_sample_free(sample);
 	}
 
@@ -572,9 +572,12 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 
 	if (!ret)
 	{
-		WLog_ERR(TAG, "decode error");
+		WLog_ERR(TAG, "decode error, queue ack anyways");
 		if (!tsmf_sample_queue_ack(sample))
+		{
+			WLog_ERR(TAG, "error queuing sample for ack");
 			return FALSE;
+		}
 
 		return TRUE;
 	}
@@ -593,15 +596,13 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 				WLog_ERR(TAG, "unable to decode video format");
 				if (!tsmf_sample_queue_ack(sample))
 				{
-					WLog_ERR(TAG, "error acking sample");
+					WLog_ERR(TAG, "error queuing sample for ack");
 				}
 				return FALSE;
 			}
 
 			sample->pixfmt = pixfmt;
 		}
-
-		ret = FALSE;
 
 		if (stream->decoder->GetDecodedDimension)
 		{
@@ -658,18 +659,22 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 		switch (sample->stream->major_type)
 		{
 			case TSMF_MAJOR_TYPE_VIDEO:
-				{
-					break;
-				}
+			{
+				break;
+			}
 
 			case TSMF_MAJOR_TYPE_AUDIO:
-				{
-					break;
-				}
+			{
+				break;
+			}
 		}
 
 		sample->ack_time = ack_anticipation_time;
-		ret = tsmf_sample_queue_ack(sample);
+		if (!tsmf_sample_queue_ack(sample))
+		{
+			WLog_ERR(TAG, "error queuing sample for ack");
+			ret = FALSE;
+		}
 	}
 
 	return ret;
@@ -761,7 +766,7 @@ static void* tsmf_stream_playback_func(void *arg)
 	TSMF_STREAM* stream = (TSMF_STREAM *) arg;
 	TSMF_PRESENTATION* presentation = stream->presentation;
 	UINT error = CHANNEL_RC_OK;
-    DWORD status;
+	DWORD status;
 
 	DEBUG_TSMF("in %d", stream->stream_id);
 
@@ -797,7 +802,6 @@ static void* tsmf_stream_playback_func(void *arg)
 			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
 			break;
 		}
-
 
 		status = WaitForSingleObject(stream->stopEvent, 0);
 
@@ -1004,7 +1008,7 @@ UINT tsmf_presentation_sync(TSMF_PRESENTATION* presentation)
 {
 	UINT32 index;
 	UINT32 count;
-    UINT error;
+	UINT error;
 
 	ArrayList_Lock(presentation->stream_list);
 	count = ArrayList_Count(presentation->stream_list);
@@ -1013,15 +1017,15 @@ UINT tsmf_presentation_sync(TSMF_PRESENTATION* presentation)
 	{
 		TSMF_STREAM* stream = (TSMF_STREAM *) ArrayList_GetItem(presentation->stream_list, index);
 		if (WaitForSingleObject(stream->ready, 500) == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
-            return error;
-        }
+		{
+			error = GetLastError();
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+			return error;
+		}
 	}
 
 	ArrayList_Unlock(presentation->stream_list);
-    return CHANNEL_RC_OK;
+	return CHANNEL_RC_OK;
 }
 
 BOOL tsmf_presentation_stop(TSMF_PRESENTATION* presentation)
@@ -1030,8 +1034,6 @@ BOOL tsmf_presentation_stop(TSMF_PRESENTATION* presentation)
 	UINT32 count;
 	TSMF_STREAM* stream;
 	BOOL ret = TRUE;
-
-	ret &= tsmf_presentation_flush(presentation);
 
 	ArrayList_Lock(presentation->stream_list);
 	count = ArrayList_Count(presentation->stream_list);
@@ -1067,17 +1069,8 @@ BOOL tsmf_presentation_set_geometry_info(TSMF_PRESENTATION* presentation,
 		return TRUE;
 
 	/* Streams can be added/removed from the presentation and the server will resend geometry info when a new stream is 
-	 * added to the presentation.
+	 * added to the presentation. So, always process a valid message.
 	 */
-	/*
-	if ((width == presentation->width) && (height == presentation->height) &&
-			(x == presentation->x) && (y == presentation->y) &&
-			(num_rects == presentation->nr_rects) &&
-			(0 == memcmp(rects, presentation->rects, num_rects * sizeof(RDP_RECT))))
-	{
-		return TRUE;
-	}
-	*/
 
 	presentation->x = x;
 	presentation->y = y;
@@ -1140,30 +1133,6 @@ BOOL tsmf_stream_flush(TSMF_STREAM* stream)
 		stream->presentation->audio_end_time = 0;
 	}
 	return TRUE;
-}
-
-BOOL tsmf_presentation_flush(TSMF_PRESENTATION* presentation)
-{
-	UINT32 index;
-	UINT32 count;
-	TSMF_STREAM* stream;
-	BOOL ret = TRUE;
-
-	ArrayList_Lock(presentation->stream_list);
-	count = ArrayList_Count(presentation->stream_list);
-
-	for (index = 0; index < count; index++)
-	{
-		stream = (TSMF_STREAM*) ArrayList_GetItem(presentation->stream_list, index);
-		ret &= tsmf_stream_flush(stream);
-	}
-
-	ArrayList_Unlock(presentation->stream_list);
-	presentation->eos = 0;
-	presentation->audio_start_time = 0;
-	presentation->audio_end_time = 0;
-
-	return ret;
 }
 
 void _tsmf_presentation_free(TSMF_PRESENTATION* presentation)
@@ -1304,7 +1273,10 @@ BOOL tsmf_stream_set_format(TSMF_STREAM* stream, const char *name, wStream *s)
 	}
 
 	if (!tsmf_codec_parse_media_type(&mediatype, s))
+	{
+		WLog_ERR(TAG, "unable to parse media type");
 		return FALSE;
+	}
 
 	if (mediatype.MajorType == TSMF_MAJOR_TYPE_VIDEO)
 	{
@@ -1370,10 +1342,10 @@ void _tsmf_stream_free(TSMF_STREAM* stream)
 	if (stream->play_thread)
 	{
 		if (WaitForSingleObject(stream->play_thread, INFINITE) == WAIT_FAILED)
-        {
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
-            return;
-        }
+		{
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
+			return;
+		}
 
 		CloseHandle(stream->play_thread);
 		stream->play_thread = NULL;
@@ -1382,10 +1354,10 @@ void _tsmf_stream_free(TSMF_STREAM* stream)
 	if (stream->ack_thread)
 	{
 		if (WaitForSingleObject(stream->ack_thread, INFINITE) == WAIT_FAILED)
-        {
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
-            return;
-        }
+		{
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
+			return;
+		}
 		CloseHandle(stream->ack_thread);
 		stream->ack_thread = NULL;
 	}
