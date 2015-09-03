@@ -99,7 +99,7 @@ int TestEnvironmentGetSetEB(int argc, char* argv[])
 	}
 	free(lpszEnvironmentBlockNew);
 
-	lpszEnvironmentBlockNew = (LPTCH) malloc(1024);
+	lpszEnvironmentBlockNew = (LPTCH) calloc(1024, sizeof(TCHAR));
 	if (!lpszEnvironmentBlockNew)
 		return -1;
 
