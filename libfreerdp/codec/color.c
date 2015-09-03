@@ -1418,6 +1418,25 @@ void freerdp_alpha_cursor_convert(BYTE* alphaData, BYTE* xorMask, BYTE* andMask,
 	}
 }
 
+static INLINE UINT32 freerdp_image_inverted_pointer_color(int x, int y)
+{
+#if 1
+	/**
+	 * Inverted pointer colors (where individual pixels can change their
+	 * color to accommodate the background behind them) only seem to be
+	 * supported on Windows.
+	 * Using a static replacement color for these pixels (e.g. black)
+	 * might result in invisible pointers depending on the background.
+	 * This function returns either black or white, depending on the
+	 * pixel's position.
+	 */
+
+	return (x + y) & 1 ? 0xFF000000 : 0xFFFFFFFF;
+#else
+	return 0xFF000000;
+#endif
+}
+
 /**
  * Drawing Monochrome Pointers:
  * http://msdn.microsoft.com/en-us/library/windows/hardware/ff556143/
@@ -1520,7 +1539,7 @@ int freerdp_image_copy_from_pointer_data(BYTE* pDstData, UINT32 DstFormat,
 					else if (andPixel && !xorPixel)
 						*pDstPixel++ = 0x00000000; /* transparent */
 					else if (andPixel && xorPixel)
-						*pDstPixel++ = 0xFF000000; /* inverted (set as black) */
+						*pDstPixel++ = freerdp_image_inverted_pointer_color(x, y); /* inverted */
 				}
 
 				pDstPixel = (UINT32*) &((BYTE*) pDstPixel)[nDstPad];
@@ -1606,10 +1625,10 @@ int freerdp_image_copy_from_pointer_data(BYTE* pDstData, UINT32 DstFormat,
 					{
 						const UINT32 xorPixelMasked = xorPixel | 0xFF000000;
 
-						if (xorPixelMasked == 0xFF000000) /* black */
-							*pDstPixel++ = 0x00000000; /* transparent */
-						else if (xorPixelMasked == 0xFFFFFFFF) /* white */
-							*pDstPixel++ = 0xFF000000; /* inverted (set as black) */
+						if (xorPixelMasked == 0xFF000000) /* black -> transparent */
+							*pDstPixel++ = 0x00000000;
+						else if (xorPixelMasked == 0xFFFFFFFF) /* white -> inverted */
+							*pDstPixel++ = freerdp_image_inverted_pointer_color(x, y);
 						else
 							*pDstPixel++ = xorPixel;
 					}
