@@ -405,8 +405,8 @@ UINT gdi_SurfaceCommand_H264(rdpGdi* gdi, RdpgfxClientContext* context, RDPGFX_S
 
 	if (status < 0)
 	{
-		WLog_ERR(TAG, "h264_decompress failure: %d",status);
-		return ERROR_INTERNAL_ERROR;
+		WLog_WARN(TAG, "h264_decompress failure: %d, ignoring update.", status);
+		return CHANNEL_RC_OK;
 	}
 
 	for (i = 0; i < meta->numRegionRects; i++)
