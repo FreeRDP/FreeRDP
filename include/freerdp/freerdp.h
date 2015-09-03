@@ -284,6 +284,7 @@ FREERDP_API void freerdp_set_last_error(rdpContext* context, UINT32 lastError);
 
 FREERDP_API ULONG freerdp_get_transport_sent(rdpContext* context, BOOL resetCount);
 
+FREERDP_API void clearChannelError(rdpContext* context);
 FREERDP_API HANDLE getChannelErrorEventHandle(rdpContext* context);
 FREERDP_API UINT getChannelError(rdpContext* context);
 FREERDP_API const char* getChannelErrorDescription(rdpContext* context);
