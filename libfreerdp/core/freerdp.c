@@ -815,15 +815,3 @@ FREERDP_API void setChannelError(rdpContext* context, UINT errorNum, char* descr
 	strncpy(context->errorDescription, description, 499);
 	SetEvent(context->channelErrorEvent);
 }
-
-BOOL freerdp_get_nla_failure(freerdp* instance)
-{
-	rdpRdp* rdp;
-
-	rdp = instance->context->rdp;
-
-	if (transport_get_nla_failure(rdp->transport))
-		return TRUE;
-
-	return FALSE;
-}

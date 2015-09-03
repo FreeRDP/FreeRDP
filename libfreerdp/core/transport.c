@@ -59,7 +59,7 @@
 static void* transport_client_thread(void* arg);
 
 
-static void test_function(SSL* ssl, int where, int ret)
+static void transport_ssl_cb(SSL* ssl, int where, int ret)
 {
 	rdpTransport *transport;
 	if ((where | SSL_CB_ALERT) && (ret == 561))
@@ -157,7 +157,7 @@ BOOL transport_connect_tls(rdpTransport* transport)
 
 	transport->frontBio = tls->bio;
 
-	BIO_callback_ctrl(tls->bio, BIO_CTRL_SET_CALLBACK, (bio_info_cb*) test_function);
+	BIO_callback_ctrl(tls->bio, BIO_CTRL_SET_CALLBACK, (bio_info_cb*) transport_ssl_cb);
 	SSL_set_app_data(tls->ssl, transport);
 
 	if (!transport->frontBio)
@@ -200,7 +200,6 @@ BOOL transport_connect_nla(rdpTransport* transport)
 
 	if (nla_client_begin(rdp->nla) < 0)
 	{
-		transport->nlaFailure = TRUE;
 		if (!freerdp_get_last_error(context))
 			freerdp_set_last_error(context, FREERDP_ERROR_AUTHENTICATION_FAILED);
 
@@ -358,7 +357,6 @@ BOOL transport_accept_nla(rdpTransport* transport)
 
 	if (nla_authenticate(transport->nla) < 0)
 	{
-		transport->nlaFailure = TRUE;
 		WLog_ERR(TAG, "client authentication failure");
 		transport_set_nla_mode(transport, FALSE);
 		nla_free(transport->nla);
@@ -1044,15 +1042,3 @@ void transport_free(rdpTransport* transport)
 
 	free(transport);
 }
-
-BOOL transport_get_nla_failure(rdpTransport* transport)
-{
-	if (transport != NULL)
-	{
-		if (transport->nlaFailure == TRUE)
-			return TRUE;
-	}
-
-	return FALSE;
-}
-
