@@ -745,12 +745,8 @@ int transport_check_fds(rdpTransport* transport)
 	int status;
 	int recv_status;
 	wStream* received;
-	HANDLE event;
 
 	if (!transport)
-		return -1;
-
-	if (BIO_get_event(transport->frontBio, &event) != 1)
 		return -1;
 
 	/**
@@ -760,9 +756,6 @@ int transport_check_fds(rdpTransport* transport)
 	 * wait for a socket to get signaled that data is available
 	 * (which may never happen).
 	 */
-#ifdef _WIN32
-	ResetEvent(event);
-#endif
 	for (;;)
 	{
 		/**

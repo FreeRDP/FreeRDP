@@ -168,11 +168,28 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 			continue;
 		}
 
-		/* FIXME: these file descriptors do not work on Windows */
-
 		listener->sockfds[listener->num_sockfds] = sockfd;
+#ifdef _WIN32
+		listener->events[listener->num_sockfds] = WSACreateEvent();
+
+		if (listener->events[listener->num_sockfds])
+		{
+			/* WSAEventSelect automatically sets the socket in non-blocking mode */
+			/* Set lNetworkEvents as same behavior as being put in readfds in select()
+			 * to keep same behavior between WIN32 and posix.
+			 * From MSDN for function select:
+			 * https://msdn.microsoft.com/en-us/library/windows/desktop/ms740141(v=vs.85).aspx
+			 * In summary, a socket will be identified in a particular set when select returns if:
+			 * readfds:
+			 * 1. If listen has been called and a connection is pending, accept will succeed.
+			 * 2. Data is available for reading (includes OOB data if SO_OOBINLINE is enabled).
+			 * 3. Connection has been closed/reset/terminated. */
+			WSAEventSelect(sockfd, listener->events[listener->num_sockfds], FD_READ | FD_ACCEPT | FD_CLOSE);
+		}
+#else
 		listener->events[listener->num_sockfds] =
 			CreateFileDescriptorEvent(NULL, FALSE, FALSE, sockfd, WINPR_FD_READ);
+#endif
 		listener->num_sockfds++;
 
 		WLog_INFO(TAG, "Listening on %s:%s", addr, servname);
@@ -336,7 +353,7 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 	void* sin_addr;
 	int peer_sockfd;
 	freerdp_peer* client = NULL;
-	socklen_t peer_addr_size;
+	int peer_addr_size;
 	struct sockaddr_storage peer_addr;
 	rdpListener* listener = (rdpListener*) instance->listener;
 	static const BYTE localhost6_bytes[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
@@ -347,8 +364,18 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 
 	for (i = 0; i < listener->num_sockfds; i++)
 	{
+#ifdef _WIN32
+		/* Manually reset the event created by WSACreateEvent.
+		 * It will be reenabled by accept if there is still data to be read */
+		WSAResetEvent(listener->events[i]);
+#else
+		/* Don't need to reset event for posix socket. The socket event is bound 
+		 * to the socket fd itself. So it is automatically 'reseted' if there is
+		 * no more data to be read */
+#endif
+
 		peer_addr_size = sizeof(peer_addr);
-		peer_sockfd = accept(listener->sockfds[i], (struct sockaddr*) &peer_addr, &peer_addr_size);
+		peer_sockfd = _accept(listener->sockfds[i], (struct sockaddr*) &peer_addr, &peer_addr_size);
 		peer_accepted = FALSE;
 
 		if (peer_sockfd == -1)
