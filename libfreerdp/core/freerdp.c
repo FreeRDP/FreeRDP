@@ -70,6 +70,7 @@ BOOL freerdp_connect(freerdp* instance)
 	/* We always set the return code to 0 before we start the connect sequence*/
 	connectErrorCode = 0;
 	freerdp_set_last_error(instance->context, FREERDP_ERROR_SUCCESS);
+	clearChannelError(instance->context);
 
 	rdp = instance->context->rdp;
 	settings = instance->settings;
@@ -768,10 +769,19 @@ FREERDP_API UINT getChannelError(rdpContext* context)
 {
 	return context->channelErrorNum;
 }
+
 FREERDP_API const char* getChannelErrorDescription(rdpContext* context)
 {
 	return context->errorDescription;
 }
+
+FREERDP_API void clearChannelError(rdpContext* context)
+{
+	context->channelErrorNum = 0;
+	memset(context->errorDescription, 0, 500);
+	ResetEvent(context->channelErrorEvent);
+}
+
 FREERDP_API void setChannelError(rdpContext* context, UINT errorNum, char* description)
 {
 	context->channelErrorNum = errorNum;
