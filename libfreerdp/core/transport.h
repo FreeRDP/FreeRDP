@@ -110,6 +110,5 @@ int transport_receive_pool_return(rdpTransport* transport, wStream* pdu);
 
 rdpTransport* transport_new(rdpContext* context);
 void transport_free(rdpTransport* transport);
-BOOL transport_get_nla_failure(rdpTransport* transport);
 
 #endif
