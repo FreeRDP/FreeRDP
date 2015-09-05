@@ -158,8 +158,10 @@ static int testSuccess(void)
 		"test",
 		"/v:127.0.0.1",
 		"/cert-ignore",
+        "/rfx",
 		NULL
 	};
+    int argc = 4;
 	char* path = TESTING_OUTPUT_DIRECTORY;
 	char* wpath = TESTING_SRC_DIRECTORY;
 	char* exe = GetCombinedPath(path, "server");
@@ -218,7 +220,7 @@ static int testSuccess(void)
 	free(wpath);
 
 	Sleep(1000);
-	rc = runInstance(3, argv, NULL);
+	rc = runInstance(argc, argv, NULL);
 
 	if (!TerminateProcess(process.hProcess, 0))
 		return -2;
