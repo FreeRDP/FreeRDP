@@ -145,6 +145,8 @@ static int transport_bio_simple_read(BIO* bio, char* buf, int size)
 
 	BIO_clear_flags(bio, BIO_FLAGS_READ);
 
+	WSAResetEvent(ptr->hEvent);
+
 	status = _recv(ptr->socket, buf, size, 0);
 
 	if (status > 0)
@@ -365,7 +367,7 @@ static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown)
 		return 0;
 
 	/* WSAEventSelect automatically sets the socket in non-blocking mode */
-	if (WSAEventSelect(ptr->socket, ptr->hEvent, FD_READ | FD_WRITE | FD_CLOSE))
+	if (WSAEventSelect(ptr->socket, ptr->hEvent, FD_READ | FD_ACCEPT | FD_CLOSE))
 	{
 		WLog_ERR(TAG, "WSAEventSelect returned %08X", WSAGetLastError());
 		return 0;

@@ -630,7 +630,9 @@ BOOL WSASetEvent(HANDLE hEvent)
 
 BOOL WSAResetEvent(HANDLE hEvent)
 {
-	return ResetEvent(hEvent);
+	/* POSIX systems auto reset the socket,
+	 * if no more data is available. */
+	return TRUE;
 }
 
 BOOL WSACloseEvent(HANDLE hEvent)

@@ -751,19 +751,6 @@ int transport_check_fds(rdpTransport* transport)
 	if (!transport)
 		return -1;
 
-	if (BIO_get_event(transport->frontBio, &event) != 1)
-		return -1;
-
-	/**
-	 * Loop through and read all available PDUs.  Since multiple
-	 * PDUs can exist, it's important to deliver them all before
-	 * returning.  Otherwise we run the risk of having a thread
-	 * wait for a socket to get signaled that data is available
-	 * (which may never happen).
-	 */
-#ifdef _WIN32
-	ResetEvent(event);
-#endif
 	while(!freerdp_shall_disconnect(transport->context->instance))
 	{
 		/**
