@@ -102,6 +102,9 @@ BOOL freerdp_connect(freerdp* instance)
 		goto freerdp_connect_finally;
 	}
 
+	if (!status)
+		goto freerdp_connect_finally;
+
 	if (status)
 	{
 		if (instance->settings->DumpRemoteFx)
