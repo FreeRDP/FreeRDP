@@ -188,6 +188,8 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	if (!rdp->settingsCopy)
 		return FALSE;
 
+	ResetEvent(rdp->context->abortEvent);
+
 	nego_init(rdp->nego);
 	nego_set_target(rdp->nego, settings->ServerHostname, settings->ServerPort);
 
@@ -832,7 +834,7 @@ int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 		return rdp_recv_out_of_sequence_pdu(rdp, s);
 	}
 
-	if (rdp->disconnect)
+	if (freerdp_shall_disconnect(rdp->instance))
 		return 0;
 
 	if (!rdp_send_confirm_active(rdp))

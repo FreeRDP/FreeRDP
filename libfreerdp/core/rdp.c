@@ -307,7 +307,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 	{
 		if (code == X224_TPDU_DISCONNECT_REQUEST)
 		{
-			rdp->disconnect = TRUE;
+			freerdp_abort_connect(rdp->instance);
 			return TRUE;
 		}
 
@@ -341,7 +341,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 
 		if (!rdp->instance)
 		{
-			rdp->disconnect = TRUE;
+			freerdp_abort_connect(rdp->instance);
 			return FALSE;
 		}
 
@@ -364,7 +364,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 		}
 
 		WLog_ERR(TAG, "DisconnectProviderUltimatum: reason: %d", reason);
-		rdp->disconnect = TRUE;
+		freerdp_abort_connect(rdp->instance);
 
 		EventArgsInit(&e, "freerdp");
 		e.code = 0;
@@ -1117,7 +1117,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 		return -1;
 	}
 
-	if (rdp->disconnect)
+	if (freerdp_shall_disconnect(rdp->instance))
 		return 0;
  
 	if (rdp->autodetect->bandwidthMeasureStarted)
@@ -1647,7 +1647,6 @@ void rdp_reset(rdpRdp* rdp)
 	rdp->nego = nego_new(rdp->transport);
 	rdp->mcs = mcs_new(rdp->transport);
 	rdp->transport->layer = TRANSPORT_LAYER_TCP;
-	rdp->disconnect = FALSE;
 	rdp->errorInfo = 0;
 	rdp->deactivation_reactivation = 0;
 	rdp->finalize_sc_pdus = 0;

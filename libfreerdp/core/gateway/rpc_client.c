@@ -340,7 +340,7 @@ int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 
 				rpc->result = *((UINT32*) &buffer[StubOffset]);
 
-				rpc->context->rdp->disconnect = TRUE;
+				freerdp_abort_connect(rpc->context->instance);
 				rpc->transport->tsg->state = TSG_STATE_TUNNEL_CLOSE_PENDING;
 				EventArgsInit(&e, "freerdp");
 				e.code = 0;
