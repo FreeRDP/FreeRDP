@@ -158,10 +158,10 @@ static int testSuccess(void)
 		"test",
 		"/v:127.0.0.1",
 		"/cert-ignore",
-        "/rfx",
+		"/rfx",
 		NULL
 	};
-    int argc = 4;
+	int argc = 4;
 	char* path = TESTING_OUTPUT_DIRECTORY;
 	char* wpath = TESTING_SRC_DIRECTORY;
 	char* exe = GetCombinedPath(path, "server");
@@ -205,7 +205,9 @@ static int testSuccess(void)
 		return -2;
 	}
 
-	// Start sample server locally. 
+	// Start sample server locally.
+    memset(&si, 0, sizeof(si));
+    si.cb = sizeof(si);
 	if (!CreateProcessA(exe, exe, NULL, NULL, FALSE, 0, NULL,
 				wpath, &si, &process))
 	{
