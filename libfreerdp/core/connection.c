@@ -188,8 +188,6 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	if (!rdp->settingsCopy)
 		return FALSE;
 
-	ResetEvent(rdp->context->abortEvent);
-
 	nego_init(rdp->nego);
 	nego_set_target(rdp->nego, settings->ServerHostname, settings->ServerPort);
 
@@ -314,6 +312,8 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 BOOL rdp_client_disconnect(rdpRdp* rdp)
 {
 	BOOL status;
+
+	ResetEvent(rdp->context->abortEvent);
 
 	if (rdp->settingsCopy)
 	{
