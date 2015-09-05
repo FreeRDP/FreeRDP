@@ -145,6 +145,16 @@ static int transport_bio_simple_read(BIO* bio, char* buf, int size)
 
 	BIO_clear_flags(bio, BIO_FLAGS_READ);
 
+#ifdef _WIN32
+	/* Manually reset the event created by WSACreateEvent.
+	 * It will be reenabled by recv if there is still data to be read */
+	WSAResetEvent(ptr->hEvent);
+#else
+	/* Don't need to reset event for posix socket. The socket event is bound 
+	 * to the socket fd itself. So it is automatically 'reseted' if there is
+	 * no more data to be read */
+#endif
+
 	status = _recv(ptr->socket, buf, size, 0);
 
 	if (status > 0)
@@ -366,7 +376,16 @@ static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown)
 			return 0;
 
 		/* WSAEventSelect automatically sets the socket in non-blocking mode */
-		WSAEventSelect(ptr->socket, ptr->hEvent, FD_READ | FD_WRITE | FD_CLOSE);
+		/* Set lNetworkEvents as same behavior as being put in readfds in select()
+		 * to keep same behavior between WIN32 and posix.
+		 * From MSDN for function select:
+		 * https://msdn.microsoft.com/en-us/library/windows/desktop/ms740141(v=vs.85).aspx
+		 * In summary, a socket will be identified in a particular set when select returns if:
+		 * readfds:
+		 * 1. If listen has been called and a connection is pending, accept will succeed.
+		 * 2. Data is available for reading (includes OOB data if SO_OOBINLINE is enabled).
+		 * 3. Connection has been closed/reset/terminated. */
+		WSAEventSelect(ptr->socket, ptr->hEvent, FD_READ | FD_ACCEPT | FD_CLOSE);
 #else
 		ptr->hEvent = CreateFileDescriptorEvent(NULL, FALSE, FALSE, (int) ptr->socket, WINPR_FD_READ);
 
