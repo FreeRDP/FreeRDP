@@ -899,7 +899,8 @@ BOOL rdg_tls_out_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int tim
 
 	assert(hostname != NULL);
 
-	sockfd = freerdp_tcp_connect(settings, settings->GatewayHostname, settings->GatewayPort, timeout);
+	sockfd = freerdp_tcp_connect(rdg->context, settings, settings->GatewayHostname,
+					settings->GatewayPort, timeout);
 
 	if (sockfd < 1)
 	{
@@ -955,7 +956,8 @@ BOOL rdg_tls_in_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int time
 
 	assert(hostname != NULL);
 
-	sockfd = freerdp_tcp_connect(settings, settings->GatewayHostname, settings->GatewayPort, timeout);
+	sockfd = freerdp_tcp_connect(rdg->context, settings, settings->GatewayHostname,
+					settings->GatewayPort, timeout);
 
 	if (sockfd < 1)
 		return FALSE;

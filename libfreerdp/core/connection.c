@@ -313,6 +313,8 @@ BOOL rdp_client_disconnect(rdpRdp* rdp)
 {
 	BOOL status;
 
+	ResetEvent(rdp->context->abortEvent);
+
 	if (rdp->settingsCopy)
 	{
 		freerdp_settings_free(rdp->settingsCopy);
@@ -832,7 +834,7 @@ int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 		return rdp_recv_out_of_sequence_pdu(rdp, s);
 	}
 
-	if (rdp->disconnect)
+	if (freerdp_shall_disconnect(rdp->instance))
 		return 0;
 
 	if (!rdp_send_confirm_active(rdp))
