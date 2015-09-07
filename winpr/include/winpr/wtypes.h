@@ -28,6 +28,14 @@
 
 #include <winpr/spec.h>
 
+#if defined(HAVE_STDBOOL_H)
+#include <stdbool.h>
+#endif
+
+#if defined(HAVE_STDINT_H)
+#include <stdint.h>
+#endif
+
 #ifdef _WIN32
 #include <wtypes.h>
 #endif
@@ -49,17 +57,39 @@
 #define NEAR
 #endif
 
+#if defined(HAVE_STDINT_H)
+#define int8_t	char
+#define int16_t short
+#define int32_t int
+#define int64_t long long
+#else
 #define __int8	char
 #define __int16 short
 #define __int32 int
 #define __int64 long long
-
-#if defined(__x86_64__) || defined(__arm64__)
-#define __int3264 __int64
-#else
-#define __int3264 __int32
 #endif
 
+#if defined(HAVE_STDINT_H)
+#if defined(__x86_64__) || defined(__arm64__)
+#define __int3264 int64_t
+#define __uint3264 uint64_t
+#else
+#define __int3264 int32_t
+#define __uint3264 uint32_t
+#endif
+#else
+#if defined(__x86_64__) || defined(__arm64__)
+#define __int3264 __int64
+#define __uint3264 unsigned __int64
+#else
+#define __int3264 __int32
+#define __uint3264 unsigned __int32
+#endif
+#endif
+
+#if defined(HAVE_STDBOOL_H)
+typedef bool BOOL;
+#else
 #ifndef __OBJC__
 #if defined(__APPLE__)
 typedef signed char BOOL;
@@ -69,10 +99,15 @@ typedef int BOOL;
 #endif
 #endif
 #endif
+#endif
 
 typedef BOOL *PBOOL, *LPBOOL;
 
-#if defined(__LP64__) || defined(__APPLE__)
+#if defined(HAVE_STDINT_H)
+typedef int32_t LONG;
+typedef uint32_t DWORD;
+typedef uint32_t ULONG;
+#elif defined(__LP64__) || defined(__APPLE__)
 typedef int LONG;
 typedef unsigned int DWORD;
 typedef unsigned int ULONG;
@@ -82,26 +117,49 @@ typedef unsigned long DWORD;
 typedef unsigned long ULONG;
 #endif
 
+#if defined(HAVE_STDINT_H)
+typedef uint8_t BYTE, *PBYTE, *LPBYTE;
+#else
 typedef unsigned char BYTE, *PBYTE, *LPBYTE;
+#endif
+
 typedef BYTE BOOLEAN, *PBOOLEAN;
+#if defined(wchar_t)
+typedef wchar_t WCHAR, *PWCHAR;
+#else
 typedef unsigned short WCHAR, *PWCHAR;
+#endif
 typedef WCHAR* BSTR;
 typedef char CHAR, *PCHAR;
 typedef DWORD *PDWORD, *LPDWORD;
+#if defined(HAVE_STDINT_H)
+typedef uint32_t DWORD32;
+typedef uint64_t DWORD64;
+typedef uint64_t ULONGLONG;
+#else
 typedef unsigned int DWORD32;
 typedef unsigned __int64 DWORD64;
 typedef unsigned __int64 ULONGLONG;
+#endif
 typedef ULONGLONG DWORDLONG, *PDWORDLONG;
 typedef float FLOAT;
 typedef unsigned char UCHAR, *PUCHAR;
 typedef short SHORT;
 
 #ifndef FALSE
+#if defined(HAVE_STDBOOL_H)
+#define FALSE			false
+#else
 #define FALSE			0
+#endif
 #endif
 
 #ifndef TRUE
+#if defined(HAVE_STDBOOL_H)
+#define TRUE			true
+#else
 #define TRUE			1
+#endif
 #endif
 
 #define CONST const
@@ -119,24 +177,40 @@ typedef HANDLE HMENU;
 
 typedef DWORD HCALL;
 typedef int INT, *LPINT;
+#if defined(HAVE_STDINT_H)
+typedef int8_t INT8;
+typedef int16_t INT16;
+typedef int32_t INT32;
+typedef int64_t INT64;
+#else
 typedef signed char INT8;
 typedef signed short INT16;
 #ifndef XMD_H
 typedef signed int INT32;
 typedef signed __int64 INT64;
 #endif
+#endif
 typedef const WCHAR* LMCSTR;
 typedef WCHAR* LMSTR;
 typedef LONG *PLONG, *LPLONG;
+#if defined(HAVE_STDINT_H)
+typedef int64_t LONGLONG;
+#else
 typedef signed __int64 LONGLONG;
+#endif
 
 typedef __int3264 LONG_PTR, *PLONG_PTR;
-typedef unsigned __int3264 ULONG_PTR, *PULONG_PTR;
+typedef __uint3264 ULONG_PTR, *PULONG_PTR;
 
+#if defined(HAVE_STDINT_H)
+typedef int32_t LONG32;
+typedef int64_t LONG64;
+#else
 typedef signed int LONG32;
 
 #ifndef XMD_H
 typedef signed __int64 LONG64;
+#endif
 #endif
 
 typedef CHAR *PSTR, *LPSTR, *LPCH;
@@ -145,13 +219,23 @@ typedef const CHAR *LPCSTR,*PCSTR;
 typedef WCHAR *LPWSTR, *PWSTR, *LPWCH;
 typedef const WCHAR *LPCWSTR,*PCWSTR;
 
+typedef unsigned int UINT;
+#if defined(HAVE_STDINT_H)
+typedef uint64_t QWORD;
+
+typedef uint8_t UINT8;
+typedef uint16_t UINT16;
+typedef uint32_t UINT32;
+typedef uint64_t UINT64;
+#else
 typedef unsigned __int64 QWORD;
 
-typedef unsigned int UINT;
 typedef unsigned char UINT8;
 typedef unsigned short UINT16;
 typedef unsigned int UINT32;
 typedef unsigned __int64 UINT64;
+#endif
+
 typedef ULONG *PULONG;
 
 typedef LONG HRESULT;
@@ -160,15 +244,25 @@ typedef SCODE *PSCODE;
 
 typedef ULONG_PTR DWORD_PTR, *PDWORD_PTR;
 typedef ULONG_PTR SIZE_T;
+#if defined(HAVE_STDINT_H)
+typedef uint32_t ULONG32;
+typedef uint64_t ULONG64;
+typedef uint16_t USHORT;
+typedef uint16_t WORD, *PWORD, *LPWORD;
+#else
 typedef unsigned int ULONG32;
 typedef unsigned __int64 ULONG64;
-typedef wchar_t UNICODE;
 typedef unsigned short USHORT;
+typedef unsigned short WORD, *PWORD, *LPWORD;
+#endif
+typedef wchar_t UNICODE;
 #define VOID void
 typedef void *PVOID, *LPVOID;
 typedef void *PVOID64, *LPVOID64;
-typedef unsigned short WORD, *PWORD, *LPWORD;
 
+#if defined(HAVE_STDINT_H)
+typedef intptr_t INT_PTR;
+typedef uintptr_t UINT_PTR;
 #if defined(__x86_64__) || defined(__arm64__)
 typedef __int64 INT_PTR;
 typedef unsigned __int64 UINT_PTR;
@@ -273,19 +367,19 @@ typedef DWORD SECURITY_INFORMATION, *PSECURITY_INFORMATION;
 
 typedef struct _RPC_SID
 {
-	unsigned char Revision;
-	unsigned char SubAuthorityCount;
+	UCHAR Revision;
+	UCHAR SubAuthorityCount;
 	RPC_SID_IDENTIFIER_AUTHORITY IdentifierAuthority;
-	unsigned long SubAuthority[];
+	ULONG SubAuthority[];
 } RPC_SID, *PRPC_SID, *PSID;
 
 typedef struct _ACL
 {
-	unsigned char AclRevision;
-	unsigned char Sbz1;
-	unsigned short AclSize;
-	unsigned short AceCount;
-	unsigned short Sbz2;
+	UCHAR AclRevision;
+	UCHAR Sbz1;
+	USHORT AclSize;
+	USHORT AceCount;
+	USHORT Sbz2;
 } ACL, *PACL;
 
 typedef struct _SECURITY_DESCRIPTOR
@@ -329,7 +423,7 @@ typedef double DOUBLE;
 typedef void* PCONTEXT_HANDLE;
 typedef PCONTEXT_HANDLE* PPCONTEXT_HANDLE;
 
-typedef unsigned long error_status_t;
+typedef ULONG error_status_t;
 
 #ifndef _NTDEF_
 typedef LONG NTSTATUS;
