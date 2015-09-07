@@ -1193,7 +1193,7 @@ int freerdp_client_populate_settings_from_assistance_file(rdpAssistanceFile* fil
 	return 1;
 }
 
-rdpAssistanceFile* freerdp_assistance_file_new()
+rdpAssistanceFile* freerdp_assistance_file_new(void)
 {
 	return (rdpAssistanceFile*) calloc(1, sizeof(rdpAssistanceFile));
 }
