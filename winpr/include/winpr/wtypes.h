@@ -87,7 +87,7 @@
 #endif
 #endif
 
-#if defined(HAVE_STDBOOL_H)
+#if defined(HAVE_STDBOOL_H) && !defined(__OBJC__)
 typedef bool BOOL;
 #else
 #ifndef __OBJC__
@@ -147,7 +147,7 @@ typedef unsigned char UCHAR, *PUCHAR;
 typedef short SHORT;
 
 #ifndef FALSE
-#if defined(HAVE_STDBOOL_H)
+#if defined(HAVE_STDBOOL_H) && !defined(__OBJC__)
 #define FALSE			false
 #else
 #define FALSE			0
@@ -155,7 +155,7 @@ typedef short SHORT;
 #endif
 
 #ifndef TRUE
-#if defined(HAVE_STDBOOL_H)
+#if defined(HAVE_STDBOOL_H) && !defined(__OBJC__)
 #define TRUE			true
 #else
 #define TRUE			1
