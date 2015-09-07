@@ -989,7 +989,6 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 	X509_set_issuer_name(context->x509, name);
 
 	x509_add_ext(context->x509, NID_ext_key_usage, "serverAuth");
-	x509_add_ext(context->x509, NID_key_usage, "keyEncipherment,dataEncipherment");
 
 	arg = CommandLineFindArgumentA(args, "a");
 
