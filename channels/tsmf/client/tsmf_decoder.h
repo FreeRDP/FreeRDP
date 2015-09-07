@@ -49,7 +49,7 @@ struct _ITSMFDecoder
 	/* Optional Contol function */
 	BOOL (*Control)(ITSMFDecoder *decoder, ITSMFControlMsg control_msg, UINT32 *arg);
 	/* Decode a sample with extended interface. */
-	int (*DecodeEx)(ITSMFDecoder *decoder, const BYTE *data, UINT32 data_size, UINT32 extensions,
+	BOOL (*DecodeEx)(ITSMFDecoder *decoder, const BYTE *data, UINT32 data_size, UINT32 extensions,
 					UINT64 start_time, UINT64 end_time, UINT64 duration);
 	/* Get current play time */
 	UINT64(*GetRunningTime)(ITSMFDecoder *decoder);
