@@ -542,7 +542,7 @@ static LONG smartcard_GetStatusChangeW_Call(SMARTCARD_DEVICE* smartcard, SMARTCA
 
 	ret.cReaders = call->cReaders;
 	ret.rgReaderStates = NULL;
-	if (ret.cReaders)
+	if (ret.cReaders > 0)
 		ret.rgReaderStates = (ReaderState_Return*) calloc(ret.cReaders, sizeof(ReaderState_Return));
 
 	if (!ret.rgReaderStates)
