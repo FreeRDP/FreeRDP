@@ -100,7 +100,8 @@ static DWORD audin_winmm_thread_func(void* arg)
 	char *buffer;
 	int size, i;
 	WAVEHDR waveHdr[4];
-    DWORD status;
+	DWORD status;
+	MMRESULT rc;
 
 	if (!winmm->hWaveIn)
 	{
@@ -122,44 +123,68 @@ static DWORD audin_winmm_thread_func(void* arg)
 		waveHdr[i].dwBufferLength = size;
 		waveHdr[i].dwFlags = 0;
 		waveHdr[i].lpData = buffer;
-		if (MMSYSERR_NOERROR != waveInPrepareHeader(winmm->hWaveIn, &waveHdr[i], sizeof(waveHdr[i])))
+
+		rc = waveInPrepareHeader(winmm->hWaveIn, &waveHdr[i], sizeof(waveHdr[i]));
+		if (MMSYSERR_NOERROR != rc)
 		{
-			DEBUG_DVC("waveInPrepareHeader failed.");
+			DEBUG_DVC("waveInPrepareHeader failed. %d", rc);
 			if (winmm->rdpcontext)
 				setChannelError(winmm->rdpcontext, ERROR_INTERNAL_ERROR, "audin_winmm_thread_func reported an error");
 		}
-		if (MMSYSERR_NOERROR != waveInAddBuffer(winmm->hWaveIn, &waveHdr[i], sizeof(waveHdr[i])))
+
+		rc = waveInAddBuffer(winmm->hWaveIn, &waveHdr[i], sizeof(waveHdr[i]));
+		if (MMSYSERR_NOERROR != rc)
 		{
-			DEBUG_DVC("waveInAddBuffer failed.");
+			DEBUG_DVC("waveInAddBuffer failed. %d", rc);
 			if (winmm->rdpcontext)
 				setChannelError(winmm->rdpcontext, ERROR_INTERNAL_ERROR, "audin_winmm_thread_func reported an error");
 		}
 	}
-	waveInStart(winmm->hWaveIn);
+
+	rc = waveInStart(winmm->hWaveIn);
+	if (MMSYSERR_NOERROR != rc)
+	{
+		DEBUG_DVC("waveInStart failed. %d", rc);
+		if (winmm->rdpcontext)
+			setChannelError(winmm->rdpcontext, ERROR_INTERNAL_ERROR, "audin_winmm_thread_func reported an error");
+	}
 
 	status = WaitForSingleObject(winmm->stopEvent, INFINITE);
 
-    if (status == WAIT_FAILED)
-    {
-        DEBUG_DVC("WaitForSingleObject failed.");
-        if (winmm->rdpcontext)
-            setChannelError(winmm->rdpcontext, ERROR_INTERNAL_ERROR, "audin_winmm_thread_func reported an error");
-    }
+	if (status == WAIT_FAILED)
+{
+		DEBUG_DVC("WaitForSingleObject failed.");
+		if (winmm->rdpcontext)
+			setChannelError(winmm->rdpcontext, ERROR_INTERNAL_ERROR, "audin_winmm_thread_func reported an error");
+	}
 
-	waveInStop(winmm->hWaveIn);
+	rc = waveInReset(winmm->hWaveIn);
+	if (MMSYSERR_NOERROR != rc)
+	{
+		DEBUG_DVC("waveInReset failed. %d", rc);
+		if (winmm->rdpcontext)
+			setChannelError(winmm->rdpcontext, ERROR_INTERNAL_ERROR, "audin_winmm_thread_func reported an error");
+	}
 
 	for (i = 0; i < 4; i++)
 	{
-		if (MMSYSERR_NOERROR != waveInUnprepareHeader(winmm->hWaveIn, &waveHdr[i], sizeof(waveHdr[i])))
+		rc = waveInUnprepareHeader(winmm->hWaveIn, &waveHdr[i], sizeof(waveHdr[i]));
+		if (MMSYSERR_NOERROR != rc)
 		{
-			DEBUG_DVC("waveInUnprepareHeader failed.");
+			DEBUG_DVC("waveInUnprepareHeader failed. %d", rc);
 			if (winmm->rdpcontext)
 				setChannelError(winmm->rdpcontext, ERROR_INTERNAL_ERROR, "audin_winmm_thread_func reported an error");
 		}
 		free(waveHdr[i].lpData);
 	}
 
-	waveInClose(winmm->hWaveIn);
+	rc = waveInClose(winmm->hWaveIn);
+	if (MMSYSERR_NOERROR != rc)
+	{
+		DEBUG_DVC("waveInClose failed. %d", rc);
+		if (winmm->rdpcontext)
+			setChannelError(winmm->rdpcontext, ERROR_INTERNAL_ERROR, "audin_winmm_thread_func reported an error");
+	}
 	winmm->hWaveIn = NULL;
 
 	return 0;
