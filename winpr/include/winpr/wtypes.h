@@ -58,15 +58,23 @@
 #endif
 
 #if defined(HAVE_STDINT_H)
-#define int8_t	char
-#define int16_t short
-#define int32_t int
-#define int64_t long long
+#define __int8	int8_t
+#define __uint8	uint8_t
+#define __int16 int16_t
+#define __uint16 uint16_t
+#define __int32 int32_t
+#define __uint32 uint32_t
+#define __int64 int64_t
+#define __uint64 uint64_t
 #else
 #define __int8	char
+#define __uint8	unsigned char
 #define __int16 short
+#define __uint16 unsigned short
 #define __int32 int
+#define __uint32 unsigned int
 #define __int64 long long
+#define __uint64 unsigned long long
 #endif
 
 #if defined(HAVE_STDINT_H)
@@ -207,7 +215,6 @@ typedef int32_t LONG32;
 typedef int64_t LONG64;
 #else
 typedef signed int LONG32;
-
 #ifndef XMD_H
 typedef signed __int64 LONG64;
 #endif
@@ -263,7 +270,7 @@ typedef void *PVOID64, *LPVOID64;
 #if defined(HAVE_STDINT_H)
 typedef intptr_t INT_PTR;
 typedef uintptr_t UINT_PTR;
-#if defined(__x86_64__) || defined(__arm64__)
+#elif __x86_64__
 typedef __int64 INT_PTR;
 typedef unsigned __int64 UINT_PTR;
 #else
