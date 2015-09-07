@@ -351,7 +351,7 @@ static UINT tsmf_on_close(IWTSVirtualChannelCallback *pChannelCallback)
 static UINT tsmf_on_new_channel_connection(IWTSListenerCallback *pListenerCallback,
 		IWTSVirtualChannel *pChannel,
 		BYTE *Data,
-		int *pbAccept,
+		BOOL *pbAccept,
 		IWTSVirtualChannelCallback **ppCallback)
 {
 	TSMF_CHANNEL_CALLBACK* callback;

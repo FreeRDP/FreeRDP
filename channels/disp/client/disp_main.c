@@ -254,7 +254,7 @@ static UINT disp_on_close(IWTSVirtualChannelCallback* pChannelCallback)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT disp_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
-	IWTSVirtualChannel* pChannel, BYTE* Data, int* pbAccept,
+	IWTSVirtualChannel* pChannel, BYTE* Data, BOOL* pbAccept,
 	IWTSVirtualChannelCallback** ppCallback)
 {
 	DISP_CHANNEL_CALLBACK* callback;
