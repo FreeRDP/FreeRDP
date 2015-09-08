@@ -88,11 +88,10 @@
 #else
 #if defined(__x86_64__) || defined(__arm64__)
 #define __int3264 __int64
-#define __uint3264 unsigned __int64
+#define __uint3264 __uint64
 #else
 #define __int3264 __int32
-#define __uint3264 unsigned __int32
-#endif
+#define __uint3264 __uint32
 #endif
 
 #if defined(HAVE_STDBOOL_H) && !defined(__OBJC__)
