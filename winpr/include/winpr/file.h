@@ -161,6 +161,10 @@
 #define FIND_FIRST_EX_CASE_SENSITIVE		0x1
 #define FIND_FIRST_EX_LARGE_FETCH		0x2
 
+#define STD_INPUT_HANDLE  (DWORD)-10
+#define STD_OUTPUT_HANDLE (DWORD)-11
+#define STD_ERROR_HANDLE  (DWORD)-12
+
 typedef union _FILE_SEGMENT_ELEMENT
 {
 	PVOID64 Buffer;
@@ -316,7 +320,6 @@ WINPR_API BOOL RemoveDirectoryW(LPCWSTR lpPathName);
 #define RemoveDirectory		RemoveDirectoryA
 #endif
 
-
 /* Extra Functions */
 
 typedef BOOL (*pcIsFileHandled)(LPCSTR lpFileName);
@@ -329,7 +332,9 @@ typedef struct _HANDLE_CREATOR
 	pcCreateFileA CreateFileA;
 } HANDLE_CREATOR, *PHANDLE_CREATOR, *LPHANDLE_CREATOR;
 
-BOOL RegisterHandleCreator(PHANDLE_CREATOR pHandleCreator);
+WINPR_API HANDLE GetStdHandle(DWORD nStdHandle);
+WINPR_API BOOL SetStdHandle(DWORD nStdHandle, HANDLE hHandle);
+WINPR_API BOOL SetStdHandleEx(DWORD dwStdHandle, HANDLE hNewHandle, HANDLE* phOldHandle);
 
 #endif /* _WIN32 */
 

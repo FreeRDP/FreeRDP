@@ -24,7 +24,6 @@
 
 #include <winpr/crt.h>
 #include <winpr/path.h>
-#include <winpr/synch.h>
 #include <winpr/file.h>
 
 #ifdef HAVE_UNISTD_H

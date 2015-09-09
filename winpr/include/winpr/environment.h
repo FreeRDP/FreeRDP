@@ -40,10 +40,6 @@ WINPR_API BOOL SetCurrentDirectoryW(LPCWSTR lpPathName);
 WINPR_API DWORD SearchPathA(LPCSTR lpPath, LPCSTR lpFileName, LPCSTR lpExtension, DWORD nBufferLength, LPSTR lpBuffer, LPSTR* lpFilePart);
 WINPR_API DWORD SearchPathW(LPCWSTR lpPath, LPCWSTR lpFileName, LPCWSTR lpExtension, DWORD nBufferLength, LPWSTR lpBuffer, LPWSTR* lpFilePart);
 
-WINPR_API HANDLE GetStdHandle(DWORD nStdHandle);
-WINPR_API BOOL SetStdHandle(DWORD nStdHandle, HANDLE hHandle);
-WINPR_API BOOL SetStdHandleEx(DWORD dwStdHandle, HANDLE hNewHandle, HANDLE* phOldHandle);
-
 WINPR_API LPSTR GetCommandLineA(VOID);
 WINPR_API LPWSTR GetCommandLineW(VOID);
 
