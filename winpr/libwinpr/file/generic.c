@@ -25,11 +25,6 @@
 #include <winpr/crt.h>
 #include <winpr/path.h>
 #include <winpr/synch.h>
-#include <winpr/error.h>
-#include <winpr/handle.h>
-#include <winpr/platform.h>
-#include <winpr/collections.h>
-
 #include <winpr/file.h>
 
 #ifdef HAVE_UNISTD_H
@@ -42,7 +37,34 @@
 
 #include "../log.h"
 #define TAG WINPR_TAG("file")
-#include <winpr/handle.h>
+
+#ifndef _WIN32
+
+#include <assert.h>
+#include <pthread.h>
+#include <dirent.h>
+
+#include <sys/un.h>
+#include <sys/stat.h>
+#include <sys/socket.h>
+
+#ifdef HAVE_AIO_H
+#undef HAVE_AIO_H /* disable for now, incomplete */
+#endif
+
+#ifdef HAVE_AIO_H
+#include <aio.h>
+#endif
+
+#ifdef ANDROID
+#include <sys/vfs.h>
+#else
+#include <sys/statvfs.h>
+#endif
+
+#include "../handle/handle.h"
+
+#include "../pipe/pipe.h"
 
 /**
  * api-ms-win-core-file-l1-2-0.dll:
@@ -148,172 +170,27 @@
  * http://code.google.com/p/kernel/wiki/AIOUserGuide
  */
 
-#ifndef _WIN32
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
-#include <assert.h>
-#include <time.h>
-#include <errno.h>
-#include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <dirent.h>
-
-#include <fcntl.h>
-#include <sys/un.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-
-#ifdef HAVE_AIO_H
-#undef HAVE_AIO_H /* disable for now, incomplete */
-#endif
-
-#ifdef HAVE_AIO_H
-#include <aio.h>
-#endif
-
-#ifndef _WIN32
-#include <errno.h>
-#include <sys/time.h>
-#include <signal.h>
-#endif
-
-#ifdef ANDROID
-#include <sys/vfs.h>
-#else
-#include <sys/statvfs.h>
-#endif
-
-#include "../handle/handle.h"
-
-#include "../pipe/pipe.h"
-
-/* TODO: FIXME: use of a wArrayList and split winpr-utils with
- * winpr-collections to avoid a circular dependency
- * _HandleCreators = ArrayList_New(TRUE);
- */
-/* _HandleCreators is a NULL-terminated array with a maximun of HANDLE_CREATOR_MAX HANDLE_CREATOR */
-#define HANDLE_CREATOR_MAX 128
-static HANDLE_CREATOR** _HandleCreators = NULL;
-static CRITICAL_SECTION _HandleCreatorsLock;
+static wArrayList *_HandleCreators;
 
 static pthread_once_t _HandleCreatorsInitialized = PTHREAD_ONCE_INIT;
 
-static BOOL FileCloseHandle(HANDLE handle);
 
-static BOOL FileIsHandled(HANDLE handle)
-{
-	WINPR_NAMED_PIPE* pFile = (WINPR_NAMED_PIPE*) handle;
-
-	if (!pFile || (pFile->Type != HANDLE_TYPE_NAMED_PIPE) || (pFile == INVALID_HANDLE_VALUE))
-	{
-		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-BOOL FileCloseHandle(HANDLE handle) {
-	WINPR_NAMED_PIPE* pNamedPipe = (WINPR_NAMED_PIPE*) handle;
-
-
-	if (!FileIsHandled(handle))
-		return FALSE;
-
-	if (pNamedPipe->clientfd != -1)
-	{
-		//WLOG_DBG(TAG, "closing clientfd %d", pNamedPipe->clientfd);
-		close(pNamedPipe->clientfd);
-	}
-
-	if (pNamedPipe->serverfd != -1)
-	{
-		//WLOG_DBG(TAG, "closing serverfd %d", pNamedPipe->serverfd);
-		close(pNamedPipe->serverfd);
-	}
-
-	if (pNamedPipe->pfnUnrefNamedPipe)
-		pNamedPipe->pfnUnrefNamedPipe(pNamedPipe);
-
-	free(pNamedPipe->lpFileName);
-	free(pNamedPipe->lpFilePath);
-	free(pNamedPipe->name);
-	free(pNamedPipe);
-
-	return TRUE;
-}
-
-static int FileGetFd(HANDLE handle)
-{
-	WINPR_NAMED_PIPE *file = (WINPR_NAMED_PIPE *)handle;
-
-	if (!FileIsHandled(handle))
-		return -1;
-
-	if (file->ServerMode)
-		return file->serverfd;
-	else
-		return file->clientfd;
-}
+HANDLE_CREATOR *GetNamedPipeClientHandleCreator(void);
+HANDLE_CREATOR *GetCommHandleCreator(void);
 
 static void _HandleCreatorsInit()
 {
-	/* NB: error management to be done outside of this function */
+
 	assert(_HandleCreators == NULL);
-	_HandleCreators = (HANDLE_CREATOR**)calloc(HANDLE_CREATOR_MAX+1, sizeof(HANDLE_CREATOR*));
+	_HandleCreators = ArrayList_New(TRUE);
 	if (!_HandleCreators)
 		return;
 
-	if (!InitializeCriticalSectionEx(&_HandleCreatorsLock, 0, 0))
-	{
-		free(_HandleCreators);
-		_HandleCreators = NULL;
-	}
-}
-
-/**
- * Returns TRUE on success, FALSE otherwise.
- *
- * ERRORS:
- *   ERROR_DLL_INIT_FAILED
- *   ERROR_INSUFFICIENT_BUFFER _HandleCreators full
- */
-BOOL RegisterHandleCreator(PHANDLE_CREATOR pHandleCreator)
-{
-	int i;
-
-	if (pthread_once(&_HandleCreatorsInitialized, _HandleCreatorsInit) != 0)
-	{
-		SetLastError(ERROR_DLL_INIT_FAILED);
-		return FALSE;
-	}
-
-	if (_HandleCreators == NULL)
-	{
-		SetLastError(ERROR_DLL_INIT_FAILED);
-		return FALSE;
-	}
-
-	EnterCriticalSection(&_HandleCreatorsLock);
-
-	for (i=0; i<HANDLE_CREATOR_MAX; i++)
-	{
-		if (_HandleCreators[i] == NULL)
-		{
-			_HandleCreators[i] = pHandleCreator;
-			LeaveCriticalSection(&_HandleCreatorsLock);
-			return TRUE;
-		}
-	}
-
-	SetLastError(ERROR_INSUFFICIENT_BUFFER);
-	LeaveCriticalSection(&_HandleCreatorsLock);
-	return FALSE;
+	/*
+	 * Register all file handle creators.
+	 */
+	ArrayList_Add(_HandleCreators, GetNamedPipeClientHandleCreator());
+	ArrayList_Add(_HandleCreators, GetCommHandleCreator());
 }
 
 
@@ -344,25 +221,10 @@ int InstallAioSignalHandler()
 
 #endif /* HAVE_AIO_H */
 
-
-static HANDLE_OPS ops = {
-		FileIsHandled,
-		FileCloseHandle,
-		FileGetFd,
-		NULL, /* CleanupHandle */
-		NamedPipeRead,
-		NamedPipeWrite
-};
-
 HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
 				   DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
 	int i;
-	char* name;
-	int status;
-	HANDLE hNamedPipe;
-	struct sockaddr_un s;
-	WINPR_NAMED_PIPE* pNamedPipe;
 
 	if (!lpFileName)
 		return INVALID_HANDLE_VALUE;
@@ -379,106 +241,23 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 		return INVALID_HANDLE_VALUE;
 	}
 
-	EnterCriticalSection(&_HandleCreatorsLock);
+	ArrayList_Lock(_HandleCreators);
 
-	for (i=0; _HandleCreators[i] != NULL; i++)
+	for (i=0; i <= ArrayList_Count(_HandleCreators); i++)
 	{
-		HANDLE_CREATOR* creator = (HANDLE_CREATOR*)_HandleCreators[i];
+		HANDLE_CREATOR* creator = ArrayList_GetItem(_HandleCreators, i);
 
 		if (creator && creator->IsHandled(lpFileName))
 		{
 			HANDLE newHandle = creator->CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
 													dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-			LeaveCriticalSection(&_HandleCreatorsLock);
+			ArrayList_Unlock(_HandleCreators);
 			return newHandle;
 		}
 	}
 
-	LeaveCriticalSection(&_HandleCreatorsLock);
-
-	/* TODO: use of a HANDLE_CREATOR for named pipes as well */
-
-	if (!IsNamedPipeFileNameA(lpFileName))
-		return INVALID_HANDLE_VALUE;
-
-	name = GetNamedPipeNameWithoutPrefixA(lpFileName);
-
-	if (!name)
-		return INVALID_HANDLE_VALUE;
-
-	free(name);
-	pNamedPipe = (WINPR_NAMED_PIPE*) calloc(1, sizeof(WINPR_NAMED_PIPE));
-	if (!pNamedPipe)
-	{
-		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-		return INVALID_HANDLE_VALUE;
-	}
-
-	hNamedPipe = (HANDLE) pNamedPipe;
-	WINPR_HANDLE_SET_TYPE_AND_MODE(pNamedPipe, HANDLE_TYPE_NAMED_PIPE, WINPR_FD_READ);
-	pNamedPipe->name = _strdup(lpFileName);
-	if (!pNamedPipe->name)
-	{
-		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-		free(pNamedPipe);
-		return INVALID_HANDLE_VALUE;
-	}
-	pNamedPipe->dwOpenMode = 0;
-	pNamedPipe->dwPipeMode = 0;
-	pNamedPipe->nMaxInstances = 0;
-	pNamedPipe->nOutBufferSize = 0;
-	pNamedPipe->nInBufferSize = 0;
-	pNamedPipe->nDefaultTimeOut = 0;
-	pNamedPipe->dwFlagsAndAttributes = dwFlagsAndAttributes;
-	pNamedPipe->lpFileName = GetNamedPipeNameWithoutPrefixA(lpFileName);
-	if (!pNamedPipe->lpFileName)
-	{
-		free((void *)pNamedPipe->name);
-		free(pNamedPipe);
-		return INVALID_HANDLE_VALUE;
-
-	}
-	pNamedPipe->lpFilePath = GetNamedPipeUnixDomainSocketFilePathA(lpFileName);
-	if (!pNamedPipe->lpFilePath)
-	{
-		free((void *)pNamedPipe->lpFileName);
-		free((void *)pNamedPipe->name);
-		free(pNamedPipe);
-		return INVALID_HANDLE_VALUE;
-
-	}
-	pNamedPipe->clientfd = socket(PF_LOCAL, SOCK_STREAM, 0);
-	pNamedPipe->serverfd = -1;
-	pNamedPipe->ServerMode = FALSE;
-	ZeroMemory(&s, sizeof(struct sockaddr_un));
-	s.sun_family = AF_UNIX;
-	strcpy(s.sun_path, pNamedPipe->lpFilePath);
-	status = connect(pNamedPipe->clientfd, (struct sockaddr*) &s, sizeof(struct sockaddr_un));
-
-	pNamedPipe->ops = &ops;
-
-	if (status != 0)
-	{
-		close(pNamedPipe->clientfd);
-		free((char*) pNamedPipe->name);
-		free((char*) pNamedPipe->lpFileName);
-		free((char*) pNamedPipe->lpFilePath);
-		free(pNamedPipe);
-		return INVALID_HANDLE_VALUE;
-	}
-
-	if (dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED)
-	{
-#if 0
-		int flags = fcntl(pNamedPipe->clientfd, F_GETFL);
-
-		if (flags != -1)
-			fcntl(pNamedPipe->clientfd, F_SETFL, flags | O_NONBLOCK);
-
-#endif
-	}
-
-	return hNamedPipe;
+	ArrayList_Unlock(_HandleCreators);
+	return INVALID_HANDLE_VALUE;
 }
 
 HANDLE CreateFileW(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
@@ -806,72 +585,6 @@ BOOL RemoveDirectoryW(LPCWSTR lpPathName)
 #endif
 
 /* Extended API */
-
-#define NAMED_PIPE_PREFIX_PATH		"\\\\.\\pipe\\"
-
-BOOL IsNamedPipeFileNameA(LPCSTR lpName)
-{
-	if (strncmp(lpName, NAMED_PIPE_PREFIX_PATH, sizeof(NAMED_PIPE_PREFIX_PATH) - 1) != 0)
-		return FALSE;
-
-	return TRUE;
-}
-
-char* GetNamedPipeNameWithoutPrefixA(LPCSTR lpName)
-{
-	char* lpFileName;
-
-	if (!lpName)
-		return NULL;
-
-	if (!IsNamedPipeFileNameA(lpName))
-		return NULL;
-
-	lpFileName = _strdup(&lpName[strlen(NAMED_PIPE_PREFIX_PATH)]);
-	return lpFileName;
-}
-
-char* GetNamedPipeUnixDomainSocketBaseFilePathA()
-{
-	char* lpTempPath;
-	char* lpPipePath;
-	lpTempPath = GetKnownPath(KNOWN_PATH_TEMP);
-	if (!lpTempPath)
-		return NULL;
-	lpPipePath = GetCombinedPath(lpTempPath, ".pipe");
-	free(lpTempPath);
-	return lpPipePath;
-}
-
-char* GetNamedPipeUnixDomainSocketFilePathA(LPCSTR lpName)
-{
-	char* lpPipePath;
-	char* lpFileName;
-	char* lpFilePath;
-	lpPipePath = GetNamedPipeUnixDomainSocketBaseFilePathA();
-	lpFileName = GetNamedPipeNameWithoutPrefixA(lpName);
-	lpFilePath = GetCombinedPath(lpPipePath, (char*) lpFileName);
-	free(lpPipePath);
-	free(lpFileName);
-	return lpFilePath;
-}
-
-int GetNamePipeFileDescriptor(HANDLE hNamedPipe)
-{
-#ifndef _WIN32
-	int fd;
-	WINPR_NAMED_PIPE* pNamedPipe;
-	pNamedPipe = (WINPR_NAMED_PIPE*) hNamedPipe;
-
-	if (!pNamedPipe || pNamedPipe->Type != HANDLE_TYPE_NAMED_PIPE)
-		return -1;
-
-	fd = (pNamedPipe->ServerMode) ? pNamedPipe->serverfd : pNamedPipe->clientfd;
-	return fd;
-#else
-	return -1;
-#endif
-}
 
 int UnixChangeFileMode(const char* filename, int flags)
 {
