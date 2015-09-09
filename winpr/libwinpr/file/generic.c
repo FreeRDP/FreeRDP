@@ -175,7 +175,10 @@ static pthread_once_t _HandleCreatorsInitialized = PTHREAD_ONCE_INIT;
 
 
 HANDLE_CREATOR *GetNamedPipeClientHandleCreator(void);
+
+#if defined __linux__ && !defined ANDROID
 HANDLE_CREATOR *GetCommHandleCreator(void);
+#endif /* __linux__ && !defined ANDROID */
 
 static void _HandleCreatorsInit()
 {
@@ -189,7 +192,9 @@ static void _HandleCreatorsInit()
 	 * Register all file handle creators.
 	 */
 	ArrayList_Add(_HandleCreators, GetNamedPipeClientHandleCreator());
+#if defined __linux__ && !defined ANDROID
 	ArrayList_Add(_HandleCreators, GetCommHandleCreator());
+#endif /* __linux__ && !defined ANDROID */
 }
 
 
