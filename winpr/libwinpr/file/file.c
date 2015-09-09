@@ -74,8 +74,13 @@ static BOOL FileCloseHandle(HANDLE handle) {
 
 	if (file->fd != -1)
 	{
-		close(file->fd);
-		file->fd = -1;
+
+		/* Don't close stdin/stdout/stderr */
+		if (file->fd > 2)
+		{
+			close(file->fd);
+			file->fd = -1;
+		}
 	}
 
 	free(handle);

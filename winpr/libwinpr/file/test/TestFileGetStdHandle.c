@@ -41,6 +41,7 @@ int TestFileGetStdHandle(int argc, char* argv[])
 		fprintf(stderr, "write failed\n");
 		return -1;
 	}
+	CloseHandle(stdout);
 
 	return 0;
 }
