@@ -298,6 +298,10 @@ WINPR_API BOOL CreateDirectoryW(LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecu
 WINPR_API BOOL RemoveDirectoryA(LPCSTR lpPathName);
 WINPR_API BOOL RemoveDirectoryW(LPCWSTR lpPathName);
 
+WINPR_API HANDLE GetStdHandle(DWORD nStdHandle);
+WINPR_API BOOL SetStdHandle(DWORD nStdHandle, HANDLE hHandle);
+WINPR_API BOOL SetStdHandleEx(DWORD dwStdHandle, HANDLE hNewHandle, HANDLE* phOldHandle);
+
 #ifdef __cplusplus
 }
 #endif
@@ -331,10 +335,6 @@ typedef struct _HANDLE_CREATOR
 	pcIsFileHandled IsHandled;
 	pcCreateFileA CreateFileA;
 } HANDLE_CREATOR, *PHANDLE_CREATOR, *LPHANDLE_CREATOR;
-
-WINPR_API HANDLE GetStdHandle(DWORD nStdHandle);
-WINPR_API BOOL SetStdHandle(DWORD nStdHandle, HANDLE hHandle);
-WINPR_API BOOL SetStdHandleEx(DWORD dwStdHandle, HANDLE hNewHandle, HANDLE* phOldHandle);
 
 #endif /* _WIN32 */
 

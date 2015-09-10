@@ -575,10 +575,7 @@ BOOL CreateDirectoryW(LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttrib
 
 BOOL RemoveDirectoryA(LPCSTR lpPathName)
 {
-	if (!rmdir(lpPathName))
-		return TRUE;
-
-	return FALSE;
+	return (rmdir(lpPathName) == 0);
 }
 
 BOOL RemoveDirectoryW(LPCWSTR lpPathName)
