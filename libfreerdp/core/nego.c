@@ -186,9 +186,6 @@ BOOL nego_connect(rdpNego* nego)
 		return FALSE;
 	}
 
-	if (!(nego->flags & DYNVC_GFX_PROTOCOL_SUPPORTED))
-		settings->NetworkAutoDetect = FALSE;
-
 	return TRUE;
 }
 
