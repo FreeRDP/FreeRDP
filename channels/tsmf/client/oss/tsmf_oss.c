@@ -34,7 +34,11 @@
 #include <libgen.h>
 #include <limits.h>
 #include <unistd.h>
-#include <sys/soundcard.h>
+#if defined(__OpenBSD__)
+    #include <soundcard.h>
+#else
+    #include <sys/soundcard.h>
+#endif
 #include <sys/ioctl.h>
 
 #include <freerdp/types.h>

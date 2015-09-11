@@ -381,6 +381,7 @@ endif(APPLE)
 
 # OpenBSD
 if(OPENBSD)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -L/usr/local/lib")
 	set(WITH_MANPAGES "ON")
 	set(WITH_ALSA "OFF")
 	set(WITH_PULSE "ON")
