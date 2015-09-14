@@ -71,7 +71,7 @@ typedef struct comm_device COMM_DEVICE;
 static COMM_DEVICE **_CommDevices = NULL;
 static CRITICAL_SECTION _CommDevicesLock;
 
-static HANDLE_CREATOR *_CommHandleCreator = NULL;
+static HANDLE_CREATOR _CommHandleCreator;
 
 static pthread_once_t _CommInitialized = PTHREAD_ONCE_INIT;
 
@@ -85,14 +85,19 @@ static int CommGetFd(HANDLE handle)
 	return comm->fd;
 }
 
-static void _CommInit()
+HANDLE_CREATOR *GetCommHandleCreator(void)
+{
+	_CommHandleCreator.IsHandled = IsCommDevice;
+	_CommHandleCreator.CreateFileA = CommCreateFileA;
+	return &_CommHandleCreator;
+}
+
+static void _CommInit(void)
 {
 	/* NB: error management to be done outside of this function */
 
 	assert(_Log == NULL);
 	assert(_CommDevices == NULL);
-	assert(_CommHandleCreator == NULL);
-
 
 	_CommDevices = (COMM_DEVICE**)calloc(COMM_DEVICE_MAX+1, sizeof(COMM_DEVICE*));
 	if (!_CommDevices)
@@ -105,31 +110,9 @@ static void _CommInit()
 		return;
 	}
 
-	_CommHandleCreator = (HANDLE_CREATOR*)malloc(sizeof(HANDLE_CREATOR));
-	if (!_CommHandleCreator)
-	{
-		DeleteCriticalSection(&_CommDevicesLock);
-		free(_CommDevices);
-		_CommDevices = NULL;
-		return;
-	}
-
-	_CommHandleCreator->IsHandled = IsCommDevice;
-	_CommHandleCreator->CreateFileA = CommCreateFileA;
-
-	if (!RegisterHandleCreator(_CommHandleCreator))
-	{
-		DeleteCriticalSection(&_CommDevicesLock);
-		free(_CommDevices);
-		free(_CommHandleCreator);
-		_CommDevices = NULL;
-		_CommHandleCreator = NULL;
-		return;
-	}
 	_Log = WLog_Get("com.winpr.comm");
 	assert(_Log != NULL);
 }
-
 
 /**
  * Returns TRUE when the comm module is correctly intialized, FALSE otherwise
@@ -138,12 +121,6 @@ static void _CommInit()
 static BOOL CommInitialized()
 {
 	if (pthread_once(&_CommInitialized, _CommInit) != 0)
-	{
-		SetLastError(ERROR_DLL_INIT_FAILED);
-		return FALSE;
-	}
-
-	if (_CommHandleCreator == NULL)
 	{
 		SetLastError(ERROR_DLL_INIT_FAILED);
 		return FALSE;
