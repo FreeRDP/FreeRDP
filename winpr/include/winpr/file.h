@@ -360,6 +360,7 @@ WINPR_API char* GetNamedPipeUnixDomainSocketBaseFilePathA(void);
 WINPR_API char* GetNamedPipeUnixDomainSocketFilePathA(LPCSTR lpName);
 
 WINPR_API int GetNamePipeFileDescriptor(HANDLE hNamedPipe);
+WINPR_API HANDLE GetFileHandleForFileDescriptor(int fd);
 
 #ifdef __cplusplus
 }

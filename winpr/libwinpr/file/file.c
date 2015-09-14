@@ -33,6 +33,7 @@
 
 #include "../handle/handle.h"
 #include <errno.h>
+#include <fcntl.h>
 
 struct winpr_file
 {
@@ -215,13 +216,34 @@ HANDLE GetStdHandle(DWORD nStdHandle)
 
 BOOL SetStdHandle(DWORD nStdHandle, HANDLE hHandle)
 {
-	return TRUE;
+	return FALSE;
 }
 
 BOOL SetStdHandleEx(DWORD dwStdHandle, HANDLE hNewHandle, HANDLE* phOldHandle)
 {
-	return TRUE;
+	return FALSE;
 }
 
 #endif /* _WIN32 */
+
+/* Extended API */
+
+HANDLE GetFileHandleForFileDescriptor(int fd)
+{
+#ifdef WIN32
+    return INVALID_HANDLE_VALUE;
+#else /* WIN32 */
+    WINPR_FILE *pFile;
+
+    /* Make sure it's a valid fd */
+    if (fcntl(fd, F_GETFD) == -1 && errno == EBADF)
+        return INVALID_HANDLE_VALUE;
+
+    pFile = FileHandle_New();
+    if (!pFile)
+        return INVALID_HANDLE_VALUE;
+    pFile->fd = fd;
+    return (HANDLE)pFile;
+#endif /* WIN32 */
+}
 
