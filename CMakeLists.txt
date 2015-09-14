@@ -381,11 +381,10 @@ endif(APPLE)
 
 # OpenBSD
 if(OPENBSD)
-        LINK_DIRECTORIES(/usr/local/lib)
-        TARGET_LINK_LIBRARIES(execinfo)
 	set(WITH_MANPAGES "ON")
 	set(WITH_ALSA "OFF")
-	set(WITH_PULSE "ON")
+        set(WITH_PULSE "OFF")
+        set(WITH_OSS "ON")
 	set(WITH_WAYLAND "OFF")
 endif()
 
