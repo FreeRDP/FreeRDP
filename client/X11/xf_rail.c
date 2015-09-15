@@ -497,11 +497,12 @@ static BOOL xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 				appWindow->height == appWindow->windowHeight)
 		{
 			xf_UpdateWindowArea(xfc, appWindow, 0, 0, appWindow->windowWidth, appWindow->windowHeight);
-			return TRUE;
 		}
-
-		xf_MoveWindow(xfc, appWindow, appWindow->windowOffsetX - appWindow->localWindowOffsetCorrX, appWindow->windowOffsetY - appWindow->localWindowOffsetCorrY,
+		else
+		{
+			xf_MoveWindow(xfc, appWindow, appWindow->windowOffsetX - appWindow->localWindowOffsetCorrX, appWindow->windowOffsetY - appWindow->localWindowOffsetCorrY,
 				appWindow->windowWidth, appWindow->windowHeight);
+		}
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_WND_RECTS)
