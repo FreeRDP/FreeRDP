@@ -65,7 +65,8 @@ static void transport_ssl_cb(SSL* ssl, int where, int ret)
 	if ((where | SSL_CB_ALERT) && (ret == 561))
 	{
 		transport = (rdpTransport *) SSL_get_app_data(ssl);
-		transport->nlaFailure = TRUE;
+		if (!freerdp_get_last_error(transport->context))
+			freerdp_set_last_error(transport->context, FREERDP_ERROR_AUTHENTICATION_FAILED);
 	}
 }
 
@@ -1003,7 +1004,6 @@ rdpTransport* transport_new(rdpContext* context)
 	transport->blocking = TRUE;
 	transport->GatewayEnabled = FALSE;
 	transport->layer = TRANSPORT_LAYER_TCP;
-	transport->nlaFailure = FALSE;
 
 	if (!InitializeCriticalSectionAndSpinCount(&(transport->ReadLock), 4000))
 		goto out_free_connectedEvent;

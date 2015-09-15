@@ -77,7 +77,6 @@ struct rdp_transport
 	CRITICAL_SECTION ReadLock;
 	CRITICAL_SECTION WriteLock;
 	ULONG written;
-	BOOL nlaFailure;
 };
 
 wStream* transport_send_stream_init(rdpTransport* transport, int size);
