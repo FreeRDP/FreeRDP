@@ -1378,7 +1378,7 @@ long rdg_bio_callback(BIO* bio, int mode, const char* argp, int argi, long argl,
 static int rdg_bio_write(BIO* bio, const char* buf, int num)
 {
 	int status;
-	rdpRdg* rdg = (rdpRdg*)bio->ptr;
+	rdpRdg* rdg = (rdpRdg*) bio->ptr;
 
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
 
@@ -1411,14 +1411,14 @@ static int rdg_bio_read(BIO* bio, char* buf, int size)
 
 	status = rdg_read_data_packet(rdg, (BYTE*) buf, size);
 
-	if (!status)
-	{
-		BIO_set_retry_read(bio);
-		return -1;
-	}
-	else if (status < 0)
+	if (status < 0)
 	{
 		BIO_clear_retry_flags(bio);
+		return -1;
+	}
+	else if (status == 0)
+	{
+		BIO_set_retry_read(bio);
 		return -1;
 	}
 
@@ -1462,20 +1462,37 @@ static long rdg_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 	}
 	else if (cmd == BIO_C_READ_BLOCKED)
 	{
-		status = 0;
+		BIO* bio = tlsOut->bio;
+		status = BIO_read_blocked(bio);
 	}
 	else if (cmd == BIO_C_WRITE_BLOCKED)
 	{
-		status = 0;
+		BIO* bio = tlsIn->bio;
+		status = BIO_write_blocked(bio);
 	}
 	else if (cmd == BIO_C_WAIT_READ)
 	{
-		int timeout = (int)arg1;
-		return BIO_wait_read(tlsOut->bio, timeout);
+		int timeout = (int) arg1;
+		BIO* bio = tlsOut->bio;
+
+		if (BIO_read_blocked(bio))
+			return BIO_wait_read(bio, timeout);
+		else if (BIO_write_blocked(bio))
+			return BIO_wait_write(bio, timeout);
+		else
+			status = 1;
 	}
 	else if (cmd == BIO_C_WAIT_WRITE)
 	{
-		status = 0;
+		int timeout = (int) arg1;
+		BIO* bio = tlsIn->bio;
+
+		if (BIO_write_blocked(bio))
+			status = BIO_wait_write(bio, timeout);
+		else if (BIO_read_blocked(bio))
+			status = BIO_wait_read(bio, timeout);
+		else
+			status = 1;
 	}
 
 	return status;
