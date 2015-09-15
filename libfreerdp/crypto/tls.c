@@ -48,6 +48,7 @@
 struct _BIO_RDP_TLS
 {
 	SSL* ssl;
+	CRITICAL_SECTION lock;
 };
 typedef struct _BIO_RDP_TLS BIO_RDP_TLS;
 
@@ -58,6 +59,7 @@ long bio_rdp_tls_callback(BIO* bio, int mode, const char* argp, int argi, long a
 
 static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 {
+	int error;
 	int status;
 	BIO_RDP_TLS* tls = (BIO_RDP_TLS*) bio->ptr;
 
@@ -65,12 +67,17 @@ static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 		return 0;
 
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_READ | BIO_FLAGS_IO_SPECIAL);
+	
+	EnterCriticalSection(&tls->lock);
 
 	status = SSL_write(tls->ssl, buf, size);
+	error = SSL_get_error(tls->ssl, status);
+	
+	LeaveCriticalSection(&tls->lock);
 
 	if (status <= 0)
 	{
-		switch (SSL_get_error(tls->ssl, status))
+		switch (error)
 		{
 			case SSL_ERROR_NONE:
 				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
@@ -109,6 +116,7 @@ static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 
 static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 {
+	int error;
 	int status;
 	BIO_RDP_TLS* tls = (BIO_RDP_TLS*) bio->ptr;
 
@@ -117,11 +125,16 @@ static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_READ | BIO_FLAGS_IO_SPECIAL);
 
+	EnterCriticalSection(&tls->lock);
+	
 	status = SSL_read(tls->ssl, buf, size);
+	error = SSL_get_error(tls->ssl, status);
 
+	LeaveCriticalSection(&tls->lock);
+	
 	if (status <= 0)
 	{
-		switch (SSL_get_error(tls->ssl, status))
+		switch (error)
 		{
 			case SSL_ERROR_NONE:
 				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
@@ -381,6 +394,8 @@ static int bio_rdp_tls_new(BIO* bio)
 		return 0;
 
 	bio->ptr = (void*) tls;
+	
+	InitializeCriticalSectionAndSpinCount(&tls->lock, 4000);
 
 	return 1;
 }
@@ -409,6 +424,8 @@ static int bio_rdp_tls_free(BIO* bio)
 		bio->flags = 0;
 	}
 
+	DeleteCriticalSection(&tls->lock);
+	
 	free(tls);
 
 	return 1;
