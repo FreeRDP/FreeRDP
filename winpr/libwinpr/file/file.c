@@ -18,17 +18,17 @@
  * limitations under the License.
  */
 
-#ifndef _WIN32
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
+#include <winpr/file.h>
+
+#ifndef _WIN32
 
 #include "../log.h"
 #define TAG WINPR_TAG("file")
 
-#include <winpr/file.h>
 #include <winpr/wlog.h>
 
 #include "../handle/handle.h"
@@ -231,19 +231,19 @@ BOOL SetStdHandleEx(DWORD dwStdHandle, HANDLE hNewHandle, HANDLE* phOldHandle)
 HANDLE GetFileHandleForFileDescriptor(int fd)
 {
 #ifdef WIN32
-    return INVALID_HANDLE_VALUE;
+	return (HANDLE)_get_osfhandle(fd);
 #else /* WIN32 */
-    WINPR_FILE *pFile;
+	WINPR_FILE *pFile;
 
-    /* Make sure it's a valid fd */
-    if (fcntl(fd, F_GETFD) == -1 && errno == EBADF)
-        return INVALID_HANDLE_VALUE;
+	/* Make sure it's a valid fd */
+	if (fcntl(fd, F_GETFD) == -1 && errno == EBADF)
+		return INVALID_HANDLE_VALUE;
 
-    pFile = FileHandle_New();
-    if (!pFile)
-        return INVALID_HANDLE_VALUE;
-    pFile->fd = fd;
-    return (HANDLE)pFile;
+	pFile = FileHandle_New();
+	if (!pFile)
+		return INVALID_HANDLE_VALUE;
+	pFile->fd = fd;
+	return (HANDLE)pFile;
 #endif /* WIN32 */
 }
 
