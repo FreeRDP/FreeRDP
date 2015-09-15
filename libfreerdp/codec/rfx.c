@@ -1554,12 +1554,20 @@ skip_encoding_loop:
 
 	if (success && message->numTiles != maxNbTiles)
 	{
-		void* pmem = realloc((void*) message->tiles, sizeof(RFX_TILE*) * message->numTiles);
+		if (message->numTiles > 0)
+		{
+			void* pmem = realloc((void*) message->tiles, sizeof(RFX_TILE*) * message->numTiles);
 
-		if (pmem)
-			message->tiles = (RFX_TILE**) pmem;
+			if (pmem)
+				message->tiles = (RFX_TILE**) pmem;
+			else
+				success = FALSE;
+		}
 		else
+		{
+			free(message->tiles);
 			success = FALSE;
+		}
 	}
 
 	/* when using threads ensure all computations are done */

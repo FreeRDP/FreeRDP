@@ -4632,7 +4632,7 @@ unsigned lodepng_decode(unsigned char** out, unsigned* w, unsigned* h,
     }
 
     outsize = lodepng_get_raw_size(*w, *h, &state->info_raw);
-    *out = (unsigned char*)malloc(outsize);
+    *out = (unsigned char*)calloc(outsize, sizeof(unsigned char));
     if(!(*out))
     {
       state->error = 83; /*alloc fail*/
