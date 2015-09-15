@@ -132,12 +132,12 @@ struct rdp_rdg
 	rdpNtlm* ntlm;
 	HttpContext* http;
 	HANDLE readEvent;
+    CRITICAL_SECTION writeSection;
 
 	UUID guid;
 
 	int state;
 	UINT16 packetRemainingCount;
-	int nonBlocking;
 	int timeout;
 };
 

@@ -1167,16 +1167,62 @@ int rdg_write_data_packet(rdpRdg* rdg, BYTE* buf, int size)
 
 BOOL rdg_process_close_packet(rdpRdg* rdg)
 {
-	BYTE buffer[sizeof(RdgPacketHeader) + 4];
-	RdgPacketHeader* header = (RdgPacketHeader*)buffer;
+    int status;
+    wStream* sChunk;
+    int packetSize = 12;
+    char chunkSize[11];
+    
+    sprintf_s(chunkSize, sizeof(chunkSize), "%X\r\n", packetSize);
+    
+    sChunk = Stream_New(NULL, strlen(chunkSize) + packetSize + 2);
+    
+    if (!sChunk)
+        return FALSE;
+    
+    Stream_Write(sChunk, chunkSize, strlen(chunkSize));
+    
+    Stream_Write_UINT16(sChunk, PKT_TYPE_CLOSE_CHANNEL_RESPONSE);   /* Type */
+    Stream_Write_UINT16(sChunk, 0);   /* Reserved */
+    Stream_Write_UINT32(sChunk, packetSize);   /* Packet length */
+    
+    Stream_Write_UINT32(sChunk, 0);   /* Status code */
+    
+    Stream_Write(sChunk, "\r\n", 2);
+    Stream_SealLength(sChunk);
+    
+    status = tls_write_all(rdg->tlsIn, Stream_Buffer(sChunk), Stream_Length(sChunk));
+    Stream_Free(sChunk, TRUE);
+    
+    return (status < 0 ? FALSE : TRUE);
+}
 
-	memset(buffer, 0, sizeof(buffer));
-	header->type = PKT_TYPE_CLOSE_CHANNEL_RESPONSE;
-	header->packetLength = sizeof(buffer);
-
-	WLog_DBG(TAG, "Channel Close requested");
-	rdg->state = RDG_CLIENT_STATE_CLOSED;
-	return (rdg_write_data_packet(rdg, buffer, sizeof(buffer)) > 0 ? TRUE : FALSE);
+BOOL rdg_process_keep_alive_packet(rdpRdg* rdg)
+{
+    int status;
+    wStream* sChunk;
+    int packetSize = 8;
+    char chunkSize[11];
+    
+    sprintf_s(chunkSize, sizeof(chunkSize), "%X\r\n", packetSize);
+    
+    sChunk = Stream_New(NULL, strlen(chunkSize) + packetSize + 2);
+    
+    if (!sChunk)
+        return FALSE;
+    
+    Stream_Write(sChunk, chunkSize, strlen(chunkSize));
+    
+    Stream_Write_UINT16(sChunk, PKT_TYPE_KEEPALIVE);   /* Type */
+    Stream_Write_UINT16(sChunk, 0);   /* Reserved */
+    Stream_Write_UINT32(sChunk, packetSize);   /* Packet length */
+    
+    Stream_Write(sChunk, "\r\n", 2);
+    Stream_SealLength(sChunk);
+    
+    status = tls_write_all(rdg->tlsIn, Stream_Buffer(sChunk), Stream_Length(sChunk));
+    Stream_Free(sChunk, TRUE);
+    
+    return (status < 0 ? FALSE : TRUE);
 }
 
 BOOL rdg_process_unknown_packet(rdpRdg* rdg, int type)
@@ -1223,16 +1269,25 @@ BOOL rdg_process_control_packet(rdpRdg* rdg, int type, int packetLength)
 	switch (type)
 	{
 	case PKT_TYPE_CLOSE_CHANNEL:
-		return rdg_process_close_packet(rdg);
-		break;
+        EnterCriticalSection(&rdg->writeSection);
+		status = rdg_process_close_packet(rdg);
+        LeaveCriticalSection(&rdg->writeSection);
+        break;
+
+    case PKT_TYPE_KEEPALIVE:
+        EnterCriticalSection(&rdg->writeSection);
+        status = rdg_process_keep_alive_packet(rdg);
+        LeaveCriticalSection(&rdg->writeSection);
+        break;
+            
 	default:
-		rdg_process_unknown_packet(rdg, type);
+		status = rdg_process_unknown_packet(rdg, type);
 		break;
 	}
 
 	Stream_Free(s, TRUE);
 
-	return TRUE;
+	return status;
 }
 
 int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
@@ -1255,7 +1310,7 @@ int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
 				{
 					return -1;
 				}
-				if (rdg->nonBlocking && !readCount)
+				if (!readCount)
 				{
 					return 0;
 				}
@@ -1298,12 +1353,13 @@ int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
 
 	status = BIO_read(rdg->tlsOut->bio, buffer, readSize);
 
-	if (status < 0)
+	if (status <= 0)
 	{
 		if (!BIO_should_retry(rdg->tlsOut->bio))
 		{
 			return -1;
 		}
+        return 0;
 	}
 
 	rdg->packetRemainingCount -= status;
@@ -1330,7 +1386,9 @@ static int rdg_bio_write(BIO* bio, const char* buf, int num)
 
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
 
+    EnterCriticalSection(&rdg->writeSection);
 	status = rdg_write_data_packet(rdg, (BYTE*) buf, num);
+    LeaveCriticalSection(&rdg->writeSection);
 
 	if (status < 0)
 	{
@@ -1355,23 +1413,17 @@ static int rdg_bio_read(BIO* bio, char* buf, int size)
 	int status;
 	rdpRdg* rdg = (rdpRdg*)bio->ptr;
 
-	BIO_clear_flags(bio, BIO_FLAGS_READ);
-
 	status = rdg_read_data_packet(rdg, (BYTE*) buf, size);
 
-	if (status < 0)
+    if (!status)
+    {
+        BIO_set_retry_read(bio);
+        return -1;
+    }
+	else if (status < 0)
 	{
-		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+        BIO_clear_retry_flags(bio);
 		return -1;
-	}
-	else if (status < size)
-	{
-		BIO_set_flags(bio, BIO_FLAGS_READ);
-		WSASetLastError(WSAEWOULDBLOCK);
-	}
-	else
-	{
-		BIO_clear_flags(bio, BIO_FLAGS_READ);
 	}
 
 	return status;
@@ -1379,12 +1431,12 @@ static int rdg_bio_read(BIO* bio, char* buf, int size)
 
 static int rdg_bio_puts(BIO* bio, const char* str)
 {
-	return 1;
+	return -2;
 }
 
 static int rdg_bio_gets(BIO* bio, char* str, int size)
 {
-	return 1;
+	return -2;
 }
 
 static long rdg_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
@@ -1410,7 +1462,6 @@ static long rdg_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 	}
 	else if (cmd == BIO_C_SET_NONBLOCK)
 	{
-		rdg->nonBlocking = arg1;
 		status = 1;
 	}
 	else if (cmd == BIO_C_READ_BLOCKED)
@@ -1536,6 +1587,8 @@ rdpRdg* rdg_new(rdpTransport* transport)
 
 		if (!rdg->readEvent)
 			goto rdg_alloc_error;
+        
+        InitializeCriticalSection(&rdg->writeSection);
 	}
 
 	return rdg;
@@ -1579,6 +1632,8 @@ void rdg_free(rdpRdg* rdg)
 		CloseHandle(rdg->readEvent);
 		rdg->readEvent = NULL;
 	}
+    
+    DeleteCriticalSection(&rdg->writeSection);
 
 	free(rdg);
 }
