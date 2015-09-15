@@ -625,6 +625,7 @@ int shadow_server_init(rdpShadowServer* server)
 	if (status >= 0)
 		return status;
 
+	shadow_subsystem_free(server->subsystem);
 fail_subsystem_new:
 	freerdp_listener_free(server->listener);
 	server->listener = NULL;
@@ -651,33 +652,33 @@ fail_client_array:
 
 int shadow_server_uninit(rdpShadowServer* server)
 {
+	if (!server)
+		return -1;
+
 	shadow_server_stop(server);
 
-	if (server->listener)
-	{
-		freerdp_listener_free(server->listener);
-		server->listener = NULL;
-	}
-
-	if (server->CertificateFile)
-	{
-		free(server->CertificateFile);
-		server->CertificateFile = NULL;
-	}
-	
-	if (server->PrivateKeyFile)
-	{
-		free(server->PrivateKeyFile);
-		server->PrivateKeyFile = NULL;
-	}
-
-	if (server->ipcSocket)
-	{
-		free(server->ipcSocket);
-		server->ipcSocket = NULL;
-	}
-
 	shadow_subsystem_uninit(server->subsystem);
+
+	shadow_subsystem_free(server->subsystem);
+
+	freerdp_listener_free(server->listener);
+	server->listener = NULL;
+
+	free(server->CertificateFile);
+	server->CertificateFile = NULL;
+	free(server->PrivateKeyFile);
+	server->PrivateKeyFile = NULL;
+
+	free(server->ConfigPath);
+	server->ConfigPath = NULL;
+
+	DeleteCriticalSection(&(server->lock));
+
+	CloseHandle(server->StopEvent);
+	server->StopEvent = NULL;
+
+	ArrayList_Free(server->clients);
+	server->clients = NULL;
 
 	return 1;
 }
@@ -705,15 +706,8 @@ void shadow_server_free(rdpShadowServer* server)
 	if (!server)
 		return;
 
-	DeleteCriticalSection(&(server->lock));
-
-	if (server->clients)
-	{
-		ArrayList_Free(server->clients);
-		server->clients = NULL;
-	}
-
-	shadow_subsystem_free(server->subsystem);
+	free(server->ipcSocket);
+	server->ipcSocket = NULL;
 
 	free(server);
 }
