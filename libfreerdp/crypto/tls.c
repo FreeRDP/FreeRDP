@@ -159,6 +159,11 @@ static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 				break;
 
 			case SSL_ERROR_SYSCALL:
+                if (WSAGetLastError() == WSAEWOULDBLOCK)
+                {
+                    BIO_set_flags(bio, BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY);
+                    break;
+                }
 				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 				break;
 		}
