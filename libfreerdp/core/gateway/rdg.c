@@ -1310,6 +1310,7 @@ int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
 				{
 					return 0;
 				}
+				BIO_wait_read(rdg->tlsOut->bio, 50);
 				continue;
 			}
 
@@ -1338,6 +1339,7 @@ int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
 				{
 					return -1;
 				}
+				BIO_wait_read(rdg->tlsOut->bio, 50);
 				continue;
 			}
 
@@ -1398,7 +1400,7 @@ static int rdg_bio_write(BIO* bio, const char* buf, int num)
 	}
 	else
 	{
-		BIO_clear_flags(bio, BIO_FLAGS_WRITE);
+		BIO_set_flags(bio, BIO_FLAGS_WRITE);
 	}
 
 	return status;
@@ -1419,7 +1421,12 @@ static int rdg_bio_read(BIO* bio, char* buf, int size)
 	else if (status == 0)
 	{
 		BIO_set_retry_read(bio);
+		WSASetLastError(WSAEWOULDBLOCK);
 		return -1;
+	}
+	else
+	{
+		BIO_set_flags(bio, BIO_FLAGS_READ);
 	}
 
 	return status;
