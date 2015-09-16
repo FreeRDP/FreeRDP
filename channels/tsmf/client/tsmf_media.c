@@ -1057,11 +1057,8 @@ BOOL tsmf_presentation_set_geometry_info(TSMF_PRESENTATION* presentation,
 	UINT32 index;
 	UINT32 count;
 	TSMF_STREAM* stream;
-	void *tmp_rects;
+	void *tmp_rects = NULL;
 	BOOL ret = TRUE;
-
-	if (num_rects < 1 || !rects)
-		return TRUE;
 
 	/* The server may send messages with invalid width / height.
 	 * Ignore those messages. */
@@ -1069,17 +1066,17 @@ BOOL tsmf_presentation_set_geometry_info(TSMF_PRESENTATION* presentation,
 		return TRUE;
 
 	/* Streams can be added/removed from the presentation and the server will resend geometry info when a new stream is 
-	 * added to the presentation. So, always process a valid message.
+	 * added to the presentation. Also, num_rects is used to indicate whether or not the window is visible.
+	 * So, always process a valid message with unchanged position/size and/or no visibility rects.
 	 */
 
 	presentation->x = x;
 	presentation->y = y;
 	presentation->width = width;
 	presentation->height = height;
-
+	
 	tmp_rects = realloc(presentation->rects, sizeof(RDP_RECT) * num_rects);
-	if (!tmp_rects)
-		return FALSE;
+
 	presentation->nr_rects = num_rects;
 	presentation->rects = tmp_rects;
 

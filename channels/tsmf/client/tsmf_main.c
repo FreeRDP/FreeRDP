@@ -39,12 +39,8 @@
 BOOL tsmf_send_eos_response(IWTSVirtualChannelCallback* pChannelCallback, UINT32 message_id)
 {
 	wStream* s = NULL;
-	int status;
+	int status = -1;
 	TSMF_CHANNEL_CALLBACK* callback = (TSMF_CHANNEL_CALLBACK*) pChannelCallback;
-
-	s = Stream_New(NULL, 24);
-	if (!s)
-		return FALSE;
 
 	if (!callback)
 	{

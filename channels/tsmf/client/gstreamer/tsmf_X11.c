@@ -128,8 +128,10 @@ static GstBusSyncReply tsmf_platform_bus_sync_handler(GstBus *bus, GstMessage *m
 
 			gst_x_overlay_expose(hdl->overlay);
 #endif
+			XLockDisplay(hdl->disp);
 			XMoveResizeWindow(hdl->disp, hdl->subwin, hdl->subwinX, hdl->subwinY, hdl->subwinWidth, hdl->subwinHeight);
 			XSync(hdl->disp, FALSE);
+			XUnlockDisplay(hdl->disp);
 		}
 	} else {
 		g_warning ("Window was not available before retrieving the overlay!");
@@ -283,7 +285,9 @@ int tsmf_window_create(TSMFGstreamerDecoder* decoder)
 
 		if (!hdl->subwin)
 		{
+			XLockDisplay(hdl->disp);
 			hdl->subwin = XCreateSimpleWindow(hdl->disp, *(int *)hdl->xfwin, 0, 0, 1, 1, 0, 0, 0);
+			XUnlockDisplay(hdl->disp);
 
 			if (!hdl->subwin)
 			{
@@ -296,7 +300,9 @@ int tsmf_window_create(TSMFGstreamerDecoder* decoder)
 		decoder->ready = TRUE;
 #if defined(WITH_XEXT)
 	int event, error;
+	XLockDisplay(hdl->disp);
 	hdl->has_shape = XShapeQueryExtension(hdl->disp, &event, &error);
+	XUnlockDisplay(hdl->disp);
 #endif
 	}
 
@@ -348,29 +354,52 @@ int tsmf_window_resize(TSMFGstreamerDecoder* decoder, int x, int y, int width,
 		hdl->subwinY = y;
 		hdl->subwinWidth = width;
 		hdl->subwinHeight = height;
-		XMoveResizeWindow(hdl->disp, hdl->subwin, hdl->subwinX, hdl->subwinY, hdl->subwinWidth, hdl->subwinHeight);
-#if defined(WITH_XEXT)
 
+		XLockDisplay(hdl->disp);
+		XMoveResizeWindow(hdl->disp, hdl->subwin, hdl->subwinX, hdl->subwinY, hdl->subwinWidth, hdl->subwinHeight);
+
+		/* Unmap the window if there are no visibility rects */
+		if (nr_rects == 0)
+			tsmf_window_unmap(decoder);
+		else
+			tsmf_window_map(decoder);
+
+#if defined(WITH_XEXT)
 		if (hdl->has_shape)
 		{
 			int i;
-			XRectangle *xrects = calloc(nr_rects, sizeof(XRectangle));
-			if (!xrects)
-				return -1;
+			XRectangle *xrects = NULL;
 
-			for (i = 0; i < nr_rects; i++)
+			if (nr_rects == 0)
 			{
-				xrects[i].x = rects[i].x - x;
-				xrects[i].y = rects[i].y - y;
-				xrects[i].width = rects[i].width;
-				xrects[i].height = rects[i].height;
+				xrects = calloc(1, sizeof(XRectangle));
+				xrects->x = x;
+				xrects->y = y;
+				xrects->width = width;
+				xrects->height = height;
 			}
+			else
+			{
+				xrects = calloc(nr_rects, sizeof(XRectangle));
+			}
+			
+			if (xrects)
+			{
+				for (i = 0; i < nr_rects; i++)
+				{
+					xrects[i].x = rects[i].x - x;
+					xrects[i].y = rects[i].y - y;
+					xrects[i].width = rects[i].width;
+					xrects[i].height = rects[i].height;
+				}
 
-			XShapeCombineRectangles(hdl->disp, hdl->subwin, ShapeBounding, x, y, xrects, nr_rects, ShapeSet, 0);
-			free(xrects);
+				XShapeCombineRectangles(hdl->disp, hdl->subwin, ShapeBounding, x, y, xrects, nr_rects, ShapeSet, 0);
+				free(xrects);
+			}
 		}
 #endif
 		XSync(hdl->disp, FALSE);
+		XUnlockDisplay(hdl->disp);
 	}
 
 	return 0;
@@ -453,8 +482,10 @@ int tsmf_window_destroy(TSMFGstreamerDecoder* decoder)
 
 	if (hdl->subwin)
 	{
+		XLockDisplay(hdl->disp);
 		XDestroyWindow(hdl->disp, hdl->subwin);
 		XSync(hdl->disp, FALSE);
+		XUnlockDisplay(hdl->disp);
 	}
 
 	hdl->overlay = NULL;
