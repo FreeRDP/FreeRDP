@@ -171,7 +171,6 @@ struct rdp_rdp
 	BYTE fips_decrypt_key[24];
 	UINT32 errorInfo;
 	UINT32 finalize_sc_pdus;
-	BOOL disconnect;
 	BOOL resendFocus;
 	BOOL deactivation_reactivation;
 	BOOL AwaitCapabilities;

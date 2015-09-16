@@ -64,6 +64,7 @@ DEVMAN* devman_new(rdpdrPlugin* rdpdr)
 	if (!devman->devices)
 	{
 		WLog_INFO(TAG,  "ListDictionary_New failed!");
+		free(devman);
 		return NULL;
 	}
 

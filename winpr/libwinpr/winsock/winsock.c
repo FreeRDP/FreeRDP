@@ -630,7 +630,9 @@ BOOL WSASetEvent(HANDLE hEvent)
 
 BOOL WSAResetEvent(HANDLE hEvent)
 {
-	return ResetEvent(hEvent);
+	/* POSIX systems auto reset the socket,
+	 * if no more data is available. */
+	return TRUE;
 }
 
 BOOL WSACloseEvent(HANDLE hEvent)
@@ -647,7 +649,7 @@ BOOL WSACloseEvent(HANDLE hEvent)
 
 int WSAEventSelect(SOCKET s, WSAEVENT hEventObject, LONG lNetworkEvents)
 {
-	u_long arg = lNetworkEvents ? 1 : 0;
+	u_long arg = 1;
 	ULONG mode = 0;
 
 	if (_ioctlsocket(s, FIONBIO, &arg) != 0)

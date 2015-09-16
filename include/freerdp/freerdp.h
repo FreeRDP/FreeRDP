@@ -134,7 +134,8 @@ struct rdp_context
 	ALIGN64 rdpMetrics* metrics; /* 41 */
 	ALIGN64 rdpCodecs* codecs; /* 42 */
 	ALIGN64 rdpAutoDetect* autodetect; /* 43 */
-	UINT64 paddingC[64 - 44]; /* 44 */
+	ALIGN64 HANDLE abortEvent; /* 44 */
+	UINT64 paddingC[64 - 45]; /* 45 */
 
 	UINT64 paddingD[96 - 64]; /* 64 */
 	UINT64 paddingE[128 - 96]; /* 96 */
@@ -248,6 +249,7 @@ FREERDP_API BOOL freerdp_context_new(freerdp* instance);
 FREERDP_API void freerdp_context_free(freerdp* instance);
 
 FREERDP_API BOOL freerdp_connect(freerdp* instance);
+FREERDP_API BOOL freerdp_abort_connect(freerdp* instance);
 FREERDP_API BOOL freerdp_shall_disconnect(freerdp* instance);
 FREERDP_API BOOL freerdp_disconnect(freerdp* instance);
 FREERDP_API BOOL freerdp_reconnect(freerdp* instance);
@@ -284,6 +286,7 @@ FREERDP_API void freerdp_set_last_error(rdpContext* context, UINT32 lastError);
 
 FREERDP_API ULONG freerdp_get_transport_sent(rdpContext* context, BOOL resetCount);
 
+FREERDP_API void clearChannelError(rdpContext* context);
 FREERDP_API HANDLE getChannelErrorEventHandle(rdpContext* context);
 FREERDP_API UINT getChannelError(rdpContext* context);
 FREERDP_API const char* getChannelErrorDescription(rdpContext* context);

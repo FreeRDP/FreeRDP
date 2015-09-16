@@ -25,6 +25,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
+#include <freerdp/freerdp.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -60,6 +61,7 @@
 BIO_METHOD* BIO_s_simple_socket(void);
 BIO_METHOD* BIO_s_buffered_socket(void);
 
-int freerdp_tcp_connect(rdpSettings* settings, const char* hostname, int port, int timeout);
+int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings,
+			const char* hostname, int port, int timeout);
 
 #endif /* __TCP_H */

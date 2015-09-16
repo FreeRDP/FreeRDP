@@ -676,10 +676,12 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* messag
 
 	if (message->numRects < 1)
 	{
-		/* Unfortunately, it isn't documented.
-		It seems that server asks to clip whole session when numRects = 0.
-		Issue: https://github.com/FreeRDP/FreeRDP/issues/1738 */
-		WLog_ERR(TAG, "no rects. Clip whole session.");
+		/*
+		   If numRects is zero the decoder must generate a rectangle with
+		   coordinates (0, 0, width, height).
+		   See [MS-RDPRFX] (revision >= 17.0) 2.2.2.3.3 TS_RFX_REGION
+		   https://msdn.microsoft.com/en-us/library/ff635233.aspx
+		*/
 
 		if (!(message->rects = (RFX_RECT*) malloc(sizeof(RFX_RECT))))
 			return FALSE;
@@ -1552,12 +1554,20 @@ skip_encoding_loop:
 
 	if (success && message->numTiles != maxNbTiles)
 	{
-		void* pmem = realloc((void*) message->tiles, sizeof(RFX_TILE*) * message->numTiles);
+		if (message->numTiles > 0)
+		{
+			void* pmem = realloc((void*) message->tiles, sizeof(RFX_TILE*) * message->numTiles);
 
-		if (pmem)
-			message->tiles = (RFX_TILE**) pmem;
+			if (pmem)
+				message->tiles = (RFX_TILE**) pmem;
+			else
+				success = FALSE;
+		}
 		else
+		{
+			free(message->tiles);
 			success = FALSE;
+		}
 	}
 
 	/* when using threads ensure all computations are done */

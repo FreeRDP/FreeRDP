@@ -204,6 +204,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 	int sockfd;
 	BOOL status = FALSE;
 	rdpSettings* settings = transport->settings;
+	rdpContext* context = transport->context;
 
 	transport->async = settings->AsyncTransport;
 
@@ -256,7 +257,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 	}
 	else
 	{
-		sockfd = freerdp_tcp_connect(settings, hostname, port, timeout);
+		sockfd = freerdp_tcp_connect(context, settings, hostname, port, timeout);
 
 		if (sockfd < 1)
 			return FALSE;
@@ -750,20 +751,7 @@ int transport_check_fds(rdpTransport* transport)
 	if (!transport)
 		return -1;
 
-	if (BIO_get_event(transport->frontBio, &event) != 1)
-		return -1;
-
-	/**
-	 * Loop through and read all available PDUs.  Since multiple
-	 * PDUs can exist, it's important to deliver them all before
-	 * returning.  Otherwise we run the risk of having a thread
-	 * wait for a socket to get signaled that data is available
-	 * (which may never happen).
-	 */
-#ifdef _WIN32
-	ResetEvent(event);
-#endif
-	for (;;)
+	while(!freerdp_shall_disconnect(transport->context->instance))
 	{
 		/**
 		 * Note: transport_read_pdu tries to read one PDU from

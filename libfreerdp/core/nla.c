@@ -45,7 +45,7 @@
 #define TAG FREERDP_TAG("core.nla")
 
 #define SERVER_KEY "Software\\"FREERDP_VENDOR_STRING"\\" \
-		     FREERDP_PRODUCT_STRING"\\Server"
+			 FREERDP_PRODUCT_STRING"\\Server"
 
 /**
  * TSRequest ::= SEQUENCE {
@@ -113,17 +113,17 @@ void nla_identity_free(SEC_WINNT_AUTH_IDENTITY* identity)
 	{
 		if (identity->User)
 		{
-			memset(identity->User, 0, identity->UserLength*2);
+			memset(identity->User, 0, identity->UserLength * 2);
 			free(identity->User);
 		}
 		if (identity->Password)
 		{
-			memset(identity->Password, 0, identity->PasswordLength*2);
+			memset(identity->Password, 0, identity->PasswordLength * 2);
 			free(identity->Password);
 		}
 		if (identity->Domain)
 		{
-			memset(identity->Domain, 0, identity->DomainLength*2);
+			memset(identity->Domain, 0, identity->DomainLength * 2);
 			free(identity->Domain);
 		}
 	}
@@ -258,7 +258,8 @@ int nla_client_init(rdpNla* nla)
 
 	if (nla->status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "QuerySecurityPackageInfo status: 0x%08X", nla->status);
+		WLog_ERR(TAG, "QuerySecurityPackageInfo status %s [%08X]",
+			GetSecurityStatusString(nla->status), nla->status);
 		return -1;
 	}
 
@@ -269,7 +270,8 @@ int nla_client_init(rdpNla* nla)
 
 	if (nla->status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "AcquireCredentialsHandle status: 0x%08X", nla->status);
+		WLog_ERR(TAG, "AcquireCredentialsHandle status %s [%08X]",
+			 GetSecurityStatusString(nla->status), nla->status);
 		return -1;
 	}
 
@@ -315,10 +317,23 @@ int nla_client_begin(rdpNla* nla)
 			SECURITY_NATIVE_DREP, NULL, 0, &nla->context,
 			&nla->outputBufferDesc, &nla->pfContextAttr, &nla->expiration);
 
+	WLog_VRB(TAG, " InitializeSecurityContext status %s [%08X]",
+		   GetSecurityStatusString(nla->status), nla->status);
+
 	if ((nla->status == SEC_I_COMPLETE_AND_CONTINUE) || (nla->status == SEC_I_COMPLETE_NEEDED))
 	{
 		if (nla->table->CompleteAuthToken)
-			nla->table->CompleteAuthToken(&nla->context, &nla->outputBufferDesc);
+		{
+			SECURITY_STATUS status;
+
+			status = nla->table->CompleteAuthToken(&nla->context, &nla->outputBufferDesc);
+			if (status != SEC_E_OK)
+			{
+				WLog_WARN(TAG, "CompleteAuthToken status %s [%08X]",
+					  GetSecurityStatusString(status), status);
+				return -1;
+			}
+		}
 
 		if (nla->status == SEC_I_COMPLETE_NEEDED)
 			nla->status = SEC_E_OK;
@@ -379,13 +394,25 @@ int nla_client_recv(rdpNla* nla)
 				SECURITY_NATIVE_DREP, &nla->inputBufferDesc,
 				0, &nla->context, &nla->outputBufferDesc, &nla->pfContextAttr, &nla->expiration);
 
+		WLog_VRB(TAG, "InitializeSecurityContext  %s [%08X]",
+			   GetSecurityStatusString(nla->status), nla->status);
+
 		free(nla->inputBuffer.pvBuffer);
 		nla->inputBuffer.pvBuffer = NULL;
 
 		if ((nla->status == SEC_I_COMPLETE_AND_CONTINUE) || (nla->status == SEC_I_COMPLETE_NEEDED))
 		{
 			if (nla->table->CompleteAuthToken)
-				nla->table->CompleteAuthToken(&nla->context, &nla->outputBufferDesc);
+			{
+				SECURITY_STATUS status;
+				status = nla->table->CompleteAuthToken(&nla->context, &nla->outputBufferDesc);
+				if (status != SEC_E_OK)
+				{
+					WLog_WARN(TAG, "CompleteAuthToken status %s [%08X]",
+						  GetSecurityStatusString(status), status);
+					return -1;
+				}
+			}
 
 			if (nla->status == SEC_I_COMPLETE_NEEDED)
 				nla->status = SEC_E_OK;
@@ -397,17 +424,18 @@ int nla_client_recv(rdpNla* nla)
 		{
 			nla->havePubKeyAuth = TRUE;
 
-			if (nla->table->QueryContextAttributes(&nla->context, SECPKG_ATTR_SIZES, &nla->ContextSizes) != SEC_E_OK)
+			nla->status = nla->table->QueryContextAttributes(&nla->context, SECPKG_ATTR_SIZES, &nla->ContextSizes);
+			if (nla->status != SEC_E_OK)
 			{
-				WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure");
+				WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure %s [%08X]",
+					 GetSecurityStatusString(nla->status), nla->status);
 				return -1;
 			}
 
-			nla_encrypt_public_key_echo(nla);
+			nla->status = nla_encrypt_public_key_echo(nla);
+			if (nla->status != SEC_E_OK)
+				return -1;
 		}
-
-		if (nla->outputBuffer.cbBuffer < 1)
-			return -1;
 
 		nla->negoToken.pvBuffer = nla->outputBuffer.pvBuffer;
 		nla->negoToken.cbBuffer = nla->outputBuffer.cbBuffer;
@@ -422,7 +450,8 @@ int nla_client_recv(rdpNla* nla)
 		}
 		nla_buffer_free(nla);
 
-		nla->state = NLA_STATE_PUB_KEY_AUTH;
+		if (nla->status == SEC_E_OK)
+			nla->state = NLA_STATE_PUB_KEY_AUTH;
 		status = 1;
 	}
 	else if (nla->state == NLA_STATE_PUB_KEY_AUTH)
@@ -433,7 +462,8 @@ int nla_client_recv(rdpNla* nla)
 
 		if (nla->status != SEC_E_OK)
 		{
-			WLog_ERR(TAG, "Could not verify public key echo!");
+			WLog_ERR(TAG, "Could not verify public key echo %s [%08X]",
+				 GetSecurityStatusString(nla->status), nla->status);
 			return -1;
 		}
 
@@ -442,7 +472,8 @@ int nla_client_recv(rdpNla* nla)
 
 		if (nla->status != SEC_E_OK)
 		{
-			WLog_ERR(TAG, "nla_encrypt_ts_credentials status: 0x%08X", nla->status);
+			WLog_ERR(TAG, "nla_encrypt_ts_credentials status %s [%08X]",
+				 GetSecurityStatusString(nla->status), nla->status);
 			return -1;
 		}
 
@@ -454,7 +485,21 @@ int nla_client_recv(rdpNla* nla)
 		nla_buffer_free(nla);
 
 		nla->table->FreeCredentialsHandle(&nla->credentials);
-		nla->table->FreeContextBuffer(nla->pPackageInfo);
+		if (nla->status != SEC_E_OK)
+		{
+			WLog_ERR(TAG, "FreeCredentialsHandle status %s [%08X]",
+				  GetSecurityStatusString(nla->status), nla->status);
+		}
+
+		nla->status = nla->table->FreeContextBuffer(nla->pPackageInfo);
+		if (nla->status != SEC_E_OK)
+		{
+			WLog_ERR(TAG, "FreeContextBuffer status %s [%08X]",
+				  GetSecurityStatusString(nla->status), nla->status);
+		}
+
+		if (nla->status != SEC_E_OK)
+			return -1;
 
 		nla->state = NLA_STATE_AUTH_INFO;
 		status = 1;
@@ -548,7 +593,8 @@ int nla_server_init(rdpNla* nla)
 
 	if (nla->status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "QuerySecurityPackageInfo status: 0x%08X", nla->status);
+		WLog_ERR(TAG, "QuerySecurityPackageInfo status %s [%08X]",
+			 GetSecurityStatusString(nla->status), nla->status);
 		return -1;
 	}
 
@@ -558,7 +604,8 @@ int nla_server_init(rdpNla* nla)
 
 	if (nla->status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "AcquireCredentialsHandle status: 0x%08X", nla->status);
+		WLog_ERR(TAG, "AcquireCredentialsHandle status %s [%08X]",
+			 GetSecurityStatusString(nla->status), nla->status);
 		return -1;
 	}
 
@@ -638,14 +685,24 @@ int nla_server_authenticate(rdpNla* nla)
 				 &nla->inputBufferDesc, nla->fContextReq, SECURITY_NATIVE_DREP, &nla->context,
 				 &nla->outputBufferDesc, &nla->pfContextAttr, &nla->expiration);
 
+		WLog_VRB(TAG, "AcceptSecurityContext status %s [%08X]",
+			   GetSecurityStatusString(nla->status), nla->status);
 		nla->negoToken.pvBuffer = nla->outputBuffer.pvBuffer;
 		nla->negoToken.cbBuffer = nla->outputBuffer.cbBuffer;
 
 		if ((nla->status == SEC_I_COMPLETE_AND_CONTINUE) || (nla->status == SEC_I_COMPLETE_NEEDED))
 		{
 			if (nla->table->CompleteAuthToken)
-				nla->table->CompleteAuthToken(&nla->context, &nla->outputBufferDesc);
-
+			{
+				SECURITY_STATUS status;
+				status = nla->table->CompleteAuthToken(&nla->context, &nla->outputBufferDesc);
+				if (status != SEC_E_OK)
+				{
+					WLog_WARN(TAG, "CompleteAuthToken status %s [%08X]",
+						  GetSecurityStatusString(status), status);
+					return -1;
+				}
+			}
 			if (nla->status == SEC_I_COMPLETE_NEEDED)
 				nla->status = SEC_E_OK;
 			else if (nla->status == SEC_I_COMPLETE_AND_CONTINUE)
@@ -654,29 +711,51 @@ int nla_server_authenticate(rdpNla* nla)
 
 		if (nla->status == SEC_E_OK)
 		{
+			if (nla->outputBuffer.cbBuffer != 0)
+			{
+				if (!nla_send(nla))
+				{
+					nla_buffer_free(nla);
+					return -1;
+				}
+
+				if (nla_recv(nla) < 0)
+					return -1;
+
+				WLog_DBG(TAG, "Receiving pubkey Token");
+				nla_buffer_print(nla);
+			}
+
 			nla->havePubKeyAuth = TRUE;
 
-			if (nla->table->QueryContextAttributes(&nla->context, SECPKG_ATTR_SIZES, &nla->ContextSizes) != SEC_E_OK)
+			nla->status  = nla->table->QueryContextAttributes(&nla->context, SECPKG_ATTR_SIZES, &nla->ContextSizes);
+			if (nla->status != SEC_E_OK)
 			{
-				WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure");
+				WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure %s [%08X]",
+					 GetSecurityStatusString(nla->status), nla->status);
 				return -1;
 			}
 
-			if (nla_decrypt_public_key_echo(nla) != SEC_E_OK)
+			nla->status = nla_decrypt_public_key_echo(nla);
+			if (nla->status != SEC_E_OK)
 			{
-				WLog_ERR(TAG, "Error: could not verify client's public key echo");
+				WLog_ERR(TAG, "Error: could not verify client's public key echo %s [%08X]",
+					 GetSecurityStatusString(nla->status), nla->status);
 				return -1;
 			}
 
 			sspi_SecBufferFree(&nla->negoToken);
 			nla->negoToken.pvBuffer = NULL;
 			nla->negoToken.cbBuffer = 0;
-			nla_encrypt_public_key_echo(nla);
+			nla->status = nla_encrypt_public_key_echo(nla);
+			if (nla->status != SEC_E_OK)
+				return -1;
 		}
 
 		if ((nla->status != SEC_E_OK) && (nla->status != SEC_I_CONTINUE_NEEDED))
 		{
-			WLog_ERR(TAG, "AcceptSecurityContext status: 0x%08X", nla->status);
+			WLog_ERR(TAG, "AcceptSecurityContext status %s [%08X]",
+				 GetSecurityStatusString(nla->status), nla->status);
 			return -1; /* Access Denied */
 		}
 
@@ -703,15 +782,11 @@ int nla_server_authenticate(rdpNla* nla)
 	if (nla_recv(nla) < 0)
 		return -1;
 
-	if (nla_decrypt_ts_credentials(nla) != SEC_E_OK)
-	{
-		WLog_ERR(TAG, "Could not decrypt TSCredentials status: 0x%08X", nla->status);
-		return -1;
-	}
-
+	nla->status = nla_decrypt_ts_credentials(nla);
 	if (nla->status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "AcceptSecurityContext status: 0x%08X", nla->status);
+		WLog_ERR(TAG, "Could not decrypt TSCredentials status %s [%08X]",
+			 GetSecurityStatusString(nla->status), nla->status);
 		return -1;
 	}
 
@@ -719,7 +794,8 @@ int nla_server_authenticate(rdpNla* nla)
 
 	if (nla->status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "ImpersonateSecurityContext status: 0x%08X", nla->status);
+		WLog_ERR(TAG, "ImpersonateSecurityContext status %s [%08X]",
+			 GetSecurityStatusString(nla->status), nla->status);
 		return -1;
 	}
 	else
@@ -728,12 +804,19 @@ int nla_server_authenticate(rdpNla* nla)
 
 		if (nla->status != SEC_E_OK)
 		{
-			WLog_ERR(TAG, "RevertSecurityContext status: 0x%08X", nla->status);
+			WLog_ERR(TAG, "RevertSecurityContext status %s [%08X]",
+				 GetSecurityStatusString(nla->status), nla->status);
 			return -1;
 		}
 	}
 
-	nla->table->FreeContextBuffer(nla->pPackageInfo);
+	nla->status = nla->table->FreeContextBuffer(nla->pPackageInfo);
+	if (nla->status != SEC_E_OK)
+	{
+		WLog_ERR(TAG, "DeleteSecurityContext status %s [%08X]",
+			  GetSecurityStatusString(nla->status), nla->status);
+		return -1;
+	}
 
 	return 1;
 }
@@ -798,14 +881,15 @@ SECURITY_STATUS nla_encrypt_public_key_echo(rdpNla* nla)
 	int public_key_length;
 
 	public_key_length = nla->PublicKey.cbBuffer;
-	if (!sspi_SecBufferAlloc(&nla->pubKeyAuth, nla->ContextSizes.cbMaxSignature + public_key_length))
+	if (!sspi_SecBufferAlloc(&nla->pubKeyAuth, nla->ContextSizes.cbSecurityTrailer + public_key_length))
 		return SEC_E_INSUFFICIENT_MEMORY;
 	Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
-	Buffers[1].BufferType = SECBUFFER_DATA; /* TLS Public Key */
-	Buffers[0].cbBuffer = nla->ContextSizes.cbMaxSignature;
+	Buffers[0].cbBuffer = nla->ContextSizes.cbSecurityTrailer;
 	Buffers[0].pvBuffer = nla->pubKeyAuth.pvBuffer;
+
+	Buffers[1].BufferType = SECBUFFER_DATA; /* TLS Public Key */
 	Buffers[1].cbBuffer = public_key_length;
-	Buffers[1].pvBuffer = ((BYTE*) nla->pubKeyAuth.pvBuffer) + nla->ContextSizes.cbMaxSignature;
+	Buffers[1].pvBuffer = ((BYTE*) nla->pubKeyAuth.pvBuffer) + nla->ContextSizes.cbSecurityTrailer;
 	CopyMemory(Buffers[1].pvBuffer, nla->PublicKey.pvBuffer, Buffers[1].cbBuffer);
 
 	if (nla->server)
@@ -821,7 +905,8 @@ SECURITY_STATUS nla_encrypt_public_key_echo(rdpNla* nla)
 
 	if (status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "EncryptMessage status: 0x%08X", status);
+		WLog_ERR(TAG, "EncryptMessage status %s [%08X]",
+			 GetSecurityStatusString(status), status);
 		return status;
 	}
 
@@ -840,9 +925,9 @@ SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla)
 	SecBufferDesc Message;
 	SECURITY_STATUS status;
 
-	if ((nla->PublicKey.cbBuffer + nla->ContextSizes.cbMaxSignature) != nla->pubKeyAuth.cbBuffer)
+	if ((nla->PublicKey.cbBuffer + nla->ContextSizes.cbSecurityTrailer) != nla->pubKeyAuth.cbBuffer)
 	{
-		WLog_ERR(TAG, "unexpected pubKeyAuth buffer size: %d", (int) nla->pubKeyAuth.cbBuffer);
+		WLog_ERR(TAG, "unexpected pubKeyAuth buffer size: %lu", nla->pubKeyAuth.cbBuffer);
 		return SEC_E_INVALID_TOKEN;
 	}
 
@@ -855,11 +940,12 @@ SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla)
 	CopyMemory(buffer, nla->pubKeyAuth.pvBuffer, length);
 	public_key_length = nla->PublicKey.cbBuffer;
 	Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
-	Buffers[1].BufferType = SECBUFFER_DATA; /* Encrypted TLS Public Key */
-	Buffers[0].cbBuffer = nla->ContextSizes.cbMaxSignature;
+	Buffers[0].cbBuffer = nla->ContextSizes.cbSecurityTrailer;
 	Buffers[0].pvBuffer = buffer;
-	Buffers[1].cbBuffer = length - nla->ContextSizes.cbMaxSignature;
-	Buffers[1].pvBuffer = buffer + nla->ContextSizes.cbMaxSignature;
+
+	Buffers[1].BufferType = SECBUFFER_DATA; /* Encrypted TLS Public Key */
+	Buffers[1].cbBuffer = length - nla->ContextSizes.cbSecurityTrailer;
+	Buffers[1].pvBuffer = buffer + nla->ContextSizes.cbSecurityTrailer;
 	Message.cBuffers = 2;
 	Message.ulVersion = SECBUFFER_VERSION;
 	Message.pBuffers = (PSecBuffer) &Buffers;
@@ -867,7 +953,8 @@ SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla)
 
 	if (status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "DecryptMessage failure: 0x%08X", status);
+		WLog_ERR(TAG, "DecryptMessage failure %s [%08X]",
+			 GetSecurityStatusString(status), status);
 		return status;
 	}
 
@@ -1143,13 +1230,14 @@ SECURITY_STATUS nla_encrypt_ts_credentials(rdpNla* nla)
 	if (!nla_encode_ts_credentials(nla))
 		return SEC_E_INSUFFICIENT_MEMORY;
 
-	if (!sspi_SecBufferAlloc(&nla->authInfo, nla->ContextSizes.cbMaxSignature + nla->tsCredentials.cbBuffer))
+	if (!sspi_SecBufferAlloc(&nla->authInfo, nla->ContextSizes.cbSecurityTrailer + nla->tsCredentials.cbBuffer))
 		return SEC_E_INSUFFICIENT_MEMORY;
-	Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
-	Buffers[1].BufferType = SECBUFFER_DATA; /* TSCredentials */
-	Buffers[0].cbBuffer = nla->ContextSizes.cbMaxSignature;
+	Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */	
+	Buffers[0].cbBuffer = nla->ContextSizes.cbSecurityTrailer;
 	Buffers[0].pvBuffer = nla->authInfo.pvBuffer;
 	ZeroMemory(Buffers[0].pvBuffer, Buffers[0].cbBuffer);
+
+	Buffers[1].BufferType = SECBUFFER_DATA; /* TSCredentials */
 	Buffers[1].cbBuffer = nla->tsCredentials.cbBuffer;
 	Buffers[1].pvBuffer = &((BYTE*) nla->authInfo.pvBuffer)[Buffers[0].cbBuffer];
 	CopyMemory(Buffers[1].pvBuffer, nla->tsCredentials.pvBuffer, Buffers[1].cbBuffer);
@@ -1161,7 +1249,11 @@ SECURITY_STATUS nla_encrypt_ts_credentials(rdpNla* nla)
 	status = nla->table->EncryptMessage(&nla->context, 0, &Message, nla->sendSeqNum++);
 
 	if (status != SEC_E_OK)
+	{
+		WLog_ERR(TAG, "EncryptMessage failure %s [%08X]",
+			 GetSecurityStatusString(status), status);
 		return status;
+	}
 
 	return SEC_E_OK;
 }
@@ -1190,17 +1282,21 @@ SECURITY_STATUS nla_decrypt_ts_credentials(rdpNla* nla)
 		return SEC_E_INSUFFICIENT_MEMORY;
 
 	CopyMemory(buffer, nla->authInfo.pvBuffer, length);
-	Buffers[0].cbBuffer = nla->ContextSizes.cbMaxSignature;
+	Buffers[0].cbBuffer = nla->ContextSizes.cbSecurityTrailer;
 	Buffers[0].pvBuffer = buffer;
-	Buffers[1].cbBuffer = length - nla->ContextSizes.cbMaxSignature;
-	Buffers[1].pvBuffer = &buffer[nla->ContextSizes.cbMaxSignature];
+	Buffers[1].cbBuffer = length - nla->ContextSizes.cbSecurityTrailer;
+	Buffers[1].pvBuffer = &buffer[nla->ContextSizes.cbSecurityTrailer];
 	Message.cBuffers = 2;
 	Message.ulVersion = SECBUFFER_VERSION;
 	Message.pBuffers = (PSecBuffer) &Buffers;
 	status = nla->table->DecryptMessage(&nla->context, &Message, nla->recvSeqNum++, &pfQOP);
 
 	if (status != SEC_E_OK)
+	{
+		WLog_ERR(TAG, "DecryptMessage failure %s [%08X]",
+			 GetSecurityStatusString(status), status);
 		return status;
+	}
 
 	if(!nla_read_ts_credentials(nla, &Buffers[1]))
 	{
@@ -1602,7 +1698,15 @@ void nla_free(rdpNla* nla)
 		return;
 
 	if (nla->table)
-		nla->table->DeleteSecurityContext(&nla->context);
+	{
+		SECURITY_STATUS status;
+		status = nla->table->DeleteSecurityContext(&nla->context);
+		if (status != SEC_E_OK)
+		{
+			WLog_WARN(TAG, "DeleteSecurityContext status %s [%08X]",
+				  GetSecurityStatusString(status), status);
+		}
+	}
 
 	sspi_SecBufferFree(&nla->PublicKey);
 	sspi_SecBufferFree(&nla->tsCredentials);

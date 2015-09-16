@@ -1148,7 +1148,7 @@ static void copy_pixel_buffer(UINT8* dstBuf, UINT8* srcBuf, int x, int y, int wi
 	int length;
 	int scanline;
 	UINT8 *dstp, *srcp;
-	
+
 	length = width * bpp;
 	scanline = wBuf * bpp;
 

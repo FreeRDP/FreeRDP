@@ -609,6 +609,7 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 			if (!fullpath)
 			{
 				WLog_ERR(TAG, "drive_file_combine_fullpath failed!");
+				free (s);
 				return FALSE;
 			}
 			free(s);

@@ -111,21 +111,6 @@ DWORD SearchPathW(LPCWSTR lpPath, LPCWSTR lpFileName, LPCWSTR lpExtension, DWORD
 	return 0;
 }
 
-HANDLE GetStdHandle(DWORD nStdHandle)
-{
-	return NULL;
-}
-
-BOOL SetStdHandle(DWORD nStdHandle, HANDLE hHandle)
-{
-	return TRUE;
-}
-
-BOOL SetStdHandleEx(DWORD dwStdHandle, HANDLE hNewHandle, HANDLE* phOldHandle)
-{
-	return TRUE;
-}
-
 LPSTR GetCommandLineA(VOID)
 {
 	return NULL;
