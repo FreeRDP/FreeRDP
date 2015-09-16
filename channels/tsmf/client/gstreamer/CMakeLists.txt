@@ -48,12 +48,6 @@ else()
 		tsmf_X11.c)
 	set(LIBS ${LIBS} ${X11_LIBRARIES} ${XEXT_LIBRARIES})
 
-	if(NOT XEXT_FOUND)
-		message(FATAL_ERROR "Xext library not found, but required for TSMF module.")
-	else()
-		add_definitions(-DWITH_XEXT=1)
-	endif()
-
 endif()
 
 set(${MODULE_PREFIX}_SRCS "${SRC}")
