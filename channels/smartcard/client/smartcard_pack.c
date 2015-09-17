@@ -444,13 +444,13 @@ LONG smartcard_pack_establish_context_return(SMARTCARD_DEVICE* smartcard, wStrea
 {
 	LONG status;
 
-	if ((status = smartcard_pack_redir_scard_context(smartcard, s, &(ret->hContext))))
+	if ((status == smartcard_pack_redir_scard_context(smartcard, s, &(ret->hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_pack_redir_scard_context failed with error %lu", status);
 		return status;
 	}
 
-	if ((status = smartcard_pack_redir_scard_context_ref(smartcard, s, &(ret->hContext))))
+	if ((status == smartcard_pack_redir_scard_context_ref(smartcard, s, &(ret->hContext))))
 		WLog_ERR(TAG, "smartcard_pack_redir_scard_context_ref failed with error %lu", status);
 
 	return status;
@@ -488,13 +488,13 @@ LONG smartcard_unpack_context_call(SMARTCARD_DEVICE* smartcard, wStream* s, Cont
 {
 	LONG status;
 
-	if ((status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
+	if ((status == smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %lu", status);
 		return status;
 	}
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
+	if ((status == smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %lu", status);
 
 	return status;
@@ -546,7 +546,7 @@ LONG smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* s,
 
 	call->mszGroups = NULL;
 
-	if ((status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
+	if ((status == smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %lu", status);
 		return status;
@@ -564,7 +564,7 @@ LONG smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* s,
 	Stream_Read_UINT32(s, call->fmszReadersIsNULL); /* fmszReadersIsNULL (4 bytes) */
 	Stream_Read_UINT32(s, call->cchReaders); /* cchReaders (4 bytes) */
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
+	if ((status == smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %lu", status);
 		return status;
@@ -674,7 +674,7 @@ LONG smartcard_pack_list_readers_return(SMARTCARD_DEVICE* smartcard, wStream* s,
 		else
 			Stream_Zero(s, ret->cBytes);
 
-		if ((error = smartcard_pack_write_size_align(smartcard, s, ret->cBytes, 4)))
+		if ((error == smartcard_pack_write_size_align(smartcard, s, ret->cBytes, 4)))
 		{
 			WLog_ERR(TAG, "smartcard_pack_write_size_align failed with error %lu", error);
 			return error;
@@ -745,7 +745,7 @@ LONG smartcard_unpack_connect_common(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
-	if ((status = smartcard_unpack_redir_scard_context(smartcard, s, &(common->hContext))))
+	if ((status == smartcard_unpack_redir_scard_context(smartcard, s, &(common->hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %lu", status);
 		return status;
@@ -773,7 +773,7 @@ LONG smartcard_unpack_connect_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 
 	Stream_Seek_UINT32(s); /* szReaderNdrPtr (4 bytes) */
 
-	if ((status = smartcard_unpack_connect_common(smartcard, s, &(call->Common))))
+	if ((status == smartcard_unpack_connect_common(smartcard, s, &(call->Common))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_connect_common failed with error %lu", status);
 		return status;
@@ -797,7 +797,7 @@ LONG smartcard_unpack_connect_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 	smartcard_unpack_read_size_align(smartcard, s, count, 4);
 	call->szReader[count] = '\0';
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->Common.hContext))))
+	if ((status == smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->Common.hContext))))
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %lu", status);
 
 	return status;
@@ -848,7 +848,7 @@ LONG smartcard_unpack_connect_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 
 	Stream_Seek_UINT32(s); /* szReaderNdrPtr (4 bytes) */
 
-	if ((status = smartcard_unpack_connect_common(smartcard, s, &(call->Common))))
+	if ((status == smartcard_unpack_connect_common(smartcard, s, &(call->Common))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_connect_common failed with error %lu", status);
 		return status;
@@ -872,7 +872,7 @@ LONG smartcard_unpack_connect_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 	smartcard_unpack_read_size_align(smartcard, s, (count * 2), 4);
 	call->szReader[count] = '\0';
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->Common.hContext))))
+	if ((status == smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->Common.hContext))))
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %lu", status);
 
 	return status;
@@ -916,13 +916,13 @@ LONG smartcard_pack_connect_return(SMARTCARD_DEVICE* smartcard, wStream* s, Conn
 {
 	LONG status;
 
-	if ((status = smartcard_pack_redir_scard_context(smartcard, s, &(ret->hContext))))
+	if ((status == smartcard_pack_redir_scard_context(smartcard, s, &(ret->hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_pack_redir_scard_context failed with error %lu", status);
 		return status;
 	}
 
-	if ((status = smartcard_pack_redir_scard_handle(smartcard, s, &(ret->hCard))))
+	if ((status == smartcard_pack_redir_scard_handle(smartcard, s, &(ret->hCard))))
 	{
 		WLog_ERR(TAG, "smartcard_pack_redir_scard_handle failed with error %lu", status);
 		return status;
@@ -930,13 +930,13 @@ LONG smartcard_pack_connect_return(SMARTCARD_DEVICE* smartcard, wStream* s, Conn
 
 	Stream_Write_UINT32(s, ret->dwActiveProtocol); /* dwActiveProtocol (4 bytes) */
 
-	if ((status = smartcard_pack_redir_scard_context_ref(smartcard, s, &(ret->hContext))))
+	if ((status == smartcard_pack_redir_scard_context_ref(smartcard, s, &(ret->hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_pack_redir_scard_context_ref failed with error %lu", status);
 		return status;
 	}
 
-	if ((status = smartcard_pack_redir_scard_handle_ref(smartcard, s, &(ret->hCard))))
+	if ((status == smartcard_pack_redir_scard_handle_ref(smartcard, s, &(ret->hCard))))
 		WLog_ERR(TAG, "smartcard_pack_redir_scard_handle_ref failed with error %lu", status);
 
 	return status;
@@ -990,13 +990,13 @@ LONG smartcard_unpack_reconnect_call(SMARTCARD_DEVICE* smartcard, wStream* s, Re
 {
 	LONG status;
 
-	if ((status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
+	if ((status == smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %lu", status);
 		return status;
 	}
 
-	if ((status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard))))
+	if ((status == smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle failed with error %lu", status);
 		return status;
@@ -1014,13 +1014,13 @@ LONG smartcard_unpack_reconnect_call(SMARTCARD_DEVICE* smartcard, wStream* s, Re
 	Stream_Read_UINT32(s, call->dwPreferredProtocols); /* dwPreferredProtocols (4 bytes) */
 	Stream_Read_UINT32(s, call->dwInitialization); /* dwInitialization (4 bytes) */
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
+	if ((status == smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %lu", status);
 		return status;
 	}
 
-	if ((status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard))))
+	if ((status == smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard))))
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle_ref failed with error %lu", status);
 
 	return status;
@@ -1096,13 +1096,13 @@ LONG smartcard_unpack_hcard_and_disposition_call(SMARTCARD_DEVICE* smartcard, wS
 {
 	LONG status;
 
-	if ((status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
+	if ((status == smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %lu", status);
 		return status;
 	}
 
-	if ((status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard))))
+	if ((status == smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle failed with error %lu", status);
 		return status;
@@ -1117,13 +1117,13 @@ LONG smartcard_unpack_hcard_and_disposition_call(SMARTCARD_DEVICE* smartcard, wS
 
 	Stream_Read_UINT32(s, call->dwDisposition); /* dwDisposition (4 bytes) */
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
+	if ((status == smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %lu", status);
 		return status;
 	}
 
-	if ((status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard))))
+	if ((status == smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard))))
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle_ref failed with error %lu", status);
 
 	return status;
@@ -1183,7 +1183,7 @@ LONG smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wStr
 
 	call->rgReaderStates = NULL;
 
-	if ((status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
+	if ((status == smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %lu", status);
 		return status;
@@ -1200,7 +1200,7 @@ LONG smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wStr
 	Stream_Read_UINT32(s, call->cReaders); /* cReaders (4 bytes) */
 	Stream_Read_UINT32(s, rgReaderStatesNdrPtr); /* rgReaderStatesNdrPtr (4 bytes) */
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
+	if ((status == smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %lu", status);
 		return status;
@@ -1361,7 +1361,7 @@ LONG smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wStr
 
 	call->rgReaderStates = NULL;
 
-	if ((status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
+	if ((status == smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %lu", status);
 		return status;
@@ -1378,7 +1378,7 @@ LONG smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wStr
 	Stream_Read_UINT32(s, call->cReaders); /* cReaders (4 bytes) */
 	Stream_Read_UINT32(s, rgReaderStatesNdrPtr); /* rgReaderStatesNdrPtr (4 bytes) */
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
+	if ((status == smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %lu", status);
 		return status;
@@ -1594,13 +1594,13 @@ LONG smartcard_unpack_state_call(SMARTCARD_DEVICE* smartcard, wStream* s, State_
 {
 	LONG status;
 
-	if ((status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
+	if ((status == smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %lu", status);
 		return status;
 	}
 
-	if ((status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard))))
+	if ((status == smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle failed with error %lu", status);
 		return status;
@@ -1616,13 +1616,13 @@ LONG smartcard_unpack_state_call(SMARTCARD_DEVICE* smartcard, wStream* s, State_
 	Stream_Read_UINT32(s, call->fpbAtrIsNULL); /* fpbAtrIsNULL (4 bytes) */
 	Stream_Read_UINT32(s, call->cbAtrLen); /* cbAtrLen (4 bytes) */
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
+	if ((status == smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %lu", status);
 		return status;
 	}
 
-	if ((status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard))))
+	if ((status == smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard))))
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle_ref failed with error %lu", status);
 
 	return status;
@@ -1639,7 +1639,7 @@ LONG smartcard_pack_state_return(SMARTCARD_DEVICE* smartcard, wStream* s, State_
 	Stream_Write_UINT32(s, ret->cbAtrLen); /* rgAtrLength (4 bytes) */
 	Stream_Write(s, ret->rgAtr, ret->cbAtrLen); /* rgAtr */
 
-	if ((status = smartcard_pack_write_size_align(smartcard, s, ret->cbAtrLen, 4)))
+	if ((status == smartcard_pack_write_size_align(smartcard, s, ret->cbAtrLen, 4)))
 		WLog_ERR(TAG, "smartcard_pack_write_size_align failed with error %lu", status);
 
 	return status;
@@ -1649,13 +1649,13 @@ LONG smartcard_unpack_status_call(SMARTCARD_DEVICE* smartcard, wStream* s, Statu
 {
 	LONG status;
 
-	if ((status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
+	if ((status == smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %lu", status);
 		return status;
 	}
 
-	if ((status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard))))
+	if ((status == smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle failed with error %lu", status);
 		return status;
@@ -1672,13 +1672,13 @@ LONG smartcard_unpack_status_call(SMARTCARD_DEVICE* smartcard, wStream* s, Statu
 	Stream_Read_UINT32(s, call->cchReaderLen); /* cchReaderLen (4 bytes) */
 	Stream_Read_UINT32(s, call->cbAtrLen); /* cbAtrLen (4 bytes) */
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
+	if ((status == smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %lu", status);
 		return status;
 	}
 
-	if ((status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard))))
+	if ((status == smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard))))
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle_ref failed with error %lu", status);
 
 	return status;
@@ -1748,7 +1748,7 @@ LONG smartcard_pack_status_return(SMARTCARD_DEVICE* smartcard, wStream* s, Statu
 	else
 		Stream_Zero(s, ret->cBytes);
 	
-	if ((status = smartcard_pack_write_size_align(smartcard, s, ret->cBytes, 4)))
+	if ((status == smartcard_pack_write_size_align(smartcard, s, ret->cBytes, 4)))
 		WLog_ERR(TAG, "smartcard_pack_write_size_align failed with error %lu", status);
 
 	return status;
@@ -1822,13 +1822,13 @@ LONG smartcard_unpack_get_attrib_call(SMARTCARD_DEVICE* smartcard, wStream* s, G
 {
 	LONG status;
 
-	if ((status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
+	if ((status == smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %lu", status);
 		return status;
 	}
 
-	if ((status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard))))
+	if ((status == smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle failed with error %lu", status);
 		return status;
@@ -1845,13 +1845,13 @@ LONG smartcard_unpack_get_attrib_call(SMARTCARD_DEVICE* smartcard, wStream* s, G
 	Stream_Read_UINT32(s, call->fpbAttrIsNULL); /* fpbAttrIsNULL (4 bytes) */
 	Stream_Read_UINT32(s, call->cbAttrLen); /* cbAttrLen (4 bytes) */
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
+	if ((status == smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %lu", status);
 		return status;
 	}
 
-	if ((status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard))))
+	if ((status == smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard))))
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle_ref failed with error %lu", status);
 
 	return status;
@@ -1916,7 +1916,7 @@ LONG smartcard_pack_get_attrib_return(SMARTCARD_DEVICE* smartcard, wStream* s, G
 	else
 		Stream_Write(s, ret->pbAttr, ret->cbAttrLen); /* pbAttr */
 
-	if ((status = smartcard_pack_write_size_align(smartcard, s, ret->cbAttrLen, 4)))
+	if ((status == smartcard_pack_write_size_align(smartcard, s, ret->cbAttrLen, 4)))
 		WLog_ERR(TAG, "smartcard_pack_write_size_align failed with error %lu", status);
 
 	return status;
@@ -1956,13 +1956,13 @@ LONG smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Cont
 
 	call->pvInBuffer = NULL;
 
-	if ((status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
+	if ((status == smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %lu", status);
 		return status;
 	}
 
-	if ((status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard))))
+	if ((status == smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle failed with error %lu", status);
 		return status;
@@ -1981,13 +1981,13 @@ LONG smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Cont
 	Stream_Read_UINT32(s, call->fpvOutBufferIsNULL); /* fpvOutBufferIsNULL (4 bytes) */
 	Stream_Read_UINT32(s, call->cbOutBufferSize); /* cbOutBufferSize (4 bytes) */
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
+	if ((status == smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %lu", status);
 		return status;
 	}
 
-	if ((status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard))))
+	if ((status == smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %lu", status);
 		return status;
@@ -2095,7 +2095,7 @@ LONG smartcard_pack_control_return(SMARTCARD_DEVICE* smartcard, wStream* s, Cont
 	if (ret->cbOutBufferSize > 0)
 	{
 		Stream_Write(s, ret->pvOutBuffer, ret->cbOutBufferSize); /* pvOutBuffer */
-		if ((error = smartcard_pack_write_size_align(smartcard, s, ret->cbOutBufferSize, 4)))
+		if ((error == smartcard_pack_write_size_align(smartcard, s, ret->cbOutBufferSize, 4)))
 		{
 			WLog_ERR(TAG, "smartcard_pack_write_size_align failed with error %lu", error);
 			return error;
@@ -2146,13 +2146,13 @@ LONG smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, Tra
 	call->pioRecvPci = NULL;
 	call->pbSendBuffer = NULL;
 
-	if ((status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
+	if ((status == smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %lu", status);
 		return status;
 	}
 
-	if ((status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard))))
+	if ((status == smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle failed with error %lu", status);
 		return status;
@@ -2188,13 +2188,13 @@ LONG smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, Tra
 		return STATUS_INVALID_PARAMETER;
 	}
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
+	if ((status == smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %lu", status);
 		return status;
 	}
 
-	if ((status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard))))
+	if ((status == smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_handle_ref failed with error %lu", status);
 		return status;
@@ -2516,7 +2516,7 @@ LONG smartcard_pack_transmit_return(SMARTCARD_DEVICE* smartcard, wStream* s, Tra
 		{
 			Stream_Write_UINT32(s, cbExtraBytes); /* Length (4 bytes) */
 			Stream_Write(s, pbExtraBytes, cbExtraBytes);
-			if ((error = smartcard_pack_write_size_align(smartcard, s, cbExtraBytes, 4)))
+			if ((error == smartcard_pack_write_size_align(smartcard, s, cbExtraBytes, 4)))
 			{
 				WLog_ERR(TAG, "smartcard_pack_write_size_align failed with error %lu!", error);
 				return error;
@@ -2534,7 +2534,7 @@ LONG smartcard_pack_transmit_return(SMARTCARD_DEVICE* smartcard, wStream* s, Tra
 
 		Stream_Write_UINT32(s, ret->cbRecvLength); /* pbRecvBufferNdrLen (4 bytes) */
 		Stream_Write(s, ret->pbRecvBuffer, ret->cbRecvLength);
-		if ((error = smartcard_pack_write_size_align(smartcard, s, ret->cbRecvLength, 4)))
+		if ((error == smartcard_pack_write_size_align(smartcard, s, ret->cbRecvLength, 4)))
 		{
 			WLog_ERR(TAG, "smartcard_pack_write_size_align failed with error %lu!", error);
 			return error;
@@ -2607,7 +2607,7 @@ LONG smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, wS
 
 	call->rgReaderStates = NULL;
 
-	if ((status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
+	if ((status == smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context failed with error %lu", status);
 		return status;
@@ -2625,7 +2625,7 @@ LONG smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, wS
 	Stream_Read_UINT32(s, call->cReaders); /* cReaders (4 bytes) */
 	Stream_Read_UINT32(s, rgReaderStatesNdrPtr); /* rgReaderStatesNdrPtr (4 bytes) */
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
+	if ((status == smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %lu", status);
 		return status;
