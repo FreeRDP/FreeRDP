@@ -694,9 +694,9 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder* decoder, const BYTE *data, UIN
 	 * We don't expect to block here often, since the pipeline should
 	 * have more than enough buffering.
 	 */
-	DEBUG_TSMF("%s. Start:(%d) End:(%d) Duration:(%d) Last Start:(%d)",
-			   get_type(mdecoder), (int)start_time, (int)end_time, (int)duration,
-			   (int)mdecoder->last_sample_start_time);
+	DEBUG_TSMF("%s. Start:(%lu) End:(%lu) Duration:(%d) Last Start:(%lu)",
+			   get_type(mdecoder), start_time, end_time, (int)duration,
+			   mdecoder->last_sample_start_time);
 
 	if (mdecoder->shutdown)
 	{
@@ -753,6 +753,8 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder* decoder, const BYTE *data, UIN
 
 	if (mdecoder->pipeline_start_time_valid)
 	{
+		DEBUG_TSMF("%s start time %lu", get_type(mdecoder), start_time);
+
 		/* Adjusted the condition for a seek to be based on start time only
 		 * WMV1 and WMV2 files in particular have bad end time and duration values
 		 * there seems to be no real side effects of just using the start time instead
@@ -767,9 +769,10 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder* decoder, const BYTE *data, UIN
 		/* If the start_time is valid and different from the previous start time by more than the seek tolerance, then we have a seek condition */
 		if (((start_time > maxTime) || (start_time < minTime)) && useTimestamps)
 		{
-			DEBUG_TSMF("tsmf_gstreamer_decodeEx: start_time=[%d] > last_sample_start_time=[%d] OR ", (int)start_time, (int)mdecoder->last_sample_start_time);
-			DEBUG_TSMF("tsmf_gstreamer_decodeEx: start_time=[%d] < last_sample_start_time=[%d] with", (int)start_time, (int)mdecoder->last_sample_start_time);
-			DEBUG_TSMF("tsmf_gstreamer_decodeEX: a tolerance of more than [%d] from the last sample", (int) SEEK_TOLERANCE);
+			DEBUG_TSMF("tsmf_gstreamer_decodeEx: start_time=[%lu] > last_sample_start_time=[%lu] OR ", start_time, mdecoder->last_sample_start_time);
+			DEBUG_TSMF("tsmf_gstreamer_decodeEx: start_time=[%lu] < last_sample_start_time=[%lu] with", start_time, mdecoder->last_sample_start_time);
+			DEBUG_TSMF("tsmf_gstreamer_decodeEX: a tolerance of more than [%lu] from the last sample", SEEK_TOLERANCE);
+			DEBUG_TSMF("tsmf_gstreamer_decodeEX: minTime=[%lu] maxTime=[%lu]", minTime, maxTime);
 
 			mdecoder->seeking = TRUE;
 
@@ -781,7 +784,7 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder* decoder, const BYTE *data, UIN
 	}
 	else
 	{
-		DEBUG_TSMF("%s start time %d", get_type(mdecoder), start_time);
+		DEBUG_TSMF("%s start time %lu", get_type(mdecoder), start_time);
 		/* Always set base/start time to 0. Will use seek offset to translate real buffer times
 		 * back to 0. This allows the video to be started from anywhere and the ability to handle seeks
 		 * without rebuilding the pipeline, etc. since that is costly
@@ -832,7 +835,7 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder* decoder, const BYTE *data, UIN
 	{
 		DEBUG_TSMF("%s: state=%s", get_type(mdecoder), gst_element_state_get_name(GST_STATE(mdecoder->pipe)));	
 
-		DEBUG_TSMF("Paused: %i   Shutdown: %i   Ready: %i", mdecoder->paused, mdecoder->shutdown, mdecoder->ready);
+		DEBUG_TSMF("%s Paused: %i   Shutdown: %i   Ready: %i", get_type(mdecoder), mdecoder->paused, mdecoder->shutdown, mdecoder->ready);
 		if (!mdecoder->paused && !mdecoder->shutdown && mdecoder->ready)
 			tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_PLAYING);
 	}
@@ -961,9 +964,6 @@ static UINT64 tsmf_gstreamer_get_running_time(ITSMFDecoder* decoder)
 		return mdecoder->last_sample_start_time;
 
 	if (!mdecoder->pipe)
-		return 0;
-
-	if (GST_STATE(mdecoder->pipe) != GST_STATE_PLAYING)
 		return 0;
 
 	GstFormat fmt = GST_FORMAT_TIME;

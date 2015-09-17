@@ -597,9 +597,9 @@ UINT tsmf_ifman_on_sample(TSMF_IFMAN* ifman)
 	if (Stream_GetRemainingLength(ifman->input) < cbData)
 		return ERROR_INVALID_DATA;
 
-	DEBUG_TSMF("MessageId %d StreamId %d SampleStartTime %d SampleEndTime %d "
+	DEBUG_TSMF("MessageId %d StreamId %d SampleStartTime %lu SampleEndTime %lu "
 			   "ThrottleDuration %d SampleExtensions %d cbData %d",
-			   ifman->message_id, StreamId, (int)SampleStartTime, (int)SampleEndTime,
+			   ifman->message_id, StreamId, SampleStartTime, SampleEndTime,
 			   (int)ThrottleDuration, SampleExtensions, cbData);
 
 	presentation = tsmf_presentation_find_by_id(ifman->presentation_id);

@@ -553,8 +553,14 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 					{
 						UINT64 video_time = (UINT64) stream->decoder->GetRunningTime(stream->decoder);
 						UINT64 audio_time = (UINT64) temp_stream->decoder->GetRunningTime(temp_stream->decoder);
-						sample->start_time += abs(video_time - audio_time) > VIDEO_ADJUST_MAX ? (video_time - audio_time) : VIDEO_ADJUST_MAX;
-						sample->end_time += abs(video_time - audio_time) > VIDEO_ADJUST_MAX ? (video_time - audio_time) : VIDEO_ADJUST_MAX;
+						UINT64 max_adjust = VIDEO_ADJUST_MAX;
+
+						if (video_time < audio_time)
+							max_adjust = -VIDEO_ADJUST_MAX;
+
+						sample->start_time += abs(video_time - audio_time) < VIDEO_ADJUST_MAX ? (video_time - audio_time) : max_adjust;
+						sample->end_time += abs(video_time - audio_time) < VIDEO_ADJUST_MAX ? (video_time - audio_time) : max_adjust;
+
 						break;
 					}
 				}
