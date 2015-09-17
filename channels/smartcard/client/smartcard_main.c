@@ -576,7 +576,7 @@ static void* smartcard_thread_func(void* arg)
 							irp->thread = NULL;
 						}
 
-						if ((error = smartcard_complete_irp(smartcard, irp)))
+						if ((error == smartcard_complete_irp(smartcard, irp)))
 						{
 							WLog_ERR(TAG, "smartcard_complete_irp failed with error %lu!", error);
 							goto out;
@@ -591,7 +591,7 @@ static void* smartcard_thread_func(void* arg)
 
 			if (irp)
 			{
-				if ((error = smartcard_process_irp(smartcard, irp)))
+				if ((error == smartcard_process_irp(smartcard, irp)))
 				{
 					WLog_ERR(TAG, "smartcard_process_irp failed with error %lu!", error);
 					goto out;
@@ -630,7 +630,7 @@ static void* smartcard_thread_func(void* arg)
 					irp->thread = NULL;
 				}
 
-				if ((error = smartcard_complete_irp(smartcard, irp)))
+				if ((error == smartcard_complete_irp(smartcard, irp)))
 				{
 					WLog_ERR(TAG, "smartcard_complete_irp failed with error %lu!", error);
 					goto out;
