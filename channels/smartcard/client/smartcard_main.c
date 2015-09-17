@@ -86,7 +86,7 @@ void* smartcard_context_thread(SMARTCARD_CONTEXT* pContext)
 
 			if (operation)
 			{
-				if ((status = smartcard_irp_device_control_call(smartcard, operation)))
+				if ((status == smartcard_irp_device_control_call(smartcard, operation)))
 				{
 					WLog_ERR(TAG, "smartcard_irp_device_control_call failed with error %lu", status);
 					break;
@@ -458,7 +458,7 @@ UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 		if (!asyncIrp)
 		{
-			if ((status = smartcard_irp_device_control_call(smartcard, operation)))
+			if ((status == smartcard_irp_device_control_call(smartcard, operation)))
 			{
 				WLog_ERR(TAG, "smartcard_irp_device_control_call failed with error %lu!", status);
 				return (UINT32)status;
