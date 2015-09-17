@@ -319,6 +319,30 @@ const char* GetSecurityStatusString(SECURITY_STATUS status)
 	return "SEC_E_UNKNOWN";
 }
 
+BOOL IsSecurityStatusError(SECURITY_STATUS status)
+{
+	BOOL error = TRUE;
+
+	switch (status)
+	{
+		case SEC_E_OK:
+		case SEC_I_CONTINUE_NEEDED:
+		case SEC_I_COMPLETE_NEEDED:
+		case SEC_I_COMPLETE_AND_CONTINUE:
+		case SEC_I_LOCAL_LOGON:
+		case SEC_I_CONTEXT_EXPIRED:
+		case SEC_I_INCOMPLETE_CREDENTIALS:
+		case SEC_I_RENEGOTIATE:
+		case SEC_I_NO_LSA_CONTEXT:
+		case SEC_I_SIGNATURE_NEEDED:
+		case SEC_I_NO_RENEGOTIATION:
+			error = FALSE;
+			break;
+	}
+
+	return error;
+}
+
 SecurityFunctionTableW* SEC_ENTRY InitSecurityInterfaceExW(DWORD flags)
 {
 	if (!g_Initialized)
