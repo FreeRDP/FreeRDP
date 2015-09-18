@@ -234,21 +234,25 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 
 	WLog_VRB(TAG, "InitializeSecurityContext status %s [%08X]",
 		 GetSecurityStatusString(status), status);
+
 	if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED) || (status == SEC_E_OK))
 	{
-		if (ntlm->table->CompleteAuthToken)
+		if ((status != SEC_E_OK) && ntlm->table->CompleteAuthToken)
 		{
 			SECURITY_STATUS cStatus;
+			
 			cStatus = ntlm->table->CompleteAuthToken(&ntlm->context, &ntlm->outputBufferDesc);
+
 			if (cStatus != SEC_E_OK)
 			{
 				WLog_WARN(TAG, "CompleteAuthToken status  %s [%08X]",
-					  GetSecurityStatusString(cStatus), cStatus);
+					GetSecurityStatusString(cStatus), cStatus);
 				return FALSE;
 			}
 		}
 
 		status = ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes);
+
 		if (status != SEC_E_OK)
 		{
 			WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure %s [%08X]",

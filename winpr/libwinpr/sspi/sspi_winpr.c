@@ -804,11 +804,12 @@ SECURITY_STATUS SEC_ENTRY winpr_AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipa
 	status = table->AcquireCredentialsHandleW(pszPrincipal, pszPackage, fCredentialUse,
 						  pvLogonID, pAuthData, pGetKeyFn, pvGetKeyArgument, phCredential, ptsExpiry);
 
-	if (status != SEC_E_OK)
+	if (IsSecurityStatusError(status))
 	{
 		WLog_WARN(TAG, "AcquireCredentialsHandleW status %s [%08X]",
 			  GetSecurityStatusString(status), status);
 	}
+
 	return status;
 }
 
@@ -828,7 +829,7 @@ SECURITY_STATUS SEC_ENTRY winpr_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal
 	status = table->AcquireCredentialsHandleA(pszPrincipal, pszPackage, fCredentialUse,
 						  pvLogonID, pAuthData, pGetKeyFn, pvGetKeyArgument, phCredential, ptsExpiry);
 
-	if (status != SEC_E_OK)
+	if (IsSecurityStatusError(status))
 	{
 		WLog_WARN(TAG, "AcquireCredentialsHandleA status %s [%08X]",
 			  GetSecurityStatusString(status), status);
@@ -858,7 +859,7 @@ SECURITY_STATUS SEC_ENTRY winpr_ExportSecurityContext(PCtxtHandle phContext, ULO
 
 	status = table->ExportSecurityContext(phContext, fFlags, pPackedContext, pToken);
 
-	if (status != SEC_E_OK)
+	if (IsSecurityStatusError(status))
 	{
 		WLog_WARN(TAG, "ExportSecurityContext status %s [%08X]",
 			  GetSecurityStatusString(status), status);
@@ -888,11 +889,12 @@ SECURITY_STATUS SEC_ENTRY winpr_FreeCredentialsHandle(PCredHandle phCredential)
 
 	status = table->FreeCredentialsHandle(phCredential);
 
-	if (status != SEC_E_OK)
+	if (IsSecurityStatusError(status))
 	{
 		WLog_WARN(TAG, "FreeCredentialsHandle status %s [%08X]",
 			  GetSecurityStatusString(status), status);
 	}
+
 	return status;
 }
 
@@ -917,7 +919,7 @@ SECURITY_STATUS SEC_ENTRY winpr_ImportSecurityContextW(SEC_WCHAR* pszPackage, PS
 
 	status = table->ImportSecurityContextW(pszPackage, pPackedContext, pToken, phContext);
 
-	if (status != SEC_E_OK)
+	if (IsSecurityStatusError(status))
 	{
 		WLog_WARN(TAG, "ImportSecurityContextW status %s [%08X]",
 			  GetSecurityStatusString(status), status);
@@ -947,7 +949,7 @@ SECURITY_STATUS SEC_ENTRY winpr_ImportSecurityContextA(SEC_CHAR* pszPackage, PSe
 
 	status = table->ImportSecurityContextA(pszPackage, pPackedContext, pToken, phContext);
 
-	if (status != SEC_E_OK)
+	if (IsSecurityStatusError(status))
 	{
 		WLog_WARN(TAG, "ImportSecurityContextA status %s [%08X]",
 			  GetSecurityStatusString(status), status);
@@ -977,7 +979,7 @@ SECURITY_STATUS SEC_ENTRY winpr_QueryCredentialsAttributesW(PCredHandle phCreden
 
 	status = table->QueryCredentialsAttributesW(phCredential, ulAttribute, pBuffer);
 
-	if (status != SEC_E_OK)
+	if (IsSecurityStatusError(status))
 	{
 		WLog_WARN(TAG, "QueryCredentialsAttributesW status %s [%08X]",
 			  GetSecurityStatusString(status), status);
@@ -1007,7 +1009,7 @@ SECURITY_STATUS SEC_ENTRY winpr_QueryCredentialsAttributesA(PCredHandle phCreden
 
 	status = table->QueryCredentialsAttributesA(phCredential, ulAttribute, pBuffer);
 
-	if (status != SEC_E_OK)
+	if (IsSecurityStatusError(status))
 	{
 		WLog_WARN(TAG, "QueryCredentialsAttributesA status %s [%08X]",
 			  GetSecurityStatusString(status), status);
@@ -1042,7 +1044,7 @@ SECURITY_STATUS SEC_ENTRY winpr_AcceptSecurityContext(PCredHandle phCredential, 
 	status = table->AcceptSecurityContext(phCredential, phContext, pInput, fContextReq,
 					      TargetDataRep, phNewContext, pOutput, pfContextAttr, ptsTimeStamp);
 
-	if (status != SEC_E_OK)
+	if (IsSecurityStatusError(status))
 	{
 		WLog_WARN(TAG, "AcceptSecurityContext status %s [%08X]",
 			  GetSecurityStatusString(status), status);
@@ -1072,7 +1074,7 @@ SECURITY_STATUS SEC_ENTRY winpr_ApplyControlToken(PCtxtHandle phContext, PSecBuf
 
 	status = table->ApplyControlToken(phContext, pInput);
 
-	if (status != SEC_E_OK)
+	if (IsSecurityStatusError(status))
 	{
 		WLog_WARN(TAG, "ApplyControlToken status %s [%08X]",
 			  GetSecurityStatusString(status), status);
@@ -1102,7 +1104,7 @@ SECURITY_STATUS SEC_ENTRY winpr_CompleteAuthToken(PCtxtHandle phContext, PSecBuf
 
 	status = table->CompleteAuthToken(phContext, pToken);
 
-	if (status != SEC_E_OK)
+	if (IsSecurityStatusError(status))
 	{
 		WLog_WARN(TAG, "CompleteAuthToken status %s [%08X]",
 			  GetSecurityStatusString(status), status);
@@ -1132,7 +1134,7 @@ SECURITY_STATUS SEC_ENTRY winpr_DeleteSecurityContext(PCtxtHandle phContext)
 
 	status = table->DeleteSecurityContext(phContext);
 
-	if (status != SEC_E_OK)
+	if (IsSecurityStatusError(status))
 	{
 		WLog_WARN(TAG, "DeleteSecurityContext status %s [%08X]",
 			  GetSecurityStatusString(status), status);
@@ -1172,7 +1174,7 @@ SECURITY_STATUS SEC_ENTRY winpr_ImpersonateSecurityContext(PCtxtHandle phContext
 
 	status = table->ImpersonateSecurityContext(phContext);
 
-	if (status != SEC_E_OK)
+	if (IsSecurityStatusError(status))
 	{
 		WLog_WARN(TAG, "ImpersonateSecurityContext status %s [%08X]",
 			  GetSecurityStatusString(status), status);
@@ -1207,7 +1209,7 @@ SECURITY_STATUS SEC_ENTRY winpr_InitializeSecurityContextW(PCredHandle phCredent
 						   pszTargetName, fContextReq, Reserved1, TargetDataRep,
 						   pInput, Reserved2, phNewContext, pOutput, pfContextAttr, ptsExpiry);
 
-	if (status != SEC_E_OK)
+	if (IsSecurityStatusError(status))
 	{
 		WLog_WARN(TAG, "InitializeSecurityContextW status %s [%08X]",
 			  GetSecurityStatusString(status), status);
@@ -1242,7 +1244,7 @@ SECURITY_STATUS SEC_ENTRY winpr_InitializeSecurityContextA(PCredHandle phCredent
 						   pszTargetName, fContextReq, Reserved1, TargetDataRep,
 						   pInput, Reserved2, phNewContext, pOutput, pfContextAttr, ptsExpiry);
 
-	if (status != SEC_E_OK)
+	if (IsSecurityStatusError(status))
 	{
 		WLog_WARN(TAG, "InitializeSecurityContextA status %s [%08X]",
 			  GetSecurityStatusString(status), status);
@@ -1272,7 +1274,7 @@ SECURITY_STATUS SEC_ENTRY winpr_QueryContextAttributesW(PCtxtHandle phContext, U
 
 	status = table->QueryContextAttributesW(phContext, ulAttribute, pBuffer);
 
-	if (status != SEC_E_OK)
+	if (IsSecurityStatusError(status))
 	{
 		WLog_WARN(TAG, "QueryContextAttributesW status %s [%08X]",
 			  GetSecurityStatusString(status), status);
@@ -1302,7 +1304,7 @@ SECURITY_STATUS SEC_ENTRY winpr_QueryContextAttributesA(PCtxtHandle phContext, U
 
 	status = table->QueryContextAttributesA(phContext, ulAttribute, pBuffer);
 
-	if (status != SEC_E_OK)
+	if (IsSecurityStatusError(status))
 	{
 		WLog_WARN(TAG, "QueryContextAttributesA status %s [%08X]",
 			  GetSecurityStatusString(status), status);
@@ -1332,7 +1334,7 @@ SECURITY_STATUS SEC_ENTRY winpr_QuerySecurityContextToken(PCtxtHandle phContext,
 
 	status = table->QuerySecurityContextToken(phContext, phToken);
 
-	if (status != SEC_E_OK)
+	if (IsSecurityStatusError(status))
 	{
 		WLog_WARN(TAG, "QuerySecurityContextToken status %s [%08X]",
 			  GetSecurityStatusString(status), status);
@@ -1362,7 +1364,7 @@ SECURITY_STATUS SEC_ENTRY winpr_SetContextAttributesW(PCtxtHandle phContext, ULO
 
 	status = table->SetContextAttributesW(phContext, ulAttribute, pBuffer, cbBuffer);
 
-	if (status != SEC_E_OK)
+	if (IsSecurityStatusError(status))
 	{
 		WLog_WARN(TAG, "SetContextAttributesW status %s [%08X]",
 			  GetSecurityStatusString(status), status);
@@ -1392,7 +1394,7 @@ SECURITY_STATUS SEC_ENTRY winpr_SetContextAttributesA(PCtxtHandle phContext, ULO
 
 	status = table->SetContextAttributesA(phContext, ulAttribute, pBuffer, cbBuffer);
 
-	if (status != SEC_E_OK)
+	if (IsSecurityStatusError(status))
 	{
 		WLog_WARN(TAG, "SetContextAttributesA status %s [%08X]",
 			  GetSecurityStatusString(status), status);
@@ -1422,7 +1424,7 @@ SECURITY_STATUS SEC_ENTRY winpr_RevertSecurityContext(PCtxtHandle phContext)
 
 	status = table->RevertSecurityContext(phContext);
 
-	if (status != SEC_E_OK)
+	if (IsSecurityStatusError(status))
 	{
 		WLog_WARN(TAG, "RevertSecurityContext status %s [%08X]",
 			  GetSecurityStatusString(status), status);
@@ -1454,7 +1456,7 @@ SECURITY_STATUS SEC_ENTRY winpr_DecryptMessage(PCtxtHandle phContext, PSecBuffer
 
 	status = table->DecryptMessage(phContext, pMessage, MessageSeqNo, pfQOP);
 
-	if (status != SEC_E_OK)
+	if (IsSecurityStatusError(status))
 	{
 		WLog_WARN(TAG, "DecryptMessage status %s [%08X]",
 			  GetSecurityStatusString(status), status);
@@ -1514,7 +1516,7 @@ SECURITY_STATUS SEC_ENTRY winpr_MakeSignature(PCtxtHandle phContext, ULONG fQOP,
 
 	status = table->MakeSignature(phContext, fQOP, pMessage, MessageSeqNo);
 
-	if (status != SEC_E_OK)
+	if (IsSecurityStatusError(status))
 	{
 		WLog_WARN(TAG, "MakeSignature status %s [%08X]",
 			  GetSecurityStatusString(status), status);
@@ -1544,7 +1546,7 @@ SECURITY_STATUS SEC_ENTRY winpr_VerifySignature(PCtxtHandle phContext, PSecBuffe
 
 	status = table->VerifySignature(phContext, pMessage, MessageSeqNo, pfQOP);
 
-	if (status != SEC_E_OK)
+	if (IsSecurityStatusError(status))
 	{
 		WLog_WARN(TAG, "VerifySignature status %s [%08X]",
 			  GetSecurityStatusString(status), status);
