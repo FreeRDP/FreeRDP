@@ -387,8 +387,11 @@ int rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, wStream* s)
 	if (status < 0)
 		return status;
 
-	if (!Stream_SafeSeek(s, 1)) /* pad2Octets (1 byte) */
-		return -1;
+	if (Stream_GetRemainingLength(s) >= 1)
+	{
+		/* this field is optional, and its absence is not an error */
+		Stream_Seek(s, 1); /* pad2Octets (1 byte) */
+	}
 
 	return status;
 }
