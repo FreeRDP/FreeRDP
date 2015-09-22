@@ -49,7 +49,7 @@ static UINT dvcman_get_configuration(IWTSListener* pListener, void** ppPropertyB
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
-	const char* pszChannelName, UINT32 ulFlags,
+	const char* pszChannelName, ULONG ulFlags,
 	IWTSListenerCallback* pListenerCallback, IWTSListener** ppListener)
 {
 	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
@@ -400,7 +400,7 @@ UINT dvcman_init(IWTSVirtualChannelManager* pChannelMgr)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT dvcman_write_channel(IWTSVirtualChannel* pChannel, UINT32 cbSize, BYTE* pBuffer, void* pReserved)
+static UINT dvcman_write_channel(IWTSVirtualChannel* pChannel, ULONG cbSize, BYTE* pBuffer, void* pReserved)
 {
 	UINT status;
 	DVCMAN_CHANNEL* channel = (DVCMAN_CHANNEL*) pChannel;
