@@ -291,8 +291,8 @@ static BOOL xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 		appWindow->dwStyle = windowState->style;
 		appWindow->dwExStyle = windowState->extendedStyle;
 
-		appWindow->x = appWindow->windowOffsetX = windowState->windowOffsetX;
-		appWindow->y = appWindow->windowOffsetY = windowState->windowOffsetY;
+		appWindow->x = appWindow->windowOffsetX = appWindow->visibleOffsetX = windowState->windowOffsetX;
+		appWindow->y = appWindow->windowOffsetY = appWindow->visibleOffsetY = windowState->windowOffsetY;
 		appWindow->width = appWindow->windowWidth = windowState->windowWidth;
 		appWindow->height = appWindow->windowHeight = windowState->windowHeight;
 

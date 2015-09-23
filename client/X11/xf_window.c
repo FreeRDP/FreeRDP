@@ -927,6 +927,8 @@ void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, RECTANG
 {
 	int i;
 	XRectangle* xrects;
+	UINT32 translatedWindowOffsetX;
+	UINT32 translatedWindowOffsetY;
 
 	if (nrects < 1)
 		return;
@@ -942,7 +944,11 @@ void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, RECTANG
 		xrects[i].height = rects[i].bottom - rects[i].top;
 	}
 
-	XShapeCombineRectangles(xfc->display, appWindow->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
+	/* Translate the server rail window offset to a local offset */
+	translatedWindowOffsetX = (appWindow->visibleOffsetX - appWindow->windowOffsetX);
+	translatedWindowOffsetY = (appWindow->visibleOffsetY - appWindow->windowOffsetY);
+
+	XShapeCombineRectangles(xfc->display, appWindow->handle, ShapeBounding, translatedWindowOffsetX, translatedWindowOffsetY, xrects, nrects, ShapeSet, 0);
 	free(xrects);
 #endif
 
