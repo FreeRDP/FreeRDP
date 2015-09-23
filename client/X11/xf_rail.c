@@ -194,8 +194,8 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	 * we can start to receive GDI orders for the new window dimensions before we
 	 * receive the RAIL ORDER for the new window size.  This avoids that race condition.
 	 */
-	appWindow->windowOffsetX = windowMove.left;
-	appWindow->windowOffsetY = windowMove.top;
+	appWindow->windowOffsetX = (INT16)windowMove.left;
+	appWindow->windowOffsetY = (INT16)windowMove.top;
 	appWindow->windowWidth = appWindow->width;
 	appWindow->windowHeight = appWindow->height;
 	appWindow->local_move.state = LMS_TERMINATING;
