@@ -359,8 +359,11 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		}
 	}
 
-	if (!Stream_SafeSeek(s, 8)) /* pad (8 bytes) */
-		return -1;
+	if (Stream_GetRemainingLength(s) >= 8)
+	{
+		/* some versions of windows don't included this padding before closing the connection */
+		Stream_Seek(s, 8); /* pad (8 bytes) */
+	}
 
 	if (redirection->flags & LB_NOREDIRECT)
 		return 0;
