@@ -628,14 +628,12 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 
 	if ((nWidth % 4) != 0)
 	{
-		nXSrc -= (nWidth % 4);
-		nWidth += (nWidth % 4);
+		nWidth += (4 - (nWidth % 4));
 	}
 
 	if ((nHeight % 4) != 0)
 	{
-		nYSrc -= (nHeight % 4);
-		nHeight += (nHeight % 4);
+		nHeight += (4 - (nHeight % 4));
 	}
 
 	for (yIdx = 0; yIdx < rows; yIdx++)
