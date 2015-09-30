@@ -529,7 +529,7 @@ BOOL region16_union_rect(REGION16 *dst, const REGION16 *src, const RECTANGLE_16 
 		dstRect->top = rect->top;
 		dstRect->left = rect->left;
 		dstRect->right = rect->right;
-		dstRect->bottom = srcExtents->top;
+		dstRect->bottom = MIN(srcExtents->top, rect->bottom);
 
 		usedRects++;
 		dstRect++;
