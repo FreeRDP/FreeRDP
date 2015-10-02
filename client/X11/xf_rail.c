@@ -196,6 +196,16 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	 */
 	appWindow->windowOffsetX = (INT16)windowMove.left;
 	appWindow->windowOffsetY = (INT16)windowMove.top;
+	if (appWindow->windowOffsetX < 0)
+		appWindow->localWindowOffsetCorrX = 0 - appWindow->windowOffsetX;
+	else
+		appWindow->localWindowOffsetCorrX = 0;
+
+	if (appWindow->windowOffsetY < 0)
+		appWindow->localWindowOffsetCorrY = 0 - appWindow->windowOffsetY;
+	else
+		appWindow->localWindowOffsetCorrY = 0;
+
 	appWindow->windowWidth = appWindow->width;
 	appWindow->windowHeight = appWindow->height;
 	appWindow->local_move.state = LMS_TERMINATING;
