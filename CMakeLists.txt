@@ -287,13 +287,13 @@ if(WIN32)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_CRT_SECURE_NO_WARNINGS")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWIN32_LEAN_AND_MEAN")
 
-  # Set product and vendor for dll and exe version information.
-  set(RC_VERSION_VENDOR ${VENDOR})
-  set(RC_VERSION_PRODUCT ${PRODUCT})
-  set(RC_VERSION_PATCH ${BUILD_NUMBER})
-  set(RC_VERSION_DESCRIPTION ${GIT_REVISION})
+	# Set product and vendor for dll and exe version information.
+	set(RC_VERSION_VENDOR ${VENDOR})
+	set(RC_VERSION_PRODUCT ${PRODUCT})
+	set(RC_VERSION_PATCH ${BUILD_NUMBER})
+	set(RC_VERSION_DESCRIPTION ${GIT_REVISION})
 
-  string(TIMESTAMP RC_VERSION_YEAR "%Y")
+	string(TIMESTAMP RC_VERSION_YEAR "%Y")
 
 	if(NOT DEFINED CMAKE_WINDOWS_VERSION)
 		set(CMAKE_WINDOWS_VERSION "WINXP")
@@ -638,6 +638,14 @@ if(TARGET_ARCH MATCHES "x86|x64")
 		# Intel Performance Primitives
 		find_feature(IPP ${IPP_FEATURE_TYPE} ${IPP_FEATURE_PURPOSE} ${IPP_FEATURE_DESCRIPTION})
 	endif()
+endif()
+
+if(OPENSSL_FOUND)
+	add_definitions("-DWITH_OPENSSL")
+endif()
+
+if(MBEDTLS_FOUND)
+	add_definitions("-DWITH_MBEDTLS")
 endif()
 
 if (TARGET_ARCH MATCHES "sparc")

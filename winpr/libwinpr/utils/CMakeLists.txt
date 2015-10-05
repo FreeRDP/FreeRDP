@@ -103,13 +103,17 @@ winpr_module_add(${${MODULE_PREFIX}_SRCS}
 winpr_include_directory_add(
 	"lodepng"
 	"trio"
-	"."
-	${ZLIB_INCLUDE_DIRS}
-	${OPENSSL_INCLUDE_DIR})
+	".")
+	
+if(OPENSSL_FOUND)
+	winpr_include_directory_add(${OPENSSL_INCLUDE_DIR})
+	winpr_library_add(${OPENSSL_LIBRARIES})
+endif()
 
-winpr_library_add(
-	${ZLIB_LIBRARIES}
-	${OPENSSL_LIBRARIES})
+if(MBEDTLS_FOUND)
+	winpr_include_directory_add(${MBEDTLS_INCLUDE_DIR})
+	winpr_library_add(${MBEDTLS_LIBRARIES})
+endif()
 
 if(UNIX)
 	winpr_library_add(m)
