@@ -381,6 +381,10 @@ int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* mod, Key
 	}
 
 	keyStr = XKeysymToString(keysym);
+	if (keyStr == 0)
+	{
+		return 1;
+	}
 
 	if (mod->Shift)
 		strcat(combination, "Shift+");
