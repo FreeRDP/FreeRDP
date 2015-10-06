@@ -39,6 +39,7 @@ SCHANNEL_CONTEXT* schannel_ContextNew()
 		return NULL;
 
 	context->openssl = schannel_openssl_new();
+
 	if (!context->openssl)
 	{
 		free(context);

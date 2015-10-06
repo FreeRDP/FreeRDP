@@ -30,6 +30,10 @@
 #include <winpr/print.h>
 #include <winpr/sysinfo.h>
 
+#include <openssl/md5.h>
+#include <openssl/rc4.h>
+#include <openssl/hmac.h>
+
 #include "ntlm_compute.h"
 
 #include "../../log.h"
@@ -194,14 +198,14 @@ int ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 	WINPR_SAM* sam;
 	WINPR_SAM_ENTRY* entry;
 	SSPI_CREDENTIALS* credentials = context->credentials;
+
 	sam = SamOpen(TRUE);
 
 	if (!sam)
 		return -1;
 
-	entry = SamLookupUserW(sam,
-						   (LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
-						   (LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2);
+	entry = SamLookupUserW(sam, (LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
+			(LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2);
 
 	if (entry)
 	{
@@ -210,16 +214,15 @@ int ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 		winpr_HexDump(TAG, WLOG_DEBUG, entry->NtHash, 16);
 #endif
 		NTOWFv2FromHashW(entry->NtHash,
-						 (LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
-						 (LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2,
-						 (BYTE*) hash);
+				(LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
+				(LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2,
+				(BYTE*) hash);
 		SamFreeEntry(sam, entry);
 		SamClose(sam);
 		return 1;
 	}
 
-	entry = SamLookupUserW(sam,
-						   (LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2, NULL, 0);
+	entry = SamLookupUserW(sam, (LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2, NULL, 0);
 
 	if (entry)
 	{
@@ -228,9 +231,9 @@ int ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 		winpr_HexDump(TAG, WLOG_DEBUG, entry->NtHash, 16);
 #endif
 		NTOWFv2FromHashW(entry->NtHash,
-						 (LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
-						 (LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2,
-						 (BYTE*) hash);
+				(LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
+				(LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2,
+				(BYTE*) hash);
 		SamFreeEntry(sam, entry);
 		SamClose(sam);
 		return 1;
@@ -283,9 +286,9 @@ int ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 	if (memcmp(context->NtlmHash, NTLM_NULL_BUFFER, 16) != 0)
 	{
 		NTOWFv2FromHashW(context->NtlmHash,
-						 (LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
-						 (LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2,
-						 (BYTE*) hash);
+				(LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
+				(LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2,
+				(BYTE*) hash);
 	}
 	else if (credentials->identity.PasswordLength > 256)
 	{
@@ -294,15 +297,15 @@ int ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 			return -1;
 
 		NTOWFv2FromHashW(context->NtlmHash,
-						 (LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
-						 (LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2,
-						 (BYTE*) hash);
+				(LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
+				(LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2,
+				(BYTE*) hash);
 	}
 	else if (credentials->identity.PasswordLength > 0)
 	{
 		NTOWFv2W((LPWSTR) credentials->identity.Password, credentials->identity.PasswordLength * 2,
-				 (LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
-				 (LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2, (BYTE*) hash);
+				(LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
+				(LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2, (BYTE*) hash);
 	}
 	else if (context->UseSamFileDatabase)
 	{
@@ -544,6 +547,7 @@ int ntlm_generate_signing_key(BYTE* exported_session_key, PSecBuffer sign_magic,
 	int length;
 	BYTE* value;
 	MD5_CTX md5;
+
 	length = 16 + sign_magic->cbBuffer;
 	value = (BYTE*) malloc(length);
 
@@ -657,8 +661,8 @@ void ntlm_init_rc4_seal_states(NTLM_CONTEXT* context)
 		context->RecvSigningKey = context->ClientSigningKey;
 		context->SendSealingKey = context->ClientSealingKey;
 		context->RecvSealingKey = context->ServerSealingKey;
-		RC4_set_key(&context->SendRc4Seal, 16, context->ServerSealingKey);
-		RC4_set_key(&context->RecvRc4Seal, 16, context->ClientSealingKey);
+		RC4_set_key((RC4_KEY*) context->SendRc4Seal, 16, context->ServerSealingKey);
+		RC4_set_key((RC4_KEY*) context->RecvRc4Seal, 16, context->ClientSealingKey);
 	}
 	else
 	{
@@ -666,8 +670,8 @@ void ntlm_init_rc4_seal_states(NTLM_CONTEXT* context)
 		context->RecvSigningKey = context->ServerSigningKey;
 		context->SendSealingKey = context->ServerSealingKey;
 		context->RecvSealingKey = context->ClientSealingKey;
-		RC4_set_key(&context->SendRc4Seal, 16, context->ClientSealingKey);
-		RC4_set_key(&context->RecvRc4Seal, 16, context->ServerSealingKey);
+		RC4_set_key((RC4_KEY*) context->SendRc4Seal, 16, context->ClientSealingKey);
+		RC4_set_key((RC4_KEY*) context->RecvRc4Seal, 16, context->ServerSealingKey);
 	}
 }
 
@@ -686,4 +690,3 @@ void ntlm_compute_message_integrity_check(NTLM_CONTEXT* context)
 	HMAC_Final(&hmac_ctx, context->MessageIntegrityCheck, NULL);
 	HMAC_CTX_cleanup(&hmac_ctx);
 }
-

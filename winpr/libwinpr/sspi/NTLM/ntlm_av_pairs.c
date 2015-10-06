@@ -31,6 +31,8 @@
 #include <winpr/sysinfo.h>
 #include <winpr/tchar.h>
 
+#include <openssl/md5.h>
+
 #include "ntlm_compute.h"
 
 #include "ntlm_av_pairs.h"
@@ -258,6 +260,7 @@ void ntlm_compute_channel_bindings(NTLM_CONTEXT* context)
 	BYTE* ChannelBindingToken;
 	UINT32 ChannelBindingTokenLength;
 	SEC_CHANNEL_BINDINGS* ChannelBindings;
+
 	ZeroMemory(context->ChannelBindingsHash, 16);
 	ChannelBindings = context->Bindings.Bindings;
 

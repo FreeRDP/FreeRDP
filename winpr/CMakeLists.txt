@@ -28,6 +28,7 @@ endif()
 # Include cmake modules
 include(CheckIncludeFiles)
 include(CheckLibraryExists)
+include(CheckSymbolExists)
 include(CheckStructHasMember)
 include(FindPkgConfig)
 include(TestBigEndian)
@@ -40,6 +41,8 @@ include(CheckCmakeCompat)
 include(FindFeature)
 include(AutoVersioning)
 include(ConfigOptions)
+include(ComplexLibrary)
+include(FeatureSummary)
 include(CheckCCompilerFlag)
 include(GNUInstallDirsWrapper)
 include(CMakePackageConfigHelpers)
@@ -50,7 +53,80 @@ set(WINPR_VERSION_MINOR "1")
 set(WINPR_VERSION_REVISION "0")
 set(WINPR_VERSION "${WINPR_VERSION_MAJOR}.${WINPR_VERSION_MINOR}")
 set(WINPR_VERSION_FULL "${WINPR_VERSION}.${WINPR_VERSION_REVISION}")
-set(WINPR_VERSION_FULL ${WINPR_VERSION_FULL} PARENT_SCOPE)
+
+if(FREERDP_BUILD)
+	set(WINPR_VERSION_FULL ${WINPR_VERSION_FULL} PARENT_SCOPE)
+else()
+	set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+
+	if(NOT IOS AND NOT ANDROID)
+		find_package(Threads REQUIRED)
+	endif()
+
+	# Include files
+	if(NOT IOS)
+		check_include_files(fcntl.h HAVE_FCNTL_H)
+		check_include_files(unistd.h HAVE_UNISTD_H)
+		check_include_files(execinfo.h HAVE_EXECINFO_H)
+		check_include_files(stdint.h HAVE_STDINT_H)
+		check_include_files(inttypes.h HAVE_INTTYPES_H)
+		check_include_files(sys/modem.h HAVE_SYS_MODEM_H)
+		check_include_files(sys/filio.h HAVE_SYS_FILIO_H)
+		check_include_files(sys/sockio.h HAVE_SYS_SOCKIO_H)
+		check_include_files(sys/strtio.h HAVE_SYS_STRTIO_H)
+		check_include_files(sys/select.h HAVE_SYS_SELECT_H)
+	else()
+		set(HAVE_FCNTL_H 1)
+		set(HAVE_UNISTD_H 1)
+		set(HAVE_STDINT_H 1)
+		set(HAVE_INTTYPES_H 1)
+		set(HAVE_SYS_FILIO_H 1)
+	endif()
+
+	if(NOT IOS)
+		check_struct_has_member("struct tm" tm_gmtoff time.h HAVE_TM_GMTOFF)
+	else()
+		set(HAVE_TM_GMTOFF 1)
+	endif()
+
+	if(NOT WIN32)
+		check_library_exists(pthread pthread_mutex_timedlock "" HAVE_PTHREAD_MUTEX_TIMEDLOCK)
+	endif()
+
+	set(OPENSSL_FEATURE_TYPE "OPTIONAL")
+	set(OPENSSL_FEATURE_PURPOSE "cryptography")
+	set(OPENSSL_FEATURE_DESCRIPTION "encryption, certificate validation, hashing functions")
+
+	set(MBEDTLS_FEATURE_TYPE "OPTIONAL")
+	set(MBEDTLS_FEATURE_PURPOSE "cryptography")
+	set(MBEDTLS_FEATURE_DESCRIPTION "encryption, certificate validation, hashing functions")
+
+	find_feature(OpenSSL ${OPENSSL_FEATURE_TYPE} ${OPENSSL_FEATURE_PURPOSE} ${OPENSSL_FEATURE_DESCRIPTION})
+	find_feature(MbedTLS ${MBEDTLS_FEATURE_TYPE} ${MBEDTLS_FEATURE_PURPOSE} ${MBEDTLS_FEATURE_DESCRIPTION})
+
+	if(OPENSSL_FOUND)
+		add_definitions("-DWITH_OPENSSL")
+	endif()
+
+	if(MBEDTLS_FOUND)
+		add_definitions("-DWITH_MBEDTLS")
+	endif()
+
+	# Include directories
+	include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
+	# Configure files
+	add_definitions("-DHAVE_CONFIG_H")
+	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+
+	enable_testing()
+
+	if(MSVC)
+		set(TESTING_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+	else()
+		set(TESTING_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Testing")
+	endif()
+endif()
 
 # Default to release build type
 if(NOT CMAKE_BUILD_TYPE)

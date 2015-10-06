@@ -21,19 +21,15 @@
 #include "config.h"
 #endif
 
-#include <time.h>
-#include <openssl/des.h>
-#include <openssl/md4.h>
-#include <openssl/hmac.h>
-#include <openssl/rand.h>
-#include <openssl/engine.h>
-
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
 #include <winpr/print.h>
 #include <winpr/sysinfo.h>
 #include <winpr/registry.h>
 #include <winpr/tchar.h>
+
+#include <openssl/rc4.h>
+#include <openssl/hmac.h>
 
 #include "ntlm.h"
 #include "../sspi.h"
@@ -156,9 +152,16 @@ NTLM_CONTEXT* ntlm_ContextNew()
 	DWORD dwSize;
 	DWORD dwValue;
 	NTLM_CONTEXT* context;
+
 	context = (NTLM_CONTEXT*) calloc(1, sizeof(NTLM_CONTEXT));
 
 	if (!context)
+		return NULL;
+
+	context->SendRc4Seal = (void*) calloc(1, sizeof(RC4_KEY));
+	context->RecvRc4Seal = (void*) calloc(1, sizeof(RC4_KEY));
+
+	if (!context->SendRc4Seal || !context->RecvRc4Seal)
 		return NULL;
 
 	context->NTLMv2 = TRUE;
@@ -244,6 +247,8 @@ void ntlm_ContextFree(NTLM_CONTEXT* context)
 	if (!context)
 		return;
 
+	free(context->SendRc4Seal);
+	free(context->RecvRc4Seal);
 	sspi_SecBufferFree(&context->NegotiateMessage);
 	sspi_SecBufferFree(&context->ChallengeMessage);
 	sspi_SecBufferFree(&context->AuthenticateMessage);
@@ -854,7 +859,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
 	/* Encrypt message using with RC4, result overwrites original buffer */
 
 	if (context->confidentiality)
-		RC4(&context->SendRc4Seal, length, (BYTE*) data, (BYTE*) data_buffer->pvBuffer);
+		RC4((RC4_KEY*) context->SendRc4Seal, length, (BYTE*) data, (BYTE*) data_buffer->pvBuffer);
 	else
 		CopyMemory(data_buffer->pvBuffer, data, length);
 
@@ -866,7 +871,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
 #endif
 	free(data);
 	/* RC4-encrypt first 8 bytes of digest */
-	RC4(&context->SendRc4Seal, 8, digest, checksum);
+	RC4((RC4_KEY*) context->SendRc4Seal, 8, digest, checksum);
 	signature = (BYTE*) signature_buffer->pvBuffer;
 	/* Concatenate version, ciphertext and sequence number to build signature */
 	CopyMemory(signature, (void*) &version, 4);
@@ -923,7 +928,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferD
 	/* Decrypt message using with RC4, result overwrites original buffer */
 
 	if (context->confidentiality)
-		RC4(&context->RecvRc4Seal, length, (BYTE*) data, (BYTE*) data_buffer->pvBuffer);
+		RC4((RC4_KEY*) context->RecvRc4Seal, length, (BYTE*) data, (BYTE*) data_buffer->pvBuffer);
 	else
 		CopyMemory(data_buffer->pvBuffer, data, length);
 
@@ -942,7 +947,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferD
 #endif
 	free(data);
 	/* RC4-encrypt first 8 bytes of digest */
-	RC4(&context->RecvRc4Seal, 8, digest, checksum);
+	RC4((RC4_KEY*) context->RecvRc4Seal, 8, digest, checksum);
 	/* Concatenate version, ciphertext and sequence number to build signature */
 	CopyMemory(expected_signature, (void*) &version, 4);
 	CopyMemory(&expected_signature[4], (void*) checksum, 8);

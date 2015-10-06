@@ -147,6 +147,7 @@ static wListDictionary* g_ProtectedMemoryBlocks = NULL;
 
 BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 {
+#ifdef WITH_OPENSSL
 	BYTE* pCipherText;
 	int cbOut, cbFinal;
 	BYTE randomKey[256];
@@ -163,6 +164,7 @@ BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 	}
 
 	pMemBlock = (WINPR_PROTECTED_MEMORY_BLOCK*) calloc(1, sizeof(WINPR_PROTECTED_MEMORY_BLOCK));
+
 	if (!pMemBlock)
 		return FALSE;
 
@@ -192,6 +194,7 @@ BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 
 	cbOut = pMemBlock->cbData + AES_BLOCK_SIZE - 1;
 	pCipherText = (BYTE*) malloc(cbOut);
+
 	if (!pCipherText)
 	{
 		free(pMemBlock);
@@ -206,10 +209,14 @@ BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 	free(pCipherText);
 
 	return ListDictionary_Add(g_ProtectedMemoryBlocks, pData, pMemBlock);
+#else
+	return TRUE;
+#endif
 }
 
 BOOL CryptUnprotectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 {
+#ifdef WITH_OPENSSL
 	BYTE* pPlainText;
 	int cbOut, cbFinal;
 	WINPR_PROTECTED_MEMORY_BLOCK* pMemBlock;
@@ -228,7 +235,9 @@ BOOL CryptUnprotectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 	/* AES Decryption */
 
 	cbOut = pMemBlock->cbData + AES_BLOCK_SIZE - 1;
+
 	pPlainText = (BYTE*) malloc(cbOut);
+
 	if (!pPlainText)
 		return FALSE;
 
@@ -250,6 +259,9 @@ BOOL CryptUnprotectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 	free(pMemBlock);
 
 	return TRUE;
+#else
+	return TRUE;
+#endif
 }
 
 BOOL CryptProtectData(DATA_BLOB* pDataIn, LPCWSTR szDataDescr, DATA_BLOB* pOptionalEntropy,

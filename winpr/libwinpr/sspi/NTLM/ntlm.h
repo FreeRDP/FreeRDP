@@ -25,16 +25,6 @@
 
 #include <winpr/nt.h>
 
-#include <time.h>
-#include <openssl/des.h>
-#include <openssl/md4.h>
-#include <openssl/md5.h>
-#include <openssl/sha.h>
-#include <openssl/rc4.h>
-#include <openssl/hmac.h>
-#include <openssl/rand.h>
-#include <openssl/engine.h>
-
 #include "../sspi.h"
 
 #define MESSAGE_TYPE_NEGOTIATE					1
@@ -234,8 +224,8 @@ struct _NTLM_CONTEXT
 	BYTE MachineID[32];
 	BOOL SendVersionInfo;
 	BOOL confidentiality;
-	RC4_KEY SendRc4Seal;
-	RC4_KEY RecvRc4Seal;
+	void* SendRc4Seal;
+	void* RecvRc4Seal;
 	BYTE* SendSigningKey;
 	BYTE* RecvSigningKey;
 	BYTE* SendSealingKey;

@@ -22,16 +22,11 @@
 
 #ifndef _WIN32
 
+#ifdef WITH_OPENSSL
+
 #include <openssl/evp.h>
 #include <openssl/aes.h>
 #include <openssl/rand.h>
-
-struct _WINPR_CERTSTORE
-{
-	LPCSTR lpszStoreProvider;
-	DWORD dwMsgAndCertEncodingType;
-};
-typedef struct _WINPR_CERTSTORE WINPR_CERTSTORE;
 
 struct _WINPR_PROTECTED_MEMORY_BLOCK
 {
@@ -45,6 +40,15 @@ struct _WINPR_PROTECTED_MEMORY_BLOCK
 	EVP_CIPHER_CTX dec;
 };
 typedef struct _WINPR_PROTECTED_MEMORY_BLOCK WINPR_PROTECTED_MEMORY_BLOCK;
+
+#endif
+
+struct _WINPR_CERTSTORE
+{
+	LPCSTR lpszStoreProvider;
+	DWORD dwMsgAndCertEncodingType;
+};
+typedef struct _WINPR_CERTSTORE WINPR_CERTSTORE;
 
 #endif
 
