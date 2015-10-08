@@ -5,6 +5,7 @@ set(MODULE_PREFIX "TEST_CRYPTO")
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
+	TestCryptoHash.c
 	TestCryptoProtectData.c
 	TestCryptoProtectMemory.c
 	TestCryptoCertEnumCertificatesInStore.c)

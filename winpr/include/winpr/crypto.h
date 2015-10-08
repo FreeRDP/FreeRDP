@@ -610,5 +610,197 @@ BOOL CryptBinaryToStringA(CONST BYTE* pbBinary, DWORD cbBinary, DWORD dwFlags, L
 #define CALG_ECDSA			(ALG_CLASS_SIGNATURE | ALG_TYPE_DSS | ALG_SID_ECDSA)
 #endif
 
+/**
+ * Custom Crypto API Abstraction Layer
+ */
+
+/**
+ * MD5 hashing
+ */
+
+struct _OPENSSL_MD5_CTX
+{
+	UINT32 A, B, C, D;
+	UINT32 Nl, Nh;
+	UINT32 data[16];
+	UINT32 num;
+};
+typedef struct _OPENSSL_MD5_CTX OPENSSL_MD5_CTX;
+
+struct _MBEDTLS_MD5_CTX
+{
+	UINT32 total[2];
+	UINT32 state[4];
+	BYTE buffer[64];
+};
+typedef struct _MBEDTLS_MD5_CTX MBEDTLS_MD5_CTX;
+
+union _WINPR_MD5_CTX
+{
+	OPENSSL_MD5_CTX openssl;
+	MBEDTLS_MD5_CTX mbedtls;
+};
+typedef union _WINPR_MD5_CTX WINPR_MD5_CTX;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+WINPR_API void winpr_MD5_Init(WINPR_MD5_CTX* ctx);
+WINPR_API void winpr_MD5_Update(WINPR_MD5_CTX* ctx, const BYTE* input, size_t ilen);
+WINPR_API void winpr_MD5_Final(WINPR_MD5_CTX* ctx, BYTE* output);
+WINPR_API void winpr_MD5(const BYTE* input, size_t ilen, BYTE* output);
+
+#ifdef __cplusplus
+}
+#endif
+
+/**
+ * MD4 hashing
+ */
+
+struct _OPENSSL_MD4_CTX
+{
+	UINT32 A, B, C, D;
+	UINT32 Nl, Nh;
+	UINT32 data[16];
+	UINT32 num;
+};
+typedef struct _OPENSSL_MD4_CTX OPENSSL_MD4_CTX;
+
+struct _MBEDTLS_MD4_CTX
+{
+	UINT32 total[2];
+	UINT32 state[4];
+	BYTE buffer[64];
+};
+typedef struct _MBEDTLS_MD4_CTX MBEDTLS_MD4_CTX;
+
+union _WINPR_MD4_CTX
+{
+	OPENSSL_MD4_CTX openssl;
+	MBEDTLS_MD4_CTX mbedtls;
+};
+typedef union _WINPR_MD4_CTX WINPR_MD4_CTX;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+WINPR_API void winpr_MD4_Init(WINPR_MD4_CTX* ctx);
+WINPR_API void winpr_MD4_Update(WINPR_MD4_CTX* ctx, const BYTE* input, size_t ilen);
+WINPR_API void winpr_MD4_Final(WINPR_MD4_CTX* ctx, BYTE* output);
+WINPR_API void winpr_MD4(const BYTE* input, size_t ilen, BYTE* output);
+
+#ifdef __cplusplus
+}
+#endif
+
+/**
+ * SHA1 Hashing
+ */
+
+struct _OPENSSL_SHA1_CTX
+{
+	UINT32 h0, h1, h2, h3, h4;
+	UINT32 Nl, Nh;
+	UINT32 data[16];
+	UINT32 num;
+};
+typedef struct _OPENSSL_SHA1_CTX OPENSSL_SHA1_CTX;
+
+struct _MBEDTLS_SHA1_CTX
+{
+	UINT32 total[2];
+	UINT32 state[5];
+	BYTE buffer[64];
+};
+typedef struct _MBEDTLS_SHA1_CTX MBEDTLS_SHA1_CTX;
+
+union _WINPR_SHA1_CTX
+{
+	OPENSSL_SHA1_CTX openssl;
+	MBEDTLS_SHA1_CTX mbedtls;
+};
+typedef union _WINPR_SHA1_CTX WINPR_SHA1_CTX;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+WINPR_API void winpr_SHA1_Init(WINPR_SHA1_CTX* ctx);
+WINPR_API void winpr_SHA1_Update(WINPR_SHA1_CTX* ctx, const BYTE* input, size_t ilen);
+WINPR_API void winpr_SHA1_Final(WINPR_SHA1_CTX* ctx, BYTE* output);
+WINPR_API void winpr_SHA1(const BYTE* input, size_t ilen, BYTE* output);
+
+#ifdef __cplusplus
+}
+#endif
+
+/**
+ * HMAC
+ */
+
+#define WINPR_MD_NONE		0
+#define WINPR_MD_MD2		1
+#define WINPR_MD_MD4		2
+#define WINPR_MD_MD5		3
+#define WINPR_MD_SHA1		4
+#define WINPR_MD_SHA224		5
+#define WINPR_MD_SHA256		6
+#define WINPR_MD_SHA384		7
+#define WINPR_MD_SHA512		8
+#define WINPR_MD_RIPEMD160	9
+
+struct _OPENSSL_EVP_MD_CTX
+{
+	const void* digest;
+	void* engine;
+	unsigned long flags;
+	void* md_data;
+	void* pctx;
+	void* update;
+};
+typedef struct _OPENSSL_EVP_MD_CTX OPENSSL_EVP_MD_CTX;
+
+struct _OPENSSL_HMAC_CTX
+{
+	const void* md;
+	OPENSSL_EVP_MD_CTX md_ctx;
+	OPENSSL_EVP_MD_CTX i_ctx;
+	OPENSSL_EVP_MD_CTX o_ctx;
+	unsigned int key_length;
+	unsigned char key[128];
+};
+typedef struct _OPENSSL_HMAC_CTX OPENSSL_HMAC_CTX;
+
+struct _MBEDTLS_HMAC_CTX
+{
+	    const void* md_info;
+	    void* md_ctx;
+	    void* hmac_ctx;
+};
+typedef struct _MBEDTLS_HMAC_CTX MBEDTLS_HMAC_CTX;
+
+union _WINPR_HMAC_CTX
+{
+	OPENSSL_HMAC_CTX openssl;
+	MBEDTLS_HMAC_CTX mbedtls;
+};
+typedef union _WINPR_HMAC_CTX WINPR_HMAC_CTX;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+WINPR_API int winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, int md, const BYTE* key, size_t keylen);
+WINPR_API int winpr_HMAC_Update(WINPR_HMAC_CTX* ctx, const BYTE* input, size_t ilen);
+WINPR_API int winpr_HMAC_Final(WINPR_HMAC_CTX* ctx, BYTE* output);
+WINPR_API int winpr_HMAC(int md, const BYTE* key, size_t keylen, const BYTE* input, size_t ilen, BYTE* output);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* WINPR_CRYPTO_H */
 
