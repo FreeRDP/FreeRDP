@@ -802,5 +802,57 @@ WINPR_API int winpr_HMAC(int md, const BYTE* key, size_t keylen, const BYTE* inp
 }
 #endif
 
+/**
+ * Random Number Generation
+ */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+WINPR_API int winpr_RAND(BYTE* output, size_t len);
+
+#ifdef __cplusplus
+}
+#endif
+
+/**
+ * RC4
+ */
+
+struct _OPENSSL_RC4_CTX
+{
+	int x, y;
+	int data[256];
+};
+typedef struct _OPENSSL_RC4_CTX OPENSSL_RC4_CTX;
+
+struct _MBEDTLS_RC4_CTX
+{
+	int x;
+	int y;
+	BYTE m[256];
+};
+typedef struct _MBEDTLS_RC4_CTX MBEDTLS_RC4_CTX;
+
+union _WINPR_RC4_CTX
+{
+	OPENSSL_RC4_CTX openssl;
+	MBEDTLS_RC4_CTX mbedtls;
+};
+typedef union _WINPR_RC4_CTX WINPR_RC4_CTX;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+WINPR_API void winpr_RC4_Init(WINPR_RC4_CTX* ctx, const BYTE* key, size_t keylen);
+WINPR_API int winpr_RC4_Update(WINPR_RC4_CTX* ctx, size_t length, const BYTE* input, BYTE* output);
+WINPR_API void winpr_RC4_Final(WINPR_RC4_CTX* ctx);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* WINPR_CRYPTO_H */
 

@@ -17,6 +17,8 @@
 
 winpr_module_add(
 	hash.c
+	rand.c
+	cipher.c
 	cert.c
 	crypto.c
 	crypto.h)
