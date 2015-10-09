@@ -22,12 +22,6 @@
 
 #ifndef _WIN32
 
-#ifdef WITH_OPENSSL
-
-#include <openssl/evp.h>
-#include <openssl/aes.h>
-#include <openssl/rand.h>
-
 struct _WINPR_PROTECTED_MEMORY_BLOCK
 {
 	BYTE* pData;
@@ -36,12 +30,8 @@ struct _WINPR_PROTECTED_MEMORY_BLOCK
 	BYTE key[32];
 	BYTE iv[32];
 	BYTE salt[8];
-	EVP_CIPHER_CTX enc;
-	EVP_CIPHER_CTX dec;
 };
 typedef struct _WINPR_PROTECTED_MEMORY_BLOCK WINPR_PROTECTED_MEMORY_BLOCK;
-
-#endif
 
 struct _WINPR_CERTSTORE
 {

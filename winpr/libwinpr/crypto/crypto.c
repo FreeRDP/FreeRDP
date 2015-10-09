@@ -141,15 +141,21 @@
 #include "crypto.h"
 
 #include <winpr/crt.h>
+#include <winpr/crypto.h>
 #include <winpr/collections.h>
+
+#ifdef WITH_OPENSSL
+#include <openssl/evp.h>
+#include <openssl/aes.h>
+#endif
 
 static wListDictionary* g_ProtectedMemoryBlocks = NULL;
 
 BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 {
-#ifdef WITH_OPENSSL
 	BYTE* pCipherText;
-	int cbOut, cbFinal;
+	size_t cbOut, cbFinal;
+	WINPR_CIPHER_CTX enc;
 	BYTE randomKey[256];
 	WINPR_PROTECTED_MEMORY_BLOCK* pMemBlock;
 
@@ -172,27 +178,17 @@ BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 	pMemBlock->cbData = cbData;
 	pMemBlock->dwFlags = dwFlags;
 
-	/* AES Initialization */
+	winpr_RAND(pMemBlock->salt, 8);
+	winpr_RAND(randomKey, sizeof(randomKey));
 
-	RAND_bytes(pMemBlock->salt, 8);
-	RAND_bytes(randomKey, sizeof(randomKey));
-
-	EVP_BytesToKey(EVP_aes_256_cbc(), EVP_sha1(),
-			pMemBlock->salt,
-			randomKey, sizeof(randomKey),
-			4, pMemBlock->key, pMemBlock->iv);
+#ifdef WITH_OPENSSL
+	EVP_BytesToKey(EVP_aes_256_cbc(), EVP_sha1(), pMemBlock->salt,
+			randomKey, sizeof(randomKey), 4, pMemBlock->key, pMemBlock->iv);
+#endif
 
 	SecureZeroMemory(randomKey, sizeof(randomKey));
 
-	EVP_CIPHER_CTX_init(&(pMemBlock->enc));
-	EVP_EncryptInit_ex(&(pMemBlock->enc), EVP_aes_256_cbc(), NULL, pMemBlock->key, pMemBlock->iv);
-
-	EVP_CIPHER_CTX_init(&(pMemBlock->dec));
-	EVP_DecryptInit_ex(&(pMemBlock->dec), EVP_aes_256_cbc(), NULL, pMemBlock->key, pMemBlock->iv);
-
-	/* AES Encryption */
-
-	cbOut = pMemBlock->cbData + AES_BLOCK_SIZE - 1;
+	cbOut = pMemBlock->cbData + 16 - 1;
 	pCipherText = (BYTE*) malloc(cbOut);
 
 	if (!pCipherText)
@@ -201,24 +197,21 @@ BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 		return FALSE;
 	}
 
-	EVP_EncryptInit_ex(&(pMemBlock->enc), NULL, NULL, NULL, NULL);
-	EVP_EncryptUpdate(&(pMemBlock->enc), pCipherText, &cbOut, pMemBlock->pData, pMemBlock->cbData);
-	EVP_EncryptFinal_ex(&(pMemBlock->enc), pCipherText + cbOut, &cbFinal);
+	winpr_Cipher_Init(&enc, WINPR_CIPHER_AES_256_CBC, WINPR_ENCRYPT, pMemBlock->key, pMemBlock->iv);
+	winpr_Cipher_Update(&enc, pMemBlock->pData, pMemBlock->cbData, pCipherText, &cbOut);
+	winpr_Cipher_Final(&enc, pCipherText + cbOut, &cbFinal);
 
 	CopyMemory(pMemBlock->pData, pCipherText, pMemBlock->cbData);
 	free(pCipherText);
 
 	return ListDictionary_Add(g_ProtectedMemoryBlocks, pData, pMemBlock);
-#else
-	return TRUE;
-#endif
 }
 
 BOOL CryptUnprotectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 {
-#ifdef WITH_OPENSSL
 	BYTE* pPlainText;
-	int cbOut, cbFinal;
+	size_t cbOut, cbFinal;
+	WINPR_CIPHER_CTX dec;
 	WINPR_PROTECTED_MEMORY_BLOCK* pMemBlock;
 
 	if (dwFlags != CRYPTPROTECTMEMORY_SAME_PROCESS)
@@ -232,18 +225,16 @@ BOOL CryptUnprotectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 	if (!pMemBlock)
 		return FALSE;
 
-	/* AES Decryption */
-
-	cbOut = pMemBlock->cbData + AES_BLOCK_SIZE - 1;
+	cbOut = pMemBlock->cbData + 16 - 1;
 
 	pPlainText = (BYTE*) malloc(cbOut);
 
 	if (!pPlainText)
 		return FALSE;
 
-	EVP_DecryptInit_ex(&(pMemBlock->dec), NULL, NULL, NULL, NULL);
-	EVP_DecryptUpdate(&(pMemBlock->dec), pPlainText, &cbOut, pMemBlock->pData, pMemBlock->cbData);
-	EVP_DecryptFinal_ex(&(pMemBlock->dec), pPlainText + cbOut, &cbFinal);
+	winpr_Cipher_Init(&dec, WINPR_CIPHER_AES_256_CBC, WINPR_DECRYPT, pMemBlock->key, pMemBlock->iv);
+	winpr_Cipher_Update(&dec, pMemBlock->pData, pMemBlock->cbData, pPlainText, &cbOut);
+	winpr_Cipher_Final(&dec, pPlainText + cbOut, &cbFinal);
 
 	CopyMemory(pMemBlock->pData, pPlainText, pMemBlock->cbData);
 	SecureZeroMemory(pPlainText, pMemBlock->cbData);
@@ -251,17 +242,9 @@ BOOL CryptUnprotectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 
 	ListDictionary_Remove(g_ProtectedMemoryBlocks, pData);
 
-	/* AES Cleanup */
-
-	EVP_CIPHER_CTX_cleanup(&(pMemBlock->enc));
-	EVP_CIPHER_CTX_cleanup(&(pMemBlock->dec));
-
 	free(pMemBlock);
 
 	return TRUE;
-#else
-	return TRUE;
-#endif
 }
 
 BOOL CryptProtectData(DATA_BLOB* pDataIn, LPCWSTR szDataDescr, DATA_BLOB* pOptionalEntropy,

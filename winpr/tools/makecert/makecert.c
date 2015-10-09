@@ -263,9 +263,9 @@ int makecert_print_command_line_help(int argc, char** argv)
 	return 1;
 }
 
+#ifdef WITH_OPENSSL
 int x509_add_ext(X509* cert, int nid, char* value)
 {
-#ifdef WITH_OPENSSL
 	X509V3_CTX ctx;
 	X509_EXTENSION* ext;
 
@@ -279,10 +279,10 @@ int x509_add_ext(X509* cert, int nid, char* value)
 
 	X509_add_ext(cert, ext, -1);
 	X509_EXTENSION_free(ext);
-#endif
 
 	return 1;
 }
+#endif
 
 char* x509_name_parse(char* name, char* txt, int* length)
 {

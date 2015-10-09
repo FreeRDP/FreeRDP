@@ -854,5 +854,119 @@ WINPR_API void winpr_RC4_Final(WINPR_RC4_CTX* ctx);
 }
 #endif
 
-#endif /* WINPR_CRYPTO_H */
+/**
+ * Generic Cipher API
+ */
 
+/* cipher operation types */
+#define WINPR_ENCRYPT				0
+#define WINPR_DECRYPT				1
+
+/* cipher types */
+#define WINPR_CIPHER_NONE			0
+#define WINPR_CIPHER_NULL			1
+#define WINPR_CIPHER_AES_128_ECB		2
+#define WINPR_CIPHER_AES_192_ECB		3
+#define WINPR_CIPHER_AES_256_ECB		4
+#define WINPR_CIPHER_AES_128_CBC		5
+#define WINPR_CIPHER_AES_192_CBC		6
+#define WINPR_CIPHER_AES_256_CBC		7
+#define WINPR_CIPHER_AES_128_CFB128		8
+#define WINPR_CIPHER_AES_192_CFB128		9
+#define WINPR_CIPHER_AES_256_CFB128		10
+#define WINPR_CIPHER_AES_128_CTR		11
+#define WINPR_CIPHER_AES_192_CTR		12
+#define WINPR_CIPHER_AES_256_CTR		13
+#define WINPR_CIPHER_AES_128_GCM		14
+#define WINPR_CIPHER_AES_192_GCM		15
+#define WINPR_CIPHER_AES_256_GCM		16
+#define WINPR_CIPHER_CAMELLIA_128_ECB		17
+#define WINPR_CIPHER_CAMELLIA_192_ECB		18
+#define WINPR_CIPHER_CAMELLIA_256_ECB		19
+#define WINPR_CIPHER_CAMELLIA_128_CBC		20
+#define WINPR_CIPHER_CAMELLIA_192_CBC		21
+#define WINPR_CIPHER_CAMELLIA_256_CBC		22
+#define WINPR_CIPHER_CAMELLIA_128_CFB128	23
+#define WINPR_CIPHER_CAMELLIA_192_CFB128	24
+#define WINPR_CIPHER_CAMELLIA_256_CFB128	25
+#define WINPR_CIPHER_CAMELLIA_128_CTR		26
+#define WINPR_CIPHER_CAMELLIA_192_CTR		27
+#define WINPR_CIPHER_CAMELLIA_256_CTR		28
+#define WINPR_CIPHER_CAMELLIA_128_GCM		29
+#define WINPR_CIPHER_CAMELLIA_192_GCM		30
+#define WINPR_CIPHER_CAMELLIA_256_GCM		31
+#define WINPR_CIPHER_DES_ECB			32
+#define WINPR_CIPHER_DES_CBC			33
+#define WINPR_CIPHER_DES_EDE_ECB		34
+#define WINPR_CIPHER_DES_EDE_CBC		35
+#define WINPR_CIPHER_DES_EDE3_ECB		36
+#define WINPR_CIPHER_DES_EDE3_CBC		37
+#define WINPR_CIPHER_BLOWFISH_ECB		38
+#define WINPR_CIPHER_BLOWFISH_CBC		39
+#define WINPR_CIPHER_BLOWFISH_CFB64		40
+#define WINPR_CIPHER_BLOWFISH_CTR		41
+#define WINPR_CIPHER_ARC4_128			42
+#define WINPR_CIPHER_AES_128_CCM		43
+#define WINPR_CIPHER_AES_192_CCM		44
+#define WINPR_CIPHER_AES_256_CCM		45
+#define WINPR_CIPHER_CAMELLIA_128_CCM		46
+#define WINPR_CIPHER_CAMELLIA_192_CCM		47
+#define WINPR_CIPHER_CAMELLIA_256_CCM		48
+
+struct _OPENSSL_CIPHER_CTX
+{
+	const void* cipher;
+	void* engine;
+	int encrypt;
+	int buf_len;
+	BYTE oiv[16];
+	BYTE iv[16];
+	BYTE buf[32];
+	int num;
+	void* app_data;
+	int key_len;
+	unsigned long flags;
+	void* cipher_data;
+	int final_used;
+	int block_mask;
+	BYTE final[32];
+	BYTE winpr_pad[32];
+};
+typedef struct _OPENSSL_CIPHER_CTX OPENSSL_CIPHER_CTX;
+
+struct _MBEDTLS_CIPHER_CTX
+{
+	const void* cipher_info;
+	int key_bitlen;
+	int operation;
+	void* add_padding;
+	int* get_padding;
+	BYTE unprocessed_data[16];
+	size_t unprocessed_len;
+	BYTE iv[16];
+	size_t iv_size;
+	void* cipher_ctx;
+	BYTE winpr_pad[32];
+};
+typedef struct _MBEDTLS_CIPHER_CTX MBEDTLS_CIPHER_CTX;
+
+union _WINPR_CIPHER_CTX
+{
+	OPENSSL_CIPHER_CTX openssl;
+	MBEDTLS_CIPHER_CTX mbedtls;
+};
+typedef union _WINPR_CIPHER_CTX WINPR_CIPHER_CTX;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+WINPR_API void winpr_Cipher_Init(WINPR_CIPHER_CTX* ctx, int cipher, int op, const BYTE* key, const BYTE* iv);
+WINPR_API int winpr_Cipher_Update(WINPR_CIPHER_CTX* ctx, const BYTE* input, size_t ilen, BYTE* output, size_t* olen);
+WINPR_API void winpr_Cipher_Final(WINPR_CIPHER_CTX* ctx, BYTE* output, size_t* olen);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* WINPR_CRYPTO_H */
