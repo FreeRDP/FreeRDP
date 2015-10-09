@@ -144,11 +144,6 @@
 #include <winpr/crypto.h>
 #include <winpr/collections.h>
 
-#ifdef WITH_OPENSSL
-#include <openssl/evp.h>
-#include <openssl/aes.h>
-#endif
-
 static wListDictionary* g_ProtectedMemoryBlocks = NULL;
 
 BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
@@ -165,6 +160,7 @@ BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 	if (!g_ProtectedMemoryBlocks)
 	{
 		g_ProtectedMemoryBlocks = ListDictionary_New(TRUE);
+
 		if (!g_ProtectedMemoryBlocks)
 			return FALSE;
 	}
@@ -181,10 +177,8 @@ BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 	winpr_RAND(pMemBlock->salt, 8);
 	winpr_RAND(randomKey, sizeof(randomKey));
 
-#ifdef WITH_OPENSSL
-	EVP_BytesToKey(EVP_aes_256_cbc(), EVP_sha1(), pMemBlock->salt,
-			randomKey, sizeof(randomKey), 4, pMemBlock->key, pMemBlock->iv);
-#endif
+	winpr_openssl_BytesToKey(WINPR_CIPHER_AES_256_CBC, WINPR_MD_SHA1,
+			pMemBlock->salt, randomKey, sizeof(randomKey), 4, pMemBlock->key, pMemBlock->iv);
 
 	SecureZeroMemory(randomKey, sizeof(randomKey));
 

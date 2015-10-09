@@ -166,7 +166,7 @@ void winpr_SHA1(const BYTE* input, size_t ilen, BYTE* output)
  * HMAC
  */
 
-#if defined(WITH_OPENSSL)
+#ifdef WITH_OPENSSL
 const EVP_MD* winpr_openssl_get_evp_md(int md)
 {
 	const EVP_MD* evp = NULL;
@@ -226,7 +226,9 @@ const EVP_MD* winpr_openssl_get_evp_md(int md)
 
 	return evp;
 }
-#elif defined(WITH_MBEDTLS)
+#endif
+
+#ifdef WITH_MBEDTLS
 mbedtls_md_type_t winpr_mbedtls_get_md_type(int md)
 {
 	mbedtls_md_type_t type = MBEDTLS_MD_NONE;
@@ -322,3 +324,49 @@ int winpr_HMAC(int md, const BYTE* key, size_t keylen, const BYTE* input, size_t
 	return 0;
 }
 
+/**
+ * Generic Digest API
+ */
+
+void winpr_Digest_Init(WINPR_DIGEST_CTX* ctx, int md)
+{
+#if defined(WITH_OPENSSL)
+	const EVP_MD* evp = winpr_openssl_get_evp_md(md);
+	EVP_MD_CTX_init((EVP_MD_CTX*) ctx);
+	EVP_DigestInit_ex((EVP_MD_CTX*) ctx, evp, NULL);
+#elif defined(WITH_MBEDTLS)
+	const mbedtls_md_info_t* md_info;
+	mbedtls_md_type_t md_type = winpr_mbedtls_get_md_type(md);
+	md_info = mbedtls_md_info_from_type(md_type);
+	mbedtls_md_init((mbedtls_md_context_t*) ctx);
+	mbedtls_md_setup((mbedtls_md_context_t*) ctx, md_info, 0);
+	mbedtls_md_starts((mbedtls_md_context_t*) ctx);
+#endif
+}
+
+void winpr_Digest_Update(WINPR_DIGEST_CTX* ctx, const BYTE* input, size_t ilen)
+{
+#if defined(WITH_OPENSSL)
+	EVP_DigestUpdate((EVP_MD_CTX*) ctx, input, ilen);
+#elif defined(WITH_MBEDTLS)
+	mbedtls_md_update((mbedtls_md_context_t*) ctx, input, ilen);
+#endif
+}
+
+void winpr_Digest_Final(WINPR_DIGEST_CTX* ctx, BYTE* output)
+{
+#if defined(WITH_OPENSSL)
+	EVP_DigestFinal_ex((EVP_MD_CTX*) ctx, output, NULL);
+#elif defined(WITH_MBEDTLS)
+	mbedtls_md_finish((mbedtls_md_context_t*) ctx, output);
+	mbedtls_md_free((mbedtls_md_context_t*) ctx);
+#endif
+}
+
+void winpr_Digest(int md, const BYTE* input, size_t ilen, BYTE* output)
+{
+	WINPR_DIGEST_CTX ctx;
+	winpr_Digest_Init(&ctx, md);
+	winpr_Digest_Update(&ctx, input, ilen);
+	winpr_Digest_Final(&ctx, output);
+}

@@ -32,6 +32,7 @@
 #endif
 
 #ifdef WITH_MBEDTLS
+#include <mbedtls/md.h>
 #include <mbedtls/aes.h>
 #include <mbedtls/arc4.h>
 #include <mbedtls/des.h>
@@ -74,6 +75,14 @@ void winpr_RC4_Final(WINPR_RC4_CTX* ctx)
 /**
  * Generic Cipher API
  */
+
+#ifdef WITH_OPENSSL
+extern const EVP_MD* winpr_openssl_get_evp_md(int md);
+#endif
+
+#ifdef WITH_MBEDTLS
+extern mbedtls_md_type_t winpr_mbedtls_get_md_type(int md);
+#endif
 
 #if defined(WITH_OPENSSL)
 const EVP_CIPHER* winpr_openssl_get_evp_cipher(int cipher)
@@ -505,4 +514,132 @@ void winpr_Cipher_Final(WINPR_CIPHER_CTX* ctx, BYTE* output, size_t* olen)
 	mbedtls_cipher_finish((mbedtls_cipher_context_t*) ctx, output, olen);
 	mbedtls_cipher_free((mbedtls_cipher_context_t*) ctx);
 #endif
+}
+
+/**
+ * Key Generation
+ */
+
+int winpr_openssl_BytesToKey(int cipher, int md, const BYTE* salt, const BYTE* data, int datal, int count, BYTE* key, BYTE* iv)
+{
+	/**
+	 * Key and IV generation compatible with OpenSSL EVP_BytesToKey():
+	 * https://www.openssl.org/docs/manmaster/crypto/EVP_BytesToKey.html
+	 */
+
+#if defined(WITH_OPENSSL)
+	const EVP_MD* evp_md;
+	const EVP_CIPHER* evp_cipher;
+	evp_md = winpr_openssl_get_evp_md(md);
+	evp_cipher = winpr_openssl_get_evp_cipher(cipher);
+	return EVP_BytesToKey(evp_cipher, evp_md, salt, data, datal, count, key, iv);
+#elif defined(WITH_MBEDTLS)
+	int rv = 0;
+	BYTE md_buf[64];
+	int niv, nkey, addmd = 0;
+	unsigned int mds = 0, i;
+	mbedtls_md_context_t ctx;
+	const mbedtls_md_info_t* md_info;
+	mbedtls_cipher_type_t cipher_type;
+	const mbedtls_cipher_info_t* cipher_info;
+
+	mbedtls_md_type_t md_type = winpr_mbedtls_get_md_type(md);
+	md_info = mbedtls_md_info_from_type(md_type);
+
+	cipher_type = winpr_mbedtls_get_cipher_type(cipher);
+	cipher_info = mbedtls_cipher_info_from_type(cipher_type);
+
+	nkey = cipher_info->key_bitlen / 8;
+	niv = cipher_info->iv_size;
+
+	if ((nkey > 64) || (niv > 64))
+		return 0;
+
+	if (!data)
+		return nkey;
+
+	mbedtls_md_init(&ctx);
+
+	while (1)
+	{
+		if (mbedtls_md_setup(&ctx, md_info, 0) != 0)
+			return 0;
+
+		if (mbedtls_md_starts(&ctx) != 0)
+			return 0;
+
+		if (addmd++)
+		{
+			if (mbedtls_md_update(&ctx, &(md_buf[0]), mds) != 0)
+				goto err;
+		}
+
+		if (mbedtls_md_update(&ctx, data, datal) != 0)
+			goto err;
+
+		if (salt)
+		{
+			if (mbedtls_md_update(&ctx, salt, 8) != 0)
+				goto err;
+		}
+
+		if (mbedtls_md_finish(&ctx, &(md_buf[0])) != 0)
+			goto err;
+
+		mds = mbedtls_md_get_size(md_info);
+
+		for (i = 1; i < (unsigned int) count; i++)
+		{
+			if (mbedtls_md_starts(&ctx) != 0)
+				goto err;
+			if (mbedtls_md_update(&ctx, &(md_buf[0]), mds) != 0)
+				goto err;
+			if (mbedtls_md_finish(&ctx, &(md_buf[0])) != 0)
+				goto err;
+		}
+
+		i = 0;
+
+		if (nkey)
+		{
+			while (1)
+			{
+				if (nkey == 0)
+					break;
+				if (i == mds)
+					break;
+				if (key)
+					*(key++) = md_buf[i];
+				nkey--;
+				i++;
+			}
+		}
+
+		if (niv && (i != mds))
+		{
+			while (1)
+			{
+				if (niv == 0)
+					break;
+				if (i == mds)
+					break;
+				if (iv)
+					*(iv++) = md_buf[i];
+				niv--;
+				i++;
+			}
+		}
+
+		if ((nkey == 0) && (niv == 0))
+			break;
+	}
+
+	rv = cipher_info->key_bitlen / 8;
+err:
+	mbedtls_md_free(&ctx);
+	SecureZeroMemory(&(md_buf[0]), EVP_MAX_MD_SIZE);
+	return rv;
+#endif
+
+	return 0;
 }

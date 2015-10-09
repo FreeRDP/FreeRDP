@@ -803,6 +803,51 @@ WINPR_API int winpr_HMAC(int md, const BYTE* key, size_t keylen, const BYTE* inp
 #endif
 
 /**
+ * Generic Digest API
+ */
+
+struct _OPENSSL_DIGEST_CTX
+{
+	const void* digest;
+	void* engine;
+	unsigned long flags;
+	void* md_data;
+	void* pctx;
+	void* update;
+	BYTE winpr_pad[8];
+};
+typedef struct _OPENSSL_DIGEST_CTX OPENSSL_DIGEST_CTX;
+
+struct _MBEDTLS_DIGEST_CTX
+{
+	const void* md_info;
+	void* md_ctx;
+	void* hmac_ctx;
+	BYTE winpr_pad[8];
+};
+typedef struct _MBEDTLS_DIGEST_CTX MBEDTLS_DIGEST_CTX;
+
+union _WINPR_DIGEST_CTX
+{
+	OPENSSL_DIGEST_CTX openssl;
+	MBEDTLS_DIGEST_CTX mbedtls;
+};
+typedef union _WINPR_DIGEST_CTX WINPR_DIGEST_CTX;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+WINPR_API void winpr_Digest_Init(WINPR_DIGEST_CTX* ctx, int md);
+WINPR_API void winpr_Digest_Update(WINPR_DIGEST_CTX* ctx, const BYTE* input, size_t ilen);
+WINPR_API void winpr_Digest_Final(WINPR_DIGEST_CTX* ctx, BYTE* output);
+WINPR_API void winpr_Digest(int md, const BYTE* input, size_t ilen, BYTE* output);
+
+#ifdef __cplusplus
+}
+#endif
+
+/**
  * Random Number Generation
  */
 
@@ -964,6 +1009,20 @@ extern "C" {
 WINPR_API void winpr_Cipher_Init(WINPR_CIPHER_CTX* ctx, int cipher, int op, const BYTE* key, const BYTE* iv);
 WINPR_API int winpr_Cipher_Update(WINPR_CIPHER_CTX* ctx, const BYTE* input, size_t ilen, BYTE* output, size_t* olen);
 WINPR_API void winpr_Cipher_Final(WINPR_CIPHER_CTX* ctx, BYTE* output, size_t* olen);
+
+#ifdef __cplusplus
+}
+#endif
+
+/**
+ * Key Generation
+ */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int winpr_openssl_BytesToKey(int cipher, int md, const BYTE* salt, const BYTE* data, int datal, int count, BYTE* key, BYTE* iv);
 
 #ifdef __cplusplus
 }
