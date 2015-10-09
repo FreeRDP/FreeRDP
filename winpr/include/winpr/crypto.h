@@ -856,6 +856,7 @@ extern "C" {
 #endif
 
 WINPR_API int winpr_RAND(BYTE* output, size_t len);
+WINPR_API int winpr_RAND_pseudo(BYTE* output, size_t len);
 
 #ifdef __cplusplus
 }
@@ -1022,7 +1023,7 @@ WINPR_API void winpr_Cipher_Final(WINPR_CIPHER_CTX* ctx, BYTE* output, size_t* o
 extern "C" {
 #endif
 
-int winpr_openssl_BytesToKey(int cipher, int md, const BYTE* salt, const BYTE* data, int datal, int count, BYTE* key, BYTE* iv);
+WINPR_API int winpr_openssl_BytesToKey(int cipher, int md, const BYTE* salt, const BYTE* data, int datal, int count, BYTE* key, BYTE* iv);
 
 #ifdef __cplusplus
 }

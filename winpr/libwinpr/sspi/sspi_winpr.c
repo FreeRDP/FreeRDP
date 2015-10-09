@@ -21,17 +21,12 @@
 #include "config.h"
 #endif
 
-#include <stdlib.h>
-
 #include <winpr/windows.h>
 
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
 #include <winpr/ssl.h>
 #include <winpr/print.h>
-
-#include <openssl/ssl.h>
-#include <openssl/err.h>
 
 #include "sspi.h"
 

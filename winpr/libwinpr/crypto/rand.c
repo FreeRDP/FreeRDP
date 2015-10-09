@@ -35,12 +35,23 @@
 #include <mbedtls/hmac_drbg.h>
 #endif
 
-#undef WITH_OPENSSL
-
 int winpr_RAND(BYTE* output, size_t len)
 {
 #if defined(WITH_OPENSSL)
 	RAND_bytes(output, len);
+#elif defined(WITH_MBEDTLS) && defined(MBEDTLS_HAVEGE_C)
+	mbedtls_havege_state hs;
+	mbedtls_havege_init(&hs);
+	mbedtls_havege_random(&hs, output, len);
+	mbedtls_havege_free(&hs);
+#endif
+	return 0;
+}
+
+int winpr_RAND_pseudo(BYTE* output, size_t len)
+{
+#if defined(WITH_OPENSSL)
+	RAND_pseudo_bytes(output, len);
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_HAVEGE_C)
 	mbedtls_havege_state hs;
 	mbedtls_havege_init(&hs);

@@ -570,7 +570,7 @@ int winpr_openssl_BytesToKey(int cipher, int md, const BYTE* salt, const BYTE* d
 
 		if (addmd++)
 		{
-			if (mbedtls_md_update(&ctx, &(md_buf[0]), mds) != 0)
+			if (mbedtls_md_update(&ctx, md_buf, mds) != 0)
 				goto err;
 		}
 
@@ -583,7 +583,7 @@ int winpr_openssl_BytesToKey(int cipher, int md, const BYTE* salt, const BYTE* d
 				goto err;
 		}
 
-		if (mbedtls_md_finish(&ctx, &(md_buf[0])) != 0)
+		if (mbedtls_md_finish(&ctx, md_buf) != 0)
 			goto err;
 
 		mds = mbedtls_md_get_size(md_info);
@@ -592,9 +592,9 @@ int winpr_openssl_BytesToKey(int cipher, int md, const BYTE* salt, const BYTE* d
 		{
 			if (mbedtls_md_starts(&ctx) != 0)
 				goto err;
-			if (mbedtls_md_update(&ctx, &(md_buf[0]), mds) != 0)
+			if (mbedtls_md_update(&ctx, md_buf, mds) != 0)
 				goto err;
-			if (mbedtls_md_finish(&ctx, &(md_buf[0])) != 0)
+			if (mbedtls_md_finish(&ctx, md_buf) != 0)
 				goto err;
 		}
 
@@ -637,7 +637,7 @@ int winpr_openssl_BytesToKey(int cipher, int md, const BYTE* salt, const BYTE* d
 	rv = cipher_info->key_bitlen / 8;
 err:
 	mbedtls_md_free(&ctx);
-	SecureZeroMemory(&(md_buf[0]), EVP_MAX_MD_SIZE);
+	SecureZeroMemory(md_buf, 64);
 	return rv;
 #endif
 
