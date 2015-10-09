@@ -298,7 +298,7 @@ int ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 						 (LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2,
 						 (BYTE*) hash);
 	}
-	else if (credentials->identity.PasswordLength > 0)
+	else if (credentials->identity.Password)
 	{
 		NTOWFv2W((LPWSTR) credentials->identity.Password, credentials->identity.PasswordLength * 2,
 				 (LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
