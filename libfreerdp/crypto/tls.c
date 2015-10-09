@@ -48,6 +48,7 @@
 struct _BIO_RDP_TLS
 {
 	SSL* ssl;
+	CRITICAL_SECTION lock;
 };
 typedef struct _BIO_RDP_TLS BIO_RDP_TLS;
 
@@ -58,6 +59,7 @@ long bio_rdp_tls_callback(BIO* bio, int mode, const char* argp, int argi, long a
 
 static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 {
+	int error;
 	int status;
 	BIO_RDP_TLS* tls = (BIO_RDP_TLS*) bio->ptr;
 
@@ -65,12 +67,17 @@ static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 		return 0;
 
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_READ | BIO_FLAGS_IO_SPECIAL);
+	
+	EnterCriticalSection(&tls->lock);
 
 	status = SSL_write(tls->ssl, buf, size);
+	error = SSL_get_error(tls->ssl, status);
+	
+	LeaveCriticalSection(&tls->lock);
 
 	if (status <= 0)
 	{
-		switch (SSL_get_error(tls->ssl, status))
+		switch (error)
 		{
 			case SSL_ERROR_NONE:
 				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
@@ -109,6 +116,7 @@ static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 
 static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 {
+	int error;
 	int status;
 	BIO_RDP_TLS* tls = (BIO_RDP_TLS*) bio->ptr;
 
@@ -117,11 +125,16 @@ static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_READ | BIO_FLAGS_IO_SPECIAL);
 
+	EnterCriticalSection(&tls->lock);
+	
 	status = SSL_read(tls->ssl, buf, size);
+	error = SSL_get_error(tls->ssl, status);
 
+	LeaveCriticalSection(&tls->lock);
+	
 	if (status <= 0)
 	{
-		switch (SSL_get_error(tls->ssl, status))
+		switch (error)
 		{
 			case SSL_ERROR_NONE:
 				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
@@ -159,11 +172,6 @@ static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 				break;
 
 			case SSL_ERROR_SYSCALL:
-                if (WSAGetLastError() == WSAEWOULDBLOCK)
-                {
-                    BIO_set_flags(bio, BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY);
-                    break;
-                }
 				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 				break;
 		}
@@ -386,6 +394,8 @@ static int bio_rdp_tls_new(BIO* bio)
 		return 0;
 
 	bio->ptr = (void*) tls;
+	
+	InitializeCriticalSectionAndSpinCount(&tls->lock, 4000);
 
 	return 1;
 }
@@ -414,6 +424,8 @@ static int bio_rdp_tls_free(BIO* bio)
 		bio->flags = 0;
 	}
 
+	DeleteCriticalSection(&tls->lock);
+	
 	free(tls);
 
 	return 1;
@@ -625,17 +637,23 @@ BOOL tls_prepare(rdpTls* tls, BIO* underlying, const SSL_METHOD* method, int opt
 int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 {
 	CryptoCert cert;
-	int verify_status, status;
+	int verify_status;
 
 	do
 	{
 #ifdef HAVE_POLL_H
-		struct pollfd pollfds;
-#else
-		struct timeval tv;
-		fd_set rset;
-#endif
 		int fd;
+		int status;
+		struct pollfd pollfds;
+#elif !defined(_WIN32)
+		int fd;
+		int status;
+		fd_set rset;
+		struct timeval tv;
+#else
+		HANDLE event;
+		DWORD status;
+#endif
 
 		status = BIO_do_handshake(tls->bio);
 
@@ -645,6 +663,7 @@ int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 		if (!BIO_should_retry(tls->bio))
 			return -1;
 
+#ifndef _WIN32
 		/* we select() only for read even if we should test both read and write
 		 * depending of what have blocked */
 		fd = BIO_get_fd(tls->bio, NULL);
@@ -654,6 +673,15 @@ int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 			WLog_ERR(TAG, "unable to retrieve BIO fd");
 			return -1;
 		}
+#else
+		BIO_get_event(tls->bio, &event);
+
+		if (!event)
+		{
+			WLog_ERR(TAG, "unable to retrieve BIO event");
+			return -1;
+		}
+#endif
 
 #ifdef HAVE_POLL_H
 		pollfds.fd = fd;
@@ -665,23 +693,35 @@ int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 			status = poll(&pollfds, 1, 10 * 1000);
 		}
 		while ((status < 0) && (errno == EINTR));
-#else
+#elif !defined(_WIN32)
 		FD_ZERO(&rset);
 		FD_SET(fd, &rset);
 		tv.tv_sec = 0;
 		tv.tv_usec = 10 * 1000; /* 10ms */
 
 		status = _select(fd + 1, &rset, NULL, NULL, &tv);
+#else
+		status = WaitForSingleObject(event, 10);
 #endif
+
+#ifndef _WIN32
 		if (status < 0)
 		{
 			WLog_ERR(TAG, "error during select()");
 			return -1;
 		}
+#else
+		if ((status != WAIT_OBJECT_0) && (status != WAIT_TIMEOUT))
+		{
+			WLog_ERR(TAG, "error during WaitForSingleObject(): 0x%04X", status);
+			return -1;
+		}
+#endif
 	}
 	while (TRUE);
 
 	cert = tls_get_certificate(tls, clientMode);
+
 	if (!cert)
 	{
 		WLog_ERR(TAG, "tls_get_certificate failed to return the server certificate.");
@@ -689,6 +729,7 @@ int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 	}
 
 	tls->Bindings = tls_get_channel_bindings(cert->px509);
+
 	if (!tls->Bindings)
 	{
 		WLog_ERR(TAG, "unable to retrieve bindings");
@@ -703,10 +744,9 @@ int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 		goto out;
 	}
 
-	/* Note: server-side NLA needs public keys (keys from us, the server) but no
-	 * 		certificate verify
-	 */
+	/* server-side NLA needs public keys (keys from us, the server) but no certificate verify */
 	verify_status = 1;
+
 	if (clientMode)
 	{
 		verify_status = tls_verify_certificate(tls, cert, tls->hostname, tls->port);

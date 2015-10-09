@@ -102,7 +102,7 @@ static INLINE int winpr_Handle_getFd(HANDLE handle)
 	if (!winpr_Handle_GetInfo(handle, &type, &hdl))
 		return -1;
 
-	if (!hdl || !hdl->ops->GetFd)
+	if (!hdl || !hdl->ops || !hdl->ops->GetFd)
 		return -1;
 
 	return hdl->ops->GetFd(handle);
@@ -116,7 +116,7 @@ static INLINE DWORD winpr_Handle_cleanup(HANDLE handle)
 	if (!winpr_Handle_GetInfo(handle, &type, &hdl))
 		return WAIT_FAILED;
 
-	if (!hdl)
+	if (!hdl || !hdl->ops)
 		return WAIT_FAILED;
 
 	/* If there is no cleanup function, assume all ok. */

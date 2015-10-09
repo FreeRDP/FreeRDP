@@ -54,19 +54,21 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* 
 
 	if (status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "QuerySecurityPackageInfo status: 0x%08X", status);
+		WLog_ERR(TAG, "QuerySecurityPackageInfo status %s [%08X]",
+			 GetSecurityStatusString(status), status);
 		return FALSE;
 	}
 
 	ntlm->cbMaxToken = ntlm->pPackageInfo->cbMaxToken;
 
 	status = ntlm->table->AcquireCredentialsHandle(NULL, NTLMSP_NAME,
-			SECPKG_CRED_OUTBOUND, NULL, &ntlm->identity, NULL, NULL,
-			&ntlm->credentials, &ntlm->expiration);
+						       SECPKG_CRED_OUTBOUND, NULL, &ntlm->identity, NULL, NULL,
+						       &ntlm->credentials, &ntlm->expiration);
 
 	if (status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "AcquireCredentialsHandle status: 0x%08X", status);
+		WLog_ERR(TAG, "AcquireCredentialsHandle status %s [%08X]",
+			 GetSecurityStatusString(status), status);
 		return FALSE;
 	}
 
@@ -86,11 +88,11 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* 
 	else
 	{
 		/**
-		 * flags for RPC authentication:
-		 * RPC_C_AUTHN_LEVEL_PKT_INTEGRITY:
-		 * ISC_REQ_USE_DCE_STYLE | ISC_REQ_DELEGATE | ISC_REQ_MUTUAL_AUTH |
-		 * ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT
-		 */
+	 * flags for RPC authentication:
+	 * RPC_C_AUTHN_LEVEL_PKT_INTEGRITY:
+	 * ISC_REQ_USE_DCE_STYLE | ISC_REQ_DELEGATE | ISC_REQ_MUTUAL_AUTH |
+	 * ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT
+	 */
 
 		ntlm->fContextReq |= ISC_REQ_USE_DCE_STYLE;
 		ntlm->fContextReq |= ISC_REQ_DELEGATE | ISC_REQ_MUTUAL_AUTH;
@@ -223,21 +225,38 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 	}
 
 	status = ntlm->table->InitializeSecurityContext(&ntlm->credentials,
-			(ntlm->haveContext) ? &ntlm->context : NULL,
-			(ntlm->ServicePrincipalName) ? ntlm->ServicePrincipalName : NULL,
-			ntlm->fContextReq, 0, SECURITY_NATIVE_DREP,
-			(ntlm->haveInputBuffer) ? &ntlm->inputBufferDesc : NULL,
-			0, &ntlm->context, &ntlm->outputBufferDesc,
-			&ntlm->pfContextAttr, &ntlm->expiration);
+							(ntlm->haveContext) ? &ntlm->context : NULL,
+							(ntlm->ServicePrincipalName) ? ntlm->ServicePrincipalName : NULL,
+							ntlm->fContextReq, 0, SECURITY_NATIVE_DREP,
+							(ntlm->haveInputBuffer) ? &ntlm->inputBufferDesc : NULL,
+							0, &ntlm->context, &ntlm->outputBufferDesc,
+							&ntlm->pfContextAttr, &ntlm->expiration);
+
+	WLog_VRB(TAG, "InitializeSecurityContext status %s [%08X]",
+		 GetSecurityStatusString(status), status);
 
 	if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED) || (status == SEC_E_OK))
 	{
-		if (ntlm->table->CompleteAuthToken)
-			ntlm->table->CompleteAuthToken(&ntlm->context, &ntlm->outputBufferDesc);
-
-		if (ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes) != SEC_E_OK)
+		if ((status != SEC_E_OK) && ntlm->table->CompleteAuthToken)
 		{
-			WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure");
+			SECURITY_STATUS cStatus;
+			
+			cStatus = ntlm->table->CompleteAuthToken(&ntlm->context, &ntlm->outputBufferDesc);
+
+			if (cStatus != SEC_E_OK)
+			{
+				WLog_WARN(TAG, "CompleteAuthToken status  %s [%08X]",
+					GetSecurityStatusString(cStatus), cStatus);
+				return FALSE;
+			}
+		}
+
+		status = ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes);
+
+		if (status != SEC_E_OK)
+		{
+			WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure %s [%08X]",
+				 GetSecurityStatusString(status), status);
 			return FALSE;
 		}
 
@@ -275,9 +294,26 @@ void ntlm_client_uninit(rdpNtlm* ntlm)
 
 	if (ntlm->table)
 	{
-		ntlm->table->FreeCredentialsHandle(&ntlm->credentials);
-		ntlm->table->FreeContextBuffer(ntlm->pPackageInfo);
-		ntlm->table->DeleteSecurityContext(&ntlm->context);
+		SECURITY_STATUS status;
+
+		status = ntlm->table->FreeCredentialsHandle(&ntlm->credentials);
+		if (status != SEC_E_OK)
+		{
+			WLog_WARN(TAG, "FreeCredentialsHandle status %s [%08X]",
+				  GetSecurityStatusString(status), status);
+		}
+		status = ntlm->table->FreeContextBuffer(ntlm->pPackageInfo);
+		if (status != SEC_E_OK)
+		{
+			WLog_WARN(TAG, "FreeContextBuffer status %s [%08X]",
+				  GetSecurityStatusString(status), status);
+		}
+		status = ntlm->table->DeleteSecurityContext(&ntlm->context);
+		if (status != SEC_E_OK)
+		{
+			WLog_WARN(TAG, "DeleteSecurityContext status %s [%08X]",
+				  GetSecurityStatusString(status), status);
+		}
 		ntlm->table = NULL;
 	}
 }

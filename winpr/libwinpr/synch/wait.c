@@ -479,9 +479,9 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 			signal_set = pollfds[index].revents & pollfds[index].events;
 #else
 			if (Object->Mode & WINPR_FD_READ)
-				signal_set = FD_ISSET(fd, &rfds);
+				signal_set = FD_ISSET(fd, &rfds) ? 1 : 0;
 			if (Object->Mode & WINPR_FD_WRITE)
-				signal_set = FD_ISSET(fd, &wfds);
+				signal_set |= FD_ISSET(fd, &wfds) ? 1 : 0;
 #endif
 			if (signal_set)
 			{

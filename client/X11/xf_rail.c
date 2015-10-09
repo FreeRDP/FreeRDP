@@ -222,10 +222,10 @@ void xf_rail_invalidate_region(xfContext* xfc, REGION16* invalidRegion)
 
 		if (appWindow)
 		{
-			windowRect.left = appWindow->x;
-			windowRect.top = appWindow->y;
-			windowRect.right = appWindow->x + appWindow->width;
-			windowRect.bottom = appWindow->y + appWindow->height;
+			windowRect.left = MAX(appWindow->x, 0);
+			windowRect.top = MAX(appWindow->y, 0);
+			windowRect.right = MAX(appWindow->x + appWindow->width, 0);
+			windowRect.bottom = MAX(appWindow->y + appWindow->height, 0);
 
 			region16_clear(&windowInvalidRegion);
 			region16_intersect_rect(&windowInvalidRegion, invalidRegion, &windowRect);
@@ -497,11 +497,12 @@ static BOOL xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 				appWindow->height == appWindow->windowHeight)
 		{
 			xf_UpdateWindowArea(xfc, appWindow, 0, 0, appWindow->windowWidth, appWindow->windowHeight);
-			return TRUE;
 		}
-
-		xf_MoveWindow(xfc, appWindow, appWindow->windowOffsetX - appWindow->localWindowOffsetCorrX, appWindow->windowOffsetY - appWindow->localWindowOffsetCorrY,
+		else
+		{
+			xf_MoveWindow(xfc, appWindow, appWindow->windowOffsetX - appWindow->localWindowOffsetCorrX, appWindow->windowOffsetY - appWindow->localWindowOffsetCorrY,
 				appWindow->windowWidth, appWindow->windowHeight);
+		}
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_WND_RECTS)

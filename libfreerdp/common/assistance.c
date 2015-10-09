@@ -1114,7 +1114,10 @@ int freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name)
 	buffer = (BYTE*) malloc(fileSize + 2);
 
 	if (!buffer)
+	{
+		fclose(fp);
 		return -1;
+	}
 
 	readSize = fread(buffer, fileSize, 1, fp);
 

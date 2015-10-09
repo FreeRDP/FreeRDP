@@ -359,8 +359,11 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		}
 	}
 
-	if (!Stream_SafeSeek(s, 8)) /* pad (8 bytes) */
-		return -1;
+	if (Stream_GetRemainingLength(s) >= 8)
+	{
+		/* some versions of windows don't included this padding before closing the connection */
+		Stream_Seek(s, 8); /* pad (8 bytes) */
+	}
 
 	if (redirection->flags & LB_NOREDIRECT)
 		return 0;
@@ -387,8 +390,11 @@ int rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, wStream* s)
 	if (status < 0)
 		return status;
 
-	if (!Stream_SafeSeek(s, 1)) /* pad2Octets (1 byte) */
-		return -1;
+	if (Stream_GetRemainingLength(s) >= 1)
+	{
+		/* this field is optional, and its absence is not an error */
+		Stream_Seek(s, 1); /* pad2Octets (1 byte) */
+	}
 
 	return status;
 }

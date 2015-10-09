@@ -171,8 +171,13 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 		/* FIXME: these file descriptors do not work on Windows */
 
 		listener->sockfds[listener->num_sockfds] = sockfd;
-		listener->events[listener->num_sockfds] =
-			CreateFileDescriptorEvent(NULL, FALSE, FALSE, sockfd, WINPR_FD_READ);
+		listener->events[listener->num_sockfds] = WSACreateEvent();
+		if (!listener->events[listener->num_sockfds])
+		{
+			listener->num_sockfds = 0;
+			break;
+		}
+		WSAEventSelect(sockfd, listener->events[listener->num_sockfds], FD_READ | FD_ACCEPT | FD_CLOSE);
 		listener->num_sockfds++;
 
 		WLog_INFO(TAG, "Listening on %s:%s", addr, servname);
@@ -336,7 +341,7 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 	void* sin_addr;
 	int peer_sockfd;
 	freerdp_peer* client = NULL;
-	socklen_t peer_addr_size;
+	int peer_addr_size;
 	struct sockaddr_storage peer_addr;
 	rdpListener* listener = (rdpListener*) instance->listener;
 	static const BYTE localhost6_bytes[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 };
@@ -347,8 +352,10 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 
 	for (i = 0; i < listener->num_sockfds; i++)
 	{
+		WSAResetEvent(listener->events[i]);
+
 		peer_addr_size = sizeof(peer_addr);
-		peer_sockfd = accept(listener->sockfds[i], (struct sockaddr*) &peer_addr, &peer_addr_size);
+		peer_sockfd = _accept(listener->sockfds[i], (struct sockaddr*) &peer_addr, &peer_addr_size);
 		peer_accepted = FALSE;
 
 		if (peer_sockfd == -1)

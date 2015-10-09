@@ -168,7 +168,7 @@ char* FindApplicationPath(char* application)
 	nSize = GetEnvironmentVariableA("PATH", NULL, 0);
 
 	if (!nSize)
-		return application;
+		return _strdup(application);
 
 	lpSystemPath = (LPSTR) malloc(nSize);
 	if (!lpSystemPath)
@@ -288,16 +288,34 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 		sigfillset(&set);
 		pthread_sigmask(SIG_UNBLOCK, &set, NULL);
 
+		if (lpStartupInfo)
+		{
+			int handle_fd;
+
+			handle_fd = winpr_Handle_getFd(lpStartupInfo->hStdOutput);
+			if (handle_fd != -1)
+				dup2(handle_fd, STDOUT_FILENO);
+
+			handle_fd = winpr_Handle_getFd(lpStartupInfo->hStdError);
+			if (handle_fd != -1)
+				dup2(handle_fd, STDERR_FILENO);
+
+			handle_fd = winpr_Handle_getFd(lpStartupInfo->hStdInput);
+			if (handle_fd != -1)
+				dup2(handle_fd, STDIN_FILENO);
+		}
+
+
 #ifdef __sun
-	closefrom(3);
+		closefrom(3);
 #else
 #ifdef F_MAXFD // on some BSD derivates
-	maxfd = fcntl(0, F_MAXFD);
+		maxfd = fcntl(0, F_MAXFD);
 #else
-	maxfd = sysconf(_SC_OPEN_MAX);
+		maxfd = sysconf(_SC_OPEN_MAX);
 #endif
-	for(fd=3; fd<maxfd; fd++)
-		close(fd);
+		for(fd=3; fd<maxfd; fd++)
+			close(fd);
 #endif // __sun
 
 		if (token)

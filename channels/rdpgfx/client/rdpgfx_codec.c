@@ -38,52 +38,12 @@
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_decode_uncompressed(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
-{
-	return CHANNEL_RC_OK;
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-UINT rdpgfx_decode_remotefx(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
-{
-	return CHANNEL_RC_OK;
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-UINT rdpgfx_decode_clear(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
-{
-	return CHANNEL_RC_OK;
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-UINT rdpgfx_decode_planar(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
-{
-	return CHANNEL_RC_OK;
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H264_METABLOCK* meta)
+static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H264_METABLOCK* meta)
 {
 	UINT32 index;
 	RDPGFX_RECT16* regionRect;
 	RDPGFX_H264_QUANT_QUALITY* quantQualityVal;
-	UINT error;
+	UINT error = ERROR_INVALID_DATA;
 
 	meta->regionRects = NULL;
 	meta->quantQualityVals = NULL;
@@ -91,7 +51,7 @@ UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H264_META
 	if (Stream_GetRemainingLength(s) < 4)
 	{
 		WLog_ERR(TAG, "not enough data!");
-		return ERROR_INVALID_DATA;
+		goto error_out;
 	}
 
 	Stream_Read_UINT32(s, meta->numRegionRects); /* numRegionRects (4 bytes) */
@@ -99,7 +59,7 @@ UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H264_META
 	if (Stream_GetRemainingLength(s) < (meta->numRegionRects * 8))
 	{
 		WLog_ERR(TAG, "not enough data!");
-		return ERROR_INVALID_DATA;
+		goto error_out;
 	}
 
 	meta->regionRects = (RDPGFX_RECT16*) malloc(meta->numRegionRects * sizeof(RDPGFX_RECT16));
@@ -107,7 +67,8 @@ UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H264_META
 	if (!meta->regionRects)
 	{
 		WLog_ERR(TAG, "malloc failed!");
-		return CHANNEL_RC_NO_MEMORY;
+		error = CHANNEL_RC_NO_MEMORY;
+		goto error_out;
 	}
 
 	meta->quantQualityVals = (RDPGFX_H264_QUANT_QUALITY*) malloc(meta->numRegionRects * sizeof(RDPGFX_H264_QUANT_QUALITY));
@@ -136,7 +97,8 @@ UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H264_META
 	if (Stream_GetRemainingLength(s) < (meta->numRegionRects * 2))
 	{
 		WLog_ERR(TAG, "not enough data!");
-		return ERROR_INVALID_DATA;
+		error = ERROR_INVALID_DATA;
+		goto error_out;
 	}
 
 	for (index = 0; index < meta->numRegionRects; index++)
@@ -166,7 +128,7 @@ error_out:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_decode_h264(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
+static UINT rdpgfx_decode_h264(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	UINT error;
 	wStream* s;
@@ -212,65 +174,13 @@ UINT rdpgfx_decode_h264(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_decode_alpha(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
-{
-	return CHANNEL_RC_OK;
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-UINT rdpgfx_decode_progressive(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
-{
-	return CHANNEL_RC_OK;
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
 UINT rdpgfx_decode(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	UINT error = CHANNEL_RC_OK;
+	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
 
 	switch (cmd->codecId)
 	{
-		case RDPGFX_CODECID_UNCOMPRESSED:
-			if ((error = rdpgfx_decode_uncompressed(gfx, cmd)))
-			{
-				WLog_ERR(TAG, "rdpgfx_decode_uncompressed failed with error %lu", error);
-				return error;
-			}
-			break;
-
-		case RDPGFX_CODECID_CAVIDEO:
-			if ((error = rdpgfx_decode_remotefx(gfx, cmd)))
-			{
-				WLog_ERR(TAG, "rdpgfx_decode_remotefx failed with error %lu", error);
-				return error;
-			}
-			break;
-
-		case RDPGFX_CODECID_CLEARCODEC:
-			if ((error = rdpgfx_decode_clear(gfx, cmd)))
-			{
-				WLog_ERR(TAG, "rdpgfx_decode_clear failed with error %lu", error);
-				return error;
-			}
-
-			break;
-
-		case RDPGFX_CODECID_PLANAR:
-			if ((error = rdpgfx_decode_planar(gfx, cmd)))
-			{
-				WLog_ERR(TAG, "rdpgfx_decode_planar failed with error %lu", error);
-				return error;
-			}
-			break;
-
 		case RDPGFX_CODECID_H264:
 			if ((error = rdpgfx_decode_h264(gfx, cmd)))
 			{
@@ -279,23 +189,13 @@ UINT rdpgfx_decode(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 			}
 			break;
 
-		case RDPGFX_CODECID_ALPHA:
-			if ((error = rdpgfx_decode_alpha(gfx, cmd)))
+		default:
+			if (context)
 			{
-				WLog_ERR(TAG, "rdpgfx_decode_alpha failed with error %lu", error);
-				return error;
+				IFCALLRET(context->SurfaceCommand, error, context, cmd);
+				if (error)
+					WLog_ERR(TAG, "context->SurfaceCommand failed with error %lu", error);
 			}
-			break;
-
-		case RDPGFX_CODECID_CAPROGRESSIVE:
-			if ((error = rdpgfx_decode_progressive(gfx, cmd)))
-			{
-				WLog_ERR(TAG, "rdpgfx_decode_progressive failed with error %lu", error);
-				return error;
-			}
-			break;
-
-		case RDPGFX_CODECID_CAPROGRESSIVE_V2:
 			break;
 	}
 

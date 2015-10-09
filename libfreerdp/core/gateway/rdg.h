@@ -132,7 +132,7 @@ struct rdp_rdg
 	rdpNtlm* ntlm;
 	HttpContext* http;
 	HANDLE readEvent;
-    CRITICAL_SECTION writeSection;
+	CRITICAL_SECTION writeSection;
 
 	UUID guid;
 

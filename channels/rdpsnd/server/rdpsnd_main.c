@@ -782,6 +782,8 @@ void rdpsnd_server_context_free(RdpsndServerContext* context)
 
 	free(context->client_formats);
 
+	free(context->priv);
+
 	free(context);
 }
 

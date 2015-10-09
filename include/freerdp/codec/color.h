@@ -376,12 +376,12 @@ extern "C" {
 
 #define BGR16_RGB32(_r, _g, _b, _p) \
 	GetBGR16(_r, _g, _b, _p); \
- 	RGB_565_888(_r, _g, _b); \
+	RGB_565_888(_r, _g, _b); \
 	_p = RGB32(_r, _g, _b);
 
 #define RGB32_RGB16(_r, _g, _b, _p) \
 	GetRGB32(_r, _g, _b, _p); \
- 	RGB_888_565(_r, _g, _b); \
+	RGB_888_565(_r, _g, _b); \
 	_p = RGB565(_r, _g, _b);
 
 #define RGB15_RGB16(_r, _g, _b, _p) \
@@ -452,8 +452,11 @@ FREERDP_API void freerdp_clrconv_free(HCLRCONV clrconv);
 FREERDP_API int freerdp_image_copy_from_monochrome(BYTE* pDstData, UINT32 DstFormat, int nDstStep, int nXDst, int nYDst,
 		int nWidth, int nHeight, BYTE* pSrcData, UINT32 backColor, UINT32 foreColor, BYTE* palette);
 
-FREERDP_API int freerdp_image_copy_from_pointer_data(BYTE* pDstData, UINT32 DstFormat, int nDstStep, int nXDst, int nYDst,
-		int nWidth, int nHeight, BYTE* xorMask, BYTE* andMask, UINT32 xorBpp, BYTE* palette);
+FREERDP_API int freerdp_image_copy_from_pointer_data(
+		BYTE* pDstData, UINT32 DstFormat, int nDstStep,
+		int nXDst, int nYDst, int nWidth, int nHeight, BYTE* xorMask,
+		UINT32 xorMaskLength, BYTE* andMask, UINT32 andMaskLength,
+		UINT32 xorBpp, BYTE* palette);
 
 FREERDP_API int freerdp_image8_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,
 		int nWidth, int nHeight, BYTE* pSrcData, DWORD SrcFormat, int nSrcStep, int nXSrc, int nYSrc, BYTE* palette);
@@ -472,7 +475,7 @@ FREERDP_API int freerdp_image_move(BYTE* pData, DWORD Format, int nStep, int nXD
 		int nWidth, int nHeight, int nXSrc, int nYSrc);
 FREERDP_API int freerdp_image_fill(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,
 		int nWidth, int nHeight, UINT32 color);
-	
+
 FREERDP_API int freerdp_image_copy_from_retina(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,
 		int nWidth, int nHeight, BYTE* pSrcData, int nSrcStep, int nXSrc, int nYSrc);
 

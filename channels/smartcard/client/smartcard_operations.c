@@ -474,7 +474,9 @@ static LONG smartcard_GetStatusChangeA_Call(SMARTCARD_DEVICE* smartcard, SMARTCA
 	}
 
 	ret.cReaders = call->cReaders;
-	ret.rgReaderStates = (ReaderState_Return*) calloc(ret.cReaders, sizeof(ReaderState_Return));
+	ret.rgReaderStates = NULL;
+	if (ret.cReaders > 0)
+		ret.rgReaderStates = (ReaderState_Return*) calloc(ret.cReaders, sizeof(ReaderState_Return));
 
 	if (!ret.rgReaderStates)
 		return STATUS_NO_MEMORY;
@@ -539,7 +541,9 @@ static LONG smartcard_GetStatusChangeW_Call(SMARTCARD_DEVICE* smartcard, SMARTCA
 	}
 
 	ret.cReaders = call->cReaders;
-	ret.rgReaderStates = (ReaderState_Return*) calloc(ret.cReaders, sizeof(ReaderState_Return));
+	ret.rgReaderStates = NULL;
+	if (ret.cReaders > 0)
+		ret.rgReaderStates = (ReaderState_Return*) calloc(ret.cReaders, sizeof(ReaderState_Return));
 
 	if (!ret.rgReaderStates)
 		return STATUS_NO_MEMORY;
@@ -884,10 +888,7 @@ static LONG smartcard_StatusA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERAT
 	LPSTR mszReaderNames = NULL;
 	IRP* irp = operation->irp;
 
-	if (call->cbAtrLen > 32)
-		call->cbAtrLen = 32;
-
-	ret.cbAtrLen = call->cbAtrLen;
+	ret.cbAtrLen = 32;
 	ZeroMemory(ret.pbAtr, 32);
 	cchReaderLen = SCARD_AUTOALLOCATE;
 
@@ -937,10 +938,7 @@ static LONG smartcard_StatusW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERAT
 	LPWSTR mszReaderNames = NULL;
 	IRP* irp = operation->irp;
 
-	if (call->cbAtrLen > 32)
-		call->cbAtrLen = 32;
-
-	ret.cbAtrLen = call->cbAtrLen;
+	ret.cbAtrLen = 32;
 	ZeroMemory(ret.pbAtr, 32);
 	cchReaderLen = SCARD_AUTOALLOCATE;
 
@@ -1231,7 +1229,9 @@ static LONG smartcard_LocateCardsByATRA_Call(SMARTCARD_DEVICE* smartcard, SMARTC
 	}
 
 	ret.cReaders = call->cReaders;
-	ret.rgReaderStates = (ReaderState_Return*) calloc(ret.cReaders, sizeof(ReaderState_Return));
+	ret.rgReaderStates = NULL;
+	if (ret.cReaders > 0)
+		ret.rgReaderStates = (ReaderState_Return*) calloc(ret.cReaders, sizeof(ReaderState_Return));
 
 	if (!ret.rgReaderStates)
 		return STATUS_NO_MEMORY;

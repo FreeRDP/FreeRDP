@@ -61,6 +61,9 @@
 #define AV_CODEC_ID_AC3 CODEC_ID_AC3
 #endif
 
+#if LIBAVUTIL_VERSION_MAJOR < 52
+#define AV_PIX_FMT_YUV420P PIX_FMT_YUV420P
+#endif
 
 typedef struct _TSMFFFmpegDecoder
 {
@@ -102,7 +105,11 @@ static BOOL tsmf_ffmpeg_init_video_stream(ITSMFDecoder* decoder, const TS_AM_MED
 	mdecoder->codec_context->bit_rate = media_type->BitRate;
 	mdecoder->codec_context->time_base.den = media_type->SamplesPerSecond.Numerator;
 	mdecoder->codec_context->time_base.num = media_type->SamplesPerSecond.Denominator;
+#if LIBAVCODEC_VERSION_MAJOR < 55
 	mdecoder->frame = avcodec_alloc_frame();
+#else
+	mdecoder->frame = av_frame_alloc();
+#endif
 	return TRUE;
 }
 
@@ -328,7 +335,11 @@ static BOOL tsmf_ffmpeg_decode_video(ITSMFDecoder* decoder, const BYTE *data, UI
 		if (!mdecoder->decoded_data)
 			return FALSE;
 
+#if LIBAVCODEC_VERSION_MAJOR < 55
 		frame = avcodec_alloc_frame();
+#else
+		frame = av_frame_alloc();
+#endif
 		avpicture_fill((AVPicture*) frame, mdecoder->decoded_data,
 					   mdecoder->codec_context->pix_fmt,
 					   mdecoder->codec_context->width, mdecoder->codec_context->height);
@@ -400,7 +411,11 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE *data, UI
 									(int16_t *) dst, &frame_size, src, src_size);
 #else
 		{
+#if LIBAVCODEC_VERSION_MAJOR < 55
 			AVFrame *decoded_frame = avcodec_alloc_frame();
+#else
+			AVFrame *decoded_frame = av_frame_alloc();
+#endif
 			int got_frame = 0;
 			AVPacket pkt;
 			av_init_packet(&pkt);
@@ -480,7 +495,7 @@ static UINT32 tsmf_ffmpeg_get_decoded_format(ITSMFDecoder* decoder)
 
 	switch (mdecoder->codec_context->pix_fmt)
 	{
-		case PIX_FMT_YUV420P:
+		case AV_PIX_FMT_YUV420P:
 			return RDP_PIXFMT_I420;
 		default:
 			WLog_ERR(TAG, "unsupported pixel format %u",

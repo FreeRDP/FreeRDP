@@ -119,7 +119,7 @@ if(UNIX)
 	winpr_library_add(m)
 endif()
 
-if(BSD)
+if(FREEBSD)
 	winpr_library_add(execinfo)
 endif()
 

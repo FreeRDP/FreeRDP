@@ -574,7 +574,6 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UIN
 
 void xf_SetWindowText(xfContext* xfc, xfAppWindow* appWindow, char* name)
 {
-	XStoreName(xfc->display, appWindow->handle, name);
 	const size_t i = strlen(name);
 	XStoreName(xfc->display, appWindow->handle, name);
 
@@ -702,6 +701,8 @@ int xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow)
 
 	/* Move doesn't seem to work until window is mapped. */
 	xf_MoveWindow(xfc, appWindow, appWindow->x, appWindow->y, appWindow->width, appWindow->height);
+
+	xf_SetWindowText(xfc, appWindow, appWindow->title);
 
 	return 1;
 }
@@ -905,6 +906,7 @@ void xf_SetWindowRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rec
 	if (nrects < 1)
 		return;
 
+#ifdef WITH_XEXT
 	xrects = (XRectangle*) calloc(nrects, sizeof(XRectangle));
 
 	for (i = 0; i < nrects; i++)
@@ -915,11 +917,10 @@ void xf_SetWindowRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rec
 		xrects[i].height = rects[i].bottom - rects[i].top;
 	}
 
-#ifdef WITH_XEXT
 	XShapeCombineRectangles(xfc->display, appWindow->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
+	free(xrects);
 #endif
 
-	free(xrects);
 }
 
 void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rects, int nrects)
@@ -930,6 +931,7 @@ void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, RECTANG
 	if (nrects < 1)
 		return;
 
+#ifdef WITH_XEXT
 	xrects = (XRectangle*) calloc(nrects, sizeof(XRectangle));
 
 	for (i = 0; i < nrects; i++)
@@ -940,11 +942,10 @@ void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, RECTANG
 		xrects[i].height = rects[i].bottom - rects[i].top;
 	}
 
-#ifdef WITH_XEXT
 	XShapeCombineRectangles(xfc->display, appWindow->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
+	free(xrects);
 #endif
 
-	free(xrects);
 }
 
 void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width, int height)

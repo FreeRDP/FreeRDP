@@ -983,7 +983,6 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPS
 			goto error_receiveData;
 		}
 		channel->queue = MessageQueue_New(NULL);
-		channel->queue = MessageQueue_New(NULL);
 		if (!channel->queue)
 			goto error_queue;
 

@@ -36,12 +36,6 @@ static void* named_pipe_client_thread(void* arg)
 	WaitForSingleObject(ReadyEvent, INFINITE);
 	hNamedPipe = CreateFile(lpszPipeNameMt, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 
-	if (!hNamedPipe)
-	{
-		printf("%s:Named Pipe CreateFile failure: NULL handle\n", __FUNCTION__);
-		goto out;
-	}
-
 	if (hNamedPipe == INVALID_HANDLE_VALUE)
 	{
 		printf("%s: Named Pipe CreateFile failure: INVALID_HANDLE_VALUE\n", __FUNCTION__);
@@ -252,8 +246,8 @@ static void* named_pipe_single_thread(void* arg)
 
 	for (i = 0; i < numPipes; i++)
 	{
-		if (!(clients[i] = CreateFile(lpszPipeNameSt, GENERIC_READ | GENERIC_WRITE,
-									  0, NULL, OPEN_EXISTING, 0, NULL)))
+		if ((clients[i] = CreateFile(lpszPipeNameSt, GENERIC_READ | GENERIC_WRITE,
+									  0, NULL, OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
 		{
 			printf("%s: CreateFile #%d failed\n", __FUNCTION__, i);
 			goto out;

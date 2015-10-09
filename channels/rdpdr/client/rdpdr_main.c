@@ -391,7 +391,9 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 	DEVICE_DRIVE_EXT *device_ext;
 	ULONG_PTR *keys;
 	UINT32 ids[1];
-	UINT error;
+	UINT error = 0;
+
+	memset(dev_array, 0, sizeof(dev_array));
 
 	f = fopen("/proc/mounts", "r");
 	if (f == NULL)
@@ -408,10 +410,9 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 			/* copy hotpluged device mount point to the dev_array */
 			if (strstr(word, "/mnt/") != NULL || strstr(word, "/media/") != NULL)
 			{
-				dev_array[size].path = strdup(word);
+				dev_array[size].path = word;
 				dev_array[size++].to_add = TRUE;
 			}
-			free(word);
 		}
 		free(line);
 	}
@@ -450,7 +451,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 			if ((error = rdpdr_send_device_list_remove_request(rdpdr, 1, ids)))
 			{
 				WLog_ERR(TAG, "rdpdr_send_device_list_remove_request failed with error %lu!", error);
-				return error;
+				goto cleanup;
 			}
 		}
 	}
@@ -468,18 +469,15 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 			if (!drive)
 			{
 				WLog_ERR(TAG, "calloc failed!");
-				return CHANNEL_RC_NO_MEMORY;
+				error = CHANNEL_RC_NO_MEMORY;
+				goto cleanup;
 			}
 
 			drive->Type = RDPDR_DTYP_FILESYSTEM;
 
-			drive->Path = _strdup(dev_array[i].path);
-			if (!drive->Path)
-			{
-				WLog_ERR(TAG, "_strdup failed!");
-				free(drive);
-				return CHANNEL_RC_NO_MEMORY;
-			}
+			drive->Path = dev_array[i].path;
+			dev_array[i].path = NULL;
+
 			name = strrchr(drive->Path, '/') + 1;
 			drive->Name = _strdup(name);
 			if (!drive->Name)
@@ -487,7 +485,8 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 				WLog_ERR(TAG, "_strdup failed!");
 				free(drive->Path);
 				free(drive);
-				return CHANNEL_RC_NO_MEMORY;
+				error = CHANNEL_RC_NO_MEMORY;
+				goto cleanup;
 			}
 			if ((error = devman_load_device_service(rdpdr->devman, (RDPDR_DEVICE *)drive, rdpdr->rdpcontext)))
 			{
@@ -495,14 +494,17 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 				free(drive->Path);
 				free(drive->Name);
 				free(drive);
-				return error;
+				error = CHANNEL_RC_NO_MEMORY;
+				goto cleanup;
 			}
 		}
-
-		free(dev_array[i].path);
-		dev_array[i].path = NULL;
 	}
-	return rdpdr_send_device_list_announce_request(rdpdr, TRUE);
+
+cleanup:
+	for (i = 0; i < size; i++)
+		free (dev_array[size].path);
+
+	return error ? error : rdpdr_send_device_list_announce_request(rdpdr, TRUE);
 }
 
 static void* drive_hotplug_thread_func(void* arg)

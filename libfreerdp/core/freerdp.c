@@ -70,9 +70,11 @@ BOOL freerdp_connect(freerdp* instance)
 	/* We always set the return code to 0 before we start the connect sequence*/
 	connectErrorCode = 0;
 	freerdp_set_last_error(instance->context, FREERDP_ERROR_SUCCESS);
+	clearChannelError(instance->context);
 
 	rdp = instance->context->rdp;
 	settings = instance->settings;
+
 	instance->context->codecs = codecs_new(instance->context);
 	IFCALLRET(instance->PreConnect, status, instance);
 
@@ -100,6 +102,9 @@ BOOL freerdp_connect(freerdp* instance)
 		WLog_ERR(TAG, "Authentication only, exit status %d", !status);
 		goto freerdp_connect_finally;
 	}
+
+	if (!status)
+		goto freerdp_connect_finally;
 
 	if (status)
 	{
@@ -179,6 +184,14 @@ freerdp_connect_finally:
 	PubSub_OnConnectionResult(instance->context->pubSub, instance->context, &e);
 
 	return status;
+}
+
+BOOL freerdp_abort_connect(freerdp* instance)
+{
+	if (!instance || !instance->context)
+		return FALSE;
+
+	return SetEvent(instance->context->abortEvent);
 }
 
 BOOL freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
@@ -375,7 +388,11 @@ BOOL freerdp_reconnect(freerdp* instance)
 
 BOOL freerdp_shall_disconnect(freerdp* instance)
 {
-	return instance->context->rdp->disconnect;
+	if (!instance || !instance->context)
+		return FALSE;
+	if (WaitForSingleObject(instance->context->abortEvent, 0) != WAIT_OBJECT_0)
+		return FALSE;
+	return TRUE;
 }
 
 FREERDP_API BOOL freerdp_focus_required(freerdp* instance)
@@ -526,14 +543,22 @@ BOOL freerdp_context_new(freerdp* instance)
 
 	update_register_client_callbacks(rdp->update);
 
+	instance->context->abortEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (!instance->context->abortEvent)
+		goto out_error_abort_event;
+
 	IFCALLRET(instance->ContextNew, ret, instance, instance->context);
 
 	if (ret)
 		return TRUE;
-out_error_create_event:
+
+	CloseHandle(context->abortEvent);
+out_error_abort_event:
 	CloseHandle(context->channelErrorEvent);
-out_error_description:
+out_error_create_event:
 	free(context->errorDescription);
+out_error_description:
+	graphics_free(context->graphics);
 out_error_graphics_new:
 	rdp_free(rdp);
 out_error_rdp_new:
@@ -575,6 +600,9 @@ void freerdp_context_free(freerdp* instance)
 
 	CloseHandle(instance->context->channelErrorEvent);
 	free(instance->context->errorDescription);
+
+	CloseHandle(instance->context->abortEvent);
+	instance->context->abortEvent = NULL;
 
 	free(instance->context);
 	instance->context = NULL;
@@ -768,10 +796,19 @@ FREERDP_API UINT getChannelError(rdpContext* context)
 {
 	return context->channelErrorNum;
 }
+
 FREERDP_API const char* getChannelErrorDescription(rdpContext* context)
 {
 	return context->errorDescription;
 }
+
+FREERDP_API void clearChannelError(rdpContext* context)
+{
+	context->channelErrorNum = 0;
+	memset(context->errorDescription, 0, 500);
+	ResetEvent(context->channelErrorEvent);
+}
+
 FREERDP_API void setChannelError(rdpContext* context, UINT errorNum, char* description)
 {
 	context->channelErrorNum = errorNum;
