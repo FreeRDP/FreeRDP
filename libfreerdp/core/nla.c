@@ -33,6 +33,7 @@
 #include <freerdp/crypto/tls.h>
 
 #include <winpr/crt.h>
+#include <winpr/sam.h>
 #include <winpr/sspi.h>
 #include <winpr/print.h>
 #include <winpr/tchar.h>
@@ -144,6 +145,8 @@ int nla_client_init(rdpNla* nla)
 	BOOL PromptPassword = FALSE;
 	freerdp* instance = nla->instance;
 	rdpSettings* settings = nla->settings;
+	WINPR_SAM* sam;
+	WINPR_SAM_ENTRY* entry;
 
 	nla->state = NLA_STATE_INITIAL;
 
@@ -151,9 +154,31 @@ int nla_client_init(rdpNla* nla)
 		settings->DisableCredentialsDelegation = TRUE;
 
 	if ((!settings->Password) || (!settings->Username)
-			|| (!strlen(settings->Password)) || (!strlen(settings->Username)))
+			|| (!strlen(settings->Username)))
 	{
 		PromptPassword = TRUE;
+	}
+
+	if (PromptPassword && settings->Username && strlen(settings->Username))
+	{
+		sam = SamOpen(TRUE);
+
+		if (sam)
+		{
+			entry = SamLookupUserA(sam, settings->Username, strlen(settings->Username), NULL, 0);
+
+			if (entry)
+			{
+				/**
+				 * The user could be found in SAM database.
+				 * Use entry in SAM database later instead of prompt
+				 */
+				PromptPassword = FALSE;
+				SamFreeEntry(sam, entry);
+			}
+
+			SamClose(sam);
+		}
 	}
 
 #ifndef _WIN32

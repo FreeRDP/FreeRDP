@@ -21,17 +21,12 @@
 #include "config.h"
 #endif
 
-#include <stdlib.h>
-
 #include <winpr/windows.h>
 
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
 #include <winpr/ssl.h>
 #include <winpr/print.h>
-
-#include <openssl/ssl.h>
-#include <openssl/err.h>
 
 #include "sspi.h"
 
@@ -447,7 +442,7 @@ int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDEN
 	if (identity->PasswordLength > 256)
 		identity->PasswordLength /= SSPI_CREDENTIALS_HASH_LENGTH_FACTOR;
 
-	if (identity->PasswordLength > 0)
+	if (srcIdentity->Password)
 	{
 		identity->Password = (UINT16*) malloc((identity->PasswordLength + 1) * sizeof(WCHAR));
 

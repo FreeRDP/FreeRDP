@@ -18,10 +18,16 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/ssl.h>
 #include <winpr/thread.h>
+
+#ifdef WITH_OPENSSL
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -277,3 +283,17 @@ BOOL winpr_CleanupSSL(DWORD flags)
 
 	return TRUE;
 }
+
+#else
+
+BOOL winpr_InitializeSSL(DWORD flags)
+{
+	return TRUE;
+}
+
+BOOL winpr_CleanupSSL(DWORD flags)
+{
+	return TRUE;
+}
+
+#endif

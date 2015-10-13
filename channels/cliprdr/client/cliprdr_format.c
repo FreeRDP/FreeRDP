@@ -306,20 +306,11 @@ UINT cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UI
 	formatDataResponse.requestedFormatData = NULL;
 
 	if (dataLen)
-	{
-		formatDataResponse.requestedFormatData = (BYTE*) malloc(dataLen);
-		if (!formatDataResponse.requestedFormatData)
-		{
-			WLog_ERR(TAG, "malloc failed!");
-			return CHANNEL_RC_NO_MEMORY;
-		}
-		Stream_Read(s, formatDataResponse.requestedFormatData, dataLen);
-	}
+		formatDataResponse.requestedFormatData = (BYTE*) Stream_Pointer(s);
 
 	IFCALLRET(context->ServerFormatDataResponse, error, context, &formatDataResponse);
 	if (error)
 		WLog_ERR(TAG, "ServerFormatDataResponse failed with error %lu!", error);
 
-	free(formatDataResponse.requestedFormatData);
 	return error;
 }

@@ -710,7 +710,14 @@ rdtkFont* rdtk_embedded_font_new(rdtkEngine* engine, BYTE* imageData, int imageS
 
 void rdtk_font_free(rdtkFont* font)
 {
-	free(font);
+	if (font)
+	{
+		free(font->family);
+		free(font->style);
+		winpr_image_free(font->image, TRUE);
+		free(font->glyphs);
+		free(font);
+	}
 }
 
 int rdtk_font_engine_init(rdtkEngine* engine)

@@ -17,14 +17,11 @@ create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
 	${${MODULE_PREFIX}_TESTS})
 
-include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(${OPENSSL_INCLUDE_DIR})
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-set(${MODULE_PREFIX}_LIBS
-	${ZLIB_LIBRARIES}
-	${OPENSSL_LIBRARIES})
+set(${MODULE_PREFIX}_LIBS ${OPENSSL_LIBRARIES})
 
 if(WIN32)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} secur32 crypt32)

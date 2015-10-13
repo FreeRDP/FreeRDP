@@ -30,6 +30,7 @@
 #include <winpr/print.h>
 #include <winpr/sysinfo.h>
 #include <winpr/tchar.h>
+#include <winpr/crypto.h>
 
 #include "ntlm_compute.h"
 
@@ -242,22 +243,23 @@ typedef struct gss_channel_bindings_struct {
 } *gss_channel_bindings_t;
  */
 
-static void ntlm_md5_update_uint32_be(MD5_CTX* md5, UINT32 num)
+static void ntlm_md5_update_uint32_be(WINPR_MD5_CTX* md5, UINT32 num)
 {
 	BYTE be32[4];
 	be32[0] = (num >> 0) & 0xFF;
 	be32[1] = (num >> 8) & 0xFF;
 	be32[2] = (num >> 16) & 0xFF;
 	be32[3] = (num >> 24) & 0xFF;
-	MD5_Update(md5, be32, 4);
+	winpr_MD5_Update(md5, be32, 4);
 }
 
 void ntlm_compute_channel_bindings(NTLM_CONTEXT* context)
 {
-	MD5_CTX md5;
+	WINPR_MD5_CTX md5;
 	BYTE* ChannelBindingToken;
 	UINT32 ChannelBindingTokenLength;
 	SEC_CHANNEL_BINDINGS* ChannelBindings;
+
 	ZeroMemory(context->ChannelBindingsHash, 16);
 	ChannelBindings = context->Bindings.Bindings;
 
@@ -266,14 +268,14 @@ void ntlm_compute_channel_bindings(NTLM_CONTEXT* context)
 
 	ChannelBindingTokenLength = context->Bindings.BindingsLength - sizeof(SEC_CHANNEL_BINDINGS);
 	ChannelBindingToken = &((BYTE*) ChannelBindings)[ChannelBindings->dwApplicationDataOffset];
-	MD5_Init(&md5);
+	winpr_MD5_Init(&md5);
 	ntlm_md5_update_uint32_be(&md5, ChannelBindings->dwInitiatorAddrType);
 	ntlm_md5_update_uint32_be(&md5, ChannelBindings->cbInitiatorLength);
 	ntlm_md5_update_uint32_be(&md5, ChannelBindings->dwAcceptorAddrType);
 	ntlm_md5_update_uint32_be(&md5, ChannelBindings->cbAcceptorLength);
 	ntlm_md5_update_uint32_be(&md5, ChannelBindings->cbApplicationDataLength);
-	MD5_Update(&md5, (void*) ChannelBindingToken, ChannelBindingTokenLength);
-	MD5_Final(context->ChannelBindingsHash, &md5);
+	winpr_MD5_Update(&md5, (void*) ChannelBindingToken, ChannelBindingTokenLength);
+	winpr_MD5_Final(&md5, context->ChannelBindingsHash);
 }
 
 void ntlm_compute_single_host_data(NTLM_CONTEXT* context)
