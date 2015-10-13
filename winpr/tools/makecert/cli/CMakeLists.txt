@@ -23,20 +23,20 @@ include_directories(..)
 set(${MODULE_PREFIX}_SRCS
 	main.c)
 
-	# On windows create dll version information.
+# On windows create dll version information.
 # Vendor, product and year are already set in top level CMakeLists.txt
 if (WIN32)
-  set (RC_VERSION_MAJOR ${WINPR_VERSION_MAJOR})
-  set (RC_VERSION_MINOR ${WINPR_VERSION_MINOR})
-  set (RC_VERSION_BUILD ${WINPR_VERSION_REVISION})
-  set (RC_VERSION_FILE "${MODULE_NAME}${CMAKE_EXECUTABLE_SUFFIX}" )
+	set(RC_VERSION_MAJOR ${WINPR_VERSION_MAJOR})
+	set(RC_VERSION_MINOR ${WINPR_VERSION_MINOR})
+	set(RC_VERSION_BUILD ${WINPR_VERSION_REVISION})
+	set(RC_VERSION_FILE "${MODULE_NAME}${CMAKE_EXECUTABLE_SUFFIX}")
 
-  configure_file(
-    ${CMAKE_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
-    ${CMAKE_CURRENT_BINARY_DIR}/version.rc
-    @ONLY)
+	configure_file(
+		${CMAKE_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
+		${CMAKE_CURRENT_BINARY_DIR}/version.rc
+		@ONLY)
 
-  set ( ${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 endif()
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})

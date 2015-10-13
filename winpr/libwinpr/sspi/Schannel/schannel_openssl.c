@@ -21,12 +21,29 @@
 #include "config.h"
 #endif
 
+#include "schannel_openssl.h"
+
+#ifdef WITH_OPENSSL
+
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
 #include <winpr/ssl.h>
 #include <winpr/print.h>
 
-#include "schannel_openssl.h"
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <openssl/bio.h>
+
+struct _SCHANNEL_OPENSSL
+{
+	SSL* ssl;
+	SSL_CTX* ctx;
+	BOOL connected;
+	BIO* bioRead;
+	BIO* bioWrite;
+	BYTE* ReadBuffer;
+	BYTE* WriteBuffer;
+};
 
 #include "../../log.h"
 #define TAG WINPR_TAG("sspi.schannel")
@@ -172,7 +189,7 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
 {
 	int status;
 	long options = 0;
-	//context->ctx = SSL_CTX_new(SSLv23_server_method());
+
 	context->ctx = SSL_CTX_new(TLSv1_server_method());
 
 	if (!context->ctx)
@@ -524,3 +541,47 @@ void schannel_openssl_free(SCHANNEL_OPENSSL* context)
 		free(context);
 	}
 }
+
+#else
+
+int schannel_openssl_client_init(SCHANNEL_OPENSSL* context)
+{
+	return 0;
+}
+
+int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
+{
+	return 0;
+}
+
+SECURITY_STATUS schannel_openssl_client_process_tokens(SCHANNEL_OPENSSL* context, PSecBufferDesc pInput, PSecBufferDesc pOutput)
+{
+	return SEC_E_OK;
+}
+
+SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL* context, PSecBufferDesc pInput, PSecBufferDesc pOutput)
+{
+	return SEC_E_OK;
+}
+
+SECURITY_STATUS schannel_openssl_encrypt_message(SCHANNEL_OPENSSL* context, PSecBufferDesc pMessage)
+{
+	return SEC_E_OK;
+}
+
+SECURITY_STATUS schannel_openssl_decrypt_message(SCHANNEL_OPENSSL* context, PSecBufferDesc pMessage)
+{
+	return SEC_E_OK;
+}
+
+SCHANNEL_OPENSSL* schannel_openssl_new(void)
+{
+	return NULL;
+}
+
+void schannel_openssl_free(SCHANNEL_OPENSSL* context)
+{
+
+}
+
+#endif

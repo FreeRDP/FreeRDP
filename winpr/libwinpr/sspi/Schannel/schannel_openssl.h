@@ -27,20 +27,6 @@
 /* OpenSSL includes windows.h */
 #include <winpr/windows.h>
 
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <openssl/bio.h>
-
-struct _SCHANNEL_OPENSSL
-{
-	SSL* ssl;
-	SSL_CTX* ctx;
-	BOOL connected;
-	BIO* bioRead;
-	BIO* bioWrite;
-	BYTE* ReadBuffer;
-	BYTE* WriteBuffer;
-};
 typedef struct _SCHANNEL_OPENSSL SCHANNEL_OPENSSL;
 
 int schannel_openssl_client_init(SCHANNEL_OPENSSL* context);

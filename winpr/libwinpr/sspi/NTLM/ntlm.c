@@ -21,19 +21,12 @@
 #include "config.h"
 #endif
 
-#include <time.h>
-#include <openssl/des.h>
-#include <openssl/md4.h>
-#include <openssl/hmac.h>
-#include <openssl/rand.h>
-#include <openssl/engine.h>
-
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
 #include <winpr/print.h>
+#include <winpr/tchar.h>
 #include <winpr/sysinfo.h>
 #include <winpr/registry.h>
-#include <winpr/tchar.h>
 
 #include "ntlm.h"
 #include "../sspi.h"
@@ -156,6 +149,7 @@ NTLM_CONTEXT* ntlm_ContextNew()
 	DWORD dwSize;
 	DWORD dwValue;
 	NTLM_CONTEXT* context;
+
 	context = (NTLM_CONTEXT*) calloc(1, sizeof(NTLM_CONTEXT));
 
 	if (!context)
@@ -810,11 +804,11 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
 	int length;
 	void* data;
 	UINT32 SeqNo;
-	HMAC_CTX hmac;
 	BYTE digest[16];
 	BYTE checksum[8];
 	BYTE* signature;
 	ULONG version = 1;
+	WINPR_HMAC_CTX hmac;
 	NTLM_CONTEXT* context;
 	PSecBuffer data_buffer = NULL;
 	PSecBuffer signature_buffer = NULL;
@@ -844,17 +838,15 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
 
 	CopyMemory(data, data_buffer->pvBuffer, length);
 	/* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
-	HMAC_CTX_init(&hmac);
-	HMAC_Init_ex(&hmac, context->SendSigningKey, 16, EVP_md5(), NULL);
-	HMAC_Update(&hmac, (void*) &(SeqNo), 4);
-	HMAC_Update(&hmac, (void*) data, length);
-	HMAC_Final(&hmac, digest, NULL);
-	HMAC_CTX_cleanup(&hmac);
+	winpr_HMAC_Init(&hmac, WINPR_MD_MD5, context->SendSigningKey, 16);
+	winpr_HMAC_Update(&hmac, (void*) &(SeqNo), 4);
+	winpr_HMAC_Update(&hmac, (void*) data, length);
+	winpr_HMAC_Final(&hmac, digest);
 
 	/* Encrypt message using with RC4, result overwrites original buffer */
 
 	if (context->confidentiality)
-		RC4(&context->SendRc4Seal, length, (BYTE*) data, (BYTE*) data_buffer->pvBuffer);
+		winpr_RC4_Update(&context->SendRc4Seal, length, (BYTE*) data, (BYTE*) data_buffer->pvBuffer);
 	else
 		CopyMemory(data_buffer->pvBuffer, data, length);
 
@@ -866,7 +858,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
 #endif
 	free(data);
 	/* RC4-encrypt first 8 bytes of digest */
-	RC4(&context->SendRc4Seal, 8, digest, checksum);
+	winpr_RC4_Update(&context->SendRc4Seal, 8, digest, checksum);
 	signature = (BYTE*) signature_buffer->pvBuffer;
 	/* Concatenate version, ciphertext and sequence number to build signature */
 	CopyMemory(signature, (void*) &version, 4);
@@ -886,10 +878,10 @@ SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferD
 	int length;
 	void* data;
 	UINT32 SeqNo;
-	HMAC_CTX hmac;
 	BYTE digest[16];
 	BYTE checksum[8];
 	UINT32 version = 1;
+	WINPR_HMAC_CTX hmac;
 	NTLM_CONTEXT* context;
 	BYTE expected_signature[16];
 	PSecBuffer data_buffer = NULL;
@@ -923,17 +915,15 @@ SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferD
 	/* Decrypt message using with RC4, result overwrites original buffer */
 
 	if (context->confidentiality)
-		RC4(&context->RecvRc4Seal, length, (BYTE*) data, (BYTE*) data_buffer->pvBuffer);
+		winpr_RC4_Update(&context->RecvRc4Seal, length, (BYTE*) data, (BYTE*) data_buffer->pvBuffer);
 	else
 		CopyMemory(data_buffer->pvBuffer, data, length);
 
 	/* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
-	HMAC_CTX_init(&hmac);
-	HMAC_Init_ex(&hmac, context->RecvSigningKey, 16, EVP_md5(), NULL);
-	HMAC_Update(&hmac, (void*) &(SeqNo), 4);
-	HMAC_Update(&hmac, (void*) data_buffer->pvBuffer, data_buffer->cbBuffer);
-	HMAC_Final(&hmac, digest, NULL);
-	HMAC_CTX_cleanup(&hmac);
+	winpr_HMAC_Init(&hmac, WINPR_MD_MD5, context->RecvSigningKey, 16);
+	winpr_HMAC_Update(&hmac, (void*) &(SeqNo), 4);
+	winpr_HMAC_Update(&hmac, (void*) data_buffer->pvBuffer, data_buffer->cbBuffer);
+	winpr_HMAC_Final(&hmac, digest);
 #ifdef WITH_DEBUG_NTLM
 	WLog_DBG(TAG, "Encrypted Data Buffer (length = %d)", length);
 	winpr_HexDump(TAG, WLOG_DEBUG, data, length);
@@ -942,7 +932,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferD
 #endif
 	free(data);
 	/* RC4-encrypt first 8 bytes of digest */
-	RC4(&context->RecvRc4Seal, 8, digest, checksum);
+	winpr_RC4_Update(&context->RecvRc4Seal, 8, digest, checksum);
 	/* Concatenate version, ciphertext and sequence number to build signature */
 	CopyMemory(expected_signature, (void*) &version, 4);
 	CopyMemory(&expected_signature[4], (void*) checksum, 8);

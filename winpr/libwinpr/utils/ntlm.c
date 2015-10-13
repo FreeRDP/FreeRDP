@@ -24,9 +24,7 @@
 #include <winpr/ntlm.h>
 
 #include <winpr/crt.h>
-
-#include <openssl/ssl.h>
-#include <openssl/md4.h>
+#include <winpr/crypto.h>
 
 /**
  * Define NTOWFv1(Password, User, Domain) as
@@ -36,7 +34,7 @@
 
 BYTE* NTOWFv1W(LPWSTR Password, UINT32 PasswordLength, BYTE* NtHash)
 {
-	MD4_CTX md4_ctx;
+	WINPR_MD4_CTX md4;
 
 	if (!Password)
 		return NULL;
@@ -44,9 +42,9 @@ BYTE* NTOWFv1W(LPWSTR Password, UINT32 PasswordLength, BYTE* NtHash)
 	if (!NtHash && !(NtHash = malloc(16)))
 		return NULL;
 
-	MD4_Init(&md4_ctx);
-	MD4_Update(&md4_ctx, Password, PasswordLength);
-	MD4_Final((void*) NtHash, &md4_ctx);
+	winpr_MD4_Init(&md4);
+	winpr_MD4_Update(&md4, (BYTE*) Password, (size_t) PasswordLength);
+	winpr_MD4_Final(&md4, NtHash);
 
 	return NtHash;
 }
@@ -105,7 +103,7 @@ BYTE* NTOWFv2W(LPWSTR Password, UINT32 PasswordLength, LPWSTR User,
 	CopyMemory(&buffer[UserLength], Domain, DomainLength);
 
 	/* Compute the HMAC-MD5 hash of the above value using the NTLMv1 hash as the key, the result is the NTLMv2 hash */
-	HMAC(EVP_md5(), (void*) NtHashV1, 16, buffer, UserLength + DomainLength, (void*) NtHash, NULL);
+	winpr_HMAC(WINPR_MD_MD5, NtHashV1, 16, buffer, UserLength + DomainLength, NtHash);
 
 	free(buffer);
 
@@ -167,7 +165,7 @@ BYTE* NTOWFv2FromHashW(BYTE* NtHashV1, LPWSTR User, UINT32 UserLength, LPWSTR Do
 	}
 
 	/* Compute the HMAC-MD5 hash of the above value using the NTLMv1 hash as the key, the result is the NTLMv2 hash */
-	HMAC(EVP_md5(), (void*) NtHashV1, 16, buffer, UserLength + DomainLength, (void*) NtHash, NULL);
+	winpr_HMAC(WINPR_MD_MD5, NtHashV1, 16, buffer, UserLength + DomainLength, NtHash);
 
 	free(buffer);
 

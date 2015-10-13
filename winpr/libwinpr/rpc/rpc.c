@@ -21,14 +21,11 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-
 #include <winpr/crt.h>
 #include <winpr/rpc.h>
+#include <winpr/crypto.h>
 
 #ifndef _WIN32
-
-#include <openssl/rand.h>
 
 #include "../log.h"
 #define TAG WINPR_TAG("rpc")
@@ -658,13 +655,13 @@ static UUID UUID_NIL =
 
 RPC_STATUS UuidCreate(UUID* Uuid)
 {
-	RAND_pseudo_bytes((void*) Uuid, 16);
+	winpr_RAND_pseudo((BYTE*) Uuid, 16);
 	return RPC_S_OK;
 }
 
 RPC_STATUS UuidCreateSequential(UUID* Uuid)
 {
-	RAND_pseudo_bytes((void*) Uuid, 16);
+	winpr_RAND_pseudo((BYTE*) Uuid, 16);
 	return RPC_S_OK;
 }
 
