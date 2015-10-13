@@ -89,6 +89,8 @@ const EVP_CIPHER* winpr_openssl_get_evp_cipher(int cipher)
 {
 	const EVP_CIPHER* evp = NULL;
 
+	OpenSSL_add_all_ciphers();
+
 	switch (cipher)
 	{
 		case WINPR_CIPHER_NULL:
@@ -121,89 +123,89 @@ const EVP_CIPHER* winpr_openssl_get_evp_cipher(int cipher)
 			break;
 
 		case WINPR_CIPHER_AES_128_CFB128:
-			evp = EVP_aes_128_cfb128();
+			evp = EVP_get_cipherbyname("aes-128-cfb128");
 			break;
 
 		case WINPR_CIPHER_AES_192_CFB128:
-			evp = EVP_aes_192_cfb128();
+			evp = EVP_get_cipherbyname("aes-192-cfb128");
 			break;
 
 		case WINPR_CIPHER_AES_256_CFB128:
-			evp = EVP_aes_256_cfb128();
+			evp = EVP_get_cipherbyname("aes-256-cfb128");
 			break;
 
 		case WINPR_CIPHER_AES_128_CTR:
-			evp = EVP_aes_128_ctr();
+			evp = EVP_get_cipherbyname("aes-128-ctr");
 			break;
 
 		case WINPR_CIPHER_AES_192_CTR:
-			evp = EVP_aes_192_ctr();
+			evp = EVP_get_cipherbyname("aes-192-ctr");
 			break;
 
 		case WINPR_CIPHER_AES_256_CTR:
-			evp = EVP_aes_256_ctr();
+			evp = EVP_get_cipherbyname("aes-256-ctr");
 			break;
 
 		case WINPR_CIPHER_AES_128_GCM:
-			evp = EVP_aes_128_gcm();
+			evp = EVP_get_cipherbyname("aes-128-gcm");
 			break;
 
 		case WINPR_CIPHER_AES_192_GCM:
-			evp = EVP_aes_192_gcm();
+			evp = EVP_get_cipherbyname("aes-192-gcm");
 			break;
 
 		case WINPR_CIPHER_AES_256_GCM:
-			evp = EVP_aes_256_gcm();
+			evp = EVP_get_cipherbyname("aes-256-gcm");
 			break;
 
 		case WINPR_CIPHER_AES_128_CCM:
-			evp = EVP_aes_128_ccm();
+			evp = EVP_get_cipherbyname("aes-128-ccm");
 			break;
 
 		case WINPR_CIPHER_AES_192_CCM:
-			evp = EVP_aes_192_ccm();
+			evp = EVP_get_cipherbyname("aes-192-ccm");
 			break;
 
 		case WINPR_CIPHER_AES_256_CCM:
-			evp = EVP_aes_256_ccm();
+			evp = EVP_get_cipherbyname("aes-256-ccm");
 			break;
 #endif
 
 #ifndef OPENSSL_NO_CAMELLIA
 		case WINPR_CIPHER_CAMELLIA_128_ECB:
-			evp = EVP_camellia_128_ecb();
+			evp = EVP_get_cipherbyname("camellia-128-ecb");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_192_ECB:
-			evp = EVP_camellia_192_ecb();
+			evp = EVP_get_cipherbyname("camellia-192-ecb");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_256_ECB:
-			evp = EVP_camellia_256_ecb();
+			evp = EVP_get_cipherbyname("camellia-256-ecb");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_128_CBC:
-			evp = EVP_camellia_128_cbc();
+			evp = EVP_get_cipherbyname("camellia-128-cbc");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_192_CBC:
-			evp = EVP_camellia_192_cbc();
+			evp = EVP_get_cipherbyname("camellia-192-cbc");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_256_CBC:
-			evp = EVP_camellia_256_cbc();
+			evp = EVP_get_cipherbyname("camellia-256-cbc");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_128_CFB128:
-			evp = EVP_camellia_128_cfb128();
+			evp = EVP_get_cipherbyname("camellia-128-cfb128");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_192_CFB128:
-			evp = EVP_camellia_192_cfb128();
+			evp = EVP_get_cipherbyname("camellia-192-cfb128");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_256_CFB128:
-			evp = EVP_camellia_256_cfb128();
+			evp = EVP_get_cipherbyname("camellia-256-cfb128");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_128_CTR:

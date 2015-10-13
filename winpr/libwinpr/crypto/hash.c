@@ -171,6 +171,8 @@ const EVP_MD* winpr_openssl_get_evp_md(int md)
 {
 	const EVP_MD* evp = NULL;
 
+	OpenSSL_add_all_digests();
+
 	switch (md)
 	{
 #ifndef OPENSSL_NO_MD2
@@ -219,7 +221,7 @@ const EVP_MD* winpr_openssl_get_evp_md(int md)
 
 #ifndef OPENSSL_NO_RIPEMD
 		case WINPR_MD_RIPEMD160:
-			evp = EVP_ripemd160();
+			evp = EVP_get_digestbyname("ripemd160");
 			break;
 #endif
 	}
