@@ -838,10 +838,10 @@ typedef union _WINPR_DIGEST_CTX WINPR_DIGEST_CTX;
 extern "C" {
 #endif
 
-WINPR_API void winpr_Digest_Init(WINPR_DIGEST_CTX* ctx, int md);
-WINPR_API void winpr_Digest_Update(WINPR_DIGEST_CTX* ctx, const BYTE* input, size_t ilen);
-WINPR_API void winpr_Digest_Final(WINPR_DIGEST_CTX* ctx, BYTE* output);
-WINPR_API void winpr_Digest(int md, const BYTE* input, size_t ilen, BYTE* output);
+WINPR_API int winpr_Digest_Init(WINPR_DIGEST_CTX* ctx, int md);
+WINPR_API int winpr_Digest_Update(WINPR_DIGEST_CTX* ctx, const BYTE* input, size_t ilen);
+WINPR_API int winpr_Digest_Final(WINPR_DIGEST_CTX* ctx, BYTE* output);
+WINPR_API int winpr_Digest(int md, const BYTE* input, size_t ilen, BYTE* output);
 
 #ifdef __cplusplus
 }
@@ -1007,9 +1007,9 @@ typedef union _WINPR_CIPHER_CTX WINPR_CIPHER_CTX;
 extern "C" {
 #endif
 
-WINPR_API void winpr_Cipher_Init(WINPR_CIPHER_CTX* ctx, int cipher, int op, const BYTE* key, const BYTE* iv);
+WINPR_API int winpr_Cipher_Init(WINPR_CIPHER_CTX* ctx, int cipher, int op, const BYTE* key, const BYTE* iv);
 WINPR_API int winpr_Cipher_Update(WINPR_CIPHER_CTX* ctx, const BYTE* input, size_t ilen, BYTE* output, size_t* olen);
-WINPR_API void winpr_Cipher_Final(WINPR_CIPHER_CTX* ctx, BYTE* output, size_t* olen);
+WINPR_API int winpr_Cipher_Final(WINPR_CIPHER_CTX* ctx, BYTE* output, size_t* olen);
 
 #ifdef __cplusplus
 }

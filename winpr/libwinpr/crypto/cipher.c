@@ -57,10 +57,10 @@ int winpr_RC4_Update(WINPR_RC4_CTX* ctx, size_t length, const BYTE* input, BYTE*
 {
 #if defined(WITH_OPENSSL)
 	RC4((RC4_KEY*) ctx, length, input, output);
-#elif defined(WITH_MBEDTLS) && defined(MBEDTLS_ARC4_C)
-	mbedtls_arc4_crypt((mbedtls_arc4_context*) ctx, length, input, output);
-#endif
 	return 0;
+#elif defined(WITH_MBEDTLS) && defined(MBEDTLS_ARC4_C)
+	return mbedtls_arc4_crypt((mbedtls_arc4_context*) ctx, length, input, output);
+#endif
 }
 
 void winpr_RC4_Final(WINPR_RC4_CTX* ctx)
@@ -97,29 +97,28 @@ const EVP_CIPHER* winpr_openssl_get_evp_cipher(int cipher)
 			evp = EVP_enc_null();
 			break;
 
-#ifndef OPENSSL_NO_AES
 		case WINPR_CIPHER_AES_128_ECB:
-			evp = EVP_aes_128_ecb();
+			evp = EVP_get_cipherbyname("aes-128-ecb");
 			break;
 
 		case WINPR_CIPHER_AES_192_ECB:
-			evp = EVP_aes_192_ecb();
+			evp = EVP_get_cipherbyname("aes-192-ecb");
 			break;
 
 		case WINPR_CIPHER_AES_256_ECB:
-			evp = EVP_aes_256_ecb();
+			evp = EVP_get_cipherbyname("aes-256-ecb");
 			break;
 
 		case WINPR_CIPHER_AES_128_CBC:
-			evp = EVP_aes_128_cbc();
+			evp = EVP_get_cipherbyname("aes-128-cbc");
 			break;
 
 		case WINPR_CIPHER_AES_192_CBC:
-			evp = EVP_aes_192_cbc();
+			evp = EVP_get_cipherbyname("aes-192-cbc");
 			break;
 
 		case WINPR_CIPHER_AES_256_CBC:
-			evp = EVP_aes_256_cbc();
+			evp = EVP_get_cipherbyname("aes-256-cbc");
 			break;
 
 		case WINPR_CIPHER_AES_128_CFB128:
@@ -169,9 +168,7 @@ const EVP_CIPHER* winpr_openssl_get_evp_cipher(int cipher)
 		case WINPR_CIPHER_AES_256_CCM:
 			evp = EVP_get_cipherbyname("aes-256-ccm");
 			break;
-#endif
 
-#ifndef OPENSSL_NO_CAMELLIA
 		case WINPR_CIPHER_CAMELLIA_128_ECB:
 			evp = EVP_get_cipherbyname("camellia-128-ecb");
 			break;
@@ -209,53 +206,83 @@ const EVP_CIPHER* winpr_openssl_get_evp_cipher(int cipher)
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_128_CTR:
-		case WINPR_CIPHER_CAMELLIA_192_CTR:
-		case WINPR_CIPHER_CAMELLIA_256_CTR:
-		case WINPR_CIPHER_CAMELLIA_128_GCM:
-		case WINPR_CIPHER_CAMELLIA_192_GCM:
-		case WINPR_CIPHER_CAMELLIA_256_GCM:
-		case WINPR_CIPHER_CAMELLIA_128_CCM:
-		case WINPR_CIPHER_CAMELLIA_192_CCM:
-		case WINPR_CIPHER_CAMELLIA_256_CCM:
+			evp = EVP_get_cipherbyname("camellia-128-ctr");
 			break;
-#endif
 
-#ifndef OPENSSL_NO_DES
+		case WINPR_CIPHER_CAMELLIA_192_CTR:
+			evp = EVP_get_cipherbyname("camellia-192-ctr");
+			break;
+
+		case WINPR_CIPHER_CAMELLIA_256_CTR:
+			evp = EVP_get_cipherbyname("camellia-256-ctr");
+			break;
+
+		case WINPR_CIPHER_CAMELLIA_128_GCM:
+			evp = EVP_get_cipherbyname("camellia-128-gcm");
+			break;
+
+		case WINPR_CIPHER_CAMELLIA_192_GCM:
+			evp = EVP_get_cipherbyname("camellia-192-gcm");
+			break;
+
+		case WINPR_CIPHER_CAMELLIA_256_GCM:
+			evp = EVP_get_cipherbyname("camellia-256-gcm");
+			break;
+
+		case WINPR_CIPHER_CAMELLIA_128_CCM:
+			evp = EVP_get_cipherbyname("camellia-128-ccm");
+			break;
+
+		case WINPR_CIPHER_CAMELLIA_192_CCM:
+			evp = EVP_get_cipherbyname("camellia-192-gcm");
+			break;
+
+		case WINPR_CIPHER_CAMELLIA_256_CCM:
+			evp = EVP_get_cipherbyname("camellia-256-gcm");
+			break;
+
 		case WINPR_CIPHER_DES_ECB:
-			evp = EVP_des_ecb();
+			evp = EVP_get_cipherbyname("des-ecb");
 			break;
 
 		case WINPR_CIPHER_DES_CBC:
-			evp = EVP_des_cbc();
+			evp = EVP_get_cipherbyname("des-cbc");
 			break;
 
 		case WINPR_CIPHER_DES_EDE_ECB:
-			evp = EVP_des_ede_ecb();
+			evp = EVP_get_cipherbyname("des-ede-ecb");
 			break;
 
 		case WINPR_CIPHER_DES_EDE_CBC:
-			evp = EVP_des_ede_cbc();
+			evp = EVP_get_cipherbyname("des-ede-cbc");
 			break;
 
 		case WINPR_CIPHER_DES_EDE3_ECB:
-			evp = EVP_des_ede3_ecb();
+			evp = EVP_get_cipherbyname("des-ede3-ecb");
 			break;
 
 		case WINPR_CIPHER_DES_EDE3_CBC:
-			evp = EVP_des_ede3_cbc();
+			evp = EVP_get_cipherbyname("des-ede3-cbc");
 			break;
-#endif
 
-#ifndef OPENSSL_NO_RC4
 		case WINPR_CIPHER_ARC4_128:
-			evp = EVP_rc4();
+			evp = EVP_get_cipherbyname("rc4");
 			break;
-#endif
 
 		case WINPR_CIPHER_BLOWFISH_ECB:
+			evp = EVP_get_cipherbyname("blowfish-ecb");
+			break;
+
 		case WINPR_CIPHER_BLOWFISH_CBC:
+			evp = EVP_get_cipherbyname("blowfish-cbc");
+			break;
+
 		case WINPR_CIPHER_BLOWFISH_CFB64:
+			evp = EVP_get_cipherbyname("blowfish-cfb64");
+			break;
+
 		case WINPR_CIPHER_BLOWFISH_CTR:
+			evp = EVP_get_cipherbyname("blowfish-ctr");
 			break;
 	}
 
@@ -469,15 +496,21 @@ mbedtls_cipher_type_t winpr_mbedtls_get_cipher_type(int cipher)
 }
 #endif
 
-void winpr_Cipher_Init(WINPR_CIPHER_CTX* ctx, int cipher, int op, const BYTE* key, const BYTE* iv)
+int winpr_Cipher_Init(WINPR_CIPHER_CTX* ctx, int cipher, int op, const BYTE* key, const BYTE* iv)
 {
 #if defined(WITH_OPENSSL)
 	int operation;
 	const EVP_CIPHER* evp;
 	evp = winpr_openssl_get_evp_cipher(cipher);
+
+	if (!evp)
+		return -1;
+
 	operation = (op == WINPR_ENCRYPT) ? 1 : 0;
 	EVP_CIPHER_CTX_init((EVP_CIPHER_CTX*) ctx);
-	EVP_CipherInit_ex((EVP_CIPHER_CTX*) ctx, evp, NULL, key, iv, operation);
+
+	if (EVP_CipherInit_ex((EVP_CIPHER_CTX*) ctx, evp, NULL, key, iv, operation) != 1)
+		return -1;
 #elif defined(WITH_MBEDTLS)
 	int key_bitlen;
 	mbedtls_operation_t operation;
@@ -485,37 +518,57 @@ void winpr_Cipher_Init(WINPR_CIPHER_CTX* ctx, int cipher, int op, const BYTE* ke
 	const mbedtls_cipher_info_t* cipher_info;
 	cipher_type = winpr_mbedtls_get_cipher_type(cipher);
 	cipher_info = mbedtls_cipher_info_from_type(cipher_type);
+
+	if (!cipher_info)
+		return -1;
+
 	operation = (op == WINPR_ENCRYPT) ? MBEDTLS_ENCRYPT : MBEDTLS_DECRYPT;
 	mbedtls_cipher_init((mbedtls_cipher_context_t*) ctx);
-	mbedtls_cipher_setup((mbedtls_cipher_context_t*) ctx, cipher_info);
+
+	if (mbedtls_cipher_setup((mbedtls_cipher_context_t*) ctx, cipher_info) != 0)
+		return -1;
+
 	key_bitlen = mbedtls_cipher_get_key_bitlen((mbedtls_cipher_context_t*) ctx);
-	mbedtls_cipher_setkey((mbedtls_cipher_context_t*) ctx, key, key_bitlen, operation);
+
+	if (mbedtls_cipher_setkey((mbedtls_cipher_context_t*) ctx, key, key_bitlen, operation) != 0)
+		return -1;
 #endif
+	return 0;
 }
 
 int winpr_Cipher_Update(WINPR_CIPHER_CTX* ctx, const BYTE* input, size_t ilen, BYTE* output, size_t* olen)
 {
 #if defined(WITH_OPENSSL)
 	int outl = (int) *olen;
-	EVP_CipherUpdate((EVP_CIPHER_CTX*) ctx, output, &outl, input, ilen);
+
+	if (EVP_CipherUpdate((EVP_CIPHER_CTX*) ctx, output, &outl, input, ilen) != 1)
+		return -1;
+
 	*olen = (size_t) outl;
 #elif defined(WITH_MBEDTLS)
-	mbedtls_cipher_update((mbedtls_cipher_context_t*) ctx, input, ilen, output, olen);
+	if (mbedtls_cipher_update((mbedtls_cipher_context_t*) ctx, input, ilen, output, olen) != 0)
+		return -1;
 #endif
 	return 0;
 }
 
-void winpr_Cipher_Final(WINPR_CIPHER_CTX* ctx, BYTE* output, size_t* olen)
+int winpr_Cipher_Final(WINPR_CIPHER_CTX* ctx, BYTE* output, size_t* olen)
 {
 #if defined(WITH_OPENSSL)
 	int outl = (int) *olen;
-	EVP_CipherFinal_ex((EVP_CIPHER_CTX*) ctx, output, &outl);
+
+	if (EVP_CipherFinal_ex((EVP_CIPHER_CTX*) ctx, output, &outl) != 1)
+		return -1;
+
 	EVP_CIPHER_CTX_cleanup((EVP_CIPHER_CTX*) ctx);
 	*olen = (size_t) outl;
 #elif defined(WITH_MBEDTLS)
-	mbedtls_cipher_finish((mbedtls_cipher_context_t*) ctx, output, olen);
+	if (mbedtls_cipher_finish((mbedtls_cipher_context_t*) ctx, output, olen) != 0)
+		return -1;
+
 	mbedtls_cipher_free((mbedtls_cipher_context_t*) ctx);
 #endif
+	return 0;
 }
 
 /**

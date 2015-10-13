@@ -175,55 +175,41 @@ const EVP_MD* winpr_openssl_get_evp_md(int md)
 
 	switch (md)
 	{
-#ifndef OPENSSL_NO_MD2
 		case WINPR_MD_MD2:
-			evp = EVP_md2();
+			evp = EVP_get_digestbyname("md2");
 			break;
-#endif
 
-#ifndef OPENSSL_NO_MD4
 		case WINPR_MD_MD4:
-			evp = EVP_md4();
+			evp = EVP_get_digestbyname("md4");
 			break;
-#endif
 
-#ifndef OPENSSL_NO_MD5
 		case WINPR_MD_MD5:
-			evp = EVP_md5();
+			evp = EVP_get_digestbyname("md5");
 			break;
-#endif
 
-#ifndef OPENSSL_NO_SHA
 		case WINPR_MD_SHA1:
-			evp = EVP_sha1();
+			evp = EVP_get_digestbyname("sha1");
 			break;
-#endif
 
-#ifndef OPENSSL_NO_SHA256
 		case WINPR_MD_SHA224:
-			evp = EVP_sha224();
+			evp = EVP_get_digestbyname("sha224");
 			break;
 
 		case WINPR_MD_SHA256:
-			evp = EVP_sha256();
+			evp = EVP_get_digestbyname("sha256");
 			break;
-#endif
 
-#ifndef OPENSSL_NO_SHA512
 		case WINPR_MD_SHA384:
-			evp = EVP_sha384();
+			evp = EVP_get_digestbyname("sha384");
 			break;
 
 		case WINPR_MD_SHA512:
-			evp = EVP_sha512();
+			evp = EVP_get_digestbyname("sha512");
 			break;
-#endif
 
-#ifndef OPENSSL_NO_RIPEMD
 		case WINPR_MD_RIPEMD160:
 			evp = EVP_get_digestbyname("ripemd160");
 			break;
-#endif
 	}
 
 	return evp;
@@ -282,15 +268,29 @@ int winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, int md, const BYTE* key, size_t keylen)
 {
 #if defined(WITH_OPENSSL)
 	const EVP_MD* evp = winpr_openssl_get_evp_md(md);
+
+	if (!evp)
+		return -1;
+
 	HMAC_CTX_init((HMAC_CTX*) ctx);
-	HMAC_Init_ex((HMAC_CTX*) ctx, key, keylen, evp, NULL);
+
+	if (HMAC_Init_ex((HMAC_CTX*) ctx, key, keylen, evp, NULL) != 1)
+		return -1;
 #elif defined(WITH_MBEDTLS)
 	const mbedtls_md_info_t* md_info;
 	mbedtls_md_type_t md_type = winpr_mbedtls_get_md_type(md);
 	md_info = mbedtls_md_info_from_type(md_type);
+
+	if (!md_info)
+		return -1;
+
 	mbedtls_md_init((mbedtls_md_context_t*) ctx);
-	mbedtls_md_setup((mbedtls_md_context_t*) ctx, md_info, 1);
-	mbedtls_md_hmac_starts((mbedtls_md_context_t*) ctx, key, keylen);
+
+	if (mbedtls_md_setup((mbedtls_md_context_t*) ctx, md_info, 1) != 0)
+		return -1;
+
+	if (mbedtls_md_hmac_starts((mbedtls_md_context_t*) ctx, key, keylen) != 0)
+		return -1;
 #endif
 	return 0;
 }
@@ -298,9 +298,11 @@ int winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, int md, const BYTE* key, size_t keylen)
 int winpr_HMAC_Update(WINPR_HMAC_CTX* ctx, const BYTE* input, size_t ilen)
 {
 #if defined(WITH_OPENSSL)
-	HMAC_Update((HMAC_CTX*) ctx, input, ilen);
+	if (HMAC_Update((HMAC_CTX*) ctx, input, ilen) != 1)
+		return -1;
 #elif defined(WITH_MBEDTLS)
-	mbedtls_md_hmac_update((mbedtls_md_context_t*) ctx, input, ilen);
+	if (mbedtls_md_hmac_update((mbedtls_md_context_t*) ctx, input, ilen) != 0)
+		return -1;
 #endif
 	return 0;
 }
@@ -308,10 +310,13 @@ int winpr_HMAC_Update(WINPR_HMAC_CTX* ctx, const BYTE* input, size_t ilen)
 int winpr_HMAC_Final(WINPR_HMAC_CTX* ctx, BYTE* output)
 {
 #if defined(WITH_OPENSSL)
-	HMAC_Final((HMAC_CTX*) ctx, output, NULL);
+	if (HMAC_Final((HMAC_CTX*) ctx, output, NULL) != 1)
+		return -1;
 	HMAC_CTX_cleanup((HMAC_CTX*) ctx);
 #elif defined(WITH_MBEDTLS)
-	mbedtls_md_hmac_finish((mbedtls_md_context_t*) ctx, output);
+	if (mbedtls_md_hmac_finish((mbedtls_md_context_t*) ctx, output) != 0)
+		return -1;
+
 	mbedtls_md_free((mbedtls_md_context_t*) ctx);
 #endif
 	return 0;
@@ -320,9 +325,16 @@ int winpr_HMAC_Final(WINPR_HMAC_CTX* ctx, BYTE* output)
 int winpr_HMAC(int md, const BYTE* key, size_t keylen, const BYTE* input, size_t ilen, BYTE* output)
 {
 	WINPR_HMAC_CTX ctx;
-	winpr_HMAC_Init(&ctx, md, key, keylen);
-	winpr_HMAC_Update(&ctx, input, ilen);
-	winpr_HMAC_Final(&ctx, output);
+
+	if (winpr_HMAC_Init(&ctx, md, key, keylen) != 0)
+		return -1;
+
+	if (winpr_HMAC_Update(&ctx, input, ilen) != 0)
+		return -1;
+
+	if (winpr_HMAC_Final(&ctx, output) != 0)
+		return -1;
+
 	return 0;
 }
 
@@ -330,45 +342,75 @@ int winpr_HMAC(int md, const BYTE* key, size_t keylen, const BYTE* input, size_t
  * Generic Digest API
  */
 
-void winpr_Digest_Init(WINPR_DIGEST_CTX* ctx, int md)
+int winpr_Digest_Init(WINPR_DIGEST_CTX* ctx, int md)
 {
 #if defined(WITH_OPENSSL)
 	const EVP_MD* evp = winpr_openssl_get_evp_md(md);
+
+	if (!evp)
+		return -1;
+
 	EVP_MD_CTX_init((EVP_MD_CTX*) ctx);
-	EVP_DigestInit_ex((EVP_MD_CTX*) ctx, evp, NULL);
+
+	if (EVP_DigestInit_ex((EVP_MD_CTX*) ctx, evp, NULL) != 1)
+		return -1;
 #elif defined(WITH_MBEDTLS)
 	const mbedtls_md_info_t* md_info;
 	mbedtls_md_type_t md_type = winpr_mbedtls_get_md_type(md);
 	md_info = mbedtls_md_info_from_type(md_type);
+
+	if (!md_info)
+		return -1;
+
 	mbedtls_md_init((mbedtls_md_context_t*) ctx);
-	mbedtls_md_setup((mbedtls_md_context_t*) ctx, md_info, 0);
-	mbedtls_md_starts((mbedtls_md_context_t*) ctx);
+
+	if (mbedtls_md_setup((mbedtls_md_context_t*) ctx, md_info, 0) != 0)
+		return -1;
+
+	if (mbedtls_md_starts((mbedtls_md_context_t*) ctx) != 0)
+		return -1;
 #endif
+	return 0;
 }
 
-void winpr_Digest_Update(WINPR_DIGEST_CTX* ctx, const BYTE* input, size_t ilen)
+int winpr_Digest_Update(WINPR_DIGEST_CTX* ctx, const BYTE* input, size_t ilen)
 {
 #if defined(WITH_OPENSSL)
-	EVP_DigestUpdate((EVP_MD_CTX*) ctx, input, ilen);
+	if (EVP_DigestUpdate((EVP_MD_CTX*) ctx, input, ilen) != 1)
+		return -1;
 #elif defined(WITH_MBEDTLS)
-	mbedtls_md_update((mbedtls_md_context_t*) ctx, input, ilen);
+	if (mbedtls_md_update((mbedtls_md_context_t*) ctx, input, ilen) != 0)
+		return -1;
 #endif
+	return 0;
 }
 
-void winpr_Digest_Final(WINPR_DIGEST_CTX* ctx, BYTE* output)
+int winpr_Digest_Final(WINPR_DIGEST_CTX* ctx, BYTE* output)
 {
 #if defined(WITH_OPENSSL)
-	EVP_DigestFinal_ex((EVP_MD_CTX*) ctx, output, NULL);
+	if (EVP_DigestFinal_ex((EVP_MD_CTX*) ctx, output, NULL) != 1)
+		return -1;
 #elif defined(WITH_MBEDTLS)
-	mbedtls_md_finish((mbedtls_md_context_t*) ctx, output);
+	if (mbedtls_md_finish((mbedtls_md_context_t*) ctx, output) != 0)
+		return -1;
+
 	mbedtls_md_free((mbedtls_md_context_t*) ctx);
 #endif
+	return 0;
 }
 
-void winpr_Digest(int md, const BYTE* input, size_t ilen, BYTE* output)
+int winpr_Digest(int md, const BYTE* input, size_t ilen, BYTE* output)
 {
 	WINPR_DIGEST_CTX ctx;
-	winpr_Digest_Init(&ctx, md);
-	winpr_Digest_Update(&ctx, input, ilen);
-	winpr_Digest_Final(&ctx, output);
+
+	if (winpr_Digest_Init(&ctx, md) != 0)
+		return -1;
+
+	if (winpr_Digest_Update(&ctx, input, ilen) != 0)
+		return -1;
+
+	if (winpr_Digest_Final(&ctx, output) != 0)
+		return -1;
+
+	return 0;
 }
