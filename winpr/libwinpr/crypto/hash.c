@@ -274,8 +274,13 @@ int winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, int md, const BYTE* key, size_t keylen)
 
 	HMAC_CTX_init((HMAC_CTX*) ctx);
 
+#if (OPENSSL_VERSION_NUMBER < 0x10000000L)
+	HMAC_Init_ex((HMAC_CTX*) ctx, key, keylen, evp, NULL);
+#else
 	if (HMAC_Init_ex((HMAC_CTX*) ctx, key, keylen, evp, NULL) != 1)
 		return -1;
+#endif
+
 #elif defined(WITH_MBEDTLS)
 	const mbedtls_md_info_t* md_info;
 	mbedtls_md_type_t md_type = winpr_mbedtls_get_md_type(md);
@@ -298,8 +303,12 @@ int winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, int md, const BYTE* key, size_t keylen)
 int winpr_HMAC_Update(WINPR_HMAC_CTX* ctx, const BYTE* input, size_t ilen)
 {
 #if defined(WITH_OPENSSL)
+#if (OPENSSL_VERSION_NUMBER < 0x10000000L)
+	HMAC_Update((HMAC_CTX*) ctx, input, ilen);
+#else
 	if (HMAC_Update((HMAC_CTX*) ctx, input, ilen) != 1)
 		return -1;
+#endif
 #elif defined(WITH_MBEDTLS)
 	if (mbedtls_md_hmac_update((mbedtls_md_context_t*) ctx, input, ilen) != 0)
 		return -1;
@@ -310,8 +319,12 @@ int winpr_HMAC_Update(WINPR_HMAC_CTX* ctx, const BYTE* input, size_t ilen)
 int winpr_HMAC_Final(WINPR_HMAC_CTX* ctx, BYTE* output)
 {
 #if defined(WITH_OPENSSL)
+#if (OPENSSL_VERSION_NUMBER < 0x10000000L)
+	HMAC_Final((HMAC_CTX*) ctx, output, NULL);
+#else
 	if (HMAC_Final((HMAC_CTX*) ctx, output, NULL) != 1)
 		return -1;
+#endif
 	HMAC_CTX_cleanup((HMAC_CTX*) ctx);
 #elif defined(WITH_MBEDTLS)
 	if (mbedtls_md_hmac_finish((mbedtls_md_context_t*) ctx, output) != 0)
