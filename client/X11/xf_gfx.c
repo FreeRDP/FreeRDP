@@ -1054,6 +1054,9 @@ UINT xf_MapSurfaceToOutput(RdpgfxClientContext* context, RDPGFX_MAP_SURFACE_TO_O
 
 	surface = (xfGfxSurface*) context->GetSurfaceData(context, surfaceToOutput->surfaceId);
 
+	if (!surface)
+		return ERROR_INTERNAL_ERROR;
+
 	surface->outputMapped = TRUE;
 	surface->outputOriginX = surfaceToOutput->outputOriginX;
 	surface->outputOriginY = surfaceToOutput->outputOriginY;

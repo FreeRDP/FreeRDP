@@ -26,12 +26,17 @@
 struct gdi_gfx_surface
 {
 	UINT16 surfaceId;
+	rdpCodecs* codecs;
 	UINT32 width;
 	UINT32 height;
 	BOOL alpha;
 	BYTE* data;
 	int scanline;
 	UINT32 format;
+	BOOL outputMapped;
+	UINT32 outputOriginX;
+	UINT32 outputOriginY;
+	REGION16 invalidRegion;
 };
 typedef struct gdi_gfx_surface gdiGfxSurface;
 
