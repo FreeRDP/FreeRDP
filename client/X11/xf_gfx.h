@@ -28,6 +28,7 @@
 struct xf_gfx_surface
 {
 	UINT16 surfaceId;
+	rdpCodecs* codecs;
 	UINT32 width;
 	UINT32 height;
 	BOOL alpha;
