@@ -194,8 +194,18 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	 * we can start to receive GDI orders for the new window dimensions before we
 	 * receive the RAIL ORDER for the new window size.  This avoids that race condition.
 	 */
-	appWindow->windowOffsetX = windowMove.left;
-	appWindow->windowOffsetY = windowMove.top;
+	appWindow->windowOffsetX = (INT16)windowMove.left;
+	appWindow->windowOffsetY = (INT16)windowMove.top;
+	if (appWindow->windowOffsetX < 0)
+		appWindow->localWindowOffsetCorrX = 0 - appWindow->windowOffsetX;
+	else
+		appWindow->localWindowOffsetCorrX = 0;
+
+	if (appWindow->windowOffsetY < 0)
+		appWindow->localWindowOffsetCorrY = 0 - appWindow->windowOffsetY;
+	else
+		appWindow->localWindowOffsetCorrY = 0;
+
 	appWindow->windowWidth = appWindow->width;
 	appWindow->windowHeight = appWindow->height;
 	appWindow->local_move.state = LMS_TERMINATING;
@@ -291,8 +301,8 @@ static BOOL xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 		appWindow->dwStyle = windowState->style;
 		appWindow->dwExStyle = windowState->extendedStyle;
 
-		appWindow->x = appWindow->windowOffsetX = windowState->windowOffsetX;
-		appWindow->y = appWindow->windowOffsetY = windowState->windowOffsetY;
+		appWindow->x = appWindow->windowOffsetX = appWindow->visibleOffsetX = windowState->windowOffsetX;
+		appWindow->y = appWindow->windowOffsetY = appWindow->visibleOffsetY = windowState->windowOffsetY;
 		appWindow->width = appWindow->windowWidth = windowState->windowWidth;
 		appWindow->height = appWindow->windowHeight = windowState->windowHeight;
 

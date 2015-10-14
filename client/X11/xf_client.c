@@ -342,7 +342,7 @@ BOOL xf_sw_end_paint(rdpContext* context)
 
 		xf_lock_x11(xfc, FALSE);
 
-		xf_rail_paint(xfc, x, y, x + w - 1, y + h - 1);
+		xf_rail_paint(xfc, x, y, x + w, y + h);
 
 		xf_unlock_x11(xfc, FALSE);
 	}
@@ -455,7 +455,7 @@ BOOL xf_hw_end_paint(rdpContext* context)
 
 		xf_lock_x11(xfc, FALSE);
 
-		xf_rail_paint(xfc, x, y, x + w - 1, y + h - 1);
+		xf_rail_paint(xfc, x, y, x + w, y + h);
 
 		xf_unlock_x11(xfc, FALSE);
 	}
