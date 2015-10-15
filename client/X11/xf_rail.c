@@ -299,6 +299,7 @@ static BOOL xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 		appWindow->localWindowOffsetCorrX = 0;
 		appWindow->localWindowOffsetCorrY = 0;
 
+		/* Ensure window always gets a window title */
 		if (fieldFlags & WINDOW_ORDER_FIELD_TITLE)
 		{
 			char* title = NULL;
@@ -321,8 +322,6 @@ static BOOL xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 		HashTable_Add(xfc->railWindows, (void*) (UINT_PTR) orderInfo->windowId, (void*) appWindow);
 
 		xf_AppWindowInit(xfc, appWindow);
-
-		return TRUE;
 	}
 	else
 	{
