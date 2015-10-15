@@ -466,7 +466,7 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 		return TRUE;
 	}
 
-	if(xfc->fullscreen_toggle)
+	if(!xfc->remote_app && xfc->fullscreen_toggle)
 	{
 		if (keysym == XK_Return)
 		{
