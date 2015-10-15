@@ -278,7 +278,8 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window win
 
 	xf_event_adjust_coordinates(xfc, &x, &y);
 
-	input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
+	if (!app || xf_AppWindowFromX11Window(xfc,window)->local_move.direction != RAIL_WMSZ_KEYSIZE)
+		input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
 
 	if (xfc->fullscreen && !app)
 	{

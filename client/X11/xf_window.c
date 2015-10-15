@@ -927,7 +927,7 @@ void xf_SetWindowRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rec
 
 }
 
-void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rects, int nrects)
+void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, UINT32 rectsOffsetX, UINT32 rectsOffsetY, RECTANGLE_16* rects, int nrects)
 {
 	int i;
 	XRectangle* xrects;
@@ -946,7 +946,7 @@ void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, RECTANG
 		xrects[i].height = rects[i].bottom - rects[i].top;
 	}
 
-	XShapeCombineRectangles(xfc->display, appWindow->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
+	XShapeCombineRectangles(xfc->display, appWindow->handle, ShapeBounding, rectsOffsetX, rectsOffsetY, xrects, nrects, ShapeSet, 0);
 	free(xrects);
 #endif
 
@@ -955,20 +955,14 @@ void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, RECTANG
 void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width, int height)
 {
 	int ax, ay;
-	UINT32 translatedWindowOffsetX;
-	UINT32 translatedWindowOffsetY;
 
-	/* Translate the server rail window offset to a local offset */
-	translatedWindowOffsetX = (appWindow->windowOffsetX - appWindow->localWindowOffsetCorrX);
-	translatedWindowOffsetY = (appWindow->windowOffsetY - appWindow->localWindowOffsetCorrY);
+	ax = x + appWindow->windowOffsetX;
+	ay = y + appWindow->windowOffsetY;
 
-	ax = x + translatedWindowOffsetX;
-	ay = y + translatedWindowOffsetY;
-
-	if (ax + width > translatedWindowOffsetX + appWindow->width)
-		width = (translatedWindowOffsetX + appWindow->width - 1) - ax;
-	if (ay + height > translatedWindowOffsetY + appWindow->height)
-		height = (translatedWindowOffsetY + appWindow->height - 1) - ay;
+	if (ax + width > appWindow->windowOffsetX + appWindow->windowWidth)
+		width = (appWindow->windowOffsetX + appWindow->windowWidth - 1) - ax;
+	if (ay + height > appWindow->windowOffsetY + appWindow->windowHeight)
+		height = (appWindow->windowOffsetY + appWindow->windowHeight - 1) - ay;
 
 	xf_lock_x11(xfc, TRUE);
 

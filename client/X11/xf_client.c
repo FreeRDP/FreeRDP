@@ -1865,11 +1865,12 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xfc->_NET_WM_STATE_SKIP_PAGER = XInternAtom(xfc->display, "_NET_WM_STATE_SKIP_PAGER", False);
 	xfc->_NET_WM_MOVERESIZE = XInternAtom(xfc->display, "_NET_WM_MOVERESIZE", False);
 	xfc->_NET_MOVERESIZE_WINDOW = XInternAtom(xfc->display, "_NET_MOVERESIZE_WINDOW", False);
+
+	xfc->UTF8_STRING = XInternAtom(xfc->display, "UTF8_STRING", FALSE);
 	xfc->WM_PROTOCOLS = XInternAtom(xfc->display, "WM_PROTOCOLS", False);
 	xfc->WM_DELETE_WINDOW = XInternAtom(xfc->display, "WM_DELETE_WINDOW", False);
 	xfc->WM_STATE = XInternAtom(xfc->display, "WM_STATE", False);
 
-	xfc->UTF8_STRING = XInternAtom(xfc->display, "UTF8_STRING", FALSE);
 	xfc->xfds = ConnectionNumber(xfc->display);
 	xfc->screen_number = DefaultScreen(xfc->display);
 	xfc->screen = ScreenOfDisplay(xfc->display, xfc->screen_number);
