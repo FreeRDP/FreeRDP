@@ -327,7 +327,7 @@ static void xf_SetWindowPID(xfContext* xfc, Window window, pid_t pid)
 	if (!pid)
 		pid = getpid();
 
-	am_wm_pid = XInternAtom(xfc->display, "_NET_WM_PID", False);
+	am_wm_pid = xfc->_NET_WM_PID;
 
 	XChangeProperty(xfc->display, window, am_wm_pid, XA_CARDINAL,
 				32, PropModeReplace, (BYTE*) &pid, 1);
@@ -579,8 +579,8 @@ void xf_SetWindowText(xfContext* xfc, xfAppWindow* appWindow, char* name)
 	const size_t i = strlen(name);
 	XStoreName(xfc->display, appWindow->handle, name);
 
-	Atom wm_Name = XInternAtom(xfc->display, "_NET_WM_NAME", FALSE);
-	Atom utf8Str = XInternAtom(xfc->display, "UTF8_STRING", FALSE);
+	Atom wm_Name = xfc->_NET_WM_NAME;
+	Atom utf8Str = xfc->UTF8_STRING;
 
 	XChangeProperty(xfc->display, appWindow->handle, wm_Name, utf8Str, 8,
 	                PropModeReplace, (unsigned char *)name, i);
@@ -823,9 +823,10 @@ void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 
 		case WINDOW_SHOW_MAXIMIZED:
 			/* Set the window as maximized */
-			xf_SendClientEvent(xfc, appWindow->handle, xfc->_NET_WM_STATE, 4, 1,
-					XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_VERT", False),
-					XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_HORZ", False), 0);
+			xf_SendClientEvent(xfc, appWindow->handle, xfc->_NET_WM_STATE, 4,
+					_NET_WM_STATE_ADD,
+					xfc->_NET_WM_STATE_MAXIMIZED_VERT,
+					xfc->_NET_WM_STATE_MAXIMIZED_HORZ, 0);
 			/*
 			 * This is a workaround for the case where the window is maximized locally before the rail server is told to maximize
 			 * the window, this appears to be a race condition where the local window with incomplete data and once the window is
@@ -840,9 +841,10 @@ void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 
 		case WINDOW_SHOW:
 			/* Ensure the window is not maximized */
-			xf_SendClientEvent(xfc, appWindow->handle, xfc->_NET_WM_STATE, 4, 0,
-					XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_VERT", False),
-					XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_HORZ", False), 0);
+			xf_SendClientEvent(xfc, appWindow->handle, xfc->_NET_WM_STATE, 4,
+					_NET_WM_STATE_REMOVE,
+					xfc->_NET_WM_STATE_MAXIMIZED_VERT,
+					xfc->_NET_WM_STATE_MAXIMIZED_HORZ, 0);
 			/*
 			 * Ignore configure requests until both the Maximized properties have been processed
 			 * to prevent condition where WM overrides size of request due to one or both of these properties

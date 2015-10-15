@@ -185,6 +185,8 @@ struct xf_context
 	xfClipboard* clipboard;
 	CliprdrClientContext* cliprdr;
 
+	Atom UTF8_STRING;
+
 	Atom _NET_WM_ICON;
 	Atom _MOTIF_WM_HINTS;
 	Atom _NET_CURRENT_DESKTOP;
@@ -192,10 +194,15 @@ struct xf_context
 
 	Atom _NET_WM_STATE;
 	Atom _NET_WM_STATE_FULLSCREEN;
+	Atom _NET_WM_STATE_MAXIMIZED_HORZ;
+	Atom _NET_WM_STATE_MAXIMIZED_VERT;
 	Atom _NET_WM_STATE_SKIP_TASKBAR;
 	Atom _NET_WM_STATE_SKIP_PAGER;
 
 	Atom _NET_WM_FULLSCREEN_MONITORS;
+
+	Atom _NET_WM_NAME;
+	Atom _NET_WM_PID;
 
 	Atom _NET_WM_WINDOW_TYPE;
 	Atom _NET_WM_WINDOW_TYPE_NORMAL;

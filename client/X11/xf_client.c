@@ -1850,7 +1850,11 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xfc->_NET_WORKAREA = XInternAtom(xfc->display, "_NET_WORKAREA", False);
 	xfc->_NET_WM_STATE = XInternAtom(xfc->display, "_NET_WM_STATE", False);
 	xfc->_NET_WM_STATE_FULLSCREEN = XInternAtom(xfc->display, "_NET_WM_STATE_FULLSCREEN", False);
+	xfc->_NET_WM_STATE_MAXIMIZED_HORZ = XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_HORZ", False);
+	xfc->_NET_WM_STATE_MAXIMIZED_VERT = XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_VERT", False);
 	xfc->_NET_WM_FULLSCREEN_MONITORS = XInternAtom(xfc->display, "_NET_WM_FULLSCREEN_MONITORS", False);
+	xfc->_NET_WM_NAME = XInternAtom(xfc->display, "_NET_WM_NAME", False);
+	xfc->_NET_WM_PID = XInternAtom(xfc->display, "_NET_WM_PID", False);
 	xfc->_NET_WM_WINDOW_TYPE = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE", False);
 	xfc->_NET_WM_WINDOW_TYPE_NORMAL = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE_NORMAL", False);
 	xfc->_NET_WM_WINDOW_TYPE_DIALOG = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE_DIALOG", False);
@@ -1865,6 +1869,7 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xfc->WM_DELETE_WINDOW = XInternAtom(xfc->display, "WM_DELETE_WINDOW", False);
 	xfc->WM_STATE = XInternAtom(xfc->display, "WM_STATE", False);
 
+	xfc->UTF8_STRING = XInternAtom(xfc->display, "UTF8_STRING", FALSE);
 	xfc->xfds = ConnectionNumber(xfc->display);
 	xfc->screen_number = DefaultScreen(xfc->display);
 	xfc->screen = ScreenOfDisplay(xfc->display, xfc->screen_number);
