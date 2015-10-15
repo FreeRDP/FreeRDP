@@ -371,6 +371,13 @@ INLINE BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y)
 	}
 }
 
+/**
+ * Get current color in brush bitmap according to dest coordinates.\n
+ * @msdn{dd183396}
+ * @param x dest x-coordinate
+ * @param y dest y-coordinate
+ * @return color
+ */
 INLINE BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y)
 {
 	BYTE * p;
@@ -381,10 +388,14 @@ INLINE BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y)
 		{
 			HGDI_BITMAP hBmpBrush = hdcBrush->brush->pattern;
 	
+			/* According to @msdn{dd183396}, the system always positions a brush bitmap
+			 * at the brush origin and copy across the client area.
+			 * Calculate the offset of the mapped pixel in the brush bitmap according to
+			 * brush origin and dest coordinates */
 			if (x >= 0 && y >= 0)
 			{
-				x = x % hBmpBrush->width;
-				y = y % hBmpBrush->height;
+				x = (x + hBmpBrush->width - (hdcBrush->brush->nXOrg % hBmpBrush->width)) % hBmpBrush->width;
+				y = (y + hBmpBrush->height - (hdcBrush->brush->nYOrg % hBmpBrush->height)) % hBmpBrush->height;
 				p = hBmpBrush->data + (y * hBmpBrush->scanline) + (x * hBmpBrush->bytesPerPixel);
 				return p;
 			}
@@ -661,6 +672,8 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 			ret = FALSE;
 			goto out_error;
 		}
+		gdi->drawing->hdc->brush->nXOrg = brush->x;
+		gdi->drawing->hdc->brush->nYOrg = brush->y;
 
 		if (!gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
 				patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop)))
@@ -719,6 +732,8 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 			ret = FALSE;
 			goto out_error;
 		}
+		gdi->drawing->hdc->brush->nXOrg = brush->x;
+		gdi->drawing->hdc->brush->nYOrg = brush->y;
 
 		if (!gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
 				patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop)))
@@ -952,6 +967,8 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 			gdi_DeleteObject((HGDIOBJECT) hBmp);
 			goto out_fail;
 		}
+		gdi->drawing->hdc->brush->nXOrg = brush->x;
+		gdi->drawing->hdc->brush->nYOrg = brush->y;
 
 		gdi_BitBlt(gdi->drawing->hdc, mem3blt->nLeftRect, mem3blt->nTopRect,
 				mem3blt->nWidth, mem3blt->nHeight, bitmap->hdc,
