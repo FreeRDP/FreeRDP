@@ -506,7 +506,8 @@ static BOOL xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_WND_RECTS)
 	{
-		xf_SetWindowRects(xfc, appWindow, appWindow->windowRects, appWindow->numWindowRects);
+		/* We should only be using the visibility rects for shaping the window */
+		//xf_SetWindowRects(xfc, appWindow, appWindow->windowRects, appWindow->numWindowRects);
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)
