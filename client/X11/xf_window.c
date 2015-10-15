@@ -567,9 +567,11 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UIN
 	}
 	else
 	{
-		XChangeProperty(xfc->display, appWindow->handle, xfc->_NET_WM_WINDOW_TYPE,
-				XA_ATOM, 32, PropModeReplace, (BYTE*) &window_type, 1);
+		window_type = xfc->_NET_WM_WINDOW_TYPE_NORMAL;
 	}
+
+	XChangeProperty(xfc->display, appWindow->handle, xfc->_NET_WM_WINDOW_TYPE,
+			XA_ATOM, 32, PropModeReplace, (BYTE*) &window_type, 1);
 }
 
 void xf_SetWindowText(xfContext* xfc, xfAppWindow* appWindow, char* name)
