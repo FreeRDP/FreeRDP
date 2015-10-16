@@ -959,10 +959,10 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, i
 	ax = x + appWindow->windowOffsetX;
 	ay = y + appWindow->windowOffsetY;
 
-	if (ax + width > appWindow->windowOffsetX + appWindow->windowWidth)
-		width = (appWindow->windowOffsetX + appWindow->windowWidth - 1) - ax;
-	if (ay + height > appWindow->windowOffsetY + appWindow->windowHeight)
-		height = (appWindow->windowOffsetY + appWindow->windowHeight - 1) - ay;
+	if (ax + width > appWindow->windowOffsetX + appWindow->width)
+		width = (appWindow->windowOffsetX + appWindow->width - 1) - ax;
+	if (ay + height > appWindow->windowOffsetY + appWindow->height)
+		height = (appWindow->windowOffsetY + appWindow->height - 1) - ay;
 
 	xf_lock_x11(xfc, TRUE);
 
