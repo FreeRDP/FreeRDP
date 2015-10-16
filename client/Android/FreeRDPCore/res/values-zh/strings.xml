@@ -5,7 +5,7 @@
     <string name="no">否</string>
     <string name="cancel">取消</string>
     <string name="cont">继续</string>
-    <string name="login">登陆</string>
+    <string name="login">登录</string>
     <string name="logout">断开</string>
     <!-- Home menu items -->
     <string name="menu_exit">退出</string>
