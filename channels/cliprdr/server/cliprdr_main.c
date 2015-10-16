@@ -1409,12 +1409,6 @@ static UINT cliprdr_server_close(CliprdrServerContext* context)
 		cliprdr->ChannelHandle = NULL;
 	}
 
-	if (cliprdr->ChannelEvent)
-	{
-		CloseHandle(cliprdr->ChannelEvent);
-		cliprdr->ChannelEvent = NULL;
-	}
-
 	return CHANNEL_RC_OK;
 }
 
