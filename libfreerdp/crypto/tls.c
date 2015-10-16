@@ -67,12 +67,12 @@ static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 		return 0;
 
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_READ | BIO_FLAGS_IO_SPECIAL);
-	
+
 	EnterCriticalSection(&tls->lock);
 
 	status = SSL_write(tls->ssl, buf, size);
 	error = SSL_get_error(tls->ssl, status);
-	
+
 	LeaveCriticalSection(&tls->lock);
 
 	if (status <= 0)
@@ -126,12 +126,12 @@ static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_READ | BIO_FLAGS_IO_SPECIAL);
 
 	EnterCriticalSection(&tls->lock);
-	
+
 	status = SSL_read(tls->ssl, buf, size);
 	error = SSL_get_error(tls->ssl, status);
 
 	LeaveCriticalSection(&tls->lock);
-	
+
 	if (status <= 0)
 	{
 		switch (error)
@@ -394,7 +394,7 @@ static int bio_rdp_tls_new(BIO* bio)
 		return 0;
 
 	bio->ptr = (void*) tls;
-	
+
 	InitializeCriticalSectionAndSpinCount(&tls->lock, 4000);
 
 	return 1;
@@ -425,7 +425,7 @@ static int bio_rdp_tls_free(BIO* bio)
 	}
 
 	DeleteCriticalSection(&tls->lock);
-	
+
 	free(tls);
 
 	return 1;
@@ -1105,17 +1105,19 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 		status = -1;
 
 		if (instance->VerifyX509Certificate)
-		{
 			status = instance->VerifyX509Certificate(instance, pemCert, length, hostname, port, tls->isGatewayTransport);
-		}
-
-		WLog_ERR(TAG, "(length = %d) status: %d%s",	length, status, pemCert);
+		else
+			WLog_ERR(TAG, "No VerifyX509Certificate callback registered!");
 
 		free(pemCert);
 		BIO_free(bio);
 
 		if (status < 0)
+		{
+			WLog_ERR(TAG, "VerifyX509Certificate failed: (length = %d) status: [%d] %s",
+				 length, status, pemCert);
 			return -1;
+		}
 
 		return (status == 0) ? 0 : 1;
 	}
