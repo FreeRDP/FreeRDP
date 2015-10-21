@@ -24,6 +24,6 @@
 
 #include "wlog/wlog.h"
 
-int WLog_DataMessage_Write(char* filename, void* data, int length);
+BOOL WLog_DataMessage_Write(char* filename, void* data, int length);
 
 #endif /* WINPR_WLOG_DATA_MESSAGE_PRIVATE_H */

@@ -121,7 +121,7 @@ BOOL WLog_SetLogAppenderType(wLog* log, DWORD logAppenderType)
 	return log->Appender != NULL;
 }
 
-int WLog_OpenAppender(wLog* log)
+BOOL WLog_OpenAppender(wLog* log)
 {
 	int status = 0;
 	wLogAppender* appender;
@@ -129,10 +129,10 @@ int WLog_OpenAppender(wLog* log)
 	appender = WLog_GetLogAppender(log);
 
 	if (!appender)
-		return -1;
+		return FALSE;
 
 	if (!appender->Open)
-		return 0;
+		return TRUE;
 
 	if (!appender->State)
 	{
@@ -143,7 +143,7 @@ int WLog_OpenAppender(wLog* log)
 	return status;
 }
 
-int WLog_CloseAppender(wLog* log)
+BOOL WLog_CloseAppender(wLog* log)
 {
 	int status = 0;
 	wLogAppender* appender;
@@ -151,10 +151,10 @@ int WLog_CloseAppender(wLog* log)
 	appender = WLog_GetLogAppender(log);
 
 	if (!appender)
-		return -1;
+		return FALSE;
 
 	if (!appender->Close)
-		return 0;
+		return TRUE;
 
 	if (appender->State)
 	{
