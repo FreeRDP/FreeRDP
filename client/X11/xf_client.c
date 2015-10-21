@@ -1177,7 +1177,9 @@ BOOL xf_post_connect(freerdp* instance)
 	update->PlaySound = xf_play_sound;
 	update->SetKeyboardIndicators = xf_keyboard_set_indicators;
 
-	xfc->clipboard = xf_clipboard_new(xfc);
+	if (!(xfc->clipboard = xf_clipboard_new(xfc)))
+		return FALSE;
+
 	if (freerdp_channels_post_connect(channels, instance) < 0)
 		return FALSE;
 
