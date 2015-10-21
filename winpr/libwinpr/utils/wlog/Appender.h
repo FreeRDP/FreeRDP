@@ -27,6 +27,10 @@
 #include "wlog/ConsoleAppender.h"
 #include "wlog/CallbackAppender.h"
 
+#ifdef HAVE_SYSLOG_H
+#include "wlog/SyslogAppender.h"
+#endif
+
 void WLog_Appender_Free(wLog* log, wLogAppender* appender);
 
 #include "wlog/wlog.h"

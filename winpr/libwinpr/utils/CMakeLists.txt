@@ -51,6 +51,13 @@ set(${MODULE_PREFIX}_TRIO_SRCS
 	trio/triop.h
 	trio/triostr.c
 	trio/triostr.h)
+
+if (HAVE_SYSLOG_H)
+	set(SYSLOG_SRCS
+		wlog/SyslogAppender.c
+		wlog/SyslogAppender.h
+	)
+endif()
 	
 set(${MODULE_PREFIX}_WLOG_SRCS
 	wlog/wlog.c
@@ -76,7 +83,10 @@ set(${MODULE_PREFIX}_WLOG_SRCS
 	wlog/CallbackAppender.c
 	wlog/CallbackAppender.h
 	wlog/ConsoleAppender.c
-	wlog/ConsoleAppender.h)
+	wlog/ConsoleAppender.h
+	${SYSLOG_SRCS}
+	)
+
 
 set(${MODULE_PREFIX}_SRCS
 	ini.c

@@ -113,6 +113,7 @@ struct _wLogLayout
 #define WLOG_APPENDER_FILE	1
 #define WLOG_APPENDER_BINARY	2
 #define WLOG_APPENDER_CALLBACK	3
+#define WLOG_APPENDER_SYSLOG	4
 
 #define WLOG_PACKET_INBOUND	1
 #define WLOG_PACKET_OUTBOUND	2
@@ -196,6 +197,14 @@ struct _wLogCallbackAppender
 	CallbackAppenderPackage_t package;
 };
 typedef struct _wLogCallbackAppender wLogCallbackAppender;
+
+#ifdef HAVE_SYSLOG_H
+struct _wLogSyslogAppender
+{
+	WLOG_APPENDER_COMMON();
+};
+typedef struct _wLogSyslogAppender wLogSyslogAppender;
+#endif
 
 /**
  * Filter
