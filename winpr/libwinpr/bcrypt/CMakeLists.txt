@@ -17,8 +17,3 @@
 
 winpr_module_add(bcrypt.c)
 
-winpr_include_directory_add(
-	${OPENSSL_INCLUDE_DIR}
-	${ZLIB_INCLUDE_DIRS})
-
-winpr_library_add(${ZLIB_LIBRARIES})
