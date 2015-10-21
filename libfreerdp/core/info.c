@@ -723,14 +723,14 @@ BOOL rdp_recv_logon_plain_notify(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_recv_logon_error_info(rdpRdp* rdp, wStream* s)
 {
-	UINT32 errorNotificationData;
 	UINT32 errorNotificationType;
+	UINT32 errorNotificationData;
 
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
-	Stream_Read_UINT32(s, errorNotificationData); /* errorNotificationData (4 bytes) */
 	Stream_Read_UINT32(s, errorNotificationType); /* errorNotificationType (4 bytes) */
+	Stream_Read_UINT32(s, errorNotificationData); /* errorNotificationData (4 bytes) */
 
 	WLog_DBG(TAG, "LogonErrorInfo: Data: 0x%04X Type: 0x%04X",
 			errorNotificationData, errorNotificationType);
