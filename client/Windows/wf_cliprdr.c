@@ -1230,9 +1230,6 @@ static UINT cliprdr_send_data_request(wfClipboard* clipboard, UINT32 formatId)
 			!clipboard->context->ClientFormatDataRequest)
 		return ERROR_INTERNAL_ERROR;
 
-	formatDataRequest.msgType = CB_FORMAT_DATA_REQUEST;
-	formatDataRequest.msgFlags = CB_RESPONSE_OK;
-
 	formatDataRequest.requestedFormatId = formatId;
 	clipboard->requestedFormatId = formatId;
 
@@ -1264,6 +1261,7 @@ static UINT cliprdr_send_request_filecontents(wfClipboard* clipboard, const void
 	fileContentsRequest.nPositionHigh = positionhigh;
 	fileContentsRequest.cbRequested = nreq;
 	fileContentsRequest.clipDataId = 0;
+	fileContentsRequest.msgFlags = 0;
 
 	rc = clipboard->context->ClientFileContentsRequest(clipboard->context, &fileContentsRequest);
 
@@ -1719,8 +1717,7 @@ static UINT wf_cliprdr_send_client_capabilities(wfClipboard* clipboard)
 	generalCapabilitySet.generalFlags =
 			CB_USE_LONG_FORMAT_NAMES |
 			CB_STREAM_FILECLIP_ENABLED |
-			CB_FILECLIP_NO_FILE_PATHS |
-			CB_CAN_LOCK_CLIPDATA;
+			CB_FILECLIP_NO_FILE_PATHS;
 
 	return clipboard->context->ClientCapabilities(clipboard->context, &capabilities);
 }
@@ -1860,6 +1857,9 @@ static UINT wf_cliprdr_server_format_list_response(CliprdrClientContext* context
 {
 	(void)context;
 	(void)formatListResponse;
+
+	if (formatListResponse->msgFlags != CB_RESPONSE_OK)
+		return E_FAIL;
 
 	return CHANNEL_RC_OK;
 }
@@ -2069,8 +2069,6 @@ exit:
 		CloseClipboard();
 	}
 
-	ZeroMemory(&response, sizeof(CLIPRDR_FORMAT_DATA_RESPONSE));
-
 	response.msgFlags = CB_RESPONSE_OK;
 	response.dataLen = size;
 	response.requestedFormatData = (BYTE*) buff;
@@ -2093,6 +2091,9 @@ static UINT wf_cliprdr_server_format_data_response(CliprdrClientContext* context
 	BYTE* data;
 	HANDLE hMem;
 	wfClipboard* clipboard;
+
+	if (formatDataResponse->msgFlags != CB_RESPONSE_OK)
+		return E_FAIL;
 
 	if (!context || !formatDataResponse)
 		return ERROR_INTERNAL_ERROR;
@@ -2312,6 +2313,9 @@ static UINT wf_cliprdr_server_file_contents_response(CliprdrClientContext* conte
 													 const CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
 {
 	wfClipboard* clipboard;
+
+	if (fileContentsResponse->msgFlags != CB_RESPONSE_OK)
+		return E_FAIL;
 
 	if (!context || !fileContentsResponse)
 		return ERROR_INTERNAL_ERROR;
