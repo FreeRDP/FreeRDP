@@ -59,24 +59,28 @@ static BOOL check(const wLogMessage *msg)
 	return rc;
 }
 
-void CallbackAppenderMessage(const wLogMessage *msg)
+BOOL CallbackAppenderMessage(const wLogMessage *msg)
 {
 	check(msg);
+	return TRUE;
 }
 
-void CallbackAppenderData(const wLogMessage *msg)
+BOOL CallbackAppenderData(const wLogMessage *msg)
 {
 	fprintf(stdout, "%s\n", __FUNCTION__);
+	return TRUE;
 }
 
-void CallbackAppenderImage(const wLogMessage *msg)
+BOOL CallbackAppenderImage(const wLogMessage *msg)
 {
 	fprintf(stdout, "%s\n", __FUNCTION__);
+	return TRUE;
 }
 
-void CallbackAppenderPackage(const wLogMessage *msg)
+BOOL CallbackAppenderPackage(const wLogMessage *msg)
 {
 	fprintf(stdout, "%s\n", __FUNCTION__);
+	return TRUE;
 }
 
 int TestWLogCallback(int argc, char* argv[])
