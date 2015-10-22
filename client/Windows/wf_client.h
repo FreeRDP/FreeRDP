@@ -137,7 +137,7 @@ struct wf_context
 	int yCurrentScroll;
 	int yMaxScroll;
 
-	wfClipboard* clipboard;
+	void* clipboard;
 	CliprdrClientContext* cliprdr;
 
 	FloatBar* floatbar;
