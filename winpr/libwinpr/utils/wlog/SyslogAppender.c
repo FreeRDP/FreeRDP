@@ -53,64 +53,62 @@ static int getSyslogLevel(DWORD level)
 	}
 }
 
-static int WLog_SyslogAppender_Open(wLog* log, wLogSyslogAppender* appender)
+static BOOL WLog_SyslogAppender_Open(wLog* log, wLogSyslogAppender* appender)
 {
 	if (!log || !appender)
-		return -1;
+		return FALSE;
 
-	return 0;
+	return TRUE;
 }
 
-static int WLog_SyslogAppender_Close(wLog* log, wLogSyslogAppender* appender)
+static BOOL WLog_SyslogAppender_Close(wLog* log, wLogSyslogAppender* appender)
 {
 	if (!log || !appender)
-		return -1;
+		return FALSE;
 
-	return 0;
+	return TRUE;
 }
 
-static int WLog_SyslogAppender_WriteMessage(wLog* log, wLogSyslogAppender* appender, wLogMessage* message)
+static BOOL WLog_SyslogAppender_WriteMessage(wLog* log, wLogSyslogAppender* appender, wLogMessage* message)
 {
 	int syslogLevel;
 
 	if (!log || !appender || !message)
-		return -1;
+		return FALSE;
 
 	syslogLevel = getSyslogLevel(message->Level);
 	if (syslogLevel >= 0)
 		syslog(syslogLevel, "%s", message->TextString);
 	
-	return 1;
+	return TRUE;
 }
 
-static int WLog_SyslogAppender_WriteDataMessage(wLog* log, wLogSyslogAppender* appender, wLogMessage* message)
+static BOOL WLog_SyslogAppender_WriteDataMessage(wLog* log, wLogSyslogAppender* appender, wLogMessage* message)
 {
 	int syslogLevel;
 
 	if (!log || !appender || !message)
-		return -1;
+		return FALSE;
 
 	syslogLevel = getSyslogLevel(message->Level);
 	if (syslogLevel >= 0)
 		syslog(syslogLevel, "skipped data message of %d bytes", message->Length);
 
-	return 0;
+	return TRUE;
 }
 
-
-
-static int WLog_SyslogAppender_WriteImageMessage(wLog* log, wLogSyslogAppender* appender, wLogMessage* message)
+static BOOL WLog_SyslogAppender_WriteImageMessage(wLog* log, wLogSyslogAppender* appender, wLogMessage* message)
 {
 	int syslogLevel;
 
 	if (!log || !appender || !message)
-		return -1;
+		return FALSE;
 
 	syslogLevel = getSyslogLevel(message->Level);
 	if (syslogLevel >= 0)
 		syslog(syslogLevel, "skipped image (%dx%dx%d)", message->ImageWidth, message->ImageHeight, message->ImageBpp);
 
-	return 0;
+	return TRUE;
 }
 
 wLogSyslogAppender* WLog_SyslogAppender_New(wLog* log)
@@ -138,7 +136,5 @@ wLogSyslogAppender* WLog_SyslogAppender_New(wLog* log)
 void WLog_SyslogAppender_Free(wLog* log, wLogSyslogAppender* appender)
 {
 	if (appender)
-	{
 		free(appender);
-	}
 }
