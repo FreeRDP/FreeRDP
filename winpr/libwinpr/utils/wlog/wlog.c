@@ -231,7 +231,7 @@ BOOL WLog_WritePacket(wLog* log, wLogMessage* message)
 
 BOOL WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args)
 {
-	BOOL status;
+	BOOL status = FALSE;
 
 	if (message->Type == WLOG_MESSAGE_TEXT)
 	{
