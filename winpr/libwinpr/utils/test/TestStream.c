@@ -65,6 +65,16 @@ static BOOL TestStream_Verify(wStream* s, int mincap, int len, int pos)
 	return TRUE;
 }
 
+static BOOL TestStream_New()
+{
+	wStream *s = NULL;
+	/* Test creation of a 0-size stream with no buffer */
+	s = Stream_New(NULL, 0);
+	if (s)
+		return FALSE;
+	return TRUE;
+}
+
 
 static BOOL TestStream_Create(int count, BOOL selfAlloc)
 {
@@ -266,6 +276,8 @@ int TestStream(int argc, char* argv[])
 	if (!TestStream_Reading())
 		return 4;
 
+	if (!TestStream_New())
+		return 5;
 	/**
 	 * FIXME: Add tests for
 	 * Stream_Write_*
