@@ -80,6 +80,7 @@ struct _CliprdrStream
 	LONG m_lIndex;
 	ULARGE_INTEGER m_lSize;
 	ULARGE_INTEGER m_lOffset;
+	FILEDESCRIPTORW m_Dsc;
 	void* m_pData;
 };
 typedef struct _CliprdrStream CliprdrStream;
@@ -392,10 +393,11 @@ static HRESULT STDMETHODCALLTYPE CliprdrStream_Clone(IStream* This, IStream** pp
 	return E_NOTIMPL;
 }
 
-static CliprdrStream* CliprdrStream_New(LONG index, void* pData)
+static CliprdrStream* CliprdrStream_New(LONG index, void* pData, const FILEDESCRIPTORW *dsc)
 {
 	IStream* iStream;
 	BOOL success = FALSE;
+	BOOL isDir = FALSE;
 	CliprdrStream* instance;
 	wfClipboard* clipboard = (wfClipboard*) pData;
 
@@ -403,6 +405,8 @@ static CliprdrStream* CliprdrStream_New(LONG index, void* pData)
 
 	if (instance)
 	{
+		instance->m_Dsc = *dsc;
+
 		iStream = &instance->iStream;
 
 		iStream->lpVtbl = (IStreamVtbl*) calloc(1, sizeof(IStreamVtbl));
@@ -429,16 +433,26 @@ static CliprdrStream* CliprdrStream_New(LONG index, void* pData)
 			instance->m_pData = pData;
 			instance->m_lOffset.QuadPart = 0;
 
-			/* get content size of this stream */
-			if (cliprdr_send_request_filecontents(clipboard, (void*) instance,
-												  instance->m_lIndex,
-												  FILECONTENTS_SIZE, 0, 0, 8) == CHANNEL_RC_OK)
+			if (instance->m_Dsc.dwFlags & FD_ATTRIBUTES)
 			{
-				success = TRUE;
+				if (instance->m_Dsc.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+					isDir = TRUE;
 			}
 
-			instance->m_lSize.QuadPart = *((LONGLONG*) clipboard->req_fdata);
-			free(clipboard->req_fdata);
+			if (((instance->m_Dsc.dwFlags & FD_FILESIZE) == 0) && !isDir) {
+				/* get content size of this stream */
+				if (cliprdr_send_request_filecontents(clipboard, (void*) instance,
+													  instance->m_lIndex,
+													  FILECONTENTS_SIZE, 0, 0, 8) == CHANNEL_RC_OK)
+				{
+					success = TRUE;
+				}
+
+				instance->m_lSize.QuadPart = *((LONGLONG*) clipboard->req_fdata);
+				free(clipboard->req_fdata);
+			}
+			else
+				success = TRUE;
 		}
 	}
 
@@ -579,7 +593,11 @@ static HRESULT STDMETHODCALLTYPE CliprdrDataObject_GetData(
 				if (instance->m_pStream)
 				{
 					for (i = 0; i < instance->m_nStreams; i++)
-						instance->m_pStream[i] = (IStream*) CliprdrStream_New(i, clipboard);
+					{
+						instance->m_pStream[i] = (IStream*) CliprdrStream_New(i, clipboard, &dsc->fgd[i]);
+						if (!instance->m_pStream[i])
+							return E_OUTOFMEMORY;
+					}
 				}
 			}
 		}
