@@ -65,15 +65,19 @@ static wLogFilter* g_Filters = NULL;
 
 static BOOL log_recursion(const char* file, const char* fkt, int line)
 {
+	char** msg;
 	size_t used, i;
 	void* bt = winpr_backtrace(20);
+#if defined(ANDROID)
+	const char* tag = WINPR_TAG("utils.wlog");
+#endif
+
 	if (!bt)
 		return FALSE;
-	char** msg = winpr_backtrace_symbols(bt, &used);
+	msg = winpr_backtrace_symbols(bt, &used);
 	if (!msg)
 		return FALSE;
 #if defined(ANDROID)
-	const char* tag = WINPR_TAG("utils.wlog");
 	if (__android_log_print(ANDROID_LOG_FATAL, tag, "Recursion detected!!!") < 0)
 		return FALSE;
 	if (__android_log_print(ANDROID_LOG_FATAL, tag, "Check %s [%s:%d]", fkt, file, line) < 0)
