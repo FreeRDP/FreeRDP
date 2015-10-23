@@ -1209,8 +1209,16 @@ static UINT cliprdr_send_format_list(wfClipboard* clipboard)
 
 	index = 0;
 
-	while (formatId = EnumClipboardFormats(formatId))
-		formats[index++].formatId = formatId;;
+	if (IsClipboardFormatAvailable(CF_HDROP))
+	{
+		formats[index++].formatId = RegisterClipboardFormat(CFSTR_FILEDESCRIPTORW);
+		formats[index++].formatId = RegisterClipboardFormat(CFSTR_FILECONTENTS);
+	}
+	else
+	{
+		while (formatId = EnumClipboardFormats(formatId))
+				formats[index++].formatId = formatId;
+	}
 
 	numFormats = index;
 
