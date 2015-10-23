@@ -1566,5 +1566,6 @@ void cliprdr_server_context_free(CliprdrServerContext* context)
 		free(cliprdr->temporaryDirectory);
 	}
 
+	free(context->handle);
 	free(context);
 }
