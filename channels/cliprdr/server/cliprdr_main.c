@@ -1409,12 +1409,6 @@ static UINT cliprdr_server_close(CliprdrServerContext* context)
 		cliprdr->ChannelHandle = NULL;
 	}
 
-	if (cliprdr->ChannelEvent)
-	{
-		CloseHandle(cliprdr->ChannelEvent);
-		cliprdr->ChannelEvent = NULL;
-	}
-
 	return CHANNEL_RC_OK;
 }
 
@@ -1572,5 +1566,6 @@ void cliprdr_server_context_free(CliprdrServerContext* context)
 		free(cliprdr->temporaryDirectory);
 	}
 
+	free(context->handle);
 	free(context);
 }
