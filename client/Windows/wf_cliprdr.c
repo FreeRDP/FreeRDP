@@ -571,6 +571,7 @@ static HRESULT STDMETHODCALLTYPE CliprdrDataObject_GetData(
 
 	if (instance->m_pFormatEtc[idx].cfFormat == RegisterClipboardFormat(CFSTR_FILEDESCRIPTORW))
 	{
+		FILEGROUPDESCRIPTOR *dsc;
 		DWORD remote = get_remote_format_id(clipboard, instance->m_pFormatEtc[idx].cfFormat);
 		if (cliprdr_send_data_request(clipboard, remote) != 0)
 			return E_UNEXPECTED;
@@ -580,7 +581,7 @@ static HRESULT STDMETHODCALLTYPE CliprdrDataObject_GetData(
 		/* GlobalLock returns a pointer to the first byte of the memory block,
 		* in which is a FILEGROUPDESCRIPTOR structure, whose first UINT member
 		* is the number of FILEDESCRIPTOR's */
-		FILEGROUPDESCRIPTOR *dsc = (FILEGROUPDESCRIPTOR*) GlobalLock(clipboard->hmem);
+		dsc = (FILEGROUPDESCRIPTOR*) GlobalLock(clipboard->hmem);
 		instance->m_nStreams = dsc->cItems;
 		GlobalUnlock(clipboard->hmem);
 
