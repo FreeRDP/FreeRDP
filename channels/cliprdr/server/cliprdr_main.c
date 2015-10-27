@@ -193,7 +193,7 @@ static UINT cliprdr_server_format_list(CliprdrServerContext* context, CLIPRDR_FO
 	CLIPRDR_FORMAT* format;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 
-	if (!cliprdr->useLongFormatNames)
+	if (!context->useLongFormatNames)
 	{
 		length = formatList->numFormats * 36;
 
@@ -504,22 +504,21 @@ static UINT cliprdr_server_receive_general_capability(CliprdrServerContext* cont
 {
 	UINT32 version;
 	UINT32 generalFlags;
-	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 
 	Stream_Read_UINT32(s, version); /* version (4 bytes) */
 	Stream_Read_UINT32(s, generalFlags); /* generalFlags (4 bytes) */
 
-	if (generalFlags & CB_USE_LONG_FORMAT_NAMES)
-		cliprdr->useLongFormatNames = TRUE;
+	if (context->useLongFormatNames)
+		context->useLongFormatNames = (generalFlags & CB_USE_LONG_FORMAT_NAMES) ? TRUE : FALSE;
 
-	if (generalFlags & CB_STREAM_FILECLIP_ENABLED)
-		cliprdr->streamFileClipEnabled = TRUE;
+	if (context->streamFileClipEnabled)
+		context->streamFileClipEnabled = (generalFlags & CB_STREAM_FILECLIP_ENABLED) ? TRUE : FALSE;
 
-	if (generalFlags & CB_FILECLIP_NO_FILE_PATHS)
-		cliprdr->fileClipNoFilePaths = TRUE;
+	if (context->fileClipNoFilePaths)
+		context->fileClipNoFilePaths = (generalFlags & CB_FILECLIP_NO_FILE_PATHS) ? TRUE : FALSE;
 
-	if (generalFlags & CB_CAN_LOCK_CLIPDATA)
-		cliprdr->canLockClipData = TRUE;
+	if (context->canLockClipData)
+		context->canLockClipData = (generalFlags & CB_CAN_LOCK_CLIPDATA) ? TRUE : FALSE;
 
 	return CHANNEL_RC_OK;
 }
@@ -654,7 +653,7 @@ static UINT cliprdr_server_receive_format_list(CliprdrServerContext* context, wS
 		formatList.formats = NULL;
 		formatList.numFormats = 0;
 	}
-	else if (!cliprdr->useLongFormatNames)
+	else if (!context->useLongFormatNames)
 	{
 		formatList.numFormats = (dataLen / 36);
 
@@ -1103,8 +1102,17 @@ static UINT cliprdr_server_init(CliprdrServerContext* context)
 
 	generalFlags = 0;
 
-	if (cliprdr->useLongFormatNames)
+	if (context->useLongFormatNames)
 		generalFlags |= CB_USE_LONG_FORMAT_NAMES;
+
+	if (context->streamFileClipEnabled)
+		generalFlags |= CB_STREAM_FILECLIP_ENABLED;
+
+	if (context->fileClipNoFilePaths)
+		generalFlags |= CB_FILECLIP_NO_FILE_PATHS;
+
+	if (context->canLockClipData)
+		generalFlags |= CB_CAN_LOCK_CLIPDATA;
 
 	capabilities.msgType = CB_CLIP_CAPS;
 	capabilities.msgFlags = 0;
@@ -1526,11 +1534,6 @@ CliprdrServerContext* cliprdr_server_context_new(HANDLE vcm)
 		if (cliprdr)
 		{
 			cliprdr->vcm = vcm;
-
-			cliprdr->useLongFormatNames = TRUE;
-			cliprdr->streamFileClipEnabled = TRUE;
-			cliprdr->fileClipNoFilePaths = TRUE;
-			cliprdr->canLockClipData = TRUE;
 
 			cliprdr->s = Stream_New(NULL, 4096);
 
