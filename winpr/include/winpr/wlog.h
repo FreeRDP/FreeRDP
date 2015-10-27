@@ -27,6 +27,10 @@ extern "C" {
 #include <stdio.h>
 #include <stdarg.h>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif /* HAVE_CONFIG_H */
+
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
