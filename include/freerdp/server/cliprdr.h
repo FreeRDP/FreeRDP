@@ -68,6 +68,12 @@ struct _cliprdr_server_context
 	void* handle;
 	void* custom;
 
+	/* server clipboard capabilities - set by server - updated by the channel after client capability exchange */
+	BOOL useLongFormatNames;
+	BOOL streamFileClipEnabled;
+	BOOL fileClipNoFilePaths;
+	BOOL canLockClipData;
+
 	psCliprdrOpen Open;
 	psCliprdrClose Close;
 	psCliprdrStart Start;
