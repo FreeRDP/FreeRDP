@@ -68,7 +68,7 @@ struct _cliprdr_server_context
 	void* handle;
 	void* custom;
 
-	/* clipboard capabilities - set by server */
+	/* server clipboard capabilities - set by server - updated by the channel after client capability exchange */
 	BOOL useLongFormatNames;
 	BOOL streamFileClipEnabled;
 	BOOL fileClipNoFilePaths;
