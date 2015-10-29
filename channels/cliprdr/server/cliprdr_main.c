@@ -1004,9 +1004,9 @@ static UINT cliprdr_server_receive_filecontents_response(CliprdrServerContext* c
 	response.cbRequested = header->dataLen - 4;
 	response.requestedData = Stream_Pointer(s); /* requestedFileContentsData */
 
-	IFCALLRET(context->ServerFileContentsResponse, error, context, &response);
+	IFCALLRET(context->ClientFileContentsResponse, error, context, &response);
 	if (error)
-		WLog_ERR(TAG, "ServerFileContentsResponse failed with error %lu!", error);
+		WLog_ERR(TAG, "ClientFileContentsResponse failed with error %lu!", error);
 
 	return error;
 }
