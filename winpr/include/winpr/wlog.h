@@ -27,10 +27,6 @@ extern "C" {
 #include <stdio.h>
 #include <stdarg.h>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif /* HAVE_CONFIG_H */
-
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
@@ -202,13 +198,11 @@ struct _wLogCallbackAppender
 };
 typedef struct _wLogCallbackAppender wLogCallbackAppender;
 
-#ifdef HAVE_SYSLOG_H
 struct _wLogSyslogAppender
 {
 	WLOG_APPENDER_COMMON();
 };
 typedef struct _wLogSyslogAppender wLogSyslogAppender;
-#endif
 
 /**
  * Filter
