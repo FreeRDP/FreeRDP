@@ -694,6 +694,10 @@ wLog* WLog_GetRoot()
 				logAppenderType = WLOG_APPENDER_FILE;
 			else if (_stricmp(env, "BINARY") == 0)
 				logAppenderType = WLOG_APPENDER_BINARY;
+#ifdef HAVE_SYSLOG_H
+			else if (_stricmp(env, "SYSLOG") == 0)
+				logAppenderType = WLOG_APPENDER_SYSLOG;
+#endif /* HAVE_SYSLOG_H */
 
 			free(env);
 		}
