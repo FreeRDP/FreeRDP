@@ -151,6 +151,7 @@ wLogJournaldAppender* WLog_JournaldAppender_New(wLog* log)
 	if (!appender->stream)
 		goto error_stream_open;
 	setbuffer(appender->stream, NULL, 0);
+	free(env);
 	return appender;
 
 error_stream_open:
