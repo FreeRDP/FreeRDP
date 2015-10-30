@@ -150,6 +150,7 @@ wLogJournaldAppender* WLog_JournaldAppender_New(wLog* log)
 	appender->stream = fdopen(fd, "w");
 	if (!appender->stream)
 		goto error_stream_open;
+	setbuffer(appender->stream, NULL, 0);
 	return appender;
 
 error_stream_open:
