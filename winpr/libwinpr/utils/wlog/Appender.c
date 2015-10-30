@@ -53,6 +53,11 @@ wLogAppender* WLog_Appender_New(wLog* log, DWORD logAppenderType)
 		appender = (wLogAppender*) WLog_SyslogAppender_New(log);
 		break;
 #endif
+#ifdef HAVE_JOURNALD_H
+	case WLOG_APPENDER_JOURNALD:
+		appender = (wLogAppender*) WLog_JournaldAppender_New(log);
+		break;
+#endif
 	default:
 		fprintf(stderr, "%s: unknown handler type %d\n", __FUNCTION__, logAppenderType);
 		appender = NULL;
@@ -106,6 +111,11 @@ void WLog_Appender_Free(wLog* log, wLogAppender* appender)
 #ifdef HAVE_SYSLOG_H
 	case WLOG_APPENDER_SYSLOG:
 		WLog_SyslogAppender_Free(log, (wLogSyslogAppender *) appender);
+		break;
+#endif
+#ifdef HAVE_JOURNALD_H
+	case WLOG_APPENDER_JOURNALD:
+		WLog_JournaldAppender_Free(log, (wLogJournaldAppender *) appender);
 		break;
 #endif
 	default:

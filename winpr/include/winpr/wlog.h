@@ -114,6 +114,7 @@ struct _wLogLayout
 #define WLOG_APPENDER_BINARY	2
 #define WLOG_APPENDER_CALLBACK	3
 #define WLOG_APPENDER_SYSLOG	4
+#define WLOG_APPENDER_JOURNALD	5
 
 #define WLOG_PACKET_INBOUND	1
 #define WLOG_PACKET_OUTBOUND	2
@@ -203,6 +204,16 @@ struct _wLogSyslogAppender
 	WLOG_APPENDER_COMMON();
 };
 typedef struct _wLogSyslogAppender wLogSyslogAppender;
+
+#ifdef HAVE_JOURNALD_H
+struct _wLogJournaldAppender
+{
+	WLOG_APPENDER_COMMON();
+	FILE *stream;
+};
+typedef struct _wLogJournaldAppender wLogJournaldAppender;
+#endif
+
 
 /**
  * Filter
