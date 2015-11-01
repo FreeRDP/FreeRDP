@@ -30,6 +30,7 @@
 
 WINPR_API wLogJournaldAppender* WLog_JournaldAppender_New(wLog* log);
 WINPR_API void WLog_JournaldAppender_Free(wLog* log, wLogJournaldAppender* appender);
+WINPR_API BOOL Wlog_JournaldAppender_SetIdentifier(wLogJournaldAppender* appender, const char *id);
 
 
 #endif /* WINPR_LIBWINPR_UTILS_WLOG_JOURNALDAPPENDER_H_ */

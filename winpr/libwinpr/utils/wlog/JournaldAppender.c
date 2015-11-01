@@ -35,12 +35,42 @@
 #include "wlog/Message.h"
 #include "wlog/JournaldAppender.h"
 
+BOOL Wlog_JournaldAppender_SetIdentifier(wLogJournaldAppender* appender, const char *id)
+{
+	if (appender->identifier)
+		free(appender->identifier);
+
+	if (appender->stream)
+	{
+		fclose(appender->stream);
+		appender->stream = NULL;
+	}
+
+	return ((appender->identifier = _strdup(id)) != NULL);
+}
 
 static BOOL WLog_JournaldAppender_Open(wLog* log, wLogJournaldAppender* appender)
 {
+	int fd;
+
 	if (!log || !appender)
 		return FALSE;
 
+	if (appender->stream)
+		return TRUE;
+
+	fd = sd_journal_stream_fd(appender->identifier, LOG_INFO, 1);
+	if (fd < 0)
+		return FALSE;
+
+	appender->stream = fdopen(fd, "w");
+	if (!appender->stream)
+	{
+		close(fd);
+		return FALSE;
+	}
+
+	setbuffer(appender->stream, NULL, 0);
 	return TRUE;
 }
 
@@ -109,9 +139,7 @@ wLogJournaldAppender* WLog_JournaldAppender_New(wLog* log)
 {
 	wLogJournaldAppender* appender;
 	DWORD nSize;
-	LPSTR env = NULL;
 	LPCSTR name;
-	int fd;
 
 	appender = (wLogJournaldAppender*) calloc(1, sizeof(wLogJournaldAppender));
 	if (!appender)
@@ -132,32 +160,26 @@ wLogJournaldAppender* WLog_JournaldAppender_New(wLog* log)
 	nSize = GetEnvironmentVariableA(name, NULL, 0);
 	if (nSize)
 	{
-		env = (LPSTR) malloc(nSize);
-		if (!env)
+		appender->identifier = (LPSTR) malloc(nSize);
+		if (!appender->identifier)
 			goto error_env_malloc;
 
-		GetEnvironmentVariableA(name, env, nSize);
+		GetEnvironmentVariableA(name, appender->identifier, nSize);
+
+		if (!WLog_JournaldAppender_Open(log, appender))
+			goto error_open;
 	}
 	else
 	{
-		env = _strdup("winpr");
+		appender->identifier = _strdup("winpr");
+		if (!appender->identifier)
+			goto error_env_malloc;
 	}
 
-	fd = sd_journal_stream_fd(env, LOG_INFO, 1);
-	if (fd < 0)
-		goto error_journal_fd;
-
-	appender->stream = fdopen(fd, "w");
-	if (!appender->stream)
-		goto error_stream_open;
-	setbuffer(appender->stream, NULL, 0);
-	free(env);
 	return appender;
 
-error_stream_open:
-	close(fd);
-error_journal_fd:
-	free(env);
+error_open:
+	free(appender->identifier);
 error_env_malloc:
 	free(appender);
 	return NULL;
@@ -169,6 +191,7 @@ void WLog_JournaldAppender_Free(wLog* log, wLogJournaldAppender* appender)
 	{
 		if (appender->stream)
 			fclose(appender->stream);
+		free(appender->identifier);
 		free(appender);
 	}
 }

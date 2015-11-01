@@ -703,7 +703,7 @@ wLog* WLog_GetRoot()
 				logAppenderType = WLOG_APPENDER_SYSLOG;
 #endif /* HAVE_SYSLOG_H */
 #ifdef HAVE_JOURNALD_H
-			else if (_stricmp(env, "SYSTEMD") == 0)
+			else if (_stricmp(env, "JOURNALD") == 0)
 				logAppenderType = WLOG_APPENDER_JOURNALD;
 #endif
 

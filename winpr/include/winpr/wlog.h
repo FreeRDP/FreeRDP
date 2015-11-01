@@ -205,14 +205,13 @@ struct _wLogSyslogAppender
 };
 typedef struct _wLogSyslogAppender wLogSyslogAppender;
 
-#ifdef HAVE_JOURNALD_H
 struct _wLogJournaldAppender
 {
 	WLOG_APPENDER_COMMON();
+	char *identifier;
 	FILE *stream;
 };
 typedef struct _wLogJournaldAppender wLogJournaldAppender;
-#endif
 
 
 /**
