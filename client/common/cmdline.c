@@ -262,7 +262,7 @@ int freerdp_client_print_command_line_help(int argc, char** argv)
 	printf("\n");
 
 	printf("Drive Redirection: /drive:home,/home/user\n");
-	printf("Smartcard Redirection: /smartcard:<device>\n");
+	printf("Smartcard Redirection: /smartcard:<name>\n");
 	printf("Serial Port Redirection: /serial:<name>,<device>,[SerCx2|SerCx|Serial],[permissive]\n");
 	printf("Serial Port Redirection: /serial:COM1,/dev/ttyS0\n");
 	printf("Parallel Port Redirection: /parallel:<device>\n");
@@ -278,6 +278,7 @@ int freerdp_client_print_command_line_help(int argc, char** argv)
 	printf("Multimedia Redirection: /multimedia:sys:oss,dev:/dev/dsp1,decoder:ffmpeg\n");
 	printf("Multimedia Redirection: /multimedia:sys:alsa\n");
 	printf("USB Device Redirection: /usb:id,dev:054c:0268\n");
+	printf("Smartcard Redirection: /smartcard:\"Xiring Leo V2 (52412506854712) 01 00\"\n");
 	printf("\n");
 
 	printf("More documentation is coming, in the meantime consult source files\n");
