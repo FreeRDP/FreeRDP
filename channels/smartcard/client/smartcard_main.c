@@ -679,6 +679,7 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	RDPDR_SMARTCARD* device;
 	SMARTCARD_DEVICE* smartcard;
 	UINT error = CHANNEL_RC_NO_MEMORY;
+	LONG status;
 
 	device = (RDPDR_SMARTCARD*) pEntryPoints->device;
 
@@ -723,6 +724,13 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 			smartcard->path = name;
 		else
 			smartcard->name = name;
+	}
+	
+	status = SCardAddReaderName(&smartcard->thread, (LPSTR) name);
+	if (status != SCARD_S_SUCCESS)
+	{
+		WLog_ERR(TAG, "Failed to add reader name!");
+		goto error_device_data;
 	}
 
 	smartcard->IrpQueue = MessageQueue_New(NULL);
