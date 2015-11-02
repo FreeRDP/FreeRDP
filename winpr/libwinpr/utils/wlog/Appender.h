@@ -31,6 +31,10 @@
 #include "wlog/SyslogAppender.h"
 #endif
 
+#ifdef HAVE_JOURNALD_H
+#include "wlog/JournaldAppender.h"
+#endif
+
 void WLog_Appender_Free(wLog* log, wLogAppender* appender);
 
 #include "wlog/wlog.h"

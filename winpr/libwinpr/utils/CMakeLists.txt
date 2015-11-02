@@ -58,6 +58,16 @@ if (HAVE_SYSLOG_H)
 		wlog/SyslogAppender.h
 	)
 endif()
+
+if (LIBSYSTEMD_FOUND)
+	set(JOURNALD_SRCS
+		wlog/JournaldAppender.c
+		wlog/JournaldAppender.h
+	)
+
+	winpr_include_directory_add(${LIBSYSTEMD_INCLUDE_DIR})
+	winpr_library_add(${LIBSYSTEMD_LIBRARY})
+endif()
 	
 set(${MODULE_PREFIX}_WLOG_SRCS
 	wlog/wlog.c
@@ -85,6 +95,7 @@ set(${MODULE_PREFIX}_WLOG_SRCS
 	wlog/ConsoleAppender.c
 	wlog/ConsoleAppender.h
 	${SYSLOG_SRCS}
+	${JOURNALD_SRCS}
 	)
 
 
