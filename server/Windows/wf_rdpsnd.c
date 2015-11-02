@@ -151,6 +151,7 @@ BOOL wf_peer_rdpsnd_init(wfPeerContext* context)
 		return FALSE;
 
 	context->rdpsnd = rdpsnd_server_context_new(context->vcm);
+	context->rdpsnd->rdpcontext = &context->_p;
 	context->rdpsnd->data = context;
 
 	context->rdpsnd->server_formats = supported_audio_formats;

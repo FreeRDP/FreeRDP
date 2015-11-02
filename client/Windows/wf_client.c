@@ -575,8 +575,7 @@ static BOOL wf_gw_authenticate(freerdp* instance,
 		char** username, char** password, char** domain)
 {
 	char tmp[MAX_PATH];
-
-	sprintf(tmp, sizeof(tmp), "Gateway %s", instance->settings->GatewayHostname);
+	sprintf_s(tmp, sizeof(tmp), "Gateway %s", instance->settings->GatewayHostname);
 	return wf_authenticate_raw(instance, tmp, username, password, domain);
 }
 

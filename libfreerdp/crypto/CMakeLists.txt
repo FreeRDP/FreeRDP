@@ -33,6 +33,11 @@ freerdp_include_directory_add(${ZLIB_INCLUDE_DIRS})
 
 freerdp_library_add(${OPENSSL_LIBRARIES})
 
+if(MBEDTLS_FOUND)
+	freerdp_include_directory_add(${MBEDTLS_INCLUDE_DIR})
+	freerdp_library_add(${MBEDTLS_LIBRARIES})
+endif()
+
 if(WIN32)
 	freerdp_library_add(ws2_32)
 else()

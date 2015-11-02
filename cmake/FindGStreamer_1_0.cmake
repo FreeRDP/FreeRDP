@@ -53,17 +53,17 @@ set(GSTREAMER_1_0_MINIMUM_VERSION 1.0.5)
 # Helper macro to find a Gstreamer plugin (or Gstreamer itself)
 #   _component_prefix is prepended to the _INCLUDE_DIRS and _LIBRARIES variables (eg. "GSTREAMER_1_0_AUDIO")
 #   _pkgconfig_name is the component's pkg-config name (eg. "gstreamer-1.0", or "gstreamer-video-1.0").
-#   _header is the component's header, relative to the gstreamer-1.0 directory (eg. "gst/gst.h").
 #   _library is the component's library name (eg. "gstreamer-1.0" or "gstvideo-1.0")
-macro(FIND_GSTREAMER_COMPONENT _component_prefix _pkgconfig_name _header _library)
+macro(FIND_GSTREAMER_COMPONENT _component_prefix _pkgconfig_name _library)
     # FIXME: The QUIET keyword can be used once we require CMake 2.8.2.
-    pkg_check_modules(PC_${_component_prefix} ${_pkgconfig_name})
 
-    find_path(${_component_prefix}_INCLUDE_DIRS
-        NAMES ${_header}
-        HINTS ${PC_${_component_prefix}_INCLUDE_DIRS} ${PC_${_component_prefix}_INCLUDEDIR}
-        PATH_SUFFIXES gstreamer-1.0
-    )
+    string(REGEX MATCH "(.*)>=(.*)" _dummy "${_pkgconfig_name}")
+    if ("${CMAKE_MATCH_2}" STREQUAL "")
+        pkg_check_modules(PC_${_component_prefix} "${_pkgconfig_name} >= ${GStreamer_FIND_VERSION}")
+    else ()
+        pkg_check_modules(PC_${_component_prefix} ${_pkgconfig_name})
+    endif ()
+    set(${_component_prefix}_INCLUDE_DIRS ${PC_${_component_prefix}_INCLUDE_DIRS})
 
     find_library(${_component_prefix}_LIBRARIES
         NAMES ${_library} gstreamer_android
@@ -78,8 +78,8 @@ endmacro()
 # 1.1. Find headers and libraries
 set(GLIB_ROOT_DIR ${GSTREAMER_1_0_ROOT_DIR})
 find_package(Glib REQUIRED)
-FIND_GSTREAMER_COMPONENT(GSTREAMER_1_0 gstreamer-1.0 gst/gst.h gstreamer-1.0)
-FIND_GSTREAMER_COMPONENT(GSTREAMER_1_0_BASE gstreamer-base-1.0 gst/gst.h gstbase-1.0)
+FIND_GSTREAMER_COMPONENT(GSTREAMER_1_0 gstreamer-1.0 gstreamer-1.0)
+FIND_GSTREAMER_COMPONENT(GSTREAMER_1_0_BASE gstreamer-base-1.0 gstbase-1.0)
 
 # 1.2. Check Gstreamer version
 if (GSTREAMER_1_0_INCLUDE_DIRS)
@@ -110,11 +110,11 @@ endif ()
 # 2. Find Gstreamer plugins
 # -------------------------
 
-FIND_GSTREAMER_COMPONENT(GSTREAMER_1_0_APP gstreamer-app-1.0 gst/app/gstappsink.h gstapp-1.0)
-FIND_GSTREAMER_COMPONENT(GSTREAMER_1_0_AUDIO gstreamer-audio-1.0 gst/audio/audio.h gstaudio-1.0)
-FIND_GSTREAMER_COMPONENT(GSTREAMER_1_0_FFT gstreamer-fft-1.0 gst/fft/gstfft.h gstfft-1.0)
-FIND_GSTREAMER_COMPONENT(GSTREAMER_1_0_PBUTILS gstreamer-pbutils-1.0 gst/pbutils/pbutils.h gstpbutils-1.0)
-FIND_GSTREAMER_COMPONENT(GSTREAMER_1_0_VIDEO gstreamer-video-1.0 gst/video/video.h gstvideo-1.0)
+FIND_GSTREAMER_COMPONENT(GSTREAMER_1_0_APP gstreamer-app-1.0 gstapp-1.0)
+FIND_GSTREAMER_COMPONENT(GSTREAMER_1_0_AUDIO gstreamer-audio-1.0 gstaudio-1.0)
+FIND_GSTREAMER_COMPONENT(GSTREAMER_1_0_FFT gstreamer-fft-1.0 gstfft-1.0)
+FIND_GSTREAMER_COMPONENT(GSTREAMER_1_0_PBUTILS gstreamer-pbutils-1.0 gstpbutils-1.0)
+FIND_GSTREAMER_COMPONENT(GSTREAMER_1_0_VIDEO gstreamer-video-1.0 gstvideo-1.0)
 
 # ------------------------------------------------
 # 3. Process the COMPONENTS passed to FIND_PACKAGE

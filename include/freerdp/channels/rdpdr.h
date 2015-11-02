@@ -4,6 +4,8 @@
  *
  * Copyright 2010-2011 Vic Lee
  * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -314,9 +316,9 @@ typedef struct _DEVICE DEVICE;
 typedef struct _IRP IRP;
 typedef struct _DEVMAN DEVMAN;
 
-typedef void (*pcIRPRequest)(DEVICE* device, IRP* irp);
-typedef void (*pcInitDevice)(DEVICE* device);
-typedef void (*pcFreeDevice)(DEVICE* device);
+typedef UINT (*pcIRPRequest)(DEVICE* device, IRP* irp);
+typedef UINT (*pcInitDevice)(DEVICE* device);
+typedef UINT (*pcFreeDevice)(DEVICE* device);
 
 struct _DEVICE
 {
@@ -331,7 +333,7 @@ struct _DEVICE
 	pcFreeDevice Free;
 };
 
-typedef void (*pcIRPResponse)(IRP* irp);
+typedef UINT (*pcIRPResponse)(IRP* irp);
 
 struct _IRP
 {
@@ -362,7 +364,7 @@ struct _DEVMAN
 	wListDictionary* devices;
 };
 
-typedef void (*pcRegisterDevice)(DEVMAN* devman, DEVICE* device);
+typedef UINT (*pcRegisterDevice)(DEVMAN* devman, DEVICE* device);
 
 struct _DEVICE_SERVICE_ENTRY_POINTS
 {
@@ -370,10 +372,11 @@ struct _DEVICE_SERVICE_ENTRY_POINTS
 
 	pcRegisterDevice RegisterDevice;
 	RDPDR_DEVICE* device;
+	rdpContext* rdpcontext;
 };
 typedef struct _DEVICE_SERVICE_ENTRY_POINTS DEVICE_SERVICE_ENTRY_POINTS;
 typedef DEVICE_SERVICE_ENTRY_POINTS* PDEVICE_SERVICE_ENTRY_POINTS;
 
-typedef int (*PDEVICE_SERVICE_ENTRY)(PDEVICE_SERVICE_ENTRY_POINTS);
+typedef UINT (*PDEVICE_SERVICE_ENTRY)(PDEVICE_SERVICE_ENTRY_POINTS);
 
 #endif /* FREERDP_CHANNEL_RDPDR_H */

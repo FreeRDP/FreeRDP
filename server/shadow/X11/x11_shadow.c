@@ -51,6 +51,8 @@
 
 #define TAG SERVER_TAG("shadow.x11")
 
+int x11_shadow_enum_monitors(MONITOR_DEF* monitors, int maxMonitors);
+
 #ifdef WITH_PAM
 
 #include <security/pam_appl.h>
@@ -273,12 +275,6 @@ void x11_shadow_input_mouse_event(x11ShadowSubsystem* subsystem, UINT16 flags, U
 	x += surface->x;
 	y += surface->y;
 
-	if (server->shareSubRect)
-	{
-		x += server->subRect.left;
-		y += server->subRect.top;
-	}
-
 	XTestGrabControl(subsystem->display, True);
 
 	if (flags & PTR_FLAGS_WHEEL)
@@ -332,12 +328,6 @@ void x11_shadow_input_extended_mouse_event(x11ShadowSubsystem* subsystem, UINT16
 	x += surface->x;
 	y += surface->y;
 
-	if (server->shareSubRect)
-	{
-		x += server->subRect.left;
-		y += server->subRect.top;
-	}
-
 	XTestGrabControl(subsystem->display, True);
 
 	XTestFakeMotionEvent(subsystem->display, 0, x, y, CurrentTime);
@@ -368,7 +358,8 @@ static void x11_shadow_message_free(UINT32 id, SHADOW_MSG_OUT* msg)
 			break;
 
 		case SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE_ID:
-			free(((SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE*)msg)->pixels);
+			free(((SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE*)msg)->xorMaskData);
+			free(((SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE*)msg)->andMaskData);
 			free(msg);
 			break;
 
@@ -410,18 +401,14 @@ int x11_shadow_pointer_alpha_update(x11ShadowSubsystem* subsystem)
 	msg->yHot = subsystem->cursorHotY;
 	msg->width = subsystem->cursorWidth;
 	msg->height = subsystem->cursorHeight;
-	msg->scanline = msg->width * 4;
 
-	msg->pixels = (BYTE*) malloc(msg->scanline * msg->height);
-
-	if (!msg->pixels)
+	if (shadow_subsystem_pointer_convert_alpha_pointer_data(subsystem->cursorPixels, TRUE,
+			msg->width, msg->height, msg) < 0)
 	{
 		free (msg);
 		return -1;
 	}
 
-	CopyMemory(msg->pixels, subsystem->cursorPixels, msg->scanline * msg->height);
-	msg->premultiplied = TRUE;
 	msg->Free = x11_shadow_message_free;
 
 	return shadow_client_boardcast_msg(subsystem->server, NULL, msgId, (SHADOW_MSG_OUT*) msg, NULL) ? 1 : -1;
@@ -493,6 +480,13 @@ int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 
 		x = root_x;
 		y = root_y;
+	}
+
+	/* Convert to offset based on current surface */
+	if (surface)
+	{
+		x -= surface->x;
+		y -= surface->y;
 	}
 
 	if ((x != subsystem->pointerX) || (y != subsystem->pointerY))
@@ -572,8 +566,8 @@ int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
 	nWidth = subsystem->cursorWidth;
 	nHeight = subsystem->cursorHeight;
 
-	nXDst = subsystem->pointerX - surface->x - subsystem->cursorHotX;
-	nYDst = subsystem->pointerY - surface->y - subsystem->cursorHotY;
+	nXDst = subsystem->pointerX - subsystem->cursorHotX;
+	nYDst = subsystem->pointerY - subsystem->cursorHotY;
 
 	if (nXDst >= surface->width)
 		return 1;
@@ -659,6 +653,51 @@ int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
 	return 1;
 }
 
+BOOL x11_shadow_check_resize(x11ShadowSubsystem* subsystem)
+{
+	MONITOR_DEF* virtualScreen;
+	XWindowAttributes attr;
+	XGetWindowAttributes(subsystem->display, subsystem->root_window, &attr);
+
+	if (attr.width != subsystem->width || attr.height != subsystem->height)
+	{
+		/* Screen size changed. Refresh monitor definitions and trigger screen resize */
+		subsystem->numMonitors = x11_shadow_enum_monitors(subsystem->monitors, 16);
+
+		shadow_screen_resize(subsystem->server->screen);
+
+		subsystem->width = attr.width;
+		subsystem->height = attr.height;
+
+		virtualScreen = &(subsystem->virtualScreen);
+		virtualScreen->left = 0;
+		virtualScreen->top = 0;
+		virtualScreen->right = subsystem->width;
+		virtualScreen->bottom = subsystem->height;
+		virtualScreen->flags = 1;
+
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+static int x11_shadow_error_handler_for_capture(Display * display, XErrorEvent * event)
+{
+    char msg[256];
+    XGetErrorText(display, event->error_code, (char *) &msg, sizeof(msg));
+	WLog_ERR(TAG, "X11 error: %s Error code: %x, request code: %x, minor code: %x", 
+			msg, event->error_code, event->request_code, event->minor_code);
+
+	/* Ignore BAD MATCH error during image capture. Abort in other case */
+	if (event->error_code != BadMatch)
+	{
+		abort();
+	}
+
+	return 0;
+}
+
 int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 {
 	int count;
@@ -692,6 +731,12 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 
 	XLockDisplay(subsystem->display);
 
+	/*
+	 * Ignore BadMatch error during image capture. The screen size may be 
+	 * changed outside. We will resize to correct resolution at next frame
+	 */
+	XSetErrorHandler(x11_shadow_error_handler_for_capture);
+
 	if (subsystem->use_xshm)
 	{
 		image = subsystem->fb_image;
@@ -707,9 +752,21 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 		image = XGetImage(subsystem->display, subsystem->root_window,
 					surface->x, surface->y, surface->width, surface->height, AllPlanes, ZPixmap);
 
+		if (!image)
+		{
+			/*
+			 * BadMatch error happened. The size may have been changed again.
+			 * Give up this frame and we will resize again in next frame 
+			 */
+			goto fail_capture;
+		}
+
 		status = shadow_capture_compare(surface->data, surface->scanline, surface->width, surface->height,
 				(BYTE*) image->data, image->bytes_per_line, &invalidRect);
 	}
+
+	/* Restore the default error handler */
+	XSetErrorHandler(NULL);
 
 	XSync(subsystem->display, False);
 
@@ -757,6 +814,12 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 		XDestroyImage(image);
 
 	return 1;
+	
+fail_capture:
+	XSetErrorHandler(NULL);
+	XSync(subsystem->display, False);
+	XUnlockDisplay(subsystem->display);
+	return 0;
 }
 
 int x11_shadow_subsystem_process_message(x11ShadowSubsystem* subsystem, wMessage* message)
@@ -866,6 +929,7 @@ void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem)
 
 		if ((status == WAIT_TIMEOUT) || (GetTickCount64() > frameTime))
 		{
+			x11_shadow_check_resize(subsystem);
 			x11_shadow_screen_grab(subsystem);
 			x11_shadow_query_cursor(subsystem, FALSE);
 
@@ -1126,6 +1190,8 @@ int x11_shadow_enum_monitors(MONITOR_DEF* monitors, int maxMonitors)
 		}
 	}
 #endif
+
+	XCloseDisplay(display);
 
 	if (numMonitors < 1)
 	{

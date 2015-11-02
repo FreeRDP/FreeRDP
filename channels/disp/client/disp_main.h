@@ -3,6 +3,8 @@
  * Display Update Virtual Channel Extension
  *
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +35,8 @@
 
 #define DISPLAY_CONTROL_PDU_TYPE_CAPS			0x00000005
 #define DISPLAY_CONTROL_PDU_TYPE_MONITOR_LAYOUT		0x00000002
+
+#define TAG CHANNELS_TAG("disp.client")
 
 #endif /* FREERDP_CHANNEL_DISP_CLIENT_MAIN_H */
 

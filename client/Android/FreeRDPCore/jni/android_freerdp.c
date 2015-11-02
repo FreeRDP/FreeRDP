@@ -328,7 +328,8 @@ static BOOL android_verify_certificate(freerdp* instance, char* subject, char* i
 	return ((res == JNI_TRUE) ? TRUE : FALSE);
 }
 
-static BOOL android_verify_changed_certificate(freerdp* instance, char* subject, char* issuer, char* new_fingerprint, char* old_fingerprint)
+static BOOL android_verify_changed_certificate(freerdp* instance, char* subject, char* issuer,
+		char* new_fingerprint, char* old_subject, char* old_issuer, char* old_fingerprint)
 {
 	return android_verify_certificate(instance, subject, issuer, new_fingerprint);
 }
@@ -1148,7 +1149,7 @@ static void copy_pixel_buffer(UINT8* dstBuf, UINT8* srcBuf, int x, int y, int wi
 	int length;
 	int scanline;
 	UINT8 *dstp, *srcp;
-	
+
 	length = width * bpp;
 	scanline = wBuf * bpp;
 

@@ -17,19 +17,17 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-
 #include <winpr/crt.h>
 #include <winpr/path.h>
 #include <winpr/cmdline.h>
 #include <winpr/sysinfo.h>
 
+#ifdef WITH_OPENSSL
 #include <openssl/conf.h>
 #include <openssl/pem.h>
 #include <openssl/pkcs12.h>
 #include <openssl/x509v3.h>
+#endif
 
 #include <winpr/tools/makecert.h>
 
@@ -38,10 +36,12 @@ struct _MAKECERT_CONTEXT
 	int argc;
 	char** argv;
 
+#ifdef WITH_OPENSSL
 	RSA* rsa;
 	X509* x509;
 	EVP_PKEY* pkey;
 	PKCS12* pkcs12;
+#endif
 
 	BOOL live;
 	BOOL silent;
@@ -263,6 +263,7 @@ int makecert_print_command_line_help(int argc, char** argv)
 	return 1;
 }
 
+#ifdef WITH_OPENSSL
 int x509_add_ext(X509* cert, int nid, char* value)
 {
 	X509V3_CTX ctx;
@@ -281,6 +282,7 @@ int x509_add_ext(X509* cert, int nid, char* value)
 
 	return 1;
 }
+#endif
 
 char* x509_name_parse(char* name, char* txt, int* length)
 {
@@ -306,8 +308,24 @@ char* x509_name_parse(char* name, char* txt, int* length)
 
 char* x509_get_default_name()
 {
-	CHAR* computerName;
+	CHAR* computerName = NULL;
 	DWORD nSize = 0;
+
+	if (GetComputerNameExA(ComputerNamePhysicalDnsFullyQualified, NULL, &nSize) ||
+		GetLastError() != ERROR_MORE_DATA)
+		goto fallback;
+
+	computerName = (CHAR*)calloc(nSize, 1);
+	if (!computerName)
+		goto fallback;
+
+	if (!GetComputerNameExA(ComputerNamePhysicalDnsFullyQualified, computerName, &nSize))
+		goto fallback;
+
+	return computerName;
+
+fallback:
+	free(computerName);
 
 	if (GetComputerNameExA(ComputerNamePhysicalNetBIOS, NULL, &nSize) ||
 		GetLastError() != ERROR_MORE_DATA)
@@ -477,6 +495,7 @@ int makecert_context_set_output_file_name(MAKECERT_CONTEXT* context, char* name)
 
 int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* path)
 {
+#ifdef WITH_OPENSSL
 	FILE* fp = NULL;
 	int status;
 	int length;
@@ -725,10 +744,14 @@ out_fail:
 	free(fullpath);
 
 	return ret;
+#else
+	return 1;
+#endif
 }
 
 int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, char* path)
 {
+#ifdef WITH_OPENSSL
 	FILE* fp = NULL;
 	int status;
 	int length;
@@ -837,10 +860,14 @@ out_fail:
 	free(fullpath);
 
 	return ret;
+#else
+	return 1;
+#endif
 }
 
 int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 {
+#ifdef WITH_OPENSSL
 	int length;
 	char* entry;
 	int key_length;
@@ -973,7 +1000,6 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 	X509_set_issuer_name(context->x509, name);
 
 	x509_add_ext(context->x509, NID_ext_key_usage, "serverAuth");
-	x509_add_ext(context->x509, NID_key_usage, "keyEncipherment,dataEncipherment");
 
 	arg = CommandLineFindArgumentA(args, "a");
 
@@ -1084,7 +1110,7 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 				return -1;
 		}
 	}
-
+#endif
 	return 0;
 }
 
@@ -1109,15 +1135,16 @@ void makecert_context_free(MAKECERT_CONTEXT* context)
 	{
 		free(context->password);
 
-		X509_free(context->x509);
-		EVP_PKEY_free(context->pkey);
-
 		free(context->default_name);
 		free(context->common_name);
 		free(context->output_file);
 		free(context->output_path);
 
+#ifdef WITH_OPENSSL
+		X509_free(context->x509);
+		EVP_PKEY_free(context->pkey);
 		CRYPTO_cleanup_all_ex_data();
+#endif
 
 		free(context);
 	}

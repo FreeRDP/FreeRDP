@@ -689,6 +689,68 @@ out:
 	return retCode;
 }
 
+static int test_norbert2_case() {
+	REGION16 region;
+	int retCode = -1;
+	const RECTANGLE_16 *rects;
+	int nbRects = 0;
+	int i;
+	RECTANGLE_16 rect1 = {  464, 696,   476,  709 };
+	RECTANGLE_16 rect2 = {    0,   0,  1024,   32 };
+
+	region16_init(&region);
+
+	if (!region16_union_rect(&region, &region, &rect1)) {
+		fprintf(stderr, "%s: Error 1 - region16_union_rect failed\n", __FUNCTION__);
+		goto out;
+	}
+
+	if (!(rects = region16_rects(&region, &nbRects))) {
+		fprintf(stderr, "%s: Error 2 - region16_rects failed\n", __FUNCTION__);
+		goto out;
+	}
+
+	if (nbRects != 1) {
+		fprintf(stderr, "%s: Error 3 - expected nbRects == 1 but got %d\n", __FUNCTION__, nbRects);
+		goto out;
+	}
+
+	if (!compareRectangles(&rects[0], &rect1, 1)) {
+		fprintf(stderr, "%s: Error 4 - compare failed\n", __FUNCTION__);
+		goto out;
+	}
+
+	if (!region16_union_rect(&region, &region, &rect2)) {
+		fprintf(stderr, "%s: Error 5 - region16_union_rect failed\n", __FUNCTION__);
+		goto out;
+	}
+
+	if (!(rects = region16_rects(&region, &nbRects))) {
+		fprintf(stderr, "%s: Error 6 - region16_rects failed\n", __FUNCTION__);
+		goto out;
+	}
+
+	if (nbRects != 2) {
+		fprintf(stderr, "%s: Error 7 - expected nbRects == 2 but got %d\n", __FUNCTION__, nbRects);
+		goto out;
+	}
+
+	if (!compareRectangles(&rects[0], &rect2, 1)) {
+		fprintf(stderr, "%s: Error 8 - compare failed\n", __FUNCTION__);
+		goto out;
+	}
+
+	if (!compareRectangles(&rects[1], &rect1, 1)) {
+		fprintf(stderr, "%s: Error 9 - compare failed\n", __FUNCTION__);
+		goto out;
+	}
+
+	retCode = 0;
+out:
+	region16_uninit(&region);
+	return retCode;
+}
+
 static int test_empty_rectangle() {
 	REGION16 region, intersection;
 	int retCode = -1;
@@ -765,7 +827,8 @@ struct UnitaryTest tests[] = {
 	{"data from weston",        test_from_weston},
 	{"R1 & R3",					test_r1_inter_r3},
 	{"(R1+R3)&R11 (band merge)",test_r1_r3_inter_r11},
-	{"norbert case",			test_norbert_case},
+	{"norbert's case",			test_norbert_case},
+	{"norbert's case 2", 		test_norbert2_case},
 	{"empty rectangle case",	test_empty_rectangle},
 
 	{NULL, NULL}

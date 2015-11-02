@@ -4,6 +4,8 @@
  *
  * Copyright 2010-2011 Vic Lee
  * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,11 +169,21 @@ void rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
 	}
 }
 
-void rdpdr_send_capability_response(rdpdrPlugin* rdpdr)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rdpdr_send_capability_response(rdpdrPlugin* rdpdr)
 {
 	wStream* s;
 
 	s = Stream_New(NULL, 256);
+	if (!s)
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	Stream_Write_UINT16(s, RDPDR_CTYP_CORE);
 	Stream_Write_UINT16(s, PAKID_CORE_CLIENT_CAPABILITY);
@@ -185,5 +197,5 @@ void rdpdr_send_capability_response(rdpdrPlugin* rdpdr)
 	rdpdr_write_drive_capset(rdpdr, s);
 	rdpdr_write_smartcard_capset(rdpdr, s);
 
-	rdpdr_send(rdpdr, s);
+	return rdpdr_send(rdpdr, s);
 }

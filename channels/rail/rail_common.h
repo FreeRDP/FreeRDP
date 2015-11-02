@@ -5,6 +5,8 @@
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2011 Roman Barabanov <romanbarabanov@gmail.com>
  * Copyright 2011 Vic Lee
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,13 +45,13 @@ extern const char* const RAIL_ORDER_TYPE_STRINGS[];
 #define RAIL_LANGBAR_INFO_ORDER_LENGTH		4	/* fixed */
 
 void rail_string_to_unicode_string(char* string, RAIL_UNICODE_STRING* unicode_string);
-BOOL rail_read_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake);
+UINT rail_read_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake);
 void rail_write_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake);
-BOOL rail_read_handshake_ex_order(wStream* s, RAIL_HANDSHAKE_EX_ORDER* handshakeEx);
+UINT rail_read_handshake_ex_order(wStream* s, RAIL_HANDSHAKE_EX_ORDER* handshakeEx);
 void rail_write_handshake_ex_order(wStream* s, RAIL_HANDSHAKE_EX_ORDER* handshakeEx);
 
-wStream* rail_pdu_init(int length);
-BOOL rail_read_pdu_header(wStream* s, UINT16* orderType, UINT16* orderLength);
+wStream* rail_pdu_init(size_t length);
+UINT rail_read_pdu_header(wStream* s, UINT16* orderType, UINT16* orderLength);
 void rail_write_pdu_header(wStream* s, UINT16 orderType, UINT16 orderLength);
 
 #endif /* FREERDP_CHANNEL_RAIL_COMMON_H */

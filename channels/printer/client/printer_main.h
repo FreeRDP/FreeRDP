@@ -3,6 +3,8 @@
  * Print Virtual Channel
  *
  * Copyright 2010-2011 Vic Lee
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +66,7 @@ struct rdp_printer
 	pcFreePrinter Free;
 };
 
-typedef void (*pcWritePrintJob) (rdpPrintJob* printjob, BYTE* data, int size);
+typedef UINT (*pcWritePrintJob) (rdpPrintJob* printjob, BYTE* data, int size);
 typedef void (*pcClosePrintJob) (rdpPrintJob* printjob);
 
 struct rdp_print_job

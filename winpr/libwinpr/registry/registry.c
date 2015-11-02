@@ -266,13 +266,10 @@ LONG RegQueryValueExW(HKEY hKey, LPCWSTR lpValueName,
 LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName,
 		LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
 {
-	Reg* reg;
 	RegKey* key;
 	RegVal* pValue;
 
 	key = (RegKey*) hKey;
-	reg = RegGetInstance();
-
 	pValue = key->values;
 
 	while (pValue != NULL)

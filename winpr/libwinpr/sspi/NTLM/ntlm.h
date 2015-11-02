@@ -24,16 +24,7 @@
 #include <winpr/windows.h>
 
 #include <winpr/nt.h>
-
-#include <time.h>
-#include <openssl/des.h>
-#include <openssl/md4.h>
-#include <openssl/md5.h>
-#include <openssl/sha.h>
-#include <openssl/rc4.h>
-#include <openssl/hmac.h>
-#include <openssl/rand.h>
-#include <openssl/engine.h>
+#include <winpr/crypto.h>
 
 #include "../sspi.h"
 
@@ -234,8 +225,8 @@ struct _NTLM_CONTEXT
 	BYTE MachineID[32];
 	BOOL SendVersionInfo;
 	BOOL confidentiality;
-	RC4_KEY SendRc4Seal;
-	RC4_KEY RecvRc4Seal;
+	WINPR_RC4_CTX SendRc4Seal;
+	WINPR_RC4_CTX RecvRc4Seal;
 	BYTE* SendSigningKey;
 	BYTE* RecvSigningKey;
 	BYTE* SendSealingKey;

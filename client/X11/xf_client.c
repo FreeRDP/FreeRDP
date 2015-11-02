@@ -725,9 +725,14 @@ void xf_toggle_control(xfContext* xfc)
 	xfc->controlToggle = !xfc->controlToggle;
 }
 
-int xf_encomsp_participant_created(EncomspClientContext* context, ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT xf_encomsp_participant_created(EncomspClientContext* context, ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated)
 {
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
 void xf_encomsp_init(xfContext* xfc, EncomspClientContext* encomsp)
@@ -1172,7 +1177,9 @@ BOOL xf_post_connect(freerdp* instance)
 	update->PlaySound = xf_play_sound;
 	update->SetKeyboardIndicators = xf_keyboard_set_indicators;
 
-	xfc->clipboard = xf_clipboard_new(xfc);
+	if (!(xfc->clipboard = xf_clipboard_new(xfc)))
+		return FALSE;
+
 	if (freerdp_channels_post_connect(channels, instance) < 0)
 		return FALSE;
 

@@ -536,9 +536,14 @@ static BOOL gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 		pDstData = gdi->primary_buffer;
 		nDstStep = gdi->width * gdi->bytesPerPixel;
 
-		nWidth = bitmap->destRight - bitmap->destLeft + 1; /* clip width */
-		nHeight = bitmap->destBottom - bitmap->destTop + 1; /* clip height */
+		nWidth = MIN(bitmap->destRight, gdi->width - 1) - bitmap->destLeft + 1; /* clip width */
+		nHeight = MIN(bitmap->destBottom, gdi->height - 1) - bitmap->destTop + 1; /* clip height */
 
+		if (nWidth <= 0 || nHeight <= 0)
+		{
+			/* Empty bitmap */
+			continue;
+		}
 		status = freerdp_image_copy(pDstData, gdi->format, nDstStep, nXDst, nYDst,
 				nWidth, nHeight, pSrcData, gdi->format, nSrcStep, nXSrc, nYSrc, gdi->palette);
 

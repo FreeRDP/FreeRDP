@@ -4,6 +4,8 @@
  *
  * Copyright 2010-2011 Vic Lee
  * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +26,6 @@
 #include "rdpdr_main.h"
 
 void rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s);
-void rdpdr_send_capability_response(rdpdrPlugin* rdpdr);
+UINT rdpdr_send_capability_response(rdpdrPlugin* rdpdr);
 
 #endif /* FREERDP_CHANNEL_RDPDR_CLIENT_CAPABILITIES_H */

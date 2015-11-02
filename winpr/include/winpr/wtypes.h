@@ -54,7 +54,7 @@
 #define __int32 int
 #define __int64 long long
 
-#if __x86_64__
+#if defined(__x86_64__) || defined(__arm64__)
 #define __int3264 __int64
 #else
 #define __int3264 __int32
@@ -169,7 +169,7 @@ typedef void *PVOID, *LPVOID;
 typedef void *PVOID64, *LPVOID64;
 typedef unsigned short WORD, *PWORD, *LPWORD;
 
-#if __x86_64__
+#if defined(__x86_64__) || defined(__arm64__)
 typedef __int64 INT_PTR;
 typedef unsigned __int64 UINT_PTR;
 #else

@@ -16,9 +16,12 @@
 # limitations under the License.
 
 winpr_module_add(
+	hash.c
+	rand.c
+	cipher.c
+	cert.c
 	crypto.c
-	crypto.h
-	cert.c)
+	crypto.h)
 
 if(WIN32)
 	winpr_library_add(crypt32)

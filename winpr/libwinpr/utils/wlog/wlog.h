@@ -25,7 +25,7 @@
 #define WLOG_MAX_PREFIX_SIZE	512
 #define WLOG_MAX_STRING_SIZE	8192
 
-void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* message);
+BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* message);
 
 #include "wlog/Layout.h"
 #include "wlog/Appender.h"

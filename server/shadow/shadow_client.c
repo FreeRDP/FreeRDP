@@ -150,12 +150,6 @@ void shadow_client_context_free(freerdp_peer* peer, rdpShadowClient* client)
 	MessageQueue_Clear(client->MsgQueue);
 	MessageQueue_Free(client->MsgQueue);
 
-	if (client->lobby)
-	{
-		shadow_surface_free(client->lobby);
-		client->lobby = NULL;
-	}
-
 	if (client->encoder)
 	{
 		shadow_encoder_free(client->encoder);
@@ -188,6 +182,19 @@ BOOL shadow_client_capabilities(freerdp_peer* peer)
 	return TRUE;
 }
 
+static INLINE void shadow_client_calc_desktop_size(rdpShadowServer* server, int* pWidth, int* pHeight)
+{
+	RECTANGLE_16 viewport = {0, 0, server->screen->width, server->screen->height};
+
+	if (server->shareSubRect)
+	{
+		rectangles_intersection(&viewport, &(server->subRect), &viewport); 
+	}
+
+	(*pWidth) = viewport.right - viewport.left;
+	(*pHeight) = viewport.bottom - viewport.top;
+}
+
 BOOL shadow_client_post_connect(freerdp_peer* peer)
 {
 	int authStatus;
@@ -203,17 +210,7 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 	server = client->server;
 	subsystem = server->subsystem;
 
-	if (!server->shareSubRect)
-	{
-		width = server->screen->width;
-		height = server->screen->height;
-	}
-	else
-	{
-		width = server->subRect.right - server->subRect.left;
-		height = server->subRect.bottom - server->subRect.top;
-	}
-
+	shadow_client_calc_desktop_size(server, &width, &height);
 	settings->DesktopWidth = width;
 	settings->DesktopHeight = height;
 
@@ -232,19 +229,17 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 
 	invalidRect.left = 0;
 	invalidRect.top = 0;
-	invalidRect.right = width;
-	invalidRect.bottom = height;
+	invalidRect.right = server->screen->width;
+	invalidRect.bottom = server->screen->height;
 
 	region16_union_rect(&(client->invalidRegion), &(client->invalidRegion), &invalidRect);
-
-	shadow_client_init_lobby(client);
 
 	authStatus = -1;
 
 	if (settings->Username && settings->Password)
 		settings->AutoLogonEnabled = TRUE;
 
-	if (settings->AutoLogonEnabled && server->authentication)
+	if (server->authentication)
 	{
 		if (subsystem->Authenticate)
 		{
@@ -268,6 +263,30 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 	}
 
 	return TRUE;
+}
+
+/* Convert rects in sub rect coordinate to client/surface coordinate */
+static INLINE void shadow_client_convert_rects(rdpShadowClient* client, 
+		RECTANGLE_16* dst, RECTANGLE_16* src, UINT32 numRects)
+{
+	if (client->server->shareSubRect)
+	{
+		int i = 0;
+		UINT16 offsetX = client->server->subRect.left;
+		UINT16 offsetY = client->server->subRect.top;
+
+		for (i = 0; i < numRects; i++)
+		{
+			dst[i].left = src[i].left + offsetX;
+			dst[i].right = src[i].right + offsetX;
+			dst[i].top = src[i].top + offsetY;
+			dst[i].bottom = src[i].bottom + offsetY;
+		}
+	}
+	else
+	{
+		CopyMemory(dst, src, numRects * sizeof(RECTANGLE_16));
+	}
 }
 
 BOOL shadow_client_refresh_rect(rdpShadowClient* client, BYTE count, RECTANGLE_16* areas)
@@ -294,7 +313,7 @@ BOOL shadow_client_refresh_rect(rdpShadowClient* client, BYTE count, RECTANGLE_1
 			return FALSE;
 		}
 
-		CopyMemory(wParam->rects, areas, wParam->numRects * sizeof(RECTANGLE_16));
+		shadow_client_convert_rects(client, wParam->rects, areas, wParam->numRects);
 	}
 
 	message.id = SHADOW_MSG_IN_REFRESH_OUTPUT_ID;
@@ -319,7 +338,7 @@ BOOL shadow_client_suppress_output(rdpShadowClient* client, BYTE allow, RECTANGL
 	wParam->allow = (UINT32) allow;
 
 	if (area)
-		CopyMemory(&(wParam->rect), area, sizeof(RECTANGLE_16));
+		shadow_client_convert_rects(client, &(wParam->rect), area, 1);
 
 	message.id = SHADOW_MSG_IN_SUPPRESS_OUTPUT_ID;
 	message.wParam = (void*) wParam;
@@ -445,7 +464,7 @@ int shadow_client_send_surface_bits(rdpShadowClient* client, rdpShadowSurface* s
 		rect.height = nHeight;
 
 		if (!(messages = rfx_encode_messages(encoder->rfx, &rect, 1, pSrcData,
-				surface->width, surface->height, nSrcStep, &numMessages,
+				settings->DesktopWidth, settings->DesktopHeight, nSrcStep, &numMessages,
 				settings->MultifragMaxRequestSize)))
 		{
 			return 0;
@@ -455,12 +474,12 @@ int shadow_client_send_surface_bits(rdpShadowClient* client, rdpShadowSurface* s
 
 		cmd.destLeft = 0;
 		cmd.destTop = 0;
-		cmd.destRight = surface->width;
-		cmd.destBottom = surface->height;
+		cmd.destRight = settings->DesktopWidth;
+		cmd.destBottom = settings->DesktopHeight;
 
 		cmd.bpp = 32;
-		cmd.width = surface->width;
-		cmd.height = surface->height;
+		cmd.width = settings->DesktopWidth;
+		cmd.height = settings->DesktopHeight;
 		cmd.skipCompression = TRUE;
 
 		if (numMessages > 0)
@@ -568,6 +587,21 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 	pSrcData = surface->data;
 	nSrcStep = surface->scanline;
 	SrcFormat = PIXEL_FORMAT_RGB32;
+
+	if (server->shareSubRect)
+	{
+		int subX, subY;
+		int subWidth, subHeight;
+
+		subX = server->subRect.left;
+		subY = server->subRect.top;
+		subWidth = server->subRect.right - server->subRect.left;
+		subHeight = server->subRect.bottom - server->subRect.top;
+
+		nXSrc -= subX;
+		nYSrc -= subY;
+		pSrcData = &pSrcData[(subY * nSrcStep) + (subX * 4)];
+	}
 
 	if ((nXSrc % 4) != 0)
 	{
@@ -679,9 +713,11 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 		UINT32 i, j;
 		UINT32 updateSize;
 		UINT32 newUpdateSize;
-		BITMAP_DATA* fragBitmapData;
+		BITMAP_DATA* fragBitmapData = NULL;
 
-		fragBitmapData = (BITMAP_DATA*) malloc(sizeof(BITMAP_DATA) * k);
+		if (k > 0)
+			fragBitmapData = (BITMAP_DATA*) malloc(sizeof(BITMAP_DATA) * k);
+
 		if (!fragBitmapData)
 		{
 			free(bitmapData);
@@ -747,7 +783,7 @@ int shadow_client_send_surface_update(rdpShadowClient* client)
 	server = client->server;
 	encoder = client->encoder;
 
-	surface = client->inLobby ? client->lobby : server->surface;
+	surface = client->inLobby ? server->lobby : server->surface;
 
 	EnterCriticalSection(&(client->lock));
 
@@ -819,85 +855,6 @@ int shadow_client_surface_update(rdpShadowClient* client, REGION16* region)
 	return 1;
 }
 
-int shadow_client_convert_alpha_pointer_data(BYTE* pixels, BOOL premultiplied,
-		UINT32 width, UINT32 height, POINTER_COLOR_UPDATE* pointerColor)
-{
-	UINT32 x, y;
-	BYTE* pSrc8;
-	BYTE* pDst8;
-	int xorStep;
-	int andStep;
-	UINT32 andBit;
-	BYTE* andBits;
-	UINT32 andPixel;
-	BYTE A, R, G, B;
-
-	xorStep = (width * 3);
-	xorStep += (xorStep % 2);
-
-	andStep = ((width + 7) / 8);
-	andStep += (andStep % 2);
-
-	pointerColor->lengthXorMask = height * xorStep;
-	pointerColor->xorMaskData = (BYTE*) calloc(1, pointerColor->lengthXorMask);
-
-	if (!pointerColor->xorMaskData)
-		return -1;
-
-	pointerColor->lengthAndMask = height * andStep;
-	pointerColor->andMaskData = (BYTE*) calloc(1, pointerColor->lengthAndMask);
-
-	if (!pointerColor->andMaskData)
-		return -1;
-
-	for (y = 0; y < height; y++)
-	{
-		pSrc8 = &pixels[(width * 4) * (height - 1 - y)];
-		pDst8 = &(pointerColor->xorMaskData[y * xorStep]);
-
-		andBit = 0x80;
-		andBits = &(pointerColor->andMaskData[andStep * y]);
-
-		for (x = 0; x < width; x++)
-		{
-			B = *pSrc8++;
-			G = *pSrc8++;
-			R = *pSrc8++;
-			A = *pSrc8++;
-
-			andPixel = 0;
-
-			if (A < 64)
-				A = 0; /* pixel cannot be partially transparent */
-
-			if (!A)
-			{
-				/* transparent pixel: XOR = black, AND = 1 */
-				andPixel = 1;
-				B = G = R = 0;
-			}
-			else
-			{
-				if (premultiplied)
-				{
-					B = (B * 0xFF ) / A;
-					G = (G * 0xFF ) / A;
-					R = (R * 0xFF ) / A;
-				}
-			}
-
-			*pDst8++ = B;
-			*pDst8++ = G;
-			*pDst8++ = R;
-
-			if (andPixel) *andBits |= andBit;
-			if (!(andBit >>= 1)) { andBits++; andBit = 0x80; }
-		}
-	}
-
-	return 1;
-}
-
 int shadow_client_subsystem_process_message(rdpShadowClient* client, wMessage* message)
 {
 	rdpContext* context = (rdpContext*) client;
@@ -914,6 +871,12 @@ int shadow_client_subsystem_process_message(rdpShadowClient* client, wMessage* m
 
 			pointerPosition.xPos = msg->xPos;
 			pointerPosition.yPos = msg->yPos;
+
+			if (client->server->shareSubRect)
+			{
+				pointerPosition.xPos -= client->server->subRect.left;
+				pointerPosition.yPos -= client->server->subRect.top;
+			}
 
 			if (client->activated)
 			{
@@ -944,19 +907,17 @@ int shadow_client_subsystem_process_message(rdpShadowClient* client, wMessage* m
 			pointerColor->yPos = msg->yHot;
 			pointerColor->width = msg->width;
 			pointerColor->height = msg->height;
+			pointerColor->lengthAndMask = msg->lengthAndMask;
+			pointerColor->lengthXorMask = msg->lengthXorMask;
+			pointerColor->xorMaskData = msg->xorMaskData;
+			pointerColor->andMaskData = msg->andMaskData;
 
 			pointerCached.cacheIndex = pointerColor->cacheIndex;
 
 			if (client->activated)
 			{
-				shadow_client_convert_alpha_pointer_data(msg->pixels, msg->premultiplied,
-						msg->width, msg->height, pointerColor);
-
 				IFCALL(update->pointer->PointerNew, context, &pointerNew);
 				IFCALL(update->pointer->PointerCached, context, &pointerCached);
-
-				free(pointerColor->xorMaskData);
-				free(pointerColor->andMaskData);
 			}
 			break;
 		}
@@ -1060,15 +1021,44 @@ void* shadow_client_thread(rdpShadowClient* client)
 				int index;
 				int numRects = 0;
 				const RECTANGLE_16* rects;
+				int width, height;
 
-				rects = region16_rects(&(subsystem->invalidRegion), &numRects);
-
-				for (index = 0; index < numRects; index++)
+				/* Check resize */
+				shadow_client_calc_desktop_size(server, &width, &height);
+				if (settings->DesktopWidth != (UINT32)width || settings->DesktopHeight != (UINT32)height)
 				{
-					region16_union_rect(&(client->invalidRegion), &(client->invalidRegion), &rects[index]);
-				}
+					/* Screen size changed, do resize */
+					settings->DesktopWidth = width;
+					settings->DesktopHeight = height;
 
-				shadow_client_send_surface_update(client);
+					/**
+					 * Unset client activated flag to avoid sending update message during
+					 * resize. DesktopResize will reactive the client and 
+					 * shadow_client_activate would be invoked later.
+					 */
+					client->activated = FALSE;
+
+					/* Send Resize */
+					peer->update->DesktopResize(peer->update->context); // update_send_desktop_resize
+
+					/* Clear my invalidRegion. shadow_client_activate refreshes fullscreen */
+					region16_clear(&(client->invalidRegion));
+
+					WLog_ERR(TAG, "Client from %s is resized (%dx%d@%d)",
+							peer->hostname, settings->DesktopWidth, settings->DesktopHeight, settings->ColorDepth);
+				}
+				else 
+				{
+					/* Send frame */
+					rects = region16_rects(&(subsystem->invalidRegion), &numRects);
+
+					for (index = 0; index < numRects; index++)
+					{
+						region16_union_rect(&(client->invalidRegion), &(client->invalidRegion), &rects[index]);
+					}
+
+					shadow_client_send_surface_update(client);
+				}
 			}
 
 			/* 

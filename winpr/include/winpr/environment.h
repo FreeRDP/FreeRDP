@@ -40,10 +40,6 @@ WINPR_API BOOL SetCurrentDirectoryW(LPCWSTR lpPathName);
 WINPR_API DWORD SearchPathA(LPCSTR lpPath, LPCSTR lpFileName, LPCSTR lpExtension, DWORD nBufferLength, LPSTR lpBuffer, LPSTR* lpFilePart);
 WINPR_API DWORD SearchPathW(LPCWSTR lpPath, LPCWSTR lpFileName, LPCWSTR lpExtension, DWORD nBufferLength, LPWSTR lpBuffer, LPWSTR* lpFilePart);
 
-WINPR_API HANDLE GetStdHandle(DWORD nStdHandle);
-WINPR_API BOOL SetStdHandle(DWORD nStdHandle, HANDLE hHandle);
-WINPR_API BOOL SetStdHandleEx(DWORD dwStdHandle, HANDLE hNewHandle, HANDLE* phOldHandle);
-
 WINPR_API LPSTR GetCommandLineA(VOID);
 WINPR_API LPWSTR GetCommandLineW(VOID);
 
@@ -113,6 +109,8 @@ WINPR_API LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge);
 
 WINPR_API DWORD GetEnvironmentVariableEBA(LPCSTR envBlock, LPCSTR lpName, LPSTR lpBuffer, DWORD nSize);
 WINPR_API BOOL SetEnvironmentVariableEBA(LPSTR* envBlock, LPCSTR lpName, LPCSTR lpValue);
+
+WINPR_API char** EnvironmentBlockToEnvpA(LPCH lpszEnvironmentBlock);
 
 #ifdef __cplusplus
 }

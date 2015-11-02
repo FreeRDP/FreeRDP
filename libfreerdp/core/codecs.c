@@ -29,7 +29,7 @@
 
 BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags)
 {
-	if (flags & FREERDP_CODEC_INTERLEAVED && !codecs->interleaved)
+	if ((flags & FREERDP_CODEC_INTERLEAVED) && !codecs->interleaved)
 	{
 		if (!(codecs->interleaved = bitmap_interleaved_context_new(FALSE)))
 		{
@@ -38,7 +38,7 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags)
 		}
 	}
 
-	if (flags & FREERDP_CODEC_PLANAR && !codecs->planar)
+	if ((flags & FREERDP_CODEC_PLANAR) && !codecs->planar)
 	{
 		if (!(codecs->planar = freerdp_bitmap_planar_context_new(FALSE, 64, 64)))
 		{
@@ -47,7 +47,7 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags)
 		}
 	}
 
-	if (flags & FREERDP_CODEC_NSCODEC && !codecs->nsc)
+	if ((flags & FREERDP_CODEC_NSCODEC) && !codecs->nsc)
 	{
 		if (!(codecs->nsc = nsc_context_new()))
 		{
@@ -56,7 +56,7 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags)
 		}
 	}
 
-	if (flags & FREERDP_CODEC_REMOTEFX && !codecs->rfx)
+	if ((flags & FREERDP_CODEC_REMOTEFX) && !codecs->rfx)
 	{
 		if (!(codecs->rfx = rfx_context_new(FALSE)))
 		{
@@ -65,7 +65,7 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags)
 		}
 	}
 
-	if (flags & FREERDP_CODEC_CLEARCODEC && !codecs->clear)
+	if ((flags & FREERDP_CODEC_CLEARCODEC) && !codecs->clear)
 	{
 		if (!(codecs->clear = clear_context_new(FALSE)))
 		{
@@ -79,7 +79,7 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags)
 
 	}
 
-	if (flags & FREERDP_CODEC_PROGRESSIVE && !codecs->progressive)
+	if ((flags & FREERDP_CODEC_PROGRESSIVE) && !codecs->progressive)
 	{
 		if (!(codecs->progressive = progressive_context_new(FALSE)))
 		{
@@ -88,7 +88,7 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags)
 		}
 	}
 
-	if (flags & FREERDP_CODEC_H264 && !codecs->h264)
+	if ((flags & FREERDP_CODEC_H264) && !codecs->h264)
 	{
 		if (!(codecs->h264 = h264_context_new(FALSE)))
 		{

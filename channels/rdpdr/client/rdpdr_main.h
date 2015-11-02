@@ -4,6 +4,8 @@
  *
  * Copyright 2010-2011 Vic Lee
  * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,8 +67,9 @@ struct rdpdr_plugin
 #else
 	HANDLE stopEvent;
 #endif
+	rdpContext* rdpcontext;
 };
 
-int rdpdr_send(rdpdrPlugin* rdpdr, wStream* s);
+UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s);
 
 #endif /* FREERDP_CHANNEL_RDPDR_CLIENT_MAIN_H */

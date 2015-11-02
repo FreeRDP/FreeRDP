@@ -20,15 +20,25 @@ set(MODULE_PREFIX "WINPR_MAKECERT_TOOL")
 
 set(${MODULE_PREFIX}_SRCS makecert.c)
 
-include_directories(${ZLIB_INCLUDE_DIRS})
-include_directories(${OPENSSL_INCLUDE_DIR})
+if(OPENSSL_FOUND)
+	include_directories(${OPENSSL_INCLUDE_DIR})
+endif()
+
+if(MBEDTLS_FOUND)
+	include_directories(${MBEDTLS_INCLUDE_DIR})
+endif()
 
 add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS}) 
 
-set(${MODULE_PREFIX}_LIBS
-	${ZLIB_LIBRARIES}
-	${OPENSSL_LIBRARIES}
-	winpr)
+set(${MODULE_PREFIX}_LIBS winpr)
+
+if(OPENSSL_FOUND)
+	list(APPEND ${MODULE_PREFIX}_LIBS ${OPENSSL_LIBRARIES})
+endif()
+
+if(MBEDTLS_FOUND)
+	list(APPEND ${MODULE_PREFIX}_LIBS ${MBEDTLS_LIBRARIES})
+endif()
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 

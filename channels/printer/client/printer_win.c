@@ -3,6 +3,8 @@
  * Print Virtual Channel - WIN driver
  *
  * Copyright 2012 Gerald Richter
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +77,12 @@ static void printer_win_get_printjob_name(char* buf, int size)
 		t->tm_hour, t->tm_min, t->tm_sec);
 }
 
-static void printer_win_write_printjob(rdpPrintJob* printjob, BYTE* data, int size)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT printer_win_write_printjob(rdpPrintJob* printjob, BYTE* data, int size)
 {
 	rdpWinPrintJob* win_printjob = (rdpWinPrintJob*) printjob;
 
@@ -84,9 +91,8 @@ static void printer_win_write_printjob(rdpPrintJob* printjob, BYTE* data, int si
 	DWORD pcWritten;
 
 	if(!WritePrinter(((rdpWinPrinter*)printjob->printer)->hPrinter, pBuf, cbBuf, &pcWritten))
-	{
-
-	}
+		return ERROR_INTERNAL_ERROR;
+	return CHANNEL_RC_OK;
 }
 
 static void printer_win_close_printjob(rdpPrintJob* printjob)
@@ -117,6 +123,8 @@ static rdpPrintJob* printer_win_create_printjob(rdpPrinter* printer, UINT32 id)
 		return NULL;
 
 	win_printjob = (rdpWinPrintJob*) calloc(1, sizeof(rdpWinPrintJob));
+	if (!win_printjob)
+		return NULL;
 
 	win_printjob->printjob.id = id;
 	win_printjob->printjob.printer = printer;
@@ -128,12 +136,14 @@ static rdpPrintJob* printer_win_create_printjob(rdpPrinter* printer, UINT32 id)
 
 	if (!win_printjob->handle)
 	{
-
+		free(win_printjob);
+		return NULL;
 	}
 
 	if (!StartPagePrinter(win_printer->hPrinter))
 	{
-
+		free(win_printjob);
+		return NULL;
 	}
 
 	win_printjob->printjob.Write = printer_win_write_printjob;
@@ -177,9 +187,16 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver, cons
 	size_t charsConverted;
 
 	win_printer = (rdpWinPrinter*) calloc(1, sizeof(rdpWinPrinter));
+	if (!win_printer)
+		return NULL;
 
 	win_printer->printer.id = win_driver->id_sequence++;
 	win_printer->printer.name = _strdup(name);
+	if (!win_printer->printer.name)
+	{
+		free(win_printer);
+		return NULL;
+	}
 	win_printer->printer.is_default = is_default;
 
 	win_printer->printer.CreatePrintJob = printer_win_create_printjob;
@@ -191,9 +208,22 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver, cons
 
 	GetPrinter(win_printer->hPrinter, 2, (LPBYTE) prninfo, 0, &needed);
 	prninfo = (PRINTER_INFO_2*) GlobalAlloc(GPTR,needed);
+	if (!prninfo)
+	{
+		free(win_printer->printer.name);
+		free(win_printer);
+		return NULL;
+	}
 	GetPrinter(win_printer->hPrinter, 2, (LPBYTE) prninfo, needed, &needed);
 
 	win_printer->printer.driver = malloc(1000);
+	if (!win_printer->printer.driver)
+	{
+		GlobalFree(prninfo);
+		free(win_printer->printer.name);
+		free(win_printer);
+		return NULL;
+	}
 	wcstombs_s(&charsConverted, win_printer->printer.driver, 1000, prninfo->pDriverName, _TRUNCATE);
 
 	return (rdpPrinter*)win_printer;
@@ -215,6 +245,8 @@ static rdpPrinter** printer_win_enum_printers(rdpPrinterDriver* driver)
 
 	/* allocate array of PRINTER_INFO structures */
 	prninfo = (PRINTER_INFO_2*) GlobalAlloc(GPTR,needed);
+	if (!prninfo)
+		return NULL;
  
 	/* call again */
 	if (!EnumPrinters(PRINTER_ENUM_LOCAL|PRINTER_ENUM_CONNECTIONS, NULL, 2, (LPBYTE) prninfo, needed, &needed, &returned))
@@ -223,6 +255,11 @@ static rdpPrinter** printer_win_enum_printers(rdpPrinterDriver* driver)
 	}
 
 	printers = (rdpPrinter**) calloc((returned + 1), sizeof(rdpPrinter*));
+	if (!printers)
+	{
+		GlobalFree(prninfo);
+		return NULL;
+	}
 
 	num_printers = 0;
 
@@ -254,6 +291,8 @@ rdpPrinterDriver* printer_win_get_driver(void)
 	if (!win_driver)
 	{
 		win_driver = (rdpWinPrinterDriver*) calloc(1, sizeof(rdpWinPrinterDriver));
+		if (!win_driver)
+			return NULL;
 
 		win_driver->driver.EnumPrinters = printer_win_enum_printers;
 		win_driver->driver.GetPrinter = printer_win_get_printer;

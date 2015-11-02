@@ -3,8 +3,8 @@
  * FreeRDP Interface
  *
  * Copyright 2009-2011 Jay Sorg
- * Copyright 2014 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
- *
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,7 +110,11 @@ struct rdp_context
 
 	ALIGN64 wPubSub* pubSub; /* (offset 18) */
 
-	UINT64 paddingB[32 - 19]; /* 19 */
+	ALIGN64 HANDLE channelErrorEvent; /* (offset 19)*/
+	ALIGN64 UINT channelErrorNum; /*(offset 20)*/
+	ALIGN64 char* errorDescription; /*(offset 21)*/
+
+	UINT64 paddingB[32 - 22]; /* 22 */
 
 	ALIGN64 rdpRdp* rdp; /**< (offset 32)
 					Pointer to a rdp_rdp structure used to keep the connection's parameters.
@@ -130,7 +134,8 @@ struct rdp_context
 	ALIGN64 rdpMetrics* metrics; /* 41 */
 	ALIGN64 rdpCodecs* codecs; /* 42 */
 	ALIGN64 rdpAutoDetect* autodetect; /* 43 */
-	UINT64 paddingC[64 - 44]; /* 44 */
+	ALIGN64 HANDLE abortEvent; /* 44 */
+	UINT64 paddingC[64 - 45]; /* 45 */
 
 	UINT64 paddingD[96 - 64]; /* 64 */
 	UINT64 paddingE[128 - 96]; /* 96 */
@@ -244,6 +249,7 @@ FREERDP_API BOOL freerdp_context_new(freerdp* instance);
 FREERDP_API void freerdp_context_free(freerdp* instance);
 
 FREERDP_API BOOL freerdp_connect(freerdp* instance);
+FREERDP_API BOOL freerdp_abort_connect(freerdp* instance);
 FREERDP_API BOOL freerdp_shall_disconnect(freerdp* instance);
 FREERDP_API BOOL freerdp_disconnect(freerdp* instance);
 FREERDP_API BOOL freerdp_reconnect(freerdp* instance);
@@ -279,6 +285,13 @@ FREERDP_API const char* freerdp_get_last_error_string(UINT32 error);
 FREERDP_API void freerdp_set_last_error(rdpContext* context, UINT32 lastError);
 
 FREERDP_API ULONG freerdp_get_transport_sent(rdpContext* context, BOOL resetCount);
+
+FREERDP_API void clearChannelError(rdpContext* context);
+FREERDP_API HANDLE getChannelErrorEventHandle(rdpContext* context);
+FREERDP_API UINT getChannelError(rdpContext* context);
+FREERDP_API const char* getChannelErrorDescription(rdpContext* context);
+FREERDP_API void setChannelError(rdpContext* context, UINT errorNum, char* description);
+FREERDP_API BOOL checkChannelErrorEvent(rdpContext* context);
 
 #ifdef __cplusplus
 }

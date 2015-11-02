@@ -3,6 +3,8 @@
  * Remote Assistance Virtual Channel
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +29,12 @@
 
 #include "remdesk_main.h"
 
-static int remdesk_virtual_channel_write(RemdeskServerContext* context, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_virtual_channel_write(RemdeskServerContext* context, wStream* s)
 {
 	BOOL status;
 	ULONG BytesWritten = 0;
@@ -35,29 +42,46 @@ static int remdesk_virtual_channel_write(RemdeskServerContext* context, wStream*
 	status = WTSVirtualChannelWrite(context->priv->ChannelHandle,
 			(PCHAR) Stream_Buffer(s), Stream_Length(s), &BytesWritten);
 
-	return (status) ? 1 : -1;
+	return (status) ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
-static int remdesk_read_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_read_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
 	int status;
 	UINT32 ChannelNameLen;
 	char* pChannelName = NULL;
 
 	if (Stream_GetRemainingLength(s) < 8)
-		return -1;
+	{
+		WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	Stream_Read_UINT32(s, ChannelNameLen); /* ChannelNameLen (4 bytes) */
 	Stream_Read_UINT32(s, header->DataLength); /* DataLen (4 bytes) */
 
 	if (ChannelNameLen > 64)
-		return -1;
+	{
+		WLog_ERR(TAG, "ChannelNameLen > 64!");
+		return ERROR_INVALID_DATA;
+	}
 
 	if ((ChannelNameLen % 2) != 0)
-		return -1;
+	{
+		WLog_ERR(TAG, "(ChannelNameLen % 2) != 0!");
+		return ERROR_INVALID_DATA;
+	}
 
 	if (Stream_GetRemainingLength(s) < ChannelNameLen)
-		return -1;
+	{
+		WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
+		return ERROR_INVALID_DATA;
+	}
 
 	ZeroMemory(header->ChannelName, sizeof(header->ChannelName));
 
@@ -68,12 +92,20 @@ static int remdesk_read_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* heade
 	Stream_Seek(s, ChannelNameLen);
 
 	if (status <= 0)
-		return -1;
+	{
+		WLog_ERR(TAG, "ConvertFromUnicode failed!");
+		return ERROR_INVALID_DATA;
+	}
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-static int remdesk_write_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_write_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
 	int index;
 	UINT32 ChannelNameLen;
@@ -93,89 +125,158 @@ static int remdesk_write_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* head
 
 	Stream_Write(s, ChannelNameW, ChannelNameLen); /* ChannelName (variable) */
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-static int remdesk_write_ctl_header(wStream* s, REMDESK_CTL_HEADER* ctlHeader)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_write_ctl_header(wStream* s, REMDESK_CTL_HEADER* ctlHeader)
 {
-	remdesk_write_channel_header(s, (REMDESK_CHANNEL_HEADER*) ctlHeader);
+	UINT error;
+	if ((error = remdesk_write_channel_header(s, (REMDESK_CHANNEL_HEADER*) ctlHeader)))
+	{
+		WLog_ERR(TAG, "remdesk_write_channel_header failed with error %lu!", error);
+		return error;
+	}
 	Stream_Write_UINT32(s, ctlHeader->msgType); /* msgType (4 bytes) */
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-static int remdesk_prepare_ctl_header(REMDESK_CTL_HEADER* ctlHeader, UINT32 msgType, UINT32 msgSize)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_prepare_ctl_header(REMDESK_CTL_HEADER* ctlHeader, UINT32 msgType, UINT32 msgSize)
 {
 	ctlHeader->msgType = msgType;
 	strcpy(ctlHeader->ChannelName, REMDESK_CHANNEL_CTL_NAME);
 	ctlHeader->DataLength = 4 + msgSize;
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-static int remdesk_send_ctl_result_pdu(RemdeskServerContext* context, UINT32 result)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_send_ctl_result_pdu(RemdeskServerContext* context, UINT32 result)
 {
 	wStream* s;
 	REMDESK_CTL_RESULT_PDU pdu;
+	UINT error;
 
 	pdu.result = result;
 
-	remdesk_prepare_ctl_header(&(pdu.ctlHeader), REMDESK_CTL_RESULT, 4);
+	if ((error = remdesk_prepare_ctl_header(&(pdu.ctlHeader), REMDESK_CTL_RESULT, 4)))
+	{
+		WLog_ERR(TAG, "remdesk_prepare_ctl_header failed with error %lu!", error);
+		return error;
+	}
 
 	s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.DataLength);
+	if (!s)
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
-	remdesk_write_ctl_header(s, &(pdu.ctlHeader));
+	if ((error = remdesk_write_ctl_header(s, &(pdu.ctlHeader))))
+	{
+		WLog_ERR(TAG, "remdesk_write_ctl_header failed with error %lu!", error);
+		goto out;
+	}
+
 
 	Stream_Write_UINT32(s, pdu.result); /* result (4 bytes) */
 
 	Stream_SealLength(s);
 
-	remdesk_virtual_channel_write(context, s);
-
+	if ((error = remdesk_virtual_channel_write(context, s)))
+		WLog_ERR(TAG, "remdesk_virtual_channel_write failed with error %lu!", error);
+out:
 	Stream_Free(s, TRUE);
 
-	return 1;
+	return error;
 }
 
-static int remdesk_send_ctl_version_info_pdu(RemdeskServerContext* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_send_ctl_version_info_pdu(RemdeskServerContext* context)
 {
 	wStream* s;
 	REMDESK_CTL_VERSION_INFO_PDU pdu;
+	UINT error;
 
-	remdesk_prepare_ctl_header(&(pdu.ctlHeader), REMDESK_CTL_VERSIONINFO, 8);
+	if ((error = remdesk_prepare_ctl_header(&(pdu.ctlHeader), REMDESK_CTL_VERSIONINFO, 8)))
+	{
+		WLog_ERR(TAG, "remdesk_prepare_ctl_header failed with error %lu!", error);
+		return error;
+	}
 
 	pdu.versionMajor = 1;
 	pdu.versionMinor = 2;
 
 	s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.DataLength);
+	if (!s)
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
-	remdesk_write_ctl_header(s, &(pdu.ctlHeader));
+	if ((error = remdesk_write_ctl_header(s, &(pdu.ctlHeader))))
+	{
+		WLog_ERR(TAG, "remdesk_write_ctl_header failed with error %lu!", error);
+		goto out;
+	}
 
 	Stream_Write_UINT32(s, pdu.versionMajor); /* versionMajor (4 bytes) */
 	Stream_Write_UINT32(s, pdu.versionMinor); /* versionMinor (4 bytes) */
 
 	Stream_SealLength(s);
 
-	remdesk_virtual_channel_write(context, s);
-
+	if ((error = remdesk_virtual_channel_write(context, s)))
+		WLog_ERR(TAG, "remdesk_virtual_channel_write failed with error %lu!", error);
+out:
 	Stream_Free(s, TRUE);
 
-	return 1;
+	return error;
 }
 
-static int remdesk_recv_ctl_version_info_pdu(RemdeskServerContext* context, wStream* s, REMDESK_CHANNEL_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_recv_ctl_version_info_pdu(RemdeskServerContext* context, wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
 	UINT32 versionMajor;
 	UINT32 versionMinor;
 
 	if (Stream_GetRemainingLength(s) < 8)
-		return -1;
+	{
+		WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
+		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, versionMajor); /* versionMajor (4 bytes) */
 	Stream_Read_UINT32(s, versionMinor); /* versionMinor (4 bytes) */
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-static int remdesk_recv_ctl_remote_control_desktop_pdu(RemdeskServerContext* context, wStream* s, REMDESK_CHANNEL_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_recv_ctl_remote_control_desktop_pdu(RemdeskServerContext* context, wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
 	int status;
 	int cchStringW;
@@ -184,6 +285,7 @@ static int remdesk_recv_ctl_remote_control_desktop_pdu(RemdeskServerContext* con
 	int cbRaConnectionStringW = 0;
 	WCHAR* raConnectionStringW = NULL;
 	REMDESK_CTL_REMOTE_CONTROL_DESKTOP_PDU pdu;
+	UINT error;
 
 	msgLength = header->DataLength - 4;
 
@@ -198,7 +300,7 @@ static int remdesk_recv_ctl_remote_control_desktop_pdu(RemdeskServerContext* con
 	}
 
 	if (pStringW[cchStringW] || !cchStringW)
-		return -1;
+		return ERROR_INVALID_DATA;
 
 	cchStringW++;
 	cbRaConnectionStringW = cchStringW * 2;
@@ -209,18 +311,27 @@ static int remdesk_recv_ctl_remote_control_desktop_pdu(RemdeskServerContext* con
 			cbRaConnectionStringW / 2, &pdu.raConnectionString, 0, NULL, NULL);
 
 	if (status <= 0)
-		return -1;
+	{
+		WLog_ERR(TAG, "ConvertFromUnicode failed!");
+		return ERROR_INTERNAL_ERROR;
+	}
 
 	WLog_INFO(TAG, "RaConnectionString: %s",
 			  pdu.raConnectionString);
 	free(pdu.raConnectionString);
 
-	remdesk_send_ctl_result_pdu(context, 0);
+	if ((error = remdesk_send_ctl_result_pdu(context, 0)))
+		WLog_ERR(TAG, "remdesk_send_ctl_result_pdu failed with error %lu!", error);
 
-	return 1;
+	return error;
 }
 
-static int remdesk_recv_ctl_authenticate_pdu(RemdeskServerContext* context, wStream* s, REMDESK_CHANNEL_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_recv_ctl_authenticate_pdu(RemdeskServerContext* context, wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
 	int status;
 	int cchStringW;
@@ -245,7 +356,7 @@ static int remdesk_recv_ctl_authenticate_pdu(RemdeskServerContext* context, wStr
 	}
 
 	if (pStringW[cchStringW] || !cchStringW)
-		return -1;
+		return ERROR_INVALID_DATA;
 
 	cchStringW++;
 	cbRaConnectionStringW = cchStringW * 2;
@@ -261,7 +372,7 @@ static int remdesk_recv_ctl_authenticate_pdu(RemdeskServerContext* context, wStr
 	}
 
 	if (pStringW[cchStringW] || !cchStringW)
-		return -1;
+		return ERROR_INVALID_DATA;
 
 	cchStringW++;
 	cbExpertBlobW = cchStringW * 2;
@@ -272,7 +383,10 @@ static int remdesk_recv_ctl_authenticate_pdu(RemdeskServerContext* context, wStr
 			cbRaConnectionStringW / 2, &pdu.raConnectionString, 0, NULL, NULL);
 
 	if (status <= 0)
-		return -1;
+	{
+		WLog_ERR(TAG, "ConvertFromUnicode failed!");
+		return ERROR_INTERNAL_ERROR;
+	}
 
 	pdu.expertBlob = NULL;
 
@@ -280,44 +394,73 @@ static int remdesk_recv_ctl_authenticate_pdu(RemdeskServerContext* context, wStr
 			cbExpertBlobW / 2, &pdu.expertBlob, 0, NULL, NULL);
 
 	if (status <= 0)
-		return -1;
+	{
+		WLog_ERR(TAG, "ConvertFromUnicode failed!");
+		free(pdu.raConnectionString);
+		return ERROR_INTERNAL_ERROR;
+	}
 
 	WLog_INFO(TAG, "RaConnectionString: %s ExpertBlob: %s",
 			  pdu.raConnectionString, pdu.expertBlob);
 	free(pdu.raConnectionString);
 	free(pdu.expertBlob);
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-static int remdesk_recv_ctl_verify_password_pdu(RemdeskServerContext* context, wStream* s, REMDESK_CHANNEL_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_recv_ctl_verify_password_pdu(RemdeskServerContext* context, wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
 	int status;
 	int cbExpertBlobW = 0;
 	WCHAR* expertBlobW = NULL;
 	REMDESK_CTL_VERIFY_PASSWORD_PDU pdu;
+	UINT error;
 
 	if (Stream_GetRemainingLength(s) < 8)
-		return -1;
+	{
+		WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
+		return ERROR_INVALID_DATA;
+	}
 
 	pdu.expertBlob = NULL;
 	expertBlobW = (WCHAR*) Stream_Pointer(s);
 	cbExpertBlobW = header->DataLength - 4;
 
 	status = ConvertFromUnicode(CP_UTF8, 0, expertBlobW, cbExpertBlobW / 2, &pdu.expertBlob, 0, NULL, NULL);
-	WLog_INFO(TAG, "ExpertBlob: %s", pdu.expertBlob);
-	remdesk_send_ctl_result_pdu(context, 0);
 
-	return 1;
+	if (status <= 0)
+	{
+		WLog_ERR(TAG, "ConvertFromUnicode failed!");
+		return ERROR_INTERNAL_ERROR;
+	}
+
+	WLog_INFO(TAG, "ExpertBlob: %s", pdu.expertBlob);
+	if ((error = remdesk_send_ctl_result_pdu(context, 0)))
+		WLog_ERR(TAG, "remdesk_send_ctl_result_pdu failed with error %lu!", error);
+
+	return error;
 }
 
-static int remdesk_recv_ctl_pdu(RemdeskServerContext* context, wStream* s, REMDESK_CHANNEL_HEADER* header)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_recv_ctl_pdu(RemdeskServerContext* context, wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
-	int status = 1;
+	UINT error = CHANNEL_RC_OK;
 	UINT32 msgType = 0;
 
 	if (Stream_GetRemainingLength(s) < 4)
-		return -1;
+	{
+		WLog_ERR(TAG, "Stream_GetRemainingLength failed!");
+		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, msgType); /* msgType (4 bytes) */
 	WLog_INFO(TAG, "msgType: %d", msgType);
@@ -325,25 +468,41 @@ static int remdesk_recv_ctl_pdu(RemdeskServerContext* context, wStream* s, REMDE
 	switch (msgType)
 	{
 		case REMDESK_CTL_REMOTE_CONTROL_DESKTOP:
-			status = remdesk_recv_ctl_remote_control_desktop_pdu(context, s, header);
+			if ((error = remdesk_recv_ctl_remote_control_desktop_pdu(context, s, header)))
+			{
+				WLog_ERR(TAG, "remdesk_recv_ctl_remote_control_desktop_pdu failed with error %lu!", error);
+				return error;
+			}
 			break;
 
 		case REMDESK_CTL_AUTHENTICATE:
-			status = remdesk_recv_ctl_authenticate_pdu(context, s, header);
+			if ((error = remdesk_recv_ctl_authenticate_pdu(context, s, header)))
+			{
+				WLog_ERR(TAG, "remdesk_recv_ctl_authenticate_pdu failed with error %lu!", error);
+				return error;
+			}
 			break;
 
 		case REMDESK_CTL_DISCONNECT:
 			break;
 
 		case REMDESK_CTL_VERSIONINFO:
-			status = remdesk_recv_ctl_version_info_pdu(context, s, header);
+			if((error = remdesk_recv_ctl_version_info_pdu(context, s, header)))
+			{
+				WLog_ERR(TAG, "remdesk_recv_ctl_version_info_pdu failed with error %lu!", error);
+				return error;
+			}
 			break;
 
 		case REMDESK_CTL_ISCONNECTED:
 			break;
 
 		case REMDESK_CTL_VERIFY_PASSWORD:
-			status = remdesk_recv_ctl_verify_password_pdu(context, s, header);
+			if ((error = remdesk_recv_ctl_verify_password_pdu(context, s, header)))
+			{
+				WLog_ERR(TAG, "remdesk_recv_ctl_verify_password_pdu failed with error %lu!", error);
+				return error;
+			}
 			break;
 
 		case REMDESK_CTL_EXPERT_ON_VISTA:
@@ -360,16 +519,21 @@ static int remdesk_recv_ctl_pdu(RemdeskServerContext* context, wStream* s, REMDE
 
 		default:
 			WLog_ERR(TAG, "remdesk_recv_control_pdu: unknown msgType: %d", msgType);
-			status = -1;
+			error = ERROR_INVALID_DATA;
 			break;
 	}
 
-	return status;
+	return error;
 }
 
-static int remdesk_server_receive_pdu(RemdeskServerContext* context, wStream* s)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_server_receive_pdu(RemdeskServerContext* context, wStream* s)
 {
-	int status = 1;
+	UINT error = CHANNEL_RC_OK;
 	REMDESK_CHANNEL_HEADER header;
 
 #if 0
@@ -377,12 +541,20 @@ static int remdesk_server_receive_pdu(RemdeskServerContext* context, wStream* s)
 	winpr_HexDump(Stream_Pointer(s), Stream_GetRemainingLength(s));
 #endif
 
-	if (remdesk_read_channel_header(s, &header) < 0)
-		return -1;
+	if ((error = remdesk_read_channel_header(s, &header)))
+	{
+		WLog_ERR(TAG, "remdesk_read_channel_header failed with error %lu!", error);
+		return error;
+	}
+
 
 	if (strcmp(header.ChannelName, "RC_CTL") == 0)
 	{
-		status = remdesk_recv_ctl_pdu(context, s, &header);
+		if ((error = remdesk_recv_ctl_pdu(context, s, &header)))
+		{
+			WLog_ERR(TAG, "remdesk_recv_ctl_pdu failed with error %lu!", error);
+			return error;
+		}
 	}
 	else if (strcmp(header.ChannelName, "70") == 0)
 	{
@@ -409,7 +581,7 @@ static int remdesk_server_receive_pdu(RemdeskServerContext* context, wStream* s)
 
 	}
 
-	return 1;
+	return error;
 }
 
 static void* remdesk_server_thread(void* arg)
@@ -424,6 +596,7 @@ static void* remdesk_server_thread(void* arg)
 	HANDLE ChannelEvent;
 	DWORD BytesReturned;
 	RemdeskServerContext* context;
+	UINT error;
 
 	context = (RemdeskServerContext*) arg;
 
@@ -432,6 +605,12 @@ static void* remdesk_server_thread(void* arg)
 	ChannelEvent = NULL;
 
 	s = Stream_New(NULL, 4096);
+	if (!s)
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
+		error = CHANNEL_RC_NO_MEMORY;
+		goto out;
+	}
 
 	if (WTSVirtualChannelQuery(context->priv->ChannelHandle, WTSVirtualEventHandle, &buffer, &BytesReturned) == TRUE)
 	{
@@ -440,18 +619,45 @@ static void* remdesk_server_thread(void* arg)
 
 		WTSFreeMemory(buffer);
 	}
+	else
+	{
+		WLog_ERR(TAG, "WTSVirtualChannelQuery failed!");
+		error = ERROR_INTERNAL_ERROR;
+		goto out;
+	}
 
 	nCount = 0;
 	events[nCount++] = ChannelEvent;
 	events[nCount++] = context->priv->StopEvent;
 
-	remdesk_send_ctl_version_info_pdu(context);
+	if ((error = remdesk_send_ctl_version_info_pdu(context)))
+	{
+		WLog_ERR(TAG, "remdesk_send_ctl_version_info_pdu failed with error %lu!", error);
+		goto out;
+	}
 
 	while (1)
 	{
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
-		if (WaitForSingleObject(context->priv->StopEvent, 0) == WAIT_OBJECT_0)
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
+            break;
+        }
+
+        status = WaitForSingleObject(context->priv->StopEvent, 0);
+
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+            break;
+        }
+
+
+		if (status == WAIT_OBJECT_0)
 		{
 			break;
 		}
@@ -464,7 +670,12 @@ static void* remdesk_server_thread(void* arg)
 		}
 		else
 		{
-			Stream_EnsureRemainingCapacity(s, BytesReturned);
+			if (!Stream_EnsureRemainingCapacity(s, BytesReturned))
+			{
+				WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
+				error = CHANNEL_RC_NO_MEMORY;
+				break;
+			}
 		}
 
 		if (Stream_GetPosition(s) >= 8)
@@ -476,40 +687,78 @@ static void* remdesk_server_thread(void* arg)
 			{
 				Stream_SealLength(s);
 				Stream_SetPosition(s, 0);
-				remdesk_server_receive_pdu(context, s);
+				if ((error = remdesk_server_receive_pdu(context, s)))
+				{
+					WLog_ERR(TAG, "remdesk_server_receive_pdu failed with error %lu!", error);
+					break;
+				}
 				Stream_SetPosition(s, 0);
 			}
 		}
 	}
 
 	Stream_Free(s, TRUE);
+out:
+	if (error && context->rdpcontext)
+		setChannelError(context->rdpcontext, error, "remdesk_server_thread reported an error");
 
+	ExitThread((DWORD)error);
 	return NULL;
 }
 
-static int remdesk_server_start(RemdeskServerContext* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_server_start(RemdeskServerContext* context)
 {
 	context->priv->ChannelHandle = WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, "remdesk");
 
 	if (!context->priv->ChannelHandle)
-		return -1;
+	{
+		WLog_ERR(TAG, "WTSVirtualChannelOpen failed!");
+		return ERROR_INTERNAL_ERROR;
+	}
 
-	context->priv->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (!(context->priv->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	{
+		WLog_ERR(TAG, "CreateEvent failed!");
+		return ERROR_INTERNAL_ERROR;
+	}
 
-	context->priv->Thread = CreateThread(NULL, 0,
-			(LPTHREAD_START_ROUTINE) remdesk_server_thread, (void*) context, 0, NULL);
+	if (!(context->priv->Thread = CreateThread(NULL, 0,
+			(LPTHREAD_START_ROUTINE) remdesk_server_thread, (void*) context, 0, NULL)))
+	{
+		WLog_ERR(TAG, "CreateThread failed!");
+		CloseHandle(context->priv->StopEvent);
+		context->priv->StopEvent = NULL;
+		return ERROR_INTERNAL_ERROR;
+	}
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
-static int remdesk_server_stop(RemdeskServerContext* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT remdesk_server_stop(RemdeskServerContext* context)
 {
+    UINT error;
+
 	SetEvent(context->priv->StopEvent);
 
-	WaitForSingleObject(context->priv->Thread, INFINITE);
+	if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
+    {
+        error = GetLastError();
+        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+        return error;
+    }
 	CloseHandle(context->priv->Thread);
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
 RemdeskServerContext* remdesk_server_context_new(HANDLE vcm)
@@ -527,10 +776,12 @@ RemdeskServerContext* remdesk_server_context_new(HANDLE vcm)
 
 		context->priv = (RemdeskServerPrivate*) calloc(1, sizeof(RemdeskServerPrivate));
 
-		if (context->priv)
+		if (!context->priv)
 		{
-			context->priv->Version = 1;
+			free(context);
+			return NULL;
 		}
+		context->priv->Version = 1;
 	}
 
 	return context;

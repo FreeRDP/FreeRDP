@@ -45,6 +45,7 @@ extern "C" {
 
 rdpShadowSurface* shadow_surface_new(rdpShadowServer* server, int x, int y, int width, int height);
 void shadow_surface_free(rdpShadowSurface* surface);
+BOOL shadow_surface_resize(rdpShadowSurface *surface, int x, int y, int width, int height);
 
 #ifdef __cplusplus
 }

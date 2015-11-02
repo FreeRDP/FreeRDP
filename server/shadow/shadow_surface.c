@@ -41,15 +41,12 @@ rdpShadowSurface* shadow_surface_new(rdpShadowServer* server, int x, int y, int 
 	surface->height = height;
 	surface->scanline = (surface->width + (surface->width % 4)) * 4;
 
-	surface->data = (BYTE*) malloc(surface->scanline * surface->height);
-
+	surface->data = (BYTE*) calloc(1, surface->scanline * surface->height);
 	if (!surface->data)
 	{
 		free (surface);
 		return NULL;
 	}
-
-	ZeroMemory(surface->data, surface->scanline * surface->height);
 
 	if (!InitializeCriticalSectionAndSpinCount(&(surface->lock), 4000))
 	{
@@ -75,4 +72,36 @@ void shadow_surface_free(rdpShadowSurface* surface)
 	region16_uninit(&(surface->invalidRegion));
 
 	free(surface);
+}
+
+BOOL shadow_surface_resize(rdpShadowSurface *surface, int x, int y, int width, int height)
+{
+	BYTE* buffer = NULL;
+	int scanline = (width + (width % 4)) * 4;
+
+	if (!surface)
+		return FALSE;
+
+	if ((width == surface->width) && (height == surface->height))
+	{
+		/* We don't need to reset frame buffer, just update left top */
+		surface->x = x;
+		surface->y = y;
+		return TRUE;
+	}
+
+	buffer = (BYTE*) realloc(surface->data, scanline * height);
+	if (buffer)
+	{
+		surface->x = x;
+		surface->y = y;
+		surface->width = width;
+		surface->height = height;
+		surface->scanline = scanline;
+		surface->data = buffer;
+
+		return TRUE;
+	}
+
+	return FALSE;
 }

@@ -3,6 +3,8 @@
  * Audio Output Virtual Channel
  *
  * Copyright (c) 2015 Rozhuk Ivan <rozhuk.im@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,35 +153,49 @@ static BOOL rdpsnd_oss_format_supported(rdpsndDevicePlugin* device, AUDIO_FORMAT
 	return TRUE;
 }
 
-static void rdpsnd_oss_set_format(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
+static BOOL rdpsnd_oss_set_format(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
 {
 	int tmp;
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
 
 	if (device == NULL || oss->pcm_handle == -1 || format == NULL)
-		return;
+		return FALSE;
 
 	oss->latency = latency;
 	CopyMemory(&(oss->format), format, sizeof(AUDIO_FORMAT));
 	tmp = rdpsnd_oss_get_format(format);
 
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_SETFMT, &tmp) == -1)
+	{
 		OSS_LOG_ERR("SNDCTL_DSP_SETFMT failed", errno);
+		return FALSE;
+	}
 
 	tmp = format->nChannels;
 
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_CHANNELS, &tmp) == -1)
+	{
 		OSS_LOG_ERR("SNDCTL_DSP_CHANNELS failed", errno);
+		return FALSE;
+	}
 
 	tmp = format->nSamplesPerSec;
 
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_SPEED, &tmp) == -1)
+	{
 		OSS_LOG_ERR("SNDCTL_DSP_SPEED failed", errno);
+		return FALSE;
+	}
 
 	tmp = format->nBlockAlign;
 
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_SETFRAGMENT, &tmp) == -1)
+	{
 		OSS_LOG_ERR("SNDCTL_DSP_SETFRAGMENT failed", errno);
+		return FALSE;
+	}
+
+	return TRUE;
 }
 
 static void rdpsnd_oss_open_mixer(rdpsndOssPlugin* oss)
@@ -209,13 +225,13 @@ static void rdpsnd_oss_open_mixer(rdpsndOssPlugin* oss)
 	}
 }
 
-static void rdpsnd_oss_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
+static BOOL rdpsnd_oss_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
 {
 	char dev_name[PATH_MAX] = "/dev/dsp";
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
 
 	if (device == NULL || oss->pcm_handle != -1)
-		return;
+		return TRUE;
 
 	if (oss->dev_unit != -1)
 		sprintf_s(dev_name, PATH_MAX - 1, "/dev/dsp%i", oss->dev_unit);
@@ -226,7 +242,7 @@ static void rdpsnd_oss_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
 	{
 		OSS_LOG_ERR("sound dev open failed", errno);
 		oss->pcm_handle = -1;
-		return;
+		return FALSE;
 	}
 
 #if 0 /* FreeBSD OSS implementation at this moment (2015.03) does not set PCM_CAP_OUTPUT flag. */
@@ -251,12 +267,13 @@ static void rdpsnd_oss_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
 		OSS_LOG_ERR("SNDCTL_DSP_GETFMTS failed", errno);
 		close(oss->pcm_handle);
 		oss->pcm_handle = -1;
-		return;
+		return FALSE;
 	}
 
 	freerdp_dsp_context_reset_adpcm(oss->dsp_context);
 	rdpsnd_oss_set_format(device, format, latency);
 	rdpsnd_oss_open_mixer(oss);
+	return TRUE;
 }
 
 static void rdpsnd_oss_close(rdpsndDevicePlugin* device)
@@ -319,13 +336,13 @@ static UINT32 rdpsnd_oss_get_volume(rdpsndDevicePlugin* device)
 	return dwVolume;
 }
 
-static void rdpsnd_oss_set_volume(rdpsndDevicePlugin* device, UINT32 value)
+static BOOL rdpsnd_oss_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 {
 	int left, right;
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
 
 	if (device == NULL || oss->mixer_handle == -1)
-		return;
+		return FALSE;
 
 	left = (((value & 0xFFFF) * 100) / 0xFFFF);
 	right = ((((value >> 16) & 0xFFFF) * 100) / 0xFFFF);
@@ -343,15 +360,20 @@ static void rdpsnd_oss_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 	left |= (right << 8);
 
 	if (ioctl(oss->mixer_handle, MIXER_WRITE(SOUND_MIXER_VOLUME), &left) == -1)
+	{
 		OSS_LOG_ERR("WRITE_MIXER", errno);
+		return FALSE;
+	}
+
+	return TRUE;
 }
 
-static void rdpsnd_oss_wave_decode(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
+static BOOL rdpsnd_oss_wave_decode(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 {
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
 
 	if (device == NULL || wave == NULL)
-		return;
+		return FALSE;
 
 	switch (oss->format.wFormatTag)
 	{
@@ -368,6 +390,7 @@ static void rdpsnd_oss_wave_decode(rdpsndDevicePlugin* device, RDPSND_WAVE* wave
 			wave->data = oss->dsp_context->adpcm_buffer;
 			break;
 	}
+	return TRUE;
 }
 
 static void rdpsnd_oss_wave_play(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
@@ -435,6 +458,9 @@ static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* a
 		CommandLineSwitchCase(arg, "dev")
 		{
 			str_num = _strdup(arg->Value);
+			if (!str_num)
+				return ERROR_OUTOFMEMORY;
+
 			oss->dev_unit = strtol(str_num, &eptr, 10);
 
 			if (oss->dev_unit < 0 || *eptr != '\0')
@@ -453,12 +479,18 @@ static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* a
 #define freerdp_rdpsnd_client_subsystem_entry	oss_freerdp_rdpsnd_client_subsystem_entry
 #endif
 
-int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	ADDIN_ARGV* args;
 	rdpsndOssPlugin* oss;
-	oss = (rdpsndOssPlugin*)malloc(sizeof(rdpsndOssPlugin));
-	ZeroMemory(oss, sizeof(rdpsndOssPlugin));
+	oss = (rdpsndOssPlugin*)calloc(1, sizeof(rdpsndOssPlugin));
+	if (!oss)
+		return CHANNEL_RC_NO_MEMORY;
 	oss->device.Open = rdpsnd_oss_open;
 	oss->device.FormatSupported = rdpsnd_oss_format_supported;
 	oss->device.SetFormat = rdpsnd_oss_set_format;
@@ -474,6 +506,13 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	args = pEntryPoints->args;
 	rdpsnd_oss_parse_addin_args((rdpsndDevicePlugin*)oss, args);
 	oss->dsp_context = freerdp_dsp_context_new();
+	if (!oss->dsp_context)
+	{
+		free(oss);
+		return CHANNEL_RC_NO_MEMORY;
+	}
+
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*)oss);
-	return 0;
+
+	return CHANNEL_RC_OK;
 }

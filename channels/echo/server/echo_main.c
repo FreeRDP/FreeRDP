@@ -3,6 +3,8 @@
  * Echo Virtual Channel Extension
  *
  * Copyright 2014 Vic Lee
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +34,9 @@
 #include <winpr/sysinfo.h>
 
 #include <freerdp/server/echo.h>
+#include <freerdp/channels/log.h>
+
+#define TAG CHANNELS_TAG("echo.server")
 
 typedef struct _echo_server
 {
@@ -48,7 +53,12 @@ typedef struct _echo_server
 
 } echo_server;
 
-static BOOL echo_server_open_channel(echo_server* echo)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT echo_server_open_channel(echo_server* echo)
 {
 	DWORD Error;
 	HANDLE hEvent;
@@ -59,8 +69,10 @@ static BOOL echo_server_open_channel(echo_server* echo)
 	if (WTSQuerySessionInformationA(echo->context.vcm, WTS_CURRENT_SESSION,
 		WTSSessionId, (LPSTR*) &pSessionId, &BytesReturned) == FALSE)
 	{
-		return FALSE;
+		WLog_ERR(TAG, "WTSQuerySessionInformationA failed!");
+		return ERROR_INTERNAL_ERROR;
 	}
+
 	echo->SessionId = (DWORD) *pSessionId;
 	WTSFreeMemory(pSessionId);
 
@@ -69,7 +81,12 @@ static BOOL echo_server_open_channel(echo_server* echo)
 
 	while (echo->echo_channel == NULL)
 	{
-		WaitForSingleObject(hEvent, 1000);
+		if (WaitForSingleObject(hEvent, 1000) == WAIT_FAILED)
+        {
+            Error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", Error);
+            return Error;
+        }
 
 		echo->echo_channel = WTSVirtualChannelOpenEx(echo->SessionId,
 			"ECHO", WTS_CHANNEL_OPTION_DYNAMIC);
@@ -85,7 +102,7 @@ static BOOL echo_server_open_channel(echo_server* echo)
 			break;
 	}
 
-	return echo->echo_channel ? TRUE : FALSE;
+	return echo->echo_channel ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
 static void* echo_server_thread_func(void* arg)
@@ -98,11 +115,14 @@ static void* echo_server_thread_func(void* arg)
 	HANDLE ChannelEvent;
 	DWORD BytesReturned = 0;
 	echo_server* echo = (echo_server*) arg;
+	UINT error;
+    DWORD status;
 
-	if (echo_server_open_channel(echo) == FALSE)
+	if ((error = echo_server_open_channel(echo)))
 	{
-		IFCALL(echo->context.OpenResult, &echo->context, ECHO_SERVER_OPEN_RESULT_NOTSUPPORTED);
-		return NULL;
+		IFCALLRET(echo->context.OpenResult, error, &echo->context, ECHO_SERVER_OPEN_RESULT_NOTSUPPORTED);
+		WLog_ERR(TAG, "echo_server_open_channel failed with error %lu!", error);
+		goto out;
 	}
 
 	buffer = NULL;
@@ -125,15 +145,28 @@ static void* echo_server_thread_func(void* arg)
 
 	while (1)
 	{
-		if (WaitForMultipleObjects(nCount, events, FALSE, 100) == WAIT_OBJECT_0)
+        status = WaitForMultipleObjects(nCount, events, FALSE, 100);
+
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
+            break;
+        }
+
+		if (status == WAIT_OBJECT_0)
 		{
-			IFCALL(echo->context.OpenResult, &echo->context, ECHO_SERVER_OPEN_RESULT_CLOSED);
+			IFCALLRET(echo->context.OpenResult, error, &echo->context, ECHO_SERVER_OPEN_RESULT_CLOSED);
+			if (error)
+				WLog_ERR(TAG, "OpenResult failed with error %lu!", error);
 			break;
 		}
 
 		if (WTSVirtualChannelQuery(echo->echo_channel, WTSVirtualChannelReady, &buffer, &BytesReturned) == FALSE)
 		{
-			IFCALL(echo->context.OpenResult, &echo->context, ECHO_SERVER_OPEN_RESULT_ERROR);
+			IFCALLRET(echo->context.OpenResult, error, &echo->context, ECHO_SERVER_OPEN_RESULT_ERROR);
+			if (error)
+				WLog_ERR(TAG, "OpenResult failed with error %lu!", error);
 			break;
 		}
 
@@ -143,16 +176,34 @@ static void* echo_server_thread_func(void* arg)
 
 		if (ready)
 		{
-			IFCALL(echo->context.OpenResult, &echo->context, ECHO_SERVER_OPEN_RESULT_OK);
+			IFCALLRET(echo->context.OpenResult, error, &echo->context, ECHO_SERVER_OPEN_RESULT_OK);
+			if (error)
+				WLog_ERR(TAG, "OpenResult failed with error %lu!", error);
 			break;
 		}
 	}
 
 	s = Stream_New(NULL, 4096);
+	if (!s)
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
+		WTSVirtualChannelClose(echo->echo_channel);
+		ExitThread((DWORD)ERROR_NOT_ENOUGH_MEMORY);
+		return NULL;
+	}
 
 	while (ready)
 	{
-		if (WaitForMultipleObjects(nCount, events, FALSE, INFINITE) == WAIT_OBJECT_0)
+        status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
+            break;
+        }
+
+        if (status == WAIT_OBJECT_0)
 			break;
 
 		Stream_SetPosition(s, 0);
@@ -160,47 +211,94 @@ static void* echo_server_thread_func(void* arg)
 		WTSVirtualChannelRead(echo->echo_channel, 0, NULL, 0, &BytesReturned);
 		if (BytesReturned < 1)
 			continue;
-		Stream_EnsureRemainingCapacity(s, BytesReturned);
-		if (WTSVirtualChannelRead(echo->echo_channel, 0, (PCHAR) Stream_Buffer(s),
-			(ULONG) Stream_Capacity(s), &BytesReturned) == FALSE)
+		if (!Stream_EnsureRemainingCapacity(s, BytesReturned))
 		{
+			WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
+			error = CHANNEL_RC_NO_MEMORY;
 			break;
 		}
 
-		IFCALL(echo->context.Response, &echo->context, (BYTE *) Stream_Buffer(s), BytesReturned);
-	}
+		if (WTSVirtualChannelRead(echo->echo_channel, 0, (PCHAR) Stream_Buffer(s),
+			(ULONG) Stream_Capacity(s), &BytesReturned) == FALSE)
+		{
+			WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
+			error = ERROR_INTERNAL_ERROR;
+			break;
+		}
 
+		IFCALLRET(echo->context.Response, error, &echo->context, (BYTE *) Stream_Buffer(s), BytesReturned);
+		if (error)
+		{
+			WLog_ERR(TAG, "Response failed with error %lu!", error);
+			break;
+		}
+	}
 	Stream_Free(s, TRUE);
 	WTSVirtualChannelClose(echo->echo_channel);
 	echo->echo_channel = NULL;
+out:
+	if (error && echo->context.rdpcontext)
+		setChannelError(echo->context.rdpcontext, error, "echo_server_thread_func reported an error");
 
+	ExitThread((DWORD)error);
 	return NULL;
 }
 
-static void echo_server_open(echo_server_context* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT echo_server_open(echo_server_context* context)
 {
 	echo_server* echo = (echo_server*) context;
 
 	if (echo->thread == NULL)
 	{
-		echo->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-		echo->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) echo_server_thread_func, (void*) echo, 0, NULL);
+		if (!(echo->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+		{
+			WLog_ERR(TAG, "CreateEvent failed!");
+			return ERROR_INTERNAL_ERROR;
+		}
+
+		if (!(echo->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) echo_server_thread_func, (void*) echo, 0, NULL)))
+		{
+			WLog_ERR(TAG, "CreateEvent failed!");
+			CloseHandle(echo->stopEvent);
+			echo->stopEvent = NULL;
+			return ERROR_INTERNAL_ERROR;
+		}
 	}
+	return CHANNEL_RC_OK;
 }
 
-static void echo_server_close(echo_server_context* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT echo_server_close(echo_server_context* context)
 {
+    UINT error = CHANNEL_RC_OK;
 	echo_server* echo = (echo_server*) context;
 
 	if (echo->thread)
 	{
 		SetEvent(echo->stopEvent);
-		WaitForSingleObject(echo->thread, INFINITE);
+
+		if (WaitForSingleObject(echo->thread, INFINITE) == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+            return error;
+        }
+
 		CloseHandle(echo->thread);
 		CloseHandle(echo->stopEvent);
 		echo->thread = NULL;
 		echo->stopEvent = NULL;
 	}
+	return error;
 }
 
 static BOOL echo_server_request(echo_server_context* context, const BYTE* buffer, UINT32 length)
@@ -216,10 +314,15 @@ echo_server_context* echo_server_context_new(HANDLE vcm)
 
 	echo = (echo_server*) calloc(1, sizeof(echo_server));
 
-	echo->context.vcm = vcm;
-	echo->context.Open = echo_server_open;
-	echo->context.Close = echo_server_close;
-	echo->context.Request = echo_server_request;
+	if (echo)
+	{
+		echo->context.vcm = vcm;
+		echo->context.Open = echo_server_open;
+		echo->context.Close = echo_server_close;
+		echo->context.Request = echo_server_request;
+	}
+	else
+		WLog_ERR(TAG, "calloc failed!");
 
 	return (echo_server_context*) echo;
 }

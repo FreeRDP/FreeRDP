@@ -3,6 +3,8 @@
  * Audio Input Redirection Virtual Channel - ALSA implementation
  *
  * Copyright 2010-2011 Vic Lee
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +65,8 @@ typedef struct _AudinALSADevice
 
 	AudinReceive receive;
 	void* user_data;
+
+	rdpContext* rdpcontext;
 } AudinALSADevice;
 
 static BOOL audin_alsa_set_params(AudinALSADevice* alsa, snd_pcm_t* capture_handle)
@@ -98,15 +102,21 @@ static BOOL audin_alsa_set_params(AudinALSADevice* alsa, snd_pcm_t* capture_hand
 	return TRUE;
 }
 
-static BOOL audin_alsa_thread_receive(AudinALSADevice* alsa, BYTE* src, int size)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_alsa_thread_receive(AudinALSADevice* alsa, BYTE* src, int size)
 {
 	int frames;
 	int cframes;
-	int ret = 0;
+	UINT ret = CHANNEL_RC_OK;
 	int encoded_size;
 	BYTE* encoded_data;
 	int rbytes_per_frame;
 	int tbytes_per_frame;
+    int status;
 
 	rbytes_per_frame = alsa->actual_channels * alsa->bytes_per_channel;
 	tbytes_per_frame = alsa->target_channels * alsa->bytes_per_channel;
@@ -130,7 +140,16 @@ static BOOL audin_alsa_thread_receive(AudinALSADevice* alsa, BYTE* src, int size
 
 	while (frames > 0)
 	{
-		if (WaitForSingleObject(alsa->stopEvent, 0) == WAIT_OBJECT_0)
+        status = WaitForSingleObject(alsa->stopEvent, 0);
+
+        if (status == WAIT_FAILED)
+        {
+            ret = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", ret);
+            break;
+        }
+
+		if (status == WAIT_OBJECT_0)
 			break;
 
 		cframes = alsa->frames_per_packet - alsa->buffer_frames;
@@ -146,9 +165,13 @@ static BOOL audin_alsa_thread_receive(AudinALSADevice* alsa, BYTE* src, int size
 		{
 			if (alsa->wformat == WAVE_FORMAT_DVI_ADPCM)
 			{
-				alsa->dsp_context->encode_ima_adpcm(alsa->dsp_context,
+				if (!alsa->dsp_context->encode_ima_adpcm(alsa->dsp_context,
 					alsa->buffer, alsa->buffer_frames * tbytes_per_frame,
-					alsa->target_channels, alsa->block_size);
+					alsa->target_channels, alsa->block_size))
+				{
+					ret = ERROR_INTERNAL_ERROR;
+					break;
+				}
 
 				encoded_data = alsa->dsp_context->adpcm_buffer;
 				encoded_size = alsa->dsp_context->adpcm_size;
@@ -162,7 +185,16 @@ static BOOL audin_alsa_thread_receive(AudinALSADevice* alsa, BYTE* src, int size
 				encoded_size = alsa->buffer_frames * tbytes_per_frame;
 			}
 
-			if (WaitForSingleObject(alsa->stopEvent, 0) == WAIT_OBJECT_0)
+            status = WaitForSingleObject(alsa->stopEvent, 0);
+
+            if (status == WAIT_FAILED)
+            {
+                ret = GetLastError();
+                WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", ret);
+                break;
+            }
+
+            if (status == WAIT_OBJECT_0)
 				break;
 			else
 			{
@@ -174,7 +206,7 @@ static BOOL audin_alsa_thread_receive(AudinALSADevice* alsa, BYTE* src, int size
 
 			alsa->buffer_frames = 0;
 
-			if (!ret)
+			if (ret != CHANNEL_RC_OK)
 				break;
 		}
 
@@ -182,72 +214,101 @@ static BOOL audin_alsa_thread_receive(AudinALSADevice* alsa, BYTE* src, int size
 		frames -= cframes;
 	}
 
-	return (ret) ? TRUE : FALSE;
+	return ret;
 }
 
 static void* audin_alsa_thread_func(void* arg)
 {
-	int error;
+	long error;
 	BYTE* buffer;
 	int rbytes_per_frame;
 	int tbytes_per_frame;
 	snd_pcm_t* capture_handle = NULL;
 	AudinALSADevice* alsa = (AudinALSADevice*) arg;
+    DWORD status;
 
 	DEBUG_DVC("in");
 
 	rbytes_per_frame = alsa->actual_channels * alsa->bytes_per_channel;
 	tbytes_per_frame = alsa->target_channels * alsa->bytes_per_channel;
-	buffer = (BYTE*) malloc(rbytes_per_frame * alsa->frames_per_packet);
-	ZeroMemory(buffer, rbytes_per_frame * alsa->frames_per_packet);
+	buffer = (BYTE*) calloc(1, rbytes_per_frame * alsa->frames_per_packet);
+	if (!buffer)
+	{
+		WLog_ERR(TAG, "calloc failed!");
+        error = CHANNEL_RC_NO_MEMORY;
+		if (alsa->rdpcontext)
+			setChannelError(alsa->rdpcontext, error, "calloc failed!");
+        goto out;
+	}
+
 	freerdp_dsp_context_reset_adpcm(alsa->dsp_context);
 
-	do
-	{
-		if ((error = snd_pcm_open(&capture_handle, alsa->device_name, SND_PCM_STREAM_CAPTURE, 0)) < 0)
-		{
-			WLog_ERR(TAG, "snd_pcm_open (%s)", snd_strerror(error));
-			break;
-		}
+    if ((error = snd_pcm_open(&capture_handle, alsa->device_name, SND_PCM_STREAM_CAPTURE, 0)) < 0)
+    {
+        WLog_ERR(TAG, "snd_pcm_open (%s)", snd_strerror(error));
+        goto out;
+    }
 
-		if (!audin_alsa_set_params(alsa, capture_handle))
-		{
-			break;
-		}
+    if (!audin_alsa_set_params(alsa, capture_handle))
+    {
+        WLog_ERR(TAG, "audin_alsa_set_params failed");
+        goto out;
+    }
 
-		while (!(WaitForSingleObject(alsa->stopEvent, 0) == WAIT_OBJECT_0))
-		{
-			error = snd_pcm_readi(capture_handle, buffer, alsa->frames_per_packet);
+    while(1)
+    {
+        status = WaitForSingleObject(alsa->stopEvent, 0);
 
-			if (error == -EPIPE)
-			{
-				snd_pcm_recover(capture_handle, error, 0);
-				continue;
-			}
-			else if (error < 0)
-			{
-				WLog_ERR(TAG, "snd_pcm_readi (%s)", snd_strerror(error));
-				break;
-			}
+        if (status == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+            break;
+        }
 
-			if (!audin_alsa_thread_receive(alsa, buffer, error * rbytes_per_frame))
-				break;
-		}
-	}
-	while (0);
+        if (status == WAIT_OBJECT_0)
+            break;
+
+        error = snd_pcm_readi(capture_handle, buffer, alsa->frames_per_packet);
+
+        if (error == -EPIPE)
+        {
+            snd_pcm_recover(capture_handle, error, 0);
+            continue;
+        }
+        else if (error < 0)
+        {
+            WLog_ERR(TAG, "snd_pcm_readi (%s)", snd_strerror(error));
+            break;
+        }
+
+        if ((error = audin_alsa_thread_receive(alsa, buffer, error * rbytes_per_frame)))
+        {
+            WLog_ERR(TAG, "audin_alsa_thread_receive failed with error %lu", error);
+            break;
+        }
+
+    }
 
 	free(buffer);
 
 	if (capture_handle)
 		snd_pcm_close(capture_handle);
-
+out:
 	DEBUG_DVC("out");
-	ExitThread(0);
+	if (error && alsa->rdpcontext)
+		setChannelError(alsa->rdpcontext, error, "audin_alsa_thread_func reported an error");
+	ExitThread((DWORD)error);
 
 	return NULL;
 }
 
-static void audin_alsa_free(IAudinDevice* device)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_alsa_free(IAudinDevice* device)
 {
 	AudinALSADevice* alsa = (AudinALSADevice*) device;
 
@@ -256,6 +317,7 @@ static void audin_alsa_free(IAudinDevice* device)
 	free(alsa->device_name);
 
 	free(alsa);
+	return CHANNEL_RC_OK;
 }
 
 static BOOL audin_alsa_format_supported(IAudinDevice* device, audinFormat* format)
@@ -285,7 +347,12 @@ static BOOL audin_alsa_format_supported(IAudinDevice* device, audinFormat* forma
 	return FALSE;
 }
 
-static void audin_alsa_set_format(IAudinDevice* device, audinFormat* format, UINT32 FramesPerPacket)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_alsa_set_format(IAudinDevice* device, audinFormat* format, UINT32 FramesPerPacket)
 {
 	int bs;
 	AudinALSADevice* alsa = (AudinALSADevice*) device;
@@ -324,40 +391,70 @@ static void audin_alsa_set_format(IAudinDevice* device, audinFormat* format, UIN
 
 	alsa->wformat = format->wFormatTag;
 	alsa->block_size = format->nBlockAlign;
+	return CHANNEL_RC_OK;
 }
 
-static void audin_alsa_open(IAudinDevice* device, AudinReceive receive, void* user_data)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_alsa_open(IAudinDevice* device, AudinReceive receive, void* user_data)
 {
-	int rbytes_per_frame;
 	int tbytes_per_frame;
 	AudinALSADevice* alsa = (AudinALSADevice*) device;
-
-	DEBUG_DVC("");
 
 	alsa->receive = receive;
 	alsa->user_data = user_data;
 
-	rbytes_per_frame = alsa->actual_channels * alsa->bytes_per_channel;
 	tbytes_per_frame = alsa->target_channels * alsa->bytes_per_channel;
-	alsa->buffer = (BYTE*) malloc(tbytes_per_frame * alsa->frames_per_packet);
-	ZeroMemory(alsa->buffer, tbytes_per_frame * alsa->frames_per_packet);
+	alsa->buffer = (BYTE*) calloc(1, tbytes_per_frame * alsa->frames_per_packet);
+	if (!alsa->buffer)
+	{
+		WLog_ERR(TAG, "calloc failed!");
+		return ERROR_NOT_ENOUGH_MEMORY;
+	}
 	alsa->buffer_frames = 0;
 	
-	alsa->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	alsa->thread = CreateThread(NULL, 0,
-			(LPTHREAD_START_ROUTINE) audin_alsa_thread_func, alsa, 0, NULL);
+	if (!(alsa->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	{
+		WLog_ERR(TAG, "CreateEvent failed!");
+		goto error_out;
+	}
+	if (!(alsa->thread = CreateThread(NULL, 0,
+			(LPTHREAD_START_ROUTINE) audin_alsa_thread_func, alsa, 0, NULL)))
+	{
+		WLog_ERR(TAG, "CreateThread failed!");
+		goto error_out;
+	}
+	return CHANNEL_RC_OK;
+error_out:
+	free(alsa->buffer);
+	alsa->buffer = NULL;
+	CloseHandle(alsa->stopEvent);
+	alsa->stopEvent = NULL;
+	return ERROR_INTERNAL_ERROR;
 }
 
-static void audin_alsa_close(IAudinDevice* device)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_alsa_close(IAudinDevice* device)
 {
+    UINT error = CHANNEL_RC_OK;
 	AudinALSADevice* alsa = (AudinALSADevice*) device;
-
-	DEBUG_DVC("");
 
 	if (alsa->stopEvent)
 	{
 		SetEvent(alsa->stopEvent);
-		WaitForSingleObject(alsa->thread, INFINITE);
+		if (WaitForSingleObject(alsa->thread, INFINITE) == WAIT_FAILED)
+        {
+            error = GetLastError();
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+            return error;
+        }
 
 		CloseHandle(alsa->stopEvent);
 		alsa->stopEvent = NULL;
@@ -371,6 +468,8 @@ static void audin_alsa_close(IAudinDevice* device)
 
 	alsa->receive = NULL;
 	alsa->user_data = NULL;
+
+	return error;
 }
 
 COMMAND_LINE_ARGUMENT_A audin_alsa_args[] =
@@ -379,7 +478,12 @@ COMMAND_LINE_ARGUMENT_A audin_alsa_args[] =
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
-static void audin_alsa_parse_addin_args(AudinALSADevice* device, ADDIN_ARGV* args)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT audin_alsa_parse_addin_args(AudinALSADevice* device, ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
@@ -402,37 +506,67 @@ static void audin_alsa_parse_addin_args(AudinALSADevice* device, ADDIN_ARGV* arg
 		CommandLineSwitchCase(arg, "dev")
 		{
 			alsa->device_name = _strdup(arg->Value);
+			if(!alsa->device_name)
+			{
+				WLog_ERR(TAG, "_strdup failed!");
+				return CHANNEL_RC_NO_MEMORY;
+			}
 		}
 
 		CommandLineSwitchEnd(arg)
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+
+	return CHANNEL_RC_OK;
 }
 
 #ifdef STATIC_CHANNELS
 #define freerdp_audin_client_subsystem_entry	alsa_freerdp_audin_client_subsystem_entry
 #endif
 
-int freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	ADDIN_ARGV* args;
 	AudinALSADevice* alsa;
+	UINT error;
 
-	alsa = (AudinALSADevice*) malloc(sizeof(AudinALSADevice));
-	ZeroMemory(alsa, sizeof(AudinALSADevice));
+	alsa = (AudinALSADevice*) calloc(1, sizeof(AudinALSADevice));
+	if (!alsa)
+	{
+		WLog_ERR(TAG, "calloc failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	alsa->iface.Open = audin_alsa_open;
 	alsa->iface.FormatSupported = audin_alsa_format_supported;
 	alsa->iface.SetFormat = audin_alsa_set_format;
 	alsa->iface.Close = audin_alsa_close;
 	alsa->iface.Free = audin_alsa_free;
+	alsa->rdpcontext = pEntryPoints->rdpcontext;
 
 	args = pEntryPoints->args;
 
-	audin_alsa_parse_addin_args(alsa, args);
+	if ((error = audin_alsa_parse_addin_args(alsa, args)))
+	{
+		WLog_ERR(TAG, "audin_alsa_parse_addin_args failed with errorcode %lu!", error);
+		goto error_out;
+	}
 
 	if (!alsa->device_name)
+	{
 		alsa->device_name = _strdup("default");
+		if (!alsa->device_name)
+		{
+			WLog_ERR(TAG, "_strdup failed!");
+			error = CHANNEL_RC_NO_MEMORY;
+			goto error_out;
+		}
+	}
 
 	alsa->frames_per_packet = 128;
 	alsa->target_rate = 22050;
@@ -443,8 +577,23 @@ int freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEnt
 	alsa->bytes_per_channel = 2;
 
 	alsa->dsp_context = freerdp_dsp_context_new();
+	if (!alsa->dsp_context)
+	{
+		WLog_ERR(TAG, "freerdp_dsp_context_new failed!");
+		error = CHANNEL_RC_NO_MEMORY;
+		goto error_out;
+	}
 
-	pEntryPoints->pRegisterAudinDevice(pEntryPoints->plugin, (IAudinDevice*) alsa);
+	if ((error = pEntryPoints->pRegisterAudinDevice(pEntryPoints->plugin, (IAudinDevice*) alsa)))
+	{
+		WLog_ERR(TAG, "RegisterAudinDevice failed with error %lu!", error);
+		goto error_out;
+	}
 
-	return 0;
+	return CHANNEL_RC_OK;
+error_out:
+	freerdp_dsp_context_free(alsa->dsp_context);
+	free(alsa->device_name);
+	free(alsa);
+	return error;
 }

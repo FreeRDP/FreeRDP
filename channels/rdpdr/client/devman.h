@@ -4,6 +4,8 @@
  *
  * Copyright 2010-2011 Vic Lee
  * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +26,7 @@
 #include "rdpdr_main.h"
 
 void devman_unregister_device(DEVMAN* devman, void* key);
-BOOL devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device);
+UINT devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device, rdpContext* rdpcontext);
 DEVICE* devman_get_device_by_id(DEVMAN* devman, UINT32 id);
 
 DEVMAN* devman_new(rdpdrPlugin* rdpdr);

@@ -34,7 +34,11 @@
 #include <libgen.h>
 #include <limits.h>
 #include <unistd.h>
-#include <sys/soundcard.h>
+#if defined(__OpenBSD__)
+    #include <soundcard.h>
+#else
+    #include <sys/soundcard.h>
+#endif
 #include <sys/ioctl.h>
 
 #include <freerdp/types.h>
@@ -211,8 +215,9 @@ static UINT64 tsmf_oss_get_latency(ITSMFAudioDevice* audio)
 	return latency;
 }
 
-static void tsmf_oss_flush(ITSMFAudioDevice* audio)
+static BOOL tsmf_oss_flush(ITSMFAudioDevice* audio)
 {
+	return TRUE;
 }
 
 static void tsmf_oss_free(ITSMFAudioDevice* audio)

@@ -244,67 +244,67 @@ int tsmf_window_resize(TSMFGstreamerDecoder* decoder, int x, int y, int width,
 	{
 		return -3;
 	}
-	else
+
+#if GST_VERSION_MAJOR > 0
+	GstVideoOverlay *overlay = GST_VIDEO_OVERLAY(decoder->outsink);
+#else
+	GstXOverlay *overlay = GST_X_OVERLAY(decoder->outsink);
+#endif
+	if (!decoder)
+		return -1;
+
+	if (!decoder->platform)
+		return -1;
+
+	hdl = (struct X11Handle*) decoder->platform;
+	DEBUG_TSMF("resize: x=%d, y=%d, w=%d, h=%d", x, y, width, height);
+
+#if GST_VERSION_MAJOR > 0
+
+	if (!gst_video_overlay_set_render_rectangle(overlay, 0, 0, width, height))
 	{
-#if GST_VERSION_MAJOR > 0
-		GstVideoOverlay *overlay = GST_VIDEO_OVERLAY(decoder->outsink);
+		WLog_ERR(TAG, "Could not resize overlay!");
+	}
+
+	gst_video_overlay_expose(overlay);
 #else
-		GstXOverlay *overlay = GST_X_OVERLAY(decoder->outsink);
-#endif
-		if (!decoder)
-			return -1;
+	if (!gst_x_overlay_set_render_rectangle(overlay, 0, 0, width, height))
+	{
+		WLog_ERR(TAG, "Could not resize overlay!");
+	}
 
-		if (!decoder->platform)
-			return -1;
-
-		hdl = (struct X11Handle*) decoder->platform;
-		DEBUG_TSMF("resize: x=%d, y=%d, w=%d, h=%d", x, y, width, height);
-
-#if GST_VERSION_MAJOR > 0
-
-		if (!gst_video_overlay_set_render_rectangle(overlay, 0, 0, width, height))
-		{
-			WLog_ERR(TAG, "Could not resize overlay!");
-		}
-
-		gst_video_overlay_expose(overlay);
-#else
-		if (!gst_x_overlay_set_render_rectangle(overlay, 0, 0, width, height))
-		{
-			WLog_ERR(TAG, "Could not resize overlay!");
-		}
-
-		gst_x_overlay_expose(overlay);
+	gst_x_overlay_expose(overlay);
 #endif
 
-		if (hdl->subwin)
-		{
-			XMoveResizeWindow(hdl->disp, hdl->subwin, x, y, width, height);
+	if (hdl->subwin)
+	{
+		XMoveResizeWindow(hdl->disp, hdl->subwin, x, y, width, height);
 #if defined(WITH_XEXT)
 
-			if (hdl->has_shape)
+		if (hdl->has_shape)
+		{
+			int i;
+			XRectangle *xrects = calloc(nr_rects, sizeof(XRectangle));
+			if (!xrects)
+				return -1;
+
+			for (i = 0; i < nr_rects; i++)
 			{
-				int i;
-				XRectangle *xrects = calloc(nr_rects, sizeof(XRectangle));
-
-				for (i=0; i<nr_rects; i++)
-				{
-					xrects[i].x = rects[i].x - x;
-					xrects[i].y = rects[i].y - y;
-					xrects[i].width = rects[i].width;
-					xrects[i].height = rects[i].height;
-				}
-
-				XShapeCombineRectangles(hdl->disp, hdl->subwin, ShapeBounding, x, y, xrects, nr_rects, ShapeSet, 0);
-				free(xrects);
+				xrects[i].x = rects[i].x - x;
+				xrects[i].y = rects[i].y - y;
+				xrects[i].width = rects[i].width;
+				xrects[i].height = rects[i].height;
 			}
 
-#endif
-			XSync(hdl->disp, FALSE);
+			XShapeCombineRectangles(hdl->disp, hdl->subwin, ShapeBounding, x, y, xrects, nr_rects, ShapeSet, 0);
+			free(xrects);
 		}
 
-		return 0;
+#endif
+		XSync(hdl->disp, FALSE);
 	}
+
+	return 0;
 }
 
 int tsmf_window_pause(TSMFGstreamerDecoder* decoder)

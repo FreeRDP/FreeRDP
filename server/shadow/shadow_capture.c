@@ -90,14 +90,16 @@ int shadow_capture_compare(BYTE* pData1, int nStep1, int nWidth, int nHeight, BY
 	int l, t, r, b;
 	BYTE *p1, *p2;
 	BOOL rows[1024];
+#ifdef WITH_DEBUG_SHADOW_CAPTURE
 	BOOL cols[1024];
-	BOOL grid[1024][1024];
+#endif
 
 	allEqual = TRUE;
 	ZeroMemory(rect, sizeof(RECTANGLE_16));
 	FillMemory(rows, sizeof(rows), 0xFF);
+#ifdef WITH_DEBUG_SHADOW_CAPTURE
 	FillMemory(cols, sizeof(cols), 0xFF);
-	FillMemory(grid, sizeof(grid), 0xFF);
+#endif
 
 	nrow = (nHeight + 15) / 16;
 	ncol = (nWidth + 15) / 16;
@@ -141,9 +143,10 @@ int shadow_capture_compare(BYTE* pData1, int nStep1, int nWidth, int nHeight, BY
 
 			if (!equal)
 			{
-				grid[ty][tx] = FALSE;
 				rows[ty] = FALSE;
+#ifdef WITH_DEBUG_SHADOW_CAPTURE
 				cols[tx] = FALSE;
+#endif
 
 				if (l > tx)
 					l = tx;
@@ -179,39 +182,38 @@ int shadow_capture_compare(BYTE* pData1, int nStep1, int nWidth, int nHeight, BY
 	if (rect->bottom > nHeight)
 		rect->bottom = nHeight;
 
-	if (0)
+#ifdef WITH_DEBUG_SHADOW_CAPTURE
+	char *col_str = calloc(ncol + 1, sizeof(char));
+	if (!col_str)
 	{
-		char *col_str = calloc(ncol + 1, sizeof(char));
-		if (!col_str)
-		{
-			WLog_ERR(TAG, "calloc failed!");
-			return 1;
-		}
+		WLog_ERR(TAG, "calloc failed!");
+		return 1;
+	}
 
-		for (tx = 0; tx < ncol; tx++)
-			sprintf(&col_str[tx], "-");
-		WLog_INFO(TAG, "%s", col_str);
+	for (tx = 0; tx < ncol; tx++)
+		sprintf(&col_str[tx], "-");
+	WLog_INFO(TAG, "%s", col_str);
 
+	for (tx = 0; tx < ncol; tx++)
+		sprintf(&col_str[tx], "%c", cols[tx] ? 'O' : 'X');
+	WLog_INFO(TAG, "%s", col_str);
+
+	for (tx = 0; tx < ncol; tx++)
+		sprintf(&col_str[tx], "-");
+	WLog_INFO(TAG, "%s", col_str);
+
+	for (ty = 0; ty < nrow; ty++)
+	{
 		for (tx = 0; tx < ncol; tx++)
 			sprintf(&col_str[tx], "%c", cols[tx] ? 'O' : 'X');
 		WLog_INFO(TAG, "%s", col_str);
-
-		for (tx = 0; tx < ncol; tx++)
-			sprintf(&col_str[tx], "-");
-		WLog_INFO(TAG, "%s", col_str);
-
-		for (ty = 0; ty < nrow; ty++)
-		{
-			for (tx = 0; tx < ncol; tx++)
-				sprintf(&col_str[tx], "%c", cols[tx] ? 'O' : 'X');
-			WLog_INFO(TAG, "%s", col_str);
-			WLog_INFO(TAG, "|%s|", rows[ty] ? "O" : "X");
-		}
-
-		WLog_INFO(TAG, "left: %d top: %d right: %d bottom: %d ncol: %d nrow: %d",
-				l, t, r, b, ncol, nrow);
-		free(col_str);
+		WLog_INFO(TAG, "|%s|", rows[ty] ? "O" : "X");
 	}
+
+	WLog_INFO(TAG, "left: %d top: %d right: %d bottom: %d ncol: %d nrow: %d",
+			l, t, r, b, ncol, nrow);
+	free(col_str);
+#endif
 
 	return 1;
 }

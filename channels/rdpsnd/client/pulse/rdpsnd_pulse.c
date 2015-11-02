@@ -3,6 +3,8 @@
  * Audio Output Virtual Channel
  *
  * Copyright 2011 Vic Lee
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -249,7 +251,7 @@ static void rdpsnd_pulse_set_format_spec(rdpsndPulsePlugin* pulse, AUDIO_FORMAT*
 	pulse->block_size = format->nBlockAlign;
 }
 
-static void rdpsnd_pulse_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
+static BOOL rdpsnd_pulse_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
 {
 	pa_stream_state_t state;
 	pa_stream_flags_t flags;
@@ -258,9 +260,7 @@ static void rdpsnd_pulse_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, 
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*) device;
 
 	if (!pulse->context || pulse->stream)
-	{
-		return;
-	}
+		return TRUE;
 
 	rdpsnd_pulse_set_format_spec(pulse, format);
 	pulse->latency = latency;
@@ -268,17 +268,16 @@ static void rdpsnd_pulse_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, 
 	if (pa_sample_spec_valid(&pulse->sample_spec) == 0)
 	{
 		pa_sample_spec_snprint(ss, sizeof(ss), &pulse->sample_spec);
-		return;
+		return TRUE;
 	}
 
 	pa_threaded_mainloop_lock(pulse->mainloop);
 
 	pulse->stream = pa_stream_new(pulse->context, "freerdp", &pulse->sample_spec, NULL);
-
 	if (!pulse->stream)
 	{
 		pa_threaded_mainloop_unlock(pulse->mainloop);
-		return;
+		return FALSE;
 	}
 
 	/* register essential callbacks */
@@ -301,7 +300,7 @@ static void rdpsnd_pulse_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, 
 		pulse->device_name, pulse->latency > 0 ? &buffer_attr : NULL, flags, NULL, NULL) < 0)
 	{
 		pa_threaded_mainloop_unlock(pulse->mainloop);
-		return;
+		return TRUE;
 	}
 
 	for (;;)
@@ -331,11 +330,11 @@ static void rdpsnd_pulse_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, 
 
 		pulse->gsm_context = gsm_create();
 #endif
+		return TRUE;
 	}
-	else
-	{
-		rdpsnd_pulse_close(device);
-	}
+
+	rdpsnd_pulse_close(device);
+	return FALSE;
 }
 
 static void rdpsnd_pulse_free(rdpsndDevicePlugin* device)
@@ -424,7 +423,7 @@ static BOOL rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, AUDIO_FORM
 	return FALSE;
 }
 
-static void rdpsnd_pulse_set_format(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
+static BOOL rdpsnd_pulse_set_format(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
 {
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*) device;
 
@@ -437,10 +436,10 @@ static void rdpsnd_pulse_set_format(rdpsndDevicePlugin* device, AUDIO_FORMAT* fo
 		pa_threaded_mainloop_unlock(pulse->mainloop);
 	}
 
-	rdpsnd_pulse_open(device, format, latency);
+	return rdpsnd_pulse_open(device, format, latency);
 }
 
-static void rdpsnd_pulse_set_volume(rdpsndDevicePlugin* device, UINT32 value)
+static BOOL rdpsnd_pulse_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 {
 	pa_cvolume cv;
 	pa_volume_t left;
@@ -449,7 +448,7 @@ static void rdpsnd_pulse_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*) device;
 
 	if (!pulse->context || !pulse->stream)
-		return;
+		return FALSE;
 
 	left = (pa_volume_t) (value & 0xFFFF);
 	right = (pa_volume_t) ((value >> 16) & 0xFFFF);
@@ -467,6 +466,7 @@ static void rdpsnd_pulse_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 		pa_operation_unref(operation);
 
 	pa_threaded_mainloop_unlock(pulse->mainloop);
+	return TRUE;
 }
 
 static BYTE* rdpsnd_pulse_convert_audio(rdpsndDevicePlugin* device, BYTE* data, int* size)
@@ -593,7 +593,12 @@ COMMAND_LINE_ARGUMENT_A rdpsnd_pulse_args[] =
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
-static void rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* args)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
@@ -605,7 +610,7 @@ static void rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV
 	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
 			rdpsnd_pulse_args, flags, pulse, NULL, NULL);
 	if (status < 0)
-		return;
+		return ERROR_INVALID_DATA;
 
 	arg = rdpsnd_pulse_args;
 	do
@@ -618,26 +623,35 @@ static void rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV
 		CommandLineSwitchCase(arg, "dev")
 		{
 			pulse->device_name = _strdup(arg->Value);
+			if (!pulse->device_name)
+				return ERROR_OUTOFMEMORY;
 		}
 
 		CommandLineSwitchEnd(arg)
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+
+	return CHANNEL_RC_OK;
 }
 
 #ifdef STATIC_CHANNELS
 #define freerdp_rdpsnd_client_subsystem_entry	pulse_freerdp_rdpsnd_client_subsystem_entry
 #endif
 
-int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	ADDIN_ARGV* args;
 	rdpsndPulsePlugin* pulse;
+	UINT ret;
 
 	pulse = (rdpsndPulsePlugin*) calloc(1, sizeof(rdpsndPulsePlugin));
-
 	if (!pulse)
-		return -1;
+		return CHANNEL_RC_NO_MEMORY;
 
 	pulse->device.Open = rdpsnd_pulse_open;
 	pulse->device.FormatSupported = rdpsnd_pulse_format_supported;
@@ -649,39 +663,48 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	pulse->device.Free = rdpsnd_pulse_free;
 
 	args = pEntryPoints->args;
-	rdpsnd_pulse_parse_addin_args((rdpsndDevicePlugin*) pulse, args);
+	if (args->argc > 1)
+	{
+		ret = rdpsnd_pulse_parse_addin_args((rdpsndDevicePlugin *) pulse, args);
+		if (ret != CHANNEL_RC_OK)
+		{
+			WLog_ERR(TAG, "error parsing arguments");
+			goto error;
+		}
+	}
 
+	ret = CHANNEL_RC_NO_MEMORY;
 	pulse->dsp_context = freerdp_dsp_context_new();
+	if (!pulse->dsp_context)
+		goto error;
 
 #ifdef WITH_GSM
 	pulse->gsmBuffer = Stream_New(NULL, 4096);
+	if (!pulse->gsmBuffer)
+		goto error;
 #endif
+
 
 	pulse->mainloop = pa_threaded_mainloop_new();
 
 	if (!pulse->mainloop)
-	{
-		rdpsnd_pulse_free((rdpsndDevicePlugin*)pulse);
-		return 1;
-	}
+		goto error;
 
 	pulse->context = pa_context_new(pa_threaded_mainloop_get_api(pulse->mainloop), "freerdp");
 
 	if (!pulse->context)
-	{
-		rdpsnd_pulse_free((rdpsndDevicePlugin*)pulse);
-		return 1;
-	}
+		goto error;
 
 	pa_context_set_state_callback(pulse->context, rdpsnd_pulse_context_state_callback, pulse);
 
+	ret = ERROR_INVALID_OPERATION;
 	if (!rdpsnd_pulse_connect((rdpsndDevicePlugin*)pulse))
-	{
-		rdpsnd_pulse_free((rdpsndDevicePlugin*)pulse);
-		return 1;
-	}
+		goto error;
 
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*) pulse);
+	return CHANNEL_RC_OK;
 
-	return 0;
+error:
+	rdpsnd_pulse_free((rdpsndDevicePlugin*)pulse);
+	return ret;
 }

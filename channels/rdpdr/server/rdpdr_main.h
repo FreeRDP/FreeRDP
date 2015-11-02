@@ -4,6 +4,8 @@
  *
  * Copyright 2014 Dell Software <Mike.McDonald@software.dell.com>
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +82,7 @@ struct _RDPDR_IRP
 	char PathName[256];
 	char ExtraBuffer[256];
 	void *CallbackData;
-	BOOL (*Callback)(RdpdrServerContext* context, wStream* s, struct _RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus);
+	UINT (*Callback)(RdpdrServerContext* context, wStream* s, struct _RDPDR_IRP* irp, UINT32 deviceId, UINT32 completionId, UINT32 ioStatus);
 };
 typedef struct _RDPDR_IRP RDPDR_IRP;
 
