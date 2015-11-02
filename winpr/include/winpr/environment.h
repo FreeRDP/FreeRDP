@@ -110,6 +110,8 @@ WINPR_API LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge);
 WINPR_API DWORD GetEnvironmentVariableEBA(LPCSTR envBlock, LPCSTR lpName, LPSTR lpBuffer, DWORD nSize);
 WINPR_API BOOL SetEnvironmentVariableEBA(LPSTR* envBlock, LPCSTR lpName, LPCSTR lpValue);
 
+WINPR_API char** EnvironmentBlockToEnvpA(LPCH lpszEnvironmentBlock);
+
 #ifdef __cplusplus
 }
 #endif

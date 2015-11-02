@@ -26,7 +26,6 @@
 #include "../handle/nonehandle.h"
 
 #include <winpr/thread.h>
-#include <fcntl.h>
 
 /**
  * CreateProcessA
@@ -54,30 +53,16 @@
 
 #ifndef _WIN32
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
 #include <winpr/crt.h>
-#include <winpr/heap.h>
 #include <winpr/path.h>
-#include <winpr/tchar.h>
 #include <winpr/environment.h>
 
-#include <pwd.h>
 #include <grp.h>
 
-#include <errno.h>
-#include <string.h>
 #include <signal.h>
-#include <sys/wait.h>
-#include <sys/types.h>
-
-#include <pthread.h>
 
 #include "thread.h"
 
-#include "../handle/handle.h"
 #include "../security/security.h"
 
 #ifndef NSIG
@@ -87,55 +72,6 @@
 #define NSIG 64
 #endif
 #endif
-
-char** EnvironmentBlockToEnvpA(LPCH lpszEnvironmentBlock)
-{
-	char* p;
-	int index;
-	int count;
-	int length;
-	char** envp = NULL;
-
-	count = 0;
-	if (!lpszEnvironmentBlock)
-		return NULL;
-
-	p = (char*) lpszEnvironmentBlock;
-
-	while (p[0] && p[1])
-	{
-		length = strlen(p);
-		p += (length + 1);
-		count++;
-	}
-
-	index = 0;
-	p = (char*) lpszEnvironmentBlock;
-
-	envp = (char**) calloc(count + 1, sizeof(char*));
-	if (!envp)
-		return NULL;
-	envp[count] = NULL;
-
-	while (p[0] && p[1])
-	{
-		length = strlen(p);
-		envp[index] = _strdup(p);
-		if (!envp[index])
-		{
-			for (index -= 1; index >= 0; --index)
-			{
-				free(envp[index]);
-			}
-			free(envp);
-			return NULL;
-		}
-		p += (length + 1);
-		index++;
-	}
-
-	return envp;
-}
 
 /**
  * If the file name does not contain a directory path, the system searches for the executable file in the following sequence:
@@ -151,7 +87,7 @@ char** EnvironmentBlockToEnvpA(LPCH lpszEnvironmentBlock)
  *    this per-application path in the search sequence, use the ShellExecute function.
  */
 
-char* FindApplicationPath(char* application)
+static char* FindApplicationPath(char* application)
 {
 	char* path;
 	char* save;
@@ -208,7 +144,6 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 		LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
 	pid_t pid;
-	int flags;
 	int numArgs;
 	LPSTR* pArgs = NULL;
 	char** envp = NULL;
@@ -230,7 +165,6 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	if (!pArgs)
 		return FALSE;
 
-	flags = 0;
 
 	token = (WINPR_ACCESS_TOKEN*) hToken;
 
@@ -532,7 +466,7 @@ BOOL TerminateProcess(HANDLE hProcess, UINT uExitCode)
 }
 
 
-BOOL ProcessHandleCloseHandle(HANDLE handle)
+static BOOL ProcessHandleCloseHandle(HANDLE handle)
 {
 	WINPR_PROCESS* process = (WINPR_PROCESS*) handle;
 	free(process);
@@ -585,7 +519,6 @@ HANDLE CreateProcessHandle(pid_t pid)
 
 	return (HANDLE)process;
 }
-
 
 #endif
 

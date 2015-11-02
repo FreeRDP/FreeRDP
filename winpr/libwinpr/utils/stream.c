@@ -70,6 +70,9 @@ wStream* Stream_New(BYTE* buffer, size_t size)
 {
 	wStream* s;
 
+	if (!buffer && !size)
+		return NULL;
+
 	s = malloc(sizeof(wStream));
 
 	if (!s)
