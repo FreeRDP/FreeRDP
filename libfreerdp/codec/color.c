@@ -3444,8 +3444,8 @@ int freerdp_image32_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDs
 					pSrcPixel++;
 				}
 
-				pSrcPixel = (UINT32*) &((BYTE*) pSrcPixel)[nSrcStep];
-				pDstPixel = (BYTE*) &((BYTE*) pDstPixel)[nDstStep];
+				pSrcPixel = (UINT32*) &((BYTE*) pSrcPixel)[nSrcPad];
+				pDstPixel = (BYTE*) &((BYTE*) pDstPixel)[nDstPad];
 			}
 
 			return 1;
