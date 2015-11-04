@@ -200,12 +200,22 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 
 	xf_ResizeDesktopWindow(xfc, window, width, height);
 
-	XMoveWindow(xfc->display, window->handle, startX, startY);
+	if (fullscreen)
+	{
+		/* enter full screen: move the window before adding NET_WM_STATE_FULLSCREEN */
+		XMoveWindow(xfc->display, window->handle, startX, startY);
+	}
 
 	/* Set the fullscreen state */
 	xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
 				fullscreen ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE,
 				xfc->_NET_WM_STATE_FULLSCREEN, 0, 0);
+
+	if (!fullscreen)
+	{
+		/* leave full screen: move the window after removing NET_WM_STATE_FULLSCREEN */
+		XMoveWindow(xfc->display, window->handle, startX, startY);
+	}
 }
 
 /* http://tronche.com/gui/x/xlib/window-information/XGetWindowProperty.html */
