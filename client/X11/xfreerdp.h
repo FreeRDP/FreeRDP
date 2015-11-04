@@ -156,6 +156,7 @@ struct xf_context
 	int savedHeight;
 	int savedPosX;
 	int savedPosY;
+	BYTE savedMaximizedState;
 
 #ifdef WITH_XRENDER
 	int scaledWidth;
@@ -189,9 +190,13 @@ struct xf_context
 	Atom _MOTIF_WM_HINTS;
 	Atom _NET_CURRENT_DESKTOP;
 	Atom _NET_WORKAREA;
+	Atom _NET_FRAME_EXTENTS;
 
 	Atom _NET_WM_STATE;
 	Atom _NET_WM_STATE_FULLSCREEN;
+	Atom _NET_WM_STATE_ABOVE;
+	Atom _NET_WM_STATE_MAXIMIZED_VERT;
+	Atom _NET_WM_STATE_MAXIMIZED_HORZ;
 	Atom _NET_WM_STATE_SKIP_TASKBAR;
 	Atom _NET_WM_STATE_SKIP_PAGER;
 
