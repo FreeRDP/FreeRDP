@@ -62,15 +62,15 @@ option(WITH_SAMPLE "Build sample code" OFF)
 
 option(WITH_CLIENT_COMMON "Build client common library" ON)
 cmake_dependent_option(WITH_CLIENT "Build client binaries" ON WITH_CLIENT_COMMON ON)
+
 option(WITH_SERVER "Build server binaries" OFF)
 
 option(STATIC_CHANNELS "Build channels statically" ON)
 
 option(WITH_CHANNELS "Build virtual channel plugins" ON)
 
-if(WITH_CLIENT AND WITH_CHANNELS)
-	option(WITH_CLIENT_CHANNELS "Build virtual channel plugins" ON)
-endif()
+cmake_dependent_option(WITH_CLIENT_CHANNELS "Build virtual channel plugins" ON
+	"WITH_CLIENT_COMMON;WITH_CHANNELS" ON)
 
 if(WITH_SERVER AND WITH_CHANNELS)
 	option(WITH_SERVER_CHANNELS "Build virtual channel plugins" ON)
