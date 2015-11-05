@@ -28,6 +28,7 @@
 
 #include <freerdp/listener.h>
 #include <freerdp/codec/rfx.h>
+#include <freerdp/build-config.h>
 
 #include "wf_info.h"
 #include "wf_input.h"

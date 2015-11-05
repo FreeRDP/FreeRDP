@@ -30,6 +30,7 @@
 #include <winpr/library.h>
 
 #include <freerdp/addin.h>
+#include <freerdp/build-config.h>
 
 
 LPSTR freerdp_get_library_install_path()
@@ -143,7 +144,7 @@ void* freerdp_load_dynamic_addin(LPCSTR pszFileName, LPCSTR pszPath, LPCSTR pszE
 	}
 	else
 	{
-		cchAddinFile = cchFileName + cchExt + 2 + sizeof(CMAKE_SHARED_LIBRARY_PREFIX);
+		cchAddinFile = cchFileName + cchExt + 2 + sizeof(FREERDP_SHARED_LIBRARY_PREFIX);
 		pszAddinFile = (LPSTR) malloc(cchAddinFile + 1);
 		if (!pszAddinFile)
 		{
@@ -151,7 +152,7 @@ void* freerdp_load_dynamic_addin(LPCSTR pszFileName, LPCSTR pszPath, LPCSTR pszE
 			free(pszFilePath);
 			return NULL;
 		}
-		sprintf_s(pszAddinFile, cchAddinFile, CMAKE_SHARED_LIBRARY_PREFIX"%s%s", pszFileName, pszExt);
+		sprintf_s(pszAddinFile, cchAddinFile, FREERDP_SHARED_LIBRARY_PREFIX"%s%s", pszFileName, pszExt);
 		cchAddinFile = strlen(pszAddinFile);
 	}
 
@@ -182,9 +183,9 @@ void* freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName, LPSTR pszSubsyste
 {
 	void* entry;
 	LPSTR pszFileName;
-	size_t cchFileName = sizeof(CMAKE_SHARED_LIBRARY_PREFIX) + 32;
+	size_t cchFileName = sizeof(FREERDP_SHARED_LIBRARY_PREFIX) + 32;
 	LPCSTR pszExtension;
-	LPCSTR pszPrefix = CMAKE_SHARED_LIBRARY_PREFIX;
+	LPCSTR pszPrefix = FREERDP_SHARED_LIBRARY_PREFIX;
 
 	pszExtension = PathGetSharedLibraryExtensionA(0);
 

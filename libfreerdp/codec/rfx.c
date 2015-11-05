@@ -43,6 +43,7 @@
 #include <freerdp/constants.h>
 #include <freerdp/primitives.h>
 #include <freerdp/codec/region.h>
+#include <freerdp/build-config.h>
 
 #include "rfx_constants.h"
 #include "rfx_types.h"
