@@ -47,7 +47,7 @@ static BOOL WLog_UdpAppender_Open(wLog* log, wLogUdpAppender* appender)
 	char *colonPos;
 
 
-	if (!log || !appender)
+	if (!appender)
 		return FALSE;
 
 	if (appender->targetAddrLen) /* already opened */
@@ -169,7 +169,7 @@ wLogUdpAppender* WLog_UdpAppender_New(wLog* log)
 	{
 		appender->host = (LPSTR) malloc(nSize);
 		if (!appender->host)
-			goto error_env_malloc;
+			goto error_host_alloc;
 
 		GetEnvironmentVariableA(name, appender->host, nSize);
 
@@ -180,14 +180,14 @@ wLogUdpAppender* WLog_UdpAppender_New(wLog* log)
 	{
 		appender->host = _strdup("127.0.0.1:20000");
 		if (!appender->host)
-			goto error_env_malloc;
+			goto error_host_alloc;
 	}
 
 	return appender;
 
 error_open:
 	free(appender->host);
-error_env_malloc:
+error_host_alloc:
 	closesocket(appender->sock);
 error_sock:
 	free(appender);
