@@ -119,25 +119,17 @@ void xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 		return;
 
 	/* If current window position disagrees with RDP window position, send update to RDP server */
-	if (appWindow->x != (appWindow->windowOffsetX - appWindow->localWindowOffsetCorrX) ||
-			appWindow->y != (appWindow->windowOffsetY - appWindow->localWindowOffsetCorrY) ||
+	if (appWindow->x != appWindow->windowOffsetX ||
+			appWindow->y != appWindow->windowOffsetY ||
 			appWindow->width != appWindow->windowWidth ||
 			appWindow->height != appWindow->windowHeight)
 	{
-		/*
-		 * windowOffset corresponds to the window location on the rail server
-		 * but our local window is based uses a local offset since the windowOffset
-		 * can be negative and but X does not support negative values. Not using an 
-		 * offset can result in blank areas for a maximized window
-		 */
 		windowMove.windowId = appWindow->windowId;
 		/*
 		 * Calculate new size/position for the rail window(new values for windowOffsetX/windowOffsetY/windowWidth/windowHeight) on the server
-		 * New position is based on: Current local rail window offset +
-		 * Local offset correction(current correction value to translate the local window offset to the server rail window offset)
 		 */
-		windowMove.left = appWindow->x + appWindow->localWindowOffsetCorrX;
-		windowMove.top = appWindow->y + appWindow->localWindowOffsetCorrY;
+		windowMove.left = appWindow->x;
+		windowMove.top = appWindow->y;
 		windowMove.right = windowMove.left + appWindow->width;
 		windowMove.bottom = windowMove.top + appWindow->height;
 
@@ -163,12 +155,10 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 
 	/*
 	 * Calculate new size/position for the rail window(new values for windowOffsetX/windowOffsetY/windowWidth/windowHeight) on the server
-	 * New position is based on: Current local rail window offset +
-	 * Local offset correction(current correction value to translate the local window offset to the server rail window offset)
 	 *
 	 */
-	windowMove.left = appWindow->x + appWindow->localWindowOffsetCorrX;
-	windowMove.top = appWindow->y + appWindow->localWindowOffsetCorrY;
+	windowMove.left = appWindow->x;
+	windowMove.top = appWindow->y;
 	windowMove.right = windowMove.left + appWindow->width; /* In the update to RDP the position is one past the window */
 	windowMove.bottom = windowMove.top + appWindow->height;
 
@@ -179,8 +169,6 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	 */
 	XQueryPointer(xfc->display, appWindow->handle,
 			&root_window, &child_window, &x, &y, &child_x, &child_y, &mask);
-
-	input->MouseEvent(input, PTR_FLAGS_BUTTON1, x, y);
 
 	/* only send the mouse coordinates if not a keyboard move or size */
 	if ((appWindow->local_move.direction != _NET_WM_MOVERESIZE_MOVE_KEYBOARD) &&
@@ -194,8 +182,8 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	 * we can start to receive GDI orders for the new window dimensions before we
 	 * receive the RAIL ORDER for the new window size.  This avoids that race condition.
 	 */
-	appWindow->windowOffsetX = windowMove.left;
-	appWindow->windowOffsetY = windowMove.top;
+	appWindow->windowOffsetX = appWindow->x;
+	appWindow->windowOffsetY = appWindow->y;
 	appWindow->windowWidth = appWindow->width;
 	appWindow->windowHeight = appWindow->height;
 	appWindow->local_move.state = LMS_TERMINATING;
@@ -277,6 +265,7 @@ static BOOL xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 	xfAppWindow* appWindow = NULL;
 	xfContext* xfc = (xfContext*) context;
 	UINT32 fieldFlags = orderInfo->fieldFlags;
+	BOOL position_or_size_updated = FALSE;
 
 	if (fieldFlags & WINDOW_ORDER_STATE_NEW)
 	{
@@ -296,9 +285,7 @@ static BOOL xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 		appWindow->width = appWindow->windowWidth = windowState->windowWidth;
 		appWindow->height = appWindow->windowHeight = windowState->windowHeight;
 
-		appWindow->localWindowOffsetCorrX = 0;
-		appWindow->localWindowOffsetCorrY = 0;
-
+		/* Ensure window always gets a window title */
 		if (fieldFlags & WINDOW_ORDER_FIELD_TITLE)
 		{
 			char* title = NULL;
@@ -321,8 +308,6 @@ static BOOL xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 		HashTable_Add(xfc->railWindows, (void*) (UINT_PTR) orderInfo->windowId, (void*) appWindow);
 
 		xf_AppWindowInit(xfc, appWindow);
-
-		return TRUE;
 	}
 	else
 	{
@@ -333,37 +318,31 @@ static BOOL xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 	if (!appWindow)
 		return FALSE;
 
+	/* Keep track of any position/size update so that we can force a refresh of the window */
+	if ((fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET) ||
+		(fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE)   ||
+		(fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET) ||
+		(fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE) ||
+		(fieldFlags & WINDOW_ORDER_FIELD_WND_CLIENT_DELTA) ||
+		(fieldFlags & WINDOW_ORDER_FIELD_VIS_OFFSET) ||
+		(fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY))
+	{
+		position_or_size_updated = TRUE;
+	}				
+
+
 	/* Update Parameters */
 
-	if ((fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET) ||
-		(fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE))
+	if (fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET)
 	{
-		if (fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET)
-		{
-			appWindow->windowOffsetX = windowState->windowOffsetX;
-			appWindow->windowOffsetY = windowState->windowOffsetY;
+		appWindow->windowOffsetX = windowState->windowOffsetX;
+		appWindow->windowOffsetY = windowState->windowOffsetY;
+	}
 
-			/*
-			 * The rail server can give negative window coordinates when updating windowOffsetX and windowOffsetY,
-			 * but we can only send unsigned integers to the rail server. Therefore, we maintain a local offset.
-			 */
-
-			if (appWindow->windowOffsetX < 0)
-				appWindow->localWindowOffsetCorrX = 0 - appWindow->windowOffsetX;
-			else
-				appWindow->localWindowOffsetCorrX = 0;
-
-			if (appWindow->windowOffsetY < 0)
-				appWindow->localWindowOffsetCorrY = 0 - appWindow->windowOffsetY;
-			else
-				appWindow->localWindowOffsetCorrY = 0;
-		}
-
-		if (fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE)
-		{
-			appWindow->windowWidth = windowState->windowWidth;
-			appWindow->windowHeight = windowState->windowHeight;
-		}
+	if (fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE)
+	{
+		appWindow->windowWidth = windowState->windowWidth;
+		appWindow->windowHeight = windowState->windowHeight;
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_OWNER)
@@ -479,41 +458,43 @@ static BOOL xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 			xf_SetWindowText(xfc, appWindow, appWindow->title);
 	}
 
-	if ((fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET) ||
-			(fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE))
+	if (position_or_size_updated)
 	{
+		UINT32 visibilityRectsOffsetX = (appWindow->visibleOffsetX - (appWindow->clientOffsetX - appWindow->windowClientDeltaX));
+		UINT32 visibilityRectsOffsetY = (appWindow->visibleOffsetY - (appWindow->clientOffsetY - appWindow->windowClientDeltaY));
+
 		/*
 		 * The rail server like to set the window to a small size when it is minimized even though it is hidden
 		 * in some cases this can cause the window not to restore back to its original size. Therefore we don't
 		 * update our local window when that rail window state is minimized
 		 */
-		if (appWindow->rail_state == WINDOW_SHOW_MINIMIZED)
-			return TRUE;
+		if (appWindow->rail_state != WINDOW_SHOW_MINIMIZED)
+		{
 
-		/* Do nothing if window is already in the correct position */
-		if (appWindow->x == (appWindow->windowOffsetX - appWindow->localWindowOffsetCorrX) &&
-				appWindow->y == (appWindow->windowOffsetY - appWindow->localWindowOffsetCorrY) &&
+			/* Redraw window area if already in the correct position */
+			if (appWindow->x == appWindow->windowOffsetX &&
+				appWindow->y == appWindow->windowOffsetY &&
 				appWindow->width == appWindow->windowWidth &&
 				appWindow->height == appWindow->windowHeight)
-		{
-			xf_UpdateWindowArea(xfc, appWindow, 0, 0, appWindow->windowWidth, appWindow->windowHeight);
-		}
-		else
-		{
-			xf_MoveWindow(xfc, appWindow, appWindow->windowOffsetX - appWindow->localWindowOffsetCorrX, appWindow->windowOffsetY - appWindow->localWindowOffsetCorrY,
-				appWindow->windowWidth, appWindow->windowHeight);
+			{
+				xf_UpdateWindowArea(xfc, appWindow, 0, 0, appWindow->windowWidth, appWindow->windowHeight);
+			}
+			else
+			{
+				xf_MoveWindow(xfc, appWindow, appWindow->windowOffsetX, appWindow->windowOffsetY,
+					appWindow->windowWidth, appWindow->windowHeight);
+			}
+
+	                xf_SetWindowVisibilityRects(xfc, appWindow, visibilityRectsOffsetX, visibilityRectsOffsetY, appWindow->visibilityRects, appWindow->numVisibilityRects);
 		}
 	}
 
-	if (fieldFlags & WINDOW_ORDER_FIELD_WND_RECTS)
+	/* We should only be using the visibility rects for shaping the window */
+	/*if (fieldFlags & WINDOW_ORDER_FIELD_WND_RECTS)
 	{
 		xf_SetWindowRects(xfc, appWindow, appWindow->windowRects, appWindow->numWindowRects);
-	}
+	}*/
 
-	if (fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)
-	{
-		xf_SetWindowVisibilityRects(xfc, appWindow, appWindow->visibilityRects, appWindow->numVisibilityRects);
-	}
 	return TRUE;
 }
 

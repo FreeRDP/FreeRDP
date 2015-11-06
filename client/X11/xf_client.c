@@ -342,7 +342,7 @@ BOOL xf_sw_end_paint(rdpContext* context)
 
 		xf_lock_x11(xfc, FALSE);
 
-		xf_rail_paint(xfc, x, y, x + w - 1, y + h - 1);
+		xf_rail_paint(xfc, x, y, x + w, y + h);
 
 		xf_unlock_x11(xfc, FALSE);
 	}
@@ -455,7 +455,7 @@ BOOL xf_hw_end_paint(rdpContext* context)
 
 		xf_lock_x11(xfc, FALSE);
 
-		xf_rail_paint(xfc, x, y, x + w - 1, y + h - 1);
+		xf_rail_paint(xfc, x, y, x + w, y + h);
 
 		xf_unlock_x11(xfc, FALSE);
 	}
@@ -1852,7 +1852,11 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xfc->_NET_WORKAREA = XInternAtom(xfc->display, "_NET_WORKAREA", False);
 	xfc->_NET_WM_STATE = XInternAtom(xfc->display, "_NET_WM_STATE", False);
 	xfc->_NET_WM_STATE_FULLSCREEN = XInternAtom(xfc->display, "_NET_WM_STATE_FULLSCREEN", False);
+	xfc->_NET_WM_STATE_MAXIMIZED_HORZ = XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_HORZ", False);
+	xfc->_NET_WM_STATE_MAXIMIZED_VERT = XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_VERT", False);
 	xfc->_NET_WM_FULLSCREEN_MONITORS = XInternAtom(xfc->display, "_NET_WM_FULLSCREEN_MONITORS", False);
+	xfc->_NET_WM_NAME = XInternAtom(xfc->display, "_NET_WM_NAME", False);
+	xfc->_NET_WM_PID = XInternAtom(xfc->display, "_NET_WM_PID", False);
 	xfc->_NET_WM_WINDOW_TYPE = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE", False);
 	xfc->_NET_WM_WINDOW_TYPE_NORMAL = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE_NORMAL", False);
 	xfc->_NET_WM_WINDOW_TYPE_DIALOG = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE_DIALOG", False);
@@ -1863,6 +1867,8 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xfc->_NET_WM_STATE_SKIP_PAGER = XInternAtom(xfc->display, "_NET_WM_STATE_SKIP_PAGER", False);
 	xfc->_NET_WM_MOVERESIZE = XInternAtom(xfc->display, "_NET_WM_MOVERESIZE", False);
 	xfc->_NET_MOVERESIZE_WINDOW = XInternAtom(xfc->display, "_NET_MOVERESIZE_WINDOW", False);
+
+	xfc->UTF8_STRING = XInternAtom(xfc->display, "UTF8_STRING", FALSE);
 	xfc->WM_PROTOCOLS = XInternAtom(xfc->display, "WM_PROTOCOLS", False);
 	xfc->WM_DELETE_WINDOW = XInternAtom(xfc->display, "WM_DELETE_WINDOW", False);
 	xfc->WM_STATE = XInternAtom(xfc->display, "WM_STATE", False);
