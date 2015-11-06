@@ -185,30 +185,37 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		 */
 		startX = startX + xfc->instance->settings->MonitorLocalShiftX;
 		startY = startY + xfc->instance->settings->MonitorLocalShiftY;
+
+		/* Set monitor bounds */
+		if (settings->MonitorCount > 1)
+		{
+			xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_FULLSCREEN_MONITORS, 5,
+				xfc->fullscreenMonitors.top,
+				xfc->fullscreenMonitors.bottom,
+				xfc->fullscreenMonitors.left,
+				xfc->fullscreenMonitors.right,
+				1);
+		}
 	}
 
 	xf_ResizeDesktopWindow(xfc, window, width, height);
+
+	if (fullscreen)
+	{
+		/* enter full screen: move the window before adding NET_WM_STATE_FULLSCREEN */
+		XMoveWindow(xfc->display, window->handle, startX, startY);
+	}
 
 	/* Set the fullscreen state */
 	xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
 				fullscreen ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE,
 				xfc->_NET_WM_STATE_FULLSCREEN, 0, 0);
 
-	/* Only send monitor bounds if they are valid */
-	if ((xfc->fullscreenMonitors.top >= 0) &&
-			(xfc->fullscreenMonitors.bottom >= 0) &&
-			(xfc->fullscreenMonitors.left >= 0) &&
-			(xfc->fullscreenMonitors.right >= 0))
+	if (!fullscreen)
 	{
-		xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_FULLSCREEN_MONITORS, 5,
-				xfc->fullscreenMonitors.top,
-				xfc->fullscreenMonitors.bottom,
-				xfc->fullscreenMonitors.left,
-				xfc->fullscreenMonitors.right,
-				1);
+		/* leave full screen: move the window after removing NET_WM_STATE_FULLSCREEN */
+		XMoveWindow(xfc->display, window->handle, startX, startY);
 	}
-
-	XMoveWindow(xfc->display, window->handle, startX, startY);
 }
 
 /* http://tronche.com/gui/x/xlib/window-information/XGetWindowProperty.html */
