@@ -91,7 +91,6 @@
 LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 {
 	char* p;
-	int index;
 	int length;
 	char* pBeg;
 	char* pEnd;

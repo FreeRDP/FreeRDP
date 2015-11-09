@@ -20,6 +20,7 @@
  */
 
 #include <winpr/file.h>
+#include <winpr/handle.h>
 #include <string.h>
 #include <stdio.h>
 
