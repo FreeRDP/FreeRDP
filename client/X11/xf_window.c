@@ -239,7 +239,7 @@ BOOL xf_GetWindowProperty(xfContext* xfc, Window window, Atom property, int leng
 
 	if (actual_type == None)
 	{
-		WLog_ERR(TAG, "Property %lu does not exist", property);
+		WLog_INFO(TAG, "Property %lu does not exist", property);
 		return FALSE;
 	}
 

@@ -70,7 +70,7 @@ WINPR_SAM* SamOpen(BOOL read_only)
 		sam->fp = fp;
 	}
 	else
-		WLog_ERR(TAG, "Could not open SAM file!");
+		WLog_DBG(TAG, "Could not open SAM file!");
 
 	return sam;
 }
