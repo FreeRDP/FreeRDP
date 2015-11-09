@@ -31,6 +31,7 @@
 
 #if defined(ANDROID)
 #include <android/log.h>
+#include "../log.h"
 #endif
 
 #include "wlog.h"
