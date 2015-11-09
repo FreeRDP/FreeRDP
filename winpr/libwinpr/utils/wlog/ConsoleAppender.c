@@ -65,7 +65,7 @@ static BOOL WLog_ConsoleAppender_WriteMessage(wLog* log, wLogAppender* appender,
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
 
 #ifdef _WIN32
-	if (appender->outputStream == WLOG_CONSOLE_DEBUG)
+	if (consoleAppender->outputStream == WLOG_CONSOLE_DEBUG)
 	{
 		char MessageString[4096];
 
