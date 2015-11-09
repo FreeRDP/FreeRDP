@@ -20,7 +20,18 @@
 #ifndef WINPR_WLOG_LAYOUT_PRIVATE_H
 #define WINPR_WLOG_LAYOUT_PRIVATE_H
 
-#include <winpr/wlog.h>
+#include "wlog.h"
+
+/**
+ * Log Layout
+ */
+
+struct _wLogLayout
+{
+	DWORD Type;
+
+	LPSTR FormatString;
+};
 
 wLogLayout* WLog_Layout_New(wLog* log);
 void WLog_Layout_Free(wLog* log, wLogLayout* layout);

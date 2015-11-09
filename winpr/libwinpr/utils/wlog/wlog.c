@@ -33,11 +33,16 @@
 #include <android/log.h>
 #endif
 
-#include <winpr/wlog.h>
+#include "wlog.h"
 
-#include "wlog/wlog.h"
 
-#include "../../log.h"
+struct _wLogFilter
+{
+	DWORD Level;
+	LPSTR* Names;
+	DWORD NameCount;
+};
+typedef struct _wLogFilter wLogFilter;
 
 /**
  * References for general logging concepts:

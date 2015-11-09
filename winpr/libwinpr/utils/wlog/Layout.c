@@ -30,7 +30,7 @@
 #include <winpr/sysinfo.h>
 #include <winpr/environment.h>
 
-#include <winpr/wlog.h>
+#include "wlog.h"
 
 #include "wlog/Layout.h"
 

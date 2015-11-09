@@ -2,7 +2,8 @@
  * WinPR: Windows Portable Runtime
  * WinPR Logger
  *
- * Copyright 2013 David FORT <contact@hardening-consulting.com>
+ * Copyright © 2015 Thincast Technologies GmbH
+ * Copyright © 2015 David FORT <contact@hardening-consulting.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,16 +22,14 @@
 #include "config.h"
 #endif
 
+#include "SyslogAppender.h"
 #include <syslog.h>
 
-#include <winpr/crt.h>
-#include <winpr/environment.h>
-#include <winpr/thread.h>
-
-#include <winpr/wlog.h>
-
-#include "wlog/Message.h"
-#include "wlog/SyslogAppender.h"
+struct _wLogSyslogAppender
+{
+	WLOG_APPENDER_COMMON();
+};
+typedef struct _wLogSyslogAppender wLogSyslogAppender;
 
 static int getSyslogLevel(DWORD level)
 {
@@ -53,7 +52,7 @@ static int getSyslogLevel(DWORD level)
 	}
 }
 
-static BOOL WLog_SyslogAppender_Open(wLog* log, wLogSyslogAppender* appender)
+static BOOL WLog_SyslogAppender_Open(wLog* log, wLogAppender* appender)
 {
 	if (!log || !appender)
 		return FALSE;
@@ -61,7 +60,7 @@ static BOOL WLog_SyslogAppender_Open(wLog* log, wLogSyslogAppender* appender)
 	return TRUE;
 }
 
-static BOOL WLog_SyslogAppender_Close(wLog* log, wLogSyslogAppender* appender)
+static BOOL WLog_SyslogAppender_Close(wLog* log, wLogAppender* appender)
 {
 	if (!log || !appender)
 		return FALSE;
@@ -69,7 +68,7 @@ static BOOL WLog_SyslogAppender_Close(wLog* log, wLogSyslogAppender* appender)
 	return TRUE;
 }
 
-static BOOL WLog_SyslogAppender_WriteMessage(wLog* log, wLogSyslogAppender* appender, wLogMessage* message)
+static BOOL WLog_SyslogAppender_WriteMessage(wLog* log, wLogAppender* appender, wLogMessage* message)
 {
 	int syslogLevel;
 
@@ -83,7 +82,7 @@ static BOOL WLog_SyslogAppender_WriteMessage(wLog* log, wLogSyslogAppender* appe
 	return TRUE;
 }
 
-static BOOL WLog_SyslogAppender_WriteDataMessage(wLog* log, wLogSyslogAppender* appender, wLogMessage* message)
+static BOOL WLog_SyslogAppender_WriteDataMessage(wLog* log, wLogAppender* appender, wLogMessage* message)
 {
 	int syslogLevel;
 
@@ -97,7 +96,7 @@ static BOOL WLog_SyslogAppender_WriteDataMessage(wLog* log, wLogSyslogAppender* 
 	return TRUE;
 }
 
-static BOOL WLog_SyslogAppender_WriteImageMessage(wLog* log, wLogSyslogAppender* appender, wLogMessage* message)
+static BOOL WLog_SyslogAppender_WriteImageMessage(wLog* log, wLogAppender* appender, wLogMessage* message)
 {
 	int syslogLevel;
 
@@ -111,7 +110,12 @@ static BOOL WLog_SyslogAppender_WriteImageMessage(wLog* log, wLogSyslogAppender*
 	return TRUE;
 }
 
-wLogSyslogAppender* WLog_SyslogAppender_New(wLog* log)
+void WLog_SyslogAppender_Free(wLogAppender* appender)
+{
+		free(appender);
+}
+
+wLogAppender* WLog_SyslogAppender_New(wLog* log)
 {
 	wLogSyslogAppender* appender;
 
@@ -121,20 +125,12 @@ wLogSyslogAppender* WLog_SyslogAppender_New(wLog* log)
 
 	appender->Type = WLOG_APPENDER_SYSLOG;
 
-	appender->Open = (WLOG_APPENDER_OPEN_FN) WLog_SyslogAppender_Open;
-	appender->Close = (WLOG_APPENDER_OPEN_FN) WLog_SyslogAppender_Close;
-	appender->WriteMessage =
-			(WLOG_APPENDER_WRITE_MESSAGE_FN) WLog_SyslogAppender_WriteMessage;
-	appender->WriteDataMessage =
-			(WLOG_APPENDER_WRITE_DATA_MESSAGE_FN) WLog_SyslogAppender_WriteDataMessage;
-	appender->WriteImageMessage =
-			(WLOG_APPENDER_WRITE_IMAGE_MESSAGE_FN) WLog_SyslogAppender_WriteImageMessage;
+	appender->Open = WLog_SyslogAppender_Open;
+	appender->Close = WLog_SyslogAppender_Close;
+	appender->WriteMessage = WLog_SyslogAppender_WriteMessage;
+	appender->WriteDataMessage = WLog_SyslogAppender_WriteDataMessage;
+	appender->WriteImageMessage = WLog_SyslogAppender_WriteImageMessage;
+	appender->Free = WLog_SyslogAppender_Free;
 
-	return appender;
-}
-
-void WLog_SyslogAppender_Free(wLog* log, wLogSyslogAppender* appender)
-{
-	if (appender)
-		free(appender);
+	return (wLogAppender*)appender;
 }

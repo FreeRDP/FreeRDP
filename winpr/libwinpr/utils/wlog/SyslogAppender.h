@@ -24,12 +24,8 @@
 #ifndef WINPR_LIBWINPR_UTILS_WLOG_SYSLOGAPPENDER_H_
 #define WINPR_LIBWINPR_UTILS_WLOG_SYSLOGAPPENDER_H_
 
-#include <winpr/wlog.h>
+#include "wlog.h"
 
-#include "wlog/wlog.h"
-
-WINPR_API wLogSyslogAppender* WLog_SyslogAppender_New(wLog* log);
-WINPR_API void WLog_SyslogAppender_Free(wLog* log, wLogSyslogAppender* appender);
-
+wLogAppender* WLog_SyslogAppender_New(wLog* log);
 
 #endif /* WINPR_LIBWINPR_UTILS_WLOG_SYSLOGAPPENDER_H_ */
