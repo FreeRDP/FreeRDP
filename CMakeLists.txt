@@ -776,8 +776,8 @@ if(WITH_CHANNELS)
 	add_subdirectory(channels)
 endif()
 
-if(WITH_CLIENT)
-	add_subdirectory(client)
+if(WITH_CLIENT_COMMON OR WITH_CLIENT)
+add_subdirectory(client)
 endif()
 
 if(WITH_SERVER)

@@ -596,13 +596,13 @@ HRESULT PathCchRemoveExtensionW(PWSTR pszPath, size_t cchPath)
 BOOL PathCchIsRootA(PCSTR pszPath)
 {
 	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
-	return E_NOTIMPL;
+	return FALSE;
 }
 
 BOOL PathCchIsRootW(PCWSTR pszPath)
 {
 	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
-	return E_NOTIMPL;
+	return FALSE;
 }
 
 /**
