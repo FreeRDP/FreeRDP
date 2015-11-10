@@ -48,6 +48,10 @@ else()
 		tsmf_X11.c)
 	set(LIBS ${LIBS} ${X11_LIBRARIES} ${XEXT_LIBRARIES})
 
+	if(XEXT_FOUND)
+		add_definitions(-DWITH_XEXT=1)
+	endif()
+
 endif()
 
 set(${MODULE_PREFIX}_SRCS "${SRC}")
