@@ -12,7 +12,13 @@ TODO add more details and configuration examples.
 
 # Environment variables
 
-* WLOG_APPENDER  - the appender to use
+* WLOG_APPENDER  - the appender to use possible values below also see the Appender section.
+  * CONSOLE
+  * FILE
+  * BINARY
+  * SYSLOG
+  * JOURNALD
+  * UDP
 * WLOG_PREFIX - configure the prefix used for outputting the message (see
   Format for more details and examples)
 * WLOG_LEVEL - the level to output messages for
@@ -34,7 +40,7 @@ The level list below is top down. Top the highest level.
 * WLOG_DEBUG - debug messages
 * WLOG_INFO - general informations
 * WLOG_WARN - warnings
-* WLOG_ERROR - error
+* WLOG_ERROR - errors
 * WLOG_FATAL - fatal problems
 * WLOG_OFF - completely disable the wlog output
 
@@ -56,7 +62,7 @@ The format a logger prints in has the following possible options:
 * "hr" - hour
 * "mi" - minute
 * "se" - second
-* "ml" - milliseconds
+* "ml" - millisecond
 
 A maximum of 16 options can be used per format string.
 
@@ -118,7 +124,7 @@ Options:
 
 ### Udp
 
-This appender sends the loging messages to a pre-defined remote host via UDP.
+This appender sends the logging messages to a pre-defined remote host via UDP.
 
 Options:
 

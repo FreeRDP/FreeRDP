@@ -120,7 +120,7 @@ BOOL WLog_Write(wLog* log, wLogMessage* message)
 	if (!appender)
 		return FALSE;
 
-	if (!appender->State)
+	if (!appender->active)
 		if (!WLog_OpenAppender(log))
 			return FALSE;
 
@@ -151,7 +151,7 @@ BOOL WLog_WriteData(wLog* log, wLogMessage* message)
 	if (!appender)
 		return FALSE;
 
-	if (!appender->State)
+	if (!appender->active)
 		if (!WLog_OpenAppender(log))
 			return FALSE;
 
@@ -182,7 +182,7 @@ BOOL WLog_WriteImage(wLog* log, wLogMessage* message)
 	if (!appender)
 		return FALSE;
 
-	if (!appender->State)
+	if (!appender->active)
 		if (!WLog_OpenAppender(log))
 			return FALSE;
 
@@ -213,7 +213,7 @@ BOOL WLog_WritePacket(wLog* log, wLogMessage* message)
 	if (!appender)
 		return FALSE;
 
-	if (!appender->State)
+	if (!appender->active)
 		if (!WLog_OpenAppender(log))
 			return FALSE;
 

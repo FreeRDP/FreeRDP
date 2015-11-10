@@ -62,10 +62,10 @@ BOOL WLog_OpenAppender(wLog* log)
 	if (!appender->Open)
 		return TRUE;
 
-	if (!appender->State)
+	if (!appender->active)
 	{
 		status = appender->Open(log, appender);
-		appender->State = 1;
+		appender->active = TRUE;
 	}
 
 	return status;
@@ -84,10 +84,10 @@ BOOL WLog_CloseAppender(wLog* log)
 	if (!appender->Close)
 		return TRUE;
 
-	if (appender->State)
+	if (appender->active)
 	{
 		status = appender->Close(log, appender);
-		appender->State = 0;
+		appender->active = FALSE;
 	}
 
 	return status;

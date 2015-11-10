@@ -37,7 +37,7 @@ typedef void (*WLOG_APPENDER_FREE)(wLogAppender* appender);
 
 #define WLOG_APPENDER_COMMON() \
 	DWORD Type; \
-	DWORD State; \
+	BOOL active; \
 	wLogLayout* Layout; \
 	CRITICAL_SECTION lock; \
 	BOOL recursive; \
