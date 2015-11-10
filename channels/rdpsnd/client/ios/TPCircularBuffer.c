@@ -30,6 +30,7 @@
 #include <winpr/wlog.h>
 
 #include "TPCircularBuffer.h"
+#include "rdpsnd_main.h"
 
 #include <mach/mach.h>
 #include <stdio.h>
