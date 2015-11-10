@@ -94,6 +94,8 @@ set(${MODULE_PREFIX}_WLOG_SRCS
 	wlog/CallbackAppender.h
 	wlog/ConsoleAppender.c
 	wlog/ConsoleAppender.h
+	wlog/UdpAppender.c
+	wlog/UdpAppender.h
 	${SYSLOG_SRCS}
 	${JOURNALD_SRCS}
 	)

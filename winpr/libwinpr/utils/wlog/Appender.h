@@ -26,6 +26,7 @@
 #include "wlog/BinaryAppender.h"
 #include "wlog/ConsoleAppender.h"
 #include "wlog/CallbackAppender.h"
+#include "wlog/UdpAppender.h"
 
 #ifdef HAVE_SYSLOG_H
 #include "wlog/SyslogAppender.h"

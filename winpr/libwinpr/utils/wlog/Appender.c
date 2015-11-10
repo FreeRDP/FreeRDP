@@ -58,6 +58,9 @@ wLogAppender* WLog_Appender_New(wLog* log, DWORD logAppenderType)
 		appender = (wLogAppender*) WLog_JournaldAppender_New(log);
 		break;
 #endif
+	case WLOG_APPENDER_UDP:
+		appender = (wLogAppender*) WLog_UdpAppender_New(log);
+		break;
 	default:
 		fprintf(stderr, "%s: unknown handler type %d\n", __FUNCTION__, logAppenderType);
 		appender = NULL;
@@ -118,6 +121,9 @@ void WLog_Appender_Free(wLog* log, wLogAppender* appender)
 		WLog_JournaldAppender_Free(log, (wLogJournaldAppender *) appender);
 		break;
 #endif
+	case WLOG_APPENDER_UDP:
+		WLog_UdpAppender_Free(log, (wLogUdpAppender *) appender);
+		break;
 	default:
 		fprintf(stderr, "%s: don't know how to free appender type %d\n", __FUNCTION__, appender->Type);
 		break;

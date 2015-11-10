@@ -32,6 +32,7 @@ extern "C" {
 
 #include <winpr/synch.h>
 #include <winpr/thread.h>
+#include <winpr/winsock.h>
 
 typedef struct _wLog wLog;
 typedef struct _wLogMessage wLogMessage;
@@ -115,6 +116,7 @@ struct _wLogLayout
 #define WLOG_APPENDER_CALLBACK	3
 #define WLOG_APPENDER_SYSLOG	4
 #define WLOG_APPENDER_JOURNALD	5
+#define WLOG_APPENDER_UDP	6
 
 #define WLOG_PACKET_INBOUND	1
 #define WLOG_PACKET_OUTBOUND	2
@@ -212,6 +214,16 @@ struct _wLogJournaldAppender
 	FILE *stream;
 };
 typedef struct _wLogJournaldAppender wLogJournaldAppender;
+
+struct _wLogUdpAppender
+{
+	WLOG_APPENDER_COMMON();
+	char *host;
+	struct sockaddr targetAddr;
+	int	targetAddrLen;
+	SOCKET sock;
+};
+typedef struct _wLogUdpAppender wLogUdpAppender;
 
 
 /**

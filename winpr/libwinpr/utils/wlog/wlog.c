@@ -706,6 +706,8 @@ wLog* WLog_GetRoot()
 			else if (_stricmp(env, "JOURNALD") == 0)
 				logAppenderType = WLOG_APPENDER_JOURNALD;
 #endif
+			else if (_stricmp(env, "UDP") == 0)
+				logAppenderType = WLOG_APPENDER_UDP;
 
 			free(env);
 		}

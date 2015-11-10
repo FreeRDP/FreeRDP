@@ -260,6 +260,12 @@ BOOL update_gdi_fast_index(rdpContext* context, FAST_INDEX_ORDER* fastIndex)
 	if (opRight == 0)
 		opRight = fastIndex->bkRight;
 
+	/* Server can send a massive number (32766) which appears to be
+	 * undocumented special behavior for "Erase all the way right".
+	 * X11 has nondeterministic results asking for a draw that wide. */
+	if (opRight > context->instance->settings->DesktopWidth)
+		opRight = context->instance->settings->DesktopWidth;
+
 	if (x == -32768)
 		x = fastIndex->bkLeft;
 
@@ -312,6 +318,10 @@ BOOL update_gdi_fast_glyph(rdpContext* context, FAST_GLYPH_ORDER* fastGlyph)
 
 	if (opRight == 0)
 		opRight = fastGlyph->bkRight;
+
+	/* See update_gdi_fast_index opRight comment. */
+	if (opRight > context->instance->settings->DesktopWidth)
+		opRight = context->instance->settings->DesktopWidth;
 
 	if (x == -32768)
 		x = fastGlyph->bkLeft;
