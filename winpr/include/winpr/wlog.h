@@ -27,15 +27,9 @@
 extern "C" {
 #endif
 
-#include <stdio.h>
-#include <stdarg.h>
-
-#include <winpr/winpr.h>
 #include <winpr/wtypes.h>
-
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/winsock.h>
 
 /**
  * Log Levels

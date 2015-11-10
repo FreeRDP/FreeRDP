@@ -25,6 +25,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/environment.h>
+#include <winpr/winsock.h>
 
 #include "wlog.h"
 
