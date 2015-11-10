@@ -93,6 +93,7 @@
 #define __int3264 __int32
 #define __uint3264 __uint32
 #endif
+#endif
 
 #if defined(HAVE_STDBOOL_H) && !defined(__OBJC__)
 typedef bool BOOL;
