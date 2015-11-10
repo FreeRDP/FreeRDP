@@ -196,12 +196,6 @@ wLogAppender* WLog_JournaldAppender_New(wLog* log)
 		if (!WLog_JournaldAppender_Open(log, (wLogAppender *)appender))
 			goto error_open;
 	}
-	else
-	{
-		appender->identifier = _strdup("winpr");
-		if (!appender->identifier)
-			goto error_env_malloc;
-	}
 
 	return (wLogAppender *)appender;
 
