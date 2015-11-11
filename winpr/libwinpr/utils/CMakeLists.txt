@@ -77,7 +77,6 @@ set(${MODULE_PREFIX}_WLOG_SRCS
 	wlog/Message.c
 	wlog/Message.h
 	wlog/TextMessage.c
-	wlog/TextMessage.h
 	wlog/DataMessage.c
 	wlog/DataMessage.h
 	wlog/ImageMessage.c

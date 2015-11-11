@@ -20,14 +20,9 @@
 #ifndef WINPR_WLOG_MESSAGE_PRIVATE_H
 #define WINPR_WLOG_MESSAGE_PRIVATE_H
 
-#include <winpr/wlog.h>
-
-#include "wlog/wlog.h"
-
-#include "wlog/TextMessage.h"
-#include "wlog/DataMessage.h"
-#include "wlog/ImageMessage.h"
-#include "wlog/PacketMessage.h"
+#include "DataMessage.h"
+#include "ImageMessage.h"
+#include "PacketMessage.h"
 
 char* WLog_Message_GetOutputFileName(int id, const char* ext);
 

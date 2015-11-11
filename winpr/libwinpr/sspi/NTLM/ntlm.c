@@ -27,6 +27,7 @@
 #include <winpr/tchar.h>
 #include <winpr/sysinfo.h>
 #include <winpr/registry.h>
+#include <freerdp/build-config.h>
 
 #include "ntlm.h"
 #include "../sspi.h"

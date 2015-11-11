@@ -31,13 +31,19 @@
 
 #if defined(ANDROID)
 #include <android/log.h>
+#include "../log.h"
 #endif
 
-#include <winpr/wlog.h>
+#include "wlog.h"
 
-#include "wlog/wlog.h"
 
-#include "../../log.h"
+struct _wLogFilter
+{
+	DWORD Level;
+	LPSTR* Names;
+	DWORD NameCount;
+};
+typedef struct _wLogFilter wLogFilter;
 
 /**
  * References for general logging concepts:
@@ -114,7 +120,7 @@ BOOL WLog_Write(wLog* log, wLogMessage* message)
 	if (!appender)
 		return FALSE;
 
-	if (!appender->State)
+	if (!appender->active)
 		if (!WLog_OpenAppender(log))
 			return FALSE;
 
@@ -145,7 +151,7 @@ BOOL WLog_WriteData(wLog* log, wLogMessage* message)
 	if (!appender)
 		return FALSE;
 
-	if (!appender->State)
+	if (!appender->active)
 		if (!WLog_OpenAppender(log))
 			return FALSE;
 
@@ -176,7 +182,7 @@ BOOL WLog_WriteImage(wLog* log, wLogMessage* message)
 	if (!appender)
 		return FALSE;
 
-	if (!appender->State)
+	if (!appender->active)
 		if (!WLog_OpenAppender(log))
 			return FALSE;
 
@@ -207,7 +213,7 @@ BOOL WLog_WritePacket(wLog* log, wLogMessage* message)
 	if (!appender)
 		return FALSE;
 
-	if (!appender->State)
+	if (!appender->active)
 		if (!WLog_OpenAppender(log))
 			return FALSE;
 

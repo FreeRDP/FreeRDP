@@ -31,6 +31,7 @@
 
 #include <freerdp/log.h>
 #include <freerdp/crypto/tls.h>
+#include <freerdp/build-config.h>
 
 #include <winpr/crt.h>
 #include <winpr/sam.h>

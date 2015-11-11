@@ -18,10 +18,12 @@
 # limitations under the License.
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp/version.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp/build-config.h.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp/build-config.h)
 
 file(GLOB FREERDP_HEADERS "freerdp/*.h")
 install(FILES ${FREERDP_HEADERS} DESTINATION include/freerdp COMPONENT headers)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp/version.h DESTINATION include/freerdp COMPONENT headers)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp/build-config.h DESTINATION include/freerdp COMPONENT headers)
 
 install(DIRECTORY freerdp/cache DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY freerdp/codec DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")

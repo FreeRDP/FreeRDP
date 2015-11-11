@@ -23,7 +23,7 @@
 #include "config.h"
 #endif
 
-#include <winpr/wlog.h>
+#include "wlog.h"
 
 #include "wlog/PacketMessage.h"
 

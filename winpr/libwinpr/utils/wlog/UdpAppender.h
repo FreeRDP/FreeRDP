@@ -28,8 +28,6 @@
 
 #include "wlog/wlog.h"
 
-WINPR_API wLogUdpAppender* WLog_UdpAppender_New(wLog* log);
-WINPR_API void WLog_UdpAppender_Free(wLog* log, wLogUdpAppender* appender);
-WINPR_API BOOL Wlog_UdpAppender_SetTarget(wLogUdpAppender* appender, const char *host);
+wLogAppender* WLog_UdpAppender_New(wLog* log);
 
 #endif /* WINPR_LIBWINPR_UTILS_WLOG_UDPAPPENDER_H_ */

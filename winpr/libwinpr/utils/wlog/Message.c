@@ -25,9 +25,9 @@
 #include <winpr/path.h>
 #include <winpr/file.h>
 
-#include <winpr/wlog.h>
+#include "wlog.h"
 
-#include "wlog/Message.h"
+#include "Message.h"
 
 char* WLog_Message_GetOutputFileName(int id, const char* ext)
 {

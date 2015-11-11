@@ -31,6 +31,7 @@
 #include <freerdp/constants.h>
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/channels.h>
+#include <freerdp/build-config.h>
 
 #include "wf_peer.h"
 #include "wf_settings.h"

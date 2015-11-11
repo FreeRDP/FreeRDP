@@ -633,7 +633,6 @@ static UINT cliprdr_server_receive_format_list(CliprdrServerContext* context, wS
 	WCHAR* wszFormatName;
 	CLIPRDR_FORMAT* formats = NULL;
 	CLIPRDR_FORMAT_LIST formatList;
-	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 	UINT error = CHANNEL_RC_OK;
 
 	dataLen = header->dataLen;
@@ -1094,7 +1093,6 @@ static UINT cliprdr_server_init(CliprdrServerContext* context)
 	CLIPRDR_CAPABILITIES capabilities;
 	CLIPRDR_MONITOR_READY monitorReady;
 	CLIPRDR_GENERAL_CAPABILITY_SET generalCapabilitySet;
-	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 	UINT error;
 
 	ZeroMemory(&capabilities, sizeof(capabilities));

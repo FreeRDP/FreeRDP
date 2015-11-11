@@ -21,10 +21,6 @@
 #include "config.h"
 #endif
 
-#include <winpr/wlog.h>
-
-#include "wlog/TextMessage.h"
-
 void wlog_TextMessage_dummy()
 {
 	/* avoid no symbol ranlib warning */

@@ -694,7 +694,6 @@ static int test_norbert2_case() {
 	int retCode = -1;
 	const RECTANGLE_16 *rects;
 	int nbRects = 0;
-	int i;
 	RECTANGLE_16 rect1 = {  464, 696,   476,  709 };
 	RECTANGLE_16 rect2 = {    0,   0,  1024,   32 };
 

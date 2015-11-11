@@ -23,6 +23,8 @@
 
 #include <stdlib.h>
 
+#include <freerdp/build-config.h>
+
 #include <winpr/tchar.h>
 #include <winpr/windows.h>
 
