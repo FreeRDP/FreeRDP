@@ -955,7 +955,7 @@ static UINT cliprdr_server_receive_filecontents_request(CliprdrServerContext* co
 	request.msgFlags = header->msgFlags;
 	request.dataLen = header->dataLen;
 
-	if (Stream_GetRemainingLength(s) < 28)
+	if (Stream_GetRemainingLength(s) < 24)
 	{
 		WLog_ERR(TAG, "not enought data in stream!");
 		return ERROR_INVALID_DATA;
@@ -967,7 +967,10 @@ static UINT cliprdr_server_receive_filecontents_request(CliprdrServerContext* co
 	Stream_Read_UINT32(s, request.nPositionLow); /* nPositionLow (4 bytes) */
 	Stream_Read_UINT32(s, request.nPositionHigh); /* nPositionHigh (4 bytes) */
 	Stream_Read_UINT32(s, request.cbRequested); /* cbRequested (4 bytes) */
-	Stream_Read_UINT32(s, request.clipDataId); /* clipDataId (4 bytes) */
+	if (Stream_GetRemainingLength(s) < 4) /* clipDataId (4 bytes) optional */
+		request.clipDataId = 0;
+	else
+		Stream_Read_UINT32(s, request.clipDataId);
 
 	IFCALLRET(context->ClientFileContentsRequest, error, context, &request);
 	if (error)
