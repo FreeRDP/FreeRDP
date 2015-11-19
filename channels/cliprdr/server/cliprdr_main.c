@@ -470,7 +470,7 @@ static UINT cliprdr_server_file_contents_response(CliprdrServerContext* context,
 	if (fileContentsResponse->dwFlags & FILECONTENTS_SIZE)
 		fileContentsResponse->cbRequested = sizeof(UINT64);
 
-	s = cliprdr_server_packet_new(CB_FILECONTENTS_REQUEST, 0,
+	s = cliprdr_server_packet_new(CB_FILECONTENTS_RESPONSE, 0,
 			4 + fileContentsResponse->cbRequested);
 
 	if (!s)
