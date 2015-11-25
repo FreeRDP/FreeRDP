@@ -187,6 +187,44 @@ fail:
 }
 #endif
 
+#if defined(_WIN32) && (NTDDI_VERSION <= NTDDI_WINXP)
+
+typedef USHORT (WINAPI * PRTL_CAPTURE_STACK_BACK_TRACE_FN)(ULONG FramesToSkip, ULONG FramesToCapture, PVOID* BackTrace, PULONG BackTraceHash);
+
+static HMODULE g_NTDLL_Library = NULL;
+static BOOL g_RtlCaptureStackBackTrace_Detected = FALSE;
+static BOOL g_RtlCaptureStackBackTrace_Available = FALSE;
+static PRTL_CAPTURE_STACK_BACK_TRACE_FN g_pRtlCaptureStackBackTrace = NULL;
+
+USHORT RtlCaptureStackBackTrace(ULONG FramesToSkip, ULONG FramesToCapture, PVOID* BackTrace, PULONG BackTraceHash)
+{
+	if (!g_RtlCaptureStackBackTrace_Detected)
+	{
+		g_NTDLL_Library = LoadLibraryA("kernel32.dll");
+
+		if (g_NTDLL_Library)
+		{
+			g_pRtlCaptureStackBackTrace = (PRTL_CAPTURE_STACK_BACK_TRACE_FN) GetProcAddress(g_NTDLL_Library, "RtlCaptureStackBackTrace");
+			g_RtlCaptureStackBackTrace_Available = (g_pRtlCaptureStackBackTrace) ? TRUE : FALSE;
+		}
+		else
+		{
+			g_RtlCaptureStackBackTrace_Available = FALSE;
+		}
+
+		g_RtlCaptureStackBackTrace_Detected = TRUE;
+	}
+
+	if (g_RtlCaptureStackBackTrace_Available)
+	{
+		return (*g_pRtlCaptureStackBackTrace)(FramesToSkip, FramesToCapture, BackTrace, BackTraceHash);
+	}
+
+	return 0;
+}
+
+#endif
+
 void winpr_backtrace_free(void* buffer)
 {
 	if (!buffer)
@@ -272,7 +310,7 @@ void* winpr_backtrace(DWORD size)
 	}
 
 	SymInitialize(process, NULL, TRUE);
-	data->used = CaptureStackBackTrace(2, size, data->stack, NULL);
+	data->used = RtlCaptureStackBackTrace(2, size, data->stack, NULL);
 
 	return data;
 #else
