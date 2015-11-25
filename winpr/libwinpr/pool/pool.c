@@ -205,9 +205,9 @@ PTP_POOL CreateThreadpool(PVOID reserved)
 		free(pool);
 		return NULL;
 	}
+#endif
 
 	return pool;
-#endif
 }
 
 VOID CloseThreadpool(PTP_POOL ptpp)

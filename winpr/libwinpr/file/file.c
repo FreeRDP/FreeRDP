@@ -228,9 +228,13 @@ BOOL SetStdHandleEx(DWORD dwStdHandle, HANDLE hNewHandle, HANDLE* phOldHandle)
 
 /* Extended API */
 
+#ifdef _WIN32
+#include <io.h>
+#endif
+
 HANDLE GetFileHandleForFileDescriptor(int fd)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	return (HANDLE)_get_osfhandle(fd);
 #else /* WIN32 */
 	WINPR_FILE *pFile;
