@@ -1267,6 +1267,7 @@ BOOL mac_end_paint(rdpContext* context)
 
 BOOL mac_desktop_resize(rdpContext* context)
 {
+	ResizeWindowEventArgs e;
 	mfContext* mfc = (mfContext*) context;
 	MRDPView* view = (MRDPView*) mfc->view;
 	rdpSettings* settings = context->settings;
@@ -1288,8 +1289,21 @@ BOOL mac_desktop_resize(rdpContext* context)
 		return FALSE;
 	
 	view->bitmap_context = mac_create_bitmap_context(context);
+	
 	if (!view->bitmap_context)
 		return FALSE;
+	
+	mfc->client_width = mfc->width;
+	mfc->client_height = mfc->height;
+	
+	[view setFrameSize:NSMakeSize(mfc->width, mfc->height)];
+	
+	EventArgsInit(&e, "mfreerdp");
+	e.width = settings->DesktopWidth;
+	e.height = settings->DesktopHeight;
+	
+	PubSub_OnResizeWindow(context->pubSub, context, &e);
+	
 	return TRUE;
 }
 
