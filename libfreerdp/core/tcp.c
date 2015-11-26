@@ -1047,12 +1047,16 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings,
 	UINT32 optval;
 	socklen_t optlen;
 	BOOL ipcSocket = FALSE;
+	BOOL useExternalDefinedSocket = FALSE;
 
 	if (!hostname)
 		return -1;
 
 	if (hostname[0] == '/')
 		ipcSocket = TRUE;
+
+	if (hostname[0] == '|')
+		useExternalDefinedSocket = TRUE;
 
 	if (ipcSocket)
 	{
@@ -1061,6 +1065,8 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings,
 		if (sockfd < 0)
 			return -1;
 	}
+        else if (useExternalDefinedSocket)
+	  sockfd = port;
 	else
 	{
 		sockfd = -1;
@@ -1143,7 +1149,8 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings,
 	settings->ClientAddress = freerdp_tcp_get_ip_address(sockfd);
 	if (!settings->ClientAddress)
 	{
-		close(sockfd);
+	        if (!useExternalDefinedSocket)
+		  close(sockfd);
 		WLog_ERR(TAG, "Couldn't get socket ip address");
 		return -1;
 	}
@@ -1151,7 +1158,7 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings,
 	optval = 1;
 	optlen = sizeof(optval);
 
-	if (!ipcSocket)
+	if (!ipcSocket && !useExternalDefinedSocket)
 	{
 		if (setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (void*) &optval, optlen) < 0)
 			WLog_ERR(TAG, "unable to set TCP_NODELAY");
@@ -1174,7 +1181,7 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings,
 		}
 	}
 
-	if (!ipcSocket)
+	if (!ipcSocket && !useExternalDefinedSocket)
 	{
 		if (!freerdp_tcp_set_keep_alive_mode(sockfd))
 		{
