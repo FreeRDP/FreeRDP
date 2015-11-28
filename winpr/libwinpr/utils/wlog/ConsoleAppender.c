@@ -55,10 +55,11 @@ static BOOL WLog_ConsoleAppender_WriteMessage(wLog* log, wLogAppender* appender,
 {
 	FILE* fp;
 	char prefix[WLOG_MAX_PREFIX_SIZE];
+	wLogConsoleAppender *consoleAppender;
 	if (!appender)
 		return FALSE;
 
-	wLogConsoleAppender *consoleAppender = (wLogConsoleAppender *)appender;
+	consoleAppender = (wLogConsoleAppender *)appender;
 
 
 	message->PrefixString = prefix;
