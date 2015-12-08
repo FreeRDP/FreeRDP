@@ -1528,11 +1528,30 @@ void* xf_client_thread(void* param)
 
 	xfc = (xfContext*) instance->context;
 
-	/* Connection succeeded. --authonly ? */
-	if (instance->settings->AuthenticationOnly || !status)
+	/* --authonly ? */
+	if (instance->settings->AuthenticationOnly)
 	{
 		WLog_ERR(TAG, "Authentication only, exit status %d", !status);
-		exit_code = XF_EXIT_CONN_FAILED;
+		if (!status)
+		{
+			if (freerdp_get_last_error(instance->context) == FREERDP_ERROR_AUTHENTICATION_FAILED)
+				exit_code = XF_EXIT_AUTH_FAILURE;
+			else
+				exit_code = XF_EXIT_CONN_FAILED;
+		}
+		else
+			exit_code = XF_EXIT_SUCCESS;
+		goto disconnect;
+	}
+
+	if (!status)
+	{
+		WLog_ERR(TAG, "Freerdp connect error exit status %d", !status);
+		exit_code = freerdp_error_info(instance);
+		if (freerdp_get_last_error(instance->context) == FREERDP_ERROR_AUTHENTICATION_FAILED)
+			exit_code = XF_EXIT_AUTH_FAILURE;
+		else
+			exit_code = XF_EXIT_CONN_FAILED;
 		goto disconnect;
 	}
 
@@ -1643,7 +1662,7 @@ disconnect:
 
 DWORD xf_exit_code_from_disconnect_reason(DWORD reason)
 {
-	if (reason == 0 || (reason >= XF_EXIT_PARSE_ARGUMENTS && reason <= XF_EXIT_CONN_FAILED))
+	if (reason == 0 || (reason >= XF_EXIT_PARSE_ARGUMENTS && reason <= XF_EXIT_AUTH_FAILURE))
 		return reason;
 	/* License error set */
 	else if (reason >= 0x100 && reason <= 0x10A)

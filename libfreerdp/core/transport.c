@@ -58,6 +58,18 @@
 
 static void* transport_client_thread(void* arg);
 
+
+static void transport_ssl_cb(SSL* ssl, int where, int ret)
+{
+	rdpTransport *transport;
+	if ((where | SSL_CB_ALERT) && (ret == 561))
+	{
+		transport = (rdpTransport *) SSL_get_app_data(ssl);
+		if (!freerdp_get_last_error(transport->context))
+			freerdp_set_last_error(transport->context, FREERDP_ERROR_AUTHENTICATION_FAILED);
+	}
+}
+
 wStream* transport_send_stream_init(rdpTransport* transport, int size)
 {
 	wStream* s;
@@ -145,6 +157,9 @@ BOOL transport_connect_tls(rdpTransport* transport)
 	}
 
 	transport->frontBio = tls->bio;
+
+	BIO_callback_ctrl(tls->bio, BIO_CTRL_SET_CALLBACK, (bio_info_cb*) transport_ssl_cb);
+	SSL_set_app_data(tls->ssl, transport);
 
 	if (!transport->frontBio)
 	{
