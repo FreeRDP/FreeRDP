@@ -471,3 +471,29 @@ void winpr_log_backtrace(const char* tag, DWORD level, DWORD size)
 	winpr_backtrace_free(stack);
 }
 
+char* winpr_strerror(DWORD dw, char* dmsg, size_t size) {
+	LPTSTR msg = NULL;
+	DWORD rc;
+
+#if defined(_WIN32)
+	rc = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+			FORMAT_MESSAGE_FROM_SYSTEM |
+			FORMAT_MESSAGE_IGNORE_INSERTS,
+			NULL, dw, 0, (LPTSTR)&msg, 0, NULL);
+	if (rc) {
+#if defined(UNICODE)
+		WideCharToMultiByte(CP_ACP, 0, msg, rc, dmsg, size - 1, NULL, NULL);
+#else
+		memcpy(dmsg, msg, min(rc, size - 1));
+#endif
+		dmsg[min(rc, size - 1)] = 0;
+		LocalFree(msg);
+	} else {
+		_snprintf(dmsg, size, "FAILURE: %08X", GetLastError());
+	}
+#else
+	_snprintf(dmsg, size, "%s", strerror(dw));
+#endif
+
+	return dmsg;
+}
