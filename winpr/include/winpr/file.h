@@ -165,6 +165,13 @@
 #define STD_OUTPUT_HANDLE (DWORD)-11
 #define STD_ERROR_HANDLE  (DWORD)-12
 
+#define FILE_BEGIN   0
+#define FILE_CURRENT 1
+#define FILE_END     2
+
+#define LOCKFILE_FAIL_IMMEDIATELY 1
+#define LOCKFILE_EXCLUSIVE_LOCK   2
+
 typedef union _FILE_SEGMENT_ELEMENT
 {
 	PVOID64 Buffer;
@@ -260,6 +267,8 @@ WINPR_API BOOL WriteFileGather(HANDLE hFile, FILE_SEGMENT_ELEMENT aSegmentArray[
 WINPR_API BOOL FlushFileBuffers(HANDLE hFile);
 
 WINPR_API BOOL SetEndOfFile(HANDLE hFile);
+
+WINPR_API DWORD WINAPI GetFileSize(HANDLE hFile, LPDWORD lpFileSizeHigh);
 
 WINPR_API DWORD SetFilePointer(HANDLE hFile, LONG lDistanceToMove,
 		PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod);
