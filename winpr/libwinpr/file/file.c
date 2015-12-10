@@ -118,7 +118,7 @@ static DWORD FileSetFilePointer(HANDLE hFile, LONG lDistanceToMove,
 	if (!hFile)
 		return INVALID_SET_FILE_POINTER;
 
-	fp = fdopen(pFile->fd, "w");
+	fp = fdopen(pFile->fd, "wb");
 
 	if (!fp)
 	{
@@ -233,7 +233,7 @@ static DWORD FileGetFileSize(HANDLE Object, LPDWORD lpFileSizeHigh)
 		return 0;
 
 	file = (WINPR_FILE *)Object;
-	fp = fdopen(file->fd, "r");
+	fp = fdopen(file->fd, "wb");
 
 	if (!fp)
 	{
@@ -496,7 +496,9 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 
 	{
 		FILE* fp = fopen(pFile->lpFileName, mode);
-		pFile->fd = fileno(fp);
+		pFile->fd = -1;
+		if (fp)
+			pFile->fd = fileno(fp);
 	}
 	if (pFile->fd < 0)
 	{
