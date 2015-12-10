@@ -3,6 +3,7 @@
 #include <winpr/crt.h>
 #include <winpr/file.h>
 #include <winpr/path.h>
+#include <winpr/handle.h>
 #include <winpr/windows.h>
 
 int TestFileCreateFile(int argc, char* argv[])
@@ -42,7 +43,17 @@ int TestFileCreateFile(int argc, char* argv[])
 	if (written != sizeof(buffer))
 		rc = -1;
 
-	written = SetFilePointer(handle, 0, NULL, FILE_BEGIN);
+	written = SetFilePointer(handle, 5, NULL, FILE_BEGIN);
+
+	if (written != 5)
+		rc = -1;
+
+	written = SetFilePointer(handle, 0, NULL, FILE_CURRENT);
+
+	if (written != 5)
+		rc = -1;
+
+	written = SetFilePointer(handle, -5, NULL, FILE_CURRENT);
 
 	if (written != 0)
 		rc = -1;
