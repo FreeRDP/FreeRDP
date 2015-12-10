@@ -122,7 +122,7 @@ static DWORD FileSetFilePointer(HANDLE hFile, LONG lDistanceToMove,
 
 	if (!fp)
 	{
-		WLog_ERR(TAG, "fdopen(%d) failed with %s [%08X]", pFile->fd,
+		WLog_ERR(TAG, "fdopen(%s) failed with %s [%08X]", pFile->lpFileName,
 			 strerror(errno), errno);
 		return INVALID_SET_FILE_POINTER;
 	}
@@ -144,7 +144,7 @@ static DWORD FileSetFilePointer(HANDLE hFile, LONG lDistanceToMove,
 
 	if (fseek(fp, offset, whence))
 	{
-		WLog_ERR(TAG, "fseek(%d) failed with %s [%08X]", pFile->fd,
+		WLog_ERR(TAG, "fseek(%s) failed with %s [%08X]", pFile->lpFileName,
 			 strerror(errno), errno);
 		return INVALID_SET_FILE_POINTER;
 	}
@@ -237,7 +237,7 @@ static DWORD FileGetFileSize(HANDLE Object, LPDWORD lpFileSizeHigh)
 
 	if (!fp)
 	{
-		WLog_ERR(TAG, "fdopen(%d) failed with %s [%08X]", file->fd,
+		WLog_ERR(TAG, "fopen(%s) failed with %s [%08X]", file->lpFileName,
 			 strerror(errno), errno);
 		return INVALID_FILE_SIZE;
 	}
@@ -246,14 +246,14 @@ static DWORD FileGetFileSize(HANDLE Object, LPDWORD lpFileSizeHigh)
 
 	if (cur < 0)
 	{
-		WLog_ERR(TAG, "ftell(%d) failed with %s [%08X]", file->fd,
+		WLog_ERR(TAG, "ftell(%s) failed with %s [%08X]", file->lpFileName,
 			 strerror(errno), errno);
 		return INVALID_FILE_SIZE;
 	}
 
 	if (fseek(fp, 0, SEEK_END) != 0)
 	{
-		WLog_ERR(TAG, "fseek(%d) failed with %s [%08X]", file->fd,
+		WLog_ERR(TAG, "fseek(%s) failed with %s [%08X]", file->lpFileName,
 			 strerror(errno), errno);
 		return INVALID_FILE_SIZE;
 	}
@@ -262,14 +262,14 @@ static DWORD FileGetFileSize(HANDLE Object, LPDWORD lpFileSizeHigh)
 
 	if (size < 0)
 	{
-		WLog_ERR(TAG, "ftell(%d) failed with %s [%08X]", file->fd,
+		WLog_ERR(TAG, "ftell(%s) failed with %s [%08X]", file->lpFileName,
 			 strerror(errno), errno);
 		return INVALID_FILE_SIZE;
 	}
 
 	if (fseek(fp, cur, SEEK_SET) != 0)
 	{
-		WLog_ERR(TAG, "ftell(%d) failed with %s [%08X]", file->fd,
+		WLog_ERR(TAG, "ftell(%s) failed with %s [%08X]", file->lpFileName,
 			 strerror(errno), errno);
 		return INVALID_FILE_SIZE;
 	}
@@ -292,7 +292,7 @@ static BOOL FileLockFileEx(HANDLE hFile, DWORD dwFlags, DWORD dwReserved,
 
 	if (pFile->bLocked)
 	{
-		WLog_ERR(TAG, "File %d already locked!", pFile->fd);
+		WLog_ERR(TAG, "File %s already locked!", pFile->lpFileName);
 		return FALSE;
 	}
 
@@ -332,14 +332,14 @@ static BOOL FileUnlockFile(HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffs
 
 	if (!pFile->bLocked)
 	{
-		WLog_ERR(TAG, "File %d is not locked!", pFile->fd);
+		WLog_ERR(TAG, "File %s is not locked!", pFile->lpFileName);
 		return FALSE;
 	}
 
 	if (flock(pFile->fd, LOCK_UN) < 0)
 	{
-		WLog_ERR(TAG, "flock(LOCK_UN) %d failed with %s [%08X]",
-			 pFile->fd, strerror(errno), errno);
+		WLog_ERR(TAG, "flock(LOCK_UN) %s failed with %s [%08X]",
+			 pFile->lpFileName, strerror(errno), errno);
 		return FALSE;
 	}
 
@@ -356,7 +356,7 @@ static BOOL FileUnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfByte
 
 	if (!pFile->bLocked)
 	{
-		WLog_ERR(TAG, "File %d is not locked!", pFile->fd);
+		WLog_ERR(TAG, "File %s is not locked!", pFile->lpFileName);
 		return FALSE;
 	}
 
@@ -368,8 +368,8 @@ static BOOL FileUnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfByte
 
 	if (flock(pFile->fd, LOCK_UN) < 0)
 	{
-		WLog_ERR(TAG, "flock(LOCK_UN) %d failed with %s [%08X]",
-			 pFile->fd, strerror(errno), errno);
+		WLog_ERR(TAG, "flock(LOCK_UN) %s failed with %s [%08X]",
+			 pFile->lpFileName, strerror(errno), errno);
 		return FALSE;
 	}
 
@@ -398,7 +398,7 @@ static HANDLE_OPS fileOps = {
 	FileUnlockFileEx
 };
 
-static HANDLE_OPS pipeOps = {
+static HANDLE_OPS shmOps = {
 	FileIsHandled,
 	FileCloseHandle,
 	FileGetFd,
@@ -556,7 +556,7 @@ static WINPR_FILE *FileHandle_New(int fd)
 	HANDLE hFile;
 	char name[MAX_PATH];
 
-	_snprintf(name, sizeof(name), "pipe_device_%d", fd);
+	_snprintf(name, sizeof(name), "device_%d", fd);
 	pFile = (WINPR_FILE*) calloc(1, sizeof(WINPR_FILE));
 	if (!pFile)
 	{
@@ -564,7 +564,7 @@ static WINPR_FILE *FileHandle_New(int fd)
 		return NULL;
 	}
 	pFile->fd = fd;
-	pFile->ops = &pipeOps;
+	pFile->ops = &shmOps;
 	pFile->lpFileName = _strdup(name);
 
 	hFile = (HANDLE) pFile;
