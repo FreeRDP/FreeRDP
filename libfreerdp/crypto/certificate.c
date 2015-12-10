@@ -406,6 +406,7 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store,
 	{
 		WLog_ERR(TAG, "SetFilePointer(%s) returned %s [%08X]",
 			 certificate_store->file, strerror(errno), GetLastError());
+		free(data);
 		CloseHandle(fp);
 		return FALSE;
 	}
@@ -414,6 +415,7 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store,
 	{
 		WLog_ERR(TAG, "SetEndOfFile(%s) returned %s [%08X]",
 			 certificate_store->file, strerror(errno), GetLastError());
+		free(data);
 		CloseHandle(fp);
 		return FALSE;
 	}
@@ -456,6 +458,7 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store,
 				{
 					WLog_ERR(TAG, "malloc(%s) returned %s [%08X]",
 						 certificate_store->file, strerror(errno), errno);
+					free(data);
 					CloseHandle(fp);
 					return FALSE;
 				}
@@ -465,6 +468,7 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store,
 					WLog_ERR(TAG, "_snprintf(%s) returned %s [%08X]",
 						 certificate_store->file, strerror(errno), errno);
 					free(tdata);
+					free(data);
 					CloseHandle(fp);
 					return FALSE;
 				}
@@ -473,6 +477,7 @@ BOOL certificate_data_replace(rdpCertificateStore* certificate_store,
 					WLog_ERR(TAG, "WriteFile(%s) returned %s [%08X]",
 						 certificate_store->file, strerror(errno), errno);
 					free(tdata);
+					free(data);
 					CloseHandle(fp);
 					return FALSE;
 				}
