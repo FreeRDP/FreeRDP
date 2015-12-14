@@ -456,6 +456,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 	BOOL create;
 	const char* mode = FileGetMode(dwDesiredAccess, dwCreationDisposition, &create);
 	int lock;
+	FILE* fp = NULL;
 
 	pFile = (WINPR_FILE*) calloc(1, sizeof(WINPR_FILE));
 	if (!pFile)
@@ -484,22 +485,24 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 
 	if (create)
 	{
-		FILE* fp = fopen(pFile->lpFileName, "ab");
+		fp = fopen(pFile->lpFileName, "ab");
 		if (!fp)
 		{
 			free(pFile->lpFileName);
 			free(pFile);
 			return INVALID_HANDLE_VALUE;
 		}
-		fclose(fp);
+
+		fp = freopen(pFile->lpFileName, mode, fp);
 	}
 
-	{
-		FILE* fp = fopen(pFile->lpFileName, mode);
-		pFile->fd = -1;
-		if (fp)
-			pFile->fd = fileno(fp);
-	}
+	if (NULL == fp)
+		fp = fopen(pFile->lpFileName, mode);
+
+	pFile->fd = -1;
+	if (fp)
+		pFile->fd = fileno(fp);
+
 	if (pFile->fd < 0)
 	{
 		WLog_ERR(TAG, "Failed to open file %s with mode %s",
