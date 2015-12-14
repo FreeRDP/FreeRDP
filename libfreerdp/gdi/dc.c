@@ -201,8 +201,11 @@ BOOL gdi_DeleteObject(HGDIOBJECT hgdiobject)
 	{
 		HGDI_BITMAP hBitmap = (HGDI_BITMAP) hgdiobject;
 
-		if (hBitmap->data)
-			_aligned_free(hBitmap->data);
+		if (hBitmap->data && hBitmap->free)
+		{
+			hBitmap->free(hBitmap->data);
+			hBitmap->data = NULL;
+		}
 
 		free(hBitmap);
 	}

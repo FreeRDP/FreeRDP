@@ -399,7 +399,7 @@ gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp, BYTE* 
 {
 	gdiBitmap* bitmap;
 
-	bitmap = (gdiBitmap*) malloc(sizeof(gdiBitmap));
+	bitmap = (gdiBitmap*) calloc(1, sizeof(gdiBitmap));
 
 	if (!bitmap)
 		goto fail_bitmap;
@@ -1107,11 +1107,9 @@ static BOOL gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 		freerdp_image_copy(pDstData, gdi->format, -1, 0, 0,
 				cmd->width, cmd->height, pSrcData, PIXEL_FORMAT_XRGB32_VF, -1, 0, 0, gdi->palette);
 
-		gdi->image->bitmap->width = cmd->width;
-		gdi->image->bitmap->height = cmd->height;
-		gdi->image->bitmap->bitsPerPixel = cmd->bpp;
-		gdi->image->bitmap->bytesPerPixel = cmd->bpp / 8;
-		gdi->image->bitmap->data = gdi->bitmap_buffer;
+		gdi_DeleteObject((HGDIOBJECT)gdi->image->bitmap);
+		gdi->image->bitmap = gdi_CreateBitmapEx(cmd->width, cmd->height, cmd->bpp, gdi->bitmap_buffer, NULL);
+		gdi_SelectObject(gdi->image->hdc, (HGDIOBJECT) gdi->image->bitmap);
 
 		gdi_BitBlt(gdi->primary->hdc, cmd->destLeft, cmd->destTop, cmd->width, cmd->height, gdi->image->hdc, 0, 0, GDI_SRCCOPY);
 	} 
@@ -1132,11 +1130,9 @@ static BOOL gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 		freerdp_image_copy(pDstData, gdi->format, -1, 0, 0,
 				cmd->width, cmd->height, pSrcData, PIXEL_FORMAT_XRGB32_VF, -1, 0, 0, gdi->palette);
 
-		gdi->image->bitmap->width = cmd->width;
-		gdi->image->bitmap->height = cmd->height;
-		gdi->image->bitmap->bitsPerPixel = cmd->bpp;
-		gdi->image->bitmap->bytesPerPixel = cmd->bpp / 8;
-		gdi->image->bitmap->data = gdi->bitmap_buffer;
+		gdi_DeleteObject((HGDIOBJECT)gdi->image->bitmap);
+		gdi->image->bitmap = gdi_CreateBitmapEx(cmd->width, cmd->height, cmd->bpp, gdi->bitmap_buffer, NULL);
+		gdi_SelectObject(gdi->image->hdc, (HGDIOBJECT) gdi->image->bitmap);
 
 		gdi_BitBlt(gdi->primary->hdc, cmd->destLeft, cmd->destTop, cmd->width, cmd->height, gdi->image->hdc, 0, 0, GDI_SRCCOPY);
 	}
@@ -1202,7 +1198,8 @@ BOOL gdi_init_primary(rdpGdi* gdi)
 	if (!gdi->primary_buffer)
 		gdi->primary->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, gdi->width, gdi->height);
 	else
-		gdi->primary->bitmap = gdi_CreateBitmap(gdi->width, gdi->height, gdi->dstBpp, gdi->primary_buffer);
+		gdi->primary->bitmap = gdi_CreateBitmapEx(gdi->width, gdi->height, gdi->dstBpp,
+												gdi->primary_buffer, NULL);
 
 	if (!gdi->primary->bitmap)
 		goto fail_bitmap;

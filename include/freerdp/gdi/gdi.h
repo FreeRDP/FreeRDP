@@ -178,6 +178,7 @@ struct _GDI_BITMAP
 	int height;
 	int scanline;
 	BYTE* data;
+	void (*free)(void *);
 };
 typedef struct _GDI_BITMAP GDI_BITMAP;
 typedef GDI_BITMAP* HGDI_BITMAP;
