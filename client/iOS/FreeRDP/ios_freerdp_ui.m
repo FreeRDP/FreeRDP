@@ -63,39 +63,47 @@ BOOL ios_ui_authenticate(freerdp * instance, char** username, char** password, c
 	return TRUE;
 }
 
-BOOL ios_ui_check_certificate(freerdp * instance, char * subject, char * issuer, char * fingerprint)
+DWORD ios_ui_check_certificate(freerdp * instance, const char* common_name,
+				   const char * subject, const char * issuer,
+				   const char * fingerprint, BOOL host_mismatch)
 {
-    // check whether we accept all certificates
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"security.accept_certificates"] == YES)
-        return TRUE;
-    
+	// check whether we accept all certificates
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"security.accept_certificates"] == YES)
+		return 2;
+
 	mfInfo* mfi = MFI_FROM_INSTANCE(instance);
 	NSMutableDictionary* params = [NSMutableDictionary dictionaryWithObjectsAndKeys:
-                                        (subject) ? [NSString stringWithUTF8String:subject] : @"", @"subject",
-                                        (issuer) ? [NSString stringWithUTF8String:issuer] : @"", @"issuer",
-                                        (fingerprint) ? [NSString stringWithUTF8String:subject] : @"", @"fingerprint",
-                                        nil];
-	
-    // request certificate verification UI
-    [mfi->session performSelectorOnMainThread:@selector(sessionVerifyCertificateWithParams:) withObject:params waitUntilDone:YES];
-    
-    // wait for UI request to be completed
-    [[mfi->session uiRequestCompleted] lock];
-    [[mfi->session uiRequestCompleted] wait];
-    [[mfi->session uiRequestCompleted] unlock];
-    
+										(subject) ? [NSString stringWithUTF8String:subject] : @"", @"subject",
+										(issuer) ? [NSString stringWithUTF8String:issuer] : @"", @"issuer",
+										(fingerprint) ? [NSString stringWithUTF8String:subject] : @"", @"fingerprint",
+										nil];
+
+	// request certificate verification UI
+	[mfi->session performSelectorOnMainThread:@selector(sessionVerifyCertificateWithParams:) withObject:params waitUntilDone:YES];
+
+	// wait for UI request to be completed
+	[[mfi->session uiRequestCompleted] lock];
+	[[mfi->session uiRequestCompleted] wait];
+	[[mfi->session uiRequestCompleted] unlock];
+
 	if (![[params valueForKey:@"result"] boolValue])
 	{
 		mfi->unwanted = YES;
-		return FALSE;
+		return 0;
 	}
-	
-	return TRUE;
+
+	return 1;
 }
 
-BOOL ios_ui_check_changed_certificate(freerdp * instance, char * subject, char * issuer, char * new_fingerprint, char * old_fingerprint)
+DWORD ios_ui_check_changed_certificate(freerdp * instance,
+									   const char * common_name,
+									   const char * subject,
+									   const char * issuer,
+									   const char * new_fingerprint,
+									   const char * old_fingerprint)
 {
-	return ios_ui_check_certificate(instance, subject, issuer, new_fingerprint);    
+	return ios_ui_check_certificate(instance, common_name, subject, issuer,
+					new_fingerprint, FALSE);
 }
 
 

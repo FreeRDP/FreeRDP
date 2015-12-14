@@ -1458,55 +1458,108 @@ static BOOL xf_gw_authenticate(freerdp* instance, char** username, char** passwo
 	return xf_authenticate_raw(instance, TRUE, username, password, domain);
 }
 
+static DWORD xf_accept_certificate(rdpSettings* settings)
+{
+	char answer;
+
+	while (1)
+	{
+		printf("Do you trust the above certificate? (Y/T/N) ");
+		answer = fgetc(stdin);
+
+		if (feof(stdin))
+		{
+			printf("\nError: Could not read answer from stdin.");
+			if (settings->CredentialsFromStdin)
+				printf(" - Run without parameter \"--from-stdin\" to set trust.");
+			printf("\n");
+			return 0;
+		}
+
+		switch(answer)
+		{
+			case 'y':
+			case 'Y':
+				return 1;
+			case 't':
+			case 'T':
+				return 2;
+			case 'n':
+			case 'N':
+				return 0;
+			default:
+				break;
+		}
+		printf("\n");
+	}
+
+	return 0;
+}
+
 /** Callback set in the rdp_freerdp structure, and used to make a certificate validation
  *  when the connection requires it.
  *  This function will actually be called by tls_verify_certificate().
  *  @see rdp_client_connect() and tls_connect()
  *  @param instance - pointer to the rdp_freerdp structure that contains the connection settings
+ *  @param common_name
  *  @param subject
  *  @param issuer
  *  @param fingerprint
- *  @return TRUE if the certificate is trusted. FALSE otherwise.
+ *  @param host_mismatch Indicates the certificate host does not match.
+ *  @return 1 if the certificate is trusted, 2 if temporary trusted, 0 otherwise.
  */
-BOOL xf_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
+static DWORD xf_verify_certificate(freerdp* instance, const char* common_name,
+				   const char* subject, const char* issuer,
+				   const char* fingerprint, BOOL host_mismatch)
 {
-	char answer;
+	printf("Certificate details:\n");
+	printf("\tSubject: %s\n", subject);
+	printf("\tIssuer: %s\n", issuer);
+	printf("\tThumbprint: %s\n", fingerprint);
+	printf("The above X.509 certificate could not be verified, possibly because you do not have\n"
+		"the CA certificate in your certificate store, or the certificate has expired.\n"
+		"Please look at the documentation on how to create local certificate store for a private CA.\n");
 
-	WLog_INFO(TAG, "Certificate details:");
-	WLog_INFO(TAG, "\tSubject: %s", subject);
-	WLog_INFO(TAG, "\tIssuer: %s", issuer);
-	WLog_INFO(TAG, "\tThumbprint: %s", fingerprint);
-	WLog_INFO(TAG, "The above X.509 certificate could not be verified, possibly because you do not have "
-			  "the CA certificate in your certificate store, or the certificate has expired. "
-			  "Please look at the documentation on how to create local certificate store for a private CA.");
+	return xf_accept_certificate(instance->settings);
+}
 
-	while (1)
-	{
-		WLog_INFO(TAG, "Do you trust the above certificate? (Y/N) ");
-		answer = fgetc(stdin);
+/** Callback set in the rdp_freerdp structure, and used to make a certificate validation
+ *  when a stored certificate does not match the remote counterpart.
+ *  This function will actually be called by tls_verify_certificate().
+ *  @see rdp_client_connect() and tls_connect()
+ *  @param instance - pointer to the rdp_freerdp structure that contains the connection settings
+ *  @param common_name
+ *  @param subject
+ *  @param issuer
+ *  @param fingerprint
+ *  @param old_subject
+ *  @param old_issuer
+ *  @param old_fingerprint
+ *  @return 1 if the certificate is trusted, 2 if temporary trusted, 0 otherwise.
+ */
+static DWORD xf_verify_changed_certificate(freerdp* instance, const char* common_name,
+					   const char* subject, const char* issuer,
+					   const char* fingerprint,
+					   const char* old_subject, const char* old_issuer,
+					   const char* old_fingerprint)
+{
+	printf("!!! Certificate has changed !!!\n");
+	printf("\n");
+	printf("New Certificate details:\n");
+	printf("\tSubject: %s\n", subject);
+	printf("\tIssuer: %s\n", issuer);
+	printf("\tThumbprint: %s\n", fingerprint);
+	printf("\n");
+	printf("Old Certificate details:\n");
+	printf("\tSubject: %s\n", old_subject);
+	printf("\tIssuer: %s\n", old_issuer);
+	printf("\tThumbprint: %s\n", old_fingerprint);
+	printf("\n");
+	printf("The above X.509 certificate does not match the certificate used for previous connections.\n"
+		"This may indicate that the certificate has been tampered with.\n"
+		"Please contact the administrator of the RDP server and clarify.\n");
 
-		if (feof(stdin))
-		{
-			WLog_INFO(TAG, "Error: Could not read answer from stdin.");
-			if (instance->settings->CredentialsFromStdin)
-				WLog_INFO(TAG, " - Run without parameter \"--from-stdin\" to set trust.");
-			WLog_INFO(TAG, "");
-			return FALSE;
-		}
-
-		if (answer == 'y' || answer == 'Y')
-		{
-			return TRUE;
-		}
-		else if (answer == 'n' || answer == 'N')
-		{
-			break;
-		}
-
-		WLog_INFO(TAG, "");
-	}
-
-	return FALSE;
+	return xf_accept_certificate(instance->settings);
 }
 
 int xf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
@@ -1959,6 +2012,7 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->Authenticate = xf_authenticate;
 	instance->GatewayAuthenticate = xf_gw_authenticate;
 	instance->VerifyCertificate = xf_verify_certificate;
+	instance->VerifyChangedCertificate = xf_verify_changed_certificate;
 	instance->LogonErrorInfo = xf_logon_error_info;
 
 	settings = instance->settings;
