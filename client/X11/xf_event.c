@@ -331,7 +331,7 @@ BOOL xf_generic_ButtonPress(xfContext* xfc, int x, int y, int button, Window win
 
 		case 5:
 			wheel = TRUE;
-			flags = PTR_FLAGS_WHEEL | PTR_FLAGS_WHEEL_NEGATIVE | 0x0088;
+			flags = PTR_FLAGS_WHEEL | PTR_FLAGS_WHEEL_NEGATIVE | 0x0078;
 			break;
 
 		case 8:		/* back */
@@ -346,9 +346,18 @@ BOOL xf_generic_ButtonPress(xfContext* xfc, int x, int y, int button, Window win
 			flags = PTR_XFLAGS_DOWN | PTR_XFLAGS_BUTTON2;
 			break;
 
-		//TODO handle: case 6:		/* wheel left or back */
-		//TODO handle: case 7:		/* wheel right or forward */
-		
+		case 6:		/* wheel left */
+			wheel = TRUE;
+			if (xfc->settings->HasHorizontalWheel)
+				flags = PTR_FLAGS_HWHEEL | 0x0078;
+			break;
+
+		case 7:		/* wheel right */
+			wheel = TRUE;
+			if (xfc->settings->HasHorizontalWheel)
+				flags = PTR_FLAGS_HWHEEL | PTR_FLAGS_WHEEL_NEGATIVE | 0x0078;
+			break;
+
 		default:
 			x = 0;
 			y = 0;
