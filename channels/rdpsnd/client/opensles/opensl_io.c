@@ -306,6 +306,7 @@ int android_AudioOut(OPENSL_STREAM *p, const short *buffer,int size)
 		return -1;
 	}
 	memcpy(data, buffer, size * sizeof(short));
+	Queue_Enqueue(p->queue, data);
  	(*p->bqPlayerBufferQueue)->Enqueue(p->bqPlayerBufferQueue, 
 	 	data, sizeof(short) * size);
   
