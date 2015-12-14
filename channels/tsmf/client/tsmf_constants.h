@@ -125,6 +125,8 @@
 #define TSMF_SUB_TYPE_VP8                  24
 #define TSMF_SUB_TYPE_VP9                  25
 #define TSMF_SUB_TYPE_H263                 26
+#define TSMF_SUB_TYPE_M4S2                 27
+#define TSMF_SUB_TYPE_WMA1                 28
 
 /* FormatType */
 #define TSMF_FORMAT_TYPE_UNKNOWN            0
