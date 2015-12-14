@@ -1236,12 +1236,13 @@ BOOL rdp_read_input_capability_set(wStream* s, UINT16 length, rdpSettings* setti
 		{
 			/* advertised by RDP 5.2, 6.0, 6.1 and 7.0 servers */
 		}
-		else if (inputFlags & TS_INPUT_FLAG_MOUSE_HWHEEL)
-			settings->HasHorizontalWheel = TRUE;
 		else
 		{
 			/* server does not support fastpath input */
 			settings->FastPathInput = FALSE;
+		}
+		if (inputFlags & TS_INPUT_FLAG_MOUSE_HWHEEL) {
+			settings->HasHorizontalWheel = TRUE;
 		}
 	}
 	return TRUE;

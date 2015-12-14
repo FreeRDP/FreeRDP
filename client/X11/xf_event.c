@@ -349,13 +349,13 @@ BOOL xf_generic_ButtonPress(xfContext* xfc, int x, int y, int button, Window win
 		case 6:		/* wheel left */
 			wheel = TRUE;
 			if (xfc->settings->HasHorizontalWheel)
-				flags = PTR_FLAGS_HWHEEL | 0x0078;
+				flags = PTR_FLAGS_HWHEEL | PTR_FLAGS_WHEEL_NEGATIVE | 0x0078;
 			break;
 
 		case 7:		/* wheel right */
 			wheel = TRUE;
 			if (xfc->settings->HasHorizontalWheel)
-				flags = PTR_FLAGS_HWHEEL | PTR_FLAGS_WHEEL_NEGATIVE | 0x0078;
+				flags = PTR_FLAGS_HWHEEL | 0x0078;
 			break;
 
 		default:
