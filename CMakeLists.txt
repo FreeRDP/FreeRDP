@@ -287,6 +287,15 @@ if(WIN32)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_CRT_SECURE_NO_WARNINGS")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWIN32_LEAN_AND_MEAN")
 
+	set(CMAKE_USE_RELATIVE_PATH ON)
+	if (${CMAKE_GENERATOR} MATCHES "NMake Makefile*")
+		set(CMAKE_PDB_BINARY_DIR ${CMAKE_BINARY_DIR})
+	elseif (${CMAKE_GENERATOR} MATCHES "Visual Studio*")
+		set(CMAKE_PDB_BINARY_DIR "${CMAKE_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}")
+	else()
+		message(FATAL "Unknown generator ${CMAKE_GENERATOR}")
+	endif()
+
 	# Set product and vendor for dll and exe version information.
 	set(RC_VERSION_VENDOR ${VENDOR})
 	set(RC_VERSION_PRODUCT ${PRODUCT})

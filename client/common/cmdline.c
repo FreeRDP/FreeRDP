@@ -42,7 +42,7 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("common.cmdline")
 
-COMMAND_LINE_ARGUMENT_A args[] =
+static COMMAND_LINE_ARGUMENT_A args[] =
 {
 	{ "v", COMMAND_LINE_VALUE_REQUIRED, "<server>[:port]", NULL, NULL, -1, NULL, "Server hostname" },
 	{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Server port" },

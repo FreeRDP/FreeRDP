@@ -155,10 +155,6 @@ macro(add_channel_client_subsystem _channel_prefix _channel_name _subsystem _typ
 endmacro(add_channel_client_subsystem)
 
 macro(add_channel_client_library _module_prefix _module_name _channel_name _dynamic _entry)
-	if(${_dynamic} AND MSVC AND (NOT STATIC_CHANNELS))
-		set(${_module_prefix}_SRCS ${${_module_prefix}_SRCS} module.def)
-	endif()
-
 	if(${_dynamic} AND (NOT STATIC_CHANNELS))
 # On windows create dll version information.
 # Vendor, product and year are already set in top level CMakeLists.txt
@@ -188,9 +184,6 @@ macro(add_channel_client_library _module_prefix _module_name _channel_name _dyna
 endmacro(add_channel_client_library)
 
 macro(add_channel_client_subsystem_library _module_prefix _module_name _channel_name _type _dynamic _entry)
-	if(${_dynamic} AND MSVC AND (NOT STATIC_CHANNELS))
-		set(${_module_prefix}_SRCS ${${_module_prefix}_SRCS} module.def)
-	endif()
 	if(${_dynamic} AND (NOT STATIC_CHANNELS))
 # On windows create dll version information.
 # Vendor, product and year are already set in top level CMakeLists.txt
@@ -219,9 +212,6 @@ macro(add_channel_client_subsystem_library _module_prefix _module_name _channel_
 endmacro(add_channel_client_subsystem_library)
 
 macro(add_channel_server_library _module_prefix _module_name _channel_name _dynamic _entry)
-	if(${_dynamic} AND MSVC AND (NOT STATIC_CHANNELS))
-		set(${_module_prefix}_SRCS ${${_module_prefix}_SRCS} module.def)
-	endif()
 	if(${_dynamic} AND (NOT STATIC_CHANNELS))
 # On windows create dll version information.
 # Vendor, product and year are already set in top level CMakeLists.txt

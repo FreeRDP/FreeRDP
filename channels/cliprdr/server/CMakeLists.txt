@@ -23,8 +23,6 @@ set(${MODULE_PREFIX}_SRCS
 
 add_channel_server_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntry")
 
-
-
 target_link_libraries(${MODULE_NAME} freerdp)
 
 install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_ADDIN_PATH} EXPORT FreeRDPTargets)
