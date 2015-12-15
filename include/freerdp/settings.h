@@ -1232,7 +1232,8 @@ struct rdp_settings
 	ALIGN64 BOOL MultiTouchInput; /* 2631 */
 	ALIGN64 BOOL MultiTouchGestures; /* 2632 */
 	ALIGN64 UINT32 KeyboardHook; /* 2633 */
-	UINT64 padding2688[2688 - 2634]; /* 2634 */
+	ALIGN64 BOOL HasHorizontalWheel; /* 2634 */
+	UINT64 padding2688[2688 - 2635]; /* 2635 */
 
 	/* Brush Capabilities */
 	ALIGN64 UINT32 BrushSupportLevel; /* 2688 */

@@ -35,6 +35,7 @@ typedef struct rdp_input rdpInput;
 #define KBD_FLAGS_RELEASE		0x8000
 
 /* Pointer Flags */
+#define PTR_FLAGS_HWHEEL		0x0400
 #define PTR_FLAGS_WHEEL			0x0200
 #define PTR_FLAGS_WHEEL_NEGATIVE	0x0100
 #define PTR_FLAGS_MOVE			0x0800

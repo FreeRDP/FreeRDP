@@ -1241,6 +1241,9 @@ BOOL rdp_read_input_capability_set(wStream* s, UINT16 length, rdpSettings* setti
 			/* server does not support fastpath input */
 			settings->FastPathInput = FALSE;
 		}
+		if (inputFlags & TS_INPUT_FLAG_MOUSE_HWHEEL) {
+			settings->HasHorizontalWheel = TRUE;
+		}
 	}
 	return TRUE;
 }
@@ -1261,7 +1264,7 @@ void rdp_write_input_capability_set(wStream* s, rdpSettings* settings)
 
 	header = rdp_capability_set_start(s);
 
-	inputFlags = INPUT_FLAG_SCANCODES | INPUT_FLAG_MOUSEX | INPUT_FLAG_UNICODE;
+	inputFlags = INPUT_FLAG_SCANCODES | INPUT_FLAG_MOUSEX | INPUT_FLAG_UNICODE | TS_INPUT_FLAG_MOUSE_HWHEEL;
 
 	if (settings->FastPathInput)
 	{
