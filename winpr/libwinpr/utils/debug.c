@@ -472,10 +472,10 @@ void winpr_log_backtrace(const char* tag, DWORD level, DWORD size)
 }
 
 char* winpr_strerror(DWORD dw, char* dmsg, size_t size) {
+#if defined(_WIN32)
 	LPTSTR msg = NULL;
 	DWORD rc;
 
-#if defined(_WIN32)
 	rc = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
 			FORMAT_MESSAGE_FROM_SYSTEM |
 			FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -483,17 +483,17 @@ char* winpr_strerror(DWORD dw, char* dmsg, size_t size) {
 	if (rc) {
 #if defined(UNICODE)
 		WideCharToMultiByte(CP_ACP, 0, msg, rc, dmsg, size - 1, NULL, NULL);
-#else
+#else /* defined(UNICODE) */
 		memcpy(dmsg, msg, min(rc, size - 1));
-#endif
+#endif /* defined(UNICODE) */
 		dmsg[min(rc, size - 1)] = 0;
 		LocalFree(msg);
 	} else {
 		_snprintf(dmsg, size, "FAILURE: %08X", GetLastError());
 	}
-#else
+#else /* defined(_WIN32) */
 	_snprintf(dmsg, size, "%s", strerror(dw));
-#endif
+#endif /* defined(_WIN32) */
 
 	return dmsg;
 }
