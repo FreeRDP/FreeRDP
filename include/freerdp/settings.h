@@ -1106,7 +1106,8 @@ struct rdp_settings
 	ALIGN64 BOOL LocalConnection; /* 1602 */
 	ALIGN64 BOOL AuthenticationOnly; /* 1603 */
 	ALIGN64 BOOL CredentialsFromStdin; /* 1604 */
-	UINT64 padding1664[1664 - 1605]; /* 1605 */
+	ALIGN64 BOOL UnmapButtons; /* 1605 */
+	UINT64 padding1664[1664 - 1606]; /* 1606 */
 
 	/* Names */
 	ALIGN64 char* ComputerName; /* 1664 */
@@ -1422,7 +1423,6 @@ struct rdp_settings
 	/*
 	 * Extensions
 	 */
-	ALIGN64 BOOL UnmapButtons;
 
 	/* Extensions */
 	ALIGN64 int num_extensions; /*  */
