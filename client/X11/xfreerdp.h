@@ -79,6 +79,14 @@ typedef struct xf_glyph xfGlyph;
 
 typedef struct xf_clipboard xfClipboard;
 
+/* Value of the first logical button number in X11 which must be */
+/* subtracted to go from a button number in X11 to an index into */
+/* a per-button array.                                           */
+#define BUTTON_BASE Button1
+
+/* Number of buttons that are mapped from X11 to RDP button events. */
+#define NUM_BUTTONS_MAPPED 3
+
 struct xf_context
 {
 	rdpContext context;
@@ -228,6 +236,9 @@ struct xf_context
 
 	BOOL xkbAvailable;
 	BOOL xrenderAvailable;
+
+	/* value to be sent over wire for each logical client mouse button */
+	int button_map[NUM_BUTTONS_MAPPED];
 };
 
 BOOL xf_create_window(xfContext* xfc);
