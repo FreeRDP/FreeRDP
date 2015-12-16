@@ -107,18 +107,9 @@ static DWORD FileSetFilePointer(HANDLE hFile, LONG lDistanceToMove,
 	WINPR_FILE* pFile = (WINPR_FILE*) hFile;
 	long offset = lDistanceToMove;
 	int whence;
-	FILE* fp;
 
 	if (!hFile)
 		return INVALID_SET_FILE_POINTER;
-
-	fp = pFile->fp;
-
-	if (!fp)
-	{
-		WLog_ERR(TAG, "No file pointer for(%s)", pFile->lpFileName);
-		return INVALID_SET_FILE_POINTER;
-	}
 
 	switch(dwMoveMethod)
 	{
@@ -135,14 +126,14 @@ static DWORD FileSetFilePointer(HANDLE hFile, LONG lDistanceToMove,
 		return INVALID_SET_FILE_POINTER;
 	}
 
-	if (fseek(fp, offset, whence))
+	if (fseek(pFile->fp, offset, whence))
 	{
 		WLog_ERR(TAG, "fseek(%s) failed with %s [%08X]", pFile->lpFileName,
 			 strerror(errno), errno);
 		return INVALID_SET_FILE_POINTER;
 	}
 
-	return ftell(fp);
+	return ftell(pFile->fp);
 }
 
 static BOOL FileRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
@@ -213,23 +204,14 @@ static BOOL FileWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrit
 static DWORD FileGetFileSize(HANDLE Object, LPDWORD lpFileSizeHigh)
 {
 	WINPR_FILE* file;
-	FILE* fp;
 	long cur, size;
 
 	if (!Object)
 		return 0;
 
 	file = (WINPR_FILE *)Object;
-	fp = file->fp;
 
-	if (!fp)
-	{
-		WLog_ERR(TAG, "fopen(%s) failed with %s [%08X]", file->lpFileName,
-			 strerror(errno), errno);
-		return INVALID_FILE_SIZE;
-	}
-
-	cur = ftell(fp);
+	cur = ftell(file->fp);
 
 	if (cur < 0)
 	{
@@ -238,14 +220,14 @@ static DWORD FileGetFileSize(HANDLE Object, LPDWORD lpFileSizeHigh)
 		return INVALID_FILE_SIZE;
 	}
 
-	if (fseek(fp, 0, SEEK_END) != 0)
+	if (fseek(file->fp, 0, SEEK_END) != 0)
 	{
 		WLog_ERR(TAG, "fseek(%s) failed with %s [%08X]", file->lpFileName,
 			 strerror(errno), errno);
 		return INVALID_FILE_SIZE;
 	}
 
-	size = ftell(fp);
+	size = ftell(file->fp);
 
 	if (size < 0)
 	{
@@ -254,7 +236,7 @@ static DWORD FileGetFileSize(HANDLE Object, LPDWORD lpFileSizeHigh)
 		return INVALID_FILE_SIZE;
 	}
 
-	if (fseek(fp, cur, SEEK_SET) != 0)
+	if (fseek(file->fp, cur, SEEK_SET) != 0)
 	{
 		WLog_ERR(TAG, "ftell(%s) failed with %s [%08X]", file->lpFileName,
 			 strerror(errno), errno);
@@ -489,13 +471,14 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 	pFile->fp = fp;
 	if (!pFile->fp)
 	{
-		WLog_ERR(TAG, "Failed to open file pointer for %s",
-			 pFile->lpFileName);
-
+		/* This case can occur when trying to open a
+		 * not existing file without create flag. */
 		free(pFile->lpFileName);
 		free(pFile);
 		return INVALID_HANDLE_VALUE;
 	}
+
+	setvbuf(fp, NULL, _IONBF, 0);
 
 	if (dwShareMode & FILE_SHARE_READ)
 		lock = LOCK_SH;
@@ -538,7 +521,6 @@ HANDLE_CREATOR *GetFileHandleCreator(void)
 static WINPR_FILE *FileHandle_New(FILE* fp)
 {
 	WINPR_FILE *pFile;
-	HANDLE hFile;
 	char name[MAX_PATH];
 
 	_snprintf(name, sizeof(name), "device_%d", fileno(fp));
@@ -552,7 +534,6 @@ static WINPR_FILE *FileHandle_New(FILE* fp)
 	pFile->ops = &shmOps;
 	pFile->lpFileName = _strdup(name);
 
-	hFile = (HANDLE) pFile;
 	WINPR_HANDLE_SET_TYPE_AND_MODE(pFile, HANDLE_TYPE_FILE, WINPR_FD_READ);
 	return pFile;
 }
@@ -618,6 +599,11 @@ HANDLE GetFileHandleForFileDescriptor(int fd)
 		fp = fdopen(fd, "wb");
 	else
 		fp = fdopen(fd, "rb");
+
+	if (!fp)
+		return INVALID_HANDLE_VALUE;
+
+	setvbuf(fp, NULL, _IONBF, 0);
 
 	pFile = FileHandle_New(fp);
 	if (!pFile)
