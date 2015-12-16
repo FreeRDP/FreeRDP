@@ -50,9 +50,33 @@ typedef BOOL (*pcCloseHandle)(HANDLE handle);
 typedef int (*pcGetFd)(HANDLE handle);
 typedef DWORD (*pcCleanupHandle)(HANDLE handle);
 typedef BOOL (*pcReadFile)(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
-							LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
+		LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
+typedef BOOL (*pcReadFileEx)(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
+		LPOVERLAPPED lpOverlapped, LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine);
+typedef BOOL (*pcReadFileScatter)(HANDLE hFile, FILE_SEGMENT_ELEMENT aSegmentArray[],
+		DWORD nNumberOfBytesToRead, LPDWORD lpReserved, LPOVERLAPPED lpOverlapped);
 typedef BOOL (*pcWriteFile)(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
-							LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
+		LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
+typedef BOOL (*pcWriteFileEx)(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
+		LPOVERLAPPED lpOverlapped, LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine);
+typedef BOOL (*pcWriteFileGather)(HANDLE hFile, FILE_SEGMENT_ELEMENT aSegmentArray[],
+		DWORD nNumberOfBytesToWrite, LPDWORD lpReserved, LPOVERLAPPED lpOverlapped);
+typedef DWORD (*pcGetFileSize)(HANDLE handle, LPDWORD lpFileSizeHigh);
+typedef BOOL (*pcFlushFileBuffers)(HANDLE hFile);
+typedef BOOL (*pcSetEndOfFile)(HANDLE handle);
+typedef DWORD(*pcSetFilePointer)(HANDLE handle, LONG lDistanceToMove,
+		PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod);
+typedef BOOL (*pcSetFilePointerEx)(HANDLE hFile, LARGE_INTEGER liDistanceToMove,
+		PLARGE_INTEGER lpNewFilePointer, DWORD dwMoveMethod);
+typedef BOOL (*pcLockFile)(HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh,
+		DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh);
+typedef BOOL (*pcLockFileEx)(HANDLE hFile, DWORD dwFlags, DWORD dwReserved,
+		DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh,
+		LPOVERLAPPED lpOverlapped);
+typedef BOOL (*pcUnlockFile)(HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh,
+		DWORD nNumberOfBytesToUnlockLow, DWORD nNumberOfBytesToUnlockHigh);
+typedef BOOL (*pcUnlockFileEx)(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfBytesToUnlockLow,
+		DWORD nNumberOfBytesToUnlockHigh, LPOVERLAPPED lpOverlapped);
 
 typedef struct _HANDLE_OPS
 {
@@ -61,7 +85,20 @@ typedef struct _HANDLE_OPS
 	pcGetFd GetFd;
 	pcCleanupHandle CleanupHandle;
 	pcReadFile ReadFile;
+	pcReadFileEx ReadFileEx;
+	pcReadFileScatter ReadFileScatter;
 	pcWriteFile WriteFile;
+	pcWriteFileEx WriteFileEx;
+	pcWriteFileGather WriteFileGather;
+	pcGetFileSize GetFileSize;
+	pcFlushFileBuffers FlushFileBuffers;
+	pcSetEndOfFile SetEndOfFile;
+	pcSetFilePointer SetFilePointer;
+	pcSetFilePointerEx SetFilePointerEx;
+	pcLockFile LockFile;
+	pcLockFileEx LockFileEx;
+	pcUnlockFile UnlockFile;
+	pcUnlockFileEx UnlockFileEx;
 } HANDLE_OPS;
 
 struct winpr_handle

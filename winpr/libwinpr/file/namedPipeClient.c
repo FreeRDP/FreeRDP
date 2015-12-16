@@ -111,7 +111,20 @@ static HANDLE_OPS ops = {
 		NamedPipeClientGetFd,
 		NULL, /* CleanupHandle */
 		NamedPipeRead,
-		NamedPipeWrite
+		NULL, /* FileReadEx */
+		NULL, /* FileReadScatter */
+		NamedPipeWrite,
+		NULL, /* FileWriteEx */
+		NULL, /* FileWriteGather */
+		NULL, /* FileGetFileSize */
+		NULL, /*  FlushFileBuffers */
+		NULL, /* FileSetEndOfFile */
+		NULL, /* FileSetFilePointer */
+		NULL, /* SetFilePointerEx */
+		NULL, /* FileLockFile */
+		NULL, /* FileLockFileEx */
+		NULL, /* FileUnlockFile */
+		NULL /* FileUnlockFileEx */
 };
 
 static HANDLE NamedPipeClientCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,

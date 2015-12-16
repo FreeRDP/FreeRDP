@@ -178,7 +178,20 @@ static HANDLE_OPS ops = {
 		PipeGetFd,
 		NULL, /* CleanupHandle */
 		PipeRead,
-		PipeWrite
+		NULL, /* FileReadEx */
+		NULL, /* FileReadScatter */
+		PipeWrite,
+		NULL, /* FileWriteEx */
+		NULL, /* FileWriteGather */
+		NULL, /* FileGetFileSize */
+		NULL, /*  FlushFileBuffers */
+		NULL, /* FileSetEndOfFile */
+		NULL, /* FileSetFilePointer */
+		NULL, /* SetFilePointerEx */
+		NULL, /* FileLockFile */
+		NULL, /* FileLockFileEx */
+		NULL, /* FileUnlockFile */
+		NULL /* FileUnlockFileEx */
 };
 
 
@@ -409,6 +422,8 @@ static HANDLE_OPS namedOps = {
 		NamedPipeGetFd,
 		NULL, /* CleanupHandle */
 		NamedPipeRead,
+		NULL,
+		NULL,
 		NamedPipeWrite
 };
 
