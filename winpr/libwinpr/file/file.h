@@ -37,7 +37,7 @@ struct winpr_file
 {
 	WINPR_HANDLE_DEF();
 
-	int fd;
+	FILE* fp;
 
 	char* lpFileName;
 

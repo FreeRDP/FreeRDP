@@ -57,7 +57,7 @@ static int FileGetFd(HANDLE handle)
 	if (!FileIsHandled(handle))
 		return -1;
 
-	return file->fd;
+	return fileno(file->fp);
 }
 
 static BOOL FileCloseHandle(HANDLE handle) {
@@ -66,14 +66,13 @@ static BOOL FileCloseHandle(HANDLE handle) {
 	if (!FileIsHandled(handle))
 		return FALSE;
 
-	if (file->fd != -1)
+	if (file->fp)
 	{
-
 		/* Don't close stdin/stdout/stderr */
-		if (file->fd > 2)
+		if (fileno(file->fp) > 2)
 		{
-			close(file->fd);
-			file->fd = -1;
+			fclose(file->fp);
+			file->fp = NULL;
 		}
 	}
 
@@ -85,21 +84,16 @@ static BOOL FileCloseHandle(HANDLE handle) {
 static BOOL FileSetEndOfFile(HANDLE hFile)
 {
 	WINPR_FILE* pFile = (WINPR_FILE*) hFile;
-	DWORD lowSize, highSize;
 	off_t size;
 
 	if (!hFile)
 		return FALSE;
 
-	lowSize = GetFileSize(hFile, &highSize);
-	if (lowSize == INVALID_FILE_SIZE)
-		return FALSE;
-
-	size = lowSize | ((off_t)highSize << 32);
-	if (ftruncate(pFile->fd, size) < 0)
+	size = ftell(pFile->fp);
+	if (ftruncate(fileno(pFile->fp), size) < 0)
 	{
-		WLog_ERR(TAG, "ftruncate %d failed with %s [%08X]",
-			pFile->fd, strerror(errno), errno);
+		WLog_ERR(TAG, "ftruncate %s failed with %s [%08X]",
+			pFile->lpFileName, strerror(errno), errno);
 		return FALSE;
 	}
 
@@ -118,12 +112,11 @@ static DWORD FileSetFilePointer(HANDLE hFile, LONG lDistanceToMove,
 	if (!hFile)
 		return INVALID_SET_FILE_POINTER;
 
-	fp = fdopen(pFile->fd, "wb");
+	fp = pFile->fp;
 
 	if (!fp)
 	{
-		WLog_ERR(TAG, "fdopen(%s) failed with %s [%08X]", pFile->lpFileName,
-			 strerror(errno), errno);
+		WLog_ERR(TAG, "No file pointer for(%s)", pFile->lpFileName);
 		return INVALID_SET_FILE_POINTER;
 	}
 
@@ -155,7 +148,7 @@ static DWORD FileSetFilePointer(HANDLE hFile, LONG lDistanceToMove,
 static BOOL FileRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 					LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped)
 {
-	int io_status;
+	size_t io_status;
 	WINPR_FILE* file;
 	BOOL status = TRUE;
 
@@ -169,13 +162,9 @@ static BOOL FileRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	}
 
 	file = (WINPR_FILE *)Object;
-	do
-	{
-		io_status = read(file->fd, lpBuffer, nNumberOfBytesToRead);
-	}
-	while ((io_status < 0) && (errno == EINTR));
+	io_status = fread(lpBuffer, nNumberOfBytesToRead, 1, file->fp);
 
-	if (io_status < 0)
+	if (io_status != 1)
 	{
 		status = FALSE;
 
@@ -188,7 +177,7 @@ static BOOL FileRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	}
 
 	if (lpNumberOfBytesRead)
-		*lpNumberOfBytesRead = io_status;
+		*lpNumberOfBytesRead = nNumberOfBytesToRead;
 
 	return status;
 }
@@ -196,7 +185,7 @@ static BOOL FileRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 static BOOL FileWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 						LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped)
 {
-	int io_status;
+	size_t io_status;
 	WINPR_FILE* file;
 
 	if (!Object)
@@ -210,16 +199,14 @@ static BOOL FileWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrit
 
 	file = (WINPR_FILE *)Object;
 
-	do
-	{
-		io_status = write(file->fd, lpBuffer, nNumberOfBytesToWrite);
-	}
-	while ((io_status < 0) && (errno == EINTR));
+	io_status = fwrite(lpBuffer, nNumberOfBytesToWrite, 1, file->fp);
+	if (io_status != 1)
+		return FALSE;
 
 	if ((io_status < 0) && (errno == EWOULDBLOCK))
 		io_status = 0;
 
-	*lpNumberOfBytesWritten = io_status;
+	*lpNumberOfBytesWritten = nNumberOfBytesToWrite;
 	return TRUE;
 }
 
@@ -233,7 +220,7 @@ static DWORD FileGetFileSize(HANDLE Object, LPDWORD lpFileSizeHigh)
 		return 0;
 
 	file = (WINPR_FILE *)Object;
-	fp = fdopen(file->fd, "wb");
+	fp = file->fp;
 
 	if (!fp)
 	{
@@ -310,7 +297,7 @@ static BOOL FileLockFileEx(HANDLE hFile, DWORD dwFlags, DWORD dwReserved,
 	if (dwFlags & LOCKFILE_FAIL_IMMEDIATELY)
 		lock |= LOCK_NB;
 
-	if (flock(pFile->fd, lock) < 0)
+	if (flock(fileno(pFile->fp), lock) < 0)
 	{
 		WLog_ERR(TAG, "flock failed with %s [%08X]",
 			 strerror(errno), errno);
@@ -336,7 +323,7 @@ static BOOL FileUnlockFile(HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffs
 		return FALSE;
 	}
 
-	if (flock(pFile->fd, LOCK_UN) < 0)
+	if (flock(fileno(pFile->fp), LOCK_UN) < 0)
 	{
 		WLog_ERR(TAG, "flock(LOCK_UN) %s failed with %s [%08X]",
 			 pFile->lpFileName, strerror(errno), errno);
@@ -366,7 +353,7 @@ static BOOL FileUnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfByte
 		return FALSE;
 	}
 
-	if (flock(pFile->fd, LOCK_UN) < 0)
+	if (flock(fileno(pFile->fp), LOCK_UN) < 0)
 	{
 		WLog_ERR(TAG, "flock(LOCK_UN) %s failed with %s [%08X]",
 			 pFile->lpFileName, strerror(errno), errno);
@@ -499,14 +486,11 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 	if (NULL == fp)
 		fp = fopen(pFile->lpFileName, mode);
 
-	pFile->fd = -1;
-	if (fp)
-		pFile->fd = fileno(fp);
-
-	if (pFile->fd < 0)
+	pFile->fp = fp;
+	if (!pFile->fp)
 	{
-		WLog_ERR(TAG, "Failed to open file %s with mode %s",
-			 pFile->lpFileName, mode);
+		WLog_ERR(TAG, "Failed to open file pointer for %s",
+			 pFile->lpFileName);
 
 		free(pFile->lpFileName);
 		free(pFile);
@@ -520,13 +504,11 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 
 	if (dwShareMode & (FILE_SHARE_READ | FILE_SHARE_WRITE))
 	{
-		if (flock(pFile->fd, lock) < 0)
+		if (flock(fileno(pFile->fp), lock) < 0)
 		{
 			WLog_ERR(TAG, "flock failed with %s [%08X]",
 				 strerror(errno), errno);
-			close(pFile->fd);
-			free(pFile->lpFileName);
-			free(pFile);
+			FileCloseHandle(pFile);
 			return INVALID_HANDLE_VALUE;
 		}
 
@@ -553,20 +535,20 @@ HANDLE_CREATOR *GetFileHandleCreator(void)
 }
 
 
-static WINPR_FILE *FileHandle_New(int fd)
+static WINPR_FILE *FileHandle_New(FILE* fp)
 {
 	WINPR_FILE *pFile;
 	HANDLE hFile;
 	char name[MAX_PATH];
 
-	_snprintf(name, sizeof(name), "device_%d", fd);
+	_snprintf(name, sizeof(name), "device_%d", fileno(fp));
 	pFile = (WINPR_FILE*) calloc(1, sizeof(WINPR_FILE));
 	if (!pFile)
 	{
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 		return NULL;
 	}
-	pFile->fd = fd;
+	pFile->fp = fp;
 	pFile->ops = &shmOps;
 	pFile->lpFileName = _strdup(name);
 
@@ -577,23 +559,24 @@ static WINPR_FILE *FileHandle_New(int fd)
 
 HANDLE GetStdHandle(DWORD nStdHandle)
 {
-	int fd;
+	FILE* fp;
 	WINPR_FILE *pFile;
+
 	switch (nStdHandle)
 	{
 		case STD_INPUT_HANDLE:
-			fd = STDIN_FILENO;
+			fp = stdin;
 			break;
 		case STD_OUTPUT_HANDLE:
-			fd = STDOUT_FILENO;
+			fp = stdout;
 			break;
 		case STD_ERROR_HANDLE:
-			fd = STDERR_FILENO;
+			fp = stderr;
 			break;
 		default:
 			return INVALID_HANDLE_VALUE;
 	}
-	pFile = FileHandle_New(fd);
+	pFile = FileHandle_New(fp);
 	if (!pFile)
 		return INVALID_HANDLE_VALUE;
 
@@ -620,16 +603,28 @@ HANDLE GetFileHandleForFileDescriptor(int fd)
 	return (HANDLE)_get_osfhandle(fd);
 #else /* WIN32 */
 	WINPR_FILE *pFile;
+	FILE* fp;
+	int flags;
 
 	/* Make sure it's a valid fd */
 	if (fcntl(fd, F_GETFD) == -1 && errno == EBADF)
 		return INVALID_HANDLE_VALUE;
 
-	pFile = FileHandle_New(fd);
+	flags = fcntl(fd, F_GETFL);
+	if (flags == -1)
+		return INVALID_HANDLE_VALUE;
+
+	if (flags & O_WRONLY)
+		fp = fdopen(fd, "wb");
+	else
+		fp = fdopen(fd, "rb");
+
+	pFile = FileHandle_New(fp);
 	if (!pFile)
 		return INVALID_HANDLE_VALUE;
-	pFile->fd = fd;
+
 	return (HANDLE)pFile;
 #endif /* WIN32 */
 }
+
 
