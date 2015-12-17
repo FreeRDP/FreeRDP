@@ -20,8 +20,8 @@
 #ifndef WINPR_WTYPES_H
 #define WINPR_WTYPES_H
 
-#define HAVE_STDINT_H
-#define HAVE_STDBOOL_H
+#define WINPR_HAVE_STDINT_H 0
+#define WINPR_HAVE_STDINT_H 0
 
 /* MSDN: Windows Data Types - http://msdn.microsoft.com/en-us/library/aa383751/ */
 /* [MS-DTYP]: Windows Data Types - http://msdn.microsoft.com/en-us/library/cc230273/ */
@@ -31,11 +31,11 @@
 
 #include <winpr/spec.h>
 
-#if defined(HAVE_STDBOOL_H)
+#if WINPR_HAVE_STDBOOL_H
 #include <stdbool.h>
 #endif
 
-#if defined(HAVE_STDINT_H)
+#if WINPR_HAVE_STDINT_H
 #include <stdint.h>
 #endif
 
@@ -60,7 +60,7 @@
 #define NEAR
 #endif
 
-#if defined(HAVE_STDINT_H)
+#if WINPR_HAVE_STDINT_H
 #define __int8	int8_t
 #define __uint8	uint8_t
 #define __int16 int16_t
@@ -80,7 +80,7 @@
 #define __uint64 unsigned long long
 #endif
 
-#if defined(HAVE_STDINT_H)
+#if WINPR_HAVE_STDINT_H
 #if defined(__x86_64__) || defined(__arm64__)
 #define __int3264 int64_t
 #define __uint3264 uint64_t
@@ -98,7 +98,7 @@
 #endif
 #endif
 
-#if defined(HAVE_STDBOOL_H) && !defined(__OBJC__)
+#if WINPR_HAVE_STDBOOL_H && !defined(__OBJC__)
 typedef bool BOOL;
 #else
 #ifndef __OBJC__
@@ -114,7 +114,7 @@ typedef int BOOL;
 
 typedef BOOL *PBOOL, *LPBOOL;
 
-#if defined(HAVE_STDINT_H)
+#if WINPR_HAVE_STDINT_H
 typedef int32_t LONG;
 typedef uint32_t DWORD;
 typedef uint32_t ULONG;
@@ -128,7 +128,7 @@ typedef unsigned long DWORD;
 typedef unsigned long ULONG;
 #endif
 
-#if defined(HAVE_STDINT_H)
+#if WINPR_HAVE_STDINT_H
 typedef uint8_t BYTE, *PBYTE, *LPBYTE;
 #else
 typedef unsigned char BYTE, *PBYTE, *LPBYTE;
@@ -143,7 +143,7 @@ typedef unsigned short WCHAR, *PWCHAR;
 typedef WCHAR* BSTR;
 typedef char CHAR, *PCHAR;
 typedef DWORD *PDWORD, *LPDWORD;
-#if defined(HAVE_STDINT_H)
+#if WINPR_HAVE_STDINT_H
 typedef uint32_t DWORD32;
 typedef uint64_t DWORD64;
 typedef uint64_t ULONGLONG;
@@ -158,7 +158,7 @@ typedef unsigned char UCHAR, *PUCHAR;
 typedef short SHORT;
 
 #ifndef FALSE
-#if defined(HAVE_STDBOOL_H) && !defined(__OBJC__)
+#if WINPR_HAVE_STDBOOL_H && !defined(__OBJC__)
 #define FALSE			false
 #else
 #define FALSE			0
@@ -166,7 +166,7 @@ typedef short SHORT;
 #endif
 
 #ifndef TRUE
-#if defined(HAVE_STDBOOL_H) && !defined(__OBJC__)
+#if WINPR_HAVE_STDBOOL_H && !defined(__OBJC__)
 #define TRUE			true
 #else
 #define TRUE			1
@@ -188,7 +188,7 @@ typedef HANDLE HMENU;
 
 typedef DWORD HCALL;
 typedef int INT, *LPINT;
-#if defined(HAVE_STDINT_H)
+#if WINPR_HAVE_STDINT_H
 typedef int8_t INT8;
 typedef int16_t INT16;
 typedef int32_t INT32;
@@ -204,7 +204,7 @@ typedef signed __int64 INT64;
 typedef const WCHAR* LMCSTR;
 typedef WCHAR* LMSTR;
 typedef LONG *PLONG, *LPLONG;
-#if defined(HAVE_STDINT_H)
+#if WINPR_HAVE_STDINT_H
 typedef int64_t LONGLONG;
 #else
 typedef signed __int64 LONGLONG;
@@ -213,7 +213,7 @@ typedef signed __int64 LONGLONG;
 typedef __int3264 LONG_PTR, *PLONG_PTR;
 typedef __uint3264 ULONG_PTR, *PULONG_PTR;
 
-#if defined(HAVE_STDINT_H)
+#if WINPR_HAVE_STDINT_H
 typedef int32_t LONG32;
 typedef int64_t LONG64;
 #else
@@ -230,7 +230,7 @@ typedef WCHAR *LPWSTR, *PWSTR, *LPWCH;
 typedef const WCHAR *LPCWSTR,*PCWSTR;
 
 typedef unsigned int UINT;
-#if defined(HAVE_STDINT_H)
+#if WINPR_HAVE_STDINT_H
 typedef uint64_t QWORD;
 
 typedef uint8_t UINT8;
@@ -254,7 +254,7 @@ typedef SCODE *PSCODE;
 
 typedef ULONG_PTR DWORD_PTR, *PDWORD_PTR;
 typedef ULONG_PTR SIZE_T;
-#if defined(HAVE_STDINT_H)
+#if WINPR_HAVE_STDINT_H
 typedef uint32_t ULONG32;
 typedef uint64_t ULONG64;
 typedef uint16_t USHORT;
@@ -270,7 +270,7 @@ typedef wchar_t UNICODE;
 typedef void *PVOID, *LPVOID;
 typedef void *PVOID64, *LPVOID64;
 
-#if defined(HAVE_STDINT_H)
+#if WINPR_HAVE_STDINT_H
 typedef intptr_t INT_PTR;
 typedef uintptr_t UINT_PTR;
 #elif __x86_64__
