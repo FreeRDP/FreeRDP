@@ -20,8 +20,8 @@
 #ifndef WINPR_WTYPES_H
 #define WINPR_WTYPES_H
 
-#define HAVE_STDINT_H
-#define HAVE_STDBOOL_H
+#cmakedefine HAVE_STDINT_H
+#cmakedefine HAVE_STDBOOL_H
 
 /* MSDN: Windows Data Types - http://msdn.microsoft.com/en-us/library/aa383751/ */
 /* [MS-DTYP]: Windows Data Types - http://msdn.microsoft.com/en-us/library/cc230273/ */
