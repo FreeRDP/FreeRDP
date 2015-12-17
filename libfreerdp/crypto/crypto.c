@@ -435,7 +435,7 @@ char* crypto_cert_subject_common_name(X509* xcert, int* length)
 	if (*length < 0)
 		return NULL;
 
-	common_name = _strdup(common_name_raw);
+	common_name = _strdup((char*)common_name_raw);
 	OPENSSL_free(common_name_raw);
 
 	return (char*) common_name;
