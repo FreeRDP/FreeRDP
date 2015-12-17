@@ -345,14 +345,6 @@ else()
 	set(HAVE_SYS_FILIO_H 1)
 endif()
 
-if(HAVE_STDBOOL_H)
-	add_definitions(-DHAVE_STDBOOL_H)
-endif()
-
-if(HAVE_STDINT_H)
-	add_definitions(-DHAVE_STDINT_H)
-endif()
-
 if(NOT IOS)
 	check_struct_has_member("struct tm" tm_gmtoff time.h HAVE_TM_GMTOFF)
 else()

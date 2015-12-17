@@ -23,6 +23,10 @@
 /* MSDN: Windows Data Types - http://msdn.microsoft.com/en-us/library/aa383751/ */
 /* [MS-DTYP]: Windows Data Types - http://msdn.microsoft.com/en-us/library/cc230273/ */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <wchar.h>
 #include <winpr/windows.h>
 
