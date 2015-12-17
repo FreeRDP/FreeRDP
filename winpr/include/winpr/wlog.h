@@ -27,6 +27,7 @@
 extern "C" {
 #endif
 
+#include <stdarg.h>
 #include <winpr/wtypes.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
