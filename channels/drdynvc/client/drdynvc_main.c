@@ -436,7 +436,7 @@ static UINT dvcman_close_channel_iface(IWTSVirtualChannel* pChannel)
 UINT dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId, const char* ChannelName)
 {
 	int i;
-	int bAccept;
+	BOOL bAccept;
 	DVCMAN_LISTENER* listener;
 	DVCMAN_CHANNEL* channel;
 	DrdynvcClientContext* context;
@@ -462,11 +462,11 @@ UINT dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Channe
 			channel->iface.Write = dvcman_write_channel;
 			channel->iface.Close = dvcman_close_channel_iface;
 
-			bAccept = 1;
+			bAccept = TRUE;
 			pCallback = NULL;
 
 			if ((error = listener->listener_callback->OnNewChannelConnection(listener->listener_callback,
-				(IWTSVirtualChannel*) channel, NULL, &bAccept, &pCallback)) == CHANNEL_RC_OK && bAccept == 1)
+				(IWTSVirtualChannel*) channel, NULL, &bAccept, &pCallback)) == CHANNEL_RC_OK && bAccept)
 			{
 				WLog_DBG(TAG, "listener %s created new channel %d",
 					  listener->channel_name, channel->channel_id);

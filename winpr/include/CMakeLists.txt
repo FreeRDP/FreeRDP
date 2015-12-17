@@ -16,6 +16,7 @@
 # limitations under the License.
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/winpr/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/winpr/version.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/winpr/wtypes.h.in ${CMAKE_CURRENT_BINARY_DIR}/winpr/wtypes.h)
 
 file(GLOB WINPR_HEADERS "winpr/*.h")
 install(FILES ${WINPR_HEADERS} DESTINATION include/winpr COMPONENT headers)

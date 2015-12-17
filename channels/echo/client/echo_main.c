@@ -96,7 +96,7 @@ static UINT echo_on_close(IWTSVirtualChannelCallback* pChannelCallback)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT echo_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
-	IWTSVirtualChannel* pChannel, BYTE* Data, int* pbAccept,
+	IWTSVirtualChannel* pChannel, BYTE* Data, BOOL* pbAccept,
 	IWTSVirtualChannelCallback** ppCallback)
 {
 	ECHO_CHANNEL_CALLBACK* callback;
