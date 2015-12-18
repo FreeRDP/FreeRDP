@@ -340,9 +340,9 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, BOOL gateway, char** 
 	{
 		size_t username_size = 0;
 		printf("%s", prompt[0]);
-		if (getline(username, &username_size, stdin) < 0)
+		if (GetLine(username, &username_size, stdin) < 0)
 		{
-			WLog_ERR(TAG, "getline returned %s [%d]", strerror(errno), errno);
+			WLog_ERR(TAG, "GetLine returned %s [%d]", strerror(errno), errno);
 			goto fail;
 		}
 
@@ -357,9 +357,9 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, BOOL gateway, char** 
 	{
 		size_t domain_size = 0;
 		printf("%s", prompt[1]);
-		if (getline(domain, &domain_size, stdin) < 0)
+		if (GetLine(domain, &domain_size, stdin) < 0)
 		{
-			WLog_ERR(TAG, "getline returned %s [%d]", strerror(errno), errno);
+			WLog_ERR(TAG, "GetLine returned %s [%d]", strerror(errno), errno);
 			goto fail;
 		}
 
