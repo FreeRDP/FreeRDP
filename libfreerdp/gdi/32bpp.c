@@ -526,7 +526,7 @@ static BOOL BitBlt_PSDPxax_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nW
 			{
 				for (x = 0; x < nWidth; x++)
 				{
-					patp = (UINT32*) gdi_get_brush_pointer(hdcDest, x, y);
+					patp = (UINT32*) gdi_get_brush_pointer(hdcDest, nXDest + x, nYDest + y);
 					*dstp = (*srcp & *dstp) | (~(*srcp) & *patp);
 					srcp++;
 					dstp++;
@@ -583,7 +583,7 @@ static BOOL BitBlt_SPDSxax_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nW
 			{
 				for (x = 0; x < nWidth; x++)
 				{
-					patp = (UINT32*) gdi_get_brush_pointer(hdcDest, x, y);
+					patp = (UINT32*) gdi_get_brush_pointer(hdcDest, nXDest + x, nYDest + y);
 					*dstp = *srcp ^ (*patp & (*dstp ^ *srcp));
 					srcp++;
 					dstp++;
@@ -614,7 +614,7 @@ static BOOL BitBlt_SPna_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidt
 		{
 			for (x = 0; x < nWidth; x++)
 			{
-				patp = (UINT32*) gdi_get_brush_pointer(hdcDest, x, y);
+				patp = (UINT32*) gdi_get_brush_pointer(hdcDest, nXDest + x, nYDest + y);
 				
 				*dstp = *srcp & ~(*patp);
 				srcp++;
@@ -668,7 +668,7 @@ static BOOL BitBlt_DPa_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth
 		{
 			for (x = 0; x < nWidth; x++)
 			{
-				patp = (UINT32*) gdi_get_brush_pointer(hdcDest, x, y);
+				patp = (UINT32*) gdi_get_brush_pointer(hdcDest, nXDest + x, nYDest + y);
 
 				*dstp = *dstp & *patp;
 				dstp++;
@@ -693,7 +693,7 @@ static BOOL BitBlt_PDxn_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidt
 		{
 			for (x = 0; x < nWidth; x++)
 			{
-				patp = (UINT32*) gdi_get_brush_pointer(hdcDest, x, y);
+				patp = (UINT32*) gdi_get_brush_pointer(hdcDest, nXDest + x, nYDest + y);
 
 				*dstp = *dstp ^ ~(*patp);
 				dstp++;
@@ -723,7 +723,7 @@ static BOOL BitBlt_MERGECOPY_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int 
 		{
 			for (x = 0; x < nWidth; x++)
 			{
-				patp = (UINT32*) gdi_get_brush_pointer(hdcDest, x, y);
+				patp = (UINT32*) gdi_get_brush_pointer(hdcDest, nXDest + x, nYDest + y);
 				
 				*dstp = *srcp & *patp;
 				srcp++;
@@ -790,13 +790,10 @@ static BOOL BitBlt_PATCOPY_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nW
 	}
 	else
 	{
-		/* align pattern to 8x8 grid to make sure transition
-		between different pattern blocks are smooth */
-
 		if (hdcDest->brush->style == GDI_BS_HATCHED)
 		{
-			xOffset = nXDest % 8;
-			yOffset = nYDest % 8 + 2; // +2 added after comparison to mstsc
+			xOffset = 0;
+			yOffset = 2; // +2 added after comparison to mstsc
 		}
 		else
 		{
@@ -811,7 +808,7 @@ static BOOL BitBlt_PATCOPY_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nW
 			{
 				for (x = 0; x < nWidth; x++)
 				{
-					patp = (UINT32*) gdi_get_brush_pointer(hdcDest, x+xOffset, y+yOffset);
+					patp = (UINT32*) gdi_get_brush_pointer(hdcDest, nXDest + x + xOffset, nYDest + y + yOffset);
 					*dstp = *patp;
 					dstp++;
 				}
@@ -857,7 +854,7 @@ static BOOL BitBlt_PATINVERT_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int 
 			{
 				for (x = 0; x < nWidth; x++)
 				{
-					patp = (UINT32*) gdi_get_brush_pointer(hdcDest, x, y);
+					patp = (UINT32*) gdi_get_brush_pointer(hdcDest, nXDest + x, nYDest + y);
 					*dstp = *patp ^ *dstp;
 					dstp++;
 				}
@@ -887,7 +884,7 @@ static BOOL BitBlt_PATPAINT_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int n
 		{
 			for (x = 0; x < nWidth; x++)
 			{
-				patp = (UINT32*) gdi_get_brush_pointer(hdcDest, x, y);
+				patp = (UINT32*) gdi_get_brush_pointer(hdcDest, nXDest + x, nYDest + y);
 				*dstp = *dstp | (*patp | ~(*srcp));
 				srcp++;
 				dstp++;
