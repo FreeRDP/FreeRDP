@@ -515,7 +515,9 @@ INT64 GetLine(char** lineptr, size_t* size, FILE* stream)
     (*lineptr)[used] = '\0';
 
 	return used;
-#else
+#elif !defined(ANDROID) && !defined(IOS)
 	return getline(lineptr, size, stream);
+#else
+	return -1;
 #endif
 }
