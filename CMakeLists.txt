@@ -246,6 +246,30 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
 	endif()
 endif()
 
+# Enable address sanitizer, where supported and when required
+if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR CMAKE_COMPILER_IS_GNUCC)
+	if(WITH_SANITIZE_ADDRESS)
+		if (DEFINED CMAKE_REQUIRED_FLAGS)
+			set(SAVE_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
+		endif()
+		set(CMAKE_REQUIRED_FLAGS "-fsanitize=address")
+		CHECK_C_COMPILER_FLAG ("-fsanitize=address" fsanitize-address)
+		if(fsanitize-address)
+			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
+		endif()
+		if (DEFINED SAVE_CMAKE_REQUIRED_FLAGS)
+			set(CMAKE_REQUIRED_FLAGS ${SAVE_CMAKE_REQUIRED_FLAGS})
+		else()
+			unset(CMAKE_REQUIRED_FLAGS)
+		endif()
+
+		CHECK_C_COMPILER_FLAG ("-fno-omit-frame-pointer" fno-omit-frame-pointer)
+		if(fno-omit-frame-pointer)
+			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-omit-frame-pointer")
+		endif()
+	endif()
+endif()
+
 if(MSVC)
 	# Remove previous warning definitions,
 	# NMake is otherwise complaining.
