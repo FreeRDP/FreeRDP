@@ -164,12 +164,10 @@ if(${CMAKE_VERSION} VERSION_GREATER "2.8.10")
 	set(WINPR_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/WinPR")
 
 	set(WINPR_INCLUDE_DIR "include")
-	# Keep this for legacy builds
-	set(WINPR_MONOLITHIC_BUILD OFF)
 
 	configure_package_config_file(WinPRConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/WinPRConfig.cmake
 		INSTALL_DESTINATION ${WINPR_CMAKE_INSTALL_DIR}
-		PATH_VARS WINPR_INCLUDE_DIR WINPR_MONOLITHIC_BUILD)
+		PATH_VARS WINPR_INCLUDE_DIR)
 
 	write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/WinPRConfigVersion.cmake
 		VERSION ${WINPR_VERSION} COMPATIBILITY SameMajorVersion)
