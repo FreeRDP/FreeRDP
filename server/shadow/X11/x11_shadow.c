@@ -40,13 +40,6 @@
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/region.h>
 
-#include "../shadow_screen.h"
-#include "../shadow_client.h"
-#include "../shadow_capture.h"
-#include "../shadow_surface.h"
-#include "../shadow_subsystem.h"
-#include "../shadow_mcevent.h"
-
 #include "x11_shadow.h"
 
 #define TAG SERVER_TAG("shadow.x11")
@@ -161,7 +154,7 @@ int x11_shadow_pam_get_service_name(SHADOW_PAM_AUTH_INFO* info)
 	return 1;
 }
 
-int x11_shadow_pam_authenticate(x11ShadowSubsystem* subsystem, const char* user, const char* domain, const char* password)
+int x11_shadow_pam_authenticate(x11ShadowSubsystem* subsystem, rdpShadowClient* client, const char* user, const char* domain, const char* password)
 {
 	int pam_status;
 	SHADOW_PAM_AUTH_INFO* info;
@@ -215,12 +208,12 @@ int x11_shadow_pam_authenticate(x11ShadowSubsystem* subsystem, const char* user,
 
 #endif
 
-void x11_shadow_input_synchronize_event(x11ShadowSubsystem* subsystem, UINT32 flags)
+void x11_shadow_input_synchronize_event(x11ShadowSubsystem* subsystem, rdpShadowClient* client, UINT32 flags)
 {
 
 }
 
-void x11_shadow_input_keyboard_event(x11ShadowSubsystem* subsystem, UINT16 flags, UINT16 code)
+void x11_shadow_input_keyboard_event(x11ShadowSubsystem* subsystem, rdpShadowClient* client, UINT16 flags, UINT16 code)
 {
 #ifdef WITH_XTEST
 	DWORD vkcode;
@@ -256,12 +249,12 @@ void x11_shadow_input_keyboard_event(x11ShadowSubsystem* subsystem, UINT16 flags
 #endif
 }
 
-void x11_shadow_input_unicode_keyboard_event(x11ShadowSubsystem* subsystem, UINT16 flags, UINT16 code)
+void x11_shadow_input_unicode_keyboard_event(x11ShadowSubsystem* subsystem, rdpShadowClient* client, UINT16 flags, UINT16 code)
 {
 
 }
 
-void x11_shadow_input_mouse_event(x11ShadowSubsystem* subsystem, UINT16 flags, UINT16 x, UINT16 y)
+void x11_shadow_input_mouse_event(x11ShadowSubsystem* subsystem, rdpShadowClient* client, UINT16 flags, UINT16 x, UINT16 y)
 {
 #ifdef WITH_XTEST
 	int button = 0;
@@ -314,7 +307,7 @@ void x11_shadow_input_mouse_event(x11ShadowSubsystem* subsystem, UINT16 flags, U
 #endif
 }
 
-void x11_shadow_input_extended_mouse_event(x11ShadowSubsystem* subsystem, UINT16 flags, UINT16 x, UINT16 y)
+void x11_shadow_input_extended_mouse_event(x11ShadowSubsystem* subsystem, rdpShadowClient* client, UINT16 flags, UINT16 x, UINT16 y)
 {
 #ifdef WITH_XTEST
 	int button = 0;
@@ -793,7 +786,7 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 
 		count = ArrayList_Count(server->clients);
 
-		shadow_multiclient_publish_and_wait(subsystem->updateEvent);
+		shadow_subsystem_frame_update((rdpShadowSubsystem *)subsystem);
 
 		if (count == 1)
 		{
@@ -1444,7 +1437,7 @@ void x11_shadow_subsystem_free(x11ShadowSubsystem* subsystem)
 	free(subsystem);
 }
 
-FREERDP_API int X11_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
+int X11_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
 {
 	pEntryPoints->New = (pfnShadowSubsystemNew) x11_shadow_subsystem_new;
 	pEntryPoints->Free = (pfnShadowSubsystemFree) x11_shadow_subsystem_free;

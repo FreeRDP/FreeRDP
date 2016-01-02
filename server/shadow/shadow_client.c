@@ -179,6 +179,16 @@ void shadow_client_message_free(wMessage* message)
 
 BOOL shadow_client_capabilities(freerdp_peer* peer)
 {
+	rdpShadowSubsystem* subsystem;
+	rdpShadowClient* client;
+
+	client = (rdpShadowClient*) peer->context;
+	subsystem = client->server->subsystem;
+
+	if (subsystem->ClientCapabilities)
+	{
+		return subsystem->ClientCapabilities(subsystem, client);
+	}
 	return TRUE;
 }
 
@@ -243,7 +253,7 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 	{
 		if (subsystem->Authenticate)
 		{
-			authStatus = subsystem->Authenticate(subsystem,
+			authStatus = subsystem->Authenticate(subsystem, client,
 					settings->Username, settings->Domain, settings->Password);
 		}
 	}

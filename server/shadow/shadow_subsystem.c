@@ -271,3 +271,8 @@ int shadow_subsystem_pointer_convert_alpha_pointer_data(BYTE* pixels, BOOL premu
 
 	return 1;
 }
+
+void shadow_subsystem_frame_update(rdpShadowSubsystem* subsystem)
+{
+	shadow_multiclient_publish_and_wait(subsystem->updateEvent);
+}

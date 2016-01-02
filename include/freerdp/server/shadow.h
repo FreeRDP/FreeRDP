@@ -64,18 +64,19 @@ typedef int (*pfnShadowSubsystemStop)(rdpShadowSubsystem* subsystem);
 
 typedef int (*pfnShadowEnumMonitors)(MONITOR_DEF* monitors, int maxMonitors);
 
-typedef int (*pfnShadowAuthenticate)(rdpShadowSubsystem* subsystem,
+typedef int (*pfnShadowAuthenticate)(rdpShadowSubsystem* subsystem, rdpShadowClient* client,
 		const char* user, const char* domain, const char* password);
 typedef BOOL (*pfnShadowClientConnect)(rdpShadowSubsystem* subsystem, rdpShadowClient* client);
 typedef void (*pfnShadowClientDisconnect)(rdpShadowSubsystem* subsystem, rdpShadowClient* client);
+typedef BOOL (*pfnShadowClientCapabilities)(rdpShadowSubsystem* subsystem, rdpShadowClient* client);
 
-typedef int (*pfnShadowSynchronizeEvent)(rdpShadowSubsystem* subsystem, UINT32 flags);
-typedef int (*pfnShadowKeyboardEvent)(rdpShadowSubsystem* subsystem, UINT16 flags, UINT16 code);
-typedef int (*pfnShadowUnicodeKeyboardEvent)(rdpShadowSubsystem* subsystem, UINT16 flags, UINT16 code);
-typedef int (*pfnShadowMouseEvent)(rdpShadowSubsystem* subsystem, UINT16 flags, UINT16 x, UINT16 y);
-typedef int (*pfnShadowExtendedMouseEvent)(rdpShadowSubsystem* subsystem, UINT16 flags, UINT16 x, UINT16 y);
+typedef int (*pfnShadowSynchronizeEvent)(rdpShadowSubsystem* subsystem, rdpShadowClient* client, UINT32 flags);
+typedef int (*pfnShadowKeyboardEvent)(rdpShadowSubsystem* subsystem, rdpShadowClient* client, UINT16 flags, UINT16 code);
+typedef int (*pfnShadowUnicodeKeyboardEvent)(rdpShadowSubsystem* subsystem, rdpShadowClient* client, UINT16 flags, UINT16 code);
+typedef int (*pfnShadowMouseEvent)(rdpShadowSubsystem* subsystem, rdpShadowClient* client, UINT16 flags, UINT16 x, UINT16 y);
+typedef int (*pfnShadowExtendedMouseEvent)(rdpShadowSubsystem* subsystem, rdpShadowClient* client, UINT16 flags, UINT16 x, UINT16 y);
 
-typedef void (*pfnShadowChannelAudinServerReceiveSamples)(rdpShadowSubsystem* subsystem, const void* buf, int nframes);
+typedef void (*pfnShadowChannelAudinServerReceiveSamples)(rdpShadowSubsystem* subsystem, rdpShadowClient* client, const void* buf, int nframes);
 
 struct rdp_shadow_client
 {
@@ -130,6 +131,21 @@ struct rdp_shadow_server
 	freerdp_listener* listener;
 };
 
+struct rdp_shadow_surface
+{
+	rdpShadowServer* server;
+
+	int x;
+	int y;
+	int width;
+	int height;
+	int scanline;
+	BYTE* data;
+
+	CRITICAL_SECTION lock;
+	REGION16 invalidRegion;
+};
+
 struct _RDP_SHADOW_ENTRY_POINTS
 {
 	pfnShadowSubsystemNew New;
@@ -174,6 +190,7 @@ struct _RDP_SHADOW_ENTRY_POINTS
 	pfnShadowAuthenticate Authenticate; \
 	pfnShadowClientConnect ClientConnect; \
 	pfnShadowClientDisconnect ClientDisconnect; \
+	pfnShadowClientCapabilities ClientCapabilities; \
 	\
 	rdpShadowServer* server
 
@@ -277,6 +294,11 @@ FREERDP_API int shadow_enum_monitors(MONITOR_DEF* monitors, int maxMonitors);
 
 FREERDP_API rdpShadowServer* shadow_server_new();
 FREERDP_API void shadow_server_free(rdpShadowServer* server);
+
+FREERDP_API int shadow_capture_align_clip_rect(RECTANGLE_16* rect, RECTANGLE_16* clip);
+FREERDP_API int shadow_capture_compare(BYTE* pData1, int nStep1, int nWidth, int nHeight, BYTE* pData2, int nStep2, RECTANGLE_16* rect);
+
+FREERDP_API void shadow_subsystem_frame_update(rdpShadowSubsystem* subsystem);
 
 FREERDP_API BOOL shadow_client_post_msg(rdpShadowClient* client, void* context, UINT32 type, SHADOW_MSG_OUT* msg, void* lParam);
 FREERDP_API int shadow_client_boardcast_msg(rdpShadowServer* server, void* context, UINT32 type, SHADOW_MSG_OUT* msg, void* lParam);
