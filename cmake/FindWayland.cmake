@@ -1,19 +1,14 @@
-# - Find Wayland
-# Find the Wayland libraries
+# - Finds UWAC
+# Find the UWAC libraries and its dependencies
 #
 #  This module defines the following variables:
-#     WAYLAND_FOUND        - true if WAYLAND_INCLUDE_DIR & WAYLAND_LIBRARY are found
-#     WAYLAND_LIBRARIES    - Set when WAYLAND_LIBRARY is found
-#     WAYLAND_INCLUDE_DIRS - Set when WAYLAND_INCLUDE_DIR is found
-#
-#     WAYLAND_INCLUDE_DIR  - where to find wayland-client.h, etc.
-#     WAYLAND_LIBRARY      - the Wayland client library
-#     WAYLAND_VERSION      - wayland client version if found and pkg-config was used
+#     UWAC_FOUND        - true if UWAC has been found
+#     UWAC_LIBS         - Set to the full path to UWAC libraries and its dependencies
+#     UWAC_INCLUDE_DIRS - Set to the include directories for UWAC
 #
 
 #=============================================================================
-# Copyright 2014 Manuel Bachmann <tarnyko@tarnyko.net>
-# Copyright 2015 Bernhard Miklautz <bernhard.miklautz@shacknet.at>
+# Copyright 2015 David Fort <contact@hardening-consulting.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,38 +23,31 @@
 # limitations under the License.
 #=============================================================================
 
-set(REQUIRED_WAYLAND_CLIENT_VERSION 1.3.0)
 include(FindPkgConfig)
 
 if(PKG_CONFIG_FOUND)
-  pkg_check_modules(WAYLAND wayland-client)
+    pkg_check_modules(UWAC uwac)
+  
+    # find the complete path to each dependant library
+    set(UWAC_LIBS, "")
+    foreach(libname ${UWAC_LIBRARIES})
+        find_library(FOUND_LIB NAMES ${libname}
+                  PATHS ${UWAC_LIBRARY_DIRS}
+        )
+       
+        if (FOUND_LIB)
+            list(APPEND UWAC_LIBS ${FOUND_LIB})
+        endif()
+        unset(FOUND_LIB CACHE)
+    endforeach()
+    
+    
+    find_path(UWAC_INCLUDE_DIR NAMES uwac/uwac.h
+              PATHS ${UWAC_INCLUDE_DIRS}
+              DOC "The UWAC include directory"
+    )
+
 endif()
-
-find_path(WAYLAND_INCLUDE_DIR NAMES wayland-client.h
-          PATHS ${WAYLAND_INCLUDE_DIRS}
-          DOC "The Wayland include directory"
-)
-
-find_library(WAYLAND_LIBRARY NAMES wayland-client
-          PATHS ${WAYLAND_LIBRARY_DIRS}
-          DOC "The Wayland client library"
-)
 
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(WAYLAND DEFAULT_MSG WAYLAND_LIBRARY WAYLAND_INCLUDE_DIR)
-
-if(WAYLAND_VERSION)
-	if (${WAYLAND_VERSION} VERSION_LESS ${REQUIRED_WAYLAND_CLIENT_VERSION})
-		message(WARNING "Installed wayland version ${WAYLAND_VERSION} is too old - minimum required version ${REQUIRED_WAYLAND_CLIENT_VERSION}")
-		set(WAYLAND_FOUND FALSE)
-	endif()
-else()
-		message(WARNING "Couldn't detect wayland version - no version check is done")
-endif()
-
-if(WAYLAND_FOUND)
-  set(WAYLAND_LIBRARIES ${WAYLAND_LIBRARY})
-  set(WAYLAND_INCLUDE_DIRS ${WAYLAND_INCLUDE_DIR})
-endif()
-
-mark_as_advanced(WAYLAND_INCLUDE_DIR WAYLAND_LIBRARY WAYLAND_VERSION)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(UWAC DEFAULT_MSG UWAC_LIBS UWAC_INCLUDE_DIR)
