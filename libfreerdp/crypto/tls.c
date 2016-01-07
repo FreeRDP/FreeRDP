@@ -798,7 +798,7 @@ int tls_connect(rdpTls* tls, BIO* underlying)
 	 */
 	options |= SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS;
 
-	if (!tls_prepare(tls, underlying, TLSv1_client_method(), options, TRUE))
+	if (!tls_prepare(tls, underlying, SSLv23_client_method(), options, TRUE))
 		return FALSE;
 
 	return tls_do_handshake(tls, TRUE);
