@@ -7,6 +7,8 @@
  * Copyright 2012 Gerald Richter
  * Copyright 2015 Thincast Technologies GmbH
  * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+ * Copyright 2016 Inuvika Inc.
+ * Copyright 2016 David PHAM-VAN <d.phamvan@inuvika.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -507,7 +509,7 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 {
 	char* s = NULL;
 	mode_t m;
-	UINT64 size;
+	INT64 size;
 	int status;
 	char* fullpath;
 	struct STAT st;
@@ -516,9 +518,14 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 #else
 	struct timeval tv[2];
 #endif
+	UINT64 CreationTime;
+	UINT64 LastAccessTime;
 	UINT64 LastWriteTime;
+	UINT64 ChangeTime;
 	UINT32 FileAttributes;
 	UINT32 FileNameLength;
+	int fd;
+	LARGE_INTEGER liSize;
 
 	m = 0;
 
@@ -526,10 +533,10 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 	{
 		case FileBasicInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232094.aspx */
-			Stream_Seek_UINT64(input); /* CreationTime */
-			Stream_Seek_UINT64(input); /* LastAccessTime */
+			Stream_Read_UINT64(input, CreationTime);
+			Stream_Read_UINT64(input, LastAccessTime);
 			Stream_Read_UINT64(input, LastWriteTime);
-			Stream_Seek_UINT64(input); /* ChangeTime */
+			Stream_Read_UINT64(input, ChangeTime);
 			Stream_Read_UINT32(input, FileAttributes);
 
 			if (FSTAT(file->fd, &st) != 0)
@@ -538,7 +545,6 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 			tv[0].tv_sec = st.st_atime;
 			tv[1].tv_sec = (LastWriteTime > 0 ? FILE_TIME_RDP_TO_SYSTEM(LastWriteTime) : st.st_mtime);
 #ifndef WIN32
-			/* TODO on win32 */
 #ifdef ANDROID
 			tv[0].tv_usec = 0;
 			tv[1].tv_usec = 0;
@@ -563,6 +569,8 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 				if (m != st.st_mode)
 					fchmod(file->fd, st.st_mode);
 			}
+#else /* WIN32 */
+			SetFileTime(file->fd, &CreationTime, &LastAccessTime, &LastWriteTime);
 #endif
 			break;
 
@@ -570,10 +578,19 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 			/* http://msdn.microsoft.com/en-us/library/cc232067.aspx */
 		case FileAllocationInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232076.aspx */
-			Stream_Read_UINT64(input, size);
+			Stream_Read_INT64(input, size);
 #ifndef _WIN32
-			if (ftruncate(file->fd, size) != 0)
+			fd = OPEN(file->fullpath, O_RDWR);
+			if (ftruncate(fd, size) != 0)
+			{
+				WLog_ERR(TAG, "Unable to truncate %s to %d: %s (%d)", file->fullpath, size, strerror(errno), errno);
 				return FALSE;
+			}
+			close(fd);
+#else
+			liSize.QuadPart = size;
+			SetFilePointerEx(file->fd, liSize, NULL, FILE_BEGIN);
+			SetEndOfFile(file->fd);
 #endif
 			break;
 
