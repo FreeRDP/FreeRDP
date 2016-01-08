@@ -9,3 +9,4 @@
 !/X11
 !/Wayland
 !/CMakeLists.txt
+!*.in

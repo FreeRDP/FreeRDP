@@ -79,6 +79,7 @@ if (FREERDP_VERSION_SUFFIX)
 else()
 	set(FREERDP_VERSION_FULL "${FREERDP_VERSION}")
 endif()
+set(FREERDP_INCLUDE_DIR "include/freerdp${FREERDP_VERSION_MAJOR}/")
 
 # Allow to search the host machine for git
 if(ANDROID OR IOS)
@@ -787,37 +788,20 @@ if(WITH_CHANNELS)
 	add_subdirectory(channels)
 endif()
 
+if (${CMAKE_VERSION} VERSION_LESS 2.8.12)
+	set(PUBLIC_KEYWORD "")
+	set(PRIVATE_KEYWORD "")
+else()
+	set(PUBLIC_KEYWORD "PUBLIC")
+	set(PRIVATE_KEYWORD "PRIVATE")
+endif()
+
 if(WITH_CLIENT_COMMON OR WITH_CLIENT)
 add_subdirectory(client)
 endif()
 
 if(WITH_SERVER)
 	add_subdirectory(server)
-endif()
-
-
-# Exporting
-
-if(${CMAKE_VERSION} VERSION_GREATER "2.8.10")
-
-	export(PACKAGE freerdp)
-
-	set(FREERDP_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/FreeRDP")
-
-	set(FREERDP_INCLUDE_DIR "include")
-
-	configure_package_config_file(FreeRDPConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfig.cmake
-		INSTALL_DESTINATION ${FREERDP_CMAKE_INSTALL_DIR}
-		PATH_VARS FREERDP_INCLUDE_DIR)
-
-	write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfigVersion.cmake
-		VERSION ${FREERDP_VERSION} COMPATIBILITY SameMajorVersion)
-
-	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfigVersion.cmake
-		DESTINATION ${FREERDP_CMAKE_INSTALL_DIR})
-
-	install(EXPORT FreeRDPTargets DESTINATION ${FREERDP_CMAKE_INSTALL_DIR})
-
 endif()
 
 # Packaging
@@ -835,14 +819,3 @@ endif()
 #message("VENDOR: ${VENDOR} CLIENT_VENDOR_PATH: ${CLIENT_VENDOR_PATH} CMAKE_CPACK_INCLUDE_FILE: ${CMAKE_CPACK_INCLUDE_FILE}")
 
 include(${CMAKE_CPACK_INCLUDE_FILE})
-
-set(FREERDP_PC_LIBS "-lfreerdp -lfreerdp-client")
-set(WINPR_PC_LIBS "-lwinpr")
-if (WITH_SERVER)
-	set(FREERDP_PC_LIBS "${FREERDP_PC_LIBS} -lfreerdp-server")
-endif()
-
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc @ONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/winpr.pc.in ${CMAKE_CURRENT_BINARY_DIR}/winpr.pc @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/winpr.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
