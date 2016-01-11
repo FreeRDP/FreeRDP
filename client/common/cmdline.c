@@ -21,6 +21,7 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+#include "buildflags.h"
 
 #include <assert.h>
 
@@ -171,12 +172,23 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "assistance", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Remote assistance password" },
 	{ "encryption-methods", COMMAND_LINE_VALUE_REQUIRED, "<40,56,128,FIPS>", NULL, NULL, -1, NULL, "RDP standard security encryption methods" },
 	{ "from-stdin", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Read credentials from stdin, do not use defaults." },
+	{ "buildconfig", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_BUILDCONFIG, NULL, NULL, NULL, -1, NULL, "print the build configuration" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
 int freerdp_client_print_version()
 {
 	printf("This is FreeRDP version %s (git %s)\n", FREERDP_VERSION_FULL, GIT_REVISION);
+	return 1;
+}
+
+int freerdp_client_print_buildconfig()
+{
+	printf("Build configuration: %s\n", BUILD_CONFIG);
+	printf("Build type: %s\n", BUILD_TYPE);
+	printf("CFLAGS: %s\n", CFLAGS);
+	printf("Compiler: %s, %s\n", COMPILER_ID, COMPILER_VERSION);
+	printf("Target architecture: %s\n", TARGET_ARCH);
 	return 1;
 }
 
@@ -1351,6 +1363,12 @@ int freerdp_client_settings_command_line_status_print(rdpSettings* settings, int
 	{
 		freerdp_client_print_version();
 		return COMMAND_LINE_STATUS_PRINT_VERSION;
+	}
+	if (status == COMMAND_LINE_STATUS_PRINT_BUILDCONFIG)
+	{
+		freerdp_client_print_version();
+		freerdp_client_print_buildconfig();
+		return COMMAND_LINE_STATUS_PRINT_BUILDCONFIG;
 	}
 	else if (status == COMMAND_LINE_STATUS_PRINT)
 	{

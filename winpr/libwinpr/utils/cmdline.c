@@ -363,6 +363,8 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 						return COMMAND_LINE_STATUS_PRINT_HELP;
 				else if (options[j].Flags & COMMAND_LINE_PRINT_VERSION)
 						return COMMAND_LINE_STATUS_PRINT_VERSION;
+				else if (options[j].Flags & COMMAND_LINE_PRINT_BUILDCONFIG)
+						return COMMAND_LINE_STATUS_PRINT_BUILDCONFIG;
 			}
 			
 			if (!found && (flags & COMMAND_LINE_IGN_UNKNOWN_KEYWORD) == 0)
