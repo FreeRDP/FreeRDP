@@ -25,8 +25,9 @@
 boolean tls_connect(rdpTls* tls)
 {
 	int connection_status;
+	int options = 0;
 
-	tls->ctx = SSL_CTX_new(TLSv1_client_method());
+	tls->ctx = SSL_CTX_new(SSLv23_client_method());
 
 	if (tls->ctx == NULL)
 	{
@@ -42,7 +43,15 @@ boolean tls_connect(rdpTls* tls)
 	 * block padding is normally used, but the Microsoft TLS implementation
 	 * won't recognize it and will disconnect you after sending a TLS alert.
 	 */
-	SSL_CTX_set_options(tls->ctx, SSL_OP_ALL);
+	options |= SSL_OP_ALL;
+
+	/**
+	 * disable SSLv2 and SSLv3
+	 */
+	options |= SSL_OP_NO_SSLv2;
+	options |= SSL_OP_NO_SSLv3;
+
+	SSL_CTX_set_options(tls->ctx, options);
 
 	tls->ssl = SSL_new(tls->ctx);
 
