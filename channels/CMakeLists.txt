@@ -154,6 +154,20 @@ macro(add_channel_client_subsystem _channel_prefix _channel_name _subsystem _typ
 	endif()
 endmacro(add_channel_client_subsystem)
 
+macro(channel_install _targets _destination _export_target)
+	if (NOT STATIC_CHANNELS OR ${CMAKE_VERSION} VERSION_LESS 2.8.12)
+		install(TARGETS ${_targets} DESTINATION ${_destination} EXPORT ${_export_target})
+	endif()
+endmacro(channel_install)
+
+macro(server_channel_install _targets _destination)
+	channel_install(${_targets} ${_destination} "FreeRDP-ServerTargets")
+endmacro(server_channel_install)
+
+macro(client_channel_install _targets _destination)
+	channel_install(${_targets} ${_destination} "FreeRDP-ClientTargets")
+endmacro(client_channel_install)
+
 macro(add_channel_client_library _module_prefix _module_name _channel_name _dynamic _entry)
 	if(${_dynamic} AND (NOT STATIC_CHANNELS))
 # On windows create dll version information.
@@ -174,6 +188,7 @@ macro(add_channel_client_library _module_prefix _module_name _channel_name _dyna
     endif()
 
 		add_library(${_module_name} ${${_module_prefix}_SRCS})
+		client_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
 	else()
 		set(${_module_prefix}_STATIC ON PARENT_SCOPE)
 		set(${_module_prefix}_NAME ${_module_name} PARENT_SCOPE)
@@ -203,6 +218,7 @@ macro(add_channel_client_subsystem_library _module_prefix _module_name _channel_
     endif()
 
 		add_library(${_module_name} ${${_module_prefix}_SRCS})
+		client_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
 	else()
 		set(${_module_prefix}_STATIC ON PARENT_SCOPE)
 		set(${_module_prefix}_NAME ${_module_name} PARENT_SCOPE)
@@ -230,6 +246,7 @@ macro(add_channel_server_library _module_prefix _module_name _channel_name _dyna
     endif()
 
 		add_library(${_module_name} ${${_module_prefix}_SRCS})
+		server_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
 	else()
 		set(${_module_prefix}_STATIC ON PARENT_SCOPE)
 		set(${_module_prefix}_NAME ${_module_name} PARENT_SCOPE)
