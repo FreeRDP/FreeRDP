@@ -1594,6 +1594,12 @@ BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	Stream_Read_UINT32(s, flags); /* flags */
 	Stream_Read_UINT32(s, monitorCount); /* monitorCount */
 
+	if (monitorCount > settings->MonitorDefArraySize)
+	{
+		WLog_ERR(TAG, "too many announced monitors(%d), clamping to %d", monitorCount, settings->MonitorDefArraySize);
+		monitorCount = settings->MonitorDefArraySize;
+	}
+
 	if (((blockLength - 8)  / 20) < monitorCount)
 		return FALSE;
 
