@@ -717,7 +717,10 @@ UINT gdi_CreateSurface(RdpgfxClientContext* context, RDPGFX_CREATE_SURFACE_PDU* 
 	surface->codecs = codecs_new(gdi->context);
 
 	if (!surface->codecs)
+	{
+		free (surface);
 		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	surface->surfaceId = createSurface->surfaceId;
 	surface->width = (UINT32) createSurface->width;
