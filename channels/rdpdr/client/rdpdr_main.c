@@ -413,6 +413,8 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 				dev_array[size].path = word;
 				dev_array[size++].to_add = TRUE;
 			}
+			else
+				free (word);
 		}
 		free(line);
 	}
@@ -502,7 +504,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 
 cleanup:
 	for (i = 0; i < size; i++)
-		free (dev_array[size].path);
+		free (dev_array[i].path);
 
 	return error ? error : rdpdr_send_device_list_announce_request(rdpdr, TRUE);
 }

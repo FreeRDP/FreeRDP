@@ -424,7 +424,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 	WINPR_FILE* pFile;
 	BOOL create;
 	const char* mode = FileGetMode(dwDesiredAccess, dwCreationDisposition, &create);
-	int lock;
+	int lock = 0;
 	FILE* fp = NULL;
 
 	pFile = (WINPR_FILE*) calloc(1, sizeof(WINPR_FILE));
