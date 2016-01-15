@@ -179,7 +179,7 @@ void xf_keyboard_release_all_keypress(xfContext* xfc)
 
 	for (keycode = 0; keycode < ARRAYSIZE(xfc->KeyboardState); keycode++)
 	{
-		if (!xfc->KeyboardState[keycode])
+		if (xfc->KeyboardState[keycode])
 		{
 			rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(keycode);
 
