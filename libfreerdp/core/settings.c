@@ -734,8 +734,8 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->ClientProductId = malloc(32);
 		if (!_settings->ClientProductId)
 			goto out_fail;
-		CopyMemory(_settings->ClientHostname, settings->ClientHostname, 32);
-		CopyMemory(_settings->ClientProductId, settings->ClientProductId, 32);
+		strncpy(_settings->ClientHostname, settings->ClientHostname, 32);
+		strncpy(_settings->ClientProductId, settings->ClientProductId, 32);
 
 		_settings->BitmapCacheV2CellInfo = (BITMAP_CACHE_V2_CELL_INFO*) malloc(sizeof(BITMAP_CACHE_V2_CELL_INFO) * 6);
 		if (!_settings->BitmapCacheV2CellInfo)
