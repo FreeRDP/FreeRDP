@@ -71,6 +71,7 @@ BOOL freerdp_connect(freerdp* instance)
 	connectErrorCode = 0;
 	freerdp_set_last_error(instance->context, FREERDP_ERROR_SUCCESS);
 	clearChannelError(instance->context);
+	ResetEvent(instance->context->abortEvent);
 
 	rdp = instance->context->rdp;
 	settings = instance->settings;
