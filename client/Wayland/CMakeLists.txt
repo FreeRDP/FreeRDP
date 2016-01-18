@@ -19,7 +19,7 @@
 set(MODULE_NAME "wlfreerdp")
 set(MODULE_PREFIX "FREERDP_CLIENT_WAYLAND")
 
-include_directories(${UWAC_INCLUDE_DIRS})
+include_directories(${CMAKE_SOURCE_DIR}/uwac/include)
 
 set(${MODULE_PREFIX}_SRCS
     wlfreerdp.c
@@ -31,7 +31,7 @@ set(${MODULE_PREFIX}_SRCS
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${CMAKE_DL_LIBS})
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${UWAC_LIBS} freerdp-client freerdp)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client freerdp uwac)
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)

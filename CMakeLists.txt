@@ -789,6 +789,10 @@ include_directories("${CMAKE_BINARY_DIR}/rdtk/include")
 
 add_subdirectory(rdtk)
 
+if(WAYLAND_FOUND)
+    add_subdirectory(uwac)
+endif()
+
 if(BSD)
 	if(IS_DIRECTORY /usr/local/include)
 		include_directories(/usr/local/include)

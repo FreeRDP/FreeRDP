@@ -1,10 +1,12 @@
-# - Finds UWAC
-# Find the UWAC libraries and its dependencies
+# - Finds Wayland
+# Find the Wayland libraries that are needed for UWAC 
 #
 #  This module defines the following variables:
-#     UWAC_FOUND        - true if UWAC has been found
-#     UWAC_LIBS         - Set to the full path to UWAC libraries and its dependencies
-#     UWAC_INCLUDE_DIRS - Set to the include directories for UWAC
+#     WAYLAND_FOUND     - true if UWAC has been found
+#     WAYLAND_LIBS      - Set to the full path to wayland client libraries
+#     WAYLAND_INCLUDE_DIR - Set to the include directories for wayland
+#     XKBCOMMON_LIBS      - Set to the full path to xkbcommon libraries
+#     XKBCOMMON_INCLUDE_DIR - Set to the include directories for xkbcommon
 #
 
 #=============================================================================
@@ -26,28 +28,32 @@
 include(FindPkgConfig)
 
 if(PKG_CONFIG_FOUND)
-    pkg_check_modules(UWAC uwac)
-  
-    # find the complete path to each dependant library
-    set(UWAC_LIBS, "")
-    foreach(libname ${UWAC_LIBRARIES})
-        find_library(FOUND_LIB NAMES ${libname}
-                  PATHS ${UWAC_LIBRARY_DIRS}
-        )
-       
-        if (FOUND_LIB)
-            list(APPEND UWAC_LIBS ${FOUND_LIB})
-        endif()
-        unset(FOUND_LIB CACHE)
-    endforeach()
-    
-    
-    find_path(UWAC_INCLUDE_DIR NAMES uwac/uwac.h
-              PATHS ${UWAC_INCLUDE_DIRS}
-              DOC "The UWAC include directory"
-    )
-
+    pkg_check_modules(WAYLAND_SCANNER_PKG wayland-scanner)    
+    pkg_check_modules(WAYLAND_CLIENT wayland-client)
+    pkg_check_modules(XKBCOMMON xkbcommon)
 endif()
 
+find_program(WAYLAND_SCANNER wayland-scanner
+    HINTS "${WAYLAND_SCANNER_PREFIX}/bin"
+)
+
+find_path(WAYLAND_INCLUDE_DIR wayland-client.h
+    HINTS ${WAYLAND_CLIENT_INCLUDE_DIRS}
+)
+
+find_library(WAYLAND_LIBS 
+    NAMES "wayland-client"
+    HINTS "${WAYLAND_CLIENT_LIBRARIES}" 
+)
+
+find_path(XKBCOMMON_INCLUDE_DIR xkbcommon/xkbcommon.h
+    HINTS ${XKBCOMMON_INCLUDE_DIRS}
+)
+
+find_library(XKBCOMMON_LIBS 
+    NAMES xkbcommon
+    HINTS "${XKBCOMMON_LIBRARIES}" 
+)
+
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(WAYLAND DEFAULT_MSG UWAC_LIBS UWAC_INCLUDE_DIR)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(WAYLAND DEFAULT_MSG WAYLAND_SCANNER WAYLAND_INCLUDE_DIR WAYLAND_LIBS XKBCOMMON_INCLUDE_DIR XKBCOMMON_LIBS)
