@@ -105,7 +105,7 @@ static BOOL BitBlt_SRCCOPY_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 			dstp = gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
 
 			if (srcp != 0 && dstp != 0)
-				memcpy(dstp, srcp, nWidth * hdcDest->bytesPerPixel);
+				memmove(dstp, srcp, nWidth * hdcDest->bytesPerPixel);
 		}
 
 		return TRUE;
