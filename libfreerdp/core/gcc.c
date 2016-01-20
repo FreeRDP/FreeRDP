@@ -761,6 +761,9 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	if (settings->SupportDynamicTimeZone)
 		settings->SupportDynamicTimeZone = (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE) ? TRUE : FALSE;
 
+	if (settings->SupportMonitorLayoutPdu)
+		settings->SupportMonitorLayoutPdu = (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU) ? TRUE : FALSE;
+
 	if (!(earlyCapabilityFlags & RNS_UD_CS_VALID_CONNECTION_TYPE))
 		connectionType = 0;
 
@@ -865,6 +868,9 @@ void gcc_write_client_core_data(wStream* s, rdpMcs* mcs)
 
 	if (settings->SupportDynamicTimeZone)
 		earlyCapabilityFlags |= RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE;
+
+	if (settings->SupportMonitorLayoutPdu)
+		earlyCapabilityFlags |= RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU;
 
 	Stream_Write_UINT16(s, highColorDepth); /* highColorDepth */
 	Stream_Write_UINT16(s, supportedColorDepths); /* supportedColorDepths */
