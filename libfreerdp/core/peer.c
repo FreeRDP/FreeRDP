@@ -219,10 +219,18 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 	if (settings->RdpKeyFile)
 	{
 		settings->RdpServerRsaKey = key_new(settings->RdpKeyFile);
-
 		if (!settings->RdpServerRsaKey)
 		{
 			WLog_ERR(TAG, "invalid RDP key file %s", settings->RdpKeyFile);
+			return FALSE;
+		}
+	}
+	else if (settings->RdpKeyContent)
+	{
+		settings->RdpServerRsaKey = key_new_from_content(settings->RdpKeyContent, NULL);
+		if (!settings->RdpServerRsaKey)
+		{
+			WLog_ERR(TAG, "invalid RDP key content");
 			return FALSE;
 		}
 	}

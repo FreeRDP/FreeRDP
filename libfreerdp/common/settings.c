@@ -2381,6 +2381,15 @@ char* freerdp_get_param_string(rdpSettings* settings, int id)
 		case FreeRDP_RdpKeyFile:
 			return settings->RdpKeyFile;
 
+		case FreeRDP_CertificateContent:
+			return settings->CertificateContent;
+
+		case FreeRDP_PrivateKeyContent:
+			return settings->PrivateKeyContent;
+
+		case FreeRDP_RdpKeyContent:
+			return settings->RdpKeyContent;
+
 		case FreeRDP_WindowTitle:
 			return settings->WindowTitle;
 
@@ -2549,6 +2558,18 @@ int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 
 		case FreeRDP_PrivateKeyFile:
 			tmp = &settings->PrivateKeyFile;
+			break;
+
+		case FreeRDP_CertificateContent:
+			tmp = &settings->CertificateContent;
+			break;
+
+		case FreeRDP_PrivateKeyContent:
+			tmp = &settings->PrivateKeyContent;
+			break;
+
+		case FreeRDP_RdpKeyContent:
+			tmp = &settings->RdpKeyContent;
 			break;
 
 		case FreeRDP_RdpKeyFile:

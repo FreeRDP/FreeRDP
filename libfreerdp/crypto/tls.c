@@ -823,9 +823,12 @@ static void tls_openssl_tlsext_debug_callback(SSL *s, int client_server,
 }
 #endif
 
-BOOL tls_accept(rdpTls* tls, BIO* underlying, const char* cert_file, const char* privatekey_file)
+BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings *settings)
 {
 	long options = 0;
+	BIO *bio;
+	RSA *rsa;
+	X509 *x509;
 
 	/**
 	 * SSL_OP_NO_SSLv2:
@@ -867,16 +870,85 @@ BOOL tls_accept(rdpTls* tls, BIO* underlying, const char* cert_file, const char*
 	if (!tls_prepare(tls, underlying, SSLv23_server_method(), options, FALSE))
 		return FALSE;
 
-	if (SSL_use_RSAPrivateKey_file(tls->ssl, privatekey_file, SSL_FILETYPE_PEM) <= 0)
+	if (settings->PrivateKeyFile)
 	{
-		WLog_ERR(TAG, "SSL_CTX_use_RSAPrivateKey_file failed");
-		WLog_ERR(TAG, "PrivateKeyFile: %s", privatekey_file);
+		bio = BIO_new_file(settings->PrivateKeyFile, "rb+");
+		if (!bio)
+		{
+			WLog_ERR(TAG, "BIO_new_file failed for private key %s", settings->PrivateKeyFile);
+			return FALSE;
+		}
+	}
+	else if (settings->PrivateKeyContent)
+	{
+		bio = BIO_new_mem_buf(settings->PrivateKeyContent, strlen(settings->PrivateKeyContent));
+		if (!bio)
+		{
+			WLog_ERR(TAG, "BIO_new_mem_buf failed for private key");
+			return FALSE;
+		}
+	}
+	else
+	{
+		WLog_ERR(TAG, "no private key defined");
 		return FALSE;
 	}
 
-	if (SSL_use_certificate_file(tls->ssl, cert_file, SSL_FILETYPE_PEM) <= 0)
+	rsa = PEM_read_bio_RSAPrivateKey(bio, NULL, NULL, NULL);
+	BIO_free(bio);
+
+	if (!rsa)
+	{
+		WLog_ERR(TAG, "invalid private key");
+		return FALSE;
+	}
+
+	if (SSL_use_RSAPrivateKey(tls->ssl, rsa) <= 0)
+	{
+		WLog_ERR(TAG, "SSL_CTX_use_RSAPrivateKey_file failed");
+		RSA_free(rsa);
+		return FALSE;
+	}
+
+
+	if (settings->CertificateFile)
+	{
+		bio = BIO_new_file(settings->CertificateFile, "rb+");
+		if (!bio)
+		{
+			WLog_ERR(TAG, "BIO_new_file failed for certificate %s", settings->CertificateFile);
+			return FALSE;
+		}
+	}
+	else if (settings->CertificateContent)
+	{
+		bio = BIO_new_mem_buf(settings->CertificateContent, strlen(settings->CertificateContent));
+		if (!bio)
+		{
+			WLog_ERR(TAG, "BIO_new_mem_buf failed for certificate");
+			return FALSE;
+		}
+	}
+	else
+	{
+		WLog_ERR(TAG, "no certificate defined");
+		return FALSE;
+	}
+
+	x509 = PEM_read_bio_X509(bio, NULL, NULL, 0);
+	BIO_free(bio);
+
+	if (!x509)
+	{
+		WLog_ERR(TAG, "invalid certificate");
+		return FALSE;
+	}
+
+
+	if (SSL_use_certificate(tls->ssl, x509) <= 0)
 	{
 		WLog_ERR(TAG, "SSL_use_certificate_file failed");
+		X509_free(x509);
 		return FALSE;
 	}
 

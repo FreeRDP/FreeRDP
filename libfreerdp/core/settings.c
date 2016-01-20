@@ -597,6 +597,9 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		CHECKED_STRDUP(CertificateFile); /* 1410 */
 		CHECKED_STRDUP(PrivateKeyFile); /* 1411 */
 		CHECKED_STRDUP(RdpKeyFile); /* 1412 */
+		CHECKED_STRDUP(CertificateContent); /* 1416 */
+		CHECKED_STRDUP(PrivateKeyContent); /* 1417 */
+		CHECKED_STRDUP(RdpKeyContent); /* 1418 */
 		CHECKED_STRDUP(WindowTitle); /* 1542 */
 		CHECKED_STRDUP(WmClass); /* 1549 */
 		CHECKED_STRDUP(ComputerName); /* 1664 */
@@ -924,6 +927,9 @@ void freerdp_settings_free(rdpSettings* settings)
     free(settings->ServerCertificate);
     free(settings->RdpKeyFile);
     certificate_free(settings->RdpServerCertificate);
+    free(settings->CertificateContent);
+    free(settings->PrivateKeyContent);
+    free(settings->RdpKeyContent);
     free(settings->ClientAutoReconnectCookie);
     free(settings->ServerAutoReconnectCookie);
     free(settings->ClientTimeZone);
