@@ -591,8 +591,8 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	/* clientName (32 bytes, null-terminated unicode, truncated to 15 characters) */
 	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), 32 / 2, &str, 0, NULL, NULL);
 	Stream_Seek(s, 32);
-	sprintf_s(settings->ClientHostname, 31, "%s", str);
-	settings->ClientHostname[31] = 0;
+	free(settings->ClientHostname);
+	settings->ClientHostname = str;
 	free(str);
 	str = NULL;
 
@@ -649,8 +649,8 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 
 		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), 64 / 2, &str, 0, NULL, NULL);
 		Stream_Seek(s, 64); /* clientDigProductId (64 bytes) */
-		sprintf_s(settings->ClientProductId, 32, "%s", str);
-		free(str);
+		free(settings->ClientProductId);
+		settings->ClientProductId = str;
 		blockLength -= 64;
 
 		if (blockLength < 1)
