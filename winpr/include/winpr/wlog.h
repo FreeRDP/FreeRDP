@@ -190,6 +190,9 @@ WINPR_API BOOL WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args
 
 WINPR_API DWORD WLog_GetLogLevel(wLog* log);
 WINPR_API BOOL WLog_SetLogLevel(wLog* log, DWORD logLevel);
+WINPR_API BOOL WLog_SetStringLogLevel(wLog* log, LPCSTR level);
+WINPR_API BOOL WLog_AddStringLogFilters(LPCSTR filter);
+
 
 WINPR_API BOOL WLog_SetLogAppenderType(wLog* log, DWORD logAppenderType);
 WINPR_API wLogAppender* WLog_GetLogAppender(wLog* log);

@@ -55,7 +55,7 @@ typedef struct _wLogFilter wLogFilter;
  * http://docs.python.org/2/library/logging.html
  */
 
-const char* WLOG_LEVELS[7] =
+LPCSTR WLOG_LEVELS[7] =
 {
 	"TRACE",
 	"DEBUG",
@@ -69,13 +69,16 @@ const char* WLOG_LEVELS[7] =
 static DWORD g_FilterCount = 0;
 static wLogFilter* g_Filters = NULL;
 
-static BOOL log_recursion(const char* file, const char* fkt, int line)
+static int WLog_ParseLogLevel(LPCSTR level);
+static BOOL WLog_ParseFilter(wLogFilter* filter, LPCSTR name);
+
+static BOOL log_recursion(LPCSTR file, LPCSTR fkt, int line)
 {
 	char** msg;
 	size_t used, i;
 	void* bt = winpr_backtrace(20);
 #if defined(ANDROID)
-	const char* tag = WINPR_TAG("utils.wlog");
+	LPCSTR tag = WINPR_TAG("utils.wlog");
 #endif
 
 	if (!bt)
@@ -302,6 +305,92 @@ DWORD WLog_GetLogLevel(wLog* log)
 	}
 }
 
+BOOL WLog_SetStringLogLevel(wLog* log, LPCSTR level)
+{
+	int lvl;
+	if (!log || !level)
+		return FALSE;
+
+	lvl = WLog_ParseLogLevel(level);
+	if (lvl < 0)
+		return FALSE;
+
+	return WLog_SetLogLevel(log, lvl);
+}
+
+BOOL WLog_AddStringLogFilters(LPCSTR filter)
+{
+	DWORD pos;
+	DWORD size;
+	DWORD count;
+	DWORD status;
+	LPSTR p;
+	LPSTR s;
+	LPSTR cp;
+	wLogFilter* tmp;
+
+	if (!filter)
+		return FALSE;
+
+	count = 1;
+	p = (LPSTR)filter;
+
+	while ((p = strchr(p, ',')) != NULL)
+	{
+		count++;
+		p++;
+	}
+
+	pos = g_FilterCount;
+	size = g_FilterCount + count;
+	tmp = (wLogFilter*) realloc(g_Filters, size * sizeof(wLogFilter));
+
+	if (!tmp)
+	{
+		free (g_Filters);
+		return FALSE;
+	}
+	g_Filters = tmp;
+
+	cp = (LPSTR)_strdup(filter);
+	if (!cp)
+		return FALSE;
+
+	p = cp;
+	s = cp;
+
+	do
+	{
+		p = strchr(p, ',');
+		if (p)
+			*p = '\0';
+
+		if (pos < size)
+		{
+			status = WLog_ParseFilter(&g_Filters[pos++], s);
+			if (status < 0)
+			{
+				free (cp);
+				return FALSE;
+			}
+		}
+		else
+			break;
+
+		if (p)
+		{
+			s = p + 1;
+			p++;
+		}
+	}
+	while (p != NULL);
+
+	g_FilterCount = size;
+	free (cp);
+
+	return TRUE;
+}
+
 BOOL WLog_SetLogLevel(wLog* log, DWORD logLevel)
 {
 	if (!log)
@@ -316,7 +405,7 @@ BOOL WLog_SetLogLevel(wLog* log, DWORD logLevel)
 	return TRUE;
 }
 
-int WLog_ParseLogLevel(const char* level)
+int WLog_ParseLogLevel(LPCSTR level)
 {
 	int iLevel = -1;
 
@@ -418,12 +507,12 @@ BOOL WLog_ParseFilter(wLogFilter* filter, LPCSTR name)
 
 BOOL WLog_ParseFilters()
 {
-	char* p;
+	BOOL res;
 	char* env;
-	DWORD count;
 	DWORD nSize;
-	int status;
-	LPCSTR* strs;
+
+	g_Filters = NULL;
+	g_FilterCount = 0;
 
 	nSize = GetEnvironmentVariableA("WLOG_FILTER", NULL, 0);
 
@@ -438,62 +527,11 @@ BOOL WLog_ParseFilters()
 	if (!GetEnvironmentVariableA("WLOG_FILTER", env, nSize))
 		return FALSE;
 
-	count = 1;
-	p = env;
+	res = WLog_AddStringLogFilters(env);
 
-	while ((p = strchr(p, ',')) != NULL)
-	{
-		count++;
-		p++;
-	}
-
-	g_FilterCount = count;
-	p = env;
-
-	count = 0;
-	strs = (LPCSTR*) calloc(g_FilterCount, sizeof(LPCSTR));
-
-	if (!strs)
-	{
-		free(env);
-		return FALSE;
-	}
-
-	strs[count++] = p;
-
-	while ((p = strchr(p, ',')) != NULL)
-	{
-		if (count < g_FilterCount)
-			strs[count++] = p + 1;
-		*p = '\0';
-		p++;
-	}
-
-	g_Filters = calloc(g_FilterCount, sizeof(wLogFilter));
-
-	if (!g_Filters)
-	{
-		free(strs);
-		free(env);
-		return FALSE;
-	}
-
-	for (count = 0; count < g_FilterCount; count++)
-	{
-		status = WLog_ParseFilter(&g_Filters[count], strs[count]);
-
-		if (status < 0)
-		{
-			free(strs);
-			free(env);
-			return FALSE;
-		}
-	}
-
-	free(strs);
 	free(env);
 
-	return TRUE;
+	return res;
 }
 
 int WLog_GetFilterLogLevel(wLog* log)

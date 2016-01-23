@@ -26,6 +26,7 @@
 #include <assert.h>
 
 #include <winpr/crt.h>
+#include <winpr/wlog.h>
 #include <winpr/cmdline.h>
 
 #include <freerdp/addin.h>
@@ -173,6 +174,8 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "encryption-methods", COMMAND_LINE_VALUE_REQUIRED, "<40,56,128,FIPS>", NULL, NULL, -1, NULL, "RDP standard security encryption methods" },
 	{ "from-stdin", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Read credentials from stdin, do not use defaults." },
 	{ "buildconfig", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_BUILDCONFIG, NULL, NULL, NULL, -1, NULL, "print the build configuration" },
+	{ "log-level", COMMAND_LINE_VALUE_REQUIRED, "[OFF|FATAL|ERROR|WARN|INFO|DEBUG|TRACE]", NULL, NULL, -1, NULL, "Set the default log level" },
+	{ "log-filters", COMMAND_LINE_VALUE_REQUIRED, "<logger tag>:<log level>[, <logger tag>:<log level>][, ...]]", NULL, NULL, -1, NULL, "Set logger filters" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
@@ -2105,6 +2108,17 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchCase(arg, "from-stdin")
 		{
 			settings->CredentialsFromStdin = TRUE;
+		}
+		CommandLineSwitchCase(arg, "log-level")
+		{
+			wLog* root = WLog_GetRoot();
+			if (!WLog_SetStringLogLevel(root, arg->Value))
+				return COMMAND_LINE_ERROR;
+		}
+		CommandLineSwitchCase(arg, "log-filters")
+		{
+			if (!WLog_AddStringLogFilters(arg->Value))
+				return COMMAND_LINE_ERROR;
 		}
 		CommandLineSwitchCase(arg, "sec-rdp")
 		{
