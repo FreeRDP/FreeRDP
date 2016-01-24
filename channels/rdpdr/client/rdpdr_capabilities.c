@@ -128,11 +128,14 @@ static void rdpdr_process_smartcard_capset(rdpdrPlugin* rdpdr, wStream* s)
 	Stream_Seek(s, capabilityLength - 4);
 }
 
-void rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
+UINT rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
 {
 	UINT16 i;
 	UINT16 numCapabilities;
 	UINT16 capabilityType;
+
+	if (!rdpdr || !s)
+		return ERROR_INVALID_PARAMETER;
 
 	Stream_Read_UINT16(s, numCapabilities);
 	Stream_Seek(s, 2); /* pad (2 bytes) */
@@ -167,6 +170,8 @@ void rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
 				break;
 		}
 	}
+
+	return CHANNEL_RC_OK;
 }
 
 /**

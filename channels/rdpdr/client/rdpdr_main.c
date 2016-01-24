@@ -81,6 +81,9 @@ static UINT rdpdr_send_device_list_remove_request(rdpdrPlugin* rdpdr, UINT32 cou
 	UINT32 i;
 	wStream* s;
 
+	if (!rdpdr)
+		return ERROR_INVALID_PARAMETER;
+
 	s = Stream_New(NULL, 256);
 	if (!s)
 	{
@@ -429,7 +432,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 		BOOL dev_found = FALSE;
 
 		device_ext = (DEVICE_DRIVE_EXT *)ListDictionary_GetItemValue(rdpdr->devman->devices, (void *)keys[j]);
-		if (!device_ext)
+		if (!device_ext || !device_ext->path)
 			continue;
 
 		/* not plugable device */
@@ -592,6 +595,10 @@ out:
 static UINT drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 {
     UINT error;
+
+	if (!rdpdr)
+		return ERROR_INVALID_PARAMETER;
+
 	if (rdpdr->hotplugThread)
 	{
 		if (rdpdr->stopEvent)
@@ -622,6 +629,9 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 	RDPDR_DEVICE* device;
 	rdpSettings* settings;
 	UINT error = CHANNEL_RC_OK;
+
+	if (!rdpdr)
+		return ERROR_INVALID_PARAMETER;
 
 	rdpdr->devman = devman_new(rdpdr);
 	if (!rdpdr->devman)
@@ -661,13 +671,18 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 	return error;
 }
 
-static void rdpdr_process_server_announce_request(rdpdrPlugin* rdpdr, wStream* s)
+static UINT rdpdr_process_server_announce_request(rdpdrPlugin* rdpdr, wStream* s)
 {
+	if (!rdpdr || !s)
+		return ERROR_INVALID_PARAMETER;
+
 	Stream_Read_UINT16(s, rdpdr->versionMajor);
 	Stream_Read_UINT16(s, rdpdr->versionMinor);
 	Stream_Read_UINT32(s, rdpdr->clientID);
 
 	rdpdr->sequenceId++;
+
+	return CHANNEL_RC_OK;
 }
 
 /**
@@ -678,6 +693,9 @@ static void rdpdr_process_server_announce_request(rdpdrPlugin* rdpdr, wStream* s
 static UINT rdpdr_send_client_announce_reply(rdpdrPlugin* rdpdr)
 {
 	wStream* s;
+
+	if (!rdpdr)
+		return ERROR_INVALID_PARAMETER;
 
 	s = Stream_New(NULL, 12);
 	if (!s)
@@ -707,6 +725,9 @@ static UINT rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 	WCHAR* computerNameW = NULL;
 	size_t computerNameLenW;
 
+    if (!rdpdr)
+        return ERROR_INVALID_PARAMETER;
+
 	if (!rdpdr->computerName[0])
 		gethostname(rdpdr->computerName, sizeof(rdpdr->computerName) - 1);
 
@@ -733,11 +754,14 @@ static UINT rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 	return rdpdr_send(rdpdr, s);
 }
 
-static void rdpdr_process_server_clientid_confirm(rdpdrPlugin* rdpdr, wStream* s)
+static UINT rdpdr_process_server_clientid_confirm(rdpdrPlugin* rdpdr, wStream* s)
 {
 	UINT16 versionMajor;
 	UINT16 versionMinor;
 	UINT32 clientID;
+
+	if (!rdpdr || !s)
+		return ERROR_INVALID_PARAMETER;
 
 	Stream_Read_UINT16(s, versionMajor);
 	Stream_Read_UINT16(s, versionMinor);
@@ -750,9 +774,9 @@ static void rdpdr_process_server_clientid_confirm(rdpdrPlugin* rdpdr, wStream* s
 	}
 
 	if (clientID != rdpdr->clientID)
-	{
 		rdpdr->clientID = clientID;
-	}
+
+	return CHANNEL_RC_OK;
 }
 
 /**
@@ -773,6 +797,9 @@ static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 	DEVICE* device;
 	int keyCount;
 	ULONG_PTR* pKeys;
+
+	if (!rdpdr)
+		return ERROR_INVALID_PARAMETER;
 
 	s = Stream_New(NULL, 256);
 	if (!s)
@@ -859,6 +886,9 @@ static UINT rdpdr_process_irp(rdpdrPlugin* rdpdr, wStream* s)
 	IRP* irp;
 	UINT error = CHANNEL_RC_OK;
 
+	if (!rdpdr || !s)
+		return ERROR_INVALID_PARAMETER;
+
 	irp = irp_new(rdpdr->devman, s);
 
 	if (!irp)
@@ -887,6 +917,9 @@ static UINT rdpdr_process_init(rdpdrPlugin* rdpdr)
 	DEVICE* device;
 	ULONG_PTR* pKeys;
 	UINT error = CHANNEL_RC_OK;
+
+	if (!rdpdr)
+		return ERROR_INVALID_PARAMETER;
 
 	pKeys = NULL;
 	keyCount = ListDictionary_GetKeys(rdpdr->devman->devices, &pKeys);
@@ -921,6 +954,9 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 	UINT32 status;
 	UINT error;
 
+	if (!rdpdr || !s)
+		return ERROR_INVALID_PARAMETER;
+
 	Stream_Read_UINT16(s, component); /* Component (2 bytes) */
 	Stream_Read_UINT16(s, packetId); /* PacketId (2 bytes) */
 
@@ -929,7 +965,8 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 		switch (packetId)
 		{
 			case PAKID_CORE_SERVER_ANNOUNCE:
-				rdpdr_process_server_announce_request(rdpdr, s);
+				if ((error = rdpdr_process_server_announce_request(rdpdr, s)))
+					return error;
 				if ((error = rdpdr_send_client_announce_reply(rdpdr)))
 				{
 					WLog_ERR(TAG, "rdpdr_send_client_announce_reply failed with error %lu", error);
@@ -948,7 +985,8 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 				break;
 
 			case PAKID_CORE_SERVER_CAPABILITY:
-				rdpdr_process_capability_request(rdpdr, s);
+				if ((error = rdpdr_process_capability_request(rdpdr, s)))
+					return error;
 				if ((error = rdpdr_send_capability_response(rdpdr)))
 				{
 					WLog_ERR(TAG, "rdpdr_send_capability_response failed with error %lu", error);
@@ -957,7 +995,9 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 				break;
 
 			case PAKID_CORE_CLIENTID_CONFIRM:
-				rdpdr_process_server_clientid_confirm(rdpdr, s);
+				if ((error = rdpdr_process_server_clientid_confirm(rdpdr, s)))
+					return error;
+
 				if ((error = rdpdr_send_device_list_announce_request(rdpdr, FALSE)))
 				{
 					WLog_ERR(TAG, "rdpdr_send_device_list_announce_request failed with error %lu", error);
@@ -1132,10 +1172,11 @@ UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 	UINT status;
 	rdpdrPlugin* plugin = (rdpdrPlugin*) rdpdr;
 
+	if (!rdpdr || !s)
+		return ERROR_INVALID_PARAMETER;
+
 	if (!plugin)
-	{
 		status = CHANNEL_RC_BAD_INIT_HANDLE;
-	}
 	else
 	{
 		status = plugin->channelEntryPoints.pVirtualChannelWrite(plugin->OpenHandle,
@@ -1161,6 +1202,9 @@ static UINT rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr,
 		void* pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	wStream* data_in;
+
+	if (!rdpdr)
+		return ERROR_INVALID_PARAMETER;
 
 	if ((dataFlags & CHANNEL_FLAG_SUSPEND) || (dataFlags & CHANNEL_FLAG_RESUME))
 	{
@@ -1256,6 +1300,12 @@ static void* rdpdr_virtual_channel_client_thread(void* arg)
 	rdpdrPlugin* rdpdr = (rdpdrPlugin*) arg;
 	UINT error;
 
+	if (!rdpdr)
+	{
+		ExitThread((DWORD) ERROR_INVALID_PARAMETER);
+		return NULL;
+	}
+
 	if ((error = rdpdr_process_connect(rdpdr)))
 	{
 		WLog_ERR(TAG, "rdpdr_process_connect failed with error %lu!", error);
@@ -1304,6 +1354,9 @@ static UINT rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, LPVOID pDa
 	UINT32 status;
 	UINT error;
 
+	if (!rdpdr)
+		return ERROR_INVALID_PARAMETER;
+
 	status = rdpdr->channelEntryPoints.pVirtualChannelOpen(rdpdr->InitHandle,
 		&rdpdr->OpenHandle, rdpdr->channelDef.name, rdpdr_virtual_channel_open_event);
 
@@ -1344,6 +1397,9 @@ static UINT rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, LPVOID pDa
 static UINT rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
 {
 	UINT error;
+
+	if (!rdpdr)
+		return ERROR_INVALID_PARAMETER;
 
 	if (MessageQueue_PostQuit(rdpdr->queue, 0) && (WaitForSingleObject(rdpdr->thread, INFINITE) == WAIT_FAILED))
     {
@@ -1444,7 +1500,6 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	rdpdrPlugin* rdpdr;
 	CHANNEL_ENTRY_POINTS_FREERDP* pEntryPointsEx;
 
-
 	rdpdr = (rdpdrPlugin*) calloc(1, sizeof(rdpdrPlugin));
 
 	if (!rdpdr)
@@ -1472,7 +1527,6 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	}
 
 	CopyMemory(&(rdpdr->channelEntryPoints), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_FREERDP));
-
 
 	rc = rdpdr->channelEntryPoints.pVirtualChannelInit(&rdpdr->InitHandle,
 		&rdpdr->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, rdpdr_virtual_channel_init_event);
