@@ -547,12 +547,12 @@ BOOL rdp_read_order_capability_set(wStream* s, UINT16 length, rdpSettings* setti
  * @param settings settings
  */
 
-BOOL rdp_write_order_capability_set(wStream* s, rdpSettings* settings)
+static BOOL rdp_write_order_capability_set(wStream* s, rdpSettings* settings)
 {
 	int header;
 	UINT16 orderFlags;
 	UINT16 orderSupportExFlags;
-	UINT16 textANSICodePage;
+	UINT16 textANSICodePage = 0;
 
 	if (!Stream_EnsureRemainingCapacity(s, 64))
 		return FALSE;
@@ -560,7 +560,8 @@ BOOL rdp_write_order_capability_set(wStream* s, rdpSettings* settings)
 	header = rdp_capability_set_start(s);
 
 	/* see [MSDN-CP]: http://msdn.microsoft.com/en-us/library/dd317756 */
-	textANSICodePage = 65001; /* Unicode (UTF-8) */
+	if (!settings->ServerMode)
+		textANSICodePage = 65001; /* Unicode (UTF-8) */
 
 	orderSupportExFlags = 0;
 	orderFlags = NEGOTIATE_ORDER_SUPPORT | ZERO_BOUNDS_DELTA_SUPPORT | COLOR_INDEX_SUPPORT;
@@ -592,7 +593,7 @@ BOOL rdp_write_order_capability_set(wStream* s, rdpSettings* settings)
 	Stream_Write_UINT32(s, 230400); /* desktopSaveSize (4 bytes) */
 	Stream_Write_UINT16(s, 0); /* pad2OctetsC (2 bytes) */
 	Stream_Write_UINT16(s, 0); /* pad2OctetsD (2 bytes) */
-	Stream_Write_UINT16(s, 0); /* textANSICodePage (2 bytes) */
+	Stream_Write_UINT16(s, textANSICodePage); /* textANSICodePage (2 bytes) */
 	Stream_Write_UINT16(s, 0); /* pad2OctetsE (2 bytes) */
 
 	rdp_capability_set_finish(s, header, CAPSET_TYPE_ORDER);
