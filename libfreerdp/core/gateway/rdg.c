@@ -200,12 +200,13 @@ BOOL rdg_send_tunnel_authorization(rdpRdg* rdg)
 	BOOL status;
 	WCHAR* clientName = NULL;
 	UINT16 clientNameLen;
-	UINT32 packetSize = 12 + clientNameLen * 2;
+	UINT32 packetSize;
 
 	clientNameLen = ConvertToUnicode(CP_UTF8, 0, rdg->settings->ClientHostname, -1, &clientName, 0);
 	if (!clientName)
 		return FALSE;
 
+	packetSize = 12 + clientNameLen * 2 + sizeof(WCHAR);
 	s = Stream_New(NULL, packetSize);
 
 	if (!s)
