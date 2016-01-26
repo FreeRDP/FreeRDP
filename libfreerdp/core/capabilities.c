@@ -31,8 +31,6 @@
 
 #define TAG FREERDP_TAG("core.capabilities")
 
-#ifdef WITH_DEBUG_CAPABILITIES
-
 const char* const CAPSET_TYPE_STRINGS[] =
 {
 		"Unknown",
@@ -68,7 +66,13 @@ const char* const CAPSET_TYPE_STRINGS[] =
 		"Frame Acknowledge"
 };
 
-#endif
+static const char *get_capability_name(UINT16 type)
+{
+	if (type > CAPSET_TYPE_FRAME_ACKNOWLEDGE)
+		return "<unknown>";
+
+	return CAPSET_TYPE_STRINGS[type];
+}
 
 BOOL rdp_print_capability_sets(wStream* s, UINT16 numberCapabilities, BOOL receiving);
 
@@ -3401,6 +3405,7 @@ BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCa
 	UINT16 type;
 	UINT16 length;
 	BYTE *bm, *em;
+	BOOL treated;
 
 	Stream_GetPointer(s, mark);
 	count = numberCapabilities;
@@ -3428,6 +3433,7 @@ BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCa
 			return FALSE;
 		}
 
+		treated = TRUE;
 		switch (type)
 		{
 			case CAPSET_TYPE_GENERAL:
@@ -3445,23 +3451,18 @@ BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCa
 					return FALSE;
 				break;
 
-			case CAPSET_TYPE_BITMAP_CACHE:
-				if (!rdp_read_bitmap_cache_capability_set(s, length, settings))
-					return FALSE;
-				break;
-
-			case CAPSET_TYPE_CONTROL:
-				if (!rdp_read_control_capability_set(s, length, settings))
-					return FALSE;
-				break;
-
-			case CAPSET_TYPE_ACTIVATION:
-				if (!rdp_read_window_activation_capability_set(s, length, settings))
-					return FALSE;
-				break;
-
 			case CAPSET_TYPE_POINTER:
 				if (!rdp_read_pointer_capability_set(s, length, settings))
+					return FALSE;
+				break;
+
+			case CAPSET_TYPE_INPUT:
+				if (!rdp_read_input_capability_set(s, length, settings))
+					return FALSE;
+				break;
+
+			case CAPSET_TYPE_VIRTUAL_CHANNEL:
+				if (!rdp_read_virtual_channel_capability_set(s, length, settings))
 					return FALSE;
 				break;
 
@@ -3475,53 +3476,8 @@ BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCa
 					return FALSE;
 				break;
 
-			case CAPSET_TYPE_SOUND:
-				if (!rdp_read_sound_capability_set(s, length, settings))
-					return FALSE;
-				break;
-
-			case CAPSET_TYPE_INPUT:
-				if (!rdp_read_input_capability_set(s, length, settings))
-					return FALSE;
-				break;
-
 			case CAPSET_TYPE_FONT:
 				if (!rdp_read_font_capability_set(s, length, settings))
-					return FALSE;
-				break;
-
-			case CAPSET_TYPE_BRUSH:
-				if (!rdp_read_brush_capability_set(s, length, settings))
-					return FALSE;
-				break;
-
-			case CAPSET_TYPE_GLYPH_CACHE:
-				if (!rdp_read_glyph_cache_capability_set(s, length, settings))
-					return FALSE;
-				break;
-
-			case CAPSET_TYPE_OFFSCREEN_CACHE:
-				if (!rdp_read_offscreen_bitmap_cache_capability_set(s, length, settings))
-					return FALSE;
-				break;
-
-			case CAPSET_TYPE_BITMAP_CACHE_HOST_SUPPORT:
-				if (!rdp_read_bitmap_cache_host_support_capability_set(s, length, settings))
-					return FALSE;
-				break;
-
-			case CAPSET_TYPE_BITMAP_CACHE_V2:
-				if (!rdp_read_bitmap_cache_v2_capability_set(s, length, settings))
-					return FALSE;
-				break;
-
-			case CAPSET_TYPE_VIRTUAL_CHANNEL:
-				if (!rdp_read_virtual_channel_capability_set(s, length, settings))
-					return FALSE;
-				break;
-
-			case CAPSET_TYPE_DRAW_NINE_GRID_CACHE:
-				if (!rdp_read_draw_nine_grid_cache_capability_set(s, length, settings))
 					return FALSE;
 				break;
 
@@ -3540,11 +3496,6 @@ BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCa
 					return FALSE;
 				break;
 
-			case CAPSET_TYPE_COMP_DESK:
-				if (!rdp_read_desktop_composition_capability_set(s, length, settings))
-					return FALSE;
-				break;
-
 			case CAPSET_TYPE_MULTI_FRAGMENT_UPDATE:
 				if (!rdp_read_multifragment_update_capability_set(s, length, settings))
 					return FALSE;
@@ -3552,6 +3503,11 @@ BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCa
 
 			case CAPSET_TYPE_LARGE_POINTER:
 				if (!rdp_read_large_pointer_capability_set(s, length, settings))
+					return FALSE;
+				break;
+
+			case CAPSET_TYPE_COMP_DESK:
+				if (!rdp_read_desktop_composition_capability_set(s, length, settings))
 					return FALSE;
 				break;
 
@@ -3576,8 +3532,82 @@ BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCa
 				break;
 
 			default:
-				WLog_ERR(TAG,  "unknown capability type %d", type);
+				treated = FALSE;
 				break;
+		}
+
+		if (!treated)
+		{
+			if (settings->ServerMode)
+			{
+				/* treating capabilities that are supposed to be send only from the client */
+				switch (type)
+				{
+				case CAPSET_TYPE_BITMAP_CACHE:
+					if (!rdp_read_bitmap_cache_capability_set(s, length, settings))
+						return FALSE;
+					break;
+
+				case CAPSET_TYPE_BITMAP_CACHE_V2:
+					if (!rdp_read_bitmap_cache_v2_capability_set(s, length, settings))
+						return FALSE;
+					break;
+
+				case CAPSET_TYPE_BRUSH:
+					if (!rdp_read_brush_capability_set(s, length, settings))
+						return FALSE;
+					break;
+
+				case CAPSET_TYPE_GLYPH_CACHE:
+					if (!rdp_read_glyph_cache_capability_set(s, length, settings))
+						return FALSE;
+					break;
+
+				case CAPSET_TYPE_OFFSCREEN_CACHE:
+					if (!rdp_read_offscreen_bitmap_cache_capability_set(s, length, settings))
+						return FALSE;
+					break;
+
+				case CAPSET_TYPE_SOUND:
+					if (!rdp_read_sound_capability_set(s, length, settings))
+						return FALSE;
+					break;
+
+				case CAPSET_TYPE_CONTROL:
+					if (!rdp_read_control_capability_set(s, length, settings))
+						return FALSE;
+					break;
+
+				case CAPSET_TYPE_ACTIVATION:
+					if (!rdp_read_window_activation_capability_set(s, length, settings))
+						return FALSE;
+					break;
+
+				case CAPSET_TYPE_DRAW_NINE_GRID_CACHE:
+					if (!rdp_read_draw_nine_grid_cache_capability_set(s, length, settings))
+						return FALSE;
+					break;
+
+				default:
+					WLog_ERR(TAG, "capability %s(%d) not expected from client", get_capability_name(type), type);
+					return FALSE;
+				}
+			}
+			else
+			{
+				/* treating capabilities that are supposed to be send only from the server */
+				switch (type)
+				{
+				case CAPSET_TYPE_BITMAP_CACHE_HOST_SUPPORT:
+					if (!rdp_read_bitmap_cache_host_support_capability_set(s, length, settings))
+						return FALSE;
+					break;
+
+				default:
+					WLog_ERR(TAG, "capability %s(%d) not expected from server", get_capability_name(type), type);
+					return FALSE;
+				}
+			}
 		}
 
 		if (s->pointer != em)
