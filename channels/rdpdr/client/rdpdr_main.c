@@ -81,10 +81,7 @@ static UINT rdpdr_send_device_list_remove_request(rdpdrPlugin* rdpdr, UINT32 cou
 	UINT32 i;
 	wStream* s;
 
-	if (!rdpdr)
-		return ERROR_INVALID_PARAMETER;
-
-	s = Stream_New(NULL, 256);
+	s = Stream_New(NULL, count * sizeof(UINT32) + 8);
 	if (!s)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
@@ -520,15 +517,15 @@ static void* drive_hotplug_thread_func(void* arg)
 	struct timeval tv;
 	int rv;
 	UINT error;
-    DWORD status;
+	DWORD status;
 
 	rdpdr = (rdpdrPlugin*) arg;
 
 	if (!(rdpdr->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 	{
 		WLog_ERR(TAG, "CreateEvent failed!");
-        error = ERROR_INTERNAL_ERROR;
-        goto out;
+		error = ERROR_INTERNAL_ERROR;
+		goto out;
 	}
 
 	mfd = open("/proc/mounts", O_RDONLY, 0);
@@ -536,8 +533,8 @@ static void* drive_hotplug_thread_func(void* arg)
 	if (mfd < 0)
 	{
 		WLog_ERR(TAG, "ERROR: Unable to open /proc/mounts.");
-        error = ERROR_INTERNAL_ERROR;
-        goto out;
+		error = ERROR_INTERNAL_ERROR;
+		goto out;
 	}
 
 	FD_ZERO(&rfds);
@@ -548,18 +545,18 @@ static void* drive_hotplug_thread_func(void* arg)
 	if ((error = handle_hotplug(rdpdr)))
 	{
 		WLog_ERR(TAG, "handle_hotplug failed with error %lu!", error);
-        goto out;
+		goto out;
 	}
 
 	while ((rv = select(mfd+1, NULL, NULL, &rfds, &tv)) >= 0)
 	{
-        status = WaitForSingleObject(rdpdr->stopEvent, 0);
-        if (status == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
-            goto out;
-        }
+		status = WaitForSingleObject(rdpdr->stopEvent, 0);
+		if (status == WAIT_FAILED)
+		{
+			error = GetLastError();
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+			goto out;
+		}
 		if (status == WAIT_OBJECT_0)
 			break;
 
@@ -569,7 +566,7 @@ static void* drive_hotplug_thread_func(void* arg)
 			if ((error = handle_hotplug(rdpdr)))
 			{
 				WLog_ERR(TAG, "handle_hotplug failed with error %lu!", error);
-                goto out;
+				goto out;
 			}
 		}
 
@@ -580,11 +577,11 @@ static void* drive_hotplug_thread_func(void* arg)
 	}
 
 out:
-    if (error && rdpdr->rdpcontext)
-        setChannelError(rdpdr->rdpcontext, error, "drive_hotplug_thread_func reported an error");
+	if (error && rdpdr->rdpcontext)
+		setChannelError(rdpdr->rdpcontext, error, "drive_hotplug_thread_func reported an error");
 
-    ExitThread((DWORD)error);
-    return NULL;
+	ExitThread((DWORD)error);
+	return NULL;
 }
 
 /**
@@ -594,10 +591,7 @@ out:
  */
 static UINT drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 {
-    UINT error;
-
-	if (!rdpdr)
-		return ERROR_INVALID_PARAMETER;
+	UINT error;
 
 	if (rdpdr->hotplugThread)
 	{
@@ -605,14 +599,14 @@ static UINT drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 			SetEvent(rdpdr->stopEvent);
 
 		if (WaitForSingleObject(rdpdr->hotplugThread, INFINITE) == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
-            return error;
-        }
+		{
+			error = GetLastError();
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+			return error;
+		}
 		rdpdr->hotplugThread = NULL;
 	}
-    return CHANNEL_RC_OK;
+	return CHANNEL_RC_OK;
 }
 
 #endif
@@ -629,9 +623,6 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 	RDPDR_DEVICE* device;
 	rdpSettings* settings;
 	UINT error = CHANNEL_RC_OK;
-
-	if (!rdpdr)
-		return ERROR_INVALID_PARAMETER;
 
 	rdpdr->devman = devman_new(rdpdr);
 	if (!rdpdr->devman)
@@ -673,8 +664,8 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 
 static UINT rdpdr_process_server_announce_request(rdpdrPlugin* rdpdr, wStream* s)
 {
-	if (!rdpdr || !s)
-		return ERROR_INVALID_PARAMETER;
+	if (!Stream_EnsureRemainingCapacity(s, 8))
+		return CHANNEL_RC_NO_BUFFER;
 
 	Stream_Read_UINT16(s, rdpdr->versionMajor);
 	Stream_Read_UINT16(s, rdpdr->versionMinor);
@@ -694,14 +685,11 @@ static UINT rdpdr_send_client_announce_reply(rdpdrPlugin* rdpdr)
 {
 	wStream* s;
 
-	if (!rdpdr)
-		return ERROR_INVALID_PARAMETER;
-
 	s = Stream_New(NULL, 12);
 	if (!s)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
-		return CHANNEL_RC_OK;
+		return CHANNEL_RC_NO_MEMORY;
 	}
 
 	Stream_Write_UINT16(s, RDPDR_CTYP_CORE); /* Component (2 bytes) */
@@ -724,9 +712,6 @@ static UINT rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 	wStream* s;
 	WCHAR* computerNameW = NULL;
 	size_t computerNameLenW;
-
-    if (!rdpdr)
-        return ERROR_INVALID_PARAMETER;
 
 	if (!rdpdr->computerName[0])
 		gethostname(rdpdr->computerName, sizeof(rdpdr->computerName) - 1);
@@ -760,8 +745,8 @@ static UINT rdpdr_process_server_clientid_confirm(rdpdrPlugin* rdpdr, wStream* s
 	UINT16 versionMinor;
 	UINT32 clientID;
 
-	if (!rdpdr || !s)
-		return ERROR_INVALID_PARAMETER;
+	if (!Stream_EnsureRemainingCapacity(s, 8))
+		return CHANNEL_RC_NO_BUFFER;
 
 	Stream_Read_UINT16(s, versionMajor);
 	Stream_Read_UINT16(s, versionMinor);
@@ -798,9 +783,6 @@ static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 	int keyCount;
 	ULONG_PTR* pKeys;
 
-	if (!rdpdr)
-		return ERROR_INVALID_PARAMETER;
-
 	s = Stream_New(NULL, 256);
 	if (!s)
 	{
@@ -831,7 +813,7 @@ static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 		 */
 
 		if ((rdpdr->versionMinor == 0x0005) ||
-			(device->type == RDPDR_DTYP_SMARTCARD) || userLoggedOn)
+				(device->type == RDPDR_DTYP_SMARTCARD) || userLoggedOn)
 		{
 			data_len = (int) (device->data == NULL ? 0 : Stream_GetPosition(device->data));
 			if (!Stream_EnsureRemainingCapacity(s, 20 + data_len))
@@ -886,9 +868,6 @@ static UINT rdpdr_process_irp(rdpdrPlugin* rdpdr, wStream* s)
 	IRP* irp;
 	UINT error = CHANNEL_RC_OK;
 
-	if (!rdpdr || !s)
-		return ERROR_INVALID_PARAMETER;
-
 	irp = irp_new(rdpdr->devman, s);
 
 	if (!irp)
@@ -899,10 +878,10 @@ static UINT rdpdr_process_irp(rdpdrPlugin* rdpdr, wStream* s)
 
 	IFCALLRET(irp->device->IRPRequest, error, irp->device, irp);
 
-    if (error)
-        WLog_ERR(TAG, "device->IRPRequest failed with error %lu", error);
+	if (error)
+		WLog_ERR(TAG, "device->IRPRequest failed with error %lu", error);
 
-    return error;
+	return error;
 }
 
 /**
@@ -917,9 +896,6 @@ static UINT rdpdr_process_init(rdpdrPlugin* rdpdr)
 	DEVICE* device;
 	ULONG_PTR* pKeys;
 	UINT error = CHANNEL_RC_OK;
-
-	if (!rdpdr)
-		return ERROR_INVALID_PARAMETER;
 
 	pKeys = NULL;
 	keyCount = ListDictionary_GetKeys(rdpdr->devman->devices, &pKeys);
@@ -955,7 +931,10 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 	UINT error;
 
 	if (!rdpdr || !s)
-		return ERROR_INVALID_PARAMETER;
+		return CHANNEL_RC_NULL_DATA;
+
+	if (!Stream_EnsureRemainingCapacity(s, 4))
+		return CHANNEL_RC_NO_BUFFER;
 
 	Stream_Read_UINT16(s, component); /* Component (2 bytes) */
 	Stream_Read_UINT16(s, packetId); /* PacketId (2 bytes) */
@@ -964,74 +943,77 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 	{
 		switch (packetId)
 		{
-			case PAKID_CORE_SERVER_ANNOUNCE:
-				if ((error = rdpdr_process_server_announce_request(rdpdr, s)))
-					return error;
-				if ((error = rdpdr_send_client_announce_reply(rdpdr)))
-				{
-					WLog_ERR(TAG, "rdpdr_send_client_announce_reply failed with error %lu", error);
-					return error;
-				}
-				if ((error = rdpdr_send_client_name_request(rdpdr)))
-				{
-					WLog_ERR(TAG, "rdpdr_send_client_name_request failed with error %lu", error);
-					return error;
-				}
-				if ((error = rdpdr_process_init(rdpdr)))
-				{
-					WLog_ERR(TAG, "rdpdr_process_init failed with error %lu", error);
-					return error;
-				}
-				break;
+		case PAKID_CORE_SERVER_ANNOUNCE:
+			if ((error = rdpdr_process_server_announce_request(rdpdr, s)))
+				return error;
+			if ((error = rdpdr_send_client_announce_reply(rdpdr)))
+			{
+				WLog_ERR(TAG, "rdpdr_send_client_announce_reply failed with error %lu", error);
+				return error;
+			}
+			if ((error = rdpdr_send_client_name_request(rdpdr)))
+			{
+				WLog_ERR(TAG, "rdpdr_send_client_name_request failed with error %lu", error);
+				return error;
+			}
+			if ((error = rdpdr_process_init(rdpdr)))
+			{
+				WLog_ERR(TAG, "rdpdr_process_init failed with error %lu", error);
+				return error;
+			}
+			break;
 
-			case PAKID_CORE_SERVER_CAPABILITY:
-				if ((error = rdpdr_process_capability_request(rdpdr, s)))
-					return error;
-				if ((error = rdpdr_send_capability_response(rdpdr)))
-				{
-					WLog_ERR(TAG, "rdpdr_send_capability_response failed with error %lu", error);
-					return error;
-				}
-				break;
+		case PAKID_CORE_SERVER_CAPABILITY:
+			if ((error = rdpdr_process_capability_request(rdpdr, s)))
+				return error;
+			if ((error = rdpdr_send_capability_response(rdpdr)))
+			{
+				WLog_ERR(TAG, "rdpdr_send_capability_response failed with error %lu", error);
+				return error;
+			}
+			break;
 
-			case PAKID_CORE_CLIENTID_CONFIRM:
-				if ((error = rdpdr_process_server_clientid_confirm(rdpdr, s)))
-					return error;
+		case PAKID_CORE_CLIENTID_CONFIRM:
+			if ((error = rdpdr_process_server_clientid_confirm(rdpdr, s)))
+				return error;
 
-				if ((error = rdpdr_send_device_list_announce_request(rdpdr, FALSE)))
-				{
-					WLog_ERR(TAG, "rdpdr_send_device_list_announce_request failed with error %lu", error);
-					return error;
-				}
-				break;
+			if ((error = rdpdr_send_device_list_announce_request(rdpdr, FALSE)))
+			{
+				WLog_ERR(TAG, "rdpdr_send_device_list_announce_request failed with error %lu", error);
+				return error;
+			}
+			break;
 
-			case PAKID_CORE_USER_LOGGEDON:
-				if ((error = rdpdr_send_device_list_announce_request(rdpdr, TRUE)))
-				{
-					WLog_ERR(TAG, "rdpdr_send_device_list_announce_request failed with error %lu", error);
-					return error;
-				}
-				break;
+		case PAKID_CORE_USER_LOGGEDON:
+			if ((error = rdpdr_send_device_list_announce_request(rdpdr, TRUE)))
+			{
+				WLog_ERR(TAG, "rdpdr_send_device_list_announce_request failed with error %lu", error);
+				return error;
+			}
+			break;
 
-			case PAKID_CORE_DEVICE_REPLY:
-				/* connect to a specific resource */
-				Stream_Read_UINT32(s, deviceId);
-				Stream_Read_UINT32(s, status);
-				break;
+		case PAKID_CORE_DEVICE_REPLY:
+			/* connect to a specific resource */
+			if (Stream_EnsureRemainingCapacity(s, 8))
+				return CHANNEL_RC_NO_BUFFER;
 
-			case PAKID_CORE_DEVICE_IOREQUEST:
-				if ((error = rdpdr_process_irp(rdpdr, s)))
-				{
-					WLog_ERR(TAG, "rdpdr_process_irp failed with error %lu", error);
-					return error;
-				}
-				s = NULL;
-				break;
+			Stream_Read_UINT32(s, deviceId);
+			Stream_Read_UINT32(s, status);
+			break;
 
-			default:
-				WLog_ERR(TAG, "RDPDR_CTYP_CORE unknown PacketId: 0x%04X", packetId);
-				return ERROR_INVALID_DATA;
-				break;
+		case PAKID_CORE_DEVICE_IOREQUEST:
+			if ((error = rdpdr_process_irp(rdpdr, s)))
+			{
+				WLog_ERR(TAG, "rdpdr_process_irp failed with error %lu", error);
+				return error;
+			}
+			s = NULL;
+			break;
+
+		default:
+			WLog_ERR(TAG, "RDPDR_CTYP_CORE unknown PacketId: 0x%04X", packetId);
+			return ERROR_INVALID_DATA;
+			break;
 
 		}
 	}
@@ -1039,21 +1021,24 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 	{
 		switch (packetId)
 		{
-			case PAKID_PRN_CACHE_DATA:
-				{
-					UINT32 eventID;
-					Stream_Read_UINT32(s, eventID);
-					WLog_ERR(TAG, "Ignoring unhandled message PAKID_PRN_CACHE_DATA (EventID: 0x%04X)", eventID);
-				}
-				break;
+		case PAKID_PRN_CACHE_DATA:
+		{
+			UINT32 eventID;
+			if (Stream_EnsureRemainingCapacity(s, 4))
+				return CHANNEL_RC_NO_BUFFER;
 
-			case PAKID_PRN_USING_XPS:
-				WLog_ERR(TAG, "Ignoring unhandled message PAKID_PRN_USING_XPS");
-				break;
+			Stream_Read_UINT32(s, eventID);
+			WLog_ERR(TAG, "Ignoring unhandled message PAKID_PRN_CACHE_DATA (EventID: 0x%04X)", eventID);
+		}
+			break;
 
-			default:
-				WLog_ERR(TAG, "Unknown printing component packetID: 0x%04X", packetId);
-				return ERROR_INVALID_DATA;
+		case PAKID_PRN_USING_XPS:
+			WLog_ERR(TAG, "Ignoring unhandled message PAKID_PRN_USING_XPS");
+			break;
+
+		default:
+			WLog_ERR(TAG, "Unknown printing component packetID: 0x%04X", packetId);
+			return ERROR_INVALID_DATA;
 		}
 	}
 	else
@@ -1173,14 +1158,14 @@ UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 	rdpdrPlugin* plugin = (rdpdrPlugin*) rdpdr;
 
 	if (!rdpdr || !s)
-		return ERROR_INVALID_PARAMETER;
+		return CHANNEL_RC_NULL_DATA;
 
 	if (!plugin)
 		status = CHANNEL_RC_BAD_INIT_HANDLE;
 	else
 	{
 		status = plugin->channelEntryPoints.pVirtualChannelWrite(plugin->OpenHandle,
-			Stream_Buffer(s), (UINT32) Stream_GetPosition(s), s);
+																 Stream_Buffer(s), (UINT32) Stream_GetPosition(s), s);
 	}
 
 	if (status != CHANNEL_RC_OK)
@@ -1199,12 +1184,9 @@ UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr,
-		void* pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
+													  void* pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	wStream* data_in;
-
-	if (!rdpdr)
-		return ERROR_INVALID_PARAMETER;
 
 	if ((dataFlags & CHANNEL_FLAG_SUSPEND) || (dataFlags & CHANNEL_FLAG_RESUME))
 	{
@@ -1260,14 +1242,14 @@ static UINT rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr,
 }
 
 static VOID VCAPITYPE rdpdr_virtual_channel_open_event(DWORD openHandle, UINT event,
-		LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
+													   LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	rdpdrPlugin* rdpdr;
 	UINT error = CHANNEL_RC_OK;
 
 	rdpdr = (rdpdrPlugin*) rdpdr_get_open_handle_data(openHandle);
 
-	if (!rdpdr)
+	if (!rdpdr || !pData)
 	{
 		WLog_ERR(TAG,  "rdpdr_virtual_channel_open_event: error no match");
 		return;
@@ -1275,17 +1257,17 @@ static VOID VCAPITYPE rdpdr_virtual_channel_open_event(DWORD openHandle, UINT ev
 
 	switch (event)
 	{
-		case CHANNEL_EVENT_DATA_RECEIVED:
-			if ((error  = rdpdr_virtual_channel_event_data_received(rdpdr, pData, dataLength, totalLength, dataFlags)))
-				WLog_ERR(TAG,  "rdpdr_virtual_channel_event_data_received failed with error %lu!", error );
-			break;
+	case CHANNEL_EVENT_DATA_RECEIVED:
+		if ((error  = rdpdr_virtual_channel_event_data_received(rdpdr, pData, dataLength, totalLength, dataFlags)))
+			WLog_ERR(TAG,  "rdpdr_virtual_channel_event_data_received failed with error %lu!", error );
+		break;
 
-		case CHANNEL_EVENT_WRITE_COMPLETE:
-			Stream_Free((wStream*) pData, TRUE);
-			break;
+	case CHANNEL_EVENT_WRITE_COMPLETE:
+		Stream_Free((wStream*) pData, TRUE);
+		break;
 
-		case CHANNEL_EVENT_USER:
-			break;
+	case CHANNEL_EVENT_USER:
+		break;
 	}
 	if (error && rdpdr->rdpcontext)
 		setChannelError(rdpdr->rdpcontext, error, "rdpdr_virtual_channel_open_event reported an error");
@@ -1302,7 +1284,7 @@ static void* rdpdr_virtual_channel_client_thread(void* arg)
 
 	if (!rdpdr)
 	{
-		ExitThread((DWORD) ERROR_INVALID_PARAMETER);
+		ExitThread((DWORD) CHANNEL_RC_NULL_DATA);
 		return NULL;
 	}
 
@@ -1354,20 +1336,17 @@ static UINT rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, LPVOID pDa
 	UINT32 status;
 	UINT error;
 
-	if (!rdpdr)
-		return ERROR_INVALID_PARAMETER;
-
 	status = rdpdr->channelEntryPoints.pVirtualChannelOpen(rdpdr->InitHandle,
-		&rdpdr->OpenHandle, rdpdr->channelDef.name, rdpdr_virtual_channel_open_event);
+														   &rdpdr->OpenHandle, rdpdr->channelDef.name, rdpdr_virtual_channel_open_event);
 
-    if (status != CHANNEL_RC_OK)
-    {
-        WLog_ERR(TAG,  "pVirtualChannelOpen failed with %s [%08X]",
-                 WTSErrorToString(status), status);
-        return status;
-    }
+	if (status != CHANNEL_RC_OK)
+	{
+		WLog_ERR(TAG,  "pVirtualChannelOpen failed with %s [%08X]",
+				 WTSErrorToString(status), status);
+		return status;
+	}
 
-    if ((error = rdpdr_add_open_handle_data(rdpdr->OpenHandle, rdpdr)))
+	if ((error = rdpdr_add_open_handle_data(rdpdr->OpenHandle, rdpdr)))
 	{
 		WLog_ERR(TAG, "rdpdr_add_open_handle_data failed with error %lu!", error);
 		return error;
@@ -1398,15 +1377,12 @@ static UINT rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
 {
 	UINT error;
 
-	if (!rdpdr)
-		return ERROR_INVALID_PARAMETER;
-
 	if (MessageQueue_PostQuit(rdpdr->queue, 0) && (WaitForSingleObject(rdpdr->thread, INFINITE) == WAIT_FAILED))
-    {
-        error = GetLastError();
-        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
-        return error;
-    }
+	{
+		error = GetLastError();
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+		return error;
+	}
 
 	MessageQueue_Free(rdpdr->queue);
 	CloseHandle(rdpdr->thread);
@@ -1415,10 +1391,10 @@ static UINT rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
 	rdpdr->thread = NULL;
 
 	if ((error = drive_hotplug_thread_terminate(rdpdr)))
-    {
-        WLog_ERR(TAG, "drive_hotplug_thread_terminate failed with error %lu!", error);
-        return error;
-    }
+	{
+		WLog_ERR(TAG, "drive_hotplug_thread_terminate failed with error %lu!", error);
+		return error;
+	}
 
 	error = rdpdr->channelEntryPoints.pVirtualChannelClose(rdpdr->OpenHandle);
 	if (CHANNEL_RC_OK != error)
@@ -1465,25 +1441,25 @@ static VOID VCAPITYPE rdpdr_virtual_channel_init_event(LPVOID pInitHandle, UINT 
 
 	switch (event)
 	{
-		case CHANNEL_EVENT_INITIALIZED:
-			break;
-		case CHANNEL_EVENT_CONNECTED:
-			if ((error = rdpdr_virtual_channel_event_connected(rdpdr, pData, dataLength)))
-				WLog_ERR(TAG, "rdpdr_virtual_channel_event_connected failed with error %lu!", error);
-			break;
+	case CHANNEL_EVENT_INITIALIZED:
+		break;
+	case CHANNEL_EVENT_CONNECTED:
+		if ((error = rdpdr_virtual_channel_event_connected(rdpdr, pData, dataLength)))
+			WLog_ERR(TAG, "rdpdr_virtual_channel_event_connected failed with error %lu!", error);
+		break;
 
-		case CHANNEL_EVENT_DISCONNECTED:
-			if ((error = rdpdr_virtual_channel_event_disconnected(rdpdr)))
-				WLog_ERR(TAG, "rdpdr_virtual_channel_event_disconnected failed with error %lu!", error);
-			break;
+	case CHANNEL_EVENT_DISCONNECTED:
+		if ((error = rdpdr_virtual_channel_event_disconnected(rdpdr)))
+			WLog_ERR(TAG, "rdpdr_virtual_channel_event_disconnected failed with error %lu!", error);
+		break;
 
-		case CHANNEL_EVENT_TERMINATED:
-			rdpdr_virtual_channel_event_terminated(rdpdr);
-			break;
-		default:
-			WLog_ERR(TAG, "unknown event %d!", event);
-			error = ERROR_INVALID_DATA;
-			break;
+	case CHANNEL_EVENT_TERMINATED:
+		rdpdr_virtual_channel_event_terminated(rdpdr);
+		break;
+	default:
+		WLog_ERR(TAG, "unknown event %d!", event);
+		error = ERROR_INVALID_DATA;
+		break;
 	}
 
 	if (error && rdpdr->rdpcontext)
