@@ -761,6 +761,9 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	if (settings->SupportDynamicTimeZone)
 		settings->SupportDynamicTimeZone = (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE) ? TRUE : FALSE;
 
+	if (settings->SupportMonitorLayoutPdu)
+		settings->SupportMonitorLayoutPdu = (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU) ? TRUE : FALSE;
+
 	if (!(earlyCapabilityFlags & RNS_UD_CS_VALID_CONNECTION_TYPE))
 		connectionType = 0;
 
@@ -865,6 +868,9 @@ void gcc_write_client_core_data(wStream* s, rdpMcs* mcs)
 
 	if (settings->SupportDynamicTimeZone)
 		earlyCapabilityFlags |= RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE;
+
+	if (settings->SupportMonitorLayoutPdu)
+		earlyCapabilityFlags |= RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU;
 
 	Stream_Write_UINT16(s, highColorDepth); /* highColorDepth */
 	Stream_Write_UINT16(s, supportedColorDepths); /* supportedColorDepths */
@@ -1593,6 +1599,12 @@ BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 
 	Stream_Read_UINT32(s, flags); /* flags */
 	Stream_Read_UINT32(s, monitorCount); /* monitorCount */
+
+	if (monitorCount > settings->MonitorDefArraySize)
+	{
+		WLog_ERR(TAG, "too many announced monitors(%d), clamping to %d", monitorCount, settings->MonitorDefArraySize);
+		monitorCount = settings->MonitorDefArraySize;
+	}
 
 	if (((blockLength - 8)  / 20) < monitorCount)
 		return FALSE;

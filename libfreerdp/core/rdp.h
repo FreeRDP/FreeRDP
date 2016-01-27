@@ -214,6 +214,8 @@ int rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s);
 
 void rdp_read_flow_control_pdu(wStream* s, UINT16* type);
 
+BOOL rdp_write_monitor_layout_pdu(wStream* s, UINT32 monitorCount, const rdpMonitor* monitorDefArray);
+
 int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra);
 
 int rdp_check_fds(rdpRdp* rdp);

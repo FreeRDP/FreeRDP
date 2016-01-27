@@ -364,8 +364,33 @@ BOOL rdp_server_accept_client_control_pdu(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_server_accept_client_font_list_pdu(rdpRdp* rdp, wStream* s)
 {
+	rdpSettings *settings = rdp->settings;
+
 	if (!rdp_recv_client_font_list_pdu(s))
 		return FALSE;
+
+	if (settings->SupportMonitorLayoutPdu && settings->MonitorCount)
+	{
+		/* client supports the monitorLayout PDU, let's send him the monitors if any */
+		wStream *st;
+		BOOL r;
+
+		st = rdp_data_pdu_init(rdp);
+		if (!st)
+			return FALSE;
+
+		if (!rdp_write_monitor_layout_pdu(st, settings->MonitorCount, settings->MonitorDefArray))
+		{
+			Stream_Free(st, TRUE);
+			return FALSE;
+		}
+
+		r = rdp_send_data_pdu(rdp, st, DATA_PDU_TYPE_MONITOR_LAYOUT, 0);
+		Stream_Free(st, TRUE);
+
+		if (!r)
+			return FALSE;
+	}
 
 	if (!rdp_send_server_font_map_pdu(rdp))
 		return FALSE;
