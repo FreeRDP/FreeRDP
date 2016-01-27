@@ -325,7 +325,7 @@ BOOL WLog_AddStringLogFilters(LPCSTR filter)
 	DWORD count;
 	DWORD status;
 	LPSTR p;
-	LPSTR s;
+	LPSTR filterStr;
 	LPSTR cp;
 	wLogFilter* tmp;
 
@@ -346,10 +346,8 @@ BOOL WLog_AddStringLogFilters(LPCSTR filter)
 	tmp = (wLogFilter*) realloc(g_Filters, size * sizeof(wLogFilter));
 
 	if (!tmp)
-	{
-		free (g_Filters);
 		return FALSE;
-	}
+
 	g_Filters = tmp;
 
 	cp = (LPSTR)_strdup(filter);
@@ -357,7 +355,7 @@ BOOL WLog_AddStringLogFilters(LPCSTR filter)
 		return FALSE;
 
 	p = cp;
-	s = cp;
+	filterStr = cp;
 
 	do
 	{
@@ -367,7 +365,7 @@ BOOL WLog_AddStringLogFilters(LPCSTR filter)
 
 		if (pos < size)
 		{
-			status = WLog_ParseFilter(&g_Filters[pos++], s);
+			status = WLog_ParseFilter(&g_Filters[pos++], filterStr);
 			if (status < 0)
 			{
 				free (cp);
@@ -379,7 +377,7 @@ BOOL WLog_AddStringLogFilters(LPCSTR filter)
 
 		if (p)
 		{
-			s = p + 1;
+			filterStr = p + 1;
 			p++;
 		}
 	}
