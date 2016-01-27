@@ -59,6 +59,7 @@ rdpCertificate* certificate_new(void);
 void certificate_free(rdpCertificate* certificate);
 
 rdpRsaKey* key_new(const char *keyfile);
+rdpRsaKey* key_new_from_content(const char *keycontent, const char *keyfile);
 void key_free(rdpRsaKey* key);
 
 #define CERTIFICATE_TAG FREERDP_TAG("core.certificate")

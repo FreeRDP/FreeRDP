@@ -322,7 +322,7 @@ BOOL transport_accept_tls(rdpTransport* transport)
 
 	transport->layer = TRANSPORT_LAYER_TLS;
 
-	if (!tls_accept(transport->tls, transport->frontBio, settings->CertificateFile, settings->PrivateKeyFile))
+	if (!tls_accept(transport->tls, transport->frontBio, settings))
 		return FALSE;
 
 	transport->frontBio = transport->tls->bio;
@@ -340,7 +340,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 
 	transport->layer = TRANSPORT_LAYER_TLS;
 
-	if (!tls_accept(transport->tls, transport->frontBio, settings->CertificateFile, settings->PrivateKeyFile))
+	if (!tls_accept(transport->tls, transport->frontBio, settings))
 		return FALSE;
 
 	transport->frontBio = transport->tls->bio;

@@ -655,6 +655,10 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_RdpServerRsaKey					1413
 #define FreeRDP_RdpServerCertificate				1414
 #define FreeRDP_ExternalCertificateManagement			1415
+#define FreeRDP_CertificateContent 1416
+#define FreeRDP_PrivateKeyContent	1417
+#define FreeRDP_RdpKeyContent		1418
+
 #define FreeRDP_Workarea					1536
 #define FreeRDP_Fullscreen					1537
 #define FreeRDP_PercentScreen					1538
@@ -1071,7 +1075,10 @@ struct rdp_settings
 	ALIGN64 rdpRsaKey* RdpServerRsaKey; /* 1413 */
 	ALIGN64 rdpCertificate* RdpServerCertificate; /* 1414 */
 	ALIGN64 BOOL ExternalCertificateManagement; /* 1415 */
-	UINT64 padding1472[1472 - 1416]; /* 1416 */
+	ALIGN64 char *CertificateContent; /* 1416 */
+	ALIGN64 char *PrivateKeyContent; /* 1417 */
+	ALIGN64 char* RdpKeyContent; /* 1418 */
+	UINT64 padding1472[1472 - 1419]; /* 1419 */
 	UINT64 padding1536[1536 - 1472]; /* 1472 */
 
 	/**
