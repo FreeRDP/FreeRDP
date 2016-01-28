@@ -4,8 +4,9 @@
  *
  * Copyright 2010-2011 Vic Lee
  * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
- * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015-2016 Thincast Technologies GmbH
  * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -203,19 +204,19 @@ UINT rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
 			break;
 
 		case CAP_PRINTER_TYPE:
-			rdpdr_process_printer_capset(rdpdr, s);
+			status = rdpdr_process_printer_capset(rdpdr, s);
 			break;
 
 		case CAP_PORT_TYPE:
-			rdpdr_process_port_capset(rdpdr, s);
+			status = rdpdr_process_port_capset(rdpdr, s);
 			break;
 
 		case CAP_DRIVE_TYPE:
-			rdpdr_process_drive_capset(rdpdr, s);
+			status = rdpdr_process_drive_capset(rdpdr, s);
 			break;
 
 		case CAP_SMARTCARD_TYPE:
-			rdpdr_process_smartcard_capset(rdpdr, s);
+			status = rdpdr_process_smartcard_capset(rdpdr, s);
 			break;
 
 		default:
