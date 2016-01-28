@@ -728,7 +728,7 @@ UINT drdynvc_send(drdynvcPlugin* drdynvc, wStream* s)
 UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, BYTE* data, UINT32 dataSize)
 {
 	wStream* data_out;
-	unsigned long pos = 0;
+	unsigned long pos;
 	UINT32 cbChId;
 	UINT32 cbLen;
 	unsigned long chunkLength;
@@ -747,9 +747,9 @@ UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, BYTE* data, UI
 	Stream_SetPosition(data_out, 1);
 	cbChId = drdynvc_write_variable_uint(data_out, ChannelId);
 
+	pos = Stream_GetPosition(data_out);
 	if (dataSize == 0)
 	{
-		pos = Stream_GetPosition(data_out);
 		Stream_SetPosition(data_out, 0);
 		Stream_Write_UINT8(data_out, 0x40 | cbChId);
 		Stream_SetPosition(data_out, pos);
@@ -758,7 +758,6 @@ UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, BYTE* data, UI
 	}
 	else if (dataSize <= CHANNEL_CHUNK_LENGTH - pos)
 	{
-		pos = Stream_GetPosition(data_out);
 		Stream_SetPosition(data_out, 0);
 		Stream_Write_UINT8(data_out, 0x30 | cbChId);
 		Stream_SetPosition(data_out, pos);
