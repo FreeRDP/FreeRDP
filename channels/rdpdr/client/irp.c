@@ -83,7 +83,7 @@ IRP* irp_new(DEVMAN* devman, wStream* s, UINT* error)
 	DEVICE* device;
 	UINT32 DeviceId;
 
-	if (!Stream_EnsureRemainingCapacity(s, 20))
+	if (Stream_GetRemainingLength(s) < 20)
 	{
 		if (error)
 			*error = CHANNEL_RC_NO_BUFFER;

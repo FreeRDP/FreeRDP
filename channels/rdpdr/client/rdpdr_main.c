@@ -664,7 +664,7 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 
 static UINT rdpdr_process_server_announce_request(rdpdrPlugin* rdpdr, wStream* s)
 {
-	if (!Stream_EnsureRemainingCapacity(s, 8))
+	if (Stream_GetRemainingLength(s) < 8)
 		return CHANNEL_RC_NO_BUFFER;
 
 	Stream_Read_UINT16(s, rdpdr->versionMajor);
@@ -745,7 +745,7 @@ static UINT rdpdr_process_server_clientid_confirm(rdpdrPlugin* rdpdr, wStream* s
 	UINT16 versionMinor;
 	UINT32 clientID;
 
-	if (!Stream_EnsureRemainingCapacity(s, 8))
+	if (Stream_GetRemainingLength(s) < 8)
 		return CHANNEL_RC_NO_BUFFER;
 
 	Stream_Read_UINT16(s, versionMajor);
@@ -933,7 +933,7 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 	if (!rdpdr || !s)
 		return CHANNEL_RC_NULL_DATA;
 
-	if (!Stream_EnsureRemainingCapacity(s, 4))
+	if (Stream_GetRemainingLength(s) < 4)
 		return CHANNEL_RC_NO_BUFFER;
 
 	Stream_Read_UINT16(s, component); /* Component (2 bytes) */
@@ -994,7 +994,7 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 
 		case PAKID_CORE_DEVICE_REPLY:
 			/* connect to a specific resource */
-			if (Stream_EnsureRemainingCapacity(s, 8))
+			if (Stream_GetRemainingLength(s) < 8)
 				return CHANNEL_RC_NO_BUFFER;
 
 			Stream_Read_UINT32(s, deviceId);
@@ -1024,7 +1024,7 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 		case PAKID_PRN_CACHE_DATA:
 		{
 			UINT32 eventID;
-			if (Stream_EnsureRemainingCapacity(s, 4))
+			if (Stream_GetRemainingLength(s) < 4)
 				return CHANNEL_RC_NO_BUFFER;
 
 			Stream_Read_UINT32(s, eventID);
