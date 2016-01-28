@@ -30,6 +30,7 @@
 #include "transport.h"
 #include "connection.h"
 #include "message.h"
+#include "buildflags.h"
 
 #include <assert.h>
 
@@ -438,11 +439,21 @@ const char* freerdp_get_version_string(void)
 
 const char* freerdp_get_build_date(void)
 {
-	static char build_date[64];
-
-	sprintf_s(build_date, sizeof(build_date), "%s %s", __DATE__, __TIME__);
+	static char build_date[] = __DATE__ " " __TIME__;
 
 	return build_date;
+}
+
+const char* freerdp_get_build_config(void)
+{
+	static const char build_config[] =
+		"Build configuration: " BUILD_CONFIG "\n"
+		"Build type:          " BUILD_TYPE "\n"
+		"CFLAGS:              " CFLAGS "\n"
+		"Compiler:            " COMPILER_ID ", " COMPILER_VERSION "\n"
+		"Target architecture: " TARGET_ARCH "\n";
+
+	return build_config;
 }
 
 const char* freerdp_get_build_revision(void)
