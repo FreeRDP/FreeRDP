@@ -172,7 +172,7 @@ static BOOL WLog_FileAppender_WriteDataMessage(wLog* log, wLogAppender* appender
 
 static int g_ImageId = 0;
 
-static int WLog_FileAppender_WriteImageMessage(wLog* log, wLogAppender* appender, wLogMessage* message)
+static BOOL WLog_FileAppender_WriteImageMessage(wLog* log, wLogAppender* appender, wLogMessage* message)
 {
 	int ImageId;
 	char* FullFileName;
