@@ -497,7 +497,6 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 				free(drive->Path);
 				free(drive->Name);
 				free(drive);
-				error = CHANNEL_RC_NO_MEMORY;
 				goto cleanup;
 			}
 		}
@@ -820,7 +819,7 @@ static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 			if (!Stream_EnsureRemainingCapacity(s, 20 + data_len))
 			{
 				WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
-				return CHANNEL_RC_NO_MEMORY;
+				return CHANNEL_RC_NO_BUFFER;
 			}
 
 			Stream_Write_UINT32(s, device->type); /* deviceType */
@@ -869,12 +868,12 @@ static UINT rdpdr_process_irp(rdpdrPlugin* rdpdr, wStream* s)
 	IRP* irp;
 	UINT error = CHANNEL_RC_OK;
 
-	irp = irp_new(rdpdr->devman, s);
+	irp = irp_new(rdpdr->devman, s, &error);
 
 	if (!irp)
 	{
-		WLog_ERR(TAG, "irp_new failed!");
-		return CHANNEL_RC_NO_MEMORY;
+		WLog_ERR(TAG, "irp_new failed with %lu!", error);
+		return error;
 	}
 
 	IFCALLRET(irp->device->IRPRequest, error, irp->device, irp);
@@ -1217,7 +1216,7 @@ static UINT rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr,
 	if (!Stream_EnsureRemainingCapacity(data_in, (int) dataLength))
 	{
 		WLog_ERR(TAG,  "Stream_EnsureRemainingCapacity failed!");
-		return CHANNEL_RC_NO_MEMORY;
+		return CHANNEL_RC_NO_BUFFER;
 	}
 	Stream_Write(data_in, pData, dataLength);
 
