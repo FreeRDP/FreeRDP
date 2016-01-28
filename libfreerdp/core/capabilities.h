@@ -169,7 +169,7 @@
 
 BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId);
 BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s);
-void rdp_write_demand_active(wStream* s, rdpSettings* settings);
+BOOL rdp_write_demand_active(wStream* s, rdpSettings* settings);
 BOOL rdp_send_demand_active(rdpRdp* rdp);
 BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s);
 BOOL rdp_write_confirm_active(wStream* s, rdpSettings* settings);
