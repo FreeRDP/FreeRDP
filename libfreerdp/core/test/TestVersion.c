@@ -33,6 +33,10 @@ int TestVersion(int argc, char* argv[])
 	if (!build)
 		return -1;
 
+	build = freerdp_get_build_config();
+	if (!build)
+		return -1;
+
 	return 0;
 }
 

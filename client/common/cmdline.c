@@ -21,7 +21,6 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "buildflags.h"
 
 #include <assert.h>
 
@@ -187,11 +186,7 @@ int freerdp_client_print_version()
 
 int freerdp_client_print_buildconfig()
 {
-	printf("Build configuration: %s\n", BUILD_CONFIG);
-	printf("Build type: %s\n", BUILD_TYPE);
-	printf("CFLAGS: %s\n", CFLAGS);
-	printf("Compiler: %s, %s\n", COMPILER_ID, COMPILER_VERSION);
-	printf("Target architecture: %s\n", TARGET_ARCH);
+	printf("%s", freerdp_get_build_config());
 	return 1;
 }
 

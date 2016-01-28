@@ -51,5 +51,6 @@ WINPR_API void winpr_get_version(int* major, int* minor, int* revision);
 WINPR_API const char* winpr_get_version_string(void);
 WINPR_API const char* winpr_get_build_date(void);
 WINPR_API const char* winpr_get_build_revision(void);
+WINPR_API const char* winpr_get_build_config(void);
 
 #endif /* WINPR_H */
