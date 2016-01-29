@@ -214,26 +214,17 @@ static void rdpsnd_mac_free(rdpsndDevicePlugin* device)
 
 static BOOL rdpsnd_mac_format_supported(rdpsndDevicePlugin* device, AUDIO_FORMAT* format)
 {
-        if (format->wFormatTag == WAVE_FORMAT_PCM)
-        {
-                return TRUE;
-        }
-        else if (format->wFormatTag == WAVE_FORMAT_ALAW)
-        {
-                return TRUE;
-        }
-        else if (format->wFormatTag == WAVE_FORMAT_MULAW)
-        {
-                return TRUE;
-        }
-        else if (format->wFormatTag == WAVE_FORMAT_GSM610)
-        {
-                return FALSE;
-        }
-        else if (format->wFormatTag == WAVE_FORMAT_ADPCM || format->wFormatTag == WAVE_FORMAT_DVI_ADPCM)
-        {
-                return TRUE;
-        }
+	switch (format->wFormatTag)
+	{
+		case WAVE_FORMAT_PCM:
+		case WAVE_FORMAT_ALAW:
+		case WAVE_FORMAT_MULAW:
+		case WAVE_FORMAT_ADPCM:
+		case WAVE_FORMAT_DVI_ADPCM:
+			return TRUE;
+		case WAVE_FORMAT_GSM610:
+			return FALSE;
+	}
 	
 	return FALSE;
 }
