@@ -541,7 +541,7 @@ void xf_input_hide_cursor(xfContext* xfc)
 		XcursorPixel xp = 0;
 		static Cursor nullcursor = None;
 
-		xf_lock_x11(xfc, FALSE);
+		xf_lock_x11(xfc, TRUE);
 
 		ZeroMemory(&ci, sizeof(ci));
 		ci.version = XCURSOR_IMAGE_VERSION;
@@ -556,7 +556,7 @@ void xf_input_hide_cursor(xfContext* xfc)
 
 		xfc->cursorHidden = TRUE;
 
-		xf_unlock_x11(xfc, FALSE);
+		xf_unlock_x11(xfc, TRUE);
 	}
 #endif
 }
@@ -564,7 +564,7 @@ void xf_input_hide_cursor(xfContext* xfc)
 void xf_input_show_cursor(xfContext* xfc)
 {
 #ifdef WITH_XCURSOR
-	xf_lock_x11(xfc, FALSE);
+	xf_lock_x11(xfc, TRUE);
 
 	if (xfc->cursorHidden)
 	{
@@ -579,7 +579,7 @@ void xf_input_show_cursor(xfContext* xfc)
 		xfc->cursorHidden = FALSE;
 	}
 
-	xf_unlock_x11(xfc, FALSE);
+	xf_unlock_x11(xfc, TRUE);
 #endif
 }
 
