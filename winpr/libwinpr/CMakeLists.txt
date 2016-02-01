@@ -73,6 +73,10 @@ macro (winpr_definition_add)
      set (WINPR_DEFINITIONS ${WINPR_DEFINITIONS} PARENT_SCOPE)
 endmacro()
 
+if (ANDROID)
+    winpr_library_add(log)
+endif()
+
 # Level "1" API as defined for MinCore.lib
 set(WINPR_CORE synch locale library file comm pipe interlocked security
 	environment crypto registry credentials path io memory input shell

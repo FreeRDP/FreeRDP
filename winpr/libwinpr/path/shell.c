@@ -76,11 +76,6 @@ static char* GetPath_HOME(void)
 
 #ifdef _WIN32
 	path = GetEnvAlloc("UserProfile");
-#elif defined(ANDROID)
-	path = malloc(2);
-	if (!path)
-		return NULL;
-	strcpy(path, "/");
 #else
 	path = GetEnvAlloc("HOME");
 #endif
