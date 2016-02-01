@@ -880,7 +880,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		char* user = NULL;
 		char* domain = NULL;
 
-		if (freerdp_parse_username(file->Username, &user, &domain) != 0)
+		if (!freerdp_parse_username(file->Username, &user, &domain))
 			return FALSE;
 		if (freerdp_set_param_string(settings, FreeRDP_Username, user) != 0)
 			return FALSE;
@@ -900,7 +900,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		int port = -1;
 		char* host = NULL;
 
-		if (freerdp_parse_hostname(file->FullAddress, &host, &port) != 0)
+		if (!freerdp_parse_hostname(file->FullAddress, &host, &port))
 			return FALSE;
 
 		if (freerdp_set_param_string(settings, FreeRDP_ServerHostname, host) != 0)
@@ -1022,7 +1022,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		int port = -1;
 		char* host = NULL;
 
-		if (freerdp_parse_hostname(file->GatewayHostname, &host, &port) != 0)
+		if (!freerdp_parse_hostname(file->GatewayHostname, &host, &port))
 			return FALSE;
 
 		if (freerdp_set_param_string(settings, FreeRDP_GatewayHostname, host) != 0)
