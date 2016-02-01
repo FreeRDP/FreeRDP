@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Button labels -->
+    <string name="yes">Ja</string>
+    <string name="no">Nee</string>
+    <string name="cancel">Annuleren</string>
+    <string name="cont">Doorgaan</string>
+    <string name="login">Inloggen</string>
+    <string name="logout">Uitloggen</string>
+    <!-- Home menu items -->
+    <string name="menu_exit">Sluiten</string>
+    <string name="menu_about">Over</string>
+    <string name="menu_help">Help</string>
+    <string name="menu_new_bookmark">Nieuwe connectie</string>
+    <string name="menu_app_settings">Instellingen</string>
+    <!-- Bookmark menu items -->
+    <string name="menu_title_bookmark">Connectie</string>
+    <string name="menu_connect">Verbinden</string>
+    <string name="menu_edit">Bewerken</string>
+    <string name="menu_delete">Verwijderen</string>
+    <!-- Session menu items -->
+    <string name="menu_sys_keyboard">Toetsenbord</string>
+    <string name="menu_ext_keyboard">Functietoetsen</string>
+    <string name="menu_touch_pointer">Touch Pointer</string>
+    <string name="menu_home">home</string>
+    <string name="menu_disconnect">Verbinding verbreken</string>
+    <!-- List section headers -->
+    <string name="section_bookmarks">Handmatige connecties</string>
+    <string name="section_active_sessions">Actieve sessies</string>
+    <!-- Search strings -->
+    <string name="search_hint">Verbinden met computer</string>    
+    <!-- List placeholder labels -->
+    <string name="list_placeholder_login">Login</string>
+    <string name="list_placeholder_no_servers">Geen servers</string>
+    <string name="list_placeholder_connecting">Verbinden ...</string>
+    <string name="list_placeholder_disconnecting">Verbinding verbreken ...</string>
+    <string name="list_placeholder_connection_error">Connectie verloren</string>
+    <string name="list_placeholder_wrong_password">Ongeldig wachtwoord</string>
+    <string name="list_placeholder_invalid_username">Ongeldige gebruikersnaam</string>
+    <string name="list_placeholder_add_bookmark">Connectie toevoegen</string>
+    <!-- Bookmark settings strings -->
+    <string name="settings_cat_host">Host</string>
+    <string name="settings_label">Label</string>
+    <string name="settings_hostname">Host</string>
+    <string name="settings_port">Poort</string>
+    <string name="settings_cat_credentials">Inloggegevens</string>
+    <string name="settings_credentials">Inloggegevens</string>
+    <string name="settings_username">Gebruikersnaam</string>
+    <string name="settings_password">Wachtwoord</string>
+    <string name="settings_domain">Domein</string>
+    <string name="settings_cat_settings">Instellingen</string>
+    <string name="settings_screen">Scherm</string>
+    <string name="settings_cat_screen">Scherminstellingen</string>
+    <string name="settings_colors">Kleuren</string>
+    <string-array name="colors_array">
+        <item>Hoge kleuren (16 Bit)</item>
+        <item>Ware kleuren (24 Bit)</item>
+        <item>Hoogste kwaliteit (32 Bit)</item>
+    </string-array>
+    <string-array name="colors_values_array">
+        <item>16</item>
+        <item>24</item>
+        <item>32</item>
+    </string-array>
+    <string name="settings_resolution">Resolutie</string>
+    <string name="resolution_automatic">Automatisch</string>
+    <string name="resolution_fit">Schermvullend</string>
+    <string name="resolution_custom">Aangepast</string>
+    <string-array name="resolutions_array">
+        <item>Automatisch</item>
+        <item>Schermvullend</item>
+        <item>Aangepast</item>
+        <item>640x480</item>
+        <item>720x480</item>
+        <item>800x600</item>
+        <item>1024x768</item>
+        <item>1280x1024</item>
+        <item>1440x900</item>
+        <item>1920x1080</item>
+        <item>1920x1200</item>
+    </string-array>
+    <!-- The strings in resolutions_values_array should not be localized -->
+    <!-- They are used for text comparison and must remain in english -->
+    <string-array name="resolutions_values_array">
+        <item>automatic</item>
+        <item>fitscreen</item>
+        <item>custom</item>
+        <item>640x480</item>
+        <item>720x480</item>
+        <item>800x600</item>
+        <item>1024x768</item>
+        <item>1280x1024</item>
+        <item>1440x900</item>
+        <item>1920x1080</item>
+        <item>1920x1200</item>
+    </string-array>
+    <!-- end protected string section -->
+    <string name="settings_width">Breedte</string>
+    <string name="settings_height">Hoogte</string>
+    <string name="settings_performance">Prestatie</string>
+    <string name="settings_cat_performance">Prestatieinstellingen</string>
+    <string name="settings_perf_remotefx">RemoteFX</string>
+    <string name="settings_perf_wallpaper">Bureaublad achtergrond</string>
+    <string name="settings_perf_font_smoothing">Lettertype Smoothing</string>
+    <string name="settings_perf_desktop_composition">Bureaublad compositie</string>
+    <string name="settings_perf_full_window_drag">Inhoud van het venster weergeven tijdens slepen</string>
+    <string name="settings_perf_menu_animation">Menu animatie</string>
+    <string name="settings_perf_theming">Visuele stijlen</string>
+    <string name="settings_advanced">Geavanceerd</string>
+    <string name="settings_cat_advanced">Geavanceerde instellingen</string>
+    <string name="settings_enable_3g_settings">3G Instellingen</string>
+    <string name="settings_screen_3g">3G Scherm</string>
+    <string name="settings_performance_3g">3G Prestatie</string>
+    <string name="settings_cat_gateway">Gateway</string>
+    <string name="settings_enable_gateway_settings">Gateway inschakelen</string>
+    <string name="settings_gateway_settings">Gateway instellingen</string>    
+    <string name="settings_redirect_sdcard">SDCard aankoppelen</string>
+    <string name="settings_redirect_sound">Redirect Sound</string>
+    <string-array name="redirect_sound_array">
+        <item>Do not play</item>
+        <item>Play on Server</item>
+        <item>Play on Device</item>
+    </string-array>
+    <string-array name="redirect_sound_values_array">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+    <string name="settings_redirect_microphone">Redirect Microphone</string>
+    <string name="settings_security">Beveiliging</string>
+    <string-array name="security_array">
+        <item>Automatisch</item>
+        <item>RDP</item>
+        <item>TLS</item>
+        <item>NLA</item>
+    </string-array>
+    <string-array name="security_values_array">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+    <string name="settings_remote_program">Extern programma</string>
+    <string name="settings_work_dir">Werkmap</string>
+    <string name="settings_async_channel">Async channel</string>
+    <string name="settings_async_transport">Async transport</string>
+    <string name="settings_async_input">Async input</string>
+    <string name="settings_async_update">Async update</string>
+    <string name="settings_console_mode">Console modus</string>
+    <!-- App settings strings -->
+    <string name="settings_password_present">*******</string>
+    <string name="settings_password_empty">Niet ingesteld</string>
+    <string name="settings_cat_ui">Gebruikersinterface</string>
+    <string name="settings_ui_hide_status_bar">Verberg statusbalk</string>
+    <string name="settings_ui_hide_zoom_controls">Verberg Zoom Controls</string>
+    <string name="settings_ui_swap_mouse_buttons">Wissel muisknoppen</string>
+    <string name="settings_ui_invert_scrolling">Scrollen omkeren</string>
+    <string name="settings_ui_auto_scroll_touchpointer">Touch Pointer Auto Scroll</string>
+    <string name="settings_ui_ask_on_exit">Toon dialoog bij sluiten</string>
+    <string name="settings_cat_power">Energiebesparing</string>
+    <string name="settings_power_disconnect_timeout">Sluit inactieve ingen</string>
+    <string name="settings_cat_security">Beveiliging</string>
+    <string name="settings_security_accept_certificates">Accepteer alle certificaten</string>
+    <string name="settings_security_clear_certificate_cache">Certificaat cache opschonen</string>
+    <string name="settings_description_after_minutes">na %1$d minuten</string>
+    <string name="settings_description_disabled">Uitgeschakeld</string>
+    <!-- Activity titles -->
+    <string name="title_bookmark_settings">Connectie instellingen</string>
+    <string name="title_application_settings">Instellingen</string>
+    <string name="title_home">aFreeRDP - FreeRDP voor Android</string>
+    <string name="title_create_shortcut">RDP verbinding</string>
+    <string name="title_help">Help</string>
+    <string name="title_about">Over</string>
+    <!-- Error message strings -->
+    <string name="error_bookmark_incomplete_title">Annuleren zonder opslaan?</string>
+    <string name="error_bookmark_incomplete">Druk op "Annuleren" om af te breken!\nKlik op "Doorgaan" om de verplichte velden op te geven!</string>
+    <string name="error_connection_failure">Fout bij het verbinden met de server!</string>
+    <!-- Info message strings -->
+    <string name="info_capabilities_changed">De scherm instellingen zijn veranderd omdat de server de door u opgegeven instellingen niet ondersteunt!</string>
+    <string name="info_reset_success">Certificaat cache is verwijderd!</string>
+    <string name="info_reset_failed">Fout bij het verwijderderen van certificaat cache!</string>
+    <!-- Dialog strings -->
+    <string name="dlg_title_verify_certificate">Controleer certificaat</string>
+    <string name="dlg_msg_verify_certificate">De identiteit van de externe computer niet kan worden geverifieerd. Wilt u toch verbinden?</string>
+    <string name="dlg_title_credentials">Vul uw gegevens in</string>
+    <string name="dlg_title_create_shortcut">Snelkoppeling maken</string>
+    <string name="dlg_msg_create_shortcut">Snelkoppeling naam:</string>
+    <string name="dlg_msg_connecting">Verbinden ...</string>
+    <string name="dlg_msg_logging_in">Aanmelden ...</string>
+    <string name="dlg_title_about">Over aFreeRDP</string>
+    <string name="dlg_title_create_bookmark_after_qc">Connectie instellingen opslaan?</string>
+    <string name="dlg_msg_create_bookmark_after_qc">Uw connectie instellingen zijn niet opgeslagen! Wilt u deze opslaan?</string>
+    <string name="dlg_title_save_bookmark">Verbinding opslaan?</string>
+    <string name="dlg_save_bookmark">Wilt u alle wijzigingen opslaan?</string>
+    <string name="dlg_dont_show_again">Niet opnieuw vragen</string>
+    <string name="dlg_title_exit">Toepassing sluiten?</string>
+    <string name="dlg_msg_exit">Weet u zeker dat u de applicatie wilt sluiten?</string>
+    <string name="dlg_title_clear_cert_cache">Verwijder certificaten?</string>
+    <string name="dlg_msg_clear_cert_cache">Weet u zeker dat u al uw cache certificaten wilt verwijderen?</string>
+    <string name="debug_level">Debug Level</string>
+    <string name="settings_debug">Debug Settings</string>
+</resources>
