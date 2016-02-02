@@ -28,10 +28,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef HAVE_STDINT_H
-#include <stdint.h>
-#endif
-
 #include <winpr/crt.h>
 #include <winpr/tchar.h>
 #include <winpr/sysinfo.h>
