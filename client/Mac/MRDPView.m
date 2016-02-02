@@ -89,6 +89,11 @@ DWORD mac_client_thread(void* param);
 	{
 		instance->settings->DesktopWidth  = screenFrame.size.width;
 		instance->settings->DesktopHeight = screenFrame.size.height;
+		[self enterFullScreenMode:[NSScreen mainScreen] withOptions:nil];
+	}
+	else
+	{
+		[self exitFullScreenModeWithOptions:nil];
 	}
 
 	mfc->client_height = instance->settings->DesktopHeight;
