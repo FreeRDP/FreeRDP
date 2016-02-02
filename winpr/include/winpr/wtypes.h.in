@@ -21,18 +21,10 @@
 #define WINPR_WTYPES_H
 
 /* Set by CMake during configuration. */
-#if defined @HAVE_STDINT_H@
-#define WINPR_HAVE_STDINT_H 1
-#else
-#define WINPR_HAVE_STDINT_H 0
-#endif
+#cmakedefine01 WINPR_HAVE_STDINT_H
 
 /* Set by CMake during configuration. */
-#if defined @HAVE_STDBOOL_H@
-#define WINPR_HAVE_STDBOOL_H 1
-#else
-#define WINPR_HAVE_STDBOOL_H 0
-#endif
+#cmakedefine01 WINPR_HAVE_STDBOOL_H
 
 /* MSDN: Windows Data Types - http://msdn.microsoft.com/en-us/library/aa383751/ */
 /* [MS-DTYP]: Windows Data Types - http://msdn.microsoft.com/en-us/library/cc230273/ */
