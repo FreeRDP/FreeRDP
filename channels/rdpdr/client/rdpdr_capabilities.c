@@ -190,11 +190,11 @@ UINT rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
 	Stream_Read_UINT16(s, numCapabilities);
 	Stream_Seek(s, 2); /* pad (2 bytes) */
 
-	if (Stream_GetRemainingLength(s) < sizeof(UINT16) * numCapabilities)
-		return CHANNEL_RC_NO_BUFFER;
-
 	for (i = 0; i < numCapabilities; i++)
 	{
+		if (Stream_GetRemainingLength(s) < sizeof(UINT16))
+			return CHANNEL_RC_NO_BUFFER;
+
 		Stream_Read_UINT16(s, capabilityType);
 
 		switch (capabilityType)
