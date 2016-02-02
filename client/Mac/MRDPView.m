@@ -89,7 +89,12 @@ DWORD mac_client_thread(void* param);
 	{
 		instance->settings->DesktopWidth  = screenFrame.size.width;
 		instance->settings->DesktopHeight = screenFrame.size.height;
-	}
+        [self enterFullScreenMode:[NSScreen mainScreen] withOptions:nil];
+ 	}
+    else
+        {
+        [self exitFullScreenModeWithOptions:nil];
+        }
 
 	mfc->client_height = instance->settings->DesktopHeight;
 	mfc->client_width = instance->settings->DesktopWidth;
@@ -336,7 +341,7 @@ disconnect:
 {
 	if (!initialized)
 	{
-		cursors = [[NSMutableArray alloc] initWithCapacity:10];
+        cursors = [[NSMutableArray alloc] initWithCapacity:10];
 
 		// setup a mouse tracking area
 		NSTrackingArea * trackingArea = [[NSTrackingArea alloc] initWithRect:[self visibleRect] options:NSTrackingMouseEnteredAndExited | NSTrackingMouseMoved | NSTrackingCursorUpdate | NSTrackingEnabledDuringMouseDrag | NSTrackingActiveWhenFirstResponder owner:self userInfo:nil];
