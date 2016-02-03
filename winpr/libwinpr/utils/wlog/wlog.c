@@ -323,7 +323,6 @@ BOOL WLog_AddStringLogFilters(LPCSTR filter)
 	DWORD pos;
 	DWORD size;
 	DWORD count;
-	DWORD status;
 	LPSTR p;
 	LPSTR filterStr;
 	LPSTR cp;
@@ -365,8 +364,7 @@ BOOL WLog_AddStringLogFilters(LPCSTR filter)
 
 		if (pos < size)
 		{
-			status = WLog_ParseFilter(&g_Filters[pos++], filterStr);
-			if (!status)
+			if (!WLog_ParseFilter(&g_Filters[pos++], filterStr))
 			{
 				free (cp);
 				return FALSE;
