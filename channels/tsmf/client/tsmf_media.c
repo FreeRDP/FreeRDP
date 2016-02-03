@@ -548,6 +548,8 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 				int index = 0;
 				for (index = 0; index < count; index++)
 				{
+					UINT64 time_diff;
+
 					temp_stream = (TSMF_STREAM*) ArrayList_GetItem(presentation->stream_list, index);
 					if (temp_stream->major_type == TSMF_MAJOR_TYPE_AUDIO)
 					{
@@ -558,8 +560,14 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 						if (video_time < audio_time)
 							max_adjust = -VIDEO_ADJUST_MAX;
 
-						sample->start_time += abs(video_time - audio_time) < VIDEO_ADJUST_MAX ? (video_time - audio_time) : max_adjust;
-						sample->end_time += abs(video_time - audio_time) < VIDEO_ADJUST_MAX ? (video_time - audio_time) : max_adjust;
+						if (video_time > audio_time)
+							time_diff = video_time - audio_time;
+						else
+							time_diff = audio_time - video_time;
+
+						time_diff = time_diff < VIDEO_ADJUST_MAX ? time_diff : max_adjust;
+						sample->start_time += time_diff;
+						sample->end_time += time_diff;
 
 						break;
 					}
@@ -1215,11 +1223,11 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id, 
 error_add:
 	SetEvent(stream->stopEvent);
 	if (WaitForSingleObject(stream->ack_thread, INFINITE) == WAIT_FAILED)
-        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
 error_ack_thread:
 	SetEvent(stream->stopEvent);
 	if (WaitForSingleObject(stream->play_thread, INFINITE) == WAIT_FAILED)
-        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
 error_play_thread:
 	Queue_Free(stream->sample_ack_list);
 error_sample_ack_list:
