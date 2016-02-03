@@ -877,7 +877,7 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames,
 
 		sockfds[index] = _socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
 
-		if (sockfds[index] < 0)
+		if (sockfds[index] == INVALID_SOCKET)
 		{
 			freeaddrinfo(result);
 			sockfds[index] = 0;
