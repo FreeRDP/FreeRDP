@@ -72,6 +72,8 @@ option(WITH_CHANNELS "Build virtual channel plugins" ON)
 cmake_dependent_option(WITH_CLIENT_CHANNELS "Build virtual channel plugins" ON
 	"WITH_CLIENT_COMMON;WITH_CHANNELS" OFF)
 
+cmake_dependent_option(WITH_MACAUDIO "Enable OSX sound backend" ON "APPLE;NOT IOS" OFF)
+
 if(WITH_SERVER AND WITH_CHANNELS)
 	option(WITH_SERVER_CHANNELS "Build virtual channel plugins" ON)
 endif()
