@@ -194,9 +194,6 @@ static BOOL FileWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrit
 	if (io_status != 1)
 		return FALSE;
 
-	if ((io_status < 0) && (errno == EWOULDBLOCK))
-		io_status = 0;
-
 	*lpNumberOfBytesWritten = nNumberOfBytesToWrite;
 	return TRUE;
 }
