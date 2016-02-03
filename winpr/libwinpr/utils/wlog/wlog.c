@@ -366,7 +366,7 @@ BOOL WLog_AddStringLogFilters(LPCSTR filter)
 		if (pos < size)
 		{
 			status = WLog_ParseFilter(&g_Filters[pos++], filterStr);
-			if (status < 0)
+			if (!status)
 			{
 				free (cp);
 				return FALSE;
