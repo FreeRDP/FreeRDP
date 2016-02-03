@@ -36,6 +36,8 @@
 
 #include <freerdp/channels/rdpdr.h>
 
+#include "../printer.h"
+
 #ifdef WITH_CUPS
 #include "printer_cups.h"
 #endif
