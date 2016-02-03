@@ -66,12 +66,12 @@ static UINT rdpdr_process_general_capset(rdpdrPlugin* rdpdr, wStream* s)
 	UINT16 capabilityLength;
 
 	if (Stream_GetRemainingLength(s) < 2)
-		return CHANNEL_RC_NO_BUFFER;
+		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, capabilityLength);
 
 	if (Stream_GetRemainingLength(s) < capabilityLength - 4)
-		return CHANNEL_RC_NO_BUFFER;
+		return ERROR_INVALID_DATA;
 
 	Stream_Seek(s, capabilityLength - 4);
 
@@ -90,12 +90,12 @@ static UINT rdpdr_process_printer_capset(rdpdrPlugin* rdpdr, wStream* s)
 	UINT16 capabilityLength;
 
 	if (Stream_GetRemainingLength(s) < 2)
-		return CHANNEL_RC_NO_BUFFER;
+		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, capabilityLength);
 
 	if (Stream_GetRemainingLength(s) < capabilityLength - 4)
-		return CHANNEL_RC_NO_BUFFER;
+		return ERROR_INVALID_DATA;
 
 	Stream_Seek(s, capabilityLength - 4);
 
@@ -114,12 +114,12 @@ static UINT rdpdr_process_port_capset(rdpdrPlugin* rdpdr, wStream* s)
 	UINT16 capabilityLength;
 
 	if (Stream_GetRemainingLength(s) < 2)
-		return CHANNEL_RC_NO_BUFFER;
+		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, capabilityLength);
 
 	if (Stream_GetRemainingLength(s) < capabilityLength - 4)
-		return CHANNEL_RC_NO_BUFFER;
+		return ERROR_INVALID_DATA;
 
 	Stream_Seek(s, capabilityLength - 4);
 
@@ -138,12 +138,12 @@ static UINT rdpdr_process_drive_capset(rdpdrPlugin* rdpdr, wStream* s)
 	UINT16 capabilityLength;
 
 	if (Stream_GetRemainingLength(s) < 2)
-		return CHANNEL_RC_NO_BUFFER;
+		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, capabilityLength);
 
 	if (Stream_GetRemainingLength(s) < capabilityLength - 4)
-		return CHANNEL_RC_NO_BUFFER;
+		return ERROR_INVALID_DATA;
 
 	Stream_Seek(s, capabilityLength - 4);
 
@@ -162,12 +162,12 @@ static UINT rdpdr_process_smartcard_capset(rdpdrPlugin* rdpdr, wStream* s)
 	UINT16 capabilityLength;
 
 	if (Stream_GetRemainingLength(s) < 2)
-		return CHANNEL_RC_NO_BUFFER;
+		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, capabilityLength);
 
 	if (Stream_GetRemainingLength(s) < capabilityLength - 4)
-		return CHANNEL_RC_NO_BUFFER;
+		return ERROR_INVALID_DATA;
 
 	Stream_Seek(s, capabilityLength - 4);
 
@@ -185,7 +185,7 @@ UINT rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
 		return CHANNEL_RC_NULL_DATA;
 
 	if (Stream_GetRemainingLength(s) < 4)
-		return CHANNEL_RC_NO_BUFFER;
+		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, numCapabilities);
 	Stream_Seek(s, 2); /* pad (2 bytes) */
@@ -193,7 +193,7 @@ UINT rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
 	for (i = 0; i < numCapabilities; i++)
 	{
 		if (Stream_GetRemainingLength(s) < sizeof(UINT16))
-			return CHANNEL_RC_NO_BUFFER;
+			return ERROR_INVALID_DATA;
 
 		Stream_Read_UINT16(s, capabilityType);
 

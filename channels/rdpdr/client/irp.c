@@ -86,7 +86,7 @@ IRP* irp_new(DEVMAN* devman, wStream* s, UINT* error)
 	if (Stream_GetRemainingLength(s) < 20)
 	{
 		if (error)
-			*error = CHANNEL_RC_NO_BUFFER;
+			*error = ERROR_INVALID_DATA;
 		return NULL;
 	}
 

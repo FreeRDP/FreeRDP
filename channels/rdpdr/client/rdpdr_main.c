@@ -665,7 +665,7 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 static UINT rdpdr_process_server_announce_request(rdpdrPlugin* rdpdr, wStream* s)
 {
 	if (Stream_GetRemainingLength(s) < 8)
-		return CHANNEL_RC_NO_BUFFER;
+		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, rdpdr->versionMajor);
 	Stream_Read_UINT16(s, rdpdr->versionMinor);
@@ -746,7 +746,7 @@ static UINT rdpdr_process_server_clientid_confirm(rdpdrPlugin* rdpdr, wStream* s
 	UINT32 clientID;
 
 	if (Stream_GetRemainingLength(s) < 8)
-		return CHANNEL_RC_NO_BUFFER;
+		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, versionMajor);
 	Stream_Read_UINT16(s, versionMinor);
@@ -819,7 +819,7 @@ static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 			if (!Stream_EnsureRemainingCapacity(s, 20 + data_len))
 			{
 				WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
-				return CHANNEL_RC_NO_BUFFER;
+				return ERROR_INVALID_DATA;
 			}
 
 			Stream_Write_UINT32(s, device->type); /* deviceType */
@@ -934,7 +934,7 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 		return CHANNEL_RC_NULL_DATA;
 
 	if (Stream_GetRemainingLength(s) < 4)
-		return CHANNEL_RC_NO_BUFFER;
+		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, component); /* Component (2 bytes) */
 	Stream_Read_UINT16(s, packetId); /* PacketId (2 bytes) */
@@ -995,7 +995,7 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 		case PAKID_CORE_DEVICE_REPLY:
 			/* connect to a specific resource */
 			if (Stream_GetRemainingLength(s) < 8)
-				return CHANNEL_RC_NO_BUFFER;
+				return ERROR_INVALID_DATA;
 
 			Stream_Read_UINT32(s, deviceId);
 			Stream_Read_UINT32(s, status);
@@ -1025,7 +1025,7 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 		{
 			UINT32 eventID;
 			if (Stream_GetRemainingLength(s) < 4)
-				return CHANNEL_RC_NO_BUFFER;
+				return ERROR_INVALID_DATA;
 
 			Stream_Read_UINT32(s, eventID);
 			WLog_ERR(TAG, "Ignoring unhandled message PAKID_PRN_CACHE_DATA (EventID: 0x%04X)", eventID);
@@ -1216,7 +1216,7 @@ static UINT rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr,
 	if (!Stream_EnsureRemainingCapacity(data_in, (int) dataLength))
 	{
 		WLog_ERR(TAG,  "Stream_EnsureRemainingCapacity failed!");
-		return CHANNEL_RC_NO_BUFFER;
+		return ERROR_INVALID_DATA;
 	}
 	Stream_Write(data_in, pData, dataLength);
 
