@@ -232,8 +232,8 @@ pstatus_t sse2_RGBToYCbCr_16s16s_P3P3(
 			pDst, dstStep, roi);
 	}
 
-	min = _mm_set1_epi16(-128 << 5);
-	max = _mm_set1_epi16(127 << 5);
+	min = _mm_set1_epi16(-128 * 32);
+	max = _mm_set1_epi16(127 * 32);
 
 	r_buf  = (__m128i*) (pSrc[0]);
 	g_buf  = (__m128i*) (pSrc[1]);
