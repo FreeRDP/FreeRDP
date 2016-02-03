@@ -297,8 +297,8 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 	unsigned long long diff;
 	DWORD signalled;
 	DWORD polled;
-	DWORD *poll_map;
-	BOOL *signalled_idx;
+	DWORD *poll_map = NULL;
+	BOOL *signalled_idx = NULL;
 	int fd = -1;
 	int index;
 	int status;
