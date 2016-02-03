@@ -593,7 +593,6 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	Stream_Seek(s, 32);
 	free(settings->ClientHostname);
 	settings->ClientHostname = str;
-	free(str);
 	str = NULL;
 
 	Stream_Read_UINT32(s, settings->KeyboardType); /* KeyboardType (4 bytes) */
