@@ -101,6 +101,7 @@
 #endif
 #endif
 
+#ifndef XMD_H /* X11/Xmd.h typedef collision with BOOL */
 #if WINPR_HAVE_STDBOOL_H && !defined(__OBJC__)
 typedef bool BOOL;
 #else
@@ -108,7 +109,6 @@ typedef bool BOOL;
 #if defined(__APPLE__)
 typedef signed char BOOL;
 #else
-#ifndef XMD_H
 typedef int BOOL;
 #endif
 #endif
@@ -131,11 +131,14 @@ typedef unsigned long DWORD;
 typedef unsigned long ULONG;
 #endif
 
+#ifndef XMD_H /* X11/Xmd.h typedef collision with BYTE */
 #if WINPR_HAVE_STDINT_H
-typedef uint8_t BYTE, *PBYTE, *LPBYTE;
+typedef uint8_t BYTE;
 #else
-typedef unsigned char BYTE, *PBYTE, *LPBYTE;
+typedef unsigned char BYTE;
 #endif
+#endif
+typedef BYTE *PBYTE, *LPBYTE;
 
 typedef BYTE BOOLEAN, *PBOOLEAN;
 #if defined(wchar_t)
@@ -191,6 +194,8 @@ typedef HANDLE HMENU;
 
 typedef DWORD HCALL;
 typedef int INT, *LPINT;
+
+#ifndef XMD_H /* X11/Xmd.h typedef collision with INT8, INT16, INT32 and INT64 */
 #if WINPR_HAVE_STDINT_H
 typedef int8_t INT8;
 typedef int16_t INT16;
@@ -199,11 +204,11 @@ typedef int64_t INT64;
 #else
 typedef signed char INT8;
 typedef signed short INT16;
-#ifndef XMD_H
 typedef signed int INT32;
 typedef signed __int64 INT64;
 #endif
 #endif
+
 typedef const WCHAR* LMCSTR;
 typedef WCHAR* LMSTR;
 typedef LONG *PLONG, *LPLONG;
@@ -218,10 +223,14 @@ typedef __uint3264 ULONG_PTR, *PULONG_PTR;
 
 #if WINPR_HAVE_STDINT_H
 typedef int32_t LONG32;
-typedef int64_t LONG64;
 #else
 typedef signed int LONG32;
-#ifndef XMD_H
+#endif
+
+#ifndef XMD_H /* X11/Xmd.h defines LONG64 */
+#if WINPR_HAVE_STDINT_H
+typedef int64_t LONG64;
+#else
 typedef signed __int64 LONG64;
 #endif
 #endif
