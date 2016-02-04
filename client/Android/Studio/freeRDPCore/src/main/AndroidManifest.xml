@@ -27,8 +27,7 @@
 		android:xlargeScreens="true" />
 
 	<application
-		android:theme="@style/Theme.Main"
-		android:debuggable="false">
+		android:theme="@style/Theme.Main">
 
 		<!-- Activity to create shortcuts -->
 		<activity android:name=".presentation.ShortcutsActivity"
