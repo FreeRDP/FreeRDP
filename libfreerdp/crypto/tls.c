@@ -589,12 +589,7 @@ out_free:
 	return NULL;
 }
 
-
-#if defined(__APPLE__)
-BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method, int options, BOOL clientMode)
-#else
-BOOL tls_prepare(rdpTls* tls, BIO* underlying, const SSL_METHOD* method, int options, BOOL clientMode)
-#endif
+static BOOL tls_prepare(rdpTls* tls, BIO* underlying, const SSL_METHOD* method, int options, BOOL clientMode)
 {
 	rdpSettings* settings = tls->settings;
 
