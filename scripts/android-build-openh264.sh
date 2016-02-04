@@ -8,8 +8,8 @@ function build {
 	echo "Building architecture $1..."
 	BASE=$(pwd)
 	common_run cd $BUILD_SRC
-	PATH=$ANDROID_SDK/tools:$ANDROID_NDK:$PATH
-	MAKE="make PATH=$PATH OS=android NDKROOT=$ANDROID_NDK TARGET=android-$2 NDKLEVEL=$2 ARCH=$1 -j"
+	PATH=$ANDROID_NDK:$PATH
+	MAKE="make PATH=$PATH OS=android NDKROOT=$ANDROID_NDK TARGET=android-$2 NDKLEVEL=$2 ARCH=$1 -j libraries"
 	common_run git clean -xdf
 	common_run $MAKE
 	# Install creates a non optimal directory layout, fix that

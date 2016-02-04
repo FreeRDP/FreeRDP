@@ -95,7 +95,7 @@ do
         then
             common_run bash $SCRIPT_PATH/android-build-jpeg.sh \
                 --src $BUILD_SRC/jpeg --dst $BUILD_DST \
-                --sdk $ANDROID_SDK --ndk $ANDROID_NDK \
+                --ndk $ANDROID_NDK \
                 --arch $ARCH \
                 --tag $JPEG_TAG
         fi
@@ -107,7 +107,7 @@ do
         then
             common_run bash $SCRIPT_PATH/android-build-openh264.sh \
                 --src $BUILD_SRC/openh264 --dst $BUILD_DST \
-                --sdk $ANDROID_SDK --ndk $ANDROID_NDK \
+                --ndk $ANDROID_NDK \
                 --arch $ARCH \
                 --tag $OPENH264_TAG
         fi
@@ -119,7 +119,7 @@ do
         then
             common_run bash $SCRIPT_PATH/android-build-openssl.sh \
                 --src $BUILD_SRC/openssl --dst $BUILD_DST \
-                --sdk $ANDROID_SDK --ndk $ANDROID_NDK \
+                --ndk $ANDROID_NDK \
                 --arch $ARCH \
                 --tag $OPENSSL_TAG
         fi

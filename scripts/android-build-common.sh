@@ -8,10 +8,6 @@ if [ -z $NDK_TARGET ]; then
 	NDK_TARGET=21
 fi
 
-if [ -z $ANDROID_SDK ]; then
-	ANDROID_SDK="missing"
-fi
-
 if [ -z $ANDROID_NDK ]; then
 	ANDROID_NDK="missing"
 fi
@@ -36,8 +32,6 @@ CLEAN_BUILD_DIR=0
 
 function common_help {
 	echo "$(BASHSOURCE[0]) supports the following arguments:"
-	echo "	--sdk	The base directory of your android SDK"
-	echo "			ANDROID_SDK=$ANDROID_SDK"
 	echo "	--ndk	The base directory of your android NDK defa"
 	echo "			ANDROID_NDK=$ANDROID_NDK"
 	echo "	--arch	A list of architectures to build"
@@ -75,11 +69,6 @@ function common_parse_arguments {
             source "$2"
             shift
             ;;
-
-			--sdk)
-			ANDROID_SDK="$2"
-			shift
-			;;
 
 			--ndk)
 			ANDROID_NDK="$2"
@@ -129,12 +118,6 @@ function common_parse_arguments {
 }
 
 function common_check_requirements {
-	if [[ ! -d $ANDROID_SDK ]];
-	then
-		echo "export ANDROID_SDK to point to your SDK location."
-		exit 1
-	fi
-
 	if [[ ! -d $ANDROID_NDK ]];
 	then
 		echo "export ANDROID_NDK to point to your NDK location."
