@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+/*
+   Session screen layout
+
+   Copyright 2013 Thincast Technologies GmbH, Author: Martin Fleisz
+
+   This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
+   If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+ -->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:id="@+id/session_root_view"
+	>
+
+	<!-- childs are specified bottom-up so that we have a correct z-order in our final layout -->
+	<android.inputmethodservice.KeyboardView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/extended_keyboard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+		android:layout_alignParentBottom="true"
+		android:visibility="gone"
+        />
+
+	<com.freerdp.freerdpcore.presentation.ScrollView2D
+		android:id="@+id/sessionScrollView"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_above="@id/extended_keyboard"
+		android:scrollbars="horizontal|vertical"
+		android:layout_alignParentTop="true"
+	    android:fillViewport="true"
+	    android:drawingCacheQuality="low"
+	    android:isScrollContainer="true"
+		>
+	    
+		<com.freerdp.freerdpcore.presentation.SessionView
+			android:id="@+id/sessionView"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:focusable="true"
+		    android:focusableInTouchMode="true"
+		    android:drawingCacheQuality="low"
+			/>
+
+	</com.freerdp.freerdpcore.presentation.ScrollView2D>		
+
+	<com.freerdp.freerdpcore.presentation.TouchPointerView
+		android:id="@+id/touchPointerView"
+		android:layout_width="match_parent"			
+		android:layout_height="match_parent"
+		android:src="@drawable/touch_pointer_default"
+		android:visibility="invisible"
+		/>
+
+	<android.widget.ZoomControls
+		android:id="@+id/zoomControls"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_alignBottom="@id/sessionScrollView"
+	    android:layout_centerHorizontal="true"
+		/>
+
+	<android.inputmethodservice.KeyboardView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/extended_keyboard_header"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+		android:layout_alignParentTop="true"
+		android:visibility="gone"
+		android:layout_centerHorizontal="true"		
+        />   
+	
+</RelativeLayout>

@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Button labels -->
+    <string name="yes">是</string>
+    <string name="no">否</string>
+    <string name="cancel">取消</string>
+    <string name="cont">继续</string>
+    <string name="login">登录</string>
+    <string name="logout">断开</string>
+    <!-- Home menu items -->
+    <string name="menu_exit">退出</string>
+    <string name="menu_about">关于</string>
+    <string name="menu_help">帮助</string>
+    <string name="menu_new_bookmark">新建连接</string>
+    <string name="menu_app_settings">设置</string>
+    <!-- Bookmark menu items -->
+    <string name="menu_title_bookmark">操作</string>
+    <string name="menu_connect">连接</string>
+    <string name="menu_edit">编辑</string>
+    <string name="menu_delete">删除</string>
+    <!-- Session menu items -->
+    <string name="menu_sys_keyboard">键盘</string>
+    <string name="menu_ext_keyboard">功能键</string>
+    <string name="menu_touch_pointer">触控鼠标</string>
+    <string name="menu_home">主目录</string>
+    <string name="menu_disconnect">断开连接</string>
+    <!-- List section headers -->
+    <string name="section_bookmarks">手动连接</string>
+    <string name="section_active_sessions">活动会话数</string>
+    <!-- Search strings -->
+    <string name="search_hint">搜索</string>    
+    <!-- List placeholder labels -->
+    <string name="list_placeholder_login">登录</string>
+    <string name="list_placeholder_no_servers">没有服务</string>
+    <string name="list_placeholder_connecting">连接中 &#8230;</string>
+    <string name="list_placeholder_disconnecting">正在断开连接 &#8230;</string>
+    <string name="list_placeholder_connection_error">连接丢失</string>
+    <string name="list_placeholder_wrong_password">密码错误</string>
+    <string name="list_placeholder_invalid_username">用户名错误</string>
+    <string name="list_placeholder_add_bookmark">新建连接</string>
+    <!-- Bookmark settings strings -->
+    <string name="settings_cat_host">主机信息</string>
+    <string name="settings_label">标签*</string>
+    <string name="settings_hostname">远程主机ip或域名</string>
+    <string name="settings_port">端口</string>
+    <string name="settings_cat_credentials">登录信息</string>
+    <string name="settings_credentials">登录信息</string>
+    <string name="settings_username">用户名</string>
+    <string name="settings_password">密码</string>
+    <string name="settings_domain">域</string>
+    <string name="settings_cat_settings">设置</string>
+    <string name="settings_screen">显示</string>
+    <string name="settings_cat_screen">显示设置</string>
+    <string name="settings_colors">颜色深度</string>
+    <string-array name="colors_array">
+        <item>High Color (16 Bit)</item>
+        <item>True Color (24 Bit)</item>
+        <item>Highest Quality (32 Bit)</item>
+    </string-array>
+    <string-array name="colors_values_array">
+        <item>16</item>
+        <item>24</item>
+        <item>32</item>
+    </string-array>
+    <string name="settings_resolution">分辨率</string>
+    <string name="resolution_automatic">自动</string>
+    <string name="resolution_fit">全屏</string>
+    <string name="resolution_custom">自定义</string>
+    <string-array name="resolutions_array">
+        <item>自动</item>
+        <item>全屏</item>
+        <item>自定义</item>
+        <item>640x480</item>
+        <item>720x480</item>
+        <item>800x600</item>
+        <item>1024x768</item>
+        <item>1280x1024</item>
+        <item>1440x900</item>
+        <item>1920x1080</item>
+        <item>1920x1200</item>
+    </string-array>
+    <string-array name="resolutions_values_array">
+        <item>自动</item>
+        <item>全屏</item>
+        <item>自定义</item>
+        <item>640x480</item>
+        <item>720x480</item>
+        <item>800x600</item>
+        <item>1024x768</item>
+        <item>1280x1024</item>
+        <item>1440x900</item>
+        <item>1920x1080</item>
+        <item>1920x1200</item>
+    </string-array>
+    <string name="settings_width">宽度</string>
+    <string name="settings_height">高度</string>
+    <string name="settings_performance">连接性能</string>
+    <string name="settings_cat_performance">性能设置</string>
+    <string name="settings_perf_remotefx">RemoteFX</string>
+    <string name="settings_perf_wallpaper">桌面背景</string>
+    <string name="settings_perf_font_smoothing">字体平滑</string>
+    <string name="settings_perf_desktop_composition">桌面拼合</string>
+    <string name="settings_perf_full_window_drag">拖动是显示窗口内容</string>
+    <string name="settings_perf_menu_animation">菜单动画效果</string>
+    <string name="settings_perf_theming">视觉样式</string>
+    <string name="settings_advanced">高级</string>
+    <string name="settings_cat_advanced">高级设置</string>
+    <string name="settings_enable_3g_settings">3G设置</string>
+    <string name="settings_screen_3g">使用3G网络时的显示设置</string>
+    <string name="settings_performance_3g">使用3G网络时的连接性能</string>
+    <string name="settings_cat_gateway">路由</string>
+    <string name="settings_enable_gateway_settings">使用路由</string>
+    <string name="settings_gateway_settings">路由设置</string>    
+    <string name="settings_redirect_sdcard">SDCard 重定向</string>
+		<string name="settings_redirect_sound">音频重定向</string>
+    <string-array name="redirect_sound_array">
+        <item>不要播放</item>
+        <item>在远程主机播放</item>
+        <item>在此设备上播放</item>
+    </string-array>
+    <string-array name="redirect_sound_values_array">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+    <string name="settings_redirect_microphone">麦克风重定向</string>
+    <string name="settings_security">连接协议</string>
+    <string-array name="security_array">
+        <item>自动</item>
+        <item>RDP</item>
+        <item>TLS</item>
+        <item>NLA</item>
+    </string-array>
+    <string-array name="security_values_array">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+    <string name="settings_remote_program">远程程序</string>
+    <string name="settings_work_dir">工作目录</string>
+    <string name="settings_async_channel">Async channel</string>
+    <string name="settings_async_transport">Async transport</string>
+    <string name="settings_async_input">Async input</string>
+    <string name="settings_async_update">Async update</string>
+    <string name="settings_console_mode">控制台模式</string>
+    <!-- App settings strings -->
+    <string name="settings_password_present">*******</string>
+    <string name="settings_password_empty">未设置</string>
+    <string name="settings_cat_ui">用户界面</string>
+    <string name="settings_ui_hide_status_bar">隐藏状态栏</string>
+    <string name="settings_ui_hide_zoom_controls">隐藏缩放控件</string>
+    <string name="settings_ui_swap_mouse_buttons">交换鼠标左右键</string>
+    <string name="settings_ui_invert_scrolling">翻转滚动</string>
+    <string name="settings_ui_auto_scroll_touchpointer">触摸指针自动滚屏</string>
+    <string name="settings_ui_ask_on_exit">退出时确认是否退出</string>
+    <string name="settings_cat_power">省电设计</string>
+    <string name="settings_power_disconnect_timeout">关闭空闲连接</string>
+    <string name="settings_cat_security">安全</string>
+    <string name="settings_security_accept_certificates">接受所有证书</string>
+    <string name="settings_security_clear_certificate_cache">清除证书缓存</string>
+    <string name="settings_description_after_minutes">%1$d 秒后</string>
+    <string name="settings_description_disabled">Disabled</string>
+    <!-- Activity titles -->
+    <string name="title_bookmark_settings">连接设置</string>
+    <string name="title_application_settings">设置</string>
+    <string name="title_home">aFreeRDP - FreeRDP for Android</string>
+    <string name="title_create_shortcut">RDP Connections</string>
+    <string name="title_help">帮助</string>
+    <string name="title_about">关于</string>
+    <!-- Error message strings -->
+    <string name="error_bookmark_incomplete_title">不保存即退出？</string>
+    <string name="error_bookmark_incomplete">点击 “继续” 继续编辑，点击 "取消" 放弃当前更改</string>
+    <string name="error_connection_failure">建立连接失败！</string>
+    <!-- Info message strings -->
+    <string name="info_capabilities_changed">由于主机不支持您的设置所以显示设置已经修改为适应主机的设置！</string>
+    <string name="info_reset_success">清除证书缓存成功！</string>
+    <string name="info_reset_failed">清楚证书缓存失败！</string>
+    <!-- Dialog strings -->
+    <string name="dlg_title_verify_certificate">证书验证</string>
+    <string name="dlg_msg_verify_certificate">未能验证远程主机证书的安全性，是否连接？</string>
+    <string name="dlg_title_credentials">请输入您的证书</string>
+    <string name="dlg_title_create_shortcut">创建快捷方式</string>
+    <string name="dlg_msg_create_shortcut">快捷方式名称：</string>
+    <string name="dlg_msg_connecting">连接中 &#8230;</string>
+    <string name="dlg_msg_logging_in">正在登录 &#8230;</string>
+    <string name="dlg_title_about">关于aFreeRDP</string>
+    <string name="dlg_title_create_bookmark_after_qc">是否保存连接设置？</string>
+    <string name="dlg_msg_create_bookmark_after_qc">连接设置还没保存！ 是否保存？</string>
+    <string name="dlg_title_save_bookmark">保存？</string>
+    <string name="dlg_save_bookmark">是否保存更改？</string>
+    <string name="dlg_dont_show_again">不再提示</string>
+    <string name="dlg_title_exit">退出？</string>
+    <string name="dlg_msg_exit">是否退出？</string>
+    <string name="dlg_title_clear_cert_cache">清除证书缓存？</string>
+    <string name="dlg_msg_clear_cert_cache">是否清除所有的证书缓存？</string>
+    <string name="debug_level">Debug Level</string>
+    <string name="settings_debug">Debug Settings</string>
+</resources>

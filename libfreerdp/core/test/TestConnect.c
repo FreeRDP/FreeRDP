@@ -22,7 +22,7 @@ static int runInstance(int argc, char* argv[], freerdp** inst)
 	if (freerdp_client_settings_parse_command_line(instance->settings, argc, argv, FALSE) < 0)
 		goto finish;
 
-	if (freerdp_client_load_addins(instance->context->channels, instance->settings) != 1)
+	if (!freerdp_client_load_addins(instance->context->channels, instance->settings))
 		goto finish;
 
 	if (s_sync)

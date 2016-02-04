@@ -1,0 +1,2 @@
+include ':freeRDPCore'
+include ':aFreeRDP'

@@ -29,13 +29,13 @@
 #include <freerdp/client/cmdline.h>
 #include <freerdp/client/channels.h>
 
-BOOL freerdp_client_common_new(freerdp* instance, rdpContext* context)
+static BOOL freerdp_client_common_new(freerdp* instance, rdpContext* context)
 {
 	RDP_CLIENT_ENTRY_POINTS* pEntryPoints = instance->pClientEntryPoints;
 	return pEntryPoints->ClientNew(instance, context);
 }
 
-void freerdp_client_common_free(freerdp* instance, rdpContext* context)
+static void freerdp_client_common_free(freerdp* instance, rdpContext* context)
 {
 	RDP_CLIENT_ENTRY_POINTS* pEntryPoints = instance->pClientEntryPoints;
 	pEntryPoints->ClientFree(instance, context);
@@ -152,7 +152,7 @@ static BOOL freerdp_client_settings_post_process(rdpSettings* settings)
 			}
 		}
 	}
-	
+
 	/* Moved logic for Multimon and Span monitors to force fullscreen, so
 	 * that the rdp file also triggers this functionality */
 	if (settings->SpanMonitors)
@@ -164,7 +164,7 @@ static BOOL freerdp_client_settings_post_process(rdpSettings* settings)
 	{
 		settings->Fullscreen = TRUE;
 	}
-	
+
 	return TRUE;
 
 out_error:
@@ -197,7 +197,7 @@ int freerdp_client_settings_parse_command_line(rdpSettings* settings, int argc,
 	{
 		status = freerdp_client_settings_parse_assistance_file(settings, settings->AssistanceFile);
 	}
-	
+
 	/* Only call post processing if no status/error was returned*/
 	if (status < 0)
 		return status;

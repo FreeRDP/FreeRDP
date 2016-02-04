@@ -1627,7 +1627,7 @@ if(NOT _CMAKE_IN_TRY_COMPILE)
  else()
   set( EXECUTABLE_OUTPUT_PATH "${LIBRARY_OUTPUT_PATH_ROOT}/bin" CACHE PATH "Output directory for applications" )
  endif()
- set( LIBRARY_OUTPUT_PATH "${LIBRARY_OUTPUT_PATH_ROOT}/libs/${ANDROID_NDK_OUTPUT_ABI_NAME}" CACHE PATH "path for android libs" )
+ set( CMAKE_INSTALL_LIBDIR "${ANDROID_NDK_OUTPUT_ABI_NAME}" CACHE PATH "path for android libs" )
 endif()
 
 # copy shaed stl library to build directory
