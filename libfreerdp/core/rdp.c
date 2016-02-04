@@ -363,7 +363,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 				rdp_set_error_info(rdp, ERRINFO_RPC_INITIATED_DISCONNECT);
 		}
 
-		WLog_ERR(TAG, "DisconnectProviderUltimatum: reason: %d", reason);
+		WLog_DBG(TAG, "DisconnectProviderUltimatum: reason: %d", reason);
 		freerdp_abort_connect(rdp->instance);
 
 		EventArgsInit(&e, "freerdp");
