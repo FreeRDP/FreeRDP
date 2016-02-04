@@ -77,18 +77,28 @@ static UINT irp_complete(IRP* irp)
 	return error;
 }
 
-IRP* irp_new(DEVMAN* devman, wStream* s)
+IRP* irp_new(DEVMAN* devman, wStream* s, UINT* error)
 {
 	IRP* irp;
 	DEVICE* device;
 	UINT32 DeviceId;
+
+	if (Stream_GetRemainingLength(s) < 20)
+	{
+		if (error)
+			*error = ERROR_INVALID_DATA;
+		return NULL;
+	}
 
 	Stream_Read_UINT32(s, DeviceId); /* DeviceId (4 bytes) */
 	device = devman_get_device_by_id(devman, DeviceId);
 
 	if (!device)
 	{
-		WLog_ERR(TAG, "devman_get_device_by_id failed!");
+		WLog_WARN(TAG, "devman_get_device_by_id failed!");
+		if (error)
+			*error = CHANNEL_RC_OK;
+
 		return NULL;
 	};
 
@@ -97,6 +107,8 @@ IRP* irp_new(DEVMAN* devman, wStream* s)
 	if (!irp)
 	{
 		WLog_ERR(TAG, "_aligned_malloc failed!");
+		if (error)
+			*error = CHANNEL_RC_NO_MEMORY;
 		return NULL;
 	}
 
@@ -117,6 +129,8 @@ IRP* irp_new(DEVMAN* devman, wStream* s)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
 		_aligned_free(irp);
+		if (error)
+			*error = CHANNEL_RC_NO_MEMORY;
 		return NULL;
 	}
 	Stream_Write_UINT16(irp->output, RDPDR_CTYP_CORE); /* Component (2 bytes) */
@@ -130,6 +144,9 @@ IRP* irp_new(DEVMAN* devman, wStream* s)
 
 	irp->thread = NULL;
 	irp->cancelled = FALSE;
+
+	if (error)
+		*error = CHANNEL_RC_OK;
 
 	return irp;
 }
