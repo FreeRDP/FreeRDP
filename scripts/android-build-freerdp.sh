@@ -25,7 +25,7 @@ while [[ $# > 0 ]]
 do
 	key="$1"
 	case $key in
-		--src)
+		--freerdp-src)
 			SRC_DIR="$2"
 			shift
 			;;
