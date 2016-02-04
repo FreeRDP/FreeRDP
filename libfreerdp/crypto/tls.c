@@ -807,6 +807,10 @@ int tls_connect(rdpTls* tls, BIO* underlying)
 	if (!tls_prepare(tls, underlying, SSLv23_client_method(), options, TRUE))
 		return FALSE;
 
+#ifndef OPENSSL_NO_TLSEXT
+	SSL_set_tlsext_host_name(tls->ssl, tls->hostname);
+#endif
+
 	return tls_do_handshake(tls, TRUE);
 }
 
