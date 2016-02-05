@@ -417,37 +417,64 @@ static BOOL android_authenticate(freerdp* instance, char** username,
 	return ((res == JNI_TRUE) ? TRUE : FALSE);
 }
 
-static BOOL android_verify_certificate(freerdp* instance, char* subject,
-					   char* issuer, char* fingerprint)
+static DWORD android_verify_certificate(
+        freerdp* instance, const char* common_name,
+        const char* subject, const char* issuer,
+        const char* fingerprint, BOOL host_mismatch)
 {
-	JNIEnv* env;
-	jboolean attached = jni_attach_thread(&env);
-	jstring jstr1 = (*env)->NewStringUTF(env, subject);
-	jstring jstr2 = (*env)->NewStringUTF(env, issuer);
-	jstring jstr3 = (*env)->NewStringUTF(env, fingerprint);
-	jboolean res;
+    WLog_DBG(TAG, "Certificate details:");
+    WLog_DBG(TAG, "\tSubject: %s", subject);
+    WLog_DBG(TAG, "\tIssuer: %s", issuer);
+    WLog_DBG(TAG, "\tThumbprint: %s", fingerprint);
+    WLog_DBG(TAG, "The above X.509 certificate could not be verified, possibly because you do not have "
+            "the CA certificate in your certificate store, or the certificate has expired."
+            "Please look at the documentation on how to create local certificate store for a private CA.\n");
 
-	res = freerdp_callback_bool_result(
-			  "OnVerifyCertificate",
-			  "(ILjava/lang/String;"
-			  "Ljava/lang/String;"
-			  "Ljava/lang/String;)Z",
-			  instance, jstr1, jstr2, jstr3);
+    JNIEnv* env;
+    jboolean attached = jni_attach_thread(&env);
+    jstring jstr0 = (*env)->NewStringUTF(env, common_name);
+    jstring jstr1 = (*env)->NewStringUTF(env, subject);
+    jstring jstr2 = (*env)->NewStringUTF(env, issuer);
+    jstring jstr3 = (*env)->NewStringUTF(env, fingerprint);
 
-	if (attached == JNI_TRUE)
-		jni_detach_thread();
+    jint res = freerdp_callback_int_result("OnVerifyCertificate",
+            "(ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)I",
+            instance, jstr0, jstr1, jstr2, jstr3, host_mismatch);
 
-	return ((res == JNI_TRUE) ? TRUE : FALSE);
+    if (attached == JNI_TRUE)
+        jni_detach_thread();
+    
+    return res;
 }
 
-static BOOL android_verify_changed_certificate(
-		freerdp* instance, char* subject, char* issuer,
-		char* new_fingerprint, char* old_subject,
-		char* old_issuer, char* old_fingerprint)
+static DWORD android_verify_changed_certificate(freerdp* instance,
+					const char* common_name,
+					const char* subject,
+					const char* issuer,
+					const char* new_fingerprint,
+					const char* old_subject,
+					const char* old_issuer,
+					const char* old_fingerprint)
 {
-	return android_verify_certificate(
-				instance, subject, issuer,
-				new_fingerprint);
+    JNIEnv* env;
+    jboolean attached = jni_attach_thread(&env);
+    jstring jstr0 = (*env)->NewStringUTF(env, common_name);
+    jstring jstr1 = (*env)->NewStringUTF(env, subject);
+    jstring jstr2 = (*env)->NewStringUTF(env, issuer);
+    jstring jstr3 = (*env)->NewStringUTF(env, new_fingerprint);
+    jstring jstr4 = (*env)->NewStringUTF(env, old_subject);
+    jstring jstr5 = (*env)->NewStringUTF(env, old_issuer);
+    jstring jstr6 = (*env)->NewStringUTF(env, old_fingerprint);
+
+    jint res = freerdp_callback_int_result("OnVerifyChangedCertificate",
+            "(ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;"
+            "Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I",
+            instance, jstr0, jstr1, jstr2, jstr3, jstr4, jstr5, jstr6);
+
+    if (attached == JNI_TRUE)
+        jni_detach_thread();
+    
+    return res;
 }
 
 static void* jni_input_thread(void* arg)

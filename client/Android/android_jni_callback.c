@@ -181,7 +181,7 @@ jint java_callback_int(jobject obj, const char * callback, const char* signature
 	jint res = -1;
 	JNIEnv *env;
 
-	DEBUG_ANDROID("java_callback: %s (%s)", callback, signature);
+	WLog_DBG(TAG, "java_callback: %s (%s)", callback, signature);
 
 	attached = jni_attach_thread(&env);
 
