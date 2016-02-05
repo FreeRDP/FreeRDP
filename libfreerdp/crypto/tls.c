@@ -589,7 +589,11 @@ out_free:
 	return NULL;
 }
 
+#if OPENSSL_VERSION_NUMBER >= 0x010000000L
 static BOOL tls_prepare(rdpTls* tls, BIO* underlying, const SSL_METHOD* method, int options, BOOL clientMode)
+#else
+static BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method, int options, BOOL clientMode)
+#endif
 {
 	rdpSettings* settings = tls->settings;
 
