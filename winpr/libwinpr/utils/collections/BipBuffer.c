@@ -260,7 +260,7 @@ int BipBuffer_Write(wBipBuffer* bb, BYTE* data, size_t size)
 
 		CopyMemory(block, &data[status], writeSize);
 		BipBuffer_WriteCommit(bb, writeSize);
-		status += writeSize;
+		status += (int) writeSize;
 
 		if ((status == size) || (writeSize < blockSize))
 			return status;
@@ -277,7 +277,7 @@ int BipBuffer_Write(wBipBuffer* bb, BYTE* data, size_t size)
 
 		CopyMemory(block, &data[status], writeSize);
 		BipBuffer_WriteCommit(bb, writeSize);
-		status += writeSize;
+		status += (int) writeSize;
 
 		if ((status == size) || (writeSize < blockSize))
 			return status;
@@ -370,7 +370,7 @@ int BipBuffer_Read(wBipBuffer* bb, BYTE* data, size_t size)
 
 		CopyMemory(&data[status], block, readSize);
 		BipBuffer_ReadCommit(bb, readSize);
-		status += readSize;
+		status += (int) readSize;
 
 		if ((status == size) || (readSize < blockSize))
 			return status;
@@ -387,7 +387,7 @@ int BipBuffer_Read(wBipBuffer* bb, BYTE* data, size_t size)
 
 		CopyMemory(&data[status], block, readSize);
 		BipBuffer_ReadCommit(bb, readSize);
-		status += readSize;
+		status += (int) readSize;
 
 		if ((status == size) || (readSize < blockSize))
 			return status;

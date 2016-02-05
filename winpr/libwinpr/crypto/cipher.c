@@ -49,7 +49,7 @@ void winpr_RC4_Init(WINPR_RC4_CTX* ctx, const BYTE* key, size_t keylen)
 	RC4_set_key((RC4_KEY*) ctx, keylen, key);
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_ARC4_C)
 	mbedtls_arc4_init((mbedtls_arc4_context*) ctx);
-	mbedtls_arc4_setup((mbedtls_arc4_context*) ctx, key, keylen);
+	mbedtls_arc4_setup((mbedtls_arc4_context*) ctx, key, (unsigned int) keylen);
 #endif
 }
 

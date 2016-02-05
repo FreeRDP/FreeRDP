@@ -28,12 +28,10 @@
 
 /* String Manipulation (CRT): http://msdn.microsoft.com/en-us/library/f0151s4x.aspx */
 
-#ifndef _WIN32
-
-#include "casing.c"
-
 #include "../log.h"
 #define TAG WINPR_TAG("crt")
+
+#ifndef _WIN32
 
 char* _strdup(const char* strSource)
 {
@@ -153,9 +151,15 @@ WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context)
 	return nextToken;
 }
 
+#endif
+
+#if !defined(_WIN32) || defined(_UWP)
+
 /* Windows API Sets - api-ms-win-core-string-l2-1-0.dll
  * http://msdn.microsoft.com/en-us/library/hh802935/
  */
+
+#include "casing.c"
 
 LPSTR CharUpperA(LPSTR lpsz)
 {
@@ -165,7 +169,7 @@ LPSTR CharUpperA(LPSTR lpsz)
 	if (!lpsz)
 		return NULL;
 
-	length = strlen(lpsz);
+	length = (int) strlen(lpsz);
 
 	if (length < 1)
 		return (LPSTR) NULL;
@@ -198,7 +202,7 @@ LPWSTR CharUpperW(LPWSTR lpsz)
 
 DWORD CharUpperBuffA(LPSTR lpsz, DWORD cchLength)
 {
-	int i;
+	DWORD i;
 
 	if (cchLength < 1)
 		return 0;
@@ -232,7 +236,7 @@ LPSTR CharLowerA(LPSTR lpsz)
 	if (!lpsz)
 		return (LPSTR) NULL;
 
-	length = strlen(lpsz);
+	length = (int) strlen(lpsz);
 
 	if (length < 1)
 		return (LPSTR) NULL;
@@ -265,7 +269,7 @@ LPWSTR CharLowerW(LPWSTR lpsz)
 
 DWORD CharLowerBuffA(LPSTR lpsz, DWORD cchLength)
 {
-	int i;
+	DWORD i;
 
 	if (cchLength < 1)
 		return 0;
@@ -350,7 +354,7 @@ BOOL IsCharLowerW(WCHAR ch)
 
 int lstrlenA(LPCSTR lpString)
 {
-	return strlen(lpString);
+	return (int) strlen(lpString);
 }
 
 int lstrlenW(LPCWSTR lpString)
@@ -365,7 +369,7 @@ int lstrlenW(LPCWSTR lpString)
 	while (*p)
 		p++;
 
-	return p - lpString;
+	return (int) (p - lpString);
 }
 
 int lstrcmpA(LPCSTR lpString1, LPCSTR lpString2)
@@ -409,7 +413,7 @@ int ConvertLineEndingToLF(char* str, int size)
 		}
 	}
 
-	status = pOutput - str;
+	status = (int) (pOutput - str);
 
 	return status;
 }
@@ -458,7 +462,7 @@ char* ConvertLineEndingToCRLF(const char* str, int* size)
 		pInput++;
 	}
 
-	*size = pOutput - newStr;
+	*size = (int) (pOutput - newStr);
 
 	return newStr;
 }

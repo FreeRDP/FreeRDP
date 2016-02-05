@@ -289,7 +289,7 @@ int ConvertToUnicode(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 		return 0;
 
 	if (cbMultiByte == -1)
-		cbMultiByte = strlen(lpMultiByteStr) + 1;
+		cbMultiByte = (int) (strlen(lpMultiByteStr) + 1);
 
 	if (cchWideChar == 0)
 	{
@@ -335,7 +335,7 @@ int ConvertFromUnicode(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int 
 		return 0;
 
 	if (cchWideChar == -1)
-		cchWideChar = _wcslen(lpWideCharStr) + 1;
+		cchWideChar = (int) (_wcslen(lpWideCharStr) + 1);
 
 	if (cbMultiByte == 0)
 	{

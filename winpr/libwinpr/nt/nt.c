@@ -42,7 +42,7 @@ VOID _InitializeObjectAttributes(POBJECT_ATTRIBUTES InitializedAttributes,
 		PUNICODE_STRING ObjectName, ULONG Attributes, HANDLE RootDirectory,
 		PSECURITY_DESCRIPTOR SecurityDescriptor)
 {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(_UWP)
 	InitializeObjectAttributes(InitializedAttributes, ObjectName,
 		Attributes, RootDirectory, SecurityDescriptor);
 #else

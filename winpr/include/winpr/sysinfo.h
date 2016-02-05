@@ -99,28 +99,6 @@ typedef struct _SYSTEM_INFO
 WINPR_API void GetSystemInfo(LPSYSTEM_INFO lpSystemInfo);
 WINPR_API void GetNativeSystemInfo(LPSYSTEM_INFO lpSystemInfo);
 
-typedef enum _COMPUTER_NAME_FORMAT
-{
-	ComputerNameNetBIOS,
-	ComputerNameDnsHostname,
-	ComputerNameDnsDomain,
-	ComputerNameDnsFullyQualified,
-	ComputerNamePhysicalNetBIOS,
-	ComputerNamePhysicalDnsHostname,
-	ComputerNamePhysicalDnsDomain,
-	ComputerNamePhysicalDnsFullyQualified,
-	ComputerNameMax
-} COMPUTER_NAME_FORMAT;
-
-WINPR_API BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD lpnSize);
-WINPR_API BOOL GetComputerNameExW(COMPUTER_NAME_FORMAT NameType, LPWSTR lpBuffer, LPDWORD lpnSize);
-
-#ifdef UNICODE
-#define GetComputerNameEx	GetComputerNameExW
-#else
-#define GetComputerNameEx	GetComputerNameExA
-#endif
-
 typedef struct _OSVERSIONINFOA
 {
 	DWORD dwOSVersionInfoSize;
@@ -224,8 +202,6 @@ WINPR_API BOOL SetLocalTime(CONST SYSTEMTIME* lpSystemTime);
 WINPR_API VOID GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime);
 WINPR_API BOOL GetSystemTimeAdjustment(PDWORD lpTimeAdjustment, PDWORD lpTimeIncrement, PBOOL lpTimeAdjustmentDisabled);
 
-WINPR_API DWORD GetTickCount(void);
-
 WINPR_API BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature);
 
 #define PF_FLOATING_POINT_PRECISION_ERRATA		0
@@ -288,6 +264,34 @@ WINPR_API BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature);
 #define PF_ARM_INTEL_XSCALE             0x80010001
 #define PF_ARM_INTEL_PMU                0x80010002
 #define PF_ARM_INTEL_WMMX               0x80010003
+
+#endif
+
+#if !defined(_WIN32) || defined(_UWP)
+
+WINPR_API DWORD GetTickCount(void);
+
+typedef enum _COMPUTER_NAME_FORMAT
+{
+	ComputerNameNetBIOS,
+	ComputerNameDnsHostname,
+	ComputerNameDnsDomain,
+	ComputerNameDnsFullyQualified,
+	ComputerNamePhysicalNetBIOS,
+	ComputerNamePhysicalDnsHostname,
+	ComputerNamePhysicalDnsDomain,
+	ComputerNamePhysicalDnsFullyQualified,
+	ComputerNameMax
+} COMPUTER_NAME_FORMAT;
+
+WINPR_API BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD lpnSize);
+WINPR_API BOOL GetComputerNameExW(COMPUTER_NAME_FORMAT NameType, LPWSTR lpBuffer, LPDWORD lpnSize);
+
+#ifdef UNICODE
+#define GetComputerNameEx	GetComputerNameExW
+#else
+#define GetComputerNameEx	GetComputerNameExA
+#endif
 
 #endif
 

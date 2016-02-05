@@ -46,6 +46,32 @@ WINPR_API LPWSTR GetCommandLineW(VOID);
 WINPR_API BOOL NeedCurrentDirectoryForExePathA(LPCSTR ExeName);
 WINPR_API BOOL NeedCurrentDirectoryForExePathW(LPCWSTR ExeName);
 
+#ifdef __cplusplus
+}
+#endif
+
+#ifdef UNICODE
+#define GetCurrentDirectory		GetCurrentDirectoryW
+#define SetCurrentDirectory		SetCurrentDirectoryW
+#define SearchPath			SearchPathW
+#define GetCommandLine			GetCommandLineW
+#define NeedCurrentDirectoryForExePath	NeedCurrentDirectoryForExePathW
+#else
+#define GetCurrentDirectory		GetCurrentDirectoryA
+#define SetCurrentDirectory		SetCurrentDirectoryA
+#define SearchPath			SearchPathA
+#define GetCommandLine			GetCommandLineA
+#define NeedCurrentDirectoryForExePath	NeedCurrentDirectoryForExePathA
+#endif
+
+#endif
+
+#if !defined(_WIN32) || defined(_UWP)
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 WINPR_API DWORD GetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize);
 WINPR_API DWORD GetEnvironmentVariableW(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize);
 
@@ -74,11 +100,6 @@ WINPR_API BOOL FreeEnvironmentStringsW(LPWCH lpszEnvironmentBlock);
 #endif
 
 #ifdef UNICODE
-#define GetCurrentDirectory		GetCurrentDirectoryW
-#define SetCurrentDirectory		SetCurrentDirectoryW
-#define SearchPath			SearchPathW
-#define GetCommandLine			GetCommandLineW
-#define NeedCurrentDirectoryForExePath	NeedCurrentDirectoryForExePathW
 #define GetEnvironmentVariable		GetEnvironmentVariableW
 #define SetEnvironmentVariable		SetEnvironmentVariableW
 #define GetEnvironmentStrings		GetEnvironmentStringsW
@@ -86,11 +107,6 @@ WINPR_API BOOL FreeEnvironmentStringsW(LPWCH lpszEnvironmentBlock);
 #define ExpandEnvironmentStrings	ExpandEnvironmentStringsW
 #define FreeEnvironmentStrings		FreeEnvironmentStringsW
 #else
-#define GetCurrentDirectory		GetCurrentDirectoryA
-#define SetCurrentDirectory		SetCurrentDirectoryA
-#define SearchPath			SearchPathA
-#define GetCommandLine			GetCommandLineA
-#define NeedCurrentDirectoryForExePath	NeedCurrentDirectoryForExePathA
 #define GetEnvironmentVariable		GetEnvironmentVariableA
 #define SetEnvironmentVariable		SetEnvironmentVariableA
 #define GetEnvironmentStringsA		GetEnvironmentStrings

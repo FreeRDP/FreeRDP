@@ -37,7 +37,7 @@ int IniFile_Load_String(wIniFile* ini, const char* iniString)
 	ini->nextLine = NULL;
 	ini->buffer = NULL;
 	
-	fileSize = strlen(iniString);
+	fileSize = (long int) strlen(iniString);
 
 	if (fileSize < 1)
 		return -1;
@@ -146,7 +146,7 @@ char* IniFile_Load_GetNextLine(wIniFile* ini)
 
 	ini->line = ini->nextLine;
 	ini->nextLine = strtok(NULL, "\n");
-	ini->lineLength = strlen(ini->line);
+	ini->lineLength = (int) strlen(ini->line);
 
 	return ini->line;
 }
@@ -459,7 +459,7 @@ char** IniFile_GetSectionNames(wIniFile* ini, int* count)
 	for (index = 0; index < ini->nSections; index++)
 	{
 		section = ini->sections[index];
-		nameLength = strlen(section->name);
+		nameLength = (int) strlen(section->name);
 		length += (nameLength + 1);
 	}
 	
@@ -473,7 +473,7 @@ char** IniFile_GetSectionNames(wIniFile* ini, int* count)
 	{
 		sectionNames[index] = p;
 		section = ini->sections[index];
-		nameLength = strlen(section->name);
+		nameLength = (int) strlen(section->name);
 		CopyMemory(p, section->name, nameLength + 1);
 		p += (nameLength + 1);
 	}
@@ -505,7 +505,7 @@ char** IniFile_GetSectionKeyNames(wIniFile* ini, const char* section, int* count
 	for (index = 0; index < pSection->nKeys; index++)
 	{
 		pKey = pSection->keys[index];
-		nameLength = strlen(pKey->name);
+		nameLength = (int) strlen(pKey->name);
 		length += (nameLength + 1);
 	}
 	
@@ -519,7 +519,7 @@ char** IniFile_GetSectionKeyNames(wIniFile* ini, const char* section, int* count
 	{
 		keyNames[index] = p;
 		pKey = pSection->keys[index];
-		nameLength = strlen(pKey->name);
+		nameLength = (int) strlen(pKey->name);
 		CopyMemory(p, pKey->name, nameLength + 1);
 		p += (nameLength + 1);
 	}
@@ -632,12 +632,12 @@ char* IniFile_WriteBuffer(wIniFile* ini)
 	for (i = 0; i < ini->nSections; i++)
 	{
 		section = ini->sections[i];
-		size += strlen(section->name) + 3;
+		size += (int) (strlen(section->name) + 3);
 
 		for (j = 0; j < section->nKeys; j++)
 		{
 			key = section->keys[j];
-			size += strlen(key->name) + strlen(key->value) + 2;
+			size += (int) (strlen(key->name) + strlen(key->value) + 2);
 		}
 
 		size += 1;
@@ -656,13 +656,13 @@ char* IniFile_WriteBuffer(wIniFile* ini)
 	{
 		section = ini->sections[i];
 		sprintf_s(&buffer[offset], size - offset, "[%s]\n", section->name);
-		offset += strlen(section->name) + 3;
+		offset += (int) (strlen(section->name) + 3);
 
 		for (j = 0; j < section->nKeys; j++)
 		{
 			key = section->keys[j];
 			sprintf_s(&buffer[offset], size - offset, "%s=%s\n", key->name, key->value);
-			offset += strlen(key->name) + strlen(key->value) + 2;
+			offset += (int) (strlen(key->name) + strlen(key->value) + 2);
 		}
 
 		sprintf_s(&buffer[offset], size - offset, "\n");
@@ -686,7 +686,7 @@ int IniFile_WriteFile(wIniFile* ini, const char* filename)
 	if (!buffer)
 		return -1;
 
-	length = strlen(buffer);
+	length = (int) strlen(buffer);
 
 	ini->readOnly = FALSE;
 

@@ -389,6 +389,15 @@ DWORD GetTickCount(void)
 }
 #endif // _WIN32
 
+#if defined(_UWP)
+
+DWORD GetTickCount(void)
+{
+	return (DWORD) GetTickCount64();
+}
+
+#endif
+
 #if (!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0600))
 
 ULONGLONG GetTickCount64(void)

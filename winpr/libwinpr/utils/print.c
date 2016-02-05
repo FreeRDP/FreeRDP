@@ -33,7 +33,7 @@
 
 #include "../log.h"
 
-void winpr_HexDump(const char* tag, int level, const BYTE* data, int length)
+void winpr_HexDump(const char* tag, UINT32 level, const BYTE* data, int length)
 {
 	const BYTE* p = data;
 	int i, line, offset = 0;
@@ -74,7 +74,7 @@ void winpr_HexDump(const char* tag, int level, const BYTE* data, int length)
 	free(buffer);
 }
 
-void winpr_CArrayDump(const char* tag, int level, const BYTE* data, int length, int width)
+void winpr_CArrayDump(const char* tag, UINT32 level, const BYTE* data, int length, int width)
 {
 	const BYTE* p = data;
 	int i, line, offset = 0;
