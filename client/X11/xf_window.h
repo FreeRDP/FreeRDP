@@ -102,22 +102,22 @@ struct xf_app_window
 	UINT32 dwExStyle;
 	UINT32 showState;
 
-	UINT32 clientOffsetX;
-	UINT32 clientOffsetY;
+	INT32 clientOffsetX;
+	INT32 clientOffsetY;
 	UINT32 clientAreaWidth;
 	UINT32 clientAreaHeight;
 
-	UINT32 windowOffsetX;
-	UINT32 windowOffsetY;
-	UINT32 windowClientDeltaX;
-	UINT32 windowClientDeltaY;
+	INT32 windowOffsetX;
+	INT32 windowOffsetY;
+	INT32 windowClientDeltaX;
+	INT32 windowClientDeltaY;
 	UINT32 windowWidth;
 	UINT32 windowHeight;
 	UINT32 numWindowRects;
 	RECTANGLE_16* windowRects;
 
-	UINT32 visibleOffsetX;
-	UINT32 visibleOffsetY;
+	INT32 visibleOffsetX;
+	INT32 visibleOffsetY;
 	UINT32 numVisibilityRects;
 	RECTANGLE_16* visibilityRects;
 
@@ -160,7 +160,7 @@ void xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int wid
 void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state);
 //void xf_SetWindowIcon(xfContext* xfc, xfAppWindow* appWindow, rdpIcon* icon);
 void xf_SetWindowRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rects, int nrects);
-void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rects, int nrects);
+void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, UINT32 rectsOffsetX, UINT32 rectsOffsetY, RECTANGLE_16* rects, int nrects);
 void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UINT32 ex_style);
 void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width, int height);
 void xf_DestroyWindow(xfContext* xfc, xfAppWindow* appWindow);

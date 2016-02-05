@@ -93,7 +93,7 @@ static UINT AudinServerReceiveSamples(audin_server_context* context, const void*
 		return CHANNEL_RC_OK;
 
 	if (subsystem->AudinServerReceiveSamples)
-		subsystem->AudinServerReceiveSamples(subsystem, buf, nframes);
+		subsystem->AudinServerReceiveSamples(subsystem, client, buf, nframes);
 	return CHANNEL_RC_OK;
 }
 

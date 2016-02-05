@@ -59,24 +59,28 @@ static BOOL check(const wLogMessage *msg)
 	return rc;
 }
 
-void CallbackAppenderMessage(const wLogMessage *msg)
+BOOL CallbackAppenderMessage(const wLogMessage *msg)
 {
 	check(msg);
+	return TRUE;
 }
 
-void CallbackAppenderData(const wLogMessage *msg)
+BOOL CallbackAppenderData(const wLogMessage *msg)
 {
 	fprintf(stdout, "%s\n", __FUNCTION__);
+	return TRUE;
 }
 
-void CallbackAppenderImage(const wLogMessage *msg)
+BOOL CallbackAppenderImage(const wLogMessage *msg)
 {
 	fprintf(stdout, "%s\n", __FUNCTION__);
+	return TRUE;
 }
 
-void CallbackAppenderPackage(const wLogMessage *msg)
+BOOL CallbackAppenderPackage(const wLogMessage *msg)
 {
 	fprintf(stdout, "%s\n", __FUNCTION__);
+	return TRUE;
 }
 
 int TestWLogCallback(int argc, char* argv[])
@@ -86,6 +90,7 @@ int TestWLogCallback(int argc, char* argv[])
 	wLog* logB;
 	wLogLayout* layout;
 	wLogAppender* appender;
+	wLogCallbacks callbacks;
 
 	function = __FUNCTION__;
 	WLog_Init();
@@ -96,9 +101,13 @@ int TestWLogCallback(int argc, char* argv[])
 
 	appender = WLog_GetLogAppender(root);
 
-	WLog_CallbackAppender_SetCallbacks(root, (wLogCallbackAppender*) appender,
-		CallbackAppenderMessage, CallbackAppenderImage, CallbackAppenderPackage,
-		CallbackAppenderData);
+	callbacks.data = CallbackAppenderData;
+	callbacks.image = CallbackAppenderImage;
+	callbacks.message = CallbackAppenderMessage;
+	callbacks.package = CallbackAppenderPackage;
+
+	if (!WLog_ConfigureAppender(appender, "callbacks", (void *)&callbacks))
+		return -1;
 
 	layout = WLog_GetLogLayout(root);
 	WLog_Layout_SetPrefixFormat(root, layout, "%mn");

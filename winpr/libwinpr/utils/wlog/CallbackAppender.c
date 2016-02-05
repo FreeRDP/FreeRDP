@@ -21,107 +21,114 @@
 #include "config.h"
 #endif
 
-#include <winpr/crt.h>
-#include <winpr/path.h>
+#include "CallbackAppender.h"
 
-#include <winpr/wlog.h>
 
-#include "wlog/Message.h"
-
-#include "wlog/CallbackAppender.h"
-
-/**
- * Callback Appender
- */
-
-WINPR_API void WLog_CallbackAppender_SetCallbacks(wLog* log, wLogCallbackAppender* appender,
-	CallbackAppenderMessage_t msg, CallbackAppenderImage_t img, CallbackAppenderPackage_t pkg,
-	CallbackAppenderData_t data)
+struct _wLogCallbackAppender
 {
-	if (!appender)
-		return;
+	WLOG_APPENDER_COMMON();
 
-	if (appender->Type != WLOG_APPENDER_CALLBACK)
-		return;
+	wLogCallbacks *callbacks;
+};
+typedef struct _wLogCallbackAppender wLogCallbackAppender;
 
-	appender->message = msg;
-	appender->image = img;
-	appender->package = pkg;
-	appender->data = data;
+static BOOL WLog_CallbackAppender_Open(wLog* log, wLogAppender* appender)
+{
+	return TRUE;
 }
 
-int WLog_CallbackAppender_Open(wLog* log, wLogCallbackAppender* appender)
+static BOOL WLog_CallbackAppender_Close(wLog* log, wLogAppender* appender)
 {
-	return 0;
+	return TRUE;
 }
 
-int WLog_CallbackAppender_Close(wLog* log, wLogCallbackAppender* appender)
-{
-	return 0;
-}
-
-int WLog_CallbackAppender_WriteMessage(wLog* log, wLogCallbackAppender* appender, wLogMessage* message)
+static BOOL WLog_CallbackAppender_WriteMessage(wLog* log, wLogAppender* appender, wLogMessage* message)
 {
 	char prefix[WLOG_MAX_PREFIX_SIZE];
+	wLogCallbackAppender* callbackAppender;
 
+	if (!appender)
+		return FALSE;
 	message->PrefixString = prefix;
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
 
-	if (appender->message)
-	{
-		appender->message(message);
-	}
-	else
-	{
-		return -1;
-	}
+	callbackAppender = (wLogCallbackAppender *)appender;
 
-	return 1;
+	if (callbackAppender->callbacks && callbackAppender->callbacks->message)
+		return callbackAppender->callbacks->message(message);
+	else
+		return FALSE;
 }
 
-int WLog_CallbackAppender_WriteDataMessage(wLog* log, wLogCallbackAppender* appender, wLogMessage* message)
+static BOOL WLog_CallbackAppender_WriteDataMessage(wLog* log, wLogAppender* appender, wLogMessage* message)
 {
-	if (appender->data)
-	{
-		appender->data(message);
-	}
-	else
-	{
-		return -1;
-	}
 
-	return 1;
+	wLogCallbackAppender* callbackAppender;
+	if (!appender)
+		return FALSE;
+
+	callbackAppender = (wLogCallbackAppender *)appender;
+	if (callbackAppender->callbacks && callbackAppender->callbacks->data)
+		return callbackAppender->callbacks->data(message);
+	else
+		return FALSE;
 }
 
-int WLog_CallbackAppender_WriteImageMessage(wLog* log, wLogCallbackAppender* appender, wLogMessage* message)
+static BOOL WLog_CallbackAppender_WriteImageMessage(wLog* log, wLogAppender* appender, wLogMessage* message)
 {
-	if (appender->image)
-	{
-		appender->image(message);
-	}
-	else
-	{
-		return -1;
-	}
+	wLogCallbackAppender* callbackAppender;
+	if (!appender)
+		return FALSE;
 
-	return 1;
+	callbackAppender = (wLogCallbackAppender *)appender;
+	if (callbackAppender->callbacks && callbackAppender->callbacks->image)
+		return callbackAppender->callbacks->image(message);
+	else
+		return FALSE;
 }
 
-int WLog_CallbackAppender_WritePacketMessage(wLog* log, wLogCallbackAppender* appender, wLogMessage* message)
+static BOOL WLog_CallbackAppender_WritePacketMessage(wLog* log, wLogAppender* appender, wLogMessage* message)
 {
-	if (appender->package)
-	{
-		appender->package(message);
-	}
-	else
-	{
-		return -1;
-	}
+	wLogCallbackAppender* callbackAppender;
+	if (!appender)
+		return FALSE;
 
-	return 1;
+	callbackAppender = (wLogCallbackAppender *)appender;
+	if (callbackAppender->callbacks && callbackAppender->callbacks->package)
+		return callbackAppender->callbacks->package(message);
+	else
+		return FALSE;
 }
 
-wLogCallbackAppender* WLog_CallbackAppender_New(wLog* log)
+static BOOL WLog_CallbackAppender_Set(wLogAppender* appender, const char *setting, void *value)
+{
+	wLogCallbackAppender *callbackAppender = (wLogCallbackAppender *)appender;
+
+	if (!value || strcmp(setting, "callbacks"))
+		return FALSE;
+
+	if (!(callbackAppender->callbacks = calloc(1, sizeof(wLogCallbacks)))) {
+		return FALSE;
+	}
+
+	callbackAppender->callbacks = memcpy(callbackAppender->callbacks, value, sizeof(wLogCallbacks));
+	return TRUE;
+}
+
+static void WLog_CallbackAppender_Free(wLogAppender* appender)
+{
+	wLogCallbackAppender *callbackAppender;
+	if (!appender) {
+		return;
+	}
+
+	callbackAppender = (wLogCallbackAppender *)appender;
+
+	free(callbackAppender->callbacks);
+	free(appender);
+}
+
+wLogAppender* WLog_CallbackAppender_New(wLog* log)
 {
 	wLogCallbackAppender* CallbackAppender;
 
@@ -131,21 +138,14 @@ wLogCallbackAppender* WLog_CallbackAppender_New(wLog* log)
 
 	CallbackAppender->Type = WLOG_APPENDER_CALLBACK;
 
-	CallbackAppender->Open = (WLOG_APPENDER_OPEN_FN) WLog_CallbackAppender_Open;
-	CallbackAppender->Close = (WLOG_APPENDER_OPEN_FN) WLog_CallbackAppender_Close;
-	CallbackAppender->WriteMessage =
-			(WLOG_APPENDER_WRITE_MESSAGE_FN) WLog_CallbackAppender_WriteMessage;
-	CallbackAppender->WriteDataMessage =
-			(WLOG_APPENDER_WRITE_DATA_MESSAGE_FN) WLog_CallbackAppender_WriteDataMessage;
-	CallbackAppender->WriteImageMessage =
-			(WLOG_APPENDER_WRITE_IMAGE_MESSAGE_FN) WLog_CallbackAppender_WriteImageMessage;
-	CallbackAppender->WritePacketMessage =
-			(WLOG_APPENDER_WRITE_PACKET_MESSAGE_FN) WLog_CallbackAppender_WritePacketMessage;
+	CallbackAppender->Open = WLog_CallbackAppender_Open;
+	CallbackAppender->Close = WLog_CallbackAppender_Close;
+	CallbackAppender->WriteMessage = WLog_CallbackAppender_WriteMessage;
+	CallbackAppender->WriteDataMessage = WLog_CallbackAppender_WriteDataMessage;
+	CallbackAppender->WriteImageMessage = WLog_CallbackAppender_WriteImageMessage;
+	CallbackAppender->WritePacketMessage = WLog_CallbackAppender_WritePacketMessage;
+	CallbackAppender->Free = WLog_CallbackAppender_Free;
+	CallbackAppender->Set = WLog_CallbackAppender_Set;
 
-	return CallbackAppender;
-}
-
-void WLog_CallbackAppender_Free(wLog* log, wLogCallbackAppender* appender)
-{
-	free(appender);
+	return (wLogAppender *)CallbackAppender;
 }

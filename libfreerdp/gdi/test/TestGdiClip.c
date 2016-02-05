@@ -28,7 +28,7 @@ int test_gdi_ClipCoords(void)
 
 	hdc->bytesPerPixel = 4;
 	hdc->bitsPerPixel = 32;
-	bmp = gdi_CreateBitmap(1024, 768, 4, NULL);
+	bmp = gdi_CreateBitmapEx(1024, 768, 4, NULL, NULL);
 	gdi_SelectObject(hdc, (HGDIOBJECT) bmp);
 	gdi_SetNullClipRgn(hdc);
 
@@ -186,7 +186,7 @@ int test_gdi_InvalidateRegion(void)
 
 	hdc->bytesPerPixel = 4;
 	hdc->bitsPerPixel = 32;
-	bmp = gdi_CreateBitmap(1024, 768, 4, NULL);
+	bmp = gdi_CreateBitmapEx(1024, 768, 4, NULL, NULL);
 	gdi_SelectObject(hdc, (HGDIOBJECT) bmp);
 	gdi_SetNullClipRgn(hdc);
 

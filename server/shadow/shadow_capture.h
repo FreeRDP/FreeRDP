@@ -38,9 +38,6 @@ struct rdp_shadow_capture
 extern "C" {
 #endif
 
-int shadow_capture_align_clip_rect(RECTANGLE_16* rect, RECTANGLE_16* clip);
-int shadow_capture_compare(BYTE* pData1, int nStep1, int nWidth, int nHeight, BYTE* pData2, int nStep2, RECTANGLE_16* rect);
-
 rdpShadowCapture* shadow_capture_new(rdpShadowServer* server);
 void shadow_capture_free(rdpShadowCapture* capture);
 

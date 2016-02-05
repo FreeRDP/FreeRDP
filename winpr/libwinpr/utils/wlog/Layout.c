@@ -30,7 +30,7 @@
 #include <winpr/sysinfo.h>
 #include <winpr/environment.h>
 
-#include <winpr/wlog.h>
+#include "wlog.h"
 
 #include "wlog/Layout.h"
 
@@ -65,7 +65,7 @@ void WLog_PrintMessagePrefix(wLog* log, wLogMessage* message, const char* format
 	va_end(args);
 }
 
-void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* message)
+BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* message)
 {
 	char* p;
 	int index;
@@ -327,6 +327,7 @@ void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 					args[11], args[12], args[13], args[14], args[15]);
 			break;
 	}
+	return TRUE;
 }
 
 wLogLayout* WLog_GetLogLayout(wLog* log)

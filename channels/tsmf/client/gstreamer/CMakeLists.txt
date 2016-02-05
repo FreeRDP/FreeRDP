@@ -48,9 +48,7 @@ else()
 		tsmf_X11.c)
 	set(LIBS ${LIBS} ${X11_LIBRARIES} ${XEXT_LIBRARIES})
 
-	if(NOT XEXT_FOUND)
-		message(FATAL_ERROR "Xext library not found, but required for TSMF module.")
-	else()
+	if(XEXT_FOUND)
 		add_definitions(-DWITH_XEXT=1)
 	endif()
 
@@ -65,5 +63,3 @@ add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_N
 
 
 target_link_libraries(${MODULE_NAME} ${LIBS} freerdp)
-
-install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_ADDIN_PATH} EXPORT FreeRDPTargets)

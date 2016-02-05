@@ -53,7 +53,7 @@ p_PatBlt PatBlt_[5] =
 
 HGDI_BRUSH gdi_CreateSolidBrush(GDI_COLOR crColor)
 {
-	HGDI_BRUSH hBrush = (HGDI_BRUSH) malloc(sizeof(GDI_BRUSH));
+	HGDI_BRUSH hBrush = (HGDI_BRUSH) calloc(1, sizeof(GDI_BRUSH));
 	if (!hBrush)
 		return NULL;
 	hBrush->objectType = GDIOBJECT_BRUSH;
@@ -71,7 +71,7 @@ HGDI_BRUSH gdi_CreateSolidBrush(GDI_COLOR crColor)
 
 HGDI_BRUSH gdi_CreatePatternBrush(HGDI_BITMAP hbmp)
 {
-	HGDI_BRUSH hBrush = (HGDI_BRUSH) malloc(sizeof(GDI_BRUSH));
+	HGDI_BRUSH hBrush = (HGDI_BRUSH) calloc(1, sizeof(GDI_BRUSH));
 	if (!hBrush)
 		return NULL;
 	hBrush->objectType = GDIOBJECT_BRUSH;
@@ -82,7 +82,7 @@ HGDI_BRUSH gdi_CreatePatternBrush(HGDI_BITMAP hbmp)
 
 HGDI_BRUSH gdi_CreateHatchBrush(HGDI_BITMAP hbmp)
 {
-	HGDI_BRUSH hBrush = (HGDI_BRUSH) malloc(sizeof(GDI_BRUSH));
+	HGDI_BRUSH hBrush = (HGDI_BRUSH) calloc(1, sizeof(GDI_BRUSH));
 	if (!hBrush)
 		return NULL;
 	hBrush->objectType = GDIOBJECT_BRUSH;

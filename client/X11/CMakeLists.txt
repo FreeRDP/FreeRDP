@@ -74,7 +74,7 @@ set(${MODULE_PREFIX}_LIBS
 	${CMAKE_DL_LIBS})
 
 if(WITH_MANPAGES)
-	find_program( XSLTPROC_EXECUTABLE NAMES xsltproc)
+	find_program(XSLTPROC_EXECUTABLE NAMES xsltproc)
 
 	if(DOCBOOKXSL_FOUND AND XSLTPROC_EXECUTABLE)
 
@@ -111,7 +111,7 @@ if(WITH_MANPAGES)
 		if(OPENBSD)
 		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/xfreerdp.1 DESTINATION man/man1)
 		else()
-		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/xfreerdp.1 DESTINATION share/man/man1)
+		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/xfreerdp.1 DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/man/man1)
 		endif()
 	else()
 		message(WARNING "WITH_MANPAGES was set, but xsltproc was not found. man-pages will not be installed")
@@ -211,7 +211,7 @@ if(WITH_IPP)
 endif()
 
 if(WITH_CLIENT_INTERFACE)
-	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries EXPORT FreeRDPTargets)
+	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries)
 	add_subdirectory(cli)
 else()
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)

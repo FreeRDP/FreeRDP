@@ -86,14 +86,21 @@ typedef struct _CLIPRDR_MFPICT CLIPRDR_MFPICT;
 
 struct _CLIPRDR_FILEDESCRIPTOR
 {
-	UINT32 flags;
-	BYTE reserved1[32];
-	UINT32 fileAttributes;
-	BYTE reserved2[16];
-	UINT64 lastWriteTime;
-	UINT32 fileSizeHigh;
-	UINT32 fileSizeLow;
-	char fileName[520];
+	DWORD    dwFlags;
+	BYTE     clsid[16];
+	BYTE     sizel[8];
+	BYTE     pointl[8];
+	DWORD    dwFileAttributes;
+	FILETIME ftCreationTime;
+	FILETIME ftLastAccessTime;
+	FILETIME ftLastWriteTime;
+	DWORD    nFileSizeHigh;
+	DWORD    nFileSizeLow;
+	union
+	{
+		WCHAR    w[260];
+		CHAR	 c[520];
+	} cFileName;
 };
 typedef struct _CLIPRDR_FILEDESCRIPTOR CLIPRDR_FILEDESCRIPTOR;
 

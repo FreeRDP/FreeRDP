@@ -30,6 +30,7 @@
 #include "transport.h"
 #include "connection.h"
 #include "message.h"
+#include "buildflags.h"
 
 #include <assert.h>
 
@@ -71,6 +72,7 @@ BOOL freerdp_connect(freerdp* instance)
 	connectErrorCode = 0;
 	freerdp_set_last_error(instance->context, FREERDP_ERROR_SUCCESS);
 	clearChannelError(instance->context);
+	ResetEvent(instance->context->abortEvent);
 
 	rdp = instance->context->rdp;
 	settings = instance->settings;
@@ -438,11 +440,21 @@ const char* freerdp_get_version_string(void)
 
 const char* freerdp_get_build_date(void)
 {
-	static char build_date[64];
-
-	sprintf_s(build_date, sizeof(build_date), "%s %s", __DATE__, __TIME__);
+	static char build_date[] = __DATE__ " " __TIME__;
 
 	return build_date;
+}
+
+const char* freerdp_get_build_config(void)
+{
+	static const char build_config[] =
+		"Build configuration: " BUILD_CONFIG "\n"
+		"Build type:          " BUILD_TYPE "\n"
+		"CFLAGS:              " CFLAGS "\n"
+		"Compiler:            " COMPILER_ID ", " COMPILER_VERSION "\n"
+		"Target architecture: " TARGET_ARCH "\n";
+
+	return build_config;
 }
 
 const char* freerdp_get_build_revision(void)
@@ -615,7 +627,7 @@ UINT32 freerdp_error_info(freerdp* instance)
 }
 
 void freerdp_set_error_info(rdpRdp* rdp, UINT32 error) {
-	rdp->errorInfo = error;
+	rdp_set_error_info(rdp, error);
 }
 
 UINT32 freerdp_get_last_error(rdpContext* context)

@@ -178,6 +178,7 @@ struct _GDI_BITMAP
 	int height;
 	int scanline;
 	BYTE* data;
+	void (*free)(void *);
 };
 typedef struct _GDI_BITMAP GDI_BITMAP;
 typedef GDI_BITMAP* HGDI_BITMAP;
@@ -224,6 +225,8 @@ struct _GDI_BRUSH
 	int style;
 	HGDI_BITMAP pattern;
 	GDI_COLOR color;
+	int nXOrg;
+	int nYOrg;
 };
 typedef struct _GDI_BRUSH GDI_BRUSH;
 typedef GDI_BRUSH* HGDI_BRUSH;

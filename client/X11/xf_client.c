@@ -35,6 +35,7 @@
 #endif
 
 #ifdef WITH_XI
+#include <X11/extensions/XInput.h>
 #include <X11/extensions/XInput2.h>
 #endif
 
@@ -342,7 +343,7 @@ BOOL xf_sw_end_paint(rdpContext* context)
 
 		xf_lock_x11(xfc, FALSE);
 
-		xf_rail_paint(xfc, x, y, x + w - 1, y + h - 1);
+		xf_rail_paint(xfc, x, y, x + w, y + h);
 
 		xf_unlock_x11(xfc, FALSE);
 	}
@@ -455,7 +456,7 @@ BOOL xf_hw_end_paint(rdpContext* context)
 
 		xf_lock_x11(xfc, FALSE);
 
-		xf_rail_paint(xfc, x, y, x + w - 1, y + h - 1);
+		xf_rail_paint(xfc, x, y, x + w, y + h);
 
 		xf_unlock_x11(xfc, FALSE);
 	}
@@ -935,6 +936,138 @@ void xf_check_extensions(xfContext* context)
 #endif
 }
 
+#ifdef WITH_XI
+/* Input device which does NOT have the correct mapping. We must disregard */
+/* this device when trying to find the input device which is the pointer.  */
+static const char TEST_PTR_STR [] = "Virtual core XTEST pointer";
+static const size_t TEST_PTR_LEN = sizeof (TEST_PTR_STR) / sizeof (char);
+
+/* Invalid device identifier which indicate failure. */
+static const int INVALID_XID = -1;
+#endif /* WITH_XI */
+
+static void xf_get_x11_button_map (xfContext* xfc, unsigned char* x11_map)
+{
+#ifdef WITH_XI
+	int opcode, event, error;
+	int xid;
+	XDevice* ptr_dev;
+	XExtensionVersion* version;
+	XDeviceInfo* devices1;
+	XIDeviceInfo* devices2;
+	int i, num_devices;
+
+	if (XQueryExtension (xfc->display, "XInputExtension", &opcode, &event, &error))
+	{
+		WLog_DBG(TAG, "Searching for XInput pointer device");
+		xid = INVALID_XID;
+		/* loop through every device, looking for a pointer */
+		version = XGetExtensionVersion (xfc->display, INAME);
+		if (version->major_version >= 2)
+		{
+			/* XID of pointer device using XInput version 2 */
+			devices2 = XIQueryDevice (xfc->display, XIAllDevices, &num_devices);
+			if (devices2)
+			{
+				for (i = 0; i < num_devices; ++i)
+				{
+					if ((devices2[i].use == XISlavePointer) &&
+					    (strncmp (devices2[i].name, TEST_PTR_STR, TEST_PTR_LEN) != 0))
+					{
+						xid = devices2[i].deviceid;
+						break;
+					}
+				}
+				XIFreeDeviceInfo (devices2);
+			}
+		}
+		else
+		{
+			/* XID of pointer device using XInput version 1 */
+			devices1 = XListInputDevices (xfc->display, &num_devices);
+			if (devices1)
+			{
+				for (i = 0; i < num_devices; ++i)
+				{
+					if ((devices1[i].use == IsXExtensionPointer) &&
+					    (strncmp (devices1[i].name, TEST_PTR_STR, TEST_PTR_LEN) != 0))
+					{
+						xid = devices1[i].id;
+						break;
+					}
+				}
+				XFreeDeviceList (devices1);
+			}
+		}
+		XFree (version);
+		/* get button mapping from input extension if there is a pointer device; */
+		/* otherwise leave unchanged.                                            */
+		if (xid != INVALID_XID)
+		{
+			WLog_DBG(TAG, "Pointer device: %d", xid);
+			ptr_dev = XOpenDevice (xfc->display, xid);
+			XGetDeviceButtonMapping (xfc->display, ptr_dev, x11_map, NUM_BUTTONS_MAPPED);
+			XCloseDevice (xfc->display, ptr_dev);
+		}
+		else
+		{
+			WLog_DBG(TAG, "No pointer device found!");
+		}
+	}
+	else
+#endif /* WITH_XI */
+	{
+		WLog_DBG(TAG, "Get global pointer mapping (no XInput)");
+		XGetPointerMapping (xfc->display, x11_map, NUM_BUTTONS_MAPPED);
+	}
+}
+
+/* Assignment of physical (not logical) mouse buttons to wire flags. */
+/* Notice that the middle button is 2 in X11, but 3 in RDP.          */
+static const int xf_button_flags[NUM_BUTTONS_MAPPED] = {
+	PTR_FLAGS_BUTTON1,
+	PTR_FLAGS_BUTTON3,
+	PTR_FLAGS_BUTTON2
+};
+
+static void xf_button_map_init (xfContext* xfc)
+{
+	/* loop counter for array initialization */
+	int physical;
+	int logical;
+
+	/* logical mouse button which is used for each physical mouse  */
+	/* button (indexed from zero). This is the default map.        */
+	unsigned char x11_map[NUM_BUTTONS_MAPPED] = {
+		Button1,
+		Button2,
+		Button3
+	};
+
+	/* query system for actual remapping */
+	if (!xfc->settings->UnmapButtons)
+	{
+		xf_get_x11_button_map (xfc, x11_map);
+	}
+
+	/* iterate over all (mapped) physical buttons; for each of them */
+	/* find the logical button in X11, and assign to this the       */
+	/* appropriate value to send over the RDP wire.                 */
+	for (physical = 0; physical < NUM_BUTTONS_MAPPED; ++physical)
+	{
+		logical = x11_map[physical];
+		if (Button1 <= logical && logical <= Button3)
+		{
+			xfc->button_map[logical-BUTTON_BASE] = xf_button_flags[physical];
+		}
+		else
+		{
+			WLog_ERR(TAG,"Mouse physical button %d is mapped to logical button %d",
+				physical, logical);
+		}
+	}
+}
+
 /**
  * Callback given to freerdp_connect() to process the pre-connect operations.
  * It will fill the rdp_freerdp structure (instance) with the appropriate options to use for the connection.
@@ -1058,6 +1191,7 @@ BOOL xf_pre_connect(freerdp* instance)
 	xfc->decorations = settings->Decorations;
 	xfc->grab_keyboard = settings->GrabKeyboard;
 	xfc->fullscreen_toggle = settings->ToggleFullscreen;
+	xf_button_map_init (xfc);
 
 	return TRUE;
 }
@@ -1177,7 +1311,9 @@ BOOL xf_post_connect(freerdp* instance)
 	update->PlaySound = xf_play_sound;
 	update->SetKeyboardIndicators = xf_keyboard_set_indicators;
 
-	xfc->clipboard = xf_clipboard_new(xfc);
+	if (!(xfc->clipboard = xf_clipboard_new(xfc)))
+		return FALSE;
+
 	if (freerdp_channels_post_connect(channels, instance) < 0)
 		return FALSE;
 
@@ -1526,11 +1662,30 @@ void* xf_client_thread(void* param)
 
 	xfc = (xfContext*) instance->context;
 
-	/* Connection succeeded. --authonly ? */
-	if (instance->settings->AuthenticationOnly || !status)
+	/* --authonly ? */
+	if (instance->settings->AuthenticationOnly)
 	{
 		WLog_ERR(TAG, "Authentication only, exit status %d", !status);
-		exit_code = XF_EXIT_CONN_FAILED;
+		if (!status)
+		{
+			if (freerdp_get_last_error(instance->context) == FREERDP_ERROR_AUTHENTICATION_FAILED)
+				exit_code = XF_EXIT_AUTH_FAILURE;
+			else
+				exit_code = XF_EXIT_CONN_FAILED;
+		}
+		else
+			exit_code = XF_EXIT_SUCCESS;
+		goto disconnect;
+	}
+
+	if (!status)
+	{
+		WLog_ERR(TAG, "Freerdp connect error exit status %d", !status);
+		exit_code = freerdp_error_info(instance);
+		if (freerdp_get_last_error(instance->context) == FREERDP_ERROR_AUTHENTICATION_FAILED)
+			exit_code = XF_EXIT_AUTH_FAILURE;
+		else
+			exit_code = XF_EXIT_CONN_FAILED;
 		goto disconnect;
 	}
 
@@ -1641,7 +1796,7 @@ disconnect:
 
 DWORD xf_exit_code_from_disconnect_reason(DWORD reason)
 {
-	if (reason == 0 || (reason >= XF_EXIT_PARSE_ARGUMENTS && reason <= XF_EXIT_CONN_FAILED))
+	if (reason == 0 || (reason >= XF_EXIT_PARSE_ARGUMENTS && reason <= XF_EXIT_AUTH_FAILURE))
 		return reason;
 	/* License error set */
 	else if (reason >= 0x100 && reason <= 0x10A)
@@ -1850,7 +2005,11 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xfc->_NET_WORKAREA = XInternAtom(xfc->display, "_NET_WORKAREA", False);
 	xfc->_NET_WM_STATE = XInternAtom(xfc->display, "_NET_WM_STATE", False);
 	xfc->_NET_WM_STATE_FULLSCREEN = XInternAtom(xfc->display, "_NET_WM_STATE_FULLSCREEN", False);
+	xfc->_NET_WM_STATE_MAXIMIZED_HORZ = XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_HORZ", False);
+	xfc->_NET_WM_STATE_MAXIMIZED_VERT = XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_VERT", False);
 	xfc->_NET_WM_FULLSCREEN_MONITORS = XInternAtom(xfc->display, "_NET_WM_FULLSCREEN_MONITORS", False);
+	xfc->_NET_WM_NAME = XInternAtom(xfc->display, "_NET_WM_NAME", False);
+	xfc->_NET_WM_PID = XInternAtom(xfc->display, "_NET_WM_PID", False);
 	xfc->_NET_WM_WINDOW_TYPE = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE", False);
 	xfc->_NET_WM_WINDOW_TYPE_NORMAL = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE_NORMAL", False);
 	xfc->_NET_WM_WINDOW_TYPE_DIALOG = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE_DIALOG", False);
@@ -1861,6 +2020,8 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xfc->_NET_WM_STATE_SKIP_PAGER = XInternAtom(xfc->display, "_NET_WM_STATE_SKIP_PAGER", False);
 	xfc->_NET_WM_MOVERESIZE = XInternAtom(xfc->display, "_NET_WM_MOVERESIZE", False);
 	xfc->_NET_MOVERESIZE_WINDOW = XInternAtom(xfc->display, "_NET_MOVERESIZE_WINDOW", False);
+
+	xfc->UTF8_STRING = XInternAtom(xfc->display, "UTF8_STRING", FALSE);
 	xfc->WM_PROTOCOLS = XInternAtom(xfc->display, "WM_PROTOCOLS", False);
 	xfc->WM_DELETE_WINDOW = XInternAtom(xfc->display, "WM_DELETE_WINDOW", False);
 	xfc->WM_STATE = XInternAtom(xfc->display, "WM_STATE", False);

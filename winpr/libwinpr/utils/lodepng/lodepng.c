@@ -2208,6 +2208,12 @@ unsigned lodepng_zlib_compress(unsigned char** out, size_t* outsize, const unsig
     *out = outv.data;
     *outsize = outv.size;
   }
+  else
+  {
+    *out = NULL;
+    *outsize = 0;
+    ucvector_cleanup(&outv);
+  }
 
   return error;
 }

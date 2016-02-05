@@ -60,16 +60,19 @@ CMAKE_DEPENDENT_OPTION(TESTS_WTSAPI_EXTRA "Build extra WTSAPI tests (interactive
 
 option(WITH_SAMPLE "Build sample code" OFF)
 
-option(WITH_CLIENT "Build client binaries" ON)
+option(WITH_CLIENT_COMMON "Build client common library" ON)
+cmake_dependent_option(WITH_CLIENT "Build client binaries" ON "WITH_CLIENT_COMMON" OFF)
+
 option(WITH_SERVER "Build server binaries" OFF)
 
 option(STATIC_CHANNELS "Build channels statically" ON)
 
 option(WITH_CHANNELS "Build virtual channel plugins" ON)
 
-if(WITH_CLIENT AND WITH_CHANNELS)
-	option(WITH_CLIENT_CHANNELS "Build virtual channel plugins" ON)
-endif()
+cmake_dependent_option(WITH_CLIENT_CHANNELS "Build virtual channel plugins" ON
+	"WITH_CLIENT_COMMON;WITH_CHANNELS" OFF)
+
+cmake_dependent_option(WITH_MACAUDIO "Enable OSX sound backend" ON "APPLE;NOT IOS" OFF)
 
 if(WITH_SERVER AND WITH_CHANNELS)
 	option(WITH_SERVER_CHANNELS "Build virtual channel plugins" ON)
@@ -119,6 +122,8 @@ option(WITH_DEBUG_X11_LOCAL_MOVESIZE "Print X11 Client local movesize debug mess
 option(WITH_DEBUG_X11 "Print X11 Client debug messages" ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_XV "Print XVideo debug messages" ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_RINGBUFFER "Enable Ringbuffer debug messages" ${DEFAULT_DEBUG_OPTION})
+
+option(WITH_DEBUG_SYMBOLS "Pack debug symbols to installer" OFF)
 
 if(ANDROID)
 include(ConfigOptionsAndroid)

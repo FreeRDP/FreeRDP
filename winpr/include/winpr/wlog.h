@@ -3,6 +3,9 @@
  * WinPR Logger
  *
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 Bernhard Miklautz <bernhard.miklautz@thincast.com>
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,41 +27,41 @@
 extern "C" {
 #endif
 
-#include <stdio.h>
 #include <stdarg.h>
-
-#include <winpr/winpr.h>
 #include <winpr/wtypes.h>
-
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-
-typedef struct _wLog wLog;
-typedef struct _wLogMessage wLogMessage;
-typedef struct _wLogLayout wLogLayout;
-typedef struct _wLogAppender wLogAppender;
 
 /**
  * Log Levels
  */
-
-#define WLOG_TRACE		0
-#define WLOG_DEBUG		1
-#define WLOG_INFO		2
-#define WLOG_WARN		3
-#define WLOG_ERROR		4
-#define WLOG_FATAL		5
-#define WLOG_OFF		6
+#define WLOG_TRACE  0
+#define WLOG_DEBUG  1
+#define WLOG_INFO   2
+#define WLOG_WARN   3
+#define WLOG_ERROR  4
+#define WLOG_FATAL  5
+#define WLOG_OFF    6
 #define WLOG_LEVEL_INHERIT 0xFFFF
 
 /**
  * Log Message
  */
+#define WLOG_MESSAGE_TEXT      0
+#define WLOG_MESSAGE_DATA      1
+#define WLOG_MESSAGE_IMAGE     2
+#define WLOG_MESSAGE_PACKET    3
 
-#define WLOG_MESSAGE_TEXT	0
-#define WLOG_MESSAGE_DATA	1
-#define WLOG_MESSAGE_IMAGE	2
-#define WLOG_MESSAGE_PACKET	3
+/**
+ * Log Appenders
+ */
+#define WLOG_APPENDER_CONSOLE   0
+#define WLOG_APPENDER_FILE      1
+#define WLOG_APPENDER_BINARY    2
+#define WLOG_APPENDER_CALLBACK  3
+#define WLOG_APPENDER_SYSLOG    4
+#define WLOG_APPENDER_JOURNALD  5
+#define WLOG_APPENDER_UDP       6
 
 struct _wLogMessage
 {
@@ -93,144 +96,16 @@ struct _wLogMessage
 	int PacketLength;
 	DWORD PacketFlags;
 };
+typedef struct _wLogMessage wLogMessage;
+typedef struct _wLogLayout wLogLayout;
+typedef struct _wLogAppender wLogAppender;
+typedef struct _wLog wLog;
 
-/**
- * Log Layout
- */
+#define WLOG_PACKET_INBOUND     1
+#define WLOG_PACKET_OUTBOUND    2
 
-struct _wLogLayout
-{
-	DWORD Type;
-
-	LPSTR FormatString;
-};
-
-/**
- * Log Appenders
- */
-
-#define WLOG_APPENDER_CONSOLE	0
-#define WLOG_APPENDER_FILE	1
-#define WLOG_APPENDER_BINARY	2
-#define WLOG_APPENDER_CALLBACK	3
-
-#define WLOG_PACKET_INBOUND	1
-#define WLOG_PACKET_OUTBOUND	2
-
-typedef int (*WLOG_APPENDER_OPEN_FN)(wLog* log, wLogAppender* appender);
-typedef int (*WLOG_APPENDER_CLOSE_FN)(wLog* log, wLogAppender* appender);
-typedef int (*WLOG_APPENDER_WRITE_MESSAGE_FN)(wLog* log, wLogAppender* appender, wLogMessage* message);
-typedef int (*WLOG_APPENDER_WRITE_DATA_MESSAGE_FN)(wLog* log, wLogAppender* appender, wLogMessage* message);
-typedef int (*WLOG_APPENDER_WRITE_IMAGE_MESSAGE_FN)(wLog* log, wLogAppender* appender, wLogMessage* message);
-typedef int (*WLOG_APPENDER_WRITE_PACKET_MESSAGE_FN)(wLog* log, wLogAppender* appender, wLogMessage* message);
-
-#define WLOG_APPENDER_COMMON() \
-	DWORD Type; \
-	DWORD State; \
-	wLogLayout* Layout; \
-	CRITICAL_SECTION lock; \
-	BOOL recursive; \
-	void* TextMessageContext; \
-	void* DataMessageContext; \
-	void* ImageMessageContext; \
-	void* PacketMessageContext; \
-	WLOG_APPENDER_OPEN_FN Open; \
-	WLOG_APPENDER_CLOSE_FN Close; \
-	WLOG_APPENDER_WRITE_MESSAGE_FN WriteMessage; \
-	WLOG_APPENDER_WRITE_DATA_MESSAGE_FN WriteDataMessage; \
-	WLOG_APPENDER_WRITE_IMAGE_MESSAGE_FN WriteImageMessage; \
-	WLOG_APPENDER_WRITE_PACKET_MESSAGE_FN WritePacketMessage
-
-struct _wLogAppender
-{
-	WLOG_APPENDER_COMMON();
-};
-
-#define WLOG_CONSOLE_DEFAULT		0
-#define WLOG_CONSOLE_STDOUT		1
-#define WLOG_CONSOLE_STDERR		2
-#define WLOG_CONSOLE_DEBUG		4
-
-struct _wLogConsoleAppender
-{
-	WLOG_APPENDER_COMMON();
-
-	int outputStream;
-};
-typedef struct _wLogConsoleAppender wLogConsoleAppender;
-
-struct _wLogFileAppender
-{
-	WLOG_APPENDER_COMMON();
-
-	char* FileName;
-	char* FilePath;
-	char* FullFileName;
-	FILE* FileDescriptor;
-};
-typedef struct _wLogFileAppender wLogFileAppender;
-
-struct _wLogBinaryAppender
-{
-	WLOG_APPENDER_COMMON();
-
-	char* FileName;
-	char* FilePath;
-	char* FullFileName;
-	FILE* FileDescriptor;
-};
-typedef struct _wLogBinaryAppender wLogBinaryAppender;
-
-typedef void (*CallbackAppenderMessage_t)(const wLogMessage *msg);
-typedef void (*CallbackAppenderData_t)(const wLogMessage *msg);
-typedef void (*CallbackAppenderImage_t)(const wLogMessage *msg);
-typedef void (*CallbackAppenderPackage_t)(const wLogMessage *msg);
-
-struct _wLogCallbackAppender
-{
-	WLOG_APPENDER_COMMON();
-
-	CallbackAppenderMessage_t message;
-	CallbackAppenderData_t data;
-	CallbackAppenderImage_t image;
-	CallbackAppenderPackage_t package;
-};
-typedef struct _wLogCallbackAppender wLogCallbackAppender;
-
-/**
- * Filter
- */
-
-struct _wLogFilter
-{
-	DWORD Level;
-	LPSTR* Names;
-	DWORD NameCount;
-};
-typedef struct _wLogFilter wLogFilter;
-
-/**
- * Logger
- */
-
-struct _wLog
-{
-	LPSTR Name;
-	DWORD Level;
-
-	BOOL IsRoot;
-	LPSTR* Names;
-	DWORD NameCount;
-	wLogAppender* Appender;
-
-	wLog* Parent;
-	wLog** Children;
-	DWORD ChildrenCount;
-	DWORD ChildrenSize;
-};
-
-WINPR_API void WLog_PrintMessage(wLog* log, wLogMessage* message, ...);
-WINPR_API int WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args);
+WINPR_API BOOL WLog_PrintMessage(wLog* log, wLogMessage* message, ...);
+WINPR_API BOOL WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args);
 
 #define WLog_Print(_log, _log_level, _fmt, ...) \
 	do { \
@@ -314,22 +189,16 @@ WINPR_API int WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args)
 #define WLog_FATAL(tag, fmt, ...) WLog_Print(WLog_Get(tag), WLOG_FATAL, fmt, ## __VA_ARGS__)
 
 WINPR_API DWORD WLog_GetLogLevel(wLog* log);
-WINPR_API void WLog_SetLogLevel(wLog* log, DWORD logLevel);
+WINPR_API BOOL WLog_SetLogLevel(wLog* log, DWORD logLevel);
+WINPR_API BOOL WLog_SetStringLogLevel(wLog* log, LPCSTR level);
+WINPR_API BOOL WLog_AddStringLogFilters(LPCSTR filter);
 
-WINPR_API wLogAppender* WLog_GetLogAppender(wLog* log);
+
 WINPR_API BOOL WLog_SetLogAppenderType(wLog* log, DWORD logAppenderType);
-
-WINPR_API int WLog_OpenAppender(wLog* log);
-WINPR_API int WLog_CloseAppender(wLog* log);
-
-WINPR_API void WLog_ConsoleAppender_SetOutputStream(wLog* log, wLogConsoleAppender* appender, int outputStream);
-
-WINPR_API BOOL WLog_FileAppender_SetOutputFileName(wLog* log, wLogFileAppender* appender, const char* filename);
-WINPR_API BOOL WLog_FileAppender_SetOutputFilePath(wLog* log, wLogFileAppender* appender, const char* filepath);
-
-WINPR_API void WLog_CallbackAppender_SetCallbacks(wLog* log, wLogCallbackAppender* appender,
-	CallbackAppenderMessage_t msg, CallbackAppenderImage_t img, CallbackAppenderPackage_t pkg,
-	CallbackAppenderData_t data);
+WINPR_API wLogAppender* WLog_GetLogAppender(wLog* log);
+WINPR_API BOOL WLog_OpenAppender(wLog* log);
+WINPR_API BOOL WLog_CloseAppender(wLog* log);
+WINPR_API BOOL WLog_ConfigureAppender(wLogAppender *appender, const char *setting, void *value);
 
 WINPR_API wLogLayout* WLog_GetLogLayout(wLog* log);
 WINPR_API BOOL WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* format);
@@ -338,7 +207,20 @@ WINPR_API wLog* WLog_GetRoot(void);
 WINPR_API wLog* WLog_Get(LPCSTR name);
 
 WINPR_API BOOL WLog_Init(void);
-WINPR_API void WLog_Uninit(void);
+WINPR_API BOOL WLog_Uninit(void);
+
+typedef BOOL (*wLogCallbackMessage_t)(const wLogMessage *msg);
+typedef BOOL (*wLogCallbackData_t)(const wLogMessage *msg);
+typedef BOOL (*wLogCallbackImage_t)(const wLogMessage *msg);
+typedef BOOL (*wLogCallbackPackage_t)(const wLogMessage *msg);
+
+struct _wLogCallbacks {
+	wLogCallbackData_t data;
+	wLogCallbackImage_t  image;
+	wLogCallbackMessage_t message;
+	wLogCallbackPackage_t  package;
+};
+typedef struct _wLogCallbacks wLogCallbacks;
 
 #ifdef __cplusplus
 }

@@ -154,7 +154,7 @@ void xf_keyboard_key_press(xfContext* xfc, BYTE keycode, KeySym keysym)
 	if (keycode < 8)
 		return;
 
-	xfc->KeyboardState[keycode] = keysym;
+	xfc->KeyboardState[keycode] = TRUE;
 
 	if (xf_keyboard_handle_special_keys(xfc, keysym))
 		return;
@@ -167,7 +167,7 @@ void xf_keyboard_key_release(xfContext* xfc, BYTE keycode)
 	if (keycode < 8)
 		return;
 
-	xfc->KeyboardState[keycode] = NoSymbol;
+	xfc->KeyboardState[keycode] = FALSE;
 
 	xf_keyboard_send_key(xfc, FALSE, keycode);
 }
@@ -179,7 +179,7 @@ void xf_keyboard_release_all_keypress(xfContext* xfc)
 
 	for (keycode = 0; keycode < ARRAYSIZE(xfc->KeyboardState); keycode++)
 	{
-		if (xfc->KeyboardState[keycode] != NoSymbol)
+		if (xfc->KeyboardState[keycode])
 		{
 			rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(keycode);
 
@@ -189,7 +189,7 @@ void xf_keyboard_release_all_keypress(xfContext* xfc)
 				freerdp_input_send_keyboard_event_ex(xfc->instance->input, FALSE, RDP_SCANCODE_TAB);
 
 			freerdp_input_send_keyboard_event_ex(xfc->instance->input, FALSE, rdp_scancode);
-			xfc->KeyboardState[keycode] = NoSymbol;
+			xfc->KeyboardState[keycode] = FALSE;
 		}
 	}
 }
@@ -197,7 +197,7 @@ void xf_keyboard_release_all_keypress(xfContext* xfc)
 BOOL xf_keyboard_key_pressed(xfContext* xfc, KeySym keysym)
 {
 	KeyCode keycode = XKeysymToKeycode(xfc->display, keysym);
-	return (xfc->KeyboardState[keycode] == keysym);
+	return xfc->KeyboardState[keycode];
 }
 
 void xf_keyboard_send_key(xfContext* xfc, BOOL down, BYTE keycode)
@@ -466,7 +466,7 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 		return TRUE;
 	}
 
-	if(xfc->fullscreen_toggle)
+	if(!xfc->remote_app && xfc->fullscreen_toggle)
 	{
 		if (keysym == XK_Return)
 		{

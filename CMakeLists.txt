@@ -68,29 +68,40 @@ if ($ENV{BUILD_NUMBER})
   set(BUILD_NUMBER $ENV{BUILD_NUMBER})
 endif()
 set(WITH_LIBRARY_VERSIONING "ON")
-set(FREERDP_VERSION_MAJOR "1")
-set(FREERDP_VERSION_MINOR "2")
-set(FREERDP_VERSION_REVISION "5")
+set(FREERDP_VERSION_MAJOR "2")
+set(FREERDP_VERSION_MINOR "0")
+set(FREERDP_VERSION_REVISION "0")
 set(FREERDP_VERSION_SUFFIX "dev")
-set(FREERDP_API_VERSION "${FREERDP_VERSION_MAJOR}.${FREERDP_VERSION_MINOR}")
-set(FREERDP_VERSION "${FREERDP_API_VERSION}.${FREERDP_VERSION_REVISION}")
+set(FREERDP_API_VERSION "${FREERDP_VERSION_MAJOR}")
+set(FREERDP_VERSION "${FREERDP_VERSION_MAJOR}.${FREERDP_VERSION_MINOR}.${FREERDP_VERSION_REVISION}")
 if (FREERDP_VERSION_SUFFIX)
 	set(FREERDP_VERSION_FULL "${FREERDP_VERSION}-${FREERDP_VERSION_SUFFIX}")
 else()
 	set(FREERDP_VERSION_FULL "${FREERDP_VERSION}")
+endif()
+set(FREERDP_INCLUDE_DIR "include/freerdp${FREERDP_VERSION_MAJOR}/")
+
+# Make paths absolute
+if (CMAKE_INSTALL_PREFIX)
+	get_filename_component(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" ABSOLUTE)
+endif()
+if (FREERDP_EXTERNAL_PATH)
+	get_filename_component (FREERDP_EXTERNAL_PATH "${FREERDP_EXTERNAL_PATH}" ABSOLUTE)
 endif()
 
 # Allow to search the host machine for git
 if(ANDROID OR IOS)
 	SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM BOTH)
 endif(ANDROID OR IOS)
+
 include(GetGitRevisionDescription)
 git_get_exact_tag(GIT_REVISION --tags --always)
+
 if (${GIT_REVISION} STREQUAL "n/a")
-  git_rev_parse(GIT_REVISION --short)
+	git_rev_parse (GIT_REVISION --short)
 endif()
 if(ANDROID OR IOS)
-    SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY)
+	SET (CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY)
 endif(ANDROID OR IOS)
 
 message(STATUS "Git Revision ${GIT_REVISION}")
@@ -104,7 +115,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 if(NOT DEFINED BUILD_SHARED_LIBS)
-	if(ANDROID OR IOS OR APPLE)
+	if(IOS OR APPLE)
 		set(BUILD_SHARED_LIBS OFF)
 	else()
 		set(BUILD_SHARED_LIBS ON)
@@ -246,6 +257,30 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
 	endif()
 endif()
 
+# Enable address sanitizer, where supported and when required
+if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR CMAKE_COMPILER_IS_GNUCC)
+	if(WITH_SANITIZE_ADDRESS)
+		if (DEFINED CMAKE_REQUIRED_FLAGS)
+			set(SAVE_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
+		endif()
+		set(CMAKE_REQUIRED_FLAGS "-fsanitize=address")
+		CHECK_C_COMPILER_FLAG ("-fsanitize=address" fsanitize-address)
+		if(fsanitize-address)
+			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
+		endif()
+		if (DEFINED SAVE_CMAKE_REQUIRED_FLAGS)
+			set(CMAKE_REQUIRED_FLAGS ${SAVE_CMAKE_REQUIRED_FLAGS})
+		else()
+			unset(CMAKE_REQUIRED_FLAGS)
+		endif()
+
+		CHECK_C_COMPILER_FLAG ("-fno-omit-frame-pointer" fno-omit-frame-pointer)
+		if(fno-omit-frame-pointer)
+			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-omit-frame-pointer")
+		endif()
+	endif()
+endif()
+
 if(MSVC)
 	# Remove previous warning definitions,
 	# NMake is otherwise complaining.
@@ -274,11 +309,11 @@ if(MSVC)
 	set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR})
 	set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR})
 
-        if(CMAKE_BUILD_TYPE STREQUAL "Release")
-        else()
-                set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Zi")
-                set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zi")
-        endif()
+	if(CMAKE_BUILD_TYPE STREQUAL "Release")
+	else()
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Zi")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zi")
+	endif()
 
 endif()
 
@@ -286,6 +321,15 @@ if(WIN32)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DUNICODE -D_UNICODE")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_CRT_SECURE_NO_WARNINGS")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWIN32_LEAN_AND_MEAN")
+
+	set(CMAKE_USE_RELATIVE_PATH ON)
+	if (${CMAKE_GENERATOR} MATCHES "NMake Makefile*")
+		set(CMAKE_PDB_BINARY_DIR ${CMAKE_BINARY_DIR})
+	elseif (${CMAKE_GENERATOR} MATCHES "Visual Studio*")
+		set(CMAKE_PDB_BINARY_DIR "${CMAKE_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}")
+	else()
+		message(FATAL "Unknown generator ${CMAKE_GENERATOR}")
+	endif()
 
 	# Set product and vendor for dll and exe version information.
 	set(RC_VERSION_VENDOR ${VENDOR})
@@ -327,17 +371,16 @@ if(NOT IOS)
 	check_include_files(fcntl.h HAVE_FCNTL_H)
 	check_include_files(unistd.h HAVE_UNISTD_H)
 	check_include_files(execinfo.h HAVE_EXECINFO_H)
-	check_include_files(stdint.h HAVE_STDINT_H)
 	check_include_files(inttypes.h HAVE_INTTYPES_H)
 	check_include_files(sys/modem.h HAVE_SYS_MODEM_H)
 	check_include_files(sys/filio.h HAVE_SYS_FILIO_H)
 	check_include_files(sys/sockio.h HAVE_SYS_SOCKIO_H)
 	check_include_files(sys/strtio.h HAVE_SYS_STRTIO_H)
 	check_include_files(sys/select.h HAVE_SYS_SELECT_H)
+	check_include_files(syslog.h HAVE_SYSLOG_H)
 else()
 	set(HAVE_FCNTL_H 1)
 	set(HAVE_UNISTD_H 1)
-	set(HAVE_STDINT_H 1)
 	set(HAVE_INTTYPES_H 1)
 	set(HAVE_SYS_FILIO_H 1)
 endif()
@@ -369,9 +412,9 @@ if(APPLE)
 
 # Temporarily disabled, causes the cmake script to be reexecuted, causing the compilation to fail.
 # Workaround: specify the parameter in the command-line
-#        if(WITH_CLANG)
-#                set(CMAKE_C_COMPILER "clang")
-#        endif()
+#	if(WITH_CLANG)
+#		set(CMAKE_C_COMPILER "clang")
+#	endif()
 
 	if (WITH_VERBOSE)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -v")
@@ -383,14 +426,18 @@ endif(APPLE)
 if(OPENBSD)
 	set(WITH_MANPAGES "ON")
 	set(WITH_ALSA "OFF")
-        set(WITH_PULSE "OFF")
-        set(WITH_OSS "ON")
+	set(WITH_PULSE "OFF")
+	set(WITH_OSS "ON")
 	set(WITH_WAYLAND "OFF")
 endif()
 
 # Android
 if(ANDROID)
-  set(WITH_LIBRARY_VERSIONING "OFF")
+	set(WITH_LIBRARY_VERSIONING "OFF")
+
+	if (${ANDROID_ABI} STREQUAL "armeabi")
+		set (WITH_NEON OFF)
+	endif()
 
 	if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 		add_definitions(-DNDK_DEBUG=1)
@@ -402,40 +449,23 @@ if(ANDROID)
 	endif()
 	set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -llog")
 
-	if (NOT FREERDP_EXTERNAL_JPEG_PATH)
-		if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/external/jpeg8d")
-			set(FREERDP_EXTERNAL_JPEG_PATH "${CMAKE_CURRENT_SOURCE_DIR}/external/jpeg8d")
+	if (NOT FREERDP_EXTERNAL_PATH)
+		if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/external/")
+			set (FREERDP_EXTERNAL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/external/")
 		else()
-			message(STATUS "FREERDP_EXTERNAL_SSL_PATH not set! - Needs to be set if openssl is not found in the android NDK (which usually isn't)")
+			message(STATUS "FREERDP_EXTERNAL_PATH not set!")
 		endif()
 	endif()
-	if (NOT FREERDP_EXTERNAL_SSL_PATH)
-		if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/external/openssl")
-			set(FREERDP_EXTERNAL_SSL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/external/openssl")
-		else()
-			message(STATUS "FREERDP_EXTERNAL_SSL_PATH not set! - Needs to be set if openssl is not found in the android NDK (which usually isn't)")
-		endif()
-		if(WITH_GPROF)
-			if (NOT FREERDP_EXTERNAL_PROFILER_PATH)
-			if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/external/android-ndk-profiler")
-				set(FREERDP_EXTERNAL_PROFILER_PATH
-					"${CMAKE_CURRENT_SOURCE_DIR}/external/android-ndk-profiler")
-			else()
-				message(STATUS "FREERDP_EXTERNAL_PROFILER_PATH not set!")
-			endif()
-		endif()
-	endif()
-endif()
-set(CMAKE_FIND_ROOT_PATH ${CMAKE_FIND_ROOT_PATH} ${FREERDP_EXTERNAL_SSL_PATH} ${FREERDP_EXTERNAL_JPEG_PATH})
-set(CMAKE_FIND_ROOT_PATH ${CMAKE_FIND_ROOT_PATH} ${FREERDP_EXTERNAL_PROFILER_PATH})
 
-	set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/client/Android/FreeRDPCore/jni/${ANDROID_ABI})
-	CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/scripts/regenerate_jni_headers.sh.cmake
-		${CMAKE_BINARY_DIR}/scripts/regenerate_jni_headers.sh @ONLY)
+	list (APPEND CMAKE_INCLUDE_PATH ${FREERDP_EXTERNAL_PATH}/include)
+	list (APPEND CMAKE_LIBRARY_PATH ${FREERDP_EXTERNAL_PATH}/${ANDROID_ABI}/ )
+	set( CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH )
+	set( CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH )
+
 	if (WITH_GPROF)
-		CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/scripts/gprof_generate.sh.cmake ${CMAKE_BINARY_DIR}/scripts/gprof_generate.sh @ONLY)
+		CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/scripts/gprof_generate.sh.cmake
+			${CMAKE_BINARY_DIR}/scripts/gprof_generate.sh @ONLY)
 	endif(WITH_GPROF)
-
 endif()
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
@@ -449,9 +479,9 @@ if(NOT WIN32)
 endif()
 
 if(WITH_VALGRIND_MEMCHECK)
-    check_include_files(valgrind/memcheck.h HAVE_VALGRIND_MEMCHECK_H)
+	check_include_files(valgrind/memcheck.h HAVE_VALGRIND_MEMCHECK_H)
 else()
-    unset(HAVE_VALGRIND_MEMCHECK_H CACHE)
+	unset(HAVE_VALGRIND_MEMCHECK_H CACHE)
 endif()
 
 if(UNIX OR CYGWIN)
@@ -589,6 +619,21 @@ if(APPLE)
 	set(OPENSLES_FEATURE_TYPE "DISABLED")
 endif()
 
+if(UNIX AND NOT ANDROID)
+	set(WLOG_SYSTEMD_JOURNAL_FEATURE_TYPE "RECOMMENDED")
+	set(WLOG_SYSTEMD_JOURNAL_FEATURE_PURPOSE "systemd journal appender")
+	set(WLOG_SYSTEMD_JOURNAL_FEATURE_DESCRIPTION "allows to export wLog to systemd journal")
+
+	#include(Findlibsystemd)
+	find_feature(libsystemd ${WLOG_SYSTEMD_JOURNAL_FEATURE_TYPE} ${WLOG_SYSTEMD_JOURNAL_FEATURE_PURPOSE} ${WLOG_SYSTEMD_JOURNAL_FEATURE_DESCRIPTION})
+
+	if(LIBSYSTEMD_FOUND)
+		set(HAVE_JOURNALD_H TRUE)
+	else()
+		unset(HAVE_JOURNALD_H)
+	endif()
+endif(UNIX AND NOT ANDROID)
+
 if(ANDROID)
 	set(X11_FEATURE_TYPE "DISABLED")
 	set(WAYLAND_FEATURE_TYPE "DISABLED")
@@ -603,7 +648,6 @@ if(ANDROID)
 	set(GSTREAMER_0_10_FEATURE_TYPE "DISABLED")
 	set(OPENSLES_FEATURE_TYPE "REQUIRED")
 endif()
-
 
 find_feature(X11 ${X11_FEATURE_TYPE} ${X11_FEATURE_PURPOSE} ${X11_FEATURE_DESCRIPTION})
 find_feature(Wayland ${WAYLAND_FEATURE_TYPE} ${WAYLAND_FEATURE_PURPOSE} ${WAYLAND_FEATURE_DESCRIPTION})
@@ -677,8 +721,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DI
 
 # RPATH configuration
 if(CMAKE_SKIP_RPATH)
-       set(CMAKE_SKIP_RPATH FALSE)
-       set(CMAKE_SKIP_INSTALL_RPATH TRUE)
+	set(CMAKE_SKIP_RPATH FALSE)
+	set(CMAKE_SKIP_INSTALL_RPATH TRUE)
 endif()
 set(CMAKE_SKIP_BUILD_RPATH FALSE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
@@ -761,40 +805,20 @@ if(WITH_CHANNELS)
 	add_subdirectory(channels)
 endif()
 
-if(WITH_CLIENT)
-	add_subdirectory(client)
+if (${CMAKE_VERSION} VERSION_LESS 2.8.12)
+	set(PUBLIC_KEYWORD "")
+	set(PRIVATE_KEYWORD "")
+else()
+	set(PUBLIC_KEYWORD "PUBLIC")
+	set(PRIVATE_KEYWORD "PRIVATE")
+endif()
+
+if(WITH_CLIENT_COMMON OR WITH_CLIENT)
+add_subdirectory(client)
 endif()
 
 if(WITH_SERVER)
 	add_subdirectory(server)
-endif()
-
-
-# Exporting
-
-if(${CMAKE_VERSION} VERSION_GREATER "2.8.10")
-
-	export(PACKAGE freerdp)
-
-	set(FREERDP_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/FreeRDP")
-
-	set(FREERDP_INCLUDE_DIR "include")
-
-	# keep for legacy builds
-	set(FREERDP_MONOLITHIC_BUILD OFF)
-
-	configure_package_config_file(FreeRDPConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfig.cmake
-		INSTALL_DESTINATION ${FREERDP_CMAKE_INSTALL_DIR}
-		PATH_VARS FREERDP_INCLUDE_DIR FREERDP_MONOLITHIC_BUILD)
-
-	write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfigVersion.cmake
-		VERSION ${FREERDP_VERSION} COMPATIBILITY SameMajorVersion)
-
-	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfigVersion.cmake
-		DESTINATION ${FREERDP_CMAKE_INSTALL_DIR})
-
-	install(EXPORT FreeRDPTargets DESTINATION ${FREERDP_CMAKE_INSTALL_DIR})
-
 endif()
 
 # Packaging
@@ -813,13 +837,12 @@ endif()
 
 include(${CMAKE_CPACK_INCLUDE_FILE})
 
-set(FREERDP_PC_LIBS "-lfreerdp -lfreerdp-client")
-set(WINPR_PC_LIBS "-lwinpr")
-if (WITH_SERVER)
-	set(FREERDP_PC_LIBS "${FREERDP_PC_LIBS} -lfreerdp-server")
-endif()
-
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc @ONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/winpr.pc.in ${CMAKE_CURRENT_BINARY_DIR}/winpr.pc @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/winpr.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+set(FREERDP_BUILD_CONFIG_LIST "")
+GET_CMAKE_PROPERTY(res VARIABLES)
+FOREACH(var ${res})
+ IF (var MATCHES "^WITH_*|^BUILD_TESTING|^STATIC_CHANNELS|^HAVE_*")
+	LIST(APPEND FREERDP_BUILD_CONFIG_LIST "${var}=${${var}}")
+ ENDIF()
+ENDFOREACH()
+string(REPLACE ";" " " FREERDP_BUILD_CONFIG "${FREERDP_BUILD_CONFIG_LIST}")
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/buildflags.h.in ${CMAKE_CURRENT_BINARY_DIR}/buildflags.h)

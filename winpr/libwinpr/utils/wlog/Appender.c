@@ -21,33 +21,116 @@
 #include "config.h"
 #endif
 
-#include <winpr/wlog.h>
+#include "Appender.h"
 
-#include "wlog/Layout.h"
-
-#include "wlog/Appender.h"
-
-wLogAppender* WLog_Appender_New(wLog* log, DWORD logAppenderType)
+void WLog_Appender_Free(wLog* log, wLogAppender* appender)
 {
-	wLogAppender* appender = NULL;
+	if (!appender)
+		return;
+
+	if (appender->Layout)
+	{
+		WLog_Layout_Free(log, appender->Layout);
+		appender->Layout = NULL;
+	}
+
+	DeleteCriticalSection(&appender->lock);
+	appender->Free(appender);
+}
+
+wLogAppender* WLog_GetLogAppender(wLog* log)
+{
 	if (!log)
 		return NULL;
 
-	if (logAppenderType == WLOG_APPENDER_CONSOLE)
+	if (!log->Appender)
+		return WLog_GetLogAppender(log->Parent);
+
+	return log->Appender;
+}
+
+BOOL WLog_OpenAppender(wLog* log)
+{
+	int status = 0;
+	wLogAppender* appender;
+
+	appender = WLog_GetLogAppender(log);
+
+	if (!appender)
+		return FALSE;
+
+	if (!appender->Open)
+		return TRUE;
+
+	if (!appender->active)
 	{
-		appender = (wLogAppender*) WLog_ConsoleAppender_New(log);
+		status = appender->Open(log, appender);
+		appender->active = TRUE;
 	}
-	else if (logAppenderType == WLOG_APPENDER_FILE)
+
+	return status;
+}
+
+BOOL WLog_CloseAppender(wLog* log)
+{
+	int status = 0;
+	wLogAppender* appender;
+
+	appender = WLog_GetLogAppender(log);
+
+	if (!appender)
+		return FALSE;
+
+	if (!appender->Close)
+		return TRUE;
+
+	if (appender->active)
 	{
-		appender = (wLogAppender*) WLog_FileAppender_New(log);
+		status = appender->Close(log, appender);
+		appender->active = FALSE;
 	}
-	else if (logAppenderType == WLOG_APPENDER_BINARY)
+
+	return status;
+}
+
+wLogAppender* WLog_Appender_New(wLog* log, DWORD logAppenderType)
+{
+	wLogAppender* appender;
+
+	if (!log)
+		return NULL;
+
+	switch (logAppenderType)
 	{
-		appender = (wLogAppender*) WLog_BinaryAppender_New(log);
-	}
-	else if (logAppenderType == WLOG_APPENDER_CALLBACK)
-	{
-		appender = (wLogAppender*) WLog_CallbackAppender_New(log);
+	case WLOG_APPENDER_CONSOLE:
+		appender = WLog_ConsoleAppender_New(log);
+		break;
+	case WLOG_APPENDER_FILE:
+		appender = WLog_FileAppender_New(log);
+		break;
+	case WLOG_APPENDER_BINARY:
+		appender = WLog_BinaryAppender_New(log);
+		break;
+	case WLOG_APPENDER_CALLBACK:
+		appender = WLog_CallbackAppender_New(log);
+		break;
+#ifdef HAVE_SYSLOG_H
+	case WLOG_APPENDER_SYSLOG:
+		appender = WLog_SyslogAppender_New(log);
+		break;
+#endif
+#ifdef HAVE_JOURNALD_H
+	case WLOG_APPENDER_JOURNALD:
+		appender = WLog_JournaldAppender_New(log);
+		break;
+#endif
+	case WLOG_APPENDER_UDP:
+		appender = (wLogAppender*) WLog_UdpAppender_New(log);
+		break;
+	default:
+		fprintf(stderr, "%s: unknown handler type %d\n", __FUNCTION__, logAppenderType);
+		appender = NULL;
+		break;
 	}
 
 	if (!appender)
@@ -67,50 +150,11 @@ wLogAppender* WLog_Appender_New(wLog* log, DWORD logAppenderType)
 	return appender;
 }
 
-void WLog_Appender_Free(wLog* log, wLogAppender* appender)
-{
-	if (appender)
-	{
-		if (appender->Layout)
-		{
-			WLog_Layout_Free(log, appender->Layout);
-			appender->Layout = NULL;
-		}
-
-		DeleteCriticalSection(&appender->lock);
-
-		if (appender->Type == WLOG_APPENDER_CONSOLE)
-		{
-			WLog_ConsoleAppender_Free(log, (wLogConsoleAppender*) appender);
-		}
-		else if (appender->Type == WLOG_APPENDER_FILE)
-		{
-			WLog_FileAppender_Free(log, (wLogFileAppender*) appender);
-		}
-		else if (appender->Type == WLOG_APPENDER_BINARY)
-		{
-			WLog_BinaryAppender_Free(log, (wLogBinaryAppender*) appender);
-		}
-		else if (appender->Type == WLOG_APPENDER_CALLBACK)
-		{
-			WLog_CallbackAppender_Free(log, (wLogCallbackAppender*) appender);
-		}
-	}
-}
-
-wLogAppender* WLog_GetLogAppender(wLog* log)
-{
-	if (!log)
-		return NULL;
-
-	if (!log->Appender)
-		return WLog_GetLogAppender(log->Parent);
-
-	return log->Appender;
-}
-
 BOOL WLog_SetLogAppenderType(wLog* log, DWORD logAppenderType)
 {
+	if (!log)
+		return FALSE;
+
 	if (log->Appender)
 	{
 		WLog_Appender_Free(log, log->Appender);
@@ -121,46 +165,14 @@ BOOL WLog_SetLogAppenderType(wLog* log, DWORD logAppenderType)
 	return log->Appender != NULL;
 }
 
-int WLog_OpenAppender(wLog* log)
+BOOL WLog_ConfigureAppender(wLogAppender *appender, const char *setting, void *value)
 {
-	int status = 0;
-	wLogAppender* appender;
+	if (!appender || !setting || !strlen(setting))
+		return FALSE;
 
-	appender = WLog_GetLogAppender(log);
+	if (appender->Set)
+		return appender->Set(appender, setting, value);
+	else
+		return FALSE;
 
-	if (!appender)
-		return -1;
-
-	if (!appender->Open)
-		return 0;
-
-	if (!appender->State)
-	{
-		status = appender->Open(log, appender);
-		appender->State = 1;
-	}
-
-	return status;
-}
-
-int WLog_CloseAppender(wLog* log)
-{
-	int status = 0;
-	wLogAppender* appender;
-
-	appender = WLog_GetLogAppender(log);
-
-	if (!appender)
-		return -1;
-
-	if (!appender->Close)
-		return 0;
-
-	if (appender->State)
-	{
-		status = appender->Close(log, appender);
-		appender->State = 0;
-	}
-
-	return status;
 }

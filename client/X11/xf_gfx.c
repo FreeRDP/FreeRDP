@@ -709,7 +709,10 @@ UINT xf_CreateSurface(RdpgfxClientContext* context, RDPGFX_CREATE_SURFACE_PDU* c
 	surface->codecs = codecs_new((rdpContext*) xfc);
 
 	if (!surface->codecs)
+	{
+		free (surface);
 		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	surface->surfaceId = createSurface->surfaceId;
 	surface->width = (UINT32) createSurface->width;

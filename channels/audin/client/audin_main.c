@@ -5,6 +5,7 @@
  * Copyright 2010-2011 Vic Lee
  * Copyright 2015 Thincast Technologies GmbH
  * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+ * Copyright 2015 Armin Novak <armin.novak@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -195,7 +196,7 @@ static UINT audin_process_formats(IWTSVirtualChannelCallback* pChannelCallback, 
 		Stream_Read_UINT16(s, format.cbSize);
 		format.data = Stream_Pointer(s);
 		Stream_Seek(s, format.cbSize);
-		
+
 		DEBUG_DVC("wFormatTag=%d nChannels=%d nSamplesPerSec=%d "
 			"nBlockAlign=%d wBitsPerSample=%d cbSize=%d",
 			format.wFormatTag, format.nChannels, format.nSamplesPerSec,
@@ -310,7 +311,7 @@ static UINT audin_send_open_reply_pdu(IWTSVirtualChannelCallback* pChannelCallba
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT audin_receive_wave_data(BYTE* data, int size, void* user_data)
+static UINT audin_receive_wave_data(const BYTE* data, int size, void* user_data)
 {
 	UINT error;
 	wStream* out;
@@ -521,7 +522,7 @@ static UINT audin_on_close(IWTSVirtualChannelCallback* pChannelCallback)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT audin_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
-	IWTSVirtualChannel* pChannel, BYTE* Data, int* pbAccept,
+	IWTSVirtualChannel* pChannel, BYTE* Data, BOOL* pbAccept,
 	IWTSVirtualChannelCallback** ppCallback)
 {
 	AUDIN_CHANNEL_CALLBACK* callback;
@@ -667,7 +668,7 @@ static UINT audin_load_device_plugin(IWTSPlugin* pPlugin, const char* name, ADDI
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT audin_set_subsystem(AUDIN_PLUGIN* audin, char* subsystem)
+static UINT audin_set_subsystem(AUDIN_PLUGIN* audin, char* subsystem)
 {
 	free(audin->subsystem);
 	audin->subsystem = _strdup(subsystem);
@@ -684,7 +685,7 @@ UINT audin_set_subsystem(AUDIN_PLUGIN* audin, char* subsystem)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT audin_set_device_name(AUDIN_PLUGIN* audin, char* device_name)
+static UINT audin_set_device_name(AUDIN_PLUGIN* audin, char* device_name)
 {
 	free(audin->device_name);
 	audin->device_name = _strdup(device_name);
@@ -696,7 +697,7 @@ UINT audin_set_device_name(AUDIN_PLUGIN* audin, char* device_name)
 	return CHANNEL_RC_OK;
 }
 
-COMMAND_LINE_ARGUMENT_A audin_args[] =
+static COMMAND_LINE_ARGUMENT_A audin_args[] =
 {
 	{ "sys", COMMAND_LINE_VALUE_REQUIRED, "<subsystem>", NULL, NULL, -1, NULL, "subsystem" },
 	{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "device" },
@@ -779,9 +780,38 @@ static BOOL audin_process_addin_args(IWTSPlugin* pPlugin, ADDIN_ARGV* args)
  */
 UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
+	struct SubsystemEntry
+	{
+		char *subsystem;
+		char *device;
+	};
+
 	UINT error = CHANNEL_RC_OK;
 	ADDIN_ARGV* args;
 	AUDIN_PLUGIN* audin;
+	struct SubsystemEntry entries[] =
+	{
+#if defined(WITH_PULSE)
+		{"pulse", ""},
+#endif
+#if defined(WITH_OSS)
+		{"oss", "default"},
+#endif
+#if defined(WITH_ALSA)
+		{"alsa", "default"},
+#endif
+#if defined(WITH_OPENSLES)
+		{"opensles", "default"},
+#endif
+#if defined(WITH_WINMM)
+		{"winmm", "default"},
+#endif
+#if defined(WITH_MACAUDIO)
+		{"mac", "default"},
+#endif
+		{NULL,NULL}
+	};
+	struct SubsystemEntry *entry = &entries[0];
 
 	assert(pEntryPoints);
 	assert(pEntryPoints->GetPlugin);
@@ -807,123 +837,26 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	args = pEntryPoints->GetPluginData(pEntryPoints);
 	audin->rdpcontext = ((freerdp*)((rdpSettings*) pEntryPoints->GetRdpSettings(pEntryPoints))->instance)->context;
 
-	if (error == CHANNEL_RC_OK)
-		audin_process_addin_args((IWTSPlugin*) audin, args);
-	else
+	while (entry && entry->subsystem && !audin->device)
 	{
-		WLog_ERR(TAG, "RegisterPlugin failed with error %lu!", error);
-		return error;
-	}
+		if ((error = audin_set_subsystem(audin, entry->subsystem)))
+		{
+			WLog_ERR(TAG, "audin_set_subsystem for %s failed with error %lu!",
+				 entry->subsystem, error);
+		}
+		else if ((error = audin_set_device_name(audin, entry->device)))
+		{
+			WLog_ERR(TAG, "audin_set_device_name for %s failed with error %lu!",
+				 entry->subsystem, error);
+		}
+		else if ((error = audin_load_device_plugin((IWTSPlugin*) audin, audin->subsystem, args)))
+		{
+			WLog_ERR(TAG, "audin_load_device_plugin %s failed with error %lu!",
+				 entry->subsystem, error);
+		}
 
-	if (audin->subsystem && (error = audin_load_device_plugin((IWTSPlugin*) audin, audin->subsystem, args))) {
-		WLog_ERR(TAG, "audin_load_device_plugin failed!");
-		return error;
-    }
-
-#if defined(WITH_PULSE)
-	if (!audin->device)
-	{
-		if ((error = audin_set_subsystem(audin, "pulse")))
-		{
-			WLog_ERR(TAG, "audin_set_subsystem for pulse failed with error %lu!", error);
-			return error;
-		}
-		if ((error = audin_set_device_name(audin, "")))
-		{
-			WLog_ERR(TAG, "audin_set_device_name for pulse failed with error %lu!", error);
-			return error;
-		}
-		if ((error = audin_load_device_plugin((IWTSPlugin*) audin, audin->subsystem, args)))
-		{
-			WLog_ERR(TAG, "audin_load_device_plugin for pulse failed with error %lu!", error);
-			return error;
-		}
+		entry++;
 	}
-#endif
-
-#if defined(WITH_OSS)
-	if (!audin->device)
-	{
-		if ((error = audin_set_subsystem(audin, "oss")))
-		{
-			WLog_ERR(TAG, "audin_set_subsystem for oss failed with error %lu!", error);
-			return error;
-		}
-		if ((error = audin_set_device_name(audin, "default")))
-		{
-			WLog_ERR(TAG, "audin_set_device_name for oss failed with error %lu!", error);
-			return error;
-		}
-		if ((error = audin_load_device_plugin((IWTSPlugin*) audin, audin->subsystem, args)))
-		{
-			WLog_ERR(TAG, "audin_load_device_plugin oss pulse failed with error %lu!", error);
-			return error;
-		}
-	}
-#endif
-
-#if defined(WITH_ALSA)
-	if (!audin->device)
-	{
-		if ((error = audin_set_subsystem(audin, "alsa")))
-		{
-			WLog_ERR(TAG, "audin_set_subsystem for alsa failed with error %lu!", error);
-			return error;
-		}
-		if ((error = audin_set_device_name(audin, "default")))
-		{
-			WLog_ERR(TAG, "audin_set_device_name for alsa failed with error %lu!", error);
-			return error;
-		}
-		if ((error = audin_load_device_plugin((IWTSPlugin*) audin, audin->subsystem, args)))
-		{
-			WLog_ERR(TAG, "audin_load_device_plugin oss alsa failed with error %lu!", error);
-			return error;
-		}
-	}
-#endif
-
-#if defined(WITH_OPENSLES)
-	if (!audin->device)
-	{
-		if ((error = audin_set_subsystem(audin, "opensles")))
-		{
-			WLog_ERR(TAG, "audin_set_subsystem for opensles failed with error %lu!", error);
-			return error;
-		}
-		if ((error = audin_set_device_name(audin, "default")))
-		{
-			WLog_ERR(TAG, "audin_set_device_name for opensles failed with error %lu!", error);
-			return error;
-		}
-		if ((error = audin_load_device_plugin((IWTSPlugin*) audin, audin->subsystem, args)))
-		{
-			WLog_ERR(TAG, "audin_load_device_plugin oss opensles failed with error %lu!", error);
-			return error;
-		}
-	}
-#endif
-
-#if defined(WITH_WINMM)
-	if (!audin->device)
-	{
-		if ((error = audin_set_subsystem(audin, "winmm")))
-		{
-			WLog_ERR(TAG, "audin_set_subsystem for winmm failed with error %lu!", error);
-			return error;
-		}
-		if ((error = audin_set_device_name(audin, "default")))
-		{
-			WLog_ERR(TAG, "audin_set_device_name for winmm failed with error %lu!", error);
-			return error;
-		}
-		if ((error = audin_load_device_plugin((IWTSPlugin*) audin, audin->subsystem, args)))
-		{
-			WLog_ERR(TAG, "audin_load_device_plugin oss winmm failed with error %lu!", error);
-			return error;
-		}
-	}
-#endif
 
 	if (audin->device == NULL)
 	{

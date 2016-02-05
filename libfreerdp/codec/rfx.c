@@ -28,10 +28,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef HAVE_STDINT_H
-#include <stdint.h>
-#endif
-
 #include <winpr/crt.h>
 #include <winpr/tchar.h>
 #include <winpr/sysinfo.h>
@@ -43,6 +39,7 @@
 #include <freerdp/constants.h>
 #include <freerdp/primitives.h>
 #include <freerdp/codec/region.h>
+#include <freerdp/build-config.h>
 
 #include "rfx_constants.h"
 #include "rfx_types.h"

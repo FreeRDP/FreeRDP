@@ -591,9 +591,8 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	/* clientName (32 bytes, null-terminated unicode, truncated to 15 characters) */
 	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), 32 / 2, &str, 0, NULL, NULL);
 	Stream_Seek(s, 32);
-	sprintf_s(settings->ClientHostname, 31, "%s", str);
-	settings->ClientHostname[31] = 0;
-	free(str);
+	free(settings->ClientHostname);
+	settings->ClientHostname = str;
 	str = NULL;
 
 	Stream_Read_UINT32(s, settings->KeyboardType); /* KeyboardType (4 bytes) */
@@ -649,8 +648,8 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 
 		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), 64 / 2, &str, 0, NULL, NULL);
 		Stream_Seek(s, 64); /* clientDigProductId (64 bytes) */
-		sprintf_s(settings->ClientProductId, 32, "%s", str);
-		free(str);
+		free(settings->ClientProductId);
+		settings->ClientProductId = str;
 		blockLength -= 64;
 
 		if (blockLength < 1)
@@ -761,6 +760,9 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	if (settings->SupportDynamicTimeZone)
 		settings->SupportDynamicTimeZone = (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE) ? TRUE : FALSE;
 
+	if (settings->SupportMonitorLayoutPdu)
+		settings->SupportMonitorLayoutPdu = (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU) ? TRUE : FALSE;
+
 	if (!(earlyCapabilityFlags & RNS_UD_CS_VALID_CONNECTION_TYPE))
 		connectionType = 0;
 
@@ -865,6 +867,9 @@ void gcc_write_client_core_data(wStream* s, rdpMcs* mcs)
 
 	if (settings->SupportDynamicTimeZone)
 		earlyCapabilityFlags |= RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE;
+
+	if (settings->SupportMonitorLayoutPdu)
+		earlyCapabilityFlags |= RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU;
 
 	Stream_Write_UINT16(s, highColorDepth); /* highColorDepth */
 	Stream_Write_UINT16(s, supportedColorDepths); /* supportedColorDepths */
@@ -1593,6 +1598,12 @@ BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 
 	Stream_Read_UINT32(s, flags); /* flags */
 	Stream_Read_UINT32(s, monitorCount); /* monitorCount */
+
+	if (monitorCount > settings->MonitorDefArraySize)
+	{
+		WLog_ERR(TAG, "too many announced monitors(%d), clamping to %d", monitorCount, settings->MonitorDefArraySize);
+		monitorCount = settings->MonitorDefArraySize;
+	}
 
 	if (((blockLength - 8)  / 20) < monitorCount)
 		return FALSE;

@@ -19,7 +19,10 @@ int TestWLog(int argc, char* argv[])
 	WLog_SetLogAppenderType(root, WLOG_APPENDER_BINARY);
 
 	appender = WLog_GetLogAppender(root);
-	WLog_ConsoleAppender_SetOutputStream(root, (wLogConsoleAppender*) appender, WLOG_CONSOLE_STDERR);
+	if(!WLog_ConfigureAppender(appender, "outputfilename", "test_w.log"))
+		return 1;
+	if(!WLog_ConfigureAppender(appender, "outputfilepath", "/tmp/"))
+		return 1;
 
 	layout = WLog_GetLogLayout(root);
 	WLog_Layout_SetPrefixFormat(root, layout, "[%lv:%mn] [%fl|%fn|%ln] - ");

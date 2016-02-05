@@ -51,11 +51,21 @@ include(CMakePackageConfigHelpers)
 set(WINPR_VERSION_MAJOR "1")
 set(WINPR_VERSION_MINOR "1")
 set(WINPR_VERSION_REVISION "0")
-set(WINPR_VERSION "${WINPR_VERSION_MAJOR}.${WINPR_VERSION_MINOR}")
-set(WINPR_VERSION_FULL "${WINPR_VERSION}.${WINPR_VERSION_REVISION}")
+set(WINPR_VERSION "${WINPR_VERSION_MAJOR}.${WINPR_VERSION_MINOR}.${WINPR_VERSION_REVISION}")
+set(WINPR_VERSION_FULL "${WINPR_VERSION}")
+set(WINPR_API_VERSION "${WINPR_VERSION_MAJOR}")
+
+if(NOT IOS)
+	check_include_files(stdbool.h WINPR_HAVE_STDBOOL_H)
+	check_include_files(stdint.h WINPR_HAVE_STDINT_H)
+else(NOT IOS)
+	set(WINPR_HAVE_STDBOOL_H 1)
+	set(WINPR_HAVE_STDINT_H 1)
+endif(NOT IOS)
 
 if(FREERDP_BUILD)
 	set(WINPR_VERSION_FULL ${WINPR_VERSION_FULL} PARENT_SCOPE)
+	set(WINPR_VERSION ${WINPR_VERSION} PARENT_SCOPE)
 else()
 	set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 
@@ -68,7 +78,6 @@ else()
 		check_include_files(fcntl.h HAVE_FCNTL_H)
 		check_include_files(unistd.h HAVE_UNISTD_H)
 		check_include_files(execinfo.h HAVE_EXECINFO_H)
-		check_include_files(stdint.h HAVE_STDINT_H)
 		check_include_files(inttypes.h HAVE_INTTYPES_H)
 		check_include_files(sys/modem.h HAVE_SYS_MODEM_H)
 		check_include_files(sys/filio.h HAVE_SYS_FILIO_H)
@@ -78,7 +87,6 @@ else()
 	else()
 		set(HAVE_FCNTL_H 1)
 		set(HAVE_UNISTD_H 1)
-		set(HAVE_STDINT_H 1)
 		set(HAVE_INTTYPES_H 1)
 		set(HAVE_SYS_FILIO_H 1)
 	endif()
@@ -161,15 +169,13 @@ if(${CMAKE_VERSION} VERSION_GREATER "2.8.10")
 
 	export(PACKAGE winpr)
 
-	set(WINPR_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/WinPR")
+	set(WINPR_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/WinPR${WINPR_VERSION_MAJOR}")
 
-	set(WINPR_INCLUDE_DIR "include")
-	# Keep this for legacy builds
-	set(WINPR_MONOLITHIC_BUILD OFF)
+	set(WINPR_INCLUDE_DIR "include/winpr${WINPR_VERSION_MAJOR}")
 
 	configure_package_config_file(WinPRConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/WinPRConfig.cmake
 		INSTALL_DESTINATION ${WINPR_CMAKE_INSTALL_DIR}
-		PATH_VARS WINPR_INCLUDE_DIR WINPR_MONOLITHIC_BUILD)
+		PATH_VARS WINPR_INCLUDE_DIR)
 
 	write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/WinPRConfigVersion.cmake
 		VERSION ${WINPR_VERSION} COMPATIBILITY SameMajorVersion)
@@ -181,3 +187,8 @@ if(${CMAKE_VERSION} VERSION_GREATER "2.8.10")
 
 endif()
 
+if(FREERDP_BUILD)
+	set(WINPR_PKG_CONFIG_FILENAME winpr${WINPR_VERSION_MAJOR} PARENT_SCOPE)
+endif()
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/winpr.pc.in ${CMAKE_CURRENT_BINARY_DIR}/winpr${WINPR_VERSION_MAJOR}.pc @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/winpr${WINPR_VERSION_MAJOR}.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)

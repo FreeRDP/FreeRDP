@@ -1,0 +1,15 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=@CMAKE_INSTALL_PREFIX@
+libdir=@CMAKE_INSTALL_FULL_LIBDIR@
+includedir=${prefix}/@RDTK_INCLUDE_DIR@
+libs=-lrdtk
+
+Name: Remote Desktop Tool Kit
+Description: FreeRDP RDTK: A toolkit implementation for RDP
+URL: http://www.freerdp.com/
+Version: @RDTK_VERSION_FULL@
+Requires: 
+Requires.private: @WINPR_PKG_CONFIG_FILENAME@ freerdp@FREERDP_VERSION_MAJOR@
+Libs: -L${libdir} ${libs}
+Libs.private: -ldl -lpthread
+Cflags: -I${includedir}

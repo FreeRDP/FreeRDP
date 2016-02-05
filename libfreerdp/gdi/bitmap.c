@@ -130,10 +130,17 @@ INLINE void gdi_SetPixel_32bpp(HGDI_BITMAP hBmp, int X, int Y, UINT32 pixel)
  * @param nHeight height
  * @param cBitsPerPixel bits per pixel
  * @param data pixel buffer
+ * @param fkt_free The function used for deallocation of the buffer, NULL for none.
  * @return new bitmap
  */
 
 HGDI_BITMAP gdi_CreateBitmap(int nWidth, int nHeight, int cBitsPerPixel, BYTE* data)
+{
+	return gdi_CreateBitmapEx(nWidth, nHeight, cBitsPerPixel, data, _aligned_free);
+}
+
+HGDI_BITMAP gdi_CreateBitmapEx(int nWidth, int nHeight, int cBitsPerPixel, BYTE* data,
+							void (*fkt_free)(void*))
 {
 	HGDI_BITMAP hBitmap = (HGDI_BITMAP) calloc(1, sizeof(GDI_BITMAP));
 
@@ -147,6 +154,7 @@ HGDI_BITMAP gdi_CreateBitmap(int nWidth, int nHeight, int cBitsPerPixel, BYTE* d
 	hBitmap->width = nWidth;
 	hBitmap->height = nHeight;
 	hBitmap->data = data;
+	hBitmap->free = fkt_free;
 
 	return hBitmap;
 }
@@ -162,7 +170,7 @@ HGDI_BITMAP gdi_CreateBitmap(int nWidth, int nHeight, int cBitsPerPixel, BYTE* d
 
 HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, int nWidth, int nHeight)
 {
-	HGDI_BITMAP hBitmap = (HGDI_BITMAP) malloc(sizeof(GDI_BITMAP));
+	HGDI_BITMAP hBitmap = (HGDI_BITMAP) calloc(1, sizeof(GDI_BITMAP));
 
 	if (!hBitmap)
 		return NULL;
@@ -173,6 +181,7 @@ HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, int nWidth, int nHeight)
 	hBitmap->width = nWidth;
 	hBitmap->height = nHeight;
 	hBitmap->data = _aligned_malloc(nWidth * nHeight * hBitmap->bytesPerPixel, 16);
+	hBitmap->free = _aligned_free;
 	if (!hBitmap->data)
 	{
 		free(hBitmap);

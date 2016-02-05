@@ -25,13 +25,6 @@
 #include <freerdp/codec/region.h>
 #include <freerdp/log.h>
 
-#include "../shadow_screen.h"
-#include "../shadow_client.h"
-#include "../shadow_surface.h"
-#include "../shadow_capture.h"
-#include "../shadow_subsystem.h"
-#include "../shadow_mcevent.h"
-
 #include "mac_shadow.h"
 
 #define TAG SERVER_TAG("shadow.mac")
@@ -39,12 +32,12 @@
 
 static macShadowSubsystem* g_Subsystem = NULL;
 
-void mac_shadow_input_synchronize_event(macShadowSubsystem* subsystem, UINT32 flags)
+void mac_shadow_input_synchronize_event(macShadowSubsystem* subsystem, rdpShadowClient* client, UINT32 flags)
 {
 
 }
 
-void mac_shadow_input_keyboard_event(macShadowSubsystem* subsystem, UINT16 flags, UINT16 code)
+void mac_shadow_input_keyboard_event(macShadowSubsystem* subsystem, rdpShadowClient* client, UINT16 flags, UINT16 code)
 {
 	DWORD vkcode;
 	DWORD keycode;
@@ -87,12 +80,12 @@ void mac_shadow_input_keyboard_event(macShadowSubsystem* subsystem, UINT16 flags
 	CFRelease(source);
 }
 
-void mac_shadow_input_unicode_keyboard_event(macShadowSubsystem* subsystem, UINT16 flags, UINT16 code)
+void mac_shadow_input_unicode_keyboard_event(macShadowSubsystem* subsystem, rdpShadowClient* client, UINT16 flags, UINT16 code)
 {
 
 }
 
-void mac_shadow_input_mouse_event(macShadowSubsystem* subsystem, UINT16 flags, UINT16 x, UINT16 y)
+void mac_shadow_input_mouse_event(macShadowSubsystem* subsystem, rdpShadowClient* client, UINT16 flags, UINT16 x, UINT16 y)
 {
 	UINT32 scrollX = 0;
 	UINT32 scrollY = 0;
@@ -196,7 +189,7 @@ void mac_shadow_input_mouse_event(macShadowSubsystem* subsystem, UINT16 flags, U
 	}
 }
 
-void mac_shadow_input_extended_mouse_event(macShadowSubsystem* subsystem, UINT16 flags, UINT16 x, UINT16 y)
+void mac_shadow_input_extended_mouse_event(macShadowSubsystem* subsystem, rdpShadowClient* client, UINT16 flags, UINT16 x, UINT16 y)
 {
 
 }
@@ -366,7 +359,7 @@ void (^mac_capture_stream_handler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfa
 			
 		count = ArrayList_Count(server->clients);
 			
-		shadow_multiclient_publish_and_wait(subsystem->updateEvent);
+		shadow_subsystem_frame_update((rdpShadowSubsystem *)subsystem);
 		
 		if (count == 1)
 		{
@@ -667,7 +660,7 @@ macShadowSubsystem* mac_shadow_subsystem_new()
 	return subsystem;
 }
 
-FREERDP_API int Mac_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
+int Mac_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
 {
 	pEntryPoints->New = (pfnShadowSubsystemNew) mac_shadow_subsystem_new;
 	pEntryPoints->Free = (pfnShadowSubsystemFree) mac_shadow_subsystem_free;

@@ -57,11 +57,24 @@ VOID _InitializeObjectAttributes(POBJECT_ATTRIBUTES InitializedAttributes,
 
 #ifndef _WIN32
 
-#include "nt.h"
 
 #include <pthread.h>
-
 #include <winpr/crt.h>
+
+#include "../handle/handle.h"
+
+struct winpr_nt_file
+{
+	WINPR_HANDLE_DEF();
+
+	ACCESS_MASK DesiredAccess;
+	OBJECT_ATTRIBUTES ObjectAttributes;
+	ULONG FileAttributes;
+	ULONG ShareAccess;
+	ULONG CreateDisposition;
+	ULONG CreateOptions;
+};
+typedef struct winpr_nt_file WINPR_NT_FILE;
 
 static pthread_once_t _TebOnceControl = PTHREAD_ONCE_INIT;
 static pthread_key_t  _TebKey;
@@ -210,9 +223,9 @@ NTSTATUS _NtCreateFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess,
 		PLARGE_INTEGER AllocationSize, ULONG FileAttributes, ULONG ShareAccess,
 		ULONG CreateDisposition, ULONG CreateOptions, PVOID EaBuffer, ULONG EaLength)
 {
-	WINPR_FILE* pFileHandle;
+	WINPR_NT_FILE* pFileHandle;
 
-	pFileHandle = (WINPR_FILE*) calloc(1, sizeof(WINPR_FILE));
+	pFileHandle = (WINPR_NT_FILE*) calloc(1, sizeof(WINPR_NT_FILE));
 	if (!pFileHandle)
 		return STATUS_NO_MEMORY;
 
@@ -241,9 +254,9 @@ NTSTATUS _NtOpenFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess,
 		POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock,
 		ULONG ShareAccess, ULONG OpenOptions)
 {
-	WINPR_FILE* pFileHandle;
+	WINPR_NT_FILE* pFileHandle;
 
-	pFileHandle = (WINPR_FILE*) calloc(1, sizeof(WINPR_FILE));
+	pFileHandle = (WINPR_NT_FILE*) calloc(1, sizeof(WINPR_NT_FILE));
 
 	if (!pFileHandle)
 		return STATUS_NO_MEMORY;
@@ -298,12 +311,12 @@ NTSTATUS _NtDeviceIoControlFile(HANDLE FileHandle, HANDLE Event,
 
 NTSTATUS _NtClose(HANDLE Handle)
 {
-	WINPR_FILE* pFileHandle;
+	WINPR_NT_FILE* pFileHandle;
 
 	if (!Handle)
 		return 0;
 
-	pFileHandle = (WINPR_FILE*) Handle;
+	pFileHandle = (WINPR_NT_FILE*) Handle;
 
 	free(pFileHandle);
 

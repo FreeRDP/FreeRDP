@@ -655,6 +655,10 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_RdpServerRsaKey					1413
 #define FreeRDP_RdpServerCertificate				1414
 #define FreeRDP_ExternalCertificateManagement			1415
+#define FreeRDP_CertificateContent 1416
+#define FreeRDP_PrivateKeyContent	1417
+#define FreeRDP_RdpKeyContent		1418
+
 #define FreeRDP_Workarea					1536
 #define FreeRDP_Fullscreen					1537
 #define FreeRDP_PercentScreen					1538
@@ -1071,7 +1075,10 @@ struct rdp_settings
 	ALIGN64 rdpRsaKey* RdpServerRsaKey; /* 1413 */
 	ALIGN64 rdpCertificate* RdpServerCertificate; /* 1414 */
 	ALIGN64 BOOL ExternalCertificateManagement; /* 1415 */
-	UINT64 padding1472[1472 - 1416]; /* 1416 */
+	ALIGN64 char *CertificateContent; /* 1416 */
+	ALIGN64 char *PrivateKeyContent; /* 1417 */
+	ALIGN64 char* RdpKeyContent; /* 1418 */
+	UINT64 padding1472[1472 - 1419]; /* 1419 */
 	UINT64 padding1536[1536 - 1472]; /* 1472 */
 
 	/**
@@ -1106,7 +1113,8 @@ struct rdp_settings
 	ALIGN64 BOOL LocalConnection; /* 1602 */
 	ALIGN64 BOOL AuthenticationOnly; /* 1603 */
 	ALIGN64 BOOL CredentialsFromStdin; /* 1604 */
-	UINT64 padding1664[1664 - 1605]; /* 1605 */
+	ALIGN64 BOOL UnmapButtons; /* 1605 */
+	UINT64 padding1664[1664 - 1606]; /* 1606 */
 
 	/* Names */
 	ALIGN64 char* ComputerName; /* 1664 */
@@ -1232,7 +1240,8 @@ struct rdp_settings
 	ALIGN64 BOOL MultiTouchInput; /* 2631 */
 	ALIGN64 BOOL MultiTouchGestures; /* 2632 */
 	ALIGN64 UINT32 KeyboardHook; /* 2633 */
-	UINT64 padding2688[2688 - 2634]; /* 2634 */
+	ALIGN64 BOOL HasHorizontalWheel; /* 2634 */
+	UINT64 padding2688[2688 - 2635]; /* 2635 */
 
 	/* Brush Capabilities */
 	ALIGN64 UINT32 BrushSupportLevel; /* 2688 */

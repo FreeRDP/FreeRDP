@@ -572,3 +572,52 @@ BOOL SetEnvironmentVariableEBA(LPSTR* envBlock, LPCSTR lpName, LPCSTR lpValue)
 
 	return TRUE;
 }
+
+char** EnvironmentBlockToEnvpA(LPCH lpszEnvironmentBlock)
+{
+	char* p;
+	int index;
+	int count;
+	int length;
+	char** envp = NULL;
+
+	count = 0;
+	if (!lpszEnvironmentBlock)
+		return NULL;
+
+	p = (char*) lpszEnvironmentBlock;
+
+	while (p[0] && p[1])
+	{
+		length = strlen(p);
+		p += (length + 1);
+		count++;
+	}
+
+	index = 0;
+	p = (char*) lpszEnvironmentBlock;
+
+	envp = (char**) calloc(count + 1, sizeof(char*));
+	if (!envp)
+		return NULL;
+	envp[count] = NULL;
+
+	while (p[0] && p[1])
+	{
+		length = strlen(p);
+		envp[index] = _strdup(p);
+		if (!envp[index])
+		{
+			for (index -= 1; index >= 0; --index)
+			{
+				free(envp[index]);
+			}
+			free(envp);
+			return NULL;
+		}
+		p += (length + 1);
+		index++;
+	}
+
+	return envp;
+}

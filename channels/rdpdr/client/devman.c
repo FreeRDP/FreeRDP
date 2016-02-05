@@ -6,6 +6,7 @@
  * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2015 Thincast Technologies GmbH
  * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+ * Copyright 2016 Armin Novak <armin.novak@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,12 +43,18 @@
 
 void devman_device_free(DEVICE* device)
 {
+	if (!device)
+		return;
+
 	IFCALL(device->Free, device);
 }
 
 DEVMAN* devman_new(rdpdrPlugin* rdpdr)
 {
 	DEVMAN* devman;
+
+	if (!rdpdr)
+		return NULL;
 
 	devman = (DEVMAN*) calloc(1, sizeof(DEVMAN));
 
@@ -84,6 +91,9 @@ void devman_unregister_device(DEVMAN* devman, void* key)
 {
 	DEVICE* device;
 
+	if (!devman || !key)
+		return;
+
 	device = (DEVICE*) ListDictionary_Remove(devman->devices, key);
 
 	if (device)
@@ -98,6 +108,9 @@ void devman_unregister_device(DEVMAN* devman, void* key)
 static UINT devman_register_device(DEVMAN* devman, DEVICE* device)
 {
 	void* key = NULL;
+
+	if (!devman || !device)
+		return ERROR_INVALID_PARAMETER;
 
 	device->id = devman->id_sequence++;
 	key = (void*) (size_t) device->id;
@@ -114,6 +127,9 @@ DEVICE* devman_get_device_by_id(DEVMAN* devman, UINT32 id)
 {
 	DEVICE* device = NULL;
 	void* key = (void*) (size_t) id;
+
+	if (!devman)
+		return NULL;
 
 	device = (DEVICE*) ListDictionary_GetItemValue(devman->devices, key);
 
@@ -136,6 +152,9 @@ UINT devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device, rdpContext
 	char* ServiceName = NULL;
 	DEVICE_SERVICE_ENTRY_POINTS ep;
 	PDEVICE_SERVICE_ENTRY entry = NULL;
+
+	if (!devman || !device || !rdpcontext)
+		return ERROR_INVALID_PARAMETER;
 
 	if (device->Type == RDPDR_DTYP_FILESYSTEM)
 		ServiceName = DRIVE_SERVICE_NAME;

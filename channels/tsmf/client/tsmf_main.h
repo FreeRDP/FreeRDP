@@ -64,6 +64,7 @@ struct _TSMF_PLUGIN
 	rdpContext* rdpcontext;
 };
 
+BOOL tsmf_send_eos_response(IWTSVirtualChannelCallback* pChannelCallback, UINT32 message_id);
 BOOL tsmf_playback_ack(IWTSVirtualChannelCallback* pChannelCallback,
 		UINT32 message_id, UINT64 duration, UINT32 data_size);
 

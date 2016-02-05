@@ -1335,7 +1335,7 @@ static UINT urbdrc_on_close(IWTSVirtualChannelCallback * pChannelCallback)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT urbdrc_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
-	IWTSVirtualChannel * pChannel, BYTE* pData, int* pbAccept, IWTSVirtualChannelCallback** ppCallback)
+	IWTSVirtualChannel * pChannel, BYTE* pData, BOOL* pbAccept, IWTSVirtualChannelCallback** ppCallback)
 {
 	URBDRC_LISTENER_CALLBACK* listener_callback = (URBDRC_LISTENER_CALLBACK*) pListenerCallback;
 	URBDRC_CHANNEL_CALLBACK* callback;

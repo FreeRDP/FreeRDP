@@ -148,6 +148,7 @@ typedef BOOL (*pSetKeyboardIndicators)(rdpContext* context, UINT16 led_flags);
 
 typedef BOOL (*pRefreshRect)(rdpContext* context, BYTE count, RECTANGLE_16* areas);
 typedef BOOL (*pSuppressOutput)(rdpContext* context, BYTE allow, RECTANGLE_16* area);
+typedef BOOL (*pRemoteMonitors)(rdpContext* context, UINT32 count, const MONITOR_DEF *monitors);
 
 typedef BOOL (*pSurfaceCommand)(rdpContext* context, wStream* s);
 typedef BOOL (*pSurfaceBits)(rdpContext* context, SURFACE_BITS_COMMAND* surfaceBitsCommand);
@@ -180,7 +181,8 @@ struct rdp_update
 
 	pRefreshRect RefreshRect; /* 48 */
 	pSuppressOutput SuppressOutput; /* 49 */
-	UINT32 paddingD[64 - 50]; /* 50 */
+	pRemoteMonitors RemoteMonitors; /* 50 */
+	UINT32 paddingD[64 - 51]; /* 51 */
 
 	pSurfaceCommand SurfaceCommand; /* 64 */
 	pSurfaceBits SurfaceBits; /* 65 */

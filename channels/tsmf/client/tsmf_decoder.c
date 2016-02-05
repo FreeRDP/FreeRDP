@@ -32,7 +32,7 @@
 #include "tsmf_constants.h"
 #include "tsmf_decoder.h"
 
-static ITSMFDecoder* tsmf_load_decoder_by_name(const char *name, TS_AM_MEDIA_TYPE *media_type)
+static ITSMFDecoder* tsmf_load_decoder_by_name(const char *name)
 {
 	ITSMFDecoder* decoder;
 	TSMF_DECODER_ENTRY entry;
@@ -50,13 +50,15 @@ static ITSMFDecoder* tsmf_load_decoder_by_name(const char *name, TS_AM_MEDIA_TYP
 		return NULL;
 	}
 
-	if (!decoder->SetFormat(decoder, media_type))
-	{
-		decoder->Free(decoder);
-		decoder = NULL;
-	}
-
 	return decoder;
+}
+
+static BOOL tsmf_decoder_set_format(ITSMFDecoder *decoder, TS_AM_MEDIA_TYPE* media_type)
+{
+	if (decoder->SetFormat(decoder, media_type))
+		return TRUE;
+	else
+		return FALSE;
 }
 
 ITSMFDecoder* tsmf_load_decoder(const char* name, TS_AM_MEDIA_TYPE* media_type)
@@ -65,18 +67,57 @@ ITSMFDecoder* tsmf_load_decoder(const char* name, TS_AM_MEDIA_TYPE* media_type)
 
 	if (name)
 	{
-		decoder = tsmf_load_decoder_by_name(name, media_type);
+		decoder = tsmf_load_decoder_by_name(name);
 	}
 
 #if defined(WITH_GSTREAMER_1_0) || defined(WITH_GSTREAMER_0_10)
 	if (!decoder)
-		decoder = tsmf_load_decoder_by_name("gstreamer", media_type);
+		decoder = tsmf_load_decoder_by_name("gstreamer");
 #endif
 
 #if defined(WITH_FFMPEG)
 	if (!decoder)
-		decoder = tsmf_load_decoder_by_name("ffmpeg", media_type);
+		decoder = tsmf_load_decoder_by_name("ffmpeg");
 #endif
+
+	if (decoder)
+	{
+		if (!tsmf_decoder_set_format(decoder, media_type))
+		{
+			decoder->Free(decoder);
+			decoder = NULL;
+		}
+	}
 
 	return decoder;
 }
+
+BOOL tsmf_check_decoder_available(const char* name)
+{
+	ITSMFDecoder* decoder = NULL;
+	BOOL retValue = FALSE;
+
+	if (name)
+	{
+		decoder = tsmf_load_decoder_by_name(name);
+	}
+#if defined(WITH_GSTREAMER_1_0) || defined(WITH_GSTREAMER_0_10)
+        if (!decoder)
+                decoder = tsmf_load_decoder_by_name("gstreamer");
+#endif
+
+#if defined(WITH_FFMPEG)
+	if (!decoder)
+		decoder = tsmf_load_decoder_by_name("ffmpeg");
+#endif
+
+	if (decoder)
+	{
+		decoder->Free(decoder);
+		decoder = NULL;
+		retValue = TRUE;
+	}
+
+	return retValue;
+}
+

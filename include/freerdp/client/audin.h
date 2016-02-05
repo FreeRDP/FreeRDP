@@ -29,7 +29,7 @@
  * Subsystem Interface
  */
 
-typedef UINT (*AudinReceive) (BYTE* data, int size, void* userData);
+typedef UINT (*AudinReceive) (const BYTE* data, int size, void* userData);
 
 typedef struct audin_format audinFormat;
 struct audin_format

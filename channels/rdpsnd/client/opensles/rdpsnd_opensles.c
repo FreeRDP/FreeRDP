@@ -138,32 +138,7 @@ static BOOL rdpsnd_opensles_set_format(rdpsndDevicePlugin* device,
 
 		opensles->rate = format->nSamplesPerSec;
 		opensles->channels = format->nChannels;
-
-		switch (format->wFormatTag)
-		{
-			case WAVE_FORMAT_PCM:
-				switch (format->wBitsPerSample)
-				{
-					case 4:
-						opensles->format = WAVE_FORMAT_ADPCM;
-						break;
-
-					case 8:
-						opensles->format = WAVE_FORMAT_PCM;
-						break;
-
-					case 16:
-						opensles->format = WAVE_FORMAT_ADPCM;
-						break;
-				}
-				break;
-
-			case WAVE_FORMAT_ADPCM:
-			case WAVE_FORMAT_DVI_ADPCM:
-				opensles->format = format->wFormatTag;
-				break;
-		}
-	
+		opensles->format = format->wFormatTag;
 		opensles->wformat = format->wFormatTag;
 		opensles->block_size = format->nBlockAlign;
 	}

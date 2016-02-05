@@ -21,28 +21,28 @@
 #include "config.h"
 #endif
 
-#include <winpr/wlog.h>
+#include "wlog.h"
 
 #include "wlog/DataMessage.h"
 
 #include "../../log.h"
 #define TAG WINPR_TAG("utils.wlog")
 
-int WLog_DataMessage_Write(char* filename, void* data, int length)
+BOOL WLog_DataMessage_Write(char* filename, void* data, int length)
 {
 	FILE* fp;
-	int ret = 0;
+	BOOL ret = TRUE;
 
 	fp = fopen(filename, "w+b");
 
 	if (!fp)
 	{
-		WLog_ERR(TAG, "failed to open file %s", filename);
-		return -1;
+		//WLog_ERR(TAG, "failed to open file %s", filename);
+		return FALSE;
 	}
 
 	if (fwrite(data, length, 1, fp) != 1)
-		ret = -1;
+		ret = FALSE;
 	fclose(fp);
 	return ret;
 }

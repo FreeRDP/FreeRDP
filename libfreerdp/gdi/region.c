@@ -234,8 +234,8 @@ INLINE BOOL gdi_CopyOverlap(int x, int y, int width, int height, int srcx, int s
 	gdi_CRgnToRect(x, y, width, height, &dst);
 	gdi_CRgnToRect(srcx, srcy, width, height, &src);
 
-	return (dst.right > src.left && dst.left < src.right &&
-		dst.bottom > src.top && dst.top < src.bottom) ? TRUE : FALSE;
+	return (dst.right >= src.left && dst.left <= src.right &&
+		dst.bottom >= src.top && dst.top <= src.bottom) ? TRUE : FALSE;
 }
 
 /**

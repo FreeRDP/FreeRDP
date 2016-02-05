@@ -20,9 +20,7 @@
 #ifndef WINPR_WLOG_PACKET_MESSAGE_PRIVATE_H
 #define WINPR_WLOG_PACKET_MESSAGE_PRIVATE_H
 
-#include <winpr/wlog.h>
-
-#include "wlog/wlog.h"
+#include "wlog.h"
 
 #define PCAP_MAGIC_NUMBER	0xA1B2C3D4
 
@@ -116,7 +114,7 @@ struct _wTcpHeader
 };
 typedef struct _wTcpHeader wTcpHeader;
 
-int WLog_PacketMessage_Write(wPcap* pcap, void* data, DWORD length, DWORD flags);
+BOOL WLog_PacketMessage_Write(wPcap* pcap, void* data, DWORD length, DWORD flags);
 
 #endif /* WINPR_WLOG_PACKET_MESSAGE_PRIVATE_H */
 

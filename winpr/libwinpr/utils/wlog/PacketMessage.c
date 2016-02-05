@@ -23,7 +23,7 @@
 #include "config.h"
 #endif
 
-#include <winpr/wlog.h>
+#include "wlog.h"
 
 #include "wlog/PacketMessage.h"
 
@@ -375,7 +375,7 @@ static BOOL WLog_PacketMessage_Write_TcpHeader(wPcap* pcap, wTcpHeader* tcp)
 static UINT32 g_InboundSequenceNumber = 0;
 static UINT32 g_OutboundSequenceNumber = 0;
 
-int WLog_PacketMessage_Write(wPcap* pcap, void* data, DWORD length, DWORD flags)
+BOOL WLog_PacketMessage_Write(wPcap* pcap, void* data, DWORD length, DWORD flags)
 {
 	wTcpHeader tcp;
 	wIPv4Header ipv4;
@@ -385,7 +385,7 @@ int WLog_PacketMessage_Write(wPcap* pcap, void* data, DWORD length, DWORD flags)
 	ethernet.Type = 0x0800;
 
 	if (!pcap || !pcap->fp)
-		return -1;
+		return FALSE;
 
 	if (flags & WLOG_PACKET_OUTBOUND)
 	{
@@ -479,7 +479,7 @@ int WLog_PacketMessage_Write(wPcap* pcap, void* data, DWORD length, DWORD flags)
 		!WLog_PacketMessage_Write_IPv4Header(pcap, &ipv4) ||
 		!WLog_PacketMessage_Write_TcpHeader(pcap, &tcp) ||
 		!Pcap_Write_RecordContent(pcap, &record))
-		return -1;
+		return FALSE;
 	fflush(pcap->fp);
-	return 0;
+	return TRUE;
 }

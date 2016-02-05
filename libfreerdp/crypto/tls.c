@@ -67,12 +67,12 @@ static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 		return 0;
 
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_READ | BIO_FLAGS_IO_SPECIAL);
-	
+
 	EnterCriticalSection(&tls->lock);
 
 	status = SSL_write(tls->ssl, buf, size);
 	error = SSL_get_error(tls->ssl, status);
-	
+
 	LeaveCriticalSection(&tls->lock);
 
 	if (status <= 0)
@@ -126,12 +126,12 @@ static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_READ | BIO_FLAGS_IO_SPECIAL);
 
 	EnterCriticalSection(&tls->lock);
-	
+
 	status = SSL_read(tls->ssl, buf, size);
 	error = SSL_get_error(tls->ssl, status);
 
 	LeaveCriticalSection(&tls->lock);
-	
+
 	if (status <= 0)
 	{
 		switch (error)
@@ -394,7 +394,7 @@ static int bio_rdp_tls_new(BIO* bio)
 		return 0;
 
 	bio->ptr = (void*) tls;
-	
+
 	InitializeCriticalSectionAndSpinCount(&tls->lock, 4000);
 
 	return 1;
@@ -425,7 +425,7 @@ static int bio_rdp_tls_free(BIO* bio)
 	}
 
 	DeleteCriticalSection(&tls->lock);
-	
+
 	free(tls);
 
 	return 1;
@@ -798,8 +798,18 @@ int tls_connect(rdpTls* tls, BIO* underlying)
 	 */
 	options |= SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS;
 
-	if (!tls_prepare(tls, underlying, TLSv1_client_method(), options, TRUE))
+	/**
+	 * disable SSLv2 and SSLv3
+	 */
+	options |= SSL_OP_NO_SSLv2;
+	options |= SSL_OP_NO_SSLv3;
+
+	if (!tls_prepare(tls, underlying, SSLv23_client_method(), options, TRUE))
 		return FALSE;
+
+#ifndef OPENSSL_NO_TLSEXT
+	SSL_set_tlsext_host_name(tls->ssl, tls->hostname);
+#endif
 
 	return tls_do_handshake(tls, TRUE);
 }
@@ -817,9 +827,12 @@ static void tls_openssl_tlsext_debug_callback(SSL *s, int client_server,
 }
 #endif
 
-BOOL tls_accept(rdpTls* tls, BIO* underlying, const char* cert_file, const char* privatekey_file)
+BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings *settings)
 {
 	long options = 0;
+	BIO *bio;
+	RSA *rsa;
+	X509 *x509;
 
 	/**
 	 * SSL_OP_NO_SSLv2:
@@ -861,16 +874,85 @@ BOOL tls_accept(rdpTls* tls, BIO* underlying, const char* cert_file, const char*
 	if (!tls_prepare(tls, underlying, SSLv23_server_method(), options, FALSE))
 		return FALSE;
 
-	if (SSL_use_RSAPrivateKey_file(tls->ssl, privatekey_file, SSL_FILETYPE_PEM) <= 0)
+	if (settings->PrivateKeyFile)
 	{
-		WLog_ERR(TAG, "SSL_CTX_use_RSAPrivateKey_file failed");
-		WLog_ERR(TAG, "PrivateKeyFile: %s", privatekey_file);
+		bio = BIO_new_file(settings->PrivateKeyFile, "rb+");
+		if (!bio)
+		{
+			WLog_ERR(TAG, "BIO_new_file failed for private key %s", settings->PrivateKeyFile);
+			return FALSE;
+		}
+	}
+	else if (settings->PrivateKeyContent)
+	{
+		bio = BIO_new_mem_buf(settings->PrivateKeyContent, strlen(settings->PrivateKeyContent));
+		if (!bio)
+		{
+			WLog_ERR(TAG, "BIO_new_mem_buf failed for private key");
+			return FALSE;
+		}
+	}
+	else
+	{
+		WLog_ERR(TAG, "no private key defined");
 		return FALSE;
 	}
 
-	if (SSL_use_certificate_file(tls->ssl, cert_file, SSL_FILETYPE_PEM) <= 0)
+	rsa = PEM_read_bio_RSAPrivateKey(bio, NULL, NULL, NULL);
+	BIO_free(bio);
+
+	if (!rsa)
+	{
+		WLog_ERR(TAG, "invalid private key");
+		return FALSE;
+	}
+
+	if (SSL_use_RSAPrivateKey(tls->ssl, rsa) <= 0)
+	{
+		WLog_ERR(TAG, "SSL_CTX_use_RSAPrivateKey_file failed");
+		RSA_free(rsa);
+		return FALSE;
+	}
+
+
+	if (settings->CertificateFile)
+	{
+		bio = BIO_new_file(settings->CertificateFile, "rb+");
+		if (!bio)
+		{
+			WLog_ERR(TAG, "BIO_new_file failed for certificate %s", settings->CertificateFile);
+			return FALSE;
+		}
+	}
+	else if (settings->CertificateContent)
+	{
+		bio = BIO_new_mem_buf(settings->CertificateContent, strlen(settings->CertificateContent));
+		if (!bio)
+		{
+			WLog_ERR(TAG, "BIO_new_mem_buf failed for certificate");
+			return FALSE;
+		}
+	}
+	else
+	{
+		WLog_ERR(TAG, "no certificate defined");
+		return FALSE;
+	}
+
+	x509 = PEM_read_bio_X509(bio, NULL, NULL, 0);
+	BIO_free(bio);
+
+	if (!x509)
+	{
+		WLog_ERR(TAG, "invalid certificate");
+		return FALSE;
+	}
+
+
+	if (SSL_use_certificate(tls->ssl, x509) <= 0)
 	{
 		WLog_ERR(TAG, "SSL_use_certificate_file failed");
+		X509_free(x509);
 		return FALSE;
 	}
 
@@ -1105,17 +1187,19 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 		status = -1;
 
 		if (instance->VerifyX509Certificate)
-		{
 			status = instance->VerifyX509Certificate(instance, pemCert, length, hostname, port, tls->isGatewayTransport);
-		}
-
-		WLog_ERR(TAG, "(length = %d) status: %d%s",	length, status, pemCert);
+		else
+			WLog_ERR(TAG, "No VerifyX509Certificate callback registered!");
 
 		free(pemCert);
 		BIO_free(bio);
 
 		if (status < 0)
+		{
+			WLog_ERR(TAG, "VerifyX509Certificate failed: (length = %d) status: [%d] %s",
+				 length, status, pemCert);
 			return -1;
+		}
 
 		return (status == 0) ? 0 : 1;
 	}

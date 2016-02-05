@@ -8,7 +8,7 @@
 
 %define   INSTALL_PREFIX /opt/freerdp-nightly/
 Name:           freerdp-nightly
-Version:        1.2.1
+Version:        2.0
 Release:        0
 License:        ASL 2.0
 Summary:        Free implementation of the Remote Desktop Protocol (RDP)
@@ -36,8 +36,8 @@ BuildRequires: uuid-devel
 BuildRequires: libxml2-devel
 BuildRequires: zlib-devel
 
-# Suse 1320+
-%if 0%{?suse_version} >= 1320
+# (Open)Suse
+%if %{defined suse_version}
 BuildRequires: docbook-xsl-stylesheets
 BuildRequires: libxslt-tools
 BuildRequires: pkg-config
@@ -153,6 +153,8 @@ export NO_BRP_CHECK_RPATH true
 
 
 %changelog
+* Tue Nov 16 2015 FreeRDP Team <team@freerdp.com> - 2.0.0-0
+- Update version information and support for OpenSuse 42.1
 * Tue Feb 03 2015 FreeRDP Team <team@freerdp.com> - 1.2.1-0
 - Update version information
 * Fri Jan 23 2015 Bernhard Miklautz <bmiklautz+freerdp@shacknet.at> - 1.2.0-0

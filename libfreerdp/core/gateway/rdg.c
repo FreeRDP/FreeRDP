@@ -198,14 +198,22 @@ BOOL rdg_send_tunnel_authorization(rdpRdg* rdg)
 	int i;
 	wStream* s;
 	BOOL status;
-	char* clientName = rdg->settings->ClientHostname;
-	UINT16 clientNameLen = strlen(clientName) + 1;
-	UINT32 packetSize = 12 + clientNameLen * 2;
+	WCHAR* clientName = NULL;
+	UINT16 clientNameLen;
+	UINT32 packetSize;
 
+	clientNameLen = ConvertToUnicode(CP_UTF8, 0, rdg->settings->ClientHostname, -1, &clientName, 0);
+	if (!clientName)
+		return FALSE;
+
+	packetSize = 12 + clientNameLen * 2 + sizeof(WCHAR);
 	s = Stream_New(NULL, packetSize);
 
 	if (!s)
+	{
+		free(clientName);
 		return FALSE;
+	}
 
 	Stream_Write_UINT16(s, PKT_TYPE_TUNNEL_AUTH); /* Type (2 bytes) */
 	Stream_Write_UINT16(s, 0); /* Reserved (2 bytes) */
@@ -215,15 +223,16 @@ BOOL rdg_send_tunnel_authorization(rdpRdg* rdg)
 	Stream_Write_UINT16(s, clientNameLen * 2); /* Client name string length */
 
 	for (i = 0; i < clientNameLen; i++)
-	{
 		Stream_Write_UINT16(s, clientName[i]);
-	}
+
+	Stream_Write_UINT16(s, 0);
 
 	Stream_SealLength(s);
 
 	status = rdg_write_packet(rdg, s);
 
 	Stream_Free(s, TRUE);
+	free(clientName);
 
 	if (status)
 	{

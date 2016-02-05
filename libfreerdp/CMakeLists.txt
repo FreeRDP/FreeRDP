@@ -21,8 +21,8 @@ set(MODULE_PREFIX "FREERDP")
 # Create imported targets for Intel IPP libraries
 
 if(IPP_FOUND)
-    foreach(ipp_lib ${IPP_LIBRARIES})
-			add_library("${ipp_lib}_imported" STATIC IMPORTED)
+		foreach(ipp_lib ${IPP_LIBRARIES})
+		add_library("${ipp_lib}_imported" STATIC IMPORTED)
 		set_property(TARGET "${ipp_lib}_imported" PROPERTY IMPORTED_LOCATION "${IPP_LIBRARY_DIRS}/${ipp_lib}")
 	endforeach()
 endif()
@@ -34,22 +34,22 @@ set(LIBFREERDP_INCLUDES "")
 set(LIBFREERDP_DEFINITIONS "")
 
 macro (freerdp_module_add)
-    file (RELATIVE_PATH _relPath "${LIBFREERDP_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
-    foreach (_src ${ARGN})
-        if (_relPath)
-            list (APPEND LIBFREERDP_SRCS "${_relPath}/${_src}")
-        else()
-            list (APPEND LIBFREERDP_SRCS "${_src}")
-        endif()
-    endforeach()
-    if (_relPath)
-        set (LIBFREERDP_SRCS ${LIBFREERDP_SRCS} PARENT_SCOPE)
-    endif()
+		file (RELATIVE_PATH _relPath "${LIBFREERDP_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+		foreach (_src ${ARGN})
+				if (_relPath)
+						list (APPEND LIBFREERDP_SRCS "${_relPath}/${_src}")
+				else()
+						list (APPEND LIBFREERDP_SRCS "${_src}")
+				endif()
+		endforeach()
+		if (_relPath)
+				set (LIBFREERDP_SRCS ${LIBFREERDP_SRCS} PARENT_SCOPE)
+		endif()
 endmacro()
 
 macro (freerdp_include_directory_add)
-    file (RELATIVE_PATH _relPath "${LIBFREERDP_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
-    foreach (_inc ${ARGN})
+		file (RELATIVE_PATH _relPath "${LIBFREERDP_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+		foreach (_inc ${ARGN})
 				if (IS_ABSOLUTE ${_inc})
 							list (APPEND LIBFREERDP_INCLUDES "${_inc}")
 				else()
@@ -59,24 +59,24 @@ macro (freerdp_include_directory_add)
 							list (APPEND LIBFREERDP_INCLUDES "${_inc}")
 					endif()
 				endif()
-    endforeach()
-    if (_relPath)
-        set (LIBFREERDP_INCLUDES ${LIBFREERDP_INCLUDES} PARENT_SCOPE)
-    endif()
+		endforeach()
+		if (_relPath)
+				set (LIBFREERDP_INCLUDES ${LIBFREERDP_INCLUDES} PARENT_SCOPE)
+		endif()
 endmacro()
 
 macro (freerdp_library_add)
-    foreach (_lib ${ARGN})
-            list (APPEND LIBFREERDP_LIBS "${_lib}")
-    endforeach()
-     set (LIBFREERDP_LIBS ${LIBFREERDP_LIBS} PARENT_SCOPE)
+		foreach (_lib ${ARGN})
+						list (APPEND LIBFREERDP_LIBS "${_lib}")
+		endforeach()
+		 set (LIBFREERDP_LIBS ${LIBFREERDP_LIBS} PARENT_SCOPE)
 endmacro()
 
 macro (freerdp_definition_add)
-    foreach (_define ${ARGN})
-            list (APPEND LIBFREERDP_DEFINITIONS "${_define}")
-    endforeach()
-     set (LIBFREERDP_DEFINITIONS ${LIBFREERDP_DEFINITIONS} PARENT_SCOPE)
+		foreach (_define ${ARGN})
+						list (APPEND LIBFREERDP_DEFINITIONS "${_define}")
+		endforeach()
+		 set (LIBFREERDP_DEFINITIONS ${LIBFREERDP_DEFINITIONS} PARENT_SCOPE)
 endmacro()
 
 set(${MODULE_PREFIX}_SUBMODULES
@@ -242,7 +242,7 @@ if(WITH_SSE2)
 	endif()
 elseif(WITH_NEON)
 	if(CMAKE_COMPILER_IS_GNUCC)
-	    set(OPTIMIZATION "${OPTIMIZATION} -mfpu=neon")
+		set(OPTIMIZATION "${OPTIMIZATION} -mfpu=neon")
 	endif()
 	# TODO: Add MSVC equivalent
 endif()
@@ -263,7 +263,7 @@ freerdp_module_add(${PRIMITIVES_SRCS})
 
 if(IPP_FOUND)
 	freerdp_include_directory_add(${IPP_INCLUDE_DIRS})
-    foreach(ipp_lib ${IPP_LIBRARIES})
+		foreach(ipp_lib ${IPP_LIBRARIES})
 		freerdp_library_add("${ipp_lib}_imported")
 	endforeach()
 endif()
@@ -302,10 +302,38 @@ add_definitions(${LIBFREERDP_DEFINITIONS})
 set_target_properties(${MODULE_NAME} PROPERTIES LINKER_LANGUAGE C)
 
 if (WITH_LIBRARY_VERSIONING)
-	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
+    set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
 endif()
 
 
 target_link_libraries(${MODULE_NAME} ${LIBFREERDP_LIBS} winpr)
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries EXPORT FreeRDPTargets)
+if (WITH_DEBUG_SYMBOLS AND MSVC AND BUILD_SHARED_LIBS)
+    install(FILES ${CMAKE_PDB_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT symbols)
+endif()
+
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp${FREERDP_VERSION_MAJOR}.pc @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp${FREERDP_VERSION_MAJOR}.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+
+## cmake project
+if(${CMAKE_VERSION} VERSION_GREATER "2.8.10")
+
+	export(PACKAGE freerdp)
+
+	set(FREERDP_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/FreeRDP${FREERDP_VERSION_MAJOR}")
+
+	configure_package_config_file(FreeRDPConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfig.cmake
+		INSTALL_DESTINATION ${FREERDP_CMAKE_INSTALL_DIR}
+		PATH_VARS FREERDP_INCLUDE_DIR)
+
+	write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfigVersion.cmake
+		VERSION ${FREERDP_VERSION} COMPATIBILITY SameMajorVersion)
+
+	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfigVersion.cmake
+		DESTINATION ${FREERDP_CMAKE_INSTALL_DIR})
+
+	install(EXPORT FreeRDPTargets DESTINATION ${FREERDP_CMAKE_INSTALL_DIR})
+
+endif()

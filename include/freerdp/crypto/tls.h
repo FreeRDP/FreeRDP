@@ -89,7 +89,7 @@ struct rdp_tls
 #endif
 
 FREERDP_API int tls_connect(rdpTls* tls, BIO *underlying);
-FREERDP_API BOOL tls_accept(rdpTls* tls, BIO *underlying, const char* cert_file, const char* privatekey_file);
+FREERDP_API BOOL tls_accept(rdpTls* tls, BIO *underlying, rdpSettings *settings);
 FREERDP_API BOOL tls_send_alert(rdpTls* tls);
 
 FREERDP_API int tls_write_all(rdpTls* tls, const BYTE* data, int length);

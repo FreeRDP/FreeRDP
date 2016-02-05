@@ -20,6 +20,8 @@ LICENSE.txt
 *Config.cmake
 *ConfigVersion.cmake
 include/freerdp/version.h
+include/freerdp/build-config.h
+buildflags.h
 
 *.a.objlist.cmake
 *.a.objlist

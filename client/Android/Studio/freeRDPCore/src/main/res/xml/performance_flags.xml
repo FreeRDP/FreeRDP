@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+/*
+   Bookmark Performance Settings Layout
+
+   Copyright 2013 Thincast Technologies GmbH, Author: Martin Fleisz
+
+   This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
+   If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+ -->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+    <PreferenceCategory android:title="@string/settings_cat_performance">
+        <CheckBoxPreference android:key="bookmark.perf_remotefx"
+                            android:title="@string/settings_perf_remotefx"/>
+        <CheckBoxPreference android:key="bookmark.perf_gfx"
+                            android:title="@string/settings_perf_gfx"/>
+        <CheckBoxPreference android:key="bookmark.perf_gfx_h264"
+                            android:title="@string/settings_perf_gfx_h264"
+            android:dependency="bookmark.perf_gfx"/>
+        <CheckBoxPreference android:key="bookmark.perf_wallpaper" android:title="@string/settings_perf_wallpaper"/>
+        <CheckBoxPreference android:key="bookmark.perf_font_smoothing" android:title="@string/settings_perf_font_smoothing"/>
+        <CheckBoxPreference android:key="bookmark.perf_desktop_composition" android:title="@string/settings_perf_desktop_composition"/>
+        <CheckBoxPreference android:key="bookmark.perf_window_dragging" android:title="@string/settings_perf_full_window_drag"/>
+        <CheckBoxPreference android:key="bookmark.perf_menu_animation" android:title="@string/settings_perf_menu_animation"/>
+        <CheckBoxPreference android:key="bookmark.perf_themes" android:title="@string/settings_perf_theming"/>
+    </PreferenceCategory>
+</PreferenceScreen>

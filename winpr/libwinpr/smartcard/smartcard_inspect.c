@@ -1269,7 +1269,7 @@ SCardApiFunctionTable Inspect_SCardApiFunctionTable =
 void Inspect_InitLog()
 {
 	wLogLayout* layout;
-	wLogFileAppender* appender;
+	wLogAppender* appender;
 	const char* filepath = SMARTCARD_INSPECT_FILEPATH;
 
 	if (g_Log)
@@ -1284,10 +1284,12 @@ void Inspect_InitLog()
 
 	WLog_SetLogLevel(g_Log, WLOG_DEBUG);
 	WLog_SetLogAppenderType(g_Log, WLOG_APPENDER_FILE);
-	appender = (wLogFileAppender*) WLog_GetLogAppender(g_Log);
+	appender = WLog_GetLogAppender(g_Log);
+	if (!appender)
+		return;
 
-	WLog_FileAppender_SetOutputFileName(g_Log, appender, "WinSCard.txt");
-	WLog_FileAppender_SetOutputFilePath(g_Log, appender, filepath);
+	WLog_ConfigureAppender(appender, "outputfilename", "WinSCard.txt");
+	WLog_ConfigureAppender(appender, "outputfilepath", (void *)filepath);
 
 	layout = WLog_GetLogLayout(g_Log);
 	WLog_Layout_SetPrefixFormat(g_Log, layout, "[%mn] ");

@@ -56,13 +56,23 @@
 
 #define AUDIO_TOLERANCE 10000000LL
 
+/* 1 second = 10,000,000 100ns units*/
+#define VIDEO_ADJUST_MAX 10*1000*1000
+
+#define MAX_ACK_TIME 666667
+
+#define AUDIO_MIN_BUFFER_LEVEL 3
+#define AUDIO_MAX_BUFFER_LEVEL 6
+
+#define VIDEO_MIN_BUFFER_LEVEL 10
+#define VIDEO_MAX_BUFFER_LEVEL 30
+
 struct _TSMF_PRESENTATION
 {
 	BYTE presentation_id[GUID_SIZE];
 
 	const char *audio_name;
 	const char *audio_device;
-	int eos;
 
 	IWTSVirtualChannelCallback *channel_callback;
 
@@ -93,6 +103,9 @@ struct _TSMF_STREAM
 
 	int major_type;
 	int eos;
+	UINT32 eos_message_id;
+	IWTSVirtualChannelCallback* eos_channel_callback;
+	int delayed_stop;
 	UINT32 width;
 	UINT32 height;
 
@@ -101,10 +114,16 @@ struct _TSMF_STREAM
 	UINT32 channels;
 	UINT32 bits_per_sample;
 
+	/* The start time of last played sample */
+	UINT64 last_start_time; 
 	/* The end_time of last played sample */
 	UINT64 last_end_time;
 	/* Next sample should not start before this system time. */
 	UINT64 next_start_time;
+
+	UINT32 minBufferLevel;
+	UINT32 maxBufferLevel;
+	UINT32 currentBufferLevel;
 
 	HANDLE play_thread;
 	HANDLE ack_thread;
@@ -114,6 +133,8 @@ struct _TSMF_STREAM
 	wQueue *sample_list;
 	wQueue *sample_ack_list;
 	rdpContext* rdpcontext;
+
+	BOOL seeking;
 };
 
 struct _TSMF_SAMPLE
@@ -127,6 +148,8 @@ struct _TSMF_SAMPLE
 	BYTE *data;
 	UINT32 decoded_size;
 	UINT32 pixfmt;
+
+	BOOL invalidTimestamps;
 
 	TSMF_STREAM* stream;
 	IWTSVirtualChannelCallback *channel_callback;
@@ -170,7 +193,10 @@ static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 				if (stream->major_type == TSMF_MAJOR_TYPE_AUDIO)
 				{
 					/* Check if some other stream has earlier sample that needs to be played first */
-					if (stream->last_end_time > AUDIO_TOLERANCE)
+					/* Start time is more reliable than end time as some stream types seem to have incorrect
+					 * end times from the server
+					 */
+					if (stream->last_start_time > AUDIO_TOLERANCE)
 					{
 						ArrayList_Lock(presentation->stream_list);
 						count = ArrayList_Count(presentation->stream_list);
@@ -179,9 +205,13 @@ static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 						{
 							s = (TSMF_STREAM *) ArrayList_GetItem(presentation->stream_list, index);
 
-							if (s != stream && !s->eos && s->last_end_time &&
-									s->last_end_time < stream->last_end_time - AUDIO_TOLERANCE)
+							/* Start time is more reliable than end time as some stream types seem to have incorrect
+							 * end times from the server
+							 */
+							if (s != stream && !s->eos && s->last_start_time &&
+								s->last_start_time < stream->last_start_time - AUDIO_TOLERANCE)
 							{
+								DEBUG_TSMF("Pending due to audio tolerance");
 								pending = TRUE;
 								break;
 							}
@@ -192,8 +222,12 @@ static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 				}
 				else
 				{
-					if (stream->last_end_time > presentation->audio_end_time)
+					/* Start time is more reliable than end time as some stream types seem to have incorrect
+					 * end times from the server
+					 */
+					if (stream->last_start_time > presentation->audio_start_time)
 					{
+						DEBUG_TSMF("Pending due to stream start time > audio start time");
 						pending = TRUE;
 					}
 				}
@@ -206,8 +240,13 @@ static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 
 	sample = (TSMF_SAMPLE *) Queue_Dequeue(stream->sample_list);
 
-	if (sample && (sample->end_time > stream->last_end_time))
+	/* Only update stream last end time if the sample end time is valid and greater than the current stream end time */
+	if (sample && (sample->end_time > stream->last_end_time) && (!sample->invalidTimestamps))
 		stream->last_end_time = sample->end_time;
+
+	/* Only update stream last start time if the sample start time is valid and greater than the current stream start time */
+	if (sample && (sample->start_time > stream->last_start_time) && (!sample->invalidTimestamps))
+		stream->last_start_time = sample->start_time;
 
 	return sample;
 }
@@ -242,6 +281,9 @@ static BOOL tsmf_sample_queue_ack(TSMF_SAMPLE* sample)
 	return Queue_Enqueue(sample->stream->sample_ack_list, sample);
 }
 
+/* Returns TRUE if no more samples are currently available
+ * Returns FALSE otherwise
+ */
 static BOOL tsmf_stream_process_ack(void* arg, BOOL force)
 {
 	TSMF_STREAM* stream = arg;
@@ -250,26 +292,42 @@ static BOOL tsmf_stream_process_ack(void* arg, BOOL force)
 	BOOL rc = FALSE;
 
 	if (!stream)
-		return FALSE;
+		return TRUE;
 
 	Queue_Lock(stream->sample_ack_list);
 	sample = (TSMF_SAMPLE*) Queue_Peek(stream->sample_ack_list);
 
 	if (!sample)
+	{
+		rc = TRUE;
 		goto finally;
+	}
 
 	if (!force)
 	{
+		/* Do some min/max ack limiting if we have access to Buffer level information */
+		if (stream->decoder->BufferLevel)
+		{
+			/* Try to keep buffer level below max by withholding acks */
+			if (stream->currentBufferLevel > stream->maxBufferLevel)
+				goto finally;
+			/* Try to keep buffer level above min by pushing acks through quickly */
+			else if (stream->currentBufferLevel < stream->minBufferLevel)
+				goto dequeue;
+		}
+
+		/* Time based acks only */
 		ack_time = get_current_time();
 
 		if (sample->ack_time > ack_time)
 			goto finally;
 	}
 
+dequeue:
 	sample = Queue_Dequeue(stream->sample_ack_list);
 	if (sample)
 	{
-		rc = tsmf_sample_ack(sample);
+		tsmf_sample_ack(sample);
 		tsmf_sample_free(sample);
 	}
 
@@ -295,6 +353,7 @@ TSMF_PRESENTATION* tsmf_presentation_new(const BYTE* guid, IWTSVirtualChannelCal
 	CopyMemory(presentation->presentation_id, guid, GUID_SIZE);
 	presentation->channel_callback = pChannelCallback;
 	presentation->volume = 5000; /* 50% */
+	presentation->muted = 0;
 	if (!(presentation->stream_list = ArrayList_New(TRUE)))
 		goto error_stream_list;
 
@@ -372,9 +431,12 @@ static BOOL tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 	{
 		t = get_current_time();
 
+		/* Start time is more reliable than end time as some stream types seem to have incorrect
+		 * end times from the server
+		 */
 		if (stream->next_start_time > t &&
-				(sample->end_time >= presentation->audio_start_time ||
-				 sample->end_time < stream->last_end_time))
+				((sample->start_time >= presentation->audio_start_time) ||
+				((sample->start_time < stream->last_start_time) && (!sample->invalidTimestamps))))
 		{
 			USleep((stream->next_start_time - t) / 10);
 		}
@@ -449,9 +511,15 @@ static BOOL tsmf_sample_playback_audio(TSMF_SAMPLE* sample)
 	}
 
 	sample->ack_time = latency + get_current_time();
-	stream->last_end_time = sample->end_time + latency;
-	stream->presentation->audio_start_time = sample->start_time + latency;
-	stream->presentation->audio_end_time = sample->end_time + latency;
+
+	/* Only update stream times if the sample timestamps are valid */
+	if (!sample->invalidTimestamps)
+	{
+		stream->last_start_time = sample->start_time + latency;
+		stream->last_end_time = sample->end_time + latency;
+		stream->presentation->audio_start_time = sample->start_time + latency;
+		stream->presentation->audio_end_time = sample->end_time + latency;
+	}
 	return ret;
 }
 
@@ -467,6 +535,46 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 	{
 		if (stream->decoder->DecodeEx)
 		{
+			/* Try to "sync" video buffers to audio buffers by looking at the running time for each stream
+			 * The difference between the two running times causes an offset between audio and video actual
+			 * render times. So, we try to adjust timestamps on the video buffer to match those on the audio buffer.
+			 */
+			if (stream->major_type == TSMF_MAJOR_TYPE_VIDEO)
+			{	
+				TSMF_STREAM* temp_stream = NULL;
+				TSMF_PRESENTATION* presentation = stream->presentation;
+				ArrayList_Lock(presentation->stream_list);
+				int count = ArrayList_Count(presentation->stream_list);
+				int index = 0;
+				for (index = 0; index < count; index++)
+				{
+					UINT64 time_diff;
+
+					temp_stream = (TSMF_STREAM*) ArrayList_GetItem(presentation->stream_list, index);
+					if (temp_stream->major_type == TSMF_MAJOR_TYPE_AUDIO)
+					{
+						UINT64 video_time = (UINT64) stream->decoder->GetRunningTime(stream->decoder);
+						UINT64 audio_time = (UINT64) temp_stream->decoder->GetRunningTime(temp_stream->decoder);
+						UINT64 max_adjust = VIDEO_ADJUST_MAX;
+
+						if (video_time < audio_time)
+							max_adjust = -VIDEO_ADJUST_MAX;
+
+						if (video_time > audio_time)
+							time_diff = video_time - audio_time;
+						else
+							time_diff = audio_time - video_time;
+
+						time_diff = time_diff < VIDEO_ADJUST_MAX ? time_diff : max_adjust;
+						sample->start_time += time_diff;
+						sample->end_time += time_diff;
+
+						break;
+					}
+				}
+				ArrayList_Unlock(presentation->stream_list);
+			}
+
 			ret = stream->decoder->DecodeEx(stream->decoder, sample->data, sample->data_size, sample->extensions,
 						sample->start_time, sample->end_time, sample->duration);
 		}
@@ -478,9 +586,12 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 
 	if (!ret)
 	{
-		WLog_ERR(TAG, "decode error");
+		WLog_ERR(TAG, "decode error, queue ack anyways");
 		if (!tsmf_sample_queue_ack(sample))
+		{
+			WLog_ERR(TAG, "error queuing sample for ack");
 			return FALSE;
+		}
 
 		return TRUE;
 	}
@@ -499,15 +610,13 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 				WLog_ERR(TAG, "unable to decode video format");
 				if (!tsmf_sample_queue_ack(sample))
 				{
-					WLog_ERR(TAG, "error acking sample");
+					WLog_ERR(TAG, "error queuing sample for ack");
 				}
 				return FALSE;
 			}
 
 			sample->pixfmt = pixfmt;
 		}
-
-		ret = FALSE;
 
 		if (stream->decoder->GetDecodedDimension)
 		{
@@ -543,54 +652,43 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 	{
 		TSMF_STREAM* stream = sample->stream;
 		UINT64 ack_anticipation_time = get_current_time();
-		UINT64 currentRunningTime = sample->start_time;
 		BOOL buffer_filled = TRUE;
 
-		if (stream->decoder->GetRunningTime)
+		/* Classify the buffer as filled once it reaches minimum level */
+		if (stream->decoder->BufferLevel)
 		{
-			currentRunningTime = stream->decoder->GetRunningTime(stream->decoder);
-		}
-
-		if (stream->decoder->BufferFilled)
-		{
-			buffer_filled = stream->decoder->BufferFilled(stream->decoder);
+			if (stream->currentBufferLevel < stream->minBufferLevel)
+				buffer_filled = FALSE;
 		}
 
 		if (buffer_filled)
 		{
-			if (currentRunningTime > sample->start_time)
-			{
-				ack_anticipation_time += sample->duration;
-			}
-			else if (currentRunningTime == 0)
-			{
-				ack_anticipation_time += sample->duration;
-			}
-			else
-			{
-				ack_anticipation_time += (sample->start_time - currentRunningTime);
-			}
+			ack_anticipation_time += (sample->duration/2 < MAX_ACK_TIME) ? sample->duration/2 : MAX_ACK_TIME;
 		}
 		else
 		{
-			ack_anticipation_time += sample->duration / 2;
+			ack_anticipation_time += (sample->duration/2 < MAX_ACK_TIME) ? sample->duration/2 : MAX_ACK_TIME;
 		}
 
 		switch (sample->stream->major_type)
 		{
 			case TSMF_MAJOR_TYPE_VIDEO:
-				{
-					break;
-				}
+			{
+				break;
+			}
 
 			case TSMF_MAJOR_TYPE_AUDIO:
-				{
-					break;
-				}
+			{
+				break;
+			}
 		}
 
 		sample->ack_time = ack_anticipation_time;
-		ret = tsmf_sample_queue_ack(sample);
+		if (!tsmf_sample_queue_ack(sample))
+		{
+			WLog_ERR(TAG, "error queuing sample for ack");
+			ret = FALSE;
+		}
 	}
 
 	return ret;
@@ -608,31 +706,63 @@ static void* tsmf_stream_ack_func(void *arg)
 
 	while (1)
 	{
-		DWORD ev = WaitForMultipleObjects(2, hdl, FALSE, INFINITE);
+		DWORD ev = WaitForMultipleObjects(2, hdl, FALSE, 1000);
 
-        if (ev == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
-            break;
-        }
-
-		if (ev == WAIT_OBJECT_0)
-			break;
-
-		if (!stream->decoder)
-			continue;
-
-		if (stream->decoder->SetAckFunc)
-			continue;
-
-		if (tsmf_stream_process_ack(stream, FALSE))
+		if (ev == WAIT_FAILED)
 		{
-			error = ERROR_INTERNAL_ERROR;
-			WLog_ERR(TAG, "tsmf_stream_process_ack failed!");
+			error = GetLastError();
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
 			break;
 		}
 
+		if (stream->decoder)
+			if (stream->decoder->BufferLevel)
+				stream->currentBufferLevel = stream->decoder->BufferLevel(stream->decoder);
+
+		if (stream->eos)
+		{
+			while ((stream->currentBufferLevel > 0) || !(tsmf_stream_process_ack(stream, TRUE)))
+			{
+				DEBUG_TSMF("END OF STREAM PROCESSING!");
+				if (stream->decoder->BufferLevel)
+					stream->currentBufferLevel = stream->decoder->BufferLevel(stream->decoder);
+				else
+					stream->currentBufferLevel = 1;
+
+				USleep(1000);
+			}
+
+			tsmf_send_eos_response(stream->eos_channel_callback, stream->eos_message_id);
+			stream->eos = 0;
+
+			if (stream->delayed_stop)
+			{
+				DEBUG_TSMF("Finishing delayed stream stop, now that eos has processed.");
+				tsmf_stream_flush(stream);
+
+				if (stream->decoder->Control)
+					stream->decoder->Control(stream->decoder, Control_Stop, NULL);
+			}
+		}
+
+		/* Stream stopped force all of the acks to happen */
+		if (ev == WAIT_OBJECT_0)
+		{
+			DEBUG_TSMF("ack: Stream stopped!");
+			while(1)
+			{
+				if (tsmf_stream_process_ack(stream, TRUE))
+					break;
+				USleep(1000);
+			}
+			break;
+		}
+
+		if (tsmf_stream_process_ack(stream, FALSE))
+			continue;
+
+		if (stream->currentBufferLevel > stream->minBufferLevel)
+			USleep(1000);
 	}
 
 	if (error && stream->rdpcontext)
@@ -646,11 +776,11 @@ static void* tsmf_stream_ack_func(void *arg)
 static void* tsmf_stream_playback_func(void *arg)
 {
 	HANDLE hdl[2];
-	TSMF_SAMPLE* sample;
+	TSMF_SAMPLE* sample = NULL;
 	TSMF_STREAM* stream = (TSMF_STREAM *) arg;
 	TSMF_PRESENTATION* presentation = stream->presentation;
 	UINT error = CHANNEL_RC_OK;
-    DWORD status;
+	DWORD status;
 
 	DEBUG_TSMF("in %d", stream->stream_id);
 
@@ -678,28 +808,32 @@ static void* tsmf_stream_playback_func(void *arg)
 
 	while (1)
 	{
-        status = WaitForMultipleObjects(2, hdl, FALSE, INFINITE);
+		status = WaitForMultipleObjects(2, hdl, FALSE, 1000);
 
-        if (status == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
-            break;
-        }
+		if (status == WAIT_FAILED)
+		{
+			error = GetLastError();
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+			break;
+		}
 
-        status = WaitForSingleObject(stream->stopEvent, 0);
+		status = WaitForSingleObject(stream->stopEvent, 0);
 
-        if (status == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
-            break;
-        }
+		if (status == WAIT_FAILED)
+		{
+			error = GetLastError();
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+			break;
+		}
 
-        if (status == WAIT_OBJECT_0)
-            break;
+		if (status == WAIT_OBJECT_0)
+			break;
 
-        sample = tsmf_stream_pop_sample(stream, 0);
+		if (stream->decoder)
+			if (stream->decoder->BufferLevel)
+				stream->currentBufferLevel = stream->decoder->BufferLevel(stream->decoder);
+
+		sample = tsmf_stream_pop_sample(stream, 0);
 
 		if (sample && !tsmf_sample_playback(sample))
 		{
@@ -707,7 +841,11 @@ static void* tsmf_stream_playback_func(void *arg)
 			error = ERROR_INTERNAL_ERROR;
 			break;
 		}
+
+		if (stream->currentBufferLevel > stream->minBufferLevel)
+			USleep(1000);
 	}
+
 
 	if (stream->audio)
 	{
@@ -728,7 +866,9 @@ static BOOL tsmf_stream_start(TSMF_STREAM* stream)
 	if (!stream || !stream->presentation || !stream->decoder || !stream->decoder->Control)
 		return TRUE;
 
-	return stream->decoder->Control(stream->decoder, Control_Resume, NULL);
+	stream->eos = 0;
+
+	return stream->decoder->Control(stream->decoder, Control_Restart, NULL);
 }
 
 static BOOL tsmf_stream_stop(TSMF_STREAM* stream)
@@ -736,7 +876,24 @@ static BOOL tsmf_stream_stop(TSMF_STREAM* stream)
 	if (!stream || !stream->decoder || !stream->decoder->Control)
 		return TRUE;
 
-	return stream->decoder->Control(stream->decoder, Control_Stop, NULL);
+	/* If stopping after eos - we delay until the eos has been processed
+	 * this allows us to process any buffers that have been acked even though
+	 * they have not actually been completely processes by the decoder
+	 */
+	if (stream->eos)
+	{
+		DEBUG_TSMF("Setting up a delayed stop for once the eos has been processed.");
+		stream->delayed_stop = 1;
+		return TRUE;
+	}
+	/* Otherwise force stop immediately */
+	else
+	{
+		DEBUG_TSMF("Stop with no pending eos response, so do it immediately.");
+		tsmf_stream_flush(stream);
+
+		return stream->decoder->Control(stream->decoder, Control_Stop, NULL);
+	}
 }
 
 static BOOL tsmf_stream_pause(TSMF_STREAM* stream)
@@ -752,7 +909,9 @@ static BOOL tsmf_stream_restart(TSMF_STREAM* stream)
 	if (!stream || !stream->decoder || !stream->decoder->Control)
 		return TRUE;
 
-	return stream->decoder->Control(stream->decoder, Control_Resume, NULL);
+	stream->eos = 0;
+
+	return stream->decoder->Control(stream->decoder, Control_Restart, NULL);
 }
 
 static BOOL tsmf_stream_change_volume(TSMF_STREAM* stream, UINT32 newVolume, UINT32 muted)
@@ -863,7 +1022,7 @@ UINT tsmf_presentation_sync(TSMF_PRESENTATION* presentation)
 {
 	UINT32 index;
 	UINT32 count;
-    UINT error;
+	UINT error;
 
 	ArrayList_Lock(presentation->stream_list);
 	count = ArrayList_Count(presentation->stream_list);
@@ -872,15 +1031,15 @@ UINT tsmf_presentation_sync(TSMF_PRESENTATION* presentation)
 	{
 		TSMF_STREAM* stream = (TSMF_STREAM *) ArrayList_GetItem(presentation->stream_list, index);
 		if (WaitForSingleObject(stream->ready, 500) == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
-            return error;
-        }
+		{
+			error = GetLastError();
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+			return error;
+		}
 	}
 
 	ArrayList_Unlock(presentation->stream_list);
-    return CHANNEL_RC_OK;
+	return CHANNEL_RC_OK;
 }
 
 BOOL tsmf_presentation_stop(TSMF_PRESENTATION* presentation)
@@ -889,8 +1048,6 @@ BOOL tsmf_presentation_stop(TSMF_PRESENTATION* presentation)
 	UINT32 count;
 	TSMF_STREAM* stream;
 	BOOL ret = TRUE;
-
-	ret &= tsmf_presentation_flush(presentation);
 
 	ArrayList_Lock(presentation->stream_list);
 	count = ArrayList_Count(presentation->stream_list);
@@ -902,6 +1059,9 @@ BOOL tsmf_presentation_stop(TSMF_PRESENTATION* presentation)
 	}
 
 	ArrayList_Unlock(presentation->stream_list);
+	presentation->audio_start_time = 0;
+	presentation->audio_end_time = 0;
+
 	return ret;
 }
 
@@ -911,33 +1071,26 @@ BOOL tsmf_presentation_set_geometry_info(TSMF_PRESENTATION* presentation,
 	UINT32 index;
 	UINT32 count;
 	TSMF_STREAM* stream;
-	void *tmp_rects;
+	void *tmp_rects = NULL;
 	BOOL ret = TRUE;
-
-	if (num_rects < 1 || !rects)
-		return TRUE;
 
 	/* The server may send messages with invalid width / height.
 	 * Ignore those messages. */
 	if (!width || !height)
 		return TRUE;
 
-	if ((width == presentation->width) && (height == presentation->height) &&
-			(x == presentation->x) && (y == presentation->y) &&
-			(num_rects == presentation->nr_rects) &&
-			(0 == memcmp(rects, presentation->rects, num_rects * sizeof(RDP_RECT))))
-	{
-		return TRUE;
-	}
+	/* Streams can be added/removed from the presentation and the server will resend geometry info when a new stream is 
+	 * added to the presentation. Also, num_rects is used to indicate whether or not the window is visible.
+	 * So, always process a valid message with unchanged position/size and/or no visibility rects.
+	 */
 
 	presentation->x = x;
 	presentation->y = y;
 	presentation->width = width;
 	presentation->height = height;
-
+	
 	tmp_rects = realloc(presentation->rects, sizeof(RDP_RECT) * num_rects);
-	if (!tmp_rects)
-		return FALSE;
+
 	presentation->nr_rects = num_rects;
 	presentation->rects = tmp_rects;
 
@@ -969,7 +1122,7 @@ void tsmf_presentation_set_audio_device(TSMF_PRESENTATION* presentation, const c
 	presentation->audio_device = device;
 }
 
-static BOOL tsmf_stream_flush(TSMF_STREAM* stream)
+BOOL tsmf_stream_flush(TSMF_STREAM* stream)
 {
 	BOOL ret = TRUE;
 
@@ -979,6 +1132,9 @@ static BOOL tsmf_stream_flush(TSMF_STREAM* stream)
 		ret = stream->audio->Flush(stream->audio);
 
 	stream->eos = 0;
+	stream->eos_message_id = 0;
+	stream->eos_channel_callback = NULL;
+	stream->delayed_stop = 0;
 	stream->last_end_time = 0;
 	stream->next_start_time = 0;
 
@@ -988,30 +1144,6 @@ static BOOL tsmf_stream_flush(TSMF_STREAM* stream)
 		stream->presentation->audio_end_time = 0;
 	}
 	return TRUE;
-}
-
-BOOL tsmf_presentation_flush(TSMF_PRESENTATION* presentation)
-{
-	UINT32 index;
-	UINT32 count;
-	TSMF_STREAM* stream;
-	BOOL ret = TRUE;
-
-	ArrayList_Lock(presentation->stream_list);
-	count = ArrayList_Count(presentation->stream_list);
-
-	for (index = 0; index < count; index++)
-	{
-		stream = (TSMF_STREAM*) ArrayList_GetItem(presentation->stream_list, index);
-		ret &= tsmf_stream_flush(stream);
-	}
-
-	ArrayList_Unlock(presentation->stream_list);
-	presentation->eos = 0;
-	presentation->audio_start_time = 0;
-	presentation->audio_end_time = 0;
-
-	return ret;
 }
 
 void _tsmf_presentation_free(TSMF_PRESENTATION* presentation)
@@ -1049,6 +1181,14 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id, 
 		return NULL;
 	}
 
+	stream->minBufferLevel = VIDEO_MIN_BUFFER_LEVEL;
+	stream->maxBufferLevel = VIDEO_MAX_BUFFER_LEVEL;
+	stream->currentBufferLevel = 1;
+
+	stream->seeking = FALSE;
+	stream->eos = 0;
+	stream->eos_message_id = 0;
+	stream->eos_channel_callback = NULL;
 	stream->stream_id = stream_id;
 	stream->presentation = presentation;
 	stream->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -1083,11 +1223,11 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id, 
 error_add:
 	SetEvent(stream->stopEvent);
 	if (WaitForSingleObject(stream->ack_thread, INFINITE) == WAIT_FAILED)
-        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
 error_ack_thread:
 	SetEvent(stream->stopEvent);
 	if (WaitForSingleObject(stream->play_thread, INFINITE) == WAIT_FAILED)
-        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
 error_play_thread:
 	Queue_Free(stream->sample_ack_list);
 error_sample_ack_list:
@@ -1144,7 +1284,10 @@ BOOL tsmf_stream_set_format(TSMF_STREAM* stream, const char *name, wStream *s)
 	}
 
 	if (!tsmf_codec_parse_media_type(&mediatype, s))
+	{
+		WLog_ERR(TAG, "unable to parse media type");
 		return FALSE;
+	}
 
 	if (mediatype.MajorType == TSMF_MAJOR_TYPE_VIDEO)
 	{
@@ -1152,6 +1295,9 @@ BOOL tsmf_stream_set_format(TSMF_STREAM* stream, const char *name, wStream *s)
 				   mediatype.Width, mediatype.Height, mediatype.BitRate,
 				   (double) mediatype.SamplesPerSecond.Numerator / (double) mediatype.SamplesPerSecond.Denominator,
 				   mediatype.ExtraDataSize);
+
+		stream->minBufferLevel = VIDEO_MIN_BUFFER_LEVEL;
+		stream->maxBufferLevel = VIDEO_MAX_BUFFER_LEVEL;
 	}
 	else if (mediatype.MajorType == TSMF_MAJOR_TYPE_AUDIO)
 	{
@@ -1164,6 +1310,9 @@ BOOL tsmf_stream_set_format(TSMF_STREAM* stream, const char *name, wStream *s)
 
 		if (stream->bits_per_sample == 0)
 			stream->bits_per_sample = 16;
+
+		stream->minBufferLevel = AUDIO_MIN_BUFFER_LEVEL;
+		stream->maxBufferLevel = AUDIO_MAX_BUFFER_LEVEL;
 	}
 
 	stream->major_type = mediatype.MajorType;
@@ -1183,13 +1332,14 @@ BOOL tsmf_stream_set_format(TSMF_STREAM* stream, const char *name, wStream *s)
 	return ret;
 }
 
-void tsmf_stream_end(TSMF_STREAM* stream)
+void tsmf_stream_end(TSMF_STREAM* stream, UINT32 message_id, IWTSVirtualChannelCallback* pChannelCallback)
 {
 	if (!stream)
 		return;
 
 	stream->eos = 1;
-	stream->presentation->eos = 1;
+	stream->eos_message_id = message_id;
+	stream->eos_channel_callback = pChannelCallback;
 }
 
 void _tsmf_stream_free(TSMF_STREAM* stream)
@@ -1197,17 +1347,16 @@ void _tsmf_stream_free(TSMF_STREAM* stream)
 	if (!stream)
 		return;
 
-	if (tsmf_stream_stop(stream))
-		tsmf_stream_flush(stream);
+	tsmf_stream_stop(stream);
 	SetEvent(stream->stopEvent);
 
 	if (stream->play_thread)
 	{
 		if (WaitForSingleObject(stream->play_thread, INFINITE) == WAIT_FAILED)
-        {
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
-            return;
-        }
+		{
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
+			return;
+		}
 
 		CloseHandle(stream->play_thread);
 		stream->play_thread = NULL;
@@ -1216,10 +1365,10 @@ void _tsmf_stream_free(TSMF_STREAM* stream)
 	if (stream->ack_thread)
 	{
 		if (WaitForSingleObject(stream->ack_thread, INFINITE) == WAIT_FAILED)
-        {
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
-            return;
-        }
+		{
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
+			return;
+		}
 		CloseHandle(stream->ack_thread);
 		stream->ack_thread = NULL;
 	}
@@ -1267,6 +1416,10 @@ BOOL tsmf_stream_push_sample(TSMF_STREAM* stream, IWTSVirtualChannelCallback *pC
 	sample->end_time = end_time;
 	sample->duration = duration;
 	sample->extensions = extensions;
+	if ((sample->extensions & 0x00000080) || (sample->extensions & 0x00000040))
+		sample->invalidTimestamps = TRUE;
+	else
+		sample->invalidTimestamps = FALSE;
 	sample->stream = stream;
 	sample->channel_callback = pChannelCallback;
 	sample->data_size = data_size;

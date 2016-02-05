@@ -18,6 +18,85 @@
 set(MODULE_NAME "freerdp-shadow")
 set(MODULE_PREFIX "FREERDP_SERVER_SHADOW")
 
+include_directories(${OPENSSL_INCLUDE_DIR})
+
+set(${MODULE_PREFIX}_SRCS
+	shadow_client.c
+	shadow_client.h
+	shadow_lobby.c
+	shadow_lobby.h
+	shadow_input.c
+	shadow_input.h
+	shadow_screen.c
+	shadow_screen.h
+	shadow_surface.c
+	shadow_surface.h
+	shadow_encoder.c
+	shadow_encoder.h
+	shadow_capture.c
+	shadow_capture.h
+	shadow_channels.c
+	shadow_channels.h
+	shadow_encomsp.c
+	shadow_encomsp.h
+	shadow_remdesk.c
+	shadow_remdesk.h
+	shadow_rdpsnd.c
+	shadow_rdpsnd.h
+	shadow_audin.c
+	shadow_audin.h
+	shadow_subsystem.c
+	shadow_subsystem.h
+	shadow_mcevent.c
+	shadow_mcevent.h
+	shadow_server.c
+	shadow.h)
+
+# On windows create dll version information.
+# Vendor, product and year are already set in top level CMakeLists.txt
+if (WIN32)
+  set (RC_VERSION_MAJOR ${FREERDP_VERSION_MAJOR})
+  set (RC_VERSION_MINOR ${FREERDP_VERSION_MINOR})
+  set (RC_VERSION_BUILD ${FREERDP_VERSION_REVISION})
+  set (RC_VERSION_PATCH 0)
+  set (RC_VERSION_FILE "${CMAKE_SHARED_LIBRARY_PREFIX}${MODULE_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}" )
+
+  configure_file(
+    ${CMAKE_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
+    ${CMAKE_CURRENT_BINARY_DIR}/version.rc
+    @ONLY)
+
+  set ( ${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+endif()
+
+add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+
+list(APPEND ${MODULE_PREFIX}_LIBS freerdp)
+list(APPEND ${MODULE_PREFIX}_LIBS freerdp-server)
+list(APPEND ${MODULE_PREFIX}_LIBS winpr)
+list(APPEND ${MODULE_PREFIX}_LIBS winpr-makecert-tool)
+
+list(APPEND ${MODULE_PREFIX}_LIBS rdtk)
+
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+
+if (WITH_LIBRARY_VERSIONING)
+	  set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
+endif()
+
+install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT server)
+
+if (WITH_DEBUG_SYMBOLS AND MSVC)
+	install(FILES ${CMAKE_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT symbols)
+endif()
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/shadow")
+
+# command-line executable
+
+set(MODULE_NAME "freerdp-shadow-cli")
+set(MODULE_PREFIX "FREERDP_SERVER_SHADOW_CLI")
+
 if(WIN32)
 	set(WITH_SHADOW_WIN 1)
 elseif(X11_FOUND AND NOT APPLE)
@@ -146,39 +225,8 @@ if(WITH_SHADOW_MAC)
 	list(APPEND ${MODULE_PREFIX}_MAC_LIBS ${IOKIT} ${IOSURFACE} ${CARBON})
 endif()
 
-include_directories(${OPENSSL_INCLUDE_DIR})
-
 set(${MODULE_PREFIX}_SRCS
-	shadow_client.c
-	shadow_client.h
-	shadow_lobby.c
-	shadow_lobby.h
-	shadow_input.c
-	shadow_input.h
-	shadow_screen.c
-	shadow_screen.h
-	shadow_surface.c
-	shadow_surface.h
-	shadow_encoder.c
-	shadow_encoder.h
-	shadow_capture.c
-	shadow_capture.h
-	shadow_channels.c
-	shadow_channels.h
-	shadow_encomsp.c
-	shadow_encomsp.h
-	shadow_remdesk.c
-	shadow_remdesk.h
-	shadow_rdpsnd.c
-	shadow_rdpsnd.h
-	shadow_audin.c
-	shadow_audin.h
-	shadow_subsystem.c
-	shadow_subsystem.h
-	shadow_mcevent.c
-	shadow_mcevent.h
-	shadow_server.c
-	shadow.h)
+	shadow.c)
 
 set(${MODULE_PREFIX}_WIN_SRCS
 	Win/win_rdp.c
@@ -214,52 +262,6 @@ endif()
 
 list(APPEND ${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_AUTH_LIBS})
 
-# On windows create dll version information.
-# Vendor, product and year are already set in top level CMakeLists.txt
-if (WIN32)
-  set (RC_VERSION_MAJOR ${FREERDP_VERSION_MAJOR})
-  set (RC_VERSION_MINOR ${FREERDP_VERSION_MINOR})
-  set (RC_VERSION_BUILD ${FREERDP_VERSION_REVISION})
-  set (RC_VERSION_PATCH 0)
-  set (RC_VERSION_FILE "${CMAKE_SHARED_LIBRARY_PREFIX}${MODULE_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}" )
-
-  configure_file(
-    ${CMAKE_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
-    ${CMAKE_CURRENT_BINARY_DIR}/version.rc
-    @ONLY)
-
-  set ( ${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
-endif()
-
-add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
-
-list(APPEND ${MODULE_PREFIX}_LIBS freerdp)
-list(APPEND ${MODULE_PREFIX}_LIBS freerdp-server)
-list(APPEND ${MODULE_PREFIX}_LIBS freerdp-client)
-
-list(APPEND ${MODULE_PREFIX}_LIBS winpr)
-list(APPEND ${MODULE_PREFIX}_LIBS winpr-makecert-tool)
-
-list(APPEND ${MODULE_PREFIX}_LIBS rdtk)
-
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-
-if (WITH_LIBRARY_VERSIONING)
-	  set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
-endif()
-
-install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT server)
-
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/shadow")
-
-# command-line executable
-
-set(MODULE_NAME "freerdp-shadow-cli")
-set(MODULE_PREFIX "FREERDP_SERVER_SHADOW_CLI")
-
-set(${MODULE_PREFIX}_SRCS
-	shadow.c)
-
 	# On windows create dll version information.
 # Vendor, product and year are already set in top level CMakeLists.txt
 if (WIN32)
@@ -277,12 +279,15 @@ if (WIN32)
 endif()
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
-set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "freerdp-shadow")
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-shadow)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
-install(TARGETS ${MODULE_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT server)
+install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT server)
+if (WITH_DEBUG_SYMBOLS AND MSVC)
+	install(FILES ${CMAKE_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${CMAKE_INSTALL_BINDIR}
+		COMPONENT symbols)
+endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/shadow")

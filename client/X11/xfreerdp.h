@@ -79,6 +79,14 @@ typedef struct xf_glyph xfGlyph;
 
 typedef struct xf_clipboard xfClipboard;
 
+/* Value of the first logical button number in X11 which must be */
+/* subtracted to go from a button number in X11 to an index into */
+/* a per-button array.                                           */
+#define BUTTON_BASE Button1
+
+/* Number of buttons that are mapped from X11 to RDP button events. */
+#define NUM_BUTTONS_MAPPED 3
+
 struct xf_context
 {
 	rdpContext context;
@@ -185,6 +193,8 @@ struct xf_context
 	xfClipboard* clipboard;
 	CliprdrClientContext* cliprdr;
 
+	Atom UTF8_STRING;
+
 	Atom _NET_WM_ICON;
 	Atom _MOTIF_WM_HINTS;
 	Atom _NET_CURRENT_DESKTOP;
@@ -192,10 +202,15 @@ struct xf_context
 
 	Atom _NET_WM_STATE;
 	Atom _NET_WM_STATE_FULLSCREEN;
+	Atom _NET_WM_STATE_MAXIMIZED_HORZ;
+	Atom _NET_WM_STATE_MAXIMIZED_VERT;
 	Atom _NET_WM_STATE_SKIP_TASKBAR;
 	Atom _NET_WM_STATE_SKIP_PAGER;
 
 	Atom _NET_WM_FULLSCREEN_MONITORS;
+
+	Atom _NET_WM_NAME;
+	Atom _NET_WM_PID;
 
 	Atom _NET_WM_WINDOW_TYPE;
 	Atom _NET_WM_WINDOW_TYPE_NORMAL;
@@ -221,6 +236,9 @@ struct xf_context
 
 	BOOL xkbAvailable;
 	BOOL xrenderAvailable;
+
+	/* value to be sent over wire for each logical client mouse button */
+	int button_map[NUM_BUTTONS_MAPPED];
 };
 
 BOOL xf_create_window(xfContext* xfc);
@@ -268,6 +286,7 @@ enum XF_EXIT_CODE
 	XF_EXIT_MEMORY = 129,
 	XF_EXIT_PROTOCOL = 130,
 	XF_EXIT_CONN_FAILED = 131,
+	XF_EXIT_AUTH_FAILURE = 132,
 
 	XF_EXIT_UNKNOWN = 255,
 };

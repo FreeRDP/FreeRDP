@@ -27,6 +27,7 @@ typedef enum _ITSMFControlMsg
 {
 	Control_Pause,
 	Control_Resume,
+	Control_Restart,
 	Control_Stop
 } ITSMFControlMsg;
 
@@ -49,7 +50,7 @@ struct _ITSMFDecoder
 	/* Optional Contol function */
 	BOOL (*Control)(ITSMFDecoder *decoder, ITSMFControlMsg control_msg, UINT32 *arg);
 	/* Decode a sample with extended interface. */
-	int (*DecodeEx)(ITSMFDecoder *decoder, const BYTE *data, UINT32 data_size, UINT32 extensions,
+	BOOL (*DecodeEx)(ITSMFDecoder *decoder, const BYTE *data, UINT32 data_size, UINT32 extensions,
 					UINT64 start_time, UINT64 end_time, UINT64 duration);
 	/* Get current play time */
 	UINT64(*GetRunningTime)(ITSMFDecoder *decoder);
@@ -58,7 +59,7 @@ struct _ITSMFDecoder
 	/* Change Gstreamer Audio Volume */
 	BOOL (*ChangeVolume)(ITSMFDecoder *decoder, UINT32 newVolume, UINT32 muted);
 	/* Check buffer level */
-	BOOL (*BufferFilled)(ITSMFDecoder *decoder);
+	BOOL (*BufferLevel)(ITSMFDecoder *decoder);
 	/* Register a callback for frame ack. */
 	BOOL (*SetAckFunc)(ITSMFDecoder *decoder, BOOL (*cb)(void *,BOOL), void *stream);
 	/* Register a callback for stream seek detection. */
@@ -69,6 +70,7 @@ struct _ITSMFDecoder
 typedef ITSMFDecoder *(*TSMF_DECODER_ENTRY)(void);
 
 ITSMFDecoder *tsmf_load_decoder(const char *name, TS_AM_MEDIA_TYPE *media_type);
+BOOL tsmf_check_decoder_available(const char* name);
 
 #endif
 

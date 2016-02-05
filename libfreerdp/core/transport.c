@@ -58,6 +58,18 @@
 
 static void* transport_client_thread(void* arg);
 
+
+static void transport_ssl_cb(SSL* ssl, int where, int ret)
+{
+	rdpTransport *transport;
+	if ((where | SSL_CB_ALERT) && (ret == 561))
+	{
+		transport = (rdpTransport *) SSL_get_app_data(ssl);
+		if (!freerdp_get_last_error(transport->context))
+			freerdp_set_last_error(transport->context, FREERDP_ERROR_AUTHENTICATION_FAILED);
+	}
+}
+
 wStream* transport_send_stream_init(rdpTransport* transport, int size)
 {
 	wStream* s;
@@ -145,6 +157,9 @@ BOOL transport_connect_tls(rdpTransport* transport)
 	}
 
 	transport->frontBio = tls->bio;
+
+	BIO_callback_ctrl(tls->bio, BIO_CTRL_SET_CALLBACK, (bio_info_cb*) transport_ssl_cb);
+	SSL_set_app_data(tls->ssl, transport);
 
 	if (!transport->frontBio)
 	{
@@ -307,7 +322,7 @@ BOOL transport_accept_tls(rdpTransport* transport)
 
 	transport->layer = TRANSPORT_LAYER_TLS;
 
-	if (!tls_accept(transport->tls, transport->frontBio, settings->CertificateFile, settings->PrivateKeyFile))
+	if (!tls_accept(transport->tls, transport->frontBio, settings))
 		return FALSE;
 
 	transport->frontBio = transport->tls->bio;
@@ -325,7 +340,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 
 	transport->layer = TRANSPORT_LAYER_TLS;
 
-	if (!tls_accept(transport->tls, transport->frontBio, settings->CertificateFile, settings->PrivateKeyFile))
+	if (!tls_accept(transport->tls, transport->frontBio, settings))
 		return FALSE;
 
 	transport->frontBio = transport->tls->bio;
@@ -356,6 +371,53 @@ BOOL transport_accept_nla(rdpTransport* transport)
 	return TRUE;
 }
 
+#define WLog_ERR_BIO(tag, biofunc, bio) \
+	transport_bio_error_log(tag, biofunc, bio, __FILE__, __FUNCTION__, __LINE__)
+
+static void transport_bio_error_log(LPCSTR tag, LPCSTR biofunc, BIO* bio,
+	LPCSTR file, LPCSTR func, DWORD line)
+{
+	unsigned long sslerr;
+	char *buf;
+	wLog* log;
+	wLogMessage log_message;
+	int saveerrno;
+
+	saveerrno = errno;
+
+	log = WLog_Get(tag);
+	if (!log)
+		return;
+
+	log_message.Level = WLOG_ERROR;
+	if (log_message.Level < WLog_GetLogLevel(log))
+		return;
+
+	log_message.Type = WLOG_MESSAGE_TEXT;
+	log_message.LineNumber = line;
+	log_message.FileName = file;
+	log_message.FunctionName = func;
+
+	if (ERR_peek_error() == 0)
+	{
+		log_message.FormatString = "%s returned a system error %d: %s";
+		WLog_PrintMessage(log, &log_message, biofunc, saveerrno, strerror(saveerrno));
+		return;
+	}
+
+	buf = malloc(120);
+	if (buf)
+	{
+		while((sslerr = ERR_get_error()))
+		{
+			ERR_error_string_n(sslerr, buf, 120);
+			log_message.FormatString = "%s returned an error: %s";
+			WLog_PrintMessage(log, &log_message, biofunc, buf);
+		}
+		free(buf);
+	}
+}
+
 int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 {
 	int read = 0;
@@ -376,6 +438,12 @@ int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 			if (!transport->frontBio || !BIO_should_retry(transport->frontBio))
 			{
 				/* something unexpected happened, let's close */
+				if (!transport->frontBio)
+				{
+					WLog_ERR(TAG, "BIO_read: transport->frontBio null");
+					return -1;
+				}
+				WLog_ERR_BIO(TAG, "BIO_read", transport->frontBio);
 				transport->layer = TRANSPORT_LAYER_CLOSED;
 				return -1;
 			}
@@ -387,7 +455,7 @@ int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 			/* blocking means that we can't continue until we have read the number of requested bytes */
 			if (BIO_wait_read(transport->frontBio, 100) < 0)
 			{
-				WLog_ERR(TAG, "error when selecting for read");
+				WLog_ERR_BIO(TAG, "BIO_wait_read", transport->frontBio);
 				return -1;
 			}
 
@@ -610,15 +678,21 @@ int transport_write(rdpTransport* transport, wStream* s)
 			 * is a SSL or TSG BIO in the chain.
 			 */
 			if (!BIO_should_retry(transport->frontBio))
+			{
+				WLog_ERR_BIO(TAG, "BIO_should_retry", transport->frontBio);
 				goto out_cleanup;
+			}
 
 			/* non-blocking can live with blocked IOs */
 			if (!transport->blocking)
+			{
+				WLog_ERR_BIO(TAG, "BIO_write", transport->frontBio);
 				goto out_cleanup;
+			}
 
 			if (BIO_wait_write(transport->frontBio, 100) < 0)
 			{
-				WLog_ERR(TAG, "error when selecting for write");
+				WLog_ERR_BIO(TAG, "BIO_wait_write", transport->frontBio);
 				status = -1;
 				goto out_cleanup;
 			}

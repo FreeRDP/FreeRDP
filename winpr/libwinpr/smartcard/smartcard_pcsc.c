@@ -1996,7 +1996,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardStatus_Internal(SCARDHANDLE hCard,
 		{
 			if (pcchReaderLenAlloc)
 			{
-#ifdef __MAXOSX__
+#ifdef __MACOSX__
 				/**
 				* Workaround for SCardStatus Bug in MAC OS X Yosemite
 				*/

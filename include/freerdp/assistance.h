@@ -77,7 +77,7 @@ FREERDP_API int freerdp_assistance_decrypt(rdpAssistanceFile* file, const char* 
 
 FREERDP_API int freerdp_client_populate_settings_from_assistance_file(rdpAssistanceFile* file, rdpSettings* settings);
 
-FREERDP_API rdpAssistanceFile* freerdp_assistance_file_new();
+FREERDP_API rdpAssistanceFile* freerdp_assistance_file_new(void);
 FREERDP_API void freerdp_assistance_file_free(rdpAssistanceFile* file);
 
 #ifdef __cplusplus

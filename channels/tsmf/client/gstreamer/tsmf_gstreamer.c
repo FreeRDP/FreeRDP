@@ -45,20 +45,52 @@
 #include <inttypes.h>
 #endif
 
+/* 1 second = 10,000,000 100ns units*/
+#define SEEK_TOLERANCE 10*1000*1000
+
 static BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder* mdecoder);
 static void tsmf_gstreamer_clean_up(TSMFGstreamerDecoder* mdecoder);
 static int tsmf_gstreamer_pipeline_set_state(TSMFGstreamerDecoder* mdecoder,
 		GstState desired_state);
+static BOOL tsmf_gstreamer_buffer_level(ITSMFDecoder* decoder);
 
 const char* get_type(TSMFGstreamerDecoder* mdecoder)
 {
 	if (!mdecoder)
 		return NULL;
 
-	if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
-		return "VIDEO";
-	else
-		return "AUDIO";
+	switch (mdecoder->media_type)
+	{
+		case TSMF_MAJOR_TYPE_VIDEO:
+			return "VIDEO";
+		case TSMF_MAJOR_TYPE_AUDIO:
+			return "AUDIO";
+		default:
+			return "UNKNOWN";
+	}
+}
+
+static void cb_child_added(GstChildProxy *child_proxy, GObject *object, TSMFGstreamerDecoder* mdecoder)
+{
+	DEBUG_TSMF("NAME: %s", G_OBJECT_TYPE_NAME(object));
+
+	if (!g_strcmp0(G_OBJECT_TYPE_NAME(object), "GstXvImageSink") || !g_strcmp0(G_OBJECT_TYPE_NAME(object), "GstXImageSink") || !g_strcmp0(G_OBJECT_TYPE_NAME(object), "GstFluVAAutoSink"))
+	{
+		gst_base_sink_set_max_lateness((GstBaseSink *) object, 10000000); /* nanoseconds */
+		g_object_set(G_OBJECT(object), "sync", TRUE, NULL); /* synchronize on the clock */
+		g_object_set(G_OBJECT(object), "async", TRUE, NULL); /* no async state changes */
+	}
+
+	else if (!g_strcmp0(G_OBJECT_TYPE_NAME(object), "GstAlsaSink") || !g_strcmp0(G_OBJECT_TYPE_NAME(object), "GstPulseSink"))
+	{
+		gst_base_sink_set_max_lateness((GstBaseSink *) object, 10000000); /* nanoseconds */
+		g_object_set(G_OBJECT(object), "slave-method", 1, NULL);
+		g_object_set(G_OBJECT(object), "buffer-time", (gint64) 20000, NULL); /* microseconds */
+		g_object_set(G_OBJECT(object), "drift-tolerance", (gint64) 20000, NULL); /* microseconds */
+		g_object_set(G_OBJECT(object), "latency-time", (gint64) 10000, NULL); /* microseconds */
+		g_object_set(G_OBJECT(object), "sync", TRUE, NULL); /* synchronize on the clock */
+		g_object_set(G_OBJECT(object), "async", TRUE, NULL); /* no async state changes */
+	}
 }
 
 static void tsmf_gstreamer_enough_data(GstAppSrc *src, gpointer user_data)
@@ -81,16 +113,32 @@ static gboolean tsmf_gstreamer_seek_data(GstAppSrc *src, guint64 offset, gpointe
 	(void) mdecoder;
 	DEBUG_TSMF("%s offset=%llu", get_type(mdecoder), offset);
 
-	if (!mdecoder->paused)
-		tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_PAUSED);
+	return TRUE;
+}
 
-	gst_app_src_end_of_stream((GstAppSrc*) mdecoder->src);
+static BOOL tsmf_gstreamer_change_volume(ITSMFDecoder* decoder, UINT32 newVolume, UINT32 muted)
+{
+	TSMFGstreamerDecoder* mdecoder = (TSMFGstreamerDecoder *) decoder;
 
-	if (!mdecoder->paused)
-		tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_PLAYING);
+	if (!mdecoder || !mdecoder->pipe)
+		return TRUE;
 
-	if (mdecoder->sync_cb)
-		mdecoder->sync_cb(mdecoder->stream);
+	if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
+		return TRUE;
+
+	mdecoder->gstMuted = (BOOL) muted;
+	DEBUG_TSMF("mute=[%d]", mdecoder->gstMuted);
+	mdecoder->gstVolume = (double) newVolume / (double) 10000;
+	DEBUG_TSMF("gst_new_vol=[%f]", mdecoder->gstVolume);
+
+	if (!mdecoder->volume)
+		return TRUE;
+
+	if (!G_IS_OBJECT(mdecoder->volume))
+		return TRUE;
+
+	g_object_set(mdecoder->volume, "mute", mdecoder->gstMuted, NULL);
+	g_object_set(mdecoder->volume, "volume", mdecoder->gstVolume, NULL);
 
 	return TRUE;
 }
@@ -209,10 +257,17 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* m
 	{
 		case TSMF_SUB_TYPE_WVC1:
 			mdecoder->gst_caps = gst_caps_new_simple("video/x-wmv",
+								 "bitrate", G_TYPE_UINT, media_type->BitRate,
 								 "width", G_TYPE_INT, media_type->Width,
 								 "height", G_TYPE_INT, media_type->Height,
 								 "wmvversion", G_TYPE_INT, 3,
+#if GST_VERSION_MAJOR > 0
 								 "format", G_TYPE_STRING, "WVC1",
+#else
+								 "format", GST_TYPE_FOURCC, GST_MAKE_FOURCC ('W', 'V', 'C', '1'),
+#endif
+								 "framerate", GST_TYPE_FRACTION, media_type->SamplesPerSecond.Numerator, media_type->SamplesPerSecond.Denominator,
+								 "pixel-aspect-ratio", GST_TYPE_FRACTION, 1 , 1,
 								 NULL);
 			break;
 		case TSMF_SUB_TYPE_MP4S:
@@ -221,6 +276,12 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* m
 								  "bitrate", G_TYPE_UINT, media_type->BitRate,
 								  "width", G_TYPE_INT, media_type->Width,
 								  "height", G_TYPE_INT, media_type->Height,
+#if GST_VERSION_MAJOR > 0
+								  "format", G_TYPE_STRING, "MP42",
+#else  
+								  "format", GST_TYPE_FOURCC, GST_MAKE_FOURCC ('M', 'P', '4', '2'),
+#endif
+								  "framerate", GST_TYPE_FRACTION, media_type->SamplesPerSecond.Numerator, media_type->SamplesPerSecond.Denominator,
 								  NULL);
 			break;
 		case TSMF_SUB_TYPE_MP42:
@@ -229,14 +290,40 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* m
 								  "bitrate", G_TYPE_UINT, media_type->BitRate,
 								  "width", G_TYPE_INT, media_type->Width,
 								  "height", G_TYPE_INT, media_type->Height,
+#if GST_VERSION_MAJOR > 0                                         
+                                                                  "format", G_TYPE_STRING, "MP42",
+#else
+                                                                  "format", GST_TYPE_FOURCC, GST_MAKE_FOURCC ('M', 'P', '4', '2'),
+#endif
+								  "framerate", GST_TYPE_FRACTION, media_type->SamplesPerSecond.Numerator, media_type->SamplesPerSecond.Denominator,
 								  NULL);
 			break;
 		case TSMF_SUB_TYPE_MP43:
 			mdecoder->gst_caps =  gst_caps_new_simple("video/x-msmpeg",
+								  "msmpegversion", G_TYPE_INT, 43,
 								  "bitrate", G_TYPE_UINT, media_type->BitRate,
 								  "width", G_TYPE_INT, media_type->Width,
 								  "height", G_TYPE_INT, media_type->Height,
+#if GST_VERSION_MAJOR > 0                                         
+								  "format", G_TYPE_STRING, "MP43",
+#else   
+								  "format", GST_TYPE_FOURCC, GST_MAKE_FOURCC ('M', 'P', '4', '3'),
+#endif
+								  "framerate", GST_TYPE_FRACTION, media_type->SamplesPerSecond.Numerator, media_type->SamplesPerSecond.Denominator,
 								  NULL);
+			break;
+		case TSMF_SUB_TYPE_M4S2:
+			mdecoder->gst_caps =  gst_caps_new_simple ("video/mpeg",
+								   "mpegversion", G_TYPE_INT, 4,
+								   "width", G_TYPE_INT, media_type->Width,
+								   "height", G_TYPE_INT, media_type->Height,
+#if GST_VERSION_MAJOR > 0                                         
+								   "format", G_TYPE_STRING, "M4S2",
+#else   
+								   "format", GST_TYPE_FOURCC, GST_MAKE_FOURCC ('M', '4', 'S', '2'),
+#endif
+								   "framerate", GST_TYPE_FRACTION, media_type->SamplesPerSecond.Numerator, media_type->SamplesPerSecond.Denominator,
+								   NULL);
 			break;
 		case TSMF_SUB_TYPE_WMA9:
 			mdecoder->gst_caps =  gst_caps_new_simple("audio/x-wma",
@@ -248,6 +335,17 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* m
 								  "width", G_TYPE_INT, media_type->BitsPerSample,
 								  "block_align", G_TYPE_INT, media_type->BlockAlign,
 								  NULL);
+			break;
+		case TSMF_SUB_TYPE_WMA1:
+			mdecoder->gst_caps =  gst_caps_new_simple ("audio/x-wma",
+								   "wmaversion", G_TYPE_INT, 1,
+								   "rate", G_TYPE_INT, media_type->SamplesPerSecond.Numerator,
+								   "channels", G_TYPE_INT, media_type->Channels,
+								   "bitrate", G_TYPE_INT, media_type->BitRate,
+								   "depth", G_TYPE_INT, media_type->BitsPerSample,
+								   "width", G_TYPE_INT, media_type->BitsPerSample,
+								   "block_align", G_TYPE_INT, media_type->BlockAlign,
+								   NULL);
 			break;
 		case TSMF_SUB_TYPE_WMA2:
 			mdecoder->gst_caps =  gst_caps_new_simple("audio/x-wma",
@@ -274,6 +372,12 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* m
 								 "width", G_TYPE_INT, media_type->Width,
 								 "height", G_TYPE_INT, media_type->Height,
 								 "wmvversion", G_TYPE_INT, 1,
+#if GST_VERSION_MAJOR > 0                                         
+								 "format", G_TYPE_STRING, "WMV1",
+#else   
+								 "format", GST_TYPE_FOURCC, GST_MAKE_FOURCC ('W', 'M', 'V', '1'),
+#endif
+								 "framerate", GST_TYPE_FRACTION, media_type->SamplesPerSecond.Numerator, media_type->SamplesPerSecond.Denominator,
 								 NULL);
 			break;
 		case TSMF_SUB_TYPE_WMV2:
@@ -281,6 +385,13 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* m
 								 "width", G_TYPE_INT, media_type->Width,
 								 "height", G_TYPE_INT, media_type->Height,
 								 "wmvversion", G_TYPE_INT, 2,
+#if GST_VERSION_MAJOR > 0                                         
+								 "format", G_TYPE_STRING, "WMV2",
+#else
+								 "format", GST_TYPE_FOURCC, GST_MAKE_FOURCC ('W', 'M', 'V', '2'),
+#endif
+								 "framerate", GST_TYPE_FRACTION, media_type->SamplesPerSecond.Numerator, media_type->SamplesPerSecond.Denominator,
+								 "pixel-aspect-ratio", GST_TYPE_FRACTION, 1 , 1,
 								 NULL);
 			break;
 		case TSMF_SUB_TYPE_WMV3:
@@ -289,6 +400,13 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* m
 								 "width", G_TYPE_INT, media_type->Width,
 								 "height", G_TYPE_INT, media_type->Height,
 								 "wmvversion", G_TYPE_INT, 3,
+#if GST_VERSION_MAJOR > 0                                         
+								  "format", G_TYPE_STRING, "WMV3",
+#else
+								 "format", GST_TYPE_FOURCC, GST_MAKE_FOURCC ('W', 'M', 'V', '3'),
+#endif
+								 "framerate", GST_TYPE_FRACTION, media_type->SamplesPerSecond.Numerator, media_type->SamplesPerSecond.Denominator,
+								 "pixel-aspect-ratio", GST_TYPE_FRACTION, 1 , 1,
 								 NULL);
 			break;
 		case TSMF_SUB_TYPE_AVC1:
@@ -296,6 +414,10 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* m
 			mdecoder->gst_caps = gst_caps_new_simple("video/x-h264",
 								 "width", G_TYPE_INT, media_type->Width,
 								 "height", G_TYPE_INT, media_type->Height,
+								 "framerate", GST_TYPE_FRACTION, media_type->SamplesPerSecond.Numerator, media_type->SamplesPerSecond.Denominator,
+								 "pixel-aspect-ratio", GST_TYPE_FRACTION, 1 , 1,
+								 "stream-format", G_TYPE_STRING, "byte-stream",
+								 "alignment", G_TYPE_STRING, "nal",
 								 NULL);
 			break;
 		case TSMF_SUB_TYPE_AC3:
@@ -319,6 +441,8 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* m
 								 "rate", G_TYPE_INT, media_type->SamplesPerSecond.Numerator,
 								 "channels", G_TYPE_INT, media_type->Channels,
 								 "mpegversion", G_TYPE_INT, 4,
+								 "framed", G_TYPE_BOOLEAN, TRUE,
+								 "stream-format", G_TYPE_STRING, "raw",
 								 NULL);
 			break;
 		case TSMF_SUB_TYPE_MP1A:
@@ -347,6 +471,7 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* m
 								 "format", G_TYPE_STRING, "YUY2",
 								 "width", G_TYPE_INT, media_type->Width,
 								 "height", G_TYPE_INT, media_type->Height,
+								 "framerate", GST_TYPE_FRACTION, media_type->SamplesPerSecond.Numerator, media_type->SamplesPerSecond.Denominator, 
 								 NULL);
 #endif
 			break;
@@ -358,10 +483,13 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* m
 			break;
 		case TSMF_SUB_TYPE_MP2A:
 			mdecoder->gst_caps =  gst_caps_new_simple("audio/mpeg",
-								  "mpegversion", G_TYPE_INT, 2,
+								  "mpegversion", G_TYPE_INT, 1,
 								  "rate", G_TYPE_INT, media_type->SamplesPerSecond.Numerator,
 								  "channels", G_TYPE_INT, media_type->Channels,
 								  NULL);
+			break;
+		case TSMF_SUB_TYPE_FLAC:
+			mdecoder->gst_caps =  gst_caps_new_simple("audio/x-flac", "", NULL);
 			break;
 		default:
 			WLog_ERR(TAG, "unknown format:(%d).", media_type->SubType);
@@ -404,17 +532,23 @@ void tsmf_gstreamer_clean_up(TSMFGstreamerDecoder* mdecoder)
 		gst_object_unref(mdecoder->pipe);
 	}
 
-	tsmf_window_destroy(mdecoder);
 	mdecoder->ready = FALSE;
+	mdecoder->paused = FALSE;
+
 	mdecoder->pipe = NULL;
 	mdecoder->src = NULL;
+	mdecoder->queue = NULL;
 }
 
 BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder* mdecoder)
 {
-	const char* appsrc = "appsrc name=source ! decodebin name=decoder !";
-	const char* video = "autovideoconvert ! videoscale !";
-	const char* audio = "audioconvert ! audiorate ! audioresample ! volume name=audiovolume !";
+#if GST_VERSION_MAJOR > 0
+	const char* video = "appsrc name=videosource ! queue2 name=videoqueue ! decodebin name=videodecoder !";
+        const char* audio = "appsrc name=audiosource ! queue2 name=audioqueue ! decodebin name=audiodecoder ! audioconvert ! audiorate ! audioresample ! volume name=audiovolume !";
+#else
+	const char* video = "appsrc name=videosource ! queue2 name=videoqueue ! decodebin2 name=videodecoder !";
+	const char* audio = "appsrc name=audiosource ! queue2 name=audioqueue ! decodebin2 name=audiodecoder ! audioconvert ! audiorate ! audioresample ! volume name=audiovolume !";
+#endif
 	char pipeline[1024];
 
 	if (!mdecoder)
@@ -424,9 +558,9 @@ BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder* mdecoder)
 	 *       The only fixed elements necessary are appsrc and the volume element for audio streams.
 	 *       The rest could easily be provided in gstreamer pipeline notation from command line. */
 	if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
-		sprintf_s(pipeline, sizeof(pipeline), "%s %s %s name=outsink", appsrc, video, tsmf_platform_get_video_sink());
+		sprintf_s(pipeline, sizeof(pipeline), "%s %s name=videosink", video, tsmf_platform_get_video_sink());
 	else
-		sprintf_s(pipeline, sizeof(pipeline), "%s %s %s name=outsink", appsrc, audio, tsmf_platform_get_audio_sink());
+		sprintf_s(pipeline, sizeof(pipeline), "%s %s name=audiosink", audio, tsmf_platform_get_audio_sink());
 
 	DEBUG_TSMF("pipeline=%s", pipeline);
 	mdecoder->pipe = gst_parse_launch(pipeline, NULL);
@@ -437,7 +571,10 @@ BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder* mdecoder)
 		return FALSE;
 	}
 
-	mdecoder->src = gst_bin_get_by_name(GST_BIN(mdecoder->pipe), "source");
+	if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
+		mdecoder->src = gst_bin_get_by_name(GST_BIN(mdecoder->pipe), "videosource");
+	else
+		mdecoder->src = gst_bin_get_by_name(GST_BIN(mdecoder->pipe), "audiosource");
 
 	if (!mdecoder->src)
 	{
@@ -445,7 +582,21 @@ BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder* mdecoder)
 		return FALSE;
 	}
 
-	mdecoder->outsink = gst_bin_get_by_name(GST_BIN(mdecoder->pipe), "outsink");
+	if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
+		mdecoder->queue = gst_bin_get_by_name(GST_BIN(mdecoder->pipe), "videoqueue");
+	else
+		mdecoder->queue = gst_bin_get_by_name(GST_BIN(mdecoder->pipe), "audioqueue");
+
+	if (!mdecoder->queue)
+	{
+		WLog_ERR(TAG, "Failed to get queue");
+		return FALSE;
+	}
+
+	if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
+		mdecoder->outsink = gst_bin_get_by_name(GST_BIN(mdecoder->pipe), "videosink");
+	else
+		mdecoder->outsink = gst_bin_get_by_name(GST_BIN(mdecoder->pipe), "audiosink");
 
 	if (!mdecoder->outsink)
 	{
@@ -453,7 +604,9 @@ BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder* mdecoder)
 		return FALSE;
 	}
 
-	if (mdecoder->media_type != TSMF_MAJOR_TYPE_VIDEO)
+	g_signal_connect(mdecoder->outsink, "child-added", G_CALLBACK(cb_child_added), mdecoder);
+
+	if (mdecoder->media_type == TSMF_MAJOR_TYPE_AUDIO)
 	{
 		mdecoder->volume = gst_bin_get_by_name(GST_BIN(mdecoder->pipe), "audiovolume");
 
@@ -462,6 +615,8 @@ BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder* mdecoder)
 			WLog_ERR(TAG, "Failed to get volume");
 			return FALSE;
 		}
+
+		tsmf_gstreamer_change_volume((ITSMFDecoder*)mdecoder, mdecoder->gstVolume*((double) 10000), mdecoder->gstMuted);
 	}
 
 	tsmf_platform_register_handler(mdecoder);
@@ -473,16 +628,45 @@ BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder* mdecoder)
 		tsmf_gstreamer_seek_data
 	};
 	g_object_set(mdecoder->src, "format", GST_FORMAT_TIME, NULL);
-	g_object_set(mdecoder->src, "is-live", TRUE, NULL);
-	g_object_set(mdecoder->src, "block", TRUE, NULL);
+	g_object_set(mdecoder->src, "is-live", FALSE, NULL);
+	g_object_set(mdecoder->src, "block", FALSE, NULL);
+	g_object_set(mdecoder->src, "blocksize", 1024, NULL);
 	gst_app_src_set_caps((GstAppSrc *) mdecoder->src, mdecoder->gst_caps);
 	gst_app_src_set_callbacks((GstAppSrc *)mdecoder->src, &callbacks, mdecoder, NULL);
 	gst_app_src_set_stream_type((GstAppSrc *) mdecoder->src, GST_APP_STREAM_TYPE_SEEKABLE);
+	gst_app_src_set_latency((GstAppSrc *) mdecoder->src, 0, -1);
+	gst_app_src_set_max_bytes((GstAppSrc *) mdecoder->src, (guint64) 0);//unlimited
+	g_object_set(G_OBJECT(mdecoder->queue), "use-buffering", FALSE, NULL);
+	g_object_set(G_OBJECT(mdecoder->queue), "use-rate-estimate", FALSE, NULL);
+	g_object_set(G_OBJECT(mdecoder->queue), "max-size-buffers", 0, NULL);
+	g_object_set(G_OBJECT(mdecoder->queue), "max-size-bytes", 0, NULL);
+	g_object_set(G_OBJECT(mdecoder->queue), "max-size-time", (guint64) 0, NULL);
+
+	/* Only set these properties if not an autosink, otherwise we will set properties when real sinks are added */
+	if (!g_strcmp0(G_OBJECT_TYPE_NAME(mdecoder->outsink), "GstAutoVideoSink") && !g_strcmp0(G_OBJECT_TYPE_NAME(mdecoder->outsink), "GstAutoAudioSink"))
+	{
+		if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
+		{
+			gst_base_sink_set_max_lateness((GstBaseSink *) mdecoder->outsink, 10000000); /* nanoseconds */
+		}
+		else
+		{
+			gst_base_sink_set_max_lateness((GstBaseSink *) mdecoder->outsink, 10000000); /* nanoseconds */
+			g_object_set(G_OBJECT(mdecoder->outsink), "buffer-time", (gint64) 20000, NULL); /* microseconds */
+			g_object_set(G_OBJECT(mdecoder->outsink), "drift-tolerance", (gint64) 20000, NULL); /* microseconds */
+			g_object_set(G_OBJECT(mdecoder->outsink), "latency-time", (gint64) 10000, NULL); /* microseconds */
+			g_object_set(G_OBJECT(mdecoder->outsink), "slave-method", 1, NULL);
+		}
+		g_object_set(G_OBJECT(mdecoder->outsink), "sync", TRUE, NULL); /* synchronize on the clock */
+		g_object_set(G_OBJECT(mdecoder->outsink), "async", TRUE, NULL); /* no async state changes */
+	}
+
 	tsmf_window_create(mdecoder);
 	tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_READY);
 	tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_PLAYING);
 	mdecoder->pipeline_start_time_valid = 0;
 	mdecoder->shutdown = 0;
+	mdecoder->paused = FALSE;
 
 	GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(mdecoder->pipe), GST_DEBUG_GRAPH_SHOW_ALL, get_type(mdecoder));
 
@@ -495,7 +679,7 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder* decoder, const BYTE *data, UIN
 	GstBuffer *gst_buf;
 	TSMFGstreamerDecoder* mdecoder = (TSMFGstreamerDecoder *) decoder;
 	UINT64 sample_time = tsmf_gstreamer_timestamp_ms_to_gst(start_time);
-	UINT64 sample_duration = tsmf_gstreamer_timestamp_ms_to_gst(duration);
+	BOOL useTimestamps = TRUE;
 
 	if (!mdecoder)
 	{
@@ -509,15 +693,24 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder* decoder, const BYTE *data, UIN
 	 * We don't expect to block here often, since the pipeline should
 	 * have more than enough buffering.
 	 */
-	DEBUG_TSMF("%s. Start:(%llu) End:(%llu) Duration:(%llu) Last End:(%llu)",
-			   get_type(mdecoder), start_time, end_time, duration,
-			   mdecoder->last_sample_end_time);
+	DEBUG_TSMF("%s. Start:(%lu) End:(%lu) Duration:(%d) Last Start:(%lu)",
+			   get_type(mdecoder), start_time, end_time, (int)duration,
+			   mdecoder->last_sample_start_time);
+
+	if (mdecoder->shutdown)
+	{
+		WLog_ERR(TAG, "decodeEx called on shutdown decoder");
+		return TRUE;
+	}
 
 	if (mdecoder->gst_caps == NULL)
 	{
 		WLog_ERR(TAG, "tsmf_gstreamer_set_format not called or invalid format.");
 		return FALSE;
 	}
+
+	if (!mdecoder->pipe)
+		tsmf_gstreamer_pipeline_build(mdecoder);
 
 	if (!mdecoder->src)
 	{
@@ -533,83 +726,119 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder* decoder, const BYTE *data, UIN
 		return FALSE;
 	}
 
+	/* Relative timestamping will sometimes be set to 0
+	 * so we ignore these timestamps just to be safe(bit 8)
+	 */
+	if (extensions & 0x00000080)
+	{
+		DEBUG_TSMF("Ignoring the timestamps - relative - bit 8");
+		useTimestamps = FALSE;
+	}
+
+	/* If no timestamps exist then we dont want to look at the timestamp values (bit 7) */
+	if (extensions & 0x00000040)
+	{
+		DEBUG_TSMF("Ignoring the timestamps - none - bit 7");
+		useTimestamps = FALSE;
+	}
+
+	/* If performing a seek */
+	if (mdecoder->seeking)
+	{
+		mdecoder->seeking = FALSE;
+		tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_PAUSED);
+		mdecoder->pipeline_start_time_valid = 0;	
+	}
+
 	if (mdecoder->pipeline_start_time_valid)
 	{
-		long long diff = start_time;
-		diff -= mdecoder->last_sample_end_time;
+		DEBUG_TSMF("%s start time %lu", get_type(mdecoder), start_time);
 
-		if (diff < 0)
-			diff *= -1;
+		/* Adjusted the condition for a seek to be based on start time only
+		 * WMV1 and WMV2 files in particular have bad end time and duration values
+		 * there seems to be no real side effects of just using the start time instead
+		 */
+		UINT64 minTime = mdecoder->last_sample_start_time - (UINT64) SEEK_TOLERANCE;
+		UINT64 maxTime = mdecoder->last_sample_start_time + (UINT64) SEEK_TOLERANCE;
 
-		/* The pipe is initialized, but there is a discontinuity.
-		 * Seek to the start position... */
-		if (diff > 50)
+		/* Make sure the minTime stops at 0 , should we be at the beginning of the stream */ 
+		if (mdecoder->last_sample_start_time < (UINT64) SEEK_TOLERANCE)
+			minTime = 0;    
+
+		/* If the start_time is valid and different from the previous start time by more than the seek tolerance, then we have a seek condition */
+		if (((start_time > maxTime) || (start_time < minTime)) && useTimestamps)
 		{
-			DEBUG_TSMF("%s seeking to %lld", get_type(mdecoder), start_time);
+			DEBUG_TSMF("tsmf_gstreamer_decodeEx: start_time=[%lu] > last_sample_start_time=[%lu] OR ", start_time, mdecoder->last_sample_start_time);
+			DEBUG_TSMF("tsmf_gstreamer_decodeEx: start_time=[%lu] < last_sample_start_time=[%lu] with", start_time, mdecoder->last_sample_start_time);
+			DEBUG_TSMF("tsmf_gstreamer_decodeEX: a tolerance of more than [%lu] from the last sample", SEEK_TOLERANCE);
+			DEBUG_TSMF("tsmf_gstreamer_decodeEX: minTime=[%lu] maxTime=[%lu]", minTime, maxTime);
 
-			if (!gst_element_seek(mdecoder->pipe, 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_ACCURATE,
-								  GST_SEEK_TYPE_SET, sample_time,
-								  GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE))
-			{
-				WLog_ERR(TAG, "seek failed");
-			}
+			mdecoder->seeking = TRUE;
 
-			mdecoder->pipeline_start_time_valid = 0;
+			/* since we cant make the gstreamer pipeline jump to the new start time after a seek - we just maintain
+			 * a offset between realtime and gstreamer time
+			 */
+			mdecoder->seek_offset = start_time;
 		}
 	}
 	else
 	{
-		DEBUG_TSMF("%s start time %llu", get_type(mdecoder), sample_time);
+		DEBUG_TSMF("%s start time %lu", get_type(mdecoder), start_time);
+		/* Always set base/start time to 0. Will use seek offset to translate real buffer times
+		 * back to 0. This allows the video to be started from anywhere and the ability to handle seeks
+		 * without rebuilding the pipeline, etc. since that is costly
+		 */
+		gst_element_set_base_time(mdecoder->pipe, tsmf_gstreamer_timestamp_ms_to_gst(0));
+		gst_element_set_start_time(mdecoder->pipe, tsmf_gstreamer_timestamp_ms_to_gst(0));
 		mdecoder->pipeline_start_time_valid = 1;
+
+		/* Set the seek offset if buffer has valid timestamps. */
+		if (useTimestamps)
+			mdecoder->seek_offset = start_time;
+
+		if (!gst_element_seek(mdecoder->pipe, 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH,
+						GST_SEEK_TYPE_SET, 0,
+						GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE))
+		{
+			WLog_ERR(TAG, "seek failed");
+		}
 	}
 
 #if GST_VERSION_MAJOR > 0
-	GST_BUFFER_PTS(gst_buf) = sample_time;
+	if (useTimestamps)
+		GST_BUFFER_PTS(gst_buf) = sample_time - tsmf_gstreamer_timestamp_ms_to_gst(mdecoder->seek_offset);
+	else
+		GST_BUFFER_PTS(gst_buf) = GST_CLOCK_TIME_NONE;
 #else
-	GST_BUFFER_TIMESTAMP(gst_buf) = sample_time;
+	if (useTimestamps)
+		GST_BUFFER_TIMESTAMP(gst_buf) = sample_time - tsmf_gstreamer_timestamp_ms_to_gst(mdecoder->seek_offset);
+	else
+		GST_BUFFER_TIMESTAMP(gst_buf) = GST_CLOCK_TIME_NONE;
 #endif
-	GST_BUFFER_DURATION(gst_buf) = sample_duration;
+	GST_BUFFER_DURATION(gst_buf) = GST_CLOCK_TIME_NONE;
+	GST_BUFFER_OFFSET(gst_buf) = GST_BUFFER_OFFSET_NONE;
+#if GST_VERSION_MAJOR > 0
+#else
+	gst_buffer_set_caps(gst_buf, mdecoder->gst_caps);
+#endif
 	gst_app_src_push_buffer(GST_APP_SRC(mdecoder->src), gst_buf);
 
-	if (mdecoder->ack_cb)
-		mdecoder->ack_cb(mdecoder->stream, TRUE);
-
-	mdecoder->last_sample_end_time = end_time;
-
-	if (GST_STATE(mdecoder->pipe) != GST_STATE_PLAYING)
+	/* Should only update the last timestamps if the current ones are valid */
+	if (useTimestamps)
 	{
-		DEBUG_TSMF("%s: state=%s", get_type(mdecoder), gst_element_state_get_name(GST_STATE(mdecoder->pipe)));
+		mdecoder->last_sample_start_time = start_time;
+		mdecoder->last_sample_end_time = end_time;
+	}
 
+	if (mdecoder->pipe && (GST_STATE(mdecoder->pipe) != GST_STATE_PLAYING))
+	{
+		DEBUG_TSMF("%s: state=%s", get_type(mdecoder), gst_element_state_get_name(GST_STATE(mdecoder->pipe)));	
+
+		DEBUG_TSMF("%s Paused: %i   Shutdown: %i   Ready: %i", get_type(mdecoder), mdecoder->paused, mdecoder->shutdown, mdecoder->ready);
 		if (!mdecoder->paused && !mdecoder->shutdown && mdecoder->ready)
 			tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_PLAYING);
 	}
 
-	return TRUE;
-}
-
-static BOOL tsmf_gstreamer_change_volume(ITSMFDecoder* decoder, UINT32 newVolume, UINT32 muted)
-{
-	TSMFGstreamerDecoder* mdecoder = (TSMFGstreamerDecoder *) decoder;
-
-	if (!mdecoder || !mdecoder->pipe)
-		return FALSE;
-
-	if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
-		return TRUE;
-
-	mdecoder->gstMuted = (BOOL) muted;
-	DEBUG_TSMF("mute=[%d]", mdecoder->gstMuted);
-	mdecoder->gstVolume = (double) newVolume / (double) 10000;
-	DEBUG_TSMF("gst_new_vol=[%f]", mdecoder->gstVolume);
-
-	if (!mdecoder->volume)
-		return FALSE;
-
-	if (!G_IS_OBJECT(mdecoder->volume))
-		return FALSE;
-
-	g_object_set(mdecoder->volume, "mute", mdecoder->gstMuted, NULL);
-	g_object_set(mdecoder->volume, "volume", mdecoder->gstVolume, NULL);
 	return TRUE;
 }
 
@@ -618,7 +847,10 @@ static BOOL tsmf_gstreamer_control(ITSMFDecoder* decoder, ITSMFControlMsg contro
 	TSMFGstreamerDecoder* mdecoder = (TSMFGstreamerDecoder *) decoder;
 
 	if (!mdecoder)
-		return FALSE;
+	{
+		WLog_ERR(TAG, "Control called with no decoder!");
+		return TRUE;
+	}
 
 	if (control_msg == Control_Pause)
 	{
@@ -626,15 +858,13 @@ static BOOL tsmf_gstreamer_control(ITSMFDecoder* decoder, ITSMFControlMsg contro
 
 		if (mdecoder->paused)
 		{
-			WLog_ERR(TAG, "%s: Ignoring control PAUSE, already received!", get_type(mdecoder));
+			WLog_ERR(TAG, "%s: Ignoring Control_Pause, already received!", get_type(mdecoder));
 			return TRUE;
 		}
 
 		tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_PAUSED);
+		mdecoder->shutdown = 0;
 		mdecoder->paused = TRUE;
-
-		if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
-			tsmf_window_pause(mdecoder);
 	}
 	else if (control_msg == Control_Resume)
 	{
@@ -642,17 +872,12 @@ static BOOL tsmf_gstreamer_control(ITSMFDecoder* decoder, ITSMFControlMsg contro
 
 		if (!mdecoder->paused && !mdecoder->shutdown)
 		{
-			WLog_ERR(TAG, "%s: Ignoring control RESUME, already received!", get_type(mdecoder));
+			WLog_ERR(TAG, "%s: Ignoring Control_Resume, already received!", get_type(mdecoder));
 			return TRUE;
 		}
 
+		mdecoder->shutdown = 0;
 		mdecoder->paused = FALSE;
-		mdecoder->shutdown = FALSE;
-
-		if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
-			tsmf_window_resume(mdecoder);
-
-		tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_PLAYING);
 	}
 	else if (control_msg == Control_Stop)
 	{
@@ -660,18 +885,29 @@ static BOOL tsmf_gstreamer_control(ITSMFDecoder* decoder, ITSMFControlMsg contro
 
 		if (mdecoder->shutdown)
 		{
-			WLog_ERR(TAG, "%s: Ignoring control STOP, already received!", get_type(mdecoder));
+			WLog_ERR(TAG, "%s: Ignoring Control_Stop, already received!", get_type(mdecoder));
 			return TRUE;
 		}
 
-		mdecoder->shutdown = TRUE;
 		/* Reset stamps, flush buffers, etc */
-		tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_PAUSED);
+		if (mdecoder->pipe)
+		{
+			tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_NULL);
+			tsmf_window_destroy(mdecoder);
+			tsmf_gstreamer_clean_up(mdecoder);
+		}
+		mdecoder->seek_offset = 0;
+		mdecoder->pipeline_start_time_valid = 0;
+		mdecoder->shutdown = 1;
+	}
+	else if (control_msg == Control_Restart)
+	{
+		DEBUG_TSMF("Control_Restart %s", get_type(mdecoder));
+		mdecoder->shutdown = 0;
+		mdecoder->paused = FALSE;
 
-		if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
-			tsmf_window_pause(mdecoder);
-
-		gst_app_src_end_of_stream((GstAppSrc *)mdecoder->src);
+		if (mdecoder->pipeline_start_time_valid)
+			tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_PLAYING);
 	}
 	else
 		WLog_ERR(TAG, "Unknown control message %08x", control_msg);
@@ -679,7 +915,7 @@ static BOOL tsmf_gstreamer_control(ITSMFDecoder* decoder, ITSMFControlMsg contro
 	return TRUE;
 }
 
-static BOOL tsmf_gstreamer_buffer_filled(ITSMFDecoder* decoder)
+static BOOL tsmf_gstreamer_buffer_level(ITSMFDecoder* decoder)
 {
 	TSMFGstreamerDecoder* mdecoder = (TSMFGstreamerDecoder *) decoder;
 	DEBUG_TSMF("");
@@ -687,10 +923,13 @@ static BOOL tsmf_gstreamer_buffer_filled(ITSMFDecoder* decoder)
 	if (!mdecoder)
 		return FALSE;
 
-	guint buff_max = 0;
 	guint clbuff = 0;
-	DEBUG_TSMF("%s buffer fill %u/%u", get_type(mdecoder), clbuff, buff_max);
-	return clbuff >= buff_max ? TRUE : FALSE;
+
+	if (G_IS_OBJECT(mdecoder->queue))
+		g_object_get(mdecoder->queue, "current-level-buffers", &clbuff, NULL);
+
+	DEBUG_TSMF("%s buffer level %u", get_type(mdecoder), clbuff);
+	return clbuff;
 }
 
 static void tsmf_gstreamer_free(ITSMFDecoder* decoder)
@@ -700,7 +939,7 @@ static void tsmf_gstreamer_free(ITSMFDecoder* decoder)
 
 	if (mdecoder)
 	{
-		mdecoder->shutdown = 1;
+		tsmf_window_destroy(mdecoder);
 		tsmf_gstreamer_clean_up(mdecoder);
 
 		if (mdecoder->gst_caps)
@@ -721,19 +960,19 @@ static UINT64 tsmf_gstreamer_get_running_time(ITSMFDecoder* decoder)
 		return 0;
 
 	if (!mdecoder->outsink)
-		return mdecoder->last_sample_end_time;
+		return mdecoder->last_sample_start_time;
 
-	if (GST_STATE(mdecoder->pipe) != GST_STATE_PLAYING)
+	if (!mdecoder->pipe)
 		return 0;
 
 	GstFormat fmt = GST_FORMAT_TIME;
 	gint64 pos = 0;
 #if GST_VERSION_MAJOR > 0
-	gst_element_query_position(mdecoder->outsink, fmt, &pos);
+	gst_element_query_position(mdecoder->pipe, fmt, &pos);
 #else
-	gst_element_query_position(mdecoder->outsink, &fmt, &pos);
+	gst_element_query_position(mdecoder->pipe, &fmt, &pos);
 #endif
-	return pos/100;
+	return (UINT64) (pos/100 + mdecoder->seek_offset);
 }
 
 static BOOL tsmf_gstreamer_update_rendering_area(ITSMFDecoder* decoder,
@@ -757,7 +996,7 @@ BOOL tsmf_gstreamer_ack(ITSMFDecoder* decoder, BOOL (*cb)(void *, BOOL), void *s
 {
 	TSMFGstreamerDecoder* mdecoder = (TSMFGstreamerDecoder *) decoder;
 	DEBUG_TSMF("");
-	mdecoder->ack_cb = cb;
+	mdecoder->ack_cb = NULL;
 	mdecoder->stream = stream;
 	return TRUE;
 }
@@ -800,13 +1039,17 @@ ITSMFDecoder* freerdp_tsmf_client_subsystem_entry(void)
 	decoder->iface.Control = tsmf_gstreamer_control;
 	decoder->iface.DecodeEx = tsmf_gstreamer_decodeEx;
 	decoder->iface.ChangeVolume = tsmf_gstreamer_change_volume;
-	decoder->iface.BufferFilled = tsmf_gstreamer_buffer_filled;
+	decoder->iface.BufferLevel = tsmf_gstreamer_buffer_level;
 	decoder->iface.SetAckFunc = tsmf_gstreamer_ack;
 	decoder->iface.SetSyncFunc = tsmf_gstreamer_sync;
 	decoder->paused = FALSE;
 	decoder->gstVolume = 0.5;
 	decoder->gstMuted = FALSE;
 	decoder->state = GST_STATE_VOID_PENDING;  /* No real state yet */
+	decoder->last_sample_start_time = 0;
+	decoder->last_sample_end_time = 0;
+	decoder->seek_offset = 0;
+	decoder->seeking = FALSE;
 
 	if (tsmf_platform_create(decoder) < 0)
 	{

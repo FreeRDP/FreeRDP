@@ -185,30 +185,37 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		 */
 		startX = startX + xfc->instance->settings->MonitorLocalShiftX;
 		startY = startY + xfc->instance->settings->MonitorLocalShiftY;
+
+		/* Set monitor bounds */
+		if (settings->MonitorCount > 1)
+		{
+			xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_FULLSCREEN_MONITORS, 5,
+				xfc->fullscreenMonitors.top,
+				xfc->fullscreenMonitors.bottom,
+				xfc->fullscreenMonitors.left,
+				xfc->fullscreenMonitors.right,
+				1);
+		}
 	}
 
 	xf_ResizeDesktopWindow(xfc, window, width, height);
+
+	if (fullscreen)
+	{
+		/* enter full screen: move the window before adding NET_WM_STATE_FULLSCREEN */
+		XMoveWindow(xfc->display, window->handle, startX, startY);
+	}
 
 	/* Set the fullscreen state */
 	xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
 				fullscreen ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE,
 				xfc->_NET_WM_STATE_FULLSCREEN, 0, 0);
 
-	/* Only send monitor bounds if they are valid */
-	if ((xfc->fullscreenMonitors.top >= 0) &&
-			(xfc->fullscreenMonitors.bottom >= 0) &&
-			(xfc->fullscreenMonitors.left >= 0) &&
-			(xfc->fullscreenMonitors.right >= 0))
+	if (!fullscreen)
 	{
-		xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_FULLSCREEN_MONITORS, 5,
-				xfc->fullscreenMonitors.top,
-				xfc->fullscreenMonitors.bottom,
-				xfc->fullscreenMonitors.left,
-				xfc->fullscreenMonitors.right,
-				1);
+		/* leave full screen: move the window after removing NET_WM_STATE_FULLSCREEN */
+		XMoveWindow(xfc->display, window->handle, startX, startY);
 	}
-
-	XMoveWindow(xfc->display, window->handle, startX, startY);
 }
 
 /* http://tronche.com/gui/x/xlib/window-information/XGetWindowProperty.html */
@@ -232,7 +239,7 @@ BOOL xf_GetWindowProperty(xfContext* xfc, Window window, Atom property, int leng
 
 	if (actual_type == None)
 	{
-		WLog_ERR(TAG, "Property %lu does not exist", property);
+		WLog_INFO(TAG, "Property %lu does not exist", property);
 		return FALSE;
 	}
 
@@ -327,7 +334,7 @@ static void xf_SetWindowPID(xfContext* xfc, Window window, pid_t pid)
 	if (!pid)
 		pid = getpid();
 
-	am_wm_pid = XInternAtom(xfc->display, "_NET_WM_PID", False);
+	am_wm_pid = xfc->_NET_WM_PID;
 
 	XChangeProperty(xfc->display, window, am_wm_pid, XA_CARDINAL,
 				32, PropModeReplace, (BYTE*) &pid, 1);
@@ -567,9 +574,11 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UIN
 	}
 	else
 	{
-		XChangeProperty(xfc->display, appWindow->handle, xfc->_NET_WM_WINDOW_TYPE,
-				XA_ATOM, 32, PropModeReplace, (BYTE*) &window_type, 1);
+		window_type = xfc->_NET_WM_WINDOW_TYPE_NORMAL;
 	}
+
+	XChangeProperty(xfc->display, appWindow->handle, xfc->_NET_WM_WINDOW_TYPE,
+			XA_ATOM, 32, PropModeReplace, (BYTE*) &window_type, 1);
 }
 
 void xf_SetWindowText(xfContext* xfc, xfAppWindow* appWindow, char* name)
@@ -577,8 +586,8 @@ void xf_SetWindowText(xfContext* xfc, xfAppWindow* appWindow, char* name)
 	const size_t i = strlen(name);
 	XStoreName(xfc->display, appWindow->handle, name);
 
-	Atom wm_Name = XInternAtom(xfc->display, "_NET_WM_NAME", FALSE);
-	Atom utf8Str = XInternAtom(xfc->display, "UTF8_STRING", FALSE);
+	Atom wm_Name = xfc->_NET_WM_NAME;
+	Atom utf8Str = xfc->UTF8_STRING;
 
 	XChangeProperty(xfc->display, appWindow->handle, wm_Name, utf8Str, 8,
 	                PropModeReplace, (unsigned char *)name, i);
@@ -821,9 +830,10 @@ void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 
 		case WINDOW_SHOW_MAXIMIZED:
 			/* Set the window as maximized */
-			xf_SendClientEvent(xfc, appWindow->handle, xfc->_NET_WM_STATE, 4, 1,
-					XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_VERT", False),
-					XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_HORZ", False), 0);
+			xf_SendClientEvent(xfc, appWindow->handle, xfc->_NET_WM_STATE, 4,
+					_NET_WM_STATE_ADD,
+					xfc->_NET_WM_STATE_MAXIMIZED_VERT,
+					xfc->_NET_WM_STATE_MAXIMIZED_HORZ, 0);
 			/*
 			 * This is a workaround for the case where the window is maximized locally before the rail server is told to maximize
 			 * the window, this appears to be a race condition where the local window with incomplete data and once the window is
@@ -838,9 +848,10 @@ void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 
 		case WINDOW_SHOW:
 			/* Ensure the window is not maximized */
-			xf_SendClientEvent(xfc, appWindow->handle, xfc->_NET_WM_STATE, 4, 0,
-					XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_VERT", False),
-					XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_HORZ", False), 0);
+			xf_SendClientEvent(xfc, appWindow->handle, xfc->_NET_WM_STATE, 4,
+					_NET_WM_STATE_REMOVE,
+					xfc->_NET_WM_STATE_MAXIMIZED_VERT,
+					xfc->_NET_WM_STATE_MAXIMIZED_HORZ, 0);
 			/*
 			 * Ignore configure requests until both the Maximized properties have been processed
 			 * to prevent condition where WM overrides size of request due to one or both of these properties
@@ -923,7 +934,7 @@ void xf_SetWindowRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rec
 
 }
 
-void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rects, int nrects)
+void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, UINT32 rectsOffsetX, UINT32 rectsOffsetY, RECTANGLE_16* rects, int nrects)
 {
 	int i;
 	XRectangle* xrects;
@@ -942,7 +953,7 @@ void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, RECTANG
 		xrects[i].height = rects[i].bottom - rects[i].top;
 	}
 
-	XShapeCombineRectangles(xfc->display, appWindow->handle, ShapeBounding, 0, 0, xrects, nrects, ShapeSet, 0);
+	XShapeCombineRectangles(xfc->display, appWindow->handle, ShapeBounding, rectsOffsetX, rectsOffsetY, xrects, nrects, ShapeSet, 0);
 	free(xrects);
 #endif
 
@@ -951,20 +962,14 @@ void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, RECTANG
 void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width, int height)
 {
 	int ax, ay;
-	UINT32 translatedWindowOffsetX;
-	UINT32 translatedWindowOffsetY;
 
-	/* Translate the server rail window offset to a local offset */
-	translatedWindowOffsetX = (appWindow->windowOffsetX - appWindow->localWindowOffsetCorrX);
-	translatedWindowOffsetY = (appWindow->windowOffsetY - appWindow->localWindowOffsetCorrY);
+	ax = x + appWindow->windowOffsetX;
+	ay = y + appWindow->windowOffsetY;
 
-	ax = x + translatedWindowOffsetX;
-	ay = y + translatedWindowOffsetY;
-
-	if (ax + width > translatedWindowOffsetX + appWindow->width)
-		width = (translatedWindowOffsetX + appWindow->width - 1) - ax;
-	if (ay + height > translatedWindowOffsetY + appWindow->height)
-		height = (translatedWindowOffsetY + appWindow->height - 1) - ay;
+	if (ax + width > appWindow->windowOffsetX + appWindow->width)
+		width = (appWindow->windowOffsetX + appWindow->width - 1) - ax;
+	if (ay + height > appWindow->windowOffsetY + appWindow->height)
+		height = (appWindow->windowOffsetY + appWindow->height - 1) - ay;
 
 	xf_lock_x11(xfc, TRUE);
 

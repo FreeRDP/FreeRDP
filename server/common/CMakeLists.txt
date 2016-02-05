@@ -18,17 +18,24 @@
 set(MODULE_NAME "freerdp-server")
 set(MODULE_PREFIX "FREERDP_SERVER")
 
+#  Policy CMP0022: INTERFACE_LINK_LIBRARIES defines the link
+#  interface.  Run "cmake --help-policy CMP0022" for policy details.  Use the
+#  cmake_policy command to set the policy and suppress this warning.
+if(POLICY CMP0022)
+  cmake_policy(SET CMP0022 NEW)
+endif()
+
 set(${MODULE_PREFIX}_SRCS
 	server.c)
+
+foreach(FREERDP_CHANNELS_SERVER_SRC ${FREERDP_CHANNELS_SERVER_SRCS})
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} "${FREERDP_CHANNELS_SERVER_SRC}")
+endforeach()
 
 if(MSVC)
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
 endif()
 
-foreach(FREERDP_CHANNELS_SERVER_SRC ${FREERDP_CHANNELS_SERVER_SRCS})
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS}
-				"${FREERDP_CHANNELS_SERVER_SRC}")
-endforeach()
 
 # On windows create dll version information.
 # Vendor, product and year are already set in top level CMakeLists.txt
@@ -52,13 +59,13 @@ if (WITH_LIBRARY_VERSIONING)
   set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
 endif()
 
+target_link_libraries(${MODULE_NAME} ${PRIVATE_KEYWORD} ${FREERDP_CHANNELS_SERVER_LIBS})
+target_link_libraries(${MODULE_NAME} ${PUBLIC_KEYWORD} winpr freerdp)
 
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
-	${FREERDP_CHANNELS_SERVER_LIBS})
-
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-
-install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries EXPORT FreeRDPTargets)
+install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries EXPORT FreeRDP-ServerTargets)
+if (WITH_DEBUG_SYMBOLS AND MSVC AND BUILD_SHARED_LIBS)
+    install(FILES ${CMAKE_PDB_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT symbols)
+endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/Common")
 export_complex_library(LIBNAME ${MODULE_NAME})

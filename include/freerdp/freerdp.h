@@ -272,6 +272,7 @@ FREERDP_API void freerdp_get_version(int* major, int* minor, int* revision);
 FREERDP_API const char* freerdp_get_version_string(void);
 FREERDP_API const char* freerdp_get_build_date(void);
 FREERDP_API const char* freerdp_get_build_revision(void);
+FREERDP_API const char* freerdp_get_build_config(void);
 
 FREERDP_API freerdp* freerdp_new(void);
 FREERDP_API void freerdp_free(freerdp* instance);

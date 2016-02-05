@@ -1,6 +1,7 @@
 # FreeRDP: A Remote Desktop Protocol Implementation
 # Android Client
 #
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
 # Copyright 2013 Bernhard Miklautz <bernhard.miklautz@thincast.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,68 +16,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if (NOT ANDROID_NDK)
-	message(FATAL_ERROR "ANDROID_NDK not set but required for building android native library.")
+set(MODULE_NAME "freerdp-android")
+set(MODULE_PREFIX "FREERDP_CLIENT_ANDROID")
+
+include_directories(.)
+
+if(CMAKE_COMPILER_IS_GNUCC)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-pointer-sign")
 endif()
 
-set(CMAKE_PROGRAM_PATH ${ANDROID_NDK})
-find_program(NDK_COMMAND ndk-build CMAKE_FIND_ROOT_PATH_BOTH)
+set(${MODULE_PREFIX}_SRCS
+	android_event.c
+	android_event.h
+	android_freerdp.c
+	android_freerdp.h
+	android_jni_utils.c
+	android_jni_utils.h
+	android_jni_callback.c
+	android_jni_callback.h)
 
-if(NDK_COMMAND STREQUAL "NDK_COMMAND-NOTFOUND")
-	message(FATAL_ERROR "ndk-build not found but required to build native lib")
+if(WITH_CLIENT_CHANNELS)
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS}
+		android_cliprdr.c
+		android_cliprdr.h)
 endif()
 
-set(NDK_LIB_CFG "${CMAKE_CURRENT_BINARY_DIR}/FreeRDPCore/jni/Android.mk")
-if(ANDROID_BUILD_JAVA)
-	if (NOT ANDROID_SDK)
-		message(FATAL_ERROR "ANDROID_SDK not set but required for building the java gui (ANDROID_BUILD_JAVA)")
-	endif()
-	# And isn't shiped with the android ndk/sdk so
-	# we need to find it on the local machine
-  SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM BOTH)
-	find_program(ANT_COMMAND ant)
-  SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY)
+add_library(${MODULE_NAME} SHARED ${${MODULE_PREFIX}_SRCS})
 
-	if(ANT_COMMAND STREQUAL "ANT_COMMAND-NOTFOUND")
-		message(FATAL_ERROR "ant not found but required to build android java")
-	endif()
-endif(ANDROID_BUILD_JAVA)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr freerdp)
 
-set(ANDROID_COMMAND "${ANDROID_SDK}/tools/android")
-if(NOT EXISTS ${ANDROID_COMMAND})
-	message(FATAL_ERROR "android not found but required to build android java")
-endif()
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} dl)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} log)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} jnigraphics)
 
-if(ANDROID_BUILD_JAVA_DEBUG)
-	set(ANDROID_BUILD_TYPE "debug")
-else()
-	set(ANDROID_BUILD_TYPE "release")
-endif()
-
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-	set(ANDROID_DEBUG_ENABLE "true")
-	set(NDK_DEBUG "1")
-else()
-	set(ANDROID_DEBUG_ENABLE "false")
-	set(NDK_DEBUG "0")
-endif()
-
-set(APPCOMPAT_DIR "${CMAKE_CURRENT_BINARY_DIR}/appcompat_v7")
-set(supportdir "${ANDROID_SDK}/extras/android/support/v7/appcompat")
-set(compatibilitydir "${ANDROID_SDK}/extras/android/compatibility/v7/appcompat")
-if(EXISTS "${supportdir}" AND IS_DIRECTORY "${supportdir}")
-       add_custom_target(copy_appcompat ALL
-               COMMAND ${CMAKE_COMMAND} -E copy_directory "${supportdir}" ${APPCOMPAT_DIR}
-               COMMAND ${ANDROID_COMMAND} update lib-project -p ${APPCOMPAT_DIR} -t android-${ANDROID_APP_TARGET_SDK}
-       )
-elseif(EXISTS "${compatibilitydir}" AND IS_DIRECTORY "${compatibilitydir}")
-       add_custom_target(copy_appcompat ALL
-               COMMAND ${CMAKE_COMMAND} -E copy_directory "${compatibilitydir}" ${APPCOMPAT_DIR}
-               COMMAND ${ANDROID_COMMAND} update lib-project -p ${APPCOMPAT_DIR} -t android-${ANDROID_APP_TARGET_SDK}
-       )
-else()
-	message( FATAL_ERROR "${ANDROID_SDK}/extras/android/{support|compatibility}/v7/appcompat directory not found.  Please install a recent version of Android Support Library, CMake will now exit." )
-endif()
-
-add_subdirectory(FreeRDPCore)
-add_subdirectory(aFreeRDP)
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries EXPORT AndroidTargets)

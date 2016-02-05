@@ -33,7 +33,7 @@ BOOL sf_peer_encomsp_init(testPeerContext* context)
 	if (!context->encomsp)
 		return FALSE;
 
-	if (context->encomsp->Start(context->encomsp) < 0)
+	if (context->encomsp->Start(context->encomsp) != CHANNEL_RC_OK)
 		return FALSE;
 
 	return TRUE;

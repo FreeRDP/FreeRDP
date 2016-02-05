@@ -20,16 +20,21 @@
 #ifndef WINPR_WLOG_APPENDER_PRIVATE_H
 #define WINPR_WLOG_APPENDER_PRIVATE_H
 
-#include <winpr/wlog.h>
+#include "wlog.h"
 
-#include "wlog/FileAppender.h"
-#include "wlog/BinaryAppender.h"
-#include "wlog/ConsoleAppender.h"
-#include "wlog/CallbackAppender.h"
+#include "FileAppender.h"
+#include "ConsoleAppender.h"
+#include "BinaryAppender.h"
+#include "CallbackAppender.h"
+#ifdef HAVE_JOURNALD_H
+#include "JournaldAppender.h"
+#endif
+#ifdef HAVE_SYSLOG_H
+#include "SyslogAppender.h"
+#endif
+#include "UdpAppender.h"
 
 void WLog_Appender_Free(wLog* log, wLogAppender* appender);
-
-#include "wlog/wlog.h"
 
 #endif /* WINPR_WLOG_APPENDER_PRIVATE_H */
  

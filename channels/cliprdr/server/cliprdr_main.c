@@ -193,7 +193,7 @@ static UINT cliprdr_server_format_list(CliprdrServerContext* context, CLIPRDR_FO
 	CLIPRDR_FORMAT* format;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 
-	if (!cliprdr->useLongFormatNames)
+	if (!context->useLongFormatNames)
 	{
 		length = formatList->numFormats * 36;
 
@@ -470,7 +470,7 @@ static UINT cliprdr_server_file_contents_response(CliprdrServerContext* context,
 	if (fileContentsResponse->dwFlags & FILECONTENTS_SIZE)
 		fileContentsResponse->cbRequested = sizeof(UINT64);
 
-	s = cliprdr_server_packet_new(CB_FILECONTENTS_REQUEST, 0,
+	s = cliprdr_server_packet_new(CB_FILECONTENTS_RESPONSE, fileContentsResponse->msgFlags,
 			4 + fileContentsResponse->cbRequested);
 
 	if (!s)
@@ -504,22 +504,21 @@ static UINT cliprdr_server_receive_general_capability(CliprdrServerContext* cont
 {
 	UINT32 version;
 	UINT32 generalFlags;
-	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 
 	Stream_Read_UINT32(s, version); /* version (4 bytes) */
 	Stream_Read_UINT32(s, generalFlags); /* generalFlags (4 bytes) */
 
-	if (generalFlags & CB_USE_LONG_FORMAT_NAMES)
-		cliprdr->useLongFormatNames = TRUE;
+	if (context->useLongFormatNames)
+		context->useLongFormatNames = (generalFlags & CB_USE_LONG_FORMAT_NAMES) ? TRUE : FALSE;
 
-	if (generalFlags & CB_STREAM_FILECLIP_ENABLED)
-		cliprdr->streamFileClipEnabled = TRUE;
+	if (context->streamFileClipEnabled)
+		context->streamFileClipEnabled = (generalFlags & CB_STREAM_FILECLIP_ENABLED) ? TRUE : FALSE;
 
-	if (generalFlags & CB_FILECLIP_NO_FILE_PATHS)
-		cliprdr->fileClipNoFilePaths = TRUE;
+	if (context->fileClipNoFilePaths)
+		context->fileClipNoFilePaths = (generalFlags & CB_FILECLIP_NO_FILE_PATHS) ? TRUE : FALSE;
 
-	if (generalFlags & CB_CAN_LOCK_CLIPDATA)
-		cliprdr->canLockClipData = TRUE;
+	if (context->canLockClipData)
+		context->canLockClipData = (generalFlags & CB_CAN_LOCK_CLIPDATA) ? TRUE : FALSE;
 
 	return CHANNEL_RC_OK;
 }
@@ -634,7 +633,6 @@ static UINT cliprdr_server_receive_format_list(CliprdrServerContext* context, wS
 	WCHAR* wszFormatName;
 	CLIPRDR_FORMAT* formats = NULL;
 	CLIPRDR_FORMAT_LIST formatList;
-	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 	UINT error = CHANNEL_RC_OK;
 
 	dataLen = header->dataLen;
@@ -654,7 +652,7 @@ static UINT cliprdr_server_receive_format_list(CliprdrServerContext* context, wS
 		formatList.formats = NULL;
 		formatList.numFormats = 0;
 	}
-	else if (!cliprdr->useLongFormatNames)
+	else if (!context->useLongFormatNames)
 	{
 		formatList.numFormats = (dataLen / 36);
 
@@ -957,7 +955,7 @@ static UINT cliprdr_server_receive_filecontents_request(CliprdrServerContext* co
 	request.msgFlags = header->msgFlags;
 	request.dataLen = header->dataLen;
 
-	if (Stream_GetRemainingLength(s) < 28)
+	if (Stream_GetRemainingLength(s) < 24)
 	{
 		WLog_ERR(TAG, "not enought data in stream!");
 		return ERROR_INVALID_DATA;
@@ -969,7 +967,10 @@ static UINT cliprdr_server_receive_filecontents_request(CliprdrServerContext* co
 	Stream_Read_UINT32(s, request.nPositionLow); /* nPositionLow (4 bytes) */
 	Stream_Read_UINT32(s, request.nPositionHigh); /* nPositionHigh (4 bytes) */
 	Stream_Read_UINT32(s, request.cbRequested); /* cbRequested (4 bytes) */
-	Stream_Read_UINT32(s, request.clipDataId); /* clipDataId (4 bytes) */
+	if (Stream_GetRemainingLength(s) < 4) /* clipDataId (4 bytes) optional */
+		request.clipDataId = 0;
+	else
+		Stream_Read_UINT32(s, request.clipDataId);
 
 	IFCALLRET(context->ClientFileContentsRequest, error, context, &request);
 	if (error)
@@ -1005,9 +1006,9 @@ static UINT cliprdr_server_receive_filecontents_response(CliprdrServerContext* c
 	response.cbRequested = header->dataLen - 4;
 	response.requestedData = Stream_Pointer(s); /* requestedFileContentsData */
 
-	IFCALLRET(context->ServerFileContentsResponse, error, context, &response);
+	IFCALLRET(context->ClientFileContentsResponse, error, context, &response);
 	if (error)
-		WLog_ERR(TAG, "ServerFileContentsResponse failed with error %lu!", error);
+		WLog_ERR(TAG, "ClientFileContentsResponse failed with error %lu!", error);
 
 	return error;
 }
@@ -1095,7 +1096,6 @@ static UINT cliprdr_server_init(CliprdrServerContext* context)
 	CLIPRDR_CAPABILITIES capabilities;
 	CLIPRDR_MONITOR_READY monitorReady;
 	CLIPRDR_GENERAL_CAPABILITY_SET generalCapabilitySet;
-	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 	UINT error;
 
 	ZeroMemory(&capabilities, sizeof(capabilities));
@@ -1103,8 +1103,17 @@ static UINT cliprdr_server_init(CliprdrServerContext* context)
 
 	generalFlags = 0;
 
-	if (cliprdr->useLongFormatNames)
+	if (context->useLongFormatNames)
 		generalFlags |= CB_USE_LONG_FORMAT_NAMES;
+
+	if (context->streamFileClipEnabled)
+		generalFlags |= CB_STREAM_FILECLIP_ENABLED;
+
+	if (context->fileClipNoFilePaths)
+		generalFlags |= CB_FILECLIP_NO_FILE_PATHS;
+
+	if (context->canLockClipData)
+		generalFlags |= CB_CAN_LOCK_CLIPDATA;
 
 	capabilities.msgType = CB_CLIP_CAPS;
 	capabilities.msgFlags = 0;
@@ -1409,12 +1418,6 @@ static UINT cliprdr_server_close(CliprdrServerContext* context)
 		cliprdr->ChannelHandle = NULL;
 	}
 
-	if (cliprdr->ChannelEvent)
-	{
-		CloseHandle(cliprdr->ChannelEvent);
-		cliprdr->ChannelEvent = NULL;
-	}
-
 	return CHANNEL_RC_OK;
 }
 
@@ -1533,11 +1536,6 @@ CliprdrServerContext* cliprdr_server_context_new(HANDLE vcm)
 		{
 			cliprdr->vcm = vcm;
 
-			cliprdr->useLongFormatNames = TRUE;
-			cliprdr->streamFileClipEnabled = TRUE;
-			cliprdr->fileClipNoFilePaths = TRUE;
-			cliprdr->canLockClipData = TRUE;
-
 			cliprdr->s = Stream_New(NULL, 4096);
 
 			if(!cliprdr->s)
@@ -1572,5 +1570,6 @@ void cliprdr_server_context_free(CliprdrServerContext* context)
 		free(cliprdr->temporaryDirectory);
 	}
 
+	free(context->handle);
 	free(context);
 }

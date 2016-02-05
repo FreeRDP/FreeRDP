@@ -4,8 +4,9 @@
  *
  * Copyright 2010-2011 Vic Lee
  * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
- * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015-2016 Thincast Technologies GmbH
  * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,12 +61,21 @@ static void rdpdr_write_general_capset(rdpdrPlugin* rdpdr, wStream* s)
 }
 
 /* Process device direction general capability set */
-static void rdpdr_process_general_capset(rdpdrPlugin* rdpdr, wStream* s)
+static UINT rdpdr_process_general_capset(rdpdrPlugin* rdpdr, wStream* s)
 {
 	UINT16 capabilityLength;
 
+	if (Stream_GetRemainingLength(s) < 2)
+		return ERROR_INVALID_DATA;
+
 	Stream_Read_UINT16(s, capabilityLength);
+
+	if (Stream_GetRemainingLength(s) < capabilityLength - 4)
+		return ERROR_INVALID_DATA;
+
 	Stream_Seek(s, capabilityLength - 4);
+
+	return CHANNEL_RC_OK;
 }
 
 /* Output printer direction capability set */
@@ -75,12 +85,21 @@ static void rdpdr_write_printer_capset(rdpdrPlugin* rdpdr, wStream* s)
 }
 
 /* Process printer direction capability set */
-static void rdpdr_process_printer_capset(rdpdrPlugin* rdpdr, wStream* s)
+static UINT rdpdr_process_printer_capset(rdpdrPlugin* rdpdr, wStream* s)
 {
 	UINT16 capabilityLength;
 
+	if (Stream_GetRemainingLength(s) < 2)
+		return ERROR_INVALID_DATA;
+
 	Stream_Read_UINT16(s, capabilityLength);
+
+	if (Stream_GetRemainingLength(s) < capabilityLength - 4)
+		return ERROR_INVALID_DATA;
+
 	Stream_Seek(s, capabilityLength - 4);
+
+	return CHANNEL_RC_OK;
 }
 
 /* Output port redirection capability set */
@@ -90,12 +109,21 @@ static void rdpdr_write_port_capset(rdpdrPlugin* rdpdr, wStream* s)
 }
 
 /* Process port redirection capability set */
-static void rdpdr_process_port_capset(rdpdrPlugin* rdpdr, wStream* s)
+static UINT rdpdr_process_port_capset(rdpdrPlugin* rdpdr, wStream* s)
 {
 	UINT16 capabilityLength;
 
+	if (Stream_GetRemainingLength(s) < 2)
+		return ERROR_INVALID_DATA;
+
 	Stream_Read_UINT16(s, capabilityLength);
+
+	if (Stream_GetRemainingLength(s) < capabilityLength - 4)
+		return ERROR_INVALID_DATA;
+
 	Stream_Seek(s, capabilityLength - 4);
+
+	return CHANNEL_RC_OK;
 }
 
 /* Output drive redirection capability set */
@@ -105,12 +133,21 @@ static void rdpdr_write_drive_capset(rdpdrPlugin* rdpdr, wStream* s)
 }
 
 /* Process drive redirection capability set */
-static void rdpdr_process_drive_capset(rdpdrPlugin* rdpdr, wStream* s)
+static UINT rdpdr_process_drive_capset(rdpdrPlugin* rdpdr, wStream* s)
 {
 	UINT16 capabilityLength;
 
+	if (Stream_GetRemainingLength(s) < 2)
+		return ERROR_INVALID_DATA;
+
 	Stream_Read_UINT16(s, capabilityLength);
+
+	if (Stream_GetRemainingLength(s) < capabilityLength - 4)
+		return ERROR_INVALID_DATA;
+
 	Stream_Seek(s, capabilityLength - 4);
+
+	return CHANNEL_RC_OK;
 }
 
 /* Output smart card redirection capability set */
@@ -120,53 +157,77 @@ static void rdpdr_write_smartcard_capset(rdpdrPlugin* rdpdr, wStream* s)
 }
 
 /* Process smartcard redirection capability set */
-static void rdpdr_process_smartcard_capset(rdpdrPlugin* rdpdr, wStream* s)
+static UINT rdpdr_process_smartcard_capset(rdpdrPlugin* rdpdr, wStream* s)
 {
 	UINT16 capabilityLength;
 
+	if (Stream_GetRemainingLength(s) < 2)
+		return ERROR_INVALID_DATA;
+
 	Stream_Read_UINT16(s, capabilityLength);
+
+	if (Stream_GetRemainingLength(s) < capabilityLength - 4)
+		return ERROR_INVALID_DATA;
+
 	Stream_Seek(s, capabilityLength - 4);
+
+	return CHANNEL_RC_OK;
 }
 
-void rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
+UINT rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
 {
+	UINT status = CHANNEL_RC_OK;
 	UINT16 i;
 	UINT16 numCapabilities;
 	UINT16 capabilityType;
+
+	if (!rdpdr || !s)
+		return CHANNEL_RC_NULL_DATA;
+
+	if (Stream_GetRemainingLength(s) < 4)
+		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, numCapabilities);
 	Stream_Seek(s, 2); /* pad (2 bytes) */
 
 	for (i = 0; i < numCapabilities; i++)
 	{
+		if (Stream_GetRemainingLength(s) < sizeof(UINT16))
+			return ERROR_INVALID_DATA;
+
 		Stream_Read_UINT16(s, capabilityType);
 
 		switch (capabilityType)
 		{
-			case CAP_GENERAL_TYPE:
-				rdpdr_process_general_capset(rdpdr, s);
-				break;
+		case CAP_GENERAL_TYPE:
+			status = rdpdr_process_general_capset(rdpdr, s);
+			break;
 
-			case CAP_PRINTER_TYPE:
-				rdpdr_process_printer_capset(rdpdr, s);
-				break;
+		case CAP_PRINTER_TYPE:
+			status = rdpdr_process_printer_capset(rdpdr, s);
+			break;
 
-			case CAP_PORT_TYPE:
-				rdpdr_process_port_capset(rdpdr, s);
-				break;
+		case CAP_PORT_TYPE:
+			status = rdpdr_process_port_capset(rdpdr, s);
+			break;
 
-			case CAP_DRIVE_TYPE:
-				rdpdr_process_drive_capset(rdpdr, s);
-				break;
+		case CAP_DRIVE_TYPE:
+			status = rdpdr_process_drive_capset(rdpdr, s);
+			break;
 
-			case CAP_SMARTCARD_TYPE:
-				rdpdr_process_smartcard_capset(rdpdr, s);
-				break;
+		case CAP_SMARTCARD_TYPE:
+			status = rdpdr_process_smartcard_capset(rdpdr, s);
+			break;
 
-			default:
-				break;
+		default:
+			break;
 		}
+
+		if (status != CHANNEL_RC_OK)
+			return status;
 	}
+
+	return CHANNEL_RC_OK;
 }
 
 /**
