@@ -112,9 +112,6 @@ static UINT devman_register_device(DEVMAN* devman, DEVICE* device)
 	if (!devman || !device)
 		return ERROR_INVALID_PARAMETER;
 
-	if (device->type != RDPDR_DTYP_FILESYSTEM)
-		return CHANNEL_RC_OK;
-
 	device->id = devman->id_sequence++;
 	key = (void*) (size_t) device->id;
 
