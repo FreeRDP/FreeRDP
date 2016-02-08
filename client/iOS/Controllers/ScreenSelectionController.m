@@ -25,6 +25,7 @@
 
 - (id)initWithConnectionParams:(ConnectionParams*)params keyPath:(NSString*)keyPath
 {
+    
     self = [super initWithStyle:UITableViewStyleGrouped];
     if (self)
     {
