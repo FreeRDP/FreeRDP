@@ -111,7 +111,7 @@ static NSString *kDurationKey = @"duration";
     [toast setAlpha:0.0];
     [self addSubview:toast];
     
-    [UIView beginAnimations:@"fade_in" context:toast];
+    [UIView beginAnimations:@"fade_in" context:(__bridge void * _Nullable)(toast)];
     [UIView setAnimationDuration:kFadeDuration];
     [UIView setAnimationDelegate:self];
     [UIView setAnimationDidStopSelector:@selector(animationDidStop:finished:context:)];
@@ -126,14 +126,14 @@ static NSString *kDurationKey = @"duration";
 
 - (void)animationDidStop:(NSString*)animationID finished:(BOOL)finished context:(void *)context {
     
-    UIView *toast = (UIView *)context;
+    UIView *toast = (__bridge UIView *)context;
     
     // retrieve the display interval associated with the view
     float interval = [(NSNumber *)objc_getAssociatedObject(toast, &kDurationKey) floatValue];
     
     if([animationID isEqualToString:@"fade_in"]) {
         
-        [UIView beginAnimations:@"fade_out" context:toast];
+        [UIView beginAnimations:@"fade_out" context:(__bridge void * _Nullable)(toast)];
         [UIView setAnimationDelay:interval];
         [UIView setAnimationDuration:kFadeDuration];
         [UIView setAnimationDelegate:self];
@@ -195,13 +195,13 @@ static NSString *kDurationKey = @"duration";
     UIImageView *imageView = nil;
     
     // create the parent view
-    UIView *wrapperView = [[[UIView alloc] init] autorelease];
+    UIView *wrapperView = [[UIView alloc] init];
     [wrapperView.layer setCornerRadius:kCornerRadius];
     [wrapperView setBackgroundColor:[[UIColor blackColor] colorWithAlphaComponent:kOpacity]];
     wrapperView.autoresizingMask = UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleBottomMargin;
 
     if(image != nil) {
-        imageView = [[[UIImageView alloc] initWithImage:image] autorelease];
+        imageView = [[UIImageView alloc] initWithImage:image];
         [imageView setContentMode:UIViewContentModeScaleAspectFit];
         [imageView setFrame:CGRectMake(kHorizontalPadding, kVerticalPadding, kImageWidth, kImageHeight)];
     }
@@ -218,7 +218,7 @@ static NSString *kDurationKey = @"duration";
     }
     
     if (title != nil) {
-        titleLabel = [[[UILabel alloc] init] autorelease];
+        titleLabel = [[UILabel alloc] init];
         [titleLabel setNumberOfLines:kMaxTitleLines];
         [titleLabel setFont:[UIFont boldSystemFontOfSize:kFontSize]];
         [titleLabel setTextAlignment:UITextAlignmentLeft];
@@ -235,7 +235,7 @@ static NSString *kDurationKey = @"duration";
     }
     
     if (message != nil) {
-        messageLabel = [[[UILabel alloc] init] autorelease];
+        messageLabel = [[UILabel alloc] init];
         [messageLabel setNumberOfLines:kMaxMessageLines];
         [messageLabel setFont:[UIFont systemFontOfSize:kFontSize]];
         [messageLabel setLineBreakMode:UILineBreakModeWordWrap];

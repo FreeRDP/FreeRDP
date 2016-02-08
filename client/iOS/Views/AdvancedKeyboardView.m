@@ -14,7 +14,7 @@
 // helper struct to define button layouts/settings
 struct ButtonItem
 {
-    NSString* title;
+    void* title;
     int tag;
 };
 
@@ -23,8 +23,6 @@ struct ButtonItem
 @end
 
 @implementation AdvancedKeyboardView
-
-@synthesize delegate = _delegate;
 
 // defines for the different views
 #define KEY_SHOW_FUNCVIEW    0x1000
@@ -132,19 +130,19 @@ struct ButtonItem cursorKeysItems[24] =
 
 - (void)initFunctionKeysView
 {
-    _function_keys_view = [[self keyboardViewForItems:functionKeysItems columns:6 rows:4] retain];
+    _function_keys_view = [self keyboardViewForItems:functionKeysItems columns:6 rows:4];
     [self addSubview:_function_keys_view];
 }
 
 - (void)initNumPadKeysView
 {
-    _numpad_keys_view = [[self keyboardViewForItems:numPadKeysItems columns:6 rows:4] retain];
+    _numpad_keys_view = [self keyboardViewForItems:numPadKeysItems columns:6 rows:4];
     [self addSubview:_numpad_keys_view];
 }
 
 - (void)initCursorKeysView
 {
-    _cursor_keys_view = [[self keyboardViewForItems:cursorKeysItems columns:6 rows:4] retain];
+    _cursor_keys_view = [self keyboardViewForItems:cursorKeysItems columns:6 rows:4];
     [self addSubview:_cursor_keys_view];
 }
 
@@ -206,15 +204,6 @@ struct ButtonItem cursorKeysItems[24] =
     CGColorSpaceRelease(rgbColorspace); 
 }
 
-
-- (void)dealloc
-{
-    [_function_keys_view autorelease];
-    [_numpad_keys_view autorelease];
-    [_cursor_keys_view autorelease];
-    [super dealloc];
-}
-
 #pragma mark -
 #pragma mark button events
 
@@ -267,7 +256,7 @@ struct ButtonItem cursorKeysItems[24] =
     
 - (UIView*)keyboardViewForItems:(struct ButtonItem*)items columns:(int)columns rows:(int)rows
 {
-    UIView* result_view = [[[UIView alloc] initWithFrame:self.bounds] autorelease];
+    UIView* result_view = [[UIView alloc] initWithFrame:self.bounds];
     result_view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
     
     // calculate maximum button size
@@ -321,14 +310,15 @@ struct ButtonItem cursorKeysItems[24] =
             }
             
             // set button text or image parameters
-            if([curItem->title hasPrefix:@"img:"] == YES)
+            NSString* title = (__bridge NSString *)(curItem->title);
+            if([title hasPrefix:@"img:"] == YES)
             {
-                UIImage* btn_image = [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:[curItem->title substringFromIndex:4] ofType:@"png"]];
+                UIImage* btn_image = [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:[title substringFromIndex:4] ofType:@"png"]];
                 [btn setImage:btn_image forState:UIControlStateNormal];
             }
             else
             {
-                [btn setTitle:curItem->title forState:UIControlStateNormal];
+                [btn setTitle:title forState:UIControlStateNormal];
                 [btn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];                
             }
             

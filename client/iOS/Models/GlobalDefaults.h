@@ -14,13 +14,13 @@
 
 @interface GlobalDefaults : NSObject{
 @private
-	ComputerBookmark* _default_bookmark;
+	ComputerBookmark* __weak _default_bookmark;
 }
 
 + (GlobalDefaults*)sharedGlobalDefaults;
 
 // The same object is always returned from this method.
-@property (readonly,nonatomic) ComputerBookmark* bookmark;
+@property (weak, readonly,nonatomic) ComputerBookmark* bookmark;
 
 - (ConnectionParams*)newParams;
 - (ComputerBookmark*)newBookmark;

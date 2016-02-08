@@ -48,8 +48,6 @@ extern NSString* TSXSessionDidFailToConnectNotification;
     ComputerBookmark* _bookmark;
     
 	ConnectionParams* _params;
-	
-	NSObject<RDPSessionDelegate>* _delegate;
     
     NSCondition* _ui_request_completed;
     

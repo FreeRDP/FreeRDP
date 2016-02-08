@@ -26,7 +26,7 @@
     else if([self respondsToSelector:@selector(copyWithZone:)])
         return [self copy];
     else
-        return [self retain];
+        return self;
 }
 
 @end
@@ -39,9 +39,9 @@
 + (NSString*)stringWithUUID
 {
 	CFUUIDRef uuidObj = CFUUIDCreate(nil);
-	NSString* uuidString = (NSString*)CFUUIDCreateString(nil, uuidObj);
+	NSString* uuidString = (NSString*)CFBridgingRelease(CFUUIDCreateString(nil, uuidObj));
 	CFRelease(uuidObj);
-	return [uuidString autorelease];
+	return uuidString;
 }
 
 /* Code from http://code.google.com/p/google-toolbox-for-mac/source/browse/trunk/Foundation/GTMNSData%2BHex.m?r=344 */ 
@@ -102,7 +102,6 @@
 	}
 	
 	immutableResult = [NSString stringWithString:result];
-	[result release];
 	return immutableResult;
 }
 
@@ -121,7 +120,6 @@
     {
         id obj = [[self objectForKey:key] mutableDeepCopy];
         [newDictionary setObject:obj forKey:key];
-        [obj release];
     }
     return newDictionary;
 }
@@ -139,7 +137,6 @@
     {
         obj = [obj mutableDeepCopy];
         [newArray addObject:obj];
-        [obj release];
     }
     return newArray;
 }
@@ -157,7 +154,6 @@
     {
         obj = [obj mutableDeepCopy];
         [newSet addObject:obj];
-        [obj release];
     }
     return newSet;
 }

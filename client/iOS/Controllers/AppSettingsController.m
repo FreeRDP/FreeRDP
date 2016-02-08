@@ -27,7 +27,7 @@
     if ((self = [super initWithStyle:style])) 
 	{                   
         UIImage* tabBarIcon = [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"tabbar_icon_settings" ofType:@"png"]];
-        [self setTabBarItem:[[[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"Settings", @"Tabbar item settings") image:tabBarIcon tag:0] autorelease]];
+        [self setTabBarItem:[[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"Settings", @"Tabbar item settings") image:tabBarIcon tag:0]];
     }
     return self;
 }
@@ -55,7 +55,6 @@
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [super dealloc];
 }
 
 #pragma mark -

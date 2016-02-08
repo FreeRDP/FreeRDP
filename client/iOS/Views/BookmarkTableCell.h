@@ -17,9 +17,9 @@
 	IBOutlet UIImageView* _connection_state_icon;
 }
 
-@property (retain, nonatomic) UILabel* title;
-@property (retain, nonatomic) UILabel* subTitle;
-@property (retain, nonatomic) UIImageView* connectionStateIcon;
+@property (strong, nonatomic) UILabel* title;
+@property (strong, nonatomic) UILabel* subTitle;
+@property (strong, nonatomic) UIImageView* connectionStateIcon;
 
 
 @end

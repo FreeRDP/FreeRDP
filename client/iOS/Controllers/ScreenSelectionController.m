@@ -29,11 +29,11 @@
     self = [super initWithStyle:UITableViewStyleGrouped];
     if (self)
     {
-        _params = [params retain];
-        _keyPath = (keyPath != nil ? [keyPath retain] : nil);
+        _params = params;
+        _keyPath = (keyPath != nil ? keyPath : nil);
  
-        _color_options = (OrderedDictionary*)[SelectionForColorSetting() retain];
-        _resolution_modes = [ResolutionModes() retain];
+        _color_options = (OrderedDictionary*)SelectionForColorSetting();
+        _resolution_modes = ResolutionModes();
         
         // init current selections
         NSUInteger idx = [_color_options indexForValue:[NSNumber numberWithInt:[_params intForKeyPath:[self keyPathForKey:@"colors"]]]];
@@ -47,14 +47,6 @@
     return self;    
 }
 
-- (void)dealloc
-{
-    [super dealloc];
-    [_params autorelease];
-    [_keyPath autorelease];
-    [_color_options autorelease];
-    [_resolution_modes autorelease];
-}
 
 -(NSString*)keyPathForKey:(NSString*)key
 {

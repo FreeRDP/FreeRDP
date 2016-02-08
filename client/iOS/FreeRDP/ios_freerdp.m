@@ -85,8 +85,8 @@ static BOOL ios_post_connect(freerdp* instance)
 		
 	// Channel allocation
 	freerdp_channels_post_connect(instance->context->channels, instance);
-
-	[mfi->session performSelectorOnMainThread:@selector(sessionDidConnect) withObject:nil waitUntilDone:YES];
+    RDPSession* session = (__bridge RDPSession *)(mfi->session);
+	[session performSelectorOnMainThread:@selector(sessionDidConnect) withObject:nil waitUntilDone:YES];
 	return TRUE;
 }
 
@@ -113,7 +113,7 @@ int ios_run_freerdp(freerdp* instance)
 	mfi->connection_state = TSXConnectionConnected;
 			
 	// Connection main loop
-	NSAutoreleasePool* pool;
+//	NSAutoreleasePool* pool;
 	int i;
 	int fds;
 	int max_fds;
@@ -133,7 +133,7 @@ int ios_run_freerdp(freerdp* instance)
 	{
 		rcount = wcount = 0;
 		
-		pool = [[NSAutoreleasePool alloc] init];
+//		pool = [[NSAutoreleasePool alloc] init];
 
 		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
@@ -215,8 +215,8 @@ int ios_run_freerdp(freerdp* instance)
 			break;
 		}
 
-		[pool release]; pool = nil;
-	}	
+//		[pool release]; pool = nil;
+	}
 
 	CGContextRelease(mfi->bitmap_context);
 	mfi->bitmap_context = NULL;	
@@ -228,7 +228,7 @@ int ios_run_freerdp(freerdp* instance)
 	gdi_free(instance);
 	cache_free(instance->context->cache);
 	
-	[pool release]; pool = nil;
+//	[pool release]; pool = nil;
 	return MF_EXIT_SUCCESS;
 }
 

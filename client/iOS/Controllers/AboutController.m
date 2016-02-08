@@ -20,23 +20,18 @@
 		// set title and tab-bar image
 		[self setTitle:NSLocalizedString(@"About", @"About Controller title")];
         UIImage* tabBarIcon = [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"tabbar_icon_about" ofType:@"png"]];
-        [self setTabBarItem:[[[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"About", @"Tabbar item about") image:tabBarIcon tag:0] autorelease]];
+        [self setTabBarItem:[[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"About", @"Tabbar item about") image:tabBarIcon tag:0]];
         
         last_link_clicked = nil;
     }
     return self;
 }
 
-- (void)dealloc
-{
-    [super dealloc];
-    [last_link_clicked release];    
-}
 
 // Implement loadView to create a view hierarchy programmatically, without using a nib.
 - (void)loadView 
 {
-	webView = [[[UIWebView alloc] initWithFrame:CGRectZero] autorelease];
+	webView = [[UIWebView alloc] initWithFrame:CGRectZero];
 	[webView setAutoresizingMask:(UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight)];
 	[webView setAutoresizesSubviews:YES];
 	[webView setDelegate:self];	
@@ -52,7 +47,7 @@
     [super viewDidLoad];
 	
     NSString *filename = (IsPhone() ? @"about_phone" : @"about");
-	NSString *htmlString = [[[NSString alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:filename ofType:@"html" inDirectory:@"about_page"]  encoding:NSUTF8StringEncoding error:nil] autorelease];
+	NSString *htmlString = [[NSString alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:filename ofType:@"html" inDirectory:@"about_page"]  encoding:NSUTF8StringEncoding error:nil];
 	    
 	[webView loadHTMLString:[NSString stringWithFormat:htmlString, 
                              TSXAppFullVersion(), 
@@ -75,8 +70,7 @@
 	
 	if(navigationType == UIWebViewNavigationTypeLinkClicked)
 	{
-        [last_link_clicked release];
-		last_link_clicked = [[[request URL] absoluteString] retain];
+		last_link_clicked = [[request URL] absoluteString];
 		BlockAlertView *alert = [BlockAlertView alertWithTitle:NSLocalizedString(@"External Link", @"External Link Alert Title")
                                                         message:[NSString stringWithFormat:NSLocalizedString(@"Open [%@] in Browser?", @"Open link in browser (with link as parameter)"), last_link_clicked]];
 

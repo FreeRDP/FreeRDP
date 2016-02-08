@@ -29,10 +29,10 @@
         
     BOOL _display_server_settings;
     
-    id<BookmarkEditorDelegate> delegate;
+    id<BookmarkEditorDelegate> __weak delegate;
 }
 
-@property (nonatomic, assign) id<BookmarkEditorDelegate> delegate;
+@property (nonatomic, weak) id<BookmarkEditorDelegate> delegate;
 
 // init for the given bookmark
 - (id)initWithBookmark:(ComputerBookmark*)bookmark;

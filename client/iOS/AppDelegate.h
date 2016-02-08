@@ -16,7 +16,7 @@
     MainTabBarController* _tabBarController;
 }
 
-@property (nonatomic, retain) IBOutlet UIWindow *window;
-@property (nonatomic, retain) IBOutlet MainTabBarController* tabBarController;
+@property (nonatomic, strong) IBOutlet UIWindow *window;
+@property (nonatomic, strong) IBOutlet MainTabBarController* tabBarController;
 
 @end

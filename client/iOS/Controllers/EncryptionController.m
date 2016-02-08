@@ -54,15 +54,15 @@ static EncryptionController* _shared_encryption_controller = nil;
 	if (saved_password == nil)
     {
         saved_password = [self keychainDefaultPassword];        
-        Encryptor* encryptor = [[[Encryptor alloc] initWithPassword:saved_password] autorelease];
+        Encryptor* encryptor = [[Encryptor alloc] initWithPassword:saved_password];
         [self setEncryptedVerificationData:encryptor];        
-        _shared_encryptor = [encryptor retain];
+        _shared_encryptor = encryptor;
     }
     else
     {
-        Encryptor* encryptor = [[[Encryptor alloc] initWithPassword:saved_password] autorelease];
+        Encryptor* encryptor = [[Encryptor alloc] initWithPassword:saved_password];
         if ([self verifyPassword:encryptor])
-            _shared_encryptor = [encryptor retain];
+            _shared_encryptor = encryptor;
     }    
     
     return _shared_encryptor;

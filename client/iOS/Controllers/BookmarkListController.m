@@ -60,11 +60,11 @@
                 
         // set title and tabbar controller image
         [self setTitle:NSLocalizedString(@"Connections", @"'Connections': bookmark controller title")];
-        [self setTabBarItem:[[[UITabBarItem alloc] initWithTabBarSystemItem:UITabBarSystemItemBookmarks tag:0] autorelease]];
+        [self setTabBarItem:[[UITabBarItem alloc] initWithTabBarSystemItem:UITabBarSystemItemBookmarks tag:0]];
 
         // load images
-        _star_on_img = [[UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"icon_accessory_star_on" ofType:@"png"]] retain];
-        _star_off_img = [[UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"icon_accessory_star_off" ofType:@"png"]] retain];
+        _star_on_img = [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"icon_accessory_star_on" ofType:@"png"]];
+        _star_off_img = [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"icon_accessory_star_off" ofType:@"png"]];
 
         // init reachability detection
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reachabilityChanged:) name:kReachabilityChangedNotification object:nil];
@@ -137,16 +137,8 @@
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
-    [_temporary_bookmark release];
-    [_connection_history release];
-    [_active_sessions release];
-	[_manual_search_result release];
-    [_manual_bookmarks release];
     
-    [_star_on_img release];
-    [_star_off_img release];
 
-    [super dealloc];
 }
 
 
@@ -354,13 +346,12 @@
             {
                 int fromIdx = [self bookmarkIndexFromIndexPath:fromIndexPath];
                 int toIdx = [self bookmarkIndexFromIndexPath:toIndexPath];
-                ComputerBookmark* temp_bookmark = [[_manual_bookmarks objectAtIndex:fromIdx] retain];
+                ComputerBookmark* temp_bookmark = [_manual_bookmarks objectAtIndex:fromIdx];
                 [_manual_bookmarks removeObjectAtIndex:fromIdx];
                 if (toIdx >= [_manual_bookmarks count])
                     [_manual_bookmarks addObject:temp_bookmark];
                 else
                     [_manual_bookmarks insertObject:temp_bookmark atIndex:toIdx];
-                [temp_bookmark release];
                 
                 [self scheduleWriteManualBookmarksToDataStore];
                 break;
@@ -443,7 +434,7 @@
     {
         // resume session
         RDPSession* session = [_active_sessions objectAtIndex:[indexPath row]];
-        UIViewController* ctrl = [[[RDPSessionViewController alloc] initWithNibName:@"RDPSessionView" bundle:nil session:session] autorelease];
+        UIViewController* ctrl = [[RDPSessionViewController alloc] initWithNibName:@"RDPSessionView" bundle:nil session:session];
         [ctrl setHidesBottomBarWhenPushed:YES];
         [[self navigationController] pushViewController:ctrl animated:YES];
     }
@@ -458,8 +449,8 @@
                 if ([[_searchBar text] length] == 0)
                 {                    
                     // show add bookmark controller
-                    ComputerBookmark *bookmark = [[[ComputerBookmark alloc] initWithBaseDefaultParameters] autorelease];
-                    BookmarkEditorController* bookmarkEditorController = [[[BookmarkEditorController alloc] initWithBookmark:bookmark] autorelease];
+                    ComputerBookmark *bookmark = [[ComputerBookmark alloc] initWithBaseDefaultParameters];
+                    BookmarkEditorController* bookmarkEditorController = [[BookmarkEditorController alloc] initWithBookmark:bookmark];
                     [bookmarkEditorController setTitle:NSLocalizedString(@"Add Connection", @"Add Connection title")];
                     [bookmarkEditorController setDelegate:self];
                     [bookmarkEditorController setHidesBottomBarWhenPushed:YES];
@@ -501,8 +492,8 @@
 		if(bookmark != nil)
 		{	            
 			// create rdp session
-            RDPSession* session = [[[RDPSession alloc] initWithBookmark:bookmark] autorelease];
-            UIViewController* ctrl = [[[RDPSessionViewController alloc] initWithNibName:@"RDPSessionView" bundle:nil session:session] autorelease];
+            RDPSession* session = [[RDPSession alloc] initWithBookmark:bookmark];
+            UIViewController* ctrl = [[RDPSessionViewController alloc] initWithNibName:@"RDPSessionView" bundle:nil session:session];
             [ctrl setHidesBottomBarWhenPushed:YES];
             [[self navigationController] pushViewController:ctrl animated:YES];
             [_active_sessions addObject:session];
@@ -546,7 +537,7 @@
     // bookmark found? - start the editor
 	if (bookmark != nil)
 	{
-		BookmarkEditorController* editBookmarkController = [[[BookmarkEditorController alloc] initWithBookmark:bookmark] autorelease];
+		BookmarkEditorController* editBookmarkController = [[BookmarkEditorController alloc] initWithBookmark:bookmark];
         [editBookmarkController setHidesBottomBarWhenPushed:YES];
         [editBookmarkController setTitle:bookmark_editor_title];
         [editBookmarkController setDelegate:self];
@@ -567,7 +558,6 @@
 - (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar
 {
 	// clear search result
-	[_manual_search_result release];
 	_manual_search_result = nil;
 	
 	// clear text and remove cancel button
@@ -614,7 +604,7 @@
     if (![_manual_bookmarks containsObject:[session bookmark]])
     {
         // retain the bookmark in case we want to save it later
-        _temporary_bookmark = [[session bookmark] retain];
+        _temporary_bookmark = [session bookmark];
         
         // ask the user if he wants to save the bookmark
         NSString* title = NSLocalizedString(@"Save Connection Settings?", @"Save connection settings title");
@@ -626,7 +616,6 @@
             {
                 [_manual_bookmarks addObject:_temporary_bookmark];
                 [_tableView reloadSections:[NSIndexSet indexSetWithIndex:SECTION_BOOKMARKS] withRowAnimation:UITableViewRowAnimationNone];
-                [_temporary_bookmark autorelease];
                 _temporary_bookmark = nil;
             }
         }];
@@ -712,12 +701,11 @@
 
 - (void)performSearch:(NSString*)searchText
 {
-    [_manual_search_result autorelease];
     
 	if([searchText length] > 0)
 	{
-		_manual_search_result = [FilterBookmarks(_manual_bookmarks, [searchText componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]) retain];
-        _history_search_result = [FilterHistory(_connection_history, searchText) retain];
+		_manual_search_result = FilterBookmarks(_manual_bookmarks, [searchText componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]);
+        _history_search_result = FilterHistory(_connection_history, searchText);
     }
 	else
 	{
@@ -743,7 +731,7 @@
 
 - (ComputerBookmark*)bookmarkForQuickConnectTo:(NSString*)host
 {
-    ComputerBookmark* bookmark = [[[ComputerBookmark alloc] initWithBaseDefaultParameters] autorelease];
+    ComputerBookmark* bookmark = [[ComputerBookmark alloc] initWithBaseDefaultParameters];
     [bookmark setLabel:host]; 
     [[bookmark params] setValue:host forKey:@"hostname"];                
     return bookmark;
@@ -765,7 +753,7 @@
 
 - (void)scheduleWriteManualBookmarksToDataStore
 {
-	[[NSOperationQueue mainQueue] addOperation:[[[NSInvocationOperation alloc] initWithTarget:self selector:@selector(writeManualBookmarksToDataStore) object:nil] autorelease]];
+	[[NSOperationQueue mainQueue] addOperation:[[NSInvocationOperation alloc] initWithTarget:self selector:@selector(writeManualBookmarksToDataStore) object:nil]];
 }
 
 - (void)writeManualBookmarksToDataStore
@@ -775,7 +763,7 @@
 
 - (void)scheduleWriteConnectionHistoryToDataStore
 {
-	[[NSOperationQueue mainQueue] addOperation:[[[NSInvocationOperation alloc] initWithTarget:self selector:@selector(writeConnectionHistoryToDataStore) object:nil] autorelease]];
+	[[NSOperationQueue mainQueue] addOperation:[[NSInvocationOperation alloc] initWithTarget:self selector:@selector(writeConnectionHistoryToDataStore) object:nil]];
 }
 
 - (void)writeConnectionHistoryToDataStore
@@ -791,19 +779,17 @@
 
 - (void)readManualBookmarksFromDataStore
 {
-    [_manual_bookmarks autorelease];
     _manual_bookmarks = [self arrayFromDataStoreURL:[self manualBookmarksDataStoreURL]];
 
     if(_manual_bookmarks == nil)
     {
         _manual_bookmarks = [[NSMutableArray alloc] init];
-        [_manual_bookmarks addObject:[[[GlobalDefaults sharedGlobalDefaults] newTestServerBookmark] autorelease]];
+        [_manual_bookmarks addObject:[[GlobalDefaults sharedGlobalDefaults] newTestServerBookmark]];
     }
 }
 
 - (void)readConnectionHistoryFromDataStore
 {
-    [_connection_history autorelease];
     _connection_history = [self arrayFromDataStoreURL:[self connectionHistoryDataStoreURL]];
     
     if(_connection_history == nil)
@@ -817,7 +803,7 @@
 	if (!archived_data)
 		return nil;
     
-	return [[NSKeyedUnarchiver unarchiveObjectWithData:archived_data] retain];
+	return [NSKeyedUnarchiver unarchiveObjectWithData:archived_data];
 }
 
 - (NSURL*)manualBookmarksDataStoreURL

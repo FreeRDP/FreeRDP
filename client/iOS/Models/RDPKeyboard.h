@@ -27,7 +27,7 @@
     int _unicode_map[256];
     NSDictionary* _special_keys;
 
-    NSObject<RDPKeyboardDelegate>* _delegate;
+    NSObject<RDPKeyboardDelegate>* __weak _delegate;
     
 	BOOL _ctrl_pressed;
     BOOL _alt_pressed;
@@ -35,7 +35,7 @@
     BOOL _win_pressed;
 }
 
-@property (assign) id <RDPKeyboardDelegate> delegate;
+@property (weak) id <RDPKeyboardDelegate> delegate;
 @property (readonly) BOOL ctrlPressed;
 @property (readonly) BOOL altPressed;
 @property (readonly) BOOL shiftPressed;

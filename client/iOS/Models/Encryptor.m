@@ -33,7 +33,7 @@
 	if ( !(self = [super init]) )
 		return nil;
 	
-	_plaintext_password = [plaintext_password retain];
+	_plaintext_password = plaintext_password;
 	const char* plaintext_password_data = [plaintext_password length] ? [plaintext_password UTF8String] : " ";
 	
 	if (!plaintext_password_data || !strlen(plaintext_password_data))
@@ -51,7 +51,6 @@
 		{
 			NSLog(@"%s: CCKeyDerivationPBKDF ret == %d, indicating some sort of failure.", __func__, ret);
             free(derived_key);
-			[self autorelease];
 			return nil;
 		}
 	}
@@ -65,7 +64,6 @@
 		{
 			NSLog(@"%s: PKCS5_PBKDF2_HMAC_SHA1 ret == %lu, indicating some sort of failure.", __func__, ret);
             free(derived_key);
-			[self release];
 			return nil;
 		}
 	}	
@@ -142,7 +140,7 @@
 
 - (NSString*)decryptString:(NSData*)encrypted_string
 {
-	return [[[NSString alloc] initWithData:[self decryptData:encrypted_string] encoding:NSUTF8StringEncoding] autorelease];
+	return [[NSString alloc] initWithData:[self decryptData:encrypted_string] encoding:NSUTF8StringEncoding];
 }
 
 - (NSData*)randomInitializationVector

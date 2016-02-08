@@ -45,10 +45,10 @@
     ComputerBookmark* _temporary_bookmark;
 }
 
-@property (nonatomic, retain) IBOutlet UISearchBar* searchBar;
-@property (nonatomic, retain) IBOutlet UITableView* tableView;
-@property (nonatomic, retain) IBOutlet BookmarkTableCell* bmTableCell;
-@property (nonatomic, retain) IBOutlet SessionTableCell* sessTableCell;
+@property (nonatomic, strong) IBOutlet UISearchBar* searchBar;
+@property (nonatomic, strong) IBOutlet UITableView* tableView;
+@property (nonatomic, strong) IBOutlet BookmarkTableCell* bmTableCell;
+@property (nonatomic, strong) IBOutlet SessionTableCell* sessTableCell;
 
 
 @end

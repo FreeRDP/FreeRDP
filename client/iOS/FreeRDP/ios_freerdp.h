@@ -36,7 +36,7 @@ struct mf_info
 	rdpContext* _context;
 	
 	// UI
-	RDPSession* session;
+	void* session;
 	
 	// Graphics
 	CGContextRef bitmap_context;

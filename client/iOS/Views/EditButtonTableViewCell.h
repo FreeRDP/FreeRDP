@@ -15,7 +15,7 @@
     IBOutlet UIButton* _button;
 }
 
-@property (retain, nonatomic) UILabel* label;
-@property (retain, nonatomic) UIButton* button;
+@property (strong, nonatomic) UILabel* label;
+@property (strong, nonatomic) UIButton* button;
 
 @end

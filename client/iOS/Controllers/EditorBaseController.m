@@ -75,7 +75,7 @@ NSString* TableCellIdentifierButton = @"cellIdButton";
     }
     else if ([identifier isEqualToString:TableCellIdentifierMultiChoice])
     {
-        cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:identifier] autorelease];
+        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:identifier];
     }
     else
     {

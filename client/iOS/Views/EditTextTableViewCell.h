@@ -15,7 +15,7 @@
 	IBOutlet UITextField* _textfield;    
 }
 
-@property (retain, nonatomic) UILabel* label;
-@property (retain, nonatomic) UITextField* textfield;
+@property (strong, nonatomic) UILabel* label;
+@property (strong, nonatomic) UITextField* textfield;
 
 @end

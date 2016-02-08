@@ -30,7 +30,7 @@
     if (!(self = [super init]))
 		return nil;
 	
-	_uuid = [[NSString stringWithUUID] retain];
+	_uuid = [NSString stringWithUUID];
 	_label = @"";
     _connected_via_wlan = NO;
     return self;
@@ -58,8 +58,7 @@
 		
 	if ([decoder containsValueForKey:@"uuid"])
 	{
-		[_uuid release];
-		_uuid = [[decoder decodeObjectForKey:@"uuid"] retain]; 
+		_uuid = [decoder decodeObjectForKey:@"uuid"]; 
 	}
 	
 	if ([decoder containsValueForKey:@"label"])
@@ -67,8 +66,7 @@
     
 	if ([decoder containsValueForKey:@"connectionParams"])
 	{
-		[_connection_params release];
-		_connection_params = [[decoder decodeObjectForKey:@"connectionParams"] retain];
+		_connection_params = [decoder decodeObjectForKey:@"connectionParams"];
 	}
 	
 	return self;
@@ -76,7 +74,7 @@
 
 - (id)initWithBaseDefaultParameters
 {
-	return [self initWithConnectionParameters:[[[ConnectionParams alloc] initWithBaseDefaultParameters] autorelease]];
+	return [self initWithConnectionParameters:[[ConnectionParams alloc] initWithBaseDefaultParameters]];
 }
 
 - (id)copy
@@ -107,10 +105,6 @@
 - (void)dealloc
 {	
 	_parent = nil;
-	[_label release]; _label = nil;
-	[_uuid release]; _uuid = nil;
-	[_connection_params release]; _connection_params = nil;
-	[super dealloc];
 }
 
 - (UIImage*)image
