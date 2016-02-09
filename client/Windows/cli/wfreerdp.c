@@ -97,11 +97,10 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	status = freerdp_client_settings_parse_command_line(settings, argc, argv, FALSE);
 	if (status)
+    {
+        freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
 		goto out;
-
-	status = freerdp_client_settings_command_line_status_print(settings, status, context->argc, context->argv);
-	if (status)
-		goto out;
+    }
 
 	if (freerdp_client_start(context) != 0)
 		goto out;
