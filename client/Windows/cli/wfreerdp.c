@@ -40,9 +40,10 @@
 
 #include "wf_client.h"
 
+#include <shellapi.h>
+
 INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-	int index;
 	int status;
 	HANDLE thread;
 	wfContext* wfc;
@@ -50,7 +51,11 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	rdpContext* context;
 	rdpSettings* settings;
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
-	int ret = 0;
+	int ret = 1;
+	int argc = 0, i;
+	LPWSTR* args;
+	LPWSTR cmd;
+	char** argv;
 
 	ZeroMemory(&clientEntryPoints, sizeof(RDP_CLIENT_ENTRY_POINTS));
 	clientEntryPoints.Size = sizeof(RDP_CLIENT_ENTRY_POINTS);
@@ -59,56 +64,71 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	RdpClientEntry(&clientEntryPoints);
 
 	context = freerdp_client_context_new(&clientEntryPoints);
+	if (!context)
+		return -1;
+
+	cmd = GetCommandLineW();
+	if (!cmd)
+		goto out;
+
+	args = CommandLineToArgvW(cmd, &argc);
+	if (!args)
+		goto out;
+
+	argv = calloc(argc, sizeof(char*));
+	if (!argv)
+		goto out;
+
+	for (i=0; i<argc; i++)
+	{
+		int size = WideCharToMultiByte(CP_UTF8, 0, args[i], -1, NULL, 0, NULL, NULL);
+		argv[i] = calloc(size, sizeof(char));
+		if (!argv[i])
+			goto out;
+
+		if (WideCharToMultiByte(CP_UTF8, 0, args[i], -1, argv[i], size, NULL, NULL) != size)
+			goto out;
+	}
 
 	settings = context->settings;
 	wfc = (wfContext*) context;
-
-	settings->SoftwareGdi = TRUE;
-
-	context->argc = __argc;
-	context->argv = (char**) malloc(sizeof(char*) * __argc);
-	if (!context->argv)
-	{
-		ret = 1;
+	if (!settings || !wfc)
 		goto out;
-	}
 
-	for (index = 0; index < context->argc; index++)
-	{
-		context->argv[index] = _strdup(__argv[index]);
-		if (!context->argv[index])
-		{
-			ret = 1;
-			for (--index; index >= 0; --index)
-				free(context->argv[index]);
-			free(context->argv);
-			context->argv = NULL;
-			goto out;
-		}
-
-	}
-
-	status = freerdp_client_settings_parse_command_line(settings, context->argc, context->argv, FALSE);
-
-	status = freerdp_client_settings_command_line_status_print(settings, status, context->argc, context->argv);
-
+	status = freerdp_client_settings_parse_command_line(settings, argc, argv, FALSE);
 	if (status)
-	{
-		freerdp_client_context_free(context);
-		return 0;
-	}
+    {
+        freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
+		goto out;
+    }
 
-	freerdp_client_start(context);
+	if (freerdp_client_start(context) != 0)
+		goto out;
 
 	thread = freerdp_client_get_thread(context);
+	if (thread)
+	{
+		if (WaitForSingleObject(thread, INFINITE) == WAIT_OBJECT_0)
+		{
+			GetExitCodeThread(thread, &dwExitCode);
+			ret = dwExitCode;
+		}
+	}
 
-	WaitForSingleObject(thread, INFINITE);
+	if (freerdp_client_stop(context) != 0)
+		goto out;
 
-	GetExitCodeThread(thread, &dwExitCode);
-
-	freerdp_client_stop(context);
 out:
 	freerdp_client_context_free(context);
+
+	if (argv)
+	{
+		for (i=0; i<argc; i++)
+			free(argv[i]);
+
+		free (argv);
+	}
+	LocalFree(args);
 
 	return ret;
 }
