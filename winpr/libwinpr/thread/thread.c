@@ -663,8 +663,7 @@ DWORD GetCurrentThreadId(VOID)
 
 	/* Since pthread_t can be 64-bits on some systems, take just the    */
 	/* lower 32-bits of it for the thread ID returned by this function. */
-	tid = (long)tid & 0xffffffff;
-	return (DWORD) tid;
+	return (DWORD)tid & 0xffffffffUL;
 }
 
 DWORD ResumeThread(HANDLE hThread)

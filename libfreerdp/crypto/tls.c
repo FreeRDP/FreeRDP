@@ -589,11 +589,10 @@ out_free:
 	return NULL;
 }
 
-
-#if defined(__APPLE__)
-BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method, int options, BOOL clientMode)
+#if OPENSSL_VERSION_NUMBER >= 0x010000000L
+static BOOL tls_prepare(rdpTls* tls, BIO* underlying, const SSL_METHOD* method, int options, BOOL clientMode)
 #else
-BOOL tls_prepare(rdpTls* tls, BIO* underlying, const SSL_METHOD* method, int options, BOOL clientMode)
+static BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method, int options, BOOL clientMode)
 #endif
 {
 	rdpSettings* settings = tls->settings;
