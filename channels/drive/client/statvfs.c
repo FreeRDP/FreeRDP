@@ -3,6 +3,8 @@
  * statvfs emulation for Windows
  *
  * Copyright 2012 Gerald Richter
+ * Copyright 2016 Inuvika Inc.
+ * Copyright 2016 David PHAM-VAN <d.phamvan@inuvika.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,17 +31,18 @@ int statvfs(const char *path, struct statvfs *buf)
 {
 	BOOL res;
 	int len;
-	LPWSTR unicodestr;
+	LPWSTR unicodestr = NULL;
 	DWORD lpSectorsPerCluster;
 	DWORD lpBytesPerSector;
 	DWORD lpNumberOfFreeClusters;
 	DWORD lpTotalNumberOfClusters;
 
-	len = MultiByteToWideChar(CP_ACP, 0, path, -1, NULL, 0);
-	unicodestr = (LPWSTR) malloc(len);
-	MultiByteToWideChar(CP_ACP, 0, path, -1, unicodestr, len);
+	len = ConvertToUnicode(CP_ACP, 0, path, -1, &unicodestr, 0);
+	if (len <= 0)
+		return -1;
 
-	res = GetDiskFreeSpace(unicodestr, &lpSectorsPerCluster, &lpBytesPerSector, &lpNumberOfFreeClusters, &lpTotalNumberOfClusters);
+	res = GetDiskFreeSpaceW(unicodestr, &lpSectorsPerCluster, &lpBytesPerSector, &lpNumberOfFreeClusters, &lpTotalNumberOfClusters);
+	free(unicodestr);
 
 	buf->f_bsize = lpBytesPerSector; /* file system block size */
 	buf->f_frsize = 0; /* fragment size */
