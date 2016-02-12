@@ -94,17 +94,17 @@ const RECTANGLE_16 *region16_rects(const REGION16 *region, int *nbRects)
 	REGION16_DATA *data;
 
 	assert(region);
-	assert(region->data);
 
 	data = region->data;
 	if (!data)
 	{
 		if (nbRects)
 			*nbRects = 0;
-		return 0;
+		return NULL;
 	}
 
-	*nbRects = data->nbRects;
+	if (nbRects)
+		*nbRects = data->nbRects;
 	return (RECTANGLE_16 *)(data + 1);
 }
 
