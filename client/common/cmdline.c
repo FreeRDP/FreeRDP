@@ -279,7 +279,7 @@ BOOL freerdp_client_print_command_line_help(int argc, char** argv)
 	printf("\n");
 
 	printf("Drive Redirection: /drive:home,/home/user\n");
-	printf("Smartcard Redirection: /smartcard:<device>\n");
+	printf("Smartcard Redirection: /smartcard:<name>\n");
 	printf("Serial Port Redirection: /serial:<name>,<device>,[SerCx2|SerCx|Serial],[permissive]\n");
 	printf("Serial Port Redirection: /serial:COM1,/dev/ttyS0\n");
 	printf("Parallel Port Redirection: /parallel:<device>\n");
@@ -295,6 +295,7 @@ BOOL freerdp_client_print_command_line_help(int argc, char** argv)
 	printf("Multimedia Redirection: /multimedia:sys:oss,dev:/dev/dsp1,decoder:ffmpeg\n");
 	printf("Multimedia Redirection: /multimedia:sys:alsa\n");
 	printf("USB Device Redirection: /usb:id,dev:054c:0268\n");
+	printf("Smartcard Redirection: /smartcard:\"Xiring Leo V2 (52412506854712) 01 00\"\n");
 	printf("\n");
 
 	printf("More documentation is coming, in the meantime consult source files\n");
@@ -830,15 +831,26 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 	}
 	CommandLineSwitchCase(arg, "smartcard")
 	{
-		char** p;
-		int count;
-
-		p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
-		p[0] = "smartcard";
-
-		status = freerdp_client_add_device_channel(settings, count, p);
-
-		free(p);
+		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+		{
+			char** p;
+			int count;
+			
+			p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
+			p[0] = "smartcard";
+			free(p);
+		}
+		else
+		{
+			char* p[2];
+			int count;
+			
+			count = 2;
+			p[0] = "smartcard";
+			p[1] = "";
+			
+			status = freerdp_client_add_device_channel(settings, count, p);
+		}
 	}
 	CommandLineSwitchCase(arg, "printer")
 	{
