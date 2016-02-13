@@ -59,8 +59,7 @@
 }
 - (void)dealloc
 {
-	[_connection_params release]; _connection_params = nil; 
-	[super dealloc];
+	 _connection_params = nil; 
 }
 
 - (id)copyWithZone:(NSZone *)zone
@@ -99,7 +98,6 @@
         [self serializeDecryptedForKey:@"tsg_password" forParams:serializable_params];
 	
 	[coder encodeObject:serializable_params forKey:@"connectionParams"];
-	[serializable_params release];
 }
 
 - (void)serializeDecryptedForKey:(NSString*)key forParams:(NSMutableDictionary*)params

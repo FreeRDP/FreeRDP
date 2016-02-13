@@ -27,10 +27,10 @@
 @interface Encryptor : NSObject {
 @private
 	NSData* _encryption_key;
-	NSString* _plaintext_password;
+	NSString* __weak _plaintext_password;
 }
 
-@property(readonly) NSString* plaintextPassword;
+@property(weak, readonly) NSString* plaintextPassword;
 
 - (id)initWithPassword:(NSString*)plaintext_password;
 

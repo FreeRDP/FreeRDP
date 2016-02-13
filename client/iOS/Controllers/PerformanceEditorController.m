@@ -26,8 +26,8 @@
 {
     self = [super initWithStyle:UITableViewStyleGrouped];
     if (self) {
-        _params = [params retain];
-        _keyPath = (keyPath != nil ? [keyPath retain] : nil);
+        _params = params;
+        _keyPath = (keyPath != nil ? keyPath : nil);
     }
     return self;
 }
@@ -56,11 +56,6 @@
     return key;
 }
 
-- (void)dealloc
-{
-    [super dealloc];
-    [_params release];
-}
 
 #pragma mark -
 #pragma mark Table view data source

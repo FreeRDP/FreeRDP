@@ -14,6 +14,6 @@
 	IBOutlet UILabel* _label;
 }
 
-@property (retain, nonatomic) UILabel* label;
+@property (strong, nonatomic) UILabel* label;
 
 @end

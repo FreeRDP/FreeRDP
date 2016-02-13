@@ -46,14 +46,14 @@
     [self setContentMode:UIViewContentModeTopLeft];
     
     // load touchPointerImage
-    _default_pointer_img = [[UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"touch_pointer_default" ofType:@"png"]] retain];
-    _active_pointer_img = [[UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"touch_pointer_active" ofType:@"png"]] retain];
-    _lclick_pointer_img = [[UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"touch_pointer_lclick" ofType:@"png"]] retain];
-    _rclick_pointer_img = [[UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"touch_pointer_rclick" ofType:@"png"]] retain];
-    _scroll_pointer_img = [[UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"touch_pointer_scroll" ofType:@"png"]] retain];
-    _extkeyboard_pointer_img = [[UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"touch_pointer_ext_keyboard" ofType:@"png"]] retain];
-    _keyboard_pointer_img = [[UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"touch_pointer_keyboard" ofType:@"png"]] retain];
-    _reset_pointer_img = [[UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"touch_pointer_reset" ofType:@"png"]] retain];        
+    _default_pointer_img = [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"touch_pointer_default" ofType:@"png"]];
+    _active_pointer_img = [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"touch_pointer_active" ofType:@"png"]];
+    _lclick_pointer_img = [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"touch_pointer_lclick" ofType:@"png"]];
+    _rclick_pointer_img = [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"touch_pointer_rclick" ofType:@"png"]];
+    _scroll_pointer_img = [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"touch_pointer_scroll" ofType:@"png"]];
+    _extkeyboard_pointer_img = [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"touch_pointer_ext_keyboard" ofType:@"png"]];
+    _keyboard_pointer_img = [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"touch_pointer_keyboard" ofType:@"png"]];
+    _reset_pointer_img = [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"touch_pointer_reset" ofType:@"png"]];        
     _cur_pointer_img = _default_pointer_img;
     _pointer_transformation = CGAffineTransformMake(1, 0, 0, 1, 0, 0);
     
@@ -74,15 +74,15 @@
     }
     
     // init gesture recognizers
-    UITapGestureRecognizer* singleTapRecognizer = [[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleSingleTap:)] autorelease];
+    UITapGestureRecognizer* singleTapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleSingleTap:)];
     [singleTapRecognizer setNumberOfTouchesRequired:1];
     [singleTapRecognizer setNumberOfTapsRequired:1];
     
-    UILongPressGestureRecognizer* dragDropRecognizer = [[[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleDragDrop:)] autorelease];
+    UILongPressGestureRecognizer* dragDropRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleDragDrop:)];
     dragDropRecognizer.minimumPressDuration = 0.4;
     //        dragDropRecognizer.allowableMovement = 1000.0;        
     
-    UILongPressGestureRecognizer* pointerMoveScrollRecognizer = [[[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handlePointerMoveScroll:)] autorelease];
+    UILongPressGestureRecognizer* pointerMoveScrollRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handlePointerMoveScroll:)];
     pointerMoveScrollRecognizer.minimumPressDuration = 0.15;
     pointerMoveScrollRecognizer.allowableMovement = 1000.0;
     [pointerMoveScrollRecognizer requireGestureRecognizerToFail:dragDropRecognizer];
@@ -92,18 +92,6 @@
     [self addGestureRecognizer:pointerMoveScrollRecognizer];    
 }
 
-- (void)dealloc
-{
-    [super dealloc];
-    [_default_pointer_img autorelease];
-    [_active_pointer_img autorelease];
-    [_lclick_pointer_img autorelease];
-    [_rclick_pointer_img autorelease];
-    [_scroll_pointer_img autorelease];
-    [_extkeyboard_pointer_img autorelease];
-    [_keyboard_pointer_img autorelease];
-    [_reset_pointer_img autorelease];
-}
 
 #pragma mark - Public interface
 

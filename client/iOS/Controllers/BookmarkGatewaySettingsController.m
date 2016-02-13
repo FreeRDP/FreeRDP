@@ -25,7 +25,7 @@
     if ((self = [super initWithStyle:UITableViewStyleGrouped]))
 	{
 		// set additional settings state according to bookmark data
-		_bookmark = [bookmark retain];
+		_bookmark = bookmark;
         _params = [bookmark params];
     }
     return self;
@@ -51,11 +51,6 @@
     return YES;
 }
 
-- (void)dealloc
-{
-    [super dealloc];
-    [_bookmark release];
-}
 
 #pragma mark - Table view data source
 

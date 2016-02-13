@@ -19,10 +19,10 @@
 	IBOutlet UIButton* _disconnect_button;
 }
 
-@property (retain, nonatomic) UILabel* title;
-@property (retain, nonatomic) UILabel* server;
-@property (retain, nonatomic) UILabel* username;
-@property (retain, nonatomic) UIImageView* screenshot;
-@property (retain, nonatomic) UIButton* disconnectButton;
+@property (strong, nonatomic) UILabel* title;
+@property (strong, nonatomic) UILabel* server;
+@property (strong, nonatomic) UILabel* username;
+@property (strong, nonatomic) UIImageView* screenshot;
+@property (strong, nonatomic) UIButton* disconnectButton;
 
 @end

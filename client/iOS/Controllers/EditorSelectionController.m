@@ -22,9 +22,9 @@
     self = [super initWithStyle:UITableViewStyleGrouped];
     if (self)
     {
-        _params = [params retain];
-        _entries = [entries retain];
-        _selections = [selections retain];
+        _params = params;
+        _entries = entries;
+        _selections = selections;
         
         // allocate and init current selections array
         _cur_selections = [[NSMutableArray alloc] initWithCapacity:[_entries count]];        
@@ -47,12 +47,6 @@
 {
     // Releases the view if it doesn't have a superview.
     [super didReceiveMemoryWarning];
-    
-    // Release any cached data, images, etc that aren't in use.
-    [_params autorelease];
-    [_entries autorelease];
-    [_selections autorelease];    
-    [_cur_selections autorelease];
 }
 
 #pragma mark - View lifecycle

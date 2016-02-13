@@ -107,10 +107,6 @@
 	return self;
 }
 
-- (void)dealloc
-{
-	[super dealloc];
-}
 
 #pragma mark -
 #pragma mark class methods

@@ -29,7 +29,7 @@
     if ((self = [super initWithStyle:UITableViewStyleGrouped])) 
 	{
 		// set additional settings state according to bookmark data
-		_bookmark = [bookmark retain];
+		_bookmark = bookmark;
         _params = [bookmark params];                
     }
     return self;
@@ -259,18 +259,18 @@
     {
         case 1:
             if ([_params boolForKey:@"enable_tsg_settings"])
-                viewCtrl = [[[BookmarkGatewaySettingsController alloc] initWithBookmark:_bookmark] autorelease];
+                viewCtrl = [[BookmarkGatewaySettingsController alloc] initWithBookmark:_bookmark];
             break;
         case 3:
             if ([_params boolForKey:@"enable_3g_settings"])
-                viewCtrl = [[[ScreenSelectionController alloc] initWithConnectionParams:_params keyPath:@"settings_3g"] autorelease];
+                viewCtrl = [[ScreenSelectionController alloc] initWithConnectionParams:_params keyPath:@"settings_3g"];
             break;
         case 4:
             if ([_params boolForKey:@"enable_3g_settings"])
-                viewCtrl = [[[PerformanceEditorController alloc] initWithConnectionParams:_params keyPath:@"settings_3g"] autorelease];
+                viewCtrl = [[PerformanceEditorController alloc] initWithConnectionParams:_params keyPath:@"settings_3g"];
             break;                    
         case 5:
-            viewCtrl = [[[EditorSelectionController alloc] initWithConnectionParams:_params entries:[NSArray arrayWithObject:@"security"] selections:[NSArray arrayWithObject:SelectionForSecuritySetting()]] autorelease];
+            viewCtrl = [[EditorSelectionController alloc] initWithConnectionParams:_params entries:[NSArray arrayWithObject:@"security"] selections:[NSArray arrayWithObject:SelectionForSecuritySetting()]];
             break;                                    
         default:
             break;

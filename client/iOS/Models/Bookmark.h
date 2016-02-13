@@ -14,17 +14,17 @@
 
 @interface ComputerBookmark : NSObject <NSCoding> {
 @protected
-	ComputerBookmark* _parent;
+	ComputerBookmark* __weak _parent;
 	NSString* _uuid, * _label;
 	UIImage* _image;
     ConnectionParams* _connection_params;
     BOOL _connected_via_wlan;
 }
 
-@property (nonatomic,assign)   ComputerBookmark* parent;
+@property (nonatomic,weak)   ComputerBookmark* parent;
 @property (nonatomic,readonly) NSString* uuid;
 @property (nonatomic,copy)     NSString* label;
-@property (nonatomic,retain)   UIImage* image;
+@property (nonatomic,strong)   UIImage* image;
 @property (readonly, nonatomic) ConnectionParams* params;
 @property (nonatomic, assign) BOOL conntectedViaWLAN;
 

@@ -23,7 +23,8 @@
 
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
-{    
+{
+    
 	// Set default values for most NSUserDefaults
 	[[NSUserDefaults standardUserDefaults] registerDefaults:[NSDictionary dictionaryWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"Defaults" ofType:@"plist"]]];
 
@@ -32,18 +33,18 @@
     SetInvertScrollingFlag([[NSUserDefaults standardUserDefaults] boolForKey:@"ui.invert_scrolling"]);
     
     // create bookmark view and navigation controller
-    BookmarkListController* bookmarkListController = [[[BookmarkListController alloc] initWithNibName:@"BookmarkListView" bundle:nil] autorelease];
-    UINavigationController* bookmarkNavigationController = [[[UINavigationController alloc] initWithRootViewController:bookmarkListController] autorelease];	
+    BookmarkListController* bookmarkListController = [[BookmarkListController alloc] initWithNibName:@"BookmarkListView" bundle:nil];
+    UINavigationController* bookmarkNavigationController = [[UINavigationController alloc] initWithRootViewController:bookmarkListController];	
 
     // create app settings view and navigation controller
-    AppSettingsController* appSettingsController = [[[AppSettingsController alloc] initWithStyle:UITableViewStyleGrouped] autorelease];
-    UINavigationController* appSettingsNavigationController = [[[UINavigationController alloc] initWithRootViewController:appSettingsController] autorelease];	
+    AppSettingsController* appSettingsController = [[AppSettingsController alloc] initWithStyle:UITableViewStyleGrouped];
+    UINavigationController* appSettingsNavigationController = [[UINavigationController alloc] initWithRootViewController:appSettingsController];	
      
     // create help view controller
-    HelpController* helpViewController = [[[HelpController alloc] initWithNibName:nil bundle:nil] autorelease];
+    HelpController* helpViewController = [[HelpController alloc] initWithNibName:nil bundle:nil];
 
     // create about view controller
-    AboutController* aboutViewController = [[[AboutController alloc] initWithNibName:nil bundle:nil] autorelease];
+    AboutController* aboutViewController = [[AboutController alloc] initWithNibName:nil bundle:nil];
      
     // add tab-bar controller to the main window and display everything
     NSArray* tabItems = [NSArray arrayWithObjects:bookmarkNavigationController, appSettingsNavigationController, helpViewController, aboutViewController, nil];
@@ -97,10 +98,5 @@
      */
 }
 
-- (void)dealloc
-{
-    [_window release];
-    [super dealloc];
-}
 
 @end

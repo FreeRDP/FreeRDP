@@ -19,7 +19,7 @@
 		// set title and tab-bar image
 		[self setTitle:NSLocalizedString(@"Help", @"Help Controller title")];
         UIImage* tabBarIcon = [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"tabbar_icon_help" ofType:@"png"]];
-        [self setTabBarItem:[[[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"Help", @"Tabbar item help") image:tabBarIcon tag:0] autorelease]];
+        [self setTabBarItem:[[UITabBarItem alloc] initWithTitle:NSLocalizedString(@"Help", @"Tabbar item help") image:tabBarIcon tag:0]];
     }
     return self;
 }
@@ -27,7 +27,7 @@
 // Implement loadView to create a view hierarchy programmatically, without using a nib.
 - (void)loadView 
 {
-	webView = [[[UIWebView alloc] initWithFrame:CGRectZero] autorelease];
+	webView = [[UIWebView alloc] initWithFrame:CGRectZero];
 	[webView setAutoresizingMask:(UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight)];
 	[webView setAutoresizesSubviews:YES];
 	[webView setDelegate:self];	
@@ -35,9 +35,6 @@
 	[self setView:webView];
 }
 
-- (void)dealloc {
-    [super dealloc];
-}
 
 // Implement viewDidLoad to do additional setup after loading the view, typically from a nib.
 - (void)viewDidLoad 
@@ -45,7 +42,7 @@
     [super viewDidLoad];
 	
     NSString *filename = (IsPhone() ? @"gestures_phone" : @"gestures");
-	NSString *htmlString = [[[NSString alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:filename ofType:@"html" inDirectory:@"help_page"]  encoding:NSUTF8StringEncoding error:nil] autorelease];
+	NSString *htmlString = [[NSString alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:filename ofType:@"html" inDirectory:@"help_page"]  encoding:NSUTF8StringEncoding error:nil];
 	
 	[webView loadHTMLString:htmlString baseURL:[NSURL fileURLWithPath:[[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent:@"help_page"]]];    
 }

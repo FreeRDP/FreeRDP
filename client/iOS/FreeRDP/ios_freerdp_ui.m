@@ -28,13 +28,16 @@ BOOL ios_ui_authenticate(freerdp * instance, char** username, char** password, c
 		[NSString stringWithUTF8String:instance->settings->ServerHostname], @"hostname", // used for the auth prompt message; not changed
 		nil];
 
+    RDPSession* currentSession = (__bridge RDPSession *)(mfi->session);
+    
     // request auth UI
-    [mfi->session performSelectorOnMainThread:@selector(sessionRequestsAuthenticationWithParams:) withObject:params waitUntilDone:YES];
+    [currentSession performSelectorOnMainThread:@selector(sessionRequestsAuthenticationWithParams:) withObject:params waitUntilDone:YES];
     
     // wait for UI request to be completed
-    [[mfi->session uiRequestCompleted] lock];
-    [[mfi->session uiRequestCompleted] wait];
-    [[mfi->session uiRequestCompleted] unlock];
+
+    [[currentSession uiRequestCompleted] lock];
+    [[currentSession uiRequestCompleted] wait];
+    [[currentSession uiRequestCompleted] unlock];
     
 	if (![[params valueForKey:@"result"] boolValue])
 	{
@@ -76,13 +79,14 @@ BOOL ios_ui_check_certificate(freerdp * instance, char * subject, char * issuer,
                                         (fingerprint) ? [NSString stringWithUTF8String:subject] : @"", @"fingerprint",
                                         nil];
 	
+    RDPSession* session = (__bridge RDPSession*) mfi->session;
     // request certificate verification UI
-    [mfi->session performSelectorOnMainThread:@selector(sessionVerifyCertificateWithParams:) withObject:params waitUntilDone:YES];
+    [session performSelectorOnMainThread:@selector(sessionVerifyCertificateWithParams:) withObject:params waitUntilDone:YES];
     
     // wait for UI request to be completed
-    [[mfi->session uiRequestCompleted] lock];
-    [[mfi->session uiRequestCompleted] wait];
-    [[mfi->session uiRequestCompleted] unlock];
+    [[session uiRequestCompleted] lock];
+    [[session uiRequestCompleted] wait];
+    [[session uiRequestCompleted] unlock];
     
 	if (![[params valueForKey:@"result"] boolValue])
 	{
@@ -115,8 +119,9 @@ BOOL ios_ui_end_paint(rdpContext * context)
 	rdpGdi *gdi = context->gdi;
 	CGRect dirty_rect = CGRectMake(gdi->primary->hdc->hwnd->invalid->x, gdi->primary->hdc->hwnd->invalid->y, gdi->primary->hdc->hwnd->invalid->w, gdi->primary->hdc->hwnd->invalid->h);
 	
+    RDPSession* session = (__bridge RDPSession*) mfi->session;
 	if (gdi->primary->hdc->hwnd->invalid->null == 0)
-		[mfi->session performSelectorOnMainThread:@selector(setNeedsDisplayInRectAsValue:) withObject:[NSValue valueWithCGRect:dirty_rect] waitUntilDone:NO];
+		[session performSelectorOnMainThread:@selector(setNeedsDisplayInRectAsValue:) withObject:[NSValue valueWithCGRect:dirty_rect] waitUntilDone:NO];
     return TRUE;
 }
 
@@ -132,8 +137,9 @@ BOOL ios_ui_resize_window(rdpContext * context)
 #pragma mark Exported
 
 static void ios_create_bitmap_context(mfInfo* mfi)
-{	
-	[mfi->session performSelectorOnMainThread:@selector(sessionBitmapContextWillChange) withObject:nil waitUntilDone:YES];
+{
+    RDPSession* session = (__bridge RDPSession*) mfi->session;
+	[session performSelectorOnMainThread:@selector(sessionBitmapContextWillChange) withObject:nil waitUntilDone:YES];
 	    
     rdpGdi* gdi = mfi->instance->context->gdi;
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
@@ -143,7 +149,7 @@ static void ios_create_bitmap_context(mfInfo* mfi)
 		mfi->bitmap_context = CGBitmapContextCreate(gdi->primary_buffer, gdi->width, gdi->height, 8, gdi->width * 4, colorSpace, kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst);
     CGColorSpaceRelease(colorSpace);
     
-	[mfi->session performSelectorOnMainThread:@selector(sessionBitmapContextDidChange) withObject:nil waitUntilDone:YES];
+	[session performSelectorOnMainThread:@selector(sessionBitmapContextDidChange) withObject:nil waitUntilDone:YES];
 }
 
 void ios_allocate_display_buffer(mfInfo* mfi)

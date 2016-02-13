@@ -54,10 +54,10 @@
     BOOL _pointer_moving;
     BOOL _pointer_scrolling;
     
-    NSObject<TouchPointerDelegate>* _delegate;
+    NSObject<TouchPointerDelegate>* __weak _delegate;
 }
 
-@property (assign) IBOutlet NSObject<TouchPointerDelegate>* delegate;
+@property (weak) IBOutlet NSObject<TouchPointerDelegate>* delegate;
 
 // positions the pointer on screen if it got offscreen after an orentation change or after displaying the keyboard
 -(void)ensurePointerIsVisible;

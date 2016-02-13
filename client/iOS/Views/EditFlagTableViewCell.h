@@ -15,7 +15,7 @@
 	IBOutlet UISwitch* _toggle;    
 }
 
-@property (retain, nonatomic) UILabel* label;
-@property (retain, nonatomic) UISwitch* toggle;
+@property (strong, nonatomic) UILabel* label;
+@property (strong, nonatomic) UISwitch* toggle;
 
 @end

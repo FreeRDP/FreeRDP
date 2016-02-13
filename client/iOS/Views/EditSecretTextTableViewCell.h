@@ -16,8 +16,8 @@
 	IBOutlet UIButton* _unhide_button;
 }
 
-@property (retain, nonatomic) UILabel* label;
-@property (retain, nonatomic) UITextField* textfield;
+@property (strong, nonatomic) UILabel* label;
+@property (strong, nonatomic) UITextField* textfield;
 
 - (void)setEnabled:(BOOL)enabled;
 

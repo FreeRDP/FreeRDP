@@ -36,9 +36,6 @@
     
     // currently visible view
     UIView* _cur_view;
-
-    // delegate
-	NSObject<AdvancedKeyboardDelegate>* _delegate;
 }
 
 @property (assign) NSObject<AdvancedKeyboardDelegate>* delegate;

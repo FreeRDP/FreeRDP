@@ -35,7 +35,7 @@ NSString* TSXSessionDidFailToConnectNotification = @"TSXSessionDidFailToConnect"
 
 @implementation RDPSession
 
-@synthesize delegate=_delegate, params=_params, toolbarVisible = _toolbar_visible, uiRequestCompleted = _ui_request_completed, bookmark = _bookmark;
+@synthesize params=_params, toolbarVisible = _toolbar_visible, uiRequestCompleted = _ui_request_completed, bookmark = _bookmark;
 
 + (void)initialize
 {
@@ -51,9 +51,9 @@ NSString* TSXSessionDidFailToConnectNotification = @"TSXSessionDidFailToConnect"
 	if (!bookmark)
 		[NSException raise:NSInvalidArgumentException format:@"%s: params may not be nil.", __func__];
 	
-    _bookmark = [bookmark retain];
+    _bookmark = bookmark;
 	_params = [[bookmark params] copy];
-    _name = [[bookmark label] retain];
+    _name = [bookmark label];
     _delegate = nil;	
     _toolbar_visible = YES;
 	_freerdp = ios_freerdp_new();
@@ -206,25 +206,17 @@ NSString* TSXSessionDidFailToConnectNotification = @"TSXSessionDidFailToConnect"
     settings->AudioPlayback = FALSE;
     settings->AudioCapture = FALSE;
 	
-	[self mfi]->session = self;
+	[self mfi]->session = (__bridge void *)(self);
 	return self;
 
 out_free:
-    [self release];
     return nil;
 }
 
 - (void)dealloc
 {
 	[self setDelegate:nil];
-    [_bookmark release];
-    [_name release];
-	[_params release];
-    [_ui_request_completed release];
-    
 	ios_freerdp_free(_freerdp);
-	
-	[super dealloc];
 }
 
 - (CGContextRef)bitmapContext
@@ -378,15 +370,11 @@ out_free:
 // Blocks until rdp session finishes.
 - (void)runSession
 {
-    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];	
-
     // Run the session
     [self performSelectorOnMainThread:@selector(sessionWillConnect) withObject:nil waitUntilDone:YES];
     int result_code = ios_run_freerdp(_freerdp);
     [self mfi]->connection_state = TSXConnectionDisconnected;
     [self performSelectorOnMainThread:@selector(runSessionFinished:) withObject:[NSNumber numberWithInt:result_code] waitUntilDone:YES];
-
-    [pool release];
 }
 
 // Main thread.

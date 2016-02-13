@@ -53,8 +53,8 @@
     [super viewDidLoad];
 
     // replace back button with a custom handler that checks if the required bookmark settings were specified
-    UIBarButtonItem* saveButton = [[[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Save", @"Save Button title") style:UIBarButtonItemStyleDone target:self action:@selector(handleSave:)] autorelease];
-    UIBarButtonItem* cancelButton = [[[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Cancel", @"Cancel Button title") style:UIBarButtonItemStyleBordered target:self action:@selector(handleCancel:)] autorelease];
+    UIBarButtonItem* saveButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Save", @"Save Button title") style:UIBarButtonItemStyleDone target:self action:@selector(handleSave:)];
+    UIBarButtonItem* cancelButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Cancel", @"Cancel Button title") style:UIBarButtonItemStyleBordered target:self action:@selector(handleCancel:)];
     [[self navigationItem] setLeftBarButtonItem:cancelButton];    
     [[self navigationItem] setRightBarButtonItem:saveButton];    
 }
@@ -272,7 +272,7 @@
         case SECTION_CREDENTIALS:
         {
             if ([indexPath row] == 0)
-                viewCtrl = [[[CredentialsEditorController alloc] initWithBookmark:_bookmark] autorelease];
+                viewCtrl = [[CredentialsEditorController alloc] initWithBookmark:_bookmark];
             break;
         }
             
@@ -281,13 +281,13 @@
             switch ([indexPath row])
             {
                 case 0:
-                    viewCtrl = [[[ScreenSelectionController alloc] initWithConnectionParams:_params] autorelease];
+                    viewCtrl = [[ScreenSelectionController alloc] initWithConnectionParams:_params];
                     break;
                 case 1:
-                    viewCtrl = [[[PerformanceEditorController alloc] initWithConnectionParams:_params] autorelease];
+                    viewCtrl = [[PerformanceEditorController alloc] initWithConnectionParams:_params];
                     break;    
                 case 2:
-                    viewCtrl = [[[AdvancedBookmarkEditorController alloc] initWithBookmark:_bookmark] autorelease];
+                    viewCtrl = [[AdvancedBookmarkEditorController alloc] initWithBookmark:_bookmark];
                     break;
                 default:
                     break;
@@ -378,11 +378,6 @@
     [super didReceiveMemoryWarning];
     
     // Relinquish ownership any cached data, images, etc that aren't in use.
-}
-
-- (void)dealloc {
-    [super dealloc];
-    [_bookmark autorelease];
 }
 
 

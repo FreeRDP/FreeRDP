@@ -102,12 +102,12 @@ BOOL ios_events_check_fds(mfInfo* mfi, fd_set* rfds)
 	if (bytes_read != archived_data_length)
 	{
 		NSLog(@"%s: attempted to read data; read %ld bytes but wanted %d bytes.", __func__, bytes_read, archived_data_length);
-		[archived_object_data release];
+		archived_object_data = nil;
 		return FALSE;
 	}
 	
 	id unarchived_object_data = [NSKeyedUnarchiver unarchiveObjectWithData:archived_object_data];
-	[archived_object_data release];
+	archived_object_data = nil;
 	
 	return ios_events_handle_event(mfi, unarchived_object_data);
 }

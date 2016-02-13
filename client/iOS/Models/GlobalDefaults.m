@@ -41,17 +41,12 @@
 		bookmark = [NSKeyedUnarchiver unarchiveObjectWithData:bookmark_data];
 	
 	if (!bookmark)
-		bookmark = [[[ComputerBookmark alloc] initWithBaseDefaultParameters] autorelease];
+		bookmark = [[ComputerBookmark alloc] initWithBaseDefaultParameters];
 	
-	_default_bookmark = [bookmark retain];
+	_default_bookmark = bookmark;
 	return self;
 }
 
-- (void)dealloc
-{
-	[_default_bookmark release];
-	[super dealloc];
-}
 
 #pragma mark -
 
@@ -59,7 +54,7 @@
 
 - (ComputerBookmark*)newBookmark
 {
-	return [[ComputerBookmark alloc] initWithConnectionParameters:[[self newParams] autorelease]];
+	return [[ComputerBookmark alloc] initWithConnectionParameters:[self newParams]];
 }
 
 - (ConnectionParams*)newParams

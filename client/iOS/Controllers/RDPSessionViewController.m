@@ -41,7 +41,7 @@
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
     if (self) 
     {
-        _session = [session retain];
+        _session = session;
         [_session setDelegate:self];
         _session_initilized = NO;
         
@@ -77,7 +77,7 @@
     _keyboard_visible = NO;
 
     // init keyboard toolbar
-    _keyboard_toolbar = [[self keyboardToolbar] retain];
+    _keyboard_toolbar = [self keyboardToolbar];
     [_dummy_textfield setInputAccessoryView:_keyboard_toolbar];
     
     // init gesture recognizers
@@ -186,10 +186,6 @@
     // the session lives on longer so set the delegate to nil
     [_session setDelegate:nil];
 
-    [_advanced_keyboard_view release];
-    [_keyboard_toolbar release];
-    [_session release];
-    [super dealloc];
 }
 
 #pragma mark -
@@ -296,7 +292,6 @@
     // remove and release connecting view
     [_connecting_indicator_view stopAnimating];
     [_connecting_view removeFromSuperview];
-    [_connecting_view autorelease];          
 
     // return to bookmark list
     [[self navigationController] popViewControllerAnimated:YES];
@@ -331,7 +326,6 @@
     // remove and release connecting view
     [_connecting_indicator_view stopAnimating];
     [_connecting_view removeFromSuperview];
-    [_connecting_view autorelease];   
     
     // check if session settings changed ...
     // The 2nd width check is to ignore changes in resolution settings due to the RDVH display bug (refer to RDPSEssion.m for more details)
@@ -391,13 +385,13 @@
 
 - (void)session:(RDPSession *)session requestsAuthenticationWithParams:(NSMutableDictionary *)params
 {
-    CredentialsInputController* view_controller = [[[CredentialsInputController alloc] initWithNibName:@"CredentialsInputView" bundle:nil session:_session params:params] autorelease];
+    CredentialsInputController* view_controller = [[CredentialsInputController alloc] initWithNibName:@"CredentialsInputView" bundle:nil session:_session params:params];
     [self presentModalViewController:view_controller animated:YES];
 }
 
 - (void)session:(RDPSession *)session verifyCertificateWithParams:(NSMutableDictionary *)params
 {
-    VerifyCertificateController* view_controller = [[[VerifyCertificateController alloc] initWithNibName:@"VerifyCertificateView" bundle:nil session:_session params:params] autorelease];
+    VerifyCertificateController* view_controller = [[VerifyCertificateController alloc] initWithNibName:@"VerifyCertificateView" bundle:nil session:_session params:params];
     [self presentModalViewController:view_controller animated:YES];
 }
 
@@ -493,7 +487,6 @@
     {
         // cleanup advanced keyboard view
         [_advanced_keyboard_view removeFromSuperview];
-        [_advanced_keyboard_view autorelease];
         _advanced_keyboard_view = nil;        
     }
 }
@@ -616,7 +609,6 @@
     {
         _advanced_keyboard_visible = NO;
         [_advanced_keyboard_view removeFromSuperview];
-        [_advanced_keyboard_view autorelease];
         _advanced_keyboard_view = nil;
     }    
 }
@@ -859,23 +851,23 @@
 
 -(UIToolbar*)keyboardToolbar
 {
-	UIToolbar* keyboard_toolbar = [[[UIToolbar alloc] initWithFrame:CGRectNull] autorelease];
+	UIToolbar* keyboard_toolbar = [[UIToolbar alloc] initWithFrame:CGRectNull];
 	[keyboard_toolbar setBarStyle:UIBarStyleBlackOpaque];
     
-	UIBarButtonItem* esc_btn = [[[UIBarButtonItem alloc] initWithTitle:@"Esc" style:UIBarButtonItemStyleBordered target:self action:@selector(pressEscKey:)] autorelease];
+	UIBarButtonItem* esc_btn = [[UIBarButtonItem alloc] initWithTitle:@"Esc" style:UIBarButtonItemStyleBordered target:self action:@selector(pressEscKey:)];
     UIImage* win_icon = [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"toolbar_icon_win" ofType:@"png"]];
-	UIBarButtonItem* win_btn = [[[UIBarButtonItem alloc] initWithImage:win_icon style:UIBarButtonItemStyleBordered target:self action:@selector(toggleWinKey:)] autorelease];
-	UIBarButtonItem* ctrl_btn = [[[UIBarButtonItem alloc] initWithTitle:@"Ctrl" style:UIBarButtonItemStyleBordered target:self action:@selector(toggleCtrlKey:)] autorelease];
-	UIBarButtonItem* alt_btn = [[[UIBarButtonItem alloc] initWithTitle:@"Alt" style:UIBarButtonItemStyleBordered target:self action:@selector(toggleAltKey:)] autorelease];
-	UIBarButtonItem* ext_btn = [[[UIBarButtonItem alloc] initWithTitle:@"Ext" style:UIBarButtonItemStyleBordered target:self action:@selector(toggleKeyboardWhenOtherVisible:)] autorelease];
-	UIBarButtonItem* done_btn = [[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(toggleKeyboard:)] autorelease];
-	UIBarButtonItem* flex_spacer = [[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil] autorelease];
+	UIBarButtonItem* win_btn = [[UIBarButtonItem alloc] initWithImage:win_icon style:UIBarButtonItemStyleBordered target:self action:@selector(toggleWinKey:)];
+	UIBarButtonItem* ctrl_btn = [[UIBarButtonItem alloc] initWithTitle:@"Ctrl" style:UIBarButtonItemStyleBordered target:self action:@selector(toggleCtrlKey:)];
+	UIBarButtonItem* alt_btn = [[UIBarButtonItem alloc] initWithTitle:@"Alt" style:UIBarButtonItemStyleBordered target:self action:@selector(toggleAltKey:)];
+	UIBarButtonItem* ext_btn = [[UIBarButtonItem alloc] initWithTitle:@"Ext" style:UIBarButtonItemStyleBordered target:self action:@selector(toggleKeyboardWhenOtherVisible:)];
+	UIBarButtonItem* done_btn = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(toggleKeyboard:)];
+	UIBarButtonItem* flex_spacer = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
     
     // iPad gets a shift button, iphone doesn't (there's just not enough space ...)
     NSArray* items;
     if(IsPad())
     {
-        UIBarButtonItem* shift_btn = [[[UIBarButtonItem alloc] initWithTitle:@"Shift" style:UIBarButtonItemStyleBordered target:self action:@selector(toggleShiftKey:)] autorelease];
+        UIBarButtonItem* shift_btn = [[UIBarButtonItem alloc] initWithTitle:@"Shift" style:UIBarButtonItemStyleBordered target:self action:@selector(toggleShiftKey:)];
         items = [NSArray arrayWithObjects:esc_btn, flex_spacer, 
                  shift_btn, flex_spacer, 
                  ctrl_btn, flex_spacer, 
@@ -896,31 +888,31 @@
 - (void)initGestureRecognizers
 {        
 	// single and double tap recognizer 
-    UITapGestureRecognizer* doubleTapRecognizer = [[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleDoubleTap:)] autorelease];
+    UITapGestureRecognizer* doubleTapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleDoubleTap:)];
     [doubleTapRecognizer setNumberOfTouchesRequired:1];
 	[doubleTapRecognizer setNumberOfTapsRequired:2];	
     
-	UITapGestureRecognizer* singleTapRecognizer = [[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleSingleTap:)] autorelease];
+	UITapGestureRecognizer* singleTapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleSingleTap:)];
 	[singleTapRecognizer requireGestureRecognizerToFail:doubleTapRecognizer];	
     [singleTapRecognizer setNumberOfTouchesRequired:1];
 	[singleTapRecognizer setNumberOfTapsRequired:1];
     
     // 2 fingers - tap recognizer 
-	UITapGestureRecognizer* single2FingersTapRecognizer = [[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleSingle2FingersTap:)] autorelease];
+	UITapGestureRecognizer* single2FingersTapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleSingle2FingersTap:)];
     [single2FingersTapRecognizer setNumberOfTouchesRequired:2];
 	[single2FingersTapRecognizer setNumberOfTapsRequired:1];
     
 	// long press gesture recognizer
-	UILongPressGestureRecognizer* longPressRecognizer = [[[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPress:)] autorelease];
+	UILongPressGestureRecognizer* longPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPress:)];
 	[longPressRecognizer setMinimumPressDuration:0.5];
     
     // double long press gesture recognizer
-	UILongPressGestureRecognizer* doubleLongPressRecognizer = [[[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleDoubleLongPress:)] autorelease];
+	UILongPressGestureRecognizer* doubleLongPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleDoubleLongPress:)];
     [doubleLongPressRecognizer setNumberOfTouchesRequired:2];
 	[doubleLongPressRecognizer setMinimumPressDuration:0.5];
     
     // 3 finger, single tap gesture for showing/hiding the toolbar
-    UITapGestureRecognizer* single3FingersTapRecognizer = [[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleSingle3FingersTap:)] autorelease];
+    UITapGestureRecognizer* single3FingersTapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleSingle3FingersTap:)];
     [single3FingersTapRecognizer setNumberOfTapsRequired:1];
     [single3FingersTapRecognizer setNumberOfTouchesRequired:3];
     
@@ -957,7 +949,6 @@
     _mouse_move_event_timer = nil;
     NSDictionary* event = [timer userInfo];
     [_session sendInputEvent:event];
-    [timer autorelease];
 }
 
 - (void)handleMouseMoveForPosition:(CGPoint)position
@@ -975,8 +966,7 @@
     }
     else
     {
-        [_mouse_move_event_timer autorelease];
-        _mouse_move_event_timer = [[NSTimer scheduledTimerWithTimeInterval:0.05 target:self selector:@selector(sendDelayedMouseEventWithTimer:) userInfo:event repeats:NO] retain];        
+        _mouse_move_event_timer = [NSTimer scheduledTimerWithTimeInterval:0.05 target:self selector:@selector(sendDelayedMouseEventWithTimer:) userInfo:event repeats:NO];        
     }    
 }
 
