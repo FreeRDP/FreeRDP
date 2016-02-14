@@ -1523,7 +1523,9 @@ char* freerdp_get_unix_timezone_identifier()
 		return tzid;
 	}
 
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
+#if defined(ANDROID)
+	fp = popen("getprop persist.sys.timezone", "r");
+#elif defined(__FreeBSD__) || defined(__OpenBSD__)
 	fp = fopen("/var/db/zoneinfo", "r");
 #else
 	fp = fopen("/etc/timezone", "r");
