@@ -99,9 +99,11 @@ BOOL shw_authenticate(freerdp* instance, char** username, char** password, char*
 	return TRUE;
 }
 
-BOOL shw_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
+static DWORD shw_verify_certificate(freerdp* instance, const char* common_name,
+					const char* subject, const char* issuer,
+					const char* fingerprint, BOOL host_mismatch)
 {
-	return TRUE;
+	return 1;
 }
 
 int shw_verify_x509_certificate(freerdp* instance, BYTE* data, int length, const char* hostname, int port, DWORD flags)

@@ -65,13 +65,55 @@ typedef void (*pContextFree)(freerdp* instance, rdpContext* context);
 typedef BOOL (*pPreConnect)(freerdp* instance);
 typedef BOOL (*pPostConnect)(freerdp* instance);
 typedef void (*pPostDisconnect)(freerdp* instance);
-typedef BOOL (*pAuthenticate)(freerdp* instance, char** username, char** password, char** domain);
-typedef BOOL (*pVerifyCertificate)(freerdp* instance, char* subject, char* issuer, char* fingerprint);
-typedef BOOL (*pVerifyChangedCertificate)(freerdp* instance, char* subject,
-                                          char* issuer, char* new_fingerprint,
-                                          char* old_subject, char* old_issuer,
-                                          char* old_fingerprint);
-typedef int (*pVerifyX509Certificate)(freerdp* instance, BYTE* data, int length, const char* hostname, int port, DWORD flags);
+typedef BOOL (*pAuthenticate)(freerdp* instance, char** username,
+			  char** password, char** domain);
+
+/** @brief Callback used if user interaction is required to accept
+ *         an unknown certificate.
+ *
+ *  @param common_name      The certificate registered hostname.
+ *  @param subject          The common name of the certificate.
+ *  @param issuer           The issuer of the certificate.
+ *  @param fingerprint      The fingerprint of the certificate.
+ *  @param host_mismatch    A flag indicating the certificate
+ *                          subject does not match the host connecting to.
+ *
+ *  @return 1 to accept and store a certificate, 2 to accept
+ *          a certificate only for this session, 0 otherwise.
+ */
+typedef DWORD (*pVerifyCertificate)(freerdp* instance,
+				const char* common_name,
+				const char* subject,
+				const char* issuer,
+				const char* fingerprint,
+				BOOL host_mismatch);
+
+/** @brief Callback used if user interaction is required to accept
+ *         a changed certificate.
+ *
+ *  @param common_name      The certificate registered hostname.
+ *  @param subject          The common name of the new certificate.
+ *  @param issuer           The issuer of the new certificate.
+ *  @param fingerprint      The fingerprint of the new certificate.
+ *  @param old_subject      The common name of the old certificate.
+ *  @param old_issuer       The issuer of the new certificate.
+ *  @param old_fingerprint  The fingerprint of the old certificate.
+ *
+ *  @return 1 to accept and store a certificate, 2 to accept
+ *          a certificate only for this session, 0 otherwise.
+ */
+
+typedef DWORD (*pVerifyChangedCertificate)(freerdp* instance,
+					const char* common_name,
+					const char* subject,
+					const char* issuer,
+					const char* new_fingerprint,
+					const char* old_subject,
+					const char* old_issuer,
+					const char* old_fingerprint);
+typedef int (*pVerifyX509Certificate)(freerdp* instance, BYTE* data,
+				int length, const char* hostname,
+				int port, DWORD flags);
 
 typedef int (*pLogonErrorInfo)(freerdp* instance, UINT32 data, UINT32 type);
 

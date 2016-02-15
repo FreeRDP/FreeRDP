@@ -172,46 +172,6 @@ static void wl_post_disconnect(freerdp* instance)
 		wlf_DestroyWindow(context, context->window);
 }
 
-static BOOL wl_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
-{
-	char answer;
-
-	printf("Certificate details:\n");
-	printf("\tSubject: %s\n", subject);
-	printf("\tIssuer: %s\n", issuer);
-	printf("\tThumbprint: %s\n", fingerprint);
-	printf("The above X.509 certificate could not be verified, possibly because you do not have "
-		"the CA certificate in your certificate store, or the certificate has expired. "
-		"Please look at the documentation on how to create local certificate store for a private CA.\n");
-
-	while (1)
-	{
-		printf("Do you trust the above certificate? (Y/N) ");
-		answer = fgetc(stdin);
-
-		if (feof(stdin))
-		{
-			printf("\nError: Could not read answer from stdin.");
-			if (instance->settings->CredentialsFromStdin)
-				printf(" - Run without parameter \"--from-stdin\" to set trust.");
-			printf("\n");
-			return FALSE;
-		}
-
-		if (answer == 'y' || answer == 'Y')
-		{
-			return TRUE;
-		}
-		else if (answer == 'n' || answer == 'N')
-		{
-			break;
-		}
-		printf("\n");
-	}
-
-	return FALSE;
-}
-
 static int wlfreerdp_run(freerdp* instance)
 {
 	DWORD count;
@@ -262,7 +222,10 @@ int main(int argc, char* argv[])
 	instance->PreConnect = wl_pre_connect;
 	instance->PostConnect = wl_post_connect;
 	instance->PostDisconnect = wl_post_disconnect;
-	instance->VerifyCertificate = wl_verify_certificate;
+	instance->Authenticate = client_cli_authenticate;
+	instance->GatewayAuthenticate = client_cli_gw_authenticate;
+	instance->VerifyCertificate = client_cli_verify_certificate;
+	instance->VerifyChangedCertificate = client_cli_verify_changed_certificate;
 
 	instance->ContextSize = sizeof(wlfContext);
 	instance->ContextNew = wl_context_new;

@@ -21,13 +21,20 @@
 #include "config.h"
 #endif
 
+#include <string.h>
+#include <errno.h>
+
 #include <freerdp/client.h>
 
 #include <freerdp/addin.h>
 #include <freerdp/assistance.h>
 #include <freerdp/client/file.h>
+#include <freerdp/utils/passphrase.h>
 #include <freerdp/client/cmdline.h>
 #include <freerdp/client/channels.h>
+
+#include <freerdp/log.h>
+#define TAG CLIENT_TAG("common")
 
 static BOOL freerdp_client_common_new(freerdp* instance, rdpContext* context)
 {
@@ -295,4 +302,211 @@ int freerdp_client_settings_parse_assistance_file(rdpSettings* settings, const c
 
 	return 0;
 }
+
+/** Callback set in the rdp_freerdp structure, and used to get the user's password,
+ *  if required to establish the connection.
+ *  This function is actually called in credssp_ntlmssp_client_init()
+ *  @see rdp_server_accept_nego() and rdp_check_fds()
+ *  @param instance - pointer to the rdp_freerdp structure that contains the connection settings
+ *  @param username - unused
+ *  @param password - on return: pointer to a character string that will be filled by the password entered by the user.
+ *  				  Note that this character string will be allocated inside the function, and needs to be deallocated by the caller
+ *  				  using free(), even in case this function fails.
+ *  @param domain - unused
+ *  @return TRUE if a password was successfully entered. See freerdp_passphrase_read() for more details.
+ */
+static BOOL client_cli_authenticate_raw(freerdp* instance, BOOL gateway, char** username,
+		char** password, char** domain)
+{
+	static const size_t password_size = 512;
+	const char* auth[] =
+	{
+		"Username: ",
+		"Domain:   ",
+		"Password: "
+	};
+	const char* gw[] =
+	{
+		"GatewayUsername: ",
+		"GatewayDomain:   ",
+		"GatewayPassword: "
+	};
+	const char** prompt = (gateway) ? gw : auth;
+
+	if (!username || !password || !domain)
+		return FALSE;
+
+	if (!*username)
+	{
+		size_t username_size = 0;
+		printf("%s", prompt[0]);
+		if (GetLine(username, &username_size, stdin) < 0)
+		{
+			WLog_ERR(TAG, "GetLine returned %s [%d]", strerror(errno), errno);
+			goto fail;
+		}
+
+		if (*username)
+		{
+			*username = StrSep(username, "\r");
+			*username = StrSep(username, "\n");
+		}
+	}
+
+	if (!*domain)
+	{
+		size_t domain_size = 0;
+		printf("%s", prompt[1]);
+		if (GetLine(domain, &domain_size, stdin) < 0)
+		{
+			WLog_ERR(TAG, "GetLine returned %s [%d]", strerror(errno), errno);
+			goto fail;
+		}
+
+		if (*domain)
+		{
+			*domain = StrSep(domain, "\r");
+			*domain = StrSep(domain, "\n");
+		}
+	}
+
+	if (!*password)
+	{
+		*password = calloc(password_size, sizeof(char));
+		if (!*password)
+			goto fail;
+
+		if (freerdp_passphrase_read(prompt[2], *password, password_size,
+			instance->settings->CredentialsFromStdin) == NULL)
+			goto fail;
+	}
+
+	return TRUE;
+
+fail:
+	free(*username);
+	free(*domain);
+	free(*password);
+
+	*username = NULL;
+	*domain = NULL;
+	*password = NULL;
+
+	return FALSE;
+}
+
+BOOL client_cli_authenticate(freerdp* instance, char** username, char** password, char** domain)
+{
+	return client_cli_authenticate_raw(instance, FALSE, username, password, domain);
+}
+
+BOOL client_cli_gw_authenticate(freerdp* instance, char** username, char** password, char** domain)
+{
+	return client_cli_authenticate_raw(instance, TRUE, username, password, domain);
+}
+
+static DWORD client_cli_accept_certificate(rdpSettings* settings)
+{
+	char answer;
+
+	while (1)
+	{
+		printf("Do you trust the above certificate? (Y/T/N) ");
+		answer = fgetc(stdin);
+
+		if (feof(stdin))
+		{
+			printf("\nError: Could not read answer from stdin.");
+			if (settings->CredentialsFromStdin)
+				printf(" - Run without parameter \"--from-stdin\" to set trust.");
+			printf("\n");
+			return 0;
+		}
+
+		switch(answer)
+		{
+			case 'y':
+			case 'Y':
+				return 1;
+			case 't':
+			case 'T':
+				return 2;
+			case 'n':
+			case 'N':
+				return 0;
+			default:
+				break;
+		}
+		printf("\n");
+	}
+
+	return 0;
+}
+
+/** Callback set in the rdp_freerdp structure, and used to make a certificate validation
+ *  when the connection requires it.
+ *  This function will actually be called by tls_verify_certificate().
+ *  @see rdp_client_connect() and tls_connect()
+ *  @param instance - pointer to the rdp_freerdp structure that contains the connection settings
+ *  @param common_name
+ *  @param subject
+ *  @param issuer
+ *  @param fingerprint
+ *  @param host_mismatch Indicates the certificate host does not match.
+ *  @return 1 if the certificate is trusted, 2 if temporary trusted, 0 otherwise.
+ */
+DWORD client_cli_verify_certificate(freerdp* instance, const char* common_name,
+				   const char* subject, const char* issuer,
+				   const char* fingerprint, BOOL host_mismatch)
+{
+	printf("Certificate details:\n");
+	printf("\tSubject: %s\n", subject);
+	printf("\tIssuer: %s\n", issuer);
+	printf("\tThumbprint: %s\n", fingerprint);
+	printf("The above X.509 certificate could not be verified, possibly because you do not have\n"
+		"the CA certificate in your certificate store, or the certificate has expired.\n"
+		"Please look at the documentation on how to create local certificate store for a private CA.\n");
+
+	return client_cli_accept_certificate(instance->settings);
+}
+
+/** Callback set in the rdp_freerdp structure, and used to make a certificate validation
+ *  when a stored certificate does not match the remote counterpart.
+ *  This function will actually be called by tls_verify_certificate().
+ *  @see rdp_client_connect() and tls_connect()
+ *  @param instance - pointer to the rdp_freerdp structure that contains the connection settings
+ *  @param common_name
+ *  @param subject
+ *  @param issuer
+ *  @param fingerprint
+ *  @param old_subject
+ *  @param old_issuer
+ *  @param old_fingerprint
+ *  @return 1 if the certificate is trusted, 2 if temporary trusted, 0 otherwise.
+ */
+DWORD client_cli_verify_changed_certificate(freerdp* instance, const char* common_name,
+					   const char* subject, const char* issuer,
+					   const char* fingerprint,
+					   const char* old_subject, const char* old_issuer,
+					   const char* old_fingerprint)
+{
+	printf("!!! Certificate has changed !!!\n");
+	printf("\n");
+	printf("New Certificate details:\n");
+	printf("\tSubject: %s\n", subject);
+	printf("\tIssuer: %s\n", issuer);
+	printf("\tThumbprint: %s\n", fingerprint);
+	printf("\n");
+	printf("Old Certificate details:\n");
+	printf("\tSubject: %s\n", old_subject);
+	printf("\tIssuer: %s\n", old_issuer);
+	printf("\tThumbprint: %s\n", old_fingerprint);
+	printf("\n");
+	printf("The above X.509 certificate does not match the certificate used for previous connections.\n"
+		"This may indicate that the certificate has been tampered with.\n"
+		"Please contact the administrator of the RDP server and clarify.\n");
+
+	return client_cli_accept_certificate(instance->settings);
+}
+
 

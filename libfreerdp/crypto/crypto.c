@@ -404,7 +404,8 @@ char* crypto_cert_subject(X509* xcert)
 char* crypto_cert_subject_common_name(X509* xcert, int* length)
 {
 	int index;
-	BYTE* common_name;
+	BYTE* common_name_raw;
+	char* common_name;
 	X509_NAME* subject_name;
 	X509_NAME_ENTRY* entry;
 	ASN1_STRING* entry_data;
@@ -429,10 +430,13 @@ char* crypto_cert_subject_common_name(X509* xcert, int* length)
 	if (entry_data == NULL)
 		return NULL;
 
-	*length = ASN1_STRING_to_UTF8(&common_name, entry_data);
+	*length = ASN1_STRING_to_UTF8(&common_name_raw, entry_data);
 
 	if (*length < 0)
 		return NULL;
+
+	common_name = _strdup((char*)common_name_raw);
+	OPENSSL_free(common_name_raw);
 
 	return (char*) common_name;
 }

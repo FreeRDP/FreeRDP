@@ -608,6 +608,31 @@ BOOL wf_verify_certificate(freerdp* instance, char* subject, char* issuer, char*
 	return TRUE;
 }
 
+static DWORD wf_verify_changed_certificate(freerdp* instance, const char* common_name,
+					   const char* subject, const char* issuer,
+					   const char* fingerprint,
+					   const char* old_subject, const char* old_issuer,
+					   const char* old_fingerprint)
+{
+	char answer;
+
+	WLog_ERR(TAG, "!!! Certificate has changed !!!");
+	WLog_ERR(TAG, "New Certificate details:");
+	WLog_ERR(TAG, "\tSubject: %s", subject);
+	WLog_ERR(TAG, "\tIssuer: %s", issuer);
+	WLog_ERR(TAG, "\tThumbprint: %s", fingerprint);
+	WLog_ERR(TAG, "Old Certificate details:");
+	WLog_ERR(TAG, "\tSubject: %s", old_subject);
+	WLog_ERR(TAG, "\tIssuer: %s", old_issuer);
+	WLog_ERR(TAG, "\tThumbprint: %s", old_fingerprint);
+	WLog_ERR(TAG, "The above X.509 certificate does not match the certificate used for previous connections. "
+		"This may indicate that the certificate has been tampered with."
+		"Please contact the administrator of the RDP server and clarify.");
+
+	return 0;
+}
+
+
 static BOOL wf_auto_reconnect(freerdp* instance)
 {
 	wfContext* wfc = (wfContext *)instance->context;
@@ -1081,6 +1106,7 @@ BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->Authenticate = wf_authenticate;
 	instance->GatewayAuthenticate = wf_gw_authenticate;
 	instance->VerifyCertificate = wf_verify_certificate;
+	instance->VerifyChangedCertificate = wf_verify_changed_certificate;
 
 	wfc->instance = instance;
 	wfc->settings = instance->settings;

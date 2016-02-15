@@ -94,6 +94,18 @@ FREERDP_API int freerdp_client_settings_write_connection_file(const rdpSettings*
 
 FREERDP_API int freerdp_client_settings_parse_assistance_file(rdpSettings* settings, const char* filename);
 
+FREERDP_API BOOL client_cli_authenticate(freerdp* instance, char** username, char** password, char** domain);
+FREERDP_API BOOL client_cli_gw_authenticate(freerdp* instance, char** username, char** password, char** domain);
+
+FREERDP_API DWORD client_cli_verify_certificate(freerdp* instance, const char* common_name,
+				   const char* subject, const char* issuer,
+				   const char* fingerprint, BOOL host_mismatch);
+
+FREERDP_API DWORD client_cli_verify_changed_certificate(freerdp* instance, const char* common_name,
+					   const char* subject, const char* issuer,
+					   const char* fingerprint,
+					   const char* old_subject, const char* old_issuer,
+					   const char* old_fingerprint);
 #ifdef __cplusplus
 }
 #endif
