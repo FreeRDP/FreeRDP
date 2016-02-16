@@ -33,6 +33,9 @@
 #include <winpr/debug.h>
 #include <winpr/cmdline.h>
 
+#define __COREFOUNDATION_CFPLUGINCOM__ 1
+#define IUNKNOWN_C_GUTS void *_reserved; void* QueryInterface; void* AddRef; void* Release
+
 #include <CoreAudio/CoreAudioTypes.h>
 #include <CoreAudio/CoreAudio.h>
 #include <AudioToolbox/AudioToolbox.h>
