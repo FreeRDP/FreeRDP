@@ -204,8 +204,7 @@ static int rdp_security_stream_init(rdpRdp* rdp, wStream* s, BOOL sec_header)
 int rdp_init_stream(rdpRdp* rdp, wStream* s)
 {
 	Stream_Seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
-	rdp_security_stream_init(rdp, s, FALSE);
-	return 0;
+	return rdp_security_stream_init(rdp, s, FALSE);
 }
 
 wStream* rdp_send_stream_init(rdpRdp* rdp)
