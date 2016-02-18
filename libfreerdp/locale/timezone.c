@@ -1538,21 +1538,33 @@ char* freerdp_get_unix_timezone_identifier()
 
 		if (length < 2)
 		{
+#if defined(ANDROID)
+			pclose(fp) ;
+#else
 			fclose(fp) ;
+#endif
 			return NULL;
 		}
 
 		tzid = (char*) malloc(length + 1);
 		if (!tzid)
 		{
-			fclose(fp);
+#if defined(ANDROID)
+			pclose(fp) ;
+#else
+			fclose(fp) ;
+#endif
 			return NULL;
 		}
 
 		if (fread(tzid, length, 1, fp) != 1)
 		{
 			free(tzid);
-			fclose(fp);
+#if defined(ANDROID)
+			pclose(fp) ;
+#else
+			fclose(fp) ;
+#endif
 			return NULL;
 		}
 		tzid[length] = '\0';
@@ -1560,7 +1572,11 @@ char* freerdp_get_unix_timezone_identifier()
 		if (tzid[length - 1] == '\n')
 			tzid[length - 1] = '\0';
 
-		fclose(fp);
+#if defined(ANDROID)
+			pclose(fp) ;
+#else
+			fclose(fp) ;
+#endif
 
 		return tzid;
 	}
