@@ -1584,7 +1584,7 @@ char* freerdp_get_unix_timezone_identifier()
 		return tzid;
 	}
 
-	tzid = freerdp_get_unix_timezone_identifier_from_file(FILE* fp);
+	tzid = freerdp_get_unix_timezone_identifier_from_file();
 	if (tzid != NULL)
 	{
 		return tzid;
