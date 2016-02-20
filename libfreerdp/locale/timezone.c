@@ -1505,10 +1505,70 @@ static UINT64 freerdp_windows_gmtime()
 	return windows_time;
 }
 
+char* freerdp_read_unix_timezone_identifier_from_file(FILE* fp)
+{
+	char* tzid = NULL;
+	
+	fseek(fp, 0, SEEK_END);
+	length = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+
+	if (length < 2)
+	{
+		return NULL;
+	}
+
+	tzid = (char*) malloc(length + 1);
+	if (!tzid)
+	{
+		return NULL;
+	}
+
+	if (fread(tzid, length, 1, fp) != 1)
+	{
+		free(tzid);
+		return NULL;
+	}
+	
+	tzid[length] = '\0';
+	if (tzid[length - 1] == '\n')
+	{
+		tzid[length - 1] = '\0';
+	}
+
+}
+
+char* freerdp_get_unix_timezone_identifier_from_file()
+{
+	FILE* fp;
+	char* tzid = NULL;
+	
+#if defined(ANDROID)
+	fp = popen("getprop persist.sys.timezone", "r");
+#elif defined(__FreeBSD__) || defined(__OpenBSD__)
+	fp = fopen("/var/db/zoneinfo", "r");
+#else
+	fp = fopen("/etc/timezone", "r");
+#endif
+
+	if (NULL == fp )
+	{
+		return NULL;
+	}
+
+	tzid = freerdp_read_unix_timezone_identifier_from_file(FILE* fp);
+
+#if defined(ANDROID)
+	pclose(fp) ;
+#else
+	fclose(fp) ;
+#endif
+	return tzid;
+}
+
 char* freerdp_get_unix_timezone_identifier()
 {
 #ifndef _WIN32
-	FILE* fp;
 	ssize_t len;
 	char* tz_env;
 	size_t length;
@@ -1523,63 +1583,12 @@ char* freerdp_get_unix_timezone_identifier()
 		return tzid;
 	}
 
-#if defined(ANDROID)
-	fp = popen("getprop persist.sys.timezone", "r");
-#elif defined(__FreeBSD__) || defined(__OpenBSD__)
-	fp = fopen("/var/db/zoneinfo", "r");
-#else
-	fp = fopen("/etc/timezone", "r");
-#endif
-	if (fp != NULL)
+	tzid = freerdp_get_unix_timezone_identifier_from_file(FILE* fp);
+	if (tzid != NULL)
 	{
-		fseek(fp, 0, SEEK_END);
-		length = ftell(fp);
-		fseek(fp, 0, SEEK_SET);
-
-		if (length < 2)
-		{
-#if defined(ANDROID)
-			pclose(fp) ;
-#else
-			fclose(fp) ;
-#endif
-			return NULL;
-		}
-
-		tzid = (char*) malloc(length + 1);
-		if (!tzid)
-		{
-#if defined(ANDROID)
-			pclose(fp) ;
-#else
-			fclose(fp) ;
-#endif
-			return NULL;
-		}
-
-		if (fread(tzid, length, 1, fp) != 1)
-		{
-			free(tzid);
-#if defined(ANDROID)
-			pclose(fp) ;
-#else
-			fclose(fp) ;
-#endif
-			return NULL;
-		}
-		tzid[length] = '\0';
-
-		if (tzid[length - 1] == '\n')
-			tzid[length - 1] = '\0';
-
-#if defined(ANDROID)
-			pclose(fp) ;
-#else
-			fclose(fp) ;
-#endif
-
 		return tzid;
 	}
+
 
 	/*
 	 * On linux distros such as Redhat or Archlinux, a symlink at /etc/localtime
