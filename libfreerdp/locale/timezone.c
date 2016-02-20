@@ -1536,6 +1536,7 @@ char* freerdp_read_unix_timezone_identifier_from_file(FILE* fp)
 		tzid[length - 1] = '\0';
 	}
 
+	return tzid;
 }
 
 char* freerdp_get_unix_timezone_identifier_from_file()
