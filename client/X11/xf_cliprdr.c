@@ -44,6 +44,8 @@
 
 #define TAG CLIENT_TAG("x11")
 
+#define MAX_CLIPBOARD_FORMATS	255
+
 struct xf_cliprdr_format
 {
 	Atom atom;
@@ -341,6 +343,12 @@ static CLIPRDR_FORMAT* xf_cliprdr_parse_server_format_list(BYTE* data, size_t le
 
 	Stream_Read_UINT32(s, *numFormats);
 
+	if (*numFormats > MAX_CLIPBOARD_FORMATS)
+	{
+		WLog_ERR(TAG, "unexpectedly large number of formats: %u", *numFormats);
+		goto error;
+	}
+
 	if (!(formats = (CLIPRDR_FORMAT*) calloc(*numFormats, sizeof(CLIPRDR_FORMAT))))
 	{
 		WLog_ERR(TAG, "failed to allocate format list");
@@ -349,6 +357,9 @@ static CLIPRDR_FORMAT* xf_cliprdr_parse_server_format_list(BYTE* data, size_t le
 
 	for (i = 0; i < *numFormats; i++)
 	{
+		const char* formatName = NULL;
+		size_t formatNameLength = 0;
+
 		if (Stream_GetRemainingLength(s) < sizeof(UINT32))
 		{
 			WLog_ERR(TAG, "unexpected end of serialized format list");
@@ -356,8 +367,18 @@ static CLIPRDR_FORMAT* xf_cliprdr_parse_server_format_list(BYTE* data, size_t le
 		}
 
 		Stream_Read_UINT32(s, formats[i].formatId);
-		formats[i].formatName = strdup((char*) Stream_Pointer(s));
-		Stream_Seek(s, strlen((char*) Stream_Pointer(s)) + 1);
+
+		formatName = (const char*) Stream_Pointer(s);
+		formatNameLength = strnlen(formatName, Stream_GetRemainingLength(s));
+
+		if (formatNameLength == Stream_GetRemainingLength(s))
+		{
+			WLog_ERR(TAG, "missing terminating null byte, %zu bytes left to read", formatNameLength);
+			goto error;
+		}
+
+		formats[i].formatName = strndup(formatName, formatNameLength);
+		Stream_Seek(s, formatNameLength + 1);
 	}
 
 	Stream_Free(s, FALSE);
