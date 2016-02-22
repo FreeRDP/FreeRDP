@@ -38,7 +38,7 @@
 		"A configuration error prevented a connection to be established."
 
 #define ERRCONNECT_CONNECT_UNDEFINED_STRING \
-		"A undefined connection error occured."
+		"A undefined connection error occurred."
 
 #define ERRCONNECT_POST_CONNECT_FAILED_STRING \
 		"The connection attempt was aborted due to post connect configuration errors."

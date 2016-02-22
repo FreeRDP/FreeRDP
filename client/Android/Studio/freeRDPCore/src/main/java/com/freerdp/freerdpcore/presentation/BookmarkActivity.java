@@ -575,7 +575,7 @@ public class BookmarkActivity extends PreferenceActivity implements
 		if (!verifyFailed && sharedPreferences.getInt("bookmark.port", -1) <= 0)
 			verifyFailed = true;
 
-		// if an error occured - display toast and return false
+		// if an error occurred - display toast and return false
 		return (!verifyFailed);
 	}
 

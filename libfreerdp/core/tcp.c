@@ -489,7 +489,7 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 	 */
 	if (buf && num && !ringbuffer_write(&ptr->xmitBuffer, (const BYTE*) buf, num))
 	{
-		WLog_ERR(TAG, "an error occured when writing (num: %d)", num);
+		WLog_ERR(TAG, "an error occurred when writing (num: %d)", num);
 		return -1;
 	}
 
