@@ -29,30 +29,30 @@ include(FindPkgConfig)
 
 if(PKG_CONFIG_FOUND)
     pkg_check_modules(WAYLAND_SCANNER_PKG wayland-scanner)    
-    pkg_check_modules(WAYLAND_CLIENT wayland-client)
-    pkg_check_modules(XKBCOMMON xkbcommon)
+    pkg_check_modules(WAYLAND_CLIENT_PKG wayland-client)
+    pkg_check_modules(XKBCOMMON_PC_PKG xkbcommon)
 endif()
 
 find_program(WAYLAND_SCANNER wayland-scanner
-    HINTS "${WAYLAND_SCANNER_PREFIX}/bin"
+    HINTS "${WAYLAND_SCANNER_PKG_PREFIX}/bin"
 )
 
 find_path(WAYLAND_INCLUDE_DIR wayland-client.h
-    HINTS ${WAYLAND_CLIENT_INCLUDE_DIRS}
+    HINTS ${WAYLAND_CLIENT_PKG_INCLUDE_DIRS}
 )
 
 find_library(WAYLAND_LIBS 
     NAMES "wayland-client"
-    HINTS "${WAYLAND_CLIENT_LIBRARIES}" 
+    HINTS "${WAYLAND_CLIENT_PKG_LIBRARIES}"
 )
 
 find_path(XKBCOMMON_INCLUDE_DIR xkbcommon/xkbcommon.h
-    HINTS ${XKBCOMMON_INCLUDE_DIRS}
+    HINTS ${XKBCOMMON_PC_INCLUDE_DIRS}
 )
 
 find_library(XKBCOMMON_LIBS 
     NAMES xkbcommon
-    HINTS "${XKBCOMMON_LIBRARIES}" 
+    HINTS "${XKBCOMMON_PC_LIBRARIES}"
 )
 
 include(FindPackageHandleStandardArgs)

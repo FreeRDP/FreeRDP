@@ -696,9 +696,11 @@ static void seat_handle_capabilities(void *data, struct wl_seat *seat, enum wl_s
 		wl_pointer_set_user_data(input->pointer, input);
 		wl_pointer_add_listener(input->pointer, &pointer_listener, input);
 	} else if (!(caps & WL_SEAT_CAPABILITY_POINTER) && input->pointer) {
+#ifdef WL_POINTER_RELEASE_SINCE_VERSION
 		if (input->seat_version >= WL_POINTER_RELEASE_SINCE_VERSION)
 			wl_pointer_release(input->pointer);
 		else
+#endif
 			wl_pointer_destroy(input->pointer);
 		input->pointer = NULL;
 	}
@@ -708,9 +710,11 @@ static void seat_handle_capabilities(void *data, struct wl_seat *seat, enum wl_s
 		wl_keyboard_set_user_data(input->keyboard, input);
 		wl_keyboard_add_listener(input->keyboard, &keyboard_listener, input);
 	} else if (!(caps & WL_SEAT_CAPABILITY_KEYBOARD) && input->keyboard) {
+#ifdef WL_KEYBOARD_RELEASE_SINCE_VERSION
 		if (input->seat_version >= WL_KEYBOARD_RELEASE_SINCE_VERSION)
 			wl_keyboard_release(input->keyboard);
 		else
+#endif
 			wl_keyboard_destroy(input->keyboard);
 		input->keyboard = NULL;
 	}
@@ -720,9 +724,11 @@ static void seat_handle_capabilities(void *data, struct wl_seat *seat, enum wl_s
 		wl_touch_set_user_data(input->touch, input);
 		wl_touch_add_listener(input->touch, &touch_listener, input);
 	} else if (!(caps & WL_SEAT_CAPABILITY_TOUCH) && input->touch) {
+#ifdef WL_TOUCH_RELEASE_SINCE_VERSION
 		if (input->seat_version >= WL_TOUCH_RELEASE_SINCE_VERSION)
 			wl_touch_release(input->touch);
 		else
+#endif
 			wl_touch_destroy(input->touch);
 		input->touch = NULL;
 	}
@@ -788,9 +794,11 @@ error_xkb_context:
 
 void UwacSeatDestroy(UwacSeat *s) {
 	if (s->seat) {
+#ifdef WL_SEAT_RELEASE_SINCE_VERSION
 		if (s->seat_version >= WL_SEAT_RELEASE_SINCE_VERSION)
 			wl_seat_release(s->seat);
 		else
+#endif
 			wl_seat_destroy(s->seat);
 	}
 	s->seat = NULL;
@@ -802,23 +810,29 @@ void UwacSeatDestroy(UwacSeat *s) {
 	xkb_context_unref(s->xkb_context);
 
 	if (s->pointer) {
+#ifdef WL_POINTER_RELEASE_SINCE_VERSION
 		if (s->seat_version >= WL_POINTER_RELEASE_SINCE_VERSION)
 			wl_pointer_release(s->pointer);
 		else
+#endif
 			wl_pointer_destroy(s->pointer);
 	}
 
 	if (s->touch) {
+#ifdef WL_TOUCH_RELEASE_SINCE_VERSION
 		if (s->seat_version >= WL_TOUCH_RELEASE_SINCE_VERSION)
 			wl_touch_release(s->touch);
 		else
+#endif
 			wl_touch_destroy(s->touch);
 	}
 
 	if (s->keyboard) {
+#ifdef WL_KEYBOARD_RELEASE_SINCE_VERSION
 		if (s->seat_version >= WL_KEYBOARD_RELEASE_SINCE_VERSION)
 			wl_keyboard_release(s->keyboard);
 		else
+#endif
 			wl_keyboard_destroy(s->keyboard);
 	}
 
