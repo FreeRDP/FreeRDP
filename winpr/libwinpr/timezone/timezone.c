@@ -1484,101 +1484,63 @@ static UINT64 freerdp_windows_gmtime()
 	return windows_time;
 }
 
-static char* freerdp_get_unix_timezone_identifier()
+static char* freerdp_read_unix_timezone_identifier_from_file(FILE* fp)
 {
-	FILE* fp;
-	ssize_t len;
-	char* tz_env;
-	size_t length;
+	long length;
 	char* tzid = NULL;
-	char buf[1024];
 
-	tz_env = getenv("TZ");
+	if (fseek(fp, 0, SEEK_END) != 0)
+		return NULL;
+	length = ftell(fp);
+	if (fseek(fp, 0, SEEK_SET) != 0)
+		return NULL;
 
-	if (tz_env != NULL)
+	if (length < 2)
+		return NULL;
+
+	tzid = (char*) malloc(length + 1);
+	if (!tzid)
+		return NULL;
+
+	if (fread(tzid, length, 1, fp) != 1)
 	{
-		tzid = _strdup(tz_env);
-		return tzid;
+		free(tzid);
+		return NULL;
 	}
 
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
+	tzid[length] = '\0';
+	if (tzid[length - 1] == '\n')
+		tzid[length - 1] = '\0';
+
+	return tzid;
+}
+
+static char* freerdp_get_unix_timezone_identifier_from_file(void)
+{
+	FILE* fp;
+	char* tzid = NULL;
+
+#if defined(ANDROID)
+	fp = popen("getprop persist.sys.timezone", "r");
+#elif defined(__FreeBSD__) || defined(__OpenBSD__)
 	fp = fopen("/var/db/zoneinfo", "r");
 #else
 	fp = fopen("/etc/timezone", "r");
 #endif
-	if (fp != NULL)
-	{
-		fseek(fp, 0, SEEK_END);
-		length = ftell(fp);
-		fseek(fp, 0, SEEK_SET);
 
-		if (length < 2)
-		{
-			fclose(fp) ;
-			return NULL;
-		}
+	if (NULL == fp )
+		return NULL;
 
-		tzid = (char*) malloc(length + 1);
-		if (!tzid)
-		{
-			fclose(fp);
-			return NULL;
-		}
+	tzid = freerdp_read_unix_timezone_identifier_from_file(fp);
 
-		if (fread(tzid, length, 1, fp) != 1)
-		{
-			free(tzid);
-			fclose(fp);
-			return NULL;
-		}
-		tzid[length] = '\0';
-
-		if (tzid[length - 1] == '\n')
-			tzid[length - 1] = '\0';
-
-		fclose(fp);
-
-		return tzid;
-	}
-
-	/*
-	 * On linux distros such as Redhat or Archlinux, a symlink at /etc/localtime
-	 * will point to /usr/share/zoneinfo/region/place where region/place could be
-	 * America/Montreal for example.
-	 */
-
-	if ((len = readlink("/etc/localtime", buf, sizeof(buf) - 1)) != -1)
-	{
-		int num = 0;
-		int pos = len;
-
-		buf[len] = '\0';
-
-		/* find the position of the 2nd to last "/" */
-
-		while (num < 2)
-		{
-			if (pos == 0)
-				break;
-
-			pos -= 1;
-
-			if (buf[pos] == '/')
-				num++;
-		}
-
-		tzid = (char*) malloc(len - pos + 1);
-		if (!tzid)
-			return NULL;
-
-		strncpy(tzid, buf + pos + 1, len - pos);
-
-		return tzid;
-	}
-
-	WLog_ERR(TAG,  "Unable to detect time zone");
+#if defined(ANDROID)
+	pclose(fp) ;
+#else
+	fclose(fp) ;
+#endif
 	return tzid;
 }
+
 
 static BOOL freerdp_match_unix_timezone_identifier_with_list(const char* tzid, const char* list)
 {
@@ -1613,7 +1575,7 @@ static TIME_ZONE_ENTRY* freerdp_detect_windows_time_zone(UINT32 bias)
 	char* tzid;
 	TIME_ZONE_ENTRY* timezone;
 
-	tzid = freerdp_get_unix_timezone_identifier();
+	tzid = freerdp_get_unix_timezone_identifier_from_file();
 
 	if (tzid == NULL)
 		return NULL;
@@ -1705,9 +1667,9 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 		tz->DaylightBias = dtz->Bias;
 
 		ConvertToUnicode(CP_UTF8, 0, dtz->StandardName, sizeof(dtz->StandardName),
-				 &tz->StandardName, sizeof(tz->StandardName)/sizeof(WCHAR));
+				 (WCHAR**)&tz->StandardName, sizeof(tz->StandardName)/sizeof(WCHAR));
 		ConvertToUnicode(CP_UTF8, 0, dtz->DaylightName, sizeof(dtz->DaylightName),
-				 &tz->DaylightName, sizeof(tz->DaylightName)/sizeof(WCHAR));
+				 (WCHAR**)&tz->DaylightName, sizeof(tz->DaylightName)/sizeof(WCHAR));
 
 		if ((dtz->SupportsDST) && (dtz->RuleTableCount > 0))
 		{
