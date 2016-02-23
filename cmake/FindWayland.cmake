@@ -43,7 +43,7 @@ find_path(WAYLAND_INCLUDE_DIR wayland-client.h
 
 find_library(WAYLAND_LIBS 
     NAMES "wayland-client"
-    HINTS "${WAYLAND_CLIENT_PKG_LIBRARIES}"
+    HINTS "${WAYLAND_CLIENT_PKG_LIBRARY_DIRS}"
 )
 
 find_path(XKBCOMMON_INCLUDE_DIR xkbcommon/xkbcommon.h
@@ -52,7 +52,7 @@ find_path(XKBCOMMON_INCLUDE_DIR xkbcommon/xkbcommon.h
 
 find_library(XKBCOMMON_LIBS 
     NAMES xkbcommon
-    HINTS "${XKBCOMMON_PC_LIBRARIES}"
+    HINTS "${XKBCOMMON_PC_LIBRARY_DIRS}"
 )
 
 include(FindPackageHandleStandardArgs)
