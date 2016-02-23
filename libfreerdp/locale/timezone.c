@@ -1539,7 +1539,8 @@ char* freerdp_get_unix_timezone_identifier()
 	 * America/Montreal for example.
 	 */
 	
-	if ((len = readlink("/etc/localtime", buf, sizeof(buf) - 1)) != -1)
+	if ((len = readlink("/etc/localtime", buf, sizeof(buf) - 1)) != -1 ||
+	    (len = readlink("/etc/TZ", buf, sizeof(buf) - 1)) != -1)
 	{
 		int num = 0;
 		int pos = len;
