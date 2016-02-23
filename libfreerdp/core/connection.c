@@ -312,8 +312,6 @@ BOOL rdp_client_disconnect(rdpRdp* rdp)
 {
 	BOOL status;
 
-	ResetEvent(rdp->context->abortEvent);
-
 	if (rdp->settingsCopy)
 	{
 		freerdp_settings_free(rdp->settingsCopy);

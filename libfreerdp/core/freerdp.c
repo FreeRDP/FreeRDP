@@ -383,6 +383,7 @@ BOOL freerdp_reconnect(freerdp* instance)
 	BOOL status;
 	rdpRdp* rdp = instance->context->rdp;
 
+	ResetEvent(instance->context->abortEvent);
 	status = rdp_client_reconnect(rdp);
 
 	return status;
