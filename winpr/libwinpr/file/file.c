@@ -24,7 +24,11 @@
 
 #include <winpr/file.h>
 
-#ifndef _WIN32
+#ifdef _WIN32
+
+#include <io.h>
+
+#else /* _WIN32 */
 
 #include "../log.h"
 #define TAG WINPR_TAG("file")
@@ -577,9 +581,9 @@ BOOL SetStdHandleEx(DWORD dwStdHandle, HANDLE hNewHandle, HANDLE* phOldHandle)
 
 HANDLE GetFileHandleForFileDescriptor(int fd)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	return (HANDLE)_get_osfhandle(fd);
-#else /* WIN32 */
+#else /* _WIN32 */
 	WINPR_FILE *pFile;
 	FILE* fp;
 	int flags;
@@ -607,7 +611,7 @@ HANDLE GetFileHandleForFileDescriptor(int fd)
 		return INVALID_HANDLE_VALUE;
 
 	return (HANDLE)pFile;
-#endif /* WIN32 */
+#endif /* _WIN32 */
 }
 
 
