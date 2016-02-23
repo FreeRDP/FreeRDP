@@ -21,6 +21,8 @@
 #ifndef FREERDP_SETTINGS_H
 #define FREERDP_SETTINGS_H
 
+#include <winpr/timezone.h>
+
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
@@ -268,32 +270,6 @@ typedef struct _TARGET_NET_ADDRESS TARGET_NET_ADDRESS;
 #define ORIENTATION_PORTRAIT			90
 #define ORIENTATION_LANDSCAPE_FLIPPED	180
 #define ORIENTATION_PORTRAIT_FLIPPED	270
-
-/* SYSTEM_TIME */
-typedef struct
-{
-	UINT16 wYear;
-	UINT16 wMonth;
-	UINT16 wDayOfWeek;
-	UINT16 wDay;
-	UINT16 wHour;
-	UINT16 wMinute;
-	UINT16 wSecond;
-	UINT16 wMilliseconds;
-} SYSTEM_TIME;
-
-/* TIME_ZONE_INFORMATION */
-struct _TIME_ZONE_INFO
-{
-	UINT32 bias;
-	char standardName[32];
-	SYSTEM_TIME standardDate;
-	UINT32 standardBias;
-	char daylightName[32];
-	SYSTEM_TIME daylightDate;
-	UINT32 daylightBias;
-};
-typedef struct _TIME_ZONE_INFO TIME_ZONE_INFO;
 
 /* ARC_CS_PRIVATE_PACKET */
 typedef struct
@@ -977,7 +953,7 @@ struct rdp_settings
 	UINT64 padding0896[896 - 837]; /* 837 */
 
 	/* Client Info (Time Zone) */
-	ALIGN64 TIME_ZONE_INFO* ClientTimeZone; /* 896 */
+	ALIGN64 LPTIME_ZONE_INFORMATION ClientTimeZone; /* 896 */
 	ALIGN64 char* DynamicDSTTimeZoneKeyName; /* 897 */
 	ALIGN64 BOOL DynamicDaylightTimeDisabled; /* 898 */
 	UINT64 padding0960[960 - 899]; /* 899 */
