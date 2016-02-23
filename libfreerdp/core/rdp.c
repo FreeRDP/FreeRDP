@@ -340,10 +340,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 			return FALSE;
 
 		if (!rdp->instance)
-		{
-			freerdp_abort_connect(rdp->instance);
 			return FALSE;
-		}
 
 		context = rdp->instance->context;
 
