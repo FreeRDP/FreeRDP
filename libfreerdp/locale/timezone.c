@@ -1567,9 +1567,11 @@ char* freerdp_get_unix_timezone_identifier()
 	 * On linux distros such as Redhat or Archlinux, a symlink at /etc/localtime
 	 * will point to /usr/share/zoneinfo/region/place where region/place could be
 	 * America/Montreal for example.
+	 * Some distributions do have to symlink at /etc/TZ.
 	 */
 	
-	if ((len = readlink("/etc/localtime", buf, sizeof(buf) - 1)) != -1)
+	if ((len = readlink("/etc/localtime", buf, sizeof(buf) - 1)) != -1 ||
+		(len = readlink("/etc/TZ", buf, sizeof(buf) - 1)) != -1)
 	{
 		int num = 0;
 		int pos = len;

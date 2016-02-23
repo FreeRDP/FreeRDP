@@ -1684,7 +1684,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			{
 				id = (unsigned long int) freerdp_map_keyboard_layout_name_to_id(arg->Value);
 				if (id == -1)
-					WLog_ERR(TAG, "A problem occured while mapping the layout name to id");
+					WLog_ERR(TAG, "A problem occurred while mapping the layout name to id");
 				else if (id == 0)
 				{
 					WLog_ERR(TAG, "Could not identify keyboard layout: %s", arg->Value);

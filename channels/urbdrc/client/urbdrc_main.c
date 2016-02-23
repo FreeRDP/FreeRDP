@@ -1026,7 +1026,7 @@ static void* urbdrc_search_usb_device(void* arg)
 			}
 			else
 			{
-				WLog_ERR(TAG,  "No Device from receive_device(). An error occured.");
+				WLog_ERR(TAG,  "No Device from receive_device(). An error occurred.");
 			}
 		}
 	}
