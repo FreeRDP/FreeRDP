@@ -92,10 +92,10 @@ endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/shadow")
 
-# command-line executable
+# subsystem library
 
-set(MODULE_NAME "freerdp-shadow-cli")
-set(MODULE_PREFIX "FREERDP_SERVER_SHADOW_CLI")
+set(MODULE_NAME "freerdp-shadow-subsystem")
+set(MODULE_PREFIX "FREERDP_SERVER_SHADOW_SUBSYSTEM")
 
 if(WIN32)
 	set(WITH_SHADOW_WIN 1)
@@ -225,9 +225,6 @@ if(WITH_SHADOW_MAC)
 	list(APPEND ${MODULE_PREFIX}_MAC_LIBS ${IOKIT} ${IOSURFACE} ${CARBON})
 endif()
 
-set(${MODULE_PREFIX}_SRCS
-	shadow.c)
-
 set(${MODULE_PREFIX}_WIN_SRCS
 	Win/win_rdp.c
 	Win/win_rdp.h
@@ -248,19 +245,45 @@ set(${MODULE_PREFIX}_MAC_SRCS
 
 if(WITH_SHADOW_WIN)
 	add_definitions(-DWITH_SHADOW_WIN)
-	list(APPEND ${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_WIN_SRCS})
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_WIN_SRCS})
 	list(APPEND ${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_WIN_LIBS})
 elseif(WITH_SHADOW_X11)
 	add_definitions(-DWITH_SHADOW_X11)
-	list(APPEND ${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_X11_SRCS})
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_X11_SRCS})
 	list(APPEND ${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_X11_LIBS})
 elseif(WITH_SHADOW_MAC)
 	add_definitions(-DWITH_SHADOW_MAC)
-	list(APPEND ${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_MAC_SRCS})
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_MAC_SRCS})
 	list(APPEND ${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_MAC_LIBS})
 endif()
 
 list(APPEND ${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_AUTH_LIBS})
+
+add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-shadow)
+
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+
+if (WITH_LIBRARY_VERSIONING)
+	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
+endif()
+
+install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT server)
+if (WITH_DEBUG_SYMBOLS AND MSVC)
+	install(FILES ${CMAKE_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${CMAKE_INSTALL_LIBDIR}
+		COMPONENT symbols)
+endif()
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/shadow")
+
+# command-line executable
+
+set(MODULE_NAME "freerdp-shadow-cli")
+set(MODULE_PREFIX "FREERDP_SERVER_SHADOW_CLI")
+
+set(${MODULE_PREFIX}_SRCS
+	shadow.c)
 
 	# On windows create dll version information.
 # Vendor, product and year are already set in top level CMakeLists.txt
@@ -280,7 +303,7 @@ endif()
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-shadow)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-shadow-subsystem)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
