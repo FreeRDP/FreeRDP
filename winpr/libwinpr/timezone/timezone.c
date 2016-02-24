@@ -1747,7 +1747,7 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 
 		/* 1 ... TIME_ZONE_ID_STANDARD
 		 * 2 ... TIME_ZONE_ID_DAYLIGHT */
-		return dtz->SupportsDST ? 2 : 1;
+		return local_time->tm_isdst ? 2 : 1;
 	}
 	else
 	{
