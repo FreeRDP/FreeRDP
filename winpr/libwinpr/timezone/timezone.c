@@ -1471,7 +1471,7 @@ const WINDOWS_TZID_ENTRY WindowsTimeZoneIdTable[] =
 	{ "Yakutsk Standard Time", "Asia/Yakutsk" }
 };
 
-static UINT64 freerdp_windows_gmtime()
+static UINT64 winpr_windows_gmtime()
 {
 	time_t unix_time;
 	UINT64 windows_time;
@@ -1484,7 +1484,7 @@ static UINT64 freerdp_windows_gmtime()
 	return windows_time;
 }
 
-static char* freerdp_read_unix_timezone_identifier_from_file(FILE* fp)
+static char* winpr_read_unix_timezone_identifier_from_file(FILE* fp)
 {
 	long length;
 	char* tzid = NULL;
@@ -1515,7 +1515,7 @@ static char* freerdp_read_unix_timezone_identifier_from_file(FILE* fp)
 	return tzid;
 }
 
-static char* freerdp_get_timezone_from_link(void)
+static char* winpr_get_timezone_from_link(void)
 {
 	const char* links[] =
 	{
@@ -1571,7 +1571,7 @@ static char* freerdp_get_timezone_from_link(void)
 	return NULL;
 }
 
-static char* freerdp_get_unix_timezone_identifier_from_file(void)
+static char* winpr_get_unix_timezone_identifier_from_file(void)
 {
 	FILE* fp;
 	char* tzid = NULL;
@@ -1587,7 +1587,7 @@ static char* freerdp_get_unix_timezone_identifier_from_file(void)
 	if (NULL == fp )
 		return NULL;
 
-	tzid = freerdp_read_unix_timezone_identifier_from_file(fp);
+	tzid = winpr_read_unix_timezone_identifier_from_file(fp);
 
 #if defined(ANDROID)
 	pclose(fp) ;
@@ -1598,7 +1598,7 @@ static char* freerdp_get_unix_timezone_identifier_from_file(void)
 }
 
 
-static BOOL freerdp_match_unix_timezone_identifier_with_list(const char* tzid, const char* list)
+static BOOL winpr_match_unix_timezone_identifier_with_list(const char* tzid, const char* list)
 {
 	char* p;
 	char* list_copy;
@@ -1625,16 +1625,16 @@ static BOOL freerdp_match_unix_timezone_identifier_with_list(const char* tzid, c
 	return FALSE;
 }
 
-static TIME_ZONE_ENTRY* freerdp_detect_windows_time_zone(UINT32 bias)
+static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(UINT32 bias)
 {
 	int i, j;
 	char* tzid;
 	TIME_ZONE_ENTRY* timezone;
 
-	tzid = freerdp_get_unix_timezone_identifier_from_file();
+	tzid = winpr_get_unix_timezone_identifier_from_file();
 
 	if (tzid == NULL)
-		tzid = freerdp_get_timezone_from_link();
+		tzid = winpr_get_timezone_from_link();
 
 	if (tzid == NULL)
 		return NULL;
@@ -1646,7 +1646,7 @@ static TIME_ZONE_ENTRY* freerdp_detect_windows_time_zone(UINT32 bias)
 			if (strcmp(TimeZoneTable[i].Id, WindowsTimeZoneIdTable[j].windows) != 0)
 				continue;
 
-			if (freerdp_match_unix_timezone_identifier_with_list(tzid, WindowsTimeZoneIdTable[j].tzid))
+			if (winpr_match_unix_timezone_identifier_with_list(tzid, WindowsTimeZoneIdTable[j].tzid))
 			{
 				free(tzid);
 
@@ -1665,12 +1665,12 @@ static TIME_ZONE_ENTRY* freerdp_detect_windows_time_zone(UINT32 bias)
 	return NULL;
 }
 
-static TIME_ZONE_RULE_ENTRY* freerdp_get_current_time_zone_rule(TIME_ZONE_RULE_ENTRY* rules, UINT32 count)
+static TIME_ZONE_RULE_ENTRY* winpr_get_current_time_zone_rule(TIME_ZONE_RULE_ENTRY* rules, UINT32 count)
 {
 	int i;
 	UINT64 windows_time;
 
-	windows_time = freerdp_windows_gmtime();
+	windows_time = winpr_windows_gmtime();
 
 	for (i = 0; i < (int) count; i++)
 	{
@@ -1714,7 +1714,7 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 	WLog_DBG(TAG, "tzname[std]: %s, tzname[dst]: %s, timezone: %ld, Daylight: %d",
 			   tzname[0], tzname[1], timezone, daylight);
 
-	dtz = freerdp_detect_windows_time_zone(tz->Bias);
+	dtz = winpr_detect_windows_time_zone(tz->Bias);
 
 	if (dtz!= NULL)
 	{
@@ -1733,7 +1733,7 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 		if ((dtz->SupportsDST) && (dtz->RuleTableCount > 0))
 		{
 			TIME_ZONE_RULE_ENTRY* rule;
-			rule = freerdp_get_current_time_zone_rule(dtz->RuleTable, dtz->RuleTableCount);
+			rule = winpr_get_current_time_zone_rule(dtz->RuleTable, dtz->RuleTableCount);
 
 			if (rule != NULL)
 			{
