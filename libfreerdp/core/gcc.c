@@ -24,6 +24,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/crypto.h>
 
 #include <freerdp/log.h>
 
@@ -1178,7 +1179,7 @@ const BYTE tssk_exponent[] =
 
 BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 {
-	CryptoMd5 md5;
+	WINPR_MD5_CTX md5;
 	BYTE* sigData;
 	int expLen, keyLen, sigDataLen;
 	BYTE encryptedSignature[TSSK_KEY_LENGTH];
@@ -1375,15 +1376,9 @@ BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 
 	memcpy(signature, initial_signature, sizeof(initial_signature));
 
-	md5 = crypto_md5_init();
-	if (!md5)
-	{
-		WLog_ERR(TAG,  "unable to allocate a md5");
-		return FALSE;
-	}
-
-	crypto_md5_update(md5, sigData, sigDataLen);
-	crypto_md5_final(md5, signature);
+	winpr_MD5_Init(&md5);
+	winpr_MD5_Update(&md5, sigData, sigDataLen);
+	winpr_MD5_Final(&md5, signature);
 
 	crypto_rsa_private_encrypt(signature, sizeof(signature), TSSK_KEY_LENGTH,
 		tssk_modulus, tssk_privateExponent, encryptedSignature);

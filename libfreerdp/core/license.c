@@ -23,6 +23,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/crypto.h>
 #include <freerdp/log.h>
 
 #include "redirection.h"
@@ -384,22 +385,16 @@ BOOL license_generate_keys(rdpLicense* license)
 
 BOOL license_generate_hwid(rdpLicense* license)
 {
-	CryptoMd5 md5;
+	WINPR_MD5_CTX md5;
 	BYTE macAddress[6];
 
 	ZeroMemory(macAddress, sizeof(macAddress));
 	ZeroMemory(license->HardwareId, HWID_LENGTH);
 
-	md5 = crypto_md5_init();
+	winpr_MD5_Init(&md5);
+	winpr_MD5_Update(&md5, macAddress, sizeof(macAddress));
+	winpr_MD5_Final(&md5, &license->HardwareId[HWID_PLATFORM_ID_LENGTH]);
 
-	if (!md5)
-	{
-		WLog_ERR(TAG, "unable to allocate a md5");
-		return FALSE;
-	}
-
-	crypto_md5_update(md5, macAddress, sizeof(macAddress));
-	crypto_md5_final(md5, &license->HardwareId[HWID_PLATFORM_ID_LENGTH]);
 	return TRUE;
 }
 

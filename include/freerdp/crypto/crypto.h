@@ -26,7 +26,6 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/rc4.h>
-#include <openssl/md5.h>
 #include <openssl/hmac.h>
 #include <openssl/bn.h>
 #include <openssl/x509v3.h>
@@ -42,11 +41,6 @@
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
-
-struct crypto_md5_struct
-{
-	MD5_CTX md5_ctx;
-};
 
 struct crypto_rc4_struct
 {
@@ -72,13 +66,6 @@ struct crypto_cert_struct
 #ifdef __cplusplus
  extern "C" {
 #endif
-
-#define	CRYPTO_MD5_DIGEST_LENGTH	MD5_DIGEST_LENGTH
-typedef struct crypto_md5_struct* CryptoMd5;
-
-FREERDP_API CryptoMd5 crypto_md5_init(void);
-FREERDP_API void crypto_md5_update(CryptoMd5 md5, const BYTE* data, UINT32 length);
-FREERDP_API void crypto_md5_final(CryptoMd5 md5, BYTE* out_data);
 
 typedef struct crypto_rc4_struct* CryptoRc4;
 

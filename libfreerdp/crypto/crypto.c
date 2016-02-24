@@ -28,26 +28,6 @@
 
 #define TAG FREERDP_TAG("crypto")
 
-CryptoMd5 crypto_md5_init(void)
-{
-	CryptoMd5 md5 = malloc(sizeof(*md5));
-	if (!md5)
-		return NULL;
-	MD5_Init(&md5->md5_ctx);
-	return md5;
-}
-
-void crypto_md5_update(CryptoMd5 md5, const BYTE* data, UINT32 length)
-{
-	MD5_Update(&md5->md5_ctx, data, length);
-}
-
-void crypto_md5_final(CryptoMd5 md5, BYTE* out_data)
-{
-	MD5_Final(out_data, &md5->md5_ctx);
-	free(md5);
-}
-
 CryptoRc4 crypto_rc4_init(const BYTE* key, UINT32 length)
 {
 	CryptoRc4 rc4 = malloc(sizeof(*rc4));

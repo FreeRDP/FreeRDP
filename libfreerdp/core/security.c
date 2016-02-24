@@ -127,7 +127,7 @@ fips_oddparity_table[256] =
 static BOOL security_salted_hash(const BYTE* salt, const BYTE* input, int length,
 		const BYTE* salt1, const BYTE* salt2, BYTE* output)
 {
-	CryptoMd5 md5;
+	WINPR_MD5_CTX md5;
 	WINPR_SHA1_CTX sha1;
 	BYTE sha1_digest[WINPR_SHA1_DIGEST_LENGTH];
 
@@ -142,15 +142,10 @@ static BOOL security_salted_hash(const BYTE* salt, const BYTE* input, int length
 	winpr_SHA1_Final(&sha1, sha1_digest);
 
 	/* SaltedHash(Salt, Input, Salt1, Salt2) = MD5(S + SHA1_Digest) */
-	md5 = crypto_md5_init();
-	if (!md5)
-	{
-		WLog_ERR(TAG,  "unable to allocate a md5");
-		return FALSE;
-	}
-	crypto_md5_update(md5, salt, 48); /* Salt (48 bytes) */
-	crypto_md5_update(md5, sha1_digest, sizeof(sha1_digest)); /* SHA1_Digest */
-	crypto_md5_final(md5, output);
+	winpr_MD5_Init(&md5);
+	winpr_MD5_Update(&md5, salt, 48); /* Salt (48 bytes) */
+	winpr_MD5_Update(&md5, sha1_digest, sizeof(sha1_digest)); /* SHA1_Digest */
+	winpr_MD5_Final(&md5, output);
 	return TRUE;
 }
 
@@ -195,18 +190,13 @@ void security_mac_salt_key(const BYTE* session_key_blob, const BYTE* client_rand
 
 BOOL security_md5_16_32_32(const BYTE* in0, const BYTE* in1, const BYTE* in2, BYTE* output)
 {
-	CryptoMd5 md5;
+	WINPR_MD5_CTX md5;
 
-	md5 = crypto_md5_init();
-	if (!md5)
-	{
-		WLog_ERR(TAG,  "unable to allocate a md5");
-		return FALSE;
-	}
-	crypto_md5_update(md5, in0, 16);
-	crypto_md5_update(md5, in1, 32);
-	crypto_md5_update(md5, in2, 32);
-	crypto_md5_final(md5, output);
+	winpr_MD5_Init(&md5);
+	winpr_MD5_Update(&md5, in0, 16);
+	winpr_MD5_Update(&md5, in1, 32);
+	winpr_MD5_Update(&md5, in2, 32);
+	winpr_MD5_Final(&md5, output);
 	return TRUE;
 }
 
@@ -228,7 +218,7 @@ void security_UINT32_le(BYTE* output, UINT32 value)
 BOOL security_mac_data(const BYTE* mac_salt_key, const BYTE* data, UINT32 length,
 		BYTE* output)
 {
-	CryptoMd5 md5;
+	WINPR_MD5_CTX md5;
 	WINPR_SHA1_CTX sha1;
 	BYTE length_le[4];
 	BYTE sha1_digest[WINPR_SHA1_DIGEST_LENGTH];
@@ -246,25 +236,20 @@ BOOL security_mac_data(const BYTE* mac_salt_key, const BYTE* data, UINT32 length
 	winpr_SHA1_Final(&sha1, sha1_digest);
 
 	/* MacData = MD5(MacSaltKey + pad2 + SHA1_Digest) */
-	md5 = crypto_md5_init();
-	if (!md5)
-	{
-		WLog_ERR(TAG, "unable to allocate a md5");
-		return FALSE;
-	}
-	crypto_md5_update(md5, mac_salt_key, 16); /* MacSaltKey */
-	crypto_md5_update(md5, pad2, sizeof(pad2)); /* pad2 */
-	crypto_md5_update(md5, sha1_digest, sizeof(sha1_digest)); /* SHA1_Digest */
-	crypto_md5_final(md5, output);
+	winpr_MD5_Init(&md5);
+	winpr_MD5_Update(&md5, mac_salt_key, 16); /* MacSaltKey */
+	winpr_MD5_Update(&md5, pad2, sizeof(pad2)); /* pad2 */
+	winpr_MD5_Update(&md5, sha1_digest, sizeof(sha1_digest)); /* SHA1_Digest */
+	winpr_MD5_Final(&md5, output);
 	return TRUE;
 }
 
 BOOL security_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length, BYTE* output)
 {
-	CryptoMd5 md5;
+	WINPR_MD5_CTX md5;
 	WINPR_SHA1_CTX sha1;
 	BYTE length_le[4];
-	BYTE md5_digest[CRYPTO_MD5_DIGEST_LENGTH];
+	BYTE md5_digest[WINPR_MD5_DIGEST_LENGTH];
 	BYTE sha1_digest[WINPR_SHA1_DIGEST_LENGTH];
 
 	security_UINT32_le(length_le, length); /* length must be little-endian */
@@ -278,16 +263,11 @@ BOOL security_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length, BYTE* 
 	winpr_SHA1_Final(&sha1, sha1_digest);
 
 	/* MACSignature = First64Bits(MD5(MACKeyN + pad2 + SHA1_Digest)) */
-	md5 = crypto_md5_init();
-	if (!md5)
-	{
-		WLog_ERR(TAG, "unable to allocate a md5");
-		return FALSE;
-	}
-	crypto_md5_update(md5, rdp->sign_key, rdp->rc4_key_len); /* MacKeyN */
-	crypto_md5_update(md5, pad2, sizeof(pad2)); /* pad2 */
-	crypto_md5_update(md5, sha1_digest, sizeof(sha1_digest)); /* SHA1_Digest */
-	crypto_md5_final(md5, md5_digest);
+	winpr_MD5_Init(&md5);
+	winpr_MD5_Update(&md5, rdp->sign_key, rdp->rc4_key_len); /* MacKeyN */
+	winpr_MD5_Update(&md5, pad2, sizeof(pad2)); /* pad2 */
+	winpr_MD5_Update(&md5, sha1_digest, sizeof(sha1_digest)); /* SHA1_Digest */
+	winpr_MD5_Final(&md5, md5_digest);
 
 	memcpy(output, md5_digest, 8);
 	return TRUE;
@@ -296,11 +276,11 @@ BOOL security_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length, BYTE* 
 BOOL security_salted_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length,
 		BOOL encryption, BYTE* output)
 {
-	CryptoMd5 md5;
+	WINPR_MD5_CTX md5;
 	WINPR_SHA1_CTX sha1;
 	BYTE length_le[4];
 	BYTE use_count_le[4];
-	BYTE md5_digest[CRYPTO_MD5_DIGEST_LENGTH];
+	BYTE md5_digest[WINPR_MD5_DIGEST_LENGTH];
 	BYTE sha1_digest[WINPR_SHA1_DIGEST_LENGTH];
 
 	security_UINT32_le(length_le, length); /* length must be little-endian */
@@ -328,16 +308,11 @@ BOOL security_salted_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length,
 	winpr_SHA1_Final(&sha1, sha1_digest);
 
 	/* MACSignature = First64Bits(MD5(MACKeyN + pad2 + SHA1_Digest)) */
-	md5 = crypto_md5_init();
-	if (!md5)
-	{
-		WLog_ERR(TAG, "unable to allocate a md5");
-		return FALSE;
-	}
-	crypto_md5_update(md5, rdp->sign_key, rdp->rc4_key_len); /* MacKeyN */
-	crypto_md5_update(md5, pad2, sizeof(pad2)); /* pad2 */
-	crypto_md5_update(md5, sha1_digest, sizeof(sha1_digest)); /* SHA1_Digest */
-	crypto_md5_final(md5, md5_digest);
+	winpr_MD5_Init(&md5);
+	winpr_MD5_Update(&md5, rdp->sign_key, rdp->rc4_key_len); /* MacKeyN */
+	winpr_MD5_Update(&md5, pad2, sizeof(pad2)); /* pad2 */
+	winpr_MD5_Update(&md5, sha1_digest, sizeof(sha1_digest)); /* SHA1_Digest */
+	winpr_MD5_Final(&md5, md5_digest);
 
 	memcpy(output, md5_digest, 8);
 	return TRUE;
@@ -500,7 +475,7 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 BOOL security_key_update(BYTE* key, BYTE* update_key, int key_len, rdpRdp* rdp)
 {
 	BYTE sha1h[WINPR_SHA1_DIGEST_LENGTH];
-	CryptoMd5 md5;
+	WINPR_MD5_CTX md5;
 	WINPR_SHA1_CTX sha1;
 	CryptoRc4 rc4;
 	BYTE salt[] = { 0xD1, 0x26, 0x9E }; /* 40 bits: 3 bytes, 56 bits: 1 byte */
@@ -511,16 +486,11 @@ BOOL security_key_update(BYTE* key, BYTE* update_key, int key_len, rdpRdp* rdp)
 	winpr_SHA1_Update(&sha1, key, key_len);
 	winpr_SHA1_Final(&sha1, sha1h);
 
-	md5 = crypto_md5_init();
-	if (!md5)
-	{
-		WLog_ERR(TAG, "unable to allocate a md5");
-		return FALSE;
-	}
-	crypto_md5_update(md5, update_key, key_len);
-	crypto_md5_update(md5, pad2, sizeof(pad2));
-	crypto_md5_update(md5, sha1h, sizeof(sha1h));
-	crypto_md5_final(md5, key);
+	winpr_MD5_Init(&md5);
+	winpr_MD5_Update(&md5, update_key, key_len);
+	winpr_MD5_Update(&md5, pad2, sizeof(pad2));
+	winpr_MD5_Update(&md5, sha1h, sizeof(sha1h));
+	winpr_MD5_Final(&md5, key);
 
 	rc4 = crypto_rc4_init(key, key_len);
 	if (!rc4)

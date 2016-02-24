@@ -642,6 +642,8 @@ union _WINPR_MD5_CTX
 };
 typedef union _WINPR_MD5_CTX WINPR_MD5_CTX;
 
+#define WINPR_MD5_DIGEST_LENGTH        16
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -700,7 +702,7 @@ WINPR_API void winpr_MD4(const BYTE* input, size_t ilen, BYTE* output);
  * SHA1 Hashing
  */
 
-#define WINPR_SHA1_DIGEST_LENGTH SHA_DIGEST_LENGTH
+#define WINPR_SHA1_DIGEST_LENGTH	20
 
 struct _OPENSSL_SHA1_CTX
 {
