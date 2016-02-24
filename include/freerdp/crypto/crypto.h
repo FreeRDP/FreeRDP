@@ -27,7 +27,6 @@
 #include <openssl/err.h>
 #include <openssl/rc4.h>
 #include <openssl/md5.h>
-#include <openssl/sha.h>
 #include <openssl/hmac.h>
 #include <openssl/bn.h>
 #include <openssl/x509v3.h>
@@ -43,11 +42,6 @@
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
-
-struct crypto_sha1_struct
-{
-	SHA_CTX sha_ctx;
-};
 
 struct crypto_md5_struct
 {
@@ -78,13 +72,6 @@ struct crypto_cert_struct
 #ifdef __cplusplus
  extern "C" {
 #endif
-
-#define	CRYPTO_SHA1_DIGEST_LENGTH	SHA_DIGEST_LENGTH
-typedef struct crypto_sha1_struct* CryptoSha1;
-
-FREERDP_API CryptoSha1 crypto_sha1_init(void);
-FREERDP_API void crypto_sha1_update(CryptoSha1 sha1, const BYTE* data, UINT32 length);
-FREERDP_API void crypto_sha1_final(CryptoSha1 sha1, BYTE* out_data);
 
 #define	CRYPTO_MD5_DIGEST_LENGTH	MD5_DIGEST_LENGTH
 typedef struct crypto_md5_struct* CryptoMd5;

@@ -28,26 +28,6 @@
 
 #define TAG FREERDP_TAG("crypto")
 
-CryptoSha1 crypto_sha1_init(void)
-{
-	CryptoSha1 sha1 = malloc(sizeof(*sha1));
-	if (!sha1)
-		return NULL;
-	SHA1_Init(&sha1->sha_ctx);
-	return sha1;
-}
-
-void crypto_sha1_update(CryptoSha1 sha1, const BYTE* data, UINT32 length)
-{
-	SHA1_Update(&sha1->sha_ctx, data, length);
-}
-
-void crypto_sha1_final(CryptoSha1 sha1, BYTE* out_data)
-{
-	SHA1_Final(out_data, &sha1->sha_ctx);
-	free(sha1);
-}
-
 CryptoMd5 crypto_md5_init(void)
 {
 	CryptoMd5 md5 = malloc(sizeof(*md5));

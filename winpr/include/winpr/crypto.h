@@ -700,6 +700,8 @@ WINPR_API void winpr_MD4(const BYTE* input, size_t ilen, BYTE* output);
  * SHA1 Hashing
  */
 
+#define WINPR_SHA1_DIGEST_LENGTH SHA_DIGEST_LENGTH
+
 struct _OPENSSL_SHA1_CTX
 {
 	UINT32 h0, h1, h2, h3, h4;
