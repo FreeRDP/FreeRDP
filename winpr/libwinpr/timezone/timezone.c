@@ -1515,6 +1515,62 @@ static char* freerdp_read_unix_timezone_identifier_from_file(FILE* fp)
 	return tzid;
 }
 
+static char* freerdp_get_timezone_from_link(void)
+{
+	const char* links[] =
+	{
+		"/etc/localtime",
+		"/etc/TZ"
+	};
+	size_t x;
+	ssize_t len;
+	char buf[1024];
+	char* tzid = NULL;
+
+	/*
+	 * On linux distros such as Redhat or Archlinux, a symlink at /etc/localtime
+	 * will point to /usr/share/zoneinfo/region/place where region/place could be
+	 * America/Montreal for example.
+	 * Some distributions do have to symlink at /etc/TZ.
+	 */
+
+	for (x=0; x<sizeof(links) / sizeof(links[0]); x++)
+	{
+		const char* link = links[x];
+
+		if ((len = readlink(link, buf, sizeof(buf) - 1)) != -1)
+		{
+			int num = 0;
+			int pos = len;
+
+			buf[len] = '\0';
+
+			/* find the position of the 2nd to last "/" */
+
+			while (num < 2)
+			{
+				if (pos == 0)
+					break;
+
+				pos -= 1;
+
+				if (buf[pos] == '/')
+					num++;
+			}
+
+			tzid = (char*) malloc(len - pos + 1);
+			if (!tzid)
+				return NULL;
+
+			strncpy(tzid, buf + pos + 1, len - pos);
+
+			return tzid;
+		}
+	}
+
+	return NULL;
+}
+
 static char* freerdp_get_unix_timezone_identifier_from_file(void)
 {
 	FILE* fp;
@@ -1576,6 +1632,9 @@ static TIME_ZONE_ENTRY* freerdp_detect_windows_time_zone(UINT32 bias)
 	TIME_ZONE_ENTRY* timezone;
 
 	tzid = freerdp_get_unix_timezone_identifier_from_file();
+
+	if (tzid == NULL)
+		tzid = freerdp_get_timezone_from_link();
 
 	if (tzid == NULL)
 		return NULL;
@@ -1653,7 +1712,7 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 	tz->Bias = 0;
 #endif
 	WLog_DBG(TAG, "tzname[std]: %s, tzname[dst]: %s, timezone: %ld, Daylight: %d",
-		       tzname[0], tzname[1], timezone, daylight);
+			   tzname[0], tzname[1], timezone, daylight);
 
 	dtz = freerdp_detect_windows_time_zone(tz->Bias);
 
