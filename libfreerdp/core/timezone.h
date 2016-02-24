@@ -32,7 +32,7 @@
 #include <winpr/stream.h>
 
 BOOL rdp_read_client_time_zone(wStream* s, rdpSettings* settings);
-void rdp_write_client_time_zone(wStream* s, rdpSettings* settings);
+BOOL rdp_write_client_time_zone(wStream* s, rdpSettings* settings);
 
 #define TIMEZONE_TAG FREERDP_TAG("core.timezone")
 #ifdef WITH_DEBUG_TIMEZONE
