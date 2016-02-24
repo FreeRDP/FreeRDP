@@ -31,6 +31,7 @@
 #include "transport.h"
 
 #include <winpr/crt.h>
+#include <winpr/crypto.h>
 
 #include <freerdp/log.h>
 #include <freerdp/error.h>
@@ -512,19 +513,9 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 		goto end;
 	}
 
-	rdp->rc4_decrypt_key = crypto_rc4_init(rdp->decrypt_key, rdp->rc4_key_len);
-	if (!rdp->rc4_decrypt_key)
-	{
-		WLog_ERR(TAG, "unable to allocate rc4 decrypt key");
-		goto end;
-	}
+	winpr_RC4_Init(rdp->rc4_decrypt_key, rdp->decrypt_key, rdp->rc4_key_len);
+	winpr_RC4_Init(rdp->rc4_encrypt_key, rdp->encrypt_key, rdp->rc4_key_len);
 
-	rdp->rc4_encrypt_key = crypto_rc4_init(rdp->encrypt_key, rdp->rc4_key_len);
-	if (!rdp->rc4_encrypt_key)
-	{
-		WLog_ERR(TAG, "unable to allocate rc4 encrypt key");
-		goto end;
-	}
 	ret = TRUE;
 end:
 	free(crypt_client_random);
@@ -630,19 +621,9 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 		goto end;
 	}
 
-	rdp->rc4_decrypt_key = crypto_rc4_init(rdp->decrypt_key, rdp->rc4_key_len);
-	if (!rdp->rc4_decrypt_key)
-	{
-		WLog_ERR(TAG, "unable to allocate rc4 decrypt key");
-		goto end;
-	}
+	winpr_RC4_Init(rdp->rc4_decrypt_key, rdp->decrypt_key, rdp->rc4_key_len);
+	winpr_RC4_Init(rdp->rc4_encrypt_key, rdp->encrypt_key, rdp->rc4_key_len);
 
-	rdp->rc4_encrypt_key = crypto_rc4_init(rdp->encrypt_key, rdp->rc4_key_len);
-	if (!rdp->rc4_encrypt_key)
-	{
-		WLog_ERR(TAG, "unable to allocate rc4 encrypt key");
-		goto end;
-	}
 	ret = TRUE;
 end:
 	free(crypt_client_random);

@@ -455,27 +455,19 @@ BOOL license_encrypt_premaster_secret(rdpLicense* license)
 
 BOOL license_decrypt_platform_challenge(rdpLicense* license)
 {
-	CryptoRc4 rc4;
+	WINPR_RC4_CTX rc4;
 
 	license->PlatformChallenge->data = (BYTE *)malloc(license->EncryptedPlatformChallenge->length);
 	if (!license->PlatformChallenge->data)
 		return FALSE;
 	license->PlatformChallenge->length = license->EncryptedPlatformChallenge->length;
 
-	rc4 = crypto_rc4_init(license->LicensingEncryptionKey, LICENSING_ENCRYPTION_KEY_LENGTH);
-	if (!rc4)
-	{
-		WLog_ERR(TAG, "unable to allocate a rc4");
-		free(license->PlatformChallenge->data);
-		license->PlatformChallenge->data = NULL;
-		return FALSE;
-	}
-
-	crypto_rc4(rc4, license->EncryptedPlatformChallenge->length,
+	winpr_RC4_Init(&rc4, license->LicensingEncryptionKey, LICENSING_ENCRYPTION_KEY_LENGTH);
+	winpr_RC4_Update(&rc4, license->EncryptedPlatformChallenge->length,
 			   license->EncryptedPlatformChallenge->data,
 			   license->PlatformChallenge->data);
 
-	crypto_rc4_free(rc4);
+	winpr_RC4_Final(&rc4);
 	return TRUE;
 }
 
@@ -1020,7 +1012,7 @@ BOOL license_send_platform_challenge_response_packet(rdpLicense* license)
 	wStream* s;
 	int length;
 	BYTE* buffer;
-	CryptoRc4 rc4;
+	WINPR_RC4_CTX rc4;
 	BYTE mac_data[16];
 	BOOL status;
 
@@ -1041,19 +1033,15 @@ BOOL license_send_platform_challenge_response_packet(rdpLicense* license)
 	if (!status)
 		return FALSE;
 
-	rc4 = crypto_rc4_init(license->LicensingEncryptionKey, LICENSING_ENCRYPTION_KEY_LENGTH);
-	if (!rc4)
-	{
-		WLog_ERR(TAG, "unable to allocate a rc4");
-		return FALSE;
-	}
+	winpr_RC4_Init(&rc4, license->LicensingEncryptionKey, LICENSING_ENCRYPTION_KEY_LENGTH);
 
 	buffer = (BYTE*) malloc(HWID_LENGTH);
 	if (!buffer)
 		return FALSE;
 
-	crypto_rc4(rc4, HWID_LENGTH, license->HardwareId, buffer);
-	crypto_rc4_free(rc4);
+	winpr_RC4_Update(&rc4, HWID_LENGTH, license->HardwareId, buffer);
+	winpr_RC4_Final(&rc4);
+
 	license->EncryptedHardwareId->type = BB_DATA_BLOB;
 	license->EncryptedHardwareId->data = buffer;
 	license->EncryptedHardwareId->length = HWID_LENGTH;

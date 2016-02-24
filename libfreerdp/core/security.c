@@ -477,7 +477,7 @@ BOOL security_key_update(BYTE* key, BYTE* update_key, int key_len, rdpRdp* rdp)
 	BYTE sha1h[WINPR_SHA1_DIGEST_LENGTH];
 	WINPR_MD5_CTX md5;
 	WINPR_SHA1_CTX sha1;
-	CryptoRc4 rc4;
+	WINPR_RC4_CTX rc4;
 	BYTE salt[] = { 0xD1, 0x26, 0x9E }; /* 40 bits: 3 bytes, 56 bits: 1 byte */
 
 	winpr_SHA1_Init(&sha1);
@@ -492,14 +492,9 @@ BOOL security_key_update(BYTE* key, BYTE* update_key, int key_len, rdpRdp* rdp)
 	winpr_MD5_Update(&md5, sha1h, sizeof(sha1h));
 	winpr_MD5_Final(&md5, key);
 
-	rc4 = crypto_rc4_init(key, key_len);
-	if (!rc4)
-	{
-		WLog_ERR(TAG, "unable to allocate a rc4");
-		return FALSE;
-	}
-	crypto_rc4(rc4, key_len, key, key);
-	crypto_rc4_free(rc4);
+	winpr_RC4_Init(&rc4, key, key_len);
+	winpr_RC4_Update(&rc4, key_len, key, key);
+	winpr_RC4_Final(&rc4);
 
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_40BIT)
 		memcpy(key, salt, 3);
@@ -516,17 +511,13 @@ BOOL security_encrypt(BYTE* data, int length, rdpRdp* rdp)
 		if (!security_key_update(rdp->encrypt_key, rdp->encrypt_update_key, rdp->rc4_key_len, rdp))
 			return FALSE;
 
-		crypto_rc4_free(rdp->rc4_encrypt_key);
-		rdp->rc4_encrypt_key = crypto_rc4_init(rdp->encrypt_key, rdp->rc4_key_len);
-		if (!rdp->rc4_encrypt_key)
-		{
-			WLog_ERR(TAG, "unable to allocate rc4 encrypt key");
-			return FALSE;
-		}
+		winpr_RC4_Final(rdp->rc4_encrypt_key);
+		winpr_RC4_Init(rdp->rc4_encrypt_key, rdp->encrypt_key, rdp->rc4_key_len);
+
 		rdp->encrypt_use_count = 0;
 	}
 
-	crypto_rc4(rdp->rc4_encrypt_key, length, data, data);
+	winpr_RC4_Update(rdp->rc4_encrypt_key, length, data, data);
 	rdp->encrypt_use_count++;
 	rdp->encrypt_checksum_use_count++;
 	return TRUE;
@@ -541,17 +532,12 @@ BOOL security_decrypt(BYTE* data, int length, rdpRdp* rdp)
 	{
 		if (!security_key_update(rdp->decrypt_key, rdp->decrypt_update_key, rdp->rc4_key_len, rdp))
 			return FALSE;
-		crypto_rc4_free(rdp->rc4_decrypt_key);
-		rdp->rc4_decrypt_key = crypto_rc4_init(rdp->decrypt_key, rdp->rc4_key_len);
-		if (!rdp->rc4_decrypt_key)
-		{
-			WLog_ERR(TAG,  "unable to allocate rc4 decrypt key");
-			return FALSE;
-		}
+		winpr_RC4_Final(rdp->rc4_decrypt_key);
+		winpr_RC4_Init(rdp->rc4_decrypt_key, rdp->decrypt_key, rdp->rc4_key_len);
 
 		rdp->decrypt_use_count = 0;
 	}
-	crypto_rc4(rdp->rc4_decrypt_key, length, data, data);
+	winpr_RC4_Update(rdp->rc4_decrypt_key, length, data, data);
 	rdp->decrypt_use_count += 1;
 	rdp->decrypt_checksum_use_count++;
 	return TRUE;

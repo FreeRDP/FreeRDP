@@ -27,6 +27,7 @@ typedef struct rdp_nla rdpNla;
 
 #include <winpr/sspi.h>
 #include <winpr/stream.h>
+#include <winpr/crypto.h>
 
 #include <freerdp/crypto/tls.h>
 #include <freerdp/crypto/ber.h>
@@ -75,7 +76,7 @@ struct rdp_nla
 	SecBuffer authInfo;
 	SecBuffer PublicKey;
 	SecBuffer tsCredentials;
-	CryptoRc4 rc4SealState;
+	WINPR_RC4_CTX rc4SealState;
 	LPTSTR ServicePrincipalName;
 	SEC_WINNT_AUTH_IDENTITY* identity;
 	PSecurityFunctionTable table;

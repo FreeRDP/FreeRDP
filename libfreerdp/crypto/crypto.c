@@ -28,25 +28,6 @@
 
 #define TAG FREERDP_TAG("crypto")
 
-CryptoRc4 crypto_rc4_init(const BYTE* key, UINT32 length)
-{
-	CryptoRc4 rc4 = malloc(sizeof(*rc4));
-	if (!rc4)
-		return NULL;
-	RC4_set_key(&rc4->rc4_key, length, key);
-	return rc4;
-}
-
-void crypto_rc4(CryptoRc4 rc4, UINT32 length, const BYTE* in_data, BYTE* out_data)
-{
-	RC4(&rc4->rc4_key, length, in_data, out_data);
-}
-
-void crypto_rc4_free(CryptoRc4 rc4)
-{
-	free(rc4);
-}
-
 CryptoDes3 crypto_des3_encrypt_init(const BYTE* key, const BYTE* ivec)
 {
 	CryptoDes3 des3 = malloc(sizeof(*des3));

@@ -25,7 +25,6 @@
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-#include <openssl/rc4.h>
 #include <openssl/hmac.h>
 #include <openssl/bn.h>
 #include <openssl/x509v3.h>
@@ -41,11 +40,6 @@
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
-
-struct crypto_rc4_struct
-{
-	RC4_KEY rc4_key;
-};
 
 struct crypto_des3_struct
 {
@@ -66,12 +60,6 @@ struct crypto_cert_struct
 #ifdef __cplusplus
  extern "C" {
 #endif
-
-typedef struct crypto_rc4_struct* CryptoRc4;
-
-FREERDP_API CryptoRc4 crypto_rc4_init(const BYTE* key, UINT32 length);
-FREERDP_API void crypto_rc4(CryptoRc4 rc4, UINT32 length, const BYTE* in_data, BYTE* out_data);
-FREERDP_API void crypto_rc4_free(CryptoRc4 rc4);
 
 typedef struct crypto_des3_struct* CryptoDes3;
 
