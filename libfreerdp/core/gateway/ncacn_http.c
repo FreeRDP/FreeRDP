@@ -29,8 +29,6 @@
 #include <winpr/dsparse.h>
 #include <winpr/winhttp.h>
 
-#include <openssl/rand.h>
-
 #define TAG FREERDP_TAG("core.gateway.ntlm")
 
 wStream* rpc_ntlm_http_request(rdpRpc* rpc, HttpContext* http, const char* method, int contentLength, SecBuffer* ntlmToken)

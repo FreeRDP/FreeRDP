@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/crypto.h>
 
 #include <freerdp/log.h>
 #include <freerdp/crypto/crypto.h>
@@ -290,7 +291,7 @@ void crypto_reverse(BYTE* data, int length)
 
 void crypto_nonce(BYTE* nonce, int size)
 {
-	RAND_bytes((void*) nonce, size);
+	winpr_RAND((void*) nonce, size);
 }
 
 char* crypto_cert_fingerprint(X509* xcert)
