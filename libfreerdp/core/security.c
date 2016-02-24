@@ -134,18 +134,28 @@ static BOOL security_salted_hash(const BYTE* salt, const BYTE* input, int length
 	/* SaltedHash(Salt, Input, Salt1, Salt2) = MD5(S + SHA1(Input + Salt + Salt1 + Salt2)) */
 
 	/* SHA1_Digest = SHA1(Input + Salt + Salt1 + Salt2) */
-	winpr_SHA1_Init(&sha1);
-	winpr_SHA1_Update(&sha1, input, length); /* Input */
-	winpr_SHA1_Update(&sha1, salt, 48); /* Salt (48 bytes) */
-	winpr_SHA1_Update(&sha1, salt1, 32); /* Salt1 (32 bytes) */
-	winpr_SHA1_Update(&sha1, salt2, 32); /* Salt2 (32 bytes) */
-	winpr_SHA1_Final(&sha1, sha1_digest);
+	if (!winpr_SHA1_Init(&sha1))
+		return FALSE;
+	if (!winpr_SHA1_Update(&sha1, input, length)) /* Input */
+		return FALSE;
+	if (!winpr_SHA1_Update(&sha1, salt, 48)) /* Salt (48 bytes) */
+		return FALSE;
+	if (!winpr_SHA1_Update(&sha1, salt1, 32)) /* Salt1 (32 bytes) */
+		return FALSE;
+	if (!winpr_SHA1_Update(&sha1, salt2, 32)) /* Salt2 (32 bytes) */
+		return FALSE;
+	if (!winpr_SHA1_Final(&sha1, sha1_digest, sizeof(sha1_digest)))
+		return FALSE;
 
 	/* SaltedHash(Salt, Input, Salt1, Salt2) = MD5(S + SHA1_Digest) */
-	winpr_MD5_Init(&md5);
-	winpr_MD5_Update(&md5, salt, 48); /* Salt (48 bytes) */
-	winpr_MD5_Update(&md5, sha1_digest, sizeof(sha1_digest)); /* SHA1_Digest */
-	winpr_MD5_Final(&md5, output);
+	if (!winpr_MD5_Init(&md5))
+		return FALSE;
+	if (!winpr_MD5_Update(&md5, salt, 48)) /* Salt (48 bytes) */
+		return FALSE;
+	if (!winpr_MD5_Update(&md5, sha1_digest, sizeof(sha1_digest))) /* SHA1_Digest */
+		return FALSE;
+	if (!winpr_MD5_Final(&md5, output, WINPR_MD5_DIGEST_LENGTH))
+		return FALSE;
 	return TRUE;
 }
 
@@ -192,11 +202,16 @@ BOOL security_md5_16_32_32(const BYTE* in0, const BYTE* in1, const BYTE* in2, BY
 {
 	WINPR_MD5_CTX md5;
 
-	winpr_MD5_Init(&md5);
-	winpr_MD5_Update(&md5, in0, 16);
-	winpr_MD5_Update(&md5, in1, 32);
-	winpr_MD5_Update(&md5, in2, 32);
-	winpr_MD5_Final(&md5, output);
+	if (!winpr_MD5_Init(&md5))
+        return FALSE;
+	if (!winpr_MD5_Update(&md5, in0, 16))
+        return FALSE;
+	if (!winpr_MD5_Update(&md5, in1, 32))
+        return FALSE;
+	if (!winpr_MD5_Update(&md5, in2, 32))
+        return FALSE;
+	if (!winpr_MD5_Final(&md5, output, WINPR_MD5_DIGEST_LENGTH))
+        return FALSE;
 	return TRUE;
 }
 
@@ -228,19 +243,30 @@ BOOL security_mac_data(const BYTE* mac_salt_key, const BYTE* data, UINT32 length
 	security_UINT32_le(length_le, length); /* length must be little-endian */
 
 	/* SHA1_Digest = SHA1(MacSaltKey + pad1 + length + data) */
-	winpr_SHA1_Init(&sha1);
-	winpr_SHA1_Update(&sha1, mac_salt_key, 16); /* MacSaltKey */
-	winpr_SHA1_Update(&sha1, pad1, sizeof(pad1)); /* pad1 */
-	winpr_SHA1_Update(&sha1, length_le, sizeof(length_le)); /* length */
-	winpr_SHA1_Update(&sha1, data, length); /* data */
-	winpr_SHA1_Final(&sha1, sha1_digest);
+	if (!winpr_SHA1_Init(&sha1))
+		return FALSE;
+	if (!winpr_SHA1_Update(&sha1, mac_salt_key, 16)) /* MacSaltKey */
+		return FALSE;
+	if (!winpr_SHA1_Update(&sha1, pad1, sizeof(pad1))) /* pad1 */
+		return FALSE;
+	if (!winpr_SHA1_Update(&sha1, length_le, sizeof(length_le))) /* length */
+		return FALSE;
+	if (!winpr_SHA1_Update(&sha1, data, length)) /* data */
+		return FALSE;
+	if (!winpr_SHA1_Final(&sha1, sha1_digest, sizeof(sha1_digest)))
+		return FALSE;
 
 	/* MacData = MD5(MacSaltKey + pad2 + SHA1_Digest) */
-	winpr_MD5_Init(&md5);
-	winpr_MD5_Update(&md5, mac_salt_key, 16); /* MacSaltKey */
-	winpr_MD5_Update(&md5, pad2, sizeof(pad2)); /* pad2 */
-	winpr_MD5_Update(&md5, sha1_digest, sizeof(sha1_digest)); /* SHA1_Digest */
-	winpr_MD5_Final(&md5, output);
+	if (!winpr_MD5_Init(&md5))
+		return FALSE;
+	if (!winpr_MD5_Update(&md5, mac_salt_key, 16)) /* MacSaltKey */
+		return FALSE;
+	if (!winpr_MD5_Update(&md5, pad2, sizeof(pad2))) /* pad2 */
+		return FALSE;
+	if (!winpr_MD5_Update(&md5, sha1_digest, sizeof(sha1_digest))) /* SHA1_Digest */
+		return FALSE;
+	if (!winpr_MD5_Final(&md5, output, WINPR_MD5_DIGEST_LENGTH))
+		return FALSE;
 	return TRUE;
 }
 
@@ -255,19 +281,30 @@ BOOL security_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length, BYTE* 
 	security_UINT32_le(length_le, length); /* length must be little-endian */
 
 	/* SHA1_Digest = SHA1(MACKeyN + pad1 + length + data) */
-	winpr_SHA1_Init(&sha1);
-	winpr_SHA1_Update(&sha1, rdp->sign_key, rdp->rc4_key_len); /* MacKeyN */
-	winpr_SHA1_Update(&sha1, pad1, sizeof(pad1)); /* pad1 */
-	winpr_SHA1_Update(&sha1, length_le, sizeof(length_le)); /* length */
-	winpr_SHA1_Update(&sha1, data, length); /* data */
-	winpr_SHA1_Final(&sha1, sha1_digest);
+	if (!winpr_SHA1_Init(&sha1))
+		return FALSE;
+	if (!winpr_SHA1_Update(&sha1, rdp->sign_key, rdp->rc4_key_len)) /* MacKeyN */
+		return FALSE;
+	if (!winpr_SHA1_Update(&sha1, pad1, sizeof(pad1))) /* pad1 */
+		return FALSE;
+	if (!winpr_SHA1_Update(&sha1, length_le, sizeof(length_le))) /* length */
+		return FALSE;
+	if (!winpr_SHA1_Update(&sha1, data, length)) /* data */
+		return FALSE;
+	if (!winpr_SHA1_Final(&sha1, sha1_digest, sizeof(sha1_digest)))
+		return FALSE;
 
 	/* MACSignature = First64Bits(MD5(MACKeyN + pad2 + SHA1_Digest)) */
-	winpr_MD5_Init(&md5);
-	winpr_MD5_Update(&md5, rdp->sign_key, rdp->rc4_key_len); /* MacKeyN */
-	winpr_MD5_Update(&md5, pad2, sizeof(pad2)); /* pad2 */
-	winpr_MD5_Update(&md5, sha1_digest, sizeof(sha1_digest)); /* SHA1_Digest */
-	winpr_MD5_Final(&md5, md5_digest);
+	if (!winpr_MD5_Init(&md5))
+		return FALSE;
+	if (!winpr_MD5_Update(&md5, rdp->sign_key, rdp->rc4_key_len)) /* MacKeyN */
+		return FALSE;
+	if (!winpr_MD5_Update(&md5, pad2, sizeof(pad2))) /* pad2 */
+		return FALSE;
+	if (!winpr_MD5_Update(&md5, sha1_digest, sizeof(sha1_digest))) /* SHA1_Digest */
+		return FALSE;
+	if (!winpr_MD5_Final(&md5, md5_digest, sizeof(md5_digest)))
+		return FALSE;
 
 	memcpy(output, md5_digest, 8);
 	return TRUE;
@@ -299,20 +336,32 @@ BOOL security_salted_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length,
 	}
 
 	/* SHA1_Digest = SHA1(MACKeyN + pad1 + length + data) */
-	winpr_SHA1_Init(&sha1);
-	winpr_SHA1_Update(&sha1, rdp->sign_key, rdp->rc4_key_len); /* MacKeyN */
-	winpr_SHA1_Update(&sha1, pad1, sizeof(pad1)); /* pad1 */
-	winpr_SHA1_Update(&sha1, length_le, sizeof(length_le)); /* length */
-	winpr_SHA1_Update(&sha1, data, length); /* data */
-	winpr_SHA1_Update(&sha1, use_count_le, sizeof(use_count_le)); /* encryptionCount */
-	winpr_SHA1_Final(&sha1, sha1_digest);
+	if (!winpr_SHA1_Init(&sha1))
+		return FALSE;
+	if (!winpr_SHA1_Update(&sha1, rdp->sign_key, rdp->rc4_key_len)) /* MacKeyN */
+		return FALSE;
+	if (!winpr_SHA1_Update(&sha1, pad1, sizeof(pad1))) /* pad1 */
+		return FALSE;
+	if (!winpr_SHA1_Update(&sha1, length_le, sizeof(length_le))) /* length */
+		return FALSE;
+	if (!winpr_SHA1_Update(&sha1, data, length)) /* data */
+		return FALSE;
+	if (!winpr_SHA1_Update(&sha1, use_count_le, sizeof(use_count_le))) /* encryptionCount */
+		return FALSE;
+	if (!winpr_SHA1_Final(&sha1, sha1_digest, sizeof(sha1_digest)))
+		return FALSE;
 
 	/* MACSignature = First64Bits(MD5(MACKeyN + pad2 + SHA1_Digest)) */
-	winpr_MD5_Init(&md5);
-	winpr_MD5_Update(&md5, rdp->sign_key, rdp->rc4_key_len); /* MacKeyN */
-	winpr_MD5_Update(&md5, pad2, sizeof(pad2)); /* pad2 */
-	winpr_MD5_Update(&md5, sha1_digest, sizeof(sha1_digest)); /* SHA1_Digest */
-	winpr_MD5_Final(&md5, md5_digest);
+	if (!winpr_MD5_Init(&md5))
+		return FALSE;
+	if (!winpr_MD5_Update(&md5, rdp->sign_key, rdp->rc4_key_len)) /* MacKeyN */
+		return FALSE;
+	if (!winpr_MD5_Update(&md5, pad2, sizeof(pad2))) /* pad2 */
+		return FALSE;
+	if (!winpr_MD5_Update(&md5, sha1_digest, sizeof(sha1_digest))) /* SHA1_Digest */
+		return FALSE;
+	if (!winpr_MD5_Final(&md5, md5_digest, sizeof(md5_digest)))
+		return FALSE;
 
 	memcpy(output, md5_digest, 8);
 	return TRUE;
@@ -388,22 +437,34 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 		BYTE client_encrypt_key_t[WINPR_SHA1_DIGEST_LENGTH + 1];
 		BYTE client_decrypt_key_t[WINPR_SHA1_DIGEST_LENGTH + 1];
 
-		winpr_SHA1_Init(&sha1);
-		winpr_SHA1_Update(&sha1, client_random + 16, 16);
-		winpr_SHA1_Update(&sha1, server_random + 16, 16);
-		winpr_SHA1_Final(&sha1, client_encrypt_key_t);
+		if (!winpr_SHA1_Init(&sha1))
+			return FALSE;
+		if (!winpr_SHA1_Update(&sha1, client_random + 16, 16))
+			return FALSE;
+		if (!winpr_SHA1_Update(&sha1, server_random + 16, 16))
+			return FALSE;
+		if (!winpr_SHA1_Final(&sha1, client_encrypt_key_t, sizeof(client_encrypt_key_t)))
+			return FALSE;
 		client_encrypt_key_t[20] = client_encrypt_key_t[0];
 
-		winpr_SHA1_Init(&sha1);
-		winpr_SHA1_Update(&sha1, client_random, 16);
-		winpr_SHA1_Update(&sha1, server_random, 16);
-		winpr_SHA1_Final(&sha1, client_decrypt_key_t);
+		if (!winpr_SHA1_Init(&sha1))
+			return FALSE;
+		if (!winpr_SHA1_Update(&sha1, client_random, 16))
+			return FALSE;
+		if (!winpr_SHA1_Update(&sha1, server_random, 16))
+			return FALSE;
+		if (!winpr_SHA1_Final(&sha1, client_decrypt_key_t, sizeof(client_decrypt_key_t)))
+			return FALSE;
 		client_decrypt_key_t[20] = client_decrypt_key_t[0];
 
-		winpr_SHA1_Init(&sha1);
-		winpr_SHA1_Update(&sha1, client_decrypt_key_t, 20);
-		winpr_SHA1_Update(&sha1, client_encrypt_key_t, 20);
-		winpr_SHA1_Final(&sha1, rdp->fips_sign_key);
+		if (!winpr_SHA1_Init(&sha1))
+			return FALSE;
+		if (!winpr_SHA1_Update(&sha1, client_decrypt_key_t, 20))
+			return FALSE;
+		if (!winpr_SHA1_Update(&sha1, client_encrypt_key_t, 20))
+			return FALSE;
+		if (!winpr_SHA1_Final(&sha1, rdp->fips_sign_key, WINPR_SHA1_DIGEST_LENGTH))
+			return FALSE;
 
 		if (rdp->settings->ServerMode)
 		{
@@ -480,21 +541,34 @@ BOOL security_key_update(BYTE* key, BYTE* update_key, int key_len, rdpRdp* rdp)
 	WINPR_RC4_CTX rc4;
 	BYTE salt[] = { 0xD1, 0x26, 0x9E }; /* 40 bits: 3 bytes, 56 bits: 1 byte */
 
-	winpr_SHA1_Init(&sha1);
-	winpr_SHA1_Update(&sha1, update_key, key_len);
-	winpr_SHA1_Update(&sha1, pad1, sizeof(pad1));
-	winpr_SHA1_Update(&sha1, key, key_len);
-	winpr_SHA1_Final(&sha1, sha1h);
+	if (!winpr_SHA1_Init(&sha1))
+		return FALSE;
+	if (!winpr_SHA1_Update(&sha1, update_key, key_len))
+		return FALSE;
+	if (!winpr_SHA1_Update(&sha1, pad1, sizeof(pad1)))
+		return FALSE;
+	if (!winpr_SHA1_Update(&sha1, key, key_len))
+		return FALSE;
+	if (!winpr_SHA1_Final(&sha1, sha1h, sizeof(sha1h)))
+		return FALSE;
 
-	winpr_MD5_Init(&md5);
-	winpr_MD5_Update(&md5, update_key, key_len);
-	winpr_MD5_Update(&md5, pad2, sizeof(pad2));
-	winpr_MD5_Update(&md5, sha1h, sizeof(sha1h));
-	winpr_MD5_Final(&md5, key);
+	if (!winpr_MD5_Init(&md5))
+		return FALSE;
+	if (!winpr_MD5_Update(&md5, update_key, key_len))
+		return FALSE;
+	if (!winpr_MD5_Update(&md5, pad2, sizeof(pad2)))
+		return FALSE;
+	if (!winpr_MD5_Update(&md5, sha1h, sizeof(sha1h)))
+		return FALSE;
+	if (!winpr_MD5_Final(&md5, key, WINPR_MD5_DIGEST_LENGTH))
+		return FALSE;
 
-	winpr_RC4_Init(&rc4, key, key_len);
-	winpr_RC4_Update(&rc4, key_len, key, key);
-	winpr_RC4_Final(&rc4);
+	if (!winpr_RC4_Init(&rc4, key, key_len))
+		return FALSE;
+	if (!winpr_RC4_Update(&rc4, key_len, key, key))
+		return FALSE;
+	if (!winpr_RC4_Final(&rc4))
+		return FALSE;
 
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_40BIT)
 		memcpy(key, salt, 3);
@@ -511,13 +585,16 @@ BOOL security_encrypt(BYTE* data, int length, rdpRdp* rdp)
 		if (!security_key_update(rdp->encrypt_key, rdp->encrypt_update_key, rdp->rc4_key_len, rdp))
 			return FALSE;
 
-		winpr_RC4_Final(rdp->rc4_encrypt_key);
-		winpr_RC4_Init(rdp->rc4_encrypt_key, rdp->encrypt_key, rdp->rc4_key_len);
+		if (!winpr_RC4_Final(rdp->rc4_encrypt_key))
+			return FALSE;
+		if (!winpr_RC4_Init(rdp->rc4_encrypt_key, rdp->encrypt_key, rdp->rc4_key_len))
+			return FALSE;
 
 		rdp->encrypt_use_count = 0;
 	}
 
-	winpr_RC4_Update(rdp->rc4_encrypt_key, length, data, data);
+	if (!winpr_RC4_Update(rdp->rc4_encrypt_key, length, data, data))
+		return FALSE;
 	rdp->encrypt_use_count++;
 	rdp->encrypt_checksum_use_count++;
 	return TRUE;
@@ -532,12 +609,15 @@ BOOL security_decrypt(BYTE* data, int length, rdpRdp* rdp)
 	{
 		if (!security_key_update(rdp->decrypt_key, rdp->decrypt_update_key, rdp->rc4_key_len, rdp))
 			return FALSE;
-		winpr_RC4_Final(rdp->rc4_decrypt_key);
-		winpr_RC4_Init(rdp->rc4_decrypt_key, rdp->decrypt_key, rdp->rc4_key_len);
+		if (!winpr_RC4_Final(rdp->rc4_decrypt_key))
+			return FALSE;
+		if (!winpr_RC4_Init(rdp->rc4_decrypt_key, rdp->decrypt_key, rdp->rc4_key_len))
+			return FALSE;
 
 		rdp->decrypt_use_count = 0;
 	}
-	winpr_RC4_Update(rdp->rc4_decrypt_key, length, data, data);
+	if (!winpr_RC4_Update(rdp->rc4_decrypt_key, length, data, data))
+		return FALSE;
 	rdp->decrypt_use_count += 1;
 	rdp->decrypt_checksum_use_count++;
 	return TRUE;
@@ -550,12 +630,14 @@ BOOL security_hmac_signature(const BYTE* data, int length, BYTE* output, rdpRdp*
 
 	security_UINT32_le(use_count_le, rdp->encrypt_use_count);
 
-	if (!crypto_hmac_sha1_init(rdp->fips_hmac, rdp->fips_sign_key, 20))
+	if (!winpr_HMAC_Init(rdp->fips_hmac, WINPR_MD_SHA1, rdp->fips_sign_key, 20))
 		return FALSE;
-
-	crypto_hmac_update(rdp->fips_hmac, data, length);
-	crypto_hmac_update(rdp->fips_hmac, use_count_le, 4);
-	crypto_hmac_final(rdp->fips_hmac, buf, 20);
+	if (!winpr_HMAC_Update(rdp->fips_hmac, data, length))
+		return FALSE;
+	if (!winpr_HMAC_Update(rdp->fips_hmac, use_count_le, 4))
+		return FALSE;
+	if (!winpr_HMAC_Final(rdp->fips_hmac, buf, 20))
+		return FALSE;
 
 	memmove(output, buf, 8);
 	return TRUE;
@@ -581,11 +663,14 @@ BOOL security_fips_check_signature(const BYTE* data, int length, const BYTE* sig
 
 	security_UINT32_le(use_count_le, rdp->decrypt_use_count);
 
-	if (!crypto_hmac_sha1_init(rdp->fips_hmac, rdp->fips_sign_key, 20))
+	if (!winpr_HMAC_Init(rdp->fips_hmac, WINPR_MD_SHA1, rdp->fips_sign_key, 20))
 		return FALSE;
-	crypto_hmac_update(rdp->fips_hmac, data, length);
-	crypto_hmac_update(rdp->fips_hmac, use_count_le, 4);
-	crypto_hmac_final(rdp->fips_hmac, buf, 20);
+	if (!winpr_HMAC_Update(rdp->fips_hmac, data, length))
+		return FALSE;
+	if (!winpr_HMAC_Update(rdp->fips_hmac, use_count_le, 4))
+		return FALSE;
+	if (!winpr_HMAC_Final(rdp->fips_hmac, buf, 20))
+		return FALSE;
 
 	rdp->decrypt_use_count++;
 

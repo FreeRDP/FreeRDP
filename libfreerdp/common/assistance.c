@@ -548,7 +548,7 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 	int cbPasswordW;
 	int cbPassStubW;
 	int EncryptedSize;
-	BYTE PasswordHash[16];
+	BYTE PasswordHash[WINPR_MD5_DIGEST_LENGTH];
 	EVP_CIPHER_CTX rc4Ctx;
 	BYTE* pbIn, *pbOut;
 	int cbOut, cbIn, cbFinal;
@@ -572,7 +572,7 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
         free (PasswordW);
         return NULL;
     }
-	if (!winpr_MD5_Final(&md5Ctx, (BYTE*) PasswordHash))
+	if (!winpr_MD5_Final(&md5Ctx, (BYTE*) PasswordHash, sizeof(PasswordHash)))
     {
         free (PasswordW);
         return NULL;

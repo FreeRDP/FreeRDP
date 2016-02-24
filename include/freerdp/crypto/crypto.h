@@ -25,10 +25,8 @@
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-#include <openssl/hmac.h>
 #include <openssl/bn.h>
 #include <openssl/x509v3.h>
-#include <openssl/rand.h>
 
 #if defined(OPENSSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER >= 0x0090800f)
 #define D2I_X509_CONST const
@@ -44,11 +42,6 @@
 struct crypto_des3_struct
 {
 	EVP_CIPHER_CTX des3_ctx;
-};
-
-struct crypto_hmac_struct
-{
-	HMAC_CTX hmac_ctx;
 };
 
 struct crypto_cert_struct
@@ -68,15 +61,6 @@ FREERDP_API CryptoDes3 crypto_des3_decrypt_init(const BYTE* key, const BYTE* ive
 FREERDP_API BOOL crypto_des3_encrypt(CryptoDes3 des3, UINT32 length, const BYTE *in_data, BYTE *out_data);
 FREERDP_API BOOL crypto_des3_decrypt(CryptoDes3 des3, UINT32 length, const BYTE *in_data, BYTE* out_data);
 FREERDP_API void crypto_des3_free(CryptoDes3 des3);
-
-typedef struct crypto_hmac_struct* CryptoHmac;
-
-FREERDP_API CryptoHmac crypto_hmac_new(void);
-FREERDP_API BOOL crypto_hmac_sha1_init(CryptoHmac hmac, const BYTE *data, UINT32 length);
-FREERDP_API BOOL crypto_hmac_md5_init(CryptoHmac hmac, const BYTE *data, UINT32 length);
-FREERDP_API void crypto_hmac_update(CryptoHmac hmac, const BYTE *data, UINT32 length);
-FREERDP_API void crypto_hmac_final(CryptoHmac hmac, BYTE *out_data, UINT32 length);
-FREERDP_API void crypto_hmac_free(CryptoHmac hmac);
 
 typedef struct crypto_cert_struct* CryptoCert;
 

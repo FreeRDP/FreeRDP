@@ -1376,9 +1376,12 @@ BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 
 	memcpy(signature, initial_signature, sizeof(initial_signature));
 
-	winpr_MD5_Init(&md5);
-	winpr_MD5_Update(&md5, sigData, sigDataLen);
-	winpr_MD5_Final(&md5, signature);
+	if (!winpr_MD5_Init(&md5))
+		return FALSE;
+	if (!winpr_MD5_Update(&md5, sigData, sigDataLen))
+		return FALSE;
+	if (!winpr_MD5_Final(&md5, signature, sizeof(signature)))
+		return FALSE;
 
 	crypto_rsa_private_encrypt(signature, sizeof(signature), TSSK_KEY_LENGTH,
 		tssk_modulus, tssk_privateExponent, encryptedSignature);

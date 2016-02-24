@@ -391,9 +391,12 @@ BOOL license_generate_hwid(rdpLicense* license)
 	ZeroMemory(macAddress, sizeof(macAddress));
 	ZeroMemory(license->HardwareId, HWID_LENGTH);
 
-	winpr_MD5_Init(&md5);
-	winpr_MD5_Update(&md5, macAddress, sizeof(macAddress));
-	winpr_MD5_Final(&md5, &license->HardwareId[HWID_PLATFORM_ID_LENGTH]);
+	if (!winpr_MD5_Init(&md5))
+		return FALSE;
+	if (!winpr_MD5_Update(&md5, macAddress, sizeof(macAddress)))
+		return FALSE;
+	if (!winpr_MD5_Final(&md5, &license->HardwareId[HWID_PLATFORM_ID_LENGTH], WINPR_MD5_DIGEST_LENGTH))
+		return FALSE;
 
 	return TRUE;
 }

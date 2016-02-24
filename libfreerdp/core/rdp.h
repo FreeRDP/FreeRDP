@@ -156,7 +156,7 @@ struct rdp_rdp
 	int encrypt_checksum_use_count;
 	struct crypto_des3_struct* fips_encrypt;
 	struct crypto_des3_struct* fips_decrypt;
-	struct crypto_hmac_struct* fips_hmac;
+	WINPR_HMAC_CTX* fips_hmac;
 	UINT32 sec_flags;
 	BOOL do_crypt;
 	BOOL do_crypt_license;

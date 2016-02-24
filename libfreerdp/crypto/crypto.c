@@ -77,55 +77,6 @@ void crypto_des3_free(CryptoDes3 des3)
 	free(des3);
 }
 
-CryptoHmac crypto_hmac_new(void)
-{
-	CryptoHmac hmac = malloc(sizeof(*hmac));
-	if (!hmac)
-		return NULL;
-
-	HMAC_CTX_init(&hmac->hmac_ctx);
-	return hmac;
-}
-
-BOOL crypto_hmac_sha1_init(CryptoHmac hmac, const BYTE* data, UINT32 length)
-{
-#if (OPENSSL_VERSION_NUMBER >= 0x00909000)
-	return HMAC_Init_ex(&hmac->hmac_ctx, data, length, EVP_sha1(), NULL) == 1;
-#else
-	HMAC_Init_ex(&hmac->hmac_ctx, data, length, EVP_sha1(), NULL);
-	return TRUE;
-#endif
-}
-
-BOOL crypto_hmac_md5_init(CryptoHmac hmac, const BYTE* data, UINT32 length)
-{
-#if (OPENSSL_VERSION_NUMBER >= 0x00909000)
-	return HMAC_Init_ex(&hmac->hmac_ctx, data, length, EVP_md5(), NULL) == 1;
-#else
-	HMAC_Init_ex(&hmac->hmac_ctx, data, length, EVP_md5(), NULL);
-	return TRUE;
-#endif
-}
-
-void crypto_hmac_update(CryptoHmac hmac, const BYTE* data, UINT32 length)
-{
-	HMAC_Update(&hmac->hmac_ctx, data, length);
-}
-
-void crypto_hmac_final(CryptoHmac hmac, BYTE* out_data, UINT32 length)
-{
-	HMAC_Final(&hmac->hmac_ctx, out_data, &length);
-}
-
-void crypto_hmac_free(CryptoHmac hmac)
-{
-	if (hmac == NULL)
-		return;
-
-	HMAC_CTX_cleanup(&hmac->hmac_ctx);
-	free(hmac);
-}
-
 CryptoCert crypto_cert_read(BYTE* data, UINT32 length)
 {
 	CryptoCert cert = malloc(sizeof(*cert));

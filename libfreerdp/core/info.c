@@ -44,7 +44,7 @@ static const char* const INFO_TYPE_LOGON_STRINGS[4] =
 
 BOOL rdp_compute_client_auto_reconnect_cookie(rdpRdp* rdp)
 {
-	CryptoHmac hmac;
+	WINPR_HMAC_CTX hmac;
 	BYTE ClientRandom[32];
 	BYTE AutoReconnectRandom[32];
 	ARC_SC_PRIVATE_PACKET* serverCookie;
@@ -67,18 +67,14 @@ BOOL rdp_compute_client_auto_reconnect_cookie(rdpRdp* rdp)
 	if (settings->SelectedProtocol == PROTOCOL_RDP)
 		CopyMemory(ClientRandom, settings->ClientRandom, settings->ClientRandomLength);
 
-	hmac = crypto_hmac_new();
-
-	if (!hmac)
-		return FALSE;
-
 	/* SecurityVerifier = HMAC_MD5(AutoReconnectRandom, ClientRandom) */
 
-	if (!crypto_hmac_md5_init(hmac, AutoReconnectRandom, 16))
+	if (!winpr_HMAC_Init(&hmac, WINPR_MD_MD5, AutoReconnectRandom, 16))
 		return FALSE;
-	crypto_hmac_update(hmac, ClientRandom, 32);
-	crypto_hmac_final(hmac, clientCookie->securityVerifier, 16);
-	crypto_hmac_free(hmac);
+	if (!winpr_HMAC_Update(&hmac, ClientRandom, 32))
+		return FALSE;
+	if (!winpr_HMAC_Final(&hmac, clientCookie->securityVerifier, 16))
+		return FALSE;
 
 	return TRUE;
 }

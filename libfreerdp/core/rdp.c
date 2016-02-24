@@ -1614,7 +1614,7 @@ void rdp_reset(rdpRdp* rdp)
 
 	if (rdp->fips_hmac)
 	{
-		crypto_hmac_free(rdp->fips_hmac);
+		free(rdp->fips_hmac);
 		rdp->fips_hmac = NULL;
 	}
 
@@ -1665,7 +1665,7 @@ void rdp_free(rdpRdp* rdp)
 		winpr_RC4_Final(rdp->rc4_encrypt_key);
 		crypto_des3_free(rdp->fips_encrypt);
 		crypto_des3_free(rdp->fips_decrypt);
-		crypto_hmac_free(rdp->fips_hmac);
+		free(rdp->fips_hmac);
 		freerdp_settings_free(rdp->settings);
 		freerdp_settings_free(rdp->settingsCopy);
 		transport_free(rdp->transport);

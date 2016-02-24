@@ -503,7 +503,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 			goto end;
 		}
 
-		rdp->fips_hmac = crypto_hmac_new();
+		rdp->fips_hmac = calloc(1, sizeof(WINPR_HMAC_CTX));
 		if (!rdp->fips_hmac)
 		{
 			WLog_ERR(TAG, "unable to allocate fips hmac");
@@ -611,7 +611,7 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 			goto end;
 		}
 
-		rdp->fips_hmac = crypto_hmac_new();
+		rdp->fips_hmac = calloc(1, sizeof(WINPR_HMAC_CTX));
 		if (!rdp->fips_hmac)
 		{
 			WLog_ERR(TAG, "unable to allocate fips hmac");
