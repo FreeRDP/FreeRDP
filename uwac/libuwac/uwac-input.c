@@ -742,6 +742,8 @@ seat_handle_name(void *data, struct wl_seat *seat, const char *name)
 		free(input->name);
 
 	input->name = strdup(name);
+	if (!input->name)
+		assert(uwacErrorHandler(input->display, UWAC_ERROR_NOMEMORY, "unable to strdup seat's name\n"));
 }
 
 static const struct wl_seat_listener seat_listener = {

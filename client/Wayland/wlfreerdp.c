@@ -92,6 +92,9 @@ static BOOL wl_end_paint(rdpContext* context)
 	context_w = (wlfContext*) context;
 
 	data = UwacWindowGetDrawingBuffer(context_w->window);
+	if (!data)
+		return FALSE;
+
 	for (i = 0; i < h; i++)
 	{
 		memcpy(data + ((i+y)*(gdi->width*4)) + x*4,
@@ -99,7 +102,9 @@ static BOOL wl_end_paint(rdpContext* context)
 		       w*4);
 	}
 
-	UwacWindowAddDamage(context_w->window, x, y, w, h);
+	if (UwacWindowAddDamage(context_w->window, x, y, w, h) != UWAC_SUCCESS)
+		return FALSE;
+
 	context_w->haveDamage = TRUE;
 	return wl_update_content(context_w);
 }

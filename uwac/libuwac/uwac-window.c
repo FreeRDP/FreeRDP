@@ -296,6 +296,10 @@ int UwacWindowShmAllocBuffers(UwacWindow *w, int nbuffers, int allocSize, uint32
 	}
 
 	pool = wl_shm_create_pool(w->display->shm, fd, allocSize * nbuffers);
+	if (!pool) {
+		ret = UWAC_ERROR_NOMEMORY;
+		goto error_mmap;
+	}
 
 	for (i = 0; i < nbuffers; i++) {
 		UwacBuffer *buffer = &w->buffers[w->nbuffers + i];
