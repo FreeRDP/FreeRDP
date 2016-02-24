@@ -43,7 +43,7 @@
  * RC4
  */
 
-void winpr_RC4_Init(WINPR_RC4_CTX* ctx, const BYTE* key, size_t keylen)
+BOOL winpr_RC4_Init(WINPR_RC4_CTX* ctx, const BYTE* key, size_t keylen)
 {
 #if defined(WITH_OPENSSL)
 	RC4_set_key((RC4_KEY*) ctx, keylen, key);
@@ -51,25 +51,29 @@ void winpr_RC4_Init(WINPR_RC4_CTX* ctx, const BYTE* key, size_t keylen)
 	mbedtls_arc4_init((mbedtls_arc4_context*) ctx);
 	mbedtls_arc4_setup((mbedtls_arc4_context*) ctx, key, keylen);
 #endif
+    return TRUE;
 }
 
-int winpr_RC4_Update(WINPR_RC4_CTX* ctx, size_t length, const BYTE* input, BYTE* output)
+BOOL winpr_RC4_Update(WINPR_RC4_CTX* ctx, size_t length, const BYTE* input, BYTE* output)
 {
 #if defined(WITH_OPENSSL)
 	RC4((RC4_KEY*) ctx, length, input, output);
-	return 0;
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_ARC4_C)
-	return mbedtls_arc4_crypt((mbedtls_arc4_context*) ctx, length, input, output);
+	if (mbedtls_arc4_crypt((mbedtls_arc4_context*) ctx, length, input, output) != 0)
+        return FALSE;
 #endif
+
+    return TRUE;
 }
 
-void winpr_RC4_Final(WINPR_RC4_CTX* ctx)
+BOOL winpr_RC4_Final(WINPR_RC4_CTX* ctx)
 {
 #if defined(WITH_OPENSSL)
 
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_ARC4_C)
 	mbedtls_arc4_free((mbedtls_arc4_context*) ctx);
 #endif
+    return TRUE;
 }
 
 /**

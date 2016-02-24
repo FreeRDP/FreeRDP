@@ -648,10 +648,10 @@ typedef union _WINPR_MD5_CTX WINPR_MD5_CTX;
 extern "C" {
 #endif
 
-WINPR_API void winpr_MD5_Init(WINPR_MD5_CTX* ctx);
-WINPR_API void winpr_MD5_Update(WINPR_MD5_CTX* ctx, const BYTE* input, size_t ilen);
-WINPR_API void winpr_MD5_Final(WINPR_MD5_CTX* ctx, BYTE* output);
-WINPR_API void winpr_MD5(const BYTE* input, size_t ilen, BYTE* output);
+WINPR_API BOOL winpr_MD5_Init(WINPR_MD5_CTX* ctx);
+WINPR_API BOOL winpr_MD5_Update(WINPR_MD5_CTX* ctx, const BYTE* input, size_t ilen);
+WINPR_API BOOL winpr_MD5_Final(WINPR_MD5_CTX* ctx, BYTE* output);
+WINPR_API BOOL winpr_MD5(const BYTE* input, size_t ilen, BYTE* output);
 
 #ifdef __cplusplus
 }
@@ -689,10 +689,10 @@ typedef union _WINPR_MD4_CTX WINPR_MD4_CTX;
 extern "C" {
 #endif
 
-WINPR_API void winpr_MD4_Init(WINPR_MD4_CTX* ctx);
-WINPR_API void winpr_MD4_Update(WINPR_MD4_CTX* ctx, const BYTE* input, size_t ilen);
-WINPR_API void winpr_MD4_Final(WINPR_MD4_CTX* ctx, BYTE* output);
-WINPR_API void winpr_MD4(const BYTE* input, size_t ilen, BYTE* output);
+WINPR_API BOOL winpr_MD4_Init(WINPR_MD4_CTX* ctx);
+WINPR_API BOOL winpr_MD4_Update(WINPR_MD4_CTX* ctx, const BYTE* input, size_t ilen);
+WINPR_API BOOL winpr_MD4_Final(WINPR_MD4_CTX* ctx, BYTE* output);
+WINPR_API BOOL winpr_MD4(const BYTE* input, size_t ilen, BYTE* output);
 
 #ifdef __cplusplus
 }
@@ -732,10 +732,10 @@ typedef union _WINPR_SHA1_CTX WINPR_SHA1_CTX;
 extern "C" {
 #endif
 
-WINPR_API void winpr_SHA1_Init(WINPR_SHA1_CTX* ctx);
-WINPR_API void winpr_SHA1_Update(WINPR_SHA1_CTX* ctx, const BYTE* input, size_t ilen);
-WINPR_API void winpr_SHA1_Final(WINPR_SHA1_CTX* ctx, BYTE* output);
-WINPR_API void winpr_SHA1(const BYTE* input, size_t ilen, BYTE* output);
+WINPR_API BOOL winpr_SHA1_Init(WINPR_SHA1_CTX* ctx);
+WINPR_API BOOL winpr_SHA1_Update(WINPR_SHA1_CTX* ctx, const BYTE* input, size_t ilen);
+WINPR_API BOOL winpr_SHA1_Final(WINPR_SHA1_CTX* ctx, BYTE* output);
+WINPR_API BOOL winpr_SHA1(const BYTE* input, size_t ilen, BYTE* output);
 
 #ifdef __cplusplus
 }
@@ -896,9 +896,9 @@ typedef union _WINPR_RC4_CTX WINPR_RC4_CTX;
 extern "C" {
 #endif
 
-WINPR_API void winpr_RC4_Init(WINPR_RC4_CTX* ctx, const BYTE* key, size_t keylen);
-WINPR_API int winpr_RC4_Update(WINPR_RC4_CTX* ctx, size_t length, const BYTE* input, BYTE* output);
-WINPR_API void winpr_RC4_Final(WINPR_RC4_CTX* ctx);
+WINPR_API BOOL winpr_RC4_Init(WINPR_RC4_CTX* ctx, const BYTE* key, size_t keylen);
+WINPR_API BOOL winpr_RC4_Update(WINPR_RC4_CTX* ctx, size_t length, const BYTE* input, BYTE* output);
+WINPR_API BOOL winpr_RC4_Final(WINPR_RC4_CTX* ctx);
 
 #ifdef __cplusplus
 }

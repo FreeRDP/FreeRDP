@@ -43,123 +43,158 @@
  * MD5
  */
 
-void winpr_MD5_Init(WINPR_MD5_CTX* ctx)
+BOOL winpr_MD5_Init(WINPR_MD5_CTX* ctx)
 {
 #if defined(WITH_OPENSSL)
-	MD5_Init((MD5_CTX*) ctx);
+	if (MD5_Init((MD5_CTX*) ctx) != 1)
+        return FALSE;
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_MD5_C)
 	mbedtls_md5_init((mbedtls_md5_context*) ctx);
 	mbedtls_md5_starts((mbedtls_md5_context*) ctx);
 #endif
+
+    return TRUE;
 }
 
-void winpr_MD5_Update(WINPR_MD5_CTX* ctx, const BYTE* input, size_t ilen)
+BOOL winpr_MD5_Update(WINPR_MD5_CTX* ctx, const BYTE* input, size_t ilen)
 {
 #if defined(WITH_OPENSSL)
-	MD5_Update((MD5_CTX*) ctx, input, ilen);
+	if (MD5_Update((MD5_CTX*) ctx, input, ilen) != 1)
+        return FALSE;
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_MD5_C)
 	mbedtls_md5_update((mbedtls_md5_context*) ctx, input, ilen);
 #endif
+
+    return TRUE;
 }
 
-void winpr_MD5_Final(WINPR_MD5_CTX* ctx, BYTE* output)
+BOOL winpr_MD5_Final(WINPR_MD5_CTX* ctx, BYTE* output)
 {
 #if defined(WITH_OPENSSL)
-	MD5_Final(output, (MD5_CTX*) ctx);
+	if (MD5_Final(output, (MD5_CTX*) ctx) != 1)
+        return FALSE;
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_MD5_C)
 	mbedtls_md5_finish((mbedtls_md5_context*) ctx, output);
 	mbedtls_md5_free((mbedtls_md5_context*) ctx);
 #endif
+
+    return TRUE;
 }
 
-void winpr_MD5(const BYTE* input, size_t ilen, BYTE* output)
+BOOL winpr_MD5(const BYTE* input, size_t ilen, BYTE* output)
 {
 	WINPR_MD5_CTX ctx;
-	winpr_MD5_Init(&ctx);
-	winpr_MD5_Update(&ctx, input, ilen);
-	winpr_MD5_Final(&ctx, output);
+
+	if (!winpr_MD5_Init(&ctx))
+        return FALSE;
+	if (!winpr_MD5_Update(&ctx, input, ilen))
+        return FALSE;
+	return winpr_MD5_Final(&ctx, output);
 }
 
 /**
  * MD4
  */
 
-void winpr_MD4_Init(WINPR_MD4_CTX* ctx)
+BOOL winpr_MD4_Init(WINPR_MD4_CTX* ctx)
 {
 #if defined(WITH_OPENSSL)
-	MD4_Init((MD4_CTX*) ctx);
+	if (MD4_Init((MD4_CTX*) ctx) != 1)
+        return FALSE;
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_MD4_C)
 	mbedtls_md4_init((mbedtls_md4_context*) ctx);
 	mbedtls_md4_starts((mbedtls_md4_context*) ctx);
 #endif
+    return TRUE;
 }
 
-void winpr_MD4_Update(WINPR_MD4_CTX* ctx, const BYTE* input, size_t ilen)
+BOOL winpr_MD4_Update(WINPR_MD4_CTX* ctx, const BYTE* input, size_t ilen)
 {
 #if defined(WITH_OPENSSL)
-	MD4_Update((MD4_CTX*) ctx, input, ilen);
+	if (MD4_Update((MD4_CTX*) ctx, input, ilen) != 1)
+        return FALSE;
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_MD4_C)
 	mbedtls_md4_update((mbedtls_md4_context*) ctx, input, ilen);
 #endif
+
+    return TRUE;
 }
 
-void winpr_MD4_Final(WINPR_MD4_CTX* ctx, BYTE* output)
+BOOL winpr_MD4_Final(WINPR_MD4_CTX* ctx, BYTE* output)
 {
 #if defined(WITH_OPENSSL)
-	MD4_Final(output, (MD4_CTX*) ctx);
+	if (MD4_Final(output, (MD4_CTX*) ctx) != 1)
+        return FALSE;
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_MD4_C)
 	mbedtls_md4_finish((mbedtls_md4_context*) ctx, output);
 	mbedtls_md4_free((mbedtls_md4_context*) ctx);
 #endif
+
+    return TRUE;
 }
 
-void winpr_MD4(const BYTE* input, size_t ilen, BYTE* output)
+BOOL winpr_MD4(const BYTE* input, size_t ilen, BYTE* output)
 {
 	WINPR_MD4_CTX ctx;
-	winpr_MD4_Init(&ctx);
-	winpr_MD4_Update(&ctx, input, ilen);
-	winpr_MD4_Final(&ctx, output);
+
+	if (!winpr_MD4_Init(&ctx))
+        return FALSE;
+	if (!winpr_MD4_Update(&ctx, input, ilen))
+        return FALSE;
+	return winpr_MD4_Final(&ctx, output);
 }
 
 /**
  * SHA1
  */
 
-void winpr_SHA1_Init(WINPR_SHA1_CTX* ctx)
+BOOL winpr_SHA1_Init(WINPR_SHA1_CTX* ctx)
 {
 #if defined(WITH_OPENSSL)
-	SHA1_Init((SHA_CTX*) ctx);
+	if (SHA1_Init((SHA_CTX*) ctx) != 1)
+        return FALSE;
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_SHA1_C)
 	mbedtls_sha1_init((mbedtls_sha1_context*) ctx);
 	mbedtls_sha1_starts((mbedtls_sha1_context*) ctx);
 #endif
+
+    return TRUE;
 }
 
-void winpr_SHA1_Update(WINPR_SHA1_CTX* ctx, const BYTE* input, size_t ilen)
+BOOL winpr_SHA1_Update(WINPR_SHA1_CTX* ctx, const BYTE* input, size_t ilen)
 {
 #if defined(WITH_OPENSSL)
-	SHA1_Update((SHA_CTX*) ctx, input, ilen);
+	if (SHA1_Update((SHA_CTX*) ctx, input, ilen) != 1)
+        return FALSE;
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_SHA1_C)
 	mbedtls_sha1_update((mbedtls_sha1_context*) ctx, input, ilen);
 #endif
+
+    return TRUE;
 }
 
-void winpr_SHA1_Final(WINPR_SHA1_CTX* ctx, BYTE* output)
+BOOL winpr_SHA1_Final(WINPR_SHA1_CTX* ctx, BYTE* output)
 {
 #if defined(WITH_OPENSSL)
-	SHA1_Final(output, (SHA_CTX*) ctx);
+	if (SHA1_Final(output, (SHA_CTX*) ctx) != 1)
+        return FALSE;
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_SHA1_C)
 	mbedtls_sha1_finish((mbedtls_sha1_context*) ctx, output);
 	mbedtls_sha1_free((mbedtls_sha1_context*) ctx);
 #endif
+
+    return TRUE;
 }
 
-void winpr_SHA1(const BYTE* input, size_t ilen, BYTE* output)
+BOOL winpr_SHA1(const BYTE* input, size_t ilen, BYTE* output)
 {
 	WINPR_SHA1_CTX ctx;
-	winpr_SHA1_Init(&ctx);
-	winpr_SHA1_Update(&ctx, input, ilen);
-	winpr_SHA1_Final(&ctx, output);
+
+	if (!winpr_SHA1_Init(&ctx))
+        return FALSE;
+	if (!winpr_SHA1_Update(&ctx, input, ilen))
+        return FALSE;
+	return winpr_SHA1_Final(&ctx, output);
 }
 
 /**
