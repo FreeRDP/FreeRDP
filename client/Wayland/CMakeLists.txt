@@ -2,6 +2,7 @@
 # FreeRDP Wayland Client cmake build script
 #
 # Copyright 2014 Manuel Bachmann <tarnyko@tarnyko.net>
+# Copyright 2015 David Fort <contact@hardening-consulting.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,22 +19,19 @@
 set(MODULE_NAME "wlfreerdp")
 set(MODULE_PREFIX "FREERDP_CLIENT_WAYLAND")
 
-include_directories(${WAYLAND_INCLUDE_DIRS})
+include_directories(${CMAKE_SOURCE_DIR}/uwac/include)
 
 set(${MODULE_PREFIX}_SRCS
-	wlf_display.c
-	wlf_display.h
-	wlf_window.c
-	wlf_window.h
+    wlfreerdp.c
+	wlfreerdp.h
 	wlf_input.c
 	wlf_input.h
-	wlfreerdp.c
-	wlfreerdp.h)
+	)
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${CMAKE_DL_LIBS})
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${WAYLAND_LIBRARIES} freerdp-client freerdp)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client freerdp uwac)
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)

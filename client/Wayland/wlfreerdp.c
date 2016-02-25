@@ -23,8 +23,13 @@
 #include <freerdp/client/cmdline.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/gdi/gdi.h>
+#include <linux/input.h>
 
 #include "wlfreerdp.h"
+#include "wlf_input.h"
+
+UwacDisplay *g_display;
+HANDLE g_displayHandle;
 
 static BOOL wl_context_new(freerdp* instance, rdpContext* context)
 {
@@ -44,6 +49,18 @@ static void wl_context_free(freerdp* instance, rdpContext* context)
 	}
 }
 
+BOOL wl_update_content(wlfContext *context_w)
+{
+	if (!context_w->waitingFrameDone && context_w->haveDamage)
+	{
+		UwacWindowSubmitBuffer(context_w->window, true);
+		context_w->waitingFrameDone = TRUE;
+		context_w->haveDamage = FALSE;
+	}
+
+	return TRUE;
+}
+
 static BOOL wl_begin_paint(rdpContext* context)
 {
 	rdpGdi* gdi;
@@ -53,12 +70,12 @@ static BOOL wl_begin_paint(rdpContext* context)
 	return TRUE;
 }
 
+
 static BOOL wl_end_paint(rdpContext* context)
 {
 	rdpGdi* gdi;
-	wlfDisplay* display;
-	wlfWindow* window;
-	wlfContext* context_w;
+	char *data;
+	wlfContext *context_w;
 	INT32 x, y;
 	UINT32 w, h;
 	int i;
@@ -73,21 +90,28 @@ static BOOL wl_end_paint(rdpContext* context)
 	h = gdi->primary->hdc->hwnd->invalid->h;
 
 	context_w = (wlfContext*) context;
-	display = context_w->display;
-	window = context_w->window;
+
+	data = UwacWindowGetDrawingBuffer(context_w->window);
+	if (!data)
+		return FALSE;
 
 	for (i = 0; i < h; i++)
-		memcpy(window->data + ((i+y)*(gdi->width*4)) + x*4,
+	{
+		memcpy(data + ((i+y)*(gdi->width*4)) + x*4,
 		       gdi->primary_buffer + ((i+y)*(gdi->width*4)) + x*4,
 		       w*4);
+	}
 
-	return wlf_RefreshDisplay(display);
+	if (UwacWindowAddDamage(context_w->window, x, y, w, h) != UWAC_SUCCESS)
+		return FALSE;
+
+	context_w->haveDamage = TRUE;
+	return wl_update_content(context_w);
 }
+
 
 static BOOL wl_pre_connect(freerdp* instance)
 {
-	wlfDisplay* display;
-	wlfInput* input;
 	wlfContext* context;
 
 	if (freerdp_channels_pre_connect(instance->context->channels, instance))
@@ -97,17 +121,7 @@ static BOOL wl_pre_connect(freerdp* instance)
 	if (!context)
 		return FALSE;
 
-	display = wlf_CreateDisplay();
-	if (!display)
-		return FALSE;
-
-	context->display = display;
-
-	input = wlf_CreateInput(context);
-	if (!input)
-		return FALSE;
-
-	context->input = input;
+	context->display = g_display;
 
 	return TRUE;
 }
@@ -115,7 +129,7 @@ static BOOL wl_pre_connect(freerdp* instance)
 static BOOL wl_post_connect(freerdp* instance)
 {
 	rdpGdi* gdi;
-	wlfWindow* window;
+	UwacWindow* window;
 	wlfContext* context;
 
 	if (!gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP, NULL))
@@ -126,28 +140,23 @@ static BOOL wl_post_connect(freerdp* instance)
 		return FALSE;
 
 	context = (wlfContext*) instance->context;
-	window = wlf_CreateDesktopWindow(context, "FreeRDP", gdi->width, gdi->height, FALSE);
+	context->window = window = UwacCreateWindowShm(context->display, gdi->width, gdi->height, WL_SHM_FORMAT_XRGB8888);
 	if (!window)
 		return FALSE;
 
-	 /* fill buffer with first image here */
-	window->data = malloc (gdi->width * gdi->height *4);
-	if (!window->data)
-		return FALSE;
+	UwacWindowSetTitle(window, "FreeRDP");
 
-	memcpy(window->data, (void*) gdi->primary_buffer, gdi->width * gdi->height * 4);
 	instance->update->BeginPaint = wl_begin_paint;
 	instance->update->EndPaint = wl_end_paint;
-
-	 /* put Wayland data in the context here */
-	context->window = window;
 
 	if (freerdp_channels_post_connect(instance->context->channels, instance) < 0)
 		return FALSE;
 
-	wlf_UpdateWindowArea(context, window, 0, 0, gdi->width, gdi->height);
 
-	return TRUE;
+	memcpy(UwacWindowGetDrawingBuffer(context->window), gdi->primary_buffer, gdi->width * gdi->height * 4);
+	UwacWindowAddDamage(context->window, 0, 0, gdi->width, gdi->height);
+	context->haveDamage = TRUE;
+	return wl_update_content(context);
 }
 
 static void wl_post_disconnect(freerdp* instance)
@@ -161,15 +170,67 @@ static void wl_post_disconnect(freerdp* instance)
 
 	context = (wlfContext*) instance->context;
 
-	if (context->display)
-		wlf_DestroyDisplay(context, context->display);
-
-	if (context->input)
-		wlf_DestroyInput(context, context->input);
-
 	gdi_free(instance);
 	if (context->window)
-		wlf_DestroyWindow(context, context->window);
+		UwacDestroyWindow(&context->window);
+
+	if (context->display)
+		UwacCloseDisplay(&context->display);
+
+}
+
+static BOOL handle_uwac_events(freerdp* instance, UwacDisplay *display) {
+	UwacEvent event;
+	wlfContext *context;
+
+	if (UwacDisplayDispatch(display, 1) < 0)
+		return FALSE;
+
+	while (UwacHasEvent(display))
+	{
+		if (UwacNextEvent(display, &event) != UWAC_SUCCESS)
+			return FALSE;
+
+		/*printf("UWAC event type %d\n", event.type);*/
+		switch (event.type) {
+		case UWAC_EVENT_FRAME_DONE:
+			if (!instance)
+				continue;
+
+			context = (wlfContext *)instance->context;
+			context->waitingFrameDone = FALSE;
+			if (context->haveDamage && !wl_end_paint(instance->context))
+				return FALSE;
+			break;
+		case UWAC_EVENT_POINTER_ENTER:
+			if (!wlf_handle_pointer_enter(instance, &event.mouse_enter_leave))
+				return FALSE;
+			break;
+		case UWAC_EVENT_POINTER_MOTION:
+			if (!wlf_handle_pointer_motion(instance, &event.mouse_motion))
+				return FALSE;
+			break;
+		case UWAC_EVENT_POINTER_BUTTONS:
+			if (!wlf_handle_pointer_buttons(instance, &event.mouse_button))
+				return FALSE;
+			break;
+		case UWAC_EVENT_POINTER_AXIS:
+			if (!wlf_handle_pointer_axis(instance, &event.mouse_axis))
+				return FALSE;
+			break;
+		case UWAC_EVENT_KEY:
+			if (!wlf_handle_key(instance, &event.key))
+				return FALSE;
+			break;
+		case UWAC_EVENT_KEYBOARD_ENTER:
+			if (!wlf_keyboard_enter(instance, &event.keyboard_enter_leave))
+				return FALSE;
+			break;
+		default:
+			break;
+		}
+	}
+	return TRUE;
 }
 
 static int wlfreerdp_run(freerdp* instance)
@@ -184,27 +245,39 @@ static int wlfreerdp_run(freerdp* instance)
 			return -1;
 	}
 
+	handle_uwac_events(instance, g_display);
+
 	while (!freerdp_shall_disconnect(instance))
 	{
-		count = freerdp_get_event_handles(instance->context, handles, 64);
+		handles[0] = g_displayHandle;
+
+		count = freerdp_get_event_handles(instance->context, &handles[1], 63);
 		if (!count)
 		{
 			printf("Failed to get FreeRDP file descriptor\n");
 			break;
 		}
 
-		status = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
+		status = WaitForMultipleObjects(count+1, handles, FALSE, INFINITE);
 		if (WAIT_FAILED == status)
 		{
 			printf("%s: WaitForMultipleObjects failed\n", __FUNCTION__);
 			break;
 		}
 
-		if (freerdp_check_event_handles(instance->context) != TRUE)
-		{
-			printf("Failed to check FreeRDP file descriptor\n");
+		if (!handle_uwac_events(instance, g_display)) {
+			printf("error handling UWAC events\n");
 			break;
 		}
+
+		//if (WaitForMultipleObjects(count, &handles[1], FALSE, INFINITE)) {
+			if (freerdp_check_event_handles(instance->context) != TRUE)
+			{
+				printf("Failed to check FreeRDP file descriptor\n");
+				break;
+			}
+		//}
+
 	}
 
 	freerdp_channels_disconnect(instance->context->channels, instance);
@@ -215,8 +288,19 @@ static int wlfreerdp_run(freerdp* instance)
 
 int main(int argc, char* argv[])
 {
-	int status;
+	UwacReturnCode status;
 	freerdp* instance;
+
+	g_display = UwacOpenDisplay(NULL, &status);
+	if (!g_display)
+		exit(1);
+
+	g_displayHandle = CreateFileDescriptorEvent(NULL, FALSE, FALSE, UwacDisplayGetFd(g_display), WINPR_FD_READ);
+	if (!g_displayHandle)
+		exit(1);
+
+	//if (!handle_uwac_events(NULL, g_display))
+	//	exit(1);
 
 	instance = freerdp_new();
 	instance->PreConnect = wl_pre_connect;
