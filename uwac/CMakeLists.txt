@@ -15,6 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Soname versioning
+set(UWAC_VERSION_MAJOR "0")
+set(UWAC_VERSION_MINOR "0")
+set(UWAC_VERSION_REVISION "1")
+set(UWAC_VERSION "${UWAC_VERSION_MAJOR}.${UWAC_VERSION_MINOR}.${UWAC_VERSION_REVISION}")
+set(UWAC_VERSION_FULL "${UWAC_VERSION}")
+set(UWAC_API_VERSION "${UWAC_VERSION_MAJOR}")
+
 add_subdirectory(include)
 add_subdirectory(libuwac)
-
