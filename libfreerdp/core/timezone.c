@@ -82,15 +82,15 @@ BOOL rdp_read_client_time_zone(wStream* s, rdpSettings* settings)
 {
 	LPTIME_ZONE_INFORMATION tz;
 
-    if (!s || !settings)
-        return FALSE;
+	if (!s || !settings)
+		return FALSE;
 
 	if (Stream_GetRemainingLength(s) < 172)
 		return FALSE;
 
 	tz = settings->ClientTimeZone;
-    if (!tz)
-        return FALSE;
+	if (!tz)
+		return FALSE;
 
 	Stream_Read_UINT32(s, tz->Bias); /* Bias */
 
@@ -122,8 +122,8 @@ BOOL rdp_write_client_time_zone(wStream* s, rdpSettings* settings)
 	DWORD rc;
 
 	tz = settings->ClientTimeZone;
-    if (!tz)
-        return FALSE;
+	if (!tz)
+		return FALSE;
 
 	rc = GetTimeZoneInformation(tz);
 
@@ -137,7 +137,7 @@ BOOL rdp_write_client_time_zone(wStream* s, rdpSettings* settings)
 	rdp_write_system_time(s, &tz->StandardDate);
 
 	DEBUG_TIMEZONE("bias=%d stdName='%s' dlName='%s'", tz->Bias,
-		       tz->StandardName, tz->DaylightName);
+			   tz->StandardName, tz->DaylightName);
 
 	/* Note that StandardBias is ignored if no valid standardDate is provided. */
 	/* StandardBias */
@@ -155,6 +155,6 @@ BOOL rdp_write_client_time_zone(wStream* s, rdpSettings* settings)
 	Stream_Write_UINT32(s, tz->DaylightBias);
 	DEBUG_TIMEZONE("DaylightBias=%d", tz->DaylightBias);
 
-    return TRUE
+	return TRUE;
 }
 
