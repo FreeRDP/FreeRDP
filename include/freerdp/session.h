@@ -22,7 +22,7 @@
 #include <winpr/wtypes.h>
 
 /* Logon Information Types */
-#define INFO_TYPE_LOGON			0x00000000
+#define INFO_TYPE_LOGON		0x00000000
 #define INFO_TYPE_LOGON_LONG		0x00000001
 #define INFO_TYPE_LOGON_PLAIN_NOTIFY	0x00000002
 #define INFO_TYPE_LOGON_EXTENDED_INF	0x00000003
