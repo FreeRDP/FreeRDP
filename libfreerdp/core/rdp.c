@@ -204,8 +204,7 @@ static int rdp_security_stream_init(rdpRdp* rdp, wStream* s, BOOL sec_header)
 int rdp_init_stream(rdpRdp* rdp, wStream* s)
 {
 	Stream_Seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
-	rdp_security_stream_init(rdp, s, FALSE);
-	return 0;
+	return rdp_security_stream_init(rdp, s, FALSE);
 }
 
 wStream* rdp_send_stream_init(rdpRdp* rdp)
@@ -668,8 +667,7 @@ BOOL rdp_recv_set_error_info_data_pdu(rdpRdp* rdp, wStream* s)
 		return FALSE;
 
 	Stream_Read_UINT32(s, errorInfo); /* errorInfo (4 bytes) */
-	rdp_set_error_info(rdp, errorInfo);
-	return TRUE;
+	return rdp_set_error_info(rdp, errorInfo);
 }
 
 BOOL rdp_recv_server_auto_reconnect_status_pdu(rdpRdp* rdp, wStream* s)
@@ -1412,6 +1410,8 @@ BOOL rdp_send_error_info(rdpRdp* rdp)
 		return TRUE;
 
 	s = rdp_data_pdu_init(rdp);
+	if (!s)
+		return FALSE;
 
 	Stream_Write_UINT32(s, rdp->errorInfo); /* error id (4 bytes) */
 

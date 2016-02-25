@@ -26,6 +26,7 @@
 #include <winpr/crt.h>
 #include <freerdp/crypto/crypto.h>
 #include <freerdp/log.h>
+#include <freerdp/session.h>
 #include <stdio.h>
 
 #include "timezone.h"
@@ -90,7 +91,7 @@ BOOL rdp_compute_client_auto_reconnect_cookie(rdpRdp* rdp)
  * @param settings settings
  */
 
-BOOL rdp_read_server_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
+BOOL rdp_read_server_auto_reconnect_cookie(rdpRdp* rdp, wStream* s, logon_info_ex *info)
 {
 	BYTE* p;
 	ARC_SC_PRIVATE_PACKET* autoReconnectCookie;
@@ -102,15 +103,15 @@ BOOL rdp_read_server_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
 		return FALSE;
 
 	Stream_Read_UINT32(s, autoReconnectCookie->cbLen); /* cbLen (4 bytes) */
-	Stream_Read_UINT32(s, autoReconnectCookie->version); /* Version (4 bytes) */
-	Stream_Read_UINT32(s, autoReconnectCookie->logonId); /* LogonId (4 bytes) */
-	Stream_Read(s, autoReconnectCookie->arcRandomBits, 16); /* ArcRandomBits (16 bytes) */
-
 	if (autoReconnectCookie->cbLen != 28)
 	{
 		WLog_ERR(TAG, "ServerAutoReconnectCookie.cbLen != 28");
 		return FALSE;
 	}
+
+	Stream_Read_UINT32(s, autoReconnectCookie->version); /* Version (4 bytes) */
+	Stream_Read_UINT32(s, autoReconnectCookie->logonId); /* LogonId (4 bytes) */
+	Stream_Read(s, autoReconnectCookie->arcRandomBits, 16); /* ArcRandomBits (16 bytes) */
 
 	p = autoReconnectCookie->arcRandomBits;
 
@@ -119,6 +120,9 @@ BOOL rdp_read_server_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
 			autoReconnectCookie->version, autoReconnectCookie->logonId,
 			p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7],
 			p[8], p[9], p[10], p[11], p[12], p[13], p[14], p[15]);
+
+	info->LogonId = autoReconnectCookie->logonId;
+	CopyMemory(info->ArcRandomBits, p, 16);
 
 	if ((settings->PrintReconnectCookie) && (autoReconnectCookie->cbLen > 0))
 	{
@@ -660,31 +664,46 @@ BOOL rdp_send_client_info(rdpRdp* rdp)
 	return status;
 }
 
-BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s)
+BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s, logon_info *info)
 {
 	UINT32 cbDomain;
 	UINT32 cbUserName;
-	UINT32 SessionId;
 
 	if (Stream_GetRemainingLength(s) < 576)
 		return FALSE;
 
 	Stream_Read_UINT32(s, cbDomain); /* cbDomain (4 bytes) */
+	if (cbDomain > 52)
+		return FALSE;
+	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), cbDomain, &info->domain, 0, NULL, FALSE);
+	if (!info->domain)
+		return FALSE;
 	Stream_Seek(s, 52); /* domain (52 bytes) */
-	Stream_Read_UINT32(s, cbUserName); /* cbUserName (4 bytes) */
-	Stream_Seek(s, 512); /* userName (512 bytes) */
-	Stream_Read_UINT32(s, SessionId); /* SessionId (4 bytes) */
 
-	WLog_DBG(TAG, "LogonInfoV1: SessionId: 0x%04X", SessionId);
+	Stream_Read_UINT32(s, cbUserName); /* cbUserName (4 bytes) */
+	if (cbUserName > 512)
+		goto error_username;
+	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), cbUserName, &info->username, 0, NULL, FALSE);
+	if (!info->username)
+		goto error_username;
+	Stream_Seek(s, 512); /* userName (512 bytes) */
+
+	Stream_Read_UINT32(s, info->sessionId); /* SessionId (4 bytes) */
+
+	WLog_DBG(TAG, "LogonInfoV1: SessionId: 0x%04X", info->sessionId);
 
 	return TRUE;
+
+error_username:
+	free(info->domain);
+	info->domain = NULL;
+	return FALSE;
 }
 
-BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s)
+BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info *info)
 {
 	UINT16 Version;
 	UINT32 Size;
-	UINT32 SessionId;
 	UINT32 cbDomain;
 	UINT32 cbUserName;
 
@@ -693,7 +712,7 @@ BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s)
 
 	Stream_Read_UINT16(s, Version); /* Version (2 bytes) */
 	Stream_Read_UINT32(s, Size); /* Size (4 bytes) */
-	Stream_Read_UINT32(s, SessionId); /* SessionId (4 bytes) */
+	Stream_Read_UINT32(s, info->sessionId); /* SessionId (4 bytes) */
 	Stream_Read_UINT32(s, cbDomain); /* cbDomain (4 bytes) */
 	Stream_Read_UINT32(s, cbUserName); /* cbUserName (4 bytes) */
 	Stream_Seek(s, 558); /* pad (558 bytes) */
@@ -701,10 +720,21 @@ BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s)
 	if (Stream_GetRemainingLength(s) < (cbDomain + cbUserName))
 		return FALSE;
 
+	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), cbDomain, &info->domain, 0, NULL, FALSE);
+	if (!info->domain)
+		return FALSE;
 	Stream_Seek(s, cbDomain); /* domain */
+
+	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), cbUserName, &info->username, 0, NULL, FALSE);
+	if (!info->username)
+	{
+		free(info->domain);
+		info->domain = NULL;
+		return FALSE;
+	}
 	Stream_Seek(s, cbUserName); /* userName */
 
-	WLog_DBG(TAG, "LogonInfoV2: SessionId: 0x%04X", SessionId);
+	WLog_DBG(TAG, "LogonInfoV2: SessionId: 0x%04X", info->sessionId);
 
 	return TRUE;
 }
@@ -721,7 +751,7 @@ BOOL rdp_recv_logon_plain_notify(rdpRdp* rdp, wStream* s)
 	return TRUE;
 }
 
-BOOL rdp_recv_logon_error_info(rdpRdp* rdp, wStream* s)
+BOOL rdp_recv_logon_error_info(rdpRdp* rdp, wStream* s, logon_info_ex *info)
 {
 	UINT32 errorNotificationType;
 	UINT32 errorNotificationData;
@@ -737,10 +767,12 @@ BOOL rdp_recv_logon_error_info(rdpRdp* rdp, wStream* s)
 
 	IFCALL(rdp->instance->LogonErrorInfo, rdp->instance, errorNotificationData, errorNotificationType);
 
+	info->ErrorNotificationType = errorNotificationType;
+	info->ErrorNotificationData = errorNotificationData;
 	return TRUE;
 }
 
-BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, wStream* s)
+BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, wStream* s, logon_info_ex *info)
 {
 	UINT32 cbFieldData;
 	UINT32 fieldsPresent;
@@ -752,7 +784,7 @@ BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, wStream* s)
 	Stream_Read_UINT16(s, Length); /* Length (2 bytes) */
 	Stream_Read_UINT32(s, fieldsPresent); /* fieldsPresent (4 bytes) */
 
-	if (Stream_GetRemainingLength(s) < (Length - 6))
+	if ((Length < 6) || (Stream_GetRemainingLength(s) < (Length - 6)))
 		return FALSE;
 
 	WLog_DBG(TAG, "LogonInfoExtended: fieldsPresent: 0x%04X", fieldsPresent);
@@ -764,20 +796,28 @@ BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, wStream* s)
 		if (Stream_GetRemainingLength(s) < 4)
 			return FALSE;
 
+		info->haveCookie = TRUE;
 		Stream_Read_UINT32(s, cbFieldData); /* cbFieldData (4 bytes) */
 
-		if (!rdp_read_server_auto_reconnect_cookie(rdp, s))
+		if (Stream_GetRemainingLength(s) < cbFieldData)
+			return FALSE;
+
+		if (!rdp_read_server_auto_reconnect_cookie(rdp, s, info))
 			return FALSE;
 	}
 
 	if (fieldsPresent & LOGON_EX_LOGONERRORS)
 	{
+		info->haveErrorInfo = TRUE;
 		if (Stream_GetRemainingLength(s) < 4)
 			return FALSE;
 
 		Stream_Read_UINT32(s, cbFieldData); /* cbFieldData (4 bytes) */
 
-		if (!rdp_recv_logon_error_info(rdp, s))
+		if (Stream_GetRemainingLength(s) < cbFieldData)
+			return FALSE;
+
+		if (!rdp_recv_logon_error_info(rdp, s, info))
 			return FALSE;
 	}
 
@@ -792,7 +832,11 @@ BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, wStream* s)
 BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 {
 	UINT32 infoType;
-	BOOL status = FALSE;
+	BOOL status;
+	logon_info logonInfo;
+	logon_info_ex logonInfoEx;
+	rdpContext *context = rdp->context;
+	rdpUpdate *update = rdp->context->update;
 
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
@@ -802,22 +846,39 @@ BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 	switch (infoType)
 	{
 		case INFO_TYPE_LOGON:
-			status = rdp_recv_logon_info_v1(rdp, s);
+			ZeroMemory(&logonInfo, sizeof(logonInfo));
+			status = rdp_recv_logon_info_v1(rdp, s, &logonInfo);
+			if (status && update->SaveSessionInfo)
+				status = update->SaveSessionInfo(context, infoType, &logonInfo);
+			free(logonInfo.domain);
+			free(logonInfo.username);
 			break;
 
 		case INFO_TYPE_LOGON_LONG:
-			status = rdp_recv_logon_info_v2(rdp, s);
+			ZeroMemory(&logonInfo, sizeof(logonInfo));
+			status = rdp_recv_logon_info_v2(rdp, s, &logonInfo);
+			if (status && update->SaveSessionInfo)
+				status = update->SaveSessionInfo(context, infoType, &logonInfo);
+			free(logonInfo.domain);
+			free(logonInfo.username);
 			break;
 
 		case INFO_TYPE_LOGON_PLAIN_NOTIFY:
 			status = rdp_recv_logon_plain_notify(rdp, s);
+			if (status && update->SaveSessionInfo)
+				status = update->SaveSessionInfo(context, infoType, NULL);
 			break;
 
 		case INFO_TYPE_LOGON_EXTENDED_INF:
-			status = rdp_recv_logon_info_extended(rdp, s);
+			ZeroMemory(&logonInfoEx, sizeof(logonInfoEx));
+			status = rdp_recv_logon_info_extended(rdp, s, &logonInfoEx);
+			if (status && update->SaveSessionInfo)
+				status = update->SaveSessionInfo(context, infoType, &logonInfoEx);
 			break;
 
 		default:
+			WLog_ERR(TAG, "Unhandled saveSessionInfo type 0x%x", infoType);
+			status = TRUE;
 			break;
 	}
 
@@ -830,3 +891,174 @@ BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 	return status;
 }
 
+static BOOL rdp_write_logon_info_v1(wStream *s, logon_info *info)
+{
+	int sz = 4 + 52 + 4 + 512 + 4;
+	int len;
+	WCHAR *wString = NULL;
+
+	if (!Stream_EnsureRemainingCapacity(s, sz))
+		return FALSE;
+
+	/* domain */
+	len = ConvertToUnicode(CP_UTF8, 0, info->domain, -1, &wString, 0);
+	if (len < 0)
+		return FALSE;
+	len *= 2;
+	if (len > 52)
+		return FALSE;
+
+	Stream_Write_UINT32(s, len);
+	Stream_Write(s, wString, len);
+	Stream_Seek(s, 52 - len);
+	free(wString);
+
+	/* username */
+	len = ConvertToUnicode(CP_UTF8, 0, info->username, -1, &wString, 0);
+	if (len < 0)
+		return FALSE;
+
+	len *= 2;
+	if (len > 512)
+		return FALSE;
+
+	Stream_Write_UINT32(s, len);
+	Stream_Write(s, wString, len);
+	Stream_Seek(s, 512 - len);
+	free(wString);
+
+	/* sessionId */
+	Stream_Write_UINT32(s, info->sessionId);
+
+	return TRUE;
+}
+
+static BOOL rdp_write_logon_info_v2(wStream *s, logon_info *info)
+{
+	int Size = 2 + 4 + 4 + 4 + 4 + 558;
+	int domainLen, usernameLen, len;
+	WCHAR *wString;
+
+	if (!Stream_EnsureRemainingCapacity(s, Size))
+		return FALSE;
+
+	Stream_Write_UINT16(s, SAVE_SESSION_PDU_VERSION_ONE);
+	Stream_Write_UINT32(s, Size);
+	Stream_Write_UINT32(s, info->sessionId);
+
+	domainLen = strlen(info->domain);
+	Stream_Write_UINT32(s, (domainLen + 1) * 2);
+
+	usernameLen = strlen(info->username);
+	Stream_Write_UINT32(s, (usernameLen + 1) * 2);
+
+	Stream_Seek(s, 558);
+
+	len = ConvertToUnicode(CP_UTF8, 0, info->domain, -1, &wString, 0);
+	if (len < 0)
+		return FALSE;
+
+	Stream_Write(s, wString, len * 2);
+	free(wString);
+
+	len = ConvertToUnicode(CP_UTF8, 0, info->username, -1, &wString, 0);
+	if (len < 0)
+		return FALSE;
+
+	Stream_Write(s, wString, len * 2);
+	free(wString);
+	return TRUE;
+}
+
+static BOOL rdp_write_logon_info_plain(wStream *s)
+{
+	if (!Stream_EnsureRemainingCapacity(s, 576))
+		return FALSE;
+
+	Stream_Seek(s, 576);
+	return TRUE;
+}
+
+static BOOL rdp_write_logon_info_ex(wStream *s, logon_info_ex *info)
+{
+	UINT32 FieldsPresent = 0;
+	UINT16 Size = 2 + 4 + 570;
+
+	if (info->haveCookie)
+	{
+		FieldsPresent |= LOGON_EX_AUTORECONNECTCOOKIE;
+		Size += 28;
+	}
+
+	if (info->haveErrorInfo)
+	{
+		FieldsPresent |= LOGON_EX_LOGONERRORS;
+		Size += 8;
+	}
+
+	if (!Stream_EnsureRemainingCapacity(s, Size))
+		return FALSE;
+
+	Stream_Write_UINT16(s, Size);
+	Stream_Write_UINT32(s, FieldsPresent);
+
+	if (info->haveCookie)
+	{
+		Stream_Write_UINT32(s, 28);							/* cbFieldData (4 bytes) */
+
+		Stream_Write_UINT32(s, 28); 						/* cbLen (4 bytes) */
+		Stream_Write_UINT32(s, AUTO_RECONNECT_VERSION_1); 	/* Version (4 bytes) */
+		Stream_Write_UINT32(s, info->LogonId);				/* LogonId (4 bytes) */
+		Stream_Write(s, info->ArcRandomBits, 16);			/* ArcRandomBits (16 bytes) */
+	}
+
+	if (info->haveErrorInfo)
+	{
+		Stream_Write_UINT32(s, 8);							/* cbFieldData (4 bytes) */
+
+		Stream_Write_UINT32(s, info->ErrorNotificationType); /* ErrorNotificationType (4 bytes) */
+		Stream_Write_UINT32(s, info->ErrorNotificationData); /* ErrorNotificationData (4 bytes) */
+	}
+
+	Stream_Seek(s, 570);
+	return TRUE;
+}
+
+BOOL rdp_send_save_session_info(rdpContext *context, UINT32 type, void *data)
+{
+	wStream *s;
+	BOOL status;
+	rdpRdp *rdp = context->rdp;
+
+	s = rdp_data_pdu_init(rdp);
+	if (!s)
+		return FALSE;
+
+	Stream_Write_UINT32(s, type);
+
+	switch (type)
+	{
+	case INFO_TYPE_LOGON:
+		status = rdp_write_logon_info_v1(s, (logon_info *)data);
+		break;
+	case INFO_TYPE_LOGON_LONG:
+		status = rdp_write_logon_info_v2(s, (logon_info *)data);
+		break;
+	case INFO_TYPE_LOGON_PLAIN_NOTIFY:
+		status = rdp_write_logon_info_plain(s);
+		break;
+	case INFO_TYPE_LOGON_EXTENDED_INF:
+		status = rdp_write_logon_info_ex(s, (logon_info_ex *)data);
+		break;
+	default:
+		WLog_ERR(TAG, "saveSessionInfo type 0x%x not handled", type);
+		status = FALSE;
+		break;
+	}
+
+	if (status)
+		status = rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SAVE_SESSION_INFO, rdp->mcs->userId);
+	else
+		Stream_Free(s, TRUE);
+	return status;
+}
