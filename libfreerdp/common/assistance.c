@@ -563,28 +563,28 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 	cbPasswordW = (status - 1) * 2;
 
 	if (!winpr_MD5_Init(&md5Ctx))
-    {
-        free (PasswordW);
-        return NULL;
-    }
+	{
+		free (PasswordW);
+		return NULL;
+	}
 	if (!winpr_MD5_Update(&md5Ctx, (BYTE*)PasswordW, cbPasswordW))
-    {
-        free (PasswordW);
-        return NULL;
-    }
+	{
+		free (PasswordW);
+		return NULL;
+	}
 	if (!winpr_MD5_Final(&md5Ctx, (BYTE*) PasswordHash, sizeof(PasswordHash)))
-    {
-        free (PasswordW);
-        return NULL;
-    }
+	{
+		free (PasswordW);
+		return NULL;
+	}
 
 	status = ConvertToUnicode(CP_UTF8, 0, passStub, -1, &PassStubW, 0);
 
 	if (status <= 0)
-    {
-        free (PasswordW);
+	{
+		free (PasswordW);
 		return NULL;
-    }
+	}
 
 	cbPassStubW = (status - 1) * 2;
 

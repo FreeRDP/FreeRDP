@@ -12,11 +12,11 @@ BOOL test_crypto_hash_md5()
 	WINPR_MD5_CTX ctx;
 
 	if (!winpr_MD5_Init(&ctx))
-        return FALSE;
+		return FALSE;
 	if (!winpr_MD5_Update(&ctx, (BYTE*) TEST_MD5_DATA, strlen(TEST_MD5_DATA)))
-        return FALSE;
+		return FALSE;
 	if (!winpr_MD5_Final(&ctx, hash, sizeof(hash)))
-        return FALSE;
+		return FALSE;
 
 	if (memcmp(hash, TEST_MD5_HASH, WINPR_MD5_DIGEST_LENGTH) != 0)
 	{
@@ -46,11 +46,11 @@ BOOL test_crypto_hash_md4()
 	WINPR_MD4_CTX ctx;
 
 	if (!winpr_MD4_Init(&ctx))
-        return FALSE;
+		return FALSE;
 	if (!winpr_MD4_Update(&ctx, (BYTE*) TEST_MD4_DATA, strlen(TEST_MD4_DATA)))
-        return FALSE;
+		return FALSE;
 	if (!winpr_MD4_Final(&ctx, hash, sizeof(hash)))
-        return FALSE;
+		return FALSE;
 
 	if (memcmp(hash, TEST_MD4_HASH, WINPR_MD4_DIGEST_LENGTH) != 0)
 	{
@@ -80,11 +80,11 @@ BOOL test_crypto_hash_sha1()
 	WINPR_SHA1_CTX ctx;
 
 	if (!winpr_SHA1_Init(&ctx))
-        return FALSE;
+		return FALSE;
 	if (!winpr_SHA1_Update(&ctx, (BYTE*) TEST_SHA1_DATA, strlen(TEST_SHA1_DATA)))
-        return FALSE;
+		return FALSE;
 	if (!winpr_SHA1_Final(&ctx, hash, sizeof(hash)))
-        return FALSE;
+		return FALSE;
 
 	if (memcmp(hash, TEST_SHA1_HASH, WINPR_MD5_DIGEST_LENGTH) != 0)
 	{
@@ -115,11 +115,11 @@ BOOL test_crypto_hash_hmac_md5()
 	WINPR_HMAC_CTX ctx;
 
 	if (!winpr_HMAC_Init(&ctx, WINPR_MD_MD5, TEST_HMAC_MD5_KEY, WINPR_SHA1_DIGEST_LENGTH))
-        return FALSE;
+		return FALSE;
 	if (!winpr_HMAC_Update(&ctx, (BYTE*) TEST_HMAC_MD5_DATA, strlen(TEST_HMAC_MD5_DATA)))
-        return FALSE;
+		return FALSE;
 	if (!winpr_HMAC_Final(&ctx, hash, sizeof(hash)))
-        return FALSE;
+		return FALSE;
 
 	if (memcmp(hash, TEST_HMAC_MD5_HASH, WINPR_SHA1_DIGEST_LENGTH) != 0)
 	{
@@ -150,11 +150,11 @@ BOOL test_crypto_hash_hmac_sha1()
 	WINPR_HMAC_CTX ctx;
 
 	if (!winpr_HMAC_Init(&ctx, WINPR_MD_SHA1, TEST_HMAC_SHA1_KEY, WINPR_SHA1_DIGEST_LENGTH))
-        return FALSE;
+		return FALSE;
 	if (!winpr_HMAC_Update(&ctx, (BYTE*) TEST_HMAC_SHA1_DATA, strlen(TEST_HMAC_SHA1_DATA)))
-        return FALSE;
+		return FALSE;
 	if (!winpr_HMAC_Final(&ctx, hash, sizeof(hash)))
-        return FALSE;
+		return FALSE;
 
 	if (memcmp(hash, TEST_HMAC_SHA1_HASH, WINPR_SHA1_DIGEST_LENGTH) != 0)
 	{
