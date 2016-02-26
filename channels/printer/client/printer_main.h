@@ -5,6 +5,7 @@
  * Copyright 2010-2011 Vic Lee
  * Copyright 2015 Thincast Technologies GmbH
  * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+ * Copyright 2016 Armin Novak <armin.novak@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +30,7 @@ typedef struct rdp_printer rdpPrinter;
 typedef struct rdp_print_job rdpPrintJob;
 
 typedef rdpPrinter** (*pcEnumPrinters) (rdpPrinterDriver* driver);
-typedef rdpPrinter* (*pcGetPrinter) (rdpPrinterDriver* driver, const char* name);
+typedef rdpPrinter* (*pcGetPrinter) (rdpPrinterDriver* driver, const char* name, const char* driverName);
 
 struct rdp_printer_driver
 {
