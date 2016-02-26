@@ -16,5 +16,4 @@
 # limitations under the License.
 
 file(GLOB UWAC_HEADERS "uwac/*.h")
-install(FILES ${UWAC_HEADERS} DESTINATION include/uwac COMPONENT headers)
-
+install(FILES ${UWAC_HEADERS} DESTINATION include/uwac${UWAC_API_VERSION}/uwac COMPONENT headers)

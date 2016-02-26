@@ -1,5 +1,5 @@
 # - Finds Wayland
-# Find the Wayland libraries that are needed for UWAC 
+# Find the Wayland libraries that are needed for UWAC
 #
 #  This module defines the following variables:
 #     WAYLAND_FOUND     - true if UWAC has been found
@@ -28,29 +28,29 @@
 include(FindPkgConfig)
 
 if(PKG_CONFIG_FOUND)
-    pkg_check_modules(WAYLAND_SCANNER_PKG wayland-scanner)    
-    pkg_check_modules(WAYLAND_CLIENT_PKG wayland-client)
-    pkg_check_modules(XKBCOMMON_PC_PKG xkbcommon)
+    pkg_check_modules(WAYLAND_SCANNER_PC wayland-scanner)
+    pkg_check_modules(WAYLAND_CLIENT_PC wayland-client)
+    pkg_check_modules(XKBCOMMON_PC xkbcommon)
 endif()
 
 find_program(WAYLAND_SCANNER wayland-scanner
-    HINTS "${WAYLAND_SCANNER_PKG_PREFIX}/bin"
+    HINTS "${WAYLAND_SCANNER_PC_PREFIX}/bin"
 )
 
 find_path(WAYLAND_INCLUDE_DIR wayland-client.h
-    HINTS ${WAYLAND_CLIENT_PKG_INCLUDE_DIRS}
+    HINTS ${WAYLAND_CLIENT_PC_INCLUDE_DIRS}
 )
 
-find_library(WAYLAND_LIBS 
+find_library(WAYLAND_LIBS
     NAMES "wayland-client"
-    HINTS "${WAYLAND_CLIENT_PKG_LIBRARY_DIRS}"
+    HINTS "${WAYLAND_CLIENT_PC_LIBRARY_DIRS}"
 )
 
 find_path(XKBCOMMON_INCLUDE_DIR xkbcommon/xkbcommon.h
     HINTS ${XKBCOMMON_PC_INCLUDE_DIRS}
 )
 
-find_library(XKBCOMMON_LIBS 
+find_library(XKBCOMMON_LIBS
     NAMES xkbcommon
     HINTS "${XKBCOMMON_PC_LIBRARY_DIRS}"
 )
