@@ -523,37 +523,37 @@ static const _SERIAL_IOCTL_NAME _SERIAL_IOCTL_NAMES[] =
 /**
  * FIXME: got a proper function name and place
  */
-const char* _comm_serial_ioctl_name(ULONG number);
+WINPR_API const char* _comm_serial_ioctl_name(ULONG number);
 
 /**
  * FIXME: got a proper function name and place
  */
-void _comm_setServerSerialDriver(HANDLE hComm, SERIAL_DRIVER_ID);
+WINPR_API void _comm_setServerSerialDriver(HANDLE hComm, SERIAL_DRIVER_ID);
 
 /**
  * FIXME: got a proper function name and place
  *
  * permissive mode is disabled by default.
  */
-BOOL _comm_set_permissive(HANDLE hDevice, BOOL permissive);
+WINPR_API BOOL _comm_set_permissive(HANDLE hDevice, BOOL permissive);
 
 
 /**
  * FIXME: to be moved in comm_ioctl.h
  */
-BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize,
+WINPR_API BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize,
 			LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped);
 
 /**
  * FIXME: to be moved in comm_io.h
  */
-BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
+WINPR_API BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
 
 /**
  * FIXME: to be moved in comm_io.h
  */
-BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
+WINPR_API BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 		LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
 
 #ifdef __cplusplus
