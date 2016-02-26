@@ -250,7 +250,6 @@ static void* drive_hotplug_thread_func(void* arg)
 	HDEVNOTIFY hDevNotify;
 
 	rdpdr = (rdpdrPlugin *)arg;
-	first_hotplug(rdpdr);
 
 	/* init windows class */
 	wnd_cls.cbSize        = sizeof(WNDCLASSEX);
@@ -492,6 +491,15 @@ static void drive_hotplug_fsevent_callback(ConstFSEventStreamRef streamRef, void
 	}
 }
 
+void first_hotplug(rdpdrPlugin *rdpdr)
+{
+	UINT error;
+	if ((error = handle_hotplug(rdpdr)))
+	{
+		WLog_ERR(TAG, "handle_hotplug failed with error %lu!", error);
+	}
+}
+
 static void* drive_hotplug_thread_func(void* arg)
 {
 	rdpdrPlugin* rdpdr;
@@ -505,12 +513,6 @@ static void* drive_hotplug_thread_func(void* arg)
 	ZeroMemory(&ctx, sizeof(ctx));
 	ctx.info = arg;
 	fsev = FSEventStreamCreate(kCFAllocatorMalloc, drive_hotplug_fsevent_callback, &ctx, pathsToWatch, kFSEventStreamEventIdSinceNow, 1, kFSEventStreamCreateFlagNone);
-
-	if ((error = handle_hotplug(rdpdr)))
-	{
-		WLog_ERR(TAG, "handle_hotplug failed with error %lu!", error);
-		return NULL;
-	}
 
 	rdpdr->runLoop = CFRunLoopGetCurrent();
 	FSEventStreamScheduleWithRunLoop(fsev, rdpdr->runLoop, kCFRunLoopDefaultMode);
@@ -781,6 +783,15 @@ cleanup:
 	return error;
 }
 
+void first_hotplug(rdpdrPlugin *rdpdr)
+{
+	UINT error;
+	if ((error = handle_hotplug(rdpdr)))
+	{
+		WLog_ERR(TAG, "handle_hotplug failed with error %lu!", error);
+	}
+}
+
 static void* drive_hotplug_thread_func(void* arg)
 {
 	rdpdrPlugin* rdpdr;
@@ -813,12 +824,6 @@ static void* drive_hotplug_thread_func(void* arg)
 	FD_SET(mfd, &rfds);
 	tv.tv_sec = 1;
 	tv.tv_usec = 0;
-
-	if ((error = handle_hotplug(rdpdr)))
-	{
-		WLog_ERR(TAG, "handle_hotplug failed with error %lu!", error);
-		goto out;
-	}
 
 	while ((rv = select(mfd+1, NULL, NULL, &rfds, &tv)) >= 0)
 	{
@@ -917,6 +922,7 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 
 		if (device->Name && (strcmp(device->Name, "*") == 0))
 		{
+			first_hotplug(rdpdr);
 			if (!(rdpdr->hotplugThread = CreateThread(NULL, 0,
 					(LPTHREAD_START_ROUTINE) drive_hotplug_thread_func, rdpdr, 0, NULL)))
 			{
