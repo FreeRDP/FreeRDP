@@ -352,22 +352,25 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME *lpCreationTime,
 		const FILETIME *lpLastAccessTime, const FILETIME *lpLastWriteTime)
 {
 	int rc;
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(ANDROID)
 	struct stat buf;
 #endif
+#ifdef ANDROID
+	struct timeval timevals[2];
+#else
 	struct timespec times[2]; /* last access, last modification */
+#endif
 	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
 	const UINT64 EPOCH_DIFF = 11644473600ULL;
 
 	if (!hFile)
 		return FALSE;
 
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(ANDROID)
 	rc = fstat(fileno(pFile->fp), &buf);
 	if (rc < 0)
 		return FALSE;
 #endif
-	memset(times, 0, sizeof(times));
 	if (!lpLastAccessTime)
 	{
 #ifdef __APPLE__
@@ -377,7 +380,11 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME *lpCreationTime,
 		times[0].tv_sec = buf.st_atime;
 		times[0].tv_nsec = buf.st_atimensec;
 #endif
+#elif ANDROID
+		timevals[0].tv_sec = buf.st_mtime;
+		timevals[0].tv_usec = buf.st_mtimensec / 1000UL;
 #else
+		times[0].tv_sec = UTIME_OMIT;
 		times[0].tv_nsec = UTIME_OMIT;
 #endif
 	}
@@ -388,8 +395,15 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME *lpCreationTime,
 		tmp -= EPOCH_DIFF;
 		tmp /= 10ULL;
 
+#ifdef ANDROID
+		tmp /= 10000ULL;
+
+		timevals[0].tv_sec = tmp / 10000ULL;
+		timevals[0].tv_usec = tmp % 10000ULL;
+#else
 		times[0].tv_sec = tmp / 10000000ULL;
 		times[0].tv_nsec = tmp % 10000000ULL;
+#endif
 	}
 	if (!lpLastWriteTime)
 	{
@@ -400,7 +414,11 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME *lpCreationTime,
 		times[1].tv_sec = buf.st_mtime;
 		times[1].tv_nsec = buf.st_mtimensec;
 #endif
+#elif ANDROID
+		timevals[1].tv_sec = buf.st_mtime;
+		timevals[1].tv_usec = buf.st_mtimensec / 1000UL;
 #else
+		times[1].tv_sec = UTIME_OMIT;
 		times[1].tv_nsec = UTIME_OMIT;
 #endif
 	}
@@ -411,13 +429,22 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME *lpCreationTime,
 		tmp -= EPOCH_DIFF;
 		tmp /= 10ULL;
 
+#ifdef ANDROID
+		tmp /= 10000ULL;
+
+		timevals[1].tv_sec = tmp / 10000ULL;
+		timevals[1].tv_usec = tmp % 10000ULL;
+#else
 		times[1].tv_sec = tmp / 10000000ULL;
 		times[1].tv_nsec = tmp % 10000000ULL;
+#endif
 	}
 
 	// TODO: Creation time can not be handled!
 #ifdef __APPLE__
 	rc = futimes(fileno(pFile->fp), times);
+#elif ANDROID
+	rc = utimes(pFile->lpFileName, timevals);
 #else
 	rc = futimens(fileno(pFile->fp), times);
 #endif
