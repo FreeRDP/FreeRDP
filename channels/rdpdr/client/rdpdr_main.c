@@ -112,6 +112,14 @@ static UINT rdpdr_send_device_list_remove_request(rdpdrPlugin* rdpdr, UINT32 cou
 
 #ifdef _WIN32
 
+BOOL check_path(char* path)
+{
+	UINT type = GetDriveTypeA(path);
+	if (!(type == DRIVE_REMOVABLE || type == DRIVE_CDROM || type == DRIVE_REMOTE))
+		return FALSE;
+	return GetVolumeInformationA(path, NULL, 0, NULL, NULL, NULL, NULL, 0);
+}
+
 void first_hotplug(rdpdrPlugin *rdpdr)
 {
 	int i;
@@ -128,13 +136,16 @@ void first_hotplug(rdpdrPlugin *rdpdr)
 			drive_path[0] = 'A' + i;
 			drive_path[1] = ':';
 
-			drive = (RDPDR_DRIVE*)malloc(sizeof(RDPDR_DRIVE));
-			ZeroMemory(drive, sizeof(RDPDR_DRIVE));
-			drive->Type = RDPDR_DTYP_FILESYSTEM;
-			drive->Path = _strdup(drive_path);
-			drive_path[1] = '\0';
-			drive->Name = _strdup(drive_path);
-			devman_load_device_service(rdpdr->devman, (RDPDR_DEVICE *)drive, rdpdr->rdpcontext);
+			if (check_path(drive_path))
+			{
+				drive = (RDPDR_DRIVE*)malloc(sizeof(RDPDR_DRIVE));
+				ZeroMemory(drive, sizeof(RDPDR_DRIVE));
+				drive->Type = RDPDR_DTYP_FILESYSTEM;
+				drive->Path = _strdup(drive_path);
+				drive_path[1] = '\0';
+				drive->Name = _strdup(drive_path);
+				devman_load_device_service(rdpdr->devman, (RDPDR_DEVICE *)drive, rdpdr->rdpcontext);
+			}
 		}
 		unitmask = unitmask >> 1;
 	}
@@ -170,16 +181,19 @@ LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 								drive_path[0] = 'A' + i;
 								drive_path[1] = ':';
 
-								drive = (RDPDR_DRIVE*) malloc(sizeof(RDPDR_DRIVE));
-								ZeroMemory(drive, sizeof(RDPDR_DRIVE));
+								if (check_path(drive_path))
+								{
+									drive = (RDPDR_DRIVE*) malloc(sizeof(RDPDR_DRIVE));
+									ZeroMemory(drive, sizeof(RDPDR_DRIVE));
 
-								drive->Type = RDPDR_DTYP_FILESYSTEM;
+									drive->Type = RDPDR_DTYP_FILESYSTEM;
 
-								drive->Path = _strdup(drive_path);
-								drive_path[1] = '\0';
-								drive->Name = _strdup(drive_path);
-								devman_load_device_service(rdpdr->devman, (RDPDR_DEVICE *)drive, rdpdr->rdpcontext);
-								rdpdr_send_device_list_announce_request(rdpdr, TRUE);
+									drive->Path = _strdup(drive_path);
+									drive_path[1] = '\0';
+									drive->Name = _strdup(drive_path);
+									devman_load_device_service(rdpdr->devman, (RDPDR_DEVICE *)drive, rdpdr->rdpcontext);
+									rdpdr_send_device_list_announce_request(rdpdr, TRUE);
+								}
 							}
 							unitmask = unitmask >> 1;
 						}
