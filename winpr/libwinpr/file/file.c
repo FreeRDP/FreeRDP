@@ -40,6 +40,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/file.h>
+#include <sys/stat.h>
+#include <sys/time.h>
 
 static BOOL FileIsHandled(HANDLE handle)
 {
@@ -346,6 +348,52 @@ static BOOL FileUnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfByte
 	return TRUE;
 }
 
+static BOOL FileSetFileTime(HANDLE hFile, const FILETIME *lpCreationTime,
+		const FILETIME *lpLastAccessTime, const FILETIME *lpLastWriteTime)
+{
+	int rc;
+	struct timespec times[2]; /* last access, last modification */
+	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
+	const UINT64 EPOCH_DIFF = 11644473600ULL;
+
+	if (!hFile)
+		return FALSE;
+
+	memset(times, 0, sizeof(times));
+	if (!lpLastAccessTime)
+		times[0].tv_nsec = UTIME_OMIT;
+	else
+	{
+		UINT64 tmp = ((UINT64)lpLastAccessTime->dwHighDateTime) << 32
+				| lpLastAccessTime->dwLowDateTime;
+		tmp -= EPOCH_DIFF;
+		tmp /= 10ULL;
+
+		times[0].tv_sec = tmp / 10000000ULL;
+		times[0].tv_nsec = tmp % 10000000ULL;
+	}
+	if (!lpLastWriteTime)
+		times[1].tv_nsec = UTIME_OMIT;
+	else
+	{
+		UINT64 tmp = ((UINT64)lpLastWriteTime->dwHighDateTime) << 32
+				| lpLastWriteTime->dwLowDateTime;
+		tmp -= EPOCH_DIFF;
+		tmp /= 10ULL;
+
+		times[1].tv_sec = tmp / 10000000ULL;
+		times[1].tv_nsec = tmp % 10000000ULL;
+	}
+
+	// TODO: Creation time can not be handled!
+	rc = futimens(fileno(pFile->fp), times);
+	if (rc != 0)
+		return FALSE;
+
+	return TRUE;
+
+}
+
 static HANDLE_OPS fileOps = {
 	FileIsHandled,
 	FileCloseHandle,
@@ -365,7 +413,8 @@ static HANDLE_OPS fileOps = {
 	NULL, /* FileLockFile */
 	FileLockFileEx,
 	FileUnlockFile,
-	FileUnlockFileEx
+	FileUnlockFileEx,
+	FileSetFileTime
 };
 
 static HANDLE_OPS shmOps = {
@@ -387,8 +436,8 @@ static HANDLE_OPS shmOps = {
 	NULL, /* FileLockFile */
 	NULL, /* FileLockFileEx */
 	NULL, /* FileUnlockFile */
-	NULL /* FileUnlockFileEx */
-
+	NULL, /* FileUnlockFileEx */
+	NULL  /* FileSetFileTime */
 };
 
 

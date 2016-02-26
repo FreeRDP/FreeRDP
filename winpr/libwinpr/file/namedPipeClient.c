@@ -51,14 +51,14 @@ static HANDLE_CREATOR _NamedPipeClientHandleCreator;
 
 static BOOL NamedPipeClientIsHandled(HANDLE handle)
 {
-       WINPR_NAMED_PIPE* pFile = (WINPR_NAMED_PIPE*) handle;
+	WINPR_NAMED_PIPE* pFile = (WINPR_NAMED_PIPE*) handle;
 
-       if (!pFile || (pFile->Type != HANDLE_TYPE_NAMED_PIPE) || (pFile == INVALID_HANDLE_VALUE))
-       {
-               SetLastError(ERROR_INVALID_HANDLE);
-               return FALSE;
-       }
-       return TRUE;
+	if (!pFile || (pFile->Type != HANDLE_TYPE_NAMED_PIPE) || (pFile == INVALID_HANDLE_VALUE))
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+		return FALSE;
+	}
+	return TRUE;
 }
 
 BOOL NamedPipeClientCloseHandle(HANDLE handle)
@@ -124,7 +124,8 @@ static HANDLE_OPS ops = {
 		NULL, /* FileLockFile */
 		NULL, /* FileLockFileEx */
 		NULL, /* FileUnlockFile */
-		NULL /* FileUnlockFileEx */
+		NULL, /* FileUnlockFileEx */
+		NULL  /* SetFileTime */
 };
 
 static HANDLE NamedPipeClientCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
