@@ -203,15 +203,15 @@ BOOL security_md5_16_32_32(const BYTE* in0, const BYTE* in1, const BYTE* in2, BY
 	WINPR_MD5_CTX md5;
 
 	if (!winpr_MD5_Init(&md5))
-        return FALSE;
+		return FALSE;
 	if (!winpr_MD5_Update(&md5, in0, 16))
-        return FALSE;
+		return FALSE;
 	if (!winpr_MD5_Update(&md5, in1, 32))
-        return FALSE;
+		return FALSE;
 	if (!winpr_MD5_Update(&md5, in2, 32))
-        return FALSE;
+		return FALSE;
 	if (!winpr_MD5_Final(&md5, output, WINPR_MD5_DIGEST_LENGTH))
-        return FALSE;
+		return FALSE;
 	return TRUE;
 }
 
@@ -459,9 +459,9 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 
 		if (!winpr_SHA1_Init(&sha1))
 			return FALSE;
-		if (!winpr_SHA1_Update(&sha1, client_decrypt_key_t, 20))
+		if (!winpr_SHA1_Update(&sha1, client_decrypt_key_t, WINPR_SHA1_DIGEST_LENGTH))
 			return FALSE;
-		if (!winpr_SHA1_Update(&sha1, client_encrypt_key_t, 20))
+		if (!winpr_SHA1_Update(&sha1, client_encrypt_key_t, WINPR_SHA1_DIGEST_LENGTH))
 			return FALSE;
 		if (!winpr_SHA1_Final(&sha1, rdp->fips_sign_key, WINPR_SHA1_DIGEST_LENGTH))
 			return FALSE;
@@ -625,18 +625,19 @@ BOOL security_decrypt(BYTE* data, int length, rdpRdp* rdp)
 
 BOOL security_hmac_signature(const BYTE* data, int length, BYTE* output, rdpRdp* rdp)
 {
-	BYTE buf[20];
+	BYTE buf[WINPR_SHA1_DIGEST_LENGTH];
 	BYTE use_count_le[4];
 
 	security_UINT32_le(use_count_le, rdp->encrypt_use_count);
 
-	if (!winpr_HMAC_Init(rdp->fips_hmac, WINPR_MD_SHA1, rdp->fips_sign_key, 20))
+	if (!winpr_HMAC_Init(rdp->fips_hmac, WINPR_MD_SHA1,
+		rdp->fips_sign_key, WINPR_SHA1_DIGEST_LENGTH))
 		return FALSE;
 	if (!winpr_HMAC_Update(rdp->fips_hmac, data, length))
 		return FALSE;
 	if (!winpr_HMAC_Update(rdp->fips_hmac, use_count_le, 4))
 		return FALSE;
-	if (!winpr_HMAC_Final(rdp->fips_hmac, buf, 20))
+	if (!winpr_HMAC_Final(rdp->fips_hmac, buf, WINPR_SHA1_DIGEST_LENGTH))
 		return FALSE;
 
 	memmove(output, buf, 8);
@@ -658,18 +659,19 @@ BOOL security_fips_decrypt(BYTE* data, int length, rdpRdp* rdp)
 
 BOOL security_fips_check_signature(const BYTE* data, int length, const BYTE* sig, rdpRdp* rdp)
 {
-	BYTE buf[20];
+	BYTE buf[WINPR_SHA1_DIGEST_LENGTH];
 	BYTE use_count_le[4];
 
 	security_UINT32_le(use_count_le, rdp->decrypt_use_count);
 
-	if (!winpr_HMAC_Init(rdp->fips_hmac, WINPR_MD_SHA1, rdp->fips_sign_key, 20))
+	if (!winpr_HMAC_Init(rdp->fips_hmac, WINPR_MD_SHA1,
+		rdp->fips_sign_key, WINPR_SHA1_DIGEST_LENGTH))
 		return FALSE;
 	if (!winpr_HMAC_Update(rdp->fips_hmac, data, length))
 		return FALSE;
 	if (!winpr_HMAC_Update(rdp->fips_hmac, use_count_le, 4))
 		return FALSE;
-	if (!winpr_HMAC_Final(rdp->fips_hmac, buf, 20))
+	if (!winpr_HMAC_Final(rdp->fips_hmac, buf, WINPR_SHA1_DIGEST_LENGTH))
 		return FALSE;
 
 	rdp->decrypt_use_count++;
