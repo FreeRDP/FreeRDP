@@ -22,70 +22,12 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/crypto.h>
 
 #include <freerdp/log.h>
 #include <freerdp/crypto/crypto.h>
 
 #define TAG FREERDP_TAG("crypto")
-
-CryptoSha1 crypto_sha1_init(void)
-{
-	CryptoSha1 sha1 = malloc(sizeof(*sha1));
-	if (!sha1)
-		return NULL;
-	SHA1_Init(&sha1->sha_ctx);
-	return sha1;
-}
-
-void crypto_sha1_update(CryptoSha1 sha1, const BYTE* data, UINT32 length)
-{
-	SHA1_Update(&sha1->sha_ctx, data, length);
-}
-
-void crypto_sha1_final(CryptoSha1 sha1, BYTE* out_data)
-{
-	SHA1_Final(out_data, &sha1->sha_ctx);
-	free(sha1);
-}
-
-CryptoMd5 crypto_md5_init(void)
-{
-	CryptoMd5 md5 = malloc(sizeof(*md5));
-	if (!md5)
-		return NULL;
-	MD5_Init(&md5->md5_ctx);
-	return md5;
-}
-
-void crypto_md5_update(CryptoMd5 md5, const BYTE* data, UINT32 length)
-{
-	MD5_Update(&md5->md5_ctx, data, length);
-}
-
-void crypto_md5_final(CryptoMd5 md5, BYTE* out_data)
-{
-	MD5_Final(out_data, &md5->md5_ctx);
-	free(md5);
-}
-
-CryptoRc4 crypto_rc4_init(const BYTE* key, UINT32 length)
-{
-	CryptoRc4 rc4 = malloc(sizeof(*rc4));
-	if (!rc4)
-		return NULL;
-	RC4_set_key(&rc4->rc4_key, length, key);
-	return rc4;
-}
-
-void crypto_rc4(CryptoRc4 rc4, UINT32 length, const BYTE* in_data, BYTE* out_data)
-{
-	RC4(&rc4->rc4_key, length, in_data, out_data);
-}
-
-void crypto_rc4_free(CryptoRc4 rc4)
-{
-	free(rc4);
-}
 
 CryptoDes3 crypto_des3_encrypt_init(const BYTE* key, const BYTE* ivec)
 {
@@ -133,55 +75,6 @@ void crypto_des3_free(CryptoDes3 des3)
 		return;
 	EVP_CIPHER_CTX_cleanup(&des3->des3_ctx);
 	free(des3);
-}
-
-CryptoHmac crypto_hmac_new(void)
-{
-	CryptoHmac hmac = malloc(sizeof(*hmac));
-	if (!hmac)
-		return NULL;
-
-	HMAC_CTX_init(&hmac->hmac_ctx);
-	return hmac;
-}
-
-BOOL crypto_hmac_sha1_init(CryptoHmac hmac, const BYTE* data, UINT32 length)
-{
-#if (OPENSSL_VERSION_NUMBER >= 0x00909000)
-	return HMAC_Init_ex(&hmac->hmac_ctx, data, length, EVP_sha1(), NULL) == 1;
-#else
-	HMAC_Init_ex(&hmac->hmac_ctx, data, length, EVP_sha1(), NULL);
-	return TRUE;
-#endif
-}
-
-BOOL crypto_hmac_md5_init(CryptoHmac hmac, const BYTE* data, UINT32 length)
-{
-#if (OPENSSL_VERSION_NUMBER >= 0x00909000)
-	return HMAC_Init_ex(&hmac->hmac_ctx, data, length, EVP_md5(), NULL) == 1;
-#else
-	HMAC_Init_ex(&hmac->hmac_ctx, data, length, EVP_md5(), NULL);
-	return TRUE;
-#endif
-}
-
-void crypto_hmac_update(CryptoHmac hmac, const BYTE* data, UINT32 length)
-{
-	HMAC_Update(&hmac->hmac_ctx, data, length);
-}
-
-void crypto_hmac_final(CryptoHmac hmac, BYTE* out_data, UINT32 length)
-{
-	HMAC_Final(&hmac->hmac_ctx, out_data, &length);
-}
-
-void crypto_hmac_free(CryptoHmac hmac)
-{
-	if (hmac == NULL)
-		return;
-
-	HMAC_CTX_cleanup(&hmac->hmac_ctx);
-	free(hmac);
 }
 
 CryptoCert crypto_cert_read(BYTE* data, UINT32 length)
@@ -349,7 +242,7 @@ void crypto_reverse(BYTE* data, int length)
 
 void crypto_nonce(BYTE* nonce, int size)
 {
-	RAND_bytes((void*) nonce, size);
+	winpr_RAND((void*) nonce, size);
 }
 
 char* crypto_cert_fingerprint(X509* xcert)

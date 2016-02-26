@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/crypto.h>
+
 #include "autodetect.h"
 
 #define RDP_RTT_REQUEST_TYPE_CONTINUOUS  0x0001
@@ -173,7 +175,7 @@ BOOL autodetect_send_bandwidth_measure_payload(rdpContext* context, UINT16 paylo
 		return FALSE;
 	}
 
-	RAND_bytes(buffer, payloadLength);
+	winpr_RAND(buffer, payloadLength);
 	Stream_Write(s, buffer, payloadLength);
 
 	bResult = rdp_send_message_channel_pdu(context->rdp, s, SEC_AUTODETECT_REQ);
@@ -225,7 +227,7 @@ static BOOL autodetect_send_bandwidth_measure_stop(rdpContext* context, UINT16 p
 				return FALSE;
 			}
 
-			RAND_bytes(buffer, payloadLength);
+			winpr_RAND(buffer, payloadLength);
 			Stream_Write(s, buffer, payloadLength);
 		}
 	}

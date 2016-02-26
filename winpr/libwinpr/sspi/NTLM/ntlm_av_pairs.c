@@ -260,7 +260,7 @@ void ntlm_compute_channel_bindings(NTLM_CONTEXT* context)
 	UINT32 ChannelBindingTokenLength;
 	SEC_CHANNEL_BINDINGS* ChannelBindings;
 
-	ZeroMemory(context->ChannelBindingsHash, 16);
+	ZeroMemory(context->ChannelBindingsHash, WINPR_MD5_DIGEST_LENGTH);
 	ChannelBindings = context->Bindings.Bindings;
 
 	if (!ChannelBindings)
@@ -275,7 +275,7 @@ void ntlm_compute_channel_bindings(NTLM_CONTEXT* context)
 	ntlm_md5_update_uint32_be(&md5, ChannelBindings->cbAcceptorLength);
 	ntlm_md5_update_uint32_be(&md5, ChannelBindings->cbApplicationDataLength);
 	winpr_MD5_Update(&md5, (void*) ChannelBindingToken, ChannelBindingTokenLength);
-	winpr_MD5_Final(&md5, context->ChannelBindingsHash);
+	winpr_MD5_Final(&md5, context->ChannelBindingsHash, WINPR_MD5_DIGEST_LENGTH);
 }
 
 void ntlm_compute_single_host_data(NTLM_CONTEXT* context)

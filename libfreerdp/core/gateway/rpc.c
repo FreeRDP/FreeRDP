@@ -30,7 +30,6 @@
 
 #include <freerdp/log.h>
 
-#include <openssl/rand.h>
 #include <openssl/bio.h>
 
 #ifdef HAVE_VALGRIND_MEMCHECK_H

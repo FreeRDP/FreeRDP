@@ -22,16 +22,13 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/crypto.h>
 #include <winpr/print.h>
 #include <winpr/windows.h>
 
 #include <openssl/ssl.h>
-#include <openssl/md5.h>
-#include <openssl/rc4.h>
-#include <openssl/sha.h>
 #include <openssl/evp.h>
 #include <openssl/aes.h>
-#include <openssl/rand.h>
 #include <openssl/engine.h>
 
 #include <freerdp/log.h>
@@ -523,7 +520,7 @@ char* freerdp_assistance_generate_pass_stub(DWORD flags)
 	 * Example: WB^6HsrIaFmEpi
 	 */
 
-	RAND_bytes((BYTE*) nums, sizeof(nums));
+	winpr_RAND((BYTE*) nums, sizeof(nums));
 
 	passStub[0] = set1[nums[0] % sizeof(set1)]; /* character 0 */
 	passStub[1] = set2[nums[1] % sizeof(set2)]; /* character 1 */
@@ -547,11 +544,11 @@ char* freerdp_assistance_generate_pass_stub(DWORD flags)
 BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* passStub, int* pEncryptedSize)
 {
 	int status;
-	MD5_CTX md5Ctx;
+	WINPR_MD5_CTX md5Ctx;
 	int cbPasswordW;
 	int cbPassStubW;
 	int EncryptedSize;
-	BYTE PasswordHash[16];
+	BYTE PasswordHash[WINPR_MD5_DIGEST_LENGTH];
 	EVP_CIPHER_CTX rc4Ctx;
 	BYTE* pbIn, *pbOut;
 	int cbOut, cbIn, cbFinal;
@@ -565,14 +562,29 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 
 	cbPasswordW = (status - 1) * 2;
 
-	MD5_Init(&md5Ctx);
-	MD5_Update(&md5Ctx, PasswordW, cbPasswordW);
-	MD5_Final((void*) PasswordHash, &md5Ctx);
+	if (!winpr_MD5_Init(&md5Ctx))
+	{
+		free (PasswordW);
+		return NULL;
+	}
+	if (!winpr_MD5_Update(&md5Ctx, (BYTE*)PasswordW, cbPasswordW))
+	{
+		free (PasswordW);
+		return NULL;
+	}
+	if (!winpr_MD5_Final(&md5Ctx, (BYTE*) PasswordHash, sizeof(PasswordHash)))
+	{
+		free (PasswordW);
+		return NULL;
+	}
 
 	status = ConvertToUnicode(CP_UTF8, 0, passStub, -1, &PassStubW, 0);
 
 	if (status <= 0)
+	{
+		free (PasswordW);
 		return NULL;
+	}
 
 	cbPassStubW = (status - 1) * 2;
 
