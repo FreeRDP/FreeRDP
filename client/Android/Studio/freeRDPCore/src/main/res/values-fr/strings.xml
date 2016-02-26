@@ -121,9 +121,9 @@
         <item>Play on Device</item>
     </string-array>
     <string-array name="redirect_sound_values_array">
-        <item>0</item>
-        <item>1</item>
         <item>2</item>
+        <item>1</item>
+        <item>0</item>
     </string-array>
     <string name="settings_redirect_microphone">Redirect Microphone</string>
     <string name="settings_security">"Securité"</string>
