@@ -352,6 +352,9 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME *lpCreationTime,
 		const FILETIME *lpLastAccessTime, const FILETIME *lpLastWriteTime)
 {
 	int rc;
+#ifdef __APPLE__
+	struct stat buf;
+#endif
 	struct timespec times[2]; /* last access, last modification */
 	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
 	const UINT64 EPOCH_DIFF = 11644473600ULL;
@@ -359,9 +362,25 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME *lpCreationTime,
 	if (!hFile)
 		return FALSE;
 
+#ifdef __APPLE__
+	rc = fstat(fileno(pFile->fp), &buf);
+	if (rc < 0)
+		return FALSE;
+#endif
 	memset(times, 0, sizeof(times));
 	if (!lpLastAccessTime)
+	{
+#ifdef __APPLE__
+#if !defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE)
+		times[0] = buf.st_atimespec;
+#else
+		times[0].tv_sec = buf.st_atime;
+		times[0].tv_nsec = buf.st_atimensec;
+#endif
+#else
 		times[0].tv_nsec = UTIME_OMIT;
+#endif
+	}
 	else
 	{
 		UINT64 tmp = ((UINT64)lpLastAccessTime->dwHighDateTime) << 32
@@ -373,7 +392,18 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME *lpCreationTime,
 		times[0].tv_nsec = tmp % 10000000ULL;
 	}
 	if (!lpLastWriteTime)
+	{
+#ifdef __APPLE__
+#if !defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE)
+		times[1] = buf.st_mtimespec;
+#else
+		times[1].tv_sec = buf.st_mtime;
+		times[1].tv_nsec = buf.st_mtimensec;
+#endif
+#else
 		times[1].tv_nsec = UTIME_OMIT;
+#endif
+	}
 	else
 	{
 		UINT64 tmp = ((UINT64)lpLastWriteTime->dwHighDateTime) << 32
@@ -386,7 +416,11 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME *lpCreationTime,
 	}
 
 	// TODO: Creation time can not be handled!
+#ifdef __APPLE__
+	rc = futimes(fileno(pFile->fp), times);
+#else
 	rc = futimens(fileno(pFile->fp), times);
+#endif
 	if (rc != 0)
 		return FALSE;
 
