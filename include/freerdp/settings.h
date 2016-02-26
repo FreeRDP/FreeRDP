@@ -4,6 +4,7 @@
  *
  * Copyright 2009-2011 Jay Sorg
  * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 Armin Novak <armin.novak@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1435,6 +1436,7 @@ FREERDP_API int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, char* pre
 
 FREERDP_API BOOL freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device);
 FREERDP_API RDPDR_DEVICE* freerdp_device_collection_find(rdpSettings* settings, const char* name);
+FREERDP_API RDPDR_DEVICE* freerdp_device_collection_find_type(rdpSettings* settings, UINT32 type);
 FREERDP_API RDPDR_DEVICE* freerdp_device_clone(RDPDR_DEVICE* device);
 FREERDP_API void freerdp_device_collection_free(rdpSettings* settings);
 

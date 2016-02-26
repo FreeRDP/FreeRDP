@@ -4,6 +4,7 @@
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2014 Norbert Federa <norbert.federa@thincast.com>
+ * Copyright 2016 Armin Novak <armin.novak@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1311,7 +1312,7 @@ int freerdp_detect_posix_style_command_line_syntax(int argc, char** argv,
 }
 
 static BOOL freerdp_client_detect_command_line(int argc, char** argv,
-					       DWORD* flags, BOOL ignoreUnknown)
+						DWORD* flags, BOOL ignoreUnknown)
 {
 	int old_cli_status;
 	int old_cli_count;
@@ -2508,28 +2509,34 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	{
 		RDPDR_SMARTCARD* smartcard;
 
-		smartcard = (RDPDR_SMARTCARD*) calloc(1, sizeof(RDPDR_SMARTCARD));
+		if (!freerdp_device_collection_find_type(settings, RDPDR_DTYP_SMARTCARD))
+		{
+			smartcard = (RDPDR_SMARTCARD*) calloc(1, sizeof(RDPDR_SMARTCARD));
 
-		if (!smartcard)
-			return FALSE;
+			if (!smartcard)
+				return FALSE;
 
-		smartcard->Type = RDPDR_DTYP_SMARTCARD;
-		if (!freerdp_device_collection_add(settings, (RDPDR_DEVICE*) smartcard))
-			return FALSE;
+			smartcard->Type = RDPDR_DTYP_SMARTCARD;
+			if (!freerdp_device_collection_add(settings, (RDPDR_DEVICE*) smartcard))
+				return FALSE;
+		}
 	}
 
 	if (settings->RedirectPrinters)
 	{
 		RDPDR_PRINTER* printer;
 
-		printer = (RDPDR_PRINTER*) calloc(1, sizeof(RDPDR_PRINTER));
+		if (!freerdp_device_collection_find_type(settings, RDPDR_DTYP_PRINT))
+		{
+			printer = (RDPDR_PRINTER*) calloc(1, sizeof(RDPDR_PRINTER));
 
-		if (!printer)
-			return FALSE;
+			if (!printer)
+				return FALSE;
 
-		printer->Type = RDPDR_DTYP_PRINT;
-		if (!freerdp_device_collection_add(settings, (RDPDR_DEVICE*) printer))
-			return FALSE;
+			printer->Type = RDPDR_DTYP_PRINT;
+			if (!freerdp_device_collection_add(settings, (RDPDR_DEVICE*) printer))
+				return FALSE;
+		}
 	}
 
 	if (settings->RedirectClipboard)
