@@ -92,7 +92,6 @@ FREERDP_API int crypto_rsa_public_decrypt(const BYTE* input, int length, UINT32 
 FREERDP_API int crypto_rsa_private_encrypt(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus, const BYTE* private_exponent, BYTE* output);
 FREERDP_API int crypto_rsa_private_decrypt(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus, const BYTE* private_exponent, BYTE* output);
 FREERDP_API void crypto_reverse(BYTE* data, int length);
-FREERDP_API void crypto_nonce(BYTE* nonce, int size);
 
 FREERDP_API char* crypto_base64_encode(const BYTE* data, int length);
 FREERDP_API void crypto_base64_decode(const char* enc_data, int length, BYTE** dec_data, int* res_length);

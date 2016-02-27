@@ -437,7 +437,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	if (!settings->ClientRandom)
 		return FALSE;
 
-	crypto_nonce(settings->ClientRandom, settings->ClientRandomLength);
+	winpr_RAND(settings->ClientRandom, settings->ClientRandomLength);
 	key_len = settings->RdpServerCertificate->cert_info.ModulusLength;
 	mod = settings->RdpServerCertificate->cert_info.Modulus;
 	exp = settings->RdpServerCertificate->cert_info.exponent;

@@ -1349,7 +1349,7 @@ BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 
 	settings->ServerRandomLength = serverRandomLen;
 	settings->ServerRandom = (BYTE*) malloc(serverRandomLen);
-	crypto_nonce(settings->ServerRandom, serverRandomLen);
+	winpr_RAND(settings->ServerRandom, serverRandomLen);
 	Stream_Write(s, settings->ServerRandom, serverRandomLen);
 
 	sigData = Stream_Pointer(s);
