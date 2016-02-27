@@ -1016,9 +1016,10 @@ typedef union _WINPR_CIPHER_CTX WINPR_CIPHER_CTX;
 extern "C" {
 #endif
 
-WINPR_API BOOL winpr_Cipher_Init(WINPR_CIPHER_CTX* ctx, int cipher, int op, const BYTE* key, const BYTE* iv);
+WINPR_API BOOL winpr_Cipher_New(WINPR_CIPHER_CTX** ctx, int cipher, int op, const BYTE* key, const BYTE* iv);
 WINPR_API BOOL winpr_Cipher_Update(WINPR_CIPHER_CTX* ctx, const BYTE* input, size_t ilen, BYTE* output, size_t* olen);
 WINPR_API BOOL winpr_Cipher_Final(WINPR_CIPHER_CTX* ctx, BYTE* output, size_t* olen);
+WINPR_API void winpr_Cipher_Free(WINPR_CIPHER_CTX* ctx);
 
 #ifdef __cplusplus
 }

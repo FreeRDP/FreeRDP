@@ -646,7 +646,9 @@ BOOL security_hmac_signature(const BYTE* data, int length, BYTE* output, rdpRdp*
 
 BOOL security_fips_encrypt(BYTE* data, int length, rdpRdp* rdp)
 {
-	if (!crypto_des3_encrypt(rdp->fips_encrypt, length, data, data))
+	size_t olen;
+
+	if (!winpr_Cipher_Update(rdp->fips_encrypt, data, length, data, &olen))
 		return FALSE;
 	rdp->encrypt_use_count++;
 	return TRUE;
@@ -654,7 +656,11 @@ BOOL security_fips_encrypt(BYTE* data, int length, rdpRdp* rdp)
 
 BOOL security_fips_decrypt(BYTE* data, int length, rdpRdp* rdp)
 {
-	return crypto_des3_decrypt(rdp->fips_decrypt, length, data, data);
+	size_t olen;
+
+	if (!winpr_Cipher_Update(rdp->fips_decrypt, data, length, data, &olen))
+		return FALSE;
+	return TRUE;
 }
 
 BOOL security_fips_check_signature(const BYTE* data, int length, const BYTE* sig, rdpRdp* rdp)

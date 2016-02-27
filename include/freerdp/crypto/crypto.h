@@ -38,11 +38,7 @@
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
-
-struct crypto_des3_struct
-{
-	EVP_CIPHER_CTX des3_ctx;
-};
+#include <freerdp/crypto/certificate.h>
 
 struct crypto_cert_struct
 {
@@ -54,17 +50,7 @@ struct crypto_cert_struct
  extern "C" {
 #endif
 
-typedef struct crypto_des3_struct* CryptoDes3;
-
-FREERDP_API CryptoDes3 crypto_des3_encrypt_init(const BYTE* key, const BYTE* ivec);
-FREERDP_API CryptoDes3 crypto_des3_decrypt_init(const BYTE* key, const BYTE* ivec);
-FREERDP_API BOOL crypto_des3_encrypt(CryptoDes3 des3, UINT32 length, const BYTE *in_data, BYTE *out_data);
-FREERDP_API BOOL crypto_des3_decrypt(CryptoDes3 des3, UINT32 length, const BYTE *in_data, BYTE* out_data);
-FREERDP_API void crypto_des3_free(CryptoDes3 des3);
-
 typedef struct crypto_cert_struct* CryptoCert;
-
-#include <freerdp/crypto/certificate.h>
 
 FREERDP_API CryptoCert crypto_cert_read(BYTE* data, UINT32 length);
 FREERDP_API char* crypto_cert_fingerprint(X509* xcert);
