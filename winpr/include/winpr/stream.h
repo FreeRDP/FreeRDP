@@ -229,7 +229,7 @@ static INLINE void Stream_Write_UINT64(wStream* s, UINT64 _v)
 	*_s->pointer++ = ((UINT64)(_v) >> 48) & 0xFF;
 	*_s->pointer++ = ((UINT64)(_v) >> 56) & 0xFF;
 }
-static INLINE void Stream_Write(wStream* s, void* _b, size_t _n)
+static INLINE void Stream_Write(wStream* s, const void* _b, size_t _n)
 {
 	struct _wStream* _s = (struct _wStream*)s;
 	memcpy(_s->pointer, (_b), (_n));
