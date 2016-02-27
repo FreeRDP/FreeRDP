@@ -17,6 +17,7 @@ import com.freerdp.freerdpcore.domain.ManualBookmark;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -206,9 +207,7 @@ public class LibFreeRDP {
             args.add("/gfx");
         }
 
-        if (flags.getH264()) {
-            args.add("/h264");
-        }
+        args.add(addFlag("gfx-h264", flags.getH264()));
 
         args.add(addFlag("wallpaper", flags.getWallpaper()));
         args.add(addFlag("window-drag", flags.getFullWindowDrag()));
@@ -270,6 +269,57 @@ public class LibFreeRDP {
         }
 
         args.add("/log-level:TRACE");
+        String[] arrayArgs = args.toArray(new String[args.size()]);
+        return freerdp_parse_arguments(inst, arrayArgs);
+    }
+    
+    public static boolean setConnectionInfo(int inst, Uri openUri) {
+        ArrayList<String> args = new ArrayList<String>();
+
+        // Parse URI from query string. Same key overwrite previous one
+        // freerdp://user@ip:port/connect?sound=&rfx=&p=password&clipboard=%2b&themes=-
+     
+        // Now we only support Software GDI
+        args.add(TAG);
+        args.add("/gdi:sw");
+        
+        // Parse hostname and port. Set to 'v' argument
+        String hostname = openUri.getHost();
+        int port = openUri.getPort();
+        if (hostname != null) {
+            hostname = hostname + ((port == -1) ? "" : (":" + String.valueOf(port)));
+            args.add("/v:" + hostname);
+        }
+        
+        String user = openUri.getUserInfo();
+        if (user != null) {
+            args.add("/u:" + user);
+        }
+        
+        for (String key: openUri.getQueryParameterNames()) {
+            String value = openUri.getQueryParameter(key);
+            
+            if (value.isEmpty()) {
+                // Query: key=
+                // To freerdp argument: /key
+                args.add("/" + key);
+            } else if (value.equals("-") || value.equals("+")) {
+                // Query: key=- or key=+
+                // To freerdp argument: -key or +key
+                args.add(value+key);
+            } else {
+                // Query: key=value
+                // To freerdp argument: /key:value
+                if (key.equals("drive") && value.equals("sdcard")) { 
+                    // Special for sdcard redirect
+                    String path = android.os.Environment.getExternalStorageDirectory().getPath();
+                    value = "sdcard," + path;
+                }
+
+                args.add("/" + key + ":" + value);
+            }
+        }
+        
         String[] arrayArgs = args.toArray(new String[args.size()]);
         return freerdp_parse_arguments(inst, arrayArgs);
     }

@@ -69,6 +69,12 @@
 				android:theme="@style/Theme.Main"
 				android:configChanges="orientation|keyboardHidden|keyboard"
 				android:windowSoftInputMode="adjustResize">
+				<intent-filter>
+					<action android:name="android.intent.action.VIEW" />
+					<category android:name="android.intent.category.DEFAULT" />              
+					<category android:name="android.intent.category.BROWSABLE" />
+					<data android:scheme="freerdp" android:host="*" />
+				</intent-filter>
 			</activity>
 			<activity android:name=".presentation.AboutActivity"
 				android:label="@string/title_about"
