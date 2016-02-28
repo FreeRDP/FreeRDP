@@ -257,10 +257,13 @@ public class LibFreeRDP {
             }
         }
 
-        /* 0 ... disable
-           1 ... local
-           2 ... remote */
+        /* 0 ... local
+           1 ... remote 
+           2 ... disable */
         args.add("/audio-mode:" + String.valueOf(advanced.getRedirectSound()));
+        if (advanced.getRedirectSound() == 0) {
+            args.add("/sound");
+        }
 
         if (advanced.getRedirectMicrophone()) {
             args.add("/microphone");
