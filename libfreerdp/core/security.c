@@ -538,7 +538,8 @@ BOOL security_key_update(BYTE* key, BYTE* update_key, int key_len, rdpRdp* rdp)
 	BYTE sha1h[WINPR_SHA1_DIGEST_LENGTH];
 	WINPR_MD5_CTX md5;
 	WINPR_SHA1_CTX sha1;
-	WINPR_RC4_CTX rc4;
+	WINPR_RC4_CTX* rc4;
+	BOOL rc;
 	BYTE salt[] = { 0xD1, 0x26, 0x9E }; /* 40 bits: 3 bytes, 56 bits: 1 byte */
 
 	if (!winpr_SHA1_Init(&sha1))
@@ -563,11 +564,12 @@ BOOL security_key_update(BYTE* key, BYTE* update_key, int key_len, rdpRdp* rdp)
 	if (!winpr_MD5_Final(&md5, key, WINPR_MD5_DIGEST_LENGTH))
 		return FALSE;
 
-	if (!winpr_RC4_Init(&rc4, key, key_len))
+	if (!winpr_RC4_New(&rc4, key, key_len))
 		return FALSE;
-	if (!winpr_RC4_Update(&rc4, key_len, key, key))
-		return FALSE;
-	if (!winpr_RC4_Final(&rc4))
+	rc = winpr_RC4_Update(rc4, key_len, key, key);
+	winpr_RC4_Free(rc4);
+
+	if (!rc)
 		return FALSE;
 
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_40BIT)
@@ -585,9 +587,8 @@ BOOL security_encrypt(BYTE* data, int length, rdpRdp* rdp)
 		if (!security_key_update(rdp->encrypt_key, rdp->encrypt_update_key, rdp->rc4_key_len, rdp))
 			return FALSE;
 
-		if (!winpr_RC4_Final(rdp->rc4_encrypt_key))
-			return FALSE;
-		if (!winpr_RC4_Init(rdp->rc4_encrypt_key, rdp->encrypt_key, rdp->rc4_key_len))
+		winpr_RC4_Free(rdp->rc4_encrypt_key);
+		if (!winpr_RC4_New(&rdp->rc4_encrypt_key, rdp->encrypt_key, rdp->rc4_key_len))
 			return FALSE;
 
 		rdp->encrypt_use_count = 0;
@@ -609,9 +610,8 @@ BOOL security_decrypt(BYTE* data, int length, rdpRdp* rdp)
 	{
 		if (!security_key_update(rdp->decrypt_key, rdp->decrypt_update_key, rdp->rc4_key_len, rdp))
 			return FALSE;
-		if (!winpr_RC4_Final(rdp->rc4_decrypt_key))
-			return FALSE;
-		if (!winpr_RC4_Init(rdp->rc4_decrypt_key, rdp->decrypt_key, rdp->rc4_key_len))
+		winpr_RC4_Free(rdp->rc4_decrypt_key);
+		if (!winpr_RC4_New(&rdp->rc4_decrypt_key, rdp->decrypt_key, rdp->rc4_key_len))
 			return FALSE;
 
 		rdp->decrypt_use_count = 0;

@@ -513,12 +513,27 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 		goto end;
 	}
 
-	winpr_RC4_Init(rdp->rc4_decrypt_key, rdp->decrypt_key, rdp->rc4_key_len);
-	winpr_RC4_Init(rdp->rc4_encrypt_key, rdp->encrypt_key, rdp->rc4_key_len);
+	if (!winpr_RC4_New(&rdp->rc4_decrypt_key, rdp->decrypt_key, rdp->rc4_key_len))
+		goto end;
+	if (!winpr_RC4_New(&rdp->rc4_encrypt_key, rdp->encrypt_key, rdp->rc4_key_len))
+		goto end;
 
 	ret = TRUE;
 end:
 	free(crypt_client_random);
+	if (!ret)
+	{
+		winpr_Cipher_Free(rdp->fips_decrypt);
+		winpr_Cipher_Free(rdp->fips_encrypt);
+		winpr_RC4_Free(rdp->rc4_decrypt_key);
+		winpr_RC4_Free(rdp->rc4_encrypt_key);
+
+		rdp->fips_decrypt = NULL;
+		rdp->fips_encrypt = NULL;
+		rdp->rc4_decrypt_key = NULL;
+		rdp->rc4_encrypt_key = NULL;
+	}
+
 	return ret;
 }
 
@@ -575,12 +590,12 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	if (rand_len != key_len + 8)
 	{
 		WLog_ERR(TAG, "invalid encrypted client random length");
-		goto end2;
+		goto end;
 	}
 
 	crypt_client_random = calloc(1, rand_len);
 	if (!crypt_client_random)
-		goto end2;
+		goto end;
 	Stream_Read(s, crypt_client_random, rand_len);
 
 	mod = rdp->settings->RdpServerRsaKey->Modulus;
@@ -589,9 +604,7 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 
 	/* now calculate encrypt / decrypt and update keys */
 	if (!security_establish_keys(client_random, rdp))
-	{
 		goto end;
-	}
 
 	rdp->do_crypt = TRUE;
 
@@ -621,15 +634,28 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 		goto end;
 	}
 
-	winpr_RC4_Init(rdp->rc4_decrypt_key, rdp->decrypt_key, rdp->rc4_key_len);
-	winpr_RC4_Init(rdp->rc4_encrypt_key, rdp->encrypt_key, rdp->rc4_key_len);
+	if (!winpr_RC4_New(&rdp->rc4_decrypt_key, rdp->decrypt_key, rdp->rc4_key_len))
+		goto end;
+	if (!winpr_RC4_New(&rdp->rc4_encrypt_key, rdp->encrypt_key, rdp->rc4_key_len))
+		goto end;
 
 	ret = TRUE;
 end:
 	free(crypt_client_random);
-end2:
 	free(client_random);
 
+	if (!ret)
+	{
+		winpr_Cipher_Free(rdp->fips_encrypt);
+		winpr_Cipher_Free(rdp->fips_decrypt);
+		winpr_RC4_Free(rdp->rc4_encrypt_key);
+		winpr_RC4_Free(rdp->rc4_decrypt_key);
+
+		rdp->fips_encrypt = NULL;
+		rdp->fips_decrypt = NULL;
+		rdp->rc4_encrypt_key = NULL;
+		rdp->rc4_decrypt_key = NULL;
+	}
 	return ret;
 }
 

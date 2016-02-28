@@ -901,9 +901,9 @@ typedef union _WINPR_RC4_CTX WINPR_RC4_CTX;
 extern "C" {
 #endif
 
-WINPR_API BOOL winpr_RC4_Init(WINPR_RC4_CTX* ctx, const BYTE* key, size_t keylen);
+WINPR_API BOOL winpr_RC4_New(WINPR_RC4_CTX** ctx, const BYTE* key, size_t keylen);
 WINPR_API BOOL winpr_RC4_Update(WINPR_RC4_CTX* ctx, size_t length, const BYTE* input, BYTE* output);
-WINPR_API BOOL winpr_RC4_Final(WINPR_RC4_CTX* ctx);
+WINPR_API void winpr_RC4_Free(WINPR_RC4_CTX* ctx);
 
 #ifdef __cplusplus
 }

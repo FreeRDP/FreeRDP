@@ -43,15 +43,26 @@
  * RC4
  */
 
-BOOL winpr_RC4_Init(WINPR_RC4_CTX* ctx, const BYTE* key, size_t keylen)
+BOOL winpr_RC4_New(WINPR_RC4_CTX** octx, const BYTE* key, size_t keylen)
 {
+	WINPR_RC4_CTX* ctx = NULL;
+
+	if (!octx || !key || (keylen == 0))
+		return FALSE;
+
+	ctx = calloc(1, sizeof(WINPR_RC4_CTX));
+	if (!ctx)
+		return FALSE;
+
 #if defined(WITH_OPENSSL)
 	RC4_set_key((RC4_KEY*) ctx, keylen, key);
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_ARC4_C)
 	mbedtls_arc4_init((mbedtls_arc4_context*) ctx);
 	mbedtls_arc4_setup((mbedtls_arc4_context*) ctx, key, keylen);
 #endif
-    return TRUE;
+	*octx = ctx;
+
+	return TRUE;
 }
 
 BOOL winpr_RC4_Update(WINPR_RC4_CTX* ctx, size_t length, const BYTE* input, BYTE* output)
@@ -60,20 +71,23 @@ BOOL winpr_RC4_Update(WINPR_RC4_CTX* ctx, size_t length, const BYTE* input, BYTE
 	RC4((RC4_KEY*) ctx, length, input, output);
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_ARC4_C)
 	if (mbedtls_arc4_crypt((mbedtls_arc4_context*) ctx, length, input, output) != 0)
-        return FALSE;
+		return FALSE;
 #endif
 
-    return TRUE;
+	return TRUE;
 }
 
-BOOL winpr_RC4_Final(WINPR_RC4_CTX* ctx)
+void winpr_RC4_Free(WINPR_RC4_CTX* ctx)
 {
+	if (!ctx)
+		return;
+
 #if defined(WITH_OPENSSL)
 
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_ARC4_C)
 	mbedtls_arc4_free((mbedtls_arc4_context*) ctx);
 #endif
-    return TRUE;
+	free(ctx);
 }
 
 /**
@@ -502,7 +516,7 @@ mbedtls_cipher_type_t winpr_mbedtls_get_cipher_type(int cipher)
 
 BOOL winpr_Cipher_New(WINPR_CIPHER_CTX** cctx, int cipher, int op, const BYTE* key, const BYTE* iv)
 {
-    WINPR_CIPHER_CTX* ctx;
+	WINPR_CIPHER_CTX* ctx;
 #if defined(WITH_OPENSSL)
 	int operation;
 	const EVP_CIPHER* evp;
@@ -514,10 +528,10 @@ BOOL winpr_Cipher_New(WINPR_CIPHER_CTX** cctx, int cipher, int op, const BYTE* k
 	const mbedtls_cipher_info_t* cipher_info;
 #endif
 
-    ctx = calloc(1, sizeof(WINPR_CIPHER_CTX));
-    if (!ctx)
-        return FALSE;
-    
+	ctx = calloc(1, sizeof(WINPR_CIPHER_CTX));
+	if (!ctx)
+		return FALSE;
+	
 #if defined(WITH_OPENSSL)
 	octx = (EVP_CIPHER_CTX*)ctx;
 	evp = winpr_openssl_get_evp_cipher(cipher);
@@ -551,7 +565,7 @@ BOOL winpr_Cipher_New(WINPR_CIPHER_CTX** cctx, int cipher, int op, const BYTE* k
 		return FALSE;
 #endif
 
-    *cctx = ctx;
+	*cctx = ctx;
 	return TRUE;
 }
 
@@ -589,8 +603,8 @@ BOOL winpr_Cipher_Final(WINPR_CIPHER_CTX* ctx, BYTE* output, size_t* olen)
 
 void winpr_Cipher_Free(WINPR_CIPHER_CTX* ctx)
 {
-    if (!ctx)
-        return;
+	if (!ctx)
+		return;
 
 #if defined(WITH_OPENSSL)
 	EVP_CIPHER_CTX_cleanup((EVP_CIPHER_CTX*) ctx);
