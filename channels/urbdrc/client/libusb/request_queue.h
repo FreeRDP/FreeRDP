@@ -33,11 +33,10 @@ struct _TRANSFER_REQUEST
 	void*	next;
 
 	UINT32	RequestId;
-	BYTE	endpoint;  
+	BYTE	endpoint;
 	struct libusb_transfer *transfer;
 	int		submit;
 };
-
 
 struct _REQUEST_QUEUE
 {
@@ -54,12 +53,12 @@ struct _REQUEST_QUEUE
 	int (*unregister_request) (REQUEST_QUEUE *queue, UINT32 RequestId);
 	TRANSFER_REQUEST *(*get_next) (REQUEST_QUEUE* queue);
 	TRANSFER_REQUEST *(*get_request_by_ep) (REQUEST_QUEUE *queue, BYTE ep);
-	TRANSFER_REQUEST *(*register_request) (REQUEST_QUEUE* queue, 
-		UINT32 RequestId, struct libusb_transfer * transfer, BYTE endpoint);
+	TRANSFER_REQUEST *(*register_request) (REQUEST_QUEUE* queue,
+										   UINT32 RequestId,
+										   struct libusb_transfer * transfer,
+										   BYTE endpoint);
 };
 
-
 REQUEST_QUEUE* request_queue_new(void);
-
 
 #endif /* __REQUEST_QUEUE_H */

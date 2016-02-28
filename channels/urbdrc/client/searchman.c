@@ -22,7 +22,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -92,8 +91,8 @@ static int searchman_list_remove(USB_SEARCHMAN* searchman, UINT16 idVendor, UINT
 	{
 		point = searchman_get_next(searchman);
 
-		if (point->idVendor == idVendor && 
-			point->idProduct == idProduct)
+		if (point->idVendor == idVendor &&
+				point->idProduct == idProduct)
 		{
 			/* set previous device to point to next device */
 
@@ -125,7 +124,7 @@ static int searchman_list_remove(USB_SEARCHMAN* searchman, UINT16 idVendor, UINT
 			}
 			searchman->usb_numbers--;
 			
-			free(search); 
+			free(search);
 			
 			return 1; /* unregistration successful */
 		}
@@ -174,7 +173,7 @@ static void searchman_list_show(USB_SEARCHMAN* self)
 	WLog_DBG(TAG,  "================= END ===============");
 }
 
-void searchman_free(USB_SEARCHMAN* self)
+static void searchman_free(USB_SEARCHMAN* self)
 {
 	USB_SEARCHDEV * dev;
 

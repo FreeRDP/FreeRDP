@@ -80,6 +80,4 @@ typedef UDEVICE * PUDEVICE;
 int udev_new_by_id(UINT16 idVendor, UINT16 idProduct, IUDEVICE ***devArray);
 IUDEVICE* udev_new_by_addr(int bus_number, int dev_number);
 
-extern int libusb_debug;
-
 #endif /* __LIBUSB_UDEVICE_H */

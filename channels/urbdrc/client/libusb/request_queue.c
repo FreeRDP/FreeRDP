@@ -21,10 +21,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+
 #include "request_queue.h"
 
-TRANSFER_REQUEST* request_queue_get_next(REQUEST_QUEUE* queue)
+static TRANSFER_REQUEST* request_queue_get_next(REQUEST_QUEUE* queue)
 {
 	TRANSFER_REQUEST* request;
 
@@ -34,7 +34,7 @@ TRANSFER_REQUEST* request_queue_get_next(REQUEST_QUEUE* queue)
 	return request;
 }
 
-int request_queue_has_next(REQUEST_QUEUE* queue)
+static int request_queue_has_next(REQUEST_QUEUE* queue)
 {
 	if (queue->ireq == NULL)
 		return 0;
@@ -42,8 +42,8 @@ int request_queue_has_next(REQUEST_QUEUE* queue)
 		return 1;
 }
 
-TRANSFER_REQUEST* request_queue_register_request(REQUEST_QUEUE* queue, UINT32 RequestId,
-	struct libusb_transfer* transfer, BYTE endpoint)
+static TRANSFER_REQUEST* request_queue_register_request(REQUEST_QUEUE* queue, UINT32 RequestId,
+												 struct libusb_transfer* transfer, BYTE endpoint)
 {
 	TRANSFER_REQUEST* request;
 
@@ -88,13 +88,13 @@ out:
 	return NULL;
 }
 
-void request_queue_rewind(REQUEST_QUEUE* queue)
+static void request_queue_rewind(REQUEST_QUEUE* queue)
 {
 	queue->ireq = queue->head;
 }
 
 /* Get first*/
-TRANSFER_REQUEST* request_queue_get_request_by_endpoint(REQUEST_QUEUE* queue, BYTE ep)
+static TRANSFER_REQUEST* request_queue_get_request_by_endpoint(REQUEST_QUEUE* queue, BYTE ep)
 {
 	TRANSFER_REQUEST * request;
 
@@ -117,7 +117,7 @@ TRANSFER_REQUEST* request_queue_get_request_by_endpoint(REQUEST_QUEUE* queue, BY
 	return NULL;
 }
 
-int request_queue_unregister_request(REQUEST_QUEUE* queue, UINT32 RequestId)
+static int request_queue_unregister_request(REQUEST_QUEUE* queue, UINT32 RequestId)
 {
 	TRANSFER_REQUEST *request, *request_temp;
 
@@ -130,7 +130,7 @@ int request_queue_unregister_request(REQUEST_QUEUE* queue, UINT32 RequestId)
 	{
 		request = queue->get_next(queue);
 
-		if (request->RequestId == RequestId) 
+		if (request->RequestId == RequestId)
 		{
 
 			if (request->prev != NULL)
@@ -159,12 +159,12 @@ int request_queue_unregister_request(REQUEST_QUEUE* queue, UINT32 RequestId)
 			if (request)
 			{
 				request->transfer = NULL;
-				zfree(request); 
+				free(request);
 			}
 
 			ReleaseMutex(queue->request_loading);
 
-			return 0; 
+			return 0;
 		}
 	}
 

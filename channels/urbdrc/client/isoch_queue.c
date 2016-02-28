@@ -87,7 +87,7 @@ out:
 static int isoch_queue_unregister_data(ISOCH_CALLBACK_QUEUE* queue, ISOCH_CALLBACK_DATA* isoch)
 {
 	ISOCH_CALLBACK_DATA* p;
-		
+
 	queue->rewind(queue);
 
 	while (queue->has_next(queue))
@@ -131,7 +131,7 @@ static int isoch_queue_unregister_data(ISOCH_CALLBACK_QUEUE* queue, ISOCH_CALLBA
 		isoch->out_data = NULL;
 
 		if (isoch)
-			zfree(isoch);
+			free(isoch);
 
 		return 1; /* unregistration successful */
 	}
@@ -140,7 +140,7 @@ static int isoch_queue_unregister_data(ISOCH_CALLBACK_QUEUE* queue, ISOCH_CALLBA
 	return 0;
 }
 
-void isoch_queue_free(ISOCH_CALLBACK_QUEUE* queue)
+static void isoch_queue_free(ISOCH_CALLBACK_QUEUE* queue)
 {
 	ISOCH_CALLBACK_DATA* isoch;
 
@@ -162,8 +162,8 @@ void isoch_queue_free(ISOCH_CALLBACK_QUEUE* queue)
 	CloseHandle(queue->isoch_loading);
 
 	/* free queue */
-	if (queue) 
-		zfree(queue);
+	if (queue)
+		free(queue);
 }
 
 ISOCH_CALLBACK_QUEUE* isoch_queue_new()
