@@ -65,7 +65,7 @@ struct _UDEVMAN
 	int device_num;
 	int sem_timeout;
 
-	pthread_mutex_t devman_loading;
+	HANDLE devman_loading;
 	sem_t sem_urb_lock;
 };
 typedef UDEVMAN* PUDEVMAN;
@@ -397,13 +397,13 @@ static IUDEVICE* udevman_get_udevice_by_UsbDevice(IUDEVMAN* idevman, UINT32 UsbD
 static void udevman_loading_lock(IUDEVMAN* idevman)
 {
 	UDEVMAN* udevman = (UDEVMAN*) idevman;
-	pthread_mutex_lock(&udevman->devman_loading);
+	WaitForSingleObject(udevman->devman_loading, INFINITE);
 }
 
 static void udevman_loading_unlock(IUDEVMAN* idevman)
 {
 	UDEVMAN* udevman = (UDEVMAN*) idevman;
-	pthread_mutex_unlock(&udevman->devman_loading);
+	ReleaseMutex(udevman->devman_loading);
 }
 
 static void udevman_wait_urb(IUDEVMAN* idevman)
@@ -426,7 +426,7 @@ static void udevman_free(IUDEVMAN* idevman)
 {
 	UDEVMAN* udevman = (UDEVMAN*) idevman;
 
-	pthread_mutex_destroy(&udevman->devman_loading);
+	CloseHandle(udevman->devman_loading);
 	sem_destroy(&udevman->sem_urb_lock);
 
 	libusb_exit(NULL);
@@ -590,17 +590,16 @@ int freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS p
 
 	libusb_init(NULL);
 
-	udevman = (PUDEVMAN) malloc(sizeof(UDEVMAN));
+	udevman = (PUDEVMAN) calloc(1, sizeof(UDEVMAN));
 	if (!udevman)
 		return -1;
-	udevman->device_num = 0;
-	udevman->idev = NULL;
-	udevman->head = NULL;
-	udevman->tail = NULL;   
-	udevman->sem_timeout = 0;
+
+	udevman->devman_loading = CreateMutex(NULL, FALSE, NULL);
+	if (!udevman->devman_loading)
+		goto out;
+
 	udevman->flags = UDEVMAN_FLAG_ADD_BY_VID_PID;
 
-	pthread_mutex_init(&udevman->devman_loading, NULL);
 	sem_init(&udevman->sem_urb_lock, 0, MAX_URB_REQUSET_NUM);
 
 	/* load usb device service management */
@@ -617,4 +616,10 @@ int freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS p
 	WLog_DBG(TAG, "UDEVMAN device registered.");
 
 	return 0;
+
+out:
+	if (udevman->devman_loading)
+		CloseHandle(udevman->devman_loading);
+	free(udevman);
+	return -1;
 }

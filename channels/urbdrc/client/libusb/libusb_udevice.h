@@ -72,7 +72,7 @@ struct _UDEVICE
 	/* Used in isochronous transfer */
 	void * isoch_queue;
 
-	pthread_mutex_t mutex_isoch;
+	HANDLE mutex_isoch;
 	sem_t   sem_id;
 };
 typedef UDEVICE * PUDEVICE;

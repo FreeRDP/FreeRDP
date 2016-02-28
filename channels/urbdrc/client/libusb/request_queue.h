@@ -46,7 +46,7 @@ struct _REQUEST_QUEUE
 	TRANSFER_REQUEST* head; /* head request in linked queue */
 	TRANSFER_REQUEST* tail; /* tail request in linked queue */
 
-	pthread_mutex_t request_loading;
+	HANDLE request_loading;
 
 	/* request queue manager service */
 	void (*rewind) (REQUEST_QUEUE *queue);

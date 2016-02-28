@@ -1261,13 +1261,13 @@ static int libusb_udev_wait_for_detach(IUDEVICE* idev)
 static void libusb_udev_lock_fifo_isoch(IUDEVICE* idev)
 {
 	UDEVICE* pdev = (UDEVICE*) idev;
-	pthread_mutex_lock(&pdev->mutex_isoch);  
+	WaitForSingleObject(pdev->mutex_isoch, INFINITE);  
 }
 
 static void  libusb_udev_unlock_fifo_isoch(IUDEVICE* idev)
 {
 	UDEVICE* pdev = (UDEVICE*) idev;
-	pthread_mutex_unlock(&pdev->mutex_isoch);
+	ReleaseMutex(&pdev->mutex_isoch);
 }
 
 static int libusb_udev_query_device_port_status(IUDEVICE* idev, UINT32* UsbdStatus, UINT32* BufferSize, BYTE* Buffer)
@@ -1574,7 +1574,7 @@ static void libusb_udev_cancel_all_transfer_request(IUDEVICE* idev)
 	REQUEST_QUEUE* request_queue = pdev->request_queue;
 	TRANSFER_REQUEST* request = NULL;
 
-	pthread_mutex_lock(&request_queue->request_loading);
+	WaitForSingleObject(request_queue->request_loading, INFINITE);
 			
 	request_queue->rewind(request_queue);
 
@@ -1602,7 +1602,7 @@ static void libusb_udev_cancel_all_transfer_request(IUDEVICE* idev)
 
 	}
 
-	pthread_mutex_unlock(&request_queue->request_loading);
+	ReleaseMutex(request_queue->request_loading);
 }
 
 static int func_cancel_xact_request(TRANSFER_REQUEST *request)
@@ -1645,7 +1645,7 @@ static int libusb_udev_cancel_transfer_request(IUDEVICE* idev, UINT32 RequestId)
 	int status = 0, retry_times = 0;
 
 cancel_retry:
-	pthread_mutex_lock(&request_queue->request_loading);
+	WaitForSingleObject(&request_queue->request_loading, INFINITE);
 
 	request_queue->rewind(request_queue);
 
@@ -1670,7 +1670,7 @@ cancel_retry:
 		}
 	}
 
-	pthread_mutex_unlock(&request_queue->request_loading);
+	ReleaseMutex(request_queue->request_loading);
 
 	if ((status == 0) && (retry_times < 10))
 	{
@@ -1864,13 +1864,21 @@ static IUDEVICE* udev_init(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_number)
 	/* set config of windows */
 	pdev->MsConfig = msusb_msconfig_new();
 
-	pthread_mutex_init(&pdev->mutex_isoch, NULL);
+	pdev->mutex_isoch = CreateMutex(NULL, FALSE, NULL);
+	if (!pdev->mutex_isoch)
+		goto out;
 
 	//deb_config_msg(pdev->libusb_dev, config_temp, devDescriptor->bNumConfigurations);  
 
 	udev_load_interface(pdev);
 
 	return (IUDEVICE*) pdev;
+
+out:
+	//TODO: Resource cleanup
+	if (pdev->mutex_isoch)
+		CloseHandle(pdev->mutex_isoch);
+	return NULL;
 }
 
 int udev_new_by_id(UINT16 idVendor, UINT16 idProduct, IUDEVICE*** devArray)

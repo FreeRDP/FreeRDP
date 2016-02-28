@@ -44,7 +44,7 @@ struct _USB_SEARCHMAN
 	USB_SEARCHDEV*	head; /* head device in linked list */
 	USB_SEARCHDEV*	tail; /* tail device in linked list */
 
-	pthread_mutex_t mutex;
+	HANDLE mutex;
 	HANDLE term_event;
 	sem_t sem_term;
 	int started;

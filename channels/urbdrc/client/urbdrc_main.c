@@ -37,6 +37,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <winpr/thread.h>
 #include <winpr/string.h>
 #include <winpr/cmdline.h>
 
@@ -1149,7 +1150,7 @@ static UINT urbdrc_process_channel_notification(URBDRC_CHANNEL_CALLBACK* callbac
 
 		case RIMCALL_RELEASE:
 			WLog_VRB(TAG, "recv RIMCALL_RELEASE");
-			pthread_t thread;
+			HANDLE thread;
 
 			TRANSFER_DATA*  transfer_data;
 
@@ -1173,13 +1174,19 @@ static UINT urbdrc_process_channel_notification(URBDRC_CHANNEL_CALLBACK* callbac
 				transfer_data->pBuffer[i] = pBuffer[i];
 			}
 
-			if (pthread_create(&thread, 0, urbdrc_new_device_create, transfer_data) != 0)
+			thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)urbdrc_new_device_create, transfer_data, 0, NULL);
+			if (!thread)
 			{
 				free(transfer_data->pBuffer);
 				free(transfer_data);
 				return ERROR_INVALID_OPERATION;
 			}
-			pthread_detach(thread);
+			if (!CloseHandle(thread))
+			{
+				free(transfer_data->pBuffer);
+				free(transfer_data);
+				return ERROR_INVALID_OPERATION;
+			}
 			break;
 
 		default:
@@ -1237,7 +1244,7 @@ static UINT urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 
 		default:
 			WLog_VRB(TAG, "InterfaceId 0x%X Start matching devices list", InterfaceId);
-			pthread_t thread;
+			HANDLE thread;
 			TRANSFER_DATA* transfer_data;
 
 			transfer_data = (TRANSFER_DATA *)malloc(sizeof(TRANSFER_DATA));
@@ -1269,8 +1276,9 @@ static UINT urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 			func_lock_isoch_mutex(transfer_data);
 #endif
 
-			error = pthread_create(&thread, 0, urbdrc_process_udev_data_transfer, transfer_data);
-			if (error != 0)
+			thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)urbdrc_process_udev_data_transfer,
+						transfer_data, 0, NULL);
+			if (!thread)
 			{
 				WLog_ERR(TAG, "Create Data Transfer Thread got error = %d", error);
 				free(transfer_data->pBuffer);
@@ -1278,7 +1286,12 @@ static UINT urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 				return ERROR_INVALID_OPERATION;
 			}
 
-			pthread_detach(thread);
+			if (!CloseHandle(thread))
+			{
+				free(transfer_data->pBuffer);
+				free(transfer_data);
+				return ERROR_INVALID_OPERATION;
+			}
 			break;
 	}
 

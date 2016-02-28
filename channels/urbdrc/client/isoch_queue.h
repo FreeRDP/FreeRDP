@@ -23,10 +23,8 @@
 
 #include "urbdrc_types.h"
 
-
 typedef struct _ISOCH_CALLBACK_DATA ISOCH_CALLBACK_DATA;
 typedef struct _ISOCH_CALLBACK_QUEUE ISOCH_CALLBACK_QUEUE;
-
 
 struct _ISOCH_CALLBACK_DATA
 {
@@ -39,8 +37,6 @@ struct _ISOCH_CALLBACK_DATA
 	void * callback;
 };
 
-
-
 struct _ISOCH_CALLBACK_QUEUE
 {
 	int isoch_num;
@@ -48,7 +44,7 @@ struct _ISOCH_CALLBACK_QUEUE
 	ISOCH_CALLBACK_DATA* head; /* head point in linked list */
 	ISOCH_CALLBACK_DATA* tail; /* tail point in linked list */
 	
-	pthread_mutex_t isoch_loading;
+	HANDLE isoch_loading;
 	
 	/* Isochronous queue service */
 	void (*rewind) (ISOCH_CALLBACK_QUEUE * queue);
@@ -61,9 +57,6 @@ struct _ISOCH_CALLBACK_QUEUE
 	
 };
 
-
 ISOCH_CALLBACK_QUEUE* isoch_queue_new(void);
-
-	
 
 #endif /* __ISOCH_QUEUE_H */
