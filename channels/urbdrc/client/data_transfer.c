@@ -960,7 +960,7 @@ static int urb_isoch_transfer(URBDRC_CHANNEL_CALLBACK * callback, BYTE * data,
 #else
 	if (!pdev->isSigToEnd(pdev))
 		callback->channel->Write(callback->channel, out_size, out_data, NULL);
-	zfree(out_data);
+	free(out_data);
 #endif
 
 	if (nullBuffer)

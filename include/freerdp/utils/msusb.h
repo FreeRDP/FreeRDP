@@ -26,9 +26,6 @@
 
 #include <winpr/stream.h>
 
-/* a safer free helper */
-#define zfree(p) do { if (p != NULL) {free(p); p = NULL;} } while (0)
-
 /* Data maintenance helper only used in URBDRC */	
 #define data_read_BYTE(_p, _v) do { _v = \
 	*((BYTE *) (_p)); \
