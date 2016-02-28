@@ -1516,7 +1516,7 @@ static UINT urbdrc_process_addin_args(URBDRC_PLUGIN* urbdrc, ADDIN_ARGV* args)
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
 
-	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
+	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON| COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
 
 	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
 										urbdrc_args, flags, urbdrc, NULL, NULL);
