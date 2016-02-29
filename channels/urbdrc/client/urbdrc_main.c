@@ -831,7 +831,7 @@ static void* urbdrc_search_usb_device(void* arg)
 
 		if (status == WAIT_OBJECT_0)
 		{
-			sem_post(&searchman->sem_term);
+			ReleaseSemaphore(searchman->sem_term, 1, NULL);
 			goto out;
 		}
 
@@ -940,7 +940,7 @@ static void* urbdrc_search_usb_device(void* arg)
 						if (status == WAIT_OBJECT_0)
 						{
 							CloseHandle(mon_fd);
-							sem_post(&searchman->sem_term);
+							ReleaseSemaphore(searchman->sem_term, 1, NULL);
 							return 0;
 						}
 
@@ -1012,7 +1012,7 @@ static void* urbdrc_search_usb_device(void* arg)
 					if (status == WAIT_OBJECT_0)
 					{
 						CloseHandle(mon_fd);
-						sem_post(&searchman->sem_term);
+						ReleaseSemaphore(searchman->sem_term, 1, NULL);
 						return 0;
 					}
 
@@ -1035,7 +1035,7 @@ out:
 	CloseHandle(mon_fd);
 
 fail_create_monfd_event:
-	sem_post(&searchman->sem_term);
+	ReleaseSemaphore(searchman->sem_term, 1, NULL);
 
 	return 0;
 }
@@ -1424,10 +1424,7 @@ static UINT urbdrc_plugin_terminated(IWTSPlugin* pPlugin)
 		/* free searchman */
 		if (searchman->started)
 		{
-			struct timespec ts;
-			ts.tv_sec = time(NULL)+10;
-			ts.tv_nsec = 0;
-			sem_timedwait(&searchman->sem_term, &ts);
+			WaitForSingleObject(searchman->sem_term, 10000);
 		}
 
 		searchman->free(searchman);

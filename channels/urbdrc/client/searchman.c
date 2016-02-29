@@ -184,7 +184,7 @@ static void searchman_free(USB_SEARCHMAN* self)
 	}
 
 	/* free searchman */
-	sem_destroy(&self->sem_term);
+	CloseHandle(self->sem_term);
 	CloseHandle(self->term_event);
 	free(self);
 }
@@ -223,6 +223,7 @@ USB_SEARCHMAN* searchman_new(void * urbdrc, UINT32 UsbDevice)
 	if (!searchman->term_event)
 		goto out_error_event;
 	
+	searchman->sem_term = CreateSemaphoreA(NULL, 0, 0xFFFFFFFFL, NULL);
 	if (sem_init(&searchman->sem_term, 0, 0) < 0)
 		goto out_error_sem;
 

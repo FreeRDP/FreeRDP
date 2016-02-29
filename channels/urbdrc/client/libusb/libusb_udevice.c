@@ -1214,15 +1214,7 @@ static int libusb_udev_wait_action_completion(IUDEVICE* idev)
 	int error, sval;
 	UDEVICE* pdev = (UDEVICE*) idev;
 
-	while(1)
-	{
-		usleep(500000);
-
-		error = sem_getvalue(&pdev->sem_id, &sval);
-
-		if (sval == 0)
-			break;
-	}
+	WaitForSingleObject(pdev->sem_id, INFINITE);
 
 	return error;
 }
@@ -1230,13 +1222,13 @@ static int libusb_udev_wait_action_completion(IUDEVICE* idev)
 static void libusb_udev_push_action(IUDEVICE* idev)
 {
 	UDEVICE* pdev = (UDEVICE*) idev;
-	sem_post(&pdev->sem_id);
+	ReleaseSemaphore(pdev->sem_id, 1, NULL);
 }
 
 static void libusb_udev_complete_action(IUDEVICE* idev)
 {
 	UDEVICE* pdev = (UDEVICE*) idev;
-	sem_trywait(&pdev->sem_id);
+	WaitForSingleObject(pdev->sem_id, 0);
 }
 
 static int libusb_udev_wait_for_detach(IUDEVICE* idev)
@@ -1861,7 +1853,10 @@ static IUDEVICE* udev_init(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_number)
 	pdev->channel_id = 0xffff;
 	pdev->request_queue = request_queue_new();
 	pdev->isoch_queue = NULL;
-	sem_init(&pdev->sem_id, 0, 0);
+
+	pdev->sem_id = CreateSemaphoreA(NULL, 0, 0xFFFFFFFL, NULL);
+	if (!pdev->sem_id)
+		goto out;
 
 	/* set config of windows */
 	pdev->MsConfig = msusb_msconfig_new();
@@ -1878,8 +1873,11 @@ static IUDEVICE* udev_init(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_number)
 
 out:
 	//TODO: Resource cleanup
+	if (pdev->sem_id)
+		CloseHandle(pdev->sem_id);
 	if (pdev->mutex_isoch)
 		CloseHandle(pdev->mutex_isoch);
+
 	return NULL;
 }
 

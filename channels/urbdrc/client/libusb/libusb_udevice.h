@@ -73,7 +73,7 @@ struct _UDEVICE
 	void * isoch_queue;
 
 	HANDLE mutex_isoch;
-	sem_t   sem_id;
+	HANDLE sem_id;
 };
 typedef UDEVICE * PUDEVICE;
 

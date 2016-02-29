@@ -64,7 +64,7 @@ struct _UDEVMAN
 	int sem_timeout;
 
 	HANDLE devman_loading;
-	sem_t sem_urb_lock;
+	HANDLE sem_urb_lock;
 };
 typedef UDEVMAN* PUDEVMAN;
 
@@ -283,7 +283,8 @@ static int udevman_unregister_udevice(IUDEVMAN* idevman, int bus_number, int dev
 		libusb_close (dev->libusb_handle);
 		libusb_close (dev->hub_handle);
 		
-		sem_destroy(&dev->sem_id);
+		if (dev->sem_id)
+			CloseHandle(dev->sem_id);
 		/* free device info */
 		if (dev->devDescriptor)
 			free(dev->devDescriptor);
@@ -407,13 +408,13 @@ static void udevman_loading_unlock(IUDEVMAN* idevman)
 static void udevman_wait_urb(IUDEVMAN* idevman)
 {
 	UDEVMAN* udevman = (UDEVMAN*) idevman;
-	sem_wait(&udevman->sem_urb_lock);
+	WaitForSingleObject(udevman->sem_urb_lock, INFINITE);
 }
 
 static void udevman_push_urb(IUDEVMAN* idevman)
 {
 	UDEVMAN* udevman = (UDEVMAN*) idevman;
-	sem_post(&udevman->sem_urb_lock);
+	ReleaseSemaphore(udevman->sem_urb_lock, 1, NULL);
 }
 
 BASIC_STATE_FUNC_DEFINED(defUsbDevice, UINT32)
@@ -424,8 +425,10 @@ static void udevman_free(IUDEVMAN* idevman)
 {
 	UDEVMAN* udevman = (UDEVMAN*) idevman;
 
-	CloseHandle(udevman->devman_loading);
-	sem_destroy(&udevman->sem_urb_lock);
+	if (!udevman->devman_loading)
+		CloseHandle(udevman->devman_loading);
+	if (!udevman->sem_urb_lock)
+		CloseHandle(udevman->sem_urb_lock);
 
 	libusb_exit(NULL);
 
@@ -597,8 +600,9 @@ int freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS p
 		goto out;
 
 	udevman->flags = UDEVMAN_FLAG_ADD_BY_VID_PID;
-
-	sem_init(&udevman->sem_urb_lock, 0, MAX_URB_REQUSET_NUM);
+	udevman->sem_urb_lock = CreateSemaphoreA(NULL, 0, 0xFFFFFFFL, NULL);
+	if (!udevman->sem_urb_lock)
+		goto out;
 
 	/* load usb device service management */
 	udevman_load_interface(udevman);
@@ -614,6 +618,8 @@ int freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS p
 out:
 	if (udevman->devman_loading)
 		CloseHandle(udevman->devman_loading);
+	if (!udevman->sem_urb_lock)
+		CloseHandle(udevman->sem_urb_lock);
 	free(udevman);
 	return -1;
 }

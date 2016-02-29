@@ -46,7 +46,7 @@ struct _USB_SEARCHMAN
 
 	HANDLE mutex;
 	HANDLE term_event;
-	sem_t sem_term;
+	HANDLE sem_term;
 	int started;
 
 	/* for urbdrc channel call back */
