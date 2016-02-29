@@ -535,13 +535,20 @@ WINPR_CIPHER_CTX* winpr_Cipher_New(int cipher, int op, const BYTE* key, const BY
 	evp = winpr_openssl_get_evp_cipher(cipher);
 
 	if (!evp)
+	{
+		free (ctx);
 		return NULL;
+	}
 
 	operation = (op == WINPR_ENCRYPT) ? 1 : 0;
 	EVP_CIPHER_CTX_init(octx);
 
 	if (EVP_CipherInit_ex(octx, evp, NULL, key, iv, operation) != 1)
+	{
+		EVP_CIPHER_CTX_cleanup(octx);
+		free (octx);
 		return NULL;
+	}
 
 	EVP_CIPHER_CTX_set_padding(octx, 0);
 #elif defined(WITH_MBEDTLS)
@@ -549,18 +556,28 @@ WINPR_CIPHER_CTX* winpr_Cipher_New(int cipher, int op, const BYTE* key, const BY
 	cipher_info = mbedtls_cipher_info_from_type(cipher_type);
 
 	if (!cipher_info)
+	{
+		free (ctx);
 		return NULL;
+	}
 
 	operation = (op == WINPR_ENCRYPT) ? MBEDTLS_ENCRYPT : MBEDTLS_DECRYPT;
 	mbedtls_cipher_init((mbedtls_cipher_context_t*) ctx);
 
 	if (mbedtls_cipher_setup((mbedtls_cipher_context_t*) ctx, cipher_info) != 0)
+	{
+		free (ctx);
 		return NULL;
+	}
 
 	key_bitlen = mbedtls_cipher_get_key_bitlen((mbedtls_cipher_context_t*) ctx);
 
 	if (mbedtls_cipher_setkey((mbedtls_cipher_context_t*) ctx, key, key_bitlen, operation) != 0)
+	{
+		mbedtls_cipher_free((mbedtls_cipher_context_t*) ctx);
+		free (ctx);
 		return NULL;
+	}
 #endif
 	return ctx;
 }
