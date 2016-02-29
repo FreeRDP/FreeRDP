@@ -21,7 +21,7 @@ set(MODULE_PREFIX "TEST_LIBRARY_B")
 set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} TestLibraryB.c)
 
 if(MSVC)
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS})
 endif()
 
 add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})

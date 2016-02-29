@@ -500,9 +500,9 @@ WINPR_API PCCERT_CONTEXT CertFindCertificateInStore(HCERTSTORE hCertStore, DWORD
 
 WINPR_API PCCERT_CONTEXT CertEnumCertificatesInStore(HCERTSTORE hCertStore, PCCERT_CONTEXT pPrevCertContext);
 
-DWORD CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
+WINPR_API DWORD CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
 		DWORD dwFlags, void* pvTypePara, LPWSTR pszNameString, DWORD cchNameString);
-DWORD CertGetNameStringA(PCCERT_CONTEXT pCertContext, DWORD dwType,
+WINPR_API DWORD CertGetNameStringA(PCCERT_CONTEXT pCertContext, DWORD dwType,
 		DWORD dwFlags, void* pvTypePara, LPSTR pszNameString, DWORD cchNameString);
 
 #ifdef __cplusplus

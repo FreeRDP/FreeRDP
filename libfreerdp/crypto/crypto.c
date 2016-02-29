@@ -334,7 +334,7 @@ char* crypto_cert_subject_common_name(X509* xcert, int* length)
 	return (char*) common_name;
 }
 
-FREERDP_API void crypto_cert_subject_alt_name_free(int count, int *lengths,
+void crypto_cert_subject_alt_name_free(int count, int *lengths,
 						   char** alt_name)
 {
 	int i;

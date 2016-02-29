@@ -40,13 +40,13 @@ typedef struct uwac_touch_automata UwacTouchAutomata;
  *
  * @param automata
  */
-void UwacTouchAutomataInit(UwacTouchAutomata *automata);
+UWAC_API void UwacTouchAutomataInit(UwacTouchAutomata *automata);
 
 /**
  *
  * @param automata
  */
-void UwacTouchAutomataReset(UwacTouchAutomata *automata);
+UWAC_API void UwacTouchAutomataReset(UwacTouchAutomata *automata);
 
 
 /**
@@ -55,6 +55,6 @@ void UwacTouchAutomataReset(UwacTouchAutomata *automata);
  * @param event
  * @return
  */
-bool UwacTouchAutomataInjectEvent(UwacTouchAutomata *automata, UwacEvent *event);
+UWAC_API bool UwacTouchAutomataInjectEvent(UwacTouchAutomata *automata, UwacEvent *event);
 
 #endif /* __UWAC_TOOLS_H_ */
