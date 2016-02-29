@@ -442,10 +442,10 @@ int ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 
 void ntlm_rc4k(BYTE* key, int length, BYTE* plaintext, BYTE* ciphertext)
 {
-	WINPR_RC4_CTX* rc4;
-	if (winpr_RC4_New(&rc4, (void*) key, 16))
+	WINPR_RC4_CTX* rc4 = winpr_RC4_New(key, 16);
+	if (rc4)
 	{
-		winpr_RC4_Update(rc4, length, (void*) plaintext, (void*) ciphertext);
+		winpr_RC4_Update(rc4, length, plaintext, ciphertext);
 		winpr_RC4_Free(rc4);
 	}
 }
@@ -664,8 +664,8 @@ void ntlm_init_rc4_seal_states(NTLM_CONTEXT* context)
 		context->RecvSigningKey = context->ClientSigningKey;
 		context->SendSealingKey = context->ClientSealingKey;
 		context->RecvSealingKey = context->ServerSealingKey;
-		winpr_RC4_New(&context->SendRc4Seal, context->ServerSealingKey, 16);
-		winpr_RC4_New(&context->RecvRc4Seal, context->ClientSealingKey, 16);
+		context->SendRc4Seal = winpr_RC4_New(context->ServerSealingKey, 16);
+		context->RecvRc4Seal = winpr_RC4_New(context->ClientSealingKey, 16);
 	}
 	else
 	{
@@ -673,8 +673,8 @@ void ntlm_init_rc4_seal_states(NTLM_CONTEXT* context)
 		context->RecvSigningKey = context->ServerSigningKey;
 		context->SendSealingKey = context->ServerSealingKey;
 		context->RecvSealingKey = context->ClientSealingKey;
-		winpr_RC4_New(&context->SendRc4Seal, context->ClientSealingKey, 16);
-		winpr_RC4_New(&context->RecvRc4Seal, context->ServerSealingKey, 16);
+		context->SendRc4Seal = winpr_RC4_New(context->ClientSealingKey, 16);
+		context->RecvRc4Seal = winpr_RC4_New(context->ServerSealingKey, 16);
 	}
 }
 

@@ -43,16 +43,16 @@
  * RC4
  */
 
-BOOL winpr_RC4_New(WINPR_RC4_CTX** octx, const BYTE* key, size_t keylen)
+WINPR_RC4_CTX* winpr_RC4_New(const BYTE* key, size_t keylen)
 {
 	WINPR_RC4_CTX* ctx = NULL;
 
-	if (!octx || !key || (keylen == 0))
-		return FALSE;
+	if (!key || (keylen == 0))
+		return NULL;
 
 	ctx = calloc(1, sizeof(WINPR_RC4_CTX));
 	if (!ctx)
-		return FALSE;
+		return NULL;
 
 #if defined(WITH_OPENSSL)
 	RC4_set_key((RC4_KEY*) ctx, keylen, key);
@@ -60,9 +60,7 @@ BOOL winpr_RC4_New(WINPR_RC4_CTX** octx, const BYTE* key, size_t keylen)
 	mbedtls_arc4_init((mbedtls_arc4_context*) ctx);
 	mbedtls_arc4_setup((mbedtls_arc4_context*) ctx, key, keylen);
 #endif
-	*octx = ctx;
-
-	return TRUE;
+	return ctx;
 }
 
 BOOL winpr_RC4_Update(WINPR_RC4_CTX* ctx, size_t length, const BYTE* input, BYTE* output)
@@ -514,7 +512,7 @@ mbedtls_cipher_type_t winpr_mbedtls_get_cipher_type(int cipher)
 }
 #endif
 
-BOOL winpr_Cipher_New(WINPR_CIPHER_CTX** cctx, int cipher, int op, const BYTE* key, const BYTE* iv)
+WINPR_CIPHER_CTX* winpr_Cipher_New(int cipher, int op, const BYTE* key, const BYTE* iv)
 {
 	WINPR_CIPHER_CTX* ctx;
 #if defined(WITH_OPENSSL)
@@ -530,20 +528,20 @@ BOOL winpr_Cipher_New(WINPR_CIPHER_CTX** cctx, int cipher, int op, const BYTE* k
 
 	ctx = calloc(1, sizeof(WINPR_CIPHER_CTX));
 	if (!ctx)
-		return FALSE;
-	
+		return NULL;
+
 #if defined(WITH_OPENSSL)
 	octx = (EVP_CIPHER_CTX*)ctx;
 	evp = winpr_openssl_get_evp_cipher(cipher);
 
 	if (!evp)
-		return FALSE;
+		return NULL;
 
 	operation = (op == WINPR_ENCRYPT) ? 1 : 0;
 	EVP_CIPHER_CTX_init(octx);
 
 	if (EVP_CipherInit_ex(octx, evp, NULL, key, iv, operation) != 1)
-		return FALSE;
+		return NULL;
 
 	EVP_CIPHER_CTX_set_padding(octx, 0);
 #elif defined(WITH_MBEDTLS)
@@ -551,22 +549,20 @@ BOOL winpr_Cipher_New(WINPR_CIPHER_CTX** cctx, int cipher, int op, const BYTE* k
 	cipher_info = mbedtls_cipher_info_from_type(cipher_type);
 
 	if (!cipher_info)
-		return FALSE;
+		return NULL;
 
 	operation = (op == WINPR_ENCRYPT) ? MBEDTLS_ENCRYPT : MBEDTLS_DECRYPT;
 	mbedtls_cipher_init((mbedtls_cipher_context_t*) ctx);
 
 	if (mbedtls_cipher_setup((mbedtls_cipher_context_t*) ctx, cipher_info) != 0)
-		return FALSE;
+		return NULL;
 
 	key_bitlen = mbedtls_cipher_get_key_bitlen((mbedtls_cipher_context_t*) ctx);
 
 	if (mbedtls_cipher_setkey((mbedtls_cipher_context_t*) ctx, key, key_bitlen, operation) != 0)
-		return FALSE;
+		return NULL;
 #endif
-
-	*cctx = ctx;
-	return TRUE;
+	return ctx;
 }
 
 BOOL winpr_Cipher_Update(WINPR_CIPHER_CTX* ctx, const BYTE* input, size_t ilen, BYTE* output, size_t* olen)

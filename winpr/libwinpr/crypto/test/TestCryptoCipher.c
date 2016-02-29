@@ -21,7 +21,7 @@ static BOOL test_crypto_cipher_rc4()
 	if (!text)
 		goto out;
 
-	if (!winpr_RC4_New(&ctx, TEST_RC4_KEY, strlen((char*) TEST_RC4_KEY)))
+	if ((ctx = winpr_RC4_New(TEST_RC4_KEY, strlen((char*) TEST_RC4_KEY))) == NULL)
 		goto out;
 	rc = winpr_RC4_Update(ctx, len, (BYTE*) TEST_RC4_PLAINTEXT, text);
 	winpr_RC4_Free(ctx);

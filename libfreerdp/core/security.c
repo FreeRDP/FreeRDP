@@ -564,7 +564,7 @@ BOOL security_key_update(BYTE* key, BYTE* update_key, int key_len, rdpRdp* rdp)
 	if (!winpr_MD5_Final(&md5, key, WINPR_MD5_DIGEST_LENGTH))
 		return FALSE;
 
-	if (!winpr_RC4_New(&rc4, key, key_len))
+	if ((rc4 = winpr_RC4_New(key, key_len)) == NULL)
 		return FALSE;
 	rc = winpr_RC4_Update(rc4, key_len, key, key);
 	winpr_RC4_Free(rc4);
@@ -588,7 +588,8 @@ BOOL security_encrypt(BYTE* data, int length, rdpRdp* rdp)
 			return FALSE;
 
 		winpr_RC4_Free(rdp->rc4_encrypt_key);
-		if (!winpr_RC4_New(&rdp->rc4_encrypt_key, rdp->encrypt_key, rdp->rc4_key_len))
+		rdp->rc4_encrypt_key = winpr_RC4_New(rdp->encrypt_key, rdp->rc4_key_len);
+		if (!rdp->rc4_encrypt_key)
 			return FALSE;
 
 		rdp->encrypt_use_count = 0;
@@ -611,7 +612,9 @@ BOOL security_decrypt(BYTE* data, int length, rdpRdp* rdp)
 		if (!security_key_update(rdp->decrypt_key, rdp->decrypt_update_key, rdp->rc4_key_len, rdp))
 			return FALSE;
 		winpr_RC4_Free(rdp->rc4_decrypt_key);
-		if (!winpr_RC4_New(&rdp->rc4_decrypt_key, rdp->decrypt_key, rdp->rc4_key_len))
+		rdp->rc4_decrypt_key = winpr_RC4_New(rdp->decrypt_key,
+						     rdp->rc4_key_len);
+		if (!rdp->rc4_decrypt_key)
 			return FALSE;
 
 		rdp->decrypt_use_count = 0;

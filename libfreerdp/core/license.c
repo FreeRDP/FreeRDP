@@ -466,7 +466,8 @@ BOOL license_decrypt_platform_challenge(rdpLicense* license)
 		return FALSE;
 	license->PlatformChallenge->length = license->EncryptedPlatformChallenge->length;
 
-	if (!winpr_RC4_New(&rc4, license->LicensingEncryptionKey, LICENSING_ENCRYPTION_KEY_LENGTH))
+	if ((rc4 = winpr_RC4_New(license->LicensingEncryptionKey,
+				 LICENSING_ENCRYPTION_KEY_LENGTH)) == NULL)
 		return FALSE;
 	rc = winpr_RC4_Update(rc4, license->EncryptedPlatformChallenge->length,
 			   license->EncryptedPlatformChallenge->data,
@@ -1038,7 +1039,9 @@ BOOL license_send_platform_challenge_response_packet(rdpLicense* license)
 	if (!status)
 		return FALSE;
 
-	if (!winpr_RC4_New(&rc4, license->LicensingEncryptionKey, LICENSING_ENCRYPTION_KEY_LENGTH))
+	rc4 = winpr_RC4_New(license->LicensingEncryptionKey,
+			    LICENSING_ENCRYPTION_KEY_LENGTH);
+	if (!rc4)
 		return FALSE;
 
 	buffer = (BYTE*) malloc(HWID_LENGTH);
