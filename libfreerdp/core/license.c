@@ -329,10 +329,10 @@ void license_generate_randoms(rdpLicense* license)
 	ZeroMemory(license->ClientRandom, CLIENT_RANDOM_LENGTH); /* ClientRandom */
 	ZeroMemory(license->PremasterSecret, PREMASTER_SECRET_LENGTH); /* PremasterSecret */
 #ifndef LICENSE_NULL_CLIENT_RANDOM
-	crypto_nonce(license->ClientRandom, CLIENT_RANDOM_LENGTH); /* ClientRandom */
+	winpr_RAND(license->ClientRandom, CLIENT_RANDOM_LENGTH); /* ClientRandom */
 #endif
 #ifndef LICENSE_NULL_PREMASTER_SECRET
-	crypto_nonce(license->PremasterSecret, PREMASTER_SECRET_LENGTH); /* PremasterSecret */
+	winpr_RAND(license->PremasterSecret, PREMASTER_SECRET_LENGTH); /* PremasterSecret */
 #endif
 }
 
@@ -458,20 +458,23 @@ BOOL license_encrypt_premaster_secret(rdpLicense* license)
 
 BOOL license_decrypt_platform_challenge(rdpLicense* license)
 {
-	WINPR_RC4_CTX rc4;
+	BOOL rc;
+	WINPR_RC4_CTX* rc4;
 
 	license->PlatformChallenge->data = (BYTE *)malloc(license->EncryptedPlatformChallenge->length);
 	if (!license->PlatformChallenge->data)
 		return FALSE;
 	license->PlatformChallenge->length = license->EncryptedPlatformChallenge->length;
 
-	winpr_RC4_Init(&rc4, license->LicensingEncryptionKey, LICENSING_ENCRYPTION_KEY_LENGTH);
-	winpr_RC4_Update(&rc4, license->EncryptedPlatformChallenge->length,
+	if ((rc4 = winpr_RC4_New(license->LicensingEncryptionKey,
+				 LICENSING_ENCRYPTION_KEY_LENGTH)) == NULL)
+		return FALSE;
+	rc = winpr_RC4_Update(rc4, license->EncryptedPlatformChallenge->length,
 			   license->EncryptedPlatformChallenge->data,
 			   license->PlatformChallenge->data);
 
-	winpr_RC4_Final(&rc4);
-	return TRUE;
+	winpr_RC4_Free(rc4);
+	return rc;
 }
 
 /**
@@ -1015,7 +1018,7 @@ BOOL license_send_platform_challenge_response_packet(rdpLicense* license)
 	wStream* s;
 	int length;
 	BYTE* buffer;
-	WINPR_RC4_CTX rc4;
+	WINPR_RC4_CTX* rc4;
 	BYTE mac_data[16];
 	BOOL status;
 
@@ -1036,14 +1039,22 @@ BOOL license_send_platform_challenge_response_packet(rdpLicense* license)
 	if (!status)
 		return FALSE;
 
-	winpr_RC4_Init(&rc4, license->LicensingEncryptionKey, LICENSING_ENCRYPTION_KEY_LENGTH);
+	rc4 = winpr_RC4_New(license->LicensingEncryptionKey,
+			    LICENSING_ENCRYPTION_KEY_LENGTH);
+	if (!rc4)
+		return FALSE;
 
 	buffer = (BYTE*) malloc(HWID_LENGTH);
 	if (!buffer)
 		return FALSE;
 
-	winpr_RC4_Update(&rc4, HWID_LENGTH, license->HardwareId, buffer);
-	winpr_RC4_Final(&rc4);
+	status = winpr_RC4_Update(rc4, HWID_LENGTH, license->HardwareId, buffer);
+	winpr_RC4_Free(rc4);
+	if (!status)
+	{
+		free(buffer);
+		return FALSE;
+	}
 
 	license->EncryptedHardwareId->type = BB_DATA_BLOB;
 	license->EncryptedHardwareId->data = buffer;

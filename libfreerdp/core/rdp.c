@@ -1590,25 +1590,25 @@ void rdp_reset(rdpRdp* rdp)
 
 	if (rdp->rc4_decrypt_key)
 	{
-		winpr_RC4_Final(rdp->rc4_decrypt_key);
+		winpr_RC4_Free(rdp->rc4_decrypt_key);
 		rdp->rc4_decrypt_key = NULL;
 	}
 
 	if (rdp->rc4_encrypt_key)
 	{
-		winpr_RC4_Final(rdp->rc4_encrypt_key);
+		winpr_RC4_Free(rdp->rc4_encrypt_key);
 		rdp->rc4_encrypt_key = NULL;
 	}
 
 	if (rdp->fips_encrypt)
 	{
-		crypto_des3_free(rdp->fips_encrypt);
+		winpr_Cipher_Free(rdp->fips_encrypt);
 		rdp->fips_encrypt = NULL;
 	}
 
 	if (rdp->fips_decrypt)
 	{
-		crypto_des3_free(rdp->fips_decrypt);
+		winpr_Cipher_Free(rdp->fips_decrypt);
 		rdp->fips_decrypt = NULL;
 	}
 
@@ -1661,10 +1661,10 @@ void rdp_free(rdpRdp* rdp)
 {
 	if (rdp)
 	{
-		winpr_RC4_Final(rdp->rc4_decrypt_key);
-		winpr_RC4_Final(rdp->rc4_encrypt_key);
-		crypto_des3_free(rdp->fips_encrypt);
-		crypto_des3_free(rdp->fips_decrypt);
+		winpr_RC4_Free(rdp->rc4_decrypt_key);
+		winpr_RC4_Free(rdp->rc4_encrypt_key);
+		winpr_Cipher_Free(rdp->fips_encrypt);
+		winpr_Cipher_Free(rdp->fips_decrypt);
 		free(rdp->fips_hmac);
 		freerdp_settings_free(rdp->settings);
 		freerdp_settings_free(rdp->settingsCopy);

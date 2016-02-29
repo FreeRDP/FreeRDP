@@ -29,54 +29,6 @@
 
 #define TAG FREERDP_TAG("crypto")
 
-CryptoDes3 crypto_des3_encrypt_init(const BYTE* key, const BYTE* ivec)
-{
-	CryptoDes3 des3 = malloc(sizeof(*des3));
-	if (!des3)
-		return NULL;
-
-	EVP_CIPHER_CTX_init(&des3->des3_ctx);
-	EVP_EncryptInit_ex(&des3->des3_ctx, EVP_des_ede3_cbc(), NULL, key, ivec);
-	EVP_CIPHER_CTX_set_padding(&des3->des3_ctx, 0);
-	return des3;
-}
-
-CryptoDes3 crypto_des3_decrypt_init(const BYTE* key, const BYTE* ivec)
-{
-	CryptoDes3 des3 = malloc(sizeof(*des3));
-	if (!des3)
-		return NULL;
-
-	EVP_CIPHER_CTX_init(&des3->des3_ctx);
-	EVP_DecryptInit_ex(&des3->des3_ctx, EVP_des_ede3_cbc(), NULL, key, ivec);
-	EVP_CIPHER_CTX_set_padding(&des3->des3_ctx, 0);
-	return des3;
-}
-
-BOOL crypto_des3_encrypt(CryptoDes3 des3, UINT32 length, const BYTE* in_data, BYTE* out_data)
-{
-	int len;
-	return EVP_EncryptUpdate(&des3->des3_ctx, out_data, &len, in_data, length) == 1;
-}
-
-BOOL crypto_des3_decrypt(CryptoDes3 des3, UINT32 length, const BYTE* in_data, BYTE* out_data)
-{
-	int len;
-	int ret = EVP_DecryptUpdate(&des3->des3_ctx, out_data, &len, in_data, length);
-
-	if (length != len)
-		abort(); /* TODO */
-	return ret == 1;
-}
-
-void crypto_des3_free(CryptoDes3 des3)
-{
-	if (des3 == NULL)
-		return;
-	EVP_CIPHER_CTX_cleanup(&des3->des3_ctx);
-	free(des3);
-}
-
 CryptoCert crypto_cert_read(BYTE* data, UINT32 length)
 {
 	CryptoCert cert = malloc(sizeof(*cert));
@@ -238,11 +190,6 @@ void crypto_reverse(BYTE* data, int length)
 		data[i] = data[j];
 		data[j] = temp;
 	}
-}
-
-void crypto_nonce(BYTE* nonce, int size)
-{
-	winpr_RAND((void*) nonce, size);
 }
 
 char* crypto_cert_fingerprint(X509* xcert)

@@ -901,9 +901,9 @@ typedef union _WINPR_RC4_CTX WINPR_RC4_CTX;
 extern "C" {
 #endif
 
-WINPR_API BOOL winpr_RC4_Init(WINPR_RC4_CTX* ctx, const BYTE* key, size_t keylen);
+WINPR_API WINPR_RC4_CTX* winpr_RC4_New(const BYTE* key, size_t keylen);
 WINPR_API BOOL winpr_RC4_Update(WINPR_RC4_CTX* ctx, size_t length, const BYTE* input, BYTE* output);
-WINPR_API BOOL winpr_RC4_Final(WINPR_RC4_CTX* ctx);
+WINPR_API void winpr_RC4_Free(WINPR_RC4_CTX* ctx);
 
 #ifdef __cplusplus
 }
@@ -1016,9 +1016,10 @@ typedef union _WINPR_CIPHER_CTX WINPR_CIPHER_CTX;
 extern "C" {
 #endif
 
-WINPR_API BOOL winpr_Cipher_Init(WINPR_CIPHER_CTX* ctx, int cipher, int op, const BYTE* key, const BYTE* iv);
+WINPR_API WINPR_CIPHER_CTX* winpr_Cipher_New(int cipher, int op, const BYTE* key, const BYTE* iv);
 WINPR_API BOOL winpr_Cipher_Update(WINPR_CIPHER_CTX* ctx, const BYTE* input, size_t ilen, BYTE* output, size_t* olen);
 WINPR_API BOOL winpr_Cipher_Final(WINPR_CIPHER_CTX* ctx, BYTE* output, size_t* olen);
+WINPR_API void winpr_Cipher_Free(WINPR_CIPHER_CTX* ctx);
 
 #ifdef __cplusplus
 }

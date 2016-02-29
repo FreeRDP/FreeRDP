@@ -538,7 +538,8 @@ BOOL security_key_update(BYTE* key, BYTE* update_key, int key_len, rdpRdp* rdp)
 	BYTE sha1h[WINPR_SHA1_DIGEST_LENGTH];
 	WINPR_MD5_CTX md5;
 	WINPR_SHA1_CTX sha1;
-	WINPR_RC4_CTX rc4;
+	WINPR_RC4_CTX* rc4;
+	BOOL rc;
 	BYTE salt[] = { 0xD1, 0x26, 0x9E }; /* 40 bits: 3 bytes, 56 bits: 1 byte */
 
 	if (!winpr_SHA1_Init(&sha1))
@@ -563,11 +564,12 @@ BOOL security_key_update(BYTE* key, BYTE* update_key, int key_len, rdpRdp* rdp)
 	if (!winpr_MD5_Final(&md5, key, WINPR_MD5_DIGEST_LENGTH))
 		return FALSE;
 
-	if (!winpr_RC4_Init(&rc4, key, key_len))
+	if ((rc4 = winpr_RC4_New(key, key_len)) == NULL)
 		return FALSE;
-	if (!winpr_RC4_Update(&rc4, key_len, key, key))
-		return FALSE;
-	if (!winpr_RC4_Final(&rc4))
+	rc = winpr_RC4_Update(rc4, key_len, key, key);
+	winpr_RC4_Free(rc4);
+
+	if (!rc)
 		return FALSE;
 
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_40BIT)
@@ -585,9 +587,9 @@ BOOL security_encrypt(BYTE* data, int length, rdpRdp* rdp)
 		if (!security_key_update(rdp->encrypt_key, rdp->encrypt_update_key, rdp->rc4_key_len, rdp))
 			return FALSE;
 
-		if (!winpr_RC4_Final(rdp->rc4_encrypt_key))
-			return FALSE;
-		if (!winpr_RC4_Init(rdp->rc4_encrypt_key, rdp->encrypt_key, rdp->rc4_key_len))
+		winpr_RC4_Free(rdp->rc4_encrypt_key);
+		rdp->rc4_encrypt_key = winpr_RC4_New(rdp->encrypt_key, rdp->rc4_key_len);
+		if (!rdp->rc4_encrypt_key)
 			return FALSE;
 
 		rdp->encrypt_use_count = 0;
@@ -609,9 +611,10 @@ BOOL security_decrypt(BYTE* data, int length, rdpRdp* rdp)
 	{
 		if (!security_key_update(rdp->decrypt_key, rdp->decrypt_update_key, rdp->rc4_key_len, rdp))
 			return FALSE;
-		if (!winpr_RC4_Final(rdp->rc4_decrypt_key))
-			return FALSE;
-		if (!winpr_RC4_Init(rdp->rc4_decrypt_key, rdp->decrypt_key, rdp->rc4_key_len))
+		winpr_RC4_Free(rdp->rc4_decrypt_key);
+		rdp->rc4_decrypt_key = winpr_RC4_New(rdp->decrypt_key,
+						     rdp->rc4_key_len);
+		if (!rdp->rc4_decrypt_key)
 			return FALSE;
 
 		rdp->decrypt_use_count = 0;
@@ -646,7 +649,9 @@ BOOL security_hmac_signature(const BYTE* data, int length, BYTE* output, rdpRdp*
 
 BOOL security_fips_encrypt(BYTE* data, int length, rdpRdp* rdp)
 {
-	if (!crypto_des3_encrypt(rdp->fips_encrypt, length, data, data))
+	size_t olen;
+
+	if (!winpr_Cipher_Update(rdp->fips_encrypt, data, length, data, &olen))
 		return FALSE;
 	rdp->encrypt_use_count++;
 	return TRUE;
@@ -654,7 +659,11 @@ BOOL security_fips_encrypt(BYTE* data, int length, rdpRdp* rdp)
 
 BOOL security_fips_decrypt(BYTE* data, int length, rdpRdp* rdp)
 {
-	return crypto_des3_decrypt(rdp->fips_decrypt, length, data, data);
+	size_t olen;
+
+	if (!winpr_Cipher_Update(rdp->fips_decrypt, data, length, data, &olen))
+		return FALSE;
+	return TRUE;
 }
 
 BOOL security_fips_check_signature(const BYTE* data, int length, const BYTE* sig, rdpRdp* rdp)
