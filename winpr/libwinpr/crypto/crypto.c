@@ -186,7 +186,7 @@ BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 	pCipherText = (BYTE*) malloc(cbOut);
 
 	if (!pCipherText)
-	goto out;
+		goto out;
 
 	if ((enc = winpr_Cipher_New(WINPR_CIPHER_AES_256_CBC, WINPR_ENCRYPT,
 				    pMemBlock->key, pMemBlock->iv)) == NULL)
