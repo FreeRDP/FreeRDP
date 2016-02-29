@@ -38,13 +38,13 @@
 #include <freerdp/freerdp.h>
 #include "audin_main.h"
 
-#define MSG_SNDIN_VERSION		0x01
-#define MSG_SNDIN_FORMATS		0x02
-#define MSG_SNDIN_OPEN			0x03
-#define MSG_SNDIN_OPEN_REPLY	0x04
-#define MSG_SNDIN_DATA_INCOMING	0x05
-#define MSG_SNDIN_DATA			0x06
-#define MSG_SNDIN_FORMATCHANGE	0x07
+#define MSG_SNDIN_VERSION       0x01
+#define MSG_SNDIN_FORMATS       0x02
+#define MSG_SNDIN_OPEN          0x03
+#define MSG_SNDIN_OPEN_REPLY    0x04
+#define MSG_SNDIN_DATA_INCOMING 0x05
+#define MSG_SNDIN_DATA          0x06
+#define MSG_SNDIN_FORMATCHANGE  0x07
 
 typedef struct _AUDIN_LISTENER_CALLBACK AUDIN_LISTENER_CALLBACK;
 struct _AUDIN_LISTENER_CALLBACK
@@ -82,7 +82,7 @@ struct _AUDIN_PLUGIN
 
 	/* Parsed plugin data */
 	UINT16 fixed_format;
-	UINT16 fixed_channel;	
+	UINT16 fixed_channel;
 	UINT32 fixed_rate;
 	char* subsystem;
 	char* device_name;
@@ -860,7 +860,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 			goto out;
 		}
 	}
-	else 
+	else
 	{
 		while (entry && entry->subsystem && !audin->device)
 		{
