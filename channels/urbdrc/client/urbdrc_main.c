@@ -1541,6 +1541,8 @@ static UINT urbdrc_process_addin_args(URBDRC_PLUGIN* urbdrc, ADDIN_ARGV* args)
 
 #ifdef STATIC_CHANNELS
 #define DVCPluginEntry urbdrc_DVCPluginEntry
+#else
+#define DVCPluginEntry FREERDP_API DVCPluginEntry
 #endif
 
 /**

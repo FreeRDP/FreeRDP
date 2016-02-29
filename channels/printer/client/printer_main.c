@@ -451,6 +451,8 @@ error_out:
 
 #ifdef STATIC_CHANNELS
 #define DeviceServiceEntry	printer_DeviceServiceEntry
+#else
+#define DeviceServiceEntry	FREERDP_API DeviceServiceEntry
 #endif
 
 /**

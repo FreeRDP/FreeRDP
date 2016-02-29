@@ -859,6 +859,8 @@ out_error:
 
 #ifdef STATIC_CHANNELS
 #define DeviceServiceEntry	drive_DeviceServiceEntry
+#else
+#define DeviceServiceEntry	FREERDP_API DeviceServiceEntry
 #endif
 
 UINT sys_code_page = 0;

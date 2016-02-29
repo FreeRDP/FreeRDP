@@ -340,6 +340,8 @@ UINT disp_send_monitor_layout(DispClientContext* context, UINT32 NumMonitors, DI
 
 #ifdef STATIC_CHANNELS
 #define DVCPluginEntry		disp_DVCPluginEntry
+#else
+#define DVCPluginEntry		FREERDP_API DVCPluginEntry
 #endif
 
 /**
