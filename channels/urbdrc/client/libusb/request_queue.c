@@ -74,12 +74,10 @@ static TRANSFER_REQUEST* request_queue_register_request(REQUEST_QUEUE* queue, UI
 		queue->tail->next = (void*) request;
 		request->prev = (void*) queue->tail;
 		queue->tail = request;
-		request = NULL;
 	}
 
 	queue->request_num += 1;
-	if (!ReleaseMutex(queue->request_loading))
-		goto out;
+	ReleaseMutex(queue->request_loading);
 
 	return request;
 

@@ -47,14 +47,14 @@ static ISOCH_CALLBACK_DATA* isoch_queue_get_next(ISOCH_CALLBACK_QUEUE* queue)
 static ISOCH_CALLBACK_DATA* isoch_queue_register_data(ISOCH_CALLBACK_QUEUE* queue, void* callback, void* dev)
 {
 	ISOCH_CALLBACK_DATA* isoch;
-	
+
 	isoch = (ISOCH_CALLBACK_DATA*) calloc(1, sizeof(ISOCH_CALLBACK_DATA));
 	if (!isoch)
 		return NULL;
-	
+
 	isoch->device = dev;
 	isoch->callback = callback;
-	
+
 	if (WaitForSingleObject(queue->isoch_loading, INFINITE) != WAIT_OBJECT_0)
 		goto out;
 
@@ -70,12 +70,10 @@ static ISOCH_CALLBACK_DATA* isoch_queue_register_data(ISOCH_CALLBACK_QUEUE* queu
 		queue->tail->next = (void*)isoch;
 		isoch->prev = (void*)queue->tail;
 		queue->tail = isoch;
-		isoch = NULL;
 	}
 	queue->isoch_num += 1;
 
-	if (!ReleaseMutex(queue->isoch_loading))
-		goto out;
+	ReleaseMutex(queue->isoch_loading);
 
 	return isoch;
 

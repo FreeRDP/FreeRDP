@@ -192,7 +192,7 @@ static void searchman_free(USB_SEARCHMAN* self)
 USB_SEARCHMAN* searchman_new(void * urbdrc, UINT32 UsbDevice)
 {
 	USB_SEARCHMAN* searchman;
-	
+
 	searchman = (USB_SEARCHMAN*) calloc(1, sizeof(USB_SEARCHMAN));
 	if (!searchman)
 		return NULL;
@@ -206,7 +206,7 @@ USB_SEARCHMAN* searchman_new(void * urbdrc, UINT32 UsbDevice)
 		WLog_ERR(TAG, "searchman mutex initialization: searchman->mutex failed");
 		goto out_error_mutex;
 	}
-	
+
 	/* load service */
 	searchman->add = searchman_list_add;
 	searchman->remove = searchman_list_remove;
@@ -217,14 +217,14 @@ USB_SEARCHMAN* searchman_new(void * urbdrc, UINT32 UsbDevice)
 	searchman->start = searchman_start;
 	searchman->close = searchman_close;
 	searchman->free = searchman_free;
-	
+
 	searchman->started = 0;
 	searchman->term_event = CreateEvent(NULL, TRUE, FALSE, NULL);
 	if (!searchman->term_event)
 		goto out_error_event;
-	
+
 	searchman->sem_term = CreateSemaphoreA(NULL, 0, 0xFFFFFFFFL, NULL);
-	if (sem_init(&searchman->sem_term, 0, 0) < 0)
+	if (!searchman->sem_term)
 		goto out_error_sem;
 
 	return searchman;

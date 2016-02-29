@@ -1211,12 +1211,12 @@ static char* libusb_udev_get_path(IUDEVICE* idev)
 
 static int libusb_udev_wait_action_completion(IUDEVICE* idev)
 {
-	int error, sval;
 	UDEVICE* pdev = (UDEVICE*) idev;
 
-	WaitForSingleObject(pdev->sem_id, INFINITE);
+	if (WaitForSingleObject(pdev->sem_id, INFINITE) != WAIT_OBJECT_0)
+		return -1;
 
-	return error;
+	return 0;
 }
 
 static void libusb_udev_push_action(IUDEVICE* idev)
