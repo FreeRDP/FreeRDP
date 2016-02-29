@@ -5,6 +5,7 @@
  * Copyright 2012 Gerald Richter
  * Copyright 2015 Thincast Technologies GmbH
  * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+ * Copyright 2016 Armin Novak <armin.novak@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -175,10 +176,12 @@ static void printer_win_free_printer(rdpPrinter* printer)
 		win_printer->printjob->printjob.Close((rdpPrintJob*) win_printer->printjob);
 
 	free(printer->name);
+	free(printer->driver);
 	free(printer);
 }
 
-static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver, const char* name, const wchar_t* drivername, BOOL is_default)
+static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver,
+	const char* name, const WCHAR* drivername, BOOL is_default)
 {
 	rdpWinPrinter* win_printer;
 	wchar_t wname[256];
@@ -216,7 +219,10 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver, cons
 	}
 	GetPrinter(win_printer->hPrinter, 2, (LPBYTE) prninfo, needed, &needed);
 
-	win_printer->printer.driver = malloc(1000);
+	if (drivername)
+		win_printer->printer.driver = _wcsdup(drivername);
+	else
+		win_printer->printer.driver = _wcsdup(prninfo->pDriverName);
 	if (!win_printer->printer.driver)
 	{
 		GlobalFree(prninfo);
@@ -224,7 +230,6 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver, cons
 		free(win_printer);
 		return NULL;
 	}
-	wcstombs_s(&charsConverted, win_printer->printer.driver, 1000, prninfo->pDriverName, _TRUNCATE);
 
 	return (rdpPrinter*)win_printer;
 }
@@ -274,13 +279,24 @@ static rdpPrinter** printer_win_enum_printers(rdpPrinterDriver* driver)
 	return printers;
 }
 
-static rdpPrinter* printer_win_get_printer(rdpPrinterDriver* driver, const char* name)
+static rdpPrinter* printer_win_get_printer(rdpPrinterDriver* driver,
+	const char* name, const char* driverName)
 {
+	WCHAR* driverNameW = NULL;
 	rdpWinPrinterDriver* win_driver = (rdpWinPrinterDriver*)driver;
 	rdpPrinter *myPrinter = NULL;
 	
-	myPrinter = printer_win_new_printer(win_driver, name, L"", win_driver->id_sequence == 1 ? TRUE : FALSE);
-	
+	if (driverName)
+	{
+		ConvertToUnicode(CP_UTF8, 0, driverName, -1, &driverNameW, 0);
+		if (!driverNameW)
+			return NULL;
+	}
+
+	myPrinter = printer_win_new_printer(win_driver, name, driverNameW,
+	win_driver->id_sequence == 1 ? TRUE : FALSE);
+	free(driverNameW);
+
 	return myPrinter;
 }
 
