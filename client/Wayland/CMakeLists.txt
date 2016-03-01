@@ -19,6 +19,7 @@
 set(MODULE_NAME "wlfreerdp")
 set(MODULE_PREFIX "FREERDP_CLIENT_WAYLAND")
 
+include_directories(${WAYLAND_INCLUDE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/uwac/include)
 
 set(${MODULE_PREFIX}_SRCS
