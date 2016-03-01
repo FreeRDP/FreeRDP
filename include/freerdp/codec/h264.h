@@ -61,7 +61,7 @@ struct _H264_CONTEXT
 	FLOAT FrameRate;
 	UINT32 QP;
 	UINT32 NumberOfThreads;
-	
+
 	int iStride[3];
 	BYTE* pYUVData[3];
 
@@ -80,7 +80,7 @@ FREERDP_API int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSi
 		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nDstWidth, int nDstHeight,
 		RDPGFX_RECT16* regionRects, int numRegionRect);
 
-FREERDP_API int h264_context_reset(H264_CONTEXT* h264);
+FREERDP_API BOOL h264_context_reset(H264_CONTEXT* h264, UINT32 width, UINT32 height);
 
 FREERDP_API H264_CONTEXT* h264_context_new(BOOL Compressor);
 FREERDP_API void h264_context_free(H264_CONTEXT* h264);

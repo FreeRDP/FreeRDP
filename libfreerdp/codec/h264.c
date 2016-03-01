@@ -103,17 +103,17 @@ typedef interface IMFDXGIDeviceManager IMFDXGIDeviceManager;
 #define __IMFDXGIDeviceManager_INTERFACE_DEFINED__
 
 typedef struct IMFDXGIDeviceManagerVtbl
-{        
+{
 	HRESULT (STDMETHODCALLTYPE * QueryInterface)(IMFDXGIDeviceManager* This, REFIID riid, void** ppvObject);
 	ULONG   (STDMETHODCALLTYPE * AddRef)(IMFDXGIDeviceManager* This);
-        ULONG   (STDMETHODCALLTYPE * Release)(IMFDXGIDeviceManager* This);
-        HRESULT (STDMETHODCALLTYPE * CloseDeviceHandle)(IMFDXGIDeviceManager* This, HANDLE hDevice);
-        HRESULT (STDMETHODCALLTYPE * GetVideoService)(IMFDXGIDeviceManager* This, HANDLE hDevice, REFIID riid, void** ppService);
-        HRESULT (STDMETHODCALLTYPE * LockDevice)(IMFDXGIDeviceManager* This, HANDLE hDevice, REFIID riid, void** ppUnkDevice, BOOL fBlock);
-        HRESULT (STDMETHODCALLTYPE * OpenDeviceHandle)(IMFDXGIDeviceManager* This, HANDLE* phDevice);
-        HRESULT (STDMETHODCALLTYPE * ResetDevice)(IMFDXGIDeviceManager* This, IUnknown* pUnkDevice, UINT resetToken);
-        HRESULT (STDMETHODCALLTYPE * TestDevice)(IMFDXGIDeviceManager* This, HANDLE hDevice);
-        HRESULT (STDMETHODCALLTYPE * UnlockDevice)(IMFDXGIDeviceManager* This, HANDLE hDevice, BOOL fSaveState);
+	ULONG   (STDMETHODCALLTYPE * Release)(IMFDXGIDeviceManager* This);
+	HRESULT (STDMETHODCALLTYPE * CloseDeviceHandle)(IMFDXGIDeviceManager* This, HANDLE hDevice);
+	HRESULT (STDMETHODCALLTYPE * GetVideoService)(IMFDXGIDeviceManager* This, HANDLE hDevice, REFIID riid, void** ppService);
+	HRESULT (STDMETHODCALLTYPE * LockDevice)(IMFDXGIDeviceManager* This, HANDLE hDevice, REFIID riid, void** ppUnkDevice, BOOL fBlock);
+	HRESULT (STDMETHODCALLTYPE * OpenDeviceHandle)(IMFDXGIDeviceManager* This, HANDLE* phDevice);
+	HRESULT (STDMETHODCALLTYPE * ResetDevice)(IMFDXGIDeviceManager* This, IUnknown* pUnkDevice, UINT resetToken);
+	HRESULT (STDMETHODCALLTYPE * TestDevice)(IMFDXGIDeviceManager* This, HANDLE hDevice);
+	HRESULT (STDMETHODCALLTYPE * UnlockDevice)(IMFDXGIDeviceManager* This, HANDLE hDevice, BOOL fSaveState);
 }
 IMFDXGIDeviceManagerVtbl;
 
@@ -396,7 +396,7 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize)
 	}
 	else if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
 	{
-		
+
 	}
 	else if (FAILED(hr))
 	{
@@ -518,7 +518,7 @@ static void mf_uninit(H264_CONTEXT* h264)
 		h264->iStride[0] = h264->iStride[1] = h264->iStride[2] = 0;
 
 		sys->MFShutdown();
-		
+
 		CoUninitialize();
 
 		free(sys);
@@ -592,7 +592,7 @@ static BOOL mf_init(H264_CONTEXT* h264)
 
 		var.vt = VT_UI4;
 		var.ulVal = 1;
-		
+
 		hr = sys->codecApi->lpVtbl->SetValue(sys->codecApi, &CODECAPI_AVLowLatencyMode, &var);
 
 		if (FAILED(hr))
@@ -618,7 +618,7 @@ static BOOL mf_init(H264_CONTEXT* h264)
 		}
 
 		hr = sys->inputType->lpVtbl->SetGUID(sys->inputType, &MF_MT_SUBTYPE, &MFVideoFormat_H264);
-		
+
 		if (FAILED(hr))
 		{
 			WLog_ERR(TAG, "SetGUID(MF_MT_SUBTYPE) failure: 0x%04X", hr);
@@ -1407,7 +1407,7 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 
 		width = rect->right - rect->left;
 		height = rect->bottom - rect->top;
-		
+
 		pDstPoint = pDstData + rect->top * nDstStep + rect->left * 4;
 		pYUVPoint[0] = pYUVData[0] + rect->top * iStride[0] + rect->left;
 
@@ -1514,9 +1514,15 @@ BOOL h264_context_init(H264_CONTEXT* h264)
 	return FALSE;
 }
 
-int h264_context_reset(H264_CONTEXT* h264)
+BOOL h264_context_reset(H264_CONTEXT* h264, UINT32 width, UINT32 height)
 {
-	return 1;
+	if (!h264)
+		return FALSE;
+
+	h264->width = width;
+	h264->height = height;
+
+	return TRUE;
 }
 
 H264_CONTEXT* h264_context_new(BOOL Compressor)

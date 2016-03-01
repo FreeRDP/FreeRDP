@@ -59,9 +59,12 @@ BOOL test_peer_context_new(freerdp_peer* client, testPeerContext* context)
 	if (!(context->rfx_context = rfx_context_new(TRUE)))
 		goto fail_rfx_context;
 
+	if (!rfx_context_reset(context->rfx_context, SAMPLE_SERVER_DEFAULT_WIDTH,
+			       SAMPLE_SERVER_DEFAULT_HEIGHT))
+		goto fail_rfx_context;
+
 	context->rfx_context->mode = RLGR3;
-	context->rfx_context->width = SAMPLE_SERVER_DEFAULT_WIDTH;
-	context->rfx_context->height = SAMPLE_SERVER_DEFAULT_HEIGHT;
+
 	rfx_context_set_pixel_format(context->rfx_context, RDP_PIXEL_FORMAT_R8G8B8);
 
 	if (!(context->nsc_context = nsc_context_new()))
@@ -613,7 +616,6 @@ BOOL tf_peer_activate(freerdp_peer* client)
 {
 	testPeerContext* context = (testPeerContext*) client->context;
 
-	rfx_context_reset(context->rfx_context);
 	context->activated = TRUE;
 
 	//client->settings->CompressionLevel = PACKET_COMPR_TYPE_8K;
