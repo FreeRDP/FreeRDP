@@ -52,38 +52,32 @@ WINPR_API void Stream_Free(wStream* s, BOOL bFreeBuffer);
 
 static INLINE void Stream_Seek(wStream* s, size_t _offset)
 {
-	struct _wStream* _s = (struct _wStream*)s;
-	_s->pointer += (_offset);
+	s->pointer += (_offset);
 }
 
 static INLINE void Stream_Rewind(wStream* s, size_t _offset)
 {
-	struct _wStream* _s = (struct _wStream*)s;
-	_s->pointer -= (_offset);
+	s->pointer -= (_offset);
 }
 
-#define _stream_read_n8(_t, __s, _v, _p) do { \
-	struct _wStream* _s = (struct _wStream*)__s; \
+#define _stream_read_n8(_t, _s, _v, _p) do { \
 	_v = \
 	(_t)(*_s->pointer); \
 	if (_p) Stream_Seek(_s, sizeof(_t)); } while (0)
 
-#define _stream_read_n16_le(_t, __s, _v, _p) do { \
-	struct _wStream* _s = (struct _wStream*)__s; \
+#define _stream_read_n16_le(_t, _s, _v, _p) do { \
 	_v = \
 	(_t)(*_s->pointer) + \
 	(((_t)(*(_s->pointer + 1))) << 8); \
 	if (_p) Stream_Seek(_s, sizeof(_t)); } while (0)
 
-#define _stream_read_n16_be(_t, __s, _v, _p) do { \
-	struct _wStream* _s = (struct _wStream*)__s; \
+#define _stream_read_n16_be(_t, _s, _v, _p) do { \
 	_v = \
 	(((_t)(*_s->pointer)) << 8) + \
 	(_t)(*(_s->pointer + 1)); \
 	if (_p) Stream_Seek(_s, sizeof(_t)); } while (0)
 
-#define _stream_read_n32_le(_t, __s, _v, _p) do { \
-	struct _wStream* _s = (struct _wStream*)__s; \
+#define _stream_read_n32_le(_t, _s, _v, _p) do { \
 	_v = \
 	(_t)(*_s->pointer) + \
 	(((_t)(*(_s->pointer + 1))) << 8) + \
@@ -91,8 +85,7 @@ static INLINE void Stream_Rewind(wStream* s, size_t _offset)
 	(((_t)(*(_s->pointer + 3))) << 24); \
 	if (_p) Stream_Seek(_s, sizeof(_t)); } while (0)
 
-#define _stream_read_n32_be(_t, __s, _v, _p) do { \
-	struct _wStream* _s = (struct _wStream*)__s; \
+#define _stream_read_n32_be(_t, _s, _v, _p) do { \
 	_v = \
 	(((_t)(*(_s->pointer))) << 24) + \
 	(((_t)(*(_s->pointer + 1))) << 16) + \
@@ -100,8 +93,7 @@ static INLINE void Stream_Rewind(wStream* s, size_t _offset)
 	(((_t)(*(_s->pointer + 3)))); \
 	if (_p) Stream_Seek(_s, sizeof(_t)); } while (0)
 
-#define _stream_read_n64_le(_t, __s, _v, _p) do { \
-	struct _wStream* _s = (struct _wStream*)__s; \
+#define _stream_read_n64_le(_t, _s, _v, _p) do { \
 	_v = \
 	(_t)(*_s->pointer) + \
 	(((_t)(*(_s->pointer + 1))) << 8) + \
@@ -113,8 +105,7 @@ static INLINE void Stream_Rewind(wStream* s, size_t _offset)
 	(((_t)(*(_s->pointer + 7))) << 56); \
 	if (_p) Stream_Seek(_s, sizeof(_t)); } while (0)
 
-#define _stream_read_n64_be(_t, __s, _v, _p) do { \
-	struct _wStream* _s = (struct _wStream*)__s; \
+#define _stream_read_n64_be(_t, _s, _v, _p) do { \
 	_v = \
 	(((_t)(*(_s->pointer))) << 56) + \
 	(((_t)(*(_s->pointer + 1))) << 48) + \
@@ -147,9 +138,8 @@ static INLINE void Stream_Rewind(wStream* s, size_t _offset)
 #define Stream_Read_UINT64_BE(_s, _v) _stream_read_n64_be(UINT64, _s, _v, TRUE)
 #define Stream_Read_INT64_BE(_s, _v) _stream_read_n64_be(INT64, _s, _v, TRUE)
 
-static INLINE void Stream_Read(wStream* s, void* _b, size_t _n)
+static INLINE void Stream_Read(wStream* _s, void* _b, size_t _n)
 {
-	struct _wStream* _s = (struct _wStream*)s;
 	memcpy(_b, (_s->pointer), (_n));
 	Stream_Seek(_s, _n);
 }
@@ -175,51 +165,44 @@ static INLINE void Stream_Read(wStream* s, void* _b, size_t _n)
 #define Stream_Peek_UINT64_BE(_s, _v) _stream_read_n64_be(UINT64, _s, _v, FALSE)
 #define Stream_Peek_INT64_BE(_s, _v) _stream_read_n64_be(INT64, _s, _v, FALSE)
 
-static INLINE void Stream_Peek(wStream* s, void* _b, size_t _n)
+static INLINE void Stream_Peek(wStream* _s, void* _b, size_t _n)
 {
-	struct _wStream* _s = (struct _wStream*)s;
 	memcpy(_b, (_s->pointer), (_n));
 }
 
-static INLINE void Stream_Write_UINT8(wStream* s, UINT8 _v)
+static INLINE void Stream_Write_UINT8(wStream* _s, UINT8 _v)
 {
-	struct _wStream* _s = (struct _wStream*)s;
 	*_s->pointer++ = (UINT8)(_v);
 }
 
-static INLINE void Stream_Write_UINT16(wStream* s, UINT16 _v)
+static INLINE void Stream_Write_UINT16(wStream* _s, UINT16 _v)
 {
-	struct _wStream* _s = (struct _wStream*)s;
 	*_s->pointer++ = (_v) & 0xFF;
 	*_s->pointer++ = ((_v) >> 8) & 0xFF;
 }
 
-static INLINE void Stream_Write_UINT16_BE(wStream* s, UINT16 _v)
+static INLINE void Stream_Write_UINT16_BE(wStream* _s, UINT16 _v)
 {
-	struct _wStream* _s = (struct _wStream*)s;
 	*_s->pointer++ = ((_v) >> 8) & 0xFF;
 	*_s->pointer++ = (_v) & 0xFF;
 }
 
-static INLINE void Stream_Write_UINT32(wStream* s, UINT32 _v)
+static INLINE void Stream_Write_UINT32(wStream* _s, UINT32 _v)
 {
-	struct _wStream* _s = (struct _wStream*)s;
 	*_s->pointer++ = (_v) & 0xFF;
 	*_s->pointer++ = ((_v) >> 8) & 0xFF;
 	*_s->pointer++ = ((_v) >> 16) & 0xFF;
 	*_s->pointer++ = ((_v) >> 24) & 0xFF;
 }
 
-static INLINE void Stream_Write_UINT32_BE(wStream* s, UINT32 _v)
+static INLINE void Stream_Write_UINT32_BE(wStream* _s, UINT32 _v)
 {
-	struct _wStream* _s = (struct _wStream*)s;
 	Stream_Write_UINT16_BE(_s, ((_v) >> 16 & 0xFFFF));
 	Stream_Write_UINT16_BE(_s, ((_v) & 0xFFFF));
 }
 
-static INLINE void Stream_Write_UINT64(wStream* s, UINT64 _v)
+static INLINE void Stream_Write_UINT64(wStream* _s, UINT64 _v)
 {
-	struct _wStream* _s = (struct _wStream*)s;
 	*_s->pointer++ = (UINT64)(_v) & 0xFF;
 	*_s->pointer++ = ((UINT64)(_v) >> 8) & 0xFF;
 	*_s->pointer++ = ((UINT64)(_v) >> 16) & 0xFF;
@@ -229,9 +212,8 @@ static INLINE void Stream_Write_UINT64(wStream* s, UINT64 _v)
 	*_s->pointer++ = ((UINT64)(_v) >> 48) & 0xFF;
 	*_s->pointer++ = ((UINT64)(_v) >> 56) & 0xFF;
 }
-static INLINE void Stream_Write(wStream* s, const void* _b, size_t _n)
+static INLINE void Stream_Write(wStream* _s, const void* _b, size_t _n)
 {
-	struct _wStream* _s = (struct _wStream*)s;
 	memcpy(_s->pointer, (_b), (_n));
 	Stream_Seek(_s, _n);
 }
@@ -246,109 +228,91 @@ static INLINE void Stream_Write(wStream* s, const void* _b, size_t _n)
 #define Stream_Rewind_UINT32(_s)	Stream_Rewind(_s, 4)
 #define Stream_Rewind_UINT64(_s)	Stream_Rewind(_s, 8)
 
-static INLINE void Stream_Zero(wStream* s, size_t _n)
+static INLINE void Stream_Zero(wStream* _s, size_t _n)
 {
-	struct _wStream* _s = (struct _wStream*)s;
 	memset(_s->pointer, '\0', (_n));
 	Stream_Seek(_s, _n);
 }
 
-static INLINE void Stream_Fill(wStream* s, int _v, size_t _n)
+static INLINE void Stream_Fill(wStream* _s, int _v, size_t _n)
 {
-	struct _wStream* _s = (struct _wStream*)s;
 	memset(_s->pointer, _v, (_n));
 	Stream_Seek(_s, _n);
 }
 
-static INLINE void Stream_Copy(wStream* dst, wStream* src, size_t _n)
+static INLINE void Stream_Copy(wStream* _dst, wStream* _src, size_t _n)
 {
-	struct _wStream* _src = (struct _wStream*)src;
-	struct _wStream* _dst = (struct _wStream*)dst;
-
 	memcpy(_dst->pointer, _src->pointer, _n);
 	Stream_Seek(_dst, _n);
 	Stream_Seek(_src, _n);
 }
 
-static INLINE BYTE* Stream_Buffer(wStream* s)
+static INLINE BYTE* Stream_Buffer(wStream* _s)
 {
-	struct _wStream* _s = (struct _wStream*)s;
 	return _s->buffer;
 }
 
 #define Stream_GetBuffer(_s, _b)	_b = Stream_Buffer(_s)
-static INLINE void Stream_SetBuffer(wStream* s, BYTE* _b)
+static INLINE void Stream_SetBuffer(wStream* _s, BYTE* _b)
 {
-	struct _wStream* _s = (struct _wStream*)s;
 	_s->buffer = _b;
 }
 
-static INLINE BYTE* Stream_Pointer(wStream* s)
+static INLINE BYTE* Stream_Pointer(wStream* _s)
 {
-	struct _wStream* _s = (struct _wStream*)s;
 	return _s->pointer;
 }
 
 #define Stream_GetPointer(_s, _p)	_p = Stream_Pointer(_s)
-static INLINE void Stream_SetPointer(wStream* s, BYTE* _p)
+static INLINE void Stream_SetPointer(wStream* _s, BYTE* _p)
 {
-	struct _wStream* _s = (struct _wStream*)s;
 	_s->pointer = _p;
 }
 
-static INLINE size_t Stream_Length(wStream* s)
+static INLINE size_t Stream_Length(wStream* _s)
 {
-	struct _wStream* _s = (struct _wStream*)s;
 	return _s->length;
 }
 
 #define Stream_GetLength(_s, _l)	_l = Stream_Length(_s)
-static INLINE void Stream_SetLength(wStream* s, size_t _l)
+static INLINE void Stream_SetLength(wStream* _s, size_t _l)
 {
-	struct _wStream* _s = (struct _wStream*)s;
 	_s->length = _l;
 }
 
-static INLINE size_t Stream_Capacity(wStream* s)
+static INLINE size_t Stream_Capacity(wStream* _s)
 {
-	struct _wStream* _s = (struct _wStream*)s;
 	return _s->capacity;
 }
 
 #define Stream_GetCapacity(_s, _c)	_c = Stream_Capacity(_s);
-static INLINE void Stream_SetCapacity(wStream* s, size_t _c)
+static INLINE void Stream_SetCapacity(wStream* _s, size_t _c)
 {
-	struct _wStream* _s = (struct _wStream*)s;
 	_s->capacity = _c;
 }
 
-static INLINE size_t Stream_GetPosition(wStream* s)
+static INLINE size_t Stream_GetPosition(wStream* _s)
 {
-	struct _wStream* _s = (struct _wStream*)s;
 	return (_s->pointer - _s->buffer);
 }
 
-static INLINE void Stream_SetPosition(wStream* s, size_t _p)
+static INLINE void Stream_SetPosition(wStream* _s, size_t _p)
 {
-	struct _wStream* _s = (struct _wStream*)s;
 	_s->pointer = _s->buffer + (_p);
 }
 
-static INLINE void Stream_SealLength(wStream* s)
+static INLINE void Stream_SealLength(wStream* _s)
 {
-	struct _wStream* _s = (struct _wStream*)s;
 	_s->length = (_s->pointer - _s->buffer);
 }
 
-static INLINE size_t Stream_GetRemainingLength(wStream* s)
+static INLINE size_t Stream_GetRemainingLength(wStream* _s)
 {
-	struct _wStream* _s = (struct _wStream*)s;
 	return (_s->length - (_s->pointer - _s->buffer));
 }
 
-static INLINE void Stream_Clear(wStream* s)
+static INLINE void Stream_Clear(wStream* _s)
 {
-	struct _wStream* _s = (struct _wStream*)s;
 	memset(_s->buffer, 0, _s->capacity);
 }
 
