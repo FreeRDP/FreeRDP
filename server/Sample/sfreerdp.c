@@ -550,9 +550,12 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 	WLog_DBG(TAG, "");
 	WLog_DBG(TAG, "Client requested desktop: %dx%dx%d",
 			 client->settings->DesktopWidth, client->settings->DesktopHeight, client->settings->ColorDepth);
+
 #if (SAMPLE_SERVER_USE_CLIENT_RESOLUTION == 1)
-	context->rfx_context->width = client->settings->DesktopWidth;
-	context->rfx_context->height = client->settings->DesktopHeight;
+	if (!rfx_context_reset(context->rfx_context, client->settings->DesktopWidth,
+		       client->settings->DesktopHeight))
+		return FALSE;
+
 	WLog_DBG(TAG, "Using resolution requested by client.");
 #else
 	client->settings->DesktopWidth = context->rfx_context->width;
@@ -660,8 +663,10 @@ BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 			client->settings->DesktopWidth = SAMPLE_SERVER_DEFAULT_WIDTH;
 			client->settings->DesktopHeight = SAMPLE_SERVER_DEFAULT_HEIGHT;
 		}
-		context->rfx_context->width = client->settings->DesktopWidth;
-		context->rfx_context->height = client->settings->DesktopHeight;
+		if (!rfx_context_reset(context->rfx_context, client->settings->DesktopWidth,
+			       client->settings->DesktopHeight))
+			return FALSE;
+
 		update->DesktopResize(update->context);
 		context->activated = FALSE;
 	}
