@@ -407,7 +407,7 @@ wStream* http_request_write(HttpContext* context, HttpRequest* request)
 	free(lines);
 	Stream_Write(s, "\0", 1); /* append null terminator */
 	Stream_Rewind(s, 1); /* don't include null terminator in length */
-	Stream_Length(s) = Stream_GetPosition(s);
+	Stream_SetLength(s, Stream_GetPosition(s));
 	return s;
 
 out_free:

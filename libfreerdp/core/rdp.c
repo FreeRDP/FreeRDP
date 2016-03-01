@@ -1056,7 +1056,7 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, int length, UINT16 securityFlags)
 			return FALSE; /* TODO */
 		}
 
-		Stream_Length(s) -= pad;
+		Stream_SetLength(s, Stream_Length(s) - pad);
 		return TRUE;
 	}
 

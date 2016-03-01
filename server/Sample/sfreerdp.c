@@ -441,20 +441,16 @@ BOOL tf_peer_dump_rfx(freerdp_peer* client)
 
 	while (pcap_has_next_record(pcap_rfx))
 	{
-		BYTE* tmp = NULL;
 		if (!pcap_get_next_record_header(pcap_rfx, &record))
 			break;
 
-		tmp = realloc(Stream_Buffer(s), record.length);
-		if (!tmp)
+		if (!Stream_EnsureCapacity(s, record.length))
 			break;
 
-		Stream_Buffer(s) = tmp;
 		record.data = Stream_Buffer(s);
-		Stream_Capacity(s) = record.length;
 
 		pcap_get_next_record_content(pcap_rfx, &record);
-		Stream_Pointer(s) = Stream_Buffer(s) + Stream_Capacity(s);
+		Stream_SetPointer(s, Stream_Buffer(s) + Stream_Capacity(s));
 
 		if (test_dump_rfx_realtime && test_sleep_tsdiff(&prev_seconds, &prev_useconds, record.header.ts_sec, record.header.ts_usec) == FALSE)
 			break;

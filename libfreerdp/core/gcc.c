@@ -226,7 +226,7 @@ void gcc_write_conference_create_request(wStream* s, wStream* userData)
 	per_write_octet_string(s, h221_cs_key, 4, 4); /* h221NonStandard, client-to-server H.221 key, "Duca" */
 
 	/* userData::value (OCTET_STRING) */
-	per_write_octet_string(s, userData->buffer, Stream_GetPosition(userData), 0); /* array of client data blocks */
+	per_write_octet_string(s, Stream_Buffer(userData), Stream_GetPosition(userData), 0); /* array of client data blocks */
 }
 
 BOOL gcc_read_conference_create_response(wStream* s, rdpMcs* mcs)
@@ -320,7 +320,7 @@ void gcc_write_conference_create_response(wStream* s, wStream* userData)
 	per_write_octet_string(s, h221_sc_key, 4, 4); /* h221NonStandard, server-to-client H.221 key, "McDn" */
 
 	/* userData (OCTET_STRING) */
-	per_write_octet_string(s, userData->buffer, Stream_GetPosition(userData), 0); /* array of server data blocks */
+	per_write_octet_string(s, Stream_Buffer(userData), Stream_GetPosition(userData), 0); /* array of server data blocks */
 }
 
 BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, int length)
@@ -509,7 +509,7 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, int length)
 				break;
 		}
 		offset += blockLength;
-		Stream_Pointer(s) = holdp + blockLength;
+		Stream_SetPointer(s, holdp + blockLength);
 	}
 
 	return TRUE;
