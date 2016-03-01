@@ -261,6 +261,252 @@ static BOOL TestStream_Reading(void)
 	return result;
 }
 
+static BOOL TestStream_Write(void)
+{
+	BOOL rc = FALSE;
+	UINT8 u8;
+	UINT16 u16;
+	UINT32 u32;
+	UINT64 u64;
+	const BYTE data[] = "someteststreamdata";
+	wStream* s = Stream_New(NULL, 100);
+	if (!s)
+		goto out;
+	if (s->pointer != s->buffer)
+		goto out;
+
+	Stream_Write(s, data, sizeof(data));
+	if (memcmp(Stream_Buffer(s), data, sizeof(data)) == 0)
+		rc = TRUE;
+	if (s->pointer != s->buffer + sizeof(data))
+		goto out;
+
+	Stream_SetPosition(s, 0);
+	if (s->pointer != s->buffer)
+		goto out;
+	Stream_Write_UINT8(s, 42);
+	if (s->pointer != s->buffer + 1)
+		goto out;
+	Stream_SetPosition(s, 0);
+	if (s->pointer != s->buffer)
+		goto out;
+	Stream_Peek_UINT8(s, u8);
+	if (u8 != 42)
+		goto out;
+
+	Stream_Write_UINT16(s, 0x1234);
+	if (s->pointer != s->buffer + 2)
+		goto out;
+	Stream_SetPosition(s, 0);
+	if (s->pointer != s->buffer)
+		goto out;
+	Stream_Peek_UINT16(s, u16);
+	if (u16 != 0x1234)
+		goto out;
+
+	Stream_Write_UINT32(s, 0x12345678UL);
+	if (s->pointer != s->buffer + 4)
+		goto out;
+	Stream_SetPosition(s, 0);
+	if (s->pointer != s->buffer)
+		goto out;
+	Stream_Peek_UINT32(s, u32);
+	if (u32 != 0x12345678UL)
+		goto out;
+
+	Stream_Write_UINT64(s, 0x1234567890ABCDEFULL);
+	if (s->pointer != s->buffer + 8)
+		goto out;
+	Stream_SetPosition(s, 0);
+	if (s->pointer != s->buffer)
+		goto out;
+	Stream_Peek_UINT64(s, u64);
+	if (u64 != 0x1234567890ABCDEFULL)
+		goto out;
+out:
+	Stream_Free(s, TRUE);
+	return rc;
+}
+
+static BOOL TestStream_Seek(void)
+{
+	BOOL rc = FALSE;
+	wStream* s = Stream_New(NULL, 100);
+	if (!s)
+		goto out;
+
+	if (s->pointer != s->buffer)
+		goto out;
+
+	Stream_Seek(s, 5);
+	if (s->pointer != s->buffer + 5)
+		goto out;
+	Stream_Seek_UINT8(s);
+	if (s->pointer != s->buffer + 6)
+		goto out;
+
+	Stream_Seek_UINT16(s);
+	if (s->pointer != s->buffer + 8)
+		goto out;
+
+	Stream_Seek_UINT32(s);
+	if (s->pointer != s->buffer + 12)
+		goto out;
+	Stream_Seek_UINT64(s);
+	if (s->pointer != s->buffer + 20)
+		goto out;
+
+	rc = TRUE;
+out:
+	Stream_Free(s, TRUE);
+	return rc;
+}
+
+static BOOL TestStream_Rewind(void)
+{
+	BOOL rc = FALSE;
+	wStream* s = Stream_New(NULL, 100);
+	if (!s)
+		goto out;
+	if (s->pointer != s->buffer)
+		goto out;
+
+	Stream_Seek(s, 100);
+	if (s->pointer != s->buffer + 100)
+		goto out;
+
+	Stream_Rewind(s, 10);
+	if (s->pointer != s->buffer + 90)
+		goto out;
+	Stream_Rewind_UINT8(s);
+	if (s->pointer != s->buffer + 89)
+		goto out;
+	Stream_Rewind_UINT16(s);
+	if (s->pointer != s->buffer + 87)
+		goto out;
+
+	Stream_Rewind_UINT32(s);
+	if (s->pointer != s->buffer + 83)
+		goto out;
+	Stream_Rewind_UINT64(s);
+	if (s->pointer != s->buffer + 75)
+		goto out;
+
+	rc = TRUE;
+out:
+	Stream_Free(s, TRUE);
+	return rc;
+}
+
+static BOOL TestStream_Zero(void)
+{
+	UINT32 x;
+	BOOL rc = FALSE;
+	const BYTE data[] = "someteststreamdata";
+	wStream* s = Stream_New(NULL, sizeof(data));
+	if (!s)
+		goto out;
+
+	Stream_Write(s, data, sizeof(data));
+	if (memcmp(Stream_Buffer(s), data, sizeof(data)) != 0)
+		goto out;
+	Stream_SetPosition(s, 0);
+	if (s->pointer != s->buffer)
+		goto out;
+	Stream_Zero(s, 5);
+	if (s->pointer != s->buffer + 5)
+		goto out;
+	if (memcmp(Stream_Pointer(s), data+5, sizeof(data)-5) != 0)
+		goto out;
+	Stream_SetPosition(s, 0);
+	if (s->pointer != s->buffer)
+		goto out;
+	for (x=0; x<5; x++)
+	{
+		UINT8 val;
+		Stream_Read_UINT8(s, val);
+		if (val != 0)
+			goto out;
+	}
+
+	rc = TRUE;
+out:
+	Stream_Free(s, TRUE);
+	return rc;
+}
+
+static BOOL TestStream_Fill(void)
+{
+	BOOL rc = FALSE;
+	const BYTE fill[7] = "XXXXXXX";
+	const BYTE data[] = "someteststreamdata";
+	wStream* s = Stream_New(NULL, sizeof(data));
+	if (!s)
+		goto out;
+
+	Stream_Write(s, data, sizeof(data));
+	if (memcmp(Stream_Buffer(s), data, sizeof(data)) != 0)
+		goto out;
+	Stream_SetPosition(s, 0);
+	if (s->pointer != s->buffer)
+		goto out;
+	Stream_Fill(s, fill[0], sizeof(fill));
+	if (s->pointer != s->buffer + sizeof(fill))
+		goto out;
+	if (memcmp(Stream_Pointer(s), data+sizeof(fill), sizeof(data)-sizeof(fill)) != 0)
+		goto out;
+	Stream_SetPosition(s, 0);
+	if (s->pointer != s->buffer)
+		goto out;
+	if (memcmp(Stream_Pointer(s), fill, sizeof(fill)) != 0)
+		goto out;
+
+	rc = TRUE;
+out:
+	Stream_Free(s, TRUE);
+	return rc;
+}
+
+static BOOL TestStream_Copy(void)
+{
+	BOOL rc = FALSE;
+	const BYTE data[] = "someteststreamdata";
+	wStream* s = Stream_New(NULL, sizeof(data));
+	wStream* d = Stream_New(NULL, sizeof(data));
+	if (!s || !d)
+		goto out;
+	if (s->pointer != s->buffer)
+		goto out;
+
+	Stream_Write(s, data, sizeof(data));
+	if (memcmp(Stream_Buffer(s), data, sizeof(data)) != 0)
+		goto out;
+	if (s->pointer != s->buffer + sizeof(data))
+		goto out;
+	Stream_SetPosition(s, 0);
+	if (s->pointer != s->buffer)
+		goto out;
+
+	Stream_Copy(s, d, sizeof(data));
+	if (s->pointer != s->buffer + sizeof(data))
+		goto out;
+	if (d->pointer != d->buffer + sizeof(data))
+		goto out;
+	if (Stream_GetPosition(s) != Stream_GetPosition(d))
+		goto out;
+
+	if (memcmp(Stream_Buffer(s), data, sizeof(data)) != 0)
+		goto out;
+	if (memcmp(Stream_Buffer(d), data, sizeof(data)) != 0)
+		goto out;
+
+	rc = TRUE;
+out:
+	Stream_Free(s, TRUE);
+	Stream_Free(d, TRUE);
+	return rc;
+}
+
 
 int TestStream(int argc, char* argv[])
 {
@@ -278,15 +524,24 @@ int TestStream(int argc, char* argv[])
 
 	if (!TestStream_New())
 		return 5;
-	/**
-	 * FIXME: Add tests for
-	 * Stream_Write_*
-	 * Stream_Seek_*
-	 * Stream_Rewind_*
-	 * Stream_Zero
-	 * Stream_Fill
-	 * Stream_Copy
-	 */
+
+	if (!TestStream_Write())
+		return 6;
+
+	if (!TestStream_Seek())
+		return 7;
+
+	if (!TestStream_Rewind())
+		return 8;
+
+	if (!TestStream_Zero())
+		return 9;
+
+	if (!TestStream_Fill())
+		return 10;
+
+	if (!TestStream_Copy())
+		return 11;
 
 	return 0;
 }
