@@ -136,12 +136,11 @@ int shadow_encoder_init_rfx(rdpShadowEncoder* encoder)
 	if (!encoder->rfx)
 		encoder->rfx = rfx_context_new(TRUE);
 
-	if (!rfx_context_reset(encoder->rfx, encoder->width, encoder->height))
-		goto fail;
-
 	if (!encoder->rfx)
 		goto fail;
 
+	if (!rfx_context_reset(encoder->rfx, encoder->width, encoder->height))
+		goto fail;
 
 	encoder->rfx->mode = RLGR3;
 	encoder->rfx->width = encoder->width;
