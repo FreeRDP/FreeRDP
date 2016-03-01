@@ -690,6 +690,11 @@ UINT gdi_SurfaceCommand(RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cm
 			break;
 
 		case RDPGFX_CODECID_CAPROGRESSIVE_V2:
+			WLog_WARN(TAG, "SurfaceCommand %08X not implemented", cmd->codecId);
+			break;
+
+		default:
+			WLog_WARN(TAG, "Invalid SurfaceCommand %08X", cmd->codecId);
 			break;
 	}
 
