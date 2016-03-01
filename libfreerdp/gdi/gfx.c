@@ -68,7 +68,7 @@ UINT gdi_ResetGraphics(RdpgfxClientContext* context, RDPGFX_RESET_GRAPHICS_PDU* 
 		if (!freerdp_client_codecs_reset(surface->codecs, FREERDP_CODEC_ALL,
 						 surface->width, surface->height))
 		{
-			free (surface);
+			free (pSurfaceIds);
 			return ERROR_INTERNAL_ERROR;
 		}
 
