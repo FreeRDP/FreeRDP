@@ -192,7 +192,7 @@ static BOOL update_message_SurfaceCommand(rdpContext* context, wStream* s)
 	if (!wParam)
 		return FALSE;
 
-	Stream_Copy(wParam, s, Stream_GetRemainingLength(s));
+	Stream_Copy(s, wParam, Stream_GetRemainingLength(s));
 	Stream_SetPosition(wParam, 0);
 
 	return MessageQueue_Post(context->update->queue, (void*) context,

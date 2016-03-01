@@ -240,7 +240,7 @@ static INLINE void Stream_Fill(wStream* _s, int _v, size_t _n)
 	Stream_Seek(_s, _n);
 }
 
-static INLINE void Stream_Copy(wStream* _dst, wStream* _src, size_t _n)
+static INLINE void Stream_Copy(wStream* _src, wStream* _dst, size_t _n)
 {
 	memcpy(_dst->pointer, _src->pointer, _n);
 	Stream_Seek(_dst, _n);

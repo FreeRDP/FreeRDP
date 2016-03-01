@@ -45,7 +45,7 @@
  * Fast-Path packet format is defined in [MS-RDPBCGR] 2.2.9.1.2, which revises
  * server output packets from the first byte with the goal of improving
  * bandwidth.
- * 
+ *
  * Slow-Path packet always starts with TPKT header, which has the first
  * byte 0x03, while Fast-Path packet starts with 2 zero bits in the first
  * two less significant bits of the first byte.
@@ -282,7 +282,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 			if (!fastpath_recv_update_synchronize(fastpath, s))
 				WLog_ERR(TAG,  "fastpath_recv_update_synchronize failure but we continue");
 			else
-				IFCALL(update->Synchronize, context);			
+				IFCALL(update->Synchronize, context);
 			break;
 
 		case FASTPATH_UPDATETYPE_SURFCMDS:
@@ -463,7 +463,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 			Stream_SetPosition(fastpath->updateData, 0);
 
-			Stream_Copy(fastpath->updateData, cs, size);
+			Stream_Copy(cs, fastpath->updateData, size);
 		}
 		else if (fragmentation == FASTPATH_FRAGMENT_NEXT)
 		{
@@ -491,7 +491,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 				goto out_fail;
 			}
 
-			Stream_Copy(fastpath->updateData, cs, size);
+			Stream_Copy(cs, fastpath->updateData, size);
 		}
 		else if (fragmentation == FASTPATH_FRAGMENT_LAST)
 		{
@@ -519,7 +519,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 				goto out_fail;
 			}
 
-			Stream_Copy(fastpath->updateData, cs, size);
+			Stream_Copy(cs, fastpath->updateData, size);
 
 			Stream_SealLength(fastpath->updateData);
 			Stream_SetPosition(fastpath->updateData, 0);
@@ -546,7 +546,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 out_fail:
 
     if (cs != s) {
-        Stream_Release(cs);
+	Stream_Release(cs);
     }
 
     return -1;
