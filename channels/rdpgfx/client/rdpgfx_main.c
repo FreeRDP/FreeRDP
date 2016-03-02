@@ -58,7 +58,7 @@ static UINT rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 	RDPGFX_PLUGIN* gfx;
 	RDPGFX_HEADER header;
 	RDPGFX_CAPSET* capsSet;
-	RDPGFX_CAPSET capsSets[2];
+	RDPGFX_CAPSET capsSets[3];
 	RDPGFX_CAPS_ADVERTISE_PDU pdu;
 
 	gfx = (RDPGFX_PLUGIN*) callback->plugin;
@@ -90,7 +90,17 @@ static UINT rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 		capsSet->flags |= RDPGFX_CAPS_FLAG_SMALL_CACHE;
 
 	if (gfx->H264)
-		capsSet->flags |= RDPGFX_CAPS_FLAG_H264ENABLED;
+		capsSet->flags |= RDPGFX_CAPS_FLAG_AVC420ENABLED;
+
+	capsSet = &capsSets[pdu.capsSetCount++];
+	capsSet->version = RDPGFX_CAPVERSION_10;
+	capsSet->flags = 0;
+
+	if (gfx->SmallCache)
+		capsSet->flags |= RDPGFX_CAPS_FLAG_SMALL_CACHE;
+
+	if (!gfx->H264)
+		capsSet->flags |= RDPGFX_CAPS_FLAG_AVCDISABLED;
 
 	header.pduLength = RDPGFX_HEADER_SIZE + 2 + (pdu.capsSetCount * RDPGFX_CAPSET_SIZE);
 
@@ -742,7 +752,7 @@ UINT rdpgfx_recv_solid_fill_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 		if (error)
 			WLog_ERR(TAG, "context->SolidFill failed with error %lu", error);
 	}
-	
+
 	free(pdu.fillRects);
 
 	return error;

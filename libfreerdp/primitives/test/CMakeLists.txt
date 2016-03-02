@@ -14,6 +14,7 @@ set(${MODULE_PREFIX}_TESTS
 	TestPrimitivesSet.c
 	TestPrimitivesShift.c
 	TestPrimitivesSign.c
+	TestPrimitivesYUV.c
 	TestPrimitivesYCbCr.c
 	TestPrimitivesYCoCg.c)
 

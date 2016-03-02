@@ -189,6 +189,11 @@ typedef pstatus_t (*__YUV420CombineToYUV444_t)(
 		const BYTE* pAuxSrc[3], const UINT32 srcAuxStep[3],
 		BYTE* pDst[3], const UINT32 dstStep[3],
 		const prim_size_t* roi);
+typedef pstatus_t (*__YUV444SplitToYUV420_t)(
+		const BYTE* pSrc[3], const UINT32 srcStep[3],
+		BYTE* pMainDst[3], const UINT32 dstMainStep[3],
+		BYTE* pAuxDst[3], const UINT32 srcAuxStep[3],
+		const prim_size_t* roi);
 typedef pstatus_t (*__andC_32u_t)(
 	const UINT32 *pSrc,
 	UINT32 val,
@@ -239,6 +244,7 @@ typedef struct
 	__RGBToYUV420_8u_P3AC4R_t RGBToYUV420_8u_P3AC4R;
 	__RGBToYUV444_8u_P3AC4R_t RGBToYUV444_8u_P3AC4R;
 	__YUV420CombineToYUV444_t YUV420CombineToYUV444;
+	__YUV444SplitToYUV420_t YUV444SplitToYUV420;
 	__YUV420ToRGB_8u_P3AC4R_t YUV444ToRGB_8u_P3AC4R;
 } primitives_t;
 
