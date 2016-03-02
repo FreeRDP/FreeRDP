@@ -1716,6 +1716,7 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 
 	if (dtz!= NULL)
 	{
+		int status;
 		WLog_DBG(TAG, "tz: Bias=%d sn='%s' dln='%s'",
 			dtz->Bias, dtz->StandardName, dtz->DaylightName);
 
@@ -1723,10 +1724,23 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 		tz->StandardBias = dtz->Bias;
 		tz->DaylightBias = dtz->Bias;
 
-		ConvertToUnicode(CP_UTF8, 0, dtz->StandardName, sizeof(dtz->StandardName),
-				 (WCHAR**)&tz->StandardName, sizeof(tz->StandardName)/sizeof(WCHAR));
-		ConvertToUnicode(CP_UTF8, 0, dtz->DaylightName, sizeof(dtz->DaylightName),
-				 (WCHAR**)&tz->DaylightName, sizeof(tz->DaylightName)/sizeof(WCHAR));
+		ZeroMemory(tz->StandardName, sizeof(tz->StandardName));
+		ZeroMemory(tz->DaylightName, sizeof(tz->DaylightName));
+		status = MultiByteToWideChar(CP_UTF8, 0, dtz->StandardName, -1, tz->StandardName,
+									 sizeof(tz->StandardName)/sizeof(WCHAR)-1);
+		if (status < 1)
+		{
+			WLog_ERR(TAG, "StandardName convertion failed - using default");
+			goto out_error;
+		}
+
+		status = MultiByteToWideChar(CP_UTF8, 0, dtz->DaylightName, -1, tz->DaylightName,
+									 sizeof(tz->DaylightName)/sizeof(WCHAR)-1);
+		if (status < 1)
+		{
+			WLog_ERR(TAG, "DaylightName convertion failed - using default");
+			goto out_error;
+		}
 
 		if ((dtz->SupportsDST) && (dtz->RuleTableCount > 0))
 		{
@@ -1751,6 +1765,7 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 	{
 		/* could not detect timezone, fallback to using GMT */
 		WLog_DBG(TAG, "tz not found, using GMT.");
+out_error:
 		memcpy(tz->StandardName, L"GMT Standard Time", sizeof(tz->StandardName));
 		memcpy(tz->DaylightName, L"GMT Daylight Time", sizeof(tz->DaylightName));
 		return 0; /* TIME_ZONE_ID_UNKNOWN */
