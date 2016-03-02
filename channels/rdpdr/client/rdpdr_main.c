@@ -813,7 +813,7 @@ static void* drive_hotplug_thread_func(void* arg)
 	fd_set rfds;
 	struct timeval tv;
 	int rv;
-	UINT error;
+	UINT error = 0;
 	DWORD status;
 
 	rdpdr = (rdpdrPlugin*) arg;
