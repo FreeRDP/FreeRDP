@@ -538,8 +538,10 @@ BOOL WLog_ParseFilters(void)
 LONG WLog_GetFilterLogLevel(wLog* log)
 {
 	DWORD i, j;
-	LONG iLevel = -1;
 	BOOL match = FALSE;
+
+	if (log->FilterLevel >= 0)
+		return log->FilterLevel;
 
 	for (i = 0; i < g_FilterCount; i++)
 	{
@@ -569,9 +571,11 @@ LONG WLog_GetFilterLogLevel(wLog* log)
 	}
 
 	if (match)
-		iLevel = (int) g_Filters[i].Level;
+		log->FilterLevel = g_Filters[i].Level;
+	else
+		log->FilterLevel = log->Level;
 
-	return iLevel;
+	return log->FilterLevel;
 }
 
 BOOL WLog_ParseName(wLog* log, LPCSTR name)
@@ -636,6 +640,7 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 	log->Parent = rootLogger;
 	log->ChildrenCount = 0;
 	log->ChildrenSize = 16;
+	log->FilterLevel = -1;
 
 	if (!(log->Children = (wLog**) calloc(log->ChildrenSize, sizeof(wLog*))))
 		goto out_fail;
