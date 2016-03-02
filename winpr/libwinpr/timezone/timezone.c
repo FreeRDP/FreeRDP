@@ -1711,8 +1711,6 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 #else
 	tz->Bias = 0;
 #endif
-	WLog_DBG(TAG, "tzname[std]: %s, tzname[dst]: %s, timezone: %ld, Daylight: %d",
-			   tzname[0], tzname[1], timezone, daylight);
 
 	dtz = winpr_detect_windows_time_zone(tz->Bias);
 

@@ -150,7 +150,7 @@ BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 {
 	BYTE* pCipherText;
 	size_t cbOut, cbFinal;
-	WINPR_CIPHER_CTX* enc;
+	WINPR_CIPHER_CTX* enc = NULL;
 	BYTE randomKey[256];
 	WINPR_PROTECTED_MEMORY_BLOCK* pMemBlock;
 
