@@ -36,8 +36,8 @@ UINT rdpgfx_write_header(wStream* s, RDPGFX_HEADER* header);
 UINT rdpgfx_read_point16(wStream* s, RDPGFX_POINT16* pt16);
 UINT rdpgfx_write_point16(wStream* s, RDPGFX_POINT16* point16);
 
-UINT rdpgfx_read_rect16(wStream* s, RDPGFX_RECT16* rect16);
-UINT rdpgfx_write_rect16(wStream* s, RDPGFX_RECT16* rect16);
+UINT rdpgfx_read_rect16(wStream* s, RECTANGLE_16* rect16);
+UINT rdpgfx_write_rect16(wStream* s, RECTANGLE_16* rect16);
 
 UINT rdpgfx_read_color32(wStream* s, RDPGFX_COLOR32* color32);
 UINT rdpgfx_write_color32(wStream* s, RDPGFX_COLOR32* color32);

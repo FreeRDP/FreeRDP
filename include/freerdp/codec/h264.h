@@ -78,7 +78,7 @@ FREERDP_API int h264_compress(H264_CONTEXT* h264, BYTE* pSrcData, DWORD SrcForma
 
 FREERDP_API int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nDstWidth, int nDstHeight,
-		RDPGFX_RECT16* regionRects, int numRegionRect);
+		RECTANGLE_16* regionRects, int numRegionRect);
 
 FREERDP_API BOOL h264_context_reset(H264_CONTEXT* h264, UINT32 width, UINT32 height);
 

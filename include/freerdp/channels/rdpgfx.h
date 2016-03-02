@@ -37,15 +37,6 @@ struct _RDPGFX_POINT16
 };
 typedef struct _RDPGFX_POINT16 RDPGFX_POINT16;
 
-struct _RDPGFX_RECT16
-{
-	UINT16 left;
-	UINT16 top;
-	UINT16 right;
-	UINT16 bottom;
-};
-typedef struct _RDPGFX_RECT16 RDPGFX_RECT16;
-
 struct _RDPGFX_COLOR32
 {
 	BYTE B;
@@ -145,7 +136,7 @@ struct _RDPGFX_WIRE_TO_SURFACE_PDU_1
 	UINT16 surfaceId;
 	UINT16 codecId;
 	RDPGFX_PIXELFORMAT pixelFormat;
-	RDPGFX_RECT16 destRect;
+	RECTANGLE_16 destRect;
 	UINT32 bitmapDataLength;
 	BYTE* bitmapData;
 };
@@ -195,7 +186,7 @@ struct _RDPGFX_SOLID_FILL_PDU
 	UINT16 surfaceId;
 	RDPGFX_COLOR32 fillPixel;
 	UINT16 fillRectCount;
-	RDPGFX_RECT16* fillRects;
+	RECTANGLE_16* fillRects;
 };
 typedef struct _RDPGFX_SOLID_FILL_PDU RDPGFX_SOLID_FILL_PDU;
 
@@ -203,7 +194,7 @@ struct _RDPGFX_SURFACE_TO_SURFACE_PDU
 {
 	UINT16 surfaceIdSrc;
 	UINT16 surfaceIdDest;
-	RDPGFX_RECT16 rectSrc;
+	RECTANGLE_16 rectSrc;
 	UINT16 destPtsCount;
 	RDPGFX_POINT16* destPts;
 };
@@ -214,7 +205,7 @@ struct _RDPGFX_SURFACE_TO_CACHE_PDU
 	UINT16 surfaceId;
 	UINT64 cacheKey;
 	UINT16 cacheSlot;
-	RDPGFX_RECT16 rectSrc;
+	RECTANGLE_16 rectSrc;
 };
 typedef struct _RDPGFX_SURFACE_TO_CACHE_PDU RDPGFX_SURFACE_TO_CACHE_PDU;
 
@@ -349,7 +340,7 @@ typedef struct _RDPGFX_H264_QUANT_QUALITY RDPGFX_H264_QUANT_QUALITY;
 struct _RDPGFX_H264_METABLOCK
 {
 	UINT32 numRegionRects;
-	RDPGFX_RECT16* regionRects;
+	RECTANGLE_16* regionRects;
 	RDPGFX_H264_QUANT_QUALITY* quantQualityVals;
 };
 typedef struct _RDPGFX_H264_METABLOCK RDPGFX_H264_METABLOCK;

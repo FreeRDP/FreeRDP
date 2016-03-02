@@ -1353,7 +1353,7 @@ static H264_CONTEXT_SUBSYSTEM g_Subsystem_libavcodec =
 
 int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nDstWidth,
-		int nDstHeight, RDPGFX_RECT16* regionRects, int numRegionRects)
+		int nDstHeight, RECTANGLE_16* regionRects, int numRegionRects)
 {
 	int index;
 	int status;
@@ -1364,7 +1364,7 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 	BYTE** pYUVData;
 	int width, height;
 	BYTE* pYUVPoint[3];
-	RDPGFX_RECT16* rect;
+	RECTANGLE_16* rect;
 	primitives_t* prims = primitives_get();
 
 	if (!h264)

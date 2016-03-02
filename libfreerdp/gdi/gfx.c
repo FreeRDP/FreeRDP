@@ -807,7 +807,7 @@ UINT gdi_SolidFill(RdpgfxClientContext* context, RDPGFX_SOLID_FILL_PDU* solidFil
 	UINT32 color;
 	BYTE a, r, g, b;
 	int nWidth, nHeight;
-	RDPGFX_RECT16* rect;
+	RECTANGLE_16* rect;
 	gdiGfxSurface* surface;
 	RECTANGLE_16 invalidRect;
 	rdpGdi* gdi = (rdpGdi*) context->custom;
@@ -861,7 +861,7 @@ UINT gdi_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFAC
 	UINT16 index;
 	BOOL sameSurface;
 	int nWidth, nHeight;
-	RDPGFX_RECT16* rectSrc;
+	RECTANGLE_16* rectSrc;
 	RDPGFX_POINT16* destPt;
 	RECTANGLE_16 invalidRect;
 	gdiGfxSurface* surfaceSrc;
@@ -922,7 +922,7 @@ UINT gdi_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFAC
  */
 UINT gdi_SurfaceToCache(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_CACHE_PDU* surfaceToCache)
 {
-	RDPGFX_RECT16* rect;
+	RECTANGLE_16* rect;
 	gdiGfxSurface* surface;
 	gdiGfxCacheEntry* cacheEntry;
 	rdpGdi* gdi = (rdpGdi*) context->custom;

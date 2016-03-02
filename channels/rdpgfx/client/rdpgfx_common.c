@@ -161,7 +161,7 @@ UINT rdpgfx_write_point16(wStream* s, RDPGFX_POINT16* point16)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_read_rect16(wStream* s, RDPGFX_RECT16* rect16)
+UINT rdpgfx_read_rect16(wStream* s, RECTANGLE_16* rect16)
 {
 	if (Stream_GetRemainingLength(s) < 8)
 	{
@@ -182,7 +182,7 @@ UINT rdpgfx_read_rect16(wStream* s, RDPGFX_RECT16* rect16)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_write_rect16(wStream* s, RDPGFX_RECT16* rect16)
+UINT rdpgfx_write_rect16(wStream* s, RECTANGLE_16* rect16)
 {
 	Stream_Write_UINT16(s, rect16->left); /* left (2 bytes) */
 	Stream_Write_UINT16(s, rect16->top); /* top (2 bytes) */

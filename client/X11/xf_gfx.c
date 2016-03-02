@@ -833,7 +833,7 @@ UINT xf_SolidFill(RdpgfxClientContext* context, RDPGFX_SOLID_FILL_PDU* solidFill
 	UINT32 color;
 	BYTE a, r, g, b;
 	int nWidth, nHeight;
-	RDPGFX_RECT16* rect;
+	RECTANGLE_16* rect;
 	xfGfxSurface* surface;
 	RECTANGLE_16 invalidRect;
 	xfContext* xfc = (xfContext*) context->custom;
@@ -884,7 +884,7 @@ UINT xf_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFACE
 	UINT16 index;
 	BOOL sameSurface;
 	int nWidth, nHeight;
-	RDPGFX_RECT16* rectSrc;
+	RECTANGLE_16* rectSrc;
 	RDPGFX_POINT16* destPt;
 	RECTANGLE_16 invalidRect;
 	xfGfxSurface* surfaceSrc;
@@ -947,7 +947,7 @@ UINT xf_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFACE
 UINT xf_SurfaceToCache(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_CACHE_PDU* surfaceToCache)
 {
 	size_t size;
-	RDPGFX_RECT16* rect;
+	RECTANGLE_16* rect;
 	xfGfxSurface* surface;
 	xfGfxCacheEntry* cacheEntry;
 	xfContext* xfc = (xfContext*) context->custom;
