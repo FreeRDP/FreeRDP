@@ -40,6 +40,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/file.h>
+#include <sys/stat.h>
+#include <sys/time.h>
 
 static BOOL FileIsHandled(HANDLE handle)
 {
@@ -346,6 +348,113 @@ static BOOL FileUnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfByte
 	return TRUE;
 }
 
+static BOOL FileSetFileTime(HANDLE hFile, const FILETIME *lpCreationTime,
+		const FILETIME *lpLastAccessTime, const FILETIME *lpLastWriteTime)
+{
+	int rc;
+#if defined(__APPLE__) || defined(ANDROID)
+	struct stat buf;
+#endif
+#ifdef ANDROID
+	struct timeval timevals[2];
+#else
+	struct timespec times[2]; /* last access, last modification */
+#endif
+	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
+	const UINT64 EPOCH_DIFF = 11644473600ULL;
+
+	if (!hFile)
+		return FALSE;
+
+#if defined(__APPLE__) || defined(ANDROID)
+	rc = fstat(fileno(pFile->fp), &buf);
+	if (rc < 0)
+		return FALSE;
+#endif
+	if (!lpLastAccessTime)
+	{
+#ifdef __APPLE__
+#if !defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE)
+		times[0] = buf.st_atimespec;
+#else
+		times[0].tv_sec = buf.st_atime;
+		times[0].tv_nsec = buf.st_atimensec;
+#endif
+#elif ANDROID
+		timevals[0].tv_sec = buf.st_mtime;
+		timevals[0].tv_usec = buf.st_mtimensec / 1000UL;
+#else
+		times[0].tv_sec = UTIME_OMIT;
+		times[0].tv_nsec = UTIME_OMIT;
+#endif
+	}
+	else
+	{
+		UINT64 tmp = ((UINT64)lpLastAccessTime->dwHighDateTime) << 32
+				| lpLastAccessTime->dwLowDateTime;
+		tmp -= EPOCH_DIFF;
+		tmp /= 10ULL;
+
+#ifdef ANDROID
+		tmp /= 10000ULL;
+
+		timevals[0].tv_sec = tmp / 10000ULL;
+		timevals[0].tv_usec = tmp % 10000ULL;
+#else
+		times[0].tv_sec = tmp / 10000000ULL;
+		times[0].tv_nsec = tmp % 10000000ULL;
+#endif
+	}
+	if (!lpLastWriteTime)
+	{
+#ifdef __APPLE__
+#if !defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE)
+		times[1] = buf.st_mtimespec;
+#else
+		times[1].tv_sec = buf.st_mtime;
+		times[1].tv_nsec = buf.st_mtimensec;
+#endif
+#elif ANDROID
+		timevals[1].tv_sec = buf.st_mtime;
+		timevals[1].tv_usec = buf.st_mtimensec / 1000UL;
+#else
+		times[1].tv_sec = UTIME_OMIT;
+		times[1].tv_nsec = UTIME_OMIT;
+#endif
+	}
+	else
+	{
+		UINT64 tmp = ((UINT64)lpLastWriteTime->dwHighDateTime) << 32
+				| lpLastWriteTime->dwLowDateTime;
+		tmp -= EPOCH_DIFF;
+		tmp /= 10ULL;
+
+#ifdef ANDROID
+		tmp /= 10000ULL;
+
+		timevals[1].tv_sec = tmp / 10000ULL;
+		timevals[1].tv_usec = tmp % 10000ULL;
+#else
+		times[1].tv_sec = tmp / 10000000ULL;
+		times[1].tv_nsec = tmp % 10000000ULL;
+#endif
+	}
+
+	// TODO: Creation time can not be handled!
+#ifdef __APPLE__
+	rc = futimes(fileno(pFile->fp), times);
+#elif ANDROID
+	rc = utimes(pFile->lpFileName, timevals);
+#else
+	rc = futimens(fileno(pFile->fp), times);
+#endif
+	if (rc != 0)
+		return FALSE;
+
+	return TRUE;
+
+}
+
 static HANDLE_OPS fileOps = {
 	FileIsHandled,
 	FileCloseHandle,
@@ -365,7 +474,8 @@ static HANDLE_OPS fileOps = {
 	NULL, /* FileLockFile */
 	FileLockFileEx,
 	FileUnlockFile,
-	FileUnlockFileEx
+	FileUnlockFileEx,
+	FileSetFileTime
 };
 
 static HANDLE_OPS shmOps = {
@@ -387,8 +497,8 @@ static HANDLE_OPS shmOps = {
 	NULL, /* FileLockFile */
 	NULL, /* FileLockFileEx */
 	NULL, /* FileUnlockFile */
-	NULL /* FileUnlockFileEx */
-
+	NULL, /* FileUnlockFileEx */
+	NULL  /* FileSetFileTime */
 };
 
 

@@ -623,6 +623,27 @@ BOOL UnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfBytesToUnlockLo
 	return FALSE;
 }
 
+BOOL WINAPI SetFileTime(HANDLE hFile, const FILETIME *lpCreationTime,
+		const FILETIME *lpLastAccessTime, const FILETIME *lpLastWriteTime)
+{
+	ULONG Type;
+	WINPR_HANDLE *handle;
+
+	if (hFile == INVALID_HANDLE_VALUE)
+		return FALSE;
+
+	if (!winpr_Handle_GetInfo(hFile, &Type, &handle))
+		return FALSE;
+
+	handle = (WINPR_HANDLE *)hFile;
+	if (handle->ops->SetFileTime)
+		return handle->ops->SetFileTime(handle, lpCreationTime,
+			lpLastAccessTime, lpLastWriteTime);
+
+	WLog_ERR(TAG, "%s operation not implemented", __FUNCTION__);
+	return FALSE;
+}
+
 struct _WIN32_FILE_SEARCH
 {
 	DIR* pDir;
