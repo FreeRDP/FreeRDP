@@ -477,6 +477,8 @@ static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* a
 
 #ifdef STATIC_CHANNELS
 #define freerdp_rdpsnd_client_subsystem_entry	oss_freerdp_rdpsnd_client_subsystem_entry
+#else
+#define freerdp_rdpsnd_client_subsystem_entry	FREERDP_API freerdp_rdpsnd_client_subsystem_entry
 #endif
 
 /**

@@ -485,6 +485,8 @@ static UINT audin_oss_parse_addin_args(AudinOSSDevice *device, ADDIN_ARGV *args)
 
 #ifdef STATIC_CHANNELS
 #define freerdp_audin_client_subsystem_entry	oss_freerdp_audin_client_subsystem_entry
+#else
+#define freerdp_audin_client_subsystem_entry	FREERDP_API freerdp_audin_client_subsystem_entry
 #endif
 
 /**

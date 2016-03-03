@@ -407,6 +407,9 @@ static int rdpsnd_opensles_parse_addin_args(rdpsndDevicePlugin* device,
 #ifdef STATIC_CHANNELS
 #define freerdp_rdpsnd_client_subsystem_entry \
 	opensles_freerdp_rdpsnd_client_subsystem_entry
+#else
+#define freerdp_rdpsnd_client_subsystem_entry \
+	FREERDP_API freerdp_rdpsnd_client_subsystem_entry
 #endif
 
 /**
