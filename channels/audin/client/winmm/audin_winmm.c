@@ -393,6 +393,8 @@ static UINT audin_winmm_parse_addin_args(AudinWinmmDevice* device, ADDIN_ARGV* a
 
 #ifdef STATIC_CHANNELS
 #define freerdp_audin_client_subsystem_entry	winmm_freerdp_audin_client_subsystem_entry
+#else
+#define freerdp_audin_client_subsystem_entry	FREERDP_API freerdp_audin_client_subsystem_entry
 #endif
 
 /**

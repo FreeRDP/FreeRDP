@@ -579,6 +579,8 @@ static void urbdrc_udevman_parse_addin_args(UDEVMAN* udevman, ADDIN_ARGV* args)
 
 #ifdef STATIC_CHANNELS
 #define freerdp_urbdrc_client_subsystem_entry	libusb_freerdp_urbdrc_client_subsystem_entry
+#else
+#define freerdp_urbdrc_client_subsystem_entry	FREERDP_API freerdp_urbdrc_client_subsystem_entry
 #endif
 
 int freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS pEntryPoints)

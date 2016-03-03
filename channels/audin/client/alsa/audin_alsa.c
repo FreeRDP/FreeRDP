@@ -522,6 +522,8 @@ static UINT audin_alsa_parse_addin_args(AudinALSADevice* device, ADDIN_ARGV* arg
 
 #ifdef STATIC_CHANNELS
 #define freerdp_audin_client_subsystem_entry	alsa_freerdp_audin_client_subsystem_entry
+#else
+#define freerdp_audin_client_subsystem_entry	FREERDP_API freerdp_audin_client_subsystem_entry
 #endif
 
 /**
