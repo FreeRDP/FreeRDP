@@ -665,23 +665,32 @@ BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s, logon_info *info)
 	UINT32 cbDomain;
 	UINT32 cbUserName;
 
+	ZeroMemory(info, sizeof(*info));
+
 	if (Stream_GetRemainingLength(s) < 576)
 		return FALSE;
 
 	Stream_Read_UINT32(s, cbDomain); /* cbDomain (4 bytes) */
 	if (cbDomain > 52)
 		return FALSE;
-	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), cbDomain, &info->domain, 0, NULL, FALSE);
-	if (!info->domain)
-		return FALSE;
+	if (cbDomain)
+	{
+		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), cbDomain, &info->domain, 0, NULL, FALSE);
+		if (!info->domain)
+			return FALSE;
+	}
+
 	Stream_Seek(s, 52); /* domain (52 bytes) */
 
 	Stream_Read_UINT32(s, cbUserName); /* cbUserName (4 bytes) */
 	if (cbUserName > 512)
 		goto error_username;
-	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), cbUserName, &info->username, 0, NULL, FALSE);
-	if (!info->username)
-		goto error_username;
+	if (cbUserName)
+	{
+		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), cbUserName, &info->username, 0, NULL, FALSE);
+		if (!info->username)
+			goto error_username;
+	}
 	Stream_Seek(s, 512); /* userName (512 bytes) */
 
 	Stream_Read_UINT32(s, info->sessionId); /* SessionId (4 bytes) */
@@ -703,6 +712,8 @@ BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info *info)
 	UINT32 cbDomain;
 	UINT32 cbUserName;
 
+	ZeroMemory(info, sizeof(*info));
+
 	if (Stream_GetRemainingLength(s) < 576)
 		return FALSE;
 
@@ -716,19 +727,25 @@ BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info *info)
 	if (Stream_GetRemainingLength(s) < (cbDomain + cbUserName))
 		return FALSE;
 
-	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), cbDomain, &info->domain, 0, NULL, FALSE);
-	if (!info->domain)
-		return FALSE;
-	Stream_Seek(s, cbDomain); /* domain */
-
-	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), cbUserName, &info->username, 0, NULL, FALSE);
-	if (!info->username)
+	if (cbDomain)
 	{
-		free(info->domain);
-		info->domain = NULL;
-		return FALSE;
+		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), cbDomain, &info->domain, 0, NULL, FALSE);
+		if (!info->domain)
+			return FALSE;
+		Stream_Seek(s, cbDomain); /* domain */
 	}
-	Stream_Seek(s, cbUserName); /* userName */
+
+	if (cbUserName)
+	{
+		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), cbUserName, &info->username, 0, NULL, FALSE);
+		if (!info->username)
+		{
+			free(info->domain);
+			info->domain = NULL;
+			return FALSE;
+		}
+		Stream_Seek(s, cbUserName); /* userName */
+	}
 
 	WLog_DBG(TAG, "LogonInfoV2: SessionId: 0x%04X", info->sessionId);
 
