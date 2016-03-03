@@ -82,7 +82,7 @@ struct _AUDIN_PLUGIN
 
 	/* Parsed plugin data */
 	UINT16 fixed_format;
-	UINT16 fixed_channel;	
+	UINT16 fixed_channel;
 	UINT32 fixed_rate;
 	char* subsystem;
 	char* device_name;
@@ -92,6 +92,8 @@ struct _AUDIN_PLUGIN
 
 	rdpContext* rdpcontext;
 };
+
+static BOOL audin_process_addin_args(AUDIN_PLUGIN* audin, ADDIN_ARGV* args);
 
 /**
  * Function description
@@ -639,7 +641,11 @@ static UINT audin_load_device_plugin(IWTSPlugin* pPlugin, const char* name, ADDI
 {
 	PFREERDP_AUDIN_DEVICE_ENTRY entry;
 	FREERDP_AUDIN_DEVICE_ENTRY_POINTS entryPoints;
+	AUDIN_PLUGIN* audin = (AUDIN_PLUGIN*)pPlugin;
 	UINT error;
+
+	if (!audin_process_addin_args(audin, args))
+		return CHANNEL_RC_INITIALIZATION_ERROR;
 
 	entry = (PFREERDP_AUDIN_DEVICE_ENTRY) freerdp_load_channel_addin_entry("audin", (LPSTR) name, NULL, 0);
 
@@ -660,6 +666,7 @@ static UINT audin_load_device_plugin(IWTSPlugin* pPlugin, const char* name, ADDI
 		return error;
 	}
 
+	WLog_INFO(TAG, "Loaded %s backend for audin", name);
 	return CHANNEL_RC_OK;
 }
 
@@ -707,18 +714,19 @@ static COMMAND_LINE_ARGUMENT_A audin_args[] =
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
-static BOOL audin_process_addin_args(IWTSPlugin* pPlugin, ADDIN_ARGV* args)
+BOOL audin_process_addin_args(AUDIN_PLUGIN* audin, ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
-	AUDIN_PLUGIN* audin = (AUDIN_PLUGIN*) pPlugin;
 	UINT error;
 
-	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
+	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
 
 	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
 			audin_args, flags, audin, NULL, NULL);
+	if (status != 0)
+		return FALSE;
 
 	arg = audin_args;
 
@@ -788,7 +796,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		char *device;
 	};
 
-	UINT error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_INITIALIZATION_ERROR;
 	ADDIN_ARGV* args;
 	AUDIN_PLUGIN* audin;
 	struct SubsystemEntry entries[] =
@@ -839,31 +847,53 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	args = pEntryPoints->GetPluginData(pEntryPoints);
 	audin->rdpcontext = ((freerdp*)((rdpSettings*) pEntryPoints->GetRdpSettings(pEntryPoints))->instance)->context;
 
-	while (entry && entry->subsystem && !audin->device)
+	if (args)
 	{
-		if ((error = audin_set_subsystem(audin, entry->subsystem)))
-		{
-			WLog_ERR(TAG, "audin_set_subsystem for %s failed with error %lu!",
-				 entry->subsystem, error);
-		}
-		else if ((error = audin_set_device_name(audin, entry->device)))
-		{
-			WLog_ERR(TAG, "audin_set_device_name for %s failed with error %lu!",
-				 entry->subsystem, error);
-		}
-		else if ((error = audin_load_device_plugin((IWTSPlugin*) audin, audin->subsystem, args)))
+		if (!audin_process_addin_args(audin, args))
+			goto out;
+	}
+
+	if (audin->subsystem)
+	{
+		if ((error = audin_load_device_plugin((IWTSPlugin*) audin, audin->subsystem, args)))
 		{
 			WLog_ERR(TAG, "audin_load_device_plugin %s failed with error %lu!",
-				 entry->subsystem, error);
+					 audin->subsystem, error);
+			goto out;
 		}
+	}
+	else
+	{
+		while (entry && entry->subsystem && !audin->device)
+		{
+			if ((error = audin_set_subsystem(audin, entry->subsystem)))
+			{
+				WLog_ERR(TAG, "audin_set_subsystem for %s failed with error %lu!",
+					 entry->subsystem, error);
+			}
+			else if ((error = audin_set_device_name(audin, entry->device)))
+			{
+				WLog_ERR(TAG, "audin_set_device_name for %s failed with error %lu!",
+					 entry->subsystem, error);
+			}
+			else if ((error = audin_load_device_plugin((IWTSPlugin*) audin, audin->subsystem, args)))
+			{
+				WLog_ERR(TAG, "audin_load_device_plugin %s failed with error %lu!",
+					 entry->subsystem, error);
+			}
 
-		entry++;
+			entry++;
+		}
 	}
 
 	if (audin->device == NULL)
-	{
 		WLog_ERR(TAG, "no sound device.");
-	}
+
+	error = CHANNEL_RC_OK;
+
+out:
+	if (error != CHANNEL_RC_OK)
+		audin_plugin_terminated((IWTSPlugin*)audin);
 
 	return error;
 }
