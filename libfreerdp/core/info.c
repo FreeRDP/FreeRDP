@@ -821,21 +821,24 @@ BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s, logon_info *info)
 	/* cbDomain is the size of the Unicode character data (including the mandatory
 	 * null terminator) in bytes present in the fixed-length (52 bytes) Domain field
 	 */
-	if ((cbDomain % 2) || cbDomain < 2 || cbDomain > 52)
+	if (cbDomain)
 	{
-		WLog_ERR(TAG, "protocol error: invalid cbDomain value: %lu", cbDomain);
-		goto fail;
-	}
-	wstr = (WCHAR*) Stream_Pointer(s);
-	if (wstr[cbDomain / 2 - 1])
-	{
-		WLog_ERR(TAG, "protocol error: Domain must be null terminated");
-		goto fail;
-	}
-	if (ConvertFromUnicode(CP_UTF8, 0, wstr, -1, &info->domain, 0, NULL, FALSE) < 1)
-	{
-		WLog_ERR(TAG, "failed to convert the Domain string");
-		goto fail;
+		if ((cbDomain % 2) || cbDomain > 52)
+		{
+			WLog_ERR(TAG, "protocol error: invalid cbDomain value: %lu", cbDomain);
+			goto fail;
+		}
+		wstr = (WCHAR*) Stream_Pointer(s);
+		if (wstr[cbDomain / 2 - 1])
+		{
+			WLog_ERR(TAG, "protocol error: Domain must be null terminated");
+			goto fail;
+		}
+		if (ConvertFromUnicode(CP_UTF8, 0, wstr, -1, &info->domain, 0, NULL, FALSE) < 1)
+		{
+			WLog_ERR(TAG, "failed to convert the Domain string");
+			goto fail;
+		}
 	}
 	Stream_Seek(s, 52); /* domain (52 bytes) */
 
@@ -845,22 +848,24 @@ BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s, logon_info *info)
 	/* cbUserName is the size of the Unicode character data (including the mandatory
 	 * null terminator) in bytes present in the fixed-length (512 bytes) UserName field.
 	 */
-
-	if ((cbUserName % 2) || cbUserName < 2 || cbUserName > 512)
+	if (cbUserName)
 	{
-		WLog_ERR(TAG, "protocol error: invalid cbUserName value: %lu", cbUserName);
-		goto fail;
-	}
-	wstr = (WCHAR*) Stream_Pointer(s);
-	if (wstr[cbUserName / 2 - 1])
-	{
-		WLog_ERR(TAG, "protocol error: UserName must be null terminated");
-		goto fail;
-	}
-	if (ConvertFromUnicode(CP_UTF8, 0, wstr, -1, &info->username, 0, NULL, FALSE) < 1)
-	{
-		WLog_ERR(TAG, "failed to convert the UserName string");
-		goto fail;
+		if ((cbUserName % 2) || cbUserName > 512)
+		{
+			WLog_ERR(TAG, "protocol error: invalid cbUserName value: %lu", cbUserName);
+			goto fail;
+		}
+		wstr = (WCHAR*) Stream_Pointer(s);
+		if (wstr[cbUserName / 2 - 1])
+		{
+			WLog_ERR(TAG, "protocol error: UserName must be null terminated");
+			goto fail;
+		}
+		if (ConvertFromUnicode(CP_UTF8, 0, wstr, -1, &info->username, 0, NULL, FALSE) < 1)
+		{
+			WLog_ERR(TAG, "failed to convert the UserName string");
+			goto fail;
+		}
 	}
 	Stream_Seek(s, 512); /* userName (512 bytes) */
 
@@ -906,34 +911,31 @@ BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info *info)
 	 *       that the maximum value is 52 bytes, according to the fixed size of the
 	 *       Domain field in the Logon Info Version 1 (TS_LOGON_INFO) structure.
 	 */
-
-	if ((cbDomain % 2) || cbDomain < 2 || cbDomain > 52)
+	if (cbDomain)
 	{
-		WLog_ERR(TAG, "protocol error: invalid cbDomain value: %lu", cbDomain);
-		goto fail;
+		if ((cbDomain % 2) || cbDomain > 52)
+		{
+			WLog_ERR(TAG, "protocol error: invalid cbDomain value: %lu", cbDomain);
+			goto fail;
+		}
+		if (Stream_GetRemainingLength(s) < (size_t) cbDomain)
+		{
+			WLog_ERR(TAG, "insufficient remaining stream length");
+			goto fail;
+		}
+		wstr = (WCHAR*) Stream_Pointer(s);
+		if (wstr[cbDomain / 2 - 1])
+		{
+			WLog_ERR(TAG, "protocol error: Domain field must be null terminated");
+			goto fail;
+		}
+		if (ConvertFromUnicode(CP_UTF8, 0, wstr, -1, &info->domain, 0, NULL, FALSE) < 1)
+		{
+			WLog_ERR(TAG, "failed to convert the Domain string");
+			goto fail;
+		}
 	}
-
-	if (Stream_GetRemainingLength(s) < (size_t) cbDomain)
-	{
-		WLog_ERR(TAG, "insufficient remaining stream length");
-		goto fail;
-	}
-
-	wstr = (WCHAR*) Stream_Pointer(s);
-	if (wstr[cbDomain / 2 - 1])
-	{
-		WLog_ERR(TAG, "protocol error: Domain field must be null terminated");
-		goto fail;
-	}
-
-	if (ConvertFromUnicode(CP_UTF8, 0, wstr, -1, &info->domain, 0, NULL, FALSE) < 1)
-	{
-		WLog_ERR(TAG, "failed to convert the Domain string");
-		goto fail;
-	}
-
 	Stream_Seek(s, cbDomain); /* domain */
-
 
 	/* cbUserName is the size in bytes of the Unicode character data in the UserName field.
 	 * The size of the mandatory null terminator is include in this value.
@@ -941,32 +943,30 @@ BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info *info)
 	 *       that the maximum value is 512 bytes, according to the fixed size of the
 	 *       Username field in the Logon Info Version 1 (TS_LOGON_INFO) structure.
 	 */
-
-	if ((cbUserName % 2) || cbUserName < 2 || cbUserName > 512)
+	if (cbUserName)
 	{
-		WLog_ERR(TAG, "protocol error: invalid cbUserName value: %lu", cbUserName);
-		goto fail;
+		if ((cbUserName % 2) || cbUserName < 2 || cbUserName > 512)
+		{
+			WLog_ERR(TAG, "protocol error: invalid cbUserName value: %lu", cbUserName);
+			goto fail;
+		}
+		if (Stream_GetRemainingLength(s) < (size_t) cbUserName)
+		{
+			WLog_ERR(TAG, "insufficient remaining stream length");
+			goto fail;
+		}
+		wstr = (WCHAR*) Stream_Pointer(s);
+		if (wstr[cbUserName / 2 - 1])
+		{
+			WLog_ERR(TAG, "protocol error: UserName field must be null terminated");
+			goto fail;
+		}
+		if (ConvertFromUnicode(CP_UTF8, 0, wstr, -1, &info->username, 0, NULL, FALSE) < 1)
+		{
+			WLog_ERR(TAG, "failed to convert the Domain string");
+			goto fail;
+		}
 	}
-
-	if (Stream_GetRemainingLength(s) < (size_t) cbUserName)
-	{
-		WLog_ERR(TAG, "insufficient remaining stream length");
-		goto fail;
-	}
-
-	wstr = (WCHAR*) Stream_Pointer(s);
-	if (wstr[cbUserName / 2 - 1])
-	{
-		WLog_ERR(TAG, "protocol error: UserName field must be null terminated");
-		goto fail;
-	}
-
-	if (ConvertFromUnicode(CP_UTF8, 0, wstr, -1, &info->username, 0, NULL, FALSE) < 1)
-	{
-		WLog_ERR(TAG, "failed to convert the Domain string");
-		goto fail;
-	}
-
 	Stream_Seek(s, cbUserName); /* userName */
 
 	WLog_DBG(TAG, "LogonInfoV2: SessionId: 0x%04X UserName: [%s] Domain: [%s]",
