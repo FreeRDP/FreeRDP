@@ -296,18 +296,14 @@ BOOL WLog_PrintMessage(wLog* log, wLogMessage* message, ...)
 
 DWORD WLog_GetLogLevel(wLog* log)
 {
-	LONG level = WLog_GetFilterLogLevel(log);
+	if (log->FilterLevel < 0)
+		log->FilterLevel = WLog_GetFilterLogLevel(log);
 
-	if (level >= 0)
-		return level;
+	if ((log->FilterLevel >= 0) && (log->FilterLevel != WLOG_LEVEL_INHERIT))
+		return log->FilterLevel;
 	else if (log->Level == WLOG_LEVEL_INHERIT)
-	{
-		return WLog_GetLogLevel(log->Parent);
-	}
-	else
-	{
-		return log->Level;
-	}
+		log->Level = WLog_GetLogLevel(log->Parent);
+	return log->Level;
 }
 
 BOOL WLog_SetStringLogLevel(wLog* log, LPCSTR level)
@@ -398,9 +394,7 @@ BOOL WLog_SetLogLevel(wLog* log, DWORD logLevel)
 		return FALSE;
 
 	if ((logLevel > WLOG_OFF) && (logLevel != WLOG_LEVEL_INHERIT))
-	{
 		logLevel = WLOG_OFF;
-	}
 
 	log->Level = logLevel;
 	return TRUE;
@@ -573,7 +567,7 @@ LONG WLog_GetFilterLogLevel(wLog* log)
 	if (match)
 		log->FilterLevel = g_Filters[i].Level;
 	else
-		log->FilterLevel = log->Level;
+		log->FilterLevel = WLOG_LEVEL_INHERIT;
 
 	return log->FilterLevel;
 }
@@ -679,7 +673,7 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 
 	iLevel = WLog_GetFilterLogLevel(log);
 
-	if (iLevel >= 0)
+	if ((iLevel >= 0) && (iLevel != WLOG_LEVEL_INHERIT))
 		log->Level = (DWORD) iLevel;
 
 	return log;
@@ -783,7 +777,6 @@ BOOL WLog_AddChild(wLog* parent, wLog* child)
 			if (parent->Children)
 				free (parent->Children);
 			parent->Children = NULL;
-			
 		}
 		else
 		{
