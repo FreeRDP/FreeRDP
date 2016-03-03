@@ -30,7 +30,7 @@
 
 #define TAG FREERDP_TAG("core.redirection")
 
-void rdp_print_redirection_flags(UINT32 flags)
+static void rdp_print_redirection_flags(UINT32 flags)
 {
 	WLog_DBG(TAG, "redirectionFlags = {");
 
@@ -76,9 +76,10 @@ void rdp_print_redirection_flags(UINT32 flags)
 	WLog_DBG(TAG, "}");
 }
 
-BOOL rdp_redirection_read_string(wStream* s, char** str)
+static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t maxLength)
 {
 	UINT32 length;
+	WCHAR* wstr = NULL;
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
@@ -88,13 +89,31 @@ BOOL rdp_redirection_read_string(wStream* s, char** str)
 
 	Stream_Read_UINT32(s, length);
 
-	if (Stream_GetRemainingLength(s) < length)
+	if ((length % 2) || length < 2 || length > maxLength)
 	{
-		WLog_ERR(TAG,  "rdp_redirection_read_string failure: incorrect length %d", length);
+		WLog_ERR(TAG,  "rdp_redirection_read_string failure: invalid unicode string length: %lu", length);
 		return FALSE;
 	}
 
-	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), length / 2, str, 0, NULL, NULL);
+	if (Stream_GetRemainingLength(s) < length)
+	{
+		WLog_ERR(TAG,  "rdp_redirection_read_string failure: insufficient stream length (%lu bytes required)", length);
+		return FALSE;
+	}
+
+	wstr = (WCHAR*) Stream_Pointer(s);
+
+	if (wstr[length / 2 - 1])
+	{
+		WLog_ERR(TAG,  "rdp_redirection_read_string failure: unterminated unicode string");
+		return FALSE;
+	}
+
+	if (ConvertFromUnicode(CP_UTF8, 0, wstr, -1, str, 0, NULL, NULL) < 1)
+	{
+		WLog_ERR(TAG,  "rdp_redirection_read_string failure: string conversion failed");
+		return FALSE;
+	}
 	Stream_Seek(s, length);
 	return TRUE;
 }
@@ -173,7 +192,10 @@ int rdp_redirection_apply_settings(rdpRdp* rdp)
 		/* Password may be a cookie without a null terminator */
 		free(settings->RedirectionPassword);
 		settings->RedirectionPasswordLength = redirection->PasswordLength;
-		settings->RedirectionPassword = (BYTE*) malloc(settings->RedirectionPasswordLength);
+		/* For security reasons we'll allocate an additional zero WCHAR at the
+		 * end of the buffer that is not included in RedirectionPasswordLength
+		 */
+		settings->RedirectionPassword = (BYTE*) calloc(1, settings->RedirectionPasswordLength + sizeof(WCHAR));
 		if (!settings->RedirectionPassword)
 			return -1;
 		CopyMemory(settings->RedirectionPassword, redirection->Password, settings->RedirectionPasswordLength);
@@ -219,7 +241,7 @@ int rdp_redirection_apply_settings(rdpRdp* rdp)
 	return 0;
 }
 
-BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
+static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 {
 	UINT16 flags;
 	UINT16 length;
@@ -238,14 +260,33 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 	rdp_print_redirection_flags(redirection->flags);
 
+	/* Although MS-RDPBCGR does not mention any length constraints limits for the
+	 * variable length null-terminated unicode strings in the RDP_SERVER_REDIRECTION_PACKET
+	 * structure we will use the following limits in bytes including the null terminator:
+	 *
+	 * TargetNetAddress:     80 bytes
+	 * UserName:            512 bytes
+	 * Domain:               52 bytes
+	 * Password(Cookie):    512 bytes
+	 * TargetFQDN:          512 bytes
+	 * TargetNetBiosName:    32 bytes
+	 */
+
 	if (redirection->flags & LB_TARGET_NET_ADDRESS)
 	{
-		if (!rdp_redirection_read_string(s, &(redirection->TargetNetAddress)))
+		if (!rdp_redirection_read_unicode_string(s, &(redirection->TargetNetAddress), 80))
 			return -1;
 	}
 
 	if (redirection->flags & LB_LOAD_BALANCE_INFO)
 	{
+		/* See [MSFT-SDLBTS] (a.k.a. TS_Session_Directory.doc)
+		 * load balance info example data:
+		 * 0000  43 6f 6f 6b 69 65 3a 20 6d 73 74 73 3d 32 31 33  Cookie: msts=213
+		 * 0010  34 30 32 36 34 33 32 2e 31 35 36 32 39 2e 30 30  4026432.15629.00
+                 * 0020  30 30 0d 0a                                      00..
+		 */
+
 		if (Stream_GetRemainingLength(s) < 4)
 			return -1;
 
@@ -265,7 +306,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 	if (redirection->flags & LB_USERNAME)
 	{
-		if (!rdp_redirection_read_string(s, &(redirection->Username)))
+		if (!rdp_redirection_read_unicode_string(s, &(redirection->Username), 512))
 			return -1;
 
 		WLog_DBG(TAG, "Username: %s", redirection->Username);
@@ -273,7 +314,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 	if (redirection->flags & LB_DOMAIN)
 	{
-		if (!rdp_redirection_read_string(s, &(redirection->Domain)))
+		if (!rdp_redirection_read_unicode_string(s, &(redirection->Domain), 52))
 			return FALSE;
 
 		WLog_DBG(TAG, "Domain: %s", redirection->Domain);
@@ -281,12 +322,45 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 	if (redirection->flags & LB_PASSWORD)
 	{
-		/* Note: length (hopefully) includes double zero termination */
+		/* Note: Password is a variable-length array of bytes containing the
+		 * password used by the user in Unicode format, including a null-terminator
+		 * or (!) or a cookie value that MUST be passed to the target server on
+		 * successful connection.
+		 * Since the format of the password cookie (probably some salted hash) is
+		 * currently unknown we'll treat it as opaque data. All cookies seen so far
+		 * are 120 bytes including \0\0 termination.
+		 * Here is an observed example of a redirection password cookie:
+		 *
+		 * 0000  02 00 00 80 44 53 48 4c 60 ab 69 2f 07 d6 9e 2d  ....DSHL`.i/...-
+		 * 0010  f0 3a 97 3b a9 c5 ec 7e 66 bd b3 84 6c b1 ef b9  .:.;...~f...l...
+		 * 0020  b6 82 4e cc 3a df 64 b7 7b 25 04 54 c2 58 98 f8  ..N.:.d.{%.T.X..
+		 * 0030  97 87 d4 93 c7 c1 e1 5b c2 85 f8 22 49 1f 81 88  .......[..."I...
+		 * 0040  43 44 83 f6 9a 72 40 24 dc 4d 43 cb d9 92 3c 8f  CD...r@$.MC...<.
+		 * 0050  3a 37 5c 77 13 a0 72 3c 72 08 64 2a 29 fb dc eb  :7\w..r<r.d*)...
+		 * 0060  0d 2b 06 b4 c6 08 b4 73 34 16 93 62 6d 24 e9 93  .+.....s4..bm$..
+		 * 0070  97 27 7b dd 9a 72 00 00                          .'{..r..
+		 *
+		 * Notwithstanding the above, we'll allocated an additional zero WCHAR at the
+		 * end of the buffer which won't get counted in PasswordLength.
+		 */
+
 		if (Stream_GetRemainingLength(s) < 4)
 			return -1;
 
 		Stream_Read_UINT32(s, redirection->PasswordLength);
-		redirection->Password = (BYTE*) malloc(redirection->PasswordLength);
+
+		/* [MS-RDPBCGR] specifies 512 bytes as the upper limit for the password length
+		 * including the null terminatior(s). This should also be enough for the unknown
+		 * password cookie format (see previous comment).
+		 */
+
+		if (Stream_GetRemainingLength(s) < redirection->PasswordLength)
+			return -1;
+
+		if (redirection->PasswordLength > 512)
+			return -1;
+
+		redirection->Password = (BYTE*) calloc(1, redirection->PasswordLength + sizeof(WCHAR));
 		if (!redirection->Password)
 			return -1;
 		Stream_Read(s, redirection->Password, redirection->PasswordLength);
@@ -297,7 +371,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 	if (redirection->flags & LB_TARGET_FQDN)
 	{
-		if (!rdp_redirection_read_string(s, &(redirection->TargetFQDN)))
+		if (!rdp_redirection_read_unicode_string(s, &(redirection->TargetFQDN), 512))
 			return -1;
 
 		WLog_DBG(TAG, "TargetFQDN: %s", redirection->TargetFQDN);
@@ -305,7 +379,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 	if (redirection->flags & LB_TARGET_NETBIOS_NAME)
 	{
-		if (!rdp_redirection_read_string(s, &(redirection->TargetNetBiosName)))
+		if (!rdp_redirection_read_unicode_string(s, &(redirection->TargetNetBiosName), 32))
 			return -1;
 
 		WLog_DBG(TAG, "TargetNetBiosName: %s", redirection->TargetNetBiosName);
@@ -352,7 +426,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 		for (i = 0; i < (int) count; i++)
 		{
-			if (!rdp_redirection_read_string(s, &(redirection->TargetNetAddresses[i])))
+			if (!rdp_redirection_read_unicode_string(s, &(redirection->TargetNetAddresses[i]), 80))
 				return FALSE;
 
 			WLog_DBG(TAG, "TargetNetAddresses[%d]: %s", i, redirection->TargetNetAddresses[i]);
@@ -369,13 +443,6 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		return 0;
 
 	return 1;
-}
-
-int rdp_recv_redirection_packet(rdpRdp* rdp, wStream* s)
-{
-	int status = 0;
-	status = rdp_recv_server_redirection_pdu(rdp, s);
-	return status;
 }
 
 int rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, wStream* s)

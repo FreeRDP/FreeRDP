@@ -590,7 +590,12 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	Stream_Read_UINT32(s, settings->ClientBuild); /* ClientBuild (4 bytes) */
 
 	/* clientName (32 bytes, null-terminated unicode, truncated to 15 characters) */
-	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), 32 / 2, &str, 0, NULL, NULL);
+	if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), 32 / 2,
+		&str, 0, NULL, NULL) < 1)
+	{
+		WLog_ERR(TAG, "failed to convert client host name");
+		return FALSE;
+	}
 	Stream_Seek(s, 32);
 	free(settings->ClientHostname);
 	settings->ClientHostname = str;
@@ -644,10 +649,17 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 		settings->EarlyCapabilityFlags = (UINT32) earlyCapabilityFlags;
 		blockLength -= 2;
 
+		/* clientDigProductId (64 bytes): Contains a value that uniquely identifies the client */
+
 		if (blockLength < 64)
 			break;
 
-		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), 64 / 2, &str, 0, NULL, NULL);
+		if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), 64 / 2,
+			&str, 0, NULL, NULL) < 1)
+		{
+			WLog_ERR(TAG, "failed to convert the client product identifier");
+			return FALSE;
+		}
 		Stream_Seek(s, 64); /* clientDigProductId (64 bytes) */
 		free(settings->ClientProductId);
 		settings->ClientProductId = str;

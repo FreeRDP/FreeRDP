@@ -597,8 +597,12 @@ static UINT cliprdr_server_receive_temporary_directory(CliprdrServerContext* con
 	free(cliprdr->temporaryDirectory);
 	cliprdr->temporaryDirectory = NULL;
 
-	ConvertFromUnicode(CP_UTF8, 0, wszTempDir, -1,
-			&(cliprdr->temporaryDirectory), 0, NULL, NULL);
+	if (ConvertFromUnicode(CP_UTF8, 0, wszTempDir, -1,
+		&(cliprdr->temporaryDirectory), 0, NULL, NULL) < 1)
+	{
+		WLog_ERR(TAG, "failed to convert temporary directory name");
+		return ERROR_INVALID_DATA;
+	}
 
 	length = strlen(cliprdr->temporaryDirectory);
 
@@ -680,12 +684,21 @@ static UINT cliprdr_server_receive_format_list(CliprdrServerContext* context, wS
 
 			formats[index].formatName = NULL;
 
+			/* According to MS-RDPECLIP 2.2.3.1.1.1 formatName is "a 32-byte block containing
+			 * the *null-terminated* name assigned to the Clipboard Format: (32 ASCII 8 characters
+			 * or 16 Unicode characters)"
+			 * However, both Windows RDSH and mstsc violate this specs as seen in the following
+			 * example of a transferred short format name string: [R.i.c.h. .T.e.x.t. .F.o.r.m.a.t.]
+			 * These are 16 unicode charaters - *without* terminating null !
+			 */
+
 			if (asciiNames)
 			{
 				szFormatName = (char*) Stream_Pointer(s);
 
 				if (szFormatName[0])
 				{
+					/* ensure null termination */
 					formats[index].formatName = (char*) malloc(32 + 1);
 					CopyMemory(formats[index].formatName, szFormatName, 32);
 					formats[index].formatName[32] = '\0';
@@ -697,8 +710,16 @@ static UINT cliprdr_server_receive_format_list(CliprdrServerContext* context, wS
 
 				if (wszFormatName[0])
 				{
-					ConvertFromUnicode(CP_UTF8, 0, wszFormatName,
-						16, &(formats[index].formatName), 0, NULL, NULL);
+					/* ConvertFromUnicode always returns a null-terminated
+					 * string on success, even if the source string isn't.
+					 */
+					if (ConvertFromUnicode(CP_UTF8, 0, wszFormatName, 16,
+						&(formats[index].formatName), 0, NULL, NULL) < 1)
+					{
+						WLog_ERR(TAG, "failed to convert short clipboard format name");
+						error = ERROR_INVALID_DATA;
+						goto out;
+					}
 				}
 			}
 
@@ -757,8 +778,13 @@ static UINT cliprdr_server_receive_format_list(CliprdrServerContext* context, wS
 
 			if (formatNameLength)
 			{
-				ConvertFromUnicode(CP_UTF8, 0, wszFormatName,
-					-1, &(formats[index].formatName), 0, NULL, NULL);
+				if (ConvertFromUnicode(CP_UTF8, 0, wszFormatName, -1,
+					&(formats[index].formatName), 0, NULL, NULL) < 1)
+				{
+					WLog_ERR(TAG, "failed to convert long clipboard format name");
+					error = ERROR_INVALID_DATA;
+					goto out;
+				}
 			}
 
 			Stream_Seek(s, (formatNameLength + 1) * 2);
@@ -775,6 +801,7 @@ static UINT cliprdr_server_receive_format_list(CliprdrServerContext* context, wS
 	if (error)
 		WLog_ERR(TAG, "ClientFormatList failed with error %lu!", error);
 
+out:
 	for (index = 0; index < formatList.numFormats; index++)
 	{
 		free(formatList.formats[index].formatName);

@@ -371,6 +371,7 @@ BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s, WINDOW_ORDER_I
 {
 	rdpContext* context = update->context;
 	rdpWindowUpdate* window = update->window;
+	BOOL result = TRUE;
 
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
@@ -382,20 +383,20 @@ BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s, WINDOW_ORDER_I
 		if (!update_read_window_icon_order(s, orderInfo, &window->window_icon))
 			return FALSE;
 		WLog_Print(update->log, WLOG_DEBUG, "WindowIcon");
-		IFCALL(window->WindowIcon, context, orderInfo, &window->window_icon);
+		IFCALLRET(window->WindowIcon, result, context, orderInfo, &window->window_icon);
 	}
 	else if (orderInfo->fieldFlags & WINDOW_ORDER_CACHED_ICON)
 	{
 		if (!update_read_window_cached_icon_order(s, orderInfo, &window->window_cached_icon))
 			return FALSE;
 		WLog_Print(update->log, WLOG_DEBUG, "WindowCachedIcon");
-		IFCALL(window->WindowCachedIcon, context, orderInfo, &window->window_cached_icon);
+		IFCALLRET(window->WindowCachedIcon, result, context, orderInfo, &window->window_cached_icon);
 	}
 	else if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_DELETED)
 	{
 		update_read_window_delete_order(s, orderInfo);
 		WLog_Print(update->log, WLOG_DEBUG, "WindowDelete");
-		IFCALL(window->WindowDelete, context, orderInfo);
+		IFCALLRET(window->WindowDelete, result, context, orderInfo);
 	}
 	else
 	{
@@ -405,16 +406,16 @@ BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s, WINDOW_ORDER_I
 		if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_NEW)
 		{
 			WLog_Print(update->log, WLOG_DEBUG, "WindowCreate");
-			IFCALL(window->WindowCreate, context, orderInfo, &window->window_state);
+			IFCALLRET(window->WindowCreate, result, context, orderInfo, &window->window_state);
 		}
 		else
 		{
 			WLog_Print(update->log, WLOG_DEBUG, "WindowUpdate");
-			IFCALL(window->WindowUpdate, context, orderInfo, &window->window_state);
+			IFCALLRET(window->WindowUpdate, result, context, orderInfo, &window->window_state);
 		}
 	}
 
-	return TRUE;
+	return result;
 }
 
 BOOL update_read_notification_icon_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notify_icon_state)
@@ -470,6 +471,7 @@ BOOL update_recv_notification_icon_info_order(rdpUpdate* update, wStream* s, WIN
 {
 	rdpContext* context = update->context;
 	rdpWindowUpdate* window = update->window;
+	BOOL result = TRUE;
 
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
@@ -481,7 +483,7 @@ BOOL update_recv_notification_icon_info_order(rdpUpdate* update, wStream* s, WIN
 	{
 		update_read_notification_icon_delete_order(s, orderInfo);
 		WLog_Print(update->log, WLOG_DEBUG, "NotifyIconDelete");
-		IFCALL(window->NotifyIconDelete, context, orderInfo);
+		IFCALLRET(window->NotifyIconDelete, result, context, orderInfo);
 	}
 	else
 	{
@@ -491,16 +493,16 @@ BOOL update_recv_notification_icon_info_order(rdpUpdate* update, wStream* s, WIN
 		if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_NEW)
 		{
 			WLog_Print(update->log, WLOG_DEBUG, "NotifyIconCreate");
-			IFCALL(window->NotifyIconCreate, context, orderInfo, &window->notify_icon_state);
+			IFCALLRET(window->NotifyIconCreate, result, context, orderInfo, &window->notify_icon_state);
 		}
 		else
 		{
 			WLog_Print(update->log, WLOG_DEBUG, "NotifyIconUpdate");
-			IFCALL(window->NotifyIconUpdate, context, orderInfo, &window->notify_icon_state);
+			IFCALLRET(window->NotifyIconUpdate, result, context, orderInfo, &window->notify_icon_state);
 		}
 	}
 
-	return TRUE;
+	return result;
 }
 
 BOOL update_read_desktop_actively_monitored_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitored_desktop)
@@ -560,22 +562,23 @@ BOOL update_recv_desktop_info_order(rdpUpdate* update, wStream* s, WINDOW_ORDER_
 {
 	rdpContext* context = update->context;
 	rdpWindowUpdate* window = update->window;
+	BOOL result = TRUE;
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_NONE)
 	{
 		update_read_desktop_non_monitored_order(s, orderInfo);
 		WLog_Print(update->log, WLOG_DEBUG, "NonMonitoredDesktop");
-		IFCALL(window->NonMonitoredDesktop, context, orderInfo);
+		IFCALLRET(window->NonMonitoredDesktop, result, context, orderInfo);
 	}
 	else
 	{
 		if (!update_read_desktop_actively_monitored_order(s, orderInfo, &window->monitored_desktop))
 			return FALSE;
 		WLog_Print(update->log, WLOG_DEBUG, "ActivelyMonitoredDesktop");
-		IFCALL(window->MonitoredDesktop, context, orderInfo, &window->monitored_desktop);
+		IFCALLRET(window->MonitoredDesktop, result, context, orderInfo, &window->monitored_desktop);
 	}
 
-	return TRUE;
+	return result;
 }
 
 BOOL update_recv_altsec_window_order(rdpUpdate* update, wStream* s)

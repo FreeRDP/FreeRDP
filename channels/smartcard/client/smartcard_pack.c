@@ -707,7 +707,12 @@ void smartcard_trace_list_readers_return(SMARTCARD_DEVICE* smartcard, ListReader
 	if (unicode)
 	{
 		length = ret->cBytes / 2;
-		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) ret->msz, (int)length, &mszA, 0, NULL, NULL);
+		if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) ret->msz, (int)length,
+			&mszA, 0, NULL, NULL) < 1)
+		{
+			WLog_ERR(TAG, "ConvertFromUnicode failed");
+			return;
+		}
 	}
 	else
 	{
@@ -1767,7 +1772,12 @@ void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, Status_Return* r
 	if (unicode)
 	{
 		length = ret->cBytes / 2;
-		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) ret->mszReaderNames, (int)length, &mszReaderNamesA, 0, NULL, NULL);
+		if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) ret->mszReaderNames, (int)length,
+			&mszReaderNamesA, 0, NULL, NULL) < 1)
+		{
+			WLog_ERR(TAG, "ConvertFromUnicode failed");
+			return;
+		}
 	}
 	else
 	{
