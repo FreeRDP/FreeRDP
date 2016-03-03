@@ -206,7 +206,7 @@ BOOL rdg_send_tunnel_authorization(rdpRdg* rdg)
 	if (!clientName)
 		return FALSE;
 
-	packetSize = 12 + clientNameLen * 2 + sizeof(WCHAR);
+	packetSize = 12 + clientNameLen * sizeof(WCHAR);
 	s = Stream_New(NULL, packetSize);
 
 	if (!s)
@@ -224,8 +224,6 @@ BOOL rdg_send_tunnel_authorization(rdpRdg* rdg)
 
 	for (i = 0; i < clientNameLen; i++)
 		Stream_Write_UINT16(s, clientName[i]);
-
-	Stream_Write_UINT16(s, 0);
 
 	Stream_SealLength(s);
 
