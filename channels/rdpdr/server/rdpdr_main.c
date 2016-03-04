@@ -152,9 +152,10 @@ static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext* context
 	Stream_Seek_UINT32(s); /* CodePage (4 bytes), MUST be set to zero */
 	Stream_Read_UINT32(s, ComputerNameLen); /* ComputerNameLen (4 bytes) */
 
-	if (Stream_GetRemainingLength(s) < ComputerNameLen)
+
+	if (UnicodeFlag > 1) /* must be 0x00000000 or 0x00000001 */
 	{
-		WLog_ERR(TAG, "not enough data in stream!");
+		WLog_ERR(TAG, "invalid UnicodeFlag value: 0x%08X", UnicodeFlag);
 		return ERROR_INVALID_DATA;
 	}
 
@@ -164,6 +165,39 @@ static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext* context
 	 * not in characters, including the NULL terminator!
 	 */
 
+	if (UnicodeFlag)
+	{
+		if ((ComputerNameLen % 2) || ComputerNameLen > 512 || ComputerNameLen < 2)
+		{
+			WLog_ERR(TAG, "invalid unicode computer name length: %u", ComputerNameLen);
+			return ERROR_INVALID_DATA;
+		}
+	}
+	else
+	{
+		if (ComputerNameLen > 256 || ComputerNameLen < 1)
+		{
+			WLog_ERR(TAG, "invalid ascii computer name length: %u", ComputerNameLen);
+			return ERROR_INVALID_DATA;
+		}
+	}
+
+	if (Stream_GetRemainingLength(s) < ComputerNameLen)
+	{
+		WLog_ERR(TAG, "not enough data in stream!");
+		return ERROR_INVALID_DATA;
+	}
+
+	/* ComputerName must be null terminated, check if it really is */
+
+	if (Stream_Pointer(s)[ComputerNameLen-1] ||
+		(UnicodeFlag && Stream_Pointer(s)[ComputerNameLen-2]))
+	{
+		WLog_ERR(TAG, "computer name must be null terminated");
+		return ERROR_INVALID_DATA;
+	}
+
+
 	if (context->priv->ClientComputerName)
 	{
 		free(context->priv->ClientComputerName);
@@ -172,12 +206,21 @@ static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext* context
 
 	if (UnicodeFlag)
 	{
-		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s),
-				-1, &(context->priv->ClientComputerName), 0, NULL, NULL);
+		if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), -1,
+			&(context->priv->ClientComputerName), 0, NULL, NULL) < 1)
+		{
+			WLog_ERR(TAG, "failed to convert client computer name");
+			return ERROR_INVALID_DATA;
+		}
 	}
 	else
 	{
 		context->priv->ClientComputerName = _strdup((char*) Stream_Pointer(s));
+		if (!context->priv->ClientComputerName)
+		{
+			WLog_ERR(TAG, "failed to duplicate client computer name");
+			return CHANNEL_RC_NO_MEMORY;
+		}
 	}
 
 	Stream_Seek(s, ComputerNameLen);

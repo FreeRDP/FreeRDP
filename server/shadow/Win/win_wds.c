@@ -744,7 +744,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 		return -1;
 	}
 
-	subsystem->pInvitation->lpVtbl->get_ConnectionString(subsystem->pInvitation, &bstrConnectionString);
+	hr = subsystem->pInvitation->lpVtbl->get_ConnectionString(subsystem->pInvitation, &bstrConnectionString);
 
 	if (FAILED(hr))
 	{
@@ -752,10 +752,24 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 		return -1;
 	}
 
+	status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) bstrConnectionString,
+		((UINT32*) bstrConnectionString)[-1], &(file->ConnectionString2), 0, NULL, NULL);
+
+	SysFreeString(bstrConnectionString);
+
+	if (status < 1)
+	{
+		WLog_ERR(TAG, "failed to convert connection string");
+		return -1;
+	}
+
 	file = subsystem->pAssistanceFile = freerdp_assistance_file_new();
 
-	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) bstrConnectionString,
-		((UINT32*) bstrConnectionString)[-1], &(file->ConnectionString2), 0, NULL, NULL);
+	if (!file)
+	{
+		WLog_ERR(TAG, "freerdp_assistance_file_new() failed");
+		return -1;
+	}
 
 	status = freerdp_assistance_parse_connection_string2(file);
 

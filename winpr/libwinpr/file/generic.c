@@ -274,7 +274,7 @@ HANDLE CreateFileW(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
 	LPSTR lpFileNameA = NULL;
 	HANDLE hdl;
 
-	if (ConvertFromUnicode(CP_UTF8, 0, lpFileName, -1, &lpFileNameA, 0, NULL, NULL))
+	if (ConvertFromUnicode(CP_UTF8, 0, lpFileName, -1, &lpFileNameA, 0, NULL, NULL) < 1)
 		return NULL;
 
 	hdl= CreateFileA(lpFileNameA, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
@@ -296,7 +296,7 @@ BOOL DeleteFileW(LPCWSTR lpFileName)
 	LPSTR lpFileNameA = NULL;
 	BOOL rc = FALSE;
 
-	if (ConvertFromUnicode(CP_UTF8, 0, lpFileName, -1, &lpFileNameA, 0, NULL, NULL))
+	if (ConvertFromUnicode(CP_UTF8, 0, lpFileName, -1, &lpFileNameA, 0, NULL, NULL) < 1)
 		return FALSE;
 	rc = DeleteFileA(lpFileNameA);
 	free (lpFileNameA);
