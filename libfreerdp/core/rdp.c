@@ -204,8 +204,7 @@ static int rdp_security_stream_init(rdpRdp* rdp, wStream* s, BOOL sec_header)
 int rdp_init_stream(rdpRdp* rdp, wStream* s)
 {
 	Stream_Seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
-	rdp_security_stream_init(rdp, s, FALSE);
-	return 0;
+	return rdp_security_stream_init(rdp, s, FALSE);
 }
 
 wStream* rdp_send_stream_init(rdpRdp* rdp)
@@ -340,10 +339,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 			return FALSE;
 
 		if (!rdp->instance)
-		{
-			freerdp_abort_connect(rdp->instance);
 			return FALSE;
-		}
 
 		context = rdp->instance->context;
 
@@ -671,8 +667,7 @@ BOOL rdp_recv_set_error_info_data_pdu(rdpRdp* rdp, wStream* s)
 		return FALSE;
 
 	Stream_Read_UINT32(s, errorInfo); /* errorInfo (4 bytes) */
-	rdp_set_error_info(rdp, errorInfo);
-	return TRUE;
+	return rdp_set_error_info(rdp, errorInfo);
 }
 
 BOOL rdp_recv_server_auto_reconnect_status_pdu(rdpRdp* rdp, wStream* s)
@@ -1061,7 +1056,7 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, int length, UINT16 securityFlags)
 			return FALSE; /* TODO */
 		}
 
-		Stream_Length(s) -= pad;
+		Stream_SetLength(s, Stream_Length(s) - pad);
 		return TRUE;
 	}
 
@@ -1415,6 +1410,8 @@ BOOL rdp_send_error_info(rdpRdp* rdp)
 		return TRUE;
 
 	s = rdp_data_pdu_init(rdp);
+	if (!s)
+		return FALSE;
 
 	Stream_Write_UINT32(s, rdp->errorInfo); /* error id (4 bytes) */
 
@@ -1593,31 +1590,31 @@ void rdp_reset(rdpRdp* rdp)
 
 	if (rdp->rc4_decrypt_key)
 	{
-		crypto_rc4_free(rdp->rc4_decrypt_key);
+		winpr_RC4_Free(rdp->rc4_decrypt_key);
 		rdp->rc4_decrypt_key = NULL;
 	}
 
 	if (rdp->rc4_encrypt_key)
 	{
-		crypto_rc4_free(rdp->rc4_encrypt_key);
+		winpr_RC4_Free(rdp->rc4_encrypt_key);
 		rdp->rc4_encrypt_key = NULL;
 	}
 
 	if (rdp->fips_encrypt)
 	{
-		crypto_des3_free(rdp->fips_encrypt);
+		winpr_Cipher_Free(rdp->fips_encrypt);
 		rdp->fips_encrypt = NULL;
 	}
 
 	if (rdp->fips_decrypt)
 	{
-		crypto_des3_free(rdp->fips_decrypt);
+		winpr_Cipher_Free(rdp->fips_decrypt);
 		rdp->fips_decrypt = NULL;
 	}
 
 	if (rdp->fips_hmac)
 	{
-		crypto_hmac_free(rdp->fips_hmac);
+		free(rdp->fips_hmac);
 		rdp->fips_hmac = NULL;
 	}
 
@@ -1664,11 +1661,11 @@ void rdp_free(rdpRdp* rdp)
 {
 	if (rdp)
 	{
-		crypto_rc4_free(rdp->rc4_decrypt_key);
-		crypto_rc4_free(rdp->rc4_encrypt_key);
-		crypto_des3_free(rdp->fips_encrypt);
-		crypto_des3_free(rdp->fips_decrypt);
-		crypto_hmac_free(rdp->fips_hmac);
+		winpr_RC4_Free(rdp->rc4_decrypt_key);
+		winpr_RC4_Free(rdp->rc4_encrypt_key);
+		winpr_Cipher_Free(rdp->fips_encrypt);
+		winpr_Cipher_Free(rdp->fips_decrypt);
+		free(rdp->fips_hmac);
 		freerdp_settings_free(rdp->settings);
 		freerdp_settings_free(rdp->settingsCopy);
 		transport_free(rdp->transport);

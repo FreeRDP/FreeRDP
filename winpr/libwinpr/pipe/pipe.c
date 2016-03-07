@@ -191,7 +191,8 @@ static HANDLE_OPS ops = {
 		NULL, /* FileLockFile */
 		NULL, /* FileLockFileEx */
 		NULL, /* FileUnlockFile */
-		NULL /* FileUnlockFileEx */
+		NULL, /* FileUnlockFileEx */
+		NULL  /* SetFileTime */
 };
 
 

@@ -79,7 +79,7 @@ UINT tsmf_ifman_exchange_capability_request(TSMF_IFMAN* ifman)
 	if (!Stream_EnsureRemainingCapacity(ifman->output, ifman->input_size + 4))
 		return ERROR_OUTOFMEMORY;
 	pos = Stream_GetPosition(ifman->output);
-	Stream_Copy(ifman->output, ifman->input, ifman->input_size);
+	Stream_Copy(ifman->input, ifman->output, ifman->input_size);
 	Stream_SetPosition(ifman->output, pos);
 
 	if (Stream_GetRemainingLength(ifman->output) < 4)

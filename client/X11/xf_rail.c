@@ -290,15 +290,29 @@ static BOOL xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 		{
 			char* title = NULL;
 
-			ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) windowState->titleInfo.string,
-				   windowState->titleInfo.length / 2, &title, 0, NULL, NULL);
+			if (windowState->titleInfo.length == 0)
+			{
+				if (!(title = _strdup("")))
+				{
+					WLog_ERR(TAG, "failed to duplicate empty window title string");
+					/* error handled below */
+				}
+			}
+			else if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) windowState->titleInfo.string,
+				windowState->titleInfo.length / 2, &title, 0, NULL, NULL) < 1)
+			{
+				WLog_ERR(TAG, "failed to convert window title");
+				/* error handled below */
+			}
 
 			appWindow->title = title;
 		}
 		else
 		{
-			appWindow->title = _strdup("RdpRailWindow");
+			if (!(appWindow->title = _strdup("RdpRailWindow")))
+				WLog_ERR(TAG, "failed to duplicate default window title string");
 		}
+
 		if (!appWindow->title)
 		{
 			free(appWindow);
@@ -365,9 +379,20 @@ static BOOL xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 	{
 		char* title = NULL;
 
-		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) windowState->titleInfo.string,
-			   windowState->titleInfo.length / 2, &title, 0, NULL, NULL);
-
+		if (windowState->titleInfo.length == 0)
+		{
+			if (!(title = _strdup("")))
+			{
+				WLog_ERR(TAG, "failed to duplicate empty window title string");
+				return FALSE;
+			}
+		}
+		else if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) windowState->titleInfo.string,
+			windowState->titleInfo.length / 2, &title, 0, NULL, NULL) < 1)
+		{
+			WLog_ERR(TAG, "failed to convert window title");
+			return FALSE;
+		}
 		free(appWindow->title);
 		appWindow->title = title;
 	}

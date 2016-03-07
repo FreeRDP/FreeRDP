@@ -73,10 +73,10 @@ FREERDP_API void region16_init(REGION16 *region);
 /** @return the number of rectangles of this region16 */
 FREERDP_API int region16_n_rects(const REGION16 *region);
 
-/** returns a pointer on rectangles and the number of rectangles in this region.
- * nbRect can be set to NULL if not interested by the numnber of rectangles.
+/** returns a pointer to rectangles and the number of rectangles in this region.
+ * nbRects can be set to NULL if not interested in the number of rectangles.
  * @param region the input region
- * @param nbRects a pointer that will be filled with the number of rectangles
+ * @param nbRects if non-NULL returns the number of rectangles
  * @return a pointer on the rectangles
  */
 FREERDP_API const RECTANGLE_16 *region16_rects(const REGION16 *region, int *nbRects);

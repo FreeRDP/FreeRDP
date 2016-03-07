@@ -1066,12 +1066,10 @@ public class SessionActivity extends ActionBarActivity implements
 	}
 
 	@Override
-	public boolean OnVerifiyCertificate(String subject, String issuer,
-										String fingerprint) {
-
+	public int OnVerifiyCertificate(String commonName, String subject, String issuer, String fingerprint, boolean mismatch) {
 		// see if global settings says accept all
 		if (GlobalSettings.getAcceptAllCertificates())
-			return true;
+			return 0;
 
 		// this is where the return code of our dialog will be stored
 		callbackDialogResult = false;
@@ -1095,7 +1093,38 @@ public class SessionActivity extends ActionBarActivity implements
 		} catch (InterruptedException e) {
 		}
 
-		return callbackDialogResult;
+		return callbackDialogResult ? 1 : 0;
+	}
+
+	@Override
+	public int OnVerifiyChangedCertificate(String commonName, String subject, String issuer, String fingerprint, String oldSubject, String oldIssuer, String oldFingerprint) {
+		// see if global settings says accept all
+		if (GlobalSettings.getAcceptAllCertificates())
+			return 0;
+
+		// this is where the return code of our dialog will be stored
+		callbackDialogResult = false;
+
+		// set message
+		String msg = getResources().getString(
+				R.string.dlg_msg_verify_certificate);
+		msg = msg + "\n\nSubject: " + subject + "\nIssuer: " + issuer
+				+ "\nFingerprint: " + fingerprint;
+		dlgVerifyCertificate.setMessage(msg);
+
+		// start dialog in UI thread
+		uiHandler.sendMessage(Message.obtain(null, UIHandler.SHOW_DIALOG,
+				dlgVerifyCertificate));
+
+		// wait for result
+		try {
+			synchronized (dlgVerifyCertificate) {
+				dlgVerifyCertificate.wait();
+			}
+		} catch (InterruptedException e) {
+		}
+
+		return callbackDialogResult ? 1 : 0;
 	}
 
 	@Override

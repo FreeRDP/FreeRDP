@@ -958,8 +958,8 @@ static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int c
 
 	Stream_Write_UINT8(data_out, 0x10 | cbChId);
 	Stream_SetPosition(s, 1);
-	Stream_Copy(data_out, s, pos - 1);
-	
+	Stream_Copy(s, data_out, pos - 1);
+
 	if (channel_status == CHANNEL_RC_OK)
 	{
 		WLog_DBG(TAG, "channel created");

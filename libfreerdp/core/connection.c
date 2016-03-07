@@ -31,6 +31,7 @@
 #include "transport.h"
 
 #include <winpr/crt.h>
+#include <winpr/crypto.h>
 
 #include <freerdp/log.h>
 #include <freerdp/error.h>
@@ -312,8 +313,6 @@ BOOL rdp_client_disconnect(rdpRdp* rdp)
 {
 	BOOL status;
 
-	ResetEvent(rdp->context->abortEvent);
-
 	if (rdp->settingsCopy)
 	{
 		freerdp_settings_free(rdp->settingsCopy);
@@ -438,7 +437,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	if (!settings->ClientRandom)
 		return FALSE;
 
-	crypto_nonce(settings->ClientRandom, settings->ClientRandomLength);
+	winpr_RAND(settings->ClientRandom, settings->ClientRandomLength);
 	key_len = settings->RdpServerCertificate->cert_info.ModulusLength;
 	mod = settings->RdpServerCertificate->cert_info.Modulus;
 	exp = settings->RdpServerCertificate->cert_info.exponent;
@@ -491,20 +490,26 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 
 	if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
-		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->fips_encrypt_key, fips_ivec);
+		rdp->fips_encrypt = winpr_Cipher_New( WINPR_CIPHER_DES_EDE3_CBC,
+							WINPR_ENCRYPT,
+							rdp->fips_encrypt_key,
+							fips_ivec);
 		if (!rdp->fips_encrypt)
 		{
 			WLog_ERR(TAG, "unable to allocate des3 encrypt key");
 			goto end;
 		}
-		rdp->fips_decrypt = crypto_des3_decrypt_init(rdp->fips_decrypt_key, fips_ivec);
+		rdp->fips_decrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC,
+						     WINPR_DECRYPT,
+						     rdp->fips_decrypt_key,
+						     fips_ivec);
 		if (!rdp->fips_decrypt)
 		{
 			WLog_ERR(TAG, "unable to allocate des3 decrypt key");
 			goto end;
 		}
 
-		rdp->fips_hmac = crypto_hmac_new();
+		rdp->fips_hmac = calloc(1, sizeof(WINPR_HMAC_CTX));
 		if (!rdp->fips_hmac)
 		{
 			WLog_ERR(TAG, "unable to allocate fips hmac");
@@ -514,22 +519,27 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 		goto end;
 	}
 
-	rdp->rc4_decrypt_key = crypto_rc4_init(rdp->decrypt_key, rdp->rc4_key_len);
-	if (!rdp->rc4_decrypt_key)
-	{
-		WLog_ERR(TAG, "unable to allocate rc4 decrypt key");
+	rdp->rc4_decrypt_key = winpr_RC4_New(rdp->decrypt_key, rdp->rc4_key_len);
+	rdp->rc4_encrypt_key = winpr_RC4_New(rdp->encrypt_key, rdp->rc4_key_len);
+	if (!rdp->rc4_decrypt_key || !rdp->rc4_encrypt_key)
 		goto end;
-	}
 
-	rdp->rc4_encrypt_key = crypto_rc4_init(rdp->encrypt_key, rdp->rc4_key_len);
-	if (!rdp->rc4_encrypt_key)
-	{
-		WLog_ERR(TAG, "unable to allocate rc4 encrypt key");
-		goto end;
-	}
 	ret = TRUE;
 end:
 	free(crypt_client_random);
+	if (!ret)
+	{
+		winpr_Cipher_Free(rdp->fips_decrypt);
+		winpr_Cipher_Free(rdp->fips_encrypt);
+		winpr_RC4_Free(rdp->rc4_decrypt_key);
+		winpr_RC4_Free(rdp->rc4_encrypt_key);
+
+		rdp->fips_decrypt = NULL;
+		rdp->fips_encrypt = NULL;
+		rdp->rc4_decrypt_key = NULL;
+		rdp->rc4_encrypt_key = NULL;
+	}
+
 	return ret;
 }
 
@@ -586,12 +596,12 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	if (rand_len != key_len + 8)
 	{
 		WLog_ERR(TAG, "invalid encrypted client random length");
-		goto end2;
+		goto end;
 	}
 
 	crypt_client_random = calloc(1, rand_len);
 	if (!crypt_client_random)
-		goto end2;
+		goto end;
 	Stream_Read(s, crypt_client_random, rand_len);
 
 	mod = rdp->settings->RdpServerRsaKey->Modulus;
@@ -600,29 +610,33 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 
 	/* now calculate encrypt / decrypt and update keys */
 	if (!security_establish_keys(client_random, rdp))
-	{
 		goto end;
-	}
 
 	rdp->do_crypt = TRUE;
 
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
-		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->fips_encrypt_key, fips_ivec);
+		rdp->fips_encrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC,
+						     WINPR_ENCRYPT,
+						     rdp->fips_encrypt_key,
+						     fips_ivec);
 		if (!rdp->fips_encrypt)
 		{
 			WLog_ERR(TAG, "unable to allocate des3 encrypt key");
 			goto end;
 		}
 
-		rdp->fips_decrypt = crypto_des3_decrypt_init(rdp->fips_decrypt_key, fips_ivec);
+		rdp->fips_decrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC,
+						     WINPR_DECRYPT,
+						     rdp->fips_decrypt_key,
+						     fips_ivec);
 		if (!rdp->fips_decrypt)
 		{
 			WLog_ERR(TAG, "unable to allocate des3 decrypt key");
 			goto end;
 		}
 
-		rdp->fips_hmac = crypto_hmac_new();
+		rdp->fips_hmac = calloc(1, sizeof(WINPR_HMAC_CTX));
 		if (!rdp->fips_hmac)
 		{
 			WLog_ERR(TAG, "unable to allocate fips hmac");
@@ -632,25 +646,28 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 		goto end;
 	}
 
-	rdp->rc4_decrypt_key = crypto_rc4_init(rdp->decrypt_key, rdp->rc4_key_len);
-	if (!rdp->rc4_decrypt_key)
-	{
-		WLog_ERR(TAG, "unable to allocate rc4 decrypt key");
+	rdp->rc4_decrypt_key = winpr_RC4_New(rdp->decrypt_key, rdp->rc4_key_len);
+	rdp->rc4_encrypt_key = winpr_RC4_New(rdp->encrypt_key, rdp->rc4_key_len);
+	if (!rdp->rc4_decrypt_key || rdp->rc4_encrypt_key)
 		goto end;
-	}
 
-	rdp->rc4_encrypt_key = crypto_rc4_init(rdp->encrypt_key, rdp->rc4_key_len);
-	if (!rdp->rc4_encrypt_key)
-	{
-		WLog_ERR(TAG, "unable to allocate rc4 encrypt key");
-		goto end;
-	}
 	ret = TRUE;
 end:
 	free(crypt_client_random);
-end2:
 	free(client_random);
 
+	if (!ret)
+	{
+		winpr_Cipher_Free(rdp->fips_encrypt);
+		winpr_Cipher_Free(rdp->fips_decrypt);
+		winpr_RC4_Free(rdp->rc4_encrypt_key);
+		winpr_RC4_Free(rdp->rc4_decrypt_key);
+
+		rdp->fips_encrypt = NULL;
+		rdp->fips_decrypt = NULL;
+		rdp->rc4_encrypt_key = NULL;
+		rdp->rc4_decrypt_key = NULL;
+	}
 	return ret;
 }
 

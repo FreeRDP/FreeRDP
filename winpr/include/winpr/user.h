@@ -51,6 +51,7 @@
 #define IDTIMEOUT				32000
 #define IDASYNC					32001
 
+#define CF_RAW			0
 #define CF_TEXT			1
 #define CF_BITMAP		2
 #define CF_METAFILEPICT		3

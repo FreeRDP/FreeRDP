@@ -89,7 +89,12 @@ public class LibFreeRDP {
 
         boolean OnAuthenticate(StringBuilder username, StringBuilder domain, StringBuilder password);
 
-        boolean OnVerifiyCertificate(String subject, String issuer, String fingerprint);
+        int OnVerifiyCertificate(String commonName, String subject,
+                String issuer, String fingerprint, boolean mismatch);
+
+        int OnVerifiyChangedCertificate(String commonName, String subject,
+                String issuer, String fingerprint, String oldSubject,
+                String oldIssuer, String oldFingerprint);
 
         void OnGraphicsUpdate(int x, int y, int width, int height);
 
@@ -252,10 +257,13 @@ public class LibFreeRDP {
             }
         }
 
-        /* 0 ... disable
-           1 ... local
-           2 ... remote */
+        /* 0 ... local
+           1 ... remote 
+           2 ... disable */
         args.add("/audio-mode:" + String.valueOf(advanced.getRedirectSound()));
+        if (advanced.getRedirectSound() == 0) {
+            args.add("/sound");
+        }
 
         if (advanced.getRedirectMicrophone()) {
             args.add("/microphone");
@@ -330,14 +338,30 @@ public class LibFreeRDP {
         return false;
     }
 
-    private static boolean OnVerifyCertificate(int inst, String subject, String issuer, String fingerprint) {
+    private static int OnVerifyCertificate(int inst, String commonName, String subject,
+                                           String issuer, String fingerprint, boolean
+                                                   hostMismatch) {
         SessionState s = GlobalApp.getSession(inst);
         if (s == null)
-            return false;
+            return 0;
         UIEventListener uiEventListener = s.getUIEventListener();
         if (uiEventListener != null)
-            return uiEventListener.OnVerifiyCertificate(subject, issuer, fingerprint);
-        return false;
+            return uiEventListener.OnVerifiyCertificate(commonName, subject, issuer, fingerprint,
+                    hostMismatch);
+        return 0;
+    }
+
+    private static int OnVerifyCertificate(int inst, String commonName, String subject,
+                                           String issuer, String fingerprint, String oldSubject,
+                                           String oldIssuer, String oldFingerprint) {
+        SessionState s = GlobalApp.getSession(inst);
+        if (s == null)
+            return 0;
+        UIEventListener uiEventListener = s.getUIEventListener();
+        if (uiEventListener != null)
+            return uiEventListener.OnVerifiyChangedCertificate(commonName, subject, issuer,
+                    fingerprint, oldSubject, oldIssuer, oldFingerprint);
+        return 0;
     }
 
     private static void OnGraphicsUpdate(int inst, int x, int y, int width, int height) {

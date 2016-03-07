@@ -527,6 +527,8 @@ static UINT tsmf_process_addin_args(IWTSPlugin *pPlugin, ADDIN_ARGV *args)
 
 #ifdef STATIC_CHANNELS
 #define DVCPluginEntry	tsmf_DVCPluginEntry
+#else
+#define DVCPluginEntry	FREERDP_API DVCPluginEntry
 #endif
 
 /**

@@ -172,6 +172,45 @@ finish:
 	return res;
 }
 
+/* callback with int result */
+jint java_callback_int(jobject obj, const char * callback, const char* signature, va_list args)
+{
+	jclass jObjClass;
+	jmethodID jCallback;
+	jboolean attached;
+	jint res = -1;
+	JNIEnv *env;
+
+	WLog_DBG(TAG, "java_callback: %s (%s)", callback, signature);
+
+	attached = jni_attach_thread(&env);
+
+	jObjClass = (*env)->GetObjectClass(env, obj);
+
+	if (!jObjClass)
+	{
+		WLog_ERR(TAG, "android_java_callback: failed to get class reference");
+		goto finish;
+	}
+
+	jCallback = (*env)->GetStaticMethodID(env, jObjClass, callback, signature);
+
+	if (!jCallback)
+	{
+		WLog_ERR(TAG, "android_java_callback: failed to get method id");
+		goto finish;
+	}
+
+	res = (*env)->CallStaticIntMethodV(env, jObjClass, jCallback, args);
+
+finish:
+	if(attached == JNI_TRUE)
+		jni_detach_thread();
+
+	return res;
+}
+
+
 /* callback to freerdp class */
 void freerdp_callback(const char * callback, const char * signature, ...)
 {
@@ -186,6 +225,15 @@ jboolean freerdp_callback_bool_result(const char * callback, const char * signat
 	va_list vl;
 	va_start(vl, signature);
 	jboolean res = java_callback_bool(jLibFreeRDPObject, callback, signature, vl);
+	va_end(vl);
+	return res;
+}
+
+jint freerdp_callback_int_result(const char * callback, const char * signature, ...)
+{
+	va_list vl;
+ 	va_start(vl, signature);
+	jint res = java_callback_int(jLibFreeRDPObject, callback, signature, vl);
 	va_end(vl);
 	return res;
 }

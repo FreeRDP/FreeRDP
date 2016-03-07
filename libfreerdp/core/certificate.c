@@ -29,6 +29,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/crypto.h>
 
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
@@ -398,18 +399,17 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
 		const BYTE* sigdata, int sigdatalen, wStream* s, UINT32 siglen)
 {
 	int i, sum;
-	CryptoMd5 md5ctx;
+	WINPR_MD5_CTX md5ctx;
 	BYTE sig[TSSK_KEY_LENGTH];
 	BYTE encsig[TSSK_KEY_LENGTH + 8];
-	BYTE md5hash[CRYPTO_MD5_DIGEST_LENGTH];
+	BYTE md5hash[WINPR_MD5_DIGEST_LENGTH];
 
-	md5ctx = crypto_md5_init();
-
-	if (!md5ctx)
-		return FALSE;
-
-	crypto_md5_update(md5ctx, sigdata, sigdatalen);
-	crypto_md5_final(md5ctx, md5hash);
+	if (!winpr_MD5_Init(&md5ctx))
+            return FALSE;
+	if (!winpr_MD5_Update(&md5ctx, sigdata, sigdatalen))
+            return FALSE;
+	if (!winpr_MD5_Final(&md5ctx, md5hash, sizeof(md5hash)))
+            return FALSE;
 	Stream_Read(s, encsig, siglen);
 
 	/* Last 8 bytes shall be all zero. */

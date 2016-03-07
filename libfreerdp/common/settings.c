@@ -3,6 +3,7 @@
  * Settings Management
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 Armin Novak <armin.novak@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -202,6 +203,22 @@ RDPDR_DEVICE* freerdp_device_collection_find(rdpSettings* settings, const char* 
 			continue;
 
 		if (strcmp(device->Name, name) == 0)
+			return device;
+	}
+
+	return NULL;
+}
+
+RDPDR_DEVICE* freerdp_device_collection_find_type(rdpSettings* settings, UINT32 type)
+{
+	UINT32 index;
+	RDPDR_DEVICE* device;
+
+	for (index = 0; index < settings->DeviceCount; index++)
+	{
+		device = (RDPDR_DEVICE*) settings->DeviceArray[index];
+
+		if (device->Type == type)
 			return device;
 	}
 

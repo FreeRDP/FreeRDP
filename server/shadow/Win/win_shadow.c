@@ -519,7 +519,7 @@ winShadowSubsystem* win_shadow_subsystem_new()
 	return subsystem;
 }
 
-int Win_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
+FREERDP_API int Win_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
 {
 	pEntryPoints->New = (pfnShadowSubsystemNew) win_shadow_subsystem_new;
 	pEntryPoints->Free = (pfnShadowSubsystemFree) win_shadow_subsystem_free;

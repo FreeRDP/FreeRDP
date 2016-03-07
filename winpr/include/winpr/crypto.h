@@ -500,9 +500,9 @@ WINPR_API PCCERT_CONTEXT CertFindCertificateInStore(HCERTSTORE hCertStore, DWORD
 
 WINPR_API PCCERT_CONTEXT CertEnumCertificatesInStore(HCERTSTORE hCertStore, PCCERT_CONTEXT pPrevCertContext);
 
-DWORD CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
+WINPR_API DWORD CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
 		DWORD dwFlags, void* pvTypePara, LPWSTR pszNameString, DWORD cchNameString);
-DWORD CertGetNameStringA(PCCERT_CONTEXT pCertContext, DWORD dwType,
+WINPR_API DWORD CertGetNameStringA(PCCERT_CONTEXT pCertContext, DWORD dwType,
 		DWORD dwFlags, void* pvTypePara, LPSTR pszNameString, DWORD cchNameString);
 
 #ifdef __cplusplus
@@ -642,14 +642,16 @@ union _WINPR_MD5_CTX
 };
 typedef union _WINPR_MD5_CTX WINPR_MD5_CTX;
 
+#define WINPR_MD5_DIGEST_LENGTH        16
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-WINPR_API void winpr_MD5_Init(WINPR_MD5_CTX* ctx);
-WINPR_API void winpr_MD5_Update(WINPR_MD5_CTX* ctx, const BYTE* input, size_t ilen);
-WINPR_API void winpr_MD5_Final(WINPR_MD5_CTX* ctx, BYTE* output);
-WINPR_API void winpr_MD5(const BYTE* input, size_t ilen, BYTE* output);
+WINPR_API BOOL winpr_MD5_Init(WINPR_MD5_CTX* ctx);
+WINPR_API BOOL winpr_MD5_Update(WINPR_MD5_CTX* ctx, const BYTE* input, size_t ilen);
+WINPR_API BOOL winpr_MD5_Final(WINPR_MD5_CTX* ctx, BYTE* output, size_t ilen);
+WINPR_API BOOL winpr_MD5(const BYTE* input, size_t ilen, BYTE* output, size_t olen);
 
 #ifdef __cplusplus
 }
@@ -683,14 +685,16 @@ union _WINPR_MD4_CTX
 };
 typedef union _WINPR_MD4_CTX WINPR_MD4_CTX;
 
+#define WINPR_MD4_DIGEST_LENGTH        16
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-WINPR_API void winpr_MD4_Init(WINPR_MD4_CTX* ctx);
-WINPR_API void winpr_MD4_Update(WINPR_MD4_CTX* ctx, const BYTE* input, size_t ilen);
-WINPR_API void winpr_MD4_Final(WINPR_MD4_CTX* ctx, BYTE* output);
-WINPR_API void winpr_MD4(const BYTE* input, size_t ilen, BYTE* output);
+WINPR_API BOOL winpr_MD4_Init(WINPR_MD4_CTX* ctx);
+WINPR_API BOOL winpr_MD4_Update(WINPR_MD4_CTX* ctx, const BYTE* input, size_t ilen);
+WINPR_API BOOL winpr_MD4_Final(WINPR_MD4_CTX* ctx, BYTE* output, size_t ilen);
+WINPR_API BOOL winpr_MD4(const BYTE* input, size_t ilen, BYTE* output, size_t olen);
 
 #ifdef __cplusplus
 }
@@ -699,6 +703,8 @@ WINPR_API void winpr_MD4(const BYTE* input, size_t ilen, BYTE* output);
 /**
  * SHA1 Hashing
  */
+
+#define WINPR_SHA1_DIGEST_LENGTH	20
 
 struct _OPENSSL_SHA1_CTX
 {
@@ -728,10 +734,10 @@ typedef union _WINPR_SHA1_CTX WINPR_SHA1_CTX;
 extern "C" {
 #endif
 
-WINPR_API void winpr_SHA1_Init(WINPR_SHA1_CTX* ctx);
-WINPR_API void winpr_SHA1_Update(WINPR_SHA1_CTX* ctx, const BYTE* input, size_t ilen);
-WINPR_API void winpr_SHA1_Final(WINPR_SHA1_CTX* ctx, BYTE* output);
-WINPR_API void winpr_SHA1(const BYTE* input, size_t ilen, BYTE* output);
+WINPR_API BOOL winpr_SHA1_Init(WINPR_SHA1_CTX* ctx);
+WINPR_API BOOL winpr_SHA1_Update(WINPR_SHA1_CTX* ctx, const BYTE* input, size_t ilen);
+WINPR_API BOOL winpr_SHA1_Final(WINPR_SHA1_CTX* ctx, BYTE* output, size_t ilen);
+WINPR_API BOOL winpr_SHA1(const BYTE* input, size_t ilen, BYTE* output, size_t olen);
 
 #ifdef __cplusplus
 }
@@ -740,17 +746,19 @@ WINPR_API void winpr_SHA1(const BYTE* input, size_t ilen, BYTE* output);
 /**
  * HMAC
  */
-
-#define WINPR_MD_NONE		0
-#define WINPR_MD_MD2		1
-#define WINPR_MD_MD4		2
-#define WINPR_MD_MD5		3
-#define WINPR_MD_SHA1		4
-#define WINPR_MD_SHA224		5
-#define WINPR_MD_SHA256		6
-#define WINPR_MD_SHA384		7
-#define WINPR_MD_SHA512		8
-#define WINPR_MD_RIPEMD160	9
+typedef enum
+{
+    WINPR_MD_NONE		= 0,
+    WINPR_MD_MD2		= 1,
+    WINPR_MD_MD4		= 2,
+    WINPR_MD_MD5		= 3,
+    WINPR_MD_SHA1		= 4,
+    WINPR_MD_SHA224		= 5,
+    WINPR_MD_SHA256		= 6,
+    WINPR_MD_SHA384		= 7,
+    WINPR_MD_SHA512		= 8,
+    WINPR_MD_RIPEMD160	= 9
+} WINPR_MD_TYPE;
 
 struct _OPENSSL_EVP_MD_CTX
 {
@@ -793,10 +801,11 @@ typedef union _WINPR_HMAC_CTX WINPR_HMAC_CTX;
 extern "C" {
 #endif
 
-WINPR_API int winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, int md, const BYTE* key, size_t keylen);
-WINPR_API int winpr_HMAC_Update(WINPR_HMAC_CTX* ctx, const BYTE* input, size_t ilen);
-WINPR_API int winpr_HMAC_Final(WINPR_HMAC_CTX* ctx, BYTE* output);
-WINPR_API int winpr_HMAC(int md, const BYTE* key, size_t keylen, const BYTE* input, size_t ilen, BYTE* output);
+WINPR_API BOOL winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, WINPR_MD_TYPE  md, const BYTE* key, size_t keylen);
+WINPR_API BOOL winpr_HMAC_Update(WINPR_HMAC_CTX* ctx, const BYTE* input, size_t ilen);
+WINPR_API BOOL winpr_HMAC_Final(WINPR_HMAC_CTX* ctx, BYTE* output, size_t ilen);
+WINPR_API BOOL winpr_HMAC(WINPR_MD_TYPE md, const BYTE* key, size_t keylen,
+            const BYTE* input, size_t ilen, BYTE* output, size_t olen);
 
 #ifdef __cplusplus
 }
@@ -838,10 +847,10 @@ typedef union _WINPR_DIGEST_CTX WINPR_DIGEST_CTX;
 extern "C" {
 #endif
 
-WINPR_API int winpr_Digest_Init(WINPR_DIGEST_CTX* ctx, int md);
-WINPR_API int winpr_Digest_Update(WINPR_DIGEST_CTX* ctx, const BYTE* input, size_t ilen);
-WINPR_API int winpr_Digest_Final(WINPR_DIGEST_CTX* ctx, BYTE* output);
-WINPR_API int winpr_Digest(int md, const BYTE* input, size_t ilen, BYTE* output);
+WINPR_API BOOL winpr_Digest_Init(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md);
+WINPR_API BOOL winpr_Digest_Update(WINPR_DIGEST_CTX* ctx, const BYTE* input, size_t ilen);
+WINPR_API BOOL winpr_Digest_Final(WINPR_DIGEST_CTX* ctx, BYTE* output, size_t ilen);
+WINPR_API BOOL winpr_Digest(int md, const BYTE* input, size_t ilen, BYTE* output, size_t olen);
 
 #ifdef __cplusplus
 }
@@ -892,9 +901,9 @@ typedef union _WINPR_RC4_CTX WINPR_RC4_CTX;
 extern "C" {
 #endif
 
-WINPR_API void winpr_RC4_Init(WINPR_RC4_CTX* ctx, const BYTE* key, size_t keylen);
-WINPR_API int winpr_RC4_Update(WINPR_RC4_CTX* ctx, size_t length, const BYTE* input, BYTE* output);
-WINPR_API void winpr_RC4_Final(WINPR_RC4_CTX* ctx);
+WINPR_API WINPR_RC4_CTX* winpr_RC4_New(const BYTE* key, size_t keylen);
+WINPR_API BOOL winpr_RC4_Update(WINPR_RC4_CTX* ctx, size_t length, const BYTE* input, BYTE* output);
+WINPR_API void winpr_RC4_Free(WINPR_RC4_CTX* ctx);
 
 #ifdef __cplusplus
 }
@@ -903,6 +912,8 @@ WINPR_API void winpr_RC4_Final(WINPR_RC4_CTX* ctx);
 /**
  * Generic Cipher API
  */
+
+#define WINPR_AES_BLOCK_SIZE			16
 
 /* cipher operation types */
 #define WINPR_ENCRYPT				0
@@ -1007,9 +1018,10 @@ typedef union _WINPR_CIPHER_CTX WINPR_CIPHER_CTX;
 extern "C" {
 #endif
 
-WINPR_API int winpr_Cipher_Init(WINPR_CIPHER_CTX* ctx, int cipher, int op, const BYTE* key, const BYTE* iv);
-WINPR_API int winpr_Cipher_Update(WINPR_CIPHER_CTX* ctx, const BYTE* input, size_t ilen, BYTE* output, size_t* olen);
-WINPR_API int winpr_Cipher_Final(WINPR_CIPHER_CTX* ctx, BYTE* output, size_t* olen);
+WINPR_API WINPR_CIPHER_CTX* winpr_Cipher_New(int cipher, int op, const BYTE* key, const BYTE* iv);
+WINPR_API BOOL winpr_Cipher_Update(WINPR_CIPHER_CTX* ctx, const BYTE* input, size_t ilen, BYTE* output, size_t* olen);
+WINPR_API BOOL winpr_Cipher_Final(WINPR_CIPHER_CTX* ctx, BYTE* output, size_t* olen);
+WINPR_API void winpr_Cipher_Free(WINPR_CIPHER_CTX* ctx);
 
 #ifdef __cplusplus
 }

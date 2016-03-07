@@ -24,7 +24,11 @@
 
 #include <winpr/file.h>
 
-#ifndef _WIN32
+#ifdef _WIN32
+
+#include <io.h>
+
+#else /* _WIN32 */
 
 #include "../log.h"
 #define TAG WINPR_TAG("file")
@@ -36,6 +40,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/file.h>
+#include <sys/stat.h>
+#include <sys/time.h>
 
 static BOOL FileIsHandled(HANDLE handle)
 {
@@ -342,6 +348,128 @@ static BOOL FileUnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfByte
 	return TRUE;
 }
 
+static BOOL FileSetFileTime(HANDLE hFile, const FILETIME *lpCreationTime,
+		const FILETIME *lpLastAccessTime, const FILETIME *lpLastWriteTime)
+{
+	int rc;
+#if defined(__APPLE__) || defined(ANDROID) || defined(__FreeBSD__)
+	struct stat buf;
+#endif
+/* OpenBSD, NetBSD and DragonflyBSD support POSIX futimens */
+#if defined(ANDROID) || defined(__FreeBSD__)
+	struct timeval timevals[2];
+#else
+	struct timespec times[2]; /* last access, last modification */
+#endif
+	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
+	const UINT64 EPOCH_DIFF = 11644473600ULL;
+
+	if (!hFile)
+		return FALSE;
+
+#if defined(__APPLE__) || defined(ANDROID) || defined(__FreeBSD__)
+	rc = fstat(fileno(pFile->fp), &buf);
+	if (rc < 0)
+		return FALSE;
+#endif
+	if (!lpLastAccessTime)
+	{
+#if defined(__APPLE__)
+#if !defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE)
+		times[0] = buf.st_atimespec;
+#else
+		times[0].tv_sec = buf.st_atime;
+		times[0].tv_nsec = buf.st_atimensec;
+#endif
+#elif defined(__FreeBSD__)
+		timevals[0].tv_sec = buf.st_atime;
+#ifdef _POSIX_SOURCE
+		TIMESPEC_TO_TIMEVAL(&timevals[0], &buf.st_atim);
+#else
+		TIMESPEC_TO_TIMEVAL(&timevals[0], &buf.st_atimespec);
+#endif
+#elif defined(ANDROID)
+		timevals[0].tv_sec = buf.st_atime;
+		timevals[0].tv_usec = buf.st_atimensec / 1000UL;
+#else
+		times[0].tv_sec = UTIME_OMIT;
+		times[0].tv_nsec = UTIME_OMIT;
+#endif
+	}
+	else
+	{
+		UINT64 tmp = ((UINT64)lpLastAccessTime->dwHighDateTime) << 32
+				| lpLastAccessTime->dwLowDateTime;
+		tmp -= EPOCH_DIFF;
+		tmp /= 10ULL;
+
+#if defined(ANDROID) || defined(__FreeBSD__)
+		tmp /= 10000ULL;
+
+		timevals[0].tv_sec = tmp / 10000ULL;
+		timevals[0].tv_usec = tmp % 10000ULL;
+#else
+		times[0].tv_sec = tmp / 10000000ULL;
+		times[0].tv_nsec = tmp % 10000000ULL;
+#endif
+	}
+	if (!lpLastWriteTime)
+	{
+#ifdef __APPLE__
+#if !defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE)
+		times[1] = buf.st_mtimespec;
+#else
+		times[1].tv_sec = buf.st_mtime;
+		times[1].tv_nsec = buf.st_mtimensec;
+#endif
+#elif defined(__FreeBSD__)
+		timevals[1].tv_sec = buf.st_mtime;
+#ifdef _POSIX_SOURCE
+		TIMESPEC_TO_TIMEVAL(&timevals[1], &buf.st_mtim);
+#else
+		TIMESPEC_TO_TIMEVAL(&timevals[1], &buf.st_mtimespec);
+#endif
+#elif defined(ANDROID)
+		timevals[1].tv_sec = buf.st_mtime;
+		timevals[1].tv_usec = buf.st_mtimensec / 1000UL;
+#else
+		times[1].tv_sec = UTIME_OMIT;
+		times[1].tv_nsec = UTIME_OMIT;
+#endif
+	}
+	else
+	{
+		UINT64 tmp = ((UINT64)lpLastWriteTime->dwHighDateTime) << 32
+				| lpLastWriteTime->dwLowDateTime;
+		tmp -= EPOCH_DIFF;
+		tmp /= 10ULL;
+
+#if defined(ANDROID) || defined(__FreeBSD__)
+		tmp /= 10000ULL;
+
+		timevals[1].tv_sec = tmp / 10000ULL;
+		timevals[1].tv_usec = tmp % 10000ULL;
+#else
+		times[1].tv_sec = tmp / 10000000ULL;
+		times[1].tv_nsec = tmp % 10000000ULL;
+#endif
+	}
+
+	// TODO: Creation time can not be handled!
+#ifdef __APPLE__
+	rc = futimes(fileno(pFile->fp), times);
+#elif defined(ANDROID) || defined(__FreeBSD__)
+	rc = utimes(pFile->lpFileName, timevals);
+#else
+	rc = futimens(fileno(pFile->fp), times);
+#endif
+	if (rc != 0)
+		return FALSE;
+
+	return TRUE;
+
+}
+
 static HANDLE_OPS fileOps = {
 	FileIsHandled,
 	FileCloseHandle,
@@ -361,7 +489,8 @@ static HANDLE_OPS fileOps = {
 	NULL, /* FileLockFile */
 	FileLockFileEx,
 	FileUnlockFile,
-	FileUnlockFileEx
+	FileUnlockFileEx,
+	FileSetFileTime
 };
 
 static HANDLE_OPS shmOps = {
@@ -383,8 +512,8 @@ static HANDLE_OPS shmOps = {
 	NULL, /* FileLockFile */
 	NULL, /* FileLockFileEx */
 	NULL, /* FileUnlockFile */
-	NULL /* FileUnlockFileEx */
-
+	NULL, /* FileUnlockFileEx */
+	NULL  /* FileSetFileTime */
 };
 
 
@@ -503,7 +632,7 @@ BOOL IsFileDevice(LPCTSTR lpDeviceName)
 	return TRUE;
 }
 
-HANDLE_CREATOR _FileHandleCreator = 
+HANDLE_CREATOR _FileHandleCreator =
 {
 	IsFileDevice,
 	FileCreateFileA
@@ -583,7 +712,7 @@ HANDLE GetFileHandleForFileDescriptor(int fd)
 {
 #ifdef _WIN32
 	return (HANDLE)_get_osfhandle(fd);
-#else /* WIN32 */
+#else /* _WIN32 */
 	WINPR_FILE *pFile;
 	FILE* fp;
 	int flags;
@@ -611,7 +740,7 @@ HANDLE GetFileHandleForFileDescriptor(int fd)
 		return INVALID_HANDLE_VALUE;
 
 	return (HANDLE)pFile;
-#endif /* WIN32 */
+#endif /* _WIN32 */
 }
 
 

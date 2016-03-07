@@ -197,6 +197,8 @@ WINPR_API char* ConvertLineEndingToCRLF(const char* str, int* size);
 
 WINPR_API char* StrSep(char** stringp, const char* delim);
 
+WINPR_API INT64 GetLine(char** lineptr, size_t* size, FILE* stream);
+
 #ifdef __cplusplus
 }
 #endif

@@ -489,7 +489,7 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 	 */
 	if (buf && num && !ringbuffer_write(&ptr->xmitBuffer, (const BYTE*) buf, num))
 	{
-		WLog_ERR(TAG, "an error occured when writing (num: %d)", num);
+		WLog_ERR(TAG, "an error occurred when writing (num: %d)", num);
 		return -1;
 	}
 
@@ -1027,7 +1027,7 @@ BOOL freerdp_tcp_set_keep_alive_mode(int sockfd)
 #endif
 
 #ifdef TCP_USER_TIMEOUT
-	optval = 4000;
+	optval = 9000;
 	optlen = sizeof(optval);
 
 	if (setsockopt(sockfd, SOL_TCP, TCP_USER_TIMEOUT, (void*) &optval, optlen) < 0)

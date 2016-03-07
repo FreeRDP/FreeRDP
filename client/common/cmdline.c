@@ -4,6 +4,7 @@
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2014 Norbert Federa <norbert.federa@thincast.com>
+ * Copyright 2016 Armin Novak <armin.novak@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -175,6 +176,12 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "buildconfig", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_BUILDCONFIG, NULL, NULL, NULL, -1, NULL, "print the build configuration" },
 	{ "log-level", COMMAND_LINE_VALUE_REQUIRED, "[OFF|FATAL|ERROR|WARN|INFO|DEBUG|TRACE]", NULL, NULL, -1, NULL, "Set the default log level" },
 	{ "log-filters", COMMAND_LINE_VALUE_REQUIRED, "<logger tag>:<log level>[, <logger tag>:<log level>][, ...]]", NULL, NULL, -1, NULL, "Set logger filters" },
+	{ "pwidth", COMMAND_LINE_VALUE_REQUIRED, "<physical width (mm)>", NULL, NULL, -1, NULL, "Physical width of display (in millimeters)" },
+	{ "pheight", COMMAND_LINE_VALUE_REQUIRED, "<physical height (mm)>", NULL, NULL, -1, NULL, "Physical height of display (in millimeters)" },
+	{ "orientation", COMMAND_LINE_VALUE_REQUIRED, "<orientation>", NULL, NULL, -1, NULL, "Orientation of display in degrees (0, 90, 180, 270)" },
+	{ "scale", COMMAND_LINE_VALUE_REQUIRED, "<scale amount (%%)>", "100", NULL, -1, NULL, "Scaling factor of the display (value of 100, 140, or 180)" },
+	{ "scale-desktop", COMMAND_LINE_VALUE_REQUIRED, "<scale amount (%%)>", "100", NULL, -1, NULL, "Scaling factor for desktop applications (value between 100 and 500)" },
+	{ "scale-device", COMMAND_LINE_VALUE_REQUIRED, "<scale amount (%%)>", "100", NULL, -1, NULL, "Scaling factor for app store applications (100, 140, or 180)" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
@@ -1305,7 +1312,7 @@ int freerdp_detect_posix_style_command_line_syntax(int argc, char** argv,
 }
 
 static BOOL freerdp_client_detect_command_line(int argc, char** argv,
-					       DWORD* flags, BOOL ignoreUnknown)
+						DWORD* flags, BOOL ignoreUnknown)
 {
 	int old_cli_status;
 	int old_cli_count;
@@ -1678,7 +1685,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			{
 				id = (unsigned long int) freerdp_map_keyboard_layout_name_to_id(arg->Value);
 				if (id == -1)
-					WLog_ERR(TAG, "A problem occured while mapping the layout name to id");
+					WLog_ERR(TAG, "A problem occurred while mapping the layout name to id");
 				else if (id == 0)
 				{
 					WLog_ERR(TAG, "Could not identify keyboard layout: %s", arg->Value);
@@ -2289,6 +2296,55 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			if (!(settings->RemoteAssistancePassword = _strdup(arg->Value)))
 				return COMMAND_LINE_ERROR_MEMORY;
 		}
+		CommandLineSwitchCase(arg, "pwidth")
+		{
+			settings->DesktopPhysicalWidth = atoi(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "pheight")
+		{
+			settings->DesktopPhysicalHeight = atoi(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "orientation")
+		{
+			settings->DesktopOrientation = atoi(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "scale")
+		{
+			int scaleFactor = atoi(arg->Value);
+			if (scaleFactor == 100 || scaleFactor == 140 || scaleFactor == 180) {
+				settings->DesktopScaleFactor = scaleFactor;
+				settings->DeviceScaleFactor = scaleFactor;
+			} else {
+				WLog_ERR(TAG, "scale:  invalid scale factor (%d)", scaleFactor);
+				return COMMAND_LINE_ERROR;
+			}
+		}
+		CommandLineSwitchCase(arg, "scale-desktop")
+		{
+			int desktopScaleFactor = atoi(arg->Value);
+			if (desktopScaleFactor >= 100 && desktopScaleFactor <= 500)
+			{
+				settings->DesktopScaleFactor = desktopScaleFactor;
+			}
+			else
+			{
+				WLog_ERR(TAG, "scale:  invalid desktop scale factor (%d)", desktopScaleFactor);
+				return COMMAND_LINE_ERROR;
+			}
+		}
+		CommandLineSwitchCase(arg, "scale-device")
+		{
+			int deviceScaleFactor = atoi(arg->Value);
+			if (deviceScaleFactor == 100 || deviceScaleFactor == 140 || deviceScaleFactor == 180)
+			{
+				settings->DeviceScaleFactor = deviceScaleFactor;
+			}
+			else
+			{
+				WLog_ERR(TAG, "scale:  invalid device scale factor (%d)", deviceScaleFactor);
+				return COMMAND_LINE_ERROR;
+			}
+		}
 		CommandLineSwitchDefault(arg)
 		{
 		}
@@ -2453,28 +2509,34 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	{
 		RDPDR_SMARTCARD* smartcard;
 
-		smartcard = (RDPDR_SMARTCARD*) calloc(1, sizeof(RDPDR_SMARTCARD));
+		if (!freerdp_device_collection_find_type(settings, RDPDR_DTYP_SMARTCARD))
+		{
+			smartcard = (RDPDR_SMARTCARD*) calloc(1, sizeof(RDPDR_SMARTCARD));
 
-		if (!smartcard)
-			return FALSE;
+			if (!smartcard)
+				return FALSE;
 
-		smartcard->Type = RDPDR_DTYP_SMARTCARD;
-		if (!freerdp_device_collection_add(settings, (RDPDR_DEVICE*) smartcard))
-			return FALSE;
+			smartcard->Type = RDPDR_DTYP_SMARTCARD;
+			if (!freerdp_device_collection_add(settings, (RDPDR_DEVICE*) smartcard))
+				return FALSE;
+		}
 	}
 
 	if (settings->RedirectPrinters)
 	{
 		RDPDR_PRINTER* printer;
 
-		printer = (RDPDR_PRINTER*) calloc(1, sizeof(RDPDR_PRINTER));
+		if (!freerdp_device_collection_find_type(settings, RDPDR_DTYP_PRINT))
+		{
+			printer = (RDPDR_PRINTER*) calloc(1, sizeof(RDPDR_PRINTER));
 
-		if (!printer)
-			return FALSE;
+			if (!printer)
+				return FALSE;
 
-		printer->Type = RDPDR_DTYP_PRINT;
-		if (!freerdp_device_collection_add(settings, (RDPDR_DEVICE*) printer))
-			return FALSE;
+			printer->Type = RDPDR_DTYP_PRINT;
+			if (!freerdp_device_collection_add(settings, (RDPDR_DEVICE*) printer))
+				return FALSE;
+		}
 	}
 
 	if (settings->RedirectClipboard)

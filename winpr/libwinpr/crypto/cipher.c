@@ -43,33 +43,49 @@
  * RC4
  */
 
-void winpr_RC4_Init(WINPR_RC4_CTX* ctx, const BYTE* key, size_t keylen)
+WINPR_RC4_CTX* winpr_RC4_New(const BYTE* key, size_t keylen)
 {
+	WINPR_RC4_CTX* ctx = NULL;
+
+	if (!key || (keylen == 0))
+		return NULL;
+
+	ctx = calloc(1, sizeof(WINPR_RC4_CTX));
+	if (!ctx)
+		return NULL;
+
 #if defined(WITH_OPENSSL)
 	RC4_set_key((RC4_KEY*) ctx, keylen, key);
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_ARC4_C)
 	mbedtls_arc4_init((mbedtls_arc4_context*) ctx);
 	mbedtls_arc4_setup((mbedtls_arc4_context*) ctx, key, (unsigned int) keylen);
 #endif
+	return ctx;
 }
 
-int winpr_RC4_Update(WINPR_RC4_CTX* ctx, size_t length, const BYTE* input, BYTE* output)
+BOOL winpr_RC4_Update(WINPR_RC4_CTX* ctx, size_t length, const BYTE* input, BYTE* output)
 {
 #if defined(WITH_OPENSSL)
 	RC4((RC4_KEY*) ctx, length, input, output);
-	return 0;
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_ARC4_C)
-	return mbedtls_arc4_crypt((mbedtls_arc4_context*) ctx, length, input, output);
+	if (mbedtls_arc4_crypt((mbedtls_arc4_context*) ctx, length, input, output) != 0)
+		return FALSE;
 #endif
+
+	return TRUE;
 }
 
-void winpr_RC4_Final(WINPR_RC4_CTX* ctx)
+void winpr_RC4_Free(WINPR_RC4_CTX* ctx)
 {
+	if (!ctx)
+		return;
+
 #if defined(WITH_OPENSSL)
 
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_ARC4_C)
 	mbedtls_arc4_free((mbedtls_arc4_context*) ctx);
 #endif
+	free(ctx);
 }
 
 /**
@@ -496,80 +512,120 @@ mbedtls_cipher_type_t winpr_mbedtls_get_cipher_type(int cipher)
 }
 #endif
 
-int winpr_Cipher_Init(WINPR_CIPHER_CTX* ctx, int cipher, int op, const BYTE* key, const BYTE* iv)
+WINPR_CIPHER_CTX* winpr_Cipher_New(int cipher, int op, const BYTE* key, const BYTE* iv)
 {
+	WINPR_CIPHER_CTX* ctx;
 #if defined(WITH_OPENSSL)
 	int operation;
 	const EVP_CIPHER* evp;
-	evp = winpr_openssl_get_evp_cipher(cipher);
-
-	if (!evp)
-		return -1;
-
-	operation = (op == WINPR_ENCRYPT) ? 1 : 0;
-	EVP_CIPHER_CTX_init((EVP_CIPHER_CTX*) ctx);
-
-	if (EVP_CipherInit_ex((EVP_CIPHER_CTX*) ctx, evp, NULL, key, iv, operation) != 1)
-		return -1;
+	EVP_CIPHER_CTX* octx;
 #elif defined(WITH_MBEDTLS)
 	int key_bitlen;
 	mbedtls_operation_t operation;
 	mbedtls_cipher_type_t cipher_type;
 	const mbedtls_cipher_info_t* cipher_info;
+#endif
+
+	ctx = calloc(1, sizeof(WINPR_CIPHER_CTX));
+	if (!ctx)
+		return NULL;
+
+#if defined(WITH_OPENSSL)
+	octx = (EVP_CIPHER_CTX*)ctx;
+	evp = winpr_openssl_get_evp_cipher(cipher);
+
+	if (!evp)
+	{
+		free (ctx);
+		return NULL;
+	}
+
+	operation = (op == WINPR_ENCRYPT) ? 1 : 0;
+	EVP_CIPHER_CTX_init(octx);
+
+	if (EVP_CipherInit_ex(octx, evp, NULL, key, iv, operation) != 1)
+	{
+		EVP_CIPHER_CTX_cleanup(octx);
+		free (octx);
+		return NULL;
+	}
+
+	EVP_CIPHER_CTX_set_padding(octx, 0);
+#elif defined(WITH_MBEDTLS)
 	cipher_type = winpr_mbedtls_get_cipher_type(cipher);
 	cipher_info = mbedtls_cipher_info_from_type(cipher_type);
 
 	if (!cipher_info)
-		return -1;
+	{
+		free (ctx);
+		return NULL;
+	}
 
 	operation = (op == WINPR_ENCRYPT) ? MBEDTLS_ENCRYPT : MBEDTLS_DECRYPT;
 	mbedtls_cipher_init((mbedtls_cipher_context_t*) ctx);
 
 	if (mbedtls_cipher_setup((mbedtls_cipher_context_t*) ctx, cipher_info) != 0)
-		return -1;
+	{
+		free (ctx);
+		return NULL;
+	}
 
 	key_bitlen = mbedtls_cipher_get_key_bitlen((mbedtls_cipher_context_t*) ctx);
 
 	if (mbedtls_cipher_setkey((mbedtls_cipher_context_t*) ctx, key, key_bitlen, operation) != 0)
-		return -1;
+	{
+		mbedtls_cipher_free((mbedtls_cipher_context_t*) ctx);
+		free (ctx);
+		return NULL;
+	}
 #endif
-	return 0;
+	return ctx;
 }
 
-int winpr_Cipher_Update(WINPR_CIPHER_CTX* ctx, const BYTE* input, size_t ilen, BYTE* output, size_t* olen)
+BOOL winpr_Cipher_Update(WINPR_CIPHER_CTX* ctx, const BYTE* input, size_t ilen, BYTE* output, size_t* olen)
 {
 #if defined(WITH_OPENSSL)
 	int outl = (int) *olen;
 
 	if (EVP_CipherUpdate((EVP_CIPHER_CTX*) ctx, output, &outl, input, ilen) != 1)
-		return -1;
+		return FALSE;
 
 	*olen = (size_t) outl;
 #elif defined(WITH_MBEDTLS)
 	if (mbedtls_cipher_update((mbedtls_cipher_context_t*) ctx, input, ilen, output, olen) != 0)
-		return -1;
+		return FALSE;
 #endif
-	return 0;
+	return TRUE;
 }
 
-int winpr_Cipher_Final(WINPR_CIPHER_CTX* ctx, BYTE* output, size_t* olen)
+BOOL winpr_Cipher_Final(WINPR_CIPHER_CTX* ctx, BYTE* output, size_t* olen)
 {
 #if defined(WITH_OPENSSL)
 	int outl = (int) *olen;
 
 	if (EVP_CipherFinal_ex((EVP_CIPHER_CTX*) ctx, output, &outl) != 1)
-		return -1;
+		return FALSE;
 
-	EVP_CIPHER_CTX_cleanup((EVP_CIPHER_CTX*) ctx);
 	*olen = (size_t) outl;
 #elif defined(WITH_MBEDTLS)
 	if (mbedtls_cipher_finish((mbedtls_cipher_context_t*) ctx, output, olen) != 0)
-		return -1;
+		return FALSE;
+#endif
+	return TRUE;
+}
 
+void winpr_Cipher_Free(WINPR_CIPHER_CTX* ctx)
+{
+	if (!ctx)
+		return;
+
+#if defined(WITH_OPENSSL)
+	EVP_CIPHER_CTX_cleanup((EVP_CIPHER_CTX*) ctx);
+#elif defined(WITH_MBEDTLS)
 	mbedtls_cipher_free((mbedtls_cipher_context_t*) ctx);
 #endif
-	return 0;
 }
+
 
 /**
  * Key Generation

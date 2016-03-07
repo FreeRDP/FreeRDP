@@ -4,6 +4,7 @@
  *
  * Copyright 2009-2011 Jay Sorg
  * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 Armin Novak <armin.novak@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +21,8 @@
 
 #ifndef FREERDP_SETTINGS_H
 #define FREERDP_SETTINGS_H
+
+#include <winpr/timezone.h>
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -268,32 +271,6 @@ typedef struct _TARGET_NET_ADDRESS TARGET_NET_ADDRESS;
 #define ORIENTATION_PORTRAIT			90
 #define ORIENTATION_LANDSCAPE_FLIPPED	180
 #define ORIENTATION_PORTRAIT_FLIPPED	270
-
-/* SYSTEM_TIME */
-typedef struct
-{
-	UINT16 wYear;
-	UINT16 wMonth;
-	UINT16 wDayOfWeek;
-	UINT16 wDay;
-	UINT16 wHour;
-	UINT16 wMinute;
-	UINT16 wSecond;
-	UINT16 wMilliseconds;
-} SYSTEM_TIME;
-
-/* TIME_ZONE_INFORMATION */
-struct _TIME_ZONE_INFO
-{
-	UINT32 bias;
-	char standardName[32];
-	SYSTEM_TIME standardDate;
-	UINT32 standardBias;
-	char daylightName[32];
-	SYSTEM_TIME daylightDate;
-	UINT32 daylightBias;
-};
-typedef struct _TIME_ZONE_INFO TIME_ZONE_INFO;
 
 /* ARC_CS_PRIVATE_PACKET */
 typedef struct
@@ -977,7 +954,7 @@ struct rdp_settings
 	UINT64 padding0896[896 - 837]; /* 837 */
 
 	/* Client Info (Time Zone) */
-	ALIGN64 TIME_ZONE_INFO* ClientTimeZone; /* 896 */
+	ALIGN64 LPTIME_ZONE_INFORMATION ClientTimeZone; /* 896 */
 	ALIGN64 char* DynamicDSTTimeZoneKeyName; /* 897 */
 	ALIGN64 BOOL DynamicDaylightTimeDisabled; /* 898 */
 	UINT64 padding0960[960 - 899]; /* 899 */
@@ -1459,6 +1436,7 @@ FREERDP_API int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, char* pre
 
 FREERDP_API BOOL freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device);
 FREERDP_API RDPDR_DEVICE* freerdp_device_collection_find(rdpSettings* settings, const char* name);
+FREERDP_API RDPDR_DEVICE* freerdp_device_collection_find_type(rdpSettings* settings, UINT32 type);
 FREERDP_API RDPDR_DEVICE* freerdp_device_clone(RDPDR_DEVICE* device);
 FREERDP_API void freerdp_device_collection_free(rdpSettings* settings);
 

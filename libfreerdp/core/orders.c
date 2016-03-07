@@ -1728,7 +1728,7 @@ BOOL update_read_fast_glyph_order(wStream* s, ORDER_INFO* orderInfo, FAST_GLYPH_
 			}
 		}
 
-		Stream_Pointer(s) = phold + fastGlyph->cbData;
+		Stream_SetPointer(s, phold + fastGlyph->cbData);
 	}
 
 	return TRUE;
@@ -3546,7 +3546,7 @@ BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flags)
 			break;
 	}
 
-	Stream_Pointer(s) = next;
+	Stream_SetPointer(s, next);
 
 	return TRUE;
 }

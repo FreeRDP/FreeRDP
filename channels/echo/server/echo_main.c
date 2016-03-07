@@ -116,12 +116,15 @@ static void* echo_server_thread_func(void* arg)
 	DWORD BytesReturned = 0;
 	echo_server* echo = (echo_server*) arg;
 	UINT error;
-    DWORD status;
+	DWORD status;
 
 	if ((error = echo_server_open_channel(echo)))
 	{
-		IFCALLRET(echo->context.OpenResult, error, &echo->context, ECHO_SERVER_OPEN_RESULT_NOTSUPPORTED);
+		UINT error2 = 0;
 		WLog_ERR(TAG, "echo_server_open_channel failed with error %lu!", error);
+		IFCALLRET(echo->context.OpenResult, error2, &echo->context, ECHO_SERVER_OPEN_RESULT_NOTSUPPORTED);
+		if (error2)
+			WLog_ERR(TAG, "echo server's OpenResult callback failed with error %lu", error2);
 		goto out;
 	}
 
@@ -145,14 +148,14 @@ static void* echo_server_thread_func(void* arg)
 
 	while (1)
 	{
-        status = WaitForMultipleObjects(nCount, events, FALSE, 100);
+		status = WaitForMultipleObjects(nCount, events, FALSE, 100);
 
-        if (status == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
-            break;
-        }
+		if (status == WAIT_FAILED)
+		{
+			error = GetLastError();
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
+			break;
+		}
 
 		if (status == WAIT_OBJECT_0)
 		{

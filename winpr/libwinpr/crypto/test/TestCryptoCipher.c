@@ -7,22 +7,26 @@ static const BYTE* TEST_RC4_KEY = (BYTE*) "Key";
 static const char* TEST_RC4_PLAINTEXT = "Plaintext";
 static const BYTE* TEST_RC4_CIPHERTEXT = (BYTE*) "\xBB\xF3\x16\xE8\xD9\x40\xAF\x0A\xD3";
 
-BOOL test_crypto_cipher_rc4()
+static BOOL test_crypto_cipher_rc4()
 {
 	size_t len;
-	BYTE* text;
-	WINPR_RC4_CTX ctx;
+	BOOL rc = FALSE;
+	BYTE* text = NULL;
+	WINPR_RC4_CTX* ctx;
 
 	len = strlen(TEST_RC4_PLAINTEXT);
 
 	text = (BYTE*) calloc(1, len);
 
 	if (!text)
-		return FALSE;
+		goto out;
 
-	winpr_RC4_Init(&ctx, TEST_RC4_KEY, strlen((char*) TEST_RC4_KEY));
-	winpr_RC4_Update(&ctx, len, (BYTE*) TEST_RC4_PLAINTEXT, text);
-	winpr_RC4_Final(&ctx);
+	if ((ctx = winpr_RC4_New(TEST_RC4_KEY, strlen((char*) TEST_RC4_KEY))) == NULL)
+		goto out;
+	rc = winpr_RC4_Update(ctx, len, (BYTE*) TEST_RC4_PLAINTEXT, text);
+	winpr_RC4_Free(ctx);
+	if (!rc)
+		goto out;
 
 	if (memcmp(text, TEST_RC4_CIPHERTEXT, len) != 0)
 	{
@@ -36,11 +40,14 @@ BOOL test_crypto_cipher_rc4()
 
 		free(actual);
 		free(expected);
-
-		return FALSE;
+		goto out;
 	}
 
-	return TRUE;
+	rc = TRUE;
+
+out:
+	free(text);
+	return rc;
 }
 
 static const BYTE* TEST_RAND_DATA = (BYTE*)
@@ -56,7 +63,7 @@ static const BYTE* TEST_CIPHER_KEY = (BYTE*)
 static const BYTE* TEST_CIPHER_IV = (BYTE*)
 	"\xFE\xE3\x9F\xF0\xD1\x5E\x37\x0C\xAB\xAB\x9B\x04\xF3\xDB\x99\x15";
 
-BOOL test_crypto_cipher_key()
+static BOOL test_crypto_cipher_key()
 {
 	int status;
 	BYTE key[32];

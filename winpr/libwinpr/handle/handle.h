@@ -77,6 +77,8 @@ typedef BOOL (*pcUnlockFile)(HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOf
 		DWORD nNumberOfBytesToUnlockLow, DWORD nNumberOfBytesToUnlockHigh);
 typedef BOOL (*pcUnlockFileEx)(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfBytesToUnlockLow,
 		DWORD nNumberOfBytesToUnlockHigh, LPOVERLAPPED lpOverlapped);
+typedef BOOL (*pcSetFileTime)(HANDLE hFile, const FILETIME *lpCreationTime,
+		const FILETIME *lpLastAccessTime, const FILETIME *lpLastWriteTime);
 
 typedef struct _HANDLE_OPS
 {
@@ -99,6 +101,7 @@ typedef struct _HANDLE_OPS
 	pcLockFileEx LockFileEx;
 	pcUnlockFile UnlockFile;
 	pcUnlockFileEx UnlockFileEx;
+	pcSetFileTime SetFileTime;
 } HANDLE_OPS;
 
 struct winpr_handle

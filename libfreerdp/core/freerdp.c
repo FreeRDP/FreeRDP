@@ -383,6 +383,7 @@ BOOL freerdp_reconnect(freerdp* instance)
 	BOOL status;
 	rdpRdp* rdp = instance->context->rdp;
 
+	ResetEvent(instance->context->abortEvent);
 	status = rdp_client_reconnect(rdp);
 
 	return status;
@@ -397,7 +398,7 @@ BOOL freerdp_shall_disconnect(freerdp* instance)
 	return TRUE;
 }
 
-FREERDP_API BOOL freerdp_focus_required(freerdp* instance)
+BOOL freerdp_focus_required(freerdp* instance)
 {
 	rdpRdp* rdp;
 	BOOL bRetCode = FALSE;
@@ -777,19 +778,19 @@ void freerdp_free(freerdp* instance)
 	free(instance);
 }
 
-FREERDP_API ULONG freerdp_get_transport_sent(rdpContext* context, BOOL resetCount) {
+ULONG freerdp_get_transport_sent(rdpContext* context, BOOL resetCount) {
 	ULONG written = context->rdp->transport->written;
 	if (resetCount)
 		context->rdp->transport->written = 0;
 	return written;
 }
 
-FREERDP_API HANDLE getChannelErrorEventHandle(rdpContext* context)
+HANDLE getChannelErrorEventHandle(rdpContext* context)
 {
 	return context->channelErrorEvent;
 }
 
-FREERDP_API BOOL checkChannelErrorEvent(rdpContext* context)
+BOOL checkChannelErrorEvent(rdpContext* context)
 {
 	if (WaitForSingleObject( context->channelErrorEvent, 0) == WAIT_OBJECT_0)
 	{
@@ -804,24 +805,24 @@ FREERDP_API BOOL checkChannelErrorEvent(rdpContext* context)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-FREERDP_API UINT getChannelError(rdpContext* context)
+UINT getChannelError(rdpContext* context)
 {
 	return context->channelErrorNum;
 }
 
-FREERDP_API const char* getChannelErrorDescription(rdpContext* context)
+const char* getChannelErrorDescription(rdpContext* context)
 {
 	return context->errorDescription;
 }
 
-FREERDP_API void clearChannelError(rdpContext* context)
+void clearChannelError(rdpContext* context)
 {
 	context->channelErrorNum = 0;
 	memset(context->errorDescription, 0, 500);
 	ResetEvent(context->channelErrorEvent);
 }
 
-FREERDP_API void setChannelError(rdpContext* context, UINT errorNum, char* description)
+void setChannelError(rdpContext* context, UINT errorNum, char* description)
 {
 	context->channelErrorNum = errorNum;
 	strncpy(context->errorDescription, description, 499);

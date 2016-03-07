@@ -150,7 +150,7 @@ BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 {
 	BYTE* pCipherText;
 	size_t cbOut, cbFinal;
-	WINPR_CIPHER_CTX enc;
+	WINPR_CIPHER_CTX* enc = NULL;
 	BYTE randomKey[256];
 	WINPR_PROTECTED_MEMORY_BLOCK* pMemBlock;
 
@@ -186,27 +186,35 @@ BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 	pCipherText = (BYTE*) malloc(cbOut);
 
 	if (!pCipherText)
-	{
-		free(pMemBlock);
-		return FALSE;
-	}
+		goto out;
 
-	winpr_Cipher_Init(&enc, WINPR_CIPHER_AES_256_CBC, WINPR_ENCRYPT, pMemBlock->key, pMemBlock->iv);
-	winpr_Cipher_Update(&enc, pMemBlock->pData, pMemBlock->cbData, pCipherText, &cbOut);
-	winpr_Cipher_Final(&enc, pCipherText + cbOut, &cbFinal);
+	if ((enc = winpr_Cipher_New(WINPR_CIPHER_AES_256_CBC, WINPR_ENCRYPT,
+				    pMemBlock->key, pMemBlock->iv)) == NULL)
+		goto out;
+	if (!winpr_Cipher_Update(enc, pMemBlock->pData, pMemBlock->cbData, pCipherText, &cbOut))
+		goto out;
+	if (!winpr_Cipher_Final(enc, pCipherText + cbOut, &cbFinal))
+		goto out;
+	winpr_Cipher_Free(enc);
 
 	CopyMemory(pMemBlock->pData, pCipherText, pMemBlock->cbData);
 	free(pCipherText);
 
 	return ListDictionary_Add(g_ProtectedMemoryBlocks, pData, pMemBlock);
+out:
+	free (pMemBlock);
+	free (pCipherText);
+	winpr_Cipher_Free(enc);
+
+	return FALSE;
 }
 
 BOOL CryptUnprotectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 {
-	BYTE* pPlainText;
+	BYTE* pPlainText = NULL;
 	size_t cbOut, cbFinal;
-	WINPR_CIPHER_CTX dec;
-	WINPR_PROTECTED_MEMORY_BLOCK* pMemBlock;
+	WINPR_CIPHER_CTX* dec = NULL;
+	WINPR_PROTECTED_MEMORY_BLOCK* pMemBlock = NULL;
 
 	if (dwFlags != CRYPTPROTECTMEMORY_SAME_PROCESS)
 		return FALSE;
@@ -217,18 +225,23 @@ BOOL CryptUnprotectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 	pMemBlock = (WINPR_PROTECTED_MEMORY_BLOCK*) ListDictionary_GetItemValue(g_ProtectedMemoryBlocks, pData);
 
 	if (!pMemBlock)
-		return FALSE;
+		goto out;
 
 	cbOut = pMemBlock->cbData + 16 - 1;
 
 	pPlainText = (BYTE*) malloc(cbOut);
 
 	if (!pPlainText)
-		return FALSE;
+		goto out;
 
-	winpr_Cipher_Init(&dec, WINPR_CIPHER_AES_256_CBC, WINPR_DECRYPT, pMemBlock->key, pMemBlock->iv);
-	winpr_Cipher_Update(&dec, pMemBlock->pData, pMemBlock->cbData, pPlainText, &cbOut);
-	winpr_Cipher_Final(&dec, pPlainText + cbOut, &cbFinal);
+	if ((dec = winpr_Cipher_New(WINPR_CIPHER_AES_256_CBC, WINPR_DECRYPT,
+				    pMemBlock->key, pMemBlock->iv)) == NULL)
+		goto out;
+	if (!winpr_Cipher_Update(dec, pMemBlock->pData, pMemBlock->cbData, pPlainText, &cbOut))
+		goto out;
+	if (!winpr_Cipher_Final(dec, pPlainText + cbOut, &cbFinal))
+		goto out;
+	winpr_Cipher_Free(dec);
 
 	CopyMemory(pMemBlock->pData, pPlainText, pMemBlock->cbData);
 	SecureZeroMemory(pPlainText, pMemBlock->cbData);
@@ -239,6 +252,12 @@ BOOL CryptUnprotectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 	free(pMemBlock);
 
 	return TRUE;
+
+out:
+	free(pPlainText);
+	free(pMemBlock);
+	winpr_Cipher_Free(dec);
+	return FALSE;
 }
 
 BOOL CryptProtectData(DATA_BLOB* pDataIn, LPCWSTR szDataDescr, DATA_BLOB* pOptionalEntropy,

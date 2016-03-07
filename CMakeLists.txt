@@ -122,8 +122,10 @@ if(NOT DEFINED BUILD_SHARED_LIBS)
 	endif()
 endif()
 
-if(NOT DEFINED EXPORT_ALL_SYMBOLS)
-	set(EXPORT_ALL_SYMBOLS TRUE)
+if(BUILD_TESTING)
+    set(EXPORT_ALL_SYMBOLS TRUE)
+elseif(NOT DEFINED EXPORT_ALL_SYMBOLS)
+    set(EXPORT_ALL_SYMBOLS FALSE)
 endif()
 
 # BSD
@@ -698,17 +700,17 @@ if (TARGET_ARCH MATCHES "sparc")
 endif()
 
 # Path to put FreeRDP data
-set(FREERDP_DATA_PATH "${CMAKE_INSTALL_PREFIX}/share/freerdp")
+set(FREERDP_DATA_PATH "${CMAKE_INSTALL_PREFIX}/share/freerdp${FREERDP_VERSION_MAJOR}")
 
 # Path to put plugins
 
 set(FREERDP_LIBRARY_PATH "${CMAKE_INSTALL_LIBDIR}")
 
-set(FREERDP_PLUGIN_PATH "${CMAKE_INSTALL_LIBDIR}/freerdp")
+set(FREERDP_PLUGIN_PATH "${CMAKE_INSTALL_LIBDIR}/freerdp${FREERDP_VERSION_MAJOR}")
 set(FREERDP_ADDIN_PATH "${FREERDP_PLUGIN_PATH}")
 
 # Path to put extensions
-set(FREERDP_EXTENSION_PATH "${CMAKE_INSTALL_FULL_LIBDIR}/freerdp/extensions")
+set(FREERDP_EXTENSION_PATH "${CMAKE_INSTALL_FULL_LIBDIR}/freerdp${FREERDP_VERSION_MAJOR}/extensions")
 
 # Include directories
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -788,6 +790,10 @@ include_directories("${CMAKE_SOURCE_DIR}/rdtk/include")
 include_directories("${CMAKE_BINARY_DIR}/rdtk/include")
 
 add_subdirectory(rdtk)
+
+if(WAYLAND_FOUND)
+    add_subdirectory(uwac)
+endif()
 
 if(BSD)
 	if(IS_DIRECTORY /usr/local/include)

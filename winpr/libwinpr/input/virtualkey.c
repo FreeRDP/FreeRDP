@@ -64,7 +64,7 @@ static const VIRTUAL_KEY_CODE VIRTUAL_KEY_CODE_TABLE[256] =
 	{ VK_JUNJA, "VK_JUNJA" },
 	{ VK_FINAL, "VK_FINAL" },
 	{ VK_KANJI, "VK_KANJI" }, /* also VK_HANJA */
-	{ 0, NULL },
+	{ VK_HKTG, "VK_HKTG" },
 	{ VK_ESCAPE, "VK_ESCAPE" },
 	{ VK_CONVERT, "VK_CONVERT" },
 	{ VK_NONCONVERT, "VK_NONCONVERT" },
@@ -417,7 +417,7 @@ XKB_KEYNAME XKB_KEYNAME_TABLE[] =
 
 	{ "HENK",       VK_CONVERT },
 	{ "MUHE",       VK_NONCONVERT },
-	{ "HKTG",       VK_DBE_KATAKANA },
+	{ "HKTG",       VK_HKTG },
 
 //	{ "AE13",	VK_BACKSLASH_JP }, // JP
 //	{ "LVL3",	0x54}
@@ -425,9 +425,10 @@ XKB_KEYNAME XKB_KEYNAME_TABLE[] =
 
 char* GetVirtualKeyName(DWORD vkcode)
 {
-	char* vkname;
+	char* vkname = NULL;
 
-	vkname = (char*) VIRTUAL_KEY_CODE_TABLE[vkcode].name;
+	if (vkcode < ARRAYSIZE(VIRTUAL_KEY_CODE_TABLE))
+		vkname = (char*) VIRTUAL_KEY_CODE_TABLE[vkcode].name;
 
 	if (!vkname)
 		vkname = "VK_NONE";

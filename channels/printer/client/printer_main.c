@@ -5,6 +5,7 @@
  * Copyright 2010-2011 Vic Lee
  * Copyright 2015 Thincast Technologies GmbH
  * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+ * Copyright 2016 Armin Novak <armin.novak@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +36,8 @@
 #include <winpr/interlocked.h>
 
 #include <freerdp/channels/rdpdr.h>
+
+#include "../printer.h"
 
 #ifdef WITH_CUPS
 #include "printer_cups.h"
@@ -449,6 +452,8 @@ error_out:
 
 #ifdef STATIC_CHANNELS
 #define DeviceServiceEntry	printer_DeviceServiceEntry
+#else
+#define DeviceServiceEntry	FREERDP_API DeviceServiceEntry
 #endif
 
 /**
@@ -487,16 +492,13 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 	if (name && name[0])
 	{
-		printer = driver->GetPrinter(driver, name);
+		printer = driver->GetPrinter(driver, name, driver_name);
 
 		if (!printer)
 		{
 			WLog_ERR(TAG, "Could not get printer %s!", name);
 			return CHANNEL_RC_INITIALIZATION_ERROR;
 		}
-
-		if (driver_name && driver_name[0])
-			printer->driver = driver_name;
 
 		if ((error = printer_register(pEntryPoints, printer)))
 		{

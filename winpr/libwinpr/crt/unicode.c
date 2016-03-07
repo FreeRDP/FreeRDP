@@ -276,6 +276,19 @@ int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int
 
 #endif
 
+/**
+ * ConvertToUnicode is a convenience wrapper for MultiByteToWideChar:
+ *
+ * If the lpWideCharStr prarameter for the converted string points to NULL
+ * or if the cchWideChar parameter is set to 0 this function will automatically
+ * allocate the required memory which is guaranteed to be null-terminated
+ * after the conversion, even if the source c string isn't.
+ *
+ * If the cbMultiByte parameter is set to -1 the passed lpMultiByteStr must
+ * be null-terminated and the required length for the converted string will be
+ * calculated accordingly.
+ */
+
 int ConvertToUnicode(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 		int cbMultiByte, LPWSTR* lpWideCharStr, int cchWideChar)
 {
@@ -305,7 +318,7 @@ int ConvertToUnicode(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 
 	if (allocate)
 	{
-		*lpWideCharStr = (LPWSTR) calloc(cchWideChar, sizeof(WCHAR));
+		*lpWideCharStr = (LPWSTR) calloc(cchWideChar + 1, sizeof(WCHAR));
 
 		if (!(*lpWideCharStr))
 		{
@@ -317,10 +330,30 @@ int ConvertToUnicode(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 	status = MultiByteToWideChar(CodePage, dwFlags, lpMultiByteStr, cbMultiByte, *lpWideCharStr, cchWideChar);
 
 	if (status != cchWideChar)
+	{
+		if (allocate)
+		{
+			free(*lpWideCharStr);
+			*lpWideCharStr = NULL;
+		}
 		status = 0;
+	}
 
 	return status;
 }
+
+/**
+ * ConvertFromUnicode is a convenience wrapper for WideCharToMultiByte:
+ *
+ * If the lpMultiByteStr parameter for the converted string points to NULL
+ * or if the cbMultiByte parameter is set to 0 this function will automatically
+ * allocate the required memory which is guaranteed to be null-terminated
+ * after the conversion, even if the source unicode string isn't.
+ *
+ * If the cchWideChar parameter is set to -1 the passed lpWideCharStr must
+ * be null-terminated and the required length for the converted string will be
+ * calculated accordingly.
+ */
 
 int ConvertFromUnicode(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int cchWideChar,
 		LPSTR* lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar, LPBOOL lpUsedDefaultChar)

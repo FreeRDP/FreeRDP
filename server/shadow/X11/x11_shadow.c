@@ -1437,7 +1437,7 @@ void x11_shadow_subsystem_free(x11ShadowSubsystem* subsystem)
 	free(subsystem);
 }
 
-int X11_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
+FREERDP_API int X11_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
 {
 	pEntryPoints->New = (pfnShadowSubsystemNew) x11_shadow_subsystem_new;
 	pEntryPoints->Free = (pfnShadowSubsystemFree) x11_shadow_subsystem_free;

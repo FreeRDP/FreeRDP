@@ -3,6 +3,7 @@
  * Wayland Input
  *
  * Copyright 2014 Manuel Bachmann <tarnyko@tarnyko.net>
+ * Copyright 2015 David Fort <contact@hardening-consulting.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,23 +21,15 @@
 #ifndef __WLF_INPUT_H
 #define __WLF_INPUT_H
 
-#include <wayland-client.h>
+#include <freerdp/freerdp.h>
+#include <uwac/uwac.h>
 
-typedef struct wlf_input wlfInput;
+BOOL wlf_handle_pointer_enter(freerdp* instance, UwacPointerEnterLeaveEvent *ev);
+BOOL wlf_handle_pointer_motion(freerdp* instance, UwacPointerMotionEvent *ev);
+BOOL wlf_handle_pointer_buttons(freerdp* instance, UwacPointerButtonEvent *ev);
+BOOL wlf_handle_pointer_axis(freerdp* instance, UwacPointerAxisEvent *ev);
 
-#include "wlfreerdp.h"
-
-struct wlf_input
-{
-	rdpInput* input;
-	UINT16 last_x;
-	UINT16 last_y;
-
-	struct wl_pointer* pointer;
-	struct wl_keyboard* keyboard;
-};
-
-wlfInput* wlf_CreateInput(wlfContext* wlfc);
-void wlf_DestroyInput(wlfContext* wlfc, wlfInput* input);
+BOOL wlf_handle_key(freerdp* instance, UwacKeyEvent *ev);
+BOOL wlf_keyboard_enter(freerdp *instance, UwacKeyboardEnterLeaveEvent *ev);
 
 #endif /* __WLF_INPUT_H */

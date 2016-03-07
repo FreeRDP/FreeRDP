@@ -57,7 +57,7 @@ void update_process_glyph(rdpContext* context, BYTE* data, int* index,
 
 		if (offset & 0x80)
 		{
-			offset = data[*index + 1] | ((int)((char)data[*index + 2]) << 8);
+			offset = data[*index + 1] | ((int)((signed char)data[*index + 2]) << 8);
 			(*index)++;
 			(*index)++;
 		}

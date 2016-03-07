@@ -394,6 +394,8 @@ static UINT parallel_free(DEVICE* device)
 
 #ifdef STATIC_CHANNELS
 #define DeviceServiceEntry	parallel_DeviceServiceEntry
+#else
+#define DeviceServiceEntry	FREERDP_API DeviceServiceEntry
 #endif
 
 /**

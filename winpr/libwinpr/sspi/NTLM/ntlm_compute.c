@@ -315,7 +315,7 @@ int ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 int ntlm_compute_lm_v2_response(NTLM_CONTEXT* context)
 {
 	BYTE* response;
-	BYTE value[16];
+	BYTE value[WINPR_MD5_DIGEST_LENGTH];
 
 	if (context->LmCompatibilityLevel < 2)
 	{
@@ -340,7 +340,9 @@ int ntlm_compute_lm_v2_response(NTLM_CONTEXT* context)
 
 	response = (BYTE*) context->LmChallengeResponse.pvBuffer;
 	/* Compute the HMAC-MD5 hash of the resulting value using the NTLMv2 hash as the key */
-	winpr_HMAC(WINPR_MD_MD5, (void*) context->NtlmV2Hash, 16, (BYTE*) value, 16, (BYTE*) response);
+	winpr_HMAC(WINPR_MD_MD5, (void*) context->NtlmV2Hash, WINPR_MD5_DIGEST_LENGTH,
+			(BYTE*) value, WINPR_MD5_DIGEST_LENGTH,
+			(BYTE*) response, WINPR_MD5_DIGEST_LENGTH);
 	/* Concatenate the resulting HMAC-MD5 hash and the client challenge, giving us the LMv2 response (24 bytes) */
 	CopyMemory(&response[16], context->ClientChallenge, 8);
 	return 1;
@@ -356,7 +358,7 @@ int ntlm_compute_lm_v2_response(NTLM_CONTEXT* context)
 int ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 {
 	BYTE* blob;
-	BYTE nt_proof_str[16];
+	BYTE nt_proof_str[WINPR_MD5_DIGEST_LENGTH];
 	SecBuffer ntlm_v2_temp;
 	SecBuffer ntlm_v2_temp_chal;
 	PSecBuffer TargetInfo;
@@ -385,7 +387,7 @@ int ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 	WLog_DBG(TAG, "Workstation (length = %d)", context->Workstation.Length);
 	winpr_HexDump(TAG, WLOG_DEBUG, (BYTE*) context->Workstation.Buffer, context->Workstation.Length);
 	WLog_DBG(TAG, "NTOWFv2, NTLMv2 Hash");
-	winpr_HexDump(TAG, WLOG_DEBUG, context->NtlmV2Hash, 16);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->NtlmV2Hash, WINPR_MD5_DIGEST_LENGTH);
 #endif
 	/* Construct temp */
 	blob[0] = 1; /* RespType (1 byte) */
@@ -409,8 +411,9 @@ int ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 	blob = (BYTE*) ntlm_v2_temp_chal.pvBuffer;
 	CopyMemory(blob, context->ServerChallenge, 8);
 	CopyMemory(&blob[8], ntlm_v2_temp.pvBuffer, ntlm_v2_temp.cbBuffer);
-	winpr_HMAC(WINPR_MD_MD5, (BYTE*) context->NtlmV2Hash, 16, (BYTE*) ntlm_v2_temp_chal.pvBuffer,
-		 ntlm_v2_temp_chal.cbBuffer, (BYTE*) nt_proof_str);
+	winpr_HMAC(WINPR_MD_MD5, (BYTE*) context->NtlmV2Hash, WINPR_MD5_DIGEST_LENGTH,
+			(BYTE*) ntlm_v2_temp_chal.pvBuffer, ntlm_v2_temp_chal.cbBuffer,
+			(BYTE*) nt_proof_str, WINPR_MD5_DIGEST_LENGTH);
 
 	/* NtChallengeResponse, Concatenate NTProofStr with temp */
 
@@ -421,7 +424,9 @@ int ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 	CopyMemory(blob, nt_proof_str, 16);
 	CopyMemory(&blob[16], ntlm_v2_temp.pvBuffer, ntlm_v2_temp.cbBuffer);
 	/* Compute SessionBaseKey, the HMAC-MD5 hash of NTProofStr using the NTLMv2 hash as the key */
-	winpr_HMAC(WINPR_MD_MD5, (BYTE*) context->NtlmV2Hash, 16, (BYTE*) nt_proof_str, 16, (BYTE*) context->SessionBaseKey);
+	winpr_HMAC(WINPR_MD_MD5, (BYTE*) context->NtlmV2Hash, WINPR_MD5_DIGEST_LENGTH,
+			(BYTE*) nt_proof_str, WINPR_MD5_DIGEST_LENGTH,
+			(BYTE*) context->SessionBaseKey, WINPR_MD5_DIGEST_LENGTH);
 	sspi_SecBufferFree(&ntlm_v2_temp);
 	sspi_SecBufferFree(&ntlm_v2_temp_chal);
 	return 1;
@@ -437,10 +442,12 @@ int ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 
 void ntlm_rc4k(BYTE* key, int length, BYTE* plaintext, BYTE* ciphertext)
 {
-	WINPR_RC4_CTX rc4;
-	winpr_RC4_Init(&rc4, (void*) key, 16);
-	winpr_RC4_Update(&rc4, length, (void*) plaintext, (void*) ciphertext);
-	winpr_RC4_Final(&rc4);
+	WINPR_RC4_CTX* rc4 = winpr_RC4_New(key, 16);
+	if (rc4)
+	{
+		winpr_RC4_Update(rc4, length, plaintext, ciphertext);
+		winpr_RC4_Free(rc4);
+	}
 }
 
 /**
@@ -544,18 +551,18 @@ int ntlm_generate_signing_key(BYTE* exported_session_key, PSecBuffer sign_magic,
 	BYTE* value;
 	WINPR_MD5_CTX md5;
 
-	length = 16 + sign_magic->cbBuffer;
+	length = WINPR_MD5_DIGEST_LENGTH + sign_magic->cbBuffer;
 	value = (BYTE*) malloc(length);
 
 	if (!value)
 		return -1;
 
 	/* Concatenate ExportedSessionKey with sign magic */
-	CopyMemory(value, exported_session_key, 16);
-	CopyMemory(&value[16], sign_magic->pvBuffer, sign_magic->cbBuffer);
+	CopyMemory(value, exported_session_key, WINPR_MD5_DIGEST_LENGTH);
+	CopyMemory(&value[WINPR_MD5_DIGEST_LENGTH], sign_magic->pvBuffer, sign_magic->cbBuffer);
 	winpr_MD5_Init(&md5);
 	winpr_MD5_Update(&md5, value, length);
-	winpr_MD5_Final(&md5, signing_key);
+	winpr_MD5_Final(&md5, signing_key, WINPR_MD5_DIGEST_LENGTH);
 	free(value);
 	return 1;
 }
@@ -602,16 +609,16 @@ int ntlm_generate_sealing_key(BYTE* exported_session_key, PSecBuffer seal_magic,
 	WINPR_MD5_CTX md5;
 	SecBuffer buffer;
 
-	if (!sspi_SecBufferAlloc(&buffer, 16 + seal_magic->cbBuffer))
+	if (!sspi_SecBufferAlloc(&buffer, WINPR_MD5_DIGEST_LENGTH + seal_magic->cbBuffer))
 		return -1;
 
 	p = (BYTE*) buffer.pvBuffer;
 	/* Concatenate ExportedSessionKey with seal magic */
-	CopyMemory(p, exported_session_key, 16);
-	CopyMemory(&p[16], seal_magic->pvBuffer, seal_magic->cbBuffer);
+	CopyMemory(p, exported_session_key, WINPR_MD5_DIGEST_LENGTH);
+	CopyMemory(&p[WINPR_MD5_DIGEST_LENGTH], seal_magic->pvBuffer, seal_magic->cbBuffer);
 	winpr_MD5_Init(&md5);
 	winpr_MD5_Update(&md5, buffer.pvBuffer, buffer.cbBuffer);
-	winpr_MD5_Final(&md5, sealing_key);
+	winpr_MD5_Final(&md5, sealing_key, WINPR_MD5_DIGEST_LENGTH);
 	sspi_SecBufferFree(&buffer);
 	return 1;
 }
@@ -657,8 +664,8 @@ void ntlm_init_rc4_seal_states(NTLM_CONTEXT* context)
 		context->RecvSigningKey = context->ClientSigningKey;
 		context->SendSealingKey = context->ClientSealingKey;
 		context->RecvSealingKey = context->ServerSealingKey;
-		winpr_RC4_Init(&context->SendRc4Seal, context->ServerSealingKey, 16);
-		winpr_RC4_Init(&context->RecvRc4Seal, context->ClientSealingKey, 16);
+		context->SendRc4Seal = winpr_RC4_New(context->ServerSealingKey, 16);
+		context->RecvRc4Seal = winpr_RC4_New(context->ClientSealingKey, 16);
 	}
 	else
 	{
@@ -666,8 +673,8 @@ void ntlm_init_rc4_seal_states(NTLM_CONTEXT* context)
 		context->RecvSigningKey = context->ServerSigningKey;
 		context->SendSealingKey = context->ServerSealingKey;
 		context->RecvSealingKey = context->ClientSealingKey;
-		winpr_RC4_Init(&context->SendRc4Seal, context->ClientSealingKey, 16);
-		winpr_RC4_Init(&context->RecvRc4Seal, context->ServerSealingKey, 16);
+		context->SendRc4Seal = winpr_RC4_New(context->ClientSealingKey, 16);
+		context->RecvRc4Seal = winpr_RC4_New(context->ServerSealingKey, 16);
 	}
 }
 
@@ -679,9 +686,9 @@ void ntlm_compute_message_integrity_check(NTLM_CONTEXT* context)
 	 * CHALLENGE_MESSAGE, AUTHENTICATE_MESSAGE) using the ExportedSessionKey
 	 */
 
-	winpr_HMAC_Init(&hmac, WINPR_MD_MD5, context->ExportedSessionKey, 16);
+	winpr_HMAC_Init(&hmac, WINPR_MD_MD5, context->ExportedSessionKey, WINPR_MD5_DIGEST_LENGTH);
 	winpr_HMAC_Update(&hmac, (BYTE*) context->NegotiateMessage.pvBuffer, context->NegotiateMessage.cbBuffer);
 	winpr_HMAC_Update(&hmac, (BYTE*) context->ChallengeMessage.pvBuffer, context->ChallengeMessage.cbBuffer);
 	winpr_HMAC_Update(&hmac, (BYTE*) context->AuthenticateMessage.pvBuffer, context->AuthenticateMessage.cbBuffer);
-	winpr_HMAC_Final(&hmac, context->MessageIntegrityCheck);
+	winpr_HMAC_Final(&hmac, context->MessageIntegrityCheck, WINPR_MD5_DIGEST_LENGTH);
 }

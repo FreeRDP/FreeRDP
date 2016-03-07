@@ -660,7 +660,7 @@ macShadowSubsystem* mac_shadow_subsystem_new()
 	return subsystem;
 }
 
-int Mac_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
+FREERDP_API int Mac_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
 {
 	pEntryPoints->New = (pfnShadowSubsystemNew) mac_shadow_subsystem_new;
 	pEntryPoints->Free = (pfnShadowSubsystemFree) mac_shadow_subsystem_free;

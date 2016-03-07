@@ -28,7 +28,6 @@
 #include <winpr/dsparse.h>
 
 #include <freerdp/log.h>
-#include <openssl/rand.h>
 
 #include "http.h"
 

@@ -571,7 +571,7 @@ BOOL mcs_write_connect_initial(wStream* s, rdpMcs* mcs, wStream* userData)
 		goto out;
 
 	/* userData (OCTET_STRING) */
-	ber_write_octet_string(tmps, userData->buffer, Stream_GetPosition(userData));
+	ber_write_octet_string(tmps, Stream_Buffer(userData), Stream_GetPosition(userData));
 
 	length = Stream_GetPosition(tmps);
 	/* Connect-Initial (APPLICATION 101, IMPLICIT SEQUENCE) */
@@ -608,7 +608,7 @@ BOOL mcs_write_connect_response(wStream* s, rdpMcs* mcs, wStream* userData)
 	if (!mcs_write_domain_parameters(tmps, &(mcs->domainParameters)))
 		goto out;
 	/* userData (OCTET_STRING) */
-	ber_write_octet_string(tmps, userData->buffer, Stream_GetPosition(userData));
+	ber_write_octet_string(tmps, Stream_Buffer(userData), Stream_GetPosition(userData));
 
 	length = Stream_GetPosition(tmps);
 	ber_write_application_tag(s, MCS_TYPE_CONNECT_RESPONSE, length);
