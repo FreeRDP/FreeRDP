@@ -333,7 +333,8 @@ BOOL wf_pre_connect(freerdp* instance)
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
 		(pChannelDisconnectedEventHandler) wf_OnChannelDisconnectedEventHandler);
 
-	freerdp_channels_pre_connect(instance->context->channels, instance);
+	if (freerdp_channels_pre_connect(instance->context->channels, instance) != CHANNEL_RC_OK)
+		return FALSE;
 
 	return TRUE;
 }
@@ -485,7 +486,7 @@ BOOL wf_post_connect(freerdp* instance)
 		instance->update->BitmapUpdate = wf_gdi_bitmap_update;
 	}
 
-	if (freerdp_channels_post_connect(context->channels, instance) < 0)
+	if (freerdp_channels_post_connect(context->channels, instance) != CHANNEL_RC_OK)
 		return FALSE;
 
 	if (wfc->fullscreen)
@@ -1169,7 +1170,8 @@ int wfreerdp_client_start(rdpContext* context)
 	if (!wfc->keyboardThread)
 		return -1;
 
-	freerdp_client_load_addins(context->channels, instance->settings);
+	if (!freerdp_client_load_addins(context->channels, instance->settings))
+		return -1;
 
 	wfc->thread = CreateThread(NULL, 0, wf_client_thread, (void*) instance, 0, &wfc->mainThreadId);
 

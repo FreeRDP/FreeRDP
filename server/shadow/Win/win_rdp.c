@@ -133,9 +133,11 @@ BOOL shw_pre_connect(freerdp* instance)
 	PubSub_SubscribeChannelDisconnected(context->pubSub,
 			(pChannelDisconnectedEventHandler) shw_OnChannelDisconnectedEventHandler);
 
-	freerdp_client_load_addins(context->channels, instance->settings);
+	if (!freerdp_client_load_addins(context->channels, instance->settings))
+		return FALSE;
 
-	freerdp_channels_pre_connect(context->channels, instance);
+	if (freerdp_channels_pre_connect(context->channels, instance) != CHANNEL_RC_OK)
+		return FALSE;
 
 	return TRUE;
 }
@@ -159,7 +161,7 @@ BOOL shw_post_connect(freerdp* instance)
 	instance->update->DesktopResize = shw_desktop_resize;
 	instance->update->SurfaceFrameMarker = shw_surface_frame_marker;
 
-	return (freerdp_channels_post_connect(instance->context->channels, instance) >= 0) ;
+	return (freerdp_channels_post_connect(instance->context->channels, instance) == CHANNEL_RC_OK) ;
 }
 
 void* shw_client_thread(void* arg)

@@ -1030,11 +1030,11 @@ static UINT remdesk_virtual_channel_event_disconnected(remdeskPlugin* remdesk)
 	UINT rc;
 
 	if (MessageQueue_PostQuit(remdesk->queue, 0) && (WaitForSingleObject(remdesk->thread, INFINITE) == WAIT_FAILED))
-    {
-        rc = GetLastError();
-        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", rc);
-        return rc;
-    }
+	{
+		rc = GetLastError();
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", rc);
+		return rc;
+	}
 
 	MessageQueue_Free(remdesk->queue);
 	CloseHandle(remdesk->thread);
@@ -1066,7 +1066,9 @@ static void remdesk_virtual_channel_event_terminated(remdeskPlugin* remdesk)
 	free(remdesk);
 }
 
-static VOID VCAPITYPE remdesk_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
+static UINT VCAPITYPE remdesk_virtual_channel_init_event(LPVOID pInitHandle,
+							 UINT event, LPVOID pData,
+							 UINT dataLength)
 {
 	remdeskPlugin* remdesk;
 	UINT error = CHANNEL_RC_OK;
@@ -1076,7 +1078,7 @@ static VOID VCAPITYPE remdesk_virtual_channel_init_event(LPVOID pInitHandle, UIN
 	if (!remdesk)
 	{
 		WLog_ERR(TAG,  "error no match");
-		return;
+		return CHANNEL_RC_BAD_INIT_HANDLE;
 	}
 
 	switch (event)
@@ -1097,6 +1099,8 @@ static VOID VCAPITYPE remdesk_virtual_channel_init_event(LPVOID pInitHandle, UIN
 	}
 	if (error && remdesk->rdpcontext)
 		setChannelError(remdesk->rdpcontext, error, "remdesk_virtual_channel_init_event reported an error");
+
+	return error;
 }
 
 /* remdesk is always built-in */

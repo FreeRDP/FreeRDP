@@ -116,7 +116,7 @@ typedef struct tagCHANNEL_PDU_HEADER
 #define VCEXPORT  __export
 #endif
 
-typedef VOID VCAPITYPE CHANNEL_INIT_EVENT_FN(LPVOID pInitHandle,
+typedef UINT VCAPITYPE CHANNEL_INIT_EVENT_FN(LPVOID pInitHandle,
 		UINT event, LPVOID pData, UINT dataLength);
 
 typedef CHANNEL_INIT_EVENT_FN *PCHANNEL_INIT_EVENT_FN;

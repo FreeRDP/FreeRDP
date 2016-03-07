@@ -480,8 +480,8 @@ cleanup:
 
 
 static void drive_hotplug_fsevent_callback(ConstFSEventStreamRef streamRef, void *clientCallBackInfo,
-                                           size_t numEvents, void *eventPaths, const FSEventStreamEventFlags eventFlags[],
-                                           const FSEventStreamEventId eventIds[])
+					   size_t numEvents, void *eventPaths, const FSEventStreamEventFlags eventFlags[],
+					   const FSEventStreamEventId eventIds[])
 {
 	rdpdrPlugin* rdpdr;
 	int i;
@@ -649,13 +649,13 @@ static char* get_word(char* str, unsigned int* offset)
 		(*offset)++;
 
 	word = malloc(wlen + 1);
-	
+
 	if (word != NULL)
 	{
 		CopyMemory(word, p, wlen);
 		word[wlen] = '\0';
 	}
-	
+
 	return word;
 }
 
@@ -1720,7 +1720,8 @@ static void rdpdr_virtual_channel_event_terminated(rdpdrPlugin* rdpdr)
 	free(rdpdr);
 }
 
-static VOID VCAPITYPE rdpdr_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
+static UINT VCAPITYPE rdpdr_virtual_channel_init_event(LPVOID pInitHandle, UINT event,
+						       LPVOID pData, UINT dataLength)
 {
 	rdpdrPlugin* rdpdr;
 	UINT error = CHANNEL_RC_OK;
@@ -1730,7 +1731,7 @@ static VOID VCAPITYPE rdpdr_virtual_channel_init_event(LPVOID pInitHandle, UINT 
 	if (!rdpdr)
 	{
 		WLog_ERR(TAG, "error no match");
-		return;
+		return CHANNEL_RC_BAD_INIT_HANDLE;
 	}
 
 	switch (event)
@@ -1758,7 +1759,7 @@ static VOID VCAPITYPE rdpdr_virtual_channel_init_event(LPVOID pInitHandle, UINT 
 
 	if (error && rdpdr->rdpcontext)
 		setChannelError(rdpdr->rdpcontext, error, "rdpdr_virtual_channel_init_event reported an error");
-	return;
+	return error;
 }
 
 /* rdpdr is always built-in */

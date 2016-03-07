@@ -1217,9 +1217,9 @@ static UINT encomsp_virtual_channel_event_disconnected(encomspPlugin* encomsp)
 
 	if (MessageQueue_PostQuit(encomsp->queue, 0) && (WaitForSingleObject(encomsp->thread, INFINITE) == WAIT_FAILED))
     {
-        rc = GetLastError();
-        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", rc);
-        return rc;
+	rc = GetLastError();
+	WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", rc);
+	return rc;
     }
 
 	MessageQueue_Free(encomsp->queue);
@@ -1259,7 +1259,9 @@ static UINT encomsp_virtual_channel_event_terminated(encomspPlugin* encomsp)
 	return CHANNEL_RC_OK;
 }
 
-static void VCAPITYPE encomsp_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
+static UINT VCAPITYPE encomsp_virtual_channel_init_event(LPVOID pInitHandle,
+							 UINT event, LPVOID pData,
+							 UINT dataLength)
 {
 	encomspPlugin* encomsp;
 	UINT error = CHANNEL_RC_OK;
@@ -1269,7 +1271,7 @@ static void VCAPITYPE encomsp_virtual_channel_init_event(LPVOID pInitHandle, UIN
 	if (!encomsp)
 	{
 		WLog_ERR(TAG,  "encomsp_virtual_channel_init_event: error no match");
-		return;
+		return CHANNEL_RC_BAD_INIT_HANDLE;
 	}
 
 	switch (event)
@@ -1294,7 +1296,7 @@ static void VCAPITYPE encomsp_virtual_channel_init_event(LPVOID pInitHandle, UIN
 	if (error && encomsp->rdpcontext)
 		setChannelError(encomsp->rdpcontext, error, "encomsp_virtual_channel_init_event reported an error");
 
-	return;
+	return error;
 }
 
 /* encomsp is always built-in */

@@ -235,7 +235,8 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 
 	peer->update->DesktopResize(peer->update->context);
 
-	shadow_client_channels_post_connect(client);
+	if (shadow_client_channels_post_connect(client) != CHANNEL_RC_OK)
+		return FALSE;
 
 	invalidRect.left = 0;
 	invalidRect.top = 0;

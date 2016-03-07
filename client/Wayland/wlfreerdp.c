@@ -114,7 +114,7 @@ static BOOL wl_pre_connect(freerdp* instance)
 {
 	wlfContext* context;
 
-	if (freerdp_channels_pre_connect(instance->context->channels, instance))
+	if (freerdp_channels_pre_connect(instance->context->channels, instance) != CHANNEL_RC_OK)
 		return FALSE;
 
 	context = (wlfContext*) instance->context;
@@ -149,7 +149,7 @@ static BOOL wl_post_connect(freerdp* instance)
 	instance->update->BeginPaint = wl_begin_paint;
 	instance->update->EndPaint = wl_end_paint;
 
-	if (freerdp_channels_post_connect(instance->context->channels, instance) < 0)
+	if (freerdp_channels_post_connect(instance->context->channels, instance) != CHANNEL_RC_OK)
 		return FALSE;
 
 
@@ -324,7 +324,8 @@ int main(int argc, char* argv[])
 	if (status)
 		exit(0);
 
-	freerdp_client_load_addins(instance->context->channels, instance->settings);
+	if (!freerdp_client_load_addins(instance->context->channels, instance->settings))
+		exit(-1);
 
 	wlfreerdp_run(instance);
 
