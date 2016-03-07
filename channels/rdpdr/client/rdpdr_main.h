@@ -6,6 +6,8 @@
  * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2015 Thincast Technologies GmbH
  * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+ * Copyright 2016 Inuvika Inc.
+ * Copyright 2016 David PHAM-VAN <d.phamvan@inuvika.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +38,10 @@
 #include <freerdp/channels/rdpdr.h>
 #include <freerdp/channels/log.h>
 
+#ifdef __MACOSX__
+#include <CoreServices/CoreServices.h>
+#endif
+
 #define TAG CHANNELS_TAG("rdpdr.client")
 
 typedef struct rdpdr_plugin rdpdrPlugin;
@@ -64,6 +70,8 @@ struct rdpdr_plugin
 	HANDLE hotplugThread;
 #ifdef _WIN32
 	HWND hotplug_wnd;
+#elif __MACOSX__
+	CFRunLoopRef runLoop;
 #else
 	HANDLE stopEvent;
 #endif
