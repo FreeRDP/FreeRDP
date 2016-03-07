@@ -352,10 +352,11 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME *lpCreationTime,
 		const FILETIME *lpLastAccessTime, const FILETIME *lpLastWriteTime)
 {
 	int rc;
-#if defined(__APPLE__) || defined(ANDROID)
+#if defined(__APPLE__) || defined(ANDROID) || defined(__FreeBSD__)
 	struct stat buf;
 #endif
-#ifdef ANDROID
+/* OpenBSD, NetBSD and DragonflyBSD support POSIX futimens */
+#if defined(ANDROID) || defined(__FreeBSD__)
 	struct timeval timevals[2];
 #else
 	struct timespec times[2]; /* last access, last modification */
@@ -366,23 +367,30 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME *lpCreationTime,
 	if (!hFile)
 		return FALSE;
 
-#if defined(__APPLE__) || defined(ANDROID)
+#if defined(__APPLE__) || defined(ANDROID) || defined(__FreeBSD__)
 	rc = fstat(fileno(pFile->fp), &buf);
 	if (rc < 0)
 		return FALSE;
 #endif
 	if (!lpLastAccessTime)
 	{
-#ifdef __APPLE__
+#if defined(__APPLE__)
 #if !defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE)
 		times[0] = buf.st_atimespec;
 #else
 		times[0].tv_sec = buf.st_atime;
 		times[0].tv_nsec = buf.st_atimensec;
 #endif
-#elif ANDROID
-		timevals[0].tv_sec = buf.st_mtime;
-		timevals[0].tv_usec = buf.st_mtimensec / 1000UL;
+#elif defined(__FreeBSD__)
+		timevals[0].tv_sec = buf.st_atime;
+#ifdef _POSIX_SOURCE
+		TIMESPEC_TO_TIMEVAL(&timevals[0], &buf.st_atim);
+#else
+		TIMESPEC_TO_TIMEVAL(&timevals[0], &buf.st_atimespec);
+#endif
+#elif defined(ANDROID)
+		timevals[0].tv_sec = buf.st_atime;
+		timevals[0].tv_usec = buf.st_atimensec / 1000UL;
 #else
 		times[0].tv_sec = UTIME_OMIT;
 		times[0].tv_nsec = UTIME_OMIT;
@@ -395,7 +403,7 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME *lpCreationTime,
 		tmp -= EPOCH_DIFF;
 		tmp /= 10ULL;
 
-#ifdef ANDROID
+#if defined(ANDROID) || defined(__FreeBSD__)
 		tmp /= 10000ULL;
 
 		timevals[0].tv_sec = tmp / 10000ULL;
@@ -414,7 +422,14 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME *lpCreationTime,
 		times[1].tv_sec = buf.st_mtime;
 		times[1].tv_nsec = buf.st_mtimensec;
 #endif
-#elif ANDROID
+#elif defined(__FreeBSD__)
+		timevals[1].tv_sec = buf.st_mtime;
+#ifdef _POSIX_SOURCE
+		TIMESPEC_TO_TIMEVAL(&timevals[1], &buf.st_mtim);
+#else
+		TIMESPEC_TO_TIMEVAL(&timevals[1], &buf.st_mtimespec);
+#endif
+#elif defined(ANDROID)
 		timevals[1].tv_sec = buf.st_mtime;
 		timevals[1].tv_usec = buf.st_mtimensec / 1000UL;
 #else
@@ -429,7 +444,7 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME *lpCreationTime,
 		tmp -= EPOCH_DIFF;
 		tmp /= 10ULL;
 
-#ifdef ANDROID
+#if defined(ANDROID) || defined(__FreeBSD__)
 		tmp /= 10000ULL;
 
 		timevals[1].tv_sec = tmp / 10000ULL;
@@ -443,7 +458,7 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME *lpCreationTime,
 	// TODO: Creation time can not be handled!
 #ifdef __APPLE__
 	rc = futimes(fileno(pFile->fp), times);
-#elif ANDROID
+#elif defined(ANDROID) || defined(__FreeBSD__)
 	rc = utimes(pFile->lpFileName, timevals);
 #else
 	rc = futimens(fileno(pFile->fp), times);
@@ -617,7 +632,7 @@ BOOL IsFileDevice(LPCTSTR lpDeviceName)
 	return TRUE;
 }
 
-HANDLE_CREATOR _FileHandleCreator = 
+HANDLE_CREATOR _FileHandleCreator =
 {
 	IsFileDevice,
 	FileCreateFileA
