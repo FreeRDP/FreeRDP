@@ -1475,6 +1475,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				CommandLineSwitchCase(arg, "v")
 		{
 			free (settings->ServerHostname);
+			settings->ServerHostname = NULL;
+
 			p = strchr(arg->Value, '[');
 			/* ipv4 */
 			if (!p)
