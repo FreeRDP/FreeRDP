@@ -913,6 +913,8 @@ WINPR_API void winpr_RC4_Free(WINPR_RC4_CTX* ctx);
  * Generic Cipher API
  */
 
+#define WINPR_AES_BLOCK_SIZE			16
+
 /* cipher operation types */
 #define WINPR_ENCRYPT				0
 #define WINPR_DECRYPT				1
