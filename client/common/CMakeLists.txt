@@ -39,7 +39,7 @@ foreach(FREERDP_CHANNELS_CLIENT_SRC ${FREERDP_CHANNELS_CLIENT_SRCS})
 endforeach()
 
 if(MSVC)
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS})
 endif()
 
 # On windows create dll version information.

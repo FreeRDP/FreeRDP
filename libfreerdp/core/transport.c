@@ -733,8 +733,7 @@ out_cleanup:
 		transport->layer = TRANSPORT_LAYER_CLOSED;
 	}
 
-	if (s->pool)
-		Stream_Release(s);
+	Stream_Release(s);
 
 	LeaveCriticalSection(&(transport->WriteLock));
 	return status;

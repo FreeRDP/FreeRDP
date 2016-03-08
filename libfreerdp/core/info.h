@@ -26,11 +26,6 @@
 
 #include <winpr/stream.h>
 
-#define INFO_TYPE_LOGON			0x00000000
-#define INFO_TYPE_LOGON_LONG		0x00000001
-#define INFO_TYPE_LOGON_PLAIN_NOTIFY	0x00000002
-#define INFO_TYPE_LOGON_EXTENDED_INF	0x00000003
-
 /* Client Address Family */
 #define ADDRESS_FAMILY_INET		0x0002
 #define ADDRESS_FAMILY_INET6		0x0017
@@ -56,23 +51,13 @@
 #define INFO_VIDEO_DISABLE		0x00400000
 #define INFO_HIDEF_RAIL_SUPPORTED	0x02000000
 
-/* Logon Information Types */
-#define INFO_TYPE_LOGON			0x00000000
-#define INFO_TYPE_LOGON_LONG		0x00000001
-#define INFO_TYPE_LOGON_PLAIN_NOTIFY	0x00000002
-#define INFO_TYPE_LOGON_EXTENDED_INF	0x00000003
-
 /* Extended Logon Info */
 #define LOGON_EX_AUTORECONNECTCOOKIE	0x00000001
 #define LOGON_EX_LOGONERRORS		0x00000002
 
-/* Logon Error Info */
-#define LOGON_FAILED_BAD_PASSWORD	0x00000000
-#define LOGON_FAILED_UPDATE_PASSWORD	0x00000001
-#define LOGON_FAILED_OTHER		0x00000002
-#define LOGON_WARNING			0x00000003
+#define SAVE_SESSION_PDU_VERSION_ONE 0x0001
 
-BOOL rdp_read_server_auto_reconnect_cookie(rdpRdp* rdp, wStream* s);
+
 BOOL rdp_read_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s);
 void rdp_write_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s);
 void rdp_write_auto_reconnect_cookie(rdpRdp* rdp, wStream* s);
@@ -83,5 +68,6 @@ void rdp_write_info_packet(rdpRdp* rdp, wStream* s);
 BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s);
 BOOL rdp_send_client_info(rdpRdp* rdp);
 BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s);
+BOOL rdp_send_save_session_info(rdpContext *context, UINT32 type, void *data);
 
 #endif /* __INFO_H */

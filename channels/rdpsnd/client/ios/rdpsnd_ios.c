@@ -281,6 +281,8 @@ static void rdpsnd_ios_free(rdpsndDevicePlugin* device)
 
 #ifdef STATIC_CHANNELS
 #define freerdp_rdpsnd_client_subsystem_entry	ios_freerdp_rdpsnd_client_subsystem_entry
+#else
+#define freerdp_rdpsnd_client_subsystem_entry	FREERDP_API freerdp_rdpsnd_client_subsystem_entry
 #endif
 
 /**

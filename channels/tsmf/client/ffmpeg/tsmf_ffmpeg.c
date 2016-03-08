@@ -543,6 +543,8 @@ static BOOL initialized = FALSE;
 
 #ifdef STATIC_CHANNELS
 #define freerdp_tsmf_client_subsystem_entry	ffmpeg_freerdp_tsmf_client_decoder_subsystem_entry
+#else
+#define freerdp_tsmf_client_subsystem_entry	FREERDP_API freerdp_tsmf_client_decoder_subsystem_entry
 #endif
 
 ITSMFDecoder* freerdp_tsmf_client_subsystem_entry(void)

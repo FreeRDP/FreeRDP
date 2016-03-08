@@ -156,6 +156,8 @@ typedef BOOL (*pSurfaceFrameMarker)(rdpContext* context, SURFACE_FRAME_MARKER* s
 typedef BOOL (*pSurfaceFrameBits)(rdpContext* context, SURFACE_BITS_COMMAND* cmd, BOOL first, BOOL last, UINT32 frameId);
 typedef BOOL (*pSurfaceFrameAcknowledge)(rdpContext* context, UINT32 frameId);
 
+typedef BOOL (*pSaveSessionInfo)(rdpContext *context, UINT32 type, void *data);
+
 struct rdp_update
 {
 	rdpContext* context; /* 0 */
@@ -189,7 +191,8 @@ struct rdp_update
 	pSurfaceFrameMarker SurfaceFrameMarker; /* 66 */
 	pSurfaceFrameBits SurfaceFrameBits; /* 67 */
 	pSurfaceFrameAcknowledge SurfaceFrameAcknowledge; /* 68 */
-	UINT32 paddingE[80 - 69]; /* 69 */
+	pSaveSessionInfo SaveSessionInfo; /* 69 */
+	UINT32 paddingE[80 - 70]; /* 70 */
 
 	/* internal */
 

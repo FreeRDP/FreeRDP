@@ -22,6 +22,7 @@
 #endif
 
 #include <errno.h>
+#include <stdio.h>
 #include <wctype.h>
 
 #include <winpr/crt.h>
@@ -485,4 +486,42 @@ char* StrSep(char** stringp, const char* delim)
 	return start;
 }
 
+INT64 GetLine(char** lineptr, size_t* size, FILE* stream)
+{
+#if defined(_WIN32)
+	char c;
+	char *n;
+	size_t step = 32;
+	size_t used = 0;
 
+	if (!lineptr || !size)
+	{
+		errno = EINVAL;
+		return -1;
+	}
+
+	do
+	{
+		if (used + 2 >= *size)
+		{
+			*size += step;
+			n = realloc(*lineptr, *size);
+			if (!n)
+			{
+				return -1;
+			}
+			*lineptr = n;
+		}
+        c = fgetc(stream);
+        if (c != EOF)
+            (*lineptr)[used++] = c;
+    } while((c != '\n') && (c != '\r') && (c != EOF));
+    (*lineptr)[used] = '\0';
+
+	return used;
+#elif !defined(ANDROID) && !defined(IOS)
+	return getline(lineptr, size, stream);
+#else
+	return -1;
+#endif
+}

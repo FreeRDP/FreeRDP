@@ -813,6 +813,8 @@ static UINT serial_free(DEVICE* device)
 
 #ifdef STATIC_CHANNELS
 #define DeviceServiceEntry	serial_DeviceServiceEntry
+#else
+#define DeviceServiceEntry	FREERDP_API DeviceServiceEntry
 #endif
 
 /**

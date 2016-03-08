@@ -1,4 +1,0 @@
-LIBRARY		"TestLibraryB"
-EXPORTS
-	FunctionA				@1
-	FunctionB				@2

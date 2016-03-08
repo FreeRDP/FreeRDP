@@ -277,7 +277,9 @@ typedef struct _SHADOW_MSG_OUT_AUDIO_OUT_VOLUME SHADOW_MSG_OUT_AUDIO_OUT_VOLUME;
 extern "C" {
 #endif
 
+FREERDP_API void shadow_subsystem_set_entry_builtin(const char* name);
 FREERDP_API void shadow_subsystem_set_entry(pfnShadowSubsystemEntry pEntry);
+
 FREERDP_API int shadow_subsystem_pointer_convert_alpha_pointer_data(BYTE* pixels, BOOL premultiplied,
 		UINT32 width, UINT32 height, SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* pointerColor);
 

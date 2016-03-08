@@ -51,6 +51,7 @@
 #include <freerdp/log.h>
 
 #include <winpr/stream.h>
+#include <winpr/crypto.h>
 
 /* Security Header Flags */
 #define SEC_EXCHANGE_PKT					0x0001
@@ -147,15 +148,15 @@ struct rdp_rdp
 	rdpAutoDetect* autodetect;
 	rdpHeartbeat* heartbeat;
 	rdpMultitransport* multitransport;
-	struct crypto_rc4_struct* rc4_decrypt_key;
+	WINPR_RC4_CTX* rc4_decrypt_key;
 	int decrypt_use_count;
 	int decrypt_checksum_use_count;
-	struct crypto_rc4_struct* rc4_encrypt_key;
+	WINPR_RC4_CTX* rc4_encrypt_key;
 	int encrypt_use_count;
 	int encrypt_checksum_use_count;
-	struct crypto_des3_struct* fips_encrypt;
-	struct crypto_des3_struct* fips_decrypt;
-	struct crypto_hmac_struct* fips_hmac;
+	WINPR_CIPHER_CTX* fips_encrypt;
+	WINPR_CIPHER_CTX* fips_decrypt;
+	WINPR_HMAC_CTX* fips_hmac;
 	UINT32 sec_flags;
 	BOOL do_crypt;
 	BOOL do_crypt_license;

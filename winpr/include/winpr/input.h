@@ -80,8 +80,9 @@
 #define VK_HANJA	0x19 /* IME Hanja mode */
 #define VK_KANJI	0x19 /* IME Kanji mode */
 
-/* 0x1A is undefined */
+/* 0x1A is undefined, use it for missing Hiragana/Katakana Toggle */
 
+#define VK_HKTG 	0x1A /* Hiragana/Katakana toggle */
 #define VK_ESCAPE	0x1B /* ESC key */
 #define VK_CONVERT	0x1C /* IME convert */
 #define VK_NONCONVERT	0x1D /* IME nonconvert */
@@ -555,7 +556,7 @@
 #define KBD7_T0A		VK_KEY_9
 #define KBD7_T0B		VK_KEY_0
 #define KBD7_T0C		VK_OEM_MINUS
-#define KBD7_T0D		VK_OEM_7		/* NE */
+#define KBD7_T0D		VK_OEM_PLUS
 #define KBD7_T0E		VK_BACK
 #define KBD7_T0F		VK_TAB
 #define KBD7_T10		VK_KEY_Q
@@ -581,8 +582,8 @@
 #define KBD7_T24		VK_KEY_J
 #define KBD7_T25		VK_KEY_K
 #define KBD7_T26		VK_KEY_L
-#define KBD7_T27		VK_OEM_PLUS		/* NE */
-#define KBD7_T28		VK_OEM_1		/* NE */
+#define KBD7_T27		VK_OEM_1
+#define KBD7_T28		VK_OEM_7
 #define KBD7_T29		VK_OEM_3		/* NE */
 #define KBD7_T2A		VK_LSHIFT
 #define KBD7_T2B		VK_OEM_5		/* NE */
@@ -600,7 +601,7 @@
 #define KBD7_T37		VK_MULTIPLY
 #define KBD7_T38		VK_LMENU
 #define KBD7_T39		VK_SPACE
-#define KBD7_T3A		VK_DBE_ALPHANUMERIC	/* NE */
+#define KBD7_T3A		VK_CAPITAL
 #define KBD7_T3B		VK_F1
 #define KBD7_T3C		VK_F2
 #define KBD7_T3D		VK_F3
@@ -613,22 +614,22 @@
 #define KBD7_T44		VK_F10
 #define KBD7_T45		VK_NUMLOCK
 #define KBD7_T46		VK_SCROLL
-#define KBD7_T47		VK_HOME
-#define KBD7_T48		VK_UP
-#define KBD7_T49		VK_PRIOR
+#define KBD7_T47		VK_NUMPAD7		/* VK_HOME */
+#define KBD7_T48		VK_NUMPAD8		/* VK_UP */
+#define KBD7_T49		VK_NUMPAD9		/* VK_PRIOR */
 #define KBD7_T4A		VK_SUBTRACT
-#define KBD7_T4B		VK_LEFT
-#define KBD7_T4C		VK_CLEAR
-#define KBD7_T4D		VK_RIGHT
+#define KBD7_T4B		VK_NUMPAD4		/* VK_LEFT */
+#define KBD7_T4C		VK_NUMPAD5		/* VK_CLEAR */
+#define KBD7_T4D		VK_NUMPAD6		/* VK_RIGHT */
 #define KBD7_T4E		VK_ADD
-#define KBD7_T4F		VK_END
-#define KBD7_T50		VK_DOWN
-#define KBD7_T51		VK_NEXT
-#define KBD7_T52		VK_INSERT
-#define KBD7_T53		VK_DELETE
+#define KBD7_T4F		VK_NUMPAD1		/* VK_END */
+#define KBD7_T50		VK_NUMPAD2		/* VK_DOWN */
+#define KBD7_T51		VK_NUMPAD3		/* VK_NEXT */
+#define KBD7_T52		VK_NUMPAD0		/* VK_INSERT */
+#define KBD7_T53		VK_DECIMAL		/* VK_DELETE */
 #define KBD7_T54		VK_SNAPSHOT
 #define KBD7_T55		VK_NONE
-#define KBD7_T56		VK_NONE			/* NE */
+#define KBD7_T56		VK_OEM_102
 #define KBD7_T57		VK_F11
 #define KBD7_T58		VK_F12
 #define KBD7_T59		VK_CLEAR
@@ -654,27 +655,27 @@
 #define KBD7_T6D		VK_F22
 #define KBD7_T6E		VK_F23
 #define KBD7_T6F		VK_NONE			/* NE */
-#define KBD7_T70		VK_DBE_KATAKANA		/* NE */
+#define KBD7_T70		VK_HKTG			/* NE */
 #define KBD7_T71		VK_NONE			/* NE */
 #define KBD7_T72		VK_NONE
-#define KBD7_T73		VK_OEM_102		/* NE */
+#define KBD7_T73		VK_ABNT_C1
 #define KBD7_T74		VK_NONE
 #define KBD7_T75		VK_NONE
 #define KBD7_T76		VK_F24
-#define KBD7_T77		VK_DBE_SBCSCHAR		/* NE */
+#define KBD7_T77		VK_NONE
 #define KBD7_T78		VK_NONE
 #define KBD7_T79		VK_CONVERT		/* NE */
 #define KBD7_T7A		VK_NONE
 #define KBD7_T7B		VK_NONCONVERT		/* NE */
 #define KBD7_T7C		VK_TAB
-#define KBD7_T7D		VK_NONE			/* NE */
+#define KBD7_T7D		VK_OEM_8
 #define KBD7_T7E		VK_ABNT_C2
 #define KBD7_T7F		VK_OEM_PA2
 
 #define KBD7_X10		VK_MEDIA_PREV_TRACK
 #define KBD7_X19		VK_MEDIA_NEXT_TRACK
 #define KBD7_X1C		VK_RETURN
-#define KBD7_X1D		VK_RCONTROL		/* NE */
+#define KBD7_X1D		VK_RCONTROL
 #define KBD7_X20		VK_VOLUME_MUTE
 #define KBD7_X21		VK_LAUNCH_APP2
 #define KBD7_X22		VK_MEDIA_PLAY_PAUSE
@@ -682,10 +683,10 @@
 #define KBD7_X2E		VK_VOLUME_DOWN
 #define KBD7_X30		VK_VOLUME_UP
 #define KBD7_X32		VK_BROWSER_HOME
-#define KBD7_X33		VK_OEM_8		/* NE */
+#define KBD7_X33		VK_NONE
 #define KBD7_X35		VK_DIVIDE
 #define KBD7_X37		VK_SNAPSHOT
-#define KBD7_X38		VK_DBE_HIRAGANA		/* NE */
+#define KBD7_X38		VK_RMENU
 #define KBD7_X42		VK_NONE
 #define KBD7_X43		VK_NONE
 #define KBD7_X44		VK_NONE

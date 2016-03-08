@@ -5,6 +5,7 @@
  * Copyright 2010-2011 Vic Lee
  * Copyright 2015 Thincast Technologies GmbH
  * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+ * Copyright 2016 Armin Novak <armin.novak@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,25 +25,12 @@
 
 #include <freerdp/channels/rdpdr.h>
 
-/* SERVER_PRINTER_CACHE_EVENT.cachedata */
-#define RDPDR_ADD_PRINTER_EVENT             0x00000001
-#define RDPDR_UPDATE_PRINTER_EVENT          0x00000002
-#define RDPDR_DELETE_PRINTER_EVENT          0x00000003
-#define RDPDR_RENAME_PRINTER_EVENT          0x00000004
-
-/* DR_PRN_DEVICE_ANNOUNCE.Flags */
-#define RDPDR_PRINTER_ANNOUNCE_FLAG_ASCII           0x00000001
-#define RDPDR_PRINTER_ANNOUNCE_FLAG_DEFAULTPRINTER  0x00000002
-#define RDPDR_PRINTER_ANNOUNCE_FLAG_NETWORKPRINTER  0x00000004
-#define RDPDR_PRINTER_ANNOUNCE_FLAG_TSPRINTER       0x00000008
-#define RDPDR_PRINTER_ANNOUNCE_FLAG_XPSFORMAT       0x00000010
-
 typedef struct rdp_printer_driver rdpPrinterDriver;
 typedef struct rdp_printer rdpPrinter;
 typedef struct rdp_print_job rdpPrintJob;
 
 typedef rdpPrinter** (*pcEnumPrinters) (rdpPrinterDriver* driver);
-typedef rdpPrinter* (*pcGetPrinter) (rdpPrinterDriver* driver, const char* name);
+typedef rdpPrinter* (*pcGetPrinter) (rdpPrinterDriver* driver, const char* name, const char* driverName);
 
 struct rdp_printer_driver
 {

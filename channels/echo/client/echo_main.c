@@ -162,6 +162,8 @@ static UINT echo_plugin_terminated(IWTSPlugin* pPlugin)
 
 #ifdef STATIC_CHANNELS
 #define DVCPluginEntry		echo_DVCPluginEntry
+#else
+#define DVCPluginEntry		FREERDP_API DVCPluginEntry
 #endif
 
 /**

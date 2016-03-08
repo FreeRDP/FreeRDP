@@ -102,16 +102,25 @@ UINT cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 
 			formats[index].formatName = NULL;
 
+			/* According to MS-RDPECLIP 2.2.3.1.1.1 formatName is "a 32-byte block containing
+			 * the *null-terminated* name assigned to the Clipboard Format: (32 ASCII 8 characters
+			 * or 16 Unicode characters)"
+			 * However, both Windows RDSH and mstsc violate this specs as seen in the following
+			 * example of a transferred short format name string: [R.i.c.h. .T.e.x.t. .F.o.r.m.a.t.]
+			 * These are 16 unicode charaters - *without* terminating null !
+			 */
+
 			if (asciiNames)
 			{
 				szFormatName = (char*) Stream_Pointer(s);
 
 				if (szFormatName[0])
 				{
+					/* ensure null termination */
 					formats[index].formatName = (char*) malloc(32 + 1);
 					if (!formats[index].formatName)
 					{
-						WLog_ERR(TAG, "calloc failed!");
+						WLog_ERR(TAG, "malloc failed!");
 						error = CHANNEL_RC_NO_MEMORY;
 						goto error_out;
 					}
@@ -125,8 +134,16 @@ UINT cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 
 				if (wszFormatName[0])
 				{
-					ConvertFromUnicode(CP_UTF8, 0, wszFormatName,
-						16, &(formats[index].formatName), 0, NULL, NULL);
+					/* ConvertFromUnicode always returns a null-terminated
+					 * string on success, even if the source string isn't.
+					 */
+					if (ConvertFromUnicode(CP_UTF8, 0, wszFormatName, 16,
+						&(formats[index].formatName), 0, NULL, NULL) < 1)
+					{
+						WLog_ERR(TAG, "failed to convert short clipboard format name");
+						error = ERROR_INTERNAL_ERROR;
+						goto error_out;
+					}
 				}
 			}
 
@@ -185,8 +202,13 @@ UINT cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 
 			if (formatNameLength)
 			{
-				ConvertFromUnicode(CP_UTF8, 0, wszFormatName,
-					-1, &(formats[index].formatName), 0, NULL, NULL);
+				if (ConvertFromUnicode(CP_UTF8, 0, wszFormatName, -1,
+					&(formats[index].formatName), 0, NULL, NULL) < 1)
+				{
+					WLog_ERR(TAG, "failed to convert long clipboard format name");
+					error = ERROR_INTERNAL_ERROR;
+					goto error_out;
+				}
 			}
 
 			Stream_Seek(s, (formatNameLength + 1) * 2);

@@ -3392,10 +3392,10 @@ BOOL rdp_print_capability_sets(wStream* s, UINT16 numberCapabilities, BOOL recei
 				break;
 		}
 
-		if (s->pointer != em)
+		if (Stream_Pointer(s) != em)
 		{
 			WLog_ERR(TAG,  "incorrect offset, type:0x%02X actual:%d expected:%d",
-					 type, (int)(s->pointer - bm), (int)(em - bm));
+					 type, (int)(Stream_Pointer(s) - bm), (int)(em - bm));
 		}
 
 		Stream_SetPointer(s, em);
@@ -3617,10 +3617,10 @@ BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCa
 			}
 		}
 
-		if (s->pointer != em)
+		if (Stream_Pointer(s) != em)
 		{
 			WLog_ERR(TAG,  "incorrect offset, type:0x%02X actual:%d expected:%d",
-					 type, (int)(s->pointer - bm), (int)(em - bm));
+					 type, (int)(Stream_Pointer(s) - bm), (int)(em - bm));
 		}
 
 		Stream_SetPointer(s, em);

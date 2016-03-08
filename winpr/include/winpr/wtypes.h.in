@@ -285,7 +285,7 @@ typedef void *PVOID64, *LPVOID64;
 #if WINPR_HAVE_STDINT_H
 typedef intptr_t INT_PTR;
 typedef uintptr_t UINT_PTR;
-#elif __x86_64__
+#elif defined (__x86_64__)
 typedef __int64 INT_PTR;
 typedef unsigned __int64 UINT_PTR;
 #else

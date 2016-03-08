@@ -141,7 +141,7 @@ namespace TimeZones
                     tzr.StandardDate.wYear = (UInt16)0;
                     tzr.StandardDate.wMonth = (UInt16)transition.Month;
                     tzr.StandardDate.wDayOfWeek = (UInt16)transition.DayOfWeek;
-                    tzr.StandardDate.wDay = (UInt16)transition.Day;
+                    tzr.StandardDate.wDay = (UInt16)transition.Week;
                     tzr.StandardDate.wHour = (UInt16)time.Hour;
                     tzr.StandardDate.wMinute = (UInt16)time.Minute;
                     tzr.StandardDate.wSecond = (UInt16)time.Second;
@@ -153,7 +153,7 @@ namespace TimeZones
                     tzr.DaylightDate.wYear = (UInt16)0;
                     tzr.DaylightDate.wMonth = (UInt16)transition.Month;
                     tzr.DaylightDate.wDayOfWeek = (UInt16)transition.DayOfWeek;
-                    tzr.DaylightDate.wDay = (UInt16)transition.Day;
+                    tzr.DaylightDate.wDay = (UInt16)transition.Week;
                     tzr.DaylightDate.wHour = (UInt16)time.Hour;
                     tzr.DaylightDate.wMinute = (UInt16)time.Minute;
                     tzr.DaylightDate.wSecond = (UInt16)time.Second;

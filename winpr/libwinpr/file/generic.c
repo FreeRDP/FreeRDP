@@ -274,7 +274,7 @@ HANDLE CreateFileW(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
 	LPSTR lpFileNameA = NULL;
 	HANDLE hdl;
 
-	if (ConvertFromUnicode(CP_UTF8, 0, lpFileName, -1, &lpFileNameA, 0, NULL, NULL))
+	if (ConvertFromUnicode(CP_UTF8, 0, lpFileName, -1, &lpFileNameA, 0, NULL, NULL) < 1)
 		return NULL;
 
 	hdl= CreateFileA(lpFileNameA, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
@@ -296,7 +296,7 @@ BOOL DeleteFileW(LPCWSTR lpFileName)
 	LPSTR lpFileNameA = NULL;
 	BOOL rc = FALSE;
 
-	if (ConvertFromUnicode(CP_UTF8, 0, lpFileName, -1, &lpFileNameA, 0, NULL, NULL))
+	if (ConvertFromUnicode(CP_UTF8, 0, lpFileName, -1, &lpFileNameA, 0, NULL, NULL) < 1)
 		return FALSE;
 	rc = DeleteFileA(lpFileNameA);
 	free (lpFileNameA);
@@ -620,6 +620,27 @@ BOOL UnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfBytesToUnlockLo
 				nNumberOfBytesToUnlockLow, nNumberOfBytesToUnlockHigh, lpOverlapped);
 
 	WLog_ERR(TAG, "UnLockFileEx operation not implemented");
+	return FALSE;
+}
+
+BOOL WINAPI SetFileTime(HANDLE hFile, const FILETIME *lpCreationTime,
+		const FILETIME *lpLastAccessTime, const FILETIME *lpLastWriteTime)
+{
+	ULONG Type;
+	WINPR_HANDLE *handle;
+
+	if (hFile == INVALID_HANDLE_VALUE)
+		return FALSE;
+
+	if (!winpr_Handle_GetInfo(hFile, &Type, &handle))
+		return FALSE;
+
+	handle = (WINPR_HANDLE *)hFile;
+	if (handle->ops->SetFileTime)
+		return handle->ops->SetFileTime(handle, lpCreationTime,
+			lpLastAccessTime, lpLastWriteTime);
+
+	WLog_ERR(TAG, "%s operation not implemented", __FUNCTION__);
 	return FALSE;
 }
 

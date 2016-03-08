@@ -1344,7 +1344,7 @@ static BOOL _get_commstatus(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus)
 	}
 	else
 	{
-		/* FIXME: "is 80 percent full" from the specs is ambiguous, need to track when it previously occured? */
+		/* FIXME: "is 80 percent full" from the specs is ambiguous, need to track when it previously * occurred? */
 		pComm->PendingEvents &= ~SERIAL_EV_RX80FULL;
 	}
 

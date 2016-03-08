@@ -7,6 +7,8 @@
  * Copyright 2012 Gerald Richter
  * Copyright 2015 Thincast Technologies GmbH
  * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+ * Copyright 2016 Inuvika Inc.
+ * Copyright 2016 David PHAM-VAN <d.phamvan@inuvika.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,8 +86,6 @@ typedef UINT32 mode_t;
 
 #define FILE_TIME_SYSTEM_TO_RDP(_t) \
 	(((UINT64)(_t) + EPOCH_DIFF) * 10000000LL)
-#define FILE_TIME_RDP_TO_SYSTEM(_t) \
-	(((_t) == 0LL || (_t) == (UINT64)(-1LL)) ? 0 : (time_t)((_t) / 10000000LL - EPOCH_DIFF))
 
 #define FILE_ATTR_SYSTEM_TO_RDP(_f, _st) ( \
 	(S_ISDIR(_st.st_mode) ? FILE_ATTRIBUTE_DIRECTORY : 0) | \

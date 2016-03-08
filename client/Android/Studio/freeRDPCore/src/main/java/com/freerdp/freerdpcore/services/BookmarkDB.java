@@ -76,8 +76,8 @@ public class BookmarkDB extends SQLiteOpenHelper {
         String sqlInsertDefaultPerfFlags =
                 "INSERT INTO tbl_performance_flags ("
                         + "perf_remotefx, "
-                        + "perf_gfx"
-                        + "perf_gfx_h264"
+                        + "perf_gfx, "
+                        + "perf_gfx_h264, "
                         + "perf_wallpaper, "
                         + "perf_theming, "
                         + "perf_full_window_drag, "

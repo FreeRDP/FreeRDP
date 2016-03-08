@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/crypto.h>
 #include <winpr/winhttp.h>
 
 #include <freerdp/log.h>
@@ -422,7 +423,7 @@ int rts_ping_traffic_sent_notify_command_write(BYTE* buffer, UINT32 PingTrafficS
 
 void rts_generate_cookie(BYTE* cookie)
 {
-	RAND_pseudo_bytes(cookie, 16);
+	winpr_RAND(cookie, 16);
 }
 
 /* CONN/A Sequence */

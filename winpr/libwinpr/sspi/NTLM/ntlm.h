@@ -225,8 +225,8 @@ struct _NTLM_CONTEXT
 	BYTE MachineID[32];
 	BOOL SendVersionInfo;
 	BOOL confidentiality;
-	WINPR_RC4_CTX SendRc4Seal;
-	WINPR_RC4_CTX RecvRc4Seal;
+	WINPR_RC4_CTX* SendRc4Seal;
+	WINPR_RC4_CTX* RecvRc4Seal;
 	BYTE* SendSigningKey;
 	BYTE* RecvSigningKey;
 	BYTE* SendSealingKey;

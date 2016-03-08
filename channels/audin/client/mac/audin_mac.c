@@ -33,6 +33,9 @@
 #include <winpr/debug.h>
 #include <winpr/cmdline.h>
 
+#define __COREFOUNDATION_CFPLUGINCOM__ 1
+#define IUNKNOWN_C_GUTS void *_reserved; void* QueryInterface; void* AddRef; void* Release
+
 #include <CoreAudio/CoreAudioTypes.h>
 #include <CoreAudio/CoreAudio.h>
 #include <AudioToolbox/AudioToolbox.h>
@@ -402,6 +405,8 @@ static UINT audin_mac_parse_addin_args(AudinMacDevice *device, ADDIN_ARGV *args)
 
 #ifdef STATIC_CHANNELS
 #define freerdp_audin_client_subsystem_entry	mac_freerdp_audin_client_subsystem_entry
+#else
+#define freerdp_audin_client_subsystem_entry	FREERDP_API freerdp_audin_client_subsystem_entry
 #endif
 
 UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)

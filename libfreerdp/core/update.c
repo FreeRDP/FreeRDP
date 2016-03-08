@@ -30,10 +30,12 @@
 #include "update.h"
 #include "surface.h"
 #include "message.h"
+#include "info.h"
 
 #include <freerdp/log.h>
 #include <freerdp/peer.h>
 #include <freerdp/codec/bitmap.h>
+
 
 #define TAG FREERDP_TAG("core.update")
 
@@ -1905,6 +1907,7 @@ void update_register_server_callbacks(rdpUpdate* update)
 	update->SurfaceFrameBits = update_send_surface_frame_bits;
 	update->PlaySound = update_send_play_sound;
 	update->SetKeyboardIndicators = update_send_set_keyboard_indicators;
+	update->SaveSessionInfo = rdp_send_save_session_info;
 	update->primary->DstBlt = update_send_dstblt;
 	update->primary->PatBlt = update_send_patblt;
 	update->primary->ScrBlt = update_send_scrblt;

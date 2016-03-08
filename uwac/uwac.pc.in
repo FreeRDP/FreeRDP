@@ -1,0 +1,15 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=@CMAKE_INSTALL_PREFIX@
+libdir=@CMAKE_INSTALL_FULL_LIBDIR@
+includedir=${prefix}/@UWAC_INCLUDE_DIR@
+libs=-luwac
+
+Name: uwac 
+Description: uwac: using wayland as a client
+URL: http://www.freerdp.com/
+Version: @UWAC_VERSION@
+Requires:
+Requires.private: wayland-client xkbcommon freerdp@FREERDP_VERSION_MAJOR@
+Libs: -L${libdir} ${libs}
+Libs.private: 
+Cflags: -I${includedir}

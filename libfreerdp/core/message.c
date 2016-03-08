@@ -188,19 +188,12 @@ static BOOL update_message_SurfaceCommand(rdpContext* context, wStream* s)
 {
 	wStream* wParam;
 
-	wParam = (wStream*) malloc(sizeof(wStream));
+	wParam = Stream_New(NULL, Stream_GetRemainingLength(s));
 	if (!wParam)
 		return FALSE;
 
-	wParam->capacity = Stream_Capacity(s);
-	wParam->buffer = (BYTE*) malloc(wParam->capacity);
-	if (!wParam->buffer)
-	{
-			free(wParam);
-			return FALSE;
-	}
-
-	wParam->pointer = wParam->buffer;
+	Stream_Copy(s, wParam, Stream_GetRemainingLength(s));
+	Stream_SetPosition(wParam, 0);
 
 	return MessageQueue_Post(context->update->queue, (void*) context,
 			MakeMessageId(Update, SurfaceCommand), (void*) wParam, NULL);
@@ -2058,7 +2051,7 @@ int update_message_free_pointer_update_class(wMessage* msg, int type)
 				free(wParam);
 			}
 			break;
-		
+
 		case PointerUpdate_PointerNew:
 			{
 				POINTER_NEW_UPDATE* wParam = (POINTER_NEW_UPDATE*) msg->wParam;
@@ -2091,11 +2084,11 @@ static int update_message_process_pointer_update_class(rdpUpdateProxy* proxy, wM
 			break;
 
 		case PointerUpdate_PointerColor:
-			IFCALL(proxy->PointerColor, msg->context, (POINTER_COLOR_UPDATE*) msg->wParam);	
+			IFCALL(proxy->PointerColor, msg->context, (POINTER_COLOR_UPDATE*) msg->wParam);
 			break;
 
 		case PointerUpdate_PointerNew:
-			IFCALL(proxy->PointerNew, msg->context, (POINTER_NEW_UPDATE*) msg->wParam);	
+			IFCALL(proxy->PointerNew, msg->context, (POINTER_NEW_UPDATE*) msg->wParam);
 			break;
 
 		case PointerUpdate_PointerCached:
@@ -2220,7 +2213,7 @@ int update_message_queue_free_message(wMessage *message)
 	int msgType;
 
 	assert(message);
-	
+
 	if (message->id == WMQ_QUIT)
 		return 0;
 
