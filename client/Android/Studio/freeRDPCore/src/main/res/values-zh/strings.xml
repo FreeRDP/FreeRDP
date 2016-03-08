@@ -80,9 +80,9 @@
         <item>1920x1200</item>
     </string-array>
     <string-array name="resolutions_values_array">
-        <item>自动</item>
-        <item>全屏</item>
-        <item>自定义</item>
+        <item>automatic</item>
+        <item>fitscreen</item>
+        <item>custom</item>
         <item>640x480</item>
         <item>720x480</item>
         <item>800x600</item>

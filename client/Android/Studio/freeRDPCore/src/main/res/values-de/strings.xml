@@ -80,9 +80,9 @@
         <item>1920x1200</item>
     </string-array>
     <string-array name="resolutions_values_array">
-        <item>automatisch</item>
-        <item>an Bildschirm anpassen</item>
-        <item>Benutzerdefiniert</item>
+        <item>automatic</item>
+        <item>fitscreen</item>
+        <item>custom</item>
         <item>640x480</item>
         <item>720x480</item>
         <item>800x600</item>
