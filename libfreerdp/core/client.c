@@ -232,7 +232,7 @@ UINT freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 {
 	UINT error = CHANNEL_RC_OK;
 	int index;
-	char* name;
+	char* name = NULL;
 	char* hostname;
 	int hostnameLength;
 	CHANNEL_CLIENT_DATA* pChannelClientData;
@@ -259,7 +259,10 @@ UINT freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 
 			name = (char*) malloc(9);
 			if (!name)
-				return -1;
+			{
+				error = CHANNEL_RC_NO_MEMORY;
+				goto fail;
+			}
 			CopyMemory(name, pChannelOpenData->name, 8);
 			name[8] = '\0';
 
@@ -282,6 +285,7 @@ UINT freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 	}
 
 fail:
+	free (name);
 	return error;
 }
 
