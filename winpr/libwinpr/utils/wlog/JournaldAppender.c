@@ -79,6 +79,7 @@ static BOOL WLog_JournaldAppender_WriteMessage(wLog* log, wLogAppender* appender
 {
 	char *formatStr;
 	wLogJournaldAppender* journaldAppender;
+	char prefix[WLOG_MAX_PREFIX_SIZE];
 
 	if (!log || !appender || !message)
 		return FALSE;
@@ -89,19 +90,19 @@ static BOOL WLog_JournaldAppender_WriteMessage(wLog* log, wLogAppender* appender
 	{
 	case WLOG_TRACE:
 	case WLOG_DEBUG:
-		formatStr = "<7>%s\n";
+		formatStr = "<7>%s%s\n";
 		break;
 	case WLOG_INFO:
-		formatStr = "<6>%s\n";
+		formatStr = "<6>%s%s\n";
 		break;
 	case WLOG_WARN:
-		formatStr = "<4>%s\n";
+		formatStr = "<4>%s%s\n";
 		break;
 	case WLOG_ERROR:
-		formatStr = "<3>%s\n";
+		formatStr = "<3>%s%s\n";
 		break;
 	case WLOG_FATAL:
-		formatStr = "<2>%s\n";
+		formatStr = "<2>%s%s\n";
 		break;
 	case WLOG_OFF:
 		return TRUE;
@@ -110,7 +111,11 @@ static BOOL WLog_JournaldAppender_WriteMessage(wLog* log, wLogAppender* appender
 		return FALSE;
 	}
 
-	fprintf(journaldAppender->stream, formatStr, message->TextString);
+	message->PrefixString = prefix;
+	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
+
+	if (message->Level != WLOG_OFF)
+		fprintf(journaldAppender->stream, formatStr, message->PrefixString, message->TextString);
 	return TRUE;
 }
 
