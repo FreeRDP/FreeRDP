@@ -207,7 +207,9 @@ public class LibFreeRDP {
             args.add("/gfx");
         }
 
-        args.add(addFlag("gfx-h264", flags.getH264()));
+        if (flags.getH264()) {
+            args.add("/gfx-h264");
+        }
 
         args.add(addFlag("wallpaper", flags.getWallpaper()));
         args.add(addFlag("window-drag", flags.getFullWindowDrag()));
