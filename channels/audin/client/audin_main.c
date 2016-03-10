@@ -721,6 +721,11 @@ BOOL audin_process_addin_args(AUDIN_PLUGIN* audin, ADDIN_ARGV* args)
 	COMMAND_LINE_ARGUMENT_A* arg;
 	UINT error;
 
+	if (args->argc == 1)
+	{
+		return TRUE;
+	}
+
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
 
 	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
