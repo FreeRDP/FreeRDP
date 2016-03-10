@@ -47,7 +47,8 @@ function build {
 	common_run cd $BUILD_SRC
 	common_run git clean -xdf
 	common_run ./Configure --openssldir=$DST_DIR $CONFIG shared
-	common_run make -j build_libs
+	common_run make depend
+	common_run make build_libs
 
 	if [ ! -d $DST_DIR ];
 	then
