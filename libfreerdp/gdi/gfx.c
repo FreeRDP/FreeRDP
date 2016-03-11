@@ -65,14 +65,21 @@ UINT gdi_ResetGraphics(RdpgfxClientContext* context, RDPGFX_RESET_GRAPHICS_PDU* 
 		if (!surface || !surface->outputMapped)
 			continue;
 
-		freerdp_client_codecs_reset(surface->codecs, FREERDP_CODEC_ALL);
+		if (!freerdp_client_codecs_reset(surface->codecs, FREERDP_CODEC_ALL,
+						 surface->width, surface->height))
+		{
+			free (pSurfaceIds);
+			return ERROR_INTERNAL_ERROR;
+		}
 
 		region16_clear(&surface->invalidRegion);
 	}
 
 	free(pSurfaceIds);
 
-	freerdp_client_codecs_reset(gdi->codecs, FREERDP_CODEC_ALL);
+	if (!freerdp_client_codecs_reset(gdi->codecs, FREERDP_CODEC_ALL,
+					 gdi->width, gdi->height))
+		return ERROR_INTERNAL_ERROR;
 
 	gdi->graphicsReset = TRUE;
 
@@ -683,6 +690,11 @@ UINT gdi_SurfaceCommand(RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cm
 			break;
 
 		case RDPGFX_CODECID_CAPROGRESSIVE_V2:
+			WLog_WARN(TAG, "SurfaceCommand %08X not implemented", cmd->codecId);
+			break;
+
+		default:
+			WLog_WARN(TAG, "Invalid SurfaceCommand %08X", cmd->codecId);
 			break;
 	}
 
@@ -720,6 +732,13 @@ UINT gdi_CreateSurface(RdpgfxClientContext* context, RDPGFX_CREATE_SURFACE_PDU* 
 	{
 		free (surface);
 		return CHANNEL_RC_NO_MEMORY;
+	}
+
+	if (!freerdp_client_codecs_reset(surface->codecs, FREERDP_CODEC_ALL,
+					 createSurface->width, createSurface->height))
+	{
+		free (surface);
+		return ERROR_INTERNAL_ERROR;
 	}
 
 	surface->surfaceId = createSurface->surfaceId;

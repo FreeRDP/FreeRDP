@@ -1160,9 +1160,12 @@ BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context, BYTE* data,
 	return dstData;
 }
 
-int freerdp_bitmap_planar_context_reset(BITMAP_PLANAR_CONTEXT* context)
+BOOL freerdp_bitmap_planar_context_reset(BITMAP_PLANAR_CONTEXT* context)
 {
-	return 1;
+	if (!context)
+		return FALSE;
+
+	return TRUE;
 }
 
 BITMAP_PLANAR_CONTEXT* freerdp_bitmap_planar_context_new(DWORD flags, int maxWidth, int maxHeight)

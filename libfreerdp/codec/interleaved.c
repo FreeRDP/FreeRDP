@@ -413,9 +413,12 @@ int interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pDstData
 	return status;
 }
 
-int bitmap_interleaved_context_reset(BITMAP_INTERLEAVED_CONTEXT* interleaved)
+BOOL bitmap_interleaved_context_reset(BITMAP_INTERLEAVED_CONTEXT* interleaved)
 {
-	return 1;
+	if (!interleaved)
+		return FALSE;
+
+	return TRUE;
 }
 
 BITMAP_INTERLEAVED_CONTEXT* bitmap_interleaved_context_new(BOOL Compressor)

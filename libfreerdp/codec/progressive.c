@@ -1880,9 +1880,12 @@ int progressive_compress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UINT3
 	return 1;
 }
 
-int progressive_context_reset(PROGRESSIVE_CONTEXT* progressive)
+BOOL progressive_context_reset(PROGRESSIVE_CONTEXT* progressive)
 {
-	return 1;
+	if (!progressive)
+		return FALSE;
+
+	return TRUE;
 }
 
 PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor)

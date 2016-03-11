@@ -59,9 +59,12 @@ BOOL test_peer_context_new(freerdp_peer* client, testPeerContext* context)
 	if (!(context->rfx_context = rfx_context_new(TRUE)))
 		goto fail_rfx_context;
 
+	if (!rfx_context_reset(context->rfx_context, SAMPLE_SERVER_DEFAULT_WIDTH,
+			       SAMPLE_SERVER_DEFAULT_HEIGHT))
+		goto fail_rfx_context;
+
 	context->rfx_context->mode = RLGR3;
-	context->rfx_context->width = SAMPLE_SERVER_DEFAULT_WIDTH;
-	context->rfx_context->height = SAMPLE_SERVER_DEFAULT_HEIGHT;
+
 	rfx_context_set_pixel_format(context->rfx_context, RDP_PIXEL_FORMAT_R8G8B8);
 
 	if (!(context->nsc_context = nsc_context_new()))
@@ -547,9 +550,12 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 	WLog_DBG(TAG, "");
 	WLog_DBG(TAG, "Client requested desktop: %dx%dx%d",
 			 client->settings->DesktopWidth, client->settings->DesktopHeight, client->settings->ColorDepth);
+
 #if (SAMPLE_SERVER_USE_CLIENT_RESOLUTION == 1)
-	context->rfx_context->width = client->settings->DesktopWidth;
-	context->rfx_context->height = client->settings->DesktopHeight;
+	if (!rfx_context_reset(context->rfx_context, client->settings->DesktopWidth,
+		       client->settings->DesktopHeight))
+		return FALSE;
+
 	WLog_DBG(TAG, "Using resolution requested by client.");
 #else
 	client->settings->DesktopWidth = context->rfx_context->width;
@@ -613,7 +619,6 @@ BOOL tf_peer_activate(freerdp_peer* client)
 {
 	testPeerContext* context = (testPeerContext*) client->context;
 
-	rfx_context_reset(context->rfx_context);
 	context->activated = TRUE;
 
 	//client->settings->CompressionLevel = PACKET_COMPR_TYPE_8K;
@@ -658,8 +663,10 @@ BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 			client->settings->DesktopWidth = SAMPLE_SERVER_DEFAULT_WIDTH;
 			client->settings->DesktopHeight = SAMPLE_SERVER_DEFAULT_HEIGHT;
 		}
-		context->rfx_context->width = client->settings->DesktopWidth;
-		context->rfx_context->height = client->settings->DesktopHeight;
+		if (!rfx_context_reset(context->rfx_context, client->settings->DesktopWidth,
+			       client->settings->DesktopHeight))
+			return FALSE;
+
 		update->DesktopResize(update->context);
 		context->activated = FALSE;
 	}

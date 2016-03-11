@@ -357,6 +357,9 @@ void rfx_context_free(RFX_CONTEXT* context)
 {
 	RFX_CONTEXT_PRIV *priv;
 
+	if (!context)
+		return;
+
 	assert(NULL != context);
 	assert(NULL != context->priv);
 	assert(NULL != context->priv->TilePool);
@@ -419,10 +422,17 @@ void rfx_context_set_pixel_format(RFX_CONTEXT* context, RDP_PIXEL_FORMAT pixel_f
 	}
 }
 
-void rfx_context_reset(RFX_CONTEXT* context)
+BOOL rfx_context_reset(RFX_CONTEXT* context, UINT32 width, UINT32 height)
 {
+	if (!context)
+		return FALSE;
+
+	context->width = width;
+	context->height = height;
 	context->state = RFX_STATE_SEND_HEADERS;
 	context->frameIdx = 0;
+
+	return TRUE;
 }
 
 static BOOL rfx_process_message_sync(RFX_CONTEXT* context, wStream* s)
