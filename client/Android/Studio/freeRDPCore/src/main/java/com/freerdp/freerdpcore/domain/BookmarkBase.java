@@ -748,6 +748,10 @@ public class BookmarkBase implements Parcelable, Cloneable {
 
 		editor.putBoolean("bookmark.perf_remotefx",
 				performanceFlags.getRemoteFX());
+		editor.putBoolean("bookmark.perf_gfx",
+				performanceFlags.getGfx());
+		editor.putBoolean("bookmark.perf_gfx_h264",
+				performanceFlags.getH264());
 		editor.putBoolean("bookmark.perf_wallpaper",
 				performanceFlags.getWallpaper());
 		editor.putBoolean("bookmark.perf_font_smoothing",
@@ -774,6 +778,10 @@ public class BookmarkBase implements Parcelable, Cloneable {
 
 		editor.putBoolean("bookmark.perf_remotefx_3g", advancedSettings
 				.getPerformance3G().getRemoteFX());
+		editor.putBoolean("bookmark.perf_gfx_3g", advancedSettings
+				.getPerformance3G().getGfx());
+		editor.putBoolean("bookmark.perf_gfx_h264_3g", advancedSettings
+				.getPerformance3G().getH264());
 		editor.putBoolean("bookmark.perf_wallpaper_3g", advancedSettings
 				.getPerformance3G().getWallpaper());
 		editor.putBoolean("bookmark.perf_font_smoothing_3g", advancedSettings
@@ -825,6 +833,10 @@ public class BookmarkBase implements Parcelable, Cloneable {
 
 		performanceFlags.setRemoteFX(sharedPrefs.getBoolean(
 				"bookmark.perf_remotefx", false));
+		performanceFlags.setGfx(sharedPrefs.getBoolean(
+				"bookmark.perf_gfx", false));
+		performanceFlags.setH264(sharedPrefs.getBoolean(
+				"bookmark.perf_gfx_h264", false));
 		performanceFlags.setWallpaper(sharedPrefs.getBoolean(
 				"bookmark.perf_wallpaper", false));
 		performanceFlags.setFontSmoothing(sharedPrefs.getBoolean(
@@ -850,6 +862,10 @@ public class BookmarkBase implements Parcelable, Cloneable {
 
 		advancedSettings.getPerformance3G().setRemoteFX(
 				sharedPrefs.getBoolean("bookmark.perf_remotefx_3g", false));
+		advancedSettings.getPerformance3G().setGfx(sharedPrefs.getBoolean(
+				"bookmark.perf_gfx_3g", false));
+		advancedSettings.getPerformance3G().setH264(sharedPrefs.getBoolean(
+				"bookmark.perf_gfx_h264_3g", false));
 		advancedSettings.getPerformance3G().setWallpaper(
 				sharedPrefs.getBoolean("bookmark.perf_wallpaper_3g", false));
 		advancedSettings.getPerformance3G().setFontSmoothing(
