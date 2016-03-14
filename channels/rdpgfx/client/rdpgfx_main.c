@@ -90,7 +90,7 @@ static UINT rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 		capsSet->flags |= RDPGFX_CAPS_FLAG_SMALL_CACHE;
 
 	if (gfx->H264)
-		capsSet->flags |= RDPGFX_CAPS_FLAG_AVC420ENABLED;
+		capsSet->flags |= RDPGFX_CAPS_FLAG_AVC420_ENABLED;
 
 	capsSet = &capsSets[pdu.capsSetCount++];
 	capsSet->version = RDPGFX_CAPVERSION_10;
@@ -100,7 +100,7 @@ static UINT rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 		capsSet->flags |= RDPGFX_CAPS_FLAG_SMALL_CACHE;
 
 	if (!gfx->H264)
-		capsSet->flags |= RDPGFX_CAPS_FLAG_AVCDISABLED;
+		capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
 
 	header.pduLength = RDPGFX_HEADER_SIZE + 2 + (pdu.capsSetCount * RDPGFX_CAPSET_SIZE);
 
