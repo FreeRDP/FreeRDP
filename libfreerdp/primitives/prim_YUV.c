@@ -38,11 +38,13 @@ static INLINE BYTE CLIP(INT32 X)
 /**
  * @brief general_YUV420CombineToYUV444
  *
- * @param pSrc    Pointer to auxilary YUV420 data
- * @param srcStep Step width in auxilary YUV420 data
- * @param pDst    Pointer to main YUV420 data
- * @param dstStep Step width in main YUV420 data
- * @param roi     Area information for YUV420 data
+ * @param pMainSrc    Pointer to luma YUV420 data
+ * @param srcMainStep Step width in luma YUV420 data
+ * @param pAuxSrc     Pointer to chroma YUV420 data
+ * @param srcAuxStep  Step width in chroma YUV420 data
+ * @param pDst        Pointer to YUV444 data
+ * @param dstStep     Step width in YUV444 data
+ * @param roi         Region of source to combine in destination.
  *
  * @return PRIMITIVES_SUCCESS on success, an error code otherwise.
  */
