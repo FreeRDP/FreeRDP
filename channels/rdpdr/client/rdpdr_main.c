@@ -1720,7 +1720,7 @@ static void rdpdr_virtual_channel_event_terminated(rdpdrPlugin* rdpdr)
 	free(rdpdr);
 }
 
-static UINT VCAPITYPE rdpdr_virtual_channel_init_event(LPVOID pInitHandle, UINT event,
+static VOID VCAPITYPE rdpdr_virtual_channel_init_event(LPVOID pInitHandle, UINT event,
 						       LPVOID pData, UINT dataLength)
 {
 	rdpdrPlugin* rdpdr;
@@ -1731,7 +1731,7 @@ static UINT VCAPITYPE rdpdr_virtual_channel_init_event(LPVOID pInitHandle, UINT 
 	if (!rdpdr)
 	{
 		WLog_ERR(TAG, "error no match");
-		return CHANNEL_RC_BAD_INIT_HANDLE;
+		return;
 	}
 
 	switch (event)
@@ -1759,7 +1759,6 @@ static UINT VCAPITYPE rdpdr_virtual_channel_init_event(LPVOID pInitHandle, UINT 
 
 	if (error && rdpdr->rdpcontext)
 		setChannelError(rdpdr->rdpcontext, error, "rdpdr_virtual_channel_init_event reported an error");
-	return error;
 }
 
 /* rdpdr is always built-in */

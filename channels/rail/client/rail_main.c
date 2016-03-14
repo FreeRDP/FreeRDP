@@ -776,7 +776,7 @@ static void rail_virtual_channel_event_terminated(railPlugin* rail)
 	free(rail);
 }
 
-static UINT VCAPITYPE rail_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
+static VOID VCAPITYPE rail_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
 {
 	railPlugin* rail;
 	UINT error = CHANNEL_RC_OK;
@@ -786,7 +786,7 @@ static UINT VCAPITYPE rail_virtual_channel_init_event(LPVOID pInitHandle, UINT e
 	if (!rail)
 	{
 		WLog_ERR(TAG,  "rail_virtual_channel_init_event: error no match");
-		return CHANNEL_RC_BAD_INIT_HANDLE;
+		return;
 	}
 
 	switch (event)
@@ -808,8 +808,6 @@ static UINT VCAPITYPE rail_virtual_channel_init_event(LPVOID pInitHandle, UINT e
 
 	if(error && rail->rdpcontext)
 		setChannelError(rail->rdpcontext, error, "rail_virtual_channel_init_event reported an error");
-
-	return error;
 }
 
 /* rail is always built-in */

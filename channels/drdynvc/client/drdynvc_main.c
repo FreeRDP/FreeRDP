@@ -1501,7 +1501,7 @@ static UINT drdynvc_virtual_channel_event_terminated(drdynvcPlugin* drdynvc)
 	return CHANNEL_RC_OK;
 }
 
-static UINT VCAPITYPE drdynvc_virtual_channel_init_event(LPVOID pInitHandle,
+static VOID VCAPITYPE drdynvc_virtual_channel_init_event(LPVOID pInitHandle,
 							 UINT event, LPVOID pData,
 							 UINT dataLength)
 {
@@ -1513,7 +1513,7 @@ static UINT VCAPITYPE drdynvc_virtual_channel_init_event(LPVOID pInitHandle,
 	if (!drdynvc)
 	{
 		WLog_ERR(TAG, "drdynvc_virtual_channel_init_event: error no match");
-		return CHANNEL_RC_BAD_INIT_HANDLE;
+		return;
 	}
 
 	switch (event)
@@ -1535,8 +1535,6 @@ static UINT VCAPITYPE drdynvc_virtual_channel_init_event(LPVOID pInitHandle,
 	}
 	if (error && drdynvc->rdpcontext)
 		setChannelError(drdynvc->rdpcontext, error, "drdynvc_virtual_channel_init_event reported an error");
-
-	return error;
 }
 
 /**

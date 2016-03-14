@@ -1066,7 +1066,7 @@ static void remdesk_virtual_channel_event_terminated(remdeskPlugin* remdesk)
 	free(remdesk);
 }
 
-static UINT VCAPITYPE remdesk_virtual_channel_init_event(LPVOID pInitHandle,
+static VOID VCAPITYPE remdesk_virtual_channel_init_event(LPVOID pInitHandle,
 							 UINT event, LPVOID pData,
 							 UINT dataLength)
 {
@@ -1078,7 +1078,7 @@ static UINT VCAPITYPE remdesk_virtual_channel_init_event(LPVOID pInitHandle,
 	if (!remdesk)
 	{
 		WLog_ERR(TAG,  "error no match");
-		return CHANNEL_RC_BAD_INIT_HANDLE;
+		return;
 	}
 
 	switch (event)
@@ -1099,8 +1099,6 @@ static UINT VCAPITYPE remdesk_virtual_channel_init_event(LPVOID pInitHandle,
 	}
 	if (error && remdesk->rdpcontext)
 		setChannelError(remdesk->rdpcontext, error, "remdesk_virtual_channel_init_event reported an error");
-
-	return error;
 }
 
 /* remdesk is always built-in */

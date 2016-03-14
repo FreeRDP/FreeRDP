@@ -1259,7 +1259,7 @@ static UINT encomsp_virtual_channel_event_terminated(encomspPlugin* encomsp)
 	return CHANNEL_RC_OK;
 }
 
-static UINT VCAPITYPE encomsp_virtual_channel_init_event(LPVOID pInitHandle,
+static VOID VCAPITYPE encomsp_virtual_channel_init_event(LPVOID pInitHandle,
 							 UINT event, LPVOID pData,
 							 UINT dataLength)
 {
@@ -1271,7 +1271,7 @@ static UINT VCAPITYPE encomsp_virtual_channel_init_event(LPVOID pInitHandle,
 	if (!encomsp)
 	{
 		WLog_ERR(TAG,  "encomsp_virtual_channel_init_event: error no match");
-		return CHANNEL_RC_BAD_INIT_HANDLE;
+		return;
 	}
 
 	switch (event)
@@ -1295,8 +1295,6 @@ static UINT VCAPITYPE encomsp_virtual_channel_init_event(LPVOID pInitHandle,
 
 	if (error && encomsp->rdpcontext)
 		setChannelError(encomsp->rdpcontext, error, "encomsp_virtual_channel_init_event reported an error");
-
-	return error;
 }
 
 /* encomsp is always built-in */

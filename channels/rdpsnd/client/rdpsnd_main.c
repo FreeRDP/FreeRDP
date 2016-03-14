@@ -1450,7 +1450,7 @@ static void rdpsnd_virtual_channel_event_terminated(rdpsndPlugin* rdpsnd)
 	free(rdpsnd);
 }
 
-static UINT VCAPITYPE rdpsnd_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
+static VOID VCAPITYPE rdpsnd_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
 {
 	rdpsndPlugin* plugin;
 	UINT error = CHANNEL_RC_OK;
@@ -1460,7 +1460,7 @@ static UINT VCAPITYPE rdpsnd_virtual_channel_init_event(LPVOID pInitHandle, UINT
 	if (!plugin)
 	{
 		WLog_ERR(TAG,  "rdpsnd_virtual_channel_init_event: error no match");
-		return CHANNEL_RC_BAD_INIT_HANDLE;
+		return;
 	}
 
 	switch (event)
@@ -1481,7 +1481,6 @@ static UINT VCAPITYPE rdpsnd_virtual_channel_init_event(LPVOID pInitHandle, UINT
 	}
 	if (error && plugin->rdpcontext)
 		setChannelError(plugin->rdpcontext, error, "rdpsnd_virtual_channel_init_event reported an error");
-	return error;
 }
 
 /* rdpsnd is always built-in */

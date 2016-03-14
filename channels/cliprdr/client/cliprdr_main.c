@@ -1257,7 +1257,7 @@ static UINT cliprdr_virtual_channel_event_terminated(cliprdrPlugin* cliprdr)
 	return CHANNEL_RC_OK;
 }
 
-static UINT VCAPITYPE cliprdr_virtual_channel_init_event(LPVOID pInitHandle,
+static VOID VCAPITYPE cliprdr_virtual_channel_init_event(LPVOID pInitHandle,
 							 UINT event, LPVOID pData,
 							 UINT dataLength)
 {
@@ -1269,7 +1269,7 @@ static UINT VCAPITYPE cliprdr_virtual_channel_init_event(LPVOID pInitHandle,
 	if (!cliprdr)
 	{
 		WLog_ERR(TAG, "error no match");
-		return CHANNEL_RC_BAD_INIT_HANDLE;
+		return;
 	}
 
 	switch (event)
@@ -1291,8 +1291,6 @@ static UINT VCAPITYPE cliprdr_virtual_channel_init_event(LPVOID pInitHandle,
 	}
 	if (error && cliprdr->context->rdpcontext)
 		setChannelError(cliprdr->context->rdpcontext, error, "cliprdr_virtual_channel_init_event reported an error");
-
-	return error;
 }
 
 /* cliprdr is always built-in */
