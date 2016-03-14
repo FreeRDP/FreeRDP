@@ -29,7 +29,7 @@
     <string name="section_active_sessions">Active Sessions</string>
     <string name="action_settings">foobar</string>
     <!-- Search strings -->
-    <string name="search_hint">Connect to Computer</string>    
+    <string name="search_hint">Connect to Computer</string>
     <!-- List placeholder labels -->
     <string name="list_placeholder_login">Login</string>
     <string name="list_placeholder_no_servers">No Servers</string>
@@ -58,7 +58,10 @@
         <item>True Color (24 Bit)</item>
         <item>Highest Quality (32 Bit)</item>
     </string-array>
-    <string-array name="colors_values_array">
+    <!-- This array is used as is in code,
+	do not translate! -->
+    <string-array name="colors_values_array"
+                  translatable="false">
         <item>16</item>
         <item>24</item>
         <item>32</item>
@@ -80,7 +83,10 @@
         <item>1920x1080</item>
         <item>1920x1200</item>
     </string-array>
-    <string-array name="resolutions_values_array">
+    <!-- This array is used as is in code,
+	do not translate! -->
+    <string-array name="resolutions_values_array"
+                  translatable="false">
         <item>automatic</item>
         <item>fitscreen</item>
         <item>custom</item>
@@ -113,15 +119,18 @@
     <string name="settings_performance_3g">3G Performance</string>
     <string name="settings_cat_gateway">Gateway</string>
     <string name="settings_enable_gateway_settings">Enable Gateway</string>
-    <string name="settings_gateway_settings">Gateway Settings</string>    
+    <string name="settings_gateway_settings">Gateway Settings</string>
     <string name="settings_redirect_sdcard">Redirect SDCard</string>
-		<string name="settings_redirect_sound">Redirect Sound</string>
+    <string name="settings_redirect_sound">Redirect Sound</string>
     <string-array name="redirect_sound_array">
         <item>Do not play</item>
         <item>Play on Server</item>
         <item>Play on Device</item>
     </string-array>
-    <string-array name="redirect_sound_values_array">
+    <!-- This array is used as is in code,
+	do not translate! -->
+    <string-array name="redirect_sound_values_array"
+                  translatable="false">
         <item>2</item>
         <item>1</item>
         <item>0</item>
@@ -134,7 +143,10 @@
         <item>TLS</item>
         <item>NLA</item>
     </string-array>
-    <string-array name="security_values_array">
+    <!-- This array is used as is in code,
+	do not translate! -->
+    <string-array name="security_values_array"
+                  translatable="false">
         <item>0</item>
         <item>1</item>
         <item>2</item>
