@@ -58,6 +58,8 @@
         <item>True Color (24 Bit)</item>
         <item>Highest Quality (32 Bit)</item>
     </string-array>
+    <!-- This array is used as is in code,
+	do not translate! -->
     <string-array name="colors_values_array"
                   translatable="false">
         <item>16</item>
@@ -81,6 +83,8 @@
         <item>1920x1080</item>
         <item>1920x1200</item>
     </string-array>
+    <!-- This array is used as is in code,
+	do not translate! -->
     <string-array name="resolutions_values_array"
                   translatable="false">
         <item>automatic</item>
@@ -123,6 +127,8 @@
         <item>Play on Server</item>
         <item>Play on Device</item>
     </string-array>
+    <!-- This array is used as is in code,
+	do not translate! -->
     <string-array name="redirect_sound_values_array"
                   translatable="false">
         <item>2</item>
@@ -137,6 +143,8 @@
         <item>TLS</item>
         <item>NLA</item>
     </string-array>
+    <!-- This array is used as is in code,
+	do not translate! -->
     <string-array name="security_values_array"
                   translatable="false">
         <item>0</item>
