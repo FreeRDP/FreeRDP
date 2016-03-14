@@ -287,17 +287,23 @@ WINPR_API char* GetCombinedPath(const char* basePath, const char* subPath);
 
 WINPR_API BOOL PathMakePathA(LPCSTR path, LPSECURITY_ATTRIBUTES lpAttributes);
 
+#ifndef WIN32
 WINPR_API BOOL PathFileExistsA(LPCSTR pszPath);
 WINPR_API BOOL PathFileExistsW(LPCWSTR pszPath);
+#endif
 
 #ifdef __cplusplus
 }
 #endif
 
+#ifdef WIN32
+#include <Shlwapi.h>
+#else
 #ifdef UNICODE
 #define PathFileExists	PathFileExistsW
 #else
 #define PathFileExists	PathFileExistsA
+#endif
 #endif
 
 #endif /* WINPR_PATH_H */

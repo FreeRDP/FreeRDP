@@ -481,6 +481,7 @@ BOOL PathMakePathA(LPCSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
 	return PathFileExistsA(path);
 }
 
+#ifndef WIN32
 BOOL PathFileExistsA(LPCSTR pszPath)
 {
 	struct stat stat_info;
@@ -495,4 +496,4 @@ BOOL PathFileExistsW(LPCWSTR pszPath)
 {
 	return FALSE;
 }
-
+#endif
