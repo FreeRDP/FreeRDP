@@ -627,7 +627,11 @@ UINT32 freerdp_error_info(freerdp* instance)
 	return instance->context->rdp->errorInfo;
 }
 
-void freerdp_set_error_info(rdpRdp* rdp, UINT32 error) {
+void freerdp_set_error_info(rdpRdp* rdp, UINT32 error)
+{
+	if (!rdp)
+		return;
+
 	rdp_set_error_info(rdp, error);
 }
 
