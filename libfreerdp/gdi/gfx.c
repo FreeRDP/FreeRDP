@@ -461,39 +461,38 @@ UINT gdi_SurfaceCommand_Planar(rdpGdi* gdi, RdpgfxClientContext* context, RDPGFX
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT gdi_SurfaceCommand_H264(rdpGdi* gdi, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
+static UINT gdi_SurfaceCommand_AVC420(rdpGdi* gdi, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	int status;
 	UINT32 i;
-	BYTE* DstData = NULL;
 	gdiGfxSurface* surface;
 	RDPGFX_H264_METABLOCK* meta;
-	RDPGFX_H264_BITMAP_STREAM* bs;
+	RDPGFX_AVC420_BITMAP_STREAM* bs;
 
 	surface = (gdiGfxSurface*) context->GetSurfaceData(context, cmd->surfaceId);
 
 	if (!surface)
 		return ERROR_INTERNAL_ERROR;
 
-	if (!freerdp_client_codecs_prepare(surface->codecs, FREERDP_CODEC_H264))
+	if (!freerdp_client_codecs_prepare(surface->codecs, FREERDP_CODEC_AVC420))
 		return ERROR_INTERNAL_ERROR;
 
-	bs = (RDPGFX_H264_BITMAP_STREAM*) cmd->extra;
+	bs = (RDPGFX_AVC420_BITMAP_STREAM*) cmd->extra;
 
 	if (!bs)
 		return ERROR_INTERNAL_ERROR;
 
 	meta = &(bs->meta);
 
-	DstData = surface->data;
-
-	status = h264_decompress(surface->codecs->h264, bs->data, bs->length, &DstData,
-			PIXEL_FORMAT_XRGB32, surface->scanline, surface->width, surface->height,
-			meta->regionRects, meta->numRegionRects);
+	status = avc420_decompress(surface->codecs->h264, bs->data, bs->length,
+				   surface->data, PIXEL_FORMAT_XRGB32,
+				   surface->scanline, surface->width,
+				   surface->height, meta->regionRects,
+				   meta->numRegionRects);
 
 	if (status < 0)
 	{
-		WLog_WARN(TAG, "h264_decompress failure: %d, ignoring update.", status);
+		WLog_WARN(TAG, "avc420_decompress failure: %d, ignoring update.", status);
 		return CHANNEL_RC_OK;
 	}
 
@@ -504,6 +503,77 @@ UINT gdi_SurfaceCommand_H264(rdpGdi* gdi, RdpgfxClientContext* context, RDPGFX_S
 
 	if (!gdi->inGfxFrame)
 		gdi_UpdateSurfaces(gdi);
+
+	return CHANNEL_RC_OK;
+}
+
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
+{
+	int status;
+	UINT32 i;
+	gdiGfxSurface* surface;
+	RDPGFX_AVC444_BITMAP_STREAM* bs;
+	RDPGFX_AVC420_BITMAP_STREAM* avc1;
+	RDPGFX_H264_METABLOCK* meta1;
+	RDPGFX_AVC420_BITMAP_STREAM* avc2;
+	RDPGFX_H264_METABLOCK* meta2;
+	RECTANGLE_16* regionRects = NULL;
+
+	surface = (gdiGfxSurface*) context->GetSurfaceData(context, cmd->surfaceId);
+
+	if (!surface)
+		return ERROR_INTERNAL_ERROR;
+
+	if (!freerdp_client_codecs_prepare(surface->codecs, FREERDP_CODEC_AVC444))
+		return ERROR_INTERNAL_ERROR;
+
+	bs = (RDPGFX_AVC444_BITMAP_STREAM*) cmd->extra;
+
+	if (!bs)
+		return ERROR_INTERNAL_ERROR;
+
+	avc1 = &bs->bitstream[0];
+	avc2 = &bs->bitstream[1];
+	meta1 = &avc1->meta;
+	meta2 = &avc2->meta;
+	status = avc444_decompress(surface->codecs->h264, bs->LC,
+				   meta1->regionRects, meta1->numRegionRects,
+				   avc1->data, avc1->length,
+				   meta2->regionRects, meta2->numRegionRects,
+				   avc2->data, avc2->length,
+				   surface->data, PIXEL_FORMAT_XRGB32,
+				   surface->scanline, surface->width,
+				   surface->height);
+
+	if (status < 0)
+	{
+		WLog_WARN(TAG, "avc444_decompress failure: %d, ignoring update.", status);
+		return CHANNEL_RC_OK;
+	}
+
+	for (i = 0; i < meta1->numRegionRects; i++)
+	{
+		region16_union_rect(&(surface->invalidRegion),
+				    &(surface->invalidRegion),
+				    &(meta1->regionRects[i]));
+	}
+
+	for (i = 0; i < meta2->numRegionRects; i++)
+	{
+		region16_union_rect(&(surface->invalidRegion),
+				    &(surface->invalidRegion),
+				    &(meta2->regionRects[i]));
+	}
+
+	if (!gdi->inGfxFrame)
+		gdi_UpdateSurfaces(gdi);
+
+	free(regionRects);
 
 	return CHANNEL_RC_OK;
 }
@@ -677,8 +747,12 @@ UINT gdi_SurfaceCommand(RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cm
 			status = gdi_SurfaceCommand_Planar(gdi, context, cmd);
 			break;
 
-		case RDPGFX_CODECID_H264:
-			status = gdi_SurfaceCommand_H264(gdi, context, cmd);
+		case RDPGFX_CODECID_AVC420:
+			status = gdi_SurfaceCommand_AVC420(gdi, context, cmd);
+			break;
+
+		case RDPGFX_CODECID_AVC444:
+			status = gdi_SurfaceCommand_AVC444(gdi, context, cmd);
 			break;
 
 		case RDPGFX_CODECID_ALPHA:
@@ -807,7 +881,7 @@ UINT gdi_SolidFill(RdpgfxClientContext* context, RDPGFX_SOLID_FILL_PDU* solidFil
 	UINT32 color;
 	BYTE a, r, g, b;
 	int nWidth, nHeight;
-	RDPGFX_RECT16* rect;
+	RECTANGLE_16* rect;
 	gdiGfxSurface* surface;
 	RECTANGLE_16 invalidRect;
 	rdpGdi* gdi = (rdpGdi*) context->custom;
@@ -861,7 +935,7 @@ UINT gdi_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFAC
 	UINT16 index;
 	BOOL sameSurface;
 	int nWidth, nHeight;
-	RDPGFX_RECT16* rectSrc;
+	RECTANGLE_16* rectSrc;
 	RDPGFX_POINT16* destPt;
 	RECTANGLE_16 invalidRect;
 	gdiGfxSurface* surfaceSrc;
@@ -922,7 +996,7 @@ UINT gdi_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFAC
  */
 UINT gdi_SurfaceToCache(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_CACHE_PDU* surfaceToCache)
 {
-	RDPGFX_RECT16* rect;
+	RECTANGLE_16* rect;
 	gdiGfxSurface* surface;
 	gdiGfxCacheEntry* cacheEntry;
 	rdpGdi* gdi = (rdpGdi*) context->custom;

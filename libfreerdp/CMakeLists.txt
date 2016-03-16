@@ -234,7 +234,7 @@ endif()
 
 if(WITH_SSE2)
 	if(CMAKE_COMPILER_IS_GNUCC)
-		set(OPTIMIZATION "${OPTIMIZATION} -msse2 -mssse3 -O2 -Wdeclaration-after-statement")
+		set(OPTIMIZATION "${OPTIMIZATION} -msse2 -mssse3 -Wdeclaration-after-statement")
 	endif()
 
 	if(MSVC)
@@ -249,12 +249,6 @@ endif()
 
 if(DEFINED OPTIMIZATION)
 	set_source_files_properties(${PRIMITIVES_OPT_SRCS} PROPERTIES COMPILE_FLAGS ${OPTIMIZATION})
-endif()
-
-
-# always compile with optimization
-if(CMAKE_COMPILER_IS_GNUCC)
-	set_source_files_properties(${PRIMITIVES_SRCS} PROPERTIES COMPILE_FLAGS "-O2")
 endif()
 
 set(PRIMITIVES_SRCS ${PRIMITIVES_SRCS} ${PRIMITIVES_OPT_SRCS})
