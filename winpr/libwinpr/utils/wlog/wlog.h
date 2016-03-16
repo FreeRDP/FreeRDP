@@ -63,6 +63,7 @@ struct _wLogAppender
 struct _wLog
 {
 	LPSTR Name;
+	LONG FilterLevel;
 	DWORD Level;
 
 	BOOL IsRoot;

@@ -36,7 +36,7 @@ override_dh_strip:
 
 override_dh_install:
 	mkdir -p debian/tmp/opt/freerdp-nightly/lib/cmake/
-	rm -rf debian/tmp/opt/freerdp-nightly/lib/freerdp/*.a
+	rm -rf debian/tmp/opt/freerdp-nightly/lib/freerdp2/*.a
 
 	dh_install --fail-missing
 

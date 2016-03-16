@@ -242,7 +242,7 @@ FREERDP_API int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* p
 FREERDP_API int progressive_create_surface_context(PROGRESSIVE_CONTEXT* progressive, UINT16 surfaceId, UINT32 width, UINT32 height);
 FREERDP_API int progressive_delete_surface_context(PROGRESSIVE_CONTEXT* progressive, UINT16 surfaceId);
 
-FREERDP_API int progressive_context_reset(PROGRESSIVE_CONTEXT* progressive);
+FREERDP_API BOOL progressive_context_reset(PROGRESSIVE_CONTEXT* progressive);
 
 FREERDP_API PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor);
 FREERDP_API void progressive_context_free(PROGRESSIVE_CONTEXT* progressive);
@@ -252,4 +252,4 @@ FREERDP_API void progressive_context_free(PROGRESSIVE_CONTEXT* progressive);
 #endif
 
 #endif /* FREERDP_CODEC_PROGRESSIVE_H */
- 
+

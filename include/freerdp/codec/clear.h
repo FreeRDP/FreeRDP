@@ -71,7 +71,7 @@ FREERDP_API int clear_compress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcS
 FREERDP_API int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight);
 
-FREERDP_API int clear_context_reset(CLEAR_CONTEXT* clear);
+FREERDP_API BOOL clear_context_reset(CLEAR_CONTEXT* clear);
 
 FREERDP_API CLEAR_CONTEXT* clear_context_new(BOOL Compressor);
 FREERDP_API void clear_context_free(CLEAR_CONTEXT* clear);
@@ -81,4 +81,4 @@ FREERDP_API void clear_context_free(CLEAR_CONTEXT* clear);
 #endif
 
 #endif /* FREERDP_CODEC_CLEAR_H */
- 
+

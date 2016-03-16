@@ -46,8 +46,8 @@ public class BookmarkDB extends SQLiteOpenHelper {
                 "CREATE TABLE tbl_performance_flags ("
                         + ID + " INTEGER PRIMARY KEY, "
                         + "perf_remotefx INTEGER, "
-                        + "perf_gfx INTEGER,"
-                        + "perf_gfx_h264 INTEGER,"
+                        + "perf_gfx INTEGER, "
+                        + "perf_gfx_h264 INTEGER, "
                         + "perf_wallpaper INTEGER, "
                         + "perf_theming INTEGER, "
                         + "perf_full_window_drag INTEGER, "
@@ -71,7 +71,6 @@ public class BookmarkDB extends SQLiteOpenHelper {
                         + "VALUES ( "
                         + "32, 1, 1024, 768);";
         db.execSQL(sqlInsertDefaultScreenEntry);
-        db.execSQL(sqlInsertDefaultScreenEntry);
 
         String sqlInsertDefaultPerfFlags =
                 "INSERT INTO tbl_performance_flags ("
@@ -86,7 +85,6 @@ public class BookmarkDB extends SQLiteOpenHelper {
                         + "perf_desktop_composition) "
                         + "VALUES ( "
                         + "1, 1, 1, 0, 0, 0, 0, 0, 0);";
-        db.execSQL(sqlInsertDefaultPerfFlags);
         db.execSQL(sqlInsertDefaultPerfFlags);
 
         String sqlInsertDefaultSessionEntry =

@@ -13,6 +13,7 @@ import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.Uri;
 import android.util.Log;
 
 import java.util.*;
@@ -125,6 +126,12 @@ public class GlobalApp extends Application implements LibFreeRDP.EventListener {
     // RDP session handling
     static public SessionState createSession(BookmarkBase bookmark, Context context) {
         SessionState session = new SessionState(LibFreeRDP.newInstance(context), bookmark);
+        sessionMap.put(Integer.valueOf(session.getInstance()), session);
+        return session;
+    }
+    
+    static public SessionState createSession(Uri openUri, Context context) {
+        SessionState session = new SessionState(LibFreeRDP.newInstance(context), openUri);
         sessionMap.put(Integer.valueOf(session.getInstance()), session);
         return session;
     }

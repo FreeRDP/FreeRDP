@@ -47,7 +47,8 @@ function build {
 	common_run cd $BUILD_SRC
 	common_run git clean -xdf
 	common_run ./Configure --openssldir=$DST_DIR $CONFIG shared
-	common_run make -j build_libs
+	common_run make CALC_VERSIONS="SHLIB_COMPAT=; SHLIB_SOVER=" depend
+	common_run make CALC_VERSIONS="SHLIB_COMPAT=; SHLIB_SOVER=" build_libs
 
 	if [ ! -d $DST_DIR ];
 	then
@@ -64,12 +65,6 @@ common_parse_arguments $@
 common_check_requirements
 common_update $SCM_URL $SCM_TAG $BUILD_SRC
 common_clean $BUILD_DST
-
-# Patch openssl
-BASE=$(pwd)
-common_run cd $BUILD_SRC
-common_run git am $(dirname "${BASH_SOURCE[0]}")/openssl-disable-library-versioning.patch
-common_run cd $BASE
 
 ORG_PATH=$PATH
 for ARCH in $BUILD_ARCH
