@@ -1740,7 +1740,7 @@ static BOOL winpr_match_unix_timezone_identifier_with_list(const char* tzid, con
 	return FALSE;
 }
 
-static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone()
+static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
 {
 	int i, j;
 	char* tzid;
