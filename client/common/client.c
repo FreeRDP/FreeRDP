@@ -195,17 +195,6 @@ int freerdp_client_settings_parse_command_line(rdpSettings* settings, int argc,
 
 	status = freerdp_client_settings_parse_command_line_arguments(settings, argc, argv, allowUnknown);
 
-	if (settings->ConnectionFile)
-	{
-		status = freerdp_client_settings_parse_connection_file(settings, settings->ConnectionFile);
-	}
-
-	if (settings->AssistanceFile)
-	{
-		status = freerdp_client_settings_parse_assistance_file(settings, settings->AssistanceFile);
-	}
-
-	/* Only call post processing if no status/error was returned*/
 	if (status < 0)
 		return status;
 
