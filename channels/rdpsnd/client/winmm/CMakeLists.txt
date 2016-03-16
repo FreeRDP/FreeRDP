@@ -24,8 +24,6 @@ include_directories(..)
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
 
-
-
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr)
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winmm.lib)
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp)
