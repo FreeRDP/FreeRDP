@@ -109,7 +109,8 @@ static BOOL tf_pre_connect(freerdp* instance)
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = TRUE;
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = TRUE;
 
-	freerdp_channels_pre_connect(instance->context->channels, instance);
+	if (freerdp_channels_pre_connect(instance->context->channels, instance) != CHANNEL_RC_OK)
+		return FALSE;
 
 	return TRUE;
 }
@@ -122,7 +123,7 @@ static BOOL tf_post_connect(freerdp* instance)
 	instance->update->BeginPaint = tf_begin_paint;
 	instance->update->EndPaint = tf_end_paint;
 
-	return (freerdp_channels_post_connect(instance->context->channels, instance) >= 0);
+	return (freerdp_channels_post_connect(instance->context->channels, instance) == CHANNEL_RC_OK);
 }
 
 static void* tf_client_thread_proc(freerdp* instance)
@@ -200,7 +201,8 @@ int main(int argc, char* argv[])
 		exit(0);
 	}
 
-	freerdp_client_load_addins(instance->context->channels, instance->settings);
+	if (!freerdp_client_load_addins(instance->context->channels, instance->settings))
+		exit (-1);
 
 	if (!(thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
 			tf_client_thread_proc, instance, 0, NULL)))

@@ -400,7 +400,7 @@ BOOL rdp_client_reconnect(rdpRdp* rdp)
 	status = rdp_client_connect(rdp);
 
 	if (status)
-		status = (freerdp_channels_post_connect(channels, context->instance) >= 0);
+		status = (freerdp_channels_post_connect(channels, context->instance) == CHANNEL_RC_OK);
 
 	return status;
 }

@@ -64,9 +64,11 @@ static BOOL ios_pre_connect(freerdp* instance)
 	
 	settings->FrameAcknowledge = 10;
 
-	freerdp_client_load_addins(instance->context->channels, instance->settings);
+	if (!freerdp_client_load_addins(instance->context->channels, instance->settings))
+		return FALSE;
 
-	freerdp_channels_pre_connect(instance->context->channels, instance);
+	if (freerdp_channels_pre_connect(instance->context->channels, instance) != CHANNEL_RC_OK)
+		return FALSE;
 
 	return TRUE;
 }
@@ -84,7 +86,8 @@ static BOOL ios_post_connect(freerdp* instance)
 	instance->update->DesktopResize = ios_ui_resize_window;
 		
 	// Channel allocation
-	freerdp_channels_post_connect(instance->context->channels, instance);
+	if (freerdp_channels_post_connect(instance->context->channels, instance) != CHANNEL_RC_OK)
+		return FALSE;
 
 	[mfi->session performSelectorOnMainThread:@selector(sessionDidConnect) withObject:nil waitUntilDone:YES];
 	return TRUE;

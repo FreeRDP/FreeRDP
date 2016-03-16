@@ -241,7 +241,7 @@ IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT dvcman_load_addin(IWTSVirtualChannelManager* pChannelMgr, ADDIN_ARGV* args, rdpSettings* settings)
+static UINT dvcman_load_addin(IWTSVirtualChannelManager* pChannelMgr, ADDIN_ARGV* args, rdpSettings* settings)
 {
 	DVCMAN_ENTRY_POINTS entryPoints;
 	PDVC_PLUGIN_ENTRY pDVCPluginEntry = NULL;
@@ -261,7 +261,7 @@ UINT dvcman_load_addin(IWTSVirtualChannelManager* pChannelMgr, ADDIN_ARGV* args,
 		entryPoints.args = args;
 		entryPoints.settings = settings;
 
-		pDVCPluginEntry((IDRDYNVC_ENTRY_POINTS*) &entryPoints);
+		return pDVCPluginEntry((IDRDYNVC_ENTRY_POINTS*) &entryPoints);
 	}
 
 	return CHANNEL_RC_OK;
@@ -478,8 +478,8 @@ UINT dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Channe
 				context = dvcman->drdynvc->context;
 				IFCALLRET(context->OnChannelConnected, error, context, ChannelName, listener->iface.pInterface);
 
-                if (error)
-                    WLog_ERR(TAG, "context.ReceiveSamples failed with error %lu", error);
+		if (error)
+			WLog_ERR(TAG, "context.ReceiveSamples failed with error %lu", error);
 
 				return error;
 			}
@@ -1056,7 +1056,7 @@ static UINT drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp, int cb
 		WLog_ERR(TAG, "dvcman_close_channel failed with error %lu!", error);
 		return error;
 	}
-	
+
 	data_out = Stream_New(NULL, 4);
 
 	if (!data_out)
@@ -1214,6 +1214,10 @@ void* drdynvc_get_open_handle_data(DWORD openHandle)
 void drdynvc_remove_open_handle_data(DWORD openHandle)
 {
 	void* pOpenHandle = (void*) (size_t) openHandle;
+
+	if (!g_OpenHandles)
+		return;
+
 	ListDictionary_Remove(g_OpenHandles, pOpenHandle);
 
 	if (ListDictionary_Count(g_OpenHandles) < 1)
@@ -1411,7 +1415,9 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 	for (index = 0; index < settings->DynamicChannelCount; index++)
 	{
 		args = settings->DynamicChannelArray[index];
-		dvcman_load_addin(drdynvc->channel_mgr, args, settings);
+		error = dvcman_load_addin(drdynvc->channel_mgr, args, settings);
+		if (CHANNEL_RC_OK != error)
+			goto error;
 	}
 
 	if ((error = dvcman_init(drdynvc->channel_mgr)))
@@ -1434,8 +1440,6 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 
 error:
 	drdynvc_remove_open_handle_data(drdynvc->OpenHandle);
-	MessageQueue_Free(drdynvc->queue);
-	drdynvc->queue = NULL;
 	return error;
 }
 
@@ -1449,11 +1453,11 @@ static UINT drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
 	UINT status;
 
 	if (MessageQueue_PostQuit(drdynvc->queue, 0) && (WaitForSingleObject(drdynvc->thread, INFINITE) == WAIT_FAILED))
-    {
-        status = GetLastError();
-        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", status);
-        return status;
-    }
+	{
+		status = GetLastError();
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", status);
+		return status;
+	}
 
 	MessageQueue_Free(drdynvc->queue);
 	CloseHandle(drdynvc->thread);
@@ -1497,7 +1501,9 @@ static UINT drdynvc_virtual_channel_event_terminated(drdynvcPlugin* drdynvc)
 	return CHANNEL_RC_OK;
 }
 
-static void VCAPITYPE drdynvc_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
+static VOID VCAPITYPE drdynvc_virtual_channel_init_event(LPVOID pInitHandle,
+							 UINT event, LPVOID pData,
+							 UINT dataLength)
 {
 	drdynvcPlugin* drdynvc;
 	UINT error = CHANNEL_RC_OK;
@@ -1529,7 +1535,6 @@ static void VCAPITYPE drdynvc_virtual_channel_init_event(LPVOID pInitHandle, UIN
 	}
 	if (error && drdynvc->rdpcontext)
 		setChannelError(drdynvc->rdpcontext, error, "drdynvc_virtual_channel_init_event reported an error");
-
 }
 
 /**
