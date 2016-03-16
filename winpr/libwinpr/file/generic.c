@@ -835,8 +835,7 @@ int UnixChangeFileMode(const char* filename, int flags)
 
 	int fl = 0;
 
-	ConvertToUnicode(CP_UTF8, 0, filename, -1, &wfl, 0);
-	if (!wfl)
+	if (ConvertToUnicode(CP_UTF8, 0, filename, -1, &wfl, 0) <= 0)
 		return -1;
 
 	/* Check for unsupported flags. */
