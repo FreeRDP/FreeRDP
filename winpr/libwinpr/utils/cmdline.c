@@ -405,6 +405,8 @@ int CommandLineClearArgumentsA(COMMAND_LINE_ARGUMENT_A* options)
 
 	for (i = 0; options[i].Name != NULL; i++)
 	{
+		if (options[i].Flags & COMMAND_LINE_ALLOCATED_VALUE)
+			free (options[i].Value);
 		options[i].Flags &= COMMAND_LINE_INPUT_FLAG_MASK;
 		options[i].Value = NULL;
 	}
