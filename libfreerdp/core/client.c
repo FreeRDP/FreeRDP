@@ -272,6 +272,7 @@ UINT freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 			PubSub_OnChannelConnected(instance->context->pubSub, instance->context, &e);
 
 			free(name);
+			name = NULL;
 		}
 	}
 
