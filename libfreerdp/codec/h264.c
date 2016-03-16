@@ -1597,8 +1597,8 @@ static BOOL avc444_process_rect(H264_CONTEXT* h264,
 	if (!check_rect(h264, rect, nDstWidth, nDstHeight))
 		return FALSE;
 
-	width = rect->right - rect->left;
-	height = rect->bottom - rect->top;
+	width = rect->right - rect->left + 1;
+	height = rect->bottom - rect->top + 1;
 
 	roi.width = width;
 	roi.height = height;
