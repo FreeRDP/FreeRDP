@@ -224,19 +224,6 @@ BOOL wf_pre_connect(freerdp* instance)
 
 	settings = instance->settings;
 
-	if (settings->ConnectionFile)
-	{
-		if (wfc->connectionRdpFile)
-		{
-			freerdp_client_rdp_file_free(wfc->connectionRdpFile);
-		}
-
-		wfc->connectionRdpFile = freerdp_client_rdp_file_new();
-		WLog_INFO(TAG,  "Using connection file: %s", settings->ConnectionFile);
-		freerdp_client_parse_rdp_file(wfc->connectionRdpFile, settings->ConnectionFile);
-		freerdp_client_populate_settings_from_rdp_file(wfc->connectionRdpFile, settings);
-	}
-
 	settings->OsMajorType = OSMAJORTYPE_WINDOWS;
 	settings->OsMinorType = OSMINORTYPE_WINDOWS_NT;
 	settings->OrderSupport[NEG_DSTBLT_INDEX] = TRUE;
@@ -917,40 +904,6 @@ int freerdp_client_set_window_size(wfContext* wfc, int width, int height)
 	if ((width != wfc->client_width) || (height != wfc->client_height))
 	{
 		PostThreadMessage(wfc->mainThreadId, WM_SIZE, SIZE_RESTORED, ((UINT) height << 16) | (UINT) width);
-	}
-
-	return 0;
-}
-
-// TODO: Some of that code is a duplicate of wf_pre_connect. Refactor?
-int freerdp_client_load_settings_from_rdp_file(wfContext* wfc, char* filename)
-{
-	rdpSettings* settings;
-
-	settings = wfc->instance->settings;
-
-	if (filename)
-	{
-		settings->ConnectionFile = _strdup(filename);
-		if (!settings->ConnectionFile)
-		{
-			return 3;
-		}
-
-		// free old settings file
-		freerdp_client_rdp_file_free(wfc->connectionRdpFile);
-		wfc->connectionRdpFile = freerdp_client_rdp_file_new();
-		WLog_INFO(TAG,  "Using connection file: %s", settings->ConnectionFile);
-
-		if (!freerdp_client_parse_rdp_file(wfc->connectionRdpFile, settings->ConnectionFile))
-		{
-			return 1;
-		}
-
-		if (!freerdp_client_populate_settings_from_rdp_file(wfc->connectionRdpFile, settings))
-		{
-			return 2;
-		}
 	}
 
 	return 0;
