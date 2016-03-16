@@ -321,6 +321,9 @@ static int freerdp_client_command_line_pre_filter(void* context, int index, int 
 				if (!(settings->ConnectionFile = _strdup(argv[index])))
 					return COMMAND_LINE_ERROR_MEMORY;
 
+				if (freerdp_client_settings_parse_connection_file(settings, settings->ConnectionFile))
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+
 				return 1;
 			}
 		}
@@ -332,6 +335,9 @@ static int freerdp_client_command_line_pre_filter(void* context, int index, int 
 				settings = (rdpSettings*) context;
 				if (!(settings->AssistanceFile = _strdup(argv[index])))
 					return COMMAND_LINE_ERROR_MEMORY;
+
+				if (freerdp_client_settings_parse_assistance_file(settings, settings->AssistanceFile) < 0)
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
 				return 1;
 			}
