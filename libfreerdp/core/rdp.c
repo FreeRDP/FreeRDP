@@ -67,7 +67,7 @@ const char* DATA_PDU_TYPE_STRINGS[80] =
 		"ARC Status", /* 0x32 */
 		"?", "?", "?", /* 0x33 - 0x35 */
 		"Status Info", /* 0x36 */
-		"Monitor Layout" /* 0x37 */
+		"Monitor Layout", /* 0x37 */
 		"FrameAcknowledge", "?", "?", /* 0x38 - 0x40 */
 		"?", "?", "?", "?", "?", "?" /* 0x41 - 0x46 */
 };
