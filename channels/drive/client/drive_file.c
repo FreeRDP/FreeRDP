@@ -595,7 +595,7 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 				return FALSE;
 			}
 			liSize.QuadPart = size;
-			if (SetFilePointerEx(hFd, liSize, NULL, FILE_BEGIN) == 0)
+			if (SetFilePointer(hFd, liSize.LowPart, &liSize.HighPart, FILE_BEGIN) == 0)
 			{
 				WLog_ERR(TAG, "Unable to truncate %s to %d", file->fullpath, size);
 				CloseHandle(hFd);
