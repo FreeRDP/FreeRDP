@@ -2531,15 +2531,17 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	{
 		if (!freerdp_client_load_static_channel_addin(channels, settings, "rdpdr", settings))
 			return FALSE;
+	}
 
+	if (settings->AudioPlayback)
+	{
 		if (!freerdp_static_channel_collection_find(settings, "rdpsnd"))
 		{
-			char* params[2];
+			char* params[1];
 
 			params[0] = "rdpsnd";
-			params[1] = "sys:fake";
 
-			if (!freerdp_client_add_static_channel(settings, 2, (char**) params))
+			if (!freerdp_client_add_static_channel(settings, 1, (char**) params))
 				return FALSE;
 		}
 	}
