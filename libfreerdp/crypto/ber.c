@@ -451,6 +451,14 @@ int ber_write_integer(wStream* s, UINT32 value)
 		Stream_Write_UINT32_BE(s, value);
 		return 6;
 	}
+	else
+	{
+		/* treat as signed integer i.e. NT/HRESULT error codes */
+		ber_write_universal_tag(s, BER_TAG_INTEGER, FALSE);
+		ber_write_length(s, 4);
+		Stream_Write_UINT32_BE(s, value);
+		return 6;
+	}
 
 	return 0;
 }
@@ -471,6 +479,11 @@ int ber_sizeof_integer(UINT32 value)
 	}
 	else if (value < 0x80000000)
 	{
+		return 6;
+	}
+	else
+	{
+		/* treat as signed integer i.e. NT/HRESULT error codes */
 		return 6;
 	}
 
