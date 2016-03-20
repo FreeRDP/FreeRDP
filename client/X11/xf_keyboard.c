@@ -470,10 +470,33 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 	{
 		if (keysym == XK_Return)
 		{
+			WLog_DBG(TAG,  "X keycode 0x%x, Ctrl: %d, Alt: %d", keysym, mod.Ctrl, mod.Alt);
 			if (mod.Ctrl && mod.Alt)
 			{
 				/* Ctrl-Alt-Enter: toggle full screen */
 				xf_toggle_fullscreen(xfc);
+				return TRUE;
+			}
+		}
+	}
+
+	if (!xfc->remote_app)
+	{
+		if ((keysym == XK_Tab) || (keysym == XK_Left) || (keysym == XK_Right))
+		{
+			WLog_DBG(TAG,  "X keycode 0x%x, Ctrl: %d, Alt: %d", keysym, mod.Ctrl, mod.Alt);
+			if (mod.Ctrl && mod.Alt)
+			{
+				/* Works in either full screen or windowed.
+				 * If in fullscreen or cursor inside window - need to do
+				 * "double" ctrl-alt-* key press and release...
+				 * 1st ctrl-alt-[tab-left-right] releases from x11 key binding
+				 * 2nd ctrl-alt-[tab-left-right] executes OS system key binding
+				 * Note: If windowed and cursor is not in freerdp window, ie.,
+				 * on tile bar, this doesnt apply and ctrl-alt-[tab-left-right]
+				 * key press will work as OS system key binding.
+				 */
+				XUngrabKeyboard(xfc->display, CurrentTime);
 				return TRUE;
 			}
 		}
