@@ -573,7 +573,10 @@ int nla_client_authenticate(rdpNla* nla)
 		if (status < 0)
 		{
 			if (nla->errorCode)
+			{
 				WLog_ERR(TAG, "SPNEGO failed with NTSTATUS: %08X", nla->errorCode);
+				freerdp_set_last_error(nla->instance->context, nla->errorCode);
+			}
 
 			Stream_Free(s, TRUE);
 			return -1;
