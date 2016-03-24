@@ -1101,6 +1101,9 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 		case FreeRDP_GfxH264:
 			return settings->GfxH264;
 
+		case FreeRDP_GfxAVC444:
+			return settings->GfxAVC444;
+
 		case FreeRDP_DrawNineGridEnabled:
 			return settings->DrawNineGridEnabled;
 
@@ -1610,6 +1613,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 		case FreeRDP_GfxH264:
 			settings->GfxH264 = param;
+			break;
+
+		case FreeRDP_GfxAVC444:
+			settings->GfxAVC444 = param;
 			break;
 
 		case FreeRDP_DrawNineGridEnabled:

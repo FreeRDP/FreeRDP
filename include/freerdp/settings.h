@@ -768,6 +768,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_GfxProgressive					3842
 #define FreeRDP_GfxProgressiveV2				3843
 #define FreeRDP_GfxH264						3844
+#define FreeRDP_GfxAVC444					3845
 #define FreeRDP_BitmapCacheV3CodecId				3904
 #define FreeRDP_DrawNineGridEnabled				3968
 #define FreeRDP_DrawNineGridCacheSize				3969
@@ -1314,7 +1315,8 @@ struct rdp_settings
 	ALIGN64 BOOL GfxProgressive; /* 3842 */
 	ALIGN64 BOOL GfxProgressiveV2; /* 3843 */
 	ALIGN64 BOOL GfxH264; /* 3844 */
-	UINT64 padding3904[3904 - 3845]; /* 3845 */
+	ALIGN64 BOOL GfxAVC444; /* 3845 */
+	UINT64 padding3904[3904 - 3846]; /* 3846 */
 
 	/**
 	 * Caches
