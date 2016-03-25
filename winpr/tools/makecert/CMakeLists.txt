@@ -33,7 +33,13 @@ add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
 set(${MODULE_PREFIX}_LIBS winpr)
 
 if(OPENSSL_FOUND)
-	list(APPEND ${MODULE_PREFIX}_LIBS ${OPENSSL_LIBRARIES})
+	if(WIN32)
+		list(APPEND ${MODULE_PREFIX}_LIBS ${OPENSSL_LIBRARIES})
+	else()
+		# if ${OPENSSL_LIBRARIES} libssl and libcrypto is linked
+		# therefor explicitly link against libcrypto
+		list(APPEND ${MODULE_PREFIX}_LIBS crypto)
+	endif()
 endif()
 
 if(MBEDTLS_FOUND)

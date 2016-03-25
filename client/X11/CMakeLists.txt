@@ -70,8 +70,7 @@ else()
 endif()
 
 set(${MODULE_PREFIX}_LIBS
-	${X11_LIBRARIES}
-	${CMAKE_DL_LIBS})
+	${X11_LIBRARIES})
 
 if(WITH_MANPAGES)
 	find_program(XSLTPROC_EXECUTABLE NAMES xsltproc)
@@ -203,11 +202,11 @@ endif()
 
 include_directories(${CMAKE_SOURCE_DIR}/resources)
 
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp freerdp-client)
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client)
+target_link_libraries(${MODULE_NAME} ${PRIVATE_KEYWORD} ${${MODULE_PREFIX}_LIBS})
 
 if(WITH_IPP)
-    target_link_libraries(${MODULE_NAME} ${IPP_LIBRARY_LIST})
+    target_link_libraries(${MODULE_NAME} ${PRIVATE_KEYWORD} ${IPP_LIBRARY_LIST})
 endif()
 
 if(WITH_CLIENT_INTERFACE)

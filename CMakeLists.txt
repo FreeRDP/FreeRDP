@@ -757,6 +757,14 @@ endif()
 include_directories("${CMAKE_SOURCE_DIR}/winpr/include")
 include_directories("${CMAKE_BINARY_DIR}/winpr/include")
 
+if (${CMAKE_VERSION} VERSION_LESS 2.8.12)
+	set(PUBLIC_KEYWORD "")
+	set(PRIVATE_KEYWORD "")
+else()
+	set(PUBLIC_KEYWORD "PUBLIC")
+	set(PRIVATE_KEYWORD "PRIVATE")
+endif()
+
 add_subdirectory(winpr)
 
 # Sub-directories
@@ -805,14 +813,6 @@ endif()
 
 if(WITH_CHANNELS)
 	add_subdirectory(channels)
-endif()
-
-if (${CMAKE_VERSION} VERSION_LESS 2.8.12)
-	set(PUBLIC_KEYWORD "")
-	set(PRIVATE_KEYWORD "")
-else()
-	set(PUBLIC_KEYWORD "PUBLIC")
-	set(PRIVATE_KEYWORD "PRIVATE")
 endif()
 
 if(WITH_CLIENT_COMMON OR WITH_CLIENT)
