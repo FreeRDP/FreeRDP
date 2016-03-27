@@ -34,7 +34,7 @@
 #include <freerdp/client/channels.h>
 #include <freerdp/crypto/crypto.h>
 #include <freerdp/locale/keyboard.h>
-
+#include <freerdp/utils/passphrase.h>
 
 #include <freerdp/client/cmdline.h>
 #include <freerdp/version.h>
