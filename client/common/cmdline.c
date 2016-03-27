@@ -1744,8 +1744,11 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			else
 			{
 				static const size_t password_size = 512;
-				settings->Password = calloc(password_size, sizeof(char));
-				freerdp_passphrase_read("Password: ", settings->Password, password_size, 1);
+				settings->Password = (char*) calloc(password_size, sizeof(char));
+				if (!settings->Password)
+					return COMMAND_LINE_ERROR_MEMORY;
+				if (!freerdp_passphrase_read("Password: ", settings->Password, password_size, 1))
+					return COMMAND_LINE_ERROR;
 			}
 		}
 		CommandLineSwitchCase(arg, "g")
