@@ -74,7 +74,7 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "vc", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Static virtual channel" },
 	{ "dvc", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Dynamic virtual channel" },
 	{ "u", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Username" },
-	{ "p", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Password" },
+	{ "p", COMMAND_LINE_VALUE_OPTIONAL, "<password>", NULL, NULL, -1, NULL, "Password" },
 	{ "d", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Domain" },
 	{ "g", COMMAND_LINE_VALUE_OPTIONAL, "<gateway>[:port]", NULL, NULL, -1, NULL, "Gateway Hostname" },
 	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Gateway username" },
@@ -1736,8 +1736,17 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchCase(arg, "p")
 		{
 			free (settings->Password);
-			if (!(settings->Password = _strdup(arg->Value)))
-				return COMMAND_LINE_ERROR_MEMORY;
+			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+			{
+				if (!(settings->Password = _strdup(arg->Value)))
+					return COMMAND_LINE_ERROR_MEMORY;
+			}
+			else
+			{
+				static const size_t password_size = 512;
+				settings->Password = calloc(password_size, sizeof(char));
+				freerdp_passphrase_read("Password: ", settings->Password, password_size, 1);
+			}
 		}
 		CommandLineSwitchCase(arg, "g")
 		{
@@ -2434,7 +2443,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 	arg = CommandLineFindArgumentA(args, "p");
 
-	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
+	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT && arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 	{
 		FillMemory(arg->Value, strlen(arg->Value), '*');
 	}
