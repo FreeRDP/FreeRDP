@@ -23,6 +23,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
+#include <winpr/library.h>
 #include <winpr/bitstream.h>
 
 #include <freerdp/primitives.h>

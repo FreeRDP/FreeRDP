@@ -110,7 +110,24 @@ static UINT rdpdr_send_device_list_remove_request(rdpdrPlugin* rdpdr, UINT32 cou
 	return rdpdr_send(rdpdr, s);
 }
 
-#ifdef _WIN32
+#ifdef _UWP
+
+void first_hotplug(rdpdrPlugin *rdpdr)
+{
+
+}
+
+static void* drive_hotplug_thread_func(void* arg)
+{
+	return NULL;
+}
+
+static UINT drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
+{
+	return CHANNEL_RC_OK;
+}
+
+#elif _WIN32
 
 BOOL check_path(char* path)
 {

@@ -34,7 +34,7 @@ typedef PCONTEXT_HANDLE PTUNNEL_CONTEXT_HANDLE_SERIALIZE;
 typedef PCONTEXT_HANDLE PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE;
 typedef PCONTEXT_HANDLE PCHANNEL_CONTEXT_HANDLE_SERIALIZE;
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(_UWP)
 
 #include <rpc.h>
 
@@ -72,8 +72,10 @@ typedef PCONTEXT_HANDLE PCHANNEL_CONTEXT_HANDLE_SERIALIZE;
 
 typedef long RPC_STATUS;
 
+#ifndef _WIN32
 typedef CHAR* RPC_CSTR;
 typedef WCHAR* RPC_WSTR;
+#endif
 
 typedef void* I_RPC_HANDLE;
 typedef I_RPC_HANDLE RPC_BINDING_HANDLE;
@@ -196,6 +198,8 @@ typedef struct
 	unsigned long Count;
 	RPC_IF_ID *IfId[1];
 } RPC_IF_ID_VECTOR;
+
+#ifndef _WIN32
 
 typedef void *RPC_AUTH_IDENTITY_HANDLE;
 typedef void *RPC_AUTHZ_HANDLE;
@@ -370,6 +374,8 @@ typedef void (*RPC_HTTP_PROXY_FREE_STRING)(unsigned short* String);
 #define RPC_C_AUTHZ_NAME			1
 #define RPC_C_AUTHZ_DCE				2
 #define RPC_C_AUTHZ_DEFAULT			0xFFFFFFFF
+
+#endif
 
 typedef void (*RPC_AUTH_KEY_RETRIEVAL_FN)(void* Arg, unsigned short* ServerPrincName, unsigned long KeyVer, void** Key, RPC_STATUS* pStatus);
 

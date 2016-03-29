@@ -29,7 +29,7 @@
  * Functions: http://msdn.microsoft.com/en-us/library/windows/desktop/ms724875/
  */
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(_UWP)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -224,7 +224,7 @@ LONG RegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesire
 	{
 		if (_stricmp(pKey->subname, lpSubKey) == 0)
 		{
-			*phkResult = pKey;
+			*phkResult = (HKEY) pKey;
 			return ERROR_SUCCESS;
 		}
 
@@ -294,7 +294,7 @@ LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName,
 				int length;
 				char* pData = (char*) lpData;
 
-				length = strlen(pValue->data.string);
+				length = (int) strlen(pValue->data.string);
 
 				if (pData != NULL)
 				{

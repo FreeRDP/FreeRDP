@@ -350,6 +350,27 @@ typedef struct _HANDLE_CREATOR
 
 #endif /* _WIN32 */
 
+#ifdef _UWP
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+WINPR_API HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData);
+WINPR_API HANDLE FindFirstFileW(LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData);
+
+#ifdef __cplusplus
+}
+#endif
+
+#ifdef UNICODE
+#define FindFirstFile		FindFirstFileW
+#else
+#define FindFirstFile		FindFirstFileA
+#endif
+
+#endif
+
 #define WILDCARD_STAR		0x00000001
 #define WILDCARD_QM		0x00000002
 #define WILDCARD_DOS		0x00000100

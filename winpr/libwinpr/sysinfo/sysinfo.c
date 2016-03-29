@@ -174,44 +174,6 @@ void GetNativeSystemInfo(LPSYSTEM_INFO lpSystemInfo)
 	GetSystemInfo(lpSystemInfo);
 }
 
-/* OSVERSIONINFOEX Structure:
- * http://msdn.microsoft.com/en-us/library/windows/desktop/ms724833
- */
-
-BOOL GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
-{
-	/* Windows 7 SP1 Version Info */
-	if ((lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOA)) ||
-			(lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOEXA)))
-	{
-		lpVersionInformation->dwMajorVersion = 6;
-		lpVersionInformation->dwMinorVersion = 1;
-		lpVersionInformation->dwBuildNumber = 7601;
-		lpVersionInformation->dwPlatformId = VER_PLATFORM_WIN32_NT;
-		ZeroMemory(lpVersionInformation->szCSDVersion, sizeof(lpVersionInformation->szCSDVersion));
-
-		if (lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOEXA))
-		{
-			LPOSVERSIONINFOEXA lpVersionInformationEx = (LPOSVERSIONINFOEXA) lpVersionInformation;
-			lpVersionInformationEx->wServicePackMajor = 1;
-			lpVersionInformationEx->wServicePackMinor = 0;
-			lpVersionInformationEx->wSuiteMask = 0;
-			lpVersionInformationEx->wProductType = VER_NT_WORKSTATION;
-			lpVersionInformationEx->wReserved = 0;
-		}
-
-		return TRUE;
-	}
-
-	return FALSE;
-}
-
-BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation)
-{
-	WLog_ERR(TAG, "GetVersionExW unimplemented");
-	return TRUE;
-}
-
 void GetSystemTime(LPSYSTEMTIME lpSystemTime)
 {
 	time_t ct = 0;
@@ -311,6 +273,73 @@ DWORD GetTickCount(void)
 	return ticks;
 }
 #endif // _WIN32
+
+#if !defined(_WIN32) || defined(_UWP)
+
+/* OSVERSIONINFOEX Structure:
+* http://msdn.microsoft.com/en-us/library/windows/desktop/ms724833
+*/
+
+BOOL GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
+{
+#ifdef _UWP
+	/* Windows 10 Version Info */
+	if ((lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOA)) ||
+		(lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOEXA)))
+	{
+		lpVersionInformation->dwMajorVersion = 10;
+		lpVersionInformation->dwMinorVersion = 0;
+		lpVersionInformation->dwBuildNumber = 0;
+		lpVersionInformation->dwPlatformId = VER_PLATFORM_WIN32_NT;
+		ZeroMemory(lpVersionInformation->szCSDVersion, sizeof(lpVersionInformation->szCSDVersion));
+
+		if (lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOEXA))
+		{
+			LPOSVERSIONINFOEXA lpVersionInformationEx = (LPOSVERSIONINFOEXA)lpVersionInformation;
+			lpVersionInformationEx->wServicePackMajor = 0;
+			lpVersionInformationEx->wServicePackMinor = 0;
+			lpVersionInformationEx->wSuiteMask = 0;
+			lpVersionInformationEx->wProductType = VER_NT_WORKSTATION;
+			lpVersionInformationEx->wReserved = 0;
+		}
+
+		return TRUE;
+	}
+#else
+	/* Windows 7 SP1 Version Info */
+	if ((lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOA)) ||
+		(lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOEXA)))
+	{
+		lpVersionInformation->dwMajorVersion = 6;
+		lpVersionInformation->dwMinorVersion = 1;
+		lpVersionInformation->dwBuildNumber = 7601;
+		lpVersionInformation->dwPlatformId = VER_PLATFORM_WIN32_NT;
+		ZeroMemory(lpVersionInformation->szCSDVersion, sizeof(lpVersionInformation->szCSDVersion));
+
+		if (lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOEXA))
+		{
+			LPOSVERSIONINFOEXA lpVersionInformationEx = (LPOSVERSIONINFOEXA)lpVersionInformation;
+			lpVersionInformationEx->wServicePackMajor = 1;
+			lpVersionInformationEx->wServicePackMinor = 0;
+			lpVersionInformationEx->wSuiteMask = 0;
+			lpVersionInformationEx->wProductType = VER_NT_WORKSTATION;
+			lpVersionInformationEx->wReserved = 0;
+		}
+
+		return TRUE;
+	}
+#endif
+
+	return FALSE;
+}
+
+BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation)
+{
+	ZeroMemory(lpVersionInformation->szCSDVersion, sizeof(lpVersionInformation->szCSDVersion));
+	return GetVersionExA((LPOSVERSIONINFOA) lpVersionInformation);
+}
+
+#endif
 
 #if !defined(_WIN32) || defined(_UWP)
 
