@@ -45,7 +45,7 @@
 
 #include "printer_main.h"
 
-#ifdef WIN32
+#if defined(_WIN32) && !defined(_UWP)
 #include "printer_win.h"
 #endif
 
@@ -476,7 +476,7 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	driver = printer_cups_get_driver();
 #endif
 
-#ifdef WIN32
+#if defined(_WIN32) && !defined(_UWP)
 	driver = printer_win_get_driver();
 #endif
 
