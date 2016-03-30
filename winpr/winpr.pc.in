@@ -9,7 +9,7 @@ Description: WinPR: Windows Portable Runtime
 URL: http://www.freerdp.com/
 Version: @WINPR_VERSION@
 Requires:
-Requires.private: zlib libssl
+Requires.private: libssl
 Libs: -L${libdir} ${libs}
 Libs.private: -ldl -lrt -lm -lpthread
 Cflags: -I${includedir}

@@ -29,7 +29,7 @@ set(${MODULE_PREFIX}_LIBS rdtk)
 
 list(APPEND ${MODULE_PREFIX}_LIBS ${X11_LIBRARIES})
 
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS} winpr)
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "RdTk")
 
