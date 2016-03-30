@@ -121,7 +121,7 @@ static int certificate_data_match_legacy(rdpCertificateStore* certificate_store,
 	char* data;
 	char* mdata;
 	char* pline;
-	char* hostname;
+	char* hostname = NULL;
 	DWORD lowSize, highSize;
 	UINT64 size;
 	size_t length;
@@ -129,8 +129,10 @@ static int certificate_data_match_legacy(rdpCertificateStore* certificate_store,
 
 	/* Assure POSIX style paths, CreateFile expects either '/' or '\\' */
 	PathCchConvertStyleA(certificate_store->legacy_file, strlen(certificate_store->legacy_file), PATH_STYLE_UNIX);
+	
 	fp = CreateFileA(certificate_store->legacy_file, GENERIC_READ, FILE_SHARE_READ,
 					NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
 	if (fp == INVALID_HANDLE_VALUE)
 		return match;
 

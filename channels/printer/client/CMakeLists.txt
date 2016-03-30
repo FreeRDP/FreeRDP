@@ -30,7 +30,7 @@ if(WITH_CUPS)
 	add_definitions(-DWITH_CUPS)
 endif()
 
-if(WIN32)
+if(WIN32 AND NOT UWP)
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS}
 		printer_win.c
 		printer_win.h)

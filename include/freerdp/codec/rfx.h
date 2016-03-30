@@ -183,7 +183,7 @@ FREERDP_API RFX_MESSAGE* rfx_encode_messages(RFX_CONTEXT* context, const RFX_REC
 		BYTE* data, int width, int height, int scanline, int* numMessages, int maxDataSize);
 FREERDP_API BOOL rfx_write_message(RFX_CONTEXT* context, wStream* s, RFX_MESSAGE* message);
 
-FREERDP_API void rfx_context_reset(RFX_CONTEXT* context);
+FREERDP_API BOOL rfx_context_reset(RFX_CONTEXT* context, UINT32 width, UINT32 height);
 
 FREERDP_API RFX_CONTEXT* rfx_context_new(BOOL encoder);
 FREERDP_API void rfx_context_free(RFX_CONTEXT* context);

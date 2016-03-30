@@ -23,7 +23,7 @@
 #include <winpr/sspi.h>
 #include <winpr/crypto.h>
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(_UWP)
 
 #include <schannel.h>
 

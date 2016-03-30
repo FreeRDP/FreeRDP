@@ -248,15 +248,19 @@ BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo)
 
 	if (rdp->errorInfo != ERRINFO_SUCCESS)
 	{
-		ErrorInfoEventArgs e;
-		rdpContext* context = rdp->instance->context;
-
-		rdp->context->LastError = MAKE_FREERDP_ERROR(ERRINFO, errorInfo);
+		rdpContext* context = rdp->context;
 		rdp_print_errinfo(rdp->errorInfo);
-
-		EventArgsInit(&e, "freerdp");
-		e.code = rdp->errorInfo;
-		PubSub_OnErrorInfo(context->pubSub, context, &e);
+		if (context)
+		{
+			context->LastError = MAKE_FREERDP_ERROR(ERRINFO, errorInfo);
+			if (context->pubSub)
+			{
+				ErrorInfoEventArgs e;
+				EventArgsInit(&e, "freerdp");
+				e.code = rdp->errorInfo;
+				PubSub_OnErrorInfo(context->pubSub, context, &e);
+			}
+		}
 	}
 	else
 	{

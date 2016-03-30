@@ -53,6 +53,10 @@
 #define DEBUG_CLIPRDR(fmt, ...) do { } while (0)
 #endif
 
+typedef BOOL (WINAPI * fnAddClipboardFormatListener)(HWND hwnd);
+typedef BOOL (WINAPI * fnRemoveClipboardFormatListener)(HWND hwnd);
+typedef BOOL (WINAPI * fnGetUpdatedClipboardFormats)(PUINT lpuiFormats, UINT cFormats, PUINT pcFormatsOut);
+
 struct format_mapping
 {
 	UINT32 remote_format_id;
@@ -128,11 +132,15 @@ struct wf_clipboard
 	size_t file_array_size;
 	WCHAR** file_names;
 	FILEDESCRIPTORW** fileDescriptor;
+
+	BOOL legacyApi;
+	HMODULE hUser32;
+	HWND hWndNextViewer;
+	fnAddClipboardFormatListener AddClipboardFormatListener;
+	fnRemoveClipboardFormatListener RemoveClipboardFormatListener;
+	fnGetUpdatedClipboardFormats GetUpdatedClipboardFormats;
 };
 typedef struct wf_clipboard wfClipboard;
-
-extern BOOL WINAPI AddClipboardFormatListener(_In_ HWND hwnd);
-extern BOOL WINAPI RemoveClipboardFormatListener(_In_  HWND hwnd);
 
 #define WM_CLIPRDR_MESSAGE  (WM_USER + 156)
 #define OLE_SETCLIPBOARD    1
@@ -144,8 +152,8 @@ static UINT cliprdr_send_data_request(wfClipboard* clipboard, UINT32 format);
 static UINT cliprdr_send_lock(wfClipboard* clipboard);
 static UINT cliprdr_send_unlock(wfClipboard* clipboard);
 static UINT cliprdr_send_request_filecontents(wfClipboard* clipboard, void* streamid,
-											  int index, int flag, DWORD positionhigh,
-											  DWORD positionlow, ULONG request);
+				int index, int flag, DWORD positionhigh,
+				DWORD positionlow, ULONG request);
 
 static void CliprdrDataObject_Delete(CliprdrDataObject* instance);
 
@@ -1179,6 +1187,39 @@ static UINT cliprdr_send_tempdir(wfClipboard* clipboard)
 	return clipboard->context->TempDirectory(clipboard->context, &tempDirectory);
 }
 
+BOOL cliprdr_GetUpdatedClipboardFormats(wfClipboard* clipboard, PUINT lpuiFormats, UINT cFormats, PUINT pcFormatsOut)
+{
+	UINT index = 0;
+	UINT format = 0;
+	BOOL clipboardOpen = FALSE;
+
+	if (!clipboard->legacyApi)
+		return clipboard->GetUpdatedClipboardFormats(lpuiFormats, cFormats, pcFormatsOut);
+
+	clipboardOpen = OpenClipboard(clipboard->hwnd);
+
+	if (!clipboardOpen)
+		return FALSE;
+
+	while (index < cFormats)
+	{
+		format = EnumClipboardFormats(format);
+
+		if (!format)
+			break;
+
+		lpuiFormats[index] = format;
+
+		index++;
+	}
+
+	*pcFormatsOut = index;
+
+	CloseClipboard();
+
+	return TRUE;
+}
+
 static UINT cliprdr_send_format_list(wfClipboard* clipboard)
 {
 	UINT rc;
@@ -1300,9 +1341,7 @@ static UINT cliprdr_send_request_filecontents(wfClipboard* clipboard, const void
 	return rc;
 }
 
-static UINT cliprdr_send_response_filecontents(wfClipboard* clipboard,
-											   UINT32 streamId, UINT32 size,
-											   BYTE* data)
+static UINT cliprdr_send_response_filecontents(wfClipboard* clipboard, UINT32 streamId, UINT32 size, BYTE* data)
 {
 	CLIPRDR_FILE_CONTENTS_RESPONSE fileContentsResponse;
 
@@ -1327,15 +1366,25 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 	case WM_CREATE:
 		DEBUG_CLIPRDR("info: WM_CREATE");
 		clipboard = (wfClipboard*)((CREATESTRUCT*) lParam)->lpCreateParams;
-		if (!AddClipboardFormatListener(hWnd)) {
-			DEBUG_CLIPRDR("error: AddClipboardFormatListener failed with %#x.", GetLastError());
-		}
+
 		clipboard->hwnd = hWnd;
+
+		if (!clipboard->legacyApi)
+			clipboard->AddClipboardFormatListener(hWnd);
+		else
+			clipboard->hWndNextViewer = SetClipboardViewer(hWnd);
+
 		break;
 
 	case WM_CLOSE:
 		DEBUG_CLIPRDR("info: WM_CLOSE");
-		RemoveClipboardFormatListener(hWnd);
+		if (!clipboard->legacyApi)
+			clipboard->RemoveClipboardFormatListener(hWnd);
+		break;
+
+	case WM_DESTROY:
+		if (clipboard->legacyApi)
+			ChangeClipboardChain(hWnd, clipboard->hWndNextViewer);
 		break;
 
 	case WM_CLIPBOARDUPDATE:
@@ -1387,6 +1436,33 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 			}
 		}
 		/* Note: GlobalFree() is not needed when success */
+		break;
+
+
+	case WM_DRAWCLIPBOARD:
+		if (clipboard->legacyApi)
+		{
+			if ((GetClipboardOwner() != clipboard->hwnd) &&
+				(S_FALSE == OleIsCurrentClipboard(clipboard->data_obj)))
+			{
+				cliprdr_send_format_list(clipboard);
+			}
+
+			SendMessage(clipboard->hWndNextViewer, Msg, wParam, lParam);
+		}
+		break;
+
+	case WM_CHANGECBCHAIN:
+		if (clipboard->legacyApi)
+		{
+			HWND hWndCurrViewer = (HWND) wParam;
+			HWND hWndNextViewer = (HWND) lParam;
+
+			if (hWndCurrViewer == clipboard->hWndNextViewer)
+				clipboard->hWndNextViewer = hWndNextViewer;
+			else if (clipboard->hWndNextViewer)
+				SendMessage(clipboard->hWndNextViewer, Msg, wParam, lParam);
+		}
 		break;
 
 	case WM_CLIPRDR_MESSAGE:
@@ -1443,10 +1519,8 @@ static int create_cliprdr_window(wfClipboard* clipboard)
 
 	RegisterClassEx(&wnd_cls);
 
-	clipboard->hwnd = CreateWindowEx(WS_EX_LEFT,
-									 _T("ClipboardHiddenMessageProcessor"),
-									 _T("rdpclip"),
-									 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, GetModuleHandle(NULL), clipboard);
+	clipboard->hwnd = CreateWindowEx(WS_EX_LEFT, _T("ClipboardHiddenMessageProcessor"),
+			_T("rdpclip"), 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, GetModuleHandle(NULL), clipboard);
 
 	if (!clipboard->hwnd)
 	{
@@ -2390,6 +2464,18 @@ BOOL wf_cliprdr_init(wfContext* wfc, CliprdrClientContext* cliprdr)
 
 	clipboard->map_capacity = 32;
 	clipboard->map_size = 0;
+
+	clipboard->hUser32 = LoadLibraryA("user32.dll");
+
+	if (clipboard->hUser32)
+	{
+		clipboard->AddClipboardFormatListener = (fnAddClipboardFormatListener) GetProcAddress(clipboard->hUser32, "AddClipboardFormatListener");
+		clipboard->RemoveClipboardFormatListener = (fnRemoveClipboardFormatListener) GetProcAddress(clipboard->hUser32, "RemoveClipboardFormatListener");
+		clipboard->GetUpdatedClipboardFormats = (fnGetUpdatedClipboardFormats) GetProcAddress(clipboard->hUser32, "GetUpdatedClipboardFormats");
+	}
+
+	if (!(clipboard->hUser32 && clipboard->AddClipboardFormatListener && clipboard->RemoveClipboardFormatListener && clipboard->GetUpdatedClipboardFormats))
+		clipboard->legacyApi = TRUE;
 
 	if (!(clipboard->format_mappings = (formatMapping*) calloc(1, sizeof(formatMapping) * clipboard->map_capacity)))
 		goto error;

@@ -286,8 +286,8 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 			UINT32 vBarHeight;
 			UINT32 vBarPixelCount;
 			UINT32 vBarShortPixelCount;
-			CLEAR_VBAR_ENTRY* vBarEntry;
-			CLEAR_VBAR_ENTRY* vBarShortEntry;
+			CLEAR_VBAR_ENTRY* vBarEntry = NULL;
+			CLEAR_VBAR_ENTRY* vBarShortEntry = NULL;
 
 			if ((bandsByteCount - suboffset) < 11)
 				return -1021;
@@ -830,12 +830,16 @@ int clear_compress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize, BYTE** 
 	return 1;
 }
 
-int clear_context_reset(CLEAR_CONTEXT* clear)
+BOOL clear_context_reset(CLEAR_CONTEXT* clear)
 {
+	if (!clear)
+		return FALSE;
+
 	clear->seqNumber = 0;
 	clear->VBarStorageCursor = 0;
 	clear->ShortVBarStorageCursor = 0;
-	return 1;
+
+	return TRUE;
 }
 
 CLEAR_CONTEXT* clear_context_new(BOOL Compressor)

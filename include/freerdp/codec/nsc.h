@@ -93,7 +93,7 @@ FREERDP_API NSC_MESSAGE* nsc_encode_messages(NSC_CONTEXT* context, BYTE* data, i
 FREERDP_API int nsc_write_message(NSC_CONTEXT* context, wStream* s, NSC_MESSAGE* message);
 FREERDP_API int nsc_message_free(NSC_CONTEXT* context, NSC_MESSAGE* message);
 
-FREERDP_API int nsc_context_reset(NSC_CONTEXT* context);
+FREERDP_API BOOL nsc_context_reset(NSC_CONTEXT* context, UINT32 width, UINT32 height);
 
 FREERDP_API NSC_CONTEXT* nsc_context_new(void);
 FREERDP_API void nsc_context_free(NSC_CONTEXT* context);

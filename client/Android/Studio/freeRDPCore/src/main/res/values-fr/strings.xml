@@ -56,11 +56,6 @@
         <item>"Couleurs vraies (24 bits)"</item>
         <item>"Haute qualité (32 bits)"</item>
     </string-array>
-    <string-array name="colors_values_array">
-        <item>"16"</item>
-        <item>"24"</item>
-        <item>"32"</item>
-    </string-array>
     <string name="settings_resolution">"Résolution"</string>
     <string name="resolution_automatic">"Automatique"</string>
     <string name="resolution_fit">"Agrandir la fenêtre"</string>
@@ -77,21 +72,6 @@
         <item>"1440x900"</item>
         <item>"1920x1080"</item>
         <item>"1920x1200"</item>
-    </string-array>
-    <!-- The strings in resolutions_values_array should not be localized -->
-    <!-- They are used for text comparison and must remain in english -->
-    <string-array name="resolutions_values_array">
-        <item>automatic</item>
-        <item>fitscreen</item>
-        <item>custom</item>
-        <item>640x480</item>
-        <item>720x480</item>
-        <item>800x600</item>
-        <item>1024x768</item>
-        <item>1280x1024</item>
-        <item>1440x900</item>
-        <item>1920x1080</item>
-        <item>1920x1200</item>
     </string-array>
     <!-- end protected string section -->
     <string name="settings_width">"Largeur"</string>
@@ -120,11 +100,6 @@
         <item>Play on Server</item>
         <item>Play on Device</item>
     </string-array>
-    <string-array name="redirect_sound_values_array">
-        <item>2</item>
-        <item>1</item>
-        <item>0</item>
-    </string-array>
     <string name="settings_redirect_microphone">Redirect Microphone</string>
     <string name="settings_security">"Securité"</string>
     <string-array name="security_array">
@@ -132,12 +107,6 @@
         <item>"RDP"</item>
         <item>"TLS"</item>
         <item>"NLA"</item>
-    </string-array>
-    <string-array name="security_values_array">
-        <item>"0"</item>
-        <item>"1"</item>
-        <item>"2"</item>
-        <item>"3"</item>
     </string-array>
     <string name="settings_remote_program">"Lancement de programme"</string>
     <string name="settings_work_dir">"Répertoire de travail"</string>

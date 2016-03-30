@@ -25,7 +25,7 @@
 #include <winpr/rpc.h>
 #include <winpr/crypto.h>
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(_UWP)
 
 #include "../log.h"
 #define TAG WINPR_TAG("rpc")

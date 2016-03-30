@@ -109,7 +109,7 @@ FREERDP_API BOOL freerdp_bitmap_planar_delta_encode_planes(BYTE* inPlanes[4], in
 FREERDP_API BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context, BYTE* data, UINT32 format,
 		int width, int height, int scanline, BYTE* dstData, int* pDstSize);
 
-FREERDP_API int freerdp_bitmap_planar_context_reset(BITMAP_PLANAR_CONTEXT* context);
+FREERDP_API BOOL freerdp_bitmap_planar_context_reset(BITMAP_PLANAR_CONTEXT* context);
 
 FREERDP_API BITMAP_PLANAR_CONTEXT* freerdp_bitmap_planar_context_new(DWORD flags, int maxWidth, int maxHeight);
 FREERDP_API void freerdp_bitmap_planar_context_free(BITMAP_PLANAR_CONTEXT* context);

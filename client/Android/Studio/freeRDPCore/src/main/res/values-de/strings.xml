@@ -57,29 +57,11 @@
         <item>True Color (24 Bit)</item>
         <item>Highest Quality (32 Bit)</item>
     </string-array>
-    <string-array name="colors_values_array">
-        <item>16</item>
-        <item>24</item>
-        <item>32</item>
-    </string-array>
     <string name="settings_resolution">Auflösung</string>
     <string name="resolution_automatic">automatisch</string>
     <string name="resolution_fit">an Bildschirm anpassen</string>
     <string name="resolution_custom">Benutzerdefiniert</string>
     <string-array name="resolutions_array">
-        <item>automatisch</item>
-        <item>an Bildschirm anpassen</item>
-        <item>Benutzerdefiniert</item>
-        <item>640x480</item>
-        <item>720x480</item>
-        <item>800x600</item>
-        <item>1024x768</item>
-        <item>1280x1024</item>
-        <item>1440x900</item>
-        <item>1920x1080</item>
-        <item>1920x1200</item>
-    </string-array>
-    <string-array name="resolutions_values_array">
         <item>automatisch</item>
         <item>an Bildschirm anpassen</item>
         <item>Benutzerdefiniert</item>
@@ -118,11 +100,6 @@
         <item>Auf Server abspielen</item>
         <item>Auf Client abspielen</item>
     </string-array>
-    <string-array name="redirect_sound_values_array">
-        <item>2</item>
-        <item>1</item>
-        <item>0</item>
-    </string-array>
     <string name="settings_redirect_microphone">Mikrophon umleiten</string>
     <string name="settings_security">Sicherheit</string>
     <string-array name="security_array">
@@ -130,12 +107,6 @@
         <item>RDP</item>
         <item>TLS</item>
         <item>NLA</item>
-    </string-array>
-    <string-array name="security_values_array">
-        <item>0</item>
-        <item>1</item>
-        <item>2</item>
-        <item>3</item>
     </string-array>
     <string name="settings_remote_program">Remote Program</string>
     <string name="settings_work_dir">Arbeitsverzeichnis</string>

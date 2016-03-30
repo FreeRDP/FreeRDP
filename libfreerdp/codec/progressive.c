@@ -938,7 +938,7 @@ INT16 progressive_rfx_srl_read(RFX_PROGRESSIVE_UPGRADE_STATE* state, UINT32 numB
 		mag++;
 	}
 
-	return sign ? -mag : mag;
+	return sign ? -1 * mag : mag;
 }
 
 int progressive_rfx_upgrade_state_finish(RFX_PROGRESSIVE_UPGRADE_STATE* state)
@@ -1880,9 +1880,12 @@ int progressive_compress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UINT3
 	return 1;
 }
 
-int progressive_context_reset(PROGRESSIVE_CONTEXT* progressive)
+BOOL progressive_context_reset(PROGRESSIVE_CONTEXT* progressive)
 {
-	return 1;
+	if (!progressive)
+		return FALSE;
+
+	return TRUE;
 }
 
 PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor)

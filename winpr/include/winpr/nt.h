@@ -89,7 +89,7 @@
 
 /* Defined in wincred.h, do not redefine */
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(_UWP)
 
 #include <wincred.h>
 
@@ -1421,7 +1421,11 @@ typedef struct _IO_STATUS_BLOCK
 {
 	union
 	{
+#ifdef _WIN32
+		NTSTATUS Status;
+#else
 		NTSTATUS status;
+#endif
 		PVOID Pointer;
 	};
 	ULONG_PTR Information;

@@ -34,9 +34,9 @@ int shadow_encoder_preferred_fps(rdpShadowEncoder* encoder)
 
 UINT32 shadow_encoder_inflight_frames(rdpShadowEncoder* encoder)
 {
-	/* Return inflight frame count = 
+	/* Return inflight frame count =
 	 * <last sent frame id> - <last client-acknowledged frame id>
-	 * Note: This function is exported so that subsystem could 
+	 * Note: This function is exported so that subsystem could
 	 * implement its own strategy to tune fps.
 	 */
 	return encoder->frameId - encoder->lastAckframeId;
@@ -137,7 +137,10 @@ int shadow_encoder_init_rfx(rdpShadowEncoder* encoder)
 		encoder->rfx = rfx_context_new(TRUE);
 
 	if (!encoder->rfx)
-		return -1;
+		goto fail;
+
+	if (!rfx_context_reset(encoder->rfx, encoder->width, encoder->height))
+		goto fail;
 
 	encoder->rfx->mode = RLGR3;
 	encoder->rfx->width = encoder->width;
@@ -154,6 +157,10 @@ int shadow_encoder_init_rfx(rdpShadowEncoder* encoder)
 	encoder->codecs |= FREERDP_CODEC_REMOTEFX;
 
 	return 1;
+
+fail:
+	rfx_context_free(encoder->rfx);
+	return -1;
 }
 
 int shadow_encoder_init_nsc(rdpShadowEncoder* encoder)

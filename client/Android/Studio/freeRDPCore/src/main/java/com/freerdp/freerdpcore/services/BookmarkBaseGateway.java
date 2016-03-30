@@ -261,6 +261,8 @@ public abstract class BookmarkBaseGateway
 	
 	private void addPerformanceFlagsColumns(ArrayList<String> columns) {
 		columns.add("join_performance_flags.perf_remotefx as performanceRemoteFX");
+		columns.add("join_performance_flags.perf_gfx as performanceGfx");
+		columns.add("join_performance_flags.perf_gfx_h264 as performanceGfxH264");
 		columns.add("join_performance_flags.perf_wallpaper as performanceWallpaper");
 		columns.add("join_performance_flags.perf_theming as performanceTheming");
 		columns.add("join_performance_flags.perf_full_window_drag as performanceFullWindowDrag");
@@ -278,6 +280,8 @@ public abstract class BookmarkBaseGateway
 	
 	private void addPerformanceFlags3GColumns(ArrayList<String> columns) {
 		columns.add("join_performance_3G.perf_remotefx as performanceRemoteFX3G");
+		columns.add("join_performance_3G.perf_gfx as performanceGfx3G");
+		columns.add("join_performance_3G.perf_gfx_h264 as performanceGfxH2643G");
 		columns.add("join_performance_3G.perf_wallpaper as performanceWallpaper3G");
 		columns.add("join_performance_3G.perf_theming as performanceTheming3G");
 		columns.add("join_performance_3G.perf_full_window_drag as performanceFullWindowDrag3G");
@@ -335,6 +339,11 @@ public abstract class BookmarkBaseGateway
 	private void readPerformanceFlags(BookmarkBase bookmark, Cursor cursor) {
 		BookmarkBase.PerformanceFlags perfFlags = bookmark.getPerformanceFlags();
 		perfFlags.setRemoteFX(cursor.getInt(cursor.getColumnIndex("performanceRemoteFX")) == 0 ? false : true);
+		perfFlags.setGfx(cursor.getInt(cursor.getColumnIndex("performanceGfx")) == 0 ? false :
+				true);
+		perfFlags.setH264(cursor.getInt(cursor.getColumnIndex("performanceGfxH264")) == 0 ?
+				false :
+				true);
 		perfFlags.setWallpaper(cursor.getInt(cursor.getColumnIndex("performanceWallpaper")) == 0 ? false : true);
 		perfFlags.setTheming(cursor.getInt(cursor.getColumnIndex("performanceTheming")) == 0 ? false : true);
 		perfFlags.setFullWindowDrag(cursor.getInt(cursor.getColumnIndex("performanceFullWindowDrag")) == 0 ? false : true);
@@ -354,6 +363,11 @@ public abstract class BookmarkBaseGateway
 	private void readPerformanceFlags3G(BookmarkBase bookmark, Cursor cursor) {
 		BookmarkBase.PerformanceFlags perfFlags = bookmark.getAdvancedSettings().getPerformance3G();
 		perfFlags.setRemoteFX(cursor.getInt(cursor.getColumnIndex("performanceRemoteFX3G")) == 0 ? false : true);
+		perfFlags.setGfx(cursor.getInt(cursor.getColumnIndex("performanceGfx3G")) == 0 ? false :
+				true);
+		perfFlags.setH264(cursor.getInt(cursor.getColumnIndex("performanceGfxH2643G")) == 0 ?
+				false :
+				true);
 		perfFlags.setWallpaper(cursor.getInt(cursor.getColumnIndex("performanceWallpaper3G")) == 0 ? false : true);
 		perfFlags.setTheming(cursor.getInt(cursor.getColumnIndex("performanceTheming3G")) == 0 ? false : true);
 		perfFlags.setFullWindowDrag(cursor.getInt(cursor.getColumnIndex("performanceFullWindowDrag3G")) == 0 ? false : true);
@@ -373,6 +387,8 @@ public abstract class BookmarkBaseGateway
 	private void fillPerformanceFlagsContentValues(BookmarkBase.PerformanceFlags perfFlags, ContentValues values)
 	{
 		values.put("perf_remotefx", perfFlags.getRemoteFX());
+		values.put("perf_gfx", perfFlags.getGfx());
+		values.put("perf_gfx_h264", perfFlags.getH264());
 		values.put("perf_wallpaper", perfFlags.getWallpaper());
 		values.put("perf_theming", perfFlags.getTheming());
 		values.put("perf_full_window_drag", perfFlags.getFullWindowDrag());

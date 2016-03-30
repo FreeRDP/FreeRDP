@@ -22,7 +22,7 @@
 
 #include <winpr/windows.h>
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(_UWP)
 
 #include <winreg.h>
 
@@ -38,6 +38,8 @@ extern "C" {
 #include <winpr/nt.h>
 #include <winpr/io.h>
 #include <winpr/error.h>
+
+#ifndef _WIN32
 
 #define OWNER_SECURITY_INFORMATION	0x00000001
 #define GROUP_SECURITY_INFORMATION	0x00000002
@@ -104,6 +106,8 @@ extern "C" {
 
 typedef HANDLE HKEY;
 typedef HANDLE* PHKEY;
+
+#endif
 
 typedef ACCESS_MASK REGSAM;
 

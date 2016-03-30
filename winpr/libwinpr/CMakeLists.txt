@@ -113,6 +113,7 @@ if (WIN32)
     @ONLY)
 
   set (WINPR_SRCS ${WINPR_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+  list(APPEND WINPR_LIBS "Shlwapi")
 endif()
 
 add_library(${MODULE_NAME} ${WINPR_SRCS})
