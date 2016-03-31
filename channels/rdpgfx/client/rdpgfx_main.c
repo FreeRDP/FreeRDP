@@ -92,19 +92,22 @@ static UINT rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 	if (gfx->H264)
 		capsSet->flags |= RDPGFX_CAPS_FLAG_AVC420_ENABLED;
 
-	capsSet = &capsSets[pdu.capsSetCount++];
-	capsSet->version = RDPGFX_CAPVERSION_10;
-	capsSet->flags = 0;
+	if (gfx->AVC444)
+	{
+		capsSet = &capsSets[pdu.capsSetCount++];
+		capsSet->version = RDPGFX_CAPVERSION_10;
+		capsSet->flags = 0;
 
-	if (gfx->SmallCache)
-		capsSet->flags |= RDPGFX_CAPS_FLAG_SMALL_CACHE;
+		if (gfx->SmallCache)
+			capsSet->flags |= RDPGFX_CAPS_FLAG_SMALL_CACHE;
 
-	if (!gfx->H264)
-		capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
+		if (!gfx->H264)
+			capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
+	}
 
 	header.pduLength = RDPGFX_HEADER_SIZE + 2 + (pdu.capsSetCount * RDPGFX_CAPSET_SIZE);
 
-	WLog_DBG(TAG, "SendCapsAdvertisePdu");
+	WLog_DBG(TAG, "SendCapsAdvertisePdu %d", pdu.capsSetCount);
 
 	s = Stream_New(NULL, header.pduLength);
 	if (!s)
@@ -1573,6 +1576,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		gfx->Progressive = gfx->settings->GfxProgressive;
 		gfx->ProgressiveV2 = gfx->settings->GfxProgressiveV2;
 		gfx->H264 = gfx->settings->GfxH264;
+		gfx->AVC444 = gfx->settings->GfxAVC444;
 
 		if (gfx->H264)
 			gfx->SmallCache = TRUE;
@@ -1581,7 +1585,6 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 			gfx->ThinClient = FALSE;
 
 		gfx->MaxCacheSlot = (gfx->ThinClient) ? 4096 : 25600;
-
 
 		context = (RdpgfxClientContext*) calloc(1, sizeof(RdpgfxClientContext));
 
