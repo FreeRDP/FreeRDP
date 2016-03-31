@@ -2011,11 +2011,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				{
 					settings->GfxH264 = TRUE;
 				}
-				else if (_strnicmp("RFX", arg->Value, 3) == 0)
-				{
-
-				}
-				else if (arg->Value != NULL)
+				else if (_strnicmp("RFX", arg->Value, 3) != 0)
 					return COMMAND_LINE_ERROR;
 			}
 		}
@@ -2045,10 +2041,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				{
 					settings->GfxAVC444 = TRUE;
 				}
-				else if (_strnicmp("AVC420", arg->Value, 6) == 0)
-				{
-				}
-				else if (arg->Value != NULL)
+				else if (_strnicmp("AVC420", arg->Value, 6) != 0)
 					return COMMAND_LINE_ERROR;
 			}
 		}
