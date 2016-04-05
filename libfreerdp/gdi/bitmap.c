@@ -3,6 +3,8 @@
  * GDI Bitmap Functions
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2016 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,20 +32,14 @@
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/codec/color.h>
 
-#include <freerdp/gdi/32bpp.h>
-#include <freerdp/gdi/16bpp.h>
-#include <freerdp/gdi/8bpp.h>
-
+#include <freerdp/gdi/region.h>
 #include <freerdp/gdi/bitmap.h>
+#include <freerdp/log.h>
 
-p_BitBlt BitBlt_[5] =
-{
-	NULL,
-	BitBlt_8bpp,
-	BitBlt_16bpp,
-	NULL,
-	BitBlt_32bpp
-};
+#include "brush.h"
+#include "clipping.h"
+
+#define TAG FREERDP_TAG("gdi.bitmap")
 
 /**
  * Get pixel at the given coordinates.\n
@@ -54,41 +50,18 @@ p_BitBlt BitBlt_[5] =
  * @return pixel color
  */
 
-INLINE GDI_COLOR gdi_GetPixel(HGDI_DC hdc, int nXPos, int nYPos)
+INLINE UINT32 gdi_GetPixel(HGDI_DC hdc, UINT32 nXPos, UINT32 nYPos)
 {
 	HGDI_BITMAP hBmp = (HGDI_BITMAP) hdc->selectedObject;
-	GDI_COLOR* colorp = (GDI_COLOR*)&(hBmp->data[(nYPos * hBmp->width * hdc->bytesPerPixel) + nXPos * hdc->bytesPerPixel]);
-	return (GDI_COLOR) *colorp;
+	BYTE* data = &(hBmp->data[(nYPos * hBmp->scanline) + nXPos * GetBytesPerPixel(
+								  hBmp->format)]);
+	return ReadColor(data, hBmp->format);
 }
 
-INLINE BYTE gdi_GetPixel_8bpp(HGDI_BITMAP hBmp, int X, int Y)
+INLINE BYTE* gdi_GetPointer(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y)
 {
-	return *((BYTE*)&(hBmp->data[(Y * hBmp->width) + X]));
-}
-
-INLINE UINT16 gdi_GetPixel_16bpp(HGDI_BITMAP hBmp, int X, int Y)
-{
-	return *((UINT16*)&(hBmp->data[(Y * hBmp->width * 2) + X * 2]));
-}
-
-INLINE UINT32 gdi_GetPixel_32bpp(HGDI_BITMAP hBmp, int X, int Y)
-{
-	return *((UINT32*)&(hBmp->data[(Y * hBmp->width * 4) + X * 4]));
-}
-
-INLINE BYTE* gdi_GetPointer_8bpp(HGDI_BITMAP hBmp, int X, int Y)
-{
-	return ((BYTE*)&(hBmp->data[(Y * hBmp->width) + X]));
-}
-
-INLINE UINT16* gdi_GetPointer_16bpp(HGDI_BITMAP hBmp, int X, int Y)
-{
-	return ((UINT16*)&(hBmp->data[(Y * hBmp->width * 2) + X * 2]));
-}
-
-INLINE UINT32* gdi_GetPointer_32bpp(HGDI_BITMAP hBmp, int X, int Y)
-{
-	return ((UINT32*)&(hBmp->data[(Y * hBmp->width * 4) + X * 4]));
+	UINT32 bpp = GetBytesPerPixel(hBmp->format);
+	return &hBmp->data[(Y * hBmp->width * bpp) + X * bpp];
 }
 
 /**
@@ -101,26 +74,19 @@ INLINE UINT32* gdi_GetPointer_32bpp(HGDI_BITMAP hBmp, int X, int Y)
  * @return
  */
 
-INLINE GDI_COLOR gdi_SetPixel(HGDI_DC hdc, int X, int Y, GDI_COLOR crColor)
+static INLINE UINT32 gdi_SetPixelBmp(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y,
+									 UINT32 crColor)
 {
-	HGDI_BITMAP hBmp = (HGDI_BITMAP) hdc->selectedObject;
-	*((GDI_COLOR*)&(hBmp->data[(Y * hBmp->width * hdc->bytesPerPixel) + X * hdc->bytesPerPixel])) = crColor;
+	BYTE* p = &hBmp->data[(Y * hBmp->scanline) + X * GetBytesPerPixel(
+							  hBmp->format)];
+	WriteColor(p, hBmp->format, crColor);
 	return crColor;
 }
 
-INLINE void gdi_SetPixel_8bpp(HGDI_BITMAP hBmp, int X, int Y, BYTE pixel)
+INLINE UINT32 gdi_SetPixel(HGDI_DC hdc, UINT32 X, UINT32 Y, UINT32 crColor)
 {
-	*((BYTE*)&(hBmp->data[(Y * hBmp->width) + X])) = pixel;
-}
-
-INLINE void gdi_SetPixel_16bpp(HGDI_BITMAP hBmp, int X, int Y, UINT16 pixel)
-{
-	*((UINT16*)&(hBmp->data[(Y * hBmp->width * 2) + X * 2])) = pixel;
-}
-
-INLINE void gdi_SetPixel_32bpp(HGDI_BITMAP hBmp, int X, int Y, UINT32 pixel)
-{
-	*((UINT32*)&(hBmp->data[(Y * hBmp->width * 4) + X * 4])) = pixel;
+	HGDI_BITMAP hBmp = (HGDI_BITMAP) hdc->selectedObject;
+	return gdi_SetPixelBmp(hBmp, X, Y, crColor);
 }
 
 /**
@@ -134,13 +100,14 @@ INLINE void gdi_SetPixel_32bpp(HGDI_BITMAP hBmp, int X, int Y, UINT32 pixel)
  * @return new bitmap
  */
 
-HGDI_BITMAP gdi_CreateBitmap(int nWidth, int nHeight, int cBitsPerPixel, BYTE* data)
+HGDI_BITMAP gdi_CreateBitmap(UINT32 nWidth, UINT32 nHeight, UINT32 format,
+							 BYTE* data)
 {
-	return gdi_CreateBitmapEx(nWidth, nHeight, cBitsPerPixel, data, _aligned_free);
+	return gdi_CreateBitmapEx(nWidth, nHeight, format, 0, data, _aligned_free);
 }
 
-HGDI_BITMAP gdi_CreateBitmapEx(int nWidth, int nHeight, int cBitsPerPixel, BYTE* data,
-							void (*fkt_free)(void*))
+HGDI_BITMAP gdi_CreateBitmapEx(UINT32 nWidth, UINT32 nHeight, UINT32 format,
+							   UINT32 stride, BYTE* data, void (*fkt_free)(void*))
 {
 	HGDI_BITMAP hBitmap = (HGDI_BITMAP) calloc(1, sizeof(GDI_BITMAP));
 
@@ -148,14 +115,17 @@ HGDI_BITMAP gdi_CreateBitmapEx(int nWidth, int nHeight, int cBitsPerPixel, BYTE*
 		return NULL;
 
 	hBitmap->objectType = GDIOBJECT_BITMAP;
-	hBitmap->bitsPerPixel = cBitsPerPixel;
-	hBitmap->bytesPerPixel = (cBitsPerPixel + 1) / 8;
-	hBitmap->scanline = nWidth * hBitmap->bytesPerPixel;
+	hBitmap->format = format;
+
+	if (stride > 0)
+		hBitmap->scanline = stride;
+	else
+		hBitmap->scanline = nWidth * GetBytesPerPixel(hBitmap->format);
+
 	hBitmap->width = nWidth;
 	hBitmap->height = nHeight;
 	hBitmap->data = data;
 	hBitmap->free = fkt_free;
-
 	return hBitmap;
 }
 
@@ -168,7 +138,8 @@ HGDI_BITMAP gdi_CreateBitmapEx(int nWidth, int nHeight, int cBitsPerPixel, BYTE*
  * @return new bitmap
  */
 
-HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, int nWidth, int nHeight)
+HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, UINT32 nWidth,
+									   UINT32 nHeight)
 {
 	HGDI_BITMAP hBitmap = (HGDI_BITMAP) calloc(1, sizeof(GDI_BITMAP));
 
@@ -176,20 +147,627 @@ HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, int nWidth, int nHeight)
 		return NULL;
 
 	hBitmap->objectType = GDIOBJECT_BITMAP;
-	hBitmap->bytesPerPixel = hdc->bytesPerPixel;
-	hBitmap->bitsPerPixel = hdc->bitsPerPixel;
+	hBitmap->format = hdc->format;
 	hBitmap->width = nWidth;
 	hBitmap->height = nHeight;
-	hBitmap->data = _aligned_malloc(nWidth * nHeight * hBitmap->bytesPerPixel, 16);
+	hBitmap->data = _aligned_malloc(nWidth * nHeight * GetBytesPerPixel(
+										hBitmap->format), 16);
 	hBitmap->free = _aligned_free;
+
 	if (!hBitmap->data)
 	{
 		free(hBitmap);
 		return NULL;
 	}
-	hBitmap->scanline = nWidth * hBitmap->bytesPerPixel;
 
+	hBitmap->scanline = nWidth * GetBytesPerPixel(hBitmap->format);
 	return hBitmap;
+}
+
+static BOOL BitBlt_SRCCOPY(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
+			   UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
+			   UINT32 nXSrc, UINT32 nYSrc)
+{
+	UINT32 y;
+	BYTE* srcp;
+	BYTE* dstp;
+
+	if (!hdcDest || !hdcSrc)
+		return FALSE;
+
+	if (hdcDest->format != hdcSrc->format)
+	{
+		WLog_ERR(TAG, "Function does not support color conversion!");
+		return FALSE;
+	}
+
+	if ((nHeight == 0) || (nWidth == 0))
+		return TRUE;
+
+	if ((hdcDest->selectedObject != hdcSrc->selectedObject) ||
+	    !gdi_CopyOverlap(nXDest, nYDest, nWidth, nHeight, nXSrc, nYSrc))
+	{
+		for (y = 0; y < nHeight; y++)
+		{
+			srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
+			dstp = gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+
+			if (srcp != 0 && dstp != 0)
+				memmove(dstp, srcp, nWidth * GetBytesPerPixel(hdcDest->format));
+		}
+
+		return TRUE;
+	}
+
+	if (nYSrc < nYDest)
+	{
+		/* copy down (bottom to top) */
+		for (y = nHeight - 1; y >= 0; y--)
+		{
+			srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
+			dstp = gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+
+			if (srcp != 0 && dstp != 0)
+				memmove(dstp, srcp, nWidth * GetBytesPerPixel(hdcDest->format));
+		}
+	}
+	else if (nYSrc > nYDest || nXSrc > nXDest)
+	{
+		/* copy up or left (top top bottom) */
+		for (y = 0; y < nHeight; y++)
+		{
+			srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
+			dstp = gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+
+			if (srcp != 0 && dstp != 0)
+				memmove(dstp, srcp, nWidth * GetBytesPerPixel(hdcDest->format));
+		}
+	}
+	else
+	{
+		/* copy straight right */
+		for (y = 0; y < nHeight; y++)
+		{
+			srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
+			dstp = gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
+
+			if (srcp != 0 && dstp != 0)
+				memmove(dstp, srcp, nWidth * GetBytesPerPixel(hdcDest->format));
+		}
+	}
+
+	return TRUE;
+}
+
+static BOOL BitBlt_NOTSRCCOPY(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
+			      UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
+			      UINT32 nXSrc, UINT32 nYSrc)
+{
+	UINT32 x, y;
+
+	if (!hdcDest || !hdcSrc)
+		return FALSE;
+
+	for (y = 0; y < nHeight; y++)
+	{
+		for (x = 0; x < nWidth; x++)
+		{
+			const BYTE* srcp = gdi_get_bitmap_pointer(
+						   hdcSrc, nXSrc + x, nYSrc + y);
+			BYTE* dstp = gdi_get_bitmap_pointer(
+					     hdcDest, nXDest + x, nYDest + y);
+
+			if (srcp && dstp)
+			{
+				UINT32 color = ReadColor(srcp, hdcSrc->format);
+				color = ConvertColor(color, hdcSrc->format, hdcDest->format, NULL);
+				color = ~color;
+				WriteColor(dstp, hdcDest->format, color);
+			}
+		}
+	}
+
+	return TRUE;
+}
+
+static BOOL BitBlt_SRCERASE(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
+			    UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
+			    UINT32 nXSrc, UINT32 nYSrc)
+{
+	UINT32 x, y;
+
+	if (!hdcDest || !hdcSrc)
+		return FALSE;
+
+	for (y = 0; y < nHeight; y++)
+	{
+		for (x = 0; x < nWidth; x++)
+		{
+			const BYTE* srcp = gdi_get_bitmap_pointer(
+						   hdcSrc, nXSrc + x, nYSrc + y);
+			BYTE* dstp = gdi_get_bitmap_pointer(
+					     hdcDest, nXDest + x, nYDest + y);
+
+			if (srcp && dstp)
+			{
+				UINT32 colorA = ReadColor(srcp, hdcSrc->format);
+				UINT32 colorB = ReadColor(dstp, hdcDest->format);
+				UINT32 color;
+
+				colorA = ConvertColor(colorA, hdcSrc->format, hdcDest->format, NULL);
+				color = colorA & ~colorB;
+				WriteColor(dstp, hdcDest->format, color);
+			}
+		}
+	}
+
+	return TRUE;
+}
+
+static BOOL BitBlt_NOTSRCERASE(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
+			       UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
+			       UINT32 nXSrc, UINT32 nYSrc)
+{
+	UINT32 x, y;
+
+	if (!hdcDest || !hdcSrc)
+		return FALSE;
+
+	for (y = 0; y < nHeight; y++)
+	{
+		for (x = 0; x < nWidth; x++)
+		{
+			const BYTE* srcp = gdi_get_bitmap_pointer(
+						   hdcSrc, nXSrc + x, nYSrc + y);
+			BYTE* dstp = gdi_get_bitmap_pointer(
+					     hdcDest, nXDest + x, nYDest + y);
+
+			if (srcp && dstp)
+			{
+				UINT32 color;
+				UINT32 colorA = ReadColor(srcp, hdcSrc->format);
+				UINT32 colorB = ReadColor(dstp, hdcDest->format);
+
+				colorA = ConvertColor(colorA, hdcSrc->format,
+						      hdcDest->format, NULL);
+
+				color = ~colorA & ~colorB;
+				WriteColor(dstp, hdcDest->format, color);
+			}
+		}
+	}
+
+	return TRUE;
+}
+
+static BOOL BitBlt_SRCINVERT(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
+			     UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
+			     UINT32 nXSrc, UINT32 nYSrc)
+{
+	UINT32 x, y;
+
+	if (!hdcDest || !hdcSrc)
+		return FALSE;
+
+	for (y = 0; y < nHeight; y++)
+	{
+		for (x = 0; x < nWidth; x++)
+		{
+			const BYTE* srcp = gdi_get_bitmap_pointer(
+						   hdcSrc, nXSrc + x, nYSrc + y);
+			BYTE* dstp = gdi_get_bitmap_pointer(
+					     hdcDest, nXDest + x, nYDest + y);
+
+			if (srcp && dstp)
+			{
+				UINT32 color;
+				UINT32 colorA = ReadColor(srcp, hdcSrc->format);
+				UINT32 colorB = ReadColor(dstp, hdcDest->format);
+
+				colorA = ConvertColor(colorA, hdcSrc->format,
+						      hdcDest->format, NULL);
+
+				color = colorA ^ colorB;
+				WriteColor(dstp, hdcDest->format, color);
+			}
+		}
+	}
+
+	return TRUE;
+}
+
+static BOOL BitBlt_SRCAND(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
+			  UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
+			  UINT32 nXSrc, UINT32 nYSrc)
+{
+	UINT32 x, y;
+
+	if (!hdcDest || !hdcSrc)
+		return FALSE;
+
+	for (y = 0; y < nHeight; y++)
+	{
+		for (x = 0; x < nWidth; x++)
+		{
+			const BYTE* srcp = gdi_get_bitmap_pointer(
+						   hdcSrc, nXSrc + x, nYSrc + y);
+			BYTE* dstp = gdi_get_bitmap_pointer(
+					     hdcDest, nXDest + x, nYDest + y);
+
+			if (srcp && dstp)
+			{
+				UINT32 color;
+				UINT32 colorA = ReadColor(srcp, hdcSrc->format);
+				UINT32 colorB = ReadColor(dstp, hdcDest->format);
+
+				colorA = ConvertColor(colorA, hdcSrc->format,
+						      hdcDest->format, NULL);
+
+				color = colorA & colorB;
+				WriteColor(dstp, hdcDest->format, color);
+			}
+		}
+	}
+
+	return TRUE;
+}
+
+static BOOL BitBlt_SRCPAINT(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
+			    UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
+			    UINT32 nXSrc, UINT32 nYSrc)
+{
+	UINT32 x, y;
+
+	if (!hdcDest || !hdcSrc)
+		return FALSE;
+
+	for (y = 0; y < nHeight; y++)
+	{
+		for (x = 0; x < nWidth; x++)
+		{
+			const BYTE* srcp = gdi_get_bitmap_pointer(
+						   hdcSrc, nXSrc + x, nYSrc + y);
+			BYTE* dstp = gdi_get_bitmap_pointer(
+					     hdcDest, nXDest + x, nYDest + y);
+
+			if (srcp && dstp)
+			{
+				UINT32 color;
+				UINT32 colorA = ReadColor(srcp, hdcSrc->format);
+				UINT32 colorB = ReadColor(dstp, hdcDest->format);
+
+				colorA = ConvertColor(colorA, hdcSrc->format,
+						      hdcDest->format, NULL);
+
+				color = colorA | colorB;
+				WriteColor(dstp, hdcDest->format, color);
+			}
+		}
+	}
+
+	return TRUE;
+}
+
+static BOOL BitBlt_DSPDxax(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
+			   UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
+			   UINT32 nXSrc, UINT32 nYSrc)
+{
+	UINT32 x, y;
+	UINT32 color;
+
+	if (!hdcDest || !hdcSrc)
+		return FALSE;
+
+	/* D = (S & P) | (~S & D) */
+	color = hdcDest->textColor;
+
+	for (y = 0; y < nHeight; y++)
+	{
+		for (x = 0; x<nWidth; x++)
+		{
+			const BYTE* srcp = gdi_get_bitmap_pointer(
+						   hdcSrc, nXSrc + x, nYSrc + y);
+			BYTE* dstp = gdi_get_bitmap_pointer(
+					     hdcDest, nXDest + x, nYDest + y);
+
+			if (srcp && dstp)
+			{
+				UINT32 color;
+				UINT32 colorA = ReadColor(srcp, hdcSrc->format);
+				UINT32 colorB = ReadColor(dstp, hdcDest->format);
+
+				colorA = ConvertColor(colorA, hdcSrc->format,
+						      hdcDest->format, NULL);
+
+				color = (colorA & color) | (~colorA & colorB);
+				WriteColor(dstp, hdcDest->format, color);
+			}
+		}
+	}
+
+	return TRUE;
+}
+
+static BOOL BitBlt_PSDPxax(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
+			   UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
+			   UINT32 nXSrc, UINT32 nYSrc)
+{
+	UINT32 x, y;
+
+	if (!hdcDest || !hdcSrc)
+		return FALSE;
+
+	/* D = (S & D) | (~S & P) */
+	if (hdcDest->brush->style == GDI_BS_SOLID)
+	{
+		UINT32 colorC = hdcDest->brush->color;
+
+		for (y = 0; y < nHeight; y++)
+		{
+			for (x = 0; x<nWidth; x++)
+			{
+				const BYTE* srcp = gdi_get_bitmap_pointer(
+							   hdcSrc, nXSrc + x, nYSrc + y);
+				BYTE* dstp = gdi_get_bitmap_pointer(
+						     hdcDest, nXDest + x, nYDest + y);
+
+				if (srcp && dstp)
+				{
+					UINT32 color;
+					UINT32 colorA = ReadColor(srcp, hdcSrc->format);
+					UINT32 colorB = ReadColor(dstp, hdcDest->format);
+
+					colorA = ConvertColor(colorA, hdcSrc->format,
+							      hdcDest->format, NULL);
+
+					color = (colorA & colorB) | (~colorA & colorC);
+					WriteColor(dstp, hdcDest->format, color);
+				}
+			}
+		}
+	}
+	else
+	{
+		for (y = 0; y < nHeight; y++)
+		{
+			for (x = 0; x<nWidth; x++)
+			{
+				const BYTE* srcp = gdi_get_bitmap_pointer(
+							   hdcSrc, nXSrc + x, nYSrc + y);
+				const BYTE* patp = gdi_get_brush_pointer(
+							   hdcDest, nXDest + x, nYDest + y);
+				BYTE* dstp = gdi_get_bitmap_pointer(
+						     hdcDest, nXDest + x, nYDest + y);
+
+				if (srcp && dstp)
+				{
+					UINT32 color;
+					UINT32 colorA = ReadColor(srcp, hdcSrc->format);
+					UINT32 colorB = ReadColor(dstp, hdcDest->format);
+					UINT32 colorC = ReadColor(patp, hdcDest->format);
+
+					colorA = ConvertColor(colorA, hdcSrc->format,
+							      hdcDest->format, NULL);
+
+					color = (colorA & colorB) | (~colorA & colorC);
+					WriteColor(dstp, hdcDest->format, color);
+				}
+			}
+		}
+	}
+
+	return TRUE;
+}
+
+static BOOL BitBlt_SPDSxax(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
+			   UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
+			   UINT32 nXSrc, UINT32 nYSrc)
+{
+	UINT32 x, y;
+
+	if (!hdcDest || !hdcSrc)
+		return FALSE;
+
+	/* D = S ^ (P & (D ^ S)) */
+	if (hdcDest->brush->style == GDI_BS_SOLID)
+	{
+		UINT32 color = hdcDest->brush->color;
+
+		for (y = 0; y < nHeight; y++)
+		{
+			for (x = 0; x<nWidth; x++)
+			{
+				const BYTE* srcp = gdi_get_bitmap_pointer(
+							   hdcSrc, nXSrc + x, nYSrc + y);
+				BYTE* dstp = gdi_get_bitmap_pointer(
+						     hdcDest, nXDest + x, nYDest + y);
+
+				if (srcp && dstp)
+				{
+					UINT32 colorD;
+					UINT32 colorA = ReadColor(srcp, hdcSrc->format);
+					UINT32 colorB = ReadColor(dstp, hdcDest->format);
+
+					colorA = ConvertColor(colorA, hdcSrc->format,
+							      hdcDest->format, NULL);
+
+					colorD = colorA ^ (color & (colorB ^ colorA));
+					WriteColor(dstp, hdcDest->format, color);
+				}
+			}
+		}
+	}
+	else
+	{
+		for (y = 0; y < nHeight; y++)
+		{
+			for (x = 0; x<nWidth; x++)
+			{
+				const BYTE* srcp = gdi_get_bitmap_pointer(
+							   hdcSrc, nXSrc + x, nYSrc + y);
+				const BYTE* patp = gdi_get_brush_pointer(
+							   hdcDest, nXDest + x, nYDest + y);
+				BYTE* dstp = gdi_get_bitmap_pointer(
+						     hdcDest, nXDest + x, nYDest + y);
+
+				if (srcp && dstp)
+				{
+					UINT32 colorD;
+					UINT32 colorA = ReadColor(srcp, hdcSrc->format);
+					UINT32 colorB = ReadColor(dstp, hdcDest->format);
+					UINT32 color = ReadColor(patp, hdcDest->format);
+
+					colorA = ConvertColor(colorA, hdcSrc->format,
+							      hdcDest->format, NULL);
+
+					colorD = colorA ^ (color & (colorB ^ colorA));
+					WriteColor(dstp, hdcDest->format, color);
+				}
+			}
+		}
+	}
+
+	return TRUE;
+}
+
+static BOOL BitBlt_SPna(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
+			UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
+			UINT32 nXSrc, UINT32 nYSrc)
+{
+	UINT32 x, y;
+
+	if (!hdcDest || !hdcSrc)
+		return FALSE;
+
+	for (y = 0; y < nHeight; y++)
+	{
+		for (x = 0; x < nWidth; x++)
+		{
+			const BYTE* srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc + x, nYSrc + y);
+			const BYTE* patp = gdi_get_brush_pointer(hdcDest, nXDest + x, nYDest + y);
+			BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
+
+			if (srcp && patp && dstp)
+			{
+				UINT32 color;
+				UINT32 colorA = ReadColor(srcp, hdcSrc->format);
+				UINT32 colorB = ReadColor(patp, hdcDest->format);
+
+				colorA = ConvertColor(colorA, hdcSrc->format,
+						      hdcDest->format, NULL);
+				color = colorA & ~colorB;
+				WriteColor(dstp, hdcDest->format, color);
+			}
+		}
+	}
+
+	return TRUE;
+}
+
+static BOOL BitBlt_DSna(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
+			UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
+			UINT32 nXSrc, UINT32 nYSrc)
+{
+	UINT32 x, y;
+
+	if (!hdcDest || !hdcSrc)
+		return FALSE;
+
+	for (y = 0; y < nHeight; y++)
+	{
+		for (x = 0; x < nWidth; x++)
+		{
+			const BYTE* srcp = gdi_get_bitmap_pointer(
+				       hdcSrc, nXSrc + x, nYSrc + y);
+			BYTE* dstp = gdi_get_bitmap_pointer(
+				       hdcDest, nXDest + x, nYDest + y);
+			if (srcp && dstp)
+			{
+				UINT32 color;
+				UINT32 colorA = ReadColor(srcp, hdcSrc->format);
+				UINT32 colorB = ReadColor(dstp, hdcDest->format);
+
+				colorA = ConvertColor(colorA, hdcSrc->format,
+						      hdcDest->format, NULL);
+
+				color = ~colorA & colorB;
+				WriteColor(dstp, hdcDest->format, color);
+			}
+		}
+	}
+
+	return TRUE;
+}
+
+
+
+static BOOL BitBlt_MERGECOPY(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
+			     UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
+			     UINT32 nXSrc, UINT32 nYSrc)
+{
+	UINT32 x, y;
+
+	if (!hdcDest || !hdcSrc)
+		return FALSE;
+
+	for (y = 0; y < nHeight; y++)
+	{
+		for (x = 0; x < nWidth; x++)
+		{
+			const BYTE* srcp = gdi_get_bitmap_pointer(
+						   hdcSrc, nXSrc + x, nYSrc + y);
+			const BYTE* patp = gdi_get_brush_pointer(
+						   hdcDest, nXDest + x, nYDest + y);
+			BYTE* dstp = gdi_get_bitmap_pointer(
+					     hdcDest, nXDest + x, nYDest + y);
+
+			if (srcp && patp && dstp)
+			{
+				UINT32 color;
+				UINT32 colorA = ReadColor(srcp, hdcSrc->format);
+				UINT32 colorB = ReadColor(patp, hdcDest->format);
+
+				colorA = ConvertColor(colorA, hdcSrc->format,
+						      hdcDest->format, NULL);
+				color = colorA & colorB;
+				WriteColor(dstp, hdcDest->format, color);
+			}
+		}
+	}
+
+	return TRUE;
+}
+
+static BOOL BitBlt_MERGEPAINT(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
+			      UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
+			      UINT32 nXSrc, UINT32 nYSrc)
+{
+	UINT32 x, y;
+
+	if (!hdcDest || !hdcSrc)
+		return FALSE;
+
+	for (y = 0; y < nHeight; y++)
+	{
+		for (x = 0; x < nWidth; x++)
+		{
+			const BYTE* srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc + x, nYSrc + y);
+			BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
+
+			if (srcp && dstp)
+			{
+				UINT32 colorA = ReadColor(srcp, hdcSrc->format);
+				UINT32 colorB = ReadColor(dstp, hdcDest->format);
+				UINT32 color;
+
+				colorA = ConvertColor(colorA, hdcSrc->format, hdcDest->format, NULL);
+				color = ~colorA | colorB;
+				WriteColor(dstp, hdcDest->format, color);
+			}
+		}
+	}
+
+	return TRUE;
 }
 
 /**
@@ -206,13 +784,90 @@ HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, int nWidth, int nHeight)
  * @param rop raster operation code
  * @return 0 on failure, non-zero otherwise
  */
-
-BOOL gdi_BitBlt(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc, DWORD rop)
+BOOL gdi_BitBlt(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
+		  UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
+		  UINT32 nXSrc, UINT32 nYSrc, DWORD rop)
 {
-	p_BitBlt _BitBlt = BitBlt_[IBPP(hdcDest->bitsPerPixel)];
-
-	if (_BitBlt == NULL)
+	if (!hdcDest)
 		return FALSE;
 
-	return _BitBlt(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, rop);
+	if (hdcSrc != NULL)
+	{
+		if (!gdi_ClipCoords(hdcDest, &nXDest, &nYDest, &nWidth, &nHeight, &nXSrc, &nYSrc))
+			return TRUE;
+	}
+	else
+	{
+		if (!gdi_ClipCoords(hdcDest, &nXDest, &nYDest, &nWidth, &nHeight, NULL, NULL))
+			return TRUE;
+	}
+
+	if (!gdi_InvalidateRegion(hdcDest, nXDest, nYDest, nWidth, nHeight))
+		return FALSE;
+
+	switch (rop)
+	{
+		case GDI_BLACKNESS:
+			return BitBlt_BLACKNESS(hdcDest, nXDest, nYDest, nWidth, nHeight);
+
+		case GDI_WHITENESS:
+			return BitBlt_WHITENESS(hdcDest, nXDest, nYDest, nWidth, nHeight);
+
+		case GDI_SRCCOPY:
+			return BitBlt_SRCCOPY(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
+
+		case GDI_SPna:
+			return BitBlt_SPna(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
+
+		case GDI_DSna:
+			return BitBlt_DSna(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
+
+		case GDI_DSPDxax:
+			return BitBlt_DSPDxax(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
+
+		case GDI_PSDPxax:
+			return BitBlt_PSDPxax(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
+
+		case GDI_SPDSxax:
+			return BitBlt_SPDSxax(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
+
+		case GDI_NOTSRCCOPY:
+			return BitBlt_NOTSRCCOPY(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
+
+		case GDI_DSTINVERT:
+			return BitBlt_DSTINVERT(hdcDest, nXDest, nYDest, nWidth, nHeight);
+
+		case GDI_SRCERASE:
+			return BitBlt_SRCERASE(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
+
+		case GDI_NOTSRCERASE:
+			return BitBlt_NOTSRCERASE(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
+
+		case GDI_SRCINVERT:
+			return BitBlt_SRCINVERT(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
+
+		case GDI_SRCAND:
+			return BitBlt_SRCAND(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
+
+		case GDI_SRCPAINT:
+			return BitBlt_SRCPAINT(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
+
+		case GDI_MERGECOPY:
+			return BitBlt_MERGECOPY(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
+
+		case GDI_MERGEPAINT:
+			return BitBlt_MERGEPAINT(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
+
+		case GDI_PATCOPY:
+			return BitBlt_PATCOPY(hdcDest, nXDest, nYDest, nWidth, nHeight);
+
+		case GDI_PATINVERT:
+			return BitBlt_PATINVERT(hdcDest, nXDest, nYDest, nWidth, nHeight);
+
+		case GDI_PATPAINT:
+			return BitBlt_PATPAINT(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
+	}
+
+	WLog_ERR(TAG,  "BitBlt: unknown rop: 0x%08X", rop);
+	return FALSE;
 }

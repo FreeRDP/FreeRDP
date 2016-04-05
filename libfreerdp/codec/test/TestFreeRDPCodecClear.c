@@ -37,7 +37,7 @@ static BYTE TEST_CLEAR_EXAMPLE_4[] =
 	"\xb6\xff\xff\xff\xff\xff\xff\xff\xff\xff\x46\x91\x47\x91\x48\x91"
 	"\x49\x91\x4a\x91\x1b\x91";
 
-int test_ClearDecompressExample1()
+static int test_ClearDecompressExample1(void)
 {
 	int status;
 	BYTE* pSrcData;
@@ -50,16 +50,16 @@ int test_ClearDecompressExample1()
 	SrcSize = sizeof(TEST_CLEAR_EXAMPLE_1) - 1;
 	pSrcData = (BYTE*) TEST_CLEAR_EXAMPLE_1;
 
-	status = clear_decompress(clear, pSrcData, SrcSize, &pDstData, PIXEL_FORMAT_XRGB32, 0, 0, 0, 0, 0);
+	status = clear_decompress(clear, pSrcData, SrcSize, pDstData, PIXEL_FORMAT_XRGB32, 0, 0, 0, 0, 0);
 
 	printf("clear_decompress example 1 status: %d\n", status);
 
 	clear_context_free(clear);
 
-	return 1;
+	return status;
 }
 
-int test_ClearDecompressExample2()
+static int test_ClearDecompressExample2(void)
 {
 	int status;
 	BYTE* pSrcData;
@@ -72,16 +72,16 @@ int test_ClearDecompressExample2()
 	SrcSize = sizeof(TEST_CLEAR_EXAMPLE_2) - 1;
 	pSrcData = (BYTE*) TEST_CLEAR_EXAMPLE_2;
 
-	status = clear_decompress(clear, pSrcData, SrcSize, &pDstData, PIXEL_FORMAT_XRGB32, 0, 0, 0, 0, 0);
+	status = clear_decompress(clear, pSrcData, SrcSize, pDstData, PIXEL_FORMAT_XRGB32, 0, 0, 0, 0, 0);
 
 	printf("clear_decompress example 2 status: %d\n", status);
 
 	clear_context_free(clear);
 
-	return 1;
+	return status;
 }
 
-int test_ClearDecompressExample3()
+static int test_ClearDecompressExample3(void)
 {
 	int status;
 	BYTE* pSrcData;
@@ -94,16 +94,16 @@ int test_ClearDecompressExample3()
 	SrcSize = sizeof(TEST_CLEAR_EXAMPLE_3) - 1;
 	pSrcData = (BYTE*) TEST_CLEAR_EXAMPLE_3;
 
-	status = clear_decompress(clear, pSrcData, SrcSize, &pDstData, PIXEL_FORMAT_XRGB32, 0, 0, 0, 0, 0);
+	status = clear_decompress(clear, pSrcData, SrcSize, pDstData, PIXEL_FORMAT_XRGB32, 0, 0, 0, 0, 0);
 
 	printf("clear_decompress example 3 status: %d\n", status);
 
 	clear_context_free(clear);
 
-	return 1;
+	return status;
 }
 
-int test_ClearDecompressExample4()
+static int test_ClearDecompressExample4(void)
 {
 	int status;
 	BYTE* pSrcData;
@@ -116,24 +116,26 @@ int test_ClearDecompressExample4()
 	SrcSize = sizeof(TEST_CLEAR_EXAMPLE_4) - 1;
 	pSrcData = (BYTE*) TEST_CLEAR_EXAMPLE_4;
 
-	status = clear_decompress(clear, pSrcData, SrcSize, &pDstData, PIXEL_FORMAT_XRGB32, 0, 0, 0, 0, 0);
+	status = clear_decompress(clear, pSrcData, SrcSize, pDstData,
+				  PIXEL_FORMAT_XRGB32, 0, 0, 0, 0, 0);
 
 	printf("clear_decompress example 4 status: %d\n", status);
 
 	clear_context_free(clear);
 
-	return 1;
+	return status;
 }
 
 int TestFreeRDPCodecClear(int argc, char* argv[])
 {
-	//test_ClearDecompressExample1();
-
-	//test_ClearDecompressExample2();
-
-	//test_ClearDecompressExample3();
-
-	test_ClearDecompressExample4();
+	if (test_ClearDecompressExample1())
+		return -1;
+	if (test_ClearDecompressExample2())
+		return -1;
+	if (test_ClearDecompressExample3())
+		return -1;
+	if (test_ClearDecompressExample4())
+		return -1;
 
 	return 0;
 }

@@ -42,11 +42,20 @@ struct _BITMAP_INTERLEAVED_CONTEXT
  extern "C" {
 #endif
 
-FREERDP_API int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcData, UINT32 SrcSize, int bpp,
-		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight, BYTE* palette);
+FREERDP_API INT32 interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
+				       const BYTE* pSrcData, UINT32 SrcSize,
+				       UINT32 bpp,
+				       BYTE* pDstData, UINT32 DstFormat,
+				       UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+				       UINT32 nWidth, UINT32 nHeight,
+				       const UINT32* palette);
 
-FREERDP_API int interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pDstData, UINT32* pDstSize,
-		int nWidth, int nHeight, BYTE* pSrcData, DWORD SrcFormat, int nSrcStep, int nXSrc, int nYSrc, BYTE* palette, int bpp);
+FREERDP_API BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
+				     BYTE* pDstData, UINT32* pDstSize,
+				     UINT32 nWidth, UINT32 nHeight,
+				     const BYTE* pSrcData, UINT32 SrcFormat,
+				     UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
+				     const UINT32* palette, UINT32 bpp);
 
 FREERDP_API BOOL bitmap_interleaved_context_reset(BITMAP_INTERLEAVED_CONTEXT* interleaved);
 

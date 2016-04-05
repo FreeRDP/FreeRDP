@@ -23,200 +23,158 @@
 static const int ANDOR_PRETEST_ITERATIONS = 100000;
 static const int TEST_TIME = 2.0;  // seconds
 
-extern BOOL g_TestPrimitivesPerformance;
-
-extern pstatus_t general_andC_32u(const UINT32 *pSrc, UINT32 val,
-	UINT32 *pDst, int len);
-extern pstatus_t sse3_andC_32u(const UINT32 *pSrc, UINT32 val,
-	UINT32 *pDst, int len);
-extern pstatus_t general_orC_32u(const UINT32 *pSrc, UINT32 val,
-	UINT32 *pDst, int len);
-extern pstatus_t sse3_orC_32u(const UINT32 *pSrc, UINT32 val,
-	UINT32 *pDst, int len);
-
 #define VALUE (0xA5A5A5A5U)
 
 /* ========================================================================= */
-int test_and_32u_func(void)
+static BOOL test_and_32u_func(void)
 {
-	UINT32 ALIGN(src[FUNC_TEST_SIZE+3]), ALIGN(dst[FUNC_TEST_SIZE+3]);
+	UINT32 ALIGN(src[FUNC_TEST_SIZE + 3]), ALIGN(dst[FUNC_TEST_SIZE + 3]);
 	int failed = 0;
 	int i;
 	char testStr[256];
-
 	testStr[0] = '\0';
-	get_random_data(src, sizeof(src));
-	general_andC_32u(src+1, VALUE, dst+1, FUNC_TEST_SIZE);
+	winpr_RAND(src, sizeof(src));
+	generic->andC_32u(src + 1, VALUE, dst + 1, FUNC_TEST_SIZE);
 	strcat(testStr, " general");
-	for (i=1; i<=FUNC_TEST_SIZE; ++i)
+
+	for (i = 1; i <= FUNC_TEST_SIZE; ++i)
 	{
 		if (dst[i] != (src[i] & VALUE))
-		{ 
-			printf("AND-general FAIL[%d] 0x%08x&0x%08x=0x%08x, got 0x%08x\n", 
-				i, src[i], VALUE, src[i] & VALUE, dst[i]); 
+		{
+			printf("AND-general FAIL[%d] 0x%08x&0x%08x=0x%08x, got 0x%08x\n",
+			       i, src[i], VALUE, src[i] & VALUE, dst[i]);
 			++failed;
 		}
 	}
+
 #ifdef WITH_SSE2
+
 	if (IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
 	{
 		strcat(testStr, " SSE3");
 		/* Aligned */
 		memset(dst, 0, sizeof(dst));
-		sse3_andC_32u(src+1, VALUE, dst+1, FUNC_TEST_SIZE);
-		for (i=1; i<=FUNC_TEST_SIZE; ++i)
+		sse3_andC_32u(src + 1, VALUE, dst + 1, FUNC_TEST_SIZE);
+
+		for (i = 1; i <= FUNC_TEST_SIZE; ++i)
 		{
 			if (dst[i] != (src[i] & VALUE))
-			{ 
-				printf("AND-SSE-aligned FAIL[%d] 0x%08x&0x%08x=0x%08x, got 0x%08x\n", 
-					i, src[i], VALUE, src[i] & VALUE, dst[i]); 
+			{
+				printf("AND-SSE-aligned FAIL[%d] 0x%08x&0x%08x=0x%08x, got 0x%08x\n",
+				       i, src[i], VALUE, src[i] & VALUE, dst[i]);
 				++failed;
 			}
 		}
+
 		/* Unaligned */
 		memset(dst, 0, sizeof(dst));
-		sse3_andC_32u(src+1, VALUE, dst+2, FUNC_TEST_SIZE);
-		for (i=1; i<=FUNC_TEST_SIZE; ++i)
+		sse3_andC_32u(src + 1, VALUE, dst + 2, FUNC_TEST_SIZE);
+
+		for (i = 1; i <= FUNC_TEST_SIZE; ++i)
 		{
-			if (dst[i+1] != (src[i] & VALUE))
-			{ 
-				printf("AND-SSE-unaligned FAIL[%d] 0x%08x&0x%08x=0x%08x, got 0x%08x\n", 
-					i, src[i], VALUE, src[i] & VALUE, dst[i+1]); 
+			if (dst[i + 1] != (src[i] & VALUE))
+			{
+				printf("AND-SSE-unaligned FAIL[%d] 0x%08x&0x%08x=0x%08x, got 0x%08x\n",
+				       i, src[i], VALUE, src[i] & VALUE, dst[i + 1]);
 				++failed;
 			}
 		}
 	}
+
 #endif /* i386 */
+
 	if (!failed) printf("All and_32u tests passed (%s).\n", testStr);
+
 	return (failed > 0) ? FAILURE : SUCCESS;
 }
 
 /* ------------------------------------------------------------------------- */
-STD_SPEED_TEST(andC_32u_speed_test, UINT32, UINT32, dst=dst,
-	TRUE, general_andC_32u(src1, constant, dst, size),
-#ifdef WITH_SSE2
-	TRUE, sse3_andC_32u(src1, constant, dst, size), PF_SSE3_INSTRUCTIONS_AVAILABLE, FALSE,
-#else
-	FALSE, PRIM_NOP, 0, FALSE,
-#endif
-	TRUE, ippsAndC_32u(src1, constant, dst, size))
-
-int test_and_32u_speed(void)
+static BOOL test_and_32u_speed(void)
 {
-	UINT32 ALIGN(src[MAX_TEST_SIZE+3]), ALIGN(dst[MAX_TEST_SIZE+3]);
-	get_random_data(src, sizeof(src));
+	UINT32 ALIGN(src[MAX_TEST_SIZE + 3]), ALIGN(dst[MAX_TEST_SIZE + 3]);
+	winpr_RAND(src, sizeof(src));
 	andC_32u_speed_test("and32u", "aligned", src, NULL, VALUE, dst,
-		test_sizes, NUM_TEST_SIZES, ANDOR_PRETEST_ITERATIONS, TEST_TIME);
-	andC_32u_speed_test("and32u", "unaligned", src+1, NULL, VALUE, dst,
-		test_sizes, NUM_TEST_SIZES, ANDOR_PRETEST_ITERATIONS, TEST_TIME);
+			    test_sizes, NUM_TEST_SIZES, ANDOR_PRETEST_ITERATIONS, TEST_TIME);
+	andC_32u_speed_test("and32u", "unaligned", src + 1, NULL, VALUE, dst,
+			    test_sizes, NUM_TEST_SIZES, ANDOR_PRETEST_ITERATIONS, TEST_TIME);
 	return SUCCESS;
 }
 
 /* ========================================================================= */
-int test_or_32u_func(void)
+static BOOL check(const UINT32* src, const UINT32* dst, UINT32 size, UINT32 value)
 {
-	UINT32 ALIGN(src[FUNC_TEST_SIZE+3]), ALIGN(dst[FUNC_TEST_SIZE+3]);
-	int failed = 0;
-	int i;
-	char testStr[256];
+	UINT32 i;
+	UINT32 failed = 0;
 
-	testStr[0] = '\0';
-	get_random_data(src, sizeof(src));
-	general_orC_32u(src+1, VALUE, dst+1, FUNC_TEST_SIZE);
-	strcat(testStr, " general");
-	for (i=1; i<=FUNC_TEST_SIZE; ++i)
+	for (i = 1; i <= size; ++i)
 	{
-		if (dst[i] != (src[i] | VALUE))
-		{ 
-			printf("OR-general general FAIL[%d] 0x%08x&0x%08x=0x%08x, got 0x%08x\n", 
-				i, src[i], VALUE, src[i] | VALUE, dst[i]); 
-		++failed;
+		if (dst[i] != (src[i] | value))
+		{
+			printf("OR-general general FAIL[%d] 0x%08x&0x%08x=0x%08x, got 0x%08x\n",
+			       i, src[i], value, src[i] | value, dst[i]);
+			++failed;
 		}
 	}
-#ifdef WITH_SSE2
-	if(IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
-	{
-		strcat(testStr, " SSE3");
-		/* Aligned */
-		memset(dst, 0, sizeof(dst));
-		sse3_orC_32u(src+1, VALUE, dst+1, FUNC_TEST_SIZE);
-		for (i=1; i<FUNC_TEST_SIZE; ++i)
-		{
-			if (dst[i] != (src[i] | VALUE))
-			{ 
-				printf("OR-SSE-aligned FAIL[%d] 0x%08x&0x%08x=0x%08x, got 0x%08x\n", 
-					i, src[i], VALUE, src[i] | VALUE, dst[i]); 
-				++failed;
-			}
-		}
-		/* Unaligned */
-		memset(dst, 0, sizeof(dst));
-		sse3_orC_32u(src+1, VALUE, dst+2, FUNC_TEST_SIZE);
-		for (i=1; i<FUNC_TEST_SIZE; ++i)
-		{
-			if (dst[i+1] != (src[i] | VALUE))
-			{ 
-				printf("OR-SSE-unaligned FAIL[%d] 0x%08x&0x%08x=0x%08x, got 0x%08x\n", 
-					i, src[i], VALUE, src[i] | VALUE, dst[i+1]); 
-				++failed;
-			}
-		}
-	}
-#endif /* i386 */
-	if (!failed) printf("All or_32u tests passed (%s).\n", testStr);
-	return (failed > 0) ? FAILURE : SUCCESS;
+
+	return TRUE;
 }
-    	
-/* ------------------------------------------------------------------------- */
-STD_SPEED_TEST(orC_32u_speed_test, UINT32, UINT32, dst=dst,
-	TRUE, general_orC_32u(src1, constant, dst, size),
-#ifdef WITH_SSE2
-	TRUE, sse3_orC_32u(src1, constant, dst, size), PF_SSE3_INSTRUCTIONS_AVAILABLE, FALSE,
-#else
-	FALSE, PRIM_NOP, 0, FALSE,
-#endif
-	TRUE, ippsOrC_32u(src1, constant, dst, size))
 
-int test_or_32u_speed(void)
+static BOOL test_or_32u_func(void)
 {
-	UINT32 ALIGN(src[MAX_TEST_SIZE+3]), ALIGN(dst[MAX_TEST_SIZE+3]);
-	get_random_data(src, sizeof(src));
-	orC_32u_speed_test("or32u", "aligned", src, NULL, VALUE, dst,
-		test_sizes, NUM_TEST_SIZES, ANDOR_PRETEST_ITERATIONS, TEST_TIME);
-	orC_32u_speed_test("or32u", "unaligned", src+1, NULL, VALUE, dst,
-		test_sizes, NUM_TEST_SIZES, ANDOR_PRETEST_ITERATIONS, TEST_TIME);
-	return SUCCESS;
+	pstatus_t status;
+	UINT32 ALIGN(src[FUNC_TEST_SIZE + 3]), ALIGN(dst[FUNC_TEST_SIZE + 3]);
+	char testStr[256];
+	testStr[0] = '\0';
+	winpr_RAND((BYTE*)src, sizeof(src));
+
+	status = generic->orC_32u(src + 1, VALUE, dst + 1, FUNC_TEST_SIZE);
+	if (status != PRIMITIVES_SUCCESS)
+		return FALSE;
+
+	if (!check(src + 1, dst + 1, FUNC_TEST_SIZE, VALUE))
+		return FALSE;
+
+	status = optimized->orC_32u(src + 1, VALUE, dst + 1, FUNC_TEST_SIZE);
+	if (status != PRIMITIVES_SUCCESS)
+		return FALSE;
+
+	if (!check(src + 1, dst + 1, FUNC_TEST_SIZE, VALUE))
+		return FALSE;
+
+	return TRUE;
+}
+
+/* ------------------------------------------------------------------------- */
+static BOOL test_or_32u_speed(void)
+{
+	UINT32 ALIGN(src[FUNC_TEST_SIZE + 3]), ALIGN(dst[FUNC_TEST_SIZE + 3]);
+	char testStr[256];
+	testStr[0] = '\0';
+	winpr_RAND((BYTE*)src, sizeof(src));
+
+	if (!speed_test("add16s", "aligned", g_Iterations,
+			generic->orC_32u, optimized->orC_32u,
+			src + 1, VALUE, dst + 1, FUNC_TEST_SIZE))
+		return FALSE;
+
+	return TRUE;
 }
 
 int TestPrimitivesAndOr(int argc, char* argv[])
 {
-	int status;
+	prim_test_setup(FALSE);
 
-	status = test_and_32u_func();
+	if (!test_and_32u_func())
+		return -1;
 
-	if (status != SUCCESS)
-		return 1;
+	if (!test_and_32u_speed())
+		return -1;
 
-	if (g_TestPrimitivesPerformance)
-	{
-		status = test_and_32u_speed();
+	if (!test_or_32u_func())
+		return -1;
 
-		if (status != SUCCESS)
-			return 1;
-	}
-
-	status = test_or_32u_func();
-
-	if (status != SUCCESS)
-		return 1;
-
-	if (g_TestPrimitivesPerformance)
-	{
-		status = test_or_32u_speed();
-
-		if (status != SUCCESS)
-			return 1;
-	}
+	if (!test_or_32u_speed())
+		return -1;
 
 	return 0;
 }

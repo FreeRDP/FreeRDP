@@ -32,7 +32,11 @@
 
 #define TAG FREERDP_TAG("cache.offscreen")
 
-BOOL update_gdi_create_offscreen_bitmap(rdpContext* context, CREATE_OFFSCREEN_BITMAP_ORDER* createOffscreenBitmap)
+static void offscreen_cache_put(rdpOffscreenCache* offscreen_cache, UINT32 index, rdpBitmap* bitmap);
+static void offscreen_cache_delete(rdpOffscreenCache* offscreen, UINT32 index);
+
+static BOOL update_gdi_create_offscreen_bitmap(rdpContext* context,
+						   const CREATE_OFFSCREEN_BITMAP_ORDER* createOffscreenBitmap)
 {
 	int i;
 	UINT16 index;
@@ -66,7 +70,8 @@ BOOL update_gdi_create_offscreen_bitmap(rdpContext* context, CREATE_OFFSCREEN_BI
 	return TRUE;
 }
 
-BOOL update_gdi_switch_surface(rdpContext* context, SWITCH_SURFACE_ORDER* switchSurface)
+static BOOL update_gdi_switch_surface(rdpContext* context,
+				   const SWITCH_SURFACE_ORDER* switchSurface)
 {
 	rdpCache* cache = context->cache;
 

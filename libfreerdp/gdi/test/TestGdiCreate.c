@@ -3,15 +3,16 @@
 
 #include <freerdp/gdi/dc.h>
 #include <freerdp/gdi/pen.h>
-#include <freerdp/gdi/line.h>
-#include <freerdp/gdi/brush.h>
 #include <freerdp/gdi/region.h>
 #include <freerdp/gdi/bitmap.h>
 #include <freerdp/gdi/drawing.h>
 
 #include <winpr/crt.h>
 
-int test_gdi_GetDC(void)
+#include "line.h"
+#include "brush.h"
+
+static int test_gdi_GetDC(void)
 {
 	HGDI_DC hdc;
 
@@ -21,10 +22,7 @@ int test_gdi_GetDC(void)
 		return -1;
 	}
 
-	if (hdc->bytesPerPixel != 4)
-		return -1;
-
-	if (hdc->bitsPerPixel != 32)
+    if (hdc->format != PIXEL_FORMAT_XRGB32)
 		return -1;
 
 	if (hdc->drawMode != GDI_R2_BLACK)
@@ -33,7 +31,7 @@ int test_gdi_GetDC(void)
 	return 0;
 }
 
-int test_gdi_CreateCompatibleDC(void)
+static int test_gdi_CreateCompatibleDC(void)
 {
 	HGDI_DC hdc;
 	HGDI_DC chdc;
@@ -44,8 +42,7 @@ int test_gdi_CreateCompatibleDC(void)
 		return -1;
 	}
 
-	hdc->bytesPerPixel = 2;
-	hdc->bitsPerPixel = 16;
+	hdc->format = PIXEL_FORMAT_RGB16;
 	hdc->drawMode = GDI_R2_XORPEN;
 
 	if (!(chdc = gdi_CreateCompatibleDC(hdc)))
@@ -54,10 +51,7 @@ int test_gdi_CreateCompatibleDC(void)
 		return -1;
 	}
 
-	if (chdc->bytesPerPixel != hdc->bytesPerPixel)
-		return -1;
-
-	if (chdc->bitsPerPixel != hdc->bitsPerPixel)
+	if (chdc->format != hdc->format)
 		return -1;
 
 	if (chdc->drawMode != hdc->drawMode)
@@ -66,15 +60,14 @@ int test_gdi_CreateCompatibleDC(void)
 	return 0;
 }
 
-int test_gdi_CreateBitmap(void)
+static int test_gdi_CreateBitmap(void)
 {
-	int bpp;
-	int width;
-	int height;
+	UINT32 format = PIXEL_FORMAT_ARGB32;
+	UINT32 width;
+	UINT32 height;
 	BYTE* data;
 	HGDI_BITMAP hBitmap;
 
-	bpp = 32;
 	width = 32;
 	height = 16;
 	if (!(data = (BYTE*) _aligned_malloc(width * height * 4, 16)))
@@ -83,7 +76,7 @@ int test_gdi_CreateBitmap(void)
 		return -1;
 	}
 
-	if (!(hBitmap = gdi_CreateBitmap(width, height, bpp, data)))
+	if (!(hBitmap = gdi_CreateBitmap(width, height, format, data)))
 	{
 		printf("gdi_CreateBitmap failed\n");
 		return -1;
@@ -92,7 +85,7 @@ int test_gdi_CreateBitmap(void)
 	if (hBitmap->objectType != GDIOBJECT_BITMAP)
 		return -1;
 
-	if (hBitmap->bitsPerPixel != bpp)
+	if (hBitmap->format != format)
 		return -1;
 
 	if (hBitmap->width != width)
@@ -109,11 +102,11 @@ int test_gdi_CreateBitmap(void)
 	return 0;
 }
 
-int test_gdi_CreateCompatibleBitmap(void)
+static int test_gdi_CreateCompatibleBitmap(void)
 {
 	HGDI_DC hdc;
-	int width;
-	int height;
+	UINT32 width;
+	UINT32 height;
 	HGDI_BITMAP hBitmap;
 
 	if (!(hdc = gdi_GetDC()))
@@ -122,8 +115,7 @@ int test_gdi_CreateCompatibleBitmap(void)
 		return -1;
 	}
 
-	hdc->bytesPerPixel = 4;
-	hdc->bitsPerPixel = 32;
+	hdc->format = PIXEL_FORMAT_ARGB32;
 
 	width = 32;
 	height = 16;
@@ -132,10 +124,7 @@ int test_gdi_CreateCompatibleBitmap(void)
 	if (hBitmap->objectType != GDIOBJECT_BITMAP)
 		return -1;
 
-	if (hBitmap->bytesPerPixel != hdc->bytesPerPixel)
-		return -1;
-
-	if (hBitmap->bitsPerPixel != hdc->bitsPerPixel)
+	if (hBitmap->format != hdc->format)
 		return -1;
 
 	if (hBitmap->width != width)
@@ -152,7 +141,7 @@ int test_gdi_CreateCompatibleBitmap(void)
 	return 0;
 }
 
-int test_gdi_CreatePen(void)
+static int test_gdi_CreatePen(void)
 {
 	HGDI_PEN hPen = gdi_CreatePen(GDI_PS_SOLID, 8, 0xAABBCCDD);
 
@@ -176,7 +165,7 @@ int test_gdi_CreatePen(void)
 	return 0;
 }
 
-int test_gdi_CreateSolidBrush(void)
+static int test_gdi_CreateSolidBrush(void)
 {
 	HGDI_BRUSH hBrush = gdi_CreateSolidBrush(0xAABBCCDD);
 
@@ -194,7 +183,7 @@ int test_gdi_CreateSolidBrush(void)
 	return 0;
 }
 
-int test_gdi_CreatePatternBrush(void)
+static int test_gdi_CreatePatternBrush(void)
 {
 	HGDI_BRUSH hBrush;
 	HGDI_BITMAP hBitmap;
@@ -216,7 +205,7 @@ int test_gdi_CreatePatternBrush(void)
 	return 0;
 }
 
-int test_gdi_CreateRectRgn(void)
+static int test_gdi_CreateRectRgn(void)
 {
 	int x1 = 32;
 	int y1 = 64;
@@ -248,7 +237,7 @@ int test_gdi_CreateRectRgn(void)
 	return 0;
 }
 
-int test_gdi_CreateRect(void)
+static int test_gdi_CreateRect(void)
 {
 	HGDI_RECT hRect;
 	int x1 = 32;
@@ -282,7 +271,7 @@ int test_gdi_CreateRect(void)
 	return 0;
 }
 
-int test_gdi_GetPixel(void)
+static int test_gdi_GetPixel(void)
 {
 	HGDI_DC hdc;
 	int width = 128;
@@ -295,8 +284,7 @@ int test_gdi_GetPixel(void)
 		return -1;
 	}
 
-	hdc->bytesPerPixel = 4;
-	hdc->bitsPerPixel = 32;
+	hdc->format = PIXEL_FORMAT_ARGB32;
 
 	hBitmap = gdi_CreateCompatibleBitmap(hdc, width, height);
 	gdi_SelectObject(hdc, (HGDIOBJECT) hBitmap);
@@ -314,11 +302,11 @@ int test_gdi_GetPixel(void)
 	return 0;
 }
 
-int test_gdi_SetPixel(void)
+static int test_gdi_SetPixel(void)
 {
 	HGDI_DC hdc;
-	int width = 128;
-	int height = 64;
+	UINT32 width = 128;
+	UINT32 height = 64;
 	HGDI_BITMAP hBitmap;
 
 	if (!(hdc = gdi_GetDC()))
@@ -327,8 +315,7 @@ int test_gdi_SetPixel(void)
 		return -1;
 	}
 
-	hdc->bytesPerPixel = 4;
-	hdc->bitsPerPixel = 32;
+	hdc->format = PIXEL_FORMAT_ARGB32;
 
 	hBitmap = gdi_CreateCompatibleBitmap(hdc, width, height);
 	gdi_SelectObject(hdc, (HGDIOBJECT) hBitmap);
@@ -348,7 +335,7 @@ int test_gdi_SetPixel(void)
 	return 0;
 }
 
-int test_gdi_SetROP2(void)
+static int test_gdi_SetROP2(void)
 {
 	HGDI_DC hdc;
 
@@ -366,7 +353,7 @@ int test_gdi_SetROP2(void)
 	return 0;
 }
 
-int test_gdi_MoveToEx(void)
+static int test_gdi_MoveToEx(void)
 {
 	HGDI_DC hdc;
 	HGDI_PEN hPen;

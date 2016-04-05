@@ -3,6 +3,8 @@
  * GDI Device Context Functions
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2016 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,14 +41,13 @@
  * @return current device context
  */
 
-HGDI_DC gdi_GetDC()
+HGDI_DC gdi_GetDC(void)
 {
-	HGDI_DC hDC = (HGDI_DC) malloc(sizeof(GDI_DC));
+	HGDI_DC hDC = (HGDI_DC) calloc(1, sizeof(GDI_DC));
 	if (!hDC)
 		return NULL;
 
-	hDC->bytesPerPixel = 4;
-	hDC->bitsPerPixel = 32;
+	hDC->format = PIXEL_FORMAT_XRGB32;
 	hDC->drawMode = GDI_R2_BLACK;
 	hDC->clip = gdi_CreateRectRgn(0, 0, 0, 0);
 	if (!hDC->clip)
@@ -65,7 +66,7 @@ HGDI_DC gdi_GetDC()
  * @return new device context
  */
 
-HGDI_DC gdi_CreateDC(UINT32 flags, int bpp)
+HGDI_DC gdi_CreateDC(UINT32 format)
 {
 	HGDI_DC hDC;
 
@@ -80,12 +81,7 @@ HGDI_DC gdi_CreateDC(UINT32 flags, int bpp)
 	hDC->clip->null = 1;
 	hDC->hwnd = NULL;
 
-	hDC->bitsPerPixel = bpp;
-	hDC->bytesPerPixel = bpp / 8;
-
-	hDC->alpha = (flags & CLRCONV_ALPHA) ? TRUE : FALSE;
-	hDC->invert = (flags & CLRCONV_INVERT) ? TRUE : FALSE;
-	hDC->rgb555 = (flags & CLRCONV_RGB555) ? TRUE : FALSE;
+	hDC->format = format;
 
 	if (!(hDC->hwnd = (HGDI_WND) calloc(1, sizeof(GDI_WND))))
 		goto fail;
@@ -117,7 +113,7 @@ fail:
 
 HGDI_DC gdi_CreateCompatibleDC(HGDI_DC hdc)
 {
-	HGDI_DC hDC = (HGDI_DC) malloc(sizeof(GDI_DC));
+	HGDI_DC hDC = (HGDI_DC) calloc(1, sizeof(GDI_DC));
 	if (!hDC)
 		return NULL;
 
@@ -127,13 +123,9 @@ HGDI_DC gdi_CreateCompatibleDC(HGDI_DC hdc)
 		return NULL;
 	}
 	hDC->clip->null = 1;
-	hDC->bytesPerPixel = hdc->bytesPerPixel;
-	hDC->bitsPerPixel = hdc->bitsPerPixel;
+	hDC->format = hdc->format;
 	hDC->drawMode = hdc->drawMode;
 	hDC->hwnd = NULL;
-	hDC->alpha = hdc->alpha;
-	hDC->invert = hdc->invert;
-	hDC->rgb555 = hdc->rgb555;
 	return hDC;
 }
 

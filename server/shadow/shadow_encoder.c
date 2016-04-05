@@ -141,7 +141,7 @@ int shadow_encoder_init_rfx(rdpShadowEncoder* encoder)
 
 	encoder->rfx->mode = encoder->server->rfxMode;
 
-	rfx_context_set_pixel_format(encoder->rfx, RDP_PIXEL_FORMAT_B8G8R8A8);
+	rfx_context_set_pixel_format(encoder->rfx, PIXEL_FORMAT_BGR24);
 
 	encoder->codecs |= FREERDP_CODEC_REMOTEFX;
 

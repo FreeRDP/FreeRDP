@@ -4,6 +4,8 @@
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2012 HP Development Company, LLC
+ * Copyright 2016 Thincast Technologies GmbH
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -590,7 +592,7 @@ void xf_SetWindowText(xfContext* xfc, xfAppWindow* appWindow, char* name)
 	Atom utf8Str = xfc->UTF8_STRING;
 
 	XChangeProperty(xfc->display, appWindow->handle, wm_Name, utf8Str, 8,
-	                PropModeReplace, (unsigned char *)name, i);
+			PropModeReplace, (unsigned char *)name, i);
 }
 
 void xf_FixWindowCoordinates(xfContext* xfc, int* x, int* y, int* width, int* height)
@@ -959,7 +961,8 @@ void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, UINT32 
 
 }
 
-void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width, int height)
+void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y,
+			 int width, int height)
 {
 	int ax, ay;
 

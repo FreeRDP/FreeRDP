@@ -64,9 +64,6 @@ struct rdp_bitmap_cache
 extern "C" {
 #endif
 
-FREERDP_API rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmap_cache, UINT32 id, UINT32 index);
-FREERDP_API void bitmap_cache_put(rdpBitmapCache* bitmap_cache, UINT32 id, UINT32 index, rdpBitmap* bitmap);
-
 FREERDP_API void bitmap_cache_register_callbacks(rdpUpdate* update);
 
 FREERDP_API rdpBitmapCache* bitmap_cache_new(rdpSettings* settings);

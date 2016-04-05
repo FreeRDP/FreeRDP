@@ -3,6 +3,8 @@
  * GDI Line Functions
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2016 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,21 +29,13 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
+#include <freerdp/gdi/pen.h>
+#include <freerdp/gdi/bitmap.h>
+#include <freerdp/gdi/region.h>
 
-#include <freerdp/gdi/32bpp.h>
-#include <freerdp/gdi/16bpp.h>
-#include <freerdp/gdi/8bpp.h>
-
-#include <freerdp/gdi/line.h>
-
-p_LineTo LineTo_[5] =
-{
-	NULL,
-	LineTo_8bpp,
-	LineTo_16bpp,
-	NULL,
-	LineTo_32bpp
-};
+#include "drawing.h"
+#include "clipping.h"
+#include "line.h"
 
 /**
  * Draw a line from the current position to the given position.\n
@@ -51,15 +45,157 @@ p_LineTo LineTo_[5] =
  * @param nYEnd ending y position
  * @return nonzero if successful, 0 otherwise
  */
-
-BOOL gdi_LineTo(HGDI_DC hdc, int nXEnd, int nYEnd)
+static BOOL gdi_rop_color(UINT32 rop, BYTE* pixelPtr, UINT32 pen, UINT32 format)
 {
-	p_LineTo _LineTo = LineTo_[IBPP(hdc->bitsPerPixel)];
+	UINT32 pixel = ReadColor(pixelPtr, format);
 
-	if (_LineTo == NULL)
+	switch(rop)
+	{
+	case 1: /* LineTo_BLACK */
+		pixel = GetColor(format, 0, 0, 0, 0xFF);
+		break;
+	case 2: /* LineTo_NOTMERGEPEN */
+		pixel = ~(pixel | pen);
+		break;
+	case 3: /* LineTo_MASKNOTPEN */
+		pixel &= ~pen;
+		break;
+	case 4: /* LineTo_NOTCOPYPEN */
+		pixel = ~pen;
+		break;
+	case 5: /* LineTo_MASKPENNOT */
+		pixel = pen & ~pixel;
+		break;
+	case 6: /* LineTo_NOT */
+		pixel = ~pixel;
+		break;
+	case 7: /* LineTo_XORPEN */
+		pixel = pixel ^ pen;
+		break;
+	case 8: /* LineTo_NOTMASKPEN */
+		pixel = ~(pixel & pen);
+		break;
+	case 9: /* LineTo_MASKPEN */
+		pixel &= pen;
+		break;
+	case 10: /* LineTo_NOTXORPEN */
+		pixel = ~(pixel ^ pen);
+		break;
+	case 11: /* LineTo_NOP */
+		break;
+	case 12: /* LineTo_MERGENOTPEN */
+		pixel |= ~pen;
+		break;
+	case 13: /* LineTo_COPYPEN */
+		pixel = pen;
+		break;
+	case 14: /* LineTo_MERGEPENNOT */
+		pixel = pixel | ~pen;
+		break;
+	case 15: /* LineTo_MERGEPEN */
+		pixel = pixel | pen;
+		break;
+	case 16: /* LineTo_WHITE */
+		pixel = GetColor(format, 0, 0, 0, 0);
+		break;
+
+	default:
+		return FALSE;
+	}
+
+	WriteColor(pixelPtr, format, pixel);
+
+	return TRUE;
+}
+
+BOOL gdi_LineTo(HGDI_DC hdc, UINT32 nXEnd, UINT32 nYEnd)
+{
+	UINT32 x, y;
+	UINT32 x1, y1;
+	UINT32 x2, y2;
+	UINT32 e, e2;
+	INT32 dx, dy;
+	INT32 sx, sy;
+	INT32 bx1, by1;
+	INT32 bx2, by2;
+	HGDI_BITMAP bmp;
+	UINT32 pen;
+	UINT32 rop2 = gdi_GetROP2(hdc);
+
+	x1 = hdc->pen->posX;
+	y1 = hdc->pen->posY;
+	x2 = nXEnd;
+	y2 = nYEnd;
+
+	dx = (x1 > x2) ? x1 - x2 : x2 - x1;
+	dy = (y1 > y2) ? y1 - y2 : y2 - y1;
+
+	sx = (x1 < x2) ? 1 : -1;
+	sy = (y1 < y2) ? 1 : -1;
+
+	e = dx - dy;
+
+	x = x1;
+	y = y1;
+
+	bmp = (HGDI_BITMAP) hdc->selectedObject;
+
+	if (hdc->clip->null)
+	{
+		bx1 = (x1 < x2) ? x1 : x2;
+		by1 = (y1 < y2) ? y1 : y2;
+		bx2 = (x1 > x2) ? x1 : x2;
+		by2 = (y1 > y2) ? y1 : y2;
+	}
+	else
+	{
+		bx1 = hdc->clip->x;
+		by1 = hdc->clip->y;
+		bx2 = bx1 + hdc->clip->w - 1;
+		by2 = by1 + hdc->clip->h - 1;
+	}
+
+	bx1 = MAX(bx1, 0);
+	by1 = MAX(by1, 0);
+	bx2 = MIN(bx2, bmp->width - 1);
+	by2 = MIN(by2, bmp->height - 1);
+
+	if (!gdi_InvalidateRegion(hdc, bx1, by1, bx2 - bx1 + 1, by2 - by1 + 1))
 		return FALSE;
 
-	return _LineTo(hdc, nXEnd, nYEnd);
+	pen = gdi_GetPenColor(hdc->pen, bmp->format);
+
+	while (1)
+	{
+		if (!(x == x2 && y == y2))
+		{
+			if ((x >= bx1 && x <= bx2) && (y >= by1 && y <= by2))
+			{
+				BYTE* pixel = gdi_GetPointer(bmp, x, y);
+				gdi_rop_color(rop2, pixel, pen, bmp->format);
+			}
+		}
+		else
+		{
+			break;
+		}
+
+		e2 = 2 * e;
+
+		if (e2 > -dy)
+		{
+			e -= dy;
+			x += sx;
+		}
+
+		if (e2 < dx)
+		{
+			e += dx;
+			y += sy;
+		}
+	}
+
+	return TRUE;
 }
 
 /**
@@ -91,11 +227,11 @@ BOOL gdi_PolylineTo(HGDI_DC hdc, GDI_POINT *lppt, DWORD cCount)
  * @param cPoints number of points
  * @return nonzero on success, 0 otherwise
  */
-BOOL gdi_Polyline(HGDI_DC hdc, GDI_POINT *lppt, int cPoints)
+BOOL gdi_Polyline(HGDI_DC hdc, GDI_POINT *lppt, UINT32 cPoints)
 {
 	if (cPoints > 0)
 	{
-		int i;
+		UINT32 i;
 		GDI_POINT pt;
 
 		if (!gdi_MoveToEx(hdc, lppt[0].x, lppt[0].y, &pt))
@@ -124,9 +260,9 @@ BOOL gdi_Polyline(HGDI_DC hdc, GDI_POINT *lppt, int cPoints)
  * @param cCount count of entries in lpdwPolyPoints
  * @return nonzero on success, 0 otherwise
  */
-BOOL gdi_PolyPolyline(HGDI_DC hdc, GDI_POINT *lppt, int *lpdwPolyPoints, DWORD cCount)
+BOOL gdi_PolyPolyline(HGDI_DC hdc, GDI_POINT *lppt, UINT32 *lpdwPolyPoints, DWORD cCount)
 {
-	int cPoints;
+	UINT32 cPoints;
 	DWORD i, j = 0;
 
 	for (i = 0; i < cCount; i++)
@@ -148,7 +284,7 @@ BOOL gdi_PolyPolyline(HGDI_DC hdc, GDI_POINT *lppt, int *lpdwPolyPoints, DWORD c
  * @return nonzero on success, 0 otherwise
  */
 
-BOOL gdi_MoveToEx(HGDI_DC hdc, int X, int Y, HGDI_POINT lpPoint)
+BOOL gdi_MoveToEx(HGDI_DC hdc, UINT32 X, UINT32 Y, HGDI_POINT lpPoint)
 {
 	if (lpPoint != NULL)
 	{

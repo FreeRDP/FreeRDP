@@ -44,7 +44,7 @@ struct _CLEAR_VBAR_ENTRY
 {
 	UINT32 size;
 	UINT32 count;
-	UINT32* pixels;
+	BYTE* pixels;
 };
 typedef struct _CLEAR_VBAR_ENTRY CLEAR_VBAR_ENTRY;
 
@@ -55,6 +55,7 @@ struct _CLEAR_CONTEXT
 	UINT32 seqNumber;
 	BYTE* TempBuffer;
 	UINT32 TempSize;
+	UINT32 format;
 	CLEAR_GLYPH_ENTRY GlyphCache[4000];
 	UINT32 VBarStorageCursor;
 	CLEAR_VBAR_ENTRY VBarStorage[32768];
@@ -68,8 +69,10 @@ extern "C" {
 
 FREERDP_API int clear_compress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize);
 
-FREERDP_API int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
-		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight);
+FREERDP_API INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
+				   UINT32 SrcSize,
+				   BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
+				   UINT32 nXDst, UINT32 nYDst, UINT32 nWidth, UINT32 nHeight);
 
 FREERDP_API BOOL clear_context_reset(CLEAR_CONTEXT* clear);
 

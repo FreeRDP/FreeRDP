@@ -3,6 +3,8 @@
  * GDI Library
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2016 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,17 +144,13 @@ struct _GDIOBJECT
 typedef struct _GDIOBJECT GDIOBJECT;
 typedef GDIOBJECT* HGDIOBJECT;
 
-/* RGB encoded as 0x00BBGGRR */
-typedef unsigned int GDI_COLOR;
-typedef GDI_COLOR* LPGDI_COLOR;
-
 struct _GDI_RECT
 {
 	BYTE objectType;
-	int left;
-	int top;
-	int right;
-	int bottom;
+	UINT32 left;
+	UINT32 top;
+	UINT32 right;
+	UINT32 bottom;
 };
 typedef struct _GDI_RECT GDI_RECT;
 typedef GDI_RECT* HGDI_RECT;
@@ -160,11 +158,11 @@ typedef GDI_RECT* HGDI_RECT;
 struct _GDI_RGN
 {
 	BYTE objectType;
-	int x; /* left */
-	int y; /* top */
-	int w; /* width */
-	int h; /* height */
-	int null; /* null region */
+	UINT32 x; /* left */
+	UINT32 y; /* top */
+	UINT32 w; /* width */
+	UINT32 h; /* height */
+	BOOL null; /* null region */
 };
 typedef struct _GDI_RGN GDI_RGN;
 typedef GDI_RGN* HGDI_RGN;
@@ -172,13 +170,12 @@ typedef GDI_RGN* HGDI_RGN;
 struct _GDI_BITMAP
 {
 	BYTE objectType;
-	int bytesPerPixel;
-	int bitsPerPixel;
-	int width;
-	int height;
-	int scanline;
+	UINT32 format;
+	UINT32 width;
+	UINT32 height;
+	UINT32 scanline;
 	BYTE* data;
-	void (*free)(void *);
+	void (*free)(void*);
 };
 typedef struct _GDI_BITMAP GDI_BITMAP;
 typedef GDI_BITMAP* HGDI_BITMAP;
@@ -186,11 +183,12 @@ typedef GDI_BITMAP* HGDI_BITMAP;
 struct _GDI_PEN
 {
 	BYTE objectType;
-	int style;
-	int width;
-	int posX;
-	int posY;
-	GDI_COLOR color;
+	UINT32 style;
+	UINT32 width;
+	UINT32 posX;
+	UINT32 posY;
+	UINT32 color;
+	UINT32 format;
 };
 typedef struct _GDI_PEN GDI_PEN;
 typedef GDI_PEN* HGDI_PEN;
@@ -206,15 +204,15 @@ typedef struct _GDI_PALETTEENTRY GDI_PALETTEENTRY;
 struct _GDI_PALETTE
 {
 	UINT16 count;
-	GDI_PALETTEENTRY *entries;
+	GDI_PALETTEENTRY* entries;
 };
 typedef struct _GDI_PALETTE GDI_PALETTE;
 typedef GDI_PALETTE* HGDI_PALETTE;
 
 struct _GDI_POINT
 {
-	int x;
-	int y;
+	UINT32 x;
+	UINT32 y;
 };
 typedef struct _GDI_POINT GDI_POINT;
 typedef GDI_POINT* HGDI_POINT;
@@ -224,17 +222,17 @@ struct _GDI_BRUSH
 	BYTE objectType;
 	int style;
 	HGDI_BITMAP pattern;
-	GDI_COLOR color;
-	int nXOrg;
-	int nYOrg;
+	UINT32 color;
+	UINT32 nXOrg;
+	UINT32 nYOrg;
 };
 typedef struct _GDI_BRUSH GDI_BRUSH;
 typedef GDI_BRUSH* HGDI_BRUSH;
 
 struct _GDI_WND
 {
-	int count;
-	int ninvalid;
+	UINT32 count;
+	INT32 ninvalid;
 	HGDI_RGN invalid;
 	HGDI_RGN cinvalid;
 };
@@ -244,19 +242,15 @@ typedef GDI_WND* HGDI_WND;
 struct _GDI_DC
 {
 	HGDIOBJECT selectedObject;
-	int bytesPerPixel;
-	int bitsPerPixel;
-	GDI_COLOR bkColor;
-	GDI_COLOR textColor;
+	UINT32 format;
+	UINT32 bkColor;
+	UINT32 textColor;
 	HGDI_BRUSH brush;
 	HGDI_RGN clip;
 	HGDI_PEN pen;
 	HGDI_WND hwnd;
-	int drawMode;
-	int bkMode;
-	int alpha;
-	int invert;
-	int rgb555;
+	UINT32 drawMode;
+	UINT32 bkMode;
 };
 typedef struct _GDI_DC GDI_DC;
 typedef GDI_DC* HGDI_DC;
@@ -285,27 +279,24 @@ struct rdp_gdi
 {
 	rdpContext* context;
 
-	int width;
-	int height;
-	int dstBpp;
-	int srcBpp;
-	int cursor_x;
-	int cursor_y;
-	int bytesPerPixel;
+	UINT32 width;
+	UINT32 height;
+	UINT32 stride;
+	UINT32 dstFormat;
+	UINT32 cursor_x;
+	UINT32 cursor_y;
 	rdpCodecs* codecs;
 
-	BOOL invert;
 	HGDI_DC hdc;
-	UINT32 format;
 	gdiBitmap* primary;
 	gdiBitmap* drawing;
 	UINT32 bitmap_size;
 	BYTE* bitmap_buffer;
 	BYTE* primary_buffer;
-	GDI_COLOR textColor;
-	BYTE palette[256 * 4];
-	gdiBitmap* tile;
+	UINT32 textColor;
+	UINT32 palette[256];
 	gdiBitmap* image;
+	void (*free)(void*);
 
 	BOOL inGfxFrame;
 	BOOL graphicsReset;
@@ -322,9 +313,14 @@ FREERDP_API DWORD gdi_rop3_code(BYTE code);
 FREERDP_API UINT32 gdi_get_pixel_format(UINT32 bitsPerPixel, BOOL vFlip);
 FREERDP_API BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y);
 FREERDP_API BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y);
-FREERDP_API BOOL gdi_resize(rdpGdi* gdi, int width, int height);
-
-FREERDP_API BOOL gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer);
+FREERDP_API BOOL gdi_resize(rdpGdi* gdi, UINT32 width, UINT32 height);
+FREERDP_API BOOL gdi_resize_ex(rdpGdi* gdi, UINT32 width, UINT32 height,
+                               INT32 stride, INT32 format, BYTE* buffer,
+                               void (*pfree)(void*));
+FREERDP_API BOOL gdi_init(freerdp* instance, UINT32 format);
+FREERDP_API BOOL gdi_init_ex(freerdp* instance, UINT32 format,
+                             UINT32 stride, BYTE* buffer,
+                             void (*pfree)(void*));
 FREERDP_API void gdi_free(freerdp* instance);
 
 #ifdef __cplusplus

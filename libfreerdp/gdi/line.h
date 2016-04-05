@@ -1,8 +1,10 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * GDI 8bpp Internal Buffer Routines
+ * GDI Line Functions
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2016 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,28 +19,24 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_GDI_8BPP_H
-#define FREERDP_GDI_8BPP_H
+#ifndef FREERDP_GDI_LINE_H
+#define FREERDP_GDI_LINE_H
 
 #include <freerdp/api.h>
-#include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
-
-typedef BOOL (*pLineTo_8bpp)(HGDI_DC hdc, int nXEnd, int nYEnd);
 
 #ifdef __cplusplus
  extern "C" {
 #endif
 
-FREERDP_API BYTE gdi_get_color_8bpp(HGDI_DC hdc, GDI_COLOR color);
-
-FREERDP_API BOOL FillRect_8bpp(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr);
-FREERDP_API BOOL BitBlt_8bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc, DWORD rop);
-FREERDP_API BOOL PatBlt_8bpp(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, DWORD rop);
-FREERDP_API BOOL LineTo_8bpp(HGDI_DC hdc, int nXEnd, int nYEnd);
+BOOL gdi_LineTo(HGDI_DC hdc, UINT32 nXEnd, UINT32 nYEnd);
+BOOL gdi_PolylineTo(HGDI_DC hdc, GDI_POINT *lppt, DWORD cCount);
+BOOL gdi_Polyline(HGDI_DC hdc, GDI_POINT *lppt, UINT32 cPoints);
+BOOL gdi_PolyPolyline(HGDI_DC hdc, GDI_POINT *lppt, UINT32 *lpdwPolyPoints, DWORD cCount);
+BOOL gdi_MoveToEx(HGDI_DC hdc, UINT32 X, UINT32 Y, HGDI_POINT lpPoint);
 
 #ifdef __cplusplus
  }
 #endif
 
-#endif /* FREERDP_GDI_8BPP_H */
+#endif /* FREERDP_GDI_LINE_H */

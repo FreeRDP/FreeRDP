@@ -3,22 +3,24 @@
 
 #include <freerdp/gdi/dc.h>
 #include <freerdp/gdi/pen.h>
-#include <freerdp/gdi/line.h>
-#include <freerdp/gdi/brush.h>
 #include <freerdp/gdi/region.h>
 #include <freerdp/gdi/bitmap.h>
 #include <freerdp/gdi/drawing.h>
-#include <freerdp/gdi/clipping.h>
 
 #include <winpr/crt.h>
 
-int test_gdi_ClipCoords(void)
+#include "line.h"
+#include "brush.h"
+#include "clipping.h"
+
+static int test_gdi_ClipCoords(void)
 {
 	BOOL draw;
 	HGDI_DC hdc;
 	HGDI_RGN rgn1;
 	HGDI_RGN rgn2;
 	HGDI_BITMAP bmp;
+	const UINT32 format = PIXEL_FORMAT_ARGB32;
 
 	if (!(hdc = gdi_GetDC()))
 	{
@@ -26,9 +28,8 @@ int test_gdi_ClipCoords(void)
 		return -1;
 	}
 
-	hdc->bytesPerPixel = 4;
-	hdc->bitsPerPixel = 32;
-	bmp = gdi_CreateBitmapEx(1024, 768, 4, NULL, NULL);
+	hdc->format = format;
+    bmp = gdi_CreateBitmapEx(1024, 768, PIXEL_FORMAT_XRGB32, 0, NULL, NULL);
 	gdi_SelectObject(hdc, (HGDIOBJECT) bmp);
 	gdi_SetNullClipRgn(hdc);
 
@@ -170,13 +171,14 @@ int test_gdi_ClipCoords(void)
 	return 0;
 }
 
-int test_gdi_InvalidateRegion(void)
+static int test_gdi_InvalidateRegion(void)
 {
 	HGDI_DC hdc;
 	HGDI_RGN rgn1;
 	HGDI_RGN rgn2;
 	HGDI_RGN invalid;
-	HGDI_BITMAP bmp;
+    HGDI_BITMAP bmp;
+    const UINT32 format = PIXEL_FORMAT_XRGB32;
 
 	if (!(hdc = gdi_GetDC()))
 	{
@@ -184,9 +186,8 @@ int test_gdi_InvalidateRegion(void)
 		return -1;
 	}
 
-	hdc->bytesPerPixel = 4;
-	hdc->bitsPerPixel = 32;
-	bmp = gdi_CreateBitmapEx(1024, 768, 4, NULL, NULL);
+	hdc->format = format;
+    bmp = gdi_CreateBitmapEx(1024, 768, PIXEL_FORMAT_XRGB32, 0, NULL, NULL);
 	gdi_SelectObject(hdc, (HGDIOBJECT) bmp);
 	gdi_SetNullClipRgn(hdc);
 

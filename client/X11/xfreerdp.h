@@ -3,6 +3,8 @@
  * X11 Client
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 Thincast Technologies GmbH
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +99,6 @@ struct xf_context
 	rdpCodecs* codecs;
 
 	GC gc;
-	int bpp;
 	int xfds;
 	int depth;
 	int sessionWidth;
@@ -135,15 +136,12 @@ struct xf_context
 	HANDLE mutex;
 	BOOL UseXThreads;
 	BOOL cursorHidden;
-	BYTE* palette;
-	BYTE palette_hwgdi[256 * 4];
+	UINT32* palette;
+	UINT32 palette_hwgdi[256];
 
 	HGDI_DC hdc;
 	UINT32 bitmap_size;
 	BYTE* bitmap_buffer;
-	BYTE* primary_buffer;
-	BOOL inGfxFrame;
-	BOOL graphicsReset;
 
 	BOOL frame_begin;
 	UINT16 frame_x1;

@@ -137,7 +137,8 @@ int update_recv_surfcmds(rdpUpdate* update, UINT32 size, wStream* s)
 	return 0;
 }
 
-BOOL update_write_surfcmd_surface_bits_header(wStream* s, SURFACE_BITS_COMMAND* cmd)
+BOOL update_write_surfcmd_surface_bits_header(wStream* s,
+					      const SURFACE_BITS_COMMAND* cmd)
 {
 	if (!Stream_EnsureRemainingCapacity(s, SURFCMD_SURFACE_BITS_HEADER_LENGTH))
 		return FALSE;

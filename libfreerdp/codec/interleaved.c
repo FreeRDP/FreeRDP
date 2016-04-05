@@ -5,6 +5,8 @@
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2015 Thincast Technologies GmbH
  * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2016 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +105,7 @@ static INLINE UINT32 ExtractCodeId(BYTE bOrderHdr)
 /**
  * Extract the run length of a compression order.
  */
-static INLINE UINT32 ExtractRunLength(UINT32 code, BYTE* pbOrderHdr, UINT32* advance)
+static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, UINT32* advance)
 {
 	UINT32 runLength;
 	UINT32 ladvance;
@@ -112,63 +114,63 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, BYTE* pbOrderHdr, UINT32* adv
 	runLength = 0;
 	switch (code)
 	{
-		case REGULAR_FGBG_IMAGE:
-			runLength = (*pbOrderHdr) & g_MaskRegularRunLength;
-			if (runLength == 0)
-			{
-				runLength = (*(pbOrderHdr + 1)) + 1;
-				ladvance += 1;
-			}
-			else
-			{
-				runLength = runLength * 8;
-			}
-			break;
-		case LITE_SET_FG_FGBG_IMAGE:
-			runLength = (*pbOrderHdr) & g_MaskLiteRunLength;
-			if (runLength == 0)
-			{
-				runLength = (*(pbOrderHdr + 1)) + 1;
-				ladvance += 1;
-			}
-			else
-			{
-				runLength = runLength * 8;
-			}
-			break;
-		case REGULAR_BG_RUN:
-		case REGULAR_FG_RUN:
-		case REGULAR_COLOR_RUN:
-		case REGULAR_COLOR_IMAGE:
-			runLength = (*pbOrderHdr) & g_MaskRegularRunLength;
-			if (runLength == 0)
-			{
-				/* An extended (MEGA) run. */
-				runLength = (*(pbOrderHdr + 1)) + 32;
-				ladvance += 1;
-			}
-			break;
-		case LITE_SET_FG_FG_RUN:
-		case LITE_DITHERED_RUN:
-			runLength = (*pbOrderHdr) & g_MaskLiteRunLength;
-			if (runLength == 0)
-			{
-				/* An extended (MEGA) run. */
-				runLength = (*(pbOrderHdr + 1)) + 16;
-				ladvance += 1;
-			}
-			break;
-		case MEGA_MEGA_BG_RUN:
-		case MEGA_MEGA_FG_RUN:
-		case MEGA_MEGA_SET_FG_RUN:
-		case MEGA_MEGA_DITHERED_RUN:
-		case MEGA_MEGA_COLOR_RUN:
-		case MEGA_MEGA_FGBG_IMAGE:
-		case MEGA_MEGA_SET_FGBG_IMAGE:
-		case MEGA_MEGA_COLOR_IMAGE:
-			runLength = ((UINT16) pbOrderHdr[1]) | ((UINT16) (pbOrderHdr[2] << 8));
-			ladvance += 2;
-			break;
+	case REGULAR_FGBG_IMAGE:
+		runLength = (*pbOrderHdr) & g_MaskRegularRunLength;
+		if (runLength == 0)
+		{
+			runLength = (*(pbOrderHdr + 1)) + 1;
+			ladvance += 1;
+		}
+		else
+		{
+			runLength = runLength * 8;
+		}
+		break;
+	case LITE_SET_FG_FGBG_IMAGE:
+		runLength = (*pbOrderHdr) & g_MaskLiteRunLength;
+		if (runLength == 0)
+		{
+			runLength = (*(pbOrderHdr + 1)) + 1;
+			ladvance += 1;
+		}
+		else
+		{
+			runLength = runLength * 8;
+		}
+		break;
+	case REGULAR_BG_RUN:
+	case REGULAR_FG_RUN:
+	case REGULAR_COLOR_RUN:
+	case REGULAR_COLOR_IMAGE:
+		runLength = (*pbOrderHdr) & g_MaskRegularRunLength;
+		if (runLength == 0)
+		{
+			/* An extended (MEGA) run. */
+			runLength = (*(pbOrderHdr + 1)) + 32;
+			ladvance += 1;
+		}
+		break;
+	case LITE_SET_FG_FG_RUN:
+	case LITE_DITHERED_RUN:
+		runLength = (*pbOrderHdr) & g_MaskLiteRunLength;
+		if (runLength == 0)
+		{
+			/* An extended (MEGA) run. */
+			runLength = (*(pbOrderHdr + 1)) + 16;
+			ladvance += 1;
+		}
+		break;
+	case MEGA_MEGA_BG_RUN:
+	case MEGA_MEGA_FG_RUN:
+	case MEGA_MEGA_SET_FG_RUN:
+	case MEGA_MEGA_DITHERED_RUN:
+	case MEGA_MEGA_COLOR_RUN:
+	case MEGA_MEGA_FGBG_IMAGE:
+	case MEGA_MEGA_SET_FGBG_IMAGE:
+	case MEGA_MEGA_COLOR_IMAGE:
+		runLength = ((UINT16) pbOrderHdr[1]) | ((UINT16) (pbOrderHdr[2] << 8));
+		ladvance += 2;
+		break;
 	}
 	*advance = ladvance;
 	return runLength;
@@ -231,11 +233,11 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, BYTE* pbOrderHdr, UINT32* adv
 #undef RLEDECOMPRESS
 #undef RLEEXTRA
 #define DESTWRITEPIXEL(_buf, _pix) do { (_buf)[0] = (BYTE)(_pix);  \
-  (_buf)[1] = (BYTE)((_pix) >> 8); (_buf)[2] = (BYTE)((_pix) >> 16); } while (0)
+	(_buf)[1] = (BYTE)((_pix) >> 8); (_buf)[2] = (BYTE)((_pix) >> 16); } while (0)
 #define DESTREADPIXEL(_pix, _buf) _pix = (_buf)[0] | ((_buf)[1] << 8) | \
-  ((_buf)[2] << 16)
+	((_buf)[2] << 16)
 #define SRCREADPIXEL(_pix, _buf) _pix = (_buf)[0] | ((_buf)[1] << 8) | \
-  ((_buf)[2] << 16)
+	((_buf)[2] << 16)
 #define DESTNEXTPIXEL(_buf) _buf += 3
 #define SRCNEXTPIXEL(_buf) _buf += 3
 #define WRITEFGBGIMAGE WriteFgBgImage24to24
@@ -244,22 +246,23 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, BYTE* pbOrderHdr, UINT32* adv
 #define RLEEXTRA
 #include "include/bitmap.c"
 
-int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcData, UINT32 SrcSize, int bpp,
-		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight, BYTE* palette)
+INT32 interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
+							 const BYTE* pSrcData, UINT32 SrcSize,
+							 UINT32 bpp,
+							 BYTE* pDstData, UINT32 DstFormat,
+							 UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+							 UINT32 nWidth, UINT32 nHeight,
+							 const UINT32* palette)
 {
-	int status;
-	BOOL vFlip;
-	int scanline;
-	BYTE* pDstData;
+	INT32 status;
+	UINT32 scanline;
 	UINT32 SrcFormat;
 	UINT32 BufferSize;
-	int dstBitsPerPixel;
-	int dstBytesPerPixel;
+	UINT32 dstBitsPerPixel;
+	UINT32 dstBytesPerPixel;
 
-	pDstData = *ppDstData;
-	dstBitsPerPixel = FREERDP_PIXEL_FORMAT_DEPTH(DstFormat);
-	dstBytesPerPixel = (FREERDP_PIXEL_FORMAT_BPP(DstFormat) / 8);
-	vFlip = FREERDP_PIXEL_FORMAT_FLIP(DstFormat) ? TRUE : FALSE;
+	dstBitsPerPixel = GetBitsPerPixel(DstFormat);
+	dstBytesPerPixel = GetBytesPerPixel(DstFormat);
 
 	if (!interleaved)
 		return -1;
@@ -274,14 +277,6 @@ int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcDa
 
 		SrcFormat = PIXEL_FORMAT_RGB24_VF;
 
-#if 0
-		if ((SrcFormat == DstFormat) && !nXDst && !nYDst && (scanline == nDstStep))
-		{
-			RleDecompress24to24(pSrcData, SrcSize, pDstData, scanline, nWidth, nHeight);
-			return 1;
-		}
-#endif
-
 		if (BufferSize > interleaved->TempSize)
 		{
 			interleaved->TempBuffer = _aligned_realloc(interleaved->TempBuffer, BufferSize, 16);
@@ -294,7 +289,8 @@ int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcDa
 		RleDecompress24to24(pSrcData, SrcSize, interleaved->TempBuffer, scanline, nWidth, nHeight);
 
 		status = freerdp_image_copy(pDstData, DstFormat, nDstStep, nXDst, nYDst,
-				nWidth, nHeight, interleaved->TempBuffer, SrcFormat, scanline, 0, 0, palette);
+					    nWidth, nHeight, interleaved->TempBuffer,
+					    SrcFormat, scanline, 0, 0, palette);
 	}
 	else if ((bpp == 16) || (bpp == 15))
 	{
@@ -302,14 +298,6 @@ int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcDa
 		BufferSize = scanline * nHeight;
 
 		SrcFormat = (bpp == 16) ? PIXEL_FORMAT_RGB16_VF : PIXEL_FORMAT_RGB15_VF;
-
-#if 0
-		if ((SrcFormat == DstFormat) && !nXDst && !nYDst && (scanline == nDstStep))
-		{
-			RleDecompress16to16(pSrcData, SrcSize, pDstData, scanline, nWidth, nHeight);
-			return 1;
-		}
-#endif
 
 		if (BufferSize > interleaved->TempSize)
 		{
@@ -322,8 +310,10 @@ int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcDa
 
 		RleDecompress16to16(pSrcData, SrcSize, interleaved->TempBuffer, scanline, nWidth, nHeight);
 
-		status = freerdp_image_copy(pDstData, DstFormat, nDstStep, nXDst, nYDst,
-				nWidth, nHeight, interleaved->TempBuffer, SrcFormat, scanline, 0, 0, palette);
+		status = freerdp_image_copy(pDstData, DstFormat, nDstStep,
+						nXDst, nYDst, nWidth, nHeight,
+						interleaved->TempBuffer, SrcFormat,
+						scanline, 0, 0, palette);
 	}
 	else if (bpp == 8)
 	{
@@ -331,14 +321,6 @@ int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcDa
 		BufferSize = scanline * nHeight;
 
 		SrcFormat = PIXEL_FORMAT_RGB8_VF;
-
-#if 0
-		if ((SrcFormat == DstFormat) && !nXDst && !nYDst && (scanline == nDstStep))
-		{
-			RleDecompress8to8(pSrcData, SrcSize, pDstData, scanline, nWidth, nHeight);
-			return 1;
-		}
-#endif
 
 		if (BufferSize > interleaved->TempSize)
 		{
@@ -352,7 +334,8 @@ int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcDa
 		RleDecompress8to8(pSrcData, SrcSize, interleaved->TempBuffer, scanline, nWidth, nHeight);
 
 		status = freerdp_image_copy(pDstData, DstFormat, nDstStep, nXDst, nYDst,
-				nWidth, nHeight, interleaved->TempBuffer, SrcFormat, scanline, 0, 0, palette);
+					    nWidth, nHeight, interleaved->TempBuffer,
+					    SrcFormat, scanline, 0, 0, palette);
 	}
 	else
 	{
@@ -362,8 +345,12 @@ int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcDa
 	return 1;
 }
 
-int interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pDstData, UINT32* pDstSize,
-		int nWidth, int nHeight, BYTE* pSrcData, DWORD SrcFormat, int nSrcStep, int nXSrc, int nYSrc, BYTE* palette, int bpp)
+BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
+			 BYTE* pDstData, UINT32* pDstSize,
+			 UINT32 nWidth, UINT32 nHeight,
+			 const BYTE* pSrcData, UINT32 SrcFormat,
+			 UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
+			 const UINT32* palette, UINT32 bpp)
 {
 	int status;
 	wStream* s;
@@ -373,13 +360,13 @@ int interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pDstData
 	if (nWidth % 4)
 	{
 		WLog_ERR(TAG, "interleaved_compress: width is not a multiple of 4");
-		return -1;
+		return FALSE;
 	}
 
 	if ((nWidth > 64) || (nHeight > 64))
 	{
 		WLog_ERR(TAG, "interleaved_compress: width (%d) or height (%d) is greater than 64", nWidth, nHeight);
-		return -1;
+		return FALSE;
 	}
 
 	if (bpp == 24)
@@ -392,18 +379,18 @@ int interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pDstData
 		DstFormat = PIXEL_FORMAT_RGB8;
 
 	if (!DstFormat)
-		return -1;
+		return FALSE;
 
 	status = freerdp_image_copy(interleaved->TempBuffer, DstFormat, -1, 0, 0, nWidth, nHeight,
-					pSrcData, SrcFormat, nSrcStep, nXSrc, nYSrc, palette);
+								pSrcData, SrcFormat, nSrcStep, nXSrc, nYSrc, palette);
 
 	s = Stream_New(pDstData, maxSize);
 
 	if (!s)
-		return -1;
+		return FALSE;
 
 	status = freerdp_bitmap_compress((char*) interleaved->TempBuffer, nWidth, nHeight,
-					s, bpp, maxSize, nHeight - 1, interleaved->bts, 0);
+									 s, bpp, maxSize, nHeight - 1, interleaved->bts, 0);
 
 	Stream_SealLength(s);
 	*pDstSize = (UINT32) Stream_Length(s);

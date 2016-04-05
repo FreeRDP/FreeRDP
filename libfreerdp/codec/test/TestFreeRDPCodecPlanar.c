@@ -11,7 +11,7 @@
  * Experimental Case 01: 64x64 (32bpp)
  */
 
-static BYTE TEST_RLE_BITMAP_EXPERIMENTAL_01[16384] =
+static const BYTE TEST_RLE_BITMAP_EXPERIMENTAL_01[16384] =
 	"\x1B\x1A\x16\xFF\x1C\x1A\x16\xFF\x18\x17\x13\xFF\x19\x18\x14\xFF\x17\x16\x12\xFF\x18\x16\x12\xFF\x19\x18\x14\xFF\x19\x18\x14\xFF"
 	"\x1D\x1C\x17\xFF\x1D\x1B\x17\xFF\x1C\x1B\x17\xFF\x1B\x1A\x16\xFF\x1A\x19\x15\xFF\x1A\x19\x15\xFF\x18\x17\x13\xFF\x1A\x19\x15\xFF"
 	"\x1B\x1A\x16\xFF\x19\x18\x14\xFF\x19\x18\x14\xFF\x18\x16\x14\xFF\x1C\x1A\x16\xFF\x1A\x18\x14\xFF\x1B\x1A\x16\xFF\x19\x17\x13\xFF"
@@ -530,7 +530,7 @@ static BYTE TEST_RLE_BITMAP_EXPERIMENTAL_01[16384] =
  * Experimental Case 02: 64x64 (32bpp)
  */
 
-static BYTE TEST_RLE_BITMAP_EXPERIMENTAL_02[16384] =
+static const BYTE TEST_RLE_BITMAP_EXPERIMENTAL_02[16384] =
 	"\x1C\x1C\x17\xFF\x1D\x1B\x18\xFF\x1B\x19\x15\xFF\x19\x18\x13\xFF\x19\x18\x14\xFF\x17\x16\x12\xFF\x17\x17\x13\xFF\x19\x17\x14\xFF"
 	"\x15\x14\x11\xFF\x13\x13\x10\xFF\x4F\x4B\x3E\xFF\x21\x20\x1A\xFF\x22\x21\x1B\xFF\x22\x21\x1C\xFF\x22\x21\x1B\xFF\x21\x21\x1A\xFF"
 	"\x22\x21\x1B\xFF\x21\x20\x1A\xFF\x21\x20\x1A\xFF\x21\x20\x1A\xFF\x22\x21\x1B\xFF\x23\x22\x1D\xFF\x22\x20\x1A\xFF\x21\x20\x1A\xFF"
@@ -1048,7 +1048,7 @@ static BYTE TEST_RLE_BITMAP_EXPERIMENTAL_02[16384] =
  * Experimental Case 03: 64x64 (32bpp)
  */
 
-static BYTE TEST_RLE_BITMAP_EXPERIMENTAL_03[16384] =
+static const BYTE TEST_RLE_BITMAP_EXPERIMENTAL_03[16384] =
 	"\x27\x2A\x23\xFF\x23\x25\x1F\xFF\x23\x23\x1E\xFF\x24\x23\x1D\xFF\x25\x23\x1D\xFF\x25\x23\x1E\xFF\x25\x23\x1D\xFF\x25\x24\x1F\xFF"
 	"\x28\x2B\x23\xFF\x37\x60\x4A\xFF\x4A\xA2\x78\xFF\x47\x97\x71\xFF\x41\x84\x64\xFF\x3D\x75\x58\xFF\x38\x62\x4B\xFF\x33\x50\x3E\xFF"
 	"\x2E\x3C\x30\xFF\x2A\x34\x29\xFF\x28\x30\x26\xFF\x27\x2C\x24\xFF\x26\x29\x22\xFF\x27\x28\x21\xFF\x27\x26\x20\xFF\x27\x25\x20\xFF"
@@ -2663,7 +2663,7 @@ BYTE TEST_64X64_BLUE_PLANE_RLE[3724] =
  * [MS-RDPEGDI] Test Bitmap 32x32 (16bpp)
  */
 
-const BYTE TEST_RLE_UNCOMPRESSED_BITMAP_16BPP[2048] =
+static const BYTE TEST_RLE_UNCOMPRESSED_BITMAP_16BPP[2048] =
 	"\xFF\xFF\x99\xD6\x99\xD6\x99\xD6\x99\xD6\x00\x00\x00\x00\x00\x00"
 	"\x00\x00\x00\x00\x00\x00\x99\xD6\x99\xD6\x99\xD6\x10\x84\x08\x42"
 	"\x08\x42\x10\x84\x99\xD6\x99\xD6\x99\xD6\x99\xD6\x00\x00\x00\x00"
@@ -2797,7 +2797,7 @@ const BYTE TEST_RLE_UNCOMPRESSED_BITMAP_16BPP[2048] =
  * [MS-RDPEGDI] Test Bitmap 32x32 (RLE Encoded, not RDP6)
  */
 
-const BYTE TEST_RLE_COMPRESSED_BITMAP[220] =
+static const BYTE TEST_RLE_COMPRESSED_BITMAP[220] =
 	"\x85\xFF\xFF\x99\xD6\x99\xD6\x99\xD6\x99\xD6\x06\x8B\x99\xD6\x99"
 	"\xD6\x99\xD6\x10\x84\x08\x42\x08\x42\x10\x84\x99\xD6\x99\xD6\x99"
 	"\xD6\x99\xD6\x06\x84\x99\xD6\x99\xD6\x99\xD6\xFF\xFF\x16\x69\x99"
@@ -2813,7 +2813,7 @@ const BYTE TEST_RLE_COMPRESSED_BITMAP[220] =
 	"\xC3\x80\x61\x00\x00\x00\x00\x00\xCC\x89\x52\x03\x6E\xFF\xFF\x02"
 	"\xCB\x18\xC6\x84\x08\x42\x08\x42\x08\x42\xFF\xFF";
 
-const BYTE TEST_RLE_SCANLINE_UNCOMPRESSED[12] =
+static const BYTE TEST_RLE_SCANLINE_UNCOMPRESSED[12] =
 	"AAAABBCCCCCD";
 
 /**
@@ -2822,7 +2822,7 @@ const BYTE TEST_RLE_SCANLINE_UNCOMPRESSED[12] =
 
 /* Scanline Absolute Values */
 
-const BYTE TEST_RDP6_SCANLINES_ABSOLUTE[3][6] =
+static const BYTE TEST_RDP6_SCANLINES_ABSOLUTE[3][6] =
 {
 	{  255,  255,  255,  255,  254,  253 },
 	{  254,  192,  132,   96,   75,   25 },
@@ -2830,8 +2830,7 @@ const BYTE TEST_RDP6_SCANLINES_ABSOLUTE[3][6] =
 };
 
 /* Scanline Delta Values */
-
-const int TEST_RDP6_SCANLINES_DELTA[3][6] =
+static const int TEST_RDP6_SCANLINES_DELTA[3][6] =
 {
 	{  255, 255,  255,  255,  254,  253 },
 	{   -1, -63, -123, -159, -179, -228 },
@@ -2840,7 +2839,7 @@ const int TEST_RDP6_SCANLINES_DELTA[3][6] =
 
 /* Scanline Delta Values (1-byte two's complement) */
 
-const char TEST_RDP6_SCANLINES_DELTA_2C[3][6] =
+static const BYTE TEST_RDP6_SCANLINES_DELTA_2C[3][6] =
 {
 	{   -1,  -1,   -1,   -1,   -2,   -3 },
 	{   -1, -63, -123,   97,   77,   28 },
@@ -2849,7 +2848,7 @@ const char TEST_RDP6_SCANLINES_DELTA_2C[3][6] =
 
 /* Scanline Delta Values (1-byte two's complement, encoded) */
 
-const char TEST_RDP6_SCANLINES_DELTA_2C_ENCODED[3][6] =
+static const BYTE TEST_RDP6_SCANLINES_DELTA_2C_ENCODED[3][6] =
 {
 	{   -1,  -1,   -1,   -1,   -2,   -3 },
 	{   -1, 125,   11,  -62, -102,   56 },
@@ -2858,7 +2857,7 @@ const char TEST_RDP6_SCANLINES_DELTA_2C_ENCODED[3][6] =
 
 /* Scanline Delta Values (1-byte two's complement, encoded, unsigned) */
 
-const BYTE TEST_RDP6_SCANLINES_DELTA_2C_ENCODED_UNSIGNED[3][6] =
+static const BYTE TEST_RDP6_SCANLINES_DELTA_2C_ENCODED_UNSIGNED[3][6] =
 {
 	{ 0xFF, 0xFF, 0xFF, 0xFF, 0xFE, 0xFD },
 	{ 0x01, 0x7D, 0xF5, 0xC2, 0x9A, 0x38 },
@@ -2880,7 +2879,7 @@ static void fill_bitmap_alpha_channel(BYTE* data, int width, int height, BYTE va
 	}
 }
 
-void fill_bitmap_red_channel(BYTE* data, int width, int height, BYTE value)
+static void fill_bitmap_red_channel(BYTE* data, int width, int height, BYTE value)
 {
 	int i, j;
 	UINT32* pixel;
@@ -2895,7 +2894,7 @@ void fill_bitmap_red_channel(BYTE* data, int width, int height, BYTE value)
 	}
 }
 
-void fill_bitmap_green_channel(BYTE* data, int width, int height, BYTE value)
+static void fill_bitmap_green_channel(BYTE* data, int width, int height, BYTE value)
 {
 	int i, j;
 	UINT32* pixel;
@@ -2910,7 +2909,7 @@ void fill_bitmap_green_channel(BYTE* data, int width, int height, BYTE value)
 	}
 }
 
-void fill_bitmap_blue_channel(BYTE* data, int width, int height, BYTE value)
+static void fill_bitmap_blue_channel(BYTE* data, int width, int height, BYTE value)
 {
 	int i, j;
 	UINT32* pixel;
@@ -2925,7 +2924,7 @@ void fill_bitmap_blue_channel(BYTE* data, int width, int height, BYTE value)
 	}
 }
 
-void dump_color_channel(BYTE* data, int width, int height)
+static void dump_color_channel(BYTE* data, int width, int height)
 {
 	int i, j;
 
@@ -2940,14 +2939,14 @@ void dump_color_channel(BYTE* data, int width, int height)
 	}
 }
 
-int test_individual_planes_encoding_rle()
+static int test_individual_planes_encoding_rle(void)
 {
-	int width;
-	int height;
+	UINT32 width;
+	UINT32 height;
 	BYTE* pOutput;
 	int planeSize;
 	int compareSize;
-	int dstSizes[4];
+	UINT32 dstSizes[4];
 	int availableSize;
 	DWORD planarFlags;
 	BITMAP_PLANAR_CONTEXT* planar;
@@ -3073,10 +3072,9 @@ int test_individual_planes_encoding_rle()
 int TestFreeRDPCodecPlanar(int argc, char* argv[])
 {
 	int i;
-	int dstSize;
+	UINT32 dstSize;
 	UINT32 format;
 	BYTE* pDstData;
-	HCLRCONV clrconv;
 	DWORD planarFlags;
 	BYTE* srcBitmap32;
 	BYTE* srcBitmap16;
@@ -3089,10 +3087,20 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 	planarFlags = PLANAR_FORMAT_HEADER_NA;
 	planarFlags |= PLANAR_FORMAT_HEADER_RLE;
 	planar = freerdp_bitmap_planar_context_new(planarFlags, 64, 64);
-	clrconv = freerdp_clrconv_new(0);
 	srcBitmap16 = (BYTE*) TEST_RLE_UNCOMPRESSED_BITMAP_16BPP;
-	srcBitmap32 = freerdp_image_convert(srcBitmap16, NULL, 32, 32, 16, 32, clrconv);
+
 	format = PIXEL_FORMAT_ARGB32;
+	pDstData = calloc(32*32, GetBytesPerPixel(format));
+	if (!pDstData)
+		return -1;
+
+	if (freerdp_image_copy(pDstData, format,
+			   32 * GetBytesPerPixel(format),
+			   0, 0, 32, 32, srcBitmap16, PIXEL_FORMAT_RGB16,
+			   32 * GetBytesPerPixel(PIXEL_FORMAT_RGB16),
+			   0, 0, NULL))
+		return -1;
+
 #if 0
 	freerdp_bitmap_compress_planar(planar, srcBitmap32, format, 32, 32, 32 * 4, NULL, &dstSize);
 	freerdp_bitmap_planar_compress_plane_rle((BYTE*) TEST_RLE_SCANLINE_UNCOMPRESSED, 12, 1, NULL, &dstSize);
@@ -3309,7 +3317,6 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 
 	free(compressedBitmap);
 	free(decompressedBitmap);
-	freerdp_clrconv_free(clrconv);
 	_aligned_free(srcBitmap32);
 	freerdp_bitmap_planar_context_free(planar);
 	return 0;

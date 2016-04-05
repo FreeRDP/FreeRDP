@@ -33,12 +33,18 @@
 
 #define TAG FREERDP_TAG("cache.pointer")
 
-BOOL update_pointer_position(rdpContext* context, POINTER_POSITION_UPDATE* pointer_position)
+static void pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index,
+							  rdpPointer* pointer);
+static const rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, UINT32 index);
+
+static BOOL update_pointer_position(rdpContext* context,
+									const POINTER_POSITION_UPDATE* pointer_position)
 {
 	return Pointer_SetPosition(context, pointer_position->xPos, pointer_position->yPos);
 }
 
-BOOL update_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer_system)
+static BOOL update_pointer_system(rdpContext* context,
+								  const POINTER_SYSTEM_UPDATE* pointer_system)
 {
 	switch (pointer_system->type)
 	{
@@ -56,7 +62,8 @@ BOOL update_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer_s
 	return TRUE;
 }
 
-BOOL update_pointer_color(rdpContext* context, POINTER_COLOR_UPDATE* pointer_color)
+static BOOL update_pointer_color(rdpContext* context,
+								 const POINTER_COLOR_UPDATE* pointer_color)
 {
 	rdpPointer* pointer;
 	rdpCache* cache = context->cache;
@@ -103,7 +110,8 @@ out_fail:
 	return FALSE;
 }
 
-BOOL update_pointer_new(rdpContext* context, POINTER_NEW_UPDATE* pointer_new)
+static BOOL update_pointer_new(rdpContext* context,
+							   const POINTER_NEW_UPDATE* pointer_new)
 {
 	rdpPointer* pointer;
 	rdpCache* cache = context->cache;
@@ -148,9 +156,10 @@ out_fail:
 	return FALSE;
 }
 
-BOOL update_pointer_cached(rdpContext* context, POINTER_CACHED_UPDATE* pointer_cached)
+static BOOL update_pointer_cached(rdpContext* context,
+								  const POINTER_CACHED_UPDATE* pointer_cached)
 {
-	rdpPointer* pointer;
+	const rdpPointer* pointer;
 	rdpCache* cache = context->cache;
 
 	pointer = pointer_cache_get(cache->pointer, pointer_cached->cacheIndex);
@@ -163,9 +172,9 @@ BOOL update_pointer_cached(rdpContext* context, POINTER_CACHED_UPDATE* pointer_c
 	return FALSE;
 }
 
-rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, UINT32 index)
+const rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, UINT32 index)
 {
-	rdpPointer* pointer;
+	const rdpPointer* pointer;
 
 	if (index >= pointer_cache->cacheSize)
 	{
@@ -178,7 +187,8 @@ rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, UINT32 index)
 	return pointer;
 }
 
-void pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index, rdpPointer* pointer)
+void pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index,
+							  rdpPointer* pointer)
 {
 	rdpPointer* prevPointer;
 
@@ -233,10 +243,10 @@ void pointer_cache_free(rdpPointerCache* pointer_cache)
 {
 	if (pointer_cache != NULL)
 	{
-		int i;
+		UINT32 i;
 		rdpPointer* pointer;
 
-		for (i = 0; i < (int) pointer_cache->cacheSize; i++)
+		for (i = 0; i < pointer_cache->cacheSize; i++)
 		{
 			pointer = pointer_cache->entries[i];
 

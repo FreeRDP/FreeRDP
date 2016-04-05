@@ -22,15 +22,8 @@
 static const int SIGN_PRETEST_ITERATIONS = 100000;
 static const float TEST_TIME = 1.0;
 
-extern BOOL g_TestPrimitivesPerformance;
-
-extern pstatus_t general_sign_16s(const INT16 *pSrc, INT16 *pDst, int len);
-#ifdef WITH_SSE2
-extern pstatus_t ssse3_sign_16s(const INT16 *pSrc, INT16 *pDst, int len);
-#endif
-
 /* ------------------------------------------------------------------------- */
-int test_sign16s_func(void)
+static int test_sign16s_func(void)
 {
 	INT16 ALIGN(src[65535]), ALIGN(d1[65535]);
 #ifdef WITH_SSE2
@@ -39,75 +32,80 @@ int test_sign16s_func(void)
 #endif
 	int failed = 0;
 	char testStr[256];
-
 	/* Test when we can reach 16-byte alignment */
 	testStr[0] = '\0';
-	get_random_data(src, sizeof(src));
-	general_sign_16s(src+1, d1+1, 65535);
+	winpr_RAND(src, sizeof(src));
+	general_sign_16s(src + 1, d1 + 1, 65535);
 #ifdef WITH_SSE2
+
 	if (IsProcessorFeaturePresentEx(PF_EX_SSSE3))
 	{
 		strcat(testStr, " SSSE3");
-		ssse3_sign_16s(src+1, d2+1, 65535);
-		for (i=1; i<65535; ++i)
+		ssse3_sign_16s(src + 1, d2 + 1, 65535);
+
+		for (i = 1; i < 65535; ++i)
 		{
 			if (d1[i] != d2[i])
-			{ 
-				printf("SIGN16s-SSE-aligned FAIL[%d] of %d: want %d, got %d\n", 
-					i, src[i], d1[i], d2[i]); 
+			{
+				printf("SIGN16s-SSE-aligned FAIL[%d] of %d: want %d, got %d\n",
+				       i, src[i], d1[i], d2[i]);
 				++failed;
 			}
 		}
 	}
-#endif /* i386 */
 
+#endif /* i386 */
 	/* Test when we cannot reach 16-byte alignment */
-	get_random_data(src, sizeof(src));
-	general_sign_16s(src+1, d1+2, 65535);
+	winpr_RAND(src, sizeof(src));
+	general_sign_16s(src + 1, d1 + 2, 65535);
 #ifdef WITH_SSE2
+
 	if (IsProcessorFeaturePresentEx(PF_EX_SSSE3))
 	{
-		ssse3_sign_16s(src+1, d2+2, 65535);
-		for (i=2; i<65535; ++i)
+		ssse3_sign_16s(src + 1, d2 + 2, 65535);
+
+		for (i = 2; i < 65535; ++i)
 		{
 			if (d1[i] != d2[i])
-			{ 
-				printf("SIGN16s-SSE-unaligned FAIL[%d] of %d: want %d, got %d\n", 
-					i, src[i-1], d1[i], d2[i]); 
+			{
+				printf("SIGN16s-SSE-unaligned FAIL[%d] of %d: want %d, got %d\n",
+				       i, src[i - 1], d1[i], d2[i]);
 				++failed;
 			}
 		}
 	}
+
 #endif /* i386 */
+
 	if (!failed) printf("All sign16s tests passed (%s).\n", testStr);
+
 	return (failed > 0) ? FAILURE : SUCCESS;
 }
 
 /* ------------------------------------------------------------------------- */
-STD_SPEED_TEST(sign16s_speed_test, INT16, INT16, dst=dst,
-	TRUE, general_sign_16s(src1, dst, size),
+STD_SPEED_TEST(sign16s_speed_test, INT16, INT16, dst = dst,
+	       TRUE, general_sign_16s(src1, dst, size),
 #ifdef WITH_SSE2
-	TRUE, ssse3_sign_16s(src1, dst, size), PF_EX_SSSE3, TRUE,
+	       TRUE, ssse3_sign_16s(src1, dst, size), PF_EX_SSSE3, TRUE,
 #else
-	FALSE, PRIM_NOP, 0, FALSE,
+	       FALSE, PRIM_NOP, 0, FALSE,
 #endif
-	FALSE, dst=dst);
+	       FALSE, dst = dst);
 
-int test_sign16s_speed(void)
+static int test_sign16s_speed(void)
 {
-	INT16 ALIGN(src[MAX_TEST_SIZE+3]), ALIGN(dst[MAX_TEST_SIZE+3]);
-	get_random_data(src, sizeof(src));
+	INT16 ALIGN(src[MAX_TEST_SIZE + 3]), ALIGN(dst[MAX_TEST_SIZE + 3]);
+	winpr_RAND(src, sizeof(src));
 	sign16s_speed_test("sign16s", "aligned", src, NULL, 0, dst,
-		test_sizes, NUM_TEST_SIZES, SIGN_PRETEST_ITERATIONS, TEST_TIME);
-	sign16s_speed_test("sign16s", "unaligned", src+1, NULL, 0, dst,
-		test_sizes, NUM_TEST_SIZES, SIGN_PRETEST_ITERATIONS, TEST_TIME);
+			   test_sizes, NUM_TEST_SIZES, SIGN_PRETEST_ITERATIONS, TEST_TIME);
+	sign16s_speed_test("sign16s", "unaligned", src + 1, NULL, 0, dst,
+			   test_sizes, NUM_TEST_SIZES, SIGN_PRETEST_ITERATIONS, TEST_TIME);
 	return SUCCESS;
 }
 
 int TestPrimitivesSign(int argc, char* argv[])
 {
 	int status;
-
 	status = test_sign16s_func();
 
 	if (status != SUCCESS)

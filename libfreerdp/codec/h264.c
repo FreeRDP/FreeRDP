@@ -1483,19 +1483,21 @@ static BOOL avc_yuv_to_rgb(H264_CONTEXT* h264, const RECTANGLE_16* regionRects,
 		roi.width = width;
 		roi.height = height;
 
+		// TODO: Color format converstion support!!!
 		if (use444)
 		{
 			if (prims->YUV444ToRGB_8u_P3AC4R(
-				       pYUVPoint, iStride, pDstPoint,
-				       nDstStep, &roi) != PRIMITIVES_SUCCESS)
+				    pYUVPoint, iStride, pDstPoint, nDstStep,
+				    DstFormat, &roi) != PRIMITIVES_SUCCESS)
 			{
 				return FALSE;
 			}
 		}
 		else
 		{
-			if (prims->YUV420ToRGB_8u_P3AC4R(pYUVPoint, iStride, pDstPoint,
-						      nDstStep, &roi) != PRIMITIVES_SUCCESS)
+			if (prims->YUV420ToRGB_8u_P3AC4R(
+				    pYUVPoint, iStride, pDstPoint, nDstStep,
+				    DstFormat, &roi) != PRIMITIVES_SUCCESS)
 				return FALSE;
 		}
 	}
