@@ -3,18 +3,18 @@
 
 #include <freerdp/gdi/dc.h>
 #include <freerdp/gdi/pen.h>
-#include <freerdp/gdi/line.h>
 #include <freerdp/gdi/shape.h>
-#include <freerdp/gdi/brush.h>
 #include <freerdp/gdi/region.h>
 #include <freerdp/gdi/bitmap.h>
 #include <freerdp/gdi/drawing.h>
-#include <freerdp/gdi/palette.h>
-#include <freerdp/gdi/clipping.h>
-#include <freerdp/gdi/32bpp.h>
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
+
+#include "line.h"
+#include "brush.h"
+#include "clipping.h"
+#include "32bpp.h"
 
 int test_gdi_PtInRect(void)
 {
@@ -66,16 +66,14 @@ int test_gdi_FillRect(void)
 	HGDI_RECT hRect;
 	HGDI_BRUSH hBrush;
 	HGDI_BITMAP hBitmap;
-	GDI_COLOR color;
-	GDI_COLOR pixel;
-	GDI_COLOR rawPixel;
-
+	UINT32 color;
+	UINT32 pixel;
+	UINT32 rawPixel;
 	int x, y;
 	int badPixels;
 	int goodPixels;
 	int width = 200;
 	int height = 300;
-
 	int left = 20;
 	int top = 40;
 	int right = 60;
@@ -87,8 +85,7 @@ int test_gdi_FillRect(void)
 		return -1;
 	}
 
-	hdc->bytesPerPixel = 4;
-	hdc->bitsPerPixel = 32;
+	hdc->format = PIXEL_FORMAT_XRGB32;
 
 	if (!(hRect = gdi_CreateRect(left, top, right, bottom)))
 	{
@@ -97,14 +94,11 @@ int test_gdi_FillRect(void)
 	}
 
 	hBitmap = gdi_CreateCompatibleBitmap(hdc, width, height);
-	ZeroMemory(hBitmap->data, width * height * hdc->bytesPerPixel);
+	ZeroMemory(hBitmap->data, width * height * GetBytesPerPixel(hdc->format));
 	gdi_SelectObject(hdc, (HGDIOBJECT) hBitmap);
-
-	color = (GDI_COLOR) ARGB32(0xFF, 0xAA, 0xBB, 0xCC);
+	color = GetColor(PIXEL_FORMAT_ARGB32, 0xAA, 0xBB, 0xCC, 0xFF);
 	hBrush = gdi_CreateSolidBrush(color);
-
 	gdi_FillRect(hdc, hRect, hBrush);
-
 	badPixels = 0;
 	goodPixels = 0;
 
@@ -113,24 +107,28 @@ int test_gdi_FillRect(void)
 		for (y = 0; y < height; y++)
 		{
 			rawPixel = gdi_GetPixel(hdc, x, y);
-			pixel = gdi_get_color_32bpp(hdc, rawPixel);
+			pixel = ConvertColor(rawPixel, hdc->format, PIXEL_FORMAT_ARGB32, NULL);
 
 			if (gdi_PtInRect(hRect, x, y))
 			{
-				if (pixel == color) {
+				if (pixel == color)
+				{
 					goodPixels++;
 				}
-				else {
+				else
+				{
 					printf("actual:%04X expected:%04X\n", gdi_GetPixel(hdc, x, y), color);
 					badPixels++;
 				}
 			}
 			else
 			{
-				if (pixel == color) {
+				if (pixel == color)
+				{
 					badPixels++;
 				}
-				else {
+				else
+				{
 					goodPixels++;
 				}
 			}
@@ -145,7 +143,6 @@ int test_gdi_FillRect(void)
 
 	gdi_DeleteObject((HGDIOBJECT) hBrush);
 	gdi_DeleteObject((HGDIOBJECT) hBitmap);
-
 	return 0;
 }
 

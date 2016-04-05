@@ -3,19 +3,19 @@
 
 #include <freerdp/gdi/dc.h>
 #include <freerdp/gdi/pen.h>
-#include <freerdp/gdi/line.h>
-#include <freerdp/gdi/brush.h>
 #include <freerdp/gdi/region.h>
 #include <freerdp/gdi/bitmap.h>
-#include <freerdp/gdi/palette.h>
 #include <freerdp/gdi/drawing.h>
 
 #include <winpr/crt.h>
 
+#include "line.h"
+#include "brush.h"
+
 /* BitBlt() Test Data */
 
 /* source bitmap (16x16) */
-BYTE bmp_SRC[256] =
+static BYTE bmp_SRC[256] =
 {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -36,7 +36,7 @@ BYTE bmp_SRC[256] =
 };
 
 /* destination bitmap (16x16) */
-BYTE bmp_DST[256] =
+static BYTE bmp_DST[256] =
 {
 	"\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -57,7 +57,7 @@ BYTE bmp_DST[256] =
 };
 
 /* pattern bitmap (8x8) */
-BYTE bmp_PAT[64] =
+static BYTE bmp_PAT[64] =
 {
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00"
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00"
@@ -70,7 +70,7 @@ BYTE bmp_PAT[64] =
 };
 
 /* SRCCOPY (0x00CC0020) */
-BYTE bmp_SRCCOPY[256] =
+static BYTE bmp_SRCCOPY[256] =
 {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -91,7 +91,7 @@ BYTE bmp_SRCCOPY[256] =
 };
 
 /* BLACKNESS (0x00000042) */
-BYTE bmp_BLACKNESS[256] =
+static BYTE bmp_BLACKNESS[256] =
 {
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -112,7 +112,7 @@ BYTE bmp_BLACKNESS[256] =
 };
 
 /* WHITENESS (0x00FF0062) */
-BYTE bmp_WHITENESS[256] =
+static BYTE bmp_WHITENESS[256] =
 {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -133,7 +133,7 @@ BYTE bmp_WHITENESS[256] =
 };
 
 /* SRCAND (0x008800C6) */
-BYTE bmp_SRCAND[256] =
+static BYTE bmp_SRCAND[256] =
 {
 	"\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -154,7 +154,7 @@ BYTE bmp_SRCAND[256] =
 };
 
 /* SRCPAINT (0x00EE0086) */
-BYTE bmp_SRCPAINT[256] =
+static BYTE bmp_SRCPAINT[256] =
 {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -175,7 +175,7 @@ BYTE bmp_SRCPAINT[256] =
 };
 
 /* SRCINVERT (0x00660046) */
-BYTE bmp_SRCINVERT[256] =
+static BYTE bmp_SRCINVERT[256] =
 {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -196,7 +196,7 @@ BYTE bmp_SRCINVERT[256] =
 };
 
 /* SRCERASE (0x00440328) */
-BYTE bmp_SRCERASE[256] =
+static BYTE bmp_SRCERASE[256] =
 {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -217,7 +217,7 @@ BYTE bmp_SRCERASE[256] =
 };
 
 /* NOTSRCCOPY (0x00330008) */
-BYTE bmp_NOTSRCCOPY[256] =
+static BYTE bmp_NOTSRCCOPY[256] =
 {
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -238,7 +238,7 @@ BYTE bmp_NOTSRCCOPY[256] =
 };
 
 /* NOTSRCERASE (0x001100A6) */
-BYTE bmp_NOTSRCERASE[256] =
+static BYTE bmp_NOTSRCERASE[256] =
 {
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -259,7 +259,7 @@ BYTE bmp_NOTSRCERASE[256] =
 };
 
 /* DSTINVERT (0x00550009) */
-BYTE bmp_DSTINVERT[256] =
+static BYTE bmp_DSTINVERT[256] =
 {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -280,7 +280,7 @@ BYTE bmp_DSTINVERT[256] =
 };
 
 /* SPna (0x000C0324) */
-BYTE bmp_SPna[256] =
+static BYTE bmp_SPna[256] =
 {
 	"\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF"
 	"\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF"
@@ -301,7 +301,7 @@ BYTE bmp_SPna[256] =
 };
 
 /* MERGEPAINT (0x00BB0226) */
-BYTE bmp_MERGEPAINT[256] =
+static BYTE bmp_MERGEPAINT[256] =
 {
 	"\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -322,7 +322,7 @@ BYTE bmp_MERGEPAINT[256] =
 };
 
 /* MERGECOPY (0x00C000CA) */
-BYTE bmp_MERGECOPY[256] =
+static BYTE bmp_MERGECOPY[256] =
 {
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00"
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00"
@@ -343,7 +343,7 @@ BYTE bmp_MERGECOPY[256] =
 };
 
 /* PATPAINT (0x00FB0A09) */
-BYTE bmp_PATPAINT[256] =
+static BYTE bmp_PATPAINT[256] =
 {
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -364,7 +364,7 @@ BYTE bmp_PATPAINT[256] =
 };
 
 /* PATCOPY (0x00F00021) */
-BYTE bmp_PATCOPY[256] =
+static BYTE bmp_PATCOPY[256] =
 {
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00"
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00"
@@ -385,7 +385,7 @@ BYTE bmp_PATCOPY[256] =
 };
 
 /* PATINVERT (0x005A0049) */
-BYTE bmp_PATINVERT[256] =
+static BYTE bmp_PATINVERT[256] =
 {
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00\x00\x00\xFF\xFF\x00\x00\xFF\xFF"
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00\x00\x00\xFF\xFF\x00\x00\xFF\xFF"
@@ -405,73 +405,29 @@ BYTE bmp_PATINVERT[256] =
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00\x00\x00\xFF\xFF\x00\x00\xFF\xFF"
 };
 
-int CompareBitmaps(HGDI_BITMAP hBmp1, HGDI_BITMAP hBmp2)
+static int CompareBitmaps(HGDI_BITMAP hBmp1, HGDI_BITMAP hBmp2)
 {
-	int bpp;
-	int x, y;
+	UINT32 x, y;
 	BYTE *p1, *p2;
 
-	int minw = (hBmp1->width < hBmp2->width) ? hBmp1->width : hBmp2->width;
-	int minh = (hBmp1->height < hBmp2->height) ? hBmp1->height : hBmp2->height;
+	UINT32 minw = (hBmp1->width < hBmp2->width) ? hBmp1->width : hBmp2->width;
+	UINT32 minh = (hBmp1->height < hBmp2->height) ? hBmp1->height : hBmp2->height;
 
-	if (hBmp1->bitsPerPixel == hBmp2->bitsPerPixel)
+	if (hBmp1->format == hBmp2->format)
 	{
+		UINT32 colorA, colorB;
 		p1 = hBmp1->data;
 		p2 = hBmp2->data;
-		bpp = hBmp1->bitsPerPixel;
 
-		if (bpp == 32)
+		for (y = 0; y < minh; y++)
 		{
-			for (y = 0; y < minh; y++)
+			for (x = 0; x < minw; x++)
 			{
-				for (x = 0; x < minw; x++)
-				{
-					if (*p1 != *p2)
-						return 0;
-					p1++;
-					p2++;
+				colorA = ReadColor(p1, hBmp1->format);
+				colorB = ReadColor(p2, hBmp2->format);
 
-					if (*p1 != *p2)
-						return 0;
-					p1++;
-					p2++;
-
-					if (*p1 != *p2)
-						return 0;
-					p1 += 2;
-					p2 += 2;
-				}
-			}
-		}
-		else if (bpp == 16)
-		{
-			for (y = 0; y < minh; y++)
-			{
-				for (x = 0; x < minw; x++)
-				{
-					if (*p1 != *p2)
-						return 0;
-					p1++;
-					p2++;
-
-					if (*p1 != *p2)
-						return 0;
-					p1++;
-					p2++;
-				}
-			}
-		}
-		else if (bpp == 8)
-		{
-			for (y = 0; y < minh; y++)
-			{
-				for (x = 0; x < minw; x++)
-				{
-					if (*p1 != *p2)
-						return 0;
-					p1++;
-					p2++;
-				}
+				p1 += GetBytesPerPixel(hBmp1->format);
+				p2 += GetBytesPerPixel(hBmp2->format);
 			}
 		}
 	}
@@ -483,7 +439,7 @@ int CompareBitmaps(HGDI_BITMAP hBmp1, HGDI_BITMAP hBmp2)
 	return 1;
 }
 
-void test_dump_data(unsigned char* p, int len, int width, const char* name)
+static void test_dump_data(unsigned char* p, int len, int width, const char* name)
 {
 	unsigned char *line = p;
 	int i, thisline, offset = 0;
@@ -511,9 +467,11 @@ void test_dump_data(unsigned char* p, int len, int width, const char* name)
 	printf("\n");
 }
 
-void test_dump_bitmap(HGDI_BITMAP hBmp, const char* name)
+static void test_dump_bitmap(HGDI_BITMAP hBmp, const char* name)
 {
-	test_dump_data(hBmp->data, hBmp->width * hBmp->height * hBmp->bytesPerPixel, hBmp->width * hBmp->bytesPerPixel, name);
+	UINT32 stride = hBmp->width * GetBytesPerPixel(hBmp->format);
+
+	test_dump_data(hBmp->data, hBmp->height * stride, stride, name);
 }
 
 int test_assert_bitmaps_equal(HGDI_BITMAP hBmpActual, HGDI_BITMAP hBmpExpected, const char* name)
@@ -559,94 +517,84 @@ int test_gdi_BitBlt_32bpp(void)
 	HGDI_BITMAP hBmp_PATPAINT;
 	HGDI_BITMAP hBmp_PATINVERT;
 	HGDI_BITMAP hBmpDstOriginal;
-	rdpPalette* hPalette;
-	HCLRCONV clrconv;
-
-	int bytesPerPixel = 4;
-	int bitsPerPixel = 32;
+	UINT32* hPalette;
+    const UINT32 format = PIXEL_FORMAT_XRGB32;
 
 	if (!(hdcSrc = gdi_GetDC()))
 	{
 		printf("failed to get gdi device context\n");
 		return -1;
 	}
-	hdcSrc->bytesPerPixel = bytesPerPixel;
-	hdcSrc->bitsPerPixel = bitsPerPixel;
+	hdcSrc->format = format;
 
 	if (!(hdcDst = gdi_GetDC()))
 	{
 		printf("failed to get gdi device context\n");
 		return -1;
 	}
-	hdcDst->bytesPerPixel = bytesPerPixel;
-	hdcDst->bitsPerPixel = bitsPerPixel;
+	hdcDst->format = format;
 
-	hPalette = (rdpPalette*) gdi_GetSystemPalette();
+	hPalette = NULL; // TODO: Get a real palette!
 
-	clrconv = (HCLRCONV) calloc(1, sizeof(CLRCONV));
-	clrconv->alpha = 0;
-	clrconv->invert = 0;
-	clrconv->palette = hPalette;
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRC, NULL, 16, 16, 8, format, hPalette);
+	hBmpSrc = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRC, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmpSrc = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_DST, NULL, 16, 16, 8, format, hPalette);
+	hBmpDst = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_DST, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmpDst = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_DST, NULL, 16, 16, 8, format, hPalette);
+	hBmpDstOriginal = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_DST, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmpDstOriginal = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PAT, NULL, 8, 8, 8, format, hPalette);
+	hBmpPat = gdi_CreateBitmap(8, 8, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PAT, NULL, 8, 8, 8, bitsPerPixel, clrconv);
-	hBmpPat = gdi_CreateBitmap(8, 8, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCCOPY, NULL, 16, 16, 8, format, hPalette);
+	hBmp_SRCCOPY = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCCOPY, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCCOPY = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SPna, NULL, 16, 16, 8, format, hPalette);
+	hBmp_SPna = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SPna, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SPna = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_BLACKNESS, NULL, 16, 16, 8, format, hPalette);
+	hBmp_BLACKNESS = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_BLACKNESS, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_BLACKNESS = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_WHITENESS, NULL, 16, 16, 8, format, hPalette);
+	hBmp_WHITENESS = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_WHITENESS, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_WHITENESS = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCAND, NULL, 16, 16, 8, format, hPalette);
+	hBmp_SRCAND = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCAND, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCAND = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCPAINT, NULL, 16, 16, 8, format, hPalette);
+	hBmp_SRCPAINT = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCPAINT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCPAINT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCINVERT, NULL, 16, 16, 8, format, hPalette);
+	hBmp_SRCINVERT = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCINVERT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCINVERT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCERASE, NULL, 16, 16, 8, format, hPalette);
+	hBmp_SRCERASE = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCERASE, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCERASE = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_NOTSRCCOPY, NULL, 16, 16, 8, format, hPalette);
+	hBmp_NOTSRCCOPY = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_NOTSRCCOPY, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_NOTSRCCOPY = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_NOTSRCERASE, NULL, 16, 16, 8, format, hPalette);
+	hBmp_NOTSRCERASE = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_NOTSRCERASE, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_NOTSRCERASE = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_DSTINVERT, NULL, 16, 16, 8, format, hPalette);
+	hBmp_DSTINVERT = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_DSTINVERT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_DSTINVERT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_MERGECOPY, NULL, 16, 16, 8, format, hPalette);
+	hBmp_MERGECOPY = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_MERGECOPY, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_MERGECOPY = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_MERGEPAINT, NULL, 16, 16, 8, format, hPalette);
+	hBmp_MERGEPAINT = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_MERGEPAINT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_MERGEPAINT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PATCOPY, NULL, 16, 16, 8, format, hPalette);
+	hBmp_PATCOPY = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PATCOPY, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_PATCOPY = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PATPAINT, NULL, 16, 16, 8, format, hPalette);
+	hBmp_PATPAINT = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PATPAINT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_PATPAINT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PATINVERT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_PATINVERT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PATINVERT, NULL, 16, 16, 8, format, hPalette);
+	hBmp_PATINVERT = gdi_CreateBitmap(16, 16, format, data);
 
 	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
 	gdi_SelectObject(hdcDst, (HGDIOBJECT) hBmpDst);
@@ -982,10 +930,7 @@ int test_gdi_BitBlt_16bpp(void)
 	HGDI_BITMAP hBmp_PATINVERT;
 	HGDI_BITMAP hBmpDstOriginal;
 	rdpPalette* hPalette;
-	HCLRCONV clrconv;
-
-	int bytesPerPixel = 2;
-	int bitsPerPixel = 16;
+    const UINT32 format = PIXEL_FORMAT_XRGB32;
 
 	if (!(hdcSrc = gdi_GetDC()))
 	{
@@ -993,8 +938,7 @@ int test_gdi_BitBlt_16bpp(void)
 		return -1;
 	}
 
-	hdcSrc->bytesPerPixel = bytesPerPixel;
-	hdcSrc->bitsPerPixel = bitsPerPixel;
+	hdcSrc->format = format;
 
 	if (!(hdcDst = gdi_GetDC()))
 	{
@@ -1002,75 +946,69 @@ int test_gdi_BitBlt_16bpp(void)
 		return -1;
 	}
 
-	hdcDst->bytesPerPixel = bytesPerPixel;
-	hdcDst->bitsPerPixel = bitsPerPixel;
+	hdcDst->format = format;
 
 	hPalette = (rdpPalette*) gdi_GetSystemPalette();
 
-	clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
-	clrconv->alpha = 1;
-	clrconv->invert = 0;
-	clrconv->palette = hPalette;
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRC, NULL, 16, 16, 8, format, hPalette);
+	hBmpSrc = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRC, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmpSrc = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_DST, NULL, 16, 16, 8, format, hPalette);
+	hBmpDst = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_DST, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmpDst = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_DST, NULL, 16, 16, 8, format, hPalette);
+	hBmpDstOriginal = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_DST, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmpDstOriginal = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PAT, NULL, 8, 8, 8, format, hPalette);
+	hBmpPat = gdi_CreateBitmap(8, 8, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PAT, NULL, 8, 8, 8, bitsPerPixel, clrconv);
-	hBmpPat = gdi_CreateBitmap(8, 8, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCCOPY, NULL, 16, 16, 8, format, hPalette);
+	hBmp_SRCCOPY = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCCOPY, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCCOPY = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SPna, NULL, 16, 16, 8, format, hPalette);
+	hBmp_SPna = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SPna, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SPna = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_BLACKNESS, NULL, 16, 16, 8, format, hPalette);
+	hBmp_BLACKNESS = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_BLACKNESS, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_BLACKNESS = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_WHITENESS, NULL, 16, 16, 8, format, hPalette);
+	hBmp_WHITENESS = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_WHITENESS, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_WHITENESS = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCAND, NULL, 16, 16, 8, format, hPalette);
+	hBmp_SRCAND = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCAND, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCAND = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCPAINT, NULL, 16, 16, 8, format, hPalette);
+	hBmp_SRCPAINT = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCPAINT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCPAINT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCINVERT, NULL, 16, 16, 8, format, hPalette);
+	hBmp_SRCINVERT = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCINVERT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCINVERT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCERASE, NULL, 16, 16, 8, format, hPalette);
+	hBmp_SRCERASE = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCERASE, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCERASE = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_NOTSRCCOPY, NULL, 16, 16, 8, format, hPalette);
+	hBmp_NOTSRCCOPY = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_NOTSRCCOPY, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_NOTSRCCOPY = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_NOTSRCERASE, NULL, 16, 16, 8, format, hPalette);
+	hBmp_NOTSRCERASE = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_NOTSRCERASE, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_NOTSRCERASE = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_DSTINVERT, NULL, 16, 16, 8, format, hPalette);
+	hBmp_DSTINVERT = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_DSTINVERT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_DSTINVERT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_MERGECOPY, NULL, 16, 16, 8, format, hPalette);
+	hBmp_MERGECOPY = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_MERGECOPY, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_MERGECOPY = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_MERGEPAINT, NULL, 16, 16, 8, format, hPalette);
+	hBmp_MERGEPAINT = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_MERGEPAINT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_MERGEPAINT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PATCOPY, NULL, 16, 16, 8, format, hPalette);
+	hBmp_PATCOPY = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PATCOPY, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_PATCOPY = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PATPAINT, NULL, 16, 16, 8, format, hPalette);
+	hBmp_PATPAINT = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PATPAINT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_PATPAINT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PATINVERT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_PATINVERT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PATINVERT, NULL, 16, 16, 8, format, hPalette);
+	hBmp_PATINVERT = gdi_CreateBitmap(16, 16, format, data);
 
 	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
 	gdi_SelectObject(hdcDst, (HGDIOBJECT) hBmpDst);
@@ -1403,11 +1341,8 @@ int test_gdi_BitBlt_8bpp(void)
 	HGDI_BITMAP hBmp_PATPAINT;
 	HGDI_BITMAP hBmp_PATINVERT;
 	HGDI_BITMAP hBmpDstOriginal;
-	rdpPalette* hPalette;
-	HCLRCONV clrconv;
-
-	int bytesPerPixel = 1;
-	int bitsPerPixel = 8;
+    DWORD* hPalette;
+    const UINT32 format = PIXEL_FORMAT_XRGB32;
 
 	if (!(hdcSrc = gdi_GetDC()))
 	{
@@ -1415,8 +1350,11 @@ int test_gdi_BitBlt_8bpp(void)
 		return -1;
 	}
 
-	hdcSrc->bytesPerPixel = bytesPerPixel;
-	hdcSrc->bitsPerPixel = bitsPerPixel;
+	hdcSrc->format = format;
+
+    data = calloc(1024, 1024);
+    if (!data)
+        return -1;
 
 	if (!(hdcDst = gdi_GetDC()))
 	{
@@ -1424,75 +1362,109 @@ int test_gdi_BitBlt_8bpp(void)
 		return -1;
 	}
 
-	hdcDst->bytesPerPixel = bytesPerPixel;
-	hdcDst->bitsPerPixel = bitsPerPixel;
+	hdcDst->format = format;
 
-	hPalette = (rdpPalette*) gdi_GetSystemPalette();
+    hPalette = NULL; // TODO
 
-	clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
-	clrconv->alpha = 1;
-	clrconv->invert = 0;
-	clrconv->palette = hPalette;
+    if (!freerdp_image_copy(data, format, -1, 0, 0, 16, 16,
+                            bmp_SRC, PIXEL_FORMAT_RGB8, -1, 0, 0, hPalette))
+        return -1;
+	hBmpSrc = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRC, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmpSrc = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+    if (!freerdp_image_copy(data, format, -1, 0, 0, 16, 16,
+                            bmp_DST, PIXEL_FORMAT_RGB8, -1, 0, 0, hPalette))
+        return -1;
+	hBmpDst = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_DST, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmpDst = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+    if (!freerdp_image_copy(data, format, -1, 0, 0, 16, 16,
+                            bmp_DST, PIXEL_FORMAT_RGB8, -1, 0, 0, hPalette))
+        return -1;
+	hBmpDstOriginal = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_DST, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmpDstOriginal = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+    if (!freerdp_image_copy(data, format, -1, 0, 0, 8, 8,
+                            bmp_DST, PIXEL_FORMAT_RGB8, -1, 0, 0, hPalette))
+        return -1;
+	hBmpPat = gdi_CreateBitmap(8, 8, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PAT, NULL, 8, 8, 8, bitsPerPixel, clrconv);
-	hBmpPat = gdi_CreateBitmap(8, 8, bitsPerPixel, data);
+    if (!freerdp_image_copy(data, format, -1, 0, 0, 16, 16,
+                            bmp_SRCCOPY, PIXEL_FORMAT_RGB8, -1, 0, 0, hPalette))
+        return -1;
+	hBmp_SRCCOPY = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCCOPY, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCCOPY = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+    if (!freerdp_image_copy(data, format, -1, 0, 0, 16, 16,
+                            bmp_SPna, PIXEL_FORMAT_RGB8, -1, 0, 0, hPalette))
+        return -1;
+	hBmp_SPna = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SPna, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SPna = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+    if (!freerdp_image_copy(data, format, -1, 0, 0, 16, 16,
+                            bmp_BLACKNESS, PIXEL_FORMAT_RGB8, -1, 0, 0, hPalette))
+        return -1;
+	hBmp_BLACKNESS = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_BLACKNESS, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_BLACKNESS = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+    if (!freerdp_image_copy(data, format, -1, 0, 0, 16, 16,
+                            bmp_WHITENESS, PIXEL_FORMAT_RGB8, -1, 0, 0, hPalette))
+        return -1;
+	hBmp_WHITENESS = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_WHITENESS, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_WHITENESS = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+    if (!freerdp_image_copy(data, format, -1, 0, 0, 16, 16,
+                            bmp_SRCAND, PIXEL_FORMAT_RGB8, -1, 0, 0, hPalette))
+        return -1;
+	hBmp_SRCAND = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCAND, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCAND = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+    if (!freerdp_image_copy(data, format, -1, 0, 0, 16, 16,
+                            bmp_SRCPAINT, PIXEL_FORMAT_RGB8, -1, 0, 0, hPalette))
+        return -1;
+	hBmp_SRCPAINT = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCPAINT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCPAINT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+    if (!freerdp_image_copy(data, format, -1, 0, 0, 16, 16,
+                            bmp_SRCINVERT, PIXEL_FORMAT_RGB8, -1, 0, 0, hPalette))
+        return -1;
+	hBmp_SRCINVERT = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCINVERT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCINVERT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+    if (!freerdp_image_copy(data, format, -1, 0, 0, 16, 16,
+                            bmp_SRCERASE, PIXEL_FORMAT_RGB8, -1, 0, 0, hPalette))
+        return -1;
+	hBmp_SRCERASE = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCERASE, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCERASE = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+    if (!freerdp_image_copy(data, format, -1, 0, 0, 16, 16,
+                            bmp_NOTSRCCOPY, PIXEL_FORMAT_RGB8, -1, 0, 0, hPalette))
+        return -1;
+	hBmp_NOTSRCCOPY = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_NOTSRCCOPY, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_NOTSRCCOPY = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+    if (!freerdp_image_copy(data, format, -1, 0, 0, 16, 16,
+                            bmp_NOTSRCERASE, PIXEL_FORMAT_RGB8, -1, 0, 0, hPalette))
+        return -1;
+	hBmp_NOTSRCERASE = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_NOTSRCERASE, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_NOTSRCERASE = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+    if (!freerdp_image_copy(data, format, -1, 0, 0, 16, 16,
+                            bmp_DSTINVERT, PIXEL_FORMAT_RGB8, -1, 0, 0, hPalette))
+        return -1;
+	hBmp_DSTINVERT = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_DSTINVERT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_DSTINVERT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+    if (!freerdp_image_copy(data, format, -1, 0, 0, 16, 16,
+                            bmp_MERGECOPY, PIXEL_FORMAT_RGB8, -1, 0, 0, hPalette))
+        return -1;
+	hBmp_MERGECOPY = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_MERGECOPY, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_MERGECOPY = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+    if (!freerdp_image_copy(data, format, -1, 0, 0, 16, 16,
+                            bmp_MERGEPAINT, PIXEL_FORMAT_RGB8, -1, 0, 0, hPalette))
+        return -1;
+	hBmp_MERGEPAINT = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_MERGEPAINT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_MERGEPAINT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+    if (!freerdp_image_copy(data, format, -1, 0, 0, 16, 16,
+                            bmp_PATCOPY, PIXEL_FORMAT_RGB8, -1, 0, 0, hPalette))
+        return -1;
+	hBmp_PATCOPY = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PATCOPY, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_PATCOPY = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+    if (!freerdp_image_copy(data, format, -1, 0, 0, 16, 16,
+                            bmp_PATPAINT, PIXEL_FORMAT_RGB8, -1, 0, 0, hPalette))
+        return -1;
+	hBmp_PATPAINT = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PATPAINT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_PATPAINT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PATINVERT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_PATINVERT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+    if (!freerdp_image_copy(data, format, -1, 0, 0, 16, 16,
+                            bmp_PATINVERT, PIXEL_FORMAT_RGB8, -1, 0, 0, hPalette))
+        return -1;
+	hBmp_PATINVERT = gdi_CreateBitmap(16, 16, format, data);
 
 	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
 	gdi_SelectObject(hdcDst, (HGDIOBJECT) hBmpDst);

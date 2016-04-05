@@ -334,7 +334,7 @@ static BOOL android_pre_connect(freerdp* instance)
 
 static BOOL android_post_connect(freerdp* instance)
 {
-	UINT32 gdi_flags;
+	UINT32 gdi_format;
 	rdpSettings *settings;
 
 	if (!instance || !instance->settings || !instance->context || !instance->update)
@@ -346,11 +346,11 @@ static BOOL android_post_connect(freerdp* instance)
 		return FALSE;
 
 	if (instance->settings->ColorDepth > 16)
-		gdi_flags = CLRBUF_32BPP | CLRCONV_ALPHA | CLRCONV_INVERT;
+		gdi_format = PIXEL_FORMAT_ARGB32;
 	else
-		gdi_flags = CLRBUF_16BPP;
+		gdi_format = PIXEL_FORMAT_RGB16;
 
-	if (!gdi_init(instance, gdi_flags, NULL))
+	if (!gdi_init(instance, gdi_format))
 		return FALSE;
 
 	instance->update->BeginPaint = android_begin_paint;
@@ -916,7 +916,7 @@ static jboolean JNICALL jni_freerdp_update_graphics(
 	}
 
 	copy_pixel_buffer(pixels, gdi->primary_buffer, x, y, width, height,
-			  gdi->width, gdi->height, gdi->bytesPerPixel);
+			  gdi->width, gdi->height, GetBytesPerPixel(gdi->dstFormat));
 
 	if ((ret = AndroidBitmap_unlockPixels(env, bitmap)) < 0)
 	{

@@ -188,13 +188,14 @@ BOOL shadow_client_capabilities(freerdp_peer* peer)
 	return TRUE;
 }
 
-static INLINE void shadow_client_calc_desktop_size(rdpShadowServer* server, int* pWidth, int* pHeight)
+static INLINE void shadow_client_calc_desktop_size(rdpShadowServer* server,
+						   UINT32* pWidth, UINT32* pHeight)
 {
 	RECTANGLE_16 viewport = {0, 0, server->screen->width, server->screen->height};
 
 	if (server->shareSubRect)
 	{
-		rectangles_intersection(&viewport, &(server->subRect), &viewport); 
+		rectangles_intersection(&viewport, &(server->subRect), &viewport);
 	}
 
 	(*pWidth) = viewport.right - viewport.left;
@@ -204,7 +205,7 @@ static INLINE void shadow_client_calc_desktop_size(rdpShadowServer* server, int*
 BOOL shadow_client_post_connect(freerdp_peer* peer)
 {
 	int authStatus;
-	int width, height;
+	UINT32 width, height;
 	rdpSettings* settings;
 	rdpShadowClient* client;
 	rdpShadowServer* server;
@@ -270,7 +271,7 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 }
 
 /* Convert rects in sub rect coordinate to client/surface coordinate */
-static INLINE void shadow_client_convert_rects(rdpShadowClient* client, 
+static INLINE void shadow_client_convert_rects(rdpShadowClient* client,
 		RECTANGLE_16* dst, RECTANGLE_16* src, UINT32 numRects)
 {
 	if (client->server->shareSubRect)
@@ -442,10 +443,10 @@ BOOL shadow_client_logon(freerdp_peer* peer, SEC_WINNT_AUTH_IDENTITY* identity, 
 BOOL shadow_client_surface_frame_acknowledge(rdpShadowClient* client, UINT32 frameId)
 {
 	/*
-     * Record the last client acknowledged frame id to 
+     * Record the last client acknowledged frame id to
 	 * calculate how much frames are in progress.
-	 * Some rdp clients (win7 mstsc) skips frame ACK if it is 
-	 * inactive, we should not expect ACK for each frame. 
+	 * Some rdp clients (win7 mstsc) skips frame ACK if it is
+	 * inactive, we should not expect ACK for each frame.
 	 * So it is OK to calculate inflight frame count according to
 	 * a latest acknowledged frame id.
      */
@@ -651,7 +652,7 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 
 	pSrcData = surface->data;
 	nSrcStep = surface->scanline;
-	SrcFormat = PIXEL_FORMAT_RGB32;
+	SrcFormat = PIXEL_FORMAT_XRGB32;
 
 	if (server->shareSubRect)
 	{
@@ -744,7 +745,7 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 			}
 			else
 			{
-				int dstSize;
+				UINT32 dstSize;
 
 				buffer = encoder->grid[k];
 				data = &pSrcData[(bitmap->destTop * nSrcStep) + (bitmap->destLeft * 4)];
@@ -807,7 +808,7 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 					CopyMemory(&fragBitmapData[j++], &bitmapData[i++], sizeof(BITMAP_DATA));
 					updateSize = newUpdateSize;
 				}
-				
+
 				bitmapUpdate.count = bitmapUpdate.number = j;
 				IFCALL(update->BitmapUpdate, context, &bitmapUpdate);
 				updateSize = 1024;
@@ -900,8 +901,8 @@ int shadow_client_send_surface_update(rdpShadowClient* client)
 
 int shadow_client_surface_update(rdpShadowClient* client, REGION16* region)
 {
-	int index;
-	int numRects = 0;
+	UINT32 index;
+	UINT32 numRects = 0;
 	const RECTANGLE_16* rects;
 
 	EnterCriticalSection(&(client->lock));
@@ -1082,10 +1083,10 @@ void* shadow_client_thread(rdpShadowClient* client)
 		{
 			if (client->activated)
 			{
-				int index;
-				int numRects = 0;
+				UINT32 index;
+				UINT32 numRects = 0;
 				const RECTANGLE_16* rects;
-				int width, height;
+				UINT32 width, height;
 
 				/* Check resize */
 				shadow_client_calc_desktop_size(server, &width, &height);
@@ -1097,7 +1098,7 @@ void* shadow_client_thread(rdpShadowClient* client)
 
 					/**
 					 * Unset client activated flag to avoid sending update message during
-					 * resize. DesktopResize will reactive the client and 
+					 * resize. DesktopResize will reactive the client and
 					 * shadow_client_activate would be invoked later.
 					 */
 					client->activated = FALSE;
@@ -1111,7 +1112,7 @@ void* shadow_client_thread(rdpShadowClient* client)
 					WLog_ERR(TAG, "Client from %s is resized (%dx%d@%d)",
 							peer->hostname, settings->DesktopWidth, settings->DesktopHeight, settings->ColorDepth);
 				}
-				else 
+				else
 				{
 					/* Send frame */
 					rects = region16_rects(&(subsystem->invalidRegion), &numRects);
@@ -1125,7 +1126,7 @@ void* shadow_client_thread(rdpShadowClient* client)
 				}
 			}
 
-			/* 
+			/*
 			 * The return value of shadow_multiclient_consume is whether or not the subscriber really consumes the event.
 			 * It's not cared currently.
 			 */
@@ -1235,7 +1236,7 @@ void* shadow_client_thread(rdpShadowClient* client)
 
 out:
 	peer->Disconnect(peer);
-	
+
 	freerdp_peer_context_free(peer);
 	freerdp_peer_free(peer);
 	ExitThread(0);

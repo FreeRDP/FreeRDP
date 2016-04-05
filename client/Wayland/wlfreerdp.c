@@ -3,6 +3,8 @@
  * Wayland Client
  *
  * Copyright 2014 Manuel Bachmann <tarnyko@tarnyko.net>
+ * Copyright 2016 Thincast Technologies GmbH
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,9 +99,9 @@ static BOOL wl_end_paint(rdpContext* context)
 
 	for (i = 0; i < h; i++)
 	{
-		memcpy(data + ((i+y)*(gdi->width*4)) + x*4,
-		       gdi->primary_buffer + ((i+y)*(gdi->width*4)) + x*4,
-		       w*4);
+		memcpy(data + ((i+y)*(gdi->width*GetBytesPerPixel(gdi->dstFormat))) + x*GetBytesPerPixel(gdi->dstFormat),
+			   gdi->primary_buffer + ((i+y)*(gdi->width*GetBytesPerPixel(gdi->dstFormat))) + x*GetBytesPerPixel(gdi->dstFormat),
+			   w*GetBytesPerPixel(gdi->dstFormat));
 	}
 
 	if (UwacWindowAddDamage(context_w->window, x, y, w, h) != UWAC_SUCCESS)
@@ -132,7 +134,7 @@ static BOOL wl_post_connect(freerdp* instance)
 	UwacWindow* window;
 	wlfContext* context;
 
-	if (!gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP, NULL))
+	if (!gdi_init(instance, PIXEL_FORMAT_ARGB32))
 		return FALSE;
 
 	gdi = instance->context->gdi;
@@ -241,8 +243,8 @@ static int wlfreerdp_run(freerdp* instance)
 
 	if (!freerdp_connect(instance))
 	{
-			printf("Failed to connect\n");
-			return -1;
+		printf("Failed to connect\n");
+		return -1;
 	}
 
 	handle_uwac_events(instance, g_display);
@@ -271,11 +273,11 @@ static int wlfreerdp_run(freerdp* instance)
 		}
 
 		//if (WaitForMultipleObjects(count, &handles[1], FALSE, INFINITE)) {
-			if (freerdp_check_event_handles(instance->context) != TRUE)
-			{
-				printf("Failed to check FreeRDP file descriptor\n");
-				break;
-			}
+		if (freerdp_check_event_handles(instance->context) != TRUE)
+		{
+			printf("Failed to check FreeRDP file descriptor\n");
+			break;
+		}
 		//}
 
 	}

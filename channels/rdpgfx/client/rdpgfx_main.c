@@ -5,6 +5,8 @@
  * Copyright 2013-2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2015 Thincast Technologies GmbH
  * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+ * Copyright 2016 Thincast Technologies GmbH
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -586,7 +588,18 @@ static UINT rdpgfx_recv_wire_to_surface_1_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 	cmd.surfaceId = pdu.surfaceId;
 	cmd.codecId = pdu.codecId;
 	cmd.contextId = 0;
-	cmd.format = pdu.pixelFormat;
+	switch(pdu.pixelFormat)
+	{
+	case PIXEL_FORMAT_XRGB_8888:
+		cmd.format = PIXEL_FORMAT_BGRX32;
+		break;
+	case PIXEL_FORMAT_ARGB_8888:
+		cmd.format = PIXEL_FORMAT_BGRA32;
+		break;
+	default:
+		return ERROR_INVALID_DATA;
+	}
+
 	cmd.left = pdu.destRect.left;
 	cmd.top = pdu.destRect.top;
 	cmd.right = pdu.destRect.right;

@@ -3,6 +3,8 @@
  * FreeRDP Test UI
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2016 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,7 +119,7 @@ static BOOL tf_pre_connect(freerdp* instance)
 
 static BOOL tf_post_connect(freerdp* instance)
 {
-	if (!gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT | CLRBUF_16BPP | CLRBUF_32BPP, NULL))
+	if (!gdi_init(instance, PIXEL_FORMAT_XRGB32))
 		return FALSE;
 
 	instance->update->BeginPaint = tf_begin_paint;

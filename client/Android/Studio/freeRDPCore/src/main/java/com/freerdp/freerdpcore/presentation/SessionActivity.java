@@ -1124,7 +1124,7 @@ public class SessionActivity extends ActionBarActivity implements
 	}
 
 	@Override
-	public int OnVerifiyChangedCertificate(String commonName, String subject, String issuer, String fingerprint, String oldSubject, String oldIssuer, String oldFingerprint) {
+	public int OnVerifyChangedCertificate(String commonName, String subject, String issuer, String fingerprint, String oldSubject, String oldIssuer, String oldFingerprint) {
 		// see if global settings says accept all
 		if (GlobalSettings.getAcceptAllCertificates())
 			return 0;

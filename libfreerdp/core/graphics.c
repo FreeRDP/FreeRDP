@@ -31,7 +31,6 @@ rdpBitmap* Bitmap_Alloc(rdpContext* context)
 {
 	rdpBitmap* bitmap;
 	rdpGraphics* graphics;
-
 	graphics = context->graphics;
 	bitmap = (rdpBitmap*) calloc(1, graphics->Bitmap_Prototype->size);
 
@@ -62,7 +61,8 @@ void Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 	}
 }
 
-void Bitmap_SetRectangle(rdpContext* context, rdpBitmap* bitmap, UINT16 left, UINT16 top, UINT16 right, UINT16 bottom)
+void Bitmap_SetRectangle(rdpContext* context, rdpBitmap* bitmap, UINT16 left,
+                         UINT16 top, UINT16 right, UINT16 bottom)
 {
 	bitmap->left = left;
 	bitmap->top = top;
@@ -70,7 +70,8 @@ void Bitmap_SetRectangle(rdpContext* context, rdpBitmap* bitmap, UINT16 left, UI
 	bitmap->bottom = bottom;
 }
 
-void Bitmap_SetDimensions(rdpContext* context, rdpBitmap* bitmap, UINT16 width, UINT16 height)
+void Bitmap_SetDimensions(rdpContext* context, rdpBitmap* bitmap, UINT16 width,
+                          UINT16 height)
 {
 	bitmap->width = width;
 	bitmap->height = height;
@@ -79,7 +80,8 @@ void Bitmap_SetDimensions(rdpContext* context, rdpBitmap* bitmap, UINT16 width, 
 /* static method */
 BOOL Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL primary)
 {
-	return context->graphics->Bitmap_Prototype->SetSurface(context, bitmap, primary);
+	return context->graphics->Bitmap_Prototype->SetSurface(context, bitmap,
+	        primary);
 }
 
 void graphics_register_bitmap(rdpGraphics* graphics, rdpBitmap* bitmap)
@@ -88,12 +90,10 @@ void graphics_register_bitmap(rdpGraphics* graphics, rdpBitmap* bitmap)
 }
 
 /* Pointer Class */
-
 rdpPointer* Pointer_Alloc(rdpContext* context)
 {
 	rdpPointer* pointer;
 	rdpGraphics* graphics;
-
 	graphics = context->graphics;
 	pointer = (rdpPointer*) calloc(1, graphics->Pointer_Prototype->size);
 
@@ -133,7 +133,7 @@ void Pointer_Free(rdpContext* context, rdpPointer* pointer)
 }
 
 /* static method */
-BOOL Pointer_Set(rdpContext* context, rdpPointer* pointer)
+BOOL Pointer_Set(rdpContext* context, const rdpPointer* pointer)
 {
 	return context->graphics->Pointer_Prototype->Set(context, pointer);
 }
@@ -150,7 +150,8 @@ BOOL Pointer_SetDefault(rdpContext* context)
 
 BOOL Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 {
-	return IFCALLRESULT(TRUE, context->graphics->Pointer_Prototype->SetPosition, context, x, y);
+	return IFCALLRESULT(TRUE, context->graphics->Pointer_Prototype->SetPosition,
+	                    context, x, y);
 }
 
 void graphics_register_pointer(rdpGraphics* graphics, rdpPointer* pointer)
@@ -164,7 +165,6 @@ rdpGlyph* Glyph_Alloc(rdpContext* context)
 {
 	rdpGlyph* glyph;
 	rdpGraphics* graphics;
-
 	graphics = context->graphics;
 	glyph = (rdpGlyph*) calloc(1, graphics->Glyph_Prototype->size);
 
@@ -191,14 +191,18 @@ BOOL Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y)
 	return context->graphics->Glyph_Prototype->Draw(context, glyph, x, y);
 }
 
-BOOL Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor, BOOL fOpRedundant)
+BOOL Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height,
+                     UINT32 bgcolor, UINT32 fgcolor, BOOL fOpRedundant)
 {
-	return context->graphics->Glyph_Prototype->BeginDraw(context, x, y, width, height, bgcolor, fgcolor, fOpRedundant);
+	return context->graphics->Glyph_Prototype->BeginDraw(context, x, y, width,
+	        height, bgcolor, fgcolor, fOpRedundant);
 }
 
-BOOL Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor)
+BOOL Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height,
+                   UINT32 bgcolor, UINT32 fgcolor)
 {
-	return context->graphics->Glyph_Prototype->EndDraw(context, x, y, width, height, bgcolor, fgcolor);
+	return context->graphics->Glyph_Prototype->EndDraw(context, x, y, width, height,
+	        bgcolor, fgcolor);
 }
 
 void graphics_register_glyph(rdpGraphics* graphics, rdpGlyph* glyph)
@@ -211,45 +215,41 @@ void graphics_register_glyph(rdpGraphics* graphics, rdpGlyph* glyph)
 rdpGraphics* graphics_new(rdpContext* context)
 {
 	rdpGraphics* graphics;
-
 	graphics = (rdpGraphics*) calloc(1, sizeof(rdpGraphics));
 
 	if (graphics)
 	{
 		graphics->context = context;
-
 		graphics->Bitmap_Prototype = (rdpBitmap*) calloc(1, sizeof(rdpBitmap));
 
 		if (!graphics->Bitmap_Prototype)
 		{
-			free (graphics);
+			free(graphics);
 			return NULL;
 		}
 
 		graphics->Bitmap_Prototype->size = sizeof(rdpBitmap);
 		graphics->Bitmap_Prototype->New = Bitmap_New;
 		graphics->Bitmap_Prototype->Free = Bitmap_Free;
-
 		graphics->Pointer_Prototype = (rdpPointer*) calloc(1, sizeof(rdpPointer));
 
 		if (!graphics->Pointer_Prototype)
 		{
-			free (graphics->Bitmap_Prototype);
-			free (graphics);
+			free(graphics->Bitmap_Prototype);
+			free(graphics);
 			return NULL;
 		}
 
 		graphics->Pointer_Prototype->size = sizeof(rdpPointer);
 		graphics->Pointer_Prototype->New = Pointer_New;
 		graphics->Pointer_Prototype->Free = Pointer_Free;
-
 		graphics->Glyph_Prototype = (rdpGlyph*) calloc(1, sizeof(rdpGlyph));
 
 		if (!graphics->Glyph_Prototype)
 		{
-			free (graphics->Pointer_Prototype);
-			free (graphics->Bitmap_Prototype);
-			free (graphics);
+			free(graphics->Pointer_Prototype);
+			free(graphics->Bitmap_Prototype);
+			free(graphics);
 			return NULL;
 		}
 

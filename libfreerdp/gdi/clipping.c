@@ -3,6 +3,8 @@
  * GDI Clipping Functions
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2016 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +32,9 @@
 
 #include <freerdp/gdi/region.h>
 
-#include <freerdp/gdi/clipping.h>
+#include "clipping.h"
 
-BOOL gdi_SetClipRgn(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight)
+BOOL gdi_SetClipRgn(HGDI_DC hdc, UINT32 nXLeft, UINT32 nYLeft, UINT32 nWidth, UINT32 nHeight)
 {
 	return gdi_SetRgn(hdc->clip, nXLeft, nYLeft, nWidth, nHeight);
 }
@@ -74,7 +76,8 @@ BOOL gdi_SetNullClipRgn(HGDI_DC hdc)
  * @return nonzero if there is something to draw, 0 otherwise
  */
 
-BOOL gdi_ClipCoords(HGDI_DC hdc, int *x, int *y, int *w, int *h, int *srcx, int *srcy)
+BOOL gdi_ClipCoords(HGDI_DC hdc, UINT32 *x, UINT32 *y, UINT32 *w, UINT32 *h,
+		    UINT32 *srcx, UINT32 *srcy)
 {
 	GDI_RECT bmp;
 	GDI_RECT clip;

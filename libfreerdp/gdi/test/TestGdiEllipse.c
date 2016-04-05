@@ -3,21 +3,21 @@
 
 #include <freerdp/gdi/dc.h>
 #include <freerdp/gdi/pen.h>
-#include <freerdp/gdi/line.h>
 #include <freerdp/gdi/shape.h>
-#include <freerdp/gdi/brush.h>
 #include <freerdp/gdi/region.h>
 #include <freerdp/gdi/bitmap.h>
 #include <freerdp/gdi/drawing.h>
-#include <freerdp/gdi/palette.h>
-#include <freerdp/gdi/clipping.h>
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
 
+#include "line.h"
+#include "brush.h"
+#include "clipping.h"
+
 /* Ellipse() Test Data */
 
-BYTE ellipse_case_1[256] =
+static BYTE ellipse_case_1[256] =
 {
 	"\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF"
@@ -37,7 +37,7 @@ BYTE ellipse_case_1[256] =
 	"\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF"
 };
 
-BYTE ellipse_case_2[256] =
+static BYTE ellipse_case_2[256] =
 {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF"
@@ -57,7 +57,7 @@ BYTE ellipse_case_2[256] =
 	"\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF"
 };
 
-BYTE ellipse_case_3[256] =
+static BYTE ellipse_case_3[256] =
 {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -87,9 +87,7 @@ int TestGdiEllipse(int argc, char* argv[])
 	HGDI_BITMAP hBmp_Ellipse_2;
 	HGDI_BITMAP hBmp_Ellipse_3;
 	rdpPalette* hPalette;
-	HCLRCONV clrconv;
-	int bitsPerPixel = 8;
-	int bytesPerPixel = 1;
+	const UINT32 format = PIXEL_FORMAT_RGB8;
 
 	if (!(hdc = gdi_GetDC()))
 	{
@@ -97,8 +95,7 @@ int TestGdiEllipse(int argc, char* argv[])
 		return -1;
 	}
 
-	hdc->bitsPerPixel = bitsPerPixel;
-	hdc->bytesPerPixel = bytesPerPixel;
+	hdc->format = format;
 	gdi_SetNullClipRgn(hdc);
 
 	if (!(pen = gdi_CreatePen(1, 1, 0)))
@@ -114,19 +111,14 @@ int TestGdiEllipse(int argc, char* argv[])
 
 	hPalette = (rdpPalette*) gdi_GetSystemPalette();
 
-	clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
-	clrconv->alpha = 1;
-	clrconv->invert = 0;
-	clrconv->palette = hPalette;
+	data = (BYTE*) freerdp_image_convert((BYTE*) ellipse_case_1, NULL, 16, 16, 8, format, hPalette);
+	hBmp_Ellipse_1 = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) ellipse_case_1, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_Ellipse_1 = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) ellipse_case_2, NULL, 16, 16, 8, format, hPalette);
+	hBmp_Ellipse_2 = gdi_CreateBitmap(16, 16, format, data);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) ellipse_case_2, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_Ellipse_2 = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) ellipse_case_3, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_Ellipse_3 = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	data = (BYTE*) freerdp_image_convert((BYTE*) ellipse_case_3, NULL, 16, 16, 8, format, hPalette);
+	hBmp_Ellipse_3 = gdi_CreateBitmap(16, 16, format, data);
 
 	/* Test Case 1: (0,0) -> (16, 16) */
 	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS))

@@ -3,6 +3,8 @@
  * GDI Drawing Functions
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2016 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,19 +26,19 @@
 #include <freerdp/gdi/gdi.h>
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
-FREERDP_API int gdi_GetROP2(HGDI_DC hdc);
-FREERDP_API int gdi_SetROP2(HGDI_DC hdc, int fnDrawMode);
-FREERDP_API GDI_COLOR gdi_GetBkColor(HGDI_DC hdc);
-FREERDP_API GDI_COLOR gdi_SetBkColor(HGDI_DC hdc, GDI_COLOR crColor);
-FREERDP_API int gdi_GetBkMode(HGDI_DC hdc);
-FREERDP_API int gdi_SetBkMode(HGDI_DC hdc, int iBkMode);
-FREERDP_API GDI_COLOR gdi_SetTextColor(HGDI_DC hdc, GDI_COLOR crColor);
+UINT32 gdi_GetROP2(HGDI_DC hdc);
+UINT32 gdi_SetROP2(HGDI_DC hdc, int fnDrawMode);
+UINT32 gdi_GetBkColor(HGDI_DC hdc);
+UINT32 gdi_SetBkColor(HGDI_DC hdc, UINT32 crColor);
+UINT32 gdi_GetBkMode(HGDI_DC hdc);
+BOOL gdi_SetBkMode(HGDI_DC hdc, int iBkMode);
+UINT32 gdi_SetTextColor(HGDI_DC hdc, UINT32 crColor);
 
 #ifdef __cplusplus
- }
+}
 #endif
 
 #endif /* FREERDP_GDI_DRAWING_H */

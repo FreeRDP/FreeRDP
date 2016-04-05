@@ -93,7 +93,7 @@ public class LibFreeRDP {
         int OnVerifiyCertificate(String commonName, String subject,
                 String issuer, String fingerprint, boolean mismatch);
 
-        int OnVerifiyChangedCertificate(String commonName, String subject,
+        int OnVerifyChangedCertificate(String commonName, String subject,
                 String issuer, String fingerprint, String oldSubject,
                 String oldIssuer, String oldFingerprint);
 
@@ -403,7 +403,7 @@ public class LibFreeRDP {
         return 0;
     }
 
-    private static int OnVerifyCertificate(int inst, String commonName, String subject,
+    private static int OnVerifyChangedCertificate(int inst, String commonName, String subject,
                                            String issuer, String fingerprint, String oldSubject,
                                            String oldIssuer, String oldFingerprint) {
         SessionState s = GlobalApp.getSession(inst);
@@ -411,7 +411,7 @@ public class LibFreeRDP {
             return 0;
         UIEventListener uiEventListener = s.getUIEventListener();
         if (uiEventListener != null)
-            return uiEventListener.OnVerifiyChangedCertificate(commonName, subject, issuer,
+            return uiEventListener.OnVerifyChangedCertificate(commonName, subject, issuer,
                     fingerprint, oldSubject, oldIssuer, oldFingerprint);
         return 0;
     }
