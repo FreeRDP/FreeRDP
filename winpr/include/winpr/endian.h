@@ -39,7 +39,7 @@ extern "C" {
 
 #define Data_Read_UINT16(_d, _v) do { _v = \
 	(UINT16)(*_d) + \
-	(((UINT16)(*(_d))) << 8); \
+	(((UINT16)(*(_d + 1))) << 8); \
 	} while (0)
 
 #define Data_Read_UINT16_BE(_d, _v) do { _v = \
