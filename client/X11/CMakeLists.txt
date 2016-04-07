@@ -202,7 +202,10 @@ endif()
 
 include_directories(${CMAKE_SOURCE_DIR}/resources)
 
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client freerdp m)
+if (NOT APPLE)
+	list(APPEND ${MODULE_PREFIX}_LIBS rt)
+endif()
 target_link_libraries(${MODULE_NAME} ${PRIVATE_KEYWORD} ${${MODULE_PREFIX}_LIBS})
 
 if(WITH_IPP)
