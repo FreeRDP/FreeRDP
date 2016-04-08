@@ -648,7 +648,7 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 
 	rdp->rc4_decrypt_key = winpr_RC4_New(rdp->decrypt_key, rdp->rc4_key_len);
 	rdp->rc4_encrypt_key = winpr_RC4_New(rdp->encrypt_key, rdp->rc4_key_len);
-	if (!rdp->rc4_decrypt_key || rdp->rc4_encrypt_key)
+	if (!rdp->rc4_decrypt_key || !rdp->rc4_encrypt_key)
 		goto end;
 
 	ret = TRUE;
