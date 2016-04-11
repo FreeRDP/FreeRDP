@@ -113,7 +113,7 @@ BOOL gdi_LineTo(HGDI_DC hdc, UINT32 nXEnd, UINT32 nYEnd)
 	UINT32 x, y;
 	UINT32 x1, y1;
 	UINT32 x2, y2;
-	UINT32 e, e2;
+	INT32 e, e2;
 	INT32 dx, dy;
 	INT32 sx, sy;
 	INT32 bx1, by1;

@@ -291,6 +291,7 @@ struct rdp_gdi
 	gdiBitmap* primary;
 	gdiBitmap* drawing;
 	UINT32 bitmap_size;
+	UINT32 bitmap_stride;
 	BYTE* bitmap_buffer;
 	BYTE* primary_buffer;
 	UINT32 textColor;
@@ -315,12 +316,12 @@ FREERDP_API BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y);
 FREERDP_API BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y);
 FREERDP_API BOOL gdi_resize(rdpGdi* gdi, UINT32 width, UINT32 height);
 FREERDP_API BOOL gdi_resize_ex(rdpGdi* gdi, UINT32 width, UINT32 height,
-                               INT32 stride, INT32 format, BYTE* buffer,
-                               void (*pfree)(void*));
+			       INT32 stride, INT32 format, BYTE* buffer,
+			       void (*pfree)(void*));
 FREERDP_API BOOL gdi_init(freerdp* instance, UINT32 format);
 FREERDP_API BOOL gdi_init_ex(freerdp* instance, UINT32 format,
-                             UINT32 stride, BYTE* buffer,
-                             void (*pfree)(void*));
+			     UINT32 stride, BYTE* buffer,
+			     void (*pfree)(void*));
 FREERDP_API void gdi_free(freerdp* instance);
 
 #ifdef __cplusplus

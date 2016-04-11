@@ -138,7 +138,7 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 	if (!gdi_ClipCoords(hdc, &nXDest, &nYDest, &nWidth, &nHeight, NULL, NULL))
 		return TRUE;
 
-	color = ConvertColor(hbr->color, hbr->pattern->format, hdc->format, NULL);
+	color = hbr->color;
 
 	for (y = 0; y < nHeight; y++)
 	{

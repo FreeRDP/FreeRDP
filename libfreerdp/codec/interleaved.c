@@ -275,7 +275,7 @@ INT32 interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
 		scanline = nWidth * 3;
 		BufferSize = scanline * nHeight;
 
-		SrcFormat = PIXEL_FORMAT_RGB24_VF;
+		SrcFormat = PIXEL_FORMAT_BGR24_VF;
 
 		if (BufferSize > interleaved->TempSize)
 		{
