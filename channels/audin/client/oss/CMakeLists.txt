@@ -27,7 +27,7 @@ add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_N
 
 
 
-set(${MODULE_PREFIX}_LIBS freerdp ${OSS_LIBRARIES})
+set(${MODULE_PREFIX}_LIBS freerdp winpr ${OSS_LIBRARIES})
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
