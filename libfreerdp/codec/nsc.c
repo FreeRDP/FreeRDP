@@ -46,35 +46,25 @@ static void nsc_decode(NSC_CONTEXT* context)
 {
 	UINT16 x;
 	UINT16 y;
-	UINT16 rw;
-	BYTE shift;
-	BYTE* yplane;
-	BYTE* coplane;
-	BYTE* cgplane;
-	BYTE* aplane;
-	INT16 y_val;
-	INT16 co_val;
-	INT16 cg_val;
-	INT16 r_val;
-	INT16 g_val;
-	INT16 b_val;
-	BYTE* bmpdata;
-	bmpdata = context->BitmapData;
-	rw = ROUND_UP_TO(context->width, 8);
-	shift = context->ColorLossLevel - 1; /* colorloss recovery + YCoCg shift */
-	WLog_Print(context->priv->log, WLOG_DEBUG,
-	           "NscDecode: width: %d height: %d ChromaSubsamplingLevel: %d",
-	           context->width, context->height, context->ChromaSubsamplingLevel);
+	UINT16 rw = ROUND_UP_TO(context->width, 8);
+	BYTE shift = context->ColorLossLevel - 1; /* colorloss recovery + YCoCg shift */;
+
+	BYTE* bmpdata = context->BitmapData;
 
 	for (y = 0; y < context->height; y++)
 	{
+		const BYTE* yplane;
+		const BYTE* coplane;
+		const BYTE* cgplane;
+		const BYTE* aplane = context->priv->PlaneBuffers[3] + y * context->width; /* A */;
+
 		if (context->ChromaSubsamplingLevel)
 		{
 			yplane = context->priv->PlaneBuffers[0] + y * rw; /* Y */
 			coplane = context->priv->PlaneBuffers[1] + (y >> 1) * (rw >>
-			          1); /* Co, supersampled */
+				  1); /* Co, supersampled */
 			cgplane = context->priv->PlaneBuffers[2] + (y >> 1) * (rw >>
-			          1); /* Cg, supersampled */
+				  1); /* Cg, supersampled */
 		}
 		else
 		{
@@ -83,16 +73,15 @@ static void nsc_decode(NSC_CONTEXT* context)
 			cgplane = context->priv->PlaneBuffers[2] + y * context->width; /* Cg */
 		}
 
-		aplane = context->priv->PlaneBuffers[3] + y * context->width; /* A */
-
 		for (x = 0; x < context->width; x++)
 		{
-			y_val = (INT16) * yplane;
-			co_val = (INT16)(INT8)(*coplane << shift);
-			cg_val = (INT16)(INT8)(*cgplane << shift);
-			r_val = y_val + co_val - cg_val;
-			g_val = y_val + cg_val;
-			b_val = y_val - co_val - cg_val;
+			INT16 y_val = (INT16) * yplane;
+			INT16 co_val = (INT16)(INT8)(*coplane << shift);
+			INT16 cg_val = (INT16)(INT8)(*cgplane << shift);
+			INT16 r_val = y_val + co_val - cg_val;
+			INT16 g_val = y_val + cg_val;
+			INT16 b_val = y_val - co_val - cg_val;
+
 			*bmpdata++ = MINMAX(b_val, 0, 0xFF);
 			*bmpdata++ = MINMAX(g_val, 0, 0xFF);
 			*bmpdata++ = MINMAX(r_val, 0, 0xFF);
@@ -187,7 +176,7 @@ static BOOL nsc_stream_initialize(NSC_CONTEXT* context, wStream* s)
 
 	Stream_Read_UINT8(s, context->ColorLossLevel); /* ColorLossLevel (1 byte) */
 	Stream_Read_UINT8(s,
-	                  context->ChromaSubsamplingLevel); /* ChromaSubsamplingLevel (1 byte) */
+			  context->ChromaSubsamplingLevel); /* ChromaSubsamplingLevel (1 byte) */
 	Stream_Seek(s, 2); /* Reserved (2 bytes) */
 	context->Planes = Stream_Pointer(s);
 	return TRUE;
@@ -306,10 +295,10 @@ NSC_CONTEXT* nsc_context_new(void)
 		goto error_PlanePool;
 
 	PROFILER_CREATE(context->priv->prof_nsc_rle_decompress_data,
-	                "nsc_rle_decompress_data");
+			"nsc_rle_decompress_data");
 	PROFILER_CREATE(context->priv->prof_nsc_decode, "nsc_decode");
 	PROFILER_CREATE(context->priv->prof_nsc_rle_compress_data,
-	                "nsc_rle_compress_data");
+			"nsc_rle_compress_data");
 	PROFILER_CREATE(context->priv->prof_nsc_encode, "nsc_encode");
 	/* Default encoding parameters */
 	context->ColorLossLevel = 3;
@@ -356,8 +345,12 @@ BOOL nsc_context_set_pixel_format(NSC_CONTEXT* context, UINT32 pixel_format)
 }
 
 BOOL nsc_process_message(NSC_CONTEXT* context, UINT16 bpp,
-                         UINT32 width, UINT32 height, const BYTE* data,
-                         UINT32 length)
+			 UINT32 width, UINT32 height,
+			 const BYTE* data, UINT32 length,
+			 BYTE* pDstData, UINT32 DstFormat,
+			 UINT32 nDstStride,
+			 UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
+			 UINT32 nHeight)
 {
 	wStream* s;
 	BOOL ret;
@@ -365,6 +358,9 @@ BOOL nsc_process_message(NSC_CONTEXT* context, UINT16 bpp,
 
 	if (!s)
 		return FALSE;
+
+	if (nDstStride == 0)
+		nDstStride = nWidth * GetBytesPerPixel(DstFormat);
 
 	switch (bpp)
 	{
@@ -408,5 +404,11 @@ BOOL nsc_process_message(NSC_CONTEXT* context, UINT16 bpp,
 	PROFILER_ENTER(context->priv->prof_nsc_decode);
 	context->decode(context);
 	PROFILER_EXIT(context->priv->prof_nsc_decode);
+
+	if (!freerdp_image_copy(pDstData, DstFormat, nDstStride, nXDst, nYDst,
+				width, height, context->BitmapData,
+				PIXEL_FORMAT_BGRA32, -1, 0, 0, NULL))
+		return FALSE;
+
 	return TRUE;
 }

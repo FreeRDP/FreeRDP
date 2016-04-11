@@ -1094,7 +1094,7 @@ static BOOL gdi_surface_bits(rdpContext* context,
 		                         cmd->bitmapDataLength,
 		                         cmd->destLeft, cmd->destTop,
 		                         pDstData, gdi->dstFormat,
-		                         gdi->width, gdi->height, NULL))
+		                         cmd->width, cmd->height, NULL))
 		{
 			WLog_ERR(TAG, "Failed to process RemoteFX message");
 			return FALSE;
@@ -1106,14 +1106,14 @@ static BOOL gdi_surface_bits(rdpContext* context,
 										   gdi->width, gdi->height))
 			return FALSE;
 
-		nsc_process_message(gdi->codecs->nsc, cmd->bpp, cmd->width,
-		                    cmd->height, cmd->bitmapData,
-		                    cmd->bitmapDataLength);
+		if (!nsc_process_message(gdi->codecs->nsc, cmd->bpp, cmd->width,
+		                         cmd->height, cmd->bitmapData,
+		                         cmd->bitmapDataLength, gdi->bitmap_buffer,
+		                         gdi->dstFormat,
+		                         0, 0, 0, cmd->width, cmd->height))
+			return FALSE;
+
 		pDstData = gdi->bitmap_buffer;
-		pSrcData = gdi->codecs->nsc->BitmapData;
-		freerdp_image_copy(pDstData, gdi->dstFormat, -1, 0, 0,
-		                   cmd->width, cmd->height, pSrcData,
-		                   PIXEL_FORMAT_XRGB32_VF, -1, 0, 0, gdi->palette);
 		gdi_DeleteObject((HGDIOBJECT)gdi->image->bitmap);
 		gdi->image->bitmap = gdi_CreateBitmapEx(cmd->width, cmd->height,
 		                                        gdi->dstFormat, 0,

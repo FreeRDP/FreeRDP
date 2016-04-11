@@ -94,6 +94,9 @@ struct _BITMAP_PLANAR_CONTEXT
 
 	BYTE* rlePlanes[4];
 	BYTE* rlePlanesBuffer;
+
+	BYTE* pTempData;
+	UINT32 nTempStep;
 };
 
 #ifdef __cplusplus

@@ -149,7 +149,7 @@ static void rfx_profiler_print(RFX_CONTEXT* context)
 	PROFILER_PRINT_FOOTER;
 }
 
-void rfx_tile_init(RFX_TILE* tile)
+static void rfx_tile_init(RFX_TILE* tile)
 {
 	if (tile)
 	{
@@ -164,7 +164,7 @@ void rfx_tile_init(RFX_TILE* tile)
 	}
 }
 
-RFX_TILE* rfx_decoder_tile_new()
+static RFX_TILE* rfx_decoder_tile_new(void)
 {
 	RFX_TILE* tile = NULL;
 
@@ -181,7 +181,7 @@ RFX_TILE* rfx_decoder_tile_new()
 	return tile;
 }
 
-void rfx_decoder_tile_free(RFX_TILE* tile)
+static void rfx_decoder_tile_free(RFX_TILE* tile)
 {
 	if (tile)
 	{
@@ -192,12 +192,12 @@ void rfx_decoder_tile_free(RFX_TILE* tile)
 	}
 }
 
-RFX_TILE* rfx_encoder_tile_new()
+static RFX_TILE* rfx_encoder_tile_new()
 {
 	return (RFX_TILE*)calloc(1, sizeof(RFX_TILE));
 }
 
-void rfx_encoder_tile_free(RFX_TILE* tile)
+static void rfx_encoder_tile_free(RFX_TILE* tile)
 {
 	free(tile);
 }
@@ -733,8 +733,9 @@ struct _RFX_TILE_PROCESS_WORK_PARAM
 };
 typedef struct _RFX_TILE_PROCESS_WORK_PARAM RFX_TILE_PROCESS_WORK_PARAM;
 
-void CALLBACK rfx_process_message_tile_work_callback(PTP_CALLBACK_INSTANCE
-        instance, void* context, PTP_WORK work)
+static void CALLBACK rfx_process_message_tile_work_callback(
+    PTP_CALLBACK_INSTANCE
+    instance, void* context, PTP_WORK work)
 {
 	RFX_TILE_PROCESS_WORK_PARAM* param = (RFX_TILE_PROCESS_WORK_PARAM*) context;
 	rfx_decode_rgb(param->context, param->tile, param->tile->data, 64 * 4);

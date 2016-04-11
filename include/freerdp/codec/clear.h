@@ -55,6 +55,8 @@ struct _CLEAR_CONTEXT
 	UINT32 seqNumber;
 	BYTE* TempBuffer;
 	UINT32 TempSize;
+	UINT32 nTempStep;
+	UINT32 TempFormat;
 	UINT32 format;
 	CLEAR_GLYPH_ENTRY GlyphCache[4000];
 	UINT32 VBarStorageCursor;
