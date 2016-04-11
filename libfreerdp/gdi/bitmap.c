@@ -168,7 +168,7 @@ static BOOL BitBlt_SRCCOPY(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 			   UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
 			   UINT32 nXSrc, UINT32 nYSrc)
 {
-	UINT32 y;
+	INT32 y;
 	BYTE* srcp;
 	BYTE* dstp;
 
@@ -203,18 +203,6 @@ static BOOL BitBlt_SRCCOPY(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 	{
 		/* copy down (bottom to top) */
 		for (y = nHeight - 1; y >= 0; y--)
-		{
-			srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
-			dstp = gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);
-
-			if (srcp != 0 && dstp != 0)
-				memmove(dstp, srcp, nWidth * GetBytesPerPixel(hdcDest->format));
-		}
-	}
-	else if (nYSrc > nYDest || nXSrc > nXDest)
-	{
-		/* copy up or left (top top bottom) */
-		for (y = 0; y < nHeight; y++)
 		{
 			srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc, nYSrc + y);
 			dstp = gdi_get_bitmap_pointer(hdcDest, nXDest, nYDest + y);

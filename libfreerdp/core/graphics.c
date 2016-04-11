@@ -57,12 +57,13 @@ void Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 		if (bitmap->data)
 			_aligned_free(bitmap->data);
 
+		memset(bitmap, 0, sizeof(rdpBitmap));
 		free(bitmap);
 	}
 }
 
 void Bitmap_SetRectangle(rdpContext* context, rdpBitmap* bitmap, UINT16 left,
-                         UINT16 top, UINT16 right, UINT16 bottom)
+			 UINT16 top, UINT16 right, UINT16 bottom)
 {
 	bitmap->left = left;
 	bitmap->top = top;
@@ -71,7 +72,7 @@ void Bitmap_SetRectangle(rdpContext* context, rdpBitmap* bitmap, UINT16 left,
 }
 
 void Bitmap_SetDimensions(rdpContext* context, rdpBitmap* bitmap, UINT16 width,
-                          UINT16 height)
+			  UINT16 height)
 {
 	bitmap->width = width;
 	bitmap->height = height;
@@ -81,7 +82,7 @@ void Bitmap_SetDimensions(rdpContext* context, rdpBitmap* bitmap, UINT16 width,
 BOOL Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL primary)
 {
 	return context->graphics->Bitmap_Prototype->SetSurface(context, bitmap,
-	        primary);
+		primary);
 }
 
 void graphics_register_bitmap(rdpGraphics* graphics, rdpBitmap* bitmap)
@@ -151,7 +152,7 @@ BOOL Pointer_SetDefault(rdpContext* context)
 BOOL Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 {
 	return IFCALLRESULT(TRUE, context->graphics->Pointer_Prototype->SetPosition,
-	                    context, x, y);
+			    context, x, y);
 }
 
 void graphics_register_pointer(rdpGraphics* graphics, rdpPointer* pointer)
@@ -192,17 +193,17 @@ BOOL Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y)
 }
 
 BOOL Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height,
-                     UINT32 bgcolor, UINT32 fgcolor, BOOL fOpRedundant)
+		     UINT32 bgcolor, UINT32 fgcolor, BOOL fOpRedundant)
 {
 	return context->graphics->Glyph_Prototype->BeginDraw(context, x, y, width,
-	        height, bgcolor, fgcolor, fOpRedundant);
+		height, bgcolor, fgcolor, fOpRedundant);
 }
 
 BOOL Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height,
-                   UINT32 bgcolor, UINT32 fgcolor)
+		   UINT32 bgcolor, UINT32 fgcolor)
 {
 	return context->graphics->Glyph_Prototype->EndDraw(context, x, y, width, height,
-	        bgcolor, fgcolor);
+		bgcolor, fgcolor);
 }
 
 void graphics_register_glyph(rdpGraphics* graphics, rdpGlyph* glyph)
