@@ -249,10 +249,13 @@ BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 
 	/* cbClientDir is the size in bytes of the character data in the clientDir field.
 	 * This size includes the length of the mandatory null terminator.
-	 * The maximum allowed value is 512 bytes
+	 * The maximum allowed value is 512 bytes.
+	 * Note: Although according to [MS-RDPBCGR 2.2.1.11.1.1.1] the null terminator
+	 * is mandatory the Microsoft Android client (starting with version 8.1.31.44)
+	 * sets cbClientDir to 0.
 	 */
 
-	if ((cbClientDir % 2) || cbClientDir < 2 || cbClientDir > 512)
+	if ((cbClientDir % 2) || cbClientDir > 512)
 	{
 		WLog_ERR(TAG, "protocol error: invalid cbClientDir value: %u", cbClientDir);
 		return FALSE;
@@ -267,18 +270,22 @@ BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 		settings->ClientDir = NULL;
 	}
 
-	wstr = (WCHAR*) Stream_Pointer(s);
-	if (wstr[cbClientDir / 2 - 1])
+	if (cbClientDir)
 	{
-		WLog_ERR(TAG, "protocol error: clientDir must be null terminated");
-		return FALSE;
+		wstr = (WCHAR*) Stream_Pointer(s);
+		if (wstr[cbClientDir / 2 - 1])
+		{
+			WLog_ERR(TAG, "protocol error: clientDir must be null terminated");
+			return FALSE;
+		}
+		if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), -1, &settings->ClientDir, 0, NULL, NULL) < 1)
+		{
+			WLog_ERR(TAG, "failed to convert client directory");
+			return FALSE;
+		}
+		Stream_Seek(s, cbClientDir);
+		WLog_DBG(TAG, "rdp client dir: [%s]", settings->ClientDir);
 	}
-	if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), -1, &settings->ClientDir, 0, NULL, NULL) < 1)
-	{
-		WLog_ERR(TAG, "failed to convert client directory");
-		return FALSE;
-	}
-	Stream_Seek(s, cbClientDir);
 
 	if (!rdp_read_client_time_zone(s, settings))
 		return FALSE;
