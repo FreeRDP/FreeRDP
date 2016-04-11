@@ -644,7 +644,6 @@ static INLINE UINT32 ReadColor(const BYTE* src, UINT32 format)
 		case 16:
 		case 15:
 			color = ((UINT32)src[1] << 8) | src[0];
-			color = ((color >> 11) & 0x1F) | (color & 0x7E0) | ((color & 0x1F) << 11);
 			break;
 
 		case 8:
@@ -679,7 +678,6 @@ static INLINE BOOL WriteColor(BYTE* dst, UINT32 format, UINT32 color)
 
 		case 16:
 		case 15:
-			color = ((color >> 11) & 0x1F) | (color & 0x7E0) | ((color & 0x1F) << 11);
 			dst[1] = color >> 8;
 			dst[0] = color;
 			break;

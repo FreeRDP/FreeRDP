@@ -1175,15 +1175,18 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 			return FALSE;
 		}
 
-		nsc_process_message(xfc->codecs->nsc, cmd->bpp, cmd->width, cmd->height,
-		                    cmd->bitmapData, cmd->bitmapDataLength);
+		if (!nsc_process_message(xfc->codecs->nsc, cmd->bpp, cmd->width, cmd->height,
+		                         cmd->bitmapData, cmd->bitmapDataLength,
+		                         xfc->bitmap_buffer, xfc->format, 0, 0, 0, cmd->width, cmd->height))
+		{
+			xf_unlock_x11(xfc, FALSE);
+			return FALSE;
+		}
+
 		XSetFunction(xfc->display, xfc->gc, GXcopy);
 		XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 		pSrcData = xfc->codecs->nsc->BitmapData;
 		pDstData = xfc->bitmap_buffer;
-		freerdp_image_copy(pDstData, xfc->format, -1, 0, 0,
-		                   cmd->width, cmd->height, pSrcData,
-		                   PIXEL_FORMAT_BGRX32_VF, -1, 0, 0, xfc->palette);
 		image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
 		                     (char*) pDstData, cmd->width, cmd->height, xfc->scanline_pad, 0);
 		XPutImage(xfc->display, xfc->primary, xfc->gc, image, 0, 0,

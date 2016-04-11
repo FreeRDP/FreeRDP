@@ -1483,7 +1483,6 @@ static BOOL avc_yuv_to_rgb(H264_CONTEXT* h264, const RECTANGLE_16* regionRects,
 		roi.width = width;
 		roi.height = height;
 
-		// TODO: Color format converstion support!!!
 		if (use444)
 		{
 			if (prims->YUV444ToRGB_8u_P3AC4R(
