@@ -725,7 +725,7 @@ int xcrush_decompress_l1(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize,
 		if ((pSrcData + 2) > pSrcEnd)
 			return -1003;
 
-		MatchCount = *((UINT16*) pSrcData);
+		Data_Read_UINT16(pSrcData, MatchCount);
 
 		MatchDetails = (RDP61_MATCH_DETAILS*) &pSrcData[2];
 		Literals = (BYTE*) &MatchDetails[MatchCount];
@@ -736,9 +736,9 @@ int xcrush_decompress_l1(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize,
 
 		for (MatchIndex = 0; MatchIndex < MatchCount; MatchIndex++)
 		{
-			MatchLength = MatchDetails[MatchIndex].MatchLength;
-			MatchOutputOffset = MatchDetails[MatchIndex].MatchOutputOffset;
-			MatchHistoryOffset = MatchDetails[MatchIndex].MatchHistoryOffset;
+			Data_Read_UINT16(&MatchDetails[MatchIndex].MatchLength, MatchLength);
+			Data_Read_UINT16(&MatchDetails[MatchIndex].MatchOutputOffset, MatchOutputOffset);
+			Data_Read_UINT32(&MatchDetails[MatchIndex].MatchHistoryOffset, MatchHistoryOffset);
 
 			if (MatchOutputOffset < OutputOffset)
 				return -1005;
