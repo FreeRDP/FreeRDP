@@ -78,9 +78,9 @@ int shadow_encoder_init_grid(rdpShadowEncoder* encoder)
 	int tileSize;
 	int tileCount;
 	encoder->gridWidth = ((encoder->width + (encoder->maxTileWidth - 1)) /
-	                      encoder->maxTileWidth);
+						  encoder->maxTileWidth);
 	encoder->gridHeight = ((encoder->height + (encoder->maxTileHeight - 1)) /
-	                       encoder->maxTileHeight);
+						   encoder->maxTileHeight);
 	tileSize = encoder->maxTileWidth * encoder->maxTileHeight * 4;
 	tileCount = encoder->gridWidth * encoder->gridHeight;
 	encoder->gridBuffer = (BYTE*) malloc(tileSize * tileCount);
@@ -173,7 +173,7 @@ int shadow_encoder_init_nsc(rdpShadowEncoder* encoder)
 	encoder->frameAck = settings->SurfaceFrameMarkerEnabled;
 	encoder->nsc->ColorLossLevel = settings->NSCodecColorLossLevel;
 	encoder->nsc->ChromaSubsamplingLevel = settings->NSCodecAllowSubsampling ? 1 :
-	                                       0;
+										   0;
 	encoder->nsc->DynamicColorFidelity = settings->NSCodecAllowDynamicColorFidelity;
 	encoder->codecs |= FREERDP_CODEC_NSCODEC;
 	return 1;
@@ -225,7 +225,7 @@ int shadow_encoder_init(rdpShadowEncoder* encoder)
 
 	if (!encoder->bs)
 		encoder->bs = Stream_New(NULL,
-		                         encoder->maxTileWidth * encoder->maxTileHeight * 4);
+								 encoder->maxTileWidth * encoder->maxTileHeight * 4);
 
 	if (!encoder->bs)
 		return -1;
@@ -341,7 +341,7 @@ int shadow_encoder_prepare(rdpShadowEncoder* encoder, UINT32 codecs)
 	int status;
 
 	if ((codecs & FREERDP_CODEC_REMOTEFX)
-	    && !(encoder->codecs & FREERDP_CODEC_REMOTEFX))
+		&& !(encoder->codecs & FREERDP_CODEC_REMOTEFX))
 	{
 		status = shadow_encoder_init_rfx(encoder);
 
@@ -350,7 +350,7 @@ int shadow_encoder_prepare(rdpShadowEncoder* encoder, UINT32 codecs)
 	}
 
 	if ((codecs & FREERDP_CODEC_NSCODEC)
-	    && !(encoder->codecs & FREERDP_CODEC_NSCODEC))
+		&& !(encoder->codecs & FREERDP_CODEC_NSCODEC))
 	{
 		status = shadow_encoder_init_nsc(encoder);
 
@@ -359,7 +359,7 @@ int shadow_encoder_prepare(rdpShadowEncoder* encoder, UINT32 codecs)
 	}
 
 	if ((codecs & FREERDP_CODEC_PLANAR)
-	    && !(encoder->codecs & FREERDP_CODEC_PLANAR))
+		&& !(encoder->codecs & FREERDP_CODEC_PLANAR))
 	{
 		status = shadow_encoder_init_planar(encoder);
 
@@ -368,7 +368,7 @@ int shadow_encoder_prepare(rdpShadowEncoder* encoder, UINT32 codecs)
 	}
 
 	if ((codecs & FREERDP_CODEC_INTERLEAVED)
-	    && !(encoder->codecs & FREERDP_CODEC_INTERLEAVED))
+		&& !(encoder->codecs & FREERDP_CODEC_INTERLEAVED))
 	{
 		status = shadow_encoder_init_interleaved(encoder);
 

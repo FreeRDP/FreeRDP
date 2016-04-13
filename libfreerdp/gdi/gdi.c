@@ -461,10 +461,6 @@ static BOOL gdi_bitmap_update(rdpContext* context,
 			      const BITMAP_UPDATE* bitmapUpdate)
 {
 	int status;
-	UINT32 nXDst;
-	UINT32 nYDst;
-	UINT32 nXSrc;
-	UINT32 nYSrc;
 	UINT32 nWidth;
 	UINT32 nHeight;
 	UINT32 nSrcStep;
@@ -475,35 +471,22 @@ static BOOL gdi_bitmap_update(rdpContext* context,
 	UINT32 SrcSize;
 	BOOL compressed;
 	UINT32 bitsPerPixel;
-	BITMAP_DATA* bitmap;
 	rdpGdi* gdi = context->gdi;
 	rdpCodecs* codecs = context->codecs;
 
 	for (index = 0; index < bitmapUpdate->number; index++)
 	{
-		bitmap = &(bitmapUpdate->rectangles[index]);
-		nXSrc = 0;
-		nYSrc = 0;
-		nXDst = bitmap->destLeft;
-		nYDst = bitmap->destTop;
-		nWidth = bitmap->width;
-		nHeight = bitmap->height;
-		pSrcData = bitmap->bitmapDataStream;
-		SrcSize = bitmap->bitmapLength;
-		compressed = bitmap->compressed;
-		bitsPerPixel = bitmap->bitsPerPixel;
-
-		if (gdi->bitmap_size < (UINT32)(nWidth * nHeight * 4))
-		{
-			gdi->bitmap_stride = nWidth * 4;
-			gdi->bitmap_stride += 64 - gdi->bitmap_stride % 64;
-			gdi->bitmap_size = nWidth * nHeight * 4;
-			gdi->bitmap_buffer = (BYTE*) _aligned_realloc(gdi->bitmap_buffer,
-					     gdi->bitmap_size, 16);
-
-			if (!gdi->bitmap_buffer)
-				return FALSE;
-		}
+		const BITMAP_DATA* bitmap = &(bitmapUpdate->rectangles[index]);
+		UINT32 nXSrc = 0;
+		UINT32 nYSrc = 0;
+		UINT32 nXDst = bitmap->destLeft;
+		UINT32 nYDst = bitmap->destTop;
+		UINT32 nWidth = bitmap->width;
+		UINT32 nHeight = bitmap->height;
+		const BYTE* pSrcData = bitmap->bitmapDataStream;
+		UINT32 SrcSize = bitmap->bitmapLength;
+		BOOL compressed = bitmap->compressed;
+		UINT32 bitsPerPixel = bitmap->bitsPerPixel;
 
 		if (compressed)
 		{
@@ -528,8 +511,11 @@ static BOOL gdi_bitmap_update(rdpContext* context,
 					    codecs, FREERDP_CODEC_PLANAR))
 					return FALSE;
 
-				status = planar_decompress(codecs->planar, pSrcData, SrcSize, &gdi->bitmap_buffer,
-							   gdi->dstFormat, gdi->bitmap_stride, 0, 0, nWidth, nHeight, TRUE);
+				status = planar_decompress(codecs->planar, pSrcData,
+							   SrcSize, gdi->primary_buffer,
+							   gdi->dstFormat,
+							   gdi->stride,
+							   nXDst, nYDst, nWidth, nHeight, TRUE);
 			}
 
 			if (status < 0)
@@ -549,17 +535,15 @@ static BOOL gdi_bitmap_update(rdpContext* context,
 		nHeight = MIN(bitmap->destBottom,
 			      gdi->height - 1) - bitmap->destTop + 1; /* clip height */
 
-		if (nWidth <= 0 || nHeight <= 0)
-		{
-			/* Empty bitmap */
-			continue;
+			if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, gdi->stride,
+									nXDst, nYDst, nWidth, nHeight,
+									pSrcData, SrcFormat, nSrcStep,
+									nXSrc, nYSrc, gdi->palette))
+					return FALSE;
 		}
 
-		status = freerdp_image_copy(pDstData, gdi->dstFormat, nDstStep, nXDst, nYDst,
-					    nWidth, nHeight, pSrcData, gdi->dstFormat, nSrcStep, nXSrc, nYSrc,
-					    gdi->palette);
-
-		if (!gdi_InvalidateRegion(gdi->primary->hdc, nXDst, nYDst, nWidth, nHeight))
+		if (!gdi_InvalidateRegion(gdi->primary->hdc, nXDst, nYDst,
+					  nWidth, nHeight))
 			return FALSE;
 	}
 
@@ -1071,9 +1055,10 @@ static BOOL gdi_surface_bits(rdpContext* context,
 		  cmd->destLeft, cmd->destTop, cmd->destRight, cmd->destBottom,
 		  cmd->bpp, cmd->codecID, cmd->width, cmd->height, cmd->bitmapDataLength);
 
-	if (gdi->bitmap_size < (cmd->width * cmd->height * 4))
+	gdi->bitmap_stride = (cmd->width + 64 - cmd->width % 64)
+			     * GetBytesPerPixel(gdi->dstFormat);
+	if (gdi->bitmap_size < (gdi->bitmap_stride * cmd->height))
 	{
-		gdi->bitmap_stride = (cmd->width + 64 - cmd->width) * 4;
 		gdi->bitmap_size = gdi->bitmap_stride * cmd->height;
 
 		gdi->bitmap_buffer = (BYTE*) _aligned_realloc(gdi->bitmap_buffer,
@@ -1094,13 +1079,23 @@ static BOOL gdi_surface_bits(rdpContext* context,
 		if (!rfx_process_message(gdi->codecs->rfx, cmd->bitmapData,
 					 PIXEL_FORMAT_BGRX32,
 					 cmd->bitmapDataLength,
-					 cmd->destLeft, cmd->destTop,
+					 0, 0,
 					 pDstData, gdi->dstFormat,
-					 gdi->stride, cmd->height, NULL))
+					 cmd->width * GetBytesPerPixel(gdi->dstFormat),
+					 cmd->height, NULL))
 		{
 			WLog_ERR(TAG, "Failed to process RemoteFX message");
 			return FALSE;
 		}
+
+		gdi_DeleteObject((HGDIOBJECT)gdi->image->bitmap);
+		gdi->image->bitmap = gdi_CreateBitmapEx(cmd->width, cmd->height,
+							gdi->dstFormat, 0,
+							pDstData, NULL);
+		gdi_SelectObject(gdi->image->hdc, (HGDIOBJECT) gdi->image->bitmap);
+		gdi_BitBlt(gdi->primary->hdc, cmd->destLeft, cmd->destTop,
+			   cmd->width, cmd->height, gdi->image->hdc,0, 0,
+			   GDI_SRCCOPY);
 	}
 		break;
 	case RDP_CODEC_ID_NSCODEC:
@@ -1122,7 +1117,8 @@ static BOOL gdi_surface_bits(rdpContext* context,
 							pDstData, NULL);
 		gdi_SelectObject(gdi->image->hdc, (HGDIOBJECT) gdi->image->bitmap);
 		gdi_BitBlt(gdi->primary->hdc, cmd->destLeft, cmd->destTop,
-			   cmd->width, cmd->height, gdi->image->hdc, 0, 0, GDI_SRCCOPY);
+			   cmd->width, cmd->height, gdi->image->hdc, 0, 0,
+			   GDI_SRCCOPY);
 	}
 		break;
 	case RDP_CODEC_ID_NONE:
