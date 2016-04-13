@@ -443,10 +443,10 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 			break;
 	}
 
-	if (nDstStep < 0)
+	if (nDstStep <= 0)
 		nDstStep = nWidth * GetBytesPerPixel(DstFormat);
 
-	if (nSrcStep < 0)
+	if (nSrcStep <= 0)
 		nSrcStep = nWidth * GetBytesPerPixel(SrcFormat);
 
 	if (vSrcVFlip)
