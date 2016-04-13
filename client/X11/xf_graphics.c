@@ -55,7 +55,7 @@ static BOOL xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	xf_lock_x11(xfc, FALSE);
 
 	data = bitmap->data;
-	depth = (bitmap->bpp >= 24) ? 24 : bitmap->bpp;
+	depth = GetBitsPerPixel(bitmap->format);
 
 	pixmap = XCreatePixmap(xfc->display, xfc->drawable, bitmap->width, bitmap->height, xfc->depth);
 
@@ -71,7 +71,7 @@ static BOOL xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 				return FALSE;
 			}
 
-			SrcFormat = gdi_get_pixel_format(bitmap->bpp, TRUE);
+			SrcFormat = bitmap->format;
 
 			freerdp_image_copy(data, xfc->format, -1, 0, 0,
 					   bitmap->width, bitmap->height,
@@ -81,7 +81,7 @@ static BOOL xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 			_aligned_free(bitmap->data);
 			bitmap->data = data;
 
-			bitmap->bpp = (xfc->depth >= 24) ? 32 : xfc->depth;
+			bitmap->format = xfc->format;
 		}
 
 		image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
@@ -185,7 +185,7 @@ static BOOL xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 				return FALSE;
 
 			status = planar_decompress(xfc->codecs->planar, pSrcData, SrcSize,
-									   &pDstData, xfc->format, -1, 0, 0, width, height, TRUE);
+									   pDstData, xfc->format, -1, 0, 0, width, height, TRUE);
 		}
 
 		if (status < 0)
@@ -205,7 +205,7 @@ static BOOL xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 
 	bitmap->compressed = FALSE;
 	bitmap->length = size;
-	bitmap->bpp = (xfc->depth >= 24) ? 32 : xfc->depth;
+	bitmap->format = xfc->format;
 	return TRUE;
 }
 
