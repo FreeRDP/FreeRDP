@@ -57,7 +57,6 @@ void Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 		if (bitmap->data)
 			_aligned_free(bitmap->data);
 
-		memset(bitmap, 0, sizeof(rdpBitmap));
 		free(bitmap);
 	}
 }

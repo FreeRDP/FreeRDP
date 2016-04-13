@@ -509,8 +509,8 @@ static BOOL gdi_bitmap_update(rdpContext* context,
 		{
 			if (bitsPerPixel < 32)
 			{
-				if (!freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_INTERLEAVED,
-												   gdi->width, gdi->height))
+				if (!freerdp_client_codecs_prepare(
+					    codecs, FREERDP_CODEC_INTERLEAVED))
 					return FALSE;
 
 				status = interleaved_decompress(codecs->interleaved,
@@ -524,8 +524,8 @@ static BOOL gdi_bitmap_update(rdpContext* context,
 			}
 			else
 			{
-				if (!freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_PLANAR,
-												   gdi->width, gdi->height))
+				if (!freerdp_client_codecs_prepare(
+					    codecs, FREERDP_CODEC_PLANAR))
 					return FALSE;
 
 				status = planar_decompress(codecs->planar, pSrcData, SrcSize, &gdi->bitmap_buffer,
@@ -1087,8 +1087,7 @@ static BOOL gdi_surface_bits(rdpContext* context,
 	{
 	case RDP_CODEC_ID_REMOTEFX:
 	{
-		if (!freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_REMOTEFX,
-										   gdi->width, gdi->height))
+		if (!freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_REMOTEFX))
 			return FALSE;
 
 		pDstData = gdi->bitmap_buffer;
@@ -1106,8 +1105,7 @@ static BOOL gdi_surface_bits(rdpContext* context,
 		break;
 	case RDP_CODEC_ID_NSCODEC:
 	{
-		if (!freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_NSCODEC,
-										   gdi->width, gdi->height))
+		if (!freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_NSCODEC))
 			return FALSE;
 
 		if (!nsc_process_message(gdi->codecs->nsc, cmd->bpp, cmd->width,
