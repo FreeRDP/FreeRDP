@@ -174,10 +174,6 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	{
 		if (bpp < 32)
 		{
-			if (!freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_INTERLEAVED,
-											   gdi->width, gdi->height))
-				return FALSE;
-
 			status = interleaved_decompress(gdi->codecs->interleaved,
 			                                pSrcData, SrcSize,
 			                                bpp,
@@ -187,12 +183,8 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 		}
 		else
 		{
-			if (!freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_PLANAR,
-											   gdi->width, gdi->height))
-				return FALSE;
-
-			status = planar_decompress(gdi->codecs->planar, pSrcData, SrcSize, &pDstData,
-			                           gdi->dstFormat, -1, 0, 0, width, height, TRUE);
+			status = planar_decompress(gdi->codecs->planar, pSrcData, SrcSize, pDstData,
+									   gdi->dstFormat, -1, 0, 0, width, height, TRUE);
 		}
 
 		if (status < 0)
