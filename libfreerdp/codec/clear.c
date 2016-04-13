@@ -56,11 +56,16 @@ static BYTE CLEAR_8BIT_MASKS[9] =
 };
 
 static void convert_color(BYTE* dst, UINT32 nDstStep, UINT32 DstFormat,
-			  UINT32 nXDst, UINT32 nYDst,
-			  const BYTE* src, UINT32 nSrcStep, UINT32 SrcFormat,
-			  UINT32 nWidth, UINT32 nHeight)
+						  UINT32 nXDst, UINT32 nYDst, UINT32 nWidth, UINT32 nHeight,
+						  const BYTE* src, UINT32 nSrcStep, UINT32 SrcFormat,
+						  UINT32 nDstWidth, UINT32 nDstHeight)
 {
 	UINT32 x, y;
+
+	if (nWidth + nXDst > nDstWidth)
+		nWidth = nDstWidth - nXDst;
+	if (nHeight + nYDst > nDstHeight)
+		nHeight = nDstHeight - nYDst;
 
 	for (y = 0; y < nHeight; y++)
 	{
@@ -70,35 +75,35 @@ static void convert_color(BYTE* dst, UINT32 nDstStep, UINT32 DstFormat,
 		for (x = 0; x < nWidth; x++)
 		{
 			const BYTE* pSrcPixel =
-			    &pSrcLine[x * GetBytesPerPixel(SrcFormat)];
+					&pSrcLine[x * GetBytesPerPixel(SrcFormat)];
 			BYTE* pDstPixel =
-			    &pDstLine[(nXDst + x) * GetBytesPerPixel(DstFormat)];
+					&pDstLine[(nXDst + x) * GetBytesPerPixel(DstFormat)];
 			UINT32 color = ReadColor(pSrcPixel, SrcFormat);
 			color = ConvertColor(color, SrcFormat,
-					     DstFormat, NULL);
+								 DstFormat, NULL);
 			WriteColor(pDstPixel, DstFormat, color);
 		}
 	}
 }
 
 static BOOL clear_decompress_nscodec(NSC_CONTEXT* nsc, UINT32 width,
-				     UINT32 height,
-				     const BYTE* bitmapData, UINT32 bitmapDataByteCount,
-				     BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
-				     UINT32 nXDstRel, UINT32 nYDstRel)
+									 UINT32 height,
+									 const BYTE* bitmapData, UINT32 bitmapDataByteCount,
+									 BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
+									 UINT32 nXDstRel, UINT32 nYDstRel)
 {
 	return nsc_process_message(nsc, 32, width, height, bitmapData,
-				bitmapDataByteCount, pDstData, DstFormat,
-				nDstStep, nXDstRel, nYDstRel, width, height);
+							   bitmapDataByteCount, pDstData, DstFormat,
+							   nDstStep, nXDstRel, nYDstRel, width, height);
 }
 
 static BOOL clear_decompress_subcode_rlex(const BYTE* bitmapData,
-	UINT32 bitmapDataByteCount,
-	UINT32 width, UINT32 height,
-	BYTE* tmpBuffer, UINT32 nTmpBufferSize,
-	BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
-	UINT32 nXDstRel, UINT32 nYDstRel)
+										  UINT32 bitmapDataByteCount,
+										  UINT32 width, UINT32 height,
+										  BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
+										  UINT32 nXDstRel, UINT32 nYDstRel, UINT32 nDstWidth, UINT32 nDstHeight)
 {
+	UINT32 x = 0, y = 0;
 	UINT32 i;
 	UINT32 SrcFormat = PIXEL_FORMAT_BGR24;
 	UINT32 pixelCount;
@@ -118,16 +123,17 @@ static BOOL clear_decompress_subcode_rlex(const BYTE* bitmapData,
 	bitmapDataOffset = 1 + (paletteCount * 3);
 
 	if (paletteCount > 127)
-		return -1047;
+		return FALSE;
 
 	for (i = 0; i < paletteCount; i++)
 	{
-		UINT32 color = GetColor(SrcFormat,
+		UINT32 color = GetColor(
+					SrcFormat,
 					pSrcPixel8[2],
-					pSrcPixel8[1],
-					pSrcPixel8[0],
-					0xFF);
-		palette[i] = color;
+				pSrcPixel8[1],
+				pSrcPixel8[0],
+				0xFF);
+		palette[i] = ConvertColor(color, SrcFormat, DstFormat, NULL);
 		pSrcPixel8 += GetBytesPerPixel(SrcFormat);
 	}
 
@@ -145,7 +151,7 @@ static BOOL clear_decompress_subcode_rlex(const BYTE* bitmapData,
 
 		stopIndex = bitmapData[bitmapDataOffset] & CLEAR_8BIT_MASKS[numBits];
 		suiteDepth = (bitmapData[bitmapDataOffset] >> numBits) & CLEAR_8BIT_MASKS[(8 -
-			     numBits)];
+																				   numBits)];
 		startIndex = stopIndex - suiteDepth;
 		bitmapDataOffset++;
 		runLengthFactor = (UINT32) bitmapData[bitmapDataOffset];
@@ -183,8 +189,15 @@ static BOOL clear_decompress_subcode_rlex(const BYTE* bitmapData,
 
 		for (i = 0; i < runLengthFactor; i++)
 		{
-			WriteColor(tmpBuffer, SrcFormat, color);
-			tmpBuffer += GetBytesPerPixel(SrcFormat);
+			BYTE* pTmpData = &pDstData[(nXDstRel + x) * GetBytesPerPixel(DstFormat) + (nYDstRel + y) * nDstStep];
+			if ((nXDstRel + x < nDstWidth) && (nYDstRel + y < nDstHeight))
+				WriteColor(pTmpData, DstFormat, color);
+
+			if (++x >= width) {
+				y++;
+				x = 0;
+
+			}
 		}
 
 		pixelIndex += runLengthFactor;
@@ -194,32 +207,34 @@ static BOOL clear_decompress_subcode_rlex(const BYTE* bitmapData,
 
 		for (i = 0; i <= suiteDepth; i++)
 		{
+			BYTE* pTmpData = &pDstData[(nXDstRel + x) * GetBytesPerPixel(DstFormat) + (nYDstRel + y) * nDstStep];
 			UINT32 color = palette[suiteIndex++];
-			WriteColor(tmpBuffer, SrcFormat, color);
-			tmpBuffer += GetBytesPerPixel(SrcFormat);
+			if ((nXDstRel + x < nDstWidth) && (nYDstRel + y < nDstHeight))
+				WriteColor(pTmpData, DstFormat, color);
+
+			if (++x >= width) {
+				y++;
+				x = 0;
+			}
 		}
 
 		pixelIndex += (suiteDepth + 1);
 	}
 
-	nSrcStep = width * GetBytesPerPixel(SrcFormat);
+	nSrcStep = width * GetBytesPerPixel(DstFormat);
 
 	if (pixelIndex != pixelCount)
 		return -1055;
 
-	convert_color(pDstData, nDstStep, DstFormat,
-		      nXDstRel, nYDstRel,
-		      tmpBuffer, nSrcStep, SrcFormat,
-		      width, height);
 	return TRUE;
 }
 
 static BOOL clear_decompress_residual_data(CLEAR_CONTEXT* clear,
-	const BYTE* residualData,
-	UINT32 residualByteCount, UINT32 SrcSize,
-	UINT32 nWidth, UINT32 nHeight,
-	BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
-	UINT32 nXDst, UINT32 nYDst)
+										   const BYTE* residualData,
+										   UINT32 residualByteCount, UINT32 SrcSize,
+										   UINT32 nWidth, UINT32 nHeight,
+										   BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
+										   UINT32 nXDst, UINT32 nYDst, UINT32 nDstWidth, UINT32 nDstHeight)
 {
 	UINT32 i;
 	UINT32 nSrcStep;
@@ -232,15 +247,6 @@ static BOOL clear_decompress_residual_data(CLEAR_CONTEXT* clear,
 		return -1013;
 
 	suboffset = 0;
-
-	if ((nWidth * nHeight * GetBytesPerPixel(clear->format)) > clear->TempSize)
-	{
-		clear->TempSize = (nWidth * nHeight * GetBytesPerPixel(clear->format));
-		clear->TempBuffer = (BYTE*) realloc(clear->TempBuffer, clear->TempSize);
-
-		if (!clear->TempBuffer)
-			return -1014;
-	}
 
 	pixelIndex = 0;
 	pixelCount = nWidth * nHeight;
@@ -255,8 +261,8 @@ static BOOL clear_decompress_residual_data(CLEAR_CONTEXT* clear,
 			return -1015;
 
 		color = GetColor(clear->format, residualData[suboffset + 2],
-				 residualData[suboffset + 1],
-				 residualData[suboffset + 0], 0xFF);
+				residualData[suboffset + 1],
+				residualData[suboffset + 0], 0xFF);
 		suboffset += 3;
 		runLengthFactor = residualData[suboffset];
 		suboffset++;
@@ -297,18 +303,18 @@ static BOOL clear_decompress_residual_data(CLEAR_CONTEXT* clear,
 		return -1019;
 
 	convert_color(pDstData, nDstStep, DstFormat,
-		      nXDst, nYDst,
-		      clear->TempBuffer, nSrcStep, clear->format,
-		      nWidth, nHeight);
+				  nXDst, nYDst, nWidth, nHeight,
+				  clear->TempBuffer, nSrcStep, clear->format,
+				  nDstWidth, nDstHeight);
 	return TRUE;
 }
 
 static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
-					const BYTE* bandsData,
-					UINT32 bandsByteCount, UINT32 SrcSize,
-					UINT32 nWidth, UINT32 nHeight,
-					BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
-					UINT32 nXDst, UINT32 nYDst)
+										const BYTE* bandsData,
+										UINT32 bandsByteCount, UINT32 SrcSize,
+										UINT32 nWidth, UINT32 nHeight,
+										BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
+										UINT32 nXDst, UINT32 nYDst)
 {
 	UINT32 i, y;
 	UINT32 count;
@@ -350,9 +356,9 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
 		yEnd = *((UINT16*) &bandsData[suboffset + 6]);
 		suboffset += 8;
 		colorBkg = GetColor(clear->format, bandsData[suboffset + 2],
-				    bandsData[suboffset + 1],
-				    bandsData[suboffset + 0],
-				    0xFF);
+				bandsData[suboffset + 1],
+				bandsData[suboffset + 0],
+				0xFF);
 		suboffset += 3;
 
 		if (xEnd < xStart)
@@ -428,8 +434,8 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
 					BYTE* tmp;
 					vBarShortEntry->size = vBarShortEntry->count;
 					tmp = (BYTE*) realloc(
-						  vBarShortEntry->pixels,
-						  vBarShortEntry->count * GetBytesPerPixel(clear->format));
+								vBarShortEntry->pixels,
+								vBarShortEntry->count * GetBytesPerPixel(clear->format));
 
 					if (!tmp)
 						return -1;
@@ -443,12 +449,12 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
 				for (y = 0; y < vBarShortPixelCount; y++)
 				{
 					BYTE* dstBuffer =
-					    &vBarShortEntry->pixels[y * GetBytesPerPixel(clear->format)];
+							&vBarShortEntry->pixels[y * GetBytesPerPixel(clear->format)];
 					UINT32 color = GetColor(clear->format,
-								pSrcPixel8[2],
-								pSrcPixel8[1],
-								pSrcPixel8[0],
-								0xFF);
+											pSrcPixel8[2],
+							pSrcPixel8[1],
+							pSrcPixel8[0],
+							0xFF);
 					WriteColor(dstBuffer, clear->format, color);
 					pSrcPixel8 += 3;
 				}
@@ -490,7 +496,7 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
 					BYTE* tmp;
 					vBarEntry->size = vBarEntry->count;
 					tmp = (BYTE*) realloc(vBarEntry->pixels,
-							      vBarEntry->count * GetBytesPerPixel(clear->format));
+										  vBarEntry->count * GetBytesPerPixel(clear->format));
 
 					if (!tmp)
 						return -1;
@@ -526,13 +532,13 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
 					count = (vBarPixelCount > y) ? (vBarPixelCount - y) : 0;
 
 				pSrcPixel = &vBarShortEntry->pixels[(y - vBarYOn) * GetBytesPerPixel(
-									clear->format)];
+							clear->format)];
 
 				for (x = 0; x < count; x++)
 				{
 					UINT32 color;
 					color =	ReadColor(&vBarShortEntry->pixels[x * GetBytesPerPixel(clear->format)],
-							  clear->format);
+							clear->format);
 					WriteColor(dstBuffer, clear->format, color);
 					dstBuffer += GetBytesPerPixel(clear->format);
 				}
@@ -562,10 +568,10 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
 			for (y = 0; y < count; y++)
 			{
 				BYTE* pDstPixel8 = &pDstData[((nYDstRel + y) * nDstStep) +
-							     ((nXDstRel + i) * GetBytesPerPixel(DstFormat))];
+						((nXDstRel + i) * GetBytesPerPixel(DstFormat))];
 				UINT32 color = ReadColor(pSrcPixel, clear->format);
 				color = ConvertColor(color, clear->format,
-						     DstFormat, NULL);
+									 DstFormat, NULL);
 				WriteColor(pDstPixel8, DstFormat, color);
 				pSrcPixel += GetBytesPerPixel(clear->format);
 			}
@@ -576,9 +582,9 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
 }
 
 INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
-		       UINT32 SrcSize,
-		       BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
-		       UINT32 nXDst, UINT32 nYDst, UINT32 nWidth, UINT32 nHeight)
+					   UINT32 SrcSize, UINT32 nWidth, UINT32 nHeight,
+					   BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
+					   UINT32 nXDst, UINT32 nYDst, UINT32 nDstWidth, UINT32 nDstHeight)
 {
 	BYTE seqNumber;
 	BYTE glyphFlags;
@@ -618,7 +624,7 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
 	}
 
 	if ((glyphFlags & CLEARCODEC_FLAG_GLYPH_HIT) &&
-	    !(glyphFlags & CLEARCODEC_FLAG_GLYPH_INDEX))
+			!(glyphFlags & CLEARCODEC_FLAG_GLYPH_INDEX))
 		return -1006;
 
 	if (glyphFlags & CLEARCODEC_FLAG_GLYPH_INDEX)
@@ -649,9 +655,9 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
 
 			nSrcStep = nWidth * GetBytesPerPixel(clear->format);
 			convert_color(pDstData, nDstStep, DstFormat,
-				      nXDst, nYDst,
-				      glyphData, nSrcStep, clear->format,
-				      nWidth, nHeight);
+						  nXDst, nYDst, nWidth, nHeight,
+						  glyphData, nSrcStep, clear->format,
+						  nDstWidth, nDstHeight);
 			return 1; /* Finish */
 		}
 	}
@@ -668,9 +674,10 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
 	if (residualByteCount > 0)
 	{
 		if (!clear_decompress_residual_data(clear,
-						    &pSrcData[offset], residualByteCount,
-						    SrcSize - offset, nWidth, nHeight,
-						    pDstData, DstFormat, nDstStep, nXDst, nYDst))
+											&pSrcData[offset], residualByteCount,
+											SrcSize - offset, nWidth, nHeight,
+											pDstData, DstFormat, nDstStep, nXDst, nYDst,
+											nDstWidth, nDstHeight))
 			return -1111;
 
 		offset += residualByteCount;
@@ -679,9 +686,9 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
 	if (bandsByteCount > 0)
 	{
 		if (!clear_decompress_bands_data(clear,
-						 &pSrcData[offset], bandsByteCount,
-						 SrcSize - offset, nWidth, nHeight,
-						 pDstData, DstFormat, nDstStep, nXDst, nYDst))
+										 &pSrcData[offset], bandsByteCount,
+										 SrcSize - offset, nWidth, nHeight,
+										 pDstData, DstFormat, nDstStep, nXDst, nYDst))
 			return FALSE;
 
 		offset += bandsByteCount;
@@ -734,7 +741,7 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
 				return -1043;
 
 			if (((UINT32)(width * height * GetBytesPerPixel(clear->format))) >
-			    clear->TempSize)
+					clear->TempSize)
 			{
 				clear->TempSize = (width * height * GetBytesPerPixel(clear->format));
 				clear->TempBuffer = (BYTE*) realloc(clear->TempBuffer, clear->TempSize);
@@ -747,33 +754,34 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
 
 			if (subcodecId == 0) /* Uncompressed */
 			{
-				UINT32 nSrcStep = width * height * GetBytesPerPixel(PIXEL_FORMAT_BGR24);
+				UINT32 nSrcStep = width * GetBytesPerPixel(PIXEL_FORMAT_BGR24);;
+				UINT32 nSrcSize = nSrcStep * height;
 
-				if (bitmapDataByteCount != nSrcStep)
+				if (bitmapDataByteCount != nSrcSize)
 					return -1045;
 
 				convert_color(pDstData, nDstStep, DstFormat,
-					      nXDstRel, nYDstRel,
-					      bitmapData, nSrcStep,
-					      PIXEL_FORMAT_BGR24,
-					      width, height);
+							  nXDstRel, nYDstRel, width, height,
+							  bitmapData, nSrcStep,
+							  PIXEL_FORMAT_BGR24,
+							  nDstWidth, nDstHeight);
 			}
 			else if (subcodecId == 1) /* NSCodec */
 			{
 				if (!clear_decompress_nscodec(clear->nsc, width, height,
-							      bitmapData, bitmapDataByteCount,
-							      pDstData, DstFormat, nDstStep,
-							      nXDstRel, nYDstRel))
+											  bitmapData, bitmapDataByteCount,
+											  pDstData, DstFormat, nDstStep,
+											  nXDstRel, nYDstRel))
 					return -1046;
 			}
 			else if (subcodecId == 2) /* CLEARCODEC_SUBCODEC_RLEX */
 			{
 				if (!clear_decompress_subcode_rlex(bitmapData,
-								   bitmapDataByteCount,
-								   width, height,
-								   clear->TempBuffer, clear->TempSize,
-								   pDstData, DstFormat, nDstStep,
-								   nXDstRel, nYDstRel))
+												   bitmapDataByteCount,
+												   width, height,
+												   pDstData, DstFormat, nDstStep,
+												   nXDstRel, nYDstRel,
+												   nDstWidth, nDstHeight))
 					return -1047;
 			}
 			else
@@ -811,9 +819,9 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
 		glyphData = (BYTE*) glyphEntry->pixels;
 		nSrcStep = nWidth * GetBytesPerPixel(clear->format);
 		convert_color(pDstData, nDstStep, DstFormat,
-			      nXDst, nYDst,
-			      glyphData, nSrcStep, clear->format,
-			      nWidth, nHeight);
+					  nXDst, nYDst, nWidth, nHeight,
+					  glyphData, nSrcStep, clear->format,
+					  nDstWidth, nDstHeight);
 	}
 
 	if (offset != SrcSize)
@@ -823,7 +831,7 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
 }
 
 int clear_compress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
-		   BYTE** ppDstData, UINT32* pDstSize)
+				   BYTE** ppDstData, UINT32* pDstSize)
 {
 	return 1;
 }
@@ -858,13 +866,9 @@ CLEAR_CONTEXT* clear_context_new(BOOL Compressor)
 	clear->TempSize = 512 * 512 * 4;
 	clear->TempBuffer = (BYTE*) malloc(clear->TempSize);
 
-	if (!clear->TempBuffer)
-		goto error_temp_buffer;
-
 	clear_context_reset(clear);
 	return clear;
-error_temp_buffer:
-	nsc_context_free(clear->nsc);
+
 error_nsc:
 	free(clear);
 	return NULL;
