@@ -69,7 +69,7 @@ static UINT gdi_ResetGraphics(RdpgfxClientContext* context,
 			continue;
 
 		if (!freerdp_client_codecs_reset(surface->codecs, FREERDP_CODEC_ALL,
-		                                 surface->width, surface->height))
+						 surface->width, surface->height))
 		{
 			free(pSurfaceIds);
 			return ERROR_INTERNAL_ERROR;
@@ -81,7 +81,7 @@ static UINT gdi_ResetGraphics(RdpgfxClientContext* context,
 	free(pSurfaceIds);
 
 	if (!freerdp_client_codecs_reset(gdi->codecs, FREERDP_CODEC_ALL,
-	                                 gdi->width, gdi->height))
+					 gdi->width, gdi->height))
 		return ERROR_INTERNAL_ERROR;
 
 	gdi->graphicsReset = TRUE;
@@ -457,7 +457,7 @@ static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
 			       surface->scanline, surface->width,
 			       surface->height);
 
-	if (status < 0)
+	if (rc < 0)
 	{
 		WLog_WARN(TAG, "avc444_decompress failure: %d, ignoring update.", status);
 		return CHANNEL_RC_OK;
@@ -466,15 +466,15 @@ static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
 	for (i = 0; i < meta1->numRegionRects; i++)
 	{
 		region16_union_rect(&(surface->invalidRegion),
-		                    &(surface->invalidRegion),
-		                    &(meta1->regionRects[i]));
+					&(surface->invalidRegion),
+					&(meta1->regionRects[i]));
 	}
 
 	for (i = 0; i < meta2->numRegionRects; i++)
 	{
 		region16_union_rect(&(surface->invalidRegion),
-		                    &(surface->invalidRegion),
-		                    &(meta2->regionRects[i]));
+					&(surface->invalidRegion),
+					&(meta2->regionRects[i]));
 	}
 
 	if (!gdi->inGfxFrame)
@@ -506,7 +506,8 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 	if (!freerdp_client_codecs_prepare(surface->codecs, FREERDP_CODEC_ALPHACODEC))
 		return ERROR_INTERNAL_ERROR;
 
-	WLog_DBG(TAG, "gdi_SurfaceCommand_Alpha: status: %d", status);
+	WLog_DBG(TAG, "TODO gdi_SurfaceCommand_Alpha: status: %d", status);
+
 	/* fill with green for now to distinguish from the rest */
 	if (!freerdp_image_fill(surface->data, surface->format, surface->scanline,
 				cmd->left, cmd->top, cmd->width, cmd->height, 0x00FF00))
@@ -553,9 +554,20 @@ static UINT gdi_SurfaceCommand_Progressive(rdpGdi* gdi,
 						cmd->surfaceId,
 						surface->width, surface->height);
 
-	if (status < 0)
+	if (rc < 0)
 	{
-		WLog_ERR(TAG, "progressive_decompress failure: %d", status);
+		WLog_ERR(TAG, "progressive_create_surface_context failure: %d", rc);
+		return ERROR_INTERNAL_ERROR;
+	}
+
+	rc = progressive_decompress(surface->codecs->progressive, cmd->data,
+					cmd->length, surface->data, surface->format,
+					surface->scanline, cmd->left, cmd->top,
+					cmd->width, cmd->height, cmd->surfaceId);
+
+	if (rc < 0)
+	{
+		WLog_ERR(TAG, "progressive_decompress failure: %d", rc);
 		return ERROR_INTERNAL_ERROR;
 	}
 
@@ -667,7 +679,7 @@ static UINT gdi_CreateSurface(RdpgfxClientContext* context,
 	}
 
 	if (!freerdp_client_codecs_reset(surface->codecs, FREERDP_CODEC_ALL,
-	                                 createSurface->width, createSurface->height))
+					 createSurface->width, createSurface->height))
 	{
 		free(surface);
 		return ERROR_INTERNAL_ERROR;

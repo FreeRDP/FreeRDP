@@ -407,7 +407,7 @@ BOOL nsc_process_message(NSC_CONTEXT* context, UINT16 bpp,
 
 	if (!freerdp_image_copy(pDstData, DstFormat, nDstStride, nXDst, nYDst,
 				width, height, context->BitmapData,
-				PIXEL_FORMAT_BGRA32, -1, 0, 0, NULL))
+				PIXEL_FORMAT_BGRA32, 0, 0, 0, NULL))
 		return FALSE;
 
 	return TRUE;

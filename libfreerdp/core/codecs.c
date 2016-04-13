@@ -165,7 +165,7 @@ BOOL freerdp_client_codecs_reset(rdpCodecs* codecs, UINT32 flags, UINT32 width, 
 	{
 		if (codecs->planar)
 		{
-			rc &= freerdp_bitmap_planar_context_reset(codecs->planar);
+			rc &= freerdp_bitmap_planar_context_reset(codecs->planar, width, height);
 		}
 	}
 
