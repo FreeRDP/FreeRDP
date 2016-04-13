@@ -247,12 +247,12 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, UINT3
 #include "include/bitmap.c"
 
 INT32 interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
-			     const BYTE* pSrcData, UINT32 SrcSize,
-			     UINT32 bpp,
-			     BYTE* pDstData, UINT32 DstFormat,
-			     UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
-			     UINT32 nWidth, UINT32 nHeight,
-			     const UINT32* palette)
+				 const BYTE* pSrcData, UINT32 SrcSize,
+				 UINT32 bpp,
+				 BYTE* pDstData, UINT32 DstFormat,
+				 UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+				 UINT32 nWidth, UINT32 nHeight,
+				 const UINT32* palette)
 {
 	INT32 status;
 	UINT32 scanline;
@@ -309,12 +309,12 @@ INT32 interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
 	{
 	case 24:
 		RleDecompress24to24(pSrcData, SrcSize, interleaved->TempBuffer,
-				    scanline, nWidth, nHeight);
+					scanline, nWidth, nHeight);
 		break;
 	case 16:
 	case 15:
 		RleDecompress16to16(pSrcData, SrcSize, interleaved->TempBuffer,
-				    scanline, nWidth, nHeight);
+					scanline, nWidth, nHeight);
 		break;
 	case 8:
 		RleDecompress8to8(pSrcData, SrcSize, interleaved->TempBuffer,
@@ -325,8 +325,8 @@ INT32 interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
 	}
 
 	status = freerdp_image_copy(pDstData, DstFormat, nDstStep, nXDst, nYDst,
-				    nWidth, nHeight, interleaved->TempBuffer,
-				    SrcFormat, scanline, 0, 0, palette);
+					nWidth, nHeight, interleaved->TempBuffer,
+					SrcFormat, scanline, 0, 0, palette);
 
 	return status;
 }
@@ -367,8 +367,8 @@ BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
 	if (!DstFormat)
 		return FALSE;
 
-	status = freerdp_image_copy(interleaved->TempBuffer, DstFormat, -1, 0, 0, nWidth, nHeight,
-				    pSrcData, SrcFormat, nSrcStep, nXSrc, nYSrc, palette);
+	status = freerdp_image_copy(interleaved->TempBuffer, DstFormat, 0, 0, 0, nWidth, nHeight,
+					pSrcData, SrcFormat, nSrcStep, nXSrc, nYSrc, palette);
 
 	s = Stream_New(pDstData, maxSize);
 

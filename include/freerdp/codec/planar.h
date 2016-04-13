@@ -118,17 +118,17 @@ FREERDP_API BYTE* freerdp_bitmap_compress_planar(
     UINT32 width, UINT32 height, UINT32 scanline,
     BYTE* dstData, UINT32* pDstSize);
 
-FREERDP_API BOOL freerdp_bitmap_planar_context_reset(BITMAP_PLANAR_CONTEXT*
-        context);
+FREERDP_API BOOL freerdp_bitmap_planar_context_reset(
+        BITMAP_PLANAR_CONTEXT* context, UINT32 width, UINT32 height);
 
 FREERDP_API BITMAP_PLANAR_CONTEXT* freerdp_bitmap_planar_context_new(
-    DWORD flags, UINT32 maxWidth, UINT32 maxHeight);
-FREERDP_API void freerdp_bitmap_planar_context_free(BITMAP_PLANAR_CONTEXT*
-        context);
+        DWORD flags, UINT32 width, UINT32 height);
+FREERDP_API void freerdp_bitmap_planar_context_free(
+        BITMAP_PLANAR_CONTEXT* context);
 
 FREERDP_API INT32 planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
                                     const BYTE* pSrcData, UINT32 SrcSize,
-                                    BYTE** ppDstData, UINT32 DstFormat,
+                                    BYTE* pDstData, UINT32 DstFormat,
                                     INT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
                                     UINT32 nWidth, UINT32 nHeight, BOOL vFlip);
 
