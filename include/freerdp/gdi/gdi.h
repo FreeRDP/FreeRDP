@@ -289,13 +289,13 @@ struct rdp_gdi
 
 	HGDI_DC hdc;
 	gdiBitmap* primary;
-	gdiBitmap* drawing;
+    gdiBitmap* drawing;
 	UINT32 bitmap_size;
 	UINT32 bitmap_stride;
 	BYTE* bitmap_buffer;
 	BYTE* primary_buffer;
 	UINT32 textColor;
-	UINT32 palette[256];
+    UINT32 palette[256];
 	gdiBitmap* image;
 	void (*free)(void*);
 

@@ -170,7 +170,7 @@ int shadow_encoder_init_nsc(rdpShadowEncoder* encoder)
 	encoder->nsc->ChromaSubsamplingLevel = settings->NSCodecAllowSubsampling ? 1 : 0;
 	encoder->nsc->DynamicColorFidelity = settings->NSCodecAllowDynamicColorFidelity;
 
-	nsc_context_set_pixel_format(encoder->nsc, RDP_PIXEL_FORMAT_B8G8R8A8);
+	nsc_context_set_pixel_format(encoder->nsc, RDP_PIXEL_FORMAT_BGR24);
 
 	encoder->codecs |= FREERDP_CODEC_NSCODEC;
 
