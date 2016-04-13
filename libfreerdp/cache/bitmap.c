@@ -31,6 +31,7 @@
 
 #include <freerdp/log.h>
 #include <freerdp/cache/bitmap.h>
+#include <freerdp/gdi/bitmap.h>
 
 #define TAG FREERDP_TAG("cache.bitmap")
 
@@ -112,12 +113,14 @@ static BOOL update_gdi_cache_bitmap(rdpContext* context,
 		return FALSE;
 	}
 
-	bitmap->New(context, bitmap);
+	if (!bitmap->New(context, bitmap))
+		return FALSE;
 
 	prevBitmap = bitmap_cache_get(cache->bitmap, cacheBitmap->cacheId, cacheBitmap->cacheIndex);
 
 	if (prevBitmap != NULL)
-		Bitmap_Free(context, prevBitmap);
+		prevBitmap->Free(context, prevBitmap);
+
 
 	bitmap_cache_put(cache->bitmap, cacheBitmap->cacheId, cacheBitmap->cacheIndex, bitmap);
 	return TRUE;
@@ -157,12 +160,14 @@ static BOOL update_gdi_cache_bitmap_v2(rdpContext* context,
 		return FALSE;
 	}
 
-	bitmap->New(context, bitmap);
 
 	prevBitmap = bitmap_cache_get(cache->bitmap, cacheBitmapV2->cacheId, cacheBitmapV2->cacheIndex);
 
+	if (bitmap->New(context, bitmap))
+		return FALSE;
+
 	if (prevBitmap)
-		Bitmap_Free(context, prevBitmap);
+		prevBitmap->Free(context, prevBitmap);
 
 	bitmap_cache_put(cache->bitmap, cacheBitmapV2->cacheId, cacheBitmapV2->cacheIndex, bitmap);
 	return TRUE;
@@ -194,12 +199,13 @@ static BOOL update_gdi_cache_bitmap_v3(rdpContext* context,
 			bitmapData->bpp, bitmapData->length, compressed,
 			bitmapData->codecID);
 
-	bitmap->New(context, bitmap);
+	if (bitmap->New(context, bitmap))
+		return FALSE;
 
 	prevBitmap = bitmap_cache_get(cache->bitmap, cacheBitmapV3->cacheId, cacheBitmapV3->cacheIndex);
 
 	if (prevBitmap)
-		Bitmap_Free(context, prevBitmap);
+		prevBitmap->Free(context, prevBitmap);
 
 	bitmap_cache_put(cache->bitmap, cacheBitmapV3->cacheId, cacheBitmapV3->cacheIndex, bitmap);
 	return TRUE;
@@ -211,7 +217,6 @@ static BOOL update_gdi_bitmap_update(rdpContext* context,
 	UINT32 i;
 	BOOL reused = TRUE;
 	rdpBitmap* bitmap;
-	BITMAP_DATA* bitmapData;
 	rdpCache* cache = context->cache;
 
 	if (!cache->bitmap->bitmap)
@@ -225,9 +230,9 @@ static BOOL update_gdi_bitmap_update(rdpContext* context,
 
 	for (i = 0; i < (int) bitmapUpdate->number; i++)
 	{
-		bitmapData = &bitmapUpdate->rectangles[i];
+		const BITMAP_DATA* bitmapData = &bitmapUpdate->rectangles[i];
 
-		bitmap->bpp = bitmapData->bitsPerPixel;
+		bitmap->format = gdi_get_pixel_format(bitmapData->bitsPerPixel, FALSE);
 		bitmap->length = bitmapData->bitmapLength;
 		bitmap->compressed = bitmapData->compressed;
 
@@ -244,9 +249,8 @@ static BOOL update_gdi_bitmap_update(rdpContext* context,
 
 		if (reused)
 			bitmap->Free(context, bitmap);
-		else
-			reused = TRUE;
 
+		reused = TRUE;
 		bitmap->New(context, bitmap);
 
 		bitmap->Paint(context, bitmap);

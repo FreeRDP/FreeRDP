@@ -61,7 +61,7 @@ struct rdp_bitmap
     UINT32 bottom; /* 19 */
     UINT32 width; /* 20 */
     UINT32 height; /* 21 */
-    UINT32 bpp; /* 22 */
+    UINT32 format; /* 22 */
     UINT32 flags; /* 23 */
     UINT32 length; /* 24 */
     BYTE* data; /* 25 */
