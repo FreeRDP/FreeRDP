@@ -23,7 +23,6 @@
 #define FREERDP_CODEC_COLOR_H
 
 #include <freerdp/api.h>
-#include <freerdp/freerdp.h>
 #include <winpr/wlog.h>
 
 #define FREERDP_PIXEL_FORMAT_TYPE_A		0
@@ -127,6 +126,13 @@
 #define PIXEL_FORMAT_A1_F(_flip)	FREERDP_PIXEL_FORMAT(_flip, 1, FREERDP_PIXEL_FORMAT_TYPE_A, 1, 0, 0, 0)
 #define PIXEL_FORMAT_MONO		PIXEL_FORMAT_A1_F(0)
 #define PIXEL_FORMAT_MONO_VF		PIXEL_FORMAT_A1_F(1)
+
+struct gdi_palette
+{
+    UINT32 format;
+    UINT32 palette[256];
+};
+typedef struct gdi_palette gdiPalette;
 
 #ifdef __cplusplus
 extern "C" {
@@ -263,7 +269,7 @@ static const char* GetColorFormatName(UINT32 format)
 }
 
 static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
-			      BYTE* _b, BYTE* _a, const UINT32* palette)
+                  BYTE* _b, BYTE* _a, const gdiPalette* palette)
 {
 	UINT32 tmp;
 
@@ -515,8 +521,11 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 
 		/* 8bpp formats */
 		case PIXEL_FORMAT_RGB8:
-			tmp = palette[color];
-			SplitColor(tmp, PIXEL_FORMAT_ARGB32, _r, _g, _b, _a, NULL);
+            if (color <= 0xFF)
+            {
+                tmp = palette->palette[color];
+                SplitColor(tmp, palette->format, _r, _g, _b, _a, NULL);
+            }
 			break;
 
 		/* 1bpp formats */
@@ -709,7 +718,7 @@ static INLINE BOOL WriteColor(BYTE* dst, UINT32 format, UINT32 color)
 }
 
 static INLINE UINT32 ConvertColor(UINT32 color, UINT32 srcFormat,
-				  UINT32 dstFormat, const UINT32* palette)
+                  UINT32 dstFormat, const gdiPalette* palette)
 {
 	BYTE r = 0;
 	BYTE g = 0;
@@ -733,21 +742,21 @@ FREERDP_API BOOL freerdp_image_copy_from_monochrome(BYTE* pDstData,
 	UINT32 nWidth, UINT32 nHeight,
 	const BYTE* pSrcData,
 	UINT32 backColor, UINT32 foreColor,
-	const UINT32* palette);
+    const gdiPalette* palette);
 
 FREERDP_API BOOL freerdp_image_copy_from_pointer_data(
     BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
     UINT32 nXDst, UINT32 nYDst, UINT32 nWidth, UINT32 nHeight,
     const BYTE* xorMask, UINT32 xorMaskLength,
     const BYTE* andMask, UINT32 andMaskLength,
-    UINT32 xorBpp, const UINT32* palette);
+    UINT32 xorBpp, const gdiPalette* palette);
 
 FREERDP_API BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 				    INT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
 				    UINT32 nWidth, UINT32 nHeight,
 				    const BYTE* pSrcData, DWORD SrcFormat,
 				    INT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
-				    const UINT32* palette);
+                    const gdiPalette* palette);
 
 FREERDP_API BOOL freerdp_image_fill(BYTE* pDstData, DWORD DstFormat,
 				    UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,

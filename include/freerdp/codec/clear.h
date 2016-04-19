@@ -74,7 +74,8 @@ FREERDP_API int clear_compress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcS
 FREERDP_API INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
 				   UINT32 SrcSize, UINT32 nWidth, UINT32 nHeight,
 				   BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
-				   UINT32 nXDst, UINT32 nYDst, UINT32 nDstWidth, UINT32 nDstHeight);
+                   UINT32 nXDst, UINT32 nYDst, UINT32 nDstWidth, UINT32 nDstHeight,
+                                   const gdiPalette* palette);
 
 FREERDP_API BOOL clear_context_reset(CLEAR_CONTEXT* clear);
 

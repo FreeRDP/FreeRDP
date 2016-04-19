@@ -189,6 +189,7 @@ struct _GDI_PEN
 	UINT32 posY;
 	UINT32 color;
 	UINT32 format;
+    gdiPalette* palette;
 };
 typedef struct _GDI_PEN GDI_PEN;
 typedef GDI_PEN* HGDI_PEN;
@@ -295,7 +296,7 @@ struct rdp_gdi
 	BYTE* bitmap_buffer;
 	BYTE* primary_buffer;
 	UINT32 textColor;
-    UINT32 palette[256];
+    gdiPalette palette;
 	gdiBitmap* image;
 	void (*free)(void*);
 

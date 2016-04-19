@@ -149,8 +149,9 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 		}
 		else
 		{
-			status = planar_decompress(gdi->codecs->planar, pSrcData, SrcSize, pDstData,
-									   gdi->dstFormat, -1, 0, 0, width, height, TRUE);
+			status = planar_decompress(gdi->codecs->planar, pSrcData, SrcSize,
+									   pDstData, gdi->dstFormat, 0, 0, 0,
+									   width, height, TRUE);
 		}
 
 		if (status < 0)

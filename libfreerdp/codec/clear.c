@@ -58,7 +58,7 @@ static BYTE CLEAR_8BIT_MASKS[9] =
 static void convert_color(BYTE* dst, UINT32 nDstStep, UINT32 DstFormat,
 						  UINT32 nXDst, UINT32 nYDst, UINT32 nWidth, UINT32 nHeight,
 						  const BYTE* src, UINT32 nSrcStep, UINT32 SrcFormat,
-						  UINT32 nDstWidth, UINT32 nDstHeight)
+						  UINT32 nDstWidth, UINT32 nDstHeight, const gdiPalette* palette)
 {
 	UINT32 x, y;
 
@@ -80,7 +80,7 @@ static void convert_color(BYTE* dst, UINT32 nDstStep, UINT32 DstFormat,
 					&pDstLine[(nXDst + x) * GetBytesPerPixel(DstFormat)];
 			UINT32 color = ReadColor(pSrcPixel, SrcFormat);
 			color = ConvertColor(color, SrcFormat,
-								 DstFormat, NULL);
+								 DstFormat, palette);
 			WriteColor(pDstPixel, DstFormat, color);
 		}
 	}
@@ -234,7 +234,9 @@ static BOOL clear_decompress_residual_data(CLEAR_CONTEXT* clear,
 										   UINT32 residualByteCount, UINT32 SrcSize,
 										   UINT32 nWidth, UINT32 nHeight,
 										   BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
-										   UINT32 nXDst, UINT32 nYDst, UINT32 nDstWidth, UINT32 nDstHeight)
+										   UINT32 nXDst, UINT32 nYDst,
+										   UINT32 nDstWidth, UINT32 nDstHeight,
+										   const gdiPalette* palette)
 {
 	UINT32 i;
 	UINT32 nSrcStep;
@@ -305,7 +307,7 @@ static BOOL clear_decompress_residual_data(CLEAR_CONTEXT* clear,
 	convert_color(pDstData, nDstStep, DstFormat,
 				  nXDst, nYDst, nWidth, nHeight,
 				  clear->TempBuffer, nSrcStep, clear->format,
-				  nDstWidth, nDstHeight);
+				  nDstWidth, nDstHeight, palette);
 	return TRUE;
 }
 
@@ -584,7 +586,8 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
 INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
 					   UINT32 SrcSize, UINT32 nWidth, UINT32 nHeight,
 					   BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
-					   UINT32 nXDst, UINT32 nYDst, UINT32 nDstWidth, UINT32 nDstHeight)
+					   UINT32 nXDst, UINT32 nYDst, UINT32 nDstWidth,
+					   UINT32 nDstHeight, const gdiPalette* palette)
 {
 	BYTE seqNumber;
 	BYTE glyphFlags;
@@ -657,7 +660,7 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
 			convert_color(pDstData, nDstStep, DstFormat,
 						  nXDst, nYDst, nWidth, nHeight,
 						  glyphData, nSrcStep, clear->format,
-						  nDstWidth, nDstHeight);
+						  nDstWidth, nDstHeight, palette);
 			return 1; /* Finish */
 		}
 	}
@@ -677,7 +680,7 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
 											&pSrcData[offset], residualByteCount,
 											SrcSize - offset, nWidth, nHeight,
 											pDstData, DstFormat, nDstStep, nXDst, nYDst,
-											nDstWidth, nDstHeight))
+											nDstWidth, nDstHeight, palette))
 			return -1111;
 
 		offset += residualByteCount;
@@ -764,7 +767,7 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
 							  nXDstRel, nYDstRel, width, height,
 							  bitmapData, nSrcStep,
 							  PIXEL_FORMAT_BGR24,
-							  nDstWidth, nDstHeight);
+							  nDstWidth, nDstHeight, palette);
 			}
 			else if (subcodecId == 1) /* NSCodec */
 			{
@@ -821,7 +824,7 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
 		convert_color(pDstData, nDstStep, DstFormat,
 					  nXDst, nYDst, nWidth, nHeight,
 					  glyphData, nSrcStep, clear->format,
-					  nDstWidth, nDstHeight);
+					  nDstWidth, nDstHeight, palette);
 	}
 
 	if (offset != SrcSize)
