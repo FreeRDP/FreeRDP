@@ -1663,6 +1663,17 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchCase(arg, "bpp")
 		{
 			settings->ColorDepth = atoi(arg->Value);
+            switch(settings->ColorDepth)
+            {
+                case 32:
+                case 24:
+                case 16:
+                case 15:
+                case 8:
+                    break;
+                default:
+                    return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+            }
 		}
 		CommandLineSwitchCase(arg, "admin")
 		{

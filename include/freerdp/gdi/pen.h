@@ -28,7 +28,7 @@
 #endif
 
 FREERDP_API HGDI_PEN gdi_CreatePen(UINT32 fnPenStyle, UINT32 nWidth,
-				   UINT32 crColor, UINT32 format);
+                   UINT32 crColor, UINT32 format, const gdiPalette* palette);
 FREERDP_API UINT32 gdi_GetPenColor(HGDI_PEN pen, UINT32 format);
 
 #ifdef __cplusplus

@@ -136,8 +136,7 @@ struct xf_context
 	HANDLE mutex;
 	BOOL UseXThreads;
 	BOOL cursorHidden;
-	UINT32* palette;
-	UINT32 palette_hwgdi[256];
+    gdiPalette palette;
 
 	HGDI_DC hdc;
 	UINT32 bitmap_size;

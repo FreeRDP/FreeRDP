@@ -42,7 +42,7 @@
  */
 
 HGDI_PEN gdi_CreatePen(UINT32 fnPenStyle, UINT32 nWidth, UINT32 crColor,
-		       UINT32 format)
+			   UINT32 format, const gdiPalette* palette)
 {
 	HGDI_PEN hPen = (HGDI_PEN) calloc(1, sizeof(GDI_PEN));
 	if (!hPen)
@@ -52,10 +52,11 @@ HGDI_PEN gdi_CreatePen(UINT32 fnPenStyle, UINT32 nWidth, UINT32 crColor,
 	hPen->color = crColor;
 	hPen->width = nWidth;
 	hPen->format = format;
+	hPen->palette = palette;
 	return hPen;
 }
 
 INLINE UINT32 gdi_GetPenColor(HGDI_PEN pen, UINT32 format)
 {
-	return ConvertColor(pen->color, pen->format, format, NULL);
+	return ConvertColor(pen->color, pen->format, format, pen->palette);
 }

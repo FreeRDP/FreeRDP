@@ -1237,7 +1237,7 @@ BOOL xf_post_connect(freerdp* instance)
 	}
 	else
 	{
-		xfc->palette = xfc->palette_hwgdi;
+		xfc->palette = context->gdi->palette;
 		xf_gdi_register_update_callbacks(update);
 	}
 

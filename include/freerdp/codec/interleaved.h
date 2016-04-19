@@ -48,14 +48,14 @@ FREERDP_API INT32 interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved
 				       BYTE* pDstData, UINT32 DstFormat,
 				       UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
 				       UINT32 nWidth, UINT32 nHeight,
-				       const UINT32* palette);
+                       const gdiPalette* palette);
 
 FREERDP_API BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
 				     BYTE* pDstData, UINT32* pDstSize,
 				     UINT32 nWidth, UINT32 nHeight,
 				     const BYTE* pSrcData, UINT32 SrcFormat,
 				     UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
-				     const UINT32* palette, UINT32 bpp);
+                     const gdiPalette* palette, UINT32 bpp);
 
 FREERDP_API BOOL bitmap_interleaved_context_reset(BITMAP_INTERLEAVED_CONTEXT* interleaved);
 
