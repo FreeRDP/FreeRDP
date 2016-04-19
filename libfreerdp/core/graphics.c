@@ -151,7 +151,7 @@ BOOL Pointer_SetDefault(rdpContext* context)
 BOOL Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 {
 	return IFCALLRESULT(TRUE, context->graphics->Pointer_Prototype->SetPosition,
-			    context, x, y);
+				context, x, y);
 }
 
 void graphics_register_pointer(rdpGraphics* graphics, rdpPointer* pointer)
@@ -192,7 +192,7 @@ BOOL Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y)
 }
 
 BOOL Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height,
-		     UINT32 bgcolor, UINT32 fgcolor, BOOL fOpRedundant)
+			 UINT32 bgcolor, UINT32 fgcolor, BOOL fOpRedundant)
 {
 	return context->graphics->Glyph_Prototype->BeginDraw(context, x, y, width,
 		height, bgcolor, fgcolor, fOpRedundant);
