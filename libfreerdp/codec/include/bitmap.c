@@ -25,7 +25,7 @@
  * Write a foreground/background image to a destination buffer.
  */
 static BYTE* WRITEFGBGIMAGE(BYTE* pbDest, UINT32 rowDelta,
-	BYTE bitmask, PIXEL fgPel, UINT32 cBits)
+    BYTE bitmask, PIXEL fgPel, INT32 cBits)
 {
 	PIXEL xorPixel;
 

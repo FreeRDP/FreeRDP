@@ -152,7 +152,7 @@ static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 		{
 			XSetRegion(xfc->display, xfc->gc, reg1);
 			XFillRectangle(xfc->display, xfc->window->handle, xfc->gc, 0, 0,
-				       xfc->window->width, xfc->window->height);
+					   xfc->window->width, xfc->window->height);
 			XSetClipMask(xfc->display, xfc->gc, None);
 		}
 
@@ -162,9 +162,9 @@ static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 	picFormat = XRenderFindVisualFormat(xfc->display, xfc->visual);
 	pa.subwindow_mode = IncludeInferiors;
 	primaryPicture = XRenderCreatePicture(xfc->display, xfc->primary, picFormat,
-					      CPSubwindowMode, &pa);
+						  CPSubwindowMode, &pa);
 	windowPicture = XRenderCreatePicture(xfc->display, xfc->window->handle,
-					     picFormat, CPSubwindowMode, &pa);
+						 picFormat, CPSubwindowMode, &pa);
 	XRenderSetPictureFilter(xfc->display, primaryPicture, FilterBilinear, 0, 0);
 	transform.matrix[0][0] = XDoubleToFixed(xScalingFactor);
 	transform.matrix[0][1] = XDoubleToFixed(0.0);
@@ -192,8 +192,8 @@ static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 BOOL xf_picture_transform_required(xfContext* xfc)
 {
 	if (xfc->offset_x || xfc->offset_y ||
-	    xfc->scaledWidth != xfc->sessionWidth ||
-	    xfc->scaledHeight != xfc->sessionHeight)
+		xfc->scaledWidth != xfc->sessionWidth ||
+		xfc->scaledHeight != xfc->sessionHeight)
 	{
 		return TRUE;
 	}
@@ -256,7 +256,7 @@ static BOOL xf_desktop_resize(rdpContext* context)
 	if (!xfc->fullscreen)
 	{
 		xf_ResizeDesktopWindow(xfc, xfc->window, settings->DesktopWidth,
-				       settings->DesktopHeight);
+					   settings->DesktopHeight);
 	}
 	else
 	{
@@ -275,7 +275,7 @@ static BOOL xf_desktop_resize(rdpContext* context)
 		XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 		XSetForeground(xfc->display, xfc->gc, 0);
 		XFillRectangle(xfc->display, xfc->drawable, xfc->gc, 0, 0, xfc->window->width,
-			       xfc->window->height);
+				   xfc->window->height);
 	}
 
 	return TRUE;
@@ -552,7 +552,7 @@ BOOL xf_create_window(xfContext* xfc)
 		else
 		{
 			windowTitle = malloc(1 + sizeof("FreeRDP: ") + strlen(settings->ServerHostname)
-					     + sizeof(":00000"));
+						 + sizeof(":00000"));
 			sprintf(windowTitle, "FreeRDP: %s:%i", settings->ServerHostname,
 				settings->ServerPort);
 		}
@@ -599,7 +599,7 @@ BOOL xf_create_window(xfContext* xfc)
 
 	if (!xfc->primary)
 		xfc->primary = XCreatePixmap(xfc->display, xfc->drawable, xfc->sessionWidth,
-					     xfc->sessionHeight, xfc->depth);
+						 xfc->sessionHeight, xfc->depth);
 
 	xfc->drawing = xfc->primary;
 
@@ -614,7 +614,7 @@ BOOL xf_create_window(xfContext* xfc)
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 	XSetForeground(xfc->display, xfc->gc, BlackPixelOfScreen(xfc->screen));
 	XFillRectangle(xfc->display, xfc->primary, xfc->gc, 0, 0, xfc->sessionWidth,
-		       xfc->sessionHeight);
+			   xfc->sessionHeight);
 	XFlush(xfc->display);
 
 	if (!xfc->image)
@@ -726,7 +726,7 @@ void xf_toggle_control(xfContext* xfc)
  * @return 0 on success, otherwise a Win32 error code
  */
 UINT xf_encomsp_participant_created(EncomspClientContext* context,
-				    ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated)
+					ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated)
 {
 	return CHANNEL_RC_OK;
 }
@@ -822,7 +822,7 @@ BOOL xf_get_pixmap_info(xfContext* xfc)
 	}
 
 	vis = XGetVisualInfo(xfc->display, VisualClassMask | VisualScreenMask,
-			     &template, &vi_count);
+				 &template, &vi_count);
 
 	if (!vis)
 	{
@@ -912,7 +912,7 @@ void xf_check_extensions(xfContext* context)
 	int xkb_minor = XkbMinorVersion;
 
 	if (XkbLibraryVersion(&xkb_major, &xkb_minor)
-	    && XkbQueryExtension(context->display, &xkb_opcode, &xkb_event,
+		&& XkbQueryExtension(context->display, &xkb_opcode, &xkb_event,
 				 &xkb_error, &xkb_major, &xkb_minor))
 	{
 		context->xkbAvailable = TRUE;
@@ -970,7 +970,7 @@ static void xf_get_x11_button_map(xfContext* xfc, unsigned char* x11_map)
 				for (i = 0; i < num_devices; ++i)
 				{
 					if ((devices2[i].use == XISlavePointer) &&
-					    (strncmp(devices2[i].name, TEST_PTR_STR, TEST_PTR_LEN) != 0))
+						(strncmp(devices2[i].name, TEST_PTR_STR, TEST_PTR_LEN) != 0))
 					{
 						xid = devices2[i].deviceid;
 						break;
@@ -990,7 +990,7 @@ static void xf_get_x11_button_map(xfContext* xfc, unsigned char* x11_map)
 				for (i = 0; i < num_devices; ++i)
 				{
 					if ((devices1[i].use == IsXExtensionPointer) &&
-					    (strncmp(devices1[i].name, TEST_PTR_STR, TEST_PTR_LEN) != 0))
+						(strncmp(devices1[i].name, TEST_PTR_STR, TEST_PTR_LEN) != 0))
 					{
 						xid = devices1[i].id;
 						break;
@@ -1129,7 +1129,7 @@ BOOL xf_pre_connect(freerdp* instance)
 	PubSub_SubscribeChannelConnected(instance->context->pubSub,
 					 (pChannelConnectedEventHandler) xf_OnChannelConnectedEventHandler);
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
-					    (pChannelDisconnectedEventHandler) xf_OnChannelDisconnectedEventHandler);
+						(pChannelDisconnectedEventHandler) xf_OnChannelDisconnectedEventHandler);
 
 	if (!freerdp_client_load_addins(channels, instance->settings))
 		return FALSE;
@@ -1188,7 +1188,7 @@ BOOL xf_pre_connect(freerdp* instance)
 	 * we run the session in the /smart-sizing dimensions scaled to full screen
 	 */
 	if (settings->Fullscreen && settings->SmartSizing &&
-	    settings->SmartSizingWidth && settings->SmartSizingHeight)
+		settings->SmartSizingWidth && settings->SmartSizingHeight)
 	{
 		settings->DesktopWidth = settings->SmartSizingWidth;
 		settings->DesktopHeight = settings->SmartSizingHeight;
@@ -1496,7 +1496,7 @@ void* xf_client_thread(void* param)
 		if (!status)
 		{
 			if (freerdp_get_last_error(instance->context) ==
-			    FREERDP_ERROR_AUTHENTICATION_FAILED)
+				FREERDP_ERROR_AUTHENTICATION_FAILED)
 				exit_code = XF_EXIT_AUTH_FAILURE;
 			else
 				exit_code = XF_EXIT_CONN_FAILED;
@@ -1513,7 +1513,7 @@ void* xf_client_thread(void* param)
 		exit_code = freerdp_error_info(instance);
 
 		if (freerdp_get_last_error(instance->context) ==
-		    FREERDP_ERROR_AUTHENTICATION_FAILED)
+			FREERDP_ERROR_AUTHENTICATION_FAILED)
 			exit_code = XF_EXIT_AUTH_FAILURE;
 		else
 			exit_code = XF_EXIT_CONN_FAILED;
@@ -1636,8 +1636,8 @@ disconnect:
 DWORD xf_exit_code_from_disconnect_reason(DWORD reason)
 {
 	if (reason == 0 || (reason >= XF_EXIT_PARSE_ARGUMENTS
-			    && reason <= XF_EXIT_AUTH_FAILURE))
-		    return reason;
+				&& reason <= XF_EXIT_AUTH_FAILURE))
+			return reason;
 	/* License error set */
 	else if (reason >= 0x100 && reason <= 0x10A)
 			 reason -= 0x100 + XF_EXIT_LICENSE_INTERNAL;
@@ -1682,10 +1682,10 @@ static void xf_ZoomingChangeEventHandler(rdpContext* context,
 		return;
 
 	if (w < 10)
-		    w = 10;
+			w = 10;
 
 	if (h < 10)
-		    h = 10;
+			h = 10;
 
 	if (w == xfc->scaledWidth && h == xfc->scaledHeight)
 		return;
@@ -1808,9 +1808,9 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 				  (pTerminateEventHandler) xf_TerminateEventHandler);
 #ifdef WITH_XRENDER
 	PubSub_SubscribeZoomingChange(context->pubSub,
-				      (pZoomingChangeEventHandler) xf_ZoomingChangeEventHandler);
+					  (pZoomingChangeEventHandler) xf_ZoomingChangeEventHandler);
 	PubSub_SubscribePanningChange(context->pubSub,
-				      (pPanningChangeEventHandler) xf_PanningChangeEventHandler);
+					  (pPanningChangeEventHandler) xf_PanningChangeEventHandler);
 #endif
 	xfc->UseXThreads = TRUE;
 	//xfc->debug = TRUE;
@@ -1859,7 +1859,7 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xfc->_NET_WM_NAME = XInternAtom(xfc->display, "_NET_WM_NAME", False);
 	xfc->_NET_WM_PID = XInternAtom(xfc->display, "_NET_WM_PID", False);
 	xfc->_NET_WM_WINDOW_TYPE = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE",
-					       False);
+						   False);
 	xfc->_NET_WM_WINDOW_TYPE_NORMAL = XInternAtom(xfc->display,
 		"_NET_WM_WINDOW_TYPE_NORMAL", False);
 	xfc->_NET_WM_WINDOW_TYPE_DIALOG = XInternAtom(xfc->display,
@@ -1875,7 +1875,7 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xfc->_NET_WM_STATE_SKIP_PAGER = XInternAtom(xfc->display,
 		"_NET_WM_STATE_SKIP_PAGER", False);
 	xfc->_NET_WM_MOVERESIZE = XInternAtom(xfc->display, "_NET_WM_MOVERESIZE",
-					      False);
+						  False);
 	xfc->_NET_MOVERESIZE_WINDOW = XInternAtom(xfc->display,
 		"_NET_MOVERESIZE_WINDOW", False);
 	xfc->UTF8_STRING = XInternAtom(xfc->display, "UTF8_STRING", FALSE);
@@ -1902,13 +1902,13 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xfc->format = PIXEL_FORMAT_RGBX32;
 
 	if (xfc->depth == 32)
-		xfc->format = (!xfc->invert) ? PIXEL_FORMAT_RGBA32 : PIXEL_FORMAT_BGRA32;
+		xfc->format = (xfc->invert) ? PIXEL_FORMAT_RGBA32 : PIXEL_FORMAT_BGRA32;
 	else if (xfc->depth == 24)
-		xfc->format = (!xfc->invert) ? PIXEL_FORMAT_RGBX32 : PIXEL_FORMAT_BGRX32;
+		xfc->format = (xfc->invert) ? PIXEL_FORMAT_RGBX32 : PIXEL_FORMAT_BGRX32;
 	else if (xfc->depth == 16)
-		xfc->format = (!xfc->invert) ? PIXEL_FORMAT_RGB16 : PIXEL_FORMAT_BGR16;
+		xfc->format = (xfc->invert) ? PIXEL_FORMAT_RGB16 : PIXEL_FORMAT_BGR16;
 	else if (xfc->depth == 15)
-		xfc->format = (!xfc->invert) ? PIXEL_FORMAT_RGB16 : PIXEL_FORMAT_BGR16;
+		xfc->format = (xfc->invert) ? PIXEL_FORMAT_RGB16 : PIXEL_FORMAT_BGR16;
 	else
 		xfc->format = PIXEL_FORMAT_RGBX32;
 

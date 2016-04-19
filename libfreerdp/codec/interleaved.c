@@ -267,14 +267,14 @@ INT32 interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
 	if (!interleaved)
 		return -1;
 
-	if (nDstStep < 0)
+	if (nDstStep <= 0)
 		nDstStep = nWidth * dstBytesPerPixel;
 
 	switch(bpp)
 	{
 	case 24:
 		scanline = nWidth * 3;
-		SrcFormat = PIXEL_FORMAT_RGB24_VF;
+		SrcFormat = PIXEL_FORMAT_BGR24_VF;
 		break;
 	case 16:
 		scanline = nWidth * 2;

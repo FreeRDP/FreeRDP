@@ -163,7 +163,7 @@ static BOOL update_gdi_cache_bitmap_v2(rdpContext* context,
 
 	prevBitmap = bitmap_cache_get(cache->bitmap, cacheBitmapV2->cacheId, cacheBitmapV2->cacheIndex);
 
-	if (bitmap->New(context, bitmap))
+	if (!bitmap->New(context, bitmap))
 		return FALSE;
 
 	if (prevBitmap)
@@ -199,7 +199,7 @@ static BOOL update_gdi_cache_bitmap_v3(rdpContext* context,
 			bitmapData->bpp, bitmapData->length, compressed,
 			bitmapData->codecID);
 
-	if (bitmap->New(context, bitmap))
+	if (!bitmap->New(context, bitmap))
 		return FALSE;
 
 	prevBitmap = bitmap_cache_get(cache->bitmap, cacheBitmapV3->cacheId, cacheBitmapV3->cacheIndex);
@@ -251,9 +251,11 @@ static BOOL update_gdi_bitmap_update(rdpContext* context,
 			bitmap->Free(context, bitmap);
 
 		reused = TRUE;
-		bitmap->New(context, bitmap);
+		if (!bitmap->New(context, bitmap))
+			return FALSE;
 
-		bitmap->Paint(context, bitmap);
+		if (!bitmap->Paint(context, bitmap))
+			return FALSE;
 	}
 	return TRUE;
 }
