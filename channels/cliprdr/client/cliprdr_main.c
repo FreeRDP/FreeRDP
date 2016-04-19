@@ -310,9 +310,9 @@ static UINT cliprdr_process_filecontents_request(cliprdrPlugin* cliprdr, wStream
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	if (Stream_GetRemainingLength(s) < 28)
+	if (Stream_GetRemainingLength(s) < 24)
 	{
-		WLog_ERR(TAG, "not enought remaining data");
+		WLog_ERR(TAG, "not enough remaining data");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -326,7 +326,10 @@ static UINT cliprdr_process_filecontents_request(cliprdrPlugin* cliprdr, wStream
 	Stream_Read_UINT32(s, request.nPositionLow); /* nPositionLow (4 bytes) */
 	Stream_Read_UINT32(s, request.nPositionHigh); /* nPositionHigh (4 bytes) */
 	Stream_Read_UINT32(s, request.cbRequested); /* cbRequested (4 bytes) */
-	Stream_Read_UINT32(s, request.clipDataId); /* clipDataId (4 bytes) */
+	if (Stream_GetRemainingLength(s) >= 4)
+		Stream_Read_UINT32(s, request.clipDataId); /* clipDataId (4 bytes) */
+	else
+		request.clipDataId = 0;
 
 
 	IFCALLRET(context->ServerFileContentsRequest, error, context, &request);
@@ -357,7 +360,7 @@ static UINT cliprdr_process_filecontents_response(cliprdrPlugin* cliprdr, wStrea
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_ERR(TAG, "not enought remaining data");
+		WLog_ERR(TAG, "not enough remaining data");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -399,7 +402,7 @@ static UINT cliprdr_process_lock_clipdata(cliprdrPlugin* cliprdr, wStream* s, UI
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_ERR(TAG, "not enought remaining data");
+		WLog_ERR(TAG, "not enough remaining data");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -437,7 +440,7 @@ static UINT cliprdr_process_unlock_clipdata(cliprdrPlugin* cliprdr, wStream* s, 
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_ERR(TAG, "not enought remaining data");
+		WLog_ERR(TAG, "not enough remaining data");
 		return ERROR_INVALID_DATA;
 	}
 
