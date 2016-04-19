@@ -38,7 +38,7 @@ set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
     ${CORE_AUDIO}
     ${CORE_FOUNDATION})
 
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp winpr)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
