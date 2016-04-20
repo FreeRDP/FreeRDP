@@ -472,14 +472,94 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 	if (FREERDP_PIXEL_FORMAT_FLIP_MASKED(SrcFormat) ==
 		FREERDP_PIXEL_FORMAT_FLIP_MASKED(DstFormat))
 	{
-		UINT32 y;
+		INT32 y;
 
-		for (y = 0; y < nHeight; y++)
+		if (pDstData == pSrcData)
 		{
-			const BYTE* srcLine = &pSrcData[(y + nYSrc) * nSrcStep * srcVMultiplier +
-							srcVOffset];
-			BYTE* dstLine = &pDstData[(y + nYDst) * nDstStep * dstVMultiplier + dstVOffset];
-			memcpy(&dstLine[xDstOffset], &srcLine[xSrcOffset], copyDstWidth);
+			/* Copy down */
+			if (nYDst > nYSrc)
+			{
+				for (y = 0; y < nHeight; y++)
+				{
+					const BYTE* srcLine = &pSrcData[(y + nYSrc) *
+							      nSrcStep * srcVMultiplier +
+							      srcVOffset];
+					BYTE* dstLine = &pDstData[(y + nYDst) *
+							nDstStep * dstVMultiplier +
+							dstVOffset];
+
+					memcpy(&dstLine[xDstOffset],
+					       &srcLine[xSrcOffset], copyDstWidth);
+				}
+			}
+			/* Copy up */
+			else if (nYDst < nYSrc)
+			{
+				for (y = nHeight - 1; y >= 0; y--)
+				{
+					const BYTE* srcLine = &pSrcData[(y + nYSrc) *
+							      nSrcStep * srcVMultiplier +
+							      srcVOffset];
+					BYTE* dstLine = &pDstData[(y + nYDst) *
+							nDstStep * dstVMultiplier +
+							dstVOffset];
+
+					memcpy(&dstLine[xDstOffset],
+					       &srcLine[xSrcOffset], copyDstWidth);
+				}
+			}
+			/* Copy left */
+			else if (nXSrc > nXDst)
+			{
+				for (y = 0; y < nHeight; y++)
+				{
+					const BYTE* srcLine = &pSrcData[(y + nYSrc) *
+							      nSrcStep * srcVMultiplier +
+							      srcVOffset];
+					BYTE* dstLine = &pDstData[(y + nYDst) *
+							nDstStep * dstVMultiplier +
+							dstVOffset];
+
+					memmove(&dstLine[xDstOffset],
+					       &srcLine[xSrcOffset], copyDstWidth);
+				}
+			}
+			/* Copy right */
+			else if (nXSrc < nXDst)
+			{
+				for (y = nHeight - 1; y >= 0; y--)
+				{
+					const BYTE* srcLine = &pSrcData[(y + nYSrc) *
+							      nSrcStep * srcVMultiplier +
+							      srcVOffset];
+					BYTE* dstLine = &pDstData[(y + nYDst) *
+							nDstStep * dstVMultiplier +
+							dstVOffset];
+
+					memove(&dstLine[xDstOffset],
+					       &srcLine[xSrcOffset], copyDstWidth);
+				}
+			}
+			/* Source and destination are equal... */
+			else
+			{
+
+			}
+		}
+		else if (nYDst < nYSrc)
+		{
+			for (y = 0; y < nHeight; y++)
+			{
+				const BYTE* srcLine = &pSrcData[(y + nYSrc) *
+						      nSrcStep * srcVMultiplier +
+						      srcVOffset];
+				BYTE* dstLine = &pDstData[(y + nYDst) *
+						nDstStep * dstVMultiplier +
+						dstVOffset];
+
+				memcpy(&dstLine[xDstOffset],
+				       &srcLine[xSrcOffset], copyDstWidth);
+			}
 		}
 	}
 	else
@@ -488,9 +568,11 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 
 		for (y = 0; y < nHeight; y++)
 		{
-			const BYTE* srcLine = &pSrcData[(y + nYSrc) * nSrcStep * srcVMultiplier +
-							srcVOffset];
-			BYTE* dstLine = &pDstData[(y + nYDst) * nDstStep * dstVMultiplier + dstVOffset];
+			const BYTE* srcLine = &pSrcData[(y + nYSrc) *
+					      nSrcStep * srcVMultiplier +
+					      srcVOffset];
+			BYTE* dstLine = &pDstData[(y + nYDst) *
+					nDstStep * dstVMultiplier + dstVOffset];
 
 			for (x = 0; x < nWidth; x++)
 			{
