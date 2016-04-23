@@ -484,13 +484,13 @@ static BOOL gdi_bitmap_update(rdpContext* context,
 			if (bitsPerPixel < 32)
 			{
 				status = interleaved_decompress(codecs->interleaved,
-								pSrcData, SrcSize,
-								bitsPerPixel,
-								gdi->primary_buffer,
-								gdi->dstFormat,
-								gdi->stride, nXDst, nYDst,
-								nWidth, nHeight,
-								gdi->palette);
+				                                pSrcData, SrcSize,
+				                                bitsPerPixel,
+				                                gdi->primary_buffer,
+				                                gdi->dstFormat,
+				                                gdi->stride, nXDst, nYDst,
+				                                nWidth, nHeight,
+				                                &gdi->palette);
 			}
 			else
 			{
@@ -518,10 +518,10 @@ static BOOL gdi_bitmap_update(rdpContext* context,
 					  gdi->height - 1) - bitmap->destTop + 1; /* clip height */
 
 			if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, gdi->stride,
-									nXDst, nYDst, nWidth, nHeight,
-									pSrcData, SrcFormat, nSrcStep,
-									nXSrc, nYSrc, gdi->palette))
-					return FALSE;
+			                        nXDst, nYDst, nWidth, nHeight,
+			                        pSrcData, SrcFormat, nSrcStep,
+			                        nXSrc, nYSrc, &gdi->palette))
+				return FALSE;
 		}
 
 		if (!gdi_InvalidateRegion(gdi->primary->hdc, nXDst, nYDst,
@@ -537,10 +537,10 @@ static BOOL gdi_palette_update(rdpContext* context,
 {
 	int index;
 	const PALETTE_ENTRY* pe;
-	UINT32* palette32;
 	rdpGdi* gdi = context->gdi;
-	palette32 = (UINT32*) gdi->palette;
+	gdi->palette.format = gdi->dstFormat;
 
+	gdi->palette.format = gdi->dstFormat;
 	for (index = 0; index < (int) palette->number; index++)
 	{
 		pe = &(palette->entries[index]);
@@ -589,9 +589,9 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	UINT32 SrcFormat = gdi_get_pixel_format(context->settings->ColorDepth, FALSE);
 	brush = &patblt->brush;
 	foreColor = ConvertColor(patblt->foreColor, SrcFormat,
-				 gdi->dstFormat, gdi->palette);
+	                         gdi->dstFormat, &gdi->palette);
 	backColor = ConvertColor(patblt->backColor, SrcFormat,
-				 gdi->dstFormat, gdi->palette);
+	                         gdi->dstFormat, &gdi->palette);
 	originalColor = gdi_SetTextColor(gdi->drawing->hdc, foreColor);
 
 	if (brush->style == GDI_BS_SOLID)
@@ -628,7 +628,7 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 
 		hatched = GDI_BS_HATCHED_PATTERNS + (8 * brush->hatch);
 		freerdp_image_copy_from_monochrome(data, gdi->dstFormat, 0, 0, 0, 8, 8,
-						   hatched, backColor, foreColor, gdi->palette);
+		                                   hatched, backColor, foreColor, &gdi->palette);
 		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->format, data);
 
 		if (!hBmp)
@@ -676,8 +676,13 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 				goto out_error;
 			}
 
-			freerdp_image_copy(data, gdi->dstFormat, -1, 0, 0,
-					   8, 8, brush->data, brushFormat, -1, 0, 0, gdi->palette);
+			if (!freerdp_image_copy(data, gdi->dstFormat, 0, 0, 0,
+			                        8, 8, brush->data, brushFormat, 0, 0, 0,
+			                        &gdi->palette))
+			{
+				ret = FALSE;
+				goto out_error;
+			}
 		}
 		else
 		{
@@ -690,7 +695,7 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 			}
 
 			freerdp_image_copy_from_monochrome(data, gdi->dstFormat, 0, 0, 0, 8, 8,
-							   brush->data, backColor, foreColor, gdi->palette);
+			                                   brush->data, backColor, foreColor, &gdi->palette);
 		}
 
 		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->format, data);
@@ -754,7 +759,7 @@ static BOOL gdi_opaque_rect(rdpContext* context,
 	gdi_CRgnToRect(opaque_rect->nLeftRect, opaque_rect->nTopRect,
 			   opaque_rect->nWidth, opaque_rect->nHeight, &rect);
 	brush_color = ConvertColor(opaque_rect->color, SrcFormat,
-				   gdi->dstFormat, gdi->palette);
+	                           gdi->dstFormat, &gdi->palette);
 
 	if (!(hBrush = gdi_CreateSolidBrush(brush_color)))
 		return FALSE;
@@ -782,7 +787,7 @@ static BOOL gdi_multi_opaque_rect(rdpContext* context,
 		gdi_CRgnToRect(rectangle->left, rectangle->top,
 				   rectangle->width, rectangle->height, &rect);
 		brush_color = ConvertColor(multi_opaque_rect->color, SrcFormat,
-					   gdi->dstFormat, gdi->palette);
+		                           gdi->dstFormat, &gdi->palette);
 		hBrush = gdi_CreateSolidBrush(brush_color);
 
 		if (!hBrush)
@@ -807,7 +812,7 @@ static BOOL gdi_line_to(rdpContext* context, const LINE_TO_ORDER* lineTo)
 	UINT32 SrcFormat = gdi_get_pixel_format(context->settings->ColorDepth, FALSE);
 
 	if (!(hPen = gdi_CreatePen(lineTo->penStyle, lineTo->penWidth, color,
-				   SrcFormat)))
+	                           SrcFormat, &gdi->palette)))
 		return FALSE;
 
 	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT) hPen);
@@ -830,7 +835,7 @@ static BOOL gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 	UINT32 SrcFormat = gdi_get_pixel_format(context->settings->ColorDepth, FALSE);
 	color =  polyline->penColor;
 
-	if (!(hPen = gdi_CreatePen(GDI_PS_SOLID, 1, color, SrcFormat)))
+	if (!(hPen = gdi_CreatePen(GDI_PS_SOLID, 1, color, SrcFormat, &gdi->palette)))
 		return FALSE;
 
 	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT) hPen);
@@ -877,9 +882,9 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	brush = &mem3blt->brush;
 	bitmap = (gdiBitmap*) mem3blt->bitmap;
 	foreColor = ConvertColor(mem3blt->foreColor, SrcFormat,
-				 gdi->dstFormat, gdi->palette);
+	                         gdi->dstFormat, &gdi->palette);
 	backColor = ConvertColor(mem3blt->backColor, SrcFormat,
-				 gdi->dstFormat, gdi->palette);
+	                         gdi->dstFormat, &gdi->palette);
 	originalColor = gdi_SetTextColor(gdi->drawing->hdc, foreColor);
 
 	if (brush->style == GDI_BS_SOLID)
@@ -929,7 +934,7 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 			}
 
 			freerdp_image_copy_from_monochrome(data, gdi->dstFormat, 0, 0, 0, 8, 8,
-							   brush->data, backColor, foreColor, gdi->palette);
+			                                   brush->data, backColor, foreColor, &gdi->palette);
 		}
 
 		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->format, data);

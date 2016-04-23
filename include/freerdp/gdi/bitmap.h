@@ -31,24 +31,25 @@ extern "C" {
 
 FREERDP_API UINT32 gdi_GetPixel(HGDI_DC hdc, UINT32 nXPos, UINT32 nYPos);
 FREERDP_API UINT32 gdi_SetPixel(HGDI_DC hdc, UINT32 X, UINT32 Y,
-				UINT32 crColor);
+                                UINT32 crColor);
 FREERDP_API BYTE* gdi_GetPointer(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y);
 
 FREERDP_API HGDI_BITMAP gdi_CreateBitmap(UINT32 nWidth, UINT32 nHeight,
-		UINT32 format,	BYTE* data);
+        UINT32 format,	BYTE* data);
 FREERDP_API HGDI_BITMAP gdi_CreateBitmapEx(UINT32 nWidth, UINT32 nHeight,
-		UINT32 format, UINT32 stride,
-		BYTE* data, void (*fkt_free)(void*));
+        UINT32 format, UINT32 stride,
+        BYTE* data, void (*fkt_free)(void*));
 FREERDP_API HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc,
-		UINT32 nWidth, UINT32 nHeight);
+        UINT32 nWidth, UINT32 nHeight);
 
 FREERDP_API BOOL gdi_BitBlt(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-							UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
-							UINT32 nXSrc, UINT32 nYSrc, DWORD rop);
+                            UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
+                            UINT32 nXSrc, UINT32 nYSrc, DWORD rop,
+                            const gdiPalette* palette);
 
 typedef BOOL (*p_BitBlt)(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-						 UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
-						 UINT32 nXSrc, UINT32 nYSrc, DWORD rop);
+                         UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
+                         UINT32 nXSrc, UINT32 nYSrc, DWORD rop);
 
 #ifdef __cplusplus
 }

@@ -149,8 +149,8 @@ static BOOL BitBlt_PDxn(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 	return TRUE;
 }
 
-BOOL BitBlt_PATINVERT(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-                      UINT32 nWidth, UINT32 nHeight)
+static BOOL BitBlt_PATINVERT(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
+                             UINT32 nWidth, UINT32 nHeight)
 {
 	UINT32 x, y;
 
@@ -195,9 +195,9 @@ BOOL BitBlt_PATINVERT(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 	return TRUE;
 }
 
-BOOL BitBlt_PATPAINT(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-                     UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
-                     UINT32 nXSrc, UINT32 nYSrc)
+static BOOL BitBlt_PATPAINT(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
+                            UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
+                            UINT32 nXSrc, UINT32 nYSrc)
 {
 	UINT32 x, y;
 
@@ -226,8 +226,8 @@ BOOL BitBlt_PATPAINT(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 	return TRUE;
 }
 
-BOOL BitBlt_PATCOPY(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-                    UINT32 nWidth, UINT32 nHeight)
+static BOOL BitBlt_PATCOPY(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
+                           UINT32 nWidth, UINT32 nHeight)
 {
 	UINT32 x, y, xOffset, yOffset;
 
@@ -283,8 +283,8 @@ BOOL BitBlt_PATCOPY(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 	return TRUE;
 }
 
-BOOL BitBlt_DSTINVERT(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-                      UINT32 nWidth, UINT32 nHeight)
+static BOOL BitBlt_DSTINVERT(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
+                             UINT32 nWidth, UINT32 nHeight)
 {
 	UINT32 x, y;
 
@@ -307,8 +307,8 @@ BOOL BitBlt_DSTINVERT(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 	return TRUE;
 }
 
-BOOL BitBlt_BLACKNESS(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-                      UINT32 nWidth, UINT32 nHeight)
+static BOOL BitBlt_BLACKNESS(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
+                             UINT32 nWidth, UINT32 nHeight)
 {
 	UINT32 x, y;
 	UINT32 color = GetColor(hdcDest->format, 0, 0, 0, 0xFF);
@@ -327,8 +327,8 @@ BOOL BitBlt_BLACKNESS(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 	return TRUE;
 }
 
-BOOL BitBlt_WHITENESS(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-                      UINT32 nWidth, UINT32 nHeight)
+static BOOL BitBlt_WHITENESS(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
+                             UINT32 nWidth, UINT32 nHeight)
 {
 	UINT32 x, y;
 	UINT32 color = GetColor(hdcDest->format, 0, 0, 0, 0);
@@ -383,6 +383,5 @@ BOOL gdi_PatBlt(HGDI_DC hdc, UINT32 nXLeft, UINT32 nYLeft,
 			break;
 	}
 
-	WLog_ERR(TAG,  "PatBlt: unknown rop: 0x%08X", rop);
 	return FALSE;
 }
