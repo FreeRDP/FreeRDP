@@ -25,7 +25,10 @@
 #include <winpr/print.h>
 #include <winpr/bitstream.h>
 
+#include <freerdp/log.h>
 #include <freerdp/codec/zgfx.h>
+
+#define TAG FREERDP_TAG("codec")
 
 /**
  * RDP8 Compressor Limits:
@@ -188,7 +191,7 @@ void zgfx_history_buffer_ring_read(ZGFX_CONTEXT* zgfx, int offset, BYTE* dst, UI
 	while ((bytesLeft -= bytes) > 0);
 }
 
-int zgfx_decompress_segment(ZGFX_CONTEXT* zgfx, BYTE* pbSegment, UINT32 cbSegment)
+static int zgfx_decompress_segment(ZGFX_CONTEXT* zgfx, BYTE* pbSegment, UINT32 cbSegment)
 {
 	BYTE c;
 	BYTE flags;
@@ -383,10 +386,105 @@ int zgfx_decompress(ZGFX_CONTEXT* zgfx, BYTE* pSrcData, UINT32 SrcSize, BYTE** p
 	return 1;
 }
 
-int zgfx_compress(ZGFX_CONTEXT* zgfx, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags)
+static int zgfx_compress_segment(ZGFX_CONTEXT* zgfx, wStream* s, BYTE* pSrcData, UINT32 SrcSize, UINT32* pFlags)
 {
+	/* FIXME: Currently compression not implemented. Just copy the raw source */
+	
+	if (!Stream_EnsureRemainingCapacity(s, SrcSize + 1))
+	{
+		WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
+		return -1;
+	}
+	(*pFlags) |= ZGFX_PACKET_COMPR_TYPE_RDP8; /* RDP 8.0 compression format */
+	Stream_Write_UINT8(s, (*pFlags)); /* header (1 byte) */
+	Stream_Write(s, pSrcData, SrcSize);
+
 	return 1;
 }
+
+int zgfx_compress_to_stream(ZGFX_CONTEXT* zgfx, wStream* sDst, BYTE* pUncompressed, UINT32 uncompressedSize, UINT32* pFlags)
+{
+	int fragment;
+	UINT16 maxLength;
+	UINT32 totalLength;
+	UINT16* pSegmentCount = NULL;
+	BYTE* pSrcData;
+	int status = 0;
+
+	maxLength = ZGFX_SEGMENTED_MAXSIZE;
+
+	totalLength = uncompressedSize;
+	pSrcData = pUncompressed; 
+	for (fragment = 0; (totalLength > 0) || (fragment == 0); fragment++)
+	{
+		UINT32 SrcSize;
+		UINT32* pDstSize;
+		UINT32 position;
+
+		SrcSize = (totalLength > maxLength) ? maxLength : totalLength;
+		pDstSize = NULL;
+		totalLength -= SrcSize;
+
+		if (fragment == 0)
+		{
+			/* First fragment */
+
+			/* descriptor (1 byte) */
+			Stream_Write_UINT8(sDst, (totalLength == 0) ? 
+			                   ZGFX_SEGMENTED_SINGLE : ZGFX_SEGMENTED_MULTIPART);
+			if (totalLength > 0)
+			{
+				pSegmentCount = (UINT16*)Stream_Pointer(sDst); /* segmentCount (2 bytes) */
+				Stream_Seek(sDst, 2);
+				Stream_Write_UINT32(sDst, uncompressedSize); /* uncompressedSize (4 bytes) */
+			}
+		}
+		else if (totalLength == 0)
+		{
+			/* Last fragment */
+			if (pSegmentCount)
+			{
+				(*pSegmentCount) = fragment + 1;
+			}
+		}
+
+		if (fragment > 0 || totalLength > 0)
+		{
+			/* Multipart */
+			pDstSize = (UINT32*)Stream_Pointer(sDst); /* size (4 bytes) */
+			Stream_Seek(sDst, 4);
+		}
+
+		position = Stream_GetPosition(sDst);
+		if ((status = zgfx_compress_segment(zgfx, sDst, pSrcData, SrcSize, pFlags)) < 0)
+		{
+			return status;
+		}
+
+		if (pDstSize)
+		{
+			(*pDstSize) = Stream_GetPosition(sDst) - position;
+		}
+
+		pSrcData += SrcSize;
+	}
+
+	return status;
+}
+
+int zgfx_compress(ZGFX_CONTEXT* zgfx, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags)
+{
+	int status;
+	wStream* s = Stream_New(NULL, SrcSize);
+
+	status = zgfx_compress_to_stream(zgfx, s, pSrcData, SrcSize, pFlags);
+	(*ppDstData) = Stream_Buffer(s);
+	(*pDstSize) = Stream_GetPosition(s);
+
+	Stream_Free(s, FALSE);
+	return status;
+}
+
 
 void zgfx_context_reset(ZGFX_CONTEXT* zgfx, BOOL flush)
 {

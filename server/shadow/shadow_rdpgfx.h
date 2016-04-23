@@ -1,7 +1,7 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
  *
- * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 Jiang Zihao <zihao.jiang@yahoo.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,29 +16,23 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SHADOW_SERVER_CHANNELS_H
-#define FREERDP_SHADOW_SERVER_CHANNELS_H
+#ifndef FREERDP_SHADOW_SERVER_RDPGFX_H
+#define FREERDP_SHADOW_SERVER_RDPGFX_H
 
 #include <freerdp/server/shadow.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 
-#include "shadow_encomsp.h"
-#include "shadow_remdesk.h"
-#include "shadow_rdpsnd.h"
-#include "shadow_audin.h"
-#include "shadow_rdpgfx.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-UINT shadow_client_channels_post_connect(rdpShadowClient* client);
-void shadow_client_channels_free(rdpShadowClient* client);
+int shadow_client_rdpgfx_init(rdpShadowClient* client);
+void shadow_client_rdpgfx_uninit(rdpShadowClient* client);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* FREERDP_SHADOW_SERVER_CHANNELS_H */
+#endif /* FREERDP_SHADOW_SERVER_RDPGFX_H */

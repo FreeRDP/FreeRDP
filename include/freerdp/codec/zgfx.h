@@ -28,6 +28,10 @@
 #define ZGFX_SEGMENTED_SINGLE			0xE0
 #define ZGFX_SEGMENTED_MULTIPART		0xE1
 
+#define ZGFX_PACKET_COMPR_TYPE_RDP8		0x04
+
+#define ZGFX_SEGMENTED_MAXSIZE			65535
+
 struct _ZGFX_CONTEXT
 {
 	BOOL Compressor;
@@ -53,8 +57,9 @@ typedef struct _ZGFX_CONTEXT ZGFX_CONTEXT;
 extern "C" {
 #endif
 
-FREERDP_API int zgfx_compress(ZGFX_CONTEXT* zgfx, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags);
 FREERDP_API int zgfx_decompress(ZGFX_CONTEXT* zgfx, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32 flags);
+FREERDP_API int zgfx_compress(ZGFX_CONTEXT* zgfx, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags);
+FREERDP_API int zgfx_compress_to_stream(ZGFX_CONTEXT* zgfx, wStream* sDst, BYTE* pUncompressed, UINT32 uncompressedSize, UINT32* pFlags);
 
 FREERDP_API void zgfx_context_reset(ZGFX_CONTEXT* zgfx, BOOL flush);
 

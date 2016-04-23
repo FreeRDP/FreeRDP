@@ -638,6 +638,7 @@ int win_shadow_dxgi_get_invalid_region(winShadowSubsystem* subsystem)
 	RECT* pDirtyRectsBuffer;
 	DXGI_OUTDUPL_MOVE_RECT* pMoveRect;
 	DXGI_OUTDUPL_MOVE_RECT* pMoveRectBuffer;
+	rdpShadowSurface* surface = subsystem->server->surface;
 
 	if (subsystem->dxgiFrameInfo.AccumulatedFrames == 0)
 		return 0;
@@ -704,7 +705,7 @@ int win_shadow_dxgi_get_invalid_region(winShadowSubsystem* subsystem)
 		invalidRect.right = (UINT16) pDstRect->right;
 		invalidRect.bottom = (UINT16) pDstRect->bottom;
 
-		region16_union_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &invalidRect);
+		region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion), &invalidRect);
 	}
 
 	numDirtyRects = DirtyRectsBufferSize / sizeof(RECT);
@@ -718,7 +719,7 @@ int win_shadow_dxgi_get_invalid_region(winShadowSubsystem* subsystem)
 		invalidRect.right = (UINT16) pDirtyRect->right;
 		invalidRect.bottom = (UINT16) pDirtyRect->bottom;
 
-		region16_union_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &invalidRect);
+		region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion), &invalidRect);
 	}
 
 	return 1;

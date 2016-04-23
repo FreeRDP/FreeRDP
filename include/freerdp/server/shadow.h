@@ -33,6 +33,7 @@
 #include <freerdp/server/remdesk.h>
 #include <freerdp/server/rdpsnd.h>
 #include <freerdp/server/audin.h>
+#include <freerdp/server/rdpgfx.h>
 
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/region.h>
@@ -87,6 +88,7 @@ struct rdp_shadow_client
 	BOOL inLobby;
 	BOOL mayView;
 	BOOL mayInteract;
+	BOOL suppressOutput;
 	wMessageQueue* MsgQueue;
 	CRITICAL_SECTION lock;
 	REGION16 invalidRegion;
@@ -102,6 +104,7 @@ struct rdp_shadow_client
 	RemdeskServerContext* remdesk;
 	RdpsndServerContext* rdpsnd;
 	audin_server_context* audin;
+	RdpgfxServerContext* rdpgfx;
 };
 
 struct rdp_shadow_server
@@ -169,9 +172,12 @@ struct _RDP_SHADOW_ENTRY_POINTS
 	int selectedMonitor; \
 	MONITOR_DEF monitors[16]; \
 	MONITOR_DEF virtualScreen; \
+	\
+	/* This event indicates that we have graphic change */ \
+	/* such as screen update and resize. It should not be */ \
+	/* used by subsystem implementation directly */ \
 	rdpShadowMultiClientEvent* updateEvent; \
-	BOOL suppressOutput; \
-	REGION16 invalidRegion; \
+	\
 	wMessagePipe* MsgPipe; \
 	UINT32 pointerX; \
 	UINT32 pointerY; \
@@ -201,22 +207,7 @@ struct rdp_shadow_subsystem
 };
 
 /* Definition of message between subsystem and clients */
-#define SHADOW_MSG_IN_REFRESH_OUTPUT_ID			1001
-#define SHADOW_MSG_IN_SUPPRESS_OUTPUT_ID		1002
-
-struct _SHADOW_MSG_IN_REFRESH_OUTPUT
-{
-	UINT32 numRects;
-	RECTANGLE_16* rects;
-};
-typedef struct _SHADOW_MSG_IN_REFRESH_OUTPUT SHADOW_MSG_IN_REFRESH_OUTPUT;
-
-struct _SHADOW_MSG_IN_SUPPRESS_OUTPUT
-{
-	BOOL allow;
-	RECTANGLE_16 rect;
-};
-typedef struct _SHADOW_MSG_IN_SUPPRESS_OUTPUT SHADOW_MSG_IN_SUPPRESS_OUTPUT;
+#define SHADOW_MSG_IN_REFRESH_REQUEST_ID		1001
 
 typedef struct _SHADOW_MSG_OUT SHADOW_MSG_OUT;
 typedef void (*MSG_OUT_FREE_FN)(UINT32 id, SHADOW_MSG_OUT* msg); /* function to free SHADOW_MSG_OUT */

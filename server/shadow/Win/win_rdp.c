@@ -63,6 +63,7 @@ BOOL shw_end_paint(rdpContext* context)
 	rdpGdi* gdi = context->gdi;
 	shwContext* shw = (shwContext*) context;
 	winShadowSubsystem* subsystem = shw->subsystem;
+	rdpShadowSurface* surface = subsystem->server->surface;
 
 	ninvalid = gdi->primary->hdc->hwnd->ninvalid;
 	cinvalid = gdi->primary->hdc->hwnd->cinvalid;
@@ -74,7 +75,7 @@ BOOL shw_end_paint(rdpContext* context)
 		invalidRect.right = cinvalid[index].x + cinvalid[index].w;
 		invalidRect.bottom = cinvalid[index].y + cinvalid[index].h;
 
-		region16_union_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &invalidRect);
+		region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion), &invalidRect);
 	}
 
 	SetEvent(subsystem->RdpUpdateEnterEvent);
