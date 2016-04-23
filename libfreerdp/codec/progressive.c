@@ -1555,6 +1555,7 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
                              UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
                              UINT32 nWidth, UINT32 nHeight, UINT16 surfaceId)
 {
+	INT32 rc = 1;
 	UINT status;
 	const BYTE* block;
 	const BYTE* blocks;
@@ -1925,16 +1926,21 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
 			nHeight = updateRects[j].bottom - updateRects[j].top;
 			nXSrc = updateRects[j].left - (nXDst + tile->x);
 			nYSrc = updateRects[j].top - (nYDst + tile->y);
-			freerdp_image_copy(pDstData, DstFormat, nDstStep, nXDst, nYDst,
-			                   nWidth, nHeight,	tile->data, PIXEL_FORMAT_XRGB32,
-			                   64 * 4, nXSrc, nYSrc, NULL);
+
+			if (!freerdp_image_copy(pDstData, DstFormat, nDstStep, nXDst, nYDst,
+			                        nWidth, nHeight,	tile->data, PIXEL_FORMAT_XRGB32,
+			                        64 * 4, nXSrc, nYSrc, NULL))
+			{
+				rc = -42;
+				break;
+			}
 		}
 
 		region16_uninit(&updateRegion);
 	}
 
 	region16_uninit(&clippingRects);
-	return 1;
+	return rc;
 }
 
 int progressive_compress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData,

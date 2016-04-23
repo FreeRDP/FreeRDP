@@ -758,7 +758,8 @@ static UINT gdi_SolidFill(RdpgfxClientContext* context,
 	r = solidFill->fillPixel.R;
 	a = solidFill->fillPixel.XA;
 	color = GetColor(PIXEL_FORMAT_ARGB32, r, g, b, a);
-	color = ConvertColor(color, PIXEL_FORMAT_ARGB32, surface->format, NULL);
+	color = ConvertColor(color, PIXEL_FORMAT_ARGB32, surface->format,
+	                     &gdi->palette);
 
 	for (index = 0; index < solidFill->fillRectCount; index++)
 	{

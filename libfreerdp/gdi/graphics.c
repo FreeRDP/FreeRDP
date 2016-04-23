@@ -54,8 +54,15 @@ HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, UINT32 nWidth, UINT32 nHeight,
 
 	pSrcData = data;
 	nSrcStep = nWidth * GetBytesPerPixel(SrcFormat);
-	freerdp_image_copy(pDstData, gdi->dstFormat, nDstStep, 0, 0,
-					   nWidth, nHeight, pSrcData, SrcFormat, nSrcStep, 0, 0, gdi->palette);
+
+	if (!freerdp_image_copy(pDstData, gdi->dstFormat, nDstStep, 0, 0,
+	                        nWidth, nHeight, pSrcData, SrcFormat, nSrcStep, 0, 0,
+	                        &gdi->palette))
+	{
+		_aligned_free(pDstData);
+		return NULL;
+	}
+
 	bitmap = gdi_CreateBitmap(nWidth, nHeight, gdi->dstFormat, pDstData);
 	return bitmap;
 }
@@ -141,11 +148,11 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 		if (bpp < 32)
 		{
 			status = interleaved_decompress(gdi->codecs->interleaved,
-											pSrcData, SrcSize,
-											bpp,
-											pDstData, gdi->dstFormat,
-											0, 0, 0, width, height,
-											gdi->palette);
+			                                pSrcData, SrcSize,
+			                                bpp,
+			                                pDstData, gdi->dstFormat,
+			                                0, 0, 0, width, height,
+			                                &gdi->palette);
 		}
 		else
 		{
@@ -164,8 +171,8 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	{
 		SrcFormat = gdi_get_pixel_format(bpp, FALSE);
 		status = freerdp_image_copy(pDstData, gdi->dstFormat, 0, 0, 0,
-									width, height, pSrcData, SrcFormat,
-									0, 0, 0, gdi->palette);
+		                            width, height, pSrcData, SrcFormat,
+		                            0, 0, 0, &gdi->palette);
 	}
 
 	bitmap->compressed = FALSE;
@@ -256,8 +263,8 @@ static BOOL gdi_Glyph_BeginDraw(rdpContext* context, UINT32 x, UINT32 y,
 	BOOL ret = FALSE;
 	UINT32 SrcFormat = gdi_get_pixel_format(context->settings->ColorDepth, FALSE);
 	/* TODO: handle fOpRedundant! See xf_Glyph_BeginDraw() */
-	bgcolor = ConvertColor(bgcolor, SrcFormat, gdi->dstFormat, gdi->palette);
-	fgcolor = ConvertColor(fgcolor, SrcFormat, gdi->dstFormat, gdi->palette);
+	bgcolor = ConvertColor(bgcolor, SrcFormat, gdi->dstFormat, &gdi->palette);
+	fgcolor = ConvertColor(fgcolor, SrcFormat, gdi->dstFormat, &gdi->palette);
 
 	if (!(brush = gdi_CreateSolidBrush(fgcolor)))
 		goto out;
@@ -276,7 +283,7 @@ static BOOL gdi_Glyph_EndDraw(rdpContext* context, UINT32 x, UINT32 y,
 	rdpGdi* gdi = context->gdi;
 	UINT32 SrcFormat = gdi_get_pixel_format(context->settings->ColorDepth, FALSE);
 	bgcolor = ConvertColor(bgcolor, SrcFormat,
-						   gdi->dstFormat, gdi->palette);
+	                       gdi->dstFormat, &gdi->palette);
 	gdi->textColor = gdi_SetTextColor(gdi->drawing->hdc, bgcolor);
 	return TRUE;
 }

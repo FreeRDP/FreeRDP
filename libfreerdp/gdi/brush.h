@@ -33,27 +33,13 @@ HGDI_BRUSH gdi_CreateSolidBrush(UINT32 crColor);
 HGDI_BRUSH gdi_CreatePatternBrush(HGDI_BITMAP hbmp);
 HGDI_BRUSH gdi_CreateHatchBrush(HGDI_BITMAP hbmp);
 BOOL gdi_PatBlt(HGDI_DC hdc, UINT32 nXLeft, UINT32 nYLeft,
-				UINT32 nWidth, UINT32 nHeight, DWORD rop);
-
-BOOL BitBlt_PATPAINT(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-			    UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
-			    UINT32 nXSrc, UINT32 nYSrc);
-BOOL BitBlt_PATINVERT(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-			     UINT32 nWidth, UINT32 nHeight);
-BOOL BitBlt_BLACKNESS(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-			     UINT32 nWidth, UINT32 nHeight);
-BOOL BitBlt_WHITENESS(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-			     UINT32 nWidth, UINT32 nHeight);
-BOOL BitBlt_PATCOPY(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-			   UINT32 nWidth, UINT32 nHeight);
-BOOL BitBlt_DSTINVERT(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-			     UINT32 nWidth, UINT32 nHeight);
+                UINT32 nWidth, UINT32 nHeight, DWORD rop);
 
 #ifdef __cplusplus
 }
 #endif
 
 typedef BOOL (*p_PatBlt)(HGDI_DC hdc, UINT32 nXLeft, UINT32 nYLeft,
-						 UINT32 nWidth, UINT32 nHeight, DWORD rop);
+                         UINT32 nWidth, UINT32 nHeight, DWORD rop);
 
 #endif /* FREERDP_GDI_BRUSH_H */
