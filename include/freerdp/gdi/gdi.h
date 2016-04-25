@@ -189,7 +189,7 @@ struct _GDI_PEN
 	UINT32 posY;
 	UINT32 color;
 	UINT32 format;
-    gdiPalette* palette;
+	const gdiPalette* palette;
 };
 typedef struct _GDI_PEN GDI_PEN;
 typedef GDI_PEN* HGDI_PEN;
@@ -290,13 +290,13 @@ struct rdp_gdi
 
 	HGDI_DC hdc;
 	gdiBitmap* primary;
-    gdiBitmap* drawing;
+	gdiBitmap* drawing;
 	UINT32 bitmap_size;
 	UINT32 bitmap_stride;
 	BYTE* bitmap_buffer;
 	BYTE* primary_buffer;
 	UINT32 textColor;
-    gdiPalette palette;
+	gdiPalette palette;
 	gdiBitmap* image;
 	void (*free)(void*);
 
@@ -313,16 +313,16 @@ extern "C" {
 
 FREERDP_API DWORD gdi_rop3_code(BYTE code);
 FREERDP_API UINT32 gdi_get_pixel_format(UINT32 bitsPerPixel, BOOL vFlip);
-FREERDP_API BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y);
-FREERDP_API BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y);
+FREERDP_API BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, UINT32 x, UINT32 y);
+FREERDP_API BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, UINT32 x, UINT32 y);
 FREERDP_API BOOL gdi_resize(rdpGdi* gdi, UINT32 width, UINT32 height);
 FREERDP_API BOOL gdi_resize_ex(rdpGdi* gdi, UINT32 width, UINT32 height,
-			       INT32 stride, INT32 format, BYTE* buffer,
-			       void (*pfree)(void*));
+                               INT32 stride, INT32 format, BYTE* buffer,
+                               void (*pfree)(void*));
 FREERDP_API BOOL gdi_init(freerdp* instance, UINT32 format);
 FREERDP_API BOOL gdi_init_ex(freerdp* instance, UINT32 format,
-			     UINT32 stride, BYTE* buffer,
-			     void (*pfree)(void*));
+                             UINT32 stride, BYTE* buffer,
+                             void (*pfree)(void*));
 FREERDP_API void gdi_free(freerdp* instance);
 
 #ifdef __cplusplus

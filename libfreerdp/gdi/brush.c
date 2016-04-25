@@ -348,7 +348,8 @@ static BOOL BitBlt_WHITENESS(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 }
 
 BOOL gdi_PatBlt(HGDI_DC hdc, UINT32 nXLeft, UINT32 nYLeft,
-                UINT32 nWidth, UINT32 nHeight, DWORD rop)
+                UINT32 nWidth, UINT32 nHeight, DWORD rop,
+                HGDI_DC hdcSrc, UINT32 nXSrc, UINT32 nYSrc)
 {
 	if (!gdi_ClipCoords(hdc, &nXLeft, &nYLeft, &nWidth, &nHeight, NULL, NULL))
 		return TRUE;
@@ -358,6 +359,10 @@ BOOL gdi_PatBlt(HGDI_DC hdc, UINT32 nXLeft, UINT32 nYLeft,
 
 	switch (rop)
 	{
+		case GDI_PATPAINT:
+			return BitBlt_PATPAINT(hdc, nXLeft, nYLeft, nWidth, nHeight,
+			                       hdcSrc, nXSrc, nYSrc);
+
 		case GDI_PATCOPY:
 			return BitBlt_PATCOPY(hdc, nXLeft, nYLeft, nWidth, nHeight);
 

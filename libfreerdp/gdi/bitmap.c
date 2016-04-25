@@ -721,7 +721,8 @@ BOOL gdi_BitBlt(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 	if (!hdcDest)
 		return FALSE;
 
-	if (gdi_PatBlt(hdcDest, nXDest, nYDest, nWidth, nHeight, rop))
+	if (gdi_PatBlt(hdcDest, nXDest, nYDest, nWidth, nHeight, rop,
+	               hdcSrc, nXSrc, nYSrc))
 		return TRUE;
 
 	if (hdcSrc != NULL)
