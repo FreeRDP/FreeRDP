@@ -33,7 +33,8 @@ HGDI_BRUSH gdi_CreateSolidBrush(UINT32 crColor);
 HGDI_BRUSH gdi_CreatePatternBrush(HGDI_BITMAP hbmp);
 HGDI_BRUSH gdi_CreateHatchBrush(HGDI_BITMAP hbmp);
 BOOL gdi_PatBlt(HGDI_DC hdc, UINT32 nXLeft, UINT32 nYLeft,
-                UINT32 nWidth, UINT32 nHeight, DWORD rop);
+                UINT32 nWidth, UINT32 nHeight, DWORD rop,
+                HGDI_DC hdcSrc, UINT32 nXSRc, UINT32 nYSrc);
 
 #ifdef __cplusplus
 }
