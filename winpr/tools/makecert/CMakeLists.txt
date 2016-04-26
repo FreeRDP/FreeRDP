@@ -16,6 +16,7 @@
 # limitations under the License.
 
 set(MODULE_NAME "winpr-makecert-tool")
+set(MODULE_VERSIONED_NAME "winpr${WINPR_VERSION_MAJOR}-makecert-tool")
 set(MODULE_PREFIX "WINPR_MAKECERT_TOOL")
 
 set(${MODULE_PREFIX}_SRCS makecert.c)
@@ -28,7 +29,30 @@ if(MBEDTLS_FOUND)
 	include_directories(${MBEDTLS_INCLUDE_DIR})
 endif()
 
-add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS}) 
+if (WIN32)
+	set(RC_VERSION_MAJOR ${WINPR_VERSION_MAJOR})
+	set(RC_VERSION_MINOR ${WINPR_VERSION_MINOR})
+	set(RC_VERSION_BUILD ${WINPR_VERSION_REVISION})
+	set(RC_VERSION_FILE "${MODULE_VERSIONED_NAME}${CMAKE_LIBRARY_SUFFIX}")
+
+	configure_file(
+		${CMAKE_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
+		${CMAKE_CURRENT_BINARY_DIR}/version.rc
+		@ONLY)
+
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+endif()
+
+add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+
+if (WITH_LIBRARY_VERSIONING)
+  set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
+endif()
+
+if (WIN32)
+	set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME
+			${MODULE_VERSIONED_NAME})
+endif (WIN32)
 
 set(${MODULE_PREFIX}_LIBS winpr)
 

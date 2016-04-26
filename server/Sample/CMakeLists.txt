@@ -16,6 +16,7 @@
 # limitations under the License.
 
 set(MODULE_NAME "sfreerdp-server")
+set(MODULE_VERSIONED_NAME "sfreerdp${FREERDP_VERSION_MAJOR}-server")
 set(MODULE_PREFIX "FREERDP_SERVER_SAMPLE")
 
 set(${MODULE_PREFIX}_SRCS
@@ -34,7 +35,7 @@ if (WIN32)
   set (RC_VERSION_MAJOR ${FREERDP_VERSION_MAJOR})
   set (RC_VERSION_MINOR ${FREERDP_VERSION_MINOR})
   set (RC_VERSION_BUILD ${FREERDP_VERSION_REVISION})
-  set (RC_VERSION_FILE "${MODULE_NAME}${CMAKE_EXECUTABLE_SUFFIX}" )
+  set (RC_VERSION_FILE "${MODULE_VERSIONED_NAME}${CMAKE_EXECUTABLE_SUFFIX}" )
 
   configure_file(
     ${CMAKE_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
@@ -45,6 +46,10 @@ if (WIN32)
 endif()
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+if (WIN32)
+	set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME
+			${MODULE_VERSIONED_NAME})
+endif (WIN32)
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-server)
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr freerdp)
