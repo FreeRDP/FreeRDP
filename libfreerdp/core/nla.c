@@ -5,6 +5,7 @@
  * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2015 Thincast Technologies GmbH
  * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+ * Copyright 2016 Martin Fleisz <martin.fleisz@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +55,8 @@
  * 	version    [0] INTEGER,
  * 	negoTokens [1] NegoData OPTIONAL,
  * 	authInfo   [2] OCTET STRING OPTIONAL,
- * 	pubKeyAuth [3] OCTET STRING OPTIONAL
+ * 	pubKeyAuth [3] OCTET STRING OPTIONAL,
+ * 	errorCode  [4] INTEGER OPTIONAL
  * }
  *
  * NegoData ::= SEQUENCE OF NegoDataItem
@@ -548,7 +550,10 @@ int nla_client_authenticate(rdpNla* nla)
 	}
 
 	if (nla_client_begin(nla) < 1)
+	{
+		Stream_Free(s, TRUE);
 		return -1;
+	}
 
 	while (nla->state < NLA_STATE_AUTH_INFO)
 	{
@@ -566,7 +571,10 @@ int nla_client_authenticate(rdpNla* nla)
 		status = nla_recv_pdu(nla, s);
 
 		if (status < 0)
+		{
+			Stream_Free(s, TRUE);
 			return -1;
+		}
 	}
 
 	Stream_Free(s, TRUE);
@@ -780,8 +788,28 @@ int nla_server_authenticate(rdpNla* nla)
 
 		if ((nla->status != SEC_E_OK) && (nla->status != SEC_I_CONTINUE_NEEDED))
 		{
+			/* Special handling of these specific error codes as NTSTATUS_FROM_WIN32
+			   unfortunately does not map directly to the corresponding NTSTATUS values
+			 */
+			switch (GetLastError())
+			{
+				case ERROR_PASSWORD_MUST_CHANGE:
+					nla->errorCode = STATUS_PASSWORD_MUST_CHANGE;
+					break;
+				case ERROR_PASSWORD_EXPIRED:
+					nla->errorCode = STATUS_PASSWORD_EXPIRED;
+					break;
+				case ERROR_ACCOUNT_DISABLED:
+					nla->errorCode = STATUS_ACCOUNT_DISABLED;
+					break;
+				default:
+					nla->errorCode = NTSTATUS_FROM_WIN32(GetLastError());
+					break;
+			}
+
 			WLog_ERR(TAG, "AcceptSecurityContext status %s [%08X]",
 				 GetSecurityStatusString(nla->status), nla->status);
+			nla_send(nla);
 			return -1; /* Access Denied */
 		}
 
@@ -1381,14 +1409,24 @@ BOOL nla_send(rdpNla* nla)
 	wStream* s;
 	int length;
 	int ts_request_length;
-	int nego_tokens_length;
-	int pub_key_auth_length;
-	int auth_info_length;
+	int nego_tokens_length = 0;
+	int pub_key_auth_length = 0;
+	int auth_info_length = 0;
+	int error_code_context_length = 0;
+	int error_code_length = 0;
 
-	nego_tokens_length = (nla->negoToken.cbBuffer > 0) ? nla_sizeof_nego_tokens(nla->negoToken.cbBuffer) : 0;
-	pub_key_auth_length = (nla->pubKeyAuth.cbBuffer > 0) ? nla_sizeof_pub_key_auth(nla->pubKeyAuth.cbBuffer) : 0;
-	auth_info_length = (nla->authInfo.cbBuffer > 0) ? nla_sizeof_auth_info(nla->authInfo.cbBuffer) : 0;
-	length = nego_tokens_length + pub_key_auth_length + auth_info_length;
+	if (nla->version < 3 || nla->errorCode == 0)
+	{
+		nego_tokens_length = (nla->negoToken.cbBuffer > 0) ? nla_sizeof_nego_tokens(nla->negoToken.cbBuffer) : 0;
+		pub_key_auth_length = (nla->pubKeyAuth.cbBuffer > 0) ? nla_sizeof_pub_key_auth(nla->pubKeyAuth.cbBuffer) : 0;
+		auth_info_length = (nla->authInfo.cbBuffer > 0) ? nla_sizeof_auth_info(nla->authInfo.cbBuffer) : 0;
+	}
+	else
+	{
+		error_code_length = ber_sizeof_integer(nla->errorCode);
+		error_code_context_length = ber_sizeof_contextual_tag(error_code_length);
+	}
+	length = nego_tokens_length + pub_key_auth_length + auth_info_length + error_code_context_length + error_code_length;
 	ts_request_length = nla_sizeof_ts_request(length);
 
 	s = Stream_New(NULL, ber_sizeof_sequence(ts_request_length));
@@ -1404,7 +1442,7 @@ BOOL nla_send(rdpNla* nla)
 	ber_write_sequence_tag(s, ts_request_length); /* SEQUENCE */
 	/* [0] version */
 	ber_write_contextual_tag(s, 0, 3, TRUE);
-	ber_write_integer(s, 2); /* INTEGER */
+	ber_write_integer(s, nla->version); /* INTEGER */
 
 	/* [1] negoTokens (NegoData) */
 	if (nego_tokens_length > 0)
@@ -1430,6 +1468,13 @@ BOOL nla_send(rdpNla* nla)
 		length -= ber_write_sequence_octet_string(s, 3, nla->pubKeyAuth.pvBuffer, nla->pubKeyAuth.cbBuffer);
 	}
 
+	/* [4] errorCode (INTEGER) */
+	if (error_code_length > 0)
+	{
+		ber_write_contextual_tag(s, 4, error_code_length, TRUE);
+		ber_write_integer(s, nla->errorCode);
+	}
+
 	Stream_SealLength(s);
 	transport_write(nla->transport, s);
 	Stream_Free(s, TRUE);
@@ -1439,14 +1484,12 @@ BOOL nla_send(rdpNla* nla)
 int nla_decode_ts_request(rdpNla* nla, wStream* s)
 {
 	int length;
-	UINT32 version;
 
 	/* TSRequest */
 	if (!ber_read_sequence_tag(s, &length) ||
 			!ber_read_contextual_tag(s, 0, &length, TRUE) ||
-			!ber_read_integer(s, &version))
+			!ber_read_integer(s, &nla->version))
 	{
-		Stream_Free(s, TRUE);
 		return -1;
 	}
 
@@ -1459,15 +1502,12 @@ int nla_decode_ts_request(rdpNla* nla, wStream* s)
 				!ber_read_octet_string_tag(s, &length) || /* OCTET STRING */
 				((int) Stream_GetRemainingLength(s)) < length)
 		{
-			Stream_Free(s, TRUE);
 			return -1;
 		}
 
 		if (!sspi_SecBufferAlloc(&nla->negoToken, length))
-		{
-			Stream_Free(s, TRUE);
 			return -1;
-		}
+
 		Stream_Read(s, nla->negoToken.pvBuffer, length);
 		nla->negoToken.cbBuffer = length;
 	}
@@ -1477,16 +1517,11 @@ int nla_decode_ts_request(rdpNla* nla, wStream* s)
 	{
 		if (!ber_read_octet_string_tag(s, &length) || /* OCTET STRING */
 				((int) Stream_GetRemainingLength(s)) < length)
-		{
-			Stream_Free(s, TRUE);
 			return -1;
-		}
 
 		if (!sspi_SecBufferAlloc(&nla->authInfo, length))
-		{
-			Stream_Free(s, TRUE);
 			return -1;
-		}
+
 		Stream_Read(s, nla->authInfo.pvBuffer, length);
 		nla->authInfo.cbBuffer = length;
 	}
@@ -1496,18 +1531,23 @@ int nla_decode_ts_request(rdpNla* nla, wStream* s)
 	{
 		if (!ber_read_octet_string_tag(s, &length) || /* OCTET STRING */
 				((int) Stream_GetRemainingLength(s)) < length)
-		{
-			Stream_Free(s, TRUE);
 			return -1;
-		}
 
 		if (!sspi_SecBufferAlloc(&nla->pubKeyAuth, length))
-		{
-			Stream_Free(s, TRUE);
 			return -1;
-		}
+
 		Stream_Read(s, nla->pubKeyAuth.pvBuffer, length);
 		nla->pubKeyAuth.cbBuffer = length;
+	}
+
+	/* [4] errorCode (INTEGER) */
+	if (nla->version >= 3)
+	{
+		if (ber_read_contextual_tag(s, 4, &length, TRUE) != FALSE)
+		{
+			if (!ber_read_integer(s, &nla->errorCode))
+				return -1;
+		}
 	}
 
 	return 1;
@@ -1517,6 +1557,13 @@ int nla_recv_pdu(rdpNla* nla, wStream* s)
 {
 	if (nla_decode_ts_request(nla, s) < 1)
 		return -1;
+
+	if (nla->errorCode)
+	{
+		WLog_ERR(TAG, "SPNEGO failed with NTSTATUS: %08X", nla->errorCode);
+		freerdp_set_last_error(nla->instance->context, nla->errorCode);
+		return -1;
+	}
 
 	if (nla_client_recv(nla) < 1)
 		return -1;
@@ -1547,7 +1594,10 @@ int nla_recv(rdpNla* nla)
 	}
 
 	if (nla_decode_ts_request(nla, s) < 1)
+	{
+		Stream_Free(s, TRUE);
 		return -1;
+	}
 
 	Stream_Free(s, TRUE);
 	return 1;
@@ -1667,6 +1717,7 @@ rdpNla* nla_new(freerdp* instance, rdpTransport* transport, rdpSettings* setting
 	nla->transport = transport;
 	nla->sendSeqNum = 0;
 	nla->recvSeqNum = 0;
+	nla->version = 3;
 
 	ZeroMemory(&nla->negoToken, sizeof(SecBuffer));
 	ZeroMemory(&nla->pubKeyAuth, sizeof(SecBuffer));
