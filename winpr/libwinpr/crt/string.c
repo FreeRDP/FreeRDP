@@ -26,6 +26,7 @@
 #include <wctype.h>
 
 #include <winpr/crt.h>
+#include <winpr/endian.h>
 
 /* String Manipulation (CRT): http://msdn.microsoft.com/en-us/library/f0151s4x.aspx */
 
@@ -220,10 +221,13 @@ DWORD CharUpperBuffA(LPSTR lpsz, DWORD cchLength)
 DWORD CharUpperBuffW(LPWSTR lpsz, DWORD cchLength)
 {
 	DWORD i;
+	WCHAR value;
 
 	for (i = 0; i < cchLength; i++)
 	{
-		lpsz[i] = WINPR_TOUPPERW(lpsz[i]);
+		Data_Read_UINT16(&lpsz[i], value);
+		value = WINPR_TOUPPERW(value);
+		Data_Write_UINT16(&lpsz[i], value);
 	}
 
 	return cchLength;
@@ -287,10 +291,13 @@ DWORD CharLowerBuffA(LPSTR lpsz, DWORD cchLength)
 DWORD CharLowerBuffW(LPWSTR lpsz, DWORD cchLength)
 {
 	DWORD i;
+	WCHAR value;
 
 	for (i = 0; i < cchLength; i++)
 	{
-		lpsz[i] = WINPR_TOLOWERW(lpsz[i]);
+		Data_Read_UINT16(&lpsz[i], value);
+		value = WINPR_TOLOWERW(value);
+		Data_Write_UINT16(&lpsz[i], value);
 	}
 
 	return cchLength;
