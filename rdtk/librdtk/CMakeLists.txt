@@ -17,7 +17,6 @@
 set(MODULE_NAME "rdtk")
 set(MODULE_PREFIX "RDTK")
 
-include_directories(${OPENSSL_INCLUDE_DIR})
 
 set(${MODULE_PREFIX}_SRCS
 	rdtk_resources.c
@@ -37,40 +36,19 @@ set(${MODULE_PREFIX}_SRCS
 	rdtk_engine.c
 	rdtk_engine.h)
 
-# On windows create dll version information.
-# Vendor, product and year are already set in top level CMakeLists.txt
-if (WIN32)
-  set (RC_VERSION_MAJOR ${RDTK_VERSION_MAJOR})
-  set (RC_VERSION_MINOR ${RDTK_VERSION_MINOR})
-  set (RC_VERSION_BUILD ${RDTK_VERSION_REVISION})
-  set (RC_VERSION_FILE "${CMAKE_SHARED_LIBRARY_PREFIX}${MODULE_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}" )
-
-  configure_file(
-    ${CMAKE_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
-    ${CMAKE_CURRENT_BINARY_DIR}/version.rc
-    @ONLY)
-
-  set ( ${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
-endif()
-
-add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
 
 list(APPEND ${MODULE_PREFIX}_LIBS winpr)
 list(APPEND ${MODULE_PREFIX}_LIBS freerdp)
 
-if (WITH_LIBRARY_VERSIONING)
-	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${RDTK_VERSION} SOVERSION ${RDTK_API_VERSION})
-endif()
-
 target_link_libraries(${MODULE_NAME} ${PRIVATE_KEYWORD} ${${MODULE_PREFIX}_LIBS})
-
-install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} EXPORT RdTkTargets)
-if (WITH_DEBUG_SYMBOLS AND MSVC AND BUILD_SHARED_LIBS)
-	install(FILES ${CMAKE_PDB_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT symbols)
-endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "RdTk")
 
 if(BUILD_TESTING)
 	add_subdirectory(test)
+endif()
+
+if (NOT BUILD_SHARED_LIBS)
+	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} EXPORT FreeRDP-ShadowTargets)
 endif()
