@@ -49,6 +49,7 @@
 #include <freerdp/server/drdynvc.h>
 #include <freerdp/server/remdesk.h>
 #include <freerdp/server/encomsp.h>
+#include <freerdp/server/rdpgfx.h>
 
 void freerdp_channels_dummy() 
 {
@@ -79,6 +80,8 @@ void freerdp_channels_dummy()
 	encomsp_server_context_new(NULL);
 	encomsp_server_context_free(NULL);
 
+	rdpgfx_server_context_new(NULL);
+	rdpgfx_server_context_free(NULL);
 }
 
 /**

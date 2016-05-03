@@ -317,9 +317,6 @@ void (^mac_capture_stream_handler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfa
 	if (count < 1)
 		return;
 	
-	if ((count == 1) && subsystem->suppressOutput)
-		return;
-	
 	mac_shadow_capture_get_dirty_region(subsystem);
 		
 	surfaceRect.left = 0;
@@ -360,7 +357,9 @@ void (^mac_capture_stream_handler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfa
 			
 		count = ArrayList_Count(server->clients);
 			
+		EnterCriticalSection(&(surface->lock));
 		shadow_subsystem_frame_update((rdpShadowSubsystem *)subsystem);
+		LeaveCriticalSection(&(surface->lock));
 		
 		if (count == 1)
 		{
@@ -445,10 +444,14 @@ int mac_shadow_screen_grab(macShadowSubsystem* subsystem)
 
 int mac_shadow_subsystem_process_message(macShadowSubsystem* subsystem, wMessage* message)
 {
+	rdpShadowServer* server = subsystem->server;
+	rdpShadowSurface* surface = server->surface;
 	switch(message->id)
 	{
 		case SHADOW_MSG_IN_REFRESH_REQUEST_ID:
+			EnterCriticalSection(&(surface->lock));
 			shadow_subsystem_frame_update((rdpShadowSubsystem *)subsystem);
+			LeaveCriticalSection(&(surface->lock));
 			break;
 		default:
 			WLog_ERR(TAG, "Unknown message id: %u", message->id);

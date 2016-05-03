@@ -25,7 +25,7 @@
 extern "C" {
 #endif
 
-int shadow_client_surface_update(rdpShadowClient* client, REGION16* region);
+BOOL shadow_client_surface_update(rdpShadowClient* client, REGION16* region);
 BOOL shadow_client_accepted(freerdp_listener* instance, freerdp_peer* client);
 
 #ifdef __cplusplus
