@@ -79,6 +79,8 @@ struct rdp_transport
 	CRITICAL_SECTION ReadLock;
 	CRITICAL_SECTION WriteLock;
 	ULONG written;
+	HANDLE rereadEvent;
+	BOOL haveMoreBytesToRead;
 };
 
 FREERDP_LOCAL wStream* transport_send_stream_init(rdpTransport* transport,
