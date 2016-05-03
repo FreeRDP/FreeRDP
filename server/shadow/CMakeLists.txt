@@ -74,7 +74,7 @@ add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 list(APPEND ${MODULE_PREFIX}_LIBS freerdp)
 list(APPEND ${MODULE_PREFIX}_LIBS freerdp-server)
 list(APPEND ${MODULE_PREFIX}_LIBS winpr)
-list(APPEND ${MODULE_PREFIX}_LIBS winpr-makecert-tool)
+list(APPEND ${MODULE_PREFIX}_LIBS winpr-tools)
 list(APPEND ${MODULE_PREFIX}_LIBS rdtk)
 
 target_link_libraries(${MODULE_NAME} ${PRIVATE_KEYWORD} ${${MODULE_PREFIX}_LIBS})
