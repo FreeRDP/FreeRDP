@@ -18,8 +18,6 @@
 set(MODULE_NAME "xfreerdp-cli")
 set(MODULE_PREFIX "FREERDP_CLIENT_X11")
 
-include_directories(..)
-
 set(${MODULE_PREFIX}_SRCS
 	xfreerdp.c)
 
