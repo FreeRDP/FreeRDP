@@ -139,6 +139,7 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "tls-ciphers", COMMAND_LINE_VALUE_REQUIRED, "<netmon|ma|ciphers>", NULL, NULL, -1, NULL, "Allowed TLS ciphers" },
 	{ "cert-name", COMMAND_LINE_VALUE_REQUIRED, "<name>", NULL, NULL, -1, NULL, "certificate name" },
 	{ "cert-ignore", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "ignore certificate" },
+	{ "cert-tofu", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Automatically accept certificate on first connect" },
 	{ "pcb", COMMAND_LINE_VALUE_REQUIRED, "<blob>", NULL, NULL, -1, NULL, "Preconnection Blob" },
 	{ "pcid", COMMAND_LINE_VALUE_REQUIRED, "<id>", NULL, NULL, -1, NULL, "Preconnection Id" },
 	{ "spn-class", COMMAND_LINE_VALUE_REQUIRED, "<service class>", NULL, NULL, -1, NULL, "SPN authentication service class" },
@@ -2219,6 +2220,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchCase(arg, "cert-ignore")
 		{
 			settings->IgnoreCertificate = TRUE;
+		}
+		CommandLineSwitchCase(arg, "cert-tofu")
+		{
+			settings->AutoAcceptCertificate = TRUE;
 		}
 		CommandLineSwitchCase(arg, "authentication")
 		{
