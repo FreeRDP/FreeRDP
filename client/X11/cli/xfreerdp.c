@@ -29,8 +29,8 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/client/cmdline.h>
 
-#include "xf_client.h"
-#include "xfreerdp.h"
+#include "../xf_client.h"
+#include "../xfreerdp.h"
 
 int main(int argc, char* argv[])
 {

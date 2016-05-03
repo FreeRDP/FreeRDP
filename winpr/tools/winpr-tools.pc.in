@@ -1,0 +1,15 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=@CMAKE_INSTALL_PREFIX@
+libdir=@CMAKE_INSTALL_FULL_LIBDIR@
+includedir=${prefix}/@WINPR_INCLUDE_DIR@
+libs=-lwinpr-tools
+
+Name: WinPR
+Description: WinPR: Windows Portable Runtime
+URL: http://www.freerdp.com/
+Version: @WINPR_TOOLS_VERSION@
+Requires:
+Requires.private: winpr@WINPR_VERSION_MAJOR@ libssl
+Libs: -L${libdir} ${libs}
+Libs.private: -lcrypto
+Cflags: -I${includedir}
