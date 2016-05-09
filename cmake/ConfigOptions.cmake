@@ -81,7 +81,7 @@ endif()
 
 option(WITH_THIRD_PARTY "Build third-party components" OFF)
 
-option(WITH_CLIENT_INTERFACE "Build clients as a library with an interface" ON)
+option(WITH_CLIENT_INTERFACE "Build clients as a library with an interface" OFF)
 option(WITH_SERVER_INTERFACE "Build servers as a library with an interface" ON)
 
 option(WITH_DEBUG_ALL "Print all debug messages." OFF)
