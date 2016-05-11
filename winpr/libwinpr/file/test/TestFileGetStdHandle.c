@@ -26,23 +26,23 @@
 
 int TestFileGetStdHandle(int argc, char* argv[])
 {
-	HANDLE stdout;
+	HANDLE so;
 	char *buf = "happy happy";
 	DWORD bytesWritten;
 
-	stdout = GetStdHandle(STD_OUTPUT_HANDLE);
-	if (stdout == INVALID_HANDLE_VALUE)
+	so = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (so == INVALID_HANDLE_VALUE)
 	{
 		fprintf(stderr, "GetStdHandle failed ;(\n");
 		return -1;
 	}
-	WriteFile(stdout, buf, strlen(buf), &bytesWritten, FALSE);
+	WriteFile(so, buf, strlen(buf), &bytesWritten, FALSE);
 	if (bytesWritten != strlen(buf))
 	{
 		fprintf(stderr, "write failed\n");
 		return -1;
 	}
-	CloseHandle(stdout);
+	CloseHandle(so);
 
 	return 0;
 }

@@ -57,8 +57,10 @@ static BOOL try_16To32(
 	const UINT16 *src;
 	UINT32 ALIGN(outNN1[4096+3]), ALIGN(outAN1[4096+3]),
 		   ALIGN(outNI1[4096+3]), ALIGN(outAI1[4096+3]);
+#ifdef WITH_SSE2
 	UINT32 ALIGN(outNN2[4096+3]), ALIGN(outAN2[4096+3]),
 		   ALIGN(outNI2[4096+3]), ALIGN(outAI2[4096+3]);
+#endif
 
 	assert(sOffset < 4);
 	assert(dOffset < 4);
@@ -161,7 +163,7 @@ int test_RGB565ToARGB_16u32u_C3C4_func(void)
 STD_SPEED_TEST(
 	test16to32_speed, UINT16, UINT32, PRIM_NOP,
 	TRUE, general_RGB565ToARGB_16u32u_C3C4(
-		(const UINT16 *) src1, 64*2, (UINT32 *) dst, 64*4, 
+		(const UINT16 *) src1, 64*2, (UINT32 *) dst, 64*4,
 		64,64, TRUE, TRUE),
 #ifdef WITH_SSE2
 	TRUE, sse3_RGB565ToARGB_16u32u_C3C4(
@@ -182,7 +184,7 @@ int test_RGB565ToARGB_16u32u_C3C4_speed(void)
 
 	get_random_data(src, sizeof(src));
 
-	test16to32_speed("16-to-32bpp", "aligned", 
+	test16to32_speed("16-to-32bpp", "aligned",
 		(const UINT16 *) src, 0, 0, (UINT32 *) dst,
 		size_array, 1, RGB_TRIAL_ITERATIONS, TEST_TIME);
 	return SUCCESS;

@@ -37,8 +37,10 @@
 #include "../log.h"
 #define TAG WINPR_TAG("file")
 
-#ifndef _WIN32
-
+#ifdef _WIN32
+#include <io.h>
+#include <sys/stat.h>
+#else
 #include <assert.h>
 #include <pthread.h>
 #include <dirent.h>
@@ -849,6 +851,20 @@ int UnixChangeFileMode(const char* filename, int flags)
 	fl |= (flags & 0x0001) ? S_IXOTH : 0;
 	return chmod(filename, fl);
 #else
-	return 0;
+	int rc;
+	WCHAR *wfl = NULL;
+
+	int fl = 0;
+
+	if (ConvertToUnicode(CP_UTF8, 0, filename, -1, &wfl, 0) <= 0)
+		return -1;
+
+	/* Check for unsupported flags. */
+	if (flags & ~(_S_IREAD | _S_IWRITE) != 0)
+		WLog_WARN(TAG, "Unsupported file mode %d for _wchmod", flags);
+
+	rc = _wchmod(wfl, flags);
+	free (wfl);
+	return rc;
 #endif
 }

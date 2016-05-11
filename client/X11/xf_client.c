@@ -1127,8 +1127,11 @@ BOOL xf_pre_connect(freerdp* instance)
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
 			(pChannelDisconnectedEventHandler) xf_OnChannelDisconnectedEventHandler);
 
-	freerdp_client_load_addins(channels, instance->settings);
-	freerdp_channels_pre_connect(channels, instance);
+	if (!freerdp_client_load_addins(channels, instance->settings))
+		return FALSE;
+
+	if (freerdp_channels_pre_connect(channels, instance) != CHANNEL_RC_OK)
+		return FALSE;
 
 	if (!settings->Username && !settings->CredentialsFromStdin)
 	{
@@ -1312,7 +1315,7 @@ BOOL xf_post_connect(freerdp* instance)
 	if (!(xfc->clipboard = xf_clipboard_new(xfc)))
 		return FALSE;
 
-	if (freerdp_channels_post_connect(channels, instance) < 0)
+	if (freerdp_channels_post_connect(channels, instance) != CHANNEL_RC_OK)
 		return FALSE;
 
 	EventArgsInit(&e, "xfreerdp");

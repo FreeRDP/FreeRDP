@@ -29,7 +29,6 @@ freerdp_module_add(
 	tls.c)
 
 freerdp_include_directory_add(${OPENSSL_INCLUDE_DIR})
-freerdp_include_directory_add(${ZLIB_INCLUDE_DIRS})
 
 freerdp_library_add(${OPENSSL_LIBRARIES})
 
@@ -40,8 +39,6 @@ endif()
 
 if(WIN32)
 	freerdp_library_add(ws2_32)
-else()
-	freerdp_library_add(${ZLIB_LIBRARIES})
 endif()
 
 if(BUILD_TESTING)

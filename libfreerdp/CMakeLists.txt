@@ -234,7 +234,7 @@ endif()
 
 if(WITH_SSE2)
 	if(CMAKE_COMPILER_IS_GNUCC)
-		set(OPTIMIZATION "${OPTIMIZATION} -msse2 -mssse3 -O2 -Wdeclaration-after-statement")
+		set(OPTIMIZATION "${OPTIMIZATION} -msse2 -mssse3 -Wdeclaration-after-statement")
 	endif()
 
 	if(MSVC)
@@ -249,12 +249,6 @@ endif()
 
 if(DEFINED OPTIMIZATION)
 	set_source_files_properties(${PRIMITIVES_OPT_SRCS} PROPERTIES COMPILE_FLAGS ${OPTIMIZATION})
-endif()
-
-
-# always compile with optimization
-if(CMAKE_COMPILER_IS_GNUCC)
-	set_source_files_properties(${PRIMITIVES_SRCS} PROPERTIES COMPILE_FLAGS "-O2")
 endif()
 
 set(PRIMITIVES_SRCS ${PRIMITIVES_SRCS} ${PRIMITIVES_OPT_SRCS})
@@ -306,7 +300,7 @@ if (WITH_LIBRARY_VERSIONING)
 endif()
 
 
-target_link_libraries(${MODULE_NAME} ${LIBFREERDP_LIBS} winpr)
+target_link_libraries(${MODULE_NAME} ${PRIVATE_KEYWORD} ${LIBFREERDP_LIBS} winpr)
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries EXPORT FreeRDPTargets)
 if (WITH_DEBUG_SYMBOLS AND MSVC AND BUILD_SHARED_LIBS)
     install(FILES ${CMAKE_PDB_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT symbols)

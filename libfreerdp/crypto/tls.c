@@ -1273,9 +1273,19 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 							common_name, alt_names,
 							alt_names_count);
 
-			if (instance->VerifyCertificate)
-				accept_certificate = instance->VerifyCertificate(instance, common_name,
-																				 subject, issuer, fingerprint, !hostname_match);
+			/* Automatically accept certificate on first use */
+			if (tls->settings->AutoAcceptCertificate)
+			{
+				WLog_INFO(TAG, "No certificate stored, automatically accepting.");
+				accept_certificate = 1;
+			}
+			else if (instance->VerifyCertificate)
+			{
+				accept_certificate = instance->VerifyCertificate(
+							     instance, common_name,
+							     subject, issuer,
+							     fingerprint, !hostname_match);
+			}
 
 			switch(accept_certificate)
 			{

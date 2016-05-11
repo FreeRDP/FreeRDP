@@ -21,30 +21,29 @@ set(MODULE_PREFIX "WINPR_MAKECERT_TOOL")
 set(${MODULE_PREFIX}_SRCS makecert.c)
 
 if(OPENSSL_FOUND)
-	include_directories(${OPENSSL_INCLUDE_DIR})
+	winpr_tools_include_directory_add(${OPENSSL_INCLUDE_DIR})
 endif()
 
 if(MBEDTLS_FOUND)
-	include_directories(${MBEDTLS_INCLUDE_DIR})
+	winpr_tools_include_directory_add(${MBEDTLS_INCLUDE_DIR})
 endif()
 
-add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS}) 
 
-set(${MODULE_PREFIX}_LIBS winpr)
+winpr_tools_module_add(${${MODULE_PREFIX}_SRCS})
 
 if(OPENSSL_FOUND)
-	list(APPEND ${MODULE_PREFIX}_LIBS ${OPENSSL_LIBRARIES})
+	if(WIN32)
+		list(APPEND ${MODULE_PREFIX}_LIBS ${OPENSSL_LIBRARIES})
+	else()
+		# if ${OPENSSL_LIBRARIES} libssl and libcrypto is linked
+		# therefor explicitly link against libcrypto
+		list(APPEND ${MODULE_PREFIX}_LIBS crypto)
+	endif()
 endif()
 
 if(MBEDTLS_FOUND)
 	list(APPEND ${MODULE_PREFIX}_LIBS ${MBEDTLS_LIBRARIES})
 endif()
 
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
-install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries EXPORT WinPRTargets)
-
-add_subdirectory(cli)
-
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Tools")
-export_complex_library(LIBNAME ${MODULE_NAME})
+winpr_tools_library_add(${${MODULE_PREFIX}_LIBS} winpr)

@@ -741,9 +741,9 @@ static UINT rail_virtual_channel_event_disconnected(railPlugin* rail)
 	UINT rc;
 	if (MessageQueue_PostQuit(rail->queue, 0) && (WaitForSingleObject(rail->thread, INFINITE) == WAIT_FAILED))
     {
-        rc = GetLastError();
-        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", rc);
-        return rc;
+	rc = GetLastError();
+	WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", rc);
+	return rc;
     }
 
 	MessageQueue_Free(rail->queue);
@@ -757,7 +757,7 @@ static UINT rail_virtual_channel_event_disconnected(railPlugin* rail)
 	{
 		WLog_ERR(TAG, "pVirtualChannelClose failed with %s [%08X]",
 				 WTSErrorToString(rc), rc);
-        return rc;
+	return rc;
 	}
 
 	if (rail->data_in)
@@ -798,7 +798,7 @@ static VOID VCAPITYPE rail_virtual_channel_init_event(LPVOID pInitHandle, UINT e
 
 		case CHANNEL_EVENT_DISCONNECTED:
 			if ((error = rail_virtual_channel_event_disconnected(rail)))
-                WLog_ERR(TAG, "rail_virtual_channel_event_disconnected failed with error %lu!", error);
+		WLog_ERR(TAG, "rail_virtual_channel_event_disconnected failed with error %lu!", error);
 			break;
 
 		case CHANNEL_EVENT_TERMINATED:
@@ -808,8 +808,6 @@ static VOID VCAPITYPE rail_virtual_channel_init_event(LPVOID pInitHandle, UINT e
 
 	if(error && rail->rdpcontext)
 		setChannelError(rail->rdpcontext, error, "rail_virtual_channel_init_event reported an error");
-
-	return;
 }
 
 /* rail is always built-in */

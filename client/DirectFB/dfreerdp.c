@@ -177,7 +177,8 @@ BOOL df_pre_connect(freerdp* instance)
 	dfi->clrconv->palette = (rdpPalette*) malloc(sizeof(rdpPalette));
 	ZeroMemory(dfi->clrconv->palette, sizeof(rdpPalette));
 
-	freerdp_channels_pre_connect(instance->context->channels, instance);
+	if (freerdp_channels_pre_connect(instance->context->channels, instance) != CHANNEL_RC_OK)
+		return FALSE;
 
 	return (instance->context->cache = cache_new(instance->settings)) != NULL;
 }
@@ -235,7 +236,7 @@ BOOL df_post_connect(freerdp* instance)
 	pointer_cache_register_callbacks(instance->update);
 	df_register_graphics(instance->context->graphics);
 
-	return freerdp_channels_post_connect(instance->context->channels, instance) >= 0;
+	return freerdp_channels_post_connect(instance->context->channels, instance) == CHANNEL_RC_OK;
 }
 
 BOOL df_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
@@ -487,7 +488,8 @@ int main(int argc, char* argv[])
 	if (status < 0)
 		exit(0);
 
-	freerdp_client_load_addins(instance->context->channels, instance->settings);
+	if (!freerdp_client_load_addins(instance->context->channels, instance->settings))
+		exit(-1);
 
 	data = (struct thread_data*) malloc(sizeof(struct thread_data));
 	ZeroMemory(data, sizeof(sizeof(struct thread_data)));

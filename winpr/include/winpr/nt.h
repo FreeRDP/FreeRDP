@@ -1255,6 +1255,14 @@
 
 /* Defined in winternl.h, always define since we do not include this header */
 
+/* defined in ntstatus.h */
+#if !defined(NTSTATUS_FROM_WIN32) && !defined(INLINE_NTSTATUS_FROM_WIN32)
+static INLINE NTSTATUS NTSTATUS_FROM_WIN32(long x)
+{
+	return x <= 0 ? (NTSTATUS)x : (NTSTATUS) (((x) & 0x0000FFFF) | (0x7 << 16) | 0xC0000000);
+}
+#endif
+
 #ifdef _WIN32
 
 /**

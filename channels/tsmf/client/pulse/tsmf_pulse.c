@@ -359,12 +359,10 @@ static void tsmf_pulse_free(ITSMFAudioDevice *audio)
 }
 
 #ifdef STATIC_CHANNELS
-#define freerdp_tsmf_client_audio_subsystem_entry	pulse_freerdp_tsmf_client_audio_subsystem_entry
+ITSMFAudioDevice *pulse_freerdp_tsmf_client_audio_subsystem_entry(void)
 #else
-#define freerdp_tsmf_client_audio_subsystem_entry	FREERDP_API freerdp_tsmf_client_audio_subsystem_entry
+FREERDP_API ITSMFAudioDevice *freerdp_tsmf_client_audio_subsystem_entry(void)
 #endif
-
-ITSMFAudioDevice *freerdp_tsmf_client_audio_subsystem_entry(void)
 {
 	TSMFPulseAudioDevice *pulse;
 

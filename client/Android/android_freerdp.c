@@ -357,7 +357,7 @@ static BOOL android_post_connect(freerdp* instance)
 	instance->update->EndPaint = android_end_paint;
 	instance->update->DesktopResize = android_desktop_resize;
 
-	if (freerdp_channels_post_connect(instance->context->channels, instance) < 0)
+	if (freerdp_channels_post_connect(instance->context->channels, instance) != CHANNEL_RC_OK)
 		return FALSE;
 
 	freerdp_callback("OnSettingsChanged", "(IIII)V", instance,

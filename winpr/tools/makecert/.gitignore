@@ -1,4 +1,2 @@
-winpr-makecert
 *.key
 *.crt
-

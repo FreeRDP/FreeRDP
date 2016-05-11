@@ -40,14 +40,6 @@ include(CheckCCompilerFlag)
 include(GNUInstallDirsWrapper)
 include(CMakePackageConfigHelpers)
 
-# Soname versioning
-set(RDTK_VERSION_MAJOR "0")
-set(RDTK_VERSION_MINOR "0")
-set(RDTK_VERSION_REVISION "1")
-set(RDTK_API_VERSION "${RDTK_VERSION_MAJOR}")
-set(RDTK_VERSION "${RDTK_VERSION_MAJOR}.${RDTK_VERSION_MINOR}.${RDTK_VERSION_REVISION}")
-set(RDTK_VERSION_FULL "${RDTK_VERSION}")
-
 # Default to release build type
 if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Release")
@@ -63,7 +55,6 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DRDTK_EXPORTS")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 
-add_subdirectory(include)
 add_subdirectory(librdtk)
 
 if(WITH_SAMPLE)
@@ -71,26 +62,3 @@ if(WITH_SAMPLE)
 		add_subdirectory(sample)
 	endif()
 endif()
-
-# Exporting
-set(RDTK_INCLUDE_DIR "include/rdtk${RDTK_VERSION_MAJOR}")
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rdtk.pc.in ${CMAKE_CURRENT_BINARY_DIR}/rdtk${RDTK_VERSION_MAJOR}.pc @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/rdtk${RDTK_VERSION_MAJOR}.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
-
-if(${CMAKE_VERSION} VERSION_GREATER "2.8.10")
-	export(PACKAGE rdtk)
-
-	set(RDTK_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/RdTk${RDTK_VERSION_MAJOR}")
-
-	configure_package_config_file(RdTkConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/RdTkConfig.cmake
-		INSTALL_DESTINATION ${RDTK_CMAKE_INSTALL_DIR} PATH_VARS RDTK_INCLUDE_DIR)
-
-	write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/RdTkConfigVersion.cmake
-		VERSION ${RDTK_VERSION} COMPATIBILITY SameMajorVersion)
-
-	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/RdTkConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/RdTkConfigVersion.cmake
-		DESTINATION ${RDTK_CMAKE_INSTALL_DIR})
-
-	install(EXPORT RdTkTargets DESTINATION ${RDTK_CMAKE_INSTALL_DIR})
-endif()
-

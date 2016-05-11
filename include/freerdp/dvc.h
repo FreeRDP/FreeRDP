@@ -78,7 +78,7 @@ struct _IWTSVirtualChannel
 	/* Starts a write request on the channel. */
 	UINT (*Write)(IWTSVirtualChannel *pChannel,
 				ULONG cbSize,
-				BYTE *pBuffer,
+				const BYTE *pBuffer,
 				void *pReserved);
 	/* Closes the channel. */
 	UINT (*Close)(IWTSVirtualChannel *pChannel);

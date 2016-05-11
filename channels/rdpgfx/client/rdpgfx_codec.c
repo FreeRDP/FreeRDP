@@ -38,10 +38,11 @@
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H264_METABLOCK* meta)
+static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s,
+				       RDPGFX_H264_METABLOCK* meta)
 {
 	UINT32 index;
-	RDPGFX_RECT16* regionRect;
+	RECTANGLE_16* regionRect;
 	RDPGFX_H264_QUANT_QUALITY* quantQualityVal;
 	UINT error = ERROR_INVALID_DATA;
 
@@ -56,13 +57,13 @@ static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H2
 
 	Stream_Read_UINT32(s, meta->numRegionRects); /* numRegionRects (4 bytes) */
 
-	if (Stream_GetRemainingLength(s) < (meta->numRegionRects * 8))
+	if (Stream_GetRemainingLength(s) < (meta->numRegionRects * sizeof(RECTANGLE_16)))
 	{
 		WLog_ERR(TAG, "not enough data!");
 		goto error_out;
 	}
 
-	meta->regionRects = (RDPGFX_RECT16*) malloc(meta->numRegionRects * sizeof(RDPGFX_RECT16));
+	meta->regionRects = (RECTANGLE_16*) malloc(meta->numRegionRects * sizeof(RECTANGLE_16));
 
 	if (!meta->regionRects)
 	{
@@ -128,11 +129,11 @@ error_out:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_decode_h264(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
+static UINT rdpgfx_decode_AVC420(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	UINT error;
 	wStream* s;
-	RDPGFX_H264_BITMAP_STREAM h264;
+	RDPGFX_AVC420_BITMAP_STREAM h264;
 	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
 
 	s = Stream_New(cmd->data, cmd->length);
@@ -174,6 +175,91 @@ static UINT rdpgfx_decode_h264(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
+static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
+{
+	UINT error;
+	UINT32 tmp;
+	size_t pos1, pos2;
+	wStream* s;
+	RDPGFX_AVC444_BITMAP_STREAM h264;
+	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
+
+	s = Stream_New(cmd->data, cmd->length);
+
+	if (!s)
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
+
+	if (Stream_GetRemainingLength(s) < 4)
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT32(s, tmp);
+	h264.cbAvc420EncodedBitstream1 = tmp & 0x3FFFFFFFUL;
+	h264.LC = (tmp >> 30UL) & 0x03UL;
+
+	if (h264.LC == 0x03)
+		return ERROR_INVALID_DATA;
+
+	pos1 = Stream_GetPosition(s);
+	if ((error = rdpgfx_read_h264_metablock(gfx, s, &(h264.bitstream[0].meta))))
+	{
+		WLog_ERR(TAG, "rdpgfx_read_h264_metablock failed with error %lu!", error);
+		return error;
+	}
+	pos2 = Stream_GetPosition(s);
+
+	h264.bitstream[0].data = Stream_Pointer(s);
+
+	if (h264.LC == 0)
+	{
+		tmp = h264.cbAvc420EncodedBitstream1 - pos2 + pos1;
+		if (Stream_GetRemainingLength(s) < tmp)
+			return ERROR_INVALID_DATA;
+
+		h264.bitstream[0].length = tmp;
+		Stream_Seek(s, tmp);
+
+		if ((error = rdpgfx_read_h264_metablock(gfx, s, &(h264.bitstream[1].meta))))
+		{
+			WLog_ERR(TAG, "rdpgfx_read_h264_metablock failed with error %lu!", error);
+			return error;
+		}
+
+		h264.bitstream[1].data = Stream_Pointer(s);
+		h264.bitstream[1].length = Stream_GetRemainingLength(s);
+	}
+	else
+	{
+		h264.bitstream[0].length = Stream_GetRemainingLength(s);
+		memset(&h264.bitstream[1], 0, sizeof(h264.bitstream[1]));
+	}
+
+	Stream_Free(s, FALSE);
+
+	cmd->extra = (void*) &h264;
+
+	if (context)
+	{
+		IFCALLRET(context->SurfaceCommand, error, context, cmd);
+		if (error)
+			WLog_ERR(TAG, "context->SurfaceCommand failed with error %lu", error);
+	}
+
+	free(h264.bitstream[0].meta.regionRects);
+	free(h264.bitstream[0].meta.quantQualityVals);
+	free(h264.bitstream[1].meta.regionRects);
+	free(h264.bitstream[1].meta.quantQualityVals);
+
+	return error;
+}
+
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
 UINT rdpgfx_decode(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	UINT error = CHANNEL_RC_OK;
@@ -181,10 +267,18 @@ UINT rdpgfx_decode(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 
 	switch (cmd->codecId)
 	{
-		case RDPGFX_CODECID_H264:
-			if ((error = rdpgfx_decode_h264(gfx, cmd)))
+		case RDPGFX_CODECID_AVC420:
+			if ((error = rdpgfx_decode_AVC420(gfx, cmd)))
 			{
-				WLog_ERR(TAG, "rdpgfx_decode_h264 failed with error %lu", error);
+				WLog_ERR(TAG, "rdpgfx_decode_AVC420 failed with error %lu", error);
+				return error;
+			}
+			break;
+
+		case RDPGFX_CODECID_AVC444:
+			if ((error = rdpgfx_decode_AVC444(gfx, cmd)))
+			{
+				WLog_ERR(TAG, "rdpgfx_decode_AVC444 failed with error %lu", error);
 				return error;
 			}
 			break;

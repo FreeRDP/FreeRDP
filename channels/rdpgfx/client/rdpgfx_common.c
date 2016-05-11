@@ -77,8 +77,10 @@ const char* rdpgfx_get_codec_id_string(UINT16 codecId)
 			return "RDPGFX_CODECID_CLEARCODEC";
 		case RDPGFX_CODECID_PLANAR:
 			return "RDPGFX_CODECID_PLANAR";
-		case RDPGFX_CODECID_H264:
-			return "RDPGFX_CODECID_H264";
+		case RDPGFX_CODECID_AVC420:
+			return "RDPGFX_CODECID_AVC420";
+		case RDPGFX_CODECID_AVC444:
+			return "RDPGFX_CODECID_AVC444";
 		case RDPGFX_CODECID_ALPHA:
 			return "RDPGFX_CODECID_ALPHA";
 		case RDPGFX_CODECID_CAPROGRESSIVE:
@@ -161,7 +163,7 @@ UINT rdpgfx_write_point16(wStream* s, RDPGFX_POINT16* point16)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_read_rect16(wStream* s, RDPGFX_RECT16* rect16)
+UINT rdpgfx_read_rect16(wStream* s, RECTANGLE_16* rect16)
 {
 	if (Stream_GetRemainingLength(s) < 8)
 	{
@@ -182,7 +184,7 @@ UINT rdpgfx_read_rect16(wStream* s, RDPGFX_RECT16* rect16)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_write_rect16(wStream* s, RDPGFX_RECT16* rect16)
+UINT rdpgfx_write_rect16(wStream* s, RECTANGLE_16* rect16)
 {
 	Stream_Write_UINT16(s, rect16->left); /* left (2 bytes) */
 	Stream_Write_UINT16(s, rect16->top); /* top (2 bytes) */

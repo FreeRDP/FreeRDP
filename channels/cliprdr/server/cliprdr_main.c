@@ -849,7 +849,7 @@ static UINT cliprdr_server_receive_lock_clipdata(CliprdrServerContext* context, 
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_ERR(TAG, "not enought data in stream!");
+		WLog_ERR(TAG, "not enough data in stream!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -884,7 +884,7 @@ static UINT cliprdr_server_receive_unlock_clipdata(CliprdrServerContext* context
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_ERR(TAG, "not enought data in stream!");
+		WLog_ERR(TAG, "not enough data in stream!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -915,7 +915,7 @@ static UINT cliprdr_server_receive_format_data_request(CliprdrServerContext* con
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_ERR(TAG, "not enought data in stream!");
+		WLog_ERR(TAG, "not enough data in stream!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -947,7 +947,7 @@ static UINT cliprdr_server_receive_format_data_response(CliprdrServerContext* co
 
 	if (Stream_GetRemainingLength(s) < header->dataLen)
 	{
-		WLog_ERR(TAG, "not enought data in stream!");
+		WLog_ERR(TAG, "not enough data in stream!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -984,7 +984,7 @@ static UINT cliprdr_server_receive_filecontents_request(CliprdrServerContext* co
 
 	if (Stream_GetRemainingLength(s) < 24)
 	{
-		WLog_ERR(TAG, "not enought data in stream!");
+		WLog_ERR(TAG, "not enough data in stream!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -1024,7 +1024,7 @@ static UINT cliprdr_server_receive_filecontents_response(CliprdrServerContext* c
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_ERR(TAG, "not enought data in stream!");
+		WLog_ERR(TAG, "not enough data in stream!");
 		return ERROR_INVALID_DATA;
 	}
 

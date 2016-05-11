@@ -832,22 +832,20 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	assert(pEntryPoints->GetPlugin);
 
 	audin = (AUDIN_PLUGIN*) pEntryPoints->GetPlugin(pEntryPoints, "audin");
-	if (audin == NULL)
+	if (audin != NULL)
+		return CHANNEL_RC_ALREADY_INITIALIZED;
+
+	audin = (AUDIN_PLUGIN*) calloc(1, sizeof(AUDIN_PLUGIN));
+	if (!audin)
 	{
-		audin = (AUDIN_PLUGIN*) calloc(1, sizeof(AUDIN_PLUGIN));
-		if (!audin)
-		{
-			WLog_ERR(TAG, "calloc failed!");
-			return CHANNEL_RC_NO_MEMORY;
-		}
-
-		audin->iface.Initialize = audin_plugin_initialize;
-		audin->iface.Connected = NULL;
-		audin->iface.Disconnected = NULL;
-		audin->iface.Terminated = audin_plugin_terminated;
-
-		error = pEntryPoints->RegisterPlugin(pEntryPoints, "audin", (IWTSPlugin*) audin);
+		WLog_ERR(TAG, "calloc failed!");
+		return CHANNEL_RC_NO_MEMORY;
 	}
+
+	audin->iface.Initialize = audin_plugin_initialize;
+	audin->iface.Connected = NULL;
+	audin->iface.Disconnected = NULL;
+	audin->iface.Terminated = audin_plugin_terminated;
 
 	args = pEntryPoints->GetPluginData(pEntryPoints);
 	audin->rdpcontext = ((freerdp*)((rdpSettings*) pEntryPoints->GetRdpSettings(pEntryPoints))->instance)->context;
@@ -894,7 +892,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	if (audin->device == NULL)
 		WLog_ERR(TAG, "no sound device.");
 
-	error = CHANNEL_RC_OK;
+	error = pEntryPoints->RegisterPlugin(pEntryPoints, "audin", (IWTSPlugin*) audin);
 
 out:
 	if (error != CHANNEL_RC_OK)
