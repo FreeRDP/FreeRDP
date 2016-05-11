@@ -38,13 +38,10 @@ winpr_module_add(
 	ndr_union.h
 	midl.c)
 
-winpr_include_directory_add(${OPENSSL_INCLUDE_DIR}
-	${ZLIB_INCLUDE_DIRS})
+winpr_include_directory_add(${OPENSSL_INCLUDE_DIR})
 
 winpr_library_add(${OPENSSL_LIBRARIES})
 
 if(WIN32)
 	winpr_library_add(ws2_32 rpcrt4)
-else()
-	winpr_library_add(${ZLIB_LIBRARIES})
 endif()

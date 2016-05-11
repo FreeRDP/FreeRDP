@@ -246,11 +246,14 @@ void IniFile_Section_Free(wIniFileSection* section)
 	if (!section)
 		return;
 
+	free(section->name);
+
 	for (index = 0; index < section->nKeys; index++)
 	{
 		IniFile_Key_Free(section->keys[index]);
 	}
 
+	free(section->keys);
 	free(section);
 }
 

@@ -24,7 +24,7 @@
 
 #include "shadow_channels.h"
 
-int shadow_client_channels_post_connect(rdpShadowClient* client)
+UINT shadow_client_channels_post_connect(rdpShadowClient* client)
 {
 	if (WTSVirtualChannelManagerIsChannelJoined(client->vcm, ENCOMSP_SVC_CHANNEL_NAME))
 	{
@@ -43,7 +43,7 @@ int shadow_client_channels_post_connect(rdpShadowClient* client)
 
 	shadow_client_audin_init(client);
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
 void shadow_client_channels_free(rdpShadowClient* client)

@@ -31,7 +31,7 @@
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT xf_ResetGraphics(RdpgfxClientContext* context, RDPGFX_RESET_GRAPHICS_PDU* resetGraphics)
+static UINT xf_ResetGraphics(RdpgfxClientContext* context, RDPGFX_RESET_GRAPHICS_PDU* resetGraphics)
 {
 	int index;
 	UINT16 count;
@@ -70,7 +70,7 @@ UINT xf_ResetGraphics(RdpgfxClientContext* context, RDPGFX_RESET_GRAPHICS_PDU* r
 	return CHANNEL_RC_OK;
 }
 
-int xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
+static int xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 {
 	UINT16 width, height;
 	UINT32 surfaceX, surfaceY;
@@ -132,7 +132,7 @@ int xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 	return 1;
 }
 
-int xf_UpdateSurfaces(xfContext* xfc)
+static int xf_UpdateSurfaces(xfContext* xfc)
 {
 	UINT16 count;
 	int index;
@@ -220,7 +220,7 @@ int xf_OutputExpose(xfContext* xfc, int x, int y, int width, int height)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT xf_StartFrame(RdpgfxClientContext* context, RDPGFX_START_FRAME_PDU* startFrame)
+static UINT xf_StartFrame(RdpgfxClientContext* context, RDPGFX_START_FRAME_PDU* startFrame)
 {
 	xfContext* xfc = (xfContext*) context->custom;
 
@@ -234,7 +234,7 @@ UINT xf_StartFrame(RdpgfxClientContext* context, RDPGFX_START_FRAME_PDU* startFr
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT xf_EndFrame(RdpgfxClientContext* context, RDPGFX_END_FRAME_PDU* endFrame)
+static UINT xf_EndFrame(RdpgfxClientContext* context, RDPGFX_END_FRAME_PDU* endFrame)
 {
 	xfContext* xfc = (xfContext*) context->custom;
 
@@ -250,7 +250,7 @@ UINT xf_EndFrame(RdpgfxClientContext* context, RDPGFX_END_FRAME_PDU* endFrame)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT xf_SurfaceCommand_Uncompressed(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
+static UINT xf_SurfaceCommand_Uncompressed(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	xfGfxSurface* surface;
 	RECTANGLE_16 invalidRect;
@@ -281,7 +281,7 @@ UINT xf_SurfaceCommand_Uncompressed(xfContext* xfc, RdpgfxClientContext* context
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT xf_SurfaceCommand_RemoteFX(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
+static UINT xf_SurfaceCommand_RemoteFX(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	int j;
 	UINT16 i;
@@ -371,7 +371,7 @@ UINT xf_SurfaceCommand_RemoteFX(xfContext* xfc, RdpgfxClientContext* context, RD
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT xf_SurfaceCommand_ClearCodec(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
+static UINT xf_SurfaceCommand_ClearCodec(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	int status;
 	BYTE* DstData = NULL;
@@ -415,7 +415,7 @@ UINT xf_SurfaceCommand_ClearCodec(xfContext* xfc, RdpgfxClientContext* context, 
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT xf_SurfaceCommand_Planar(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
+static UINT xf_SurfaceCommand_Planar(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	int status;
 	BYTE* DstData = NULL;
@@ -453,45 +453,46 @@ UINT xf_SurfaceCommand_Planar(xfContext* xfc, RdpgfxClientContext* context, RDPG
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT xf_SurfaceCommand_H264(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
+static UINT xf_SurfaceCommand_AVC420(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	int status;
 	UINT32 i;
-	BYTE* DstData = NULL;
 	xfGfxSurface* surface;
 	RDPGFX_H264_METABLOCK* meta;
-	RDPGFX_H264_BITMAP_STREAM* bs;
+	RDPGFX_AVC420_BITMAP_STREAM* bs;
 
 	surface = (xfGfxSurface*) context->GetSurfaceData(context, cmd->surfaceId);
 
 	if (!surface)
 		return ERROR_INTERNAL_ERROR;
 
-	if (!freerdp_client_codecs_prepare(surface->codecs, FREERDP_CODEC_H264))
+	if (!freerdp_client_codecs_prepare(surface->codecs, FREERDP_CODEC_AVC420))
 		return ERROR_INTERNAL_ERROR;
 
-	bs = (RDPGFX_H264_BITMAP_STREAM*) cmd->extra;
+	bs = (RDPGFX_AVC420_BITMAP_STREAM*) cmd->extra;
 
 	if (!bs)
 		return ERROR_INTERNAL_ERROR;
 
 	meta = &(bs->meta);
 
-	DstData = surface->data;
-
-	status = h264_decompress(surface->codecs->h264, bs->data, bs->length, &DstData,
-					surface->format, surface->scanline , surface->width,
-					surface->height, meta->regionRects, meta->numRegionRects);
+	status = avc420_decompress(surface->codecs->h264, bs->data, bs->length,
+				   surface->data, surface->format,
+				   surface->scanline , surface->width,
+				   surface->height, meta->regionRects,
+				   meta->numRegionRects);
 
 	if (status < 0)
 	{
-		WLog_WARN(TAG, "h264_decompress failure: %d, ignoring update.", status);
+		WLog_WARN(TAG, "avc420_decompress failure: %d, ignoring update.", status);
 		return CHANNEL_RC_OK;
 	}
 
 	for (i = 0; i < meta->numRegionRects; i++)
 	{
-		region16_union_rect(&surface->invalidRegion, &surface->invalidRegion, (RECTANGLE_16*) &(meta->regionRects[i]));
+		region16_union_rect(&surface->invalidRegion,
+				    &surface->invalidRegion,
+				    &(meta->regionRects[i]));
 	}
 
 	if (!xfc->inGfxFrame)
@@ -505,7 +506,77 @@ UINT xf_SurfaceCommand_H264(xfContext* xfc, RdpgfxClientContext* context, RDPGFX
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT xf_SurfaceCommand_Alpha(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
+static UINT xf_SurfaceCommand_AVC444(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
+{
+	int status;
+	UINT32 i;
+	xfGfxSurface* surface;
+	RDPGFX_AVC444_BITMAP_STREAM* bs;
+	RDPGFX_AVC420_BITMAP_STREAM* avc1;
+	RDPGFX_AVC420_BITMAP_STREAM* avc2;
+	RDPGFX_H264_METABLOCK* meta1;
+	RDPGFX_H264_METABLOCK* meta2;
+	RECTANGLE_16* regionRects = NULL;
+
+	surface = (xfGfxSurface*) context->GetSurfaceData(context, cmd->surfaceId);
+
+	if (!surface)
+		return ERROR_INTERNAL_ERROR;
+
+	if (!freerdp_client_codecs_prepare(surface->codecs, FREERDP_CODEC_AVC444))
+		return ERROR_INTERNAL_ERROR;
+
+	bs = (RDPGFX_AVC444_BITMAP_STREAM*) cmd->extra;
+
+	if (!bs)
+		return ERROR_INTERNAL_ERROR;
+
+	avc1 = &bs->bitstream[0];
+	avc2 = &bs->bitstream[1];
+	meta1 = &avc1->meta;
+	meta2 = &avc2->meta;
+
+	status = avc444_decompress(surface->codecs->h264, bs->LC,
+				   meta1->regionRects, meta1->numRegionRects,
+				   avc1->data, avc1->length,
+				   meta2->regionRects, meta2->numRegionRects,
+				   avc2->data, avc2->length, surface->data,
+				   surface->format, surface->scanline,
+				   surface->width, surface->height);
+
+	if (status < 0)
+	{
+		WLog_WARN(TAG, "avc444_decompress failure: %d, ignoring update.", status);
+		return CHANNEL_RC_OK;
+	}
+
+	for (i = 0; i < meta1->numRegionRects; i++)
+	{
+		region16_union_rect(&surface->invalidRegion,
+				    &surface->invalidRegion,
+				    &(meta1->regionRects[i]));
+	}
+	for (i = 0; i < meta2->numRegionRects; i++)
+	{
+		region16_union_rect(&surface->invalidRegion,
+				    &surface->invalidRegion,
+				    &(meta2->regionRects[i]));
+	}
+
+	if (!xfc->inGfxFrame)
+		xf_UpdateSurfaces(xfc);
+
+	free (regionRects);
+
+	return CHANNEL_RC_OK;
+}
+
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT xf_SurfaceCommand_Alpha(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	int status = 0;
 	xfGfxSurface* surface;
@@ -543,7 +614,7 @@ UINT xf_SurfaceCommand_Alpha(xfContext* xfc, RdpgfxClientContext* context, RDPGF
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT xf_SurfaceCommand_Progressive(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
+static UINT xf_SurfaceCommand_Progressive(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	int i, j;
 	int status;
@@ -645,7 +716,7 @@ UINT xf_SurfaceCommand_Progressive(xfContext* xfc, RdpgfxClientContext* context,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT xf_SurfaceCommand(RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
+static UINT xf_SurfaceCommand(RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	UINT status = CHANNEL_RC_OK;
 	xfContext* xfc = (xfContext*) context->custom;
@@ -668,8 +739,12 @@ UINT xf_SurfaceCommand(RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd
 			status = xf_SurfaceCommand_Planar(xfc, context, cmd);
 			break;
 
-		case RDPGFX_CODECID_H264:
-			status = xf_SurfaceCommand_H264(xfc, context, cmd);
+		case RDPGFX_CODECID_AVC420:
+			status = xf_SurfaceCommand_AVC420(xfc, context, cmd);
+			break;
+
+		case RDPGFX_CODECID_AVC444:
+			status = xf_SurfaceCommand_AVC444(xfc, context, cmd);
 			break;
 
 		case RDPGFX_CODECID_ALPHA:
@@ -697,7 +772,7 @@ UINT xf_SurfaceCommand(RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT xf_DeleteEncodingContext(RdpgfxClientContext* context, RDPGFX_DELETE_ENCODING_CONTEXT_PDU* deleteEncodingContext)
+static UINT xf_DeleteEncodingContext(RdpgfxClientContext* context, RDPGFX_DELETE_ENCODING_CONTEXT_PDU* deleteEncodingContext)
 {
 	return CHANNEL_RC_OK;
 }
@@ -707,7 +782,7 @@ UINT xf_DeleteEncodingContext(RdpgfxClientContext* context, RDPGFX_DELETE_ENCODI
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT xf_CreateSurface(RdpgfxClientContext* context, RDPGFX_CREATE_SURFACE_PDU* createSurface)
+static UINT xf_CreateSurface(RdpgfxClientContext* context, RDPGFX_CREATE_SURFACE_PDU* createSurface)
 {
 	size_t size;
 	UINT32 bytesPerPixel;
@@ -795,7 +870,7 @@ UINT xf_CreateSurface(RdpgfxClientContext* context, RDPGFX_CREATE_SURFACE_PDU* c
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT xf_DeleteSurface(RdpgfxClientContext* context, RDPGFX_DELETE_SURFACE_PDU* deleteSurface)
+static UINT xf_DeleteSurface(RdpgfxClientContext* context, RDPGFX_DELETE_SURFACE_PDU* deleteSurface)
 {
 	rdpCodecs* codecs = NULL;
 	xfGfxSurface* surface = NULL;
@@ -827,13 +902,13 @@ UINT xf_DeleteSurface(RdpgfxClientContext* context, RDPGFX_DELETE_SURFACE_PDU* d
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT xf_SolidFill(RdpgfxClientContext* context, RDPGFX_SOLID_FILL_PDU* solidFill)
+static UINT xf_SolidFill(RdpgfxClientContext* context, RDPGFX_SOLID_FILL_PDU* solidFill)
 {
 	UINT16 index;
 	UINT32 color;
 	BYTE a, r, g, b;
 	int nWidth, nHeight;
-	RDPGFX_RECT16* rect;
+	RECTANGLE_16* rect;
 	xfGfxSurface* surface;
 	RECTANGLE_16 invalidRect;
 	xfContext* xfc = (xfContext*) context->custom;
@@ -879,12 +954,12 @@ UINT xf_SolidFill(RdpgfxClientContext* context, RDPGFX_SOLID_FILL_PDU* solidFill
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT xf_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFACE_PDU* surfaceToSurface)
+static UINT xf_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFACE_PDU* surfaceToSurface)
 {
 	UINT16 index;
 	BOOL sameSurface;
 	int nWidth, nHeight;
-	RDPGFX_RECT16* rectSrc;
+	RECTANGLE_16* rectSrc;
 	RDPGFX_POINT16* destPt;
 	RECTANGLE_16 invalidRect;
 	xfGfxSurface* surfaceSrc;
@@ -944,10 +1019,10 @@ UINT xf_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFACE
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT xf_SurfaceToCache(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_CACHE_PDU* surfaceToCache)
+static UINT xf_SurfaceToCache(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_CACHE_PDU* surfaceToCache)
 {
 	size_t size;
-	RDPGFX_RECT16* rect;
+	RECTANGLE_16* rect;
 	xfGfxSurface* surface;
 	xfGfxCacheEntry* cacheEntry;
 	xfContext* xfc = (xfContext*) context->custom;
@@ -997,7 +1072,7 @@ UINT xf_SurfaceToCache(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_CACHE_PDU
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT xf_CacheToSurface(RdpgfxClientContext* context, RDPGFX_CACHE_TO_SURFACE_PDU* cacheToSurface)
+static UINT xf_CacheToSurface(RdpgfxClientContext* context, RDPGFX_CACHE_TO_SURFACE_PDU* cacheToSurface)
 {
 	UINT16 index;
 	RDPGFX_POINT16* destPt;
@@ -1039,7 +1114,7 @@ UINT xf_CacheToSurface(RdpgfxClientContext* context, RDPGFX_CACHE_TO_SURFACE_PDU
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT xf_CacheImportReply(RdpgfxClientContext* context, RDPGFX_CACHE_IMPORT_REPLY_PDU* cacheImportReply)
+static UINT xf_CacheImportReply(RdpgfxClientContext* context, RDPGFX_CACHE_IMPORT_REPLY_PDU* cacheImportReply)
 {
 	return CHANNEL_RC_OK;
 }
@@ -1049,7 +1124,7 @@ UINT xf_CacheImportReply(RdpgfxClientContext* context, RDPGFX_CACHE_IMPORT_REPLY
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT xf_EvictCacheEntry(RdpgfxClientContext* context, RDPGFX_EVICT_CACHE_ENTRY_PDU* evictCacheEntry)
+static UINT xf_EvictCacheEntry(RdpgfxClientContext* context, RDPGFX_EVICT_CACHE_ENTRY_PDU* evictCacheEntry)
 {
 	xfGfxCacheEntry* cacheEntry;
 
@@ -1071,7 +1146,7 @@ UINT xf_EvictCacheEntry(RdpgfxClientContext* context, RDPGFX_EVICT_CACHE_ENTRY_P
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT xf_MapSurfaceToOutput(RdpgfxClientContext* context, RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU* surfaceToOutput)
+static UINT xf_MapSurfaceToOutput(RdpgfxClientContext* context, RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU* surfaceToOutput)
 {
 	xfGfxSurface* surface;
 
@@ -1094,7 +1169,7 @@ UINT xf_MapSurfaceToOutput(RdpgfxClientContext* context, RDPGFX_MAP_SURFACE_TO_O
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT xf_MapSurfaceToWindow(RdpgfxClientContext* context, RDPGFX_MAP_SURFACE_TO_WINDOW_PDU* surfaceToWindow)
+static UINT xf_MapSurfaceToWindow(RdpgfxClientContext* context, RDPGFX_MAP_SURFACE_TO_WINDOW_PDU* surfaceToWindow)
 {
 	return CHANNEL_RC_OK;
 }

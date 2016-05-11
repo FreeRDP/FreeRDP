@@ -38,12 +38,14 @@ extern pstatus_t ssse3_YCoCgRToRGB_8u_AC4R(const BYTE *pSrc, INT32 srcStep,
 /* ------------------------------------------------------------------------- */
 int test_YCoCgRToRGB_8u_AC4R_func(void)
 {
+#ifdef WITH_SSE2
+	int i;
+	INT32 ALIGN(out_sse[4098]), ALIGN(out_sse_inv[4098]);
+#endif
 	INT32 ALIGN(in[4098]);
 	INT32 ALIGN(out_c[4098]), ALIGN(out_c_inv[4098]);
-	INT32 ALIGN(out_sse[4098]), ALIGN(out_sse_inv[4098]);
 	char testStr[256];
 	BOOL failed = FALSE;
-	int i;
 
 	testStr[0] = '\0';
 	get_random_data(in, sizeof(in));

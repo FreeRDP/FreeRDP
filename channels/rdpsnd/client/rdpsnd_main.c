@@ -116,39 +116,39 @@ static void* rdpsnd_schedule_thread(void* arg)
 
 	while (1)
 	{
-        status = WaitForMultipleObjects(2, events, FALSE, INFINITE);
+	status = WaitForMultipleObjects(2, events, FALSE, INFINITE);
 
-        if (status == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
-            break;
-        }
+	if (status == WAIT_FAILED)
+	{
+	    error = GetLastError();
+	    WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+	    break;
+	}
 
-        status = WaitForSingleObject(rdpsnd->stopEvent, 0);
+	status = WaitForSingleObject(rdpsnd->stopEvent, 0);
 
-        if (status == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
-            break;
-        }
+	if (status == WAIT_FAILED)
+	{
+	    error = GetLastError();
+	    WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+	    break;
+	}
 
-        if (status == WAIT_OBJECT_0)
-            break;
-
-
-        status = WaitForSingleObject(events[0], 0);
-
-        if (status == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
-            break;
-        }
+	if (status == WAIT_OBJECT_0)
+	    break;
 
 
-        if (!MessageQueue_Peek(rdpsnd->MsgPipe->Out, &message, TRUE))
+	status = WaitForSingleObject(events[0], 0);
+
+	if (status == WAIT_FAILED)
+	{
+	    error = GetLastError();
+	    WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+	    break;
+	}
+
+
+	if (!MessageQueue_Peek(rdpsnd->MsgPipe->Out, &message, TRUE))
 		{
 			WLog_ERR(TAG, "MessageQueue_Peek failed!");
 			error = ERROR_INTERNAL_ERROR;
@@ -811,6 +811,7 @@ static UINT rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name, AD
 	if ((error = entry(&entryPoints)))
 		WLog_ERR(TAG, "%s entry returns error %lu", name, error);
 
+	WLog_INFO(TAG, "Loaded %s backend for rdpsnd", name);
 	return error;
 }
 
@@ -828,7 +829,7 @@ BOOL rdpsnd_set_device_name(rdpsndPlugin* rdpsnd, const char* device_name)
 	return (rdpsnd->device_name != NULL);
 }
 
-COMMAND_LINE_ARGUMENT_A rdpsnd_args[] =
+static COMMAND_LINE_ARGUMENT_A rdpsnd_args[] =
 {
 	{ "sys", COMMAND_LINE_VALUE_REQUIRED, "<subsystem>", NULL, NULL, -1, NULL, "subsystem" },
 	{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "device" },
@@ -1078,10 +1079,10 @@ static void rdpsnd_process_disconnect(rdpsndPlugin* rdpsnd)
 	{
 		SetEvent(rdpsnd->stopEvent);
 		if (WaitForSingleObject(rdpsnd->ScheduleThread, INFINITE) == WAIT_FAILED)
-        {
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
-            return;
-        }
+	{
+	    WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
+	    return;
+	}
 		CloseHandle(rdpsnd->ScheduleThread);
 		CloseHandle(rdpsnd->stopEvent);
 	}
@@ -1386,9 +1387,9 @@ static UINT rdpsnd_virtual_channel_event_disconnected(rdpsndPlugin* rdpsnd)
 	MessagePipe_PostQuit(rdpsnd->MsgPipe, 0);
 	if (WaitForSingleObject(rdpsnd->thread, INFINITE) == WAIT_FAILED)
     {
-        error = GetLastError();
-        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
-        return error;
+	error = GetLastError();
+	WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+	return error;
     }
 
 	CloseHandle(rdpsnd->thread);

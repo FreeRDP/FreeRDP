@@ -58,7 +58,8 @@ endif()
 option(WITH_SMARTCARD_INSPECT "Enable SmartCard API Inspector" OFF)
 
 option(BUILD_TESTING "Build unit tests" OFF)
-CMAKE_DEPENDENT_OPTION(TESTS_WTSAPI_EXTRA "Build extra WTSAPI tests (interactive)" OFF "BUILD_TESTING" ON)
+CMAKE_DEPENDENT_OPTION(TESTS_WTSAPI_EXTRA "Build extra WTSAPI tests (interactive)" OFF "BUILD_TESTING" OFF)
+CMAKE_DEPENDENT_OPTION(BUILD_COMM_TESTS "Build comm related tests (require comm port)" OFF "BUILD_TESTING" OFF)
 
 option(WITH_SAMPLE "Build sample code" OFF)
 
@@ -82,7 +83,7 @@ endif()
 
 option(WITH_THIRD_PARTY "Build third-party components" OFF)
 
-option(WITH_CLIENT_INTERFACE "Build clients as a library with an interface" ON)
+option(WITH_CLIENT_INTERFACE "Build clients as a library with an interface" OFF)
 option(WITH_SERVER_INTERFACE "Build servers as a library with an interface" ON)
 
 option(WITH_DEBUG_ALL "Print all debug messages." OFF)

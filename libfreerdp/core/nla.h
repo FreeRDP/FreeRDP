@@ -58,6 +58,8 @@ struct rdp_nla
 	rdpSettings* settings;
 	rdpTransport* transport;
 	UINT32 cbMaxToken;
+	UINT32 version;
+	UINT32 errorCode;
 	ULONG fContextReq;
 	ULONG pfContextAttr;
 	BOOL haveContext;

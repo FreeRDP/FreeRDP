@@ -159,10 +159,10 @@ static UINT cliprdr_process_general_capability(cliprdrPlugin* cliprdr, wStream* 
 		WLog_ERR(TAG, "cliprdr_get_client_interface failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
-	
+
 	Stream_Read_UINT32(s, version); /* version (4 bytes) */
 	Stream_Read_UINT32(s, generalFlags); /* generalFlags (4 bytes) */
-	
+
 	DEBUG_CLIPRDR("Version: %d", version);
 #ifdef WITH_DEBUG_CLIPRDR
 	cliprdr_print_general_capability_flags(generalFlags);
@@ -179,7 +179,7 @@ static UINT cliprdr_process_general_capability(cliprdrPlugin* cliprdr, wStream* 
 
 	if (cliprdr->canLockClipData)
 		cliprdr->canLockClipData = (generalFlags & CB_CAN_LOCK_CLIPDATA) ? TRUE : FALSE;
-	
+
 	cliprdr->capabilitiesReceived = TRUE;
 
 	if (!context->custom)
@@ -187,7 +187,7 @@ static UINT cliprdr_process_general_capability(cliprdrPlugin* cliprdr, wStream* 
 		WLog_ERR(TAG, "context->custom not set!");
 		return ERROR_INTERNAL_ERROR;
 	}
-		
+
 	capabilities.cCapabilitiesSets = 1;
 	capabilities.capabilitySets = (CLIPRDR_CAPABILITY_SET*) &(generalCapabilitySet);
 	generalCapabilitySet.capabilitySetType = CB_CAPSTYPE_GENERAL;
@@ -215,7 +215,7 @@ static UINT cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, wStream* s, UINT16
 	UINT16 cCapabilitiesSets;
 	UINT16 capabilitySetType;
 	UINT error = CHANNEL_RC_OK;
-	
+
 	Stream_Read_UINT16(s, cCapabilitiesSets); /* cCapabilitiesSets (2 bytes) */
 	Stream_Seek_UINT16(s); /* pad1 (2 bytes) */
 
@@ -235,7 +235,7 @@ static UINT cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, wStream* s, UINT16
 					return error;
 				}
 				break;
-				
+
 			default:
 				WLog_ERR(TAG, "unknown cliprdr capability set: %d", capabilitySetType);
 				return CHANNEL_RC_BAD_PROC;
@@ -273,13 +273,13 @@ static UINT cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr, wStream* s, UI
 		  * When the server capabilities pdu is not used, default capabilities
 		  * corresponding to a generalFlags field set to zero are assumed.
 		  */
-		
+
 		cliprdr->useLongFormatNames = FALSE;
 		cliprdr->streamFileClipEnabled = FALSE;
 		cliprdr->fileClipNoFilePaths = TRUE;
 		cliprdr->canLockClipData = FALSE;
 	}
-	
+
 	monitorReady.msgType = CB_MONITOR_READY;
 	monitorReady.msgFlags = flags;
 	monitorReady.dataLen = length;
@@ -310,9 +310,9 @@ static UINT cliprdr_process_filecontents_request(cliprdrPlugin* cliprdr, wStream
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	if (Stream_GetRemainingLength(s) < 28)
+	if (Stream_GetRemainingLength(s) < 24)
 	{
-		WLog_ERR(TAG, "not enought remaining data");
+		WLog_ERR(TAG, "not enough remaining data");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -326,7 +326,10 @@ static UINT cliprdr_process_filecontents_request(cliprdrPlugin* cliprdr, wStream
 	Stream_Read_UINT32(s, request.nPositionLow); /* nPositionLow (4 bytes) */
 	Stream_Read_UINT32(s, request.nPositionHigh); /* nPositionHigh (4 bytes) */
 	Stream_Read_UINT32(s, request.cbRequested); /* cbRequested (4 bytes) */
-	Stream_Read_UINT32(s, request.clipDataId); /* clipDataId (4 bytes) */
+	if (Stream_GetRemainingLength(s) >= 4)
+		Stream_Read_UINT32(s, request.clipDataId); /* clipDataId (4 bytes) */
+	else
+		request.clipDataId = 0;
 
 
 	IFCALLRET(context->ServerFileContentsRequest, error, context, &request);
@@ -354,10 +357,10 @@ static UINT cliprdr_process_filecontents_response(cliprdrPlugin* cliprdr, wStrea
 		WLog_ERR(TAG, "context->custom not set!");
 		return ERROR_INTERNAL_ERROR;
 	}
-		
+
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_ERR(TAG, "not enought remaining data");
+		WLog_ERR(TAG, "not enough remaining data");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -366,7 +369,7 @@ static UINT cliprdr_process_filecontents_response(cliprdrPlugin* cliprdr, wStrea
 	response.dataLen = length;
 
 	Stream_Read_UINT32(s, response.streamId); /* streamId (4 bytes) */
-	
+
 	response.cbRequested = length - 4;
 	response.requestedData = Stream_Pointer(s); /* requestedFileContentsData */
 
@@ -399,7 +402,7 @@ static UINT cliprdr_process_lock_clipdata(cliprdrPlugin* cliprdr, wStream* s, UI
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_ERR(TAG, "not enought remaining data");
+		WLog_ERR(TAG, "not enough remaining data");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -434,10 +437,10 @@ static UINT cliprdr_process_unlock_clipdata(cliprdrPlugin* cliprdr, wStream* s, 
 		WLog_ERR(TAG, "context->custom not set!");
 		return ERROR_INTERNAL_ERROR;
 	}
-	
+
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_ERR(TAG, "not enought remaining data");
+		WLog_ERR(TAG, "not enough remaining data");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -637,7 +640,7 @@ UINT cliprdr_client_format_list(CliprdrClientContext* context, CLIPRDR_FORMAT_LI
 	if (!cliprdr->useLongFormatNames)
 	{
 		length = formatList->numFormats * 36;
-		
+
 		s = cliprdr_packet_new(CB_FORMAT_LIST, 0, length);
 
 		if (!s)
@@ -649,40 +652,40 @@ UINT cliprdr_client_format_list(CliprdrClientContext* context, CLIPRDR_FORMAT_LI
 		for (index = 0; index < formatList->numFormats; index++)
 		{
 			format = (CLIPRDR_FORMAT*) &(formatList->formats[index]);
-			
+
 			Stream_Write_UINT32(s, format->formatId); /* formatId (4 bytes) */
-			
+
 			formatNameSize = 0;
 			formatNameLength = 0;
 
 			szFormatName = format->formatName;
-			
+
 			if (asciiNames)
 			{
 				if (szFormatName)
 					formatNameLength = strlen(szFormatName);
-				
+
 				if (formatNameLength > 31)
 					formatNameLength = 31;
-				
+
 				Stream_Write(s, szFormatName, formatNameLength);
 				Stream_Zero(s, 32 - formatNameLength);
 			}
 			else
 			{
 				wszFormatName = NULL;
-				
+
 				if (szFormatName)
 					formatNameSize = ConvertToUnicode(CP_UTF8, 0, szFormatName, -1, &wszFormatName, 0);
-				
+
 				if (formatNameSize > 15)
 					formatNameSize = 15;
-			
-				if (wszFormatName)	
+
+				if (wszFormatName)
 					Stream_Write(s, wszFormatName, formatNameSize * 2);
 
 				Stream_Zero(s, 32 - (formatNameSize * 2));
-				
+
 				free(wszFormatName);
 			}
 		}
@@ -1218,9 +1221,9 @@ static UINT cliprdr_virtual_channel_event_disconnected(cliprdrPlugin* cliprdr)
 
 	if (MessageQueue_PostQuit(cliprdr->queue, 0) && (WaitForSingleObject(cliprdr->thread, INFINITE) == WAIT_FAILED))
     {
-        rc = GetLastError();
-        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", rc);
-        return rc;
+	rc = GetLastError();
+	WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", rc);
+	return rc;
     }
 
 	MessageQueue_Free(cliprdr->queue);
@@ -1257,7 +1260,9 @@ static UINT cliprdr_virtual_channel_event_terminated(cliprdrPlugin* cliprdr)
 	return CHANNEL_RC_OK;
 }
 
-static VOID VCAPITYPE cliprdr_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
+static VOID VCAPITYPE cliprdr_virtual_channel_init_event(LPVOID pInitHandle,
+							 UINT event, LPVOID pData,
+							 UINT dataLength)
 {
 	cliprdrPlugin* cliprdr;
 	UINT error = CHANNEL_RC_OK;
@@ -1289,8 +1294,6 @@ static VOID VCAPITYPE cliprdr_virtual_channel_init_event(LPVOID pInitHandle, UIN
 	}
 	if (error && cliprdr->context->rdpcontext)
 		setChannelError(cliprdr->context->rdpcontext, error, "cliprdr_virtual_channel_init_event reported an error");
-
-	return;
 }
 
 /* cliprdr is always built-in */
@@ -1358,14 +1361,14 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	cliprdr->streamFileClipEnabled = FALSE;
 	cliprdr->fileClipNoFilePaths = TRUE;
 	cliprdr->canLockClipData = FALSE;
-	
+
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "VirtualChannelEntry");
 
 	CopyMemory(&(cliprdr->channelEntryPoints), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_FREERDP));
 
 	rc = cliprdr->channelEntryPoints.pVirtualChannelInit(&cliprdr->InitHandle,
 		&cliprdr->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, cliprdr_virtual_channel_init_event);
-	
+
 	if (CHANNEL_RC_OK != rc)
 	{
 		WLog_ERR(TAG, "pVirtualChannelInit failed with %s [%08X]",

@@ -21,7 +21,6 @@ set(MODULE_PREFIX "FREERDP_CORE")
 freerdp_definition_add(-DEXT_PATH="${FREERDP_EXTENSION_PATH}")
 
 freerdp_include_directory_add(${OPENSSL_INCLUDE_DIR})
-freerdp_include_directory_add(${ZLIB_INCLUDE_DIRS})
 
 set(${MODULE_PREFIX}_GATEWAY_DIR "gateway")
 
@@ -135,8 +134,6 @@ freerdp_module_add(${${MODULE_PREFIX}_SRCS})
 if(WIN32)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ws2_32)
 	freerdp_library_add(ws2_32)
-else()
-	freerdp_library_add(${ZLIB_LIBRARIES})
 endif()
 
 freerdp_library_add(${OPENSSL_LIBRARIES})

@@ -45,6 +45,9 @@ int ListDictionary_Count(wListDictionary* listDictionary)
 	int count = 0;
 	wListDictionaryItem* item;
 
+	if (!listDictionary)
+		return -1;
+
 	if (listDictionary->synchronized)
 		EnterCriticalSection(&listDictionary->lock);
 
@@ -98,6 +101,9 @@ BOOL ListDictionary_IsSynchronized(wListDictionary* listDictionary)
 
 void ListDictionary_Lock(wListDictionary* listDictionary)
 {
+	if (!listDictionary)
+		return;
+
 	EnterCriticalSection(&listDictionary->lock);
 }
 
@@ -107,6 +113,9 @@ void ListDictionary_Lock(wListDictionary* listDictionary)
 
 void ListDictionary_Unlock(wListDictionary* listDictionary)
 {
+	if (!listDictionary)
+		return;
+
 	LeaveCriticalSection(&listDictionary->lock);
 }
 
@@ -187,6 +196,9 @@ BOOL ListDictionary_Add(wListDictionary* listDictionary, void* key, void* value)
 	wListDictionaryItem* lastItem;
 	BOOL ret = FALSE;
 
+	if (!listDictionary)
+		return FALSE;
+
 	if (listDictionary->synchronized)
 		EnterCriticalSection(&listDictionary->lock);
 
@@ -230,6 +242,9 @@ void ListDictionary_Clear(wListDictionary* listDictionary)
 	wListDictionaryItem* item;
 	wListDictionaryItem* nextItem;
 
+	if (!listDictionary)
+		return;
+
 	if (listDictionary->synchronized)
 		EnterCriticalSection(&listDictionary->lock);
 
@@ -267,6 +282,9 @@ BOOL ListDictionary_Contains(wListDictionary* listDictionary, void* key)
 	wListDictionaryItem* item;
 	OBJECT_EQUALS_FN keyEquals;
 
+	if (!listDictionary)
+		return FALSE;
+
 	if (listDictionary->synchronized)
 		EnterCriticalSection(&(listDictionary->lock));
 
@@ -297,6 +315,9 @@ void* ListDictionary_Remove(wListDictionary* listDictionary, void* key)
 	wListDictionaryItem* item;
 	wListDictionaryItem* prevItem;
 	OBJECT_EQUALS_FN keyEquals;
+
+	if (!listDictionary)
+		return NULL;
 
 	if (listDictionary->synchronized)
 		EnterCriticalSection(&listDictionary->lock);
@@ -338,6 +359,9 @@ void *ListDictionary_Remove_Head(wListDictionary* listDictionary)
 	wListDictionaryItem* item;
 	void *value = NULL;
 
+	if (!listDictionary)
+		return NULL;
+
 	if (listDictionary->synchronized)
 		EnterCriticalSection(&listDictionary->lock);
 
@@ -363,6 +387,9 @@ void* ListDictionary_GetItemValue(wListDictionary* listDictionary, void* key)
 	void* value = NULL;
 	wListDictionaryItem* item = NULL;
 	OBJECT_EQUALS_FN keyEquals;
+
+	if (!listDictionary)
+		return NULL;
 
 	if (listDictionary->synchronized)
 		EnterCriticalSection(&listDictionary->lock);
@@ -399,6 +426,9 @@ BOOL ListDictionary_SetItemValue(wListDictionary* listDictionary, void* key, voi
 	BOOL status = FALSE;
 	wListDictionaryItem* item;
 	OBJECT_EQUALS_FN keyEquals;
+
+	if (!listDictionary)
+		return FALSE;
 
 	if (listDictionary->synchronized)
 		EnterCriticalSection(&listDictionary->lock);

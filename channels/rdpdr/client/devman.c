@@ -173,7 +173,10 @@ UINT devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device, rdpContext
 		return ERROR_INVALID_NAME;
 	}
 
-	WLog_INFO(TAG,  "Loading device service %s (static)", ServiceName);
+	if (device->Name)
+		WLog_INFO(TAG,  "Loading device service %s [%s] (static)", ServiceName, device->Name);
+	else
+		WLog_INFO(TAG,  "Loading device service %s (static)", ServiceName);
 	entry = (PDEVICE_SERVICE_ENTRY) freerdp_load_channel_addin_entry(ServiceName, NULL, "DeviceServiceEntry", 0);
 
 	if (!entry)

@@ -33,7 +33,7 @@
 extern "C" {
 #endif
 
-int shadow_client_channels_post_connect(rdpShadowClient* client);
+UINT shadow_client_channels_post_connect(rdpShadowClient* client);
 void shadow_client_channels_free(rdpShadowClient* client);
 
 #ifdef __cplusplus

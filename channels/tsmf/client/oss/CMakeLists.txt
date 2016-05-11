@@ -24,7 +24,5 @@ include_directories(..)
 include_directories(${OSS_INCLUDE_DIRS})
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
+target_link_libraries(${MODULE_NAME} winpr)
 
-
-
-target_link_libraries(${MODULE_NAME} freerdp ${OSS_LIBRARIES})

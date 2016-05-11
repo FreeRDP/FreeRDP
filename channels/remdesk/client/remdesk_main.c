@@ -1030,11 +1030,11 @@ static UINT remdesk_virtual_channel_event_disconnected(remdeskPlugin* remdesk)
 	UINT rc;
 
 	if (MessageQueue_PostQuit(remdesk->queue, 0) && (WaitForSingleObject(remdesk->thread, INFINITE) == WAIT_FAILED))
-    {
-        rc = GetLastError();
-        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", rc);
-        return rc;
-    }
+	{
+		rc = GetLastError();
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", rc);
+		return rc;
+	}
 
 	MessageQueue_Free(remdesk->queue);
 	CloseHandle(remdesk->thread);
@@ -1066,7 +1066,9 @@ static void remdesk_virtual_channel_event_terminated(remdeskPlugin* remdesk)
 	free(remdesk);
 }
 
-static VOID VCAPITYPE remdesk_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
+static VOID VCAPITYPE remdesk_virtual_channel_init_event(LPVOID pInitHandle,
+							 UINT event, LPVOID pData,
+							 UINT dataLength)
 {
 	remdeskPlugin* remdesk;
 	UINT error = CHANNEL_RC_OK;

@@ -2,6 +2,7 @@
 # winpr-makecert cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2016 Thincast Technologies GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,8 +18,6 @@
 
 set(MODULE_NAME "winpr-makecert")
 set(MODULE_PREFIX "WINPR_MAKECERT")
-
-include_directories(..)
 
 set(${MODULE_PREFIX}_SRCS
 	main.c)
@@ -41,7 +40,7 @@ endif()
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-set(${MODULE_PREFIX}_LIBS winpr-makecert-tool)
+set(${MODULE_PREFIX}_LIBS winpr-tools)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
@@ -51,4 +50,3 @@ install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT too
 if (WITH_DEBUG_SYMBOLS AND MSVC)
     install(FILES ${CMAKE_PDB_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT symbols)
 endif()
-

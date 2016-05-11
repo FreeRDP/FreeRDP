@@ -497,4 +497,10 @@ BOOL PathFileExistsW(LPCWSTR pszPath)
 	return FALSE;
 }
 
+#else
+
+#ifdef _WIN32
+#pragma comment(lib, "shlwapi.lib")
+#endif
+
 #endif
