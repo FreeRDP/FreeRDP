@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/user.h>
 
 #include "clipboard.h"
 

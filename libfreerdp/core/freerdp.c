@@ -126,6 +126,7 @@ BOOL freerdp_connect(freerdp* instance)
 			if (!freerdp_get_last_error(rdp->context))
 				freerdp_set_last_error(instance->context, FREERDP_ERROR_POST_CONNECT_FAILED);
 
+			status = FALSE;
 			goto freerdp_connect_finally;
 		}
 

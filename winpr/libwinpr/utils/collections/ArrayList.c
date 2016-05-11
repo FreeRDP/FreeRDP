@@ -207,7 +207,7 @@ void ArrayList_Clear(wArrayList *arrayList)
 
 BOOL ArrayList_Contains(wArrayList *arrayList, void *obj)
 {
-	DWORD index;
+	int index;
 	BOOL rc = FALSE;
 
 	if (arrayList->synchronized)

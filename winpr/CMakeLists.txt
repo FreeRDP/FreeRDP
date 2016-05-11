@@ -156,7 +156,7 @@ add_subdirectory(include)
 
 add_subdirectory(libwinpr)
 
-if(NOT ANDROID AND NOT IOS)
+if(NOT ANDROID AND NOT IOS AND NOT UWP)
 	add_subdirectory(tools)
 endif()
 

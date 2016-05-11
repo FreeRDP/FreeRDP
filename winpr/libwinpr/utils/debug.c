@@ -187,6 +187,44 @@ fail:
 }
 #endif
 
+#if defined(_WIN32) && (NTDDI_VERSION <= NTDDI_WINXP)
+
+typedef USHORT (WINAPI * PRTL_CAPTURE_STACK_BACK_TRACE_FN)(ULONG FramesToSkip, ULONG FramesToCapture, PVOID* BackTrace, PULONG BackTraceHash);
+
+static HMODULE g_NTDLL_Library = NULL;
+static BOOL g_RtlCaptureStackBackTrace_Detected = FALSE;
+static BOOL g_RtlCaptureStackBackTrace_Available = FALSE;
+static PRTL_CAPTURE_STACK_BACK_TRACE_FN g_pRtlCaptureStackBackTrace = NULL;
+
+USHORT RtlCaptureStackBackTrace(ULONG FramesToSkip, ULONG FramesToCapture, PVOID* BackTrace, PULONG BackTraceHash)
+{
+	if (!g_RtlCaptureStackBackTrace_Detected)
+	{
+		g_NTDLL_Library = LoadLibraryA("kernel32.dll");
+
+		if (g_NTDLL_Library)
+		{
+			g_pRtlCaptureStackBackTrace = (PRTL_CAPTURE_STACK_BACK_TRACE_FN) GetProcAddress(g_NTDLL_Library, "RtlCaptureStackBackTrace");
+			g_RtlCaptureStackBackTrace_Available = (g_pRtlCaptureStackBackTrace) ? TRUE : FALSE;
+		}
+		else
+		{
+			g_RtlCaptureStackBackTrace_Available = FALSE;
+		}
+
+		g_RtlCaptureStackBackTrace_Detected = TRUE;
+	}
+
+	if (g_RtlCaptureStackBackTrace_Available)
+	{
+		return (*g_pRtlCaptureStackBackTrace)(FramesToSkip, FramesToCapture, BackTrace, BackTraceHash);
+	}
+
+	return 0;
+}
+
+#endif
+
 void winpr_backtrace_free(void* buffer)
 {
 	if (!buffer)
@@ -255,7 +293,7 @@ void* winpr_backtrace(DWORD size)
 	data->max = size;
 	data->used = fkt->unwind_backtrace(data->buffer, 0, size);
 	return data;
-#elif defined(_WIN32) || defined(_WIN64)
+#elif (defined(_WIN32) || defined(_WIN64)) && !defined(_UWP)
 	HANDLE process = GetCurrentProcess();
 	t_win_stack* data = calloc(1, sizeof(t_win_stack));
 
@@ -272,7 +310,7 @@ void* winpr_backtrace(DWORD size)
 	}
 
 	SymInitialize(process, NULL, TRUE);
-	data->used = CaptureStackBackTrace(2, size, data->stack, NULL);
+	data->used = RtlCaptureStackBackTrace(2, size, data->stack, NULL);
 
 	return data;
 #else
@@ -352,7 +390,7 @@ char** winpr_backtrace_symbols(void* buffer, size_t* used)
 
 		return (char**) lines;
 	}
-#elif defined(_WIN32) || defined(_WIN64)
+#elif (defined(_WIN32) || defined(_WIN64)) && !defined(_UWP)
 	{
 		size_t i;
 		size_t line_len = 1024;
@@ -471,15 +509,27 @@ void winpr_log_backtrace(const char* tag, DWORD level, DWORD size)
 	winpr_backtrace_free(stack);
 }
 
-char* winpr_strerror(DWORD dw, char* dmsg, size_t size) {
+char* winpr_strerror(DWORD dw, char* dmsg, size_t size)
+{
 #if defined(_WIN32)
-	LPTSTR msg = NULL;
 	DWORD rc;
+	DWORD nSize = 0;
+	DWORD dwFlags = 0;
+	LPTSTR msg = NULL;
+	BOOL alloc = FALSE;
 
-	rc = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
-			FORMAT_MESSAGE_FROM_SYSTEM |
-			FORMAT_MESSAGE_IGNORE_INSERTS,
-			NULL, dw, 0, (LPTSTR)&msg, 0, NULL);
+	dwFlags = FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
+
+#ifdef FORMAT_MESSAGE_ALLOCATE_BUFFER
+	alloc = TRUE;
+	dwFlags |= FORMAT_MESSAGE_ALLOCATE_BUFFER;
+#else
+	nSize = (DWORD) (size * 2);
+	msg = (LPTSTR) calloc(nSize, sizeof(TCHAR));
+#endif
+
+	rc = FormatMessage(dwFlags, NULL, dw, 0, alloc ? (LPTSTR) &msg : msg, nSize, NULL);
+
 	if (rc) {
 #if defined(UNICODE)
 		WideCharToMultiByte(CP_ACP, 0, msg, rc, dmsg, size - 1, NULL, NULL);
@@ -487,7 +537,12 @@ char* winpr_strerror(DWORD dw, char* dmsg, size_t size) {
 		memcpy(dmsg, msg, min(rc, size - 1));
 #endif /* defined(UNICODE) */
 		dmsg[min(rc, size - 1)] = 0;
+
+#ifdef FORMAT_MESSAGE_ALLOCATE_BUFFER
 		LocalFree(msg);
+#else
+		free(msg);
+#endif
 	} else {
 		_snprintf(dmsg, size, "FAILURE: %08X", GetLastError());
 	}

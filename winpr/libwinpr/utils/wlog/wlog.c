@@ -491,7 +491,7 @@ BOOL WLog_ParseFilter(wLogFilter* filter, LPCSTR name)
 
 	while ((p = strchr(p, '.')) != NULL)
 	{
-		if (count < filter->NameCount)
+		if (count < (int) filter->NameCount)
 			filter->Names[count++] = p + 1;
 		*p = '\0';
 		p++;
@@ -603,7 +603,7 @@ BOOL WLog_ParseName(wLog* log, LPCSTR name)
 
 	while ((p = strchr(p, '.')) != NULL)
 	{
-		if (count < log->NameCount)
+		if (count < (int) log->NameCount)
 			log->Names[count++] = p + 1;
 		*p = '\0';
 		p++;

@@ -45,6 +45,7 @@ struct _wIniFile
 	char* line;
 	char* nextLine;
 	int lineLength;
+	char* tokctx;
 	char* buffer;
 	char* filename;
 	BOOL readOnly;

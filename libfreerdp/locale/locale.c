@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/environment.h>
 
 #include "liblocale.h"
 
@@ -633,19 +634,28 @@ static const LOCALE_KEYBOARD_LAYOUTS LOCALE_KEYBOARD_LAYOUTS_TABLE[] =
 BOOL freerdp_get_system_language_and_country_codes(char* language, char* country)
 {
 	int dot;
+	DWORD nSize;
 	int underscore;
-	char* env_lang;
+	char* env_lang = NULL;
 
 	/* LANG = <language>_<country>.<encoding> */
-	env_lang = getenv("LANG"); /* Get locale from environment variable LANG */
+	nSize = GetEnvironmentVariableA("LANG", NULL, 0);
 
-	if (env_lang == NULL)
+	if (!nSize)
 		return FALSE; /* LANG environment variable was not set */
+
+	env_lang = (char*) malloc(nSize);
+
+	if (!env_lang)
+		return FALSE;
+
+	GetEnvironmentVariableA("LANG", env_lang, nSize); /* Get locale from environment variable LANG */
 
 	underscore = strcspn(env_lang, "_");
 
 	if (underscore > 3)
 	{
+		free(env_lang);
 		return FALSE; /* The language name should not be more than 3 letters long */
 	}
 	else
@@ -665,9 +675,11 @@ BOOL freerdp_get_system_language_and_country_codes(char* language, char* country
 	}
 	else
 	{
+		free(env_lang);
 		return FALSE; /* Invalid locale */
 	}
 
+	free(env_lang);
 	return TRUE;
 }
 

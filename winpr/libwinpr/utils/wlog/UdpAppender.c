@@ -60,7 +60,7 @@ static BOOL WLog_UdpAppender_Open(wLog* log, wLogAppender* appender)
 	colonPos = strchr(udpAppender->host, ':');
 	if (!colonPos)
 		return FALSE;
-	addrLen = colonPos - udpAppender->host;
+	addrLen = (int) (colonPos - udpAppender->host);
 	memcpy(addressString, udpAppender->host, addrLen);
 	addressString[addrLen] = '\0';
 
@@ -79,7 +79,7 @@ static BOOL WLog_UdpAppender_Open(wLog* log, wLogAppender* appender)
 	}
 
 	memcpy(&udpAppender->targetAddr, result->ai_addr, result->ai_addrlen);
-	udpAppender->targetAddrLen = result->ai_addrlen;
+	udpAppender->targetAddrLen = (int) result->ai_addrlen;
 
 	return TRUE;
 }

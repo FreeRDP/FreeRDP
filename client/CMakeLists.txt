@@ -20,8 +20,8 @@
 add_subdirectory(common)
 
 if(FREERDP_VENDOR AND WITH_CLIENT)
-	if(WIN32)
-		add_subdirectory(Windows)	
+	if(WIN32 AND NOT UWP)
+		add_subdirectory(Windows)
 	else()
 		if(WITH_SAMPLE)
 			add_subdirectory(Sample)

@@ -34,6 +34,9 @@
 #include <freerdp/types.h>
 #include <freerdp/codec/dsp.h>
 
+#define __COREFOUNDATION_CFPLUGINCOM__ 1
+#define IUNKNOWN_C_GUTS void *_reserved; void* QueryInterface; void* AddRef; void* Release
+
 #include <AudioToolbox/AudioToolbox.h>
 #include <AudioToolbox/AudioQueue.h>
 

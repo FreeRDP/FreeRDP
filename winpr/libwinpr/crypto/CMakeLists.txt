@@ -23,6 +23,16 @@ winpr_module_add(
 	crypto.c
 	crypto.h)
 
+if(OPENSSL_FOUND)
+	winpr_include_directory_add(${OPENSSL_INCLUDE_DIR})
+	winpr_library_add(${OPENSSL_LIBRARIES})
+endif()
+
+if(MBEDTLS_FOUND)
+	winpr_include_directory_add(${MBEDTLS_INCLUDE_DIR})
+	winpr_library_add(${MBEDTLS_LIBRARIES})
+endif()
+
 if(WIN32)
 	winpr_library_add(crypt32)
 endif()

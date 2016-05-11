@@ -94,32 +94,8 @@ typedef struct _SYSTEM_INFO
 	WORD wProcessorRevision;
 } SYSTEM_INFO, *LPSYSTEM_INFO;
 
-#define MAX_COMPUTERNAME_LENGTH 31
-
 WINPR_API void GetSystemInfo(LPSYSTEM_INFO lpSystemInfo);
 WINPR_API void GetNativeSystemInfo(LPSYSTEM_INFO lpSystemInfo);
-
-typedef enum _COMPUTER_NAME_FORMAT
-{
-	ComputerNameNetBIOS,
-	ComputerNameDnsHostname,
-	ComputerNameDnsDomain,
-	ComputerNameDnsFullyQualified,
-	ComputerNamePhysicalNetBIOS,
-	ComputerNamePhysicalDnsHostname,
-	ComputerNamePhysicalDnsDomain,
-	ComputerNamePhysicalDnsFullyQualified,
-	ComputerNameMax
-} COMPUTER_NAME_FORMAT;
-
-WINPR_API BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD lpnSize);
-WINPR_API BOOL GetComputerNameExW(COMPUTER_NAME_FORMAT NameType, LPWSTR lpBuffer, LPDWORD lpnSize);
-
-#ifdef UNICODE
-#define GetComputerNameEx	GetComputerNameExW
-#else
-#define GetComputerNameEx	GetComputerNameExA
-#endif
 
 typedef struct _OSVERSIONINFOA
 {
@@ -207,15 +183,6 @@ typedef struct _OSVERSIONINFOEXW
 #define VER_NT_SERVER				0x0000003
 #define VER_NT_WORKSTATION			0x0000001
 
-WINPR_API BOOL GetVersionExA(LPOSVERSIONINFOA lpVersionInformation);
-WINPR_API BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation);
-
-#ifdef UNICODE
-#define GetVersionEx	GetVersionExW
-#else
-#define GetVersionEx	GetVersionExA
-#endif
-
 WINPR_API void GetSystemTime(LPSYSTEMTIME lpSystemTime);
 WINPR_API BOOL SetSystemTime(CONST SYSTEMTIME* lpSystemTime);
 WINPR_API VOID GetLocalTime(LPSYSTEMTIME lpSystemTime);
@@ -223,8 +190,6 @@ WINPR_API BOOL SetLocalTime(CONST SYSTEMTIME* lpSystemTime);
 
 WINPR_API VOID GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime);
 WINPR_API BOOL GetSystemTimeAdjustment(PDWORD lpTimeAdjustment, PDWORD lpTimeIncrement, PBOOL lpTimeAdjustmentDisabled);
-
-WINPR_API DWORD GetTickCount(void);
 
 WINPR_API BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature);
 
@@ -288,6 +253,49 @@ WINPR_API BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature);
 #define PF_ARM_INTEL_XSCALE             0x80010001
 #define PF_ARM_INTEL_PMU                0x80010002
 #define PF_ARM_INTEL_WMMX               0x80010003
+
+#endif
+
+#if !defined(_WIN32) || defined(_UWP)
+
+WINPR_API BOOL GetVersionExA(LPOSVERSIONINFOA lpVersionInformation);
+WINPR_API BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation);
+
+#ifdef UNICODE
+#define GetVersionEx	GetVersionExW
+#else
+#define GetVersionEx	GetVersionExA
+#endif
+
+#endif
+
+#if !defined(_WIN32) || defined(_UWP)
+
+WINPR_API DWORD GetTickCount(void);
+
+typedef enum _COMPUTER_NAME_FORMAT
+{
+	ComputerNameNetBIOS,
+	ComputerNameDnsHostname,
+	ComputerNameDnsDomain,
+	ComputerNameDnsFullyQualified,
+	ComputerNamePhysicalNetBIOS,
+	ComputerNamePhysicalDnsHostname,
+	ComputerNamePhysicalDnsDomain,
+	ComputerNamePhysicalDnsFullyQualified,
+	ComputerNameMax
+} COMPUTER_NAME_FORMAT;
+
+#define MAX_COMPUTERNAME_LENGTH 31
+
+WINPR_API BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD lpnSize);
+WINPR_API BOOL GetComputerNameExW(COMPUTER_NAME_FORMAT NameType, LPWSTR lpBuffer, LPDWORD lpnSize);
+
+#ifdef UNICODE
+#define GetComputerNameEx	GetComputerNameExW
+#else
+#define GetComputerNameEx	GetComputerNameExA
+#endif
 
 #endif
 

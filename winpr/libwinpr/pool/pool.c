@@ -23,6 +23,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/pool.h>
+#include <winpr/library.h>
 
 #include "pool.h"
 
@@ -205,9 +206,9 @@ PTP_POOL CreateThreadpool(PVOID reserved)
 		free(pool);
 		return NULL;
 	}
+#endif
 
 	return pool;
-#endif
 }
 
 VOID CloseThreadpool(PTP_POOL ptpp)

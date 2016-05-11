@@ -23,6 +23,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/pool.h>
+#include <winpr/library.h>
 
 #include "pool.h"
 #include "../log.h"

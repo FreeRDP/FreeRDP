@@ -1469,6 +1469,9 @@ int freerdp_image_copy_from_pointer_data(BYTE* pDstData, UINT32 DstFormat,
 	int dstBitsPerPixel;
 	int dstBytesPerPixel;
 
+	xorBits = xorMask;
+	andBits = andMask;
+
 	dstBitsPerPixel = FREERDP_PIXEL_FORMAT_DEPTH(DstFormat);
 	dstBytesPerPixel = (FREERDP_PIXEL_FORMAT_BPP(DstFormat) / 8);
 	dstFlip = FREERDP_PIXEL_FORMAT_FLIP(DstFormat);

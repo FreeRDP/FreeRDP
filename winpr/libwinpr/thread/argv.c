@@ -113,7 +113,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 	pArgs = NULL;
 	numArgs = 0;
 	lpEscapedCmdLine = NULL;
-	cmdLineLength = strlen(lpCmdLine);
+	cmdLineLength = (int) strlen(lpCmdLine);
 	lpEscapedChars = (BOOL*) calloc(1, (cmdLineLength + 1) * sizeof(BOOL));
 	if (!lpEscapedChars)
 		return NULL;
@@ -138,7 +138,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 
 			if (!pBeg)
 			{
-				length = strlen(p);
+				length = (int) strlen(p);
 				CopyMemory(pOutput, p, length);
 				pOutput += length;
 				p += length;
@@ -158,8 +158,8 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 				pBeg--;
 			}
 
-			n = (pEnd - pBeg) - 1;
-			length = (pBeg - pLastEnd);
+			n = (int) ((pEnd - pBeg) - 1);
+			length = (int) (pBeg - pLastEnd);
 			CopyMemory(pOutput, p, length);
 			pOutput += length;
 			p += length;
@@ -178,7 +178,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 
 		*pOutput++ = '\0';
 		lpCmdLine = (LPCSTR) lpEscapedCmdLine;
-		cmdLineLength = strlen(lpCmdLine);
+		cmdLineLength = (int) strlen(lpCmdLine);
 	}
 
 	maxNumArgs = 2;
@@ -217,7 +217,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 		if (*p != '"')
 		{
 			/* no whitespace escaped with double quotes */
-			length = p - pBeg;
+			length = (int) (p - pBeg);
 			CopyMemory(pOutput, pBeg, length);
 			pOutput[length] = '\0';
 			pArgs[numArgs++] = pOutput;

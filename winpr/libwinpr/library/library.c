@@ -64,6 +64,8 @@
  * SizeofResource
  */
 
+#if !defined(_WIN32) || defined(_UWP)
+
 #ifndef _WIN32
 
 #include <dlfcn.h>
@@ -75,6 +77,8 @@
 
 #ifdef __MACOSX__
 #include <mach-o/dyld.h>
+#endif
+
 #endif
 
 DLL_DIRECTORY_COOKIE AddDllDirectory(PCWSTR NewDirectory)
@@ -94,7 +98,27 @@ BOOL SetDefaultDllDirectories(DWORD DirectoryFlags)
 
 HMODULE LoadLibraryA(LPCSTR lpLibFileName)
 {
+#if defined(_UWP)
+	int status;
+	HMODULE hModule = NULL;
+	WCHAR* filenameW = NULL;
+
+	if (!lpLibFileName)
+		return NULL;
+
+	status = ConvertToUnicode(CP_UTF8, 0, lpLibFileName, -1, &filenameW, 0);
+
+	if (status < 1)
+		return NULL;
+
+	hModule = LoadPackagedLibrary(filenameW, 0);
+
+	free(filenameW);
+
+	return hModule;
+#else
 	HMODULE library;
+
 	library = dlopen(lpLibFileName, RTLD_LOCAL | RTLD_LAZY);
 
 	if (!library)
@@ -104,16 +128,23 @@ HMODULE LoadLibraryA(LPCSTR lpLibFileName)
 	}
 
 	return library;
+#endif
 }
 
 HMODULE LoadLibraryW(LPCWSTR lpLibFileName)
 {
+#if defined(_UWP)
+	return LoadPackagedLibrary(lpLibFileName, 0);
+#else
 	return (HMODULE) NULL;
+#endif
 }
 
 HMODULE LoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 {
+#if !defined(_UWP)
 	HMODULE library;
+
 	library = dlopen(lpLibFileName, RTLD_LOCAL | RTLD_LAZY);
 
 	if (!library)
@@ -123,12 +154,19 @@ HMODULE LoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 	}
 
 	return library;
+#else
+	return (HMODULE)NULL;
+#endif
 }
 
 HMODULE LoadLibraryExW(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 {
 	return (HMODULE) NULL;
 }
+
+#endif
+
+#ifndef _WIN32
 
 FARPROC GetProcAddress(HMODULE hModule, LPCSTR lpProcName)
 {

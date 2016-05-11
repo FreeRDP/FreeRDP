@@ -660,7 +660,7 @@ BOOL WINAPI Win32_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CLAS
 	else if (WtsVirtualClass == WTSVirtualFileHandle)
 	{
 		*pBytesReturned = sizeof(HANDLE);
-		*ppBuffer = LocalAlloc(LMEM_ZEROINIT, *pBytesReturned);
+		*ppBuffer = calloc(1, *pBytesReturned);
 
 		if (*ppBuffer == NULL)
 		{
@@ -673,7 +673,7 @@ BOOL WINAPI Win32_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CLAS
 	else if (WtsVirtualClass == WTSVirtualEventHandle)
 	{
 		*pBytesReturned = sizeof(HANDLE);
-		*ppBuffer = LocalAlloc(LMEM_ZEROINIT, *pBytesReturned);
+		*ppBuffer = calloc(1, *pBytesReturned);
 
 		if (*ppBuffer == NULL)
 		{
@@ -697,7 +697,7 @@ BOOL WINAPI Win32_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CLAS
 
 VOID WINAPI Win32_WTSFreeMemory(PVOID pMemory)
 {
-	LocalFree(pMemory);
+	free(pMemory);
 }
 
 BOOL WINAPI Win32_WTSFreeMemoryExW(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory, ULONG NumberOfEntries)

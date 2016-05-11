@@ -13,9 +13,10 @@
 #import <freerdp/client/cmdline.h>
 
 static AppDelegate* _singleDelegate = nil;
-void AppDelegate_EmbedWindowEventHandler(void* context, EmbedWindowEventArgs* e);
 void AppDelegate_ConnectionResultEventHandler(void* context, ConnectionResultEventArgs* e);
 void AppDelegate_ErrorInfoEventHandler(void* ctx, ErrorInfoEventArgs* e);
+void AppDelegate_EmbedWindowEventHandler(void* context, EmbedWindowEventArgs* e);
+void AppDelegate_ResizeWindowEventHandler(void* context, ResizeWindowEventArgs* e);
 void mac_set_view_size(rdpContext* context, MRDPView* view);
 
 @implementation AppDelegate
@@ -65,6 +66,7 @@ void mac_set_view_size(rdpContext* context, MRDPView* view);
 		PubSub_SubscribeConnectionResult(context->pubSub, AppDelegate_ConnectionResultEventHandler);
 		PubSub_SubscribeErrorInfo(context->pubSub, AppDelegate_ErrorInfoEventHandler);
 		PubSub_SubscribeEmbedWindow(context->pubSub, AppDelegate_EmbedWindowEventHandler);
+		PubSub_SubscribeResizeWindow(context->pubSub, AppDelegate_ResizeWindowEventHandler);
 		
 		freerdp_client_start(context);
 
@@ -205,24 +207,6 @@ void mac_set_view_size(rdpContext* context, MRDPView* view);
 
 @end
 
-void AppDelegate_EmbedWindowEventHandler(void* ctx, EmbedWindowEventArgs* e)
-{
-	rdpContext* context = (rdpContext*) ctx;
-	
-	if (_singleDelegate)
-	{
-		mfContext* mfc = (mfContext*) context;
-		_singleDelegate->mrdpView = mfc->view;
-
-		if (_singleDelegate->window)
-		{
-			[[_singleDelegate->window contentView] addSubview:mfc->view];
-		}
-		
-		mac_set_view_size(context, mfc->view);
-	}
-}
-
 /** *********************************************************************
  * On connection error, display message and quit application
  ***********************************************************************/
@@ -263,6 +247,37 @@ void AppDelegate_ErrorInfoEventHandler(void* ctx, ErrorInfoEventArgs* e)
 		// Making sure this should be invoked on the main UI thread.
 		[_singleDelegate performSelectorOnMainThread:@selector(rdpConnectError:) withObject:message waitUntilDone:TRUE];
 		[message release];
+	}
+}
+
+void AppDelegate_EmbedWindowEventHandler(void* ctx, EmbedWindowEventArgs* e)
+{
+	rdpContext* context = (rdpContext*) ctx;
+	
+	if (_singleDelegate)
+	{
+		mfContext* mfc = (mfContext*) context;
+		_singleDelegate->mrdpView = mfc->view;
+		
+		if (_singleDelegate->window)
+		{
+			[[_singleDelegate->window contentView] addSubview:mfc->view];
+		}
+		
+		mac_set_view_size(context, mfc->view);
+	}
+}
+
+void AppDelegate_ResizeWindowEventHandler(void* ctx, ResizeWindowEventArgs* e)
+{
+	rdpContext* context = (rdpContext*) ctx;
+	
+	fprintf(stderr, "ResizeWindowEventHandler: %d %d\n", e->width, e->height);
+	
+	if (_singleDelegate)
+	{
+		mfContext* mfc = (mfContext*) context;
+		mac_set_view_size(context, mfc->view);
 	}
 }
 

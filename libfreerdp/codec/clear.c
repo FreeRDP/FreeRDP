@@ -286,8 +286,8 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 			UINT32 vBarHeight;
 			UINT32 vBarPixelCount;
 			UINT32 vBarShortPixelCount;
-			CLEAR_VBAR_ENTRY* vBarEntry;
-			CLEAR_VBAR_ENTRY* vBarShortEntry;
+			CLEAR_VBAR_ENTRY* vBarEntry = NULL;
+			CLEAR_VBAR_ENTRY* vBarShortEntry = NULL;
 
 			if ((bandsByteCount - suboffset) < 11)
 				return -1021;

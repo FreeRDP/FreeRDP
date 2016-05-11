@@ -276,9 +276,36 @@ WINPR_API BOOL DeleteTimerQueueTimer(HANDLE TimerQueue, HANDLE Timer, HANDLE Com
 
 #endif
 
-#if (defined(_WIN32) && (_WIN32_WINNT < 0x0600))
+#if (defined(_WIN32) && defined(_SYNCHAPI_H_) && (_WIN32_WINNT < 0x0600))
+#define WINPR_INITIALIZE_CRITICAL_SECTION_EX	1
+#elif (defined(_WIN32) && (_WIN32_WINNT < 0x0403))
+#define WINPR_INITIALIZE_CRITICAL_SECTION_EX	1
+#endif
+
+#ifdef WINPR_INITIALIZE_CRITICAL_SECTION_EX
 
 WINPR_API BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags);
+
+#endif
+
+#ifndef _RTL_RUN_ONCE_DEF
+#define _RTL_RUN_ONCE_DEF
+
+#define RTL_RUN_ONCE_INIT		{ 0 }
+
+#define RTL_RUN_ONCE_CHECK_ONLY		0x00000001
+#define RTL_RUN_ONCE_ASYNC		0x00000002
+#define RTL_RUN_ONCE_INIT_FAILED	0x00000004
+
+#define RTL_RUN_ONCE_CTX_RESERVED_BITS	2
+
+typedef struct _RTL_RUN_ONCE
+{
+	PVOID Ptr;
+} RTL_RUN_ONCE, *PRTL_RUN_ONCE;
+
+typedef ULONG CALLBACK RTL_RUN_ONCE_INIT_FN (PRTL_RUN_ONCE RunOnce, PVOID Parameter, PVOID* Context);
+typedef RTL_RUN_ONCE_INIT_FN *PRTL_RUN_ONCE_INIT_FN;
 
 #endif
 
@@ -286,18 +313,12 @@ WINPR_API BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection,
 
 /* One-Time Initialization */
 
-typedef struct _RTL_RUN_ONCE
-{
-	PVOID Ptr;
-} RTL_RUN_ONCE, *PRTL_RUN_ONCE;
-
-#define RTL_RUN_ONCE_INIT	{ 0 }
 #define INIT_ONCE_STATIC_INIT	RTL_RUN_ONCE_INIT
 
 typedef RTL_RUN_ONCE INIT_ONCE;
 typedef PRTL_RUN_ONCE PINIT_ONCE;
 typedef PRTL_RUN_ONCE LPINIT_ONCE;
-typedef BOOL CALLBACK (*PINIT_ONCE_FN) (PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context);
+typedef BOOL (CALLBACK * PINIT_ONCE_FN)(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context);
 
 WINPR_API BOOL InitOnceBeginInitialize(LPINIT_ONCE lpInitOnce, DWORD dwFlags, PBOOL fPending, LPVOID* lpContext);
 WINPR_API BOOL InitOnceComplete(LPINIT_ONCE lpInitOnce, DWORD dwFlags, LPVOID lpContext);
@@ -308,7 +329,11 @@ WINPR_API VOID InitOnceInitialize(PINIT_ONCE InitOnce);
 
 /* Synchronization Barrier */
 
-#if (!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0602))
+#if (!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0602) && !defined(_SYNCHAPI_H_))
+#define WINPR_SYNCHRONIZATION_BARRIER	1
+#endif
+
+#ifdef WINPR_SYNCHRONIZATION_BARRIER
 
 typedef struct _RTL_BARRIER
 {
@@ -332,6 +357,7 @@ WINPR_API BOOL WINAPI EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBa
 WINPR_API BOOL WINAPI DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier);
 
 #endif
+
 /* Extended API */
 
 WINPR_API VOID USleep(DWORD dwMicroseconds);

@@ -81,7 +81,7 @@ int ntlm_SetContextServicePrincipalNameW(NTLM_CONTEXT* context, LPWSTR ServicePr
 		return 1;
 	}
 
-	context->ServicePrincipalName.Length = _wcslen(ServicePrincipalName) * 2;
+	context->ServicePrincipalName.Length = (USHORT) (_wcslen(ServicePrincipalName) * 2);
 	context->ServicePrincipalName.Buffer = (PWSTR) malloc(context->ServicePrincipalName.Length + 2);
 
 	if (!context->ServicePrincipalName.Buffer)

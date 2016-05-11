@@ -187,6 +187,37 @@ WINPR_API VOID _IoDeleteDeviceEx(PDEVICE_OBJECT_EX DeviceObject);
 
 #endif
 
+#ifdef _UWP
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+WINPR_API BOOL GetOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped, LPDWORD lpNumberOfBytesTransferred, BOOL bWait);
+
+WINPR_API BOOL DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize,
+	LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped);
+
+WINPR_API HANDLE CreateIoCompletionPort(HANDLE FileHandle, HANDLE ExistingCompletionPort, ULONG_PTR CompletionKey, DWORD NumberOfConcurrentThreads);
+
+WINPR_API BOOL GetQueuedCompletionStatus(HANDLE CompletionPort, LPDWORD lpNumberOfBytesTransferred,
+	PULONG_PTR lpCompletionKey, LPOVERLAPPED* lpOverlapped, DWORD dwMilliseconds);
+
+WINPR_API BOOL GetQueuedCompletionStatusEx(HANDLE CompletionPort, LPOVERLAPPED_ENTRY lpCompletionPortEntries,
+	ULONG ulCount, PULONG ulNumEntriesRemoved, DWORD dwMilliseconds, BOOL fAlertable);
+
+WINPR_API BOOL PostQueuedCompletionStatus(HANDLE CompletionPort, DWORD dwNumberOfBytesTransferred, ULONG_PTR dwCompletionKey, LPOVERLAPPED lpOverlapped);
+
+WINPR_API BOOL CancelIo(HANDLE hFile);
+
+WINPR_API BOOL CancelSynchronousIo(HANDLE hThread);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+
 /**
  * Extended API
  */

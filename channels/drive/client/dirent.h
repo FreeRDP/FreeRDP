@@ -222,7 +222,7 @@ static DIR *opendir(const char *dirname)
        * allows rewinddir() to function correctly when the current working
        * directory is changed between opendir() and rewinddir().
        */
-      if (GetFullPathNameA (dirname, MAX_PATH, dirp->patt, NULL)) {
+      if (GetFullPathNameA(dirname, MAX_PATH, dirp->patt, NULL)) {
          char *p;
 
          /* append the search pattern "\\*\0" to the directory name */
@@ -234,7 +234,7 @@ static DIR *opendir(const char *dirname)
          *p = '\0';
 
          /* open directory stream and retrieve the first entry */
-         dirp->search_handle = FindFirstFileA (dirp->patt, &dirp->find_data);
+         dirp->search_handle = FindFirstFileA(dirp->patt, &dirp->find_data);
          if (dirp->search_handle != INVALID_HANDLE_VALUE) {
             /* a directory entry is now waiting in memory */
             dirp->cached = 1;
