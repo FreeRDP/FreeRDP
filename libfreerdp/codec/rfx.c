@@ -815,8 +815,8 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 
 	if (message->numTiles < 1)
 	{
-		WLog_ERR(TAG, "no tiles.");
-		return FALSE;
+		/* Windows Server 2012 (not R2) can send empty tile sets */
+		return TRUE;
 	}
 
 	Stream_Read_UINT32(s, tilesDataSize); /* tilesDataSize (4 bytes) */
