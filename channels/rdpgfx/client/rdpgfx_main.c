@@ -158,7 +158,7 @@ static UINT rdpgfx_recv_caps_confirm_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStr
 
 	if (Stream_GetRemainingLength(s) < 12)
 	{
-		WLog_ERR(TAG, "not enought data!");
+		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -232,7 +232,7 @@ static UINT rdpgfx_recv_reset_graphics_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wS
 
 	if (Stream_GetRemainingLength(s) < 12)
 	{
-		WLog_ERR(TAG, "not enought data!");
+		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -242,7 +242,7 @@ static UINT rdpgfx_recv_reset_graphics_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wS
 
 	if (Stream_GetRemainingLength(s) < (pdu.monitorCount * 20))
 	{
-		WLog_ERR(TAG, "not enought data!");
+		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -304,7 +304,7 @@ static UINT rdpgfx_recv_evict_cache_entry_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 
 	if (Stream_GetRemainingLength(s) < 2)
 	{
-		WLog_ERR(TAG, "not enought data!");
+		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -337,7 +337,7 @@ UINT rdpgfx_recv_cache_import_reply_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStre
 
 	if (Stream_GetRemainingLength(s) < 2)
 	{
-		WLog_ERR(TAG, "not enought data!");
+		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -345,7 +345,7 @@ UINT rdpgfx_recv_cache_import_reply_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStre
 
 	if (Stream_GetRemainingLength(s) < (size_t) (pdu.importedEntriesCount * 2))
 	{
-		WLog_ERR(TAG, "not enought data!");
+		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -391,7 +391,7 @@ static UINT rdpgfx_recv_create_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wS
 
 	if (Stream_GetRemainingLength(s) < 7)
 	{
-		WLog_ERR(TAG, "not enought data!");
+		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -427,7 +427,7 @@ UINT rdpgfx_recv_delete_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* 
 
 	if (Stream_GetRemainingLength(s) < 2)
 	{
-		WLog_ERR(TAG, "not enought data!");
+		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -459,7 +459,7 @@ static UINT rdpgfx_recv_start_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStre
 
 	if (Stream_GetRemainingLength(s) < 8)
 	{
-		WLog_ERR(TAG, "not enought data!");
+		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -496,7 +496,7 @@ static UINT rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_ERR(TAG, "not enought data!");
+		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -552,7 +552,7 @@ static UINT rdpgfx_recv_wire_to_surface_1_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 
 	if (Stream_GetRemainingLength(s) < 17)
 	{
-		WLog_ERR(TAG, "not enought data!");
+		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -570,7 +570,7 @@ static UINT rdpgfx_recv_wire_to_surface_1_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 
 	if (pdu.bitmapDataLength > Stream_GetRemainingLength(s))
 	{
-		WLog_ERR(TAG, "not enought data!");
+		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -617,7 +617,7 @@ static UINT rdpgfx_recv_wire_to_surface_2_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 
 	if (Stream_GetRemainingLength(s) < 13)
 	{
-		WLog_ERR(TAG, "not enought data!");
+		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -673,7 +673,7 @@ static UINT rdpgfx_recv_delete_encoding_context_pdu(RDPGFX_CHANNEL_CALLBACK* cal
 
 	if (Stream_GetRemainingLength(s) < 6)
 	{
-		WLog_ERR(TAG, "not enought data!");
+		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -709,7 +709,7 @@ UINT rdpgfx_recv_solid_fill_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 
 	if (Stream_GetRemainingLength(s) < 8)
 	{
-		WLog_ERR(TAG, "not enought data!");
+		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -723,7 +723,7 @@ UINT rdpgfx_recv_solid_fill_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 
 	if (Stream_GetRemainingLength(s) < (size_t) (pdu.fillRectCount * 8))
 	{
-		WLog_ERR(TAG, "not enought data!");
+		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -777,7 +777,7 @@ static UINT rdpgfx_recv_surface_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback
 
 	if (Stream_GetRemainingLength(s) < 14)
 	{
-		WLog_ERR(TAG, "not enought data!");
+		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -793,7 +793,7 @@ static UINT rdpgfx_recv_surface_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback
 
 	if (Stream_GetRemainingLength(s) < (size_t) (pdu.destPtsCount * 4))
 	{
-		WLog_ERR(TAG, "not enought data!");
+		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -848,7 +848,7 @@ static UINT rdpgfx_recv_surface_to_cache_pdu(RDPGFX_CHANNEL_CALLBACK* callback, 
 
 	if (Stream_GetRemainingLength(s) < 20)
 	{
-		WLog_ERR(TAG, "not enought data!");
+		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -893,7 +893,7 @@ UINT rdpgfx_recv_cache_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream
 
 	if (Stream_GetRemainingLength(s) < 6)
 	{
-		WLog_ERR(TAG, "not enought data!");
+		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -903,7 +903,7 @@ UINT rdpgfx_recv_cache_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream
 
 	if (Stream_GetRemainingLength(s) < (size_t) (pdu.destPtsCount * 4))
 	{
-		WLog_ERR(TAG, "not enought data!");
+		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -955,7 +955,7 @@ static UINT rdpgfx_recv_map_surface_to_output_pdu(RDPGFX_CHANNEL_CALLBACK* callb
 
 	if (Stream_GetRemainingLength(s) < 12)
 	{
-		WLog_ERR(TAG, "not enought data!");
+		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -991,7 +991,7 @@ UINT rdpgfx_recv_map_surface_to_window_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wS
 
 	if (Stream_GetRemainingLength(s) < 18)
 	{
-		WLog_ERR(TAG, "not enought data!");
+		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
