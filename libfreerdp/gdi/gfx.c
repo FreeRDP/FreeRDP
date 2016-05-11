@@ -77,8 +77,7 @@ UINT gdi_ResetGraphics(RdpgfxClientContext* context, RDPGFX_RESET_GRAPHICS_PDU* 
 
 	free(pSurfaceIds);
 
-	if (!freerdp_client_codecs_reset(gdi->codecs, FREERDP_CODEC_ALL,
-					 gdi->width, gdi->height))
+	if (!freerdp_client_codecs_reset(gdi->codecs, FREERDP_CODEC_ALL, gdi->width, gdi->height))
 		return ERROR_INTERNAL_ERROR;
 
 	gdi->graphicsReset = TRUE;

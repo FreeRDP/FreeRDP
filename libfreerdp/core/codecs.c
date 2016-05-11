@@ -100,13 +100,9 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags)
 	return TRUE;
 }
 
-BOOL freerdp_client_codecs_reset(rdpCodecs* codecs, UINT32 flags,
-				 UINT32 width, UINT32 height)
+BOOL freerdp_client_codecs_reset(rdpCodecs* codecs, UINT32 flags, UINT32 width, UINT32 height)
 {
 	BOOL rc = TRUE;
-
-	if (!freerdp_client_codecs_prepare(codecs, flags))
-		return FALSE;
 
 	if (flags & FREERDP_CODEC_INTERLEAVED)
 	{
