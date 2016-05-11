@@ -816,18 +816,25 @@ int xcrush_decompress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BY
 	pSrcData += 2;
 	SrcSize -= 2;
 
-	if (Level2ComprFlags & PACKET_COMPRESSED)
-	{
-		status = mppc_decompress(xcrush->mppc, pSrcData, SrcSize, &pDstData, &DstSize, Level2ComprFlags);
-
-		if (status < 0)
-			return status;
-	}
-	else
+	if (!(Level2ComprFlags & PACKET_COMPRESSED))
 	{
 		pDstData = pSrcData;
 		DstSize = SrcSize;
+
+		status = xcrush_decompress_l1(xcrush, pDstData, DstSize, ppDstData, pDstSize, Level1ComprFlags);
+
+		return status;
 	}
+
+	if (Level2ComprFlags & PACKET_FLUSHED)
+	{
+		xcrush_context_reset(xcrush, FALSE);
+	}
+
+	status = mppc_decompress(xcrush->mppc, pSrcData, SrcSize, &pDstData, &DstSize, Level2ComprFlags);
+
+	if (status < 0)
+		return status;
 
 	status = xcrush_decompress_l1(xcrush, pDstData, DstSize, ppDstData, pDstSize, Level1ComprFlags);
 
