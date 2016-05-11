@@ -295,7 +295,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!settings->ChannelDefArray)
 			goto out_fail;
 
-	settings->SupportMonitorLayoutPdu = TRUE;
+	settings->SupportMonitorLayoutPdu = FALSE;
 	settings->MonitorCount = 0;
 	settings->MonitorDefArraySize = 32;
 	settings->MonitorDefArray = (rdpMonitor*) calloc(settings->MonitorDefArraySize, sizeof(rdpMonitor));
