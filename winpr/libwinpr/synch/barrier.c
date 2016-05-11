@@ -27,7 +27,7 @@
 
 #include <winpr/crt.h>
 
-#if (!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0602))
+#ifdef WINPR_SYNCHRONIZATION_BARRIER
 
 #include <winpr/library.h>
 #include <winpr/interlocked.h>

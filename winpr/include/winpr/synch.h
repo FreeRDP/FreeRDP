@@ -329,7 +329,11 @@ WINPR_API VOID InitOnceInitialize(PINIT_ONCE InitOnce);
 
 /* Synchronization Barrier */
 
-#if (!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0602))
+#if (!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0602) && !defined(_SYNCHAPI_H_))
+#define WINPR_SYNCHRONIZATION_BARRIER	1
+#endif
+
+#ifdef WINPR_SYNCHRONIZATION_BARRIER
 
 typedef struct _RTL_BARRIER
 {
@@ -353,6 +357,7 @@ WINPR_API BOOL WINAPI EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBa
 WINPR_API BOOL WINAPI DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier);
 
 #endif
+
 /* Extended API */
 
 WINPR_API VOID USleep(DWORD dwMicroseconds);

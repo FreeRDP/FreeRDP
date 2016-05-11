@@ -158,7 +158,7 @@ WINPR_API PVOID InterlockedCompareExchangePointer(PVOID volatile *Destination, P
 
 #endif /* _WIN32 */
 
-#if (!defined(_WIN32) || (defined(_WIN32) && !defined(_M_AMD64) && (_WIN32_WINNT < 0x0502)))
+#if (!defined(_WIN32) || (defined(_WIN32) && (_WIN32_WINNT < 0x0502) && !defined(InterlockedCompareExchange64)))
 #define WINPR_INTERLOCKED_COMPARE_EXCHANGE64	1
 #endif
 
