@@ -1536,6 +1536,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		}
 		CommandLineSwitchCase(arg, "vmconnect")
 		{
+			settings->VmConnectMode = TRUE;
 			settings->ServerPort = 2179;
 			settings->NegotiateSecurityLayer = FALSE;
 

@@ -601,6 +601,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_DisableCredentialsDelegation 			1099
 #define FreeRDP_AuthenticationLevel				1100
 #define FreeRDP_AllowedTlsCiphers				1101
+#define FreeRDP_VmConnectMode					1102
 #define FreeRDP_MstscCookieMode					1152
 #define FreeRDP_CookieMaxLength					1153
 #define FreeRDP_PreconnectionId					1154
@@ -1003,7 +1004,8 @@ struct rdp_settings
 	ALIGN64 BOOL DisableCredentialsDelegation; /* 1099 */
 	ALIGN64 BOOL AuthenticationLevel; /* 1100 */
 	ALIGN64 char* AllowedTlsCiphers; /* 1101 */
-	UINT64 padding1152[1152 - 1102]; /* 1102 */
+	ALIGN64 BOOL VmConnectMode; /* 1102 */
+	UINT64 padding1152[1152 - 1103]; /* 1103 */
 
 	/* Connection Cookie */
 	ALIGN64 BOOL MstscCookieMode; /* 1152 */
