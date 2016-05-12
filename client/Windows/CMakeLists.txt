@@ -73,6 +73,7 @@ else()
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} cli/wfreerdp.c cli/wfreerdp.h)
 	add_executable(${MODULE_NAME} WIN32 ${${MODULE_PREFIX}_SRCS})
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+	set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "wfreerdp")
 endif()
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client)
