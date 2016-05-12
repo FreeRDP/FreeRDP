@@ -204,7 +204,10 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			p = strchr(p + 1, ',');
 
 			if (!p)
+			{
+				free(str);
 				return -1;
+			}
 
 			*p++ = '\0';
 			tok[1] = p;
@@ -212,7 +215,10 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			p = strchr(p + 1, ',');
 
 			if (!p)
+			{
+				free(str);
 				return -1;
+			}
 
 			*p++ = '\0';
 			tok[2] = p;
@@ -220,7 +226,10 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			p = strchr(p + 1, ',');
 
 			if (!p)
+			{
+				free(str);
 				return -1;
+			}
 
 			*p++ = '\0';
 			tok[3] = p;
@@ -229,6 +238,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			y = atoi(tok[1]);
 			w = atoi(tok[2]);
 			h = atoi(tok[3]);
+			free(str);
 
 			if ((x < 0) || (y < 0) || (w < 1) || (h < 1))
 				return -1;

@@ -103,6 +103,7 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* 
 
 BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, char* hostname)
 {
+	BOOL status = FALSE;
 	DWORD SpnLength = 0;
 	LPTSTR hostnameX = NULL;
 
@@ -128,19 +129,22 @@ BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, char* hostname)
 	}
 
 	if (DsMakeSpn(ServiceClass, hostnameX, NULL, 0, NULL, &SpnLength, NULL) != ERROR_BUFFER_OVERFLOW)
-		return FALSE;
+		goto error;
 
 	ntlm->ServicePrincipalName = (LPTSTR) malloc(SpnLength * sizeof(TCHAR));
 
 	if (!ntlm->ServicePrincipalName)
-		return FALSE;
+		goto error;
 
 	if (DsMakeSpn(ServiceClass, hostnameX, NULL, 0, NULL, &SpnLength, ntlm->ServicePrincipalName) != ERROR_SUCCESS)
-		return FALSE;
+		goto error;
 
+	status = TRUE;
+
+error:
 	free(hostnameX);
 
-	return TRUE;
+	return status;
 }
 
 /**

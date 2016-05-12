@@ -250,7 +250,7 @@ int freerdp_assistance_parse_connection_string1(rdpAssistanceFile* file)
 	int count;
 	int length;
 	char* tokens[8];
-	int ret;
+	int ret = -1;
 
 	/**
 	 * <ProtocolVersion>,<protocolType>,<machineAddressList>,<assistantAccountPwd>,
@@ -272,7 +272,7 @@ int freerdp_assistance_parse_connection_string1(rdpAssistanceFile* file)
 	}
 
 	if (count != 8)
-		return -1;
+		goto error;
 
 	count = 0;
 	tokens[count++] = str;
@@ -287,32 +287,33 @@ int freerdp_assistance_parse_connection_string1(rdpAssistanceFile* file)
 	}
 
 	if (strcmp(tokens[0], "65538") != 0)
-		return -1;
+		goto error;
 
 	if (strcmp(tokens[1], "1") != 0)
-		return -1;
+		goto error;
 
 	if (strcmp(tokens[3], "*") != 0)
-		return -1;
+		goto error;
 
 	if (strcmp(tokens[5], "*") != 0)
-		return -1;
+		goto error;
 
 	if (strcmp(tokens[6], "*") != 0)
-		return -1;
+		goto error;
 
 	file->RASessionId = _strdup(tokens[4]);
 
 	if (!file->RASessionId)
-		return -1;
+		goto error;
 
 	file->RASpecificParams = _strdup(tokens[7]);
 
 	if (!file->RASpecificParams)
-		return -1;
+		goto error;
 
 	ret = freerdp_assistance_parse_address_list(file, tokens[2]);
 
+error:
 	free(str);
 
 	if (ret != 1)
