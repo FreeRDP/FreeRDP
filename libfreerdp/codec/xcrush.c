@@ -816,6 +816,12 @@ int xcrush_decompress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BY
 	pSrcData += 2;
 	SrcSize -= 2;
 
+	if (flags & PACKET_FLUSHED)
+	{
+		ZeroMemory(xcrush->HistoryBuffer, xcrush->HistoryBufferSize);
+		xcrush->HistoryOffset = 0;
+	}
+
 	if (!(Level2ComprFlags & PACKET_COMPRESSED))
 	{
 		pDstData = pSrcData;
@@ -824,11 +830,6 @@ int xcrush_decompress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BY
 		status = xcrush_decompress_l1(xcrush, pDstData, DstSize, ppDstData, pDstSize, Level1ComprFlags);
 
 		return status;
-	}
-
-	if (Level2ComprFlags & PACKET_FLUSHED)
-	{
-		//xcrush_context_reset(xcrush, FALSE);
 	}
 
 	status = mppc_decompress(xcrush->mppc, pSrcData, SrcSize, &pDstData, &DstSize, Level2ComprFlags);
