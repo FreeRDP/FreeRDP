@@ -165,7 +165,10 @@ int x11_shadow_pam_authenticate(x11ShadowSubsystem* subsystem, rdpShadowClient* 
 		return PAM_CONV_ERR;
 
 	if (x11_shadow_pam_get_service_name(info) < 0)
+	{
+		free(info);
 		return -1;
+	}
 
 	info->appdata.user = user;
 	info->appdata.domain = domain;

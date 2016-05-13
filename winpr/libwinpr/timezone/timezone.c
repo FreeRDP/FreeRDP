@@ -1974,15 +1974,14 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 		 * 2 ... TIME_ZONE_ID_DAYLIGHT */
 		return local_time->tm_isdst ? 2 : 1;
 	}
-	else
-	{
-		/* could not detect timezone, use computed bias from tm_gmtoff */
-		WLog_DBG(TAG, "tz not found, using computed bias %d.", tz->Bias);
+
+	/* could not detect timezone, use computed bias from tm_gmtoff */
+	WLog_DBG(TAG, "tz not found, using computed bias %d.", tz->Bias);
 out_error:
-		memcpy(tz->StandardName, L"Client Local Time", sizeof(tz->StandardName));
-		memcpy(tz->DaylightName, L"Client Local Time", sizeof(tz->DaylightName));
-		return 0; /* TIME_ZONE_ID_UNKNOWN */
-	}
+	free(dtz);
+	memcpy(tz->StandardName, L"Client Local Time", sizeof(tz->StandardName));
+	memcpy(tz->DaylightName, L"Client Local Time", sizeof(tz->DaylightName));
+	return 0; /* TIME_ZONE_ID_UNKNOWN */
 }
 
 BOOL SetTimeZoneInformation(const TIME_ZONE_INFORMATION* lpTimeZoneInformation)

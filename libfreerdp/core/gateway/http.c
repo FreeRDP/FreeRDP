@@ -504,7 +504,11 @@ BOOL http_response_parse_header_field(HttpResponse* response, char* name, char* 
 			authValue = _strdup(separator + 1);
 
 			if (!authScheme || !authValue)
+			{
+				free(authScheme);
+				free(authValue);
 				return FALSE;
+			}
 
 			*separator = ' ';
 		}

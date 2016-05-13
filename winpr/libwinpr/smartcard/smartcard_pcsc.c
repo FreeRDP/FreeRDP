@@ -2427,7 +2427,10 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWOR
 		friendlyNameA = _strdup(nameWinSCard);
 
 		if (!friendlyNameA)
+		{
+			free(namePCSC);
 			return SCARD_E_NO_MEMORY;
+		}
 	}
 	else
 	{
@@ -2442,7 +2445,10 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWOR
 		free(friendlyNameA);
 
 		if (!friendlyNameW)
+		{
+			free(namePCSC);
 			return SCARD_E_NO_MEMORY;
+		}
 
 		if (cbAttrLen == SCARD_AUTOALLOCATE)
 		{
@@ -2455,6 +2461,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWOR
 			if ((length * 2) > cbAttrLen)
 			{
 				free(friendlyNameW);
+				free(namePCSC);
 				return SCARD_E_INSUFFICIENT_BUFFER;
 			}
 			else
@@ -2478,6 +2485,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWOR
 			if ((length + 1) > cbAttrLen)
 			{
 				free(friendlyNameA);
+				free(namePCSC);
 				return SCARD_E_INSUFFICIENT_BUFFER;
 			}
 			else
