@@ -32,6 +32,7 @@
 #include <time.h>
 #include <unistd.h>
 
+
 struct _TIME_ZONE_RULE_ENTRY
 {
 	UINT64 TicksStart;
@@ -91,27 +92,50 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_10[] =
 
 static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_11[] =
 {
+	{ 633346740000000000ULL, 180000000000ULL, 60, { 0, 3, 6, 2, 22, 0 }, { 0, 10, 6, 2, 22, 0 }, },
+	{ 633662964000000000ULL, 633347604000000000ULL, 60, { 0, 3, 6, 5, 22, 0 }, { 0, 10, 6, 2, 22, 0 }, },
+	{ 633978324000000000ULL, 633663828000000000ULL, 60, { 0, 3, 6, 2, 22, 0 }, { 0, 10, 6, 2, 22, 0 }, },
+	{ 634293684000000000ULL, 633979188000000000ULL, 60, { 0, 4, 6, 1, 22, 0 }, { 0, 10, 6, 2, 22, 0 }, },
+	{ 634609044000000000ULL, 634294548000000000ULL, 60, { 0, 5, 6, 1, 22, 0 }, { 0, 8, 6, 3, 22, 0 }, },
+	{ 634925268000000000ULL, 634609908000000000ULL, 60, { 0, 4, 6, 5, 22, 0 }, { 0, 9, 6, 1, 22, 0 }, },
+	{ 635240628000000000ULL, 634926132000000000ULL, 60, { 0, 4, 6, 5, 22, 0 }, { 0, 9, 6, 1, 22, 0 }, },
+	{ 635555988000000000ULL, 635241492000000000ULL, 60, { 0, 4, 6, 5, 22, 0 }, { 0, 9, 6, 1, 22, 0 }, },
+	{ 635871348000000000ULL, 635556852000000000ULL, 0, { 0, 1, 0, 1, 0, 0 }, { 0, 1, 0, 1, 0, 0 }, },
+	{ 3155378292000000000ULL, 635872212000000000ULL, 60, { 0, 5, 6, 2, 22, 0 }, { 0, 8, 6, 2, 22, 0 }, }
+};
+
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_12[] =
+{
 	{ 3155378292000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 2, 0 }, { 0, 4, 0, 1, 2, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_15[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_16[] =
 {
 	{ 633031380000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 2, 0 }, { 0, 4, 0, 1, 2, 0 }, },
 	{ 3155378292000000000ULL, 633032244000000000ULL, 60, { 0, 11, 0, 1, 2, 0 }, { 0, 3, 0, 2, 2, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_16[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_17[] =
+{
+	{ 633031380000000000ULL, 180000000000ULL, 60, { 0, 10, 6, 5, 23, 59 }, { 0, 4, 6, 1, 23, 59 }, },
+	{ 634925268000000000ULL, 634609908000000000ULL, 60, { 0, 11, 0, 1, 2, 0 }, { 0, 3, 0, 2, 2, 0 }, },
+	{ 635240628000000000ULL, 634926132000000000ULL, 60, { 0, 11, 0, 1, 2, 0 }, { 0, 3, 0, 2, 2, 0 }, },
+	{ 635555988000000000ULL, 635241492000000000ULL, 60, { 0, 11, 0, 1, 2, 0 }, { 0, 3, 0, 2, 2, 0 }, },
+	{ 635871348000000000ULL, 635556852000000000ULL, 60, { 0, 11, 0, 1, 2, 0 }, { 0, 3, 0, 2, 2, 0 }, }
+};
+
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_18[] =
 {
 	{ 633031380000000000ULL, 632716884000000000ULL, 60, { 0, 10, 0, 5, 2, 0 }, { 0, 4, 0, 1, 2, 0 }, },
 	{ 3155378292000000000ULL, 633032244000000000ULL, 60, { 0, 11, 0, 1, 2, 0 }, { 0, 3, 0, 2, 2, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_17[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_19[] =
 {
 	{ 633031380000000000ULL, 180000000000ULL, 0, { 0, 1, 0, 1, 0, 0 }, { 0, 1, 0, 1, 0, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_18[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_20[] =
 {
 	{ 633662964000000000ULL, 180000000000ULL, 60, { 0, 3, 6, 2, 23, 59 }, { 0, 10, 6, 3, 23, 59 }, },
 	{ 633978324000000000ULL, 633663828000000000ULL, 60, { 0, 3, 6, 1, 23, 59 }, { 0, 10, 6, 3, 23, 59 }, },
@@ -129,13 +153,13 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_18[] =
 	{ 3155378292000000000ULL, 637450740000000000ULL, 60, { 0, 3, 6, 5, 23, 59 }, { 0, 10, 6, 1, 23, 59 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_19[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_21[] =
 {
 	{ 633031380000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 2, 0 }, { 0, 4, 0, 1, 2, 0 }, },
 	{ 3155378292000000000ULL, 633032244000000000ULL, 60, { 0, 11, 0, 1, 2, 0 }, { 0, 3, 0, 2, 2, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_20[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_22[] =
 {
 	{ 633031380000000000ULL, 180000000000ULL, 60, { 0, 2, 0, 2, 2, 0 }, { 0, 11, 0, 1, 0, 0 }, },
 	{ 633346740000000000ULL, 633032244000000000ULL, 60, { 0, 2, 0, 5, 0, 0 }, { 0, 10, 0, 2, 0, 0 }, },
@@ -174,7 +198,21 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_20[] =
 	{ 3155378292000000000ULL, 643446036000000000ULL, 60, { 0, 2, 6, 3, 23, 59 }, { 0, 10, 6, 3, 23, 59 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_22[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_24[] =
+{
+	{ 633346740000000000ULL, 180000000000ULL, 60, { 0, 3, 6, 2, 23, 59 }, { 0, 10, 6, 2, 23, 59 }, },
+	{ 633662964000000000ULL, 633347604000000000ULL, 60, { 0, 3, 6, 5, 23, 59 }, { 0, 10, 6, 2, 23, 59 }, },
+	{ 633978324000000000ULL, 633663828000000000ULL, 60, { 0, 3, 6, 2, 23, 59 }, { 0, 10, 6, 2, 23, 59 }, },
+	{ 634293684000000000ULL, 633979188000000000ULL, 60, { 0, 4, 6, 1, 23, 59 }, { 0, 10, 6, 2, 23, 59 }, },
+	{ 634609044000000000ULL, 634294548000000000ULL, 60, { 0, 5, 6, 1, 23, 59 }, { 0, 8, 6, 3, 23, 59 }, },
+	{ 634925268000000000ULL, 634609908000000000ULL, 60, { 0, 4, 6, 5, 23, 59 }, { 0, 9, 6, 1, 23, 59 }, },
+	{ 635240628000000000ULL, 634926132000000000ULL, 60, { 0, 4, 6, 5, 23, 59 }, { 0, 9, 6, 1, 23, 59 }, },
+	{ 635555988000000000ULL, 635241492000000000ULL, 60, { 0, 4, 6, 5, 23, 59 }, { 0, 9, 6, 1, 23, 59 }, },
+	{ 635871348000000000ULL, 635556852000000000ULL, 0, { 0, 1, 0, 1, 0, 0 }, { 0, 1, 0, 1, 0, 0 }, },
+	{ 3155378292000000000ULL, 635872212000000000ULL, 60, { 0, 5, 6, 2, 23, 59 }, { 0, 8, 6, 2, 23, 59 }, }
+};
+
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_25[] =
 {
 	{ 633031380000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 0, 1 }, { 0, 4, 0, 1, 0, 1 }, },
 	{ 633346740000000000ULL, 633032244000000000ULL, 60, { 0, 11, 0, 1, 0, 1 }, { 0, 3, 0, 2, 0, 1 }, },
@@ -185,7 +223,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_22[] =
 	{ 3155378292000000000ULL, 634609908000000000ULL, 60, { 0, 11, 0, 1, 2, 0 }, { 0, 3, 0, 2, 2, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_23[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_26[] =
 {
 	{ 633031380000000000ULL, 180000000000ULL, 60, { 0, 2, 0, 2, 2, 0 }, { 0, 11, 0, 1, 0, 0 }, },
 	{ 633346740000000000ULL, 633032244000000000ULL, 60, { 0, 2, 0, 5, 0, 0 }, { 0, 10, 0, 2, 0, 0 }, },
@@ -224,14 +262,14 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_23[] =
 	{ 3155378292000000000ULL, 643446036000000000ULL, 60, { 0, 2, 6, 3, 23, 59 }, { 0, 10, 6, 3, 23, 59 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_25[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_28[] =
 {
 	{ 633346740000000000ULL, 633032244000000000ULL, 60, { 0, 1, 1, 1, 0, 0 }, { 0, 12, 0, 5, 0, 0 }, },
 	{ 633662964000000000ULL, 633347604000000000ULL, 60, { 0, 3, 0, 3, 0, 0 }, { 0, 10, 6, 3, 23, 59 }, },
 	{ 633978324000000000ULL, 633663828000000000ULL, 60, { 0, 3, 6, 2, 23, 59 }, { 0, 1, 4, 1, 0, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_26[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_29[] =
 {
 	{ 633662964000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 2, 0 }, { 0, 4, 0, 1, 2, 0 }, },
 	{ 633978324000000000ULL, 633663828000000000ULL, 60, { 0, 10, 6, 4, 23, 0 }, { 0, 3, 6, 5, 22, 0 }, },
@@ -249,7 +287,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_26[] =
 	{ 3155378292000000000ULL, 637450740000000000ULL, 60, { 0, 10, 6, 5, 23, 0 }, { 0, 3, 6, 5, 22, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_27[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_30[] =
 {
 	{ 633031380000000000ULL, 180000000000ULL, 60, { 0, 3, 0, 2, 2, 0 }, { 0, 9, 0, 2, 2, 0 }, },
 	{ 633346740000000000ULL, 633032244000000000ULL, 60, { 0, 3, 0, 2, 2, 0 }, { 0, 10, 0, 1, 2, 0 }, },
@@ -263,37 +301,25 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_27[] =
 	{ 635871348000000000ULL, 635556852000000000ULL, 60, { 0, 3, 0, 2, 2, 0 }, { 0, 1, 4, 1, 0, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_28[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_31[] =
 {
 	{ 634609044000000000ULL, 634294548000000000ULL, 60, { 0, 1, 6, 1, 0, 0 }, { 0, 10, 6, 3, 23, 59 }, },
 	{ 634925268000000000ULL, 634609908000000000ULL, 60, { 0, 2, 6, 4, 23, 59 }, { 0, 1, 0, 1, 0, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_29[] =
-{
-	{ 633346740000000000ULL, 180000000000ULL, 60, { 0, 3, 6, 2, 23, 59 }, { 0, 10, 6, 2, 23, 59 }, },
-	{ 633662964000000000ULL, 633347604000000000ULL, 60, { 0, 3, 6, 5, 23, 59 }, { 0, 10, 6, 2, 23, 59 }, },
-	{ 633978324000000000ULL, 633663828000000000ULL, 60, { 0, 3, 6, 2, 23, 59 }, { 0, 10, 6, 2, 23, 59 }, },
-	{ 634293684000000000ULL, 633979188000000000ULL, 60, { 0, 4, 6, 1, 23, 59 }, { 0, 10, 6, 2, 23, 59 }, },
-	{ 634609044000000000ULL, 634294548000000000ULL, 60, { 0, 5, 6, 1, 23, 59 }, { 0, 8, 6, 3, 23, 59 }, },
-	{ 634925268000000000ULL, 634609908000000000ULL, 60, { 0, 4, 6, 5, 23, 59 }, { 0, 9, 6, 1, 23, 59 }, },
-	{ 635240628000000000ULL, 634926132000000000ULL, 60, { 0, 4, 6, 5, 23, 59 }, { 0, 9, 6, 1, 23, 59 }, },
-	{ 635555988000000000ULL, 635241492000000000ULL, 60, { 0, 4, 6, 5, 23, 59 }, { 0, 9, 6, 1, 23, 59 }, }
-};
-
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_31[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_33[] =
 {
 	{ 3155378292000000000ULL, 180000000000ULL, 60, { 0, 9, 0, 5, 2, 0 }, { 0, 3, 0, 5, 2, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_32[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_34[] =
 {
 	{ 634609044000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, },
 	{ 634925268000000000ULL, 634609908000000000ULL, 60, { 0, 10, 0, 5, 1, 0 }, { 0, 3, 0, 5, 2, 0 }, },
 	{ 3155378292000000000ULL, 634926132000000000ULL, 60, { 0, 10, 0, 5, 1, 0 }, { 0, 3, 0, 5, 0, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_34[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_36[] =
 {
 	{ 633662964000000000ULL, 633347604000000000ULL, 60, { 0, 8, 0, 5, 23, 59 }, { 0, 5, 6, 5, 23, 59 }, },
 	{ 633978324000000000ULL, 633663828000000000ULL, 60, { 0, 8, 4, 3, 23, 59 }, { 0, 5, 0, 5, 23, 59 }, },
@@ -303,22 +329,13 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_34[] =
 	{ 635240628000000000ULL, 634926132000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 4, 0, 5, 2, 0 }, },
 	{ 635555988000000000ULL, 635241492000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, },
 	{ 635871348000000000ULL, 635556852000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, },
-	{ 3155378292000000000ULL, 635872212000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, }
-};
-
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_36[] =
-{
-	{ 3155378292000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 2, 0 }, { 0, 3, 0, 5, 1, 0 }, }
+	{ 636187572000000000ULL, 635872212000000000ULL, 60, { 0, 6, 0, 1, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, },
+	{ 3155378292000000000ULL, 636188436000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, }
 };
 
 static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_38[] =
 {
-	{ 3155378292000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, }
-};
-
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_39[] =
-{
-	{ 3155378292000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, }
+	{ 3155378292000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 2, 0 }, { 0, 3, 0, 5, 1, 0 }, }
 };
 
 static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_40[] =
@@ -331,13 +348,23 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_41[] =
 	{ 3155378292000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, }
 };
 
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_42[] =
+{
+	{ 3155378292000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, }
+};
+
 static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_43[] =
+{
+	{ 3155378292000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, }
+};
+
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_45[] =
 {
 	{ 634293684000000000ULL, 180000000000ULL, -60, { 0, 9, 0, 1, 2, 0 }, { 0, 4, 0, 1, 2, 0 }, },
 	{ 3155378292000000000ULL, 634294548000000000ULL, 60, { 0, 4, 0, 1, 2, 0 }, { 0, 9, 0, 1, 2, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_44[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_46[] =
 {
 	{ 633031380000000000ULL, 180000000000ULL, 60, { 0, 9, 5, 5, 1, 0 }, { 0, 3, 4, 5, 0, 0 }, },
 	{ 633346740000000000ULL, 633032244000000000ULL, 60, { 0, 10, 5, 5, 1, 0 }, { 0, 3, 4, 5, 23, 59 }, },
@@ -350,12 +377,12 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_44[] =
 	{ 3155378292000000000ULL, 635241492000000000ULL, 60, { 0, 10, 5, 5, 1, 0 }, { 0, 3, 4, 5, 23, 59 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_45[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_47[] =
 {
 	{ 3155378292000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 4, 0 }, { 0, 3, 0, 5, 3, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_46[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_48[] =
 {
 	{ 633978324000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 0, 0 }, { 0, 3, 0, 5, 0, 0 }, },
 	{ 634293684000000000ULL, 633979188000000000ULL, 60, { 0, 10, 6, 5, 23, 59 }, { 0, 3, 6, 5, 23, 59 }, },
@@ -372,7 +399,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_46[] =
 	{ 3155378292000000000ULL, 637450740000000000ULL, 60, { 0, 10, 6, 5, 23, 59 }, { 0, 3, 6, 5, 23, 59 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_47[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_49[] =
 {
 	{ 632716020000000000ULL, 180000000000ULL, 60, { 0, 9, 4, 5, 23, 59 }, { 0, 4, 5, 5, 0, 0 }, },
 	{ 633031380000000000ULL, 632716884000000000ULL, 60, { 0, 9, 4, 3, 23, 59 }, { 0, 4, 5, 5, 0, 0 }, },
@@ -383,7 +410,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_47[] =
 	{ 635555988000000000ULL, 635241492000000000ULL, 60, { 0, 9, 4, 5, 23, 59 }, { 0, 5, 4, 3, 23, 59 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_48[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_50[] =
 {
 	{ 633031380000000000ULL, 180000000000ULL, 60, { 0, 9, 3, 3, 23, 59 }, { 0, 3, 5, 5, 23, 59 }, },
 	{ 633346740000000000ULL, 633032244000000000ULL, 60, { 0, 11, 4, 1, 23, 59 }, { 0, 3, 4, 5, 23, 59 }, },
@@ -399,17 +426,17 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_48[] =
 	{ 3155378292000000000ULL, 636188436000000000ULL, 60, { 0, 10, 4, 5, 23, 59 }, { 0, 4, 4, 1, 23, 59 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_49[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_51[] =
 {
 	{ 3155378292000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_51[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_53[] =
 {
 	{ 3155378292000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 4, 0 }, { 0, 3, 0, 5, 3, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_52[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_54[] =
 {
 	{ 634293684000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 4, 0 }, { 0, 3, 0, 5, 3, 0 }, },
 	{ 634609044000000000ULL, 634294548000000000ULL, 60, { 0, 10, 0, 5, 4, 0 }, { 0, 3, 1, 5, 3, 0 }, },
@@ -420,7 +447,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_52[] =
 	{ 3155378292000000000ULL, 635872212000000000ULL, 60, { 0, 10, 0, 5, 4, 0 }, { 0, 3, 0, 5, 3, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_53[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_55[] =
 {
 	{ 632716020000000000ULL, 632401524000000000ULL, 60, { 0, 10, 0, 2, 2, 0 }, { 0, 4, 5, 1, 2, 0 }, },
 	{ 633031380000000000ULL, 632716884000000000ULL, 60, { 0, 10, 0, 1, 2, 0 }, { 0, 3, 5, 5, 2, 0 }, },
@@ -443,7 +470,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_53[] =
 	{ 3155378292000000000ULL, 638081460000000000ULL, 60, { 0, 10, 0, 5, 2, 0 }, { 0, 3, 5, 4, 2, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_54[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_56[] =
 {
 	{ 634293684000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, },
 	{ 634609044000000000ULL, 634294548000000000ULL, 60, { 0, 1, 6, 1, 0, 0 }, { 0, 3, 0, 5, 2, 0 }, },
@@ -452,25 +479,25 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_54[] =
 	{ 635555988000000000ULL, 635241492000000000ULL, 60, { 0, 10, 0, 5, 2, 0 }, { 0, 1, 3, 1, 0, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_55[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_57[] =
 {
 	{ 634925268000000000ULL, 634609908000000000ULL, 60, { 0, 11, 6, 2, 2, 0 }, { 0, 1, 0, 1, 0, 0 }, },
 	{ 635240628000000000ULL, 634926132000000000ULL, 60, { 0, 1, 2, 1, 0, 0 }, { 0, 3, 5, 5, 1, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_56[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_58[] =
 {
 	{ 633031380000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 1, 4, 0 }, { 0, 4, 0, 1, 3, 0 }, },
 	{ 633346740000000000ULL, 633032244000000000ULL, 60, { 0, 10, 1, 1, 4, 0 }, { 0, 4, 0, 1, 3, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_58[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_60[] =
 {
 	{ 634293684000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, },
 	{ 634609044000000000ULL, 634294548000000000ULL, 60, { 0, 1, 6, 1, 0, 0 }, { 0, 3, 0, 5, 2, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_59[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_61[] =
 {
 	{ 634293684000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, },
 	{ 634609044000000000ULL, 634294548000000000ULL, 60, { 0, 1, 6, 1, 0, 0 }, { 0, 3, 0, 5, 2, 0 }, },
@@ -479,7 +506,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_59[] =
 	{ 635555988000000000ULL, 635241492000000000ULL, 60, { 0, 10, 0, 5, 2, 0 }, { 0, 1, 3, 1, 0, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_61[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_63[] =
 {
 	{ 634293684000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, },
 	{ 634609044000000000ULL, 634294548000000000ULL, 60, { 0, 1, 6, 1, 0, 0 }, { 0, 3, 0, 5, 2, 0 }, },
@@ -490,7 +517,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_61[] =
 	{ 3155378292000000000ULL, 636188436000000000ULL, 0, { 0, 1, 0, 1, 0, 0 }, { 0, 1, 0, 1, 0, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_62[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_64[] =
 {
 	{ 632716020000000000ULL, 180000000000ULL, 60, { 0, 9, 2, 4, 2, 0 }, { 0, 3, 0, 1, 2, 0 }, },
 	{ 633662964000000000ULL, 633347604000000000ULL, 60, { 0, 9, 6, 3, 23, 59 }, { 0, 3, 4, 3, 23, 59 }, },
@@ -512,23 +539,23 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_62[] =
 	{ 3155378292000000000ULL, 638396820000000000ULL, 60, { 0, 9, 5, 3, 23, 59 }, { 0, 3, 3, 3, 23, 59 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_64[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_66[] =
 {
-	{ 3155378292000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 5, 0 }, { 0, 3, 0, 5, 4, 0 }, }
+	{ 635871348000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 5, 0 }, { 0, 3, 0, 5, 4, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_66[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_68[] =
 {
 	{ 633662964000000000ULL, 633347604000000000ULL, 60, { 0, 1, 2, 1, 0, 0 }, { 0, 10, 0, 5, 2, 0 }, },
 	{ 633978324000000000ULL, 633663828000000000ULL, 60, { 0, 3, 0, 5, 2, 0 }, { 0, 1, 4, 1, 0, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_68[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_70[] =
 {
 	{ 634609044000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_71[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_73[] =
 {
 	{ 634293684000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, },
 	{ 634609044000000000ULL, 634294548000000000ULL, 60, { 0, 1, 6, 1, 0, 0 }, { 0, 3, 0, 5, 2, 0 }, },
@@ -537,18 +564,18 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_71[] =
 	{ 635555988000000000ULL, 635241492000000000ULL, 60, { 0, 10, 0, 5, 2, 0 }, { 0, 1, 3, 1, 0, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_72[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_74[] =
 {
 	{ 633662964000000000ULL, 633347604000000000ULL, 60, { 0, 10, 5, 5, 23, 59 }, { 0, 5, 6, 5, 23, 59 }, },
 	{ 633978324000000000ULL, 633663828000000000ULL, 60, { 0, 10, 6, 5, 23, 59 }, { 0, 4, 2, 2, 23, 59 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_77[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_79[] =
 {
 	{ 633978324000000000ULL, 633663828000000000ULL, 60, { 0, 12, 4, 5, 23, 59 }, { 0, 6, 5, 3, 23, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_78[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_80[] =
 {
 	{ 634293684000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, },
 	{ 634609044000000000ULL, 634294548000000000ULL, 60, { 0, 1, 6, 1, 0, 0 }, { 0, 3, 0, 5, 2, 0 }, },
@@ -557,7 +584,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_78[] =
 	{ 635555988000000000ULL, 635241492000000000ULL, 60, { 0, 10, 0, 5, 2, 0 }, { 0, 1, 3, 1, 0, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_79[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_81[] =
 {
 	{ 634293684000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, },
 	{ 634609044000000000ULL, 634294548000000000ULL, 60, { 0, 1, 6, 1, 0, 0 }, { 0, 3, 0, 5, 2, 0 }, },
@@ -566,15 +593,6 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_79[] =
 	{ 635555988000000000ULL, 635241492000000000ULL, 60, { 0, 10, 0, 5, 2, 0 }, { 0, 1, 3, 1, 0, 0 }, },
 	{ 636187572000000000ULL, 635872212000000000ULL, 60, { 0, 1, 5, 1, 0, 0 }, { 0, 3, 0, 5, 2, 0 }, },
 	{ 3155378292000000000ULL, 636188436000000000ULL, 0, { 0, 1, 0, 1, 0, 0 }, { 0, 1, 0, 1, 0, 0 }, }
-};
-
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_82[] =
-{
-	{ 634293684000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, },
-	{ 634609044000000000ULL, 634294548000000000ULL, 60, { 0, 1, 6, 1, 0, 0 }, { 0, 3, 0, 5, 2, 0 }, },
-	{ 634925268000000000ULL, 634609908000000000ULL, 0, { 0, 1, 0, 1, 0, 0 }, { 0, 1, 0, 1, 0, 0 }, },
-	{ 635240628000000000ULL, 634926132000000000ULL, 0, { 0, 1, 0, 1, 0, 0 }, { 0, 1, 0, 1, 0, 0 }, },
-	{ 635555988000000000ULL, 635241492000000000ULL, 60, { 0, 10, 0, 5, 2, 0 }, { 0, 1, 3, 1, 0, 0 }, }
 };
 
 static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_84[] =
@@ -588,18 +606,27 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_84[] =
 
 static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_86[] =
 {
+	{ 634293684000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, },
+	{ 634609044000000000ULL, 634294548000000000ULL, 60, { 0, 1, 6, 1, 0, 0 }, { 0, 3, 0, 5, 2, 0 }, },
+	{ 634925268000000000ULL, 634609908000000000ULL, 0, { 0, 1, 0, 1, 0, 0 }, { 0, 1, 0, 1, 0, 0 }, },
+	{ 635240628000000000ULL, 634926132000000000ULL, 0, { 0, 1, 0, 1, 0, 0 }, { 0, 1, 0, 1, 0, 0 }, },
+	{ 635555988000000000ULL, 635241492000000000ULL, 60, { 0, 10, 0, 5, 2, 0 }, { 0, 1, 3, 1, 0, 0 }, }
+};
+
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_88[] =
+{
 	{ 633031380000000000ULL, 632716884000000000ULL, 60, { 0, 1, 0, 1, 0, 0 }, { 0, 12, 0, 1, 2, 0 }, },
 	{ 633346740000000000ULL, 633032244000000000ULL, 60, { 0, 3, 0, 5, 3, 0 }, { 0, 10, 0, 5, 2, 0 }, },
 	{ 633662964000000000ULL, 633347604000000000ULL, 60, { 0, 3, 0, 5, 3, 0 }, { 0, 10, 0, 5, 2, 0 }, },
 	{ 633978324000000000ULL, 633663828000000000ULL, 60, { 0, 3, 0, 5, 3, 0 }, { 0, 1, 4, 1, 0, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_88[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_90[] =
 {
 	{ 3155378292000000000ULL, 635556852000000000ULL, 60, { 0, 9, 5, 5, 23, 59 }, { 0, 3, 6, 5, 2, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_89[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_91[] =
 {
 	{ 634293684000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, },
 	{ 634609044000000000ULL, 634294548000000000ULL, 60, { 0, 1, 6, 1, 0, 0 }, { 0, 3, 0, 5, 2, 0 }, },
@@ -610,7 +637,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_89[] =
 	{ 3155378292000000000ULL, 636188436000000000ULL, 0, { 0, 1, 0, 1, 0, 0 }, { 0, 1, 0, 1, 0, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_93[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_95[] =
 {
 	{ 634293684000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, },
 	{ 634609044000000000ULL, 634294548000000000ULL, 60, { 0, 1, 6, 1, 0, 0 }, { 0, 3, 0, 5, 2, 0 }, },
@@ -619,13 +646,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_93[] =
 	{ 635555988000000000ULL, 635241492000000000ULL, 60, { 0, 10, 0, 5, 2, 0 }, { 0, 1, 3, 1, 0, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_94[] =
-{
-	{ 633346740000000000ULL, 180000000000ULL, 60, { 0, 3, 0, 5, 3, 0 }, { 0, 10, 0, 5, 2, 0 }, },
-	{ 3155378292000000000ULL, 633347604000000000ULL, 60, { 0, 4, 0, 1, 3, 0 }, { 0, 10, 0, 1, 2, 0 }, }
-};
-
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_97[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_96[] =
 {
 	{ 633346740000000000ULL, 180000000000ULL, 60, { 0, 3, 0, 5, 3, 0 }, { 0, 10, 0, 5, 2, 0 }, },
 	{ 3155378292000000000ULL, 633347604000000000ULL, 60, { 0, 4, 0, 1, 3, 0 }, { 0, 10, 0, 1, 2, 0 }, }
@@ -633,11 +654,17 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_97[] =
 
 static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_99[] =
 {
+	{ 633346740000000000ULL, 180000000000ULL, 60, { 0, 3, 0, 5, 3, 0 }, { 0, 10, 0, 5, 2, 0 }, },
+	{ 3155378292000000000ULL, 633347604000000000ULL, 60, { 0, 4, 0, 1, 3, 0 }, { 0, 10, 0, 1, 2, 0 }, }
+};
+
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_101[] =
+{
 	{ 633346740000000000ULL, 180000000000ULL, 60, { 0, 3, 0, 5, 3, 0 }, { 0, 10, 0, 1, 2, 0 }, },
 	{ 3155378292000000000ULL, 633347604000000000ULL, 60, { 0, 4, 0, 1, 3, 0 }, { 0, 10, 0, 1, 2, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_100[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_102[] =
 {
 	{ 634293684000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, },
 	{ 634609044000000000ULL, 634294548000000000ULL, 60, { 0, 1, 6, 1, 0, 0 }, { 0, 3, 0, 5, 2, 0 }, },
@@ -646,7 +673,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_100[] =
 	{ 635555988000000000ULL, 635241492000000000ULL, 120, { 0, 10, 0, 5, 2, 0 }, { 0, 1, 3, 1, 0, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_101[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_103[] =
 {
 	{ 634293684000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, },
 	{ 634609044000000000ULL, 634294548000000000ULL, 60, { 0, 1, 6, 1, 0, 0 }, { 0, 3, 0, 5, 2, 0 }, },
@@ -655,7 +682,7 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_101[] =
 	{ 635555988000000000ULL, 635241492000000000ULL, 60, { 0, 10, 0, 5, 2, 0 }, { 0, 1, 3, 1, 0, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_102[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_104[] =
 {
 	{ 634293684000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, },
 	{ 634609044000000000ULL, 634294548000000000ULL, 60, { 0, 1, 6, 1, 0, 0 }, { 0, 3, 0, 5, 2, 0 }, },
@@ -666,14 +693,14 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_102[] =
 	{ 3155378292000000000ULL, 636188436000000000ULL, 0, { 0, 1, 0, 1, 0, 0 }, { 0, 1, 0, 1, 0, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_106[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_108[] =
 {
 	{ 633031380000000000ULL, 180000000000ULL, 60, { 0, 3, 0, 3, 3, 0 }, { 0, 10, 0, 1, 2, 0 }, },
 	{ 633346740000000000ULL, 633032244000000000ULL, 60, { 0, 3, 0, 3, 3, 0 }, { 0, 9, 0, 5, 2, 0 }, },
 	{ 3155378292000000000ULL, 633347604000000000ULL, 60, { 0, 4, 0, 1, 3, 0 }, { 0, 9, 0, 5, 2, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_108[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_110[] =
 {
 	{ 633978324000000000ULL, 633663828000000000ULL, 60, { 0, 1, 4, 1, 0, 0 }, { 0, 11, 0, 5, 2, 0 }, },
 	{ 634293684000000000ULL, 633979188000000000ULL, 60, { 0, 3, 0, 5, 3, 0 }, { 0, 10, 0, 4, 2, 0 }, },
@@ -684,12 +711,12 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_108[] =
 	{ 3155378292000000000ULL, 635556852000000000ULL, 60, { 0, 1, 0, 3, 3, 0 }, { 0, 11, 0, 1, 2, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_109[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_111[] =
 {
 	{ 3155378292000000000ULL, 180000000000ULL, 60, { 0, 10, 0, 5, 3, 0 }, { 0, 3, 0, 5, 2, 0 }, }
 };
 
-static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_111[] =
+static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_113[] =
 {
 	{ 633978324000000000ULL, 180000000000ULL, 0, { 0, 1, 0, 1, 0, 0 }, { 0, 1, 0, 1, 0, 0 }, },
 	{ 634293684000000000ULL, 633979188000000000ULL, 60, { 0, 1, 5, 1, 0, 0 }, { 0, 9, 6, 5, 23, 59 }, },
@@ -755,9 +782,14 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_10, 2
 	},
 	{
+		"Easter Island Standard Time", 360, TRUE, "(UTC-06:00) Easter Island",
+		"Easter Island Standard Time", "Easter Island Daylight Time",
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_11, 10
+	},
+	{
 		"Central Standard Time (Mexico)", 360, TRUE, "(UTC-06:00) Guadalajara, Mexico City, Monterrey",
 		"Central Standard Time (Mexico)", "Central Daylight Time (Mexico)",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_11, 1
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_12, 1
 	},
 	{
 		"Canada Central Standard Time", 360, FALSE, "(UTC-06:00) Saskatchewan",
@@ -777,32 +809,37 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Eastern Standard Time", 300, TRUE, "(UTC-05:00) Eastern Time (US & Canada)",
 		"Eastern Standard Time", "Eastern Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_15, 2
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_16, 2
+	},
+	{
+		"Haiti Standard Time", 300, TRUE, "(UTC-05:00) Haiti",
+		"Haiti Standard Time", "Haiti Daylight Time",
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_17, 5
 	},
 	{
 		"US Eastern Standard Time", 300, TRUE, "(UTC-05:00) Indiana (East)",
 		"US Eastern Standard Time", "US Eastern Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_16, 2
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_18, 2
 	},
 	{
 		"Venezuela Standard Time", 270, TRUE, "(UTC-04:30) Caracas",
 		"Venezuela Standard Time", "Venezuela Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_17, 1
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_19, 1
 	},
 	{
 		"Paraguay Standard Time", 240, TRUE, "(UTC-04:00) Asuncion",
 		"Paraguay Standard Time", "Paraguay Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_18, 14
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_20, 14
 	},
 	{
 		"Atlantic Standard Time", 240, TRUE, "(UTC-04:00) Atlantic Time (Canada)",
 		"Atlantic Standard Time", "Atlantic Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_19, 2
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_21, 2
 	},
 	{
 		"Central Brazilian Standard Time", 240, TRUE, "(UTC-04:00) Cuiaba",
 		"Central Brazilian Standard Time", "Central Brazilian Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_20, 35
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_22, 35
 	},
 	{
 		"SA Western Standard Time", 240, FALSE, "(UTC-04:00) Georgetown, La Paz, Manaus, San Juan",
@@ -810,14 +847,19 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 		NULL, 0
 	},
 	{
+		"Pacific SA Standard Time", 240, TRUE, "(UTC-04:00) Santiago",
+		"Pacific SA Standard Time", "Pacific SA Daylight Time",
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_24, 10
+	},
+	{
 		"Newfoundland Standard Time", 210, TRUE, "(UTC-03:30) Newfoundland",
 		"Newfoundland Standard Time", "Newfoundland Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_22, 7
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_25, 7
 	},
 	{
 		"E. South America Standard Time", 180, TRUE, "(UTC-03:00) Brasilia",
 		"E. South America Standard Time", "E. South America Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_23, 35
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_26, 35
 	},
 	{
 		"SA Eastern Standard Time", 180, FALSE, "(UTC-03:00) Cayenne, Fortaleza",
@@ -827,27 +869,22 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Argentina Standard Time", 180, TRUE, "(UTC-03:00) City of Buenos Aires",
 		"Argentina Standard Time", "Argentina Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_25, 3
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_28, 3
 	},
 	{
 		"Greenland Standard Time", 180, TRUE, "(UTC-03:00) Greenland",
 		"Greenland Standard Time", "Greenland Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_26, 14
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_29, 14
 	},
 	{
 		"Montevideo Standard Time", 180, TRUE, "(UTC-03:00) Montevideo",
 		"Montevideo Standard Time", "Montevideo Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_27, 10
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_30, 10
 	},
 	{
 		"Bahia Standard Time", 180, TRUE, "(UTC-03:00) Salvador",
 		"Bahia Standard Time", "Bahia Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_28, 2
-	},
-	{
-		"Pacific SA Standard Time", 180, TRUE, "(UTC-03:00) Santiago",
-		"Pacific SA Standard Time", "Pacific SA Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_29, 8
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_31, 2
 	},
 	{
 		"UTC-02", 120, FALSE, "(UTC-02:00) Coordinated Universal Time-02",
@@ -857,12 +894,12 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Mid-Atlantic Standard Time", 120, TRUE, "(UTC-02:00) Mid-Atlantic - Old",
 		"Mid-Atlantic Standard Time", "Mid-Atlantic Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_31, 1
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_33, 1
 	},
 	{
 		"Azores Standard Time", 60, TRUE, "(UTC-01:00) Azores",
 		"Azores Standard Time", "Azores Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_32, 3
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_34, 3
 	},
 	{
 		"Cape Verde Standard Time", 60, FALSE, "(UTC-01:00) Cabo Verde Is.",
@@ -872,7 +909,7 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Morocco Standard Time", 0, TRUE, "(UTC) Casablanca",
 		"Morocco Standard Time", "Morocco Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_34, 9
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_36, 10
 	},
 	{
 		"UTC", 0, FALSE, "(UTC) Coordinated Universal Time",
@@ -882,7 +919,7 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"GMT Standard Time", 0, TRUE, "(UTC) Dublin, Edinburgh, Lisbon, London",
 		"GMT Standard Time", "GMT Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_36, 1
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_38, 1
 	},
 	{
 		"Greenwich Standard Time", 0, FALSE, "(UTC) Monrovia, Reykjavik",
@@ -892,22 +929,22 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"W. Europe Standard Time", -60, TRUE, "(UTC+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna",
 		"W. Europe Standard Time", "W. Europe Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_38, 1
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_40, 1
 	},
 	{
 		"Central Europe Standard Time", -60, TRUE, "(UTC+01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague",
 		"Central Europe Standard Time", "Central Europe Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_39, 1
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_41, 1
 	},
 	{
 		"Romance Standard Time", -60, TRUE, "(UTC+01:00) Brussels, Copenhagen, Madrid, Paris",
 		"Romance Standard Time", "Romance Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_40, 1
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_42, 1
 	},
 	{
 		"Central European Standard Time", -60, TRUE, "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb",
 		"Central European Standard Time", "Central European Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_41, 1
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_43, 1
 	},
 	{
 		"W. Central Africa Standard Time", -60, FALSE, "(UTC+01:00) West Central Africa",
@@ -917,37 +954,37 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Namibia Standard Time", -60, TRUE, "(UTC+01:00) Windhoek",
 		"Namibia Standard Time", "Namibia Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_43, 2
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_45, 2
 	},
 	{
 		"Jordan Standard Time", -120, TRUE, "(UTC+02:00) Amman",
 		"Jordan Standard Time", "Jordan Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_44, 9
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_46, 9
 	},
 	{
 		"GTB Standard Time", -120, TRUE, "(UTC+02:00) Athens, Bucharest",
 		"GTB Standard Time", "GTB Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_45, 1
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_47, 1
 	},
 	{
 		"Middle East Standard Time", -120, TRUE, "(UTC+02:00) Beirut",
 		"Middle East Standard Time", "Middle East Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_46, 13
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_48, 13
 	},
 	{
 		"Egypt Standard Time", -120, TRUE, "(UTC+02:00) Cairo",
 		"Egypt Standard Time", "Egypt Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_47, 7
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_49, 7
 	},
 	{
 		"Syria Standard Time", -120, TRUE, "(UTC+02:00) Damascus",
 		"Syria Standard Time", "Syria Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_48, 12
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_50, 12
 	},
 	{
 		"E. Europe Standard Time", -120, TRUE, "(UTC+02:00) E. Europe",
 		"E. Europe Standard Time", "E. Europe Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_49, 1
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_51, 1
 	},
 	{
 		"South Africa Standard Time", -120, FALSE, "(UTC+02:00) Harare, Pretoria",
@@ -957,32 +994,32 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"FLE Standard Time", -120, TRUE, "(UTC+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius",
 		"FLE Standard Time", "FLE Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_51, 1
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_53, 1
 	},
 	{
 		"Turkey Standard Time", -120, TRUE, "(UTC+02:00) Istanbul",
 		"Turkey Standard Time", "Turkey Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_52, 7
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_54, 7
 	},
 	{
 		"Israel Standard Time", -120, TRUE, "(UTC+02:00) Jerusalem",
 		"Jerusalem Standard Time", "Jerusalem Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_53, 19
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_55, 19
 	},
 	{
 		"Kaliningrad Standard Time", -120, TRUE, "(UTC+02:00) Kaliningrad",
 		"Russia TZ 1 Standard Time", "Russia TZ 1 Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_54, 5
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_56, 5
 	},
 	{
 		"Libya Standard Time", -120, TRUE, "(UTC+02:00) Tripoli",
 		"Libya Standard Time", "Libya Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_55, 2
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_57, 2
 	},
 	{
 		"Arabic Standard Time", -180, TRUE, "(UTC+03:00) Baghdad",
 		"Arabic Standard Time", "Arabic Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_56, 2
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_58, 2
 	},
 	{
 		"Arab Standard Time", -180, FALSE, "(UTC+03:00) Kuwait, Riyadh",
@@ -992,12 +1029,12 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Belarus Standard Time", -180, TRUE, "(UTC+03:00) Minsk",
 		"Belarus Standard Time", "Belarus Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_58, 2
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_60, 2
 	},
 	{
 		"Russian Standard Time", -180, TRUE, "(UTC+03:00) Moscow, St. Petersburg, Volgograd",
 		"Russia TZ 2 Standard Time", "Russia TZ 2 Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_59, 5
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_61, 5
 	},
 	{
 		"E. Africa Standard Time", -180, FALSE, "(UTC+03:00) Nairobi",
@@ -1007,12 +1044,12 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Astrakhan Standard Time", -180, TRUE, "(UTC+04:00) Astrakhan, Ulyanovsk",
 		"Astrakhan Standard Time", "Astrakhan Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_61, 7
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_63, 7
 	},
 	{
 		"Iran Standard Time", -210, TRUE, "(UTC+03:30) Tehran",
 		"Iran Standard Time", "Iran Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_62, 18
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_64, 18
 	},
 	{
 		"Arabian Standard Time", -240, FALSE, "(UTC+04:00) Abu Dhabi, Muscat",
@@ -1022,7 +1059,7 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Azerbaijan Standard Time", -240, TRUE, "(UTC+04:00) Baku",
 		"Azerbaijan Standard Time", "Azerbaijan Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_64, 1
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_66, 1
 	},
 	{
 		"Russia Time Zone 3", -240, FALSE, "(UTC+04:00) Izhevsk, Samara",
@@ -1032,7 +1069,7 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Mauritius Standard Time", -240, TRUE, "(UTC+04:00) Port Louis",
 		"Mauritius Standard Time", "Mauritius Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_66, 2
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_68, 2
 	},
 	{
 		"Georgian Standard Time", -240, FALSE, "(UTC+04:00) Tbilisi",
@@ -1042,7 +1079,7 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Caucasus Standard Time", -240, TRUE, "(UTC+04:00) Yerevan",
 		"Caucasus Standard Time", "Caucasus Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_68, 1
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_70, 1
 	},
 	{
 		"Afghanistan Standard Time", -270, FALSE, "(UTC+04:30) Kabul",
@@ -1057,12 +1094,12 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Ekaterinburg Standard Time", -300, TRUE, "(UTC+05:00) Ekaterinburg",
 		"Russia TZ 4 Standard Time", "Russia TZ 4 Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_71, 5
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_73, 5
 	},
 	{
 		"Pakistan Standard Time", -300, TRUE, "(UTC+05:00) Islamabad, Karachi",
 		"Pakistan Standard Time", "Pakistan Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_72, 2
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_74, 2
 	},
 	{
 		"India Standard Time", -330, FALSE, "(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi",
@@ -1087,17 +1124,17 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Bangladesh Standard Time", -360, TRUE, "(UTC+06:00) Dhaka",
 		"Bangladesh Standard Time", "Bangladesh Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_77, 1
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_79, 1
 	},
 	{
 		"N. Central Asia Standard Time", -360, TRUE, "(UTC+06:00) Novosibirsk",
 		"Russia TZ 5 Standard Time", "Russia TZ 5 Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_78, 5
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_80, 5
 	},
 	{
 		"Altai Standard Time", -360, TRUE, "(UTC+07:00) Barnaul, Gorno-Altaysk",
 		"Altai Standard Time", "Altai Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_79, 7
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_81, 7
 	},
 	{
 		"Myanmar Standard Time", -390, FALSE, "(UTC+06:30) Yangon (Rangoon)",
@@ -1112,7 +1149,7 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"North Asia Standard Time", -420, TRUE, "(UTC+07:00) Krasnoyarsk",
 		"Russia TZ 6 Standard Time", "Russia TZ 6 Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_82, 5
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_84, 5
 	},
 	{
 		"China Standard Time", -480, FALSE, "(UTC+08:00) Beijing, Chongqing, Hong Kong, Urumqi",
@@ -1122,7 +1159,7 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"North Asia East Standard Time", -480, TRUE, "(UTC+08:00) Irkutsk",
 		"Russia TZ 7 Standard Time", "Russia TZ 7 Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_84, 5
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_86, 5
 	},
 	{
 		"Singapore Standard Time", -480, FALSE, "(UTC+08:00) Kuala Lumpur, Singapore",
@@ -1132,7 +1169,7 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"W. Australia Standard Time", -480, TRUE, "(UTC+08:00) Perth",
 		"W. Australia Standard Time", "W. Australia Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_86, 4
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_88, 4
 	},
 	{
 		"Taipei Standard Time", -480, FALSE, "(UTC+08:00) Taipei",
@@ -1142,12 +1179,12 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Ulaanbaatar Standard Time", -480, TRUE, "(UTC+08:00) Ulaanbaatar",
 		"Ulaanbaatar Standard Time", "Ulaanbaatar Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_88, 1
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_90, 1
 	},
 	{
 		"Transbaikal Standard Time", -480, TRUE, "(UTC+09:00) Chita",
 		"Transbaikal Standard Time", "Transbaikal Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_89, 7
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_91, 7
 	},
 	{
 		"North Korea Standard Time", -510, FALSE, "(UTC+08:30) Pyongyang",
@@ -1167,12 +1204,12 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Yakutsk Standard Time", -540, TRUE, "(UTC+09:00) Yakutsk",
 		"Russia TZ 8 Standard Time", "Russia TZ 8 Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_93, 5
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_95, 5
 	},
 	{
 		"Cen. Australia Standard Time", -570, TRUE, "(UTC+09:30) Adelaide",
 		"Cen. Australia Standard Time", "Cen. Australia Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_94, 2
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_96, 2
 	},
 	{
 		"AUS Central Standard Time", -570, FALSE, "(UTC+09:30) Darwin",
@@ -1187,7 +1224,7 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"AUS Eastern Standard Time", -600, TRUE, "(UTC+10:00) Canberra, Melbourne, Sydney",
 		"AUS Eastern Standard Time", "AUS Eastern Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_97, 2
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_99, 2
 	},
 	{
 		"West Pacific Standard Time", -600, FALSE, "(UTC+10:00) Guam, Port Moresby",
@@ -1197,22 +1234,22 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Tasmania Standard Time", -600, TRUE, "(UTC+10:00) Hobart",
 		"Tasmania Standard Time", "Tasmania Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_99, 2
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_101, 2
 	},
 	{
 		"Magadan Standard Time", -600, TRUE, "(UTC+10:00) Magadan",
 		"Magadan Standard Time", "Magadan Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_100, 5
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_102, 5
 	},
 	{
 		"Vladivostok Standard Time", -600, TRUE, "(UTC+10:00) Vladivostok",
 		"Russia TZ 9 Standard Time", "Russia TZ 9 Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_101, 5
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_103, 5
 	},
 	{
 		"Sakhalin Standard Time", -600, TRUE, "(UTC+11:00) Sakhalin",
 		"Sakhalin Standard Time", "Sakhalin Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_102, 7
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_104, 7
 	},
 	{
 		"Russia Time Zone 10", -660, FALSE, "(UTC+11:00) Chokurdakh",
@@ -1232,7 +1269,7 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"New Zealand Standard Time", -720, TRUE, "(UTC+12:00) Auckland, Wellington",
 		"New Zealand Standard Time", "New Zealand Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_106, 3
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_108, 3
 	},
 	{
 		"UTC+12", -720, FALSE, "(UTC+12:00) Coordinated Universal Time+12",
@@ -1242,12 +1279,12 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Fiji Standard Time", -720, TRUE, "(UTC+12:00) Fiji",
 		"Fiji Standard Time", "Fiji Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_108, 7
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_110, 7
 	},
 	{
 		"Kamchatka Standard Time", -720, TRUE, "(UTC+12:00) Petropavlovsk-Kamchatsky - Old",
 		"Kamchatka Standard Time", "Kamchatka Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_109, 1
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_111, 1
 	},
 	{
 		"Tonga Standard Time", -780, FALSE, "(UTC+13:00) Nuku'alofa",
@@ -1257,7 +1294,7 @@ static const TIME_ZONE_ENTRY TimeZoneTable[] =
 	{
 		"Samoa Standard Time", -780, TRUE, "(UTC+13:00) Samoa",
 		"Samoa Standard Time", "Samoa Daylight Time",
-		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_111, 4
+		(TIME_ZONE_RULE_ENTRY*) &TimeZoneRuleTable_113, 4
 	},
 	{
 		"Line Islands Standard Time", -840, FALSE, "(UTC+14:00) Kiritimati Island",
@@ -1280,6 +1317,8 @@ const WINDOWS_TZID_ENTRY WindowsTimeZoneIdTable[] =
 	{ "Afghanistan Standard Time", "Asia/Kabul" },
 	{ "Alaskan Standard Time", "America/Anchorage America/Juneau America/Metlakatla America/Nome America/Sitka America/Yakutat" },
 	{ "Alaskan Standard Time", "America/Anchorage" },
+	{ "Altai Standard Time", "Asia/Barnaul Asia/Tomsk" },
+	{ "Altai Standard Time", "Asia/Barnaul" },
 	{ "Arab Standard Time", "Asia/Aden" },
 	{ "Arab Standard Time", "Asia/Bahrain" },
 	{ "Arab Standard Time", "Asia/Kuwait" },
@@ -1291,6 +1330,8 @@ const WINDOWS_TZID_ENTRY WindowsTimeZoneIdTable[] =
 	{ "Arabic Standard Time", "Asia/Baghdad" },
 	{ "Argentina Standard Time", "America/Buenos_Aires America/Argentina/La_Rioja America/Argentina/Rio_Gallegos America/Argentina/Salta America/Argentina/San_Juan America/Argentina/San_Luis America/Argentina/Tucuman America/Argentina/Ushuaia America/Catamarca America/Cordoba America/Jujuy America/Mendoza" },
 	{ "Argentina Standard Time", "America/Buenos_Aires" },
+	{ "Astrakhan Standard Time", "Europe/Astrakhan Europe/Ulyanovsk" },
+	{ "Astrakhan Standard Time", "Europe/Astrakhan" },
 	{ "Atlantic Standard Time", "America/Halifax America/Glace_Bay America/Goose_Bay America/Moncton" },
 	{ "Atlantic Standard Time", "America/Halifax" },
 	{ "Atlantic Standard Time", "America/Thule" },
@@ -1462,7 +1503,7 @@ const WINDOWS_TZID_ENTRY WindowsTimeZoneIdTable[] =
 	{ "New Zealand Standard Time", "Pacific/Auckland" },
 	{ "Newfoundland Standard Time", "America/St_Johns" },
 	{ "North Asia East Standard Time", "Asia/Irkutsk" },
-	{ "North Asia Standard Time", "Asia/Krasnoyarsk Asia/Barnaul Asia/Novokuznetsk" },
+	{ "North Asia Standard Time", "Asia/Krasnoyarsk Asia/Novokuznetsk" },
 	{ "North Asia Standard Time", "Asia/Krasnoyarsk" },
 	{ "North Korea Standard Time", "Asia/Pyongyang" },
 	{ "Pacific SA Standard Time", "America/Santiago" },
@@ -1477,13 +1518,11 @@ const WINDOWS_TZID_ENTRY WindowsTimeZoneIdTable[] =
 	{ "Romance Standard Time", "Europe/Copenhagen" },
 	{ "Romance Standard Time", "Europe/Madrid Africa/Ceuta" },
 	{ "Romance Standard Time", "Europe/Paris" },
-	{ "Russia Time Zone 10", "Asia/Srednekolymsk Asia/Sakhalin" },
 	{ "Russia Time Zone 10", "Asia/Srednekolymsk" },
 	{ "Russia Time Zone 11", "Asia/Kamchatka Asia/Anadyr" },
 	{ "Russia Time Zone 11", "Asia/Kamchatka" },
-	{ "Russia Time Zone 3", "Europe/Samara Europe/Astrakhan Europe/Ulyanovsk" },
 	{ "Russia Time Zone 3", "Europe/Samara" },
-	{ "Russian Standard Time", "Europe/Moscow Europe/Simferopol Europe/Volgograd" },
+	{ "Russian Standard Time", "Europe/Moscow Europe/Kirov Europe/Simferopol Europe/Volgograd" },
 	{ "Russian Standard Time", "Europe/Moscow" },
 	{ "SA Eastern Standard Time", "America/Cayenne" },
 	{ "SA Eastern Standard Time", "America/Fortaleza America/Araguaina America/Belem America/Maceio America/Recife America/Santarem" },
@@ -1530,6 +1569,7 @@ const WINDOWS_TZID_ENTRY WindowsTimeZoneIdTable[] =
 	{ "SA Western Standard Time", "America/St_Vincent" },
 	{ "SA Western Standard Time", "America/Tortola" },
 	{ "SA Western Standard Time", "Etc/GMT+4" },
+	{ "Sakhalin Standard Time", "Asia/Sakhalin" },
 	{ "Samoa Standard Time", "Pacific/Apia" },
 	{ "SE Asia Standard Time", "Antarctica/Davis" },
 	{ "SE Asia Standard Time", "Asia/Bangkok" },
@@ -1571,6 +1611,7 @@ const WINDOWS_TZID_ENTRY WindowsTimeZoneIdTable[] =
 	{ "Tonga Standard Time", "Pacific/Enderbury" },
 	{ "Tonga Standard Time", "Pacific/Fakaofo" },
 	{ "Tonga Standard Time", "Pacific/Tongatapu" },
+	{ "Transbaikal Standard Time", "Asia/Chita" },
 	{ "Turkey Standard Time", "Europe/Istanbul" },
 	{ "Ulaanbaatar Standard Time", "Asia/Ulaanbaatar Asia/Choibalsan" },
 	{ "Ulaanbaatar Standard Time", "Asia/Ulaanbaatar" },
@@ -1647,9 +1688,10 @@ const WINDOWS_TZID_ENTRY WindowsTimeZoneIdTable[] =
 	{ "West Pacific Standard Time", "Pacific/Port_Moresby" },
 	{ "West Pacific Standard Time", "Pacific/Saipan" },
 	{ "West Pacific Standard Time", "Pacific/Truk" },
-	{ "Yakutsk Standard Time", "Asia/Yakutsk Asia/Chita Asia/Khandyga" },
+	{ "Yakutsk Standard Time", "Asia/Yakutsk Asia/Khandyga" },
 	{ "Yakutsk Standard Time", "Asia/Yakutsk" },
 };
+
 static UINT64 winpr_windows_gmtime()
 {
 	time_t unix_time;
