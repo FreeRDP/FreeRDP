@@ -964,6 +964,13 @@ SECURITY_STATUS nla_encrypt_public_key_echo(rdpNla* nla)
 		return status;
 	}
 
+	if (Buffers[0].cbBuffer < nla->ContextSizes.cbSecurityTrailer)
+	{
+		/* EncryptMessage may not use all the signature space, so we need to shrink the excess */
+		MoveMemory(((BYTE*)nla->pubKeyAuth.pvBuffer) + Buffers[0].cbBuffer, Buffers[1].pvBuffer, Buffers[1].cbBuffer);
+		nla->pubKeyAuth.cbBuffer = Buffers[0].cbBuffer + Buffers[1].cbBuffer;
+	}
+
 	return status;
 }
 
@@ -975,11 +982,13 @@ SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla)
 	BYTE* public_key1;
 	BYTE* public_key2;
 	int public_key_length;
+	int signature_length;
 	SecBuffer Buffers[2];
 	SecBufferDesc Message;
 	SECURITY_STATUS status;
 
-	if ((nla->PublicKey.cbBuffer + nla->ContextSizes.cbSecurityTrailer) != nla->pubKeyAuth.cbBuffer)
+	signature_length = nla->pubKeyAuth.cbBuffer - nla->PublicKey.cbBuffer;
+	if (signature_length < 0 || signature_length > nla->ContextSizes.cbSecurityTrailer)
 	{
 		WLog_ERR(TAG, "unexpected pubKeyAuth buffer size: %lu", nla->pubKeyAuth.cbBuffer);
 		return SEC_E_INVALID_TOKEN;
@@ -994,12 +1003,12 @@ SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla)
 	CopyMemory(buffer, nla->pubKeyAuth.pvBuffer, length);
 	public_key_length = nla->PublicKey.cbBuffer;
 	Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
-	Buffers[0].cbBuffer = nla->ContextSizes.cbSecurityTrailer;
+	Buffers[0].cbBuffer = signature_length;
 	Buffers[0].pvBuffer = buffer;
 
 	Buffers[1].BufferType = SECBUFFER_DATA; /* Encrypted TLS Public Key */
-	Buffers[1].cbBuffer = length - nla->ContextSizes.cbSecurityTrailer;
-	Buffers[1].pvBuffer = buffer + nla->ContextSizes.cbSecurityTrailer;
+	Buffers[1].cbBuffer = length - signature_length;
+	Buffers[1].pvBuffer = buffer + signature_length;
 	Message.cBuffers = 2;
 	Message.ulVersion = SECBUFFER_VERSION;
 	Message.pBuffers = (PSecBuffer) &Buffers;
@@ -1307,6 +1316,12 @@ SECURITY_STATUS nla_encrypt_ts_credentials(rdpNla* nla)
 		WLog_ERR(TAG, "EncryptMessage failure %s [%08X]",
 			 GetSecurityStatusString(status), status);
 		return status;
+	}
+
+	if (Buffers[0].cbBuffer < nla->ContextSizes.cbSecurityTrailer) {
+		/* EncryptMessage may not use all the signature space, so we need to shrink the excess */
+		MoveMemory(((BYTE*)nla->authInfo.pvBuffer) + Buffers[0].cbBuffer, Buffers[1].pvBuffer, Buffers[1].cbBuffer);
+		nla->authInfo.cbBuffer = Buffers[0].cbBuffer + Buffers[1].cbBuffer;
 	}
 
 	return SEC_E_OK;
