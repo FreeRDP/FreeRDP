@@ -314,6 +314,7 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context, int client
 	int bs;
 	int out_buffer_size;
 	AUDIO_FORMAT *format;
+	UINT error = CHANNEL_RC_OK;
 
 	if (client_format_index < 0 || client_format_index >= context->num_client_formats)
 	{
@@ -321,6 +322,8 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context, int client
 		return ERROR_INVALID_DATA;
 	}
 	
+	EnterCriticalSection(&context->priv->lock);
+
 	context->priv->src_bytes_per_sample = context->src_format.wBitsPerSample / 8;
 	context->priv->src_bytes_per_frame = context->priv->src_bytes_per_sample * context->src_format.nChannels;
 
@@ -330,7 +333,8 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context, int client
 	if (format->nSamplesPerSec == 0)
 	{
 		WLog_ERR(TAG,  "invalid Client Sound Format!!");
-		return ERROR_INVALID_DATA;
+		error = ERROR_INVALID_DATA;
+		goto out;
 	}
 
 	switch(format->wFormatTag)
@@ -365,7 +369,8 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context, int client
 		if (!newBuffer)
 		{
 			WLog_ERR(TAG, "realloc failed!");
-			return CHANNEL_RC_NO_MEMORY;
+			error = CHANNEL_RC_NO_MEMORY;
+			goto out;
 		}
 
 		context->priv->out_buffer = newBuffer;
@@ -373,11 +378,15 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context, int client
 	}
 
 	freerdp_dsp_context_reset_adpcm(context->priv->dsp_context);
-	return CHANNEL_RC_OK;
+
+out:
+	LeaveCriticalSection(&context->priv->lock);
+	return error;
 }
 
 /**
  * Function description
+ * context->priv->lock should be obtained before calling this function
  *
  * @return 0 on success, otherwise a Win32 error code
  */
@@ -501,8 +510,15 @@ static UINT rdpsnd_server_send_samples(RdpsndServerContext* context, const void*
 	int cframesize;
 	UINT error = CHANNEL_RC_OK;
 
+	EnterCriticalSection(&context->priv->lock);
+
 	if (context->selected_client_format < 0)
-		return ERROR_INVALID_DATA;
+	{
+		/* It's possible while format negotiation has not been done */
+		WLog_WARN(TAG, "Drop samples because client format has not been negotiated.");
+		error = ERROR_NOT_READY;
+		goto out;
+	}
 
 	while (nframes > 0)
 	{
@@ -518,11 +534,15 @@ static UINT rdpsnd_server_send_samples(RdpsndServerContext* context, const void*
 		if (context->priv->out_pending_frames >= context->priv->out_frames)
 		{
 			if ((error = rdpsnd_server_send_audio_pdu(context, wTimestamp)))
+			{
 				WLog_ERR(TAG, "rdpsnd_server_send_audio_pdu failed with error %lu", error);
-
+				break;
+			}
 		}
 	}
 
+out:
+	LeaveCriticalSection(&context->priv->lock);
 	return error;
 }
 
@@ -568,17 +588,25 @@ static UINT rdpsnd_server_close(RdpsndServerContext* context)
 	wStream* s = context->priv->rdpsnd_pdu;
 	UINT error = CHANNEL_RC_OK;
 
-	if (context->selected_client_format < 0)
-		return ERROR_INVALID_DATA;
+	EnterCriticalSection(&context->priv->lock);
 
 	if (context->priv->out_pending_frames > 0)
 	{
-		if ((error = rdpsnd_server_send_audio_pdu(context, 0)))
+		if (context->selected_client_format < 0)
+		{
+			WLog_ERR(TAG, "Pending audio frame exists while no format selected.");
+			error = ERROR_INVALID_DATA;
+		} 
+		else if ((error = rdpsnd_server_send_audio_pdu(context, 0)))
 		{
 			WLog_ERR(TAG, "rdpsnd_server_send_audio_pdu failed with error %lu", error);
-			return error;
 		}
 	}
+
+	LeaveCriticalSection(&context->priv->lock);
+
+	if (error)
+		return error;
 
 	context->selected_client_format = -1;
 
@@ -635,13 +663,19 @@ static UINT rdpsnd_server_start(RdpsndServerContext* context)
 		goto out_close;
 	}
 
+	if (!InitializeCriticalSectionEx(&context->priv->lock, 0, 0))
+	{
+		WLog_ERR(TAG, "InitializeCriticalSectionEx failed!");
+		goto out_pdu;
+	}
+
 	if (priv->ownThread)
 	{
 		context->priv->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 		if (!context->priv->StopEvent)
 		{
 			WLog_ERR(TAG, "CreateEvent failed!");
-			goto out_pdu;
+			goto out_lock;
 		}
 
 		context->priv->Thread = CreateThread(NULL, 0,
@@ -659,6 +693,8 @@ static UINT rdpsnd_server_start(RdpsndServerContext* context)
 out_stopEvent:
 	CloseHandle(context->priv->StopEvent);
 	context->priv->StopEvent = NULL;
+out_lock:
+	DeleteCriticalSection(&context->priv->lock);
 out_pdu:
 	Stream_Free(context->priv->rdpsnd_pdu, TRUE);
 	context->priv->rdpsnd_pdu = NULL;
@@ -692,6 +728,8 @@ static UINT rdpsnd_server_stop(RdpsndServerContext* context)
 			CloseHandle(context->priv->StopEvent);
 		}
 	}
+
+	DeleteCriticalSection(&context->priv->lock);
 
 	if (context->priv->rdpsnd_pdu)
 		Stream_Free(context->priv->rdpsnd_pdu, TRUE);
