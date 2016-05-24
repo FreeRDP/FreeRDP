@@ -70,16 +70,9 @@ BOOL MutexCloseHandle(HANDLE handle)
 	if (!MutexIsHandled(handle))
 		return FALSE;
 
-	rc = pthread_mutex_trylock(&mutex->mutex);
-	switch(rc)
+	if ((rc = pthread_mutex_destroy(&mutex->mutex)))
 	{
-		case 0: /* The mutex is now locked. */
-			break;
-		/* If we already own the mutex consider it a success. */
-		case EDEADLK:
-		case EBUSY:
-			break;
-		default:
+		WLog_ERR(TAG, "pthread_mutex_destroy failed with %s [%d]", strerror(rc), rc);
 #if defined(WITH_DEBUG_MUTEX)
 		{
 			size_t used = 0, i;
@@ -98,22 +91,10 @@ BOOL MutexCloseHandle(HANDLE handle)
 			winpr_backtrace_free(stack);
 		}
 #endif
-		WLog_ERR(TAG, "pthread_mutex_trylock failed with %s [%d]", strerror(rc), rc);
-		return FALSE;
-	}
-
-	rc = pthread_mutex_unlock(&mutex->mutex);
-	if (rc != 0)
-	{
-		WLog_ERR(TAG, "pthread_mutex_unlock failed with %s [%d]", strerror(rc), rc);
-		return FALSE;
-	}
-
-	rc = pthread_mutex_destroy(&mutex->mutex);
-	if (rc != 0)
-	{
-		WLog_ERR(TAG, "pthread_mutex_destroy failed with %s [%d]", strerror(rc), rc);
-		return FALSE;
+		/**
+		 * Note: unfortunately we may not return FALSE here since CloseHandle(hmutex) on
+		 * Windows always seems to succeed independently of the mutex object locking state
+		 */
 	}
 
 	free(handle);
@@ -138,7 +119,10 @@ HANDLE CreateMutexW(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner,
 
 	if (mutex)
 	{
-		pthread_mutex_init(&mutex->mutex, 0);
+		pthread_mutexattr_t attr;
+		pthread_mutexattr_init(&attr);
+		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+		pthread_mutex_init(&mutex->mutex, &attr);
 
 		WINPR_HANDLE_SET_TYPE_AND_MODE(mutex, HANDLE_TYPE_MUTEX, WINPR_FD_READ);
 		mutex->ops = &ops;
@@ -181,15 +165,19 @@ BOOL ReleaseMutex(HANDLE hMutex)
 {
 	ULONG Type;
 	WINPR_HANDLE* Object;
-	WINPR_MUTEX* mutex;
 
 	if (!winpr_Handle_GetInfo(hMutex, &Type, &Object))
 		return FALSE;
 
 	if (Type == HANDLE_TYPE_MUTEX)
 	{
-		mutex = (WINPR_MUTEX*) Object;
-		pthread_mutex_unlock(&mutex->mutex);
+		WINPR_MUTEX* mutex = (WINPR_MUTEX*) Object;
+		int rc = pthread_mutex_unlock(&mutex->mutex);
+		if (rc)
+		{
+			WLog_ERR(TAG, "pthread_mutex_unlock failed with %s [%d]", strerror(rc), rc);
+			return FALSE;
+		}
 		return TRUE;
 	}
 
