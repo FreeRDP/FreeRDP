@@ -7,16 +7,15 @@
 #define FIRE_COUNT	5
 #define TIMER_COUNT	5
 
-static int g_Count = 0;
-static HANDLE g_Event = NULL;
-
 struct apc_data
 {
-	int TimerId;
-	int FireCount;
+	DWORD TimerId;
+	DWORD FireCount;
 	DWORD DueTime;
 	DWORD Period;
 	UINT32 StartTime;
+	DWORD MaxFireCount;
+	HANDLE CompletionEvent;
 };
 typedef struct apc_data APC_DATA;
 
@@ -36,38 +35,30 @@ VOID CALLBACK TimerRoutine(PVOID lpParam, BOOLEAN TimerOrWaitFired)
 	expectedTime = apcData->DueTime + (apcData->Period * apcData->FireCount);
 
 	apcData->FireCount++;
-	g_Count++;
 
 	printf("TimerRoutine: TimerId: %d FireCount: %d ActualTime: %d ExpectedTime: %d Discrepancy: %d\n",
 			apcData->TimerId, apcData->FireCount, TimerTime, expectedTime, TimerTime - expectedTime);
 
-	if (g_Count >= (TIMER_COUNT * FIRE_COUNT))
-	{
-		SetEvent(g_Event);
-	}
-
 	Sleep(50);
+
+	if (apcData->FireCount == apcData->MaxFireCount)
+	{
+		SetEvent(apcData->CompletionEvent);
+	}
 }
 
 int TestSynchTimerQueue(int argc, char* argv[])
 {
-	int index;
+	DWORD index;
 	HANDLE hTimerQueue;
 	HANDLE hTimers[TIMER_COUNT];
 	APC_DATA apcData[TIMER_COUNT];
-
-	g_Event = CreateEvent(NULL, TRUE, FALSE, NULL);
-	if (!g_Event)
-	{
-		printf("CreateEvent failed (%d)\n", (int) GetLastError());
-		return -1;
-	}
 
 	hTimerQueue = CreateTimerQueue();
 
 	if (!hTimerQueue)
 	{
-		printf("CreateTimerQueue failed (%d)\n", (int) GetLastError());
+		printf("CreateTimerQueue failed (%u)\n", GetLastError());
 		return -1;
 	}
 
@@ -78,37 +69,46 @@ int TestSynchTimerQueue(int argc, char* argv[])
 		apcData[index].DueTime = (index * 100) + 500;
 		apcData[index].Period = 1000;
 		apcData[index].FireCount = 0;
+		apcData[index].MaxFireCount = FIRE_COUNT;
+
+		if (!(apcData[index].CompletionEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+		{
+			printf("Failed to create apcData[%u] event (%u)\n", index, GetLastError());
+			return -1;
+		}
 
 		if (!CreateTimerQueueTimer(&hTimers[index], hTimerQueue, (WAITORTIMERCALLBACK) TimerRoutine,
 				&apcData[index], apcData[index].DueTime, apcData[index].Period, 0))
 		{
-			printf("CreateTimerQueueTimer failed (%d)\n", (int) GetLastError());
+			printf("CreateTimerQueueTimer failed (%u)\n", GetLastError());
 			return -1;
 		}
 	}
 
-	if (WaitForSingleObject(g_Event, INFINITE) != WAIT_OBJECT_0)
+	for (index = 0; index < TIMER_COUNT; index++)
 	{
-		printf("WaitForSingleObject failed (%d)\n", (int) GetLastError());
-		return -1;
+		if (WaitForSingleObject(apcData[index].CompletionEvent, 20000) != WAIT_OBJECT_0)
+		{
+			printf("Failed to wait for timer queue timer #%u (%u)\n", index, GetLastError());
+			return -1;
+		}
+		CloseHandle(apcData[index].CompletionEvent);
 	}
 
 	for (index = 0; index < TIMER_COUNT; index++)
 	{
 		if (!DeleteTimerQueueTimer(hTimerQueue, hTimers[index], NULL))
 		{
-			printf("DeleteTimerQueueTimer failed (%d)\n", (int) GetLastError());
+			printf("DeleteTimerQueueTimer failed (%u)\n", GetLastError());
 			return -1;
 		}
 	}
-	
+
 	if (!DeleteTimerQueue(hTimerQueue))
 	{
-		printf("DeleteTimerQueue failed (%d)\n", (int) GetLastError());
+		printf("DeleteTimerQueue failed (%u)\n", GetLastError());
 		return -1;
 	}
-
-	CloseHandle(g_Event);
 
 	return 0;
 }
