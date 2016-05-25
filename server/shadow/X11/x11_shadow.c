@@ -238,6 +238,8 @@ void x11_shadow_input_keyboard_event(x11ShadowSubsystem* subsystem, rdpShadowCli
 
 	if (keycode != 0)
 	{
+		XLockDisplay(subsystem->display);
+
 		XTestGrabControl(subsystem->display, True);
 
 		if (flags & KBD_FLAGS_DOWN)
@@ -248,6 +250,8 @@ void x11_shadow_input_keyboard_event(x11ShadowSubsystem* subsystem, rdpShadowCli
 		XTestGrabControl(subsystem->display, False);
 
 		XFlush(subsystem->display);
+
+		XUnlockDisplay(subsystem->display);
 	}
 #endif
 }
@@ -270,6 +274,8 @@ void x11_shadow_input_mouse_event(x11ShadowSubsystem* subsystem, rdpShadowClient
 
 	x += surface->x;
 	y += surface->y;
+
+	XLockDisplay(subsystem->display);
 
 	XTestGrabControl(subsystem->display, True);
 
@@ -307,6 +313,8 @@ void x11_shadow_input_mouse_event(x11ShadowSubsystem* subsystem, rdpShadowClient
 	XTestGrabControl(subsystem->display, False);
 
 	XFlush(subsystem->display);
+
+	XUnlockDisplay(subsystem->display);
 #endif
 }
 
@@ -323,6 +331,8 @@ void x11_shadow_input_extended_mouse_event(x11ShadowSubsystem* subsystem, rdpSha
 
 	x += surface->x;
 	y += surface->y;
+
+	XLockDisplay(subsystem->display);
 
 	XTestGrabControl(subsystem->display, True);
 
@@ -342,6 +352,8 @@ void x11_shadow_input_extended_mouse_event(x11ShadowSubsystem* subsystem, rdpSha
 	XTestGrabControl(subsystem->display, False);
 
 	XFlush(subsystem->display);
+
+	XUnlockDisplay(subsystem->display);
 #endif
 }
 
@@ -425,7 +437,9 @@ int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 		UINT32* pDstPixel;
 		XFixesCursorImage* ci;
 
+		XLockDisplay(subsystem->display);
 		ci = XFixesGetCursorImage(subsystem->display);
+		XUnlockDisplay(subsystem->display);
 
 		if (!ci)
 			return -1;
@@ -468,11 +482,16 @@ int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 		int root_x, root_y;
 		Window root, child;
 
+		XLockDisplay(subsystem->display);
+
 		if (!XQueryPointer(subsystem->display, subsystem->root_window,
 				&root, &child, &root_x, &root_y, &win_x, &win_y, &mask))
 		{
+			XUnlockDisplay(subsystem->display);
 			return -1;
 		}
+
+		XUnlockDisplay(subsystem->display);
 
 		x = root_x;
 		y = root_y;
@@ -529,8 +548,10 @@ void x11_shadow_validate_region(x11ShadowSubsystem* subsystem, int x, int y, int
 	region.height = height;
 
 #ifdef WITH_XFIXES
+	XLockDisplay(subsystem->display);
 	XFixesSetRegion(subsystem->display, subsystem->xdamage_region, &region, 1);
 	XDamageSubtract(subsystem->display, subsystem->xdamage, subsystem->xdamage_region, None);
+	XUnlockDisplay(subsystem->display);
 #endif
 }
 
@@ -653,7 +674,10 @@ BOOL x11_shadow_check_resize(x11ShadowSubsystem* subsystem)
 {
 	MONITOR_DEF* virtualScreen;
 	XWindowAttributes attr;
+
+	XLockDisplay(subsystem->display);
 	XGetWindowAttributes(subsystem->display, subsystem->root_window, &attr);
+	XUnlockDisplay(subsystem->display);
 
 	if (attr.width != subsystem->width || attr.height != subsystem->height)
 	{
@@ -810,7 +834,7 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 		XDestroyImage(image);
 
 	return 1;
-	
+
 fail_capture:
 	XSetErrorHandler(NULL);
 	XSync(subsystem->display, False);
@@ -916,11 +940,15 @@ void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem)
 
 		if (WaitForSingleObject(subsystem->event, 0) == WAIT_OBJECT_0)
 		{
+			XLockDisplay(subsystem->display);
+
 			if (XEventsQueued(subsystem->display, QueuedAlready))
 			{
 				XNextEvent(subsystem->display, &xevent);
 				x11_shadow_handle_xevent(subsystem, &xevent);
 			}
+
+			XUnlockDisplay(subsystem->display);
 		}
 
 		if ((status == WAIT_TIMEOUT) || (GetTickCount64() > frameTime))
@@ -968,7 +996,7 @@ int x11_shadow_subsystem_base_init(x11ShadowSubsystem* subsystem)
 	return 1;
 }
 
-int x11_shadow_xfixes_init(x11ShadowSubsystem* subsystem)
+static int x11_shadow_xfixes_init(x11ShadowSubsystem* subsystem)
 {
 #ifdef WITH_XFIXES
 	int xfixes_event;
@@ -992,7 +1020,7 @@ int x11_shadow_xfixes_init(x11ShadowSubsystem* subsystem)
 #endif
 }
 
-int x11_shadow_xinerama_init(x11ShadowSubsystem* subsystem)
+static int x11_shadow_xinerama_init(x11ShadowSubsystem* subsystem)
 {
 #ifdef WITH_XINERAMA
 	int major, minor;
@@ -1016,7 +1044,7 @@ int x11_shadow_xinerama_init(x11ShadowSubsystem* subsystem)
 #endif
 }
 
-int x11_shadow_xdamage_init(x11ShadowSubsystem* subsystem)
+static int x11_shadow_xdamage_init(x11ShadowSubsystem* subsystem)
 {
 #ifdef WITH_XDAMAGE
 	int major, minor;
@@ -1054,7 +1082,7 @@ int x11_shadow_xdamage_init(x11ShadowSubsystem* subsystem)
 #endif
 }
 
-int x11_shadow_xshm_init(x11ShadowSubsystem* subsystem)
+static int x11_shadow_xshm_init(x11ShadowSubsystem* subsystem)
 {
 	Bool pixmaps;
 	int major, minor;
