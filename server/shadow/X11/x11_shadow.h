@@ -88,6 +88,7 @@ struct x11_shadow_subsystem
 	BYTE* cursorPixels;
 	int cursorMaxWidth;
 	int cursorMaxHeight;
+	rdpShadowClient* lastMouseClient;
 
 #ifdef WITH_XDAMAGE
 	GC xshm_gc;

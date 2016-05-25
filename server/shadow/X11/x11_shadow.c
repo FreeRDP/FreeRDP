@@ -267,6 +267,7 @@ void x11_shadow_input_mouse_event(x11ShadowSubsystem* subsystem, rdpShadowClient
 
 	server = subsystem->server;
 	surface = server->surface;
+	subsystem->lastMouseClient = client;
 
 	x += surface->x;
 	y += surface->y;
@@ -320,6 +321,7 @@ void x11_shadow_input_extended_mouse_event(x11ShadowSubsystem* subsystem, rdpSha
 
 	server = subsystem->server;
 	surface = server->surface;
+	subsystem->lastMouseClient = client;
 
 	x += surface->x;
 	y += surface->y;
@@ -370,6 +372,10 @@ int x11_shadow_pointer_position_update(x11ShadowSubsystem* subsystem)
 {
 	SHADOW_MSG_OUT_POINTER_POSITION_UPDATE* msg;
 	UINT32 msgId = SHADOW_MSG_OUT_POINTER_POSITION_UPDATE_ID;
+	rdpShadowClient* client;
+	rdpShadowServer* server;
+	int count = 0;
+	int index = 0;
 
 	msg = (SHADOW_MSG_OUT_POINTER_POSITION_UPDATE*) calloc(1, sizeof(SHADOW_MSG_OUT_POINTER_POSITION_UPDATE));
 
@@ -380,7 +386,23 @@ int x11_shadow_pointer_position_update(x11ShadowSubsystem* subsystem)
 	msg->yPos = subsystem->pointerY;
 	msg->Free = x11_shadow_message_free;
 
-	return shadow_client_boardcast_msg(subsystem->server, NULL, msgId, (SHADOW_MSG_OUT*) msg, NULL) ? 1 : -1;
+	server = subsystem->server;
+
+	ArrayList_Lock(server->clients);
+	for (index = 0; index < ArrayList_Count(server->clients); index++)
+	{
+		client = (rdpShadowClient*)ArrayList_GetItem(server->clients, index);
+
+		/* Skip the client which send us the latest mouse event */
+		if (client == subsystem->lastMouseClient)
+			continue; 
+
+		if (shadow_client_post_msg(client, NULL, msgId, (SHADOW_MSG_OUT*) msg, NULL))
+			count++;
+	}
+	ArrayList_Unlock(server->clients);
+
+	return count;
 }
 
 int x11_shadow_pointer_alpha_update(x11ShadowSubsystem* subsystem)
