@@ -5,11 +5,7 @@ set(MODULE_PREFIX "TEST_LIBRARY")
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
-	TestLibraryAddDllDirectory.c
-	TestLibraryRemoveDllDirectory.c
-	TestLibrarySetDefaultDllDirectories.c
 	TestLibraryLoadLibrary.c
-	TestLibraryFreeLibrary.c
 	TestLibraryGetProcAddress.c
 	TestLibraryGetModuleFileName.c)
 

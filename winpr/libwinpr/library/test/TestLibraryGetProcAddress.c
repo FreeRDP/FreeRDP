@@ -10,15 +10,17 @@ typedef int (*TEST_AB_FN)(int a, int b);
 
 int TestLibraryGetProcAddress(int argc, char* argv[])
 {
-	char* str;
-	int length;
 	int a, b, c;
-	LPTSTR BasePath;
 	HINSTANCE library;
 	TEST_AB_FN pFunctionA;
 	TEST_AB_FN pFunctionB;
 	LPCTSTR SharedLibraryExtension;
 	TCHAR LibraryPath[PATHCCH_MAX_CCH];
+
+#ifndef _WIN32
+	char* str;
+	int length;
+	LPTSTR BasePath;
 
 	str = argv[1];
 
@@ -46,6 +48,14 @@ int TestLibraryGetProcAddress(int argc, char* argv[])
 	LibraryPath[length] = 0;
 
 	NativePathCchAppend(LibraryPath, PATHCCH_MAX_CCH, _T("TestLibraryA")); /* subdirectory */
+
+#else /* _WIN32 */
+
+	/* On Windows the test libraries are in same folder as the test executable */
+	GetModuleFileName(NULL, LibraryPath, PATHCCH_MAX_CCH);
+	PathRemoveFileSpec(LibraryPath);
+#endif
+
 	NativePathCchAppend(LibraryPath, PATHCCH_MAX_CCH, _T("TestLibraryA")); /* file name without extension */
 
 	SharedLibraryExtension = PathGetSharedLibraryExtension(PATH_SHARED_LIB_EXT_WITH_DOT);
