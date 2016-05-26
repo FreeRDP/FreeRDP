@@ -39,7 +39,7 @@ int TestPathCchFindExtension(int argc, char* argv[])
 
 	/* Test missing null-termination of pszPath */
 
-	hr = PathCchFindExtensionA(_T("c:\\456.789"), 9, &pszExt);
+	hr = PathCchFindExtensionA("c:\\45.789", 9, &pszExt); /* nb: correct would be 10 */
 	if (SUCCEEDED(hr))
 	{
 		printf("PathCchFindExtensionA unexpectedly succeeded with unterminated pszPath. result: 0x%08X\n", (ULONG)hr);
@@ -50,7 +50,7 @@ int TestPathCchFindExtension(int argc, char* argv[])
 	/* Test passing of an empty terminated string (must succeed) */
 
 	pszExt = NULL;
-	pszTmp = _T("");
+	pszTmp = "";
 	hr = PathCchFindExtensionA(pszTmp, 1, &pszExt);
 	if (hr != S_OK)
 	{
@@ -68,7 +68,7 @@ int TestPathCchFindExtension(int argc, char* argv[])
 	/* Test a path without file extension (must succeed) */
 
 	pszExt = NULL;
-	pszTmp = _T("c:\\4.678\\");
+	pszTmp = "c:\\4.678\\";
 	hr = PathCchFindExtensionA(pszTmp, 10, &pszExt);
 	if (hr != S_OK)
 	{
@@ -93,7 +93,7 @@ int TestPathCchFindExtension(int argc, char* argv[])
 		return -1;
 	}
 
-	if (!pszExt || _tcscmp(pszExt, _T(".exe")))
+	if (!pszExt || strcmp(pszExt, ".exe"))
 	{
 		printf("PathCchFindExtensionA failure: unexpected extension\n");
 		return -1;
