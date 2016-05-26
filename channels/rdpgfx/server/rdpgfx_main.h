@@ -26,11 +26,15 @@
 struct _rdpgfx_server_private
 {
 	ZGFX_CONTEXT* zgfx;
+	BOOL ownThread;
 	HANDLE thread;
 	HANDLE stopEvent;
+	HANDLE channelEvent;
 	void* rdpgfx_channel;
 	DWORD SessionId;
-	BOOL opened;
+	wStream* input_stream;
+	BOOL isOpened;
+	BOOL isReady;
 };
 
 #endif /* FREERDP_CHANNEL_RDPGFX_SERVER_MAIN_H */
