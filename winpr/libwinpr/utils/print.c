@@ -43,7 +43,7 @@ void winpr_HexDump(const char* tag, UINT32 level, const BYTE* data, int length)
 
 	if (!buffer)
 	{
-		WLog_ERR(tag, "malloc(%zd) failed with [%d] %s", blen, errno, strerror(errno));
+		WLog_ERR(tag, "malloc(%lu) failed with [%d] %s", (unsigned long)blen, errno, strerror(errno));
 		return;
 	}
 
@@ -84,7 +84,7 @@ void winpr_CArrayDump(const char* tag, UINT32 level, const BYTE* data, int lengt
 
 	if (!buffer)
 	{
-		WLog_ERR(tag, "malloc(%zd) failed with [%d] %s", llen, errno, strerror(errno));
+		WLog_ERR(tag, "malloc(%lu) failed with [%d] %s", (unsigned long)llen, errno, strerror(errno));
 		return;
 	}
 
