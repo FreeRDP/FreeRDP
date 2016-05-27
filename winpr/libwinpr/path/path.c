@@ -517,9 +517,8 @@ HRESULT PathCchFindExtensionA(PCSTR pszPath, size_t cchPath, PCSTR* ppszExt)
 
 	/* find end of string */
 
-	while (*p && cchPath)
+	while (*p && --cchPath)
 	{
-		cchPath--;
 		p++;
 	}
 

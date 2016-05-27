@@ -44,8 +44,8 @@ HRESULT PATH_ALLOC_COMBINE(PCWSTR pszPathIn, PCWSTR pszMore, unsigned long dwFla
 	if (!pszPathIn)
 		return E_FAIL;  /* valid but not implemented, see top comment */
 
-	pszPathInLength = lstrlenA(pszPathIn);
-	pszMoreLength = lstrlenA(pszMore);
+	pszPathInLength = wcslen(pszPathIn);
+	pszMoreLength = wcslen(pszMore);
 
 	/* prevent segfaults - the complete implementation below is buggy */
 	if (pszPathInLength < 3)
