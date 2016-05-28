@@ -452,37 +452,32 @@ static INLINE UINT32 rdpgfx_estimate_surface_command(RDPGFX_SURFACE_COMMAND* cmd
 	UINT32 h264Size = 0;
 
 	/* Create new stream according to codec. */
-	if (cmd->codecId == RDPGFX_CODECID_CAPROGRESSIVE ||
-			cmd->codecId == RDPGFX_CODECID_CAPROGRESSIVE_V2)
+	switch (cmd->codecId)
 	{
-		return sizeof(RDPGFX_WIRE_TO_SURFACE_PDU_2) + cmd->length;
-	}
-	else if (cmd->codecId == RDPGFX_CODECID_AVC420)
-	{
-		havc420 = (RDPGFX_AVC420_BITMAP_STREAM*)cmd->extra;
-		h264Size = rdpgfx_estimate_h264_avc420(havc420);
-		return sizeof(RDPGFX_WIRE_TO_SURFACE_PDU_1) + h264Size;
-	}
-	else if (cmd->codecId == RDPGFX_CODECID_AVC444)
-	{
-		havc444 = (RDPGFX_AVC444_BITMAP_STREAM*)cmd->extra;
-		h264Size = sizeof(UINT32); /* cbAvc420EncodedBitstream1 */
-		/* avc420EncodedBitstream1 */
-		havc420 = &(havc444->bitstream[0]);
-		h264Size += rdpgfx_estimate_h264_avc420(havc420);
-
-		/* avc420EncodedBitstream2 */
-		if (havc444->LC == 0)
-		{
-			havc420 = &(havc444->bitstream[1]);
+		case RDPGFX_CODECID_CAPROGRESSIVE:
+		case RDPGFX_CODECID_CAPROGRESSIVE_V2:
+			return sizeof(RDPGFX_WIRE_TO_SURFACE_PDU_2) + cmd->length;
+		case RDPGFX_CODECID_AVC420:
+			havc420 = (RDPGFX_AVC420_BITMAP_STREAM*)cmd->extra;
+			h264Size = rdpgfx_estimate_h264_avc420(havc420);
+			return sizeof(RDPGFX_WIRE_TO_SURFACE_PDU_1) + h264Size;
+		case RDPGFX_CODECID_AVC444:
+			havc444 = (RDPGFX_AVC444_BITMAP_STREAM*)cmd->extra;
+			h264Size = sizeof(UINT32); /* cbAvc420EncodedBitstream1 */
+			/* avc420EncodedBitstream1 */
+			havc420 = &(havc444->bitstream[0]);
 			h264Size += rdpgfx_estimate_h264_avc420(havc420);
-		}
 
-		return sizeof(RDPGFX_WIRE_TO_SURFACE_PDU_1) + h264Size;
-	}
-	else
-	{
-		return sizeof(RDPGFX_WIRE_TO_SURFACE_PDU_1) + cmd->length;
+			/* avc420EncodedBitstream2 */
+			if (havc444->LC == 0)
+			{
+				havc420 = &(havc444->bitstream[1]);
+				h264Size += rdpgfx_estimate_h264_avc420(havc420);
+			}
+
+			return sizeof(RDPGFX_WIRE_TO_SURFACE_PDU_1) + h264Size;
+		default:
+			return sizeof(RDPGFX_WIRE_TO_SURFACE_PDU_1) + cmd->length;
 	}
 }
 
