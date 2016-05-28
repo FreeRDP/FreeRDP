@@ -303,7 +303,8 @@ static UINT xf_SurfaceCommand_RemoteFX(xfContext* xfc, RdpgfxClientContext* cont
 	if (!surface)
 		return ERROR_INTERNAL_ERROR;
 
-	if (!freerdp_client_codecs_prepare(surface->codecs, FREERDP_CODEC_REMOTEFX))
+	if (!freerdp_client_codecs_prepare(surface->codecs, FREERDP_CODEC_REMOTEFX,
+									   surface->width, surface->height))
 		return ERROR_INTERNAL_ERROR;
 
 	if (!(message = rfx_process_message(surface->codecs->rfx, cmd->data, cmd->length)))
@@ -383,7 +384,9 @@ static UINT xf_SurfaceCommand_ClearCodec(xfContext* xfc, RdpgfxClientContext* co
 	if (!surface)
 		return ERROR_INTERNAL_ERROR;
 
-	if (!freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_CLEARCODEC))
+	if (!freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_CLEARCODEC,
+									   xfc->settings->DesktopWidth,
+									   xfc->settings->DesktopHeight))
 		return ERROR_INTERNAL_ERROR;
 
 	DstData = surface->data;
@@ -427,7 +430,8 @@ static UINT xf_SurfaceCommand_Planar(xfContext* xfc, RdpgfxClientContext* contex
 	if (!surface)
 		return ERROR_INTERNAL_ERROR;
 
-	if (!freerdp_client_codecs_prepare(surface->codecs, FREERDP_CODEC_PLANAR))
+	if (!freerdp_client_codecs_prepare(surface->codecs, FREERDP_CODEC_PLANAR,
+									   surface->width, surface->height))
 		return ERROR_INTERNAL_ERROR;
 
 	DstData = surface->data;
@@ -466,7 +470,8 @@ static UINT xf_SurfaceCommand_AVC420(xfContext* xfc, RdpgfxClientContext* contex
 	if (!surface)
 		return ERROR_INTERNAL_ERROR;
 
-	if (!freerdp_client_codecs_prepare(surface->codecs, FREERDP_CODEC_AVC420))
+	if (!freerdp_client_codecs_prepare(surface->codecs, FREERDP_CODEC_AVC420,
+									   surface->width, surface->height))
 		return ERROR_INTERNAL_ERROR;
 
 	bs = (RDPGFX_AVC420_BITMAP_STREAM*) cmd->extra;
@@ -523,7 +528,8 @@ static UINT xf_SurfaceCommand_AVC444(xfContext* xfc, RdpgfxClientContext* contex
 	if (!surface)
 		return ERROR_INTERNAL_ERROR;
 
-	if (!freerdp_client_codecs_prepare(surface->codecs, FREERDP_CODEC_AVC444))
+	if (!freerdp_client_codecs_prepare(surface->codecs, FREERDP_CODEC_AVC444,
+									   surface->width, surface->height))
 		return ERROR_INTERNAL_ERROR;
 
 	bs = (RDPGFX_AVC444_BITMAP_STREAM*) cmd->extra;
@@ -587,7 +593,8 @@ static UINT xf_SurfaceCommand_Alpha(xfContext* xfc, RdpgfxClientContext* context
 	if (!surface)
 		return ERROR_INTERNAL_ERROR;
 
-	if (!freerdp_client_codecs_prepare(surface->codecs, FREERDP_CODEC_ALPHACODEC))
+	if (!freerdp_client_codecs_prepare(surface->codecs, FREERDP_CODEC_ALPHACODEC,
+									   surface->width, surface->height))
 		return ERROR_INTERNAL_ERROR;
 
 	WLog_DBG(TAG, "xf_SurfaceCommand_Alpha: status: %d", status);
@@ -638,7 +645,8 @@ static UINT xf_SurfaceCommand_Progressive(xfContext* xfc, RdpgfxClientContext* c
 	if (!surface)
 		return ERROR_INTERNAL_ERROR;
 
-	if (!freerdp_client_codecs_prepare(surface->codecs, FREERDP_CODEC_PROGRESSIVE))
+	if (!freerdp_client_codecs_prepare(surface->codecs, FREERDP_CODEC_PROGRESSIVE,
+									   surface->width, surface->height))
 		return ERROR_INTERNAL_ERROR;
 
 	progressive_create_surface_context(surface->codecs->progressive, cmd->surfaceId, surface->width, surface->height);
@@ -800,13 +808,6 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context, RDPGFX_CREATE_SURFACE
 	{
 		free (surface);
 		return CHANNEL_RC_NO_MEMORY;
-	}
-
-	if (!freerdp_client_codecs_reset(surface->codecs, FREERDP_CODEC_ALL,
-					 createSurface->width, createSurface->height))
-	{
-		free (surface);
-		return ERROR_INTERNAL_ERROR;
 	}
 
 	surface->surfaceId = createSurface->surfaceId;

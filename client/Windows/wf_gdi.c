@@ -406,7 +406,9 @@ BOOL wf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 
 			if (bitsPerPixel < 32)
 			{
-				if (!freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_INTERLEAVED))
+				if (!freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_INTERLEAVED,
+												   wfc->instance->settings->DesktopWidth,
+												   wfc->instance->settings->DesktopHeight))
 					return FALSE;
 
 				status = interleaved_decompress(codecs->interleaved, pSrcData, SrcSize, bitsPerPixel,
@@ -414,7 +416,9 @@ BOOL wf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 			}
 			else
 			{
-				if (!freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_PLANAR))
+				if (!freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_PLANAR,
+												   wfc->instance->settings->DesktopWidth,
+												   wfc->instance->settings->DesktopHeight))
 					return FALSE;
 
 				status = planar_decompress(codecs->planar, pSrcData, SrcSize, &pDstData,
@@ -677,7 +681,9 @@ void wf_gdi_surface_bits(wfContext* wfc, SURFACE_BITS_COMMAND* surface_bits_comm
 
 	if (surface_bits_command->codecID == RDP_CODEC_ID_REMOTEFX)
 	{
-		if (!freerdp_client_codecs_prepare(wfc->codecs, FREERDP_CODEC_REMOTEFX))
+		if (!freerdp_client_codecs_prepare(wfc->codecs, FREERDP_CODEC_REMOTEFX,
+										   wfc->instance->settings->DesktopWidth,
+										   wfc->instance->settings->DesktopHeight))
 			return;
 
 		if (!(message = rfx_process_message(wfc->codecs->rfx, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength)))
@@ -719,7 +725,9 @@ void wf_gdi_surface_bits(wfContext* wfc, SURFACE_BITS_COMMAND* surface_bits_comm
 	}
 	else if (surface_bits_command->codecID == RDP_CODEC_ID_NSCODEC)
 	{
-		if (!freerdp_client_codecs_prepare(wfc->codecs, FREERDP_CODEC_NSCODEC))
+		if (!freerdp_client_codecs_prepare(wfc->codecs, FREERDP_CODEC_NSCODEC,
+										   wfc->instance->settings->DesktopWidth,
+										   wfc->instance->settings->DesktopHeight))
 			return;
 
 		nsc_process_message(wfc->codecs->nsc, surface_bits_command->bpp, surface_bits_command->width, surface_bits_command->height,
