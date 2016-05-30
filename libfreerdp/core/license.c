@@ -386,14 +386,14 @@ BOOL license_generate_keys(rdpLicense* license)
 BOOL license_generate_hwid(rdpLicense* license)
 {
 	WINPR_MD5_CTX md5;
-	BYTE macAddress[6];
+	BYTE macAddress[15];
 
 	ZeroMemory(macAddress, sizeof(macAddress));
 	ZeroMemory(license->HardwareId, HWID_LENGTH);
 
 	if (!winpr_MD5_Init(&md5))
 		return FALSE;
-	if (!winpr_MD5_Update(&md5, macAddress, sizeof(macAddress)))
+	if (!winpr_MD5_Update(&md5, (BYTE*)license->rdp->settings->ClientHostname, sizeof(macAddress)))
 		return FALSE;
 	if (!winpr_MD5_Final(&md5, &license->HardwareId[HWID_PLATFORM_ID_LENGTH], WINPR_MD5_DIGEST_LENGTH))
 		return FALSE;
