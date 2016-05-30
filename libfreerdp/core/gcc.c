@@ -1428,8 +1428,18 @@ BOOL gcc_read_client_network_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	/* channelDefArray */
 	for (i = 0; i < mcs->channelCount; i++)
 	{
-		/* CHANNEL_DEF */
+		/**
+		 * CHANNEL_DEF
+		 * - name: an 8-byte array containing a null-terminated collection
+		 *   of seven ANSI characters that uniquely identify the channel.
+		 * - options: a 32-bit, unsigned integer. Channel option flags
+		 */
 		Stream_Read(s, mcs->channels[i].Name, 8); /* name (8 bytes) */
+		if (!memchr(mcs->channels[i].Name, 0, 8))
+		{
+			WLog_ERR(TAG, "protocol violation: received a static channel name with missing null-termination");
+			return FALSE;
+		}
 		Stream_Read_UINT32(s, mcs->channels[i].options); /* options (4 bytes) */
 		mcs->channels[i].ChannelId = mcs->baseChannelId++;
 	}
