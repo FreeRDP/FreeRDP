@@ -14,7 +14,7 @@ static void *read_image(const char *src, size_t *size)
 	int success = 0;
 	void *a = NULL;
 	long src_size;
-	FILE *fsrc = fopen(src, "r");
+	FILE *fsrc = fopen(src, "rb");
 
 	if (!fsrc)
 	{
@@ -40,13 +40,13 @@ static void *read_image(const char *src, size_t *size)
 
 	if (!a)
 	{
-		fprintf(stderr, "Failed malloc %zd bytes\n", src_size);
+		fprintf(stderr, "Failed malloc %ld bytes\n", src_size);
 		goto cleanup;
 	}
 
 	if (fread(a, sizeof(char), src_size, fsrc) != src_size)
 	{
-		fprintf(stderr, "Failed read %zd bytes\n", src_size);
+		fprintf(stderr, "Failed read %ld bytes\n", src_size);
 		goto cleanup;
 	}
 
