@@ -15,8 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-winpr_module_add(wtsapi.c
-	wtsapi.h)
+winpr_module_add(wtsapi.c)
 
 if(WIN32)
 	winpr_module_add(wtsapi_win32.c wtsapi_win32.h)
