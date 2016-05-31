@@ -30,7 +30,6 @@
 
 #include "wtsapi_win32.h"
 
-#include "wtsapi.h"
 #include "../log.h"
 
 #define WTSAPI_CHANNEL_MAGIC	0x44484356
@@ -71,6 +70,37 @@ static fnWinStationVirtualOpen pfnWinStationVirtualOpen = NULL;
 static fnWinStationVirtualOpenEx pfnWinStationVirtualOpenEx = NULL;
 
 BOOL WINAPI Win32_WTSVirtualChannelClose(HANDLE hChannel);
+
+
+/**
+  * NOTE !!
+  * An application using the WinPR wtsapi frees memory via WTSFreeMemory, which
+  * might be mapped to Win32_WTSFreeMemory. Latter does not know if the passed
+  * pointer was allocated by a function in wtsapi32.dll or in some internal
+  * code below. The WTSFreeMemory implementation in all Windows wtsapi32.dll
+  * versions up to Windows 10 uses LocalFree since all its allocating functions
+  * use LocalAlloc() internally.
+  * For that reason we also have to use LocalAlloc() for any memory returned by
+  * our WinPR wtsapi functions.
+  *
+  * To be safe we only use the _wts_malloc, _wts_calloc, _wts_free wrappers
+  * for memory managment the code below.
+  */
+
+static void *_wts_malloc(size_t size)
+{
+	return (PVOID)LocalAlloc(LMEM_FIXED, size);
+}
+
+static void *_wts_calloc(size_t nmemb, size_t size)
+{
+	return (PVOID)LocalAlloc(LMEM_FIXED | LMEM_ZEROINIT, nmemb * size);
+}
+
+static void _wts_free(void* ptr)
+{
+	LocalFree((HLOCAL)ptr);
+}
 
 BOOL Win32_WTSVirtualChannelReadAsync(WTSAPI_CHANNEL* pChannel)
 {
@@ -130,10 +160,19 @@ HANDLE WINAPI Win32_WTSVirtualChannelOpen_Internal(HANDLE hServer, DWORD Session
 	HANDLE hFile;
 	HANDLE hChannel;
 	WTSAPI_CHANNEL* pChannel;
+	size_t virtualNameLen;
 
-	if (!pVirtualName)
+	virtualNameLen = pVirtualName ? strlen(pVirtualName) : 0;
+
+	if (!virtualNameLen)
 	{
 		SetLastError(ERROR_INVALID_PARAMETER);
+		return NULL;
+	}
+
+	if (!pfnWinStationVirtualOpenEx)
+	{
+		SetLastError(ERROR_INVALID_FUNCTION);
 		return NULL;
 	}
 
@@ -142,7 +181,7 @@ HANDLE WINAPI Win32_WTSVirtualChannelOpen_Internal(HANDLE hServer, DWORD Session
 	if (!hFile)
 		return NULL;
 
-	pChannel = (WTSAPI_CHANNEL*) calloc(1, sizeof(WTSAPI_CHANNEL));
+	pChannel = (WTSAPI_CHANNEL*) _wts_calloc(1, sizeof(WTSAPI_CHANNEL));
 
 	if (!pChannel)
 	{
@@ -156,14 +195,15 @@ HANDLE WINAPI Win32_WTSVirtualChannelOpen_Internal(HANDLE hServer, DWORD Session
 	pChannel->hServer = hServer;
 	pChannel->SessionId = SessionId;
 	pChannel->hFile = hFile;
-	pChannel->VirtualName = _strdup(pVirtualName);
+	pChannel->VirtualName = _wts_calloc(1, virtualNameLen + 1);
 	if (!pChannel->VirtualName)
 	{
 		CloseHandle(hFile);
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-		free(pChannel);
+		_wts_free(pChannel);
 		return NULL;
 	}
+	memcpy(pChannel->VirtualName, pVirtualName, virtualNameLen);
 
 	pChannel->flags = flags;
 	pChannel->dynamic = (flags & WTS_CHANNEL_OPTION_DYNAMIC) ? TRUE : FALSE;
@@ -171,7 +211,7 @@ HANDLE WINAPI Win32_WTSVirtualChannelOpen_Internal(HANDLE hServer, DWORD Session
 	pChannel->showProtocol = pChannel->dynamic;
 
 	pChannel->readSize = CHANNEL_PDU_LENGTH;
-	pChannel->readBuffer = (BYTE*) malloc(pChannel->readSize);
+	pChannel->readBuffer = (BYTE*) _wts_malloc(pChannel->readSize);
 
 	pChannel->header = (CHANNEL_PDU_HEADER*) pChannel->readBuffer;
 	pChannel->chunk = &(pChannel->readBuffer[sizeof(CHANNEL_PDU_HEADER)]);
@@ -230,18 +270,18 @@ BOOL WINAPI Win32_WTSVirtualChannelClose(HANDLE hChannel)
 
 	if (pChannel->VirtualName)
 	{
-		free(pChannel->VirtualName);
+		_wts_free(pChannel->VirtualName);
 		pChannel->VirtualName = NULL;
 	}
 
 	if (pChannel->readBuffer)
 	{
-		free(pChannel->readBuffer);
+		_wts_free(pChannel->readBuffer);
 		pChannel->readBuffer = NULL;
 	}
 
 	pChannel->magic = 0;
-	free(pChannel);
+	_wts_free(pChannel);
 
 	return status;
 }
@@ -660,7 +700,7 @@ BOOL WINAPI Win32_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CLAS
 	else if (WtsVirtualClass == WTSVirtualFileHandle)
 	{
 		*pBytesReturned = sizeof(HANDLE);
-		*ppBuffer = calloc(1, *pBytesReturned);
+		*ppBuffer = _wts_calloc(1, *pBytesReturned);
 
 		if (*ppBuffer == NULL)
 		{
@@ -673,7 +713,7 @@ BOOL WINAPI Win32_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CLAS
 	else if (WtsVirtualClass == WTSVirtualEventHandle)
 	{
 		*pBytesReturned = sizeof(HANDLE);
-		*ppBuffer = calloc(1, *pBytesReturned);
+		*ppBuffer = _wts_calloc(1, *pBytesReturned);
 
 		if (*ppBuffer == NULL)
 		{
@@ -697,12 +737,12 @@ BOOL WINAPI Win32_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CLAS
 
 VOID WINAPI Win32_WTSFreeMemory(PVOID pMemory)
 {
-	free(pMemory);
+	_wts_free(pMemory);
 }
 
 BOOL WINAPI Win32_WTSFreeMemoryExW(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory, ULONG NumberOfEntries)
 {
-	return TRUE;
+	return FALSE;
 }
 
 BOOL WINAPI Win32_WTSFreeMemoryExA(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory, ULONG NumberOfEntries)
@@ -710,18 +750,18 @@ BOOL WINAPI Win32_WTSFreeMemoryExA(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory, U
 	return WTSFreeMemoryExW(WTSTypeClass, pMemory, NumberOfEntries);
 }
 
-int Win32_InitializeWinSta(PWtsApiFunctionTable pWtsApi)
+BOOL Win32_InitializeWinSta(PWtsApiFunctionTable pWtsApi)
 {
 	g_WinStaModule = LoadLibraryA("winsta.dll");
 
 	if (!g_WinStaModule)
-		return -1;
+		return FALSE;
 
 	pfnWinStationVirtualOpen = (fnWinStationVirtualOpen) GetProcAddress(g_WinStaModule, "WinStationVirtualOpen");
 	pfnWinStationVirtualOpenEx = (fnWinStationVirtualOpenEx) GetProcAddress(g_WinStaModule, "WinStationVirtualOpenEx");
 
-	if (!pfnWinStationVirtualOpenEx)
-		return -1;
+	if (!pfnWinStationVirtualOpen | !pfnWinStationVirtualOpenEx)
+		return FALSE;
 
 	pWtsApi->pVirtualChannelOpen = Win32_WTSVirtualChannelOpen;
 	pWtsApi->pVirtualChannelOpenEx = Win32_WTSVirtualChannelOpenEx;
@@ -735,5 +775,5 @@ int Win32_InitializeWinSta(PWtsApiFunctionTable pWtsApi)
 	//pWtsApi->pFreeMemoryExW = Win32_WTSFreeMemoryExW;
 	//pWtsApi->pFreeMemoryExA = Win32_WTSFreeMemoryExA;
 
-	return 1;
+	return TRUE;
 }
