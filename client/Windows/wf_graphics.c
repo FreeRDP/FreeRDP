@@ -173,7 +173,9 @@ void wf_Bitmap_Decompress(wfContext* wfc, rdpBitmap* bitmap,
 	{
 		if (bpp < 32)
 		{
-			if (!freerdp_client_codecs_prepare(wfc->codecs, FREERDP_CODEC_INTERLEAVED))
+			if (!freerdp_client_codecs_prepare(wfc->codecs, FREERDP_CODEC_INTERLEAVED,
+											   wfc->instance->settings->DesktopWidth,
+											   wfc->instance->settings->DesktopHeight))
 				return;
 
 			status = interleaved_decompress(wfc->codecs->interleaved, pSrcData, SrcSize, bpp,
@@ -181,7 +183,9 @@ void wf_Bitmap_Decompress(wfContext* wfc, rdpBitmap* bitmap,
 		}
 		else
 		{
-			if (!freerdp_client_codecs_prepare(wfc->codecs, FREERDP_CODEC_PLANAR))
+			if (!freerdp_client_codecs_prepare(wfc->codecs, FREERDP_CODEC_PLANAR,
+											   wfc->instance->settings->DesktopWidth,
+											   wfc->instance->settings->DesktopHeight))
 				return;
 
 			status = planar_decompress(wfc->codecs->planar, pSrcData, SrcSize, &pDstData,
