@@ -3,6 +3,7 @@
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
 #include <winpr/winpr.h>
+#include <winpr/tchar.h>
 
 int TestEnumerateSecurityPackages(int argc, char* argv[])
 {
@@ -21,11 +22,11 @@ int TestEnumerateSecurityPackages(int argc, char* argv[])
 		return -1;	
 	}
 
-	printf("\nEnumerateSecurityPackages (%d):\n", (unsigned int)cPackages);
+	_tprintf(_T("\nEnumerateSecurityPackages (%d):\n"), (unsigned int)cPackages);
 
 	for (index = 0; index < (int) cPackages; index++)
 	{
-		printf("\"%s\", \"%s\"\n", pPackageInfo[index].Name, pPackageInfo[index].Comment);
+		_tprintf(_T("\"%s\", \"%s\"\n"), pPackageInfo[index].Name, pPackageInfo[index].Comment);
 	}
 
 	FreeContextBuffer(pPackageInfo);

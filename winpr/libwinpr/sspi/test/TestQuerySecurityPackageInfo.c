@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <winpr/sspi.h>
 #include <winpr/winpr.h>
+#include <winpr/tchar.h>
 
 int TestQuerySecurityPackageInfo(int argc, char* argv[])
 {
@@ -18,8 +19,8 @@ int TestQuerySecurityPackageInfo(int argc, char* argv[])
 		return -1;
 	}
 
-	printf("\nQuerySecurityPackageInfo:\n");
-	printf("\"%s\", \"%s\"\n", pPackageInfo->Name, pPackageInfo->Comment);
+	_tprintf(_T("\nQuerySecurityPackageInfo:\n"));
+	_tprintf(_T("\"%s\", \"%s\"\n"), pPackageInfo->Name, pPackageInfo->Comment);
 
 	sspi_GlobalFinish();
 

@@ -16,7 +16,7 @@ int TestEnvironmentGetEnvironmentStrings(int argc, char* argv[])
 
 	while (p[0] && p[1])
 	{
-		printf("%s\n", p);
+		_tprintf(_T("%s\n"), p);
 		length = _tcslen(p);
 		p += (length + 1);
 	}
