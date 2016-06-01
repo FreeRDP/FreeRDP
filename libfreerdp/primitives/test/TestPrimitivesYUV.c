@@ -25,7 +25,7 @@ static BOOL similar(const BYTE* src, const BYTE* dst, size_t size)
 
 		if (abs(diff) > 2)
 		{
-			fprintf(stderr, "%zd %02X : %02X diff=%lf\n", x, val1, val2, diff);
+			fprintf(stderr, "%lu %02X : %02X diff=%lf\n", (unsigned long)x, val1, val2, diff);
 			return FALSE;
 		}
 	}
@@ -66,8 +66,8 @@ static BOOL check_padding(const BYTE* psrc, size_t size, size_t padding, const c
 			while((x < halfPad) && (*esrc++ != 'A'))
 				x++;
 
-			fprintf(stderr, "Buffer underflow detected %02x != %02X %s [%zd-%zd]\n",
-				d, 'A', buffer, start, x);
+			fprintf(stderr, "Buffer underflow detected %02x != %02X %s [%lu-%lu]\n",
+				d, 'A', buffer, (unsigned long)start, (unsigned long)x);
 			return FALSE;
 		}
 		if(d != 'A')
@@ -76,8 +76,8 @@ static BOOL check_padding(const BYTE* psrc, size_t size, size_t padding, const c
 			while((x < halfPad) && (*esrc++ != 'A'))
 				x++;
 
-			fprintf(stderr, "Buffer overflow detected %02x != %02X %s [%zd-%zd]\n",
-				d, 'A', buffer, start, x);
+			fprintf(stderr, "Buffer overflow detected %02x != %02X %s [%lu-%lu]\n",
+				d, 'A', buffer, (unsigned long)start, (unsigned long)x);
 			return FALSE;
 		}
 	}

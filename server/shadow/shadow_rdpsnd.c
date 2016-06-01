@@ -62,7 +62,6 @@ static void rdpsnd_activated(RdpsndServerContext* context)
 	}
 
 	context->SelectFormat(context, i);
-	context->SetVolume(context, 0x7FFF, 0x7FFF);
 }
 
 int shadow_client_rdpsnd_init(rdpShadowClient* client)

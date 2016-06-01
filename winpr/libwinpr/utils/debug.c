@@ -357,25 +357,22 @@ char** winpr_backtrace_symbols(void* buffer, size_t* used)
 	{
 		size_t line_len = (data->max > 1024) ? data->max : 1024;
 		size_t i;
-		char* lines = calloc(data->used + 1, sizeof(char *) * line_len);
-		char** vlines = (char**) lines;
+		size_t array_size = data->used * sizeof(char*);
+		size_t lines_size = data->used * line_len;
+		char **vlines = calloc(1, array_size + lines_size);
+
 		backtrace_symbol_t* symbols = calloc(data->used, sizeof(backtrace_symbol_t));
 
-		if (!lines || !symbols)
+		if (!vlines || !symbols)
 		{
-			if (lines)
-				free(lines);
-
-			if (symbols)
-				free(symbols);
-
+			free(vlines);
+			free(symbols);
 			return NULL;
 		}
 
-		/* To allow a char** malloced array to be returned, allocate n+1 lines
-		* and fill in the first lines[i] char with the address of lines[(i+1) * 1024] */
+		/* Set the pointers in the allocated buffer's initial array section */
 		for (i = 0; i < data->used; i++)
-			vlines[i] = &lines[(i + 1) * line_len];
+			vlines[i] = (char*)vlines + array_size + i * line_len;
 
 		fkt->get_backtrace_symbols(data->buffer, data->used, symbols);
 
@@ -388,7 +385,7 @@ char** winpr_backtrace_symbols(void* buffer, size_t* used)
 		if (used)
 			*used = data->used;
 
-		return (char**) lines;
+		return vlines;
 	}
 #elif (defined(_WIN32) || defined(_WIN64)) && !defined(_UWP)
 	{
@@ -396,22 +393,17 @@ char** winpr_backtrace_symbols(void* buffer, size_t* used)
 		size_t line_len = 1024;
 		HANDLE process = GetCurrentProcess();
 		t_win_stack* data = (t_win_stack*) buffer;
-		char *lines = calloc(data->used + 1, sizeof(char*) * line_len);
-		char **vlines = (char**) lines;
+		size_t array_size = data->used * sizeof(char*);
+		size_t lines_size = data->used * line_len;
+		char **vlines = calloc(1, array_size + lines_size);
 		SYMBOL_INFO* symbol = calloc(sizeof(SYMBOL_INFO) + line_len * sizeof(char), 1);
 		IMAGEHLP_LINE64* line = (IMAGEHLP_LINE64*) calloc(1, sizeof(IMAGEHLP_LINE64));
 
-		if (!lines || !symbol || !line)
+		if (!vlines || !symbol || !line)
 		{
-				if (lines)
-					free(lines);
-
-				if (symbol)
-					free(symbol);
-
-				if (line)
-					free(line);
-
+				free(vlines);
+				free(symbol);
+				free(line);
 				return NULL;
 		}
 
@@ -419,10 +411,9 @@ char** winpr_backtrace_symbols(void* buffer, size_t* used)
 		symbol->MaxNameLen = line_len;
 		symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
 
-		/* To allow a char** malloced array to be returned, allocate n+1 lines
-		* and fill in the first lines[i] char with the address of lines[(i+1) * 1024] */
+		/* Set the pointers in the allocated buffer's initial array section */
 		for (i = 0; i < data->used; i++)
-			vlines[i] = &lines[(i + 1) * line_len];
+			vlines[i] = (char*)vlines + array_size + i * line_len;
 
 		for (i = 0; i < data->used; i++)
 		{
@@ -445,7 +436,7 @@ char** winpr_backtrace_symbols(void* buffer, size_t* used)
 			free(symbol);
 			free(line);
 
-			return (char**) lines;
+			return vlines;
 	}
 #else
 	LOGF(support_msg);
@@ -504,7 +495,7 @@ void winpr_log_backtrace(const char* tag, DWORD level, DWORD size)
 	if (msg)
 	{
 		for (x=0; x<used; x++)
-			WLog_LVL(tag, level, "%zd: %s\n", x, msg[x]);
+			WLog_LVL(tag, level, "%lu: %s\n", (unsigned long)x, msg[x]);
 	}
 	winpr_backtrace_free(stack);
 }

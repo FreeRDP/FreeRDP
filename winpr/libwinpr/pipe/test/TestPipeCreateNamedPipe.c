@@ -76,7 +76,7 @@ static void* named_pipe_client_thread(void* arg)
 		goto out;
 	}
 
-	printf("Client ReadFile (%d):\n", lpNumberOfBytesRead);
+	printf("Client ReadFile: %u bytes\n", lpNumberOfBytesRead);
 	winpr_HexDump("pipe.test", WLOG_DEBUG, lpReadBuffer, lpNumberOfBytesRead);
 	fSuccess = TRUE;
 out:
@@ -118,10 +118,16 @@ static void* named_pipe_server_thread(void* arg)
 	}
 
 	SetEvent(ReadyEvent);
-	fConnected = ConnectNamedPipe(hNamedPipe, NULL);
 
-	if (!fConnected)
-		fConnected = (GetLastError() == ERROR_PIPE_CONNECTED);
+	/**
+	 * Note:
+	 * If a client connects before ConnectNamedPipe is called, the function returns zero and
+	 * GetLastError returns ERROR_PIPE_CONNECTED. This can happen if a client connects in the
+	 * interval between the call to CreateNamedPipe and the call to ConnectNamedPipe.
+	 * In this situation, there is a good connection between client and server, even though
+	 * the function returns zero.
+	 */
+	fConnected = ConnectNamedPipe(hNamedPipe, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
 
 	if (!fConnected)
 	{
@@ -151,7 +157,7 @@ static void* named_pipe_server_thread(void* arg)
 		goto out;
 	}
 
-	printf("Server ReadFile (%d):\n", lpNumberOfBytesRead);
+	printf("Server ReadFile: %u bytes\n", lpNumberOfBytesRead);
 	winpr_HexDump("pipe.test", WLOG_DEBUG, lpReadBuffer, lpNumberOfBytesRead);
 	lpNumberOfBytesWritten = 0;
 	nNumberOfBytesToWrite = PIPE_BUFFER_SIZE;
@@ -246,6 +252,7 @@ static void* named_pipe_single_thread(void* arg)
 
 	for (i = 0; i < numPipes; i++)
 	{
+		BOOL fConnected;
 		if ((clients[i] = CreateFile(lpszPipeNameSt, GENERIC_READ | GENERIC_WRITE,
 									  0, NULL, OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
 		{
@@ -253,9 +260,19 @@ static void* named_pipe_single_thread(void* arg)
 			goto out;
 		}
 
-		if (!ConnectNamedPipe(servers[i], NULL))
+		/**
+		 * Note:
+		 * If a client connects before ConnectNamedPipe is called, the function returns zero and
+		 * GetLastError returns ERROR_PIPE_CONNECTED. This can happen if a client connects in the
+		 * interval between the call to CreateNamedPipe and the call to ConnectNamedPipe.
+		 * In this situation, there is a good connection between client and server, even though
+		 * the function returns zero.
+		 */
+		fConnected = ConnectNamedPipe(servers[i], NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
+
+		if (!fConnected)
 		{
-			printf("%s: ConnectNamedPipe #%d failed\n", __FUNCTION__, i);
+			printf("%s: ConnectNamedPipe #%d failed. (%u)\n", __FUNCTION__, i, GetLastError());
 			goto out;
 		}
 	}
@@ -460,4 +477,3 @@ int TestPipeCreateNamedPipe(int argc, char* argv[])
 	CloseHandle(ServerThread);
 	return testFailed;
 }
-

@@ -22,6 +22,6 @@
 
 #include <winpr/wtsapi.h>
 
-int Win32_InitializeWinSta(PWtsApiFunctionTable pWtsApi);
+BOOL Win32_InitializeWinSta(PWtsApiFunctionTable pWtsApi);
 
 #endif /* WINPR_WTSAPI_WIN32_PRIVATE_H */

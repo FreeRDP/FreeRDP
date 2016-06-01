@@ -7,7 +7,8 @@
 #include <winpr/environment.h>
 #include <winpr/pipe.h>
 
-#define TESTENV "TEST_PROCESS=oyeah"
+#define TESTENV_A "HELLO=WORLD"
+#define TESTENV_T _T(TESTENV_A)
 
 int TestThreadCreateProcess(int argc, char* argv[])
 {
@@ -26,17 +27,17 @@ int TestThreadCreateProcess(int argc, char* argv[])
 	LPTCH lpszEnvironmentBlock;
 	HANDLE pipe_read = NULL;
 	HANDLE pipe_write = NULL;
-	char buf[255];
+	char buf[1024];
 	DWORD read_bytes;
 	int ret = 0;
+	SECURITY_ATTRIBUTES saAttr;
 
 	lpszEnvironmentBlock = GetEnvironmentStrings();
 
 	lpApplicationName = NULL;
-	//lpCommandLine = _T("ls -l /");
 
 #ifdef _WIN32
-	lpCommandLine = _T("env");
+	lpCommandLine = _T("cmd /C set");
 #else
 	lpCommandLine = _T("printenv");
 #endif
@@ -45,7 +46,9 @@ int TestThreadCreateProcess(int argc, char* argv[])
 	lpThreadAttributes = NULL;
 	bInheritHandles = FALSE;
 	dwCreationFlags = 0;
-	lpEnvironment = NULL;
+#ifdef _UNICODE
+	dwCreationFlags |= CREATE_UNICODE_ENVIRONMENT;
+#endif
 	lpEnvironment = lpszEnvironmentBlock;
 	lpCurrentDirectory = NULL;
 	ZeroMemory(&StartupInfo, sizeof(STARTUPINFO));
@@ -69,8 +72,11 @@ int TestThreadCreateProcess(int argc, char* argv[])
 		return 1;
 	}
 
-
-	WaitForSingleObject(ProcessInformation.hProcess, INFINITE);
+	if (WaitForSingleObject(ProcessInformation.hProcess, 5000) != WAIT_OBJECT_0)
+	{
+		printf("Failed to wait for first process. error=%d\n", GetLastError());
+		return 1;
+	}
 
 	exitCode = 0;
 	status = GetExitCodeProcess(ProcessInformation.hProcess, &exitCode);
@@ -82,22 +88,36 @@ int TestThreadCreateProcess(int argc, char* argv[])
 	CloseHandle(ProcessInformation.hThread);
 	FreeEnvironmentStrings(lpszEnvironmentBlock);
 
-	/* Test stdin,stdout,stderr redirection */
-	ZeroMemory(&StartupInfo, sizeof(STARTUPINFO));
-	StartupInfo.cb = sizeof(STARTUPINFO);
-	ZeroMemory(&ProcessInformation, sizeof(PROCESS_INFORMATION));
 
-	if (!CreatePipe(&pipe_read, &pipe_write, NULL, 0))
+	/* Test stdin,stdout,stderr redirection */
+
+	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+	saAttr.bInheritHandle = TRUE;
+	saAttr.lpSecurityDescriptor = NULL;
+
+	if (!CreatePipe(&pipe_read, &pipe_write, &saAttr, 0))
 	{
 		printf("Pipe creation failed. error=%d\n", GetLastError());
 		return 1;
 	}
+
+	bInheritHandles = TRUE;
+
+	ZeroMemory(&StartupInfo, sizeof(STARTUPINFO));
+	StartupInfo.cb = sizeof(STARTUPINFO);
 	StartupInfo.hStdOutput = pipe_write;
 	StartupInfo.hStdError = pipe_write;
+	StartupInfo.dwFlags = STARTF_USESTDHANDLES;
 
-	lpEnvironment = calloc(1, sizeof(TESTENV) + 1);
-	strncpy(lpEnvironment, TESTENV, strlen(TESTENV));
-	lpCommandLine = _T("printenv");
+	ZeroMemory(&ProcessInformation, sizeof(PROCESS_INFORMATION));
+
+	if (!(lpEnvironment = calloc(1, sizeof(TESTENV_T) + sizeof(TCHAR))))
+	{
+		printf("Failed to allocate environment buffer. error=%d\n", GetLastError());
+		return 1;
+	}
+	memcpy(lpEnvironment, (void*)TESTENV_T, sizeof(TESTENV_T));
+
 
 	status = CreateProcess(lpApplicationName,
 						   lpCommandLine,
@@ -120,22 +140,19 @@ int TestThreadCreateProcess(int argc, char* argv[])
 		return 1;
 	}
 
-	if (WaitForSingleObject(pipe_read, 200) != WAIT_OBJECT_0)
+	if (WaitForSingleObject(ProcessInformation.hProcess, 5000) != WAIT_OBJECT_0)
 	{
-		printf("pipe wait failed.\n");
-		ret = 1;
-	}
-	else
-	{
-		ReadFile(pipe_read, buf, 255, &read_bytes, NULL);
-		if (read_bytes < strlen(TESTENV))
-		{
-			printf("pipe read problem?!\n");
-			ret = 1;
-		}
+		printf("Failed to wait for second process. error=%d\n", GetLastError());
+		return 1;
 	}
 
-	WaitForSingleObject(ProcessInformation.hProcess, INFINITE);
+	ZeroMemory(buf, sizeof(buf));
+	ReadFile(pipe_read, buf, sizeof(buf)-1, &read_bytes, NULL);
+	if (!strstr((const char*)buf, TESTENV_A))
+	{
+		printf("No or unexpected data read from pipe\n");
+		ret = 1;
+	}
 
 	CloseHandle(pipe_read);
 	CloseHandle(pipe_write);

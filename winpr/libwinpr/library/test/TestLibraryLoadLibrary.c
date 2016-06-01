@@ -8,13 +8,14 @@
 
 int TestLibraryLoadLibrary(int argc, char* argv[])
 {
-	char* str;
-	int length;
-	LPTSTR BasePath;
 	HINSTANCE library;
 	LPCTSTR SharedLibraryExtension;
 	TCHAR LibraryPath[PATHCCH_MAX_CCH];
 
+#ifndef _WIN32
+	char* str;
+	int length;
+	LPTSTR BasePath;
 	str = argv[1];
 
 #ifdef UNICODE
@@ -42,6 +43,14 @@ int TestLibraryLoadLibrary(int argc, char* argv[])
 	LibraryPath[length] = 0;
 
 	NativePathCchAppend(LibraryPath, PATHCCH_MAX_CCH, _T("TestLibraryA")); /* subdirectory */
+
+#else /* _WIN32 */
+
+	/* On Windows the test libraries are in same folder as the test executable */
+	GetModuleFileName(NULL, LibraryPath, PATHCCH_MAX_CCH);
+	PathRemoveFileSpec(LibraryPath);
+#endif
+
 	NativePathCchAppend(LibraryPath, PATHCCH_MAX_CCH, _T("TestLibraryA")); /* file name without extension */
 
 	SharedLibraryExtension = PathGetSharedLibraryExtension(PATH_SHARED_LIB_EXT_WITH_DOT);
