@@ -139,9 +139,7 @@ int shadow_encoder_init_rfx(rdpShadowEncoder* encoder)
 	if (!rfx_context_reset(encoder->rfx, encoder->width, encoder->height))
 		goto fail;
 
-	encoder->rfx->mode = RLGR3;
-	encoder->rfx->width = encoder->width;
-	encoder->rfx->height = encoder->height;
+	encoder->rfx->mode = encoder->server->rfxMode;
 
 	rfx_context_set_pixel_format(encoder->rfx, RDP_PIXEL_FORMAT_B8G8R8A8);
 
@@ -245,6 +243,11 @@ int shadow_encoder_init_h264(rdpShadowEncoder* encoder)
 
 	if (!h264_context_reset(encoder->h264, encoder->width, encoder->height))
 		goto fail;
+
+	encoder->h264->RateControlMode = encoder->server->h264RateControlMode;
+	encoder->h264->BitRate = encoder->server->h264BitRate;
+	encoder->h264->FrameRate = encoder->server->h264FrameRate;
+	encoder->h264->QP = encoder->server->h264QP;
 
 	encoder->codecs |= FREERDP_CODEC_AVC420;
 

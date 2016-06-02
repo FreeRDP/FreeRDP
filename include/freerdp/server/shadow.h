@@ -127,6 +127,14 @@ struct rdp_shadow_server
 	BOOL authentication;
 	int selectedMonitor;
 	RECTANGLE_16 subRect;
+
+	/* Codec settings */
+	RLGR_MODE rfxMode;
+	H264_RATECONTROL_MODE h264RateControlMode;
+	UINT32 h264BitRate;
+	FLOAT h264FrameRate;
+	UINT32 h264QP;
+
 	char* ipcSocket;
 	char* ConfigPath;
 	char* CertificateFile;
