@@ -706,7 +706,14 @@ DWORD SuspendThread(HANDLE hThread)
 
 BOOL SwitchToThread(VOID)
 {
-	return (sched_yield() == 0);
+	/**
+	 * Note: on some operating systems sched_yield is a stub returning -1.
+	 * usleep should at least trigger a context switch if any thread is waiting.
+	 */
+	if (!sched_yield())
+		usleep(1);
+
+	return TRUE;
 }
 
 BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode)
