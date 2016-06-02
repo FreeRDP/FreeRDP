@@ -70,7 +70,7 @@ if(FREERDP_BUILD)
 else()
 	set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 
-	if(NOT IOS AND NOT ANDROID)
+	if(NOT IOS)
 		find_package(Threads REQUIRED)
 	endif()
 
@@ -99,7 +99,7 @@ else()
 	endif()
 
 	if(NOT WIN32)
-		check_library_exists(pthread pthread_mutex_timedlock "" HAVE_PTHREAD_MUTEX_TIMEDLOCK)
+		check_symbol_exists(pthread pthread_mutex_timedlock "" HAVE_PTHREAD_MUTEX_TIMEDLOCK)
 	endif()
 
 	set(OPENSSL_FEATURE_TYPE "OPTIONAL")

@@ -494,12 +494,12 @@ endif()
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 
-if(NOT IOS AND NOT ANDROID)
+if(NOT IOS)
 	find_package(Threads REQUIRED)
 endif()
 
 if(NOT WIN32)
-	check_library_exists(pthread pthread_mutex_timedlock "" HAVE_PTHREAD_MUTEX_TIMEDLOCK)
+	check_symbol_exists(pthread_mutex_timedlock pthread.h HAVE_PTHREAD_MUTEX_TIMEDLOCK)
 endif()
 
 if(WITH_VALGRIND_MEMCHECK)
