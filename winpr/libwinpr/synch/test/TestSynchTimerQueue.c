@@ -1,7 +1,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/sysinfo.h>
-
+#include <winpr/file.h>
 #include <winpr/synch.h>
 
 #define FIRE_COUNT	5
@@ -92,16 +92,20 @@ int TestSynchTimerQueue(int argc, char* argv[])
 			printf("Failed to wait for timer queue timer #%u (%u)\n", index, GetLastError());
 			return -1;
 		}
-		CloseHandle(apcData[index].CompletionEvent);
 	}
 
 	for (index = 0; index < TIMER_COUNT; index++)
 	{
-		if (!DeleteTimerQueueTimer(hTimerQueue, hTimers[index], NULL))
+		/**
+		 * Note: If the CompletionEvent parameter is INVALID_HANDLE_VALUE, the function waits
+		 * for any running timer callback functions to complete before returning.
+		 */
+		if (!DeleteTimerQueueTimer(hTimerQueue, hTimers[index], INVALID_HANDLE_VALUE))
 		{
 			printf("DeleteTimerQueueTimer failed (%u)\n", GetLastError());
 			return -1;
 		}
+		CloseHandle(apcData[index].CompletionEvent);
 	}
 
 	if (!DeleteTimerQueue(hTimerQueue))
