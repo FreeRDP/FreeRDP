@@ -96,9 +96,9 @@ if (FREERDP_EXTERNAL_PATH)
 endif()
 
 # Allow to search the host machine for git
-if(ANDROID OR IOS)
+if(CMAKE_CROSSCOMPILING)
 	SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM BOTH)
-endif(ANDROID OR IOS)
+endif(CMAKE_CROSSCOMPILING)
 
 include(GetGitRevisionDescription)
 git_get_exact_tag(GIT_REVISION --tags --always)
@@ -106,9 +106,9 @@ git_get_exact_tag(GIT_REVISION --tags --always)
 if (${GIT_REVISION} STREQUAL "n/a")
 	git_rev_parse (GIT_REVISION --short)
 endif()
-if(ANDROID OR IOS)
+if(CMAKE_CROSSCOMPILING)
 	SET (CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY)
-endif(ANDROID OR IOS)
+endif(CMAKE_CROSSCOMPILING)
 
 message(STATUS "Git Revision ${GIT_REVISION}")
 
@@ -458,6 +458,8 @@ endif()
 # Android
 if(ANDROID)
 	set(WITH_LIBRARY_VERSIONING "OFF")
+
+	set_property( GLOBAL PROPERTY  FIND_LIBRARY_USE_LIB64_PATHS ${ANDROID_LIBRARY_USE_LIB64_PATHS} )
 
 	if (${ANDROID_ABI} STREQUAL "armeabi")
 		set (WITH_NEON OFF)
