@@ -8,10 +8,6 @@
 if(OPENSLES_INCLUDE_DIR)
 	# Already in cache, be silent
 	set(OPENSLES_FIND_QUIETLY TRUE)
-elseif(ANDROID)
-	# Android has no pkgconfig - fallback to default paths
-	set(PC_OPENSLES_INCLUDE_DIR "${ANDROID_SYSROOT}/usr/include")
-	set(PC_OPENSLES_LIBDIR      "${ANDROID_SYSROOT}/usr/lib"    )
 else()
 	find_package(PkgConfig)
 	pkg_check_modules(PC_OPENSLES QUIET OpenSLES)
