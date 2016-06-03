@@ -175,20 +175,45 @@ BOOL WINAPI EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, DWO
 
 	if (remainingThreads > 0)
 	{
-		/* TODO: add spincount support */
-		WaitForSingleObject(hCurrentEvent, INFINITE);
+		DWORD dwProcessors = lpBarrier->Reserved4;
+		BOOL spinOnly = dwFlags & SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY;
+		BOOL blockOnly = dwFlags & SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY;
+		BOOL block = TRUE;
+
+		/**
+		 * If SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY is set we will
+		 * always spin and trust that the user knows what he/she/it
+		 * is doing. Otherwise we'll only spin if the flag
+		 * SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY is not set and
+		 * the number of remaining threads is less than the number
+		 * of processors.
+		 */
+
+		if (spinOnly || (remainingThreads < dwProcessors && !blockOnly))
+		{
+			DWORD dwSpinCount = lpBarrier->Reserved5;
+			DWORD sp = 0;
+			/* we spin until the last thread _completed_ the event switch */
+			while ((block = (lpBarrier->Reserved3[0] == (ULONG_PTR)hCurrentEvent)))
+				if (!spinOnly && ++sp > dwSpinCount)
+					break;
+		}
+
+		if (block)
+			WaitForSingleObject(hCurrentEvent, INFINITE);
+
 		return FALSE;
 	}
-
-	/* switch events */
-	lpBarrier->Reserved3[0] = (ULONG_PTR)hDormantEvent;
-	lpBarrier->Reserved3[1] = (ULONG_PTR)hCurrentEvent;
 
 	/* reset the dormant event first */
 	ResetEvent(hDormantEvent);
 
 	/* reset the remaining counter */
 	lpBarrier->Reserved1 = lpBarrier->Reserved2;
+
+	/* switch events - this will also unblock the spinning threads */
+	lpBarrier->Reserved3[1] = (ULONG_PTR)hCurrentEvent;
+	lpBarrier->Reserved3[0] = (ULONG_PTR)hDormantEvent;
 
 	/* signal the blocked threads */
 	SetEvent(hCurrentEvent);
