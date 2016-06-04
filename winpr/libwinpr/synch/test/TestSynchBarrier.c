@@ -95,7 +95,12 @@ BOOL TestSynchBarrierWithFlags(DWORD dwFlags)
 
 	if (i > 0)
 	{
-		SetEvent(gStartEvent);
+		if (!SetEvent(gStartEvent))
+		{
+			printf("%s: SetEvent(gStartEvent) failed with error = 0x%08x)\n",
+				__FUNCTION__, GetLastError());
+			InterlockedIncrement(&gErrorCount);
+		}
 
 		if (WAIT_OBJECT_0 != (dwStatus = WaitForMultipleObjects(i, threads, TRUE, INFINITE)))
 		{
@@ -105,7 +110,13 @@ BOOL TestSynchBarrierWithFlags(DWORD dwFlags)
 		}
 	}
 
-	CloseHandle(gStartEvent);
+	if (!CloseHandle(gStartEvent))
+	{
+		printf("%s: CloseHandle(gStartEvent) failed with error = 0x%08x)\n",
+			__FUNCTION__, GetLastError());
+		InterlockedIncrement(&gErrorCount);
+	}
+
 	DeleteSynchronizationBarrier(&gBarrier);
 
 	if (gTrueCount != EXPECTED_TRUE_COUNT)

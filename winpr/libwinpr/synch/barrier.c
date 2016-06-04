@@ -228,8 +228,14 @@ BOOL WINAPI DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier)
 		return pfnDeleteSynchronizationBarrier(lpBarrier);
 #endif
 
+	/**
+	 * According to https://msdn.microsoft.com/en-us/library/windows/desktop/hh706887(v=vs.85).aspx
+	 * Return value:
+	 * The DeleteSynchronizationBarrier function always returns TRUE.
+	 */
+
 	if (!lpBarrier)
-		return FALSE;
+		return TRUE;
 
 	while (lpBarrier->Reserved1 != lpBarrier->Reserved2)
 		SwitchToThread();
