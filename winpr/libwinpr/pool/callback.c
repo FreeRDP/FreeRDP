@@ -25,44 +25,32 @@
 #include <winpr/pool.h>
 #include <winpr/library.h>
 
+#ifdef WINPR_THREAD_POOL
+
 #ifdef _WIN32
-
-static BOOL module_initialized = FALSE;
-static BOOL module_available = FALSE;
-static HMODULE kernel32_module = NULL;
-
+static INIT_ONCE init_once_module = INIT_ONCE_STATIC_INIT;
 static BOOL (WINAPI * pCallbackMayRunLong)(PTP_CALLBACK_INSTANCE pci);
 
-static void module_init()
+static BOOL CALLBACK init_module(PINIT_ONCE once, PVOID param, PVOID *context)
 {
-	if (module_initialized)
-		return;
-
-	kernel32_module = LoadLibraryA("kernel32.dll");
-	module_initialized = TRUE;
-
-	if (!kernel32_module)
-		return;
-
-	module_available = TRUE;
-
-	pCallbackMayRunLong = (void*) GetProcAddress(kernel32_module, "CallbackMayRunLong");
+	HMODULE kernel32 = LoadLibraryA("kernel32.dll");
+	if (kernel32)
+	{
+		pCallbackMayRunLong = (void*)GetProcAddress(kernel32, "CallbackMayRunLong");
+	}
+	return TRUE;
 }
-
 #endif
-
-#ifdef WINPR_THREAD_POOL
 
 BOOL CallbackMayRunLong(PTP_CALLBACK_INSTANCE pci)
 {
 #ifdef _WIN32
-	module_init();
-
+	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);
 	if (pCallbackMayRunLong)
 		return pCallbackMayRunLong(pci);
-#else
 #endif
+	/* No default implementation */
 	return FALSE;
 }
 
-#endif
+#endif /* WINPR_THREAD_POOL defined */
