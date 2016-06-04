@@ -567,7 +567,12 @@ static BOOL wf_gw_authenticate(freerdp* instance,
 	return wf_authenticate_raw(instance, tmp, username, password, domain);
 }
 
-BOOL wf_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
+DWORD wf_verify_certificate(freerdp* instance,
+	const char* common_name,
+	const char* subject,
+	const char* issuer,
+	const char* fingerprint,
+	BOOL host_mismatch)
 {
 #if 0
 	DWORD mode;
@@ -578,9 +583,11 @@ BOOL wf_verify_certificate(freerdp* instance, char* subject, char* issuer, char*
 	HANDLE input_handle;
 #endif
 	WLog_INFO(TAG, "Certificate details:");
+	WLog_INFO(TAG, "\tCommonName: %s", common_name);
 	WLog_INFO(TAG, "\tSubject: %s", subject);
 	WLog_INFO(TAG, "\tIssuer: %s", issuer);
 	WLog_INFO(TAG, "\tThumbprint: %s", fingerprint);
+	WLog_INFO(TAG, "\tHostMismatch: %s", host_mismatch ? "Yes" : "No");
 	WLog_INFO(TAG, "The above X.509 certificate could not be verified, possibly because you do not have "
 			  "the CA certificate in your certificate store, or the certificate has expired. "
 			  "Please look at the documentation on how to create local certificate store for a private CA.");
@@ -593,7 +600,9 @@ BOOL wf_verify_certificate(freerdp* instance, char* subject, char* issuer, char*
 	SetConsoleMode(input_handle, mode);
 #endif
 
-	return TRUE;
+	/* return 1 to accept and store a certificate, 2 to accept
+	 * a certificate only for this session, 0 otherwise */
+	return 2;
 }
 
 static DWORD wf_verify_changed_certificate(freerdp* instance, const char* common_name,
@@ -602,8 +611,6 @@ static DWORD wf_verify_changed_certificate(freerdp* instance, const char* common
 					   const char* old_subject, const char* old_issuer,
 					   const char* old_fingerprint)
 {
-	char answer;
-
 	WLog_ERR(TAG, "!!! Certificate has changed !!!");
 	WLog_ERR(TAG, "New Certificate details:");
 	WLog_ERR(TAG, "\tSubject: %s", subject);
