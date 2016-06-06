@@ -165,6 +165,8 @@ int InstallWaitableTimerSignalHandler()
 
 int InitializeWaitableTimer(WINPR_TIMER* timer)
 {
+	int result = 0;
+
 	if (!timer->lpArgToCompletionRoutine)
 	{
 #ifdef HAVE_TIMERFD_H
@@ -184,7 +186,9 @@ int InitializeWaitableTimer(WINPR_TIMER* timer)
 			close(timer->fd);
 			return -1;
 		}
-
+#else
+		WLog_ERR(TAG, "%s: os specific implementation is missing", __FUNCTION__);
+		result = -1;
 #endif
 	}
 	else
@@ -202,12 +206,14 @@ int InitializeWaitableTimer(WINPR_TIMER* timer)
 			WLog_ERR(TAG,"timer_create");
 			return -1;
 		}
-
+#else
+		WLog_ERR(TAG, "%s: os specific implementation is missing", __FUNCTION__);
+		result = -1;
 #endif
 	}
 
 	timer->bInit = TRUE;
-	return 0;
+	return result;
 }
 
 
