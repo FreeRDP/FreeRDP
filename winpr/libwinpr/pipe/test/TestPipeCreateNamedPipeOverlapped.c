@@ -338,13 +338,7 @@ int TestPipeCreateNamedPipeOverlapped(int argc, char* argv[])
 {
 	HANDLE ClientThread;
 	HANDLE ServerThread;
-	int eFailure = -1;
-	int eSuccess =  0;
-
-#ifndef _WIN32
-        printf("Note: %s result may currently only be trusted on Win32\n", __FUNCTION__);
-        eFailure = eSuccess;
-#endif
+	int result = -1;
 
 	FillMemory(SERVER_MESSAGE, PIPE_BUFFER_SIZE, 0xAA);
 	FillMemory(CLIENT_MESSAGE, PIPE_BUFFER_SIZE, 0xBB);
@@ -352,24 +346,51 @@ int TestPipeCreateNamedPipeOverlapped(int argc, char* argv[])
 	if (!(serverReadyEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 	{
 		printf("CreateEvent failed: %d\n", GetLastError());
-		return eFailure;
+		goto out;
 	}
 	if (!(ClientThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) named_pipe_client_thread, NULL, 0, NULL)))
 	{
 		printf("CreateThread (client) failed: %d\n", GetLastError());
-		return eFailure;
+		goto out;
 	}
 	if (!(ServerThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) named_pipe_server_thread, NULL, 0, NULL)))
 	{
 		printf("CreateThread (server) failed: %d\n", GetLastError());
-		return eFailure;
+		goto out;
 	}
 
-	WaitForSingleObject(ClientThread, INFINITE);
-	WaitForSingleObject(ServerThread, INFINITE);
+	if (WAIT_OBJECT_0 != WaitForSingleObject(ClientThread, INFINITE))
+	{
+		printf("%s: Failed to wait for client thread: %u\n",
+			__FUNCTION__,  GetLastError());
+		goto out;
+	}
+	if (WAIT_OBJECT_0 != WaitForSingleObject(ServerThread, INFINITE))
+	{
+		printf("%s: Failed to wait for server thread: %u\n",
+			__FUNCTION__,  GetLastError());
+		goto out;
+	}
 
 	if (bClientSuccess && bServerSuccess)
-		return eSuccess;
+		result = 0;
 
-	return eFailure;
+out:
+
+#ifndef _WIN32
+	if (result == 0)
+	{
+		printf("%s: Error, this test is currently expected not to succeed on this platform.\n",
+			__FUNCTION__);
+		result = -1;
+	}
+	else
+	{
+		printf("%s: This test is currently expected to fail on this platform.\n",
+			__FUNCTION__);
+		result = 0;
+	}
+#endif
+
+	return result;
 }
