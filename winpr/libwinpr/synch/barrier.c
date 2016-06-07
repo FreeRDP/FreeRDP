@@ -193,8 +193,13 @@ BOOL WINAPI EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, DWO
 		{
 			DWORD dwSpinCount = lpBarrier->Reserved5;
 			DWORD sp = 0;
+			/**
+			 * nb: we must let the compiler know that our comparand
+			 * can change between the iterations in the loop below
+			 */
+			volatile ULONG_PTR* cmp = &lpBarrier->Reserved3[0];
 			/* we spin until the last thread _completed_ the event switch */
-			while ((block = (lpBarrier->Reserved3[0] == (ULONG_PTR)hCurrentEvent)))
+			while ((block = (*cmp == (ULONG_PTR)hCurrentEvent)))
 				if (!spinOnly && ++sp > dwSpinCount)
 					break;
 		}
