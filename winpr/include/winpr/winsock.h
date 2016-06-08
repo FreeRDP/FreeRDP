@@ -64,7 +64,8 @@
 
 #if (_WIN32_WINNT < 0x0600)
 
-PCSTR inet_ntop(INT Family, PVOID pAddr, PSTR pStringBuf, size_t StringBufSize);
+WINPR_API PCSTR inet_ntop(INT Family, PVOID pAddr, PSTR pStringBuf, size_t StringBufSize);
+WINPR_API INT inet_pton(INT Family, PCSTR pszAddrString, PVOID pAddrBuf);
 
 #endif /* (_WIN32_WINNT < 0x0600) */
 
