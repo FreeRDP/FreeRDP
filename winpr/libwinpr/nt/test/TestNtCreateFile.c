@@ -20,14 +20,7 @@ int TestNtCreateFile(int argc, char* argv[])
 	ACCESS_MASK DesiredAccess = 0;
 	OBJECT_ATTRIBUTES attributes;
 	IO_STATUS_BLOCK ioStatusBlock;
-
-	int eFailure = -1;
-	int eSuccess =  0;
-
-#ifndef _WIN32
-	printf("Note: %s result may currently only be trusted on Win32\n", __FUNCTION__);
-	eFailure = eSuccess;
-#endif
+	int result = -1;
 
 	_RtlInitAnsiString(&aString, TESTFILE);
 
@@ -35,7 +28,7 @@ int TestNtCreateFile(int argc, char* argv[])
 	if (ntstatus != STATUS_SUCCESS)
 	{
 		printf("_RtlAnsiStringToUnicodeString failure: 0x%08X\n", ntstatus);
-		return eFailure;
+		goto out;
 	}
 
 	handle = NULL;
@@ -53,7 +46,7 @@ int TestNtCreateFile(int argc, char* argv[])
 	if (ntstatus != STATUS_SUCCESS)
 	{
 		printf("_NtCreateFile failure: 0x%08X\n", ntstatus);
-		return eFailure;
+		goto out;
 	}
 
 	_RtlFreeUnicodeString(&uString);
@@ -63,8 +56,27 @@ int TestNtCreateFile(int argc, char* argv[])
 	if (ntstatus != STATUS_SUCCESS)
 	{
 		printf("_NtClose failure: 0x%08X\n", ntstatus);
-		return eFailure;
+		goto out;
 	}
 
-	return eSuccess;
+	result = 0;
+
+out:
+
+#ifndef _WIN32
+	if (result == 0)
+	{
+		printf("%s: Error, this test is currently expected not to succeed on this platform.\n",
+			__FUNCTION__);
+		result = -1;
+	}
+	else
+	{
+		printf("%s: This test is currently expected to fail on this platform.\n",
+			__FUNCTION__);
+		result = 0;
+	}
+#endif
+
+	return result;
 }
