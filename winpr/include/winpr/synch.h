@@ -276,16 +276,8 @@ WINPR_API BOOL DeleteTimerQueueTimer(HANDLE TimerQueue, HANDLE Timer, HANDLE Com
 
 #endif
 
-#if (defined(_WIN32) && defined(_SYNCHAPI_H_) && (_WIN32_WINNT < 0x0600))
-#define WINPR_INITIALIZE_CRITICAL_SECTION_EX	1
-#elif (defined(_WIN32) && (_WIN32_WINNT < 0x0403))
-#define WINPR_INITIALIZE_CRITICAL_SECTION_EX	1
-#endif
-
-#ifdef WINPR_INITIALIZE_CRITICAL_SECTION_EX
-
-WINPR_API BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags);
-
+#if (defined(_WIN32) && (_WIN32_WINNT < 0x0600))
+#define InitializeCriticalSectionEx(A,B,C) InitializeCriticalSectionAndSpinCount(A,B)
 #endif
 
 #ifndef _RTL_RUN_ONCE_DEF

@@ -36,15 +36,6 @@ typedef VOID (*PTP_SIMPLE_CALLBACK)(PTP_CALLBACK_INSTANCE Instance, PVOID Contex
 
 typedef struct _TP_POOL TP_POOL, *PTP_POOL;
 
-typedef enum _TP_CALLBACK_PRIORITY
-{
-	TP_CALLBACK_PRIORITY_HIGH,
-	TP_CALLBACK_PRIORITY_NORMAL,
-	TP_CALLBACK_PRIORITY_LOW,
-	TP_CALLBACK_PRIORITY_INVALID,
-	TP_CALLBACK_PRIORITY_COUNT = TP_CALLBACK_PRIORITY_INVALID
-} TP_CALLBACK_PRIORITY;
-
 typedef struct _TP_POOL_STACK_INFORMATION
 {
 	SIZE_T StackReserve;
@@ -77,40 +68,9 @@ typedef struct _TP_CALLBACK_ENVIRON_V1
 	} u;
 } TP_CALLBACK_ENVIRON_V1;
 
-#endif
+typedef TP_CALLBACK_ENVIRON_V1 TP_CALLBACK_ENVIRON, *PTP_CALLBACK_ENVIRON;
 
-/* Non-Windows and pre Windows 7 */
-#if ((!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0601)))
-
-typedef struct _TP_CALLBACK_ENVIRON_V3
-{
-	TP_VERSION Version;
-	PTP_POOL Pool;
-	PTP_CLEANUP_GROUP CleanupGroup;
-	PTP_CLEANUP_GROUP_CANCEL_CALLBACK CleanupGroupCancelCallback;
-	PVOID RaceDll;
-	struct _ACTIVATION_CONTEXT *ActivationContext;
-	PTP_SIMPLE_CALLBACK FinalizationCallback;
-
-	union
-	{
-		DWORD Flags;
-
-		struct
-		{
-			DWORD LongFunction:1;
-			DWORD Persistent:1;
-			DWORD Private:30;
-		} s;
-	} u;
-
-	TP_CALLBACK_PRIORITY CallbackPriority;
-	DWORD Size;
-} TP_CALLBACK_ENVIRON_V3;
-
-//typedef TP_CALLBACK_ENVIRON_V3 TP_CALLBACK_ENVIRON, *PTP_CALLBACK_ENVIRON;
-
-#endif
+#endif /* _WIN32 not defined */
 
 typedef struct _TP_WORK TP_WORK, *PTP_WORK;
 typedef struct _TP_TIMER TP_TIMER, *PTP_TIMER;
@@ -120,9 +80,6 @@ typedef struct _TP_WAIT TP_WAIT, *PTP_WAIT;
 
 typedef struct _TP_IO TP_IO, *PTP_IO;
 
-#if !defined(_WIN32) || (defined(_WIN32) && (_WIN32_WINNT < 0x0601))
-typedef TP_CALLBACK_ENVIRON_V1 TP_CALLBACK_ENVIRON, *PTP_CALLBACK_ENVIRON;
-#endif
 
 #ifndef _WIN32
 
@@ -153,7 +110,7 @@ typedef VOID (*PTP_WIN32_IO_CALLBACK)(PTP_CALLBACK_INSTANCE Instance, PVOID Cont
 
 #endif
 
-#if (!defined(_WIN32) || ((defined(_WIN32) && (_WIN32_WINNT < 0x0601))))
+#if (!defined(_WIN32) || ((defined(_WIN32) && (_WIN32_WINNT < 0x0600))))
 #define WINPR_THREAD_POOL	1
 #endif
 
@@ -209,14 +166,44 @@ WINPR_API VOID SetThreadpoolThreadMaximum(PTP_POOL ptpp, DWORD cthrdMost);
 
 /* Callback Environment */
 
-WINPR_API VOID InitializeThreadpoolEnvironment(PTP_CALLBACK_ENVIRON pcbe);
-WINPR_API VOID DestroyThreadpoolEnvironment(PTP_CALLBACK_ENVIRON pcbe);
-WINPR_API VOID SetThreadpoolCallbackPool(PTP_CALLBACK_ENVIRON pcbe, PTP_POOL ptpp);
-WINPR_API VOID SetThreadpoolCallbackCleanupGroup(PTP_CALLBACK_ENVIRON pcbe,
-		PTP_CLEANUP_GROUP ptpcg, PTP_CLEANUP_GROUP_CANCEL_CALLBACK pfng);
-WINPR_API VOID SetThreadpoolCallbackRunsLong(PTP_CALLBACK_ENVIRON pcbe);
-WINPR_API VOID SetThreadpoolCallbackLibrary(PTP_CALLBACK_ENVIRON pcbe, PVOID mod);
-WINPR_API VOID SetThreadpoolCallbackPriority(PTP_CALLBACK_ENVIRON pcbe, TP_CALLBACK_PRIORITY Priority);
+static INLINE VOID InitializeThreadpoolEnvironment(PTP_CALLBACK_ENVIRON pcbe)
+{
+	pcbe->Version = 1;
+	pcbe->Pool = NULL;
+	pcbe->CleanupGroup = NULL;
+	pcbe->CleanupGroupCancelCallback = NULL;
+	pcbe->RaceDll = NULL;
+	pcbe->ActivationContext = NULL;
+	pcbe->FinalizationCallback = NULL;
+	pcbe->u.Flags = 0;
+}
+
+static INLINE VOID DestroyThreadpoolEnvironment(PTP_CALLBACK_ENVIRON pcbe)
+{
+	/* no actions, this may change in a future release. */
+}
+
+static INLINE VOID SetThreadpoolCallbackPool(PTP_CALLBACK_ENVIRON pcbe, PTP_POOL ptpp)
+{
+	pcbe->Pool = ptpp;
+}
+
+static INLINE VOID SetThreadpoolCallbackCleanupGroup(PTP_CALLBACK_ENVIRON pcbe, PTP_CLEANUP_GROUP ptpcg, PTP_CLEANUP_GROUP_CANCEL_CALLBACK pfng)
+{
+	pcbe->CleanupGroup = ptpcg;
+	pcbe->CleanupGroupCancelCallback = pfng;
+}
+
+static INLINE VOID SetThreadpoolCallbackRunsLong(PTP_CALLBACK_ENVIRON pcbe)
+{
+	pcbe->u.s.LongFunction = 1;
+}
+
+static INLINE VOID SetThreadpoolCallbackLibrary(PTP_CALLBACK_ENVIRON pcbe, PVOID mod)
+{
+	pcbe->RaceDll = mod;
+}
+
 
 /* Callback */
 

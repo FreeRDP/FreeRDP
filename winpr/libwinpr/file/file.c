@@ -150,14 +150,15 @@ static BOOL FileRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	WINPR_FILE* file;
 	BOOL status = TRUE;
 
-	if (!Object)
-		return FALSE;
-
 	if (lpOverlapped)
 	{
-		WLog_ERR(TAG, "Overlapping write not supported.");
+		WLog_ERR(TAG, "WinPR %s does not support the lpOverlapped parameter", __FUNCTION__);
+		SetLastError(ERROR_NOT_SUPPORTED);
 		return FALSE;
 	}
+
+	if (!Object)
+		return FALSE;
 
 	file = (WINPR_FILE *)Object;
 	io_status = fread(lpBuffer, nNumberOfBytesToRead, 1, file->fp);
@@ -186,14 +187,15 @@ static BOOL FileWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrit
 	size_t io_status;
 	WINPR_FILE* file;
 
-	if (!Object)
-		return FALSE;
-
 	if (lpOverlapped)
 	{
-		WLog_ERR(TAG, "Overlapping write not supported.");
+		WLog_ERR(TAG, "WinPR %s does not support the lpOverlapped parameter", __FUNCTION__);
+		SetLastError(ERROR_NOT_SUPPORTED);
 		return FALSE;
 	}
+
+	if (!Object)
+		return FALSE;
 
 	file = (WINPR_FILE *)Object;
 
@@ -260,18 +262,19 @@ static BOOL FileLockFileEx(HANDLE hFile, DWORD dwFlags, DWORD dwReserved,
 	int lock;
 	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
 
+	if (lpOverlapped)
+	{
+		WLog_ERR(TAG, "WinPR %s does not support the lpOverlapped parameter", __FUNCTION__);
+		SetLastError(ERROR_NOT_SUPPORTED);
+		return FALSE;
+	}
+
 	if (!hFile)
 		return FALSE;
 
 	if (pFile->bLocked)
 	{
 		WLog_ERR(TAG, "File %s already locked!", pFile->lpFileName);
-		return FALSE;
-	}
-
-	if (lpOverlapped)
-	{
-		WLog_ERR(TAG, "lpOverlapped not implemented!");
 		return FALSE;
 	}
 
@@ -324,18 +327,19 @@ static BOOL FileUnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfByte
 {
 	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
 
+	if (lpOverlapped)
+	{
+		WLog_ERR(TAG, "WinPR %s does not support the lpOverlapped parameter", __FUNCTION__);
+		SetLastError(ERROR_NOT_SUPPORTED);
+		return FALSE;
+	}
+
 	if (!hFile)
 		return FALSE;
 
 	if (!pFile->bLocked)
 	{
 		WLog_ERR(TAG, "File %s is not locked!", pFile->lpFileName);
-		return FALSE;
-	}
-
-	if (lpOverlapped)
-	{
-		WLog_ERR(TAG, "lpOverlapped not implemented!");
 		return FALSE;
 	}
 
@@ -553,6 +557,13 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 	const char* mode = FileGetMode(dwDesiredAccess, dwCreationDisposition, &create);
 	int lock = 0;
 	FILE* fp = NULL;
+
+	if (dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED)
+	{
+		WLog_ERR(TAG, "WinPR %s does not support the FILE_FLAG_OVERLAPPED flag", __FUNCTION__);
+		SetLastError(ERROR_NOT_SUPPORTED);
+		return INVALID_HANDLE_VALUE;
+	}
 
 	pFile = (WINPR_FILE*) calloc(1, sizeof(WINPR_FILE));
 	if (!pFile)

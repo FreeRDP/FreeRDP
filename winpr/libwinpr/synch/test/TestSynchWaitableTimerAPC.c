@@ -108,6 +108,20 @@ cleanup:
 		CloseHandle(g_Event);
 	free(apcData);
 
+#ifdef __APPLE__
+	if (status == 0)
+	{
+		printf("%s: Error, this test is currently expected not to succeed on this platform.\n",
+			__FUNCTION__);
+		status = -1;
+	}
+	else
+	{
+		printf("%s: This test is currently expected to fail on this platform.\n",
+			__FUNCTION__);
+		status = 0;
+	}
+#endif
 	return status;
 }
 

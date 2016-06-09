@@ -860,7 +860,7 @@ int UnixChangeFileMode(const char* filename, int flags)
 		return -1;
 
 	/* Check for unsupported flags. */
-	if (flags & ~(_S_IREAD | _S_IWRITE) != 0)
+	if (flags & ~(_S_IREAD | _S_IWRITE))
 		WLog_WARN(TAG, "Unsupported file mode %d for _wchmod", flags);
 
 	rc = _wchmod(wfl, flags);

@@ -165,6 +165,8 @@ int InstallWaitableTimerSignalHandler()
 
 int InitializeWaitableTimer(WINPR_TIMER* timer)
 {
+	int result = 0;
+
 	if (!timer->lpArgToCompletionRoutine)
 	{
 #ifdef HAVE_TIMERFD_H
@@ -184,7 +186,9 @@ int InitializeWaitableTimer(WINPR_TIMER* timer)
 			close(timer->fd);
 			return -1;
 		}
-
+#else
+		WLog_ERR(TAG, "%s: os specific implementation is missing", __FUNCTION__);
+		result = -1;
 #endif
 	}
 	else
@@ -202,12 +206,14 @@ int InitializeWaitableTimer(WINPR_TIMER* timer)
 			WLog_ERR(TAG,"timer_create");
 			return -1;
 		}
-
+#else
+		WLog_ERR(TAG, "%s: os specific implementation is missing", __FUNCTION__);
+		result = -1;
 #endif
 	}
 
 	timer->bInit = TRUE;
-	return 0;
+	return result;
 }
 
 
@@ -641,13 +647,18 @@ BOOL DeleteTimerQueueEx(HANDLE TimerQueue, HANDLE CompletionEvent)
 	pthread_mutex_unlock(&(timerQueue->cond_mutex));
 	pthread_join(timerQueue->thread, &rvalue);
 
-	if (CompletionEvent == INVALID_HANDLE_VALUE)
+	/**
+	 * Quote from MSDN regarding CompletionEvent:
+	 * If this parameter is INVALID_HANDLE_VALUE, the function waits for
+	 * all callback functions to complete before returning.
+	 * If this parameter is NULL, the function marks the timer for
+	 * deletion and returns immediately.
+	 *
+	 * Note: The current WinPR implementation implicitly waits for any
+	 * callback functions to complete (see pthread_join above)
+	 */
+
 	{
-		/* Wait for all callback functions to complete before returning */
-	}
-	else
-	{
-		/* Cancel all timers and return immediately */
 		/* Move all active timers to the inactive timer list */
 		node = timerQueue->activeHead;
 
@@ -765,15 +776,18 @@ BOOL DeleteTimerQueueTimer(HANDLE TimerQueue, HANDLE Timer, HANDLE CompletionEve
 	timer = (WINPR_TIMER_QUEUE_TIMER*) Timer;
 	pthread_mutex_lock(&(timerQueue->cond_mutex));
 
-	if (CompletionEvent == INVALID_HANDLE_VALUE)
-	{
-		/* Wait for all callback functions to complete before returning */
-	}
-	else
-	{
-		/* Cancel timer and return immediately */
-		RemoveTimerQueueTimer(&(timerQueue->activeHead), timer);
-	}
+	/**
+	 * Quote from MSDN regarding CompletionEvent:
+	 * If this parameter is INVALID_HANDLE_VALUE, the function waits for
+	 * all callback functions to complete before returning.
+	 * If this parameter is NULL, the function marks the timer for
+	 * deletion and returns immediately.
+	 *
+	 * Note: The current WinPR implementation implicitly waits for any
+	 * callback functions to complete (see cond_mutex usage)
+	 */
+
+	RemoveTimerQueueTimer(&(timerQueue->activeHead), timer);
 
 	pthread_cond_signal(&(timerQueue->cond));
 	pthread_mutex_unlock(&(timerQueue->cond_mutex));

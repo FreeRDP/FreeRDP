@@ -1972,7 +1972,6 @@ static void xfreerdp_client_free(freerdp* instance, rdpContext* context)
 
 	if (xfc->mutex)
 	{
-		WaitForSingleObject(xfc->mutex, INFINITE);
 		CloseHandle(xfc->mutex);
 		xfc->mutex = NULL;
 	}

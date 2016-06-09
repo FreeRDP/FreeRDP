@@ -3,6 +3,12 @@
 
 #include <winpr/nt.h>
 
+#ifdef _WIN32
+#define TESTFILE "\\??\\C:\\Documents and Settings\\All Users\\winpr_test_nt_create_file.txt"
+#else
+#define TESTFILE "/tmp/winpr_test_nt_create_file.txt"
+#endif
+
 int TestNtCreateFile(int argc, char* argv[])
 {
 	HANDLE handle;
@@ -14,9 +20,16 @@ int TestNtCreateFile(int argc, char* argv[])
 	ACCESS_MASK DesiredAccess = 0;
 	OBJECT_ATTRIBUTES attributes;
 	IO_STATUS_BLOCK ioStatusBlock;
+	int result = -1;
 
-	_RtlInitAnsiString(&aString, "\\??\\C:\\Users\\Public\\foo.txt");
-	_RtlAnsiStringToUnicodeString(&uString, &aString, TRUE);
+	_RtlInitAnsiString(&aString, TESTFILE);
+
+	ntstatus = _RtlAnsiStringToUnicodeString(&uString, &aString, TRUE);
+	if (ntstatus != STATUS_SUCCESS)
+	{
+		printf("_RtlAnsiStringToUnicodeString failure: 0x%08X\n", ntstatus);
+		goto out;
+	}
 
 	handle = NULL;
 	ZeroMemory(&ioStatusBlock, sizeof(IO_STATUS_BLOCK));
@@ -32,8 +45,8 @@ int TestNtCreateFile(int argc, char* argv[])
 
 	if (ntstatus != STATUS_SUCCESS)
 	{
-		printf("NtCreateFile failure: 0x%04X\n", ntstatus);
-		return -1;
+		printf("_NtCreateFile failure: 0x%08X\n", ntstatus);
+		goto out;
 	}
 
 	_RtlFreeUnicodeString(&uString);
@@ -42,9 +55,28 @@ int TestNtCreateFile(int argc, char* argv[])
 
 	if (ntstatus != STATUS_SUCCESS)
 	{
-		printf("NtClose failure: 0x%04X\n", ntstatus);
-		return -1;
+		printf("_NtClose failure: 0x%08X\n", ntstatus);
+		goto out;
 	}
 
-	return 0;
+	result = 0;
+
+out:
+
+#ifndef _WIN32
+	if (result == 0)
+	{
+		printf("%s: Error, this test is currently expected not to succeed on this platform.\n",
+			__FUNCTION__);
+		result = -1;
+	}
+	else
+	{
+		printf("%s: This test is currently expected to fail on this platform.\n",
+			__FUNCTION__);
+		result = 0;
+	}
+#endif
+
+	return result;
 }

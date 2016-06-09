@@ -446,6 +446,17 @@ int TestPipeCreateNamedPipe(int argc, char* argv[])
 	HANDLE SingleThread;
 	HANDLE ClientThread;
 	HANDLE ServerThread;
+	HANDLE hPipe;
+
+	/* Verify that CreateNamedPipe returns INVALID_HANDLE_VALUE on failure */
+	hPipe = CreateNamedPipeA(NULL, 0, 0, 0, 0, 0, 0, NULL);
+	if (hPipe != INVALID_HANDLE_VALUE)
+	{
+		printf("CreateNamedPipe unexpectedly returned %p instead of INVALID_HANDLE_VALUE (%p)\n",
+			hPipe, INVALID_HANDLE_VALUE);
+		return -1;
+	}
+
 #ifndef _WIN32
 	signal(SIGPIPE, SIG_IGN);
 #endif

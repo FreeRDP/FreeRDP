@@ -149,7 +149,9 @@ BOOL BuildCommDCBA(LPCSTR lpDef, LPDCB lpDCB)
 
 	/* TODO: not implemented */
 
-	return TRUE;
+	CommLog_Print(WLOG_ERROR, "%s: Not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
 }
 
 BOOL BuildCommDCBW(LPCWSTR lpDef, LPDCB lpDCB)
@@ -159,7 +161,9 @@ BOOL BuildCommDCBW(LPCWSTR lpDef, LPDCB lpDCB)
 
 	/* TODO: not implemented */
 
-	return TRUE;
+	CommLog_Print(WLOG_ERROR, "%s: Not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
 }
 
 BOOL BuildCommDCBAndTimeoutsA(LPCSTR lpDef, LPDCB lpDCB, LPCOMMTIMEOUTS lpCommTimeouts)
@@ -169,7 +173,9 @@ BOOL BuildCommDCBAndTimeoutsA(LPCSTR lpDef, LPDCB lpDCB, LPCOMMTIMEOUTS lpCommTi
 
 	/* TODO: not implemented */
 
-	return TRUE;
+	CommLog_Print(WLOG_ERROR, "%s: Not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
 }
 
 BOOL BuildCommDCBAndTimeoutsW(LPCWSTR lpDef, LPDCB lpDCB, LPCOMMTIMEOUTS lpCommTimeouts)
@@ -179,7 +185,9 @@ BOOL BuildCommDCBAndTimeoutsW(LPCWSTR lpDef, LPDCB lpDCB, LPCOMMTIMEOUTS lpCommT
 
 	/* TODO: not implemented */
 
-	return TRUE;
+	CommLog_Print(WLOG_ERROR, "%s: Not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
 }
 
 BOOL CommConfigDialogA(LPCSTR lpszName, HWND hWnd, LPCOMMCONFIG lpCC)
@@ -189,7 +197,9 @@ BOOL CommConfigDialogA(LPCSTR lpszName, HWND hWnd, LPCOMMCONFIG lpCC)
 
 	/* TODO: not implemented */
 
-	return TRUE;
+	CommLog_Print(WLOG_ERROR, "%s: Not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
 }
 
 BOOL CommConfigDialogW(LPCWSTR lpszName, HWND hWnd, LPCOMMCONFIG lpCC)
@@ -199,7 +209,9 @@ BOOL CommConfigDialogW(LPCWSTR lpszName, HWND hWnd, LPCOMMCONFIG lpCC)
 
 	/* TODO: not implemented */
 
-	return TRUE;
+	CommLog_Print(WLOG_ERROR, "%s: Not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
 }
 
 BOOL GetCommConfig(HANDLE hCommDev, LPCOMMCONFIG lpCC, LPDWORD lpdwSize)
@@ -214,7 +226,9 @@ BOOL GetCommConfig(HANDLE hCommDev, LPCOMMCONFIG lpCC, LPDWORD lpdwSize)
 	if (!pComm)
 		return FALSE;
 
-	return TRUE;
+	CommLog_Print(WLOG_ERROR, "%s: Not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
 }
 
 BOOL SetCommConfig(HANDLE hCommDev, LPCOMMCONFIG lpCC, DWORD dwSize)
@@ -229,7 +243,9 @@ BOOL SetCommConfig(HANDLE hCommDev, LPCOMMCONFIG lpCC, DWORD dwSize)
 	if (!pComm)
 		return FALSE;
 
-	return TRUE;
+	CommLog_Print(WLOG_ERROR, "%s: Not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
 }
 
 BOOL GetCommMask(HANDLE hFile, PDWORD lpEvtMask)
@@ -244,7 +260,9 @@ BOOL GetCommMask(HANDLE hFile, PDWORD lpEvtMask)
 	if (!pComm)
 		return FALSE;
 
-	return TRUE;
+	CommLog_Print(WLOG_ERROR, "%s: Not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
 }
 
 BOOL SetCommMask(HANDLE hFile, DWORD dwEvtMask)
@@ -259,7 +277,9 @@ BOOL SetCommMask(HANDLE hFile, DWORD dwEvtMask)
 	if (!pComm)
 		return FALSE;
 
-	return TRUE;
+	CommLog_Print(WLOG_ERROR, "%s: Not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
 }
 
 BOOL GetCommModemStatus(HANDLE hFile, PDWORD lpModemStat)
@@ -274,7 +294,9 @@ BOOL GetCommModemStatus(HANDLE hFile, PDWORD lpModemStat)
 	if (!pComm)
 		return FALSE;
 
-	return TRUE;
+	CommLog_Print(WLOG_ERROR, "%s: Not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
 }
 
 /**
@@ -781,7 +803,9 @@ BOOL GetDefaultCommConfigA(LPCSTR lpszName, LPCOMMCONFIG lpCC, LPDWORD lpdwSize)
 
 	/* TODO: not implemented */
 
-	return TRUE;
+	CommLog_Print(WLOG_ERROR, "%s: Not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
 }
 
 BOOL GetDefaultCommConfigW(LPCWSTR lpszName, LPCOMMCONFIG lpCC, LPDWORD lpdwSize)
@@ -791,7 +815,9 @@ BOOL GetDefaultCommConfigW(LPCWSTR lpszName, LPCOMMCONFIG lpCC, LPDWORD lpdwSize
 
 	/* TODO: not implemented */
 
-	return TRUE;
+	CommLog_Print(WLOG_ERROR, "%s: Not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
 }
 
 BOOL SetDefaultCommConfigA(LPCSTR lpszName, LPCOMMCONFIG lpCC, DWORD dwSize)
@@ -801,7 +827,9 @@ BOOL SetDefaultCommConfigA(LPCSTR lpszName, LPCOMMCONFIG lpCC, DWORD dwSize)
 
 	/* TODO: not implemented */
 
-	return TRUE;
+	CommLog_Print(WLOG_ERROR, "%s: Not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
 }
 
 BOOL SetDefaultCommConfigW(LPCWSTR lpszName, LPCOMMCONFIG lpCC, DWORD dwSize)
@@ -811,7 +839,9 @@ BOOL SetDefaultCommConfigW(LPCWSTR lpszName, LPCOMMCONFIG lpCC, DWORD dwSize)
 
 	/* TODO: not implemented */
 
-	return TRUE;
+	CommLog_Print(WLOG_ERROR, "%s: Not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
 }
 
 BOOL SetCommBreak(HANDLE hFile)
@@ -826,7 +856,9 @@ BOOL SetCommBreak(HANDLE hFile)
 	if (!pComm)
 		return FALSE;
 
-	return TRUE;
+	CommLog_Print(WLOG_ERROR, "%s: Not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
 }
 
 BOOL ClearCommBreak(HANDLE hFile)
@@ -841,7 +873,9 @@ BOOL ClearCommBreak(HANDLE hFile)
 	if (!pComm)
 		return FALSE;
 
-	return TRUE;
+	CommLog_Print(WLOG_ERROR, "%s: Not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
 }
 
 BOOL ClearCommError(HANDLE hFile, PDWORD lpErrors, LPCOMSTAT lpStat)
@@ -856,7 +890,9 @@ BOOL ClearCommError(HANDLE hFile, PDWORD lpErrors, LPCOMSTAT lpStat)
 	if (!pComm)
 		return FALSE;
 
-	return TRUE;
+	CommLog_Print(WLOG_ERROR, "%s: Not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
 }
 
 
@@ -923,7 +959,9 @@ BOOL EscapeCommFunction(HANDLE hFile, DWORD dwFunc)
 	if (!pComm)
 		return FALSE;
 
-	return TRUE;
+	CommLog_Print(WLOG_ERROR, "%s: Not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
 }
 
 BOOL TransmitCommChar(HANDLE hFile, char cChar)
@@ -938,7 +976,9 @@ BOOL TransmitCommChar(HANDLE hFile, char cChar)
 	if (!pComm)
 		return FALSE;
 
-	return TRUE;
+	CommLog_Print(WLOG_ERROR, "%s: Not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
 }
 
 BOOL WaitCommEvent(HANDLE hFile, PDWORD lpEvtMask, LPOVERLAPPED lpOverlapped)
@@ -953,7 +993,9 @@ BOOL WaitCommEvent(HANDLE hFile, PDWORD lpEvtMask, LPOVERLAPPED lpOverlapped)
 	if (!pComm)
 		return FALSE;
 
-	return TRUE;
+	CommLog_Print(WLOG_ERROR, "%s: Not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
 }
 
 

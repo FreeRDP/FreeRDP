@@ -137,6 +137,13 @@ static HANDLE NamedPipeClientCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAcces
 	struct sockaddr_un s;
 	WINPR_NAMED_PIPE* pNamedPipe;
 
+	if (dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED)
+	{
+		WLog_ERR(TAG, "WinPR %s does not support the FILE_FLAG_OVERLAPPED flag", __FUNCTION__);
+		SetLastError(ERROR_NOT_SUPPORTED);
+		return INVALID_HANDLE_VALUE;
+	}
+
 	if (!lpFileName)
 		return INVALID_HANDLE_VALUE;
 

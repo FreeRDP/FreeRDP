@@ -8,13 +8,14 @@ int TestSynchWaitableTimer(int argc, char* argv[])
 	HANDLE timer;
 	LONG period;
 	LARGE_INTEGER due;
+	int result = -1;
 
 	timer = CreateWaitableTimer(NULL, FALSE, NULL);
 
 	if (!timer)
 	{
 		printf("CreateWaitableTimer failure\n");
-		return -1;
+		goto out;
 	}
 
 	due.QuadPart = -15000000LL; /* 1.5 seconds */
@@ -22,7 +23,7 @@ int TestSynchWaitableTimer(int argc, char* argv[])
 	if (!SetWaitableTimer(timer, &due, 0, NULL, NULL, 0))
 	{
 		printf("SetWaitableTimer failure\n");
-		return -1;
+		goto out;
 	}
 
 	status = WaitForSingleObject(timer, INFINITE);
@@ -30,7 +31,7 @@ int TestSynchWaitableTimer(int argc, char* argv[])
 	if (status != WAIT_OBJECT_0)
 	{
 		printf("WaitForSingleObject(timer, INFINITE) failure\n");
-		return -1;
+		goto out;
 	}
 
 	printf("Timer Signaled\n");
@@ -40,7 +41,7 @@ int TestSynchWaitableTimer(int argc, char* argv[])
 	if (status != WAIT_TIMEOUT)
 	{
 		printf("WaitForSingleObject(timer, 2000) failure: Actual: 0x%04X, Expected: 0x%04X\n", status, WAIT_TIMEOUT);
-		return -1;
+		goto out;
 	}
 
 	due.QuadPart = 0;
@@ -50,13 +51,13 @@ int TestSynchWaitableTimer(int argc, char* argv[])
 	if (!SetWaitableTimer(timer, &due, period, NULL, NULL, 0))
 	{
 		printf("SetWaitableTimer failure\n");
-		return -1;
+		goto out;
 	}
 
 	if (WaitForSingleObject(timer, INFINITE) != WAIT_OBJECT_0)
 	{
 		printf("WaitForSingleObject(timer, INFINITE) failure\n");
-		return -1;
+		goto out;
 	}
 
 	printf("Timer Signaled\n");
@@ -64,13 +65,32 @@ int TestSynchWaitableTimer(int argc, char* argv[])
 	if (WaitForMultipleObjects(1, &timer, FALSE, INFINITE) != WAIT_OBJECT_0)
 	{
 		printf("WaitForMultipleObjects(timer, INFINITE) failure\n");
-		return -1;
+		goto out;
 	}
 
 	printf("Timer Signaled\n");
 
+	result = 0;
+
+out:
 	CloseHandle(timer);
 
-	return 0;
+
+#ifdef __APPLE__
+	if (result == 0)
+	{
+		printf("%s: Error, this test is currently expected not to succeed on this platform.\n",
+			__FUNCTION__);
+		result = -1;
+	}
+	else
+	{
+		printf("%s: This test is currently expected to fail on this platform.\n",
+			__FUNCTION__);
+		result = 0;
+	}
+#endif
+
+	return result;
 }
 
