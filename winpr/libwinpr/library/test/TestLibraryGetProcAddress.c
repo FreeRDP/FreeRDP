@@ -14,76 +14,46 @@ int TestLibraryGetProcAddress(int argc, char* argv[])
 	HINSTANCE library;
 	TEST_AB_FN pFunctionA;
 	TEST_AB_FN pFunctionB;
-	LPCTSTR SharedLibraryExtension;
-	TCHAR LibraryPath[PATHCCH_MAX_CCH];
+	LPCSTR SharedLibraryExtension;
+	CHAR LibraryPath[PATHCCH_MAX_CCH];
+	PCHAR p;
 
-#ifndef _WIN32
-	char* str;
-	int length;
-	LPTSTR BasePath;
-
-	str = argv[1];
-
-#ifdef UNICODE
-	length = MultiByteToWideChar(CP_UTF8, 0, str, strlen(str), NULL, 0);
-	BasePath = (WCHAR*) malloc((length + 1) * sizeof(WCHAR));
-	if (!BasePath)
+	if (!GetModuleFileNameA(NULL, LibraryPath, PATHCCH_MAX_CCH))
 	{
-		_tprintf(_T("Memory allocation failed\n"));
-		return -1;
-	}
-	MultiByteToWideChar(CP_UTF8, 0, str, length, (LPWSTR) BasePath, length * sizeof(WCHAR));
-	BasePath[length] = 0;
-#else
-	BasePath = _strdup(str);
-	if (!BasePath)
-	{
-		printf("Memory allocation failed");
-		return -1;
-	}
-	length = strlen(BasePath);
-#endif
-	
-	CopyMemory(LibraryPath, BasePath, length * sizeof(TCHAR));
-	LibraryPath[length] = 0;
-
-	NativePathCchAppend(LibraryPath, PATHCCH_MAX_CCH, _T("TestLibraryA")); /* subdirectory */
-
-#else /* _WIN32 */
-
-	/* On Windows the test libraries are in same folder as the test executable */
-	GetModuleFileName(NULL, LibraryPath, PATHCCH_MAX_CCH);
-	PathRemoveFileSpec(LibraryPath);
-#endif
-
-	NativePathCchAppend(LibraryPath, PATHCCH_MAX_CCH, _T("TestLibraryA")); /* file name without extension */
-
-	SharedLibraryExtension = PathGetSharedLibraryExtension(PATH_SHARED_LIB_EXT_WITH_DOT);
-	NativePathCchAddExtension(LibraryPath, PATHCCH_MAX_CCH, SharedLibraryExtension); /* add shared library extension */
-
-	_tprintf(_T("Loading Library: %s\n"), LibraryPath);
-
-	library = LoadLibrary(LibraryPath);
-
-	if (!library)
-	{
-		_tprintf(_T("LoadLibrary failure\n"));
+		printf("%s: GetModuleFilenameA failed: 0x%08X\n", __FUNCTION__, GetLastError());
 		return -1;
 	}
 
-	pFunctionA = (TEST_AB_FN) GetProcAddress(library, "FunctionA");
+	/* PathCchRemoveFileSpec is not implemented in WinPR */
 
-	if (!pFunctionA)
+	if (!(p = strrchr(LibraryPath, PathGetSeparatorA(PATH_STYLE_NATIVE))))
 	{
-		_tprintf(_T("GetProcAddress failure (FunctionA)\n"));
+		printf("%s: Error identifying module directory path\n", __FUNCTION__);
+		return -1;
+	}
+	*p = 0;
+
+	NativePathCchAppendA(LibraryPath, PATHCCH_MAX_CCH, "TestLibraryA");
+	SharedLibraryExtension = PathGetSharedLibraryExtensionA(PATH_SHARED_LIB_EXT_WITH_DOT);
+	NativePathCchAddExtensionA(LibraryPath, PATHCCH_MAX_CCH, SharedLibraryExtension);
+
+	printf("%s: Loading Library: '%s'\n", __FUNCTION__, LibraryPath);
+
+	if (!(library = LoadLibraryA(LibraryPath)))
+	{
+		printf("%s: LoadLibraryA failure: 0x%08X\n", __FUNCTION__, GetLastError());
 		return -1;
 	}
 
-	pFunctionB = (TEST_AB_FN) GetProcAddress(library, "FunctionB");
-
-	if (!pFunctionB)
+	if (!(pFunctionA = (TEST_AB_FN) GetProcAddress(library, "FunctionA")))
 	{
-		_tprintf(_T("GetProcAddress failure (FunctionB)\n"));
+		printf("%s: GetProcAddress failure (FunctionA)\n", __FUNCTION__);
+		return -1;
+	}
+
+	if (!(pFunctionB = (TEST_AB_FN) GetProcAddress(library, "FunctionB")))
+	{
+		printf("%s: GetProcAddress failure (FunctionB)\n", __FUNCTION__);
 		return -1;
 	}
 
@@ -94,7 +64,7 @@ int TestLibraryGetProcAddress(int argc, char* argv[])
 
 	if (c != (a * b))
 	{
-		_tprintf(_T("pFunctionA call failed\n"));
+		printf("%s: pFunctionA call failed\n", __FUNCTION__);
 		return -1;
 	}
 
@@ -105,13 +75,13 @@ int TestLibraryGetProcAddress(int argc, char* argv[])
 
 	if (c != (a / b))
 	{
-		_tprintf(_T("pFunctionB call failed\n"));
+		printf("%s: pFunctionB call failed\n", __FUNCTION__);
 		return -1;
 	}
 
 	if (!FreeLibrary(library))
 	{
-		_tprintf(_T("FreeLibrary failure\n"));
+		printf("%s: FreeLibrary failure: 0x%08X\n", __FUNCTION__, GetLastError());
 		return -1;
 	}
 
