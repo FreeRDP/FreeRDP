@@ -213,6 +213,8 @@ HMODULE GetModuleHandleW(LPCWSTR lpModuleName)
 
 DWORD GetModuleFileNameW(HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
 {
+	WLog_ERR(TAG, "%s is not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return 0;
 }
 
@@ -230,7 +232,10 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 		status = readlink(path, buffer, sizeof(buffer));
 
 		if (status < 0)
+		{
+			SetLastError(ERROR_INTERNAL_ERROR);
 			return 0;
+		}
 
 		buffer[status] = '\0';
 		length = strlen(buffer);
@@ -239,14 +244,13 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 		{
 			CopyMemory(lpFilename, buffer, length);
 			lpFilename[length] = '\0';
-		}
-		else
-		{
-			CopyMemory(lpFilename, buffer, nSize - 1);
-			lpFilename[nSize - 1] = '\0';
+			return length;
 		}
 
-		return 0;
+		CopyMemory(lpFilename, buffer, nSize - 1);
+		lpFilename[nSize - 1] = '\0';
+		SetLastError(ERROR_INSUFFICIENT_BUFFER);
+		return nSize;
 	}
 
 #elif defined(__MACOSX__)
@@ -263,6 +267,7 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 		if (status != 0)
 		{
 			/* path too small */
+			SetLastError(ERROR_INTERNAL_ERROR);
 			return 0;
 		}
 
@@ -277,17 +282,18 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 		{
 			CopyMemory(lpFilename, buffer, length);
 			lpFilename[length] = '\0';
-		}
-		else
-		{
-			CopyMemory(lpFilename, buffer, nSize - 1);
-			lpFilename[nSize - 1] = '\0';
+			return length;
 		}
 
-		return 0;
+		CopyMemory(lpFilename, buffer, nSize - 1);
+		lpFilename[nSize - 1] = '\0';
+		SetLastError(ERROR_INSUFFICIENT_BUFFER);
+		return nSize;
 	}
 
 #endif
+	WLog_ERR(TAG, "%s is not implemented", __FUNCTION__);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return 0;
 }
 
