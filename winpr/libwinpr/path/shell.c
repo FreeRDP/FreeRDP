@@ -36,6 +36,8 @@
 
 #if defined(WIN32)
 #include <Shlobj.h>
+#else
+#include <errno.h>
 #endif
 
 static char* GetPath_XDG_CONFIG_HOME(void);
@@ -438,46 +440,35 @@ char* GetCombinedPath(const char* basePath, const char* subPath)
 
 BOOL PathMakePathA(LPCSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
 {
-	size_t length;
-	const char delim = PathGetSeparatorA(0);
-	char* cur;
-	char* copy_org = _strdup(path);
-	char* copy = copy_org;
+#ifdef _WIN32
+	return (SHCreateDirectoryExA(NULL, path, lpAttributes) == ERROR_SUCCESS);
+#else
+	const char delim = PathGetSeparatorA(PATH_STYLE_NATIVE);
+	char* dup;
+	char* p;
 
-	if (!copy_org)
+	/* we only operate on a non-null, absolute path */
+	if (!path || *path != delim)
 		return FALSE;
 
-	length = strlen(copy_org);
+	if (!(dup = _strdup(path)))
+		return FALSE;
 
-	/* Find first path element that exists. */
-	while (copy)
+	for (p = dup; p;)
 	{
-		if (!PathFileExistsA(copy))
-		{
-			cur = strrchr(copy, delim);
-			if (cur)
-				*cur = '\0';
-		}
-		else
-			break;
-	}
+		if ((p = strchr(p + 1, delim)))
+			*p = '\0';
 
-	/* Create directories. */
-	while(copy)
-	{
-		if (!PathFileExistsA(copy))
-		{
-			if (!CreateDirectoryA(copy, NULL))
+		if (mkdir(dup, 0777) != 0)
+			if (errno != EEXIST)
 				break;
-		}
-		if (strlen(copy) < length)
-			copy[strlen(copy)] = delim;
-		else
-			break;
+		if (p)
+			*p = delim;
 	}
-	free (copy_org);
 
-	return PathFileExistsA(path);
+	free(dup);
+	return (p == NULL);
+#endif
 }
 
 #if !defined(_WIN32) || defined(_UWP)
