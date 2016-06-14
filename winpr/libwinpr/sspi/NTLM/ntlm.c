@@ -45,9 +45,9 @@ char* NTLM_PACKAGE_NAME = "NTLM";
 int ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 {
 	int status;
-	DWORD nSize = MAX_COMPUTERNAME_LENGTH;
 	char* ws = Workstation;
 	CHAR computerName[MAX_COMPUTERNAME_LENGTH + 1];
+	DWORD nSize = sizeof(computerName) * sizeof(CHAR);
 
 	if (!Workstation)
 	{
@@ -108,7 +108,7 @@ int ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 {
 	int status;
 	CHAR computerName[MAX_COMPUTERNAME_LENGTH + 1];
-	DWORD nSize = MAX_COMPUTERNAME_LENGTH;
+	DWORD nSize = sizeof(computerName) * sizeof(CHAR);
 	char* name = TargetName;
 
 	if (!name)
