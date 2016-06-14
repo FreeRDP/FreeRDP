@@ -1,4 +1,4 @@
 message("PRELOADING windows cache")
 set (CMAKE_BUILD_TYPE "Debug" CACHE STRING "build type")
 set(WITH_SERVER "ON" CACHE BOOL "Build server binaries")
-#set (BUILD_TESTING ON CACHE BOOL "build testing")
+set (BUILD_TESTING ON CACHE BOOL "build testing")
