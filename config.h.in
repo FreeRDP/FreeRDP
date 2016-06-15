@@ -51,7 +51,7 @@
 #cmakedefine WITH_MEDIA_FOUNDATION
 
 /* Plugins */
-#cmakedefine STATIC_CHANNELS
+#cmakedefine BUILTIN_CHANNELS
 #cmakedefine WITH_RDPDR
 
 

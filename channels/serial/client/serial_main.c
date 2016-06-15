@@ -811,7 +811,7 @@ static UINT serial_free(DEVICE* device)
 
 #endif /* __linux__ */
 
-#ifdef STATIC_CHANNELS
+#ifdef BUILTIN_CHANNELS
 #define DeviceServiceEntry	serial_DeviceServiceEntry
 #else
 #define DeviceServiceEntry	FREERDP_API DeviceServiceEntry

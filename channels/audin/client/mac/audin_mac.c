@@ -403,7 +403,7 @@ static UINT audin_mac_parse_addin_args(AudinMacDevice *device, ADDIN_ARGV *args)
     return CHANNEL_RC_OK;
 }
 
-#ifdef STATIC_CHANNELS
+#ifdef BUILTIN_CHANNELS
 #define freerdp_audin_client_subsystem_entry	mac_freerdp_audin_client_subsystem_entry
 #else
 #define freerdp_audin_client_subsystem_entry	FREERDP_API freerdp_audin_client_subsystem_entry

@@ -95,7 +95,7 @@ based on freerdp and winpr.
         -DCMAKE_SKIP_INSTALL_RPATH=FALSE \
         -DWITH_PULSE=ON \
         -DWITH_CHANNELS=ON \
-        -DSTATIC_CHANNELS=ON \
+        -DBUILTIN_CHANNELS=ON \
         -DWITH_CUPS=ON \
         -DWITH_PCSC=ON \
         -DWITH_JPEG=ON \

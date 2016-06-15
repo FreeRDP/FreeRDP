@@ -859,7 +859,7 @@ out_error:
 	return error;
 }
 
-#ifdef STATIC_CHANNELS
+#ifdef BUILTIN_CHANNELS
 #define DeviceServiceEntry	drive_DeviceServiceEntry
 #else
 #define DeviceServiceEntry	FREERDP_API DeviceServiceEntry

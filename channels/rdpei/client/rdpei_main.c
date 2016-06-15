@@ -955,7 +955,7 @@ UINT rdpei_touch_end(RdpeiClientContext* context, int externalId, int x, int y, 
 	return CHANNEL_RC_OK;
 }
 
-#ifdef STATIC_CHANNELS
+#ifdef BUILTIN_CHANNELS
 #define DVCPluginEntry		rdpei_DVCPluginEntry
 #else
 #define DVCPluginEntry		FREERDP_API DVCPluginEntry

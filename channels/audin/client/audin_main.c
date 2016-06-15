@@ -780,7 +780,7 @@ BOOL audin_process_addin_args(AUDIN_PLUGIN* audin, ADDIN_ARGV* args)
 	return TRUE;
 }
 
-#ifdef STATIC_CHANNELS
+#ifdef BUILTIN_CHANNELS
 #define DVCPluginEntry		audin_DVCPluginEntry
 #else
 #define DVCPluginEntry		FREERDP_API DVCPluginEntry
