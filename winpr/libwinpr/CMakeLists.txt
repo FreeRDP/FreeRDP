@@ -84,6 +84,7 @@ set(WINPR_CORE synch locale library file comm pipe interlocked security
 
 foreach(DIR ${WINPR_CORE})
 	add_subdirectory(${DIR})
+	source_group("${DIR}" REGULAR_EXPRESSION "${DIR}/.*\\.[ch]")
 endforeach()
 
 set(WINPR_LEVEL2 winsock sspi winhttp asn1 sspicli crt bcrypt rpc credui
@@ -91,6 +92,7 @@ set(WINPR_LEVEL2 winsock sspi winhttp asn1 sspicli crt bcrypt rpc credui
 
 foreach(DIR ${WINPR_LEVEL2})
 	add_subdirectory(${DIR})
+	source_group("${DIR}" REGULAR_EXPRESSION "${DIR}/.*\\.[ch]")
 endforeach()
 
 set(MODULE_NAME winpr)
