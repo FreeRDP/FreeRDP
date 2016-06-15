@@ -97,7 +97,7 @@ if(WITH_MANPAGES)
 						${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-channels.1.xml ${CMAKE_CURRENT_BINARY_DIR}
 					COMMAND ${CMAKE_COMMAND} -E copy 
 						${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-examples.1.xml ${CMAKE_CURRENT_BINARY_DIR}
-						COMMAND ${XSLTPROC_EXECUTABLE} ${DOCBOOKXSL_DIR}/manpages/docbook.xsl  xfreerdp.1.xml
+					COMMAND ${XSLTPROC_EXECUTABLE} ${DOCBOOKXSL_DIR}/manpages/docbook.xsl xfreerdp.1.xml
 					WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 					DEPENDS 
 						${CMAKE_CURRENT_BINARY_DIR}/xfreerdp.1.xml 

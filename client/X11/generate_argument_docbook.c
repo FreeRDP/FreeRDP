@@ -146,13 +146,25 @@ int main(int argc, char *argv[])
 		const char *format = tr_esc_str(arg->Format);
 		const char *text = tr_esc_str((LPSTR) arg->Text);
 		fprintf(fp, "\t\t\t<varlistentry>\n");
-		if(COMMAND_LINE_VALUE_REQUIRED == arg->Flags)
-			fprintf(fp, "\t\t\t\t<term><option>/%s</option> <replaceable>%s</replaceable></term>\n", name, format);
-		else
-			fprintf(fp, "\t\t\t\t<term><option>/%s</option></term>\n", name);
-		fprintf(fp, "\t\t\t\t<listitem>\n");
-		fprintf(fp, "\t\t\t\t\t<para>%s</para>\n", format);
-		fprintf(fp, "\t\t\t\t</listitem>\n");
+
+		fprintf(fp, "\t\t\t\t<term><option>/%s</option>", name);
+		if ((arg->Flags == COMMAND_LINE_VALUE_REQUIRED) && format)
+			fprintf(fp, " <replaceable>%s</replaceable>\n", format);
+		fprintf(fp, "</term>\n");
+
+		if (format || text)
+		{
+			fprintf(fp, "\t\t\t\t<listitem>\n");
+			fprintf(fp, "\t\t\t\t\t<para>%s\n", format ? format : "");
+			if (text)
+			{
+				if (format)
+					fprintf(fp, " - ");
+				fprintf(fp, "%s", text);
+			}
+			fprintf(fp, "</para>\n");
+			fprintf(fp, "\t\t\t\t</listitem>\n");
+		}
 		fprintf(fp, "\t\t\t</varlistentry>\n");
 		free((void*) name);
 		free((void*) format);
