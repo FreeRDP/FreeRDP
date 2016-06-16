@@ -174,7 +174,7 @@ PTP_POOL GetDefaultThreadpool()
 	return pool;
 }
 
-PTP_POOL CreateThreadpool(PVOID reserved)
+PTP_POOL winpr_CreateThreadpool(PVOID reserved)
 {
 	PTP_POOL pool = NULL;
 #ifdef _WIN32
@@ -194,7 +194,7 @@ PTP_POOL CreateThreadpool(PVOID reserved)
 	return pool;
 }
 
-VOID CloseThreadpool(PTP_POOL ptpp)
+VOID winpr_CloseThreadpool(PTP_POOL ptpp)
 {
 #ifdef _WIN32
 	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);
@@ -224,7 +224,7 @@ VOID CloseThreadpool(PTP_POOL ptpp)
 	}
 }
 
-BOOL SetThreadpoolThreadMinimum(PTP_POOL ptpp, DWORD cthrdMic)
+BOOL winpr_SetThreadpoolThreadMinimum(PTP_POOL ptpp, DWORD cthrdMic)
 {
 	HANDLE thread;
 #ifdef _WIN32
@@ -250,7 +250,7 @@ BOOL SetThreadpoolThreadMinimum(PTP_POOL ptpp, DWORD cthrdMic)
 	return TRUE;
 }
 
-VOID SetThreadpoolThreadMaximum(PTP_POOL ptpp, DWORD cthrdMost)
+VOID winpr_SetThreadpoolThreadMaximum(PTP_POOL ptpp, DWORD cthrdMost)
 {
 #ifdef _WIN32
 	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);

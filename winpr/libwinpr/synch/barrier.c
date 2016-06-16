@@ -87,7 +87,7 @@ static BOOL CALLBACK InitOnce_Barrier(PINIT_ONCE once, PVOID param, PVOID *conte
 
 #endif
 
-BOOL WINAPI InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, LONG lTotalThreads, LONG lSpinCount)
+BOOL WINAPI winpr_InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, LONG lTotalThreads, LONG lSpinCount)
 {
 	SYSTEM_INFO sysinfo;
 	HANDLE hEvent0;
@@ -132,7 +132,7 @@ BOOL WINAPI InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier
 	return TRUE;
 }
 
-BOOL WINAPI EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, DWORD dwFlags)
+BOOL WINAPI winpr_EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, DWORD dwFlags)
 {
 	LONG remainingThreads;
 	HANDLE hCurrentEvent;
@@ -226,7 +226,7 @@ BOOL WINAPI EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, DWO
 	return TRUE;
 }
 
-BOOL WINAPI DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier)
+BOOL WINAPI winpr_DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier)
 {
 #ifdef _WIN32
 	if (g_NativeBarrier)
