@@ -38,9 +38,6 @@ foreach(FREERDP_CHANNELS_CLIENT_SRC ${FREERDP_CHANNELS_CLIENT_SRCS})
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} "${FREERDP_CHANNELS_CLIENT_SRC}")
 endforeach()
 
-if(MSVC)
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS})
-endif()
 
 # On windows create dll version information.
 # Vendor, product and year are already set in top level CMakeLists.txt

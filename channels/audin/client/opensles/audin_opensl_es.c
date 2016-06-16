@@ -473,7 +473,7 @@ static UINT audin_opensles_parse_addin_args(AudinOpenSLESDevice* device,
 	return CHANNEL_RC_OK;
 }
 
-#ifdef STATIC_CHANNELS
+#ifdef BUILTIN_CHANNELS
 #define freerdp_audin_client_subsystem_entry \
 	opensles_freerdp_audin_client_subsystem_entry
 #else

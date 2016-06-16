@@ -1539,7 +1539,7 @@ static UINT urbdrc_process_addin_args(URBDRC_PLUGIN* urbdrc, ADDIN_ARGV* args)
 	return CHANNEL_RC_OK;
 }
 
-#ifdef STATIC_CHANNELS
+#ifdef BUILTIN_CHANNELS
 #define DVCPluginEntry urbdrc_DVCPluginEntry
 #else
 #define DVCPluginEntry FREERDP_API DVCPluginEntry

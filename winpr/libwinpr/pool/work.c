@@ -66,7 +66,7 @@ static TP_CALLBACK_ENVIRON DEFAULT_CALLBACK_ENVIRONMENT =
 	{ 0 } /* Flags */
 };
 
-PTP_WORK CreateThreadpoolWork(PTP_WORK_CALLBACK pfnwk, PVOID pv, PTP_CALLBACK_ENVIRON pcbe)
+PTP_WORK winpr_CreateThreadpoolWork(PTP_WORK_CALLBACK pfnwk, PVOID pv, PTP_CALLBACK_ENVIRON pcbe)
 {
 	PTP_WORK work = NULL;
 #ifdef _WIN32
@@ -91,7 +91,7 @@ PTP_WORK CreateThreadpoolWork(PTP_WORK_CALLBACK pfnwk, PVOID pv, PTP_CALLBACK_EN
 	return work;
 }
 
-VOID CloseThreadpoolWork(PTP_WORK pwk)
+VOID winpr_CloseThreadpoolWork(PTP_WORK pwk)
 {
 #ifdef _WIN32
 	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);
@@ -104,7 +104,7 @@ VOID CloseThreadpoolWork(PTP_WORK pwk)
 	free(pwk);
 }
 
-VOID SubmitThreadpoolWork(PTP_WORK pwk)
+VOID winpr_SubmitThreadpoolWork(PTP_WORK pwk)
 {
 	PTP_POOL pool;
 	PTP_CALLBACK_INSTANCE callbackInstance;
@@ -127,7 +127,7 @@ VOID SubmitThreadpoolWork(PTP_WORK pwk)
 	}
 }
 
-BOOL TrySubmitThreadpoolCallback(PTP_SIMPLE_CALLBACK pfns, PVOID pv, PTP_CALLBACK_ENVIRON pcbe)
+BOOL winpr_TrySubmitThreadpoolCallback(PTP_SIMPLE_CALLBACK pfns, PVOID pv, PTP_CALLBACK_ENVIRON pcbe)
 {
 #ifdef _WIN32
 	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);
@@ -138,7 +138,7 @@ BOOL TrySubmitThreadpoolCallback(PTP_SIMPLE_CALLBACK pfns, PVOID pv, PTP_CALLBAC
 	return FALSE;
 }
 
-VOID WaitForThreadpoolWorkCallbacks(PTP_WORK pwk, BOOL fCancelPendingCallbacks)
+VOID winpr_WaitForThreadpoolWorkCallbacks(PTP_WORK pwk, BOOL fCancelPendingCallbacks)
 {
 	HANDLE event;
 	PTP_POOL pool;

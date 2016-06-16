@@ -338,7 +338,7 @@ UINT disp_send_monitor_layout(DispClientContext* context, UINT32 NumMonitors, DI
 	return disp_send_display_control_monitor_layout_pdu(callback, NumMonitors, Monitors);
 }
 
-#ifdef STATIC_CHANNELS
+#ifdef BUILTIN_CHANNELS
 #define DVCPluginEntry		disp_DVCPluginEntry
 #else
 #define DVCPluginEntry		FREERDP_API DVCPluginEntry

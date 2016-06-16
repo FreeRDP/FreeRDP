@@ -234,7 +234,7 @@
 
 #if (_WIN32_WINNT < 0x0600)
 
-PCSTR inet_ntop(INT Family, PVOID pAddr, PSTR pStringBuf, size_t StringBufSize)
+PCSTR winpr_inet_ntop(INT Family, PVOID pAddr, PSTR pStringBuf, size_t StringBufSize)
 {
 	if (Family == AF_INET)
 	{
@@ -262,7 +262,7 @@ PCSTR inet_ntop(INT Family, PVOID pAddr, PSTR pStringBuf, size_t StringBufSize)
 	return NULL;
 }
 
-INT inet_pton(INT Family, PCSTR pszAddrString, PVOID pAddrBuf)
+INT winpr_inet_pton(INT Family, PCSTR pszAddrString, PVOID pAddrBuf)
 {
 	SOCKADDR_STORAGE addr;
 	int addr_len = sizeof(addr);

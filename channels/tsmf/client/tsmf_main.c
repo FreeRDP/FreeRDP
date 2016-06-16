@@ -525,7 +525,7 @@ static UINT tsmf_process_addin_args(IWTSPlugin *pPlugin, ADDIN_ARGV *args)
 	return CHANNEL_RC_OK;
 }
 
-#ifdef STATIC_CHANNELS
+#ifdef BUILTIN_CHANNELS
 #define DVCPluginEntry	tsmf_DVCPluginEntry
 #else
 #define DVCPluginEntry	FREERDP_API DVCPluginEntry

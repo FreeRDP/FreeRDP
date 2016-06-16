@@ -20,10 +20,6 @@ set(MODULE_PREFIX "TEST_LIBRARY_B")
 
 set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} TestLibraryB.c)
 
-if(MSVC)
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS})
-endif()
-
 add_library(${MODULE_NAME} SHARED ${${MODULE_PREFIX}_SRCS})
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")

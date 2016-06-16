@@ -277,7 +277,7 @@ WINPR_API BOOL DeleteTimerQueueTimer(HANDLE TimerQueue, HANDLE Timer, HANDLE Com
 #endif
 
 #if (defined(_WIN32) && (_WIN32_WINNT < 0x0600))
-#define InitializeCriticalSectionEx(A,B,C) InitializeCriticalSectionAndSpinCount(A,B)
+#define InitializeCriticalSectionEx(lpCriticalSection, dwSpinCount, Flags) InitializeCriticalSectionAndSpinCount(lpCriticalSection, dwSpinCount)
 #endif
 
 #ifndef _RTL_RUN_ONCE_DEF
@@ -312,11 +312,15 @@ typedef PRTL_RUN_ONCE PINIT_ONCE;
 typedef PRTL_RUN_ONCE LPINIT_ONCE;
 typedef BOOL (CALLBACK * PINIT_ONCE_FN)(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context);
 
-WINPR_API BOOL InitOnceBeginInitialize(LPINIT_ONCE lpInitOnce, DWORD dwFlags, PBOOL fPending, LPVOID* lpContext);
-WINPR_API BOOL InitOnceComplete(LPINIT_ONCE lpInitOnce, DWORD dwFlags, LPVOID lpContext);
-WINPR_API BOOL InitOnceExecuteOnce(PINIT_ONCE InitOnce, PINIT_ONCE_FN InitFn, PVOID Parameter, LPVOID* Context);
-WINPR_API VOID InitOnceInitialize(PINIT_ONCE InitOnce);
+WINPR_API BOOL winpr_InitOnceBeginInitialize(LPINIT_ONCE lpInitOnce, DWORD dwFlags, PBOOL fPending, LPVOID* lpContext);
+WINPR_API BOOL winpr_InitOnceComplete(LPINIT_ONCE lpInitOnce, DWORD dwFlags, LPVOID lpContext);
+WINPR_API BOOL winpr_InitOnceExecuteOnce(PINIT_ONCE InitOnce, PINIT_ONCE_FN InitFn, PVOID Parameter, LPVOID* Context);
+WINPR_API VOID winpr_InitOnceInitialize(PINIT_ONCE InitOnce);
 
+#define InitOnceBeginInitialize winpr_InitOnceBeginInitialize
+#define InitOnceComplete winpr_InitOnceComplete
+#define InitOnceExecuteOnce winpr_InitOnceExecuteOnce
+#define InitOnceInitialize winpr_InitOnceInitialize
 #endif
 
 /* Synchronization Barrier */
@@ -344,9 +348,13 @@ typedef PRTL_BARRIER LPSYNCHRONIZATION_BARRIER;
 #define SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY	0x02
 #define SYNCHRONIZATION_BARRIER_FLAGS_NO_DELETE		0x04
 
-WINPR_API BOOL WINAPI InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, LONG lTotalThreads, LONG lSpinCount);
-WINPR_API BOOL WINAPI EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, DWORD dwFlags);
-WINPR_API BOOL WINAPI DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier);
+WINPR_API BOOL WINAPI winpr_InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, LONG lTotalThreads, LONG lSpinCount);
+WINPR_API BOOL WINAPI winpr_EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, DWORD dwFlags);
+WINPR_API BOOL WINAPI winpr_DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier);
+
+#define InitializeSynchronizationBarrier winpr_InitializeSynchronizationBarrier
+#define EnterSynchronizationBarrier winpr_EnterSynchronizationBarrier
+#define DeleteSynchronizationBarrier winpr_DeleteSynchronizationBarrier
 
 #endif
 

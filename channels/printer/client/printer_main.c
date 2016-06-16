@@ -450,7 +450,7 @@ error_out:
 	return error;
 }
 
-#ifdef STATIC_CHANNELS
+#ifdef BUILTIN_CHANNELS
 #define DeviceServiceEntry	printer_DeviceServiceEntry
 #else
 #define DeviceServiceEntry	FREERDP_API DeviceServiceEntry

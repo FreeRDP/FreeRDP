@@ -392,7 +392,7 @@ static UINT parallel_free(DEVICE* device)
     return CHANNEL_RC_OK;
 }
 
-#ifdef STATIC_CHANNELS
+#ifdef BUILTIN_CHANNELS
 #define DeviceServiceEntry	parallel_DeviceServiceEntry
 #else
 #define DeviceServiceEntry	FREERDP_API DeviceServiceEntry

@@ -436,7 +436,7 @@ DWORD GetTickCount(void)
 
 #if (!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0600))
 
-ULONGLONG GetTickCount64(void)
+ULONGLONG winpr_GetTickCount64(void)
 {
 	ULONGLONG ticks = 0;
 #if defined(__linux__)

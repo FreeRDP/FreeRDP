@@ -48,7 +48,7 @@ static BOOL CALLBACK init_module(PINIT_ONCE once, PVOID param, PVOID *context)
 }
 #endif
 
-PTP_CLEANUP_GROUP CreateThreadpoolCleanupGroup()
+PTP_CLEANUP_GROUP winpr_CreateThreadpoolCleanupGroup()
 {
 	PTP_CLEANUP_GROUP cleanupGroup = NULL;
 #ifdef _WIN32
@@ -60,7 +60,7 @@ PTP_CLEANUP_GROUP CreateThreadpoolCleanupGroup()
 	return cleanupGroup;
 }
 
-VOID CloseThreadpoolCleanupGroupMembers(PTP_CLEANUP_GROUP ptpcg, BOOL fCancelPendingCallbacks, PVOID pvCleanupContext)
+VOID winpr_CloseThreadpoolCleanupGroupMembers(PTP_CLEANUP_GROUP ptpcg, BOOL fCancelPendingCallbacks, PVOID pvCleanupContext)
 {
 #ifdef _WIN32
 	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);
@@ -73,7 +73,7 @@ VOID CloseThreadpoolCleanupGroupMembers(PTP_CLEANUP_GROUP ptpcg, BOOL fCancelPen
 	/* No default implementation */
 }
 
-VOID CloseThreadpoolCleanupGroup(PTP_CLEANUP_GROUP ptpcg)
+VOID winpr_CloseThreadpoolCleanupGroup(PTP_CLEANUP_GROUP ptpcg)
 {
 #ifdef _WIN32
 	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);

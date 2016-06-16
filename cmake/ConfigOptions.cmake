@@ -68,7 +68,7 @@ cmake_dependent_option(WITH_CLIENT "Build client binaries" ON "WITH_CLIENT_COMMO
 
 option(WITH_SERVER "Build server binaries" OFF)
 
-option(STATIC_CHANNELS "Build channels statically" ON)
+option(BUILTIN_CHANNELS "Combine all channels into their respective base library" ON)
 
 option(WITH_CHANNELS "Build virtual channel plugins" ON)
 
