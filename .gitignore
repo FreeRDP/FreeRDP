@@ -45,8 +45,6 @@ compile_commands.json
 docs/api
 client/X11/xfreerdp.1
 client/X11/xfreerdp.1.xml
-client/X11/xfreerdp-channels.1.xml
-client/X11/xfreerdp-examples.1.xml
 
 # Mac OS X
 .DS_Store
