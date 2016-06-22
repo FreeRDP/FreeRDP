@@ -337,25 +337,26 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context, int client
 		goto out;
 	}
 
+	if (context->latency <= 0)
+		context->latency = 50;
+	context->priv->out_frames = context->src_format.nSamplesPerSec * context->latency / 1000;
+	if (context->priv->out_frames < 1)
+		context->priv->out_frames = 1;
 	switch(format->wFormatTag)
 	{
 		case WAVE_FORMAT_DVI_ADPCM:
 			bs = (format->nBlockAlign - 4 * format->nChannels) * 4;
-			context->priv->out_frames = (format->nBlockAlign * 4 * format->nChannels * 2 / bs + 1) * bs / (format->nChannels * 2);
+			context->priv->out_frames -= context->priv->out_frames % bs;
+			if (context->priv->out_frames < bs)
+				context->priv->out_frames = bs;
 			break;
 
 		case WAVE_FORMAT_ADPCM:
 			bs = (format->nBlockAlign - 7 * format->nChannels) * 2 / format->nChannels + 2;
-			context->priv->out_frames = bs * 4;
+			context->priv->out_frames -= context->priv->out_frames % bs;
+			if (context->priv->out_frames < bs)
+				context->priv->out_frames = bs;
 			break;
-		default:
-			context->priv->out_frames = 0x4000 / context->priv->src_bytes_per_frame;
-			break;
-	}
-
-	if (format->nSamplesPerSec != context->src_format.nSamplesPerSec)
-	{
-		context->priv->out_frames = (context->priv->out_frames * context->src_format.nSamplesPerSec + format->nSamplesPerSec - 100) / format->nSamplesPerSec;
 	}
 	context->priv->out_pending_frames = 0;
 
