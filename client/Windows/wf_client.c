@@ -252,9 +252,7 @@ BOOL wf_pre_connect(freerdp* instance)
 	settings->GlyphSupportLevel = GLYPH_SUPPORT_NONE;
 
 	wfc->fullscreen = settings->Fullscreen;
-
-	if (wfc->fullscreen)
-		wfc->fs_toggle = 1;
+    wfc->fullscreen_toggle = settings->ToggleFullscreen;
 
 	wfc->clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
 	ZeroMemory(wfc->clrconv, sizeof(CLRCONV));
@@ -328,6 +326,11 @@ BOOL wf_pre_connect(freerdp* instance)
 
 void wf_add_system_menu(wfContext* wfc)
 {
+    if (wfc->fullscreen && !wfc->fullscreen_toggle)
+    {
+        return;
+    }
+
 	HMENU hMenu = GetSystemMenu(wfc->hwnd, FALSE);
 
 	MENUITEMINFO item_info;
@@ -356,7 +359,6 @@ BOOL wf_post_connect(freerdp* instance)
 	rdpCache* cache;
 	wfContext* wfc;
 	rdpContext* context;
-	WCHAR lpWindowName[64];
 	rdpSettings* settings;
 	EmbedWindowEventArgs e;
 
@@ -409,11 +411,11 @@ BOOL wf_post_connect(freerdp* instance)
 	}
 
 	if (settings->WindowTitle != NULL)
-		_snwprintf(lpWindowName, ARRAYSIZE(lpWindowName), L"%S", settings->WindowTitle);
+		_snwprintf(wfc->window_title, ARRAYSIZE( wfc->window_title ), L"%S", settings->WindowTitle);
 	else if (settings->ServerPort == 3389)
-		_snwprintf(lpWindowName, ARRAYSIZE(lpWindowName), L"FreeRDP: %S", settings->ServerHostname);
+		_snwprintf( wfc->window_title, ARRAYSIZE( wfc->window_title ), L"FreeRDP: %S", settings->ServerHostname);
 	else
-		_snwprintf(lpWindowName, ARRAYSIZE(lpWindowName), L"FreeRDP: %S:%d", settings->ServerHostname, settings->ServerPort);
+		_snwprintf( wfc->window_title, ARRAYSIZE( wfc->window_title), L"FreeRDP: %S:%d", settings->ServerHostname, settings->ServerPort);
 
 	if (settings->EmbeddedWindow)
 		settings->Decorations = FALSE;
@@ -427,7 +429,7 @@ BOOL wf_post_connect(freerdp* instance)
 
 	if (!wfc->hwnd)
 	{
-		wfc->hwnd = CreateWindowEx((DWORD) NULL, wfc->wndClassName, lpWindowName, dwStyle,
+		wfc->hwnd = CreateWindowEx((DWORD) NULL, wfc->wndClassName, wfc->window_title, dwStyle,
 			0, 0, 0, 0, wfc->hWndParent, NULL, wfc->hInstance, NULL);
 
 		SetWindowLongPtr(wfc->hwnd, GWLP_USERDATA, (LONG_PTR) wfc);
