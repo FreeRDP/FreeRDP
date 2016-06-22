@@ -195,8 +195,7 @@ static BOOL wf_pre_connect(freerdp* instance)
 	wfc->fullscreen = settings->Fullscreen;
 	wfc->floatbar_active = settings->Floatbar;
 
-	if (wfc->fullscreen)
-		wfc->fs_toggle = 1;
+	wfc->fullscreen_toggle = settings->ToggleFullscreen;
 
 	desktopWidth = settings->DesktopWidth;
 	desktopHeight = settings->DesktopHeight;
@@ -259,8 +258,15 @@ static BOOL wf_pre_connect(freerdp* instance)
 
 static void wf_add_system_menu(wfContext* wfc)
 {
-	HMENU hMenu = GetSystemMenu(wfc->hwnd, FALSE);
+	HMENU hMenu;
 	MENUITEMINFO item_info;
+	
+	if (wfc->fullscreen && !wfc->fullscreen_toggle)
+	{
+		return;
+	}
+	
+	hMenu = GetSystemMenu(wfc->hwnd, FALSE);
 	ZeroMemory(&item_info, sizeof(MENUITEMINFO));
 	item_info.fMask = MIIM_CHECKMARKS | MIIM_FTYPE | MIIM_ID | MIIM_STRING |
 	                  MIIM_DATA;
@@ -285,7 +291,6 @@ static BOOL wf_post_connect(freerdp* instance)
 	rdpCache* cache;
 	wfContext* wfc;
 	rdpContext* context;
-	WCHAR lpWindowName[512];
 	rdpSettings* settings;
 	EmbedWindowEventArgs e;
 	const UINT32 format = PIXEL_FORMAT_BGRX32;
@@ -307,12 +312,12 @@ static BOOL wf_post_connect(freerdp* instance)
 	}
 
 	if (settings->WindowTitle != NULL)
-		_snwprintf_s(lpWindowName, ARRAYSIZE(lpWindowName), _TRUNCATE, L"%S", settings->WindowTitle);
+		_snwprintf_s(wfc->window_title, ARRAYSIZE(wfc->window_title), _TRUNCATE, L"%S", settings->WindowTitle);
 	else if (settings->ServerPort == 3389)
-		_snwprintf_s(lpWindowName, ARRAYSIZE(lpWindowName), _TRUNCATE, L"FreeRDP: %S",
+		_snwprintf_s(wfc->window_title, ARRAYSIZE(wfc->window_title), _TRUNCATE, L"FreeRDP: %S",
 		             settings->ServerHostname);
 	else
-		_snwprintf_s(lpWindowName, ARRAYSIZE(lpWindowName), _TRUNCATE, L"FreeRDP: %S:%u",
+		_snwprintf_s(wfc->window_title, ARRAYSIZE(wfc->window_title), _TRUNCATE, L"FreeRDP: %S:%u",
 		             settings->ServerHostname, settings->ServerPort);
 
 	if (settings->EmbeddedWindow)
@@ -328,7 +333,7 @@ static BOOL wf_post_connect(freerdp* instance)
 
 	if (!wfc->hwnd)
 	{
-		wfc->hwnd = CreateWindowEx((DWORD) NULL, wfc->wndClassName, lpWindowName,
+		wfc->hwnd = CreateWindowEx((DWORD) NULL, wfc->wndClassName, wfc->window_title,
 		                           dwStyle,
 		                           0, 0, 0, 0, wfc->hWndParent, NULL, wfc->hInstance, NULL);
 		SetWindowLongPtr(wfc->hwnd, GWLP_USERDATA, (LONG_PTR) wfc);

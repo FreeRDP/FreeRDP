@@ -78,11 +78,11 @@ struct wf_context
 
 	int offset_x;
 	int offset_y;
-	int fs_toggle;
+	int fullscreen_toggle;
 	int fullscreen;
 	int floatbar_active;
 	int percentscreen;
-	char window_title[64];
+	WCHAR window_title[512];
 	int client_x;
 	int client_y;
 	int client_width;
