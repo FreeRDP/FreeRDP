@@ -26,7 +26,12 @@ if(NOT WIN32)
 endif()
 
 if(DEVD_FOUND OR UDEV_FOUND)
+	include_directories(${UDEV_INCLUDE_DIR})
 	if(UUID_FOUND AND DBUS_GLIB_FOUND AND LIBUSB_1_FOUND)
+		include_directories(${UUID_INCLUDE_DIRS})
+		include_directories(${LIBUSB_1_INCLUDE_DIRS})
+		include_directories(${DBUS_GLIB_INCLUDE_DIRS})
+
 		set(URBDRC_DEPENDENCIES_FOUND TRUE)
 		message(STATUS "Found all URBDRC dependencies")
 	else()
