@@ -327,6 +327,8 @@ static void rdpsnd_mac_waveplay(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 	length = wave->length > audioBuffer->mAudioDataBytesCapacity ? audioBuffer->mAudioDataBytesCapacity : wave->length;
     
 	CopyMemory(audioBuffer->mAudioData, wave->data, length);
+	free(wave->data);
+	wave->data = NULL;
 	audioBuffer->mAudioDataByteSize = length;
 	audioBuffer->mUserData = wave;
 	

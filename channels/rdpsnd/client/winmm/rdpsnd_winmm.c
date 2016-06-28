@@ -6,6 +6,7 @@
  * Copyright 2010-2012 Vic Lee
  * Copyright 2015 Thincast Technologies GmbH
  * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+ * Copyright 2016 David PHAM-VAN <d.phamvan@inuvika.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,6 +137,7 @@ static void CALLBACK rdpsnd_winmm_callback_function(HWAVEOUT hwo, UINT uMsg, DWO
 				winmm->device.WaveConfirm(&(winmm->device), wave);
 
 				free(lpWaveHdr->lpData);
+				free(lpWaveHdr);
 
 				free(wave);
 			}
@@ -330,6 +332,7 @@ void rdpsnd_winmm_wave_play(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 	{
 		WLog_ERR(TAG,  "waveOutWrite failure: %d", mmResult);
 		waveOutUnprepareHeader(winmm->hWaveOut, lpWaveHdr, sizeof(WAVEHDR));
+		free(lpWaveHdr);
 		return;
 	}
 }
