@@ -47,7 +47,7 @@ int ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 	int status;
 	char* ws = Workstation;
 	CHAR computerName[MAX_COMPUTERNAME_LENGTH + 1];
-	DWORD nSize = sizeof(computerName) * sizeof(CHAR);
+	DWORD nSize = sizeof(computerName) / sizeof(CHAR);
 
 	if (!Workstation)
 	{
@@ -108,12 +108,11 @@ int ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 {
 	int status;
 	CHAR computerName[MAX_COMPUTERNAME_LENGTH + 1];
-	DWORD nSize = sizeof(computerName) * sizeof(CHAR);
+	DWORD nSize = sizeof(computerName) / sizeof(CHAR);
 	char* name = TargetName;
 
 	if (!name)
 	{
-
 		if (!GetComputerNameExA(ComputerNameDnsHostname, computerName, &nSize))
 			return -1;
 
