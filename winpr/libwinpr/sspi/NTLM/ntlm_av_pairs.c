@@ -174,7 +174,7 @@ int ntlm_get_target_computer_name(PUNICODE_STRING pName, COMPUTER_NAME_FORMAT ty
 	char* name;
 	int status;
 	CHAR computerName[MAX_COMPUTERNAME_LENGTH + 1];
-	DWORD nSize = sizeof(computerName) * sizeof(CHAR);
+	DWORD nSize = sizeof(computerName) / sizeof(CHAR);
 
 	if (!GetComputerNameExA(type, computerName, &nSize))
 		return -1;
