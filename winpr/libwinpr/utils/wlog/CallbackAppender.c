@@ -49,6 +49,7 @@ static BOOL WLog_CallbackAppender_WriteMessage(wLog* log, wLogAppender* appender
 
 	if (!appender)
 		return FALSE;
+
 	message->PrefixString = prefix;
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
 
@@ -62,10 +63,14 @@ static BOOL WLog_CallbackAppender_WriteMessage(wLog* log, wLogAppender* appender
 
 static BOOL WLog_CallbackAppender_WriteDataMessage(wLog* log, wLogAppender* appender, wLogMessage* message)
 {
-
+	char prefix[WLOG_MAX_PREFIX_SIZE];
 	wLogCallbackAppender* callbackAppender;
+
 	if (!appender)
 		return FALSE;
+
+	message->PrefixString = prefix;
+	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
 
 	callbackAppender = (wLogCallbackAppender *)appender;
 	if (callbackAppender->callbacks && callbackAppender->callbacks->data)
@@ -76,9 +81,14 @@ static BOOL WLog_CallbackAppender_WriteDataMessage(wLog* log, wLogAppender* appe
 
 static BOOL WLog_CallbackAppender_WriteImageMessage(wLog* log, wLogAppender* appender, wLogMessage* message)
 {
+	char prefix[WLOG_MAX_PREFIX_SIZE];
 	wLogCallbackAppender* callbackAppender;
+
 	if (!appender)
 		return FALSE;
+
+	message->PrefixString = prefix;
+	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
 
 	callbackAppender = (wLogCallbackAppender *)appender;
 	if (callbackAppender->callbacks && callbackAppender->callbacks->image)
@@ -89,9 +99,14 @@ static BOOL WLog_CallbackAppender_WriteImageMessage(wLog* log, wLogAppender* app
 
 static BOOL WLog_CallbackAppender_WritePacketMessage(wLog* log, wLogAppender* appender, wLogMessage* message)
 {
+	char prefix[WLOG_MAX_PREFIX_SIZE];
 	wLogCallbackAppender* callbackAppender;
+
 	if (!appender)
 		return FALSE;
+
+	message->PrefixString = prefix;
+	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
 
 	callbackAppender = (wLogCallbackAppender *)appender;
 	if (callbackAppender->callbacks && callbackAppender->callbacks->package)
