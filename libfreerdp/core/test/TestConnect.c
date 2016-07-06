@@ -48,18 +48,21 @@ finish:
 	return rc;
 }
 
-static int testTimeout(void)
+static int testTimeout(int port)
 {
 	DWORD start, end, diff;
+	char arg1[] = "/v:192.0.2.1:XXXXX";
 	char* argv[] =
 	{
 		"test",
-		"/v:192.0.2.1",
+		"/v:192.0.2.1:XXXXX",
 		NULL
 	};
 
 	int rc;
 
+	snprintf(arg1, 18, "/v:192.0.2.1:%d", port);
+	argv[1] = arg1;
 	start = GetTickCount();
 	rc = runInstance(2, argv, NULL);
 	end = GetTickCount();
@@ -78,18 +81,27 @@ static int testTimeout(void)
 	return 0;
 }
 
+struct testThreadArgs {
+	int port;
+	freerdp** arg;
+};
+
 static void* testThread(void* arg)
 {
+	char arg1[] = "/v:192.0.2.1:XXXXX";
 	char* argv[] =
 	{
 		"test",
-		"/v:192.0.2.1",
+		"/v:192.0.2.1:XXXXX",
 		NULL
 	};
 
 	int rc;
+	struct testThreadArgs *args = arg;
+	snprintf(arg1, 18, "/v:192.0.2.1:%d", args->port);
+	argv[1] = arg1;
 
-	rc = runInstance(2, argv, arg);
+	rc = runInstance(2, argv, args->arg);
 
 	if (rc != 1)
 		ExitThread(-1);
@@ -98,20 +110,23 @@ static void* testThread(void* arg)
 	return NULL;
 }
 
-static int testAbort(void)
+static int testAbort(int port)
 {
 	DWORD status;
 	DWORD start, end, diff;
 	HANDLE thread;
+	struct testThreadArgs args;
 	freerdp* instance = NULL;
 
 	s_sync = CreateEvent(NULL, TRUE, FALSE, NULL);
 	if (!s_sync)
 		return -1;
 
+	args.port = port;
+	args.arg = &instance;
 	start = GetTickCount();
 	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)testThread,
-				&instance, 0, NULL);
+				&args, 0, NULL);
 	if (!thread)
 	{
 		CloseHandle(s_sync);
@@ -148,24 +163,31 @@ static int testAbort(void)
 	return 0;
 }
 
-static int testSuccess(void)
+static int testSuccess(int port)
 {
 	int rc;
 	STARTUPINFO si;
 	PROCESS_INFORMATION process;
-	char* argv[] =
+	char arg1[] = "/v:127.0.0.1:XXXXX";
+	char* clientArgs[] =
 	{
 		"test",
-		"/v:127.0.0.1",
+		"/v:127.0.0.1:XXXXX",
 		"/cert-ignore",
 		"/rfx",
 		NULL
 	};
+	char *commandLine;
+	int commandLineLen;
+
 	int argc = 4;
 	char* path = TESTING_OUTPUT_DIRECTORY;
 	char* wpath = TESTING_SRC_DIRECTORY;
 	char* exe = GetCombinedPath(path, "server");
 	char* wexe = GetCombinedPath(wpath, "server");
+
+	snprintf(arg1, 18, "/v:127.0.0.1:%d", port);
+	clientArgs[1] = arg1;
 
 	if (!exe || !wexe)
 	{
@@ -206,9 +228,21 @@ static int testSuccess(void)
 	}
 
 	// Start sample server locally.
-    memset(&si, 0, sizeof(si));
+	commandLineLen = strlen(exe) + strlen(" --port=XXXXX") + 1;
+	commandLine = malloc(commandLineLen);
+	if (!commandLine)
+	{
+		free(path);
+		free(wpath);
+		free(exe);
+		return -2;
+	}
+	snprintf(commandLine, commandLineLen, "%s --port=%d", exe, port);
+
+	memset(&si, 0, sizeof(si));
     si.cb = sizeof(si);
-	if (!CreateProcessA(exe, exe, NULL, NULL, FALSE, 0, NULL,
+
+	if (!CreateProcessA(exe, commandLine, NULL, NULL, FALSE, 0, NULL,
 				wpath, &si, &process))
 	{
 		free(exe);
@@ -220,9 +254,10 @@ static int testSuccess(void)
 	free(exe);
 	free(path);
 	free(wpath);
+	free(commandLine);
 
-	Sleep(1000);
-	rc = runInstance(argc, argv, NULL);
+	Sleep(1 * 1000); /* let the server start */
+	rc = runInstance(argc, clientArgs, NULL);
 
 	if (!TerminateProcess(process.hProcess, 0))
 		return -2;
@@ -241,19 +276,23 @@ static int testSuccess(void)
 
 int TestConnect(int argc, char* argv[])
 {
+	int randomPort;
+
+	randomPort = 3389 + (random() % 20);
+
 	/* Test connect to not existing server,
 	 * check if timeout is honored. */
-	if (testTimeout())
+	if (testTimeout(randomPort))
 		return -1;
 
 	/* Test connect to not existing server,
 	 * check if connection abort is working. */
-	if (testAbort())
+	if (testAbort(randomPort))
 		return -1;
 
 	/* Test connect to existing server,
 	 * check if connection is working. */
-	if (testSuccess())
+	if (testSuccess(randomPort))
 		return -1;
 
 	return 0;
