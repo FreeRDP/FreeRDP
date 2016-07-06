@@ -881,6 +881,7 @@ int main(int argc, char* argv[])
 	char* file;
 	char name[MAX_PATH];
 	int port = 3389, i;
+	BOOL localOnly = FALSE;
 
 	for (i = 1; i < argc; i++)
 	{
@@ -900,6 +901,8 @@ int main(int argc, char* argv[])
 			if ((port < 1) || (port > 0xFFFF))
 				return -1;
 		}
+		else if (strcmp(arg, "--local-only"))
+			localOnly = TRUE;
 		else if (strncmp(arg, "--", 2))
 			test_pcap_file = arg;
 	}
@@ -929,8 +932,8 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-	if (instance->Open(instance, NULL, port) &&
-	    instance->OpenLocal(instance, file))
+	if ((localOnly || instance->Open(instance, NULL, port)) &&
+		instance->OpenLocal(instance, file))
 	{
 		/* Entering the server main loop. In a real server the listener can be run in its own thread. */
 		test_server_mainloop(instance);
