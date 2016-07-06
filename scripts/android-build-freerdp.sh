@@ -127,15 +127,20 @@ do
     fi
 
     # Build and install the library.
+    if [ $DEPS_ONLY -eq 0 ];
+    then
 	common_run cd $BASE
 	common_run mkdir -p $BUILD_SRC/freerdp-build/$ARCH
 	common_run cd $BUILD_SRC/freerdp-build/$ARCH
 	common_run export ANDROID_NDK=$ANDROID_NDK
 	common_run cmake $CMAKE_CMD_ARGS \
 		-DANDROID_ABI=$ARCH \
+		-DCMAKE_INSTALL_PREFIX=$BUILD_DST \
+		-DCMAKE_INSTALL_LIBDIR=$ARCH \
 		$SRC_DIR
 	echo $(pwd)
 	common_run cmake --build . --target install
+    fi
 done
 
 echo "Successfully build library for architectures $BUILD_ARCH"
