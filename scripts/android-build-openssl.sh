@@ -45,6 +45,7 @@ function build {
 	BASE=$(pwd)
 	DST_DIR=$BUILD_DST/$DST_PREFIX
 	common_run cd $BUILD_SRC
+	common_run git am $(dirname "${BASH_SOURCE[0]}")/0001-64bit-architecture-support.patch
 	common_run git clean -xdf
 	common_run ./Configure --openssldir=$DST_DIR $CONFIG shared
 	common_run make CALC_VERSIONS="SHLIB_COMPAT=; SHLIB_SOVER=" depend
@@ -84,10 +85,8 @@ do
 			$ARCH "mipsel-linux-android-" "arch-mips"
 		 ;;
 	 "mips64")
-		echo "[WARNING] Skipping unsupported architecture $ARCH"
-		continue
-		 build "android-mips" "mipsel-linux-android-" \
-			$ARCH "mipsel-linux-android-" "arch-mips"
+		 build "android64-mips64" "mips64el-linux-android-" \
+			$ARCH "mips64el-linux-android-" "arch-mips64"
 		 ;;
 	 "x86")
 		 build "android-x86" "i686-linux-android-" \

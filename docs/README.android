@@ -13,8 +13,8 @@ Build requirements
 For the Android port some additional dependencies need to be fulfilled:
 
 * for JNI
-- Android NDK (>= r9)
-- prebuild openssl (optionally libjpeg and openh264)
+- CMake >= 3.0
+- Android NDK (>= r9) (and <= 10e if build with OpenH264)
 
 * for the Java GUI
 - Android SDK
@@ -38,9 +38,9 @@ Currently the default script builds for:
 * armeabi-v7a
 * x86
 * mips
-
-64 bit architectures will be added as soon as the OpenSSL build scripts
-support the android build for those.
+* arm64-v8a
+* x86_64
+* mips64
 
 When the script is finished the libraries are ready for android studio to
 be picked up in client/Android/Studio/freeRDPCore/src/main/jniLibs
