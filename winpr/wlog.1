@@ -1,0 +1,149 @@
+.\" Written by David Fort (contact@hardening-consulting.com)
+.\" Process this file with
+.\" groff -man -Tascii foo.1
+.\"
+.TH wLog 13 "June 2016" Version "1.0"
+.SH NAME
+wLog \- WinPR logging facility
+
+.SH DESCRIPTION
+wLog is a configurable and flexible logging system used throughout WinPR and
+FreeRDP.
+
+The primary concept is to have a hierarchy of loggers that can be be configured
+independently.
+
+.SH Appenders
+
+WLog uses different appenders that define where the log output should be written
+to. If the application doesn't explicitly configure the appenders the below
+described variable WLOG_APPENDER can be used to choose one appender.
+
+The following kind of appenders are available:
+
+.IP Binary
+Write the log data into a binary format file.
+
+.IP Console
+The console appender writes to the console. Depending of the operating system
+the application runs on, the output might be handled differently. For example
+on android log print would be used.
+
+.IP File
+The file appender writes the textual output to a file.
+
+.IP Udp
+This appender sends the logging messages to a pre-defined remote host via UDP.
+
+If no target is set the default one 127.0.0.1:20000 is used. To receive the
+log messages one can use netcat. To receive the default target the following
+command can be used:
+nc -u 127.0.0.1 -p 20000 -l
+.IP Syslog
+Use syslog for outputting the debug messages.
+.IP Journald
+This appender outputs messages to journald.
+
+.SH Levels
+The WLog are complementary, the higher level always includes the lower ones.
+The level list below is top down. Top the highest level.
+
+.IP TRACE 
+print everything including packets dumps
+.IP DEBUG 
+debug messages
+.IP INFO
+general informations
+.IP WARN
+warnings
+.IP ERROR
+errors
+.IP FATAL
+fatal problems
+.IP OFF
+completely disable the wlog output
+
+.SH Formats
+The format a logger prints has the following possible options:
+
+.IP lv
+log level
+.IP mn
+module name
+.IP fl
+file name
+.IP fn
+function
+.IP ln
+line number
+.IP pid
+process id
+.IP tid
+thread id
+.IP yr
+year
+.IP mo
+month
+.IP dw
+day of week
+.IP hr
+hour
+.IP mi
+minute
+.IP se
+second
+.IP ml
+millisecond
+.PP
+A maximum of 16 options can be used per format string.
+
+An example that generally sets the WLOG_PREFIX for xfreerdp would look like:
+WLOG_PREFIX="pid=%pid:tid=%tid:fn=%fn -" xfreerdp /v:xxx
+
+
+.SH ENVIRONMENT
+.IP WLOG_APPENDER
+The kind of appender, the accepted values are: CONSOLE, FILE, BINARY, SYSLOG, JOURNALD or UDP
+  
+.IP WLOG_PREFIX
+configure the prefix used for outputting the message (see Format for more details and examples)
+
+.IP WLOG_LEVEL
+the level to output messages for 
+
+.IP WLOG_FILTER
+sets a filter for WLog messages. Only the filtered messages are
+printed. The format of the filter is a serie of \<logger name\>:\<level\> separated by
+comas
+
+example: WLOG_FILTER=core.channel:DEBUG,dummy:TRACE
+will display debug messages for the core.channel logger and trace level for the dummy logger
+
+.IP WLOG_FILEAPPENDER_OUTPUT_FILE_PATH
+When using the file appender it may contains the output log file's path 
+
+.IP WLOG_FILEAPPENDER_OUTPUT_FILE_NAME
+When using the file appender it may contains the output log file's name
+
+.IP WLOG_JOURNALD_ID
+When using the systemd journal appender, this variable contains the id used with
+the journal (by default the executable's name)
+
+.IP WLOG_UDP_TARGET
+target to use for the UDP appender in the format 
+.B host:port
+
+.SH BUGS
+Please report any bugs using the bug reporting form on the
+.B FreeRDP
+web site 
+
+.SH "SEE ALSO"
+Additional information and the latest version is available
+at the web site:
+.B http://www.freerdp.com
+
+.SH AUTHOR
+David Fort <contact@hardening-consulting.com> wrote this manpage from materials written
+by Bernhard Miklautz <bernhard.miklautz@thincast.com>.
+

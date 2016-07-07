@@ -93,16 +93,19 @@ if(WITH_MANPAGES)
 
 		add_custom_command(OUTPUT xfreerdp.1
 					COMMAND generate_argument_docbook
-					COMMAND ${CMAKE_COMMAND} -E copy 
+					COMMAND ${CMAKE_COMMAND} -E copy
 						${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-channels.1.xml ${CMAKE_CURRENT_BINARY_DIR}
-					COMMAND ${CMAKE_COMMAND} -E copy 
+					COMMAND ${CMAKE_COMMAND} -E copy
 						${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-examples.1.xml ${CMAKE_CURRENT_BINARY_DIR}
-						COMMAND ${XSLTPROC_EXECUTABLE} ${DOCBOOKXSL_DIR}/manpages/docbook.xsl  xfreerdp.1.xml
+					COMMAND ${CMAKE_COMMAND} -E copy
+						${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-envvar.1.xml ${CMAKE_CURRENT_BINARY_DIR}
+					COMMAND ${XSLTPROC_EXECUTABLE} ${DOCBOOKXSL_DIR}/manpages/docbook.xsl xfreerdp.1.xml
 					WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 					DEPENDS 
 						${CMAKE_CURRENT_BINARY_DIR}/xfreerdp.1.xml 
 						${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-examples.1.xml 
 						${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-channels.1.xml 
+						${CMAKE_CURRENT_SOURCE_DIR}/xfreerdp-envvar.1.xml
 						generate_argument_docbook)
 
 		add_custom_target(xfreerdp.manpage ALL

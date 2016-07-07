@@ -174,6 +174,14 @@ if(BUILD_TESTING)
 	add_subdirectory(test)
 endif()
 
+if(WITH_MANPAGES)
+	if(OPENBSD)
+	    install(FILES wlog.1 DESTINATION man/man1)
+	else()
+	    install(FILES wlog.1 DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/man/man1)
+	endif()
+endif(WITH_MANPAGES)
+
 # Exporting
 
 if(${CMAKE_VERSION} VERSION_GREATER "2.8.10")
