@@ -807,6 +807,13 @@ static H264_CONTEXT_SUBSYSTEM g_Subsystem_x264 =
 
 #include "wels/codec_def.h"
 #include "wels/codec_api.h"
+#include "wels/codec_ver.h"
+
+#if (OPENH264_MAJOR == 1) && (OPENH264_MINOR < 3) || (OPENH264_MAJOR < 1)
+#error "Unsupported OpenH264 version "OPENH264_MAJOR"."OPENH264_MINOR"."OPENH264_REVISION" detected!"
+#elif (OPENH264_MAJOR > 1) || (OPENH264_MINOR > 6)
+#warning "Untested OpenH264 version "OPENH264_MAJOR"."OPENH264_MINOR"."OPENH264_REVISION" detected!"
+#endif
 
 struct _H264_CONTEXT_OPENH264
 {
@@ -962,7 +969,9 @@ static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstS
 
 		if (sys->EncParamExt.iMultipleThreadIdc > 1)
 		{
+#if (OPENH264_MAJOR == 1) && (OPENH264_MINOR <= 5)
 			sys->EncParamExt.sSpatialLayers[0].sSliceCfg.uiSliceMode = SM_AUTO_SLICE;
+#endif
 		}
 
 		status = (*sys->pEncoder)->InitializeExt(sys->pEncoder, &sys->EncParamExt);
@@ -1106,7 +1115,9 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 	SDecodingParam sDecParam;
 	H264_CONTEXT_OPENH264* sysContexts;
 	static int traceLevel = WELS_LOG_DEBUG;
+#if (OPENH264_MAJOR == 1) && (OPENH264_MINOR <= 5)
 	static EVideoFormatType videoFormat = videoFormatI420;
+#endif
 	static WelsTraceCallback traceCallback = (WelsTraceCallback) openh264_trace_callback;
 
 	h264->numSystemData = 1;
@@ -1144,7 +1155,9 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 			}
 
 			ZeroMemory(&sDecParam, sizeof(sDecParam));
+#if (OPENH264_MAJOR == 1) && (OPENH264_MINOR <= 5)
 			sDecParam.eOutputColorFormat  = videoFormatI420;
+#endif
 			sDecParam.eEcActiveIdc = ERROR_CON_FRAME_COPY;
 			sDecParam.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_AVC;
 
@@ -1156,11 +1169,11 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 					 status);
 				goto EXCEPTION;
 			}
-
+#if (OPENH264_MAJOR == 1) && (OPENH264_MINOR <= 5)
 			status = (*sys->pDecoder)->SetOption(
 					 sys->pDecoder, DECODER_OPTION_DATAFORMAT,
 					 &videoFormat);
-
+#endif
 			if (status != 0)
 			{
 				WLog_ERR(TAG, "Failed to set data format option on OpenH264 decoder (status=%ld)",
