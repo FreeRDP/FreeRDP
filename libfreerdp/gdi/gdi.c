@@ -483,6 +483,10 @@ static BOOL gdi_bitmap_update(rdpContext* context,
 		{
 			if (bitsPerPixel < 32)
 			{
+				if (!freerdp_client_codecs_prepare(gdi->codecs,
+							      FREERDP_CODEC_INTERLEAVED,
+							      gdi->width, gdi->height))
+					return FALSE;
 				status = interleaved_decompress(codecs->interleaved,
 								pSrcData, SrcSize,
 								bitsPerPixel,
@@ -494,6 +498,10 @@ static BOOL gdi_bitmap_update(rdpContext* context,
 			}
 			else
 			{
+				if (!freerdp_client_codecs_prepare(gdi->codecs,
+							      FREERDP_CODEC_PLANAR,
+							      gdi->width, gdi->height))
+					return FALSE;
 				status = planar_decompress(codecs->planar, pSrcData,
 							   SrcSize, gdi->primary_buffer,
 							   gdi->dstFormat,
@@ -1238,13 +1246,12 @@ BOOL gdi_init(freerdp* instance, UINT32 format)
 BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 		 void (*pfree)(void*))
 {
-	rdpGdi* gdi;
-	rdpCache* cache = NULL;
 	UINT32 SrcFormat = gdi_get_pixel_format(instance->settings->ColorDepth, FALSE);
-	gdi = (rdpGdi*) calloc(1, sizeof(rdpGdi));
+	rdpGdi* gdi = (rdpGdi*) calloc(1, sizeof(rdpGdi));
+	rdpContext* context = instance->context;
 
 	if (!gdi)
-		goto fail_gdi;
+		goto fail;
 
 	instance->context->gdi = gdi;
 	gdi->context = instance->context;
@@ -1259,24 +1266,26 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 		  GetColorFormatName(SrcFormat));
 
 	if (!(gdi->hdc = gdi_GetDC()))
-		goto fail_get_hdc;
+		goto fail;
 
 	gdi->hdc->format = gdi->dstFormat;
 
 	if (!gdi_init_primary(gdi, stride, buffer, pfree))
-		goto fail_init_primary;
+		goto fail;
 
-	if (!instance->context->cache)
+	if (!context->cache)
 	{
-		if (!(cache = cache_new(instance->settings)))
-			goto fail_cache;
-
-		instance->context->cache = cache;
+		if (!(context->cache = cache_new(instance->settings)))
+			goto fail;
 	}
+
+	gdi->codecs = codecs_new(gdi->context);
+	if (!gdi->codecs)
+		goto fail;
 
 	if (!freerdp_client_codecs_reset(gdi->codecs, FREERDP_CODEC_ALL, gdi->width,
 					 gdi->height))
-		goto fail_register_graphics;
+		goto fail;
 
 	gdi_register_update_callbacks(instance->update);
 	brush_cache_register_callbacks(instance->update);
@@ -1286,37 +1295,38 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 	palette_cache_register_callbacks(instance->update);
 
 	if (!gdi_register_graphics(instance->context->graphics))
-		goto fail_register_graphics;
+		goto fail;
 
 	instance->update->BitmapUpdate = gdi_bitmap_update;
 	return TRUE;
-fail_register_graphics:
-
-	if (cache)
-	{
-		instance->context->cache = NULL;
-		free(cache);
-	}
-
-fail_cache:
-	gdi_bitmap_free_ex(gdi->primary);
-fail_init_primary:
-fail_get_hdc:
-	free(gdi);
-fail_gdi:
+fail:
+	gdi_free(instance);
 	WLog_ERR(TAG,  "failed to initialize gdi");
 	return FALSE;
 }
 
 void gdi_free(freerdp* instance)
 {
-	rdpGdi* gdi = instance->context->gdi;
+	rdpGdi* gdi;
+	rdpContext* context;
 
+	if (!instance || !instance->context)
+		return;
+
+	gdi = instance->context->gdi;
 	if (gdi)
 	{
 		gdi_bitmap_free_ex(gdi->primary);
 		gdi_DeleteDC(gdi->hdc);
+		codecs_free(gdi->codecs);
 		free(gdi);
+	}
+
+	context = instance->context;
+	if (context->cache)
+	{
+		cache_free(context->cache);
+		context->cache = NULL;
 	}
 
 	instance->context->gdi = (rdpGdi*) NULL;

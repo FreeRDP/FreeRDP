@@ -1164,12 +1164,6 @@ BOOL xf_pre_connect(freerdp* instance)
 		WLog_INFO(TAG, "Authentication only. Don't connect to X.");
 	}
 
-	if (!context->cache)
-	{
-		if (!(context->cache = cache_new(settings)))
-			return FALSE;
-	}
-
 	if (!xf_keyboard_init(xfc))
 		return FALSE;
 
@@ -1336,12 +1330,6 @@ static void xf_post_disconnect(freerdp* instance)
 	}
 
 	xf_window_free(xfc);
-
-	if (context->cache)
-	{
-		cache_free(context->cache);
-		context->cache = NULL;
-	}
 
 	xf_keyboard_free(xfc);
 }
@@ -1912,6 +1900,7 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	else
 		xfc->format = PIXEL_FORMAT_RGBX32;
 
+	xfc->format = PIXEL_FORMAT_RGBX32;
 	if (xfc->debug)
 	{
 		WLog_INFO(TAG, "Enabling X11 debug mode.");
