@@ -361,7 +361,9 @@ BOOL xf_gdi_bitmap_update(rdpContext* context,
 
 			if (bitsPerPixel < 32)
 			{
-				if (!freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_INTERLEAVED))
+				if (!freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_INTERLEAVED,
+								   xfc->settings->DesktopWidth,
+								   xfc->settings->DesktopHeight))
 					return FALSE;
 
 				status = interleaved_decompress(codecs->interleaved,
@@ -375,7 +377,9 @@ BOOL xf_gdi_bitmap_update(rdpContext* context,
 			}
 			else
 			{
-				if (!freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_PLANAR))
+				if (!freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_PLANAR,
+								   xfc->settings->DesktopWidth,
+								   xfc->settings->DesktopHeight))
 					return FALSE;
 
 				status = planar_decompress(codecs->planar, pSrcData, SrcSize, pDstData,
@@ -489,7 +493,7 @@ static BOOL xf_gdi_dstblt(rdpContext* context, const DSTBLT_ORDER* dstblt)
 	return ret;
 }
 
-static BOOL xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
+static BOOL xf_gdi_patblt(rdpContext* context, const PATBLT_ORDER* patblt)
 {
 	Pixmap pattern;
 	const rdpBrush* brush;
@@ -1114,7 +1118,6 @@ static BOOL xf_gdi_surface_update_frame(xfContext* xfc, UINT16 tx, UINT16 ty,
 static BOOL xf_gdi_surface_bits(rdpContext* context,
 								const SURFACE_BITS_COMMAND* cmd)
 {
-	int i, tx, ty;
 	XImage* image;
 	BYTE* pSrcData;
 	BYTE* pDstData;
@@ -1126,7 +1129,9 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 
 	if (cmd->codecID == RDP_CODEC_ID_REMOTEFX)
 	{
-		if (!freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_REMOTEFX))
+		if (!freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_REMOTEFX,
+						   xfc->settings->DesktopWidth,
+						   xfc->settings->DesktopHeight))
 		{
 			xf_unlock_x11(xfc, FALSE);
 			return FALSE;
@@ -1143,31 +1148,28 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 			return FALSE;
 		}
 
+		XRectangle rect;
+		rect.x = cmd->destLeft;
+		rect.y = cmd->destTop;
+		rect.width = cmd->width;
+		rect.height = cmd->height;
 		XSetFunction(xfc->display, xfc->gc, GXcopy);
 		XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 		XSetClipRectangles(xfc->display, xfc->gc, cmd->destLeft, cmd->destTop,
-						   (XRectangle*) message->rects, message->numRects, YXBanded);
+						   &rect, 1, YXBanded);
 
 		/* Invalidate the updated region */
-		for (i = 0; i < message->numRects; i++)
-		{
-			tx = message->rects[i].x + cmd->destLeft;
-			ty = message->rects[i].y + cmd->destTop;
-
-			if (!xf_gdi_surface_update_frame(xfc, tx, ty, message->rects[i].width,
-											 message->rects[i].height))
-			{
-				ret = FALSE;
-				break;
-			}
-		}
+		if (!xf_gdi_surface_update_frame(xfc, rect.x, rect.y,
+						 rect.width, rect.height))
+			ret = FALSE;
 
 		XSetClipMask(xfc->display, xfc->gc, None);
-		rfx_message_free(xfc->codecs->rfx, message);
 	}
 	else if (cmd->codecID == RDP_CODEC_ID_NSCODEC)
 	{
-		if (!freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_NSCODEC))
+		if (!freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_NSCODEC,
+						   xfc->settings->DesktopWidth,
+						   xfc->settings->DesktopHeight))
 		{
 			xf_unlock_x11(xfc, FALSE);
 			return FALSE;

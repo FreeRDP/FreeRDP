@@ -574,7 +574,7 @@ static BOOL gdi_dstblt(rdpContext* context, const DSTBLT_ORDER* dstblt)
 			  gdi_rop3_code(dstblt->bRop), &gdi->palette);
 }
 
-static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
+static BOOL gdi_patblt(rdpContext* context, const PATBLT_ORDER* patblt)
 {
 	BYTE* data;
 	const rdpBrush* brush = &patblt->brush;
@@ -585,6 +585,9 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	rdpGdi* gdi = context->gdi;
 	BOOL ret = TRUE;
 	UINT32 SrcFormat = gdi_get_pixel_format(patblt->brush.bpp, FALSE);
+	DWORD rop = gdi_rop3_code(patblt->bRop);
+	UINT32 nXSrc = 0;
+	UINT32 nYSrc = 0;
 	foreColor = ConvertColor(patblt->foreColor, SrcFormat,
 				 gdi->dstFormat, &gdi->palette);
 	backColor = ConvertColor(patblt->backColor, SrcFormat,
