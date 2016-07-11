@@ -53,7 +53,7 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags, UINT32 width
 			return FALSE;
 		}
 
-		if (!freerdp_bitmap_planar_context_reset(codecs->planar))
+		if (!freerdp_bitmap_planar_context_reset(codecs->planar, 64, 64))
 		{
 			WLog_ERR(TAG, "Failed to reset plannar bitmap codec context");
 			freerdp_bitmap_planar_context_free(codecs->planar);
