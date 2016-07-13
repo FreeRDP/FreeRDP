@@ -53,14 +53,14 @@ static BOOL test_set8u_func(void)
 	{
 		UINT32 len;
 
-		memset(dest, 0, sizeof(dest));
+		memset(dest, 3, sizeof(dest));
 		for (len = 1; len < 48 - off; ++len)
 		{
 			status = generic->set_8u(0xa5, dest + off, len);
 			if (status != PRIMITIVES_SUCCESS)
 				return FALSE;
 
-			if (!check8(dest, len, off, 0xa8))
+			if (!check8(dest, len, off, 0xa5))
 				return FALSE;
 		}
 	}
@@ -69,14 +69,14 @@ static BOOL test_set8u_func(void)
 	{
 		UINT32 len;
 
-		memset(dest, 0, sizeof(dest));
+		memset(dest, 3, sizeof(dest));
 		for (len = 1; len < 48 - off; ++len)
 		{
 			status = optimized->set_8u(0xa5, dest + off, len);
 			if (status != PRIMITIVES_SUCCESS)
 				return FALSE;
 
-			if (!check8(dest, len, off, 0xa8))
+			if (!check8(dest, len, off, 0xa5))
 				return FALSE;
 		}
 	}
@@ -95,8 +95,9 @@ static BOOL test_set8u_speed(void)
 	{
 		winpr_RAND(&value, sizeof(value));
 		if (!speed_test("set_8u", "", g_Iterations,
-				generic->set_8u, optimized->set_8u,
-				value, dest + x, len))
+				(speed_test_fkt)generic->set_8u,
+				(speed_test_fkt)optimized->set_8u,
+				value, dest + x, x))
 			return FALSE;
 	}
 
@@ -232,8 +233,9 @@ static BOOL test_set32u_speed(void)
 	{
 		winpr_RAND(&value, sizeof(value));
 		if (!speed_test("set_32u", "", g_Iterations,
-				generic->set_32u, optimized->set_32u,
-				value, dest + x, len))
+				(speed_test_fkt)generic->set_32u,
+				(speed_test_fkt)optimized->set_32u,
+				value, dest + x, x))
 			return FALSE;
 	}
 
@@ -251,8 +253,9 @@ static BOOL test_set32s_speed(void)
 	{
 		winpr_RAND(&value, sizeof(value));
 		if (!speed_test("set_32s", "", g_Iterations,
-				generic->set_32s, optimized->set_32s,
-				value, dest + x, len))
+				(speed_test_fkt)generic->set_32s,
+				(speed_test_fkt)optimized->set_32s,
+				value, dest + x, x))
 			return FALSE;
 	}
 
@@ -265,21 +268,20 @@ int TestPrimitivesSet(int argc, char* argv[])
 
 	if (!test_set8u_func())
 		return -1;
-
-	if (!test_set8u_speed())
-		return -1;
-
 	if (!test_set32s_func())
 		return -1;
-
-	if (!test_set32s_speed())
-		return -1;
-
 	if (!test_set32u_func())
 		return -1;
 
-	if (!test_set32u_speed())
-		return -1;
+	if (g_TestPrimitivesPerformance)
+	{
+		if (!test_set8u_speed())
+			return -1;
+		if (!test_set32s_speed())
+			return -1;
+		if (!test_set32u_speed())
+			return -1;
+	}
 
 	return 0;
 }

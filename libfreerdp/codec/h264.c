@@ -1567,7 +1567,7 @@ INT32 avc420_compress(H264_CONTEXT* h264, BYTE* pSrcData, DWORD SrcFormat,
 	roi.width = nSrcWidth;
 	roi.height = nSrcHeight;
 
-	prims->RGBToYUV420_8u_P3AC4R(pSrcData, nSrcStep, pYUVData, iStride, &roi);
+	prims->RGBToYUV420_8u_P3AC4R(pSrcData, SrcFormat, nSrcStep, pYUVData, iStride, &roi);
 
 	status = h264->subsystem->Compress(h264, ppDstData, pDstSize, 0);
 

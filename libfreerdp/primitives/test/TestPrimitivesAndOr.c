@@ -20,99 +20,87 @@
 #include "prim_test.h"
 
 #define FUNC_TEST_SIZE	65536
-static const int ANDOR_PRETEST_ITERATIONS = 100000;
-static const int TEST_TIME = 2.0;  // seconds
 
 #define VALUE (0xA5A5A5A5U)
 
 /* ========================================================================= */
+static BOOL test_and_32u_impl(const char* name, __andC_32u_t fkt,
+			      const UINT32* src, const UINT32 val,
+			      UINT32* dst, size_t size)
+{
+	size_t i;
+	pstatus_t status = fkt(src, val, dst, size);
+	if (status != PRIMITIVES_SUCCESS)
+		return FALSE;
+
+	for (i = 0; i < size; ++i)
+	{
+		if (dst[i] != (src[i] & val))
+		{
+			printf("AND %s FAIL[%d] 0x%08x&0x%08x=0x%08x, got 0x%08x\n",
+			       name, i, src[i], val, src[i] & val, dst[i]);
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
 static BOOL test_and_32u_func(void)
 {
 	UINT32 ALIGN(src[FUNC_TEST_SIZE + 3]), ALIGN(dst[FUNC_TEST_SIZE + 3]);
-	int failed = 0;
-	int i;
-	char testStr[256];
-	testStr[0] = '\0';
-	winpr_RAND(src, sizeof(src));
-	generic->andC_32u(src + 1, VALUE, dst + 1, FUNC_TEST_SIZE);
-	strcat(testStr, " general");
 
-	for (i = 1; i <= FUNC_TEST_SIZE; ++i)
-	{
-		if (dst[i] != (src[i] & VALUE))
-		{
-			printf("AND-general FAIL[%d] 0x%08x&0x%08x=0x%08x, got 0x%08x\n",
-			       i, src[i], VALUE, src[i] & VALUE, dst[i]);
-			++failed;
-		}
-	}
+	winpr_RAND((BYTE*)src, sizeof(src));
 
-#ifdef WITH_SSE2
+	if (!test_and_32u_impl("generic->andC_32u aligned", generic->andC_32u,
+			       src + 1, VALUE, dst + 1, FUNC_TEST_SIZE))
+		return FALSE;
+	if (!test_and_32u_impl("generic->andC_32u unaligned", generic->andC_32u,
+			       src + 1, VALUE, dst + 2, FUNC_TEST_SIZE))
+		return FALSE;
+	if (!test_and_32u_impl("optimized->andC_32u aligned", optimized->andC_32u,
+			       src + 1, VALUE, dst + 1, FUNC_TEST_SIZE))
+		return FALSE;
+	if (!test_and_32u_impl("optimized->andC_32u unaligned", optimized->andC_32u,
+			       src + 1, VALUE, dst + 2, FUNC_TEST_SIZE))
+		return FALSE;
 
-	if (IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
-	{
-		strcat(testStr, " SSE3");
-		/* Aligned */
-		memset(dst, 0, sizeof(dst));
-		sse3_andC_32u(src + 1, VALUE, dst + 1, FUNC_TEST_SIZE);
-
-		for (i = 1; i <= FUNC_TEST_SIZE; ++i)
-		{
-			if (dst[i] != (src[i] & VALUE))
-			{
-				printf("AND-SSE-aligned FAIL[%d] 0x%08x&0x%08x=0x%08x, got 0x%08x\n",
-				       i, src[i], VALUE, src[i] & VALUE, dst[i]);
-				++failed;
-			}
-		}
-
-		/* Unaligned */
-		memset(dst, 0, sizeof(dst));
-		sse3_andC_32u(src + 1, VALUE, dst + 2, FUNC_TEST_SIZE);
-
-		for (i = 1; i <= FUNC_TEST_SIZE; ++i)
-		{
-			if (dst[i + 1] != (src[i] & VALUE))
-			{
-				printf("AND-SSE-unaligned FAIL[%d] 0x%08x&0x%08x=0x%08x, got 0x%08x\n",
-				       i, src[i], VALUE, src[i] & VALUE, dst[i + 1]);
-				++failed;
-			}
-		}
-	}
-
-#endif /* i386 */
-
-	if (!failed) printf("All and_32u tests passed (%s).\n", testStr);
-
-	return (failed > 0) ? FAILURE : SUCCESS;
+	return TRUE;
 }
 
 /* ------------------------------------------------------------------------- */
 static BOOL test_and_32u_speed(void)
 {
 	UINT32 ALIGN(src[MAX_TEST_SIZE + 3]), ALIGN(dst[MAX_TEST_SIZE + 3]);
-	winpr_RAND(src, sizeof(src));
-	andC_32u_speed_test("and32u", "aligned", src, NULL, VALUE, dst,
-			    test_sizes, NUM_TEST_SIZES, ANDOR_PRETEST_ITERATIONS, TEST_TIME);
-	andC_32u_speed_test("and32u", "unaligned", src + 1, NULL, VALUE, dst,
-			    test_sizes, NUM_TEST_SIZES, ANDOR_PRETEST_ITERATIONS, TEST_TIME);
-	return SUCCESS;
+
+	winpr_RAND((BYTE*)src, sizeof(src));
+
+	if (!speed_test("andC_32u", "aligned", g_Iterations,
+			(speed_test_fkt)generic->andC_32u,
+			(speed_test_fkt)optimized->andC_32u,
+			src + 1, VALUE, dst + 1, MAX_TEST_SIZE))
+		return FALSE;
+	if (!speed_test("andC_32u", "unaligned", g_Iterations,
+			(speed_test_fkt)generic->andC_32u,
+			(speed_test_fkt)optimized->andC_32u,
+			src + 1, VALUE, dst + 2, MAX_TEST_SIZE))
+		return FALSE;
+
+	return TRUE;
 }
 
 /* ========================================================================= */
 static BOOL check(const UINT32* src, const UINT32* dst, UINT32 size, UINT32 value)
 {
 	UINT32 i;
-	UINT32 failed = 0;
 
-	for (i = 1; i <= size; ++i)
+	for (i = 0; i < size; ++i)
 	{
 		if (dst[i] != (src[i] | value))
 		{
 			printf("OR-general general FAIL[%d] 0x%08x&0x%08x=0x%08x, got 0x%08x\n",
 			       i, src[i], value, src[i] | value, dst[i]);
-			++failed;
+			return FALSE;
 		}
 	}
 
@@ -123,8 +111,7 @@ static BOOL test_or_32u_func(void)
 {
 	pstatus_t status;
 	UINT32 ALIGN(src[FUNC_TEST_SIZE + 3]), ALIGN(dst[FUNC_TEST_SIZE + 3]);
-	char testStr[256];
-	testStr[0] = '\0';
+
 	winpr_RAND((BYTE*)src, sizeof(src));
 
 	status = generic->orC_32u(src + 1, VALUE, dst + 1, FUNC_TEST_SIZE);
@@ -153,7 +140,8 @@ static BOOL test_or_32u_speed(void)
 	winpr_RAND((BYTE*)src, sizeof(src));
 
 	if (!speed_test("add16s", "aligned", g_Iterations,
-			generic->orC_32u, optimized->orC_32u,
+			(speed_test_fkt)generic->orC_32u,
+			(speed_test_fkt)optimized->orC_32u,
 			src + 1, VALUE, dst + 1, FUNC_TEST_SIZE))
 		return FALSE;
 
@@ -167,14 +155,16 @@ int TestPrimitivesAndOr(int argc, char* argv[])
 	if (!test_and_32u_func())
 		return -1;
 
-	if (!test_and_32u_speed())
-		return -1;
-
 	if (!test_or_32u_func())
 		return -1;
 
-	if (!test_or_32u_speed())
-		return -1;
+	if (g_TestPrimitivesPerformance)
+	{
+		if (!test_and_32u_speed())
+			return -1;
+		if (!test_or_32u_speed())
+			return -1;
+	}
 
 	return 0;
 }

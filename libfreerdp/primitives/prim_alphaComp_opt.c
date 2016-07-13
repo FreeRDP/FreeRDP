@@ -46,10 +46,10 @@ static primitives_t* generic = NULL;
 #if !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS)
 
 pstatus_t sse2_alphaComp_argb(
-    const BYTE* pSrc1,  INT32 src1Step,
-    const BYTE* pSrc2,  INT32 src2Step,
-    BYTE* pDst,  INT32 dstStep,
-    INT32 width,  INT32 height)
+    const BYTE* pSrc1,  UINT32 src1Step,
+    const BYTE* pSrc2,  UINT32 src2Step,
+    BYTE* pDst,  UINT32 dstStep,
+    UINT32 width,  UINT32 height)
 {
 	const UINT32* sptr1 = (const UINT32*) pSrc1;
 	const UINT32* sptr2 = (const UINT32*) pSrc2;
@@ -62,7 +62,7 @@ pstatus_t sse2_alphaComp_argb(
 	if (width < 4)     /* pointless if too small */
 	{
 		return generic->alphaComp_argb(pSrc1, src1Step, pSrc2, src2Step,
-		                               pDst, dstStep, width, height);
+					       pDst, dstStep, width, height);
 	}
 
 	dptr = (UINT32*) pDst;
@@ -108,9 +108,13 @@ pstatus_t sse2_alphaComp_argb(
 
 		if (leadIn)
 		{
-			generic->alphaComp_argb((const BYTE*) sptr1,
-			                        src1Step, (const BYTE*) sptr2, src2Step,
-			                        (BYTE*) dptr, dstStep, leadIn, 1);
+			pstatus_t status;
+			status = generic->alphaComp_argb((const BYTE*) sptr1,
+						src1Step, (const BYTE*) sptr2, src2Step,
+						(BYTE*) dptr, dstStep, leadIn, 1);
+			if (status != PRIMITIVES_SUCCESS)
+				return status;
+
 			sptr1 += leadIn;
 			sptr2 += leadIn;
 			dptr  += leadIn;
@@ -181,9 +185,13 @@ pstatus_t sse2_alphaComp_argb(
 		/* Finish off the remainder. */
 		if (pixels)
 		{
-			generic->alphaComp_argb((const BYTE*) sptr1, src1Step,
-			                        (const BYTE*) sptr2, src2Step,
-			                        (BYTE*) dptr, dstStep, pixels, 1);
+			pstatus_t status;
+			status = generic->alphaComp_argb((const BYTE*) sptr1, src1Step,
+						(const BYTE*) sptr2, src2Step,
+						(BYTE*) dptr, dstStep, pixels, 1);
+			if (status != PRIMITIVES_SUCCESS)
+				return status;
+
 			sptr1 += pixels;
 			sptr2 += pixels;
 			dptr  += pixels;
@@ -212,7 +220,7 @@ static pstatus_t ipp_alphaComp_argb(
 	sz.width  = width;
 	sz.height = height;
 	return ippiAlphaComp_8u_AC4R(pSrc1, src1Step, pSrc2, src2Step,
-	                             pDst, dstStep, sz, ippAlphaOver);
+				     pDst, dstStep, sz, ippAlphaOver);
 }
 #endif
 

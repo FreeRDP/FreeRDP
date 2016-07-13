@@ -33,8 +33,13 @@ static const int block_size[] = { 4, 64, 256 };
 #define GRN(_c_) (((_c_) & 0x0000FF00U) >> 8)
 #define BLU(_c_) ((_c_) & 0x000000FFU)
 #define TOLERANCE 1
-#define PIXEL(_addr_, _bytes_, _x_, _y_) \
-	((UINT32 *) (((BYTE *) (_addr_)) + (_x_)*4 + (_y_)*(_bytes_)))
+static inline const UINT32* PIXEL(const BYTE* _addr_, UINT32 _bytes_, UINT32 _x_, UINT32 _y_)
+{
+	const BYTE* addr = _addr_ + _x_ * sizeof(UINT32) + _y_ * _bytes_;
+
+	return (const UINT32*)addr;
+}
+
 #define SRC1_WIDTH 6
 #define SRC1_HEIGHT 6
 #define SRC2_WIDTH 7
@@ -46,8 +51,8 @@ static const int block_size[] = { 4, 64, 256 };
 
 /* ------------------------------------------------------------------------- */
 static UINT32 alpha_add(
-    UINT32 c1,
-    UINT32 c2)
+		UINT32 c1,
+		UINT32 c2)
 {
 	UINT32 a1 = ALF(c1);
 	UINT32 r1 = RED(c1);
@@ -66,8 +71,8 @@ static UINT32 alpha_add(
 
 /* ------------------------------------------------------------------------- */
 static UINT32 colordist(
-    UINT32 c1,
-    UINT32 c2)
+		UINT32 c1,
+		UINT32 c2)
 {
 	int d, maxd = 0;
 	d = ABS(ALF(c1) - ALF(c2));
@@ -90,10 +95,10 @@ static UINT32 colordist(
 }
 
 /* ------------------------------------------------------------------------- */
-static BOOL check(const BYTE* pSrc1,  INT32 src1Step,
-		  const BYTE* pSrc2,  INT32 src2Step,
-		  BYTE* pDst,  INT32 dstStep,
-		  INT32 width,  INT32 height)
+static BOOL check(const BYTE* pSrc1,  UINT32 src1Step,
+		  const BYTE* pSrc2,  UINT32 src2Step,
+		  BYTE* pDst,  UINT32 dstStep,
+		  UINT32 width,  UINT32 height)
 {
 	UINT32 x, y;
 	for (y = 0; y < height; ++y)
@@ -120,14 +125,14 @@ static BOOL check(const BYTE* pSrc1,  INT32 src1Step,
 static BOOL test_alphaComp_func(void)
 {
 	pstatus_t status;
-	BYTE ALIGN(src1[SRC1_WIDTH * SRC1_HEIGHT]);
-	BYTE ALIGN(src2[SRC2_WIDTH * SRC2_HEIGHT]);
-	BYTE ALIGN(dst1[DST_WIDTH * DST_HEIGHT]);
-	char testStr[256];
+	BYTE ALIGN(src1[SRC1_WIDTH * SRC1_HEIGHT * 4]);
+	BYTE ALIGN(src2[SRC2_WIDTH * SRC2_HEIGHT * 4]);
+	BYTE ALIGN(dst1[DST_WIDTH * DST_HEIGHT * 4]);
 	UINT32* ptr;
 	UINT32 i;
-	testStr[0] = '\0';
+
 	winpr_RAND((BYTE*)src1, sizeof(src1));
+
 	/* Special-case the first two values */
 	src1[0] &= 0x00FFFFFFU;
 	src1[1] |= 0xFF000000U;
@@ -141,8 +146,8 @@ static BOOL test_alphaComp_func(void)
 	memset(dst1, 0, sizeof(dst1));
 
 	status = generic->alphaComp_argb(src1, 4 * SRC1_WIDTH,
-			       src2, 4 * SRC2_WIDTH,
-			       dst1, 4 * DST_WIDTH, TEST_WIDTH, TEST_HEIGHT);
+					 src2, 4 * SRC2_WIDTH,
+					 dst1, 4 * DST_WIDTH, TEST_WIDTH, TEST_HEIGHT);
 	if (status != PRIMITIVES_SUCCESS)
 		return FALSE;
 
@@ -152,8 +157,8 @@ static BOOL test_alphaComp_func(void)
 		return FALSE;
 
 	status = optimized->alphaComp_argb((const BYTE*) src1, 4 * SRC1_WIDTH,
-			       (const BYTE*) src2, 4 * SRC2_WIDTH,
-			       (BYTE*) dst1, 4 * DST_WIDTH, TEST_WIDTH, TEST_HEIGHT);
+					   (const BYTE*) src2, 4 * SRC2_WIDTH,
+					   (BYTE*) dst1, 4 * DST_WIDTH, TEST_WIDTH, TEST_HEIGHT);
 	if (status != PRIMITIVES_SUCCESS)
 		return FALSE;
 
@@ -188,7 +193,8 @@ static int test_alphaComp_speed(void)
 	memset(dst1, 0, sizeof(dst1));
 
 	if (!speed_test("add16s", "aligned", g_Iterations,
-			generic->alphaComp_argb, optimized->alphaComp_argb,
+			(speed_test_fkt)generic->alphaComp_argb,
+			(speed_test_fkt)optimized->alphaComp_argb,
 			src1, 4 * SRC1_WIDTH,
 			src2, 4 * SRC2_WIDTH,
 			dst1, 4 * DST_WIDTH, TEST_WIDTH, TEST_HEIGHT))
@@ -203,8 +209,11 @@ int TestPrimitivesAlphaComp(int argc, char* argv[])
 	if (!test_alphaComp_func())
 		return -1;
 
-	if (!test_alphaComp_speed())
-		return -1;
+	if (g_TestPrimitivesPerformance)
+	{
+		if (!test_alphaComp_speed())
+			return -1;
+	}
 
 	return 0;
 }

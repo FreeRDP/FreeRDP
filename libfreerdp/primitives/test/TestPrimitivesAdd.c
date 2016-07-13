@@ -26,7 +26,7 @@ static BOOL test_add16s_func(void)
 	pstatus_t status;
 
 	INT16 ALIGN(src1[FUNC_TEST_SIZE + 3]), ALIGN(src2[FUNC_TEST_SIZE + 3]),
-	      ALIGN(d1[FUNC_TEST_SIZE + 3]), ALIGN(d2[FUNC_TEST_SIZE + 3]);
+			ALIGN(d1[FUNC_TEST_SIZE + 3]), ALIGN(d2[FUNC_TEST_SIZE + 3]);
 
 	char testStr[256];
 	testStr[0] = '\0';
@@ -50,7 +50,7 @@ static BOOL test_add16s_func(void)
 static BOOL test_add16s_speed(void)
 {
 	BYTE ALIGN(src1[MAX_TEST_SIZE + 3]), ALIGN(src2[MAX_TEST_SIZE + 3]),
-	      ALIGN(dst[MAX_TEST_SIZE + 3]);
+			ALIGN(dst[MAX_TEST_SIZE + 3]);
 
 	if (!g_TestPrimitivesPerformance)
 		return TRUE;
@@ -59,7 +59,8 @@ static BOOL test_add16s_speed(void)
 	winpr_RAND(src2, sizeof(src2));
 
 	if (!speed_test("add16s", "aligned", g_Iterations,
-			generic->add_16s, optimized->add_16s,
+			(speed_test_fkt)generic->add_16s,
+			(speed_test_fkt)optimized->add_16s,
 			src1, src2, dst, FUNC_TEST_SIZE))
 		return FALSE;
 
@@ -72,8 +73,11 @@ int TestPrimitivesAdd(int argc, char* argv[])
 	if (!test_add16s_func())
 		return -1;
 
-	if (!test_add16s_speed())
-		return -1;
+	if (g_TestPrimitivesPerformance)
+	{
+		if (!test_add16s_speed())
+			return -1;
+	}
 
 	return 0;
 }

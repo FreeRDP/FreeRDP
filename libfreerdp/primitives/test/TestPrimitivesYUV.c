@@ -38,8 +38,8 @@ static void get_size(UINT32* width, UINT32* height)
 	winpr_RAND((BYTE*)width, sizeof(*width));
 	winpr_RAND((BYTE*)height, sizeof(*height));
 	// TODO: Algorithm only works on even resolutions...
-	*width = (*width % 4000) << 1;
-	*height = (*height % 4000 << 1);
+	*width = (*width % 64) << 1;
+	*height = (*height % 64 << 1);
 }
 
 static BOOL check_padding(const BYTE* psrc, size_t size, size_t padding,
@@ -370,11 +370,13 @@ static BOOL TestPrimitiveYUV(BOOL use444)
 
 	if (use444)
 	{
-		if (prims->RGBToYUV444_8u_P3AC4R(rgb, stride, yuv, yuv_step,
+		if (prims->RGBToYUV444_8u_P3AC4R(rgb, PIXEL_FORMAT_BGRA32,
+						 stride, yuv, yuv_step,
 						 &roi) != PRIMITIVES_SUCCESS)
 			goto fail;
 	}
-	else if (prims->RGBToYUV420_8u_P3AC4R(rgb, stride, yuv, yuv_step,
+	else if (prims->RGBToYUV420_8u_P3AC4R(rgb, PIXEL_FORMAT_BGRA32,
+					      stride, yuv, yuv_step,
 					      &roi) != PRIMITIVES_SUCCESS)
 		goto fail;
 
@@ -429,14 +431,14 @@ int TestPrimitivesYUV(int argc, char* argv[])
 	UINT32 x;
 	int rc = -1;
 
+	prim_test_setup(FALSE);
+
 	for (x = 0; x < 10; x++)
 	{
-		/* TODO: This test fails on value comparison,
-		 * there seems to be some issue left with encoder / decoder pass.
-		if (!TestPrimitiveYUV(FALSE))
-			goto end;
-			*/
 		if (!TestPrimitiveYUV(TRUE))
+			goto end;
+
+		if (!TestPrimitiveYUV(FALSE))
 			goto end;
 
 		if (!TestPrimitiveYUVCombine())

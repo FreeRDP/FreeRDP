@@ -40,7 +40,7 @@ static primitives_t* generic = NULL;
 static pstatus_t sse2_set_8u(
     BYTE val,
     BYTE* pDst,
-    INT32 len)
+    UINT32 len)
 {
 	BYTE byte, *dptr;
 	__m128i xmm0;
@@ -126,7 +126,7 @@ static pstatus_t sse2_set_8u(
 static pstatus_t sse2_set_32u(
     UINT32 val,
     UINT32* pDst,
-    INT32 len)
+    UINT32 len)
 {
 	const primitives_t* prim = primitives_get_generic();
 	UINT32* dptr = (UINT32*) pDst;
@@ -218,7 +218,7 @@ static pstatus_t sse2_set_32u(
 static pstatus_t sse2_set_32s(
     INT32 val,
     INT32* pDst,
-    INT32 len)
+    UINT32 len)
 {
 	UINT32 uval = *((UINT32*) &val);
 	return sse2_set_32u(uval, (UINT32*) pDst, len);

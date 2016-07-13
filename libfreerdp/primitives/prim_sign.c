@@ -28,7 +28,7 @@
 static pstatus_t general_sign_16s(
     const INT16* pSrc,
     INT16* pDst,
-    INT32 len)
+    UINT32 len)
 {
 	while (len--)
 	{
