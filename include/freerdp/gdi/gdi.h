@@ -286,7 +286,6 @@ struct rdp_gdi
 	UINT32 dstFormat;
 	UINT32 cursor_x;
 	UINT32 cursor_y;
-	rdpCodecs* codecs;
 
 	HGDI_DC hdc;
 	gdiBitmap* primary;

@@ -80,7 +80,7 @@ static UINT gdi_ResetGraphics(RdpgfxClientContext* context,
 
 	free(pSurfaceIds);
 
-	if (!freerdp_client_codecs_reset(gdi->codecs, FREERDP_CODEC_ALL,
+	if (!freerdp_client_codecs_reset(gdi->context->codecs, FREERDP_CODEC_ALL,
 					 gdi->width, gdi->height))
 		return ERROR_INTERNAL_ERROR;
 

@@ -483,7 +483,7 @@ static BOOL gdi_bitmap_update(rdpContext* context,
 		{
 			if (bitsPerPixel < 32)
 			{
-				if (!freerdp_client_codecs_prepare(gdi->codecs,
+				if (!freerdp_client_codecs_prepare(codecs,
 							      FREERDP_CODEC_INTERLEAVED,
 							      gdi->width, gdi->height))
 					return FALSE;
@@ -498,7 +498,7 @@ static BOOL gdi_bitmap_update(rdpContext* context,
 			}
 			else
 			{
-				if (!freerdp_client_codecs_prepare(gdi->codecs,
+				if (!freerdp_client_codecs_prepare(codecs,
 							      FREERDP_CODEC_PLANAR,
 							      gdi->width, gdi->height))
 					return FALSE;
@@ -1063,7 +1063,7 @@ static BOOL gdi_surface_bits(rdpContext* context,
 	{
 		case RDP_CODEC_ID_REMOTEFX:
 			{
-				if (!rfx_process_message(gdi->codecs->rfx, cmd->bitmapData,
+				if (!rfx_process_message(context->codecs->rfx, cmd->bitmapData,
 							 PIXEL_FORMAT_BGRX32,
 							 cmd->bitmapDataLength,
 							 0, 0,
@@ -1079,7 +1079,7 @@ static BOOL gdi_surface_bits(rdpContext* context,
 
 		case RDP_CODEC_ID_NSCODEC:
 			{
-				if (!nsc_process_message(gdi->codecs->nsc, cmd->bpp, cmd->width,
+				if (!nsc_process_message(context->codecs->nsc, cmd->bpp, cmd->width,
 							 cmd->height, cmd->bitmapData,
 							 cmd->bitmapDataLength, gdi->primary_buffer,
 							 gdi->dstFormat, gdi->stride, cmd->destLeft, cmd->destTop,
@@ -1255,7 +1255,6 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 
 	instance->context->gdi = gdi;
 	gdi->context = instance->context;
-	gdi->codecs = instance->context->codecs;
 	gdi->width = instance->settings->DesktopWidth;
 	gdi->height = instance->settings->DesktopHeight;
 	gdi->dstFormat = format;
@@ -1279,11 +1278,7 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 			goto fail;
 	}
 
-	gdi->codecs = codecs_new(gdi->context);
-	if (!gdi->codecs)
-		goto fail;
-
-	if (!freerdp_client_codecs_reset(gdi->codecs, FREERDP_CODEC_ALL, gdi->width,
+	if (!freerdp_client_codecs_reset(context->codecs, FREERDP_CODEC_ALL, gdi->width,
 					 gdi->height))
 		goto fail;
 
@@ -1318,7 +1313,6 @@ void gdi_free(freerdp* instance)
 	{
 		gdi_bitmap_free_ex(gdi->primary);
 		gdi_DeleteDC(gdi->hdc);
-		codecs_free(gdi->codecs);
 		free(gdi);
 	}
 
