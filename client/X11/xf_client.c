@@ -1900,7 +1900,6 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	else
 		xfc->format = PIXEL_FORMAT_RGBX32;
 
-	xfc->format = PIXEL_FORMAT_RGBX32;
 	if (xfc->debug)
 	{
 		WLog_INFO(TAG, "Enabling X11 debug mode.");
