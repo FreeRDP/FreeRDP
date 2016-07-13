@@ -35,7 +35,7 @@
 #define TAG FREERDP_TAG("cache.brush")
 
 static BOOL update_gdi_patblt(rdpContext* context,
-				  const PATBLT_ORDER* patblt)
+				  PATBLT_ORDER* patblt)
 {
 	BYTE style;
 	BOOL ret = TRUE;

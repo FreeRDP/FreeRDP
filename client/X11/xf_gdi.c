@@ -493,7 +493,7 @@ static BOOL xf_gdi_dstblt(rdpContext* context, const DSTBLT_ORDER* dstblt)
 	return ret;
 }
 
-static BOOL xf_gdi_patblt(rdpContext* context, const PATBLT_ORDER* patblt)
+static BOOL xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
 	Pixmap pattern;
 	const rdpBrush* brush;

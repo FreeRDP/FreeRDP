@@ -439,7 +439,7 @@ struct _ELLIPSE_CB_ORDER
 typedef struct _ELLIPSE_CB_ORDER ELLIPSE_CB_ORDER;
 
 typedef BOOL (*pDstBlt)(rdpContext* context, const DSTBLT_ORDER* dstblt);
-typedef BOOL (*pPatBlt)(rdpContext* context, const PATBLT_ORDER* patblt);
+typedef BOOL (*pPatBlt)(rdpContext* context, PATBLT_ORDER* patblt);
 typedef BOOL (*pScrBlt)(rdpContext* context, const SCRBLT_ORDER* scrblt);
 typedef BOOL (*pOpaqueRect)(rdpContext* context,
                             const OPAQUE_RECT_ORDER* opaque_rect);
