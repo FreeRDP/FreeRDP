@@ -42,8 +42,8 @@ static INLINE BYTE* writePixel(BYTE* dst, UINT32 format, BYTE r, BYTE g, BYTE b)
 
 
 static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(
-    const INT16* pSrc[3], INT32 srcStep,
-    BYTE* pDst, INT32 dstStep, UINT32 DstFormat,
+    const INT16* pSrc[3], UINT32 srcStep,
+    BYTE* pDst, UINT32 DstFormat, UINT32 dstStep,
     const prim_size_t* roi)
 {
 	UINT32 x, y;
@@ -98,8 +98,8 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(
 }
 
 static pstatus_t general_yCbCrToBGR_16s8u_P3AC4R(
-    const INT16* pSrc[3], INT32 srcStep,
-    BYTE* pDst, INT32 dstStep, UINT32 DstFormat,
+    const INT16* pSrc[3], UINT32 srcStep,
+    BYTE* pDst, UINT32 DstFormat, UINT32 dstStep,
     const prim_size_t* roi)
 {
 	UINT32 x, y;
