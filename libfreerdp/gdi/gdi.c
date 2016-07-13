@@ -582,7 +582,7 @@ static BOOL gdi_dstblt(rdpContext* context, const DSTBLT_ORDER* dstblt)
 			  gdi_rop3_code(dstblt->bRop), &gdi->palette);
 }
 
-static BOOL gdi_patblt(rdpContext* context, const PATBLT_ORDER* patblt)
+static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
 	BYTE* data;
 	const rdpBrush* brush = &patblt->brush;
