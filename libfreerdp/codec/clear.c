@@ -602,6 +602,9 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
 	if (!pDstData)
 		return -1002;
 
+	if ((nDstWidth == 0) || (nDstHeight == 0))
+		return -1022;
+
 	if (SrcSize < 2)
 		return -1003;
 
@@ -692,7 +695,7 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
 										 &pSrcData[offset], bandsByteCount,
 										 SrcSize - offset, nWidth, nHeight,
 										 pDstData, DstFormat, nDstStep, nXDst, nYDst))
-			return FALSE;
+			return -1122;
 
 		offset += bandsByteCount;
 	}
