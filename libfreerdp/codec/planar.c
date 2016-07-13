@@ -835,6 +835,9 @@ BYTE* freerdp_bitmap_planar_compress_plane_rle(const BYTE* inPlane,
 	if (!outPlane)
 	{
 		outBufferSize = width * height;
+		if (outBufferSize == 0)
+			return NULL;
+
 		outPlane = malloc(outBufferSize);
 
 		if (!outPlane)
@@ -937,6 +940,8 @@ BYTE* freerdp_bitmap_planar_delta_encode_plane(const BYTE* inPlane,
 
 	if (!outPlane)
 	{
+		if (width * height == 0)
+			return NULL;
 		if (!(outPlane = (BYTE*) malloc(width * height)))
 			return NULL;
 	}
