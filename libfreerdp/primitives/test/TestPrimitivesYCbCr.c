@@ -2274,6 +2274,7 @@ int test_YCbCr_pixels()
 
 int TestPrimitivesYCbCr(int argc, char* argv[])
 {
+	pstatus_t status = PRIMITIVES_SUCCESS;
 	int size;
 	int cnt[3];
 	float err[3];
@@ -2298,8 +2299,9 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 
 	if (1)
 	{
-		prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**) pYCbCr, 64 * 2,
-					       actual, 64 * 4, PIXEL_FORMAT_BGRA32, &roi_64x64);
+		status = prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**) pYCbCr, 64 * 2,
+					       actual, PIXEL_FORMAT_BGRA32,
+					       64 * 4, &roi_64x64);
 	}
 	else
 	{
@@ -2358,6 +2360,6 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 	}
 
 	_aligned_free(actual);
-	return 0;
+	return (status == PRIMITIVES_SUCCESS) ? 0 : 1;
 }
 

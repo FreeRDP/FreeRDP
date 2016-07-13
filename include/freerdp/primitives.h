@@ -138,12 +138,12 @@ typedef pstatus_t (*__sign_16s_t)(
     INT16* pDst,
     UINT32 len);
 typedef pstatus_t (*__yCbCrToRGB_16s8u_P3AC4R_t)(
-    const INT16* pSrc[3], INT32 srcStep,
-    BYTE* pDst, INT32 dstStep, UINT32 DstFormat,
+    const INT16* pSrc[3], UINT32 srcStep,
+    BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
     const prim_size_t* roi);
 typedef pstatus_t (*__yCbCrToBGR_16s8u_P3AC4R_t)(
-    const INT16* pSrc[3], INT32 srcStep,
-    BYTE* pDst, INT32 dstStep, UINT32 DstFormat,
+    const INT16* pSrc[3], UINT32 srcStep,
+    BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
     const prim_size_t* roi);
 typedef pstatus_t (*__yCbCrToRGB_16s16s_P3P3_t)(
     const INT16* pSrc[3],  INT32 srcStep,
