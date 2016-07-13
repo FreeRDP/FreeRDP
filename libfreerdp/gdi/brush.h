@@ -29,6 +29,8 @@
 extern "C" {
 #endif
 
+const char* gdi_rop_to_string(UINT32 code);
+
 HGDI_BRUSH gdi_CreateSolidBrush(UINT32 crColor);
 HGDI_BRUSH gdi_CreatePatternBrush(HGDI_BITMAP hbmp);
 HGDI_BRUSH gdi_CreateHatchBrush(HGDI_BITMAP hbmp);
@@ -39,8 +41,5 @@ BOOL gdi_PatBlt(HGDI_DC hdc, UINT32 nXLeft, UINT32 nYLeft,
 #ifdef __cplusplus
 }
 #endif
-
-typedef BOOL (*p_PatBlt)(HGDI_DC hdc, UINT32 nXLeft, UINT32 nYLeft,
-                         UINT32 nWidth, UINT32 nHeight, DWORD rop);
 
 #endif /* FREERDP_GDI_BRUSH_H */

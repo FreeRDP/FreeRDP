@@ -37,6 +37,238 @@
 
 #define TAG FREERDP_TAG("gdi.brush")
 
+const char* gdi_rop_to_string(UINT32 code)
+{
+	static char buffer[1024];
+
+	switch (code)
+	{
+		/* Binary Raster Operations (ROP2) */
+		case GDI_R2_BLACK:
+			_snprintf(buffer, sizeof(buffer), "GDI_R2_BLACK [%08X]", code);
+			break;
+
+		case GDI_R2_NOTMERGEPEN:
+			_snprintf(buffer, sizeof(buffer), "GDI_R2_NOTMERGEPEN [%08X]", code);
+			break;
+
+		case GDI_R2_MASKNOTPEN:
+			_snprintf(buffer, sizeof(buffer), "GDI_R2_MASKNOTPEN [%08X]", code);
+			break;
+
+		case GDI_R2_NOTCOPYPEN:
+			_snprintf(buffer, sizeof(buffer), "GDI_R2_NOTCOPYPEN [%08X]", code);
+			break;
+
+		case GDI_R2_MASKPENNOT:
+			_snprintf(buffer, sizeof(buffer), "GDI_R2_MASKPENNOT [%08X]", code);
+			break;
+
+		case GDI_R2_NOT:
+			_snprintf(buffer, sizeof(buffer), "GDI_R2_NOT [%08X]", code);
+			break;
+
+		case GDI_R2_XORPEN:
+			_snprintf(buffer, sizeof(buffer), "GDI_R2_XORPEN [%08X]", code);
+			break;
+
+		case GDI_R2_NOTMASKPEN:
+			_snprintf(buffer, sizeof(buffer), "GDI_R2_NOTMASKPEN [%08X]", code);
+			break;
+
+		case GDI_R2_MASKPEN:
+			_snprintf(buffer, sizeof(buffer), "GDI_R2_MASKPEN [%08X]", code);
+			break;
+
+		case GDI_R2_NOTXORPEN:
+			_snprintf(buffer, sizeof(buffer), "GDI_R2_NOTXORPEN [%08X]", code);
+			break;
+
+		case GDI_R2_NOP:
+			_snprintf(buffer, sizeof(buffer), "GDI_R2_NOP [%08X]", code);
+			break;
+
+		case GDI_R2_MERGENOTPEN:
+			_snprintf(buffer, sizeof(buffer), "GDI_R2_MERGENOTPEN [%08X]", code);
+			break;
+
+		case GDI_R2_COPYPEN:
+			_snprintf(buffer, sizeof(buffer), "GDI_R2_COPYPEN [%08X]", code);
+			break;
+
+		case GDI_R2_MERGEPENNOT:
+			_snprintf(buffer, sizeof(buffer), "GDI_R2_MERGEPENNOT [%08X]", code);
+			break;
+
+		case GDI_R2_MERGEPEN:
+			_snprintf(buffer, sizeof(buffer), "GDI_R2_MERGEPEN [%08X]", code);
+			break;
+
+		case GDI_R2_WHITE:
+			_snprintf(buffer, sizeof(buffer), "GDI_R2_WHITE [%08X]", code);
+			break;
+
+		/* Ternary Raster Operations (ROP3) */
+		case GDI_SRCCOPY:
+			_snprintf(buffer, sizeof(buffer), "GDI_SRCCOPY [%08X]", code);
+			break;
+
+		case GDI_SRCPAINT:
+			_snprintf(buffer, sizeof(buffer), "GDI_SRCPAINT [%08X]", code);
+			break;
+
+		case GDI_SRCAND	:
+			_snprintf(buffer, sizeof(buffer), "GDI_SRCAND	 [%08X]", code);
+			break;
+
+		case GDI_SRCINVERT:
+			_snprintf(buffer, sizeof(buffer), "GDI_SRCINVERT [%08X]", code);
+			break;
+
+		case GDI_SRCERASE:
+			_snprintf(buffer, sizeof(buffer), "GDI_SRCERASE [%08X]", code);
+			break;
+
+		case GDI_NOTSRCCOPY:
+			_snprintf(buffer, sizeof(buffer), "GDI_NOTSRCCOPY [%08X]", code);
+			break;
+
+		case GDI_NOTSRCERASE:
+			_snprintf(buffer, sizeof(buffer), "GDI_NOTSRCERASE [%08X]", code);
+			break;
+
+		case GDI_MERGECOPY:
+			_snprintf(buffer, sizeof(buffer), "GDI_MERGECOPY [%08X]", code);
+			break;
+
+		case GDI_MERGEPAINT:
+			_snprintf(buffer, sizeof(buffer), "GDI_MERGEPAINT [%08X]", code);
+			break;
+
+		case GDI_PATCOPY:
+			_snprintf(buffer, sizeof(buffer), "GDI_PATCOPY [%08X]", code);
+			break;
+
+		case GDI_PATPAINT:
+			_snprintf(buffer, sizeof(buffer), "GDI_PATPAINT [%08X]", code);
+			break;
+
+		case GDI_PATINVERT:
+			_snprintf(buffer, sizeof(buffer), "GDI_PATINVERT [%08X]", code);
+			break;
+
+		case GDI_DSTINVERT:
+			_snprintf(buffer, sizeof(buffer), "GDI_DSTINVERT [%08X]", code);
+			break;
+
+		case GDI_BLACKNESS:
+			_snprintf(buffer, sizeof(buffer), "GDI_BLACKNESS [%08X]", code);
+			break;
+
+		case GDI_WHITENESS:
+			_snprintf(buffer, sizeof(buffer), "GDI_WHITENESS [%08X]", code);
+			break;
+
+		case GDI_DSPDxax:
+			_snprintf(buffer, sizeof(buffer), "GDI_DSPDxax [%08X]", code);
+			break;
+
+		case GDI_PSDPxax:
+			_snprintf(buffer, sizeof(buffer), "GDI_PSDPxax [%08X]", code);
+			break;
+
+		case GDI_SPna:
+			_snprintf(buffer, sizeof(buffer), "GDI_SPna [%08X]", code);
+			break;
+
+		case GDI_DSna:
+			_snprintf(buffer, sizeof(buffer), "GDI_DSna [%08X]", code);
+			break;
+
+		case GDI_DPa:
+			_snprintf(buffer, sizeof(buffer), "GDI_DPa [%08X]", code);
+			break;
+
+		case GDI_PDxn:
+			_snprintf(buffer, sizeof(buffer), "GDI_PDxn [%08X]", code);
+			break;
+
+		case GDI_DSxn:
+			_snprintf(buffer, sizeof(buffer), "GDI_DSxn [%08X]", code);
+			break;
+
+		case GDI_PSDnox:
+			_snprintf(buffer, sizeof(buffer), "GDI_PSDnox [%08X]", code);
+			break;
+
+		case GDI_PDSona:
+			_snprintf(buffer, sizeof(buffer), "GDI_PDSona [%08X]", code);
+			break;
+
+		case GDI_DSPDxox:
+			_snprintf(buffer, sizeof(buffer), "GDI_DSPDxox [%08X]", code);
+			break;
+
+		case GDI_DPSDonox:
+			_snprintf(buffer, sizeof(buffer), "GDI_DPSDonox [%08X]", code);
+			break;
+
+		case GDI_SPDSxax:
+			_snprintf(buffer, sizeof(buffer), "GDI_SPDSxax [%08X]", code);
+			break;
+
+		case GDI_DPon:
+			_snprintf(buffer, sizeof(buffer), "GDI_DPon [%08X]", code);
+			break;
+
+		case GDI_DPna:
+			_snprintf(buffer, sizeof(buffer), "GDI_DPna [%08X]", code);
+			break;
+
+		case GDI_Pn:
+			_snprintf(buffer, sizeof(buffer), "GDI_Pn [%08X]", code);
+			break;
+
+		case GDI_PDna:
+			_snprintf(buffer, sizeof(buffer), "GDI_PDna [%08X]", code);
+			break;
+
+		case GDI_DPan:
+			_snprintf(buffer, sizeof(buffer), "GDI_DPan [%08X]", code);
+			break;
+
+		case GDI_DSan:
+			_snprintf(buffer, sizeof(buffer), "GDI_DSan [%08X]", code);
+			break;
+
+		case GDI_D:
+			_snprintf(buffer, sizeof(buffer), "GDI_D [%08X]", code);
+			break;
+
+		case GDI_DPno:
+			_snprintf(buffer, sizeof(buffer), "GDI_DPno [%08X]", code);
+			break;
+
+		case GDI_SDno:
+			_snprintf(buffer, sizeof(buffer), "GDI_SDno [%08X]", code);
+			break;
+
+		case GDI_PDno:
+			_snprintf(buffer, sizeof(buffer), "GDI_PDno [%08X]", code);
+			break;
+
+		case GDI_DPo:
+			_snprintf(buffer, sizeof(buffer), "GDI_DPo [%08X]", code);
+			break;
+
+		default:
+			_snprintf(buffer, sizeof(buffer), "UNKNOWN [%02X]", code);
+			break;
+	}
+
+	return buffer;
+}
+
 /**
  * Create a new solid brush.\n
  * @msdn{dd183518}
