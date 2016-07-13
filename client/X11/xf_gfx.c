@@ -102,9 +102,8 @@ static UINT xf_UpdateSurfaces(RdpgfxClientContext* context)
 	UINT status = CHANNEL_RC_OK;
 	xfGfxSurface* surface;
 	UINT16* pSurfaceIds = NULL;
-	rdpContext* ctx = (rdpContext*)context->custom;
-	xfContext* xfc = (xfContext*) ctx;
-	rdpGdi* gdi = ctx->instance->context->gdi;
+	rdpGdi* gdi = (rdpGdi*)context->custom;
+	xfContext* xfc = (xfContext*) gdi->context;
 
 	if (!gdi)
 		return status;
@@ -197,8 +196,8 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 {
 	size_t size;
 	xfGfxSurface* surface;
-	rdpContext* ctx = (rdpContext*)context->custom;
-	xfContext* xfc = (xfContext*) ctx;
+	rdpGdi* gdi = (rdpGdi*)context->custom;
+	xfContext* xfc = (xfContext*) gdi->context;
 
 	surface = (xfGfxSurface*) calloc(1, sizeof(xfGfxSurface));
 
@@ -225,10 +224,10 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 	surface->gdi.height = (UINT32) createSurface->height;
 	switch(createSurface->pixelFormat)
 	{
-	case PIXEL_FORMAT_ARGB_8888:
+	case GFX_PIXEL_FORMAT_ARGB_8888:
 		surface->gdi.format = PIXEL_FORMAT_BGRA32;
 		break;
-	case PIXEL_FORMAT_XRGB_8888:
+	case GFX_PIXEL_FORMAT_XRGB_8888:
 		surface->gdi.format = PIXEL_FORMAT_BGRX32;
 		break;
 	default:
@@ -237,7 +236,11 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 	}
 
 	surface->gdi.scanline = surface->gdi.width * GetBytesPerPixel(surface->gdi.format);
-	surface->gdi.scanline += (xfc->scanline_pad / 8) - (surface->gdi.scanline % (xfc->scanline_pad / 8));
+	if (xfc->scanline_pad > 0)
+	{
+		surface->gdi.scanline += (xfc->scanline_pad / 8);
+		surface->gdi.scanline -= (surface->gdi.scanline % (xfc->scanline_pad / 8));
+	}
 
 	size = surface->gdi.scanline * surface->gdi.height;
 	surface->gdi.data = (BYTE*) _aligned_malloc(size, 16);
@@ -260,7 +263,11 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 		UINT32 bytes = GetBytesPerPixel(xfc->format);
 
 		surface->stageScanline = width * bytes;
-		surface->stageScanline += (xfc->scanline_pad / 8) - (surface->stageScanline % (xfc->scanline_pad / 8));
+		if (xfc->scanline_pad > 0)
+		{
+			surface->stageScanline += (xfc->scanline_pad / 8);
+			surface->stageScanline -= (surface->stageScanline % (xfc->scanline_pad / 8));
+		}
 
 		size = surface->stageScanline * surface->gdi.height;
 
@@ -268,15 +275,17 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 
 		if (!surface->stage)
 		{
-			free(surface->gdi.data);
+			_aligned_free(surface->gdi.data);
 			free(surface);
 			return CHANNEL_RC_NO_MEMORY;
 		}
 
 		ZeroMemory(surface->stage, size);
 
-		surface->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
-				(char*) surface->stage, surface->gdi.width, surface->gdi.height, xfc->scanline_pad, surface->gdi.scanline);
+		surface->image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
+					      ZPixmap, 0, (char*) surface->stage,
+					      surface->gdi.width, surface->gdi.height,
+					      xfc->scanline_pad, surface->gdi.scanline);
 	}
 
 	surface->gdi.outputMapped = FALSE;
@@ -324,9 +333,6 @@ static UINT xf_DeleteSurface(RdpgfxClientContext* context,
 void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx)
 {
 	rdpGdi* gdi = xfc->context.gdi;
-
-	xfc->gfx = gfx;
-	gfx->custom = xfc->instance->context;
 
 	gdi_graphics_pipeline_init(gdi, gfx);
 
