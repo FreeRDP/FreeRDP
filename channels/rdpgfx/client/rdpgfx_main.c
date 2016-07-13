@@ -590,10 +590,10 @@ static UINT rdpgfx_recv_wire_to_surface_1_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 	cmd.contextId = 0;
 	switch(pdu.pixelFormat)
 	{
-	case PIXEL_FORMAT_XRGB_8888:
+	case GFX_PIXEL_FORMAT_XRGB_8888:
 		cmd.format = PIXEL_FORMAT_BGRX32;
 		break;
-	case PIXEL_FORMAT_ARGB_8888:
+	case GFX_PIXEL_FORMAT_ARGB_8888:
 		cmd.format = PIXEL_FORMAT_BGRA32;
 		break;
 	default:
