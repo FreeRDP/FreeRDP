@@ -43,13 +43,6 @@
 extern int test_sizes[];
 #define NUM_TEST_SIZES 10
 
-#ifndef SUCCESS
-#define SUCCESS 0
-#endif
-#ifndef FAILURE
-#define FAILURE 1
-#endif
-
 extern BOOL g_TestPrimitivesPerformance;
 extern UINT32 g_Iterations;
 
@@ -58,8 +51,10 @@ extern primitives_t* optimized;
 
 void prim_test_setup(BOOL performance);
 
+typedef pstatus_t (*speed_test_fkt)();
+
 BOOL speed_test(const char* name, const char* dsc, UINT32 iterations,
-		pstatus_t (*generic)(), pstatus_t (*optimised)(),
+		speed_test_fkt generic, speed_test_fkt optimized,
 		...);
 
 #endif // !__PRIMTEST_H_INCLUDED__

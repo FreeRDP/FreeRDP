@@ -33,11 +33,11 @@
 
 /* ------------------------------------------------------------------------- */
 static pstatus_t general_YCoCgToRGB_8u_AC4R(
-    const BYTE* pSrc, INT32 srcStep,
-    BYTE* pDst, UINT32 DstFormat, INT32 dstStep,
-    UINT32 width, UINT32 height,
-    UINT8 shift,
-    BOOL withAlpha)
+		const BYTE* pSrc, INT32 srcStep,
+		BYTE* pDst, UINT32 DstFormat, INT32 dstStep,
+		UINT32 width, UINT32 height,
+		UINT8 shift,
+		BOOL withAlpha)
 {
 	BYTE A;
 	UINT32 x, y;
@@ -66,8 +66,11 @@ static pstatus_t general_YCoCgToRGB_8u_AC4R(
 			R  = T + Co;
 			G  = Y + Cg;
 			B  = T - Co;
-			color = GetColor(DstFormat, MINMAX(R, 0, 255), MINMAX(G, 0, 255), MINMAX(B, 0,
-			                 255), A);
+
+			color = GetColor(DstFormat,
+					 MINMAX(R, 0, 255), MINMAX(G, 0, 255),
+					 MINMAX(B, 0, 255), A);
+			WriteColor(dptr, DstFormat, color);
 			dptr += GetBytesPerPixel(DstFormat);
 		}
 

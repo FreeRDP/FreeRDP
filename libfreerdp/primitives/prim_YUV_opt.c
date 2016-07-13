@@ -35,6 +35,11 @@ static pstatus_t ssse3_YUV420ToRGB_8u_P3AC4R(
 	UINT32 i, nWidth, nHeight, VaddDst, VaddY, VaddU, VaddV;
 	__m128i r0, r1, r2, r3, r4, r5, r6, r7;
 	__m128i* buffer;
+
+	// TODO: Need to implement proper color conversion!!!!!
+	return generic->YUV420ToRGB_8u_P3AC4R(pSrc, srcStep, pDst, dstStep,
+					      DstFormat, roi);
+
 	/* last_line: if the last (U,V doubled) line should be skipped, set to 10B
 	 * last_column: if it's the last column in a line, set to 10B (for handling line-endings not multiple by four) */
 	buffer = _aligned_malloc(4 * 16, 16);

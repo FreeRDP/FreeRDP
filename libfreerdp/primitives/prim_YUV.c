@@ -232,9 +232,9 @@ static pstatus_t general_YUV444SplitToYUV420(
 		{
 			/* Filter */
 			const INT32 u = pSrcU[2 * x] + pSrcU[2 * x + 1] + pSrcU1[2 * x]
-			                + pSrcU1[2 * x + 1];
+					+ pSrcU1[2 * x + 1];
 			const INT32 v = pSrcV[2 * x] + pSrcV[2 * x + 1] + pSrcV1[2 * x]
-			                + pSrcV1[2 * x + 1];
+					+ pSrcV1[2 * x + 1];
 			pU[x] = CLIP(u / 4L);
 			pV[x] = CLIP(v / 4L);
 		}
@@ -331,7 +331,7 @@ static INLINE BYTE* writePixel(BYTE* dst, UINT32 format, BYTE Y, BYTE U, BYTE V)
 	const BYTE r = YUV2R(Y, U, V);
 	const BYTE g = YUV2G(Y, U, V);
 	const BYTE b = YUV2B(Y, U, V);
-	UINT32 color = GetColor(format, r, g, b, 0);
+	UINT32 color = GetColor(format, r, g, b, 0xFF);
 	WriteColor(dst, format, color);
 	return dst + GetBytesPerPixel(format);
 }
@@ -500,9 +500,10 @@ static INLINE BYTE RGB2V(INT32 R, INT32 G, INT32 B)
 }
 
 static pstatus_t general_RGBToYUV444_8u_P3AC4R(
-    const BYTE* pSrc, const UINT32 srcStep,
+    const BYTE* pSrc, UINT32 SrcFormat, const UINT32 srcStep,
     BYTE* pDst[3], UINT32 dstStep[3], const prim_size_t* roi)
 {
+	const UINT32 bpp = GetBytesPerPixel(SrcFormat);
 	UINT32 x, y;
 	UINT32 nWidth, nHeight;
 	nWidth = roi->width;
@@ -517,9 +518,10 @@ static pstatus_t general_RGBToYUV444_8u_P3AC4R(
 
 		for (x = 0; x < nWidth; x++)
 		{
-			const BYTE B = pRGB[4 * x + 0];
-			const BYTE G = pRGB[4 * x + 1];
-			const BYTE R = pRGB[4 * x + 2];
+			BYTE B, G, R;
+			const UINT32 color = ReadColor(&pRGB[x * bpp], SrcFormat);
+			SplitColor(color, SrcFormat, &R, &G, &B, NULL, NULL);
+
 			pY[x] = RGB2Y(R, G, B);
 			pU[x] = RGB2U(R, G, B);
 			pV[x] = RGB2V(R, G, B);
@@ -530,9 +532,10 @@ static pstatus_t general_RGBToYUV444_8u_P3AC4R(
 }
 
 static pstatus_t general_RGBToYUV420_8u_P3AC4R(
-    const BYTE* pSrc, UINT32 srcStep,
+    const BYTE* pSrc, UINT32 SrcFormat, UINT32 srcStep,
     BYTE* pDst[3], UINT32 dstStep[3], const prim_size_t* roi)
 {
+	const UINT32 bpp = GetBytesPerPixel(SrcFormat);
 	UINT32 x, y;
 	UINT32 halfWidth;
 	UINT32 halfHeight;
@@ -555,39 +558,50 @@ static pstatus_t general_RGBToYUV420_8u_P3AC4R(
 
 		for (x = 0; x < halfWidth; x++)
 		{
-			INT32 R, G, B;
+			UINT32 color;
 			INT32 Ra, Ga, Ba;
 			const UINT32 val2x = (x * 2);
 			const UINT32 val2x1 = val2x + 1;
+			BYTE B, G, R;
+
 			/* 1st pixel */
-			Ba = B = pRGB[val2x * 4 + 0];
-			Ga = G = pRGB[val2x * 4 + 1];
-			Ra = R = pRGB[val2x * 4 + 2];
+			color = ReadColor(&pRGB[val2x * bpp], SrcFormat);
+			SplitColor(color, SrcFormat, &R, &G, &B, NULL, NULL);
+
+			Ba = B;
+			Ga = G;
+			Ra = R;
 			pY[val2x] = RGB2Y(R, G, B);
 
 			if (val2x1 < nWidth)
 			{
 				/* 2nd pixel */
-				Ba += B = pRGB[val2x * 4 + 4];
-				Ga += G = pRGB[val2x * 4 + 5];
-				Ra += R = pRGB[val2x * 4 + 6];
+				color = ReadColor(&pRGB[val2x1 * bpp], SrcFormat);
+				SplitColor(color, SrcFormat, &R, &G, &B, NULL, NULL);
+				Ba += B;
+				Ga += G;
+				Ra += R;
 				pY[val2x1] = RGB2Y(R, G, B);
 			}
 
 			if (val2y1 < nHeight)
 			{
 				/* 3rd pixel */
-				Ba += B = pRGB1[val2x * 4 + 0];
-				Ga += G = pRGB1[val2x * 4 + 1];
-				Ra += R = pRGB1[val2x * 4 + 2];
+				color = ReadColor(&pRGB1[val2x * bpp], SrcFormat);
+				SplitColor(color, SrcFormat, &R, &G, &B, NULL, NULL);
+				Ba += B;
+				Ga += G;
+				Ra += R;
 				pY1[val2x] = RGB2Y(R, G, B);
 
 				if (val2x1 < nWidth)
 				{
 					/* 4th pixel */
-					Ba += B = pRGB1[val2x * 4 + 4];
-					Ga += G = pRGB1[val2x * 4 + 5];
-					Ra += R = pRGB1[val2x * 4 + 6];
+					color = ReadColor(&pRGB1[val2x1 * bpp], SrcFormat);
+					SplitColor(color, SrcFormat, &R, &G, &B, NULL, NULL);
+					Ba += B;
+					Ga += G;
+					Ra += R;
 					pY1[val2x1] = RGB2Y(R, G, B);
 				}
 			}

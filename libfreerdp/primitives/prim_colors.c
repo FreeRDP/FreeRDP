@@ -262,7 +262,7 @@ static pstatus_t general_RGBToYCbCr_16s16s_P3P3(
 
 	for (y = 0; y < roi->height; y++)
 	{
-		int x;
+		UINT32 x;
 
 		for (x = 0; x < roi->width; ++x)
 		{
@@ -305,10 +305,10 @@ static pstatus_t general_RGBToYCbCr_16s16s_P3P3(
 
 /* ------------------------------------------------------------------------- */
 static pstatus_t general_RGBToRGB_16s8u_P3AC4R(
-    const INT16* pSrc[3],	/* 16-bit R,G, and B arrays */
-    INT32 srcStep,			/* bytes between rows in source data */
+    const INT16* const pSrc[3],	/* 16-bit R,G, and B arrays */
+    UINT32 srcStep,			/* bytes between rows in source data */
     BYTE* pDst,			/* 32-bit interleaved ARGB (ABGR?) data */
-    INT32 dstStep,			/* bytes between rows in dest data */
+    UINT32 dstStep,			/* bytes between rows in dest data */
     UINT32 DstFormat,
     const prim_size_t* roi)	/* region of interest */
 {

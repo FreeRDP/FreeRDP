@@ -40,8 +40,8 @@ static primitives_t* generic = NULL;
 #ifdef WITH_SSE2
 /* ------------------------------------------------------------------------- */
 static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(
-    const BYTE* pSrc, INT32 srcStep,
-    BYTE* pDst, INT32 dstStep,
+    const BYTE* pSrc, UINT32 srcStep,
+    BYTE* pDst, UINT32 DstFormat, UINT32 dstStep,
     UINT32 width, UINT32 height,
     UINT8 shift,
     BOOL withAlpha)
@@ -70,8 +70,8 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(
 	{
 		/* Too small, or we'll never hit a 16-byte boundary.  Punt. */
 		return generic->YCoCgToRGB_8u_AC4R(
-		           pSrc, srcStep, pDst, dstStep,
-		           width, height, shift, withAlpha, TRUE);
+			   pSrc, srcStep, pDst, DstFormat, dstStep,
+			   width, height, shift, withAlpha);
 	}
 
 	for (h = 0; h < height; h++)
@@ -82,12 +82,16 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(
 		/* Get to a 16-byte destination boundary. */
 		if ((ULONG_PTR) dptr & 0x0f)
 		{
+			pstatus_t status;
 			int startup = (16 - ((ULONG_PTR) dptr & 0x0f)) / 4;
 
 			if (startup > width) startup = width;
 
-			generic->YCoCgToRGB_8u_AC4R(sptr, srcStep, dptr, dstStep,
-			                            startup, 1, shift, withAlpha, TRUE);
+			status = generic->YCoCgToRGB_8u_AC4R(
+					 sptr, srcStep, dptr, DstFormat, dstStep,
+					 startup, 1, shift, withAlpha);
+			if (status != PRIMITIVES_SUCCESS)
+				return status;
 			sptr += startup * sizeof(UINT32);
 			dptr += startup * sizeof(UINT32);
 			w -= startup;
@@ -195,8 +199,13 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(
 		/* Handle any remainder pixels. */
 		if (w > 0)
 		{
-			generic->YCoCgToRGB_8u_AC4R(sptr, srcStep, dptr, dstStep,
-			                            w, 1, shift, withAlpha, TRUE);
+			pstatus_t status;
+			status = generic->YCoCgToRGB_8u_AC4R(
+					 sptr, srcStep, dptr, DstFormat, dstStep,
+					 w, 1, shift, withAlpha);
+			if (status != PRIMITIVES_SUCCESS)
+				return status;
+
 			sptr += w * sizeof(UINT32);
 			dptr += w * sizeof(UINT32);
 		}
@@ -210,8 +219,8 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(
 
 /* ------------------------------------------------------------------------- */
 static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(
-    const BYTE* pSrc, INT32 srcStep,
-    BYTE* pDst, INT32 dstStep,
+    const BYTE* pSrc, UINT32 srcStep,
+    BYTE* pDst, UINT32 DstFormat, UINT32 dstStep,
     UINT32 width, UINT32 height,
     UINT8 shift,
     BOOL withAlpha)
@@ -240,9 +249,8 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(
 	{
 		/* Too small, or we'll never hit a 16-byte boundary.  Punt. */
 		return generic->YCoCgToRGB_8u_AC4R(
-		           pSrc, srcStep,
-		           pDst, dstStep, width, height, shift,
-		           withAlpha, FALSE);
+					pSrc, srcStep, pDst, DstFormat, dstStep,
+					width, height, shift, withAlpha);
 	}
 
 	for (h = 0; h < height; h++)
@@ -253,12 +261,17 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(
 		/* Get to a 16-byte destination boundary. */
 		if ((ULONG_PTR) dptr & 0x0f)
 		{
+			pstatus_t status;
 			int startup = (16 - ((ULONG_PTR) dptr & 0x0f)) / 4;
 
 			if (startup > width) startup = width;
 
-			generic->YCoCgToRGB_8u_AC4R(sptr, srcStep, dptr, dstStep,
-			                            startup, 1, shift, withAlpha, FALSE);
+			status = generic->YCoCgToRGB_8u_AC4R(
+						sptr, srcStep, dptr, DstFormat,
+						dstStep, startup, 1, shift, withAlpha);
+			if (status != PRIMITIVES_SUCCESS)
+				return status;
+
 			sptr += startup * sizeof(UINT32);
 			dptr += startup * sizeof(UINT32);
 			w -= startup;
@@ -370,8 +383,13 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(
 		/* Handle any remainder pixels. */
 		if (w > 0)
 		{
-			generic->YCoCgToRGB_8u_AC4R(sptr, srcStep, dptr, dstStep,
-			                            w, 1, shift, withAlpha, FALSE);
+			pstatus_t status;
+			status = generic->YCoCgToRGB_8u_AC4R(
+					 sptr, srcStep, dptr, DstFormat, dstStep,
+					 w, 1, shift, withAlpha);
+			if (status != PRIMITIVES_SUCCESS)
+				return status;
+
 			sptr += w * sizeof(UINT32);
 			dptr += w * sizeof(UINT32);
 		}
@@ -388,21 +406,29 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(
 /* ------------------------------------------------------------------------- */
 static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R(
     const BYTE* pSrc, INT32 srcStep,
-    BYTE* pDst, INT32 dstStep,
+    BYTE* pDst, UINT32 DstFormat, INT32 dstStep,
     UINT32 width, UINT32 height,
     UINT8 shift,
-    BOOL withAlpha,
-    BOOL invert)
+    BOOL withAlpha)
 {
-	if (invert)
+	// TODO: Need to implement proper color conversion!!!
+	return generic->YCoCgToRGB_8u_AC4R(pSrc, srcStep, pDst, DstFormat,
+					   dstStep, width, height, shift, withAlpha);
+
+	switch(DstFormat)
 	{
-		return ssse3_YCoCgRToRGB_8u_AC4R_invert(pSrc, srcStep, pDst, dstStep,
-		                                        width, height, shift, withAlpha);
-	}
-	else
-	{
-		return ssse3_YCoCgRToRGB_8u_AC4R_no_invert(pSrc, srcStep, pDst, dstStep,
-		        width, height, shift, withAlpha);
+	case PIXEL_FORMAT_BGRX32:
+	case PIXEL_FORMAT_BGRA32:
+		return ssse3_YCoCgRToRGB_8u_AC4R_invert(
+					pSrc, srcStep, pDst, DstFormat, dstStep,
+					width, height, shift, withAlpha);
+	case PIXEL_FORMAT_RGBX32:
+	case PIXEL_FORMAT_RGBA32:
+		return ssse3_YCoCgRToRGB_8u_AC4R_no_invert(
+					pSrc, srcStep, pDst, DstFormat, dstStep,
+					width, height, shift, withAlpha);
+	default:
+		return -1;
 	}
 }
 #endif /* WITH_SSE2 */

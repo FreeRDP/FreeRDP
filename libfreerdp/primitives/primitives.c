@@ -81,6 +81,6 @@ primitives_t* primitives_get_generic(void)
 	if (!pPrimitivesGenericInitialized)
 		primitives_init_generic();
 
-	return &pPrimitives;
+	return &pPrimitivesGeneric;
 }
 

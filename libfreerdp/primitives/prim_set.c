@@ -29,7 +29,7 @@
 static pstatus_t general_set_8u(
     BYTE val,
     BYTE* pDst,
-    INT32 len)
+    UINT32 len)
 {
 	memset((void*) pDst, (int) val, (size_t) len);
 	return PRIMITIVES_SUCCESS;
@@ -48,7 +48,7 @@ static pstatus_t general_zero(
 static pstatus_t general_set_32s(
     INT32 val,
     INT32* pDst,
-    INT32 len)
+    UINT32 len)
 {
 	INT32* dptr = (INT32*) pDst;
 	size_t span, remaining;
@@ -85,7 +85,7 @@ static pstatus_t general_set_32s(
 static pstatus_t general_set_32u(
     UINT32 val,
     UINT32* pDst,
-    INT32 len)
+    UINT32 len)
 {
 	UINT32* dptr = (UINT32*) pDst;
 	size_t span, remaining;

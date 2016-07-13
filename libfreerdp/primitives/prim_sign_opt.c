@@ -35,7 +35,7 @@ static primitives_t* generic = NULL;
 static pstatus_t ssse3_sign_16s(
     const INT16* pSrc,
     INT16* pDst,
-    INT32 len)
+    UINT32 len)
 {
 	const INT16* sptr = (const INT16*) pSrc;
 	INT16* dptr = (INT16*) pDst;

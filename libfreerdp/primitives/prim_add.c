@@ -30,7 +30,7 @@ static pstatus_t general_add_16s(
     const INT16* pSrc1,
     const INT16* pSrc2,
     INT16* pDst,
-    INT32 len)
+    UINT32 len)
 {
 	while (len--)
 	{

@@ -36,23 +36,19 @@
 
 /* ------------------------------------------------------------------------- */
 static pstatus_t general_alphaComp_argb(
-    const BYTE* pSrc1,  INT32 src1Step,
-    const BYTE* pSrc2,  INT32 src2Step,
-    BYTE* pDst,  INT32 dstStep,
-    INT32 width,  INT32 height)
+    const BYTE* pSrc1,  UINT32 src1Step,
+    const BYTE* pSrc2,  UINT32 src2Step,
+    BYTE* pDst,  UINT32 dstStep,
+    UINT32 width,  UINT32 height)
 {
-	const UINT32* sptr1 = (const UINT32*) pSrc1;
-	const UINT32* sptr2 = (const UINT32*) pSrc2;
-	UINT32* dptr = (UINT32*) pDst;
-	int linebytes = width * sizeof(UINT32);
-	int src1Jump = (src1Step - linebytes) / sizeof(UINT32);
-	int src2Jump = (src2Step - linebytes) / sizeof(UINT32);
-	int dstJump  = (dstStep  - linebytes) / sizeof(UINT32);
-	int y;
+	UINT32 y;
 
 	for (y = 0; y < height; y++)
 	{
-		int x;
+		const UINT32* sptr1 = (const UINT32*) (pSrc1 + y * src1Step);
+		const UINT32* sptr2 = (const UINT32*) (pSrc2 + y * src2Step);
+		UINT32* dptr = (UINT32*) (pDst + y * dstStep);
+		UINT32 x;
 
 		for (x = 0; x < width; x++)
 		{
@@ -92,10 +88,6 @@ static pstatus_t general_alphaComp_argb(
 				*dptr++ = rb | ag;
 			}
 		}
-
-		sptr1 += src1Jump;
-		sptr2 += src2Jump;
-		dptr  += dstJump;
 	}
 
 	return PRIMITIVES_SUCCESS;

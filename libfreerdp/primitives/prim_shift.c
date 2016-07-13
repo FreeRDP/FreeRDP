@@ -24,9 +24,9 @@
 /* ------------------------------------------------------------------------- */
 static pstatus_t general_lShiftC_16s(
     const INT16* pSrc,
-    INT32 val,
+    UINT32 val,
     INT16* pDst,
-    INT32 len)
+    UINT32 len)
 {
 	if (val == 0) return PRIMITIVES_SUCCESS;
 
@@ -38,9 +38,9 @@ static pstatus_t general_lShiftC_16s(
 /* ------------------------------------------------------------------------- */
 static pstatus_t general_rShiftC_16s(
     const INT16* pSrc,
-    INT32 val,
+    UINT32 val,
     INT16* pDst,
-    INT32 len)
+    UINT32 len)
 {
 	if (val == 0) return PRIMITIVES_SUCCESS;
 
@@ -52,9 +52,9 @@ static pstatus_t general_rShiftC_16s(
 /* ------------------------------------------------------------------------- */
 static pstatus_t general_lShiftC_16u(
     const UINT16* pSrc,
-    INT32 val,
+    UINT32 val,
     UINT16* pDst,
-    INT32 len)
+    UINT32 len)
 {
 	if (val == 0) return PRIMITIVES_SUCCESS;
 
@@ -66,9 +66,9 @@ static pstatus_t general_lShiftC_16u(
 /* ------------------------------------------------------------------------- */
 static pstatus_t general_rShiftC_16u(
     const UINT16* pSrc,
-    INT32 val,
+    UINT32 val,
     UINT16* pDst,
-    INT32 len)
+    UINT32 len)
 {
 	if (val == 0) return PRIMITIVES_SUCCESS;
 
@@ -82,7 +82,7 @@ static pstatus_t general_shiftC_16s(
     const INT16* pSrc,
     INT32 val,
     INT16* pDst,
-    INT32 len)
+    UINT32 len)
 {
 	if (val == 0) return PRIMITIVES_SUCCESS;
 
@@ -95,7 +95,7 @@ static pstatus_t general_shiftC_16u(
     const UINT16* pSrc,
     INT32 val,
     UINT16* pDst,
-    INT32 len)
+    UINT32 len)
 {
 	if (val == 0) return PRIMITIVES_SUCCESS;
 
