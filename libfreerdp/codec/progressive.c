@@ -1577,14 +1577,8 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
 	UINT32 offset = 0;
 	RFX_RECT* rect = NULL;
 	REGION16 clippingRects, updateRegion;
-	PROGRESSIVE_BLOCK_SYNC sync;
-	PROGRESSIVE_BLOCK_REGION* region;
-	PROGRESSIVE_BLOCK_CONTEXT context;
-	PROGRESSIVE_BLOCK_FRAME_BEGIN frameBegin;
-	PROGRESSIVE_BLOCK_FRAME_END frameEnd;
 	PROGRESSIVE_SURFACE_CONTEXT* surface;
-	RFX_COMPONENT_CODEC_QUANT* quantVal;
-	RFX_PROGRESSIVE_CODEC_QUANT* quantProgVal;
+	PROGRESSIVE_BLOCK_REGION* region;
 	progressive->invert = FREERDP_PIXEL_FORMAT_IS_ABGR(DstFormat) ? TRUE : FALSE;
 	surface = (PROGRESSIVE_SURFACE_CONTEXT*) progressive_get_surface_data(
 	              progressive, surfaceId);
@@ -1598,6 +1592,12 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
 
 	while ((blocksLen - offset) >= 6)
 	{
+		PROGRESSIVE_BLOCK_SYNC sync;
+		PROGRESSIVE_BLOCK_CONTEXT context;
+		PROGRESSIVE_BLOCK_FRAME_BEGIN frameBegin;
+		PROGRESSIVE_BLOCK_FRAME_END frameEnd;
+		RFX_COMPONENT_CODEC_QUANT* quantVal;
+		RFX_PROGRESSIVE_CODEC_QUANT* quantProgVal;
 		boffset = 0;
 		block = &blocks[offset];
 		blockType = *((UINT16*) &block[boffset + 0]); /* blockType (2 bytes) */
@@ -1896,7 +1896,7 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
 	for (i = 0; i < region->numRects; i++)
 	{
 		RECTANGLE_16 clippingRect;
-		RFX_RECT* rect = &(region->rects[i]);
+		const RFX_RECT* rect = &(region->rects[i]);
 		clippingRect.left = nXDst + rect->x;
 		clippingRect.top = nYDst + rect->y;
 		clippingRect.right = clippingRect.left + rect->width;
@@ -1920,15 +1920,16 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
 
 		for (j = 0; j < nbUpdateRects; j++)
 		{
-			UINT32 nXSrc;
-			UINT32 nYSrc;
-			nWidth = updateRects[j].right - updateRects[j].left;
-			nHeight = updateRects[j].bottom - updateRects[j].top;
-			nXSrc = updateRects[j].left - (nXDst + tile->x);
-			nYSrc = updateRects[j].top - (nYDst + tile->y);
+			const RECTANGLE_16* rect = &updateRects[j];
+			const UINT32 nXSrc = rect->left - (nXDst + tile->x);
+			const UINT32 nYSrc = rect->top - (nYDst + tile->y);
+			const UINT32 width = rect->right - rect->left;
+			const UINT32 height = rect->bottom - rect->top;
 
-			if (!freerdp_image_copy(pDstData, DstFormat, nDstStep, nXDst, nYDst,
-			                        nWidth, nHeight,	tile->data, PIXEL_FORMAT_XRGB32,
+			if (!freerdp_image_copy(pDstData, DstFormat, nDstStep,
+			                        rect->left, rect->top,
+			                        width, height,
+			                        tile->data, PIXEL_FORMAT_BGRX32,
 			                        64 * 4, nXSrc, nYSrc, NULL))
 			{
 				rc = -42;
