@@ -438,6 +438,8 @@ static BOOL resize_vbar_entry(CLEAR_CONTEXT* clear, CLEAR_VBAR_ENTRY* vBarEntry)
 	if (vBarEntry->count > vBarEntry->size)
 	{
 		const UINT32 bpp = GetBytesPerPixel(clear->format);
+		const UINT32 oldPos = vBarEntry->size * bpp;
+		const UINT32 diffSize = (vBarEntry->count - vBarEntry->size) * bpp;
 		BYTE* tmp;
 		vBarEntry->size = vBarEntry->count;
 		tmp = (BYTE*) realloc(vBarEntry->pixels,
@@ -446,6 +448,7 @@ static BOOL resize_vbar_entry(CLEAR_CONTEXT* clear, CLEAR_VBAR_ENTRY* vBarEntry)
 		if (!tmp)
 			return FALSE;
 
+		memset(&tmp[oldPos], 0, diffSize);
 		vBarEntry->pixels = tmp;
 	}
 
@@ -485,11 +488,8 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
 		UINT16 vBarYOn;
 		UINT16 vBarYOff;
 		UINT32 vBarCount;
-		UINT32 vBarHeight;
 		UINT32 vBarPixelCount;
 		UINT32 vBarShortPixelCount;
-		CLEAR_VBAR_ENTRY* vBarEntry;
-		CLEAR_VBAR_ENTRY* vBarShortEntry;
 
 		if (Stream_GetRemainingLength(s) < 11)
 			return FALSE;
@@ -514,6 +514,9 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
 
 		for (i = 0; i < vBarCount; i++)
 		{
+			UINT32 vBarHeight;
+			CLEAR_VBAR_ENTRY* vBarEntry = NULL;
+			CLEAR_VBAR_ENTRY* vBarShortEntry;
 			BOOL vBarUpdate = FALSE;
 			const BYTE* pSrcPixel;
 
@@ -530,8 +533,9 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
 			if ((vBarHeader & 0xC000) == 0x4000) /* SHORT_VBAR_CACHE_HIT */
 			{
 				vBarIndex = (vBarHeader & 0x3FFF);
+				vBarShortEntry = &(clear->ShortVBarStorage[vBarIndex]);
 
-				if (vBarIndex >= 16384)
+				if (!vBarShortEntry)
 					return FALSE;
 
 				if (Stream_GetRemainingLength(s) < 1)
@@ -539,11 +543,6 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
 
 				Stream_Read_UINT8(s, vBarYOn);
 				suboffset += 1;
-				vBarShortEntry = &(clear->ShortVBarStorage[vBarIndex]);
-
-				if (!vBarShortEntry)
-					return FALSE;
-
 				vBarShortPixelCount = vBarShortEntry->count;
 				vBarUpdate = TRUE;
 			}
@@ -563,7 +562,7 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
 				if (Stream_GetRemainingLength(s) < (vBarShortPixelCount * 3))
 					return FALSE;
 
-				if (clear->ShortVBarStorageCursor >= 16384)
+				if (clear->ShortVBarStorageCursor >= CLEARCODEC_VBAR_SHORT_SIZE)
 					return FALSE;
 
 				vBarShortEntry = &(clear->ShortVBarStorage[clear->ShortVBarStorageCursor]);
@@ -587,16 +586,13 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
 
 				suboffset += (vBarShortPixelCount * 3);
 				vBarShortEntry->count = vBarShortPixelCount;
-				clear->ShortVBarStorageCursor = (clear->ShortVBarStorageCursor + 1) % 16384;
+				clear->ShortVBarStorageCursor =
+				    (clear->ShortVBarStorageCursor + 1) % CLEARCODEC_VBAR_SHORT_SIZE;
 				vBarUpdate = TRUE;
 			}
 			else if ((vBarHeader & 0x8000) == 0x8000) /* VBAR_CACHE_HIT */
 			{
 				vBarIndex = (vBarHeader & 0x7FFF);
-
-				if (vBarIndex >= 32768)
-					return FALSE;
-
 				vBarEntry = &(clear->VBarStorage[vBarIndex]);
 			}
 			else
@@ -610,7 +606,7 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
 				BYTE* pSrcPixel;
 				BYTE* dstBuffer;
 
-				if (clear->VBarStorageCursor >= 32768)
+				if (clear->VBarStorageCursor >= CLEARCODEC_VBAR_SIZE)
 					return FALSE;
 
 				vBarEntry = &(clear->VBarStorage[clear->VBarStorageCursor]);
@@ -667,27 +663,34 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
 				}
 
 				vBarEntry->count = vBarPixelCount;
-				clear->VBarStorageCursor = (clear->VBarStorageCursor + 1) % 32768;
+				clear->VBarStorageCursor = (clear->VBarStorageCursor + 1) %
+				                           CLEARCODEC_VBAR_SIZE;
 			}
 
-			count = yEnd - yStart + 1;
-
-			if (vBarEntry->count != count)
+			if (vBarEntry->count != vBarHeight)
 				return FALSE;
 
 			nXDstRel = nXDst + xStart;
 			nYDstRel = nYDst + yStart;
 			pSrcPixel = vBarEntry->pixels;
 
-			for (y = 0; y < count; y++)
+			if (i < nWidth)
 			{
-				BYTE* pDstPixel8 = &pDstData[((nYDstRel + y) * nDstStep) +
-				                             ((nXDstRel + i) * GetBytesPerPixel(DstFormat))];
-				UINT32 color = ReadColor(pSrcPixel, clear->format);
-				color = ConvertColor(color, clear->format,
-				                     DstFormat, NULL);
-				WriteColor(pDstPixel8, DstFormat, color);
-				pSrcPixel += GetBytesPerPixel(clear->format);
+				count = vBarEntry->count;
+
+				if (count > nHeight)
+					count = nHeight;
+
+				for (y = 0; y < count; y++)
+				{
+					BYTE* pDstPixel8 = &pDstData[((nYDstRel + y) * nDstStep) +
+					                             ((nXDstRel + i) * GetBytesPerPixel(DstFormat))];
+					UINT32 color = ReadColor(pSrcPixel, clear->format);
+					color = ConvertColor(color, clear->format,
+					                     DstFormat, NULL);
+					WriteColor(pDstPixel8, DstFormat, color);
+					pSrcPixel += GetBytesPerPixel(clear->format);
+				}
 			}
 		}
 	}
@@ -847,7 +850,14 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
 
 	/* Read composition payload header parameters */
 	if (Stream_GetRemainingLength(s) < 12)
+	{
+		const UINT32 mask = (CLEARCODEC_FLAG_GLYPH_HIT | CLEARCODEC_FLAG_GLYPH_INDEX);
+
+		if ((glyphFlags & mask) == mask)
+			goto finish;
+
 		goto fail;
+	}
 
 	Stream_Read_UINT32(s, residualByteCount);
 	Stream_Read_UINT32(s, bandsByteCount);
@@ -877,6 +887,7 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
 			goto fail;
 	}
 
+finish:
 	rc = 0;
 fail:
 	Stream_Free(s, FALSE);
