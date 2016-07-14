@@ -32,6 +32,9 @@ typedef struct _CLEAR_CONTEXT CLEAR_CONTEXT;
 #define CLEARCODEC_FLAG_GLYPH_HIT	0x02
 #define CLEARCODEC_FLAG_CACHE_RESET	0x04
 
+#define CLEARCODEC_VBAR_SIZE 32768
+#define CLEARCODEC_VBAR_SHORT_SIZE 16384
+
 struct _CLEAR_GLYPH_ENTRY
 {
 	UINT32 size;
@@ -60,21 +63,22 @@ struct _CLEAR_CONTEXT
 	UINT32 format;
 	CLEAR_GLYPH_ENTRY GlyphCache[4000];
 	UINT32 VBarStorageCursor;
-	CLEAR_VBAR_ENTRY VBarStorage[32768];
+	CLEAR_VBAR_ENTRY VBarStorage[CLEARCODEC_VBAR_SIZE];
 	UINT32 ShortVBarStorageCursor;
-	CLEAR_VBAR_ENTRY ShortVBarStorage[16384];
+	CLEAR_VBAR_ENTRY ShortVBarStorage[CLEARCODEC_VBAR_SHORT_SIZE];
 };
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-FREERDP_API int clear_compress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize);
+FREERDP_API int clear_compress(CLEAR_CONTEXT* clear, BYTE* pSrcData,
+                               UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize);
 
 FREERDP_API INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
-				   UINT32 SrcSize, UINT32 nWidth, UINT32 nHeight,
-				   BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
-                   UINT32 nXDst, UINT32 nYDst, UINT32 nDstWidth, UINT32 nDstHeight,
+                                   UINT32 SrcSize, UINT32 nWidth, UINT32 nHeight,
+                                   BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
+                                   UINT32 nXDst, UINT32 nYDst, UINT32 nDstWidth, UINT32 nDstHeight,
                                    const gdiPalette* palette);
 
 FREERDP_API BOOL clear_context_reset(CLEAR_CONTEXT* clear);
