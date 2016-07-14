@@ -415,13 +415,13 @@ static BOOL BitBlt_DSPDxax(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 
 			if (srcp && dstp)
 			{
-				UINT32 color;
+				UINT32 dstColor;
 				UINT32 colorA = ReadColor(srcp, hdcSrc->format);
 				UINT32 colorB = ReadColor(dstp, hdcDest->format);
 				colorA = ConvertColor(colorA, hdcSrc->format,
 				                      hdcDest->format, palette);
-				color = (colorA & color) | (~colorA & colorB);
-				WriteColor(dstp, hdcDest->format, color);
+				dstColor = (colorA & color) | (~colorA & colorB);
+				WriteColor(dstp, hdcDest->format, dstColor);
 			}
 		}
 	}
@@ -799,9 +799,7 @@ BOOL gdi_BitBlt(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 			                         hdcSrc, nXSrc, nYSrc, palette);
 
 		default:
-			break;
+			WLog_ERR(TAG,  "BitBlt: unknown rop: 0x%08X", rop);
+			return FALSE;
 	}
-
-	WLog_ERR(TAG,  "BitBlt: unknown rop: 0x%08X", rop);
-	return FALSE;
 }
