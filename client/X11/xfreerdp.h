@@ -96,7 +96,6 @@ struct xf_context
 
 	freerdp* instance;
 	rdpSettings* settings;
-	rdpCodecs* codecs;
 
 	GC gc;
 	int xfds;
@@ -136,7 +135,7 @@ struct xf_context
 	HANDLE mutex;
 	BOOL UseXThreads;
 	BOOL cursorHidden;
-    gdiPalette palette;
+	gdiPalette palette;
 
 	HGDI_DC hdc;
 	UINT32 bitmap_size;
@@ -241,7 +240,6 @@ struct xf_context
 BOOL xf_create_window(xfContext* xfc);
 void xf_toggle_fullscreen(xfContext* xfc);
 void xf_toggle_control(xfContext* xfc);
-BOOL xf_post_connect(freerdp* instance);
 
 void xf_encomsp_init(xfContext* xfc, EncomspClientContext* encomsp);
 void xf_encomsp_uninit(xfContext* xfc, EncomspClientContext* encomsp);

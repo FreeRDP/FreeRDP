@@ -482,11 +482,6 @@ static BOOL gdi_bitmap_update(rdpContext* context,
 		{
 			if (bitsPerPixel < 32)
 			{
-				if (!freerdp_client_codecs_prepare(codecs,
-				                                   FREERDP_CODEC_INTERLEAVED,
-				                                   gdi->width, gdi->height))
-					return FALSE;
-
 				status = interleaved_decompress(codecs->interleaved,
 				                                pSrcData, SrcSize,
 				                                bitsPerPixel,
@@ -498,11 +493,6 @@ static BOOL gdi_bitmap_update(rdpContext* context,
 			}
 			else
 			{
-				if (!freerdp_client_codecs_prepare(codecs,
-				                                   FREERDP_CODEC_PLANAR,
-				                                   gdi->width, gdi->height))
-					return FALSE;
-
 				status = planar_decompress(codecs->planar, pSrcData,
 				                           SrcSize, gdi->primary_buffer,
 				                           gdi->dstFormat,
@@ -1279,8 +1269,8 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 			goto fail;
 	}
 
-	if (!freerdp_client_codecs_reset(context->codecs, FREERDP_CODEC_ALL, gdi->width,
-	                                 gdi->height))
+	if (!freerdp_client_codecs_prepare(context->codecs, FREERDP_CODEC_ALL,
+	                                   gdi->width, gdi->height))
 		goto fail;
 
 	gdi_register_update_callbacks(instance->update);
