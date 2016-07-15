@@ -93,22 +93,20 @@
  *
  */
 
-const BYTE rop_P = 0xF0; /* 11110000 */
-const BYTE rop_S = 0xCC; /* 11001100 */
-const BYTE rop_D = 0xAA; /* 10101010 */
+static const BYTE rop_P = 0xF0; /* 11110000 */
+static const BYTE rop_S = 0xCC; /* 11001100 */
+static const BYTE rop_D = 0xAA; /* 10101010 */
 
-char* gdi_convert_postfix_to_infix(char* postfix)
+static char* gdi_convert_postfix_to_infix(const char* postfix)
 {
 	int i;
 	int length;
 	BOOL unary;
 	wStack* stack;
 	int al, bl, cl, dl;
-	char *a, *b, *c, *d;
-	al = bl = cl = dl =0;
-
+	char* a, *b, *c, *d;
+	al = bl = cl = dl = 0;
 	stack = Stack_New(FALSE);
-
 	length = strlen(postfix);
 
 	for (i = 0; i < length; i++)
@@ -116,21 +114,16 @@ char* gdi_convert_postfix_to_infix(char* postfix)
 		if ((postfix[i] == 'P') || (postfix[i] == 'D') || (postfix[i] == 'S'))
 		{
 			/* token is an operand, push on the stack */
-
 			a = malloc(2);
 			a[0] = postfix[i];
 			a[1] = '\0';
-
 			//printf("Operand: %s\n", a);
-
 			Stack_Push(stack, a);
 		}
 		else
 		{
 			/* token is an operator */
-
 			unary = FALSE;
-
 			c = malloc(2);
 			c[0] = postfix[i];
 			c[1] = '\0';
@@ -158,7 +151,6 @@ char* gdi_convert_postfix_to_infix(char* postfix)
 			}
 
 			//printf("Operator: %s\n", c);
-
 			a = (char*) Stack_Pop(stack);
 
 			if (unary)
@@ -172,14 +164,10 @@ char* gdi_convert_postfix_to_infix(char* postfix)
 				bl = strlen(b);
 
 			cl = 1;
-
 			dl = al + bl + cl + 3;
-
 			d = malloc(dl + 1);
 			sprintf_s(d, dl, "(%s%s%s)", b ? b : "", c, a);
-
 			Stack_Push(stack, d);
-
 			free(a);
 			free(b);
 			free(c);
@@ -188,11 +176,10 @@ char* gdi_convert_postfix_to_infix(char* postfix)
 
 	d = (char*) Stack_Pop(stack);
 	Stack_Free(stack);
-
 	return d;
 }
 
-static char* test_ROP3[] =
+static const char* test_ROP3[] =
 {
 	"DSPDxax",
 	"PSDPxax",
@@ -224,13 +211,15 @@ static char* test_ROP3[] =
 int TestGdiRop3(int argc, char* argv[])
 {
 	int index;
-	char* infix;
-	char* postfix;
 
 	for (index = 0; index < sizeof(test_ROP3) / sizeof(test_ROP3[0]); index++)
 	{
-		postfix = test_ROP3[index];
-		infix = gdi_convert_postfix_to_infix(postfix);
+		const char* postfix = test_ROP3[index];
+		char* infix = gdi_convert_postfix_to_infix(postfix);
+
+		if (!infix)
+			return -1;
+
 		printf("%s\t\t%s\n", postfix, infix);
 		free(infix);
 	}

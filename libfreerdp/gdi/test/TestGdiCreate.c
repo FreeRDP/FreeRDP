@@ -5,7 +5,6 @@
 #include <freerdp/gdi/pen.h>
 #include <freerdp/gdi/region.h>
 #include <freerdp/gdi/bitmap.h>
-#include <freerdp/gdi/drawing.h>
 
 #include <winpr/crt.h>
 
@@ -22,7 +21,7 @@ static int test_gdi_GetDC(void)
 		return -1;
 	}
 
-    if (hdc->format != PIXEL_FORMAT_XRGB32)
+	if (hdc->format != PIXEL_FORMAT_XRGB32)
 		return -1;
 
 	if (hdc->drawMode != GDI_R2_BLACK)
@@ -67,9 +66,9 @@ static int test_gdi_CreateBitmap(void)
 	UINT32 height;
 	BYTE* data;
 	HGDI_BITMAP hBitmap;
-
 	width = 32;
 	height = 16;
+
 	if (!(data = (BYTE*) _aligned_malloc(width * height * 4, 16)))
 	{
 		printf("failed to allocate aligned bitmap data memory\n");
@@ -98,7 +97,6 @@ static int test_gdi_CreateBitmap(void)
 		return -1;
 
 	gdi_DeleteObject((HGDIOBJECT) hBitmap);
-
 	return 0;
 }
 
@@ -116,7 +114,6 @@ static int test_gdi_CreateCompatibleBitmap(void)
 	}
 
 	hdc->format = PIXEL_FORMAT_ARGB32;
-
 	width = 32;
 	height = 16;
 	hBitmap = gdi_CreateCompatibleBitmap(hdc, width, height);
@@ -137,13 +134,14 @@ static int test_gdi_CreateCompatibleBitmap(void)
 		return -1;
 
 	gdi_DeleteObject((HGDIOBJECT) hBitmap);
-
 	return 0;
 }
 
 static int test_gdi_CreatePen(void)
 {
-	HGDI_PEN hPen = gdi_CreatePen(GDI_PS_SOLID, 8, 0xAABBCCDD);
+	const UINT32 format = PIXEL_FORMAT_RGBA32;
+	HGDI_PEN hPen = gdi_CreatePen(GDI_PS_SOLID, 8, 0xAABBCCDD,
+	                              format, NULL);
 
 	if (!hPen)
 	{
@@ -161,7 +159,6 @@ static int test_gdi_CreatePen(void)
 		return -1;
 
 	gdi_DeleteObject((HGDIOBJECT) hPen);
-
 	return 0;
 }
 
@@ -179,7 +176,6 @@ static int test_gdi_CreateSolidBrush(void)
 		return -1;
 
 	gdi_DeleteObject((HGDIOBJECT) hBrush);
-
 	return 0;
 }
 
@@ -187,7 +183,6 @@ static int test_gdi_CreatePatternBrush(void)
 {
 	HGDI_BRUSH hBrush;
 	HGDI_BITMAP hBitmap;
-
 	hBitmap = gdi_CreateBitmap(64, 64, 32, NULL);
 	hBrush = gdi_CreatePatternBrush(hBitmap);
 
@@ -201,7 +196,6 @@ static int test_gdi_CreatePatternBrush(void)
 		return -1;
 
 	gdi_DeleteObject((HGDIOBJECT) hBitmap);
-
 	return 0;
 }
 
@@ -211,7 +205,6 @@ static int test_gdi_CreateRectRgn(void)
 	int y1 = 64;
 	int x2 = 128;
 	int y2 = 256;
-
 	HGDI_RGN hRegion = gdi_CreateRectRgn(x1, y1, x2, y2);
 
 	if (hRegion->objectType != GDIOBJECT_REGION)
@@ -233,7 +226,6 @@ static int test_gdi_CreateRectRgn(void)
 		return -1;
 
 	gdi_DeleteObject((HGDIOBJECT) hRegion);
-
 	return 0;
 }
 
@@ -267,7 +259,6 @@ static int test_gdi_CreateRect(void)
 		return -1;
 
 	gdi_DeleteObject((HGDIOBJECT) hRect);
-
 	return 0;
 }
 
@@ -285,10 +276,8 @@ static int test_gdi_GetPixel(void)
 	}
 
 	hdc->format = PIXEL_FORMAT_ARGB32;
-
 	hBitmap = gdi_CreateCompatibleBitmap(hdc, width, height);
 	gdi_SelectObject(hdc, (HGDIOBJECT) hBitmap);
-
 	hBitmap->data[(64 * width * 4) + 32 * 4 + 0] = 0xDD;
 	hBitmap->data[(64 * width * 4) + 32 * 4 + 1] = 0xCC;
 	hBitmap->data[(64 * width * 4) + 32 * 4 + 2] = 0xBB;
@@ -298,7 +287,6 @@ static int test_gdi_GetPixel(void)
 		return -1;
 
 	gdi_DeleteObject((HGDIOBJECT) hBitmap);
-
 	return 0;
 }
 
@@ -316,10 +304,8 @@ static int test_gdi_SetPixel(void)
 	}
 
 	hdc->format = PIXEL_FORMAT_ARGB32;
-
 	hBitmap = gdi_CreateCompatibleBitmap(hdc, width, height);
 	gdi_SelectObject(hdc, (HGDIOBJECT) hBitmap);
-
 	gdi_SetPixel(hdc, 32, 64, 0xAABBCCDD);
 
 	if (gdi_GetPixel(hdc, 32, 64) != 0xAABBCCDD)
@@ -331,7 +317,6 @@ static int test_gdi_SetPixel(void)
 		return -1;
 
 	gdi_DeleteObject((HGDIOBJECT) hBitmap);
-
 	return 0;
 }
 
@@ -358,6 +343,8 @@ static int test_gdi_MoveToEx(void)
 	HGDI_DC hdc;
 	HGDI_PEN hPen;
 	HGDI_POINT prevPoint;
+	const UINT32 format = PIXEL_FORMAT_RGBA32;
+	rdpPalette* palette = NULL;
 
 	if (!(hdc = gdi_GetDC()))
 	{
@@ -365,7 +352,7 @@ static int test_gdi_MoveToEx(void)
 		return -1;
 	}
 
-	if (!(hPen = gdi_CreatePen(GDI_PS_SOLID, 8, 0xAABBCCDD)))
+	if (!(hPen = gdi_CreatePen(GDI_PS_SOLID, 8, 0xAABBCCDD, format, palette)))
 	{
 		printf("gdi_CreatePen failed\n");
 		return -1;
@@ -382,7 +369,6 @@ static int test_gdi_MoveToEx(void)
 
 	prevPoint = (HGDI_POINT) malloc(sizeof(GDI_POINT));
 	ZeroMemory(prevPoint, sizeof(GDI_POINT));
-
 	gdi_MoveToEx(hdc, 64, 128, prevPoint);
 
 	if (prevPoint->x != 128)
