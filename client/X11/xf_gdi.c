@@ -256,7 +256,7 @@ UINT32 xf_convert_rdp_order_color(xfContext* xfc, UINT32 color)
 
 		case 8:
 			color = (color >> 16) & (UINT32) 0xFF;
-			UINT32 dstColor = xfc->palette.palette[color];
+			UINT32 dstColor = xfc->context.gdi->palette.palette[color];
 			SplitColor(dstColor, xfc->format, &r, &g, &b,
 			           NULL, NULL);
 			break;
@@ -285,7 +285,7 @@ Pixmap xf_brush_new(xfContext* xfc, int width, int height, int bpp, BYTE* data)
 		cdata = (BYTE*) _aligned_malloc(width * height * 4, 16);
 		freerdp_image_copy(cdata, xfc->format, -1, 0, 0,
 		                   width, height, data, brushFormat, -1, 0, 0,
-		                   &xfc->palette);
+		                   &xfc->context.gdi->palette);
 		image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
 		                     ZPixmap, 0, (char*) cdata, width, height, xfc->scanline_pad, 0);
 		gc = XCreateGC(xfc->display, xfc->drawable, 0, NULL);
@@ -366,7 +366,7 @@ BOOL xf_gdi_bitmap_update(rdpContext* context,
 				                                xfc->format, -1,
 				                                0, 0,
 				                                nWidth, nHeight,
-				                                &xfc->palette);
+				                                &xfc->context.gdi->palette);
 			}
 			else
 			{
@@ -387,7 +387,7 @@ BOOL xf_gdi_bitmap_update(rdpContext* context,
 			pDstData = xfc->bitmap_buffer;
 			status = freerdp_image_copy(pDstData, xfc->format, -1, 0, 0,
 			                            nWidth, nHeight, pSrcData, SrcFormat,
-			                            -1, 0, 0, &xfc->palette);
+			                            -1, 0, 0, &xfc->context.gdi->palette);
 			pSrcData = xfc->bitmap_buffer;
 		}
 
@@ -424,13 +424,13 @@ static BOOL xf_gdi_palette_update(rdpContext* context,
 	const PALETTE_ENTRY* pe;
 	xfContext* xfc = (xfContext*) context;
 	xf_lock_x11(xfc, FALSE);
-	xfc->palette.format = xfc->format;
+	xfc->context.gdi->palette.format = xfc->format;
 
 	for (index = 0; index < palette->number; index++)
 	{
 		pe = &(palette->entries[index]);
-		xfc->palette.palette[index] = GetColor(xfc->format,
-		                                       pe->red, pe->green, pe->blue, 0xFF);
+		xfc->context.gdi->palette.palette[index] = GetColor(xfc->format,
+		        pe->red, pe->green, pe->blue, 0xFF);
 	}
 
 	xf_unlock_x11(xfc, FALSE);
@@ -1178,7 +1178,7 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 			pDstData = xfc->bitmap_buffer;
 			freerdp_image_copy(pDstData, xfc->format, -1, 0, 0,
 			                   cmd->width, cmd->height, pSrcData,
-			                   PIXEL_FORMAT_BGRX32_VF, -1, 0, 0, &xfc->palette);
+			                   PIXEL_FORMAT_BGRX32_VF, -1, 0, 0, &xfc->context.gdi->palette);
 			image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
 			                     (char*) pDstData, cmd->width, cmd->height, xfc->scanline_pad, 0);
 			XPutImage(xfc->display, xfc->primary, xfc->gc, image, 0, 0,
