@@ -73,7 +73,7 @@ static BOOL xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 			freerdp_image_copy(data, xfc->format, -1, 0, 0,
 			                   bitmap->width, bitmap->height,
 			                   bitmap->data, SrcFormat,
-			                   -1, 0, 0, &xfc->palette);
+			                   -1, 0, 0, &context->gdi->palette);
 			_aligned_free(bitmap->data);
 			bitmap->data = data;
 			bitmap->format = xfc->format;
@@ -155,7 +155,7 @@ static BOOL xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 			                                pSrcData, SrcSize, bpp,
 			                                pDstData, xfc->format,
 			                                -1, 0, 0, width, height,
-			                                &xfc->palette);
+			                                &context->gdi->palette);
 		}
 		else
 		{
@@ -174,7 +174,7 @@ static BOOL xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 		SrcFormat = gdi_get_pixel_format(bpp, TRUE);
 		status = freerdp_image_copy(pDstData, xfc->format, -1, 0, 0,
 		                            width, height, pSrcData,
-		                            SrcFormat, -1, 0, 0, &xfc->palette);
+		                            SrcFormat, -1, 0, 0, &context->gdi->palette);
 	}
 
 	bitmap->compressed = FALSE;
@@ -224,7 +224,7 @@ static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	        pointer->width * 4, 0, 0, pointer->width, pointer->height,
 	        pointer->xorMaskData, pointer->lengthXorMask,
 	        pointer->andMaskData, pointer->lengthAndMask,
-	        pointer->xorBpp, &xfc->palette) < 0)
+	        pointer->xorBpp, &context->gdi->palette) < 0)
 	{
 		free(ci.pixels);
 		xf_unlock_x11(xfc, FALSE);

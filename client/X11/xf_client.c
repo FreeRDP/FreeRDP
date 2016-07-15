@@ -1214,16 +1214,8 @@ static BOOL xf_post_connect(freerdp* instance)
 	if (!gdi_init(instance, xfc->format))
 		return FALSE;
 
-	if (settings->SoftwareGdi)
-	{
-		rdpGdi* gdi = context->gdi;
-		xfc->palette = gdi->palette;
-	}
-	else
-	{
-		xfc->palette = context->gdi->palette;
+	if (!settings->SoftwareGdi)
 		xf_gdi_register_update_callbacks(update);
-	}
 
 	xfc->srcBpp = settings->ColorDepth;
 	xfc->sessionWidth = settings->DesktopWidth;
