@@ -39,6 +39,6 @@ set(${MODULE_PREFIX}_SRCS
 freerdp_module_add(${${MODULE_PREFIX}_SRCS})
 
 if(BUILD_TESTING)
-#	add_subdirectory(test)
+	add_subdirectory(test)
 endif()
 

@@ -43,10 +43,6 @@ struct rdp_cache
 	rdpOffscreenCache* offscreen; /* 4 */
 	rdpPaletteCache* palette; /* 5 */
 	rdpNineGridCache* nine_grid; /* 6 */
-
-	/* internal */
-
-	rdpSettings* settings;
 };
 
 #ifdef __cplusplus
