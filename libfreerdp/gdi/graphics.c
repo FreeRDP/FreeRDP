@@ -171,7 +171,7 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	}
 	else
 	{
-		SrcFormat = gdi_get_pixel_format(bpp, FALSE);
+		SrcFormat = gdi_get_pixel_format(bpp, TRUE);
 		status = freerdp_image_copy(bitmap->data, bitmap->format, 0, 0, 0,
 		                            width, height, pSrcData, SrcFormat,
 		                            0, 0, 0, &gdi->palette);
