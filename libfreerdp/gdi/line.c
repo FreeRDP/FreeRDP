@@ -49,62 +49,76 @@ static BOOL gdi_rop_color(UINT32 rop, BYTE* pixelPtr, UINT32 pen, UINT32 format)
 {
 	UINT32 pixel = ReadColor(pixelPtr, format);
 
-	switch(rop)
+	switch (rop)
 	{
-	case 1: /* LineTo_BLACK */
-		pixel = GetColor(format, 0, 0, 0, 0xFF);
-		break;
-	case 2: /* LineTo_NOTMERGEPEN */
-		pixel = ~(pixel | pen);
-		break;
-	case 3: /* LineTo_MASKNOTPEN */
-		pixel &= ~pen;
-		break;
-	case 4: /* LineTo_NOTCOPYPEN */
-		pixel = ~pen;
-		break;
-	case 5: /* LineTo_MASKPENNOT */
-		pixel = pen & ~pixel;
-		break;
-	case 6: /* LineTo_NOT */
-		pixel = ~pixel;
-		break;
-	case 7: /* LineTo_XORPEN */
-		pixel = pixel ^ pen;
-		break;
-	case 8: /* LineTo_NOTMASKPEN */
-		pixel = ~(pixel & pen);
-		break;
-	case 9: /* LineTo_MASKPEN */
-		pixel &= pen;
-		break;
-	case 10: /* LineTo_NOTXORPEN */
-		pixel = ~(pixel ^ pen);
-		break;
-	case 11: /* LineTo_NOP */
-		break;
-	case 12: /* LineTo_MERGENOTPEN */
-		pixel |= ~pen;
-		break;
-	case 13: /* LineTo_COPYPEN */
-		pixel = pen;
-		break;
-	case 14: /* LineTo_MERGEPENNOT */
-		pixel = pixel | ~pen;
-		break;
-	case 15: /* LineTo_MERGEPEN */
-		pixel = pixel | pen;
-		break;
-	case 16: /* LineTo_WHITE */
-		pixel = GetColor(format, 0, 0, 0, 0);
-		break;
+		case GDI_R2_BLACK: /* LineTo_BLACK */
+			pixel = GetColor(format, 0, 0, 0, 0xFF);
+			break;
 
-	default:
-		return FALSE;
+		case GDI_R2_NOTMERGEPEN: /* LineTo_NOTMERGEPEN */
+			pixel = ~(pixel | pen);
+			break;
+
+		case GDI_R2_MASKNOTPEN: /* LineTo_MASKNOTPEN */
+			pixel &= ~pen;
+			break;
+
+		case GDI_R2_NOTCOPYPEN: /* LineTo_NOTCOPYPEN */
+			pixel = ~pen;
+			break;
+
+		case GDI_R2_MASKPENNOT: /* LineTo_MASKPENNOT */
+			pixel = pen & ~pixel;
+			break;
+
+		case GDI_R2_NOT: /* LineTo_NOT */
+			pixel = ~pixel;
+			break;
+
+		case GDI_R2_XORPEN: /* LineTo_XORPEN */
+			pixel = pixel ^ pen;
+			break;
+
+		case GDI_R2_NOTMASKPEN: /* LineTo_NOTMASKPEN */
+			pixel = ~(pixel & pen);
+			break;
+
+		case GDI_R2_MASKPEN: /* LineTo_MASKPEN */
+			pixel &= pen;
+			break;
+
+		case GDI_R2_NOTXORPEN: /* LineTo_NOTXORPEN */
+			pixel = ~(pixel ^ pen);
+			break;
+
+		case GDI_R2_NOP: /* LineTo_NOP */
+			break;
+
+		case GDI_R2_MERGENOTPEN: /* LineTo_MERGENOTPEN */
+			pixel |= ~pen;
+			break;
+
+		case GDI_R2_COPYPEN: /* LineTo_COPYPEN */
+			pixel = pen;
+			break;
+
+		case GDI_R2_MERGEPENNOT: /* LineTo_MERGEPENNOT */
+			pixel = pixel | ~pen;
+			break;
+
+		case GDI_R2_MERGEPEN: /* LineTo_MERGEPEN */
+			pixel = pixel | pen;
+			break;
+
+		case GDI_R2_WHITE: /* LineTo_WHITE */
+			pixel = GetColor(format, 0, 0, 0, 0);
+			break;
+
+		default:
+			return FALSE;
 	}
 
 	WriteColor(pixelPtr, format, pixel);
-
 	return TRUE;
 }
 
@@ -121,23 +135,17 @@ BOOL gdi_LineTo(HGDI_DC hdc, UINT32 nXEnd, UINT32 nYEnd)
 	HGDI_BITMAP bmp;
 	UINT32 pen;
 	UINT32 rop2 = gdi_GetROP2(hdc);
-
 	x1 = hdc->pen->posX;
 	y1 = hdc->pen->posY;
 	x2 = nXEnd;
 	y2 = nYEnd;
-
 	dx = (x1 > x2) ? x1 - x2 : x2 - x1;
 	dy = (y1 > y2) ? y1 - y2 : y2 - y1;
-
 	sx = (x1 < x2) ? 1 : -1;
 	sy = (y1 < y2) ? 1 : -1;
-
 	e = dx - dy;
-
 	x = x1;
 	y = y1;
-
 	bmp = (HGDI_BITMAP) hdc->selectedObject;
 
 	if (hdc->clip->null)
@@ -205,7 +213,7 @@ BOOL gdi_LineTo(HGDI_DC hdc, UINT32 nXEnd, UINT32 nYEnd)
  * @param cCount number of points
  * @return nonzero on success, 0 otherwise
  */
-BOOL gdi_PolylineTo(HGDI_DC hdc, GDI_POINT *lppt, DWORD cCount)
+BOOL gdi_PolylineTo(HGDI_DC hdc, GDI_POINT* lppt, DWORD cCount)
 {
 	DWORD i;
 
@@ -213,6 +221,7 @@ BOOL gdi_PolylineTo(HGDI_DC hdc, GDI_POINT *lppt, DWORD cCount)
 	{
 		if (!gdi_LineTo(hdc, lppt[i].x, lppt[i].y))
 			return FALSE;
+
 		if (!gdi_MoveToEx(hdc, lppt[i].x, lppt[i].y, NULL))
 			return FALSE;
 	}
@@ -227,7 +236,7 @@ BOOL gdi_PolylineTo(HGDI_DC hdc, GDI_POINT *lppt, DWORD cCount)
  * @param cPoints number of points
  * @return nonzero on success, 0 otherwise
  */
-BOOL gdi_Polyline(HGDI_DC hdc, GDI_POINT *lppt, UINT32 cPoints)
+BOOL gdi_Polyline(HGDI_DC hdc, GDI_POINT* lppt, UINT32 cPoints)
 {
 	if (cPoints > 0)
 	{
@@ -241,6 +250,7 @@ BOOL gdi_Polyline(HGDI_DC hdc, GDI_POINT *lppt, UINT32 cPoints)
 		{
 			if (!gdi_LineTo(hdc, lppt[i].x, lppt[i].y))
 				return FALSE;
+
 			if (!gdi_MoveToEx(hdc, lppt[i].x, lppt[i].y, NULL))
 				return FALSE;
 		}
@@ -260,7 +270,8 @@ BOOL gdi_Polyline(HGDI_DC hdc, GDI_POINT *lppt, UINT32 cPoints)
  * @param cCount count of entries in lpdwPolyPoints
  * @return nonzero on success, 0 otherwise
  */
-BOOL gdi_PolyPolyline(HGDI_DC hdc, GDI_POINT *lppt, UINT32 *lpdwPolyPoints, DWORD cCount)
+BOOL gdi_PolyPolyline(HGDI_DC hdc, GDI_POINT* lppt, UINT32* lpdwPolyPoints,
+                      DWORD cCount)
 {
 	UINT32 cPoints;
 	DWORD i, j = 0;
@@ -268,8 +279,10 @@ BOOL gdi_PolyPolyline(HGDI_DC hdc, GDI_POINT *lppt, UINT32 *lpdwPolyPoints, DWOR
 	for (i = 0; i < cCount; i++)
 	{
 		cPoints = lpdwPolyPoints[i];
+
 		if (!gdi_Polyline(hdc, &lppt[j], cPoints))
 			return FALSE;
+
 		j += cPoints;
 	}
 
@@ -294,6 +307,5 @@ BOOL gdi_MoveToEx(HGDI_DC hdc, UINT32 X, UINT32 Y, HGDI_POINT lpPoint)
 
 	hdc->pen->posX = X;
 	hdc->pen->posY = Y;
-
 	return TRUE;
 }
