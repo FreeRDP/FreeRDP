@@ -31,6 +31,7 @@ HGDI_BITMAP test_convert_to_bitmap(const BYTE* src, UINT32 SrcFormat,
                                    const gdiPalette* hPalette);
 
 BOOL test_assert_bitmaps_equal(HGDI_BITMAP hBmpActual,
-                               HGDI_BITMAP hBmpExpected, const char* name);
+                               HGDI_BITMAP hBmpExpected, const char* name,
+                               const gdiPalette* palette);
 
 #endif /* __GDI_CORE_H */

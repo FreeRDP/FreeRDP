@@ -6,7 +6,6 @@
 #include <freerdp/gdi/shape.h>
 #include <freerdp/gdi/region.h>
 #include <freerdp/gdi/bitmap.h>
-#include <freerdp/gdi/drawing.h>
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
@@ -14,9 +13,8 @@
 #include "line.h"
 #include "brush.h"
 #include "clipping.h"
-#include "32bpp.h"
 
-int test_gdi_PtInRect(void)
+static int test_gdi_PtInRect(void)
 {
 	HGDI_RECT hRect;
 	int left = 20;
@@ -62,6 +60,7 @@ int test_gdi_PtInRect(void)
 
 int test_gdi_FillRect(void)
 {
+	int rc = -1;
 	HGDI_DC hdc;
 	HGDI_RECT hRect;
 	HGDI_BRUSH hBrush;
@@ -82,7 +81,7 @@ int test_gdi_FillRect(void)
 	if (!(hdc = gdi_GetDC()))
 	{
 		printf("failed to get gdi device context\n");
-		return -1;
+		goto fail;
 	}
 
 	hdc->format = PIXEL_FORMAT_XRGB32;
@@ -90,7 +89,7 @@ int test_gdi_FillRect(void)
 	if (!(hRect = gdi_CreateRect(left, top, right, bottom)))
 	{
 		printf("gdi_CreateRect failed\n");
-		return -1;
+		goto fail;
 	}
 
 	hBitmap = gdi_CreateCompatibleBitmap(hdc, width, height);
@@ -136,14 +135,16 @@ int test_gdi_FillRect(void)
 	}
 
 	if (goodPixels != width * height)
-		return -1;
+		goto fail;
 
 	if (badPixels != 0)
-		return -1;
+		goto fail;
 
+	rc = 0;
+fail:
 	gdi_DeleteObject((HGDIOBJECT) hBrush);
 	gdi_DeleteObject((HGDIOBJECT) hBitmap);
-	return 0;
+	return rc;
 }
 
 int TestGdiRect(int argc, char* argv[])

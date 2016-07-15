@@ -90,7 +90,8 @@ static void test_dump_bitmap(HGDI_BITMAP hBmp, const char* name)
 	test_dump_data(hBmp->data, hBmp->height * stride, stride, name);
 }
 
-static BOOL CompareBitmaps(HGDI_BITMAP hBmp1, HGDI_BITMAP hBmp2)
+static BOOL CompareBitmaps(HGDI_BITMAP hBmp1, HGDI_BITMAP hBmp2,
+                           const gdiPalette* palette)
 {
 	UINT32 x, y;
 	const BYTE* p1 = hBmp1->data;
@@ -98,9 +99,6 @@ static BOOL CompareBitmaps(HGDI_BITMAP hBmp1, HGDI_BITMAP hBmp2)
 	UINT32 colorA, colorB;
 	UINT32 minw = (hBmp1->width < hBmp2->width) ? hBmp1->width : hBmp2->width;
 	UINT32 minh = (hBmp1->height < hBmp2->height) ? hBmp1->height : hBmp2->height;
-
-	if (hBmp1->format != hBmp2->format)
-		return FALSE;
 
 	for (y = 0; y < minh; y++)
 	{
@@ -110,6 +108,9 @@ static BOOL CompareBitmaps(HGDI_BITMAP hBmp1, HGDI_BITMAP hBmp2)
 			colorB = ReadColor(p2, hBmp2->format);
 			p1 += GetBytesPerPixel(hBmp1->format);
 			p2 += GetBytesPerPixel(hBmp2->format);
+
+			if (hBmp1->format != hBmp2->format)
+				colorB = ConvertColor(colorB, hBmp2->format, hBmp1->format, palette);
 
 			if (colorA != colorB)
 				return FALSE;
@@ -121,15 +122,18 @@ static BOOL CompareBitmaps(HGDI_BITMAP hBmp1, HGDI_BITMAP hBmp2)
 
 BOOL test_assert_bitmaps_equal(HGDI_BITMAP hBmpActual,
                                HGDI_BITMAP hBmpExpected,
-                               const char* name)
+                               const char* name,
+                               const gdiPalette* palette)
 {
-	BOOL bitmapsEqual = CompareBitmaps(hBmpActual, hBmpExpected);
+	BOOL bitmapsEqual = CompareBitmaps(hBmpActual, hBmpExpected, palette);
 
 	if (!bitmapsEqual)
 	{
 		printf("\n%s\n", name);
 		test_dump_bitmap(hBmpActual, "Actual");
 		test_dump_bitmap(hBmpExpected, "Expected");
+		fflush(stdout);
+		fflush(stderr);
 	}
 
 	return bitmapsEqual;

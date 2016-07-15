@@ -246,10 +246,9 @@ static const BYTE* line_to_case[] =
 	line_to_case_6,
 	line_to_case_7,
 	line_to_case_8,
-	line_to_case_1,
-	line_to_case_1,
-	line_to_case_1,
-	line_to_case_1,
+	line_to_case_9,
+	line_to_case_10,
+	line_to_case_11
 };
 
 static const BYTE line_to_R2_BLACK[256] =
@@ -623,20 +622,19 @@ struct ropMap
 };
 
 static BOOL test_line(HGDI_DC hdc, const gdiPalette* hPalette, UINT32 mX,
-                      UINT32 mY,
-                      UINT32 lX, UINT32 lY, HGDI_BITMAP hBmp, HGDI_BITMAP hOrgBmp)
+                      UINT32 mY, UINT32 lX, UINT32 lY, HGDI_BITMAP hBmp,
+                      HGDI_BITMAP hOrgBmp, UINT32 cX, UINT32 cY, UINT32 cW, UINT32 cH)
 {
-	/* Test Case 10: (12,12) -> (4,4) */
 	if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS, hPalette))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
 		return FALSE;
-	}
+
+	if ((cX > 0) || (cY > 0) || (cW > 0) || (cH > 0))
+		gdi_SetClipRgn(hdc, cX, cY, cW, cH);
 
 	gdi_MoveToEx(hdc, mX, mY, hPalette);
 	gdi_LineTo(hdc, lX, lY);
 
-	if (!test_assert_bitmaps_equal(hBmp, hOrgBmp, "Case 10") < 0)
+	if (!test_assert_bitmaps_equal(hBmp, hOrgBmp, "Case 10", hPalette))
 		return FALSE;
 
 	return TRUE;
@@ -645,7 +643,8 @@ static BOOL test_line(HGDI_DC hdc, const gdiPalette* hPalette, UINT32 mX,
 int TestGdiLine(int argc, char* argv[])
 {
 	int rc = -1;
-	UINT32 x, i;
+	UINT32 x, i, j;
+	gdiPalette g;
 	const UINT32 RawFormat = PIXEL_FORMAT_RGB8;
 	const UINT32 colorFormats[] =
 	{
@@ -694,13 +693,14 @@ int TestGdiLine(int argc, char* argv[])
 		};
 		const UINT32 map_size = sizeof(rop_map) / sizeof(rop_map[0]);
 		HGDI_BITMAP hBmp_LineTo[LINTETO_NUMBER] = {NULL};
-		gdiPalette p;
-		gdiPalette* hPalette = &p;
+		gdiPalette* hPalette = &g;
 		const UINT32 format = colorFormats[i];
-		rc = -1;
-		p.format = format;
+		g.format = format;
 
-		// TODO: Initialize palette!!!
+		for (i = 0; i < 256; i++)
+			g.palette[i] = GetColor(format, i, i, i, 0xFF);
+
+		rc = -1;
 
 		if (!(hdc = gdi_GetDC()))
 		{
@@ -739,56 +739,39 @@ int TestGdiLine(int argc, char* argv[])
 				goto fail;
 		}
 
-		if (!test_line(hdc, hPalette, 0, 0, 15, 15, hBmp, hBmp_LineTo[0]))
+		if (!test_line(hdc, hPalette, 0, 0, 15, 15, hBmp, hBmp_LineTo[0], 0, 0, 16, 16))
 			goto fail;
 
-		if (!test_line(hdc, hPalette, 15, 15, 0, 0, hBmp, hBmp_LineTo[1]))
+		if (!test_line(hdc, hPalette, 15, 15, 0, 0, hBmp, hBmp_LineTo[1], 0, 0, 16, 16))
 			goto fail;
 
-		if (!test_line(hdc, hPalette, 15, 0, 0, 15, hBmp, hBmp_LineTo[2]))
+		if (!test_line(hdc, hPalette, 15, 0, 0, 15, hBmp, hBmp_LineTo[2], 0, 0, 16, 16))
 			goto fail;
 
-		if (!test_line(hdc, hPalette, 0, 15, 15, 0, hBmp, hBmp_LineTo[3]))
+		if (!test_line(hdc, hPalette, 0, 15, 15, 0, hBmp, hBmp_LineTo[3], 0, 0, 16, 16))
 			goto fail;
 
-		if (!test_line(hdc, hPalette, 0, 8, 15, 8, hBmp, hBmp_LineTo[4]))
+		if (!test_line(hdc, hPalette, 0, 8, 15, 8, hBmp, hBmp_LineTo[4], 0, 0, 16, 16))
 			goto fail;
 
-		if (!test_line(hdc, hPalette, 15, 8, 0, 8, hBmp, hBmp_LineTo[5]))
+		if (!test_line(hdc, hPalette, 15, 8, 0, 8, hBmp, hBmp_LineTo[5], 0, 0, 16, 16))
 			goto fail;
 
-		if (!test_line(hdc, hPalette, 8, 0, 8, 15, hBmp, hBmp_LineTo[6]))
+		if (!test_line(hdc, hPalette, 8, 0, 8, 15, hBmp, hBmp_LineTo[6], 0, 0, 16, 16))
 			goto fail;
 
-		if (!test_line(hdc, hPalette, 8, 15, 8, 0, hBmp, hBmp_LineTo[7]))
+		if (!test_line(hdc, hPalette, 8, 15, 8, 0, hBmp, hBmp_LineTo[7], 0, 0, 16, 16))
 			goto fail;
 
-		if (!test_line(hdc, hPalette, 4, 4, 12, 12, hBmp, hBmp_LineTo[8]))
+		if (!test_line(hdc, hPalette, 4, 4, 12, 12, hBmp, hBmp_LineTo[8], 0, 0, 16, 16))
 			goto fail;
 
-		if (!test_line(hdc, hPalette, 0, 0, 16, 16, hBmp, hBmp_LineTo[9]))
+		if (!test_line(hdc, hPalette, 0, 0, 16, 16, hBmp, hBmp_LineTo[9], 5, 5, 8, 8))
 			goto fail;
 
-		/* Test Case 11: (0,0) -> (+10,+10) */
-		if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS, hPalette))
-		{
-			printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
+		if (!test_line(hdc, hPalette, 0, 0, 26, 26, hBmp, hBmp_LineTo[10], 0, 0, 16,
+		               16))
 			goto fail;
-		}
-
-		gdi_SetClipRgn(hdc, 0, 0, 16, 16);
-		gdi_MoveToEx(hdc, 0, 0, NULL);
-		gdi_LineTo(hdc, 16 + 10, 16 + 10);
-
-		if (!test_assert_bitmaps_equal(hBmp, hBmp_LineTo[10], "Case 11") < 0)
-			goto fail;
-
-		/* Test Case 12: (0,0) -> (16,16), R2_BLACK */
-		if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS, hPalette))
-		{
-			printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-			goto fail;
-		}
 
 		for (x = 0; x < map_size; x++)
 		{
@@ -804,7 +787,9 @@ int TestGdiLine(int argc, char* argv[])
 			gdi_SetROP2(hdc, rop_map[x].rop);
 			gdi_LineTo(hdc, 16, 16);
 
-			if (!test_assert_bitmaps_equal(hBmp, rop_map[x].bmp, "Case 12") < 0)
+			if (!test_assert_bitmaps_equal(hBmp, rop_map[x].bmp,
+			                               gdi_rop_to_string(rop_map[x].rop),
+			                               hPalette))
 				goto fail;
 		}
 
