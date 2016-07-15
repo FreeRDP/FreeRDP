@@ -585,9 +585,10 @@ static BOOL BitBlt_SPna(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 				UINT32 color;
 				UINT32 colorA = ReadColor(srcp, hdcSrc->format);
 				UINT32 colorB = ReadColor(patp, hdcDest->format);
-				colorA = ConvertColor(colorA, hdcSrc->format,
-				                      hdcDest->format, palette);
+				colorB = ConvertColor(colorB, hdcDest->format,
+				                      hdcSrc->format, palette);
 				color = colorA & ~colorB;
+				color = ConvertColor(color, hdcSrc->format, hdcDest->format, palette);
 				WriteColor(dstp, hdcDest->format, color);
 			}
 		}
@@ -739,6 +740,8 @@ BOOL gdi_BitBlt(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 
 	if (!gdi_InvalidateRegion(hdcDest, nXDest, nYDest, nWidth, nHeight))
 		return FALSE;
+
+	WLog_DBG(TAG, "%s [%s]", __FUNCTION__, gdi_rop_to_string(rop));
 
 	switch (rop)
 	{

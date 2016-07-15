@@ -124,24 +124,26 @@ static BOOL gdi_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 }
 
 static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
-                                  const BYTE* data, UINT32 width, UINT32 height,
+                                  const BYTE* pSrcData, UINT32 width, UINT32 height,
                                   UINT32 bpp, UINT32 length, BOOL compressed,
                                   UINT32 codecId)
 {
 	int status;
 	UINT16 size;
-	const BYTE* pSrcData;
-	BYTE* pDstData;
-	UINT32 SrcSize;
+	UINT32 SrcSize = length;
 	UINT32 SrcFormat;
 	UINT32 bytesPerPixel;
 	rdpGdi* gdi = context->gdi;
 	bytesPerPixel = (bpp + 7) / 8;
 	size = width * height * 4;
 	bitmap->data = (BYTE*) _aligned_malloc(size, 16);
-	pSrcData = data;
-	SrcSize = (UINT32) length;
-	pDstData = bitmap->data;
+
+	if (!bitmap->data)
+		return FALSE;
+
+	bitmap->compressed = FALSE;
+	bitmap->length = size;
+	bitmap->format = gdi->dstFormat;
 
 	if (compressed)
 	{
@@ -150,14 +152,14 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 			status = interleaved_decompress(context->codecs->interleaved,
 			                                pSrcData, SrcSize,
 			                                bpp,
-			                                pDstData, gdi->dstFormat,
+			                                bitmap->data, bitmap->format,
 			                                0, 0, 0, width, height,
 			                                &gdi->palette);
 		}
 		else
 		{
 			status = planar_decompress(context->codecs->planar, pSrcData, SrcSize,
-			                           pDstData, gdi->dstFormat, 0, 0, 0,
+			                           bitmap->data, bitmap->format, 0, 0, 0,
 			                           width, height, TRUE);
 		}
 
@@ -170,14 +172,11 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	else
 	{
 		SrcFormat = gdi_get_pixel_format(bpp, FALSE);
-		status = freerdp_image_copy(pDstData, gdi->dstFormat, 0, 0, 0,
+		status = freerdp_image_copy(bitmap->data, bitmap->format, 0, 0, 0,
 		                            width, height, pSrcData, SrcFormat,
 		                            0, 0, 0, &gdi->palette);
 	}
 
-	bitmap->compressed = FALSE;
-	bitmap->length = size;
-	bitmap->format = gdi->dstFormat;
 	return TRUE;
 }
 
@@ -264,8 +263,10 @@ static BOOL gdi_Glyph_BeginDraw(rdpContext* context, UINT32 x, UINT32 y,
 	BOOL ret = FALSE;
 	UINT32 SrcFormat = gdi_get_pixel_format(context->settings->ColorDepth, FALSE);
 	/* TODO: handle fOpRedundant! See xf_Glyph_BeginDraw() */
-	bgcolor = ConvertColor(bgcolor, SrcFormat, gdi->dstFormat, &gdi->palette);
-	fgcolor = ConvertColor(fgcolor, SrcFormat, gdi->dstFormat, &gdi->palette);
+	bgcolor = ConvertColor(bgcolor, SrcFormat, gdi->drawing->hdc->format,
+	                       &gdi->palette);
+	fgcolor = ConvertColor(fgcolor, SrcFormat, gdi->drawing->hdc->format,
+	                       &gdi->palette);
 
 	if (!(brush = gdi_CreateSolidBrush(fgcolor)))
 		goto out;
@@ -284,7 +285,7 @@ static BOOL gdi_Glyph_EndDraw(rdpContext* context, UINT32 x, UINT32 y,
 	rdpGdi* gdi = context->gdi;
 	UINT32 SrcFormat = gdi_get_pixel_format(context->settings->ColorDepth, FALSE);
 	bgcolor = ConvertColor(bgcolor, SrcFormat,
-	                       gdi->dstFormat, &gdi->palette);
+	                       gdi->drawing->hdc->format, &gdi->palette);
 	gdi->textColor = gdi_SetTextColor(gdi->drawing->hdc, bgcolor);
 	return TRUE;
 }
