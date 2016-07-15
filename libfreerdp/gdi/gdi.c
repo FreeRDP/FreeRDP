@@ -335,7 +335,7 @@ UINT32 gdi_get_pixel_format(UINT32 bitsPerPixel, BOOL vFlip)
 			break;
 
 		case 24:
-			format = vFlip ? PIXEL_FORMAT_RGB24_VF : PIXEL_FORMAT_RGB24;
+			format = vFlip ? PIXEL_FORMAT_BGR24_VF : PIXEL_FORMAT_BGR24;
 			break;
 
 		case 16:
