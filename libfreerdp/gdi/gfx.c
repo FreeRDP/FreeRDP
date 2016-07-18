@@ -116,10 +116,14 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 		width = extents->right - extents->left;
 		height = extents->bottom - extents->top;
 		update->BeginPaint(gdi->context);
-		freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, gdi->stride,
-		                   nXDst, nYDst, width, height,
-		                   surface->data, surface->format,
-		                   surface->scanline, nXSrc, nYSrc, NULL);
+
+		if (!freerdp_image_copy(gdi->primary_buffer, gdi->primary->hdc->format,
+		                        gdi->stride,
+		                        nXDst, nYDst, width, height,
+		                        surface->data, surface->format,
+		                        surface->scanline, nXSrc, nYSrc, NULL))
+			return CHANNEL_RC_NULL_DATA;
+
 		gdi_InvalidateRegion(gdi->primary->hdc, nXDst, nYDst, width, height);
 		update->EndPaint(gdi->context);
 	}
@@ -314,7 +318,6 @@ static UINT gdi_SurfaceCommand_ClearCodec(rdpGdi* gdi,
 static UINT gdi_SurfaceCommand_Planar(rdpGdi* gdi, RdpgfxClientContext* context,
                                       const RDPGFX_SURFACE_COMMAND* cmd)
 {
-	INT32 rc;
 	UINT status = CHANNEL_RC_OK;
 	BYTE* DstData = NULL;
 	gdiGfxSurface* surface;
@@ -325,12 +328,11 @@ static UINT gdi_SurfaceCommand_Planar(rdpGdi* gdi, RdpgfxClientContext* context,
 		return ERROR_INTERNAL_ERROR;
 
 	DstData = surface->data;
-	rc = planar_decompress(surface->codecs->planar, cmd->data, cmd->length,
+
+	if (!planar_decompress(surface->codecs->planar, cmd->data, cmd->length,
 	                       DstData, surface->format,
 	                       surface->scanline, cmd->left, cmd->top,
-	                       cmd->width, cmd->height, FALSE);
-
-	if (rc < 0)
+	                       cmd->width, cmd->height, FALSE))
 		return ERROR_INTERNAL_ERROR;
 
 	invalidRect.left = cmd->left;
