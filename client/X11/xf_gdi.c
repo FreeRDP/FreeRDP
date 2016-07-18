@@ -38,7 +38,7 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
 
-static UINT8 GDI_BS_HATCHED_PATTERNS[] =
+static const UINT8 GDI_BS_HATCHED_PATTERNS[] =
 {
 	0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, /* HS_HORIZONTAL */
 	0xF7, 0xF7, 0xF7, 0xF7, 0xF7, 0xF7, 0xF7, 0xF7, /* HS_VERTICAL */
@@ -69,7 +69,7 @@ static const BYTE xf_rop2_table[] =
 	GXset           /* 1 */
 };
 
-BOOL xf_set_rop2(xfContext* xfc, int rop2)
+static BOOL xf_set_rop2(xfContext* xfc, int rop2)
 {
 	if ((rop2 < 0x01) || (rop2 > 0x10))
 	{
@@ -81,7 +81,7 @@ BOOL xf_set_rop2(xfContext* xfc, int rop2)
 	return TRUE;
 }
 
-BOOL xf_set_rop3(xfContext* xfc, int rop3)
+static BOOL xf_set_rop3(xfContext* xfc, int rop3)
 {
 	int function = -1;
 
@@ -218,7 +218,8 @@ BOOL xf_set_rop3(xfContext* xfc, int rop3)
 	return TRUE;
 }
 
-Pixmap xf_brush_new(xfContext* xfc, int width, int height, int bpp, BYTE* data)
+static Pixmap xf_brush_new(xfContext* xfc, int width, int height, int bpp,
+                           BYTE* data)
 {
 	GC gc;
 	Pixmap bitmap;
@@ -249,7 +250,8 @@ Pixmap xf_brush_new(xfContext* xfc, int width, int height, int bpp, BYTE* data)
 	return bitmap;
 }
 
-Pixmap xf_mono_bitmap_new(xfContext* xfc, int width, int height, BYTE* data)
+static Pixmap xf_mono_bitmap_new(xfContext* xfc, int width, int height,
+                                 const BYTE* data)
 {
 	int scanline;
 	XImage* image;
@@ -363,26 +365,6 @@ BOOL xf_gdi_bitmap_update(rdpContext* context,
 	return ret;
 }
 
-static BOOL xf_gdi_palette_update(rdpContext* context,
-                                  const PALETTE_UPDATE* palette)
-{
-	int index;
-	const PALETTE_ENTRY* pe;
-	xfContext* xfc = (xfContext*) context;
-	xf_lock_x11(xfc, FALSE);
-	xfc->context.gdi->palette.format = xfc->format;
-
-	for (index = 0; index < palette->number; index++)
-	{
-		pe = &(palette->entries[index]);
-		xfc->context.gdi->palette.palette[index] = GetColor(xfc->format,
-		        pe->red, pe->green, pe->blue, 0xFF);
-	}
-
-	xf_unlock_x11(xfc, FALSE);
-	return TRUE;
-}
-
 static BOOL xf_gdi_set_bounds(rdpContext* context,
                               const rdpBounds* bounds)
 {
@@ -429,7 +411,6 @@ static BOOL xf_gdi_dstblt(rdpContext* context, const DSTBLT_ORDER* dstblt)
 
 static BOOL xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
-	Pixmap pattern;
 	const rdpBrush* brush;
 	UINT32 foreColor;
 	UINT32 backColor;
@@ -455,8 +436,8 @@ static BOOL xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	}
 	else if (brush->style == GDI_BS_HATCHED)
 	{
-		pattern = xf_mono_bitmap_new(xfc, 8, 8,
-		                             GDI_BS_HATCHED_PATTERNS + 8 * brush->hatch);
+		Pixmap pattern = xf_mono_bitmap_new(xfc, 8, 8,
+		                                    &GDI_BS_HATCHED_PATTERNS[8 * brush->hatch]);
 		XSetForeground(xfc->display, xfc->gc, backColor);
 		XSetBackground(xfc->display, xfc->gc, foreColor);
 		XSetFillStyle(xfc->display, xfc->gc, FillOpaqueStippled);
@@ -470,7 +451,7 @@ static BOOL xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	{
 		if (brush->bpp > 1)
 		{
-			pattern = xf_brush_new(xfc, 8, 8, brush->bpp, brush->data);
+			Pixmap pattern = xf_brush_new(xfc, 8, 8, brush->bpp, brush->data);
 			XSetFillStyle(xfc->display, xfc->gc, FillTiled);
 			XSetTile(xfc->display, xfc->gc, pattern);
 			XSetTSOrigin(xfc->display, xfc->gc, brush->x, brush->y);
@@ -481,7 +462,7 @@ static BOOL xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 		}
 		else
 		{
-			pattern = xf_mono_bitmap_new(xfc, 8, 8, brush->data);
+			Pixmap pattern = xf_mono_bitmap_new(xfc, 8, 8, brush->data);
 			XSetForeground(xfc->display, xfc->gc, backColor);
 			XSetBackground(xfc->display, xfc->gc, foreColor);
 			XSetFillStyle(xfc->display, xfc->gc, FillOpaqueStippled);
@@ -611,12 +592,6 @@ static BOOL xf_gdi_multi_opaque_rect(rdpContext* context,
 
 	xf_unlock_x11(xfc, FALSE);
 	return ret;
-}
-
-void xf_gdi_draw_nine_grid(rdpContext* context,
-                           DRAW_NINE_GRID_ORDER* draw_nine_grid)
-{
-	WLog_ERR(TAG,  "DrawNineGrid");
 }
 
 static BOOL xf_gdi_line_to(rdpContext* context, const LINE_TO_ORDER* line_to)
@@ -1003,20 +978,6 @@ static BOOL xf_gdi_polygon_cb(rdpContext* context,
 	return ret;
 }
 
-static BOOL xf_gdi_ellipse_sc(rdpContext* context,
-                              const ELLIPSE_SC_ORDER* ellipse_sc)
-{
-	WLog_ERR(TAG,  "Not implemented: EllipseSC");
-	return TRUE;
-}
-
-static BOOL xf_gdi_ellipse_cb(rdpContext* context,
-                              const ELLIPSE_CB_ORDER* ellipse_cb)
-{
-	WLog_ERR(TAG,  "Not implemented: EllipseCB");
-	return TRUE;
-}
-
 static BOOL xf_gdi_frame_marker(rdpContext* context,
                                 const FRAME_MARKER_ORDER* frameMarker)
 {
@@ -1197,30 +1158,18 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 void xf_gdi_register_update_callbacks(rdpUpdate* update)
 {
 	rdpPrimaryUpdate* primary = update->primary;
-	update->Palette = xf_gdi_palette_update;
 	update->SetBounds = xf_gdi_set_bounds;
 	primary->DstBlt = xf_gdi_dstblt;
 	primary->PatBlt = xf_gdi_patblt;
 	primary->ScrBlt = xf_gdi_scrblt;
 	primary->OpaqueRect = xf_gdi_opaque_rect;
-	primary->DrawNineGrid = NULL;
-	primary->MultiDstBlt = NULL;
-	primary->MultiPatBlt = NULL;
-	primary->MultiScrBlt = NULL;
 	primary->MultiOpaqueRect = xf_gdi_multi_opaque_rect;
-	primary->MultiDrawNineGrid = NULL;
 	primary->LineTo = xf_gdi_line_to;
 	primary->Polyline = xf_gdi_polyline;
 	primary->MemBlt = xf_gdi_memblt;
 	primary->Mem3Blt = xf_gdi_mem3blt;
-	primary->SaveBitmap = NULL;
-	primary->GlyphIndex = NULL;
-	primary->FastIndex = NULL;
-	primary->FastGlyph = NULL;
 	primary->PolygonSC = xf_gdi_polygon_sc;
 	primary->PolygonCB = xf_gdi_polygon_cb;
-	primary->EllipseSC = xf_gdi_ellipse_sc;
-	primary->EllipseCB = xf_gdi_ellipse_cb;
 	update->SurfaceBits = xf_gdi_surface_bits;
 	update->SurfaceFrameMarker = xf_gdi_surface_frame_marker;
 	update->altsec->FrameMarker = xf_gdi_frame_marker;
