@@ -138,6 +138,7 @@ export NO_BRP_CHECK_RPATH true
 %{INSTALL_PREFIX}/%{_lib}/*.so.*
 %{INSTALL_PREFIX}/bin/
 %{INSTALL_PREFIX}/share/man/man1/xfreerdp.1*
+%{INSTALL_PREFIX}/share/man/man1/wlog.1*
 
 %files devel
 %defattr(-,root,root)
