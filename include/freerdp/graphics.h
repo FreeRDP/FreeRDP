@@ -151,13 +151,6 @@ struct rdp_glyph
 };
 
 FREERDP_API rdpGlyph* Glyph_Alloc(rdpContext* context);
-FREERDP_API BOOL Glyph_New(rdpContext* context, rdpGlyph* glyph);
-FREERDP_API void Glyph_Free(rdpContext* context, rdpGlyph* glyph);
-FREERDP_API BOOL Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y);
-FREERDP_API BOOL Glyph_BeginDraw(rdpContext* context, int x, int y, int width,
-                                 int height, UINT32 bgcolor, UINT32 fgcolor, BOOL fOpRedundant);
-FREERDP_API BOOL Glyph_EndDraw(rdpContext* context, int x, int y, int width,
-                               int height, UINT32 bgcolor, UINT32 fgcolor);
 
 /* Graphics Module */
 

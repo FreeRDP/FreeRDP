@@ -162,35 +162,6 @@ rdpGlyph* Glyph_Alloc(rdpContext* context)
 	return glyph;
 }
 
-BOOL Glyph_New(rdpContext* context, rdpGlyph* glyph)
-{
-	return context->graphics->Glyph_Prototype->New(context, glyph);
-}
-
-void Glyph_Free(rdpContext* context, rdpGlyph* glyph)
-{
-	context->graphics->Glyph_Prototype->Free(context, glyph);
-}
-
-BOOL Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y)
-{
-	return context->graphics->Glyph_Prototype->Draw(context, glyph, x, y);
-}
-
-BOOL Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height,
-                     UINT32 bgcolor, UINT32 fgcolor, BOOL fOpRedundant)
-{
-	return context->graphics->Glyph_Prototype->BeginDraw(context, x, y, width,
-	        height, bgcolor, fgcolor, fOpRedundant);
-}
-
-BOOL Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height,
-                   UINT32 bgcolor, UINT32 fgcolor)
-{
-	return context->graphics->Glyph_Prototype->EndDraw(context, x, y, width, height,
-	        bgcolor, fgcolor);
-}
-
 void graphics_register_glyph(rdpGraphics* graphics, rdpGlyph* glyph)
 {
 	CopyMemory(graphics->Glyph_Prototype, glyph, sizeof(rdpGlyph));
@@ -240,8 +211,6 @@ rdpGraphics* graphics_new(rdpContext* context)
 		}
 
 		graphics->Glyph_Prototype->size = sizeof(rdpGlyph);
-		graphics->Glyph_Prototype->New = Glyph_New;
-		graphics->Glyph_Prototype->Free = Glyph_Free;
 	}
 
 	return graphics;
