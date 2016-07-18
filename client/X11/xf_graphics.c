@@ -396,8 +396,13 @@ static BOOL xf_Glyph_BeginDraw(rdpContext* context, UINT32 x, UINT32 y,
                                UINT32 fgcolor, BOOL fOpRedundant)
 {
 	xfContext* xfc = (xfContext*) context;
-	bgcolor = xf_convert_rdp_order_color(xfc, bgcolor);
-	fgcolor = xf_convert_rdp_order_color(xfc, fgcolor);
+
+	if (!gdi_decode_color(context->gdi, bgcolor, &bgcolor, NULL))
+		return FALSE;
+
+	if (!gdi_decode_color(context->gdi, fgcolor, &fgcolor, NULL))
+		return FALSE;
+
 	xf_lock_x11(xfc, FALSE);
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 

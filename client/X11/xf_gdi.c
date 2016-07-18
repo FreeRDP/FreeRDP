@@ -218,58 +218,6 @@ BOOL xf_set_rop3(xfContext* xfc, int rop3)
 	return TRUE;
 }
 
-UINT32 xf_convert_rdp_order_color(xfContext* xfc, UINT32 color)
-{
-	BYTE r = 0, g = 0, b = 0;
-
-	switch (xfc->srcBpp)
-	{
-		case 32:
-		case 24:
-			if (xfc->visual->red_mask == 0xFF0000 &&
-			    xfc->visual->green_mask == 0xFF00 &&
-			    xfc->visual->blue_mask == 0xFF)
-			{
-				return color;
-			}
-
-			color = GetColor(xfc->format, r, g, b, 0xFF);
-			break;
-
-		case 16:
-			color = (color & 0xFF00) | ((color >> 16) & 0xFF);
-
-			if (xfc->visual->red_mask == 0xF800 &&
-			    xfc->visual->green_mask == 0x07E0 &&
-			    xfc->visual->blue_mask == 0x001F)
-			{
-				return color;
-			}
-
-			color = GetColor(xfc->format, r, g, b, 0xFF);
-			break;
-
-		case 15:
-			color = (color & 0xFF00) | ((color >> 16) & 0xFF);
-			color = GetColor(xfc->format, r, g, b, 0xFF);
-			break;
-
-		case 8:
-			color = (color >> 16) & (UINT32) 0xFF;
-			UINT32 dstColor = xfc->context.gdi->palette.palette[color];
-			SplitColor(dstColor, xfc->format, &r, &g, &b,
-			           NULL, NULL);
-			break;
-
-		default:
-			return color;
-	}
-
-	return (((r >> xfc->red_shift_r) << xfc->red_shift_l) |
-	        ((g >> xfc->green_shift_r) << xfc->green_shift_l) |
-	        ((b >> xfc->blue_shift_r) << xfc->blue_shift_l));
-}
-
 Pixmap xf_brush_new(xfContext* xfc, int width, int height, int bpp, BYTE* data)
 {
 	GC gc;
@@ -487,11 +435,16 @@ static BOOL xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	UINT32 backColor;
 	xfContext* xfc = (xfContext*) context;
 	BOOL ret = TRUE;
+
+	if (!gdi_decode_color(context->gdi, patblt->foreColor, &foreColor, NULL))
+		return FALSE;
+
+	if (!gdi_decode_color(context->gdi, patblt->backColor, &backColor, NULL))
+		return FALSE;
+
 	xf_lock_x11(xfc, FALSE);
 	brush = &patblt->brush;
 	xf_set_rop3(xfc, gdi_rop3_code(patblt->bRop));
-	foreColor = xf_convert_rdp_order_color(xfc, patblt->foreColor);
-	backColor = xf_convert_rdp_order_color(xfc, patblt->backColor);
 
 	if (brush->style == GDI_BS_SOLID)
 	{
@@ -671,9 +624,12 @@ static BOOL xf_gdi_line_to(rdpContext* context, const LINE_TO_ORDER* line_to)
 	UINT32 color;
 	xfContext* xfc = (xfContext*) context;
 	BOOL ret = TRUE;
+
+	if (!gdi_decode_color(context->gdi, line_to->penColor, &color, NULL))
+		return FALSE;
+
 	xf_lock_x11(xfc, FALSE);
 	xf_set_rop2(xfc, line_to->bRop2);
-	color = xf_convert_rdp_order_color(xfc, line_to->penColor);
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 	XSetForeground(xfc->display, xfc->gc, color);
 	XDrawLine(xfc->display, xfc->drawing, xfc->gc,
@@ -738,9 +694,12 @@ static BOOL xf_gdi_polyline(rdpContext* context,
 	XPoint* points;
 	xfContext* xfc = (xfContext*) context;
 	BOOL ret = TRUE;
+
+	if (!gdi_decode_color(context->gdi, polyline->penColor, &color, NULL))
+		return FALSE;
+
 	xf_lock_x11(xfc, FALSE);
 	xf_set_rop2(xfc, polyline->bRop2);
-	color = xf_convert_rdp_order_color(xfc, polyline->penColor);
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 	XSetForeground(xfc->display, xfc->gc, color);
 	npoints = polyline->numDeltaEntries + 1;
@@ -818,12 +777,16 @@ static BOOL xf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	if (!xfc->display || !xfc->drawing)
 		return FALSE;
 
+	if (!gdi_decode_color(context->gdi, mem3blt->foreColor, &foreColor, NULL))
+		return FALSE;
+
+	if (!gdi_decode_color(context->gdi, mem3blt->backColor, &backColor, NULL))
+		return FALSE;
+
 	xf_lock_x11(xfc, FALSE);
 	brush = &mem3blt->brush;
 	bitmap = (xfBitmap*) mem3blt->bitmap;
 	xf_set_rop3(xfc, gdi_rop3_code(mem3blt->bRop));
-	foreColor = xf_convert_rdp_order_color(xfc, mem3blt->foreColor);
-	backColor = xf_convert_rdp_order_color(xfc, mem3blt->backColor);
 
 	if (brush->style == GDI_BS_PATTERN)
 	{
@@ -884,9 +847,12 @@ static BOOL xf_gdi_polygon_sc(rdpContext* context,
 	UINT32 brush_color;
 	xfContext* xfc = (xfContext*) context;
 	BOOL ret = TRUE;
+
+	if (!gdi_decode_color(context->gdi, polygon_sc->brushColor, &brush_color, NULL))
+		return FALSE;
+
 	xf_lock_x11(xfc, FALSE);
 	xf_set_rop2(xfc, polygon_sc->bRop2);
-	brush_color = xf_convert_rdp_order_color(xfc, polygon_sc->brushColor);
 	npoints = polygon_sc->numPoints + 1;
 	points = malloc(sizeof(XPoint) * npoints);
 
@@ -948,11 +914,16 @@ static BOOL xf_gdi_polygon_cb(rdpContext* context,
 	UINT32 backColor;
 	xfContext* xfc = (xfContext*) context;
 	BOOL ret = TRUE;
+
+	if (!gdi_decode_color(context->gdi, polygon_cb->foreColor, &foreColor, NULL))
+		return FALSE;
+
+	if (!gdi_decode_color(context->gdi, polygon_cb->backColor, &backColor, NULL))
+		return FALSE;
+
 	xf_lock_x11(xfc, FALSE);
 	brush = &(polygon_cb->brush);
 	xf_set_rop2(xfc, polygon_cb->bRop2);
-	foreColor = xf_convert_rdp_order_color(xfc, polygon_cb->foreColor);
-	backColor = xf_convert_rdp_order_color(xfc, polygon_cb->backColor);
 	npoints = polygon_cb->numPoints + 1;
 	points = malloc(sizeof(XPoint) * npoints);
 

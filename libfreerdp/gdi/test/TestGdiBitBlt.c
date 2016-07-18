@@ -10,6 +10,7 @@
 
 #include "line.h"
 #include "brush.h"
+#include "helpers.h"
 
 /* BitBlt() Test Data */
 
@@ -408,17 +409,17 @@ struct test_bitblt
 {
 	UINT32 rop;
 	const BYTE* src;
-	HGDI_BITMAP* bmp;
+	HGDI_BITMAP bmp;
 };
 
 static BOOL test_rop(HGDI_DC hdcDst, HGDI_DC hdcSrc, HGDI_BITMAP hBmpSrc,
                      HGDI_BITMAP hBmpDst,
-                     HGDI_BITMAP hBmpDstOriginal, UINT32 rop, HGDI_BITMAP* expected,
+                     HGDI_BITMAP hBmpDstOriginal, UINT32 rop, HGDI_BITMAP expected,
                      const gdiPalette* hPalette)
 {
 	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, hBmpDstOriginal);
-	gdi_SelectObject(hdcDst, hBmpDst);
+	gdi_SelectObject(hdcSrc, (HGDIOBJECT)hBmpDstOriginal);
+	gdi_SelectObject(hdcDst, (HGDIOBJECT)hBmpDst);
 
 	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY, hPalette))
 		return FALSE;

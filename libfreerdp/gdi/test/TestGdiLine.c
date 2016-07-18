@@ -12,6 +12,7 @@
 #include "line.h"
 #include "brush.h"
 #include "clipping.h"
+#include "drawing.h"
 
 #include "helpers.h"
 
@@ -618,7 +619,7 @@ struct ropMap
 {
 	UINT32 rop;
 	HGDI_BITMAP bmp;
-	BYTE* src;
+	const BYTE* src;
 };
 
 static BOOL test_line(HGDI_DC hdc, const gdiPalette* hPalette, UINT32 mX,
@@ -643,7 +644,7 @@ static BOOL test_line(HGDI_DC hdc, const gdiPalette* hPalette, UINT32 mX,
 int TestGdiLine(int argc, char* argv[])
 {
 	int rc = -1;
-	UINT32 x, i, j;
+	UINT32 x, i;
 	gdiPalette g;
 	const UINT32 RawFormat = PIXEL_FORMAT_RGB8;
 	const UINT32 colorFormats[] =
