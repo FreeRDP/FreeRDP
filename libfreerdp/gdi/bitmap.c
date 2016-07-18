@@ -741,8 +741,6 @@ BOOL gdi_BitBlt(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 	if (!gdi_InvalidateRegion(hdcDest, nXDest, nYDest, nWidth, nHeight))
 		return FALSE;
 
-	WLog_DBG(TAG, "%s [%s]", __FUNCTION__, gdi_rop_to_string(rop));
-
 	switch (rop)
 	{
 		case GDI_SRCCOPY:

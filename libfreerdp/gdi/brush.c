@@ -543,7 +543,7 @@ static BOOL BitBlt_BLACKNESS(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
                              UINT32 nWidth, UINT32 nHeight)
 {
 	UINT32 x, y;
-	UINT32 color = GetColor(hdcDest->format, 0, 0, 0, 0xFF);
+	const UINT32 color = GetColor(hdcDest->format, 0, 0, 0, 0xFF);
 
 	for (y = 0; y < nHeight; y++)
 	{
@@ -563,7 +563,7 @@ static BOOL BitBlt_WHITENESS(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
                              UINT32 nWidth, UINT32 nHeight)
 {
 	UINT32 x, y;
-	UINT32 color = GetColor(hdcDest->format, 0xFF, 0xFF, 0xFF, 0xFF);
+	const UINT32 color = GetColor(hdcDest->format, 0xFF, 0xFF, 0xFF, 0xFF);
 
 	for (y = 0; y < nHeight; y++)
 	{
@@ -583,6 +583,11 @@ BOOL gdi_PatBlt(HGDI_DC hdc, UINT32 nXLeft, UINT32 nYLeft,
                 UINT32 nWidth, UINT32 nHeight, DWORD rop,
                 HGDI_DC hdcSrc, UINT32 nXSrc, UINT32 nYSrc)
 {
+	WLog_INFO(TAG, "%s [%s] x=%lu, y=%lu, w=%lu, h=%lu [x=%lu, y=%lu] %s %s",
+	          __FUNCTION__, gdi_rop_to_string(rop), nXLeft, nYLeft,
+	          nWidth, nHeight, nXSrc, nYSrc, hdc ? GetColorFormatName(hdc->format) : "NULL",
+	          hdcSrc ? GetColorFormatName(hdcSrc->format) : "NULL");
+
 	if (!gdi_ClipCoords(hdc, &nXLeft, &nYLeft, &nWidth, &nHeight, NULL, NULL))
 		return TRUE;
 

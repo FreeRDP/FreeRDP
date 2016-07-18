@@ -95,6 +95,7 @@ static BOOL gdi_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 		return FALSE;
 	}
 
+	gdi_bitmap->hdc->format = gdi_bitmap->bitmap->format;
 	gdi_SelectObject(gdi_bitmap->hdc, (HGDIOBJECT) gdi_bitmap->bitmap);
 	gdi_bitmap->org_bitmap = NULL;
 	return TRUE;
@@ -134,7 +135,7 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	UINT32 bytesPerPixel;
 	rdpGdi* gdi = context->gdi;
 	bytesPerPixel = (bpp + 7) / 8;
-	size = width * height * 4;
+	size = width * height * GetBytesPerPixel(gdi->dstFormat);
 	bitmap->data = (BYTE*) _aligned_malloc(size, 16);
 
 	if (!bitmap->data)
@@ -195,6 +196,10 @@ static BOOL gdi_Glyph_New(rdpContext* context, rdpGlyph* glyph)
 {
 	BYTE* data;
 	gdiGlyph* gdi_glyph;
+
+	if (!context || !glyph)
+		return FALSE;
+
 	gdi_glyph = (gdiGlyph*) glyph;
 	gdi_glyph->hdc = gdi_GetDC();
 
@@ -220,7 +225,6 @@ static BOOL gdi_Glyph_New(rdpContext* context, rdpGlyph* glyph)
 		return FALSE;
 	}
 
-	gdi_glyph->bitmap->format = PIXEL_FORMAT_MONO;
 	gdi_SelectObject(gdi_glyph->hdc, (HGDIOBJECT) gdi_glyph->bitmap);
 	gdi_glyph->org_bitmap = NULL;
 	return TRUE;

@@ -474,8 +474,14 @@ static BOOL gdi_bitmap_update(rdpContext* context,
                               const BITMAP_UPDATE* bitmapUpdate)
 {
 	UINT32 index;
-	rdpGdi* gdi = context->gdi;
-	rdpCodecs* codecs = context->codecs;
+	rdpGdi* gdi;
+	rdpCodecs* codecs;
+
+	if (!context || !bitmapUpdate || !context->gdi || !context->codecs)
+		return FALSE;
+
+	gdi = context->gdi;
+	codecs = context->codecs;
 
 	for (index = 0; index < bitmapUpdate->number; index++)
 	{
@@ -544,7 +550,12 @@ static BOOL gdi_palette_update(rdpContext* context,
                                const PALETTE_UPDATE* palette)
 {
 	UINT32 index;
-	rdpGdi* gdi = context->gdi;
+	rdpGdi* gdi;
+
+	if (!context || !palette)
+		return FALSE;
+
+	gdi = context->gdi;
 	gdi->palette.format = gdi->dstFormat;
 
 	for (index = 0; index < palette->number; index++)
@@ -559,7 +570,12 @@ static BOOL gdi_palette_update(rdpContext* context,
 
 static BOOL gdi_set_bounds(rdpContext* context, const rdpBounds* bounds)
 {
-	rdpGdi* gdi = context->gdi;
+	rdpGdi* gdi;
+
+	if (!context)
+		return FALSE;
+
+	gdi = context->gdi;
 
 	if (bounds)
 	{
@@ -765,7 +781,12 @@ out_error:
 
 static BOOL gdi_scrblt(rdpContext* context, const SCRBLT_ORDER* scrblt)
 {
-	rdpGdi* gdi = context->gdi;
+	rdpGdi* gdi;
+
+	if (!context || !context->gdi)
+		return FALSE;
+
+	gdi = context->gdi;
 	return gdi_BitBlt(gdi->drawing->hdc, scrblt->nLeftRect, scrblt->nTopRect,
 	                  scrblt->nWidth, scrblt->nHeight, gdi->primary->hdc,
 	                  scrblt->nXSrc, scrblt->nYSrc, gdi_rop3_code(scrblt->bRop),
@@ -782,6 +803,9 @@ static BOOL gdi_opaque_rect(rdpContext* context,
 	BOOL ret;
 	gdi_CRgnToRect(opaque_rect->nLeftRect, opaque_rect->nTopRect,
 	               opaque_rect->nWidth, opaque_rect->nHeight, &rect);
+	WLog_INFO(TAG, "%s x=%lu, y=%lu, w=%lu, h=%lu",
+	          __FUNCTION__, opaque_rect->nLeftRect, opaque_rect->nTopRect,
+	          opaque_rect->nWidth, opaque_rect->nHeight);
 
 	if (!gdi_decode_color(gdi, opaque_rect->color, &brush_color, NULL))
 		return FALSE;
@@ -803,6 +827,9 @@ static BOOL gdi_multi_opaque_rect(rdpContext* context,
 	UINT32 brush_color;
 	rdpGdi* gdi = context->gdi;
 	BOOL ret = TRUE;
+	WLog_INFO(TAG, "%s x=%lu, y=%lu, w=%lu, h=%lu",
+	          __FUNCTION__, multi_opaque_rect->nLeftRect, multi_opaque_rect->nTopRect,
+	          multi_opaque_rect->nWidth, multi_opaque_rect->nHeight);
 
 	if (!gdi_decode_color(gdi, multi_opaque_rect->color, &brush_color, NULL))
 		return FALSE;
@@ -830,6 +857,9 @@ static BOOL gdi_line_to(rdpContext* context, const LINE_TO_ORDER* lineTo)
 	HGDI_PEN hPen;
 	UINT32 SrcFormat;
 	rdpGdi* gdi = context->gdi;
+	WLog_INFO(TAG, "%s x=%lu, y=%lu, w=%lu, h=%lu",
+	          __FUNCTION__, lineTo->nXStart, lineTo->nYStart,
+	          lineTo->nXEnd, lineTo->nYEnd);
 
 	if (!gdi_decode_color(gdi, lineTo->backColor, &color, &SrcFormat))
 		return FALSE;
@@ -874,6 +904,8 @@ static BOOL gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 	{
 		x += points[i].x;
 		y += points[i].y;
+		WLog_INFO(TAG, "%s x=%lu, y=%lu",
+		          __FUNCTION__, x, y);
 		gdi_LineTo(gdi->drawing->hdc, x, y);
 		gdi_MoveToEx(gdi->drawing->hdc, x, y, NULL);
 	}
@@ -884,8 +916,14 @@ static BOOL gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 
 static BOOL gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 {
-	gdiBitmap* bitmap = (gdiBitmap*) memblt->bitmap;
-	rdpGdi* gdi = context->gdi;
+	gdiBitmap* bitmap;
+	rdpGdi* gdi;
+
+	if (!context || !memblt || !context->gdi || !memblt->bitmap)
+		return FALSE;
+
+	bitmap = (gdiBitmap*) memblt->bitmap;
+	gdi = context->gdi;
 	return gdi_BitBlt(gdi->drawing->hdc, memblt->nLeftRect, memblt->nTopRect,
 	                  memblt->nWidth, memblt->nHeight, bitmap->hdc,
 	                  memblt->nXSrc, memblt->nYSrc, gdi_rop3_code(memblt->bRop),
