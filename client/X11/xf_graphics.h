@@ -23,6 +23,7 @@
 #include "xf_client.h"
 #include "xfreerdp.h"
 
+BOOL xf_register_pointer(rdpGraphics* graphics);
 BOOL xf_register_graphics(rdpGraphics* graphics);
 
 #endif /* __XF_GRAPHICS_H */

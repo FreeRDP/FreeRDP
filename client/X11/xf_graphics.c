@@ -437,18 +437,32 @@ static BOOL xf_Glyph_EndDraw(rdpContext* context, UINT32 x, UINT32 y,
 }
 
 /* Graphics Module */
+BOOL xf_register_pointer(rdpGraphics* graphics)
+{
+	rdpPointer* pointer = NULL;
+
+	if (!(pointer = (rdpPointer*) calloc(1, sizeof(rdpPointer))))
+		return FALSE;
+
+	pointer->size = sizeof(xfPointer);
+	pointer->New = xf_Pointer_New;
+	pointer->Free = xf_Pointer_Free;
+	pointer->Set = xf_Pointer_Set;
+	pointer->SetNull = xf_Pointer_SetNull;
+	pointer->SetDefault = xf_Pointer_SetDefault;
+	pointer->SetPosition = xf_Pointer_SetPosition;
+	graphics_register_pointer(graphics, pointer);
+	free(pointer);
+	return TRUE;
+}
 
 BOOL xf_register_graphics(rdpGraphics* graphics)
 {
 	rdpBitmap* bitmap = NULL;
-	rdpPointer* pointer = NULL;
 	rdpGlyph* glyph = NULL;
 	BOOL ret = FALSE;
 
 	if (!(bitmap = (rdpBitmap*) calloc(1, sizeof(rdpBitmap))))
-		goto out;
-
-	if (!(pointer = (rdpPointer*) calloc(1, sizeof(rdpPointer))))
 		goto out;
 
 	if (!(glyph = (rdpGlyph*) calloc(1, sizeof(rdpGlyph))))
@@ -461,14 +475,6 @@ BOOL xf_register_graphics(rdpGraphics* graphics)
 	bitmap->Decompress = xf_Bitmap_Decompress;
 	bitmap->SetSurface = xf_Bitmap_SetSurface;
 	graphics_register_bitmap(graphics, bitmap);
-	pointer->size = sizeof(xfPointer);
-	pointer->New = xf_Pointer_New;
-	pointer->Free = xf_Pointer_Free;
-	pointer->Set = xf_Pointer_Set;
-	pointer->SetNull = xf_Pointer_SetNull;
-	pointer->SetDefault = xf_Pointer_SetDefault;
-	pointer->SetPosition = xf_Pointer_SetPosition;
-	graphics_register_pointer(graphics, pointer);
 	glyph->size = sizeof(xfGlyph);
 	glyph->New = xf_Glyph_New;
 	glyph->Free = xf_Glyph_Free;
@@ -479,7 +485,6 @@ BOOL xf_register_graphics(rdpGraphics* graphics)
 	ret = TRUE;
 out:
 	free(bitmap);
-	free(pointer);
 	free(glyph);
 	return ret;
 }

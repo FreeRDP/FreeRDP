@@ -1130,7 +1130,7 @@ static BOOL gdi_surface_bits(rdpContext* context,
  * @return
  */
 
-void gdi_register_update_callbacks(rdpUpdate* update)
+static void gdi_register_update_callbacks(rdpUpdate* update)
 {
 	rdpPrimaryUpdate* primary = update->primary;
 	update->Palette = gdi_palette_update;

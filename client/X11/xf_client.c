@@ -837,9 +837,9 @@ static BOOL xf_get_pixmap_info(xfContext* xfc)
 	if (xfc->visual)
 	{
 		/*
-		 * Detect if the server visual has an inverted colormap
-		 * (BGR vs RGB, or red being the least significant byte)
-		 */
+			 * Detect if the server visual has an inverted colormap
+			 * (BGR vs RGB, or red being the least significant byte)
+			 */
 		if (vi->red_mask & 0xFF)
 		{
 			xfc->invert = TRUE;
@@ -1065,15 +1065,15 @@ static void xf_button_map_init(xfContext* xfc)
 }
 
 /**
- * Callback given to freerdp_connect() to process the pre-connect operations.
- * It will fill the rdp_freerdp structure (instance) with the appropriate options to use for the connection.
- *
- * @param instance - pointer to the rdp_freerdp structure that contains the connection's parameters, and will
- * be filled with the appropriate informations.
- *
- * @return TRUE if successful. FALSE otherwise.
- * Can exit with error code XF_EXIT_PARSE_ARGUMENTS if there is an error in the parameters.
- */
+* Callback given to freerdp_connect() to process the pre-connect operations.
+* It will fill the rdp_freerdp structure (instance) with the appropriate options to use for the connection.
+*
+* @param instance - pointer to the rdp_freerdp structure that contains the connection's parameters, and will
+* be filled with the appropriate informations.
+*
+* @return TRUE if successful. FALSE otherwise.
+* Can exit with error code XF_EXIT_PARSE_ARGUMENTS if there is an error in the parameters.
+*/
 static BOOL xf_pre_connect(freerdp* instance)
 {
 	rdpChannels* channels;
@@ -1188,10 +1188,10 @@ static BOOL xf_pre_connect(freerdp* instance)
 }
 
 /**
- * Callback given to freerdp_connect() to perform post-connection operations.
- * It will be called only if the connection was initialized properly, and will continue the initialization based on the
- * newly created connection.
- */
+* Callback given to freerdp_connect() to perform post-connection operations.
+* It will be called only if the connection was initialized properly, and will continue the initialization based on the
+* newly created connection.
+*/
 static BOOL xf_post_connect(freerdp* instance)
 {
 	rdpUpdate* update;
@@ -1205,17 +1205,22 @@ static BOOL xf_post_connect(freerdp* instance)
 	settings = instance->settings;
 	update = context->update;
 
-	if (!xf_register_graphics(context->graphics))
-	{
-		WLog_ERR(TAG, "failed to register graphics");
-		return FALSE;
-	}
-
 	if (!gdi_init(instance, xfc->format))
 		return FALSE;
 
+	if (!xf_register_pointer(context->graphics))
+		return FALSE;
+
 	if (!settings->SoftwareGdi)
+	{
+		if (!xf_register_graphics(context->graphics))
+		{
+			WLog_ERR(TAG, "failed to register graphics");
+			return FALSE;
+		}
+
 		xf_gdi_register_update_callbacks(update);
+	}
 
 	xfc->srcBpp = settings->ColorDepth;
 	xfc->sessionWidth = settings->DesktopWidth;
@@ -1431,12 +1436,12 @@ static BOOL xf_auto_reconnect(freerdp* instance)
 }
 
 /** Main loop for the rdp connection.
- *  It will be run from the thread's entry point (thread_func()).
- *  It initiates the connection, and will continue to run until the session ends,
- *  processing events as they are received.
- *  @param instance - pointer to the rdp_freerdp structure that contains the session's settings
- *  @return A code from the enum XF_EXIT_CODE (0 if successful)
- */
+*  It will be run from the thread's entry point (thread_func()).
+*  It initiates the connection, and will continue to run until the session ends,
+*  processing events as they are received.
+*  @param instance - pointer to the rdp_freerdp structure that contains the session's settings
+*  @return A code from the enum XF_EXIT_CODE (0 if successful)
+*/
 static void* xf_client_thread(void* param)
 {
 	BOOL status;
@@ -1519,10 +1524,10 @@ static void* xf_client_thread(void* param)
 	while (!xfc->disconnect && !freerdp_shall_disconnect(instance))
 	{
 		/*
-		 * win8 and server 2k12 seem to have some timing issue/race condition
-		 * when a initial sync request is send to sync the keyboard indicators
-		 * sending the sync event twice fixed this problem
-		 */
+		     * win8 and server 2k12 seem to have some timing issue/race condition
+		     * when a initial sync request is send to sync the keyboard indicators
+		     * sending the sync event twice fixed this problem
+		     */
 		if (freerdp_focus_required(instance))
 		{
 			xf_keyboard_focus_in(xfc);
@@ -1679,8 +1684,8 @@ static void xf_PanningChangeEventHandler(rdpContext* context,
 #endif
 
 /**
- * Client Interface
- */
+* Client Interface
+*/
 
 static BOOL xfreerdp_client_global_init()
 {

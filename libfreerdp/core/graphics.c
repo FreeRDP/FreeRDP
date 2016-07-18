@@ -62,7 +62,7 @@ void Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 }
 
 void Bitmap_SetRectangle(rdpContext* context, rdpBitmap* bitmap, UINT16 left,
-			 UINT16 top, UINT16 right, UINT16 bottom)
+                         UINT16 top, UINT16 right, UINT16 bottom)
 {
 	bitmap->left = left;
 	bitmap->top = top;
@@ -71,7 +71,7 @@ void Bitmap_SetRectangle(rdpContext* context, rdpBitmap* bitmap, UINT16 left,
 }
 
 void Bitmap_SetDimensions(rdpContext* context, rdpBitmap* bitmap, UINT16 width,
-			  UINT16 height)
+                          UINT16 height)
 {
 	bitmap->width = width;
 	bitmap->height = height;
@@ -81,7 +81,7 @@ void Bitmap_SetDimensions(rdpContext* context, rdpBitmap* bitmap, UINT16 width,
 BOOL Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL primary)
 {
 	return context->graphics->Bitmap_Prototype->SetSurface(context, bitmap,
-		primary);
+	        primary);
 }
 
 void graphics_register_bitmap(rdpGraphics* graphics, rdpBitmap* bitmap)
@@ -105,12 +105,19 @@ rdpPointer* Pointer_Alloc(rdpContext* context)
 	return pointer;
 }
 
-BOOL Pointer_New(rdpContext* context, rdpPointer* pointer)
+static BOOL Pointer_New(rdpContext* context, rdpPointer* pointer)
 {
+	rdpPointer* proto;
+
+	if (!context || !context->graphics || !context->graphics->Pointer_Prototype)
+		return FALSE;
+
+	proto = context->graphics->Pointer_Prototype;
+	*pointer = *proto;
 	return TRUE;
 }
 
-void Pointer_Free(rdpContext* context, rdpPointer* pointer)
+static void Pointer_Free(rdpContext* context, rdpPointer* pointer)
 {
 	if (pointer)
 	{
@@ -133,27 +140,6 @@ void Pointer_Free(rdpContext* context, rdpPointer* pointer)
 }
 
 /* static method */
-BOOL Pointer_Set(rdpContext* context, const rdpPointer* pointer)
-{
-	return context->graphics->Pointer_Prototype->Set(context, pointer);
-}
-
-BOOL Pointer_SetNull(rdpContext* context)
-{
-	return context->graphics->Pointer_Prototype->SetNull(context);
-}
-
-BOOL Pointer_SetDefault(rdpContext* context)
-{
-	return context->graphics->Pointer_Prototype->SetDefault(context);
-}
-
-BOOL Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
-{
-	return IFCALLRESULT(TRUE, context->graphics->Pointer_Prototype->SetPosition,
-				context, x, y);
-}
-
 void graphics_register_pointer(rdpGraphics* graphics, rdpPointer* pointer)
 {
 	CopyMemory(graphics->Pointer_Prototype, pointer, sizeof(rdpPointer));
@@ -192,17 +178,17 @@ BOOL Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y)
 }
 
 BOOL Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height,
-			 UINT32 bgcolor, UINT32 fgcolor, BOOL fOpRedundant)
+                     UINT32 bgcolor, UINT32 fgcolor, BOOL fOpRedundant)
 {
 	return context->graphics->Glyph_Prototype->BeginDraw(context, x, y, width,
-		height, bgcolor, fgcolor, fOpRedundant);
+	        height, bgcolor, fgcolor, fOpRedundant);
 }
 
 BOOL Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height,
-		   UINT32 bgcolor, UINT32 fgcolor)
+                   UINT32 bgcolor, UINT32 fgcolor)
 {
 	return context->graphics->Glyph_Prototype->EndDraw(context, x, y, width, height,
-		bgcolor, fgcolor);
+	        bgcolor, fgcolor);
 }
 
 void graphics_register_glyph(rdpGraphics* graphics, rdpGlyph* glyph)
