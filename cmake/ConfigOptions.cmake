@@ -43,6 +43,7 @@ endif()
 
 if(NOT WIN32)
     option(WITH_VALGRIND_MEMCHECK "Compile with valgrind helpers." OFF)
+    option(WITH_SANITIZE_ADDRESS "Compile with clang address sanitizer." OFF)
 else()
 	if(NOT UWP)
     	option(WITH_MEDIA_FOUNDATION "Enable H264 media foundation decoder." ON)
