@@ -1404,7 +1404,7 @@ void freerdp_alpha_cursor_convert(BYTE* alphaData, BYTE* xorMask, BYTE* andMask,
 				{
 					/* use pattern (not solid black) for xor area */
 					xorPixel = (x & 1) == (y & 1);
-					xorPixel = xorPixel ? 0xFFFFFF : 0;
+					xorPixel = 0;
 					xorPixel |= 0xFF000000;
 				}
 				else if (xorPixel == 0xFF000000)
