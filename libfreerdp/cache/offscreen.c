@@ -61,7 +61,7 @@ static BOOL update_gdi_create_offscreen_bitmap(rdpContext* context,
 	offscreen_cache_put(cache->offscreen, createOffscreenBitmap->id, bitmap);
 
 	if (cache->offscreen->currentSurface == createOffscreenBitmap->id)
-		Bitmap_SetSurface(context, bitmap, FALSE);
+		bitmap->SetSurface(context, bitmap, FALSE);
 
 	for (i = 0; i < createOffscreenBitmap->deleteList.cIndices; i++)
 	{
@@ -76,16 +76,17 @@ static BOOL update_gdi_switch_surface(rdpContext* context,
                                       const SWITCH_SURFACE_ORDER* switchSurface)
 {
 	rdpCache* cache = context->cache;
+	rdpBitmap* bitmap = context->graphics->Bitmap_Prototype;
 
 	if (switchSurface->bitmapId == SCREEN_BITMAP_SURFACE)
 	{
-		Bitmap_SetSurface(context, NULL, TRUE);
+		bitmap->SetSurface(context, NULL, TRUE);
 	}
 	else
 	{
 		rdpBitmap* bitmap;
 		bitmap = offscreen_cache_get(cache->offscreen, switchSurface->bitmapId);
-		Bitmap_SetSurface(context, bitmap, FALSE);
+		bitmap->SetSurface(context, bitmap, FALSE);
 	}
 
 	cache->offscreen->currentSurface = switchSurface->bitmapId;
@@ -139,7 +140,7 @@ void offscreen_cache_delete(rdpOffscreenCache* offscreenCache, UINT32 index)
 	prevBitmap = offscreenCache->entries[index];
 
 	if (prevBitmap != NULL)
-		Bitmap_Free(offscreenCache->update->context, prevBitmap);
+		prevBitmap->Free(offscreenCache->update->context, prevBitmap);
 
 	offscreenCache->entries[index] = NULL;
 }
@@ -189,7 +190,7 @@ void offscreen_cache_free(rdpOffscreenCache* offscreenCache)
 			bitmap = offscreenCache->entries[i];
 
 			if (bitmap)
-				Bitmap_Free(offscreenCache->update->context, bitmap);
+				bitmap->Free(offscreenCache->update->context, bitmap);
 		}
 
 		free(offscreenCache->entries);
