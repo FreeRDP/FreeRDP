@@ -74,17 +74,12 @@ struct rdp_bitmap
 };
 
 FREERDP_API rdpBitmap* Bitmap_Alloc(rdpContext* context);
-FREERDP_API BOOL Bitmap_New(rdpContext* context, rdpBitmap* bitmap);
-FREERDP_API void Bitmap_Free(rdpContext* context, rdpBitmap* bitmap);
-FREERDP_API BOOL Bitmap_Register(rdpContext* context, rdpBitmap* bitmap);
-FREERDP_API BOOL Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
-                                   BYTE* data, int width, int height, int bpp, int length, BOOL compressed);
-FREERDP_API void Bitmap_SetRectangle(rdpContext* context, rdpBitmap* bitmap,
-                                     UINT16 left, UINT16 top, UINT16 right, UINT16 bottom);
-FREERDP_API void Bitmap_SetDimensions(rdpContext* context, rdpBitmap* bitmap,
-                                      UINT16 width, UINT16 height);
-FREERDP_API BOOL Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap,
-                                   BOOL primary);
+FREERDP_API BOOL Bitmap_SetRectangle(rdpBitmap* bitmap,
+                                     UINT16 left,
+                                     UINT16 top, UINT16 right, UINT16 bottom);
+FREERDP_API BOOL Bitmap_SetDimensions(rdpBitmap* bitmap,
+                                      UINT16 width,
+                                      UINT16 height);
 
 /* Pointer Class */
 

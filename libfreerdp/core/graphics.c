@@ -43,12 +43,16 @@ rdpBitmap* Bitmap_Alloc(rdpContext* context)
 	return bitmap;
 }
 
-BOOL Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
+static BOOL Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 {
+	if (!bitmap || !context)
+		return FALSE;
+
+	*bitmap = *context->graphics->Bitmap_Prototype;
 	return TRUE;
 }
 
-void Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
+static void Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 {
 	if (bitmap)
 	{
@@ -61,27 +65,30 @@ void Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 	}
 }
 
-void Bitmap_SetRectangle(rdpContext* context, rdpBitmap* bitmap, UINT16 left,
+BOOL Bitmap_SetRectangle(rdpBitmap* bitmap,
+                         UINT16 left,
                          UINT16 top, UINT16 right, UINT16 bottom)
 {
+	if (!bitmap)
+		return FALSE;
+
 	bitmap->left = left;
 	bitmap->top = top;
 	bitmap->right = right;
 	bitmap->bottom = bottom;
+	return TRUE;
 }
 
-void Bitmap_SetDimensions(rdpContext* context, rdpBitmap* bitmap, UINT16 width,
+BOOL Bitmap_SetDimensions(rdpBitmap* bitmap,
+                          UINT16 width,
                           UINT16 height)
 {
+	if (!bitmap)
+		return FALSE;
+
 	bitmap->width = width;
 	bitmap->height = height;
-}
-
-/* static method */
-BOOL Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL primary)
-{
-	return context->graphics->Bitmap_Prototype->SetSurface(context, bitmap,
-	        primary);
+	return TRUE;
 }
 
 void graphics_register_bitmap(rdpGraphics* graphics, rdpBitmap* bitmap)
