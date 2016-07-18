@@ -128,7 +128,6 @@ static BOOL xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
                                  const BYTE* data, UINT32 width, UINT32 height, UINT32 bpp, UINT32 length,
                                  BOOL compressed, UINT32 codecId)
 {
-	int status;
 	UINT16 size;
 	const BYTE* pSrcData;
 	BYTE* pDstData;
@@ -151,30 +150,28 @@ static BOOL xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	{
 		if (bpp < 32)
 		{
-			status = interleaved_decompress(context->codecs->interleaved,
-			                                pSrcData, SrcSize, bpp,
-			                                pDstData, xfc->format,
-			                                -1, 0, 0, width, height,
-			                                &context->gdi->palette);
+			if (!interleaved_decompress(context->codecs->interleaved,
+			                            pSrcData, SrcSize, bpp,
+			                            pDstData, xfc->format,
+			                            -1, 0, 0, width, height,
+			                            &context->gdi->palette))
+				return FALSE;
 		}
 		else
 		{
-			status = planar_decompress(context->codecs->planar, pSrcData, SrcSize,
-			                           pDstData, xfc->format, -1, 0, 0, width, height, TRUE);
-		}
-
-		if (status < 0)
-		{
-			WLog_ERR(TAG, "Bitmap Decompression Failed");
-			return FALSE;
+			if (!planar_decompress(context->codecs->planar, pSrcData, SrcSize,
+			                       pDstData, xfc->format, -1, 0, 0, width, height, TRUE))
+				return FALSE;
 		}
 	}
 	else
 	{
 		SrcFormat = gdi_get_pixel_format(bpp, TRUE);
-		status = freerdp_image_copy(pDstData, xfc->format, -1, 0, 0,
-		                            width, height, pSrcData,
-		                            SrcFormat, -1, 0, 0, &context->gdi->palette);
+
+		if (!freerdp_image_copy(pDstData, xfc->format, -1, 0, 0,
+		                        width, height, pSrcData,
+		                        SrcFormat, -1, 0, 0, &context->gdi->palette))
+			return FALSE;
 	}
 
 	bitmap->compressed = FALSE;

@@ -318,7 +318,6 @@ Pixmap xf_mono_bitmap_new(xfContext* xfc, int width, int height, BYTE* data)
 BOOL xf_gdi_bitmap_update(rdpContext* context,
                           const BITMAP_UPDATE* bitmapUpdate)
 {
-	int status;
 	int nXDst;
 	int nYDst;
 	int nXSrc;
@@ -359,25 +358,21 @@ BOOL xf_gdi_bitmap_update(rdpContext* context,
 
 			if (bitsPerPixel < 32)
 			{
-				status = interleaved_decompress(codecs->interleaved,
-				                                pSrcData, SrcSize,
-				                                bitsPerPixel,
-				                                pDstData,
-				                                xfc->format, -1,
-				                                0, 0,
-				                                nWidth, nHeight,
-				                                &xfc->context.gdi->palette);
+				if (!interleaved_decompress(codecs->interleaved,
+				                            pSrcData, SrcSize,
+				                            bitsPerPixel,
+				                            pDstData,
+				                            xfc->format, -1,
+				                            0, 0,
+				                            nWidth, nHeight,
+				                            &xfc->context.gdi->palette))
+					return FALSE;
 			}
 			else
 			{
-				status = planar_decompress(codecs->planar, pSrcData, SrcSize, pDstData,
-				                           xfc->format, -1, 0, 0, nWidth, nHeight, TRUE);
-			}
-
-			if (status < 0)
-			{
-				WLog_ERR(TAG, "bitmap decompression failure");
-				return FALSE;
+				if (!planar_decompress(codecs->planar, pSrcData, SrcSize, pDstData,
+				                       xfc->format, -1, 0, 0, nWidth, nHeight, TRUE))
+					return FALSE;
 			}
 
 			pSrcData = xfc->bitmap_buffer;
@@ -385,9 +380,12 @@ BOOL xf_gdi_bitmap_update(rdpContext* context,
 		else
 		{
 			pDstData = xfc->bitmap_buffer;
-			status = freerdp_image_copy(pDstData, xfc->format, -1, 0, 0,
-			                            nWidth, nHeight, pSrcData, SrcFormat,
-			                            -1, 0, 0, &xfc->context.gdi->palette);
+
+			if (!freerdp_image_copy(pDstData, xfc->format, -1, 0, 0,
+			                        nWidth, nHeight, pSrcData, SrcFormat,
+			                        -1, 0, 0, &xfc->context.gdi->palette))
+				return FALSE;
+
 			pSrcData = xfc->bitmap_buffer;
 		}
 
@@ -582,10 +580,24 @@ static BOOL xf_gdi_opaque_rect(rdpContext* context,
                                const OPAQUE_RECT_ORDER* opaque_rect)
 {
 	UINT32 color;
+	rdpGdi* gdi = context->gdi;
 	xfContext* xfc = (xfContext*) context;
 	BOOL ret = TRUE;
+	UINT32 SrcFormat = gdi_get_pixel_format(context->settings->ColorDepth, FALSE);
 	xf_lock_x11(xfc, FALSE);
-	color = xf_convert_rdp_order_color(xfc, opaque_rect->color);
+
+	if (GetBitsPerPixel(SrcFormat) > 8)
+	{
+		SrcFormat = PIXEL_FORMAT_RGB24;
+		color = GetColor(SrcFormat,
+		                 opaque_rect->color & 0xFF,
+		                 (opaque_rect->color >> 8) & 0xFF,
+		                 (opaque_rect->color >> 16) & 0xFF,
+		                 0xFF);
+	}
+
+	color = ConvertColor(opaque_rect->color, SrcFormat,
+	                     gdi->drawing->hdc->format, &gdi->palette);
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 	XSetForeground(xfc->display, xfc->gc, color);
@@ -606,19 +618,32 @@ static BOOL xf_gdi_multi_opaque_rect(rdpContext* context,
                                      const MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect)
 {
 	UINT32 i;
-	UINT32 color;
-	const DELTA_RECT* rectangle;
 	xfContext* xfc = (xfContext*) context;
 	BOOL ret = TRUE;
+	rdpGdi* gdi = context->gdi;
+	UINT32 color;
+	UINT32 SrcFormat = gdi_get_pixel_format(context->settings->ColorDepth, FALSE);
+
+	if (GetBitsPerPixel(SrcFormat) > 8)
+	{
+		SrcFormat = PIXEL_FORMAT_RGB24;
+		color = GetColor(SrcFormat,
+		                 multi_opaque_rect->color & 0xFF,
+		                 (multi_opaque_rect->color >> 8) & 0xFF,
+		                 (multi_opaque_rect->color >> 16) & 0xFF,
+		                 0xFF);
+	}
+
+	color = ConvertColor(multi_opaque_rect->color, SrcFormat,
+	                     gdi->drawing->hdc->format, &gdi->palette);
 	xf_lock_x11(xfc, FALSE);
-	color = xf_convert_rdp_order_color(xfc, multi_opaque_rect->color);
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 	XSetForeground(xfc->display, xfc->gc, color);
 
 	for (i = 1; i < multi_opaque_rect->numRectangles + 1; i++)
 	{
-		rectangle = &multi_opaque_rect->rectangles[i];
+		const DELTA_RECT* rectangle = &multi_opaque_rect->rectangles[i];
 		XFillRectangle(xfc->display, xfc->drawing, xfc->gc,
 		               rectangle->left, rectangle->top,
 		               rectangle->width, rectangle->height);

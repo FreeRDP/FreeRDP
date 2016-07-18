@@ -128,7 +128,6 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
                                   UINT32 bpp, UINT32 length, BOOL compressed,
                                   UINT32 codecId)
 {
-	int status;
 	UINT16 size;
 	UINT32 SrcSize = length;
 	UINT32 SrcFormat;
@@ -149,32 +148,30 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	{
 		if (bpp < 32)
 		{
-			status = interleaved_decompress(context->codecs->interleaved,
-			                                pSrcData, SrcSize,
-			                                bpp,
-			                                bitmap->data, bitmap->format,
-			                                0, 0, 0, width, height,
-			                                &gdi->palette);
+			if (!interleaved_decompress(context->codecs->interleaved,
+			                            pSrcData, SrcSize,
+			                            bpp,
+			                            bitmap->data, bitmap->format,
+			                            0, 0, 0, width, height,
+			                            &gdi->palette))
+				return FALSE;
 		}
 		else
 		{
-			status = planar_decompress(context->codecs->planar, pSrcData, SrcSize,
-			                           bitmap->data, bitmap->format, 0, 0, 0,
-			                           width, height, TRUE);
-		}
-
-		if (status < 0)
-		{
-			WLog_ERR(TAG, "Bitmap Decompression Failed");
-			return FALSE;
+			if (!planar_decompress(context->codecs->planar, pSrcData, SrcSize,
+			                       bitmap->data, bitmap->format, 0, 0, 0,
+			                       width, height, TRUE))
+				return FALSE;
 		}
 	}
 	else
 	{
 		SrcFormat = gdi_get_pixel_format(bpp, TRUE);
-		status = freerdp_image_copy(bitmap->data, bitmap->format, 0, 0, 0,
-		                            width, height, pSrcData, SrcFormat,
-		                            0, 0, 0, &gdi->palette);
+
+		if (!freerdp_image_copy(bitmap->data, bitmap->format, 0, 0, 0,
+		                        width, height, pSrcData, SrcFormat,
+		                        0, 0, 0, &gdi->palette))
+			return FALSE;
 	}
 
 	return TRUE;

@@ -35,7 +35,7 @@
 
 static rdpGlyph* glyph_cache_get(rdpGlyphCache* glyph_cache, UINT32 id,
                                  UINT32 index);
-static void glyph_cache_put(rdpGlyphCache* glyph_cache, UINT32 id, UINT32 index,
+static BOOL glyph_cache_put(rdpGlyphCache* glyph_cache, UINT32 id, UINT32 index,
                             rdpGlyph* entry);
 
 static void* glyph_cache_fragment_get(rdpGlyphCache* glyph, UINT32 index,
@@ -434,12 +434,11 @@ static BOOL update_gdi_cache_glyph_v2(rdpContext* context,
 {
 	UINT32 i;
 	rdpGlyph* glyph;
-	const GLYPH_DATA_V2* glyphData;
 	rdpCache* cache = context->cache;
 
 	for (i = 0; i < cacheGlyphV2->cGlyphs; i++)
 	{
-		glyphData = &cacheGlyphV2->glyphData[i];
+		const GLYPH_DATA_V2* glyphData = &cacheGlyphV2->glyphData[i];
 		glyph = Glyph_Alloc(context);
 
 		if (!glyph)
@@ -454,7 +453,13 @@ static BOOL update_gdi_cache_glyph_v2(rdpContext* context,
 		glyph->cy = glyphData->cy;
 		glyph->cb = glyphData->cb;
 		glyph->aj = glyphData->aj;
-		Glyph_New(context, glyph);
+
+		if (!Glyph_New(context, glyph))
+		{
+			Glyph_Free(context, glyph);
+			return FALSE;
+		}
+
 		glyph_cache_put(cache->glyph, cacheGlyphV2->cacheId, glyphData->cacheIndex,
 		                glyph);
 	}
@@ -487,7 +492,7 @@ rdpGlyph* glyph_cache_get(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index)
 	return glyph;
 }
 
-void glyph_cache_put(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index,
+BOOL glyph_cache_put(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index,
                      rdpGlyph* glyph)
 {
 	rdpGlyph* prevGlyph;
@@ -495,13 +500,13 @@ void glyph_cache_put(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index,
 	if (id > 9)
 	{
 		WLog_ERR(TAG, "invalid glyph cache id: %d", id);
-		return;
+		return FALSE;
 	}
 
 	if (index > glyphCache->glyphCache[id].number)
 	{
 		WLog_ERR(TAG, "invalid glyph cache index: %d in cache id: %d", index, id);
-		return;
+		return FALSE;
 	}
 
 	WLog_DBG(TAG, "GlyphCachePut: id: %d index: %d", id, index);
@@ -515,6 +520,7 @@ void glyph_cache_put(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index,
 	}
 
 	glyphCache->glyphCache[id].entries[index] = glyph;
+	return TRUE;
 }
 
 void* glyph_cache_fragment_get(rdpGlyphCache* glyphCache, UINT32 index,
