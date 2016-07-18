@@ -258,18 +258,29 @@ static BOOL gdi_Glyph_BeginDraw(rdpContext* context, UINT32 x, UINT32 y,
 	HGDI_BRUSH brush;
 	rdpGdi* gdi = context->gdi;
 	BOOL ret = FALSE;
-	UINT32 SrcFormat = gdi_get_pixel_format(context->settings->ColorDepth, FALSE);
-	/* TODO: handle fOpRedundant! See xf_Glyph_BeginDraw() */
-	bgcolor = ConvertColor(bgcolor, SrcFormat, gdi->drawing->hdc->format,
-	                       &gdi->palette);
-	fgcolor = ConvertColor(fgcolor, SrcFormat, gdi->drawing->hdc->format,
-	                       &gdi->palette);
+
+	if (!gdi_decode_color(gdi, bgcolor, &bgcolor, NULL))
+		return FALSE;
+
+	if (!gdi_decode_color(gdi, fgcolor, &fgcolor, NULL))
+		return FALSE;
 
 	if (!(brush = gdi_CreateSolidBrush(fgcolor)))
 		goto out;
 
 	gdi_CRgnToRect(x, y, width, height, &rect);
-	ret = gdi_FillRect(gdi->drawing->hdc, &rect, brush);
+
+	switch (fOpRedundant)
+	{
+		case 0:
+			ret = gdi_FillRect(gdi->drawing->hdc, &rect, brush);
+			break;
+
+		default:
+			ret = TRUE;
+			break;
+	}
+
 	gdi_DeleteObject((HGDIOBJECT) brush);
 out:
 	gdi->textColor = gdi_SetTextColor(gdi->drawing->hdc, bgcolor);

@@ -318,8 +318,8 @@ static const BYTE GDI_BS_HATCHED_PATTERNS[] =
 	0x7E, 0xBD, 0xDB, 0xE7, 0xE7, 0xDB, 0xBD, 0x7E /* HS_DIACROSS */
 };
 
-static INLINE BOOL decode_color(rdpGdi* gdi, const UINT32 srcColor,
-                                UINT32* color, UINT32* format)
+INLINE BOOL gdi_decode_color(rdpGdi* gdi, const UINT32 srcColor,
+                             UINT32* color, UINT32* format)
 {
 	UINT32 SrcFormat = gdi_get_pixel_format(gdi->context->settings->ColorDepth,
 	                                        FALSE);
@@ -574,7 +574,12 @@ static BOOL gdi_set_bounds(rdpContext* context, const rdpBounds* bounds)
 
 static BOOL gdi_dstblt(rdpContext* context, const DSTBLT_ORDER* dstblt)
 {
-	rdpGdi* gdi = context->gdi;
+	rdpGdi* gdi;
+
+	if (!context || !dstblt)
+		return FALSE;
+
+	gdi = context->gdi;
 	return gdi_BitBlt(gdi->drawing->hdc, dstblt->nLeftRect, dstblt->nTopRect,
 	                  dstblt->nWidth, dstblt->nHeight, NULL, 0, 0,
 	                  gdi_rop3_code(dstblt->bRop), &gdi->palette);
@@ -593,10 +598,10 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	UINT32 nXSrc = 0;
 	UINT32 nYSrc = 0;
 
-	if (!decode_color(gdi, patblt->foreColor, &foreColor, NULL))
+	if (!gdi_decode_color(gdi, patblt->foreColor, &foreColor, NULL))
 		return FALSE;
 
-	if (!decode_color(gdi, patblt->backColor, &backColor, NULL))
+	if (!gdi_decode_color(gdi, patblt->backColor, &backColor, NULL))
 		return FALSE;
 
 	originalColor = gdi_SetTextColor(gdi->drawing->hdc, foreColor);
@@ -778,7 +783,7 @@ static BOOL gdi_opaque_rect(rdpContext* context,
 	gdi_CRgnToRect(opaque_rect->nLeftRect, opaque_rect->nTopRect,
 	               opaque_rect->nWidth, opaque_rect->nHeight, &rect);
 
-	if (!decode_color(gdi, opaque_rect->color, &brush_color, NULL))
+	if (!gdi_decode_color(gdi, opaque_rect->color, &brush_color, NULL))
 		return FALSE;
 
 	if (!(hBrush = gdi_CreateSolidBrush(brush_color)))
@@ -799,7 +804,7 @@ static BOOL gdi_multi_opaque_rect(rdpContext* context,
 	rdpGdi* gdi = context->gdi;
 	BOOL ret = TRUE;
 
-	if (!decode_color(gdi, multi_opaque_rect->color, &brush_color, NULL))
+	if (!gdi_decode_color(gdi, multi_opaque_rect->color, &brush_color, NULL))
 		return FALSE;
 
 	hBrush = gdi_CreateSolidBrush(brush_color);
@@ -826,7 +831,7 @@ static BOOL gdi_line_to(rdpContext* context, const LINE_TO_ORDER* lineTo)
 	UINT32 SrcFormat;
 	rdpGdi* gdi = context->gdi;
 
-	if (!decode_color(gdi, lineTo->backColor, &color, &SrcFormat))
+	if (!gdi_decode_color(gdi, lineTo->backColor, &color, &SrcFormat))
 		return FALSE;
 
 	if (!(hPen = gdi_CreatePen(lineTo->penStyle, lineTo->penWidth, color,
@@ -852,7 +857,7 @@ static BOOL gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 	UINT32 SrcFormat;
 	rdpGdi* gdi = context->gdi;
 
-	if (!decode_color(gdi, polyline->penColor, &color, &SrcFormat))
+	if (!gdi_decode_color(gdi, polyline->penColor, &color, &SrcFormat))
 		return FALSE;
 
 	if (!(hPen = gdi_CreatePen(GDI_PS_SOLID, 1, color, SrcFormat, &gdi->palette)))
@@ -898,10 +903,10 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	UINT32 backColor;
 	UINT32 originalColor;
 
-	if (!decode_color(gdi, mem3blt->foreColor, &foreColor, NULL))
+	if (!gdi_decode_color(gdi, mem3blt->foreColor, &foreColor, NULL))
 		return FALSE;
 
-	if (!decode_color(gdi, mem3blt->backColor, &backColor, NULL))
+	if (!gdi_decode_color(gdi, mem3blt->backColor, &backColor, NULL))
 		return FALSE;
 
 	originalColor = gdi_SetTextColor(gdi->drawing->hdc, foreColor);
@@ -1157,10 +1162,16 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 	update->altsec->FrameMarker = gdi_frame_marker;
 }
 
-static BOOL gdi_init_primary(rdpGdi* gdi, UINT32 stride, BYTE* buffer,
-                             void (*pfree)(void*))
+static BOOL gdi_init_primary(rdpGdi* gdi, UINT32 stride, UINT32 format,
+                             BYTE* buffer, void (*pfree)(void*))
 {
 	gdi->primary = (gdiBitmap*) calloc(1, sizeof(gdiBitmap));
+
+	if (format > 0)
+		gdi->dstFormat = format;
+
+	if (stride > 0)
+		gdi->stride = stride;
 
 	if (!gdi->primary)
 		goto fail_primary;
@@ -1226,7 +1237,7 @@ BOOL gdi_resize(rdpGdi* gdi, UINT32 width, UINT32 height)
 }
 
 BOOL gdi_resize_ex(rdpGdi* gdi, UINT32 width, UINT32 height,
-                   INT32 stride, INT32 format, BYTE* buffer,
+                   UINT32 stride, UINT32 format, BYTE* buffer,
                    void (*pfree)(void*))
 {
 	if (!gdi || !gdi->primary)
@@ -1243,7 +1254,7 @@ BOOL gdi_resize_ex(rdpGdi* gdi, UINT32 width, UINT32 height,
 	gdi_bitmap_free_ex(gdi->primary);
 	gdi->primary = NULL;
 	gdi->primary_buffer = NULL;
-	return gdi_init_primary(gdi, stride, buffer, pfree);
+	return gdi_init_primary(gdi, stride, format, buffer, pfree);
 }
 
 /**
@@ -1282,7 +1293,7 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 
 	gdi->hdc->format = gdi->dstFormat;
 
-	if (!gdi_init_primary(gdi, stride, buffer, pfree))
+	if (!gdi_init_primary(gdi, stride, gdi->dstFormat, buffer, pfree))
 		goto fail;
 
 	if (!(context->cache = cache_new(instance->settings)))

@@ -5,11 +5,13 @@
 #include <freerdp/gdi/pen.h>
 #include <freerdp/gdi/region.h>
 #include <freerdp/gdi/bitmap.h>
+#include <freerdp/gdi/gdi.h>
 
 #include <winpr/crt.h>
 
 #include "line.h"
 #include "brush.h"
+#include "drawing.h"
 
 static int test_gdi_GetDC(void)
 {
@@ -344,7 +346,7 @@ static int test_gdi_MoveToEx(void)
 	HGDI_PEN hPen;
 	HGDI_POINT prevPoint;
 	const UINT32 format = PIXEL_FORMAT_RGBA32;
-	rdpPalette* palette = NULL;
+	gdiPalette* palette = NULL;
 
 	if (!(hdc = gdi_GetDC()))
 	{

@@ -80,7 +80,7 @@ static const BYTE ellipse_case_3[256] =
 int TestGdiEllipse(int argc, char* argv[])
 {
 	int rc = -1;
-	UINT32 i, j;
+	UINT32 i;
 	HGDI_DC hdc;
 	HGDI_PEN pen;
 	HGDI_BITMAP hBmp;
@@ -113,7 +113,7 @@ int TestGdiEllipse(int argc, char* argv[])
 	for (i = 0; i < number_formats; i++)
 	{
 		const UINT32 format = colorFormats[i];
-		rdpPalette* hPalette = &g;
+		gdiPalette* hPalette = &g;
 		g.format = format;
 
 		for (i = 0; i < 256; i++)

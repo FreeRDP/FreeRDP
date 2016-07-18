@@ -44,9 +44,10 @@
  */
 
 HGDI_RGN gdi_CreateRectRgn(UINT32 nLeftRect, UINT32 nTopRect,
-			   UINT32 nRightRect, UINT32 nBottomRect)
+                           UINT32 nRightRect, UINT32 nBottomRect)
 {
 	HGDI_RGN hRgn = (HGDI_RGN) calloc(1, sizeof(GDI_RGN));
+
 	if (!hRgn)
 		return NULL;
 
@@ -69,9 +70,10 @@ HGDI_RGN gdi_CreateRectRgn(UINT32 nLeftRect, UINT32 nTopRect,
  */
 
 HGDI_RECT gdi_CreateRect(UINT32 xLeft, UINT32 yTop,
-			 UINT32 xRight, UINT32 yBottom)
+                         UINT32 xRight, UINT32 yBottom)
 {
 	HGDI_RECT hRect = (HGDI_RECT) calloc(1, sizeof(GDI_RECT));
+
 	if (!hRect)
 		return NULL;
 
@@ -107,7 +109,7 @@ INLINE void gdi_RectToRgn(HGDI_RECT rect, HGDI_RGN rgn)
  */
 
 INLINE void gdi_CRectToRgn(UINT32 left, UINT32 top,
-			   UINT32 right, UINT32 bottom, HGDI_RGN rgn)
+                           UINT32 right, UINT32 bottom, HGDI_RGN rgn)
 {
 	rgn->x = left;
 	rgn->y = top;
@@ -124,8 +126,8 @@ INLINE void gdi_CRectToRgn(UINT32 left, UINT32 top,
  * @param h height
  */
 
-INLINE void gdi_RectToCRgn(const HGDI_RECT rect, UINT32 *x, UINT32 *y,
-			   UINT32 *w, UINT32 *h)
+INLINE void gdi_RectToCRgn(const HGDI_RECT rect, UINT32* x, UINT32* y,
+                           UINT32* w, UINT32* h)
 {
 	*x = rect->left;
 	*y = rect->top;
@@ -145,8 +147,9 @@ INLINE void gdi_RectToCRgn(const HGDI_RECT rect, UINT32 *x, UINT32 *y,
  * @param h height
  */
 
-INLINE void gdi_CRectToCRgn(UINT32 left, UINT32 top, UINT32 right, UINT32 bottom,
-			    UINT32 *x, UINT32 *y, UINT32 *w, UINT32 *h)
+INLINE void gdi_CRectToCRgn(UINT32 left, UINT32 top, UINT32 right,
+                            UINT32 bottom,
+                            UINT32* x, UINT32* y, UINT32* w, UINT32* h)
 {
 	*x = left;
 	*y = top;
@@ -177,12 +180,18 @@ INLINE void gdi_RgnToRect(HGDI_RGN rgn, HGDI_RECT rect)
  * @param rect destination rectangle
  */
 
-INLINE void gdi_CRgnToRect(UINT32 x, UINT32 y, UINT32 w, UINT32 h, HGDI_RECT rect)
+INLINE void gdi_CRgnToRect(UINT32 x, UINT32 y, UINT32 w, UINT32 h,
+                           HGDI_RECT rect)
 {
+	memset(rect, 0, sizeof(GDI_RECT));
 	rect->left = x;
 	rect->top = y;
-	rect->right = x + w - 1;
-	rect->bottom = y + h - 1;
+
+	if (w > 0)
+		rect->right = x + w - 1;
+
+	if (h > 0)
+		rect->bottom = y + h - 1;
 }
 
 /**
@@ -194,8 +203,8 @@ INLINE void gdi_CRgnToRect(UINT32 x, UINT32 y, UINT32 w, UINT32 h, HGDI_RECT rec
  * @param bottom y2
  */
 
-INLINE void gdi_RgnToCRect(HGDI_RGN rgn, UINT32 *left, UINT32 *top,
-			   UINT32 *right, UINT32 *bottom)
+INLINE void gdi_RgnToCRect(HGDI_RGN rgn, UINT32* left, UINT32* top,
+                           UINT32* right, UINT32* bottom)
 {
 	*left = rgn->x;
 	*top = rgn->y;
@@ -216,7 +225,7 @@ INLINE void gdi_RgnToCRect(HGDI_RGN rgn, UINT32 *left, UINT32 *top,
  */
 
 INLINE void gdi_CRgnToCRect(UINT32 x, UINT32 y, UINT32 w, UINT32 h,
-			    UINT32 *left, UINT32 *top, UINT32 *right, UINT32 *bottom)
+                            UINT32* left, UINT32* top, UINT32* right, UINT32* bottom)
 {
 	*left = x;
 	*top = y;
@@ -236,16 +245,14 @@ INLINE void gdi_CRgnToCRect(UINT32 x, UINT32 y, UINT32 w, UINT32 h,
  */
 
 INLINE BOOL gdi_CopyOverlap(UINT32 x, UINT32 y, UINT32 width, UINT32 height,
-			    UINT32 srcx, UINT32 srcy)
+                            UINT32 srcx, UINT32 srcy)
 {
 	GDI_RECT dst;
 	GDI_RECT src;
-
 	gdi_CRgnToRect(x, y, width, height, &dst);
 	gdi_CRgnToRect(srcx, srcy, width, height, &src);
-
 	return (dst.right >= src.left && dst.left <= src.right &&
-		dst.bottom >= src.top && dst.top <= src.bottom) ? TRUE : FALSE;
+	        dst.bottom >= src.top && dst.top <= src.bottom) ? TRUE : FALSE;
 }
 
 /**
@@ -260,7 +267,7 @@ INLINE BOOL gdi_CopyOverlap(UINT32 x, UINT32 y, UINT32 width, UINT32 height,
  */
 
 INLINE BOOL gdi_SetRect(HGDI_RECT rc, UINT32 xLeft, UINT32 yTop,
-			UINT32 xRight, UINT32 yBottom)
+                        UINT32 xRight, UINT32 yBottom)
 {
 	rc->left = xLeft;
 	rc->top = yTop;
@@ -280,7 +287,7 @@ INLINE BOOL gdi_SetRect(HGDI_RECT rc, UINT32 xLeft, UINT32 yTop,
  */
 
 INLINE BOOL gdi_SetRgn(HGDI_RGN hRgn, UINT32 nXLeft, UINT32 nYLeft,
-		       UINT32 nWidth, UINT32 nHeight)
+                       UINT32 nWidth, UINT32 nHeight)
 {
 	hRgn->x = nXLeft;
 	hRgn->y = nYLeft;
@@ -301,7 +308,7 @@ INLINE BOOL gdi_SetRgn(HGDI_RGN hRgn, UINT32 nXLeft, UINT32 nYLeft,
  */
 
 INLINE BOOL gdi_SetRectRgn(HGDI_RGN hRgn, UINT32 nLeftRect, UINT32 nTopRect,
-			   UINT32 nRightRect, UINT32 nBottomRect)
+                           UINT32 nRightRect, UINT32 nBottomRect)
 {
 	gdi_CRectToRgn(nLeftRect, nTopRect, nRightRect, nBottomRect, hRgn);
 	hRgn->null = 0;
@@ -361,7 +368,6 @@ INLINE BOOL gdi_PtInRect(HGDI_RECT rc, UINT32 x, UINT32 y)
 	 * points on the left and top sides are considered in,
 	 * while points on the right and bottom sides are considered out
 	 */
-
 	if (x >= rc->left && x <= rc->right)
 	{
 		if (y >= rc->top && y <= rc->bottom)
@@ -384,7 +390,8 @@ INLINE BOOL gdi_PtInRect(HGDI_RECT rc, UINT32 x, UINT32 y)
  * @return nonzero on success, 0 otherwise
  */
 
-INLINE BOOL gdi_InvalidateRegion(HGDI_DC hdc, UINT32 x, UINT32 y, UINT32 w, UINT32 h)
+INLINE BOOL gdi_InvalidateRegion(HGDI_DC hdc, UINT32 x, UINT32 y, UINT32 w,
+                                 UINT32 h)
 {
 	GDI_RECT inv;
 	GDI_RECT rgn;
@@ -406,18 +413,18 @@ INLINE BOOL gdi_InvalidateRegion(HGDI_DC hdc, UINT32 x, UINT32 y, UINT32 w, UINT
 	{
 		int new_cnt;
 		HGDI_RGN new_rgn;
-
 		new_cnt = hdc->hwnd->count * 2;
 		new_rgn = (HGDI_RGN) realloc(cinvalid, sizeof(GDI_RGN) * new_cnt);
+
 		if (!new_rgn)
 			return FALSE;
+
 		hdc->hwnd->count = new_cnt;
 		cinvalid = new_rgn;
 	}
 
 	gdi_SetRgn(&cinvalid[hdc->hwnd->ninvalid++], x, y, w, h);
 	hdc->hwnd->cinvalid = cinvalid;
-
 	invalid = hdc->hwnd->invalid;
 
 	if (invalid->null)
@@ -452,6 +459,5 @@ INLINE BOOL gdi_InvalidateRegion(HGDI_DC hdc, UINT32 x, UINT32 y, UINT32 w, UINT
 		inv.bottom = rgn.bottom;
 
 	gdi_RectToRgn(&inv, invalid);
-
 	return TRUE;
 }
