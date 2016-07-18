@@ -158,14 +158,21 @@ rdpGlyph* Glyph_Alloc(rdpContext* context)
 {
 	rdpGlyph* glyph;
 	rdpGraphics* graphics;
+
+	if (!context || !context->graphics)
+		return NULL;
+
 	graphics = context->graphics;
+
+	if (!graphics->Glyph_Prototype)
+		return NULL;
+
 	glyph = (rdpGlyph*) calloc(1, graphics->Glyph_Prototype->size);
 
-	if (glyph)
-	{
-		CopyMemory(glyph, graphics->Glyph_Prototype, sizeof(rdpGlyph));
-	}
+	if (!glyph)
+		return NULL;
 
+	*glyph = *graphics->Glyph_Prototype;
 	return glyph;
 }
 

@@ -36,8 +36,6 @@
 
 #define TAG FREERDP_TAG("core.orders")
 
-#ifdef WITH_DEBUG_ORDERS
-
 static const char* const PRIMARY_DRAWING_ORDER_STRINGS[] =
 {
 	"DstBlt",
@@ -101,8 +99,6 @@ static const char* const ALTSEC_DRAWING_ORDER_STRINGS[] =
 };
 
 #define ALTSEC_DRAWING_ORDER_COUNT	(ARRAYSIZE(ALTSEC_DRAWING_ORDER_STRINGS))
-
-#endif /* WITH_DEBUG_ORDERS */
 
 const BYTE PRIMARY_DRAWING_ORDER_FIELD_BYTES[] =
 {
@@ -187,7 +183,7 @@ static INLINE BOOL update_read_coord(wStream* s, INT32* coord, BOOL delta)
 		if (Stream_GetRemainingLength(s) < 1)
 			return FALSE;
 
-		Stream_Read_UINT8(s, lsi8);
+		Stream_Read_INT8(s, lsi8);
 		*coord += lsi8;
 	}
 	else
@@ -195,7 +191,7 @@ static INLINE BOOL update_read_coord(wStream* s, INT32* coord, BOOL delta)
 		if (Stream_GetRemainingLength(s) < 2)
 			return FALSE;
 
-		Stream_Read_UINT16(s, lsi16);
+		Stream_Read_INT16(s, lsi16);
 		*coord = lsi16;
 	}
 
@@ -1279,6 +1275,9 @@ static BOOL update_read_polyline_order(wStream* s, ORDER_INFO* orderInfo,
 static BOOL update_read_memblt_order(wStream* s, ORDER_INFO* orderInfo,
                                      MEMBLT_ORDER* memblt)
 {
+	if (!s || !orderInfo || !memblt)
+		return FALSE;
+
 	ORDER_FIELD_UINT16(1, memblt->cacheId);
 	ORDER_FIELD_COORD(2, memblt->nLeftRect);
 	ORDER_FIELD_COORD(3, memblt->nTopRect);
@@ -2955,10 +2954,8 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 	}
 
 	orderInfo->deltaCoordinates = (flags & ORDER_DELTA_COORDINATES) ? TRUE : FALSE;
-#ifdef WITH_DEBUG_ORDERS
-	WLog_DBG(TAG,  "%s Primary Drawing Order (0x%02X)",
-	         PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType);
-#endif
+	WLog_Print(update->log, WLOG_DEBUG,  "%s Primary Drawing Order (0x%02X)",
+	           PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType);
 
 	switch (orderInfo->orderType)
 	{
@@ -2969,7 +2966,6 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "DstBlt");
 			IFCALL(primary->DstBlt, context, &primary->dstblt);
 			break;
 
@@ -2980,7 +2976,6 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "PatBlt");
 			IFCALL(primary->PatBlt, context, &primary->patblt);
 			break;
 
@@ -2991,7 +2986,6 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "ScrBlt");
 			IFCALL(primary->ScrBlt, context, &primary->scrblt);
 			break;
 
@@ -3003,7 +2997,6 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "OpaqueRect");
 			IFCALL(primary->OpaqueRect, context, &primary->opaque_rect);
 			break;
 
@@ -3015,7 +3008,6 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "DrawNineGrid");
 			IFCALL(primary->DrawNineGrid, context, &primary->draw_nine_grid);
 			break;
 
@@ -3027,7 +3019,6 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "MultiDstBlt");
 			IFCALL(primary->MultiDstBlt, context, &primary->multi_dstblt);
 			break;
 
@@ -3039,7 +3030,6 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "MultiPatBlt");
 			IFCALL(primary->MultiPatBlt, context, &primary->multi_patblt);
 			break;
 
@@ -3051,7 +3041,6 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "MultiScrBlt");
 			IFCALL(primary->MultiScrBlt, context, &primary->multi_scrblt);
 			break;
 
@@ -3064,7 +3053,6 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "MultiOpaqueRect");
 			IFCALL(primary->MultiOpaqueRect, context, &primary->multi_opaque_rect);
 			break;
 
@@ -3077,7 +3065,6 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "MultiDrawNineGrid");
 			IFCALL(primary->MultiDrawNineGrid, context, &primary->multi_draw_nine_grid);
 			break;
 
@@ -3088,7 +3075,6 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "LineTo");
 			IFCALL(primary->LineTo, context, &primary->line_to);
 			break;
 
@@ -3099,7 +3085,6 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "Polyline");
 			IFCALL(primary->Polyline, context, &primary->polyline);
 			break;
 
@@ -3110,7 +3095,6 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "MemBlt");
 			IFCALL(primary->MemBlt, context, &primary->memblt);
 			break;
 
@@ -3121,7 +3105,6 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "Mem3Blt");
 			IFCALL(primary->Mem3Blt, context, &primary->mem3blt);
 			break;
 
@@ -3133,7 +3116,6 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "SaveBitmap");
 			IFCALL(primary->SaveBitmap, context, &primary->save_bitmap);
 			break;
 
@@ -3145,7 +3127,6 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "GlyphIndex");
 			IFCALL(primary->GlyphIndex, context, &primary->glyph_index);
 			break;
 
@@ -3156,7 +3137,6 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "FastIndex");
 			IFCALL(primary->FastIndex, context, &primary->fast_index);
 			break;
 
@@ -3167,7 +3147,6 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "FastGlyph");
 			IFCALL(primary->FastGlyph, context, &primary->fast_glyph);
 			break;
 
@@ -3178,7 +3157,6 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "PolygonSC");
 			IFCALL(primary->PolygonSC, context, &primary->polygon_sc);
 			break;
 
@@ -3189,7 +3167,6 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "PolygonCB");
 			IFCALL(primary->PolygonCB, context, &primary->polygon_cb);
 			break;
 
@@ -3200,7 +3177,6 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "EllipseSC");
 			IFCALL(primary->EllipseSC, context, &primary->ellipse_sc);
 			break;
 
@@ -3211,7 +3187,6 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "EllipseCB");
 			IFCALL(primary->EllipseCB, context, &primary->ellipse_cb);
 			break;
 
@@ -3245,15 +3220,13 @@ BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flags)
 	Stream_Read_UINT16(s, extraFlags); /* extraFlags (2 bytes) */
 	Stream_Read_UINT8(s, orderType); /* orderType (1 byte) */
 	next = Stream_Pointer(s) + ((INT16) orderLength) + 7;
-#ifdef WITH_DEBUG_ORDERS
 
 	if (orderType < SECONDARY_DRAWING_ORDER_COUNT)
-		WLog_DBG(TAG,  "%s Secondary Drawing Order (0x%02X)",
-		         SECONDARY_DRAWING_ORDER_STRINGS[orderType], orderType);
+		WLog_Print(update->log, WLOG_DEBUG,  "%s Secondary Drawing Order (0x%02X)",
+		           SECONDARY_DRAWING_ORDER_STRINGS[orderType], orderType);
 	else
-		WLog_DBG(TAG,  "Unknown Secondary Drawing Order (0x%02X)", orderType);
-
-#endif
+		WLog_Print(update->log, WLOG_DEBUG,  "Unknown Secondary Drawing Order (0x%02X)",
+		           orderType);
 
 	switch (orderType)
 	{
@@ -3266,7 +3239,6 @@ BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "CacheBitmapUncompressed");
 			IFCALL(secondary->CacheBitmap, context, &(secondary->cache_bitmap_order));
 			break;
 
@@ -3279,7 +3251,6 @@ BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "CacheBitmapCompressed");
 			IFCALL(secondary->CacheBitmap, context, &(secondary->cache_bitmap_order));
 			break;
 
@@ -3292,7 +3263,6 @@ BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "CacheBitmapUncompressedV2");
 			IFCALL(secondary->CacheBitmapV2, context, &(secondary->cache_bitmap_v2_order));
 			break;
 
@@ -3305,7 +3275,6 @@ BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "CacheBitmapCompressedV2");
 			IFCALL(secondary->CacheBitmapV2, context, &(secondary->cache_bitmap_v2_order));
 			break;
 
@@ -3318,7 +3287,6 @@ BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "CacheBitmapCompressedV3");
 			IFCALL(secondary->CacheBitmapV3, context, &(secondary->cache_bitmap_v3_order));
 			break;
 
@@ -3331,7 +3299,6 @@ BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "CacheColorTable");
 			IFCALL(secondary->CacheColorTable, context,
 			       &(secondary->cache_color_table_order));
 			break;
@@ -3347,7 +3314,6 @@ BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flags)
 					return FALSE;
 				}
 
-				WLog_Print(update->log, WLOG_DEBUG, "CacheGlyphV2");
 				IFCALL(secondary->CacheGlyphV2, context, &(secondary->cache_glyph_v2_order));
 			}
 			else
@@ -3360,7 +3326,6 @@ BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flags)
 					return FALSE;
 				}
 
-				WLog_Print(update->log, WLOG_DEBUG, "CacheGlyph");
 				IFCALL(secondary->CacheGlyph, context, &(secondary->cache_glyph_order));
 			}
 
@@ -3375,7 +3340,6 @@ BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flags)
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "CacheBrush");
 			IFCALL(secondary->CacheBrush, context, &(secondary->cache_brush_order));
 			break;
 
@@ -3393,15 +3357,14 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 	rdpContext* context = update->context;
 	rdpAltSecUpdate* altsec = update->altsec;
 	orderType = flags >>= 2; /* orderType is in higher 6 bits of flags field */
-#ifdef WITH_DEBUG_ORDERS
 
 	if (orderType < ALTSEC_DRAWING_ORDER_COUNT)
-		WLog_DBG(TAG, "%s Alternate Secondary Drawing Order (0x%02X)",
-		         ALTSEC_DRAWING_ORDER_STRINGS[orderType], orderType);
+		WLog_Print(update->log, WLOG_DEBUG,
+		           "%s Alternate Secondary Drawing Order (0x%02X)",
+		           ALTSEC_DRAWING_ORDER_STRINGS[orderType], orderType);
 	else
-		WLog_DBG(TAG, "Unknown Alternate Secondary Drawing Order: 0x%02X", orderType);
-
-#endif
+		WLog_Print(update->log, WLOG_DEBUG,
+		           "Unknown Alternate Secondary Drawing Order: 0x%02X", orderType);
 
 	switch (orderType)
 	{
@@ -3414,7 +3377,6 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "CreateOffscreenBitmap");
 			IFCALL(altsec->CreateOffscreenBitmap, context,
 			       &(altsec->create_offscreen_bitmap));
 			break;
@@ -3427,7 +3389,6 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "SwitchSurface");
 			IFCALL(altsec->SwitchSurface, context, &(altsec->switch_surface));
 			break;
 
@@ -3440,7 +3401,6 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "CreateNineGridBitmap");
 			IFCALL(altsec->CreateNineGridBitmap, context,
 			       &(altsec->create_nine_grid_bitmap));
 			break;
@@ -3453,8 +3413,6 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "AltSecFrameMarker: action: %s (%d)",
-			           (!altsec->frame_marker.action) ? "Begin" : "End", altsec->frame_marker.action);
 			IFCALL(altsec->FrameMarker, context, &(altsec->frame_marker));
 			break;
 
@@ -3466,7 +3424,6 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "StreamBitmapFirst");
 			IFCALL(altsec->StreamBitmapFirst, context, &(altsec->stream_bitmap_first));
 			break;
 
@@ -3478,7 +3435,6 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "StreamBitmapNext");
 			IFCALL(altsec->StreamBitmapNext, context, &(altsec->stream_bitmap_next));
 			break;
 
@@ -3490,7 +3446,6 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "DrawGdiPlusFirst");
 			IFCALL(altsec->DrawGdiPlusFirst, context, &(altsec->draw_gdiplus_first));
 			break;
 
@@ -3502,7 +3457,6 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "DrawGdiPlusNext");
 			IFCALL(altsec->DrawGdiPlusNext, context, &(altsec->draw_gdiplus_next));
 			break;
 
@@ -3514,7 +3468,6 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "DrawGdiPlusEnd");
 			IFCALL(altsec->DrawGdiPlusEnd, context, &(altsec->draw_gdiplus_end));
 			break;
 
@@ -3527,7 +3480,6 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "DrawGdiPlusCacheFirst");
 			IFCALL(altsec->DrawGdiPlusCacheFirst, context,
 			       &(altsec->draw_gdiplus_cache_first));
 			break;
@@ -3541,7 +3493,6 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "DrawGdiPlusCacheNext");
 			IFCALL(altsec->DrawGdiPlusCacheNext, context,
 			       &(altsec->draw_gdiplus_cache_next));
 			break;
@@ -3555,7 +3506,6 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 				return FALSE;
 			}
 
-			WLog_Print(update->log, WLOG_DEBUG, "DrawGdiPlusCacheEnd");
 			IFCALL(altsec->DrawGdiPlusCacheEnd, context, &(altsec->draw_gdiplus_cache_end));
 			break;
 

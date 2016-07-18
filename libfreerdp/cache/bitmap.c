@@ -240,7 +240,7 @@ static BOOL update_gdi_bitmap_update(rdpContext* context,
 
 	bitmap = cache->bitmap->bitmap;
 
-	for (i = 0; i < (int) bitmapUpdate->number; i++)
+	for (i = 0; i < bitmapUpdate->number; i++)
 	{
 		const BITMAP_DATA* bitmapData = &bitmapUpdate->rectangles[i];
 		bitmap->format = gdi_get_pixel_format(bitmapData->bitsPerPixel, FALSE);
