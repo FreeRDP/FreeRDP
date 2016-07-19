@@ -100,9 +100,7 @@ struct xf_context
 	GC gc;
 	int xfds;
 	int depth;
-	int sessionWidth;
-	int sessionHeight;
-	int srcBpp;
+
 	GC gc_mono;
 	BOOL invert;
 	UINT32 format;

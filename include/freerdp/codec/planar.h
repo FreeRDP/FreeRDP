@@ -119,9 +119,10 @@ FREERDP_API void freerdp_bitmap_planar_context_free(
 
 FREERDP_API BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
                                    const BYTE* pSrcData, UINT32 SrcSize,
+                                   UINT32 nSrcWidth, UINT32 nSrcHeight,
                                    BYTE* pDstData, UINT32 DstFormat,
                                    UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
-                                   UINT32 nWidth, UINT32 nHeight, BOOL vFlip);
+                                   UINT32 nDstWidth, UINT32 nDstHeight, BOOL vFlip);
 
 #ifdef __cplusplus
 }
