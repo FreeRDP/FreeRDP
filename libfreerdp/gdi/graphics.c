@@ -138,6 +138,8 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	UINT32 SrcSize = length;
 	UINT32 SrcFormat;
 	UINT32 bytesPerPixel;
+	UINT32 DstWidth = MIN(width, bitmap->width);
+	UINT32 DstHeight = MIN(height, bitmap->height);
 	rdpGdi* gdi = context->gdi;
 	bytesPerPixel = (bpp + 7) / 8;
 	size = width * height * GetBytesPerPixel(gdi->dstFormat);
@@ -156,15 +158,17 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 		{
 			if (!interleaved_decompress(context->codecs->interleaved,
 			                            pSrcData, SrcSize,
+			                            width, height,
 			                            bpp,
 			                            bitmap->data, bitmap->format,
-			                            0, 0, 0, width, height,
+			                            0, 0, 0, DstWidth, DstHeight,
 			                            &gdi->palette))
 				return FALSE;
 		}
 		else
 		{
 			if (!planar_decompress(context->codecs->planar, pSrcData, SrcSize,
+			                       width, height,
 			                       bitmap->data, bitmap->format, 0, 0, 0,
 			                       width, height, TRUE))
 				return FALSE;
@@ -175,7 +179,7 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 		SrcFormat = gdi_get_pixel_format(bpp, TRUE);
 
 		if (!freerdp_image_copy(bitmap->data, bitmap->format, 0, 0, 0,
-		                        width, height, pSrcData, SrcFormat,
+		                        DstWidth, DstHeight, pSrcData, SrcFormat,
 		                        0, 0, 0, &gdi->palette))
 			return FALSE;
 	}

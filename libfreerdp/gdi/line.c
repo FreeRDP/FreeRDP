@@ -47,101 +47,106 @@
  */
 static BOOL gdi_rop_color(UINT32 rop, BYTE* pixelPtr, UINT32 pen, UINT32 format)
 {
-	UINT32 dstPixel;
-	const UINT32 srcPixel = ReadColor(pixelPtr, format);
+	UINT32 pixel = ReadColor(pixelPtr, format);
 
 	switch (rop)
 	{
 		case GDI_R2_BLACK: /* LineTo_BLACK */
-			dstPixel = GetColor(format, 0, 0, 0, 0xFF);
+			pixel = GetColor(format, 0, 0, 0, 0xFF);
 			break;
 
 		case GDI_R2_NOTMERGEPEN: /* LineTo_NOTMERGEPEN */
-			dstPixel = ~(srcPixel | pen);
+			pixel = ~(pixel | pen);
 			break;
 
 		case GDI_R2_MASKNOTPEN: /* LineTo_MASKNOTPEN */
-			dstPixel = srcPixel & ~pen;
+			pixel &= ~pen;
 			break;
 
 		case GDI_R2_NOTCOPYPEN: /* LineTo_NOTCOPYPEN */
-			dstPixel = ~pen;
+			pixel = ~pen;
 			break;
 
 		case GDI_R2_MASKPENNOT: /* LineTo_MASKPENNOT */
-			dstPixel = pen & ~srcPixel;
+			pixel = pen & ~pixel;
 			break;
 
 		case GDI_R2_NOT: /* LineTo_NOT */
-			dstPixel = ~srcPixel;
+			pixel = ~pixel;
 			break;
 
 		case GDI_R2_XORPEN: /* LineTo_XORPEN */
-			dstPixel = srcPixel ^ pen;
+			pixel = pixel ^ pen;
 			break;
 
 		case GDI_R2_NOTMASKPEN: /* LineTo_NOTMASKPEN */
-			dstPixel = ~(srcPixel & pen);
+			pixel = ~(pixel & pen);
 			break;
 
 		case GDI_R2_MASKPEN: /* LineTo_MASKPEN */
-			dstPixel = srcPixel & pen;
+			pixel &= pen;
 			break;
 
 		case GDI_R2_NOTXORPEN: /* LineTo_NOTXORPEN */
-			dstPixel = ~(srcPixel ^ pen);
+			pixel = ~(pixel ^ pen);
 			break;
 
 		case GDI_R2_NOP: /* LineTo_NOP */
 			break;
 
 		case GDI_R2_MERGENOTPEN: /* LineTo_MERGENOTPEN */
-			dstPixel = srcPixel | ~pen;
+			pixel |= ~pen;
 			break;
 
 		case GDI_R2_COPYPEN: /* LineTo_COPYPEN */
-			dstPixel = pen;
+			pixel = pen;
 			break;
 
 		case GDI_R2_MERGEPENNOT: /* LineTo_MERGEPENNOT */
-			dstPixel = srcPixel | ~pen;
+			pixel = pixel | ~pen;
 			break;
 
 		case GDI_R2_MERGEPEN: /* LineTo_MERGEPEN */
-			dstPixel = srcPixel | pen;
+			pixel = pixel | pen;
 			break;
 
 		case GDI_R2_WHITE: /* LineTo_WHITE */
-			dstPixel = GetColor(format, 0, 0, 0, 0xFF);
+			pixel = GetColor(format, 0, 0, 0, 0);
 			break;
 
 		default:
 			return FALSE;
 	}
 
-	WriteColor(pixelPtr, format, dstPixel);
+	WriteColor(pixelPtr, format, pixel);
 	return TRUE;
 }
 
 BOOL gdi_LineTo(HGDI_DC hdc, UINT32 nXEnd, UINT32 nYEnd)
 {
-	INT64 e2;
-	INT64 bx1, by1;
-	INT64 bx2, by2;
-	HGDI_BITMAP bmp = (HGDI_BITMAP) hdc->selectedObject;
+	UINT32 x, y;
+	UINT32 x1, y1;
+	UINT32 x2, y2;
+	INT32 e, e2;
+	INT32 dx, dy;
+	INT32 sx, sy;
+	INT32 bx1, by1;
+	INT32 bx2, by2;
+	HGDI_BITMAP bmp;
 	UINT32 pen;
 	UINT32 rop2 = gdi_GetROP2(hdc);
-	UINT32 x1 = hdc->pen->posX;
-	UINT32 y1 = hdc->pen->posY;
-	UINT32 x2 = nXEnd;
-	UINT32 y2 = nYEnd;
-	INT64 dx = (x1 > x2) ? x1 - x2 : x2 - x1;
-	INT64 dy = (y1 > y2) ? y1 - y2 : y2 - y1;
-	INT64 sx = (x1 < x2) ? 1 : -1;
-	INT64 sy = (y1 < y2) ? 1 : -1;
-	INT64 e = dx - dy;
-	UINT32 x = x1;
-	UINT32 y = y1;
+	x1 = hdc->pen->posX;
+	y1 = hdc->pen->posY;
+	x2 = nXEnd;
+	y2 = nYEnd;
+	dx = (x1 > x2) ? x1 - x2 : x2 - x1;
+	dy = (y1 > y2) ? y1 - y2 : y2 - y1;
+	sx = (x1 < x2) ? 1 : -1;
+	sy = (y1 < y2) ? 1 : -1;
+	e = dx - dy;
+	x = x1;
+	y = y1;
+	bmp = (HGDI_BITMAP) hdc->selectedObject;
 
 	if (hdc->clip->null)
 	{

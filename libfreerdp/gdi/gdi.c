@@ -491,8 +491,10 @@ static BOOL gdi_bitmap_update(rdpContext* context,
 		UINT32 nYSrc = 0;
 		UINT32 nXDst = bitmap->destLeft;
 		UINT32 nYDst = bitmap->destTop;
-		UINT32 nWidth = bitmap->width;
-		UINT32 nHeight = bitmap->height;
+		UINT32 nWidth = MIN(bitmap->destRight,
+		                    gdi->width - 1) - bitmap->destLeft + 1; /* clip width */
+		UINT32 nHeight = MIN(bitmap->destBottom,
+		                     gdi->height - 1) - bitmap->destTop + 1; /* clip height */
 		const BYTE* pSrcData = bitmap->bitmapDataStream;
 		UINT32 SrcSize = bitmap->bitmapLength;
 		BOOL compressed = bitmap->compressed;
@@ -504,6 +506,7 @@ static BOOL gdi_bitmap_update(rdpContext* context,
 			{
 				if (!interleaved_decompress(codecs->interleaved,
 				                            pSrcData, SrcSize,
+				                            bitmap->width, bitmap->height,
 				                            bitsPerPixel,
 				                            gdi->primary_buffer,
 				                            gdi->primary->hdc->format,
@@ -515,7 +518,8 @@ static BOOL gdi_bitmap_update(rdpContext* context,
 			else
 			{
 				if (!planar_decompress(codecs->planar, pSrcData,
-				                       SrcSize, gdi->primary_buffer,
+				                       SrcSize, bitmap->width, bitmap->height,
+				                       gdi->primary_buffer,
 				                       gdi->primary->hdc->format,
 				                       gdi->stride,
 				                       nXDst, nYDst, nWidth, nHeight, TRUE))
@@ -526,10 +530,6 @@ static BOOL gdi_bitmap_update(rdpContext* context,
 		{
 			UINT32 SrcFormat = gdi_get_pixel_format(bitsPerPixel, TRUE);
 			UINT32 nSrcStep = nWidth * GetBytesPerPixel(SrcFormat);
-			nWidth = MIN(bitmap->destRight,
-			             gdi->width - 1) - bitmap->destLeft + 1; /* clip width */
-			nHeight = MIN(bitmap->destBottom,
-			              gdi->height - 1) - bitmap->destTop + 1; /* clip height */
 
 			if (!freerdp_image_copy(gdi->primary_buffer, gdi->primary->hdc->format,
 			                        gdi->stride,
@@ -1117,7 +1117,7 @@ static BOOL gdi_surface_bits(rdpContext* context,
 				                         PIXEL_FORMAT_BGRX32,
 				                         cmd->bitmapDataLength,
 				                         0, 0,
-				                         gdi->bitmap_buffer, gdi->dstFormat,
+				                         gdi->primary_buffer, gdi->dstFormat,
 				                         cmd->width * GetBytesPerPixel(gdi->dstFormat),
 				                         cmd->height, NULL))
 				{

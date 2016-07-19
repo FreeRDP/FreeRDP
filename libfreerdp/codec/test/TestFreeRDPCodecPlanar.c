@@ -3007,7 +3007,8 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 
 		pDstData = decompressedBitmap;
 
-		if (!planar_decompress(planar, compressedBitmap, dstSize, pDstData,
+		if (!planar_decompress(planar, compressedBitmap, dstSize,
+		                       width, height, pDstData,
 		                       PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height, FALSE))
 		{
 			printf("failed to decompress white bitmap: width: %d height: %d\n", width,
@@ -3054,7 +3055,8 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 
 		pDstData = decompressedBitmap;
 
-		if (!planar_decompress(planar, compressedBitmap, dstSize, pDstData,
+		if (!planar_decompress(planar, compressedBitmap, dstSize,
+		                       width, height, pDstData,
 		                       PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height, FALSE))
 		{
 			printf("failed to decompress black bitmap: width: %d height: %d\n", width,
@@ -3096,7 +3098,8 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 
 	pDstData = decompressedBitmap;
 
-	if (!planar_decompress(planar, compressedBitmap, dstSize, pDstData,
+	if (!planar_decompress(planar, compressedBitmap, dstSize, width, height,
+	                       pDstData,
 	                       PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height, FALSE))
 	{
 		printf("failed to decompress experimental bitmap 01: width: %d height: %d\n",
@@ -3142,7 +3145,8 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 
 	pDstData = decompressedBitmap;
 
-	if (!planar_decompress(planar, compressedBitmap, dstSize, pDstData,
+	if (!planar_decompress(planar, compressedBitmap, dstSize, width, height,
+	                       pDstData,
 	                       PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height, FALSE))
 	{
 		printf("failed to decompress experimental bitmap 02: width: %d height: %d\n",
@@ -3189,7 +3193,8 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 
 	pDstData = decompressedBitmap;
 
-	if (!planar_decompress(planar, compressedBitmap, dstSize, pDstData,
+	if (!planar_decompress(planar, compressedBitmap, dstSize, width, height,
+	                       pDstData,
 	                       PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height, FALSE))
 	{
 		printf("failed to decompress experimental bitmap 03: width: %d height: %d\n",

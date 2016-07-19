@@ -265,10 +265,11 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr,
 
 BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
                             const BYTE* pSrcData, UINT32 SrcSize,
+                            UINT32 nSrcWidth, UINT32 nSrcHeight,
                             UINT32 bpp,
                             BYTE* pDstData, UINT32 DstFormat,
                             UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
-                            UINT32 nWidth, UINT32 nHeight,
+                            UINT32 nDstWidth, UINT32 nDstHeight,
                             const gdiPalette* palette)
 {
 	UINT32 scanline;
@@ -283,27 +284,27 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
 		return FALSE;
 
 	if (nDstStep <= 0)
-		nDstStep = nWidth * dstBytesPerPixel;
+		nDstStep = nDstWidth * dstBytesPerPixel;
 
 	switch (bpp)
 	{
 		case 24:
-			scanline = nWidth * 3;
+			scanline = nSrcWidth * 3;
 			SrcFormat = PIXEL_FORMAT_BGR24_VF;
 			break;
 
 		case 16:
-			scanline = nWidth * 2;
+			scanline = nSrcWidth * 2;
 			SrcFormat = PIXEL_FORMAT_RGB16_VF;
 			break;
 
 		case 15:
-			scanline = nWidth * 2;
+			scanline = nSrcWidth * 2;
 			SrcFormat = PIXEL_FORMAT_RGB15_VF;
 			break;
 
 		case 8:
-			scanline = nWidth;
+			scanline = nSrcWidth;
 			SrcFormat = PIXEL_FORMAT_RGB8_VF;
 			break;
 
@@ -312,7 +313,7 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
 			return FALSE;
 	}
 
-	BufferSize = scanline * nHeight;
+	BufferSize = scanline * nSrcHeight;
 
 	if (BufferSize > interleaved->TempSize)
 	{
@@ -329,18 +330,18 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
 	{
 		case 24:
 			RleDecompress24to24(pSrcData, SrcSize, interleaved->TempBuffer,
-			                    scanline, nWidth, nHeight);
+			                    scanline, nSrcWidth, nSrcHeight);
 			break;
 
 		case 16:
 		case 15:
 			RleDecompress16to16(pSrcData, SrcSize, interleaved->TempBuffer,
-			                    scanline, nWidth, nHeight);
+			                    scanline, nSrcWidth, nSrcHeight);
 			break;
 
 		case 8:
 			RleDecompress8to8(pSrcData, SrcSize, interleaved->TempBuffer,
-			                  scanline, nWidth, nHeight);
+			                  scanline, nSrcWidth, nSrcHeight);
 			break;
 
 		default:
@@ -348,7 +349,7 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
 	}
 
 	return freerdp_image_copy(pDstData, DstFormat, nDstStep, nXDst, nYDst,
-	                          nWidth, nHeight, interleaved->TempBuffer,
+	                          nDstWidth, nDstHeight, interleaved->TempBuffer,
 	                          SrcFormat, scanline, 0, 0, palette);
 }
 

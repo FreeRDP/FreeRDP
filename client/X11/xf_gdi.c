@@ -268,39 +268,28 @@ static Pixmap xf_mono_bitmap_new(xfContext* xfc, int width, int height,
 BOOL xf_gdi_bitmap_update(rdpContext* context,
                           const BITMAP_UPDATE* bitmapUpdate)
 {
-	int nXDst;
-	int nYDst;
-	int nXSrc;
-	int nYSrc;
-	int nWidth;
-	int nHeight;
 	UINT32 index;
-	XImage* image;
-	BYTE* pSrcData;
-	BYTE* pDstData;
-	UINT32 SrcSize;
-	BOOL compressed;
-	UINT32 SrcFormat;
-	BITMAP_DATA* bitmap;
 	rdpCodecs* codecs = context->codecs;
 	xfContext* xfc = (xfContext*) context;
+	rdpSettings* settings = context->settings;
 	BOOL ret = TRUE;
 
 	for (index = 0; index < bitmapUpdate->number; index++)
 	{
-		UINT32 bitsPerPixel;
-		bitmap = &(bitmapUpdate->rectangles[index]);
-		nXSrc = 0;
-		nYSrc = 0;
-		nXDst = bitmap->destLeft;
-		nYDst = bitmap->destTop;
-		nWidth = bitmap->width;
-		nHeight = bitmap->height;
-		pSrcData = bitmap->bitmapDataStream;
-		SrcSize = bitmap->bitmapLength;
-		compressed = bitmap->compressed;
-		bitsPerPixel = bitmap->bitsPerPixel;
-		SrcFormat = gdi_get_pixel_format(bitsPerPixel, TRUE);
+		BYTE* pDstData;
+		XImage* image;
+		BITMAP_DATA* bitmap = &(bitmapUpdate->rectangles[index]);
+		UINT32 bitsPerPixel = bitmap->bitsPerPixel;
+		UINT32 nXDst = bitmap->destLeft;
+		UINT32 nYDst = bitmap->destTop;
+		UINT32 nWidth = MIN(bitmap->destRight,
+		                    settings->DesktopWidth - 1) - bitmap->destLeft + 1; /* clip width */
+		UINT32 nHeight = MIN(bitmap->destBottom,
+		                     settings->DesktopHeight - 1) - bitmap->destTop + 1; /* clip height */
+		const BYTE* pSrcData = bitmap->bitmapDataStream;
+		UINT32 SrcSize = bitmap->bitmapLength;
+		BOOL compressed = bitmap->compressed;
+		UINT32 SrcFormat = gdi_get_pixel_format(bitsPerPixel, TRUE);
 
 		if (compressed)
 		{
@@ -310,6 +299,7 @@ BOOL xf_gdi_bitmap_update(rdpContext* context,
 			{
 				if (!interleaved_decompress(codecs->interleaved,
 				                            pSrcData, SrcSize,
+				                            bitmap->width, bitmap->height,
 				                            bitsPerPixel,
 				                            pDstData,
 				                            xfc->format, 0,
@@ -320,7 +310,8 @@ BOOL xf_gdi_bitmap_update(rdpContext* context,
 			}
 			else
 			{
-				if (!planar_decompress(codecs->planar, pSrcData, SrcSize, pDstData,
+				if (!planar_decompress(codecs->planar, pSrcData, SrcSize,
+				                       bitmap->width, bitmap->height, pDstData,
 				                       xfc->format, 0, 0, 0, nWidth, nHeight, TRUE))
 					return FALSE;
 			}

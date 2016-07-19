@@ -294,7 +294,6 @@ struct rdp_gdi
 	gdiBitmap* drawing;
 	UINT32 bitmap_size;
 	UINT32 bitmap_stride;
-	BYTE* bitmap_buffer;
 	BYTE* primary_buffer;
 	gdiPalette palette;
 	gdiBitmap* image;

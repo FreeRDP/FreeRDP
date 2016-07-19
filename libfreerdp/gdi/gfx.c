@@ -330,6 +330,7 @@ static UINT gdi_SurfaceCommand_Planar(rdpGdi* gdi, RdpgfxClientContext* context,
 	DstData = surface->data;
 
 	if (!planar_decompress(surface->codecs->planar, cmd->data, cmd->length,
+	                       cmd->width, cmd->height,
 	                       DstData, surface->format,
 	                       surface->scanline, cmd->left, cmd->top,
 	                       cmd->width, cmd->height, FALSE))

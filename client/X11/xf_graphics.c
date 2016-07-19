@@ -151,7 +151,7 @@ static BOOL xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 		if (bpp < 32)
 		{
 			if (!interleaved_decompress(context->codecs->interleaved,
-			                            pSrcData, SrcSize, bpp,
+			                            pSrcData, SrcSize, width, height, bpp,
 			                            pDstData, xfc->format,
 			                            0, 0, 0, width, height,
 			                            &context->gdi->palette))
@@ -160,6 +160,7 @@ static BOOL xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 		else
 		{
 			if (!planar_decompress(context->codecs->planar, pSrcData, SrcSize,
+			                       width, height,
 			                       pDstData, xfc->format, 0, 0, 0, width, height, TRUE))
 				return FALSE;
 		}
