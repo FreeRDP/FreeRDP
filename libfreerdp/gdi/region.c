@@ -33,6 +33,10 @@
 
 #include <freerdp/gdi/region.h>
 
+#include <freerdp/log.h>
+
+#define TAG FREERDP_TAG("gdi.region")
+
 /**
  * Create a region from rectangular coordinates.\n
  * @msdn{dd183514}
@@ -190,12 +194,12 @@ INLINE void gdi_CRgnToRect(UINT32 x, UINT32 y, UINT32 w, UINT32 h,
 	if (w > 0)
 		rect->right = x + w - 1;
 	else
-		WLog_ERR("xxxxxx", "");
+		WLog_ERR(TAG, "Invalid width");
 
 	if (h > 0)
 		rect->bottom = y + h - 1;
 	else
-		WLog_ERR("xxxxxx", "");
+		WLog_ERR(TAG, "Invalid height");
 }
 
 /**
@@ -233,8 +237,19 @@ INLINE void gdi_CRgnToCRect(UINT32 x, UINT32 y, UINT32 w, UINT32 h,
 {
 	*left = x;
 	*top = y;
-	*right = x + w - 1;
-	*bottom = y + h - 1;
+	*right = 0;
+
+	if (w > 0)
+		*right = x + w - 1;
+	else
+		WLog_ERR(TAG, "Invalid width");
+
+	*bottom = 0;
+
+	if (h > 0)
+		*bottom = y + h - 1;
+	else
+		WLog_ERR(TAG, "Invalid height");
 }
 
 /**

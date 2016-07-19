@@ -398,8 +398,9 @@ static BOOL BitBlt_PATINVERT(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 
 				if (dstp)
 				{
-					color ^= color;
-					WriteColor(dstp, hdcDest->format, color);
+					UINT32 dstColor = ReadColor(dstp, hdcDest->format);
+					dstColor ^= color;
+					WriteColor(dstp, hdcDest->format, dstColor);
 				}
 			}
 		}
