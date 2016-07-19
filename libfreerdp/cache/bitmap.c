@@ -108,8 +108,12 @@ static BOOL update_gdi_cache_bitmap(rdpContext* context,
 	if (!bitmap)
 		return FALSE;
 
-	Bitmap_SetDimensions(bitmap, cacheBitmap->bitmapWidth,
-	                     cacheBitmap->bitmapHeight);
+	if (!Bitmap_SetDimensions(bitmap, cacheBitmap->bitmapWidth,
+	                          cacheBitmap->bitmapHeight))
+	{
+		bitmap->Free(context, bitmap);
+		return FALSE;
+	}
 
 	if (!bitmap->Decompress(context, bitmap,
 	                        cacheBitmap->bitmapDataStream, cacheBitmap->bitmapWidth,
@@ -122,7 +126,10 @@ static BOOL update_gdi_cache_bitmap(rdpContext* context,
 	}
 
 	if (!bitmap->New(context, bitmap))
+	{
+		bitmap->Free(context, bitmap);
 		return FALSE;
+	}
 
 	prevBitmap = bitmap_cache_get(cache->bitmap, cacheBitmap->cacheId,
 	                              cacheBitmap->cacheIndex);

@@ -410,10 +410,10 @@ static BOOL overlapping(const BYTE* pDstData, UINT32 nXDst, UINT32 nYDst,
 }
 
 BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
-                        INT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+                        UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
                         UINT32 nWidth, UINT32 nHeight,
                         const BYTE* pSrcData, DWORD SrcFormat,
-                        INT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
+                        UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
                         const gdiPalette* palette)
 {
 	const UINT32 dstByte = GetBytesPerPixel(DstFormat);

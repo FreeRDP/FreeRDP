@@ -22,6 +22,8 @@
 #ifndef FREERDP_GDI_H
 #define FREERDP_GDI_H
 
+#include <winpr/wlog.h>
+
 #include <freerdp/api.h>
 #include <freerdp/log.h>
 #include <freerdp/freerdp.h>
@@ -294,7 +296,6 @@ struct rdp_gdi
 	UINT32 bitmap_stride;
 	BYTE* bitmap_buffer;
 	BYTE* primary_buffer;
-	UINT32 textColor;
 	gdiPalette palette;
 	gdiBitmap* image;
 	void (*free)(void*);
@@ -304,6 +305,8 @@ struct rdp_gdi
 	UINT16 outputSurfaceId;
 	REGION16 invalidRegion;
 	RdpgfxClientContext* gfx;
+
+	wLog* log;
 };
 
 #ifdef __cplusplus
@@ -328,13 +331,6 @@ FREERDP_API void gdi_free(freerdp* instance);
 
 #ifdef __cplusplus
 }
-#endif
-
-#define GDI_TAG FREERDP_TAG("gdi")
-#ifdef WITH_DEBUG_GDI
-#define DEBUG_GDI(fmt, ...) WLog_DBG(GDI_TAG, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_GDI(fmt, ...)
 #endif
 
 #endif /* FREERDP_GDI_H */

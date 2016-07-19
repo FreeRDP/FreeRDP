@@ -180,6 +180,9 @@ static BOOL BitBlt_SRCCOPY(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 	hSrcBmp = (HGDI_BITMAP) hdcSrc->selectedObject;
 	hDstBmp = (HGDI_BITMAP) hdcDest->selectedObject;
 
+	if (!hDstBmp || !hSrcBmp)
+		return FALSE;
+
 	if (!freerdp_image_copy(hDstBmp->data, hDstBmp->format,	hDstBmp->scanline,
 	                        nXDest, nYDest, nWidth, nHeight,
 	                        hSrcBmp->data, hSrcBmp->format, hSrcBmp->scanline,
@@ -401,7 +404,7 @@ static BOOL BitBlt_DSPDxax(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 	if (!hdcDest || !hdcSrc)
 		return FALSE;
 
-	/* D = (S & P) | (~S & D) */
+	/* D = (D ^ S) & (P ^ D) */
 	color = hdcDest->textColor;
 
 	for (y = 0; y < nHeight; y++)
@@ -420,7 +423,7 @@ static BOOL BitBlt_DSPDxax(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 				UINT32 colorB = ReadColor(dstp, hdcDest->format);
 				colorA = ConvertColor(colorA, hdcSrc->format,
 				                      hdcDest->format, palette);
-				dstColor = (colorA & color) | (~colorA & colorB);
+				dstColor = (colorB ^ colorA) & (color & colorB);
 				WriteColor(dstp, hdcDest->format, dstColor);
 			}
 		}

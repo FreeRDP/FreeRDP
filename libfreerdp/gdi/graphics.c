@@ -31,6 +31,7 @@
 #include <freerdp/gdi/region.h>
 #include <freerdp/gdi/bitmap.h>
 
+#include "clipping.h"
 #include "drawing.h"
 #include "brush.h"
 #include "graphics.h"
@@ -46,6 +47,10 @@ HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, UINT32 nWidth, UINT32 nHeight,
 	BYTE* pSrcData;
 	BYTE* pDstData;
 	HGDI_BITMAP bitmap;
+
+	if (!gdi)
+		return NULL;
+
 	nDstStep = nWidth * GetBytesPerPixel(gdi->dstFormat);
 	pDstData = _aligned_malloc(nHeight * nDstStep, 16);
 
@@ -265,10 +270,15 @@ static BOOL gdi_Glyph_BeginDraw(rdpContext* context, UINT32 x, UINT32 y,
                                 UINT32 width, UINT32 height, UINT32 bgcolor,
                                 UINT32 fgcolor, BOOL fOpRedundant)
 {
-	GDI_RECT rect;
-	HGDI_BRUSH brush;
-	rdpGdi* gdi = context->gdi;
-	BOOL ret = FALSE;
+	rdpGdi* gdi;
+
+	if (!context || !context->gdi)
+		return FALSE;
+
+	gdi = context->gdi;
+
+	if (!gdi->drawing || !gdi->drawing->hdc)
+		return FALSE;
 
 	if (!gdi_decode_color(gdi, bgcolor, &bgcolor, NULL))
 		return FALSE;
@@ -276,35 +286,25 @@ static BOOL gdi_Glyph_BeginDraw(rdpContext* context, UINT32 x, UINT32 y,
 	if (!gdi_decode_color(gdi, fgcolor, &fgcolor, NULL))
 		return FALSE;
 
-	if (!(brush = gdi_CreateSolidBrush(fgcolor)))
-		return FALSE;
-
-	gdi_CRgnToRect(x, y, width, height, &rect);
-
-	switch (fOpRedundant)
-	{
-		case 0:
-			ret = gdi_FillRect(gdi->drawing->hdc, &rect, brush);
-			break;
-
-		default:
-			ret = TRUE;
-			break;
-	}
-
-	gdi_DeleteObject((HGDIOBJECT) brush);
-	gdi->textColor = gdi_SetTextColor(gdi->drawing->hdc, bgcolor);
-	return ret;
+	gdi_SetTextColor(gdi->drawing->hdc, fgcolor);
+	gdi_SetBkColor(gdi->drawing->hdc, bgcolor);
+	return gdi_SetClipRgn(gdi->drawing->hdc, x, y, width, height);
 }
 
 static BOOL gdi_Glyph_EndDraw(rdpContext* context, UINT32 x, UINT32 y,
                               UINT32 width, UINT32 height, UINT32 bgcolor, UINT32 fgcolor)
 {
-	rdpGdi* gdi = context->gdi;
-	UINT32 SrcFormat = gdi_get_pixel_format(context->settings->ColorDepth, FALSE);
-	bgcolor = ConvertColor(bgcolor, SrcFormat,
-	                       gdi->drawing->hdc->format, &gdi->palette);
-	gdi->textColor = gdi_SetTextColor(gdi->drawing->hdc, bgcolor);
+	rdpGdi* gdi;
+
+	if (!context || !context->gdi)
+		return FALSE;
+
+	gdi = context->gdi;
+
+	if (!gdi->drawing || !gdi->drawing->hdc)
+		return FALSE;
+
+	gdi_SetNullClipRgn(gdi->drawing->hdc);
 	return TRUE;
 }
 
