@@ -639,9 +639,9 @@ static INLINE BOOL update_write_brush(wStream* s, rdpBrush* brush,
 }
 
 static INLINE BOOL update_read_delta_rects(wStream* s, DELTA_RECT* rectangles,
-        int number)
+        UINT32 number)
 {
-	int i;
+	UINT32 i;
 	BYTE flags = 0;
 	BYTE* zeroBits;
 	UINT32 zeroBitsSize;
@@ -656,12 +656,12 @@ static INLINE BOOL update_read_delta_rects(wStream* s, DELTA_RECT* rectangles,
 
 	Stream_GetPointer(s, zeroBits);
 	Stream_Seek(s, zeroBitsSize);
-	ZeroMemory(rectangles, sizeof(DELTA_RECT) * (number + 1));
+	ZeroMemory(rectangles, sizeof(DELTA_RECT) * number);
 
-	for (i = 1; i < number + 1; i++)
+	for (i = 0; i < number; i++)
 	{
-		if ((i - 1) % 2 == 0)
-			flags = zeroBits[(i - 1) / 2];
+		if (i % 2 == 0)
+			flags = zeroBits[i / 2];
 
 		if ((~flags & 0x80) && !update_read_delta(s, &rectangles[i].left))
 			return FALSE;
@@ -674,23 +674,27 @@ static INLINE BOOL update_read_delta_rects(wStream* s, DELTA_RECT* rectangles,
 			if (!update_read_delta(s, &rectangles[i].width))
 				return FALSE;
 		}
-		else
-		{
+		else if (i > 0)
 			rectangles[i].width = rectangles[i - 1].width;
-		}
+		else
+			rectangles[i].width = 0;
 
 		if (~flags & 0x10)
 		{
 			if (!update_read_delta(s, &rectangles[i].height))
 				return FALSE;
 		}
-		else
-		{
+		else if (i > 0)
 			rectangles[i].height = rectangles[i - 1].height;
+		else
+			rectangles[i].height = 0;
+
+		if (i > 0)
+		{
+			rectangles[i].left += rectangles[i - 1].left;
+			rectangles[i].top += rectangles[i - 1].top;
 		}
 
-		rectangles[i].left = rectangles[i].left + rectangles[i - 1].left;
-		rectangles[i].top = rectangles[i].top + rectangles[i - 1].top;
 		flags <<= 4;
 	}
 
@@ -2078,8 +2082,6 @@ static BOOL update_read_cache_glyph_order(wStream* s,
         UINT16 flags)
 {
 	UINT32 i;
-	INT16 lsi16;
-	GLYPH_DATA* glyph;
 
 	if (Stream_GetRemainingLength(s) < 2)
 		return FALSE;
@@ -2089,16 +2091,14 @@ static BOOL update_read_cache_glyph_order(wStream* s,
 
 	for (i = 0; i < cache_glyph_order->cGlyphs; i++)
 	{
-		glyph = &cache_glyph_order->glyphData[i];
+		GLYPH_DATA* glyph = &cache_glyph_order->glyphData[i];
 
 		if (Stream_GetRemainingLength(s) < 10)
 			return FALSE;
 
 		Stream_Read_UINT16(s, glyph->cacheIndex);
-		Stream_Read_UINT16(s, lsi16);
-		glyph->x = lsi16;
-		Stream_Read_UINT16(s, lsi16);
-		glyph->y = lsi16;
+		Stream_Read_INT16(s, glyph->x);
+		Stream_Read_INT16(s, glyph->y);
 		Stream_Read_UINT16(s, glyph->cx);
 		Stream_Read_UINT16(s, glyph->cy);
 		glyph->cb = ((glyph->cx + 7) / 8) * glyph->cy;
@@ -2169,15 +2169,14 @@ static BOOL update_read_cache_glyph_v2_order(wStream* s,
         CACHE_GLYPH_V2_ORDER* cache_glyph_v2,
         UINT16 flags)
 {
-	int i;
-	GLYPH_DATA_V2* glyph;
+	UINT32 i;
 	cache_glyph_v2->cacheId = (flags & 0x000F);
 	cache_glyph_v2->flags = (flags & 0x00F0) >> 4;
 	cache_glyph_v2->cGlyphs = (flags & 0xFF00) >> 8;
 
-	for (i = 0; i < (int) cache_glyph_v2->cGlyphs; i++)
+	for (i = 0; i < cache_glyph_v2->cGlyphs; i++)
 	{
-		glyph = &cache_glyph_v2->glyphData[i];
+		GLYPH_DATA_V2* glyph = &cache_glyph_v2->glyphData[i];
 
 		if (Stream_GetRemainingLength(s) < 1)
 			return FALSE;
@@ -2207,9 +2206,7 @@ static BOOL update_read_cache_glyph_v2_order(wStream* s,
 	}
 
 	if (flags & CG_GLYPH_UNICODE_PRESENT)
-	{
 		return Stream_SafeSeek(s, cache_glyph_v2->cGlyphs * 2);
-	}
 
 	return TRUE;
 }
@@ -2222,7 +2219,7 @@ BOOL update_write_cache_glyph_v2_order(wStream* s,
                                        const CACHE_GLYPH_V2_ORDER* cache_glyph_v2,
                                        UINT16* flags)
 {
-	int i, inf;
+	UINT32 i, inf;
 	inf = update_approximate_cache_glyph_v2_order(cache_glyph_v2, flags);
 
 	if (!Stream_EnsureRemainingCapacity(s, inf))
@@ -2232,7 +2229,7 @@ BOOL update_write_cache_glyph_v2_order(wStream* s,
 	         ((cache_glyph_v2->flags & 0x000F) << 4) |
 	         ((cache_glyph_v2->cGlyphs & 0x00FF) << 8);
 
-	for (i = 0; i < (int) cache_glyph_v2->cGlyphs; i++)
+	for (i = 0; i < cache_glyph_v2->cGlyphs; i++)
 	{
 		UINT32 cb;
 		const GLYPH_DATA_V2* glyph = &cache_glyph_v2->glyphData[i];

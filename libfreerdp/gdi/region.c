@@ -189,9 +189,13 @@ INLINE void gdi_CRgnToRect(UINT32 x, UINT32 y, UINT32 w, UINT32 h,
 
 	if (w > 0)
 		rect->right = x + w - 1;
+	else
+		WLog_ERR("xxxxxx", "");
 
 	if (h > 0)
 		rect->bottom = y + h - 1;
+	else
+		WLog_ERR("xxxxxx", "");
 }
 
 /**

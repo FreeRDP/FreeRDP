@@ -491,7 +491,7 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 	if (!surface)
 		return ERROR_INTERNAL_ERROR;
 
-	WLog_DBG(TAG, "TODO gdi_SurfaceCommand_Alpha: status: %d", status);
+	WLog_WARN(TAG, "TODO gdi_SurfaceCommand_Alpha: status: %d", status);
 
 	/* fill with green for now to distinguish from the rest */
 	if (!freerdp_image_fill(surface->data, surface->format, surface->scanline,

@@ -70,10 +70,10 @@ static BOOL xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 			}
 
 			SrcFormat = bitmap->format;
-			freerdp_image_copy(data, xfc->format, -1, 0, 0,
+			freerdp_image_copy(data, xfc->format, 0, 0, 0,
 			                   bitmap->width, bitmap->height,
 			                   bitmap->data, SrcFormat,
-			                   -1, 0, 0, &context->gdi->palette);
+			                   0, 0, 0, &context->gdi->palette);
 			_aligned_free(bitmap->data);
 			bitmap->data = data;
 			bitmap->format = xfc->format;
@@ -153,14 +153,14 @@ static BOOL xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 			if (!interleaved_decompress(context->codecs->interleaved,
 			                            pSrcData, SrcSize, bpp,
 			                            pDstData, xfc->format,
-			                            -1, 0, 0, width, height,
+			                            0, 0, 0, width, height,
 			                            &context->gdi->palette))
 				return FALSE;
 		}
 		else
 		{
 			if (!planar_decompress(context->codecs->planar, pSrcData, SrcSize,
-			                       pDstData, xfc->format, -1, 0, 0, width, height, TRUE))
+			                       pDstData, xfc->format, 0, 0, 0, width, height, TRUE))
 				return FALSE;
 		}
 	}
@@ -168,9 +168,9 @@ static BOOL xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	{
 		SrcFormat = gdi_get_pixel_format(bpp, TRUE);
 
-		if (!freerdp_image_copy(pDstData, xfc->format, -1, 0, 0,
+		if (!freerdp_image_copy(pDstData, xfc->format, 0, 0, 0,
 		                        width, height, pSrcData,
-		                        SrcFormat, -1, 0, 0, &context->gdi->palette))
+		                        SrcFormat, 0, 0, 0, &context->gdi->palette))
 			return FALSE;
 	}
 

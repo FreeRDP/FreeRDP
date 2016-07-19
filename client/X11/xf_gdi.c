@@ -232,8 +232,8 @@ static Pixmap xf_brush_new(xfContext* xfc, int width, int height, int bpp,
 	{
 		brushFormat = gdi_get_pixel_format(bpp, FALSE);
 		cdata = (BYTE*) _aligned_malloc(width * height * 4, 16);
-		freerdp_image_copy(cdata, xfc->format, -1, 0, 0,
-		                   width, height, data, brushFormat, -1, 0, 0,
+		freerdp_image_copy(cdata, xfc->format, 0, 0, 0,
+		                   width, height, data, brushFormat, 0, 0, 0,
 		                   &xfc->context.gdi->palette);
 		image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
 		                     ZPixmap, 0, (char*) cdata, width, height, xfc->scanline_pad, 0);
@@ -312,7 +312,7 @@ BOOL xf_gdi_bitmap_update(rdpContext* context,
 				                            pSrcData, SrcSize,
 				                            bitsPerPixel,
 				                            pDstData,
-				                            xfc->format, -1,
+				                            xfc->format, 0,
 				                            0, 0,
 				                            nWidth, nHeight,
 				                            &xfc->context.gdi->palette))
@@ -321,7 +321,7 @@ BOOL xf_gdi_bitmap_update(rdpContext* context,
 			else
 			{
 				if (!planar_decompress(codecs->planar, pSrcData, SrcSize, pDstData,
-				                       xfc->format, -1, 0, 0, nWidth, nHeight, TRUE))
+				                       xfc->format, 0, 0, 0, nWidth, nHeight, TRUE))
 					return FALSE;
 			}
 
@@ -331,9 +331,9 @@ BOOL xf_gdi_bitmap_update(rdpContext* context,
 		{
 			pDstData = xfc->bitmap_buffer;
 
-			if (!freerdp_image_copy(pDstData, xfc->format, -1, 0, 0,
+			if (!freerdp_image_copy(pDstData, xfc->format, 0, 0, 0,
 			                        nWidth, nHeight, pSrcData, SrcFormat,
-			                        -1, 0, 0, &xfc->context.gdi->palette))
+			                        0, 0, 0, &xfc->context.gdi->palette))
 				return FALSE;
 
 			pSrcData = xfc->bitmap_buffer;
@@ -575,7 +575,7 @@ static BOOL xf_gdi_multi_opaque_rect(rdpContext* context,
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 	XSetForeground(xfc->display, xfc->gc, color);
 
-	for (i = 1; i < multi_opaque_rect->numRectangles + 1; i++)
+	for (i = 0; i < multi_opaque_rect->numRectangles; i++)
 	{
 		const DELTA_RECT* rectangle = &multi_opaque_rect->rectangles[i];
 		XFillRectangle(xfc->display, xfc->drawing, xfc->gc,
@@ -1133,9 +1133,9 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 			XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 			pSrcData = cmd->bitmapData;
 			pDstData = xfc->bitmap_buffer;
-			freerdp_image_copy(pDstData, xfc->format, -1, 0, 0,
+			freerdp_image_copy(pDstData, xfc->format, 0, 0, 0,
 			                   cmd->width, cmd->height, pSrcData,
-			                   PIXEL_FORMAT_BGRX32_VF, -1, 0, 0, &xfc->context.gdi->palette);
+			                   PIXEL_FORMAT_BGRX32_VF, 0, 0, 0, &xfc->context.gdi->palette);
 			image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
 			                     (char*) pDstData, cmd->width, cmd->height, xfc->scanline_pad, 0);
 			XPutImage(xfc->display, xfc->primary, xfc->gc, image, 0, 0,

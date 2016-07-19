@@ -84,9 +84,9 @@ static BOOL update_gdi_switch_surface(rdpContext* context,
 	}
 	else
 	{
-		rdpBitmap* bitmap;
-		bitmap = offscreen_cache_get(cache->offscreen, switchSurface->bitmapId);
-		bitmap->SetSurface(context, bitmap, FALSE);
+		rdpBitmap* bmp;
+		bmp = offscreen_cache_get(cache->offscreen, switchSurface->bitmapId);
+		bitmap->SetSurface(context, bmp, FALSE);
 	}
 
 	cache->offscreen->currentSurface = switchSurface->bitmapId;

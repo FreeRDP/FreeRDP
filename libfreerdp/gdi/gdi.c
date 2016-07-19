@@ -438,7 +438,8 @@ gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp,
 	if (!(bitmap->hdc = gdi_CreateCompatibleDC(gdi->hdc)))
 		goto fail_hdc;
 
-	DEBUG_GDI("gdi_bitmap_new: width:%d height:%d bpp:%d", width, height, bpp);
+	WLog_Print(gdi->log, WLOG_DEBUG, "gdi_bitmap_new: width:%d height:%d bpp:%d",
+	           width, height, bpp);
 
 	if (!data)
 		bitmap->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, width, height);
@@ -803,9 +804,6 @@ static BOOL gdi_opaque_rect(rdpContext* context,
 	BOOL ret;
 	gdi_CRgnToRect(opaque_rect->nLeftRect, opaque_rect->nTopRect,
 	               opaque_rect->nWidth, opaque_rect->nHeight, &rect);
-	WLog_INFO(TAG, "%s x=%lu, y=%lu, w=%lu, h=%lu",
-	          __FUNCTION__, opaque_rect->nLeftRect, opaque_rect->nTopRect,
-	          opaque_rect->nWidth, opaque_rect->nHeight);
 
 	if (!gdi_decode_color(gdi, opaque_rect->color, &brush_color, NULL))
 		return FALSE;
@@ -827,9 +825,6 @@ static BOOL gdi_multi_opaque_rect(rdpContext* context,
 	UINT32 brush_color;
 	rdpGdi* gdi = context->gdi;
 	BOOL ret = TRUE;
-	WLog_INFO(TAG, "%s x=%lu, y=%lu, w=%lu, h=%lu",
-	          __FUNCTION__, multi_opaque_rect->nLeftRect, multi_opaque_rect->nTopRect,
-	          multi_opaque_rect->nWidth, multi_opaque_rect->nHeight);
 
 	if (!gdi_decode_color(gdi, multi_opaque_rect->color, &brush_color, NULL))
 		return FALSE;
@@ -839,12 +834,15 @@ static BOOL gdi_multi_opaque_rect(rdpContext* context,
 	if (!hBrush)
 		return FALSE;
 
-	for (i = 1; i < multi_opaque_rect->numRectangles + 1; i++)
+	for (i = 0; i < multi_opaque_rect->numRectangles; i++)
 	{
 		const DELTA_RECT* rectangle = &multi_opaque_rect->rectangles[i];
 		gdi_CRgnToRect(rectangle->left, rectangle->top,
 		               rectangle->width, rectangle->height, &rect);
-		gdi_FillRect(gdi->drawing->hdc, &rect, hBrush);
+		ret = gdi_FillRect(gdi->drawing->hdc, &rect, hBrush);
+
+		if (!ret)
+			break;
 	}
 
 	gdi_DeleteObject((HGDIOBJECT) hBrush);
@@ -857,9 +855,6 @@ static BOOL gdi_line_to(rdpContext* context, const LINE_TO_ORDER* lineTo)
 	HGDI_PEN hPen;
 	UINT32 SrcFormat;
 	rdpGdi* gdi = context->gdi;
-	WLog_INFO(TAG, "%s x=%lu, y=%lu, w=%lu, h=%lu",
-	          __FUNCTION__, lineTo->nXStart, lineTo->nYStart,
-	          lineTo->nXEnd, lineTo->nYEnd);
 
 	if (!gdi_decode_color(gdi, lineTo->backColor, &color, &SrcFormat))
 		return FALSE;
@@ -900,12 +895,10 @@ static BOOL gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 	gdi_MoveToEx(gdi->drawing->hdc, x, y, NULL);
 	points = polyline->points;
 
-	for (i = 0; i < (int) polyline->numDeltaEntries; i++)
+	for (i = 0; i < polyline->numDeltaEntries; i++)
 	{
 		x += points[i].x;
 		y += points[i].y;
-		WLog_INFO(TAG, "%s x=%lu, y=%lu",
-		          __FUNCTION__, x, y);
 		gdi_LineTo(gdi->drawing->hdc, x, y);
 		gdi_MoveToEx(gdi->drawing->hdc, x, y, NULL);
 	}
@@ -1051,28 +1044,28 @@ out_fail:
 static BOOL gdi_polygon_sc(rdpContext* context,
                            const POLYGON_SC_ORDER* polygon_sc)
 {
-	WLog_VRB(TAG, "%s: not implemented", __FUNCTION__);
-	return TRUE;
+	WLog_WARN(TAG, "%s: not implemented", __FUNCTION__);
+	return FALSE;
 }
 
 static BOOL gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 {
-	WLog_VRB(TAG, "%s: not implemented", __FUNCTION__);
-	return TRUE;
+	WLog_WARN(TAG, "%s: not implemented", __FUNCTION__);
+	return FALSE;
 }
 
 static BOOL gdi_ellipse_sc(rdpContext* context,
                            const ELLIPSE_SC_ORDER* ellipse_sc)
 {
-	WLog_VRB(TAG, "%s: not implemented", __FUNCTION__);
-	return TRUE;
+	WLog_WARN(TAG, "%s: not implemented", __FUNCTION__);
+	return FALSE;
 }
 
 static BOOL gdi_ellipse_cb(rdpContext* context,
                            const ELLIPSE_CB_ORDER* ellipse_cb)
 {
-	WLog_VRB(TAG, "%s: not implemented", __FUNCTION__);
-	return TRUE;
+	WLog_WARN(TAG, "%s: not implemented", __FUNCTION__);
+	return FALSE;
 }
 
 static BOOL gdi_frame_marker(rdpContext* context,
@@ -1084,9 +1077,9 @@ static BOOL gdi_frame_marker(rdpContext* context,
 BOOL gdi_surface_frame_marker(rdpContext* context,
                               const SURFACE_FRAME_MARKER* surfaceFrameMarker)
 {
-	DEBUG_GDI("frameId %d frameAction %d",
-	          surfaceFrameMarker->frameId,
-	          surfaceFrameMarker->frameAction);
+	WLog_Print(context->gdi->log, WLOG_DEBUG, "frameId %d frameAction %d",
+	           surfaceFrameMarker->frameId,
+	           surfaceFrameMarker->frameAction);
 
 	switch (surfaceFrameMarker->frameAction)
 	{
@@ -1110,10 +1103,11 @@ static BOOL gdi_surface_bits(rdpContext* context,
                              const SURFACE_BITS_COMMAND* cmd)
 {
 	rdpGdi* gdi = context->gdi;
-	DEBUG_GDI("destLeft %d destTop %d destRight %d destBottom %d "
-	          "bpp %d codecID %d width %d height %d length %d",
-	          cmd->destLeft, cmd->destTop, cmd->destRight, cmd->destBottom,
-	          cmd->bpp, cmd->codecID, cmd->width, cmd->height, cmd->bitmapDataLength);
+	WLog_Print(gdi->log, WLOG_DEBUG,
+	           "destLeft %d destTop %d destRight %d destBottom %d "
+	           "bpp %d codecID %d width %d height %d length %d",
+	           cmd->destLeft, cmd->destTop, cmd->destRight, cmd->destBottom,
+	           cmd->bpp, cmd->codecID, cmd->width, cmd->height, cmd->bitmapDataLength);
 
 	switch (cmd->codecID)
 	{
@@ -1315,16 +1309,21 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 	if (!gdi)
 		goto fail;
 
+	gdi->log = WLog_Get(TAG);
+
+	if (!gdi->log)
+		goto fail;
+
 	instance->context->gdi = gdi;
 	gdi->context = instance->context;
 	gdi->width = instance->settings->DesktopWidth;
 	gdi->height = instance->settings->DesktopHeight;
 	gdi->dstFormat = format;
 	/* default internal buffer format */
-	WLog_INFO(TAG, "Local framebuffer format  %s",
-	          GetColorFormatName(gdi->dstFormat));
-	WLog_INFO(TAG, "Remote framebuffer format %s",
-	          GetColorFormatName(SrcFormat));
+	WLog_Print(gdi->log, WLOG_INFO, "Local framebuffer format  %s",
+	           GetColorFormatName(gdi->dstFormat));
+	WLog_Print(gdi->log, WLOG_INFO, "Remote framebuffer format %s",
+	           GetColorFormatName(SrcFormat));
 
 	if (!(gdi->hdc = gdi_GetDC()))
 		goto fail;
