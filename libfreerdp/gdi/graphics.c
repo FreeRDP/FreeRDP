@@ -141,10 +141,6 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	UINT32 DstWidth = width;
 	UINT32 DstHeight = height;
 	rdpGdi* gdi = context->gdi;
-
-	if (!Bitmap_SetDimensions(bitmap, width, height))
-		return FALSE;
-
 	bytesPerPixel = (bpp + 7) / 8;
 	size = width * height * GetBytesPerPixel(gdi->dstFormat);
 	bitmap->data = (BYTE*) _aligned_malloc(size, 16);

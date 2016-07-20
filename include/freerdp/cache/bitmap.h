@@ -53,8 +53,6 @@ struct rdp_bitmap_cache
 	UINT32 paddingB[32 - 18]; /* 18 */
 
 	/* internal */
-
-	rdpBitmap* bitmap;
 	rdpUpdate* update;
 	rdpContext* context;
 	rdpSettings* settings;
