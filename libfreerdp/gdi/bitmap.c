@@ -426,7 +426,7 @@ static BOOL BitBlt_DSPDxax(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 					UINT32 colorB = ReadColor(dstp, hdcDest->format);
 					colorA = ConvertColor(colorA, hdcSrc->format,
 					                      hdcDest->format, palette);
-					dstColor = (colorA ^ color) & (colorA ^ colorB);
+					dstColor = (colorB ^ colorA) & (color ^ colorB);
 					WriteColor(dstp, hdcDest->format, dstColor);
 				}
 			}
@@ -453,7 +453,7 @@ static BOOL BitBlt_DSPDxax(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 					UINT32 colorB = ReadColor(dstp, hdcDest->format);
 					colorA = ConvertColor(colorA, hdcSrc->format,
 					                      hdcDest->format, palette);
-					dstColor = (colorA ^ color) & (colorA ^ colorB);
+					dstColor = (colorB ^ colorA) & (color ^ colorB);
 					WriteColor(dstp, hdcDest->format, dstColor);
 				}
 			}
@@ -492,7 +492,7 @@ static BOOL BitBlt_DSPDxox(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 					UINT32 colorB = ReadColor(dstp, hdcDest->format);
 					colorA = ConvertColor(colorA, hdcSrc->format,
 					                      hdcDest->format, palette);
-					dstColor = (colorA ^ color) | (colorA ^ colorB);
+					dstColor = (colorA ^ colorB) | (color ^ colorB);
 					WriteColor(dstp, hdcDest->format, dstColor);
 				}
 			}
@@ -519,7 +519,7 @@ static BOOL BitBlt_DSPDxox(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 					UINT32 colorC = ReadColor(patp, hdcDest->format);
 					colorA = ConvertColor(colorA, hdcSrc->format,
 					                      hdcDest->format, palette);
-					color = (colorA ^ colorB) | (colorA ^ colorC);
+					color = (colorA ^ colorB) | (colorB ^ colorC);
 					WriteColor(dstp, hdcDest->format, color);
 				}
 			}
