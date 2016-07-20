@@ -135,10 +135,6 @@ static BOOL xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	UINT32 SrcFormat;
 	UINT32 bytesPerPixel;
 	xfContext* xfc = (xfContext*) context;
-
-	if (!Bitmap_SetDimensions(bitmap, width, height))
-		return FALSE;
-
 	bytesPerPixel = (bpp + 7) / 8;
 	size = width * height * 4;
 	bitmap->data = (BYTE*) _aligned_malloc(size, 16);

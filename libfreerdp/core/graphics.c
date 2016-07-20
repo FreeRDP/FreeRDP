@@ -76,6 +76,8 @@ BOOL Bitmap_SetRectangle(rdpBitmap* bitmap,
 	bitmap->top = top;
 	bitmap->right = right;
 	bitmap->bottom = bottom;
+	bitmap->width = bitmap->right - bitmap->left + 1;
+	bitmap->height = bitmap->bottom - bitmap->top + 1;
 	return TRUE;
 }
 
@@ -86,6 +88,8 @@ BOOL Bitmap_SetDimensions(rdpBitmap* bitmap,
 	if (!bitmap)
 		return FALSE;
 
+	bitmap->right = bitmap->left + width - 1;
+	bitmap->bottom = bitmap->top + height - 1;
 	bitmap->width = width;
 	bitmap->height = height;
 	return TRUE;
