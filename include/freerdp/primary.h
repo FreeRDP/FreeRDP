@@ -25,8 +25,8 @@
 struct _GLYPH_DATA
 {
 	UINT32 cacheIndex;
-	INT32 x;
-	INT32 y;
+	INT16 x;
+	INT16 y;
 	UINT32 cx;
 	UINT32 cy;
 	UINT32 cb;

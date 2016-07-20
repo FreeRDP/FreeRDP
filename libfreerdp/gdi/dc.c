@@ -236,6 +236,7 @@ BOOL gdi_DeleteObject(HGDIOBJECT hgdiobject)
 	return TRUE;
 }
 
+
 /**
  * Delete device context.\n
  * @msdn{dd183533}
