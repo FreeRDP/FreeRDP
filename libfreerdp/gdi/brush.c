@@ -374,7 +374,7 @@ static BOOL BitBlt_PDxn(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 			{
 				UINT32 colorA = ReadColor(dstp, hdcDest->format);
 				UINT32 colorB = ReadColor(patp, hdcDest->format);
-				UINT32 color = colorA ^ ~colorB;
+				UINT32 color = ~colorA ^ colorB;
 				WriteColor(dstp, hdcDest->format, color);
 			}
 		}
@@ -388,6 +388,7 @@ static BOOL BitBlt_PATINVERT(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 {
 	UINT32 x, y;
 
+	/* DPx */
 	if (hdcDest->brush->style == GDI_BS_SOLID)
 	{
 		UINT32 color = hdcDest->brush->color;
@@ -436,6 +437,7 @@ static BOOL BitBlt_PATPAINT(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 {
 	UINT32 x, y;
 
+	/* DPSnoo */
 	if (!hdcDest || !hdcSrc)
 		return FALSE;
 
@@ -466,6 +468,7 @@ static BOOL BitBlt_PATCOPY(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 {
 	UINT32 x, y, xOffset, yOffset;
 
+	/* P */
 	if (hdcDest->brush->style == GDI_BS_SOLID)
 	{
 		UINT32 color = hdcDest->brush->color;

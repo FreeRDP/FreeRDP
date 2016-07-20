@@ -271,7 +271,7 @@ static BOOL gdi_Glyph_Draw(rdpContext* context, rdpGlyph* glyph, UINT32 x,
 	gdi_glyph = (gdiGlyph*) glyph;
 	return gdi_BitBlt(gdi->drawing->hdc, x, y, gdi_glyph->bitmap->width,
 	                  gdi_glyph->bitmap->height, gdi_glyph->hdc, 0, 0,
-	                  GDI_DSPDxax, &context->gdi->palette);
+	                  GDI_DSPDxox, &context->gdi->palette);
 }
 
 static BOOL gdi_Glyph_BeginDraw(rdpContext* context, UINT32 x, UINT32 y,
@@ -279,8 +279,6 @@ static BOOL gdi_Glyph_BeginDraw(rdpContext* context, UINT32 x, UINT32 y,
                                 UINT32 fgcolor, BOOL fOpRedundant)
 {
 	rdpGdi* gdi;
-	GDI_RECT rect;
-	HGDI_BRUSH brush;
 
 	if (!context || !context->gdi)
 		return FALSE;
@@ -294,6 +292,11 @@ static BOOL gdi_Glyph_BeginDraw(rdpContext* context, UINT32 x, UINT32 y,
 		return FALSE;
 
 	if (!gdi_decode_color(gdi, fgcolor, &fgcolor, NULL))
+		return FALSE;
+
+	gdi->drawing->hdc->brush = gdi_CreateSolidBrush(fgcolor);
+
+	if (!gdi->drawing->hdc->brush)
 		return FALSE;
 
 	gdi_SetTextColor(gdi->drawing->hdc, fgcolor);
@@ -314,6 +317,7 @@ static BOOL gdi_Glyph_EndDraw(rdpContext* context, UINT32 x, UINT32 y,
 	if (!gdi->drawing || !gdi->drawing->hdc)
 		return FALSE;
 
+	gdi_DeleteObject(gdi->drawing->hdc->brush);
 	gdi_SetNullClipRgn(gdi->drawing->hdc);
 	return TRUE;
 }
