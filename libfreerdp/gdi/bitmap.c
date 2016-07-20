@@ -558,7 +558,7 @@ static BOOL BitBlt_PSDPxax(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 					UINT32 colorB = ReadColor(dstp, hdcDest->format);
 					colorA = ConvertColor(colorA, hdcSrc->format,
 					                      hdcDest->format, palette);
-					color = (colorA ^ colorB) & (colorA ^ colorC);
+					color = (colorA ^ colorC) & (colorB ^ colorC);
 					WriteColor(dstp, hdcDest->format, color);
 				}
 			}
@@ -585,7 +585,7 @@ static BOOL BitBlt_PSDPxax(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 					UINT32 colorC = ReadColor(patp, hdcDest->format);
 					colorA = ConvertColor(colorA, hdcSrc->format,
 					                      hdcDest->format, palette);
-					color = (colorA ^ colorB) & (colorA ^ colorC);
+					color = (colorA ^ colorC) & (colorB ^ colorC);
 					WriteColor(dstp, hdcDest->format, color);
 				}
 			}
