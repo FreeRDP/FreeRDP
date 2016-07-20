@@ -389,31 +389,11 @@ static BOOL update_gdi_fast_glyph(rdpContext* context,
 		if (!glyphData)
 			return FALSE;
 
-		glyph = Glyph_Alloc(context);
+		glyph = Glyph_Alloc(context, x, y, glyphData->cx, glyphData->cy,
+		                    glyphData->cb, glyphData->aj);
 
 		if (!glyph)
 			return FALSE;
-
-		glyph->x = x;
-		glyph->y = y;
-		glyph->cx = glyphData->cx;
-		glyph->cy = glyphData->cy;
-		glyph->cb = glyphData->cb;
-		glyph->aj = malloc(glyphData->cb);
-
-		if (!glyph->aj)
-		{
-			IFCALL(glyph->Free, context, glyph);
-			return FALSE;
-		}
-
-		CopyMemory(glyph->aj, glyphData->aj, glyph->cb);
-
-		if (!glyph->New(context, glyph))
-		{
-			IFCALL(glyph->Free, context, glyph);
-			return FALSE;
-		}
 
 		glyph_cache_put(cache->glyph, fastGlyph->cacheId, fastGlyph->data[0], glyph);
 	}
@@ -449,21 +429,13 @@ static BOOL update_gdi_cache_glyph(rdpContext* context,
 		if (!glyph_data)
 			return FALSE;
 
-		if (!(glyph = Glyph_Alloc(context)))
+		if (!(glyph = Glyph_Alloc(context, glyph_data->x,
+		                          glyph_data->y,
+		                          glyph_data->cx,
+		                          glyph_data->cy,
+		                          glyph_data->cb,
+		                          glyph_data->aj)))
 			return FALSE;
-
-		glyph->x = glyph_data->x;
-		glyph->y = glyph_data->y;
-		glyph->cx = glyph_data->cx;
-		glyph->cy = glyph_data->cy;
-		glyph->cb = glyph_data->cb;
-		glyph->aj = glyph_data->aj;
-
-		if (!glyph->New(context, glyph))
-		{
-			glyph->Free(context, glyph);
-			return FALSE;
-		}
 
 		glyph_cache_put(cache->glyph, cacheGlyph->cacheId, glyph_data->cacheIndex,
 		                glyph);
@@ -491,23 +463,15 @@ static BOOL update_gdi_cache_glyph_v2(rdpContext* context,
 		if (!glyphData)
 			return FALSE;
 
-		glyph = Glyph_Alloc(context);
+		glyph = Glyph_Alloc(context, glyphData->x,
+		                    glyphData->y,
+		                    glyphData->cx,
+		                    glyphData->cy,
+		                    glyphData->cb,
+		                    glyphData->aj);
 
 		if (!glyph)
 			return FALSE;
-
-		glyph->x = glyphData->x;
-		glyph->y = glyphData->y;
-		glyph->cx = glyphData->cx;
-		glyph->cy = glyphData->cy;
-		glyph->cb = glyphData->cb;
-		glyph->aj = glyphData->aj;
-
-		if (!glyph->New(context, glyph))
-		{
-			glyph->Free(context, glyph);
-			return FALSE;
-		}
 
 		glyph_cache_put(cache->glyph, cacheGlyphV2->cacheId, glyphData->cacheIndex,
 		                glyph);
@@ -564,7 +528,7 @@ BOOL glyph_cache_put(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index,
 	prevGlyph = glyphCache->glyphCache[id].entries[index];
 
 	if (prevGlyph)
-		glyph->Free(glyphCache->context, prevGlyph);
+		prevGlyph->Free(glyphCache->context, prevGlyph);
 
 	glyphCache->glyphCache[id].entries[index] = glyph;
 	return TRUE;

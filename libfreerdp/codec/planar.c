@@ -43,7 +43,7 @@ static BOOL freerdp_bitmap_planar_delta_encode_planes(
     BYTE* outPlanes[4]);
 
 static INT32 planar_skip_plane_rle(const BYTE* pSrcData, UINT32 SrcSize,
-                                   UINT32 nDstWidth, UINT32 nDstHeight)
+                                   UINT32 nWidth, UINT32 nHeight)
 {
 	UINT32 x, y;
 	int cRawBytes;

@@ -347,7 +347,9 @@ static BOOL BitBlt_DPa(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 
 			if (dstp && patp)
 			{
-				UINT32 color = ReadColor(patp, hdcDest->format);
+				UINT32 colorA = ReadColor(patp, hdcDest->format);
+				UINT32 colorB = ReadColor(dstp, hdcDest->format);
+				UINT32 color = colorB & colorA;
 				WriteColor(dstp, hdcDest->format, color);
 			}
 		}
@@ -450,7 +452,7 @@ static BOOL BitBlt_PATPAINT(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 				UINT32 colorA = ReadColor(dstp, hdcDest->format);
 				UINT32 colorB = ReadColor(patp, hdcDest->format);
 				UINT32 colorC = ReadColor(srcp, hdcDest->format);
-				UINT32 color = colorA | colorB | ~colorC;
+				UINT32 color = ~colorA | colorB | colorC;
 				WriteColor(dstp, hdcDest->format, color);
 			}
 		}

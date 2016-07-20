@@ -35,6 +35,7 @@
 #include <freerdp/gdi/region.h>
 #include <freerdp/gdi/bitmap.h>
 #include <freerdp/log.h>
+#include <freerdp/gdi/shape.h>
 
 #include "brush.h"
 #include "clipping.h"
@@ -183,13 +184,10 @@ static BOOL BitBlt_SRCCOPY(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 	if (!hDstBmp || !hSrcBmp)
 		return FALSE;
 
-	if (!freerdp_image_copy(hDstBmp->data, hDstBmp->format,	hDstBmp->scanline,
-	                        nXDest, nYDest, nWidth, nHeight,
-	                        hSrcBmp->data, hSrcBmp->format, hSrcBmp->scanline,
-	                        nXSrc, nYSrc, palette))
-		return FALSE;
-
-	return TRUE;
+	return freerdp_image_copy(hDstBmp->data, hDstBmp->format, hDstBmp->scanline,
+	                          nXDest, nYDest, nWidth, nHeight,
+	                          hSrcBmp->data, hSrcBmp->format, hSrcBmp->scanline,
+	                          nXSrc, nYSrc, palette);
 }
 
 static BOOL BitBlt_NOTSRCCOPY(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
@@ -249,7 +247,7 @@ static BOOL BitBlt_SRCERASE(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 				UINT32 color;
 				colorA = ConvertColor(colorA, hdcSrc->format, hdcDest->format,
 				                      palette);
-				color = colorA & ~colorB;
+				color = ~colorA & colorB;
 				WriteColor(dstp, hdcDest->format, color);
 			}
 		}
@@ -279,11 +277,11 @@ static BOOL BitBlt_NOTSRCERASE(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 			if (srcp && dstp)
 			{
 				UINT32 color;
-				UINT32 colorA = ReadColor(srcp, hdcSrc->format);
-				UINT32 colorB = ReadColor(dstp, hdcDest->format);
-				colorA = ConvertColor(colorA, hdcSrc->format,
+				UINT32 colorA = ReadColor(dstp, hdcDest->format);
+				UINT32 colorB = ReadColor(srcp, hdcSrc->format);
+				colorB = ConvertColor(colorB, hdcSrc->format,
 				                      hdcDest->format, palette);
-				color = ~colorA & ~colorB;
+				color = ~(colorA | colorB);
 				WriteColor(dstp, hdcDest->format, color);
 			}
 		}
@@ -313,9 +311,9 @@ static BOOL BitBlt_SRCINVERT(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 			if (srcp && dstp)
 			{
 				UINT32 color;
-				UINT32 colorA = ReadColor(srcp, hdcSrc->format);
-				UINT32 colorB = ReadColor(dstp, hdcDest->format);
-				colorA = ConvertColor(colorA, hdcSrc->format,
+				UINT32 colorA = ReadColor(dstp, hdcDest->format);
+				UINT32 colorB = ReadColor(srcp, hdcSrc->format);
+				colorB = ConvertColor(colorB, hdcSrc->format,
 				                      hdcDest->format, palette);
 				color = colorA ^ colorB;
 				WriteColor(dstp, hdcDest->format, color);
@@ -347,9 +345,9 @@ static BOOL BitBlt_SRCAND(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 			if (srcp && dstp)
 			{
 				UINT32 color;
-				UINT32 colorA = ReadColor(srcp, hdcSrc->format);
-				UINT32 colorB = ReadColor(dstp, hdcDest->format);
-				colorA = ConvertColor(colorA, hdcSrc->format,
+				UINT32 colorA = ReadColor(dstp, hdcDest->format);
+				UINT32 colorB = ReadColor(srcp, hdcSrc->format);
+				colorB = ConvertColor(colorB, hdcSrc->format,
 				                      hdcDest->format, palette);
 				color = colorA & colorB;
 				WriteColor(dstp, hdcDest->format, color);
@@ -399,13 +397,12 @@ static BOOL BitBlt_DSPDxax(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
                            UINT32 nXSrc, UINT32 nYSrc, const gdiPalette* palette)
 {
 	UINT32 x, y;
-	UINT32 color;
+	UINT32 colorC;
 
 	if (!hdcDest || !hdcSrc)
 		return FALSE;
 
-	/* D = (D ^ S) & (P ^ D) */
-	color = hdcDest->textColor;
+	colorC = hdcDest->textColor;
 
 	for (y = 0; y < nHeight; y++)
 	{
@@ -419,11 +416,15 @@ static BOOL BitBlt_DSPDxax(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 			if (srcp && dstp)
 			{
 				UINT32 dstColor;
-				UINT32 colorA = ReadColor(srcp, hdcSrc->format);
-				UINT32 colorB = ReadColor(dstp, hdcDest->format);
-				colorA = ConvertColor(colorA, hdcSrc->format,
+				UINT32 tmp1, tmp2;
+				UINT32 colorA = ReadColor(dstp, hdcDest->format);
+				UINT32 colorB = ReadColor(srcp, hdcSrc->format);
+				colorB = ConvertColor(colorB, hdcSrc->format,
 				                      hdcDest->format, palette);
-				dstColor = (colorB ^ colorA) & (color & colorB);
+				tmp1 = colorA ^ colorB;
+				tmp2 = tmp1 & colorC;
+				dstColor = tmp2 ^ colorA;
+				//dstColor = (colorA ^ colorB) & (colorC ^ colorA);
 				WriteColor(dstp, hdcDest->format, dstColor);
 			}
 		}
@@ -444,7 +445,7 @@ static BOOL BitBlt_PSDPxax(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 	/* D = (S & D) | (~S & P) */
 	if (hdcDest->brush->style == GDI_BS_SOLID)
 	{
-		UINT32 colorC = hdcDest->brush->color;
+		UINT32 colorA = hdcDest->brush->color;
 
 		for (y = 0; y < nHeight; y++)
 		{
@@ -458,11 +459,11 @@ static BOOL BitBlt_PSDPxax(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 				if (srcp && dstp)
 				{
 					UINT32 color;
-					UINT32 colorA = ReadColor(srcp, hdcSrc->format);
-					UINT32 colorB = ReadColor(dstp, hdcDest->format);
-					colorA = ConvertColor(colorA, hdcSrc->format,
+					UINT32 colorB = ReadColor(srcp, hdcSrc->format);
+					UINT32 colorC = ReadColor(dstp, hdcDest->format);
+					colorB = ConvertColor(colorB, hdcSrc->format,
 					                      hdcDest->format, palette);
-					color = (colorA & colorB) | (~colorA & colorC);
+					color = ((colorA ^ colorB) & colorC) ^ colorA;
 					WriteColor(dstp, hdcDest->format, color);
 				}
 			}
@@ -484,12 +485,12 @@ static BOOL BitBlt_PSDPxax(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 				if (srcp && dstp)
 				{
 					UINT32 color;
-					UINT32 colorA = ReadColor(srcp, hdcSrc->format);
-					UINT32 colorB = ReadColor(dstp, hdcDest->format);
-					UINT32 colorC = ReadColor(patp, hdcDest->format);
+					UINT32 colorB = ReadColor(srcp, hdcSrc->format);
+					UINT32 colorC = ReadColor(dstp, hdcDest->format);
+					UINT32 colorA = ReadColor(patp, hdcDest->format);
 					colorA = ConvertColor(colorA, hdcSrc->format,
 					                      hdcDest->format, palette);
-					color = (colorA & colorB) | (~colorA & colorC);
+					color = ((colorA ^ colorB) & colorC) ^ colorA;
 					WriteColor(dstp, hdcDest->format, color);
 				}
 			}
@@ -511,7 +512,7 @@ static BOOL BitBlt_SPDSxax(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 	/* D = S ^ (P & (D ^ S)) */
 	if (hdcDest->brush->style == GDI_BS_SOLID)
 	{
-		UINT32 color = hdcDest->brush->color;
+		UINT32 colorB = hdcDest->brush->color;
 
 		for (y = 0; y < nHeight; y++)
 		{
@@ -524,12 +525,12 @@ static BOOL BitBlt_SPDSxax(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 
 				if (srcp && dstp)
 				{
-					UINT32 colorD;
+					UINT32 color;
 					UINT32 colorA = ReadColor(srcp, hdcSrc->format);
-					UINT32 colorB = ReadColor(dstp, hdcDest->format);
+					UINT32 colorC = ReadColor(dstp, hdcDest->format);
 					colorA = ConvertColor(colorA, hdcSrc->format,
 					                      hdcDest->format, palette);
-					colorD = colorA ^ (color & (colorB ^ colorA));
+					color = ((colorA ^ colorB) & colorC) ^ colorA;
 					WriteColor(dstp, hdcDest->format, color);
 				}
 			}
@@ -550,13 +551,13 @@ static BOOL BitBlt_SPDSxax(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 
 				if (srcp && dstp)
 				{
-					UINT32 colorD;
+					UINT32 color;
 					UINT32 colorA = ReadColor(srcp, hdcSrc->format);
-					UINT32 colorB = ReadColor(dstp, hdcDest->format);
-					UINT32 color = ReadColor(patp, hdcDest->format);
+					UINT32 colorB = ReadColor(patp, hdcDest->format);
+					UINT32 colorC = ReadColor(dstp, hdcDest->format);
 					colorA = ConvertColor(colorA, hdcSrc->format,
 					                      hdcDest->format, palette);
-					colorD = colorA ^ (color & (colorB ^ colorA));
+					color = ((colorA ^ colorB) & colorC) ^ colorA;
 					WriteColor(dstp, hdcDest->format, color);
 				}
 			}
@@ -590,7 +591,7 @@ static BOOL BitBlt_SPna(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 				UINT32 colorB = ReadColor(patp, hdcDest->format);
 				colorB = ConvertColor(colorB, hdcDest->format,
 				                      hdcSrc->format, palette);
-				color = colorA & ~colorB;
+				color = (~colorA) & colorB;
 				color = ConvertColor(color, hdcSrc->format, hdcDest->format, palette);
 				WriteColor(dstp, hdcDest->format, color);
 			}
@@ -625,7 +626,7 @@ static BOOL BitBlt_DSna(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 				UINT32 colorB = ReadColor(dstp, hdcDest->format);
 				colorA = ConvertColor(colorA, hdcSrc->format,
 				                      hdcDest->format, palette);
-				color = ~colorA & colorB;
+				color = colorA & (~colorB);
 				WriteColor(dstp, hdcDest->format, color);
 			}
 		}
@@ -695,7 +696,7 @@ static BOOL BitBlt_MERGEPAINT(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 				UINT32 color;
 				colorA = ConvertColor(colorA, hdcSrc->format, hdcDest->format,
 				                      palette);
-				color = ~colorA | colorB;
+				color = colorA | (~colorB);
 				WriteColor(dstp, hdcDest->format, color);
 			}
 		}

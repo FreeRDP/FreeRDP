@@ -154,7 +154,8 @@ void graphics_register_pointer(rdpGraphics* graphics, rdpPointer* pointer)
 
 /* Glyph Class */
 
-rdpGlyph* Glyph_Alloc(rdpContext* context)
+rdpGlyph* Glyph_Alloc(rdpContext* context, INT32 x, INT32 y,
+                      UINT32 cx, UINT32 cy, UINT32 cb, const BYTE* aj)
 {
 	rdpGlyph* glyph;
 	rdpGraphics* graphics;
@@ -173,6 +174,28 @@ rdpGlyph* Glyph_Alloc(rdpContext* context)
 		return NULL;
 
 	*glyph = *graphics->Glyph_Prototype;
+	glyph->cb = cb;
+	glyph->cx = cx;
+	glyph->cy = cy;
+	glyph->x = x;
+	glyph->y = y;
+	glyph->aj = malloc(glyph->cb);
+
+	if (!glyph->aj)
+	{
+		free(glyph);
+		return NULL;
+	}
+
+	CopyMemory(glyph->aj, aj, cb);
+
+	if (!glyph->New(context, glyph))
+	{
+		free(glyph->aj);
+		free(glyph);
+		return NULL;
+	}
+
 	return glyph;
 }
 
