@@ -138,9 +138,13 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	UINT32 SrcSize = length;
 	UINT32 SrcFormat;
 	UINT32 bytesPerPixel;
-	UINT32 DstWidth = MIN(width, bitmap->width);
-	UINT32 DstHeight = MIN(height, bitmap->height);
+	UINT32 DstWidth = width;
+	UINT32 DstHeight = height;
 	rdpGdi* gdi = context->gdi;
+
+	if (!Bitmap_SetDimensions(bitmap, width, height))
+		return FALSE;
+
 	bytesPerPixel = (bpp + 7) / 8;
 	size = width * height * GetBytesPerPixel(gdi->dstFormat);
 	bitmap->data = (BYTE*) _aligned_malloc(size, 16);
@@ -275,6 +279,8 @@ static BOOL gdi_Glyph_BeginDraw(rdpContext* context, UINT32 x, UINT32 y,
                                 UINT32 fgcolor, BOOL fOpRedundant)
 {
 	rdpGdi* gdi;
+	GDI_RECT rect;
+	HGDI_BRUSH brush;
 
 	if (!context || !context->gdi)
 		return FALSE;

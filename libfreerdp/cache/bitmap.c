@@ -108,13 +108,6 @@ static BOOL update_gdi_cache_bitmap(rdpContext* context,
 	if (!bitmap)
 		return FALSE;
 
-	if (!Bitmap_SetDimensions(bitmap, cacheBitmap->bitmapWidth,
-	                          cacheBitmap->bitmapHeight))
-	{
-		bitmap->Free(context, bitmap);
-		return FALSE;
-	}
-
 	if (!bitmap->Decompress(context, bitmap,
 	                        cacheBitmap->bitmapDataStream, cacheBitmap->bitmapWidth,
 	                        cacheBitmap->bitmapHeight,
@@ -154,9 +147,6 @@ static BOOL update_gdi_cache_bitmap_v2(rdpContext* context,
 
 	if (!bitmap)
 		return FALSE;
-
-	Bitmap_SetDimensions(bitmap, cacheBitmapV2->bitmapWidth,
-	                     cacheBitmapV2->bitmapHeight);
 
 	if (!cacheBitmapV2->bitmapBpp)
 		cacheBitmapV2->bitmapBpp = settings->ColorDepth;
@@ -205,14 +195,12 @@ static BOOL update_gdi_cache_bitmap_v3(rdpContext* context,
 	if (!bitmap)
 		return FALSE;
 
-	Bitmap_SetDimensions(bitmap, bitmapData->width, bitmapData->height);
-
 	if (!cacheBitmapV3->bpp)
 		cacheBitmapV3->bpp = settings->ColorDepth;
 
 	compressed = (bitmapData->codecID != RDP_CODEC_ID_NONE);
 	bitmap->Decompress(context, bitmap,
-	                   bitmapData->data, bitmap->width, bitmap->height,
+	                   bitmapData->data, bitmapData->width, bitmapData->height,
 	                   bitmapData->bpp, bitmapData->length, compressed,
 	                   bitmapData->codecID);
 
@@ -256,16 +244,14 @@ static BOOL update_gdi_bitmap_update(rdpContext* context,
 		Bitmap_SetRectangle(bitmap,
 		                    bitmapData->destLeft, bitmapData->destTop,
 		                    bitmapData->destRight, bitmapData->destBottom);
-		Bitmap_SetDimensions(bitmap, bitmapData->width, bitmapData->height);
-		bitmap->Decompress(context, bitmap,
-		                   bitmapData->bitmapDataStream, bitmapData->width, bitmapData->height,
-		                   bitmapData->bitsPerPixel, bitmapData->bitmapLength,
-		                   bitmapData->compressed, RDP_CODEC_ID_NONE);
 
 		if (reused)
 			bitmap->Free(context, bitmap);
 
-		reused = TRUE;
+		bitmap->Decompress(context, bitmap,
+		                   bitmapData->bitmapDataStream, bitmapData->width, bitmapData->height,
+		                   bitmapData->bitsPerPixel, bitmapData->bitmapLength,
+		                   bitmapData->compressed, RDP_CODEC_ID_NONE);
 
 		if (!bitmap->New(context, bitmap))
 			return FALSE;

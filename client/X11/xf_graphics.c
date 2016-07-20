@@ -135,6 +135,10 @@ static BOOL xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	UINT32 SrcFormat;
 	UINT32 bytesPerPixel;
 	xfContext* xfc = (xfContext*) context;
+
+	if (!Bitmap_SetDimensions(bitmap, width, height))
+		return FALSE;
+
 	bytesPerPixel = (bpp + 7) / 8;
 	size = width * height * 4;
 	bitmap->data = (BYTE*) _aligned_malloc(size, 16);
@@ -153,7 +157,7 @@ static BOOL xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 			if (!interleaved_decompress(context->codecs->interleaved,
 			                            pSrcData, SrcSize, width, height, bpp,
 			                            pDstData, xfc->format,
-			                            0, 0, 0, width, height,
+			                            0, 0, 0, bitmap->width, bitmap->height,
 			                            &context->gdi->palette))
 				return FALSE;
 		}
@@ -161,7 +165,7 @@ static BOOL xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 		{
 			if (!planar_decompress(context->codecs->planar, pSrcData, SrcSize,
 			                       width, height,
-			                       pDstData, xfc->format, 0, 0, 0, width, height, TRUE))
+			                       pDstData, xfc->format, 0, 0, 0, bitmap->width, bitmap->height, TRUE))
 				return FALSE;
 		}
 	}
@@ -375,6 +379,8 @@ static void xf_Glyph_Free(rdpContext* context, rdpGlyph* glyph)
 		XFreePixmap(xfc->display, ((xfGlyph*) glyph)->pixmap);
 
 	xf_unlock_x11(xfc, FALSE);
+	free(glyph->aj);
+	free(glyph);
 }
 
 static BOOL xf_Glyph_Draw(rdpContext* context, rdpGlyph* glyph, UINT32 x,

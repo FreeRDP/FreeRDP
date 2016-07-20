@@ -145,7 +145,8 @@ struct rdp_glyph
 	UINT32 paddingB[32 - 22]; /* 22 */
 };
 
-FREERDP_API rdpGlyph* Glyph_Alloc(rdpContext* context);
+FREERDP_API rdpGlyph* Glyph_Alloc(rdpContext* context, INT32 x, INT32 y,
+                                  UINT32 cx, UINT32 cy, UINT32 cb, const BYTE* aj);
 
 /* Graphics Module */
 
