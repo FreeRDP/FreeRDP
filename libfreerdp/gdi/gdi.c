@@ -1326,7 +1326,6 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 	if (!gdi_register_graphics(instance->context->graphics))
 		goto fail;
 
-	instance->update->BitmapUpdate = gdi_bitmap_update;
 	return TRUE;
 fail:
 	gdi_free(instance);
