@@ -471,8 +471,8 @@ void gdi_bitmap_free_ex(gdiBitmap* bitmap)
 	}
 }
 
-static BOOL gdi_bitmap_update(rdpContext* context,
-                              const BITMAP_UPDATE* bitmapUpdate)
+BOOL gdi_bitmap_update(rdpContext* context,
+                       const BITMAP_UPDATE* bitmapUpdate)
 {
 	UINT32 index;
 	rdpGdi* gdi;
@@ -487,16 +487,14 @@ static BOOL gdi_bitmap_update(rdpContext* context,
 	for (index = 0; index < bitmapUpdate->number; index++)
 	{
 		const BITMAP_DATA* bitmap = &(bitmapUpdate->rectangles[index]);
-		const UINT32 nWidth = MIN(bitmap->destRight,
-		                          gdi->width - 1) - bitmap->destLeft + 1; /* clip width */
-		const UINT32 nHeight = MIN(bitmap->destBottom,
-		                           gdi->height - 1) - bitmap->destTop + 1; /* clip height */
 		rdpBitmap* bmp = Bitmap_Alloc(context);
 
 		if (!bmp)
 			return FALSE;
 
 		Bitmap_SetDimensions(bmp, bitmap->width, bitmap->height);
+		Bitmap_SetRectangle(bmp, bitmap->destLeft, bitmap->destTop, bitmap->destRight,
+		                    bitmap->destBottom);
 
 		if (!bmp->Decompress(context, bmp, bitmap->bitmapDataStream,
 		                     bitmap->width, bitmap->height, bitmap->bitsPerPixel,
@@ -513,20 +511,13 @@ static BOOL gdi_bitmap_update(rdpContext* context,
 			return FALSE;
 		}
 
-		if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, gdi->stride,
-		                        bitmap->destLeft, bitmap->destTop, nWidth, nHeight,
-		                        bmp->data, bmp->format, bmp->width * GetBytesPerPixel(bmp->format),
-		                        0, 0, &gdi->palette))
+		if (!bmp->Paint(context, bmp))
 		{
 			bmp->Free(context, bmp);
 			return FALSE;
 		}
 
 		bmp->Free(context, bmp);
-
-		if (!gdi_InvalidateRegion(gdi->primary->hdc, bitmap->destLeft, bitmap->destTop,
-		                          nWidth, nHeight))
-			return FALSE;
 	}
 
 	return TRUE;

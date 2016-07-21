@@ -124,63 +124,6 @@ static BOOL xf_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 	return TRUE;
 }
 
-static BOOL xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
-                                 const BYTE* data, UINT32 width, UINT32 height, UINT32 bpp, UINT32 length,
-                                 BOOL compressed, UINT32 codecId)
-{
-	UINT16 size;
-	const BYTE* pSrcData;
-	BYTE* pDstData;
-	UINT32 SrcSize;
-	UINT32 SrcFormat;
-	UINT32 bytesPerPixel;
-	xfContext* xfc = (xfContext*) context;
-	bytesPerPixel = (bpp + 7) / 8;
-	size = width * height * 4;
-	bitmap->data = (BYTE*) _aligned_malloc(size, 16);
-
-	if (!bitmap->data)
-		return FALSE;
-
-	pSrcData = data;
-	SrcSize = (UINT32) length;
-	pDstData = bitmap->data;
-
-	if (compressed)
-	{
-		if (bpp < 32)
-		{
-			if (!interleaved_decompress(context->codecs->interleaved,
-			                            pSrcData, SrcSize, width, height, bpp,
-			                            pDstData, xfc->format,
-			                            0, 0, 0, bitmap->width, bitmap->height,
-			                            &context->gdi->palette))
-				return FALSE;
-		}
-		else
-		{
-			if (!planar_decompress(context->codecs->planar, pSrcData, SrcSize,
-			                       width, height,
-			                       pDstData, xfc->format, 0, 0, 0, bitmap->width, bitmap->height, TRUE))
-				return FALSE;
-		}
-	}
-	else
-	{
-		SrcFormat = gdi_get_pixel_format(bpp, TRUE);
-
-		if (!freerdp_image_copy(pDstData, xfc->format, 0, 0, 0,
-		                        width, height, pSrcData,
-		                        SrcFormat, 0, 0, 0, &context->gdi->palette))
-			return FALSE;
-	}
-
-	bitmap->compressed = FALSE;
-	bitmap->length = size;
-	bitmap->format = xfc->format;
-	return TRUE;
-}
-
 static BOOL xf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap,
                                  BOOL primary)
 {
@@ -461,33 +404,26 @@ BOOL xf_register_pointer(rdpGraphics* graphics)
 
 BOOL xf_register_graphics(rdpGraphics* graphics)
 {
-	rdpBitmap* bitmap = NULL;
-	rdpGlyph* glyph = NULL;
-	BOOL ret = FALSE;
+	rdpBitmap bitmap;
+	rdpGlyph glyph;
 
-	if (!(bitmap = (rdpBitmap*) calloc(1, sizeof(rdpBitmap))))
-		goto out;
+	if (!graphics || !graphics->Bitmap_Prototype || !graphics->Glyph_Prototype)
+		return FALSE;
 
-	if (!(glyph = (rdpGlyph*) calloc(1, sizeof(rdpGlyph))))
-		goto out;
-
-	bitmap->size = sizeof(xfBitmap);
-	bitmap->New = xf_Bitmap_New;
-	bitmap->Free = xf_Bitmap_Free;
-	bitmap->Paint = xf_Bitmap_Paint;
-	bitmap->Decompress = xf_Bitmap_Decompress;
-	bitmap->SetSurface = xf_Bitmap_SetSurface;
-	graphics_register_bitmap(graphics, bitmap);
-	glyph->size = sizeof(xfGlyph);
-	glyph->New = xf_Glyph_New;
-	glyph->Free = xf_Glyph_Free;
-	glyph->Draw = xf_Glyph_Draw;
-	glyph->BeginDraw = xf_Glyph_BeginDraw;
-	glyph->EndDraw = xf_Glyph_EndDraw;
-	graphics_register_glyph(graphics, glyph);
-	ret = TRUE;
-out:
-	free(bitmap);
-	free(glyph);
-	return ret;
+	bitmap = *graphics->Bitmap_Prototype;
+	glyph = *graphics->Glyph_Prototype;
+	bitmap.size = sizeof(xfBitmap);
+	bitmap.New = xf_Bitmap_New;
+	bitmap.Free = xf_Bitmap_Free;
+	bitmap.Paint = xf_Bitmap_Paint;
+	bitmap.SetSurface = xf_Bitmap_SetSurface;
+	graphics_register_bitmap(graphics, &bitmap);
+	glyph.size = sizeof(xfGlyph);
+	glyph.New = xf_Glyph_New;
+	glyph.Free = xf_Glyph_Free;
+	glyph.Draw = xf_Glyph_Draw;
+	glyph.BeginDraw = xf_Glyph_BeginDraw;
+	glyph.EndDraw = xf_Glyph_EndDraw;
+	graphics_register_glyph(graphics, &glyph);
+	return TRUE;
 }
