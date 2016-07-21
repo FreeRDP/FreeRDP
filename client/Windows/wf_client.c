@@ -58,7 +58,7 @@
 
 #define TAG CLIENT_TAG("windows")
 
-int wf_create_console(void)
+static int wf_create_console(void)
 {
 	if (!AllocConsole())
 		return 1;
@@ -69,15 +69,15 @@ int wf_create_console(void)
 	return 0;
 }
 
-BOOL wf_sw_begin_paint(wfContext* wfc)
+static BOOL wf_sw_begin_paint(rdpContext* context)
 {
-	rdpGdi* gdi = ((rdpContext*) wfc)->gdi;
+    rdpGdi* gdi = context->gdi;
 	gdi->primary->hdc->hwnd->invalid->null = 1;
 	gdi->primary->hdc->hwnd->ninvalid = 0;
 	return TRUE;
 }
 
-BOOL wf_sw_end_paint(wfContext* wfc)
+static BOOL wf_sw_end_paint(rdpContext* context)
 {
 	int i;
 	rdpGdi* gdi;
@@ -86,8 +86,8 @@ BOOL wf_sw_end_paint(wfContext* wfc)
 	HGDI_RGN cinvalid;
 	REGION16 invalidRegion;
 	RECTANGLE_16 invalidRect;
-	const RECTANGLE_16* extents;
-	rdpContext* context = (rdpContext*) wfc;
+    const RECTANGLE_16* extents;
+    wfContext* wfc = (wfContext*)context;
 
 	gdi = context->gdi;
 
@@ -128,68 +128,73 @@ BOOL wf_sw_end_paint(wfContext* wfc)
 	return TRUE;
 }
 
-BOOL wf_sw_desktop_resize(wfContext* wfc)
+static BOOL wf_sw_desktop_resize(rdpContext* context)
 {
-	rdpGdi* gdi;
-	rdpContext* context;
+    rdpGdi* gdi;
 	rdpSettings* settings;
-	freerdp* instance = wfc->instance;
+    wfContext* wfc = (wfContext*)context;
 
-	context = (rdpContext*) wfc;
-	settings = wfc->instance->settings;
+    if (!context || !context->instance)
+        return FALSE;
+
+    settings = context->instance->settings;
 	gdi = context->gdi;
+    if (!gdi || !settings)
+        return FALSE;
 
-	wfc->width = settings->DesktopWidth;
-	wfc->height = settings->DesktopHeight;
-
-	gdi->primary->bitmap->data = NULL;
-	gdi_free(instance);
+    if (!gdi_resize(gdi, settings->DesktopWidth, settings->DesktopHeight))
+        return FALSE;
 
 	if (wfc->primary)
 	{
+        UINT32 format = gdi_get_pixel_format(settings->ColorDepth, FALSE);
 		wf_image_free(wfc->primary);
-		wfc->primary = wf_image_new(wfc, wfc->width, wfc->height, wfc->dstBpp, NULL);
+        wfc->primary = wf_image_new(wfc, settings->DesktopWidth, settings->DesktopHeight, format, NULL);
 	}
 
-	if (!gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP, wfc->primary->pdata))
-		return FALSE;
-
-	gdi = instance->context->gdi;
-	wfc->hdc = gdi->primary->hdc;
-
 	return TRUE;
 }
 
-BOOL wf_hw_begin_paint(wfContext* wfc)
+static BOOL wf_hw_begin_paint(rdpContext* context)
 {
-	wfc->hdc->hwnd->invalid->null = 1;
-	wfc->hdc->hwnd->ninvalid = 0;
+    HGDI_DC hdc;
+
+    if (!context || !context->gdi || !context->gdi->hdc)
+        return FALSE;
+    hdc = context->gdi->hdc;
+    if (!hdc || !hdc->hwnd || !hdc->hwnd->invalid)
+        return FALSE;
+
+    hdc->hwnd->invalid->null = 1;
+    hdc->hwnd->ninvalid = 0;
 	return TRUE;
 }
 
-BOOL wf_hw_end_paint(wfContext* wfc)
+static BOOL wf_hw_end_paint(rdpContext* context)
 {
 	return TRUE;
 }
 
-BOOL wf_hw_desktop_resize(wfContext* wfc)
+static BOOL wf_hw_desktop_resize(rdpContext* context)
 {
 	BOOL same;
 	RECT rect;
 	rdpSettings* settings;
+    wfContext* wfc = (wfContext*)context;
 
-	settings = wfc->instance->settings;
+    if (!context || !context->settings)
+        return FALSE;
 
-	wfc->width = settings->DesktopWidth;
-	wfc->height = settings->DesktopHeight;
+    settings = context->settings;
 
 	if (wfc->primary)
 	{
+         UINT32 format = gdi_get_pixel_format(settings->ColorDepth, FALSE);
 		same = (wfc->primary == wfc->drawing) ? TRUE : FALSE;
 
 		wf_image_free(wfc->primary);
 
-		wfc->primary = wf_image_new(wfc, wfc->width, wfc->height, wfc->dstBpp, NULL);
+        wfc->primary = wf_image_new(wfc, settings->DesktopWidth, settings->DesktopHeight, format, NULL);
 
 		if (same)
 			wfc->drawing = wfc->primary;
@@ -198,7 +203,7 @@ BOOL wf_hw_desktop_resize(wfContext* wfc)
 	if (wfc->fullscreen != TRUE)
 	{
 		if (wfc->hwnd)
-			SetWindowPos(wfc->hwnd, HWND_TOP, -1, -1, wfc->width + wfc->diff.x, wfc->height + wfc->diff.y, SWP_NOMOVE);
+            SetWindowPos(wfc->hwnd, HWND_TOP, -1, -1, settings->DesktopWidth + wfc->diff.x, settings->DesktopHeight + wfc->diff.y, SWP_NOMOVE);
 	}
 	else
 	{
@@ -209,7 +214,7 @@ BOOL wf_hw_desktop_resize(wfContext* wfc)
 	return TRUE;
 }
 
-BOOL wf_pre_connect(freerdp* instance)
+static BOOL wf_pre_connect(freerdp* instance)
 {
 	wfContext* wfc;
 	int desktopWidth;
@@ -217,10 +222,12 @@ BOOL wf_pre_connect(freerdp* instance)
 	rdpContext* context;
 	rdpSettings* settings;
 
+    if (!instance || !instance->context || !instance->settings)
+        return FALSE;
+
 	context = instance->context;
 	wfc = (wfContext*) instance->context;
-	wfc->instance = instance;
-	wfc->codecs = instance->context->codecs;
+    wfc->instance = instance;
 
 	settings = instance->settings;
 
@@ -255,15 +262,6 @@ BOOL wf_pre_connect(freerdp* instance)
 
 	if (wfc->fullscreen)
 		wfc->fs_toggle = 1;
-
-	wfc->clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
-	ZeroMemory(wfc->clrconv, sizeof(CLRCONV));
-
-	wfc->clrconv->palette = NULL;
-	wfc->clrconv->alpha = FALSE;
-
-	if (!(instance->context->cache = cache_new(settings)))
-		return FALSE;
 
 	desktopWidth = settings->DesktopWidth;
 	desktopHeight = settings->DesktopHeight;
@@ -326,7 +324,7 @@ BOOL wf_pre_connect(freerdp* instance)
 	return TRUE;
 }
 
-void wf_add_system_menu(wfContext* wfc)
+static void wf_add_system_menu(wfContext* wfc)
 {
 	HMENU hMenu = GetSystemMenu(wfc->hwnd, FALSE);
 
@@ -349,7 +347,7 @@ void wf_add_system_menu(wfContext* wfc)
 	}
 }
 
-BOOL wf_post_connect(freerdp* instance)
+static BOOL wf_post_connect(freerdp* instance)
 {
 	rdpGdi* gdi;
 	DWORD dwStyle;
@@ -365,47 +363,19 @@ BOOL wf_post_connect(freerdp* instance)
 	wfc = (wfContext*) instance->context;
 	cache = instance->context->cache;
 
-	wfc->dstBpp = 32;
-	wfc->width = settings->DesktopWidth;
-	wfc->height = settings->DesktopHeight;
+     UINT32 format = gdi_get_pixel_format(settings->ColorDepth, FALSE);
+    wfc->format = PIXEL_FORMAT_RGBX32;
+    wfc->primary = wf_image_new(wfc,settings->DesktopWidth, settings->DesktopHeight, format, NULL);
 
-	if (settings->SoftwareGdi)
+    if (!gdi_init_ex(instance, wfc->format, 0, wfc->primary->pdata, wf_image_free))
+        return FALSE;
+
+    gdi = instance->context->gdi;
+    if (!settings->SoftwareGdi)
 	{
-		wfc->primary = wf_image_new(wfc, wfc->width, wfc->height, wfc->dstBpp, NULL);
-
-		if (!gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP, wfc->primary->pdata))
-			return FALSE;
-
-		gdi = instance->context->gdi;
-		wfc->hdc = gdi->primary->hdc;
-	}
-	else
-	{
-		wf_gdi_register_update_callbacks(instance->update);
-		wfc->srcBpp = instance->settings->ColorDepth;
-		wfc->primary = wf_image_new(wfc, wfc->width, wfc->height, wfc->dstBpp, NULL);
-
-		if (!(wfc->hdc = gdi_GetDC()))
-			return FALSE;
-
-		wfc->hdc->bitsPerPixel = wfc->dstBpp;
-		wfc->hdc->bytesPerPixel = wfc->dstBpp / 8;
-
-		wfc->hdc->alpha = wfc->clrconv->alpha;
-		wfc->hdc->invert = wfc->clrconv->invert;
-
-		wfc->hdc->hwnd = (HGDI_WND) malloc(sizeof(GDI_WND));
-		wfc->hdc->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0);
-		wfc->hdc->hwnd->invalid->null = 1;
-
-		wfc->hdc->hwnd->count = 32;
-		wfc->hdc->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * wfc->hdc->hwnd->count);
-		wfc->hdc->hwnd->ninvalid = 0;
-
-		if (settings->RemoteFxCodec)
-		{
-			wfc->tile = wf_image_new(wfc, 64, 64, 32, NULL);
-		}
+         UINT32 format = gdi_get_pixel_format(settings->ColorDepth, FALSE);
+        wf_gdi_register_update_callbacks(instance->update);
+        wfc->primary = wf_image_new(wfc, settings->DesktopWidth, settings->DesktopHeight, format, NULL);
 	}
 
 	if (settings->WindowTitle != NULL)
@@ -437,7 +407,7 @@ BOOL wf_post_connect(freerdp* instance)
 
 	wf_add_system_menu(wfc);
 
-	BitBlt(wfc->primary->hdc, 0, 0, wfc->width, wfc->height, NULL, 0, 0, BLACKNESS);
+    BitBlt(wfc->primary->hdc, 0, 0, settings->DesktopWidth, settings->DesktopHeight, NULL, 0, 0, BLACKNESS);
 	wfc->drawing = wfc->primary;
 
 	EventArgsInit(&e, "wfreerdp");
@@ -469,8 +439,7 @@ BOOL wf_post_connect(freerdp* instance)
 		brush_cache_register_callbacks(instance->update);
 		bitmap_cache_register_callbacks(instance->update);
 		offscreen_cache_register_callbacks(instance->update);
-		wf_register_graphics(context->graphics);
-		instance->update->BitmapUpdate = wf_gdi_bitmap_update;
+        wf_register_graphics(context->graphics);
 	}
 
 	if (freerdp_channels_post_connect(context->channels, instance) != CHANNEL_RC_OK)
@@ -567,7 +536,7 @@ static BOOL wf_gw_authenticate(freerdp* instance,
 	return wf_authenticate_raw(instance, tmp, username, password, domain);
 }
 
-DWORD wf_verify_certificate(freerdp* instance,
+static DWORD wf_verify_certificate(freerdp* instance,
 	const char* common_name,
 	const char* subject,
 	const char* issuer,
@@ -670,7 +639,7 @@ static BOOL wf_auto_reconnect(freerdp* instance)
 	return FALSE;
 }
 
-void* wf_input_thread(void* arg)
+static void* wf_input_thread(void* arg)
 {
 	int status;
 	wMessage message;
@@ -702,7 +671,7 @@ void* wf_input_thread(void* arg)
 	return NULL;
 }
 
-DWORD WINAPI wf_client_thread(LPVOID lpParam)
+static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 {
 	MSG msg;
 	int width;
@@ -848,7 +817,7 @@ disconnect:
 	return 0;
 }
 
-DWORD WINAPI wf_keyboard_thread(LPVOID lpParam)
+static DWORD WINAPI wf_keyboard_thread(LPVOID lpParam)
 {
 	MSG msg;
 	BOOL status;
@@ -888,24 +857,24 @@ DWORD WINAPI wf_keyboard_thread(LPVOID lpParam)
 	return (DWORD) NULL;
 }
 
-rdpSettings* freerdp_client_get_settings(wfContext* wfc)
+static rdpSettings* freerdp_client_get_settings(wfContext* wfc)
 {
 	return wfc->instance->settings;
 }
 
-int freerdp_client_focus_in(wfContext* wfc)
+static int freerdp_client_focus_in(wfContext* wfc)
 {
 	PostThreadMessage(wfc->mainThreadId, WM_SETFOCUS, 0, 1);
 	return 0;
 }
 
-int freerdp_client_focus_out(wfContext* wfc)
+static int freerdp_client_focus_out(wfContext* wfc)
 {
 	PostThreadMessage(wfc->mainThreadId, WM_KILLFOCUS, 0, 1);
 	return 0;
 }
 
-int freerdp_client_set_window_size(wfContext* wfc, int width, int height)
+static int freerdp_client_set_window_size(wfContext* wfc, int width, int height)
 {
 	WLog_DBG(TAG,  "freerdp_client_set_window_size %d, %d", width, height);
 
@@ -1025,7 +994,7 @@ void wf_size_scrollbars(wfContext* wfc, UINT32 client_width, UINT32 client_heigh
 	wf_update_canvas_diff(wfc);
 }
 
-BOOL wfreerdp_client_global_init(void)
+static BOOL wfreerdp_client_global_init(void)
 {
 	WSADATA wsaData;
 
@@ -1047,12 +1016,12 @@ BOOL wfreerdp_client_global_init(void)
 	return TRUE;
 }
 
-void wfreerdp_client_global_uninit(void)
+static void wfreerdp_client_global_uninit(void)
 {
 	WSACleanup();
 }
 
-BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
+static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 {
 	wfContext* wfc = (wfContext*) context;
 
@@ -1075,7 +1044,7 @@ BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 	return TRUE;
 }
 
-void wfreerdp_client_free(freerdp* instance, rdpContext* context)
+static void wfreerdp_client_free(freerdp* instance, rdpContext* context)
 {
 	if (!context)
 		return;
@@ -1086,15 +1055,9 @@ void wfreerdp_client_free(freerdp* instance, rdpContext* context)
 		freerdp_channels_free(context->channels);
 		context->channels = NULL;
 	}
-
-	if (context->cache)
-	{
-		cache_free(context->cache);
-		context->cache = NULL;
-	}
 }
 
-int wfreerdp_client_start(rdpContext* context)
+static int wfreerdp_client_start(rdpContext* context)
 {
 	HWND hWndParent;
 	HINSTANCE hInstance;
@@ -1141,7 +1104,7 @@ int wfreerdp_client_start(rdpContext* context)
 	return 0;
 }
 
-int wfreerdp_client_stop(rdpContext* context)
+static int wfreerdp_client_stop(rdpContext* context)
 {
 	wfContext* wfc = (wfContext*) context;
 

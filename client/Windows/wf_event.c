@@ -39,8 +39,8 @@ static HWND g_focus_hWnd;
 #define X_POS(lParam) ((UINT16) (lParam & 0xFFFF))
 #define Y_POS(lParam) ((UINT16) ((lParam >> 16) & 0xFFFF))
 
-BOOL wf_scale_blt(wfContext* wfc, HDC hdc, int x, int y, int w, int h, HDC hdcSrc, int x1, int y1, DWORD rop);
-void wf_scale_mouse_event(wfContext* wfc, rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
+static BOOL wf_scale_blt(wfContext* wfc, HDC hdc, int x, int y, int w, int h, HDC hdcSrc, int x1, int y1, DWORD rop);
+static BOOL wf_scale_mouse_event(wfContext* wfc, rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
 
 static BOOL g_flipping_in;
 static BOOL g_flipping_out;
@@ -211,12 +211,13 @@ static int wf_event_process_WM_MOUSEWHEEL(wfContext* wfc, HWND hWnd, UINT Msg, W
 	return 0;
 }
 
-void wf_sizing(wfContext* wfc, WPARAM wParam, LPARAM lParam)
+static void wf_sizing(wfContext* wfc, WPARAM wParam, LPARAM lParam)
 {
+    rdpSettings* settings = wfc->instance->settings;
 	// Holding the CTRL key down while resizing the window will force the desktop aspect ratio.
 	LPRECT rect;
 
-	if (wfc->instance->settings->SmartSizing && (GetAsyncKeyState(VK_CONTROL) & 0x8000))
+    if (settings->SmartSizing && (GetAsyncKeyState(VK_CONTROL) & 0x8000))
 	{
 		rect = (LPRECT) wParam;
 
@@ -226,20 +227,20 @@ void wf_sizing(wfContext* wfc, WPARAM wParam, LPARAM lParam)
 			case WMSZ_RIGHT:
 			case WMSZ_BOTTOMRIGHT:
 				// Adjust height
-				rect->bottom = rect->top + wfc->height * (rect->right - rect->left) / wfc->instance->settings->DesktopWidth;
+                rect->bottom = rect->top + settings->DesktopHeight * (rect->right - rect->left) / settings->DesktopWidth;
 				break;
 
 			case WMSZ_TOP:
 			case WMSZ_BOTTOM:
 			case WMSZ_TOPRIGHT:			
 				// Adjust width
-				rect->right = rect->left + wfc->width * (rect->bottom - rect->top) / wfc->instance->settings->DesktopHeight;
+                rect->right = rect->left + settings->DesktopWidth * (rect->bottom - rect->top) / settings->DesktopHeight;
 				break;
 
 			case WMSZ_BOTTOMLEFT:
 			case WMSZ_TOPLEFT:
 				// adjust width
-				rect->left = rect->right - (wfc->width * (rect->bottom - rect->top) / wfc->instance->settings->DesktopHeight);
+                rect->left = rect->right - (settings->DesktopWidth * (rect->bottom - rect->top) / settings->DesktopHeight);
 
 				break;
 		}
@@ -253,8 +254,7 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 	LONG_PTR ptr;
 	wfContext* wfc;
 	int x, y, w, h;
-	PAINTSTRUCT ps;
-	rdpInput* input;
+    PAINTSTRUCT ps;
 	BOOL processed;
 	RECT windowRect;
 	MINMAXINFO* minmax;
@@ -267,7 +267,8 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 
 	if (wfc != NULL)
 	{
-		input = wfc->instance->input;
+        rdpInput* input = wfc->instance->input;
+        rdpSettings* settings = wfc->instance->settings;
 
 		switch (Msg)
 		{
@@ -299,8 +300,8 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 					if (!wfc->fullscreen)
 					{
 						// add window decoration
-						minmax->ptMaxTrackSize.x = wfc->width + wfc->diff.x;
-						minmax->ptMaxTrackSize.y = wfc->height + wfc->diff.y;
+                        minmax->ptMaxTrackSize.x = settings->DesktopWidth + wfc->diff.x;
+                        minmax->ptMaxTrackSize.y = settings->DesktopHeight + wfc->diff.y;
 					}
 				}
 				break;
@@ -617,18 +618,20 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 
 BOOL wf_scale_blt(wfContext* wfc, HDC hdc, int x, int y, int w, int h, HDC hdcSrc, int x1, int y1, DWORD rop)
 {
-	int ww, wh, dw, dh;
+    rdpSettings* settings;
+    UINT32 ww, wh, dw, dh;
 
+    settings = wfc->instance->settings;
 	if (!wfc->client_width)
-		wfc->client_width = wfc->width;
+        wfc->client_width = settings->DesktopWidth;
 
 	if (!wfc->client_height)
-		wfc->client_height = wfc->height;
+        wfc->client_height = settings->DesktopHeight;
 
 	ww = wfc->client_width;
 	wh = wfc->client_height;
-	dw = wfc->instance->settings->DesktopWidth;
-	dh = wfc->instance->settings->DesktopHeight;
+    dw = settings->DesktopWidth;
+    dh = settings->DesktopHeight;
 
 	if (!ww)
 		ww = dw;
@@ -651,24 +654,25 @@ BOOL wf_scale_blt(wfContext* wfc, HDC hdc, int x, int y, int w, int h, HDC hdcSr
 	return TRUE;
 }
 
-void wf_scale_mouse_event(wfContext* wfc, rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+static BOOL wf_scale_mouse_event(wfContext* wfc, rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	int ww, wh, dw, dh;
 	rdpContext* context;
+    rdpSettings* settings = wfc->context.settings;
 	MouseEventEventArgs eventArgs;
 
 	if (!wfc->client_width)
-		wfc->client_width = wfc->width;
+        wfc->client_width = settings->DesktopWidth;
 
 	if (!wfc->client_height)
-		wfc->client_height = wfc->height;
+        wfc->client_height = settings->DesktopHeight;
 
 	ww = wfc->client_width;
 	wh = wfc->client_height;
-	dw = wfc->instance->settings->DesktopWidth;
-	dh = wfc->instance->settings->DesktopHeight;
+    dw = settings->DesktopWidth;
+    dh = settings->DesktopHeight;
 
-	if (!wfc->instance->settings->SmartSizing || ((ww == dw) && (wh == dh)))
+    if (!settings->SmartSizing || ((ww == dw) && (wh == dh)))
 		input->MouseEvent(input, flags, x + wfc->xCurrentScroll, y + wfc->yCurrentScroll);
 	else
 		input->MouseEvent(input, flags, x * dw / ww + wfc->xCurrentScroll, y * dh / wh + wfc->yCurrentScroll);
@@ -678,4 +682,6 @@ void wf_scale_mouse_event(wfContext* wfc, rdpInput* input, UINT16 flags, UINT16 
 	eventArgs.y = y;
 	context = (rdpContext*) wfc;
 	PubSub_OnMouseEvent(context->pubSub, context, &eventArgs);
+
+    return TRUE;
 }
