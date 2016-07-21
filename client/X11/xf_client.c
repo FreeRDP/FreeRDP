@@ -1104,18 +1104,15 @@ static BOOL xf_pre_connect(freerdp* instance)
 	settings->OrderSupport[NEG_LINETO_INDEX] = TRUE;
 	settings->OrderSupport[NEG_POLYLINE_INDEX] = TRUE;
 	settings->OrderSupport[NEG_MEMBLT_INDEX] = settings->BitmapCacheEnabled;
-	settings->OrderSupport[NEG_MEM3BLT_INDEX] = (settings->SoftwareGdi) ? TRUE :
-	FALSE;
+	settings->OrderSupport[NEG_MEM3BLT_INDEX] = TRUE;
 	settings->OrderSupport[NEG_MEMBLT_V2_INDEX] = settings->BitmapCacheEnabled;
 	settings->OrderSupport[NEG_MEM3BLT_V2_INDEX] = FALSE;
 	settings->OrderSupport[NEG_SAVEBITMAP_INDEX] = FALSE;
 	settings->OrderSupport[NEG_GLYPH_INDEX_INDEX] = TRUE;
 	settings->OrderSupport[NEG_FAST_INDEX_INDEX] = TRUE;
 	settings->OrderSupport[NEG_FAST_GLYPH_INDEX] = TRUE;
-	settings->OrderSupport[NEG_POLYGON_SC_INDEX] = (settings->SoftwareGdi) ? FALSE :
-	TRUE;
-	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = (settings->SoftwareGdi) ? FALSE :
-	TRUE;
+	settings->OrderSupport[NEG_POLYGON_SC_INDEX] = TRUE;
+	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = TRUE;
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
 	PubSub_SubscribeChannelConnected(instance->context->pubSub,
@@ -1222,6 +1219,11 @@ static BOOL xf_post_connect(freerdp* instance)
 		}
 
 		xf_gdi_register_update_callbacks(update);
+		brush_cache_register_callbacks(instance->update);
+		glyph_cache_register_callbacks(instance->update);
+		bitmap_cache_register_callbacks(instance->update);
+		offscreen_cache_register_callbacks(instance->update);
+		palette_cache_register_callbacks(instance->update);
 	}
 
 #ifdef WITH_XRENDER
