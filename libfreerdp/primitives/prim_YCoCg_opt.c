@@ -50,7 +50,7 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(
 	BYTE* dptr = (BYTE*) pDst;
 	int sRowBump = srcStep - width * sizeof(UINT32);
 	int dRowBump = dstStep - width * sizeof(UINT32);
-	int h;
+    UINT32 h;
 	/* Shift left by "shift" and divide by two is the same as shift
 	 * left by "shift-1".
 	 */
@@ -76,14 +76,14 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(
 
 	for (h = 0; h < height; h++)
 	{
-		int w = width;
+        UINT32 w = width;
 		BOOL onStride;
 
 		/* Get to a 16-byte destination boundary. */
 		if ((ULONG_PTR) dptr & 0x0f)
 		{
 			pstatus_t status;
-			int startup = (16 - ((ULONG_PTR) dptr & 0x0f)) / 4;
+            UINT32 startup = (16 - ((ULONG_PTR) dptr & 0x0f)) / 4;
 
 			if (startup > width) startup = width;
 
@@ -229,7 +229,7 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(
 	BYTE* dptr = (BYTE*) pDst;
 	int sRowBump = srcStep - width * sizeof(UINT32);
 	int dRowBump = dstStep - width * sizeof(UINT32);
-	int h;
+    UINT32 h;
 	/* Shift left by "shift" and divide by two is the same as shift
 	 * left by "shift-1".
 	 */
@@ -262,7 +262,7 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(
 		if ((ULONG_PTR) dptr & 0x0f)
 		{
 			pstatus_t status;
-			int startup = (16 - ((ULONG_PTR) dptr & 0x0f)) / 4;
+            UINT32 startup = (16 - ((ULONG_PTR) dptr & 0x0f)) / 4;
 
 			if (startup > width) startup = width;
 
