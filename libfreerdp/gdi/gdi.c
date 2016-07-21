@@ -373,7 +373,7 @@ BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, UINT32 x, UINT32 y)
 	BYTE* p;
 	HGDI_BITMAP hBmp = (HGDI_BITMAP) hdcBmp->selectedObject;
 
-	if (x >= 0 && x < hBmp->width && y >= 0 && y < hBmp->height)
+	if (x < hBmp->width && y < hBmp->height)
 	{
 		p = hBmp->data + (y * hBmp->scanline) + (x * GetBytesPerPixel(hdcBmp->format));
 		return p;
@@ -404,21 +404,17 @@ BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, UINT32 x, UINT32 y)
 		    || (hdcBrush->brush->style == GDI_BS_HATCHED))
 		{
 			HGDI_BITMAP hBmpBrush = hdcBrush->brush->pattern;
-
 			/* According to @msdn{dd183396}, the system always positions a brush bitmap
 			 * at the brush origin and copy across the client area.
 			 * Calculate the offset of the mapped pixel in the brush bitmap according to
 			 * brush origin and dest coordinates */
-			if (x >= 0 && y >= 0)
-			{
-				x = (x + hBmpBrush->width - (hdcBrush->brush->nXOrg % hBmpBrush->width)) %
-				    hBmpBrush->width;
-				y = (y + hBmpBrush->height - (hdcBrush->brush->nYOrg % hBmpBrush->height)) %
-				    hBmpBrush->height;
-				p = hBmpBrush->data + (y * hBmpBrush->scanline) + (x * GetBytesPerPixel(
-				            hBmpBrush->format));
-				return p;
-			}
+			x = (x + hBmpBrush->width - (hdcBrush->brush->nXOrg % hBmpBrush->width)) %
+			    hBmpBrush->width;
+			y = (y + hBmpBrush->height - (hdcBrush->brush->nYOrg % hBmpBrush->height)) %
+			    hBmpBrush->height;
+			p = hBmpBrush->data + (y * hBmpBrush->scanline) + (x * GetBytesPerPixel(
+			            hBmpBrush->format));
+			return p;
 		}
 	}
 

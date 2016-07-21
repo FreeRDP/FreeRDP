@@ -459,12 +459,6 @@ INLINE BOOL gdi_InvalidateRegion(HGDI_DC hdc, UINT32 x, UINT32 y, UINT32 w,
 	gdi_CRgnToRect(x, y, w, h, &rgn);
 	gdi_RgnToRect(invalid, &inv);
 
-	if (rgn.left < 0)
-		rgn.left = 0;
-
-	if (rgn.top < 0)
-		rgn.top = 0;
-
 	if (rgn.left < inv.left)
 		inv.left = rgn.left;
 

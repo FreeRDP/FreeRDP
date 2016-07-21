@@ -1556,7 +1556,7 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
                              UINT32 nWidth, UINT32 nHeight, UINT16 surfaceId)
 {
 	INT32 rc = 1;
-	UINT status;
+	INT32 status;
 	const BYTE* block;
 	const BYTE* blocks;
 	UINT16 i, j;

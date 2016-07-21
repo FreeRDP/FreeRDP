@@ -191,7 +191,7 @@ BOOL freerdp_image_copy_from_pointer_data(
 		WLog_ERR(TAG, "Format %s not supported!", GetColorFormatName(DstFormat));
 	}
 
-    if (nDstStep <= 0)
+	if (nDstStep <= 0)
 		nDstStep = dstBytesPerPixel * nWidth;
 
 	nDstPad = (nDstStep - (nWidth * dstBytesPerPixel));
@@ -236,7 +236,7 @@ BOOL freerdp_image_copy_from_pointer_data(
 
 			for (x = 0; x < nWidth; x++)
 			{
-				UINT32 color;
+				UINT32 color = 0;
 				xorPixel = (*xorBits & xorBit) ? 1 : 0;
 
 				if (!(xorBit >>= 1))
