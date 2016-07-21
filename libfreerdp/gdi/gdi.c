@@ -487,59 +487,44 @@ static BOOL gdi_bitmap_update(rdpContext* context,
 	for (index = 0; index < bitmapUpdate->number; index++)
 	{
 		const BITMAP_DATA* bitmap = &(bitmapUpdate->rectangles[index]);
-		UINT32 nXSrc = 0;
-		UINT32 nYSrc = 0;
-		UINT32 nXDst = bitmap->destLeft;
-		UINT32 nYDst = bitmap->destTop;
-		UINT32 nWidth = MIN(bitmap->destRight,
-		                    gdi->width - 1) - bitmap->destLeft + 1; /* clip width */
-		UINT32 nHeight = MIN(bitmap->destBottom,
-		                     gdi->height - 1) - bitmap->destTop + 1; /* clip height */
-		const BYTE* pSrcData = bitmap->bitmapDataStream;
-		UINT32 SrcSize = bitmap->bitmapLength;
-		BOOL compressed = bitmap->compressed;
-		UINT32 bitsPerPixel = bitmap->bitsPerPixel;
+		const UINT32 nWidth = MIN(bitmap->destRight,
+		                          gdi->width - 1) - bitmap->destLeft + 1; /* clip width */
+		const UINT32 nHeight = MIN(bitmap->destBottom,
+		                           gdi->height - 1) - bitmap->destTop + 1; /* clip height */
+		rdpBitmap* bmp = Bitmap_Alloc(context);
 
-		if (compressed)
-		{
-			if (bitsPerPixel < 32)
-			{
-				if (!interleaved_decompress(codecs->interleaved,
-				                            pSrcData, SrcSize,
-				                            bitmap->width, bitmap->height,
-				                            bitsPerPixel,
-				                            gdi->primary_buffer,
-				                            gdi->primary->hdc->format,
-				                            gdi->stride, nXDst, nYDst,
-				                            nWidth, nHeight,
-				                            &gdi->palette))
+		if (!bmp)
 			return FALSE;
-		}
-			else
-		{
-				if (!planar_decompress(codecs->planar, pSrcData,
-				                       SrcSize, bitmap->width, bitmap->height,
-				                       gdi->primary_buffer,
-				                       gdi->primary->hdc->format,
-				                       gdi->stride,
-				                       nXDst, nYDst, nWidth, nHeight, TRUE))
-			return FALSE;
-		}
-		}
-		else
-		{
-			UINT32 SrcFormat = gdi_get_pixel_format(bitsPerPixel, TRUE);
-			UINT32 nSrcStep = nWidth * GetBytesPerPixel(SrcFormat);
 
-			if (!freerdp_image_copy(gdi->primary_buffer, gdi->primary->hdc->format,
-			                        gdi->stride,
-			                        nXDst, nYDst, nWidth, nHeight,
-			                        pSrcData, SrcFormat, nSrcStep,
-			                        nXSrc, nYSrc, &gdi->palette))
+		Bitmap_SetDimensions(bmp, bitmap->width, bitmap->height);
+
+		if (!bmp->Decompress(context, bmp, bitmap->bitmapDataStream,
+		                     bitmap->width, bitmap->height, bitmap->bitsPerPixel,
+		                     bitmap->bitmapLength, bitmap->compressed,
+		                     RDP_CODEC_ID_NONE))
+		{
+			bmp->Free(context, bmp);
 			return FALSE;
 		}
 
-		if (!gdi_InvalidateRegion(gdi->primary->hdc, nXDst, nYDst,
+		if (!bmp->New(context, bmp))
+		{
+			bmp->Free(context, bmp);
+			return FALSE;
+		}
+
+		if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, gdi->stride,
+		                        bitmap->destLeft, bitmap->destTop, nWidth, nHeight,
+		                        bmp->data, bmp->format, bmp->width * GetBytesPerPixel(bmp->format),
+		                        0, 0, &gdi->palette))
+		{
+			bmp->Free(context, bmp);
+			return FALSE;
+		}
+
+		bmp->Free(context, bmp);
+
+		if (!gdi_InvalidateRegion(gdi->primary->hdc, bitmap->destLeft, bitmap->destTop,
 		                          nWidth, nHeight))
 			return FALSE;
 	}
