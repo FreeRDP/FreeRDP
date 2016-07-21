@@ -302,7 +302,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 	UINT32 subWidth;
 	UINT32 subHeight;
 	UINT32 planeSize;
-	UINT32 rleSizes[4];
+	INT32 rleSizes[4];
 	UINT32 rawSizes[4];
 	UINT32 rawWidths[4];
 	UINT32 rawHeights[4];
@@ -314,10 +314,6 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 	const UINT32 w = MIN(nSrcWidth, nDstWidth);
 	const UINT32 h = MIN(nSrcHeight, nDstHeight);
 	const primitives_t* prims = primitives_get();
-
-	if ((nSrcWidth < 0) || (nSrcHeight < 0))
-		return FALSE;
-
 	dstBitsPerPixel = GetBitsPerPixel(DstFormat);
 	dstBytesPerPixel = GetBytesPerPixel(DstFormat);
 
