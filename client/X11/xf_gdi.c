@@ -612,11 +612,17 @@ static BOOL xf_gdi_polyline(rdpContext* context,
 
 static BOOL xf_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 {
-	xfBitmap* bitmap = (xfBitmap*) memblt->bitmap;
-	xfContext* xfc = (xfContext*) context;
+	xfBitmap* bitmap;
+	xfContext* xfc;
 	BOOL ret = TRUE;
 
-	if (!xfc->display || !xfc->drawing)
+	if (!context || !memblt)
+		return FALSE;
+
+	bitmap = (xfBitmap*) memblt->bitmap;
+	xfc = (xfContext*) context;
+
+	if (!bitmap || !xfc || !xfc->display || !xfc->drawing)
 		return FALSE;
 
 	xf_lock_x11(xfc, FALSE);
