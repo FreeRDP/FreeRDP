@@ -33,6 +33,8 @@
 #include <freerdp/cache/bitmap.h>
 #include <freerdp/gdi/bitmap.h>
 
+#include "../gdi/gdi.h"
+
 #define TAG FREERDP_TAG("cache.bitmap")
 
 static rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmapCache, UINT32 id,
@@ -236,53 +238,6 @@ static BOOL update_gdi_cache_bitmap_v3(rdpContext* context,
 	return TRUE;
 }
 
-static BOOL update_gdi_bitmap_update(rdpContext* context,
-                                     const BITMAP_UPDATE* bitmapUpdate)
-{
-	UINT32 i;
-
-	for (i = 0; i < bitmapUpdate->number; i++)
-	{
-		const BITMAP_DATA* bitmapData = &bitmapUpdate->rectangles[i];
-		rdpBitmap* bitmap = Bitmap_Alloc(context);
-
-		if (!bitmap)
-			return FALSE;
-
-		bitmap->format = gdi_get_pixel_format(bitmapData->bitsPerPixel, FALSE);
-		bitmap->length = bitmapData->bitmapLength;
-		bitmap->compressed = bitmapData->compressed;
-		Bitmap_SetRectangle(bitmap,
-		                    bitmapData->destLeft, bitmapData->destTop,
-		                    bitmapData->destRight, bitmapData->destBottom);
-
-		if (!bitmap->Decompress(context, bitmap,
-		                        bitmapData->bitmapDataStream, bitmapData->width, bitmapData->height,
-		                        bitmapData->bitsPerPixel, bitmapData->bitmapLength,
-		                        bitmapData->compressed, RDP_CODEC_ID_NONE))
-		{
-			bitmap->Free(context, bitmap);
-			return FALSE;
-		}
-
-		if (!bitmap->New(context, bitmap))
-		{
-			bitmap->Free(context, bitmap);
-			return FALSE;
-		}
-
-		if (!bitmap->Paint(context, bitmap))
-		{
-			bitmap->Free(context, bitmap);
-			return FALSE;
-		}
-
-		bitmap->Free(context, bitmap);
-	}
-
-	return TRUE;
-}
-
 rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmapCache, UINT32 id,
                             UINT32 index)
 {
@@ -340,7 +295,7 @@ void bitmap_cache_register_callbacks(rdpUpdate* update)
 	update->secondary->CacheBitmap = update_gdi_cache_bitmap;
 	update->secondary->CacheBitmapV2 = update_gdi_cache_bitmap_v2;
 	update->secondary->CacheBitmapV3 = update_gdi_cache_bitmap_v3;
-	update->BitmapUpdate = update_gdi_bitmap_update;
+	update->BitmapUpdate = gdi_bitmap_update;
 }
 
 rdpBitmapCache* bitmap_cache_new(rdpSettings* settings)

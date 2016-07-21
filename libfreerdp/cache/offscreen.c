@@ -48,8 +48,8 @@ static BOOL update_gdi_create_offscreen_bitmap(rdpContext* context,
 	if (!bitmap)
 		return FALSE;
 
-	bitmap->width = createOffscreenBitmap->cx;
-	bitmap->height = createOffscreenBitmap->cy;
+	Bitmap_SetDimensions(bitmap, createOffscreenBitmap->cx,
+	                     createOffscreenBitmap->cy);
 
 	if (!bitmap->New(context, bitmap))
 	{
