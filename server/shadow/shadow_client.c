@@ -70,10 +70,6 @@ BOOL shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 
 	settings->CompressionLevel = PACKET_COMPR_TYPE_RDP6;
 
-	settings->RdpSecurity = TRUE;
-	settings->TlsSecurity = TRUE;
-	settings->NlaSecurity = FALSE;
-
 	if (!(settings->CertificateFile = _strdup(server->CertificateFile)))
 		goto fail_cert_file;
 	if (!(settings->PrivateKeyFile = _strdup(server->PrivateKeyFile)))
@@ -146,7 +142,7 @@ void shadow_client_context_free(freerdp_peer* peer, rdpShadowClient* client)
 
 	WTSCloseServer((HANDLE) client->vcm);
 
-    /* Clear queued messages and free resource */
+	/* Clear queued messages and free resource */
 	MessageQueue_Clear(client->MsgQueue);
 	MessageQueue_Free(client->MsgQueue);
 
@@ -250,17 +246,14 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 	if (settings->Username && settings->Password)
 		settings->AutoLogonEnabled = TRUE;
 
-	if (server->authentication)
+	if (server->authentication && !settings->NlaSecurity)
 	{
 		if (subsystem->Authenticate)
 		{
 			authStatus = subsystem->Authenticate(subsystem, client,
 					settings->Username, settings->Domain, settings->Password);
 		}
-	}
 
-	if (server->authentication)
-	{
 		if (authStatus < 0)
 		{
 			WLog_ERR(TAG, "client authentication failure: %d", authStatus);
@@ -383,6 +376,64 @@ BOOL shadow_client_activate(freerdp_peer* peer)
 	shadow_encoder_reset(client->encoder);
 
 	return shadow_client_refresh_rect(client, 0, NULL);
+}
+
+BOOL shadow_client_logon(freerdp_peer* peer, SEC_WINNT_AUTH_IDENTITY* identity, BOOL automatic)
+{
+	char* user = NULL;
+	char* domain = NULL;
+	char* password = NULL;
+	rdpSettings* settings = peer->settings;
+
+	if (identity->Flags & SEC_WINNT_AUTH_IDENTITY_UNICODE)
+	{
+		if (identity->User)
+			ConvertFromUnicode(CP_UTF8, 0, identity->User, identity->UserLength, &user, 0, NULL, NULL);
+
+		if (identity->Domain)
+			ConvertFromUnicode(CP_UTF8, 0, identity->Domain, identity->DomainLength, &domain, 0, NULL, NULL);
+
+		if (identity->Password)
+			ConvertFromUnicode(CP_UTF8, 0, identity->Password, identity->PasswordLength, &user, 0, NULL, NULL);
+	}
+	else
+	{
+		if (identity->User)
+			user = _strdup((char*) identity->User);
+
+		if (identity->Domain)
+			domain = _strdup((char*) identity->Domain);
+
+		if (identity->Password)
+			password = _strdup((char*) identity->Password);
+	}
+
+	if (user)
+	{
+		free(settings->Username);
+		settings->Username = user;
+		user = NULL;
+	}
+
+	if (domain)
+	{
+		free(settings->Domain);
+		settings->Domain = domain;
+		user = NULL;
+	}
+
+	if (password)
+	{
+		free(settings->Password);
+		settings->Password = password;
+		password = NULL;
+	}
+
+	free(user);
+	free(domain);
+	free(password);
+
+	return TRUE;
 }
 
 BOOL shadow_client_surface_frame_acknowledge(rdpShadowClient* client, UINT32 frameId)
@@ -993,6 +1044,7 @@ void* shadow_client_thread(rdpShadowClient* client)
 	peer->Capabilities = shadow_client_capabilities;
 	peer->PostConnect = shadow_client_post_connect;
 	peer->Activate = shadow_client_activate;
+	peer->Logon = shadow_client_logon;
 
 	shadow_input_register_callbacks(peer->input);
 
@@ -1198,6 +1250,8 @@ BOOL shadow_client_accepted(freerdp_listener* listener, freerdp_peer* peer)
 	peer->ContextSize = sizeof(rdpShadowClient);
 	peer->ContextNew = (psPeerContextNew) shadow_client_context_new;
 	peer->ContextFree = (psPeerContextFree) shadow_client_context_free;
+
+	peer->settings = freerdp_settings_clone(server->settings);
 
 	if (!freerdp_peer_context_new(peer))
 		return FALSE;

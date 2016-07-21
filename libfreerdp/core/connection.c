@@ -1044,12 +1044,12 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 		{
 			if (settings->NlaSecurity && !settings->TlsSecurity)
 			{
-				WLog_ERR(TAG, "server supports only NLA Security");
+				WLog_WARN(TAG, "server supports only NLA Security");
 				nego->SelectedProtocol |= HYBRID_REQUIRED_BY_SERVER;
 			}
 			else
 			{
-				WLog_ERR(TAG, "server supports only a SSL based Security (TLS or NLA)");
+				WLog_WARN(TAG, "server supports only a SSL based Security (TLS or NLA)");
 				nego->SelectedProtocol |= SSL_REQUIRED_BY_SERVER;
 			}
 		}

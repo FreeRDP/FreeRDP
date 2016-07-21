@@ -50,6 +50,11 @@ static COMMAND_LINE_ARGUMENT_A shadow_args[] =
 	{ "auth", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Clients must authenticate" },
 	{ "may-view", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Clients may view without prompt" },
 	{ "may-interact", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Clients may interact without prompt" },
+	{ "sec", COMMAND_LINE_VALUE_REQUIRED, "<rdp|tls|nla|ext>", NULL, NULL, -1, NULL, "force specific protocol security" },
+	{ "sec-rdp", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "rdp protocol security" },
+	{ "sec-tls", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "tls protocol security" },
+	{ "sec-nla", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "nla protocol security" },
+	{ "sec-ext", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "nla extended protocol security" },
 	{ "version", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_VERSION, NULL, NULL, NULL, -1, NULL, "Print version" },
 	{ "help", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_HELP, NULL, NULL, NULL, -1, "?", "Print help" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
@@ -149,6 +154,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 	int status;
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
+	rdpSettings* settings = server->settings;
 
 	if (argc < 2)
 		return 1;
@@ -252,6 +258,58 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		CommandLineSwitchCase(arg, "auth")
 		{
 			server->authentication = arg->Value ? TRUE : FALSE;
+		}
+		CommandLineSwitchCase(arg, "sec")
+		{
+			if (strcmp("rdp", arg->Value) == 0) /* Standard RDP */
+			{
+				settings->RdpSecurity = TRUE;
+				settings->TlsSecurity = FALSE;
+				settings->NlaSecurity = FALSE;
+				settings->ExtSecurity = FALSE;
+				settings->UseRdpSecurityLayer = TRUE;
+			}
+			else if (strcmp("tls", arg->Value) == 0) /* TLS */
+			{
+				settings->RdpSecurity = FALSE;
+				settings->TlsSecurity = TRUE;
+				settings->NlaSecurity = FALSE;
+				settings->ExtSecurity = FALSE;
+			}
+			else if (strcmp("nla", arg->Value) == 0) /* NLA */
+			{
+				settings->RdpSecurity = FALSE;
+				settings->TlsSecurity = FALSE;
+				settings->NlaSecurity = TRUE;
+				settings->ExtSecurity = FALSE;
+			}
+			else if (strcmp("ext", arg->Value) == 0) /* NLA Extended */
+			{
+				settings->RdpSecurity = FALSE;
+				settings->TlsSecurity = FALSE;
+				settings->NlaSecurity = FALSE;
+				settings->ExtSecurity = TRUE;
+			}
+			else
+			{
+				WLog_ERR(TAG, "unknown protocol security: %s", arg->Value);
+			}
+		}
+		CommandLineSwitchCase(arg, "sec-rdp")
+		{
+			settings->RdpSecurity = arg->Value ? TRUE : FALSE;
+		}
+		CommandLineSwitchCase(arg, "sec-tls")
+		{
+			settings->TlsSecurity = arg->Value ? TRUE : FALSE;
+		}
+		CommandLineSwitchCase(arg, "sec-nla")
+		{
+			settings->NlaSecurity = arg->Value ? TRUE : FALSE;
+		}
+		CommandLineSwitchCase(arg, "sec-ext")
+		{
+			settings->ExtSecurity = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchDefault(arg)
 		{
@@ -708,6 +766,11 @@ rdpShadowServer* shadow_server_new()
 
 	server->authentication = FALSE;
 
+	server->settings = freerdp_settings_new(FREERDP_SETTINGS_SERVER_MODE);
+
+	if (!server)
+		return NULL;
+
 	return server;
 }
 
@@ -716,8 +779,17 @@ void shadow_server_free(rdpShadowServer* server)
 	if (!server)
 		return;
 
-	free(server->ipcSocket);
-	server->ipcSocket = NULL;
+	if (server->ipcSocket)
+	{
+		free(server->ipcSocket);
+		server->ipcSocket = NULL;
+	}
+
+	if (server->settings)
+	{
+		freerdp_settings_free(server->settings);
+		server->settings = NULL;
+	}
 
 	free(server);
 }
