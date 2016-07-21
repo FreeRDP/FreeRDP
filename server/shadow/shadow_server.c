@@ -55,6 +55,7 @@ static COMMAND_LINE_ARGUMENT_A shadow_args[] =
 	{ "sec-tls", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "tls protocol security" },
 	{ "sec-nla", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "nla protocol security" },
 	{ "sec-ext", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "nla extended protocol security" },
+	{ "sam-file", COMMAND_LINE_VALUE_REQUIRED, "<file>", NULL, NULL, -1, NULL, "NTLM SAM file for NLA authentication" },
 	{ "version", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_VERSION, NULL, NULL, NULL, -1, NULL, "Print version" },
 	{ "help", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_HELP, NULL, NULL, NULL, -1, "?", "Print help" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
@@ -310,6 +311,10 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		CommandLineSwitchCase(arg, "sec-ext")
 		{
 			settings->ExtSecurity = arg->Value ? TRUE : FALSE;
+		}
+		CommandLineSwitchCase(arg, "sam-file")
+		{
+			freerdp_set_param_string(settings, FreeRDP_NtlmSamFile, arg->Value);
 		}
 		CommandLineSwitchDefault(arg)
 		{

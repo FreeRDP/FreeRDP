@@ -220,6 +220,7 @@ struct _NTLM_CONTEXT
 	NTLM_STATE state;
 	int SendSeqNum;
 	int RecvSeqNum;
+	char* SamFile;
 	BYTE NtlmHash[16];
 	BYTE NtlmV2Hash[16];
 	BYTE MachineID[32];

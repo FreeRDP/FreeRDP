@@ -164,7 +164,7 @@ int nla_client_init(rdpNla* nla)
 
 	if (PromptPassword && settings->Username && strlen(settings->Username))
 	{
-		sam = SamOpen(TRUE);
+		sam = SamOpen(NULL, TRUE);
 
 		if (sam)
 		{
@@ -715,9 +715,9 @@ int nla_server_authenticate(rdpNla* nla)
 			return -1;
 
 		nla->status = nla->table->AcceptSecurityContext(&nla->credentials,
-				nla-> haveContext? &nla->context: NULL,
-				 &nla->inputBufferDesc, nla->fContextReq, SECURITY_NATIVE_DREP, &nla->context,
-				 &nla->outputBufferDesc, &nla->pfContextAttr, &nla->expiration);
+				nla->haveContext? &nla->context: NULL,
+				&nla->inputBufferDesc, nla->fContextReq, SECURITY_NATIVE_DREP, &nla->context,
+				&nla->outputBufferDesc, &nla->pfContextAttr, &nla->expiration);
 
 		WLog_VRB(TAG, "AcceptSecurityContext status %s [%08X]",
 			   GetSecurityStatusString(nla->status), nla->status);
@@ -726,10 +726,17 @@ int nla_server_authenticate(rdpNla* nla)
 
 		if ((nla->status == SEC_I_COMPLETE_AND_CONTINUE) || (nla->status == SEC_I_COMPLETE_NEEDED))
 		{
+			if (nla->SamFile)
+			{
+				nla->table->SetContextAttributes(&nla->context,
+					SECPKG_ATTR_AUTH_NTLM_SAM_FILE, nla->SamFile, strlen(nla->SamFile) + 1);
+			}
+
 			if (nla->table->CompleteAuthToken)
 			{
 				SECURITY_STATUS status;
 				status = nla->table->CompleteAuthToken(&nla->context, &nla->outputBufferDesc);
+
 				if (status != SEC_E_OK)
 				{
 					WLog_WARN(TAG, "CompleteAuthToken status %s [%08X]",
@@ -737,6 +744,7 @@ int nla_server_authenticate(rdpNla* nla)
 					return -1;
 				}
 			}
+
 			if (nla->status == SEC_I_COMPLETE_NEEDED)
 				nla->status = SEC_E_OK;
 			else if (nla->status == SEC_I_COMPLETE_AND_CONTINUE)
@@ -1717,16 +1725,16 @@ LPTSTR nla_make_spn(const char* ServiceClass, const char* hostname)
 
 rdpNla* nla_new(freerdp* instance, rdpTransport* transport, rdpSettings* settings)
 {
-
 	rdpNla* nla = (rdpNla*) calloc(1, sizeof(rdpNla));
 
 	if (!nla)
 		return NULL;
 
 	nla->identity = calloc(1, sizeof(SEC_WINNT_AUTH_IDENTITY));
+
 	if (!nla->identity)
 	{
-		free (nla);
+		free(nla);
 		return NULL;
 	}
 
@@ -1737,6 +1745,9 @@ rdpNla* nla_new(freerdp* instance, rdpTransport* transport, rdpSettings* setting
 	nla->sendSeqNum = 0;
 	nla->recvSeqNum = 0;
 	nla->version = 3;
+
+	if (settings->NtlmSamFile)
+		nla->SamFile = _strdup(settings->NtlmSamFile);
 
 	ZeroMemory(&nla->negoToken, sizeof(SecBuffer));
 	ZeroMemory(&nla->pubKeyAuth, sizeof(SecBuffer));
@@ -1802,6 +1813,12 @@ void nla_free(rdpNla* nla)
 			WLog_WARN(TAG, "DeleteSecurityContext status %s [%08X]",
 				  GetSecurityStatusString(status), status);
 		}
+	}
+
+	if (nla->SamFile)
+	{
+		free(nla->SamFile);
+		nla->SamFile = NULL;
 	}
 
 	sspi_SecBufferFree(&nla->PublicKey);
