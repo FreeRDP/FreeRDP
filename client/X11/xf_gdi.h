@@ -28,7 +28,5 @@
 #include "xfreerdp.h"
 
 void xf_gdi_register_update_callbacks(rdpUpdate* update);
-BOOL xf_gdi_bitmap_update(rdpContext* context,
-                          const BITMAP_UPDATE* bitmapUpdate);
 
 #endif /* __XF_GDI_H */
