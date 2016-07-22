@@ -805,6 +805,23 @@ SECURITY_STATUS SEC_ENTRY ntlm_SetContextAttributesW(PCtxtHandle phContext, ULON
 
 		return SEC_E_OK;
 	}
+	else if (ulAttribute == SECPKG_ATTR_AUTH_NTLM_SAM_FILE)
+	{
+		const char* filename = (char*) pBuffer;
+
+		free(context->SamFile);
+		context->SamFile = NULL;
+
+		if (filename)
+		{
+			context->SamFile = _strdup(filename);
+
+			if (!context->SamFile)
+				return SEC_E_INSUFFICIENT_MEMORY;
+		}
+
+		return SEC_E_OK;
+	}
 	else if (ulAttribute == SECPKG_ATTR_AUTH_NTLM_MESSAGE)
 	{
 		SecPkgContext_AuthNtlmMessage* AuthNtlmMessage = (SecPkgContext_AuthNtlmMessage*) pBuffer;

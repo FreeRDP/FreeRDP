@@ -56,6 +56,7 @@ struct rdp_nla
 	freerdp* instance;
 	CtxtHandle context;
 	LPTSTR SspiModule;
+	char* SamFile;
 	rdpSettings* settings;
 	rdpTransport* transport;
 	UINT32 cbMaxToken;

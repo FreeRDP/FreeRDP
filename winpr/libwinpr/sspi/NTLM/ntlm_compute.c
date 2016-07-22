@@ -196,7 +196,7 @@ int ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 	WINPR_SAM_ENTRY* entry;
 	SSPI_CREDENTIALS* credentials = context->credentials;
 
-	sam = SamOpen(TRUE);
+	sam = SamOpen(context->SamFile, TRUE);
 
 	if (!sam)
 		return -1;

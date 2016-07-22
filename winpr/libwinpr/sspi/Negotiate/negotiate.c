@@ -28,7 +28,7 @@
 
 #include "../sspi.h"
 #include "../log.h"
-#define TAG WINPR_TAG("negociate")
+#define TAG WINPR_TAG("negotiate")
 
 extern const SecurityFunctionTableA NTLM_SecurityFunctionTableA;
 extern const SecurityFunctionTableW NTLM_SecurityFunctionTableW;

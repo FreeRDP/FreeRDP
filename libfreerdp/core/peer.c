@@ -476,6 +476,10 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 				return -1;
 			}
 
+			client->settings->NlaSecurity = (rdp->nego->SelectedProtocol & PROTOCOL_NLA) ? TRUE : FALSE;
+			client->settings->TlsSecurity = (rdp->nego->SelectedProtocol & PROTOCOL_TLS) ? TRUE : FALSE;
+			client->settings->RdpSecurity = (rdp->nego->SelectedProtocol & PROTOCOL_RDP) ? TRUE : FALSE;
+
 			if (rdp->nego->SelectedProtocol & PROTOCOL_NLA)
 			{
 				sspi_CopyAuthIdentity(&client->identity, rdp->nego->transport->nla->identity);
@@ -686,6 +690,7 @@ BOOL freerdp_peer_context_new(freerdp_peer* client)
 
 	context->peer = client;
 	context->ServerMode = TRUE;
+	context->settings = client->settings;
 
 	if (!(context->metrics = metrics_new(context)))
 		goto fail_metrics;

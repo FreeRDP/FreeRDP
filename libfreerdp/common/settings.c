@@ -2398,6 +2398,12 @@ char* freerdp_get_param_string(rdpSettings* settings, int id)
 		case FreeRDP_AuthenticationServiceClass:
 			return settings->AuthenticationServiceClass;
 
+		case FreeRDP_AllowedTlsCiphers:
+			return settings->AllowedTlsCiphers;
+
+		case FreeRDP_NtlmSamFile:
+			return settings->NtlmSamFile;
+
 		case FreeRDP_PreconnectionBlob:
 			return settings->PreconnectionBlob;
 
@@ -2572,6 +2578,14 @@ int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 
 		case FreeRDP_AuthenticationServiceClass:
 			tmp = &settings->AuthenticationServiceClass;
+			break;
+
+		case FreeRDP_AllowedTlsCiphers:
+			tmp = &settings->AllowedTlsCiphers;
+			break;
+
+		case FreeRDP_NtlmSamFile:
+			tmp = &settings->NtlmSamFile;
 			break;
 
 		case FreeRDP_PreconnectionBlob:

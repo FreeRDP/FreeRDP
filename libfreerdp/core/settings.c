@@ -598,6 +598,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		CHECKED_STRDUP(RemoteAssistanceRCTicket); /* 1028 */
 		CHECKED_STRDUP(AuthenticationServiceClass); /* 1098 */
 		CHECKED_STRDUP(AllowedTlsCiphers); /* 1101 */
+		CHECKED_STRDUP(NtlmSamFile); /* 1103 */
 		CHECKED_STRDUP(PreconnectionBlob); /* 1155 */
 		CHECKED_STRDUP(KerberosKdc); /* 1344 */
 		CHECKED_STRDUP(KerberosRealm); /* 1345 */
@@ -920,6 +921,7 @@ void freerdp_settings_free(rdpSettings* settings)
     free(settings->ClientAddress);
     free(settings->ClientDir);
     free(settings->AllowedTlsCiphers);
+    free(settings->NtlmSamFile);
     free(settings->CertificateFile);
     free(settings->PrivateKeyFile);
     free(settings->ConnectionFile);

@@ -110,6 +110,7 @@ struct rdp_shadow_server
 	HANDLE thread;
 	HANDLE StopEvent;
 	wArrayList* clients;
+	rdpSettings* settings;
 	rdpShadowScreen* screen;
 	rdpShadowSurface* surface;
 	rdpShadowSurface* lobby;
