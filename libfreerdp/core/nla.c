@@ -1747,7 +1747,16 @@ rdpNla* nla_new(freerdp* instance, rdpTransport* transport, rdpSettings* setting
 	nla->version = 3;
 
 	if (settings->NtlmSamFile)
+	{
 		nla->SamFile = _strdup(settings->NtlmSamFile);
+
+		if (!nla->SamFile)
+		{
+			free(nla->identity);
+			free(nla);
+			return NULL;
+		}
+	}
 
 	ZeroMemory(&nla->negoToken, sizeof(SecBuffer));
 	ZeroMemory(&nla->pubKeyAuth, sizeof(SecBuffer));
@@ -1815,11 +1824,8 @@ void nla_free(rdpNla* nla)
 		}
 	}
 
-	if (nla->SamFile)
-	{
-		free(nla->SamFile);
-		nla->SamFile = NULL;
-	}
+	free(nla->SamFile);
+	nla->SamFile = NULL;
 
 	sspi_SecBufferFree(&nla->PublicKey);
 	sspi_SecBufferFree(&nla->tsCredentials);

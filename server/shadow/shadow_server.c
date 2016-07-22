@@ -784,17 +784,11 @@ void shadow_server_free(rdpShadowServer* server)
 	if (!server)
 		return;
 
-	if (server->ipcSocket)
-	{
-		free(server->ipcSocket);
-		server->ipcSocket = NULL;
-	}
+	free(server->ipcSocket);
+	server->ipcSocket = NULL;
 
-	if (server->settings)
-	{
-		freerdp_settings_free(server->settings);
-		server->settings = NULL;
-	}
+	freerdp_settings_free(server->settings);
+	server->settings = NULL;
 
 	free(server);
 }

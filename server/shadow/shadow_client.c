@@ -408,6 +408,9 @@ BOOL shadow_client_logon(freerdp_peer* peer, SEC_WINNT_AUTH_IDENTITY* identity, 
 			password = _strdup((char*) identity->Password);
 	}
 
+	if ((identity->User && !user) || (identity->Domain && !domain) || (identity->Password && !password))
+		return FALSE;
+
 	if (user)
 	{
 		free(settings->Username);
@@ -419,7 +422,7 @@ BOOL shadow_client_logon(freerdp_peer* peer, SEC_WINNT_AUTH_IDENTITY* identity, 
 	{
 		free(settings->Domain);
 		settings->Domain = domain;
-		user = NULL;
+		domain = NULL;
 	}
 
 	if (password)

@@ -810,7 +810,15 @@ SECURITY_STATUS SEC_ENTRY ntlm_SetContextAttributesW(PCtxtHandle phContext, ULON
 		const char* filename = (char*) pBuffer;
 
 		free(context->SamFile);
-		context->SamFile = filename ? _strdup(filename) : NULL;
+		context->SamFile = NULL;
+
+		if (filename)
+		{
+			context->SamFile = _strdup(filename);
+
+			if (!context->SamFile)
+				return SEC_E_INSUFFICIENT_MEMORY;
+		}
 
 		return SEC_E_OK;
 	}
