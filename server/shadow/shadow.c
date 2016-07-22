@@ -42,6 +42,7 @@ int main(int argc, char** argv)
 	MSG msg;
 	int status = 0;
 	DWORD dwExitCode;
+	rdpSettings* settings;
 	rdpShadowServer* server;
 
 	shadow_subsystem_set_entry_builtin(NULL);
@@ -53,6 +54,12 @@ int main(int argc, char** argv)
 		status = -1;
 		goto fail_server_new;
 	}
+
+	settings = server->settings;
+
+	settings->NlaSecurity = FALSE;
+	settings->TlsSecurity = TRUE;
+	settings->RdpSecurity = TRUE;
 
 #ifdef WITH_SHADOW_X11
 	server->authentication = TRUE;
@@ -86,8 +93,7 @@ int main(int argc, char** argv)
 	if (!GetExitCodeThread(server->thread, &dwExitCode))
 		status = -1;
 	else
-		status = (int)dwExitCode;
-
+		status = (int) dwExitCode;
 
 fail_server_start:
 	shadow_server_uninit(server);

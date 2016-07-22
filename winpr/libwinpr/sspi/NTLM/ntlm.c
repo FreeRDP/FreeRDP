@@ -47,7 +47,7 @@ int ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 	int status;
 	char* ws = Workstation;
 	CHAR computerName[MAX_COMPUTERNAME_LENGTH + 1];
-	DWORD nSize = sizeof(computerName) * sizeof(CHAR);
+	DWORD nSize = sizeof(computerName) / sizeof(CHAR);
 
 	if (!Workstation)
 	{
@@ -108,12 +108,11 @@ int ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 {
 	int status;
 	CHAR computerName[MAX_COMPUTERNAME_LENGTH + 1];
-	DWORD nSize = sizeof(computerName) * sizeof(CHAR);
+	DWORD nSize = sizeof(computerName) / sizeof(CHAR);
 	char* name = TargetName;
 
 	if (!name)
 	{
-
 		if (!GetComputerNameExA(ComputerNameDnsHostname, computerName, &nSize))
 			return -1;
 
@@ -803,6 +802,23 @@ SECURITY_STATUS SEC_ENTRY ntlm_SetContextAttributesW(PCtxtHandle phContext, ULON
 			CopyMemory(context->NtlmHash, AuthNtlmHash->NtlmHash, 16);
 		else if (AuthNtlmHash->Version == 2)
 			CopyMemory(context->NtlmV2Hash, AuthNtlmHash->NtlmHash, 16);
+
+		return SEC_E_OK;
+	}
+	else if (ulAttribute == SECPKG_ATTR_AUTH_NTLM_SAM_FILE)
+	{
+		const char* filename = (char*) pBuffer;
+
+		free(context->SamFile);
+		context->SamFile = NULL;
+
+		if (filename)
+		{
+			context->SamFile = _strdup(filename);
+
+			if (!context->SamFile)
+				return SEC_E_INSUFFICIENT_MEMORY;
+		}
 
 		return SEC_E_OK;
 	}

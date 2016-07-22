@@ -1011,9 +1011,9 @@ BOOL tls_send_alert(rdpTls* tls)
 		if (tls->ssl->s3->wbuf.left == 0)
 			tls->ssl->method->ssl_dispatch_alert(tls->ssl);
 	}
+
 	return TRUE;
 }
-
 
 BIO *findBufferedBio(BIO *front)
 {
@@ -1067,7 +1067,6 @@ int tls_set_alert_code(rdpTls* tls, int level, int description)
 {
 	tls->alertLevel = level;
 	tls->alertDescription = description;
-
 	return 0;
 }
 

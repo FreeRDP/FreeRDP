@@ -363,6 +363,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 		nla_free(transport->nla);
 		transport->nla = NULL;
 		tls_set_alert_code(transport->tls, TLS_ALERT_LEVEL_FATAL, TLS_ALERT_DESCRIPTION_ACCESS_DENIED);
+		tls_send_alert(transport->tls);
 		return FALSE;
 	}
 

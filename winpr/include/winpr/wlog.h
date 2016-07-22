@@ -111,6 +111,7 @@ WINPR_API BOOL WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args
 	do { \
 		if (_log && _log_level >= WLog_GetLogLevel(_log)) { \
 			wLogMessage _log_message; \
+			memset(&_log_message, 0, sizeof(_log_message)); \
 			_log_message.Type = WLOG_MESSAGE_TEXT; \
 			_log_message.Level = _log_level; \
 			_log_message.FormatString = _fmt; \
@@ -125,6 +126,7 @@ WINPR_API BOOL WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args
 	do { \
 		if (_log && _log_level >= WLog_GetLogLevel(_log)) { \
 			wLogMessage _log_message; \
+			memset(&_log_message, 0, sizeof(_log_message)); \
 			_log_message.Type = WLOG_MESSAGE_TEXT; \
 			_log_message.Level = _log_level; \
 			_log_message.FormatString = _fmt; \
@@ -139,6 +141,7 @@ WINPR_API BOOL WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args
 	do { \
 		if (_log && _log_level >= WLog_GetLogLevel(_log)) { \
 			wLogMessage _log_message; \
+			memset(&_log_message, 0, sizeof(_log_message)); \
 			_log_message.Type = WLOG_MESSAGE_DATA; \
 			_log_message.Level = _log_level; \
 			_log_message.FormatString = NULL; \
@@ -153,6 +156,7 @@ WINPR_API BOOL WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args
 	do { \
 		if (_log && _log_level >= WLog_GetLogLevel(_log)) { \
 			wLogMessage _log_message; \
+			memset(&_log_message, 0, sizeof(_log_message)); \
 			_log_message.Type = WLOG_MESSAGE_IMAGE; \
 			_log_message.Level = _log_level; \
 			_log_message.FormatString = NULL; \
@@ -167,6 +171,7 @@ WINPR_API BOOL WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args
 	do { \
 		if (_log && _log_level >= WLog_GetLogLevel(_log)) { \
 			wLogMessage _log_message; \
+			memset(&_log_message, 0, sizeof(_log_message)); \
 			_log_message.Type = WLOG_MESSAGE_PACKET; \
 			_log_message.Level = _log_level; \
 			_log_message.FormatString = NULL; \
