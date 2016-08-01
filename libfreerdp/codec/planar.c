@@ -678,18 +678,21 @@ static BOOL freerdp_split_color_planes(const BYTE* data, UINT32 format,
                                        UINT32 scanline, BYTE** planes)
 {
 	INT32 i, j, k;
-	UINT32* pixel;
 	k = 0;
+
+	if (scanline == 0)
+		scanline = width * GetBytesPerPixel(format);
 
 	for (i = height - 1; i >= 0; i--)
 	{
-		pixel = (UINT32*) &data[scanline * i];
+		const BYTE* pixel = &data[scanline * i];
 
 		for (j = 0; j < width; j++)
 		{
-			*pixel = GetColor(format, planes[1][k], planes[2][k],
-			                  planes[3][k], planes[0][k]);
-			pixel++;
+			const UINT32 color = ReadColor(pixel, format);
+			pixel += GetBytesPerPixel(format);
+			SplitColor(color, format, &planes[1][k], &planes[2][k],
+			           &planes[3][k], &planes[0][k], NULL);
 			k++;
 		}
 	}
@@ -1082,12 +1085,12 @@ BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context,
 	if (context->AllowRunLengthEncoding)
 	{
 		if (!freerdp_bitmap_planar_delta_encode_planes(
-		        (const BYTE**)context->planes, width, height,
+		        context->planes, width, height,
 		        context->deltaPlanes))
 			return NULL;;
 
 		if (freerdp_bitmap_planar_compress_planes_rle(
-		        (const BYTE**)context->deltaPlanes, width, height,
+		        context->deltaPlanes, width, height,
 		        context->rlePlanesBuffer, dstSizes,
 		        context->AllowSkipAlpha) > 0)
 		{
