@@ -1,4 +1,6 @@
 
+#include <math.h>
+
 #include <winpr/crt.h>
 #include <winpr/print.h>
 
@@ -2864,370 +2866,270 @@ static const BYTE TEST_RDP6_SCANLINES_DELTA_2C_ENCODED_UNSIGNED[3][6] =
 	{ 0x01, 0x67, 0x8B, 0xA3, 0x78, 0xAF }
 };
 
-static void fill_bitmap_alpha_channel(BYTE* data, int width, int height,
-                                      BYTE value)
+static const UINT32 colorFormatList[] =
 {
-	int i, j;
-	UINT32* pixel;
+	PIXEL_FORMAT_RGB15,
+	PIXEL_FORMAT_BGR15,
+	PIXEL_FORMAT_RGB16,
+	PIXEL_FORMAT_BGR16,
+	PIXEL_FORMAT_RGB24,
+	PIXEL_FORMAT_BGR24,
+	PIXEL_FORMAT_ARGB32,
+	PIXEL_FORMAT_ABGR32,
+	PIXEL_FORMAT_XRGB32,
+	PIXEL_FORMAT_XBGR32,
+	PIXEL_FORMAT_RGBX32,
+	PIXEL_FORMAT_BGRX32
 
-	for (i = 0; i < height; i++)
+};
+static const UINT32 colorFormatCount = sizeof(colorFormatList) / sizeof(
+        colorFormatList[0]);
+
+static BOOL CompareBitmap(const BYTE* srcA, UINT32 srcAFormat, const BYTE* srcB,
+                          UINT32 srcBFormat, UINT32 width, UINT32 height)
+{
+	double maxDiff;
+	const UINT32 srcABits = GetBitsPerPixel(srcAFormat);
+	const UINT32 srcBBits = GetBitsPerPixel(srcBFormat);
+	UINT32 diff = fabs((double)srcABits - srcBBits);
+	UINT32 x, y;
+
+	/* No support for 8bpp */
+	if ((srcABits < 15) || (srcBBits < 15))
+		return FALSE;
+
+	/* Compare with folliwing granularity:
+	 * 32    -->    24 bpp: Each color channel has 8bpp, no difference expected
+	 * 24/32 --> 15/16 bpp: 8bit per channel against 5/6bit per channel, +/- 3bit
+	 * 16    -->    15bpp: 5/6bit per channel against 5 bit per channel, +/- 1bit
+	 */
+	switch (diff)
 	{
-		for (j = 0; j < width; j++)
+		case 1:
+			maxDiff = 2 * 2.0;
+			break;
+
+		case 8:
+		case 9:
+		case 16:
+		case 17:
+			maxDiff = 2 * 8.0;
+			break;
+
+		default:
+			maxDiff = 0.0;
+			break;
+	}
+
+	if ((srcABits == 32) || (srcBBits == 32))
+	{
+		if (diff == 8)
+			maxDiff = 0.0;
+	}
+
+	for (y = 0; y < height; y++)
+	{
+		const BYTE* lineA = &srcA[width * GetBytesPerPixel(srcAFormat) * y];
+		const BYTE* lineB = &srcB[width * GetBytesPerPixel(srcBFormat) * y];
+
+		for (x = 0; x < width; x++)
 		{
-			pixel = (UINT32*) &data[((i * width) + j) * 4];
-			*pixel = ((*pixel & 0x00FFFFFF) | (value << 24));
+			BYTE sR, sG, sB, sA, dR, dG, dB, dA;
+			const BYTE* a = &lineA[x * GetBytesPerPixel(srcAFormat)];
+			const BYTE* b = &lineB[x * GetBytesPerPixel(srcBFormat)];
+			UINT32 colorA = ReadColor(a, srcAFormat);
+			UINT32 colorB = ReadColor(b, srcBFormat);
+			SplitColor(colorA, srcAFormat, &sR, &sG, &sB, &sA, NULL);
+			SplitColor(colorB, srcBFormat, &dR, &dG, &dB, &dA, NULL);
+
+			if (fabs((double)sR - dR) > maxDiff)
+				return FALSE;
+
+			if (fabs((double)sG - dG) > maxDiff)
+				return FALSE;
+
+			if (fabs((double)sB - dB) > maxDiff)
+				return FALSE;
+
+			if (fabs((double)sA - dA) > maxDiff)
+				return FALSE;
 		}
 	}
+
+	return TRUE;
 }
 
-static void fill_bitmap_red_channel(BYTE* data, int width, int height,
-                                    BYTE value)
+static BOOL RunTestPlanar(BITMAP_PLANAR_CONTEXT* planar, const BYTE* srcBitmap,
+                          const UINT32 srcFormat, const UINT32 dstFormat,
+                          const UINT32 width, const UINT32 height)
 {
-	int i, j;
-	UINT32* pixel;
+	BOOL rc = FALSE;
+	const UINT32 size = width * height * GetBytesPerPixel(dstFormat);
+	UINT32 dstSize;
+	BYTE* compressedBitmap = freerdp_bitmap_compress_planar(planar,
+	                         srcBitmap, srcFormat, width, height, 0, NULL, &dstSize);
+	BYTE* decompressedBitmap = (BYTE*) calloc(1, size);
+	printf("%s [%s] --> [%s]: ", __FUNCTION__,
+	       GetColorFormatName(srcFormat), GetColorFormatName(dstFormat));
+	fflush(stdout);
+	printf("TODO: Skipping unfinished test!");
+	rc = TRUE;
+	goto fail;
 
-	for (i = 0; i < height; i++)
+	if (!compressedBitmap || !decompressedBitmap)
+		goto fail;
+
+	if (!planar_decompress(planar, compressedBitmap, dstSize, width, height,
+	                       decompressedBitmap,
+	                       dstFormat, 0, 0, 0, width, height, FALSE))
 	{
-		for (j = 0; j < width; j++)
-		{
-			pixel = (UINT32*) &data[((i * width) + j) * 4];
-			*pixel = ((*pixel & 0xFF00FFFF) | (value << 16));
-		}
+		printf("failed to decompress experimental bitmap 01: width: %d height: %d\n",
+		       width, height);
+		goto fail;
 	}
+
+	if (!CompareBitmap(decompressedBitmap, dstFormat, srcBitmap, srcFormat, width,
+	                   height))
+	{
+		printf("FAIL");
+		goto fail;
+	}
+
+	printf("SUCCESS");
+	rc = TRUE;
+fail:
+	free(compressedBitmap);
+	free(decompressedBitmap);
+	printf("\n");
+	fflush(stdout);
+	return rc;
 }
 
-static void fill_bitmap_green_channel(BYTE* data, int width, int height,
-                                      BYTE value)
+static BOOL RunTestPlanarSingleColor(BITMAP_PLANAR_CONTEXT* planar,
+                                     const UINT32 srcFormat, const UINT32 dstFormat)
 {
-	int i, j;
-	UINT32* pixel;
+	UINT32 i, j, x, y;
+	BOOL rc = FALSE;
+	printf("%s: [%s] --> [%s]: ", __FUNCTION__, GetColorFormatName(srcFormat),
+	       GetColorFormatName(dstFormat));
+	fflush(stdout);
 
-	for (i = 0; i < height; i++)
+	for (j = 0; j < 0x1000; j += 8)
 	{
-		for (j = 0; j < width; j++)
+		for (i = 4; i < 64; i += 8)
 		{
-			pixel = (UINT32*) &data[((i * width) + j) * 4];
-			*pixel = ((*pixel & 0xFFFF00FF) | (value << 8));
+			UINT32 compressedSize;
+			const UINT32 fill = j;
+			const UINT32 color = GetColor(srcFormat, (fill >> 8) & 0xF, (fill >> 4) & 0xF,
+			                              (fill) & 0xF, 0xFF);
+			const UINT32 width = i;
+			const UINT32 height = i;
+			BOOL failed = TRUE;
+			const UINT32 srcSize = width * height * GetBytesPerPixel(srcFormat);
+			const UINT32 dstSize = width * height * GetBytesPerPixel(dstFormat);
+			BYTE* compressedBitmap = NULL;
+			BYTE* bmp = malloc(srcSize);
+			BYTE* decompressedBitmap = (BYTE*) malloc(dstSize);
+
+			if (!bmp || !decompressedBitmap)
+				goto fail_loop;
+
+			for (y = 0; y < height; y++)
+			{
+				BYTE* line = &bmp[width * GetBytesPerPixel(srcFormat) * y];
+
+				for (x = 0; x < width; x++)
+				{
+					WriteColor(line, srcFormat, color);
+					line += GetBytesPerPixel(srcFormat);
+				}
+			}
+
+			compressedBitmap = freerdp_bitmap_compress_planar(planar, bmp, srcFormat,
+			                   width, height, 0, NULL, &compressedSize);
+
+			if (!compressedBitmap)
+				goto fail_loop;
+
+			if (!planar_decompress(planar, compressedBitmap, compressedSize,
+			                       width, height, decompressedBitmap,
+			                       dstFormat, 0, 0, 0, width, height, FALSE))
+				goto fail_loop;
+
+			if (!CompareBitmap(decompressedBitmap, dstFormat, bmp, srcFormat, width,
+			                   height))
+				goto fail_loop;
+
+			failed = FALSE;
+		fail_loop:
+			free(bmp);
+			free(compressedBitmap);
+			free(decompressedBitmap);
+
+			if (failed)
+			{
+				printf("FAIL");
+				goto fail;
+			}
 		}
 	}
+
+	printf("SUCCESS");
+	rc = TRUE;
+fail:
+	printf("\n");
+	fflush(stdout);
+	return rc;
 }
 
-static void fill_bitmap_blue_channel(BYTE* data, int width, int height,
-                                     BYTE value)
+static BOOL TestPlanar(const UINT32 format)
 {
-	int i, j;
-	UINT32* pixel;
+	UINT32 x;
+	BOOL rc = FALSE;
+	const DWORD planarFlags = PLANAR_FORMAT_HEADER_NA | PLANAR_FORMAT_HEADER_RLE;
+	BITMAP_PLANAR_CONTEXT* planar = freerdp_bitmap_planar_context_new(planarFlags,
+	                                64, 64);
 
-	for (i = 0; i < height; i++)
+	if (!planar)
+		goto fail;
+
+	if (!RunTestPlanar(planar, TEST_RLE_BITMAP_EXPERIMENTAL_01, PIXEL_FORMAT_RGBX32,
+	                   format, 64, 64))
+		goto fail;
+
+	if (!RunTestPlanar(planar, TEST_RLE_BITMAP_EXPERIMENTAL_02, PIXEL_FORMAT_RGBX32,
+	                   format, 64, 64))
+		goto fail;
+
+	if (!RunTestPlanar(planar, TEST_RLE_BITMAP_EXPERIMENTAL_03, PIXEL_FORMAT_RGBX32,
+	                   format, 64, 64))
+		goto fail;
+
+	if (!RunTestPlanar(planar, TEST_RLE_UNCOMPRESSED_BITMAP_16BPP,
+	                   PIXEL_FORMAT_RGB16, format, 32, 32))
+		goto fail;
+
+	for (x = 0; x < colorFormatCount; x++)
 	{
-		for (j = 0; j < width; j++)
-		{
-			pixel = (UINT32*) &data[((i * width) + j) * 4];
-			*pixel = ((*pixel & 0xFFFFFF00) | (value));
-		}
+		if (!RunTestPlanarSingleColor(planar, format, colorFormatList[x]))
+			goto fail;
 	}
-}
 
-static void dump_color_channel(BYTE* data, int width, int height)
-{
-	int i, j;
-
-	for (i = 0; i < height; i++)
-	{
-		for (j = 0; j < width; j++)
-		{
-			printf("%02X%s", *data,
-			       ((j + 1) == width) ? "\n" : " ");
-			data += 4;
-		}
-	}
+	rc = TRUE;
+fail:
+	freerdp_bitmap_planar_context_free(planar);
+	return rc;
 }
 
 int TestFreeRDPCodecPlanar(int argc, char* argv[])
 {
-	int i;
-	UINT32 dstSize;
-	UINT32 format;
-	BYTE* pDstData;
-	DWORD planarFlags;
-	BYTE* srcBitmap32;
-	BYTE* srcBitmap16;
-	int width, height;
-	BYTE* blackBitmap;
-	BYTE* whiteBitmap;
-	BYTE* compressedBitmap;
-	BYTE* decompressedBitmap;
-	BITMAP_PLANAR_CONTEXT* planar;
-	planarFlags = PLANAR_FORMAT_HEADER_NA;
-	planarFlags |= PLANAR_FORMAT_HEADER_RLE;
-	planar = freerdp_bitmap_planar_context_new(planarFlags, 64, 64);
-	srcBitmap16 = (BYTE*) TEST_RLE_UNCOMPRESSED_BITMAP_16BPP;
-	format = PIXEL_FORMAT_ARGB32;
-	pDstData = calloc(32 * 32, GetBytesPerPixel(format));
+	UINT32 x;
 
-	if (!pDstData)
-		return -1;
-
-	if (!freerdp_image_copy(pDstData, format,
-	                        32 * GetBytesPerPixel(format),
-	                        0, 0, 32, 32, srcBitmap16, PIXEL_FORMAT_RGB16,
-	                        32 * GetBytesPerPixel(PIXEL_FORMAT_RGB16),
-	                        0, 0, NULL))
-		return -1;
-
-#if 0
-	freerdp_bitmap_compress_planar(planar, srcBitmap32, format, 32, 32, 32 * 4,
-	                               NULL, &dstSize);
-	freerdp_bitmap_planar_compress_plane_rle((BYTE*) TEST_RLE_SCANLINE_UNCOMPRESSED,
-	        12, 1, NULL, &dstSize);
-	freerdp_bitmap_planar_delta_encode_plane((BYTE*) TEST_RDP6_SCANLINES_ABSOLUTE,
-	        6, 3, NULL);
-	freerdp_bitmap_planar_compress_plane_rle((BYTE*)
-	        TEST_RDP6_SCANLINES_DELTA_2C_ENCODED_UNSIGNED, 6, 3, NULL, &dstSize);
-#endif
-#if 1
-
-	for (i = 4; i < 64; i += 4)
+	for (x = 0; x < colorFormatCount; x++)
 	{
-		width = i;
-		height = i;
-		whiteBitmap = (BYTE*) malloc(width * height * 4);
-
-		if (!whiteBitmap)
+		if (!TestPlanar(colorFormatList[x]))
 			return -1;
-
-		FillMemory(whiteBitmap, width * height * 4, 0xFF);
-		fill_bitmap_alpha_channel(whiteBitmap, width, height, 0x00);
-		compressedBitmap = freerdp_bitmap_compress_planar(planar, whiteBitmap, format,
-		                   width, height, width * 4, NULL, &dstSize);
-		decompressedBitmap = (BYTE*) calloc(width * height, 4);
-
-		if (!decompressedBitmap)
-			return -1;
-
-		pDstData = decompressedBitmap;
-
-		if (!planar_decompress(planar, compressedBitmap, dstSize,
-		                       width, height, pDstData,
-		                       PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height, FALSE))
-		{
-			printf("failed to decompress white bitmap: width: %d height: %d\n", width,
-			       height);
-			return -1;
-		}
-		else
-		{
-			printf("success decompressing white bitmap: width: %d height: %d\n", width,
-			       height);
-		}
-
-		if (memcmp(decompressedBitmap, whiteBitmap, width * height * 4) != 0)
-		{
-			printf("white bitmap\n");
-			winpr_HexDump("codec.test", WLOG_DEBUG, whiteBitmap, width * height * 4);
-			printf("decompressed bitmap\n");
-			winpr_HexDump("codec.test", WLOG_DEBUG, decompressedBitmap, width * height * 4);
-			printf("error decompressed white bitmap corrupted: width: %d height: %d\n",
-			       width, height);
-			return -1;
-		}
-
-		free(compressedBitmap);
-		free(decompressedBitmap);
 	}
 
-	for (i = 4; i < 64; i += 4)
-	{
-		width = i;
-		height = i;
-		blackBitmap = (BYTE*) calloc(width * height, 4);
-
-		if (!blackBitmap)
-			return -1;
-
-		fill_bitmap_alpha_channel(blackBitmap, width, height, 0x00);
-		compressedBitmap = freerdp_bitmap_compress_planar(planar, blackBitmap, format,
-		                   width, height, width * 4, NULL, &dstSize);
-		decompressedBitmap = (BYTE*) calloc(width * height, 4);
-
-		if (!decompressedBitmap)
-			return -1;
-
-		pDstData = decompressedBitmap;
-
-		if (!planar_decompress(planar, compressedBitmap, dstSize,
-		                       width, height, pDstData,
-		                       PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height, FALSE))
-		{
-			printf("failed to decompress black bitmap: width: %d height: %d\n", width,
-			       height);
-			return -1;
-		}
-		else
-		{
-			printf("success decompressing black bitmap: width: %d height: %d\n", width,
-			       height);
-		}
-
-		if (memcmp(decompressedBitmap, blackBitmap, width * height * 4) != 0)
-		{
-			printf("black bitmap\n");
-			winpr_HexDump("codec.test", WLOG_DEBUG, blackBitmap, width * height * 4);
-			printf("decompressed bitmap\n");
-			winpr_HexDump("codec.test", WLOG_DEBUG, decompressedBitmap, width * height * 4);
-			printf("error decompressed black bitmap corrupted: width: %d height: %d\n",
-			       width, height);
-			return -1;
-		}
-
-		free(compressedBitmap);
-		free(decompressedBitmap);
-	}
-
-	return 0;
-	/* Experimental Case 01 */
-	width = 64;
-	height = 64;
-	compressedBitmap = freerdp_bitmap_compress_planar(planar,
-	                   (BYTE*) TEST_RLE_BITMAP_EXPERIMENTAL_01,
-	                   format, width, height, width * 4, NULL, &dstSize);
-	decompressedBitmap = (BYTE*) calloc(width * height, 4);
-
-	if (!decompressedBitmap)
-		return -1;
-
-	pDstData = decompressedBitmap;
-
-	if (!planar_decompress(planar, compressedBitmap, dstSize, width, height,
-	                       pDstData,
-	                       PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height, FALSE))
-	{
-		printf("failed to decompress experimental bitmap 01: width: %d height: %d\n",
-		       width, height);
-		return -1;
-	}
-	else
-	{
-		printf("success decompressing experimental bitmap 01: width: %d height: %d\n",
-		       width, height);
-	}
-
-	fill_bitmap_alpha_channel(decompressedBitmap, width, height, 0xFF);
-	fill_bitmap_alpha_channel((BYTE*) TEST_RLE_BITMAP_EXPERIMENTAL_01, width,
-	                          height, 0xFF);
-
-	if (memcmp(decompressedBitmap, (BYTE*) TEST_RLE_BITMAP_EXPERIMENTAL_01,
-	           width * height * 4) != 0)
-	{
-#if 0
-		printf("experimental bitmap 01\n");
-		winpr_HexDump("codec.test", WLOG_DEBUG, (BYTE*) TEST_RLE_BITMAP_EXPERIMENTAL_01,
-		              width * height * 4);
-		printf("decompressed bitmap\n");
-		winpr_HexDump("codec.test", WLOG_DEBUG, decompressedBitmap, width * height * 4);
-#endif
-		printf("error: decompressed experimental bitmap 01 is corrupted\n");
-		return -1;
-	}
-
-	free(compressedBitmap);
-	free(decompressedBitmap);
-	/* Experimental Case 02 */
-	width = 64;
-	height = 64;
-	compressedBitmap = freerdp_bitmap_compress_planar(planar,
-	                   (BYTE*) TEST_RLE_BITMAP_EXPERIMENTAL_02,
-	                   format, width, height, width * 4, NULL, &dstSize);
-	decompressedBitmap = (BYTE*) calloc(width * height, 4);
-
-	if (!decompressedBitmap)
-		return -1;
-
-	pDstData = decompressedBitmap;
-
-	if (!planar_decompress(planar, compressedBitmap, dstSize, width, height,
-	                       pDstData,
-	                       PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height, FALSE))
-	{
-		printf("failed to decompress experimental bitmap 02: width: %d height: %d\n",
-		       width, height);
-		return -1;
-	}
-	else
-	{
-		printf("success decompressing experimental bitmap 02: width: %d height: %d\n",
-		       width, height);
-	}
-
-	fill_bitmap_alpha_channel(decompressedBitmap, width, height, 0xFF);
-	fill_bitmap_alpha_channel((BYTE*) TEST_RLE_BITMAP_EXPERIMENTAL_02, width,
-	                          height, 0xFF);
-
-	if (memcmp(decompressedBitmap, (BYTE*) TEST_RLE_BITMAP_EXPERIMENTAL_02,
-	           width * height * 4) != 0)
-	{
-#if 0
-		printf("experimental bitmap 02\n");
-		winpr_HexDump("codec.test", WLOG_DEBUG, (BYTE*) TEST_RLE_BITMAP_EXPERIMENTAL_02,
-		              width * height * 4);
-		printf("decompressed bitmap\n");
-		winpr_HexDump("codec.test", WLOG_DEBUG, decompressedBitmap, width * height * 4);
-#endif
-		printf("error: decompressed experimental bitmap 02 is corrupted\n");
-		return -1;
-	}
-
-	free(compressedBitmap);
-	free(decompressedBitmap);
-#endif
-	/* Experimental Case 03 */
-	width = 64;
-	height = 64;
-	compressedBitmap = freerdp_bitmap_compress_planar(planar,
-	                   (BYTE*) TEST_RLE_BITMAP_EXPERIMENTAL_03,
-	                   format, width, height, width * 4, NULL, &dstSize);
-	decompressedBitmap = (BYTE*) calloc(width * height, 4);
-
-	if (!decompressedBitmap)
-		return -1;
-
-	pDstData = decompressedBitmap;
-
-	if (!planar_decompress(planar, compressedBitmap, dstSize, width, height,
-	                       pDstData,
-	                       PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height, FALSE))
-	{
-		printf("failed to decompress experimental bitmap 03: width: %d height: %d\n",
-		       width, height);
-		return -1;
-	}
-	else
-	{
-		printf("success decompressing experimental bitmap 03: width: %d height: %d\n",
-		       width, height);
-	}
-
-	fill_bitmap_alpha_channel(decompressedBitmap, width, height, 0xFF);
-	fill_bitmap_alpha_channel((BYTE*) TEST_RLE_BITMAP_EXPERIMENTAL_03, width,
-	                          height, 0xFF);
-
-	if (memcmp(decompressedBitmap, (BYTE*) TEST_RLE_BITMAP_EXPERIMENTAL_03,
-	           width * height * 4) != 0)
-	{
-#if 0
-		printf("experimental bitmap 03\n");
-		winpr_HexDump("codec.test", WLOG_DEBUG, (BYTE*) TEST_RLE_BITMAP_EXPERIMENTAL_03,
-		              width * height * 4);
-		printf("decompressed bitmap\n");
-		winpr_HexDump("codec.test", WLOG_DEBUG, decompressedBitmap, width * height * 4);
-#endif
-		printf("error: decompressed experimental bitmap 03 is corrupted\n");
-		return -1;
-	}
-
-	free(compressedBitmap);
-	free(decompressedBitmap);
-	_aligned_free(srcBitmap32);
-	freerdp_bitmap_planar_context_free(planar);
 	return 0;
 }
