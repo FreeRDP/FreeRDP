@@ -352,14 +352,14 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 			break;
 
 		case PIXEL_FORMAT_RGBX32:
-			if (_b)
-				*_b = color >> 24;
+			if (_r)
+				*_r = color >> 24;
 
 			if (_g)
 				*_g = color >> 16;
 
-			if (_r)
-				*_r = color >> 8;
+			if (_b)
+				*_b = color >> 8;
 
 			if (_a)
 				*_a = 0xFF;
