@@ -46,15 +46,15 @@
 
 #define TAG CLIENT_TAG("mac")
 
-BOOL mf_Pointer_New(rdpContext* context, rdpPointer* pointer);
-void mf_Pointer_Free(rdpContext* context, rdpPointer* pointer);
-BOOL mf_Pointer_Set(rdpContext* context, rdpPointer* pointer);
-BOOL mf_Pointer_SetNull(rdpContext* context);
-BOOL mf_Pointer_SetDefault(rdpContext* context);
+static BOOL mf_Pointer_New(rdpContext* context, rdpPointer* pointer);
+static void mf_Pointer_Free(rdpContext* context, rdpPointer* pointer);
+static BOOL mf_Pointer_Set(rdpContext* context, const rdpPointer* pointer);
+static BOOL mf_Pointer_SetNull(rdpContext* context);
+static BOOL mf_Pointer_SetDefault(rdpContext* context);
 
-BOOL mac_begin_paint(rdpContext* context);
-BOOL mac_end_paint(rdpContext* context);
-BOOL mac_desktop_resize(rdpContext* context);
+static BOOL mac_begin_paint(rdpContext* context);
+static BOOL mac_end_paint(rdpContext* context);
+static BOOL mac_desktop_resize(rdpContext* context);
 
 static void update_activity_cb(freerdp* instance);
 static void input_activity_cb(freerdp* instance);
@@ -979,7 +979,6 @@ BOOL mac_pre_connect(freerdp* instance)
 BOOL mac_post_connect(freerdp* instance)
 {
 	rdpGdi* gdi;
-	UINT32 flags;
 	rdpSettings* settings;
 	rdpPointer rdp_pointer;
 	mfContext* mfc = (mfContext*) instance->context;
@@ -995,15 +994,8 @@ BOOL mac_post_connect(freerdp* instance)
 	rdp_pointer.SetDefault = mf_Pointer_SetDefault;
 	
 	settings = instance->settings;
-	
-	flags = CLRCONV_ALPHA | CLRCONV_RGB555;
-	
-	//if (settings->ColorDepth > 16)
-		flags |= CLRBUF_32BPP;
-	//else
-	//	flags |= CLRBUF_16BPP;
-	
-	if (!gdi_init(instance, flags, NULL))
+
+	if (!gdi_init(instance, PIXEL_FORMAT_XRGB32))
 		return FALSE;
 	
 	gdi = instance->context->gdi;
@@ -1149,7 +1141,7 @@ void mf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 	}
 }
 
-BOOL mf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
+BOOL mf_Pointer_Set(rdpContext* context, const rdpPointer* pointer)
 {
 	mfContext* mfc = (mfContext*) context;
 	MRDPView* view = (MRDPView*) mfc->view;
@@ -1186,19 +1178,20 @@ CGContextRef mac_create_bitmap_context(rdpContext* context)
 {
 	CGContextRef bitmap_context;
 	rdpGdi* gdi = context->gdi;
+    UINT32 bpp = GetBytesPerPixel(gdi->dstFormat);
 	
 	CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
 	
-	if (gdi->bytesPerPixel == 2)
+	if (bpp == 2)
 	{
 		bitmap_context = CGBitmapContextCreate(gdi->primary_buffer,
-						       gdi->width, gdi->height, 5, gdi->width * gdi->bytesPerPixel,
+						       gdi->width, gdi->height, 5, gdi->stride,
 						       colorSpace, kCGBitmapByteOrder16Little | kCGImageAlphaNoneSkipFirst);
 	}
 	else
 	{
 		bitmap_context = CGBitmapContextCreate(gdi->primary_buffer,
-						       gdi->width, gdi->height, 8, gdi->width * gdi->bytesPerPixel,
+						       gdi->width, gdi->height, 8, gdi->stride,
 						       colorSpace, kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst);
 	}
 	
@@ -1315,7 +1308,7 @@ BOOL mac_desktop_resize(rdpContext* context)
 	return TRUE;
 }
 
-static void update_activity_cb(freerdp* instance)
+void update_activity_cb(freerdp* instance)
 {
 	int status;
 	wMessage message;
@@ -1340,7 +1333,7 @@ static void update_activity_cb(freerdp* instance)
 	}
 }
 
-static void input_activity_cb(freerdp* instance)
+void input_activity_cb(freerdp* instance)
 {
 	int status;
 	wMessage message;
