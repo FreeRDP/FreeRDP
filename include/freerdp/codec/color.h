@@ -100,7 +100,7 @@
 #define PIXEL_FORMAT_ARGB15		PIXEL_FORMAT_A1R5G5B5_F(0)
 #define PIXEL_FORMAT_ARGB15_VF		PIXEL_FORMAT_A1R5G5B5_F(1)
 
-#define PIXEL_FORMAT_X1R5G5B5_F(_flip)	FREERDP_PIXEL_FORMAT(_flip, 16, FREERDP_PIXEL_FORMAT_TYPE_ARGB, 0, 5, 5, 5)
+#define PIXEL_FORMAT_X1R5G5B5_F(_flip)	FREERDP_PIXEL_FORMAT(_flip, 15, FREERDP_PIXEL_FORMAT_TYPE_ARGB, 0, 5, 5, 5)
 #define PIXEL_FORMAT_RGB15		PIXEL_FORMAT_X1R5G5B5_F(0)
 #define PIXEL_FORMAT_RGB15_VF		PIXEL_FORMAT_X1R5G5B5_F(1)
 
@@ -108,7 +108,7 @@
 #define PIXEL_FORMAT_ABGR15		PIXEL_FORMAT_A1B5G5R5_F(0)
 #define PIXEL_FORMAT_ABGR15_VF		PIXEL_FORMAT_A1B5G5R5_F(1)
 
-#define PIXEL_FORMAT_X1B5G5R5_F(_flip)	FREERDP_PIXEL_FORMAT(_flip, 16, FREERDP_PIXEL_FORMAT_TYPE_ABGR, 0, 5, 5, 5)
+#define PIXEL_FORMAT_X1B5G5R5_F(_flip)	FREERDP_PIXEL_FORMAT(_flip, 15, FREERDP_PIXEL_FORMAT_TYPE_ABGR, 0, 5, 5, 5)
 #define PIXEL_FORMAT_BGR15		PIXEL_FORMAT_X1B5G5R5_F(0)
 #define PIXEL_FORMAT_BGR15_VF		PIXEL_FORMAT_X1B5G5R5_F(1)
 
@@ -605,11 +605,11 @@ static INLINE UINT32 GetColor(UINT32 format, BYTE r, BYTE g, BYTE b, BYTE a)
 
 		case PIXEL_FORMAT_ARGB15:
 			return (((_r >> 3) & 0x1F) << 10) | (((_g >> 3) & 0x1F) << 5) | ((
-			            _b >> 3) & 0x1F);
+			            _b >> 3) & 0x1F) | (_a ? 0x8000 : 0x0000);
 
 		case PIXEL_FORMAT_ABGR15:
 			return (((_b >> 3) & 0x1F) << 10) | (((_g >> 3) & 0x1F) << 5) | ((
-			            _r >> 3) & 0x1F);
+			            _r >> 3) & 0x1F) | (_a ? 0x8000 : 0x0000);
 
 		/* 15bpp formats */
 		case PIXEL_FORMAT_RGB15:
@@ -618,7 +618,7 @@ static INLINE UINT32 GetColor(UINT32 format, BYTE r, BYTE g, BYTE b, BYTE a)
 
 		case PIXEL_FORMAT_BGR15:
 			return (((_b >> 3) & 0x1F) << 10) | (((_g >> 3) & 0x1F) << 5) | ((
-			            _r >> 3) & 0x1F);;
+			            _r >> 3) & 0x1F);
 
 		/* 8bpp formats */
 		case PIXEL_FORMAT_RGB8:
@@ -665,13 +665,18 @@ static INLINE UINT32 ReadColor(const BYTE* src, UINT32 format)
 			break;
 
 		case 16:
-		case 15:
 			color = ((UINT32)src[1] << 8) | src[0];
 			break;
 
+		case 15:
+			color = ((UINT32)src[1] << 8) | src[0];
+
+			if (!ColorHasAlpha(format))
+				color = color & 0x7FFF;
+
+			break;
+
 		case 8:
-		case 4:
-		case 1:
 			color = *src;
 			break;
 
@@ -702,14 +707,19 @@ static INLINE BOOL WriteColor(BYTE* dst, UINT32 format, UINT32 color)
 			break;
 
 		case 16:
+			dst[1] = color >> 8;
+			dst[0] = color;
+			break;
+
 		case 15:
+			if (!ColorHasAlpha(format))
+				color = color & 0x7FFF;
+
 			dst[1] = color >> 8;
 			dst[0] = color;
 			break;
 
 		case 8:
-		case 4:
-		case 1:
 			dst[0] = color;
 			break;
 
