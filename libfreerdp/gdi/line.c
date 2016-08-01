@@ -47,79 +47,80 @@
  */
 static BOOL gdi_rop_color(UINT32 rop, BYTE* pixelPtr, UINT32 pen, UINT32 format)
 {
-	UINT32 pixel = ReadColor(pixelPtr, format);
+	const UINT32 srcPixel = ReadColor(pixelPtr, format);
+	UINT32 dstPixel;
 
 	switch (rop)
 	{
 		case GDI_R2_BLACK: /* LineTo_BLACK */
-			pixel = GetColor(format, 0, 0, 0, 0xFF);
+			dstPixel = GetColor(format, 0, 0, 0, 0xFF);
 			break;
 
 		case GDI_R2_NOTMERGEPEN: /* LineTo_NOTMERGEPEN */
-			pixel = ~(pixel | pen);
+			dstPixel = ~(srcPixel | pen);
 			break;
 
 		case GDI_R2_MASKNOTPEN: /* LineTo_MASKNOTPEN */
-			pixel &= ~pen;
+			dstPixel = srcPixel & ~pen;
 			break;
 
 		case GDI_R2_NOTCOPYPEN: /* LineTo_NOTCOPYPEN */
-			pixel = ~pen;
+			dstPixel = ~pen;
 			break;
 
 		case GDI_R2_MASKPENNOT: /* LineTo_MASKPENNOT */
-			pixel = pen & ~pixel;
+			dstPixel = pen & ~srcPixel;
 			break;
 
 		case GDI_R2_NOT: /* LineTo_NOT */
-			pixel = ~pixel;
+			dstPixel = ~srcPixel;
 			break;
 
 		case GDI_R2_XORPEN: /* LineTo_XORPEN */
-			pixel = pixel ^ pen;
+			dstPixel = srcPixel ^ pen;
 			break;
 
 		case GDI_R2_NOTMASKPEN: /* LineTo_NOTMASKPEN */
-			pixel = ~(pixel & pen);
+			dstPixel = ~(srcPixel & pen);
 			break;
 
 		case GDI_R2_MASKPEN: /* LineTo_MASKPEN */
-			pixel &= pen;
+			dstPixel = srcPixel & pen;
 			break;
 
 		case GDI_R2_NOTXORPEN: /* LineTo_NOTXORPEN */
-			pixel = ~(pixel ^ pen);
+			dstPixel = ~(srcPixel ^ pen);
 			break;
 
 		case GDI_R2_NOP: /* LineTo_NOP */
+			dstPixel = srcPixel;
 			break;
 
 		case GDI_R2_MERGENOTPEN: /* LineTo_MERGENOTPEN */
-			pixel |= ~pen;
+			dstPixel = srcPixel | ~pen;
 			break;
 
 		case GDI_R2_COPYPEN: /* LineTo_COPYPEN */
-			pixel = pen;
+			dstPixel = pen;
 			break;
 
 		case GDI_R2_MERGEPENNOT: /* LineTo_MERGEPENNOT */
-			pixel = pixel | ~pen;
+			dstPixel = srcPixel | ~pen;
 			break;
 
 		case GDI_R2_MERGEPEN: /* LineTo_MERGEPEN */
-			pixel = pixel | pen;
+			dstPixel = srcPixel | pen;
 			break;
 
 		case GDI_R2_WHITE: /* LineTo_WHITE */
-			pixel = GetColor(format, 0, 0, 0, 0);
+			dstPixel = GetColor(format, 0xFF, 0xFF, 0xFF, 0xFF);
 			break;
 
 		default:
 			return FALSE;
 	}
 
-	WriteColor(pixelPtr, format, pixel);
-	return TRUE;
+	return WriteColor(pixelPtr, format, dstPixel);
 }
 
 BOOL gdi_LineTo(HGDI_DC hdc, UINT32 nXEnd, UINT32 nYEnd)
