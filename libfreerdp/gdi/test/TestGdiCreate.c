@@ -13,6 +13,25 @@
 #include "brush.h"
 #include "drawing.h"
 
+static const UINT32 colorFormatList[] =
+{
+	PIXEL_FORMAT_RGB15,
+	PIXEL_FORMAT_BGR15,
+	PIXEL_FORMAT_RGB16,
+	PIXEL_FORMAT_BGR16,
+	PIXEL_FORMAT_RGB24,
+	PIXEL_FORMAT_BGR24,
+	PIXEL_FORMAT_ARGB32,
+	PIXEL_FORMAT_ABGR32,
+	PIXEL_FORMAT_XRGB32,
+	PIXEL_FORMAT_XBGR32,
+	PIXEL_FORMAT_RGBX32,
+	PIXEL_FORMAT_BGRX32
+
+};
+static const UINT32 colorFormatCount = sizeof(colorFormatList) / sizeof(
+        colorFormatList[0]);
+
 static int test_gdi_GetDC(void)
 {
 	HGDI_DC hdc;
@@ -264,62 +283,109 @@ static int test_gdi_CreateRect(void)
 	return 0;
 }
 
-static int test_gdi_GetPixel(void)
+static BOOL test_gdi_GetPixel(void)
 {
-	HGDI_DC hdc;
-	int width = 128;
-	int height = 64;
-	HGDI_BITMAP hBitmap;
+	BOOL rc = TRUE;
+	UINT32 x;
 
-	if (!(hdc = gdi_GetDC()))
+	for (x = 0; x < colorFormatCount; x++)
 	{
-		printf("failed to get gdi device context\n");
-		return -1;
+		UINT32 i, j;
+		UINT32 bpp;
+		HGDI_DC hdc;
+		UINT32 width = 128;
+		UINT32 height = 64;
+		HGDI_BITMAP hBitmap;
+
+		if (!(hdc = gdi_GetDC()))
+		{
+			printf("failed to get gdi device context\n");
+			return -1;
+		}
+
+		hdc->format = colorFormatList[x];
+		hBitmap = gdi_CreateCompatibleBitmap(hdc, width, height);
+		gdi_SelectObject(hdc, (HGDIOBJECT) hBitmap);
+		bpp = GetBytesPerPixel(hBitmap->format);
+
+		for (i = 0; i < height; i++)
+		{
+			for (j = 0; j < width; j++)
+			{
+				UINT32 pixel;
+				const UINT32 color = GetColor(hBitmap->format, rand(), rand(), rand(), rand());
+				WriteColor(&hBitmap->data[i * hBitmap->scanline + j * bpp], hBitmap->format,
+				           color);
+				pixel = gdi_GetPixel(hdc, j, i);
+
+				if (pixel != color)
+				{
+					rc = FALSE;
+					break;
+				}
+			}
+
+			if (!rc)
+				break;
+		}
+
+		gdi_DeleteObject((HGDIOBJECT) hBitmap);
+		gdi_DeleteDC(hdc);
 	}
 
-	hdc->format = PIXEL_FORMAT_ARGB32;
-	hBitmap = gdi_CreateCompatibleBitmap(hdc, width, height);
-	gdi_SelectObject(hdc, (HGDIOBJECT) hBitmap);
-	hBitmap->data[(64 * width * 4) + 32 * 4 + 0] = 0xDD;
-	hBitmap->data[(64 * width * 4) + 32 * 4 + 1] = 0xCC;
-	hBitmap->data[(64 * width * 4) + 32 * 4 + 2] = 0xBB;
-	hBitmap->data[(64 * width * 4) + 32 * 4 + 3] = 0xAA;
-
-	if (gdi_GetPixel(hdc, 32, 64) != 0xAABBCCDD)
-		return -1;
-
-	gdi_DeleteObject((HGDIOBJECT) hBitmap);
-	return 0;
+	return rc;
 }
 
-static int test_gdi_SetPixel(void)
+static BOOL test_gdi_SetPixel(void)
 {
-	HGDI_DC hdc;
-	UINT32 width = 128;
-	UINT32 height = 64;
-	HGDI_BITMAP hBitmap;
+	BOOL rc = TRUE;
+	UINT32 x;
 
-	if (!(hdc = gdi_GetDC()))
+	for (x = 0; x < colorFormatCount; x++)
 	{
-		printf("failed to get gdi device context\n");
-		return -1;
+		UINT32 i, j, bpp;
+		HGDI_DC hdc;
+		UINT32 width = 128;
+		UINT32 height = 64;
+		HGDI_BITMAP hBitmap;
+
+		if (!(hdc = gdi_GetDC()))
+		{
+			printf("failed to get gdi device context\n");
+			return FALSE;
+		}
+
+		hdc->format = colorFormatList[x];
+		hBitmap = gdi_CreateCompatibleBitmap(hdc, width, height);
+		gdi_SelectObject(hdc, (HGDIOBJECT) hBitmap);
+		bpp = GetBytesPerPixel(hBitmap->format);
+
+		for (i = 0; i < height; i++)
+		{
+			for (j = 0; j < width; j++)
+			{
+				UINT32 pixel;
+				const UINT32 color = GetColor(hBitmap->format, rand(), rand(), rand(), rand());
+				gdi_SetPixel(hdc, j, i, color);
+				pixel = ReadColor(&hBitmap->data[i * hBitmap->scanline + j * bpp],
+				                  hBitmap->format);
+
+				if (pixel != color)
+				{
+					rc = FALSE;
+					break;
+				}
+			}
+
+			if (!rc)
+				break;
+		}
+
+		gdi_DeleteObject((HGDIOBJECT) hBitmap);
+		gdi_DeleteDC(hdc);
 	}
 
-	hdc->format = PIXEL_FORMAT_ARGB32;
-	hBitmap = gdi_CreateCompatibleBitmap(hdc, width, height);
-	gdi_SelectObject(hdc, (HGDIOBJECT) hBitmap);
-	gdi_SetPixel(hdc, 32, 64, 0xAABBCCDD);
-
-	if (gdi_GetPixel(hdc, 32, 64) != 0xAABBCCDD)
-		return -1;
-
-	gdi_SetPixel(hdc, width - 1, height - 1, 0xAABBCCDD);
-
-	if (gdi_GetPixel(hdc, width - 1, height - 1) != 0xAABBCCDD)
-		return -1;
-
-	gdi_DeleteObject((HGDIOBJECT) hBitmap);
-	return 0;
+	return rc;
 }
 
 static int test_gdi_SetROP2(void)
@@ -437,12 +503,12 @@ int TestGdiCreate(int argc, char* argv[])
 
 	fprintf(stderr, "test_gdi_GetPixel()\n");
 
-	if (test_gdi_GetPixel() < 0)
+	if (!test_gdi_GetPixel())
 		return -1;
 
 	fprintf(stderr, "test_gdi_SetPixel()\n");
 
-	if (test_gdi_SetPixel() < 0)
+	if (!test_gdi_SetPixel())
 		return -1;
 
 	fprintf(stderr, "test_gdi_SetROP2()\n");
