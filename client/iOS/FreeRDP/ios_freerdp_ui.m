@@ -145,10 +145,10 @@ static void ios_create_bitmap_context(mfInfo* mfi)
 	    
     rdpGdi* gdi = mfi->instance->context->gdi;
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-	if (gdi->bytesPerPixel == 2)
-		mfi->bitmap_context = CGBitmapContextCreate(gdi->primary_buffer, gdi->width, gdi->height, 5, gdi->width * 2, colorSpace, kCGBitmapByteOrder16Little | kCGImageAlphaNoneSkipFirst);
+	if (GetBytesPerPixel(gdi->dstFormat) == 2)
+		mfi->bitmap_context = CGBitmapContextCreate(gdi->primary_buffer, gdi->width, gdi->height, 5, gdi->stride, colorSpace, kCGBitmapByteOrder16Little | kCGImageAlphaNoneSkipFirst);
 	else
-		mfi->bitmap_context = CGBitmapContextCreate(gdi->primary_buffer, gdi->width, gdi->height, 8, gdi->width * 4, colorSpace, kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst);
+		mfi->bitmap_context = CGBitmapContextCreate(gdi->primary_buffer, gdi->width, gdi->height, 8, gdi->stride, colorSpace, kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst);
     CGColorSpaceRelease(colorSpace);
     
 	[mfi->session performSelectorOnMainThread:@selector(sessionBitmapContextDidChange) withObject:nil waitUntilDone:YES];
@@ -156,7 +156,7 @@ static void ios_create_bitmap_context(mfInfo* mfi)
 
 void ios_allocate_display_buffer(mfInfo* mfi)
 {
-	gdi_init(mfi->instance, CLRCONV_RGB555 | ((mfi->instance->settings->ColorDepth > 16) ? CLRBUF_32BPP : CLRBUF_16BPP), NULL);
+	gdi_init(mfi->instance, PIXEL_FORMAT_XRGB32);
 	ios_create_bitmap_context(mfi);
 }
 
