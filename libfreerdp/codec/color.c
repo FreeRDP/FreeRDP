@@ -76,11 +76,11 @@ BYTE* freerdp_glyph_convert(UINT32 width, UINT32 height, const BYTE* data)
 }
 
 BOOL freerdp_image_copy_from_monochrome(BYTE* pDstData, UINT32 DstFormat,
-                                        UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
-                                        UINT32 nWidth, UINT32 nHeight,
-                                        const BYTE* pSrcData,
-                                        UINT32 backColor, UINT32 foreColor,
-                                        const gdiPalette* palette)
+					UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+					UINT32 nWidth, UINT32 nHeight,
+					const BYTE* pSrcData,
+					UINT32 backColor, UINT32 foreColor,
+					const gdiPalette* palette)
 {
 	UINT32 x, y;
 	BOOL vFlip;
@@ -135,7 +135,7 @@ BOOL freerdp_image_copy_from_monochrome(BYTE* pDstData, UINT32 DstFormat,
 }
 
 static INLINE UINT32 freerdp_image_inverted_pointer_color(UINT32 x, UINT32 y,
-        UINT32 format)
+	UINT32 format)
 {
 #if 1
 	/**
@@ -224,7 +224,7 @@ BOOL freerdp_image_copy_from_pointer_data(
 				const BYTE* andBits;
 				const BYTE* xorBits;
 				BYTE* pDstPixel = &pDstData[((nYDst + y) * nDstStep) +
-				                            (nXDst * GetBytesPerPixel(DstFormat))];
+							    (nXDst * GetBytesPerPixel(DstFormat))];
 				xorBit = andBit = 0x80;
 
 				if (!vFlip)
@@ -284,7 +284,7 @@ BOOL freerdp_image_copy_from_pointer_data(
 				if (xorBpp == 8 && !palette)
 				{
 					WLog_ERR(TAG, "null palette in convertion from %d bpp to %d bpp",
-					         xorBpp, dstBitsPerPixel);
+						 xorBpp, dstBitsPerPixel);
 					return -1;
 				}
 
@@ -302,7 +302,7 @@ BOOL freerdp_image_copy_from_pointer_data(
 					const BYTE* xorBits;
 					const BYTE* andBits = NULL;
 					BYTE* pDstPixel = &pDstData[((nYDst + y) * nDstStep) +
-					                            (nXDst * GetBytesPerPixel(DstFormat))];
+								    (nXDst * GetBytesPerPixel(DstFormat))];
 					andBit = 0x80;
 
 					if (!vFlip)
@@ -328,7 +328,7 @@ BOOL freerdp_image_copy_from_pointer_data(
 
 						if (xorBpp == 32)
 						{
-							pixelFormat = PIXEL_FORMAT_ARGB32;
+							pixelFormat = PIXEL_FORMAT_BGRA32;
 							xorPixel = ReadColor(xorBits, pixelFormat);
 
 							if (xorPixel & 0xFF000000)
@@ -346,14 +346,14 @@ BOOL freerdp_image_copy_from_pointer_data(
 						}
 						else
 						{
-							pixelFormat = PIXEL_FORMAT_RGB24;
+							pixelFormat = PIXEL_FORMAT_BGR24;
 							xorPixel = ReadColor(xorBits, pixelFormat);
 						}
 
 						xorPixel = ConvertColor(xorPixel,
-						                        pixelFormat,
-						                        PIXEL_FORMAT_ARGB32,
-						                        palette);
+									pixelFormat,
+									PIXEL_FORMAT_ARGB32,
+									palette);
 						xorBits += xorBytesPerPixel;
 						andPixel = 0;
 
@@ -380,7 +380,7 @@ BOOL freerdp_image_copy_from_pointer_data(
 						}
 
 						color = ConvertColor(xorPixel, PIXEL_FORMAT_ARGB32,
-						                     DstFormat, palette);
+								     DstFormat, palette);
 						WriteColor(pDstPixel, DstFormat, color);
 						pDstPixel += GetBytesPerPixel(DstFormat);
 					}
@@ -391,16 +391,16 @@ BOOL freerdp_image_copy_from_pointer_data(
 
 		default:
 			WLog_ERR(TAG, "failed to convert from %d bpp to %d bpp",
-			         xorBpp, dstBitsPerPixel);
+				 xorBpp, dstBitsPerPixel);
 			return -1;
 	}
 }
 
 static BOOL overlapping(const BYTE* pDstData, UINT32 nXDst, UINT32 nYDst,
-                        UINT32 nDstStep, UINT32 dstBytesPerPixel,
-                        const BYTE* pSrcData, UINT32 nXSrc, UINT32 nYSrc,
-                        UINT32 nSrcStep, UINT32 srcBytesPerPixel,
-                        UINT32 nWidth, UINT32 nHeight)
+			UINT32 nDstStep, UINT32 dstBytesPerPixel,
+			const BYTE* pSrcData, UINT32 nXSrc, UINT32 nYSrc,
+			UINT32 nSrcStep, UINT32 srcBytesPerPixel,
+			UINT32 nWidth, UINT32 nHeight)
 {
 	const BYTE* pDstStart = &pDstData[nXDst * dstBytesPerPixel + nYDst * nDstStep];
 	const BYTE* pDstEnd = pDstStart + nHeight * nDstStep;
@@ -417,11 +417,11 @@ static BOOL overlapping(const BYTE* pDstData, UINT32 nXDst, UINT32 nYDst,
 }
 
 BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
-                        UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
-                        UINT32 nWidth, UINT32 nHeight,
-                        const BYTE* pSrcData, DWORD SrcFormat,
-                        UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
-                        const gdiPalette* palette)
+			UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+			UINT32 nWidth, UINT32 nHeight,
+			const BYTE* pSrcData, DWORD SrcFormat,
+			UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
+			const gdiPalette* palette)
 {
 	const UINT32 dstByte = GetBytesPerPixel(DstFormat);
 	const UINT32 srcByte = GetBytesPerPixel(SrcFormat);
@@ -491,7 +491,7 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 	if (vSrcHFlip || vDstHFlip)
 	{
 		WLog_ERR(TAG, "Horizontal flipping not supported! %s %s",
-		         GetColorFormatName(SrcFormat), GetColorFormatName(DstFormat));
+			 GetColorFormatName(SrcFormat), GetColorFormatName(DstFormat));
 		return FALSE;
 	}
 
@@ -501,8 +501,8 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 		INT32 y;
 
 		if (overlapping(pDstData, nXDst, nYDst, nDstStep, dstByte,
-		                pSrcData, nXSrc, nYSrc, nSrcStep, srcByte,
-		                nWidth, nHeight))
+				pSrcData, nXSrc, nYSrc, nSrcStep, srcByte,
+				nWidth, nHeight))
 		{
 			/* Copy down */
 			if (nYDst < nYSrc)
@@ -510,11 +510,11 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 				for (y = 0; y < nHeight; y++)
 				{
 					const BYTE* srcLine = &pSrcData[(y + nYSrc) *
-					                                nSrcStep * srcVMultiplier +
-					                                srcVOffset];
+									nSrcStep * srcVMultiplier +
+									srcVOffset];
 					BYTE* dstLine = &pDstData[(y + nYDst) *
-					                          nDstStep * dstVMultiplier +
-					                          dstVOffset];
+								  nDstStep * dstVMultiplier +
+								  dstVOffset];
 					memcpy(&dstLine[xDstOffset],
 					       &srcLine[xSrcOffset], copyDstWidth);
 				}
@@ -525,11 +525,11 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 				for (y = nHeight - 1; y >= 0; y--)
 				{
 					const BYTE* srcLine = &pSrcData[(y + nYSrc) *
-					                                nSrcStep * srcVMultiplier +
-					                                srcVOffset];
+									nSrcStep * srcVMultiplier +
+									srcVOffset];
 					BYTE* dstLine = &pDstData[(y + nYDst) *
-					                          nDstStep * dstVMultiplier +
-					                          dstVOffset];
+								  nDstStep * dstVMultiplier +
+								  dstVOffset];
 					memcpy(&dstLine[xDstOffset],
 					       &srcLine[xSrcOffset], copyDstWidth);
 				}
@@ -540,13 +540,13 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 				for (y = 0; y < nHeight; y++)
 				{
 					const BYTE* srcLine = &pSrcData[(y + nYSrc) *
-					                                nSrcStep * srcVMultiplier +
-					                                srcVOffset];
+									nSrcStep * srcVMultiplier +
+									srcVOffset];
 					BYTE* dstLine = &pDstData[(y + nYDst) *
-					                          nDstStep * dstVMultiplier +
-					                          dstVOffset];
+								  nDstStep * dstVMultiplier +
+								  dstVOffset];
 					memmove(&dstLine[xDstOffset],
-					        &srcLine[xSrcOffset], copyDstWidth);
+						&srcLine[xSrcOffset], copyDstWidth);
 				}
 			}
 			/* Copy right */
@@ -555,13 +555,13 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 				for (y = nHeight - 1; y >= 0; y--)
 				{
 					const BYTE* srcLine = &pSrcData[(y + nYSrc) *
-					                                nSrcStep * srcVMultiplier +
-					                                srcVOffset];
+									nSrcStep * srcVMultiplier +
+									srcVOffset];
 					BYTE* dstLine = &pDstData[(y + nYDst) *
-					                          nDstStep * dstVMultiplier +
-					                          dstVOffset];
+								  nDstStep * dstVMultiplier +
+								  dstVOffset];
 					memmove(&dstLine[xDstOffset],
-					        &srcLine[xSrcOffset], copyDstWidth);
+						&srcLine[xSrcOffset], copyDstWidth);
 				}
 			}
 			/* Source and destination are equal... */
@@ -574,11 +574,11 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 			for (y = 0; y < nHeight; y++)
 			{
 				const BYTE* srcLine = &pSrcData[(y + nYSrc) *
-				                                nSrcStep * srcVMultiplier +
-				                                srcVOffset];
+								nSrcStep * srcVMultiplier +
+								srcVOffset];
 				BYTE* dstLine = &pDstData[(y + nYDst) *
-				                          nDstStep * dstVMultiplier +
-				                          dstVOffset];
+							  nDstStep * dstVMultiplier +
+							  dstVOffset];
 				memcpy(&dstLine[xDstOffset],
 				       &srcLine[xSrcOffset], copyDstWidth);
 			}
@@ -591,16 +591,16 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 		for (y = 0; y < nHeight; y++)
 		{
 			const BYTE* srcLine = &pSrcData[(y + nYSrc) *
-			                                nSrcStep * srcVMultiplier +
-			                                srcVOffset];
+							nSrcStep * srcVMultiplier +
+							srcVOffset];
 			BYTE* dstLine = &pDstData[(y + nYDst) *
-			                          nDstStep * dstVMultiplier + dstVOffset];
+						  nDstStep * dstVMultiplier + dstVOffset];
 
 			for (x = 0; x < nWidth; x++)
 			{
 				UINT32 dstColor;
 				UINT32 color = ReadColor(&srcLine[(x + nXSrc) * srcByte],
-				                         SrcFormat);
+							 SrcFormat);
 				dstColor = ConvertColor(color, SrcFormat, DstFormat, palette);
 				WriteColor(&dstLine[(x + nXDst) * dstByte], DstFormat, dstColor);
 			}
@@ -611,8 +611,8 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 }
 
 BOOL freerdp_image_fill(BYTE* pDstData, DWORD DstFormat,
-                        UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
-                        UINT32 nWidth, UINT32 nHeight, UINT32 color)
+			UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+			UINT32 nWidth, UINT32 nHeight, UINT32 color)
 {
 	UINT32 x, y;
 
