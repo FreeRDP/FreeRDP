@@ -677,6 +677,8 @@ static INLINE UINT32 ReadColor(const BYTE* src, UINT32 format)
 			break;
 
 		case 8:
+		case 4:
+		case 1:
 			color = *src;
 			break;
 
