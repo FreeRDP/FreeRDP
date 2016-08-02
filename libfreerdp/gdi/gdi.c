@@ -328,7 +328,7 @@ INLINE BOOL gdi_decode_color(rdpGdi* gdi, const UINT32 srcColor,
 		*format = SrcFormat;
 
 	*color = ConvertColor(srcColor, SrcFormat,
-	                      gdi->drawing->hdc->format, &gdi->palette);
+                          gdi->dstFormat, &gdi->palette);
 	return TRUE;
 }
 
@@ -1194,11 +1194,11 @@ static BOOL gdi_init_primary(rdpGdi* gdi, UINT32 stride, UINT32 format,
 		                           gdi->hdc, gdi->width, gdi->height);
 	}
 	else
-	{
+    {
 		gdi->primary->bitmap = gdi_CreateBitmapEx(gdi->width, gdi->height,
 		                       gdi->dstFormat,
 		                       gdi->stride,
-		                       gdi->primary_buffer, pfree);
+                               buffer, pfree);
 	}
 
 	gdi->stride = gdi->primary->bitmap->scanline;

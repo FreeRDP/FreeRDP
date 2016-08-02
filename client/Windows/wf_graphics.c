@@ -160,13 +160,45 @@ static BOOL wf_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
     return rc;
 }
 
+static BOOL wf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap,
+                                  BOOL primary)
+{
+    wfContext* wfc = (wfContext*)context;
+    wfBitmap* bmp = (wfBitmap*) bitmap;
+    rdpGdi* gdi = context->gdi;
+
+    if (!gdi || !wfc)
+        return FALSE;
+
+    if (primary)
+        wfc->drawing = wfc->primary;
+    else if (!bmp)
+        return FALSE;
+    else
+        wfc->drawing = bmp;
+
+    return TRUE;
+}
+
 /* Pointer Class */
+
+static BOOL flip_bitmap(const BYTE* src, BYTE* dst, UINT32 scanline, UINT32 nHeight)
+{
+    UINT32 x;
+    BYTE* bottomLine = dst + scanline * (nHeight - 1);
+
+    for (x=0; x<nHeight; x++)
+    {
+        memcpy(bottomLine, src, scanline);
+        src += scanline;
+        bottomLine -= scanline;
+    }
+}
 
 static BOOL wf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 {
 	HCURSOR hCur;
-	ICONINFO info;
-    BYTE *data;
+    ICONINFO info;
     rdpGdi* gdi;
 
     if (!context || !pointer)
@@ -180,44 +212,30 @@ static BOOL wf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	info.xHotspot = pointer->xPos;
 	info.yHotspot = pointer->yPos;
 
-    data = _aligned_malloc(GetBytesPerPixel(gdi->dstFormat) * pointer->width * pointer->height, 16);
-    if (!data)
-        return FALSE;
-
-    if (!freerdp_image_copy_from_pointer_data(data, gdi->dstFormat,
-                                              0, 0, 0, pointer->width, pointer->height,
-                                              pointer->xorMaskData, pointer->lengthXorMask,
-                                              pointer->andMaskData, pointer->lengthAndMask,
-                                              pointer->xorBpp, &context->gdi->palette))
-    {
-        _aligned_free(data);
-        return FALSE;
-    }
-
     if (pointer->xorBpp == 1)
-	{
-		data = (BYTE*) malloc(pointer->lengthAndMask + pointer->lengthXorMask);
-		CopyMemory(data, pointer->andMaskData, pointer->lengthAndMask);
-		CopyMemory(data + pointer->lengthAndMask, pointer->xorMaskData, pointer->lengthXorMask);
-		info.hbmMask = CreateBitmap(pointer->width, pointer->height * 2, 1, 1, data);
-		free(data);
-		info.hbmColor = NULL;
-	}
-	else
-	{
-		data = (BYTE*) malloc(pointer->lengthAndMask);
-//		freerdp_bitmap_flip(pointer->andMaskData, data, (pointer->width + 7) / 8, pointer->height);
-		info.hbmMask = CreateBitmap(pointer->width, pointer->height, 1, 1, data);
-		free(data);
-		data = (BYTE*) malloc(pointer->lengthXorMask);
-//		freerdp_image_flip(pointer->xorMaskData, data, pointer->width, pointer->height, pointer->xorBpp);
-		info.hbmColor = CreateBitmap(pointer->width, pointer->height, 1, pointer->xorBpp, data);
-		free(data);
-	}
-	hCur = CreateIconIndirect(&info);
-	((wfPointer*) pointer)->cursor = hCur;
+    {
+        BYTE* pdata = (BYTE*) _aligned_malloc(pointer->lengthAndMask + pointer->lengthXorMask, 16);
+        CopyMemory(pdata, pointer->andMaskData, pointer->lengthAndMask);
+        CopyMemory(pdata + pointer->lengthAndMask, pointer->xorMaskData, pointer->lengthXorMask);
+        info.hbmMask = CreateBitmap(pointer->width, pointer->height * 2, 1, 1, pdata);
+        _aligned_free(pdata);
+        info.hbmColor = NULL;
+    }
+    else
+    {
+        BYTE* pdata = (BYTE*) _aligned_malloc(pointer->lengthAndMask, 16);
+        flip_bitmap(pointer->andMaskData, pdata, (pointer->width + 7) / 8, pointer->height);
+        info.hbmMask = CreateBitmap(pointer->width, pointer->height, 1, 1, pdata);
+        _aligned_free(pdata);
 
-    _aligned_free(data);
+        pdata = (BYTE*) _aligned_malloc(pointer->lengthXorMask, 16);
+        flip_bitmap(pointer->xorMaskData, pdata, (pointer->width + 7) / 8, pointer->height);
+        info.hbmColor = CreateBitmap(pointer->width, pointer->height, 1, pointer->xorBpp, pdata);
+        _aligned_free(pdata);
+    }
+	hCur = CreateIconIndirect(&info);
+    ((wfPointer*) pointer)->cursor = hCur;
+
 	if (info.hbmMask)
 		DeleteObject(info.hbmMask);
 	if (info.hbmColor)
@@ -300,19 +318,26 @@ BOOL wf_register_pointer(rdpGraphics* graphics)
 BOOL wf_register_graphics(rdpGraphics* graphics)
 {
 	wfContext* wfc;
+    rdpGlyph glyph;
 	rdpBitmap bitmap;
+
 
     if (!graphics)
         return FALSE;
 
 	wfc = (wfContext*) graphics->context;
 
-	ZeroMemory(&bitmap, sizeof(rdpBitmap));
+    bitmap = *graphics->Bitmap_Prototype;
 	bitmap.size = sizeof(wfBitmap);
     bitmap.New = wf_Bitmap_New;
     bitmap.Free = wf_Bitmap_Free;
     bitmap.Paint = wf_Bitmap_Paint;
+    bitmap.SetSurface = wf_Bitmap_SetSurface;
 
-	graphics_register_bitmap(graphics, &bitmap);
+    graphics_register_bitmap(graphics, &bitmap);
+
+    glyph = *graphics->Glyph_Prototype;
+
+    graphics_register_glyph(graphics, &glyph);
     return TRUE;
 }
