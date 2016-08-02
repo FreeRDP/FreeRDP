@@ -322,6 +322,14 @@ HGDI_BRUSH gdi_CreateHatchBrush(HGDI_BITMAP hbmp)
 	return hBrush;
 }
 
+UINT32 gdi_GetBrushStyle(HGDI_DC hdc)
+{
+	if (!hdc || !hdc->brush)
+		return GDI_BS_NULL;
+
+	return hdc->brush->style;
+}
+
 /**
  * Perform a pattern blit operation on the given pixel buffer.\n
  * @msdn{dd162778}
@@ -387,45 +395,50 @@ static BOOL BitBlt_PATINVERT(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
                              UINT32 nWidth, UINT32 nHeight)
 {
 	UINT32 x, y;
+	UINT32 color;
 
 	/* DPx */
-	if (hdcDest->brush->style == GDI_BS_SOLID)
+	switch (gdi_GetBrushStyle(hdcDest))
 	{
-		UINT32 color = hdcDest->brush->color;
+		case GDI_BS_SOLID:
+			color = hdcDest->brush->color;
 
-		for (y = 0; y < nHeight; y++)
-		{
-			for (x = 0; x < nWidth; x++)
+			for (y = 0; y < nHeight; y++)
 			{
-				BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
-
-				if (dstp)
+				for (x = 0; x < nWidth; x++)
 				{
-					UINT32 dstColor = ReadColor(dstp, hdcDest->format);
-					dstColor ^= color;
-					WriteColor(dstp, hdcDest->format, dstColor);
+					BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
+
+					if (dstp)
+					{
+						UINT32 dstColor = ReadColor(dstp, hdcDest->format);
+						dstColor ^= color;
+						WriteColor(dstp, hdcDest->format, dstColor);
+					}
 				}
 			}
-		}
-	}
-	else
-	{
-		for (y = 0; y < nHeight; y++)
-		{
-			for (x = 0; x < nWidth; x++)
-			{
-				const BYTE* patp = gdi_get_brush_pointer(hdcDest, nXDest + x, nYDest + y);
-				BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
 
-				if (patp && dstp)
+			break;
+
+		default:
+			for (y = 0; y < nHeight; y++)
+			{
+				for (x = 0; x < nWidth; x++)
 				{
-					UINT32 colorA = ReadColor(patp, hdcDest->format);
-					UINT32 colorB = ReadColor(dstp, hdcDest->format);
-					UINT32 color = colorA ^ colorB;
-					WriteColor(dstp, hdcDest->format, color);
+					const BYTE* patp = gdi_get_brush_pointer(hdcDest, nXDest + x, nYDest + y);
+					BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
+
+					if (patp && dstp)
+					{
+						UINT32 colorA = ReadColor(patp, hdcDest->format);
+						UINT32 colorB = ReadColor(dstp, hdcDest->format);
+						UINT32 color = colorA ^ colorB;
+						WriteColor(dstp, hdcDest->format, color);
+					}
 				}
 			}
-		}
+
+			break;
 	}
 
 	return TRUE;
@@ -466,56 +479,53 @@ static BOOL BitBlt_PATPAINT(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 static BOOL BitBlt_PATCOPY(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
                            UINT32 nWidth, UINT32 nHeight)
 {
-	UINT32 x, y, xOffset, yOffset;
+	UINT32 x, y, xOffset = 0, yOffset = 0, color;
 
 	/* P */
-	if (hdcDest->brush->style == GDI_BS_SOLID)
+	switch (gdi_GetBrushStyle(hdcDest))
 	{
-		UINT32 color = hdcDest->brush->color;
+		case GDI_BS_SOLID:
+			color = hdcDest->brush->color;
 
-		for (y = 0; y < nHeight; y++)
-		{
-			for (x = 0; x < nWidth; x++)
+			for (y = 0; y < nHeight; y++)
 			{
-				BYTE* dstp = gdi_get_bitmap_pointer(
-				                 hdcDest, nXDest + x, nYDest + y);
-
-				if (dstp)
-					WriteColor(dstp, hdcDest->format, color);
-			}
-		}
-	}
-	else
-	{
-		if (hdcDest->brush->style == GDI_BS_HATCHED)
-		{
-			xOffset = 0;
-			yOffset = 2; /* +2 added after comparison to mstsc */
-		}
-		else
-		{
-			xOffset = 0;
-			yOffset = 0;
-		}
-
-		for (y = 0; y < nHeight; y++)
-		{
-			for (x = 0; x < nWidth; x++)
-			{
-				const BYTE* patp = gdi_get_brush_pointer(
-				                       hdcDest, nXDest + x + xOffset,
-				                       nYDest + y + yOffset);
-				BYTE* dstp = gdi_get_bitmap_pointer(
-				                 hdcDest, nXDest + x,
-				                 nYDest + y);
-
-				if (patp && dstp)
+				for (x = 0; x < nWidth; x++)
 				{
-					UINT32 color = ReadColor(patp, hdcDest->format);
-					WriteColor(dstp, hdcDest->format, color);
+					BYTE* dstp = gdi_get_bitmap_pointer(
+					                 hdcDest, nXDest + x, nYDest + y);
+
+					if (dstp)
+						WriteColor(dstp, hdcDest->format, color);
 				}
 			}
-		}
+
+			break;
+
+		case GDI_BS_HATCHED:
+			xOffset = 0;
+			yOffset = 2; /* +2 added after comparison to mstsc */
+
+		default:
+			for (y = 0; y < nHeight; y++)
+			{
+				for (x = 0; x < nWidth; x++)
+				{
+					const BYTE* patp = gdi_get_brush_pointer(
+					                       hdcDest, nXDest + x + xOffset,
+					                       nYDest + y + yOffset);
+					BYTE* dstp = gdi_get_bitmap_pointer(
+					                 hdcDest, nXDest + x,
+					                 nYDest + y);
+
+					if (patp && dstp)
+					{
+						UINT32 color = ReadColor(patp, hdcDest->format);
+						WriteColor(dstp, hdcDest->format, color);
+					}
+				}
+			}
+
+			break;
 	}
 
 	return TRUE;

@@ -44,17 +44,20 @@
 HGDI_DC gdi_GetDC(void)
 {
 	HGDI_DC hDC = (HGDI_DC) calloc(1, sizeof(GDI_DC));
+
 	if (!hDC)
 		return NULL;
 
 	hDC->format = PIXEL_FORMAT_XRGB32;
 	hDC->drawMode = GDI_R2_BLACK;
 	hDC->clip = gdi_CreateRectRgn(0, 0, 0, 0);
+
 	if (!hDC->clip)
 	{
 		free(hDC);
 		return NULL;
 	}
+
 	hDC->clip->null = 1;
 	hDC->hwnd = NULL;
 	return hDC;
@@ -80,7 +83,6 @@ HGDI_DC gdi_CreateDC(UINT32 format)
 
 	hDC->clip->null = 1;
 	hDC->hwnd = NULL;
-
 	hDC->format = format;
 
 	if (!(hDC->hwnd = (HGDI_WND) calloc(1, sizeof(GDI_WND))))
@@ -90,15 +92,14 @@ HGDI_DC gdi_CreateDC(UINT32 format)
 		goto fail;
 
 	hDC->hwnd->invalid->null = 1;
-
 	hDC->hwnd->count = 32;
-	if (!(hDC->hwnd->cinvalid = (HGDI_RGN) calloc(hDC->hwnd->count, sizeof(GDI_RGN))))
+
+	if (!(hDC->hwnd->cinvalid = (HGDI_RGN) calloc(hDC->hwnd->count,
+	                            sizeof(GDI_RGN))))
 		goto fail;
 
 	hDC->hwnd->ninvalid = 0;
-
 	return hDC;
-
 fail:
 	gdi_DeleteDC(hDC);
 	return NULL;
@@ -114,6 +115,7 @@ fail:
 HGDI_DC gdi_CreateCompatibleDC(HGDI_DC hdc)
 {
 	HGDI_DC hDC = (HGDI_DC) calloc(1, sizeof(GDI_DC));
+
 	if (!hDC)
 		return NULL;
 
@@ -122,6 +124,7 @@ HGDI_DC gdi_CreateCompatibleDC(HGDI_DC hdc)
 		free(hDC);
 		return NULL;
 	}
+
 	hDC->clip->null = 1;
 	hDC->format = hdc->format;
 	hDC->drawMode = hdc->drawMode;
@@ -210,10 +213,20 @@ BOOL gdi_DeleteObject(HGDIOBJECT hgdiobject)
 	{
 		HGDI_BRUSH hBrush = (HGDI_BRUSH) hgdiobject;
 
-		if (hBrush->style == GDI_BS_PATTERN || hBrush->style == GDI_BS_HATCHED)
+		if (hBrush)
 		{
-			if (hBrush->pattern != NULL)
-				gdi_DeleteObject((HGDIOBJECT) hBrush->pattern);
+			switch (hBrush->style)
+			{
+				case GDI_BS_PATTERN:
+				case GDI_BS_HATCHED:
+					if (hBrush->pattern != NULL)
+						gdi_DeleteObject((HGDIOBJECT) hBrush->pattern);
+
+					break;
+
+				default:
+					break;
+			}
 		}
 
 		free(hBrush);
@@ -254,6 +267,7 @@ BOOL gdi_DeleteDC(HGDI_DC hdc)
 			free(hdc->hwnd->invalid);
 			free(hdc->hwnd);
 		}
+
 		free(hdc->clip);
 		free(hdc);
 	}
