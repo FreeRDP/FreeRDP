@@ -595,7 +595,7 @@ int TestGdiBitBlt(int argc, char* argv[])
 		/* Skip 8bpp, only supported on remote end. */
 		for (y = 1; y < listSize; y++)
 		{
-			if (test_gdi_BitBlt(formatList[x], formatList[y]) != 0)
+			if (!test_gdi_BitBlt(formatList[x], formatList[y]))
 			{
 				fprintf(stderr, "test_gdi_BitBlt(SrcFormat=%s, DstFormat=%s) failed!\n",
 				        GetColorFormatName(formatList[x]),
