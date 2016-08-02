@@ -193,9 +193,11 @@ static BOOL flip_bitmap(const BYTE* src, BYTE* dst, UINT32 scanline, UINT32 nHei
         src += scanline;
         bottomLine -= scanline;
     }
+
+    return TRUE;
 }
 
-static BOOL wf_Pointer_New(rdpContext* context, rdpPointer* pointer)
+static BOOL wf_Pointer_New(rdpContext* context, const rdpPointer* pointer)
 {
 	HCURSOR hCur;
     ICONINFO info;
@@ -223,17 +225,18 @@ static BOOL wf_Pointer_New(rdpContext* context, rdpPointer* pointer)
     }
     else
     {
+        const UINT32 scanline = pointer->width * pointer->xorBpp / 8;
         BYTE* pdata = (BYTE*) _aligned_malloc(pointer->lengthAndMask, 16);
         flip_bitmap(pointer->andMaskData, pdata, (pointer->width + 7) / 8, pointer->height);
         info.hbmMask = CreateBitmap(pointer->width, pointer->height, 1, 1, pdata);
         _aligned_free(pdata);
 
         pdata = (BYTE*) _aligned_malloc(pointer->lengthXorMask, 16);
-        flip_bitmap(pointer->xorMaskData, pdata, (pointer->width + 7) / 8, pointer->height);
+        flip_bitmap(pointer->xorMaskData, pdata, scanline, pointer->height);
         info.hbmColor = CreateBitmap(pointer->width, pointer->height, 1, pointer->xorBpp, pdata);
         _aligned_free(pdata);
     }
-	hCur = CreateIconIndirect(&info);
+    hCur = CreateIconIndirect(&info);
     ((wfPointer*) pointer)->cursor = hCur;
 
 	if (info.hbmMask)
