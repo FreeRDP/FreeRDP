@@ -197,7 +197,7 @@ static BOOL wf_hw_desktop_resize(rdpContext* context)
         wfc->primary = wf_image_new(wfc, settings->DesktopWidth, settings->DesktopHeight, format, NULL);
 
 		if (same)
-			wfc->drawing = wfc->primary;
+            wfc->drawing = wfc->primary;
 	}
 
 	if (wfc->fullscreen != TRUE)
@@ -364,7 +364,7 @@ static BOOL wf_post_connect(freerdp* instance)
 	cache = instance->context->cache;
 
      UINT32 format = gdi_get_pixel_format(settings->ColorDepth, FALSE);
-    wfc->format = PIXEL_FORMAT_RGBX32;
+    wfc->format = PIXEL_FORMAT_BGRX32;
     wfc->primary = wf_image_new(wfc,settings->DesktopWidth, settings->DesktopHeight, format, NULL);
 
     if (!gdi_init_ex(instance, wfc->format, 0, wfc->primary->pdata, wf_image_free))
@@ -373,7 +373,7 @@ static BOOL wf_post_connect(freerdp* instance)
     gdi = instance->context->gdi;
     if (!settings->SoftwareGdi)
 	{
-         UINT32 format = gdi_get_pixel_format(settings->ColorDepth, FALSE);
+        UINT32 format = gdi_get_pixel_format(settings->ColorDepth, FALSE);
         wf_gdi_register_update_callbacks(instance->update);
         wfc->primary = wf_image_new(wfc, settings->DesktopWidth, settings->DesktopHeight, format, NULL);
 	}
@@ -436,10 +436,14 @@ static BOOL wf_post_connect(freerdp* instance)
 
 	if (!settings->SoftwareGdi)
 	{
-		brush_cache_register_callbacks(instance->update);
-		bitmap_cache_register_callbacks(instance->update);
-		offscreen_cache_register_callbacks(instance->update);
         wf_register_graphics(context->graphics);
+
+        wf_gdi_register_update_callbacks(instance->update);
+        brush_cache_register_callbacks(instance->update);
+        glyph_cache_register_callbacks(instance->update);
+        bitmap_cache_register_callbacks(instance->update);
+        offscreen_cache_register_callbacks(instance->update);
+        palette_cache_register_callbacks(instance->update);
 	}
 
 	if (freerdp_channels_post_connect(context->channels, instance) != CHANNEL_RC_OK)
