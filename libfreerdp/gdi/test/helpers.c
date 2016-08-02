@@ -82,9 +82,10 @@ static void test_dump_data(unsigned char* p, int len, int width,
 	}
 
 	printf("\n");
+	fflush(stdout);
 }
 
-static void test_dump_bitmap(HGDI_BITMAP hBmp, const char* name)
+void test_dump_bitmap(HGDI_BITMAP hBmp, const char* name)
 {
 	UINT32 stride = hBmp->width * GetBytesPerPixel(hBmp->format);
 	test_dump_data(hBmp->data, hBmp->height * stride, stride, name);
