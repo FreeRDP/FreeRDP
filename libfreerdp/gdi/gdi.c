@@ -328,7 +328,7 @@ INLINE BOOL gdi_decode_color(rdpGdi* gdi, const UINT32 srcColor,
 		*format = SrcFormat;
 
 	*color = ConvertColor(srcColor, SrcFormat,
-                          gdi->dstFormat, &gdi->palette);
+	                      gdi->dstFormat, &gdi->palette);
 	return TRUE;
 }
 
@@ -585,12 +585,14 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	UINT32 foreColor;
 	UINT32 backColor;
 	UINT32 originalColor;
-	HGDI_BRUSH originalBrush;
+	HGDI_BRUSH originalBrush, hbrush = NULL;
 	rdpGdi* gdi = context->gdi;
-	BOOL ret = TRUE;
+	BOOL ret = FALSE;
 	const DWORD rop = gdi_rop3_code(patblt->bRop);
 	UINT32 nXSrc = 0;
 	UINT32 nYSrc = 0;
+	BYTE data[8 * 8 * 4];
+	HGDI_BITMAP hBmp = NULL;
 
 	if (!gdi_decode_color(gdi, patblt->foreColor, &foreColor, NULL))
 		return FALSE;
@@ -599,94 +601,36 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 		return FALSE;
 
 	originalColor = gdi_SetTextColor(gdi->drawing->hdc, foreColor);
+	originalBrush = gdi->drawing->hdc->brush;
 
 	switch (brush->style)
 	{
 		case GDI_BS_SOLID:
-			originalBrush = gdi->drawing->hdc->brush;
-			gdi->drawing->hdc->brush = gdi_CreateSolidBrush(foreColor);
-
-			if (!gdi->drawing->hdc->brush)
-			{
-				ret = FALSE;
-				goto out_error;
-			}
-
-			if (!gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
-			                patblt->nWidth, patblt->nHeight, rop,
-			                gdi->primary->hdc, nXSrc, nYSrc))
-			{
-				ret = FALSE;
-			}
-
-			gdi_DeleteObject((HGDIOBJECT) gdi->drawing->hdc->brush);
-			gdi->drawing->hdc->brush = originalBrush;
+			hbrush = gdi_CreateSolidBrush(foreColor);
 			break;
 
 		case GDI_BS_HATCHED:
 			{
 				const BYTE* hatched;
-				HGDI_BITMAP hBmp;
-				BYTE* data = (BYTE*) _aligned_malloc(8 * 8 * GetBytesPerPixel(
-				        gdi->drawing->hdc->format),
-				                                     16);
-
-				if (!data)
-				{
-					ret = FALSE;
-					goto out_error;
-				}
-
 				hatched = GDI_BS_HATCHED_PATTERNS + (8 * brush->hatch);
-				freerdp_image_copy_from_monochrome(data, gdi->drawing->hdc->format, 0, 0, 0, 8,
-				                                   8,
-				                                   hatched, backColor, foreColor, &gdi->palette);
-				hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->format, data);
+
+				if (!freerdp_image_copy_from_monochrome(data, gdi->drawing->hdc->format, 0, 0,
+				                                        0, 8, 8,
+				                                        hatched, backColor, foreColor, &gdi->palette))
+					goto out_error;
+
+				hBmp = gdi_CreateBitmapEx(8, 8, gdi->drawing->hdc->format, 0, data, NULL);
 
 				if (!hBmp)
-				{
-					_aligned_free(data);
-					ret = FALSE;
 					goto out_error;
-				}
 
-				originalBrush = gdi->drawing->hdc->brush;
-				gdi->drawing->hdc->brush = gdi_CreateHatchBrush(hBmp);
-
-				if (!gdi->drawing->hdc->brush)
-				{
-					ret = FALSE;
-					goto out_error;
-				}
-
-				gdi->drawing->hdc->brush->nXOrg = brush->x;
-				gdi->drawing->hdc->brush->nYOrg = brush->y;
-
-				if (!gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
-				                patblt->nWidth, patblt->nHeight, rop,
-				                gdi->primary->hdc, nXSrc, nYSrc))
-				{
-					ret = FALSE;
-				}
-
-				gdi_DeleteObject((HGDIOBJECT) gdi->drawing->hdc->brush);
-				gdi->drawing->hdc->brush = originalBrush;
+				hbrush = gdi_CreateHatchBrush(hBmp);
 			}
 			break;
 
 		case GDI_BS_PATTERN:
 			{
-				HGDI_BITMAP hBmp;
 				UINT32 brushFormat;
-				BYTE* data = (BYTE*) _aligned_malloc(8 * 8 * GetBytesPerPixel(
-				        gdi->drawing->hdc->format),
-				                                     16);
-
-				if (!data)
-				{
-					ret = FALSE;
-					goto out_error;
-				}
 
 				if (brush->bpp > 1)
 				{
@@ -695,55 +639,22 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 					if (!freerdp_image_copy(data, gdi->drawing->hdc->format, 0, 0, 0,
 					                        8, 8, brush->data, brushFormat, 0, 0, 0,
 					                        &gdi->palette))
-					{
-						_aligned_free(data);
-						ret = FALSE;
 						goto out_error;
-					}
 				}
 				else
 				{
 					if (!freerdp_image_copy_from_monochrome(data, gdi->drawing->hdc->format, 0, 0,
 					                                        0, 8, 8,
 					                                        brush->data, backColor, foreColor, &gdi->palette))
-					{
-						_aligned_free(data);
-						ret = FALSE;
 						goto out_error;
-					}
 				}
 
-				hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->format, data);
+				hBmp = gdi_CreateBitmapEx(8, 8, gdi->drawing->hdc->format, 0, data, NULL);
 
 				if (!hBmp)
-				{
-					_aligned_free(data);
-					ret = FALSE;
 					goto out_error;
-				}
 
-				originalBrush = gdi->drawing->hdc->brush;
-				gdi->drawing->hdc->brush = gdi_CreatePatternBrush(hBmp);
-
-				if (!gdi->drawing->hdc->brush)
-				{
-					_aligned_free(data);
-					ret = FALSE;
-					goto out_error;
-				}
-
-				gdi->drawing->hdc->brush->nXOrg = brush->x;
-				gdi->drawing->hdc->brush->nYOrg = brush->y;
-
-				if (!gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
-				                patblt->nWidth, patblt->nHeight, rop,
-				                gdi->primary->hdc, nXSrc, nYSrc))
-				{
-					ret = FALSE;
-				}
-
-				gdi_DeleteObject((HGDIOBJECT) gdi->drawing->hdc->brush);
-				gdi->drawing->hdc->brush = originalBrush;
+				hbrush = gdi_CreatePatternBrush(hBmp);
 			}
 			break;
 
@@ -752,7 +663,21 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 			break;
 	}
 
+	if (!hbrush)
+		gdi_DeleteObject((HGDIOBJECT) hBmp);
+	else
+	{
+		hbrush->nXOrg = brush->x;
+		hbrush->nYOrg = brush->y;
+		gdi->drawing->hdc->brush = hbrush;
+		ret = gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
+		                 patblt->nWidth, patblt->nHeight, rop,
+		                 gdi->primary->hdc, nXSrc, nYSrc);
+	}
+
 out_error:
+	gdi_DeleteObject((HGDIOBJECT) hbrush);
+	gdi->drawing->hdc->brush = originalBrush;
 	gdi_SetTextColor(gdi->drawing->hdc, originalColor);
 	return ret;
 }
@@ -1194,11 +1119,11 @@ static BOOL gdi_init_primary(rdpGdi* gdi, UINT32 stride, UINT32 format,
 		                           gdi->hdc, gdi->width, gdi->height);
 	}
 	else
-    {
+	{
 		gdi->primary->bitmap = gdi_CreateBitmapEx(gdi->width, gdi->height,
 		                       gdi->dstFormat,
 		                       gdi->stride,
-                               buffer, pfree);
+		                       buffer, pfree);
 	}
 
 	gdi->stride = gdi->primary->bitmap->scanline;
