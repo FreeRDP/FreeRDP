@@ -806,8 +806,6 @@ static INLINE BOOL ORDER_FIELD_COLOR(const ORDER_INFO* orderInfo, wStream* s,
 	if (!TARGET || !orderInfo)
 		return FALSE;
 
-	*TARGET = 0;
-
 	if ((orderInfo->fieldFlags & (1 << (NO - 1))) && !update_read_color(s, TARGET))
 		return FALSE;
 
