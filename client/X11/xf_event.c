@@ -262,9 +262,9 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state,
 {
 	rdpInput* input;
 	Window childWindow;
-	input = xfc->instance->input;
+	input = xfc->context.input;
 
-	if (!xfc->settings->MouseMotion)
+	if (!xfc->context.settings->MouseMotion)
 	{
 		if ((state & (Button1Mask | Button2Mask | Button3Mask)) == 0)
 			return TRUE;
@@ -314,7 +314,7 @@ BOOL xf_generic_ButtonPress(xfContext* xfc, int x, int y, int button,
 	flags = 0;
 	wheel = FALSE;
 	extended = FALSE;
-	input = xfc->instance->input;
+	input = xfc->context.input;
 
 	switch (button)
 	{
@@ -349,7 +349,7 @@ BOOL xf_generic_ButtonPress(xfContext* xfc, int x, int y, int button,
 		case 6:		/* wheel left */
 			wheel = TRUE;
 
-			if (xfc->settings->HasHorizontalWheel)
+			if (xfc->context.settings->HasHorizontalWheel)
 				flags = PTR_FLAGS_HWHEEL | PTR_FLAGS_WHEEL_NEGATIVE | 0x0078;
 
 			break;
@@ -357,7 +357,7 @@ BOOL xf_generic_ButtonPress(xfContext* xfc, int x, int y, int button,
 		case 7:		/* wheel right */
 			wheel = TRUE;
 
-			if (xfc->settings->HasHorizontalWheel)
+			if (xfc->context.settings->HasHorizontalWheel)
 				flags = PTR_FLAGS_HWHEEL | 0x0078;
 
 			break;
@@ -421,7 +421,7 @@ BOOL xf_generic_ButtonRelease(xfContext* xfc, int x, int y, int button,
 	flags = 0;
 	wheel = FALSE;
 	extended = FALSE;
-	input = xfc->instance->input;
+	input = xfc->context.input;
 
 	switch (button)
 	{
@@ -664,7 +664,8 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, XEvent* event, BOOL app)
 			xfc->offset_x = 0;
 			xfc->offset_y = 0;
 
-			if (xfc->settings->SmartSizing || xfc->settings->MultiTouchGestures)
+			if (xfc->context.settings->SmartSizing
+			    || xfc->context.settings->MultiTouchGestures)
 			{
 				xfc->scaledWidth = xfc->window->width;
 				xfc->scaledHeight = xfc->window->height;
@@ -723,7 +724,7 @@ static BOOL xf_event_MapNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
 	RECTANGLE_16 rect;
 	xfAppWindow* appWindow;
-	rdpUpdate* update = xfc->instance->update;
+	rdpUpdate* update = xfc->context.update;
 	rdpSettings* settings = xfc->context.settings;
 
 	if (!app)
@@ -756,7 +757,7 @@ static BOOL xf_event_MapNotify(xfContext* xfc, XEvent* event, BOOL app)
 static BOOL xf_event_UnmapNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
 	xfAppWindow* appWindow;
-	rdpUpdate* update = xfc->instance->update;
+	rdpUpdate* update = xfc->context.update;
 	xf_keyboard_release_all_keypress(xfc);
 
 	if (!app)

@@ -59,17 +59,7 @@ BOOL xf_decode_color(rdpGdi* gdi, const UINT32 srcColor,
 	if (format)
 		*format = SrcFormat;
 
-	if (xfc->depth == 32)
-		DstFormat = (!xfc->invert) ? PIXEL_FORMAT_RGBA32 : PIXEL_FORMAT_BGRA32;
-	else if (xfc->depth == 24)
-		DstFormat = (!xfc->invert) ? PIXEL_FORMAT_RGB24 : PIXEL_FORMAT_BGR24;
-	else if (xfc->depth == 16)
-		DstFormat = (!xfc->invert) ? PIXEL_FORMAT_RGB16 : PIXEL_FORMAT_BGR16;
-	else if (xfc->depth == 15)
-		DstFormat = (!xfc->invert) ? PIXEL_FORMAT_RGB16 : PIXEL_FORMAT_BGR16;
-	else
-		DstFormat = PIXEL_FORMAT_RGBX32;
-
+	DstFormat = xf_get_local_color_format(xfc, FALSE);
 	*color = ConvertColor(srcColor, SrcFormat,
 	                      DstFormat, &gdi->palette);
 	return TRUE;
@@ -83,7 +73,9 @@ static BOOL xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	Pixmap pixmap;
 	XImage* image;
 	UINT32 SrcFormat;
+	rdpGdi* gdi;
 	xfContext* xfc = (xfContext*) context;
+	gdi = context->gdi;
 	xf_lock_x11(xfc, FALSE);
 	data = bitmap->data;
 	depth = GetBitsPerPixel(bitmap->format);
@@ -103,13 +95,13 @@ static BOOL xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 			}
 
 			SrcFormat = bitmap->format;
-			freerdp_image_copy(data, xfc->format, 0, 0, 0,
+			freerdp_image_copy(data, gdi->dstFormat, 0, 0, 0,
 			                   bitmap->width, bitmap->height,
 			                   bitmap->data, SrcFormat,
 			                   0, 0, 0, &context->gdi->palette);
 			_aligned_free(bitmap->data);
 			bitmap->data = data;
-			bitmap->format = xfc->format;
+			bitmap->format = gdi->dstFormat;
 		}
 
 		image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
@@ -175,6 +167,12 @@ static BOOL xf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap,
 /* Pointer Class */
 static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 {
+	rdpGdi* gdi;
+
+	if (!context || !pointer || !context->gdi)
+		return FALSE;
+
+	gdi = context->gdi;
 #ifdef WITH_XCURSOR
 	XcursorImage ci;
 	xfContext* xfc = (xfContext*) context;
@@ -188,14 +186,14 @@ static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	ci.yhot = pointer->yPos;
 
 	if (!(ci.pixels = (XcursorPixel*) calloc(ci.height,
-	                  ci.width * GetBytesPerPixel(xfc->format))))
+	                  ci.width * GetBytesPerPixel(gdi->dstFormat))))
 	{
 		xf_unlock_x11(xfc, FALSE);
 		return FALSE;
 	}
 
 	if (freerdp_image_copy_from_pointer_data(
-	        (BYTE*) ci.pixels, xfc->format,
+	        (BYTE*) ci.pixels, gdi->dstFormat,
 	        0, 0, 0, pointer->width, pointer->height,
 	        pointer->xorMaskData, pointer->lengthXorMask,
 	        pointer->andMaskData, pointer->lengthAndMask,
@@ -460,4 +458,30 @@ BOOL xf_register_graphics(rdpGraphics* graphics)
 	glyph.EndDraw = xf_Glyph_EndDraw;
 	graphics_register_glyph(graphics, &glyph);
 	return TRUE;
+}
+
+UINT32 xf_get_local_color_format(xfContext* xfc, BOOL aligned)
+{
+	UINT32 DstFormat;
+
+	if (!xfc)
+		return 0;
+
+	if (xfc->depth == 32)
+		DstFormat = (!xfc->invert) ? PIXEL_FORMAT_RGBA32 : PIXEL_FORMAT_BGRA32;
+	else if (xfc->depth == 24)
+	{
+		if (aligned)
+			DstFormat = (!xfc->invert) ? PIXEL_FORMAT_RGBX32 : PIXEL_FORMAT_BGRX32;
+		else
+			DstFormat = (!xfc->invert) ? PIXEL_FORMAT_RGB24 : PIXEL_FORMAT_BGR24;
+	}
+	else if (xfc->depth == 16)
+		DstFormat = (!xfc->invert) ? PIXEL_FORMAT_RGB16 : PIXEL_FORMAT_BGR16;
+	else if (xfc->depth == 15)
+		DstFormat = (!xfc->invert) ? PIXEL_FORMAT_RGB16 : PIXEL_FORMAT_BGR16;
+	else
+		DstFormat = (!xfc->invert) ? PIXEL_FORMAT_RGBX32 : PIXEL_FORMAT_BGRX32;
+
+	return DstFormat;
 }
