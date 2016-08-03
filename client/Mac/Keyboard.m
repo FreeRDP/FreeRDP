@@ -32,7 +32,7 @@ typedef struct _APPLE_KEYBOARD_DESC APPLE_KEYBOARD_DESC;
 
 /* VendorID: 0x05AC (Apple, Inc.) */
 
-APPLE_KEYBOARD_DESC APPLE_KEYBOARDS[] =
+static const APPLE_KEYBOARD_DESC APPLE_KEYBOARDS[] =
 {
 	{ 0x200, APPLE_KEYBOARD_TYPE_ANSI },
 	{ 0x201, APPLE_KEYBOARD_TYPE_ANSI }, /* USB Keyboard [Alps or Logitech, M2452] */
@@ -143,18 +143,18 @@ APPLE_KEYBOARD_DESC APPLE_KEYBOARDS[] =
 	{ 0x26A, APPLE_KEYBOARD_TYPE_ANSI }
 };
 
-enum APPLE_KEYBOARD_TYPE mac_identify_keyboard_type(uint32_t vendorID, uint32_t productID)
+static enum APPLE_KEYBOARD_TYPE mac_identify_keyboard_type(uint32_t vendorID,
+        uint32_t productID)
 {
 	enum APPLE_KEYBOARD_TYPE type = APPLE_KEYBOARD_TYPE_ANSI;
-	
+
 	if (vendorID != 0x05AC) /* Apple, Inc. */
 		return type;
-	
+
 	if ((productID < 0x200) || (productID > 0x26A))
 		return type;
-	
+
 	type = APPLE_KEYBOARDS[productID - 0x200].Type;
-	
 	return type;
 }
 
@@ -165,35 +165,33 @@ enum APPLE_KEYBOARD_TYPE mac_detect_keyboard_type()
 	IOHIDManagerRef tIOHIDManagerRef = NULL;
 	IOHIDDeviceRef* tIOHIDDeviceRefs = nil;
 	enum APPLE_KEYBOARD_TYPE type = APPLE_KEYBOARD_TYPE_ANSI;
-	
-	tIOHIDManagerRef = IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
-	
+	tIOHIDManagerRef = IOHIDManagerCreate(kCFAllocatorDefault,
+	                                      kIOHIDOptionsTypeNone);
+
 	if (!tIOHIDManagerRef)
 		return type;
-	
+
 	IOHIDManagerSetDeviceMatching(tIOHIDManagerRef, NULL);
-	
 	IOReturn tIOReturn = IOHIDManagerOpen(tIOHIDManagerRef, kIOHIDOptionsTypeNone);
-	
+
 	if (noErr != tIOReturn)
 		return type;
-	
+
 	deviceCFSetRef = IOHIDManagerCopyDevices(tIOHIDManagerRef);
-	
+
 	if (!deviceCFSetRef)
 		return type;
-	
+
 	CFIndex deviceIndex, deviceCount = CFSetGetCount(deviceCFSetRef);
-	
 	tIOHIDDeviceRefs = malloc(sizeof(IOHIDDeviceRef) * deviceCount);
-	
+
 	if (!tIOHIDDeviceRefs)
 		return type;
-	
+
 	CFSetGetValues(deviceCFSetRef, (const void**) tIOHIDDeviceRefs);
 	CFRelease(deviceCFSetRef);
 	deviceCFSetRef = NULL;
-	
+
 	for (deviceIndex = 0; deviceIndex < deviceCount; deviceIndex++)
 	{
 		CFTypeRef tCFTypeRef;
@@ -201,29 +199,30 @@ enum APPLE_KEYBOARD_TYPE mac_detect_keyboard_type()
 		uint32_t productID = 0;
 		uint32_t countryCode = 0;
 		enum APPLE_KEYBOARD_TYPE ltype;
-		
+
 		if (!tIOHIDDeviceRefs[deviceIndex])
 			continue;
-		
+
 		inIOHIDDeviceRef = tIOHIDDeviceRefs[deviceIndex];
-		
 		tCFTypeRef = IOHIDDeviceGetProperty(inIOHIDDeviceRef, CFSTR(kIOHIDVendorIDKey));
-		
+
 		if (tCFTypeRef)
 			CFNumberGetValue((CFNumberRef) tCFTypeRef, kCFNumberSInt32Type, &vendorID);
-		
-		tCFTypeRef = IOHIDDeviceGetProperty(inIOHIDDeviceRef, CFSTR(kIOHIDProductIDKey));
-		
+
+		tCFTypeRef = IOHIDDeviceGetProperty(inIOHIDDeviceRef,
+		                                    CFSTR(kIOHIDProductIDKey));
+
 		if (tCFTypeRef)
 			CFNumberGetValue((CFNumberRef) tCFTypeRef, kCFNumberSInt32Type, &productID);
-		
-		tCFTypeRef = IOHIDDeviceGetProperty(inIOHIDDeviceRef, CFSTR(kIOHIDCountryCodeKey));
-		
+
+		tCFTypeRef = IOHIDDeviceGetProperty(inIOHIDDeviceRef,
+		                                    CFSTR(kIOHIDCountryCodeKey));
+
 		if (tCFTypeRef)
 			CFNumberGetValue((CFNumberRef) tCFTypeRef, kCFNumberSInt32Type, &countryCode);
-		
+
 		ltype = mac_identify_keyboard_type(vendorID, productID);
-		
+
 		if (ltype != APPLE_KEYBOARD_TYPE_ANSI)
 		{
 			type = ltype;
@@ -238,9 +237,9 @@ enum APPLE_KEYBOARD_TYPE mac_detect_keyboard_type()
 		CFRelease(deviceCFSetRef);
 		deviceCFSetRef = NULL;
 	}
-	
+
 	if (tIOHIDManagerRef)
 		CFRelease(tIOHIDManagerRef);
-	
+
 	return type;
 }

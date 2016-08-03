@@ -49,7 +49,6 @@
 	BOOL skipResizeOnce;
 	BOOL saveInitialDragLoc;
 	BOOL skipMoveWindowOnce;
-	
 @public
 	NSPasteboard* pasteboard_rd;
 	NSPasteboard* pasteboard_wr;
@@ -62,12 +61,12 @@
 - (void) setCursor: (NSCursor*) cursor;
 - (void) setScrollOffset:(int)xOffset y:(int)yOffset w:(int)width h:(int)height;
 
-- (void) onPasteboardTimerFired :(NSTimer *) timer;
+- (void) onPasteboardTimerFired :(NSTimer*) timer;
 - (void) pause;
 - (void) resume;
 - (void) releaseResources;
 
-@property (assign) int is_connected;
+@property(assign) int is_connected;
 
 @end
 
@@ -83,8 +82,7 @@
 
 BOOL mac_pre_connect(freerdp* instance);
 BOOL mac_post_connect(freerdp*	instance);
-BOOL mac_authenticate(freerdp* instance, char** username, char** password, char** domain);
-
-DWORD mac_client_thread(void* param);
+BOOL mac_authenticate(freerdp* instance, char** username, char** password,
+                      char** domain);
 
 #endif // MRDPVIEW_H
