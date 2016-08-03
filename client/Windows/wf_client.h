@@ -76,11 +76,6 @@ struct wf_context
 	rdpContext context;
 	DEFINE_RDP_CLIENT_COMMON();
 
-	freerdp* instance;
-	rdpSettings* settings;
-
-	UINT32 format; /* Local framebuffer color format */
-
 	int offset_x;
 	int offset_y;
 	int fs_toggle;

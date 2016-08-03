@@ -143,10 +143,9 @@ static BOOL wf_sw_desktop_resize(rdpContext* context)
 
 	if (wfc->primary)
 	{
-		UINT32 format = gdi_get_pixel_format(settings->ColorDepth, FALSE);
 		wf_image_free(wfc->primary);
 		wfc->primary = wf_image_new(wfc, settings->DesktopWidth,
-		                            settings->DesktopHeight, format, NULL);
+									settings->DesktopHeight, wfc->context.gdi->dstFormat, NULL);
 	}
 
 	return TRUE;
@@ -188,11 +187,10 @@ static BOOL wf_hw_desktop_resize(rdpContext* context)
 
 	if (wfc->primary)
 	{
-		UINT32 format = gdi_get_pixel_format(settings->ColorDepth, FALSE);
 		same = (wfc->primary == wfc->drawing) ? TRUE : FALSE;
 		wf_image_free(wfc->primary);
 		wfc->primary = wf_image_new(wfc, settings->DesktopWidth,
-		                            settings->DesktopHeight, format, NULL);
+									settings->DesktopHeight, wfc->context.gdi->dstFormat, NULL);
 
 		if (same)
 			wfc->drawing = wfc->primary;
@@ -202,7 +200,7 @@ static BOOL wf_hw_desktop_resize(rdpContext* context)
 	{
 		if (wfc->hwnd)
 			SetWindowPos(wfc->hwnd, HWND_TOP, -1, -1, settings->DesktopWidth + wfc->diff.x,
-			             settings->DesktopHeight + wfc->diff.y, SWP_NOMOVE);
+						 settings->DesktopHeight + wfc->diff.y, SWP_NOMOVE);
 	}
 	else
 	{
@@ -227,7 +225,6 @@ static BOOL wf_pre_connect(freerdp* instance)
 
 	context = instance->context;
 	wfc = (wfContext*) instance->context;
-	wfc->instance = instance;
 	settings = instance->settings;
 	settings->OsMajorType = OSMAJORTYPE_WINDOWS;
 	settings->OsMinorType = OSMINORTYPE_WINDOWS_NT;
@@ -299,22 +296,22 @@ static BOOL wf_pre_connect(freerdp* instance)
 	}
 
 	if ((settings->DesktopWidth < 64) || (settings->DesktopHeight < 64) ||
-	    (settings->DesktopWidth > 4096) || (settings->DesktopHeight > 4096))
+			(settings->DesktopWidth > 4096) || (settings->DesktopHeight > 4096))
 	{
 		WLog_ERR(TAG, "invalid dimensions %d %d", settings->DesktopWidth,
-		         settings->DesktopHeight);
+				 settings->DesktopHeight);
 		return FALSE;
 	}
 
 	freerdp_set_param_uint32(settings, FreeRDP_KeyboardLayout,
-	                         (int) GetKeyboardLayout(0) & 0x0000FFFF);
+							 (int) GetKeyboardLayout(0) & 0x0000FFFF);
 	PubSub_SubscribeChannelConnected(instance->context->pubSub,
-	                                 (pChannelConnectedEventHandler) wf_OnChannelConnectedEventHandler);
+									 (pChannelConnectedEventHandler) wf_OnChannelConnectedEventHandler);
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
-	                                    (pChannelDisconnectedEventHandler) wf_OnChannelDisconnectedEventHandler);
+										(pChannelDisconnectedEventHandler) wf_OnChannelDisconnectedEventHandler);
 
 	if (freerdp_channels_pre_connect(instance->context->channels,
-	                                 instance) != CHANNEL_RC_OK)
+									 instance) != CHANNEL_RC_OK)
 		return FALSE;
 
 	return TRUE;
@@ -326,7 +323,7 @@ static void wf_add_system_menu(wfContext* wfc)
 	MENUITEMINFO item_info;
 	ZeroMemory(&item_info, sizeof(MENUITEMINFO));
 	item_info.fMask = MIIM_CHECKMARKS | MIIM_FTYPE | MIIM_ID | MIIM_STRING |
-	                  MIIM_DATA;
+			MIIM_DATA;
 	item_info.cbSize = sizeof(MENUITEMINFO);
 	item_info.wID = SYSCOMMAND_ID_SMARTSIZING;
 	item_info.fType = MFT_STRING;
@@ -335,7 +332,7 @@ static void wf_add_system_menu(wfContext* wfc)
 	item_info.dwItemData = (ULONG_PTR) wfc;
 	InsertMenuItem(hMenu, 6, TRUE, &item_info);
 
-	if (wfc->instance->settings->SmartSizing)
+	if (wfc->context.settings->SmartSizing)
 	{
 		CheckMenuItem(hMenu, SYSCOMMAND_ID_SMARTSIZING, MF_CHECKED);
 	}
@@ -351,36 +348,33 @@ static BOOL wf_post_connect(freerdp* instance)
 	WCHAR lpWindowName[64];
 	rdpSettings* settings;
 	EmbedWindowEventArgs e;
+	const UINT32 format = PIXEL_FORMAT_BGRX32;
+
 	settings = instance->settings;
 	context = instance->context;
 	wfc = (wfContext*) instance->context;
 	cache = instance->context->cache;
-	UINT32 format = gdi_get_pixel_format(settings->ColorDepth, FALSE);
-	wfc->format = PIXEL_FORMAT_BGRX32;
 	wfc->primary = wf_image_new(wfc, settings->DesktopWidth,
-	                            settings->DesktopHeight, format, NULL);
+								settings->DesktopHeight, format, NULL);
 
-	if (!gdi_init_ex(instance, wfc->format, 0, wfc->primary->pdata, wf_image_free))
+	if (!gdi_init_ex(instance, format, 0, wfc->primary->pdata, wf_image_free))
 		return FALSE;
 
 	gdi = instance->context->gdi;
 
 	if (!settings->SoftwareGdi)
 	{
-		UINT32 format = gdi_get_pixel_format(settings->ColorDepth, FALSE);
 		wf_gdi_register_update_callbacks(instance->update);
-		wfc->primary = wf_image_new(wfc, settings->DesktopWidth,
-		                            settings->DesktopHeight, format, NULL);
 	}
 
 	if (settings->WindowTitle != NULL)
 		_snwprintf(lpWindowName, ARRAYSIZE(lpWindowName), L"%S", settings->WindowTitle);
 	else if (settings->ServerPort == 3389)
 		_snwprintf(lpWindowName, ARRAYSIZE(lpWindowName), L"FreeRDP: %S",
-		           settings->ServerHostname);
+				   settings->ServerHostname);
 	else
 		_snwprintf(lpWindowName, ARRAYSIZE(lpWindowName), L"FreeRDP: %S:%d",
-		           settings->ServerHostname, settings->ServerPort);
+				   settings->ServerHostname, settings->ServerPort);
 
 	if (settings->EmbeddedWindow)
 		settings->Decorations = FALSE;
@@ -391,20 +385,20 @@ static BOOL wf_post_connect(freerdp* instance)
 		dwStyle = WS_CHILD | WS_BORDER;
 	else
 		dwStyle = WS_CAPTION | WS_OVERLAPPED | WS_SYSMENU | WS_MINIMIZEBOX | WS_SIZEBOX
-		          | WS_MAXIMIZEBOX;
+				| WS_MAXIMIZEBOX;
 
 	if (!wfc->hwnd)
 	{
 		wfc->hwnd = CreateWindowEx((DWORD) NULL, wfc->wndClassName, lpWindowName,
-		                           dwStyle,
-		                           0, 0, 0, 0, wfc->hWndParent, NULL, wfc->hInstance, NULL);
+								   dwStyle,
+								   0, 0, 0, 0, wfc->hWndParent, NULL, wfc->hInstance, NULL);
 		SetWindowLongPtr(wfc->hwnd, GWLP_USERDATA, (LONG_PTR) wfc);
 	}
 
 	wf_resize_window(wfc);
 	wf_add_system_menu(wfc);
 	BitBlt(wfc->primary->hdc, 0, 0, settings->DesktopWidth, settings->DesktopHeight,
-	       NULL, 0, 0, BLACKNESS);
+		   NULL, 0, 0, BLACKNESS);
 	wfc->drawing = wfc->primary;
 	EventArgsInit(&e, "wfreerdp");
 	e.embed = FALSE;
@@ -459,7 +453,7 @@ static CREDUI_INFOA wfUiInfo =
 };
 
 static BOOL wf_authenticate_raw(freerdp* instance, const char* title,
-                                char** username, char** password, char** domain)
+								char** username, char** password, char** domain)
 {
 	BOOL fSave;
 	DWORD status;
@@ -473,8 +467,8 @@ static BOOL wf_authenticate_raw(freerdp* instance, const char* title,
 	ZeroMemory(Password, sizeof(Password));
 	dwFlags = CREDUI_FLAGS_DO_NOT_PERSIST | CREDUI_FLAGS_EXCLUDE_CERTIFICATES;
 	status = CredUIPromptForCredentialsA(&wfUiInfo, title, NULL, 0,
-	                                     UserName, CREDUI_MAX_USERNAME_LENGTH + 1,
-	                                     Password, CREDUI_MAX_PASSWORD_LENGTH + 1, &fSave, dwFlags);
+										 UserName, CREDUI_MAX_USERNAME_LENGTH + 1,
+										 Password, CREDUI_MAX_PASSWORD_LENGTH + 1, &fSave, dwFlags);
 
 	if (status != NO_ERROR)
 	{
@@ -485,7 +479,7 @@ static BOOL wf_authenticate_raw(freerdp* instance, const char* title,
 	ZeroMemory(User, sizeof(User));
 	ZeroMemory(Domain, sizeof(Domain));
 	status = CredUIParseUserNameA(UserName, User, sizeof(User), Domain,
-	                              sizeof(Domain));
+								  sizeof(Domain));
 	//WLog_ERR(TAG, "User: %s Domain: %s Password: %s", User, Domain, Password);
 	*username = _strdup(User);
 
@@ -520,14 +514,14 @@ static BOOL wf_authenticate_raw(freerdp* instance, const char* title,
 }
 
 static BOOL wf_authenticate(freerdp* instance,
-                            char** username, char** password, char** domain)
+							char** username, char** password, char** domain)
 {
 	return wf_authenticate_raw(instance, instance->settings->ServerHostname,
-	                           username, password, domain);
+							   username, password, domain);
 }
 
 static BOOL wf_gw_authenticate(freerdp* instance,
-                               char** username, char** password, char** domain)
+							   char** username, char** password, char** domain)
 {
 	char tmp[MAX_PATH];
 	sprintf_s(tmp, sizeof(tmp), "Gateway %s", instance->settings->GatewayHostname);
@@ -535,11 +529,11 @@ static BOOL wf_gw_authenticate(freerdp* instance,
 }
 
 static DWORD wf_verify_certificate(freerdp* instance,
-                                   const char* common_name,
-                                   const char* subject,
-                                   const char* issuer,
-                                   const char* fingerprint,
-                                   BOOL host_mismatch)
+								   const char* common_name,
+								   const char* subject,
+								   const char* issuer,
+								   const char* fingerprint,
+								   BOOL host_mismatch)
 {
 #if 0
 	DWORD mode;
@@ -556,9 +550,9 @@ static DWORD wf_verify_certificate(freerdp* instance,
 	WLog_INFO(TAG, "\tThumbprint: %s", fingerprint);
 	WLog_INFO(TAG, "\tHostMismatch: %s", host_mismatch ? "Yes" : "No");
 	WLog_INFO(TAG,
-	          "The above X.509 certificate could not be verified, possibly because you do not have "
-	          "the CA certificate in your certificate store, or the certificate has expired. "
-	          "Please look at the documentation on how to create local certificate store for a private CA.");
+			  "The above X.509 certificate could not be verified, possibly because you do not have "
+			  "the CA certificate in your certificate store, or the certificate has expired. "
+			  "Please look at the documentation on how to create local certificate store for a private CA.");
 	/* TODO: ask for user validation */
 #if 0
 	input_handle = GetStdHandle(STD_INPUT_HANDLE);
@@ -572,11 +566,11 @@ static DWORD wf_verify_certificate(freerdp* instance,
 }
 
 static DWORD wf_verify_changed_certificate(freerdp* instance,
-        const char* common_name,
-        const char* subject, const char* issuer,
-        const char* fingerprint,
-        const char* old_subject, const char* old_issuer,
-        const char* old_fingerprint)
+										   const char* common_name,
+										   const char* subject, const char* issuer,
+										   const char* fingerprint,
+										   const char* old_subject, const char* old_issuer,
+										   const char* old_fingerprint)
 {
 	WLog_ERR(TAG, "!!! Certificate has changed !!!");
 	WLog_ERR(TAG, "New Certificate details:");
@@ -588,9 +582,9 @@ static DWORD wf_verify_changed_certificate(freerdp* instance,
 	WLog_ERR(TAG, "\tIssuer: %s", old_issuer);
 	WLog_ERR(TAG, "\tThumbprint: %s", old_fingerprint);
 	WLog_ERR(TAG,
-	         "The above X.509 certificate does not match the certificate used for previous connections. "
-	         "This may indicate that the certificate has been tampered with."
-	         "Please contact the administrator of the RDP server and clarify.");
+			 "The above X.509 certificate does not match the certificate used for previous connections. "
+			 "This may indicate that the certificate has been tampered with."
+			 "Please contact the administrator of the RDP server and clarify.");
 	return 0;
 }
 
@@ -651,7 +645,7 @@ static void* wf_input_thread(void* arg)
 		while (MessageQueue_Peek(queue, &message, TRUE))
 		{
 			status = freerdp_message_queue_process_message(instance,
-			         FREERDP_INPUT_MESSAGE_QUEUE, &message);
+														   FREERDP_INPUT_MESSAGE_QUEUE, &message);
 
 			if (!status)
 				break;
@@ -697,8 +691,8 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 	if (async_input)
 	{
 		if (!(input_thread = CreateThread(NULL, 0,
-		                                  (LPTHREAD_START_ROUTINE) wf_input_thread,
-		                                  instance, 0, NULL)))
+										  (LPTHREAD_START_ROUTINE) wf_input_thread,
+										  instance, 0, NULL)))
 		{
 			WLog_ERR(TAG, "Failed to create async input thread.");
 			goto disconnect;
@@ -729,10 +723,10 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 		}
 
 		if (MsgWaitForMultipleObjects(nCount, handles, FALSE, 1000,
-		                              QS_ALLINPUT) == WAIT_FAILED)
+									  QS_ALLINPUT) == WAIT_FAILED)
 		{
 			WLog_ERR(TAG, "wfreerdp_run: WaitForMultipleObjects failed: 0x%04X",
-			         GetLastError());
+					 GetLastError());
 			break;
 		}
 
@@ -820,7 +814,7 @@ static DWORD WINAPI wf_keyboard_thread(LPVOID lpParam)
 	wfc = (wfContext*) lpParam;
 	assert(NULL != wfc);
 	hook_handle = SetWindowsHookEx(WH_KEYBOARD_LL, wf_ll_kbd_proc, wfc->hInstance,
-	                               0);
+								   0);
 
 	if (hook_handle)
 	{
@@ -852,7 +846,7 @@ static DWORD WINAPI wf_keyboard_thread(LPVOID lpParam)
 
 static rdpSettings* freerdp_client_get_settings(wfContext* wfc)
 {
-	return wfc->instance->settings;
+	return wfc->context.settings;
 }
 
 static int freerdp_client_focus_in(wfContext* wfc)
@@ -874,14 +868,14 @@ static int freerdp_client_set_window_size(wfContext* wfc, int width, int height)
 	if ((width != wfc->client_width) || (height != wfc->client_height))
 	{
 		PostThreadMessage(wfc->mainThreadId, WM_SIZE, SIZE_RESTORED,
-		                  ((UINT) height << 16) | (UINT) width);
+						  ((UINT) height << 16) | (UINT) width);
 	}
 
 	return 0;
 }
 
 void wf_size_scrollbars(wfContext* wfc, UINT32 client_width,
-                        UINT32 client_height)
+						UINT32 client_height)
 {
 	if (wfc->disablewindowtracking)
 		return;
@@ -889,7 +883,7 @@ void wf_size_scrollbars(wfContext* wfc, UINT32 client_width,
 	// prevent infinite message loop
 	wfc->disablewindowtracking = TRUE;
 
-	if (wfc->instance->settings->SmartSizing)
+	if (wfc->context.settings->SmartSizing)
 	{
 		wfc->xCurrentScroll = 0;
 		wfc->yCurrentScroll = 0;
@@ -909,30 +903,30 @@ void wf_size_scrollbars(wfContext* wfc, UINT32 client_width,
 		BOOL horiz = wfc->xScrollVisible;
 		BOOL vert = wfc->yScrollVisible;;
 
-		if (!horiz && client_width < wfc->instance->settings->DesktopWidth)
+		if (!horiz && client_width < wfc->context.settings->DesktopWidth)
 		{
 			horiz = TRUE;
 		}
 		else if (horiz
-		         && client_width >=
-		         wfc->instance->settings->DesktopWidth/* - GetSystemMetrics(SM_CXVSCROLL)*/)
+				 && client_width >=
+				 wfc->context.settings->DesktopWidth/* - GetSystemMetrics(SM_CXVSCROLL)*/)
 		{
 			horiz = FALSE;
 		}
 
-		if (!vert && client_height < wfc->instance->settings->DesktopHeight)
+		if (!vert && client_height < wfc->context.settings->DesktopHeight)
 		{
 			vert = TRUE;
 		}
 		else if (vert
-		         && client_height >=
-		         wfc->instance->settings->DesktopHeight/* - GetSystemMetrics(SM_CYHSCROLL)*/)
+				 && client_height >=
+				 wfc->context.settings->DesktopHeight/* - GetSystemMetrics(SM_CYHSCROLL)*/)
 		{
 			vert = FALSE;
 		}
 
 		if (horiz == vert && (horiz != wfc->xScrollVisible
-		                      && vert != wfc->yScrollVisible))
+							  && vert != wfc->yScrollVisible))
 		{
 			if (ShowScrollBar(wfc->hwnd, SB_BOTH, horiz))
 			{
@@ -962,12 +956,12 @@ void wf_size_scrollbars(wfContext* wfc, UINT32 client_width,
 			// The horizontal scrolling range is defined by
 			// (bitmap_width) - (client_width). The current horizontal
 			// scroll value remains within the horizontal scrolling range.
-			wfc->xMaxScroll = MAX(wfc->instance->settings->DesktopWidth - client_width, 0);
+			wfc->xMaxScroll = MAX(wfc->context.settings->DesktopWidth - client_width, 0);
 			wfc->xCurrentScroll = MIN(wfc->xCurrentScroll, wfc->xMaxScroll);
 			si.cbSize = sizeof(si);
 			si.fMask  = SIF_RANGE | SIF_PAGE | SIF_POS;
 			si.nMin   = wfc->xMinScroll;
-			si.nMax   = wfc->instance->settings->DesktopWidth;
+			si.nMax   = wfc->context.settings->DesktopWidth;
 			si.nPage  = client_width;
 			si.nPos   = wfc->xCurrentScroll;
 			SetScrollInfo(wfc->hwnd, SB_HORZ, &si, TRUE);
@@ -978,13 +972,13 @@ void wf_size_scrollbars(wfContext* wfc, UINT32 client_width,
 			// The vertical scrolling range is defined by
 			// (bitmap_height) - (client_height). The current vertical
 			// scroll value remains within the vertical scrolling range.
-			wfc->yMaxScroll = MAX(wfc->instance->settings->DesktopHeight - client_height,
-			                      0);
+			wfc->yMaxScroll = MAX(wfc->context.settings->DesktopHeight - client_height,
+								  0);
 			wfc->yCurrentScroll = MIN(wfc->yCurrentScroll, wfc->yMaxScroll);
 			si.cbSize = sizeof(si);
 			si.fMask  = SIF_RANGE | SIF_PAGE | SIF_POS;
 			si.nMin   = wfc->yMinScroll;
-			si.nMax   = wfc->instance->settings->DesktopHeight;
+			si.nMax   = wfc->context.settings->DesktopHeight;
 			si.nPage  = client_height;
 			si.nPos   = wfc->yCurrentScroll;
 			SetScrollInfo(wfc->hwnd, SB_VERT, &si, TRUE);
@@ -1022,8 +1016,6 @@ static void wfreerdp_client_global_uninit(void)
 
 static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 {
-	wfContext* wfc = (wfContext*) context;
-
 	if (!(wfreerdp_client_global_init()))
 		return FALSE;
 
@@ -1036,8 +1028,7 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->GatewayAuthenticate = wf_gw_authenticate;
 	instance->VerifyCertificate = wf_verify_certificate;
 	instance->VerifyChangedCertificate = wf_verify_changed_certificate;
-	wfc->instance = instance;
-	wfc->settings = instance->settings;
+
 	return TRUE;
 }
 
@@ -1082,7 +1073,7 @@ static int wfreerdp_client_start(rdpContext* context)
 	wfc->wndClass.hIconSm = wfc->icon;
 	RegisterClassEx(&(wfc->wndClass));
 	wfc->keyboardThread = CreateThread(NULL, 0, wf_keyboard_thread, (void*) wfc, 0,
-	                                   &wfc->keyboardThreadId);
+									   &wfc->keyboardThreadId);
 
 	if (!wfc->keyboardThread)
 		return -1;
@@ -1091,7 +1082,7 @@ static int wfreerdp_client_start(rdpContext* context)
 		return -1;
 
 	wfc->thread = CreateThread(NULL, 0, wf_client_thread, (void*) instance, 0,
-	                           &wfc->mainThreadId);
+							   &wfc->mainThreadId);
 
 	if (!wfc->thread)
 		return -1;

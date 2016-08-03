@@ -39,7 +39,7 @@ HBITMAP wf_create_dib(wfContext* wfc, UINT32 width, UINT32 height,
 	HBITMAP bitmap;
 	BITMAPINFO bmi;
 	BYTE* cdata = NULL;
-	UINT32 dstFormat = wfc->format;
+	UINT32 dstFormat = srcFormat;
 	/**
 	 * See: http://msdn.microsoft.com/en-us/library/dd183376
 	 * if biHeight is positive, the bitmap is bottom-up
