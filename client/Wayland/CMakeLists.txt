@@ -27,6 +27,8 @@ set(${MODULE_PREFIX}_SRCS
 	wlfreerdp.h
 	wlf_input.c
 	wlf_input.h
+	wlf_channels.c
+	wlf_channels.h
 	)
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
