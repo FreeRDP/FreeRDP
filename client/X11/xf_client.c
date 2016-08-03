@@ -778,7 +778,7 @@ static BOOL xf_get_pixmap_info(xfContext* xfc)
 	int pf_count;
 	XVisualInfo* vi;
 	XVisualInfo* vis;
-	XVisualInfo template;
+	XVisualInfo tpl;
 	XPixmapFormatValues* pf;
 	XPixmapFormatValues* pfs;
 	XWindowAttributes window_attributes;
@@ -803,9 +803,9 @@ static BOOL xf_get_pixmap_info(xfContext* xfc)
 	}
 
 	XFree(pfs);
-	ZeroMemory(&template, sizeof(template));
-	template.class = TrueColor;
-	template.screen = xfc->screen_number;
+	ZeroMemory(&tpl, sizeof(tpl));
+	tpl.class = TrueColor;
+	tpl.screen = xfc->screen_number;
 
 	if (XGetWindowAttributes(xfc->display, RootWindowOfScreen(xfc->screen),
 	                         &window_attributes) == 0)
@@ -815,7 +815,7 @@ static BOOL xf_get_pixmap_info(xfContext* xfc)
 	}
 
 	vis = XGetVisualInfo(xfc->display, VisualClassMask | VisualScreenMask,
-	                     &template, &vi_count);
+	                     &tpl, &vi_count);
 
 	if (!vis)
 	{
@@ -1495,7 +1495,7 @@ static void* xf_client_thread(void* param)
 	else
 	{
 		if (!(inputEvent = freerdp_get_message_queue_event_handle(instance,
-		        FREERDP_INPUT_MESSAGE_QUEUE)))
+		                   FREERDP_INPUT_MESSAGE_QUEUE)))
 		{
 			WLog_ERR(TAG, "async input: failed to get input event handle");
 			exit_code = XF_EXIT_UNKNOWN;
@@ -1580,7 +1580,7 @@ static void* xf_client_thread(void* param)
 	if (settings->AsyncInput)
 	{
 		wMessageQueue* inputQueue = freerdp_get_message_queue(instance,
-		        FREERDP_INPUT_MESSAGE_QUEUE);
+		                            FREERDP_INPUT_MESSAGE_QUEUE);
 
 		if (MessageQueue_PostQuit(inputQueue, 0))
 			WaitForSingleObject(inputThread, INFINITE);
@@ -1601,16 +1601,16 @@ DWORD xf_exit_code_from_disconnect_reason(DWORD reason)
 {
 	if (reason == 0 || (reason >= XF_EXIT_PARSE_ARGUMENTS
 	                    && reason <= XF_EXIT_AUTH_FAILURE))
-		    return reason;
+		return reason;
 	/* License error set */
 	else if (reason >= 0x100 && reason <= 0x10A)
-		         reason -= 0x100 + XF_EXIT_LICENSE_INTERNAL;
+		reason -= 0x100 + XF_EXIT_LICENSE_INTERNAL;
 	/* RDP protocol error set */
 	else if (reason >= 0x10c9 && reason <= 0x1193)
-		         reason = XF_EXIT_RDP;
+		reason = XF_EXIT_RDP;
 	/* There's no need to test protocol-independent codes: they match */
 	else if (!(reason <= 0xC))
-		         reason = XF_EXIT_UNKNOWN;
+		reason = XF_EXIT_UNKNOWN;
 
 	return reason;
 }
@@ -1647,10 +1647,10 @@ static void xf_ZoomingChangeEventHandler(rdpContext* context,
 		return;
 
 	if (w < 10)
-		    w = 10;
+		w = 10;
 
 	if (h < 10)
-		    h = 10;
+		h = 10;
 
 	if (w == xfc->scaledWidth && h == xfc->scaledHeight)
 		return;
@@ -1815,35 +1815,35 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xfc->_NET_WORKAREA = XInternAtom(xfc->display, "_NET_WORKAREA", False);
 	xfc->_NET_WM_STATE = XInternAtom(xfc->display, "_NET_WM_STATE", False);
 	xfc->_NET_WM_STATE_FULLSCREEN = XInternAtom(xfc->display,
-	        "_NET_WM_STATE_FULLSCREEN", False);
+	                                "_NET_WM_STATE_FULLSCREEN", False);
 	xfc->_NET_WM_STATE_MAXIMIZED_HORZ = XInternAtom(xfc->display,
-	        "_NET_WM_STATE_MAXIMIZED_HORZ", False);
+	                                    "_NET_WM_STATE_MAXIMIZED_HORZ", False);
 	xfc->_NET_WM_STATE_MAXIMIZED_VERT = XInternAtom(xfc->display,
-	        "_NET_WM_STATE_MAXIMIZED_VERT", False);
+	                                    "_NET_WM_STATE_MAXIMIZED_VERT", False);
 	xfc->_NET_WM_FULLSCREEN_MONITORS = XInternAtom(xfc->display,
-	        "_NET_WM_FULLSCREEN_MONITORS", False);
+	                                   "_NET_WM_FULLSCREEN_MONITORS", False);
 	xfc->_NET_WM_NAME = XInternAtom(xfc->display, "_NET_WM_NAME", False);
 	xfc->_NET_WM_PID = XInternAtom(xfc->display, "_NET_WM_PID", False);
 	xfc->_NET_WM_WINDOW_TYPE = XInternAtom(xfc->display, "_NET_WM_WINDOW_TYPE",
 	                                       False);
 	xfc->_NET_WM_WINDOW_TYPE_NORMAL = XInternAtom(xfc->display,
-	        "_NET_WM_WINDOW_TYPE_NORMAL", False);
+	                                  "_NET_WM_WINDOW_TYPE_NORMAL", False);
 	xfc->_NET_WM_WINDOW_TYPE_DIALOG = XInternAtom(xfc->display,
-	        "_NET_WM_WINDOW_TYPE_DIALOG", False);
+	                                  "_NET_WM_WINDOW_TYPE_DIALOG", False);
 	xfc->_NET_WM_WINDOW_TYPE_POPUP = XInternAtom(xfc->display,
-	        "_NET_WM_WINDOW_TYPE_POPUP", False);
+	                                 "_NET_WM_WINDOW_TYPE_POPUP", False);
 	xfc->_NET_WM_WINDOW_TYPE_UTILITY = XInternAtom(xfc->display,
-	        "_NET_WM_WINDOW_TYPE_UTILITY", False);
+	                                   "_NET_WM_WINDOW_TYPE_UTILITY", False);
 	xfc->_NET_WM_WINDOW_TYPE_DROPDOWN_MENU = XInternAtom(xfc->display,
 	        "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU", False);
 	xfc->_NET_WM_STATE_SKIP_TASKBAR = XInternAtom(xfc->display,
-	        "_NET_WM_STATE_SKIP_TASKBAR", False);
+	                                  "_NET_WM_STATE_SKIP_TASKBAR", False);
 	xfc->_NET_WM_STATE_SKIP_PAGER = XInternAtom(xfc->display,
-	        "_NET_WM_STATE_SKIP_PAGER", False);
+	                                "_NET_WM_STATE_SKIP_PAGER", False);
 	xfc->_NET_WM_MOVERESIZE = XInternAtom(xfc->display, "_NET_WM_MOVERESIZE",
 	                                      False);
 	xfc->_NET_MOVERESIZE_WINDOW = XInternAtom(xfc->display,
-	        "_NET_MOVERESIZE_WINDOW", False);
+	                              "_NET_MOVERESIZE_WINDOW", False);
 	xfc->UTF8_STRING = XInternAtom(xfc->display, "UTF8_STRING", FALSE);
 	xfc->WM_PROTOCOLS = XInternAtom(xfc->display, "WM_PROTOCOLS", False);
 	xfc->WM_DELETE_WINDOW = XInternAtom(xfc->display, "WM_DELETE_WINDOW", False);
@@ -1856,7 +1856,7 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xfc->invert = (ImageByteOrder(xfc->display) == MSBFirst) ? TRUE : FALSE;
 	xfc->complex_regions = TRUE;
 	xfc->x11event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfc->xfds,
-	        WINPR_FD_READ);
+	                WINPR_FD_READ);
 
 	if (!xfc->x11event)
 	{
