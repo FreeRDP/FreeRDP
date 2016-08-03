@@ -205,6 +205,18 @@ const char* gdi_rop_to_string(UINT32 code)
 			_snprintf(buffer, sizeof(buffer), "GDI_PDSona [%08X]", code);
 			break;
 
+		case GDI_PSDPaox:
+			_snprintf(buffer, sizeof(buffer), "GDI_PSDPaox [%08X]", code);
+			break;
+
+		case GDI_PSDPxox:
+			_snprintf(buffer, sizeof(buffer), "GDI_PSDPxox [%08X]", code);
+			break;
+
+		case GDI_PSDPxoxn:
+			_snprintf(buffer, sizeof(buffer), "GDI_PSDPxoxn [%08X]", code);
+			break;
+
 		case GDI_DSPDxox:
 			_snprintf(buffer, sizeof(buffer), "GDI_DSPDxox [%08X]", code);
 			break;
