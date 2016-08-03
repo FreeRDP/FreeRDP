@@ -34,6 +34,8 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 	UINT32 surfaceX, surfaceY;
 	RECTANGLE_16 surfaceRect;
 	const RECTANGLE_16* extents;
+	rdpGdi* gdi;
+	gdi = xfc->context.gdi;
 	surfaceX = surface->gdi.outputOriginX;
 	surfaceY = surface->gdi.outputOriginY;
 	surfaceRect.left = surfaceX;
@@ -58,7 +60,7 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 
 		if (surface->stage)
 		{
-			freerdp_image_copy(surface->stage, xfc->format,
+			freerdp_image_copy(surface->stage, gdi->dstFormat,
 			                   surface->stageScanline, 0, 0,
 			                   surface->gdi.width, surface->gdi.height,
 			                   surface->gdi.data, surface->gdi.format,
@@ -67,7 +69,8 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 
 #ifdef WITH_XRENDER
 
-		if (xfc->settings->SmartSizing || xfc->settings->MultiTouchGestures)
+		if (xfc->context.settings->SmartSizing
+		    || xfc->context.settings->MultiTouchGestures)
 		{
 			XPutImage(xfc->display, xfc->primary, xfc->gc, surface->image,
 			          extents->left, extents->top, extents->left + surfaceX, extents->top + surfaceY,
@@ -248,7 +251,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 
 	ZeroMemory(surface->gdi.data, size);
 
-	if (xfc->format == surface->gdi.format)
+	if (gdi->dstFormat == surface->gdi.format)
 	{
 		surface->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
 		                              (char*) surface->gdi.data, surface->gdi.width, surface->gdi.height,
@@ -257,7 +260,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 	else
 	{
 		UINT32 width = surface->gdi.width;
-		UINT32 bytes = GetBytesPerPixel(xfc->format);
+		UINT32 bytes = GetBytesPerPixel(gdi->dstFormat);
 		surface->stageScanline = width * bytes;
 
 		if (xfc->scanline_pad > 0)

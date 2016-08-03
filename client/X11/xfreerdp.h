@@ -94,16 +94,12 @@ struct xf_context
 	rdpContext context;
 	DEFINE_RDP_CLIENT_COMMON();
 
-	freerdp* instance;
-	rdpSettings* settings;
-
 	GC gc;
 	int xfds;
 	int depth;
 
 	GC gc_mono;
 	BOOL invert;
-	UINT32 format;
 	Screen* screen;
 	XImage* image;
 	Pixmap primary;
