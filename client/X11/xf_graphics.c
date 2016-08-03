@@ -42,6 +42,39 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
 
+BOOL xf_decode_color(rdpGdi* gdi, const UINT32 srcColor,
+                     UINT32* color, UINT32* format)
+{
+	xfContext* xfc;
+	UINT32 DstFormat;
+	UINT32 SrcFormat;
+
+	if (!gdi || !gdi->context || !gdi->context->settings)
+		return FALSE;
+
+	xfc = (xfContext*)gdi->context;
+	SrcFormat = gdi_get_pixel_format(gdi->context->settings->ColorDepth,
+	                                 FALSE);
+
+	if (format)
+		*format = SrcFormat;
+
+	if (xfc->depth == 32)
+		DstFormat = (!xfc->invert) ? PIXEL_FORMAT_RGBA32 : PIXEL_FORMAT_BGRA32;
+	else if (xfc->depth == 24)
+		DstFormat = (!xfc->invert) ? PIXEL_FORMAT_RGB24 : PIXEL_FORMAT_BGR24;
+	else if (xfc->depth == 16)
+		DstFormat = (!xfc->invert) ? PIXEL_FORMAT_RGB16 : PIXEL_FORMAT_BGR16;
+	else if (xfc->depth == 15)
+		DstFormat = (!xfc->invert) ? PIXEL_FORMAT_RGB16 : PIXEL_FORMAT_BGR16;
+	else
+		DstFormat = PIXEL_FORMAT_RGBX32;
+
+	*color = ConvertColor(srcColor, SrcFormat,
+	                      DstFormat, &gdi->palette);
+	return TRUE;
+}
+
 /* Bitmap Class */
 static BOOL xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 {
@@ -154,7 +187,8 @@ static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	ci.xhot = pointer->xPos;
 	ci.yhot = pointer->yPos;
 
-	if (!(ci.pixels = (XcursorPixel*) calloc(1, ci.width * ci.height * 4)))
+	if (!(ci.pixels = (XcursorPixel*) calloc(ci.height,
+	                  ci.width * GetBytesPerPixel(xfc->format))))
 	{
 		xf_unlock_x11(xfc, FALSE);
 		return FALSE;
@@ -162,7 +196,7 @@ static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 
 	if (freerdp_image_copy_from_pointer_data(
 	        (BYTE*) ci.pixels, xfc->format,
-	        pointer->width * 4, 0, 0, pointer->width, pointer->height,
+	        0, 0, 0, pointer->width, pointer->height,
 	        pointer->xorMaskData, pointer->lengthXorMask,
 	        pointer->andMaskData, pointer->lengthAndMask,
 	        pointer->xorBpp, &context->gdi->palette) < 0)
@@ -343,10 +377,10 @@ static BOOL xf_Glyph_BeginDraw(rdpContext* context, UINT32 x, UINT32 y,
 {
 	xfContext* xfc = (xfContext*) context;
 
-	if (!gdi_decode_color(context->gdi, bgcolor, &bgcolor, NULL))
+	if (!xf_decode_color(context->gdi, bgcolor, &bgcolor, NULL))
 		return FALSE;
 
-	if (!gdi_decode_color(context->gdi, fgcolor, &fgcolor, NULL))
+	if (!xf_decode_color(context->gdi, fgcolor, &fgcolor, NULL))
 		return FALSE;
 
 	xf_lock_x11(xfc, FALSE);
