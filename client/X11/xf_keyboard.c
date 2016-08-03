@@ -465,6 +465,26 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 	{
 		return TRUE;
 	}
+	// Nicholai Mitchko
+	// Add a keyboard binding to allow switching workspaces in FullScreenMode
+	// Release Keyboard: CTRL + ALT + R/r
+	// Capture Keyboard: CTRL + ALT + U/u
+	if((keysym == XK_u) || (keysym == XK_U)){
+		if(mod.Ctrl && mod.Alt){
+			if(xfc->fullscreen){
+				XGrabKeyboard(xfc->display, xfc->window->handle, TRUE, GrabModeAsync, GrabModeAsync, CurrentTime);
+			}
+		}
+	}
+
+	if((keysym == XK_r) || (keysym == XK_R)){
+		if(mod.Ctrl && mod.Alt){
+			if(xfc->fullscreen){
+				XUngrabKeyboard(xfc->display, CurrentTime);
+			}
+		}
+	}
+	// End Changes
 
 	if(!xfc->remote_app && xfc->fullscreen_toggle)
 	{
