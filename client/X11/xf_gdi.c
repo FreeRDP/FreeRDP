@@ -219,21 +219,24 @@ static BOOL xf_set_rop3(xfContext* xfc, UINT32 rop3)
 	return TRUE;
 }
 
-static Pixmap xf_brush_new(xfContext* xfc, int width, int height, int bpp,
+static Pixmap xf_brush_new(xfContext* xfc, UINT32 width, UINT32 height,
+                           UINT32 bpp,
                            BYTE* data)
 {
 	GC gc;
 	Pixmap bitmap;
 	BYTE* cdata;
 	XImage* image;
+	rdpGdi* gdi;
 	UINT32 brushFormat;
+	gdi = xfc->context.gdi;
 	bitmap = XCreatePixmap(xfc->display, xfc->drawable, width, height, xfc->depth);
 
 	if (data)
 	{
 		brushFormat = gdi_get_pixel_format(bpp, FALSE);
 		cdata = (BYTE*) _aligned_malloc(width * height * 4, 16);
-		freerdp_image_copy(cdata, xfc->format, 0, 0, 0,
+		freerdp_image_copy(cdata, gdi->dstFormat, 0, 0, 0,
 		                   width, height, data, brushFormat, 0, 0, 0,
 		                   &xfc->context.gdi->palette);
 		image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
@@ -903,7 +906,7 @@ static BOOL xf_gdi_surface_frame_marker(rdpContext* context,
 	rdpSettings* settings;
 	xfContext* xfc = (xfContext*) context;
 	BOOL ret = TRUE;
-	settings = xfc->instance->settings;
+	settings = xfc->context.settings;
 	xf_lock_x11(xfc, FALSE);
 
 	switch (surface_frame_marker->frameAction)
@@ -925,7 +928,7 @@ static BOOL xf_gdi_surface_frame_marker(rdpContext* context,
 
 			if (settings->FrameAcknowledge > 0)
 			{
-				IFCALL(xfc->instance->update->SurfaceFrameAcknowledge, context,
+				IFCALL(xfc->context.update->SurfaceFrameAcknowledge, context,
 				       surface_frame_marker->frameId);
 			}
 
@@ -1021,7 +1024,7 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 			if (!nsc_process_message(context->codecs->nsc, cmd->bpp, cmd->width,
 			                         cmd->height,
 			                         cmd->bitmapData, cmd->bitmapDataLength,
-			                         xfc->bitmap_buffer, xfc->format, 0, 0, 0, cmd->width, cmd->height))
+			                         xfc->bitmap_buffer, gdi->dstFormat, 0, 0, 0, cmd->width, cmd->height))
 			{
 				xf_unlock_x11(xfc, FALSE);
 				return FALSE;
@@ -1046,7 +1049,7 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 			XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 			pSrcData = cmd->bitmapData;
 			pDstData = xfc->bitmap_buffer;
-			freerdp_image_copy(pDstData, xfc->format, 0, 0, 0,
+			freerdp_image_copy(pDstData, gdi->dstFormat, 0, 0, 0,
 			                   cmd->width, cmd->height, pSrcData,
 			                   PIXEL_FORMAT_BGRX32_VF, 0, 0, 0, &xfc->context.gdi->palette);
 			image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,

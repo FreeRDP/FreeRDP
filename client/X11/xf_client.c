@@ -230,7 +230,7 @@ static BOOL xf_desktop_resize(rdpContext* context)
 {
 	rdpSettings* settings;
 	xfContext* xfc = (xfContext*) context;
-	settings = xfc->settings;
+	settings = context->settings;
 
 	if (xfc->primary)
 	{
@@ -249,7 +249,7 @@ static BOOL xf_desktop_resize(rdpContext* context)
 
 #ifdef WITH_XRENDER
 
-	if (!xfc->settings->SmartSizing)
+	if (!xfc->context.settings->SmartSizing)
 	{
 		xfc->scaledWidth = settings->DesktopWidth;
 		xfc->scaledHeight = settings->DesktopHeight;
@@ -266,7 +266,7 @@ static BOOL xf_desktop_resize(rdpContext* context)
 	{
 #ifdef WITH_XRENDER
 
-		if (!xfc->settings->SmartSizing)
+		if (!xfc->context.settings->SmartSizing)
 #endif
 		{
 			/* Update the saved width and height values the window will be
@@ -504,13 +504,16 @@ BOOL xf_create_window(xfContext* xfc)
 	XEvent xevent;
 	int width, height;
 	char* windowTitle;
-	rdpSettings* settings = xfc->settings;
+	rdpGdi* gdi;
+	rdpSettings* settings;
+	settings = xfc->context.settings;
+	gdi = xfc->context.gdi;
 	ZeroMemory(&xevent, sizeof(xevent));
 	width = settings->DesktopWidth;
 	height = settings->DesktopHeight;
 
 	if (!xfc->hdc)
-		if (!(xfc->hdc = gdi_CreateDC(xfc->format)))
+		if (!(xfc->hdc = gdi_CreateDC(gdi->dstFormat)))
 			return FALSE;
 
 	if (!xfc->remote_app)
@@ -1042,7 +1045,7 @@ static void xf_button_map_init(xfContext* xfc)
 	};
 
 	/* query system for actual remapping */
-	if (!xfc->settings->UnmapButtons)
+	if (!xfc->context.settings->UnmapButtons)
 	{
 		xf_get_x11_button_map(xfc, x11_map);
 	}
@@ -1084,8 +1087,6 @@ static BOOL xf_pre_connect(freerdp* instance)
 	xfContext* xfc = (xfContext*) instance->context;
 	UINT32 maxWidth = 0;
 	UINT32 maxHeight = 0;
-	xfc->settings = instance->settings;
-	xfc->instance = instance;
 	settings = instance->settings;
 	channels = context->channels;
 	settings->OsMajorType = OSMAJORTYPE_UNIX;
@@ -1204,7 +1205,7 @@ static BOOL xf_post_connect(freerdp* instance)
 	settings = instance->settings;
 	update = context->update;
 
-	if (!gdi_init(instance, xfc->format))
+	if (!gdi_init(instance, xf_get_local_color_format(xfc, TRUE)))
 		return FALSE;
 
 	if (!xf_register_pointer(context->graphics))
@@ -1384,7 +1385,7 @@ static BOOL xf_auto_reconnect(freerdp* instance)
 	UINT32 maxRetries;
 	UINT32 numRetries = 0;
 	xfContext* xfc = (xfContext*) instance->context;
-	rdpSettings* settings = xfc->settings;
+	rdpSettings* settings = instance->settings;
 	maxRetries = settings->AutoReconnectMaxRetries;
 
 	/* Only auto reconnect on network disconnects. */
@@ -1769,7 +1770,6 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->VerifyChangedCertificate = client_cli_verify_changed_certificate;
 	instance->LogonErrorInfo = xf_logon_error_info;
 	settings = instance->settings;
-	xfc->settings = instance->context->settings;
 	PubSub_SubscribeTerminate(context->pubSub,
 	                          (pTerminateEventHandler) xf_TerminateEventHandler);
 #ifdef WITH_XRENDER
@@ -1853,7 +1853,7 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xfc->screen = ScreenOfDisplay(xfc->display, xfc->screen_number);
 	xfc->depth = DefaultDepthOfScreen(xfc->screen);
 	xfc->big_endian = (ImageByteOrder(xfc->display) == MSBFirst);
-	xfc->invert = (ImageByteOrder(xfc->display) == MSBFirst) ? TRUE : FALSE;
+	xfc->invert = (ImageByteOrder(xfc->display) == MSBFirst) ? FALSE : TRUE;
 	xfc->complex_regions = TRUE;
 	xfc->x11event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfc->xfds,
 	                WINPR_FD_READ);
@@ -1865,18 +1865,6 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	}
 
 	xfc->colormap = DefaultColormap(xfc->display, xfc->screen_number);
-	xfc->format = PIXEL_FORMAT_RGBX32;
-
-	if (xfc->depth == 32)
-		xfc->format = (xfc->invert) ? PIXEL_FORMAT_RGBA32 : PIXEL_FORMAT_BGRA32;
-	else if (xfc->depth == 24)
-		xfc->format = (xfc->invert) ? PIXEL_FORMAT_RGBX32 : PIXEL_FORMAT_BGRX32;
-	else if (xfc->depth == 16)
-		xfc->format = (xfc->invert) ? PIXEL_FORMAT_RGB16 : PIXEL_FORMAT_BGR16;
-	else if (xfc->depth == 15)
-		xfc->format = (xfc->invert) ? PIXEL_FORMAT_RGB16 : PIXEL_FORMAT_BGR16;
-	else
-		xfc->format = PIXEL_FORMAT_RGBX32;
 
 	if (xfc->debug)
 	{
