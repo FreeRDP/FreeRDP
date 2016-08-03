@@ -632,7 +632,7 @@ static BOOL test_line(HGDI_DC hdc, const gdiPalette* hPalette, UINT32 mX,
 	if ((cX > 0) || (cY > 0) || (cW > 0) || (cH > 0))
 		gdi_SetClipRgn(hdc, cX, cY, cW, cH);
 
-	gdi_MoveToEx(hdc, mX, mY, hPalette);
+	gdi_MoveToEx(hdc, mX, mY, NULL);
 	gdi_LineTo(hdc, lX, lY);
 
 	if (!test_assert_bitmaps_equal(hBmp, hOrgBmp, "Case 10", hPalette))
