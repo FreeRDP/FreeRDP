@@ -27,14 +27,14 @@
 
 #include <freerdp/gdi/gfx.h>
 
-void wf_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEventArgs* e)
+void wf_OnChannelConnectedEventHandler(rdpContext* context,
+                                       ChannelConnectedEventArgs* e)
 {
 	wfContext* wfc = (wfContext*) context;
 	rdpSettings* settings = context->settings;
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
-		
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
@@ -51,23 +51,23 @@ void wf_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEven
 	}
 	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
 	{
-		
 	}
 }
 
-void wf_OnChannelDisconnectedEventHandler(rdpContext* context, ChannelDisconnectedEventArgs* e)
+void wf_OnChannelDisconnectedEventHandler(rdpContext* context,
+        ChannelDisconnectedEventArgs* e)
 {
 	wfContext* wfc = (wfContext*) context;
 	rdpSettings* settings = context->settings;
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
-
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
 		if (settings->SoftwareGdi)
-			gdi_graphics_pipeline_uninit(context->gdi, (RdpgfxClientContext*) e->pInterface);
+			gdi_graphics_pipeline_uninit(context->gdi,
+			                             (RdpgfxClientContext*) e->pInterface);
 	}
 	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
@@ -79,6 +79,5 @@ void wf_OnChannelDisconnectedEventHandler(rdpContext* context, ChannelDisconnect
 	}
 	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
 	{
-		
 	}
 }
