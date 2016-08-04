@@ -611,10 +611,10 @@ BOOL gdi_PatBlt(HGDI_DC hdc, UINT32 nXLeft, UINT32 nYLeft,
                 UINT32 nWidth, UINT32 nHeight, DWORD rop,
                 HGDI_DC hdcSrc, UINT32 nXSrc, UINT32 nYSrc)
 {
-	WLog_INFO(TAG, "%s [%s] x=%lu, y=%lu, w=%lu, h=%lu [x=%lu, y=%lu] %s %s",
-	          __FUNCTION__, gdi_rop_to_string(rop), nXLeft, nYLeft,
-	          nWidth, nHeight, nXSrc, nYSrc, hdc ? GetColorFormatName(hdc->format) : "NULL",
-	          hdcSrc ? GetColorFormatName(hdcSrc->format) : "NULL");
+	WLog_VRB(TAG, "%s [%s] x=%lu, y=%lu, w=%lu, h=%lu [x=%lu, y=%lu] %s %s",
+	         __FUNCTION__, gdi_rop_to_string(rop), nXLeft, nYLeft,
+	         nWidth, nHeight, nXSrc, nYSrc, hdc ? GetColorFormatName(hdc->format) : "NULL",
+	         hdcSrc ? GetColorFormatName(hdcSrc->format) : "NULL");
 
 	if (!gdi_ClipCoords(hdc, &nXLeft, &nYLeft, &nWidth, &nHeight, NULL, NULL))
 		return TRUE;
