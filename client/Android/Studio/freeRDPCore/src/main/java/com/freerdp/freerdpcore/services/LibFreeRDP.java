@@ -219,6 +219,7 @@ public class LibFreeRDP {
         args.add(addFlag("themes", flags.getTheming()));
         args.add(addFlag("fonts", flags.getFontSmoothing()));
         args.add(addFlag("aero", flags.getDesktopComposition()));
+        args.add(addFlag("glyph-cache", false));
 
         if (!advanced.getRemoteProgram().isEmpty()) {
             args.add("/app:" + advanced.getRemoteProgram());
@@ -272,7 +273,7 @@ public class LibFreeRDP {
             args.add("/microphone");
         }
 
-        args.add("/log-level:TRACE");
+        args.add("/log-level:"+debug.getDebugLevel());
         String[] arrayArgs = args.toArray(new String[args.size()]);
         return freerdp_parse_arguments(inst, arrayArgs);
     }
