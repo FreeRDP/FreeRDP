@@ -22,6 +22,7 @@
 #endif
 
 #include <stddef.h>
+#include <errno.h>
 
 #include <winpr/crt.h>
 
@@ -32,15 +33,15 @@
 
 #ifdef _WIN32
 
-#include <errno.h>
-
 int freerdp_handle_signals(void)
 {
 	errno = ENOSYS;
 	return -1;
 }
 
-#elif !defined(ANDROID)
+#else
+
+#include <pthread.h>
 
 volatile sig_atomic_t terminal_needs_reset = 0;
 int terminal_fildes = 0;
@@ -59,9 +60,7 @@ static void fatal_handler(int signum)
 	default_sigaction.sa_handler = SIG_DFL;
 	sigfillset(&(default_sigaction.sa_mask));
 	default_sigaction.sa_flags = 0;
-
 	sigaction(signum, &default_sigaction, NULL);
-
 	sigemptyset(&this_mask);
 	sigaddset(&this_mask, signum);
 	pthread_sigmask(SIG_UNBLOCK, &this_mask, NULL);
@@ -110,11 +109,10 @@ int freerdp_handle_signals(void)
 	sigset_t orig_set;
 	struct sigaction orig_sigaction;
 	struct sigaction fatal_sigaction;
-
+	WLog_INFO(TAG, "Registering signal hook...");
 	sigfillset(&(fatal_sigaction.sa_mask));
 	sigdelset(&(fatal_sigaction.sa_mask), SIGCONT);
 	pthread_sigmask(SIG_BLOCK, &(fatal_sigaction.sa_mask), &orig_set);
-
 	fatal_sigaction.sa_handler = fatal_handler;
 	fatal_sigaction.sa_flags  = 0;
 
@@ -130,18 +128,9 @@ int freerdp_handle_signals(void)
 	}
 
 	pthread_sigmask(SIG_SETMASK, &orig_set, NULL);
-
 	/* Ignore SIGPIPE signal. */
 	signal(SIGPIPE, SIG_IGN);
-
 	return 0;
-}
-
-#else
-
-int freerdp_handle_signals(void)
-{
-	return -1;
 }
 
 #endif
