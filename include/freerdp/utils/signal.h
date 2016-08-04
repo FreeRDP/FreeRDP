@@ -21,14 +21,16 @@
 #define FREERDP_UTILS_SIGNAL_H
 
 #include <freerdp/api.h>
+#include <freerdp/freerdp.h>
+
 #ifndef _WIN32
 #include <signal.h>
 #include <termios.h>
 
-extern volatile sig_atomic_t terminal_needs_reset;
-extern int terminal_fildes;
-extern struct termios orig_flags;
-extern struct termios new_flags;
+FREERDP_API extern volatile sig_atomic_t terminal_needs_reset;
+FREERDP_API extern int terminal_fildes;
+FREERDP_API extern struct termios orig_flags;
+FREERDP_API extern struct termios new_flags;
 #endif
 
 #ifdef __cplusplus
