@@ -82,7 +82,11 @@ rdpContext* freerdp_client_context_new(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 	context = instance->context;
 	context->instance = instance;
 	context->settings = instance->settings;
-	freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
+
+	if (freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry,
+	                                    0) != CHANNEL_RC_OK)
+		goto out_fail2;
+
 	return context;
 out_fail2:
 	free(instance->pClientEntryPoints);
@@ -102,7 +106,12 @@ void freerdp_client_context_free(rdpContext* context)
 
 	if (instance)
 	{
+		RDP_CLIENT_ENTRY_POINTS* pEntryPoints = instance->pClientEntryPoints;
 		freerdp_context_free(instance);
+
+		if (pEntryPoints)
+			IFCALL(pEntryPoints->GlobalUninit);
+
 		free(instance->pClientEntryPoints);
 		freerdp_free(instance);
 	}
@@ -116,7 +125,7 @@ int freerdp_client_start(rdpContext* context)
 		return ERROR_BAD_ARGUMENTS;
 
 	pEntryPoints = context->instance->pClientEntryPoints;
-	return pEntryPoints->ClientStart(context);
+	return IFCALLRESULT(CHANNEL_RC_OK, pEntryPoints->ClientStart, context);
 }
 
 int freerdp_client_stop(rdpContext* context)
@@ -127,7 +136,7 @@ int freerdp_client_stop(rdpContext* context)
 		return ERROR_BAD_ARGUMENTS;
 
 	pEntryPoints = context->instance->pClientEntryPoints;
-	return pEntryPoints->ClientStop(context);
+	return IFCALLRESULT(CHANNEL_RC_OK, pEntryPoints->ClientStop, context);
 }
 
 freerdp* freerdp_client_get_instance(rdpContext* context)
