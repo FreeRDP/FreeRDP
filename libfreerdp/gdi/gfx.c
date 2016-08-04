@@ -581,6 +581,17 @@ static UINT gdi_SurfaceCommand(RdpgfxClientContext* context,
 	UINT status = CHANNEL_RC_OK;
 	rdpGdi* gdi = (rdpGdi*) context->custom;
 
+	if (!context || !cmd)
+		return ERROR_INVALID_PARAMETER;
+
+	WLog_Print(gdi->log, WLOG_TRACE,
+	           "surfaceId=%lu, codec=%lu, contextId=%lu, format=%s, "
+	           "left=%lu, top=%lu, right=%lu, bottom=%lu, width=%lu, height=%lu "
+	           "length=%lu, data=%p, extra=%p",
+	           cmd->surfaceId, cmd->codecId, cmd->contextId,
+	           GetColorFormatName(cmd->format), cmd->left, cmd->top, cmd->right,
+	           cmd->bottom, cmd->width, cmd->height, cmd->length, cmd->data, cmd->extra);
+
 	switch (cmd->codecId)
 	{
 		case RDPGFX_CODECID_UNCOMPRESSED:
