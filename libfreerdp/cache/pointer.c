@@ -137,7 +137,12 @@ static BOOL update_pointer_new(rdpContext* context,
                                const POINTER_NEW_UPDATE* pointer_new)
 {
 	rdpPointer* pointer;
-	rdpCache* cache = context->cache;
+	rdpCache* cache;
+
+	if (!context || !pointer_new)
+		return FALSE;
+
+	cache = context->cache;
 	pointer = Pointer_Alloc(context);
 
 	if (!pointer)
