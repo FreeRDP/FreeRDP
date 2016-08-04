@@ -299,7 +299,7 @@ public class BookmarkBase implements Parcelable, Cloneable {
 	
 	public static class DebugSettings implements Parcelable {
 		
-		private int debug;
+		private String debug;
 		private boolean asyncChannel;
 		private boolean asyncTransport;
 		private boolean asyncInput;
@@ -314,22 +314,22 @@ public class BookmarkBase implements Parcelable, Cloneable {
 			asyncTransport = parcel.readInt() == 1;
 			asyncInput = parcel.readInt() == 1;
 			asyncUpdate = parcel.readInt() == 1;
-			debug = parcel.readInt();
+			debug = parcel.readString();
 		}
 
 		private void init() {
-			debug = 0;
+			debug = "INFO";
 			asyncChannel = true;
 			asyncTransport = true;
 			asyncInput = true;
 			asyncUpdate = true;
 		}
 
-		public int getDebugLevel() {
+		public String getDebugLevel() {
 			return debug;
 		}
 
-		public void setDebugLevel(int debug) {
+		public void setDebugLevel(String debug) {
 			this.debug = debug;			
 		}
 
@@ -395,7 +395,7 @@ public class BookmarkBase implements Parcelable, Cloneable {
 			out.writeInt(asyncTransport ? 1 : 0);
 			out.writeInt(asyncInput ? 1 : 0);
 			out.writeInt(asyncUpdate ? 1 : 0);
-			out.writeInt(debug);
+			out.writeString(debug);
 		}
 	}
 
@@ -812,7 +812,7 @@ public class BookmarkBase implements Parcelable, Cloneable {
 		editor.putBoolean("bookmark.async_transport", debugSettings.getAsyncTransport());
 		editor.putBoolean("bookmark.async_input", debugSettings.getAsyncInput());
 		editor.putBoolean("bookmark.async_update", debugSettings.getAsyncUpdate());
-		editor.putInt("bookmark.debug_level",
+		editor.putString("bookmark.debug_level",
 				debugSettings.getDebugLevel());
 		
 		editor.commit();
@@ -895,7 +895,7 @@ public class BookmarkBase implements Parcelable, Cloneable {
 		debugSettings.setAsyncTransport(sharedPrefs.getBoolean("bookmark.async_transport", true));
 		debugSettings.setAsyncInput(sharedPrefs.getBoolean("bookmark.async_input", true));
 		debugSettings.setAsyncUpdate(sharedPrefs.getBoolean("bookmark.async_update", true));
-		debugSettings.setDebugLevel(sharedPrefs.getInt("bookmark.debug_level", 0));
+		debugSettings.setDebugLevel(sharedPrefs.getString("bookmark.debug_level", "INFO"));
 	}
 
 	// Cloneable
