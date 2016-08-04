@@ -319,16 +319,16 @@ static const BYTE GDI_BS_HATCHED_PATTERNS[] =
 };
 
 INLINE BOOL gdi_decode_color(rdpGdi* gdi, const UINT32 srcColor,
-                             UINT32* color, UINT32* format)
+			     UINT32* color, UINT32* format)
 {
 	UINT32 SrcFormat = gdi_get_pixel_format(gdi->context->settings->ColorDepth,
-	                                        FALSE);
+						FALSE);
 
 	if (format)
 		*format = SrcFormat;
 
 	*color = ConvertColor(srcColor, SrcFormat,
-	                      gdi->dstFormat, &gdi->palette);
+			      gdi->dstFormat, &gdi->palette);
 	return TRUE;
 }
 
@@ -345,7 +345,7 @@ UINT32 gdi_get_pixel_format(UINT32 bitsPerPixel, BOOL vFlip)
 	switch (bitsPerPixel)
 	{
 		case 32:
-			format = vFlip ? PIXEL_FORMAT_XRGB32_VF : PIXEL_FORMAT_XRGB32;
+			format = vFlip ? PIXEL_FORMAT_ABGR32_VF : PIXEL_FORMAT_ABGR32;
 			break;
 
 		case 24:
@@ -381,8 +381,8 @@ BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, UINT32 x, UINT32 y)
 	else
 	{
 		WLog_ERR(TAG,
-		         "gdi_get_bitmap_pointer: requesting invalid pointer: (%d,%d) in %dx%d",
-		         x, y, hBmp->width, hBmp->height);
+			 "gdi_get_bitmap_pointer: requesting invalid pointer: (%d,%d) in %dx%d",
+			 x, y, hBmp->width, hBmp->height);
 		return 0;
 	}
 }
@@ -414,7 +414,7 @@ BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, UINT32 x, UINT32 y)
 				y = (y + hBmpBrush->height - (hdcBrush->brush->nYOrg % hBmpBrush->height)) %
 				    hBmpBrush->height;
 				p = hBmpBrush->data + (y * hBmpBrush->scanline) + (x * GetBytesPerPixel(
-				            hBmpBrush->format));
+					    hBmpBrush->format));
 				return p;
 			}
 			break;
@@ -428,7 +428,7 @@ BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, UINT32 x, UINT32 y)
 }
 
 gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp,
-                             BYTE* data)
+			     BYTE* data)
 {
 	gdiBitmap* bitmap;
 	bitmap = (gdiBitmap*) calloc(1, sizeof(gdiBitmap));
@@ -440,7 +440,7 @@ gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp,
 		goto fail_hdc;
 
 	WLog_Print(gdi->log, WLOG_DEBUG, "gdi_bitmap_new: width:%d height:%d bpp:%d",
-	           width, height, bpp);
+		   width, height, bpp);
 
 	if (!data)
 		bitmap->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, width, height);
@@ -473,7 +473,7 @@ void gdi_bitmap_free_ex(gdiBitmap* bitmap)
 }
 
 BOOL gdi_bitmap_update(rdpContext* context,
-                       const BITMAP_UPDATE* bitmapUpdate)
+		       const BITMAP_UPDATE* bitmapUpdate)
 {
 	UINT32 index;
 	rdpGdi* gdi;
@@ -495,12 +495,12 @@ BOOL gdi_bitmap_update(rdpContext* context,
 
 		Bitmap_SetDimensions(bmp, bitmap->width, bitmap->height);
 		Bitmap_SetRectangle(bmp, bitmap->destLeft, bitmap->destTop, bitmap->destRight,
-		                    bitmap->destBottom);
+				    bitmap->destBottom);
 
 		if (!bmp->Decompress(context, bmp, bitmap->bitmapDataStream,
-		                     bitmap->width, bitmap->height, bitmap->bitsPerPixel,
-		                     bitmap->bitmapLength, bitmap->compressed,
-		                     RDP_CODEC_ID_NONE))
+				     bitmap->width, bitmap->height, bitmap->bitsPerPixel,
+				     bitmap->bitmapLength, bitmap->compressed,
+				     RDP_CODEC_ID_NONE))
 		{
 			bmp->Free(context, bmp);
 			return FALSE;
@@ -525,7 +525,7 @@ BOOL gdi_bitmap_update(rdpContext* context,
 }
 
 static BOOL gdi_palette_update(rdpContext* context,
-                               const PALETTE_UPDATE* palette)
+			       const PALETTE_UPDATE* palette)
 {
 	UINT32 index;
 	rdpGdi* gdi;
@@ -558,7 +558,7 @@ static BOOL gdi_set_bounds(rdpContext* context, const rdpBounds* bounds)
 	if (bounds)
 	{
 		gdi_SetClipRgn(gdi->drawing->hdc, bounds->left, bounds->top,
-		               bounds->right - bounds->left + 1, bounds->bottom - bounds->top + 1);
+			       bounds->right - bounds->left + 1, bounds->bottom - bounds->top + 1);
 	}
 	else
 		gdi_SetNullClipRgn(gdi->drawing->hdc);
@@ -575,8 +575,8 @@ static BOOL gdi_dstblt(rdpContext* context, const DSTBLT_ORDER* dstblt)
 
 	gdi = context->gdi;
 	return gdi_BitBlt(gdi->drawing->hdc, dstblt->nLeftRect, dstblt->nTopRect,
-	                  dstblt->nWidth, dstblt->nHeight, NULL, 0, 0,
-	                  gdi_rop3_code(dstblt->bRop), &gdi->palette);
+			  dstblt->nWidth, dstblt->nHeight, NULL, 0, 0,
+			  gdi_rop3_code(dstblt->bRop), &gdi->palette);
 }
 
 static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
@@ -615,8 +615,8 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 				hatched = GDI_BS_HATCHED_PATTERNS + (8 * brush->hatch);
 
 				if (!freerdp_image_copy_from_monochrome(data, gdi->drawing->hdc->format, 0, 0,
-				                                        0, 8, 8,
-				                                        hatched, backColor, foreColor, &gdi->palette))
+									0, 8, 8,
+									hatched, backColor, foreColor, &gdi->palette))
 					goto out_error;
 
 				hBmp = gdi_CreateBitmapEx(8, 8, gdi->drawing->hdc->format, 0, data, NULL);
@@ -637,15 +637,15 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 					brushFormat = gdi_get_pixel_format(brush->bpp, FALSE);
 
 					if (!freerdp_image_copy(data, gdi->drawing->hdc->format, 0, 0, 0,
-					                        8, 8, brush->data, brushFormat, 0, 0, 0,
-					                        &gdi->palette))
+								8, 8, brush->data, brushFormat, 0, 0, 0,
+								&gdi->palette))
 						goto out_error;
 				}
 				else
 				{
 					if (!freerdp_image_copy_from_monochrome(data, gdi->drawing->hdc->format, 0, 0,
-					                                        0, 8, 8,
-					                                        brush->data, backColor, foreColor, &gdi->palette))
+										0, 8, 8,
+										brush->data, backColor, foreColor, &gdi->palette))
 						goto out_error;
 				}
 
@@ -671,8 +671,8 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 		hbrush->nYOrg = brush->y;
 		gdi->drawing->hdc->brush = hbrush;
 		ret = gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
-		                 patblt->nWidth, patblt->nHeight, rop,
-		                 gdi->primary->hdc, nXSrc, nYSrc);
+				 patblt->nWidth, patblt->nHeight, rop,
+				 gdi->primary->hdc, nXSrc, nYSrc);
 	}
 
 out_error:
@@ -691,13 +691,13 @@ static BOOL gdi_scrblt(rdpContext* context, const SCRBLT_ORDER* scrblt)
 
 	gdi = context->gdi;
 	return gdi_BitBlt(gdi->drawing->hdc, scrblt->nLeftRect, scrblt->nTopRect,
-	                  scrblt->nWidth, scrblt->nHeight, gdi->primary->hdc,
-	                  scrblt->nXSrc, scrblt->nYSrc, gdi_rop3_code(scrblt->bRop),
-	                  &gdi->palette);
+			  scrblt->nWidth, scrblt->nHeight, gdi->primary->hdc,
+			  scrblt->nXSrc, scrblt->nYSrc, gdi_rop3_code(scrblt->bRop),
+			  &gdi->palette);
 }
 
 static BOOL gdi_opaque_rect(rdpContext* context,
-                            const OPAQUE_RECT_ORDER* opaque_rect)
+			    const OPAQUE_RECT_ORDER* opaque_rect)
 {
 	GDI_RECT rect;
 	HGDI_BRUSH hBrush;
@@ -705,7 +705,7 @@ static BOOL gdi_opaque_rect(rdpContext* context,
 	rdpGdi* gdi = context->gdi;
 	BOOL ret;
 	gdi_CRgnToRect(opaque_rect->nLeftRect, opaque_rect->nTopRect,
-	               opaque_rect->nWidth, opaque_rect->nHeight, &rect);
+		       opaque_rect->nWidth, opaque_rect->nHeight, &rect);
 
 	if (!gdi_decode_color(gdi, opaque_rect->color, &brush_color, NULL))
 		return FALSE;
@@ -719,7 +719,7 @@ static BOOL gdi_opaque_rect(rdpContext* context,
 }
 
 static BOOL gdi_multi_opaque_rect(rdpContext* context,
-                                  const MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect)
+				  const MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect)
 {
 	UINT32 i;
 	GDI_RECT rect;
@@ -740,7 +740,7 @@ static BOOL gdi_multi_opaque_rect(rdpContext* context,
 	{
 		const DELTA_RECT* rectangle = &multi_opaque_rect->rectangles[i];
 		gdi_CRgnToRect(rectangle->left, rectangle->top,
-		               rectangle->width, rectangle->height, &rect);
+			       rectangle->width, rectangle->height, &rect);
 		ret = gdi_FillRect(gdi->drawing->hdc, &rect, hBrush);
 
 		if (!ret)
@@ -762,7 +762,7 @@ static BOOL gdi_line_to(rdpContext* context, const LINE_TO_ORDER* lineTo)
 		return FALSE;
 
 	if (!(hPen = gdi_CreatePen(lineTo->penStyle, lineTo->penWidth, color,
-	                           SrcFormat, &gdi->palette)))
+				   SrcFormat, &gdi->palette)))
 		return FALSE;
 
 	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT) hPen);
@@ -820,9 +820,9 @@ static BOOL gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 	bitmap = (gdiBitmap*) memblt->bitmap;
 	gdi = context->gdi;
 	return gdi_BitBlt(gdi->drawing->hdc, memblt->nLeftRect, memblt->nTopRect,
-	                  memblt->nWidth, memblt->nHeight, bitmap->hdc,
-	                  memblt->nXSrc, memblt->nYSrc, gdi_rop3_code(memblt->bRop),
-	                  &gdi->palette);
+			  memblt->nWidth, memblt->nHeight, bitmap->hdc,
+			  memblt->nXSrc, memblt->nYSrc, gdi_rop3_code(memblt->bRop),
+			  &gdi->palette);
 }
 
 static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
@@ -857,9 +857,9 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 			}
 
 			ret = gdi_BitBlt(gdi->drawing->hdc, mem3blt->nLeftRect, mem3blt->nTopRect,
-			                 mem3blt->nWidth, mem3blt->nHeight, bitmap->hdc,
-			                 mem3blt->nXSrc, mem3blt->nYSrc, gdi_rop3_code(mem3blt->bRop),
-			                 &gdi->palette);
+					 mem3blt->nWidth, mem3blt->nHeight, bitmap->hdc,
+					 mem3blt->nXSrc, mem3blt->nYSrc, gdi_rop3_code(mem3blt->bRop),
+					 &gdi->palette);
 			gdi_DeleteObject((HGDIOBJECT) gdi->drawing->hdc->brush);
 			gdi->drawing->hdc->brush = originalBrush;
 			break;
@@ -869,8 +869,8 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 				HGDI_BITMAP hBmp;
 				UINT32 brushFormat;
 				BYTE* data = (BYTE*) _aligned_malloc(8 * 8 * GetBytesPerPixel(
-				        gdi->drawing->hdc->format),
-				                                     16);
+					gdi->drawing->hdc->format),
+								     16);
 
 				if (!data)
 				{
@@ -883,8 +883,8 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 					brushFormat = gdi_get_pixel_format(brush->bpp, FALSE);
 
 					if (!freerdp_image_copy(data, gdi->drawing->hdc->format, 0, 0, 0,
-					                        8, 8, brush->data, brushFormat,
-					                        0, 0, 0, &gdi->palette))
+								8, 8, brush->data, brushFormat,
+								0, 0, 0, &gdi->palette))
 					{
 						ret = FALSE;
 						_aligned_free(data);
@@ -894,9 +894,9 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 				else
 				{
 					if (!freerdp_image_copy_from_monochrome(data, gdi->drawing->hdc->format, 0, 0,
-					                                        0, 8, 8,
-					                                        brush->data, backColor, foreColor,
-					                                        &gdi->palette))
+										0, 8, 8,
+										brush->data, backColor, foreColor,
+										&gdi->palette))
 					{
 						ret = FALSE;
 						_aligned_free(data);
@@ -925,9 +925,9 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 				gdi->drawing->hdc->brush->nXOrg = brush->x;
 				gdi->drawing->hdc->brush->nYOrg = brush->y;
 				ret = gdi_BitBlt(gdi->drawing->hdc, mem3blt->nLeftRect, mem3blt->nTopRect,
-				                 mem3blt->nWidth, mem3blt->nHeight, bitmap->hdc,
-				                 mem3blt->nXSrc, mem3blt->nYSrc, gdi_rop3_code(mem3blt->bRop),
-				                 &gdi->palette);
+						 mem3blt->nWidth, mem3blt->nHeight, bitmap->hdc,
+						 mem3blt->nXSrc, mem3blt->nYSrc, gdi_rop3_code(mem3blt->bRop),
+						 &gdi->palette);
 				gdi_DeleteObject((HGDIOBJECT) gdi->drawing->hdc->brush);
 				gdi->drawing->hdc->brush = originalBrush;
 			}
@@ -944,7 +944,7 @@ out_fail:
 }
 
 static BOOL gdi_polygon_sc(rdpContext* context,
-                           const POLYGON_SC_ORDER* polygon_sc)
+			   const POLYGON_SC_ORDER* polygon_sc)
 {
 	WLog_WARN(TAG, "%s: not implemented", __FUNCTION__);
 	return FALSE;
@@ -957,31 +957,31 @@ static BOOL gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 }
 
 static BOOL gdi_ellipse_sc(rdpContext* context,
-                           const ELLIPSE_SC_ORDER* ellipse_sc)
+			   const ELLIPSE_SC_ORDER* ellipse_sc)
 {
 	WLog_WARN(TAG, "%s: not implemented", __FUNCTION__);
 	return FALSE;
 }
 
 static BOOL gdi_ellipse_cb(rdpContext* context,
-                           const ELLIPSE_CB_ORDER* ellipse_cb)
+			   const ELLIPSE_CB_ORDER* ellipse_cb)
 {
 	WLog_WARN(TAG, "%s: not implemented", __FUNCTION__);
 	return FALSE;
 }
 
 static BOOL gdi_frame_marker(rdpContext* context,
-                             const FRAME_MARKER_ORDER* frameMarker)
+			     const FRAME_MARKER_ORDER* frameMarker)
 {
 	return TRUE;
 }
 
 BOOL gdi_surface_frame_marker(rdpContext* context,
-                              const SURFACE_FRAME_MARKER* surfaceFrameMarker)
+			      const SURFACE_FRAME_MARKER* surfaceFrameMarker)
 {
 	WLog_Print(context->gdi->log, WLOG_DEBUG, "frameId %d frameAction %d",
-	           surfaceFrameMarker->frameId,
-	           surfaceFrameMarker->frameAction);
+		   surfaceFrameMarker->frameId,
+		   surfaceFrameMarker->frameAction);
 
 	switch (surfaceFrameMarker->frameAction)
 	{
@@ -1002,26 +1002,26 @@ BOOL gdi_surface_frame_marker(rdpContext* context,
 }
 
 static BOOL gdi_surface_bits(rdpContext* context,
-                             const SURFACE_BITS_COMMAND* cmd)
+			     const SURFACE_BITS_COMMAND* cmd)
 {
 	rdpGdi* gdi = context->gdi;
 	WLog_Print(gdi->log, WLOG_DEBUG,
-	           "destLeft %d destTop %d destRight %d destBottom %d "
-	           "bpp %d codecID %d width %d height %d length %d",
-	           cmd->destLeft, cmd->destTop, cmd->destRight, cmd->destBottom,
-	           cmd->bpp, cmd->codecID, cmd->width, cmd->height, cmd->bitmapDataLength);
+		   "destLeft %d destTop %d destRight %d destBottom %d "
+		   "bpp %d codecID %d width %d height %d length %d",
+		   cmd->destLeft, cmd->destTop, cmd->destRight, cmd->destBottom,
+		   cmd->bpp, cmd->codecID, cmd->width, cmd->height, cmd->bitmapDataLength);
 
 	switch (cmd->codecID)
 	{
 		case RDP_CODEC_ID_REMOTEFX:
 			{
 				if (!rfx_process_message(context->codecs->rfx, cmd->bitmapData,
-				                         PIXEL_FORMAT_BGRX32,
-				                         cmd->bitmapDataLength,
-				                         0, 0,
-				                         gdi->primary_buffer, gdi->dstFormat,
-				                         cmd->width * GetBytesPerPixel(gdi->dstFormat),
-				                         cmd->height, NULL))
+							 PIXEL_FORMAT_BGRX32,
+							 cmd->bitmapDataLength,
+							 0, 0,
+							 gdi->primary_buffer, gdi->dstFormat,
+							 cmd->width * GetBytesPerPixel(gdi->dstFormat),
+							 cmd->height, NULL))
 				{
 					WLog_ERR(TAG, "Failed to process RemoteFX message");
 					return FALSE;
@@ -1032,10 +1032,10 @@ static BOOL gdi_surface_bits(rdpContext* context,
 		case RDP_CODEC_ID_NSCODEC:
 			{
 				if (!nsc_process_message(context->codecs->nsc, cmd->bpp, cmd->width,
-				                         cmd->height, cmd->bitmapData,
-				                         cmd->bitmapDataLength, gdi->primary_buffer,
-				                         gdi->dstFormat, gdi->stride, cmd->destLeft, cmd->destTop,
-				                         cmd->width, cmd->height))
+							 cmd->height, cmd->bitmapData,
+							 cmd->bitmapDataLength, gdi->primary_buffer,
+							 gdi->dstFormat, gdi->stride, cmd->destLeft, cmd->destTop,
+							 cmd->width, cmd->height))
 					return FALSE;
 			}
 			break;
@@ -1043,9 +1043,9 @@ static BOOL gdi_surface_bits(rdpContext* context,
 		case RDP_CODEC_ID_NONE:
 			{
 				if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, gdi->stride,
-				                        cmd->destLeft, cmd->destTop, cmd->width, cmd->height,
-				                        cmd->bitmapData, PIXEL_FORMAT_XRGB32_VF, 0, 0, 0,
-				                        &gdi->palette))
+							cmd->destLeft, cmd->destTop, cmd->width, cmd->height,
+							cmd->bitmapData, PIXEL_FORMAT_XRGB32_VF, 0, 0, 0,
+							&gdi->palette))
 					return FALSE;
 			}
 			break;
@@ -1097,7 +1097,7 @@ static void gdi_register_update_callbacks(rdpUpdate* update)
 }
 
 static BOOL gdi_init_primary(rdpGdi* gdi, UINT32 stride, UINT32 format,
-                             BYTE* buffer, void (*pfree)(void*))
+			     BYTE* buffer, void (*pfree)(void*))
 {
 	gdi->primary = (gdiBitmap*) calloc(1, sizeof(gdiBitmap));
 
@@ -1116,14 +1116,14 @@ static BOOL gdi_init_primary(rdpGdi* gdi, UINT32 stride, UINT32 format,
 	if (!buffer)
 	{
 		gdi->primary->bitmap = gdi_CreateCompatibleBitmap(
-		                           gdi->hdc, gdi->width, gdi->height);
+					   gdi->hdc, gdi->width, gdi->height);
 	}
 	else
 	{
 		gdi->primary->bitmap = gdi_CreateBitmapEx(gdi->width, gdi->height,
-		                       gdi->dstFormat,
-		                       gdi->stride,
-		                       buffer, pfree);
+				       gdi->dstFormat,
+				       gdi->stride,
+				       buffer, pfree);
 	}
 
 	gdi->stride = gdi->primary->bitmap->scanline;
@@ -1145,7 +1145,7 @@ static BOOL gdi_init_primary(rdpGdi* gdi, UINT32 stride, UINT32 format,
 	gdi->primary->hdc->hwnd->count = 32;
 
 	if (!(gdi->primary->hdc->hwnd->cinvalid = (HGDI_RGN) calloc(
-	            gdi->primary->hdc->hwnd->count, sizeof(GDI_RGN))))
+		    gdi->primary->hdc->hwnd->count, sizeof(GDI_RGN))))
 		goto fail_hwnd;
 
 	gdi->primary->hdc->hwnd->ninvalid = 0;
@@ -1171,8 +1171,8 @@ BOOL gdi_resize(rdpGdi* gdi, UINT32 width, UINT32 height)
 }
 
 BOOL gdi_resize_ex(rdpGdi* gdi, UINT32 width, UINT32 height,
-                   UINT32 stride, UINT32 format, BYTE* buffer,
-                   void (*pfree)(void*))
+		   UINT32 stride, UINT32 format, BYTE* buffer,
+		   void (*pfree)(void*))
 {
 	if (!gdi || !gdi->primary)
 		return FALSE;
@@ -1202,7 +1202,7 @@ BOOL gdi_init(freerdp* instance, UINT32 format)
 }
 
 BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
-                 void (*pfree)(void*))
+		 void (*pfree)(void*))
 {
 	UINT32 SrcFormat = gdi_get_pixel_format(instance->settings->ColorDepth, FALSE);
 	rdpGdi* gdi = (rdpGdi*) calloc(1, sizeof(rdpGdi));
@@ -1223,9 +1223,9 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 	gdi->dstFormat = format;
 	/* default internal buffer format */
 	WLog_Print(gdi->log, WLOG_INFO, "Local framebuffer format  %s",
-	           GetColorFormatName(gdi->dstFormat));
+		   GetColorFormatName(gdi->dstFormat));
 	WLog_Print(gdi->log, WLOG_INFO, "Remote framebuffer format %s",
-	           GetColorFormatName(SrcFormat));
+		   GetColorFormatName(SrcFormat));
 
 	if (!(gdi->hdc = gdi_GetDC()))
 		goto fail;
@@ -1239,7 +1239,7 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 		goto fail;
 
 	if (!freerdp_client_codecs_prepare(context->codecs, FREERDP_CODEC_ALL,
-	                                   gdi->width, gdi->height))
+					   gdi->width, gdi->height))
 		goto fail;
 
 	gdi_register_update_callbacks(instance->update);
