@@ -290,7 +290,7 @@ static UINT gdi_SurfaceCommand_ClearCodec(rdpGdi* gdi,
 
 	if (rc < 0)
 	{
-		WLog_ERR(TAG, "clear_decompress failure: %d", status);
+		WLog_ERR(TAG, "clear_decompress failure: %d", rc);
 		return ERROR_INTERNAL_ERROR;
 	}
 
