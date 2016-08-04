@@ -331,8 +331,10 @@ BOOL freerdp_image_copy_from_pointer_data(
 							pixelFormat = PIXEL_FORMAT_BGRA32;
 							xorPixel = ReadColor(xorBits, pixelFormat);
 
-							if (xorPixel & 0xFF000000)
+							if (xorPixel & 0xFF)
 								ignoreAndMask = TRUE;
+							else
+								xorPixel |= 0xFF;
 						}
 						else if (xorBpp == 16)
 						{
