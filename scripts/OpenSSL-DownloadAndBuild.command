@@ -17,7 +17,6 @@ SDK_VERSION=""
 # Minimum SDK version the application supports
 MIN_SDK_VERSION=""
 
-
 ## Defaults
 INSTALLDIR="external"
 
@@ -44,9 +43,9 @@ if [ ! -d "$DEVELOPER" ]; then
   echo "sudo xcode-select -switch /Applications/Xcode.app/Contents/Developer"
   exit 1
 fi
+
 function run {
-    echo "PATH=$PATH"
-    $@
+    "$@"
     local status=$?
     if [ $status -ne 0 ]; then
         echo "error with $@" >&2
@@ -62,7 +61,7 @@ function buildArch(){
     then
         PLATFORM="iPhoneSimulator"
     else
-        sed -ie "s!static volatile sig_atomic_t intr_signal;!static volatile intr_signal;!" "crypto/ui/ui_openssl.c"
+        run sed -ie "s!static volatile sig_atomic_t intr_signal;!static volatile intr_signal;!" "crypto/ui/ui_openssl.c"
         PLATFORM="iPhoneOS"
     fi
 
@@ -144,19 +143,19 @@ case `pwd` in
 esac
 
 # Cleanup old build artifacts
-run mkdir -p ../../include/openssl
-run rm -f ../../include/openssl/*.h
+run rm -rf ../../include
+run mkdir -p ../../include
 
+run rm -rf ../../lib
 run mkdir -p ../../lib
-run rm -f ../../lib/*.a
-
-echo "Copying header files ..."
-run cp include/openssl/*.h ../../include/openssl/
-echo
 
 for i in ${ARCHS}; do
     buildArch $i
 done
+
+echo "Copying header files ..."
+run cp -r include/ ../../include/
+echo
 
 echo "Combining to unversal binary"
 run lipo -create ../../lib/libcrypto_*.a -o ../../lib/libcrypto.a
