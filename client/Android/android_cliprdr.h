@@ -24,9 +24,9 @@
 
 #include "android_freerdp.h"
 
-int android_cliprdr_send_client_format_list(CliprdrClientContext* cliprdr);
+UINT android_cliprdr_send_client_format_list(CliprdrClientContext* cliprdr);
 
-int android_cliprdr_init(androidContext* afc, CliprdrClientContext* cliprdr);
-int android_cliprdr_uninit(androidContext* afc, CliprdrClientContext* cliprdr);
+BOOL android_cliprdr_init(androidContext* afc, CliprdrClientContext* cliprdr);
+BOOL android_cliprdr_uninit(androidContext* afc, CliprdrClientContext* cliprdr);
 
 #endif /* __ANDROID_CLIPRDR_H__ */
