@@ -89,6 +89,8 @@ public class LibFreeRDP {
         void OnSettingsChanged(int width, int height, int bpp);
 
         boolean OnAuthenticate(StringBuilder username, StringBuilder domain, StringBuilder password);
+        boolean OnGatewayAuthenticate(StringBuilder username, StringBuilder domain, StringBuilder
+                password);
 
         int OnVerifiyCertificate(String commonName, String subject,
                 String issuer, String fingerprint, boolean mismatch);
@@ -387,6 +389,17 @@ public class LibFreeRDP {
         UIEventListener uiEventListener = s.getUIEventListener();
         if (uiEventListener != null)
             return uiEventListener.OnAuthenticate(username, domain, password);
+        return false;
+    }
+
+    private static boolean OnGatewayAuthenticate(int inst, StringBuilder username, StringBuilder
+            domain, StringBuilder password) {
+        SessionState s = GlobalApp.getSession(inst);
+        if (s == null)
+            return false;
+        UIEventListener uiEventListener = s.getUIEventListener();
+        if (uiEventListener != null)
+            return uiEventListener.OnGatewayAuthenticate(username, domain, password);
         return false;
     }
 

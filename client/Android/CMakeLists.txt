@@ -43,11 +43,9 @@ endif()
 
 add_library(${MODULE_NAME} SHARED ${${MODULE_PREFIX}_SRCS})
 
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client)
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr freerdp)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr freerdp freerdp-client)
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} dl)
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} log)
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} jnigraphics)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
