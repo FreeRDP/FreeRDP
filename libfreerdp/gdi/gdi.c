@@ -670,9 +670,9 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 		hbrush->nXOrg = brush->x;
 		hbrush->nYOrg = brush->y;
 		gdi->drawing->hdc->brush = hbrush;
-		ret = gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
-		                 patblt->nWidth, patblt->nHeight, rop,
-		                 gdi->primary->hdc, nXSrc, nYSrc);
+		ret = gdi_BitBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
+		                 patblt->nWidth, patblt->nHeight,
+		                 gdi->primary->hdc, nXSrc, nYSrc, rop, &gdi->palette);
 	}
 
 out_error:
@@ -1021,7 +1021,7 @@ static BOOL gdi_surface_bits(rdpContext* context,
 		case RDP_CODEC_ID_REMOTEFX:
 			{
 				if (!rfx_process_message(context->codecs->rfx, cmd->bitmapData,
-							 PIXEL_FORMAT_BGRX32,
+				                         PIXEL_FORMAT_BGRX32,
 				                         cmd->bitmapDataLength,
 				                         0, 0,
 				                         gdi->primary_buffer, gdi->dstFormat,

@@ -318,7 +318,7 @@ out:
 }
 
 /* Glyph Class */
-static BOOL xf_Glyph_New(rdpContext* context, rdpGlyph* glyph)
+static BOOL xf_Glyph_New(rdpContext* context, const rdpGlyph* glyph)
 {
 	int scanline;
 	XImage* image;
@@ -354,7 +354,7 @@ static void xf_Glyph_Free(rdpContext* context, rdpGlyph* glyph)
 	free(glyph);
 }
 
-static BOOL xf_Glyph_Draw(rdpContext* context, rdpGlyph* glyph, UINT32 x,
+static BOOL xf_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, UINT32 x,
                           UINT32 y)
 {
 	xfGlyph* xf_glyph;

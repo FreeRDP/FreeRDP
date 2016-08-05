@@ -201,7 +201,7 @@ static BOOL gdi_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap,
 }
 
 /* Glyph Class */
-static BOOL gdi_Glyph_New(rdpContext* context, rdpGlyph* glyph)
+static BOOL gdi_Glyph_New(rdpContext* context, const rdpGlyph* glyph)
 {
 	BYTE* data;
 	gdiGlyph* gdi_glyph;
@@ -254,7 +254,7 @@ static void gdi_Glyph_Free(rdpContext* context, rdpGlyph* glyph)
 	}
 }
 
-static BOOL gdi_Glyph_Draw(rdpContext* context, rdpGlyph* glyph, UINT32 x,
+static BOOL gdi_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, UINT32 x,
                            UINT32 y)
 {
 	gdiGlyph* gdi_glyph;
@@ -267,7 +267,7 @@ static BOOL gdi_Glyph_Draw(rdpContext* context, rdpGlyph* glyph, UINT32 x,
 	gdi_glyph = (gdiGlyph*) glyph;
 	return gdi_BitBlt(gdi->drawing->hdc, x, y, gdi_glyph->bitmap->width,
 	                  gdi_glyph->bitmap->height, gdi_glyph->hdc, 0, 0,
-	                  GDI_todo, &context->gdi->palette);
+	                  GDI_GLYPH_ORDER, &context->gdi->palette);
 }
 
 static BOOL gdi_Glyph_BeginDraw(rdpContext* context, UINT32 x, UINT32 y,
