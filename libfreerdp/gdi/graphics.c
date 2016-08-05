@@ -267,7 +267,7 @@ static BOOL gdi_Glyph_Draw(rdpContext* context, rdpGlyph* glyph, UINT32 x,
 	gdi_glyph = (gdiGlyph*) glyph;
 	return gdi_BitBlt(gdi->drawing->hdc, x, y, gdi_glyph->bitmap->width,
 	                  gdi_glyph->bitmap->height, gdi_glyph->hdc, 0, 0,
-	                  GDI_DSPDxox, &context->gdi->palette);
+	                  GDI_todo, &context->gdi->palette);
 }
 
 static BOOL gdi_Glyph_BeginDraw(rdpContext* context, UINT32 x, UINT32 y,
@@ -290,13 +290,13 @@ static BOOL gdi_Glyph_BeginDraw(rdpContext* context, UINT32 x, UINT32 y,
 	if (!gdi_decode_color(gdi, fgcolor, &fgcolor, NULL))
 		return FALSE;
 
-	gdi->drawing->hdc->brush = gdi_CreateSolidBrush(fgcolor);
+	gdi->drawing->hdc->brush = gdi_CreateSolidBrush(bgcolor);
 
 	if (!gdi->drawing->hdc->brush)
 		return FALSE;
 
-	gdi_SetTextColor(gdi->drawing->hdc, fgcolor);
-	gdi_SetBkColor(gdi->drawing->hdc, bgcolor);
+	gdi_SetTextColor(gdi->drawing->hdc, bgcolor);
+	gdi_SetBkColor(gdi->drawing->hdc, fgcolor);
 	return gdi_SetClipRgn(gdi->drawing->hdc, x, y, width, height);
 }
 

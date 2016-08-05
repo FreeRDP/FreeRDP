@@ -65,6 +65,10 @@
 #define GDI_MERGEPAINT			0x00BB0226 /* D = ~S | D */
 #define GDI_PATCOPY			0x00F00021 /* D = P */
 #define GDI_PATPAINT			0x00FB0A09 /* D = D | (P | ~S) */
+#define GDI_PSo				0x00FC008A
+#define GDI_PSDnoo			0x00FD0A0A
+#define GDI_DPSoo			0x00FE02A9
+#define GDI_DSPDoax			0x00620786
 #define GDI_PATINVERT			0x005A0049 /* D = P ^ D	*/
 #define GDI_DSTINVERT			0x00550009 /* D = ~D */
 #define GDI_BLACKNESS			0x00000042 /* D = 0 */
@@ -99,6 +103,7 @@
 #define GDI_SDno			0x00DD0228 /* D = S | ~D */
 #define GDI_PDno			0x00F50225 /* D = P | ~D */
 #define GDI_DPo				0x00FA0089 /* D = D | P */
+#define GDI_todo			0xFFFFFFFF /* TODO: Find out which ROP this implements */
 
 /* Brush Styles */
 #define GDI_BS_SOLID			0x00
