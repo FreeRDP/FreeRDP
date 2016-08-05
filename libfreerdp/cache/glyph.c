@@ -44,7 +44,7 @@ static void glyph_cache_fragment_put(rdpGlyphCache* glyph, UINT32 index,
                                      UINT32 count, void* entry);
 
 static BOOL update_process_glyph(rdpContext* context, const BYTE* data,
-                                 UINT32* index,	UINT32* x, UINT32* y,
+                                 UINT32* index,	INT32* x, INT32* y,
                                  UINT32 cacheId, UINT32 ulCharInc, UINT32 flAccel)
 {
 	INT32 offset;
@@ -80,7 +80,7 @@ static BOOL update_process_glyph(rdpContext* context, const BYTE* data,
 
 		if (flAccel & SO_VERTICAL)
 			*y += offset;
-		else
+		else if (flAccel & SO_HORIZONTAL)
 			*x += offset;
 	}
 
@@ -101,11 +101,11 @@ static BOOL update_process_glyph_fragments(rdpContext* context,
         UINT32 length, UINT32 cacheId,
         UINT32 ulCharInc, UINT32 flAccel,
         UINT32 bgcolor, UINT32 fgcolor,
-        UINT32 x, UINT32 y,
-        UINT32 bkX, UINT32 bkY,
-        UINT32 bkWidth, UINT32 bkHeight,
-        UINT32 opX, UINT32 opY,
-        UINT32 opWidth, UINT32 opHeight,
+        INT32 x, INT32 y,
+        INT32 bkX, INT32 bkY,
+        INT32 bkWidth, INT32 bkHeight,
+        INT32 opX, INT32 opY,
+        INT32 opWidth, INT32 opHeight,
         BOOL fOpRedundant)
 {
 	UINT32 n;

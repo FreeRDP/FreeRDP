@@ -39,255 +39,790 @@
 
 const char* gdi_rop_to_string(UINT32 code)
 {
-	static char buffer[1024];
-
 	switch (code)
 	{
-		/* Binary Raster Operations (ROP2) */
-		case GDI_R2_BLACK:
-			_snprintf(buffer, sizeof(buffer), "GDI_R2_BLACK [%08X]", code);
-			break;
-
-		case GDI_R2_NOTMERGEPEN:
-			_snprintf(buffer, sizeof(buffer), "GDI_R2_NOTMERGEPEN [%08X]", code);
-			break;
-
-		case GDI_R2_MASKNOTPEN:
-			_snprintf(buffer, sizeof(buffer), "GDI_R2_MASKNOTPEN [%08X]", code);
-			break;
-
-		case GDI_R2_NOTCOPYPEN:
-			_snprintf(buffer, sizeof(buffer), "GDI_R2_NOTCOPYPEN [%08X]", code);
-			break;
-
-		case GDI_R2_MASKPENNOT:
-			_snprintf(buffer, sizeof(buffer), "GDI_R2_MASKPENNOT [%08X]", code);
-			break;
-
-		case GDI_R2_NOT:
-			_snprintf(buffer, sizeof(buffer), "GDI_R2_NOT [%08X]", code);
-			break;
-
-		case GDI_R2_XORPEN:
-			_snprintf(buffer, sizeof(buffer), "GDI_R2_XORPEN [%08X]", code);
-			break;
-
-		case GDI_R2_NOTMASKPEN:
-			_snprintf(buffer, sizeof(buffer), "GDI_R2_NOTMASKPEN [%08X]", code);
-			break;
-
-		case GDI_R2_MASKPEN:
-			_snprintf(buffer, sizeof(buffer), "GDI_R2_MASKPEN [%08X]", code);
-			break;
-
-		case GDI_R2_NOTXORPEN:
-			_snprintf(buffer, sizeof(buffer), "GDI_R2_NOTXORPEN [%08X]", code);
-			break;
-
-		case GDI_R2_NOP:
-			_snprintf(buffer, sizeof(buffer), "GDI_R2_NOP [%08X]", code);
-			break;
-
-		case GDI_R2_MERGENOTPEN:
-			_snprintf(buffer, sizeof(buffer), "GDI_R2_MERGENOTPEN [%08X]", code);
-			break;
-
-		case GDI_R2_COPYPEN:
-			_snprintf(buffer, sizeof(buffer), "GDI_R2_COPYPEN [%08X]", code);
-			break;
-
-		case GDI_R2_MERGEPENNOT:
-			_snprintf(buffer, sizeof(buffer), "GDI_R2_MERGEPENNOT [%08X]", code);
-			break;
-
-		case GDI_R2_MERGEPEN:
-			_snprintf(buffer, sizeof(buffer), "GDI_R2_MERGEPEN [%08X]", code);
-			break;
-
-		case GDI_R2_WHITE:
-			_snprintf(buffer, sizeof(buffer), "GDI_R2_WHITE [%08X]", code);
-			break;
-
-		/* Ternary Raster Operations (ROP3) */
-		case GDI_SRCCOPY:
-			_snprintf(buffer, sizeof(buffer), "GDI_SRCCOPY [%08X]", code);
-			break;
-
-		case GDI_SRCPAINT:
-			_snprintf(buffer, sizeof(buffer), "GDI_SRCPAINT [%08X]", code);
-			break;
-
-		case GDI_SRCAND	:
-			_snprintf(buffer, sizeof(buffer), "GDI_SRCAND	 [%08X]", code);
-			break;
-
-		case GDI_SRCINVERT:
-			_snprintf(buffer, sizeof(buffer), "GDI_SRCINVERT [%08X]", code);
-			break;
-
-		case GDI_SRCERASE:
-			_snprintf(buffer, sizeof(buffer), "GDI_SRCERASE [%08X]", code);
-			break;
-
-		case GDI_NOTSRCCOPY:
-			_snprintf(buffer, sizeof(buffer), "GDI_NOTSRCCOPY [%08X]", code);
-			break;
-
-		case GDI_NOTSRCERASE:
-			_snprintf(buffer, sizeof(buffer), "GDI_NOTSRCERASE [%08X]", code);
-			break;
-
-		case GDI_MERGECOPY:
-			_snprintf(buffer, sizeof(buffer), "GDI_MERGECOPY [%08X]", code);
-			break;
-
-		case GDI_MERGEPAINT:
-			_snprintf(buffer, sizeof(buffer), "GDI_MERGEPAINT [%08X]", code);
-			break;
-
-		case GDI_PATCOPY:
-			_snprintf(buffer, sizeof(buffer), "GDI_PATCOPY [%08X]", code);
-			break;
-
-		case GDI_PATPAINT:
-			_snprintf(buffer, sizeof(buffer), "GDI_PATPAINT [%08X]", code);
-			break;
-
-		case GDI_PATINVERT:
-			_snprintf(buffer, sizeof(buffer), "GDI_PATINVERT [%08X]", code);
-			break;
-
-		case GDI_DSTINVERT:
-			_snprintf(buffer, sizeof(buffer), "GDI_DSTINVERT [%08X]", code);
-			break;
-
 		case GDI_BLACKNESS:
-			_snprintf(buffer, sizeof(buffer), "GDI_BLACKNESS [%08X]", code);
-			break;
+			return "0";
 
-		case GDI_WHITENESS:
-			_snprintf(buffer, sizeof(buffer), "GDI_WHITENESS [%08X]", code);
-			break;
+		case GDI_DPSoon:
+			return "DPSoon";
 
-		case GDI_DSPDxax:
-			_snprintf(buffer, sizeof(buffer), "GDI_DSPDxax [%08X]", code);
-			break;
+		case GDI_DPSona:
+			return "DPSona";
 
-		case GDI_PSDPxax:
-			_snprintf(buffer, sizeof(buffer), "GDI_PSDPxax [%08X]", code);
-			break;
+		case GDI_PSon:
+			return "PSon";
 
-		case GDI_SPna:
-			_snprintf(buffer, sizeof(buffer), "GDI_SPna [%08X]", code);
-			break;
-
-		case GDI_DSna:
-			_snprintf(buffer, sizeof(buffer), "GDI_DSna [%08X]", code);
-			break;
-
-		case GDI_DPa:
-			_snprintf(buffer, sizeof(buffer), "GDI_DPa [%08X]", code);
-			break;
-
-		case GDI_PDxn:
-			_snprintf(buffer, sizeof(buffer), "GDI_PDxn [%08X]", code);
-			break;
-
-		case GDI_DSxn:
-			_snprintf(buffer, sizeof(buffer), "GDI_DSxn [%08X]", code);
-			break;
-
-		case GDI_PSDnox:
-			_snprintf(buffer, sizeof(buffer), "GDI_PSDnox [%08X]", code);
-			break;
-
-		case GDI_PDSona:
-			_snprintf(buffer, sizeof(buffer), "GDI_PDSona [%08X]", code);
-			break;
-
-		case GDI_PSDPaox:
-			_snprintf(buffer, sizeof(buffer), "GDI_PSDPaox [%08X]", code);
-			break;
-
-		case GDI_PSDPxox:
-			_snprintf(buffer, sizeof(buffer), "GDI_PSDPxox [%08X]", code);
-			break;
-
-		case GDI_PSDPxoxn:
-			_snprintf(buffer, sizeof(buffer), "GDI_PSDPxoxn [%08X]", code);
-			break;
-
-		case GDI_DSPDxox:
-			_snprintf(buffer, sizeof(buffer), "GDI_DSPDxox [%08X]", code);
-			break;
-
-		case GDI_DPSDonox:
-			_snprintf(buffer, sizeof(buffer), "GDI_DPSDonox [%08X]", code);
-			break;
-
-		case GDI_SPDSxax:
-			_snprintf(buffer, sizeof(buffer), "GDI_SPDSxax [%08X]", code);
-			break;
+		case GDI_SDPona:
+			return "SDPona";
 
 		case GDI_DPon:
-			_snprintf(buffer, sizeof(buffer), "GDI_DPon [%08X]", code);
-			break;
+			return "DPon";
+
+		case GDI_PDSxnon:
+			return "PDSxnon";
+
+		case GDI_PDSaon:
+			return "PDSaon";
+
+		case GDI_SDPnaa:
+			return "SDPnaa";
+
+		case GDI_PDSxon:
+			return "PDSxon";
 
 		case GDI_DPna:
-			_snprintf(buffer, sizeof(buffer), "GDI_DPna [%08X]", code);
-			break;
+			return "DPna";
+
+		case GDI_PSDnaon:
+			return "PSDnaon";
+
+		case GDI_SPna:
+			return "SPna";
+
+		case GDI_PDSnaon:
+			return "PDSnaon";
+
+		case GDI_PDSonon:
+			return "PDSonon";
 
 		case GDI_Pn:
-			_snprintf(buffer, sizeof(buffer), "GDI_Pn [%08X]", code);
-			break;
+			return "Pn";
+
+		case GDI_PDSona:
+			return "PDSona";
+
+		case GDI_NOTSRCERASE:
+			return "DSon";
+
+		case GDI_SDPxnon:
+			return "SDPxnon";
+
+		case GDI_SDPaon:
+			return "SDPaon";
+
+		case GDI_DPSxnon:
+			return "DPSxnon";
+
+		case GDI_DPSaon:
+			return "DPSaon";
+
+		case GDI_PSDPSanaxx:
+			return "PSDPSanaxx";
+
+		case GDI_SSPxDSxaxn:
+			return "SSPxDSxaxn";
+
+		case GDI_SPxPDxa:
+			return "SPxPDxa";
+
+		case GDI_SDPSanaxn:
+			return "SDPSanaxn";
+
+		case GDI_PDSPaox:
+			return "PDSPaox";
+
+		case GDI_SDPSxaxn:
+			return "SDPSxaxn";
+
+		case GDI_PSDPaox:
+			return "PSDPaox";
+
+		case GDI_DSPDxaxn:
+			return "DSPDxaxn";
+
+		case GDI_PDSox:
+			return "PDSox";
+
+		case GDI_PDSoan:
+			return "PDSoan";
+
+		case GDI_DPSnaa:
+			return "DPSnaa";
+
+		case GDI_SDPxon:
+			return "SDPxon";
+
+		case GDI_DSna:
+			return "DSna";
+
+		case GDI_SPDnaon:
+			return "SPDnaon";
+
+		case GDI_SPxDSxa:
+			return "SPxDSxa";
+
+		case GDI_PDSPanaxn:
+			return "PDSPanaxn";
+
+		case GDI_SDPSaox:
+			return "SDPSaox";
+
+		case GDI_SDPSxnox:
+			return "SDPSxnox";
+
+		case GDI_DPSxa:
+			return "DPSxa";
+
+		case GDI_PSDPSaoxxn:
+			return "PSDPSaoxxn";
+
+		case GDI_DPSana:
+			return "DPSana";
+
+		case GDI_SSPxPDxaxn:
+			return "SSPxPDxaxn";
+
+		case GDI_SPDSoax:
+			return "SPDSoax";
+
+		case GDI_PSDnox:
+			return "PSDnox";
+
+		case GDI_PSDPxox:
+			return "PSDPxox";
+
+		case GDI_PSDnoan:
+			return "PSDnoan";
+
+		case GDI_PSna:
+			return "PSna";
+
+		case GDI_SDPnaon:
+			return "SDPnaon";
+
+		case GDI_SDPSoox:
+			return "SDPSoox";
+
+		case GDI_NOTSRCCOPY:
+			return "Sn";
+
+		case GDI_SPDSaox:
+			return "SPDSaox";
+
+		case GDI_SPDSxnox:
+			return "SPDSxnox";
+
+		case GDI_SDPox:
+			return "SDPox";
+
+		case GDI_SDPoan:
+			return "SDPoan";
+
+		case GDI_PSDPoax:
+			return "PSDPoax";
+
+		case GDI_SPDnox:
+			return "SPDnox";
+
+		case GDI_SPDSxox:
+			return "SPDSxox";
+
+		case GDI_SPDnoan:
+			return "SPDnoan";
+
+		case GDI_PSx:
+			return "PSx";
+
+		case GDI_SPDSonox:
+			return "SPDSonox";
+
+		case GDI_SPDSnaox:
+			return "SPDSnaox";
+
+		case GDI_PSan:
+			return "PSan";
+
+		case GDI_PSDnaa:
+			return "PSDnaa";
+
+		case GDI_DPSxon:
+			return "DPSxon";
+
+		case GDI_SDxPDxa:
+			return "SDxPDxa";
+
+		case GDI_SPDSanaxn:
+			return "SPDSanaxn";
+
+		case GDI_SRCERASE:
+			return "SDna";
+
+		case GDI_DPSnaon:
+			return "DPSnaon";
+
+		case GDI_DSPDaox:
+			return "DSPDaox";
+
+		case GDI_PSDPxaxn:
+			return "PSDPxaxn";
+
+		case GDI_SDPxa:
+			return "SDPxa";
+
+		case GDI_PDSPDaoxxn:
+			return "PDSPDaoxxn";
+
+		case GDI_DPSDoax:
+			return "DPSDoax";
+
+		case GDI_PDSnox:
+			return "PDSnox";
+
+		case GDI_SDPana:
+			return "SDPana";
+
+		case GDI_SSPxDSxoxn:
+			return "SSPxDSxoxn";
+
+		case GDI_PDSPxox:
+			return "PDSPxox";
+
+		case GDI_PDSnoan:
+			return "PDSnoan";
 
 		case GDI_PDna:
-			_snprintf(buffer, sizeof(buffer), "GDI_PDna [%08X]", code);
-			break;
+			return "PDna";
+
+		case GDI_DSPnaon:
+			return "DSPnaon";
+
+		case GDI_DPSDaox:
+			return "DPSDaox";
+
+		case GDI_SPDSxaxn:
+			return "SPDSxaxn";
+
+		case GDI_DPSonon:
+			return "DPSonon";
+
+		case GDI_DSTINVERT:
+			return "Dn";
+
+		case GDI_DPSox:
+			return "DPSox";
+
+		case GDI_DPSoan:
+			return "DPSoan";
+
+		case GDI_PDSPoax:
+			return "PDSPoax";
+
+		case GDI_DPSnox:
+			return "DPSnox";
+
+		case GDI_PATINVERT:
+			return "DPx";
+
+		case GDI_DPSDonox:
+			return "DPSDonox";
+
+		case GDI_DPSDxox:
+			return "DPSDxox";
+
+		case GDI_DPSnoan:
+			return "DPSnoan";
+
+		case GDI_DPSDnaox:
+			return "DPSDnaox";
 
 		case GDI_DPan:
-			_snprintf(buffer, sizeof(buffer), "GDI_DPan [%08X]", code);
-			break;
+			return "DPan";
+
+		case GDI_PDSxa:
+			return "PDSxa";
+
+		case GDI_DSPDSaoxxn:
+			return "DSPDSaoxxn";
+
+		case GDI_DSPDoax:
+			return "DSPDoax";
+
+		case GDI_SDPnox:
+			return "SDPnox";
+
+		case GDI_SDPSoax:
+			return "SDPSoax";
+
+		case GDI_DSPnox:
+			return "DSPnox";
+
+		case GDI_SRCINVERT:
+			return "DSx";
+
+		case GDI_SDPSonox:
+			return "SDPSonox";
+
+		case GDI_DSPDSonoxxn:
+			return "DSPDSonoxxn";
+
+		case GDI_PDSxxn:
+			return "PDSxxn";
+
+		case GDI_DPSax:
+			return "DPSax";
+
+		case GDI_PSDPSoaxxn:
+			return "PSDPSoaxxn";
+
+		case GDI_SDPax:
+			return "SDPax";
+
+		case GDI_PDSPDoaxxn:
+			return "PDSPDoaxxn";
+
+		case GDI_SDPSnoax:
+			return "SDPSnoax";
+
+		case GDI_PDSxnan:
+			return "PDSxnan";
+
+		case GDI_PDSana:
+			return "PDSana";
+
+		case GDI_SSDxPDxaxn:
+			return "SSDxPDxaxn";
+
+		case GDI_SDPSxox:
+			return "SDPSxox";
+
+		case GDI_SDPnoan:
+			return "SDPnoan";
+
+		case GDI_DSPDxox:
+			return "DSPDxox";
+
+		case GDI_DSPnoan:
+			return "DSPnoan";
+
+		case GDI_SDPSnaox:
+			return "SDPSnaox";
 
 		case GDI_DSan:
-			_snprintf(buffer, sizeof(buffer), "GDI_DSan [%08X]", code);
-			break;
+			return "DSan";
 
-		case GDI_D:
-			_snprintf(buffer, sizeof(buffer), "GDI_D [%08X]", code);
-			break;
+		case GDI_PDSax:
+			return "PDSax";
+
+		case GDI_DSPDSoaxxn:
+			return "DSPDSoaxxn";
+
+		case GDI_DPSDnoax:
+			return "DPSDnoax";
+
+		case GDI_SDPxnan:
+			return "SDPxnan";
+
+		case GDI_SPDSnoax:
+			return "SPDSnoax";
+
+		case GDI_DPSxnan:
+			return "DPSxnan";
+
+		case GDI_SPxDSxo:
+			return "SPxDSxo";
+
+		case GDI_DPSaan:
+			return "DPSaan";
+
+		case GDI_DPSaa:
+			return "DPSaa";
+
+		case GDI_SPxDSxon:
+			return "SPxDSxon";
+
+		case GDI_DPSxna:
+			return "DPSxna";
+
+		case GDI_SPDSnoaxn:
+			return "SPDSnoaxn";
+
+		case GDI_SDPxna:
+			return "SDPxna";
+
+		case GDI_PDSPnoaxn:
+			return "PDSPnoaxn";
+
+		case GDI_DSPDSoaxx:
+			return "DSPDSoaxx";
+
+		case GDI_PDSaxn:
+			return "PDSaxn";
+
+		case GDI_SRCAND:
+			return "DSa";
+
+		case GDI_SDPSnaoxn:
+			return "SDPSnaoxn";
+
+		case GDI_DSPnoa:
+			return "DSPnoa";
+
+		case GDI_DSPDxoxn:
+			return "DSPDxoxn";
+
+		case GDI_SDPnoa:
+			return "SDPnoa";
+
+		case GDI_SDPSxoxn:
+			return "SDPSxoxn";
+
+		case GDI_SSDxPDxax:
+			return "SSDxPDxax";
+
+		case GDI_PDSanan:
+			return "PDSanan";
+
+		case GDI_PDSxna:
+			return "PDSxna";
+
+		case GDI_SDPSnoaxn:
+			return "SDPSnoaxn";
+
+		case GDI_DPSDPoaxx:
+			return "DPSDPoaxx";
+
+		case GDI_SPDaxn:
+			return "SPDaxn";
+
+		case GDI_PSDPSoaxx:
+			return "PSDPSoaxx";
+
+		case GDI_DPSaxn:
+			return "DPSaxn";
+
+		case GDI_DPSxx:
+			return "DPSxx";
+
+		case GDI_PSDPSonoxx:
+			return "PSDPSonoxx";
+
+		case GDI_SDPSonoxn:
+			return "SDPSonoxn";
+
+		case GDI_DSxn:
+			return "DSxn";
+
+		case GDI_DPSnax:
+			return "DPSnax";
+
+		case GDI_SDPSoaxn:
+			return "SDPSoaxn";
+
+		case GDI_SPDnax:
+			return "SPDnax";
+
+		case GDI_DSPDoaxn:
+			return "DSPDoaxn";
+
+		case GDI_DSPDSaoxx:
+			return "DSPDSaoxx";
+
+		case GDI_PDSxan:
+			return "PDSxan";
+
+		case GDI_DPa:
+			return "DPa";
+
+		case GDI_PDSPnaoxn:
+			return "PDSPnaoxn";
+
+		case GDI_DPSnoa:
+			return "DPSnoa";
+
+		case GDI_DPSDxoxn:
+			return "DPSDxoxn";
+
+		case GDI_PDSPonoxn:
+			return "PDSPonoxn";
+
+		case GDI_PDxn:
+			return "PDxn";
+
+		case GDI_DSPnax:
+			return "DSPnax";
+
+		case GDI_PDSPoaxn:
+			return "PDSPoaxn";
+
+		case GDI_DPSoa:
+			return "DPSoa";
+
+		case GDI_DPSoxn:
+			return "DPSoxn";
+
+		case GDI_DSTCOPY:
+			return "D";
+
+		case GDI_DPSono:
+			return "DPSono";
+
+		case GDI_SPDSxax:
+			return "SPDSxax";
+
+		case GDI_DPSDaoxn:
+			return "DPSDaoxn";
+
+		case GDI_DSPnao:
+			return "DSPnao";
 
 		case GDI_DPno:
-			_snprintf(buffer, sizeof(buffer), "GDI_DPno [%08X]", code);
-			break;
+			return "DPno";
+
+		case GDI_PDSnoa:
+			return "PDSnoa";
+
+		case GDI_PDSPxoxn:
+			return "PDSPxoxn";
+
+		case GDI_SSPxDSxox:
+			return "SSPxDSxox";
+
+		case GDI_SDPanan:
+			return "SDPanan";
+
+		case GDI_PSDnax:
+			return "PSDnax";
+
+		case GDI_DPSDoaxn:
+			return "DPSDoaxn";
+
+		case GDI_DPSDPaoxx:
+			return "DPSDPaoxx";
+
+		case GDI_SDPxan:
+			return "SDPxan";
+
+		case GDI_PSDPxax:
+			return "PSDPxax";
+
+		case GDI_DSPDaoxn:
+			return "DSPDaoxn";
+
+		case GDI_DPSnao:
+			return "DPSnao";
+
+		case GDI_MERGEPAINT:
+			return "DSno";
+
+		case GDI_SPDSanax:
+			return "SPDSanax";
+
+		case GDI_SDxPDxan:
+			return "SDxPDxan";
+
+		case GDI_DPSxo:
+			return "DPSxo";
+
+		case GDI_DPSano:
+			return "DPSano";
+
+		case GDI_MERGECOPY:
+			return "PSa";
+
+		case GDI_SPDSnaoxn:
+			return "SPDSnaoxn";
+
+		case GDI_SPDSonoxn:
+			return "SPDSonoxn";
+
+		case GDI_PSxn:
+			return "PSxn";
+
+		case GDI_SPDnoa:
+			return "SPDnoa";
+
+		case GDI_SPDSxoxn:
+			return "SPDSxoxn";
+
+		case GDI_SDPnax:
+			return "SDPnax";
+
+		case GDI_PSDPoaxn:
+			return "PSDPoaxn";
+
+		case GDI_SDPoa:
+			return "SDPoa";
+
+		case GDI_SPDoxn:
+			return "SPDoxn";
+
+		case GDI_DPSDxax:
+			return "DPSDxax";
+
+		case GDI_SPDSaoxn:
+			return "SPDSaoxn";
+
+		case GDI_SRCCOPY:
+			return "S";
+
+		case GDI_SDPono:
+			return "SDPono";
+
+		case GDI_SDPnao:
+			return "SDPnao";
+
+		case GDI_SPno:
+			return "SPno";
+
+		case GDI_PSDnoa:
+			return "PSDnoa";
+
+		case GDI_PSDPxoxn:
+			return "PSDPxoxn";
+
+		case GDI_PDSnax:
+			return "PDSnax";
+
+		case GDI_SPDSoaxn:
+			return "SPDSoaxn";
+
+		case GDI_SSPxPDxax:
+			return "SSPxPDxax";
+
+		case GDI_DPSanan:
+			return "DPSanan";
+
+		case GDI_PSDPSaoxx:
+			return "PSDPSaoxx";
+
+		case GDI_DPSxan:
+			return "DPSxan";
+
+		case GDI_PDSPxax:
+			return "PDSPxax";
+
+		case GDI_SDPSaoxn:
+			return "SDPSaoxn";
+
+		case GDI_DPSDanax:
+			return "DPSDanax";
+
+		case GDI_SPxDSxan:
+			return "SPxDSxan";
+
+		case GDI_SPDnao:
+			return "SPDnao";
 
 		case GDI_SDno:
-			_snprintf(buffer, sizeof(buffer), "GDI_SDno [%08X]", code);
-			break;
+			return "SDno";
+
+		case GDI_SDPxo:
+			return "SDPxo";
+
+		case GDI_SDPano:
+			return "SDPano";
+
+		case GDI_PDSoa:
+			return "PDSoa";
+
+		case GDI_PDSoxn:
+			return "PDSoxn";
+
+		case GDI_DSPDxax:
+			return "DSPDxax";
+
+		case GDI_PSDPaoxn:
+			return "PSDPaoxn";
+
+		case GDI_SDPSxax:
+			return "SDPSxax";
+
+		case GDI_PDSPaoxn:
+			return "PDSPaoxn";
+
+		case GDI_SDPSanax:
+			return "SDPSanax";
+
+		case GDI_SPxPDxan:
+			return "SPxPDxan";
+
+		case GDI_SSPxDSxax:
+			return "SSPxDSxax";
+
+		case GDI_DSPDSanaxxn:
+			return "DSPDSanaxxn";
+
+		case GDI_DPSao:
+			return "DPSao";
+
+		case GDI_DPSxno:
+			return "DPSxno";
+
+		case GDI_SDPao:
+			return "SDPao";
+
+		case GDI_SDPxno:
+			return "SDPxno";
+
+		case GDI_SRCPAINT:
+			return "DSo";
+
+		case GDI_SDPnoo:
+			return "SDPnoo";
+
+		case GDI_PATCOPY:
+			return "P";
+
+		case GDI_PDSono:
+			return "PDSono";
+
+		case GDI_PDSnao:
+			return "PDSnao";
+
+		case GDI_PSno:
+			return "PSno";
+
+		case GDI_PSDnao:
+			return "PSDnao";
 
 		case GDI_PDno:
-			_snprintf(buffer, sizeof(buffer), "GDI_PDno [%08X]", code);
-			break;
+			return "PDno";
+
+		case GDI_PDSxo:
+			return "PDSxo";
+
+		case GDI_PDSano:
+			return "PDSano";
+
+		case GDI_PDSao:
+			return "PDSao";
+
+		case GDI_PDSxno:
+			return "PDSxno";
 
 		case GDI_DPo:
-			_snprintf(buffer, sizeof(buffer), "GDI_DPo [%08X]", code);
-			break;
+			return "DPo";
+
+		case GDI_PATPAINT:
+			return "DPSnoo";
+
+		case GDI_PSo:
+			return "PSo";
+
+		case GDI_PSDnoo:
+			return "PSDnoo";
+
+		case GDI_DPSoo:
+			return "DPSoo";
+
+		case GDI_WHITENESS:
+			return "1";
+
+		case GDI_GLYPH_ORDER:
+			return "SPaDSnao";
 
 		default:
-			_snprintf(buffer, sizeof(buffer), "UNKNOWN [%02X]", code);
-			break;
+			return "";
 	}
-
-	return buffer;
 }
 
 /**
- * Create a new solid brush.\n
- * @msdn{dd183518}
- * @param crColor brush color
- * @return new brush
- */
-
+* Create a new solid brush.\n
+* @msdn{dd183518}
+* @param crColor brush color
+* @return new brush
+*/
 HGDI_BRUSH gdi_CreateSolidBrush(UINT32 crColor)
 {
 	HGDI_BRUSH hBrush = (HGDI_BRUSH) calloc(1, sizeof(GDI_BRUSH));
@@ -300,14 +835,12 @@ HGDI_BRUSH gdi_CreateSolidBrush(UINT32 crColor)
 	hBrush->color = crColor;
 	return hBrush;
 }
-
 /**
- * Create a new pattern brush.\n
- * @msdn{dd183508}
- * @param hbmp pattern bitmap
- * @return new brush
- */
-
+* Create a new pattern brush.\n
+* @msdn{dd183508}
+* @param hbmp pattern bitmap
+* @return new brush
+*/
 HGDI_BRUSH gdi_CreatePatternBrush(HGDI_BITMAP hbmp)
 {
 	HGDI_BRUSH hBrush = (HGDI_BRUSH) calloc(1, sizeof(GDI_BRUSH));
@@ -320,7 +853,6 @@ HGDI_BRUSH gdi_CreatePatternBrush(HGDI_BITMAP hbmp)
 	hBrush->pattern = hbmp;
 	return hBrush;
 }
-
 HGDI_BRUSH gdi_CreateHatchBrush(HGDI_BITMAP hbmp)
 {
 	HGDI_BRUSH hBrush = (HGDI_BRUSH) calloc(1, sizeof(GDI_BRUSH));
@@ -333,699 +865,10 @@ HGDI_BRUSH gdi_CreateHatchBrush(HGDI_BITMAP hbmp)
 	hBrush->pattern = hbmp;
 	return hBrush;
 }
-
 UINT32 gdi_GetBrushStyle(HGDI_DC hdc)
 {
 	if (!hdc || !hdc->brush)
 		return GDI_BS_NULL;
 
 	return hdc->brush->style;
-}
-
-/**
- * Perform a pattern blit operation on the given pixel buffer.\n
- * @msdn{dd162778}
- * @param hdc device context
- * @param nXLeft x1
- * @param nYLeft y1
- * @param nWidth width
- * @param nHeight height
- * @param rop raster operation code
- * @return nonzero if successful, 0 otherwise
- */
-static BOOL BitBlt_DPa(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-                       UINT32 nWidth, UINT32 nHeight)
-{
-	UINT32 x, y;
-
-	for (y = 0; y < nHeight; y++)
-	{
-		for (x = 0; x < nWidth; x++)
-		{
-			const BYTE* patp = gdi_get_brush_pointer(hdcDest, nXDest + x, nYDest + y);
-			BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
-
-			if (dstp && patp)
-			{
-				UINT32 colorA = ReadColor(patp, hdcDest->format);
-				UINT32 colorB = ReadColor(dstp, hdcDest->format);
-				UINT32 color = colorB & colorA;
-				WriteColor(dstp, hdcDest->format, color);
-			}
-		}
-	}
-
-	return TRUE;
-}
-
-static BOOL BitBlt_PDxn(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-                        UINT32 nWidth, UINT32 nHeight)
-{
-	UINT32 x, y;
-
-	for (y = 0; y < nHeight; y++)
-	{
-		for (x = 0; x < nWidth; x++)
-		{
-			const BYTE* patp = gdi_get_brush_pointer(hdcDest, nXDest + x, nYDest + y);
-			BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
-
-			if (dstp && patp)
-			{
-				UINT32 colorA = ReadColor(dstp, hdcDest->format);
-				UINT32 colorB = ReadColor(patp, hdcDest->format);
-				UINT32 color = ~colorA ^ colorB;
-				WriteColor(dstp, hdcDest->format, color);
-			}
-		}
-	}
-
-	return TRUE;
-}
-
-static BOOL BitBlt_PATINVERT(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-                             UINT32 nWidth, UINT32 nHeight)
-{
-	UINT32 x, y;
-	UINT32 color;
-
-	/* DPx */
-	switch (gdi_GetBrushStyle(hdcDest))
-	{
-		case GDI_BS_SOLID:
-			color = hdcDest->brush->color;
-
-			for (y = 0; y < nHeight; y++)
-			{
-				for (x = 0; x < nWidth; x++)
-				{
-					BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
-
-					if (dstp)
-					{
-						UINT32 dstColor = ReadColor(dstp, hdcDest->format);
-						dstColor ^= color;
-						WriteColor(dstp, hdcDest->format, dstColor);
-					}
-				}
-			}
-
-			break;
-
-		default:
-			for (y = 0; y < nHeight; y++)
-			{
-				for (x = 0; x < nWidth; x++)
-				{
-					const BYTE* patp = gdi_get_brush_pointer(hdcDest, nXDest + x, nYDest + y);
-					BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
-
-					if (patp && dstp)
-					{
-						UINT32 colorA = ReadColor(patp, hdcDest->format);
-						UINT32 colorB = ReadColor(dstp, hdcDest->format);
-						UINT32 color = colorA ^ colorB;
-						WriteColor(dstp, hdcDest->format, color);
-					}
-				}
-			}
-
-			break;
-	}
-
-	return TRUE;
-}
-
-static BOOL BitBlt_PATPAINT(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-                            UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
-                            UINT32 nXSrc, UINT32 nYSrc)
-{
-	UINT32 x, y;
-	UINT32 color;
-
-	/* DPSnoo */
-	if (!hdcDest || !hdcSrc)
-		return FALSE;
-
-	switch (gdi_GetBrushStyle(hdcDest))
-	{
-		case GDI_BS_SOLID:
-			color = hdcDest->brush->color;
-
-			for (y = 0; y < nHeight; y++)
-			{
-				for (x = 0; x < nWidth; x++)
-				{
-					const BYTE* srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc + x, nYSrc + y);
-					BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
-
-					if (srcp && dstp)
-					{
-						UINT32 colorA = ReadColor(dstp, hdcDest->format);
-						UINT32 colorC = ReadColor(srcp, hdcSrc->format);
-						UINT32 dstColor;
-						colorC = ConvertColor(colorC, hdcSrc->format, hdcDest->format, NULL);
-						dstColor = ~colorA | color | colorC;
-						WriteColor(dstp, hdcDest->format, dstColor);
-					}
-				}
-			}
-
-			break;
-
-		default:
-			for (y = 0; y < nHeight; y++)
-			{
-				for (x = 0; x < nWidth; x++)
-				{
-					const BYTE* srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc + x, nYSrc + y);
-					const BYTE* patp = gdi_get_brush_pointer(hdcDest, nXDest + x, nYDest + y);
-					BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
-
-					if (srcp && patp && dstp)
-					{
-						UINT32 colorA = ReadColor(dstp, hdcDest->format);
-						UINT32 colorB = ReadColor(patp, hdcDest->format);
-						UINT32 colorC = ReadColor(srcp, hdcSrc->format);
-						UINT32 dstColor;
-						colorC = ConvertColor(colorC, hdcSrc->format, hdcDest->format, NULL);
-						dstColor = ~colorA | colorB | colorC;
-						WriteColor(dstp, hdcDest->format, dstColor);
-					}
-				}
-			}
-
-			break;
-	}
-
-	return TRUE;
-}
-
-static BOOL BitBlt_PSo(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-                       UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
-                       UINT32 nXSrc, UINT32 nYSrc)
-{
-	UINT32 x, y;
-	UINT32 color;
-
-	/* DPSnoo */
-	if (!hdcDest || !hdcSrc)
-		return FALSE;
-
-	switch (gdi_GetBrushStyle(hdcDest))
-	{
-		case GDI_BS_SOLID:
-			color = hdcDest->brush->color;
-
-			for (y = 0; y < nHeight; y++)
-			{
-				for (x = 0; x < nWidth; x++)
-				{
-					const BYTE* srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc + x, nYSrc + y);
-					BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
-
-					if (srcp && dstp)
-					{
-						UINT32 colorC = ReadColor(srcp, hdcDest->format);
-						UINT32 dstColor = color | colorC;
-						WriteColor(dstp, hdcDest->format, dstColor);
-					}
-				}
-			}
-
-			break;
-
-		default:
-			for (y = 0; y < nHeight; y++)
-			{
-				for (x = 0; x < nWidth; x++)
-				{
-					const BYTE* srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc + x, nYSrc + y);
-					const BYTE* patp = gdi_get_brush_pointer(hdcDest, nXDest + x, nYDest + y);
-					BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
-
-					if (srcp && patp && dstp)
-					{
-						UINT32 colorB = ReadColor(patp, hdcDest->format);
-						UINT32 colorC = ReadColor(srcp, hdcSrc->format);
-						UINT32 dstColor;
-						colorC = ConvertColor(colorC, hdcSrc->format, hdcDest->format, NULL);
-						dstColor = colorB | colorC;
-						WriteColor(dstp, hdcDest->format, dstColor);
-					}
-				}
-			}
-
-			break;
-	}
-
-	return TRUE;
-}
-
-static BOOL BitBlt_DSPnoo(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-                          UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
-                          UINT32 nXSrc, UINT32 nYSrc)
-{
-	UINT32 x, y;
-	UINT32 color;
-
-	/* DPSnoo */
-	if (!hdcDest || !hdcSrc)
-		return FALSE;
-
-	switch (gdi_GetBrushStyle(hdcDest))
-	{
-		case GDI_BS_SOLID:
-			color = hdcDest->brush->color;
-
-			for (y = 0; y < nHeight; y++)
-			{
-				for (x = 0; x < nWidth; x++)
-				{
-					const BYTE* srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc + x, nYSrc + y);
-					BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
-
-					if (srcp && dstp)
-					{
-						UINT32 colorA = ReadColor(dstp, hdcDest->format);
-						UINT32 colorC = ReadColor(srcp, hdcSrc->format);
-						UINT32 dstColor;
-						colorC = ConvertColor(colorC, hdcSrc->format, hdcDest->format, NULL);
-						dstColor = ~colorA | colorC | color;
-						WriteColor(dstp, hdcDest->format, dstColor);
-					}
-				}
-			}
-
-			break;
-
-		default:
-			for (y = 0; y < nHeight; y++)
-			{
-				for (x = 0; x < nWidth; x++)
-				{
-					const BYTE* srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc + x, nYSrc + y);
-					const BYTE* patp = gdi_get_brush_pointer(hdcDest, nXDest + x, nYDest + y);
-					BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
-
-					if (srcp && patp && dstp)
-					{
-						UINT32 colorA = ReadColor(dstp, hdcDest->format);
-						UINT32 colorB = ReadColor(patp, hdcDest->format);
-						UINT32 colorC = ReadColor(srcp, hdcSrc->format);
-						UINT32 dstColor;
-						colorC = ConvertColor(colorC, hdcSrc->format, hdcDest->format, NULL);
-						dstColor = ~colorA | colorB | colorC;
-						WriteColor(dstp, hdcDest->format, dstColor);
-					}
-				}
-			}
-
-			break;
-	}
-
-	return TRUE;
-}
-
-static BOOL BitBlt_DSPDoax(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-                           UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
-                           UINT32 nXSrc, UINT32 nYSrc)
-{
-	UINT32 x, y;
-	UINT32 color;
-
-	/* DPSnoo */
-	if (!hdcDest || !hdcSrc)
-		return FALSE;
-
-	switch (gdi_GetBrushStyle(hdcDest))
-	{
-		case GDI_BS_SOLID:
-			color = hdcDest->brush->color;
-
-			for (y = 0; y < nHeight; y++)
-			{
-				for (x = 0; x < nWidth; x++)
-				{
-					const BYTE* srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc + x, nYSrc + y);
-					BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
-
-					if (srcp && dstp)
-					{
-						UINT32 colorA = ReadColor(dstp, hdcDest->format);
-						UINT32 colorC = ReadColor(srcp, hdcSrc->format);
-						UINT32 dstColor;
-						colorC = ConvertColor(colorC, hdcSrc->format, hdcDest->format, NULL);
-						dstColor = colorA | colorC & color ^ colorA;
-						WriteColor(dstp, hdcDest->format, dstColor);
-					}
-				}
-			}
-
-			break;
-
-		default:
-			for (y = 0; y < nHeight; y++)
-			{
-				for (x = 0; x < nWidth; x++)
-				{
-					const BYTE* srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc + x, nYSrc + y);
-					const BYTE* patp = gdi_get_brush_pointer(hdcDest, nXDest + x, nYDest + y);
-					BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
-
-					if (srcp && patp && dstp)
-					{
-						UINT32 colorA = ReadColor(dstp, hdcDest->format);
-						UINT32 colorB = ReadColor(patp, hdcDest->format);
-						UINT32 colorC = ReadColor(srcp, hdcSrc->format);
-						UINT32 dstColor;
-						colorC = ConvertColor(colorC, hdcSrc->format, hdcDest->format, NULL);
-						dstColor = dstColor = colorA | colorC & colorB ^ colorA;
-						WriteColor(dstp, hdcDest->format, dstColor);
-					}
-				}
-			}
-
-			break;
-	}
-
-	return TRUE;
-}
-
-static BOOL BitBlt_todo(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-                        UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
-                        UINT32 nXSrc, UINT32 nYSrc)
-{
-	UINT32 x, y;
-	UINT32 color;
-
-	/* DPSnoo */
-	if (!hdcDest || !hdcSrc)
-		return FALSE;
-
-	switch (gdi_GetBrushStyle(hdcDest))
-	{
-		case GDI_BS_SOLID:
-			color = hdcDest->brush->color;
-
-			for (y = 0; y < nHeight; y++)
-			{
-				for (x = 0; x < nWidth; x++)
-				{
-					const BYTE* srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc + x, nYSrc + y);
-					BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
-
-					if (srcp && dstp)
-					{
-						UINT32 colorA = ReadColor(dstp, hdcDest->format);
-						UINT32 colorC = ReadColor(srcp, hdcSrc->format);
-						UINT32 dstColor;
-						colorC = ConvertColor(colorC, hdcSrc->format, hdcDest->format, NULL);
-						dstColor = (color & colorC) | (colorA & ~colorC);
-						WriteColor(dstp, hdcDest->format, dstColor);
-					}
-				}
-			}
-
-			break;
-
-		default:
-			for (y = 0; y < nHeight; y++)
-			{
-				for (x = 0; x < nWidth; x++)
-				{
-					const BYTE* srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc + x, nYSrc + y);
-					const BYTE* patp = gdi_get_brush_pointer(hdcDest, nXDest + x, nYDest + y);
-					BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
-
-					if (srcp && patp && dstp)
-					{
-						UINT32 colorA = ReadColor(dstp, hdcDest->format);
-						UINT32 colorB = ReadColor(patp, hdcDest->format);
-						UINT32 colorC = ReadColor(srcp, hdcSrc->format);
-						UINT32 dstColor;
-						colorC = ConvertColor(colorC, hdcSrc->format, hdcDest->format, NULL);
-						dstColor = (colorB & colorC) | (colorA & ~colorC);
-						WriteColor(dstp, hdcDest->format, dstColor);
-					}
-				}
-			}
-
-			break;
-	}
-
-	return TRUE;
-}
-
-static BOOL BitBlt_DPSoo(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-                         UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
-                         UINT32 nXSrc, UINT32 nYSrc)
-{
-	UINT32 x, y;
-	UINT32 color;
-
-	/* DPSnoo */
-	if (!hdcDest || !hdcSrc)
-		return FALSE;
-
-	switch (gdi_GetBrushStyle(hdcDest))
-	{
-		case GDI_BS_SOLID:
-			color = hdcDest->brush->color;
-
-			for (y = 0; y < nHeight; y++)
-			{
-				for (x = 0; x < nWidth; x++)
-				{
-					const BYTE* srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc + x, nYSrc + y);
-					BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
-
-					if (srcp && dstp)
-					{
-						UINT32 colorA = ReadColor(dstp, hdcDest->format);
-						UINT32 colorC = ReadColor(srcp, hdcSrc->format);
-						UINT32 dstColor;
-						colorC = ConvertColor(colorC, hdcSrc->format, hdcDest->format, NULL);
-						dstColor = color | colorA | colorC;
-						WriteColor(dstp, hdcDest->format, dstColor);
-					}
-				}
-			}
-
-			break;
-
-		default:
-			for (y = 0; y < nHeight; y++)
-			{
-				for (x = 0; x < nWidth; x++)
-				{
-					const BYTE* srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc + x, nYSrc + y);
-					const BYTE* patp = gdi_get_brush_pointer(hdcDest, nXDest + x, nYDest + y);
-					BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
-
-					if (srcp && patp && dstp)
-					{
-						UINT32 colorA = ReadColor(dstp, hdcDest->format);
-						UINT32 colorB = ReadColor(patp, hdcDest->format);
-						UINT32 colorC = ReadColor(srcp, hdcSrc->format);
-						UINT32 dstColor;
-						colorC = ConvertColor(colorC, hdcSrc->format, hdcDest->format, NULL);
-						dstColor = colorB | colorA | colorC;
-						WriteColor(dstp, hdcDest->format, dstColor);
-					}
-				}
-			}
-
-			break;
-	}
-
-	return TRUE;
-}
-
-static BOOL BitBlt_PATCOPY(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-                           UINT32 nWidth, UINT32 nHeight)
-{
-	UINT32 x, y, xOffset = 0, yOffset = 0, color;
-
-	/* P */
-	switch (gdi_GetBrushStyle(hdcDest))
-	{
-		case GDI_BS_SOLID:
-			color = hdcDest->brush->color;
-
-			for (y = 0; y < nHeight; y++)
-			{
-				for (x = 0; x < nWidth; x++)
-				{
-					BYTE* dstp = gdi_get_bitmap_pointer(
-					                 hdcDest, nXDest + x, nYDest + y);
-
-					if (dstp)
-						WriteColor(dstp, hdcDest->format, color);
-				}
-			}
-
-			break;
-
-		case GDI_BS_HATCHED:
-			xOffset = 0;
-			yOffset = 2; /* +2 added after comparison to mstsc */
-
-		default:
-			for (y = 0; y < nHeight; y++)
-			{
-				for (x = 0; x < nWidth; x++)
-				{
-					const BYTE* patp = gdi_get_brush_pointer(
-					                       hdcDest, nXDest + x + xOffset,
-					                       nYDest + y + yOffset);
-					BYTE* dstp = gdi_get_bitmap_pointer(
-					                 hdcDest, nXDest + x,
-					                 nYDest + y);
-
-					if (patp && dstp)
-					{
-						UINT32 color = ReadColor(patp, hdcDest->format);
-						WriteColor(dstp, hdcDest->format, color);
-					}
-				}
-			}
-
-			break;
-	}
-
-	return TRUE;
-}
-
-static BOOL BitBlt_DSTINVERT(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-                             UINT32 nWidth, UINT32 nHeight)
-{
-	UINT32 x, y;
-
-	for (y = 0; y < nHeight; y++)
-	{
-		for (x = 0; x < nWidth; x++)
-		{
-			BYTE* dstp = gdi_get_bitmap_pointer(
-			                 hdcDest, nXDest + x, nYDest + y);
-
-			if (dstp)
-			{
-				UINT32 color = ReadColor(dstp, hdcDest->format);
-				color = ~color;
-				WriteColor(dstp, hdcDest->format, color);
-			}
-		}
-	}
-
-	return TRUE;
-}
-
-static BOOL BitBlt_BLACKNESS(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-                             UINT32 nWidth, UINT32 nHeight)
-{
-	UINT32 x, y;
-	const UINT32 color = GetColor(hdcDest->format, 0, 0, 0, 0xFF);
-
-	for (y = 0; y < nHeight; y++)
-	{
-		for (x = 0; x < nWidth; x++)
-		{
-			BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
-
-			if (dstp)
-				WriteColor(dstp, hdcDest->format, color);
-		}
-	}
-
-	return TRUE;
-}
-
-static BOOL BitBlt_WHITENESS(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-                             UINT32 nWidth, UINT32 nHeight)
-{
-	UINT32 x, y;
-	const UINT32 color = GetColor(hdcDest->format, 0xFF, 0xFF, 0xFF, 0xFF);
-
-	for (y = 0; y < nHeight; y++)
-	{
-		for (x = 0; x < nWidth; x++)
-		{
-			BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
-
-			if (dstp)
-				WriteColor(dstp, hdcDest->format, color);
-		}
-	}
-
-	return TRUE;
-}
-
-BOOL gdi_PatBlt(HGDI_DC hdc, UINT32 nXLeft, UINT32 nYLeft,
-                UINT32 nWidth, UINT32 nHeight, DWORD rop,
-                HGDI_DC hdcSrc, UINT32 nXSrc, UINT32 nYSrc)
-{
-	WLog_VRB(TAG, "%s [%s] x=%lu, y=%lu, w=%lu, h=%lu [x=%lu, y=%lu] %s %s",
-	         __FUNCTION__, gdi_rop_to_string(rop), nXLeft, nYLeft,
-	         nWidth, nHeight, nXSrc, nYSrc, hdc ? GetColorFormatName(hdc->format) : "NULL",
-	         hdcSrc ? GetColorFormatName(hdcSrc->format) : "NULL");
-
-	if (!gdi_ClipCoords(hdc, &nXLeft, &nYLeft, &nWidth, &nHeight, NULL, NULL))
-		return TRUE;
-
-	if (!gdi_InvalidateRegion(hdc, nXLeft, nYLeft, nWidth, nHeight))
-		return FALSE;
-
-	switch (rop)
-	{
-		case GDI_PATPAINT:
-			return BitBlt_PATPAINT(hdc, nXLeft, nYLeft, nWidth, nHeight,
-			                       hdcSrc, nXSrc, nYSrc);
-
-		case GDI_PSo:
-			return BitBlt_PSo(hdc, nXLeft, nYLeft, nWidth, nHeight,
-			                  hdcSrc, nXSrc, nYSrc);
-
-		case GDI_PSDnoo:
-			return BitBlt_DSPnoo(hdc, nXLeft, nYLeft, nWidth, nHeight,
-			                     hdcSrc, nXSrc, nYSrc);
-
-		case GDI_DPSoo:
-			return BitBlt_DPSoo(hdc, nXLeft, nYLeft, nWidth, nHeight,
-			                    hdcSrc, nXSrc, nYSrc);
-
-		case GDI_DSPDoax:
-			return BitBlt_DSPDoax(hdc, nXLeft, nYLeft, nWidth, nHeight,
-			                      hdcSrc, nXSrc, nYSrc);
-
-		case GDI_todo:
-			return BitBlt_todo(hdc, nXLeft, nYLeft, nWidth, nHeight,
-			                   hdcSrc, nXSrc, nYSrc);
-
-		case GDI_PATCOPY:
-			return BitBlt_PATCOPY(hdc, nXLeft, nYLeft, nWidth, nHeight);
-
-		case GDI_PATINVERT:
-			return BitBlt_PATINVERT(hdc, nXLeft, nYLeft, nWidth, nHeight);
-
-		case GDI_DSTINVERT:
-			return BitBlt_DSTINVERT(hdc, nXLeft, nYLeft, nWidth, nHeight);
-
-		case GDI_BLACKNESS:
-			return BitBlt_BLACKNESS(hdc, nXLeft, nYLeft, nWidth, nHeight);
-
-		case GDI_WHITENESS:
-			return BitBlt_WHITENESS(hdc, nXLeft, nYLeft, nWidth, nHeight);
-
-		case GDI_DPa:
-			return BitBlt_DPa(hdc, nXLeft, nYLeft, nWidth, nHeight);
-
-		case GDI_PDxn:
-			return BitBlt_PDxn(hdc, nXLeft, nYLeft, nWidth, nHeight);
-
-		default:
-			break;
-	}
-
-	return FALSE;
 }

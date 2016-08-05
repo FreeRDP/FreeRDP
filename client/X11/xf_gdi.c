@@ -160,7 +160,7 @@ static BOOL xf_set_rop3(xfContext* xfc, UINT32 rop3)
 			function = GXequiv;
 			break;
 
-		case GDI_D:
+		case GDI_DSTCOPY:
 			function = GXnoop;
 			break;
 
