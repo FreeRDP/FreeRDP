@@ -43,46 +43,44 @@ static void* glyph_cache_fragment_get(rdpGlyphCache* glyph, UINT32 index,
 static void glyph_cache_fragment_put(rdpGlyphCache* glyph, UINT32 index,
                                      UINT32 count, void* entry);
 
-static BOOL update_process_glyph(rdpContext* context, const BYTE* data,
-                                 UINT32* index,	INT32* x, INT32* y,
-                                 UINT32 cacheId, UINT32 ulCharInc, UINT32 flAccel)
+static UINT32 update_glyph_offset(const BYTE* data, UINT32 index, INT32* x,
+                                  INT32* y, UINT32 ulCharInc, UINT32 flAccel)
 {
-	INT32 offset;
+	if ((ulCharInc == 0) && (!(flAccel & SO_CHAR_INC_EQUAL_BM_BASE)))
+	{
+		UINT32 offset = data[index++];
+
+		if (offset & 0x80)
+			offset = data[index++] | ((UINT32)data[index++]) << 8;
+
+		if (flAccel & SO_VERTICAL)
+			*y += offset;
+
+		if (flAccel & SO_HORIZONTAL)
+			*x += offset;
+	}
+
+	return index;
+}
+
+static BOOL update_process_glyph(rdpContext* context, const BYTE* data,
+                                 UINT32 cacheIndex,	INT32* x, INT32* y,
+                                 UINT32 cacheId, UINT32 flAccel)
+{
 	rdpGlyph* glyph;
-	UINT32 cacheIndex;
 	rdpGraphics* graphics;
 	rdpGlyphCache* glyph_cache;
 
-	if (!context || !data || !index || !x || !y || !context->graphics
+	if (!context || !data || !x || !y || !context->graphics
 	    || !context->cache || !context->cache->glyph)
 		return FALSE;
 
 	graphics = context->graphics;
 	glyph_cache = context->cache->glyph;
-	cacheIndex = data[*index];
 	glyph = glyph_cache_get(glyph_cache, cacheId, cacheIndex);
 
 	if (!glyph)
 		return FALSE;
-
-	if ((ulCharInc == 0) && (!(flAccel & SO_CHAR_INC_EQUAL_BM_BASE)))
-	{
-		/* Contrary to fragments, the offset is added before the glyph. */
-		(*index)++;
-		offset = data[*index];
-
-		if (offset & 0x80)
-		{
-			offset = data[*index + 1] | ((INT32)data[*index + 2]) << 8;
-			(*index)++;
-			(*index)++;
-		}
-
-		if (flAccel & SO_VERTICAL)
-			*y += offset;
-		else if (flAccel & SO_HORIZONTAL)
-			*x += offset;
-	}
 
 	if (glyph != NULL)
 	{
@@ -150,68 +148,63 @@ static BOOL update_process_glyph_fragments(rdpContext* context,
 	}
 	else
 	{
-		if (fOpRedundant)
-		{
-			if (!glyph->BeginDraw(context, bkX, bkY, bkWidth, bkHeight, bgcolor, fgcolor,
-			                      fOpRedundant))
-				return FALSE;
-		}
-		else
-		{
-			if (!glyph->BeginDraw(context, 0, 0, 0, 0, bgcolor, fgcolor, fOpRedundant))
-				return FALSE;
-		}
+		if (!glyph->BeginDraw(context, bkX, bkY, bkWidth, bkHeight, bgcolor, fgcolor,
+		                      fOpRedundant))
+			return FALSE;
 	}
 
 	while (index < length)
 	{
-		switch (data[index])
+		const UINT32 op = data[index++];
+
+		switch (op)
 		{
 			case GLYPH_FRAGMENT_USE:
-				if (index + 2 > length)
+				if (index + 1 > length)
 				{
 					/* at least one byte need to follow */
 					index = length = 0;
 					break;
 				}
 
-				id = data[index + 1];
+				id = data[index++];
 				fragments = (BYTE*) glyph_cache_fragment_get(glyph_cache, id, &size);
 
 				if (fragments != NULL)
 				{
-					for (n = 0; n < size; n++)
+					for (n = 0; n < size;)
 					{
-						update_process_glyph(context, fragments, &n, &x, &y, cacheId, ulCharInc,
-						                     flAccel);
+						const UINT32 fop = fragments[n++];
+						n = update_glyph_offset(fragments, n, &x, &y, ulCharInc, flAccel);
+
+						if (!update_process_glyph(context, fragments, fop, &x, &y, cacheId,
+						                          flAccel))
+							return FALSE;
 					}
 
 					/* Contrary to glyphs, the offset is added after the fragment. */
 					if ((ulCharInc == 0) && (!(flAccel & SO_CHAR_INC_EQUAL_BM_BASE)))
 					{
 						if (flAccel & SO_VERTICAL)
-							y += data[index + 2];
-						else
-							x += data[index + 2];
+							y += data[index++];
+
+						if (flAccel & SO_HORIZONTAL)
+							x += data[index++];
 					}
 				}
 
-				index += (index + 2 < length) ? 3 : 2;
-				length -= index;
-				data = &(data[index]);
-				index = 0;
 				break;
 
 			case GLYPH_FRAGMENT_ADD:
-				if (index + 3 > length)
+				if (index + 2 > length)
 				{
 					/* at least two bytes need to follow */
 					index = length = 0;
 					break;
 				}
 
-				id = data[index + 1];
-				size = data[index + 2];
+				id = data[index++];
+				size = data[index++];
 				fragments = (BYTE*) malloc(size);
 
 				if (!fragments)
@@ -219,24 +212,22 @@ static BOOL update_process_glyph_fragments(rdpContext* context,
 
 				CopyMemory(fragments, data, size);
 				glyph_cache_fragment_put(glyph_cache, id, size, fragments);
-				index += 3;
-				length -= index;
-				data = &(data[index]);
-				index = 0;
 				break;
 
 			default:
-				update_process_glyph(context, data, &index, &x, &y, cacheId, ulCharInc,
-				                     flAccel);
-				index++;
+				index = update_glyph_offset(data, index, &x, &y, ulCharInc, flAccel);
+
+				if (!update_process_glyph(context, data, op, &x, &y, cacheId, flAccel))
+					return FALSE;
+
 				break;
 		}
 	}
 
-	if (opWidth > 0 && opHeight > 0)
+	if ((opWidth > 0) && (opHeight > 0))
 		return glyph->EndDraw(context, opX, opY, opWidth, opHeight, bgcolor, fgcolor);
-
-	return glyph->EndDraw(context, bkX, bkY, bkWidth, bkHeight, bgcolor, fgcolor);
+	else
+		return glyph->EndDraw(context, bkX, bkY, bkWidth, bkHeight, bgcolor, fgcolor);
 }
 
 static BOOL update_gdi_glyph_index(rdpContext* context,
@@ -389,7 +380,8 @@ static BOOL update_gdi_fast_glyph(rdpContext* context,
 		if (!glyphData)
 			return FALSE;
 
-		glyph = Glyph_Alloc(context, x, y, glyphData->cx, glyphData->cy,
+		glyph = Glyph_Alloc(context, glyphData->x, glyphData->y, glyphData->cx,
+		                    glyphData->cy,
 		                    glyphData->cb, glyphData->aj);
 
 		if (!glyph)
