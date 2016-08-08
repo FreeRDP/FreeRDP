@@ -181,16 +181,6 @@ static BOOL update_process_glyph_fragments(rdpContext* context,
 						                          flAccel))
 							return FALSE;
 					}
-
-					/* Contrary to glyphs, the offset is added after the fragment. */
-					if ((ulCharInc == 0) && (!(flAccel & SO_CHAR_INC_EQUAL_BM_BASE)))
-					{
-						if (flAccel & SO_VERTICAL)
-							y += data[index++];
-
-						if (flAccel & SO_HORIZONTAL)
-							x += data[index++];
-					}
 				}
 
 				break;
