@@ -66,7 +66,43 @@ static const BYTE wf_rop2_table[] =
 static BOOL wf_decode_color(wfContext* wfc, const UINT32 srcColor,
 							UINT32* color, UINT32* format)
 {
-	return gdi_decode_color(wfc->context.gdi, srcColor, color, format);
+	rdpGdi* gdi;
+	rdpSettings* settings;
+	UINT32 SrcFormat, DstFormat;
+
+	if (!wfc)
+		return FALSE;
+
+	gdi = wfc->context.gdi;
+	settings = wfc->context.settings;
+
+	if (!gdi || !settings)
+		return FALSE;
+
+	SrcFormat = gdi_get_pixel_format(gdi->context->settings->ColorDepth,
+											FALSE);
+
+	if (format)
+		*format = SrcFormat;
+
+	switch(GetBitsPerPixel(gdi->dstFormat))
+	{
+	case 32:
+		DstFormat = PIXEL_FORMAT_ABGR32;
+		break;
+	case 24:
+		DstFormat = PIXEL_FORMAT_BGR24;
+		break;
+	case 16:
+		DstFormat = PIXEL_FORMAT_RGB16;
+		break;
+	default:
+		return FALSE;
+	}
+
+	*color = ConvertColor(srcColor, SrcFormat,
+						  DstFormat, &gdi->palette);
+	return TRUE;
 }
 
 static BOOL wf_set_rop2(HDC hdc, int rop2)
