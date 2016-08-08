@@ -314,6 +314,7 @@ static BOOL gdi_Glyph_EndDraw(rdpContext* context, UINT32 x, UINT32 y,
 		return FALSE;
 
 	gdi_DeleteObject((HGDIOBJECT)gdi->drawing->hdc->brush);
+	gdi->drawing->hdc->brush = NULL;
 	gdi_SetNullClipRgn(gdi->drawing->hdc);
 	return TRUE;
 }

@@ -484,7 +484,7 @@ static BOOL test_gdi_BitBlt(UINT32 SrcFormat, UINT32 DstFormat)
 		{GDI_DSan, bmp_SRC, NULL},
 		{GDI_DSxn, bmp_SRC, NULL},
 		{GDI_DPa, bmp_SRC, NULL},
-		{GDI_D, bmp_SRC, NULL},
+		{GDI_DSTCOPY, bmp_SRC, NULL},
 		{GDI_DPno, bmp_SRC, NULL},
 		{GDI_SDno, bmp_SRC, NULL},
 		{GDI_PDno, bmp_SRC, NULL},
