@@ -280,9 +280,6 @@ static BOOL ios_post_connect(freerdp* instance)
 
 static void ios_post_disconnect(freerdp* instance)
 {
-	if (instance && instance->context)
-		freerdp_channels_disconnect(instance->context->channels, instance);
-
 	gdi_free(instance);
 }
 
@@ -435,9 +432,6 @@ static BOOL ios_client_new(freerdp* instance, rdpContext* context)
 	if (!instance || !context)
 		return FALSE;
 
-	if (!(context->channels = freerdp_channels_new(instance)))
-		return FALSE;
-
 	if ((ctx->mfi = calloc(1, sizeof(mfInfo))) == NULL)
 		return FALSE;
 
@@ -468,13 +462,6 @@ static void ios_client_free(freerdp* instance, rdpContext* context)
 		return;
 
 	mfi = ((mfContext*) context)->mfi;
-
-	if (context->channels)
-	{
-		freerdp_channels_close(context->channels, instance);
-		freerdp_channels_free(context->channels);
-		context->channels = NULL;
-	}
 
 	ios_events_free_pipe(mfi);
 	free(mfi);

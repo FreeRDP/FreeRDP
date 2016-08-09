@@ -49,20 +49,11 @@ typedef struct tf_context tfContext;
 
 static BOOL tf_context_new(freerdp* instance, rdpContext* context)
 {
-	if (!(context->channels = freerdp_channels_new(instance)))
-		return FALSE;
-
 	return TRUE;
 }
 
 static void tf_context_free(freerdp* instance, rdpContext* context)
 {
-	if (context && context->channels)
-	{
-		freerdp_channels_close(context->channels, instance);
-		freerdp_channels_free(context->channels);
-		context->channels = NULL;
-	}
 }
 
 static BOOL tf_begin_paint(rdpContext* context)

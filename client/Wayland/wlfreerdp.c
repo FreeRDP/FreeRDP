@@ -339,7 +339,6 @@ static int wlfreerdp_run(freerdp* instance)
 		//}
 	}
 
-	freerdp_channels_disconnect(instance->context->channels, instance);
 	freerdp_disconnect(instance);
 	return 0;
 }
@@ -364,9 +363,6 @@ static BOOL wlf_client_new(freerdp* instance, rdpContext* context)
 	wlfContext* wfl = (wlfContext*) context;
 
 	if (!instance || !context)
-		return FALSE;
-
-	if (!(context->channels = freerdp_channels_new(instance)))
 		return FALSE;
 
 	instance->PreConnect = wl_pre_connect;
@@ -398,13 +394,6 @@ static void wlf_client_free(freerdp* instance, rdpContext* context)
 
 	if (!context)
 		return;
-
-	if (context->channels)
-	{
-		freerdp_channels_close(context->channels, instance);
-		freerdp_channels_free(context->channels);
-		context->channels = NULL;
-	}
 
 	if (wlf->display)
 		UwacCloseDisplay(&wlf->display);

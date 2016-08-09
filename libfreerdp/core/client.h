@@ -108,4 +108,11 @@ struct rdp_channels
 	wHashTable* openHandles;
 };
 
+rdpChannels* freerdp_channels_new(freerdp* instance);
+UINT freerdp_channels_disconnect(rdpChannels* channels,
+                                 freerdp* instance);
+void freerdp_channels_close(rdpChannels* channels,
+                            freerdp* instance);
+void freerdp_channels_free(rdpChannels* channels);
+
 #endif /* FREERDP_CORE_CLIENT_H */

@@ -401,10 +401,6 @@ static BOOL android_post_connect(freerdp* instance)
 static void android_post_disconnect(freerdp* instance)
 {
 	freerdp_callback("OnDisconnecting", "(I)V", instance);
-
-	if (instance && instance->context)
-		freerdp_channels_disconnect(instance->context->channels, instance);
-
 	gdi_free(instance);
 }
 
@@ -721,14 +717,8 @@ static BOOL android_client_new(freerdp* instance, rdpContext* context)
 	if (!instance || !context)
 		return FALSE;
 
-	if (!(context->channels = freerdp_channels_new(instance)))
-		return FALSE;
-
 	if (!android_event_queue_init(instance))
-	{
-		freerdp_channels_free(context->channels);
 		return FALSE;
-	}
 
 	instance->PreConnect = android_pre_connect;
 	instance->PostConnect = android_post_connect;
@@ -746,13 +736,6 @@ static void android_client_free(freerdp* instance, rdpContext* context)
 {
 	if (!context)
 		return;
-
-	if (context->channels)
-	{
-		freerdp_channels_close(context->channels, instance);
-		freerdp_channels_free(context->channels);
-		context->channels = NULL;
-	}
 
 	android_event_queue_uninit(instance);
 }
