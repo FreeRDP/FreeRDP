@@ -1298,7 +1298,6 @@ static void xf_post_disconnect(freerdp* instance)
 
 	context = instance->context;
 	xfc = (xfContext*) context;
-	freerdp_channels_disconnect(context->channels, instance);
 	gdi_free(instance);
 
 	if (xfc->clipboard)
@@ -1753,14 +1752,9 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xfContext* xfc = (xfContext*) instance->context;
 	assert(context);
 	assert(xfc);
-	assert(!context->channels);
 	assert(!xfc->display);
 	assert(!xfc->mutex);
 	assert(!xfc->x11event);
-
-	if (!(context->channels = freerdp_channels_new(instance)))
-		goto fail_channels_new;
-
 	instance->PreConnect = xf_pre_connect;
 	instance->PostConnect = xf_post_connect;
 	instance->PostDisconnect = xf_post_disconnect;
@@ -1898,9 +1892,6 @@ fail_create_mutex:
 	XCloseDisplay(xfc->display);
 	xfc->display = NULL;
 fail_open_display:
-	freerdp_channels_free(context->channels);
-	context->channels = NULL;
-fail_channels_new:
 	return FALSE;
 }
 
@@ -1910,13 +1901,6 @@ static void xfreerdp_client_free(freerdp* instance, rdpContext* context)
 
 	if (!context)
 		return;
-
-	if (context->channels)
-	{
-		freerdp_channels_close(context->channels, instance);
-		freerdp_channels_free(context->channels);
-		context->channels = NULL;
-	}
 
 	if (xfc->display)
 	{

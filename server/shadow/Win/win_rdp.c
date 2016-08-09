@@ -289,13 +289,6 @@ BOOL shw_freerdp_client_new(freerdp* instance, rdpContext* context)
 	if (!(shw->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 		return FALSE;
 
-	if (!(context->channels = freerdp_channels_new(instance)))
-	{
-		CloseHandle(shw->StopEvent);
-		shw->StopEvent = NULL;
-		return FALSE;
-	}
-
 	instance->PreConnect = shw_pre_connect;
 	instance->PostConnect = shw_post_connect;
 	instance->Authenticate = shw_authenticate;

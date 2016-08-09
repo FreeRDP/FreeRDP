@@ -51,20 +51,11 @@ struct thread_data
 
 BOOL df_context_new(freerdp* instance, rdpContext* context)
 {
-	if (!(context->channels = freerdp_channels_new(instance)))
-		return FALSE;
-
 	return TRUE;
 }
 
 void df_context_free(freerdp* instance, rdpContext* context)
 {
-	if (context && context->channels)
-	{
-		freerdp_channels_close(context->channels, instance);
-		freerdp_channels_free(context->channels);
-		context->channels = NULL;
-	}
 }
 
 void df_begin_paint(rdpContext* context)
@@ -402,13 +393,9 @@ int dfreerdp_run(freerdp* instance)
 		df_process_channel_event(channels, instance);
 	}
 
-	freerdp_channels_disconnect(channels, instance);
 	freerdp_disconnect(instance);
-	freerdp_channels_close(channels, instance);
-	freerdp_channels_free(channels);
 	df_free(dfi);
 	gdi_free(instance);
-	freerdp_disconnect(instance);
 	freerdp_free(instance);
 	return 0;
 }

@@ -784,8 +784,6 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 	}
 
 	/* cleanup */
-	freerdp_channels_disconnect(channels, instance);
-
 	if (async_input)
 	{
 		wMessageQueue* input_queue;
@@ -793,12 +791,14 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 
 		if (MessageQueue_PostQuit(input_queue, 0))
 			WaitForSingleObject(input_thread, INFINITE);
-
-		CloseHandle(input_thread);
 	}
 
 disconnect:
 	freerdp_disconnect(instance);
+
+	if (async_input)
+		CloseHandle(input_thread);
+
 	WLog_DBG(TAG, "Main thread exited.");
 	ExitThread(0);
 	return 0;
@@ -1018,9 +1018,6 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 	if (!(wfreerdp_client_global_init()))
 		return FALSE;
 
-	if (!(context->channels = freerdp_channels_new(instance)))
-		return FALSE;
-
 	instance->PreConnect = wf_pre_connect;
 	instance->PostConnect = wf_post_connect;
 	instance->Authenticate = wf_authenticate;
@@ -1034,13 +1031,6 @@ static void wfreerdp_client_free(freerdp* instance, rdpContext* context)
 {
 	if (!context)
 		return;
-
-	if (context->channels)
-	{
-		freerdp_channels_close(context->channels, instance);
-		freerdp_channels_free(context->channels);
-		context->channels = NULL;
-	}
 }
 
 static int wfreerdp_client_start(rdpContext* context)
