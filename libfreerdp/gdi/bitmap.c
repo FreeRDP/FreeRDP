@@ -272,66 +272,172 @@ static UINT32 process_rop(UINT32 src, UINT32 dst, UINT32 pat, const char* rop,
 	return stack[0];
 }
 
-BOOL BitBlt_process(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
-                    UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
-                    UINT32 nXSrc, UINT32 nYSrc, const char* rop)
+static BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, UINT32 nXDest,
+                         UINT32 nYDest, UINT32 nXSrc, UINT32 nYSrc, UINT32 x, UINT32 y, BOOL useSrc,
+                         UINT32 style, const char* rop, const gdiPalette* palette)
 {
-	UINT32 x, y;
-	UINT32 color;
+	UINT32 dstColor;
+	UINT32 colorA;
+	UINT32 colorB = 0;
+	UINT32 colorC;
+	BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
 
-	/* DPSnoo */
-	if (!hdcDest || !hdcSrc)
+	if (!dstp)
+	{
+		WLog_ERR(TAG, "dstp=%p", dstp);
 		return FALSE;
+	}
 
-	switch (gdi_GetBrushStyle(hdcDest))
+	colorA = ReadColor(dstp, hdcDest->format);
+
+	if (useSrc)
+	{
+		const BYTE* srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc + x, nYSrc + y);
+
+		if (!srcp)
+		{
+			WLog_ERR(TAG, "srcp=%p", srcp);
+			return FALSE;
+		}
+
+		colorC = ReadColor(srcp, hdcSrc->format);
+		colorC = ConvertColor(colorC, hdcSrc->format, hdcDest->format, palette);
+	}
+
+	switch (style)
 	{
 		case GDI_BS_SOLID:
-			color = hdcDest->brush->color;
+			colorB = hdcDest->brush->color;
+			break;
 
-			for (y = 0; y < nHeight; y++)
+		case GDI_BS_HATCHED:
+		case GDI_BS_PATTERN:
 			{
-				for (x = 0; x < nWidth; x++)
-				{
-					const BYTE* srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc + x, nYSrc + y);
-					BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
+				const BYTE* patp = gdi_get_brush_pointer(hdcDest, nXDest + x, nYDest + y);
 
-					if (srcp && dstp)
-					{
-						UINT32 colorA = ReadColor(dstp, hdcDest->format);
-						UINT32 colorC = ReadColor(srcp, hdcSrc->format);
-						UINT32 dstColor;
-						colorC = ConvertColor(colorC, hdcSrc->format, hdcDest->format, NULL);
-						dstColor = process_rop(colorC, colorA, color, rop, hdcDest->format);
-						WriteColor(dstp, hdcDest->format, dstColor);
-					}
+				if (!patp)
+				{
+					WLog_ERR(TAG, "patp=%p", patp);
+					return FALSE;
 				}
+
+				colorB = ReadColor(patp, hdcDest->format);
+			}
+			break;
+
+		default:
+			break;
+	}
+
+	dstColor = process_rop(colorC, colorA, colorB, rop, hdcDest->format);
+	WriteColor(dstp, hdcDest->format, dstColor);
+}
+
+static BOOL BitBlt_process(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
+                           UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
+                           UINT32 nXSrc, UINT32 nYSrc, const char* rop, const gdiPalette* palette)
+{
+	INT32 x, y;
+	UINT32 style;
+	BOOL useSrc = FALSE;
+	BOOL usePat = FALSE;
+	const char* iter = rop;
+
+	while (*iter != '\0')
+	{
+		switch (*iter++)
+		{
+			case 'P':
+				usePat = TRUE;
+				break;
+
+			case 'S':
+				useSrc = TRUE;
+				break;
+
+			default:
+				break;
+		}
+	}
+
+	if (!hdcDest)
+		return FALSE;
+
+	if (useSrc && !hdcSrc)
+		return FALSE;
+
+	style = gdi_GetBrushStyle(hdcDest);
+
+	switch (style)
+	{
+		case GDI_BS_SOLID:
+		case GDI_BS_HATCHED:
+		case GDI_BS_PATTERN:
+			if (!usePat)
+			{
+				WLog_ERR(TAG, "Invalid brush!!");
+				return FALSE;
 			}
 
 			break;
 
 		default:
-			for (y = 0; y < nHeight; y++)
+			if (usePat)
 			{
-				for (x = 0; x < nWidth; x++)
-				{
-					const BYTE* srcp = gdi_get_bitmap_pointer(hdcSrc, nXSrc + x, nYSrc + y);
-					const BYTE* patp = gdi_get_brush_pointer(hdcDest, nXDest + x, nYDest + y);
-					BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
-
-					if (srcp && patp && dstp)
-					{
-						UINT32 colorA = ReadColor(dstp, hdcDest->format);
-						UINT32 colorB = ReadColor(patp, hdcDest->format);
-						UINT32 colorC = ReadColor(srcp, hdcSrc->format);
-						UINT32 dstColor;
-						colorC = ConvertColor(colorC, hdcSrc->format, hdcDest->format, NULL);
-						dstColor = process_rop(colorC, colorA, colorB, rop, hdcDest->format);
-						WriteColor(dstp, hdcDest->format, dstColor);
-					}
-				}
+				WLog_ERR(TAG, "Invalid brush!!");
+				return FALSE;
 			}
 
 			break;
+	}
+
+	if ((nXDest > nXSrc) && (nYDest > nYSrc))
+	{
+		for (y = nHeight - 1; y >= 0; y--)
+		{
+			for (x = nWidth - 1; x >= 0; x--)
+			{
+				if (!BitBlt_write(hdcDest, hdcSrc, nXDest, nYDest, nXSrc, nYSrc, x, y, useSrc,
+				                  style, rop, palette))
+					return FALSE;
+			}
+		}
+	}
+	else if (nXDest > nXSrc)
+	{
+		for (y = 0; y < nHeight; y++)
+		{
+			for (x = nWidth - 1; x >= 0; x--)
+			{
+				if (!BitBlt_write(hdcDest, hdcSrc, nXDest, nYDest, nXSrc, nYSrc, x, y, useSrc,
+				                  style, rop, palette))
+					return FALSE;
+			}
+		}
+	}
+	else if (nYDest > nYSrc)
+	{
+		for (y = nHeight - 1; y >= 0; y--)
+		{
+			for (x = 0; x < nWidth; x++)
+			{
+				if (!BitBlt_write(hdcDest, hdcSrc, nXDest, nYDest, nXSrc, nYSrc, x, y, useSrc,
+				                  style, rop, palette))
+					return FALSE;
+			}
+		}
+	}
+	else
+	{
+		for (y = 0; y < nHeight; y++)
+		{
+			for (x = 0; x < nWidth; x++)
+			{
+				if (!BitBlt_write(hdcDest, hdcSrc, nXDest, nYDest, nXSrc, nYSrc, x, y, useSrc,
+				                  style, rop, palette))
+					return FALSE;
+			}
+		}
 	}
 
 	return TRUE;
@@ -358,22 +464,17 @@ BOOL gdi_BitBlt(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 	if (!hdcDest)
 		return FALSE;
 
-	if (hdcSrc != NULL)
-	{
-		if (!gdi_ClipCoords(hdcDest, &nXDest, &nYDest, &nWidth, &nHeight, &nXSrc,
-		                    &nYSrc))
-			return TRUE;
-	}
-	else
-	{
-		if (!gdi_ClipCoords(hdcDest, &nXDest, &nYDest, &nWidth, &nHeight, NULL, NULL))
-			return TRUE;
-	}
+	if (!gdi_ClipCoords(hdcDest, &nXDest, &nYDest, &nWidth, &nHeight, &nXSrc,
+	                    &nYSrc))
+		return TRUE;
+
+	if (!BitBlt_process(hdcDest, nXDest, nYDest,
+	                    nWidth, nHeight, hdcSrc,
+	                    nXSrc, nYSrc, gdi_rop_to_string(rop), palette))
+		return FALSE;
 
 	if (!gdi_InvalidateRegion(hdcDest, nXDest, nYDest, nWidth, nHeight))
 		return FALSE;
 
-	return BitBlt_process(hdcDest, nXDest, nYDest,
-	                      nWidth, nHeight, hdcSrc,
-	                      nXSrc, nYSrc, gdi_rop_to_string(rop));
+	return TRUE;
 }
