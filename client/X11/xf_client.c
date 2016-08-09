@@ -1758,7 +1758,7 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	assert(!xfc->mutex);
 	assert(!xfc->x11event);
 
-	if (!(context->channels = freerdp_channels_new()))
+	if (!(context->channels = freerdp_channels_new(instance)))
 		goto fail_channels_new;
 
 	instance->PreConnect = xf_pre_connect;

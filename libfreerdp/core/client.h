@@ -93,7 +93,6 @@ struct rdp_channels
 
 	/* control for entry into MyVirtualChannelInit */
 	int can_call_init;
-	rdpSettings* settings;
 
 	/* true once freerdp_channels_post_connect is called */
 	BOOL connected;
@@ -104,6 +103,9 @@ struct rdp_channels
 	wMessageQueue* queue;
 
 	DrdynvcClientContext* drdynvc;
+	UINT64 openHandleSeq;
+	CRITICAL_SECTION channelsLock;
+	wHashTable* openHandles;
 };
 
 #endif /* FREERDP_CORE_CLIENT_H */

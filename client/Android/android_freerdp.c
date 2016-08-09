@@ -721,7 +721,7 @@ static BOOL android_client_new(freerdp* instance, rdpContext* context)
 	if (!instance || !context)
 		return FALSE;
 
-	if (!(context->channels = freerdp_channels_new()))
+	if (!(context->channels = freerdp_channels_new(instance)))
 		return FALSE;
 
 	if (!android_event_queue_init(instance))

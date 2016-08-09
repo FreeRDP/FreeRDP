@@ -74,6 +74,8 @@ struct _DEVICE_DRIVE_EXT
 	char* path;
 };
 
+static WINPR_TLS rdpdrPlugin* s_TLSPluginContext = NULL;
+
 /**
  * Function description
  *
@@ -841,7 +843,7 @@ cleanup:
 	return error;
 }
 
-void first_hotplug(rdpdrPlugin* rdpdr)
+static void first_hotplug(rdpdrPlugin* rdpdr)
 {
 	UINT error;
 
@@ -1409,107 +1411,6 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 	return CHANNEL_RC_OK;
 }
 
-
-/****************************************************************************************/
-
-
-static wListDictionary* g_InitHandles = NULL;
-static wListDictionary* g_OpenHandles = NULL;
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-UINT rdpdr_add_init_handle_data(void* pInitHandle, void* pUserData)
-{
-	if (!g_InitHandles)
-	{
-		g_InitHandles = ListDictionary_New(TRUE);
-	}
-
-	if (!g_InitHandles)
-	{
-		WLog_ERR(TAG, "ListDictionary_New failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
-	if (!ListDictionary_Add(g_InitHandles, pInitHandle, pUserData))
-	{
-		WLog_ERR(TAG, "ListDictionary_Add failed!");
-		return ERROR_INTERNAL_ERROR;
-	}
-
-	return CHANNEL_RC_OK;
-}
-
-void* rdpdr_get_init_handle_data(void* pInitHandle)
-{
-	void* pUserData = NULL;
-	pUserData = ListDictionary_GetItemValue(g_InitHandles, pInitHandle);
-	return pUserData;
-}
-
-void rdpdr_remove_init_handle_data(void* pInitHandle)
-{
-	ListDictionary_Remove(g_InitHandles, pInitHandle);
-
-	if (ListDictionary_Count(g_InitHandles) < 1)
-	{
-		ListDictionary_Free(g_InitHandles);
-		g_InitHandles = NULL;
-	}
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-UINT rdpdr_add_open_handle_data(DWORD openHandle, void* pUserData)
-{
-	void* pOpenHandle = (void*)(size_t) openHandle;
-
-	if (!g_OpenHandles)
-	{
-		g_OpenHandles = ListDictionary_New(TRUE);
-	}
-
-	if (!g_OpenHandles)
-	{
-		WLog_ERR(TAG, "ListDictionary_New failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
-	if (!ListDictionary_Add(g_OpenHandles, pOpenHandle, pUserData))
-	{
-		WLog_ERR(TAG, "ListDictionary_Add failed!");
-		return ERROR_INTERNAL_ERROR;
-	}
-
-	return CHANNEL_RC_OK;
-}
-
-void* rdpdr_get_open_handle_data(DWORD openHandle)
-{
-	void* pUserData = NULL;
-	void* pOpenHandle = (void*)(size_t) openHandle;
-	pUserData = ListDictionary_GetItemValue(g_OpenHandles, pOpenHandle);
-	return pUserData;
-}
-
-void rdpdr_remove_open_handle_data(DWORD openHandle)
-{
-	void* pOpenHandle = (void*)(size_t) openHandle;
-	ListDictionary_Remove(g_OpenHandles, pOpenHandle);
-
-	if (ListDictionary_Count(g_OpenHandles) < 1)
-	{
-		ListDictionary_Free(g_OpenHandles);
-		g_OpenHandles = NULL;
-	}
-}
-
 /**
  * Function description
  *
@@ -1612,11 +1513,10 @@ static VOID VCAPITYPE rdpdr_virtual_channel_open_event(DWORD openHandle,
         UINT event,
         LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
-	rdpdrPlugin* rdpdr;
+	rdpdrPlugin* rdpdr = s_TLSPluginContext;
 	UINT error = CHANNEL_RC_OK;
-	rdpdr = (rdpdrPlugin*) rdpdr_get_open_handle_data(openHandle);
 
-	if (!rdpdr || !pData)
+	if (!rdpdr || !pData || (rdpdr->OpenHandle != openHandle))
 	{
 		WLog_ERR(TAG,  "rdpdr_virtual_channel_open_event: error no match");
 		return;
@@ -1714,7 +1614,6 @@ static UINT rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr,
         LPVOID pData, UINT32 dataLength)
 {
 	UINT32 status;
-	UINT error;
 	status = rdpdr->channelEntryPoints.pVirtualChannelOpen(rdpdr->InitHandle,
 	         &rdpdr->OpenHandle, rdpdr->channelDef.name, rdpdr_virtual_channel_open_event);
 
@@ -1723,12 +1622,6 @@ static UINT rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr,
 		WLog_ERR(TAG,  "pVirtualChannelOpen failed with %s [%08X]",
 		         WTSErrorToString(status), status);
 		return status;
-	}
-
-	if ((error = rdpdr_add_open_handle_data(rdpdr->OpenHandle, rdpdr)))
-	{
-		WLog_ERR(TAG, "rdpdr_add_open_handle_data failed with error %lu!", error);
-		return error;
 	}
 
 	rdpdr->queue = MessageQueue_New(NULL);
@@ -1786,6 +1679,8 @@ static UINT rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
 		         WTSErrorToString(error), error);
 	}
 
+	rdpdr->OpenHandle = 0;
+
 	if (rdpdr->data_in)
 	{
 		Stream_Free(rdpdr->data_in, TRUE);
@@ -1798,13 +1693,11 @@ static UINT rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
 		rdpdr->devman = NULL;
 	}
 
-	rdpdr_remove_open_handle_data(rdpdr->OpenHandle);
 	return error;
 }
 
 static void rdpdr_virtual_channel_event_terminated(rdpdrPlugin* rdpdr)
 {
-	rdpdr_remove_init_handle_data(rdpdr->InitHandle);
 	free(rdpdr);
 }
 
@@ -1812,11 +1705,10 @@ static VOID VCAPITYPE rdpdr_virtual_channel_init_event(LPVOID pInitHandle,
         UINT event,
         LPVOID pData, UINT dataLength)
 {
-	rdpdrPlugin* rdpdr;
+	rdpdrPlugin* rdpdr = s_TLSPluginContext;
 	UINT error = CHANNEL_RC_OK;
-	rdpdr = (rdpdrPlugin*) rdpdr_get_init_handle_data(pInitHandle);
 
-	if (!rdpdr)
+	if (!rdpdr || (rdpdr->InitHandle != pInitHandle))
 	{
 		WLog_ERR(TAG, "error no match");
 		return;
@@ -1900,12 +1792,6 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 		return FALSE;
 	}
 
-	if ((rc = rdpdr_add_init_handle_data(rdpdr->InitHandle, (void*) rdpdr)))
-	{
-		WLog_ERR(TAG, "rdpdr_add_init_handle_data failed with error %lu!", rc);
-		free(rdpdr);
-		return FALSE;
-	}
-
+	s_TLSPluginContext = rdpdr;
 	return TRUE;
 }

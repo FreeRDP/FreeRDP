@@ -30,6 +30,8 @@
 
 #define TAG CHANNELS_TAG("drdynvc.client")
 
+static WINPR_TLS drdynvcPlugin* s_TLSPluginContext = NULL;
+
 static void dvcman_channel_free(void* channel);
 static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId,
                                const BYTE* data, UINT32 dataSize);
@@ -439,8 +441,8 @@ static UINT dvcman_close_channel_iface(IWTSVirtualChannel* pChannel)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr,
-                           UINT32 ChannelId, const char* ChannelName)
+static UINT dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr,
+                                  UINT32 ChannelId, const char* ChannelName)
 {
 	int i;
 	BOOL bAccept;
@@ -740,8 +742,8 @@ static UINT drdynvc_send(drdynvcPlugin* drdynvc, wStream* s)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId,
-                        const BYTE* data, UINT32 dataSize)
+static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId,
+                               const BYTE* data, UINT32 dataSize)
 {
 	wStream* data_out;
 	unsigned long pos;
@@ -1128,105 +1130,6 @@ static UINT drdynvc_order_recv(drdynvcPlugin* drdynvc, wStream* s)
 	}
 }
 
-/****************************************************************************************/
-
-static wListDictionary* g_InitHandles = NULL;
-static wListDictionary* g_OpenHandles = NULL;
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT drdynvc_add_init_handle_data(void* pInitHandle, void* pUserData)
-{
-	if (!g_InitHandles)
-		g_InitHandles = ListDictionary_New(TRUE);
-
-	if (!g_InitHandles)
-	{
-		WLog_ERR(TAG, "ListDictionary_New failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
-	if (!ListDictionary_Add(g_InitHandles, pInitHandle, pUserData))
-	{
-		WLog_ERR(TAG, "ListDictionary_New failed!");
-		return ERROR_INTERNAL_ERROR;
-	}
-
-	return CHANNEL_RC_OK;
-}
-
-static void* drdynvc_get_init_handle_data(void* pInitHandle)
-{
-	void* pUserData = NULL;
-	pUserData = ListDictionary_GetItemValue(g_InitHandles, pInitHandle);
-	return pUserData;
-}
-
-static void drdynvc_remove_init_handle_data(void* pInitHandle)
-{
-	ListDictionary_Remove(g_InitHandles, pInitHandle);
-
-	if (ListDictionary_Count(g_InitHandles) < 1)
-	{
-		ListDictionary_Free(g_InitHandles);
-		g_InitHandles = NULL;
-	}
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT drdynvc_add_open_handle_data(DWORD openHandle, void* pUserData)
-{
-	void* pOpenHandle = (void*)(size_t) openHandle;
-
-	if (!g_OpenHandles)
-		g_OpenHandles = ListDictionary_New(TRUE);
-
-	if (!g_OpenHandles)
-	{
-		WLog_ERR(TAG, "ListDictionary_New failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
-	if (!ListDictionary_Add(g_OpenHandles, pOpenHandle, pUserData))
-	{
-		WLog_ERR(TAG, "ListDictionary_New failed!");
-		return ERROR_INTERNAL_ERROR;
-	}
-
-	return CHANNEL_RC_OK;
-}
-
-static void* drdynvc_get_open_handle_data(DWORD openHandle)
-{
-	void* pUserData = NULL;
-	void* pOpenHandle = (void*)(size_t) openHandle;
-	pUserData = ListDictionary_GetItemValue(g_OpenHandles, pOpenHandle);
-	return pUserData;
-}
-
-static void drdynvc_remove_open_handle_data(DWORD openHandle)
-{
-	void* pOpenHandle = (void*)(size_t) openHandle;
-
-	if (!g_OpenHandles)
-		return;
-
-	ListDictionary_Remove(g_OpenHandles, pOpenHandle);
-
-	if (ListDictionary_Count(g_OpenHandles) < 1)
-	{
-		ListDictionary_Free(g_OpenHandles);
-		g_OpenHandles = NULL;
-	}
-}
-
 /**
  * Function description
  *
@@ -1292,11 +1195,10 @@ static void VCAPITYPE drdynvc_virtual_channel_open_event(DWORD openHandle,
         UINT event,
         LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
-	drdynvcPlugin* drdynvc;
+	drdynvcPlugin* drdynvc = s_TLSPluginContext;
 	UINT error = CHANNEL_RC_OK;
-	drdynvc = (drdynvcPlugin*) drdynvc_get_open_handle_data(openHandle);
 
-	if (!drdynvc)
+	if (!drdynvc || (drdynvc->OpenHandle != openHandle))
 	{
 		WLog_ERR(TAG, "drdynvc_virtual_channel_open_event: error no match");
 		return;
@@ -1331,6 +1233,7 @@ static void* drdynvc_virtual_channel_client_thread(void* arg)
 	wMessage message;
 	drdynvcPlugin* drdynvc = (drdynvcPlugin*) arg;
 	UINT error = CHANNEL_RC_OK;
+	freerdp_channel_init_thread_context(drdynvc->rdpcontext);
 
 	while (1)
 	{
@@ -1398,12 +1301,6 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc,
 		return status;
 	}
 
-	if ((error = drdynvc_add_open_handle_data(drdynvc->OpenHandle, drdynvc)))
-	{
-		WLog_ERR(TAG, "drdynvc_add_open_handle_data failed with error %lu!", error);
-		return error;
-	}
-
 	drdynvc->queue = MessageQueue_New(NULL);
 
 	if (!drdynvc->queue)
@@ -1450,9 +1347,7 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc,
 		goto error;
 	}
 
-	return CHANNEL_RC_OK;
 error:
-	drdynvc_remove_open_handle_data(drdynvc->OpenHandle);
 	return error;
 }
 
@@ -1485,6 +1380,8 @@ static UINT drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
 		         WTSErrorToString(status), status);
 	}
 
+	drdynvc->OpenHandle = 0;
+
 	if (drdynvc->data_in)
 	{
 		Stream_Free(drdynvc->data_in, TRUE);
@@ -1497,7 +1394,6 @@ static UINT drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
 		drdynvc->channel_mgr = NULL;
 	}
 
-	drdynvc_remove_open_handle_data(drdynvc->OpenHandle);
 	return status;
 }
 
@@ -1508,7 +1404,7 @@ static UINT drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
  */
 static UINT drdynvc_virtual_channel_event_terminated(drdynvcPlugin* drdynvc)
 {
-	drdynvc_remove_init_handle_data(drdynvc->InitHandle);
+	drdynvc->InitHandle = 0;
 	free(drdynvc);
 	return CHANNEL_RC_OK;
 }
@@ -1517,11 +1413,10 @@ static VOID VCAPITYPE drdynvc_virtual_channel_init_event(LPVOID pInitHandle,
         UINT event, LPVOID pData,
         UINT dataLength)
 {
-	drdynvcPlugin* drdynvc;
+	drdynvcPlugin* drdynvc = s_TLSPluginContext;
 	UINT error = CHANNEL_RC_OK;
-	drdynvc = (drdynvcPlugin*) drdynvc_get_init_handle_data(pInitHandle);
 
-	if (!drdynvc)
+	if (!drdynvc || (drdynvc->InitHandle != pInitHandle))
 	{
 		WLog_ERR(TAG, "drdynvc_virtual_channel_init_event: error no match");
 		return;
@@ -1576,7 +1471,6 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	drdynvcPlugin* drdynvc;
 	DrdynvcClientContext* context;
 	CHANNEL_ENTRY_POINTS_FREERDP* pEntryPointsEx;
-	UINT error;
 	drdynvc = (drdynvcPlugin*) calloc(1, sizeof(drdynvcPlugin));
 
 	if (!drdynvc)
@@ -1625,9 +1519,8 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	{
 		WLog_ERR(TAG, "pVirtualChannelInit failed with %s [%08X]",
 		         WTSErrorToString(rc), rc);
+		free(drdynvc->context);
 		free(drdynvc);
-		free(*(pEntryPointsEx->ppInterface));
-		*(pEntryPointsEx->ppInterface) = NULL;
 		return FALSE;
 	}
 
@@ -1635,17 +1528,7 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	        (drdynvc->channelEntryPoints.ppInterface);
 	drdynvc->channelEntryPoints.ppInterface = &
 	        (drdynvc->channelEntryPoints.pInterface);
-
-	if ((error = drdynvc_add_init_handle_data(drdynvc->InitHandle,
-	             (void*) drdynvc)))
-	{
-		WLog_ERR(TAG, "drdynvc_add_init_handle_data failed with error %lu!", error);
-		free(drdynvc);
-		free(*(pEntryPointsEx->ppInterface));
-		*(pEntryPointsEx->ppInterface) = NULL;
-		return FALSE;
-	}
-
+	s_TLSPluginContext = drdynvc;
 	return TRUE;
 }
 

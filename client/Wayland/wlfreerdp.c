@@ -366,7 +366,7 @@ static BOOL wlf_client_new(freerdp* instance, rdpContext* context)
 	if (!instance || !context)
 		return FALSE;
 
-	if (!(context->channels = freerdp_channels_new()))
+	if (!(context->channels = freerdp_channels_new(instance)))
 		return FALSE;
 
 	instance->PreConnect = wl_pre_connect;
