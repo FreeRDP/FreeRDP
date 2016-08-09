@@ -49,7 +49,7 @@ typedef struct tf_context tfContext;
 
 static BOOL tf_context_new(freerdp* instance, rdpContext* context)
 {
-	if (!(context->channels = freerdp_channels_new()))
+	if (!(context->channels = freerdp_channels_new(instance)))
 		return FALSE;
 
 	return TRUE;
@@ -69,7 +69,7 @@ static BOOL tf_begin_paint(rdpContext* context)
 {
 	rdpGdi* gdi = context->gdi;
 	gdi->primary->hdc->hwnd->invalid->null = 1;
-    return TRUE;
+	return TRUE;
 }
 
 static BOOL tf_end_paint(rdpContext* context)
@@ -78,16 +78,14 @@ static BOOL tf_end_paint(rdpContext* context)
 
 	if (gdi->primary->hdc->hwnd->invalid->null)
 		return TRUE;
+
 	return TRUE;
 }
 
 static BOOL tf_pre_connect(freerdp* instance)
 {
 	rdpSettings* settings;
-
-
 	settings = instance->settings;
-
 	settings->OrderSupport[NEG_DSTBLT_INDEX] = TRUE;
 	settings->OrderSupport[NEG_PATBLT_INDEX] = TRUE;
 	settings->OrderSupport[NEG_SCRBLT_INDEX] = TRUE;
@@ -111,7 +109,8 @@ static BOOL tf_pre_connect(freerdp* instance)
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = TRUE;
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = TRUE;
 
-	if (freerdp_channels_pre_connect(instance->context->channels, instance) != CHANNEL_RC_OK)
+	if (freerdp_channels_pre_connect(instance->context->channels,
+	                                 instance) != CHANNEL_RC_OK)
 		return FALSE;
 
 	return TRUE;
@@ -124,8 +123,8 @@ static BOOL tf_post_connect(freerdp* instance)
 
 	instance->update->BeginPaint = tf_begin_paint;
 	instance->update->EndPaint = tf_end_paint;
-
-	return (freerdp_channels_post_connect(instance->context->channels, instance) == CHANNEL_RC_OK);
+	return (freerdp_channels_post_connect(instance->context->channels,
+	                                      instance) == CHANNEL_RC_OK);
 }
 
 static void* tf_client_thread_proc(freerdp* instance)
@@ -146,16 +145,17 @@ static void* tf_client_thread_proc(freerdp* instance)
 
 		if (nCount == 0)
 		{
-				WLog_ERR(TAG, "%s: freerdp_get_event_handles failed", __FUNCTION__);
-				break;
+			WLog_ERR(TAG, "%s: freerdp_get_event_handles failed", __FUNCTION__);
+			break;
 		}
 
 		status = WaitForMultipleObjects(nCount, handles, FALSE, 100);
 
 		if (status == WAIT_FAILED)
 		{
-				WLog_ERR(TAG, "%s: WaitForMultipleObjects failed with %lu", __FUNCTION__, status);
-				break;
+			WLog_ERR(TAG, "%s: WaitForMultipleObjects failed with %lu", __FUNCTION__,
+			         status);
+			break;
 		}
 
 		if (!freerdp_check_event_handles(instance->context))
@@ -166,7 +166,6 @@ static void* tf_client_thread_proc(freerdp* instance)
 	}
 
 	freerdp_disconnect(instance);
-
 	ExitThread(0);
 	return NULL;
 }
@@ -176,16 +175,16 @@ int main(int argc, char* argv[])
 	int status;
 	HANDLE thread;
 	freerdp* instance;
-
 	instance = freerdp_new();
+
 	if (!instance)
 	{
 		WLog_ERR(TAG, "Couldn't create instance");
 		exit(1);
 	}
+
 	instance->PreConnect = tf_pre_connect;
 	instance->PostConnect = tf_post_connect;
-
 	instance->ContextSize = sizeof(tfContext);
 	instance->ContextNew = tf_context_new;
 	instance->ContextFree = tf_context_free;
@@ -196,18 +195,20 @@ int main(int argc, char* argv[])
 		exit(1);
 	}
 
-	status = freerdp_client_settings_parse_command_line(instance->settings, argc, argv, FALSE);
+	status = freerdp_client_settings_parse_command_line(instance->settings, argc,
+	         argv, FALSE);
 
 	if (status < 0)
 	{
 		exit(0);
 	}
 
-	if (!freerdp_client_load_addins(instance->context->channels, instance->settings))
-		exit (-1);
+	if (!freerdp_client_load_addins(instance->context->channels,
+	                                instance->settings))
+		exit(-1);
 
 	if (!(thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
-			tf_client_thread_proc, instance, 0, NULL)))
+	                            tf_client_thread_proc, instance, 0, NULL)))
 	{
 		WLog_ERR(TAG, "Failed to create client thread");
 	}
@@ -218,6 +219,5 @@ int main(int argc, char* argv[])
 
 	freerdp_context_free(instance);
 	freerdp_free(instance);
-
 	return 0;
 }

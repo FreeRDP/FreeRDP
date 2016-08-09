@@ -20,26 +20,38 @@
 #define WINPR_H
 
 #if defined _WIN32 || defined __CYGWIN__
-	#ifdef WINPR_EXPORTS
-		#ifdef __GNUC__
-			#define WINPR_API __attribute__((dllexport))
-		#else
-			#define WINPR_API __declspec(dllexport)
-		#endif
-	#else
-		#ifdef __GNUC__
-			#define WINPR_API __attribute__((dllimport))
-		#else
-			#define WINPR_API __declspec(dllimport)
-		#endif
-	#endif
+#ifdef WINPR_EXPORTS
+#ifdef __GNUC__
+#define WINPR_API __attribute__((dllexport))
 #else
-	#if __GNUC__ >= 4
-		#define WINPR_API   __attribute__ ((visibility("default")))
-	#else
-		#define WINPR_API
-	#endif
+#define WINPR_API __declspec(dllexport)
 #endif
+#else
+#ifdef __GNUC__
+#define WINPR_API __attribute__((dllimport))
+#else
+#define WINPR_API __declspec(dllimport)
+#endif
+#endif
+#else
+#if __GNUC__ >= 4
+#define WINPR_API   __attribute__ ((visibility("default")))
+#else
+#define WINPR_API
+#endif
+#endif
+
+/* Thread local storage keyword define */
+#if defined _WIN32 || defined __CYGWIN__
+#ifdef __GNUC__
+#define WINPR_TLS __thread
+#else
+#define WINPR_TLS __declspec(thread)
+#endif
+#else
+#define WINPR_TLS __thread
+#endif
+
 
 #ifdef _WIN32
 #define INLINE	__inline

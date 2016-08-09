@@ -89,7 +89,7 @@ static BOOL mfreerdp_client_new(freerdp* instance, rdpContext* context)
 	context->instance->PreConnect = mac_pre_connect;
 	context->instance->PostConnect = mac_post_connect;
 	context->instance->Authenticate = mac_authenticate;
-	context->channels = freerdp_channels_new();
+	context->channels = freerdp_channels_new(instance);
 	settings = instance->settings;
 	settings->AsyncTransport = TRUE;
 	settings->AsyncUpdate = TRUE;
