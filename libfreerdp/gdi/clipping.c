@@ -34,7 +34,8 @@
 
 #include "clipping.h"
 
-BOOL gdi_SetClipRgn(HGDI_DC hdc, UINT32 nXLeft, UINT32 nYLeft, UINT32 nWidth, UINT32 nHeight)
+BOOL gdi_SetClipRgn(HGDI_DC hdc, UINT32 nXLeft, UINT32 nYLeft, UINT32 nWidth,
+                    UINT32 nHeight)
 {
 	return gdi_SetRgn(hdc->clip, nXLeft, nYLeft, nWidth, nHeight);
 }
@@ -76,14 +77,13 @@ BOOL gdi_SetNullClipRgn(HGDI_DC hdc)
  * @return nonzero if there is something to draw, 0 otherwise
  */
 
-BOOL gdi_ClipCoords(HGDI_DC hdc, UINT32 *x, UINT32 *y, UINT32 *w, UINT32 *h,
-		    UINT32 *srcx, UINT32 *srcy)
+BOOL gdi_ClipCoords(HGDI_DC hdc, UINT32* x, UINT32* y, UINT32* w, UINT32* h,
+                    UINT32* srcx, UINT32* srcy)
 {
 	GDI_RECT bmp;
 	GDI_RECT clip;
 	GDI_RECT coords;
 	HGDI_BITMAP hBmp;
-
 	int dx = 0;
 	int dy = 0;
 	BOOL draw = TRUE;
@@ -125,13 +125,12 @@ BOOL gdi_ClipCoords(HGDI_DC hdc, UINT32 *x, UINT32 *y, UINT32 *w, UINT32 *h,
 	gdi_CRgnToRect(*x, *y, *w, *h, &coords);
 
 	if (coords.right >= clip.left && coords.left <= clip.right &&
-		coords.bottom >= clip.top && coords.top <= clip.bottom)
+	    coords.bottom >= clip.top && coords.top <= clip.bottom)
 	{
 		/* coordinates overlap with clipping region */
-
 		if (coords.left < clip.left)
 		{
-			dx = (clip.left - coords.left) + 1;
+			dx = (clip.left - coords.left);
 			coords.left = clip.left;
 		}
 
@@ -140,7 +139,7 @@ BOOL gdi_ClipCoords(HGDI_DC hdc, UINT32 *x, UINT32 *y, UINT32 *w, UINT32 *h,
 
 		if (coords.top < clip.top)
 		{
-			dy = (clip.top - coords.top) + 1;
+			dy = (clip.top - coords.top);
 			coords.top = clip.top;
 		}
 
@@ -150,7 +149,6 @@ BOOL gdi_ClipCoords(HGDI_DC hdc, UINT32 *x, UINT32 *y, UINT32 *w, UINT32 *h,
 	else
 	{
 		/* coordinates do not overlap with clipping region */
-
 		coords.left = 0;
 		coords.right = 0;
 		coords.top = 0;
@@ -159,22 +157,11 @@ BOOL gdi_ClipCoords(HGDI_DC hdc, UINT32 *x, UINT32 *y, UINT32 *w, UINT32 *h,
 	}
 
 	if (srcx != NULL)
-	{
-		if (dx > 0)
-		{
-			*srcx += dx - 1;
-		}
-	}
+		*srcx += dx;
 
 	if (srcy != NULL)
-	{
-		if (dy > 0)
-		{
-			*srcy += dy - 1;
-		}
-	}
+		*srcy += dy;
 
 	gdi_RectToCRgn(&coords, x, y, w, h);
-
 	return draw;
 }
