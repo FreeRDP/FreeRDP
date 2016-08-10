@@ -1342,8 +1342,8 @@ void smartcard_trace_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, GetSt
 		WLog_DBG(TAG, "\t[%d]: dwCurrentState: %s (0x%08X)",
 			index, szCurrentState, readerState->dwCurrentState);
 
-		WLog_DBG(TAG, "\t[%d]: dwEventState: %s (0x%08X)",
-			index, szEventState, readerState->dwEventState);
+		WLog_DBG(TAG, "\t[%d]: dwEventState: %s (activity Count: %d) (0x%08X)",
+			index, szEventState, readerState->dwEventState >> 16, readerState->dwEventState);
 
 		free(szCurrentState);
 		free(szEventState);
@@ -1517,8 +1517,8 @@ void smartcard_trace_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, GetSt
 		WLog_DBG(TAG, "\t[%d]: dwCurrentState: %s (0x%08X)",
 			index, szCurrentState, readerState->dwCurrentState);
 
-		WLog_DBG(TAG, "\t[%d]: dwEventState: %s (0x%08X)",
-			index, szEventState, readerState->dwEventState);
+        WLog_DBG( TAG, "\t[%d]: dwEventState: %s (activity Count: %d) (0x%08X)",
+            index, szEventState, readerState->dwEventState >> 16, readerState->dwEventState );
 
 		free(szCurrentState);
 		free(szEventState);
@@ -1580,8 +1580,8 @@ void smartcard_trace_get_status_change_return(SMARTCARD_DEVICE* smartcard, GetSt
 		WLog_DBG(TAG, "\t[%d]: dwCurrentState: %s (0x%08X)",
 			index, szCurrentState, rgReaderState->dwCurrentState);
 
-		WLog_DBG(TAG, "\t[%d]: dwEventState: %s (0x%08X)",
-			index, szEventState, rgReaderState->dwEventState);
+        WLog_DBG( TAG, "\t[%d]: dwEventState: %s (activity Count: %d) (0x%08X)",
+            index, szEventState, rgReaderState->dwEventState >> 16, rgReaderState->dwEventState );
 
 		WLog_DBG(TAG, "\t[%d]: cbAtr: %d rgbAtr: %s",
 			index, rgReaderState->cbAtr, rgbAtr);
@@ -2811,8 +2811,8 @@ void smartcard_trace_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, Loc
 		WLog_DBG(TAG, "\t[%d]: dwCurrentState: %s (0x%08X)",
 			index, szCurrentState, readerState->dwCurrentState);
 
-		WLog_DBG(TAG, "\t[%d]: dwEventState: %s (0x%08X)",
-			index, szEventState, readerState->dwEventState);
+        WLog_DBG( TAG, "\t[%d]: dwEventState: %s (activity Count: %d) (0x%08X)",
+            index, szEventState, readerState->dwEventState >> 16, readerState->dwEventState );
 
 		if (rgbAtr)
 		{
