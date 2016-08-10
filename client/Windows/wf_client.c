@@ -69,14 +69,6 @@ static int wf_create_console(void)
 	return 0;
 }
 
-static BOOL wf_sw_begin_paint(rdpContext* context)
-{
-	rdpGdi* gdi = context->gdi;
-	gdi->primary->hdc->hwnd->invalid->null = 1;
-	gdi->primary->hdc->hwnd->ninvalid = 0;
-	return TRUE;
-}
-
 static BOOL wf_sw_end_paint(rdpContext* context)
 {
 	int i;
@@ -151,7 +143,7 @@ static BOOL wf_sw_desktop_resize(rdpContext* context)
 	return TRUE;
 }
 
-static BOOL wf_hw_begin_paint(rdpContext* context)
+static BOOL wf_begin_paint(rdpContext* context)
 {
 	HGDI_DC hdc;
 
@@ -240,17 +232,18 @@ static BOOL wf_pre_connect(freerdp* instance)
 	settings->OrderSupport[NEG_MULTI_DRAWNINEGRID_INDEX] = FALSE;
 	settings->OrderSupport[NEG_LINETO_INDEX] = TRUE;
 	settings->OrderSupport[NEG_POLYLINE_INDEX] = TRUE;
-	settings->OrderSupport[NEG_MEMBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MEMBLT_INDEX] = settings->BitmapCacheEnabled;
 	settings->OrderSupport[NEG_MEM3BLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MEMBLT_V2_INDEX] = settings->BitmapCacheEnabled;
+	settings->OrderSupport[NEG_MEM3BLT_V2_INDEX] = FALSE;
 	settings->OrderSupport[NEG_SAVEBITMAP_INDEX] = FALSE;
-	settings->OrderSupport[NEG_GLYPH_INDEX_INDEX] = FALSE;
-	settings->OrderSupport[NEG_FAST_INDEX_INDEX] = FALSE;
-	settings->OrderSupport[NEG_FAST_GLYPH_INDEX] = FALSE;
-	settings->OrderSupport[NEG_POLYGON_SC_INDEX] = FALSE;
-	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = FALSE;
+	settings->OrderSupport[NEG_GLYPH_INDEX_INDEX] = TRUE;
+	settings->OrderSupport[NEG_FAST_INDEX_INDEX] = TRUE;
+	settings->OrderSupport[NEG_FAST_GLYPH_INDEX] = TRUE;
+	settings->OrderSupport[NEG_POLYGON_SC_INDEX] = TRUE;
+	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = TRUE;
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
-	settings->GlyphSupportLevel = GLYPH_SUPPORT_NONE;
 	wfc->fullscreen = settings->Fullscreen;
 
 	if (wfc->fullscreen)
@@ -406,15 +399,14 @@ static BOOL wf_post_connect(freerdp* instance)
 	ShowWindow(wfc->hwnd, SW_SHOWNORMAL);
 	UpdateWindow(wfc->hwnd);
 
+	instance->update->BeginPaint = (pBeginPaint) wf_begin_paint;
 	if (settings->SoftwareGdi)
 	{
-		instance->update->BeginPaint = (pBeginPaint) wf_sw_begin_paint;
 		instance->update->EndPaint = (pEndPaint) wf_sw_end_paint;
 		instance->update->DesktopResize = (pDesktopResize) wf_sw_desktop_resize;
 	}
 	else
 	{
-		instance->update->BeginPaint = (pBeginPaint) wf_hw_begin_paint;
 		instance->update->EndPaint = (pEndPaint) wf_hw_end_paint;
 		instance->update->DesktopResize = (pDesktopResize) wf_hw_desktop_resize;
 	}
