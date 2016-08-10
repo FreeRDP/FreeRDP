@@ -173,8 +173,8 @@ static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard) {
 	int index;
 	int keyCount;
 	ULONG_PTR* pKeys;
-	SCARDCONTEXT hContext;
 	SMARTCARD_CONTEXT* pContext;
+    LONG status;
 
 	/**
 	 * On protocol termination, the following actions are performed:
@@ -198,12 +198,9 @@ static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard) {
 			if (!pContext)
 				continue;
 
-			hContext = pContext->hContext;
-
-			if (SCardIsValidContext(hContext) == SCARD_S_SUCCESS)
-			{
-				SCardCancel(hContext);
-			}
+            status = SCardCancel( pContext->hContext );
+            if ( status != SCARD_S_SUCCESS)
+                WLog_ERR( TAG, "SCardCancel() failed with error %lu!", status );
 		}
 
 		free(pKeys);
@@ -225,12 +222,9 @@ static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard) {
 			if (!pContext)
 				continue;
 
-			hContext = pContext->hContext;
-
-			if (SCardIsValidContext(hContext) == SCARD_S_SUCCESS)
-			{
-				SCardReleaseContext(hContext);
-			}
+            status = SCardCancel( pContext->hContext );
+            if (status != SCARD_S_SUCCESS)
+                WLog_ERR( TAG, "SCardCancel() failed with error %lu!", status );
 		}
 
 		free(pKeys);
