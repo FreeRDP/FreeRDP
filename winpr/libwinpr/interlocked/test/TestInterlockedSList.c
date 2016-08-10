@@ -13,13 +13,13 @@ typedef struct _PROGRAM_ITEM
 int TestInterlockedSList(int argc, char* argv[])
 {
 	ULONG Count;
-    PWINPR_SLIST_ENTRY pFirstEntry;
-    PWINPR_SLIST_ENTRY pListEntry;
-    WINPR_PSLIST_HEADER pListHead;
+	WINPR_PSLIST_ENTRY pFirstEntry;
+	WINPR_PSLIST_ENTRY pListEntry;
+	WINPR_PSLIST_HEADER pListHead;
 	PPROGRAM_ITEM pProgramItem;
 
 	/* Initialize the list header to a MEMORY_ALLOCATION_ALIGNMENT boundary. */
-    pListHead = (WINPR_PSLIST_HEADER) _aligned_malloc(sizeof(WINPR_SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
+	pListHead = (WINPR_PSLIST_HEADER) _aligned_malloc(sizeof(WINPR_SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
 
 	if (!pListHead)
 	{
