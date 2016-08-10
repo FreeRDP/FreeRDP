@@ -273,6 +273,8 @@ LONG smartcard_unpack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wStre
 {
 	UINT32 length;
 
+    ZeroMemory( &( context->pbContext ), sizeof( context->pbContext ) );
+
 	if (context->cbContext == 0)
 		return SCARD_S_SUCCESS;
 
@@ -305,10 +307,7 @@ LONG smartcard_unpack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wStre
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
-	if (context->cbContext)
-		Stream_Read(s, &(context->pbContext), context->cbContext);
-	else
-		ZeroMemory(&(context->pbContext), sizeof(context->pbContext));
+	Stream_Read(s, &(context->pbContext), context->cbContext);
 
 	return SCARD_S_SUCCESS;
 }
