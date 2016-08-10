@@ -86,7 +86,7 @@ BOOL shw_desktop_resize(rdpContext* context)
 }
 
 BOOL shw_surface_frame_marker(rdpContext* context,
-                              SURFACE_FRAME_MARKER* surfaceFrameMarker)
+							  const SURFACE_FRAME_MARKER* surfaceFrameMarker)
 {
 	shwContext* shw = (shwContext*) context;
 	return TRUE;
@@ -147,7 +147,7 @@ BOOL shw_post_connect(freerdp* instance)
 	shw = (shwContext*) instance->context;
 	settings = instance->settings;
 
-	if (!gdi_init(instance, CLRBUF_32BPP, NULL))
+	if (!gdi_init(instance, PIXEL_FORMAT_BGRX32))
 		return FALSE;
 
 	gdi = instance->context->gdi;
