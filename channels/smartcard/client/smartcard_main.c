@@ -274,8 +274,11 @@ static UINT smartcard_free(DEVICE* device)
 	}
 
 	ListDictionary_Free(smartcard->rgSCardContextList);
+    smartcard->rgSCardContextList = NULL;
 	ListDictionary_Free(smartcard->rgOutstandingMessages);
+    smartcard->rgOutstandingMessages = NULL;
 	Queue_Free(smartcard->CompletedIrpQueue);
+    smartcard->CompletedIrpQueue = NULL;
 
 	if (smartcard->StartedEvent)
 	{
