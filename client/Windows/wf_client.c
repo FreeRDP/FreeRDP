@@ -69,7 +69,7 @@ static int wf_create_console(void)
 	return 0;
 }
 
-static BOOL wf_sw_end_paint(rdpContext* context)
+static BOOL wf_end_paint(rdpContext* context)
 {
 	int i;
 	rdpGdi* gdi;
@@ -95,6 +95,7 @@ static BOOL wf_sw_end_paint(rdpContext* context)
 		invalidRect.top = cinvalid[i].y;
 		invalidRect.right = cinvalid[i].x + cinvalid[i].w;
 		invalidRect.bottom = cinvalid[i].y + cinvalid[i].h;
+
 		region16_union_rect(&invalidRegion, &invalidRegion, &invalidRect);
 	}
 
@@ -112,11 +113,6 @@ static BOOL wf_sw_end_paint(rdpContext* context)
 	}
 
 	region16_uninit(&invalidRegion);
-	return TRUE;
-}
-
-static BOOL wf_hw_end_paint(rdpContext* context)
-{
 	return TRUE;
 }
 
@@ -210,9 +206,9 @@ static BOOL wf_pre_connect(freerdp* instance)
 	settings->OrderSupport[NEG_LINETO_INDEX] = TRUE;
 	settings->OrderSupport[NEG_POLYLINE_INDEX] = TRUE;
 	settings->OrderSupport[NEG_MEMBLT_INDEX] = settings->BitmapCacheEnabled;
-	settings->OrderSupport[NEG_MEM3BLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MEM3BLT_INDEX] = settings->BitmapCacheEnabled;
 	settings->OrderSupport[NEG_MEMBLT_V2_INDEX] = settings->BitmapCacheEnabled;
-	settings->OrderSupport[NEG_MEM3BLT_V2_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MEM3BLT_V2_INDEX] = settings->BitmapCacheEnabled;
 	settings->OrderSupport[NEG_SAVEBITMAP_INDEX] = FALSE;
 	settings->OrderSupport[NEG_GLYPH_INDEX_INDEX] = TRUE;
 	settings->OrderSupport[NEG_FAST_INDEX_INDEX] = TRUE;
@@ -272,6 +268,9 @@ static BOOL wf_pre_connect(freerdp* instance)
 		         settings->DesktopHeight);
 		return FALSE;
 	}
+
+	if (!freerdp_client_load_addins(context->channels, instance->settings))
+		return -1;
 
 	freerdp_set_param_uint32(settings, FreeRDP_KeyboardLayout,
 	                         (int) GetKeyboardLayout(0) & 0x0000FFFF);
@@ -370,13 +369,10 @@ static BOOL wf_post_connect(freerdp* instance)
 	PubSub_OnEmbedWindow(context->pubSub, context, &e);
 	ShowWindow(wfc->hwnd, SW_SHOWNORMAL);
 	UpdateWindow(wfc->hwnd);
+
 	instance->update->BeginPaint = wf_begin_paint;
 	instance->update->DesktopResize = wf_desktop_resize;
-
-	if (settings->SoftwareGdi)
-		instance->update->EndPaint = wf_sw_end_paint;
-	else
-		instance->update->EndPaint = wf_hw_end_paint;
+	instance->update->EndPaint = wf_end_paint;
 
 	pointer_cache_register_callbacks(instance->update);
 	wf_register_pointer(context->graphics);
@@ -1026,9 +1022,6 @@ static int wfreerdp_client_start(rdpContext* context)
 	                                   &wfc->keyboardThreadId);
 
 	if (!wfc->keyboardThread)
-		return -1;
-
-	if (!freerdp_client_load_addins(context->channels, instance->settings))
 		return -1;
 
 	wfc->thread = CreateThread(NULL, 0, wf_client_thread, (void*) instance, 0,
