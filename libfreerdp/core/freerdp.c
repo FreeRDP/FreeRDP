@@ -94,6 +94,7 @@ rdpChannels* freerdp_channel_get_channels_context(void)
  */
 BOOL freerdp_connect(freerdp* instance)
 {
+	UINT status2;
 	rdpRdp* rdp;
 	BOOL status = TRUE;
 	rdpSettings* settings;
@@ -113,6 +114,10 @@ BOOL freerdp_connect(freerdp* instance)
 	instance->context->codecs = codecs_new(instance->context);
 	IFCALLRET(instance->PreConnect, status, instance);
 
+	if (status)
+		status2 = freerdp_channels_pre_connect(instance->context->channels,
+		                                       instance);
+
 	if (settings->KeyboardLayout == KBD_JAPANESE_INPUT_SYSTEM_MS_IME2002)
 	{
 		settings->KeyboardType = 7;
@@ -120,7 +125,7 @@ BOOL freerdp_connect(freerdp* instance)
 		settings->KeyboardFunctionKey = 12;
 	}
 
-	if (!status)
+	if (!status || (status2 != CHANNEL_RC_OK))
 	{
 		if (!freerdp_get_last_error(rdp->context))
 			freerdp_set_last_error(instance->context, FREERDP_ERROR_PRE_CONNECT_FAILED);
@@ -143,6 +148,8 @@ BOOL freerdp_connect(freerdp* instance)
 
 	if (status)
 	{
+		UINT status2;
+
 		if (instance->settings->DumpRemoteFx)
 		{
 			instance->update->pcap_rfx = pcap_open(instance->settings->DumpRemoteFxFile,
@@ -154,7 +161,11 @@ BOOL freerdp_connect(freerdp* instance)
 
 		IFCALLRET(instance->PostConnect, status, instance);
 
-		if (!status || !update_post_connect(instance->update))
+		if (status)
+			status2 = freerdp_channels_post_connect(instance->context->channels, instance);
+
+		if (!status || (status2 != CHANNEL_RC_OK)
+		    || !update_post_connect(instance->update))
 		{
 			WLog_ERR(TAG, "freerdp_post_connect failed");
 

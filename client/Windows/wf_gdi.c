@@ -64,7 +64,7 @@ static const BYTE wf_rop2_table[] =
 };
 
 static BOOL wf_decode_color(wfContext* wfc, const UINT32 srcColor,
-							UINT32* color, UINT32* format)
+                            UINT32* color, UINT32* format)
 {
 	rdpGdi* gdi;
 	rdpSettings* settings;
@@ -80,28 +80,31 @@ static BOOL wf_decode_color(wfContext* wfc, const UINT32 srcColor,
 		return FALSE;
 
 	SrcFormat = gdi_get_pixel_format(gdi->context->settings->ColorDepth,
-											FALSE);
+	                                 FALSE);
 
 	if (format)
 		*format = SrcFormat;
 
-	switch(GetBitsPerPixel(gdi->dstFormat))
+	switch (GetBitsPerPixel(gdi->dstFormat))
 	{
-	case 32:
-		DstFormat = PIXEL_FORMAT_ABGR32;
-		break;
-	case 24:
-		DstFormat = PIXEL_FORMAT_BGR24;
-		break;
-	case 16:
-		DstFormat = PIXEL_FORMAT_RGB16;
-		break;
-	default:
-		return FALSE;
+		case 32:
+			DstFormat = PIXEL_FORMAT_ABGR32;
+			break;
+
+		case 24:
+			DstFormat = PIXEL_FORMAT_BGR24;
+			break;
+
+		case 16:
+			DstFormat = PIXEL_FORMAT_RGB16;
+			break;
+
+		default:
+			return FALSE;
 	}
 
 	*color = ConvertColor(srcColor, SrcFormat,
-						  DstFormat, &gdi->palette);
+	                      DstFormat, &gdi->palette);
 	return TRUE;
 }
 
@@ -121,7 +124,7 @@ static wfBitmap* wf_glyph_new(wfContext* wfc, GLYPH_DATA* glyph)
 {
 	wfBitmap* glyph_bmp;
 	glyph_bmp = wf_image_new(wfc, glyph->cx, glyph->cy, PIXEL_FORMAT_MONO,
-							 glyph->aj);
+	                         glyph->aj);
 	return glyph_bmp;
 }
 
@@ -161,7 +164,7 @@ static BYTE* wf_glyph_convert(wfContext* wfc, int width, int height, BYTE* data)
 }
 
 static HBRUSH wf_create_brush(wfContext* wfc, rdpBrush* brush, UINT32 color,
-							  UINT32 bpp)
+                              UINT32 bpp)
 {
 	UINT32 i;
 	HBRUSH br;
@@ -172,7 +175,7 @@ static HBRUSH wf_create_brush(wfContext* wfc, rdpBrush* brush, UINT32 color,
 	lbr.lbStyle = brush->style;
 
 	if (lbr.lbStyle == BS_DIBPATTERN || lbr.lbStyle == BS_DIBPATTERN8X8
-			|| lbr.lbStyle == BS_DIBPATTERNPT)
+	    || lbr.lbStyle == BS_DIBPATTERNPT)
 		lbr.lbColor = DIB_RGB_COLORS;
 	else
 		lbr.lbColor = color;
@@ -261,7 +264,7 @@ static BOOL wf_scale_rect(wfContext* wfc, RECT* source)
 }
 
 void wf_invalidate_region(wfContext* wfc, UINT32 x, UINT32 y, UINT32 width,
-						  UINT32 height)
+                          UINT32 height)
 {
 	RECT rect;
 	rdpGdi* gdi = wfc->context.gdi;
@@ -277,7 +280,7 @@ void wf_invalidate_region(wfContext* wfc, UINT32 x, UINT32 y, UINT32 width,
 	rect.bottom = height;
 	wf_scale_rect(wfc, &rect);
 	gdi_InvalidateRegion(gdi->primary->hdc, rect.left, rect.top, rect.right,
-						 rect.bottom);
+	                     rect.bottom);
 }
 
 void wf_update_offset(wfContext* wfc)
@@ -343,7 +346,7 @@ void wf_resize_window(wfContext* wfc)
 		{
 			SetWindowLongPtr(wfc->hwnd, GWL_STYLE, WS_POPUP);
 			SetWindowPos(wfc->hwnd, HWND_TOP, 0, 0, GetSystemMetrics(SM_CXSCREEN),
-						 GetSystemMetrics(SM_CYSCREEN), SWP_FRAMECHANGED);
+			             GetSystemMetrics(SM_CYSCREEN), SWP_FRAMECHANGED);
 		}
 	}
 	else if (!wfc->context.settings->Decorations)
@@ -351,16 +354,16 @@ void wf_resize_window(wfContext* wfc)
 		SetWindowLongPtr(wfc->hwnd, GWL_STYLE, WS_CHILD);
 		/* Now resize to get full canvas size and room for caption and borders */
 		SetWindowPos(wfc->hwnd, HWND_TOP, 0, 0, settings->DesktopWidth,
-					 settings->DesktopHeight, SWP_FRAMECHANGED);
+		             settings->DesktopHeight, SWP_FRAMECHANGED);
 		wf_update_canvas_diff(wfc);
 		SetWindowPos(wfc->hwnd, HWND_TOP, -1, -1, settings->DesktopWidth + wfc->diff.x,
-					 settings->DesktopHeight + wfc->diff.y, SWP_NOMOVE | SWP_FRAMECHANGED);
+		             settings->DesktopHeight + wfc->diff.y, SWP_NOMOVE | SWP_FRAMECHANGED);
 	}
 	else
 	{
 		SetWindowLongPtr(wfc->hwnd, GWL_STYLE,
-						 WS_CAPTION | WS_OVERLAPPED | WS_SYSMENU | WS_MINIMIZEBOX | WS_SIZEBOX |
-						 WS_MAXIMIZEBOX);
+		                 WS_CAPTION | WS_OVERLAPPED | WS_SYSMENU | WS_MINIMIZEBOX | WS_SIZEBOX |
+		                 WS_MAXIMIZEBOX);
 
 		if (!wfc->client_height)
 			wfc->client_height = settings->DesktopHeight;
@@ -377,8 +380,8 @@ void wf_resize_window(wfContext* wfc)
 		wf_update_canvas_diff(wfc);
 		/* Now resize to get full canvas size and room for caption and borders */
 		SetWindowPos(wfc->hwnd, HWND_TOP, wfc->client_x, wfc->client_y,
-					 wfc->client_width + wfc->diff.x, wfc->client_height + wfc->diff.y,
-					 0 /*SWP_FRAMECHANGED*/);
+		             wfc->client_width + wfc->diff.x, wfc->client_height + wfc->diff.y,
+		             0 /*SWP_FRAMECHANGED*/);
 		//wf_size_scrollbars(wfc,  wfc->client_width, wfc->client_height);
 	}
 
@@ -413,7 +416,7 @@ void wf_toggle_fullscreen(wfContext* wfc)
 }
 
 static BOOL wf_gdi_palette_update(rdpContext* context,
-								  const PALETTE_UPDATE* palette)
+                                  const PALETTE_UPDATE* palette)
 {
 	return TRUE;
 }
@@ -442,7 +445,7 @@ static BOOL wf_gdi_set_bounds(rdpContext* context, const rdpBounds* bounds)
 	if (bounds != NULL)
 	{
 		hrgn = CreateRectRgn(bounds->left, bounds->top, bounds->right + 1,
-							 bounds->bottom + 1);
+		                     bounds->bottom + 1);
 		SelectClipRgn(wfc->drawing->hdc, hrgn);
 		DeleteObject(hrgn);
 	}
@@ -460,11 +463,11 @@ static BOOL wf_gdi_dstblt(rdpContext* context, const DSTBLT_ORDER* dstblt)
 		return FALSE;
 
 	if (!BitBlt(wfc->drawing->hdc, dstblt->nLeftRect, dstblt->nTopRect,
-				dstblt->nWidth, dstblt->nHeight, NULL, 0, 0, gdi_rop3_code(dstblt->bRop)))
+	            dstblt->nWidth, dstblt->nHeight, NULL, 0, 0, gdi_rop3_code(dstblt->bRop)))
 		return FALSE;
 
 	wf_invalidate_region(wfc, dstblt->nLeftRect, dstblt->nTopRect,
-						 dstblt->nWidth, dstblt->nHeight);
+	                     dstblt->nWidth, dstblt->nHeight);
 	return TRUE;
 }
 
@@ -490,13 +493,13 @@ static BOOL wf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 		return FALSE;
 
 	brush = wf_create_brush(wfc, &patblt->brush, fgcolor,
-							context->settings->ColorDepth);
+	                        context->settings->ColorDepth);
 	org_bkmode = SetBkMode(wfc->drawing->hdc, OPAQUE);
 	org_bkcolor = SetBkColor(wfc->drawing->hdc, bgcolor);
 	org_textcolor = SetTextColor(wfc->drawing->hdc, fgcolor);
 	org_brush = (HBRUSH)SelectObject(wfc->drawing->hdc, brush);
 	rc = PatBlt(wfc->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
-				patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop));
+	            patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop));
 	SelectObject(wfc->drawing->hdc, org_brush);
 	DeleteObject(brush);
 	SetBkMode(wfc->drawing->hdc, org_bkmode);
@@ -505,7 +508,7 @@ static BOOL wf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 
 	if (wfc->drawing == wfc->primary)
 		wf_invalidate_region(wfc, patblt->nLeftRect, patblt->nTopRect, patblt->nWidth,
-							 patblt->nHeight);
+		                     patblt->nHeight);
 
 	return rc;
 }
@@ -518,17 +521,17 @@ static BOOL wf_gdi_scrblt(rdpContext* context, const SCRBLT_ORDER* scrblt)
 		return FALSE;
 
 	if (!BitBlt(wfc->drawing->hdc, scrblt->nLeftRect, scrblt->nTopRect,
-				scrblt->nWidth, scrblt->nHeight, wfc->primary->hdc,
-				scrblt->nXSrc, scrblt->nYSrc, gdi_rop3_code(scrblt->bRop)))
+	            scrblt->nWidth, scrblt->nHeight, wfc->primary->hdc,
+	            scrblt->nXSrc, scrblt->nYSrc, gdi_rop3_code(scrblt->bRop)))
 		return FALSE;
 
 	wf_invalidate_region(wfc, scrblt->nLeftRect, scrblt->nTopRect,
-						 scrblt->nWidth, scrblt->nHeight);
+	                     scrblt->nWidth, scrblt->nHeight);
 	return TRUE;
 }
 
 static BOOL wf_gdi_opaque_rect(rdpContext* context,
-							   const OPAQUE_RECT_ORDER* opaque_rect)
+                               const OPAQUE_RECT_ORDER* opaque_rect)
 {
 	RECT rect;
 	HBRUSH brush;
@@ -551,13 +554,13 @@ static BOOL wf_gdi_opaque_rect(rdpContext* context,
 
 	if (wfc->drawing == wfc->primary)
 		wf_invalidate_region(wfc, rect.left, rect.top, rect.right - rect.left + 1,
-							 rect.bottom - rect.top + 1);
+		                     rect.bottom - rect.top + 1);
 
 	return TRUE;
 }
 
 static BOOL wf_gdi_multi_opaque_rect(rdpContext* context,
-									 const MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect)
+                                     const MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect)
 {
 	UINT32 i;
 	RECT rect;
@@ -569,7 +572,7 @@ static BOOL wf_gdi_multi_opaque_rect(rdpContext* context,
 		return FALSE;
 
 	if (!wf_decode_color(wfc, multi_opaque_rect->color, &brush_color,
-						 NULL))
+	                     NULL))
 		return FALSE;
 
 	for (i = 0; i < multi_opaque_rect->numRectangles; i++)
@@ -584,7 +587,7 @@ static BOOL wf_gdi_multi_opaque_rect(rdpContext* context,
 
 		if (wfc->drawing == wfc->primary)
 			wf_invalidate_region(wfc, rect.left, rect.top, rect.right - rect.left + 1,
-								 rect.bottom - rect.top + 1);
+			                     rect.bottom - rect.top + 1);
 
 		DeleteObject(brush);
 	}
@@ -614,9 +617,9 @@ static BOOL wf_gdi_line_to(rdpContext* context, const LINE_TO_ORDER* line_to)
 	x = (line_to->nXStart < line_to->nXEnd) ? line_to->nXStart : line_to->nXEnd;
 	y = (line_to->nYStart < line_to->nYEnd) ? line_to->nYStart : line_to->nYEnd;
 	w = (line_to->nXStart < line_to->nXEnd) ? (line_to->nXEnd - line_to->nXStart)
-											: (line_to->nXStart - line_to->nXEnd);
+	    : (line_to->nXStart - line_to->nXEnd);
 	h = (line_to->nYStart < line_to->nYEnd) ? (line_to->nYEnd - line_to->nYStart)
-											: (line_to->nYStart - line_to->nYEnd);
+	    : (line_to->nYStart - line_to->nYEnd);
 
 	if (wfc->drawing == wfc->primary)
 		wf_invalidate_region(wfc, x, y, w, h);
@@ -665,7 +668,7 @@ static BOOL wf_gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 
 		if (wfc->drawing == wfc->primary)
 			wf_invalidate_region(wfc, wfc->client_x, wfc->client_y, wfc->client_width,
-								 wfc->client_height);
+			                     wfc->client_height);
 
 		Polyline(wfc->drawing->hdc, pts, numPoints);
 		free(pts);
@@ -690,19 +693,20 @@ static BOOL wf_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 	if (!bitmap || !wfc->drawing || !wfc->drawing->hdc)
 		return FALSE;
 
-	BitBlt(wfc->drawing->hdc, memblt->nLeftRect, memblt->nTopRect,
-		   memblt->nWidth, memblt->nHeight, bitmap->hdc,
-		   memblt->nXSrc, memblt->nYSrc, gdi_rop3_code(memblt->bRop));
+	if (!BitBlt(wfc->drawing->hdc, memblt->nLeftRect, memblt->nTopRect,
+	            memblt->nWidth, memblt->nHeight, bitmap->hdc,
+	            memblt->nXSrc, memblt->nYSrc, gdi_rop3_code(memblt->bRop)))
+		return FALSE;
 
 	if (wfc->drawing == wfc->primary)
 		wf_invalidate_region(wfc, memblt->nLeftRect, memblt->nTopRect, memblt->nWidth,
-							 memblt->nHeight);
+		                     memblt->nHeight);
 
 	return TRUE;
 }
 
 static BOOL wf_gdi_surface_frame_marker(rdpContext* context,
-										const SURFACE_FRAME_MARKER* surface_frame_marker)
+                                        const SURFACE_FRAME_MARKER* surface_frame_marker)
 {
 	rdpSettings* settings;
 
@@ -715,10 +719,10 @@ static BOOL wf_gdi_surface_frame_marker(rdpContext* context,
 		return FALSE;
 
 	if (surface_frame_marker->frameAction == SURFACECMD_FRAMEACTION_END
-			&& settings->FrameAcknowledge > 0)
+	    && settings->FrameAcknowledge > 0)
 	{
 		IFCALL(context->instance->update->SurfaceFrameAcknowledge, context,
-			   surface_frame_marker->frameId);
+		       surface_frame_marker->frameId);
 	}
 
 	return TRUE;

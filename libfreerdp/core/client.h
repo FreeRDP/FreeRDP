@@ -115,5 +115,8 @@ FREERDP_LOCAL UINT freerdp_channels_disconnect(rdpChannels* channels,
 FREERDP_LOCAL void freerdp_channels_close(rdpChannels* channels,
         freerdp* instance);
 FREERDP_LOCAL void freerdp_channels_free(rdpChannels* channels);
-
+FREERDP_LOCAL UINT freerdp_channels_pre_connect(rdpChannels* channels,
+        freerdp* instance);
+FREERDP_LOCAL UINT freerdp_channels_post_connect(rdpChannels* channels,
+        freerdp* instance);
 #endif /* FREERDP_CORE_CLIENT_H */

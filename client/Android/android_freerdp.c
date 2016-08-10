@@ -288,14 +288,6 @@ static BOOL android_pre_connect(freerdp* instance)
 	}
 
 	freerdp_callback("OnPreConnect", "(I)V", instance);
-	rc = freerdp_channels_pre_connect(instance->context->channels, instance);
-
-	if (rc != CHANNEL_RC_OK)
-	{
-		WLog_ERR(TAG, "freerdp_channels_pre_connect failed with %l08X", rc);
-		return FALSE;
-	}
-
 	return TRUE;
 }
 
@@ -386,11 +378,6 @@ static BOOL android_post_connect(freerdp* instance)
 	instance->update->EndPaint = android_end_paint;
 	instance->update->DesktopResize = android_desktop_resize;
 	pointer_cache_register_callbacks(update);
-
-	if (freerdp_channels_post_connect(instance->context->channels,
-	                                  instance) != CHANNEL_RC_OK)
-		return FALSE;
-
 	freerdp_callback("OnSettingsChanged", "(IIII)V", instance,
 	                 settings->DesktopWidth, settings->DesktopHeight,
 	                 settings->ColorDepth);

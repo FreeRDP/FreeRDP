@@ -1124,9 +1124,6 @@ static BOOL xf_pre_connect(freerdp* instance)
 	if (!freerdp_client_load_addins(channels, instance->settings))
 		return FALSE;
 
-	if (freerdp_channels_pre_connect(channels, instance) != CHANNEL_RC_OK)
-		return FALSE;
-
 	if (!settings->Username && !settings->CredentialsFromStdin)
 	{
 		char* login_name = getlogin();
@@ -1276,9 +1273,6 @@ static BOOL xf_post_connect(freerdp* instance)
 	update->SetKeyboardIndicators = xf_keyboard_set_indicators;
 
 	if (!(xfc->clipboard = xf_clipboard_new(xfc)))
-		return FALSE;
-
-	if (freerdp_channels_post_connect(channels, instance) != CHANNEL_RC_OK)
 		return FALSE;
 
 	EventArgsInit(&e, "xfreerdp");

@@ -156,11 +156,6 @@ BOOL df_pre_connect(freerdp* instance)
 	dfi->clrconv->rgb555 = 0;
 	dfi->clrconv->palette = (rdpPalette*) malloc(sizeof(rdpPalette));
 	ZeroMemory(dfi->clrconv->palette, sizeof(rdpPalette));
-
-	if (freerdp_channels_pre_connect(instance->context->channels,
-	                                 instance) != CHANNEL_RC_OK)
-		return FALSE;
-
 	return (instance->context->cache = cache_new(instance->settings)) != NULL;
 }
 
@@ -211,8 +206,7 @@ BOOL df_post_connect(freerdp* instance)
 	df_keyboard_init();
 	pointer_cache_register_callbacks(instance->update);
 	df_register_graphics(instance->context->graphics);
-	return freerdp_channels_post_connect(instance->context->channels,
-	                                     instance) == CHANNEL_RC_OK;
+	return TRUE;
 }
 
 BOOL df_verify_certificate(freerdp* instance, char* subject, char* issuer,

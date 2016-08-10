@@ -99,11 +99,6 @@ static BOOL tf_pre_connect(freerdp* instance)
 	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = TRUE;
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = TRUE;
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = TRUE;
-
-	if (freerdp_channels_pre_connect(instance->context->channels,
-	                                 instance) != CHANNEL_RC_OK)
-		return FALSE;
-
 	return TRUE;
 }
 
@@ -114,8 +109,7 @@ static BOOL tf_post_connect(freerdp* instance)
 
 	instance->update->BeginPaint = tf_begin_paint;
 	instance->update->EndPaint = tf_end_paint;
-	return (freerdp_channels_post_connect(instance->context->channels,
-	                                      instance) == CHANNEL_RC_OK);
+	return TRUE;
 }
 
 static void* tf_client_thread_proc(freerdp* instance)
