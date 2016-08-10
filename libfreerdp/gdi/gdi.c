@@ -1216,12 +1216,12 @@ BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
 	if (!gdi)
 		goto fail;
 
+	instance->context->gdi = gdi;
 	gdi->log = WLog_Get(TAG);
 
 	if (!gdi->log)
 		goto fail;
 
-	instance->context->gdi = gdi;
 	gdi->context = instance->context;
 	gdi->width = instance->settings->DesktopWidth;
 	gdi->height = instance->settings->DesktopHeight;

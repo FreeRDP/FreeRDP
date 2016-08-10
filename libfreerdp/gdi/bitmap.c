@@ -219,7 +219,7 @@ static BOOL op_xor(UINT32* stack, UINT32* stackp)
 static UINT32 process_rop(UINT32 src, UINT32 dst, UINT32 pat, const char* rop,
                           UINT32 format)
 {
-	DWORD stack[10];
+	DWORD stack[10] = { 0 };
 	DWORD stackp = 0;
 
 	while (*rop != '\0')
@@ -279,7 +279,7 @@ static BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, UINT32 nXDest,
 	UINT32 dstColor;
 	UINT32 colorA;
 	UINT32 colorB = 0;
-	UINT32 colorC;
+	UINT32 colorC = 0;
 	BYTE* dstp = gdi_get_bitmap_pointer(hdcDest, nXDest + x, nYDest + y);
 
 	if (!dstp)
