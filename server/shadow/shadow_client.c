@@ -1011,7 +1011,7 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client,
 
 	if (updateSizeEstimate > maxUpdateSize)
 	{
-		UINT32 i, j;
+		INT32 i, j;
 		UINT32 updateSize;
 		UINT32 newUpdateSize;
 		BITMAP_DATA* fragBitmapData = NULL;

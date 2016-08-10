@@ -15,7 +15,7 @@ int TestWtsApiExtraSendMessage(int argc, char* argv[])
 
 	hServer = WTS_CURRENT_SERVER_HANDLE;
 
-	bSuccess = WTSSendMessage(hServer, WTS_CURRENT_SESSION,TITLE,strlen(TITLE) + 1, MESSAGE, strlen(MESSAGE) + 1, MB_CANCELTRYCONTINUE, 3 , &result,TRUE);
+	bSuccess = WTSSendMessageA(hServer, WTS_CURRENT_SESSION,TITLE,strlen(TITLE) + 1, MESSAGE, strlen(MESSAGE) + 1, MB_CANCELTRYCONTINUE, 3 , &result,TRUE);
 
 	if (!bSuccess)
 	{
