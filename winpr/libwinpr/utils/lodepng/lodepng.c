@@ -3445,7 +3445,7 @@ unsigned lodepng_convert(unsigned char* out, const unsigned char* in,
 
   if(mode_out->colortype == LCT_PALETTE)
   {
-    size_t palsize = 1u << mode_out->bitdepth;
+	size_t palsize = 1u << mode_out->bitdepth;
     if(mode_out->palettesize < palsize) palsize = mode_out->palettesize;
     color_tree_init(&tree);
     for(i = 0; i < palsize; i++)
