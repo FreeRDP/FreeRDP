@@ -986,17 +986,16 @@ static LONG smartcard_Transmit_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPE
 static LONG smartcard_Transmit_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation, Transmit_Call* call)
 {
 	LONG status;
-	Transmit_Return ret;
+	Transmit_Return ret = { 0 };
 	IRP* irp = operation->irp;
-	ret.cbRecvLength = 0;
-	ret.pbRecvBuffer = NULL;
 
-	if (call->cbRecvLength && !call->fpbRecvBufferIsNULL)
+	if (!call->fpbRecvBufferIsNULL)
 	{
 		if (call->cbRecvLength >= 66560)
-			call->cbRecvLength = 66560;
+			ret.cbRecvLength = 66560;
+        else
+			ret.cbRecvLength = call->cbRecvLength;
 
-		ret.cbRecvLength = call->cbRecvLength;
 		ret.pbRecvBuffer = (BYTE*) malloc(ret.cbRecvLength);
 
 		if (!ret.pbRecvBuffer)
