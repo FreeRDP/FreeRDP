@@ -31,13 +31,6 @@ extern "C" {
 
 #ifndef _WIN32
 
-#ifdef __IOS__
-/* workaround for SLIST_ENTRY conflict */
-
-#include <sys/queue.h>
-#undef SLIST_ENTRY
-#endif
-
 #ifndef CONTAINING_RECORD
 #define CONTAINING_RECORD(address, type, field) \
 		((type *)(((ULONG_PTR) address) - (ULONG_PTR)(&(((type *) 0)->field))))

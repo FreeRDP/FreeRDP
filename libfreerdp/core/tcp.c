@@ -27,6 +27,7 @@
 #include <fcntl.h>
 
 #include <winpr/crt.h>
+#include <winpr/platform.h>
 #include <winpr/winsock.h>
 
 #if !defined(_WIN32)
