@@ -399,7 +399,6 @@ int ios_run_freerdp(freerdp* instance)
 	mfi->bitmap_context = NULL;
 	mfi->connection_state = TSXConnectionDisconnected;
 	// Cleanup
-	freerdp_channels_disconnect(channels, instance);
 	freerdp_disconnect(instance);
 	gdi_free(instance);
 	cache_free(instance->context->cache);
@@ -413,7 +412,6 @@ int ios_run_freerdp(freerdp* instance)
 
 static BOOL ios_client_new(freerdp* instance, rdpContext* context)
 {
-	mfInfo* mfi;
 	mfContext* ctx = (mfContext*)context;
 
 	if (!instance || !context)
