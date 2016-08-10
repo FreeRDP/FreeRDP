@@ -894,12 +894,6 @@ static BOOL xf_gdi_polygon_cb(rdpContext* context,
 	return ret;
 }
 
-static BOOL xf_gdi_frame_marker(rdpContext* context,
-                                const FRAME_MARKER_ORDER* frameMarker)
-{
-	return TRUE;
-}
-
 static BOOL xf_gdi_surface_frame_marker(rdpContext* context,
                                         const SURFACE_FRAME_MARKER* surface_frame_marker)
 {
@@ -1088,6 +1082,5 @@ void xf_gdi_register_update_callbacks(rdpUpdate* update)
 	primary->PolygonCB = xf_gdi_polygon_cb;
 	update->SurfaceBits = xf_gdi_surface_bits;
 	update->SurfaceFrameMarker = xf_gdi_surface_frame_marker;
-	update->altsec->FrameMarker = xf_gdi_frame_marker;
 }
 
