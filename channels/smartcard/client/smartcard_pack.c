@@ -314,10 +314,9 @@ LONG smartcard_unpack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wStre
 
 LONG smartcard_pack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wStream* s, REDIR_SCARDCONTEXT* context)
 {
-	Stream_Write_UINT32(s, context->cbContext); /* Length (4 bytes) */
-
 	if (context->cbContext)
 	{
+        Stream_Write_UINT32(s, context->cbContext); /* Length (4 bytes) */
 		Stream_Write(s, &(context->pbContext), context->cbContext);
 	}
 
@@ -404,10 +403,11 @@ LONG smartcard_unpack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStrea
 
 LONG smartcard_pack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStream* s, REDIR_SCARDHANDLE* handle)
 {
-	Stream_Write_UINT32(s, handle->cbHandle); /* Length (4 bytes) */
-
-	if (handle->cbHandle)
+    if (handle->cbHandle)
+    {
+		Stream_Write_UINT32(s, handle->cbHandle); /* Length (4 bytes) */
 		Stream_Write(s, &(handle->pbHandle), handle->cbHandle);
+    }
 
 	return SCARD_S_SUCCESS;
 }
