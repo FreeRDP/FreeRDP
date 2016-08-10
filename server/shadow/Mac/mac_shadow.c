@@ -32,12 +32,14 @@
 
 static macShadowSubsystem* g_Subsystem = NULL;
 
-void mac_shadow_input_synchronize_event(macShadowSubsystem* subsystem, rdpShadowClient* client, UINT32 flags)
+static void mac_shadow_input_synchronize_event(macShadowSubsystem* subsystem,
+        rdpShadowClient* client, UINT32 flags)
 {
 
 }
 
-void mac_shadow_input_keyboard_event(macShadowSubsystem* subsystem, rdpShadowClient* client, UINT16 flags, UINT16 code)
+static void mac_shadow_input_keyboard_event(macShadowSubsystem* subsystem,
+        rdpShadowClient* client, UINT16 flags, UINT16 code)
 {
 	DWORD vkcode;
 	DWORD keycode;
@@ -80,12 +82,14 @@ void mac_shadow_input_keyboard_event(macShadowSubsystem* subsystem, rdpShadowCli
 	CFRelease(source);
 }
 
-void mac_shadow_input_unicode_keyboard_event(macShadowSubsystem* subsystem, rdpShadowClient* client, UINT16 flags, UINT16 code)
+static void mac_shadow_input_unicode_keyboard_event(macShadowSubsystem*
+        subsystem, rdpShadowClient* client, UINT16 flags, UINT16 code)
 {
 
 }
 
-void mac_shadow_input_mouse_event(macShadowSubsystem* subsystem, rdpShadowClient* client, UINT16 flags, UINT16 x, UINT16 y)
+static void mac_shadow_input_mouse_event(macShadowSubsystem* subsystem,
+        rdpShadowClient* client, UINT16 flags, UINT16 x, UINT16 y)
 {
 	UINT32 scrollX = 0;
 	UINT32 scrollY = 0;
@@ -189,12 +193,13 @@ void mac_shadow_input_mouse_event(macShadowSubsystem* subsystem, rdpShadowClient
 	}
 }
 
-void mac_shadow_input_extended_mouse_event(macShadowSubsystem* subsystem, rdpShadowClient* client, UINT16 flags, UINT16 x, UINT16 y)
+static void mac_shadow_input_extended_mouse_event(macShadowSubsystem* subsystem,
+        rdpShadowClient* client, UINT16 flags, UINT16 x, UINT16 y)
 {
 
 }
 
-int mac_shadow_detect_monitors(macShadowSubsystem* subsystem)
+static int mac_shadow_detect_monitors(macShadowSubsystem* subsystem)
 {
 	size_t wide, high;
 	MONITOR_DEF* monitor;
@@ -238,7 +243,7 @@ int mac_shadow_detect_monitors(macShadowSubsystem* subsystem)
 	return 1;
 }
 
-int mac_shadow_capture_start(macShadowSubsystem* subsystem)
+static int mac_shadow_capture_start(macShadowSubsystem* subsystem)
 {
 	CGError err;
 	
@@ -250,7 +255,7 @@ int mac_shadow_capture_start(macShadowSubsystem* subsystem)
 	return 1;
 }
 
-int mac_shadow_capture_stop(macShadowSubsystem* subsystem)
+static int mac_shadow_capture_stop(macShadowSubsystem* subsystem)
 {
 	CGError err;
 	
@@ -262,7 +267,7 @@ int mac_shadow_capture_stop(macShadowSubsystem* subsystem)
 	return 1;
 }
 
-int mac_shadow_capture_get_dirty_region(macShadowSubsystem* subsystem)
+static int mac_shadow_capture_get_dirty_region(macShadowSubsystem* subsystem)
 {
 	size_t index;
 	size_t numRects;
@@ -297,8 +302,66 @@ int mac_shadow_capture_get_dirty_region(macShadowSubsystem* subsystem)
 	return 0;
 }
 
-void (^mac_capture_stream_handler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfaceRef, CGDisplayStreamUpdateRef) =
-	^(CGDisplayStreamFrameStatus status, uint64_t displayTime, IOSurfaceRef frameSurface, CGDisplayStreamUpdateRef updateRef)
+static int freerdp_image_copy_from_retina(BYTE* pDstData, DWORD DstFormat,
+        int nDstStep, int nXDst, int nYDst,
+        int nWidth, int nHeight, BYTE* pSrcData, int nSrcStep, int nXSrc, int nYSrc)
+{
+	BYTE* pSrcPixel;
+	BYTE* pDstPixel;
+	int x, y;
+	int nSrcPad;
+	int nDstPad;
+	int srcBitsPerPixel;
+	int srcBytesPerPixel;
+	int dstBitsPerPixel;
+	int dstBytesPerPixel;
+	srcBitsPerPixel = 24;
+	srcBytesPerPixel = 8;
+
+	if (nSrcStep < 0)
+		nSrcStep = srcBytesPerPixel * nWidth;
+
+	dstBitsPerPixel = GetBitsPerPixel(DstFormat);
+	dstBytesPerPixel = GetBytesPerPixel(DstFormat);
+
+	if (nDstStep < 0)
+		nDstStep = dstBytesPerPixel * nWidth;
+
+	nSrcPad = (nSrcStep - (nWidth * srcBytesPerPixel));
+	nDstPad = (nDstStep - (nWidth * dstBytesPerPixel));
+	pSrcPixel = &pSrcData[(nYSrc * nSrcStep) + (nXSrc * 4)];
+	pDstPixel = &pDstData[(nYDst * nDstStep) + (nXDst * 4)];
+
+	for (y = 0; y < nHeight; y++)
+	{
+		for (x = 0; x < nWidth; x++)
+		{
+			UINT32 R, G, B;
+			UINT32 color;
+			/* simple box filter scaling, could be improved with better algorithm */
+			B = pSrcPixel[0] + pSrcPixel[4] + pSrcPixel[nSrcStep + 0] + pSrcPixel[nSrcStep +
+			        4];
+			G = pSrcPixel[1] + pSrcPixel[5] + pSrcPixel[nSrcStep + 1] + pSrcPixel[nSrcStep +
+			        5];
+			R = pSrcPixel[2] + pSrcPixel[6] + pSrcPixel[nSrcStep + 2] + pSrcPixel[nSrcStep +
+			        6];
+			pSrcPixel += 8;
+			color = GetColor(DstFormat, R >> 2, G >> 2, B >> 2, 0xFF);
+			WriteColor(pDstPixel, DstFormat, color);
+			pDstPixel += dstBytesPerPixel;
+		}
+
+		pSrcPixel = &pSrcPixel[nSrcPad + nSrcStep];
+		pDstPixel = &pDstPixel[nDstPad];
+	}
+
+	return 1;
+}
+
+static void (^mac_capture_stream_handler)(CGDisplayStreamFrameStatus, uint64_t,
+        IOSurfaceRef, CGDisplayStreamUpdateRef) =
+            ^(CGDisplayStreamFrameStatus status, uint64_t displayTime,
+              IOSurfaceRef frameSurface, CGDisplayStreamUpdateRef updateRef)
 {
 	int x, y;
 	int count;
@@ -408,7 +471,7 @@ void (^mac_capture_stream_handler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfa
 	}
 };
 
-int mac_shadow_capture_init(macShadowSubsystem* subsystem)
+static int mac_shadow_capture_init(macShadowSubsystem* subsystem)
 {
 	void* keys[2];
 	void* values[2];
@@ -437,12 +500,13 @@ int mac_shadow_capture_init(macShadowSubsystem* subsystem)
 	return 1;
 }
 
-int mac_shadow_screen_grab(macShadowSubsystem* subsystem)
+static int mac_shadow_screen_grab(macShadowSubsystem* subsystem)
 {
 	return 1;
 }
 
-int mac_shadow_subsystem_process_message(macShadowSubsystem* subsystem, wMessage* message)
+static int mac_shadow_subsystem_process_message(macShadowSubsystem* subsystem,
+        wMessage* message)
 {
 	rdpShadowServer* server = subsystem->server;
 	rdpShadowSurface* surface = server->surface;
@@ -464,7 +528,7 @@ int mac_shadow_subsystem_process_message(macShadowSubsystem* subsystem, wMessage
 	return 1;
 }
 
-void* mac_shadow_subsystem_thread(macShadowSubsystem* subsystem)
+static void* mac_shadow_subsystem_thread(macShadowSubsystem* subsystem)
 {
 	DWORD status;
 	DWORD nCount;
@@ -516,7 +580,7 @@ void* mac_shadow_subsystem_thread(macShadowSubsystem* subsystem)
 	return NULL;
 }
 
-int mac_shadow_enum_monitors(MONITOR_DEF* monitors, int maxMonitors)
+static int mac_shadow_enum_monitors(MONITOR_DEF* monitors, int maxMonitors)
 {
 	int index;
 	size_t wide, high;
@@ -546,7 +610,7 @@ int mac_shadow_enum_monitors(MONITOR_DEF* monitors, int maxMonitors)
 	return numMonitors;
 }
 
-int mac_shadow_subsystem_init(macShadowSubsystem* subsystem)
+static int mac_shadow_subsystem_init(macShadowSubsystem* subsystem)
 {
 	g_Subsystem = subsystem;
 	
@@ -557,7 +621,7 @@ int mac_shadow_subsystem_init(macShadowSubsystem* subsystem)
 	return 1;
 }
 
-int mac_shadow_subsystem_uninit(macShadowSubsystem* subsystem)
+static int mac_shadow_subsystem_uninit(macShadowSubsystem* subsystem)
 {
 	if (!subsystem)
 		return -1;
@@ -571,7 +635,7 @@ int mac_shadow_subsystem_uninit(macShadowSubsystem* subsystem)
 	return 1;
 }
 
-int mac_shadow_subsystem_start(macShadowSubsystem* subsystem)
+static int mac_shadow_subsystem_start(macShadowSubsystem* subsystem)
 {
 	HANDLE thread;
 
@@ -591,7 +655,7 @@ int mac_shadow_subsystem_start(macShadowSubsystem* subsystem)
 	return 1;
 }
 
-int mac_shadow_subsystem_stop(macShadowSubsystem* subsystem)
+static int mac_shadow_subsystem_stop(macShadowSubsystem* subsystem)
 {
 	if (!subsystem)
 		return -1;
@@ -599,7 +663,7 @@ int mac_shadow_subsystem_stop(macShadowSubsystem* subsystem)
 	return 1;
 }
 
-void mac_shadow_subsystem_free(macShadowSubsystem* subsystem)
+static void mac_shadow_subsystem_free(macShadowSubsystem* subsystem)
 {
 	if (!subsystem)
 		return;
@@ -609,7 +673,7 @@ void mac_shadow_subsystem_free(macShadowSubsystem* subsystem)
 	free(subsystem);
 }
 
-macShadowSubsystem* mac_shadow_subsystem_new()
+static macShadowSubsystem* mac_shadow_subsystem_new(void)
 {
 	macShadowSubsystem* subsystem;
 
