@@ -15,7 +15,7 @@ SHA256SUM="1d4007e53aad94a5b2002fe045ee7bb0b3d98f1a47f8b2bc851dcd1c74332919"
 SDK_VERSION=""
 
 # Minimum SDK version the application supports
-MIN_SDK_VERSION=""
+MIN_SDK_VERSION="9.3"
 
 ## Defaults
 INSTALLDIR="external"
