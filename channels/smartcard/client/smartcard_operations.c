@@ -1679,7 +1679,8 @@ LONG smartcard_irp_device_control_decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_
 LONG smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation)
 {
 	IRP* irp;
-	LONG result;
+	LONG callResult;
+    LONG packResult;
 	UINT32 offset;
 	ULONG_PTR* call;
 	UINT32 ioControlCode;
@@ -1709,199 +1710,199 @@ LONG smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OP
 	switch (ioControlCode)
 	{
 		case SCARD_IOCTL_ESTABLISHCONTEXT:
-			result = smartcard_EstablishContext_Call(smartcard, operation, (EstablishContext_Call*) call);
+			callResult = smartcard_EstablishContext_Call(smartcard, operation, (EstablishContext_Call*) call);
 			break;
 
 		case SCARD_IOCTL_RELEASECONTEXT:
-			result = smartcard_ReleaseContext_Call(smartcard, operation, (Context_Call*) call);
+			callResult = smartcard_ReleaseContext_Call(smartcard, operation, (Context_Call*) call);
 			break;
 
 		case SCARD_IOCTL_ISVALIDCONTEXT:
-			result = smartcard_IsValidContext_Call(smartcard, operation, (Context_Call*) call);
+			callResult = smartcard_IsValidContext_Call(smartcard, operation, (Context_Call*) call);
 			break;
 
 		case SCARD_IOCTL_LISTREADERGROUPSA:
-			result = SCARD_F_INTERNAL_ERROR;
+			callResult = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_LISTREADERGROUPSW:
-			result = SCARD_F_INTERNAL_ERROR;
+			callResult = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_LISTREADERSA:
-			result = smartcard_ListReadersA_Call(smartcard, operation, (ListReaders_Call*) call);
+			callResult = smartcard_ListReadersA_Call(smartcard, operation, (ListReaders_Call*) call);
 			break;
 
 		case SCARD_IOCTL_LISTREADERSW:
-			result = smartcard_ListReadersW_Call(smartcard, operation, (ListReaders_Call*) call);
+			callResult = smartcard_ListReadersW_Call(smartcard, operation, (ListReaders_Call*) call);
 			break;
 
 		case SCARD_IOCTL_INTRODUCEREADERGROUPA:
-			result = SCARD_F_INTERNAL_ERROR;
+			callResult = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_INTRODUCEREADERGROUPW:
-			result = SCARD_F_INTERNAL_ERROR;
+			callResult = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_FORGETREADERGROUPA:
-			result = SCARD_F_INTERNAL_ERROR;
+			callResult = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_FORGETREADERGROUPW:
-			result = SCARD_F_INTERNAL_ERROR;
+			callResult = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_INTRODUCEREADERA:
-			result = SCARD_F_INTERNAL_ERROR;
+			callResult = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_INTRODUCEREADERW:
-			result = SCARD_F_INTERNAL_ERROR;
+			callResult = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_FORGETREADERA:
-			result = SCARD_F_INTERNAL_ERROR;
+			callResult = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_FORGETREADERW:
-			result = SCARD_F_INTERNAL_ERROR;
+			callResult = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_ADDREADERTOGROUPA:
-			result = SCARD_F_INTERNAL_ERROR;
+			callResult = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_ADDREADERTOGROUPW:
-			result = SCARD_F_INTERNAL_ERROR;
+			callResult = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_REMOVEREADERFROMGROUPA:
-			result = SCARD_F_INTERNAL_ERROR;
+			callResult = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_REMOVEREADERFROMGROUPW:
-			result = SCARD_F_INTERNAL_ERROR;
+			callResult = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_LOCATECARDSA:
-			result = SCARD_F_INTERNAL_ERROR;
+			callResult = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_LOCATECARDSW:
-			result = SCARD_F_INTERNAL_ERROR;
+			callResult = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_GETSTATUSCHANGEA:
-			result = smartcard_GetStatusChangeA_Call(smartcard, operation, (GetStatusChangeA_Call*) call);
+			callResult = smartcard_GetStatusChangeA_Call(smartcard, operation, (GetStatusChangeA_Call*) call);
 			break;
 
 		case SCARD_IOCTL_GETSTATUSCHANGEW:
-			result = smartcard_GetStatusChangeW_Call(smartcard, operation, (GetStatusChangeW_Call*) call);
+			callResult = smartcard_GetStatusChangeW_Call(smartcard, operation, (GetStatusChangeW_Call*) call);
 			break;
 
 		case SCARD_IOCTL_CANCEL:
-			result = smartcard_Cancel_Call(smartcard, operation, (Context_Call*) call);
+			callResult = smartcard_Cancel_Call(smartcard, operation, (Context_Call*) call);
 			break;
 
 		case SCARD_IOCTL_CONNECTA:
-			result = smartcard_ConnectA_Call(smartcard, operation, (ConnectA_Call*) call);
+			callResult = smartcard_ConnectA_Call(smartcard, operation, (ConnectA_Call*) call);
 			break;
 
 		case SCARD_IOCTL_CONNECTW:
-			result = smartcard_ConnectW_Call(smartcard, operation, (ConnectW_Call*) call);
+			callResult = smartcard_ConnectW_Call(smartcard, operation, (ConnectW_Call*) call);
 			break;
 
 		case SCARD_IOCTL_RECONNECT:
-			result = smartcard_Reconnect_Call(smartcard, operation, (Reconnect_Call*) call);
+			callResult = smartcard_Reconnect_Call(smartcard, operation, (Reconnect_Call*) call);
 			break;
 
 		case SCARD_IOCTL_DISCONNECT:
-			result = smartcard_Disconnect_Call(smartcard, operation, (HCardAndDisposition_Call*) call);
+			callResult = smartcard_Disconnect_Call(smartcard, operation, (HCardAndDisposition_Call*) call);
 			break;
 
 		case SCARD_IOCTL_BEGINTRANSACTION:
-			result = smartcard_BeginTransaction_Call(smartcard, operation, (HCardAndDisposition_Call*) call);
+			callResult = smartcard_BeginTransaction_Call(smartcard, operation, (HCardAndDisposition_Call*) call);
 			break;
 
 		case SCARD_IOCTL_ENDTRANSACTION:
-			result = smartcard_EndTransaction_Call(smartcard, operation, (HCardAndDisposition_Call*) call);
+			callResult = smartcard_EndTransaction_Call(smartcard, operation, (HCardAndDisposition_Call*) call);
 			break;
 
 		case SCARD_IOCTL_STATE:
-			result = smartcard_State_Call(smartcard, operation, (State_Call*) call);
+			callResult = smartcard_State_Call(smartcard, operation, (State_Call*) call);
 			break;
 
 		case SCARD_IOCTL_STATUSA:
-			result = smartcard_StatusA_Call(smartcard, operation, (Status_Call*) call);
+			callResult = smartcard_StatusA_Call(smartcard, operation, (Status_Call*) call);
 			break;
 
 		case SCARD_IOCTL_STATUSW:
-			result = smartcard_StatusW_Call(smartcard, operation, (Status_Call*) call);
+			callResult = smartcard_StatusW_Call(smartcard, operation, (Status_Call*) call);
 			break;
 
 		case SCARD_IOCTL_TRANSMIT:
-			result = smartcard_Transmit_Call(smartcard, operation, (Transmit_Call*) call);
+			callResult = smartcard_Transmit_Call(smartcard, operation, (Transmit_Call*) call);
 			break;
 
 		case SCARD_IOCTL_CONTROL:
-			result = smartcard_Control_Call(smartcard, operation, (Control_Call*) call);
+			callResult = smartcard_Control_Call(smartcard, operation, (Control_Call*) call);
 			break;
 
 		case SCARD_IOCTL_GETATTRIB:
-			result = smartcard_GetAttrib_Call(smartcard, operation, (GetAttrib_Call*) call);
+			callResult = smartcard_GetAttrib_Call(smartcard, operation, (GetAttrib_Call*) call);
 			break;
 
 		case SCARD_IOCTL_SETATTRIB:
-			result = SCARD_F_INTERNAL_ERROR;
+			callResult = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_ACCESSSTARTEDEVENT:
-			result = smartcard_AccessStartedEvent_Call(smartcard, operation, (Long_Call*) call);
+			callResult = smartcard_AccessStartedEvent_Call(smartcard, operation, (Long_Call*) call);
 			break;
 
 		case SCARD_IOCTL_LOCATECARDSBYATRA:
-			result = smartcard_LocateCardsByATRA_Call(smartcard, operation, (LocateCardsByATRA_Call*) call);
+			callResult = smartcard_LocateCardsByATRA_Call(smartcard, operation, (LocateCardsByATRA_Call*) call);
 			break;
 
 		case SCARD_IOCTL_LOCATECARDSBYATRW:
-			result = SCARD_F_INTERNAL_ERROR;
+			callResult = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_READCACHEA:
-			result = SCARD_F_INTERNAL_ERROR;
+			callResult = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_READCACHEW:
-			result = SCARD_F_INTERNAL_ERROR;
+			callResult = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_WRITECACHEA:
-			result = SCARD_F_INTERNAL_ERROR;
+			callResult = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_WRITECACHEW:
-			result = SCARD_F_INTERNAL_ERROR;
+			callResult = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_GETTRANSMITCOUNT:
-			result = SCARD_F_INTERNAL_ERROR;
+			callResult = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_RELEASESTARTEDEVENT:
-			result = SCARD_F_INTERNAL_ERROR;
+			callResult = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_GETREADERICON:
-			result = SCARD_F_INTERNAL_ERROR;
+			callResult = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_GETDEVICETYPEID:
-			result = SCARD_F_INTERNAL_ERROR;
+			callResult = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		default:
-			result = STATUS_UNSUCCESSFUL;
+			callResult = STATUS_UNSUCCESSFUL;
 			break;
 	}
 
@@ -1920,23 +1921,23 @@ LONG smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OP
 		smartcard_pack_write_size_align(smartcard, irp->output, Stream_GetPosition(irp->output) - offset, 8);
 	}
 
-	if ((result != SCARD_S_SUCCESS) && (result != SCARD_E_TIMEOUT) &&
-			(result != SCARD_E_NO_READERS_AVAILABLE) && (result != SCARD_E_NO_SERVICE))
+	if ((callResult != SCARD_S_SUCCESS) && (callResult != SCARD_E_TIMEOUT) &&
+			(callResult != SCARD_E_NO_READERS_AVAILABLE) && (callResult != SCARD_E_NO_SERVICE))
 	{
 		WLog_WARN(TAG, "IRP failure: %s (0x%08X), status: %s (0x%08X)",
 			smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode,
-			SCardGetErrorString(result), result);
+			SCardGetErrorString(callResult), callResult);
 	}
 
 	irp->IoStatus = 0;
 
-	if ((result & 0xC0000000) == 0xC0000000)
+	if ((callResult & 0xC0000000) == 0xC0000000)
 	{
 		/* NTSTATUS error */
-		irp->IoStatus = (UINT32)result;
+		irp->IoStatus = (UINT32)callResult;
 		Stream_SetPosition(irp->output, RDPDR_DEVICE_IO_RESPONSE_LENGTH);
 		WLog_WARN(TAG, "IRP failure: %s (0x%08X), ntstatus: 0x%08X",
-			smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, result);
+			smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, callResult);
 	}
 
 	Stream_SealLength(irp->output);
@@ -1946,18 +1947,18 @@ LONG smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OP
 
 	/* Device Control Response */
 	Stream_Write_UINT32(irp->output, outputBufferLength); /* OutputBufferLength (4 bytes) */
-	if ((result = smartcard_pack_common_type_header(smartcard, irp->output))) /* CommonTypeHeader (8 bytes) */
+	if ((packResult = smartcard_pack_common_type_header(smartcard, irp->output))) /* CommonTypeHeader (8 bytes) */
 	{
-		WLog_ERR(TAG, "smartcard_pack_common_type_header failed with error %lu", result);
-		return result;
+		WLog_ERR(TAG, "smartcard_pack_common_type_header failed with error %lu", packResult);
+		return packResult;
 	}
-	if ((result = smartcard_pack_private_type_header(smartcard, irp->output, objectBufferLength))) /* PrivateTypeHeader (8 bytes) */
+	if ((packResult = smartcard_pack_private_type_header(smartcard, irp->output, objectBufferLength))) /* PrivateTypeHeader (8 bytes) */
 	{
-		WLog_ERR(TAG, "smartcard_pack_private_type_header failed with error %lu", result);
-		return result;
+		WLog_ERR(TAG, "smartcard_pack_private_type_header failed with error %lu", packResult);
+		return packResult;
 	}
 
-	Stream_Write_UINT32(irp->output, result); /* Result (4 bytes) */
+	Stream_Write_UINT32(irp->output, callResult); /* Result (4 bytes) */
 	Stream_SetPosition(irp->output, Stream_Length(irp->output));
 
 	return SCARD_S_SUCCESS;
