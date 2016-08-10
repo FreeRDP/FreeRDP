@@ -27,13 +27,9 @@ DWORD WINAPI test_synch_barrier_thread(LPVOID lpParam)
 {
 	BOOL status = FALSE;
 	struct test_params* p = (struct test_params*)lpParam;
-	DWORD i, tnum = InterlockedIncrement(&p->threadCount) - 1;
+	DWORD i;
 
-	if (tnum != p->threadCount)
-	{
-		InterlockedIncrement(&p->falseCount);
-		goto out;
-	}
+	InterlockedIncrement(&p->threadCount);
 
 	//printf("Thread #%03u entered.\n", tnum);
 
@@ -65,7 +61,7 @@ out:
 }
 
 
-BOOL TestSynchBarrierWithFlags(DWORD dwFlags, DWORD dwThreads, DWORD dwLoops)
+static BOOL TestSynchBarrierWithFlags(DWORD dwFlags, DWORD dwThreads, DWORD dwLoops)
 {
 	HANDLE* threads;
 	struct test_params p;
@@ -108,7 +104,7 @@ BOOL TestSynchBarrierWithFlags(DWORD dwFlags, DWORD dwThreads, DWORD dwLoops)
 	for (i = 0; i < dwThreads; i++)
 	{
 		if (!(threads[i] = CreateThread(NULL, 0, test_synch_barrier_thread, &p, 0,
-		                                NULL)))
+						NULL)))
 		{
 			printf("%s: CreateThread failed for thread #%u with error 0x%08x\n",
 			       __FUNCTION__, i, GetLastError());
@@ -226,11 +222,11 @@ int TestSynchBarrier(int argc, char* argv[])
 		return -1;
 
 	if (!TestSynchBarrierWithFlags(SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY,
-	                               dwMinThreads, dwNumLoops))
+				       dwMinThreads, dwNumLoops))
 		return -1;
 
 	if (!TestSynchBarrierWithFlags(SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY,
-	                               dwMaxThreads, dwNumLoops))
+				       dwMaxThreads, dwNumLoops))
 		return -1;
 
 	printf("%s: Test successfully completed\n", __FUNCTION__);
