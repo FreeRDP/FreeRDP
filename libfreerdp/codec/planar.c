@@ -43,7 +43,7 @@ static BOOL freerdp_bitmap_planar_delta_encode_planes(
     BYTE* outPlanes[4]);
 
 static INT32 planar_skip_plane_rle(const BYTE* pSrcData, UINT32 SrcSize,
-				   UINT32 nWidth, UINT32 nHeight)
+                                   UINT32 nWidth, UINT32 nHeight)
 {
 	UINT32 x, y;
 	int cRawBytes;
@@ -92,10 +92,10 @@ static INT32 planar_skip_plane_rle(const BYTE* pSrcData, UINT32 SrcSize,
 }
 
 static INT32 planar_decompress_plane_rle(const BYTE* pSrcData, UINT32 SrcSize,
-	BYTE* pDstData, INT32 nDstStep,
-	UINT32 nXDst, UINT32 nYDst,
-	UINT32 nWidth, UINT32 nHeight,
-	UINT32 nChannel, BOOL vFlip)
+        BYTE* pDstData, INT32 nDstStep,
+        UINT32 nXDst, UINT32 nYDst,
+        UINT32 nWidth, UINT32 nHeight,
+        UINT32 nChannel, BOOL vFlip)
 {
 	UINT32 x, y;
 	BYTE* dstp;
@@ -227,9 +227,9 @@ static INT32 planar_decompress_plane_rle(const BYTE* pSrcData, UINT32 SrcSize,
 }
 
 static BOOL planar_decompress_planes_raw(const BYTE* pSrcData[4],
-	BYTE* pDstData, UINT32 DstFormat,
-	UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst, UINT32 nWidth, UINT32 nHeight,
-	BOOL alpha, BOOL vFlip)
+        BYTE* pDstData, UINT32 DstFormat,
+        UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst, UINT32 nWidth, UINT32 nHeight,
+        BOOL alpha, BOOL vFlip)
 {
 	INT32 x, y;
 	INT32 beg, end, inc;
@@ -256,7 +256,7 @@ static BOOL planar_decompress_planes_raw(const BYTE* pSrcData[4],
 		for (y = beg; y != end; y += inc)
 		{
 			BYTE* pRGB = &pDstData[((nYDst + y) * nDstStep) + (nXDst * GetBytesPerPixel(
-						   DstFormat))];
+			                           DstFormat))];
 
 			for (x = 0; x < nWidth; x++)
 			{
@@ -271,7 +271,7 @@ static BOOL planar_decompress_planes_raw(const BYTE* pSrcData[4],
 		for (y = beg; y != end; y += inc)
 		{
 			BYTE* pRGB = &pDstData[((nYDst + y) * nDstStep) + (nXDst * GetBytesPerPixel(
-						   DstFormat))];
+			                           DstFormat))];
 
 			for (x = 0; x < nWidth; x++)
 			{
@@ -286,11 +286,11 @@ static BOOL planar_decompress_planes_raw(const BYTE* pSrcData[4],
 }
 
 BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
-		       const BYTE* pSrcData, UINT32 SrcSize,
-		       UINT32 nSrcWidth, UINT32 nSrcHeight,
-		       BYTE* pDstData, UINT32 DstFormat,
-		       UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
-		       UINT32 nDstWidth, UINT32 nDstHeight, BOOL vFlip)
+                       const BYTE* pSrcData, UINT32 SrcSize,
+                       UINT32 nSrcWidth, UINT32 nSrcHeight,
+                       BYTE* pDstData, UINT32 DstFormat,
+                       UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+                       UINT32 nDstWidth, UINT32 nDstHeight, BOOL vFlip)
 {
 	BOOL cs;
 	BOOL rle;
@@ -407,28 +407,28 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 		{
 			planes[3] = srcp;
 			rleSizes[3] = planar_skip_plane_rle(planes[3], SrcSize - (planes[3] - pSrcData),
-							    rawWidths[3], rawHeights[3]); /* AlphaPlane */
+			                                    rawWidths[3], rawHeights[3]); /* AlphaPlane */
 
 			if (rleSizes[3] < 0)
 				return FALSE;
 
 			planes[0] = planes[3] + rleSizes[3];
 			rleSizes[0] = planar_skip_plane_rle(planes[0], SrcSize - (planes[0] - pSrcData),
-							    rawWidths[0], rawHeights[0]); /* RedPlane */
+			                                    rawWidths[0], rawHeights[0]); /* RedPlane */
 
 			if (rleSizes[0] < 0)
 				return FALSE;
 
 			planes[1] = planes[0] + rleSizes[0];
 			rleSizes[1] = planar_skip_plane_rle(planes[1], SrcSize - (planes[1] - pSrcData),
-							    rawWidths[1], rawHeights[1]); /* GreenPlane */
+			                                    rawWidths[1], rawHeights[1]); /* GreenPlane */
 
 			if (rleSizes[1] < 1)
 				return FALSE;
 
 			planes[2] = planes[1] + rleSizes[1];
 			rleSizes[2] = planar_skip_plane_rle(planes[2], SrcSize - (planes[2] - pSrcData),
-							    rawWidths[2], rawHeights[2]); /* BluePlane */
+			                                    rawWidths[2], rawHeights[2]); /* BluePlane */
 
 			if (rleSizes[2] < 1)
 				return FALSE;
@@ -437,21 +437,21 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 		{
 			planes[0] = srcp;
 			rleSizes[0] = planar_skip_plane_rle(planes[0], SrcSize - (planes[0] - pSrcData),
-							    rawWidths[0], rawHeights[0]); /* RedPlane */
+			                                    rawWidths[0], rawHeights[0]); /* RedPlane */
 
 			if (rleSizes[0] < 0)
 				return FALSE;
 
 			planes[1] = planes[0] + rleSizes[0];
 			rleSizes[1] = planar_skip_plane_rle(planes[1], SrcSize - (planes[1] - pSrcData),
-							    rawWidths[1], rawHeights[1]); /* GreenPlane */
+			                                    rawWidths[1], rawHeights[1]); /* GreenPlane */
 
 			if (rleSizes[1] < 1)
 				return FALSE;
 
 			planes[2] = planes[1] + rleSizes[1];
 			rleSizes[2] = planar_skip_plane_rle(planes[2], SrcSize - (planes[2] - pSrcData),
-							    rawWidths[2], rawHeights[2]); /* BluePlane */
+			                                    rawWidths[2], rawHeights[2]); /* BluePlane */
 
 			if (rleSizes[2] < 1)
 				return FALSE;
@@ -480,7 +480,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 			if (alpha)
 			{
 				if (!planar_decompress_planes_raw(planes, pTempData, TempFormat, nDstStep,
-								  nXDst, nYDst, nSrcWidth, nSrcHeight, alpha, vFlip))
+				                                  nXDst, nYDst, nSrcWidth, nSrcHeight, alpha, vFlip))
 					return FALSE;
 
 				srcp += rawSizes[0] + rawSizes[1] + rawSizes[2] + rawSizes[3];
@@ -488,7 +488,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 			else /* NoAlpha */
 			{
 				if (!planar_decompress_planes_raw(planes, pTempData, TempFormat, nDstStep,
-								  nXDst, nYDst, nSrcWidth, nSrcHeight, alpha, vFlip))
+				                                  nXDst, nYDst, nSrcWidth, nSrcHeight, alpha, vFlip))
 					return FALSE;
 
 				srcp += rawSizes[0] + rawSizes[1] + rawSizes[2];
@@ -502,29 +502,29 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 			if (alpha)
 			{
 				status = planar_decompress_plane_rle(planes[3], rleSizes[3],
-								     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 3,
-								     vFlip); /* AlphaPlane */
+				                                     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 3,
+				                                     vFlip); /* AlphaPlane */
 
 				if (status < 0)
 					return FALSE;
 
 				status = planar_decompress_plane_rle(planes[0], rleSizes[0],
-								     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 2,
-								     vFlip); /* RedPlane */
+				                                     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 2,
+				                                     vFlip); /* RedPlane */
 
 				if (status < 0)
 					return FALSE;
 
 				status = planar_decompress_plane_rle(planes[1], rleSizes[1],
-								     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 1,
-								     vFlip); /* GreenPlane */
+				                                     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 1,
+				                                     vFlip); /* GreenPlane */
 
 				if (status < 0)
 					return FALSE;
 
 				status = planar_decompress_plane_rle(planes[2], rleSizes[2],
-								     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 0,
-								     vFlip); /* BluePlane */
+				                                     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 0,
+				                                     vFlip); /* BluePlane */
 
 				if (status < 0)
 					return FALSE;
@@ -534,22 +534,22 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 			else /* NoAlpha */
 			{
 				status = planar_decompress_plane_rle(planes[0], rleSizes[0],
-								     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 2,
-								     vFlip); /* RedPlane */
+				                                     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 2,
+				                                     vFlip); /* RedPlane */
 
 				if (status < 0)
 					return FALSE;
 
 				status = planar_decompress_plane_rle(planes[1], rleSizes[1],
-								     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 1,
-								     vFlip); /* GreenPlane */
+				                                     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 1,
+				                                     vFlip); /* GreenPlane */
 
 				if (status < 0)
 					return FALSE;
 
 				status = planar_decompress_plane_rle(planes[2], rleSizes[2],
-								     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 0,
-								     vFlip); /* BluePlane */
+				                                     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 0,
+				                                     vFlip); /* BluePlane */
 
 				if (status < 0)
 					return FALSE;
@@ -561,8 +561,8 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 		if (pTempData != pDstData)
 		{
 			if (!freerdp_image_copy(pDstData, DstFormat, nDstStep, nXDst, nYDst, w,
-						h, pTempData,
-						TempFormat, nTempStep, nXDst, nYDst, NULL))
+			                        h, pTempData,
+			                        TempFormat, nTempStep, nXDst, nYDst, NULL))
 				return FALSE;
 		}
 	}
@@ -586,7 +586,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 			if (alpha)
 			{
 				if (!planar_decompress_planes_raw(planes, pTempData, TempFormat, nTempStep,
-								  nXDst, nYDst, nSrcWidth, nSrcHeight, alpha, vFlip))
+				                                  nXDst, nYDst, nSrcWidth, nSrcHeight, alpha, vFlip))
 					return FALSE;
 
 				srcp += rawSizes[0] + rawSizes[1] + rawSizes[2] + rawSizes[3];
@@ -594,7 +594,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 			else /* NoAlpha */
 			{
 				if (!planar_decompress_planes_raw(planes, pTempData, TempFormat, nTempStep,
-								  nXDst, nYDst, nSrcWidth, nSrcHeight, alpha, vFlip))
+				                                  nXDst, nYDst, nSrcWidth, nSrcHeight, alpha, vFlip))
 					return FALSE;
 
 				srcp += rawSizes[0] + rawSizes[1] + rawSizes[2];
@@ -608,29 +608,29 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 			if (alpha)
 			{
 				status = planar_decompress_plane_rle(planes[3], rleSizes[3],
-								     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 3,
-								     vFlip); /* AlphaPlane */
+				                                     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 3,
+				                                     vFlip); /* AlphaPlane */
 
 				if (status < 0)
 					return FALSE;
 
 				status = planar_decompress_plane_rle(planes[0], rleSizes[0],
-								     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 2,
-								     vFlip); /* LumaPlane */
+				                                     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 2,
+				                                     vFlip); /* LumaPlane */
 
 				if (status < 0)
 					return FALSE;
 
 				status = planar_decompress_plane_rle(planes[1], rleSizes[1],
-								     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 1,
-								     vFlip); /* OrangeChromaPlane */
+				                                     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 1,
+				                                     vFlip); /* OrangeChromaPlane */
 
 				if (status < 0)
 					return FALSE;
 
 				status = planar_decompress_plane_rle(planes[2], rleSizes[2],
-								     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 0,
-								     vFlip); /* GreenChromaPlane */
+				                                     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 0,
+				                                     vFlip); /* GreenChromaPlane */
 
 				if (status < 0)
 					return FALSE;
@@ -640,22 +640,22 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 			else /* NoAlpha */
 			{
 				status = planar_decompress_plane_rle(planes[0], rleSizes[0],
-								     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 2,
-								     vFlip); /* LumaPlane */
+				                                     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 2,
+				                                     vFlip); /* LumaPlane */
 
 				if (status < 0)
 					return FALSE;
 
 				status = planar_decompress_plane_rle(planes[1], rleSizes[1],
-								     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 1,
-								     vFlip); /* OrangeChromaPlane */
+				                                     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 1,
+				                                     vFlip); /* OrangeChromaPlane */
 
 				if (status < 0)
 					return FALSE;
 
 				status = planar_decompress_plane_rle(planes[2], rleSizes[2],
-								     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 0,
-								     vFlip); /* GreenChromaPlane */
+				                                     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 0,
+				                                     vFlip); /* GreenChromaPlane */
 
 				if (status < 0)
 					return FALSE;
@@ -665,8 +665,8 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 		}
 
 		if (prims->YCoCgToRGB_8u_AC4R(pTempData, nTempStep, pDstData, DstFormat,
-					      nDstStep,
-					      w, h, cll, alpha) != PRIMITIVES_SUCCESS)
+		                              nDstStep,
+		                              w, h, cll, alpha) != PRIMITIVES_SUCCESS)
 			return FALSE;
 	}
 
@@ -674,8 +674,8 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 }
 
 static BOOL freerdp_split_color_planes(const BYTE* data, UINT32 format,
-				       UINT32 width, UINT32 height,
-				       UINT32 scanline, BYTE** planes)
+                                       UINT32 width, UINT32 height,
+                                       UINT32 scanline, BYTE** planes)
 {
 	INT32 i, j, k;
 	k = 0;
@@ -692,7 +692,7 @@ static BOOL freerdp_split_color_planes(const BYTE* data, UINT32 format,
 			const UINT32 color = ReadColor(pixel, format);
 			pixel += GetBytesPerPixel(format);
 			SplitColor(color, format, &planes[1][k], &planes[2][k],
-				   &planes[3][k], &planes[0][k], NULL);
+			           &planes[3][k], &planes[0][k], NULL);
 			k++;
 		}
 	}
@@ -815,9 +815,9 @@ static UINT32 freerdp_bitmap_planar_write_rle_bytes(
 }
 
 static UINT32 freerdp_bitmap_planar_encode_rle_bytes(const BYTE* pInBuffer,
-	UINT32 inBufferSize,
-	BYTE* pOutBuffer,
-	UINT32 outBufferSize)
+        UINT32 inBufferSize,
+        BYTE* pOutBuffer,
+        UINT32 outBufferSize)
 {
 	BYTE symbol;
 	const BYTE* pInput;
@@ -859,9 +859,9 @@ static UINT32 freerdp_bitmap_planar_encode_rle_bytes(const BYTE* pInBuffer,
 			{
 				pBytes = pInput - (cRawBytes + nRunLength + 1);
 				nBytesWritten = freerdp_bitmap_planar_write_rle_bytes(
-						    pBytes, cRawBytes,
-						    nRunLength, pOutput,
-						    outBufferSize);
+				                    pBytes, cRawBytes,
+				                    nRunLength, pOutput,
+				                    outBufferSize);
 				nRunLength = 0;
 
 				if (!nBytesWritten || (nBytesWritten > outBufferSize))
@@ -883,7 +883,7 @@ static UINT32 freerdp_bitmap_planar_encode_rle_bytes(const BYTE* pInBuffer,
 	{
 		pBytes = pInput - (cRawBytes + nRunLength);
 		nBytesWritten = freerdp_bitmap_planar_write_rle_bytes(pBytes,
-				cRawBytes, nRunLength, pOutput, outBufferSize);
+		                cRawBytes, nRunLength, pOutput, outBufferSize);
 
 		if (!nBytesWritten)
 			return 0;
@@ -898,8 +898,8 @@ static UINT32 freerdp_bitmap_planar_encode_rle_bytes(const BYTE* pInBuffer,
 }
 
 BYTE* freerdp_bitmap_planar_compress_plane_rle(const BYTE* inPlane,
-	UINT32 width, UINT32 height,
-	BYTE* outPlane, UINT32* dstSize)
+        UINT32 width, UINT32 height,
+        BYTE* outPlane, UINT32* dstSize)
 {
 	UINT32 index;
 	const BYTE* pInput;
@@ -933,7 +933,7 @@ BYTE* freerdp_bitmap_planar_compress_plane_rle(const BYTE* inPlane,
 	while (outBufferSize)
 	{
 		nBytesWritten = freerdp_bitmap_planar_encode_rle_bytes(
-				    pInput, width, pOutput, outBufferSize);
+		                    pInput, width, pOutput, outBufferSize);
 
 		if ((!nBytesWritten) || (nBytesWritten > outBufferSize))
 			return NULL;
@@ -968,7 +968,7 @@ static UINT32 freerdp_bitmap_planar_compress_planes_rle(
 		dstSizes[0] = outPlanesSize;
 
 		if (!freerdp_bitmap_planar_compress_plane_rle(
-			inPlanes[0], width, height, outPlanes, &dstSizes[0]))
+		        inPlanes[0], width, height, outPlanes, &dstSizes[0]))
 			return 0;
 
 		outPlanes += dstSizes[0];
@@ -979,7 +979,7 @@ static UINT32 freerdp_bitmap_planar_compress_planes_rle(
 	dstSizes[1] = outPlanesSize;
 
 	if (!freerdp_bitmap_planar_compress_plane_rle(inPlanes[1], width, height,
-		outPlanes, &dstSizes[1]))
+	        outPlanes, &dstSizes[1]))
 		return 0;
 
 	outPlanes += dstSizes[1];
@@ -988,7 +988,7 @@ static UINT32 freerdp_bitmap_planar_compress_planes_rle(
 	dstSizes[2] = outPlanesSize;
 
 	if (!freerdp_bitmap_planar_compress_plane_rle(inPlanes[2], width, height,
-		outPlanes, &dstSizes[2]))
+	        outPlanes, &dstSizes[2]))
 		return 0;
 
 	outPlanes += dstSizes[2];
@@ -997,7 +997,7 @@ static UINT32 freerdp_bitmap_planar_compress_planes_rle(
 	dstSizes[3] = outPlanesSize;
 
 	if (!freerdp_bitmap_planar_compress_plane_rle(inPlanes[3], width, height,
-		outPlanes, &dstSizes[3]))
+	        outPlanes, &dstSizes[3]))
 		return 0;
 
 	outPlanes += dstSizes[3];
@@ -1006,8 +1006,8 @@ static UINT32 freerdp_bitmap_planar_compress_planes_rle(
 }
 
 BYTE* freerdp_bitmap_planar_delta_encode_plane(const BYTE* inPlane,
-	UINT32 width, UINT32 height,
-	BYTE* outPlane)
+        UINT32 width, UINT32 height,
+        BYTE* outPlane)
 {
 	char s2c;
 	INT32 delta;
@@ -1045,15 +1045,15 @@ BYTE* freerdp_bitmap_planar_delta_encode_plane(const BYTE* inPlane,
 }
 
 BOOL freerdp_bitmap_planar_delta_encode_planes(const BYTE** inPlanes,
-	UINT32 width, UINT32 height,
-	BYTE* outPlanes[4])
+        UINT32 width, UINT32 height,
+        BYTE* outPlanes[4])
 {
 	UINT32 i;
 
 	for (i = 0; i < 4; i++)
 	{
 		outPlanes[i] = freerdp_bitmap_planar_delta_encode_plane(
-				   inPlanes[i], width, height, outPlanes[i]);
+		                   inPlanes[i], width, height, outPlanes[i]);
 
 		if (!outPlanes[i])
 			return FALSE;
@@ -1063,9 +1063,9 @@ BOOL freerdp_bitmap_planar_delta_encode_planes(const BYTE** inPlanes,
 }
 
 BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context,
-				     const BYTE* data, UINT32 format,
-				     UINT32 width, UINT32 height, UINT32 scanline,
-				     BYTE* dstData, UINT32* pDstSize)
+                                     const BYTE* data, UINT32 format,
+                                     UINT32 width, UINT32 height, UINT32 scanline,
+                                     BYTE* dstData, UINT32* pDstSize)
 {
 	UINT32 size;
 	BYTE* dstp;
@@ -1073,26 +1073,29 @@ BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context,
 	UINT32 dstSizes[4];
 	BYTE FormatHeader = 0;
 
+	if (!context || !context->rlePlanes)
+		return NULL;
+
 	if (context->AllowSkipAlpha)
 		FormatHeader |= PLANAR_FORMAT_HEADER_NA;
 
 	planeSize = width * height;
 
 	if (!freerdp_split_color_planes(data, format, width, height, scanline,
-					context->planes))
+	                                context->planes))
 		return NULL;
 
 	if (context->AllowRunLengthEncoding)
 	{
 		if (!freerdp_bitmap_planar_delta_encode_planes(
-			context->planes, width, height,
-			context->deltaPlanes))
+		        context->planes, width, height,
+		        context->deltaPlanes))
 			return NULL;;
 
 		if (freerdp_bitmap_planar_compress_planes_rle(
-			context->deltaPlanes, width, height,
-			context->rlePlanesBuffer, dstSizes,
-			context->AllowSkipAlpha) > 0)
+		        context->deltaPlanes, width, height,
+		        context->rlePlanesBuffer, dstSizes,
+		        context->AllowSkipAlpha) > 0)
 		{
 			int offset = 0;
 			FormatHeader |= PLANAR_FORMAT_HEADER_RLE;
@@ -1233,13 +1236,13 @@ BOOL freerdp_bitmap_planar_context_reset(
 	context->planes[2] = &context->planesBuffer[context->maxPlaneSize * 2];
 	context->planes[3] = &context->planesBuffer[context->maxPlaneSize * 3];
 	context->deltaPlanes[0] = &context->deltaPlanesBuffer[context->maxPlaneSize *
-				  0];
+	                          0];
 	context->deltaPlanes[1] = &context->deltaPlanesBuffer[context->maxPlaneSize *
-				  1];
+	                          1];
 	context->deltaPlanes[2] = &context->deltaPlanesBuffer[context->maxPlaneSize *
-				  2];
+	                          2];
 	context->deltaPlanes[3] = &context->deltaPlanesBuffer[context->maxPlaneSize *
-				  3];
+	                          3];
 	return TRUE;
 }
 

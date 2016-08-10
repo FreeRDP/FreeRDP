@@ -856,7 +856,6 @@ static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData,
 	H264_CONTEXT_OPENH264* sys = (H264_CONTEXT_OPENH264*) h264->pSystemData;
 	UINT32* iStride = h264->iStride[plane];
 	BYTE** pYUVData = h264->pYUVData[plane];
-	sys = &((H264_CONTEXT_OPENH264*) h264->pSystemData)[0];
 
 	if (!sys->pDecoder)
 		return -2001;
@@ -1478,7 +1477,7 @@ static BOOL avc_yuv_to_rgb(H264_CONTEXT* h264, const RECTANGLE_16* regionRects,
 		}
 
 		if (!check_rect(h264, rect, nDstWidth, nDstHeight))
-            return FALSE;
+			return FALSE;
 
 		width = rect->right - rect->left;
 		height = rect->bottom - rect->top;

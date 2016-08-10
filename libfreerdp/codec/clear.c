@@ -127,7 +127,7 @@ static BOOL clear_decompress_subcode_rlex(wStream* s,
 	BYTE suiteIndex;
 	BYTE suiteDepth;
 	BYTE paletteCount;
-	UINT32 palette[128];
+	UINT32 palette[128] = { 0 };
 
 	if (Stream_GetRemainingLength(s) < bitmapDataByteCount)
 		return FALSE;
@@ -193,6 +193,10 @@ static BOOL clear_decompress_subcode_rlex(wStream* s,
 			return FALSE;
 
 		suiteIndex = startIndex;
+
+		if (suiteIndex > 127)
+			return FALSE;
+
 		color = palette[suiteIndex];
 
 		if ((pixelIndex + runLengthFactor) > pixelCount)
@@ -222,7 +226,12 @@ static BOOL clear_decompress_subcode_rlex(wStream* s,
 		{
 			BYTE* pTmpData = &pDstData[(nXDstRel + x) * GetBytesPerPixel(DstFormat) +
 			                           (nYDstRel + y) * nDstStep];
-			UINT32 color = palette[suiteIndex++];
+			UINT32 color = palette[suiteIndex];
+
+			if (suiteIndex > 127)
+				return FALSE;
+
+			suiteIndex++;
 
 			if ((nXDstRel + x < nDstWidth) && (nYDstRel + y < nDstHeight))
 				WriteColor(pTmpData, DstFormat, color);

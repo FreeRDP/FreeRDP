@@ -63,8 +63,8 @@ int test_gdi_FillRect(void)
 	int rc = -1;
 	HGDI_DC hdc;
 	HGDI_RECT hRect;
-	HGDI_BRUSH hBrush;
-	HGDI_BITMAP hBitmap;
+	HGDI_BRUSH hBrush = NULL;
+	HGDI_BITMAP hBitmap = NULL;
 	UINT32 color;
 	UINT32 pixel;
 	UINT32 rawPixel;

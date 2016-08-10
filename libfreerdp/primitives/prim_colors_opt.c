@@ -91,7 +91,7 @@ static pstatus_t sse2_yCbCrToRGB_16s16s_P3P3(
 	{
 		/* We can't maintain 16-byte alignment. */
 		return generic->yCbCrToRGB_16s16s_P3P3(pSrc, srcStep,
-						       pDst, dstStep, roi);
+		                                       pDst, dstStep, roi);
 	}
 
 	zero = _mm_setzero_si128();
@@ -228,7 +228,7 @@ static pstatus_t sse2_RGBToYCbCr_16s16s_P3P3(
 	{
 		/* We can't maintain 16-byte alignment. */
 		return generic->RGBToYCbCr_16s16s_P3P3(pSrc, srcStep,
-						       pDst, dstStep, roi);
+		                                       pDst, dstStep, roi);
 	}
 
 	min = _mm_set1_epi16(-128 * 32);
@@ -385,13 +385,12 @@ pstatus_t sse2_RGBToRGB_16s8u_P3AC4R(
 	    || (dstStep & 0x0f))
 	{
 		return generic->RGBToRGB_16s8u_P3AC4R(pSrc, srcStep, pDst,
-						      dstStep, DstFormat, roi);
+		                                      dstStep, DstFormat, roi);
 	}
 
 	// TODO: Need to update SSE code to allow color conversion!!!
 	return generic->RGBToRGB_16s8u_P3AC4R(pSrc, srcStep, pDst,
-					      dstStep, DstFormat, roi);
-
+	                                      dstStep, DstFormat, roi);
 	out = (BYTE*) pDst;
 	srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 	dstbump = (dstStep - (roi->width * sizeof(UINT32)));
