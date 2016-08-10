@@ -29,12 +29,12 @@
 extern "C" {
 #endif
 
-const char* gdi_rop_to_string(UINT32 code);
+FREERDP_LOCAL const char* gdi_rop_to_string(UINT32 code);
 
-HGDI_BRUSH gdi_CreateSolidBrush(UINT32 crColor);
-HGDI_BRUSH gdi_CreatePatternBrush(HGDI_BITMAP hbmp);
-HGDI_BRUSH gdi_CreateHatchBrush(HGDI_BITMAP hbmp);
-UINT32 gdi_GetBrushStyle(HGDI_DC hdc);
+FREERDP_LOCAL HGDI_BRUSH gdi_CreateSolidBrush(UINT32 crColor);
+FREERDP_LOCAL HGDI_BRUSH gdi_CreatePatternBrush(HGDI_BITMAP hbmp);
+FREERDP_LOCAL HGDI_BRUSH gdi_CreateHatchBrush(HGDI_BITMAP hbmp);
+FREERDP_LOCAL UINT32 gdi_GetBrushStyle(HGDI_DC hdc);
 
 #ifdef __cplusplus
 }

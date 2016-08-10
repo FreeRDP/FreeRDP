@@ -44,6 +44,7 @@ typedef struct rdp_transport rdpTransport;
 #include <winpr/stream.h>
 #include <winpr/collections.h>
 
+#include <freerdp/api.h>
 #include <freerdp/crypto/tls.h>
 
 #include <time.h>
@@ -51,7 +52,8 @@ typedef struct rdp_transport rdpTransport;
 #include <freerdp/settings.h>
 
 
-typedef int (*TransportRecv) (rdpTransport* transport, wStream* stream, void* extra);
+typedef int (*TransportRecv)(rdpTransport* transport, wStream* stream,
+                             void* extra);
 
 struct rdp_transport
 {
@@ -79,35 +81,43 @@ struct rdp_transport
 	ULONG written;
 };
 
-wStream* transport_send_stream_init(rdpTransport* transport, int size);
-BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 port, int timeout);
-BOOL transport_attach(rdpTransport* transport, int sockfd);
-BOOL transport_disconnect(rdpTransport* transport);
-BOOL transport_connect_rdp(rdpTransport* transport);
-BOOL transport_connect_tls(rdpTransport* transport);
-BOOL transport_connect_nla(rdpTransport* transport);
-BOOL transport_accept_rdp(rdpTransport* transport);
-BOOL transport_accept_tls(rdpTransport* transport);
-BOOL transport_accept_nla(rdpTransport* transport);
-void transport_stop(rdpTransport* transport);
-int transport_read_pdu(rdpTransport* transport, wStream* s);
-int transport_write(rdpTransport* transport, wStream* s);
+FREERDP_LOCAL wStream* transport_send_stream_init(rdpTransport* transport,
+        int size);
+FREERDP_LOCAL BOOL transport_connect(rdpTransport* transport,
+                                     const char* hostname, UINT16 port, int timeout);
+FREERDP_LOCAL BOOL transport_attach(rdpTransport* transport, int sockfd);
+FREERDP_LOCAL BOOL transport_disconnect(rdpTransport* transport);
+FREERDP_LOCAL BOOL transport_connect_rdp(rdpTransport* transport);
+FREERDP_LOCAL BOOL transport_connect_tls(rdpTransport* transport);
+FREERDP_LOCAL BOOL transport_connect_nla(rdpTransport* transport);
+FREERDP_LOCAL BOOL transport_accept_rdp(rdpTransport* transport);
+FREERDP_LOCAL BOOL transport_accept_tls(rdpTransport* transport);
+FREERDP_LOCAL BOOL transport_accept_nla(rdpTransport* transport);
+FREERDP_LOCAL void transport_stop(rdpTransport* transport);
+FREERDP_LOCAL int transport_read_pdu(rdpTransport* transport, wStream* s);
+FREERDP_LOCAL int transport_write(rdpTransport* transport, wStream* s);
 
-void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount);
-int transport_check_fds(rdpTransport* transport);
+FREERDP_LOCAL void transport_get_fds(rdpTransport* transport, void** rfds,
+                                     int* rcount);
+FREERDP_LOCAL int transport_check_fds(rdpTransport* transport);
 
-DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events, DWORD nCount);
+FREERDP_LOCAL DWORD transport_get_event_handles(rdpTransport* transport,
+        HANDLE* events, DWORD nCount);
 
-BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking);
-void transport_set_gateway_enabled(rdpTransport* transport, BOOL GatewayEnabled);
-void transport_set_nla_mode(rdpTransport* transport, BOOL NlaMode);
-BOOL transport_is_write_blocked(rdpTransport* transport);
-int transport_drain_output_buffer(rdpTransport* transport);
+FREERDP_LOCAL BOOL transport_set_blocking_mode(rdpTransport* transport,
+        BOOL blocking);
+FREERDP_LOCAL void transport_set_gateway_enabled(rdpTransport* transport,
+        BOOL GatewayEnabled);
+FREERDP_LOCAL void transport_set_nla_mode(rdpTransport* transport,
+        BOOL NlaMode);
+FREERDP_LOCAL BOOL transport_is_write_blocked(rdpTransport* transport);
+FREERDP_LOCAL int transport_drain_output_buffer(rdpTransport* transport);
 
-wStream* transport_receive_pool_take(rdpTransport* transport);
-int transport_receive_pool_return(rdpTransport* transport, wStream* pdu);
+FREERDP_LOCAL wStream* transport_receive_pool_take(rdpTransport* transport);
+FREERDP_LOCAL int transport_receive_pool_return(rdpTransport* transport,
+        wStream* pdu);
 
-rdpTransport* transport_new(rdpContext* context);
-void transport_free(rdpTransport* transport);
+FREERDP_LOCAL rdpTransport* transport_new(rdpContext* context);
+FREERDP_LOCAL void transport_free(rdpTransport* transport);
 
 #endif
