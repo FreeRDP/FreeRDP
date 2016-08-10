@@ -51,7 +51,10 @@ static UINT32 update_glyph_offset(const BYTE* data, UINT32 index, INT32* x,
 		UINT32 offset = data[index++];
 
 		if (offset & 0x80)
-			offset = data[index++] | ((UINT32)data[index++]) << 8;
+        {
+            offset = data[index++];
+            offset |= ((UINT32)data[index++]) << 8;
+        }
 
 		if (flAccel & SO_VERTICAL)
 			*y += offset;
