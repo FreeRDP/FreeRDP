@@ -64,7 +64,7 @@ static const BYTE wf_rop2_table[] =
 };
 
 static BOOL wf_decode_color(wfContext* wfc, const UINT32 srcColor,
-                            UINT32* color, UINT32* format)
+							COLORREF* color, UINT32* format)
 {
 	rdpGdi* gdi;
 	rdpSettings* settings;
@@ -705,6 +705,68 @@ static BOOL wf_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 	return TRUE;
 }
 
+static BOOL wf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
+{
+	BOOL rc = FALSE;
+	HDC hdc;
+	wfBitmap* bitmap;
+	wfContext* wfc = (wfContext*)context;
+	COLORREF fgcolor, bgcolor, orgColor;
+	HBRUSH orgBrush = NULL, brush = NULL;
+
+	if (!context || !mem3blt)
+		return FALSE;
+
+	bitmap = (wfBitmap*) mem3blt->bitmap;
+
+	if (!bitmap || !wfc->drawing || !wfc->drawing->hdc)
+		return FALSE;
+
+	hdc = wfc->drawing->hdc;
+
+	if (!wf_decode_color(wfc, mem3blt->foreColor, &fgcolor, NULL))
+		return FALSE;
+
+	if (!wf_decode_color(wfc, mem3blt->backColor, &bgcolor, NULL))
+		return FALSE;
+
+	orgColor = SetTextColor(hdc, fgcolor);
+	switch(mem3blt->brush.style)
+	{
+	case GDI_BS_SOLID:
+		brush = CreateSolidBrush(fgcolor);
+		break;
+	case GDI_BS_HATCHED:
+
+	case GDI_BS_PATTERN:
+	{
+		HBITMAP bmp = CreateBitmap(8, 8, 1, mem3blt->brush.bpp, mem3blt->brush.data);
+		brush = CreatePatternBrush(bmp);
+	}
+		break;
+	default:
+		goto fail;
+	}
+
+	orgBrush = SelectObject(hdc, brush);
+	if (!BitBlt(hdc, mem3blt->nLeftRect, mem3blt->nTopRect,
+				mem3blt->nWidth, mem3blt->nHeight, bitmap->hdc,
+				mem3blt->nXSrc, mem3blt->nYSrc, gdi_rop3_code(mem3blt->bRop)))
+		goto fail;
+
+	if (wfc->drawing == wfc->primary)
+		wf_invalidate_region(wfc, mem3blt->nLeftRect, mem3blt->nTopRect, mem3blt->nWidth,
+							 mem3blt->nHeight);
+
+	rc = TRUE;
+
+fail:
+	if (brush)
+		SelectObject(hdc, orgBrush);
+	SetTextColor(hdc, orgColor);
+	return rc;
+}
+
 static BOOL wf_gdi_surface_frame_marker(rdpContext* context,
                                         const SURFACE_FRAME_MARKER* surface_frame_marker)
 {
@@ -741,6 +803,7 @@ void wf_gdi_register_update_callbacks(rdpUpdate* update)
 	primary->LineTo = wf_gdi_line_to;
 	primary->Polyline = wf_gdi_polyline;
 	primary->MemBlt = wf_gdi_memblt;
+	primary->Mem3Blt = wf_gdi_mem3blt;
 	update->SurfaceFrameMarker = wf_gdi_surface_frame_marker;
 }
 
