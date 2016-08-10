@@ -139,6 +139,15 @@ enum RDPDR_CLIENT_NAME_FLAG
 	RDPDR_CLIENT_NAME_ASCII = 0x00000000
 };
 
+/* Not defined in the protocol spec, but defined in the Microsoft-written 
+   Network Monitor parser (see: https://searchcode.com/codesearch/view/10386260/) */
+enum RDPDR_OS_TYPE
+{
+    RDPDR_OS_TYPE_UNKNOWN = 0x0000,
+    RDPDR_OS_TYPE_WIN9X = 0x0001,
+    RDPDR_OS_TYPE_WINNT = 0x0002
+};
+
 /* GENERAL_CAPS_SET.ioCode1 */
 enum RDPDR_CAPS_IRP_MJ
 {
