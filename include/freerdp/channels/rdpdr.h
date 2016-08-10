@@ -337,7 +337,7 @@ typedef UINT (*pcIRPResponse)(IRP* irp);
 
 struct _IRP
 {
-	SLIST_ENTRY ItemEntry;
+        WINPR_SLIST_ENTRY ItemEntry;
 
 	DEVICE* device;
 	DEVMAN* devman;
