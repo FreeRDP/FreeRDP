@@ -926,10 +926,6 @@ BOOL mac_pre_connect(freerdp* instance)
 	                                instance->settings))
 		return FALSE;
 
-	if (freerdp_channels_pre_connect(instance->context->channels,
-	                                 instance) != CHANNEL_RC_OK)
-		return FALSE;
-
 	return TRUE;
 }
 
@@ -956,10 +952,6 @@ BOOL mac_post_connect(freerdp* instance)
 	view->bitmap_context = mac_create_bitmap_context(instance->context);
 	pointer_cache_register_callbacks(instance->update);
 	graphics_register_pointer(instance->context->graphics, &rdp_pointer);
-
-	if (freerdp_channels_post_connect(instance->context->channels,
-	                                  instance) != CHANNEL_RC_OK)
-		return FALSE;
 
 	/* setup pasteboard (aka clipboard) for copy operations (write only) */
 	view->pasteboard_wr = [NSPasteboard generalPasteboard];

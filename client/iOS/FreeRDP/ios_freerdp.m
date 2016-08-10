@@ -167,14 +167,6 @@ static BOOL ios_pre_connect(freerdp* instance)
 		return FALSE;
 	}
 
-	rc = freerdp_channels_pre_connect(instance->context->channels, instance);
-
-	if (rc != CHANNEL_RC_OK)
-	{
-		WLog_ERR(TAG, "freerdp_channels_pre_connect failed with %l08X", rc);
-		return FALSE;
-	}
-
 	return TRUE;
 }
 
@@ -267,11 +259,6 @@ static BOOL ios_post_connect(freerdp* instance)
 	instance->update->EndPaint = ios_ui_end_paint;
 	instance->update->DesktopResize = ios_ui_resize_window;
 	pointer_cache_register_callbacks(instance->update);
-
-	// Channel allocation
-	if (freerdp_channels_post_connect(instance->context->channels,
-	                                  instance) != CHANNEL_RC_OK)
-		return FALSE;
 
 	[mfi->session performSelectorOnMainThread:@selector(sessionDidConnect)
 	 withObject:nil waitUntilDone:YES];

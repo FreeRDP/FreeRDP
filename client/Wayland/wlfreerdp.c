@@ -149,10 +149,6 @@ static BOOL wl_pre_connect(freerdp* instance)
 	                                instance->settings))
 		return FALSE;
 
-	if (freerdp_channels_pre_connect(instance->context->channels,
-	                                 instance) != CHANNEL_RC_OK)
-		return FALSE;
-
 	return TRUE;
 }
 
@@ -180,11 +176,6 @@ static BOOL wl_post_connect(freerdp* instance)
 	UwacWindowSetTitle(window, "FreeRDP");
 	instance->update->BeginPaint = wl_begin_paint;
 	instance->update->EndPaint = wl_end_paint;
-
-	if (freerdp_channels_post_connect(instance->context->channels,
-	                                  instance) != CHANNEL_RC_OK)
-		return FALSE;
-
 	memcpy(UwacWindowGetDrawingBuffer(context->window), gdi->primary_buffer,
 	       gdi->width * gdi->height * 4);
 	UwacWindowAddDamage(context->window, 0, 0, gdi->width, gdi->height);

@@ -115,31 +115,8 @@ static BOOL wf_sw_end_paint(rdpContext* context)
 	return TRUE;
 }
 
-static BOOL wf_sw_desktop_resize(rdpContext* context)
+static BOOL wf_hw_end_paint(rdpContext* context)
 {
-	rdpGdi* gdi;
-	rdpSettings* settings;
-	wfContext* wfc = (wfContext*)context;
-
-	if (!context || !context->instance)
-		return FALSE;
-
-	settings = context->instance->settings;
-	gdi = context->gdi;
-
-	if (!gdi || !settings)
-		return FALSE;
-
-	if (!gdi_resize(gdi, settings->DesktopWidth, settings->DesktopHeight))
-		return FALSE;
-
-	if (wfc->primary)
-	{
-		wf_image_free(wfc->primary);
-		wfc->primary = wf_image_new(wfc, settings->DesktopWidth,
-		                            settings->DesktopHeight, wfc->context.gdi->dstFormat, NULL);
-	}
-
 	return TRUE;
 }
 
@@ -160,12 +137,7 @@ static BOOL wf_begin_paint(rdpContext* context)
 	return TRUE;
 }
 
-static BOOL wf_hw_end_paint(rdpContext* context)
-{
-	return TRUE;
-}
-
-static BOOL wf_hw_desktop_resize(rdpContext* context)
+static BOOL wf_desktop_resize(rdpContext* context)
 {
 	BOOL same;
 	RECT rect;
@@ -182,11 +154,16 @@ static BOOL wf_hw_desktop_resize(rdpContext* context)
 		same = (wfc->primary == wfc->drawing) ? TRUE : FALSE;
 		wf_image_free(wfc->primary);
 		wfc->primary = wf_image_new(wfc, settings->DesktopWidth,
-		                            settings->DesktopHeight, wfc->context.gdi->dstFormat, NULL);
-
-		if (same)
-			wfc->drawing = wfc->primary;
+		                            settings->DesktopHeight, context->gdi->dstFormat, NULL);
 	}
+
+	if (!gdi_resize_ex(context->gdi, settings->DesktopWidth,
+	                   settings->DesktopHeight, 0,
+	                   context->gdi->dstFormat, wfc->primary->pdata, NULL))
+		return FALSE;
+
+	if (same)
+		wfc->drawing = wfc->primary;
 
 	if (wfc->fullscreen != TRUE)
 	{
@@ -302,11 +279,6 @@ static BOOL wf_pre_connect(freerdp* instance)
 	                                 (pChannelConnectedEventHandler) wf_OnChannelConnectedEventHandler);
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
 	                                    (pChannelDisconnectedEventHandler) wf_OnChannelDisconnectedEventHandler);
-
-	if (freerdp_channels_pre_connect(instance->context->channels,
-	                                 instance) != CHANNEL_RC_OK)
-		return FALSE;
-
 	return TRUE;
 }
 
@@ -349,7 +321,7 @@ static BOOL wf_post_connect(freerdp* instance)
 	wfc->primary = wf_image_new(wfc, settings->DesktopWidth,
 	                            settings->DesktopHeight, format, NULL);
 
-	if (!gdi_init_ex(instance, format, 0, wfc->primary->pdata, wf_image_free))
+	if (!gdi_init_ex(instance, format, 0, wfc->primary->pdata, NULL))
 		return FALSE;
 
 	gdi = instance->context->gdi;
@@ -398,18 +370,13 @@ static BOOL wf_post_connect(freerdp* instance)
 	PubSub_OnEmbedWindow(context->pubSub, context, &e);
 	ShowWindow(wfc->hwnd, SW_SHOWNORMAL);
 	UpdateWindow(wfc->hwnd);
+	instance->update->BeginPaint = wf_begin_paint;
+	instance->update->DesktopResize = wf_desktop_resize;
 
-	instance->update->BeginPaint = (pBeginPaint) wf_begin_paint;
 	if (settings->SoftwareGdi)
-	{
-		instance->update->EndPaint = (pEndPaint) wf_sw_end_paint;
-		instance->update->DesktopResize = (pDesktopResize) wf_sw_desktop_resize;
-	}
+		instance->update->EndPaint = wf_sw_end_paint;
 	else
-	{
-		instance->update->EndPaint = (pEndPaint) wf_hw_end_paint;
-		instance->update->DesktopResize = (pDesktopResize) wf_hw_desktop_resize;
-	}
+		instance->update->EndPaint = wf_hw_end_paint;
 
 	pointer_cache_register_callbacks(instance->update);
 	wf_register_pointer(context->graphics);
@@ -425,12 +392,14 @@ static BOOL wf_post_connect(freerdp* instance)
 		palette_cache_register_callbacks(instance->update);
 	}
 
-	if (freerdp_channels_post_connect(context->channels, instance) != CHANNEL_RC_OK)
-		return FALSE;
-
 	if (wfc->fullscreen)
 		floatbar_window_create(wfc);
 
+	return TRUE;
+}
+
+static BOOL wf_post_disconnect(freerdp* instance)
+{
 	return TRUE;
 }
 
@@ -1012,6 +981,7 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 
 	instance->PreConnect = wf_pre_connect;
 	instance->PostConnect = wf_post_connect;
+	instance->PostDisconnect = wf_post_disconnect;
 	instance->Authenticate = wf_authenticate;
 	instance->GatewayAuthenticate = wf_gw_authenticate;
 	instance->VerifyCertificate = wf_verify_certificate;

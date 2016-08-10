@@ -135,9 +135,6 @@ BOOL shw_pre_connect(freerdp* instance)
 	if (!freerdp_client_load_addins(context->channels, instance->settings))
 		return FALSE;
 
-	if (freerdp_channels_pre_connect(context->channels, instance) != CHANNEL_RC_OK)
-		return FALSE;
-
 	return TRUE;
 }
 
@@ -157,8 +154,7 @@ BOOL shw_post_connect(freerdp* instance)
 	instance->update->EndPaint = shw_end_paint;
 	instance->update->DesktopResize = shw_desktop_resize;
 	instance->update->SurfaceFrameMarker = shw_surface_frame_marker;
-
-	return (freerdp_channels_post_connect(instance->context->channels, instance) == CHANNEL_RC_OK) ;
+	return TRUE;
 }
 
 void* shw_client_thread(void* arg)
@@ -290,13 +286,6 @@ BOOL shw_freerdp_client_new(freerdp* instance, rdpContext* context)
 
 	if (!(shw->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 		return FALSE;
-
-	if (!(context->channels = freerdp_channels_new()))
-	{
-		CloseHandle(shw->StopEvent);
-		shw->StopEvent = NULL;
-		return FALSE;
-	}
 
 	instance->PreConnect = shw_pre_connect;
 	instance->PostConnect = shw_post_connect;
