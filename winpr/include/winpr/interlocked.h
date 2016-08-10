@@ -33,7 +33,7 @@ extern "C" {
 
 #ifndef CONTAINING_RECORD
 #define CONTAINING_RECORD(address, type, field) \
-		((type *)(((ULONG_PTR) address) - (ULONG_PTR)(&(((type *) 0)->field))))
+	    ((type *)(((ULONG_PTR) address) - (ULONG_PTR)(&(((type *) 0)->field))))
 #endif
 
 typedef struct _WINPR_LIST_ENTRY WINPR_LIST_ENTRY;
@@ -41,8 +41,8 @@ typedef struct _WINPR_LIST_ENTRY* WINPR_PLIST_ENTRY;
 
 struct _WINPR_LIST_ENTRY
 {
-        WINPR_PLIST_ENTRY Flink;
-        WINPR_PLIST_ENTRY Blink;
+		WINPR_PLIST_ENTRY Flink;
+		WINPR_PLIST_ENTRY Blink;
 };
 
 typedef struct _WINPR_SINGLE_LIST_ENTRY WINPR_SINGLE_LIST_ENTRY;
@@ -50,7 +50,7 @@ typedef struct _WINPR_SINGLE_LIST_ENTRY* WINPR_PSINGLE_LIST_ENTRY;
 
 struct _WINPR_SINGLE_LIST_ENTRY
 {
-        WINPR_PSINGLE_LIST_ENTRY Next;
+		WINPR_PSINGLE_LIST_ENTRY Next;
 };
 
 typedef struct WINPR_LIST_ENTRY32
@@ -72,14 +72,14 @@ typedef WINPR_LIST_ENTRY64 *WINPR_PLIST_ENTRY64;
 typedef struct _WINPR_SLIST_ENTRY *WINPR_PSLIST_ENTRY;
 typedef struct DECLSPEC_ALIGN(16) _WINPR_SLIST_ENTRY
 {
-        WINPR_PSLIST_ENTRY Next;
+	    WINPR_PSLIST_ENTRY Next;
 } WINPR_SLIST_ENTRY;
 
 #else  /* _WIN64 */
 
-#define WINPR_SLIST_ENTRY SINGLE_LIST_ENTRY
-#define _WINPR_SLIST_ENTRY _SINGLE_LIST_ENTRY
-#define WINPR_PSLIST_ENTRY PSINGLE_LIST_ENTRY
+#define WINPR_SLIST_ENTRY WINPR_SINGLE_LIST_ENTRY
+#define _WINPR_SLIST_ENTRY _WINPR_SINGLE_LIST_ENTRY
+#define WINPR_PSLIST_ENTRY WINPR_PSINGLE_LIST_ENTRY
 
 #endif /* _WIN64 */
 
@@ -122,7 +122,7 @@ typedef union _WINPR_SLIST_HEADER
 
 	struct
 	{
-                WINPR_SLIST_ENTRY Next;
+		WINPR_SLIST_ENTRY Next;
 		WORD Depth;
 		WORD Sequence;
 	} DUMMYSTRUCTNAME;

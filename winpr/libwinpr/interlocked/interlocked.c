@@ -44,13 +44,13 @@ VOID InitializeSListHead(WINPR_PSLIST_HEADER ListHead)
 #endif
 }
 
-PWINPR_SLIST_ENTRY InterlockedPushEntrySList(WINPR_PSLIST_HEADER ListHead, PWINPR_SLIST_ENTRY ListEntry)
+WINPR_PSLIST_ENTRY InterlockedPushEntrySList(WINPR_PSLIST_HEADER ListHead, WINPR_PSLIST_ENTRY ListEntry)
 {
     WINPR_SLIST_HEADER old;
-    WINPR_SLIST_HEADER new;
+    WINPR_SLIST_HEADER newHeader;
 
 #ifdef _WIN64
-	new.HeaderX64.NextEntry = (((ULONG_PTR) ListEntry) >> 4);
+	newHeader.HeaderX64.NextEntry = (((ULONG_PTR) ListEntry) >> 4);
 
 	while (1)
 	{
@@ -58,34 +58,34 @@ PWINPR_SLIST_ENTRY InterlockedPushEntrySList(WINPR_PSLIST_HEADER ListHead, PWINP
 
 		ListEntry->Next = (PSLIST_ENTRY) (((ULONG_PTR) old.HeaderX64.NextEntry) << 4);
 
-		new.HeaderX64.Depth = old.HeaderX64.Depth + 1;
-		new.HeaderX64.Sequence = old.HeaderX64.Sequence + 1;
+		newHeader.HeaderX64.Depth = old.HeaderX64.Depth + 1;
+		newHeader.HeaderX64.Sequence = old.HeaderX64.Sequence + 1;
 
-		if (InterlockedCompareExchange64((LONGLONG*) ListHead, new.s.Alignment, old.s.Alignment))
+		if (InterlockedCompareExchange64((LONGLONG*) ListHead, newHeader.s.Alignment, old.s.Alignment))
 		{
-			InterlockedCompareExchange64(&((LONGLONG*) ListHead)[1], new.s.Region, old.s.Region);
+			InterlockedCompareExchange64(&((LONGLONG*) ListHead)[1], newHeader.s.Region, old.s.Region);
 			break;
 		}
 	}
 
 	return (PSLIST_ENTRY) ((ULONG_PTR) old.HeaderX64.NextEntry << 4);
 #else
-	new.s.Next.Next = ListEntry;
+	newHeader.s.Next.Next = ListEntry;
 
 	do
 	{
 		old = *ListHead;
 		ListEntry->Next = old.s.Next.Next;
-		new.s.Depth = old.s.Depth + 1;
-		new.s.Sequence = old.s.Sequence + 1;
+		newHeader.s.Depth = old.s.Depth + 1;
+		newHeader.s.Sequence = old.s.Sequence + 1;
 	}
-	while(InterlockedCompareExchange64((LONGLONG*) &ListHead->Alignment, new.Alignment, old.Alignment) != old.Alignment);
+	while(InterlockedCompareExchange64((LONGLONG*) &ListHead->Alignment, newHeader.Alignment, old.Alignment) != old.Alignment);
 
 	return old.s.Next.Next;
 #endif
 }
 
-PWINPR_SLIST_ENTRY InterlockedPushListSListEx(WINPR_PSLIST_HEADER ListHead, PWINPR_SLIST_ENTRY List, PWINPR_SLIST_ENTRY ListEnd, ULONG Count)
+WINPR_PSLIST_ENTRY InterlockedPushListSListEx(WINPR_PSLIST_HEADER ListHead, WINPR_PSLIST_ENTRY List, WINPR_PSLIST_ENTRY ListEnd, ULONG Count)
 {
 #ifdef _WIN64
 
@@ -95,11 +95,11 @@ PWINPR_SLIST_ENTRY InterlockedPushListSListEx(WINPR_PSLIST_HEADER ListHead, PWIN
 	return NULL;
 }
 
-PWINPR_SLIST_ENTRY InterlockedPopEntrySList(WINPR_PSLIST_HEADER ListHead)
+WINPR_PSLIST_ENTRY InterlockedPopEntrySList(WINPR_PSLIST_HEADER ListHead)
 {
     WINPR_SLIST_HEADER old;
-    WINPR_SLIST_HEADER new;
-    PWINPR_SLIST_ENTRY entry;
+    WINPR_SLIST_HEADER newHeader;
+    WINPR_PSLIST_ENTRY entry;
 
 #ifdef _WIN64
 	while (1)
@@ -111,13 +111,13 @@ PWINPR_SLIST_ENTRY InterlockedPopEntrySList(WINPR_PSLIST_HEADER ListHead)
 		if (!entry)
 			return NULL;
 
-		new.HeaderX64.NextEntry = ((ULONG_PTR) entry->Next) >> 4;
-		new.HeaderX64.Depth = old.HeaderX64.Depth - 1;
-		new.HeaderX64.Sequence = old.HeaderX64.Sequence - 1;
+		newHeader.HeaderX64.NextEntry = ((ULONG_PTR) entry->Next) >> 4;
+		newHeader.HeaderX64.Depth = old.HeaderX64.Depth - 1;
+		newHeader.HeaderX64.Sequence = old.HeaderX64.Sequence - 1;
 
-		if (InterlockedCompareExchange64((LONGLONG*) ListHead, new.s.Alignment, old.s.Alignment))
+		if (InterlockedCompareExchange64((LONGLONG*) ListHead, newHeader.s.Alignment, old.s.Alignment))
 		{
-			InterlockedCompareExchange64(&((LONGLONG*) ListHead)[1], new.s.Region, old.s.Region);
+			InterlockedCompareExchange64(&((LONGLONG*) ListHead)[1], newHeader.s.Region, old.s.Region);
 			break;
 		}
 	}
@@ -131,50 +131,50 @@ PWINPR_SLIST_ENTRY InterlockedPopEntrySList(WINPR_PSLIST_HEADER ListHead)
 		if (!entry)
 			return NULL;
 
-		new.s.Next.Next = entry->Next;
-		new.s.Depth = old.s.Depth - 1;
-		new.s.Sequence = old.s.Sequence + 1;
+		newHeader.s.Next.Next = entry->Next;
+		newHeader.s.Depth = old.s.Depth - 1;
+		newHeader.s.Sequence = old.s.Sequence + 1;
 	}
-	while(InterlockedCompareExchange64((LONGLONG*) &ListHead->Alignment, new.Alignment, old.Alignment) != old.Alignment);
+	while(InterlockedCompareExchange64((LONGLONG*) &ListHead->Alignment, newHeader.Alignment, old.Alignment) != old.Alignment);
 #endif
 	return entry;
 }
 
-PWINPR_SLIST_ENTRY InterlockedFlushSList(WINPR_PSLIST_HEADER ListHead)
+WINPR_PSLIST_ENTRY InterlockedFlushSList(WINPR_PSLIST_HEADER ListHead)
 {
     WINPR_SLIST_HEADER old;
-    WINPR_SLIST_HEADER new;
+    WINPR_SLIST_HEADER newHeader;
 
 	if (!QueryDepthSList(ListHead))
 		return NULL;
 
 #ifdef _WIN64
-	new.s.Alignment = 0;
-	new.s.Region = 0;
-	new.HeaderX64.HeaderType = 1;
+	newHeader.s.Alignment = 0;
+	newHeader.s.Region = 0;
+	newHeader.HeaderX64.HeaderType = 1;
 
 	while (1)
 	{
 		old = *ListHead;
-		new.HeaderX64.Sequence = old.HeaderX64.Sequence + 1;
+		newHeader.HeaderX64.Sequence = old.HeaderX64.Sequence + 1;
 
-		if (InterlockedCompareExchange64((LONGLONG*) ListHead, new.s.Alignment, old.s.Alignment))
+		if (InterlockedCompareExchange64((LONGLONG*) ListHead, newHeader.s.Alignment, old.s.Alignment))
 		{
-			InterlockedCompareExchange64(&((LONGLONG*) ListHead)[1], new.s.Region, old.s.Region);
+			InterlockedCompareExchange64(&((LONGLONG*) ListHead)[1], newHeader.s.Region, old.s.Region);
 			break;
 		}
 	}
 
 	return (PSLIST_ENTRY) (((ULONG_PTR) old.HeaderX64.NextEntry) << 4);
 #else
-	new.Alignment = 0;
+	newHeader.Alignment = 0;
 
 	do
 	{
 		old = *ListHead;
-		new.s.Sequence = old.s.Sequence + 1;
+		newHeader.s.Sequence = old.s.Sequence + 1;
 	}
-	while(InterlockedCompareExchange64((LONGLONG*) &ListHead->Alignment, new.Alignment, old.Alignment) != old.Alignment);
+	while(InterlockedCompareExchange64((LONGLONG*) &ListHead->Alignment, newHeader.Alignment, old.Alignment) != old.Alignment);
 
 	return old.s.Next.Next;
 #endif
