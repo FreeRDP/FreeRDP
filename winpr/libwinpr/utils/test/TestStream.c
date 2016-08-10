@@ -145,7 +145,7 @@ fail:
 
 static BOOL TestStream_Extent(UINT32 maxSize)
 {
-	int i;
+	UINT32 i;
 	wStream *s = NULL;
 	BOOL result = FALSE;
 
