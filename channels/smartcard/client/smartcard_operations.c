@@ -693,7 +693,11 @@ static LONG smartcard_ConnectW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERA
 	status = ret.ReturnCode = SCardConnectW(operation->hContext, (WCHAR*) call->szReader, call->Common.dwShareMode,
 							call->Common.dwPreferredProtocols, &hCard, &ret.dwActiveProtocol);
 
-	smartcard_scard_context_native_to_redir(smartcard, &(ret.hContext), operation->hContext);
+    // MSTSC doesn't fill in the context on a SCardConnect return.
+    // Uncommenting this causes smartcard redir to fail when opening an elevation dialog 
+    // in the RDP session.
+
+	//smartcard_scard_context_native_to_redir(smartcard, &(ret.hContext), operation->hContext);
 	smartcard_scard_handle_native_to_redir(smartcard, &(ret.hCard), hCard);
 	smartcard_trace_connect_return(smartcard, &ret);
 
