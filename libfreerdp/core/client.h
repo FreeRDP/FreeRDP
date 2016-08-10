@@ -29,6 +29,7 @@
 #include <freerdp/svc.h>
 #include <freerdp/peer.h>
 #include <freerdp/addin.h>
+#include <freerdp/api.h>
 
 #include <freerdp/client/channels.h>
 #include <freerdp/client/drdynvc.h>
@@ -108,11 +109,11 @@ struct rdp_channels
 	wHashTable* openHandles;
 };
 
-rdpChannels* freerdp_channels_new(freerdp* instance);
-UINT freerdp_channels_disconnect(rdpChannels* channels,
-                                 freerdp* instance);
-void freerdp_channels_close(rdpChannels* channels,
-                            freerdp* instance);
-void freerdp_channels_free(rdpChannels* channels);
+FREERDP_LOCAL rdpChannels* freerdp_channels_new(freerdp* instance);
+FREERDP_LOCAL UINT freerdp_channels_disconnect(rdpChannels* channels,
+        freerdp* instance);
+FREERDP_LOCAL void freerdp_channels_close(rdpChannels* channels,
+        freerdp* instance);
+FREERDP_LOCAL void freerdp_channels_free(rdpChannels* channels);
 
 #endif /* FREERDP_CORE_CLIENT_H */

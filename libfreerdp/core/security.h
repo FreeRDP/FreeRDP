@@ -24,25 +24,34 @@
 #include <freerdp/crypto/crypto.h>
 
 #include <freerdp/freerdp.h>
+#include <freerdp/api.h>
 
 #include <winpr/stream.h>
 
-BOOL security_master_secret(const BYTE* premaster_secret, const BYTE* client_random, const BYTE* server_random, BYTE* output);
-BOOL security_session_key_blob(const BYTE* master_secret, const BYTE* client_random, const BYTE* server_random, BYTE* output);
-void security_mac_salt_key(const BYTE* session_key_blob, const BYTE* client_random, const BYTE* server_random, BYTE* output);
-BOOL security_licensing_encryption_key(const BYTE* session_key_blob, const BYTE* client_random, const BYTE* server_random, BYTE* output);
-BOOL security_mac_data(const BYTE* mac_salt_key, const BYTE* data, UINT32 length, BYTE* output);
-
-BOOL security_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length, BYTE* output);
-BOOL security_salted_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length, BOOL encryption, BYTE* output);
-BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp);
-
-BOOL security_encrypt(BYTE* data, int length, rdpRdp* rdp);
-BOOL security_decrypt(BYTE* data, int length, rdpRdp* rdp);
-
-BOOL security_hmac_signature(const BYTE* data, int length, BYTE* output, rdpRdp* rdp);
-BOOL security_fips_encrypt(BYTE* data, int length, rdpRdp* rdp);
-BOOL security_fips_decrypt(BYTE* data, int length, rdpRdp* rdp);
-BOOL security_fips_check_signature(const BYTE* data, int length, const BYTE* sig, rdpRdp* rdp);
+FREERDP_LOCAL BOOL security_master_secret(const BYTE* premaster_secret,
+        const BYTE* client_random, const BYTE* server_random, BYTE* output);
+FREERDP_LOCAL BOOL security_session_key_blob(const BYTE* master_secret,
+        const BYTE* client_random, const BYTE* server_random, BYTE* output);
+FREERDP_LOCAL void security_mac_salt_key(const BYTE* session_key_blob,
+        const BYTE* client_random, const BYTE* server_random, BYTE* output);
+FREERDP_LOCAL BOOL security_licensing_encryption_key(const BYTE*
+        session_key_blob, const BYTE* client_random, const BYTE* server_random,
+        BYTE* output);
+FREERDP_LOCAL BOOL security_mac_data(const BYTE* mac_salt_key, const BYTE* data,
+                                     UINT32 length, BYTE* output);
+FREERDP_LOCAL BOOL security_mac_signature(rdpRdp* rdp, const BYTE* data,
+        UINT32 length, BYTE* output);
+FREERDP_LOCAL BOOL security_salted_mac_signature(rdpRdp* rdp, const BYTE* data,
+        UINT32 length, BOOL encryption, BYTE* output);
+FREERDP_LOCAL BOOL security_establish_keys(const BYTE* client_random,
+        rdpRdp* rdp);
+FREERDP_LOCAL BOOL security_encrypt(BYTE* data, int length, rdpRdp* rdp);
+FREERDP_LOCAL BOOL security_decrypt(BYTE* data, int length, rdpRdp* rdp);
+FREERDP_LOCAL BOOL security_hmac_signature(const BYTE* data, int length,
+        BYTE* output, rdpRdp* rdp);
+FREERDP_LOCAL BOOL security_fips_encrypt(BYTE* data, int length, rdpRdp* rdp);
+FREERDP_LOCAL BOOL security_fips_decrypt(BYTE* data, int length, rdpRdp* rdp);
+FREERDP_LOCAL BOOL security_fips_check_signature(const BYTE* data, int length,
+        const BYTE* sig, rdpRdp* rdp);
 
 #endif /* __SECURITY_H */

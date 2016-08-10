@@ -37,6 +37,7 @@ typedef struct rdp_tsg rdpTsg;
 #include <time.h>
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
+#include <freerdp/api.h>
 
 #include <freerdp/log.h>
 
@@ -308,27 +309,30 @@ struct rdp_tsg
 	TSG_PACKET_VERSIONCAPS packetVersionCaps;
 };
 
-int tsg_proxy_begin(rdpTsg* tsg);
-int tsg_proxy_reauth(rdpTsg* tsg);
+FREERDP_LOCAL int tsg_proxy_begin(rdpTsg* tsg);
+FREERDP_LOCAL int tsg_proxy_reauth(rdpTsg* tsg);
 
-DWORD TsProxySendToServer(handle_t IDL_handle, BYTE pRpcMessage[], UINT32 count, UINT32* lengths);
+FREERDP_LOCAL DWORD TsProxySendToServer(handle_t IDL_handle, BYTE pRpcMessage[],
+                                        UINT32 count, UINT32* lengths);
 
-int tsg_transition_to_state(rdpTsg* tsg, TSG_STATE state);
+FREERDP_LOCAL int tsg_transition_to_state(rdpTsg* tsg, TSG_STATE state);
 
-BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, int timeout);
-BOOL tsg_disconnect(rdpTsg* tsg);
+FREERDP_LOCAL BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port,
+                               int timeout);
+FREERDP_LOCAL BOOL tsg_disconnect(rdpTsg* tsg);
 
-int tsg_write(rdpTsg* tsg, BYTE* data, UINT32 length);
-int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length);
+FREERDP_LOCAL int tsg_write(rdpTsg* tsg, BYTE* data, UINT32 length);
+FREERDP_LOCAL int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length);
 
-int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu);
+FREERDP_LOCAL int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu);
 
-int tsg_check_event_handles(rdpTsg* tsg);
-DWORD tsg_get_event_handles(rdpTsg* tsg, HANDLE* events, DWORD count);
+FREERDP_LOCAL int tsg_check_event_handles(rdpTsg* tsg);
+FREERDP_LOCAL DWORD tsg_get_event_handles(rdpTsg* tsg, HANDLE* events,
+        DWORD count);
 
-rdpTsg* tsg_new(rdpTransport* transport);
-void tsg_free(rdpTsg* tsg);
+FREERDP_LOCAL rdpTsg* tsg_new(rdpTransport* transport);
+FREERDP_LOCAL void tsg_free(rdpTsg* tsg);
 
-BIO_METHOD* BIO_s_tsg(void);
+FREERDP_LOCAL BIO_METHOD* BIO_s_tsg(void);
 
 #endif /* FREERDP_CORE_TSG_H */

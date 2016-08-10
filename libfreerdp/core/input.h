@@ -26,6 +26,7 @@
 
 #include <freerdp/input.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/api.h>
 
 #include <winpr/stream.h>
 
@@ -38,24 +39,33 @@
 
 #define RDP_CLIENT_INPUT_PDU_HEADER_LENGTH	4
 
-BOOL input_send_synchronize_event(rdpInput* input, UINT32 flags);
-BOOL input_send_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code);
-BOOL input_send_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code);
-BOOL input_send_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
-BOOL input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
+FREERDP_LOCAL BOOL input_send_synchronize_event(rdpInput* input, UINT32 flags);
+FREERDP_LOCAL BOOL input_send_keyboard_event(rdpInput* input, UINT16 flags,
+        UINT16 code);
+FREERDP_LOCAL BOOL input_send_unicode_keyboard_event(rdpInput* input,
+        UINT16 flags, UINT16 code);
+FREERDP_LOCAL BOOL input_send_mouse_event(rdpInput* input, UINT16 flags,
+        UINT16 x, UINT16 y);
+FREERDP_LOCAL BOOL input_send_extended_mouse_event(rdpInput* input,
+        UINT16 flags, UINT16 x, UINT16 y);
 
-BOOL input_send_fastpath_synchronize_event(rdpInput* input, UINT32 flags);
-BOOL input_send_fastpath_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code);
-BOOL input_send_fastpath_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code);
-BOOL input_send_fastpath_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
-BOOL input_send_fastpath_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
+FREERDP_LOCAL BOOL input_send_fastpath_synchronize_event(rdpInput* input,
+        UINT32 flags);
+FREERDP_LOCAL BOOL input_send_fastpath_keyboard_event(rdpInput* input,
+        UINT16 flags, UINT16 code);
+FREERDP_LOCAL BOOL input_send_fastpath_unicode_keyboard_event(rdpInput* input,
+        UINT16 flags, UINT16 code);
+FREERDP_LOCAL BOOL input_send_fastpath_mouse_event(rdpInput* input,
+        UINT16 flags, UINT16 x, UINT16 y);
+FREERDP_LOCAL BOOL input_send_fastpath_extended_mouse_event(rdpInput* input,
+        UINT16 flags, UINT16 x, UINT16 y);
 
-BOOL input_recv(rdpInput* input, wStream* s);
+FREERDP_LOCAL BOOL input_recv(rdpInput* input, wStream* s);
 
-int input_process_events(rdpInput* input);
-BOOL input_register_client_callbacks(rdpInput* input);
+FREERDP_LOCAL int input_process_events(rdpInput* input);
+FREERDP_LOCAL BOOL input_register_client_callbacks(rdpInput* input);
 
-rdpInput* input_new(rdpRdp* rdp);
-void input_free(rdpInput* input);
+FREERDP_LOCAL rdpInput* input_new(rdpRdp* rdp);
+FREERDP_LOCAL void input_free(rdpInput* input);
 
 #endif /* __INPUT_H */

@@ -29,13 +29,13 @@
 extern "C" {
 #endif
 
-UINT32 gdi_GetROP2(HGDI_DC hdc);
-UINT32 gdi_SetROP2(HGDI_DC hdc, int fnDrawMode);
-UINT32 gdi_GetBkColor(HGDI_DC hdc);
-UINT32 gdi_SetBkColor(HGDI_DC hdc, UINT32 crColor);
-UINT32 gdi_GetBkMode(HGDI_DC hdc);
-BOOL gdi_SetBkMode(HGDI_DC hdc, int iBkMode);
-UINT32 gdi_SetTextColor(HGDI_DC hdc, UINT32 crColor);
+FREERDP_LOCAL UINT32 gdi_GetROP2(HGDI_DC hdc);
+FREERDP_LOCAL UINT32 gdi_SetROP2(HGDI_DC hdc, int fnDrawMode);
+FREERDP_LOCAL UINT32 gdi_GetBkColor(HGDI_DC hdc);
+FREERDP_LOCAL UINT32 gdi_SetBkColor(HGDI_DC hdc, UINT32 crColor);
+FREERDP_LOCAL UINT32 gdi_GetBkMode(HGDI_DC hdc);
+FREERDP_LOCAL BOOL gdi_SetBkMode(HGDI_DC hdc, int iBkMode);
+FREERDP_LOCAL UINT32 gdi_SetTextColor(HGDI_DC hdc, UINT32 crColor);
 
 #ifdef __cplusplus
 }

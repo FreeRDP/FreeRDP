@@ -24,6 +24,7 @@ typedef struct rdp_bulk rdpBulk;
 
 #include "rdp.h"
 
+#include <freerdp/api.h>
 #include <freerdp/codec/mppc.h>
 #include <freerdp/codec/ncrush.h>
 #include <freerdp/codec/xcrush.h>
@@ -45,15 +46,17 @@ struct rdp_bulk
 #define BULK_COMPRESSION_FLAGS_MASK	0xE0
 #define BULK_COMPRESSION_TYPE_MASK	0x0F
 
-UINT32 bulk_compression_level(rdpBulk* bulk);
-UINT32 bulk_compression_max_size(rdpBulk* bulk);
+FREERDP_LOCAL UINT32 bulk_compression_level(rdpBulk* bulk);
+FREERDP_LOCAL UINT32 bulk_compression_max_size(rdpBulk* bulk);
 
-int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32 flags);
-int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags);
+FREERDP_LOCAL int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize,
+                                  BYTE** ppDstData, UINT32* pDstSize, UINT32 flags);
+FREERDP_LOCAL int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize,
+                                BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags);
 
-void bulk_reset(rdpBulk* bulk);
+FREERDP_LOCAL void bulk_reset(rdpBulk* bulk);
 
-rdpBulk* bulk_new(rdpContext* context);
-void bulk_free(rdpBulk* bulk);
+FREERDP_LOCAL rdpBulk* bulk_new(rdpContext* context);
+FREERDP_LOCAL void bulk_free(rdpBulk* bulk);
 
 #endif /* FREERDP_CORE_BULK_H */

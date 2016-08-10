@@ -330,7 +330,7 @@ static BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, UINT32 nXDest,
 	}
 
 	dstColor = process_rop(colorC, colorA, colorB, rop, hdcDest->format);
-	WriteColor(dstp, hdcDest->format, dstColor);
+	return WriteColor(dstp, hdcDest->format, dstColor);
 }
 
 static BOOL BitBlt_process(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
