@@ -95,7 +95,7 @@ HGDI_DC gdi_CreateDC(UINT32 format)
 	hDC->hwnd->count = 32;
 
 	if (!(hDC->hwnd->cinvalid = (HGDI_RGN) calloc(hDC->hwnd->count,
-	                            sizeof(GDI_RGN))))
+				    sizeof(GDI_RGN))))
 		goto fail;
 
 	hDC->hwnd->ninvalid = 0;
@@ -212,23 +212,6 @@ BOOL gdi_DeleteObject(HGDIOBJECT hgdiobject)
 	else if (hgdiobject->objectType == GDIOBJECT_BRUSH)
 	{
 		HGDI_BRUSH hBrush = (HGDI_BRUSH) hgdiobject;
-
-		if (hBrush)
-		{
-			switch (hBrush->style)
-			{
-				case GDI_BS_PATTERN:
-				case GDI_BS_HATCHED:
-					if (hBrush->pattern != NULL)
-						gdi_DeleteObject((HGDIOBJECT) hBrush->pattern);
-
-					break;
-
-				default:
-					break;
-			}
-		}
-
 		free(hBrush);
 	}
 	else if (hgdiobject->objectType == GDIOBJECT_REGION)
