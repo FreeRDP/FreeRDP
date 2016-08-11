@@ -108,7 +108,7 @@ static void Ellipse_Bresenham(HGDI_DC hdc, int x1, int y1, int x2, int y2)
  * @return nonzero if successful, 0 otherwise
  */
 BOOL gdi_Ellipse(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect,
-                 int nBottomRect)
+		 int nBottomRect)
 {
 	Ellipse_Bresenham(hdc, nLeftRect, nTopRect, nRightRect, nBottomRect);
 	return TRUE;
@@ -126,14 +126,21 @@ BOOL gdi_Ellipse(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect,
 BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 {
 	UINT32 x, y;
-	UINT32 color;
+	UINT32 color, dstColor;
+	BOOL monochrome = FALSE;
 	UINT32 nXDest, nYDest;
 	UINT32 nWidth, nHeight;
 	gdi_RectToCRgn(rect, &nXDest, &nYDest, &nWidth, &nHeight);
 
+	if (!hdc || !hbr)
+		return FALSE;
+
 	if (!gdi_ClipCoords(hdc, &nXDest, &nYDest, &nWidth, &nHeight, NULL, NULL))
 		return TRUE;
 
+	switch(hbr->style)
+	{
+	case GDI_BS_SOLID:
 	color = hbr->color;
 
 	for (y = 0; y < nHeight; y++)
@@ -141,13 +148,50 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 		for (x = 0; x < nWidth; x++)
 		{
 			BYTE* dstp = gdi_get_bitmap_pointer(hdc, nXDest + x,
-			                                    nYDest + y);
+							    nYDest + y);
 
 			if (dstp)
 				WriteColor(dstp, hdc->format, color);
 		}
 	}
 
+		break;
+	case GDI_BS_HATCHED:
+	case GDI_BS_PATTERN:
+		monochrome = (hbr->pattern->format == PIXEL_FORMAT_MONO);
+		for (y = 0; y < nHeight; y++)
+		{
+			for (x = 0; x < nWidth; x++)
+			{
+				const UINT32 yOffset = ((nYDest + y) * hbr->pattern->width % hbr->pattern->height) * GetBytesPerPixel(hbr->pattern->format);
+				const UINT32 xOffset = ((nXDest + x) % hbr->pattern->width) * GetBytesPerPixel(hbr->pattern->format);
+				const BYTE* patp = &hbr->pattern->data[yOffset + xOffset];
+				BYTE* dstp = gdi_get_bitmap_pointer(hdc, nXDest + x,
+								    nYDest + y);
+
+				if (!patp)
+					return FALSE;
+				if (monochrome)
+				{
+					if (*patp == 0)
+						dstColor = hdc->bkColor;
+					else
+						dstColor = hdc->textColor;
+				}
+				else
+				{
+					dstColor = ReadColor(patp, hbr->pattern->format);
+					dstColor = ConvertColor(dstColor, hbr->pattern->format, hdc->format, NULL);
+				}
+
+				if (dstp)
+					WriteColor(dstp, hdc->format, dstColor);
+			}
+		}
+		break;
+	default:
+		break;
+	}
 	if (!gdi_InvalidateRegion(hdc, nXDest, nYDest, nWidth, nHeight))
 		return FALSE;
 
@@ -179,14 +223,14 @@ BOOL gdi_Polygon(HGDI_DC hdc, GDI_POINT* lpPoints, int nCount)
  * @return nonzero if successful, 0 otherwise
  */
 BOOL gdi_PolyPolygon(HGDI_DC hdc, GDI_POINT* lpPoints, int* lpPolyCounts,
-                     int nCount)
+		     int nCount)
 {
 	WLog_ERR(TAG, "Not implemented!");
 	return FALSE;
 }
 
 BOOL gdi_Rectangle(HGDI_DC hdc, UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
-                   UINT32 nHeight)
+		   UINT32 nHeight)
 {
 	UINT32 x, y;
 	UINT32 color;
@@ -200,9 +244,9 @@ BOOL gdi_Rectangle(HGDI_DC hdc, UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
 	for (y = 0; y < nHeight; y++)
 	{
 		BYTE* dstLeft = gdi_get_bitmap_pointer(hdc, nXDst,
-		                                       nYDst + y);
+						       nYDst + y);
 		BYTE* dstRight = gdi_get_bitmap_pointer(hdc, nXDst + nWidth - 1,
-		                                        nYDst + y);
+							nYDst + y);
 
 		if (dstLeft)
 			WriteColor(dstLeft, hdc->format, color);
@@ -214,9 +258,9 @@ BOOL gdi_Rectangle(HGDI_DC hdc, UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
 	for (x = 0; x < nWidth; x++)
 	{
 		BYTE* dstTop = gdi_get_bitmap_pointer(hdc, nXDst + x,
-		                                      nYDst);
+						      nYDst);
 		BYTE* dstBottom = gdi_get_bitmap_pointer(hdc, nXDst + x,
-		                  nYDst + nHeight - 1);
+				  nYDst + nHeight - 1);
 
 		if (dstTop)
 			WriteColor(dstTop, hdc->format, color);
