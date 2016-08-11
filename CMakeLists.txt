@@ -141,7 +141,8 @@ elseif(NOT DEFINED EXPORT_ALL_SYMBOLS)
 endif()
 
 if (EXPORT_ALL_SYMBOLS)
-    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+#    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+    add_definitions(-DFREERDP_TEST_EXPORTS -DBUILD_TESTING)
 endif(EXPORT_ALL_SYMBOLS)
 
 # BSD
@@ -787,9 +788,7 @@ endif()
 include(CTest)
 
 if(BUILD_TESTING)
-	add_definitions(-DFREERDP_TEST_EXPORTS -DBUILD_TESTING)
-
-	enable_testing()
+        enable_testing()
 
 	if(MSVC)
 		set(TESTING_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
