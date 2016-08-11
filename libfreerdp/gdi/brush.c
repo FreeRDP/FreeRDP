@@ -33,6 +33,7 @@
 #include <freerdp/gdi/region.h>
 #include <freerdp/log.h>
 
+#include "brush.h"
 #include "clipping.h"
 
 #define TAG FREERDP_TAG("gdi.brush")
