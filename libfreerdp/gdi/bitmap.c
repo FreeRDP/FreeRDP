@@ -273,8 +273,9 @@ static UINT32 process_rop(UINT32 src, UINT32 dst, UINT32 pat, const char* rop,
 }
 
 static BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, UINT32 nXDest,
-                         UINT32 nYDest, UINT32 nXSrc, UINT32 nYSrc, UINT32 x, UINT32 y, BOOL useSrc,
-                         UINT32 style, const char* rop, const gdiPalette* palette)
+                         UINT32 nYDest, UINT32 nXSrc, UINT32 nYSrc, UINT32 x, UINT32 y,
+                         BOOL useSrc, BOOL usePat, UINT32 style,
+                         const char* rop, const gdiPalette* palette)
 {
 	UINT32 dstColor;
 	UINT32 colorA;
@@ -304,29 +305,32 @@ static BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, UINT32 nXDest,
 		colorC = ConvertColor(colorC, hdcSrc->format, hdcDest->format, palette);
 	}
 
-	switch (style)
+	if (usePat)
 	{
-		case GDI_BS_SOLID:
-			colorB = hdcDest->brush->color;
-			break;
+		switch (style)
+		{
+			case GDI_BS_SOLID:
+				colorB = hdcDest->brush->color;
+				break;
 
-		case GDI_BS_HATCHED:
-		case GDI_BS_PATTERN:
-			{
-				const BYTE* patp = gdi_get_brush_pointer(hdcDest, nXDest + x, nYDest + y);
-
-				if (!patp)
+			case GDI_BS_HATCHED:
+			case GDI_BS_PATTERN:
 				{
-					WLog_ERR(TAG, "patp=%p", patp);
-					return FALSE;
+					const BYTE* patp = gdi_get_brush_pointer(hdcDest, nXDest + x, nYDest + y);
+
+					if (!patp)
+					{
+						WLog_ERR(TAG, "patp=%p", patp);
+						return FALSE;
+					}
+
+					colorB = ReadColor(patp, hdcDest->format);
 				}
+				break;
 
-				colorB = ReadColor(patp, hdcDest->format);
-			}
-			break;
-
-		default:
-			break;
+			default:
+				break;
+		}
 	}
 
 	dstColor = process_rop(colorC, colorA, colorB, rop, hdcDest->format);
@@ -337,7 +341,7 @@ static BOOL BitBlt_process(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
                            UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
                            UINT32 nXSrc, UINT32 nYSrc, const char* rop, const gdiPalette* palette)
 {
-	INT32 x, y;
+	INT64 x, y;
 	UINT32 style;
 	BOOL useSrc = FALSE;
 	BOOL usePat = FALSE;
@@ -366,39 +370,32 @@ static BOOL BitBlt_process(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 	if (useSrc && !hdcSrc)
 		return FALSE;
 
-	style = gdi_GetBrushStyle(hdcDest);
-
-	switch (style)
+	if (usePat)
 	{
-		case GDI_BS_SOLID:
-		case GDI_BS_HATCHED:
-		case GDI_BS_PATTERN:
-			if (!usePat)
-			{
+		style = gdi_GetBrushStyle(hdcDest);
+
+		switch (style)
+		{
+			case GDI_BS_SOLID:
+			case GDI_BS_HATCHED:
+			case GDI_BS_PATTERN:
+				break;
+
+			default:
 				WLog_ERR(TAG, "Invalid brush!!");
 				return FALSE;
-			}
-
-			break;
-
-		default:
-			if (usePat)
-			{
-				WLog_ERR(TAG, "Invalid brush!!");
-				return FALSE;
-			}
-
-			break;
+		}
 	}
 
 	if ((nXDest > nXSrc) && (nYDest > nYSrc))
 	{
-		for (y = nHeight - 1; y >= 0; y--)
+		for (y = (INT64)nHeight - 1; y >= 0; y--)
 		{
-			for (x = nWidth - 1; x >= 0; x--)
+			for (x = (INT64)nWidth - 1; x >= 0; x--)
 			{
-				if (!BitBlt_write(hdcDest, hdcSrc, nXDest, nYDest, nXSrc, nYSrc, x, y, useSrc,
-				                  style, rop, palette))
+				if (!BitBlt_write(hdcDest, hdcSrc, nXDest, nYDest,
+				                  nXSrc, nYSrc, x, y, useSrc,
+				                  usePat, style, rop, palette))
 					return FALSE;
 			}
 		}
@@ -407,22 +404,24 @@ static BOOL BitBlt_process(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 	{
 		for (y = 0; y < nHeight; y++)
 		{
-			for (x = nWidth - 1; x >= 0; x--)
+			for (x = (INT64)nWidth - 1; x >= 0; x--)
 			{
-				if (!BitBlt_write(hdcDest, hdcSrc, nXDest, nYDest, nXSrc, nYSrc, x, y, useSrc,
-				                  style, rop, palette))
+				if (!BitBlt_write(hdcDest, hdcSrc, nXDest, nYDest,
+				                  nXSrc, nYSrc, x, y, useSrc,
+				                  usePat, style, rop, palette))
 					return FALSE;
 			}
 		}
 	}
 	else if (nYDest > nYSrc)
 	{
-		for (y = nHeight - 1; y >= 0; y--)
+		for (y = (INT64)nHeight - 1; y >= 0; y--)
 		{
 			for (x = 0; x < nWidth; x++)
 			{
-				if (!BitBlt_write(hdcDest, hdcSrc, nXDest, nYDest, nXSrc, nYSrc, x, y, useSrc,
-				                  style, rop, palette))
+				if (!BitBlt_write(hdcDest, hdcSrc, nXDest, nYDest,
+				                  nXSrc, nYSrc, x, y, useSrc,
+				                  usePat, style, rop, palette))
 					return FALSE;
 			}
 		}
@@ -433,8 +432,9 @@ static BOOL BitBlt_process(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 		{
 			for (x = 0; x < nWidth; x++)
 			{
-				if (!BitBlt_write(hdcDest, hdcSrc, nXDest, nYDest, nXSrc, nYSrc, x, y, useSrc,
-				                  style, rop, palette))
+				if (!BitBlt_write(hdcDest, hdcSrc, nXDest, nYDest,
+				                  nXSrc, nYSrc, x, y, useSrc,
+				                  usePat, style, rop, palette))
 					return FALSE;
 			}
 		}
