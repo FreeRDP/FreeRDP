@@ -255,19 +255,29 @@ static void gdi_Glyph_Free(rdpContext* context, rdpGlyph* glyph)
 }
 
 static BOOL gdi_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, UINT32 x,
-                           UINT32 y)
+                           UINT32 y, BOOL fOpRedundant)
 {
 	gdiGlyph* gdi_glyph;
 	rdpGdi* gdi;
+	HGDI_BRUSH brush;
+	BOOL rc = FALSE;
 
 	if (!context || !glyph)
 		return FALSE;
 
 	gdi = context->gdi;
 	gdi_glyph = (gdiGlyph*) glyph;
-	return gdi_BitBlt(gdi->drawing->hdc, x, y, gdi_glyph->bitmap->width,
-	                  gdi_glyph->bitmap->height, gdi_glyph->hdc, 0, 0,
-	                  GDI_GLYPH_ORDER, &context->gdi->palette);
+	brush = gdi_CreateSolidBrush(gdi->drawing->hdc->textColor);
+
+	if (!brush)
+		return FALSE;
+
+	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT)brush);
+	rc = gdi_BitBlt(gdi->drawing->hdc, x, y, gdi_glyph->bitmap->width,
+	                gdi_glyph->bitmap->height, gdi_glyph->hdc, 0, 0,
+	                GDI_GLYPH_ORDER, &context->gdi->palette);
+	gdi_DeleteObject((HGDIOBJECT)brush);
+	return rc;
 }
 
 static BOOL gdi_Glyph_BeginDraw(rdpContext* context, UINT32 x, UINT32 y,
@@ -290,13 +300,33 @@ static BOOL gdi_Glyph_BeginDraw(rdpContext* context, UINT32 x, UINT32 y,
 	if (!gdi_decode_color(gdi, fgcolor, &fgcolor, NULL))
 		return FALSE;
 
-	gdi->drawing->hdc->brush = gdi_CreateSolidBrush(bgcolor);
-
-	if (!gdi->drawing->hdc->brush)
-		return FALSE;
-
 	gdi_SetTextColor(gdi->drawing->hdc, bgcolor);
 	gdi_SetBkColor(gdi->drawing->hdc, fgcolor);
+
+	if (!fOpRedundant)
+	{
+		GDI_RECT rect = { 0 };
+		HGDI_BRUSH brush = gdi_CreateSolidBrush(fgcolor);
+
+		if (!brush)
+			return FALSE;
+
+		if (x > 0)
+			rect.left = x;
+
+		if (y > 0)
+			rect.top = y;
+
+		if (x + width > 0)
+			rect.right = x + width - 1;
+
+		if (y + height > 0)
+			rect.bottom = y + height - 1;
+
+		gdi_FillRect(gdi->drawing->hdc, &rect, brush);
+		gdi_DeleteObject((HGDIOBJECT)brush);
+	}
+
 	return gdi_SetClipRgn(gdi->drawing->hdc, x, y, width, height);
 }
 
@@ -313,8 +343,6 @@ static BOOL gdi_Glyph_EndDraw(rdpContext* context, UINT32 x, UINT32 y,
 	if (!gdi->drawing || !gdi->drawing->hdc)
 		return FALSE;
 
-	gdi_DeleteObject((HGDIOBJECT)gdi->drawing->hdc->brush);
-	gdi->drawing->hdc->brush = NULL;
 	gdi_SetNullClipRgn(gdi->drawing->hdc);
 	return TRUE;
 }
