@@ -203,8 +203,7 @@ static UINT rdpgfx_send_caps_confirm_pdu(RdpgfxServerContext* context,
 {
 	RDPGFX_CAPSET* capsSet = capsConfirm->capsSet;
 	wStream* s = rdpgfx_server_single_packet_new(
-					 RDPGFX_CMDID_CAPSCONFIRM,
-					 sizeof(RDPGFX_CAPSET) + sizeof(capsSet->flags));
+					 RDPGFX_CMDID_CAPSCONFIRM, RDPGFX_CAPSET_SIZE);
 
 	if (!s)
 	{
@@ -213,7 +212,7 @@ static UINT rdpgfx_send_caps_confirm_pdu(RdpgfxServerContext* context,
 	}
 
 	Stream_Write_UINT32(s, capsSet->version); /* version (4 bytes) */
-	Stream_Write_UINT32(s, sizeof(capsSet->flags)); /* capsDataLength (4 bytes) */
+	Stream_Write_UINT32(s, 4); /* capsDataLength (4 bytes) */
 	Stream_Write_UINT32(s, capsSet->flags); /* capsData (4 bytes) */
 	return rdpgfx_server_single_packet_send(context, s);
 }
@@ -275,9 +274,7 @@ static UINT rdpgfx_send_reset_graphics_pdu(RdpgfxServerContext* context,
 static UINT rdpgfx_send_evict_cache_entry_pdu(RdpgfxServerContext* context,
 		RDPGFX_EVICT_CACHE_ENTRY_PDU* pdu)
 {
-	wStream* s = rdpgfx_server_single_packet_new(
-					 RDPGFX_CMDID_EVICTCACHEENTRY,
-					 sizeof(RDPGFX_EVICT_CACHE_ENTRY_PDU));
+	wStream* s = rdpgfx_server_single_packet_new(RDPGFX_CMDID_EVICTCACHEENTRY, 2);
 
 	if (!s)
 	{
@@ -300,8 +297,7 @@ static UINT rdpgfx_send_cache_import_reply_pdu(RdpgfxServerContext* context,
 	UINT16 index;
 	wStream* s = rdpgfx_server_single_packet_new(
 					 RDPGFX_CMDID_CACHEIMPORTREPLY,
-					 sizeof(RDPGFX_CACHE_IMPORT_REPLY_PDU) +
-					 sizeof(UINT16) * pdu->importedEntriesCount);
+					 2 + 2 * pdu->importedEntriesCount);
 
 	if (!s)
 	{
@@ -328,9 +324,7 @@ static UINT rdpgfx_send_cache_import_reply_pdu(RdpgfxServerContext* context,
 static UINT rdpgfx_send_create_surface_pdu(RdpgfxServerContext* context,
 		RDPGFX_CREATE_SURFACE_PDU* pdu)
 {
-	wStream* s = rdpgfx_server_single_packet_new(
-					 RDPGFX_CMDID_CREATESURFACE,
-					 sizeof(RDPGFX_CREATE_SURFACE_PDU));
+	wStream* s = rdpgfx_server_single_packet_new(RDPGFX_CMDID_CREATESURFACE, 7);
 
 	if (!s)
 	{
@@ -353,9 +347,7 @@ static UINT rdpgfx_send_create_surface_pdu(RdpgfxServerContext* context,
 UINT rdpgfx_send_delete_surface_pdu(RdpgfxServerContext* context,
 									RDPGFX_DELETE_SURFACE_PDU* pdu)
 {
-	wStream* s = rdpgfx_server_single_packet_new(
-					 RDPGFX_CMDID_DELETESURFACE,
-					 sizeof(RDPGFX_DELETE_SURFACE_PDU));
+	wStream* s = rdpgfx_server_single_packet_new(RDPGFX_CMDID_DELETESURFACE, 2);
 
 	if (!s)
 	{
@@ -390,7 +382,7 @@ static UINT rdpgfx_send_start_frame_pdu(RdpgfxServerContext* context,
 {
 	wStream* s = rdpgfx_server_single_packet_new(
 					 RDPGFX_CMDID_STARTFRAME,
-					 sizeof(RDPGFX_START_FRAME_PDU));
+					 RDPGFX_START_FRAME_PDU_SIZE);
 
 	if (!s)
 	{
@@ -412,7 +404,7 @@ static UINT rdpgfx_send_end_frame_pdu(RdpgfxServerContext* context,
 {
 	wStream* s = rdpgfx_server_single_packet_new(
 					 RDPGFX_CMDID_ENDFRAME,
-					 sizeof(RDPGFX_END_FRAME_PDU));
+					 RDPGFX_END_FRAME_PDU_SIZE);
 
 	if (!s)
 	{
@@ -433,6 +425,7 @@ static UINT rdpgfx_send_end_frame_pdu(RdpgfxServerContext* context,
 static INLINE UINT32 rdpgfx_estimate_h264_avc420(
 	RDPGFX_AVC420_BITMAP_STREAM* havc420)
 {
+	/* H264 metadata + H264 stream. See rdpgfx_write_h264_avc420 */
 	return sizeof(UINT32) /* numRegionRects */
 		   + (sizeof(RECTANGLE_16) + 2) /* regionRects + quantQualityVals */
 		   * havc420->meta.numRegionRects
@@ -451,16 +444,16 @@ static INLINE UINT32 rdpgfx_estimate_surface_command(RDPGFX_SURFACE_COMMAND* cmd
 	RDPGFX_AVC444_BITMAP_STREAM* havc444 = NULL;
 	UINT32 h264Size = 0;
 
-	/* Create new stream according to codec. */
+	/* Estimate stream size according to codec. */
 	switch (cmd->codecId)
 	{
 		case RDPGFX_CODECID_CAPROGRESSIVE:
 		case RDPGFX_CODECID_CAPROGRESSIVE_V2:
-			return sizeof(RDPGFX_WIRE_TO_SURFACE_PDU_2) + cmd->length;
+			return RDPGFX_WIRE_TO_SURFACE_PDU_2_SIZE + cmd->length;
 		case RDPGFX_CODECID_AVC420:
 			havc420 = (RDPGFX_AVC420_BITMAP_STREAM*)cmd->extra;
 			h264Size = rdpgfx_estimate_h264_avc420(havc420);
-			return sizeof(RDPGFX_WIRE_TO_SURFACE_PDU_1) + h264Size;
+			return RDPGFX_WIRE_TO_SURFACE_PDU_1_SIZE + h264Size;
 		case RDPGFX_CODECID_AVC444:
 			havc444 = (RDPGFX_AVC444_BITMAP_STREAM*)cmd->extra;
 			h264Size = sizeof(UINT32); /* cbAvc420EncodedBitstream1 */
@@ -475,9 +468,9 @@ static INLINE UINT32 rdpgfx_estimate_surface_command(RDPGFX_SURFACE_COMMAND* cmd
 				h264Size += rdpgfx_estimate_h264_avc420(havc420);
 			}
 
-			return sizeof(RDPGFX_WIRE_TO_SURFACE_PDU_1) + h264Size;
+			return RDPGFX_WIRE_TO_SURFACE_PDU_1_SIZE + h264Size;
 		default:
-			return sizeof(RDPGFX_WIRE_TO_SURFACE_PDU_1) + cmd->length;
+			return RDPGFX_WIRE_TO_SURFACE_PDU_1_SIZE + cmd->length;
 	}
 }
 
@@ -708,12 +701,12 @@ static UINT rdpgfx_send_surface_frame_command(RdpgfxServerContext* context,
 
 	if (startFrame)
 	{
-		size += rdpgfx_pdu_length(sizeof(RDPGFX_START_FRAME_PDU));
+		size += rdpgfx_pdu_length(RDPGFX_START_FRAME_PDU_SIZE);
 	}
 
 	if (endFrame)
 	{
-		size += rdpgfx_pdu_length(sizeof(RDPGFX_END_FRAME_PDU));
+		size += rdpgfx_pdu_length(RDPGFX_END_FRAME_PDU_SIZE);
 	}
 
 	s = Stream_New(NULL, size);
@@ -795,8 +788,7 @@ static UINT rdpgfx_send_delete_encoding_context_pdu(RdpgfxServerContext* context
 		RDPGFX_DELETE_ENCODING_CONTEXT_PDU* pdu)
 {
 	wStream* s = rdpgfx_server_single_packet_new(
-					 RDPGFX_CMDID_DELETEENCODINGCONTEXT,
-					 sizeof(RDPGFX_DELETE_ENCODING_CONTEXT_PDU));
+					 RDPGFX_CMDID_DELETEENCODINGCONTEXT, 6);
 
 	if (!s)
 	{
@@ -822,8 +814,7 @@ UINT rdpgfx_send_solid_fill_pdu(RdpgfxServerContext* context,
 	RECTANGLE_16* fillRect;
 	wStream* s = rdpgfx_server_single_packet_new(
 					 RDPGFX_CMDID_SOLIDFILL,
-					 sizeof(RDPGFX_SOLID_FILL_PDU) +
-					 sizeof(RECTANGLE_16) * pdu->fillRectCount);
+					 8 + sizeof(RECTANGLE_16) * pdu->fillRectCount);
 
 	if (!s)
 	{
@@ -872,8 +863,7 @@ static UINT rdpgfx_send_surface_to_surface_pdu(RdpgfxServerContext* context,
 	RDPGFX_POINT16* destPt;
 	wStream* s = rdpgfx_server_single_packet_new(
 					 RDPGFX_CMDID_SURFACETOSURFACE,
-					 sizeof(RDPGFX_SURFACE_TO_SURFACE_PDU) +
-					 sizeof(RDPGFX_POINT16) * pdu->destPtsCount);
+					 14 + 4 * pdu->destPtsCount);
 
 	if (!s)
 	{
@@ -920,8 +910,7 @@ static UINT rdpgfx_send_surface_to_cache_pdu(RdpgfxServerContext* context,
 {
 	UINT error = CHANNEL_RC_OK;
 	wStream* s = rdpgfx_server_single_packet_new(
-					 RDPGFX_CMDID_SURFACETOCACHE,
-					 sizeof(RDPGFX_SURFACE_TO_CACHE_PDU));
+					 RDPGFX_CMDID_SURFACETOCACHE, 20);
 
 	if (!s)
 	{
@@ -959,8 +948,7 @@ static UINT rdpgfx_send_cache_to_surface_pdu(RdpgfxServerContext* context,
 	RDPGFX_POINT16* destPt;
 	wStream* s = rdpgfx_server_single_packet_new(
 					 RDPGFX_CMDID_CACHETOSURFACE,
-					 sizeof(RDPGFX_CACHE_TO_SURFACE_PDU) +
-					 sizeof(RDPGFX_POINT16) * pdu->destPtsCount);
+					 6 + 4 * pdu->destPtsCount);
 
 	if (!s)
 	{
@@ -998,8 +986,7 @@ static UINT rdpgfx_send_map_surface_to_output_pdu(RdpgfxServerContext* context,
 		RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU* pdu)
 {
 	wStream* s = rdpgfx_server_single_packet_new(
-					 RDPGFX_CMDID_MAPSURFACETOOUTPUT,
-					 sizeof(RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU));
+					 RDPGFX_CMDID_MAPSURFACETOOUTPUT, 12);
 
 	if (!s)
 	{
@@ -1023,8 +1010,7 @@ static UINT rdpgfx_send_map_surface_to_window_pdu(RdpgfxServerContext* context,
 		RDPGFX_MAP_SURFACE_TO_WINDOW_PDU* pdu)
 {
 	wStream* s = rdpgfx_server_single_packet_new(
-					 RDPGFX_CMDID_MAPSURFACETOWINDOW,
-					 sizeof(RDPGFX_MAP_SURFACE_TO_WINDOW_PDU));
+					 RDPGFX_CMDID_MAPSURFACETOWINDOW, 18);
 
 	if (!s)
 	{
@@ -1050,7 +1036,7 @@ static UINT rdpgfx_recv_frame_acknowledge_pdu(RdpgfxServerContext* context,
 	RDPGFX_FRAME_ACKNOWLEDGE_PDU pdu;
 	UINT error = CHANNEL_RC_OK;
 
-	if (Stream_GetRemainingLength(s) < sizeof(RDPGFX_FRAME_ACKNOWLEDGE_PDU))
+	if (Stream_GetRemainingLength(s) < 12)
 	{
 		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
@@ -1086,7 +1072,7 @@ static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context,
 	RDPGFX_CACHE_ENTRY_METADATA* cacheEntries;
 	UINT error = CHANNEL_RC_OK;
 
-	if (Stream_GetRemainingLength(s) < sizeof(UINT16))
+	if (Stream_GetRemainingLength(s) < 2)
 	{
 		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
@@ -1102,8 +1088,7 @@ static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context,
 		return ERROR_INVALID_DATA;
 	}
 
-	if (Stream_GetRemainingLength(s) <
-			(pdu.cacheEntriesCount * sizeof(RDPGFX_CACHE_ENTRY_METADATA)))
+	if (Stream_GetRemainingLength(s) < (pdu.cacheEntriesCount * 12))
 	{
 		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
@@ -1155,7 +1140,7 @@ static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context,
 	UINT error = CHANNEL_RC_OK;
 	UINT32 capsDataLength;
 
-	if (Stream_GetRemainingLength(s) < sizeof(UINT16))
+	if (Stream_GetRemainingLength(s) < 2)
 	{
 		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
@@ -1170,8 +1155,7 @@ static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context,
 		return ERROR_INVALID_DATA;
 	}
 
-	if (Stream_GetRemainingLength(s) <
-			(pdu.capsSetCount * (sizeof(RDPGFX_CAPSET) + sizeof(UINT32))))
+	if (Stream_GetRemainingLength(s) < (pdu.capsSetCount * 12))
 	{
 		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
@@ -1217,7 +1201,7 @@ static UINT rdpgfx_recv_qoe_frame_acknowledge_pdu(RdpgfxServerContext* context,
 	RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU pdu;
 	UINT error = CHANNEL_RC_OK;
 
-	if (Stream_GetRemainingLength(s) < sizeof(RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU))
+	if (Stream_GetRemainingLength(s) < 12)
 	{
 		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
