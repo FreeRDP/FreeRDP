@@ -342,7 +342,7 @@ static BOOL BitBlt_process(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
                            UINT32 nXSrc, UINT32 nYSrc, const char* rop, const gdiPalette* palette)
 {
 	INT64 x, y;
-	UINT32 style;
+	UINT32 style = 0;
 	BOOL useSrc = FALSE;
 	BOOL usePat = FALSE;
 	const char* iter = rop;

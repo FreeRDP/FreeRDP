@@ -494,6 +494,7 @@ static BOOL test_gdi_BitBlt(UINT32 SrcFormat, UINT32 DstFormat)
 	HGDI_BITMAP hBmpSrc;
 	HGDI_BITMAP hBmpDst;
 	HGDI_BITMAP hBmpDstOriginal;
+	HGDI_BRUSH brush;
 	gdiPalette g;
 	gdiPalette* hPalette = &g;
 	g.format = DstFormat;
@@ -543,6 +544,9 @@ static BOOL test_gdi_BitBlt(UINT32 SrcFormat, UINT32 DstFormat)
 			goto fail;
 	}
 
+	brush = gdi_CreateSolidBrush(0x123456);
+	gdi_SelectObject(hdcDst, (HGDIOBJECT)brush);
+
 	for (x = 0; x < number_tests; x++)
 	{
 		if (!test_rop(hdcDst, hdcSrc, hBmpSrc, hBmpDst, hBmpDstOriginal, tests[x].rop,
@@ -550,6 +554,8 @@ static BOOL test_gdi_BitBlt(UINT32 SrcFormat, UINT32 DstFormat)
 			failed = TRUE;
 	}
 
+	gdi_SelectObject(hdcDst, NULL);
+	gdi_DeleteObject((HGDIOBJECT)brush);
 	rc = !failed;
 fail:
 
@@ -567,6 +573,7 @@ fail:
 
 int TestGdiBitBlt(int argc, char* argv[])
 {
+	int rc = 0;
 	UINT32 x, y;
 	const UINT32 formatList[] =
 	{
@@ -600,10 +607,10 @@ int TestGdiBitBlt(int argc, char* argv[])
 				fprintf(stderr, "test_gdi_BitBlt(SrcFormat=%s, DstFormat=%s) failed!\n",
 				        GetColorFormatName(formatList[x]),
 				        GetColorFormatName(formatList[y]));
-				return -1;
+				rc = -y;
 			}
 		}
 	}
 
-	return 0;
+	return rc;
 }
