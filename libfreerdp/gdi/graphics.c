@@ -255,7 +255,7 @@ static void gdi_Glyph_Free(rdpContext* context, rdpGlyph* glyph)
 }
 
 static BOOL gdi_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, UINT32 x,
-                           UINT32 y, BOOL fOpRedundant)
+                           UINT32 y, UINT32 w, UINT32 h, UINT32 sx, UINT32 sy, BOOL fOpRedundant)
 {
 	gdiGlyph* gdi_glyph;
 	rdpGdi* gdi;
@@ -267,14 +267,42 @@ static BOOL gdi_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, UINT32 x,
 
 	gdi = context->gdi;
 	gdi_glyph = (gdiGlyph*) glyph;
+
+	if (!fOpRedundant && 0)
+	{
+		GDI_RECT rect = { 0 };
+
+		if (x > 0)
+			rect.left = x;
+
+		if (y > 0)
+			rect.top = y;
+
+		if (x + w > 0)
+			rect.right = x + w - 1;
+
+		if (y + h > 0)
+			rect.bottom = y + h - 1;
+
+		if ((rect.left < rect.right) && (rect.top < rect.bottom))
+		{
+			brush = gdi_CreateSolidBrush(gdi->drawing->hdc->bkColor);
+
+			if (!brush)
+				return FALSE;
+
+			gdi_FillRect(gdi->drawing->hdc, &rect, brush);
+			gdi_DeleteObject((HGDIOBJECT)brush);
+		}
+	}
+
 	brush = gdi_CreateSolidBrush(gdi->drawing->hdc->textColor);
 
 	if (!brush)
 		return FALSE;
 
 	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT)brush);
-	rc = gdi_BitBlt(gdi->drawing->hdc, x, y, gdi_glyph->bitmap->width,
-	                gdi_glyph->bitmap->height, gdi_glyph->hdc, 0, 0,
+	rc = gdi_BitBlt(gdi->drawing->hdc, x, y, w, h, gdi_glyph->hdc, sx, sy,
 	                GDI_GLYPH_ORDER, &context->gdi->palette);
 	gdi_DeleteObject((HGDIOBJECT)brush);
 	return rc;
@@ -303,7 +331,7 @@ static BOOL gdi_Glyph_BeginDraw(rdpContext* context, UINT32 x, UINT32 y,
 	gdi_SetTextColor(gdi->drawing->hdc, bgcolor);
 	gdi_SetBkColor(gdi->drawing->hdc, fgcolor);
 
-	if (!fOpRedundant)
+	if (1)
 	{
 		GDI_RECT rect = { 0 };
 		HGDI_BRUSH brush = gdi_CreateSolidBrush(fgcolor);
@@ -317,13 +345,12 @@ static BOOL gdi_Glyph_BeginDraw(rdpContext* context, UINT32 x, UINT32 y,
 		if (y > 0)
 			rect.top = y;
 
-		if (x + width > 0)
-			rect.right = x + width - 1;
+		rect.right = x + width - 1;
+		rect.bottom = y + height - 1;
 
-		if (y + height > 0)
-			rect.bottom = y + height - 1;
+		if ((x + width > rect.left) && (y + height > rect.top))
+			gdi_FillRect(gdi->drawing->hdc, &rect, brush);
 
-		gdi_FillRect(gdi->drawing->hdc, &rect, brush);
 		gdi_DeleteObject((HGDIOBJECT)brush);
 	}
 

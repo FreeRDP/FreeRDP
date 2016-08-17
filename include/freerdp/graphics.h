@@ -119,7 +119,8 @@ FREERDP_API rdpPointer* Pointer_Alloc(rdpContext* context);
 typedef BOOL (*pGlyph_New)(rdpContext* context, const rdpGlyph* glyph);
 typedef void (*pGlyph_Free)(rdpContext* context, rdpGlyph* glyph);
 typedef BOOL (*pGlyph_Draw)(rdpContext* context, const rdpGlyph* glyph,
-                            UINT32 x, UINT32 y, BOOL fOpRedundant);
+                            UINT32 x, UINT32 y, UINT32 w, UINT32 h,
+                            UINT32 sx, UINT32 sy, BOOL fOpRedundant);
 typedef BOOL (*pGlyph_BeginDraw)(rdpContext* context, UINT32 x, UINT32 y,
                                  UINT32 width, UINT32 height, UINT32 bgcolor,
                                  UINT32 fgcolor, BOOL fOpRedundant);
