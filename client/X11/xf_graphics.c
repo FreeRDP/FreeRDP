@@ -355,15 +355,29 @@ static void xf_Glyph_Free(rdpContext* context, rdpGlyph* glyph)
 }
 
 static BOOL xf_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, UINT32 x,
-                          UINT32 y, BOOL fOpRedundant)
+                          UINT32 y, UINT32 w, UINT32 h, UINT32 sx, UINT32 sy,
+                          BOOL fOpRedundant)
 {
 	xfGlyph* xf_glyph;
 	xfContext* xfc = (xfContext*) context;
 	xf_glyph = (xfGlyph*) glyph;
 	xf_lock_x11(xfc, FALSE);
+
+	if (!fOpRedundant)
+	{
+		XSetFillStyle(xfc->display, xfc->gc, FillOpaqueStippled);
+		XFillRectangle(xfc->display, xfc->drawable, xfc->gc, x, y, w, h);
+	}
+
+	XSetFillStyle(xfc->display, xfc->gc, FillStippled);
 	XSetStipple(xfc->display, xfc->gc, xf_glyph->pixmap);
+
+	if (sx || sy)
+		WLog_ERR(TAG, "");
+
+	//XSetClipOrigin(xfc->display, xfc->gc, sx, sy);
 	XSetTSOrigin(xfc->display, xfc->gc, x, y);
-	XFillRectangle(xfc->display, xfc->drawing, xfc->gc, x, y, glyph->cx, glyph->cy);
+	XFillRectangle(xfc->display, xfc->drawing, xfc->gc, x, y, w, h);
 	xf_unlock_x11(xfc, FALSE);
 	return TRUE;
 }
@@ -386,11 +400,18 @@ static BOOL xf_Glyph_BeginDraw(rdpContext* context, UINT32 x, UINT32 y,
 	rect.width = width;
 	rect.height = height;
 	xf_lock_x11(xfc, FALSE);
+
+	if (!fOpRedundant)
+	{
+		XSetForeground(xfc->display, xfc->gc, fgcolor);
+		XSetBackground(xfc->display, xfc->gc, fgcolor);
+		XSetFillStyle(xfc->display, xfc->gc, FillOpaqueStippled);
+		XClearArea(xfc->display, xfc->drawable, xfc->gc, x, y, width, height);
+		XFillRectangle(xfc->display, xfc->drawable, xfc->gc, x, y, width, height);
+	}
+
 	XSetForeground(xfc->display, xfc->gc, bgcolor);
 	XSetBackground(xfc->display, xfc->gc, fgcolor);
-	XSetFillStyle(xfc->display, xfc->gc,
-	              fOpRedundant ? FillOpaqueStippled : FillStippled);
-	XFillRectangle(xfc->display, xfc->drawable, xfc->gc, x, y, width, height);
 	xf_unlock_x11(xfc, FALSE);
 	return TRUE;
 }
@@ -408,16 +429,9 @@ static BOOL xf_Glyph_EndDraw(rdpContext* context, UINT32 x, UINT32 y,
 	if (!xf_decode_color(context->gdi, fgcolor, &fgcolor, NULL))
 		return FALSE;
 
-	xf_lock_x11(xfc, FALSE);
-	XSetFillStyle(xfc->display, xfc->gc, FillOpaqueStippled);
-	XSetForeground(xfc->display, xfc->gc, fgcolor);
-	XSetBackground(xfc->display, xfc->gc, bgcolor);
-	XFillRectangle(xfc->display, xfc->drawable, xfc->gc, x, y, width, height);
-
 	if (xfc->drawing == xfc->primary)
 		ret = gdi_InvalidateRegion(xfc->hdc, x, y, width, height);
 
-	xf_unlock_x11(xfc, FALSE);
 	return ret;
 }
 
