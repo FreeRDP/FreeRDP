@@ -161,7 +161,7 @@ int TestGdiEllipse(int argc, char* argv[])
 		if (!gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS, hPalette))
 		{
 			printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-			return -1;
+			goto fail;
 		}
 
 		if (!gdi_Ellipse(hdc, 0, 0, 16, 16))
