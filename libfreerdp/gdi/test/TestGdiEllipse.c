@@ -81,12 +81,6 @@ int TestGdiEllipse(int argc, char* argv[])
 {
 	int rc = -1;
 	UINT32 i, j;
-	HGDI_DC hdc;
-	HGDI_PEN pen;
-	HGDI_BITMAP hBmp;
-	HGDI_BITMAP hBmp_Ellipse_1;
-	HGDI_BITMAP hBmp_Ellipse_2;
-	HGDI_BITMAP hBmp_Ellipse_3;
 	const UINT32 RawFormat = PIXEL_FORMAT_RGB8;
 	const UINT32 colorFormats[] =
 	{
@@ -112,6 +106,12 @@ int TestGdiEllipse(int argc, char* argv[])
 
 	for (i = 0; i < number_formats; i++)
 	{
+		HGDI_DC hdc = NULL;
+		HGDI_PEN pen = NULL;
+		HGDI_BITMAP hBmp = NULL;
+		HGDI_BITMAP hBmp_Ellipse_1 = NULL;
+		HGDI_BITMAP hBmp_Ellipse_2 = NULL;
+		HGDI_BITMAP hBmp_Ellipse_3 = NULL;
 		const UINT32 format = colorFormats[i];
 		gdiPalette* hPalette = &g;
 		g.format = format;
@@ -164,7 +164,7 @@ int TestGdiEllipse(int argc, char* argv[])
 			goto fail;
 		}
 
-		if (!gdi_Ellipse(hdc, 0, 0, 16, 16))
+		if (!gdi_Ellipse(hdc, 0, 0, 15, 15))
 			goto fail;
 
 		rc = 0;
@@ -172,6 +172,7 @@ int TestGdiEllipse(int argc, char* argv[])
 		gdi_DeleteObject((HGDIOBJECT) hBmp_Ellipse_1);
 		gdi_DeleteObject((HGDIOBJECT) hBmp_Ellipse_2);
 		gdi_DeleteObject((HGDIOBJECT) hBmp_Ellipse_3);
+		gdi_DeleteObject((HGDIOBJECT) hBmp);
 		gdi_DeleteObject((HGDIOBJECT) pen);
 		gdi_DeleteDC(hdc);
 
