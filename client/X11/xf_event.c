@@ -1061,10 +1061,7 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 			break;
 	}
 
-	if (!xfc->remote_app)
-	{
-		xf_cliprdr_handle_xevent(xfc, event);
-	}
+	xf_cliprdr_handle_xevent(xfc, event);
 
 	xf_input_handle_event(xfc, event);
 	XSync(xfc->display, FALSE);

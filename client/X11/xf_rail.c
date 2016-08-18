@@ -64,7 +64,7 @@ void xf_rail_enable_remoteapp_mode(xfContext* xfc)
 	if (!xfc->remote_app)
 	{
 		xfc->remote_app = TRUE;
-		xfc->drawable = DefaultRootWindow(xfc->display);
+		xfc->drawable = xf_CreateDummyWindow(xfc);
 		xf_DestroyDesktopWindow(xfc, xfc->window);
 		xfc->window = NULL;
 	}
@@ -75,6 +75,7 @@ void xf_rail_disable_remoteapp_mode(xfContext* xfc)
 	if (xfc->remote_app)
 	{
 		xfc->remote_app = FALSE;
+		xf_DestroyDummyWindow(xfc, xfc->drawable);
 		xf_create_window(xfc);
 	}
 }

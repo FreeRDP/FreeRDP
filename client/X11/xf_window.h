@@ -150,6 +150,9 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width, int height);
 void xf_DestroyDesktopWindow(xfContext* xfc, xfWindow* window);
 
+Window xf_CreateDummyWindow(xfContext* xfc);
+void xf_DestroyDummyWindow(xfContext* xfc, Window window);
+
 BOOL xf_GetWindowProperty(xfContext* xfc, Window window, Atom property, int length,
 		unsigned long* nitems, unsigned long* bytes, BYTE** prop);
 void xf_SendClientEvent(xfContext* xfc, Window window, Atom atom, unsigned int numArgs, ...);
