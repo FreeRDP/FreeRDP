@@ -42,7 +42,18 @@ static UINT rdpgfx_caps_advertise(RdpgfxServerContext* context, RDPGFX_CAPS_ADVE
 	for (index = 0; index < capsAdvertise->capsSetCount; index++)
 	{
 		pdu.capsSet = &(capsAdvertise->capsSets[index]);
-		if (pdu.capsSet->version == RDPGFX_CAPVERSION_81)
+		if (pdu.capsSet->version == RDPGFX_CAPVERSION_10)
+		{
+			if (settings)
+			{
+				flags = pdu.capsSet->flags;
+				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
+				settings->GfxH264 = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
+			}
+
+			return context->CapsConfirm(context, &pdu);
+		}
+        else if (pdu.capsSet->version == RDPGFX_CAPVERSION_81)
 		{
 			if (settings)
 			{

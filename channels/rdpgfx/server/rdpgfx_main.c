@@ -427,7 +427,7 @@ static INLINE UINT32 rdpgfx_estimate_h264_avc420(
 {
 	/* H264 metadata + H264 stream. See rdpgfx_write_h264_avc420 */
 	return sizeof(UINT32) /* numRegionRects */
-		   + (sizeof(RECTANGLE_16) + 2) /* regionRects + quantQualityVals */
+		   + 10 /* regionRects + quantQualityVals */
 		   * havc420->meta.numRegionRects
 		   + havc420->length;
 }
@@ -814,7 +814,7 @@ UINT rdpgfx_send_solid_fill_pdu(RdpgfxServerContext* context,
 	RECTANGLE_16* fillRect;
 	wStream* s = rdpgfx_server_single_packet_new(
 					 RDPGFX_CMDID_SOLIDFILL,
-					 8 + sizeof(RECTANGLE_16) * pdu->fillRectCount);
+					 8 + 8 * pdu->fillRectCount);
 
 	if (!s)
 	{
