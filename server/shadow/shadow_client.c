@@ -606,6 +606,12 @@ static UINT shadow_client_rdpgfx_frame_acknowledge(RdpgfxServerContext* context,
 	                                       frameAcknowledge->frameId);
 	return CHANNEL_RC_OK;
 }
+static UINT shadow_client_rdpgfx_qoe_frame_acknowledge(RdpgfxServerContext* context, RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU* qoeFrameAcknowledge)
+{
+	shadow_client_common_frame_acknowledge((rdpShadowClient *)context->custom, 
+	                                       qoeFrameAcknowledge->frameId);
+	return CHANNEL_RC_OK;
+}
 
 /**
  * Function description
@@ -1172,10 +1178,10 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 		if (!pStatus->gfxSurfaceCreated)
 		{
 			/* Only init surface when we have h264 supported */
-			if (!(ret = shadow_client_rdpgfx_new_surface(client)))
+			if (!(ret = shadow_client_rdpgfx_reset_graphic(client)))
 				goto out;
 
-			if (!(ret = shadow_client_rdpgfx_reset_graphic(client)))
+			if (!(ret = shadow_client_rdpgfx_new_surface(client)))
 				goto out;
 
 			pStatus->gfxSurfaceCreated = TRUE;
@@ -1534,6 +1540,7 @@ static void* shadow_client_thread(rdpShadowClient* client)
 						}
 
 						client->rdpgfx->FrameAcknowledge = shadow_client_rdpgfx_frame_acknowledge;
+						client->rdpgfx->QoeFrameAcknowledge = shadow_client_rdpgfx_qoe_frame_acknowledge;
 
 						gfxstatus.gfxOpened = TRUE;
 						WLog_INFO(TAG, "Gfx Pipeline Opened");
