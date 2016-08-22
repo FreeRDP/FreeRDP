@@ -657,6 +657,15 @@ int transport_write(rdpTransport* transport, wStream* s)
 	int status = -1;
 	int writtenlength = 0;
 
+	if (!transport)
+		return -1;
+
+	if (!transport->frontBio)
+	{
+		transport->layer = TRANSPORT_LAYER_CLOSED;
+		return -1;
+	}
+
 	EnterCriticalSection(&(transport->WriteLock));
 
 	length = Stream_GetPosition(s);
