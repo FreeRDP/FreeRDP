@@ -60,7 +60,7 @@ struct _PRINTER_DEVICE
 
 	rdpPrinter* printer;
 
-	PSLIST_HEADER pIrpList;
+	WINPR_PSLIST_HEADER pIrpList;
 
 	HANDLE event;
 	HANDLE stopEvent;
@@ -403,7 +403,7 @@ UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* pri
 	free(DriverName);
 	free(PrintName);
 
-	printer_dev->pIrpList = (PSLIST_HEADER) _aligned_malloc(sizeof(SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
+	printer_dev->pIrpList = (WINPR_PSLIST_HEADER) _aligned_malloc(sizeof(WINPR_SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
 	if (!printer_dev->pIrpList)
 	{
 		WLog_ERR(TAG, "_aligned_malloc failed!");

@@ -28,6 +28,10 @@
 		<false/>
 		<key>perf_remotefx</key>
 		<false/>
+		<key>perf_gfx</key>
+		<false/>
+		<key>perf_h264</key>
+		<false/>
 		<key>perf_desktop_composition</key>
 		<false/>
 		<key>enable_3g_settings</key>
@@ -43,6 +47,10 @@
 			<key>colors</key>
 			<integer>16</integer>
 			<key>perf_remotefx</key>
+			<false/>
+			<key>perf_gfx</key>
+			<false/>
+			<key>perf_h264</key>
 			<false/>
 			<key>perf_desktop_composition</key>
 			<false/>

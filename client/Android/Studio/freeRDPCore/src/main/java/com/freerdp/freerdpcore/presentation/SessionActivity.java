@@ -1093,6 +1093,47 @@ public class SessionActivity extends ActionBarActivity implements
 	}
 
 	@Override
+	public boolean OnGatewayAuthenticate(StringBuilder username, StringBuilder domain, StringBuilder password) {
+		// this is where the return code of our dialog will be stored
+		callbackDialogResult = false;
+
+		// set text fields
+		((EditText) userCredView.findViewById(R.id.editTextUsername))
+				.setText(username);
+		((EditText) userCredView.findViewById(R.id.editTextDomain))
+				.setText(domain);
+		((EditText) userCredView.findViewById(R.id.editTextPassword))
+				.setText(password);
+
+		// start dialog in UI thread
+		uiHandler.sendMessage(Message.obtain(null, UIHandler.SHOW_DIALOG,
+				dlgUserCredentials));
+
+		// wait for result
+		try {
+			synchronized (dlgUserCredentials) {
+				dlgUserCredentials.wait();
+			}
+		} catch (InterruptedException e) {
+		}
+
+		// clear buffers
+		username.setLength(0);
+		domain.setLength(0);
+		password.setLength(0);
+
+		// read back user credentials
+		username.append(((EditText) userCredView
+				.findViewById(R.id.editTextUsername)).getText().toString());
+		domain.append(((EditText) userCredView
+				.findViewById(R.id.editTextDomain)).getText().toString());
+		password.append(((EditText) userCredView
+				.findViewById(R.id.editTextPassword)).getText().toString());
+
+		return callbackDialogResult;
+	}
+
+	@Override
 	public int OnVerifiyCertificate(String commonName, String subject, String issuer, String fingerprint, boolean mismatch) {
 		// see if global settings says accept all
 		if (GlobalSettings.getAcceptAllCertificates())
@@ -1124,7 +1165,7 @@ public class SessionActivity extends ActionBarActivity implements
 	}
 
 	@Override
-	public int OnVerifiyChangedCertificate(String commonName, String subject, String issuer, String fingerprint, String oldSubject, String oldIssuer, String oldFingerprint) {
+	public int OnVerifyChangedCertificate(String commonName, String subject, String issuer, String fingerprint, String oldSubject, String oldIssuer, String oldFingerprint) {
 		// see if global settings says accept all
 		if (GlobalSettings.getAcceptAllCertificates())
 			return 0;

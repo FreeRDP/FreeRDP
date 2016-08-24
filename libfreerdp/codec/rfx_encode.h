@@ -21,8 +21,9 @@
 #define __RFX_ENCODE_H
 
 #include <freerdp/codec/rfx.h>
+#include <freerdp/api.h>
 
-void rfx_encode_rgb(RFX_CONTEXT* context, RFX_TILE* tile);
+FREERDP_LOCAL void rfx_encode_rgb(RFX_CONTEXT* context, RFX_TILE* tile);
 
 #endif
 

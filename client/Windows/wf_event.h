@@ -26,7 +26,8 @@
 #include <freerdp/log.h>
 
 LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam);
-LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam,
+                               LPARAM lParam);
 
 void wf_event_focus_in(wfContext* wfc);
 

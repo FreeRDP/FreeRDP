@@ -116,10 +116,10 @@ struct _RFX_PROGRESSIVE_TILE
 	UINT16 cbLen;
 	UINT16 crLen;
 	UINT16 tailLen;
-	BYTE* yData;
-	BYTE* cbData;
-	BYTE* crData;
-	BYTE* tailData;
+	const BYTE* yData;
+	const BYTE* cbData;
+	const BYTE* crData;
+	const BYTE* tailData;
 
 	UINT16 ySrlLen;
 	UINT16 yRawLen;
@@ -127,21 +127,21 @@ struct _RFX_PROGRESSIVE_TILE
 	UINT16 cbRawLen;
 	UINT16 crSrlLen;
 	UINT16 crRawLen;
-	BYTE* ySrlData;
-	BYTE* yRawData;
-	BYTE* cbSrlData;
-	BYTE* cbRawData;
-	BYTE* crSrlData;
-	BYTE* crRawData;
+	const BYTE* ySrlData;
+	const BYTE* yRawData;
+	const BYTE* cbSrlData;
+	const BYTE* cbRawData;
+	const BYTE* crSrlData;
+	const BYTE* crRawData;
 
-	int x;
-	int y;
-	int width;
-	int height;
+	UINT32 x;
+	UINT32 y;
+	UINT32 width;
+	UINT32 height;
 	BYTE* data;
 	BYTE* current;
 
-	int pass;
+	UINT16 pass;
 	BYTE* sign;
 	RFX_COMPONENT_CODEC_QUANT yBitPos;
 	RFX_COMPONENT_CODEC_QUANT cbBitPos;
@@ -234,13 +234,19 @@ struct _PROGRESSIVE_CONTEXT
 extern "C" {
 #endif
 
-FREERDP_API int progressive_compress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize);
+FREERDP_API int progressive_compress(PROGRESSIVE_CONTEXT* progressive,
+                                     BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize);
 
-FREERDP_API int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UINT32 SrcSize,
-		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight, UINT16 surfaceId);
+FREERDP_API INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
+        const BYTE* pSrcData, UINT32 SrcSize,
+        BYTE* pDstData, UINT32 DstFormat,
+        UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+        UINT32 nWidth, UINT32 nHeight, UINT16 surfaceId);
 
-FREERDP_API int progressive_create_surface_context(PROGRESSIVE_CONTEXT* progressive, UINT16 surfaceId, UINT32 width, UINT32 height);
-FREERDP_API int progressive_delete_surface_context(PROGRESSIVE_CONTEXT* progressive, UINT16 surfaceId);
+FREERDP_API INT32 progressive_create_surface_context(PROGRESSIVE_CONTEXT*
+        progressive, UINT16 surfaceId, UINT32 width, UINT32 height);
+FREERDP_API int progressive_delete_surface_context(PROGRESSIVE_CONTEXT*
+        progressive, UINT16 surfaceId);
 
 FREERDP_API BOOL progressive_context_reset(PROGRESSIVE_CONTEXT* progressive);
 

@@ -20,6 +20,8 @@
 #ifndef FREERDP_API_H
 #define FREERDP_API_H
 
+#include <winpr/platform.h>
+
 #ifdef _WIN32
 #define FREERDP_CC __cdecl
 #else
@@ -37,25 +39,39 @@
 #endif
 
 #if defined _WIN32 || defined __CYGWIN__
-  #ifdef FREERDP_EXPORTS
-    #ifdef __GNUC__
-      #define FREERDP_API __attribute__((dllexport))
-    #else
-      #define FREERDP_API __declspec(dllexport)
-    #endif
-  #else
-    #ifdef __GNUC__
-      #define FREERDP_API __attribute__((dllimport))
-    #else
-      #define FREERDP_API __declspec(dllimport)
-    #endif
-  #endif
+#ifdef FREERDP_EXPORTS
+#ifdef __GNUC__
+#define FREERDP_API __attribute__((dllexport))
 #else
-  #if __GNUC__ >= 4
-    #define FREERDP_API __attribute__ ((visibility("default")))
-  #else
-    #define FREERDP_API 
-  #endif
+#define FREERDP_API __declspec(dllexport)
+#endif
+#else
+#ifdef __GNUC__
+#define FREERDP_API __attribute__((dllimport))
+#else
+#define FREERDP_API __declspec(dllimport)
+#endif
+#endif
+#else
+#if __GNUC__ >= 4
+#define FREERDP_API __attribute__ ((visibility("default")))
+#else
+#define FREERDP_API
+#endif
+#endif
+
+#ifdef BUILD_TESTING
+#define FREERDP_LOCAL FREERDP_API
+#else
+#if defined _WIN32 || defined __CYGWIN__
+#define FREERDP_LOCAL
+#else
+#if __GNUC__ >= 4
+#define FREERDP_LOCAL __attribute__ ((visibility("hidden")))
+#else
+#define FREERDP_LOCAL
+#endif
+#endif
 #endif
 
 #ifdef FREERDP_TEST_EXPORTS

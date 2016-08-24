@@ -79,7 +79,7 @@ FREERDP_API int region16_n_rects(const REGION16 *region);
  * @param nbRects if non-NULL returns the number of rectangles
  * @return a pointer on the rectangles
  */
-FREERDP_API const RECTANGLE_16 *region16_rects(const REGION16 *region, int *nbRects);
+FREERDP_API const RECTANGLE_16 *region16_rects(const REGION16 *region, UINT32 *nbRects);
 
 /** @return the extents rectangle of this region */
 FREERDP_API const RECTANGLE_16 *region16_extents(const REGION16 *region);

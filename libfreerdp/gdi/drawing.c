@@ -3,6 +3,8 @@
  * GDI Drawing Functions
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2016 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +33,7 @@
 #include <freerdp/gdi/gdi.h>
 
 #include <freerdp/gdi/dc.h>
-#include <freerdp/gdi/drawing.h>
+#include "drawing.h"
 
 /**
  * Set current foreground draw mode.\n
@@ -40,7 +42,7 @@
  * @return draw mode
  */
 
-int gdi_GetROP2(HGDI_DC hdc)
+UINT32 gdi_GetROP2(HGDI_DC hdc)
 {
 	return hdc->drawMode;
 }
@@ -53,9 +55,9 @@ int gdi_GetROP2(HGDI_DC hdc)
  * @return previous draw mode
  */
 
-int gdi_SetROP2(HGDI_DC hdc, int fnDrawMode)
+UINT32 gdi_SetROP2(HGDI_DC hdc, int fnDrawMode)
 {
-	int prevDrawMode = hdc->drawMode;
+	UINT32 prevDrawMode = hdc->drawMode;
 
 	if (fnDrawMode > 0 && fnDrawMode <= 16)
 		hdc->drawMode = fnDrawMode;
@@ -70,7 +72,7 @@ int gdi_SetROP2(HGDI_DC hdc, int fnDrawMode)
  * @return background color
  */
 
-GDI_COLOR gdi_GetBkColor(HGDI_DC hdc)
+UINT32 gdi_GetBkColor(HGDI_DC hdc)
 {
 	return hdc->bkColor;
 }
@@ -83,9 +85,9 @@ GDI_COLOR gdi_GetBkColor(HGDI_DC hdc)
  * @return previous background color
  */
 
-GDI_COLOR gdi_SetBkColor(HGDI_DC hdc, GDI_COLOR crColor)
+UINT32 gdi_SetBkColor(HGDI_DC hdc, UINT32 crColor)
 {
-	GDI_COLOR previousBkColor = hdc->bkColor;
+	UINT32 previousBkColor = hdc->bkColor;
 	hdc->bkColor = crColor;
 	return previousBkColor;
 }
@@ -97,7 +99,7 @@ GDI_COLOR gdi_SetBkColor(HGDI_DC hdc, GDI_COLOR crColor)
  * @return background mode
  */
 
-int gdi_GetBkMode(HGDI_DC hdc)
+UINT32 gdi_GetBkMode(HGDI_DC hdc)
 {
 	return hdc->bkMode;
 }
@@ -110,7 +112,8 @@ int gdi_GetBkMode(HGDI_DC hdc)
  * @return previous background mode on success, 0 on failure
  */
 
-int gdi_SetBkMode(HGDI_DC hdc, int iBkMode)
+
+BOOL gdi_SetBkMode(HGDI_DC hdc, int iBkMode)
 {
 	if (iBkMode == GDI_OPAQUE || iBkMode == GDI_TRANSPARENT)
 	{
@@ -118,7 +121,8 @@ int gdi_SetBkMode(HGDI_DC hdc, int iBkMode)
 		hdc->bkMode = iBkMode;
 		return previousBkMode;
 	}
-	return 0;
+
+	return TRUE;
 }
 
 /**
@@ -129,9 +133,9 @@ int gdi_SetBkMode(HGDI_DC hdc, int iBkMode)
  * @return previous text color
  */
 
-GDI_COLOR gdi_SetTextColor(HGDI_DC hdc, GDI_COLOR crColor)
+UINT32 gdi_SetTextColor(HGDI_DC hdc, UINT32 crColor)
 {
-	GDI_COLOR previousTextColor = hdc->textColor;
+	UINT32 previousTextColor = hdc->textColor;
 	hdc->textColor = crColor;
 	return previousTextColor;
 }

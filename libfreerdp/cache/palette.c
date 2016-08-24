@@ -30,7 +30,11 @@
 
 #define TAG FREERDP_TAG("cache.palette")
 
-static BOOL update_gdi_cache_color_table(rdpContext* context, CACHE_COLOR_TABLE_ORDER* cacheColorTable)
+static void* palette_cache_get(rdpPaletteCache* palette, UINT32 index);
+static void palette_cache_put(rdpPaletteCache* palette, UINT32 index, void* entry);
+
+static BOOL update_gdi_cache_color_table(rdpContext* context,
+					 const CACHE_COLOR_TABLE_ORDER* cacheColorTable)
 {
 	UINT32* colorTable;
 	rdpCache* cache = context->cache;

@@ -26,6 +26,7 @@ extern "C" {
 #endif
 
 #include <winpr/wtypes.h>
+#include <winpr/winpr.h>
 
 WINPR_API void winpr_log_backtrace(const char* tag, DWORD level, DWORD size);
 WINPR_API void* winpr_backtrace(DWORD size);

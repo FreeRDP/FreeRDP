@@ -25,8 +25,10 @@
 
 #include <winpr/stream.h>
 #include <freerdp/log.h>
+#include <freerdp/api.h>
 
-BOOL update_recv_altsec_window_order(rdpUpdate* update, wStream* s);
+FREERDP_LOCAL BOOL update_recv_altsec_window_order(rdpUpdate* update,
+        wStream* s);
 
 #define WND_TAG FREERDP_TAG("core.wnd")
 #ifdef WITH_DEBUG_WND

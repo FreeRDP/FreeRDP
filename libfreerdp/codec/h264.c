@@ -36,14 +36,14 @@
  * Dummy subsystem
  */
 
-static int dummy_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize, UINT32 plane)
+static int dummy_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
+                            UINT32 plane)
 {
 	return -1;
 }
 
 static void dummy_uninit(H264_CONTEXT* h264)
 {
-
 }
 
 static BOOL dummy_init(H264_CONTEXT* h264)
@@ -77,23 +77,40 @@ static H264_CONTEXT_SUBSYSTEM g_Subsystem_dummy =
 #define INITGUID
 #include <initguid.h>
 
-DEFINE_GUID(CLSID_CMSH264DecoderMFT,0x62CE7E72,0x4C71,0x4d20,0xB1,0x5D,0x45,0x28,0x31,0xA8,0x7D,0x9D);
-DEFINE_GUID(CLSID_VideoProcessorMFT,0x88753b26,0x5b24,0x49bd,0xb2,0xe7,0x0c,0x44,0x5c,0x78,0xc9,0x82);
-DEFINE_GUID(IID_IMFTransform,0xbf94c121,0x5b05,0x4e6f,0x80,0x00,0xba,0x59,0x89,0x61,0x41,0x4d);
-DEFINE_GUID(MF_MT_MAJOR_TYPE,0x48eba18e,0xf8c9,0x4687,0xbf,0x11,0x0a,0x74,0xc9,0xf9,0x6a,0x8f);
-DEFINE_GUID(MF_MT_FRAME_SIZE,0x1652c33d,0xd6b2,0x4012,0xb8,0x34,0x72,0x03,0x08,0x49,0xa3,0x7d);
-DEFINE_GUID(MF_MT_DEFAULT_STRIDE,0x644b4e48,0x1e02,0x4516,0xb0,0xeb,0xc0,0x1c,0xa9,0xd4,0x9a,0xc6);
-DEFINE_GUID(MF_MT_SUBTYPE,0xf7e34c9a,0x42e8,0x4714,0xb7,0x4b,0xcb,0x29,0xd7,0x2c,0x35,0xe5);
-DEFINE_GUID(MF_XVP_DISABLE_FRC,0x2c0afa19,0x7a97,0x4d5a,0x9e,0xe8,0x16,0xd4,0xfc,0x51,0x8d,0x8c);
-DEFINE_GUID(MFMediaType_Video,0x73646976,0x0000,0x0010,0x80,0x00,0x00,0xAA,0x00,0x38,0x9B,0x71);
-DEFINE_GUID(MFVideoFormat_RGB32,22,0x0000,0x0010,0x80,0x00,0x00,0xAA,0x00,0x38,0x9B,0x71);
-DEFINE_GUID(MFVideoFormat_ARGB32,21,0x0000,0x0010,0x80,0x00,0x00,0xAA,0x00,0x38,0x9B,0x71);
-DEFINE_GUID(MFVideoFormat_H264,0x34363248,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
-DEFINE_GUID(MFVideoFormat_IYUV,0x56555949,0x0000,0x0010,0x80,0x00,0x00,0xaa,0x00,0x38,0x9b,0x71);
-DEFINE_GUID(IID_ICodecAPI,0x901db4c7,0x31ce,0x41a2,0x85,0xdc,0x8f,0xa0,0xbf,0x41,0xb8,0xda);
-DEFINE_GUID(CODECAPI_AVLowLatencyMode,0x9c27891a,0xed7a,0x40e1,0x88,0xe8,0xb2,0x27,0x27,0xa0,0x24,0xee);
-DEFINE_GUID(CODECAPI_AVDecVideoMaxCodedWidth,0x5ae557b8,0x77af,0x41f5,0x9f,0xa6,0x4d,0xb2,0xfe,0x1d,0x4b,0xca);
-DEFINE_GUID(CODECAPI_AVDecVideoMaxCodedHeight,0x7262a16a,0xd2dc,0x4e75,0x9b,0xa8,0x65,0xc0,0xc6,0xd3,0x2b,0x13);
+DEFINE_GUID(CLSID_CMSH264DecoderMFT, 0x62CE7E72, 0x4C71, 0x4d20, 0xB1, 0x5D,
+            0x45, 0x28, 0x31, 0xA8, 0x7D, 0x9D);
+DEFINE_GUID(CLSID_VideoProcessorMFT, 0x88753b26, 0x5b24, 0x49bd, 0xb2, 0xe7,
+            0x0c, 0x44, 0x5c, 0x78, 0xc9, 0x82);
+DEFINE_GUID(IID_IMFTransform, 0xbf94c121, 0x5b05, 0x4e6f, 0x80, 0x00, 0xba,
+            0x59, 0x89, 0x61, 0x41, 0x4d);
+DEFINE_GUID(MF_MT_MAJOR_TYPE, 0x48eba18e, 0xf8c9, 0x4687, 0xbf, 0x11, 0x0a,
+            0x74, 0xc9, 0xf9, 0x6a, 0x8f);
+DEFINE_GUID(MF_MT_FRAME_SIZE, 0x1652c33d, 0xd6b2, 0x4012, 0xb8, 0x34, 0x72,
+            0x03, 0x08, 0x49, 0xa3, 0x7d);
+DEFINE_GUID(MF_MT_DEFAULT_STRIDE, 0x644b4e48, 0x1e02, 0x4516, 0xb0, 0xeb, 0xc0,
+            0x1c, 0xa9, 0xd4, 0x9a, 0xc6);
+DEFINE_GUID(MF_MT_SUBTYPE, 0xf7e34c9a, 0x42e8, 0x4714, 0xb7, 0x4b, 0xcb, 0x29,
+            0xd7, 0x2c, 0x35, 0xe5);
+DEFINE_GUID(MF_XVP_DISABLE_FRC, 0x2c0afa19, 0x7a97, 0x4d5a, 0x9e, 0xe8, 0x16,
+            0xd4, 0xfc, 0x51, 0x8d, 0x8c);
+DEFINE_GUID(MFMediaType_Video, 0x73646976, 0x0000, 0x0010, 0x80, 0x00, 0x00,
+            0xAA, 0x00, 0x38, 0x9B, 0x71);
+DEFINE_GUID(MFVideoFormat_RGB32, 22, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xAA,
+            0x00, 0x38, 0x9B, 0x71);
+DEFINE_GUID(MFVideoFormat_ARGB32, 21, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xAA,
+            0x00, 0x38, 0x9B, 0x71);
+DEFINE_GUID(MFVideoFormat_H264, 0x34363248, 0x0000, 0x0010, 0x80, 0x00, 0x00,
+            0xaa, 0x00, 0x38, 0x9b, 0x71);
+DEFINE_GUID(MFVideoFormat_IYUV, 0x56555949, 0x0000, 0x0010, 0x80, 0x00, 0x00,
+            0xaa, 0x00, 0x38, 0x9b, 0x71);
+DEFINE_GUID(IID_ICodecAPI, 0x901db4c7, 0x31ce, 0x41a2, 0x85, 0xdc, 0x8f, 0xa0,
+            0xbf, 0x41, 0xb8, 0xda);
+DEFINE_GUID(CODECAPI_AVLowLatencyMode, 0x9c27891a, 0xed7a, 0x40e1, 0x88, 0xe8,
+            0xb2, 0x27, 0x27, 0xa0, 0x24, 0xee);
+DEFINE_GUID(CODECAPI_AVDecVideoMaxCodedWidth, 0x5ae557b8, 0x77af, 0x41f5, 0x9f,
+            0xa6, 0x4d, 0xb2, 0xfe, 0x1d, 0x4b, 0xca);
+DEFINE_GUID(CODECAPI_AVDecVideoMaxCodedHeight, 0x7262a16a, 0xd2dc, 0x4e75, 0x9b,
+            0xa8, 0x65, 0xc0, 0xc6, 0xd3, 0x2b, 0x13);
 
 #ifndef __IMFDXGIDeviceManager_FWD_DEFINED__
 #define __IMFDXGIDeviceManager_FWD_DEFINED__
@@ -105,16 +122,24 @@ typedef interface IMFDXGIDeviceManager IMFDXGIDeviceManager;
 
 typedef struct IMFDXGIDeviceManagerVtbl
 {
-	HRESULT (STDMETHODCALLTYPE * QueryInterface)(IMFDXGIDeviceManager* This, REFIID riid, void** ppvObject);
-	ULONG   (STDMETHODCALLTYPE * AddRef)(IMFDXGIDeviceManager* This);
-	ULONG   (STDMETHODCALLTYPE * Release)(IMFDXGIDeviceManager* This);
-	HRESULT (STDMETHODCALLTYPE * CloseDeviceHandle)(IMFDXGIDeviceManager* This, HANDLE hDevice);
-	HRESULT (STDMETHODCALLTYPE * GetVideoService)(IMFDXGIDeviceManager* This, HANDLE hDevice, REFIID riid, void** ppService);
-	HRESULT (STDMETHODCALLTYPE * LockDevice)(IMFDXGIDeviceManager* This, HANDLE hDevice, REFIID riid, void** ppUnkDevice, BOOL fBlock);
-	HRESULT (STDMETHODCALLTYPE * OpenDeviceHandle)(IMFDXGIDeviceManager* This, HANDLE* phDevice);
-	HRESULT (STDMETHODCALLTYPE * ResetDevice)(IMFDXGIDeviceManager* This, IUnknown* pUnkDevice, UINT resetToken);
-	HRESULT (STDMETHODCALLTYPE * TestDevice)(IMFDXGIDeviceManager* This, HANDLE hDevice);
-	HRESULT (STDMETHODCALLTYPE * UnlockDevice)(IMFDXGIDeviceManager* This, HANDLE hDevice, BOOL fSaveState);
+	HRESULT(STDMETHODCALLTYPE* QueryInterface)(IMFDXGIDeviceManager* This,
+	        REFIID riid, void** ppvObject);
+	ULONG(STDMETHODCALLTYPE* AddRef)(IMFDXGIDeviceManager* This);
+	ULONG(STDMETHODCALLTYPE* Release)(IMFDXGIDeviceManager* This);
+	HRESULT(STDMETHODCALLTYPE* CloseDeviceHandle)(IMFDXGIDeviceManager* This,
+	        HANDLE hDevice);
+	HRESULT(STDMETHODCALLTYPE* GetVideoService)(IMFDXGIDeviceManager* This,
+	        HANDLE hDevice, REFIID riid, void** ppService);
+	HRESULT(STDMETHODCALLTYPE* LockDevice)(IMFDXGIDeviceManager* This,
+	                                       HANDLE hDevice, REFIID riid, void** ppUnkDevice, BOOL fBlock);
+	HRESULT(STDMETHODCALLTYPE* OpenDeviceHandle)(IMFDXGIDeviceManager* This,
+	        HANDLE* phDevice);
+	HRESULT(STDMETHODCALLTYPE* ResetDevice)(IMFDXGIDeviceManager* This,
+	                                        IUnknown* pUnkDevice, UINT resetToken);
+	HRESULT(STDMETHODCALLTYPE* TestDevice)(IMFDXGIDeviceManager* This,
+	                                       HANDLE hDevice);
+	HRESULT(STDMETHODCALLTYPE* UnlockDevice)(IMFDXGIDeviceManager* This,
+	        HANDLE hDevice, BOOL fSaveState);
 }
 IMFDXGIDeviceManagerVtbl;
 
@@ -125,12 +150,14 @@ interface IMFDXGIDeviceManager
 
 #endif /* __IMFDXGIDeviceManager_INTERFACE_DEFINED__ */
 
-typedef HRESULT (__stdcall * pfnMFStartup)(ULONG Version, DWORD dwFlags);
-typedef HRESULT (__stdcall * pfnMFShutdown)(void);
-typedef HRESULT (__stdcall * pfnMFCreateSample)(IMFSample** ppIMFSample);
-typedef HRESULT (__stdcall * pfnMFCreateMemoryBuffer)(DWORD cbMaxLength, IMFMediaBuffer** ppBuffer);
-typedef HRESULT (__stdcall * pfnMFCreateMediaType)(IMFMediaType** ppMFType);
-typedef HRESULT (__stdcall * pfnMFCreateDXGIDeviceManager)(UINT* pResetToken, IMFDXGIDeviceManager** ppDXVAManager);
+typedef HRESULT(__stdcall* pfnMFStartup)(ULONG Version, DWORD dwFlags);
+typedef HRESULT(__stdcall* pfnMFShutdown)(void);
+typedef HRESULT(__stdcall* pfnMFCreateSample)(IMFSample** ppIMFSample);
+typedef HRESULT(__stdcall* pfnMFCreateMemoryBuffer)(DWORD cbMaxLength,
+        IMFMediaBuffer** ppBuffer);
+typedef HRESULT(__stdcall* pfnMFCreateMediaType)(IMFMediaType** ppMFType);
+typedef HRESULT(__stdcall* pfnMFCreateDXGIDeviceManager)(UINT* pResetToken,
+        IMFDXGIDeviceManager** ppDXVAManager);
 
 struct _H264_CONTEXT_MF
 {
@@ -153,7 +180,8 @@ struct _H264_CONTEXT_MF
 };
 typedef struct _H264_CONTEXT_MF H264_CONTEXT_MF;
 
-static HRESULT mf_find_output_type(H264_CONTEXT_MF* sys, const GUID* guid, IMFMediaType** ppMediaType)
+static HRESULT mf_find_output_type(H264_CONTEXT_MF* sys, const GUID* guid,
+                                   IMFMediaType** ppMediaType)
 {
 	DWORD idx = 0;
 	GUID mediaGuid;
@@ -162,7 +190,8 @@ static HRESULT mf_find_output_type(H264_CONTEXT_MF* sys, const GUID* guid, IMFMe
 
 	while (1)
 	{
-		hr = sys->transform->lpVtbl->GetOutputAvailableType(sys->transform, 0, idx, &pMediaType);
+		hr = sys->transform->lpVtbl->GetOutputAvailableType(sys->transform, 0, idx,
+		        &pMediaType);
 
 		if (FAILED(hr))
 			break;
@@ -176,7 +205,6 @@ static HRESULT mf_find_output_type(H264_CONTEXT_MF* sys, const GUID* guid, IMFMe
 		}
 
 		pMediaType->lpVtbl->Release(pMediaType);
-
 		idx++;
 	}
 
@@ -202,7 +230,8 @@ static HRESULT mf_create_output_sample(H264_CONTEXT_MF* sys)
 		goto error;
 	}
 
-	hr = sys->transform->lpVtbl->GetOutputStreamInfo(sys->transform, 0, &streamInfo);
+	hr = sys->transform->lpVtbl->GetOutputStreamInfo(sys->transform, 0,
+	        &streamInfo);
 
 	if (FAILED(hr))
 	{
@@ -227,12 +256,12 @@ static HRESULT mf_create_output_sample(H264_CONTEXT_MF* sys)
 	}
 
 	sys->outputBuffer->lpVtbl->Release(sys->outputBuffer);
-
 error:
 	return hr;
 }
 
-static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize, UINT32 plane)
+static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
+                         UINT32 plane)
 {
 	HRESULT hr;
 	BYTE* pbBuffer = NULL;
@@ -246,7 +275,6 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize, UIN
 	H264_CONTEXT_MF* sys = (H264_CONTEXT_MF*) h264->pSystemData;
 	INT32* iStride = h264->iStride[plane];
 	BYTE** pYUVData = h264->pYUVData[plane];
-
 	hr = sys->MFCreateMemoryBuffer(SrcSize, &inputBuffer);
 
 	if (FAILED(hr))
@@ -255,7 +283,8 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize, UIN
 		goto error;
 	}
 
-	hr = inputBuffer->lpVtbl->Lock(inputBuffer, &pbBuffer, &cbMaxLength, &cbCurrentLength);
+	hr = inputBuffer->lpVtbl->Lock(inputBuffer, &pbBuffer, &cbMaxLength,
+	                               &cbCurrentLength);
 
 	if (FAILED(hr))
 	{
@@ -264,7 +293,6 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize, UIN
 	}
 
 	CopyMemory(pbBuffer, pSrcData, SrcSize);
-
 	hr = inputBuffer->lpVtbl->SetCurrentLength(inputBuffer, SrcSize);
 
 	if (FAILED(hr))
@@ -298,7 +326,6 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize, UIN
 	}
 
 	inputBuffer->lpVtbl->Release(inputBuffer);
-
 	hr = sys->transform->lpVtbl->ProcessInput(sys->transform, 0, inputSample, 0);
 
 	if (FAILED(hr))
@@ -319,8 +346,8 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize, UIN
 	outputDataBuffer.dwStatus = 0;
 	outputDataBuffer.pEvents = NULL;
 	outputDataBuffer.pSample = sys->outputSample;
-
-	hr = sys->transform->lpVtbl->ProcessOutput(sys->transform, 0, 1, &outputDataBuffer, &outputStatus);
+	hr = sys->transform->lpVtbl->ProcessOutput(sys->transform, 0, 1,
+	        &outputDataBuffer, &outputStatus);
 
 	if (hr == MF_E_TRANSFORM_STREAM_CHANGE)
 	{
@@ -344,7 +371,8 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize, UIN
 			goto error;
 		}
 
-		hr = sys->transform->lpVtbl->SetOutputType(sys->transform, 0, sys->outputType, 0);
+		hr = sys->transform->lpVtbl->SetOutputType(sys->transform, 0, sys->outputType,
+		        0);
 
 		if (FAILED(hr))
 		{
@@ -360,7 +388,8 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize, UIN
 			goto error;
 		}
 
-		hr = sys->outputType->lpVtbl->GetUINT64(sys->outputType, &MF_MT_FRAME_SIZE, &frameSize);
+		hr = sys->outputType->lpVtbl->GetUINT64(sys->outputType, &MF_MT_FRAME_SIZE,
+		                                        &frameSize);
 
 		if (FAILED(hr))
 		{
@@ -368,10 +397,10 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize, UIN
 			goto error;
 		}
 
-		sys->frameWidth = (UINT32) (frameSize >> 32);
+		sys->frameWidth = (UINT32)(frameSize >> 32);
 		sys->frameHeight = (UINT32) frameSize;
-
-		hr = sys->outputType->lpVtbl->GetUINT32(sys->outputType, &MF_MT_DEFAULT_STRIDE, &stride);
+		hr = sys->outputType->lpVtbl->GetUINT32(sys->outputType, &MF_MT_DEFAULT_STRIDE,
+		                                        &stride);
 
 		if (FAILED(hr))
 		{
@@ -382,24 +411,18 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize, UIN
 		iStride[0] = stride;
 		iStride[1] = stride / 2;
 		iStride[2] = stride / 2;
-
 		pTmpYUVData = (BYTE*) calloc(1, 2 * stride * sys->frameHeight);
-
 		pYUVData[0] = &pTmpYUVData[offset];
 		pTmpYUVData += iStride[0] * sys->frameHeight;
-
 		pYUVData[1] = &pTmpYUVData[offset];
 		pTmpYUVData += iStride[1] * (sys->frameHeight / 2);
-
 		pYUVData[2] = &pTmpYUVData[offset];
 		pTmpYUVData += iStride[2] * (sys->frameHeight / 2);
-
 		h264->width = sys->frameWidth;
 		h264->height = sys->frameHeight;
 	}
 	else if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
 	{
-
 	}
 	else if (FAILED(hr))
 	{
@@ -413,7 +436,6 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize, UIN
 		DWORD bufferCount = 0;
 		DWORD cbMaxLength = 0;
 		DWORD cbCurrentLength = 0;
-
 		hr = sys->outputSample->lpVtbl->GetBufferCount(sys->outputSample, &bufferCount);
 
 		if (FAILED(hr))
@@ -422,7 +444,8 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize, UIN
 			goto error;
 		}
 
-		hr = sys->outputSample->lpVtbl->GetBufferByIndex(sys->outputSample, 0, &outputBuffer);
+		hr = sys->outputSample->lpVtbl->GetBufferByIndex(sys->outputSample, 0,
+		        &outputBuffer);
 
 		if (FAILED(hr))
 		{
@@ -430,7 +453,8 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize, UIN
 			goto error;
 		}
 
-		hr = outputBuffer->lpVtbl->Lock(outputBuffer, &buffer, &cbMaxLength, &cbCurrentLength);
+		hr = outputBuffer->lpVtbl->Lock(outputBuffer, &buffer, &cbMaxLength,
+		                                &cbCurrentLength);
 
 		if (FAILED(hr))
 		{
@@ -440,13 +464,10 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize, UIN
 
 		CopyMemory(pYUVData[0], &buffer[offset], iStride[0] * sys->frameHeight);
 		offset += iStride[0] * sys->frameHeight;
-
 		CopyMemory(pYUVData[1], &buffer[offset], iStride[1] * (sys->frameHeight / 2));
 		offset += iStride[1] * (sys->frameHeight / 2);
-
 		CopyMemory(pYUVData[2], &buffer[offset], iStride[2] * (sys->frameHeight / 2));
 		offset += iStride[2] * (sys->frameHeight / 2);
-
 		hr = outputBuffer->lpVtbl->Unlock(outputBuffer);
 
 		if (FAILED(hr))
@@ -459,18 +480,16 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize, UIN
 	}
 
 	inputSample->lpVtbl->Release(inputSample);
-
 	return 1;
-
 error:
 	fprintf(stderr, "mf_decompress error\n");
 	return -1;
 }
 
-static int mf_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstSize, UINT32 plane)
+static int mf_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstSize,
+                       UINT32 plane)
 {
 	H264_CONTEXT_MF* sys = (H264_CONTEXT_MF*) h264->pSystemData;
-
 	return 1;
 }
 
@@ -517,16 +536,13 @@ static void mf_uninit(H264_CONTEXT* h264)
 			sys->mfplat = NULL;
 		}
 
-		for (x=0; x<sizeof(h264->pYUVData) / sizeof(h264->pYUVData[0]); x++)
-			free (h264->pYUVData[x][0]);
+		for (x = 0; x < sizeof(h264->pYUVData) / sizeof(h264->pYUVData[0]); x++)
+			free(h264->pYUVData[x][0]);
 
 		memset(h264->pYUVData, 0, sizeof(h264->pYUVData));
 		memset(h264->iStride, 0, sizeof(h264->iStride));
-
 		sys->MFShutdown();
-
 		CoUninitialize();
-
 		free(sys);
 		h264->pSystemData = NULL;
 	}
@@ -536,16 +552,13 @@ static BOOL mf_init(H264_CONTEXT* h264)
 {
 	HRESULT hr;
 	H264_CONTEXT_MF* sys;
-
 	sys = (H264_CONTEXT_MF*) calloc(1, sizeof(H264_CONTEXT_MF));
 
 	if (!sys)
 		goto error;
 
 	h264->pSystemData = (void*) sys;
-
 	/* http://decklink-sdk-delphi.googlecode.com/svn/trunk/Blackmagic%20DeckLink%20SDK%209.7/Win/Samples/Streaming/StreamingPreview/DecoderMF.cpp */
-
 	sys->mfplat = LoadLibraryA("mfplat.dll");
 
 	if (!sys->mfplat)
@@ -553,25 +566,28 @@ static BOOL mf_init(H264_CONTEXT* h264)
 
 	sys->MFStartup = (pfnMFStartup) GetProcAddress(sys->mfplat, "MFStartup");
 	sys->MFShutdown = (pfnMFShutdown) GetProcAddress(sys->mfplat, "MFShutdown");
-	sys->MFCreateSample = (pfnMFCreateSample) GetProcAddress(sys->mfplat, "MFCreateSample");
-	sys->MFCreateMemoryBuffer = (pfnMFCreateMemoryBuffer) GetProcAddress(sys->mfplat, "MFCreateMemoryBuffer");
-	sys->MFCreateMediaType = (pfnMFCreateMediaType) GetProcAddress(sys->mfplat, "MFCreateMediaType");
-	sys->MFCreateDXGIDeviceManager = (pfnMFCreateDXGIDeviceManager) GetProcAddress(sys->mfplat, "MFCreateDXGIDeviceManager");
+	sys->MFCreateSample = (pfnMFCreateSample) GetProcAddress(sys->mfplat,
+	                      "MFCreateSample");
+	sys->MFCreateMemoryBuffer = (pfnMFCreateMemoryBuffer) GetProcAddress(
+	                                sys->mfplat, "MFCreateMemoryBuffer");
+	sys->MFCreateMediaType = (pfnMFCreateMediaType) GetProcAddress(sys->mfplat,
+	                         "MFCreateMediaType");
+	sys->MFCreateDXGIDeviceManager = (pfnMFCreateDXGIDeviceManager) GetProcAddress(
+	                                     sys->mfplat, "MFCreateDXGIDeviceManager");
 
-	if (!sys->MFStartup || !sys->MFShutdown || !sys->MFCreateSample || !sys->MFCreateMemoryBuffer ||
-		!sys->MFCreateMediaType || !sys->MFCreateDXGIDeviceManager)
+	if (!sys->MFStartup || !sys->MFShutdown || !sys->MFCreateSample
+	    || !sys->MFCreateMemoryBuffer ||
+	    !sys->MFCreateMediaType || !sys->MFCreateDXGIDeviceManager)
 		goto error;
 
 	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
 	if (h264->Compressor)
 	{
-
 	}
 	else
 	{
 		VARIANT var = { 0 };
-
 		hr = sys->MFStartup(MF_VERSION, 0);
 
 		if (FAILED(hr))
@@ -580,7 +596,8 @@ static BOOL mf_init(H264_CONTEXT* h264)
 			goto error;
 		}
 
-		hr = CoCreateInstance(&CLSID_CMSH264DecoderMFT, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void**) &sys->transform);
+		hr = CoCreateInstance(&CLSID_CMSH264DecoderMFT, NULL, CLSCTX_INPROC_SERVER,
+		                      &IID_IMFTransform, (void**) &sys->transform);
 
 		if (FAILED(hr))
 		{
@@ -588,7 +605,8 @@ static BOOL mf_init(H264_CONTEXT* h264)
 			goto error;
 		}
 
-		hr = sys->transform->lpVtbl->QueryInterface(sys->transform, &IID_ICodecAPI, (void**) &sys->codecApi);
+		hr = sys->transform->lpVtbl->QueryInterface(sys->transform, &IID_ICodecAPI,
+		        (void**) &sys->codecApi);
 
 		if (FAILED(hr))
 		{
@@ -598,8 +616,8 @@ static BOOL mf_init(H264_CONTEXT* h264)
 
 		var.vt = VT_UI4;
 		var.ulVal = 1;
-
-		hr = sys->codecApi->lpVtbl->SetValue(sys->codecApi, &CODECAPI_AVLowLatencyMode, &var);
+		hr = sys->codecApi->lpVtbl->SetValue(sys->codecApi, &CODECAPI_AVLowLatencyMode,
+		                                     &var);
 
 		if (FAILED(hr))
 		{
@@ -615,7 +633,8 @@ static BOOL mf_init(H264_CONTEXT* h264)
 			goto error;
 		}
 
-		hr = sys->inputType->lpVtbl->SetGUID(sys->inputType, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+		hr = sys->inputType->lpVtbl->SetGUID(sys->inputType, &MF_MT_MAJOR_TYPE,
+		                                     &MFMediaType_Video);
 
 		if (FAILED(hr))
 		{
@@ -623,7 +642,8 @@ static BOOL mf_init(H264_CONTEXT* h264)
 			goto error;
 		}
 
-		hr = sys->inputType->lpVtbl->SetGUID(sys->inputType, &MF_MT_SUBTYPE, &MFVideoFormat_H264);
+		hr = sys->inputType->lpVtbl->SetGUID(sys->inputType, &MF_MT_SUBTYPE,
+		                                     &MFVideoFormat_H264);
 
 		if (FAILED(hr))
 		{
@@ -647,7 +667,8 @@ static BOOL mf_init(H264_CONTEXT* h264)
 			goto error;
 		}
 
-		hr = sys->transform->lpVtbl->SetOutputType(sys->transform, 0, sys->outputType, 0);
+		hr = sys->transform->lpVtbl->SetOutputType(sys->transform, 0, sys->outputType,
+		        0);
 
 		if (FAILED(hr))
 		{
@@ -663,8 +684,8 @@ static BOOL mf_init(H264_CONTEXT* h264)
 			goto error;
 		}
 	}
-	return TRUE;
 
+	return TRUE;
 error:
 	WLog_ERR(TAG, "mf_init failure");
 	mf_uninit(h264);
@@ -714,17 +735,17 @@ struct _H264_CONTEXT_X264
 };
 typedef struct _H264_CONTEXT_X264 H264_CONTEXT_X264;
 
-static int x264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize, UINT32 plane)
+static int x264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
+                           UINT32 plane)
 {
 	//H264_CONTEXT_X264* sys = (H264_CONTEXT_X264*) h264->pSystemData;
-
 	return 1;
 }
 
-static int x264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstSize, UINT32 plane)
+static int x264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstSize,
+                         UINT32 plane)
 {
 	//H264_CONTEXT_X264* sys = (H264_CONTEXT_X264*) h264->pSystemData;
-
 	return 1;
 }
 
@@ -742,10 +763,9 @@ static void x264_uninit(H264_CONTEXT* h264)
 static BOOL x264_init(H264_CONTEXT* h264)
 {
 	H264_CONTEXT_X264* sys;
-
 	h264->numSystemData = 1;
 	sys = (H264_CONTEXT_X264*) calloc(h264->numSystemData,
-					  sizeof(H264_CONTEXT_X264));
+	                                  sizeof(H264_CONTEXT_X264));
 
 	if (!sys)
 	{
@@ -756,18 +776,14 @@ static BOOL x264_init(H264_CONTEXT* h264)
 
 	if (h264->Compressor)
 	{
-
 	}
 	else
 	{
-
 	}
 
 	return TRUE;
-
 EXCEPTION:
 	x264_uninit(h264);
-
 	return FALSE;
 }
 
@@ -825,12 +841,14 @@ typedef struct _H264_CONTEXT_OPENH264 H264_CONTEXT_OPENH264;
 
 static BOOL g_openh264_trace_enabled = FALSE;
 
-static void openh264_trace_callback(H264_CONTEXT* h264, int level, const char* message)
+static void openh264_trace_callback(H264_CONTEXT* h264, int level,
+                                    const char* message)
 {
 	WLog_INFO(TAG, "%d - %s", level, message);
 }
 
-static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize, UINT32 plane)
+static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData,
+                               UINT32 SrcSize, UINT32 plane)
 {
 	DECODING_STATE state;
 	SBufferInfo sBufferInfo;
@@ -839,44 +857,42 @@ static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSiz
 	UINT32* iStride = h264->iStride[plane];
 	BYTE** pYUVData = h264->pYUVData[plane];
 
-	sys = &((H264_CONTEXT_OPENH264*) h264->pSystemData)[0];
-
 	if (!sys->pDecoder)
 		return -2001;
 
 	/*
 	 * Decompress the image.  The RDP host only seems to send I420 format.
 	 */
-
 	pYUVData[0] = NULL;
 	pYUVData[1] = NULL;
 	pYUVData[2] = NULL;
-
 	ZeroMemory(&sBufferInfo, sizeof(sBufferInfo));
-
-	state = (*sys->pDecoder)->DecodeFrame2(sys->pDecoder, pSrcData, SrcSize, pYUVData, &sBufferInfo);
+	state = (*sys->pDecoder)->DecodeFrame2(sys->pDecoder, pSrcData, SrcSize,
+	                                       pYUVData, &sBufferInfo);
 
 	if (sBufferInfo.iBufferStatus != 1)
 	{
 		if (state == dsNoParamSets)
 		{
 			/* this happens on the first frame due to missing parameter sets */
-			state = (*sys->pDecoder)->DecodeFrame2(sys->pDecoder, NULL, 0, pYUVData, &sBufferInfo);
+			state = (*sys->pDecoder)->DecodeFrame2(sys->pDecoder, NULL, 0, pYUVData,
+			                                       &sBufferInfo);
 		}
 		else if (state == dsErrorFree)
 		{
 			/* call DecodeFrame2 again to decode without delay */
-			state = (*sys->pDecoder)->DecodeFrame2(sys->pDecoder, NULL, 0, pYUVData, &sBufferInfo);
+			state = (*sys->pDecoder)->DecodeFrame2(sys->pDecoder, NULL, 0, pYUVData,
+			                                       &sBufferInfo);
 		}
 		else
 		{
-			WLog_WARN(TAG, "DecodeFrame2 state: 0x%02X iBufferStatus: %d", state, sBufferInfo.iBufferStatus);
+			WLog_WARN(TAG, "DecodeFrame2 state: 0x%02X iBufferStatus: %d", state,
+			          sBufferInfo.iBufferStatus);
 			return -2002;
 		}
 	}
 
 	pSystemBuffer = &sBufferInfo.UsrData.sSystemBuffer;
-
 	iStride[0] = pSystemBuffer->iStride[0];
 	iStride[1] = pSystemBuffer->iStride[1];
 	iStride[2] = pSystemBuffer->iStride[1];
@@ -894,10 +910,11 @@ static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSiz
 	}
 
 #if 0
-	WLog_INFO(TAG, "h264_decompress: state=%u, pYUVData=[%p,%p,%p], bufferStatus=%d, width=%d, height=%d, format=%d, stride=[%d,%d]",
-		  state, pYUVData[0], pYUVData[1], pYUVData[2], sBufferInfo.iBufferStatus,
-			pSystemBuffer->iWidth, pSystemBuffer->iHeight, pSystemBuffer->iFormat,
-			pSystemBuffer->iStride[0], pSystemBuffer->iStride[1]);
+	WLog_INFO(TAG,
+	          "h264_decompress: state=%u, pYUVData=[%p,%p,%p], bufferStatus=%d, width=%d, height=%d, format=%d, stride=[%d,%d]",
+	          state, pYUVData[0], pYUVData[1], pYUVData[2], sBufferInfo.iBufferStatus,
+	          pSystemBuffer->iWidth, pSystemBuffer->iHeight, pSystemBuffer->iFormat,
+	          pSystemBuffer->iStride[0], pSystemBuffer->iStride[1]);
 #endif
 
 	if (pSystemBuffer->iFormat != videoFormatI420)
@@ -909,7 +926,8 @@ static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSiz
 	return 1;
 }
 
-static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstSize, UINT32 plane)
+static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData,
+                             UINT32* pDstSize, UINT32 plane)
 {
 	int i, j;
 	int status;
@@ -919,7 +937,6 @@ static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstS
 	H264_CONTEXT_OPENH264* sys;
 	BYTE** pYUVData = h264->pYUVData[plane];
 	UINT32* iStride = h264->iStride[plane];
-
 	sys = &((H264_CONTEXT_OPENH264*) h264->pSystemData)[0];
 
 	if (!sys->pEncoder)
@@ -928,7 +945,8 @@ static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstS
 	if (!pYUVData[0] || !pYUVData[1] || !pYUVData[2])
 		return -1;
 
-	if ((sys->EncParamExt.iPicWidth != h264->width) || (sys->EncParamExt.iPicHeight != h264->height))
+	if ((sys->EncParamExt.iPicWidth != h264->width)
+	    || (sys->EncParamExt.iPicHeight != h264->height))
 	{
 		status = (*sys->pEncoder)->GetDefaultParams(sys->pEncoder, &sys->EncParamExt);
 
@@ -951,20 +969,22 @@ static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstS
 		sys->EncParamExt.sSpatialLayers[0].fFrameRate = h264->FrameRate;
 		sys->EncParamExt.sSpatialLayers[0].iVideoWidth = sys->EncParamExt.iPicWidth;
 		sys->EncParamExt.sSpatialLayers[0].iVideoHeight = sys->EncParamExt.iPicHeight;
-		sys->EncParamExt.sSpatialLayers[0].iMaxSpatialBitrate = sys->EncParamExt.iMaxBitrate;
+		sys->EncParamExt.sSpatialLayers[0].iMaxSpatialBitrate =
+		    sys->EncParamExt.iMaxBitrate;
 
 		switch (h264->RateControlMode)
 		{
-		case H264_RATECONTROL_VBR:
-			sys->EncParamExt.iRCMode = RC_BITRATE_MODE;
-			sys->EncParamExt.iTargetBitrate = h264->BitRate;
-			sys->EncParamExt.sSpatialLayers[0].iSpatialBitrate = sys->EncParamExt.iTargetBitrate;
-			break;
+			case H264_RATECONTROL_VBR:
+				sys->EncParamExt.iRCMode = RC_BITRATE_MODE;
+				sys->EncParamExt.iTargetBitrate = h264->BitRate;
+				sys->EncParamExt.sSpatialLayers[0].iSpatialBitrate =
+				    sys->EncParamExt.iTargetBitrate;
+				break;
 
-		case H264_RATECONTROL_CQP:
-			sys->EncParamExt.iRCMode = RC_OFF_MODE;
-			sys->EncParamExt.sSpatialLayers[0].iDLayerQp = h264->QP;
-			break;
+			case H264_RATECONTROL_CQP:
+				sys->EncParamExt.iRCMode = RC_OFF_MODE;
+				sys->EncParamExt.sSpatialLayers[0].iDLayerQp = h264->QP;
+				break;
 		}
 
 		if (sys->EncParamExt.iMultipleThreadIdc > 1)
@@ -982,12 +1002,14 @@ static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstS
 			return status;
 		}
 
-		status = (*sys->pEncoder)->GetOption(sys->pEncoder, ENCODER_OPTION_SVC_ENCODE_PARAM_EXT,
-						     &sys->EncParamExt);
+		status = (*sys->pEncoder)->GetOption(sys->pEncoder,
+		                                     ENCODER_OPTION_SVC_ENCODE_PARAM_EXT,
+		                                     &sys->EncParamExt);
 
 		if (status < 0)
 		{
-			WLog_ERR(TAG, "Failed to get initial OpenH264 encoder parameters (status=%ld)", status);
+			WLog_ERR(TAG, "Failed to get initial OpenH264 encoder parameters (status=%ld)",
+			         status);
 			return status;
 		}
 	}
@@ -995,52 +1017,53 @@ static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstS
 	{
 		switch (h264->RateControlMode)
 		{
-		case H264_RATECONTROL_VBR:
-			if (sys->EncParamExt.iTargetBitrate != h264->BitRate)
-			{
-				sys->EncParamExt.iTargetBitrate = h264->BitRate;
-				bitrate.iLayer = SPATIAL_LAYER_ALL;
-				bitrate.iBitrate = h264->BitRate;
-
-				status = (*sys->pEncoder)->SetOption(sys->pEncoder, ENCODER_OPTION_BITRATE,
-								     &bitrate);
-
-				if (status < 0)
+			case H264_RATECONTROL_VBR:
+				if (sys->EncParamExt.iTargetBitrate != h264->BitRate)
 				{
-					WLog_ERR(TAG, "Failed to set encoder bitrate (status=%ld)", status);
-					return status;
+					sys->EncParamExt.iTargetBitrate = h264->BitRate;
+					bitrate.iLayer = SPATIAL_LAYER_ALL;
+					bitrate.iBitrate = h264->BitRate;
+					status = (*sys->pEncoder)->SetOption(sys->pEncoder, ENCODER_OPTION_BITRATE,
+					                                     &bitrate);
+
+					if (status < 0)
+					{
+						WLog_ERR(TAG, "Failed to set encoder bitrate (status=%ld)", status);
+						return status;
+					}
 				}
-			}
-			if (sys->EncParamExt.fMaxFrameRate != h264->FrameRate)
-			{
-				sys->EncParamExt.fMaxFrameRate = h264->FrameRate;
 
-				status = (*sys->pEncoder)->SetOption(sys->pEncoder, ENCODER_OPTION_FRAME_RATE,
-								     &sys->EncParamExt.fMaxFrameRate);
-
-				if (status < 0)
+				if (sys->EncParamExt.fMaxFrameRate != h264->FrameRate)
 				{
-					WLog_ERR(TAG, "Failed to set encoder framerate (status=%ld)", status);
-					return status;
+					sys->EncParamExt.fMaxFrameRate = h264->FrameRate;
+					status = (*sys->pEncoder)->SetOption(sys->pEncoder, ENCODER_OPTION_FRAME_RATE,
+					                                     &sys->EncParamExt.fMaxFrameRate);
+
+					if (status < 0)
+					{
+						WLog_ERR(TAG, "Failed to set encoder framerate (status=%ld)", status);
+						return status;
+					}
 				}
-			}
-			break;
 
-		case H264_RATECONTROL_CQP:
-			if (sys->EncParamExt.sSpatialLayers[0].iDLayerQp != h264->QP)
-			{
-				sys->EncParamExt.sSpatialLayers[0].iDLayerQp = h264->QP;
+				break;
 
-				status = (*sys->pEncoder)->SetOption(sys->pEncoder, ENCODER_OPTION_SVC_ENCODE_PARAM_EXT,
-								     &sys->EncParamExt);
-
-				if (status < 0)
+			case H264_RATECONTROL_CQP:
+				if (sys->EncParamExt.sSpatialLayers[0].iDLayerQp != h264->QP)
 				{
-					WLog_ERR(TAG, "Failed to set encoder parameters (status=%ld)", status);
-					return status;
+					sys->EncParamExt.sSpatialLayers[0].iDLayerQp = h264->QP;
+					status = (*sys->pEncoder)->SetOption(sys->pEncoder,
+					                                     ENCODER_OPTION_SVC_ENCODE_PARAM_EXT,
+					                                     &sys->EncParamExt);
+
+					if (status < 0)
+					{
+						WLog_ERR(TAG, "Failed to set encoder parameters (status=%ld)", status);
+						return status;
+					}
 				}
-			}
-			break;
+
+				break;
 		}
 	}
 
@@ -1055,7 +1078,6 @@ static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstS
 	pic.pData[0] = pYUVData[0];
 	pic.pData[1] = pYUVData[1];
 	pic.pData[2] = pYUVData[2];
-
 	status = (*sys->pEncoder)->EncodeFrame(sys->pEncoder, &pic, &info);
 
 	if (status < 0)
@@ -1085,7 +1107,7 @@ static void openh264_uninit(H264_CONTEXT* h264)
 
 	if (sysContexts)
 	{
-		for (x=0; x<h264->numSystemData; x++)
+		for (x = 0; x < h264->numSystemData; x++)
 		{
 			H264_CONTEXT_OPENH264* sys = &sysContexts[x];
 
@@ -1103,6 +1125,7 @@ static void openh264_uninit(H264_CONTEXT* h264)
 				sys->pEncoder = NULL;
 			}
 		}
+
 		free(h264->pSystemData);
 		h264->pSystemData = NULL;
 	}
@@ -1118,19 +1141,18 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 #if (OPENH264_MAJOR == 1) && (OPENH264_MINOR <= 5)
 	static EVideoFormatType videoFormat = videoFormatI420;
 #endif
-	static WelsTraceCallback traceCallback = (WelsTraceCallback) openh264_trace_callback;
-
+	static WelsTraceCallback traceCallback = (WelsTraceCallback)
+	        openh264_trace_callback;
 	h264->numSystemData = 1;
-
 	sysContexts = (H264_CONTEXT_OPENH264*) calloc(h264->numSystemData,
-						      sizeof(H264_CONTEXT_OPENH264));
+	              sizeof(H264_CONTEXT_OPENH264));
 
 	if (!sysContexts)
 		goto EXCEPTION;
 
 	h264->pSystemData = (void*) sysContexts;
 
-	for (x=0; x<h264->numSystemData; x++)
+	for (x = 0; x < h264->numSystemData; x++)
 	{
 		H264_CONTEXT_OPENH264* sys = &sysContexts[x];
 
@@ -1160,60 +1182,65 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 #endif
 			sDecParam.eEcActiveIdc = ERROR_CON_FRAME_COPY;
 			sDecParam.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_AVC;
-
 			status = (*sys->pDecoder)->Initialize(sys->pDecoder, &sDecParam);
 
 			if (status != 0)
 			{
 				WLog_ERR(TAG, "Failed to initialize OpenH264 decoder (status=%ld)",
-					 status);
+				         status);
 				goto EXCEPTION;
 			}
+
 #if (OPENH264_MAJOR == 1) && (OPENH264_MINOR <= 5)
 			status = (*sys->pDecoder)->SetOption(
-					 sys->pDecoder, DECODER_OPTION_DATAFORMAT,
-					 &videoFormat);
+			             sys->pDecoder, DECODER_OPTION_DATAFORMAT,
+			             &videoFormat);
 #endif
+
 			if (status != 0)
 			{
-				WLog_ERR(TAG, "Failed to set data format option on OpenH264 decoder (status=%ld)",
-					 status);
+				WLog_ERR(TAG,
+				         "Failed to set data format option on OpenH264 decoder (status=%ld)",
+				         status);
 				goto EXCEPTION;
 			}
 
 			if (g_openh264_trace_enabled)
 			{
 				status = (*sys->pDecoder)->SetOption(
-						 sys->pDecoder, DECODER_OPTION_TRACE_LEVEL,
-						 &traceLevel);
+				             sys->pDecoder, DECODER_OPTION_TRACE_LEVEL,
+				             &traceLevel);
 
 				if (status != 0)
 				{
-					WLog_ERR(TAG, "Failed to set trace level option on OpenH264 decoder (status=%ld)",
-						 status);
+					WLog_ERR(TAG,
+					         "Failed to set trace level option on OpenH264 decoder (status=%ld)",
+					         status);
 					goto EXCEPTION;
 				}
 
 				status = (*sys->pDecoder)->SetOption(
-						 sys->pDecoder, DECODER_OPTION_TRACE_CALLBACK,
-						 &traceCallback);
+				             sys->pDecoder, DECODER_OPTION_TRACE_CALLBACK,
+				             &traceCallback);
 
 				if (status != 0)
 				{
-					WLog_ERR(TAG, "Failed to set trace callback option on OpenH264 decoder (status=%ld)",
-						 status);
+					WLog_ERR(TAG,
+					         "Failed to set trace callback option on OpenH264 decoder (status=%ld)",
+					         status);
 					goto EXCEPTION;
 				}
 
 				status = (*sys->pDecoder)->SetOption(
-						 sys->pDecoder,
-						 DECODER_OPTION_TRACE_CALLBACK_CONTEXT,
-						 &h264);
+				             sys->pDecoder,
+				             DECODER_OPTION_TRACE_CALLBACK_CONTEXT,
+				             &h264);
 
 				if (status != 0)
 				{
-					WLog_ERR(TAG, "Failed to set trace callback context option on OpenH264 decoder (status=%ld)",
-						 status);
+					WLog_ERR(TAG,
+					         "Failed to set trace callback context option on OpenH264 decoder (status=%ld)",
+					         status);
 					goto EXCEPTION;
 				}
 			}
@@ -1221,10 +1248,8 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 	}
 
 	return TRUE;
-
 EXCEPTION:
 	openh264_uninit(h264);
-
 	return FALSE;
 }
 
@@ -1257,7 +1282,8 @@ struct _H264_CONTEXT_LIBAVCODEC
 };
 typedef struct _H264_CONTEXT_LIBAVCODEC H264_CONTEXT_LIBAVCODEC;
 
-static int libavcodec_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize, UINT32 plane)
+static int libavcodec_decompress(H264_CONTEXT* h264, BYTE* pSrcData,
+                                 UINT32 SrcSize, UINT32 plane)
 {
 	int status;
 	int gotFrame = 0;
@@ -1265,13 +1291,11 @@ static int libavcodec_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcS
 	H264_CONTEXT_LIBAVCODEC* sys = (H264_CONTEXT_LIBAVCODEC*) h264->pSystemData;
 	BYTE** pYUVData = h264->pYUVData[plane];
 	INT32* iStride = h264->iStride[plane];
-
 	av_init_packet(&packet);
-
 	packet.data = pSrcData;
 	packet.size = SrcSize;
-
-	status = avcodec_decode_video2(sys->codecContext, sys->videoFrame, &gotFrame, &packet);
+	status = avcodec_decode_video2(sys->codecContext, sys->videoFrame, &gotFrame,
+	                               &packet);
 
 	if (status < 0)
 	{
@@ -1280,11 +1304,12 @@ static int libavcodec_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcS
 	}
 
 #if 0
-	WLog_INFO(TAG, "libavcodec_decompress: frame decoded (status=%d, gotFrame=%d, width=%d, height=%d, Y=[%p,%d], U=[%p,%d], V=[%p,%d])",
-		  status, gotFrame, sys->videoFrame->width, sys->videoFrame->height,
-		  sys->videoFrame->data[0], sys->videoFrame->linesize[0],
-			sys->videoFrame->data[1], sys->videoFrame->linesize[1],
-			sys->videoFrame->data[2], sys->videoFrame->linesize[2]);
+	WLog_INFO(TAG,
+	          "libavcodec_decompress: frame decoded (status=%d, gotFrame=%d, width=%d, height=%d, Y=[%p,%d], U=[%p,%d], V=[%p,%d])",
+	          status, gotFrame, sys->videoFrame->width, sys->videoFrame->height,
+	          sys->videoFrame->data[0], sys->videoFrame->linesize[0],
+	          sys->videoFrame->data[1], sys->videoFrame->linesize[1],
+	          sys->videoFrame->data[2], sys->videoFrame->linesize[2]);
 #endif
 
 	if (gotFrame)
@@ -1292,11 +1317,9 @@ static int libavcodec_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcS
 		pYUVData[0] = sys->videoFrame->data[0];
 		pYUVData[1] = sys->videoFrame->data[1];
 		pYUVData[2] = sys->videoFrame->data[2];
-
 		iStride[0] = sys->videoFrame->linesize[0];
 		iStride[1] = sys->videoFrame->linesize[1];
 		iStride[2] = sys->videoFrame->linesize[2];
-
 		h264->width = sys->videoFrame->width;
 		h264->height = sys->videoFrame->height;
 	}
@@ -1336,7 +1359,6 @@ static void libavcodec_uninit(H264_CONTEXT* h264)
 static BOOL libavcodec_init(H264_CONTEXT* h264)
 {
 	H264_CONTEXT_LIBAVCODEC* sys;
-
 	sys = (H264_CONTEXT_LIBAVCODEC*) calloc(1, sizeof(H264_CONTEXT_LIBAVCODEC));
 
 	if (!sys)
@@ -1345,9 +1367,7 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 	}
 
 	h264->pSystemData = (void*) sys;
-
 	avcodec_register_all();
-
 	sys->codec = avcodec_find_decoder(CODEC_ID_H264);
 
 	if (!sys->codec)
@@ -1392,10 +1412,8 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 	}
 
 	return TRUE;
-
 EXCEPTION:
 	libavcodec_uninit(h264);
-
 	return FALSE;
 }
 
@@ -1410,17 +1428,19 @@ static H264_CONTEXT_SUBSYSTEM g_Subsystem_libavcodec =
 #endif
 
 static BOOL check_rect(const H264_CONTEXT* h264, const RECTANGLE_16* rect,
-		       UINT32 nDstWidth, UINT32 nDstHeight)
+                       UINT32 nDstWidth, UINT32 nDstHeight)
 {
 	/* Check, if the output rectangle is valid in decoded h264 frame. */
 	if ((rect->right > h264->width) || (rect->left > h264->width))
 		return FALSE;
+
 	if ((rect->top > h264->height) || (rect->bottom > h264->height))
 		return FALSE;
 
 	/* Check, if the output rectangle is valid in destination buffer. */
 	if ((rect->right > nDstWidth) || (rect->left > nDstWidth))
 		return FALSE;
+
 	if ((rect->bottom > nDstHeight) || (rect->top > nDstHeight))
 		return FALSE;
 
@@ -1428,9 +1448,9 @@ static BOOL check_rect(const H264_CONTEXT* h264, const RECTANGLE_16* rect,
 }
 
 static BOOL avc_yuv_to_rgb(H264_CONTEXT* h264, const RECTANGLE_16* regionRects,
-			   UINT32 numRegionRects, UINT32 nDstWidth,
-			   UINT32 nDstHeight, UINT32 nDstStep, BYTE* pDstData,
-			   DWORD DstFormat, BOOL use444)
+                           UINT32 numRegionRects, UINT32 nDstWidth,
+                           UINT32 nDstHeight, UINT32 nDstStep, BYTE* pDstData,
+                           DWORD DstFormat, BOOL use444)
 {
 	UINT32 x;
 	BYTE* pDstPoint;
@@ -1439,9 +1459,8 @@ static BOOL avc_yuv_to_rgb(H264_CONTEXT* h264, const RECTANGLE_16* regionRects,
 	const BYTE* pYUVPoint[3];
 	primitives_t* prims = primitives_get();
 
-	for (x=0; x<numRegionRects; x++)
+	for (x = 0; x < numRegionRects; x++)
 	{
-
 		const RECTANGLE_16* rect = &(regionRects[x]);
 		const UINT32* iStride;
 		BYTE** ppYUVData;
@@ -1458,16 +1477,15 @@ static BOOL avc_yuv_to_rgb(H264_CONTEXT* h264, const RECTANGLE_16* regionRects,
 		}
 
 		if (!check_rect(h264, rect, nDstWidth, nDstHeight))
-			return -1003;
+			return FALSE;
 
 		width = rect->right - rect->left;
 		height = rect->bottom - rect->top;
-
 		pDstPoint = pDstData + rect->top * nDstStep + rect->left * 4;
-
 		pYUVPoint[0] = ppYUVData[0] + rect->top * iStride[0] + rect->left;
 		pYUVPoint[1] = ppYUVData[1];
 		pYUVPoint[2] = ppYUVData[2];
+
 		if (use444)
 		{
 			pYUVPoint[1] += rect->top * iStride[1] + rect->left;
@@ -1475,10 +1493,9 @@ static BOOL avc_yuv_to_rgb(H264_CONTEXT* h264, const RECTANGLE_16* regionRects,
 		}
 		else
 		{
-			pYUVPoint[1] += rect->top/2 * iStride[1] + rect->left/2;
-			pYUVPoint[2] += rect->top/2 * iStride[2] + rect->left/2;
+			pYUVPoint[1] += rect->top / 2 * iStride[1] + rect->left / 2;
+			pYUVPoint[2] += rect->top / 2 * iStride[2] + rect->left / 2;
 		}
-
 
 		roi.width = width;
 		roi.height = height;
@@ -1486,16 +1503,17 @@ static BOOL avc_yuv_to_rgb(H264_CONTEXT* h264, const RECTANGLE_16* regionRects,
 		if (use444)
 		{
 			if (prims->YUV444ToRGB_8u_P3AC4R(
-				       pYUVPoint, iStride, pDstPoint,
-				       nDstStep, &roi) != PRIMITIVES_SUCCESS)
+			        pYUVPoint, iStride, pDstPoint, nDstStep,
+			        DstFormat, &roi) != PRIMITIVES_SUCCESS)
 			{
 				return FALSE;
 			}
 		}
 		else
 		{
-			if (prims->YUV420ToRGB_8u_P3AC4R(pYUVPoint, iStride, pDstPoint,
-						      nDstStep, &roi) != PRIMITIVES_SUCCESS)
+			if (prims->YUV420ToRGB_8u_P3AC4R(
+			        pYUVPoint, iStride, pDstPoint, nDstStep,
+			        DstFormat, &roi) != PRIMITIVES_SUCCESS)
 				return FALSE;
 		}
 	}
@@ -1504,9 +1522,9 @@ static BOOL avc_yuv_to_rgb(H264_CONTEXT* h264, const RECTANGLE_16* regionRects,
 }
 
 INT32 avc420_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
-			BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep,
-			UINT32 nDstWidth, UINT32 nDstHeight,
-			RECTANGLE_16* regionRects, UINT32 numRegionRects)
+                        BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep,
+                        UINT32 nDstWidth, UINT32 nDstHeight,
+                        RECTANGLE_16* regionRects, UINT32 numRegionRects)
 {
 	int status;
 
@@ -1522,15 +1540,15 @@ INT32 avc420_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 		return status;
 
 	if (!avc_yuv_to_rgb(h264, regionRects, numRegionRects, nDstWidth,
-			    nDstHeight, nDstStep, pDstData, DstFormat, FALSE))
+	                    nDstHeight, nDstStep, pDstData, DstFormat, FALSE))
 		return -1002;
 
 	return 1;
 }
 
 INT32 avc420_compress(H264_CONTEXT* h264, BYTE* pSrcData, DWORD SrcFormat,
-		      UINT32 nSrcStep, UINT32 nSrcWidth, UINT32 nSrcHeight,
-		      BYTE** ppDstData, UINT32* pDstSize)
+                      UINT32 nSrcStep, UINT32 nSrcWidth, UINT32 nSrcHeight,
+                      BYTE** ppDstData, UINT32* pDstSize)
 {
 	int status = -1;
 	prim_size_t roi;
@@ -1547,29 +1565,28 @@ INT32 avc420_compress(H264_CONTEXT* h264, BYTE* pSrcData, DWORD SrcFormat,
 
 	iStride =  h264->iStride[0];
 	pYUVData = h264->pYUVData[0];
-
 	nWidth = (nSrcWidth + 1) & ~1;
 	nHeight = (nSrcHeight + 1) & ~1;
 
 	if (!(pYUVData[0] = (BYTE*) malloc(nWidth * nHeight)))
 		return -1;
+
 	iStride[0] = nWidth;
 
 	if (!(pYUVData[1] = (BYTE*) malloc(nWidth * nHeight)))
 		goto error_1;
+
 	iStride[1] = nWidth / 2;
 
 	if (!(pYUVData[2] = (BYTE*) malloc(nWidth * nHeight)))
 		goto error_2;
-	iStride[2] = nWidth / 2;
 
+	iStride[2] = nWidth / 2;
 	roi.width = nSrcWidth;
 	roi.height = nSrcHeight;
-
-	prims->RGBToYUV420_8u_P3AC4R(pSrcData, nSrcStep, pYUVData, iStride, &roi);
-
+	prims->RGBToYUV420_8u_P3AC4R(pSrcData, SrcFormat, nSrcStep, pYUVData, iStride,
+	                             &roi);
 	status = h264->subsystem->Compress(h264, ppDstData, pDstSize, 0);
-
 	free(pYUVData[2]);
 	pYUVData[2] = NULL;
 error_2:
@@ -1578,21 +1595,20 @@ error_2:
 error_1:
 	free(pYUVData[0]);
 	pYUVData[0] = NULL;
-
 	return status;
 }
 
 INT32 avc444_compress(H264_CONTEXT* h264, BYTE* pSrcData, DWORD SrcFormat,
-		      UINT32 nSrcStep, UINT32 nSrcWidth, UINT32 nSrcHeight,
-		      BYTE* op, BYTE** ppDstData, UINT32* pDstSize,
-		      BYTE** ppAuxDstData, UINT32* pAuxDstSize)
+                      UINT32 nSrcStep, UINT32 nSrcWidth, UINT32 nSrcHeight,
+                      BYTE* op, BYTE** ppDstData, UINT32* pDstSize,
+                      BYTE** ppAuxDstData, UINT32* pAuxDstSize)
 {
 	return -1;
 }
 
 static BOOL avc444_process_rect(H264_CONTEXT* h264,
-				const RECTANGLE_16* rect,
-				UINT32 nDstWidth, UINT32 nDstHeight)
+                                const RECTANGLE_16* rect,
+                                UINT32 nDstWidth, UINT32 nDstHeight)
 {
 	const primitives_t* prims = primitives_get();
 	prim_size_t roi;
@@ -1600,7 +1616,6 @@ static BOOL avc444_process_rect(H264_CONTEXT* h264,
 	const BYTE* pYUVMainPoint[3];
 	const BYTE* pYUVAuxPoint[3];
 	BYTE* pYUVDstPoint[3];
-
 	UINT32* piDstStride = h264->iYUV444Stride;
 	BYTE** ppYUVDstData = h264->pYUV444Data;
 	const UINT32* piAuxStride = h264->iStride[1];
@@ -1613,41 +1628,39 @@ static BOOL avc444_process_rect(H264_CONTEXT* h264,
 
 	width = rect->right - rect->left + 1;
 	height = rect->bottom - rect->top + 1;
-
 	roi.width = width;
 	roi.height = height;
-
 	pYUVMainPoint[0] = ppYUVMainData[0] + rect->top * piMainStride[0] +
-			   rect->left;
-	pYUVMainPoint[1] = ppYUVMainData[1] + rect->top/2 * piMainStride[1] +
-			   rect->left/2;
-	pYUVMainPoint[2] = ppYUVMainData[2] + rect->top/2 * piMainStride[2] +
-			   rect->left/2;
+	                   rect->left;
+	pYUVMainPoint[1] = ppYUVMainData[1] + rect->top / 2 * piMainStride[1] +
+	                   rect->left / 2;
+	pYUVMainPoint[2] = ppYUVMainData[2] + rect->top / 2 * piMainStride[2] +
+	                   rect->left / 2;
 	pYUVDstPoint[0] = ppYUVDstData[0] + rect->top * piDstStride[0] +
-			  rect->left;
+	                  rect->left;
 	pYUVDstPoint[1] = ppYUVDstData[1] + rect->top * piDstStride[1] +
-			  rect->left;
+	                  rect->left;
 	pYUVDstPoint[2] = ppYUVDstData[2] + rect->top * piDstStride[2] +
-			  rect->left;
-
+	                  rect->left;
 	pYUVAuxPoint[0] = ppYUVAuxData[0] + rect->top * piAuxStride[0] +
-			  rect->left;
-	pYUVAuxPoint[1] = ppYUVAuxData[1] + rect->top/2 * piAuxStride[1] +
-			  rect->left/2;
-	pYUVAuxPoint[2] = ppYUVAuxData[2] + rect->top/2 * piAuxStride[2] +
-			  rect->left/2;
+	                  rect->left;
+	pYUVAuxPoint[1] = ppYUVAuxData[1] + rect->top / 2 * piAuxStride[1] +
+	                  rect->left / 2;
+	pYUVAuxPoint[2] = ppYUVAuxData[2] + rect->top / 2 * piAuxStride[2] +
+	                  rect->left / 2;
 	pYUVDstPoint[0] = ppYUVDstData[0] + rect->top * piDstStride[0] +
-			  rect->left;
+	                  rect->left;
 	pYUVDstPoint[1] = ppYUVDstData[1] + rect->top * piDstStride[1] +
-			  rect->left;
+	                  rect->left;
 	pYUVDstPoint[2] = ppYUVDstData[2] + rect->top * piDstStride[2] +
-			  rect->left;
+	                  rect->left;
 
 	if (prims->YUV420CombineToYUV444(pYUVMainPoint, piMainStride,
-					 NULL, NULL,
-					 pYUVDstPoint, piDstStride,
-					 &roi) != PRIMITIVES_SUCCESS)
+	                                 NULL, NULL,
+	                                 pYUVDstPoint, piDstStride,
+	                                 &roi) != PRIMITIVES_SUCCESS)
 		return FALSE;
+
 	return TRUE;
 }
 
@@ -1655,20 +1668,23 @@ static void avc444_rectangle_max(RECTANGLE_16* dst, const RECTANGLE_16* add)
 {
 	if (dst->left > add->left)
 		dst->left = add->left;
+
 	if (dst->right < add->right)
 		dst->right = add->right;
+
 	if (dst->top > add->top)
 		dst->top = add->top;
+
 	if (dst->bottom < add->bottom)
 		dst->bottom = add->bottom;
 }
 
 static BOOL avc444_combine_yuv(H264_CONTEXT* h264,
-			       const RECTANGLE_16* mainRegionRects,
-			       UINT32 numMainRegionRect,
-			       const RECTANGLE_16* auxRegionRects,
-			       UINT32 numAuxRegionRect, UINT32 nDstWidth,
-			       DWORD nDstHeight, UINT32 nDstStep)
+                               const RECTANGLE_16* mainRegionRects,
+                               UINT32 numMainRegionRect,
+                               const RECTANGLE_16* auxRegionRects,
+                               UINT32 numAuxRegionRect, UINT32 nDstWidth,
+                               DWORD nDstHeight, UINT32 nDstStep)
 {
 	UINT32 x;
 	RECTANGLE_16 rect;
@@ -1681,25 +1697,22 @@ static BOOL avc444_combine_yuv(H264_CONTEXT* h264,
 	if ((piMainStride[0] != piDstStride[0]) ||
 	    (piDstSize[0] != piMainStride[0] * padDstHeight))
 	{
-		for (x=0; x<3; x++)
+		for (x = 0; x < 3; x++)
 		{
 			BYTE* ppYUVTmpData;
-
 			piDstStride[x] = piMainStride[0];
 			piDstSize[x] = piDstStride[x] * padDstHeight;
-
 			ppYUVTmpData = realloc(ppYUVDstData[x], piDstSize[x]);
 
 			if (!ppYUVTmpData)
 				goto fail;
 
 			ppYUVDstData[x] = ppYUVTmpData;
-
 			memset(ppYUVDstData[x], 0, piDstSize[x]);
 		}
 	}
 
-	for (x=0; x<3; x++)
+	for (x = 0; x < 3; x++)
 	{
 		if (!ppYUVDstData[x] || (piDstSize[x] == 0) || (piDstStride[x] == 0))
 		{
@@ -1712,25 +1725,24 @@ static BOOL avc444_combine_yuv(H264_CONTEXT* h264,
 	rect.bottom = 0;
 	rect.left = 0xFFFF;
 	rect.top = 0xFFFF;
-	for (x=0; x<numMainRegionRect; x++)
+
+	for (x = 0; x < numMainRegionRect; x++)
 		avc444_rectangle_max(&rect, &mainRegionRects[x]);
 
-	for (x=0; x<numAuxRegionRect; x++)
+	for (x = 0; x < numAuxRegionRect; x++)
 		avc444_rectangle_max(&rect, &auxRegionRects[x]);
 
 	if (!avc444_process_rect(h264, &rect, nDstWidth, nDstHeight))
 		goto fail;
 
 	return TRUE;
-
 fail:
-	free (ppYUVDstData[0]);
-	free (ppYUVDstData[1]);
-	free (ppYUVDstData[2]);
+	free(ppYUVDstData[0]);
+	free(ppYUVDstData[1]);
+	free(ppYUVDstData[2]);
 	ppYUVDstData[0] = NULL;
 	ppYUVDstData[1] = NULL;
 	ppYUVDstData[2] = NULL;
-
 	return FALSE;
 }
 
@@ -1746,18 +1758,17 @@ static double avg(UINT64* count, double old, double size)
 	double tmp = size + *count * old;
 	(*count)++;
 	tmp = tmp / *count;
-
 	return tmp;
 }
 #endif
 
 INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op,
-			RECTANGLE_16* regionRects, UINT32 numRegionRects,
-			BYTE* pSrcData, UINT32 SrcSize,
-			RECTANGLE_16* auxRegionRects, UINT32 numAuxRegionRect,
-			BYTE* pAuxSrcData, UINT32 AuxSrcSize,
-			BYTE* pDstData, DWORD DstFormat,
-			UINT32 nDstStep, UINT32 nDstWidth, UINT32 nDstHeight)
+                        RECTANGLE_16* regionRects, UINT32 numRegionRects,
+                        BYTE* pSrcData, UINT32 SrcSize,
+                        RECTANGLE_16* auxRegionRects, UINT32 numAuxRegionRect,
+                        BYTE* pAuxSrcData, UINT32 AuxSrcSize,
+                        BYTE* pDstData, DWORD DstFormat,
+                        UINT32 nDstStep, UINT32 nDstWidth, UINT32 nDstHeight)
 {
 	INT32 status = -1;
 	UINT32 numYuvRects = 0;
@@ -1769,72 +1780,82 @@ INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op,
 	    !pSrcData || !pDstData)
 		return -1001;
 
-	switch(op)
+	switch (op)
 	{
-	case 0: /* YUV420 in stream 1
+		case 0: /* YUV420 in stream 1
 		 * Chroma420 in stream 2 */
-		numYuvRects = numRegionRects;
-		yuvRects = regionRects;
-		numChromaRects = numAuxRegionRect;
-		chromaRects = auxRegionRects;
-		status = h264->subsystem->Decompress(h264, pSrcData, SrcSize, 0);
-		if (status >= 0)
-			status = h264->subsystem->Decompress(h264, pAuxSrcData, AuxSrcSize, 1);
-		break;
-	case 2: /* Chroma420 in stream 1 */
-		status = h264->subsystem->Decompress(h264, pSrcData, SrcSize, 1);
-		numChromaRects = numRegionRects;
-		chromaRects = regionRects;
-		break;
-	case 1: /* YUV420 in stream 1 */
-		status = h264->subsystem->Decompress(h264, pSrcData, SrcSize, 0);
-		numYuvRects = numRegionRects;
-		yuvRects = regionRects;
-		break;
-	default: /* WTF? */
-		break;
+			numYuvRects = numRegionRects;
+			yuvRects = regionRects;
+			numChromaRects = numAuxRegionRect;
+			chromaRects = auxRegionRects;
+			status = h264->subsystem->Decompress(h264, pSrcData, SrcSize, 0);
+
+			if (status >= 0)
+				status = h264->subsystem->Decompress(h264, pAuxSrcData, AuxSrcSize, 1);
+
+			break;
+
+		case 2: /* Chroma420 in stream 1 */
+			status = h264->subsystem->Decompress(h264, pSrcData, SrcSize, 1);
+			numChromaRects = numRegionRects;
+			chromaRects = regionRects;
+			break;
+
+		case 1: /* YUV420 in stream 1 */
+			status = h264->subsystem->Decompress(h264, pSrcData, SrcSize, 0);
+			numYuvRects = numRegionRects;
+			yuvRects = regionRects;
+			break;
+
+		default: /* WTF? */
+			break;
 	}
 
 #if defined(AVC444_FRAME_STAT)
-	switch(op)
+
+	switch (op)
 	{
-	case 0:
-		op1sum = avg(&op1, op1sum, SrcSize + AuxSrcSize);
-		break;
-	case 1:
-		op2sum = avg(&op2, op2sum, SrcSize);
-		break;
-	case 2:
-		op3sum = avg(&op3, op3sum, SrcSize);
-		break;
-	default:
-		break;
+		case 0:
+			op1sum = avg(&op1, op1sum, SrcSize + AuxSrcSize);
+			break;
+
+		case 1:
+			op2sum = avg(&op2, op2sum, SrcSize);
+			break;
+
+		case 2:
+			op3sum = avg(&op3, op3sum, SrcSize);
+			break;
+
+		default:
+			break;
 	}
 
-	WLog_INFO(TAG, "luma=%llu [avg=%lf] chroma=%llu [avg=%lf] combined=%llu [avg=%lf]",
-		  op1, op1sum, op2, op2sum, op3, op3sum);
+	WLog_INFO(TAG,
+	          "luma=%llu [avg=%lf] chroma=%llu [avg=%lf] combined=%llu [avg=%lf]",
+	          op1, op1sum, op2, op2sum, op3, op3sum);
 #endif
 
 	if (status >= 0)
 	{
 		if (!avc444_combine_yuv(h264, yuvRects,	numYuvRects,
-					chromaRects, numChromaRects,
-					nDstWidth, nDstHeight, nDstStep))
+		                        chromaRects, numChromaRects,
+		                        nDstWidth, nDstHeight, nDstStep))
 			status = -1002;
 		else
 		{
 			if (numYuvRects > 0)
 			{
 				if (!avc_yuv_to_rgb(h264, regionRects, numRegionRects, nDstWidth,
-						    nDstHeight, nDstStep, pDstData, DstFormat, TRUE))
+				                    nDstHeight, nDstStep, pDstData, DstFormat, TRUE))
 					status = -1003;
 			}
 
 			if (numChromaRects > 0)
 			{
 				if (!avc_yuv_to_rgb(h264, auxRegionRects, numAuxRegionRect,
-						    nDstWidth, nDstHeight, nDstStep, pDstData,
-						    DstFormat, TRUE))
+				                    nDstWidth, nDstHeight, nDstStep, pDstData,
+				                    DstFormat, TRUE))
 					status = -1004;
 			}
 		}
@@ -1846,38 +1867,43 @@ INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op,
 BOOL h264_context_init(H264_CONTEXT* h264)
 {
 #if defined(_WIN32) && defined(WITH_MEDIA_FOUNDATION)
+
 	if (g_Subsystem_MF.Init(h264))
 	{
 		h264->subsystem = &g_Subsystem_MF;
 		return TRUE;
 	}
-#endif
 
+#endif
 #ifdef WITH_LIBAVCODEC
+
 	if (g_Subsystem_libavcodec.Init(h264))
 	{
 		h264->subsystem = &g_Subsystem_libavcodec;
 		return TRUE;
 	}
-#endif
 
+#endif
 #ifdef WITH_OPENH264
+
 	if (g_Subsystem_OpenH264.Init(h264))
 	{
 		h264->subsystem = &g_Subsystem_OpenH264;
 		return TRUE;
 	}
-#endif
 
+#endif
 #ifdef WITH_X264
+
 	if (g_Subsystem_x264.Init(h264))
 	{
 		h264->subsystem = &g_Subsystem_x264;
 		return TRUE;
 	}
-#endif
 
-	return FALSE;
+#endif
+	h264->subsystem = &g_Subsystem_dummy;
+	return TRUE;
 }
 
 BOOL h264_context_reset(H264_CONTEXT* h264, UINT32 width, UINT32 height)
@@ -1887,21 +1913,17 @@ BOOL h264_context_reset(H264_CONTEXT* h264, UINT32 width, UINT32 height)
 
 	h264->width = width;
 	h264->height = height;
-
 	return TRUE;
 }
 
 H264_CONTEXT* h264_context_new(BOOL Compressor)
 {
 	H264_CONTEXT* h264;
-
 	h264 = (H264_CONTEXT*) calloc(1, sizeof(H264_CONTEXT));
 
 	if (h264)
 	{
 		h264->Compressor = Compressor;
-
-		h264->subsystem = &g_Subsystem_dummy;
 
 		if (Compressor)
 		{
@@ -1925,10 +1947,9 @@ void h264_context_free(H264_CONTEXT* h264)
 	if (h264)
 	{
 		h264->subsystem->Uninit(h264);
-
-		free (h264->pYUV444Data[0]);
-		free (h264->pYUV444Data[1]);
-		free (h264->pYUV444Data[2]);
+		free(h264->pYUV444Data[0]);
+		free(h264->pYUV444Data[1]);
+		free(h264->pYUV444Data[2]);
 		free(h264);
 	}
 }

@@ -195,7 +195,6 @@ endif()
 # primitives
 
 set(PRIMITIVES_SRCS
-	primitives/prim_16to32bpp.c
 	primitives/prim_add.c
 	primitives/prim_andor.c
 	primitives/prim_alphaComp.c
@@ -210,7 +209,6 @@ set(PRIMITIVES_SRCS
 	primitives/prim_internal.h)
 
 set(PRIMITIVES_OPT_SRCS
-	primitives/prim_16to32bpp_opt.c
 	primitives/prim_add_opt.c
 	primitives/prim_andor_opt.c
 	primitives/prim_alphaComp_opt.c

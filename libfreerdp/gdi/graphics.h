@@ -3,6 +3,8 @@
  * Graphical Objects
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2016 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,14 +24,12 @@
 
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/graphics.h>
+#include <freerdp/api.h>
 
-HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, int width, int height, int bpp, BYTE* data);
+FREERDP_LOCAL HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, UINT32 width,
+        UINT32 height,
+        UINT32 format, BYTE* data);
 
-BOOL gdi_Bitmap_New(rdpContext* context, rdpBitmap* bitmap);
-void gdi_Bitmap_Free(rdpContext* context, rdpBitmap* bitmap);
-BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
-		BYTE* data, int width, int height, int bpp, int length,
-                BOOL compressed, int codec_id);
-BOOL gdi_register_graphics(rdpGraphics* graphics);
+FREERDP_LOCAL BOOL gdi_register_graphics(rdpGraphics* graphics);
 
 #endif /* __GDI_GRAPHICS_H */

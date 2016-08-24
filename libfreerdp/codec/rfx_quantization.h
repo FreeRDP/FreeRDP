@@ -21,10 +21,14 @@
 #define __RFX_QUANTIZATION_H
 
 #include <freerdp/codec/rfx.h>
+#include <freerdp/api.h>
 
-void rfx_quantization_decode(INT16* buffer, const UINT32* quantization_values);
-void rfx_quantization_encode(INT16* buffer, const UINT32* quantization_values);
+FREERDP_LOCAL void rfx_quantization_decode(INT16* buffer,
+        const UINT32* quantization_values);
+FREERDP_LOCAL void rfx_quantization_encode(INT16* buffer,
+        const UINT32* quantization_values);
 
-void rfx_quantization_decode_block(const primitives_t *prims, INT16* buffer, int buffer_size, UINT32 factor);
+FREERDP_LOCAL void rfx_quantization_decode_block(const primitives_t* prims,
+        INT16* buffer, int buffer_size, UINT32 factor);
 
 #endif /* __RFX_QUANTIZATION_H */

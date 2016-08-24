@@ -6,10 +6,6 @@
 	android:versionCode="3"
 	android:versionName="e83f97b" >
 
-	<uses-sdk
-		android:targetSdkVersion="21"
-		android:minSdkVersion="14"/>
-
 	<uses-permission android:name="android.permission.INTERNET"/>
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>

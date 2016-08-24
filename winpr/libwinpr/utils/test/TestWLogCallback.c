@@ -6,7 +6,7 @@
 
 typedef struct 
 {
-	int level;
+	UINT32 level;
 	char *msg;
 	char *channel;
 } test_t;

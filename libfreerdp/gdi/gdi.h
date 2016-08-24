@@ -22,7 +22,14 @@
 
 #include "graphics.h"
 
-gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp, BYTE* data);
-void gdi_bitmap_free_ex(gdiBitmap* gdi_bmp);
+#include <freerdp/api.h>
+
+FREERDP_LOCAL BOOL gdi_bitmap_update(rdpContext* context,
+                                     const BITMAP_UPDATE* bitmapUpdate);
+
+FREERDP_LOCAL gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height,
+        int bpp,
+        BYTE* data);
+FREERDP_LOCAL void gdi_bitmap_free_ex(gdiBitmap* gdi_bmp);
 
 #endif /* __GDI_CORE_H */

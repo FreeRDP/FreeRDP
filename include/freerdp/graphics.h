@@ -3,6 +3,8 @@
  * Graphical Objects
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2016 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,14 +36,15 @@ extern "C" {
 #endif
 
 /* Bitmap Class */
-
 typedef BOOL (*pBitmap_New)(rdpContext* context, rdpBitmap* bitmap);
 typedef void (*pBitmap_Free)(rdpContext* context, rdpBitmap* bitmap);
 typedef BOOL (*pBitmap_Paint)(rdpContext* context, rdpBitmap* bitmap);
 typedef BOOL (*pBitmap_Decompress)(rdpContext* context, rdpBitmap* bitmap,
-		BYTE* data, int width, int height, int bpp, int length,
-		BOOL compressed, int codec_id);
-typedef BOOL (*pBitmap_SetSurface)(rdpContext* context, rdpBitmap* bitmap, BOOL primary);
+                                   const BYTE* data, UINT32 width, UINT32 height,
+                                   UINT32 bpp, UINT32 length, BOOL compressed,
+                                   UINT32 codec_id);
+typedef BOOL (*pBitmap_SetSurface)(rdpContext* context, rdpBitmap* bitmap,
+                                   BOOL primary);
 
 struct rdp_bitmap
 {
@@ -59,7 +62,7 @@ struct rdp_bitmap
 	UINT32 bottom; /* 19 */
 	UINT32 width; /* 20 */
 	UINT32 height; /* 21 */
-	UINT32 bpp; /* 22 */
+	UINT32 format; /* 22 */
 	UINT32 flags; /* 23 */
 	UINT32 length; /* 24 */
 	BYTE* data; /* 25 */
@@ -71,21 +74,18 @@ struct rdp_bitmap
 };
 
 FREERDP_API rdpBitmap* Bitmap_Alloc(rdpContext* context);
-FREERDP_API BOOL Bitmap_New(rdpContext* context, rdpBitmap* bitmap);
-FREERDP_API void Bitmap_Free(rdpContext* context, rdpBitmap* bitmap);
-FREERDP_API BOOL Bitmap_Register(rdpContext* context, rdpBitmap* bitmap);
-FREERDP_API BOOL Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
-		BYTE* data, int width, int height, int bpp, int length, BOOL compressed);
-FREERDP_API void Bitmap_SetRectangle(rdpContext* context, rdpBitmap* bitmap,
-		UINT16 left, UINT16 top, UINT16 right, UINT16 bottom);
-FREERDP_API void Bitmap_SetDimensions(rdpContext* context, rdpBitmap* bitmap, UINT16 width, UINT16 height);
-FREERDP_API BOOL Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL primary);
+FREERDP_API BOOL Bitmap_SetRectangle(rdpBitmap* bitmap,
+                                     UINT16 left,
+                                     UINT16 top, UINT16 right, UINT16 bottom);
+FREERDP_API BOOL Bitmap_SetDimensions(rdpBitmap* bitmap,
+                                      UINT16 width,
+                                      UINT16 height);
 
 /* Pointer Class */
 
 typedef BOOL (*pPointer_New)(rdpContext* context, rdpPointer* pointer);
 typedef void (*pPointer_Free)(rdpContext* context, rdpPointer* pointer);
-typedef BOOL (*pPointer_Set)(rdpContext* context, rdpPointer* pointer);
+typedef BOOL (*pPointer_Set)(rdpContext* context, const rdpPointer* pointer);
 typedef BOOL (*pPointer_SetNull)(rdpContext* context);
 typedef BOOL (*pPointer_SetDefault)(rdpContext* context);
 typedef BOOL (*pPointer_SetPosition)(rdpContext* context, UINT32 x, UINT32 y);
@@ -114,20 +114,18 @@ struct rdp_pointer
 };
 
 FREERDP_API rdpPointer* Pointer_Alloc(rdpContext* context);
-FREERDP_API BOOL Pointer_New(rdpContext* context, rdpPointer* pointer);
-FREERDP_API void Pointer_Free(rdpContext* context, rdpPointer* pointer);
-FREERDP_API BOOL Pointer_Set(rdpContext* context, rdpPointer* pointer);
-FREERDP_API BOOL Pointer_SetNull(rdpContext* context);
-FREERDP_API BOOL Pointer_SetDefault(rdpContext* context);
-FREERDP_API BOOL Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y);
 
 /* Glyph Class */
-
-typedef BOOL (*pGlyph_New)(rdpContext* context, rdpGlyph* glyph);
+typedef BOOL (*pGlyph_New)(rdpContext* context, const rdpGlyph* glyph);
 typedef void (*pGlyph_Free)(rdpContext* context, rdpGlyph* glyph);
-typedef BOOL (*pGlyph_Draw)(rdpContext* context, rdpGlyph* glyph, int x, int y);
-typedef BOOL (*pGlyph_BeginDraw)(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor, BOOL fOpRedundant);
-typedef BOOL (*pGlyph_EndDraw)(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor);
+typedef BOOL (*pGlyph_Draw)(rdpContext* context, const rdpGlyph* glyph,
+                            UINT32 x, UINT32 y, UINT32 w, UINT32 h,
+                            UINT32 sx, UINT32 sy, BOOL fOpRedundant);
+typedef BOOL (*pGlyph_BeginDraw)(rdpContext* context, UINT32 x, UINT32 y,
+                                 UINT32 width, UINT32 height, UINT32 bgcolor,
+                                 UINT32 fgcolor, BOOL fOpRedundant);
+typedef BOOL (*pGlyph_EndDraw)(rdpContext* context, UINT32 x, UINT32 y,
+                               UINT32 width, UINT32 height, UINT32 bgcolor, UINT32 fgcolor);
 
 struct rdp_glyph
 {
@@ -148,12 +146,8 @@ struct rdp_glyph
 	UINT32 paddingB[32 - 22]; /* 22 */
 };
 
-FREERDP_API rdpGlyph* Glyph_Alloc(rdpContext* context);
-FREERDP_API BOOL Glyph_New(rdpContext* context, rdpGlyph* glyph);
-FREERDP_API void Glyph_Free(rdpContext* context, rdpGlyph* glyph);
-FREERDP_API BOOL Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y);
-FREERDP_API BOOL Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor, BOOL fOpRedundant);
-FREERDP_API BOOL Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor);
+FREERDP_API rdpGlyph* Glyph_Alloc(rdpContext* context, INT32 x, INT32 y,
+                                  UINT32 cx, UINT32 cy, UINT32 cb, const BYTE* aj);
 
 /* Graphics Module */
 
@@ -166,9 +160,12 @@ struct rdp_graphics
 	UINT32 paddingA[16 - 4]; /* 4 */
 };
 
-FREERDP_API void graphics_register_bitmap(rdpGraphics* graphics, rdpBitmap* bitmap);
-FREERDP_API void graphics_register_pointer(rdpGraphics* graphics, rdpPointer* pointer);
-FREERDP_API void graphics_register_glyph(rdpGraphics* graphics, rdpGlyph* glyph);
+FREERDP_API void graphics_register_bitmap(rdpGraphics* graphics,
+        rdpBitmap* bitmap);
+FREERDP_API void graphics_register_pointer(rdpGraphics* graphics,
+        rdpPointer* pointer);
+FREERDP_API void graphics_register_glyph(rdpGraphics* graphics,
+        rdpGlyph* glyph);
 
 FREERDP_API rdpGraphics* graphics_new(rdpContext* context);
 FREERDP_API void graphics_free(rdpGraphics* graphics);

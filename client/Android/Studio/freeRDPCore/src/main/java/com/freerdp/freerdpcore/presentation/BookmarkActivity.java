@@ -510,7 +510,7 @@ public class BookmarkActivity extends PreferenceActivity implements
 	private void debugSettingsChanged(SharedPreferences sharedPreferences,
 			String key) {
 		if (key.equals("bookmark.debug_level")) {
-			int level = sharedPreferences.getInt(key, 0);
+			String level = sharedPreferences.getString(key, "INFO");
 			Preference pref = findPreference("bookmark.debug_level");
 			pref.setDefaultValue(level);
 		} else if (key.equals("bookmark.async_channel")) {
