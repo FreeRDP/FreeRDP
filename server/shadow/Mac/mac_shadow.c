@@ -268,6 +268,7 @@ int mac_shadow_capture_get_dirty_region(macShadowSubsystem* subsystem)
 	size_t numRects;
 	const CGRect* rects;
 	RECTANGLE_16 invalidRect;
+	rdpShadowSurface* surface = subsystem->server->surface;
 	
 	rects = CGDisplayStreamUpdateGetRects(subsystem->lastUpdate, kCGDisplayStreamUpdateDirtyRects, &numRects);
 	
@@ -290,7 +291,7 @@ int mac_shadow_capture_get_dirty_region(macShadowSubsystem* subsystem)
 			invalidRect.bottom /= 2;
 		}
 		
-		region16_union_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &invalidRect);
+		region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion), &invalidRect);
 	}
 	
 	return 0;
@@ -316,9 +317,6 @@ void (^mac_capture_stream_handler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfa
 	if (count < 1)
 		return;
 	
-	if ((count == 1) && subsystem->suppressOutput)
-		return;
-	
 	mac_shadow_capture_get_dirty_region(subsystem);
 		
 	surfaceRect.left = 0;
@@ -326,11 +324,11 @@ void (^mac_capture_stream_handler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfa
 	surfaceRect.right = surface->width;
 	surfaceRect.bottom = surface->height;
 		
-	region16_intersect_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &surfaceRect);
+	region16_intersect_rect(&(surface->invalidRegion), &(surface->invalidRegion), &surfaceRect);
 	
-	if (!region16_is_empty(&(subsystem->invalidRegion)))
+	if (!region16_is_empty(&(surface->invalidRegion)))
 	{
-		extents = region16_extents(&(subsystem->invalidRegion));
+		extents = region16_extents(&(surface->invalidRegion));
 
 		x = extents->left;
 		y = extents->top;
@@ -359,7 +357,9 @@ void (^mac_capture_stream_handler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfa
 			
 		count = ArrayList_Count(server->clients);
 			
+		EnterCriticalSection(&(surface->lock));
 		shadow_subsystem_frame_update((rdpShadowSubsystem *)subsystem);
+		LeaveCriticalSection(&(surface->lock));
 		
 		if (count == 1)
 		{
@@ -375,7 +375,7 @@ void (^mac_capture_stream_handler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfa
 		
 		ArrayList_Unlock(server->clients);
 			
-		region16_clear(&(subsystem->invalidRegion));
+		region16_clear(&(surface->invalidRegion));
 	}
 	
 	if (status != kCGDisplayStreamFrameStatusFrameComplete)
@@ -444,48 +444,15 @@ int mac_shadow_screen_grab(macShadowSubsystem* subsystem)
 
 int mac_shadow_subsystem_process_message(macShadowSubsystem* subsystem, wMessage* message)
 {
+	rdpShadowServer* server = subsystem->server;
+	rdpShadowSurface* surface = server->surface;
 	switch(message->id)
 	{
-		case SHADOW_MSG_IN_REFRESH_OUTPUT_ID:
-		{
-			UINT32 index;
-			SHADOW_MSG_IN_REFRESH_OUTPUT* msg = (SHADOW_MSG_IN_REFRESH_OUTPUT*) message->wParam;
-
-			if (msg->numRects)
-			{
-				for (index = 0; index < msg->numRects; index++)
-				{
-					region16_union_rect(&(subsystem->invalidRegion),
-							&(subsystem->invalidRegion), &msg->rects[index]);
-				}
-			}
-			else
-			{
-				RECTANGLE_16 refreshRect;
-
-				refreshRect.left = 0;
-				refreshRect.top = 0;
-				refreshRect.right = subsystem->width;
-				refreshRect.bottom = subsystem->height;
-
-				region16_union_rect(&(subsystem->invalidRegion),
-							&(subsystem->invalidRegion), &refreshRect);
-			}
+		case SHADOW_MSG_IN_REFRESH_REQUEST_ID:
+			EnterCriticalSection(&(surface->lock));
+			shadow_subsystem_frame_update((rdpShadowSubsystem *)subsystem);
+			LeaveCriticalSection(&(surface->lock));
 			break;
-		}
-		case SHADOW_MSG_IN_SUPPRESS_OUTPUT_ID:
-		{
-			SHADOW_MSG_IN_SUPPRESS_OUTPUT* msg = (SHADOW_MSG_IN_SUPPRESS_OUTPUT*) message->wParam;
-
-			subsystem->suppressOutput = (msg->allow) ? FALSE : TRUE;
-
-			if (msg->allow)
-			{
-				region16_union_rect(&(subsystem->invalidRegion),
-							&(subsystem->invalidRegion), &(msg->rect));
-			}
-			break;
-		}
 		default:
 			WLog_ERR(TAG, "Unknown message id: %u", message->id);
 			break;

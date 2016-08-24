@@ -763,9 +763,6 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 	if (count < 1)
 		return 1;
 
-	if ((count == 1) && subsystem->suppressOutput)
-		return 1;
-
 	surfaceRect.left = 0;
 	surfaceRect.top = 0;
 	surfaceRect.right = surface->width;
@@ -814,12 +811,12 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 
 	XUnlockDisplay(subsystem->display);
 
-	region16_union_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &invalidRect);
-	region16_intersect_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &surfaceRect);
+	region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion), &invalidRect);
+	region16_intersect_rect(&(surface->invalidRegion), &(surface->invalidRegion), &surfaceRect);
 
-	if (!region16_is_empty(&(subsystem->invalidRegion)))
+	if (!region16_is_empty(&(surface->invalidRegion)))
 	{
-		extents = region16_extents(&(subsystem->invalidRegion));
+		extents = region16_extents(&(surface->invalidRegion));
 
 		x = extents->left;
 		y = extents->top;
@@ -849,7 +846,7 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 			}
 		}
 
-		region16_clear(&(subsystem->invalidRegion));
+		region16_clear(&(surface->invalidRegion));
 	}
 
 	if (!subsystem->use_xshm)
@@ -868,46 +865,9 @@ int x11_shadow_subsystem_process_message(x11ShadowSubsystem* subsystem, wMessage
 {
 	switch(message->id)
 	{
-		case SHADOW_MSG_IN_REFRESH_OUTPUT_ID:
-		{
-			UINT32 index;
-			SHADOW_MSG_IN_REFRESH_OUTPUT* msg = (SHADOW_MSG_IN_REFRESH_OUTPUT*) message->wParam;
-
-			if (msg->numRects)
-			{
-				for (index = 0; index < msg->numRects; index++)
-				{
-					region16_union_rect(&(subsystem->invalidRegion),
-							&(subsystem->invalidRegion), &msg->rects[index]);
-				}
-			}
-			else
-			{
-				RECTANGLE_16 refreshRect;
-
-				refreshRect.left = 0;
-				refreshRect.top = 0;
-				refreshRect.right = subsystem->width;
-				refreshRect.bottom = subsystem->height;
-
-				region16_union_rect(&(subsystem->invalidRegion),
-							&(subsystem->invalidRegion), &refreshRect);
-			}
+		case SHADOW_MSG_IN_REFRESH_REQUEST_ID:
+			shadow_subsystem_frame_update((rdpShadowSubsystem *)subsystem);
 			break;
-		}
-		case SHADOW_MSG_IN_SUPPRESS_OUTPUT_ID:
-		{
-			SHADOW_MSG_IN_SUPPRESS_OUTPUT* msg = (SHADOW_MSG_IN_SUPPRESS_OUTPUT*) message->wParam;
-
-			subsystem->suppressOutput = (msg->allow) ? FALSE : TRUE;
-
-			if (msg->allow)
-			{
-				region16_union_rect(&(subsystem->invalidRegion),
-							&(subsystem->invalidRegion), &(msg->rect));
-			}
-			break;
-		}
 		default:
 			WLog_ERR(TAG, "Unknown message id: %u", message->id);
 			break;

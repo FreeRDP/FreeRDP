@@ -769,6 +769,12 @@ rdpShadowServer* shadow_server_new()
 	server->mayView = TRUE;
 	server->mayInteract = TRUE;
 
+	server->rfxMode = RLGR3;
+	server->h264RateControlMode = H264_RATECONTROL_VBR;
+	server->h264BitRate = 1000000;
+	server->h264FrameRate = 30;
+	server->h264QP = 0;
+
 	server->authentication = FALSE;
 
 	server->settings = freerdp_settings_new(FREERDP_SETTINGS_SERVER_MODE);

@@ -22,8 +22,8 @@ set(${MODULE_PREFIX}_SRCS
 	rdpgfx_main.h
 	rdpgfx_codec.c
 	rdpgfx_codec.h
-	rdpgfx_common.c
-	rdpgfx_common.h)
+	../rdpgfx_common.c
+	../rdpgfx_common.h)
 
 include_directories(..)
 

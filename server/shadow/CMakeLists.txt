@@ -45,6 +45,8 @@ set(${MODULE_PREFIX}_SRCS
 	shadow_rdpsnd.h
 	shadow_audin.c
 	shadow_audin.h
+	shadow_rdpgfx.c
+	shadow_rdpgfx.h
 	shadow_subsystem.c
 	shadow_subsystem.h
 	shadow_mcevent.c

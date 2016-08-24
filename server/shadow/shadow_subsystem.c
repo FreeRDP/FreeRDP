@@ -86,8 +86,6 @@ int shadow_subsystem_init(rdpShadowSubsystem* subsystem, rdpShadowServer* server
 	if (!(subsystem->updateEvent = shadow_multiclient_new()))
 		goto fail;
 
-	region16_init(&(subsystem->invalidRegion));
-
 	if ((status = subsystem->ep.Init(subsystem)) >= 0)
 		return status;
 
@@ -141,9 +139,6 @@ void shadow_subsystem_uninit(rdpShadowSubsystem* subsystem)
 		shadow_multiclient_free(subsystem->updateEvent);
 		subsystem->updateEvent = NULL;
 	}
-
-	if (subsystem->invalidRegion.data)
-		region16_uninit(&(subsystem->invalidRegion));
 }
 
 int shadow_subsystem_start(rdpShadowSubsystem* subsystem)

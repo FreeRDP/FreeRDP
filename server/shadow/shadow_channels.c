@@ -43,11 +43,21 @@ UINT shadow_client_channels_post_connect(rdpShadowClient* client)
 
 	shadow_client_audin_init(client);
 
+	if (client->context.settings->SupportGraphicsPipeline)
+	{
+		shadow_client_rdpgfx_init(client);
+	}
+
 	return CHANNEL_RC_OK;
 }
 
 void shadow_client_channels_free(rdpShadowClient* client)
 {
+	if (client->context.settings->SupportGraphicsPipeline)
+	{
+		shadow_client_rdpgfx_uninit(client);
+	}
+
 	shadow_client_audin_uninit(client);
 
 	shadow_client_rdpsnd_uninit(client);

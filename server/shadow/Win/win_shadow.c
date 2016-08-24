@@ -219,7 +219,7 @@ int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 
 	if (ArrayList_Count(server->clients) < 1)
 	{
-		region16_clear(&(subsystem->invalidRegion));
+		region16_clear(&(surface->invalidRegion));
 		return 1;
 	}
 
@@ -228,12 +228,12 @@ int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 	surfaceRect.right = surface->x + surface->width;
 	surfaceRect.bottom = surface->y + surface->height;
 
-	region16_intersect_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &surfaceRect);
+	region16_intersect_rect(&(surface->invalidRegion), &(surface->invalidRegion), &surfaceRect);
 
-	if (region16_is_empty(&(subsystem->invalidRegion)))
+	if (region16_is_empty(&(surface->invalidRegion)))
 		return 1;
 
-	extents = region16_extents(&(subsystem->invalidRegion));
+	extents = region16_extents(&(surface->invalidRegion));
 	CopyMemory(&invalidRect, extents, sizeof(RECTANGLE_16));
 
 	shadow_capture_align_clip_rect(&invalidRect, &surfaceRect);
@@ -286,7 +286,7 @@ int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 
 	ArrayList_Unlock(server->clients);
 
-	region16_clear(&(subsystem->invalidRegion));
+	region16_clear(&(surface->invalidRegion));
 
 	return 1;
 }
