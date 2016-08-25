@@ -379,7 +379,7 @@ static void (^mac_capture_stream_handler)(CGDisplayStreamFrameStatus, uint64_t,
 	
 	if (count < 1)
 		return;
-	
+
 	mac_shadow_capture_get_dirty_region(subsystem);
 		
 	surfaceRect.left = 0;
@@ -508,8 +508,6 @@ static int mac_shadow_screen_grab(macShadowSubsystem* subsystem)
 static int mac_shadow_subsystem_process_message(macShadowSubsystem* subsystem,
         wMessage* message)
 {
-	rdpShadowServer* server = subsystem->server;
-	rdpShadowSurface* surface = server->surface;
 	switch(message->id)
 	{
 		case SHADOW_MSG_IN_REFRESH_REQUEST_ID:
