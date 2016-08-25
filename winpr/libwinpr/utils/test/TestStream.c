@@ -208,7 +208,7 @@ fail:
     _r = FALSE;                                                              \
   }                                                                          \
   for (_i=0; _i<sizeof(_t); _i++) {                                          \
-    if (((BYTE*)&_a)[_i] != _p[_i]) {                                        \
+    if (((_a >> (_i * 8)) & 0xFF) != _p[_i]) {                               \
       printf("%s: test2 " #_t "_LE failed\n", __FUNCTION__);                 \
       _r = FALSE;                                                            \
       break;                                                                 \
@@ -224,7 +224,7 @@ fail:
     _r = FALSE;                                                              \
   }                                                                          \
   for (_i=0; _i<sizeof(_t); _i++) {                                          \
-    if (((BYTE*)&_a)[_i] != _p[sizeof(_t)-_i-1]) {                           \
+    if (((_a >> (_i * 8)) & 0xFF) != _p[sizeof(_t)-_i-1]) {                  \
       printf("%s: test2 " #_t "_BE failed\n", __FUNCTION__);                 \
       _r = FALSE;                                                            \
       break;                                                                 \

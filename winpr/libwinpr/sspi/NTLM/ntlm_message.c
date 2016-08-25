@@ -679,7 +679,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 		AvFlags = ntlm_av_pair_get(context->NTLMv2Response.Challenge.AvPairs, MsvAvFlags);
 
 		if (AvFlags)
-			flags = *((UINT32*) ntlm_av_pair_get_value_pointer(AvFlags));
+			Data_Read_UINT32(ntlm_av_pair_get_value_pointer(AvFlags), flags);
 	}
 
 	if (ntlm_read_message_fields_buffer(s, &(message->EncryptedRandomSessionKey)) < 0) /* EncryptedRandomSessionKey */
@@ -952,7 +952,7 @@ SECURITY_STATUS ntlm_server_AuthenticateComplete(NTLM_CONTEXT* context)
 	AvFlags = ntlm_av_pair_get(context->NTLMv2Response.Challenge.AvPairs, MsvAvFlags);
 
 	if (AvFlags)
-		flags = *((UINT32*) ntlm_av_pair_get_value_pointer(AvFlags));
+		Data_Read_UINT32(ntlm_av_pair_get_value_pointer(AvFlags), flags);
 
 	if (ntlm_compute_lm_v2_response(context) < 0) /* LmChallengeResponse */
 		return SEC_E_INTERNAL_ERROR;

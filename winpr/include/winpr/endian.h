@@ -29,53 +29,53 @@ extern "C" {
 #endif
 
 #define Data_Read_UINT8_NE(_d, _v) do { _v = \
-	*_d; } while (0)
+	*((BYTE*) _d); } while (0)
 
 #define Data_Read_UINT8(_d, _v) do { _v = \
-	*_d; } while (0)
+	*((BYTE*) _d); } while (0)
 
 #define Data_Read_UINT16_NE(_d, _v) do { _v = \
 	*((UINT16*) _d); } while (0)
 
 #define Data_Read_UINT16(_d, _v) do { _v = \
-	(UINT16)(*_d) + \
-	(((UINT16)(*(_d))) << 8); \
+	(UINT16)(*((BYTE*) _d)) + \
+	(((UINT16)(*((BYTE*) _d + 1))) << 8); \
 	} while (0)
 
 #define Data_Read_UINT16_BE(_d, _v) do { _v = \
-	(((UINT16)(*_d)) << 8) + \
-	(UINT16)(*(_d + 1)); \
+	(((UINT16)(*(BYTE*) _d)) << 8) + \
+	(UINT16)(*((BYTE*) _d + 1)); \
 	} while (0)
 
 #define Data_Read_UINT32_NE(_d, _v) do { _v = \
 	*((UINT32*) _d); } while (0)
 
 #define Data_Read_UINT32(_d, _v) do { _v = \
-	(UINT32)(*_d) + \
-	(((UINT32)(*(_d + 1))) << 8) + \
-	(((UINT32)(*(_d + 2))) << 16) + \
-	(((UINT32)(*(_d + 3))) << 24); \
+	(UINT32)(*((BYTE*) _d)) + \
+	(((UINT32)(*((BYTE*) _d + 1))) << 8) + \
+	(((UINT32)(*((BYTE*) _d + 2))) << 16) + \
+	(((UINT32)(*((BYTE*) _d + 3))) << 24); \
 	} while (0)
 
 #define Data_Read_UINT32_BE(_d, _v) do { _v = \
-	(((UINT32)(*(_d))) << 24) + \
-	(((UINT32)(*(_d + 1))) << 16) + \
-	(((UINT32)(*(_d + 2))) << 8) + \
-	(((UINT32)(*(_d + 3)))); \
+	(((UINT32)(*((BYTE*) _d))) << 24) + \
+	(((UINT32)(*((BYTE*) _d + 1))) << 16) + \
+	(((UINT32)(*((BYTE*) _d + 2))) << 8) + \
+	(((UINT32)(*((BYTE*) _d + 3)))); \
 	} while (0)
 
 #define Data_Read_UINT64_NE(_d, _v) do { _v = \
 	*((UINT64*) _d); } while (0)
 
 #define Data_Read_UINT64(_d, _v) do { _v = \
-	(UINT64)(*_d) + \
-	(((UINT64)(*(_d + 1))) << 8) + \
-	(((UINT64)(*(_d + 2))) << 16) + \
-	(((UINT64)(*(_d + 3))) << 24) + \
-	(((UINT64)(*(_d + 4))) << 32) + \
-	(((UINT64)(*(_d + 5))) << 40) + \
-	(((UINT64)(*(_d + 6))) << 48) + \
-	(((UINT64)(*(_d + 7))) << 56); \
+	(UINT64)(*((BYTE*) _d)) + \
+	(((UINT64)(*((BYTE*) _d + 1))) << 8) + \
+	(((UINT64)(*((BYTE*) _d + 2))) << 16) + \
+	(((UINT64)(*((BYTE*) _d + 3))) << 24) + \
+	(((UINT64)(*((BYTE*) _d + 4))) << 32) + \
+	(((UINT64)(*((BYTE*) _d + 5))) << 40) + \
+	(((UINT64)(*((BYTE*) _d + 6))) << 48) + \
+	(((UINT64)(*((BYTE*) _d + 7))) << 56); \
 	} while (0)
 
 #define Data_Write_UINT8_NE(_d, _v) do { \
@@ -88,42 +88,42 @@ extern "C" {
 	*((UINT16*) _d) = _v; } while (0)
 
 #define Data_Write_UINT16(_d, _v) do { \
-	*(_d) = (_v) & 0xFF; \
-	*(_d + 1) = ((_v) >> 8) & 0xFF; \
+	*((BYTE*) _d) = (_v) & 0xFF; \
+	*((BYTE*) _d + 1) = ((_v) >> 8) & 0xFF; \
 	} while (0)
 
 #define Data_Write_UINT16_BE(_d, _v) do { \
-	*(_d) = ((_v) >> 8) & 0xFF; \
-	*(_d + 1) = (_v) & 0xFF; \
+	*((BYTE*) _d) = ((_v) >> 8) & 0xFF; \
+	*((BYTE*) _d + 1) = (_v) & 0xFF; \
 	} while (0)
 
 #define Data_Write_UINT32_NE(_d, _v) do { \
 	*((UINT32*) _d) = _v; } while (0)
 
 #define Data_Write_UINT32(_d, _v) do { \
-	*(_d) = (_v) & 0xFF; \
-	*(_d + 1) = ((_v) >> 8) & 0xFF; \
-	*(_d + 2) = ((_v) >> 16) & 0xFF; \
-	*(_d + 3) = ((_v) >> 24) & 0xFF; \
+	*((BYTE*) _d) = (_v) & 0xFF; \
+	*((BYTE*) _d + 1) = ((_v) >> 8) & 0xFF; \
+	*((BYTE*) _d + 2) = ((_v) >> 16) & 0xFF; \
+	*((BYTE*) _d + 3) = ((_v) >> 24) & 0xFF; \
 	} while (0)
 
 #define Data_Write_UINT32_BE(_d, _v) do { \
-	Data_Write_UINT16_BE(_d, ((_v) >> 16 & 0xFFFF)); \
-	Data_Write_UINT16_BE(_d + 2, ((_v) & 0xFFFF)); \
+	Data_Write_UINT16_BE((BYTE*) _d, ((_v) >> 16 & 0xFFFF)); \
+	Data_Write_UINT16_BE((BYTE*) _d + 2, ((_v) & 0xFFFF)); \
 	} while (0)
 
 #define Data_Write_UINT64_NE(_d, _v) do { \
 	*((UINT64*) _d) = _v; } while (0)
 
 #define Data_Write_UINT64(_d, _v) do { \
-	*(_d) = (UINT64)(_v) & 0xFF; \
-	*(_d + 1) = ((UINT64)(_v) >> 8) & 0xFF; \
-	*(_d + 2) = ((UINT64)(_v) >> 16) & 0xFF; \
-	*(_d + 3) = ((UINT64)(_v) >> 24) & 0xFF; \
-	*(_d + 4) = ((UINT64)(_v) >> 32) & 0xFF; \
-	*(_d + 5) = ((UINT64)(_v) >> 40) & 0xFF; \
-	*(_d + 6) = ((UINT64)(_v) >> 48) & 0xFF; \
-	*(_d + 7) = ((UINT64)(_v) >> 56) & 0xFF; \
+	*((BYTE*) _d) = (UINT64)(_v) & 0xFF; \
+	*((BYTE*) _d + 1) = ((UINT64)(_v) >> 8) & 0xFF; \
+	*((BYTE*) _d + 2) = ((UINT64)(_v) >> 16) & 0xFF; \
+	*((BYTE*) _d + 3) = ((UINT64)(_v) >> 24) & 0xFF; \
+	*((BYTE*) _d + 4) = ((UINT64)(_v) >> 32) & 0xFF; \
+	*((BYTE*) _d + 5) = ((UINT64)(_v) >> 40) & 0xFF; \
+	*((BYTE*) _d + 6) = ((UINT64)(_v) >> 48) & 0xFF; \
+	*((BYTE*) _d + 7) = ((UINT64)(_v) >> 56) & 0xFF; \
 	} while (0)
 
 #ifdef __cplusplus

@@ -39,6 +39,7 @@
 ------------------------------------------------------------------------ */
 
 #include "utf.h"
+#include <winpr/endian.h>
 
 static const int halfShift  = 10; /* used for shifting by 10 bits */
 
@@ -275,7 +276,8 @@ ConversionResult ConvertUTF16toUTF8(
 		const DWORD byteMask = 0xBF;
 		const DWORD byteMark = 0x80;
 		const WCHAR* oldSource = source; /* In case we have to back up because of target overflow. */
-		ch = *source++;
+		Data_Read_UINT16 (source, ch);
+		source++;
 
 		/* If we have a surrogate pair, convert to UTF32 first. */
 		if (ch >= UNI_SUR_HIGH_START && ch <= UNI_SUR_HIGH_END)
@@ -283,7 +285,8 @@ ConversionResult ConvertUTF16toUTF8(
 			/* If the 16 bits following the high surrogate are in the source buffer... */
 			if (source < sourceEnd)
 			{
-				DWORD ch2 = *source;
+				DWORD ch2;
+				Data_Read_UINT16 (source, ch2);
 
 				/* If it's a low surrogate, convert to UTF32. */
 				if (ch2 >= UNI_SUR_LOW_START && ch2 <= UNI_SUR_LOW_END)
@@ -574,16 +577,20 @@ ConversionResult ConvertUTF8toUTF16(
 				}
 				else
 				{
-					if (!computeLength)
-						*target++ = UNI_REPLACEMENT_CHAR;
+					if (!computeLength) {
+						Data_Write_UINT16(target, UNI_REPLACEMENT_CHAR);
+						target++;
+					}
 					else
 						target++;
 				}
 			}
 			else
 			{
-				if (!computeLength)
-					*target++ = (WCHAR) ch; /* normal case */
+				if (!computeLength) {
+					Data_Write_UINT16(target, ch); /* normal case */
+					target++;
+				}
 				else
 					target++;
 			}
@@ -598,8 +605,10 @@ ConversionResult ConvertUTF8toUTF16(
 			}
 			else
 			{
-				if (!computeLength)
-					*target++ = UNI_REPLACEMENT_CHAR;
+				if (!computeLength) {
+					Data_Write_UINT16(target, UNI_REPLACEMENT_CHAR);
+					target++;
+				}
 				else
 					target++;
 			}
@@ -616,10 +625,15 @@ ConversionResult ConvertUTF8toUTF16(
 
 			ch -= halfBase;
 
-			if (!computeLength)
-			{
-				*target++ = (WCHAR)((ch >> halfShift) + UNI_SUR_HIGH_START);
-				*target++ = (WCHAR)((ch & halfMask) + UNI_SUR_LOW_START);
+			if (!computeLength) {
+				WCHAR wchar;
+
+				wchar = (ch >> halfShift) + UNI_SUR_HIGH_START;
+				Data_Write_UINT16(target, wchar);
+				target++;
+				wchar = (ch & halfMask) + UNI_SUR_LOW_START;
+				Data_Write_UINT16(target, wchar);
+				target++;
 			}
 			else
 			{

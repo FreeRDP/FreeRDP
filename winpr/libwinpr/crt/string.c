@@ -26,6 +26,7 @@
 #include <wctype.h>
 
 #include <winpr/crt.h>
+#include <winpr/endian.h>
 
 /* String Manipulation (CRT): http://msdn.microsoft.com/en-us/library/f0151s4x.aspx */
 
@@ -86,13 +87,17 @@ int _strnicmp(const char* string1, const char* string2, size_t count)
 
 int _wcscmp(const WCHAR* string1, const WCHAR* string2)
 {
+	WCHAR value1, value2;
+
 	while (*string1 && (*string1 == *string2))
 	{
 		string1++;
 		string2++;
 	}
 
-	return *string1 - *string2;
+	Data_Read_UINT16(string1, value1);
+	Data_Read_UINT16(string2, value2);
+	return value1 - value2;
 }
 
 /* _wcslen -> wcslen */
@@ -115,11 +120,13 @@ size_t _wcslen(const WCHAR* str)
 WCHAR* _wcschr(const WCHAR* str, WCHAR c)
 {
 	WCHAR* p = (WCHAR*) str;
+	WCHAR value;
 
-	while (*p && (*p != c))
+	Data_Write_UINT16(&value, c);
+	while (*p && (*p != value))
 		p++;
 
-	return ((*p == c) ? p : NULL);
+	return ((*p == value) ? p : NULL);
 }
 
 char* strtok_s(char* strToken, const char* strDelimit, char** context)
@@ -130,20 +137,29 @@ char* strtok_s(char* strToken, const char* strDelimit, char** context)
 WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context)
 {
 	WCHAR* nextToken;
+	WCHAR value;
 
 	if (!strToken)
 		strToken = *context;
 
-	while (*strToken && _wcschr(strDelimit, *strToken))
+	Data_Read_UINT16(strToken, value);
+	while (*strToken && _wcschr(strDelimit, value))
+	{
 		strToken++;
+		Data_Read_UINT16(strToken, value);
+	}
 
 	if (!*strToken)
 		return NULL;
 
 	nextToken = strToken++;
 
-	while (*strToken && !(_wcschr(strDelimit, *strToken)))
+	Data_Read_UINT16(strToken, value);
+	while (*strToken && !(_wcschr(strDelimit, value)))
+	{
 		strToken++;
+		Data_Read_UINT16(strToken, value);
+	}
 
 	if (*strToken)
 		*strToken++ = 0;
@@ -220,10 +236,13 @@ DWORD CharUpperBuffA(LPSTR lpsz, DWORD cchLength)
 DWORD CharUpperBuffW(LPWSTR lpsz, DWORD cchLength)
 {
 	DWORD i;
+	WCHAR value;
 
 	for (i = 0; i < cchLength; i++)
 	{
-		lpsz[i] = WINPR_TOUPPERW(lpsz[i]);
+		Data_Read_UINT16(&lpsz[i], value);
+		value = WINPR_TOUPPERW(value);
+		Data_Write_UINT16(&lpsz[i], value);
 	}
 
 	return cchLength;
@@ -287,10 +306,13 @@ DWORD CharLowerBuffA(LPSTR lpsz, DWORD cchLength)
 DWORD CharLowerBuffW(LPWSTR lpsz, DWORD cchLength)
 {
 	DWORD i;
+	WCHAR value;
 
 	for (i = 0; i < cchLength; i++)
 	{
-		lpsz[i] = WINPR_TOLOWERW(lpsz[i]);
+		Data_Read_UINT16(&lpsz[i], value);
+		value = WINPR_TOLOWERW(value);
+		Data_Write_UINT16(&lpsz[i], value);
 	}
 
 	return cchLength;
@@ -380,13 +402,17 @@ int lstrcmpA(LPCSTR lpString1, LPCSTR lpString2)
 
 int lstrcmpW(LPCWSTR lpString1, LPCWSTR lpString2)
 {
+	WCHAR value1, value2;
+
 	while (*lpString1 && (*lpString1 == *lpString2))
 	{
 		lpString1++;
 		lpString2++;
 	}
 
-	return *lpString1 - *lpString2;
+	Data_Read_UINT16(lpString1, value1);
+	Data_Read_UINT16(lpString2, value2);
+	return value1 - value2;
 }
 
 #endif

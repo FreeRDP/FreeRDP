@@ -84,7 +84,7 @@
 #endif
 
 #if WINPR_HAVE_STDINT_H
-#if defined(__x86_64__) || defined(__arm64__)
+#if __ILP64__ || __LP64__
 #define __int3264 int64_t
 #define __uint3264 uint64_t
 #else
@@ -92,7 +92,7 @@
 #define __uint3264 uint32_t
 #endif
 #else
-#if defined(__x86_64__) || defined(__arm64__)
+#if __ILP64__ || __LP64__
 #define __int3264 __int64
 #define __uint3264 __uint64
 #else
@@ -285,7 +285,7 @@ typedef void *PVOID64, *LPVOID64;
 #if WINPR_HAVE_STDINT_H
 typedef intptr_t INT_PTR;
 typedef uintptr_t UINT_PTR;
-#elif defined (__x86_64__)
+#elif __ILP64__ || __LP64__ || __LLP64__
 typedef __int64 INT_PTR;
 typedef unsigned __int64 UINT_PTR;
 #else
