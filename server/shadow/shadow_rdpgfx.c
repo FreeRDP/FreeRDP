@@ -53,7 +53,10 @@ static UINT rdpgfx_caps_advertise(RdpgfxServerContext* context, RDPGFX_CAPS_ADVE
 
 			return context->CapsConfirm(context, &pdu);
 		}
-        else if (pdu.capsSet->version == RDPGFX_CAPVERSION_81)
+	}
+	for (index = 0; index < capsAdvertise->capsSetCount; index++)
+	{
+		if (pdu.capsSet->version == RDPGFX_CAPVERSION_81)
 		{
 			if (settings)
 			{
@@ -61,6 +64,20 @@ static UINT rdpgfx_caps_advertise(RdpgfxServerContext* context, RDPGFX_CAPS_ADVE
 				settings->GfxThinClient = (flags & RDPGFX_CAPS_FLAG_THINCLIENT);
 				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
 				settings->GfxH264 = (flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED);
+			}
+
+			return context->CapsConfirm(context, &pdu);
+		}
+	}
+	for (index = 0; index < capsAdvertise->capsSetCount; index++)
+	{
+		if (pdu.capsSet->version == RDPGFX_CAPVERSION_8)
+		{
+			if (settings)
+			{
+				flags = pdu.capsSet->flags;
+				settings->GfxThinClient = (flags & RDPGFX_CAPS_FLAG_THINCLIENT);
+				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
 			}
 
 			return context->CapsConfirm(context, &pdu);
