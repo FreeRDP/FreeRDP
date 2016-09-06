@@ -403,11 +403,12 @@ BOOL freerdp_disconnect(freerdp* instance)
 	rdp = instance->context->rdp;
 	rdp_client_disconnect(rdp);
 	update_post_disconnect(instance->update);
-	IFCALL(instance->PostDisconnect, instance);
 
 	if (freerdp_channels_disconnect(instance->context->channels,
 	                                instance) != CHANNEL_RC_OK)
 		rc = FALSE;
+
+	IFCALL(instance->PostDisconnect, instance);
 
 	if (instance->update->pcap_rfx)
 	{
