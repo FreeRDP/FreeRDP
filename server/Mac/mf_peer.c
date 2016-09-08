@@ -172,7 +172,7 @@ void mf_peer_rfx_update(freerdp_peer* client)
 }
 
 /* Called when we have a new peer connecting */
-int mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
+void mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
 {
 	context->info = mf_info_get_instance();
 	context->rfx_context = rfx_context_new();
@@ -191,8 +191,6 @@ int mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
 	//#endif
 	
 	mf_info_peer_register(context->info, context);
-
-	return 0;
 }
 
 
