@@ -615,6 +615,70 @@ static UINT shadow_client_rdpgfx_qoe_frame_acknowledge(RdpgfxServerContext*
 /**
  * Function description
  *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context, RDPGFX_CAPS_ADVERTISE_PDU* capsAdvertise)
+{
+	UINT16 index;
+	RDPGFX_CAPS_CONFIRM_PDU pdu;
+	rdpSettings* settings = context->rdpcontext->settings;
+	UINT32 flags = 0;
+
+	/* Request full screen update for new gfx channel */
+	shadow_client_refresh_rect((rdpShadowClient *)context->custom, 0, NULL);
+
+	for (index = 0; index < capsAdvertise->capsSetCount; index++)
+	{
+		pdu.capsSet = &(capsAdvertise->capsSets[index]);
+		if (pdu.capsSet->version == RDPGFX_CAPVERSION_10)
+		{
+			if (settings)
+			{
+				flags = pdu.capsSet->flags;
+				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
+				settings->GfxH264 = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
+			}
+
+			return context->CapsConfirm(context, &pdu);
+		}
+	}
+	for (index = 0; index < capsAdvertise->capsSetCount; index++)
+	{
+		if (pdu.capsSet->version == RDPGFX_CAPVERSION_81)
+		{
+			if (settings)
+			{
+				flags = pdu.capsSet->flags;
+				settings->GfxThinClient = (flags & RDPGFX_CAPS_FLAG_THINCLIENT);
+				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
+				settings->GfxH264 = (flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED);
+			}
+
+			return context->CapsConfirm(context, &pdu);
+		}
+	}
+	for (index = 0; index < capsAdvertise->capsSetCount; index++)
+	{
+		if (pdu.capsSet->version == RDPGFX_CAPVERSION_8)
+		{
+			if (settings)
+			{
+				flags = pdu.capsSet->flags;
+				settings->GfxThinClient = (flags & RDPGFX_CAPS_FLAG_THINCLIENT);
+				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
+			}
+
+			return context->CapsConfirm(context, &pdu);
+		}
+	}
+
+	return CHANNEL_RC_UNSUPPORTED_VERSION;
+}
+
+
+/**
+ * Function description
+ *
  * @return TRUE on success
  */
 static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client,
@@ -1502,15 +1566,17 @@ static void* shadow_client_thread(rdpShadowClient* client)
 					if (settings->SupportGraphicsPipeline && client->rdpgfx &&
 					    !gfxstatus.gfxOpened)
 					{
+						client->rdpgfx->FrameAcknowledge = shadow_client_rdpgfx_frame_acknowledge;
+						client->rdpgfx->QoeFrameAcknowledge =
+						    shadow_client_rdpgfx_qoe_frame_acknowledge;
+						client->rdpgfx->CapsAdvertise = shadow_client_rdpgfx_caps_advertise;
+
 						if (!client->rdpgfx->Open(client->rdpgfx))
 						{
 							WLog_WARN(TAG, "Failed to open GraphicsPipeline");
 							settings->SupportGraphicsPipeline = FALSE;
 						}
 
-						client->rdpgfx->FrameAcknowledge = shadow_client_rdpgfx_frame_acknowledge;
-						client->rdpgfx->QoeFrameAcknowledge =
-						    shadow_client_rdpgfx_qoe_frame_acknowledge;
 						gfxstatus.gfxOpened = TRUE;
 						WLog_INFO(TAG, "Gfx Pipeline Opened");
 					}
