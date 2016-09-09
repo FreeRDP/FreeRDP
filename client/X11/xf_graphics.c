@@ -167,15 +167,18 @@ static BOOL xf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap,
 /* Pointer Class */
 static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 {
+#ifdef WITH_XCURSOR
+	UINT32 CursorFormat = PIXEL_FORMAT_RGBA32;
 	rdpGdi* gdi;
+	size_t size;
+	XcursorImage ci;
+	xfContext* xfc = (xfContext*) context;
+	xfPointer* xpointer = (xfPointer*)pointer;
 
 	if (!context || !pointer || !context->gdi)
 		return FALSE;
 
 	gdi = context->gdi;
-#ifdef WITH_XCURSOR
-	XcursorImage ci;
-	xfContext* xfc = (xfContext*) context;
 	xf_lock_x11(xfc, FALSE);
 	ZeroMemory(&ci, sizeof(ci));
 	ci.version = XCURSOR_IMAGE_VERSION;
@@ -184,28 +187,27 @@ static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	ci.height = pointer->height;
 	ci.xhot = pointer->xPos;
 	ci.yhot = pointer->yPos;
-
-	if (!(ci.pixels = (XcursorPixel*) calloc(ci.height,
-			  ci.width * GetBytesPerPixel(gdi->dstFormat))))
+	size = ci.height * ci.width * GetBytesPerPixel(CursorFormat);
+	if (!(ci.pixels = (XcursorPixel*) _aligned_malloc(size, 16)))
 	{
 		xf_unlock_x11(xfc, FALSE);
 		return FALSE;
 	}
 
 	if (freerdp_image_copy_from_pointer_data(
-		(BYTE*) ci.pixels, gdi->dstFormat,
+	    (BYTE*) ci.pixels, CursorFormat,
 		0, 0, 0, pointer->width, pointer->height,
 		pointer->xorMaskData, pointer->lengthXorMask,
 		pointer->andMaskData, pointer->lengthAndMask,
 		pointer->xorBpp, &context->gdi->palette) < 0)
 	{
-		free(ci.pixels);
+		_aligned_free(ci.pixels);
 		xf_unlock_x11(xfc, FALSE);
 		return FALSE;
 	}
 
-	((xfPointer*) pointer)->cursor = XcursorImageLoadCursor(xfc->display, &ci);
-	free(ci.pixels);
+	xpointer->cursor = XcursorImageLoadCursor(xfc->display, &ci);
+	_aligned_free(ci.pixels);
 	xf_unlock_x11(xfc, FALSE);
 #endif
 	return TRUE;
