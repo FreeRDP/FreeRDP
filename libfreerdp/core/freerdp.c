@@ -116,7 +116,7 @@ BOOL freerdp_connect(freerdp* instance)
 
 	if (status)
 		status2 = freerdp_channels_pre_connect(instance->context->channels,
-		                                       instance);
+						       instance);
 
 	if (settings->KeyboardLayout == KBD_JAPANESE_INPUT_SYSTEM_MS_IME2002)
 	{
@@ -153,7 +153,7 @@ BOOL freerdp_connect(freerdp* instance)
 		if (instance->settings->DumpRemoteFx)
 		{
 			instance->update->pcap_rfx = pcap_open(instance->settings->DumpRemoteFxFile,
-			                                       TRUE);
+							       TRUE);
 
 			if (instance->update->pcap_rfx)
 				instance->update->dump_rfx = TRUE;
@@ -220,7 +220,7 @@ BOOL freerdp_connect(freerdp* instance)
 
 	if (rdp->errorInfo == ERRINFO_SERVER_INSUFFICIENT_PRIVILEGES)
 		freerdp_set_last_error(instance->context,
-		                       FREERDP_ERROR_INSUFFICIENT_PRIVILEGES);
+				       FREERDP_ERROR_INSUFFICIENT_PRIVILEGES);
 
 	SetEvent(rdp->transport->connectedEvent);
 freerdp_connect_finally:
@@ -239,7 +239,7 @@ BOOL freerdp_abort_connect(freerdp* instance)
 }
 
 BOOL freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds,
-                     int* wcount)
+		     int* wcount)
 {
 	rdpRdp* rdp = instance->context->rdp;
 	transport_get_fds(rdp->transport, rfds, rcount);
@@ -278,7 +278,7 @@ BOOL freerdp_check_fds(freerdp* instance)
 }
 
 DWORD freerdp_get_event_handles(rdpContext* context, HANDLE* events,
-                                DWORD count)
+				DWORD count)
 {
 	DWORD nCount = 0;
 	nCount += transport_get_event_handles(context->rdp->transport, events, count);
@@ -293,6 +293,14 @@ DWORD freerdp_get_event_handles(rdpContext* context, HANDLE* events,
 	}
 	else
 		return 0;
+
+	if (context->settings->AsyncInput)
+	{
+		if (nCount >= count)
+			return 0;
+		events[nCount++] = freerdp_get_message_queue_event_handle(
+					context->instance, FREERDP_INPUT_MESSAGE_QUEUE);
+	}
 
 	return nCount;
 }
@@ -320,6 +328,16 @@ BOOL freerdp_check_event_handles(rdpContext* context)
 		return FALSE;
 
 	status = checkChannelErrorEvent(context);
+
+	if (!status)
+		return FALSE;
+
+	if (context->settings->AsyncInput)
+	{
+		status = freerdp_message_queue_process_pending_messages(
+				context->instance, FREERDP_INPUT_MESSAGE_QUEUE);
+	}
+
 	return status;
 }
 
@@ -354,7 +372,7 @@ HANDLE freerdp_get_message_queue_event_handle(freerdp* instance, DWORD id)
 }
 
 int freerdp_message_queue_process_message(freerdp* instance, DWORD id,
-        wMessage* message)
+	wMessage* message)
 {
 	int status = -1;
 
@@ -391,7 +409,7 @@ int freerdp_message_queue_process_pending_messages(freerdp* instance, DWORD id)
 }
 
 static int freerdp_send_channel_data(freerdp* instance, UINT16 channelId,
-                                     BYTE* data, int size)
+				     BYTE* data, int size)
 {
 	return rdp_send_channel_data(instance->context->rdp, channelId, data, size);
 }
@@ -404,8 +422,16 @@ BOOL freerdp_disconnect(freerdp* instance)
 	rdp_client_disconnect(rdp);
 	update_post_disconnect(instance->update);
 
+	if (instance->settings->AsyncInput)
+	{
+		wMessageQueue* inputQueue = freerdp_get_message_queue(instance,
+					     FREERDP_INPUT_MESSAGE_QUEUE);
+
+		 MessageQueue_PostQuit(inputQueue, 0);
+	}
+
 	if (freerdp_channels_disconnect(instance->context->channels,
-	                                instance) != CHANNEL_RC_OK)
+					instance) != CHANNEL_RC_OK)
 		rc = FALSE;
 
 	IFCALL(instance->PostDisconnect, instance);
@@ -547,7 +573,7 @@ BOOL freerdp_context_new(freerdp* instance)
 		goto fail;
 
 	PubSub_AddEventTypes(context->pubSub, FreeRDP_Events,
-	                     sizeof(FreeRDP_Events) / sizeof(wEventType));
+			     sizeof(FreeRDP_Events) / sizeof(wEventType));
 	context->metrics = metrics_new(context);
 
 	if (!context->metrics)
@@ -721,7 +747,7 @@ void freerdp_set_last_error(rdpContext* context, UINT32 lastError)
 {
 	if (lastError)
 		WLog_ERR(TAG, "freerdp_set_last_error %s [0x%04X]",
-		         freerdp_get_last_error_name(lastError), lastError);
+			 freerdp_get_last_error_name(lastError), lastError);
 
 	context->LastError = lastError;
 
@@ -827,7 +853,7 @@ BOOL checkChannelErrorEvent(rdpContext* context)
 	if (WaitForSingleObject(context->channelErrorEvent, 0) == WAIT_OBJECT_0)
 	{
 		WLog_ERR(TAG, "%s. Error was %lu", context->errorDescription,
-		         context->channelErrorNum);
+			 context->channelErrorNum);
 		return FALSE;
 	}
 

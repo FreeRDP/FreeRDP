@@ -555,13 +555,6 @@ static int android_freerdp_run(freerdp* instance)
 
 	if (async_input)
 	{
-		if (!(inputEvent = freerdp_get_message_queue_event_handle(instance,
-		                   FREERDP_INPUT_MESSAGE_QUEUE)))
-		{
-			WLog_ERR(TAG, "async input: failed to get input event handle");
-			goto disconnect;
-		}
-
 		if (!(inputThread = CreateThread(NULL, 0,
 		                                 (LPTHREAD_START_ROUTINE) jni_input_thread, instance, 0, NULL)))
 		{
@@ -576,10 +569,11 @@ static int android_freerdp_run(freerdp* instance)
 	{
 		DWORD tmp;
 		count = 0;
-		handles[count++] = inputEvent;
 
 		if (inputThread)
 			handles[count++] = inputThread;
+		else
+			handles[count++] = inputEvent;
 
 		tmp = freerdp_get_event_handles(context, &handles[count], 64 - count);
 
@@ -622,18 +616,6 @@ static int android_freerdp_run(freerdp* instance)
 				break;
 			}
 		}
-		else if (inputEvent)
-		{
-			if (WaitForSingleObject(inputEvent, 0) == WAIT_OBJECT_0)
-			{
-				if (!freerdp_message_queue_process_pending_messages(instance,
-				        FREERDP_INPUT_MESSAGE_QUEUE))
-				{
-					WLog_INFO(TAG, "User Disconnect");
-					break;
-				}
-			}
-		}
 	}
 
 disconnect:
@@ -641,15 +623,7 @@ disconnect:
 
 	if (async_input && inputThread)
 	{
-		wMessageQueue* input_queue = freerdp_get_message_queue(instance,
-		                             FREERDP_INPUT_MESSAGE_QUEUE);
-
-		if (input_queue)
-		{
-			if (MessageQueue_PostQuit(input_queue, 0))
-				WaitForSingleObject(inputThread, INFINITE);
-		}
-
+		WaitForSingleObject(inputThread, INFINITE);
 		CloseHandle(inputThread);
 	}
 
