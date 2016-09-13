@@ -286,10 +286,11 @@ DWORD freerdp_get_event_handles(rdpContext* context, HANDLE* events,
 	if (nCount == 0)
 		return 0;
 
-	if (events && (nCount < count + 1))
+	if (events && (nCount < count + 2))
 	{
 		events[nCount++] = freerdp_channels_get_event_handle(context->instance);
 		events[nCount++] = getChannelErrorEventHandle(context);
+		events[nCount++] = context->abortEvent;
 	}
 	else
 		return 0;
