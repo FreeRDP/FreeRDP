@@ -759,7 +759,7 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
 	UINT rc;
 	railPlugin* rail;
-	RailClientContext* context;
+	RailClientContext* context = NULL;
 	CHANNEL_ENTRY_POINTS_FREERDP* pEntryPointsEx;
 	BOOL isFreerdp = FALSE;
 	rail = (railPlugin*) calloc(1, sizeof(railPlugin));
@@ -839,6 +839,9 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	s_TLSPluginContext = rail;
 	return TRUE;
 error_out:
+
+	if (context)
+		*(pEntryPointsEx->ppInterface) = NULL;
 
 	if (isFreerdp)
 		free(rail->context);

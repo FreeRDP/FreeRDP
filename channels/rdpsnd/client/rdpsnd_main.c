@@ -1460,6 +1460,12 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	UINT rc;
 	rdpsndPlugin* rdpsnd;
 	CHANNEL_ENTRY_POINTS_FREERDP* pEntryPointsEx;
+
+	if (!pEntryPoints)
+	{
+		return FALSE;
+	}
+
 	rdpsnd = (rdpsndPlugin*) calloc(1, sizeof(rdpsndPlugin));
 
 	if (!rdpsnd)

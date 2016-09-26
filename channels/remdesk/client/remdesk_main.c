@@ -1034,6 +1034,12 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	remdeskPlugin* remdesk;
 	RemdeskClientContext* context = NULL;
 	CHANNEL_ENTRY_POINTS_FREERDP* pEntryPointsEx;
+
+	if (!pEntryPoints)
+	{
+		return FALSE;
+	}
+
 	remdesk = (remdeskPlugin*) calloc(1, sizeof(remdeskPlugin));
 
 	if (!remdesk)
@@ -1088,6 +1094,8 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	s_TLSPluginContext = remdesk;
 	return TRUE;
 error_out:
+	if (context)
+		*(pEntryPointsEx->ppInterface) = NULL;
 	free(remdesk);
 	free(context);
 	return FALSE;

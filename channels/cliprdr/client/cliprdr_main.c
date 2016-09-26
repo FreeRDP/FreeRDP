@@ -1235,7 +1235,7 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
 	UINT rc;
 	cliprdrPlugin* cliprdr;
-	CliprdrClientContext* context;
+	CliprdrClientContext* context = NULL;
 	CHANNEL_ENTRY_POINTS_FREERDP* pEntryPointsEx;
 	cliprdr = (cliprdrPlugin*) calloc(1, sizeof(cliprdrPlugin));
 
@@ -1298,6 +1298,9 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	{
 		WLog_ERR(TAG, "pVirtualChannelInit failed with %s [%08X]",
 			 WTSErrorToString(rc), rc);
+		if (context)
+			*(pEntryPointsEx->ppInterface) = NULL;
+
 		free(cliprdr->context);
 		free(cliprdr);
 		return FALSE;

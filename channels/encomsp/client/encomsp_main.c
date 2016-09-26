@@ -1232,7 +1232,7 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
 	UINT rc;
 	encomspPlugin* encomsp;
-	EncomspClientContext* context;
+	EncomspClientContext* context = NULL;
 	CHANNEL_ENTRY_POINTS_FREERDP* pEntryPointsEx;
 	BOOL isFreerdp = FALSE;
 	encomsp = (encomspPlugin*) calloc(1, sizeof(encomspPlugin));
@@ -1301,6 +1301,8 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	s_TLSPluginContext = encomsp;
 	return TRUE;
 error_out:
+	if (context)
+		*(pEntryPointsEx->ppInterface) = NULL;
 
 	if (isFreerdp)
 		free(encomsp->context);
