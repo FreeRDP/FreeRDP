@@ -82,11 +82,11 @@ static UINT echo_server_open_channel(echo_server* echo)
 	while (echo->echo_channel == NULL)
 	{
 		if (WaitForSingleObject(hEvent, 1000) == WAIT_FAILED)
-        {
-            Error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", Error);
-            return Error;
-        }
+	{
+	    Error = GetLastError();
+	    WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", Error);
+	    return Error;
+	}
 
 		echo->echo_channel = WTSVirtualChannelOpenEx(echo->SessionId,
 			"ECHO", WTS_CHANNEL_OPTION_DYNAMIC);
@@ -118,6 +118,7 @@ static void* echo_server_thread_func(void* arg)
 	UINT error;
 	DWORD status;
 
+	freerdp_channel_init_thread_context(echo->context.rdpcontext);
 	if ((error = echo_server_open_channel(echo)))
 	{
 		UINT error2 = 0;
@@ -197,16 +198,16 @@ static void* echo_server_thread_func(void* arg)
 
 	while (ready)
 	{
-        status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+	status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
-        if (status == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
-            break;
-        }
+	if (status == WAIT_FAILED)
+	{
+	    error = GetLastError();
+	    WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
+	    break;
+	}
 
-        if (status == WAIT_OBJECT_0)
+	if (status == WAIT_OBJECT_0)
 			break;
 
 		Stream_SetPosition(s, 0);
@@ -290,11 +291,11 @@ static UINT echo_server_close(echo_server_context* context)
 		SetEvent(echo->stopEvent);
 
 		if (WaitForSingleObject(echo->thread, INFINITE) == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
-            return error;
-        }
+	{
+	    error = GetLastError();
+	    WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+	    return error;
+	}
 
 		CloseHandle(echo->thread);
 		CloseHandle(echo->stopEvent);

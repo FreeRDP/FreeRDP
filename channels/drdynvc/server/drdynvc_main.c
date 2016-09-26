@@ -52,6 +52,7 @@ static void* drdynvc_server_thread(void* arg)
 	BytesReturned = 0;
 	ChannelEvent = NULL;
 
+	freerdp_channel_init_thread_context(context->rdpcontext);
 	s = Stream_New(NULL, 4096);
 	if (!s)
 	{
@@ -155,9 +156,9 @@ static UINT drdynvc_server_stop(DrdynvcServerContext* context)
 
 	if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
     {
-        error = GetLastError();
-        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
-        return error;
+	error = GetLastError();
+	WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+	return error;
     }
 	CloseHandle(context->priv->Thread);
 

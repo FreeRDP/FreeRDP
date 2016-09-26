@@ -185,6 +185,8 @@ static void* audin_oss_thread_func(void* arg)
 		goto err_out;
 	}
 
+	freerdp_channel_init_thread_context(oss->rdpcontext);
+
 	if (oss->dev_unit != -1)
 	{
 		sprintf_s(dev_name, (PATH_MAX - 1), "/dev/dsp%i", oss->dev_unit);

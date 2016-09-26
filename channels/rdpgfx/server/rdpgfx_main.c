@@ -1313,6 +1313,8 @@ static void* rdpgfx_server_thread_func(void* arg)
 	buffer = NULL;
 	BytesReturned = 0;
 	nCount = 0;
+
+	freerdp_channel_init_thread_context(context->rdpcontext);
 	events[nCount++] = priv->stopEvent;
 	events[nCount++] = priv->channelEvent;
 

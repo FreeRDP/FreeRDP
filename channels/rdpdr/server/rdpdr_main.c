@@ -1101,6 +1101,7 @@ static void* rdpdr_server_thread(void* arg)
 	BytesReturned = 0;
 	ChannelEvent = NULL;
 
+	freerdp_channel_init_thread_context(context->rdpcontext);
 	s = Stream_New(NULL, 4096);
 	if (!s)
 	{
@@ -1131,24 +1132,24 @@ static void* rdpdr_server_thread(void* arg)
 		BytesReturned = 0;
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
-        if (status == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
-            goto out_stream;
-        }
+	if (status == WAIT_FAILED)
+	{
+	    error = GetLastError();
+	    WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+	    goto out_stream;
+	}
 
-        status = WaitForSingleObject(context->priv->StopEvent, 0);
+	status = WaitForSingleObject(context->priv->StopEvent, 0);
 
-        if (status == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
-            goto out_stream;
-        }
+	if (status == WAIT_FAILED)
+	{
+	    error = GetLastError();
+	    WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+	    goto out_stream;
+	}
 
 
-        if (status == WAIT_OBJECT_0)
+	if (status == WAIT_OBJECT_0)
 			break;
 
 		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0,
@@ -1231,11 +1232,11 @@ static UINT rdpdr_server_stop(RdpdrServerContext* context)
 	{
 		SetEvent(context->priv->StopEvent);
 		if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
-            return error;
-        }
+	{
+	    error = GetLastError();
+	    WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+	    return error;
+	}
 		CloseHandle(context->priv->Thread);
 		context->priv->Thread = NULL;
 		CloseHandle(context->priv->StopEvent);

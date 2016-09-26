@@ -1191,17 +1191,17 @@ UINT cliprdr_server_read(CliprdrServerContext* context)
 		BytesReturned = 0;
 		BytesToRead = CLIPRDR_HEADER_LENGTH - Stream_GetPosition(s);
 
-        status = WaitForSingleObject(cliprdr->ChannelEvent, 0);
+	status = WaitForSingleObject(cliprdr->ChannelEvent, 0);
 
 		if (status == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
-            return error;
-        }
+	{
+	    error = GetLastError();
+	    WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+	    return error;
+	}
 
-        if (status == WAIT_TIMEOUT)
-            return CHANNEL_RC_OK;
+	if (status == WAIT_TIMEOUT)
+	    return CHANNEL_RC_OK;
 
 		if (!WTSVirtualChannelRead(cliprdr->ChannelHandle, 0,
 			(PCHAR) Stream_Pointer(s), BytesToRead, &BytesReturned))
@@ -1235,17 +1235,17 @@ UINT cliprdr_server_read(CliprdrServerContext* context)
 			BytesReturned = 0;
 			BytesToRead = (header.dataLen + CLIPRDR_HEADER_LENGTH) - Stream_GetPosition(s);
 
-            status = WaitForSingleObject(cliprdr->ChannelEvent, 0);
+	    status = WaitForSingleObject(cliprdr->ChannelEvent, 0);
 
-            if (status == WAIT_FAILED)
-            {
-                error = GetLastError();
-                WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
-                return error;
-            }
+	    if (status == WAIT_FAILED)
+	    {
+		error = GetLastError();
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+		return error;
+	    }
 
-            if (status == WAIT_TIMEOUT)
-                return CHANNEL_RC_OK;
+	    if (status == WAIT_TIMEOUT)
+		return CHANNEL_RC_OK;
 
 			if (!WTSVirtualChannelRead(cliprdr->ChannelHandle, 0,
 				(PCHAR) Stream_Pointer(s), BytesToRead, &BytesReturned))
@@ -1273,17 +1273,17 @@ UINT cliprdr_server_read(CliprdrServerContext* context)
 
 			/* check for trailing zero bytes */
 
-            status = WaitForSingleObject(cliprdr->ChannelEvent, 0);
+	    status = WaitForSingleObject(cliprdr->ChannelEvent, 0);
 
-            if (status == WAIT_FAILED)
-            {
-                error = GetLastError();
-                WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
-                return error;
-            }
+	    if (status == WAIT_FAILED)
+	    {
+		error = GetLastError();
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+		return error;
+	    }
 
-            if (status == WAIT_TIMEOUT)
-                return CHANNEL_RC_OK;
+	    if (status == WAIT_TIMEOUT)
+		return CHANNEL_RC_OK;
 
 			BytesReturned = 0;
 			BytesToRead = 4;
@@ -1326,6 +1326,7 @@ static void* cliprdr_server_thread(void* arg)
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 	UINT error;
 
+	freerdp_channel_init_thread_context(context->rdpcontext);
 	ChannelEvent = context->GetEventHandle(context);
 
 	nCount = 0;
@@ -1344,31 +1345,31 @@ static void* cliprdr_server_thread(void* arg)
 
 		if (status == WAIT_FAILED)
 		{
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
-            goto out;
+	    error = GetLastError();
+	    WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
+	    goto out;
 		}
 
-        status = WaitForSingleObject(cliprdr->StopEvent, 0);
+	status = WaitForSingleObject(cliprdr->StopEvent, 0);
 
-        if (status == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
-            goto out;
-        }
+	if (status == WAIT_FAILED)
+	{
+	    error = GetLastError();
+	    WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+	    goto out;
+	}
 
 		if (status == WAIT_OBJECT_0)
 			break;
 
-        status = WaitForSingleObject(ChannelEvent, 0);
+	status = WaitForSingleObject(ChannelEvent, 0);
 
-        if (status == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
-            goto out;
-        }
+	if (status == WAIT_FAILED)
+	{
+	    error = GetLastError();
+	    WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+	    goto out;
+	}
 
 		if (status == WAIT_OBJECT_0)
 		{
@@ -1499,11 +1500,11 @@ static UINT cliprdr_server_stop(CliprdrServerContext* context)
 	{
 		SetEvent(cliprdr->StopEvent);
 		if (WaitForSingleObject(cliprdr->Thread, INFINITE) == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
-            return error;
-        }
+	{
+	    error = GetLastError();
+	    WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+	    return error;
+	}
 		CloseHandle(cliprdr->Thread);
 		CloseHandle(cliprdr->StopEvent);
 	}

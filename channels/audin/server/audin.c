@@ -240,7 +240,7 @@ static UINT audin_server_recv_formats(audin_server* audin, wStream* s, UINT32 le
 
 	IFCALLRET(audin->context.Opening, success, &audin->context);
     if (success)
-        WLog_ERR(TAG, "context.Opening failed with error %lu", success);
+	WLog_ERR(TAG, "context.Opening failed with error %lu", success);
 	return success;
 }
 
@@ -304,7 +304,7 @@ static UINT audin_server_recv_open_reply(audin_server* audin, wStream* s, UINT32
 	IFCALLRET(audin->context.OpenResult, success, &audin->context, Result);
 
     if (success)
-        WLog_ERR(TAG, "context.OpenResult failed with error %lu", success);
+	WLog_ERR(TAG, "context.OpenResult failed with error %lu", success);
 
 	return success;
 }
@@ -375,7 +375,7 @@ static UINT audin_server_recv_data(audin_server* audin, wStream* s, UINT32 lengt
 	IFCALLRET(audin->context.ReceiveSamples, success, &audin->context, src, frames);
 
     if (success)
-        WLog_ERR(TAG, "context.ReceiveSamples failed with error %lu", success);
+	WLog_ERR(TAG, "context.ReceiveSamples failed with error %lu", success);
 
     return success;
 }
@@ -398,6 +398,7 @@ static void* audin_server_thread_func(void* arg)
 	BytesReturned = 0;
 	ChannelEvent = NULL;
 
+	freerdp_channel_init_thread_context(audin->context.rdpcontext);
 	if (WTSVirtualChannelQuery(audin->audin_channel, WTSVirtualEventHandle, &buffer, &BytesReturned) == TRUE)
 	{
 		if (BytesReturned == sizeof(HANDLE))
@@ -425,7 +426,7 @@ static void* audin_server_thread_func(void* arg)
 
 		if (status == WAIT_FAILED)
 		{
-            error = GetLastError();
+	    error = GetLastError();
 			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
 			goto out;
 		}
@@ -470,9 +471,9 @@ static void* audin_server_thread_func(void* arg)
 
 		if (status == WAIT_FAILED)
 		{
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
-            goto out;
+	    error = GetLastError();
+	    WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
+	    goto out;
 		}
 
 		Stream_SetPosition(s, 0);
@@ -503,9 +504,9 @@ static void* audin_server_thread_func(void* arg)
 			case MSG_SNDIN_VERSION:
 				if ((error = audin_server_recv_version(audin, s, BytesReturned)))
 				{
-                    WLog_ERR(TAG, "audin_server_recv_version failed with error %lu!", error);
-                    goto out_capacity;
-                }
+		    WLog_ERR(TAG, "audin_server_recv_version failed with error %lu!", error);
+		    goto out_capacity;
+		}
 				if ((error = audin_server_send_formats(audin, s)))
 				{
 					WLog_ERR(TAG, "audin_server_send_formats failed with error %lu!", error);
@@ -622,10 +623,10 @@ static BOOL audin_server_close(audin_server_context* context)
 	{
 		SetEvent(audin->stopEvent);
 		if (WaitForSingleObject(audin->thread, INFINITE) == WAIT_FAILED)
-        {
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", GetLastError());
-            return FALSE;
-        }
+	{
+	    WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", GetLastError());
+	    return FALSE;
+	}
 
 		CloseHandle(audin->thread);
 		CloseHandle(audin->stopEvent);

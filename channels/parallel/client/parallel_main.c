@@ -316,6 +316,7 @@ static void* parallel_thread_func(void* arg)
 	PARALLEL_DEVICE* parallel = (PARALLEL_DEVICE*) arg;
 	UINT error = CHANNEL_RC_OK;
 
+	freerdp_channel_init_thread_context(parallel->rdpcontext);
 	while (1)
 	{
 		if (!MessageQueue_Wait(parallel->queue))
@@ -379,9 +380,9 @@ static UINT parallel_free(DEVICE* device)
 
 	if (MessageQueue_PostQuit(parallel->queue, 0) && (WaitForSingleObject(parallel->thread, INFINITE) == WAIT_FAILED))
     {
-        error = GetLastError();
-        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
-        return error;
+	error = GetLastError();
+	WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+	return error;
     }
 	CloseHandle(parallel->thread);
 

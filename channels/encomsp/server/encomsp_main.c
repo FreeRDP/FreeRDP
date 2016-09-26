@@ -187,6 +187,7 @@ static void* encomsp_server_thread(void* arg)
 
 	context = (EncomspServerContext*) arg;
 
+	freerdp_channel_init_thread_context(context->rdpcontext);
 	buffer = NULL;
 	BytesReturned = 0;
 	ChannelEvent = NULL;
@@ -213,23 +214,23 @@ static void* encomsp_server_thread(void* arg)
 
 	while (1)
 	{
-        status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+	status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
-        if (status == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
-            break;
-        }
+	if (status == WAIT_FAILED)
+	{
+	    error = GetLastError();
+	    WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
+	    break;
+	}
 
-        status = WaitForSingleObject(context->priv->StopEvent, 0);
+	status = WaitForSingleObject(context->priv->StopEvent, 0);
 
-        if (status == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
-            break;
-        }
+	if (status == WAIT_FAILED)
+	{
+	    error = GetLastError();
+	    WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+	    break;
+	}
 
 		if (status == WAIT_OBJECT_0)
 		{
@@ -322,9 +323,9 @@ static UINT encomsp_server_stop(EncomspServerContext* context)
 
 	if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
     {
-        error = GetLastError();
-        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
-        return error;
+	error = GetLastError();
+	WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+	return error;
     }
 	CloseHandle(context->priv->Thread);
 

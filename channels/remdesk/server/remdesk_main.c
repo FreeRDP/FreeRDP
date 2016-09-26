@@ -600,6 +600,7 @@ static void* remdesk_server_thread(void* arg)
 
 	context = (RemdeskServerContext*) arg;
 
+	freerdp_channel_init_thread_context(context->rdpcontext);
 	buffer = NULL;
 	BytesReturned = 0;
 	ChannelEvent = NULL;
@@ -640,21 +641,21 @@ static void* remdesk_server_thread(void* arg)
 	{
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
-        if (status == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
-            break;
-        }
+	if (status == WAIT_FAILED)
+	{
+	    error = GetLastError();
+	    WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
+	    break;
+	}
 
-        status = WaitForSingleObject(context->priv->StopEvent, 0);
+	status = WaitForSingleObject(context->priv->StopEvent, 0);
 
-        if (status == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
-            break;
-        }
+	if (status == WAIT_FAILED)
+	{
+	    error = GetLastError();
+	    WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+	    break;
+	}
 
 
 		if (status == WAIT_OBJECT_0)
@@ -752,9 +753,9 @@ static UINT remdesk_server_stop(RemdeskServerContext* context)
 
 	if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
     {
-        error = GetLastError();
-        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
-        return error;
+	error = GetLastError();
+	WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+	return error;
     }
 	CloseHandle(context->priv->Thread);
 

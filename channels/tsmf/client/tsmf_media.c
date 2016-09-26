@@ -115,7 +115,7 @@ struct _TSMF_STREAM
 	UINT32 bits_per_sample;
 
 	/* The start time of last played sample */
-	UINT64 last_start_time; 
+	UINT64 last_start_time;
 	/* The end_time of last played sample */
 	UINT64 last_end_time;
 	/* Next sample should not start before this system time. */
@@ -540,7 +540,7 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 			 * render times. So, we try to adjust timestamps on the video buffer to match those on the audio buffer.
 			 */
 			if (stream->major_type == TSMF_MAJOR_TYPE_VIDEO)
-			{	
+			{
 				TSMF_STREAM* temp_stream = NULL;
 				TSMF_PRESENTATION* presentation = stream->presentation;
 				ArrayList_Lock(presentation->stream_list);
@@ -701,6 +701,7 @@ static void* tsmf_stream_ack_func(void *arg)
 	UINT error = CHANNEL_RC_OK;
 	DEBUG_TSMF("in %d", stream->stream_id);
 
+	freerdp_channel_init_thread_context(stream->rdpcontext);
 	hdl[0] = stream->stopEvent;
 	hdl[1] = Queue_Event(stream->sample_ack_list);
 
@@ -783,6 +784,8 @@ static void* tsmf_stream_playback_func(void *arg)
 	DWORD status;
 
 	DEBUG_TSMF("in %d", stream->stream_id);
+
+	freerdp_channel_init_thread_context(stream->rdpcontext);
 
 	if (stream->major_type == TSMF_MAJOR_TYPE_AUDIO &&
 			stream->sample_rate && stream->channels && stream->bits_per_sample)
@@ -1079,7 +1082,7 @@ BOOL tsmf_presentation_set_geometry_info(TSMF_PRESENTATION* presentation,
 	if (!width || !height)
 		return TRUE;
 
-	/* Streams can be added/removed from the presentation and the server will resend geometry info when a new stream is 
+	/* Streams can be added/removed from the presentation and the server will resend geometry info when a new stream is
 	 * added to the presentation. Also, num_rects is used to indicate whether or not the window is visible.
 	 * So, always process a valid message with unchanged position/size and/or no visibility rects.
 	 */
@@ -1088,7 +1091,7 @@ BOOL tsmf_presentation_set_geometry_info(TSMF_PRESENTATION* presentation,
 	presentation->y = y;
 	presentation->width = width;
 	presentation->height = height;
-	
+
 	tmp_rects = realloc(presentation->rects, sizeof(RDP_RECT) * num_rects);
 
 	presentation->nr_rects = num_rects;

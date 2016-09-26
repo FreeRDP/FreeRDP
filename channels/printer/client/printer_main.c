@@ -230,15 +230,16 @@ static void* printer_thread_func(void* arg)
 	HANDLE obj[] = {printer_dev->event, printer_dev->stopEvent};
 	UINT error = CHANNEL_RC_OK;
 
+	freerdp_channel_init_thread_context(printer_dev->rdpcontext);
 	while (1)
 	{
 		DWORD rc = WaitForMultipleObjects(2, obj, FALSE, INFINITE);
-        if (rc == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
-            break;
-        }
+	if (rc == WAIT_FAILED)
+	{
+	    error = GetLastError();
+	    WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+	    break;
+	}
 
 		if (rc == WAIT_OBJECT_0 + 1)
 			break;
@@ -299,9 +300,9 @@ static UINT printer_free(DEVICE* device)
 	SetEvent(printer_dev->stopEvent);
 	if (WaitForSingleObject(printer_dev->thread, INFINITE) == WAIT_FAILED)
     {
-        error = GetLastError();
-        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
-        return error;
+	error = GetLastError();
+	WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+	return error;
     }
 
 	while ((irp = (IRP*) InterlockedPopEntrySList(printer_dev->pIrpList)) != NULL)

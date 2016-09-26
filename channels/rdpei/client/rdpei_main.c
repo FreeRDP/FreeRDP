@@ -176,6 +176,7 @@ static void* rdpei_schedule_thread(void* arg)
 	HANDLE hdl[] = {rdpei->event, rdpei->stopEvent};
 	UINT error = CHANNEL_RC_OK;
 
+	freerdp_channel_init_thread_context(rdpei->rdpcontext);
 	if (!rdpei)
 	{
 		error = ERROR_INVALID_PARAMETER;
@@ -193,12 +194,12 @@ static void* rdpei_schedule_thread(void* arg)
 	{
 		status = WaitForMultipleObjects(2, hdl, FALSE, 20);
 
-        if (status == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
-            break;
-        }
+	if (status == WAIT_FAILED)
+	{
+	    error = GetLastError();
+	    WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+	    break;
+	}
 
 		if (status == WAIT_OBJECT_0 + 1)
 			break;
@@ -700,9 +701,9 @@ static UINT rdpei_plugin_terminated(IWTSPlugin* pPlugin)
 
 	if (WaitForSingleObject(rdpei->thread, INFINITE) == WAIT_FAILED)
     {
-        error = GetLastError();
-        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
-        return error;
+	error = GetLastError();
+	WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+	return error;
     }
 
 	CloseHandle(rdpei->stopEvent);

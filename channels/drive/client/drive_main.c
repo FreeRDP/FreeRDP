@@ -687,6 +687,7 @@ static void* drive_thread_func(void* arg)
 	DRIVE_DEVICE* drive = (DRIVE_DEVICE*) arg;
 	UINT error = CHANNEL_RC_OK;
 
+	freerdp_channel_init_thread_context(drive->rdpcontext);
 	while (1)
 	{
 		if (!MessageQueue_Wait(drive->IrpQueue))
@@ -750,9 +751,9 @@ static UINT drive_free(DEVICE* device)
 
 	if (MessageQueue_PostQuit(drive->IrpQueue, 0) && (WaitForSingleObject(drive->thread, INFINITE) == WAIT_FAILED))
     {
-        error = GetLastError();
-        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
-        return error;
+	error = GetLastError();
+	WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+	return error;
     }
 
 	CloseHandle(drive->thread);

@@ -121,11 +121,11 @@ static UINT encomsp_virtual_channel_write(encomspPlugin* encomsp, wStream* s)
 	winpr_HexDump(Stream_Buffer(s), Stream_Length(s));
 #endif
 	status = encomsp->channelEntryPoints.pVirtualChannelWrite(encomsp->OpenHandle,
-	         Stream_Buffer(s), (UINT32) Stream_Length(s), s);
+		 Stream_Buffer(s), (UINT32) Stream_Length(s), s);
 
 	if (status != CHANNEL_RC_OK)
 		WLog_ERR(TAG,  "VirtualChannelWrite failed with %s [%08X]",
-		         WTSErrorToString(status), status);
+			 WTSErrorToString(status), status);
 
 	return status;
 }
@@ -136,7 +136,7 @@ static UINT encomsp_virtual_channel_write(encomspPlugin* encomsp, wStream* s)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT encomsp_recv_filter_updated_pdu(encomspPlugin* encomsp, wStream* s,
-        ENCOMSP_ORDER_HEADER* header)
+	ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -190,7 +190,7 @@ static UINT encomsp_recv_filter_updated_pdu(encomspPlugin* encomsp, wStream* s,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT encomsp_recv_application_created_pdu(encomspPlugin* encomsp,
-        wStream* s, ENCOMSP_ORDER_HEADER* header)
+	wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -252,7 +252,7 @@ static UINT encomsp_recv_application_created_pdu(encomspPlugin* encomsp,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT encomsp_recv_application_removed_pdu(encomspPlugin* encomsp,
-        wStream* s, ENCOMSP_ORDER_HEADER* header)
+	wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -306,7 +306,7 @@ static UINT encomsp_recv_application_removed_pdu(encomspPlugin* encomsp,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT encomsp_recv_window_created_pdu(encomspPlugin* encomsp, wStream* s,
-        ENCOMSP_ORDER_HEADER* header)
+	ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -369,7 +369,7 @@ static UINT encomsp_recv_window_created_pdu(encomspPlugin* encomsp, wStream* s,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT encomsp_recv_window_removed_pdu(encomspPlugin* encomsp, wStream* s,
-        ENCOMSP_ORDER_HEADER* header)
+	ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -423,7 +423,7 @@ static UINT encomsp_recv_window_removed_pdu(encomspPlugin* encomsp, wStream* s,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT encomsp_recv_show_window_pdu(encomspPlugin* encomsp, wStream* s,
-        ENCOMSP_ORDER_HEADER* header)
+	ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -477,7 +477,7 @@ static UINT encomsp_recv_show_window_pdu(encomspPlugin* encomsp, wStream* s,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT encomsp_recv_participant_created_pdu(encomspPlugin* encomsp,
-        wStream* s, ENCOMSP_ORDER_HEADER* header)
+	wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -540,7 +540,7 @@ static UINT encomsp_recv_participant_created_pdu(encomspPlugin* encomsp,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT encomsp_recv_participant_removed_pdu(encomspPlugin* encomsp,
-        wStream* s, ENCOMSP_ORDER_HEADER* header)
+	wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -641,7 +641,7 @@ static UINT encomsp_recv_change_participant_control_level_pdu(
 
 	if (error)
 		WLog_ERR(TAG, "context->ChangeParticipantControlLevel failed with error %lu",
-		         error);
+			 error);
 
 	return error;
 }
@@ -687,7 +687,7 @@ static UINT encomsp_send_change_participant_control_level_pdu(
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT encomsp_recv_graphics_stream_paused_pdu(encomspPlugin* encomsp,
-        wStream* s, ENCOMSP_ORDER_HEADER* header)
+	wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -733,7 +733,7 @@ static UINT encomsp_recv_graphics_stream_paused_pdu(encomspPlugin* encomsp,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT encomsp_recv_graphics_stream_resumed_pdu(encomspPlugin* encomsp,
-        wStream* s, ENCOMSP_ORDER_HEADER* header)
+	wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -808,7 +808,7 @@ static UINT encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
 				if ((error = encomsp_recv_application_removed_pdu(encomsp, s, &header)))
 				{
 					WLog_ERR(TAG, "encomsp_recv_application_removed_pdu failed with error %lu!",
-					         error);
+						 error);
 					return error;
 				}
 
@@ -818,7 +818,7 @@ static UINT encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
 				if ((error = encomsp_recv_application_created_pdu(encomsp, s, &header)))
 				{
 					WLog_ERR(TAG, "encomsp_recv_application_removed_pdu failed with error %lu!",
-					         error);
+						 error);
 					return error;
 				}
 
@@ -855,7 +855,7 @@ static UINT encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
 				if ((error = encomsp_recv_participant_removed_pdu(encomsp, s, &header)))
 				{
 					WLog_ERR(TAG, "encomsp_recv_participant_removed_pdu failed with error %lu!",
-					         error);
+						 error);
 					return error;
 				}
 
@@ -865,7 +865,7 @@ static UINT encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
 				if ((error = encomsp_recv_participant_created_pdu(encomsp, s, &header)))
 				{
 					WLog_ERR(TAG, "encomsp_recv_participant_created_pdu failed with error %lu!",
-					         error);
+						 error);
 					return error;
 				}
 
@@ -873,11 +873,11 @@ static UINT encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
 
 			case ODTYPE_PARTICIPANT_CTRL_CHANGED:
 				if ((error = encomsp_recv_change_participant_control_level_pdu(encomsp, s,
-				             &header)))
+					     &header)))
 				{
 					WLog_ERR(TAG,
-					         "encomsp_recv_change_participant_control_level_pdu failed with error %lu!",
-					         error);
+						 "encomsp_recv_change_participant_control_level_pdu failed with error %lu!",
+						 error);
 					return error;
 				}
 
@@ -887,7 +887,7 @@ static UINT encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
 				if ((error = encomsp_recv_graphics_stream_paused_pdu(encomsp, s, &header)))
 				{
 					WLog_ERR(TAG, "encomsp_recv_graphics_stream_paused_pdu failed with error %lu!",
-					         error);
+						 error);
 					return error;
 				}
 
@@ -897,7 +897,7 @@ static UINT encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
 				if ((error = encomsp_recv_graphics_stream_resumed_pdu(encomsp, s, &header)))
 				{
 					WLog_ERR(TAG, "encomsp_recv_graphics_stream_resumed_pdu failed with error %lu!",
-					         error);
+						 error);
 					return error;
 				}
 
@@ -929,14 +929,14 @@ static int encomsp_send(encomspPlugin* encomsp, wStream* s)
 	else
 	{
 		status = plugin->channelEntryPoints.pVirtualChannelWrite(plugin->OpenHandle,
-		         Stream_Buffer(s), (UINT32) Stream_GetPosition(s), s);
+			 Stream_Buffer(s), (UINT32) Stream_GetPosition(s), s);
 	}
 
 	if (status != CHANNEL_RC_OK)
 	{
 		Stream_Free(s, TRUE);
 		WLog_ERR(TAG,  "VirtualChannelWrite failed with %s [%08X]",
-		         WTSErrorToString(status), status);
+			 WTSErrorToString(status), status);
 	}
 
 	return status;
@@ -948,7 +948,7 @@ static int encomsp_send(encomspPlugin* encomsp, wStream* s)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT encomsp_virtual_channel_event_data_received(encomspPlugin* encomsp,
-        void* pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
+	void* pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	wStream* data_in;
 
@@ -1002,8 +1002,8 @@ static UINT encomsp_virtual_channel_event_data_received(encomspPlugin* encomsp,
 }
 
 static VOID VCAPITYPE encomsp_virtual_channel_open_event(DWORD openHandle,
-        UINT event,
-        LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
+	UINT event,
+	LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	encomspPlugin* encomsp = s_TLSPluginContext;
 	UINT error = CHANNEL_RC_OK;
@@ -1018,9 +1018,9 @@ static VOID VCAPITYPE encomsp_virtual_channel_open_event(DWORD openHandle,
 	{
 		case CHANNEL_EVENT_DATA_RECEIVED:
 			if ((error = encomsp_virtual_channel_event_data_received(encomsp, pData,
-			             dataLength, totalLength, dataFlags)))
+				     dataLength, totalLength, dataFlags)))
 				WLog_ERR(TAG,
-				         "encomsp_virtual_channel_event_data_received failed with error %lu", error);
+					 "encomsp_virtual_channel_event_data_received failed with error %lu", error);
 
 			break;
 
@@ -1034,7 +1034,7 @@ static VOID VCAPITYPE encomsp_virtual_channel_open_event(DWORD openHandle,
 
 	if (error && encomsp->rdpcontext)
 		setChannelError(encomsp->rdpcontext, error,
-		                "encomsp_virtual_channel_open_event reported an error");
+				"encomsp_virtual_channel_open_event reported an error");
 
 	return;
 }
@@ -1045,6 +1045,8 @@ static void* encomsp_virtual_channel_client_thread(void* arg)
 	wMessage message;
 	encomspPlugin* encomsp = (encomspPlugin*) arg;
 	UINT error = CHANNEL_RC_OK;
+
+	freerdp_channel_init_thread_context(encomsp->rdpcontext);
 	encomsp_process_connect(encomsp);
 
 	while (1)
@@ -1080,7 +1082,7 @@ static void* encomsp_virtual_channel_client_thread(void* arg)
 
 	if (error && encomsp->rdpcontext)
 		setChannelError(encomsp->rdpcontext, error,
-		                "encomsp_virtual_channel_client_thread reported an error");
+				"encomsp_virtual_channel_client_thread reported an error");
 
 	ExitThread((DWORD)error);
 	return NULL;
@@ -1092,17 +1094,17 @@ static void* encomsp_virtual_channel_client_thread(void* arg)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT encomsp_virtual_channel_event_connected(encomspPlugin* encomsp,
-        LPVOID pData, UINT32 dataLength)
+	LPVOID pData, UINT32 dataLength)
 {
 	UINT32 status;
 	status = encomsp->channelEntryPoints.pVirtualChannelOpen(encomsp->InitHandle,
-	         &encomsp->OpenHandle, encomsp->channelDef.name,
-	         encomsp_virtual_channel_open_event);
+		 &encomsp->OpenHandle, encomsp->channelDef.name,
+		 encomsp_virtual_channel_open_event);
 
 	if (status != CHANNEL_RC_OK)
 	{
 		WLog_ERR(TAG, "pVirtualChannelOpen failed with %s [%08X]",
-		         WTSErrorToString(status), status);
+			 WTSErrorToString(status), status);
 		return status;
 	}
 
@@ -1115,8 +1117,8 @@ static UINT encomsp_virtual_channel_event_connected(encomspPlugin* encomsp,
 	}
 
 	if (!(encomsp->thread = CreateThread(NULL, 0,
-	                                     (LPTHREAD_START_ROUTINE) encomsp_virtual_channel_client_thread, (void*) encomsp,
-	                                     0, NULL)))
+					     (LPTHREAD_START_ROUTINE) encomsp_virtual_channel_client_thread, (void*) encomsp,
+					     0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		MessageQueue_Free(encomsp->queue);
@@ -1152,7 +1154,7 @@ static UINT encomsp_virtual_channel_event_disconnected(encomspPlugin* encomsp)
 	if (CHANNEL_RC_OK != rc)
 	{
 		WLog_ERR(TAG, "pVirtualChannelClose failed with %s [%08X]",
-		         WTSErrorToString(rc), rc);
+			 WTSErrorToString(rc), rc);
 		return rc;
 	}
 
@@ -1181,8 +1183,8 @@ static UINT encomsp_virtual_channel_event_terminated(encomspPlugin* encomsp)
 }
 
 static VOID VCAPITYPE encomsp_virtual_channel_init_event(LPVOID pInitHandle,
-        UINT event, LPVOID pData,
-        UINT dataLength)
+	UINT event, LPVOID pData,
+	UINT dataLength)
 {
 	encomspPlugin* encomsp = s_TLSPluginContext;
 	UINT error = CHANNEL_RC_OK;
@@ -1197,16 +1199,16 @@ static VOID VCAPITYPE encomsp_virtual_channel_init_event(LPVOID pInitHandle,
 	{
 		case CHANNEL_EVENT_CONNECTED:
 			if ((error = encomsp_virtual_channel_event_connected(encomsp, pData,
-			             dataLength)))
+				     dataLength)))
 				WLog_ERR(TAG, "encomsp_virtual_channel_event_connected failed with error %lu",
-				         error);
+					 error);
 
 			break;
 
 		case CHANNEL_EVENT_DISCONNECTED:
 			if ((error = encomsp_virtual_channel_event_disconnected(encomsp)))
 				WLog_ERR(TAG,
-				         "encomsp_virtual_channel_event_disconnected failed with error %lu", error);
+					 "encomsp_virtual_channel_event_disconnected failed with error %lu", error);
 
 			break;
 
@@ -1220,7 +1222,7 @@ static VOID VCAPITYPE encomsp_virtual_channel_init_event(LPVOID pInitHandle,
 
 	if (error && encomsp->rdpcontext)
 		setChannelError(encomsp->rdpcontext, error,
-		                "encomsp_virtual_channel_init_event reported an error");
+				"encomsp_virtual_channel_init_event reported an error");
 }
 
 /* encomsp is always built-in */
@@ -1280,22 +1282,22 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	}
 
 	CopyMemory(&(encomsp->channelEntryPoints), pEntryPoints,
-	           sizeof(CHANNEL_ENTRY_POINTS_FREERDP));
+		   sizeof(CHANNEL_ENTRY_POINTS_FREERDP));
 	rc = encomsp->channelEntryPoints.pVirtualChannelInit(&encomsp->InitHandle,
-	        &encomsp->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000,
-	        encomsp_virtual_channel_init_event);
+		&encomsp->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000,
+		encomsp_virtual_channel_init_event);
 
 	if (CHANNEL_RC_OK != rc)
 	{
 		WLog_ERR(TAG, "pVirtualChannelInit failed with %s [%08X]",
-		         WTSErrorToString(rc), rc);
+			 WTSErrorToString(rc), rc);
 		goto error_out;
 	}
 
 	encomsp->channelEntryPoints.pInterface = *
-	        (encomsp->channelEntryPoints.ppInterface);
+		(encomsp->channelEntryPoints.ppInterface);
 	encomsp->channelEntryPoints.ppInterface = &
-	        (encomsp->channelEntryPoints.pInterface);
+		(encomsp->channelEntryPoints.pInterface);
 	s_TLSPluginContext = encomsp;
 	return TRUE;
 error_out:

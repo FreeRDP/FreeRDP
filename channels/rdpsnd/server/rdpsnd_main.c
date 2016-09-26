@@ -59,7 +59,7 @@ UINT rdpsnd_server_send_formats(RdpsndServerContext* context, wStream* s)
 	Stream_Write_UINT8(s, context->block_no); /* cLastBlockConfirmed */
 	Stream_Write_UINT16(s, 0x06); /* wVersion */
 	Stream_Write_UINT8(s, 0); /* bPad */
-	
+
 	for (i = 0; i < context->num_server_formats; i++)
 	{
 		Stream_Write_UINT16(s, context->server_formats[i].wFormatTag); /* wFormatTag (WAVE_FORMAT_PCM) */
@@ -126,7 +126,7 @@ static UINT rdpsnd_server_recv_waveconfirm(RdpsndServerContext* context, wStream
 static UINT rdpsnd_server_recv_quality_mode(RdpsndServerContext* context, wStream* s)
 {
 	UINT16 quality;
-	
+
 	if (Stream_GetRemainingLength(s) < 4)
 	{
 		WLog_ERR(TAG, "not enought data in stream!");
@@ -245,6 +245,8 @@ static void* rdpsnd_server_thread(void* arg)
 	UINT error = CHANNEL_RC_OK;
 
 	context = (RdpsndServerContext *)arg;
+
+	freerdp_channel_init_thread_context(context->rdpcontext);
 	nCount = 0;
 	events[nCount++] = context->priv->channelEvent;
 	events[nCount++] = context->priv->StopEvent;
@@ -259,21 +261,21 @@ static void* rdpsnd_server_thread(void* arg)
 	{
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
-        if (status == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
-            break;
-        }
+	if (status == WAIT_FAILED)
+	{
+	    error = GetLastError();
+	    WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+	    break;
+	}
 
-        status = WaitForSingleObject(context->priv->StopEvent, 0);
+	status = WaitForSingleObject(context->priv->StopEvent, 0);
 
-        if (status == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
-            break;
-        }
+	if (status == WAIT_FAILED)
+	{
+	    error = GetLastError();
+	    WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+	    break;
+	}
 
 
 		if (status == WAIT_OBJECT_0)
@@ -321,7 +323,7 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context, int client
 		WLog_ERR(TAG,  "index %d is not correct.", client_format_index);
 		return ERROR_INVALID_DATA;
 	}
-	
+
 	EnterCriticalSection(&context->priv->lock);
 
 	context->priv->src_bytes_per_sample = context->src_format.wBitsPerSample / 8;
@@ -329,7 +331,7 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context, int client
 
 	context->selected_client_format = client_format_index;
 	format = &context->client_formats[client_format_index];
-	
+
 	if (format->nSamplesPerSec == 0)
 	{
 		WLog_ERR(TAG,  "invalid Client Sound Format!!");
@@ -361,7 +363,7 @@ static UINT rdpsnd_server_select_format(RdpsndServerContext* context, int client
 	context->priv->out_pending_frames = 0;
 
 	out_buffer_size = context->priv->out_frames * context->priv->src_bytes_per_frame;
-	
+
 	if (context->priv->out_buffer_size < out_buffer_size)
 	{
 		BYTE *newBuffer;
@@ -597,7 +599,7 @@ static UINT rdpsnd_server_close(RdpsndServerContext* context)
 		{
 			WLog_ERR(TAG, "Pending audio frame exists while no format selected.");
 			error = ERROR_INVALID_DATA;
-		} 
+		}
 		else if ((error = rdpsnd_server_send_audio_pdu(context, 0)))
 		{
 			WLog_ERR(TAG, "rdpsnd_server_send_audio_pdu failed with error %lu", error);
@@ -720,11 +722,11 @@ static UINT rdpsnd_server_stop(RdpsndServerContext* context)
 			SetEvent(context->priv->StopEvent);
 
 			if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
-            {
-                error = GetLastError();
-                WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
-                return error;
-            }
+	    {
+		error = GetLastError();
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+		return error;
+	    }
 			CloseHandle(context->priv->Thread);
 			CloseHandle(context->priv->StopEvent);
 		}

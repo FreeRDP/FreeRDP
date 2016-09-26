@@ -47,7 +47,7 @@
 /* TODO: all #ifdef __linux__ could be removed once only some generic
  * functions will be used. Replace CommReadFile by ReadFile,
  * CommWriteFile by WriteFile etc..  */
-#if defined __linux__ && !defined ANDROID 
+#if defined __linux__ && !defined ANDROID
 
 #define MAX_IRP_THREADS	5
 
@@ -468,6 +468,8 @@ static void* irp_thread_func(void* arg)
 	IRP_THREAD_DATA *data = (IRP_THREAD_DATA*)arg;
 	UINT error;
 
+	freerdp_channel_init_thread_context(data->serial->rdpcontext);
+
 	/* blocks until the end of the request */
 	if ((error = serial_process_irp(data->serial, data->irp)))
 	{
@@ -552,7 +554,7 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 				serial->IrpThreadToBeTerminatedCount--;
 			}
 			else if (waitResult != WAIT_TIMEOUT)
- 			{
+			{
 				/* unexpected thread state */
 
 				WLog_Print(serial->log, WLOG_WARN, "WaitForSingleObject, got an unexpected result=0x%lX\n", waitResult);
@@ -690,10 +692,10 @@ static void terminate_pending_irp_threads(SERIAL_DEVICE *serial)
 		TerminateThread(irpThread, 0);
 
 		if (WaitForSingleObject(irpThread, INFINITE) == WAIT_FAILED)
-        {
-            WLog_ERR(TAG,"WaitForSingleObject failed!");
-            continue;
-        }
+	{
+	    WLog_ERR(TAG,"WaitForSingleObject failed!");
+	    continue;
+	}
 
 		CloseHandle(irpThread);
 
@@ -711,6 +713,7 @@ static void* serial_thread_func(void* arg)
 	SERIAL_DEVICE* serial = (SERIAL_DEVICE*) arg;
 	UINT error = CHANNEL_RC_OK;
 
+	freerdp_channel_init_thread_context(serial->rdpcontext);
 	while (1)
 	{
 		if (!MessageQueue_Wait(serial->MainIrpQueue))
@@ -790,9 +793,9 @@ static UINT serial_free(DEVICE* device)
 	MessageQueue_PostQuit(serial->MainIrpQueue, 0);
 	if (WaitForSingleObject(serial->MainThread, INFINITE) == WAIT_FAILED)
     {
-        error = GetLastError();
-        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
-        return error;
+	error = GetLastError();
+	WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+	return error;
     }
 	CloseHandle(serial->MainThread);
 
