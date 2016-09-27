@@ -1215,7 +1215,7 @@ BOOL xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 			pSrcData = message->tiles[i]->data;
 			pDstData = pSrcData;
 
-			if ((xfc->depth != 24) || (xfc->depth != 32))
+			if ((xfc->depth != 24) && (xfc->depth != 32))
 			{
 				pDstData = xfc->bitmap_buffer;
 
