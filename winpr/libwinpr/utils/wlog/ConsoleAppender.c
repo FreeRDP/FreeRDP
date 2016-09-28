@@ -70,10 +70,15 @@ static BOOL WLog_ConsoleAppender_WriteMessage(wLog* log, wLogAppender* appender,
 	{
 		char MessageString[4096];
 
-		sprintf_s(MessageString, sizeof(MessageString), "%s%s\n",
-			  message->PrefixString, message->TextString);
+        int charsWritten = _snprintf_s( MessageString, sizeof( MessageString ), _TRUNCATE, "%s%s\n",
+            message->PrefixString, message->TextString );
 
-		OutputDebugStringA(MessageString);
+        OutputDebugStringA( MessageString );
+
+        if (charsWritten == -1)
+        {
+            OutputDebugStringA( "\nWarning!!! Log message was truncated.  Consider increasing the size of MessageString in WLog_ConsoleAppender_WriteMessage()\n" );
+        }
 
 		return TRUE;
 	}

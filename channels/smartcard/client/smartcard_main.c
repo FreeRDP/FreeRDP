@@ -173,8 +173,8 @@ static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard) {
 	int index;
 	int keyCount;
 	ULONG_PTR* pKeys;
-	SCARDCONTEXT hContext;
 	SMARTCARD_CONTEXT* pContext;
+    LONG status;
 
 	/**
 	 * On protocol termination, the following actions are performed:
@@ -198,12 +198,9 @@ static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard) {
 			if (!pContext)
 				continue;
 
-			hContext = pContext->hContext;
-
-			if (SCardIsValidContext(hContext) == SCARD_S_SUCCESS)
-			{
-				SCardCancel(hContext);
-			}
+            status = SCardCancel( pContext->hContext );
+            if ( status != SCARD_S_SUCCESS)
+                WLog_ERR( TAG, "SCardCancel() failed with error %lu!", status );
 		}
 
 		free(pKeys);
@@ -225,12 +222,9 @@ static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard) {
 			if (!pContext)
 				continue;
 
-			hContext = pContext->hContext;
-
-			if (SCardIsValidContext(hContext) == SCARD_S_SUCCESS)
-			{
-				SCardReleaseContext(hContext);
-			}
+            status = SCardCancel( pContext->hContext );
+            if (status != SCARD_S_SUCCESS)
+                WLog_ERR( TAG, "SCardCancel() failed with error %lu!", status );
 		}
 
 		free(pKeys);
@@ -280,8 +274,11 @@ static UINT smartcard_free(DEVICE* device)
 	}
 
 	ListDictionary_Free(smartcard->rgSCardContextList);
+    smartcard->rgSCardContextList = NULL;
 	ListDictionary_Free(smartcard->rgOutstandingMessages);
+    smartcard->rgOutstandingMessages = NULL;
 	Queue_Free(smartcard->CompletedIrpQueue);
+    smartcard->CompletedIrpQueue = NULL;
 
 	if (smartcard->StartedEvent)
 	{
@@ -674,7 +671,7 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	char* name;
 	char* path;
-	size_t length;
+//	size_t length;
 	int ck;
 	RDPDR_SMARTCARD* device;
 	SMARTCARD_DEVICE* smartcard;
@@ -699,6 +696,7 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	smartcard->device.Free = smartcard_free;
 	smartcard->rdpcontext = pEntryPoints->rdpcontext;
 
+#if 0
 	length = strlen(smartcard->device.name);
 	smartcard->device.data = Stream_New(NULL, length + 1);
 	if (!smartcard->device.data)
@@ -708,6 +706,9 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	}
 
 	Stream_Write(smartcard->device.data, "SCARD", 6);
+#else
+    smartcard->device.data = NULL;
+#endif
 
 	smartcard->name = NULL;
 	smartcard->path = NULL;
@@ -787,7 +788,7 @@ error_completed_irp_queue:
 	MessageQueue_Free(smartcard->IrpQueue);
 error_irp_queue:
 	Stream_Free(smartcard->device.data, TRUE);
-error_device_data:
+//error_device_data:
 	free(smartcard);
 	return error;
 }

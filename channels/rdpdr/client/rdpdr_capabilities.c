@@ -48,7 +48,14 @@ static void rdpdr_write_general_capset(rdpdrPlugin* rdpdr, wStream* s)
 {
 	rdpdr_write_capset_header(s, CAP_GENERAL_TYPE, 44, GENERAL_CAPABILITY_VERSION_02);
 
-	Stream_Write_UINT32(s, 0); /* osType, ignored on receipt */
+#ifdef _WIN32
+    // See https://msdn.microsoft.com/en-us/library/cc241533.aspx
+    // The Microsoft TS client on Windows sends 2 here.  The docs say this is ignored but
+    // at least on Windows, we should so as MSTSC does.
+    Stream_Write_UINT32( s, RDPDR_OS_TYPE_WINNT ); /* osType, MSTSC.exe sends this */
+#else
+    Stream_Write_UINT32(s, 0); /* osType, ignored on receipt */
+#endif
 	Stream_Write_UINT32(s, 0); /* osVersion, unused and must be set to zero */
 	Stream_Write_UINT16(s, 1); /* protocolMajorVersion, must be set to 1 */
 	Stream_Write_UINT16(s, RDPDR_MINOR_RDP_VERSION_5_2); /* protocolMinorVersion */

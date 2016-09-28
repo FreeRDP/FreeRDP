@@ -92,6 +92,7 @@ struct _SMARTCARD_OPERATION
 	IRP* irp;
 	void* call;
 	UINT32 ioControlCode;
+    UINT32 ioctlOutputBufferLength;
 	SCARDCONTEXT hContext;
 	SCARDHANDLE hCard;
 };
