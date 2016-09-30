@@ -7,6 +7,7 @@
  * Copyright 2012-2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2015 Thincast Technologies GmbH
  * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+ * Copyright 2016 David PHAM-VAN <d.phamvan@inuvika.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1476,6 +1477,9 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_init_event(LPVOID pInitHandle, UINT
 			break;
 
 		case CHANNEL_EVENT_TERMINATED:
+			if (plugin->thread != NULL)
+				if ((error = rdpsnd_virtual_channel_event_disconnected(plugin)))
+					WLog_ERR(TAG, "rdpsnd_virtual_channel_event_disconnected failed with error %lu!", error);
 			rdpsnd_virtual_channel_event_terminated(plugin);
 			break;
 	}

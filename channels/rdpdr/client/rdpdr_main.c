@@ -7,6 +7,7 @@
  * Copyright 2015-2016 Thincast Technologies GmbH
  * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  * Copyright 2016 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2016 David PHAM-VAN <d.phamvan@inuvika.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -890,6 +891,7 @@ out:
 	if (error && rdpdr->rdpcontext)
 		setChannelError(rdpdr->rdpcontext, error, "drive_hotplug_thread_func reported an error");
 
+	CloseHandle(rdpdr->stopEvent);
 	ExitThread((DWORD)error);
 	return NULL;
 }

@@ -6,6 +6,7 @@
  * Copyright 2015 Thincast Technologies GmbH
  * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  * Copyright 2016 Armin Novak <armin.novak@gmail.com>
+ * Copyright 2016 David PHAM-VAN <d.phamvan@inuvika.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -316,6 +317,7 @@ static UINT printer_free(DEVICE* device)
 		printer_dev->printer->Free(printer_dev->printer);
 
 	free(printer_dev->device.name);
+	Stream_Free(printer_dev->device.data, TRUE);
 
 	free(printer_dev);
     return CHANNEL_RC_OK;

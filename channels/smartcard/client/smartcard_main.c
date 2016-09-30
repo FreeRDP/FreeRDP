@@ -7,6 +7,7 @@
  * Copyright 2011 Anthony Tong <atong@trustedcs.com>
  * Copyright 2015 Thincast Technologies GmbH
  * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+ * Copyright 2016 David PHAM-VAN <d.phamvan@inuvika.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -230,6 +231,13 @@ static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard) {
 			if (SCardIsValidContext(hContext) == SCARD_S_SUCCESS)
 			{
 				SCardReleaseContext(hContext);
+
+				if (MessageQueue_PostQuit(pContext->IrpQueue, 0) && (WaitForSingleObject(pContext->thread, INFINITE) == WAIT_FAILED))
+					WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
+
+				CloseHandle(pContext->thread);
+				MessageQueue_Free(pContext->IrpQueue);	
+				free(pContext);
 			}
 		}
 
@@ -632,6 +640,11 @@ static void* smartcard_thread_func(void* arg)
 
 				if ((error = smartcard_complete_irp(smartcard, irp)))
 				{
+					if (error == CHANNEL_RC_NOT_CONNECTED)
+					{
+						error = CHANNEL_RC_OK;
+						goto out;
+					}
 					WLog_ERR(TAG, "smartcard_complete_irp failed with error %lu!", error);
 					goto out;
 				}
