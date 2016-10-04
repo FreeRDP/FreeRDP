@@ -70,7 +70,12 @@ UINT android_cliprdr_send_client_format_list(CliprdrClientContext* cliprdr)
 		formats[index].formatName = NULL;
 
 		if ((formatId > CF_MAX) && formatName)
+		{
 			formats[index].formatName = _strdup(formatName);
+
+			if (!formats[index].formatName)
+				goto fail;
+		}
 	}
 
 	formatList.msgFlags = CB_RESPONSE_OK;
@@ -245,8 +250,13 @@ static UINT android_cliprdr_server_format_list(CliprdrClientContext* cliprdr,
 		afc->serverFormats[index].formatName = NULL;
 
 		if (formatList->formats[index].formatName)
+		{
 			afc->serverFormats[index].formatName = _strdup(
 			        formatList->formats[index].formatName);
+
+			if (!afc->serverFormats[index].formatName)
+				return CHANNEL_RC_NO_MEMORY;
+		}
 	}
 
 	for (index = 0; index < afc->numServerFormats; index++)
