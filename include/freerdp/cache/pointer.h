@@ -35,7 +35,7 @@ typedef struct rdp_pointer_cache rdpPointerCache;
 struct rdp_pointer_cache
 {
 	UINT32 cacheSize; /* 0 */
-    rdpPointer** entries; /* 1 */
+	rdpPointer** entries; /* 1 */
 
 	/* internal */
 
