@@ -95,7 +95,6 @@ static BOOL wf_end_paint(rdpContext* context)
 		invalidRect.top = cinvalid[i].y;
 		invalidRect.right = cinvalid[i].x + cinvalid[i].w;
 		invalidRect.bottom = cinvalid[i].y + cinvalid[i].h;
-
 		region16_union_rect(&invalidRegion, &invalidRegion, &invalidRect);
 	}
 
@@ -369,11 +368,9 @@ static BOOL wf_post_connect(freerdp* instance)
 	PubSub_OnEmbedWindow(context->pubSub, context, &e);
 	ShowWindow(wfc->hwnd, SW_SHOWNORMAL);
 	UpdateWindow(wfc->hwnd);
-
 	instance->update->BeginPaint = wf_begin_paint;
 	instance->update->DesktopResize = wf_desktop_resize;
 	instance->update->EndPaint = wf_end_paint;
-
 	pointer_cache_register_callbacks(instance->update);
 	wf_register_pointer(context->graphics);
 
