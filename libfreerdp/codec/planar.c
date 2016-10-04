@@ -38,9 +38,6 @@ static BYTE* freerdp_bitmap_planar_compress_plane_rle(
     BYTE* outPlane, UINT32* dstSize);
 static BYTE* freerdp_bitmap_planar_delta_encode_plane(
     const BYTE* inPlane, UINT32 width, UINT32 height, BYTE* outPlane);
-static BOOL freerdp_bitmap_planar_delta_encode_planes(
-    const BYTE* inPlanes[4], UINT32 width, UINT32 height,
-    BYTE* outPlanes[4]);
 
 static INT32 planar_skip_plane_rle(const BYTE* pSrcData, UINT32 SrcSize,
                                    UINT32 nWidth, UINT32 nHeight)
@@ -675,7 +672,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 
 static BOOL freerdp_split_color_planes(const BYTE* data, UINT32 format,
                                        UINT32 width, UINT32 height,
-                                       UINT32 scanline, BYTE** planes)
+                                       UINT32 scanline, BYTE* planes[4])
 {
 	INT32 i, j, k;
 	k = 0;
@@ -953,7 +950,7 @@ BYTE* freerdp_bitmap_planar_compress_plane_rle(const BYTE* inPlane,
 }
 
 static UINT32 freerdp_bitmap_planar_compress_planes_rle(
-    const BYTE** inPlanes, UINT32 width, UINT32 height,
+    BYTE* inPlanes[4], UINT32 width, UINT32 height,
     BYTE* outPlanes, UINT32* dstSizes, BOOL skipAlpha)
 {
 	UINT32 outPlanesSize = width * height * 4;
@@ -1044,7 +1041,7 @@ BYTE* freerdp_bitmap_planar_delta_encode_plane(const BYTE* inPlane,
 	return outPlane;
 }
 
-BOOL freerdp_bitmap_planar_delta_encode_planes(const BYTE** inPlanes,
+static BOOL freerdp_bitmap_planar_delta_encode_planes(BYTE* inPlanes[4],
         UINT32 width, UINT32 height,
         BYTE* outPlanes[4])
 {
@@ -1073,7 +1070,7 @@ BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context,
 	UINT32 dstSizes[4];
 	BYTE FormatHeader = 0;
 
-	if (!context || !context->rlePlanes)
+	if (!context || !context->rlePlanesBuffer)
 		return NULL;
 
 	if (context->AllowSkipAlpha)
@@ -1222,6 +1219,10 @@ BOOL freerdp_bitmap_planar_context_reset(
 	context->maxHeight = height;
 	context->maxPlaneSize = context->maxWidth * context->maxHeight;
 	context->nTempStep = context->maxWidth * 4;
+	free(context->planesBuffer);
+	free(context->pTempData);
+	free(context->deltaPlanesBuffer);
+	free(context->rlePlanesBuffer);
 	context->planesBuffer = malloc(context->maxPlaneSize * 4);
 	context->pTempData = malloc(context->maxPlaneSize * 4);
 	context->deltaPlanesBuffer = malloc(context->maxPlaneSize * 4);
