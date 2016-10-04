@@ -224,8 +224,11 @@ static void rdpsnd_select_supported_audio_formats(rdpsndPlugin* rdpsnd)
 	if (!rdpsnd->NumberOfServerFormats)
 		return;
 
-	rdpsnd->ClientFormats = (AUDIO_FORMAT*) malloc(sizeof(AUDIO_FORMAT) *
+	rdpsnd->ClientFormats = (AUDIO_FORMAT*) calloc(sizeof(AUDIO_FORMAT),
 	                        rdpsnd->NumberOfServerFormats);
+
+	if (!rdpsnd->ClientFormats)
+		return;
 
 	for (index = 0; index < (int) rdpsnd->NumberOfServerFormats; index++)
 	{
@@ -799,7 +802,6 @@ static UINT rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name,
 {
 	PFREERDP_RDPSND_DEVICE_ENTRY entry;
 	FREERDP_RDPSND_DEVICE_ENTRY_POINTS entryPoints;
-	\
 	UINT error;
 	entry = (PFREERDP_RDPSND_DEVICE_ENTRY)
 	        freerdp_load_channel_addin_entry("rdpsnd", (LPSTR) name, NULL, 0);

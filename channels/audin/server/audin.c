@@ -224,10 +224,11 @@ static UINT audin_server_recv_formats(audin_server* audin, wStream* s,
 		return ERROR_INVALID_DATA;
 	}
 
-	audin->context.client_formats = malloc(audin->context.num_client_formats *
+	audin->context.client_formats = calloc(audin->context.num_client_formats,
 	                                       sizeof(AUDIO_FORMAT));
-	ZeroMemory(audin->context.client_formats,
-	           audin->context.num_client_formats * sizeof(AUDIO_FORMAT));
+
+	if (!audin->context.client_formats)
+		return ERROR_NOT_ENOUGH_MEMORY;
 
 	for (i = 0; i < audin->context.num_client_formats; i++)
 	{
