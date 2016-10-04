@@ -194,7 +194,7 @@ DWORD mac_client_thread(void* param)
 		if (settings->AsyncInput)
 		{
 			if (!(inputThread = CreateThread(NULL, 0,
-			                                 (LPTHREAD_START_ROUTINE) mac_client_input_thread, context, 0, NULL)))
+			(LPTHREAD_START_ROUTINE) mac_client_input_thread, context, 0, NULL)))
 			{
 				WLog_ERR(TAG,  "failed to create async input thread");
 				goto disconnect;
@@ -203,7 +203,7 @@ DWORD mac_client_thread(void* param)
 		else
 		{
 			if (!(inputEvent = freerdp_get_message_queue_event_handle(instance,
-			                   FREERDP_INPUT_MESSAGE_QUEUE)))
+			FREERDP_INPUT_MESSAGE_QUEUE)))
 			{
 				WLog_ERR(TAG, "failed to get input event handle");
 				goto disconnect;
@@ -221,7 +221,7 @@ DWORD mac_client_thread(void* param)
 			if (!settings->AsyncTransport)
 			{
 				if (!(nCountTmp = freerdp_get_event_handles(context, &events[nCount],
-				                  16 - nCount)))
+				16 - nCount)))
 				{
 					WLog_ERR(TAG, "freerdp_get_event_handles failed");
 					break;
@@ -945,14 +945,13 @@ BOOL mac_post_connect(freerdp* instance)
 	rdp_pointer.SetDefault = mf_Pointer_SetDefault;
 	settings = instance->settings;
 
-    if (!gdi_init(instance, PIXEL_FORMAT_BGRX32))
+	if (!gdi_init(instance, PIXEL_FORMAT_BGRX32))
 		return FALSE;
 
 	gdi = instance->context->gdi;
 	view->bitmap_context = mac_create_bitmap_context(instance->context);
 	pointer_cache_register_callbacks(instance->update);
 	graphics_register_pointer(instance->context->graphics, &rdp_pointer);
-
 	/* setup pasteboard (aka clipboard) for copy operations (write only) */
 	view->pasteboard_wr = [NSPasteboard generalPasteboard];
 	/* setup pasteboard for read operations */
@@ -1000,7 +999,7 @@ BOOL mac_authenticate(freerdp* instance, char** username, char** password,
 
 BOOL mf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 {
-    rdpGdi* gdi;
+	rdpGdi* gdi;
 	NSRect rect;
 	NSImage* image;
 	NSPoint hotSpot;
@@ -1010,17 +1009,17 @@ BOOL mf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	NSBitmapImageRep* bmiRep;
 	MRDPCursor* mrdpCursor = [[MRDPCursor alloc] init];
 	mfContext* mfc = (mfContext*) context;
-    MRDPView* view;
-    UINT32 format;
+	MRDPView* view;
+	UINT32 format;
 
-    if (!mfc || !context || !pointer)
-        return FALSE;
+	if (!mfc || !context || !pointer)
+		return FALSE;
 
-    view = (MRDPView*) mfc->view;
-    gdi = context->gdi;
+	view = (MRDPView*) mfc->view;
+	gdi = context->gdi;
 
-    if (!gdi || !view)
-        return FALSE;
+	if (!gdi || !view)
+		return FALSE;
 
 	rect.size.width = pointer->width;
 	rect.size.height = pointer->height;
@@ -1032,11 +1031,11 @@ BOOL mf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 		return FALSE;
 
 	mrdpCursor->cursor_data = cursor_data;
+	format = PIXEL_FORMAT_RGBA32;
 
-    format = PIXEL_FORMAT_RGBA32;
 	if (freerdp_image_copy_from_pointer_data(
-            cursor_data, format,
-            0, 0, 0, pointer->width, pointer->height,
+	        cursor_data, format,
+	        0, 0, 0, pointer->width, pointer->height,
 	        pointer->xorMaskData, pointer->lengthXorMask,
 	        pointer->andMaskData, pointer->lengthAndMask,
 	        pointer->xorBpp, NULL) < 0)
@@ -1057,7 +1056,7 @@ BOOL mf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	          isPlanar:NO
 	          colorSpaceName:NSDeviceRGBColorSpace
 	          bitmapFormat:0
-              bytesPerRow:rect.size.width * GetBytesPerPixel(format)
+	          bytesPerRow:rect.size.width * GetBytesPerPixel(format)
 	          bitsPerPixel:0];
 	mrdpCursor->bmiRep = bmiRep;
 	/* create an image using above representation */
