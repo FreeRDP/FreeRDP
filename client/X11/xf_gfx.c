@@ -173,10 +173,6 @@ UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y,
 
 	free(pSurfaceIds);
 	IFCALLRET(context->UpdateSurfaces, status, context);
-
-	if (status < 0)
-		status = -1;
-
 	return status;
 }
 
