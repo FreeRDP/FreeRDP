@@ -325,7 +325,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 
 	if (!pDstData)
 	{
-		WLog_ERR(TAG, "XXX");
+		WLog_ERR(TAG, "Invalid argument pDstData=NULL");
 		return FALSE;
 	}
 
