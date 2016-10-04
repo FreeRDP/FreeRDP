@@ -64,7 +64,7 @@ static const BYTE wf_rop2_table[] =
 };
 
 static BOOL wf_decode_color(wfContext* wfc, const UINT32 srcColor,
-							COLORREF* color, UINT32* format)
+                            COLORREF* color, UINT32* format)
 {
 	rdpGdi* gdi;
 	rdpSettings* settings;
@@ -731,38 +731,43 @@ static BOOL wf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 		return FALSE;
 
 	orgColor = SetTextColor(hdc, fgcolor);
-	switch(mem3blt->brush.style)
-	{
-	case GDI_BS_SOLID:
-		brush = CreateSolidBrush(fgcolor);
-		break;
-	case GDI_BS_HATCHED:
 
-	case GDI_BS_PATTERN:
+	switch (mem3blt->brush.style)
 	{
-		HBITMAP bmp = CreateBitmap(8, 8, 1, mem3blt->brush.bpp, mem3blt->brush.data);
-		brush = CreatePatternBrush(bmp);
-	}
-		break;
-	default:
-		goto fail;
+		case GDI_BS_SOLID:
+			brush = CreateSolidBrush(fgcolor);
+			break;
+
+		case GDI_BS_HATCHED:
+		case GDI_BS_PATTERN:
+			{
+				HBITMAP bmp = CreateBitmap(8, 8, 1, mem3blt->brush.bpp, mem3blt->brush.data);
+				brush = CreatePatternBrush(bmp);
+			}
+			break;
+
+		default:
+			goto fail;
 	}
 
 	orgBrush = SelectObject(hdc, brush);
+
 	if (!BitBlt(hdc, mem3blt->nLeftRect, mem3blt->nTopRect,
-				mem3blt->nWidth, mem3blt->nHeight, bitmap->hdc,
-				mem3blt->nXSrc, mem3blt->nYSrc, gdi_rop3_code(mem3blt->bRop)))
+	            mem3blt->nWidth, mem3blt->nHeight, bitmap->hdc,
+	            mem3blt->nXSrc, mem3blt->nYSrc, gdi_rop3_code(mem3blt->bRop)))
 		goto fail;
 
 	if (wfc->drawing == wfc->primary)
-		wf_invalidate_region(wfc, mem3blt->nLeftRect, mem3blt->nTopRect, mem3blt->nWidth,
-							 mem3blt->nHeight);
+		wf_invalidate_region(wfc, mem3blt->nLeftRect, mem3blt->nTopRect,
+		                     mem3blt->nWidth,
+		                     mem3blt->nHeight);
 
 	rc = TRUE;
-
 fail:
+
 	if (brush)
 		SelectObject(hdc, orgBrush);
+
 	SetTextColor(hdc, orgColor);
 	return rc;
 }
