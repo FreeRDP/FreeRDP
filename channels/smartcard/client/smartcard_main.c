@@ -235,11 +235,12 @@ static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard)
 			{
 				SCardReleaseContext(hContext);
 
-				if (MessageQueue_PostQuit(pContext->IrpQueue, 0) && (WaitForSingleObject(pContext->thread, INFINITE) == WAIT_FAILED))
+				if (MessageQueue_PostQuit(pContext->IrpQueue, 0)
+				    && (WaitForSingleObject(pContext->thread, INFINITE) == WAIT_FAILED))
 					WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
 
 				CloseHandle(pContext->thread);
-				MessageQueue_Free(pContext->IrpQueue);	
+				MessageQueue_Free(pContext->IrpQueue);
 				free(pContext);
 			}
 		}
@@ -644,6 +645,7 @@ static void* smartcard_thread_func(void* arg)
 						error = CHANNEL_RC_OK;
 						goto out;
 					}
+
 					WLog_ERR(TAG, "smartcard_complete_irp failed with error %lu!", error);
 					goto out;
 				}
