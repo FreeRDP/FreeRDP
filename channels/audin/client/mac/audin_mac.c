@@ -174,7 +174,7 @@ static void mac_audio_queue_input_cb(void *aqData,
 {
     AudinMacDevice* mac = (AudinMacDevice*)aqData;
     UINT error;
-    int encoded_size;
+    int encoded_size = 0;
     const BYTE *encoded_data;
     BYTE *buffer = inBuffer->mAudioData;
     int buffer_size = inBuffer->mAudioDataByteSize;
