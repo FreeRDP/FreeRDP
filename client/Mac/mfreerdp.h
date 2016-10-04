@@ -56,8 +56,8 @@ struct mf_context
 	enum APPLE_KEYBOARD_TYPE appleKeyboardType;
 
 	DWORD mainThreadId;
-    DWORD keyboardThreadId;
-	
+	DWORD keyboardThreadId;
+
 	BOOL clipboardSync;
 	wClipboard* clipboard;
 	UINT32 numServerFormats;
