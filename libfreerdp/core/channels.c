@@ -267,5 +267,5 @@ static const WtsApiFunctionTable FreeRDP_WtsApiFunctionTable =
 
 PWtsApiFunctionTable FreeRDP_InitWtsApi(void)
 {
-	return &FreeRDP_WtsApiFunctionTable;
+	return (PWtsApiFunctionTable)&FreeRDP_WtsApiFunctionTable;
 }
