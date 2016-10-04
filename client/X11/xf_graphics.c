@@ -195,12 +195,12 @@ static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 		return FALSE;
 	}
 
-	if (freerdp_image_copy_from_pointer_data(
+	if (!freerdp_image_copy_from_pointer_data(
 	        (BYTE*) ci.pixels, CursorFormat,
 	        0, 0, 0, pointer->width, pointer->height,
 	        pointer->xorMaskData, pointer->lengthXorMask,
 	        pointer->andMaskData, pointer->lengthAndMask,
-	        pointer->xorBpp, &context->gdi->palette) < 0)
+	        pointer->xorBpp, &context->gdi->palette))
 	{
 		_aligned_free(ci.pixels);
 		xf_unlock_x11(xfc, FALSE);
