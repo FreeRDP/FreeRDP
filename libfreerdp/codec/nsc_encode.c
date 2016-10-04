@@ -35,7 +35,7 @@
 #include "nsc_types.h"
 #include "nsc_encode.h"
 
-static void nsc_context_initialize_encode(NSC_CONTEXT* context)
+static BOOL nsc_context_initialize_encode(NSC_CONTEXT* context)
 {
 	int i;
 	UINT32 length;
@@ -49,8 +49,13 @@ static void nsc_context_initialize_encode(NSC_CONTEXT* context)
 	if (length > context->priv->PlaneBuffersLength)
 	{
 		for (i = 0; i < 5; i++)
+		{
 			context->priv->PlaneBuffers[i] = (BYTE*) realloc(context->priv->PlaneBuffers[i],
 			                                 length);
+
+			if (!context->priv->PlaneBuffers[i])
+				goto fail;
+		}
 
 		context->priv->PlaneBuffersLength = length;
 	}
@@ -69,6 +74,17 @@ static void nsc_context_initialize_encode(NSC_CONTEXT* context)
 		context->OrgByteCount[2] = context->width * context->height;
 		context->OrgByteCount[3] = context->width * context->height;
 	}
+
+	return TRUE;
+fail:
+
+	if (length > context->priv->PlaneBuffersLength)
+	{
+		for (i = 0; i < 5; i++)
+			free(context->priv->PlaneBuffers[i]);
+	}
+
+	return FALSE;
 }
 
 static void nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, const BYTE* data,
@@ -433,6 +449,10 @@ NSC_MESSAGE* nsc_encode_messages(NSC_CONTEXT* context, const BYTE* data,
 		PaddedMaxPlaneSize = messages[i].MaxPlaneSize + 32;
 		messages[i].PlaneBuffer = (BYTE*) BufferPool_Take(context->priv->PlanePool,
 		                          PaddedMaxPlaneSize * 5);
+
+		if (!messages[i].PlaneBuffer)
+			goto fail;
+
 		messages[i].PlaneBuffers[0] = (BYTE*) &
 		                              (messages[i].PlaneBuffer[(PaddedMaxPlaneSize * 0) + 16]);
 		messages[i].PlaneBuffers[1] = (BYTE*) &
@@ -481,6 +501,12 @@ NSC_MESSAGE* nsc_encode_messages(NSC_CONTEXT* context, const BYTE* data,
 	context->priv->PlaneBuffers[3] = NULL;
 	context->priv->PlaneBuffers[4] = NULL;
 	return messages;
+fail:
+
+	for (i = 0; i < *numMessages; i++)
+		BufferPool_Return(context->priv->PlanePool, messages[i].PlaneBuffer);
+
+	return NULL;
 }
 
 BOOL nsc_write_message(NSC_CONTEXT* context, wStream* s, NSC_MESSAGE* message)
@@ -537,7 +563,10 @@ BOOL nsc_compose_message(NSC_CONTEXT* context, wStream* s, const BYTE* data,
 	NSC_MESSAGE* message = &s_message;
 	context->width = width;
 	context->height = height;
-	nsc_context_initialize_encode(context);
+
+	if (!nsc_context_initialize_encode(context))
+		return FALSE;
+
 	/* ARGB to AYCoCg conversion, chroma subsampling and colorloss reduction */
 	PROFILER_ENTER(context->priv->prof_nsc_encode);
 	context->encode(context, data, scanline);
