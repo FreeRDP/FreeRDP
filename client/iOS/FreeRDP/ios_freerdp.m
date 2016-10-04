@@ -259,7 +259,6 @@ static BOOL ios_post_connect(freerdp* instance)
 	instance->update->EndPaint = ios_ui_end_paint;
 	instance->update->DesktopResize = ios_ui_resize_window;
 	pointer_cache_register_callbacks(instance->update);
-
 	[mfi->session performSelectorOnMainThread:@selector(sessionDidConnect)
 	 withObject:nil waitUntilDone:YES];
 	return TRUE;
@@ -447,7 +446,6 @@ static void ios_client_free(freerdp* instance, rdpContext* context)
 		return;
 
 	mfi = ((mfContext*) context)->mfi;
-
 	ios_events_free_pipe(mfi);
 	free(mfi);
 }
