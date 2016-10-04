@@ -43,9 +43,7 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam)
 	wfInfo* wfi;
 	DWORD beg, end;
 	DWORD diff, rate;
-
 	wfi = (wfInfo*) lpParam;
-
 	fps = wfi->framesPerSecond;
 	rate = 1000 / fps;
 
@@ -64,6 +62,7 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam)
 					wf_update_encode(wfi);
 					//WLog_DBG(TAG, "Start of parallel sending");
 					index = 0;
+
 					for (peerindex = 0; peerindex < wfi->peerCount; peerindex++)
 					{
 						for (; index < WF_INFO_MAXPEERS; index++)
@@ -74,7 +73,6 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam)
 								SetEvent(((wfPeerContext*) wfi->peers[index]->context)->updateEvent);
 							}
 						}
-
 					}
 
 					for (index = 0; index < wfi->activePeerCount; index++)
@@ -111,17 +109,11 @@ void wf_update_encode(wfInfo* wfi)
 	long height, width;
 	BYTE* pDataBits = NULL;
 	int stride;
-
 	SURFACE_BITS_COMMAND* cmd;
-
 	wf_info_find_invalid_region(wfi);
-
 	cmd = &wfi->cmd;
-
 	Stream_SetPosition(wfi->s, 0);
-
 	wf_info_getScreenData(wfi, &width, &height, &pDataBits, &stride);
-
 	rect.x = 0;
 	rect.y = 0;
 	rect.width = (UINT16) width;
@@ -130,18 +122,16 @@ void wf_update_encode(wfInfo* wfi)
 	Stream_Clear(wfi->s);
 
 	if (!(rfx_compose_message(wfi->rfx_context, wfi->s, &rect, 1,
-		pDataBits, width, height, stride)))
+	                          pDataBits, width, height, stride)))
 	{
 		return;
 	}
 
 	wfi->frame_idx = wfi->rfx_context->frameIdx;
-
 	cmd->destLeft = wfi->invalid.left;
 	cmd->destTop = wfi->invalid.top;
 	cmd->destRight = wfi->invalid.left + width;
 	cmd->destBottom = wfi->invalid.top + height;
-
 	cmd->bpp = 32;
 	cmd->codecID = 3;
 	cmd->width = width;
@@ -168,13 +158,12 @@ void wf_update_peer_send(wfInfo* wfi, wfPeerContext* context)
 	if ((context->frame_idx + 1) != wfi->frame_idx)
 	{
 		/* This frame is meant to be discarded */
-
 		if (context->frame_idx == 0)
 			return;
 
 		/* This is an unexpected error condition */
 		WLog_DBG(TAG, "Unexpected Frame Index: Actual: %d Expected: %d",
-				 wfi->frame_idx, context->frame_idx + 1);
+		         wfi->frame_idx, context->frame_idx + 1);
 	}
 
 	wfi->cmd.codecID = client->settings->RemoteFxCodecId;
@@ -198,12 +187,11 @@ void wf_update_encoder_reset(wfInfo* wfi)
 			wfi->rfx_context->mode = RLGR3;
 			wfi->rfx_context->width = wfi->servscreen_width;
 			wfi->rfx_context->height = wfi->servscreen_height;
-			rfx_context_set_pixel_format(wfi->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
+			rfx_context_set_pixel_format(wfi->rfx_context, RDP_PIXEL_FORMAT_BGRA32);
 			wfi->s = Stream_New(NULL, 0xFFFF);
 		}
 
 		wf_info_invalidate_full_screen(wfi);
-
 		wf_info_unlock(wfi);
 	}
 }
