@@ -212,6 +212,7 @@ static BOOL wf_Pointer_New(rdpContext* context, const rdpPointer* pointer)
 	{
 		BYTE* pdata = (BYTE*) _aligned_malloc(pointer->lengthAndMask +
 		                                      pointer->lengthXorMask, 16);
+
 		if (!pdata)
 			goto fail;
 
@@ -225,6 +226,7 @@ static BOOL wf_Pointer_New(rdpContext* context, const rdpPointer* pointer)
 	else
 	{
 		BYTE* pdata = (BYTE*) _aligned_malloc(pointer->lengthAndMask, 16);
+
 		if (!pdata)
 			goto fail;
 
@@ -232,28 +234,31 @@ static BOOL wf_Pointer_New(rdpContext* context, const rdpPointer* pointer)
 		            pointer->height);
 		info.hbmMask = CreateBitmap(pointer->width, pointer->height, 1, 1, pdata);
 		_aligned_free(pdata);
-		pdata = (BYTE*) _aligned_malloc(pointer->width * pointer->height * GetBitsPerPixel(gdi->dstFormat), 16);
+		pdata = (BYTE*) _aligned_malloc(pointer->width * pointer->height *
+		                                GetBitsPerPixel(gdi->dstFormat), 16);
+
 		if (!pdata)
 			goto fail;
 
-		if (!freerdp_image_copy_from_pointer_data(pdata, gdi->dstFormat, 0, 0, 0, pointer->width, pointer->height,
-											 pointer->xorMaskData, pointer->lengthXorMask,
-											 pointer->andMaskData, pointer->lengthAndMask, pointer->xorBpp, &gdi->palette))
+		if (!freerdp_image_copy_from_pointer_data(pdata, gdi->dstFormat, 0, 0, 0,
+		        pointer->width, pointer->height,
+		        pointer->xorMaskData, pointer->lengthXorMask,
+		        pointer->andMaskData, pointer->lengthAndMask, pointer->xorBpp, &gdi->palette))
 		{
 			_aligned_free(pdata);
 			goto fail;
 		}
+
 		info.hbmColor = CreateBitmap(pointer->width, pointer->height, 1,
-									 GetBitsPerPixel(gdi->dstFormat), pdata);
+		                             GetBitsPerPixel(gdi->dstFormat), pdata);
 		_aligned_free(pdata);
 	}
 
 	hCur = CreateIconIndirect(&info);
 	((wfPointer*) pointer)->cursor = hCur;
-
 	rc = TRUE;
-
 fail:
+
 	if (info.hbmMask)
 		DeleteObject(info.hbmMask);
 
