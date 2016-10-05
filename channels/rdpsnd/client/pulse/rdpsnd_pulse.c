@@ -584,7 +584,9 @@ static void rdpsnd_pulse_start(rdpsndDevicePlugin* device)
 	if (!pulse->stream)
 		return;
 
+	pa_threaded_mainloop_lock(pulse->mainloop);
 	pa_stream_trigger(pulse->stream, NULL, NULL);
+	pa_threaded_mainloop_unlock(pulse->mainloop);
 }
 
 COMMAND_LINE_ARGUMENT_A rdpsnd_pulse_args[] =
