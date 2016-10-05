@@ -497,6 +497,12 @@ WINSCARDAPI LONG WINAPI SCardAudit(SCARDCONTEXT hContext, DWORD dwEvent)
 	SCARDAPI_STUB_CALL_LONG(SCardAudit, hContext, dwEvent);
 }
 
+WINSCARDAPI LONG WINAPI SCardAddReaderName(HANDLE* key, LPSTR readerName)
+{
+	SCARDAPI_STUB_CALL_LONG(SCardAddReaderName, key, readerName);
+}
+
+
 /**
  * Extended API
  */

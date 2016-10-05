@@ -838,15 +838,28 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 	}
 	CommandLineSwitchCase(arg, "smartcard")
 	{
-		char** p;
-		int count;
+		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+		{
+			char** p;
+			int count;
 
-		p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
-		p[0] = "smartcard";
+			p = freerdp_command_line_parse_comma_separated_values_offset(arg->Value, &count);
+			p[0] = "smartcard";
 
-		status = freerdp_client_add_device_channel(settings, count, p);
+			status = freerdp_client_add_device_channel(settings, count, p);
 
-		free(p);
+			free(p);
+		}
+		else
+		{
+			char* p[2];
+			int count;
+			count = 2;
+			p[0] = "smartcard";
+			p[1] = "";
+
+			status = freerdp_client_add_device_channel(settings, count, p);
+		}
 	}
 	CommandLineSwitchCase(arg, "printer")
 	{
