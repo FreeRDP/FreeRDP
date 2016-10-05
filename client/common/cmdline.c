@@ -34,7 +34,7 @@
 #include <freerdp/client/channels.h>
 #include <freerdp/crypto/crypto.h>
 #include <freerdp/locale/keyboard.h>
-
+#include <freerdp/utils/passphrase.h>
 
 #include <freerdp/client/cmdline.h>
 #include <freerdp/version.h>
@@ -74,7 +74,7 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "vc", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Static virtual channel" },
 	{ "dvc", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Dynamic virtual channel" },
 	{ "u", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Username" },
-	{ "p", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Password" },
+	{ "p", COMMAND_LINE_VALUE_OPTIONAL, "<password>", NULL, NULL, -1, NULL, "Password, if present without value the password will be asked" },
 	{ "d", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Domain" },
 	{ "g", COMMAND_LINE_VALUE_REQUIRED, "<gateway>[:port]", NULL, NULL, -1, NULL, "Gateway Hostname" },
 	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Gateway username" },
@@ -173,7 +173,7 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "multitransport", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Support multitransport protocol" },
 	{ "assistance", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Remote assistance password" },
 	{ "encryption-methods", COMMAND_LINE_VALUE_REQUIRED, "<40,56,128,FIPS>", NULL, NULL, -1, NULL, "RDP standard security encryption methods" },
-	{ "from-stdin", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Read credentials from stdin, do not use defaults." },
+	{ "from-stdin", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Read credentials from stdin, do not use defaults (only for nla)" },
 	{ "buildconfig", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_BUILDCONFIG, NULL, NULL, NULL, -1, NULL, "print the build configuration" },
 	{ "log-level", COMMAND_LINE_VALUE_REQUIRED, "[OFF|FATAL|ERROR|WARN|INFO|DEBUG|TRACE]", NULL, NULL, -1, NULL, "Set the default log level, see wLog(1) for details" },
 	{ "log-filters", COMMAND_LINE_VALUE_REQUIRED, "<logger tag>:<log level>[, <logger tag>:<log level>][, ...]]", NULL, NULL, -1, NULL, "Set logger filters, see wLog(1) for details" },
@@ -1738,8 +1738,20 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchCase(arg, "p")
 		{
 			free (settings->Password);
-			if (!(settings->Password = _strdup(arg->Value)))
-				return COMMAND_LINE_ERROR_MEMORY;
+			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+			{
+				if (!(settings->Password = _strdup(arg->Value)))
+					return COMMAND_LINE_ERROR_MEMORY;
+			}
+			else
+			{
+				static const size_t password_size = 512;
+				settings->Password = (char*) calloc(password_size, sizeof(char));
+				if (!settings->Password)
+					return COMMAND_LINE_ERROR_MEMORY;
+				if (!freerdp_passphrase_read("Password: ", settings->Password, password_size, 1))
+					return COMMAND_LINE_ERROR;
+			}
 		}
 		CommandLineSwitchCase(arg, "g")
 		{
@@ -2463,7 +2475,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 	arg = CommandLineFindArgumentA(args, "p");
 
-	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
+	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT && arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 	{
 		FillMemory(arg->Value, strlen(arg->Value), '*');
 	}
