@@ -33,8 +33,8 @@ static int test_gdi_ClipCoords(void)
 	gdi_SetNullClipRgn(hdc);
 	rgn1 = gdi_CreateRectRgn(0, 0, 0, 0);
 	rgn2 = gdi_CreateRectRgn(0, 0, 0, 0);
-	rgn1->null = 1;
-	rgn2->null = 1;
+	rgn1->null = TRUE;
+	rgn2->null = TRUE;
 	/* null clipping region */
 	gdi_SetNullClipRgn(hdc);
 	gdi_SetRgn(rgn1, 20, 20, 100, 100);
@@ -180,16 +180,16 @@ static int test_gdi_InvalidateRegion(void)
 	gdi_SetNullClipRgn(hdc);
 	hdc->hwnd = (HGDI_WND) calloc(1, sizeof(GDI_WND));
 	hdc->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0);
-	hdc->hwnd->invalid->null = 1;
+	hdc->hwnd->invalid->null = TRUE;
 	invalid = hdc->hwnd->invalid;
 	hdc->hwnd->count = 16;
 	hdc->hwnd->cinvalid = (HGDI_RGN) calloc(hdc->hwnd->count, sizeof(GDI_RGN));
 	rgn1 = gdi_CreateRectRgn(0, 0, 0, 0);
 	rgn2 = gdi_CreateRectRgn(0, 0, 0, 0);
-	rgn1->null = 1;
-	rgn2->null = 1;
+	rgn1->null = TRUE;
+	rgn2->null = TRUE;
 	/* no previous invalid region */
-	invalid->null = 1;
+	invalid->null = TRUE;
 	gdi_SetRgn(rgn1, 300, 300, 100, 100);
 	gdi_SetRgn(rgn2, 300, 300, 100, 100);
 	gdi_InvalidateRegion(hdc, rgn1->x, rgn1->y, rgn1->w, rgn1->h);

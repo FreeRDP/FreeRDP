@@ -1146,7 +1146,7 @@ static BOOL gdi_init_primary(rdpGdi* gdi, UINT32 stride, UINT32 format,
 	if (!(gdi->primary->hdc->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0)))
 		goto fail_hwnd;
 
-	gdi->primary->hdc->hwnd->invalid->null = 1;
+	gdi->primary->hdc->hwnd->invalid->null = TRUE;
 	gdi->primary->hdc->hwnd->count = 32;
 
 	if (!(gdi->primary->hdc->hwnd->cinvalid = (HGDI_RGN) calloc(

@@ -58,7 +58,7 @@ HGDI_DC gdi_GetDC(void)
 		return NULL;
 	}
 
-	hDC->clip->null = 1;
+	hDC->clip->null = TRUE;
 	hDC->hwnd = NULL;
 	return hDC;
 }
@@ -81,7 +81,7 @@ HGDI_DC gdi_CreateDC(UINT32 format)
 	if (!(hDC->clip = gdi_CreateRectRgn(0, 0, 0, 0)))
 		goto fail;
 
-	hDC->clip->null = 1;
+	hDC->clip->null = TRUE;
 	hDC->hwnd = NULL;
 	hDC->format = format;
 
@@ -91,11 +91,11 @@ HGDI_DC gdi_CreateDC(UINT32 format)
 	if (!(hDC->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0)))
 		goto fail;
 
-	hDC->hwnd->invalid->null = 1;
+	hDC->hwnd->invalid->null = TRUE;
 	hDC->hwnd->count = 32;
 
 	if (!(hDC->hwnd->cinvalid = (HGDI_RGN) calloc(hDC->hwnd->count,
-				    sizeof(GDI_RGN))))
+	                            sizeof(GDI_RGN))))
 		goto fail;
 
 	hDC->hwnd->ninvalid = 0;
@@ -125,7 +125,7 @@ HGDI_DC gdi_CreateCompatibleDC(HGDI_DC hdc)
 		return NULL;
 	}
 
-	hDC->clip->null = 1;
+	hDC->clip->null = TRUE;
 	hDC->format = hdc->format;
 	hDC->drawMode = hdc->drawMode;
 	hDC->hwnd = NULL;

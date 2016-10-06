@@ -288,7 +288,7 @@ static BOOL xf_desktop_resize(rdpContext* context)
 static BOOL xf_sw_begin_paint(rdpContext* context)
 {
 	rdpGdi* gdi = context->gdi;
-	gdi->primary->hdc->hwnd->invalid->null = 1;
+	gdi->primary->hdc->hwnd->invalid->null = TRUE;
 	gdi->primary->hdc->hwnd->ninvalid = 0;
 	return TRUE;
 }
@@ -390,7 +390,7 @@ out:
 static BOOL xf_hw_begin_paint(rdpContext* context)
 {
 	xfContext* xfc = (xfContext*) context;
-	xfc->hdc->hwnd->invalid->null = 1;
+	xfc->hdc->hwnd->invalid->null = TRUE;
 	xfc->hdc->hwnd->ninvalid = 0;
 	return TRUE;
 }

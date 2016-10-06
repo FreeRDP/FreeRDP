@@ -59,7 +59,7 @@ static void tf_context_free(freerdp* instance, rdpContext* context)
 static BOOL tf_begin_paint(rdpContext* context)
 {
 	rdpGdi* gdi = context->gdi;
-	gdi->primary->hdc->hwnd->invalid->null = 1;
+	gdi->primary->hdc->hwnd->invalid->null = TRUE;
 	return TRUE;
 }
 

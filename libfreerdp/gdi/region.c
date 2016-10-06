@@ -60,7 +60,7 @@ HGDI_RGN gdi_CreateRectRgn(UINT32 nLeftRect, UINT32 nTopRect,
 	hRgn->y = nTopRect;
 	hRgn->w = nRightRect - nLeftRect + 1;
 	hRgn->h = nBottomRect - nTopRect + 1;
-	hRgn->null = 0;
+	hRgn->null = FALSE;
 	return hRgn;
 }
 
@@ -312,7 +312,7 @@ INLINE BOOL gdi_SetRgn(HGDI_RGN hRgn, UINT32 nXLeft, UINT32 nYLeft,
 	hRgn->y = nYLeft;
 	hRgn->w = nWidth;
 	hRgn->h = nHeight;
-	hRgn->null = 0;
+	hRgn->null = FALSE;
 	return TRUE;
 }
 
@@ -330,7 +330,7 @@ INLINE BOOL gdi_SetRectRgn(HGDI_RGN hRgn, UINT32 nLeftRect, UINT32 nTopRect,
                            UINT32 nRightRect, UINT32 nBottomRect)
 {
 	gdi_CRectToRgn(nLeftRect, nTopRect, nRightRect, nBottomRect, hRgn);
-	hRgn->null = 0;
+	hRgn->null = FALSE;
 	return TRUE;
 }
 
@@ -452,7 +452,7 @@ INLINE BOOL gdi_InvalidateRegion(HGDI_DC hdc, UINT32 x, UINT32 y, UINT32 w,
 		invalid->y = y;
 		invalid->w = w;
 		invalid->h = h;
-		invalid->null = 0;
+		invalid->null = FALSE;
 		return TRUE;
 	}
 

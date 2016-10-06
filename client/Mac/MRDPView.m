@@ -1156,7 +1156,7 @@ BOOL mac_begin_paint(rdpContext* context)
 	if (!gdi)
 		return FALSE;
 
-	gdi->primary->hdc->hwnd->invalid->null = 1;
+	gdi->primary->hdc->hwnd->invalid->null = TRUE;
 	return TRUE;
 }
 

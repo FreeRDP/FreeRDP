@@ -53,7 +53,7 @@ static BOOL wl_begin_paint(rdpContext* context)
 {
 	rdpGdi* gdi;
 	gdi = context->gdi;
-	gdi->primary->hdc->hwnd->invalid->null = 1;
+	gdi->primary->hdc->hwnd->invalid->null = TRUE;
 	return TRUE;
 }
 

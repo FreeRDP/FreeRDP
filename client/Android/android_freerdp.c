@@ -146,7 +146,7 @@ static BOOL android_begin_paint(rdpContext* context)
 	if (!hwnd || !hwnd->invalid)
 		return FALSE;
 
-	hwnd->invalid->null = 1;
+	hwnd->invalid->null = TRUE;
 	hwnd->ninvalid = 0;
 	return TRUE;
 }

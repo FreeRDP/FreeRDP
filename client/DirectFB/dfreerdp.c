@@ -61,7 +61,7 @@ void df_context_free(freerdp* instance, rdpContext* context)
 void df_begin_paint(rdpContext* context)
 {
 	rdpGdi* gdi = context->gdi;
-	gdi->primary->hdc->hwnd->invalid->null = 1;
+	gdi->primary->hdc->hwnd->invalid->null = TRUE;
 }
 
 void df_end_paint(rdpContext* context)

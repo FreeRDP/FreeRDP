@@ -47,7 +47,7 @@ BOOL shw_begin_paint(rdpContext* context)
 	shwContext* shw;
 	rdpGdi* gdi = context->gdi;
 	shw = (shwContext*) context;
-	gdi->primary->hdc->hwnd->invalid->null = 1;
+	gdi->primary->hdc->hwnd->invalid->null = TRUE;
 	gdi->primary->hdc->hwnd->ninvalid = 0;
 	return TRUE;
 }
@@ -62,7 +62,6 @@ BOOL shw_end_paint(rdpContext* context)
 	shwContext* shw = (shwContext*) context;
 	winShadowSubsystem* subsystem = shw->subsystem;
 	rdpShadowSurface* surface = subsystem->server->surface;
-
 	ninvalid = gdi->primary->hdc->hwnd->ninvalid;
 	cinvalid = gdi->primary->hdc->hwnd->cinvalid;
 
@@ -72,8 +71,8 @@ BOOL shw_end_paint(rdpContext* context)
 		invalidRect.top = cinvalid[index].y;
 		invalidRect.right = cinvalid[index].x + cinvalid[index].w;
 		invalidRect.bottom = cinvalid[index].y + cinvalid[index].h;
-
-		region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion), &invalidRect);
+		region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion),
+		                    &invalidRect);
 	}
 
 	SetEvent(subsystem->RdpUpdateEnterEvent);
@@ -88,7 +87,7 @@ BOOL shw_desktop_resize(rdpContext* context)
 }
 
 BOOL shw_surface_frame_marker(rdpContext* context,
-							  const SURFACE_FRAME_MARKER* surfaceFrameMarker)
+                              const SURFACE_FRAME_MARKER* surfaceFrameMarker)
 {
 	shwContext* shw = (shwContext*) context;
 	return TRUE;

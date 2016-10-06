@@ -61,7 +61,7 @@ HGDI_RGN gdi_GetClipRgn(HGDI_DC hdc)
 BOOL gdi_SetNullClipRgn(HGDI_DC hdc)
 {
 	gdi_SetClipRgn(hdc, 0, 0, 0, 0);
-	hdc->clip->null = 1;
+	hdc->clip->null = TRUE;
 	return TRUE;
 }
 

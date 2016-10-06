@@ -127,7 +127,7 @@ static BOOL wf_begin_paint(rdpContext* context)
 	if (!hdc || !hdc->hwnd || !hdc->hwnd->invalid)
 		return FALSE;
 
-	hdc->hwnd->invalid->null = 1;
+	hdc->hwnd->invalid->null = TRUE;
 	hdc->hwnd->ninvalid = 0;
 	return TRUE;
 }

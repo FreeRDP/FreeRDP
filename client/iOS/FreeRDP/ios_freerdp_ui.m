@@ -132,7 +132,7 @@ DWORD ios_ui_verify_changed_certificate(freerdp* instance,
 BOOL ios_ui_begin_paint(rdpContext* context)
 {
 	rdpGdi* gdi = context->gdi;
-	gdi->primary->hdc->hwnd->invalid->null = 1;
+	gdi->primary->hdc->hwnd->invalid->null = TRUE;
 	return TRUE;
 }
 
@@ -144,7 +144,7 @@ BOOL ios_ui_end_paint(rdpContext* context)
 	                               gdi->primary->hdc->hwnd->invalid->y, gdi->primary->hdc->hwnd->invalid->w,
 	                               gdi->primary->hdc->hwnd->invalid->h);
 
-	if (gdi->primary->hdc->hwnd->invalid->null == 0)
+	if (!gdi->primary->hdc->hwnd->invalid->null)
 		[mfi->session performSelectorOnMainThread:@selector(
 		     setNeedsDisplayInRectAsValue:) withObject:[NSValue valueWithCGRect:dirty_rect]
 		 waitUntilDone:NO];
