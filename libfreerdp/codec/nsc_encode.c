@@ -506,6 +506,7 @@ fail:
 	for (i = 0; i < *numMessages; i++)
 		BufferPool_Return(context->priv->PlanePool, messages[i].PlaneBuffer);
 
+	free(messages);
 	return NULL;
 }
 

@@ -542,7 +542,12 @@ static BOOL shadow_client_logon(freerdp_peer* peer,
 
 	if ((identity->User && !user) || (identity->Domain && !domain)
 	    || (identity->Password && !password))
+	{
+		free(user);
+		free(domain);
+		free(password);
 		return FALSE;
+	}
 
 	if (user)
 	{
