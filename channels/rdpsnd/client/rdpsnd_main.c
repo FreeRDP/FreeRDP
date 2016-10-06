@@ -1447,10 +1447,11 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_init_event(LPVOID pInitHandle,
 					         "rdpsnd_virtual_channel_event_disconnected failed with error %lu!", error);
 
 			rdpsnd_virtual_channel_event_terminated(plugin);
+			plugin = NULL;
 			break;
 	}
 
-	if (error && plugin->rdpcontext)
+	if (error && plugin && plugin->rdpcontext)
 		setChannelError(plugin->rdpcontext, error,
 		                "rdpsnd_virtual_channel_init_event reported an error");
 }
