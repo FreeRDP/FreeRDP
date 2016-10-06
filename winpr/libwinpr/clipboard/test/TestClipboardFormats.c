@@ -34,9 +34,8 @@ int TestClipboardFormats(int argc, char* argv[])
 		BOOL bSuccess;
 		UINT32 SrcSize;
 		UINT32 DstSize;
-		char* pSrcData;
+		const char* pSrcData = "this is a test string";
 		char* pDstData;
-		pSrcData = _strdup("this is a test string");
 
 		if (!pSrcData)
 		{
@@ -45,12 +44,8 @@ int TestClipboardFormats(int argc, char* argv[])
 		}
 
 		SrcSize = (UINT32)(strlen(pSrcData) + 1);
-		bSuccess = ClipboardSetData(clipboard, utf8StringFormatId, (void*) pSrcData,
+		bSuccess = ClipboardSetData(clipboard, utf8StringFormatId, pSrcData,
 		                            SrcSize);
-
-		if (!bSuccess)
-			free(pSrcData);
-
 		fprintf(stderr, "ClipboardSetData: %d\n", bSuccess);
 		DstSize = 0;
 		pDstData = (char*) ClipboardGetData(clipboard, utf8StringFormatId, &DstSize);

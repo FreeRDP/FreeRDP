@@ -771,12 +771,9 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 			formatData = [item dataForType:type];
 			formatId = ClipboardRegisterFormat(mfc->clipboard, "UTF8_STRING");
 			/* length does not include null terminator */
-			size = (UINT32) [formatData length];
-			data = (BYTE*) malloc(size + 1);
-			[formatData getBytes:data length:size];
-			data[size] = '\0';
-			size++;
-			ClipboardSetData(mfc->clipboard, formatId, (void*) data, size);
+			size = (UINT32) [formatData length] + 1;
+			data = [formatData bytes];
+			ClipboardSetData(mfc->clipboard, formatId, data, size);
 			formatMatch = TRUE;
 			break;
 		}

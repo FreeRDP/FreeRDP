@@ -58,14 +58,15 @@ const char* CF_STANDARD_STRINGS[CF_MAX] =
 	"CF_DIBV5"		/* 17 */
 };
 
-wClipboardFormat* ClipboardFindFormat(wClipboard* clipboard, UINT32 formatId, const char* name)
+wClipboardFormat* ClipboardFindFormat(wClipboard* clipboard, UINT32 formatId,
+                                      const char* name)
 {
 	UINT32 index;
 	wClipboardFormat* format = NULL;
 
 	if (!clipboard)
 		return NULL;
-	
+
 	if (formatId)
 	{
 		for (index = 0; index < clipboard->numFormats; index++)
@@ -91,7 +92,6 @@ wClipboardFormat* ClipboardFindFormat(wClipboard* clipboard, UINT32 formatId, co
 	else
 	{
 		/* special "CF_RAW" case */
-
 		if (clipboard->numFormats > 0)
 		{
 			format = &clipboard->formats[0];
@@ -99,7 +99,8 @@ wClipboardFormat* ClipboardFindFormat(wClipboard* clipboard, UINT32 formatId, co
 			if (format->formatId)
 				return NULL;
 
-			if (!format->formatName || (strcmp(format->formatName, CF_STANDARD_STRINGS[0]) == 0))
+			if (!format->formatName
+			    || (strcmp(format->formatName, CF_STANDARD_STRINGS[0]) == 0))
 				return format;
 		}
 	}
@@ -107,7 +108,8 @@ wClipboardFormat* ClipboardFindFormat(wClipboard* clipboard, UINT32 formatId, co
 	return format;
 }
 
-wClipboardSynthesizer* ClipboardFindSynthesizer(wClipboardFormat* format, UINT32 formatId)
+wClipboardSynthesizer* ClipboardFindSynthesizer(wClipboardFormat* format,
+        UINT32 formatId)
 {
 	UINT32 index;
 	wClipboardSynthesizer* synthesizer;
@@ -133,7 +135,7 @@ void ClipboardLock(wClipboard* clipboard)
 {
 	if (!clipboard)
 		return;
-	
+
 	EnterCriticalSection(&(clipboard->lock));
 }
 
@@ -141,7 +143,7 @@ void ClipboardUnlock(wClipboard* clipboard)
 {
 	if (!clipboard)
 		return;
-	
+
 	LeaveCriticalSection(&(clipboard->lock));
 }
 
@@ -149,7 +151,7 @@ BOOL ClipboardEmpty(wClipboard* clipboard)
 {
 	if (!clipboard)
 		return FALSE;
-	
+
 	if (clipboard->data)
 	{
 		free((void*) clipboard->data);
@@ -157,10 +159,8 @@ BOOL ClipboardEmpty(wClipboard* clipboard)
 	}
 
 	clipboard->size = 0;
-
 	clipboard->formatId = 0;
 	clipboard->sequenceNumber++;
-
 	return TRUE;
 }
 
@@ -168,16 +168,17 @@ UINT32 ClipboardCountRegisteredFormats(wClipboard* clipboard)
 {
 	if (!clipboard)
 		return 0;
-	
+
 	return clipboard->numFormats;
 }
 
-UINT32 ClipboardGetRegisteredFormatIds(wClipboard* clipboard, UINT32** ppFormatIds)
+UINT32 ClipboardGetRegisteredFormatIds(wClipboard* clipboard,
+                                       UINT32** ppFormatIds)
 {
 	UINT32 index;
 	UINT32* pFormatIds;
 	wClipboardFormat* format;
-	
+
 	if (!clipboard)
 		return 0;
 
@@ -208,7 +209,7 @@ UINT32 ClipboardGetRegisteredFormatIds(wClipboard* clipboard, UINT32** ppFormatI
 UINT32 ClipboardRegisterFormat(wClipboard* clipboard, const char* name)
 {
 	wClipboardFormat* format;
-	
+
 	if (!clipboard)
 		return 0;
 
@@ -220,10 +221,9 @@ UINT32 ClipboardRegisterFormat(wClipboard* clipboard, const char* name)
 	if ((clipboard->numFormats + 1) >= clipboard->maxFormats)
 	{
 		UINT32 numFormats = clipboard->maxFormats * 2;
-		wClipboardFormat *tmpFormat;
-
+		wClipboardFormat* tmpFormat;
 		tmpFormat = (wClipboardFormat*) realloc(clipboard->formats,
-				numFormats * sizeof(wClipboardFormat));
+		                                        numFormats * sizeof(wClipboardFormat));
 
 		if (!tmpFormat)
 			return 0;
@@ -245,17 +245,16 @@ UINT32 ClipboardRegisterFormat(wClipboard* clipboard, const char* name)
 
 	format->formatId = clipboard->nextFormatId++;
 	clipboard->numFormats++;
-
 	return format->formatId;
 }
 
 BOOL ClipboardRegisterSynthesizer(wClipboard* clipboard, UINT32 formatId,
-		UINT32 syntheticId, CLIPBOARD_SYNTHESIZE_FN pfnSynthesize)
+                                  UINT32 syntheticId, CLIPBOARD_SYNTHESIZE_FN pfnSynthesize)
 {
 	UINT32 index;
 	wClipboardFormat* format;
 	wClipboardSynthesizer* synthesizer;
-	
+
 	if (!clipboard)
 		return FALSE;
 
@@ -271,11 +270,10 @@ BOOL ClipboardRegisterSynthesizer(wClipboard* clipboard, UINT32 formatId,
 
 	if (!synthesizer)
 	{
-		wClipboardSynthesizer *tmpSynthesizer;
+		wClipboardSynthesizer* tmpSynthesizer;
 		UINT32 numSynthesizers = format->numSynthesizers + 1;
-
 		tmpSynthesizer = (wClipboardSynthesizer*) realloc(format->synthesizers,
-				numSynthesizers * sizeof(wClipboardSynthesizer));
+		                 numSynthesizers * sizeof(wClipboardSynthesizer));
 
 		if (!tmpSynthesizer)
 			return FALSE;
@@ -287,10 +285,8 @@ BOOL ClipboardRegisterSynthesizer(wClipboard* clipboard, UINT32 formatId,
 	}
 
 	ZeroMemory(synthesizer, sizeof(wClipboardSynthesizer));
-
 	synthesizer->syntheticId = syntheticId;
 	synthesizer->pfnSynthesize = pfnSynthesize;
-
 	return TRUE;
 }
 
@@ -298,7 +294,7 @@ UINT32 ClipboardCountFormats(wClipboard* clipboard)
 {
 	UINT32 count;
 	wClipboardFormat* format;
-	
+
 	if (!clipboard)
 		return 0;
 
@@ -308,7 +304,6 @@ UINT32 ClipboardCountFormats(wClipboard* clipboard)
 		return 0;
 
 	count = 1 + format->numSynthesizers;
-
 	return count;
 }
 
@@ -319,7 +314,7 @@ UINT32 ClipboardGetFormatIds(wClipboard* clipboard, UINT32** ppFormatIds)
 	UINT32* pFormatIds;
 	wClipboardFormat* format;
 	wClipboardSynthesizer* synthesizer;
-	
+
 	if (!clipboard)
 		return 0;
 
@@ -360,7 +355,7 @@ BOOL ClipboardInitFormats(wClipboard* clipboard)
 {
 	UINT32 formatId = 0;
 	wClipboardFormat* format;
-	
+
 	if (!clipboard)
 		return FALSE;
 
@@ -368,24 +363,24 @@ BOOL ClipboardInitFormats(wClipboard* clipboard)
 	{
 		format = &(clipboard->formats[clipboard->numFormats]);
 		ZeroMemory(format, sizeof(wClipboardFormat));
-
 		format->formatId = formatId;
 		format->formatName = _strdup(CF_STANDARD_STRINGS[formatId]);
 
 		if (!format->formatName)
 		{
 			int i;
-			for (i = formatId-1; i >= 0; --i)
+
+			for (i = formatId - 1; i >= 0; --i)
 			{
 				format = &(clipboard->formats[--clipboard->numFormats]);
-				free((void *)format->formatName);
+				free((void*)format->formatName);
 			}
+
 			return FALSE;
 		}
 	}
 
 	ClipboardInitSynthesizers(clipboard);
-
 	return TRUE;
 }
 
@@ -395,7 +390,7 @@ UINT32 ClipboardGetFormatId(wClipboard* clipboard, const char* name)
 
 	if (!clipboard)
 		return 0;
-	
+
 	format = ClipboardFindFormat(clipboard, 0, name);
 
 	if (!format)
@@ -407,7 +402,7 @@ UINT32 ClipboardGetFormatId(wClipboard* clipboard, const char* name)
 const char* ClipboardGetFormatName(wClipboard* clipboard, UINT32 formatId)
 {
 	wClipboardFormat* format;
-	
+
 	if (!clipboard)
 		return NULL;
 
@@ -427,7 +422,7 @@ void* ClipboardGetData(wClipboard* clipboard, UINT32 formatId, UINT32* pSize)
 	void* pDstData = NULL;
 	wClipboardFormat* format;
 	wClipboardSynthesizer* synthesizer;
-	
+
 	if (!clipboard)
 		return NULL;
 
@@ -445,7 +440,6 @@ void* ClipboardGetData(wClipboard* clipboard, UINT32 formatId, UINT32* pSize)
 	if (formatId == format->formatId)
 	{
 		DstSize = SrcSize;
-
 		pDstData = malloc(DstSize);
 
 		if (!pDstData)
@@ -462,18 +456,19 @@ void* ClipboardGetData(wClipboard* clipboard, UINT32 formatId, UINT32* pSize)
 			return NULL;
 
 		DstSize = SrcSize;
-		pDstData = synthesizer->pfnSynthesize(clipboard, format->formatId, pSrcData, &DstSize);
-
+		pDstData = synthesizer->pfnSynthesize(clipboard, format->formatId, pSrcData,
+		                                      &DstSize);
 		*pSize = DstSize;
 	}
 
 	return pDstData;
 }
 
-BOOL ClipboardSetData(wClipboard* clipboard, UINT32 formatId, const void* data, UINT32 size)
+BOOL ClipboardSetData(wClipboard* clipboard, UINT32 formatId, const void* data,
+                      UINT32 size)
 {
 	wClipboardFormat* format;
-	
+
 	if (!clipboard)
 		return FALSE;
 
@@ -483,12 +478,15 @@ BOOL ClipboardSetData(wClipboard* clipboard, UINT32 formatId, const void* data, 
 		return FALSE;
 
 	free((void*) clipboard->data);
-	clipboard->data = data;
-	clipboard->size = size;
+	clipboard->data = malloc(size);
 
+	if (!clipboard->data)
+		return FALSE;
+
+	memcpy(clipboard->data, data, size);
+	clipboard->size = size;
 	clipboard->formatId = formatId;
 	clipboard->sequenceNumber++;
-
 	return TRUE;
 }
 
@@ -496,7 +494,7 @@ UINT64 ClipboardGetOwner(wClipboard* clipboard)
 {
 	if (!clipboard)
 		return 0;
-	
+
 	return clipboard->ownerId;
 }
 
@@ -504,14 +502,13 @@ void ClipboardSetOwner(wClipboard* clipboard, UINT64 ownerId)
 {
 	if (!clipboard)
 		return;
-	
+
 	clipboard->ownerId = ownerId;
 }
 
 wClipboard* ClipboardCreate()
 {
 	wClipboard* clipboard;
-
 	clipboard = (wClipboard*) calloc(1, sizeof(wClipboard));
 
 	if (clipboard)
@@ -527,7 +524,8 @@ wClipboard* ClipboardCreate()
 
 		clipboard->numFormats = 0;
 		clipboard->maxFormats = 64;
-		clipboard->formats = (wClipboardFormat*) malloc(clipboard->maxFormats * sizeof(wClipboardFormat));
+		clipboard->formats = (wClipboardFormat*) malloc(clipboard->maxFormats * sizeof(
+		                         wClipboardFormat));
 
 		if (!clipboard->formats)
 		{
@@ -536,7 +534,7 @@ wClipboard* ClipboardCreate()
 			return NULL;
 		}
 
-		if(!ClipboardInitFormats(clipboard))
+		if (!ClipboardInitFormats(clipboard))
 		{
 			DeleteCriticalSection(&(clipboard->lock));
 			free(clipboard);
@@ -571,11 +569,8 @@ void ClipboardDestroy(wClipboard* clipboard)
 	free((void*) clipboard->data);
 	clipboard->data = NULL;
 	clipboard->size = 0;
-
 	clipboard->numFormats = 0;
 	free(clipboard->formats);
-
 	DeleteCriticalSection(&(clipboard->lock));
-
 	free(clipboard);
 }

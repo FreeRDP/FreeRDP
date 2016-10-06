@@ -420,14 +420,9 @@ static UINT android_cliprdr_server_format_data_response(
 		formatId = format->formatId;
 
 	size = formatDataResponse->dataLen;
-	data = (BYTE*) malloc(size);
 
-	if (!data)
-		return ERROR_INTERNAL_ERROR;
-
-	CopyMemory(data, formatDataResponse->requestedFormatData, size);
-
-	if (!ClipboardSetData(afc->clipboard, formatId, data, size))
+	if (!ClipboardSetData(afc->clipboard, formatId,
+	                      formatDataResponse->requestedFormatData, size))
 		return ERROR_INTERNAL_ERROR;
 
 	SetEvent(afc->clipboardRequestEvent);
