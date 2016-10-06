@@ -45,8 +45,24 @@
 
 #define FREERDP_PIXEL_FORMAT_FLIP_MASKED(_format) (_format & 0x3FFFFFFF)
 
+/** Design considerations
+ *
+ * The format naming scheme is based on byte position in memory.
+ * RGBA for example names a byte array with red on positon 0, green on 1 etc.
+ *
+ * To read and write the appropriate format from / to memory use ReadColor and
+ * WriteColor.
+ *
+ * The single pixel manipulation functions use an intermediate integer representation
+ * that must not be interpreted outside the functions as it is platform dependent.
+ *
+ * _VF denotes vertically flipped bitmaps.
+ * X for alpha channel denotes unused (but existing) alpha channel data.
+ */
+
 /* 32bpp formats */
 #define PIXEL_FORMAT_A8R8G8B8_F(_flip)	FREERDP_PIXEL_FORMAT(_flip, 32, FREERDP_PIXEL_FORMAT_TYPE_ARGB, 8, 8, 8, 8)
+
 #define PIXEL_FORMAT_ARGB32		PIXEL_FORMAT_A8R8G8B8_F(0)
 #define PIXEL_FORMAT_ARGB32_VF		PIXEL_FORMAT_A8R8G8B8_F(1)
 
@@ -143,128 +159,128 @@ static const char* GetColorFormatName(UINT32 format)
 {
 	switch (format)
 	{
-		/* 32bpp formats */
-		case PIXEL_FORMAT_ARGB32:
-			return "PIXEL_FORMAT_ARGB32";
+	    /* 32bpp formats */
+	    case PIXEL_FORMAT_ARGB32:
+		    return "PIXEL_FORMAT_ARGB32";
 
-		case PIXEL_FORMAT_ARGB32_VF:
-			return "PIXEL_FORMAT_ARGB32_VF";
+	    case PIXEL_FORMAT_ARGB32_VF:
+		    return "PIXEL_FORMAT_ARGB32_VF";
 
-		case PIXEL_FORMAT_XRGB32:
-			return "PIXEL_FORMAT_XRGB32";
+	    case PIXEL_FORMAT_XRGB32:
+		    return "PIXEL_FORMAT_XRGB32";
 
-		case PIXEL_FORMAT_XRGB32_VF:
-			return "PIXEL_FORMAT_XRGB32_VF";
+	    case PIXEL_FORMAT_XRGB32_VF:
+		    return "PIXEL_FORMAT_XRGB32_VF";
 
-		case PIXEL_FORMAT_ABGR32:
-			return "PIXEL_FORMAT_ABGR32";
+	    case PIXEL_FORMAT_ABGR32:
+		    return "PIXEL_FORMAT_ABGR32";
 
-		case PIXEL_FORMAT_ABGR32_VF:
-			return "PIXEL_FORMAT_ABGR32_VF";
+	    case PIXEL_FORMAT_ABGR32_VF:
+		    return "PIXEL_FORMAT_ABGR32_VF";
 
-		case PIXEL_FORMAT_XBGR32:
-			return "PIXEL_FORMAT_XBGR32";
+	    case PIXEL_FORMAT_XBGR32:
+		    return "PIXEL_FORMAT_XBGR32";
 
-		case PIXEL_FORMAT_XBGR32_VF:
-			return "PIXEL_FORMAT_XBGR32_VF";
+	    case PIXEL_FORMAT_XBGR32_VF:
+		    return "PIXEL_FORMAT_XBGR32_VF";
 
-		case PIXEL_FORMAT_BGRA32:
-			return "PIXEL_FORMAT_BGRA32";
+	    case PIXEL_FORMAT_BGRA32:
+		    return "PIXEL_FORMAT_BGRA32";
 
-		case PIXEL_FORMAT_BGRA32_VF:
-			return "PIXEL_FORMAT_BGRA32_VF";
+	    case PIXEL_FORMAT_BGRA32_VF:
+		    return "PIXEL_FORMAT_BGRA32_VF";
 
-		case PIXEL_FORMAT_BGRX32:
-			return "PIXEL_FORMAT_BGRX32";
+	    case PIXEL_FORMAT_BGRX32:
+		    return "PIXEL_FORMAT_BGRX32";
 
-		case PIXEL_FORMAT_BGRX32_VF:
-			return "PIXEL_FORMAT_BGRX32_VF";
+	    case PIXEL_FORMAT_BGRX32_VF:
+		    return "PIXEL_FORMAT_BGRX32_VF";
 
-		case PIXEL_FORMAT_RGBA32:
-			return "PIXEL_FORMAT_RGBA32";
+	    case PIXEL_FORMAT_RGBA32:
+		    return "PIXEL_FORMAT_RGBA32";
 
-		case PIXEL_FORMAT_RGBA32_VF:
-			return "PIXEL_FORMAT_RGBA32_VF";
+	    case PIXEL_FORMAT_RGBA32_VF:
+		    return "PIXEL_FORMAT_RGBA32_VF";
 
-		case PIXEL_FORMAT_RGBX32:
-			return "PIXEL_FORMAT_RGBX32";
+	    case PIXEL_FORMAT_RGBX32:
+		    return "PIXEL_FORMAT_RGBX32";
 
-		case PIXEL_FORMAT_RGBX32_VF:
-			return "PIXEL_FORMAT_RGBX32_VF";
+	    case PIXEL_FORMAT_RGBX32_VF:
+		    return "PIXEL_FORMAT_RGBX32_VF";
 
 		/* 24bpp formats */
-		case PIXEL_FORMAT_RGB24:
-			return "PIXEL_FORMAT_RGB24";
+	    case PIXEL_FORMAT_RGB24:
+		    return "PIXEL_FORMAT_RGB24";
 
-		case PIXEL_FORMAT_RGB24_VF:
-			return "PIXEL_FORMAT_RGB24_VF";
+	    case PIXEL_FORMAT_RGB24_VF:
+		    return "PIXEL_FORMAT_RGB24_VF";
 
-		case PIXEL_FORMAT_BGR24:
-			return "PIXEL_FORMAT_BGR24";
+	    case PIXEL_FORMAT_BGR24:
+		    return "PIXEL_FORMAT_BGR24";
 
-		case PIXEL_FORMAT_BGR24_VF:
-			return "PIXEL_FORMAT_BGR24_VF";
+	    case PIXEL_FORMAT_BGR24_VF:
+		    return "PIXEL_FORMAT_BGR24_VF";
 
 		/* 16bpp formats */
-		case PIXEL_FORMAT_RGB16:
-			return "PIXEL_FORMAT_RGB16";
+	    case PIXEL_FORMAT_RGB16:
+		    return "PIXEL_FORMAT_RGB16";
 
-		case PIXEL_FORMAT_RGB16_VF:
-			return "PIXEL_FORMAT_RGB16_VF";
+	    case PIXEL_FORMAT_RGB16_VF:
+		    return "PIXEL_FORMAT_RGB16_VF";
 
-		case PIXEL_FORMAT_BGR16:
-			return "PIXEL_FORMAT_BGR16";
+	    case PIXEL_FORMAT_BGR16:
+		    return "PIXEL_FORMAT_BGR16";
 
-		case PIXEL_FORMAT_BGR16_VF:
-			return "PIXEL_FORMAT_BGR16_VF";
+	    case PIXEL_FORMAT_BGR16_VF:
+		    return "PIXEL_FORMAT_BGR16_VF";
 
-		case PIXEL_FORMAT_ARGB15:
-			return "PIXEL_FORMAT_ARGB15";
+	    case PIXEL_FORMAT_ARGB15:
+		    return "PIXEL_FORMAT_ARGB15";
 
-		case PIXEL_FORMAT_ARGB15_VF:
-			return "PIXEL_FORMAT_ARGB15_VF";
+	    case PIXEL_FORMAT_ARGB15_VF:
+		    return "PIXEL_FORMAT_ARGB15_VF";
 
-		case PIXEL_FORMAT_RGB15:
-			return "PIXEL_FORMAT_RGB15";
+	    case PIXEL_FORMAT_RGB15:
+		    return "PIXEL_FORMAT_RGB15";
 
-		case PIXEL_FORMAT_RGB15_VF:
-			return "PIXEL_FORMAT_ABGR15";
+	    case PIXEL_FORMAT_RGB15_VF:
+		    return "PIXEL_FORMAT_ABGR15";
 
-		case PIXEL_FORMAT_ABGR15:
-			return "";
+	    case PIXEL_FORMAT_ABGR15:
+		    return "";
 
-		case PIXEL_FORMAT_ABGR15_VF:
-			return "PIXEL_FORMAT_ABGR15_VF";
+	    case PIXEL_FORMAT_ABGR15_VF:
+		    return "PIXEL_FORMAT_ABGR15_VF";
 
-		case PIXEL_FORMAT_BGR15:
-			return "PIXEL_FORMAT_BGR15";
+	    case PIXEL_FORMAT_BGR15:
+		    return "PIXEL_FORMAT_BGR15";
 
-		case PIXEL_FORMAT_BGR15_VF:
-			return "PIXEL_FORMAT_BGR15_VF";
+	    case PIXEL_FORMAT_BGR15_VF:
+		    return "PIXEL_FORMAT_BGR15_VF";
 
 		/* 8bpp formats */
-		case PIXEL_FORMAT_RGB8:
-			return "PIXEL_FORMAT_RGB8";
+	    case PIXEL_FORMAT_RGB8:
+		    return "PIXEL_FORMAT_RGB8";
 
-		case PIXEL_FORMAT_RGB8_VF:
-			return "PIXEL_FORMAT_RGB8_VF";
+	    case PIXEL_FORMAT_RGB8_VF:
+		    return "PIXEL_FORMAT_RGB8_VF";
 
 		/* 4 bpp formats */
-		case PIXEL_FORMAT_A4:
-			return "PIXEL_FORMAT_A4";
+	    case PIXEL_FORMAT_A4:
+		    return "PIXEL_FORMAT_A4";
 
-		case PIXEL_FORMAT_A4_VF:
-			return "PIXEL_FORMAT_A4_VF";
+	    case PIXEL_FORMAT_A4_VF:
+		    return "PIXEL_FORMAT_A4_VF";
 
 		/* 1bpp formats */
-		case PIXEL_FORMAT_MONO:
-			return "PIXEL_FORMAT_MONO";
+	    case PIXEL_FORMAT_MONO:
+		    return "PIXEL_FORMAT_MONO";
 
-		case PIXEL_FORMAT_MONO_VF:
-			return "PIXEL_FORMAT_MONO_VF";
+	    case PIXEL_FORMAT_MONO_VF:
+		    return "PIXEL_FORMAT_MONO_VF";
 
-		default:
-			return "UNKNOWN";
+	    default:
+		    return "UNKNOWN";
 	}
 }
 
@@ -275,9 +291,9 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 
 	switch (FREERDP_PIXEL_FORMAT_FLIP_MASKED(format))
 	{
-		/* 32bpp formats */
-		case PIXEL_FORMAT_ARGB32:
-			if (_a)
+	    /* 32bpp formats */
+	    case PIXEL_FORMAT_ARGB32:
+		    if (_a)
 				*_a = color >> 24;
 
 			if (_r)
@@ -289,10 +305,10 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 			if (_b)
 				*_b = color;
 
-			break;
+		    break;
 
-		case PIXEL_FORMAT_XRGB32:
-			if (_r)
+	    case PIXEL_FORMAT_XRGB32:
+		    if (_r)
 				*_r = color >> 16;
 
 			if (_g)
@@ -304,10 +320,10 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 			if (_a)
 				*_a = 0xFF;
 
-			break;
+		    break;
 
-		case PIXEL_FORMAT_ABGR32:
-			if (_a)
+	    case PIXEL_FORMAT_ABGR32:
+		    if (_a)
 				*_a = color >> 24;
 
 			if (_b)
@@ -319,10 +335,10 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 			if (_r)
 				*_r = color;
 
-			break;
+		    break;
 
-		case PIXEL_FORMAT_XBGR32:
-			if (_b)
+	    case PIXEL_FORMAT_XBGR32:
+		    if (_b)
 				*_b = color >> 16;
 
 			if (_g)
@@ -334,10 +350,10 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 			if (_a)
 				*_a = 0xFF;
 
-			break;
+		    break;
 
-		case PIXEL_FORMAT_RGBA32:
-			if (_r)
+	    case PIXEL_FORMAT_RGBA32:
+		    if (_r)
 				*_r = color >> 24;
 
 			if (_g)
@@ -349,10 +365,10 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 			if (_a)
 				*_a = color;
 
-			break;
+		    break;
 
-		case PIXEL_FORMAT_RGBX32:
-			if (_r)
+	    case PIXEL_FORMAT_RGBX32:
+		    if (_r)
 				*_r = color >> 24;
 
 			if (_g)
@@ -364,10 +380,10 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 			if (_a)
 				*_a = 0xFF;
 
-			break;
+		    break;
 
-		case PIXEL_FORMAT_BGRA32:
-			if (_b)
+	    case PIXEL_FORMAT_BGRA32:
+		    if (_b)
 				*_b = color >> 24;
 
 			if (_g)
@@ -379,10 +395,10 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 			if (_a)
 				*_a = color;
 
-			break;
+		    break;
 
-		case PIXEL_FORMAT_BGRX32:
-			if (_b)
+	    case PIXEL_FORMAT_BGRX32:
+		    if (_b)
 				*_b = color >> 24;
 
 			if (_g)
@@ -394,11 +410,11 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 			if (_a)
 				*_a = 0xFF;
 
-			break;
+		    break;
 
 		/* 24bpp formats */
-		case PIXEL_FORMAT_RGB24:
-			if (_r)
+	    case PIXEL_FORMAT_RGB24:
+		    if (_r)
 				*_r = color >> 16;
 
 			if (_g)
@@ -410,10 +426,10 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 			if (_a)
 				*_a = 0xFF;
 
-			break;
+		    break;
 
-		case PIXEL_FORMAT_BGR24:
-			if (_b)
+	    case PIXEL_FORMAT_BGR24:
+		    if (_b)
 				*_b = color >> 16;
 
 			if (_g)
@@ -425,11 +441,11 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 			if (_a)
 				*_a = 0xFF;
 
-			break;
+		    break;
 
 		/* 16bpp formats */
-		case PIXEL_FORMAT_RGB16:
-			if (_r)
+	    case PIXEL_FORMAT_RGB16:
+		    if (_r)
 				*_r = ((color >> 11) & 0x1F) << 3;
 
 			if (_g)
@@ -441,10 +457,10 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 			if (_a)
 				*_a = 0xFF;
 
-			break;
+		    break;
 
-		case PIXEL_FORMAT_BGR16:
-			if (_b)
+	    case PIXEL_FORMAT_BGR16:
+		    if (_b)
 				*_b = ((color >> 11) & 0x1F) << 3;
 
 			if (_g)
@@ -456,10 +472,10 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 			if (_a)
 				*_a = 0xFF;
 
-			break;
+		    break;
 
-		case PIXEL_FORMAT_ARGB15:
-			if (_r)
+	    case PIXEL_FORMAT_ARGB15:
+		    if (_r)
 				*_r = ((color >> 10) & 0x1F) << 3;
 
 			if (_g)
@@ -471,10 +487,10 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 			if (_a)
 				*_a = color & 0x8000 ? 0xFF : 0x00;
 
-			break;
+		    break;
 
-		case PIXEL_FORMAT_ABGR15:
-			if (_b)
+	    case PIXEL_FORMAT_ABGR15:
+		    if (_b)
 				*_b = ((color >> 10) & 0x1F) << 3;
 
 			if (_g)
@@ -486,11 +502,11 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 			if (_a)
 				*_a = color & 0x8000 ? 0xFF : 0x00;
 
-			break;
+		    break;
 
 		/* 15bpp formats */
-		case PIXEL_FORMAT_RGB15:
-			if (_r)
+	    case PIXEL_FORMAT_RGB15:
+		    if (_r)
 				*_r = ((color >> 10) & 0x1F) << 3;
 
 			if (_g)
@@ -502,10 +518,10 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 			if (_a)
 				*_a = 0xFF;
 
-			break;
+		    break;
 
-		case PIXEL_FORMAT_BGR15:
-			if (_b)
+	    case PIXEL_FORMAT_BGR15:
+		    if (_b)
 				*_b = ((color >> 10) & 0x1F) << 3;
 
 			if (_g)
@@ -517,21 +533,21 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 			if (_a)
 				*_a = 0xFF;
 
-			break;
+		    break;
 
 		/* 8bpp formats */
-		case PIXEL_FORMAT_RGB8:
-			if (color <= 0xFF)
+	    case PIXEL_FORMAT_RGB8:
+		    if (color <= 0xFF)
 			{
 				tmp = palette->palette[color];
 				SplitColor(tmp, palette->format, _r, _g, _b, _a, NULL);
 			}
 
-			break;
+		    break;
 
 		/* 1bpp formats */
-		case PIXEL_FORMAT_MONO:
-			if (_r)
+	    case PIXEL_FORMAT_MONO:
+		    if (_r)
 				*_r = (color) ? 0xFF : 0x00;
 
 			if (_g)
@@ -543,13 +559,13 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 			if (_a)
 				*_a = (color) ? 0xFF : 0x00;
 
-			break;
+		    break;
 
 		/* 4 bpp formats */
-		case PIXEL_FORMAT_A4:
-		default:
-			WLog_ERR("xxxxx", "Unsupported format %s", GetColorFormatName(format));
-			break;
+	    case PIXEL_FORMAT_A4:
+	    default:
+		    WLog_ERR("xxxxx", "Unsupported format %s", GetColorFormatName(format));
+		    break;
 	}
 }
 
@@ -562,75 +578,75 @@ static INLINE UINT32 GetColor(UINT32 format, BYTE r, BYTE g, BYTE b, BYTE a)
 
 	switch (FREERDP_PIXEL_FORMAT_FLIP_MASKED(format))
 	{
-		/* 32bpp formats */
-		case PIXEL_FORMAT_ARGB32:
-			return (_a << 24) | (_r << 16) | (_g << 8) | _b;
+	    /* 32bpp formats */
+	    case PIXEL_FORMAT_ARGB32:
+		    return (_a << 24) | (_r << 16) | (_g << 8) | _b;
 
-		case PIXEL_FORMAT_XRGB32:
-			return (_r << 16) | (_g << 8) | _b;
+	    case PIXEL_FORMAT_XRGB32:
+		    return (_r << 16) | (_g << 8) | _b;
 
-		case PIXEL_FORMAT_ABGR32:
-			return (_a << 24) | (_b << 16) | (_g << 8) | _r;
+	    case PIXEL_FORMAT_ABGR32:
+		    return (_a << 24) | (_b << 16) | (_g << 8) | _r;
 
-		case PIXEL_FORMAT_XBGR32:
-			return (_b << 16) | (_g << 8) | _r;
+	    case PIXEL_FORMAT_XBGR32:
+		    return (_b << 16) | (_g << 8) | _r;
 
-		case PIXEL_FORMAT_RGBA32:
-			return (_r << 24) | (_g << 16) | (_b << 8) | _a;
+	    case PIXEL_FORMAT_RGBA32:
+		    return (_r << 24) | (_g << 16) | (_b << 8) | _a;
 
-		case PIXEL_FORMAT_RGBX32:
-			return (_r << 24) | (_g << 16) | (_b << 8) | _a;
+	    case PIXEL_FORMAT_RGBX32:
+		    return (_r << 24) | (_g << 16) | (_b << 8) | _a;
 
-		case PIXEL_FORMAT_BGRA32:
-			return (_b << 24) | (_g << 16) | (_r << 8) | _a;
+	    case PIXEL_FORMAT_BGRA32:
+		    return (_b << 24) | (_g << 16) | (_r << 8) | _a;
 
-		case PIXEL_FORMAT_BGRX32:
-			return (_b << 24) | (_g << 16) | (_r << 8) | _a;
+	    case PIXEL_FORMAT_BGRX32:
+		    return (_b << 24) | (_g << 16) | (_r << 8) | _a;
 
 		/* 24bpp formats */
-		case PIXEL_FORMAT_RGB24:
-			return (_r << 16) | (_g << 8) | _b;
+	    case PIXEL_FORMAT_RGB24:
+		    return (_r << 16) | (_g << 8) | _b;
 
-		case PIXEL_FORMAT_BGR24:
-			return (_b << 16) | (_g << 8) | _r;
+	    case PIXEL_FORMAT_BGR24:
+		    return (_b << 16) | (_g << 8) | _r;
 
 		/* 16bpp formats */
-		case PIXEL_FORMAT_RGB16:
-			return (((_r >> 3) & 0x1F) << 11) | (((_g >> 2) & 0x3F) << 5) | ((
+	    case PIXEL_FORMAT_RGB16:
+		    return (((_r >> 3) & 0x1F) << 11) | (((_g >> 2) & 0x3F) << 5) | ((
 			            _b >> 3) & 0x1F);
 
-		case PIXEL_FORMAT_BGR16:
-			return (((_b >> 3) & 0x1F) << 11) | (((_g >> 2) & 0x3F) << 5) | ((
+	    case PIXEL_FORMAT_BGR16:
+		    return (((_b >> 3) & 0x1F) << 11) | (((_g >> 2) & 0x3F) << 5) | ((
 			            _r >> 3) & 0x1F);
 
-		case PIXEL_FORMAT_ARGB15:
-			return (((_r >> 3) & 0x1F) << 10) | (((_g >> 3) & 0x1F) << 5) | ((
+	    case PIXEL_FORMAT_ARGB15:
+		    return (((_r >> 3) & 0x1F) << 10) | (((_g >> 3) & 0x1F) << 5) | ((
 			            _b >> 3) & 0x1F) | (_a ? 0x8000 : 0x0000);
 
-		case PIXEL_FORMAT_ABGR15:
-			return (((_b >> 3) & 0x1F) << 10) | (((_g >> 3) & 0x1F) << 5) | ((
+	    case PIXEL_FORMAT_ABGR15:
+		    return (((_b >> 3) & 0x1F) << 10) | (((_g >> 3) & 0x1F) << 5) | ((
 			            _r >> 3) & 0x1F) | (_a ? 0x8000 : 0x0000);
 
 		/* 15bpp formats */
-		case PIXEL_FORMAT_RGB15:
-			return (((_r >> 3) & 0x1F) << 10) | (((_g >> 3) & 0x1F) << 5) | ((
+	    case PIXEL_FORMAT_RGB15:
+		    return (((_r >> 3) & 0x1F) << 10) | (((_g >> 3) & 0x1F) << 5) | ((
 			            _b >> 3) & 0x1F);
 
-		case PIXEL_FORMAT_BGR15:
-			return (((_b >> 3) & 0x1F) << 10) | (((_g >> 3) & 0x1F) << 5) | ((
+	    case PIXEL_FORMAT_BGR15:
+		    return (((_b >> 3) & 0x1F) << 10) | (((_g >> 3) & 0x1F) << 5) | ((
 			            _r >> 3) & 0x1F);
 
 		/* 8bpp formats */
-		case PIXEL_FORMAT_RGB8:
+	    case PIXEL_FORMAT_RGB8:
 
 		/* 4 bpp formats */
-		case PIXEL_FORMAT_A4:
+	    case PIXEL_FORMAT_A4:
 
 		/* 1bpp formats */
-		case PIXEL_FORMAT_MONO:
-		default:
-			WLog_ERR("xxxxx", "Unsupported format %s", GetColorFormatName(format));
-			return 0;
+	    case PIXEL_FORMAT_MONO:
+	    default:
+		    WLog_ERR("xxxxx", "Unsupported format %s", GetColorFormatName(format));
+		    return 0;
 	}
 }
 
@@ -663,37 +679,37 @@ static INLINE UINT32 ReadColor(const BYTE* src, UINT32 format)
 
 	switch (GetBitsPerPixel(format))
 	{
-		case 32:
-			color = ((UINT32)src[0] << 24) | ((UINT32)src[1] << 16) |
+	    case 32:
+		    color = ((UINT32)src[0] << 24) | ((UINT32)src[1] << 16) |
 			        ((UINT32)src[2] << 8) | src[3];
-			break;
+		    break;
 
-		case 24:
-			color = ((UINT32)src[0] << 16) | ((UINT32)src[1] << 8) | src[2];
-			break;
+	    case 24:
+		    color = ((UINT32)src[0] << 16) | ((UINT32)src[1] << 8) | src[2];
+		    break;
 
-		case 16:
-			color = ((UINT32)src[1] << 8) | src[0];
-			break;
+	    case 16:
+		    color = ((UINT32)src[1] << 8) | src[0];
+		    break;
 
-		case 15:
-			color = ((UINT32)src[1] << 8) | src[0];
+	    case 15:
+		    color = ((UINT32)src[1] << 8) | src[0];
 
 			if (!ColorHasAlpha(format))
 				color = color & 0x7FFF;
 
-			break;
+		    break;
 
-		case 8:
-		case 4:
-		case 1:
-			color = *src;
-			break;
+	    case 8:
+	    case 4:
+	    case 1:
+		    color = *src;
+		    break;
 
-		default:
-			WLog_ERR("xxxxx", "Unsupported format %s", GetColorFormatName(format));
+	    default:
+		    WLog_ERR("xxxxx", "Unsupported format %s", GetColorFormatName(format));
 			color = 0;
-			break;
+		    break;
 	}
 
 	return color;
@@ -703,39 +719,39 @@ static INLINE BOOL WriteColor(BYTE* dst, UINT32 format, UINT32 color)
 {
 	switch (GetBitsPerPixel(format))
 	{
-		case 32:
-			dst[0] = color >> 24;
+	    case 32:
+		    dst[0] = color >> 24;
 			dst[1] = color >> 16;
 			dst[2] = color >> 8;
 			dst[3] = color;
-			break;
+		    break;
 
-		case 24:
-			dst[0] = color >> 16;
+	    case 24:
+		    dst[0] = color >> 16;
 			dst[1] = color >> 8;
 			dst[2] = color;
-			break;
+		    break;
 
-		case 16:
-			dst[1] = color >> 8;
+	    case 16:
+		    dst[1] = color >> 8;
 			dst[0] = color;
-			break;
+		    break;
 
-		case 15:
-			if (!ColorHasAlpha(format))
+	    case 15:
+		    if (!ColorHasAlpha(format))
 				color = color & 0x7FFF;
 
 			dst[1] = color >> 8;
 			dst[0] = color;
-			break;
+		    break;
 
-		case 8:
-			dst[0] = color;
-			break;
+	    case 8:
+		    dst[0] = color;
+		    break;
 
-		default:
-			WLog_ERR("xxxxx", "Unsupported format %s", GetColorFormatName(format));
-			return FALSE;
+	    default:
+		    WLog_ERR("xxxxx", "Unsupported format %s", GetColorFormatName(format));
+		    return FALSE;
 	}
 
 	return TRUE;
