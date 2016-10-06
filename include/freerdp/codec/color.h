@@ -45,7 +45,7 @@
 
 #define FREERDP_PIXEL_FORMAT_FLIP_MASKED(_format) (_format & 0x3FFFFFFF)
 
-/** Design considerations
+/*** Design considerations
  *
  * The format naming scheme is based on byte position in memory.
  * RGBA for example names a byte array with red on positon 0, green on 1 etc.
@@ -155,6 +155,15 @@ extern "C" {
 #endif
 
 /* Color Space Conversions: http://msdn.microsoft.com/en-us/library/ff566496/ */
+
+/***
+ *
+ * Get a string representation of a color
+ *
+ * @param format The pixel color format
+ *
+ * @return A string representation of format
+ */
 static const char* GetColorFormatName(UINT32 format)
 {
 	switch (format)
@@ -284,6 +293,19 @@ static const char* GetColorFormatName(UINT32 format)
 	}
 }
 
+/***
+ *
+ * Converts a pixel color in internal representation to its red, green, blue
+ * and alpha components.
+ *
+ * @param color  The color in format internal representation
+ * @param format one of PIXEL_FORMAT_* color format defines
+ * @param _r      red color value
+ * @param _g      green color value
+ * @param _b      blue color value
+ * @param _a      alpha color value
+ * @param palette pallete to use (only used for 8 bit color!)
+ */
 static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
                               BYTE* _b, BYTE* _a, const gdiPalette* palette)
 {
@@ -569,6 +591,19 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 	}
 }
 
+/***
+ *
+ * Converts red, green, blue and alpha values to internal representation.
+ *
+ * @param format one of PIXEL_FORMAT_* color format defines
+ * @param r      red color value
+ * @param g      green color value
+ * @param b      blue color value
+ * @param a      alpha color value
+ *
+ * @return       The pixel color in the desired format. Value is in internal
+ *               representation.
+ */
 static INLINE UINT32 GetColor(UINT32 format, BYTE r, BYTE g, BYTE b, BYTE a)
 {
 	UINT32 _r = r;
@@ -650,19 +685,24 @@ static INLINE UINT32 GetColor(UINT32 format, BYTE r, BYTE g, BYTE b, BYTE a)
 	}
 }
 
+/***
+ *
+ * Returns the number of bits the format format uses.
+ *
+ * @param format One of PIXEL_FORMAT_* defines
+ *
+ * @return The number of bits the format requires per pixel.
+ */
 static INLINE UINT32 GetBitsPerPixel(UINT32 format)
 {
 	return (((format) >> 24) & 0x3F);
 }
 
-static INLINE UINT32 SetColorFormatAlpha(UINT32 format, BOOL alpha)
-{
-	if (!alpha)
-		return format & ~(1 << 12);
-	else
-		return format | (1 << 12);
-}
-
+/***
+ * @param format one of PIXEL_FORMAT_* color format defines
+ *
+ * @return TRUE if the format has an alpha channel, FALSE otherwise.
+ */
 static INLINE BOOL ColorHasAlpha(UINT32 format)
 {
 	UINT32 alpha = (((format) >> 12) & 0x0F);
@@ -673,6 +713,15 @@ static INLINE BOOL ColorHasAlpha(UINT32 format)
 	return TRUE;
 }
 
+/***
+ *
+ * Read a pixel from memory to internal representation
+ *
+ * @param src    The source buffer
+ * @param format The PIXEL_FORMAT_* define the source buffer uses for encoding
+ *
+ * @return The pixel color in internal representation
+ */
 static INLINE UINT32 ReadColor(const BYTE* src, UINT32 format)
 {
 	UINT32 color;
@@ -715,6 +764,16 @@ static INLINE UINT32 ReadColor(const BYTE* src, UINT32 format)
 	return color;
 }
 
+/***
+ *
+ * Write a pixel from internal representation to memory
+ *
+ * @param dst    The destination buffer
+ * @param format The PIXEL_FORMAT_* define for encoding
+ * @param color  The pixel color in internal representation
+ *
+ * @return TRUE if successful, FALSE otherwise
+ */
 static INLINE BOOL WriteColor(BYTE* dst, UINT32 format, UINT32 color)
 {
 	switch (GetBitsPerPixel(format))
@@ -757,6 +816,18 @@ static INLINE BOOL WriteColor(BYTE* dst, UINT32 format, UINT32 color)
 	return TRUE;
 }
 
+/***
+ *
+ * Converts a pixel in internal representation format srcFormat to internal
+ * representation format dstFormat
+ *
+ * @param color      The pixel color in srcFormat representation
+ * @param srcFormat  The PIXEL_FORMAT_* of color
+ * @param dstFormat  The PIXEL_FORMAT_* of the return.
+ * @param palette    pallete to use (only used for 8 bit color!)
+ *
+ * @return           The converted pixel color in dstFormat representation
+ */
 static INLINE UINT32 ConvertColor(UINT32 color, UINT32 srcFormat,
                                   UINT32 dstFormat, const gdiPalette* palette)
 {
@@ -768,14 +839,47 @@ static INLINE UINT32 ConvertColor(UINT32 color, UINT32 srcFormat,
 	return GetColor(dstFormat, r, g, b, a);
 }
 
+/***
+ *
+ * Returns the number of bytes the format format uses.
+ *
+ * @param format One of PIXEL_FORMAT_* defines
+ *
+ * @return The number of bytes the format requires per pixel.
+ */
 static INLINE UINT32 GetBytesPerPixel(UINT32 format)
 {
 	return (GetBitsPerPixel(format) + 7) / 8;
 }
 
+/***
+ *
+ * @param nWidth    width to copy in pixels
+ * @param nHeight   height to copy in pixels
+ * @param data      source buffer, must be (nWidth + 7) / 8 bytes long
+ *
+ * @return          A buffer allocated with _aligned_malloc(width * height, 16)
+ *                  if successufl, NULL otherwise.
+ */
 FREERDP_API BYTE* freerdp_glyph_convert(UINT32 width, UINT32 height,
                                         const BYTE* data);
 
+/***
+ *
+ * @param pDstData  destionation buffer
+ * @param DstFormat destionation buffer format
+ * @param nDstStep  destionation buffer stride (line in bytes) 0 for default
+ * @param nXDst     destination buffer offset x
+ * @param nYDst     destination buffer offset y
+ * @param nWidth    width to copy in pixels
+ * @param nHeight   height to copy in pixels
+ * @param pSrcData  source buffer, must be (nWidth + 7) / 8 bytes long
+ * @param backColor The background color in internal representation format
+ * @param foreColor The foreground color in internal representation format
+ * @param palette   pallete to use (only used for 8 bit color!)
+ *
+ * @return          TRUE if success, FALSE otherwise
+ */
 FREERDP_API BOOL freerdp_image_copy_from_monochrome(BYTE* pDstData,
         UINT32 DstFormat,
         UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
@@ -784,6 +888,24 @@ FREERDP_API BOOL freerdp_image_copy_from_monochrome(BYTE* pDstData,
         UINT32 backColor, UINT32 foreColor,
         const gdiPalette* palette);
 
+/***
+ *
+ * @param pDstData      destionation buffer
+ * @param DstFormat     destionation buffer format
+ * @param nDstStep      destionation buffer stride (line in bytes) 0 for default
+ * @param nXDst         destination buffer offset x
+ * @param nYDst         destination buffer offset y
+ * @param nWidth        width to copy in pixels
+ * @param nHeight       height to copy in pixels
+ * @param xorMask       XOR mask buffer
+ * @param xorMaskLength XOR mask length in bytes
+ * @param andMask       AND mask buffer
+ * @param andMaskLength AND mask length in bytes
+ * @param xorBpp        XOR bits per pixel
+ * @param palette       pallete to use (only used for 8 bit color!)
+ *
+ * @return              TRUE if success, FALSE otherwise
+ */
 FREERDP_API BOOL freerdp_image_copy_from_pointer_data(
     BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
     UINT32 nXDst, UINT32 nYDst, UINT32 nWidth, UINT32 nHeight,
@@ -791,6 +913,24 @@ FREERDP_API BOOL freerdp_image_copy_from_pointer_data(
     const BYTE* andMask, UINT32 andMaskLength,
     UINT32 xorBpp, const gdiPalette* palette);
 
+/***
+ *
+ * @param pDstData  destionation buffer
+ * @param DstFormat destionation buffer format
+ * @param nDstStep  destionation buffer stride (line in bytes) 0 for default
+ * @param nXDst     destination buffer offset x
+ * @param nYDst     destination buffer offset y
+ * @param nWidth    width to copy in pixels
+ * @param nHeight   height to copy in pixels
+ * @param pSrcData  source buffer
+ * @param SrcFormat source buffer format
+ * @param nSrcStep  source buffer stride (line in bytes) 0 for default
+ * @param nXSrc     source buffer x offset in pixels
+ * @param nYSrc     source buffer y offset in pixels
+ * @param palette   pallete to use (only used for 8 bit color!)
+ *
+ * @return          TRUE if success, FALSE otherwise
+ */
 FREERDP_API BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
                                     UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
                                     UINT32 nWidth, UINT32 nHeight,
@@ -798,6 +938,20 @@ FREERDP_API BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
                                     UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
                                     const gdiPalette* palette);
 
+/***
+ *
+ * @param pDstData  destionation buffer
+ * @param DstFormat destionation buffer format
+ * @param nDstStep  destionation buffer stride (line in bytes) 0 for default
+ * @param nXDst     destination buffer offset x
+ * @param nYDst     destination buffer offset y
+ * @param nWidth    width to copy in pixels
+ * @param nHeight   height to copy in pixels
+ * @param color     Pixel color in DstFormat (internal representation format,
+ *                  use GetColor to create)
+ *
+ * @return          TRUE if success, FALSE otherwise
+ */
 FREERDP_API BOOL freerdp_image_fill(BYTE* pDstData, DWORD DstFormat,
                                     UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
                                     UINT32 nWidth, UINT32 nHeight, UINT32 color);
