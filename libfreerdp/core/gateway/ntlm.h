@@ -34,6 +34,7 @@ typedef struct rdp_ntlm rdpNtlm;
 #include <freerdp/settings.h>
 #include <freerdp/crypto/tls.h>
 #include <freerdp/crypto/crypto.h>
+#include <freerdp/api.h>
 
 #include <winpr/sspi.h>
 #include <winpr/print.h>
@@ -64,15 +65,17 @@ struct rdp_ntlm
 	SecPkgContext_Bindings* Bindings;
 };
 
-BOOL ntlm_authenticate(rdpNtlm* ntlm);
+FREERDP_LOCAL BOOL ntlm_authenticate(rdpNtlm* ntlm);
 
-BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL confidentiality, char* user,
-		char* domain, char* password, SecPkgContext_Bindings* Bindings);
-void ntlm_client_uninit(rdpNtlm* ntlm);
+FREERDP_LOCAL BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL confidentiality,
+                                    char* user,
+                                    char* domain, char* password, SecPkgContext_Bindings* Bindings);
+FREERDP_LOCAL void ntlm_client_uninit(rdpNtlm* ntlm);
 
-BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, char* hostname);
+FREERDP_LOCAL BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass,
+                                        char* hostname);
 
-rdpNtlm* ntlm_new(void);
-void ntlm_free(rdpNtlm* ntlm);
+FREERDP_LOCAL rdpNtlm* ntlm_new(void);
+FREERDP_LOCAL void ntlm_free(rdpNtlm* ntlm);
 
 #endif /* FREERDP_CORE_NTLM_H */

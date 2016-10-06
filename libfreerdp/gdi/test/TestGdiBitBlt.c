@@ -3,19 +3,19 @@
 
 #include <freerdp/gdi/dc.h>
 #include <freerdp/gdi/pen.h>
-#include <freerdp/gdi/line.h>
-#include <freerdp/gdi/brush.h>
 #include <freerdp/gdi/region.h>
 #include <freerdp/gdi/bitmap.h>
-#include <freerdp/gdi/palette.h>
-#include <freerdp/gdi/drawing.h>
 
 #include <winpr/crt.h>
+
+#include "line.h"
+#include "brush.h"
+#include "helpers.h"
 
 /* BitBlt() Test Data */
 
 /* source bitmap (16x16) */
-BYTE bmp_SRC[256] =
+static const BYTE bmp_SRC[256] =
 {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -36,7 +36,7 @@ BYTE bmp_SRC[256] =
 };
 
 /* destination bitmap (16x16) */
-BYTE bmp_DST[256] =
+static const BYTE bmp_DST[256] =
 {
 	"\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -57,7 +57,7 @@ BYTE bmp_DST[256] =
 };
 
 /* pattern bitmap (8x8) */
-BYTE bmp_PAT[64] =
+static const BYTE bmp_PAT[64] =
 {
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00"
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00"
@@ -70,7 +70,7 @@ BYTE bmp_PAT[64] =
 };
 
 /* SRCCOPY (0x00CC0020) */
-BYTE bmp_SRCCOPY[256] =
+static const BYTE bmp_SRCCOPY[256] =
 {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -91,7 +91,7 @@ BYTE bmp_SRCCOPY[256] =
 };
 
 /* BLACKNESS (0x00000042) */
-BYTE bmp_BLACKNESS[256] =
+static const BYTE bmp_BLACKNESS[256] =
 {
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -112,7 +112,7 @@ BYTE bmp_BLACKNESS[256] =
 };
 
 /* WHITENESS (0x00FF0062) */
-BYTE bmp_WHITENESS[256] =
+static const BYTE bmp_WHITENESS[256] =
 {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -133,7 +133,7 @@ BYTE bmp_WHITENESS[256] =
 };
 
 /* SRCAND (0x008800C6) */
-BYTE bmp_SRCAND[256] =
+static const BYTE bmp_SRCAND[256] =
 {
 	"\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -154,7 +154,7 @@ BYTE bmp_SRCAND[256] =
 };
 
 /* SRCPAINT (0x00EE0086) */
-BYTE bmp_SRCPAINT[256] =
+static const BYTE bmp_SRCPAINT[256] =
 {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -175,7 +175,7 @@ BYTE bmp_SRCPAINT[256] =
 };
 
 /* SRCINVERT (0x00660046) */
-BYTE bmp_SRCINVERT[256] =
+static const BYTE bmp_SRCINVERT[256] =
 {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -196,7 +196,7 @@ BYTE bmp_SRCINVERT[256] =
 };
 
 /* SRCERASE (0x00440328) */
-BYTE bmp_SRCERASE[256] =
+static const BYTE bmp_SRCERASE[256] =
 {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -217,7 +217,7 @@ BYTE bmp_SRCERASE[256] =
 };
 
 /* NOTSRCCOPY (0x00330008) */
-BYTE bmp_NOTSRCCOPY[256] =
+static const BYTE bmp_NOTSRCCOPY[256] =
 {
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -238,7 +238,7 @@ BYTE bmp_NOTSRCCOPY[256] =
 };
 
 /* NOTSRCERASE (0x001100A6) */
-BYTE bmp_NOTSRCERASE[256] =
+static const BYTE bmp_NOTSRCERASE[256] =
 {
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -259,7 +259,7 @@ BYTE bmp_NOTSRCERASE[256] =
 };
 
 /* DSTINVERT (0x00550009) */
-BYTE bmp_DSTINVERT[256] =
+static const BYTE bmp_DSTINVERT[256] =
 {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00"
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00"
@@ -280,7 +280,7 @@ BYTE bmp_DSTINVERT[256] =
 };
 
 /* SPna (0x000C0324) */
-BYTE bmp_SPna[256] =
+static const BYTE bmp_SPna[256] =
 {
 	"\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF"
 	"\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF"
@@ -301,7 +301,7 @@ BYTE bmp_SPna[256] =
 };
 
 /* MERGEPAINT (0x00BB0226) */
-BYTE bmp_MERGEPAINT[256] =
+static const BYTE bmp_MERGEPAINT[256] =
 {
 	"\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -322,7 +322,7 @@ BYTE bmp_MERGEPAINT[256] =
 };
 
 /* MERGECOPY (0x00C000CA) */
-BYTE bmp_MERGECOPY[256] =
+static const BYTE bmp_MERGECOPY[256] =
 {
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00"
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00"
@@ -343,7 +343,7 @@ BYTE bmp_MERGECOPY[256] =
 };
 
 /* PATPAINT (0x00FB0A09) */
-BYTE bmp_PATPAINT[256] =
+static const BYTE bmp_PATPAINT[256] =
 {
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -364,7 +364,7 @@ BYTE bmp_PATPAINT[256] =
 };
 
 /* PATCOPY (0x00F00021) */
-BYTE bmp_PATCOPY[256] =
+static const BYTE bmp_PATCOPY[256] =
 {
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00"
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00\xFF\xFF\x00\x00"
@@ -385,7 +385,7 @@ BYTE bmp_PATCOPY[256] =
 };
 
 /* PATINVERT (0x005A0049) */
-BYTE bmp_PATINVERT[256] =
+static const BYTE bmp_PATINVERT[256] =
 {
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00\x00\x00\xFF\xFF\x00\x00\xFF\xFF"
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00\x00\x00\xFF\xFF\x00\x00\xFF\xFF"
@@ -405,1418 +405,212 @@ BYTE bmp_PATINVERT[256] =
 	"\xFF\xFF\x00\x00\xFF\xFF\x00\x00\x00\x00\xFF\xFF\x00\x00\xFF\xFF"
 };
 
-int CompareBitmaps(HGDI_BITMAP hBmp1, HGDI_BITMAP hBmp2)
+struct test_bitblt
 {
-	int bpp;
-	int x, y;
-	BYTE *p1, *p2;
+	UINT32 rop;
+	const BYTE* src;
+	HGDI_BITMAP bmp;
+};
 
-	int minw = (hBmp1->width < hBmp2->width) ? hBmp1->width : hBmp2->width;
-	int minh = (hBmp1->height < hBmp2->height) ? hBmp1->height : hBmp2->height;
+static BOOL test_rop(HGDI_DC hdcDst, HGDI_DC hdcSrc, HGDI_BITMAP hBmpSrc,
+                     HGDI_BITMAP hBmpDst,
+                     HGDI_BITMAP hBmpDstOriginal, UINT32 rop, HGDI_BITMAP expected,
+                     const gdiPalette* hPalette)
+{
+	/* restore original destination bitmap */
+	gdi_SelectObject(hdcSrc, (HGDIOBJECT)hBmpDstOriginal);
+	gdi_SelectObject(hdcDst, (HGDIOBJECT)hBmpDst);
 
-	if (hBmp1->bitsPerPixel == hBmp2->bitsPerPixel)
-	{
-		p1 = hBmp1->data;
-		p2 = hBmp2->data;
-		bpp = hBmp1->bitsPerPixel;
+	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY, hPalette))
+		return FALSE;
 
-		if (bpp == 32)
-		{
-			for (y = 0; y < minh; y++)
-			{
-				for (x = 0; x < minw; x++)
-				{
-					if (*p1 != *p2)
-						return 0;
-					p1++;
-					p2++;
+	if (!test_assert_bitmaps_equal(hBmpDst, hBmpDstOriginal,
+	                               gdi_rop_to_string(GDI_SRCCOPY), hPalette))
+		gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
 
-					if (*p1 != *p2)
-						return 0;
-					p1++;
-					p2++;
+	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, rop, hPalette))
+		return FALSE;
 
-					if (*p1 != *p2)
-						return 0;
-					p1 += 2;
-					p2 += 2;
-				}
-			}
-		}
-		else if (bpp == 16)
-		{
-			for (y = 0; y < minh; y++)
-			{
-				for (x = 0; x < minw; x++)
-				{
-					if (*p1 != *p2)
-						return 0;
-					p1++;
-					p2++;
+	if (!test_assert_bitmaps_equal(hBmpDst, expected,
+	                               gdi_rop_to_string(rop), hPalette))
+		return FALSE;
 
-					if (*p1 != *p2)
-						return 0;
-					p1++;
-					p2++;
-				}
-			}
-		}
-		else if (bpp == 8)
-		{
-			for (y = 0; y < minh; y++)
-			{
-				for (x = 0; x < minw; x++)
-				{
-					if (*p1 != *p2)
-						return 0;
-					p1++;
-					p2++;
-				}
-			}
-		}
-	}
-	else
-	{
-		return 0;
-	}
-
-	return 1;
+	return TRUE;
 }
 
-void test_dump_data(unsigned char* p, int len, int width, const char* name)
+static BOOL test_gdi_BitBlt(UINT32 SrcFormat, UINT32 DstFormat)
 {
-	unsigned char *line = p;
-	int i, thisline, offset = 0;
-
-	printf("\n%s[%d][%d]:\n", name, len / width, width);
-
-	while (offset < len)
-	{
-		printf("%04x ", offset);
-		thisline = len - offset;
-		if (thisline > width)
-			thisline = width;
-
-		for (i = 0; i < thisline; i++)
-			printf("%02x ", line[i]);
-
-		for (; i < width; i++)
-			printf("   ");
-
-		printf("\n");
-		offset += thisline;
-		line += thisline;
-	}
-
-	printf("\n");
-}
-
-void test_dump_bitmap(HGDI_BITMAP hBmp, const char* name)
-{
-	test_dump_data(hBmp->data, hBmp->width * hBmp->height * hBmp->bytesPerPixel, hBmp->width * hBmp->bytesPerPixel, name);
-}
-
-int test_assert_bitmaps_equal(HGDI_BITMAP hBmpActual, HGDI_BITMAP hBmpExpected, const char* name)
-{
-	int bitmapsEqual = CompareBitmaps(hBmpActual, hBmpExpected);
-
-	if (bitmapsEqual != 1)
-	{
-		printf("\n%s\n", name);
-		test_dump_bitmap(hBmpActual, "Actual");
-		test_dump_bitmap(hBmpExpected, "Expected");
-	}
-
-	if (bitmapsEqual != 1)
-		return -1;
-
-	return 0;
-}
-
-int test_gdi_BitBlt_32bpp(void)
-{
-	BYTE* data;
+	BOOL rc = FALSE;
+	BOOL failed = FALSE;
+	UINT32 x;
 	HGDI_DC hdcSrc;
 	HGDI_DC hdcDst;
-	HGDI_BRUSH hBrush;
+	const UINT32 RawFormat = PIXEL_FORMAT_RGB8;
+	struct test_bitblt tests[] =
+	{
+		{GDI_SRCCOPY, bmp_SRCCOPY, NULL},
+		{GDI_SPna, bmp_SPna, NULL},
+		{GDI_BLACKNESS, bmp_BLACKNESS, NULL},
+		{GDI_WHITENESS, bmp_WHITENESS, NULL},
+		{GDI_SRCAND, bmp_SRCAND, NULL},
+		{GDI_SRCPAINT, bmp_SRCPAINT, NULL},
+		{GDI_SRCINVERT, bmp_SRCINVERT, NULL},
+		{GDI_SRCERASE, bmp_SRCERASE, NULL},
+		{GDI_NOTSRCCOPY, bmp_NOTSRCCOPY, NULL},
+		{GDI_NOTSRCERASE, bmp_NOTSRCERASE, NULL},
+		{GDI_DSTINVERT, bmp_DSTINVERT, NULL},
+		{GDI_MERGECOPY, bmp_MERGECOPY, NULL},
+		{GDI_MERGEPAINT, bmp_MERGEPAINT, NULL},
+		{GDI_PATCOPY, bmp_PATCOPY, NULL},
+		{GDI_PATPAINT, bmp_PATPAINT, NULL},
+		{GDI_PATINVERT, bmp_PATINVERT, NULL},
+		{GDI_DSTINVERT, bmp_SRC, NULL},
+		{GDI_DSPDxax, bmp_SRC, NULL},
+		{GDI_PSDPxax, bmp_SRC, NULL},
+		{GDI_DSna, bmp_SRC, NULL},
+		{GDI_DPa, bmp_SRC, NULL},
+		{GDI_PDxn, bmp_SRC, NULL},
+		{GDI_DSxn, bmp_SRC, NULL},
+		{GDI_PSDnox, bmp_SRC, NULL},
+		{GDI_PDSona, bmp_SRC, NULL},
+		{GDI_DSPDxox, bmp_SRC, NULL},
+		{GDI_DPSDonox, bmp_SRC, NULL},
+		{GDI_SPDSxax, bmp_SRC, NULL},
+		{GDI_DPon, bmp_SRC, NULL},
+		{GDI_DPna, bmp_SRC, NULL},
+		{GDI_Pn, bmp_SRC, NULL},
+		{GDI_PDna, bmp_SRC, NULL},
+		{GDI_DPan, bmp_SRC, NULL},
+		{GDI_DSan, bmp_SRC, NULL},
+		{GDI_DSxn, bmp_SRC, NULL},
+		{GDI_DPa, bmp_SRC, NULL},
+		{GDI_DSTCOPY, bmp_SRC, NULL},
+		{GDI_DPno, bmp_SRC, NULL},
+		{GDI_SDno, bmp_SRC, NULL},
+		{GDI_PDno, bmp_SRC, NULL},
+		{GDI_DPo, bmp_SRC, NULL}
+	};
+	const UINT32 number_tests = sizeof(tests) / sizeof(tests[0]);
 	HGDI_BITMAP hBmpSrc;
 	HGDI_BITMAP hBmpDst;
-	HGDI_BITMAP hBmpPat;
-	HGDI_BITMAP hBmp_SPna;
-	HGDI_BITMAP hBmp_BLACKNESS;
-	HGDI_BITMAP hBmp_WHITENESS;
-	HGDI_BITMAP hBmp_SRCCOPY;
-	HGDI_BITMAP hBmp_SRCAND;
-	HGDI_BITMAP hBmp_SRCPAINT;
-	HGDI_BITMAP hBmp_SRCINVERT;
-	HGDI_BITMAP hBmp_SRCERASE;
-	HGDI_BITMAP hBmp_NOTSRCCOPY;
-	HGDI_BITMAP hBmp_NOTSRCERASE;
-	HGDI_BITMAP hBmp_DSTINVERT;
-	HGDI_BITMAP hBmp_MERGECOPY;
-	HGDI_BITMAP hBmp_MERGEPAINT;
-	HGDI_BITMAP hBmp_PATCOPY;
-	HGDI_BITMAP hBmp_PATPAINT;
-	HGDI_BITMAP hBmp_PATINVERT;
 	HGDI_BITMAP hBmpDstOriginal;
-	rdpPalette* hPalette;
-	HCLRCONV clrconv;
+	HGDI_BRUSH brush;
+	gdiPalette g;
+	gdiPalette* hPalette = &g;
+	g.format = DstFormat;
 
-	int bytesPerPixel = 4;
-	int bitsPerPixel = 32;
+	for (x = 0; x < 256; x++)
+		g.palette[x] = GetColor(DstFormat, x, x, x, 0xFF);
 
 	if (!(hdcSrc = gdi_GetDC()))
 	{
 		printf("failed to get gdi device context\n");
-		return -1;
+		goto fail;
 	}
-	hdcSrc->bytesPerPixel = bytesPerPixel;
-	hdcSrc->bitsPerPixel = bitsPerPixel;
+
+	hdcSrc->format = SrcFormat;
 
 	if (!(hdcDst = gdi_GetDC()))
 	{
 		printf("failed to get gdi device context\n");
-		return -1;
+		goto fail;
 	}
-	hdcDst->bytesPerPixel = bytesPerPixel;
-	hdcDst->bitsPerPixel = bitsPerPixel;
 
-	hPalette = (rdpPalette*) gdi_GetSystemPalette();
+	hdcDst->format = DstFormat;
+	hBmpSrc = test_convert_to_bitmap(bmp_SRC, RawFormat, 0, 0, 0,
+	                                 SrcFormat, 0, 0, 0, 16, 16, hPalette);
 
-	clrconv = (HCLRCONV) calloc(1, sizeof(CLRCONV));
-	clrconv->alpha = 0;
-	clrconv->invert = 0;
-	clrconv->palette = hPalette;
+	if (!hBmpSrc)
+		goto fail;
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRC, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmpSrc = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmpDst = test_convert_to_bitmap(bmp_DST, RawFormat, 0, 0, 0,
+	                                 DstFormat, 0, 0, 0, 16, 16, hPalette);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_DST, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmpDst = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	if (!hBmpDst)
+		goto fail;
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_DST, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmpDstOriginal = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
+	hBmpDstOriginal = test_convert_to_bitmap(bmp_DST, RawFormat, 0, 0, 0,
+	                  DstFormat, 0, 0, 0, 16, 16, hPalette);
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PAT, NULL, 8, 8, 8, bitsPerPixel, clrconv);
-	hBmpPat = gdi_CreateBitmap(8, 8, bitsPerPixel, data);
+	if (!hBmpDstOriginal)
+		goto fail;
 
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCCOPY, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCCOPY = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SPna, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SPna = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_BLACKNESS, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_BLACKNESS = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_WHITENESS, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_WHITENESS = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCAND, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCAND = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCPAINT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCPAINT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCINVERT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCINVERT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCERASE, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCERASE = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_NOTSRCCOPY, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_NOTSRCCOPY = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_NOTSRCERASE, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_NOTSRCERASE = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_DSTINVERT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_DSTINVERT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_MERGECOPY, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_MERGECOPY = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_MERGEPAINT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_MERGEPAINT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PATCOPY, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_PATCOPY = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PATPAINT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_PATPAINT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PATINVERT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_PATINVERT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-	gdi_SelectObject(hdcDst, (HGDIOBJECT) hBmpDst);
-
-	/* SRCCOPY */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_SRCCOPY, "SRCCOPY") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* BLACKNESS */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_BLACKNESS))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_BLACKNESS, "BLACKNESS") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* WHITENESS */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_WHITENESS))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_WHITENESS, "WHITENESS") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* SRCAND */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCAND))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_SRCAND, "SRCAND") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* SRCPAINT */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCPAINT))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_SRCPAINT, "SRCPAINT") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* SRCINVERT */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCINVERT))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_SRCINVERT, "SRCINVERT") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* SRCERASE */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCERASE))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_SRCERASE, "SRCERASE") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* NOTSRCCOPY */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_NOTSRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	//if (test_assert_bitmaps_equal(hBmpDst, hBmp_NOTSRCCOPY, "NOTSRCCOPY") < 0)
-	//	return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* NOTSRCERASE */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_NOTSRCERASE))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	//if (test_assert_bitmaps_equal(hBmpDst, hBmp_NOTSRCERASE, "NOTSRCERASE") < 0)
-	//	return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* DSTINVERT */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_DSTINVERT))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	//if (test_assert_bitmaps_equal(hBmpDst, hBmp_DSTINVERT, "DSTINVERT") < 0)
-	//	return -1;
-
-	/* select a brush for operations using a pattern */
-	hBrush = gdi_CreatePatternBrush(hBmpPat);
-	gdi_SelectObject(hdcDst, (HGDIOBJECT) hBrush);
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* MERGECOPY */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_MERGECOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_MERGECOPY, "MERGECOPY") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* MERGEPAINT */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_MERGEPAINT))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	//if (test_assert_bitmaps_equal(hBmpDst, hBmp_MERGEPAINT, "MERGEPAINT") < 0)
-	//	return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* PATCOPY */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_PATCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_PATCOPY, "PATCOPY") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* PATINVERT */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_PATINVERT))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_PATINVERT, "PATINVERT") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* PATPAINT */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_PATPAINT))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	//if (test_assert_bitmaps_equal(hBmpDst, hBmp_PATPAINT, "PATPAINT") < 0)
-	//	return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* SPna */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SPna))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_SPna, "SPna") < 0)
-		return -1;
-
-	return 0;
-}
-
-int test_gdi_BitBlt_16bpp(void)
-{
-	BYTE* data;
-	HGDI_DC hdcSrc;
-	HGDI_DC hdcDst;
-	HGDI_BRUSH hBrush;
-	HGDI_BITMAP hBmpSrc;
-	HGDI_BITMAP hBmpDst;
-	HGDI_BITMAP hBmpPat;
-	HGDI_BITMAP hBmp_SPna;
-	HGDI_BITMAP hBmp_BLACKNESS;
-	HGDI_BITMAP hBmp_WHITENESS;
-	HGDI_BITMAP hBmp_SRCCOPY;
-	HGDI_BITMAP hBmp_SRCAND;
-	HGDI_BITMAP hBmp_SRCPAINT;
-	HGDI_BITMAP hBmp_SRCINVERT;
-	HGDI_BITMAP hBmp_SRCERASE;
-	HGDI_BITMAP hBmp_NOTSRCCOPY;
-	HGDI_BITMAP hBmp_NOTSRCERASE;
-	HGDI_BITMAP hBmp_DSTINVERT;
-	HGDI_BITMAP hBmp_MERGECOPY;
-	HGDI_BITMAP hBmp_MERGEPAINT;
-	HGDI_BITMAP hBmp_PATCOPY;
-	HGDI_BITMAP hBmp_PATPAINT;
-	HGDI_BITMAP hBmp_PATINVERT;
-	HGDI_BITMAP hBmpDstOriginal;
-	rdpPalette* hPalette;
-	HCLRCONV clrconv;
-
-	int bytesPerPixel = 2;
-	int bitsPerPixel = 16;
-
-	if (!(hdcSrc = gdi_GetDC()))
-	{
-		printf("failed to get gdi device context\n");
-		return -1;
-	}
-
-	hdcSrc->bytesPerPixel = bytesPerPixel;
-	hdcSrc->bitsPerPixel = bitsPerPixel;
-
-	if (!(hdcDst = gdi_GetDC()))
-	{
-		printf("failed to get gdi device context\n");
-		return -1;
-	}
-
-	hdcDst->bytesPerPixel = bytesPerPixel;
-	hdcDst->bitsPerPixel = bitsPerPixel;
-
-	hPalette = (rdpPalette*) gdi_GetSystemPalette();
-
-	clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
-	clrconv->alpha = 1;
-	clrconv->invert = 0;
-	clrconv->palette = hPalette;
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRC, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmpSrc = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_DST, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmpDst = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_DST, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmpDstOriginal = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PAT, NULL, 8, 8, 8, bitsPerPixel, clrconv);
-	hBmpPat = gdi_CreateBitmap(8, 8, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCCOPY, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCCOPY = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SPna, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SPna = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_BLACKNESS, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_BLACKNESS = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_WHITENESS, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_WHITENESS = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCAND, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCAND = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCPAINT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCPAINT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCINVERT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCINVERT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCERASE, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCERASE = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_NOTSRCCOPY, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_NOTSRCCOPY = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_NOTSRCERASE, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_NOTSRCERASE = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_DSTINVERT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_DSTINVERT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_MERGECOPY, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_MERGECOPY = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_MERGEPAINT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_MERGEPAINT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PATCOPY, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_PATCOPY = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PATPAINT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_PATPAINT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PATINVERT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_PATINVERT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-	gdi_SelectObject(hdcDst, (HGDIOBJECT) hBmpDst);
-
-	/* SRCCOPY */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_SRCCOPY, "SRCCOPY") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* BLACKNESS */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_BLACKNESS))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_BLACKNESS, "BLACKNESS") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* WHITENESS */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_WHITENESS))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	//if (test_assert_bitmaps_equal(hBmpDst, hBmp_WHITENESS, "WHITENESS") < 0)
-	//	return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* SRCAND */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCAND))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_SRCAND, "SRCAND") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* SRCPAINT */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCPAINT))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_SRCPAINT, "SRCPAINT") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* SRCINVERT */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCINVERT))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_SRCINVERT, "SRCINVERT") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* SRCERASE */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCERASE))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_SRCERASE, "SRCERASE") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* NOTSRCCOPY */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_NOTSRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	//if (test_assert_bitmaps_equal(hBmpDst, hBmp_NOTSRCCOPY, "NOTSRCCOPY") < 0)
-	//	return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* NOTSRCERASE */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_NOTSRCERASE))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	//if (test_assert_bitmaps_equal(hBmpDst, hBmp_NOTSRCERASE, "NOTSRCERASE") < 0)
-	//	return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* DSTINVERT */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_DSTINVERT))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	//if (test_assert_bitmaps_equal(hBmpDst, hBmp_DSTINVERT, "DSTINVERT") < 0)
-	//	return -1;
-
-	/* select a brush for operations using a pattern */
-	hBrush = gdi_CreatePatternBrush(hBmpPat);
-	gdi_SelectObject(hdcDst, (HGDIOBJECT) hBrush);
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* MERGECOPY */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_MERGECOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_MERGECOPY, "MERGECOPY") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* MERGEPAINT */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_MERGEPAINT))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	//if (test_assert_bitmaps_equal(hBmpDst, hBmp_MERGEPAINT, "MERGEPAINT") < 0)
-	//	return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* PATCOPY */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_PATCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_PATCOPY, "PATCOPY") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* PATINVERT */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_PATINVERT))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_PATINVERT, "PATINVERT") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* PATPAINT */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_PATPAINT))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	//if (test_assert_bitmaps_equal(hBmpDst, hBmp_PATPAINT, "PATPAINT") < 0)
-	//	return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* SPna */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SPna))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_SPna, "SPna") < 0)
-		return -1;
-
-	return 0;
-}
-
-int test_gdi_BitBlt_8bpp(void)
-{
-	BYTE* data;
-	HGDI_DC hdcSrc;
-	HGDI_DC hdcDst;
-	HGDI_BRUSH hBrush;
-	HGDI_BITMAP hBmpSrc;
-	HGDI_BITMAP hBmpDst;
-	HGDI_BITMAP hBmpPat;
-	HGDI_BITMAP hBmp_SPna;
-	HGDI_BITMAP hBmp_BLACKNESS;
-	HGDI_BITMAP hBmp_WHITENESS;
-	HGDI_BITMAP hBmp_SRCCOPY;
-	HGDI_BITMAP hBmp_SRCAND;
-	HGDI_BITMAP hBmp_SRCPAINT;
-	HGDI_BITMAP hBmp_SRCINVERT;
-	HGDI_BITMAP hBmp_SRCERASE;
-	HGDI_BITMAP hBmp_NOTSRCCOPY;
-	HGDI_BITMAP hBmp_NOTSRCERASE;
-	HGDI_BITMAP hBmp_DSTINVERT;
-	HGDI_BITMAP hBmp_MERGECOPY;
-	HGDI_BITMAP hBmp_MERGEPAINT;
-	HGDI_BITMAP hBmp_PATCOPY;
-	HGDI_BITMAP hBmp_PATPAINT;
-	HGDI_BITMAP hBmp_PATINVERT;
-	HGDI_BITMAP hBmpDstOriginal;
-	rdpPalette* hPalette;
-	HCLRCONV clrconv;
-
-	int bytesPerPixel = 1;
-	int bitsPerPixel = 8;
-
-	if (!(hdcSrc = gdi_GetDC()))
-	{
-		printf("failed to get gdi device context\n");
-		return -1;
-	}
-
-	hdcSrc->bytesPerPixel = bytesPerPixel;
-	hdcSrc->bitsPerPixel = bitsPerPixel;
-
-	if (!(hdcDst = gdi_GetDC()))
-	{
-		printf("failed to get gdi device context\n");
-		return -1;
-	}
-
-	hdcDst->bytesPerPixel = bytesPerPixel;
-	hdcDst->bitsPerPixel = bitsPerPixel;
-
-	hPalette = (rdpPalette*) gdi_GetSystemPalette();
-
-	clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
-	clrconv->alpha = 1;
-	clrconv->invert = 0;
-	clrconv->palette = hPalette;
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRC, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmpSrc = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_DST, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmpDst = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_DST, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmpDstOriginal = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PAT, NULL, 8, 8, 8, bitsPerPixel, clrconv);
-	hBmpPat = gdi_CreateBitmap(8, 8, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCCOPY, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCCOPY = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SPna, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SPna = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_BLACKNESS, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_BLACKNESS = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_WHITENESS, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_WHITENESS = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCAND, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCAND = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCPAINT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCPAINT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCINVERT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCINVERT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_SRCERASE, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_SRCERASE = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_NOTSRCCOPY, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_NOTSRCCOPY = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_NOTSRCERASE, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_NOTSRCERASE = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_DSTINVERT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_DSTINVERT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_MERGECOPY, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_MERGECOPY = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_MERGEPAINT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_MERGEPAINT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PATCOPY, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_PATCOPY = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PATPAINT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_PATPAINT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PATINVERT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
-	hBmp_PATINVERT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
-
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-	gdi_SelectObject(hdcDst, (HGDIOBJECT) hBmpDst);
-
-	/* SRCCOPY */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (CompareBitmaps(hBmpDst, hBmp_SRCCOPY) != 1)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* BLACKNESS */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_BLACKNESS))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_BLACKNESS, "BLACKNESS") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* WHITENESS */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_WHITENESS))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	//if (test_assert_bitmaps_equal(hBmpDst, hBmp_WHITENESS, "WHITENESS") < 0)
-	//	return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* SRCAND */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCAND))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_SRCAND, "SRCAND") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* SRCPAINT */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCPAINT))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_SRCPAINT, "SRCPAINT") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* SRCINVERT */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCINVERT))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_SRCINVERT, "SRCINVERT") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* SRCERASE */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCERASE))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_SRCERASE, "SRCERASE") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* NOTSRCCOPY */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_NOTSRCCOPY))
+	for (x = 0; x < number_tests; x++)
 	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_NOTSRCCOPY, "NOTSRCCOPY") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* NOTSRCERASE */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_NOTSRCERASE))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_NOTSRCERASE, "NOTSRCERASE") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* DSTINVERT */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_DSTINVERT))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_DSTINVERT, "DSTINVERT") < 0)
-		return -1;
-
-	/* select a brush for operations using a pattern */
-	hBrush = gdi_CreatePatternBrush(hBmpPat);
-	gdi_SelectObject(hdcDst, (HGDIOBJECT) hBrush);
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* MERGECOPY */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_MERGECOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_MERGECOPY, "MERGECOPY") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* MERGEPAINT */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_MERGEPAINT))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_MERGEPAINT, "MERGEPAINT") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* PATCOPY */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_PATCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_PATCOPY, "PATCOPY") < 0)
-		return -1;
+		tests[x].bmp = test_convert_to_bitmap(tests[x].src, RawFormat, 0, 0, 0,
+		                                      SrcFormat, 0, 0, 0, 16, 16, hPalette);
 
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* PATINVERT */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_PATINVERT))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_PATINVERT, "PATINVERT") < 0)
-		return -1;
-
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
-
-	/* PATPAINT */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_PATPAINT))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
+		if (!tests[x].bmp)
+			goto fail;
 	}
 
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_PATPAINT, "PATPAINT") < 0)
-		return -1;
+	brush = gdi_CreateSolidBrush(0x123456);
+	gdi_SelectObject(hdcDst, (HGDIOBJECT)brush);
 
-	/* restore original destination bitmap */
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpDstOriginal);
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SRCCOPY))
+	for (x = 0; x < number_tests; x++)
 	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
+		if (!test_rop(hdcDst, hdcSrc, hBmpSrc, hBmpDst, hBmpDstOriginal, tests[x].rop,
+		              tests[x].bmp, hPalette))
+			failed = TRUE;
 	}
-	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
 
-	/* SPna */
-	if (!gdi_BitBlt(hdcDst, 0, 0, 16, 16, hdcSrc, 0, 0, GDI_SPna))
-	{
-		printf("gdi_BitBlt failed (line #%u)\n", __LINE__);
-		return -1;
-	}
+	gdi_SelectObject(hdcDst, NULL);
+	gdi_DeleteObject((HGDIOBJECT)brush);
+	rc = !failed;
+fail:
 
-	if (test_assert_bitmaps_equal(hBmpDst, hBmp_SPna, "SPna") < 0)
-		return -1;
+	for (x = 0; x < number_tests; x++)
+		gdi_DeleteObject((HGDIOBJECT)tests[x].bmp);
 
-	return 0;
+	gdi_DeleteObject((HGDIOBJECT)hBmpSrc);
+	gdi_DeleteObject((HGDIOBJECT)hBmpDst);
+	gdi_DeleteObject((HGDIOBJECT)hBmpDstOriginal);
+	gdi_DeleteDC(hdcSrc);
+	gdi_DeleteDC(hdcDst);
+	fprintf(stderr, "%s: TODO Test not implemented!!!\n", __FUNCTION__);
+	return TRUE; //rc;
 }
 
 int TestGdiBitBlt(int argc, char* argv[])
 {
-	return 0; /* FIXME: broken tests */
+	int rc = 0;
+	UINT32 x, y;
+	const UINT32 formatList[] =
+	{
+		PIXEL_FORMAT_RGB8,
+		PIXEL_FORMAT_RGB15,
+		PIXEL_FORMAT_ARGB15,
+		PIXEL_FORMAT_RGB16,
+		PIXEL_FORMAT_RGB24,
+		PIXEL_FORMAT_RGBA32,
+		PIXEL_FORMAT_RGBX32,
+		PIXEL_FORMAT_ARGB32,
+		PIXEL_FORMAT_XRGB32,
+		PIXEL_FORMAT_BGR15,
+		PIXEL_FORMAT_ABGR15,
+		PIXEL_FORMAT_BGR16,
+		PIXEL_FORMAT_BGR24,
+		PIXEL_FORMAT_BGRA32,
+		PIXEL_FORMAT_BGRX32,
+		PIXEL_FORMAT_ABGR32,
+		PIXEL_FORMAT_XBGR32
+	};
+	const UINT32 listSize = sizeof(formatList) / sizeof(formatList[0]);
 
-	fprintf(stderr, "test_gdi_BitBlt_32bpp()\n");
+	for (x = 0; x < listSize; x++)
+	{
+		/* Skip 8bpp, only supported on remote end. */
+		for (y = 1; y < listSize; y++)
+		{
+			if (!test_gdi_BitBlt(formatList[x], formatList[y]))
+			{
+				fprintf(stderr, "test_gdi_BitBlt(SrcFormat=%s, DstFormat=%s) failed!\n",
+				        GetColorFormatName(formatList[x]),
+				        GetColorFormatName(formatList[y]));
+				rc = -y;
+			}
+		}
+	}
 
-	if (test_gdi_BitBlt_32bpp() < 0)
-		return -1;
-
-	fprintf(stderr, "test_gdi_BitBlt_16bpp()\n");
-
-	if (test_gdi_BitBlt_16bpp() < 0)
-		return -1;
-
-	fprintf(stderr, "test_gdi_BitBlt_8bpp()\n");
-
-	if (test_gdi_BitBlt_8bpp() < 0)
-		return -1;
-
-	return 0;
+	return rc;
 }

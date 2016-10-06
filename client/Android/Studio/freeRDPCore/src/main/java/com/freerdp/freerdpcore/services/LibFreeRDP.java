@@ -89,11 +89,13 @@ public class LibFreeRDP {
         void OnSettingsChanged(int width, int height, int bpp);
 
         boolean OnAuthenticate(StringBuilder username, StringBuilder domain, StringBuilder password);
+        boolean OnGatewayAuthenticate(StringBuilder username, StringBuilder domain, StringBuilder
+                password);
 
         int OnVerifiyCertificate(String commonName, String subject,
                 String issuer, String fingerprint, boolean mismatch);
 
-        int OnVerifiyChangedCertificate(String commonName, String subject,
+        int OnVerifyChangedCertificate(String commonName, String subject,
                 String issuer, String fingerprint, String oldSubject,
                 String oldIssuer, String oldFingerprint);
 
@@ -217,6 +219,7 @@ public class LibFreeRDP {
         args.add(addFlag("themes", flags.getTheming()));
         args.add(addFlag("fonts", flags.getFontSmoothing()));
         args.add(addFlag("aero", flags.getDesktopComposition()));
+        args.add(addFlag("glyph-cache", false));
 
         if (!advanced.getRemoteProgram().isEmpty()) {
             args.add("/app:" + advanced.getRemoteProgram());
@@ -270,7 +273,7 @@ public class LibFreeRDP {
             args.add("/microphone");
         }
 
-        args.add("/log-level:TRACE");
+        args.add("/log-level:"+debug.getDebugLevel());
         String[] arrayArgs = args.toArray(new String[args.size()]);
         return freerdp_parse_arguments(inst, arrayArgs);
     }
@@ -390,6 +393,17 @@ public class LibFreeRDP {
         return false;
     }
 
+    private static boolean OnGatewayAuthenticate(int inst, StringBuilder username, StringBuilder
+            domain, StringBuilder password) {
+        SessionState s = GlobalApp.getSession(inst);
+        if (s == null)
+            return false;
+        UIEventListener uiEventListener = s.getUIEventListener();
+        if (uiEventListener != null)
+            return uiEventListener.OnGatewayAuthenticate(username, domain, password);
+        return false;
+    }
+
     private static int OnVerifyCertificate(int inst, String commonName, String subject,
                                            String issuer, String fingerprint, boolean
                                                    hostMismatch) {
@@ -403,7 +417,7 @@ public class LibFreeRDP {
         return 0;
     }
 
-    private static int OnVerifyCertificate(int inst, String commonName, String subject,
+    private static int OnVerifyChangedCertificate(int inst, String commonName, String subject,
                                            String issuer, String fingerprint, String oldSubject,
                                            String oldIssuer, String oldFingerprint) {
         SessionState s = GlobalApp.getSession(inst);
@@ -411,7 +425,7 @@ public class LibFreeRDP {
             return 0;
         UIEventListener uiEventListener = s.getUIEventListener();
         if (uiEventListener != null)
-            return uiEventListener.OnVerifiyChangedCertificate(commonName, subject, issuer,
+            return uiEventListener.OnVerifyChangedCertificate(commonName, subject, issuer,
                     fingerprint, oldSubject, oldIssuer, oldFingerprint);
         return 0;
     }

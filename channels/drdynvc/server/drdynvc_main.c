@@ -45,14 +45,13 @@ static void* drdynvc_server_thread(void* arg)
 	DWORD BytesReturned;
 	DrdynvcServerContext* context;
 	UINT error = ERROR_INTERNAL_ERROR;
-
 	context = (DrdynvcServerContext*) arg;
-
 	buffer = NULL;
 	BytesReturned = 0;
 	ChannelEvent = NULL;
-
+	freerdp_channel_init_thread_context(context->rdpcontext);
 	s = Stream_New(NULL, 4096);
+
 	if (!s)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
@@ -60,7 +59,8 @@ static void* drdynvc_server_thread(void* arg)
 		return NULL;
 	}
 
-	if (WTSVirtualChannelQuery(context->priv->ChannelHandle, WTSVirtualEventHandle, &buffer, &BytesReturned) == TRUE)
+	if (WTSVirtualChannelQuery(context->priv->ChannelHandle, WTSVirtualEventHandle,
+	                           &buffer, &BytesReturned) == TRUE)
 	{
 		if (BytesReturned == sizeof(HANDLE))
 			CopyMemory(&ChannelEvent, buffer, sizeof(HANDLE));
@@ -82,13 +82,16 @@ static void* drdynvc_server_thread(void* arg)
 			break;
 		}
 
-		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0, NULL, 0, &BytesReturned))
+		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0, NULL, 0,
+		                           &BytesReturned))
 		{
 			WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
 			break;
 		}
+
 		if (BytesReturned < 1)
 			continue;
+
 		if (!Stream_EnsureRemainingCapacity(s, BytesReturned))
 		{
 			WLog_ERR(TAG, "Stream_EnsureRemainingCapacity failed!");
@@ -96,7 +99,7 @@ static void* drdynvc_server_thread(void* arg)
 		}
 
 		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0,
-			(PCHAR) Stream_Buffer(s), Stream_Capacity(s), &BytesReturned))
+		                           (PCHAR) Stream_Buffer(s), Stream_Capacity(s), &BytesReturned))
 		{
 			WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
 			break;
@@ -118,7 +121,8 @@ static void* drdynvc_server_thread(void* arg)
  */
 static UINT drdynvc_server_start(DrdynvcServerContext* context)
 {
-	context->priv->ChannelHandle = WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, "drdynvc");
+	context->priv->ChannelHandle = WTSVirtualChannelOpen(context->vcm,
+	                               WTS_CURRENT_SESSION, "drdynvc");
 
 	if (!context->priv->ChannelHandle)
 	{
@@ -131,8 +135,9 @@ static UINT drdynvc_server_start(DrdynvcServerContext* context)
 		WLog_ERR(TAG, "CreateEvent failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
+
 	if (!(context->priv->Thread = CreateThread(NULL, 0,
-			(LPTHREAD_START_ROUTINE) drdynvc_server_thread, (void*) context, 0, NULL)))
+	                              (LPTHREAD_START_ROUTINE) drdynvc_server_thread, (void*) context, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		CloseHandle(context->priv->StopEvent);
@@ -150,34 +155,32 @@ static UINT drdynvc_server_start(DrdynvcServerContext* context)
  */
 static UINT drdynvc_server_stop(DrdynvcServerContext* context)
 {
-    UINT error;
+	UINT error;
 	SetEvent(context->priv->StopEvent);
 
 	if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
-    {
-        error = GetLastError();
-        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
-        return error;
-    }
-	CloseHandle(context->priv->Thread);
+	{
+		error = GetLastError();
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+		return error;
+	}
 
+	CloseHandle(context->priv->Thread);
 	return CHANNEL_RC_OK;
 }
 
 DrdynvcServerContext* drdynvc_server_context_new(HANDLE vcm)
 {
 	DrdynvcServerContext* context;
-
 	context = (DrdynvcServerContext*) calloc(1, sizeof(DrdynvcServerContext));
 
 	if (context)
 	{
 		context->vcm = vcm;
-
 		context->Start = drdynvc_server_start;
 		context->Stop = drdynvc_server_stop;
-
 		context->priv = (DrdynvcServerPrivate*) calloc(1, sizeof(DrdynvcServerPrivate));
+
 		if (!context->priv)
 		{
 			WLog_ERR(TAG, "calloc failed!");

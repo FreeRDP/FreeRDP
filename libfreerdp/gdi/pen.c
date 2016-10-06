@@ -41,35 +41,22 @@
  * @return new pen
  */
 
-HGDI_PEN gdi_CreatePen(int fnPenStyle, int nWidth, int crColor)
+HGDI_PEN gdi_CreatePen(UINT32 fnPenStyle, UINT32 nWidth, UINT32 crColor,
+			   UINT32 format, const gdiPalette* palette)
 {
-	HGDI_PEN hPen = (HGDI_PEN) malloc(sizeof(GDI_PEN));
+	HGDI_PEN hPen = (HGDI_PEN) calloc(1, sizeof(GDI_PEN));
 	if (!hPen)
 		return NULL;
 	hPen->objectType = GDIOBJECT_PEN;
 	hPen->style = fnPenStyle;
 	hPen->color = crColor;
 	hPen->width = nWidth;
+	hPen->format = format;
+	hPen->palette = palette;
 	return hPen;
 }
 
-INLINE BYTE gdi_GetPenColor_8bpp(HGDI_PEN pen)
+INLINE UINT32 gdi_GetPenColor(HGDI_PEN pen, UINT32 format)
 {
-	/* TODO: implement conversion using palette */
-	return 0xFF;
-}
-
-INLINE UINT16 gdi_GetPenColor_16bpp(HGDI_PEN pen)
-{
-	UINT16 p;
-	int r, g, b;
-	GetRGB32(r, g, b, pen->color);
- 	RGB_888_565(r, g, b);
-	p = RGB16(r, g, b);
-	return p;
-}
-
-INLINE UINT32 gdi_GetPenColor_32bpp(HGDI_PEN pen)
-{
-	return pen->color;
+	return ConvertColor(pen->color, pen->format, format, pen->palette);
 }

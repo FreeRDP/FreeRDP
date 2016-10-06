@@ -62,7 +62,6 @@
 #cmakedefine WITH_DEBUG_CLIPRDR
 #cmakedefine WITH_DEBUG_DVC
 #cmakedefine WITH_DEBUG_TSMF
-#cmakedefine WITH_DEBUG_GDI
 #cmakedefine WITH_DEBUG_KBD
 #cmakedefine WITH_DEBUG_LICENSE
 #cmakedefine WITH_DEBUG_NEGO

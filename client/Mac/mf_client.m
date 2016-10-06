@@ -30,18 +30,17 @@
  * Client Interface
  */
 
-BOOL mfreerdp_client_global_init()
+static BOOL mfreerdp_client_global_init()
 {
 	freerdp_handle_signals();
 	return TRUE;
 }
 
-void mfreerdp_client_global_uninit()
+static void mfreerdp_client_global_uninit()
 {
-
 }
 
-int mfreerdp_client_start(rdpContext* context)
+static int mfreerdp_client_start(rdpContext* context)
 {
 	MRDPView* view;
 	mfContext* mfc = (mfContext*) context;
@@ -49,7 +48,8 @@ int mfreerdp_client_start(rdpContext* context)
 	if (mfc->view == NULL)
 	{
 		// view not specified beforehand. Create view dynamically
-		mfc->view = [[MRDPView alloc] initWithFrame : NSMakeRect(0, 0, context->settings->DesktopWidth, context->settings->DesktopHeight)];
+		mfc->view = [[MRDPView alloc] initWithFrame : NSMakeRect(0, 0,
+		             context->settings->DesktopWidth, context->settings->DesktopHeight)];
 		mfc->view_ownership = TRUE;
 	}
 
@@ -57,10 +57,10 @@ int mfreerdp_client_start(rdpContext* context)
 	return [view rdpStart:context];
 }
 
-int mfreerdp_client_stop(rdpContext* context)
+static int mfreerdp_client_stop(rdpContext* context)
 {
 	mfContext* mfc = (mfContext*) context;
-	
+
 	if (mfc->thread)
 	{
 		SetEvent(mfc->stopEvent);
@@ -68,7 +68,7 @@ int mfreerdp_client_stop(rdpContext* context)
 		CloseHandle(mfc->thread);
 		mfc->thread = NULL;
 	}
-	
+
 	if (mfc->view_ownership)
 	{
 		MRDPView* view = (MRDPView*) mfc->view;
@@ -80,41 +80,40 @@ int mfreerdp_client_stop(rdpContext* context)
 	return 0;
 }
 
-BOOL mfreerdp_client_new(freerdp* instance, rdpContext* context)
+static BOOL mfreerdp_client_new(freerdp* instance, rdpContext* context)
+{
+	mfContext* mfc;
+	rdpSettings* settings;
+	mfc = (mfContext*) instance->context;
+	mfc->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	context->instance->PreConnect = mac_pre_connect;
+	context->instance->PostConnect = mac_post_connect;
+	context->instance->Authenticate = mac_authenticate;
+	settings = instance->settings;
+	settings->AsyncTransport = TRUE;
+	settings->AsyncUpdate = TRUE;
+	settings->AsyncInput = TRUE;
+	return TRUE;
+}
+
+static void mfreerdp_client_free(freerdp* instance, rdpContext* context)
 {
 	mfContext* mfc;
 	rdpSettings* settings;
 
+	if (!instance || !context)
+		return;
+
 	mfc = (mfContext*) instance->context;
-
-	mfc->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-
-	context->instance->PreConnect = mac_pre_connect;
-	context->instance->PostConnect = mac_post_connect;
-	context->instance->Authenticate = mac_authenticate;
-
-	context->channels = freerdp_channels_new();
-
-	settings = instance->settings;
-
-	settings->AsyncTransport = TRUE;
-	settings->AsyncUpdate = TRUE;
-	settings->AsyncInput = TRUE;
-
-	return TRUE;
+	CloseHandle(mfc->stopEvent);
 }
 
-void mfreerdp_client_free(freerdp* instance, rdpContext* context)
-{
-
-}
-
-void freerdp_client_mouse_event(rdpContext* cfc, DWORD flags, int x, int y)
+static void freerdp_client_mouse_event(rdpContext* cfc, DWORD flags, int x,
+                                       int y)
 {
 	int width, height;
 	rdpInput* input = cfc->instance->input;
 	rdpSettings* settings = cfc->instance->settings;
-
 	width = settings->DesktopWidth;
 	height = settings->DesktopHeight;
 
@@ -132,30 +131,28 @@ void freerdp_client_mouse_event(rdpContext* cfc, DWORD flags, int x, int y)
 	input->MouseEvent(input, flags, x, y);
 }
 
-void mf_scale_mouse_event(void* context, rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+void mf_scale_mouse_event(void* context, rdpInput* input, UINT16 flags,
+                          UINT16 x, UINT16 y)
 {
 	mfContext* mfc = (mfContext*) context;
 	MRDPView* view = (MRDPView*) mfc->view;
-	
 	int ww, wh, dw, dh;
-	
 	ww = mfc->client_width;
 	wh = mfc->client_height;
 	dw = mfc->context.settings->DesktopWidth;
 	dh = mfc->context.settings->DesktopHeight;
-	
 	// Convert to windows coordinates
 	y = [view frame].size.height - y;
-	
+
 	if (!mfc->context.settings->SmartSizing || ((ww == dw) && (wh == dh)))
 	{
 		y = y + mfc->yCurrentScroll;
-		
+
 		if (wh != dh)
 		{
 			y -= (dh - wh);
 		}
-		
+
 		input->MouseEvent(input, flags, x + mfc->xCurrentScroll, y);
 	}
 	else
@@ -169,16 +166,12 @@ int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {
 	pEntryPoints->Version = 1;
 	pEntryPoints->Size = sizeof(RDP_CLIENT_ENTRY_POINTS_V1);
-
 	pEntryPoints->GlobalInit = mfreerdp_client_global_init;
 	pEntryPoints->GlobalUninit = mfreerdp_client_global_uninit;
-
 	pEntryPoints->ContextSize = sizeof(mfContext);
 	pEntryPoints->ClientNew = mfreerdp_client_new;
 	pEntryPoints->ClientFree = mfreerdp_client_free;
-
 	pEntryPoints->ClientStart = mfreerdp_client_start;
 	pEntryPoints->ClientStop = mfreerdp_client_stop;
-
 	return 0;
 }

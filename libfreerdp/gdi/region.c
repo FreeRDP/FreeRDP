@@ -3,6 +3,8 @@
  * GDI Region Functions
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2016 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +33,10 @@
 
 #include <freerdp/gdi/region.h>
 
+#include <freerdp/log.h>
+
+#define TAG FREERDP_TAG("gdi.region")
+
 /**
  * Create a region from rectangular coordinates.\n
  * @msdn{dd183514}
@@ -41,9 +47,11 @@
  * @return new region
  */
 
-HGDI_RGN gdi_CreateRectRgn(int nLeftRect, int nTopRect, int nRightRect, int nBottomRect)
+HGDI_RGN gdi_CreateRectRgn(UINT32 nLeftRect, UINT32 nTopRect,
+                           UINT32 nRightRect, UINT32 nBottomRect)
 {
-	HGDI_RGN hRgn = (HGDI_RGN) malloc(sizeof(GDI_RGN));
+	HGDI_RGN hRgn = (HGDI_RGN) calloc(1, sizeof(GDI_RGN));
+
 	if (!hRgn)
 		return NULL;
 
@@ -52,7 +60,7 @@ HGDI_RGN gdi_CreateRectRgn(int nLeftRect, int nTopRect, int nRightRect, int nBot
 	hRgn->y = nTopRect;
 	hRgn->w = nRightRect - nLeftRect + 1;
 	hRgn->h = nBottomRect - nTopRect + 1;
-	hRgn->null = 0;
+	hRgn->null = FALSE;
 	return hRgn;
 }
 
@@ -65,9 +73,11 @@ HGDI_RGN gdi_CreateRectRgn(int nLeftRect, int nTopRect, int nRightRect, int nBot
  * @return new rectangle
  */
 
-HGDI_RECT gdi_CreateRect(int xLeft, int yTop, int xRight, int yBottom)
+HGDI_RECT gdi_CreateRect(UINT32 xLeft, UINT32 yTop,
+                         UINT32 xRight, UINT32 yBottom)
 {
-	HGDI_RECT hRect = (HGDI_RECT) malloc(sizeof(GDI_RECT));
+	HGDI_RECT hRect = (HGDI_RECT) calloc(1, sizeof(GDI_RECT));
+
 	if (!hRect)
 		return NULL;
 
@@ -102,7 +112,8 @@ INLINE void gdi_RectToRgn(HGDI_RECT rect, HGDI_RGN rgn)
  * @param rgn destination region
  */
 
-INLINE void gdi_CRectToRgn(int left, int top, int right, int bottom, HGDI_RGN rgn)
+INLINE void gdi_CRectToRgn(UINT32 left, UINT32 top,
+                           UINT32 right, UINT32 bottom, HGDI_RGN rgn)
 {
 	rgn->x = left;
 	rgn->y = top;
@@ -119,7 +130,8 @@ INLINE void gdi_CRectToRgn(int left, int top, int right, int bottom, HGDI_RGN rg
  * @param h height
  */
 
-INLINE void gdi_RectToCRgn(HGDI_RECT rect, int *x, int *y, int *w, int *h)
+INLINE void gdi_RectToCRgn(const HGDI_RECT rect, UINT32* x, UINT32* y,
+                           UINT32* w, UINT32* h)
 {
 	*x = rect->left;
 	*y = rect->top;
@@ -139,7 +151,9 @@ INLINE void gdi_RectToCRgn(HGDI_RECT rect, int *x, int *y, int *w, int *h)
  * @param h height
  */
 
-INLINE void gdi_CRectToCRgn(int left, int top, int right, int bottom, int *x, int *y, int *w, int *h)
+INLINE void gdi_CRectToCRgn(UINT32 left, UINT32 top, UINT32 right,
+                            UINT32 bottom,
+                            UINT32* x, UINT32* y, UINT32* w, UINT32* h)
 {
 	*x = left;
 	*y = top;
@@ -170,12 +184,22 @@ INLINE void gdi_RgnToRect(HGDI_RGN rgn, HGDI_RECT rect)
  * @param rect destination rectangle
  */
 
-INLINE void gdi_CRgnToRect(int x, int y, int w, int h, HGDI_RECT rect)
+INLINE void gdi_CRgnToRect(UINT32 x, UINT32 y, UINT32 w, UINT32 h,
+                           HGDI_RECT rect)
 {
+	memset(rect, 0, sizeof(GDI_RECT));
 	rect->left = x;
 	rect->top = y;
-	rect->right = x + w - 1;
-	rect->bottom = y + h - 1;
+
+	if (w > 0)
+		rect->right = x + w - 1;
+	else
+		WLog_ERR(TAG, "Invalid width");
+
+	if (h > 0)
+		rect->bottom = y + h - 1;
+	else
+		WLog_ERR(TAG, "Invalid height");
 }
 
 /**
@@ -187,7 +211,8 @@ INLINE void gdi_CRgnToRect(int x, int y, int w, int h, HGDI_RECT rect)
  * @param bottom y2
  */
 
-INLINE void gdi_RgnToCRect(HGDI_RGN rgn, int *left, int *top, int *right, int *bottom)
+INLINE void gdi_RgnToCRect(HGDI_RGN rgn, UINT32* left, UINT32* top,
+                           UINT32* right, UINT32* bottom)
 {
 	*left = rgn->x;
 	*top = rgn->y;
@@ -207,12 +232,24 @@ INLINE void gdi_RgnToCRect(HGDI_RGN rgn, int *left, int *top, int *right, int *b
  * @param bottom y2
  */
 
-INLINE void gdi_CRgnToCRect(int x, int y, int w, int h, int *left, int *top, int *right, int *bottom)
+INLINE void gdi_CRgnToCRect(UINT32 x, UINT32 y, UINT32 w, UINT32 h,
+                            UINT32* left, UINT32* top, UINT32* right, UINT32* bottom)
 {
 	*left = x;
 	*top = y;
-	*right = x + w - 1;
-	*bottom = y + h - 1;
+	*right = 0;
+
+	if (w > 0)
+		*right = x + w - 1;
+	else
+		WLog_ERR(TAG, "Invalid width");
+
+	*bottom = 0;
+
+	if (h > 0)
+		*bottom = y + h - 1;
+	else
+		WLog_ERR(TAG, "Invalid height");
 }
 
 /**
@@ -226,16 +263,15 @@ INLINE void gdi_CRgnToCRect(int x, int y, int w, int h, int *left, int *top, int
  * @return nonzero if there is an overlap, 0 otherwise
  */
 
-INLINE BOOL gdi_CopyOverlap(int x, int y, int width, int height, int srcx, int srcy)
+INLINE BOOL gdi_CopyOverlap(UINT32 x, UINT32 y, UINT32 width, UINT32 height,
+                            UINT32 srcx, UINT32 srcy)
 {
 	GDI_RECT dst;
 	GDI_RECT src;
-
 	gdi_CRgnToRect(x, y, width, height, &dst);
 	gdi_CRgnToRect(srcx, srcy, width, height, &src);
-
 	return (dst.right >= src.left && dst.left <= src.right &&
-		dst.bottom >= src.top && dst.top <= src.bottom) ? TRUE : FALSE;
+	        dst.bottom >= src.top && dst.top <= src.bottom) ? TRUE : FALSE;
 }
 
 /**
@@ -249,7 +285,8 @@ INLINE BOOL gdi_CopyOverlap(int x, int y, int width, int height, int srcx, int s
  * @return nonzero if successful, 0 otherwise
  */
 
-INLINE BOOL gdi_SetRect(HGDI_RECT rc, int xLeft, int yTop, int xRight, int yBottom)
+INLINE BOOL gdi_SetRect(HGDI_RECT rc, UINT32 xLeft, UINT32 yTop,
+                        UINT32 xRight, UINT32 yBottom)
 {
 	rc->left = xLeft;
 	rc->top = yTop;
@@ -268,13 +305,14 @@ INLINE BOOL gdi_SetRect(HGDI_RECT rc, int xLeft, int yTop, int xRight, int yBott
  * @return nonzero if successful, 0 otherwise
  */
 
-INLINE BOOL gdi_SetRgn(HGDI_RGN hRgn, int nXLeft, int nYLeft, int nWidth, int nHeight)
+INLINE BOOL gdi_SetRgn(HGDI_RGN hRgn, UINT32 nXLeft, UINT32 nYLeft,
+                       UINT32 nWidth, UINT32 nHeight)
 {
 	hRgn->x = nXLeft;
 	hRgn->y = nYLeft;
 	hRgn->w = nWidth;
 	hRgn->h = nHeight;
-	hRgn->null = 0;
+	hRgn->null = FALSE;
 	return TRUE;
 }
 
@@ -288,10 +326,11 @@ INLINE BOOL gdi_SetRgn(HGDI_RGN hRgn, int nXLeft, int nYLeft, int nWidth, int nH
  * @return nonzero if successful, 0 otherwise
  */
 
-INLINE BOOL gdi_SetRectRgn(HGDI_RGN hRgn, int nLeftRect, int nTopRect, int nRightRect, int nBottomRect)
+INLINE BOOL gdi_SetRectRgn(HGDI_RGN hRgn, UINT32 nLeftRect, UINT32 nTopRect,
+                           UINT32 nRightRect, UINT32 nBottomRect)
 {
 	gdi_CRectToRgn(nLeftRect, nTopRect, nRightRect, nBottomRect, hRgn);
-	hRgn->null = 0;
+	hRgn->null = FALSE;
 	return TRUE;
 }
 
@@ -342,13 +381,12 @@ INLINE BOOL gdi_CopyRect(HGDI_RECT dst, HGDI_RECT src)
  * @return nonzero if the point is inside, 0 otherwise
  */
 
-INLINE BOOL gdi_PtInRect(HGDI_RECT rc, int x, int y)
+INLINE BOOL gdi_PtInRect(HGDI_RECT rc, UINT32 x, UINT32 y)
 {
 	/*
 	 * points on the left and top sides are considered in,
 	 * while points on the right and bottom sides are considered out
 	 */
-
 	if (x >= rc->left && x <= rc->right)
 	{
 		if (y >= rc->top && y <= rc->bottom)
@@ -371,7 +409,8 @@ INLINE BOOL gdi_PtInRect(HGDI_RECT rc, int x, int y)
  * @return nonzero on success, 0 otherwise
  */
 
-INLINE BOOL gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h)
+INLINE BOOL gdi_InvalidateRegion(HGDI_DC hdc, UINT32 x, UINT32 y, UINT32 w,
+                                 UINT32 h)
 {
 	GDI_RECT inv;
 	GDI_RECT rgn;
@@ -393,18 +432,18 @@ INLINE BOOL gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h)
 	{
 		int new_cnt;
 		HGDI_RGN new_rgn;
-
 		new_cnt = hdc->hwnd->count * 2;
 		new_rgn = (HGDI_RGN) realloc(cinvalid, sizeof(GDI_RGN) * new_cnt);
+
 		if (!new_rgn)
 			return FALSE;
+
 		hdc->hwnd->count = new_cnt;
 		cinvalid = new_rgn;
 	}
 
 	gdi_SetRgn(&cinvalid[hdc->hwnd->ninvalid++], x, y, w, h);
 	hdc->hwnd->cinvalid = cinvalid;
-
 	invalid = hdc->hwnd->invalid;
 
 	if (invalid->null)
@@ -413,18 +452,12 @@ INLINE BOOL gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h)
 		invalid->y = y;
 		invalid->w = w;
 		invalid->h = h;
-		invalid->null = 0;
+		invalid->null = FALSE;
 		return TRUE;
 	}
 
 	gdi_CRgnToRect(x, y, w, h, &rgn);
 	gdi_RgnToRect(invalid, &inv);
-
-	if (rgn.left < 0)
-		rgn.left = 0;
-
-	if (rgn.top < 0)
-		rgn.top = 0;
 
 	if (rgn.left < inv.left)
 		inv.left = rgn.left;
@@ -439,6 +472,5 @@ INLINE BOOL gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h)
 		inv.bottom = rgn.bottom;
 
 	gdi_RectToRgn(&inv, invalid);
-
 	return TRUE;
 }

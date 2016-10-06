@@ -20,23 +20,29 @@
 #ifndef FREERDP_CORE_RPC_CLIENT_H
 #define FREERDP_CORE_RPC_CLIENT_H
 
+#include <freerdp/api.h>
+
 #include "rpc.h"
 
-RpcClientCall* rpc_client_call_find_by_id(rdpRpc* rpc, UINT32 CallId);
+FREERDP_LOCAL RpcClientCall* rpc_client_call_find_by_id(rdpRpc* rpc,
+        UINT32 CallId);
 
-RpcClientCall* rpc_client_call_new(UINT32 CallId, UINT32 OpNum);
-void rpc_client_call_free(RpcClientCall* client_call);
+FREERDP_LOCAL RpcClientCall* rpc_client_call_new(UINT32 CallId, UINT32 OpNum);
+FREERDP_LOCAL void rpc_client_call_free(RpcClientCall* client_call);
 
-int rpc_in_channel_send_pdu(RpcInChannel* inChannel, BYTE* buffer, UINT32 length);
+FREERDP_LOCAL int rpc_in_channel_send_pdu(RpcInChannel* inChannel, BYTE* buffer,
+        UINT32 length);
 
-int rpc_client_in_channel_recv(rdpRpc* rpc);
-int rpc_client_out_channel_recv(rdpRpc* rpc);
+FREERDP_LOCAL int rpc_client_in_channel_recv(rdpRpc* rpc);
+FREERDP_LOCAL int rpc_client_out_channel_recv(rdpRpc* rpc);
 
-int rpc_client_receive_pipe_read(rdpRpc* rpc, BYTE* buffer, size_t length);
+FREERDP_LOCAL int rpc_client_receive_pipe_read(rdpRpc* rpc, BYTE* buffer,
+        size_t length);
 
-int rpc_client_write_call(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum);
+FREERDP_LOCAL int rpc_client_write_call(rdpRpc* rpc, BYTE* data, int length,
+                                        UINT16 opnum);
 
-int rpc_client_new(rdpRpc* rpc);
-void rpc_client_free(rdpRpc* rpc);
+FREERDP_LOCAL int rpc_client_new(rdpRpc* rpc);
+FREERDP_LOCAL void rpc_client_free(rdpRpc* rpc);
 
 #endif /* FREERDP_CORE_RPC_CLIENT_H */

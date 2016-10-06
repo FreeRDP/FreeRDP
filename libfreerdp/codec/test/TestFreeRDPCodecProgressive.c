@@ -844,7 +844,7 @@ static int test_memcmp_count(const BYTE* mem1, const BYTE* mem2, int size, int m
 	return count;
 }
 
-int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE_FILE files[4], EGFX_SAMPLE_FILE bitmaps[4], int quarter, int count)
+static int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE_FILE files[4], EGFX_SAMPLE_FILE bitmaps[4], int quarter, int count)
 {
 	int cnt;
 	int pass;
@@ -868,7 +868,7 @@ int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE_FILE f
 	for (pass = 0; pass < count; pass++)
 	{
 		status = progressive_decompress(progressive, files[pass].buffer, files[pass].size,
-				&g_DstData, PIXEL_FORMAT_XRGB32, g_DstStep, 0, 0, g_Width, g_Height, 0);
+				g_DstData, PIXEL_FORMAT_XRGB32, g_DstStep, 0, 0, g_Width, g_Height, 0);
 
 		printf("ProgressiveDecompress: status: %d pass: %d\n", status, pass + 1);
 
@@ -948,7 +948,7 @@ int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE_FILE f
 	return 1;
 }
 
-int test_progressive_ms_sample(char* ms_sample_path)
+static int test_progressive_ms_sample(char* ms_sample_path)
 {
 	int i, j, k;
 	int count;

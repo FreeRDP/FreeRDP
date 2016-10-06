@@ -499,7 +499,7 @@ static const char *errorStrings[] = {
 };
 
 const char *UwacErrorString(UwacReturnCode error) {
-	if (error < 0 || error >= UWAC_ERROR_LAST)
+	if (error < UWAC_SUCCESS || error >= UWAC_ERROR_LAST)
 		return "invalid error code";
 
 	return errorStrings[error];

@@ -76,10 +76,6 @@ struct wf_context
 	rdpContext context;
 	DEFINE_RDP_CLIENT_COMMON();
 
-	rdpSettings* settings;
-
-	int width;
-	int height;
 	int offset_x;
 	int offset_y;
 	int fs_toggle;
@@ -90,8 +86,6 @@ struct wf_context
 	int client_y;
 	int client_width;
 	int client_height;
-	UINT32 bitmap_size;
-	BYTE* bitmap_buffer;
 
 	HANDLE keyboardThread;
 
@@ -104,21 +98,15 @@ struct wf_context
 
 	HWND hwnd;
 	POINT diff;
-	HGDI_DC hdc;
-	UINT16 srcBpp;
-	UINT16 dstBpp;
-	rdpCodecs* codecs;
-	freerdp* instance;
+
 	wfBitmap* primary;
 	wfBitmap* drawing;
-	HCLRCONV clrconv;
 	HCURSOR cursor;
 	HBRUSH brush;
 	HBRUSH org_brush;
 	RECT update_rect;
 	RECT scale_update_rect;
 
-	wfBitmap* tile;
 	DWORD mainThreadId;
 	DWORD keyboardThreadId;
 
@@ -151,8 +139,10 @@ struct wf_context
  */
 
 FREERDP_API int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
-FREERDP_API int freerdp_client_set_window_size(wfContext* wfc, int width, int height);
-FREERDP_API void wf_size_scrollbars(wfContext* wfc, UINT32 client_width, UINT32 client_height);
+FREERDP_API int freerdp_client_set_window_size(wfContext* wfc, int width,
+        int height);
+FREERDP_API void wf_size_scrollbars(wfContext* wfc, UINT32 client_width,
+                                    UINT32 client_height);
 
 #ifdef __cplusplus
 }

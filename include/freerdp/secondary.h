@@ -163,13 +163,20 @@ struct _CACHE_BRUSH_ORDER
 };
 typedef struct _CACHE_BRUSH_ORDER CACHE_BRUSH_ORDER;
 
-typedef BOOL (*pCacheBitmap)(rdpContext* context, CACHE_BITMAP_ORDER* cache_bitmap_order);
-typedef BOOL (*pCacheBitmapV2)(rdpContext* context, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2_order);
-typedef BOOL (*pCacheBitmapV3)(rdpContext* context, CACHE_BITMAP_V3_ORDER* cache_bitmap_v3_order);
-typedef BOOL (*pCacheColorTable)(rdpContext* context, CACHE_COLOR_TABLE_ORDER* cache_color_table_order);
-typedef BOOL (*pCacheGlyph)(rdpContext* context, CACHE_GLYPH_ORDER* cache_glyph_order);
-typedef BOOL (*pCacheGlyphV2)(rdpContext* context, CACHE_GLYPH_V2_ORDER* cache_glyph_v2_order);
-typedef BOOL (*pCacheBrush)(rdpContext* context, CACHE_BRUSH_ORDER* cache_brush_order);
+typedef BOOL (*pCacheBitmap)(rdpContext* context,
+			     const CACHE_BITMAP_ORDER* cache_bitmap_order);
+typedef BOOL (*pCacheBitmapV2)(rdpContext* context,
+			       CACHE_BITMAP_V2_ORDER* cache_bitmap_v2_order);
+typedef BOOL (*pCacheBitmapV3)(rdpContext* context,
+			       CACHE_BITMAP_V3_ORDER* cache_bitmap_v3_order);
+typedef BOOL (*pCacheColorTable)(rdpContext* context,
+				 const CACHE_COLOR_TABLE_ORDER* cache_color_table_order);
+typedef BOOL (*pCacheGlyph)(rdpContext* context,
+			    const CACHE_GLYPH_ORDER* cache_glyph_order);
+typedef BOOL (*pCacheGlyphV2)(rdpContext* context,
+			      const CACHE_GLYPH_V2_ORDER* cache_glyph_v2_order);
+typedef BOOL (*pCacheBrush)(rdpContext* context,
+			    const CACHE_BRUSH_ORDER* cache_brush_order);
 
 struct rdp_secondary_update
 {

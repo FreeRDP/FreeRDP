@@ -57,9 +57,6 @@ struct rdp_nine_grid_cache
 extern "C" {
 #endif
 
-FREERDP_API void* nine_grid_cache_get(rdpNineGridCache* nine_grid, UINT32 index);
-FREERDP_API void nine_grid_cache_put(rdpNineGridCache* nine_grid, UINT32 index, void* entry);
-
 FREERDP_API void nine_grid_cache_register_callbacks(rdpUpdate* update);
 
 FREERDP_API rdpNineGridCache* nine_grid_cache_new(rdpSettings* settings);

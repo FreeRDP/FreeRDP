@@ -54,6 +54,8 @@
     <string name="settings_cat_screen">Screen Settings</string>
     <string name="settings_colors">Colors</string>
     <string-array name="colors_array">
+        <item>Palette (8 Bit)</item>
+        <item>High Color (15 Bit)</item>
         <item>High Color (16 Bit)</item>
         <item>True Color (24 Bit)</item>
         <item>Highest Quality (32 Bit)</item>
@@ -62,6 +64,8 @@
 	do not translate! -->
     <string-array name="colors_values_array"
                   translatable="false">
+        <item>8</item>
+        <item>15</item>
         <item>16</item>
         <item>24</item>
         <item>32</item>
@@ -211,4 +215,25 @@
     <string name="dlg_msg_clear_cert_cache">Are you sure you want to delete all your cached Certificates?</string>
     <string name="debug_level">Debug Level</string>
     <string name="settings_debug">Debug Settings</string>
+    <string-array name="debug_array">
+        <item>OFF</item>
+        <item>FATAL</item>
+        <item>ERROR</item>
+        <item>WARN</item>
+        <item>INFO</item>
+        <item>DEBUG</item>
+        <item>TRACE</item>
+    </string-array>
+    <!-- This array is used as is in code,
+	do not translate! -->
+    <string-array name="debug_values_array"
+                  translatable="false">
+        <item>OFF</item>
+        <item>FATAL</item>
+        <item>ERROR</item>
+        <item>WARN</item>
+        <item>INFO</item>
+        <item>DEBUG</item>
+        <item>TRACE</item>
+    </string-array>
 </resources>

@@ -70,6 +70,11 @@ function common_parse_arguments {
             shift
             ;;
 
+			--target)
+			NDK_TARGET="$2"
+			shift
+			;;
+
 			--ndk)
 			ANDROID_NDK="$2"
 			shift

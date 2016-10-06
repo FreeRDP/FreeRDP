@@ -3,6 +3,8 @@
  * X11 Graphics Pipeline
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 Thincast Technologies GmbH
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,21 +29,10 @@
 
 struct xf_gfx_surface
 {
-	UINT16 surfaceId;
-	rdpCodecs* codecs;
-	UINT32 width;
-	UINT32 height;
-	BOOL alpha;
-	BYTE* data;
+	gdiGfxSurface gdi;
 	BYTE* stage;
+	UINT32 stageScanline;
 	XImage* image;
-	int scanline;
-	int stageStep;
-	UINT32 format;
-	BOOL outputMapped;
-	UINT32 outputOriginX;
-	UINT32 outputOriginY;
-	REGION16 invalidRegion;
 };
 typedef struct xf_gfx_surface xfGfxSurface;
 
@@ -50,14 +41,14 @@ struct xf_gfx_cache_entry
 	UINT64 cacheKey;
 	UINT32 width;
 	UINT32 height;
-	BOOL alpha;
 	BYTE* data;
-	int scanline;
+	UINT32 scanline;
 	UINT32 format;
 };
 typedef struct xf_gfx_cache_entry xfGfxCacheEntry;
 
-int xf_OutputExpose(xfContext* xfc, int x, int y, int width, int height);
+UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y,
+                     UINT32 width, UINT32 height);
 
 void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx);
 void xf_graphics_pipeline_uninit(xfContext* xfc, RdpgfxClientContext* gfx);

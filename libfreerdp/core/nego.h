@@ -25,6 +25,7 @@
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
 #include <freerdp/log.h>
+#include <freerdp/api.h>
 
 #include <winpr/stream.h>
 
@@ -119,45 +120,53 @@ struct rdp_nego
 };
 typedef struct rdp_nego rdpNego;
 
-BOOL nego_connect(rdpNego* nego);
-BOOL nego_disconnect(rdpNego* nego);
+FREERDP_LOCAL BOOL nego_connect(rdpNego* nego);
+FREERDP_LOCAL BOOL nego_disconnect(rdpNego* nego);
 
-BOOL nego_send_preconnection_pdu(rdpNego* nego);
+FREERDP_LOCAL BOOL nego_send_preconnection_pdu(rdpNego* nego);
 
-void nego_attempt_ext(rdpNego* nego);
-void nego_attempt_nla(rdpNego* nego);
-void nego_attempt_tls(rdpNego* nego);
-void nego_attempt_rdp(rdpNego* nego);
+FREERDP_LOCAL void nego_attempt_ext(rdpNego* nego);
+FREERDP_LOCAL void nego_attempt_nla(rdpNego* nego);
+FREERDP_LOCAL void nego_attempt_tls(rdpNego* nego);
+FREERDP_LOCAL void nego_attempt_rdp(rdpNego* nego);
 
-void nego_send(rdpNego* nego);
-int nego_recv(rdpTransport* transport, wStream* s, void* extra);
-BOOL nego_recv_response(rdpNego* nego);
-BOOL nego_read_request(rdpNego* nego, wStream* s);
+FREERDP_LOCAL void nego_send(rdpNego* nego);
+FREERDP_LOCAL int nego_recv(rdpTransport* transport, wStream* s, void* extra);
+FREERDP_LOCAL BOOL nego_recv_response(rdpNego* nego);
+FREERDP_LOCAL BOOL nego_read_request(rdpNego* nego, wStream* s);
 
-BOOL nego_send_negotiation_request(rdpNego* nego);
-void nego_process_negotiation_request(rdpNego* nego, wStream* s);
-void nego_process_negotiation_response(rdpNego* nego, wStream* s);
-void nego_process_negotiation_failure(rdpNego* nego, wStream* s);
-BOOL nego_send_negotiation_response(rdpNego* nego);
+FREERDP_LOCAL BOOL nego_send_negotiation_request(rdpNego* nego);
+FREERDP_LOCAL void nego_process_negotiation_request(rdpNego* nego, wStream* s);
+FREERDP_LOCAL void nego_process_negotiation_response(rdpNego* nego, wStream* s);
+FREERDP_LOCAL void nego_process_negotiation_failure(rdpNego* nego, wStream* s);
+FREERDP_LOCAL BOOL nego_send_negotiation_response(rdpNego* nego);
 
-rdpNego* nego_new(rdpTransport* transport);
-void nego_free(rdpNego* nego);
+FREERDP_LOCAL rdpNego* nego_new(rdpTransport* transport);
+FREERDP_LOCAL void nego_free(rdpNego* nego);
 
-void nego_init(rdpNego* nego);
-void nego_set_target(rdpNego* nego, char* hostname, int port);
-void nego_set_negotiation_enabled(rdpNego* nego, BOOL NegotiateSecurityLayer);
-void nego_set_restricted_admin_mode_required(rdpNego* nego, BOOL RestrictedAdminModeRequired);
-void nego_set_gateway_enabled(rdpNego* nego, BOOL GatewayEnabled);
-void nego_set_gateway_bypass_local(rdpNego* nego, BOOL GatewayBypassLocal);
-void nego_enable_rdp(rdpNego* nego, BOOL enable_rdp);
-void nego_enable_tls(rdpNego* nego, BOOL enable_tls);
-void nego_enable_nla(rdpNego* nego, BOOL enable_nla);
-void nego_enable_ext(rdpNego* nego, BOOL enable_ext);
-BOOL nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken, DWORD RoutingTokenLength);
-BOOL nego_set_cookie(rdpNego* nego, char* cookie);
-void nego_set_cookie_max_length(rdpNego* nego, UINT32 CookieMaxLength);
-void nego_set_send_preconnection_pdu(rdpNego* nego, BOOL SendPreconnectionPdu);
-void nego_set_preconnection_id(rdpNego* nego, UINT32 PreconnectionId);
-void nego_set_preconnection_blob(rdpNego* nego, char* PreconnectionBlob);
+FREERDP_LOCAL void nego_init(rdpNego* nego);
+FREERDP_LOCAL void nego_set_target(rdpNego* nego, char* hostname, int port);
+FREERDP_LOCAL void nego_set_negotiation_enabled(rdpNego* nego,
+        BOOL NegotiateSecurityLayer);
+FREERDP_LOCAL void nego_set_restricted_admin_mode_required(rdpNego* nego,
+        BOOL RestrictedAdminModeRequired);
+FREERDP_LOCAL void nego_set_gateway_enabled(rdpNego* nego, BOOL GatewayEnabled);
+FREERDP_LOCAL void nego_set_gateway_bypass_local(rdpNego* nego,
+        BOOL GatewayBypassLocal);
+FREERDP_LOCAL void nego_enable_rdp(rdpNego* nego, BOOL enable_rdp);
+FREERDP_LOCAL void nego_enable_tls(rdpNego* nego, BOOL enable_tls);
+FREERDP_LOCAL void nego_enable_nla(rdpNego* nego, BOOL enable_nla);
+FREERDP_LOCAL void nego_enable_ext(rdpNego* nego, BOOL enable_ext);
+FREERDP_LOCAL BOOL nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken,
+        DWORD RoutingTokenLength);
+FREERDP_LOCAL BOOL nego_set_cookie(rdpNego* nego, char* cookie);
+FREERDP_LOCAL void nego_set_cookie_max_length(rdpNego* nego,
+        UINT32 CookieMaxLength);
+FREERDP_LOCAL void nego_set_send_preconnection_pdu(rdpNego* nego,
+        BOOL SendPreconnectionPdu);
+FREERDP_LOCAL void nego_set_preconnection_id(rdpNego* nego,
+        UINT32 PreconnectionId);
+FREERDP_LOCAL void nego_set_preconnection_blob(rdpNego* nego,
+        char* PreconnectionBlob);
 
 #endif /* __NEGO_H */

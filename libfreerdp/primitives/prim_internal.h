@@ -26,46 +26,35 @@
 #endif
 
 #include <freerdp/primitives.h>
-
+#include <freerdp/api.h>
 
 /* Use lddqu for unaligned; load for 16-byte aligned. */
 #define LOAD_SI128(_ptr_) \
 	(((ULONG_PTR) (_ptr_) & 0x0f) \
-		? _mm_lddqu_si128((__m128i *) (_ptr_)) \
-		: _mm_load_si128((__m128i *) (_ptr_)))
+	 ? _mm_lddqu_si128((__m128i *) (_ptr_)) \
+	 : _mm_load_si128((__m128i *) (_ptr_)))
 
 /* Function prototypes for all the init/deinit routines. */
-extern void primitives_init_copy(primitives_t *prims);
-extern void primitives_deinit_copy(primitives_t *prims);
+FREERDP_LOCAL void primitives_init_copy(primitives_t* prims);
+FREERDP_LOCAL void primitives_init_set(primitives_t* prims);
+FREERDP_LOCAL void primitives_init_add(primitives_t* prims);
+FREERDP_LOCAL void primitives_init_andor(primitives_t* prims);
+FREERDP_LOCAL void primitives_init_shift(primitives_t* prims);
+FREERDP_LOCAL void primitives_init_sign(primitives_t* prims);
+FREERDP_LOCAL void primitives_init_alphaComp(primitives_t* prims);
+FREERDP_LOCAL void primitives_init_colors(primitives_t* prims);
+FREERDP_LOCAL void primitives_init_YCoCg(primitives_t* prims);
+FREERDP_LOCAL void primitives_init_YUV(primitives_t* prims);
 
-extern void primitives_init_set(primitives_t *prims);
-extern void primitives_deinit_set(primitives_t *prims);
-
-extern void primitives_init_add(primitives_t *prims);
-extern void primitives_deinit_add(primitives_t *prims);
-
-extern void primitives_init_andor(primitives_t *prims);
-extern void primitives_deinit_andor(primitives_t *prims);
-
-extern void primitives_init_shift(primitives_t *prims);
-extern void primitives_deinit_shift(primitives_t *prims);
-
-extern void primitives_init_sign(primitives_t *prims);
-extern void primitives_deinit_sign(primitives_t *prims);
-
-extern void primitives_init_alphaComp(primitives_t *prims);
-extern void primitives_deinit_alphaComp(primitives_t *prims);
-
-extern void primitives_init_colors(primitives_t *prims);
-extern void primitives_deinit_colors(primitives_t *prims);
-
-extern void primitives_init_YCoCg(primitives_t *prims);
-extern void primitives_deinit_YCoCg(primitives_t *prims);
-
-extern void primitives_init_YUV(primitives_t *prims);
-extern void primitives_deinit_YUV(primitives_t *prims);
-
-extern void primitives_init_16to32bpp(primitives_t *prims);
-extern void primitives_deinit_16to32bpp(primitives_t *prims);
+FREERDP_LOCAL void primitives_init_copy_opt(primitives_t* prims);
+FREERDP_LOCAL void primitives_init_set_opt(primitives_t* prims);
+FREERDP_LOCAL void primitives_init_add_opt(primitives_t* prims);
+FREERDP_LOCAL void primitives_init_andor_opt(primitives_t* prims);
+FREERDP_LOCAL void primitives_init_shift_opt(primitives_t* prims);
+FREERDP_LOCAL void primitives_init_sign_opt(primitives_t* prims);
+FREERDP_LOCAL void primitives_init_alphaComp_opt(primitives_t* prims);
+FREERDP_LOCAL void primitives_init_colors_opt(primitives_t* prims);
+FREERDP_LOCAL void primitives_init_YCoCg_opt(primitives_t* prims);
+FREERDP_LOCAL void primitives_init_YUV_opt(primitives_t* prims);
 
 #endif /* !__PRIM_INTERNAL_H_INCLUDED__ */

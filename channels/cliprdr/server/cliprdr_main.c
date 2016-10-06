@@ -65,13 +65,13 @@
  *
  */
 
-wStream* cliprdr_server_packet_new(UINT16 msgType, UINT16 msgFlags, UINT32 dataLen)
+wStream* cliprdr_server_packet_new(UINT16 msgType, UINT16 msgFlags,
+                                   UINT32 dataLen)
 {
 	wStream* s;
-
 	s = Stream_New(NULL, dataLen + 8);
 
-	if(!s)
+	if (!s)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
 		return NULL;
@@ -79,10 +79,8 @@ wStream* cliprdr_server_packet_new(UINT16 msgType, UINT16 msgFlags, UINT32 dataL
 
 	Stream_Write_UINT16(s, msgType);
 	Stream_Write_UINT16(s, msgFlags);
-
 	/* Write actual length after the entire packet has been constructed. */
 	Stream_Seek(s, 4);
-
 	return s;
 }
 
@@ -97,19 +95,14 @@ UINT cliprdr_server_packet_send(CliprdrServerPrivate* cliprdr, wStream* s)
 	BOOL status;
 	UINT32 dataLen;
 	UINT32 written;
-
 	pos = Stream_GetPosition(s);
-
 	dataLen = pos - 8;
-
 	Stream_SetPosition(s, 4);
 	Stream_Write_UINT32(s, dataLen);
 	Stream_SetPosition(s, pos);
-
-	status = WTSVirtualChannelWrite(cliprdr->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
-
+	status = WTSVirtualChannelWrite(cliprdr->ChannelHandle,
+	                                (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
 	Stream_Free(s, TRUE);
-
 	return status ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }
 
@@ -118,16 +111,16 @@ UINT cliprdr_server_packet_send(CliprdrServerPrivate* cliprdr, wStream* s)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cliprdr_server_capabilities(CliprdrServerContext* context, CLIPRDR_CAPABILITIES* capabilities)
+static UINT cliprdr_server_capabilities(CliprdrServerContext* context,
+                                        CLIPRDR_CAPABILITIES* capabilities)
 {
 	wStream* s;
 	CLIPRDR_GENERAL_CAPABILITY_SET* generalCapabilitySet;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
-
 	capabilities->msgType = CB_CLIP_CAPS;
 	capabilities->msgFlags = 0;
-
 	s = cliprdr_server_packet_new(CB_CLIP_CAPS, 0, 4 + CB_CAPSTYPE_GENERAL_LEN);
+
 	if (!s)
 	{
 		WLog_ERR(TAG, "cliprdr_server_packet_new failed!");
@@ -136,13 +129,15 @@ static UINT cliprdr_server_capabilities(CliprdrServerContext* context, CLIPRDR_C
 
 	Stream_Write_UINT16(s, 1); /* cCapabilitiesSets (2 bytes) */
 	Stream_Write_UINT16(s, 0); /* pad1 (2 bytes) */
-
-	generalCapabilitySet = (CLIPRDR_GENERAL_CAPABILITY_SET*) capabilities->capabilitySets;
-	Stream_Write_UINT16(s, generalCapabilitySet->capabilitySetType); /* capabilitySetType (2 bytes) */
-	Stream_Write_UINT16(s, generalCapabilitySet->capabilitySetLength); /* lengthCapability (2 bytes) */
+	generalCapabilitySet = (CLIPRDR_GENERAL_CAPABILITY_SET*)
+	                       capabilities->capabilitySets;
+	Stream_Write_UINT16(s,
+	                    generalCapabilitySet->capabilitySetType); /* capabilitySetType (2 bytes) */
+	Stream_Write_UINT16(s,
+	                    generalCapabilitySet->capabilitySetLength); /* lengthCapability (2 bytes) */
 	Stream_Write_UINT32(s, generalCapabilitySet->version); /* version (4 bytes) */
-	Stream_Write_UINT32(s, generalCapabilitySet->generalFlags); /* generalFlags (4 bytes) */
-
+	Stream_Write_UINT32(s,
+	                    generalCapabilitySet->generalFlags); /* generalFlags (4 bytes) */
 	WLog_DBG(TAG, "ServerCapabilities");
 	return cliprdr_server_packet_send(cliprdr, s);
 }
@@ -152,17 +147,17 @@ static UINT cliprdr_server_capabilities(CliprdrServerContext* context, CLIPRDR_C
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cliprdr_server_monitor_ready(CliprdrServerContext* context, CLIPRDR_MONITOR_READY* monitorReady)
+static UINT cliprdr_server_monitor_ready(CliprdrServerContext* context,
+        CLIPRDR_MONITOR_READY* monitorReady)
 {
 	wStream* s;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
-
 	monitorReady->msgType = CB_MONITOR_READY;
 	monitorReady->msgFlags = 0;
 	monitorReady->dataLen = 0;
-
 	s = cliprdr_server_packet_new(monitorReady->msgType,
-			monitorReady->msgFlags, monitorReady->dataLen);
+	                              monitorReady->msgFlags, monitorReady->dataLen);
+
 	if (!s)
 	{
 		WLog_ERR(TAG, "cliprdr_server_packet_new failed!");
@@ -178,7 +173,8 @@ static UINT cliprdr_server_monitor_ready(CliprdrServerContext* context, CLIPRDR_
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cliprdr_server_format_list(CliprdrServerContext* context, CLIPRDR_FORMAT_LIST* formatList)
+static UINT cliprdr_server_format_list(CliprdrServerContext* context,
+                                       CLIPRDR_FORMAT_LIST* formatList)
 {
 	wStream* s;
 	UINT32 index;
@@ -196,8 +192,8 @@ static UINT cliprdr_server_format_list(CliprdrServerContext* context, CLIPRDR_FO
 	if (!context->useLongFormatNames)
 	{
 		length = formatList->numFormats * 36;
-
 		s = cliprdr_server_packet_new(CB_FORMAT_LIST, 0, length);
+
 		if (!s)
 		{
 			WLog_ERR(TAG, "cliprdr_server_packet_new failed!");
@@ -206,13 +202,10 @@ static UINT cliprdr_server_format_list(CliprdrServerContext* context, CLIPRDR_FO
 
 		for (index = 0; index < formatList->numFormats; index++)
 		{
-			format = (CLIPRDR_FORMAT*) &(formatList->formats[index]);
-
+			format = (CLIPRDR_FORMAT*) & (formatList->formats[index]);
 			Stream_Write_UINT32(s, format->formatId); /* formatId (4 bytes) */
-
 			formatNameSize = 0;
 			formatNameLength = 0;
-
 			szFormatName = format->formatName;
 
 			if (asciiNames)
@@ -231,7 +224,8 @@ static UINT cliprdr_server_format_list(CliprdrServerContext* context, CLIPRDR_FO
 				wszFormatName = NULL;
 
 				if (szFormatName)
-					formatNameSize = ConvertToUnicode(CP_UTF8, 0, szFormatName, -1, &wszFormatName, 0);
+					formatNameSize = ConvertToUnicode(CP_UTF8, 0, szFormatName, -1, &wszFormatName,
+					                                  0);
 
 				if (formatNameSize > 15)
 					formatNameSize = 15;
@@ -240,7 +234,6 @@ static UINT cliprdr_server_format_list(CliprdrServerContext* context, CLIPRDR_FO
 					Stream_Write(s, wszFormatName, formatNameSize * 2);
 
 				Stream_Zero(s, 32 - (formatNameSize * 2));
-
 				free(wszFormatName);
 			}
 		}
@@ -249,12 +242,13 @@ static UINT cliprdr_server_format_list(CliprdrServerContext* context, CLIPRDR_FO
 	{
 		for (index = 0; index < formatList->numFormats; index++)
 		{
-			format = (CLIPRDR_FORMAT*) &(formatList->formats[index]);
+			format = (CLIPRDR_FORMAT*) & (formatList->formats[index]);
 			length += 4;
 			formatNameSize = 2;
 
 			if (format->formatName)
-				formatNameSize = MultiByteToWideChar(CP_UTF8, 0, format->formatName, -1, NULL, 0) * 2;
+				formatNameSize = MultiByteToWideChar(CP_UTF8, 0, format->formatName, -1, NULL,
+				                                     0) * 2;
 
 			length += formatNameSize;
 		}
@@ -269,7 +263,7 @@ static UINT cliprdr_server_format_list(CliprdrServerContext* context, CLIPRDR_FO
 
 		for (index = 0; index < formatList->numFormats; index++)
 		{
-			format = (CLIPRDR_FORMAT*) &(formatList->formats[index]);
+			format = (CLIPRDR_FORMAT*) & (formatList->formats[index]);
 			Stream_Write_UINT32(s, format->formatId); /* formatId (4 bytes) */
 
 			if (format->formatName)
@@ -277,7 +271,7 @@ static UINT cliprdr_server_format_list(CliprdrServerContext* context, CLIPRDR_FO
 				lpWideCharStr = (LPWSTR) Stream_Pointer(s);
 				cchWideChar = (Stream_Capacity(s) - Stream_GetPosition(s)) / 2;
 				formatNameSize = MultiByteToWideChar(CP_UTF8, 0,
-					format->formatName, -1, lpWideCharStr, cchWideChar) * 2;
+				                                     format->formatName, -1, lpWideCharStr, cchWideChar) * 2;
 				Stream_Seek(s, formatNameSize);
 			}
 			else
@@ -288,8 +282,7 @@ static UINT cliprdr_server_format_list(CliprdrServerContext* context, CLIPRDR_FO
 	}
 
 	WLog_DBG(TAG, "ServerFormatList: numFormats: %d",
-			formatList->numFormats);
-
+	         formatList->numFormats);
 	return cliprdr_server_packet_send(cliprdr, s);
 }
 
@@ -298,16 +291,15 @@ static UINT cliprdr_server_format_list(CliprdrServerContext* context, CLIPRDR_FO
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cliprdr_server_format_list_response(CliprdrServerContext* context, CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
+static UINT cliprdr_server_format_list_response(CliprdrServerContext* context,
+        CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
 {
 	wStream* s;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
-
 	formatListResponse->msgType = CB_FORMAT_LIST_RESPONSE;
 	formatListResponse->dataLen = 0;
-
 	s = cliprdr_server_packet_new(formatListResponse->msgType,
-			formatListResponse->msgFlags, formatListResponse->dataLen);
+	                              formatListResponse->msgFlags, formatListResponse->dataLen);
 
 	if (!s)
 	{
@@ -324,11 +316,11 @@ static UINT cliprdr_server_format_list_response(CliprdrServerContext* context, C
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cliprdr_server_lock_clipboard_data(CliprdrServerContext* context, CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
+static UINT cliprdr_server_lock_clipboard_data(CliprdrServerContext* context,
+        CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
 {
 	wStream* s;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
-
 	s = cliprdr_server_packet_new(CB_LOCK_CLIPDATA, 0, 4);
 
 	if (!s)
@@ -337,11 +329,10 @@ static UINT cliprdr_server_lock_clipboard_data(CliprdrServerContext* context, CL
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	Stream_Write_UINT32(s, lockClipboardData->clipDataId); /* clipDataId (4 bytes) */
-
+	Stream_Write_UINT32(s,
+	                    lockClipboardData->clipDataId); /* clipDataId (4 bytes) */
 	WLog_DBG(TAG, "ServerLockClipboardData: clipDataId: 0x%04X",
-			lockClipboardData->clipDataId);
-
+	         lockClipboardData->clipDataId);
 	return cliprdr_server_packet_send(cliprdr, s);
 }
 
@@ -350,11 +341,11 @@ static UINT cliprdr_server_lock_clipboard_data(CliprdrServerContext* context, CL
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cliprdr_server_unlock_clipboard_data(CliprdrServerContext* context, CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
+static UINT cliprdr_server_unlock_clipboard_data(CliprdrServerContext* context,
+        CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
 {
 	wStream* s;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
-
 	s = cliprdr_server_packet_new(CB_UNLOCK_CLIPDATA, 0, 4);
 
 	if (!s)
@@ -363,11 +354,10 @@ static UINT cliprdr_server_unlock_clipboard_data(CliprdrServerContext* context, 
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	Stream_Write_UINT32(s, unlockClipboardData->clipDataId); /* clipDataId (4 bytes) */
-
+	Stream_Write_UINT32(s,
+	                    unlockClipboardData->clipDataId); /* clipDataId (4 bytes) */
 	WLog_DBG(TAG, "ServerUnlockClipboardData: clipDataId: 0x%04X",
-			unlockClipboardData->clipDataId);
-
+	         unlockClipboardData->clipDataId);
 	return cliprdr_server_packet_send(cliprdr, s);
 }
 
@@ -376,16 +366,16 @@ static UINT cliprdr_server_unlock_clipboard_data(CliprdrServerContext* context, 
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cliprdr_server_format_data_request(CliprdrServerContext* context, CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
+static UINT cliprdr_server_format_data_request(CliprdrServerContext* context,
+        CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
 {
 	wStream* s;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
-
 	formatDataRequest->msgType = CB_FORMAT_DATA_REQUEST;
 	formatDataRequest->msgFlags = 0;
 	formatDataRequest->dataLen = 4;
-
-	s = cliprdr_server_packet_new(formatDataRequest->msgType, formatDataRequest->msgFlags, formatDataRequest->dataLen);
+	s = cliprdr_server_packet_new(formatDataRequest->msgType,
+	                              formatDataRequest->msgFlags, formatDataRequest->dataLen);
 
 	if (!s)
 	{
@@ -393,8 +383,8 @@ static UINT cliprdr_server_format_data_request(CliprdrServerContext* context, CL
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	Stream_Write_UINT32(s, formatDataRequest->requestedFormatId); /* requestedFormatId (4 bytes) */
-
+	Stream_Write_UINT32(s,
+	                    formatDataRequest->requestedFormatId); /* requestedFormatId (4 bytes) */
 	WLog_DBG(TAG, "ClientFormatDataRequest");
 	return cliprdr_server_packet_send(cliprdr, s);
 }
@@ -404,14 +394,14 @@ static UINT cliprdr_server_format_data_request(CliprdrServerContext* context, CL
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cliprdr_server_format_data_response(CliprdrServerContext* context, CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
+static UINT cliprdr_server_format_data_response(CliprdrServerContext* context,
+        CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
 {
 	wStream* s;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
-
 	formatDataResponse->msgType = CB_FORMAT_DATA_RESPONSE;
-
-	s = cliprdr_server_packet_new(formatDataResponse->msgType, formatDataResponse->msgFlags, formatDataResponse->dataLen);
+	s = cliprdr_server_packet_new(formatDataResponse->msgType,
+	                              formatDataResponse->msgFlags, formatDataResponse->dataLen);
 
 	if (!s)
 	{
@@ -419,8 +409,8 @@ static UINT cliprdr_server_format_data_response(CliprdrServerContext* context, C
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	Stream_Write(s, formatDataResponse->requestedFormatData, formatDataResponse->dataLen);
-
+	Stream_Write(s, formatDataResponse->requestedFormatData,
+	             formatDataResponse->dataLen);
 	WLog_DBG(TAG, "ServerFormatDataResponse");
 	return cliprdr_server_packet_send(cliprdr, s);
 }
@@ -430,11 +420,11 @@ static UINT cliprdr_server_format_data_response(CliprdrServerContext* context, C
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cliprdr_server_file_contents_request(CliprdrServerContext* context, CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
+static UINT cliprdr_server_file_contents_request(CliprdrServerContext* context,
+        CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
 	wStream* s;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
-
 	s = cliprdr_server_packet_new(CB_FILECONTENTS_REQUEST, 0, 28);
 
 	if (!s)
@@ -444,16 +434,19 @@ static UINT cliprdr_server_file_contents_request(CliprdrServerContext* context, 
 	}
 
 	Stream_Write_UINT32(s, fileContentsRequest->streamId); /* streamId (4 bytes) */
-	Stream_Write_UINT32(s, fileContentsRequest->listIndex); /* listIndex (4 bytes) */
+	Stream_Write_UINT32(s,
+	                    fileContentsRequest->listIndex); /* listIndex (4 bytes) */
 	Stream_Write_UINT32(s, fileContentsRequest->dwFlags); /* dwFlags (4 bytes) */
-	Stream_Write_UINT32(s, fileContentsRequest->nPositionLow); /* nPositionLow (4 bytes) */
-	Stream_Write_UINT32(s, fileContentsRequest->nPositionHigh); /* nPositionHigh (4 bytes) */
-	Stream_Write_UINT32(s, fileContentsRequest->cbRequested); /* cbRequested (4 bytes) */
-	Stream_Write_UINT32(s, fileContentsRequest->clipDataId); /* clipDataId (4 bytes) */
-
+	Stream_Write_UINT32(s,
+	                    fileContentsRequest->nPositionLow); /* nPositionLow (4 bytes) */
+	Stream_Write_UINT32(s,
+	                    fileContentsRequest->nPositionHigh); /* nPositionHigh (4 bytes) */
+	Stream_Write_UINT32(s,
+	                    fileContentsRequest->cbRequested); /* cbRequested (4 bytes) */
+	Stream_Write_UINT32(s,
+	                    fileContentsRequest->clipDataId); /* clipDataId (4 bytes) */
 	WLog_DBG(TAG, "ServerFileContentsRequest: streamId: 0x%04X",
-		fileContentsRequest->streamId);
-
+	         fileContentsRequest->streamId);
 	return cliprdr_server_packet_send(cliprdr, s);
 }
 
@@ -462,7 +455,8 @@ static UINT cliprdr_server_file_contents_request(CliprdrServerContext* context, 
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cliprdr_server_file_contents_response(CliprdrServerContext* context, CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
+static UINT cliprdr_server_file_contents_response(CliprdrServerContext* context,
+        CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
 {
 	wStream* s;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
@@ -470,8 +464,9 @@ static UINT cliprdr_server_file_contents_response(CliprdrServerContext* context,
 	if (fileContentsResponse->dwFlags & FILECONTENTS_SIZE)
 		fileContentsResponse->cbRequested = sizeof(UINT64);
 
-	s = cliprdr_server_packet_new(CB_FILECONTENTS_RESPONSE, fileContentsResponse->msgFlags,
-			4 + fileContentsResponse->cbRequested);
+	s = cliprdr_server_packet_new(CB_FILECONTENTS_RESPONSE,
+	                              fileContentsResponse->msgFlags,
+	                              4 + fileContentsResponse->cbRequested);
 
 	if (!s)
 	{
@@ -480,18 +475,15 @@ static UINT cliprdr_server_file_contents_response(CliprdrServerContext* context,
 	}
 
 	Stream_Write_UINT32(s, fileContentsResponse->streamId); /* streamId (4 bytes) */
-
 	/**
 	 * requestedFileContentsData:
 	 * FILECONTENTS_SIZE: file size as UINT64
 	 * FILECONTENTS_RANGE: file data from requested range
 	 */
-
-	Stream_Write(s, fileContentsResponse->requestedData, fileContentsResponse->cbRequested);
-
+	Stream_Write(s, fileContentsResponse->requestedData,
+	             fileContentsResponse->cbRequested);
 	WLog_DBG(TAG, "ServerFileContentsResponse: streamId: 0x%04X",
-		fileContentsResponse->streamId);
-
+	         fileContentsResponse->streamId);
 	return cliprdr_server_packet_send(cliprdr, s);
 }
 
@@ -500,22 +492,25 @@ static UINT cliprdr_server_file_contents_response(CliprdrServerContext* context,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cliprdr_server_receive_general_capability(CliprdrServerContext* context, wStream* s)
+static UINT cliprdr_server_receive_general_capability(CliprdrServerContext*
+        context, wStream* s)
 {
 	UINT32 version;
 	UINT32 generalFlags;
-
 	Stream_Read_UINT32(s, version); /* version (4 bytes) */
 	Stream_Read_UINT32(s, generalFlags); /* generalFlags (4 bytes) */
 
 	if (context->useLongFormatNames)
-		context->useLongFormatNames = (generalFlags & CB_USE_LONG_FORMAT_NAMES) ? TRUE : FALSE;
+		context->useLongFormatNames = (generalFlags & CB_USE_LONG_FORMAT_NAMES) ? TRUE :
+		                              FALSE;
 
 	if (context->streamFileClipEnabled)
-		context->streamFileClipEnabled = (generalFlags & CB_STREAM_FILECLIP_ENABLED) ? TRUE : FALSE;
+		context->streamFileClipEnabled = (generalFlags & CB_STREAM_FILECLIP_ENABLED) ?
+		                                 TRUE : FALSE;
 
 	if (context->fileClipNoFilePaths)
-		context->fileClipNoFilePaths = (generalFlags & CB_FILECLIP_NO_FILE_PATHS) ? TRUE : FALSE;
+		context->fileClipNoFilePaths = (generalFlags & CB_FILECLIP_NO_FILE_PATHS) ?
+		                               TRUE : FALSE;
 
 	if (context->canLockClipData)
 		context->canLockClipData = (generalFlags & CB_CAN_LOCK_CLIPDATA) ? TRUE : FALSE;
@@ -528,16 +523,15 @@ static UINT cliprdr_server_receive_general_capability(CliprdrServerContext* cont
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cliprdr_server_receive_capabilities(CliprdrServerContext* context, wStream* s, CLIPRDR_HEADER* header)
+static UINT cliprdr_server_receive_capabilities(CliprdrServerContext* context,
+        wStream* s, CLIPRDR_HEADER* header)
 {
 	UINT16 index;
 	UINT16 cCapabilitiesSets;
 	UINT16 capabilitySetType;
 	UINT16 lengthCapability;
 	UINT error;
-
 	WLog_DBG(TAG, "CliprdrClientCapabilities");
-
 	Stream_Read_UINT16(s, cCapabilitiesSets); /* cCapabilitiesSets (2 bytes) */
 	Stream_Seek_UINT16(s); /* pad1 (2 bytes) */
 
@@ -551,9 +545,11 @@ static UINT cliprdr_server_receive_capabilities(CliprdrServerContext* context, w
 			case CB_CAPSTYPE_GENERAL:
 				if ((error = cliprdr_server_receive_general_capability(context, s)))
 				{
-					WLog_ERR(TAG, "cliprdr_server_receive_general_capability failed with error %lu", error);
+					WLog_ERR(TAG, "cliprdr_server_receive_general_capability failed with error %lu",
+					         error);
 					return error;
 				}
+
 				break;
 
 			default:
@@ -571,7 +567,8 @@ static UINT cliprdr_server_receive_capabilities(CliprdrServerContext* context, w
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cliprdr_server_receive_temporary_directory(CliprdrServerContext* context, wStream* s, CLIPRDR_HEADER* header)
+static UINT cliprdr_server_receive_temporary_directory(CliprdrServerContext*
+        context, wStream* s, CLIPRDR_HEADER* header)
 {
 	int length;
 	WCHAR* wszTempDir;
@@ -582,7 +579,8 @@ static UINT cliprdr_server_receive_temporary_directory(CliprdrServerContext* con
 
 	if ((slength = Stream_GetRemainingLength(s)) < 520)
 	{
-		WLog_ERR(TAG, "Stream_GetRemainingLength returned %d but should at least be 520", slength);
+		WLog_ERR(TAG,
+		         "Stream_GetRemainingLength returned %d but should at least be 520", slength);
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
@@ -598,7 +596,7 @@ static UINT cliprdr_server_receive_temporary_directory(CliprdrServerContext* con
 	cliprdr->temporaryDirectory = NULL;
 
 	if (ConvertFromUnicode(CP_UTF8, 0, wszTempDir, -1,
-		&(cliprdr->temporaryDirectory), 0, NULL, NULL) < 1)
+	                       &(cliprdr->temporaryDirectory), 0, NULL, NULL) < 1)
 	{
 		WLog_ERR(TAG, "failed to convert temporary directory name");
 		return ERROR_INVALID_DATA;
@@ -611,10 +609,9 @@ static UINT cliprdr_server_receive_temporary_directory(CliprdrServerContext* con
 
 	CopyMemory(tempDirectory.szTempDir, cliprdr->temporaryDirectory, length);
 	tempDirectory.szTempDir[length] = '\0';
-
 	WLog_DBG(TAG, "CliprdrTemporaryDirectory: %s", cliprdr->temporaryDirectory);
-
 	IFCALLRET(context->TempDirectory, error, context, &tempDirectory);
+
 	if (error)
 		WLog_ERR(TAG, "TempDirectory failed with error %lu!", error);
 
@@ -626,7 +623,8 @@ static UINT cliprdr_server_receive_temporary_directory(CliprdrServerContext* con
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cliprdr_server_receive_format_list(CliprdrServerContext* context, wStream* s, CLIPRDR_HEADER* header)
+static UINT cliprdr_server_receive_format_list(CliprdrServerContext* context,
+        wStream* s, CLIPRDR_HEADER* header)
 {
 	UINT32 index;
 	UINT32 dataLen;
@@ -638,14 +636,11 @@ static UINT cliprdr_server_receive_format_list(CliprdrServerContext* context, wS
 	CLIPRDR_FORMAT* formats = NULL;
 	CLIPRDR_FORMAT_LIST formatList;
 	UINT error = CHANNEL_RC_OK;
-
 	dataLen = header->dataLen;
 	asciiNames = (header->msgFlags & CB_ASCII_NAMES) ? TRUE : FALSE;
-
 	formatList.msgType = CB_FORMAT_LIST;
 	formatList.msgFlags = header->msgFlags;
 	formatList.dataLen = header->dataLen;
-
 	index = 0;
 	formatList.numFormats = 0;
 	position = Stream_GetPosition(s);
@@ -667,7 +662,8 @@ static UINT cliprdr_server_receive_format_list(CliprdrServerContext* context, wS
 		}
 
 		if (formatList.numFormats)
-			formats = (CLIPRDR_FORMAT*) calloc(formatList.numFormats, sizeof(CLIPRDR_FORMAT));
+			formats = (CLIPRDR_FORMAT*) calloc(formatList.numFormats,
+			                                   sizeof(CLIPRDR_FORMAT));
 
 		if (!formats)
 		{
@@ -681,7 +677,6 @@ static UINT cliprdr_server_receive_format_list(CliprdrServerContext* context, wS
 		{
 			Stream_Read_UINT32(s, formats[index].formatId); /* formatId (4 bytes) */
 			dataLen -= 4;
-
 			formats[index].formatName = NULL;
 
 			/* According to MS-RDPECLIP 2.2.3.1.1.1 formatName is "a 32-byte block containing
@@ -714,7 +709,7 @@ static UINT cliprdr_server_receive_format_list(CliprdrServerContext* context, wS
 					 * string on success, even if the source string isn't.
 					 */
 					if (ConvertFromUnicode(CP_UTF8, 0, wszFormatName, 16,
-						&(formats[index].formatName), 0, NULL, NULL) < 1)
+					                       &(formats[index].formatName), 0, NULL, NULL) < 1)
 					{
 						WLog_ERR(TAG, "failed to convert short clipboard format name");
 						error = ERROR_INVALID_DATA;
@@ -734,7 +729,6 @@ static UINT cliprdr_server_receive_format_list(CliprdrServerContext* context, wS
 		{
 			Stream_Seek(s, 4); /* formatId (4 bytes) */
 			dataLen -= 4;
-
 			wszFormatName = (WCHAR*) Stream_Pointer(s);
 
 			if (!wszFormatName[0])
@@ -744,7 +738,6 @@ static UINT cliprdr_server_receive_format_list(CliprdrServerContext* context, wS
 
 			Stream_Seek(s, (formatNameLength + 1) * 2);
 			dataLen -= ((formatNameLength + 1) * 2);
-
 			formatList.numFormats++;
 		}
 
@@ -752,7 +745,8 @@ static UINT cliprdr_server_receive_format_list(CliprdrServerContext* context, wS
 		Stream_SetPosition(s, position);
 
 		if (formatList.numFormats)
-			formats = (CLIPRDR_FORMAT*) calloc(formatList.numFormats, sizeof(CLIPRDR_FORMAT));
+			formats = (CLIPRDR_FORMAT*) calloc(formatList.numFormats,
+			                                   sizeof(CLIPRDR_FORMAT));
 
 		if (!formats)
 		{
@@ -766,9 +760,7 @@ static UINT cliprdr_server_receive_format_list(CliprdrServerContext* context, wS
 		{
 			Stream_Read_UINT32(s, formats[index].formatId); /* formatId (4 bytes) */
 			dataLen -= 4;
-
 			formats[index].formatName = NULL;
-
 			wszFormatName = (WCHAR*) Stream_Pointer(s);
 
 			if (!wszFormatName[0])
@@ -779,7 +771,7 @@ static UINT cliprdr_server_receive_format_list(CliprdrServerContext* context, wS
 			if (formatNameLength)
 			{
 				if (ConvertFromUnicode(CP_UTF8, 0, wszFormatName, -1,
-					&(formats[index].formatName), 0, NULL, NULL) < 1)
+				                       &(formats[index].formatName), 0, NULL, NULL) < 1)
 				{
 					WLog_ERR(TAG, "failed to convert long clipboard format name");
 					error = ERROR_INVALID_DATA;
@@ -789,26 +781,25 @@ static UINT cliprdr_server_receive_format_list(CliprdrServerContext* context, wS
 
 			Stream_Seek(s, (formatNameLength + 1) * 2);
 			dataLen -= ((formatNameLength + 1) * 2);
-
 			index++;
 		}
 	}
 
 	WLog_DBG(TAG, "ClientFormatList: numFormats: %d",
-			formatList.numFormats);
-
+	         formatList.numFormats);
 	IFCALLRET(context->ClientFormatList, error, context, &formatList);
+
 	if (error)
 		WLog_ERR(TAG, "ClientFormatList failed with error %lu!", error);
 
 out:
+
 	for (index = 0; index < formatList.numFormats; index++)
 	{
 		free(formatList.formats[index].formatName);
 	}
 
 	free(formatList.formats);
-
 	return error;
 }
 
@@ -817,18 +808,18 @@ out:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cliprdr_server_receive_format_list_response(CliprdrServerContext* context, wStream* s, CLIPRDR_HEADER* header)
+static UINT cliprdr_server_receive_format_list_response(
+    CliprdrServerContext* context, wStream* s, CLIPRDR_HEADER* header)
 {
 	CLIPRDR_FORMAT_LIST_RESPONSE formatListResponse;
 	UINT error = CHANNEL_RC_OK;
-
 	WLog_DBG(TAG, "CliprdrClientFormatListResponse");
-
 	formatListResponse.msgType = CB_FORMAT_LIST_RESPONSE;
 	formatListResponse.msgFlags = header->msgFlags;
 	formatListResponse.dataLen = header->dataLen;
+	IFCALLRET(context->ClientFormatListResponse, error, context,
+	          &formatListResponse);
 
-	IFCALLRET(context->ClientFormatListResponse, error, context, &formatListResponse);
 	if (error)
 		WLog_ERR(TAG, "ClientFormatListResponse failed with error %lu!", error);
 
@@ -840,11 +831,11 @@ static UINT cliprdr_server_receive_format_list_response(CliprdrServerContext* co
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cliprdr_server_receive_lock_clipdata(CliprdrServerContext* context, wStream* s, CLIPRDR_HEADER* header)
+static UINT cliprdr_server_receive_lock_clipdata(CliprdrServerContext* context,
+        wStream* s, CLIPRDR_HEADER* header)
 {
 	CLIPRDR_LOCK_CLIPBOARD_DATA lockClipboardData;
 	UINT error = CHANNEL_RC_OK;
-
 	WLog_DBG(TAG, "CliprdrClientLockClipData");
 
 	if (Stream_GetRemainingLength(s) < 4)
@@ -856,10 +847,9 @@ static UINT cliprdr_server_receive_lock_clipdata(CliprdrServerContext* context, 
 	lockClipboardData.msgType = CB_LOCK_CLIPDATA;
 	lockClipboardData.msgFlags = header->msgFlags;
 	lockClipboardData.dataLen = header->dataLen;
-
 	Stream_Read_UINT32(s, lockClipboardData.clipDataId); /* clipDataId (4 bytes) */
-
 	IFCALLRET(context->ClientLockClipboardData, error, context, &lockClipboardData);
+
 	if (error)
 		WLog_ERR(TAG, "ClientLockClipboardData failed with error %lu!", error);
 
@@ -871,13 +861,12 @@ static UINT cliprdr_server_receive_lock_clipdata(CliprdrServerContext* context, 
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cliprdr_server_receive_unlock_clipdata(CliprdrServerContext* context, wStream* s, CLIPRDR_HEADER* header)
+static UINT cliprdr_server_receive_unlock_clipdata(CliprdrServerContext*
+        context, wStream* s, CLIPRDR_HEADER* header)
 {
 	CLIPRDR_UNLOCK_CLIPBOARD_DATA unlockClipboardData;
 	UINT error = CHANNEL_RC_OK;
-
 	WLog_DBG(TAG, "CliprdrClientUnlockClipData");
-
 	unlockClipboardData.msgType = CB_UNLOCK_CLIPDATA;
 	unlockClipboardData.msgFlags = header->msgFlags;
 	unlockClipboardData.dataLen = header->dataLen;
@@ -888,9 +877,11 @@ static UINT cliprdr_server_receive_unlock_clipdata(CliprdrServerContext* context
 		return ERROR_INVALID_DATA;
 	}
 
-	Stream_Read_UINT32(s, unlockClipboardData.clipDataId); /* clipDataId (4 bytes) */
+	Stream_Read_UINT32(s,
+	                   unlockClipboardData.clipDataId); /* clipDataId (4 bytes) */
+	IFCALLRET(context->ClientUnlockClipboardData, error, context,
+	          &unlockClipboardData);
 
-	IFCALLRET(context->ClientUnlockClipboardData, error, context, &unlockClipboardData);
 	if (error)
 		WLog_ERR(TAG, "ClientUnlockClipboardData failed with error %lu!", error);
 
@@ -902,13 +893,12 @@ static UINT cliprdr_server_receive_unlock_clipdata(CliprdrServerContext* context
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cliprdr_server_receive_format_data_request(CliprdrServerContext* context, wStream* s, CLIPRDR_HEADER* header)
+static UINT cliprdr_server_receive_format_data_request(CliprdrServerContext*
+        context, wStream* s, CLIPRDR_HEADER* header)
 {
 	CLIPRDR_FORMAT_DATA_REQUEST formatDataRequest;
 	UINT error = CHANNEL_RC_OK;
-
 	WLog_DBG(TAG, "CliprdrClientFormatDataRequest");
-
 	formatDataRequest.msgType = CB_FORMAT_DATA_REQUEST;
 	formatDataRequest.msgFlags = header->msgFlags;
 	formatDataRequest.dataLen = header->dataLen;
@@ -919,9 +909,10 @@ static UINT cliprdr_server_receive_format_data_request(CliprdrServerContext* con
 		return ERROR_INVALID_DATA;
 	}
 
-	Stream_Read_UINT32(s, formatDataRequest.requestedFormatId); /* requestedFormatId (4 bytes) */
-
+	Stream_Read_UINT32(s,
+	                   formatDataRequest.requestedFormatId); /* requestedFormatId (4 bytes) */
 	IFCALLRET(context->ClientFormatDataRequest, error, context, &formatDataRequest);
+
 	if (error)
 		WLog_ERR(TAG, "ClientFormatDataRequest failed with error %lu!", error);
 
@@ -933,13 +924,12 @@ static UINT cliprdr_server_receive_format_data_request(CliprdrServerContext* con
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cliprdr_server_receive_format_data_response(CliprdrServerContext* context, wStream* s, CLIPRDR_HEADER* header)
+static UINT cliprdr_server_receive_format_data_response(
+    CliprdrServerContext* context, wStream* s, CLIPRDR_HEADER* header)
 {
 	CLIPRDR_FORMAT_DATA_RESPONSE formatDataResponse;
 	UINT error = CHANNEL_RC_OK;
-
 	WLog_DBG(TAG, "CliprdrClientFormatDataResponse");
-
 	formatDataResponse.msgType = CB_FORMAT_DATA_RESPONSE;
 	formatDataResponse.msgFlags = header->msgFlags;
 	formatDataResponse.dataLen = header->dataLen;
@@ -957,12 +947,13 @@ static UINT cliprdr_server_receive_format_data_response(CliprdrServerContext* co
 		Stream_Read(s, formatDataResponse.requestedFormatData, header->dataLen);
 	}
 
-	IFCALLRET(context->ClientFormatDataResponse, error, context, &formatDataResponse);
+	IFCALLRET(context->ClientFormatDataResponse, error, context,
+	          &formatDataResponse);
+
 	if (error)
 		WLog_ERR(TAG, "ClientFormatDataResponse failed with error %lu!", error);
 
 	free(formatDataResponse.requestedFormatData);
-
 	return error;
 }
 
@@ -971,13 +962,12 @@ static UINT cliprdr_server_receive_format_data_response(CliprdrServerContext* co
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cliprdr_server_receive_filecontents_request(CliprdrServerContext* context, wStream* s, CLIPRDR_HEADER* header)
+static UINT cliprdr_server_receive_filecontents_request(
+    CliprdrServerContext* context, wStream* s, CLIPRDR_HEADER* header)
 {
 	CLIPRDR_FILE_CONTENTS_REQUEST request;
 	UINT error = CHANNEL_RC_OK;
-
 	WLog_DBG(TAG, "CliprdrClientFileContentsRequest");
-
 	request.msgType = CB_FILECONTENTS_REQUEST;
 	request.msgFlags = header->msgFlags;
 	request.dataLen = header->dataLen;
@@ -994,12 +984,14 @@ static UINT cliprdr_server_receive_filecontents_request(CliprdrServerContext* co
 	Stream_Read_UINT32(s, request.nPositionLow); /* nPositionLow (4 bytes) */
 	Stream_Read_UINT32(s, request.nPositionHigh); /* nPositionHigh (4 bytes) */
 	Stream_Read_UINT32(s, request.cbRequested); /* cbRequested (4 bytes) */
+
 	if (Stream_GetRemainingLength(s) < 4) /* clipDataId (4 bytes) optional */
 		request.clipDataId = 0;
 	else
 		Stream_Read_UINT32(s, request.clipDataId);
 
 	IFCALLRET(context->ClientFileContentsRequest, error, context, &request);
+
 	if (error)
 		WLog_ERR(TAG, "ClientFileContentsRequest failed with error %lu!", error);
 
@@ -1011,13 +1003,12 @@ static UINT cliprdr_server_receive_filecontents_request(CliprdrServerContext* co
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cliprdr_server_receive_filecontents_response(CliprdrServerContext* context, wStream* s, CLIPRDR_HEADER* header)
+static UINT cliprdr_server_receive_filecontents_response(
+    CliprdrServerContext* context, wStream* s, CLIPRDR_HEADER* header)
 {
 	CLIPRDR_FILE_CONTENTS_RESPONSE response;
 	UINT error = CHANNEL_RC_OK;
-
 	WLog_DBG(TAG, "CliprdrClientFileContentsResponse");
-
 	response.msgType = CB_FILECONTENTS_RESPONSE;
 	response.msgFlags = header->msgFlags;
 	response.dataLen = header->dataLen;
@@ -1029,11 +1020,10 @@ static UINT cliprdr_server_receive_filecontents_response(CliprdrServerContext* c
 	}
 
 	Stream_Read_UINT32(s, response.streamId); /* streamId (4 bytes) */
-
 	response.cbRequested = header->dataLen - 4;
 	response.requestedData = Stream_Pointer(s); /* requestedFileContentsData */
-
 	IFCALLRET(context->ClientFileContentsResponse, error, context, &response);
+
 	if (error)
 		WLog_ERR(TAG, "ClientFileContentsResponse failed with error %lu!", error);
 
@@ -1045,62 +1035,84 @@ static UINT cliprdr_server_receive_filecontents_response(CliprdrServerContext* c
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cliprdr_server_receive_pdu(CliprdrServerContext* context, wStream* s, CLIPRDR_HEADER* header)
+static UINT cliprdr_server_receive_pdu(CliprdrServerContext* context,
+                                       wStream* s, CLIPRDR_HEADER* header)
 {
 	UINT error;
-	WLog_DBG(TAG, "CliprdrServerReceivePdu: msgType: %d msgFlags: 0x%08X dataLen: %d",
-			 header->msgType, header->msgFlags, header->dataLen);
+	WLog_DBG(TAG,
+	         "CliprdrServerReceivePdu: msgType: %d msgFlags: 0x%08X dataLen: %d",
+	         header->msgType, header->msgFlags, header->dataLen);
 
 	switch (header->msgType)
 	{
 		case CB_CLIP_CAPS:
 			if ((error = cliprdr_server_receive_capabilities(context, s, header)))
-				WLog_ERR(TAG, "cliprdr_server_receive_capabilities failed with error %lu!", error);
+				WLog_ERR(TAG, "cliprdr_server_receive_capabilities failed with error %lu!",
+				         error);
+
 			break;
 
 		case CB_TEMP_DIRECTORY:
 			if ((error = cliprdr_server_receive_temporary_directory(context, s, header)))
-				WLog_ERR(TAG, "cliprdr_server_receive_temporary_directory failed with error %lu!", error);
+				WLog_ERR(TAG,
+				         "cliprdr_server_receive_temporary_directory failed with error %lu!", error);
+
 			break;
 
 		case CB_FORMAT_LIST:
 			if ((error = cliprdr_server_receive_format_list(context, s, header)))
-				WLog_ERR(TAG, "cliprdr_server_receive_format_list failed with error %lu!", error);
+				WLog_ERR(TAG, "cliprdr_server_receive_format_list failed with error %lu!",
+				         error);
+
 			break;
 
 		case CB_FORMAT_LIST_RESPONSE:
 			if ((error = cliprdr_server_receive_format_list_response(context, s, header)))
-				WLog_ERR(TAG, "cliprdr_server_receive_format_list_response failed with error %lu!", error);
+				WLog_ERR(TAG,
+				         "cliprdr_server_receive_format_list_response failed with error %lu!", error);
+
 			break;
 
 		case CB_LOCK_CLIPDATA:
 			if ((error = cliprdr_server_receive_lock_clipdata(context, s, header)))
-				WLog_ERR(TAG, "cliprdr_server_receive_lock_clipdata failed with error %lu!", error);
+				WLog_ERR(TAG, "cliprdr_server_receive_lock_clipdata failed with error %lu!",
+				         error);
+
 			break;
 
 		case CB_UNLOCK_CLIPDATA:
 			if ((error = cliprdr_server_receive_unlock_clipdata(context, s, header)))
-				WLog_ERR(TAG, "cliprdr_server_receive_unlock_clipdata failed with error %lu!", error);
+				WLog_ERR(TAG, "cliprdr_server_receive_unlock_clipdata failed with error %lu!",
+				         error);
+
 			break;
 
 		case CB_FORMAT_DATA_REQUEST:
 			if ((error = cliprdr_server_receive_format_data_request(context, s, header)))
-				WLog_ERR(TAG, "cliprdr_server_receive_format_data_request failed with error %lu!", error);
+				WLog_ERR(TAG,
+				         "cliprdr_server_receive_format_data_request failed with error %lu!", error);
+
 			break;
 
 		case CB_FORMAT_DATA_RESPONSE:
 			if ((error = cliprdr_server_receive_format_data_response(context, s, header)))
-				WLog_ERR(TAG, "cliprdr_server_receive_format_data_response failed with error %lu!", error);
+				WLog_ERR(TAG,
+				         "cliprdr_server_receive_format_data_response failed with error %lu!", error);
+
 			break;
 
 		case CB_FILECONTENTS_REQUEST:
 			if ((error = cliprdr_server_receive_filecontents_request(context, s, header)))
-				WLog_ERR(TAG, "cliprdr_server_receive_filecontents_request failed with error %lu!", error);
+				WLog_ERR(TAG,
+				         "cliprdr_server_receive_filecontents_request failed with error %lu!", error);
+
 			break;
 
 		case CB_FILECONTENTS_RESPONSE:
 			if ((error = cliprdr_server_receive_filecontents_response(context, s, header)))
-				WLog_ERR(TAG, "cliprdr_server_receive_filecontents_response failed with error %lu!", error);
+				WLog_ERR(TAG,
+				         "cliprdr_server_receive_filecontents_response failed with error %lu!", error);
+
 			break;
 
 		default:
@@ -1124,10 +1136,8 @@ static UINT cliprdr_server_init(CliprdrServerContext* context)
 	CLIPRDR_MONITOR_READY monitorReady;
 	CLIPRDR_GENERAL_CAPABILITY_SET generalCapabilitySet;
 	UINT error;
-
 	ZeroMemory(&capabilities, sizeof(capabilities));
 	ZeroMemory(&monitorReady, sizeof(monitorReady));
-
 	generalFlags = 0;
 
 	if (context->useLongFormatNames)
@@ -1145,10 +1155,8 @@ static UINT cliprdr_server_init(CliprdrServerContext* context)
 	capabilities.msgType = CB_CLIP_CAPS;
 	capabilities.msgFlags = 0;
 	capabilities.dataLen = 4 + CB_CAPSTYPE_GENERAL_LEN;
-
 	capabilities.cCapabilitiesSets = 1;
 	capabilities.capabilitySets = (CLIPRDR_CAPABILITY_SET*) &generalCapabilitySet;
-
 	generalCapabilitySet.capabilitySetType = CB_CAPSTYPE_GENERAL;
 	generalCapabilitySet.capabilitySetLength = CB_CAPSTYPE_GENERAL_LEN;
 	generalCapabilitySet.version = CB_CAPS_VERSION_2;
@@ -1159,6 +1167,7 @@ static UINT cliprdr_server_init(CliprdrServerContext* context)
 		WLog_ERR(TAG, "ServerCapabilities failed with error %lu!", error);
 		return error;
 	}
+
 	if ((error = context->MonitorReady(context, &monitorReady)))
 	{
 		WLog_ERR(TAG, "MonitorReady failed with error %lu!", error);
@@ -1182,29 +1191,27 @@ UINT cliprdr_server_read(CliprdrServerContext* context)
 	CLIPRDR_HEADER header;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 	UINT error;
-    DWORD status;
-
+	DWORD status;
 	s = cliprdr->s;
 
 	if (Stream_GetPosition(s) < CLIPRDR_HEADER_LENGTH)
 	{
 		BytesReturned = 0;
 		BytesToRead = CLIPRDR_HEADER_LENGTH - Stream_GetPosition(s);
-
-        status = WaitForSingleObject(cliprdr->ChannelEvent, 0);
+		status = WaitForSingleObject(cliprdr->ChannelEvent, 0);
 
 		if (status == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
-            return error;
-        }
+		{
+			error = GetLastError();
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+			return error;
+		}
 
-        if (status == WAIT_TIMEOUT)
-            return CHANNEL_RC_OK;
+		if (status == WAIT_TIMEOUT)
+			return CHANNEL_RC_OK;
 
 		if (!WTSVirtualChannelRead(cliprdr->ChannelHandle, 0,
-			(PCHAR) Stream_Pointer(s), BytesToRead, &BytesReturned))
+		                           (PCHAR) Stream_Pointer(s), BytesToRead, &BytesReturned))
 		{
 			WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
 			return ERROR_INTERNAL_ERROR;
@@ -1217,7 +1224,6 @@ UINT cliprdr_server_read(CliprdrServerContext* context)
 	{
 		position = Stream_GetPosition(s);
 		Stream_SetPosition(s, 0);
-
 		Stream_Read_UINT16(s, header.msgType); /* msgType (2 bytes) */
 		Stream_Read_UINT16(s, header.msgFlags); /* msgFlags (2 bytes) */
 		Stream_Read_UINT32(s, header.dataLen); /* dataLen (4 bytes) */
@@ -1234,21 +1240,20 @@ UINT cliprdr_server_read(CliprdrServerContext* context)
 		{
 			BytesReturned = 0;
 			BytesToRead = (header.dataLen + CLIPRDR_HEADER_LENGTH) - Stream_GetPosition(s);
+			status = WaitForSingleObject(cliprdr->ChannelEvent, 0);
 
-            status = WaitForSingleObject(cliprdr->ChannelEvent, 0);
+			if (status == WAIT_FAILED)
+			{
+				error = GetLastError();
+				WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+				return error;
+			}
 
-            if (status == WAIT_FAILED)
-            {
-                error = GetLastError();
-                WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
-                return error;
-            }
-
-            if (status == WAIT_TIMEOUT)
-                return CHANNEL_RC_OK;
+			if (status == WAIT_TIMEOUT)
+				return CHANNEL_RC_OK;
 
 			if (!WTSVirtualChannelRead(cliprdr->ChannelHandle, 0,
-				(PCHAR) Stream_Pointer(s), BytesToRead, &BytesReturned))
+			                           (PCHAR) Stream_Pointer(s), BytesToRead, &BytesReturned))
 			{
 				WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
 				return ERROR_INTERNAL_ERROR;
@@ -1270,26 +1275,24 @@ UINT cliprdr_server_read(CliprdrServerContext* context)
 			}
 
 			Stream_SetPosition(s, 0);
-
 			/* check for trailing zero bytes */
+			status = WaitForSingleObject(cliprdr->ChannelEvent, 0);
 
-            status = WaitForSingleObject(cliprdr->ChannelEvent, 0);
+			if (status == WAIT_FAILED)
+			{
+				error = GetLastError();
+				WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+				return error;
+			}
 
-            if (status == WAIT_FAILED)
-            {
-                error = GetLastError();
-                WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
-                return error;
-            }
-
-            if (status == WAIT_TIMEOUT)
-                return CHANNEL_RC_OK;
+			if (status == WAIT_TIMEOUT)
+				return CHANNEL_RC_OK;
 
 			BytesReturned = 0;
 			BytesToRead = 4;
 
 			if (!WTSVirtualChannelRead(cliprdr->ChannelHandle, 0,
-				(PCHAR) Stream_Pointer(s), BytesToRead, &BytesReturned))
+			                           (PCHAR) Stream_Pointer(s), BytesToRead, &BytesReturned))
 			{
 				WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
 				return ERROR_INTERNAL_ERROR;
@@ -1325,9 +1328,8 @@ static void* cliprdr_server_thread(void* arg)
 	CliprdrServerContext* context = (CliprdrServerContext*) arg;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 	UINT error;
-
+	freerdp_channel_init_thread_context(context->rdpcontext);
 	ChannelEvent = context->GetEventHandle(context);
-
 	nCount = 0;
 	events[nCount++] = cliprdr->StopEvent;
 	events[nCount++] = ChannelEvent;
@@ -1344,31 +1346,31 @@ static void* cliprdr_server_thread(void* arg)
 
 		if (status == WAIT_FAILED)
 		{
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
-            goto out;
+			error = GetLastError();
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
+			goto out;
 		}
 
-        status = WaitForSingleObject(cliprdr->StopEvent, 0);
+		status = WaitForSingleObject(cliprdr->StopEvent, 0);
 
-        if (status == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
-            goto out;
-        }
+		if (status == WAIT_FAILED)
+		{
+			error = GetLastError();
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+			goto out;
+		}
 
 		if (status == WAIT_OBJECT_0)
 			break;
 
-        status = WaitForSingleObject(ChannelEvent, 0);
+		status = WaitForSingleObject(ChannelEvent, 0);
 
-        if (status == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
-            goto out;
-        }
+		if (status == WAIT_FAILED)
+		{
+			error = GetLastError();
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+			goto out;
+		}
 
 		if (status == WAIT_OBJECT_0)
 		{
@@ -1379,9 +1381,12 @@ static void* cliprdr_server_thread(void* arg)
 			}
 		}
 	}
+
 out:
+
 	if (error && context->rdpcontext)
-		setChannelError(context->rdpcontext, error, "cliprdr_server_thread reported an error");
+		setChannelError(context->rdpcontext, error,
+		                "cliprdr_server_thread reported an error");
 
 	ExitThread((DWORD)error);
 	return NULL;
@@ -1397,8 +1402,8 @@ static UINT cliprdr_server_open(CliprdrServerContext* context)
 	void* buffer = NULL;
 	DWORD BytesReturned = 0;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
-
-	cliprdr->ChannelHandle = WTSVirtualChannelOpen(cliprdr->vcm, WTS_CURRENT_SESSION, "cliprdr");
+	cliprdr->ChannelHandle = WTSVirtualChannelOpen(cliprdr->vcm,
+	                         WTS_CURRENT_SESSION, "cliprdr");
 
 	if (!cliprdr->ChannelHandle)
 	{
@@ -1408,16 +1413,16 @@ static UINT cliprdr_server_open(CliprdrServerContext* context)
 
 	cliprdr->ChannelEvent = NULL;
 
-	if (WTSVirtualChannelQuery(cliprdr->ChannelHandle, WTSVirtualEventHandle, &buffer, &BytesReturned))
+	if (WTSVirtualChannelQuery(cliprdr->ChannelHandle, WTSVirtualEventHandle,
+	                           &buffer, &BytesReturned))
 	{
 		if (BytesReturned != sizeof(HANDLE))
 		{
 			WLog_ERR(TAG, "BytesReturned has not size of HANDLE!");
 			return ERROR_INTERNAL_ERROR;
 		}
+
 		CopyMemory(&(cliprdr->ChannelEvent), buffer, sizeof(HANDLE));
-
-
 		WTSFreeMemory(buffer);
 	}
 
@@ -1474,7 +1479,7 @@ static UINT cliprdr_server_start(CliprdrServerContext* context)
 	}
 
 	if (!(cliprdr->Thread = CreateThread(NULL, 0,
-			(LPTHREAD_START_ROUTINE) cliprdr_server_thread, (void*) context, 0, NULL)))
+	                                     (LPTHREAD_START_ROUTINE) cliprdr_server_thread, (void*) context, 0, NULL)))
 	{
 		WLog_ERR(TAG, "CreateThread failed!");
 		CloseHandle(cliprdr->StopEvent);
@@ -1492,18 +1497,20 @@ static UINT cliprdr_server_start(CliprdrServerContext* context)
  */
 static UINT cliprdr_server_stop(CliprdrServerContext* context)
 {
-    UINT error = CHANNEL_RC_OK;
+	UINT error = CHANNEL_RC_OK;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 
 	if (cliprdr->StopEvent)
 	{
 		SetEvent(cliprdr->StopEvent);
+
 		if (WaitForSingleObject(cliprdr->Thread, INFINITE) == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
-            return error;
-        }
+		{
+			error = GetLastError();
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+			return error;
+		}
+
 		CloseHandle(cliprdr->Thread);
 		CloseHandle(cliprdr->StopEvent);
 	}
@@ -1534,7 +1541,6 @@ CliprdrServerContext* cliprdr_server_context_new(HANDLE vcm)
 {
 	CliprdrServerContext* context;
 	CliprdrServerPrivate* cliprdr;
-
 	context = (CliprdrServerContext*) calloc(1, sizeof(CliprdrServerContext));
 
 	if (context)
@@ -1545,7 +1551,6 @@ CliprdrServerContext* cliprdr_server_context_new(HANDLE vcm)
 		context->Stop = cliprdr_server_stop;
 		context->GetEventHandle = cliprdr_server_get_event_handle;
 		context->CheckEventHandle = cliprdr_server_check_event_handle;
-
 		context->ServerCapabilities = cliprdr_server_capabilities;
 		context->MonitorReady = cliprdr_server_monitor_ready;
 		context->ServerFormatList = cliprdr_server_format_list;
@@ -1556,23 +1561,24 @@ CliprdrServerContext* cliprdr_server_context_new(HANDLE vcm)
 		context->ServerFormatDataResponse = cliprdr_server_format_data_response;
 		context->ServerFileContentsRequest = cliprdr_server_file_contents_request;
 		context->ServerFileContentsResponse = cliprdr_server_file_contents_response;
-
-		cliprdr = context->handle = (CliprdrServerPrivate*) calloc(1, sizeof(CliprdrServerPrivate));
+		cliprdr = context->handle = (CliprdrServerPrivate*) calloc(1,
+		                            sizeof(CliprdrServerPrivate));
 
 		if (cliprdr)
 		{
 			cliprdr->vcm = vcm;
-
 			cliprdr->s = Stream_New(NULL, 4096);
 
-			if(!cliprdr->s)
+			if (!cliprdr->s)
 			{
 				WLog_ERR(TAG, "Stream_New failed!");
 				free(context->handle);
 				free(context);
 				return NULL;
 			}
-		} else {
+		}
+		else
+		{
 			WLog_ERR(TAG, "calloc failed!");
 			free(context);
 			return NULL;

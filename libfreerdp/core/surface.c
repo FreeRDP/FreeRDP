@@ -62,11 +62,6 @@ static int update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT3
 	Stream_SetPosition(s, pos);
 	*length = 20 + cmd->bitmapDataLength;
 
-	WLog_Print(update->log, WLOG_DEBUG,
-			   "SurfaceBits: destLeft: %d destTop: %d destRight: %d destBottom: %d "
-			   "bpp: %d codecId: %d width: %d height: %d bitmapDataLength: %d",
-			   cmd->destLeft, cmd->destTop, cmd->destRight, cmd->destBottom,
-			   cmd->bpp, cmd->codecID, cmd->width, cmd->height, cmd->bitmapDataLength);
 	IFCALL(update->SurfaceBits, update->context, cmd);
 
 	return 0;
@@ -137,7 +132,8 @@ int update_recv_surfcmds(rdpUpdate* update, UINT32 size, wStream* s)
 	return 0;
 }
 
-BOOL update_write_surfcmd_surface_bits_header(wStream* s, SURFACE_BITS_COMMAND* cmd)
+BOOL update_write_surfcmd_surface_bits_header(wStream* s,
+					      const SURFACE_BITS_COMMAND* cmd)
 {
 	if (!Stream_EnsureRemainingCapacity(s, SURFCMD_SURFACE_BITS_HEADER_LENGTH))
 		return FALSE;

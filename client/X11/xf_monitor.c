@@ -48,7 +48,6 @@ int xf_list_monitors(xfContext* xfc)
 	int major, minor;
 	int i, nmonitors = 0;
 	XineramaScreenInfo* screen = NULL;
-
 	display = XOpenDisplay(NULL);
 
 	if (!display)
@@ -66,9 +65,9 @@ int xf_list_monitors(xfContext* xfc)
 			for (i = 0; i < nmonitors; i++)
 			{
 				printf("      %s [%d] %dx%d\t+%d+%d\n",
-						 (i == 0) ? "*" : " ", i,
-						 screen[i].width, screen[i].height,
-						 screen[i].x_org, screen[i].y_org);
+				       (i == 0) ? "*" : " ", i,
+				       screen[i].width, screen[i].height,
+				       screen[i].x_org, screen[i].y_org);
 			}
 
 			XFree(screen);
@@ -79,7 +78,6 @@ int xf_list_monitors(xfContext* xfc)
 #else
 	Screen* screen;
 	Display* display;
-
 	display = XOpenDisplay(NULL);
 
 	if (!display)
@@ -89,19 +87,17 @@ int xf_list_monitors(xfContext* xfc)
 	}
 
 	screen = ScreenOfDisplay(display, DefaultScreen(display));
-
-	printf("      * [0] %dx%d\t+%d+%d\n", WidthOfScreen(screen), HeightOfScreen(screen), 0, 0);
-
+	printf("      * [0] %dx%d\t+%d+%d\n", WidthOfScreen(screen),
+	       HeightOfScreen(screen), 0, 0);
 	XCloseDisplay(display);
 #endif
-
 	return 0;
 }
 
 BOOL xf_is_monitor_id_active(xfContext* xfc, UINT32 id)
 {
 	int index;
-	rdpSettings* settings = xfc->settings;
+	rdpSettings* settings = xfc->context.settings;
 
 	if (!settings->NumMonitorIds)
 		return TRUE;
@@ -121,28 +117,26 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	int nmonitors = 0;
 	int primaryMonitorFound = FALSE;
 	VIRTUAL_SCREEN* vscreen;
-	rdpSettings* settings = xfc->settings;
-
+	rdpSettings* settings = xfc->context.settings;
 	int mouse_x, mouse_y, _dummy_i;
 	Window _dummy_w;
 	int current_monitor = 0;
-
 #ifdef WITH_XINERAMA
 	int major, minor;
 	XineramaScreenInfo* screenInfo = NULL;
 #endif
-
 	vscreen = &xfc->vscreen;
 	*pMaxWidth = settings->DesktopWidth;
 	*pMaxHeight = settings->DesktopHeight;
 
 	/* get mouse location */
 	if (!XQueryPointer(xfc->display, DefaultRootWindow(xfc->display),
-			&_dummy_w, &_dummy_w, &mouse_x, &mouse_y,
-			&_dummy_i, &_dummy_i, (void *) &_dummy_i))
+	                   &_dummy_w, &_dummy_w, &mouse_x, &mouse_y,
+	                   &_dummy_i, &_dummy_i, (void*) &_dummy_i))
 		mouse_x = mouse_y = 0;
 
 #ifdef WITH_XINERAMA
+
 	if (XineramaQueryExtension(xfc->display, &major, &minor))
 	{
 		if (XineramaIsActive(xfc->display))
@@ -159,10 +153,11 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 					vscreen->monitors[i].area.left = screenInfo[i].x_org;
 					vscreen->monitors[i].area.top = screenInfo[i].y_org;
 					vscreen->monitors[i].area.right = screenInfo[i].x_org + screenInfo[i].width - 1;
-					vscreen->monitors[i].area.bottom = screenInfo[i].y_org + screenInfo[i].height - 1;
+					vscreen->monitors[i].area.bottom = screenInfo[i].y_org + screenInfo[i].height -
+					                                   1;
 
 					/* Determine which monitor that the mouse cursor is on */
-					if ((mouse_x >= vscreen->monitors[i].area.left) && 
+					if ((mouse_x >= vscreen->monitors[i].area.left) &&
 					    (mouse_x <= vscreen->monitors[i].area.right) &&
 					    (mouse_y >= vscreen->monitors[i].area.top) &&
 					    (mouse_y <= vscreen->monitors[i].area.bottom))
@@ -173,15 +168,15 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 			XFree(screenInfo);
 		}
 	}
-#endif
 
+#endif
 	xfc->fullscreenMonitors.top = xfc->fullscreenMonitors.bottom =
-	xfc->fullscreenMonitors.left = xfc->fullscreenMonitors.right = 0;
+	                                  xfc->fullscreenMonitors.left = xfc->fullscreenMonitors.right = 0;
 
 	/* WORKAROUND: With Remote Application Mode - using NET_WM_WORKAREA
- 	 * causes issues with the ability to fully size the window vertically
- 	 * (the bottom of the window area is never updated). So, we just set
- 	 * the workArea to match the full Screen width/height.
+	 * causes issues with the ability to fully size the window vertically
+	 * (the bottom of the window area is never updated). So, we just set
+	 * the workArea to match the full Screen width/height.
 	 */
 	if (settings->RemoteApplicationMode || !xf_GetWorkArea(xfc))
 	{
@@ -211,8 +206,12 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 		 */
 		if (vscreen->nmonitors > 0)
 		{
-			*pMaxWidth = ((vscreen->monitors[current_monitor].area.right - vscreen->monitors[current_monitor].area.left + 1) * settings->PercentScreen) / 100;
-			*pMaxHeight = ((vscreen->monitors[current_monitor].area.bottom - vscreen->monitors[current_monitor].area.top + 1) * settings->PercentScreen) / 100;
+			*pMaxWidth = ((vscreen->monitors[current_monitor].area.right -
+			               vscreen->monitors[current_monitor].area.left + 1) * settings->PercentScreen) /
+			             100;
+			*pMaxHeight = ((vscreen->monitors[current_monitor].area.bottom -
+			                vscreen->monitors[current_monitor].area.top + 1) * settings->PercentScreen) /
+			              100;
 		}
 	}
 
@@ -220,8 +219,9 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 		return TRUE;
 
 	/* If single monitor fullscreen OR workarea without remote app */
-	if ((settings->Fullscreen && !settings->UseMultimon && !settings->SpanMonitors) ||
-			(settings->Workarea && !settings->RemoteApplicationMode))
+	if ((settings->Fullscreen && !settings->UseMultimon && !settings->SpanMonitors)
+	    ||
+	    (settings->Workarea && !settings->RemoteApplicationMode))
 	{
 		/* If no monitors were specified on the command-line then set the current monitor as active */
 		if (!settings->NumMonitorIds)
@@ -244,10 +244,12 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 
 		settings->MonitorDefArray[nmonitors].x = vscreen->monitors[i].area.left;
 		settings->MonitorDefArray[nmonitors].y = vscreen->monitors[i].area.top;
-		settings->MonitorDefArray[nmonitors].width = MIN(vscreen->monitors[i].area.right - vscreen->monitors[i].area.left + 1, *pMaxWidth);
-		settings->MonitorDefArray[nmonitors].height = MIN(vscreen->monitors[i].area.bottom - vscreen->monitors[i].area.top + 1, *pMaxHeight);
+		settings->MonitorDefArray[nmonitors].width = MIN(vscreen->monitors[i].area.right
+		        - vscreen->monitors[i].area.left + 1, *pMaxWidth);
+		settings->MonitorDefArray[nmonitors].height = MIN(
+		            vscreen->monitors[i].area.bottom - vscreen->monitors[i].area.top + 1,
+		            *pMaxHeight);
 		settings->MonitorDefArray[nmonitors].orig_screen = i;
-
 		nmonitors++;
 	}
 
@@ -256,10 +258,13 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	{
 		settings->MonitorDefArray[0].x = vscreen->monitors[current_monitor].area.left;
 		settings->MonitorDefArray[0].y = vscreen->monitors[current_monitor].area.top;
-		settings->MonitorDefArray[0].width = MIN(vscreen->monitors[current_monitor].area.right - vscreen->monitors[current_monitor].area.left + 1, *pMaxWidth);
-		settings->MonitorDefArray[0].height = MIN(vscreen->monitors[current_monitor].area.bottom - vscreen->monitors[current_monitor].area.top + 1, *pMaxHeight);
+		settings->MonitorDefArray[0].width = MIN(
+		        vscreen->monitors[current_monitor].area.right -
+		        vscreen->monitors[current_monitor].area.left + 1, *pMaxWidth);
+		settings->MonitorDefArray[0].height = MIN(
+		        vscreen->monitors[current_monitor].area.bottom -
+		        vscreen->monitors[current_monitor].area.top + 1, *pMaxHeight);
 		settings->MonitorDefArray[0].orig_screen = current_monitor;
-
 		nmonitors = 1;
 	}
 
@@ -274,7 +279,8 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 		int vR = vX + settings->MonitorDefArray[0].width;
 		int vB = vY + settings->MonitorDefArray[0].height;
 		xfc->fullscreenMonitors.top = xfc->fullscreenMonitors.bottom =
-		xfc->fullscreenMonitors.left = xfc->fullscreenMonitors.right = settings->MonitorDefArray[0].orig_screen;
+		                                  xfc->fullscreenMonitors.left = xfc->fullscreenMonitors.right =
+		                                          settings->MonitorDefArray[0].orig_screen;
 
 		/* Calculate bounding rectangle around all monitors to be used AND
 		 * also set the Xinerama indices which define left/top/right/bottom monitors.
@@ -284,15 +290,20 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 			/* does the same as gdk_rectangle_union */
 			int destX = MIN(vX, settings->MonitorDefArray[i].x);
 			int destY = MIN(vY, settings->MonitorDefArray[i].y);
-			int destR = MAX(vR, settings->MonitorDefArray[i].x + settings->MonitorDefArray[i].width);
-			int destB = MAX(vB, settings->MonitorDefArray[i].y + settings->MonitorDefArray[i].height);
+			int destR = MAX(vR, settings->MonitorDefArray[i].x +
+			                settings->MonitorDefArray[i].width);
+			int destB = MAX(vB, settings->MonitorDefArray[i].y +
+			                settings->MonitorDefArray[i].height);
 
 			if (vX != destX)
 				xfc->fullscreenMonitors.left = settings->MonitorDefArray[i].orig_screen;
+
 			if (vY != destY)
 				xfc->fullscreenMonitors.top = settings->MonitorDefArray[i].orig_screen;
+
 			if (vR != destR)
 				xfc->fullscreenMonitors.right = settings->MonitorDefArray[i].orig_screen;
+
 			if (vB != destB)
 				xfc->fullscreenMonitors.bottom = settings->MonitorDefArray[i].orig_screen;
 
@@ -304,7 +315,6 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 
 		settings->DesktopPosX = vX;
 		settings->DesktopPosY = vY;
-
 		vscreen->area.left = 0;
 		vscreen->area.right = vR - vX - 1;
 		vscreen->area.top = 0;
@@ -318,11 +328,12 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 
 		/* If there are multiple monitors and we have not selected a primary */
 		if (!primaryMonitorFound)
-		{       
+		{
 			/* First lets try to see if there is a monitor with a 0,0 coordinate */
-			for (i=0; i<settings->MonitorCount; i++)
+			for (i = 0; i < settings->MonitorCount; i++)
 			{
-				if (!primaryMonitorFound && settings->MonitorDefArray[i].x == 0 && settings->MonitorDefArray[i].y == 0)
+				if (!primaryMonitorFound && settings->MonitorDefArray[i].x == 0
+				    && settings->MonitorDefArray[i].y == 0)
 				{
 					settings->MonitorDefArray[i].is_primary = TRUE;
 					settings->MonitorLocalShiftX = settings->MonitorDefArray[i].x;
@@ -341,16 +352,18 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 			}
 		}
 
-		/* Subtract monitor shift from monitor variables for server-side use. 
+		/* Subtract monitor shift from monitor variables for server-side use.
 		 * We maintain monitor shift value as Window requires the primary monitor to have a coordinate of 0,0
 		 * In some X configurations, no monitor may have a coordinate of 0,0. This can also be happen if the user
 		 * requests specific monitors from the command-line as well. So, we make sure to translate our primary monitor's
 		 * upper-left corner to 0,0 on the server.
 		 */
-		for (i=0; i < settings->MonitorCount; i++)
+		for (i = 0; i < settings->MonitorCount; i++)
 		{
-			settings->MonitorDefArray[i].x = settings->MonitorDefArray[i].x - settings->MonitorLocalShiftX;
-			settings->MonitorDefArray[i].y = settings->MonitorDefArray[i].y - settings->MonitorLocalShiftY;
+			settings->MonitorDefArray[i].x = settings->MonitorDefArray[i].x -
+			                                 settings->MonitorLocalShiftX;
+			settings->MonitorDefArray[i].y = settings->MonitorDefArray[i].y -
+			                                 settings->MonitorLocalShiftY;
 		}
 
 		/* Set the desktop width and height according to the bounding rectangle around the active monitors */

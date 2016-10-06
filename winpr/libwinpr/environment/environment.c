@@ -24,6 +24,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/platform.h>
 #include <winpr/error.h>
 
 #include <winpr/environment.h>

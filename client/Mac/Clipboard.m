@@ -338,17 +338,8 @@ UINT mac_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr, CLIP
 		formatId = format->formatId;
 	
 	size = formatDataResponse->dataLen;
-	data = (BYTE*) malloc(size);
 	
-	if (!data)
-	{
-		SetEvent(mfc->clipboardRequestEvent);
-		return CHANNEL_RC_NO_MEMORY;
-	}
-	
-	CopyMemory(data, formatDataResponse->requestedFormatData, size);
-	
-	ClipboardSetData(mfc->clipboard, formatId, data, size);
+	ClipboardSetData(mfc->clipboard, formatId, formatDataResponse->requestedFormatData, size);
 	
 	SetEvent(mfc->clipboardRequestEvent);
 	

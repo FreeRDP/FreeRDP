@@ -77,71 +77,100 @@
 #define FDServer					0x00000002
 #define FDOutProxy					0x00000003
 
-void rts_generate_cookie(BYTE* cookie);
+FREERDP_LOCAL void rts_generate_cookie(BYTE* cookie);
 
-int rts_command_length(rdpRpc* rpc, UINT32 CommandType, BYTE* buffer, UINT32 length);
-int rts_recv_pdu_commands(rdpRpc* rpc, rpcconn_rts_hdr_t* rts);
+FREERDP_LOCAL int rts_command_length(rdpRpc* rpc, UINT32 CommandType,
+                                     BYTE* buffer, UINT32 length);
+FREERDP_LOCAL int rts_recv_pdu_commands(rdpRpc* rpc, rpcconn_rts_hdr_t* rts);
 
-int rts_receive_window_size_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length, UINT32* ReceiveWindowSize);
-int rts_receive_window_size_command_write(BYTE* buffer, UINT32 ReceiveWindowSize);
+FREERDP_LOCAL int rts_receive_window_size_command_read(rdpRpc* rpc,
+        BYTE* buffer, UINT32 length, UINT32* ReceiveWindowSize);
+FREERDP_LOCAL int rts_receive_window_size_command_write(BYTE* buffer,
+        UINT32 ReceiveWindowSize);
 
-int rts_flow_control_ack_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length,
-		UINT32* BytesReceived, UINT32* AvailableWindow, BYTE* ChannelCookie);
-int rts_flow_control_ack_command_write(BYTE* buffer, UINT32 BytesReceived, UINT32 AvailableWindow, BYTE* ChannelCookie);
+FREERDP_LOCAL int rts_flow_control_ack_command_read(rdpRpc* rpc, BYTE* buffer,
+        UINT32 length,
+        UINT32* BytesReceived, UINT32* AvailableWindow, BYTE* ChannelCookie);
+FREERDP_LOCAL int rts_flow_control_ack_command_write(BYTE* buffer,
+        UINT32 BytesReceived, UINT32 AvailableWindow, BYTE* ChannelCookie);
 
-int rts_connection_timeout_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length, UINT32* ConnectionTimeout);
-int rts_connection_timeout_command_write(BYTE* buffer, UINT32 ConnectionTimeout);
+FREERDP_LOCAL int rts_connection_timeout_command_read(rdpRpc* rpc, BYTE* buffer,
+        UINT32 length, UINT32* ConnectionTimeout);
+FREERDP_LOCAL int rts_connection_timeout_command_write(BYTE* buffer,
+        UINT32 ConnectionTimeout);
 
-int rts_cookie_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length);
-int rts_cookie_command_write(BYTE* buffer, BYTE* Cookie);
+FREERDP_LOCAL int rts_cookie_command_read(rdpRpc* rpc, BYTE* buffer,
+        UINT32 length);
+FREERDP_LOCAL int rts_cookie_command_write(BYTE* buffer, BYTE* Cookie);
 
-int rts_channel_lifetime_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length);
-int rts_channel_lifetime_command_write(BYTE* buffer, UINT32 ChannelLifetime);
+FREERDP_LOCAL int rts_channel_lifetime_command_read(rdpRpc* rpc, BYTE* buffer,
+        UINT32 length);
+FREERDP_LOCAL int rts_channel_lifetime_command_write(BYTE* buffer,
+        UINT32 ChannelLifetime);
 
-int rts_client_keepalive_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length);
-int rts_client_keepalive_command_write(BYTE* buffer, UINT32 ClientKeepalive);
+FREERDP_LOCAL int rts_client_keepalive_command_read(rdpRpc* rpc, BYTE* buffer,
+        UINT32 length);
+FREERDP_LOCAL int rts_client_keepalive_command_write(BYTE* buffer,
+        UINT32 ClientKeepalive);
 
-int rts_version_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length);
-int rts_version_command_write(BYTE* buffer);
+FREERDP_LOCAL int rts_version_command_read(rdpRpc* rpc, BYTE* buffer,
+        UINT32 length);
+FREERDP_LOCAL int rts_version_command_write(BYTE* buffer);
 
-int rts_empty_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length);
-int rts_empty_command_write(BYTE* buffer);
+FREERDP_LOCAL int rts_empty_command_read(rdpRpc* rpc, BYTE* buffer,
+        UINT32 length);
+FREERDP_LOCAL int rts_empty_command_write(BYTE* buffer);
 
-int rts_padding_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length);
-int rts_padding_command_write(BYTE* buffer, UINT32 ConformanceCount);
+FREERDP_LOCAL int rts_padding_command_read(rdpRpc* rpc, BYTE* buffer,
+        UINT32 length);
+FREERDP_LOCAL int rts_padding_command_write(BYTE* buffer,
+        UINT32 ConformanceCount);
 
-int rts_negative_ance_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length);
-int rts_negative_ance_command_write(BYTE* buffer);
+FREERDP_LOCAL int rts_negative_ance_command_read(rdpRpc* rpc, BYTE* buffer,
+        UINT32 length);
+FREERDP_LOCAL int rts_negative_ance_command_write(BYTE* buffer);
 
-int rts_ance_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length);
-int rts_ance_command_write(BYTE* buffer);
+FREERDP_LOCAL int rts_ance_command_read(rdpRpc* rpc, BYTE* buffer,
+                                        UINT32 length);
+FREERDP_LOCAL int rts_ance_command_write(BYTE* buffer);
 
-int rts_client_address_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length);
-int rts_client_address_command_write(BYTE* buffer, UINT32 AddressType, BYTE* ClientAddress);
+FREERDP_LOCAL int rts_client_address_command_read(rdpRpc* rpc, BYTE* buffer,
+        UINT32 length);
+FREERDP_LOCAL int rts_client_address_command_write(BYTE* buffer,
+        UINT32 AddressType, BYTE* ClientAddress);
 
-int rts_association_group_id_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length);
-int rts_association_group_id_command_write(BYTE* buffer, BYTE* AssociationGroupId);
+FREERDP_LOCAL int rts_association_group_id_command_read(rdpRpc* rpc,
+        BYTE* buffer, UINT32 length);
+FREERDP_LOCAL int rts_association_group_id_command_write(BYTE* buffer,
+        BYTE* AssociationGroupId);
 
-int rts_destination_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length, UINT32* Destination);
-int rts_destination_command_write(BYTE* buffer, UINT32 Destination);
+FREERDP_LOCAL int rts_destination_command_read(rdpRpc* rpc, BYTE* buffer,
+        UINT32 length, UINT32* Destination);
+FREERDP_LOCAL int rts_destination_command_write(BYTE* buffer,
+        UINT32 Destination);
 
-int rts_ping_traffic_sent_notify_command_read(rdpRpc* rpc, BYTE* buffer, UINT32 length);
-int rts_ping_traffic_sent_notify_command_write(BYTE* buffer, UINT32 PingTrafficSent);
+FREERDP_LOCAL int rts_ping_traffic_sent_notify_command_read(rdpRpc* rpc,
+        BYTE* buffer, UINT32 length);
+FREERDP_LOCAL int rts_ping_traffic_sent_notify_command_write(BYTE* buffer,
+        UINT32 PingTrafficSent);
 
-int rts_send_CONN_A1_pdu(rdpRpc* rpc);
-int rts_recv_CONN_A3_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length);
+FREERDP_LOCAL int rts_send_CONN_A1_pdu(rdpRpc* rpc);
+FREERDP_LOCAL int rts_recv_CONN_A3_pdu(rdpRpc* rpc, BYTE* buffer,
+                                       UINT32 length);
 
-int rts_send_CONN_B1_pdu(rdpRpc* rpc);
+FREERDP_LOCAL int rts_send_CONN_B1_pdu(rdpRpc* rpc);
 
-int rts_recv_CONN_C2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length);
+FREERDP_LOCAL int rts_recv_CONN_C2_pdu(rdpRpc* rpc, BYTE* buffer,
+                                       UINT32 length);
 
-int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc);
+FREERDP_LOCAL int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc);
 
-int rts_send_keep_alive_pdu(rdpRpc* rpc);
-int rts_send_flow_control_ack_pdu(rdpRpc* rpc);
-int rts_send_ping_pdu(rdpRpc* rpc);
+FREERDP_LOCAL int rts_send_keep_alive_pdu(rdpRpc* rpc);
+FREERDP_LOCAL int rts_send_flow_control_ack_pdu(rdpRpc* rpc);
+FREERDP_LOCAL int rts_send_ping_pdu(rdpRpc* rpc);
 
-int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length);
+FREERDP_LOCAL int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer,
+        UINT32 length);
 
 #include "rts_signature.h"
 

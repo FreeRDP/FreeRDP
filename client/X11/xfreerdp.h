@@ -3,6 +3,8 @@
  * X11 Client
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 Thincast Technologies GmbH
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,20 +94,12 @@ struct xf_context
 	rdpContext context;
 	DEFINE_RDP_CLIENT_COMMON();
 
-	freerdp* instance;
-	rdpSettings* settings;
-	rdpCodecs* codecs;
-
 	GC gc;
-	int bpp;
 	int xfds;
 	int depth;
-	int sessionWidth;
-	int sessionHeight;
-	int srcBpp;
+
 	GC gc_mono;
 	BOOL invert;
-	UINT32 format;
 	Screen* screen;
 	XImage* image;
 	Pixmap primary;
@@ -131,19 +125,13 @@ struct xf_context
 	xfFullscreenMonitors fullscreenMonitors;
 	int current_desktop;
 	BOOL remote_app;
-	BOOL disconnect;
 	HANDLE mutex;
 	BOOL UseXThreads;
 	BOOL cursorHidden;
-	BYTE* palette;
-	BYTE palette_hwgdi[256 * 4];
 
 	HGDI_DC hdc;
 	UINT32 bitmap_size;
 	BYTE* bitmap_buffer;
-	BYTE* primary_buffer;
-	BOOL inGfxFrame;
-	BOOL graphicsReset;
 
 	BOOL frame_begin;
 	UINT16 frame_x1;
@@ -244,7 +232,6 @@ struct xf_context
 BOOL xf_create_window(xfContext* xfc);
 void xf_toggle_fullscreen(xfContext* xfc);
 void xf_toggle_control(xfContext* xfc);
-BOOL xf_post_connect(freerdp* instance);
 
 void xf_encomsp_init(xfContext* xfc, EncomspClientContext* encomsp);
 void xf_encomsp_uninit(xfContext* xfc, EncomspClientContext* encomsp);

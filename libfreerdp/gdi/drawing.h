@@ -1,8 +1,10 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * GDI 16bpp Internal Buffer Routines
+ * GDI Drawing Functions
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2016 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,28 +19,26 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_GDI_16BPP_H
-#define FREERDP_GDI_16BPP_H
+#ifndef FREERDP_GDI_DRAWING_H
+#define FREERDP_GDI_DRAWING_H
 
 #include <freerdp/api.h>
-#include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 
-typedef BOOL (*pLineTo_16bpp)(HGDI_DC hdc, int nXEnd, int nYEnd);
-
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
-FREERDP_API UINT16 gdi_get_color_16bpp(HGDI_DC hdc, GDI_COLOR color);
-
-FREERDP_API BOOL FillRect_16bpp(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr);
-FREERDP_API BOOL BitBlt_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc, DWORD rop);
-FREERDP_API BOOL PatBlt_16bpp(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, DWORD rop);
-FREERDP_API BOOL LineTo_16bpp(HGDI_DC hdc, int nXEnd, int nYEnd);
+FREERDP_LOCAL UINT32 gdi_GetROP2(HGDI_DC hdc);
+FREERDP_LOCAL UINT32 gdi_SetROP2(HGDI_DC hdc, int fnDrawMode);
+FREERDP_LOCAL UINT32 gdi_GetBkColor(HGDI_DC hdc);
+FREERDP_LOCAL UINT32 gdi_SetBkColor(HGDI_DC hdc, UINT32 crColor);
+FREERDP_LOCAL UINT32 gdi_GetBkMode(HGDI_DC hdc);
+FREERDP_LOCAL BOOL gdi_SetBkMode(HGDI_DC hdc, int iBkMode);
+FREERDP_LOCAL UINT32 gdi_SetTextColor(HGDI_DC hdc, UINT32 crColor);
 
 #ifdef __cplusplus
- }
+}
 #endif
 
-#endif /* FREERDP_GDI_16BPP_H */
+#endif /* FREERDP_GDI_DRAWING_H */

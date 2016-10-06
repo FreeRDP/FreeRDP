@@ -359,9 +359,7 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME *lpCreationTime,
 	int rc;
 #if defined(__APPLE__) || defined(ANDROID) || defined(__FreeBSD__)
 	struct stat buf;
-#endif
-/* OpenBSD, NetBSD and DragonflyBSD support POSIX futimens */
-#if defined(ANDROID) || defined(__FreeBSD__) || defined(__APPLE__)
+	/* OpenBSD, NetBSD and DragonflyBSD support POSIX futimens */
 	struct timeval timevals[2];
 #else
 	struct timespec times[2]; /* last access, last modification */

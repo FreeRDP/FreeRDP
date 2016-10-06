@@ -35,6 +35,7 @@
 #include <freerdp/codec/bitmap.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/nsc.h>
+#include <freerdp/gdi/gdi.h>
 
 #include "wf_client.h"
 #include "wf_graphics.h"
@@ -42,7 +43,7 @@
 
 #define TAG CLIENT_TAG("windows.gdi")
 
-const BYTE wf_rop2_table[] =
+static const BYTE wf_rop2_table[] =
 {
 	R2_BLACK,       /* 0 */
 	R2_NOTMERGEPEN, /* DPon */
@@ -62,7 +63,52 @@ const BYTE wf_rop2_table[] =
 	R2_WHITE,       /* 1 */
 };
 
-BOOL wf_set_rop2(HDC hdc, int rop2)
+static BOOL wf_decode_color(wfContext* wfc, const UINT32 srcColor,
+                            COLORREF* color, UINT32* format)
+{
+	rdpGdi* gdi;
+	rdpSettings* settings;
+	UINT32 SrcFormat, DstFormat;
+
+	if (!wfc)
+		return FALSE;
+
+	gdi = wfc->context.gdi;
+	settings = wfc->context.settings;
+
+	if (!gdi || !settings)
+		return FALSE;
+
+	SrcFormat = gdi_get_pixel_format(gdi->context->settings->ColorDepth,
+	                                 FALSE);
+
+	if (format)
+		*format = SrcFormat;
+
+	switch (GetBitsPerPixel(gdi->dstFormat))
+	{
+		case 32:
+			DstFormat = PIXEL_FORMAT_ABGR32;
+			break;
+
+		case 24:
+			DstFormat = PIXEL_FORMAT_BGR24;
+			break;
+
+		case 16:
+			DstFormat = PIXEL_FORMAT_RGB16;
+			break;
+
+		default:
+			return FALSE;
+	}
+
+	*color = ConvertColor(srcColor, SrcFormat,
+	                      DstFormat, &gdi->palette);
+	return TRUE;
+}
+
+static BOOL wf_set_rop2(HDC hdc, int rop2)
 {
 	if ((rop2 < 0x01) || (rop2 > 0x10))
 	{
@@ -71,23 +117,23 @@ BOOL wf_set_rop2(HDC hdc, int rop2)
 	}
 
 	SetROP2(hdc, wf_rop2_table[rop2 - 1]);
-
 	return TRUE;
 }
 
-wfBitmap* wf_glyph_new(wfContext* wfc, GLYPH_DATA* glyph)
+static wfBitmap* wf_glyph_new(wfContext* wfc, GLYPH_DATA* glyph)
 {
 	wfBitmap* glyph_bmp;
-	glyph_bmp = wf_image_new(wfc, glyph->cx, glyph->cy, 1, glyph->aj);
+	glyph_bmp = wf_image_new(wfc, glyph->cx, glyph->cy, PIXEL_FORMAT_MONO,
+	                         glyph->aj);
 	return glyph_bmp;
 }
 
-void wf_glyph_free(wfBitmap* glyph)
+static void wf_glyph_free(wfBitmap* glyph)
 {
 	wf_image_free(glyph);
 }
 
-BYTE* wf_glyph_convert(wfContext* wfc, int width, int height, BYTE* data)
+static BYTE* wf_glyph_convert(wfContext* wfc, int width, int height, BYTE* data)
 {
 	int indexx;
 	int indexy;
@@ -96,12 +142,11 @@ BYTE* wf_glyph_convert(wfContext* wfc, int width, int height, BYTE* data)
 	BYTE* cdata;
 	int src_bytes_per_row;
 	int dst_bytes_per_row;
-
 	src_bytes_per_row = (width + 7) / 8;
 	dst_bytes_per_row = src_bytes_per_row + (src_bytes_per_row % 2);
-	cdata = (BYTE *) malloc(dst_bytes_per_row * height);
-
+	cdata = (BYTE*) malloc(dst_bytes_per_row * height);
 	src = data;
+
 	for (indexy = 0; indexy < height; indexy++)
 	{
 		dst = cdata + indexy * dst_bytes_per_row;
@@ -118,18 +163,19 @@ BYTE* wf_glyph_convert(wfContext* wfc, int width, int height, BYTE* data)
 	return cdata;
 }
 
-HBRUSH wf_create_brush(wfContext* wfc, rdpBrush* brush, UINT32 color, int bpp)
+static HBRUSH wf_create_brush(wfContext* wfc, rdpBrush* brush, UINT32 color,
+                              UINT32 bpp)
 {
-	int i;
+	UINT32 i;
 	HBRUSH br;
 	LOGBRUSH lbr;
 	BYTE* cdata;
 	BYTE ipattern[8];
 	HBITMAP pattern = NULL;
-
 	lbr.lbStyle = brush->style;
 
-	if (lbr.lbStyle == BS_DIBPATTERN || lbr.lbStyle == BS_DIBPATTERN8X8 || lbr.lbStyle == BS_DIBPATTERNPT)
+	if (lbr.lbStyle == BS_DIBPATTERN || lbr.lbStyle == BS_DIBPATTERN8X8
+	    || lbr.lbStyle == BS_DIBPATTERNPT)
 		lbr.lbColor = DIB_RGB_COLORS;
 	else
 		lbr.lbColor = color;
@@ -138,7 +184,8 @@ HBRUSH wf_create_brush(wfContext* wfc, rdpBrush* brush, UINT32 color, int bpp)
 	{
 		if (brush->bpp > 1)
 		{
-			pattern = wf_create_dib(wfc, 8, 8, bpp, brush->data, NULL);
+			UINT32 format = gdi_get_pixel_format(bpp, FALSE);
+			pattern = wf_create_dib(wfc, 8, 8, format, brush->data, NULL);
 			lbr.lbHatch = (ULONG_PTR) pattern;
 		}
 		else
@@ -170,20 +217,30 @@ HBRUSH wf_create_brush(wfContext* wfc, rdpBrush* brush, UINT32 color, int bpp)
 	return br;
 }
 
-void wf_scale_rect(wfContext* wfc, RECT* source)
+static BOOL wf_scale_rect(wfContext* wfc, RECT* source)
 {
-	int ww, wh, dw, dh;
+	UINT32 ww, wh, dw, dh;
+	rdpSettings* settings;
+
+	if (!wfc || !source || !wfc->context.settings)
+		return FALSE;
+
+	settings = wfc->context.settings;
+
+	if (!settings)
+		return FALSE;
+
+	dw = settings->DesktopWidth;
+	dh = settings->DesktopHeight;
 
 	if (!wfc->client_width)
-		wfc->client_width = wfc->width;
+		wfc->client_width = dw;
 
 	if (!wfc->client_height)
-		wfc->client_height = wfc->height;
+		wfc->client_height = dh;
 
 	ww = wfc->client_width;
 	wh = wfc->client_height;
-	dw = wfc->instance->settings->DesktopWidth;
-	dh = wfc->instance->settings->DesktopHeight;
 
 	if (!ww)
 		ww = dw;
@@ -191,7 +248,7 @@ void wf_scale_rect(wfContext* wfc, RECT* source)
 	if (!wh)
 		wh = dh;
 
-	if (wfc->instance->settings->SmartSizing && (ww != dw || wh != dh))
+	if (wfc->context.settings->SmartSizing && (ww != dw || wh != dh))
 	{
 		source->bottom = source->bottom * wh / dh + 20;
 		source->top = source->top * wh / dh - 20;
@@ -203,52 +260,61 @@ void wf_scale_rect(wfContext* wfc, RECT* source)
 	source->top -= wfc->yCurrentScroll;
 	source->left -= wfc->xCurrentScroll;
 	source->right -= wfc->xCurrentScroll;
+	return TRUE;
 }
 
-void wf_invalidate_region(wfContext* wfc, int x, int y, int width, int height)
+void wf_invalidate_region(wfContext* wfc, UINT32 x, UINT32 y, UINT32 width,
+                          UINT32 height)
 {
 	RECT rect;
-
+	rdpGdi* gdi = wfc->context.gdi;
 	wfc->update_rect.left = x + wfc->offset_x;
 	wfc->update_rect.top = y + wfc->offset_y;
 	wfc->update_rect.right = wfc->update_rect.left + width;
 	wfc->update_rect.bottom = wfc->update_rect.top + height;
-
 	wf_scale_rect(wfc, &(wfc->update_rect));
 	InvalidateRect(wfc->hwnd, &(wfc->update_rect), FALSE);
-
 	rect.left = x;
 	rect.right = width;
 	rect.top = y;
 	rect.bottom = height;
 	wf_scale_rect(wfc, &rect);
-	gdi_InvalidateRegion(wfc->hdc, rect.left, rect.top, rect.right, rect.bottom);
+	gdi_InvalidateRegion(gdi->primary->hdc, rect.left, rect.top, rect.right,
+	                     rect.bottom);
 }
 
 void wf_update_offset(wfContext* wfc)
 {
+	rdpSettings* settings;
+	settings = wfc->context.settings;
+
 	if (wfc->fullscreen)
 	{
-		if (wfc->instance->settings->UseMultimon)
+		if (wfc->context.settings->UseMultimon)
 		{
 			int x = GetSystemMetrics(SM_XVIRTUALSCREEN);
 			int y = GetSystemMetrics(SM_YVIRTUALSCREEN);
 			int w = GetSystemMetrics(SM_CXVIRTUALSCREEN);
 			int h = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+			wfc->offset_x = (w - settings->DesktopWidth) / 2;
 
-			wfc->offset_x = (w - wfc->width) / 2;
 			if (wfc->offset_x < x)
 				wfc->offset_x = x;
-			wfc->offset_y = (h - wfc->height) / 2;
+
+			wfc->offset_y = (h - settings->DesktopHeight) / 2;
+
 			if (wfc->offset_y < y)
 				wfc->offset_y = y;
 		}
-		else 
+		else
 		{
-			wfc->offset_x = (GetSystemMetrics(SM_CXSCREEN) - wfc->width) / 2;
+			wfc->offset_x = (GetSystemMetrics(SM_CXSCREEN) - settings->DesktopWidth) / 2;
+
 			if (wfc->offset_x < 0)
 				wfc->offset_x = 0;
-			wfc->offset_y = (GetSystemMetrics(SM_CYSCREEN) - wfc->height) / 2;
+
+			wfc->offset_y = (GetSystemMetrics(SM_CYSCREEN) - settings->DesktopHeight) / 2;
+
 			if (wfc->offset_y < 0)
 				wfc->offset_y = 0;
 		}
@@ -262,56 +328,63 @@ void wf_update_offset(wfContext* wfc)
 
 void wf_resize_window(wfContext* wfc)
 {
+	rdpSettings* settings;
+	settings = wfc->context.settings;
+
 	if (wfc->fullscreen)
 	{
-		if(wfc->instance->settings->UseMultimon)
+		if (wfc->context.settings->UseMultimon)
 		{
 			int x = GetSystemMetrics(SM_XVIRTUALSCREEN);
 			int y = GetSystemMetrics(SM_YVIRTUALSCREEN);
 			int w = GetSystemMetrics(SM_CXVIRTUALSCREEN);
 			int h = GetSystemMetrics(SM_CYVIRTUALSCREEN);
-
 			SetWindowLongPtr(wfc->hwnd, GWL_STYLE, WS_POPUP);
 			SetWindowPos(wfc->hwnd, HWND_TOP, x, y, w, h, SWP_FRAMECHANGED);
 		}
 		else
 		{
 			SetWindowLongPtr(wfc->hwnd, GWL_STYLE, WS_POPUP);
-			SetWindowPos(wfc->hwnd, HWND_TOP, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), SWP_FRAMECHANGED);
+			SetWindowPos(wfc->hwnd, HWND_TOP, 0, 0, GetSystemMetrics(SM_CXSCREEN),
+			             GetSystemMetrics(SM_CYSCREEN), SWP_FRAMECHANGED);
 		}
 	}
-	else if (!wfc->instance->settings->Decorations)
-	{		
+	else if (!wfc->context.settings->Decorations)
+	{
 		SetWindowLongPtr(wfc->hwnd, GWL_STYLE, WS_CHILD);
-
 		/* Now resize to get full canvas size and room for caption and borders */
-		SetWindowPos(wfc->hwnd, HWND_TOP, 0, 0, wfc->width, wfc->height, SWP_FRAMECHANGED);
-
+		SetWindowPos(wfc->hwnd, HWND_TOP, 0, 0, settings->DesktopWidth,
+		             settings->DesktopHeight, SWP_FRAMECHANGED);
 		wf_update_canvas_diff(wfc);
-		SetWindowPos(wfc->hwnd, HWND_TOP, -1, -1, wfc->width + wfc->diff.x, wfc->height + wfc->diff.y, SWP_NOMOVE | SWP_FRAMECHANGED);
+		SetWindowPos(wfc->hwnd, HWND_TOP, -1, -1, settings->DesktopWidth + wfc->diff.x,
+		             settings->DesktopHeight + wfc->diff.y, SWP_NOMOVE | SWP_FRAMECHANGED);
 	}
 	else
 	{
-		SetWindowLongPtr(wfc->hwnd, GWL_STYLE, WS_CAPTION | WS_OVERLAPPED | WS_SYSMENU | WS_MINIMIZEBOX | WS_SIZEBOX | WS_MAXIMIZEBOX);
+		SetWindowLongPtr(wfc->hwnd, GWL_STYLE,
+		                 WS_CAPTION | WS_OVERLAPPED | WS_SYSMENU | WS_MINIMIZEBOX | WS_SIZEBOX |
+		                 WS_MAXIMIZEBOX);
 
 		if (!wfc->client_height)
-			wfc->client_height = wfc->height;
+			wfc->client_height = settings->DesktopHeight;
 
 		if (!wfc->client_width)
-			wfc->client_width = wfc->width;
+			wfc->client_width = settings->DesktopWidth;
 
 		if (!wfc->client_x)
 			wfc->client_x = 10;
 
 		if (!wfc->client_y)
 			wfc->client_y = 10;
-		
-		wf_update_canvas_diff(wfc);
 
+		wf_update_canvas_diff(wfc);
 		/* Now resize to get full canvas size and room for caption and borders */
-		SetWindowPos(wfc->hwnd, HWND_TOP, wfc->client_x, wfc->client_y, wfc->client_width + wfc->diff.x, wfc->client_height + wfc->diff.y, 0 /*SWP_FRAMECHANGED*/);
+		SetWindowPos(wfc->hwnd, HWND_TOP, wfc->client_x, wfc->client_y,
+		             wfc->client_width + wfc->diff.x, wfc->client_height + wfc->diff.y,
+		             0 /*SWP_FRAMECHANGED*/);
 		//wf_size_scrollbars(wfc,  wfc->client_width, wfc->client_height);
 	}
+
 	wf_update_offset(wfc);
 }
 
@@ -342,118 +415,10 @@ void wf_toggle_fullscreen(wfContext* wfc)
 	}
 }
 
-BOOL wf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
+static BOOL wf_gdi_palette_update(rdpContext* context,
+                                  const PALETTE_UPDATE* palette)
 {
-	HDC hdc;
-	int status;
-	int nXDst;
-	int nYDst;
-	int nXSrc;
-	int nYSrc;
-	int nWidth;
-	int nHeight;
-	HBITMAP dib;
-	UINT32 index;
-	BYTE* pSrcData;
-	BYTE* pDstData;
-	UINT32 SrcSize;
-	BOOL compressed;
-	UINT32 SrcFormat;
-	UINT32 bitsPerPixel;
-	UINT32 bytesPerPixel;
-	BITMAP_DATA* bitmap;
-	rdpCodecs* codecs = context->codecs;
-	wfContext* wfc = (wfContext*) context;
-
-	hdc = CreateCompatibleDC(GetDC(NULL));
-	if (!hdc)
-		return FALSE;
-
-	for (index = 0; index < bitmapUpdate->number; index++)
-	{
-		bitmap = &(bitmapUpdate->rectangles[index]);
-
-		nXSrc = 0;
-		nYSrc = 0;
-
-		nXDst = bitmap->destLeft;
-		nYDst = bitmap->destTop;
-
-		nWidth = bitmap->width;
-		nHeight = bitmap->height;
-
-		pSrcData = bitmap->bitmapDataStream;
-		SrcSize = bitmap->bitmapLength;
-
-		compressed = bitmap->compressed;
-		bitsPerPixel = bitmap->bitsPerPixel;
-		bytesPerPixel = (bitsPerPixel + 7) / 8;
-
-		SrcFormat = gdi_get_pixel_format(bitsPerPixel, TRUE);
-
-		if (wfc->bitmap_size < (UINT32) (nWidth * nHeight * 4))
-		{
-			wfc->bitmap_size = nWidth * nHeight * 4;
-			wfc->bitmap_buffer = (BYTE*) _aligned_realloc(wfc->bitmap_buffer, wfc->bitmap_size, 16);
-
-			if (!wfc->bitmap_buffer)
-				return FALSE;
-		}
-
-		if (compressed)
-		{
-			pDstData = wfc->bitmap_buffer;
-
-			if (bitsPerPixel < 32)
-			{
-				if (!freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_INTERLEAVED,
-												   wfc->instance->settings->DesktopWidth,
-												   wfc->instance->settings->DesktopHeight))
-					return FALSE;
-
-				status = interleaved_decompress(codecs->interleaved, pSrcData, SrcSize, bitsPerPixel,
-						&pDstData, PIXEL_FORMAT_XRGB32, nWidth * 4, 0, 0, nWidth, nHeight, NULL);
-			}
-			else
-			{
-				if (!freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_PLANAR,
-												   wfc->instance->settings->DesktopWidth,
-												   wfc->instance->settings->DesktopHeight))
-					return FALSE;
-
-				status = planar_decompress(codecs->planar, pSrcData, SrcSize, &pDstData,
-						PIXEL_FORMAT_XRGB32, nWidth * 4, 0, 0, nWidth, nHeight, TRUE);
-			}
-
-			if (status < 0)
-			{
-				WLog_ERR(TAG, "bitmap decompression failure");
-				return FALSE;
-			}
-
-			pSrcData = wfc->bitmap_buffer;
-		}
-
-		dib = wf_create_dib(wfc, nWidth, nHeight, 32, pSrcData, NULL);
-		SelectObject(hdc, dib);
-
-		nWidth = bitmap->destRight - bitmap->destLeft + 1; /* clip width */
-		nHeight = bitmap->destBottom - bitmap->destTop + 1; /* clip height */
-
-		BitBlt(wfc->primary->hdc, nXDst, nYDst, nWidth, nHeight, hdc, 0, 0, SRCCOPY);
-
-		gdi_InvalidateRegion(wfc->hdc, nXDst, nYDst, nWidth, nHeight);
-
-		DeleteObject(dib);
-	}
-
-	ReleaseDC(NULL, hdc);
 	return TRUE;
-}
-
-void wf_gdi_palette_update(wfContext* wfc, PALETTE_UPDATE* palette)
-{
-
 }
 
 void wf_set_null_clip_rgn(wfContext* wfc)
@@ -469,32 +434,44 @@ void wf_set_clip_rgn(wfContext* wfc, int x, int y, int width, int height)
 	DeleteObject(clip);
 }
 
-void wf_gdi_set_bounds(wfContext* wfc, rdpBounds* bounds)
+static BOOL wf_gdi_set_bounds(rdpContext* context, const rdpBounds* bounds)
 {
 	HRGN hrgn;
+	wfContext* wfc = (wfContext*)context;
+
+	if (!context || !bounds)
+		return FALSE;
 
 	if (bounds != NULL)
 	{
-		hrgn = CreateRectRgn(bounds->left, bounds->top, bounds->right + 1, bounds->bottom + 1);
+		hrgn = CreateRectRgn(bounds->left, bounds->top, bounds->right + 1,
+		                     bounds->bottom + 1);
 		SelectClipRgn(wfc->drawing->hdc, hrgn);
 		DeleteObject(hrgn);
 	}
 	else
-	{
 		SelectClipRgn(wfc->drawing->hdc, NULL);
-	}
+
+	return TRUE;
 }
 
-void wf_gdi_dstblt(wfContext* wfc, DSTBLT_ORDER* dstblt)
+static BOOL wf_gdi_dstblt(rdpContext* context, const DSTBLT_ORDER* dstblt)
 {
-	BitBlt(wfc->drawing->hdc, dstblt->nLeftRect, dstblt->nTopRect,
-			dstblt->nWidth, dstblt->nHeight, NULL, 0, 0, gdi_rop3_code(dstblt->bRop));
+	wfContext* wfc = (wfContext*)context;
+
+	if (!context || !dstblt)
+		return FALSE;
+
+	if (!BitBlt(wfc->drawing->hdc, dstblt->nLeftRect, dstblt->nTopRect,
+	            dstblt->nWidth, dstblt->nHeight, NULL, 0, 0, gdi_rop3_code(dstblt->bRop)))
+		return FALSE;
 
 	wf_invalidate_region(wfc, dstblt->nLeftRect, dstblt->nTopRect,
-			dstblt->nWidth, dstblt->nHeight);
+	                     dstblt->nWidth, dstblt->nHeight);
+	return TRUE;
 }
 
-void wf_gdi_patblt(wfContext* wfc, PATBLT_ORDER* patblt)
+static BOOL wf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
 	HBRUSH brush;
 	HBRUSH org_brush;
@@ -503,47 +480,69 @@ void wf_gdi_patblt(wfContext* wfc, PATBLT_ORDER* patblt)
 	UINT32 bgcolor;
 	COLORREF org_bkcolor;
 	COLORREF org_textcolor;
+	BOOL rc;
+	wfContext* wfc = (wfContext*)context;
 
-	fgcolor = freerdp_color_convert_bgr(patblt->foreColor, wfc->srcBpp, wfc->dstBpp, wfc->clrconv);
-	bgcolor = freerdp_color_convert_bgr(patblt->backColor, wfc->srcBpp, wfc->dstBpp, wfc->clrconv);
+	if (!context || !patblt)
+		return FALSE;
 
-	brush = wf_create_brush(wfc, &patblt->brush, fgcolor, wfc->srcBpp);
+	if (!wf_decode_color(wfc, patblt->foreColor, &fgcolor, NULL))
+		return FALSE;
+
+	if (!wf_decode_color(wfc, patblt->backColor, &bgcolor, NULL))
+		return FALSE;
+
+	brush = wf_create_brush(wfc, &patblt->brush, fgcolor,
+	                        context->settings->ColorDepth);
 	org_bkmode = SetBkMode(wfc->drawing->hdc, OPAQUE);
 	org_bkcolor = SetBkColor(wfc->drawing->hdc, bgcolor);
 	org_textcolor = SetTextColor(wfc->drawing->hdc, fgcolor);
 	org_brush = (HBRUSH)SelectObject(wfc->drawing->hdc, brush);
-
-	PatBlt(wfc->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
-		patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop));
-
+	rc = PatBlt(wfc->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
+	            patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop));
 	SelectObject(wfc->drawing->hdc, org_brush);
 	DeleteObject(brush);
-
 	SetBkMode(wfc->drawing->hdc, org_bkmode);
 	SetBkColor(wfc->drawing->hdc, org_bkcolor);
 	SetTextColor(wfc->drawing->hdc, org_textcolor);
 
 	if (wfc->drawing == wfc->primary)
-		wf_invalidate_region(wfc, patblt->nLeftRect, patblt->nTopRect, patblt->nWidth, patblt->nHeight);
+		wf_invalidate_region(wfc, patblt->nLeftRect, patblt->nTopRect, patblt->nWidth,
+		                     patblt->nHeight);
+
+	return rc;
 }
 
-void wf_gdi_scrblt(wfContext* wfc, SCRBLT_ORDER* scrblt)
+static BOOL wf_gdi_scrblt(rdpContext* context, const SCRBLT_ORDER* scrblt)
 {
-	BitBlt(wfc->drawing->hdc, scrblt->nLeftRect, scrblt->nTopRect,
-			scrblt->nWidth, scrblt->nHeight, wfc->primary->hdc,
-			scrblt->nXSrc, scrblt->nYSrc, gdi_rop3_code(scrblt->bRop));
+	wfContext* wfc = (wfContext*)context;
+
+	if (!context || !scrblt || !wfc->drawing)
+		return FALSE;
+
+	if (!BitBlt(wfc->drawing->hdc, scrblt->nLeftRect, scrblt->nTopRect,
+	            scrblt->nWidth, scrblt->nHeight, wfc->primary->hdc,
+	            scrblt->nXSrc, scrblt->nYSrc, gdi_rop3_code(scrblt->bRop)))
+		return FALSE;
 
 	wf_invalidate_region(wfc, scrblt->nLeftRect, scrblt->nTopRect,
-			scrblt->nWidth, scrblt->nHeight);
+	                     scrblt->nWidth, scrblt->nHeight);
+	return TRUE;
 }
 
-void wf_gdi_opaque_rect(wfContext* wfc, OPAQUE_RECT_ORDER* opaque_rect)
+static BOOL wf_gdi_opaque_rect(rdpContext* context,
+                               const OPAQUE_RECT_ORDER* opaque_rect)
 {
 	RECT rect;
 	HBRUSH brush;
 	UINT32 brush_color;
+	wfContext* wfc = (wfContext*)context;
 
-	brush_color = freerdp_color_convert_var_bgr(opaque_rect->color, wfc->srcBpp, wfc->dstBpp, wfc->clrconv);
+	if (!context || !opaque_rect)
+		return FALSE;
+
+	if (!wf_decode_color(wfc, opaque_rect->color, &brush_color, NULL))
+		return FALSE;
 
 	rect.left = opaque_rect->nLeftRect;
 	rect.top = opaque_rect->nTopRect;
@@ -554,75 +553,95 @@ void wf_gdi_opaque_rect(wfContext* wfc, OPAQUE_RECT_ORDER* opaque_rect)
 	DeleteObject(brush);
 
 	if (wfc->drawing == wfc->primary)
-		wf_invalidate_region(wfc, rect.left, rect.top, rect.right - rect.left + 1, rect.bottom - rect.top + 1);
+		wf_invalidate_region(wfc, rect.left, rect.top, rect.right - rect.left + 1,
+		                     rect.bottom - rect.top + 1);
+
+	return TRUE;
 }
 
-void wf_gdi_multi_opaque_rect(wfContext* wfc, MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect)
+static BOOL wf_gdi_multi_opaque_rect(rdpContext* context,
+                                     const MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect)
 {
-	int i;
+	UINT32 i;
 	RECT rect;
 	HBRUSH brush;
 	UINT32 brush_color;
-	DELTA_RECT* rectangle;
+	wfContext* wfc = (wfContext*)context;
 
-	brush_color = freerdp_color_convert_var_rgb(multi_opaque_rect->color, wfc->srcBpp, wfc->dstBpp, wfc->clrconv);
+	if (!context || !multi_opaque_rect)
+		return FALSE;
 
-	for (i = 1; i < (int) multi_opaque_rect->numRectangles + 1; i++)
+	if (!wf_decode_color(wfc, multi_opaque_rect->color, &brush_color,
+	                     NULL))
+		return FALSE;
+
+	for (i = 0; i < multi_opaque_rect->numRectangles; i++)
 	{
-		rectangle = &multi_opaque_rect->rectangles[i];
-
+		const DELTA_RECT* rectangle = &multi_opaque_rect->rectangles[i];
 		rect.left = rectangle->left;
 		rect.top = rectangle->top;
 		rect.right = rectangle->left + rectangle->width;
 		rect.bottom = rectangle->top + rectangle->height;
 		brush = CreateSolidBrush(brush_color);
-
 		FillRect(wfc->drawing->hdc, &rect, brush);
 
 		if (wfc->drawing == wfc->primary)
-			wf_invalidate_region(wfc, rect.left, rect.top, rect.right - rect.left + 1, rect.bottom - rect.top + 1);
+			wf_invalidate_region(wfc, rect.left, rect.top, rect.right - rect.left + 1,
+			                     rect.bottom - rect.top + 1);
 
 		DeleteObject(brush);
 	}
+
+	return TRUE;
 }
 
-void wf_gdi_line_to(wfContext* wfc, LINE_TO_ORDER* line_to)
+static BOOL wf_gdi_line_to(rdpContext* context, const LINE_TO_ORDER* line_to)
 {
 	HPEN pen;
 	HPEN org_pen;
 	int x, y, w, h;
 	UINT32 pen_color;
+	wfContext* wfc = (wfContext*)context;
 
-	pen_color = freerdp_color_convert_var_bgr(line_to->penColor, wfc->srcBpp, wfc->dstBpp, wfc->clrconv);
+	if (!context || !line_to)
+		return FALSE;
+
+	if (!wf_decode_color(wfc, line_to->penColor, &pen_color, NULL))
+		return FALSE;
 
 	pen = CreatePen(line_to->penStyle, line_to->penWidth, pen_color);
-
 	wf_set_rop2(wfc->drawing->hdc, line_to->bRop2);
 	org_pen = (HPEN) SelectObject(wfc->drawing->hdc, pen);
-
 	MoveToEx(wfc->drawing->hdc, line_to->nXStart, line_to->nYStart, NULL);
 	LineTo(wfc->drawing->hdc, line_to->nXEnd, line_to->nYEnd);
-
 	x = (line_to->nXStart < line_to->nXEnd) ? line_to->nXStart : line_to->nXEnd;
 	y = (line_to->nYStart < line_to->nYEnd) ? line_to->nYStart : line_to->nYEnd;
-	w = (line_to->nXStart < line_to->nXEnd) ? (line_to->nXEnd - line_to->nXStart) : (line_to->nXStart - line_to->nXEnd);
-	h = (line_to->nYStart < line_to->nYEnd) ? (line_to->nYEnd - line_to->nYStart) : (line_to->nYStart - line_to->nYEnd);
+	w = (line_to->nXStart < line_to->nXEnd) ? (line_to->nXEnd - line_to->nXStart)
+	    : (line_to->nXStart - line_to->nXEnd);
+	h = (line_to->nYStart < line_to->nYEnd) ? (line_to->nYEnd - line_to->nYStart)
+	    : (line_to->nYStart - line_to->nYEnd);
 
 	if (wfc->drawing == wfc->primary)
 		wf_invalidate_region(wfc, x, y, w, h);
 
 	SelectObject(wfc->drawing->hdc, org_pen);
 	DeleteObject(pen);
+	return TRUE;
 }
 
-void wf_gdi_polyline(wfContext* wfc, POLYLINE_ORDER* polyline)
+static BOOL wf_gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 {
 	int org_rop2;
 	HPEN hpen;
 	HPEN org_hpen;
 	UINT32 pen_color;
+	wfContext* wfc = (wfContext*)context;
 
-	pen_color = freerdp_color_convert_var_bgr(polyline->penColor, wfc->srcBpp, wfc->dstBpp, wfc->clrconv);
+	if (!context || !polyline)
+		return FALSE;
+
+	if (!wf_decode_color(wfc, polyline->penColor, &pen_color, NULL))
+		return FALSE;
 
 	hpen = CreatePen(0, 1, pen_color);
 	org_rop2 = wf_set_rop2(wfc->drawing->hdc, polyline->bRop2);
@@ -630,11 +649,10 @@ void wf_gdi_polyline(wfContext* wfc, POLYLINE_ORDER* polyline)
 
 	if (polyline->numDeltaEntries > 0)
 	{
-		POINT  *pts;
+		POINT*  pts;
 		POINT  temp;
 		int    numPoints;
 		int    i;
-
 		numPoints = polyline->numDeltaEntries + 1;
 		pts = (POINT*) malloc(sizeof(POINT) * numPoints);
 		pts[0].x = temp.x = polyline->xStart;
@@ -647,8 +665,11 @@ void wf_gdi_polyline(wfContext* wfc, POLYLINE_ORDER* polyline)
 			pts[i + 1].x = temp.x;
 			pts[i + 1].y = temp.y;
 		}
+
 		if (wfc->drawing == wfc->primary)
-			wf_invalidate_region(wfc, wfc->client_x, wfc->client_y, wfc->client_width, wfc->client_height);
+			wf_invalidate_region(wfc, wfc->client_x, wfc->client_y, wfc->client_width,
+			                     wfc->client_height);
+
 		Polyline(wfc->drawing->hdc, pts, numPoints);
 		free(pts);
 	}
@@ -656,172 +677,147 @@ void wf_gdi_polyline(wfContext* wfc, POLYLINE_ORDER* polyline)
 	SelectObject(wfc->drawing->hdc, org_hpen);
 	wf_set_rop2(wfc->drawing->hdc, org_rop2);
 	DeleteObject(hpen);
+	return TRUE;
 }
 
-void wf_gdi_memblt(wfContext* wfc, MEMBLT_ORDER* memblt)
+static BOOL wf_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 {
 	wfBitmap* bitmap;
+	wfContext* wfc = (wfContext*)context;
+
+	if (!context || !memblt)
+		return FALSE;
 
 	bitmap = (wfBitmap*) memblt->bitmap;
 
-	BitBlt(wfc->drawing->hdc, memblt->nLeftRect, memblt->nTopRect,
-			memblt->nWidth, memblt->nHeight, bitmap->hdc,
-			memblt->nXSrc, memblt->nYSrc, gdi_rop3_code(memblt->bRop));
+	if (!bitmap || !wfc->drawing || !wfc->drawing->hdc)
+		return FALSE;
+
+	if (!BitBlt(wfc->drawing->hdc, memblt->nLeftRect, memblt->nTopRect,
+	            memblt->nWidth, memblt->nHeight, bitmap->hdc,
+	            memblt->nXSrc, memblt->nYSrc, gdi_rop3_code(memblt->bRop)))
+		return FALSE;
 
 	if (wfc->drawing == wfc->primary)
-		wf_invalidate_region(wfc, memblt->nLeftRect, memblt->nTopRect, memblt->nWidth, memblt->nHeight);
+		wf_invalidate_region(wfc, memblt->nLeftRect, memblt->nTopRect, memblt->nWidth,
+		                     memblt->nHeight);
+
+	return TRUE;
 }
 
-void wf_gdi_surface_bits(wfContext* wfc, SURFACE_BITS_COMMAND* surface_bits_command)
+static BOOL wf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 {
-	int i, j;
-	int tx, ty;
-	RFX_MESSAGE* message;
-	BITMAPINFO bitmap_info;
+	BOOL rc = FALSE;
+	HDC hdc;
+	wfBitmap* bitmap;
+	wfContext* wfc = (wfContext*)context;
+	COLORREF fgcolor, bgcolor, orgColor;
+	HBRUSH orgBrush = NULL, brush = NULL;
 
-	if (surface_bits_command->codecID == RDP_CODEC_ID_REMOTEFX)
+	if (!context || !mem3blt)
+		return FALSE;
+
+	bitmap = (wfBitmap*) mem3blt->bitmap;
+
+	if (!bitmap || !wfc->drawing || !wfc->drawing->hdc)
+		return FALSE;
+
+	hdc = wfc->drawing->hdc;
+
+	if (!wf_decode_color(wfc, mem3blt->foreColor, &fgcolor, NULL))
+		return FALSE;
+
+	if (!wf_decode_color(wfc, mem3blt->backColor, &bgcolor, NULL))
+		return FALSE;
+
+	orgColor = SetTextColor(hdc, fgcolor);
+
+	switch (mem3blt->brush.style)
 	{
-		if (!freerdp_client_codecs_prepare(wfc->codecs, FREERDP_CODEC_REMOTEFX,
-										   wfc->instance->settings->DesktopWidth,
-										   wfc->instance->settings->DesktopHeight))
-			return;
+		case GDI_BS_SOLID:
+			brush = CreateSolidBrush(fgcolor);
+			break;
 
-		if (!(message = rfx_process_message(wfc->codecs->rfx, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength)))
-		{
-			WLog_ERR(TAG, "Failed to process RemoteFX message");
-			return;
-		}
-
-		/* blit each tile */
-		for (i = 0; i < message->numTiles; i++)
-		{
-			tx = message->tiles[i]->x + surface_bits_command->destLeft;
-			ty = message->tiles[i]->y + surface_bits_command->destTop;
-
-			freerdp_image_convert(message->tiles[i]->data, wfc->tile->pdata, 64, 64, 32, 32, wfc->clrconv);
-
-			for (j = 0; j < message->numRects; j++)
+		case GDI_BS_HATCHED:
+		case GDI_BS_PATTERN:
 			{
-				wf_set_clip_rgn(wfc,
-					surface_bits_command->destLeft + message->rects[j].x,
-					surface_bits_command->destTop + message->rects[j].y,
-					message->rects[j].width, message->rects[j].height);
-
-				BitBlt(wfc->primary->hdc, tx, ty, 64, 64, wfc->tile->hdc, 0, 0, SRCCOPY);
+				HBITMAP bmp = CreateBitmap(8, 8, 1, mem3blt->brush.bpp, mem3blt->brush.data);
+				brush = CreatePatternBrush(bmp);
 			}
-		}
+			break;
 
-		wf_set_null_clip_rgn(wfc);
+		default:
+			goto fail;
+	}
 
-		/* invalidate regions */
-		for (i = 0; i < message->numRects; i++)
-		{
-			tx = surface_bits_command->destLeft + message->rects[i].x;
-			ty = surface_bits_command->destTop + message->rects[i].y;
-			wf_invalidate_region(wfc, tx, ty, message->rects[i].width, message->rects[i].height);
-		}
+	orgBrush = SelectObject(hdc, brush);
 
-		rfx_message_free(wfc->codecs->rfx, message);
-	}
-	else if (surface_bits_command->codecID == RDP_CODEC_ID_NSCODEC)
-	{
-		if (!freerdp_client_codecs_prepare(wfc->codecs, FREERDP_CODEC_NSCODEC,
-										   wfc->instance->settings->DesktopWidth,
-										   wfc->instance->settings->DesktopHeight))
-			return;
+	if (!BitBlt(hdc, mem3blt->nLeftRect, mem3blt->nTopRect,
+	            mem3blt->nWidth, mem3blt->nHeight, bitmap->hdc,
+	            mem3blt->nXSrc, mem3blt->nYSrc, gdi_rop3_code(mem3blt->bRop)))
+		goto fail;
 
-		nsc_process_message(wfc->codecs->nsc, surface_bits_command->bpp, surface_bits_command->width, surface_bits_command->height,
-			surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
-		ZeroMemory(&bitmap_info, sizeof(bitmap_info));
-		bitmap_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-		bitmap_info.bmiHeader.biWidth = surface_bits_command->width;
-		bitmap_info.bmiHeader.biHeight = surface_bits_command->height;
-		bitmap_info.bmiHeader.biPlanes = 1;
-		bitmap_info.bmiHeader.biBitCount = surface_bits_command->bpp;
-		bitmap_info.bmiHeader.biCompression = BI_RGB;
-		SetDIBitsToDevice(wfc->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop,
-			surface_bits_command->width, surface_bits_command->height, 0, 0, 0, surface_bits_command->height,
-			wfc->codecs->nsc->BitmapData, &bitmap_info, DIB_RGB_COLORS);
-		wf_invalidate_region(wfc, surface_bits_command->destLeft, surface_bits_command->destTop,
-			surface_bits_command->width, surface_bits_command->height);
-	}
-	else if (surface_bits_command->codecID == RDP_CODEC_ID_NONE)
-	{
-		ZeroMemory(&bitmap_info, sizeof(bitmap_info));
-		bitmap_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-		bitmap_info.bmiHeader.biWidth = surface_bits_command->width;
-		bitmap_info.bmiHeader.biHeight = surface_bits_command->height;
-		bitmap_info.bmiHeader.biPlanes = 1;
-		bitmap_info.bmiHeader.biBitCount = surface_bits_command->bpp;
-		bitmap_info.bmiHeader.biCompression = BI_RGB;
-		SetDIBitsToDevice(wfc->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop,
-			surface_bits_command->width, surface_bits_command->height, 0, 0, 0, surface_bits_command->height,
-			surface_bits_command->bitmapData, &bitmap_info, DIB_RGB_COLORS);
-		wf_invalidate_region(wfc, surface_bits_command->destLeft, surface_bits_command->destTop,
-			surface_bits_command->width, surface_bits_command->height);
-	}
-	else
-	{
-		WLog_ERR(TAG,  "Unsupported codecID %d", surface_bits_command->codecID);
-	}
+	if (wfc->drawing == wfc->primary)
+		wf_invalidate_region(wfc, mem3blt->nLeftRect, mem3blt->nTopRect,
+		                     mem3blt->nWidth,
+		                     mem3blt->nHeight);
+
+	rc = TRUE;
+fail:
+
+	if (brush)
+		SelectObject(hdc, orgBrush);
+
+	SetTextColor(hdc, orgColor);
+	return rc;
 }
 
-void wf_gdi_surface_frame_marker(wfContext* wfc, SURFACE_FRAME_MARKER* surface_frame_marker)
+static BOOL wf_gdi_surface_frame_marker(rdpContext* context,
+                                        const SURFACE_FRAME_MARKER* surface_frame_marker)
 {
-	rdpContext* context;
 	rdpSettings* settings;
 
-	context = (rdpContext*) wfc;
-	settings = wfc->instance->settings;
+	if (!context || !surface_frame_marker || !context->instance)
+		return FALSE;
 
-	if (surface_frame_marker->frameAction == SURFACECMD_FRAMEACTION_END && settings->FrameAcknowledge > 0)
+	settings = context->instance->settings;
+
+	if (!settings)
+		return FALSE;
+
+	if (surface_frame_marker->frameAction == SURFACECMD_FRAMEACTION_END
+	    && settings->FrameAcknowledge > 0)
 	{
-		IFCALL(context->instance->update->SurfaceFrameAcknowledge, context, surface_frame_marker->frameId);
+		IFCALL(context->instance->update->SurfaceFrameAcknowledge, context,
+		       surface_frame_marker->frameId);
 	}
+
+	return TRUE;
 }
 
 void wf_gdi_register_update_callbacks(rdpUpdate* update)
 {
 	rdpPrimaryUpdate* primary = update->primary;
-
-	update->Palette = (pPalette) wf_gdi_palette_update;
-	update->SetBounds = (pSetBounds) wf_gdi_set_bounds;
-
-	primary->DstBlt = (pDstBlt) wf_gdi_dstblt;
-	primary->PatBlt = (pPatBlt) wf_gdi_patblt;
-	primary->ScrBlt = (pScrBlt) wf_gdi_scrblt;
-	primary->OpaqueRect = (pOpaqueRect) wf_gdi_opaque_rect;
-	primary->DrawNineGrid = NULL;
-	primary->MultiDstBlt = NULL;
-	primary->MultiPatBlt = NULL;
-	primary->MultiScrBlt = NULL;
-	primary->MultiOpaqueRect = (pMultiOpaqueRect) wf_gdi_multi_opaque_rect;
-	primary->MultiDrawNineGrid = NULL;
-	primary->LineTo = (pLineTo) wf_gdi_line_to;
-	primary->Polyline = (pPolyline) wf_gdi_polyline;
-	primary->MemBlt = (pMemBlt) wf_gdi_memblt;
-	primary->Mem3Blt = NULL;
-	primary->SaveBitmap = NULL;
-	primary->GlyphIndex = NULL;
-	primary->FastIndex = NULL;
-	primary->FastGlyph = NULL;
-	primary->PolygonSC = NULL;
-	primary->PolygonCB = NULL;
-	primary->EllipseSC = NULL;
-	primary->EllipseCB = NULL;
-
-	update->SurfaceBits = (pSurfaceBits) wf_gdi_surface_bits;
-	update->SurfaceFrameMarker = (pSurfaceFrameMarker) wf_gdi_surface_frame_marker;
+	update->Palette = wf_gdi_palette_update;
+	update->SetBounds = wf_gdi_set_bounds;
+	primary->DstBlt = wf_gdi_dstblt;
+	primary->PatBlt = wf_gdi_patblt;
+	primary->ScrBlt = wf_gdi_scrblt;
+	primary->OpaqueRect = wf_gdi_opaque_rect;
+	primary->MultiOpaqueRect = wf_gdi_multi_opaque_rect;
+	primary->LineTo = wf_gdi_line_to;
+	primary->Polyline = wf_gdi_polyline;
+	primary->MemBlt = wf_gdi_memblt;
+	primary->Mem3Blt = wf_gdi_mem3blt;
+	update->SurfaceFrameMarker = wf_gdi_surface_frame_marker;
 }
 
 void wf_update_canvas_diff(wfContext* wfc)
 {
 	RECT rc_client, rc_wnd;
 	int dx, dy;
-
 	GetClientRect(wfc->hwnd, &rc_client);
 	GetWindowRect(wfc->hwnd, &rc_wnd);
-	
 	dx = (rc_wnd.right - rc_wnd.left) - rc_client.right;
 	dy = (rc_wnd.bottom - rc_wnd.top) - rc_client.bottom;
 

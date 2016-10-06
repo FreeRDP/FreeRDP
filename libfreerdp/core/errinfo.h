@@ -21,6 +21,7 @@
 #define __ERRINFO_H
 
 #include <freerdp/freerdp.h>
+#include <freerdp/api.h>
 
 struct _ERRINFO
 {
@@ -30,6 +31,6 @@ struct _ERRINFO
 };
 typedef struct _ERRINFO ERRINFO;
 
-void rdp_print_errinfo(UINT32 code);
+FREERDP_LOCAL void rdp_print_errinfo(UINT32 code);
 
 #endif

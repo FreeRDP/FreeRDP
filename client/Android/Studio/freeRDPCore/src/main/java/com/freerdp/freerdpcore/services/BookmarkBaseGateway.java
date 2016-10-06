@@ -321,7 +321,8 @@ public abstract class BookmarkBaseGateway
 				cursor.getInt(cursor.getColumnIndex("async_input")) == 1 ? true : false);		
 		bookmark.getDebugSettings().setAsyncUpdate(
 				cursor.getInt(cursor.getColumnIndex("async_update")) == 1 ? true : false);		
-		bookmark.getDebugSettings().setDebugLevel(cursor.getInt(cursor.getColumnIndex("debug_level")));	
+		bookmark.getDebugSettings().setDebugLevel(cursor.getString(cursor.getColumnIndex
+				("debug_level")));
 	
 		readBookmarkSpecificColumns(bookmark, cursor);
 

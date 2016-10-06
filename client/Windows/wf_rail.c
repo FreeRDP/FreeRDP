@@ -101,8 +101,8 @@ static const WINDOW_STYLE EXTENDED_WINDOW_STYLES[] =
 void PrintWindowStyles(UINT32 style)
 {
 	int i;
-	
 	WLog_INFO(TAG, "\tWindow Styles:\t{");
+
 	for (i = 0; i < ARRAYSIZE(WINDOW_STYLES); i++)
 	{
 		if (style & WINDOW_STYLES[i].style)
@@ -112,7 +112,7 @@ void PrintWindowStyles(UINT32 style)
 				if ((style & WINDOW_STYLES[i].style) != WINDOW_STYLES[i].style)
 					continue;
 			}
-			
+
 			WLog_INFO(TAG, "\t\t%s", WINDOW_STYLES[i].name);
 		}
 	}
@@ -121,24 +121,26 @@ void PrintWindowStyles(UINT32 style)
 void PrintExtendedWindowStyles(UINT32 style)
 {
 	int i;
-	
 	WLog_INFO(TAG, "\tExtended Window Styles:\t{");
+
 	for (i = 0; i < ARRAYSIZE(EXTENDED_WINDOW_STYLES); i++)
 	{
 		if (style & EXTENDED_WINDOW_STYLES[i].style)
 		{
 			if (EXTENDED_WINDOW_STYLES[i].multi)
 			{
-				if ((style & EXTENDED_WINDOW_STYLES[i].style) != EXTENDED_WINDOW_STYLES[i].style)
+				if ((style & EXTENDED_WINDOW_STYLES[i].style) !=
+				    EXTENDED_WINDOW_STYLES[i].style)
 					continue;
 			}
-			
+
 			WLog_INFO(TAG, "\t\t%s", EXTENDED_WINDOW_STYLES[i].name);
 		}
 	}
 }
 
-void PrintRailWindowState(WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* windowState)
+void PrintRailWindowState(WINDOW_ORDER_INFO* orderInfo,
+                          WINDOW_STATE_ORDER* windowState)
 {
 	if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_NEW)
 		WLog_INFO(TAG, "WindowCreate: WindowId: 0x%04X", orderInfo->windowId);
@@ -155,8 +157,7 @@ void PrintRailWindowState(WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* wind
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_STYLE)
 	{
 		WLog_INFO(TAG, "\tStyle: 0x%04X ExtendedStyle: 0x%04X",
-			windowState->style, windowState->extendedStyle);
-		
+		          windowState->style, windowState->extendedStyle);
 		PrintWindowStyles(windowState->style);
 		PrintExtendedWindowStyles(windowState->extendedStyle);
 	}
@@ -169,26 +170,23 @@ void PrintRailWindowState(WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* wind
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_TITLE)
 	{
 		char* title = NULL;
-
 		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) windowState->titleInfo.string,
-				   windowState->titleInfo.length / 2, &title, 0, NULL, NULL);
-
+		                   windowState->titleInfo.length / 2, &title, 0, NULL, NULL);
 		WLog_INFO(TAG, "\tTitleInfo: %s (length = %d)", title,
-			windowState->titleInfo.length);
-
+		          windowState->titleInfo.length);
 		free(title);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET)
 	{
 		WLog_INFO(TAG, "\tClientOffsetX: %d ClientOffsetY: %d",
-			windowState->clientOffsetX, windowState->clientOffsetY);
+		          windowState->clientOffsetX, windowState->clientOffsetY);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE)
 	{
 		WLog_INFO(TAG, "\tClientAreaWidth: %d ClientAreaHeight: %d",
-			windowState->clientAreaWidth, windowState->clientAreaHeight);
+		          windowState->clientAreaWidth, windowState->clientAreaHeight);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_RP_CONTENT)
@@ -204,56 +202,52 @@ void PrintRailWindowState(WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* wind
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET)
 	{
 		WLog_INFO(TAG, "\tWindowOffsetX: %d WindowOffsetY: %d",
-			windowState->windowOffsetX, windowState->windowOffsetY);
+		          windowState->windowOffsetX, windowState->windowOffsetY);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_CLIENT_DELTA)
 	{
 		WLog_INFO(TAG, "\tWindowClientDeltaX: %d WindowClientDeltaY: %d",
-			windowState->windowClientDeltaX, windowState->windowClientDeltaY);
+		          windowState->windowClientDeltaX, windowState->windowClientDeltaY);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE)
 	{
 		WLog_INFO(TAG, "\tWindowWidth: %d WindowHeight: %d",
-			windowState->windowWidth, windowState->windowHeight);
+		          windowState->windowWidth, windowState->windowHeight);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_RECTS)
 	{
 		UINT32 index;
 		RECTANGLE_16* rect;
-
 		WLog_INFO(TAG, "\tnumWindowRects: %d", windowState->numWindowRects);
 
 		for (index = 0; index < windowState->numWindowRects; index++)
 		{
 			rect = &windowState->windowRects[index];
-
 			WLog_INFO(TAG, "\twindowRect[%d]: left: %d top: %d right: %d bottom: %d",
-				index, rect->left, rect->top, rect->right, rect->bottom);
+			          index, rect->left, rect->top, rect->right, rect->bottom);
 		}
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_VIS_OFFSET)
 	{
 		WLog_INFO(TAG, "\tvisibileOffsetX: %d visibleOffsetY: %d",
-			windowState->visibleOffsetX, windowState->visibleOffsetY);
+		          windowState->visibleOffsetX, windowState->visibleOffsetY);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)
 	{
 		UINT32 index;
 		RECTANGLE_16* rect;
-
 		WLog_INFO(TAG, "\tnumVisibilityRects: %d", windowState->numVisibilityRects);
 
 		for (index = 0; index < windowState->numVisibilityRects; index++)
 		{
 			rect = &windowState->visibilityRects[index];
-
 			WLog_INFO(TAG, "\tvisibilityRect[%d]: left: %d top: %d right: %d bottom: %d",
-				index, rect->left, rect->top, rect->right, rect->bottom);
+			          index, rect->left, rect->top, rect->right, rect->bottom);
 		}
 	}
 
@@ -264,8 +258,8 @@ static void PrintRailIconInfo(WINDOW_ORDER_INFO* orderInfo, ICON_INFO* iconInfo)
 {
 	WLog_INFO(TAG, "ICON_INFO");
 	WLog_INFO(TAG, "{");
-
-	WLog_INFO(TAG, "\tbigIcon: %s", (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ICON_BIG) ? "true" : "false");
+	WLog_INFO(TAG, "\tbigIcon: %s",
+	          (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ICON_BIG) ? "true" : "false");
 	WLog_INFO(TAG, "\tcacheEntry; 0x%04X", iconInfo->cacheEntry);
 	WLog_INFO(TAG, "\tcacheId: 0x%04X", iconInfo->cacheId);
 	WLog_INFO(TAG, "\tbpp: %d", iconInfo->bpp);
@@ -277,11 +271,11 @@ static void PrintRailIconInfo(WINDOW_ORDER_INFO* orderInfo, ICON_INFO* iconInfo)
 	WLog_INFO(TAG, "\tcolorTable: %p", iconInfo->colorTable);
 	WLog_INFO(TAG, "\tbitsMask: %p", iconInfo->bitsMask);
 	WLog_INFO(TAG, "\tbitsColor: %p", iconInfo->bitsColor);
-
 	WLog_INFO(TAG, "}");
 }
 
-LRESULT CALLBACK wf_RailWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK wf_RailWndProc(HWND hWnd, UINT msg, WPARAM wParam,
+                                LPARAM lParam)
 {
 	HDC hDC;
 	int x, y;
@@ -295,7 +289,6 @@ LRESULT CALLBACK wf_RailWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 	rdpInput* input = NULL;
 	rdpContext* context = NULL;
 	wfRailWindow* railWindow;
-
 	railWindow = (wfRailWindow*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
 
 	if (railWindow)
@@ -315,15 +308,12 @@ LRESULT CALLBACK wf_RailWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 					return 0;
 
 				hDC = BeginPaint(hWnd, &ps);
-
 				x = ps.rcPaint.left;
 				y = ps.rcPaint.top;
 				width = ps.rcPaint.right - ps.rcPaint.left + 1;
 				height = ps.rcPaint.bottom - ps.rcPaint.top + 1;
-
 				BitBlt(hDC, x, y, width, height, wfc->primary->hdc,
-					railWindow->x + x, railWindow->y + y, SRCCOPY);
-
+				       railWindow->x + x, railWindow->y + y, SRCCOPY);
 				EndPaint(hWnd, &ps);
 			}
 			break;
@@ -417,16 +407,16 @@ LRESULT CALLBACK wf_RailWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 }
 
 #define RAIL_DISABLED_WINDOW_STYLES (WS_BORDER | WS_THICKFRAME | WS_DLGFRAME | WS_CAPTION | \
-	WS_OVERLAPPED | WS_VSCROLL | WS_HSCROLL | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX)
+                                     WS_OVERLAPPED | WS_VSCROLL | WS_HSCROLL | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX)
 #define RAIL_DISABLED_EXTENDED_WINDOW_STYLES (WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE | WS_EX_WINDOWEDGE)
 
-static BOOL wf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* windowState)
+static BOOL wf_rail_window_common(rdpContext* context,
+                                  WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* windowState)
 {
 	wfRailWindow* railWindow = NULL;
 	wfContext* wfc = (wfContext*) context;
 	RailClientContext* rail = wfc->rail;
 	UINT32 fieldFlags = orderInfo->fieldFlags;
-
 	PrintRailWindowState(orderInfo, windowState);
 
 	if (fieldFlags & WINDOW_ORDER_STATE_NEW)
@@ -434,19 +424,16 @@ static BOOL wf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 		HANDLE hInstance;
 		WCHAR* titleW = NULL;
 		WNDCLASSEX wndClassEx;
-
 		railWindow = (wfRailWindow*) calloc(1, sizeof(wfRailWindow));
 
 		if (!railWindow)
 			return FALSE;
 
 		railWindow->wfc = wfc;
-
 		railWindow->dwStyle = windowState->style;
 		railWindow->dwStyle &= ~RAIL_DISABLED_WINDOW_STYLES;
 		railWindow->dwExStyle = windowState->extendedStyle;
 		railWindow->dwExStyle &= ~RAIL_DISABLED_EXTENDED_WINDOW_STYLES;
-
 		railWindow->x = windowState->windowOffsetX;
 		railWindow->y = windowState->windowOffsetY;
 		railWindow->width = windowState->windowWidth;
@@ -465,7 +452,7 @@ static BOOL wf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 				}
 			}
 			else if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) windowState->titleInfo.string,
-				   windowState->titleInfo.length / 2, &title, 0, NULL, NULL) < 1)
+			                            windowState->titleInfo.length / 2, &title, 0, NULL, NULL) < 1)
 			{
 				WLog_ERR(TAG, "failed to convert window title");
 				/* error handled below */
@@ -486,9 +473,7 @@ static BOOL wf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 		}
 
 		ConvertToUnicode(CP_UTF8, 0, railWindow->title, -1, &titleW, 0);
-
 		hInstance = GetModuleHandle(NULL);
-
 		ZeroMemory(&wndClassEx, sizeof(WNDCLASSEX));
 		wndClassEx.cbSize = sizeof(WNDCLASSEX);
 		wndClassEx.style = 0;
@@ -502,45 +487,39 @@ static BOOL wf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 		wndClassEx.lpszClassName = _T("RdpRailWindow");
 		wndClassEx.hInstance = hInstance;
 		wndClassEx.hIconSm = NULL;
-
 		RegisterClassEx(&wndClassEx);
-
 		railWindow->hWnd = CreateWindowExW(
-				railWindow->dwExStyle, /* dwExStyle */
-				_T("RdpRailWindow"), /* lpClassName */
-				titleW, /* lpWindowName */
-				railWindow->dwStyle, /* dwStyle */
-				railWindow->x, /* x */
-				railWindow->y, /* y */
-				railWindow->width, /* nWidth */
-				railWindow->height, /* nHeight */
-				NULL, /* hWndParent */
-				NULL, /* hMenu */
-				hInstance, /* hInstance */
-				NULL /* lpParam */
-				);
-
+		                       railWindow->dwExStyle, /* dwExStyle */
+		                       _T("RdpRailWindow"), /* lpClassName */
+		                       titleW, /* lpWindowName */
+		                       railWindow->dwStyle, /* dwStyle */
+		                       railWindow->x, /* x */
+		                       railWindow->y, /* y */
+		                       railWindow->width, /* nWidth */
+		                       railWindow->height, /* nHeight */
+		                       NULL, /* hWndParent */
+		                       NULL, /* hMenu */
+		                       hInstance, /* hInstance */
+		                       NULL /* lpParam */
+		                   );
 		SetWindowLongPtr(railWindow->hWnd, GWLP_USERDATA, (LONG_PTR) railWindow);
-
-		HashTable_Add(wfc->railWindows, (void*) (UINT_PTR) orderInfo->windowId, (void*) railWindow);
-
+		HashTable_Add(wfc->railWindows, (void*)(UINT_PTR) orderInfo->windowId,
+		              (void*) railWindow);
 		free(titleW);
-
 		UpdateWindow(railWindow->hWnd);
-
 		return TRUE;
 	}
 	else
 	{
 		railWindow = (wfRailWindow*) HashTable_GetItemValue(wfc->railWindows,
-			(void*) (UINT_PTR) orderInfo->windowId);
+		             (void*)(UINT_PTR) orderInfo->windowId);
 	}
 
 	if (!railWindow)
 		return TRUE;
 
 	if ((fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET) ||
-		(fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE))
+	    (fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE))
 	{
 		if (fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET)
 		{
@@ -555,16 +534,15 @@ static BOOL wf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 		}
 
 		SetWindowPos(railWindow->hWnd, NULL,
-			railWindow->x,
-			railWindow->y,
-			railWindow->width,
-			railWindow->height,
-			0);
+		             railWindow->x,
+		             railWindow->y,
+		             railWindow->width,
+		             railWindow->height,
+		             0);
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_OWNER)
 	{
-		
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_STYLE)
@@ -573,7 +551,6 @@ static BOOL wf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 		railWindow->dwStyle &= ~RAIL_DISABLED_WINDOW_STYLES;
 		railWindow->dwExStyle = windowState->extendedStyle;
 		railWindow->dwExStyle &= ~RAIL_DISABLED_EXTENDED_WINDOW_STYLES;
-
 		SetWindowLongPtr(railWindow->hWnd, GWL_STYLE, (LONG) railWindow->dwStyle);
 		SetWindowLongPtr(railWindow->hWnd, GWL_EXSTYLE, (LONG) railWindow->dwExStyle);
 	}
@@ -597,7 +574,7 @@ static BOOL wf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 			}
 		}
 		else if (ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) windowState->titleInfo.string,
-			windowState->titleInfo.length / 2, &title, 0, NULL, NULL) < 1)
+		                            windowState->titleInfo.length / 2, &title, 0, NULL, NULL) < 1)
 		{
 			WLog_ERR(TAG, "failed to convert window title");
 			return FALSE;
@@ -605,37 +582,29 @@ static BOOL wf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 
 		free(railWindow->title);
 		railWindow->title = title;
-
 		ConvertToUnicode(CP_UTF8, 0, railWindow->title, -1, &titleW, 0);
-
 		SetWindowTextW(railWindow->hWnd, titleW);
-
 		free(titleW);
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET)
 	{
-
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE)
 	{
-
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_WND_CLIENT_DELTA)
 	{
-
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_RP_CONTENT)
 	{
-
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_ROOT_PARENT)
 	{
-
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_WND_RECTS)
@@ -665,41 +634,37 @@ static BOOL wf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_VIS_OFFSET)
 	{
-
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)
 	{
-
 	}
 
 	UpdateWindow(railWindow->hWnd);
 	return TRUE;
 }
 
-static BOOL wf_rail_window_delete(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
+static BOOL wf_rail_window_delete(rdpContext* context,
+                                  WINDOW_ORDER_INFO* orderInfo)
 {
 	wfRailWindow* railWindow = NULL;
 	wfContext* wfc = (wfContext*) context;
 	RailClientContext* rail = wfc->rail;
-
 	WLog_DBG(TAG, "RailWindowDelete");
-
 	railWindow = (wfRailWindow*) HashTable_GetItemValue(wfc->railWindows,
-			(void*) (UINT_PTR) orderInfo->windowId);
+	             (void*)(UINT_PTR) orderInfo->windowId);
 
 	if (!railWindow)
 		return TRUE;
 
-	HashTable_Remove(wfc->railWindows, (void*) (UINT_PTR) orderInfo->windowId);
-
+	HashTable_Remove(wfc->railWindows, (void*)(UINT_PTR) orderInfo->windowId);
 	DestroyWindow(railWindow->hWnd);
-
 	free(railWindow);
 	return TRUE;
 }
 
-static BOOL wf_rail_window_icon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* windowIcon)
+static BOOL wf_rail_window_icon(rdpContext* context,
+                                WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* windowIcon)
 {
 	HDC hDC;
 	int bpp;
@@ -713,32 +678,24 @@ static BOOL wf_rail_window_icon(rdpContext* context, WINDOW_ORDER_INFO* orderInf
 	BITMAPINFOHEADER* bitmapInfoHeader;
 	wfContext* wfc = (wfContext*) context;
 	RailClientContext* rail = wfc->rail;
-
 	WLog_DBG(TAG, "RailWindowIcon");
-
 	PrintRailIconInfo(orderInfo, windowIcon->iconInfo);
-
 	railWindow = (wfRailWindow*) HashTable_GetItemValue(wfc->railWindows,
-			(void*) (UINT_PTR) orderInfo->windowId);
+	             (void*)(UINT_PTR) orderInfo->windowId);
 
 	if (!railWindow)
 		return TRUE;
 
 	bigIcon = (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ICON_BIG) ? TRUE : FALSE;
-
 	hDC = GetDC(railWindow->hWnd);
-
 	iconInfo.fIcon = TRUE;
 	iconInfo.xHotspot = 0;
 	iconInfo.yHotspot = 0;
-
 	ZeroMemory(&bitmapInfo, sizeof(BITMAPINFO));
 	bitmapInfoHeader = &(bitmapInfo.bmiHeader);
-
 	bpp = windowIcon->iconInfo->bpp;
 	width = windowIcon->iconInfo->width;
 	height = windowIcon->iconInfo->height;
-
 	bitmapInfoHeader->biSize = sizeof(BITMAPINFOHEADER);
 	bitmapInfoHeader->biWidth = width;
 	bitmapInfoHeader->biHeight = height;
@@ -750,27 +707,22 @@ static BOOL wf_rail_window_icon(rdpContext* context, WINDOW_ORDER_INFO* orderInf
 	bitmapInfoHeader->biYPelsPerMeter = height;
 	bitmapInfoHeader->biClrUsed = 0;
 	bitmapInfoHeader->biClrImportant = 0;
-
 	iconInfo.hbmMask = CreateDIBitmap(hDC,
-		bitmapInfoHeader, CBM_INIT,
-		windowIcon->iconInfo->bitsMask,
-		&bitmapInfo, DIB_RGB_COLORS);
-
+	                                  bitmapInfoHeader, CBM_INIT,
+	                                  windowIcon->iconInfo->bitsMask,
+	                                  &bitmapInfo, DIB_RGB_COLORS);
 	iconInfo.hbmColor = CreateDIBitmap(hDC,
-		bitmapInfoHeader, CBM_INIT,
-		windowIcon->iconInfo->bitsColor,
-		&bitmapInfo, DIB_RGB_COLORS);
-
+	                                   bitmapInfoHeader, CBM_INIT,
+	                                   windowIcon->iconInfo->bitsColor,
+	                                   &bitmapInfo, DIB_RGB_COLORS);
 	hIcon = CreateIconIndirect(&iconInfo);
 
 	if (hIcon)
 	{
 		WPARAM wParam;
 		LPARAM lParam;
-
 		wParam = (WPARAM) bigIcon ? ICON_BIG : ICON_SMALL;
 		lParam = (LPARAM) hIcon;
-
 		SendMessage(railWindow->hWnd, WM_SETICON, wParam, lParam);
 	}
 
@@ -780,95 +732,90 @@ static BOOL wf_rail_window_icon(rdpContext* context, WINDOW_ORDER_INFO* orderInf
 	{
 		/* icon should be cached */
 	}
+
 	return TRUE;
 }
 
-static BOOL wf_rail_window_cached_icon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_CACHED_ICON_ORDER* windowCachedIcon)
+static BOOL wf_rail_window_cached_icon(rdpContext* context,
+                                       WINDOW_ORDER_INFO* orderInfo, WINDOW_CACHED_ICON_ORDER* windowCachedIcon)
 {
 	WLog_DBG(TAG, "RailWindowCachedIcon");
 	return TRUE;
 }
 
-static void wf_rail_notify_icon_common(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notifyIconState)
+static void wf_rail_notify_icon_common(rdpContext* context,
+                                       WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_VERSION)
 	{
-
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_TIP)
 	{
-
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_INFO_TIP)
 	{
-
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_NOTIFY_STATE)
 	{
-
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_ICON)
 	{
 		ICON_INFO* iconInfo = &(notifyIconState->icon);
-
 		PrintRailIconInfo(orderInfo, iconInfo);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_CACHED_ICON)
 	{
-
 	}
 }
 
-static BOOL wf_rail_notify_icon_create(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notifyIconState)
+static BOOL wf_rail_notify_icon_create(rdpContext* context,
+                                       WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
 	wfContext* wfc = (wfContext*) context;
 	RailClientContext* rail = wfc->rail;
-
 	WLog_DBG(TAG, "RailNotifyIconCreate");
-
 	wf_rail_notify_icon_common(context, orderInfo, notifyIconState);
 	return TRUE;
 }
 
-static BOOL wf_rail_notify_icon_update(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notifyIconState)
+static BOOL wf_rail_notify_icon_update(rdpContext* context,
+                                       WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
 	wfContext* wfc = (wfContext*) context;
 	RailClientContext* rail = wfc->rail;
-
 	WLog_DBG(TAG, "RailNotifyIconUpdate");
-
 	wf_rail_notify_icon_common(context, orderInfo, notifyIconState);
 	return TRUE;
 }
 
-static BOOL wf_rail_notify_icon_delete(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
+static BOOL wf_rail_notify_icon_delete(rdpContext* context,
+                                       WINDOW_ORDER_INFO* orderInfo)
 {
 	wfContext* wfc = (wfContext*) context;
 	RailClientContext* rail = wfc->rail;
-
 	WLog_DBG(TAG, "RailNotifyIconDelete");
 	return TRUE;
 }
 
-static BOOL wf_rail_monitored_desktop(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitoredDesktop)
+static BOOL wf_rail_monitored_desktop(rdpContext* context,
+                                      WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitoredDesktop)
 {
 	wfContext* wfc = (wfContext*) context;
 	RailClientContext* rail = wfc->rail;
-
 	WLog_DBG(TAG, "RailMonitorDesktop");
 	return TRUE;
 }
 
-static BOOL wf_rail_non_monitored_desktop(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
+static BOOL wf_rail_non_monitored_desktop(rdpContext* context,
+        WINDOW_ORDER_INFO* orderInfo)
 {
 	wfContext* wfc = (wfContext*) context;
 	RailClientContext* rail = wfc->rail;
-
 	WLog_DBG(TAG, "RailNonMonitorDesktop");
 	return TRUE;
 }
@@ -876,7 +823,6 @@ static BOOL wf_rail_non_monitored_desktop(rdpContext* context, WINDOW_ORDER_INFO
 void wf_rail_register_update_callbacks(rdpUpdate* update)
 {
 	rdpWindowUpdate* window = update->window;
-
 	window->WindowCreate = wf_rail_window_common;
 	window->WindowUpdate = wf_rail_window_common;
 	window->WindowDelete = wf_rail_window_delete;
@@ -896,7 +842,8 @@ void wf_rail_register_update_callbacks(rdpUpdate* update)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT wf_rail_server_execute_result(RailClientContext* context, RAIL_EXEC_RESULT_ORDER* execResult)
+static UINT wf_rail_server_execute_result(RailClientContext* context,
+        RAIL_EXEC_RESULT_ORDER* execResult)
 {
 	WLog_DBG(TAG, "RailServerExecuteResult: 0x%04X", execResult->rawResult);
 	return CHANNEL_RC_OK;
@@ -907,7 +854,8 @@ static UINT wf_rail_server_execute_result(RailClientContext* context, RAIL_EXEC_
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT wf_rail_server_system_param(RailClientContext* context, RAIL_SYSPARAM_ORDER* sysparam)
+static UINT wf_rail_server_system_param(RailClientContext* context,
+                                        RAIL_SYSPARAM_ORDER* sysparam)
 {
 	return CHANNEL_RC_OK;
 }
@@ -917,18 +865,17 @@ static UINT wf_rail_server_system_param(RailClientContext* context, RAIL_SYSPARA
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT wf_rail_server_handshake(RailClientContext* context, RAIL_HANDSHAKE_ORDER* handshake)
+static UINT wf_rail_server_handshake(RailClientContext* context,
+                                     RAIL_HANDSHAKE_ORDER* handshake)
 {
 	RAIL_EXEC_ORDER exec;
 	RAIL_SYSPARAM_ORDER sysparam;
 	RAIL_HANDSHAKE_ORDER clientHandshake;
 	RAIL_CLIENT_STATUS_ORDER clientStatus;
 	wfContext* wfc = (wfContext*) context->custom;
-	rdpSettings* settings = wfc->settings;
-
+	rdpSettings* settings = wfc->context.settings;
 	clientHandshake.buildNumber = 0x00001DB0;
 	context->ClientHandshake(context, &clientHandshake);
-
 	ZeroMemory(&clientStatus, sizeof(RAIL_CLIENT_STATUS_ORDER));
 	clientStatus.flags = RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
 	context->ClientInformation(context, &clientStatus);
@@ -941,44 +888,31 @@ static UINT wf_rail_server_handshake(RailClientContext* context, RAIL_HANDSHAKE_
 	}
 
 	ZeroMemory(&sysparam, sizeof(RAIL_SYSPARAM_ORDER));
-
 	sysparam.params = 0;
-
 	sysparam.params |= SPI_MASK_SET_HIGH_CONTRAST;
 	sysparam.highContrast.colorScheme.string = NULL;
 	sysparam.highContrast.colorScheme.length = 0;
 	sysparam.highContrast.flags = 0x7E;
-
 	sysparam.params |= SPI_MASK_SET_MOUSE_BUTTON_SWAP;
 	sysparam.mouseButtonSwap = FALSE;
-
 	sysparam.params |= SPI_MASK_SET_KEYBOARD_PREF;
 	sysparam.keyboardPref = FALSE;
-
 	sysparam.params |= SPI_MASK_SET_DRAG_FULL_WINDOWS;
 	sysparam.dragFullWindows = FALSE;
-
 	sysparam.params |= SPI_MASK_SET_KEYBOARD_CUES;
 	sysparam.keyboardCues = FALSE;
-
 	sysparam.params |= SPI_MASK_SET_WORK_AREA;
 	sysparam.workArea.left = 0;
 	sysparam.workArea.top = 0;
 	sysparam.workArea.right = settings->DesktopWidth;
 	sysparam.workArea.bottom = settings->DesktopHeight;
-
 	sysparam.dragFullWindows = FALSE;
-
 	context->ClientSystemParam(context, &sysparam);
-
 	ZeroMemory(&exec, sizeof(RAIL_EXEC_ORDER));
-
 	exec.RemoteApplicationProgram = settings->RemoteApplicationProgram;
 	exec.RemoteApplicationWorkingDir = settings->ShellWorkingDirectory;
 	exec.RemoteApplicationArguments = settings->RemoteApplicationCmdLine;
-
 	context->ClientExecute(context, &exec);
-
 	return CHANNEL_RC_OK;
 }
 
@@ -987,7 +921,8 @@ static UINT wf_rail_server_handshake(RailClientContext* context, RAIL_HANDSHAKE_
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT wf_rail_server_handshake_ex(RailClientContext* context, RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
+static UINT wf_rail_server_handshake_ex(RailClientContext* context,
+                                        RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
 {
 	return CHANNEL_RC_OK;
 }
@@ -997,7 +932,8 @@ static UINT wf_rail_server_handshake_ex(RailClientContext* context, RAIL_HANDSHA
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT wf_rail_server_local_move_size(RailClientContext* context, RAIL_LOCALMOVESIZE_ORDER* localMoveSize)
+static UINT wf_rail_server_local_move_size(RailClientContext* context,
+        RAIL_LOCALMOVESIZE_ORDER* localMoveSize)
 {
 	return CHANNEL_RC_OK;
 }
@@ -1007,7 +943,8 @@ static UINT wf_rail_server_local_move_size(RailClientContext* context, RAIL_LOCA
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT wf_rail_server_min_max_info(RailClientContext* context, RAIL_MINMAXINFO_ORDER* minMaxInfo)
+static UINT wf_rail_server_min_max_info(RailClientContext* context,
+                                        RAIL_MINMAXINFO_ORDER* minMaxInfo)
 {
 	return CHANNEL_RC_OK;
 }
@@ -1017,7 +954,8 @@ static UINT wf_rail_server_min_max_info(RailClientContext* context, RAIL_MINMAXI
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT wf_rail_server_language_bar_info(RailClientContext* context, RAIL_LANGBAR_INFO_ORDER* langBarInfo)
+static UINT wf_rail_server_language_bar_info(RailClientContext* context,
+        RAIL_LANGBAR_INFO_ORDER* langBarInfo)
 {
 	return CHANNEL_RC_OK;
 }
@@ -1027,7 +965,8 @@ static UINT wf_rail_server_language_bar_info(RailClientContext* context, RAIL_LA
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT wf_rail_server_get_appid_response(RailClientContext* context, RAIL_GET_APPID_RESP_ORDER* getAppIdResp)
+static UINT wf_rail_server_get_appid_response(RailClientContext* context,
+        RAIL_GET_APPID_RESP_ORDER* getAppIdResp)
 {
 	return CHANNEL_RC_OK;
 }
@@ -1042,14 +981,13 @@ void wf_rail_invalidate_region(wfContext* wfc, REGION16* invalidRegion)
 	wfRailWindow* railWindow;
 	const RECTANGLE_16* extents;
 	REGION16 windowInvalidRegion;
-
 	region16_init(&windowInvalidRegion);
-
 	count = HashTable_GetKeys(wfc->railWindows, &pKeys);
 
 	for (index = 0; index < count; index++)
 	{
-		railWindow = (wfRailWindow*) HashTable_GetItemValue(wfc->railWindows, (void*) pKeys[index]);
+		railWindow = (wfRailWindow*) HashTable_GetItemValue(wfc->railWindows,
+		             (void*) pKeys[index]);
 
 		if (railWindow)
 		{
@@ -1057,19 +995,16 @@ void wf_rail_invalidate_region(wfContext* wfc, REGION16* invalidRegion)
 			windowRect.top = railWindow->y;
 			windowRect.right = railWindow->x + railWindow->width;
 			windowRect.bottom = railWindow->y + railWindow->height;
-
 			region16_clear(&windowInvalidRegion);
 			region16_intersect_rect(&windowInvalidRegion, invalidRegion, &windowRect);
 
 			if (!region16_is_empty(&windowInvalidRegion))
 			{
 				extents = region16_extents(&windowInvalidRegion);
-
 				updateRect.left = extents->left - railWindow->x;
 				updateRect.top = extents->top - railWindow->y;
 				updateRect.right = extents->right - railWindow->x;
 				updateRect.bottom = extents->bottom - railWindow->y;
-
 				InvalidateRect(railWindow->hWnd, &updateRect, FALSE);
 			}
 		}
@@ -1081,10 +1016,8 @@ void wf_rail_invalidate_region(wfContext* wfc, REGION16* invalidRegion)
 BOOL wf_rail_init(wfContext* wfc, RailClientContext* rail)
 {
 	rdpContext* context = (rdpContext*) wfc;
-
 	wfc->rail = rail;
 	rail->custom = (void*) wfc;
-
 	rail->ServerExecuteResult = wf_rail_server_execute_result;
 	rail->ServerSystemParam = wf_rail_server_system_param;
 	rail->ServerHandshake = wf_rail_server_handshake;
@@ -1093,9 +1026,7 @@ BOOL wf_rail_init(wfContext* wfc, RailClientContext* rail)
 	rail->ServerMinMaxInfo = wf_rail_server_min_max_info;
 	rail->ServerLanguageBarInfo = wf_rail_server_language_bar_info;
 	rail->ServerGetAppIdResponse = wf_rail_server_get_appid_response;
-
 	wf_rail_register_update_callbacks(context->update);
-
 	wfc->railWindows = HashTable_New(TRUE);
 	return (wfc->railWindows != NULL);
 }
@@ -1104,6 +1035,5 @@ void wf_rail_uninit(wfContext* wfc, RailClientContext* rail)
 {
 	wfc->rail = NULL;
 	rail->custom = NULL;
-
 	HashTable_Free(wfc->railWindows);
 }

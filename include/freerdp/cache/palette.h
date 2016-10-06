@@ -51,9 +51,6 @@ struct rdp_palette_cache
 extern "C" {
 #endif
 
-FREERDP_API void* palette_cache_get(rdpPaletteCache* palette, UINT32 index);
-FREERDP_API void palette_cache_put(rdpPaletteCache* palette, UINT32 index, void* entry);
-
 FREERDP_API void palette_cache_register_callbacks(rdpUpdate* update);
 
 FREERDP_API rdpPaletteCache* palette_cache_new(rdpSettings* settings);

@@ -3,6 +3,8 @@
  * GDI Bitmap Functions
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2016 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,31 +26,33 @@
 #include <freerdp/gdi/gdi.h>
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
-FREERDP_API GDI_COLOR gdi_GetPixel(HGDI_DC hdc, int nXPos, int nYPos);
-FREERDP_API GDI_COLOR gdi_SetPixel(HGDI_DC hdc, int X, int Y, GDI_COLOR crColor);
-FREERDP_API BYTE gdi_GetPixel_8bpp(HGDI_BITMAP hBmp, int X, int Y);
-FREERDP_API UINT16 gdi_GetPixel_16bpp(HGDI_BITMAP hBmp, int X, int Y);
-FREERDP_API UINT32 gdi_GetPixel_32bpp(HGDI_BITMAP hBmp, int X, int Y);
-FREERDP_API BYTE* gdi_GetPointer_8bpp(HGDI_BITMAP hBmp, int X, int Y);
-FREERDP_API UINT16* gdi_GetPointer_16bpp(HGDI_BITMAP hBmp, int X, int Y);
-FREERDP_API UINT32* gdi_GetPointer_32bpp(HGDI_BITMAP hBmp, int X, int Y);
-FREERDP_API void gdi_SetPixel_8bpp(HGDI_BITMAP hBmp, int X, int Y, BYTE pixel);
-FREERDP_API void gdi_SetPixel_16bpp(HGDI_BITMAP hBmp, int X, int Y, UINT16 pixel);
-FREERDP_API void gdi_SetPixel_32bpp(HGDI_BITMAP hBmp, int X, int Y, UINT32 pixel);
-FREERDP_API HGDI_BITMAP gdi_CreateBitmap(int nWidth, int nHeight, int cBitsPerPixel,
-										BYTE* data);
-FREERDP_API HGDI_BITMAP gdi_CreateBitmapEx(int nWidth, int nHeight, int cBitsPerPixel,
-										BYTE* data, void (*fkt_free)(void*));
-FREERDP_API HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, int nWidth, int nHeight);
-FREERDP_API BOOL gdi_BitBlt(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc, DWORD rop);
+FREERDP_API UINT32 gdi_GetPixel(HGDI_DC hdc, UINT32 nXPos, UINT32 nYPos);
+FREERDP_API UINT32 gdi_SetPixel(HGDI_DC hdc, UINT32 X, UINT32 Y,
+                                UINT32 crColor);
+FREERDP_API BYTE* gdi_GetPointer(HGDI_BITMAP hBmp, UINT32 X, UINT32 Y);
 
-typedef BOOL (*p_BitBlt)(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc, DWORD rop);
+FREERDP_API HGDI_BITMAP gdi_CreateBitmap(UINT32 nWidth, UINT32 nHeight,
+        UINT32 format,	BYTE* data);
+FREERDP_API HGDI_BITMAP gdi_CreateBitmapEx(UINT32 nWidth, UINT32 nHeight,
+        UINT32 format, UINT32 stride,
+        BYTE* data, void (*fkt_free)(void*));
+FREERDP_API HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc,
+        UINT32 nWidth, UINT32 nHeight);
+
+FREERDP_API BOOL gdi_BitBlt(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
+                            UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
+                            UINT32 nXSrc, UINT32 nYSrc, DWORD rop,
+                            const gdiPalette* palette);
+
+typedef BOOL (*p_BitBlt)(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
+                         UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
+                         UINT32 nXSrc, UINT32 nYSrc, DWORD rop);
 
 #ifdef __cplusplus
- }
+}
 #endif
 
 #endif /* FREERDP_GDI_BITMAP_H */

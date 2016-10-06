@@ -80,6 +80,7 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, BYTE* data, int size)
 	while (left > 0)
 	{
 		s = rdp_send_stream_init(rdp);
+
 		if (!s)
 			return FALSE;
 
@@ -100,11 +101,13 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, BYTE* data, int size)
 
 		Stream_Write_UINT32(s, size);
 		Stream_Write_UINT32(s, flags);
+
 		if (!Stream_EnsureCapacity(s, chunkSize))
 		{
 			Stream_Release(s);
 			return FALSE;
 		}
+
 		Stream_Write(s, data, chunkSize);
 
 		if (!rdp_send(rdp, s, channelId))
@@ -133,14 +136,13 @@ BOOL freerdp_channel_process(freerdp* instance, wStream* s, UINT16 channelId)
 	Stream_Read_UINT32(s, length);
 	Stream_Read_UINT32(s, flags);
 	chunkLength = Stream_GetRemainingLength(s);
-
 	IFCALL(instance->ReceiveChannelData, instance,
-			channelId, Stream_Pointer(s), chunkLength, flags, length);
-
+	       channelId, Stream_Pointer(s), chunkLength, flags, length);
 	return TRUE;
 }
 
-BOOL freerdp_channel_peer_process(freerdp_peer* client, wStream* s, UINT16 channelId)
+BOOL freerdp_channel_peer_process(freerdp_peer* client, wStream* s,
+                                  UINT16 channelId)
 {
 	UINT32 length;
 	UINT32 flags;
@@ -177,17 +179,19 @@ BOOL freerdp_channel_peer_process(freerdp_peer* client, wStream* s, UINT16 chann
 		if (!found)
 			return FALSE;
 
-		client->VirtualChannelRead(client, hChannel, Stream_Pointer(s), Stream_GetRemainingLength(s));
+		client->VirtualChannelRead(client, hChannel, Stream_Pointer(s),
+		                           Stream_GetRemainingLength(s));
 	}
 	else if (client->ReceiveChannelData)
 	{
-		client->ReceiveChannelData(client, channelId, Stream_Pointer(s), chunkLength, flags, length);
+		client->ReceiveChannelData(client, channelId, Stream_Pointer(s), chunkLength,
+		                           flags, length);
 	}
 
 	return TRUE;
 }
 
-static WtsApiFunctionTable FreeRDP_WtsApiFunctionTable =
+static const WtsApiFunctionTable FreeRDP_WtsApiFunctionTable =
 {
 	0, /* dwVersion */
 	0, /* dwFlags */
@@ -263,5 +267,5 @@ static WtsApiFunctionTable FreeRDP_WtsApiFunctionTable =
 
 PWtsApiFunctionTable FreeRDP_InitWtsApi(void)
 {
-	return &FreeRDP_WtsApiFunctionTable;
+	return (PWtsApiFunctionTable)&FreeRDP_WtsApiFunctionTable;
 }

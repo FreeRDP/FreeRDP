@@ -28,18 +28,20 @@
 #include <xmmintrin.h>
 #include <emmintrin.h>
 
+#include <freerdp/codec/color.h>
 #include <winpr/crt.h>
 
 #include "nsc_types.h"
 #include "nsc_sse2.h"
 
-static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, BYTE* data, int scanline)
+static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context,
+        const BYTE* data, UINT32 scanline)
 {
 	UINT16 x;
 	UINT16 y;
 	UINT16 rw;
 	BYTE ccl;
-	BYTE* src;
+	const BYTE* src;
 	BYTE* yplane;
 	BYTE* coplane;
 	BYTE* cgplane;
@@ -53,7 +55,6 @@ static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, BYTE* data, int
 	__m128i cg_val;
 	UINT32 tempWidth;
 	UINT32 tempHeight;
-
 	tempWidth = ROUND_UP_TO(context->width, 8);
 	tempHeight = ROUND_UP_TO(context->height, 2);
 	rw = (context->ChromaSubsamplingLevel > 0 ? tempWidth : context->width);
@@ -75,103 +76,117 @@ static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, BYTE* data, int
 		{
 			switch (context->pixel_format)
 			{
-				case RDP_PIXEL_FORMAT_B8G8R8A8:
-					b_val = _mm_set_epi16(*(src + 28), *(src + 24), *(src + 20), *(src + 16), *(src + 12), *(src + 8), *(src + 4), *src);
-					g_val = _mm_set_epi16(*(src + 29), *(src + 25), *(src + 21), *(src + 17), *(src + 13), *(src + 9), *(src + 5), *(src + 1));
-					r_val = _mm_set_epi16(*(src + 30), *(src + 26), *(src + 22), *(src + 18), *(src + 14), *(src + 10), *(src + 6), *(src + 2));
-					a_val = _mm_set_epi16(*(src + 31), *(src + 27), *(src + 23), *(src + 19), *(src + 15), *(src + 11), *(src + 7), *(src + 3));
+				case PIXEL_FORMAT_BGRA32:
+					b_val = _mm_set_epi16(*(src + 28), *(src + 24), *(src + 20), *(src + 16),
+					                      *(src + 12), *(src + 8), *(src + 4), *src);
+					g_val = _mm_set_epi16(*(src + 29), *(src + 25), *(src + 21), *(src + 17),
+					                      *(src + 13), *(src + 9), *(src + 5), *(src + 1));
+					r_val = _mm_set_epi16(*(src + 30), *(src + 26), *(src + 22), *(src + 18),
+					                      *(src + 14), *(src + 10), *(src + 6), *(src + 2));
+					a_val = _mm_set_epi16(*(src + 31), *(src + 27), *(src + 23), *(src + 19),
+					                      *(src + 15), *(src + 11), *(src + 7), *(src + 3));
 					src += 32;
 					break;
 
-				case RDP_PIXEL_FORMAT_R8G8B8A8:
-					r_val = _mm_set_epi16(*(src + 28), *(src + 24), *(src + 20), *(src + 16), *(src + 12), *(src + 8), *(src + 4), *src);
-					g_val = _mm_set_epi16(*(src + 29), *(src + 25), *(src + 21), *(src + 17), *(src + 13), *(src + 9), *(src + 5), *(src + 1));
-					b_val = _mm_set_epi16(*(src + 30), *(src + 26), *(src + 22), *(src + 18), *(src + 14), *(src + 10), *(src + 6), *(src + 2));
-					a_val = _mm_set_epi16(*(src + 31), *(src + 27), *(src + 23), *(src + 19), *(src + 15), *(src + 11), *(src + 7), *(src + 3));
+				case PIXEL_FORMAT_RGBA32:
+					r_val = _mm_set_epi16(*(src + 28), *(src + 24), *(src + 20), *(src + 16),
+					                      *(src + 12), *(src + 8), *(src + 4), *src);
+					g_val = _mm_set_epi16(*(src + 29), *(src + 25), *(src + 21), *(src + 17),
+					                      *(src + 13), *(src + 9), *(src + 5), *(src + 1));
+					b_val = _mm_set_epi16(*(src + 30), *(src + 26), *(src + 22), *(src + 18),
+					                      *(src + 14), *(src + 10), *(src + 6), *(src + 2));
+					a_val = _mm_set_epi16(*(src + 31), *(src + 27), *(src + 23), *(src + 19),
+					                      *(src + 15), *(src + 11), *(src + 7), *(src + 3));
 					src += 32;
 					break;
 
-				case RDP_PIXEL_FORMAT_B8G8R8:
-					b_val = _mm_set_epi16(*(src + 21), *(src + 18), *(src + 15), *(src + 12), *(src + 9), *(src + 6), *(src + 3), *src);
-					g_val = _mm_set_epi16(*(src + 22), *(src + 19), *(src + 16), *(src + 13), *(src + 10), *(src + 7), *(src + 4), *(src + 1));
-					r_val = _mm_set_epi16(*(src + 23), *(src + 20), *(src + 17), *(src + 14), *(src + 11), *(src + 8), *(src + 5), *(src + 2));
+				case PIXEL_FORMAT_BGR24:
+					b_val = _mm_set_epi16(*(src + 21), *(src + 18), *(src + 15), *(src + 12),
+					                      *(src + 9), *(src + 6), *(src + 3), *src);
+					g_val = _mm_set_epi16(*(src + 22), *(src + 19), *(src + 16), *(src + 13),
+					                      *(src + 10), *(src + 7), *(src + 4), *(src + 1));
+					r_val = _mm_set_epi16(*(src + 23), *(src + 20), *(src + 17), *(src + 14),
+					                      *(src + 11), *(src + 8), *(src + 5), *(src + 2));
 					a_val = _mm_set1_epi16(0xFF);
 					src += 24;
 					break;
 
-				case RDP_PIXEL_FORMAT_R8G8B8:
-					r_val = _mm_set_epi16(*(src + 21), *(src + 18), *(src + 15), *(src + 12), *(src + 9), *(src + 6), *(src + 3), *src);
-					g_val = _mm_set_epi16(*(src + 22), *(src + 19), *(src + 16), *(src + 13), *(src + 10), *(src + 7), *(src + 4), *(src + 1));
-					b_val = _mm_set_epi16(*(src + 23), *(src + 20), *(src + 17), *(src + 14), *(src + 11), *(src + 8), *(src + 5), *(src + 2));
+				case PIXEL_FORMAT_RGB24:
+					r_val = _mm_set_epi16(*(src + 21), *(src + 18), *(src + 15), *(src + 12),
+					                      *(src + 9), *(src + 6), *(src + 3), *src);
+					g_val = _mm_set_epi16(*(src + 22), *(src + 19), *(src + 16), *(src + 13),
+					                      *(src + 10), *(src + 7), *(src + 4), *(src + 1));
+					b_val = _mm_set_epi16(*(src + 23), *(src + 20), *(src + 17), *(src + 14),
+					                      *(src + 11), *(src + 8), *(src + 5), *(src + 2));
 					a_val = _mm_set1_epi16(0xFF);
 					src += 24;
 					break;
 
-				case RDP_PIXEL_FORMAT_B5G6R5_LE:
+				case PIXEL_FORMAT_BGR16:
 					b_val = _mm_set_epi16(
-						(((*(src + 15)) & 0xF8) | ((*(src + 15)) >> 5)),
-						(((*(src + 13)) & 0xF8) | ((*(src + 13)) >> 5)),
-						(((*(src + 11)) & 0xF8) | ((*(src + 11)) >> 5)),
-						(((*(src + 9)) & 0xF8) | ((*(src + 9)) >> 5)),
-						(((*(src + 7)) & 0xF8) | ((*(src + 7)) >> 5)),
-						(((*(src + 5)) & 0xF8) | ((*(src + 5)) >> 5)),
-						(((*(src + 3)) & 0xF8) | ((*(src + 3)) >> 5)),
-						(((*(src + 1)) & 0xF8) | ((*(src + 1)) >> 5)));
+					            (((*(src + 15)) & 0xF8) | ((*(src + 15)) >> 5)),
+					            (((*(src + 13)) & 0xF8) | ((*(src + 13)) >> 5)),
+					            (((*(src + 11)) & 0xF8) | ((*(src + 11)) >> 5)),
+					            (((*(src + 9)) & 0xF8) | ((*(src + 9)) >> 5)),
+					            (((*(src + 7)) & 0xF8) | ((*(src + 7)) >> 5)),
+					            (((*(src + 5)) & 0xF8) | ((*(src + 5)) >> 5)),
+					            (((*(src + 3)) & 0xF8) | ((*(src + 3)) >> 5)),
+					            (((*(src + 1)) & 0xF8) | ((*(src + 1)) >> 5)));
 					g_val = _mm_set_epi16(
-						((((*(src + 15)) & 0x07) << 5) | (((*(src + 14)) & 0xE0) >> 3)),
-						((((*(src + 13)) & 0x07) << 5) | (((*(src + 12)) & 0xE0) >> 3)),
-						((((*(src + 11)) & 0x07) << 5) | (((*(src + 10)) & 0xE0) >> 3)),
-						((((*(src + 9)) & 0x07) << 5) | (((*(src + 8)) & 0xE0) >> 3)),
-						((((*(src + 7)) & 0x07) << 5) | (((*(src + 6)) & 0xE0) >> 3)),
-						((((*(src + 5)) & 0x07) << 5) | (((*(src + 4)) & 0xE0) >> 3)),
-						((((*(src + 3)) & 0x07) << 5) | (((*(src + 2)) & 0xE0) >> 3)),
-						((((*(src + 1)) & 0x07) << 5) | (((*src) & 0xE0) >> 3)));
+					            ((((*(src + 15)) & 0x07) << 5) | (((*(src + 14)) & 0xE0) >> 3)),
+					            ((((*(src + 13)) & 0x07) << 5) | (((*(src + 12)) & 0xE0) >> 3)),
+					            ((((*(src + 11)) & 0x07) << 5) | (((*(src + 10)) & 0xE0) >> 3)),
+					            ((((*(src + 9)) & 0x07) << 5) | (((*(src + 8)) & 0xE0) >> 3)),
+					            ((((*(src + 7)) & 0x07) << 5) | (((*(src + 6)) & 0xE0) >> 3)),
+					            ((((*(src + 5)) & 0x07) << 5) | (((*(src + 4)) & 0xE0) >> 3)),
+					            ((((*(src + 3)) & 0x07) << 5) | (((*(src + 2)) & 0xE0) >> 3)),
+					            ((((*(src + 1)) & 0x07) << 5) | (((*src) & 0xE0) >> 3)));
 					r_val = _mm_set_epi16(
-						((((*(src + 14)) & 0x1F) << 3) | (((*(src + 14)) >> 2) & 0x07)),
-						((((*(src + 12)) & 0x1F) << 3) | (((*(src + 12)) >> 2) & 0x07)),
-						((((*(src + 10)) & 0x1F) << 3) | (((*(src + 10)) >> 2) & 0x07)),
-						((((*(src + 8)) & 0x1F) << 3) | (((*(src + 8)) >> 2) & 0x07)),
-						((((*(src + 6)) & 0x1F) << 3) | (((*(src + 6)) >> 2) & 0x07)),
-						((((*(src + 4)) & 0x1F) << 3) | (((*(src + 4)) >> 2) & 0x07)),
-						((((*(src + 2)) & 0x1F) << 3) | (((*(src + 2)) >> 2) & 0x07)),
-						((((*src) & 0x1F) << 3) | (((*src) >> 2) & 0x07)));
+					            ((((*(src + 14)) & 0x1F) << 3) | (((*(src + 14)) >> 2) & 0x07)),
+					            ((((*(src + 12)) & 0x1F) << 3) | (((*(src + 12)) >> 2) & 0x07)),
+					            ((((*(src + 10)) & 0x1F) << 3) | (((*(src + 10)) >> 2) & 0x07)),
+					            ((((*(src + 8)) & 0x1F) << 3) | (((*(src + 8)) >> 2) & 0x07)),
+					            ((((*(src + 6)) & 0x1F) << 3) | (((*(src + 6)) >> 2) & 0x07)),
+					            ((((*(src + 4)) & 0x1F) << 3) | (((*(src + 4)) >> 2) & 0x07)),
+					            ((((*(src + 2)) & 0x1F) << 3) | (((*(src + 2)) >> 2) & 0x07)),
+					            ((((*src) & 0x1F) << 3) | (((*src) >> 2) & 0x07)));
 					a_val = _mm_set1_epi16(0xFF);
 					src += 16;
 					break;
 
-				case RDP_PIXEL_FORMAT_R5G6B5_LE:
+				case PIXEL_FORMAT_RGB16:
 					r_val = _mm_set_epi16(
-						(((*(src + 15)) & 0xF8) | ((*(src + 15)) >> 5)),
-						(((*(src + 13)) & 0xF8) | ((*(src + 13)) >> 5)),
-						(((*(src + 11)) & 0xF8) | ((*(src + 11)) >> 5)),
-						(((*(src + 9)) & 0xF8) | ((*(src + 9)) >> 5)),
-						(((*(src + 7)) & 0xF8) | ((*(src + 7)) >> 5)),
-						(((*(src + 5)) & 0xF8) | ((*(src + 5)) >> 5)),
-						(((*(src + 3)) & 0xF8) | ((*(src + 3)) >> 5)),
-						(((*(src + 1)) & 0xF8) | ((*(src + 1)) >> 5)));
+					            (((*(src + 15)) & 0xF8) | ((*(src + 15)) >> 5)),
+					            (((*(src + 13)) & 0xF8) | ((*(src + 13)) >> 5)),
+					            (((*(src + 11)) & 0xF8) | ((*(src + 11)) >> 5)),
+					            (((*(src + 9)) & 0xF8) | ((*(src + 9)) >> 5)),
+					            (((*(src + 7)) & 0xF8) | ((*(src + 7)) >> 5)),
+					            (((*(src + 5)) & 0xF8) | ((*(src + 5)) >> 5)),
+					            (((*(src + 3)) & 0xF8) | ((*(src + 3)) >> 5)),
+					            (((*(src + 1)) & 0xF8) | ((*(src + 1)) >> 5)));
 					g_val = _mm_set_epi16(
-						((((*(src + 15)) & 0x07) << 5) | (((*(src + 14)) & 0xE0) >> 3)),
-						((((*(src + 13)) & 0x07) << 5) | (((*(src + 12)) & 0xE0) >> 3)),
-						((((*(src + 11)) & 0x07) << 5) | (((*(src + 10)) & 0xE0) >> 3)),
-						((((*(src + 9)) & 0x07) << 5) | (((*(src + 8)) & 0xE0) >> 3)),
-						((((*(src + 7)) & 0x07) << 5) | (((*(src + 6)) & 0xE0) >> 3)),
-						((((*(src + 5)) & 0x07) << 5) | (((*(src + 4)) & 0xE0) >> 3)),
-						((((*(src + 3)) & 0x07) << 5) | (((*(src + 2)) & 0xE0) >> 3)),
-						((((*(src + 1)) & 0x07) << 5) | (((*src) & 0xE0) >> 3)));
+					            ((((*(src + 15)) & 0x07) << 5) | (((*(src + 14)) & 0xE0) >> 3)),
+					            ((((*(src + 13)) & 0x07) << 5) | (((*(src + 12)) & 0xE0) >> 3)),
+					            ((((*(src + 11)) & 0x07) << 5) | (((*(src + 10)) & 0xE0) >> 3)),
+					            ((((*(src + 9)) & 0x07) << 5) | (((*(src + 8)) & 0xE0) >> 3)),
+					            ((((*(src + 7)) & 0x07) << 5) | (((*(src + 6)) & 0xE0) >> 3)),
+					            ((((*(src + 5)) & 0x07) << 5) | (((*(src + 4)) & 0xE0) >> 3)),
+					            ((((*(src + 3)) & 0x07) << 5) | (((*(src + 2)) & 0xE0) >> 3)),
+					            ((((*(src + 1)) & 0x07) << 5) | (((*src) & 0xE0) >> 3)));
 					b_val = _mm_set_epi16(
-						((((*(src + 14)) & 0x1F) << 3) | (((*(src + 14)) >> 2) & 0x07)),
-						((((*(src + 12)) & 0x1F) << 3) | (((*(src + 12)) >> 2) & 0x07)),
-						((((*(src + 10)) & 0x1F) << 3) | (((*(src + 10)) >> 2) & 0x07)),
-						((((*(src + 8)) & 0x1F) << 3) | (((*(src + 8)) >> 2) & 0x07)),
-						((((*(src + 6)) & 0x1F) << 3) | (((*(src + 6)) >> 2) & 0x07)),
-						((((*(src + 4)) & 0x1F) << 3) | (((*(src + 4)) >> 2) & 0x07)),
-						((((*(src + 2)) & 0x1F) << 3) | (((*(src + 2)) >> 2) & 0x07)),
-						((((*src) & 0x1F) << 3) | (((*src) >> 2) & 0x07)));
+					            ((((*(src + 14)) & 0x1F) << 3) | (((*(src + 14)) >> 2) & 0x07)),
+					            ((((*(src + 12)) & 0x1F) << 3) | (((*(src + 12)) >> 2) & 0x07)),
+					            ((((*(src + 10)) & 0x1F) << 3) | (((*(src + 10)) >> 2) & 0x07)),
+					            ((((*(src + 8)) & 0x1F) << 3) | (((*(src + 8)) >> 2) & 0x07)),
+					            ((((*(src + 6)) & 0x1F) << 3) | (((*(src + 6)) >> 2) & 0x07)),
+					            ((((*(src + 4)) & 0x1F) << 3) | (((*(src + 4)) >> 2) & 0x07)),
+					            ((((*(src + 2)) & 0x1F) << 3) | (((*(src + 2)) >> 2) & 0x07)),
+					            ((((*src) & 0x1F) << 3) | (((*src) >> 2) & 0x07)));
 					a_val = _mm_set1_epi16(0xFF);
 					src += 16;
 					break;
 
-				case RDP_PIXEL_FORMAT_P4_PLANER:
+				case PIXEL_FORMAT_A4:
 					{
 						int shift;
 						BYTE idx[8];
@@ -184,69 +199,72 @@ static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, BYTE* data, int
 							idx[shift] |= (((*(src + 3)) >> shift) & 1) << 3;
 							idx[shift] *= 3;
 						}
+
 						r_val = _mm_set_epi16(
-							context->palette[idx[0]],
-							context->palette[idx[1]],
-							context->palette[idx[2]],
-							context->palette[idx[3]],
-							context->palette[idx[4]],
-							context->palette[idx[5]],
-							context->palette[idx[6]],
-							context->palette[idx[7]]);
+						            context->palette[idx[0]],
+						            context->palette[idx[1]],
+						            context->palette[idx[2]],
+						            context->palette[idx[3]],
+						            context->palette[idx[4]],
+						            context->palette[idx[5]],
+						            context->palette[idx[6]],
+						            context->palette[idx[7]]);
 						g_val = _mm_set_epi16(
-							context->palette[idx[0] + 1],
-							context->palette[idx[1] + 1],
-							context->palette[idx[2] + 1],
-							context->palette[idx[3] + 1],
-							context->palette[idx[4] + 1],
-							context->palette[idx[5] + 1],
-							context->palette[idx[6] + 1],
-							context->palette[idx[7] + 1]);
+						            context->palette[idx[0] + 1],
+						            context->palette[idx[1] + 1],
+						            context->palette[idx[2] + 1],
+						            context->palette[idx[3] + 1],
+						            context->palette[idx[4] + 1],
+						            context->palette[idx[5] + 1],
+						            context->palette[idx[6] + 1],
+						            context->palette[idx[7] + 1]);
 						b_val = _mm_set_epi16(
-							context->palette[idx[0] + 2],
-							context->palette[idx[1] + 2],
-							context->palette[idx[2] + 2],
-							context->palette[idx[3] + 2],
-							context->palette[idx[4] + 2],
-							context->palette[idx[5] + 2],
-							context->palette[idx[6] + 2],
-							context->palette[idx[7] + 2]);
+						            context->palette[idx[0] + 2],
+						            context->palette[idx[1] + 2],
+						            context->palette[idx[2] + 2],
+						            context->palette[idx[3] + 2],
+						            context->palette[idx[4] + 2],
+						            context->palette[idx[5] + 2],
+						            context->palette[idx[6] + 2],
+						            context->palette[idx[7] + 2]);
 						src += 4;
 					}
+
 					a_val = _mm_set1_epi16(0xFF);
 					break;
 
-				case RDP_PIXEL_FORMAT_P8:
+				case PIXEL_FORMAT_RGB8:
 					{
 						r_val = _mm_set_epi16(
-							context->palette[(*(src + 7)) * 3],
-							context->palette[(*(src + 6)) * 3],
-							context->palette[(*(src + 5)) * 3],
-							context->palette[(*(src + 4)) * 3],
-							context->palette[(*(src + 3)) * 3],
-							context->palette[(*(src + 2)) * 3],
-							context->palette[(*(src + 1)) * 3],
-							context->palette[(*src) * 3]);
+						            context->palette[(*(src + 7)) * 3],
+						            context->palette[(*(src + 6)) * 3],
+						            context->palette[(*(src + 5)) * 3],
+						            context->palette[(*(src + 4)) * 3],
+						            context->palette[(*(src + 3)) * 3],
+						            context->palette[(*(src + 2)) * 3],
+						            context->palette[(*(src + 1)) * 3],
+						            context->palette[(*src) * 3]);
 						g_val = _mm_set_epi16(
-							context->palette[(*(src + 7)) * 3 + 1],
-							context->palette[(*(src + 6)) * 3 + 1],
-							context->palette[(*(src + 5)) * 3 + 1],
-							context->palette[(*(src + 4)) * 3 + 1],
-							context->palette[(*(src + 3)) * 3 + 1],
-							context->palette[(*(src + 2)) * 3 + 1],
-							context->palette[(*(src + 1)) * 3 + 1],
-							context->palette[(*src) * 3 + 1]);
+						            context->palette[(*(src + 7)) * 3 + 1],
+						            context->palette[(*(src + 6)) * 3 + 1],
+						            context->palette[(*(src + 5)) * 3 + 1],
+						            context->palette[(*(src + 4)) * 3 + 1],
+						            context->palette[(*(src + 3)) * 3 + 1],
+						            context->palette[(*(src + 2)) * 3 + 1],
+						            context->palette[(*(src + 1)) * 3 + 1],
+						            context->palette[(*src) * 3 + 1]);
 						b_val = _mm_set_epi16(
-							context->palette[(*(src + 7)) * 3 + 2],
-							context->palette[(*(src + 6)) * 3 + 2],
-							context->palette[(*(src + 5)) * 3 + 2],
-							context->palette[(*(src + 4)) * 3 + 2],
-							context->palette[(*(src + 3)) * 3 + 2],
-							context->palette[(*(src + 2)) * 3 + 2],
-							context->palette[(*(src + 1)) * 3 + 2],
-							context->palette[(*src) * 3 + 2]);
+						            context->palette[(*(src + 7)) * 3 + 2],
+						            context->palette[(*(src + 6)) * 3 + 2],
+						            context->palette[(*(src + 5)) * 3 + 2],
+						            context->palette[(*(src + 4)) * 3 + 2],
+						            context->palette[(*(src + 3)) * 3 + 2],
+						            context->palette[(*(src + 2)) * 3 + 2],
+						            context->palette[(*(src + 1)) * 3 + 2],
+						            context->palette[(*src) * 3 + 2]);
 						src += 8;
 					}
+
 					a_val = _mm_set1_epi16(0xFF);
 					break;
 
@@ -263,7 +281,6 @@ static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, BYTE* data, int
 			cg_val = _mm_sub_epi16(g_val, _mm_srai_epi16(r_val, 1));
 			cg_val = _mm_sub_epi16(cg_val, _mm_srai_epi16(b_val, 1));
 			cg_val = _mm_srai_epi16(cg_val, ccl);
-
 			y_val = _mm_packus_epi16(y_val, y_val);
 			_mm_storeu_si128((__m128i*) yplane, y_val);
 			co_val = _mm_packs_epi16(co_val, co_val);
@@ -280,9 +297,12 @@ static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, BYTE* data, int
 
 		if (context->ChromaSubsamplingLevel > 0 && (context->width % 2) == 1)
 		{
-			context->priv->PlaneBuffers[0][y * rw + context->width] = context->priv->PlaneBuffers[0][y * rw + context->width - 1];
-			context->priv->PlaneBuffers[1][y * rw + context->width] = context->priv->PlaneBuffers[1][y * rw + context->width - 1];
-			context->priv->PlaneBuffers[2][y * rw + context->width] = context->priv->PlaneBuffers[2][y * rw + context->width - 1];
+			context->priv->PlaneBuffers[0][y * rw + context->width] =
+			    context->priv->PlaneBuffers[0][y * rw + context->width - 1];
+			context->priv->PlaneBuffers[1][y * rw + context->width] =
+			    context->priv->PlaneBuffers[1][y * rw + context->width - 1];
+			context->priv->PlaneBuffers[2][y * rw + context->width] =
+			    context->priv->PlaneBuffers[2][y * rw + context->width - 1];
 		}
 	}
 
@@ -309,7 +329,6 @@ static void nsc_encode_subsampling_sse2(NSC_CONTEXT* context)
 	__m128i t;
 	__m128i val;
 	__m128i mask = _mm_set1_epi16(0xFF);
-
 	tempWidth = ROUND_UP_TO(context->width, 8);
 	tempHeight = ROUND_UP_TO(context->height, 2);
 
@@ -333,7 +352,6 @@ static void nsc_encode_subsampling_sse2(NSC_CONTEXT* context)
 			co_dst += 8;
 			co_src0 += 16;
 			co_src1 += 16;
-
 			t = _mm_loadu_si128((__m128i*) cg_src0);
 			t = _mm_avg_epu8(t, _mm_loadu_si128((__m128i*) cg_src1));
 			val = _mm_and_si128(_mm_srli_si128(t, 1), mask);
@@ -347,7 +365,8 @@ static void nsc_encode_subsampling_sse2(NSC_CONTEXT* context)
 	}
 }
 
-static void nsc_encode_sse2(NSC_CONTEXT* context, BYTE* data, int scanline)
+static void nsc_encode_sse2(NSC_CONTEXT* context, const BYTE* data,
+                            UINT32 scanline)
 {
 	nsc_encode_argb_to_aycocg_sse2(context, data, scanline);
 
@@ -360,6 +379,5 @@ static void nsc_encode_sse2(NSC_CONTEXT* context, BYTE* data, int scanline)
 void nsc_init_sse2(NSC_CONTEXT* context)
 {
 	IF_PROFILER(context->priv->prof_nsc_encode->name = "nsc_encode_sse2");
-
 	context->encode = nsc_encode_sse2;
 }

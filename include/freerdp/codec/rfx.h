@@ -3,6 +3,8 @@
  * RemoteFX Codec
  *
  * Copyright 2011 Vic Lee
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2016 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +31,7 @@ typedef struct _RFX_CONTEXT RFX_CONTEXT;
 #include <freerdp/types.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
+#include <freerdp/codec/region.h>
 
 #include <winpr/stream.h>
 
@@ -55,10 +58,10 @@ struct _RFX_TILE
 {
 	UINT16 x;
 	UINT16 y;
-	int width;
-	int height;
+	UINT32 width;
+	UINT32 height;
 	BYTE* data;
-	int scanline;
+	UINT32 scanline;
 	BOOL allocated;
 	BYTE quantIdxY;
 	BYTE quantIdxCb;
@@ -136,7 +139,7 @@ struct _RFX_CONTEXT
 	UINT32 version;
 	UINT32 codec_id;
 	UINT32 codec_version;
-	RDP_PIXEL_FORMAT pixel_format;
+	UINT32 pixel_format;
 	BYTE bits_per_pixel;
 
 	/* color palette allocated by the application */
@@ -163,27 +166,38 @@ struct _RFX_CONTEXT
 	RFX_CONTEXT_PRIV* priv;
 };
 
-FREERDP_API void rfx_context_set_pixel_format(RFX_CONTEXT* context, RDP_PIXEL_FORMAT pixel_format);
+FREERDP_API void rfx_context_set_pixel_format(RFX_CONTEXT* context,
+        UINT32 pixel_format);
 
-FREERDP_API int rfx_rlgr_decode(const BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 DstSize, int mode);
+FREERDP_API int rfx_rlgr_decode(const BYTE* pSrcData, UINT32 SrcSize,
+                                INT16* pDstData, UINT32 DstSize, int mode);
 
-FREERDP_API RFX_MESSAGE* rfx_process_message(RFX_CONTEXT* context, BYTE* data, UINT32 length);
+FREERDP_API BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data,
+                                     UINT32 format, UINT32 length,
+                                     UINT32 left, UINT32 top,
+                                     BYTE* dst, UINT32 dstFormat,
+                                     UINT32 dstStride, UINT32 dstHeight,
+                                     REGION16* invalidRegion);
 FREERDP_API UINT16 rfx_message_get_tile_count(RFX_MESSAGE* message);
-FREERDP_API RFX_TILE* rfx_message_get_tile(RFX_MESSAGE* message, int index);
 FREERDP_API UINT16 rfx_message_get_rect_count(RFX_MESSAGE* message);
-FREERDP_API RFX_RECT* rfx_message_get_rect(RFX_MESSAGE* message, int index);
 FREERDP_API void rfx_message_free(RFX_CONTEXT* context, RFX_MESSAGE* message);
 
 FREERDP_API BOOL rfx_compose_message(RFX_CONTEXT* context, wStream* s,
-	const RFX_RECT* rects, int num_rects, BYTE* image_data, int width, int height, int rowstride);
+                                     const RFX_RECT* rects, int num_rects, BYTE* image_data, int width, int height,
+                                     int rowstride);
 
-FREERDP_API RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
-		int numRects, BYTE* data, int width, int height, int scanline);
-FREERDP_API RFX_MESSAGE* rfx_encode_messages(RFX_CONTEXT* context, const RFX_RECT* rects, int numRects,
-		BYTE* data, int width, int height, int scanline, int* numMessages, int maxDataSize);
-FREERDP_API BOOL rfx_write_message(RFX_CONTEXT* context, wStream* s, RFX_MESSAGE* message);
+FREERDP_API RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context,
+        const RFX_RECT* rects,
+        int numRects, BYTE* data, int width, int height, int scanline);
+FREERDP_API RFX_MESSAGE* rfx_encode_messages(RFX_CONTEXT* context,
+        const RFX_RECT* rects, int numRects,
+        BYTE* data, int width, int height, int scanline, int* numMessages,
+        int maxDataSize);
+FREERDP_API BOOL rfx_write_message(RFX_CONTEXT* context, wStream* s,
+                                   RFX_MESSAGE* message);
 
-FREERDP_API BOOL rfx_context_reset(RFX_CONTEXT* context, UINT32 width, UINT32 height);
+FREERDP_API BOOL rfx_context_reset(RFX_CONTEXT* context, UINT32 width,
+                                   UINT32 height);
 
 FREERDP_API RFX_CONTEXT* rfx_context_new(BOOL encoder);
 FREERDP_API void rfx_context_free(RFX_CONTEXT* context);

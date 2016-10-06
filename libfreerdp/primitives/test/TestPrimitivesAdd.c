@@ -20,116 +20,63 @@
 #include "prim_test.h"
 
 #define FUNC_TEST_SIZE	65536
-static const int ADD16S_PRETEST_ITERATIONS = 300000*64;
-static const int TEST_TIME = 2.0;  // seconds
-
-extern BOOL g_TestPrimitivesPerformance;
-
-extern pstatus_t general_add_16s(
-	const INT16 *pSrc1, const INT16 *pSrc2, INT16 *pDst, int len);
-extern pstatus_t sse3_add_16s(
-	const INT16 *pSrc1, const INT16 *pSrc2, INT16 *pDst, int len);
-
 /* ========================================================================= */
-int test_add16s_func(void)
+static BOOL test_add16s_func(void)
 {
-	INT16 ALIGN(src1[FUNC_TEST_SIZE+3]), ALIGN(src2[FUNC_TEST_SIZE+3]), 
-		ALIGN(d1[FUNC_TEST_SIZE+3]), ALIGN(d2[FUNC_TEST_SIZE+3]);
-	int failed = 0;
-#if defined(WITH_SSE2) || defined(WITH_IPP)
-	int i;
-#endif
-	char testStr[256];
+	pstatus_t status;
 
+	INT16 ALIGN(src1[FUNC_TEST_SIZE + 3]), ALIGN(src2[FUNC_TEST_SIZE + 3]),
+			ALIGN(d1[FUNC_TEST_SIZE + 3]), ALIGN(d2[FUNC_TEST_SIZE + 3]);
+
+	char testStr[256];
 	testStr[0] = '\0';
-	get_random_data(src1, sizeof(src1));
-	get_random_data(src2, sizeof(src2));
+	winpr_RAND((BYTE*)src1, sizeof(src1));
+	winpr_RAND((BYTE*)src2, sizeof(src2));
 	memset(d1, 0, sizeof(d1));
 	memset(d2, 0, sizeof(d2));
-	general_add_16s(src1+1, src2+1, d1+1, FUNC_TEST_SIZE);
-#ifdef WITH_SSE2
-	if(IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
-	{
-		strcat(testStr, " SSE3");
-		/* Aligned */
-		sse3_add_16s(src1+1, src2+1, d2+1, FUNC_TEST_SIZE);
-		for (i=1; i<FUNC_TEST_SIZE; ++i)
-		{
-			if (d1[i] != d2[i])
-			{ 
-				printf("ADD16S-SSE-aligned FAIL[%d] %d+%d=%d, got %d\n", 
-					i, src1[i], src2[i], d1[i], d2[i]); 
-				++failed;
-			}
-		}
-		/* Unaligned */
-		sse3_add_16s(src1+1, src2+1, d2+2, FUNC_TEST_SIZE);
-		for (i=1; i<FUNC_TEST_SIZE; ++i)
-		{
-			if (d1[i] != d2[i+1])
-			{ 
-				printf("ADD16S-SSE-unaligned FAIL[%d] %d+%d=%d, got %d\n", 
-					i, src1[i], src2[i], d1[i], d2[i+1]); 
-				++failed;
-			}
-		}
-	}
-#endif
-#ifdef WITH_IPP
-	strcat(testStr, " IPP");
-	ippsAdd_16s(src1+1, src2+1, d2+1, FUNC_TEST_SIZE);
-	for (i=1; i<FUNC_TEST_SIZE; ++i)
-	{
-		if (d1[i] != d2[i])
-		{ 
-			printf("ADD16S-IPP FAIL[%d] %d+%d=%d, got %d\n", 
-				i, src1[i], src2[i], d1[i], d2[i]); 
-			++failed;
-		}
-	}
-#endif /* WITH_IPP */
-	if (!failed) printf("All add16s tests passed (%s).\n", testStr);
-	return (failed > 0) ? FAILURE : SUCCESS;
-}
- 
-/* ------------------------------------------------------------------------- */
-STD_SPEED_TEST(add16s_speed_test, INT16, INT16, dst=dst,
-	TRUE, general_add_16s(src1, src2, dst, size),
-#ifdef WITH_SSE2
-	TRUE, sse3_add_16s(src1, src2, dst, size), PF_SSE3_INSTRUCTIONS_AVAILABLE, FALSE,
-#else
-	FALSE, PRIM_NOP, 0, FALSE,
-#endif
-	TRUE, ippsAdd_16s(src1, src2, dst, size));
+	status = generic->add_16s(src1 + 1, src2 + 1, d1 + 1, FUNC_TEST_SIZE);
+	if (status != PRIMITIVES_SUCCESS)
+		return FALSE;
 
-int test_add16s_speed(void)
+	/* Unaligned */
+	status = optimized->add_16s(src1 + 1, src2 + 1, d2 + 2, FUNC_TEST_SIZE);
+	if (status != PRIMITIVES_SUCCESS)
+		return FALSE;
+
+	return TRUE;
+}
+
+/* ------------------------------------------------------------------------- */
+static BOOL test_add16s_speed(void)
 {
-	INT16 ALIGN(src1[MAX_TEST_SIZE+3]), ALIGN(src2[MAX_TEST_SIZE+3]),
-		ALIGN(dst[MAX_TEST_SIZE+3]);
-	get_random_data(src1, sizeof(src1));
-	get_random_data(src2, sizeof(src2));
-	add16s_speed_test("add16s", "aligned", src1, src2, 0, dst,
-		test_sizes, NUM_TEST_SIZES, ADD16S_PRETEST_ITERATIONS, TEST_TIME);
-	add16s_speed_test("add16s", "unaligned", src1+1, src2+2, 0, dst,
-		test_sizes, NUM_TEST_SIZES, ADD16S_PRETEST_ITERATIONS, TEST_TIME);
-	return SUCCESS;
+	BYTE ALIGN(src1[MAX_TEST_SIZE + 3]), ALIGN(src2[MAX_TEST_SIZE + 3]),
+			ALIGN(dst[MAX_TEST_SIZE + 3]);
+
+	if (!g_TestPrimitivesPerformance)
+		return TRUE;
+
+	winpr_RAND(src1, sizeof(src1));
+	winpr_RAND(src2, sizeof(src2));
+
+	if (!speed_test("add16s", "aligned", g_Iterations,
+			(speed_test_fkt)generic->add_16s,
+			(speed_test_fkt)optimized->add_16s,
+			src1, src2, dst, FUNC_TEST_SIZE))
+		return FALSE;
+
+	return TRUE;
 }
 
 int TestPrimitivesAdd(int argc, char* argv[])
 {
-	int status;
-
-	status = test_add16s_func();
-
-	if (status != SUCCESS)
-		return 1;
+	prim_test_setup(FALSE);
+	if (!test_add16s_func())
+		return -1;
 
 	if (g_TestPrimitivesPerformance)
 	{
-		status = test_add16s_speed();
-
-		if (status != SUCCESS)
-			return 1;
+		if (!test_add16s_speed())
+			return -1;
 	}
 
 	return 0;

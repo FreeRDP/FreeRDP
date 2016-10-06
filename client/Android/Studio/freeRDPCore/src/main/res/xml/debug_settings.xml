@@ -22,22 +22,18 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:freerdp="http://schemas.android.com/apk/res-auto">
         <PreferenceCategory android:title="@string/settings_debug">
-	        <com.freerdp.freerdpcore.utils.IntEditTextPreference
-	            android:key="bookmark.debug_level"
-	            android:title="@string/debug_level"
-	            android:summary="Debug level, 0 to disable."
-	            android:numeric="integer"
-	            android:inputType="number"
-	            freerdp:bounds_min="0"
-	            freerdp:bounds_max="10"
-	            freerdp:bounds_default="0" />            
-						<CheckBoxPreference android:key="bookmark.async_channel"
-							android:title="@string/settings_async_channel"/>
-						<CheckBoxPreference android:key="bookmark.async_transport"
-							android:title="@string/settings_async_transport"/>
-						<CheckBoxPreference android:key="bookmark.async_update"
-							android:title="@string/settings_async_update"/>
-						<CheckBoxPreference android:key="bookmark.async_input"
-							android:title="@string/settings_async_input"/>
+			<ListPreference
+				android:key="bookmark.debug_level"
+				android:title="@string/debug_level"
+				android:entries="@array/debug_array"
+				android:entryValues="@array/debug_values_array"/>
+			<CheckBoxPreference android:key="bookmark.async_channel"
+				android:title="@string/settings_async_channel"/>
+			<CheckBoxPreference android:key="bookmark.async_transport"
+				android:title="@string/settings_async_transport"/>
+			<CheckBoxPreference android:key="bookmark.async_update"
+				android:title="@string/settings_async_update"/>
+			<CheckBoxPreference android:key="bookmark.async_input"
+				android:title="@string/settings_async_input"/>
         </PreferenceCategory>
 </PreferenceScreen>

@@ -21,9 +21,7 @@
 #ifndef WINPR_USER_H
 #define WINPR_USER_H
 
-#include <winpr/winpr.h>
 #include <winpr/wtypes.h>
-#include <winpr/platform.h>
 
 /**
  * Standard Clipboard Formats

@@ -55,7 +55,7 @@ static INLINE UINT32 rdpgfx_pdu_length(UINT32 dataLen)
 }
 
 static INLINE UINT rdpgfx_server_packet_init_header(wStream* s,
-		UINT16 cmdId, UINT32 pduLength)
+        UINT16 cmdId, UINT32 pduLength)
 {
 	RDPGFX_HEADER header;
 	header.flags = 0;
@@ -73,7 +73,8 @@ static INLINE UINT rdpgfx_server_packet_init_header(wStream* s,
  * @param s stream
  * @param start saved start pos of the packet in the stream
  */
-static INLINE void rdpgfx_server_packet_complete_header(wStream* s, size_t start)
+static INLINE void rdpgfx_server_packet_complete_header(wStream* s,
+        size_t start)
 {
 	size_t current = Stream_GetPosition(s);
 	/* Fill actual length */
@@ -101,7 +102,7 @@ static UINT rdpgfx_server_packet_send(RdpgfxServerContext* context, wStream* s)
 	 * descriptor (1 bytes) + segmentCount (2 bytes) + uncompressedSize (4 bytes)
 	 * + segmentCount * size (4 bytes) */
 	fs = Stream_New(NULL, SrcSize + 7
-					+ (SrcSize/ZGFX_SEGMENTED_MAXSIZE + 1) * 4);
+	                + (SrcSize / ZGFX_SEGMENTED_MAXSIZE + 1) * 4);
 
 	if (!fs)
 	{
@@ -111,7 +112,7 @@ static UINT rdpgfx_server_packet_send(RdpgfxServerContext* context, wStream* s)
 	}
 
 	if (zgfx_compress_to_stream(context->priv->zgfx, fs, pSrcData,
-								SrcSize, &flags) < 0)
+	                            SrcSize, &flags) < 0)
 	{
 		WLog_ERR(TAG, "zgfx_compress_to_stream failed!");
 		error = ERROR_INTERNAL_ERROR;
@@ -119,8 +120,8 @@ static UINT rdpgfx_server_packet_send(RdpgfxServerContext* context, wStream* s)
 	}
 
 	if (!WTSVirtualChannelWrite(context->priv->rdpgfx_channel,
-								(PCHAR) Stream_Buffer(fs),
-								Stream_GetPosition(fs), &written))
+	                            (PCHAR) Stream_Buffer(fs),
+	                            Stream_GetPosition(fs), &written))
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
 		error = ERROR_INTERNAL_ERROR;
@@ -130,7 +131,7 @@ static UINT rdpgfx_server_packet_send(RdpgfxServerContext* context, wStream* s)
 	if (written < Stream_GetPosition(fs))
 	{
 		WLog_WARN(TAG, "Unexpected bytes written: %lu/%lu",
-				  written, Stream_GetPosition(fs));
+		          written, Stream_GetPosition(fs));
 	}
 
 	error = CHANNEL_RC_OK;
@@ -186,7 +187,7 @@ error:
  * @return 0 on success, otherwise a Win32 error code
  */
 static INLINE UINT rdpgfx_server_single_packet_send(
-	RdpgfxServerContext* context, wStream* s)
+    RdpgfxServerContext* context, wStream* s)
 {
 	/* Fill actual length */
 	rdpgfx_server_packet_complete_header(s, 0);
@@ -199,11 +200,11 @@ static INLINE UINT rdpgfx_server_single_packet_send(
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpgfx_send_caps_confirm_pdu(RdpgfxServerContext* context,
-		RDPGFX_CAPS_CONFIRM_PDU* capsConfirm)
+        RDPGFX_CAPS_CONFIRM_PDU* capsConfirm)
 {
 	RDPGFX_CAPSET* capsSet = capsConfirm->capsSet;
 	wStream* s = rdpgfx_server_single_packet_new(
-					 RDPGFX_CMDID_CAPSCONFIRM, RDPGFX_CAPSET_SIZE);
+	                 RDPGFX_CMDID_CAPSCONFIRM, RDPGFX_CAPSET_SIZE);
 
 	if (!s)
 	{
@@ -223,7 +224,7 @@ static UINT rdpgfx_send_caps_confirm_pdu(RdpgfxServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpgfx_send_reset_graphics_pdu(RdpgfxServerContext* context,
-		RDPGFX_RESET_GRAPHICS_PDU* pdu)
+        RDPGFX_RESET_GRAPHICS_PDU* pdu)
 {
 	UINT32 index;
 	MONITOR_DEF* monitor;
@@ -233,13 +234,13 @@ static UINT rdpgfx_send_reset_graphics_pdu(RdpgfxServerContext* context,
 	if (pdu->monitorCount >= 16)
 	{
 		WLog_ERR(TAG, "Monitor count MUST be less than or equal to 16: %lu",
-				 pdu->monitorCount);
+		         pdu->monitorCount);
 		return ERROR_INVALID_DATA;
 	}
 
 	s = rdpgfx_server_single_packet_new(
-			RDPGFX_CMDID_RESETGRAPHICS,
-			RDPGFX_RESET_GRAPHICS_PDU_SIZE - RDPGFX_HEADER_SIZE);
+	        RDPGFX_CMDID_RESETGRAPHICS,
+	        RDPGFX_RESET_GRAPHICS_PDU_SIZE - RDPGFX_HEADER_SIZE);
 
 	if (!s)
 	{
@@ -272,7 +273,7 @@ static UINT rdpgfx_send_reset_graphics_pdu(RdpgfxServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpgfx_send_evict_cache_entry_pdu(RdpgfxServerContext* context,
-		RDPGFX_EVICT_CACHE_ENTRY_PDU* pdu)
+        RDPGFX_EVICT_CACHE_ENTRY_PDU* pdu)
 {
 	wStream* s = rdpgfx_server_single_packet_new(RDPGFX_CMDID_EVICTCACHEENTRY, 2);
 
@@ -292,12 +293,12 @@ static UINT rdpgfx_send_evict_cache_entry_pdu(RdpgfxServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpgfx_send_cache_import_reply_pdu(RdpgfxServerContext* context,
-		RDPGFX_CACHE_IMPORT_REPLY_PDU* pdu)
+        RDPGFX_CACHE_IMPORT_REPLY_PDU* pdu)
 {
 	UINT16 index;
 	wStream* s = rdpgfx_server_single_packet_new(
-					 RDPGFX_CMDID_CACHEIMPORTREPLY,
-					 2 + 2 * pdu->importedEntriesCount);
+	                 RDPGFX_CMDID_CACHEIMPORTREPLY,
+	                 2 + 2 * pdu->importedEntriesCount);
 
 	if (!s)
 	{
@@ -322,7 +323,7 @@ static UINT rdpgfx_send_cache_import_reply_pdu(RdpgfxServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpgfx_send_create_surface_pdu(RdpgfxServerContext* context,
-		RDPGFX_CREATE_SURFACE_PDU* pdu)
+        RDPGFX_CREATE_SURFACE_PDU* pdu)
 {
 	wStream* s = rdpgfx_server_single_packet_new(RDPGFX_CMDID_CREATESURFACE, 7);
 
@@ -345,7 +346,7 @@ static UINT rdpgfx_send_create_surface_pdu(RdpgfxServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 UINT rdpgfx_send_delete_surface_pdu(RdpgfxServerContext* context,
-									RDPGFX_DELETE_SURFACE_PDU* pdu)
+                                    RDPGFX_DELETE_SURFACE_PDU* pdu)
 {
 	wStream* s = rdpgfx_server_single_packet_new(RDPGFX_CMDID_DELETESURFACE, 2);
 
@@ -360,14 +361,14 @@ UINT rdpgfx_send_delete_surface_pdu(RdpgfxServerContext* context,
 }
 
 static INLINE void rdpgfx_write_start_frame_pdu(wStream* s,
-		RDPGFX_START_FRAME_PDU* pdu)
+        RDPGFX_START_FRAME_PDU* pdu)
 {
 	Stream_Write_UINT32(s, pdu->timestamp); /* timestamp (4 bytes) */
 	Stream_Write_UINT32(s, pdu->frameId); /* frameId (4 bytes) */
 }
 
 static INLINE void rdpgfx_write_end_frame_pdu(wStream* s,
-		RDPGFX_END_FRAME_PDU* pdu)
+        RDPGFX_END_FRAME_PDU* pdu)
 {
 	Stream_Write_UINT32(s, pdu->frameId); /* frameId (4 bytes) */
 }
@@ -378,11 +379,11 @@ static INLINE void rdpgfx_write_end_frame_pdu(wStream* s,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpgfx_send_start_frame_pdu(RdpgfxServerContext* context,
-										RDPGFX_START_FRAME_PDU* pdu)
+                                        RDPGFX_START_FRAME_PDU* pdu)
 {
 	wStream* s = rdpgfx_server_single_packet_new(
-					 RDPGFX_CMDID_STARTFRAME,
-					 RDPGFX_START_FRAME_PDU_SIZE);
+	                 RDPGFX_CMDID_STARTFRAME,
+	                 RDPGFX_START_FRAME_PDU_SIZE);
 
 	if (!s)
 	{
@@ -400,11 +401,11 @@ static UINT rdpgfx_send_start_frame_pdu(RdpgfxServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpgfx_send_end_frame_pdu(RdpgfxServerContext* context,
-									  RDPGFX_END_FRAME_PDU* pdu)
+                                      RDPGFX_END_FRAME_PDU* pdu)
 {
 	wStream* s = rdpgfx_server_single_packet_new(
-					 RDPGFX_CMDID_ENDFRAME,
-					 RDPGFX_END_FRAME_PDU_SIZE);
+	                 RDPGFX_CMDID_ENDFRAME,
+	                 RDPGFX_END_FRAME_PDU_SIZE);
 
 	if (!s)
 	{
@@ -423,13 +424,13 @@ static UINT rdpgfx_send_end_frame_pdu(RdpgfxServerContext* context,
  * @return estimated size
  */
 static INLINE UINT32 rdpgfx_estimate_h264_avc420(
-	RDPGFX_AVC420_BITMAP_STREAM* havc420)
+    RDPGFX_AVC420_BITMAP_STREAM* havc420)
 {
 	/* H264 metadata + H264 stream. See rdpgfx_write_h264_avc420 */
 	return sizeof(UINT32) /* numRegionRects */
-		   + 10 /* regionRects + quantQualityVals */
-		   * havc420->meta.numRegionRects
-		   + havc420->length;
+	       + 10 /* regionRects + quantQualityVals */
+	       * havc420->meta.numRegionRects
+	       + havc420->length;
 }
 
 /**
@@ -438,7 +439,8 @@ static INLINE UINT32 rdpgfx_estimate_h264_avc420(
  *
  * @return estimated size
  */
-static INLINE UINT32 rdpgfx_estimate_surface_command(RDPGFX_SURFACE_COMMAND* cmd)
+static INLINE UINT32 rdpgfx_estimate_surface_command(RDPGFX_SURFACE_COMMAND*
+        cmd)
 {
 	RDPGFX_AVC420_BITMAP_STREAM* havc420 = NULL;
 	RDPGFX_AVC444_BITMAP_STREAM* havc444 = NULL;
@@ -450,10 +452,12 @@ static INLINE UINT32 rdpgfx_estimate_surface_command(RDPGFX_SURFACE_COMMAND* cmd
 		case RDPGFX_CODECID_CAPROGRESSIVE:
 		case RDPGFX_CODECID_CAPROGRESSIVE_V2:
 			return RDPGFX_WIRE_TO_SURFACE_PDU_2_SIZE + cmd->length;
+
 		case RDPGFX_CODECID_AVC420:
 			havc420 = (RDPGFX_AVC420_BITMAP_STREAM*)cmd->extra;
 			h264Size = rdpgfx_estimate_h264_avc420(havc420);
 			return RDPGFX_WIRE_TO_SURFACE_PDU_1_SIZE + h264Size;
+
 		case RDPGFX_CODECID_AVC444:
 			havc444 = (RDPGFX_AVC444_BITMAP_STREAM*)cmd->extra;
 			h264Size = sizeof(UINT32); /* cbAvc420EncodedBitstream1 */
@@ -469,6 +473,7 @@ static INLINE UINT32 rdpgfx_estimate_surface_command(RDPGFX_SURFACE_COMMAND* cmd
 			}
 
 			return RDPGFX_WIRE_TO_SURFACE_PDU_1_SIZE + h264Size;
+
 		default:
 			return RDPGFX_WIRE_TO_SURFACE_PDU_1_SIZE + cmd->length;
 	}
@@ -484,7 +489,7 @@ static INLINE UINT32 rdpgfx_estimate_surface_command(RDPGFX_SURFACE_COMMAND* cmd
 static INLINE UINT16 rdpgfx_surface_command_cmdid(RDPGFX_SURFACE_COMMAND* cmd)
 {
 	if (cmd->codecId == RDPGFX_CODECID_CAPROGRESSIVE ||
-			cmd->codecId == RDPGFX_CODECID_CAPROGRESSIVE_V2)
+	    cmd->codecId == RDPGFX_CODECID_CAPROGRESSIVE_V2)
 	{
 		return RDPGFX_CMDID_WIRETOSURFACE_2;
 	}
@@ -520,8 +525,8 @@ static UINT rdpgfx_write_h264_metablock(wStream* s, RDPGFX_H264_METABLOCK* meta)
 	{
 		quantQualityVal = &(meta->quantQualityVals[index]);
 		Stream_Write_UINT8(s, quantQualityVal->qp
-						   | (quantQualityVal->r << 6)
-						   | (quantQualityVal->p << 7)); /* qpVal (1 byte) */
+		                   | (quantQualityVal->r << 6)
+		                   | (quantQualityVal->p << 7)); /* qpVal (1 byte) */
 		/* qualityVal (1 byte) */
 		Stream_Write_UINT8(s, quantQualityVal->qualityVal);
 	}
@@ -536,14 +541,14 @@ static UINT rdpgfx_write_h264_metablock(wStream* s, RDPGFX_H264_METABLOCK* meta)
  * @return 0 on success, otherwise a Win32 error code
  */
 static INLINE UINT rdpgfx_write_h264_avc420(wStream* s,
-		RDPGFX_AVC420_BITMAP_STREAM* havc420)
+        RDPGFX_AVC420_BITMAP_STREAM* havc420)
 {
 	UINT error = CHANNEL_RC_OK;
 
 	if ((error = rdpgfx_write_h264_metablock(s, &(havc420->meta))))
 	{
 		WLog_ERR(TAG, "rdpgfx_write_h264_metablock failed with error %lu!",
-				 error);
+		         error);
 		return error;
 	}
 
@@ -558,7 +563,8 @@ static INLINE UINT rdpgfx_write_h264_avc420(wStream* s,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_write_surface_command(wStream* s, RDPGFX_SURFACE_COMMAND* cmd)
+static UINT rdpgfx_write_surface_command(wStream* s,
+        RDPGFX_SURFACE_COMMAND* cmd)
 {
 	UINT error = CHANNEL_RC_OK;
 	RDPGFX_AVC420_BITMAP_STREAM* havc420 = NULL;
@@ -567,7 +573,7 @@ static UINT rdpgfx_write_surface_command(wStream* s, RDPGFX_SURFACE_COMMAND* cmd
 	UINT32 bitmapDataLength = 0;
 
 	if (cmd->codecId == RDPGFX_CODECID_CAPROGRESSIVE ||
-			cmd->codecId == RDPGFX_CODECID_CAPROGRESSIVE_V2)
+	    cmd->codecId == RDPGFX_CODECID_CAPROGRESSIVE_V2)
 	{
 		/* Write RDPGFX_CMDID_WIRETOSURFACE_2 format for CAPROGRESSIVE */
 		Stream_Write_UINT16(s, cmd->surfaceId); /* surfaceId (2 bytes) */
@@ -653,13 +659,13 @@ static UINT rdpgfx_write_surface_command(wStream* s, RDPGFX_SURFACE_COMMAND* cmd
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpgfx_send_surface_command(RdpgfxServerContext* context,
-										RDPGFX_SURFACE_COMMAND* cmd)
+                                        RDPGFX_SURFACE_COMMAND* cmd)
 {
 	UINT error = CHANNEL_RC_OK;
 	wStream* s;
 	s = rdpgfx_server_single_packet_new(
-			rdpgfx_surface_command_cmdid(cmd),
-			rdpgfx_estimate_surface_command(cmd));
+	        rdpgfx_surface_command_cmdid(cmd),
+	        rdpgfx_estimate_surface_command(cmd));
 
 	if (!s)
 	{
@@ -690,8 +696,8 @@ error:
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpgfx_send_surface_frame_command(RdpgfxServerContext* context,
-		RDPGFX_SURFACE_COMMAND* cmd, RDPGFX_START_FRAME_PDU* startFrame,
-		RDPGFX_END_FRAME_PDU* endFrame)
+        RDPGFX_SURFACE_COMMAND* cmd, RDPGFX_START_FRAME_PDU* startFrame,
+        RDPGFX_END_FRAME_PDU* endFrame)
 
 {
 	UINT error = CHANNEL_RC_OK;
@@ -722,7 +728,7 @@ static UINT rdpgfx_send_surface_frame_command(RdpgfxServerContext* context,
 	{
 		position = Stream_GetPosition(s);
 		error = rdpgfx_server_packet_init_header(s,
-				RDPGFX_CMDID_STARTFRAME, 0);
+		        RDPGFX_CMDID_STARTFRAME, 0);
 
 		if (error != CHANNEL_RC_OK)
 		{
@@ -737,8 +743,8 @@ static UINT rdpgfx_send_surface_frame_command(RdpgfxServerContext* context,
 	/* Write RDPGFX_CMDID_WIRETOSURFACE_1 or RDPGFX_CMDID_WIRETOSURFACE_2 */
 	position = Stream_GetPosition(s);
 	error = rdpgfx_server_packet_init_header(s,
-			rdpgfx_surface_command_cmdid(cmd),
-			0); // Actual length will be filled later
+	        rdpgfx_surface_command_cmdid(cmd),
+	        0); // Actual length will be filled later
 
 	if (error != CHANNEL_RC_OK)
 	{
@@ -761,7 +767,7 @@ static UINT rdpgfx_send_surface_frame_command(RdpgfxServerContext* context,
 	{
 		position = Stream_GetPosition(s);
 		error = rdpgfx_server_packet_init_header(s,
-				RDPGFX_CMDID_ENDFRAME, 0);
+		        RDPGFX_CMDID_ENDFRAME, 0);
 
 		if (error != CHANNEL_RC_OK)
 		{
@@ -784,11 +790,12 @@ error:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_send_delete_encoding_context_pdu(RdpgfxServerContext* context,
-		RDPGFX_DELETE_ENCODING_CONTEXT_PDU* pdu)
+static UINT rdpgfx_send_delete_encoding_context_pdu(RdpgfxServerContext*
+        context,
+        RDPGFX_DELETE_ENCODING_CONTEXT_PDU* pdu)
 {
 	wStream* s = rdpgfx_server_single_packet_new(
-					 RDPGFX_CMDID_DELETEENCODINGCONTEXT, 6);
+	                 RDPGFX_CMDID_DELETEENCODINGCONTEXT, 6);
 
 	if (!s)
 	{
@@ -807,14 +814,14 @@ static UINT rdpgfx_send_delete_encoding_context_pdu(RdpgfxServerContext* context
  * @return 0 on success, otherwise a Win32 error code
  */
 UINT rdpgfx_send_solid_fill_pdu(RdpgfxServerContext* context,
-								RDPGFX_SOLID_FILL_PDU* pdu)
+                                RDPGFX_SOLID_FILL_PDU* pdu)
 {
 	UINT error = CHANNEL_RC_OK;
 	UINT16 index;
 	RECTANGLE_16* fillRect;
 	wStream* s = rdpgfx_server_single_packet_new(
-					 RDPGFX_CMDID_SOLIDFILL,
-					 8 + 8 * pdu->fillRectCount);
+	                 RDPGFX_CMDID_SOLIDFILL,
+	                 8 + 8 * pdu->fillRectCount);
 
 	if (!s)
 	{
@@ -856,14 +863,14 @@ error:
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpgfx_send_surface_to_surface_pdu(RdpgfxServerContext* context,
-		RDPGFX_SURFACE_TO_SURFACE_PDU* pdu)
+        RDPGFX_SURFACE_TO_SURFACE_PDU* pdu)
 {
 	UINT error = CHANNEL_RC_OK;
 	UINT16 index;
 	RDPGFX_POINT16* destPt;
 	wStream* s = rdpgfx_server_single_packet_new(
-					 RDPGFX_CMDID_SURFACETOSURFACE,
-					 14 + 4 * pdu->destPtsCount);
+	                 RDPGFX_CMDID_SURFACETOSURFACE,
+	                 14 + 4 * pdu->destPtsCount);
 
 	if (!s)
 	{
@@ -906,11 +913,11 @@ error:
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpgfx_send_surface_to_cache_pdu(RdpgfxServerContext* context,
-		RDPGFX_SURFACE_TO_CACHE_PDU* pdu)
+        RDPGFX_SURFACE_TO_CACHE_PDU* pdu)
 {
 	UINT error = CHANNEL_RC_OK;
 	wStream* s = rdpgfx_server_single_packet_new(
-					 RDPGFX_CMDID_SURFACETOCACHE, 20);
+	                 RDPGFX_CMDID_SURFACETOCACHE, 20);
 
 	if (!s)
 	{
@@ -941,14 +948,14 @@ error:
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpgfx_send_cache_to_surface_pdu(RdpgfxServerContext* context,
-		RDPGFX_CACHE_TO_SURFACE_PDU* pdu)
+        RDPGFX_CACHE_TO_SURFACE_PDU* pdu)
 {
 	UINT error = CHANNEL_RC_OK;
 	UINT16 index;
 	RDPGFX_POINT16* destPt;
 	wStream* s = rdpgfx_server_single_packet_new(
-					 RDPGFX_CMDID_CACHETOSURFACE,
-					 6 + 4 * pdu->destPtsCount);
+	                 RDPGFX_CMDID_CACHETOSURFACE,
+	                 6 + 4 * pdu->destPtsCount);
 
 	if (!s)
 	{
@@ -983,10 +990,10 @@ error:
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpgfx_send_map_surface_to_output_pdu(RdpgfxServerContext* context,
-		RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU* pdu)
+        RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU* pdu)
 {
 	wStream* s = rdpgfx_server_single_packet_new(
-					 RDPGFX_CMDID_MAPSURFACETOOUTPUT, 12);
+	                 RDPGFX_CMDID_MAPSURFACETOOUTPUT, 12);
 
 	if (!s)
 	{
@@ -1007,10 +1014,10 @@ static UINT rdpgfx_send_map_surface_to_output_pdu(RdpgfxServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpgfx_send_map_surface_to_window_pdu(RdpgfxServerContext* context,
-		RDPGFX_MAP_SURFACE_TO_WINDOW_PDU* pdu)
+        RDPGFX_MAP_SURFACE_TO_WINDOW_PDU* pdu)
 {
 	wStream* s = rdpgfx_server_single_packet_new(
-					 RDPGFX_CMDID_MAPSURFACETOWINDOW, 18);
+	                 RDPGFX_CMDID_MAPSURFACETOWINDOW, 18);
 
 	if (!s)
 	{
@@ -1031,7 +1038,7 @@ static UINT rdpgfx_send_map_surface_to_window_pdu(RdpgfxServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpgfx_recv_frame_acknowledge_pdu(RdpgfxServerContext* context,
-		wStream* s)
+        wStream* s)
 {
 	RDPGFX_FRAME_ACKNOWLEDGE_PDU pdu;
 	UINT error = CHANNEL_RC_OK;
@@ -1053,7 +1060,7 @@ static UINT rdpgfx_recv_frame_acknowledge_pdu(RdpgfxServerContext* context,
 
 		if (error)
 			WLog_ERR(TAG, "context->FrameAcknowledge failed with error %lu",
-					 error);
+			         error);
 	}
 
 	return error;
@@ -1065,7 +1072,7 @@ static UINT rdpgfx_recv_frame_acknowledge_pdu(RdpgfxServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context,
-		wStream* s)
+        wStream* s)
 {
 	UINT16 index;
 	RDPGFX_CACHE_IMPORT_OFFER_PDU pdu;
@@ -1095,8 +1102,8 @@ static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context,
 	}
 
 	pdu.cacheEntries = (RDPGFX_CACHE_ENTRY_METADATA*)
-					   calloc(pdu.cacheEntriesCount,
-							  sizeof(RDPGFX_CACHE_ENTRY_METADATA));
+	                   calloc(pdu.cacheEntriesCount,
+	                          sizeof(RDPGFX_CACHE_ENTRY_METADATA));
 
 	if (!pdu.cacheEntries)
 	{
@@ -1118,7 +1125,7 @@ static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context,
 
 		if (error)
 			WLog_ERR(TAG, "context->CacheImportOffer failed with error %lu",
-					 error);
+			         error);
 	}
 
 	free(pdu.cacheEntries);
@@ -1131,7 +1138,7 @@ static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context,
-		wStream* s)
+        wStream* s)
 {
 	UINT16 index;
 	RDPGFX_CAPSET* capsSet;
@@ -1172,7 +1179,7 @@ static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context,
 		if (capsDataLength != 4)
 		{
 			WLog_ERR(TAG, "capsDataLength does not equal to 4: %lu",
-					 capsDataLength);
+			         capsDataLength);
 			return ERROR_INVALID_DATA;
 		}
 
@@ -1196,7 +1203,7 @@ static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpgfx_recv_qoe_frame_acknowledge_pdu(RdpgfxServerContext* context,
-		wStream* s)
+        wStream* s)
 {
 	RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU pdu;
 	UINT error = CHANNEL_RC_OK;
@@ -1218,7 +1225,7 @@ static UINT rdpgfx_recv_qoe_frame_acknowledge_pdu(RdpgfxServerContext* context,
 
 		if (error)
 			WLog_ERR(TAG, "context->QoeFrameAcknowledge failed with error %lu",
-					 error);
+			         error);
 	}
 
 	return error;
@@ -1243,39 +1250,39 @@ static UINT rdpgfx_server_receive_pdu(RdpgfxServerContext* context, wStream* s)
 	}
 
 	WLog_DBG(TAG, "cmdId: %s (0x%04X) flags: 0x%04X pduLength: %d",
-			 rdpgfx_get_cmd_id_string(header.cmdId), header.cmdId,
-			 header.flags, header.pduLength);
+	         rdpgfx_get_cmd_id_string(header.cmdId), header.cmdId,
+	         header.flags, header.pduLength);
 
 	switch (header.cmdId)
 	{
 		case RDPGFX_CMDID_FRAMEACKNOWLEDGE:
-
 			if ((error = rdpgfx_recv_frame_acknowledge_pdu(context, s)))
 				WLog_ERR(TAG, "rdpgfx_recv_frame_acknowledge_pdu "
-						 "failed with error %lu!", error);
+				         "failed with error %lu!", error);
 
 			break;
-		case RDPGFX_CMDID_CACHEIMPORTOFFER:
 
+		case RDPGFX_CMDID_CACHEIMPORTOFFER:
 			if ((error = rdpgfx_recv_cache_import_offer_pdu(context, s)))
 				WLog_ERR(TAG, "rdpgfx_recv_cache_import_offer_pdu "
-						 "failed with error %lu!", error);
+				         "failed with error %lu!", error);
 
 			break;
-		case RDPGFX_CMDID_CAPSADVERTISE:
 
+		case RDPGFX_CMDID_CAPSADVERTISE:
 			if ((error = rdpgfx_recv_caps_advertise_pdu(context, s)))
 				WLog_ERR(TAG, "rdpgfx_recv_caps_advertise_pdu "
-						 "failed with error %lu!", error);
+				         "failed with error %lu!", error);
 
 			break;
-		case RDPGFX_CMDID_QOEFRAMEACKNOWLEDGE:
 
+		case RDPGFX_CMDID_QOEFRAMEACKNOWLEDGE:
 			if ((error = rdpgfx_recv_qoe_frame_acknowledge_pdu(context, s)))
 				WLog_ERR(TAG, "rdpgfx_recv_qoe_frame_acknowledge_pdu "
-						 "failed with error %lu!", error);
+				         "failed with error %lu!", error);
 
 			break;
+
 		default:
 			error = CHANNEL_RC_BAD_PROC;
 			break;
@@ -1284,7 +1291,7 @@ static UINT rdpgfx_server_receive_pdu(RdpgfxServerContext* context, wStream* s)
 	if (error)
 	{
 		WLog_ERR(TAG,  "Error while parsing GFX cmdId: %s (0x%04X)",
-				 rdpgfx_get_cmd_id_string(header.cmdId), header.cmdId);
+		         rdpgfx_get_cmd_id_string(header.cmdId), header.cmdId);
 		return error;
 	}
 
@@ -1293,7 +1300,7 @@ static UINT rdpgfx_server_receive_pdu(RdpgfxServerContext* context, wStream* s)
 	if (end != (beg + header.pduLength))
 	{
 		WLog_ERR(TAG,  "Unexpected gfx pdu end: Actual: %d, Expected: %d",
-				 end, (beg + header.pduLength));
+		         end, (beg + header.pduLength));
 		Stream_SetPosition(s, (beg + header.pduLength));
 	}
 
@@ -1313,6 +1320,7 @@ static void* rdpgfx_server_thread_func(void* arg)
 	buffer = NULL;
 	BytesReturned = 0;
 	nCount = 0;
+	freerdp_channel_init_thread_context(context->rdpcontext);
 	events[nCount++] = priv->stopEvent;
 	events[nCount++] = priv->channelEvent;
 
@@ -1335,14 +1343,14 @@ static void* rdpgfx_server_thread_func(void* arg)
 		if ((error = rdpgfx_server_handle_messages(context)))
 		{
 			WLog_ERR(TAG, "rdpgfx_server_handle_messages failed with error %lu",
-					 error);
+			         error);
 			break;
 		}
 	}
 
 	if (error && context->rdpcontext)
 		setChannelError(context->rdpcontext, error,
-						"rdpgfx_server_thread_func reported an error");
+		                "rdpgfx_server_thread_func reported an error");
 
 	ExitThread((DWORD)error);
 	return NULL;
@@ -1360,18 +1368,18 @@ static BOOL rdpgfx_server_open(RdpgfxServerContext* context)
 		priv->SessionId = WTS_CURRENT_SESSION;
 
 		if (WTSQuerySessionInformationA(context->vcm, WTS_CURRENT_SESSION,
-										WTSSessionId, (LPSTR*) &pSessionId,
-										&BytesReturned) == FALSE)
+		                                WTSSessionId, (LPSTR*) &pSessionId,
+		                                &BytesReturned) == FALSE)
 		{
 			WLog_ERR(TAG, "WTSQuerySessionInformationA failed!");
 			return FALSE;
 		}
 
-		priv->SessionId = (DWORD) *pSessionId;
+		priv->SessionId = (DWORD) * pSessionId;
 		WTSFreeMemory(pSessionId);
 		priv->rdpgfx_channel = WTSVirtualChannelOpenEx(priv->SessionId,
-							   RDPGFX_DVC_CHANNEL_NAME,
-							   WTS_CHANNEL_OPTION_DYNAMIC);
+		                       RDPGFX_DVC_CHANNEL_NAME,
+		                       WTS_CHANNEL_OPTION_DYNAMIC);
 
 		if (!priv->rdpgfx_channel)
 		{
@@ -1381,12 +1389,12 @@ static BOOL rdpgfx_server_open(RdpgfxServerContext* context)
 
 		/* Query for channel event handle */
 		if (!WTSVirtualChannelQuery(priv->rdpgfx_channel, WTSVirtualEventHandle,
-									&buffer, &BytesReturned)
-				|| (BytesReturned != sizeof(HANDLE)))
+		                            &buffer, &BytesReturned)
+		    || (BytesReturned != sizeof(HANDLE)))
 		{
 			WLog_ERR(TAG,  "WTSVirtualChannelQuery failed "
-					 "or invalid returned size(%d)",
-					 BytesReturned);
+			         "or invalid returned size(%d)",
+			         BytesReturned);
 
 			if (buffer)
 				WTSFreeMemory(buffer);
@@ -1412,9 +1420,9 @@ static BOOL rdpgfx_server_open(RdpgfxServerContext* context)
 			}
 
 			if (!(priv->thread = CreateThread(NULL, 0,
-											  (LPTHREAD_START_ROUTINE)
-											  rdpgfx_server_thread_func,
-											  (void*) context, 0, NULL)))
+			                                  (LPTHREAD_START_ROUTINE)
+			                                  rdpgfx_server_thread_func,
+			                                  (void*) context, 0, NULL)))
 			{
 				WLog_ERR(TAG, "CreateThread failed!");
 				goto out_stopEvent;
@@ -1452,7 +1460,7 @@ static BOOL rdpgfx_server_close(RdpgfxServerContext* context)
 		if (WaitForSingleObject(priv->thread, INFINITE) == WAIT_FAILED)
 		{
 			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu",
-					 GetLastError());
+			         GetLastError());
 			return FALSE;
 		}
 
@@ -1514,7 +1522,7 @@ RdpgfxServerContext* rdpgfx_server_context_new(HANDLE vcm)
 	context->FrameAcknowledge = NULL;
 	context->QoeFrameAcknowledge = NULL;
 	context->priv = priv = (RdpgfxServerPrivate*)
-						   calloc(1, sizeof(RdpgfxServerPrivate));
+	                       calloc(1, sizeof(RdpgfxServerPrivate));
 
 	if (!priv)
 	{
@@ -1579,8 +1587,8 @@ UINT rdpgfx_server_handle_messages(RdpgfxServerContext* context)
 	if (!priv->isReady)
 	{
 		if (WTSVirtualChannelQuery(priv->rdpgfx_channel,
-								   WTSVirtualChannelReady,
-								   &buffer, &BytesReturned) == FALSE)
+		                           WTSVirtualChannelReady,
+		                           &buffer, &BytesReturned) == FALSE)
 		{
 			if (GetLastError() == ERROR_NO_DATA)
 				return ERROR_NO_DATA;
@@ -1599,7 +1607,7 @@ UINT rdpgfx_server_handle_messages(RdpgfxServerContext* context)
 		Stream_SetPosition(s, 0);
 
 		if (!WTSVirtualChannelRead(priv->rdpgfx_channel,
-								   0, NULL, 0, &BytesReturned))
+		                           0, NULL, 0, &BytesReturned))
 		{
 			if (GetLastError() == ERROR_NO_DATA)
 				return ERROR_NO_DATA;
@@ -1618,8 +1626,8 @@ UINT rdpgfx_server_handle_messages(RdpgfxServerContext* context)
 		}
 
 		if (WTSVirtualChannelRead(priv->rdpgfx_channel, 0,
-								  (PCHAR) Stream_Buffer(s),
-								  Stream_Capacity(s), &BytesReturned) == FALSE)
+		                          (PCHAR) Stream_Buffer(s),
+		                          Stream_Capacity(s), &BytesReturned) == FALSE)
 		{
 			WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
 			return ERROR_INTERNAL_ERROR;
@@ -1633,7 +1641,7 @@ UINT rdpgfx_server_handle_messages(RdpgfxServerContext* context)
 			if ((ret = rdpgfx_server_receive_pdu(context, s)))
 			{
 				WLog_ERR(TAG, "rdpgfx_server_receive_pdu "
-						 "failed with error %lu!", ret);
+				         "failed with error %lu!", ret);
 				return ret;
 			}
 		}

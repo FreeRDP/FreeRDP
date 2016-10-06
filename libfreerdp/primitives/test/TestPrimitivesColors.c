@@ -23,39 +23,23 @@ static const int RGB_TRIAL_ITERATIONS = 1000;
 static const int YCBCR_TRIAL_ITERATIONS = 1000;
 static const float TEST_TIME = 4.0;
 
-extern BOOL g_TestPrimitivesPerformance;
-
-extern pstatus_t general_RGBToRGB_16s8u_P3AC4R(const INT16 *pSrc[3], 
-	int srcStep, BYTE *pDst, int dstStep, const prim_size_t *roi);
-extern pstatus_t sse2_RGBToRGB_16s8u_P3AC4R(const INT16 *pSrc[3], 
-	int srcStep, BYTE *pDst, int dstStep, const prim_size_t *roi);
-extern pstatus_t general_yCbCrToRGB_16s16s_P3P3(const INT16 *pSrc[3],
-	int srcStep, INT16 *pDst[3], int dstStep, const prim_size_t *roi);
-extern pstatus_t sse2_yCbCrToRGB_16s16s_P3P3(const INT16 *pSrc[3],
-	int srcStep, INT16 *pDst[3], int dstStep, const prim_size_t *roi);
-extern pstatus_t neon_yCbCrToRGB_16s16s_P3P3(const INT16 *pSrc[3],
-	int srcStep, INT16 *pDst[3], int dstStep, const prim_size_t *roi);
-
 /* ------------------------------------------------------------------------- */
-int test_RGBToRGB_16s8u_P3AC4R_func(void)
+static BOOL test_RGBToRGB_16s8u_P3AC4R_func(void)
 {
 	INT16 ALIGN(r[4096]), ALIGN(g[4096]), ALIGN(b[4096]);
 	UINT32 ALIGN(out1[4096]);
-#ifdef WITH_SSE2
 	UINT32 ALIGN(out2[4096]);
-#endif
 	int i;
-	int failed = 0;
-	char testStr[256];
-	INT16 *ptrs[3];
+	BOOL failed = FALSE;
+	INT16* ptrs[3];
 	prim_size_t roi = { 64, 64 };
 
-	testStr[0] = '\0';
-	get_random_data(r, sizeof(r));
-	get_random_data(g, sizeof(g));
-	get_random_data(b, sizeof(b));
+	winpr_RAND((BYTE*)r, sizeof(r));
+	winpr_RAND((BYTE*)g, sizeof(g));
+	winpr_RAND((BYTE*)b, sizeof(b));
+
 	/* clear upper bytes */
-	for (i=0; i<4096; ++i)
+	for (i = 0; i < 4096; ++i)
 	{
 		r[i] &= 0x00FFU;
 		g[i] &= 0x00FFU;
@@ -65,106 +49,100 @@ int test_RGBToRGB_16s8u_P3AC4R_func(void)
 	ptrs[0] = r;
 	ptrs[1] = g;
 	ptrs[2] = b;
+	if (generic->RGBToRGB_16s8u_P3AC4R((const INT16**) ptrs, 64 * 2,
+				      (BYTE*) out1, 64 * 4, PIXEL_FORMAT_RGBA32,
+				       &roi) != PRIMITIVES_SUCCESS)
+		return FALSE;
 
-	general_RGBToRGB_16s8u_P3AC4R((const INT16 **) ptrs, 64*2,
-		(BYTE *) out1, 64*4, &roi);
-#ifdef WITH_SSE2
-	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE))
+	if (optimized->RGBToRGB_16s8u_P3AC4R((const INT16**) ptrs, 64 * 2,
+					 (BYTE*) out2, 64 * 4, PIXEL_FORMAT_RGBA32,
+					  &roi) != PRIMITIVES_SUCCESS)
+		return FALSE;
+
+	for (i = 0; i < 4096; ++i)
 	{
-		strcat(testStr, " SSE2");
-		sse2_RGBToRGB_16s8u_P3AC4R((const INT16 **) ptrs, 64*2,
-			(BYTE *) out2, 64*4, &roi);
-		for (i=0; i<4096; ++i)
+		if (out1[i] != out2[i])
 		{
-			if (out1[i] != out2[i])
-			{
-				printf("RGBToRGB-SSE FAIL: out1[%d]=0x%08x out2[%d]=0x%08x\n",
-					i, out1[i], i, out2[i]);
-				failed = 1;
-			}
+			printf("RGBToRGB-SSE FAIL: out1[%d]=0x%08x out2[%d]=0x%08x\n",
+			       i, out1[i], i, out2[i]);
+			failed = TRUE;
 		}
 	}
-#endif /* i386 */
-	if (!failed) printf("All RGBToRGB_16s8u_P3AC4R tests passed (%s).\n", testStr);
-	return (failed > 0) ? FAILURE : SUCCESS;
+
+	return !failed;
 }
 
 /* ------------------------------------------------------------------------- */
-static const prim_size_t roi64x64 = { 64, 64 };
-STD_SPEED_TEST(
-	rgb_to_argb_speed, INT16*, UINT32, dst=dst,
-	TRUE, general_RGBToRGB_16s8u_P3AC4R(
-		(const INT16 **) src1, 64*2, (BYTE *) dst, 64*4, &roi64x64),
-#ifdef WITH_SSE2
-	TRUE, sse2_RGBToRGB_16s8u_P3AC4R(
-		(const INT16 **) src1, 64*2, (BYTE *) dst, 64*4, &roi64x64),
-		PF_SSE2_INSTRUCTIONS_AVAILABLE, FALSE,
-#else
-	FALSE, PRIM_NOP, 0, FALSE,
-#endif
-	FALSE, dst=dst);
-
-int test_RGBToRGB_16s8u_P3AC4R_speed(void)
+static BOOL test_RGBToRGB_16s8u_P3AC4R_speed(void)
 {
-	INT16 ALIGN(r[4096]), ALIGN(g[4096]), ALIGN(b[4096]);
-	UINT32 ALIGN(dst[4096]);
+	const prim_size_t roi64x64 = { 64, 64 };
+	INT16 ALIGN(r[4096+1]), ALIGN(g[4096+1]), ALIGN(b[4096+1]);
+	UINT32 ALIGN(dst[4096+1]);
 	int i;
-	INT16 *ptrs[3];
-	int size_array[] = { 64 };
+	INT16* ptrs[3];
 
-	get_random_data(r, sizeof(r));
-	get_random_data(g, sizeof(g));
-	get_random_data(b, sizeof(b));
+	winpr_RAND((BYTE*)r, sizeof(r));
+	winpr_RAND((BYTE*)g, sizeof(g));
+	winpr_RAND((BYTE*)b, sizeof(b));
+
 	/* clear upper bytes */
-	for (i=0; i<4096; ++i)
+	for (i = 0; i < 4096; ++i)
 	{
 		r[i] &= 0x00FFU;
 		g[i] &= 0x00FFU;
 		b[i] &= 0x00FFU;
 	}
 
-	ptrs[0] = r;
-	ptrs[1] = g;
-	ptrs[2] = b;
+	ptrs[0] = r+1;
+	ptrs[1] = g+1;
+	ptrs[2] = b+1;
 
-	rgb_to_argb_speed("RGBToARGB", "aligned", 
-		(const INT16 **) ptrs, NULL, 0, dst,
-		size_array, 1, RGB_TRIAL_ITERATIONS, TEST_TIME);
-	return SUCCESS;
+	if (!speed_test("RGBToRGB_16s8u_P3AC4R", "aligned", g_Iterations,
+			(speed_test_fkt)generic->RGBToRGB_16s8u_P3AC4R,
+			(speed_test_fkt)optimized->RGBToRGB_16s8u_P3AC4R,
+			(const INT16**) ptrs, 64 * 2, (BYTE*) dst, 64 * 4, &roi64x64))
+		return FALSE;
+
+	if (!speed_test("RGBToRGB_16s8u_P3AC4R", "unaligned", g_Iterations,
+			(speed_test_fkt)generic->RGBToRGB_16s8u_P3AC4R,
+			(speed_test_fkt)optimized->RGBToRGB_16s8u_P3AC4R,
+			(const INT16**) ptrs, 64 * 2, ((BYTE*) dst)+1, 64 * 4, &roi64x64))
+		return FALSE;
+
+	return TRUE;
 }
 
 /* ========================================================================= */
-int test_yCbCrToRGB_16s16s_P3P3_func(void)
+static BOOL test_yCbCrToRGB_16s16s_P3P3_func(void)
 {
+	pstatus_t status;
 	INT16 ALIGN(y[4096]), ALIGN(cb[4096]), ALIGN(cr[4096]);
 	INT16 ALIGN(r1[4096]), ALIGN(g1[4096]), ALIGN(b1[4096]);
 	INT16 ALIGN(r2[4096]), ALIGN(g2[4096]), ALIGN(b2[4096]);
 	int i;
-	int failed = 0;
-	char testStr[256];
-	const INT16 *in[3];
-	INT16 *out1[3];
-	INT16 *out2[3];
+	const INT16* in[3];
+	INT16* out1[3];
+	INT16* out2[3];
 	prim_size_t roi = { 64, 64 };
 
-	testStr[0] = '\0';
-	get_random_data(y, sizeof(y));
-	get_random_data(cb, sizeof(cb));
-	get_random_data(cr, sizeof(cr));
+	winpr_RAND((BYTE*)y, sizeof(y));
+	winpr_RAND((BYTE*)cb, sizeof(cb));
+	winpr_RAND((BYTE*)cr, sizeof(cr));
+
 	/* Normalize to 11.5 fixed radix */
-	for (i=0; i<4096; ++i)
+	for (i = 0; i < 4096; ++i)
 	{
 		y[i]  &= 0x1FE0U;
 		cb[i] &= 0x1FE0U;
 		cr[i] &= 0x1FE0U;
 	}
+
 	memset(r1, 0, sizeof(r1));
 	memset(g1, 0, sizeof(g1));
 	memset(b1, 0, sizeof(b1));
 	memset(r2, 0, sizeof(r2));
 	memset(g2, 0, sizeof(g2));
 	memset(b2, 0, sizeof(b2));
-
 	in[0] = y;
 	in[1] = cb;
 	in[2] = cr;
@@ -175,57 +153,45 @@ int test_yCbCrToRGB_16s16s_P3P3_func(void)
 	out2[1] = g2;
 	out2[2] = b2;
 
-	general_yCbCrToRGB_16s16s_P3P3(in, 64*2, out1, 64*2, &roi);
-#ifdef WITH_SSE2
-	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE))
+	status = generic->yCbCrToRGB_16s16s_P3P3(in, 64 * 2, out1, 64 * 2, &roi);
+	if (status != PRIMITIVES_SUCCESS)
+		return FALSE;
+
+	status = optimized->yCbCrToRGB_16s16s_P3P3(in, 64 * 2, out2, 64 * 2, &roi);
+	if (status != PRIMITIVES_SUCCESS)
+		return FALSE;
+
+	for (i = 0; i < 4096; ++i)
 	{
-		strcat(testStr, " SSE2");
-		sse2_yCbCrToRGB_16s16s_P3P3(in, 64*2, out2, 64*2, &roi);
-		for (i=0; i<4096; ++i)
+		if ((ABS(r1[i] - r2[i]) > 1)
+		    || (ABS(g1[i] - g2[i]) > 1)
+		    || (ABS(b1[i] - b2[i]) > 1))
 		{
-			if ((ABS(r1[i]-r2[i]) > 1)
-					|| (ABS(g1[i]-g2[i]) > 1)
-					|| (ABS(b1[i]-b2[i]) > 1)) {
-				printf("YCbCrToRGB-SSE FAIL[%d]: %d,%d,%d vs %d,%d,%d\n", i,
-					r1[i],g1[i],b1[i], r2[i],g2[i],b2[i]);
-				failed = 1;
-			}
+			printf("YCbCrToRGB-SSE FAIL[%d]: %d,%d,%d vs %d,%d,%d\n", i,
+			       r1[i], g1[i], b1[i], r2[i], g2[i], b2[i]);
+			return FALSE;
 		}
 	}
-#endif /* i386 */
-	if (!failed) printf("All yCbCrToRGB_16s16s_P3P3 tests passed (%s).\n", testStr);
-	return (failed > 0) ? FAILURE : SUCCESS;
+
+	return TRUE;
 }
 
 /* ------------------------------------------------------------------------- */
-STD_SPEED_TEST(
-	ycbcr_to_rgb_speed, INT16*, INT16*, dst=dst,
-	TRUE, general_yCbCrToRGB_16s16s_P3P3(src1, 64*2, dst, 64*2, &roi64x64),
-#ifdef WITH_SSE2
-	TRUE, sse2_yCbCrToRGB_16s16s_P3P3(src1, 64*2, dst, 64*2, &roi64x64),
-		PF_SSE2_INSTRUCTIONS_AVAILABLE, FALSE,
-#elif defined(WITH_NEON)
-	TRUE, neon_yCbCrToRGB_16s16s_P3P3(src1, 64*2, dst, 64*2, &roi64x64),
-		PF_ARM_NEON_INSTRUCTIONS_AVAILABLE, FALSE,
-#else
-	FALSE, PRIM_NOP, 0, FALSE,
-#endif
-	FALSE, dst=dst);
-
-int test_yCbCrToRGB_16s16s_P3P3_speed(void)
+static int test_yCbCrToRGB_16s16s_P3P3_speed(void)
 {
+	prim_size_t roi = { 64, 64 };
 	INT16 ALIGN(y[4096]), ALIGN(cb[4096]), ALIGN(cr[4096]);
 	INT16 ALIGN(r[4096]), ALIGN(g[4096]), ALIGN(b[4096]);
 	int i;
-	const INT16 *input[3];
-	INT16 *output[3];
-	int size_array[] = { 64 };
+	const INT16* input[3];
+	INT16* output[3];
 
-	get_random_data(y, sizeof(y));
-	get_random_data(cb, sizeof(cb));
-	get_random_data(cr, sizeof(cr));
+	winpr_RAND((BYTE*)y, sizeof(y));
+	winpr_RAND((BYTE*)cb, sizeof(cb));
+	winpr_RAND((BYTE*)cr, sizeof(cr));
+
 	/* Normalize to 11.5 fixed radix */
-	for (i=0; i<4096; ++i)
+	for (i = 0; i < 4096; ++i)
 	{
 		y[i]  &= 0x1FE0U;
 		cb[i] &= 0x1FE0U;
@@ -239,38 +205,34 @@ int test_yCbCrToRGB_16s16s_P3P3_speed(void)
 	output[1] = g;
 	output[2] = b;
 
-	ycbcr_to_rgb_speed("yCbCrToRGB", "aligned", input, NULL, NULL, output,
-		size_array, 1, YCBCR_TRIAL_ITERATIONS, TEST_TIME);
-	return SUCCESS;
+	if (!speed_test("yCbCrToRGB_16s16s_P3P3", "aligned", g_Iterations,
+			(speed_test_fkt)generic->yCbCrToRGB_16s16s_P3P3,
+			(speed_test_fkt)optimized->yCbCrToRGB_16s16s_P3P3,
+			input, 64 * 2, output, 64 * 2, &roi))
+		return FALSE;
+
+	return TRUE;
 }
 
 int TestPrimitivesColors(int argc, char* argv[])
 {
-	int status;
+	prim_test_setup(FALSE);
 
-	status = test_RGBToRGB_16s8u_P3AC4R_func();
-
-	if (status != SUCCESS)
+	if (!test_RGBToRGB_16s8u_P3AC4R_func())
 		return 1;
 
 	if (g_TestPrimitivesPerformance)
 	{
-		status = test_RGBToRGB_16s8u_P3AC4R_speed();
-
-		if (status != SUCCESS)
+		if (!test_RGBToRGB_16s8u_P3AC4R_speed())
 			return 1;
 	}
 
-	status = test_yCbCrToRGB_16s16s_P3P3_func();
-
-	if (status != SUCCESS)
+	if (!test_yCbCrToRGB_16s16s_P3P3_func())
 		return 1;
 
 	if (g_TestPrimitivesPerformance)
 	{
-		status = test_yCbCrToRGB_16s16s_P3P3_speed();
-
-		if (status != SUCCESS)
+		if (!test_yCbCrToRGB_16s16s_P3P3_speed())
 			return 1;
 	}
 

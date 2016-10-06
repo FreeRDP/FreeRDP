@@ -3,6 +3,8 @@
  * GDI Shape Functions
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2016 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,39 +30,24 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 
-#include <freerdp/gdi/8bpp.h>
-#include <freerdp/gdi/16bpp.h>
-#include <freerdp/gdi/32bpp.h>
 #include <freerdp/gdi/bitmap.h>
-
+#include <freerdp/gdi/region.h>
 #include <freerdp/gdi/shape.h>
 
-p_FillRect FillRect_[5] =
-{
-	NULL,
-	FillRect_8bpp,
-	FillRect_16bpp,
-	NULL,
-	FillRect_32bpp
-};
+#include <freerdp/log.h>
+
+#include "clipping.h"
+
+#define TAG FREERDP_TAG("gdi.shape")
 
 static void Ellipse_Bresenham(HGDI_DC hdc, int x1, int y1, int x2, int y2)
 {
-	int i;
-	long e, e2;
-	long dx, dy;
-	int a, b, c;
-
-	HGDI_BITMAP bmp;
-	BYTE pixel8;
-	UINT16 pixel16;
-	UINT32 pixel32;
-	int bpp = hdc->bitsPerPixel;
-
+	INT32 e, e2;
+	INT32 dx, dy;
+	INT32 a, b, c;
 	a = (x1 < x2) ? x2 - x1 : x1 - x2;
 	b = (y1 < y2) ? y2 - y1 : y1 - y2;
 	c = b & 1;
-
 	dx = 4 * (1 - a) * b * b;
 	dy = 4 * (c + 1) * a * a;
 	e = dx + dy + c * a * a;
@@ -76,46 +63,15 @@ static void Ellipse_Bresenham(HGDI_DC hdc, int x1, int y1, int x2, int y2)
 
 	y1 += (b + 1) / 2;
 	y2 = y1 - c;
-
 	a *= 8 * a;
 	c = 8 * b * b;
 
-	pixel8 = 0;
-	pixel16 = 0;
-	pixel32 = 0;
-	bmp = (HGDI_BITMAP) hdc->selectedObject;
-
 	do
 	{
-		if (bpp == 32)
-		{
-			gdi_SetPixel_32bpp(bmp, x2, y1, pixel32);
-			gdi_SetPixel_32bpp(bmp, x1, y1, pixel32);
-			gdi_SetPixel_32bpp(bmp, x1, y2, pixel32);
-			gdi_SetPixel_32bpp(bmp, x2, y2, pixel32);
-		}
-		else if (bpp == 16)
-		{
-			gdi_SetPixel_16bpp(bmp, x2, y1, pixel16);
-			gdi_SetPixel_16bpp(bmp, x1, y1, pixel16);
-			gdi_SetPixel_16bpp(bmp, x1, y2, pixel16);
-			gdi_SetPixel_16bpp(bmp, x2, y2, pixel16);
-		}
-		else if (bpp == 8)
-		{
-			for (i = x1; i < x2; i++)
-			{
-				gdi_SetPixel_8bpp(bmp, i, y1, pixel8);
-				gdi_SetPixel_8bpp(bmp, i, y2, pixel8);
-			}
-
-			for (i = y1; i < y2; i++)
-			{
-				gdi_SetPixel_8bpp(bmp, x1, i, pixel8);
-				gdi_SetPixel_8bpp(bmp, x2, i, pixel8);
-			}
-		}
-
+		gdi_SetPixel(hdc, x2, y1, 0);
+		gdi_SetPixel(hdc, x1, y1, 0);
+		gdi_SetPixel(hdc, x1, y2, 0);
+		gdi_SetPixel(hdc, x2, y2, 0);
 		e2 = 2 * e;
 
 		if (e2 >= dx)
@@ -136,21 +92,8 @@ static void Ellipse_Bresenham(HGDI_DC hdc, int x1, int y1, int x2, int y2)
 
 	while (y1 - y2 < b)
 	{
-		if (bpp == 32)
-		{
-			gdi_SetPixel_32bpp(bmp, x1 - 1, ++y1, pixel32);
-			gdi_SetPixel_32bpp(bmp, x1 - 1, --y2, pixel32);
-		}
-		else if (bpp == 16)
-		{
-			gdi_SetPixel_16bpp(bmp, x1 - 1, ++y1, pixel16);
-			gdi_SetPixel_16bpp(bmp, x1 - 1, --y2, pixel16);
-		}
-		else if (bpp == 8)
-		{
-			gdi_SetPixel_8bpp(bmp, x1 - 1, ++y1, pixel8);
-			gdi_SetPixel_8bpp(bmp, x1 - 1, --y2, pixel8);
-		}
+		gdi_SetPixel(hdc, x1 - 1, ++y1, 0);
+		gdi_SetPixel(hdc, x1 - 1, --y2, 0);
 	}
 }
 
@@ -164,7 +107,8 @@ static void Ellipse_Bresenham(HGDI_DC hdc, int x1, int y1, int x2, int y2)
  * @param nBottomRect y2
  * @return nonzero if successful, 0 otherwise
  */
-BOOL gdi_Ellipse(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect, int nBottomRect)
+BOOL gdi_Ellipse(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect,
+		 int nBottomRect)
 {
 	Ellipse_Bresenham(hdc, nLeftRect, nTopRect, nRightRect, nBottomRect);
 	return TRUE;
@@ -179,15 +123,81 @@ BOOL gdi_Ellipse(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect, int n
  * @return nonzero if successful, 0 otherwise
  */
 
-BOOL gdi_FillRect(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr)
+BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 {
-	p_FillRect _FillRect = FillRect_[IBPP(hdc->bitsPerPixel)];
+	UINT32 x, y;
+	UINT32 color, dstColor;
+	BOOL monochrome = FALSE;
+	UINT32 nXDest, nYDest;
+	UINT32 nWidth, nHeight;
+	gdi_RectToCRgn(rect, &nXDest, &nYDest, &nWidth, &nHeight);
 
-	if (_FillRect == NULL)
+	if (!hdc || !hbr)
 		return FALSE;
 
-	return _FillRect(hdc, rect, hbr);
+	if (!gdi_ClipCoords(hdc, &nXDest, &nYDest, &nWidth, &nHeight, NULL, NULL))
+		return TRUE;
+
+	switch(hbr->style)
+	{
+	case GDI_BS_SOLID:
+	color = hbr->color;
+
+	for (y = 0; y < nHeight; y++)
+	{
+		for (x = 0; x < nWidth; x++)
+		{
+			BYTE* dstp = gdi_get_bitmap_pointer(hdc, nXDest + x,
+							    nYDest + y);
+
+			if (dstp)
+				WriteColor(dstp, hdc->format, color);
+		}
+	}
+
+		break;
+	case GDI_BS_HATCHED:
+	case GDI_BS_PATTERN:
+		monochrome = (hbr->pattern->format == PIXEL_FORMAT_MONO);
+		for (y = 0; y < nHeight; y++)
+		{
+			for (x = 0; x < nWidth; x++)
+			{
+				const UINT32 yOffset = ((nYDest + y) * hbr->pattern->width % hbr->pattern->height) * GetBytesPerPixel(hbr->pattern->format);
+				const UINT32 xOffset = ((nXDest + x) % hbr->pattern->width) * GetBytesPerPixel(hbr->pattern->format);
+				const BYTE* patp = &hbr->pattern->data[yOffset + xOffset];
+				BYTE* dstp = gdi_get_bitmap_pointer(hdc, nXDest + x,
+								    nYDest + y);
+
+				if (!patp)
+					return FALSE;
+				if (monochrome)
+				{
+					if (*patp == 0)
+						dstColor = hdc->bkColor;
+					else
+						dstColor = hdc->textColor;
+				}
+				else
+				{
+					dstColor = ReadColor(patp, hbr->pattern->format);
+					dstColor = ConvertColor(dstColor, hbr->pattern->format, hdc->format, NULL);
+				}
+
+				if (dstp)
+					WriteColor(dstp, hdc->format, dstColor);
+			}
+		}
+		break;
+	default:
+		break;
+	}
+	if (!gdi_InvalidateRegion(hdc, nXDest, nYDest, nWidth, nHeight))
+		return FALSE;
+
+	return TRUE;
 }
+
 
 /**
  * Draw a polygon
@@ -197,9 +207,10 @@ BOOL gdi_FillRect(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr)
  * @param nCount number of points
  * @return nonzero if successful, 0 otherwise
  */
-BOOL gdi_Polygon(HGDI_DC hdc, GDI_POINT *lpPoints, int nCount)
+BOOL gdi_Polygon(HGDI_DC hdc, GDI_POINT* lpPoints, int nCount)
 {
-	return TRUE;
+	WLog_ERR(TAG, "Not implemented!");
+	return FALSE;
 }
 
 /**
@@ -211,22 +222,52 @@ BOOL gdi_Polygon(HGDI_DC hdc, GDI_POINT *lpPoints, int nCount)
  * @param nCount count of number of points in lpPolyCounts
  * @return nonzero if successful, 0 otherwise
  */
-BOOL gdi_PolyPolygon(HGDI_DC hdc, GDI_POINT *lpPoints, int *lpPolyCounts, int nCount)
+BOOL gdi_PolyPolygon(HGDI_DC hdc, GDI_POINT* lpPoints, int* lpPolyCounts,
+		     int nCount)
 {
-	return TRUE;
+	WLog_ERR(TAG, "Not implemented!");
+	return FALSE;
 }
 
-/**
- * Draw a rectangle
- * @msdn{dd162898}
- * @param hdc device context
- * @param nLeftRect x1
- * @param nTopRect y1
- * @param nRightRect x2
- * @param nBottomRect y2
- * @return nonzero if successful, 0 otherwise
- */
-BOOL gdi_Rectangle(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect, int nBottomRect)
+BOOL gdi_Rectangle(HGDI_DC hdc, UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
+		   UINT32 nHeight)
 {
-	return TRUE;
+	UINT32 x, y;
+	UINT32 color;
+
+	if (!gdi_ClipCoords(hdc, &nXDst, &nYDst, &nWidth, &nHeight, NULL, NULL))
+		return TRUE;
+
+	color = hdc->textColor;
+	color = GetColor(hdc->format, 0, 0xFF, 0, 0xFF);
+
+	for (y = 0; y < nHeight; y++)
+	{
+		BYTE* dstLeft = gdi_get_bitmap_pointer(hdc, nXDst,
+						       nYDst + y);
+		BYTE* dstRight = gdi_get_bitmap_pointer(hdc, nXDst + nWidth - 1,
+							nYDst + y);
+
+		if (dstLeft)
+			WriteColor(dstLeft, hdc->format, color);
+
+		if (dstRight)
+			WriteColor(dstRight, hdc->format, color);
+	}
+
+	for (x = 0; x < nWidth; x++)
+	{
+		BYTE* dstTop = gdi_get_bitmap_pointer(hdc, nXDst + x,
+						      nYDst);
+		BYTE* dstBottom = gdi_get_bitmap_pointer(hdc, nXDst + x,
+				  nYDst + nHeight - 1);
+
+		if (dstTop)
+			WriteColor(dstTop, hdc->format, color);
+
+		if (dstBottom)
+			WriteColor(dstBottom, hdc->format, color);
+	}
+
+	return FALSE;
 }

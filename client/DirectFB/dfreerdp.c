@@ -51,33 +51,23 @@ struct thread_data
 
 BOOL df_context_new(freerdp* instance, rdpContext* context)
 {
-	if (!(context->channels = freerdp_channels_new()))
-		return FALSE;
-
 	return TRUE;
 }
 
 void df_context_free(freerdp* instance, rdpContext* context)
 {
-	if (context && context->channels)
-	{
-		freerdp_channels_close(context->channels, instance);
-		freerdp_channels_free(context->channels);
-		context->channels = NULL;
-	}
 }
 
 void df_begin_paint(rdpContext* context)
 {
 	rdpGdi* gdi = context->gdi;
-	gdi->primary->hdc->hwnd->invalid->null = 1;
+	gdi->primary->hdc->hwnd->invalid->null = TRUE;
 }
 
 void df_end_paint(rdpContext* context)
 {
 	rdpGdi* gdi;
 	dfInfo* dfi;
-
 	gdi = context->gdi;
 	dfi = ((dfContext*) context)->dfi;
 
@@ -95,26 +85,23 @@ void df_end_paint(rdpContext* context)
 	dfi->update_rect.w = gdi->width;
 	dfi->update_rect.h = gdi->height;
 #endif
-
-	dfi->primary->Blit(dfi->primary, dfi->surface, &(dfi->update_rect), dfi->update_rect.x, dfi->update_rect.y);
+	dfi->primary->Blit(dfi->primary, dfi->surface, &(dfi->update_rect),
+	                   dfi->update_rect.x, dfi->update_rect.y);
 }
 
-BOOL df_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
+BOOL df_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds,
+                int* wcount)
 {
 	dfInfo* dfi;
-
 	dfi = ((dfContext*) instance->context)->dfi;
-
 	rfds[*rcount] = (void*)(long)(dfi->read_fds);
 	(*rcount)++;
-
 	return TRUE;
 }
 
 BOOL df_check_fds(freerdp* instance, fd_set* set)
 {
 	dfInfo* dfi;
-
 	dfi = ((dfContext*) instance->context)->dfi;
 
 	if (!FD_ISSET(dfi->read_fds, set))
@@ -132,16 +119,12 @@ BOOL df_pre_connect(freerdp* instance)
 	BOOL bitmap_cache;
 	dfContext* context;
 	rdpSettings* settings;
-
 	dfi = (dfInfo*) malloc(sizeof(dfInfo));
 	ZeroMemory(dfi, sizeof(dfInfo));
-
 	context = ((dfContext*) instance->context);
 	context->dfi = dfi;
-
 	settings = instance->settings;
 	bitmap_cache = settings->BitmapCacheEnabled;
-
 	settings->OrderSupport[NEG_DSTBLT_INDEX] = TRUE;
 	settings->OrderSupport[NEG_PATBLT_INDEX] = TRUE;
 	settings->OrderSupport[NEG_SCRBLT_INDEX] = TRUE;
@@ -166,20 +149,13 @@ BOOL df_pre_connect(freerdp* instance)
 	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
-
 	dfi->clrconv = (CLRCONV*) malloc(sizeof(CLRCONV));
 	ZeroMemory(dfi->clrconv, sizeof(CLRCONV));
-
 	dfi->clrconv->alpha = 1;
 	dfi->clrconv->invert = 0;
 	dfi->clrconv->rgb555 = 0;
-
 	dfi->clrconv->palette = (rdpPalette*) malloc(sizeof(rdpPalette));
 	ZeroMemory(dfi->clrconv->palette, sizeof(rdpPalette));
-
-	if (freerdp_channels_pre_connect(instance->context->channels, instance) != CHANNEL_RC_OK)
-		return FALSE;
-
 	return (instance->context->cache = cache_new(instance->settings)) != NULL;
 }
 
@@ -188,29 +164,27 @@ BOOL df_post_connect(freerdp* instance)
 	rdpGdi* gdi;
 	dfInfo* dfi;
 	dfContext* context;
-
 	context = ((dfContext*) instance->context);
 	dfi = context->dfi;
 
-	if (!gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT | CLRBUF_16BPP | CLRBUF_32BPP, NULL))
+	if (!gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT | CLRBUF_16BPP |
+	              CLRBUF_32BPP, NULL))
 		return FALSE;
 
 	gdi = instance->context->gdi;
-
 	dfi->err = DirectFBCreate(&(dfi->dfb));
-
 	dfi->dsc.flags = DSDESC_CAPS;
 	dfi->dsc.caps = DSCAPS_PRIMARY;
 	dfi->err = dfi->dfb->CreateSurface(dfi->dfb, &(dfi->dsc), &(dfi->primary));
 	dfi->err = dfi->primary->GetSize(dfi->primary, &(gdi->width), &(gdi->height));
 	dfi->dfb->SetVideoMode(dfi->dfb, gdi->width, gdi->height, gdi->dstBpp);
-	dfi->dfb->CreateInputEventBuffer(dfi->dfb, DICAPS_ALL, DFB_TRUE, &(dfi->event_buffer));
+	dfi->dfb->CreateInputEventBuffer(dfi->dfb, DICAPS_ALL, DFB_TRUE,
+	                                 &(dfi->event_buffer));
 	dfi->event_buffer->CreateFileDescriptor(dfi->event_buffer, &(dfi->read_fds));
-
 	dfi->dfb->GetDisplayLayer(dfi->dfb, 0, &(dfi->layer));
 	dfi->layer->EnableCursor(dfi->layer, 1);
-
-	dfi->dsc.flags = DSDESC_CAPS | DSDESC_WIDTH | DSDESC_HEIGHT | DSDESC_PREALLOCATED | DSDESC_PIXELFORMAT;
+	dfi->dsc.flags = DSDESC_CAPS | DSDESC_WIDTH | DSDESC_HEIGHT |
+	                 DSDESC_PREALLOCATED | DSDESC_PIXELFORMAT;
 	dfi->dsc.caps = DSCAPS_SYSTEMONLY;
 	dfi->dsc.width = gdi->width;
 	dfi->dsc.height = gdi->height;
@@ -227,28 +201,26 @@ BOOL df_post_connect(freerdp* instance)
 	dfi->dsc.preallocated[0].data = gdi->primary_buffer;
 	dfi->dsc.preallocated[0].pitch = gdi->width * gdi->bytesPerPixel;
 	dfi->dfb->CreateSurface(dfi->dfb, &(dfi->dsc), &(dfi->surface));
-
 	instance->update->BeginPaint = df_begin_paint;
 	instance->update->EndPaint = df_end_paint;
-
 	df_keyboard_init();
-
 	pointer_cache_register_callbacks(instance->update);
 	df_register_graphics(instance->context->graphics);
-
-	return freerdp_channels_post_connect(instance->context->channels, instance) == CHANNEL_RC_OK;
+	return TRUE;
 }
 
-BOOL df_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
+BOOL df_verify_certificate(freerdp* instance, char* subject, char* issuer,
+                           char* fingerprint)
 {
 	char answer;
 	WLog_INFO(TAG, "Certificate details:");
 	WLog_INFO(TAG, "\tSubject: %s", subject);
 	WLog_INFO(TAG, "\tIssuer: %s", issuer);
 	WLog_INFO(TAG, "\tThumbprint: %s", fingerprint);
-	WLog_INFO(TAG, "The above X.509 certificate could not be verified, possibly because you do not have "
-			  "the CA certificate in your certificate store, or the certificate has expired. "
-			  "Please look at the documentation on how to create local certificate store for a private CA.");
+	WLog_INFO(TAG,
+	          "The above X.509 certificate could not be verified, possibly because you do not have "
+	          "the CA certificate in your certificate store, or the certificate has expired. "
+	          "Please look at the documentation on how to create local certificate store for a private CA.");
 
 	while (1)
 	{
@@ -268,28 +240,28 @@ BOOL df_verify_certificate(freerdp* instance, char* subject, char* issuer, char*
 	return FALSE;
 }
 
-static int df_receive_channel_data(freerdp* instance, UINT16 channelId, BYTE* data, int size, int flags, int total_size)
+static int df_receive_channel_data(freerdp* instance, UINT16 channelId,
+                                   BYTE* data, int size, int flags, int total_size)
 {
-	return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
+	return freerdp_channels_data(instance, channelId, data, size, flags,
+	                             total_size);
 }
 
-static void df_process_cb_monitor_ready_event(rdpChannels* channels, freerdp* instance)
+static void df_process_cb_monitor_ready_event(rdpChannels* channels,
+        freerdp* instance)
 {
 	wMessage* event;
 	RDP_CB_FORMAT_LIST_EVENT* format_list_event;
-
-	event = freerdp_event_new(CliprdrChannel_Class, CliprdrChannel_FormatList, NULL, NULL);
-
+	event = freerdp_event_new(CliprdrChannel_Class, CliprdrChannel_FormatList, NULL,
+	                          NULL);
 	format_list_event = (RDP_CB_FORMAT_LIST_EVENT*) event;
 	format_list_event->num_formats = 0;
-
 	freerdp_channels_send_event(channels, event);
 }
 
 static void df_process_channel_event(rdpChannels* channels, freerdp* instance)
 {
 	wMessage* event;
-
 	event = freerdp_channels_pop_event(channels);
 
 	if (event)
@@ -301,7 +273,8 @@ static void df_process_channel_event(rdpChannels* channels, freerdp* instance)
 				break;
 
 			default:
-				WLog_ERR(TAG, "df_process_channel_event: unknown event type %d", GetMessageType(event->id));
+				WLog_ERR(TAG, "df_process_channel_event: unknown event type %d",
+				         GetMessageType(event->id));
 				break;
 		}
 
@@ -329,7 +302,6 @@ int dfreerdp_run(freerdp* instance)
 	dfInfo* dfi;
 	dfContext* context;
 	rdpChannels* channels;
-
 	ZeroMemory(rfds, sizeof(rfds));
 	ZeroMemory(wfds, sizeof(wfds));
 
@@ -337,7 +309,6 @@ int dfreerdp_run(freerdp* instance)
 		return 0;
 
 	context = (dfContext*) instance->context;
-
 	dfi = context->dfi;
 	channels = instance->context->channels;
 
@@ -351,11 +322,14 @@ int dfreerdp_run(freerdp* instance)
 			WLog_ERR(TAG, "Failed to get FreeRDP file descriptor");
 			break;
 		}
-		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
+
+		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds,
+		                             &wcount) != TRUE)
 		{
 			WLog_ERR(TAG, "Failed to get channel manager file descriptor");
 			break;
 		}
+
 		if (df_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
 			WLog_ERR(TAG, "Failed to get dfreerdp file descriptor");
@@ -383,9 +357,9 @@ int dfreerdp_run(freerdp* instance)
 		{
 			/* these are not really errors */
 			if (!((errno == EAGAIN) ||
-				(errno == EWOULDBLOCK) ||
-				(errno == EINPROGRESS) ||
-				(errno == EINTR))) /* signal occurred */
+			      (errno == EWOULDBLOCK) ||
+			      (errno == EINPROGRESS) ||
+			      (errno == EINTR))) /* signal occurred */
 			{
 				WLog_ERR(TAG, "dfreerdp_run: select failed");
 				break;
@@ -397,29 +371,26 @@ int dfreerdp_run(freerdp* instance)
 			WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
 			break;
 		}
+
 		if (df_check_fds(instance, &rfds_set) != TRUE)
 		{
 			WLog_ERR(TAG, "Failed to check dfreerdp file descriptor");
 			break;
 		}
+
 		if (freerdp_channels_check_fds(channels, instance) != TRUE)
 		{
 			WLog_ERR(TAG, "Failed to check channel manager file descriptor");
 			break;
 		}
+
 		df_process_channel_event(channels, instance);
 	}
 
-	freerdp_channels_disconnect(channels, instance);
 	freerdp_disconnect(instance);
-
-	freerdp_channels_close(channels, instance);
-	freerdp_channels_free(channels);
 	df_free(dfi);
 	gdi_free(instance);
-	freerdp_disconnect(instance);
 	freerdp_free(instance);
-
 	return 0;
 }
 
@@ -427,17 +398,13 @@ void* thread_func(void* param)
 {
 	struct thread_data* data;
 	data = (struct thread_data*) param;
-
 	dfreerdp_run(data->instance);
-
 	free(data);
-
 	pthread_detach(pthread_self());
-
 	g_thread_count--;
 
-        if (g_thread_count < 1)
-        	ReleaseSemaphore(g_sem, 1, NULL);
+	if (g_thread_count < 1)
+		ReleaseSemaphore(g_sem, 1, NULL);
 
 	return NULL;
 }
@@ -450,7 +417,6 @@ int main(int argc, char* argv[])
 	dfContext* context;
 	rdpChannels* channels;
 	struct thread_data* data;
-
 	setlocale(LC_ALL, "");
 
 	if (!(g_sem = CreateSemaphore(NULL, 0, 1, NULL)))
@@ -464,7 +430,6 @@ int main(int argc, char* argv[])
 	instance->PostConnect = df_post_connect;
 	instance->VerifyCertificate = df_verify_certificate;
 	instance->ReceiveChannelData = df_receive_channel_data;
-
 	instance->ContextSize = sizeof(dfContext);
 	instance->ContextNew = df_context_new;
 	instance->ContextFree = df_context_free;
@@ -477,25 +442,22 @@ int main(int argc, char* argv[])
 
 	context = (dfContext*) instance->context;
 	channels = instance->context->channels;
-
 	DirectFBInit(&argc, &argv);
-
 	instance->context->argc = argc;
 	instance->context->argv = argv;
-
-	status = freerdp_client_settings_parse_command_line(instance->settings, argc, argv, FALSE);
+	status = freerdp_client_settings_parse_command_line(instance->settings, argc,
+	         argv, FALSE);
 
 	if (status < 0)
 		exit(0);
 
-	if (!freerdp_client_load_addins(instance->context->channels, instance->settings))
+	if (!freerdp_client_load_addins(instance->context->channels,
+	                                instance->settings))
 		exit(-1);
 
 	data = (struct thread_data*) malloc(sizeof(struct thread_data));
 	ZeroMemory(data, sizeof(sizeof(struct thread_data)));
-
 	data->instance = instance;
-
 	g_thread_count++;
 	pthread_create(&thread, 0, thread_func, data);
 

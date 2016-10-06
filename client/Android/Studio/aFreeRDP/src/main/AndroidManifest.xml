@@ -6,17 +6,6 @@
 	android:versionCode="3"
 	android:versionName="e83f97b" >
 
-	<uses-sdk
-		android:targetSdkVersion="21"
-		android:minSdkVersion="14"/>
-
-	<supports-screens
-		android:anyDensity="true"
-		android:smallScreens="true"
-		android:normalScreens="true"
-		android:largeScreens="true"
-		android:xlargeScreens="true" />
-			
 	<application android:name="com.freerdp.afreerdp.application.GlobalApp"
 		android:label="aFreeRDP"
 		android:icon="@drawable/icon_launcher_freerdp" >

@@ -51,7 +51,8 @@ static BOOL update_message_EndPaint(rdpContext* context)
 			MakeMessageId(Update, EndPaint), NULL, NULL);
 }
 
-static BOOL update_message_SetBounds(rdpContext* context, rdpBounds* bounds)
+static BOOL update_message_SetBounds(rdpContext* context,
+					 const rdpBounds* bounds)
 {
 	rdpBounds* wParam = NULL;
 
@@ -79,7 +80,8 @@ static BOOL update_message_DesktopResize(rdpContext* context)
 			MakeMessageId(Update, DesktopResize), NULL, NULL);
 }
 
-static BOOL update_message_BitmapUpdate(rdpContext* context, BITMAP_UPDATE* bitmap)
+static BOOL update_message_BitmapUpdate(rdpContext* context,
+					const BITMAP_UPDATE* bitmap)
 {
 	UINT32 index;
 	BITMAP_UPDATE* wParam;
@@ -123,7 +125,8 @@ static BOOL update_message_BitmapUpdate(rdpContext* context, BITMAP_UPDATE* bitm
 			MakeMessageId(Update, BitmapUpdate), (void*) wParam, NULL);
 }
 
-static BOOL update_message_Palette(rdpContext* context, PALETTE_UPDATE* palette)
+static BOOL update_message_Palette(rdpContext* context,
+				   const PALETTE_UPDATE* palette)
 {
 	PALETTE_UPDATE* wParam;
 
@@ -136,7 +139,8 @@ static BOOL update_message_Palette(rdpContext* context, PALETTE_UPDATE* palette)
 			MakeMessageId(Update, Palette), (void*) wParam, NULL);
 }
 
-static BOOL update_message_PlaySound(rdpContext* context, PLAY_SOUND_UPDATE* playSound)
+static BOOL update_message_PlaySound(rdpContext* context,
+					 const PLAY_SOUND_UPDATE* playSound)
 {
 	PLAY_SOUND_UPDATE* wParam;
 
@@ -155,7 +159,8 @@ static BOOL update_message_SetKeyboardIndicators(rdpContext* context, UINT16 led
 			MakeMessageId(Update, SetKeyboardIndicators), (void*)(size_t)led_flags, NULL);
 }
 
-static BOOL update_message_RefreshRect(rdpContext* context, BYTE count, RECTANGLE_16* areas)
+static BOOL update_message_RefreshRect(rdpContext* context, BYTE count,
+					   const RECTANGLE_16* areas)
 {
 	RECTANGLE_16* lParam;
 
@@ -168,7 +173,8 @@ static BOOL update_message_RefreshRect(rdpContext* context, BYTE count, RECTANGL
 			MakeMessageId(Update, RefreshRect), (void*) (size_t) count, (void*) lParam);
 }
 
-static BOOL update_message_SuppressOutput(rdpContext* context, BYTE allow, RECTANGLE_16* area)
+static BOOL update_message_SuppressOutput(rdpContext* context, BYTE allow,
+					  const RECTANGLE_16* area)
 {
 	RECTANGLE_16* lParam = NULL;
 
@@ -199,7 +205,8 @@ static BOOL update_message_SurfaceCommand(rdpContext* context, wStream* s)
 			MakeMessageId(Update, SurfaceCommand), (void*) wParam, NULL);
 }
 
-static BOOL update_message_SurfaceBits(rdpContext* context, SURFACE_BITS_COMMAND* surfaceBitsCommand)
+static BOOL update_message_SurfaceBits(rdpContext* context,
+					   const SURFACE_BITS_COMMAND* surfaceBitsCommand)
 {
 	SURFACE_BITS_COMMAND* wParam;
 
@@ -224,7 +231,8 @@ static BOOL update_message_SurfaceBits(rdpContext* context, SURFACE_BITS_COMMAND
 			MakeMessageId(Update, SurfaceBits), (void*) wParam, NULL);
 }
 
-static BOOL update_message_SurfaceFrameMarker(rdpContext* context, SURFACE_FRAME_MARKER* surfaceFrameMarker)
+static BOOL update_message_SurfaceFrameMarker(rdpContext* context,
+						  const SURFACE_FRAME_MARKER* surfaceFrameMarker)
 {
 	SURFACE_FRAME_MARKER* wParam;
 
@@ -245,7 +253,7 @@ static BOOL update_message_SurfaceFrameAcknowledge(rdpContext* context, UINT32 f
 
 /* Primary Update */
 
-static BOOL update_message_DstBlt(rdpContext* context, DSTBLT_ORDER* dstBlt)
+static BOOL update_message_DstBlt(rdpContext* context, const DSTBLT_ORDER* dstBlt)
 {
 	DSTBLT_ORDER* wParam;
 
@@ -273,7 +281,8 @@ static BOOL update_message_PatBlt(rdpContext* context, PATBLT_ORDER* patBlt)
 			MakeMessageId(PrimaryUpdate, PatBlt), (void*) wParam, NULL);
 }
 
-static BOOL update_message_ScrBlt(rdpContext* context, SCRBLT_ORDER* scrBlt)
+static BOOL update_message_ScrBlt(rdpContext* context,
+				  const SCRBLT_ORDER* scrBlt)
 {
 	SCRBLT_ORDER* wParam;
 
@@ -286,7 +295,9 @@ static BOOL update_message_ScrBlt(rdpContext* context, SCRBLT_ORDER* scrBlt)
 			MakeMessageId(PrimaryUpdate, ScrBlt), (void*) wParam, NULL);
 }
 
-static BOOL update_message_OpaqueRect(rdpContext* context, OPAQUE_RECT_ORDER* opaqueRect)
+static BOOL update_message_OpaqueRect(
+		rdpContext* context,
+		const OPAQUE_RECT_ORDER* opaqueRect)
 {
 	OPAQUE_RECT_ORDER* wParam;
 
@@ -299,7 +310,9 @@ static BOOL update_message_OpaqueRect(rdpContext* context, OPAQUE_RECT_ORDER* op
 			MakeMessageId(PrimaryUpdate, OpaqueRect), (void*) wParam, NULL);
 }
 
-static BOOL update_message_DrawNineGrid(rdpContext* context, DRAW_NINE_GRID_ORDER* drawNineGrid)
+static BOOL update_message_DrawNineGrid(
+		rdpContext* context,
+		const DRAW_NINE_GRID_ORDER* drawNineGrid)
 {
 	DRAW_NINE_GRID_ORDER* wParam;
 
@@ -312,7 +325,8 @@ static BOOL update_message_DrawNineGrid(rdpContext* context, DRAW_NINE_GRID_ORDE
 			MakeMessageId(PrimaryUpdate, DrawNineGrid), (void*) wParam, NULL);
 }
 
-static BOOL update_message_MultiDstBlt(rdpContext* context, MULTI_DSTBLT_ORDER* multiDstBlt)
+static BOOL update_message_MultiDstBlt(rdpContext* context,
+					   const MULTI_DSTBLT_ORDER* multiDstBlt)
 {
 	MULTI_DSTBLT_ORDER* wParam;
 
@@ -325,7 +339,8 @@ static BOOL update_message_MultiDstBlt(rdpContext* context, MULTI_DSTBLT_ORDER* 
 			MakeMessageId(PrimaryUpdate, MultiDstBlt), (void*) wParam, NULL);
 }
 
-static BOOL update_message_MultiPatBlt(rdpContext* context, MULTI_PATBLT_ORDER* multiPatBlt)
+static BOOL update_message_MultiPatBlt(rdpContext* context,
+					   const MULTI_PATBLT_ORDER* multiPatBlt)
 {
 	MULTI_PATBLT_ORDER* wParam;
 
@@ -340,7 +355,8 @@ static BOOL update_message_MultiPatBlt(rdpContext* context, MULTI_PATBLT_ORDER* 
 			MakeMessageId(PrimaryUpdate, MultiPatBlt), (void*) wParam, NULL);
 }
 
-static BOOL update_message_MultiScrBlt(rdpContext* context, MULTI_SCRBLT_ORDER* multiScrBlt)
+static BOOL update_message_MultiScrBlt(rdpContext* context,
+					   const MULTI_SCRBLT_ORDER* multiScrBlt)
 {
 	MULTI_SCRBLT_ORDER* wParam;
 
@@ -353,7 +369,9 @@ static BOOL update_message_MultiScrBlt(rdpContext* context, MULTI_SCRBLT_ORDER* 
 			MakeMessageId(PrimaryUpdate, MultiScrBlt), (void*) wParam, NULL);
 }
 
-static BOOL update_message_MultiOpaqueRect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* multiOpaqueRect)
+static BOOL update_message_MultiOpaqueRect(
+		rdpContext* context,
+		const MULTI_OPAQUE_RECT_ORDER* multiOpaqueRect)
 {
 	MULTI_OPAQUE_RECT_ORDER* wParam;
 
@@ -366,7 +384,8 @@ static BOOL update_message_MultiOpaqueRect(rdpContext* context, MULTI_OPAQUE_REC
 			MakeMessageId(PrimaryUpdate, MultiOpaqueRect), (void*) wParam, NULL);
 }
 
-static BOOL update_message_MultiDrawNineGrid(rdpContext* context, MULTI_DRAW_NINE_GRID_ORDER* multiDrawNineGrid)
+static BOOL update_message_MultiDrawNineGrid(rdpContext* context,
+						 const MULTI_DRAW_NINE_GRID_ORDER* multiDrawNineGrid)
 {
 	MULTI_DRAW_NINE_GRID_ORDER* wParam;
 
@@ -381,7 +400,8 @@ static BOOL update_message_MultiDrawNineGrid(rdpContext* context, MULTI_DRAW_NIN
 			MakeMessageId(PrimaryUpdate, MultiDrawNineGrid), (void*) wParam, NULL);
 }
 
-static BOOL update_message_LineTo(rdpContext* context, LINE_TO_ORDER* lineTo)
+static BOOL update_message_LineTo(rdpContext* context,
+				  const LINE_TO_ORDER* lineTo)
 {
 	LINE_TO_ORDER* wParam;
 
@@ -394,7 +414,8 @@ static BOOL update_message_LineTo(rdpContext* context, LINE_TO_ORDER* lineTo)
 			MakeMessageId(PrimaryUpdate, LineTo), (void*) wParam, NULL);
 }
 
-static BOOL update_message_Polyline(rdpContext* context, POLYLINE_ORDER* polyline)
+static BOOL update_message_Polyline(rdpContext* context,
+					const POLYLINE_ORDER* polyline)
 {
 	POLYLINE_ORDER* wParam;
 
@@ -443,7 +464,8 @@ static BOOL update_message_Mem3Blt(rdpContext* context, MEM3BLT_ORDER* mem3Blt)
 			MakeMessageId(PrimaryUpdate, Mem3Blt), (void*) wParam, NULL);
 }
 
-static BOOL update_message_SaveBitmap(rdpContext* context, SAVE_BITMAP_ORDER* saveBitmap)
+static BOOL update_message_SaveBitmap(rdpContext* context,
+					  const SAVE_BITMAP_ORDER* saveBitmap)
 {
 	SAVE_BITMAP_ORDER* wParam;
 
@@ -456,7 +478,8 @@ static BOOL update_message_SaveBitmap(rdpContext* context, SAVE_BITMAP_ORDER* sa
 			MakeMessageId(PrimaryUpdate, SaveBitmap), (void*) wParam, NULL);
 }
 
-static BOOL update_message_GlyphIndex(rdpContext* context, GLYPH_INDEX_ORDER* glyphIndex)
+static BOOL update_message_GlyphIndex(rdpContext* context,
+					  GLYPH_INDEX_ORDER* glyphIndex)
 {
 	GLYPH_INDEX_ORDER* wParam;
 
@@ -471,7 +494,8 @@ static BOOL update_message_GlyphIndex(rdpContext* context, GLYPH_INDEX_ORDER* gl
 			MakeMessageId(PrimaryUpdate, GlyphIndex), (void*) wParam, NULL);
 }
 
-static BOOL update_message_FastIndex(rdpContext* context, FAST_INDEX_ORDER* fastIndex)
+static BOOL update_message_FastIndex(rdpContext* context,
+					 const FAST_INDEX_ORDER* fastIndex)
 {
 	FAST_INDEX_ORDER* wParam;
 
@@ -484,7 +508,8 @@ static BOOL update_message_FastIndex(rdpContext* context, FAST_INDEX_ORDER* fast
 			MakeMessageId(PrimaryUpdate, FastIndex), (void*) wParam, NULL);
 }
 
-static BOOL update_message_FastGlyph(rdpContext* context, FAST_GLYPH_ORDER* fastGlyph)
+static BOOL update_message_FastGlyph(rdpContext* context,
+					 const FAST_GLYPH_ORDER* fastGlyph)
 {
 	FAST_GLYPH_ORDER* wParam;
 
@@ -512,7 +537,8 @@ static BOOL update_message_FastGlyph(rdpContext* context, FAST_GLYPH_ORDER* fast
 			MakeMessageId(PrimaryUpdate, FastGlyph), (void*) wParam, NULL);
 }
 
-static BOOL update_message_PolygonSC(rdpContext* context, POLYGON_SC_ORDER* polygonSC)
+static BOOL update_message_PolygonSC(rdpContext* context,
+					 const POLYGON_SC_ORDER* polygonSC)
 {
 	POLYGON_SC_ORDER* wParam;
 
@@ -556,7 +582,8 @@ static BOOL update_message_PolygonCB(rdpContext* context, POLYGON_CB_ORDER* poly
 			MakeMessageId(PrimaryUpdate, PolygonCB), (void*) wParam, NULL);
 }
 
-static BOOL update_message_EllipseSC(rdpContext* context, ELLIPSE_SC_ORDER* ellipseSC)
+static BOOL update_message_EllipseSC(rdpContext* context,
+					 const ELLIPSE_SC_ORDER* ellipseSC)
 {
 	ELLIPSE_SC_ORDER* wParam;
 
@@ -569,7 +596,8 @@ static BOOL update_message_EllipseSC(rdpContext* context, ELLIPSE_SC_ORDER* elli
 			MakeMessageId(PrimaryUpdate, EllipseSC), (void*) wParam, NULL);
 }
 
-static BOOL update_message_EllipseCB(rdpContext* context, ELLIPSE_CB_ORDER* ellipseCB)
+static BOOL update_message_EllipseCB(rdpContext* context,
+					 const ELLIPSE_CB_ORDER* ellipseCB)
 {
 	ELLIPSE_CB_ORDER* wParam;
 
@@ -586,7 +614,8 @@ static BOOL update_message_EllipseCB(rdpContext* context, ELLIPSE_CB_ORDER* elli
 
 /* Secondary Update */
 
-static BOOL update_message_CacheBitmap(rdpContext* context, CACHE_BITMAP_ORDER* cacheBitmapOrder)
+static BOOL update_message_CacheBitmap(rdpContext* context,
+					   const CACHE_BITMAP_ORDER* cacheBitmapOrder)
 {
 	CACHE_BITMAP_ORDER* wParam;
 
@@ -649,7 +678,9 @@ static BOOL update_message_CacheBitmapV3(rdpContext* context, CACHE_BITMAP_V3_OR
 			MakeMessageId(SecondaryUpdate, CacheBitmapV3), (void*) wParam, NULL);
 }
 
-static BOOL update_message_CacheColorTable(rdpContext* context, CACHE_COLOR_TABLE_ORDER* cacheColorTableOrder)
+static BOOL update_message_CacheColorTable(
+		rdpContext* context,
+		const CACHE_COLOR_TABLE_ORDER* cacheColorTableOrder)
 {
 	CACHE_COLOR_TABLE_ORDER* wParam;
 
@@ -662,7 +693,9 @@ static BOOL update_message_CacheColorTable(rdpContext* context, CACHE_COLOR_TABL
 			MakeMessageId(SecondaryUpdate, CacheColorTable), (void*) wParam, NULL);
 }
 
-static BOOL update_message_CacheGlyph(rdpContext* context, CACHE_GLYPH_ORDER* cacheGlyphOrder)
+static BOOL update_message_CacheGlyph(
+		rdpContext* context,
+		const CACHE_GLYPH_ORDER* cacheGlyphOrder)
 {
 	CACHE_GLYPH_ORDER* wParam;
 
@@ -675,7 +708,9 @@ static BOOL update_message_CacheGlyph(rdpContext* context, CACHE_GLYPH_ORDER* ca
 			MakeMessageId(SecondaryUpdate, CacheGlyph), (void*) wParam, NULL);
 }
 
-static BOOL update_message_CacheGlyphV2(rdpContext* context, CACHE_GLYPH_V2_ORDER* cacheGlyphV2Order)
+static BOOL update_message_CacheGlyphV2(
+		rdpContext* context,
+		const CACHE_GLYPH_V2_ORDER* cacheGlyphV2Order)
 {
 	CACHE_GLYPH_V2_ORDER* wParam;
 
@@ -688,7 +723,9 @@ static BOOL update_message_CacheGlyphV2(rdpContext* context, CACHE_GLYPH_V2_ORDE
 			MakeMessageId(SecondaryUpdate, CacheGlyphV2), (void*) wParam, NULL);
 }
 
-static BOOL update_message_CacheBrush(rdpContext* context, CACHE_BRUSH_ORDER* cacheBrushOrder)
+static BOOL update_message_CacheBrush(
+		rdpContext* context,
+		const CACHE_BRUSH_ORDER* cacheBrushOrder)
 {
 	CACHE_BRUSH_ORDER* wParam;
 
@@ -703,7 +740,9 @@ static BOOL update_message_CacheBrush(rdpContext* context, CACHE_BRUSH_ORDER* ca
 
 /* Alternate Secondary Update */
 
-static BOOL update_message_CreateOffscreenBitmap(rdpContext* context, CREATE_OFFSCREEN_BITMAP_ORDER* createOffscreenBitmap)
+static BOOL update_message_CreateOffscreenBitmap(
+		rdpContext* context,
+		const CREATE_OFFSCREEN_BITMAP_ORDER* createOffscreenBitmap)
 {
 	CREATE_OFFSCREEN_BITMAP_ORDER* wParam;
 
@@ -726,7 +765,9 @@ static BOOL update_message_CreateOffscreenBitmap(rdpContext* context, CREATE_OFF
 			MakeMessageId(AltSecUpdate, CreateOffscreenBitmap), (void*) wParam, NULL);
 }
 
-static BOOL update_message_SwitchSurface(rdpContext* context, SWITCH_SURFACE_ORDER* switchSurface)
+static BOOL update_message_SwitchSurface(
+		rdpContext* context,
+		const SWITCH_SURFACE_ORDER* switchSurface)
 {
 	SWITCH_SURFACE_ORDER* wParam;
 
@@ -739,7 +780,9 @@ static BOOL update_message_SwitchSurface(rdpContext* context, SWITCH_SURFACE_ORD
 			MakeMessageId(AltSecUpdate, SwitchSurface), (void*) wParam, NULL);
 }
 
-static BOOL update_message_CreateNineGridBitmap(rdpContext* context, CREATE_NINE_GRID_BITMAP_ORDER* createNineGridBitmap)
+static BOOL update_message_CreateNineGridBitmap(
+		rdpContext* context,
+		const CREATE_NINE_GRID_BITMAP_ORDER* createNineGridBitmap)
 {
 	CREATE_NINE_GRID_BITMAP_ORDER* wParam;
 
@@ -752,7 +795,9 @@ static BOOL update_message_CreateNineGridBitmap(rdpContext* context, CREATE_NINE
 			MakeMessageId(AltSecUpdate, CreateNineGridBitmap), (void*) wParam, NULL);
 }
 
-static BOOL update_message_FrameMarker(rdpContext* context, FRAME_MARKER_ORDER* frameMarker)
+static BOOL update_message_FrameMarker(
+		rdpContext* context,
+		const FRAME_MARKER_ORDER* frameMarker)
 {
 	FRAME_MARKER_ORDER* wParam;
 
@@ -765,7 +810,9 @@ static BOOL update_message_FrameMarker(rdpContext* context, FRAME_MARKER_ORDER* 
 			MakeMessageId(AltSecUpdate, FrameMarker), (void*) wParam, NULL);
 }
 
-static BOOL update_message_StreamBitmapFirst(rdpContext* context, STREAM_BITMAP_FIRST_ORDER* streamBitmapFirst)
+static BOOL update_message_StreamBitmapFirst(
+		rdpContext* context,
+		const STREAM_BITMAP_FIRST_ORDER* streamBitmapFirst)
 {
 	STREAM_BITMAP_FIRST_ORDER* wParam;
 
@@ -780,7 +827,9 @@ static BOOL update_message_StreamBitmapFirst(rdpContext* context, STREAM_BITMAP_
 			MakeMessageId(AltSecUpdate, StreamBitmapFirst), (void*) wParam, NULL);
 }
 
-static BOOL update_message_StreamBitmapNext(rdpContext* context, STREAM_BITMAP_NEXT_ORDER* streamBitmapNext)
+static BOOL update_message_StreamBitmapNext(
+		rdpContext* context,
+		const STREAM_BITMAP_NEXT_ORDER* streamBitmapNext)
 {
 	STREAM_BITMAP_NEXT_ORDER* wParam;
 
@@ -795,7 +844,9 @@ static BOOL update_message_StreamBitmapNext(rdpContext* context, STREAM_BITMAP_N
 			MakeMessageId(AltSecUpdate, StreamBitmapNext), (void*) wParam, NULL);
 }
 
-static BOOL update_message_DrawGdiPlusFirst(rdpContext* context, DRAW_GDIPLUS_FIRST_ORDER* drawGdiPlusFirst)
+static BOOL update_message_DrawGdiPlusFirst(
+		rdpContext* context,
+		const DRAW_GDIPLUS_FIRST_ORDER* drawGdiPlusFirst)
 {
 	DRAW_GDIPLUS_FIRST_ORDER* wParam;
 
@@ -810,7 +861,9 @@ static BOOL update_message_DrawGdiPlusFirst(rdpContext* context, DRAW_GDIPLUS_FI
 			MakeMessageId(AltSecUpdate, DrawGdiPlusFirst), (void*) wParam, NULL);
 }
 
-static BOOL update_message_DrawGdiPlusNext(rdpContext* context, DRAW_GDIPLUS_NEXT_ORDER* drawGdiPlusNext)
+static BOOL update_message_DrawGdiPlusNext(
+		rdpContext* context,
+		const DRAW_GDIPLUS_NEXT_ORDER* drawGdiPlusNext)
 {
 	DRAW_GDIPLUS_NEXT_ORDER* wParam;
 
@@ -825,7 +878,9 @@ static BOOL update_message_DrawGdiPlusNext(rdpContext* context, DRAW_GDIPLUS_NEX
 			MakeMessageId(AltSecUpdate, DrawGdiPlusNext), (void*) wParam, NULL);
 }
 
-static BOOL update_message_DrawGdiPlusEnd(rdpContext* context, DRAW_GDIPLUS_END_ORDER* drawGdiPlusEnd)
+static BOOL update_message_DrawGdiPlusEnd(
+		rdpContext* context,
+		const DRAW_GDIPLUS_END_ORDER* drawGdiPlusEnd)
 {
 	DRAW_GDIPLUS_END_ORDER* wParam;
 
@@ -840,7 +895,9 @@ static BOOL update_message_DrawGdiPlusEnd(rdpContext* context, DRAW_GDIPLUS_END_
 			MakeMessageId(AltSecUpdate, DrawGdiPlusEnd), (void*) wParam, NULL);
 }
 
-static BOOL update_message_DrawGdiPlusCacheFirst(rdpContext* context, DRAW_GDIPLUS_CACHE_FIRST_ORDER* drawGdiPlusCacheFirst)
+static BOOL update_message_DrawGdiPlusCacheFirst(
+		rdpContext* context,
+		const DRAW_GDIPLUS_CACHE_FIRST_ORDER* drawGdiPlusCacheFirst)
 {
 	DRAW_GDIPLUS_CACHE_FIRST_ORDER* wParam;
 
@@ -855,7 +912,9 @@ static BOOL update_message_DrawGdiPlusCacheFirst(rdpContext* context, DRAW_GDIPL
 			MakeMessageId(AltSecUpdate, DrawGdiPlusCacheFirst), (void*) wParam, NULL);
 }
 
-static BOOL update_message_DrawGdiPlusCacheNext(rdpContext* context, DRAW_GDIPLUS_CACHE_NEXT_ORDER* drawGdiPlusCacheNext)
+static BOOL update_message_DrawGdiPlusCacheNext(
+		rdpContext* context,
+		const DRAW_GDIPLUS_CACHE_NEXT_ORDER* drawGdiPlusCacheNext)
 {
 	DRAW_GDIPLUS_CACHE_NEXT_ORDER* wParam;
 
@@ -870,7 +929,9 @@ static BOOL update_message_DrawGdiPlusCacheNext(rdpContext* context, DRAW_GDIPLU
 			MakeMessageId(AltSecUpdate, DrawGdiPlusCacheNext), (void*) wParam, NULL);
 }
 
-static BOOL update_message_DrawGdiPlusCacheEnd(rdpContext* context, DRAW_GDIPLUS_CACHE_END_ORDER* drawGdiPlusCacheEnd)
+static BOOL update_message_DrawGdiPlusCacheEnd(
+		rdpContext* context,
+		const DRAW_GDIPLUS_CACHE_END_ORDER* drawGdiPlusCacheEnd)
 {
 	DRAW_GDIPLUS_CACHE_END_ORDER* wParam;
 
@@ -1125,7 +1186,8 @@ static BOOL update_message_NonMonitoredDesktop(rdpContext* context, WINDOW_ORDER
 
 /* Pointer Update */
 
-static BOOL update_message_PointerPosition(rdpContext* context, POINTER_POSITION_UPDATE* pointerPosition)
+static BOOL update_message_PointerPosition(rdpContext* context,
+										   const POINTER_POSITION_UPDATE* pointerPosition)
 {
 	POINTER_POSITION_UPDATE* wParam;
 
@@ -1138,7 +1200,8 @@ static BOOL update_message_PointerPosition(rdpContext* context, POINTER_POSITION
 			MakeMessageId(PointerUpdate, PointerPosition), (void*) wParam, NULL);
 }
 
-static BOOL update_message_PointerSystem(rdpContext* context, POINTER_SYSTEM_UPDATE* pointerSystem)
+static BOOL update_message_PointerSystem(rdpContext* context,
+										 const POINTER_SYSTEM_UPDATE* pointerSystem)
 {
 	POINTER_SYSTEM_UPDATE* wParam;
 
@@ -1151,7 +1214,8 @@ static BOOL update_message_PointerSystem(rdpContext* context, POINTER_SYSTEM_UPD
 			MakeMessageId(PointerUpdate, PointerSystem), (void*) wParam, NULL);
 }
 
-static BOOL update_message_PointerColor(rdpContext* context, POINTER_COLOR_UPDATE* pointerColor)
+static BOOL update_message_PointerColor(rdpContext* context,
+										const POINTER_COLOR_UPDATE* pointerColor)
 {
 	POINTER_COLOR_UPDATE* wParam;
 
@@ -1188,7 +1252,8 @@ out_fail:
 	return FALSE;
 }
 
-static BOOL update_message_PointerNew(rdpContext* context, POINTER_NEW_UPDATE* pointerNew)
+static BOOL update_message_PointerNew(rdpContext* context,
+									  const POINTER_NEW_UPDATE* pointerNew)
 {
 	POINTER_NEW_UPDATE* wParam;
 
@@ -1225,7 +1290,8 @@ out_fail:
 	return FALSE;
 }
 
-static BOOL update_message_PointerCached(rdpContext* context, POINTER_CACHED_UPDATE* pointerCached)
+static BOOL update_message_PointerCached(rdpContext* context,
+										 const POINTER_CACHED_UPDATE* pointerCached)
 {
 	POINTER_CACHED_UPDATE* wParam;
 

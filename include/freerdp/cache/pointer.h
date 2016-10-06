@@ -47,9 +47,6 @@ struct rdp_pointer_cache
 extern "C" {
 #endif
 
-FREERDP_API rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, UINT32 index);
-FREERDP_API void pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index, rdpPointer* pointer);
-
 FREERDP_API void pointer_cache_register_callbacks(rdpUpdate* update);
 
 FREERDP_API rdpPointerCache* pointer_cache_new(rdpSettings* settings);

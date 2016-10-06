@@ -6,7 +6,7 @@
 
 typedef struct _LIST_ITEM
 {
-	LIST_ENTRY ItemEntry;
+	WINPR_LIST_ENTRY ItemEntry;
 	ULONG Signature;
 } LIST_ITEM, *PLIST_ITEM;
 
@@ -14,10 +14,10 @@ int TestInterlockedDList(int argc, char* argv[])
 {
 	ULONG Count;
 	PLIST_ITEM pListItem;
-	PLIST_ENTRY pListHead;
-	PLIST_ENTRY pListEntry;
+	WINPR_PLIST_ENTRY pListHead;
+	WINPR_PLIST_ENTRY pListEntry;
 
-	pListHead = (PLIST_ENTRY) _aligned_malloc(sizeof(LIST_ENTRY), MEMORY_ALLOCATION_ALIGNMENT);
+	pListHead = (WINPR_PLIST_ENTRY) _aligned_malloc(sizeof(WINPR_LIST_ENTRY), MEMORY_ALLOCATION_ALIGNMENT);
 
 	if (!pListHead)
 	{

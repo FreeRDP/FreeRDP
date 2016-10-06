@@ -31,60 +31,55 @@
 
 #define TAG CLIENT_TAG("windows")
 
-HBITMAP wf_create_dib(wfContext* wfc, int width, int height, int bpp, BYTE* data, BYTE** pdata)
+HBITMAP wf_create_dib(wfContext* wfc, UINT32 width, UINT32 height,
+                      UINT32 srcFormat, const BYTE* data, BYTE** pdata)
 {
 	HDC hdc;
 	int negHeight;
 	HBITMAP bitmap;
 	BITMAPINFO bmi;
 	BYTE* cdata = NULL;
-
+	UINT32 dstFormat = srcFormat;
 	/**
 	 * See: http://msdn.microsoft.com/en-us/library/dd183376
 	 * if biHeight is positive, the bitmap is bottom-up
 	 * if biHeight is negative, the bitmap is top-down
 	 * Since we get top-down bitmaps, let's keep it that way
 	 */
-
 	negHeight = (height < 0) ? height : height * (-1);
-
 	hdc = GetDC(NULL);
-
 	bmi.bmiHeader.biSize = sizeof(BITMAPINFO);
 	bmi.bmiHeader.biWidth = width;
 	bmi.bmiHeader.biHeight = negHeight;
 	bmi.bmiHeader.biPlanes = 1;
-	bmi.bmiHeader.biBitCount = wfc->dstBpp;
+	bmi.bmiHeader.biBitCount = GetBitsPerPixel(dstFormat);
 	bmi.bmiHeader.biCompression = BI_RGB;
-
 	bitmap = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, (void**) &cdata, NULL, 0);
 
 	if (data)
-		freerdp_image_convert(data, cdata, width, height, bpp, wfc->dstBpp, wfc->clrconv);
+		freerdp_image_copy(cdata, dstFormat, 0, 0, 0, width, height, data, srcFormat, 0,
+		                   0, 0, &wfc->context.gdi->palette);
 
 	if (pdata)
 		*pdata = cdata;
 
 	ReleaseDC(NULL, hdc);
 	GdiFlush();
-
 	return bitmap;
 }
 
-wfBitmap* wf_image_new(wfContext* wfc, int width, int height, int bpp, BYTE* data)
+wfBitmap* wf_image_new(wfContext* wfc, UINT32 width, UINT32 height,
+                       UINT32 format, const BYTE* data)
 {
 	HDC hdc;
 	wfBitmap* image;
-
 	hdc = GetDC(NULL);
 	image = (wfBitmap*) malloc(sizeof(wfBitmap));
 	image->hdc = CreateCompatibleDC(hdc);
-
-	image->bitmap = wf_create_dib(wfc, width, height, bpp, data, &(image->pdata));
-
+	image->bitmap = wf_create_dib(wfc, width, height, format, data,
+	                              &(image->pdata));
 	image->org_bitmap = (HBITMAP) SelectObject(image->hdc, image->bitmap);
 	ReleaseDC(NULL, hdc);
-
 	return image;
 }
 
@@ -101,26 +96,32 @@ void wf_image_free(wfBitmap* image)
 
 /* Bitmap Class */
 
-void wf_Bitmap_New(wfContext* wfc, rdpBitmap* bitmap)
+static BOOL wf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 {
 	HDC hdc;
+	wfContext* wfc = (wfContext*)context;
 	wfBitmap* wf_bitmap = (wfBitmap*) bitmap;
 
-	wf_bitmap = (wfBitmap*) bitmap;
+	if (!context || !bitmap)
+		return FALSE;
 
+	wf_bitmap = (wfBitmap*) bitmap;
 	hdc = GetDC(NULL);
 	wf_bitmap->hdc = CreateCompatibleDC(hdc);
 
 	if (!bitmap->data)
 		wf_bitmap->bitmap = CreateCompatibleBitmap(hdc, bitmap->width, bitmap->height);
 	else
-		wf_bitmap->bitmap = wf_create_dib(wfc, bitmap->width, bitmap->height, bitmap->bpp, bitmap->data, NULL);
+		wf_bitmap->bitmap = wf_create_dib(wfc, bitmap->width, bitmap->height,
+		                                  bitmap->format, bitmap->data, NULL);
 
-	wf_bitmap->org_bitmap = (HBITMAP) SelectObject(wf_bitmap->hdc, wf_bitmap->bitmap);
+	wf_bitmap->org_bitmap = (HBITMAP) SelectObject(wf_bitmap->hdc,
+	                        wf_bitmap->bitmap);
 	ReleaseDC(NULL, hdc);
+	return TRUE;
 }
 
-void wf_Bitmap_Free(wfContext* wfc, rdpBitmap* bitmap)
+static void wf_Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 {
 	wfBitmap* wf_bitmap = (wfBitmap*) bitmap;
 
@@ -132,145 +133,163 @@ void wf_Bitmap_Free(wfContext* wfc, rdpBitmap* bitmap)
 	}
 }
 
-void wf_Bitmap_Paint(wfContext* wfc, rdpBitmap* bitmap)
+static BOOL wf_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 {
-	int width, height;
+	BOOL rc;
+	UINT32 width, height;
+	wfContext* wfc = (wfContext*)context;
 	wfBitmap* wf_bitmap = (wfBitmap*) bitmap;
+
+	if (!context || !bitmap)
+		return FALSE;
 
 	width = bitmap->right - bitmap->left + 1;
 	height = bitmap->bottom - bitmap->top + 1;
-
-	BitBlt(wfc->primary->hdc, bitmap->left, bitmap->top,
-		width, height, wf_bitmap->hdc, 0, 0, SRCCOPY);
-
+	rc = BitBlt(wfc->primary->hdc, bitmap->left, bitmap->top,
+	            width, height, wf_bitmap->hdc, 0, 0, SRCCOPY);
 	wf_invalidate_region(wfc, bitmap->left, bitmap->top, width, height);
+	return rc;
 }
 
-void wf_Bitmap_Decompress(wfContext* wfc, rdpBitmap* bitmap,
-		BYTE* data, int width, int height, int bpp, int length, BOOL compressed, int codecId)
+static BOOL wf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap,
+                                 BOOL primary)
 {
-	int status;
-	UINT16 size;
-	BYTE* pSrcData;
-	BYTE* pDstData;
-	UINT32 SrcSize;
-	UINT32 SrcFormat;
-	UINT32 bytesPerPixel;
+	wfContext* wfc = (wfContext*)context;
+	wfBitmap* bmp = (wfBitmap*) bitmap;
+	rdpGdi* gdi = context->gdi;
 
-	bytesPerPixel = (bpp + 7) / 8;
-	size = width * height * 4;
+	if (!gdi || !wfc)
+		return FALSE;
 
-	if (!bitmap->data)
-		bitmap->data = (BYTE*) _aligned_malloc(size, 16);
-	else
-		bitmap->data = (BYTE*) _aligned_realloc(bitmap->data, size, 16);
-
-	pSrcData = data;
-	SrcSize = (UINT32) length;
-	pDstData = bitmap->data;
-
-	if (compressed)
-	{
-		if (bpp < 32)
-		{
-			if (!freerdp_client_codecs_prepare(wfc->codecs, FREERDP_CODEC_INTERLEAVED,
-											   wfc->instance->settings->DesktopWidth,
-											   wfc->instance->settings->DesktopHeight))
-				return;
-
-			status = interleaved_decompress(wfc->codecs->interleaved, pSrcData, SrcSize, bpp,
-					&pDstData, PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height, NULL);
-		}
-		else
-		{
-			if (!freerdp_client_codecs_prepare(wfc->codecs, FREERDP_CODEC_PLANAR,
-											   wfc->instance->settings->DesktopWidth,
-											   wfc->instance->settings->DesktopHeight))
-				return;
-
-			status = planar_decompress(wfc->codecs->planar, pSrcData, SrcSize, &pDstData,
-					PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height, TRUE);
-		}
-
-		if (status < 0)
-		{
-			WLog_ERR(TAG, "Bitmap Decompression Failed");
-			return;
-		}
-	}
-	else
-	{
-		SrcFormat = gdi_get_pixel_format(bpp, TRUE);
-
-		status = freerdp_image_copy(pDstData, PIXEL_FORMAT_XRGB32, width * 4, 0, 0,
-				width, height, pSrcData, SrcFormat, width * bytesPerPixel, 0, 0, NULL);
-	}
-
-	bitmap->compressed = FALSE;
-	bitmap->length = size;
-	bitmap->bpp = 32;
-}
-
-void wf_Bitmap_SetSurface(wfContext* wfc, rdpBitmap* bitmap, BOOL primary)
-{
 	if (primary)
 		wfc->drawing = wfc->primary;
+	else if (!bmp)
+		return FALSE;
 	else
-		wfc->drawing = (wfBitmap*) bitmap;
+		wfc->drawing = bmp;
+
+	return TRUE;
 }
 
 /* Pointer Class */
 
-void wf_Pointer_New(wfContext* wfc, rdpPointer* pointer)
+static BOOL flip_bitmap(const BYTE* src, BYTE* dst, UINT32 scanline,
+                        UINT32 nHeight)
+{
+	UINT32 x;
+	BYTE* bottomLine = dst + scanline * (nHeight - 1);
+
+	for (x = 0; x < nHeight; x++)
+	{
+		memcpy(bottomLine, src, scanline);
+		src += scanline;
+		bottomLine -= scanline;
+	}
+
+	return TRUE;
+}
+
+static BOOL wf_Pointer_New(rdpContext* context, const rdpPointer* pointer)
 {
 	HCURSOR hCur;
 	ICONINFO info;
-	BYTE *data;
+	rdpGdi* gdi;
+	BOOL rc = FALSE;
+
+	if (!context || !pointer)
+		return FALSE;
+
+	gdi = context->gdi;
+
+	if (!gdi)
+		return FALSE;
 
 	info.fIcon = FALSE;
 	info.xHotspot = pointer->xPos;
 	info.yHotspot = pointer->yPos;
+
 	if (pointer->xorBpp == 1)
 	{
-		data = (BYTE*) malloc(pointer->lengthAndMask + pointer->lengthXorMask);
-		CopyMemory(data, pointer->andMaskData, pointer->lengthAndMask);
-		CopyMemory(data + pointer->lengthAndMask, pointer->xorMaskData, pointer->lengthXorMask);
-		info.hbmMask = CreateBitmap(pointer->width, pointer->height * 2, 1, 1, data);
-		free(data);
+		BYTE* pdata = (BYTE*) _aligned_malloc(pointer->lengthAndMask +
+		                                      pointer->lengthXorMask, 16);
+
+		if (!pdata)
+			goto fail;
+
+		CopyMemory(pdata, pointer->andMaskData, pointer->lengthAndMask);
+		CopyMemory(pdata + pointer->lengthAndMask, pointer->xorMaskData,
+		           pointer->lengthXorMask);
+		info.hbmMask = CreateBitmap(pointer->width, pointer->height * 2, 1, 1, pdata);
+		_aligned_free(pdata);
 		info.hbmColor = NULL;
 	}
 	else
 	{
-		data = (BYTE*) malloc(pointer->lengthAndMask);
-		freerdp_bitmap_flip(pointer->andMaskData, data, (pointer->width + 7) / 8, pointer->height);
-		info.hbmMask = CreateBitmap(pointer->width, pointer->height, 1, 1, data);
-		free(data);
-		data = (BYTE*) malloc(pointer->lengthXorMask);
-		freerdp_image_flip(pointer->xorMaskData, data, pointer->width, pointer->height, pointer->xorBpp);
-		info.hbmColor = CreateBitmap(pointer->width, pointer->height, 1, pointer->xorBpp, data);
-		free(data);
+		BYTE* pdata = (BYTE*) _aligned_malloc(pointer->lengthAndMask, 16);
+
+		if (!pdata)
+			goto fail;
+
+		flip_bitmap(pointer->andMaskData, pdata, (pointer->width + 7) / 8,
+		            pointer->height);
+		info.hbmMask = CreateBitmap(pointer->width, pointer->height, 1, 1, pdata);
+		_aligned_free(pdata);
+		pdata = (BYTE*) _aligned_malloc(pointer->width * pointer->height *
+		                                GetBitsPerPixel(gdi->dstFormat), 16);
+
+		if (!pdata)
+			goto fail;
+
+		if (!freerdp_image_copy_from_pointer_data(pdata, gdi->dstFormat, 0, 0, 0,
+		        pointer->width, pointer->height,
+		        pointer->xorMaskData, pointer->lengthXorMask,
+		        pointer->andMaskData, pointer->lengthAndMask, pointer->xorBpp, &gdi->palette))
+		{
+			_aligned_free(pdata);
+			goto fail;
+		}
+
+		info.hbmColor = CreateBitmap(pointer->width, pointer->height, 1,
+		                             GetBitsPerPixel(gdi->dstFormat), pdata);
+		_aligned_free(pdata);
 	}
+
 	hCur = CreateIconIndirect(&info);
 	((wfPointer*) pointer)->cursor = hCur;
+	rc = TRUE;
+fail:
+
 	if (info.hbmMask)
 		DeleteObject(info.hbmMask);
+
 	if (info.hbmColor)
 		DeleteObject(info.hbmColor);
+
+	return rc;
 }
 
-void wf_Pointer_Free(wfContext* wfc, rdpPointer* pointer)
+static BOOL wf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 {
 	HCURSOR hCur;
+
+	if (!context || !pointer)
+		return FALSE;
 
 	hCur = ((wfPointer*) pointer)->cursor;
 
 	if (hCur != 0)
 		DestroyIcon(hCur);
+
+	return TRUE;
 }
 
-void wf_Pointer_Set(wfContext* wfc, rdpPointer* pointer)
+static BOOL wf_Pointer_Set(rdpContext* context, const rdpPointer* pointer)
 {
 	HCURSOR hCur;
+	wfContext* wfc = (wfContext*)context;
+
+	if (!context || !pointer)
+		return FALSE;
 
 	hCur = ((wfPointer*) pointer)->cursor;
 
@@ -279,52 +298,66 @@ void wf_Pointer_Set(wfContext* wfc, rdpPointer* pointer)
 		SetCursor(hCur);
 		wfc->cursor = hCur;
 	}
+
+	return TRUE;
 }
 
-void wf_Pointer_SetNull(wfContext* wfc)
+static BOOL wf_Pointer_SetNull(rdpContext* context)
 {
+	if (!context)
+		return FALSE;
 
+	return TRUE;
 }
 
-void wf_Pointer_SetDefault(wfContext* wfc)
+static BOOL wf_Pointer_SetDefault(rdpContext* context)
 {
+	if (!context)
+		return FALSE;
 
+	return TRUE;
 }
 
-void wf_register_pointer(rdpGraphics* graphics)
+BOOL wf_register_pointer(rdpGraphics* graphics)
 {
 	wfContext* wfc;
 	rdpPointer pointer;
 
-	wfc = (wfContext*) graphics->context;
+	if (!graphics)
+		return FALSE;
 
+	wfc = (wfContext*) graphics->context;
 	ZeroMemory(&pointer, sizeof(rdpPointer));
 	pointer.size = sizeof(wfPointer);
-	pointer.New = (pPointer_New) wf_Pointer_New;
-	pointer.Free = (pPointer_Free) wf_Pointer_Free;
-	pointer.Set = (pPointer_Set) wf_Pointer_Set;
-	pointer.SetNull = (pPointer_SetNull) wf_Pointer_SetNull;
-	pointer.SetDefault = (pPointer_SetDefault) wf_Pointer_SetDefault;
-
+	pointer.New = wf_Pointer_New;
+	pointer.Free = wf_Pointer_Free;
+	pointer.Set = wf_Pointer_Set;
+	pointer.SetNull = wf_Pointer_SetNull;
+	pointer.SetDefault = wf_Pointer_SetDefault;
 	graphics_register_pointer(graphics, &pointer);
+	return TRUE;
 }
 
 /* Graphics Module */
 
-void wf_register_graphics(rdpGraphics* graphics)
+BOOL wf_register_graphics(rdpGraphics* graphics)
 {
 	wfContext* wfc;
+	rdpGlyph glyph;
 	rdpBitmap bitmap;
 
+	if (!graphics)
+		return FALSE;
+
 	wfc = (wfContext*) graphics->context;
-
-	ZeroMemory(&bitmap, sizeof(rdpBitmap));
+	bitmap = *graphics->Bitmap_Prototype;
 	bitmap.size = sizeof(wfBitmap);
-	bitmap.New = (pBitmap_New) wf_Bitmap_New;
-	bitmap.Free = (pBitmap_Free) wf_Bitmap_Free;
-	bitmap.Paint = (pBitmap_Paint) wf_Bitmap_Paint;
-	bitmap.Decompress = (pBitmap_Decompress) wf_Bitmap_Decompress;
-	bitmap.SetSurface = (pBitmap_SetSurface) wf_Bitmap_SetSurface;
-
+	bitmap.New = wf_Bitmap_New;
+	bitmap.Free = wf_Bitmap_Free;
+	bitmap.Paint = wf_Bitmap_Paint;
+	bitmap.SetSurface = wf_Bitmap_SetSurface;
 	graphics_register_bitmap(graphics, &bitmap);
+	glyph = *graphics->Glyph_Prototype;
+	graphics_register_glyph(graphics, &glyph);
+	return TRUE;
 }

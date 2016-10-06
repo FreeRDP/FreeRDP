@@ -11,7 +11,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing
  * permissions and limitations under the License.
- * 
+ *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -33,28 +33,32 @@
 
 #include "prim_internal.h"
 #include "prim_templates.h"
-#include "prim_add.h"
 
+static primitives_t* generic = NULL;
 
 #ifdef WITH_SSE2
 # if !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS)
 /* ------------------------------------------------------------------------- */
-SSE3_SSD_ROUTINE(sse3_add_16s, INT16, general_add_16s,
-	_mm_adds_epi16, general_add_16s(sptr1++, sptr2++, dptr++, 1))
+SSE3_SSD_ROUTINE(sse3_add_16s, INT16, generic->add_16s,
+		 _mm_adds_epi16, generic->add_16s(sptr1++, sptr2++, dptr++, 1))
 # endif /* !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS) */
 #endif
 
 /* ------------------------------------------------------------------------- */
 void primitives_init_add_opt(
-	primitives_t *prims)
+    primitives_t* prims)
 {
+	generic = primitives_get_generic();
+	primitives_init_add(prims);
 #ifdef WITH_IPP
 	prims->add_16s = (__add_16s_t) ippsAdd_16s;
 #elif defined(WITH_SSE2)
+
 	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE)
-			&& IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))	/* for LDDQU */
+	    && IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))	/* for LDDQU */
 	{
 		prims->add_16s = sse3_add_16s;
 	}
+
 #endif
 }
