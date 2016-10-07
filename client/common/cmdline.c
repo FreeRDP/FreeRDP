@@ -750,7 +750,7 @@ static char** freerdp_command_line_parse_comma_separated_values_offset(
 
 	p = t;
 
-	if (count > 0)
+	if (count)
 		MoveMemory(&p[1], p, sizeof(char*)** count);
 
 	(*count)++;
@@ -2506,7 +2506,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 static BOOL freerdp_client_load_static_channel_addin(rdpChannels* channels,
         rdpSettings* settings, char* name, void* data)
 {
-	void* entry;
+	PVIRTUALCHANNELENTRY entry;
 	entry = freerdp_load_channel_addin_entry(name, NULL, NULL,
 	        FREERDP_ADDIN_CHANNEL_STATIC);
 
