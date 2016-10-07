@@ -30,9 +30,9 @@
 #define TAG CHANNELS_TAG("rdpsnd.client")
 
 #if defined(WITH_DEBUG_SND)
-#define DEBUG_SND(fmt, ...) WLog_DBG(TAG, fmt, ## __VA_ARGS__)
+#define DEBUG_SND(...) WLog_DBG(TAG, __VA_ARGS__)
 #else
-#define DEBUG_SND(fmt, ...) do { } while (0)
+#define DEBUG_SND(...) do { } while (0)
 #endif
 
 UINT rdpsnd_virtual_channel_write(rdpsndPlugin* rdpsnd, wStream* s);

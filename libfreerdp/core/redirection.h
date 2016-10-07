@@ -60,9 +60,9 @@ FREERDP_LOCAL void redirection_free(rdpRedirection* redirection);
 
 #define REDIR_TAG FREERDP_TAG("core.redirection")
 #ifdef WITH_DEBUG_REDIR
-#define DEBUG_REDIR(fmt, ...) WLog_DBG(REDIR_TAG, fmt, ## __VA_ARGS__)
+#define DEBUG_REDIR(...) WLog_DBG(REDIR_TAG, __VA_ARGS__)
 #else
-#define DEBUG_REDIR(fmt, ...) do { } while (0)
+#define DEBUG_REDIR(...) do { } while (0)
 #endif
 
 #endif /* __REDIRECTION_H */

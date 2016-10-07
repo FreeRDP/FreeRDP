@@ -382,26 +382,23 @@ static void transport_bio_error_log(LPCSTR tag, LPCSTR biofunc, BIO* bio,
 	wLog* log;
 	wLogMessage log_message;
 	int saveerrno;
+	DWORD level;
 	saveerrno = errno;
 	log = WLog_Get(tag);
 
 	if (!log)
 		return;
 
-	log_message.Level = WLOG_ERROR;
+	level = WLOG_ERROR;
 
-	if (log_message.Level < WLog_GetLogLevel(log))
+	if (level < WLog_GetLogLevel(log))
 		return;
-
-	log_message.Type = WLOG_MESSAGE_TEXT;
-	log_message.LineNumber = line;
-	log_message.FileName = file;
-	log_message.FunctionName = func;
 
 	if (ERR_peek_error() == 0)
 	{
-		log_message.FormatString = "%s returned a system error %d: %s";
-		WLog_PrintMessage(log, &log_message, biofunc, saveerrno, strerror(saveerrno));
+		const char* fmt = "%s returned a system error %d: %s";
+		WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, func, fmt, biofunc,
+		                  saveerrno, strerror(saveerrno));
 		return;
 	}
 
@@ -409,11 +406,13 @@ static void transport_bio_error_log(LPCSTR tag, LPCSTR biofunc, BIO* bio,
 
 	if (buf)
 	{
+		const char* fmt = "%s returned an error: %s";
+
 		while ((sslerr = ERR_get_error()))
 		{
 			ERR_error_string_n(sslerr, buf, 120);
-			log_message.FormatString = "%s returned an error: %s";
-			WLog_PrintMessage(log, &log_message, biofunc, buf);
+			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, func, fmt, biofunc,
+			                  buf);
 		}
 
 		free(buf);

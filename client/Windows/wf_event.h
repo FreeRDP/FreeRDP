@@ -33,9 +33,9 @@ void wf_event_focus_in(wfContext* wfc);
 
 #define KBD_TAG CLIENT_TAG("windows")
 #ifdef WITH_DEBUG_KBD
-#define DEBUG_KBD(fmt, ...) WLog_DBG(KBD_TAG, fmt, ## __VA_ARGS__)
+#define DEBUG_KBD(...) WLog_DBG(KBD_TAG, __VA_ARGS__)
 #else
-#define DEBUG_KBD(fmt, ...) do { } while (0)
+#define DEBUG_KBD(...) do { } while (0)
 #endif
 
 #endif /* __WF_EVENT_H */

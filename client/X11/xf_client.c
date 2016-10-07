@@ -1383,7 +1383,6 @@ static BOOL xf_auto_reconnect(freerdp* instance)
 {
 	UINT32 maxRetries;
 	UINT32 numRetries = 0;
-	xfContext* xfc = (xfContext*) instance->context;
 	rdpSettings* settings = instance->settings;
 	maxRetries = settings->AutoReconnectMaxRetries;
 

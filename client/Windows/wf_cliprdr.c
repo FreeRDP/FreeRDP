@@ -48,9 +48,9 @@
 #define TAG CLIENT_TAG("windows")
 
 #ifdef WITH_DEBUG_CLIPRDR
-#define DEBUG_CLIPRDR(fmt, ...) WLog_DBG(TAG, fmt, ## __VA_ARGS__)
+#define DEBUG_CLIPRDR(...) WLog_DBG(TAG, __VA_ARGS__)
 #else
-#define DEBUG_CLIPRDR(fmt, ...) do { } while (0)
+#define DEBUG_CLIPRDR(...) do { } while (0)
 #endif
 
 typedef BOOL (WINAPI* fnAddClipboardFormatListener)(HWND hwnd);
