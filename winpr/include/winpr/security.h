@@ -58,15 +58,15 @@ typedef enum _SECURITY_IMPERSONATION_LEVEL
 #define TOKEN_ADJUST_SESSIONID			(0x0100)
 
 #define TOKEN_ALL_ACCESS_P	(STANDARD_RIGHTS_REQUIRED | TOKEN_ASSIGN_PRIMARY | TOKEN_DUPLICATE | \
-				 TOKEN_IMPERSONATE | TOKEN_QUERY | TOKEN_QUERY_SOURCE | \
-				 TOKEN_ADJUST_PRIVILEGES | TOKEN_ADJUST_GROUPS | TOKEN_ADJUST_DEFAULT)
+                             TOKEN_IMPERSONATE | TOKEN_QUERY | TOKEN_QUERY_SOURCE | \
+                             TOKEN_ADJUST_PRIVILEGES | TOKEN_ADJUST_GROUPS | TOKEN_ADJUST_DEFAULT)
 
 #define TOKEN_ALL_ACCESS	(TOKEN_ALL_ACCESS_P | TOKEN_ADJUST_SESSIONID)
 
 #define TOKEN_READ		(STANDARD_RIGHTS_READ | TOKEN_QUERY)
 
 #define TOKEN_WRITE		(STANDARD_RIGHTS_WRITE | \
-				 TOKEN_ADJUST_PRIVILEGES | TOKEN_ADJUST_GROUPS | TOKEN_ADJUST_DEFAULT)
+                         TOKEN_ADJUST_PRIVILEGES | TOKEN_ADJUST_GROUPS | TOKEN_ADJUST_DEFAULT)
 
 #define TOKEN_EXECUTE		(STANDARD_RIGHTS_EXECUTE)
 
@@ -75,7 +75,7 @@ typedef enum _SECURITY_IMPERSONATION_LEVEL
 #define TOKEN_MANDATORY_POLICY_NEW_PROCESS_MIN		0x2
 
 #define TOKEN_MANDATORY_POLICY_VALID_MASK		(TOKEN_MANDATORY_POLICY_NO_WRITE_UP | \
-							 TOKEN_MANDATORY_POLICY_NEW_PROCESS_MIN)
+        TOKEN_MANDATORY_POLICY_NEW_PROCESS_MIN)
 
 #define POLICY_AUDIT_SUBCATEGORY_COUNT			(56)
 
@@ -120,7 +120,7 @@ typedef struct _LUID_AND_ATTRIBUTES
 	DWORD Attributes;
 } LUID_AND_ATTRIBUTES, *PLUID_AND_ATTRIBUTES;
 typedef LUID_AND_ATTRIBUTES LUID_AND_ATTRIBUTES_ARRAY[ANYSIZE_ARRAY];
-typedef LUID_AND_ATTRIBUTES_ARRAY *PLUID_AND_ATTRIBUTES_ARRAY;
+typedef LUID_AND_ATTRIBUTES_ARRAY* PLUID_AND_ATTRIBUTES_ARRAY;
 
 typedef struct _SID_IDENTIFIER_AUTHORITY
 {
@@ -156,7 +156,7 @@ typedef struct _SID_AND_ATTRIBUTES
 } SID_AND_ATTRIBUTES, * PSID_AND_ATTRIBUTES;
 
 typedef SID_AND_ATTRIBUTES SID_AND_ATTRIBUTES_ARRAY[ANYSIZE_ARRAY];
-typedef SID_AND_ATTRIBUTES_ARRAY *PSID_AND_ATTRIBUTES_ARRAY;
+typedef SID_AND_ATTRIBUTES_ARRAY* PSID_AND_ATTRIBUTES_ARRAY;
 
 typedef ULONG_PTR SID_HASH_ENTRY, *PSID_HASH_ENTRY;
 
@@ -172,13 +172,13 @@ typedef enum _TOKEN_TYPE
 	TokenPrimary = 1,
 	TokenImpersonation
 } TOKEN_TYPE;
-typedef TOKEN_TYPE *PTOKEN_TYPE;
+typedef TOKEN_TYPE* PTOKEN_TYPE;
 
 typedef enum _TOKEN_ELEVATION_TYPE
 {
 	TokenElevationTypeDefault = 1,
 	TokenElevationTypeFull,
-	TokenElevationTypeLimited,
+	TokenElevationTypeLimited
 } TOKEN_ELEVATION_TYPE, *PTOKEN_ELEVATION_TYPE;
 
 typedef enum _TOKEN_INFORMATION_CLASS
@@ -375,29 +375,47 @@ typedef struct _TOKEN_APPCONTAINER_INFORMATION
 extern "C" {
 #endif
 
-WINPR_API BOOL InitializeSecurityDescriptor(PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD dwRevision);
-WINPR_API DWORD GetSecurityDescriptorLength(PSECURITY_DESCRIPTOR pSecurityDescriptor);
-WINPR_API BOOL IsValidSecurityDescriptor(PSECURITY_DESCRIPTOR pSecurityDescriptor);
+WINPR_API BOOL InitializeSecurityDescriptor(PSECURITY_DESCRIPTOR
+        pSecurityDescriptor, DWORD dwRevision);
+WINPR_API DWORD GetSecurityDescriptorLength(PSECURITY_DESCRIPTOR
+        pSecurityDescriptor);
+WINPR_API BOOL IsValidSecurityDescriptor(PSECURITY_DESCRIPTOR
+        pSecurityDescriptor);
 
-WINPR_API BOOL GetSecurityDescriptorControl(PSECURITY_DESCRIPTOR pSecurityDescriptor,
-		PSECURITY_DESCRIPTOR_CONTROL pControl, LPDWORD lpdwRevision);
-WINPR_API BOOL SetSecurityDescriptorControl(PSECURITY_DESCRIPTOR pSecurityDescriptor,
-		SECURITY_DESCRIPTOR_CONTROL ControlBitsOfInterest, SECURITY_DESCRIPTOR_CONTROL ControlBitsToSet);
+WINPR_API BOOL GetSecurityDescriptorControl(PSECURITY_DESCRIPTOR
+        pSecurityDescriptor,
+        PSECURITY_DESCRIPTOR_CONTROL pControl, LPDWORD lpdwRevision);
+WINPR_API BOOL SetSecurityDescriptorControl(PSECURITY_DESCRIPTOR
+        pSecurityDescriptor,
+        SECURITY_DESCRIPTOR_CONTROL ControlBitsOfInterest,
+        SECURITY_DESCRIPTOR_CONTROL ControlBitsToSet);
 
-WINPR_API BOOL GetSecurityDescriptorDacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, LPBOOL lpbDaclPresent, PACL* pDacl, LPBOOL lpbDaclDefaulted);
-WINPR_API BOOL SetSecurityDescriptorDacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, BOOL bDaclPresent, PACL pDacl, BOOL bDaclDefaulted);
+WINPR_API BOOL GetSecurityDescriptorDacl(PSECURITY_DESCRIPTOR
+        pSecurityDescriptor, LPBOOL lpbDaclPresent, PACL* pDacl,
+        LPBOOL lpbDaclDefaulted);
+WINPR_API BOOL SetSecurityDescriptorDacl(PSECURITY_DESCRIPTOR
+        pSecurityDescriptor, BOOL bDaclPresent, PACL pDacl, BOOL bDaclDefaulted);
 
-WINPR_API BOOL GetSecurityDescriptorGroup(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID* pGroup, LPBOOL lpbGroupDefaulted);
-WINPR_API BOOL SetSecurityDescriptorGroup(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID pGroup, BOOL bGroupDefaulted);
+WINPR_API BOOL GetSecurityDescriptorGroup(PSECURITY_DESCRIPTOR
+        pSecurityDescriptor, PSID* pGroup, LPBOOL lpbGroupDefaulted);
+WINPR_API BOOL SetSecurityDescriptorGroup(PSECURITY_DESCRIPTOR
+        pSecurityDescriptor, PSID pGroup, BOOL bGroupDefaulted);
 
-WINPR_API BOOL GetSecurityDescriptorOwner(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID* pOwner, LPBOOL lpbOwnerDefaulted);
-WINPR_API BOOL SetSecurityDescriptorOwner(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID pOwner, BOOL bOwnerDefaulted);
+WINPR_API BOOL GetSecurityDescriptorOwner(PSECURITY_DESCRIPTOR
+        pSecurityDescriptor, PSID* pOwner, LPBOOL lpbOwnerDefaulted);
+WINPR_API BOOL SetSecurityDescriptorOwner(PSECURITY_DESCRIPTOR
+        pSecurityDescriptor, PSID pOwner, BOOL bOwnerDefaulted);
 
-WINPR_API DWORD GetSecurityDescriptorRMControl(PSECURITY_DESCRIPTOR SecurityDescriptor, PUCHAR RMControl);
-WINPR_API DWORD SetSecurityDescriptorRMControl(PSECURITY_DESCRIPTOR SecurityDescriptor, PUCHAR RMControl);
+WINPR_API DWORD GetSecurityDescriptorRMControl(PSECURITY_DESCRIPTOR
+        SecurityDescriptor, PUCHAR RMControl);
+WINPR_API DWORD SetSecurityDescriptorRMControl(PSECURITY_DESCRIPTOR
+        SecurityDescriptor, PUCHAR RMControl);
 
-WINPR_API BOOL GetSecurityDescriptorSacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, LPBOOL lpbSaclPresent, PACL* pSacl, LPBOOL lpbSaclDefaulted);
-WINPR_API BOOL SetSecurityDescriptorSacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, BOOL bSaclPresent, PACL pSacl, BOOL bSaclDefaulted);
+WINPR_API BOOL GetSecurityDescriptorSacl(PSECURITY_DESCRIPTOR
+        pSecurityDescriptor, LPBOOL lpbSaclPresent, PACL* pSacl,
+        LPBOOL lpbSaclDefaulted);
+WINPR_API BOOL SetSecurityDescriptorSacl(PSECURITY_DESCRIPTOR
+        pSecurityDescriptor, BOOL bSaclPresent, PACL pSacl, BOOL bSaclDefaulted);
 
 #ifdef __cplusplus
 }
