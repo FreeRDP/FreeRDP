@@ -28,6 +28,7 @@
     NSString* serverHostname;
     NSString* username;
     NSString* password;
+    BOOL modalCode;
 }
 @property (retain) IBOutlet NSTextField* usernameText;
 @property (retain) IBOutlet NSTextField* passwordText;
@@ -39,6 +40,7 @@
 @property (retain) NSString* serverHostname;
 @property (retain) NSString* username;
 @property (retain) NSString* password;
+@property BOOL modalCode;
 
 - (BOOL) runModal;
 

@@ -977,9 +977,11 @@ BOOL mac_authenticate(freerdp* instance, char** username, char** password,
 		dialog.password = [NSString stringWithCString:*password encoding:
 		                   NSUTF8StringEncoding];
 
-	BOOL ok = [dialog runModal];
+	[dialog performSelectorOnMainThread:@selector(runModal) withObject:nil waitUntilDone:TRUE];
 
-	if (ok)
+	BOOL ok = dialog.modalCode;
+
+	if (ok) 
 	{
 		const char* submittedUsername = [dialog.username cStringUsingEncoding:
 		                                 NSUTF8StringEncoding];
