@@ -917,7 +917,7 @@ int transport_check_fds(rdpTransport* transport)
 		now = GetTickCount();
 	}
 
-	if (now > dueDate)
+	if (now >= dueDate)
 	{
 		SetEvent(transport->rereadEvent);
 		transport->haveMoreBytesToRead = TRUE;

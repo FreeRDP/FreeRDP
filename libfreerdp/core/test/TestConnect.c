@@ -278,7 +278,7 @@ int TestConnect(int argc, char* argv[])
 {
 	int randomPort;
 
-	randomPort = 3389 + (random() % 20);
+	randomPort = 3389 + (random() % 200);
 
 	/* Test connect to not existing server,
 	 * check if timeout is honored. */
