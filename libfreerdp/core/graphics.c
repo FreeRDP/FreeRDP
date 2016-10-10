@@ -126,28 +126,6 @@ static BOOL Pointer_New(rdpContext* context, rdpPointer* pointer)
 	return TRUE;
 }
 
-static void Pointer_Free(rdpContext* context, rdpPointer* pointer)
-{
-	if (pointer)
-	{
-		pointer->Free(context, pointer);
-
-		if (pointer->xorMaskData)
-		{
-			free(pointer->xorMaskData);
-			pointer->xorMaskData = NULL;
-		}
-
-		if (pointer->andMaskData)
-		{
-			free(pointer->andMaskData);
-			pointer->andMaskData = NULL;
-		}
-
-		free(pointer);
-	}
-}
-
 /* static method */
 void graphics_register_pointer(rdpGraphics* graphics, rdpPointer* pointer)
 {
@@ -238,7 +216,7 @@ rdpGraphics* graphics_new(rdpContext* context)
 
 		graphics->Pointer_Prototype->size = sizeof(rdpPointer);
 		graphics->Pointer_Prototype->New = Pointer_New;
-		graphics->Pointer_Prototype->Free = Pointer_Free;
+		graphics->Pointer_Prototype->Free = NULL;
 		graphics->Glyph_Prototype = (rdpGlyph*) calloc(1, sizeof(rdpGlyph));
 
 		if (!graphics->Glyph_Prototype)
