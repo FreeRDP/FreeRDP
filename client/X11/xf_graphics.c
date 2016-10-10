@@ -168,7 +168,7 @@ static BOOL xf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap,
 static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 {
 #ifdef WITH_XCURSOR
-	UINT32 CursorFormat = PIXEL_FORMAT_RGBA32;
+	UINT32 CursorFormat;
 	rdpGdi* gdi;
 	size_t size;
 	XcursorImage ci;
@@ -177,6 +177,11 @@ static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 
 	if (!context || !pointer || !context->gdi)
 		return FALSE;
+
+	if (!xfc->invert)
+		CursorFormat = PIXEL_FORMAT_RGBA32;
+	else
+		CursorFormat = PIXEL_FORMAT_BGRA32;
 
 	gdi = context->gdi;
 	xf_lock_x11(xfc, FALSE);
