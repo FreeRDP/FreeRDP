@@ -43,6 +43,7 @@
 #include "brush.h"
 #include "line.h"
 #include "gdi.h"
+#include "../core/graphics.h"
 
 #define TAG FREERDP_TAG("gdi")
 
@@ -502,23 +503,23 @@ BOOL gdi_bitmap_update(rdpContext* context,
 		                     bitmap->bitmapLength, bitmap->compressed,
 		                     RDP_CODEC_ID_NONE))
 		{
-			bmp->Free(context, bmp);
+			Bitmap_Free(context, bmp);
 			return FALSE;
 		}
 
 		if (!bmp->New(context, bmp))
 		{
-			bmp->Free(context, bmp);
+			Bitmap_Free(context, bmp);
 			return FALSE;
 		}
 
 		if (!bmp->Paint(context, bmp))
 		{
-			bmp->Free(context, bmp);
+			Bitmap_Free(context, bmp);
 			return FALSE;
 		}
 
-		bmp->Free(context, bmp);
+		Bitmap_Free(context, bmp);
 	}
 
 	return TRUE;

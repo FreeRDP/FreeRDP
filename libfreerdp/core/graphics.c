@@ -25,6 +25,8 @@
 
 #include <freerdp/graphics.h>
 
+#include "graphics.h"
+
 /* Bitmap Class */
 
 rdpBitmap* Bitmap_Alloc(rdpContext* context)
@@ -52,7 +54,7 @@ static BOOL Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	return TRUE;
 }
 
-static void Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
+void Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 {
 	if (bitmap)
 	{
@@ -204,7 +206,7 @@ rdpGraphics* graphics_new(rdpContext* context)
 
 		graphics->Bitmap_Prototype->size = sizeof(rdpBitmap);
 		graphics->Bitmap_Prototype->New = Bitmap_New;
-		graphics->Bitmap_Prototype->Free = Bitmap_Free;
+		graphics->Bitmap_Prototype->Free = NULL;
 		graphics->Pointer_Prototype = (rdpPointer*) calloc(1, sizeof(rdpPointer));
 
 		if (!graphics->Pointer_Prototype)

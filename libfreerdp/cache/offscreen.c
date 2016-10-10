@@ -30,6 +30,8 @@
 #include <freerdp/log.h>
 #include <freerdp/cache/offscreen.h>
 
+#include "../core/graphics.h"
+
 #define TAG FREERDP_TAG("cache.offscreen")
 
 static void offscreen_cache_put(rdpOffscreenCache* offscreen_cache,
@@ -188,9 +190,7 @@ void offscreen_cache_free(rdpOffscreenCache* offscreenCache)
 		for (i = 0; i < (int) offscreenCache->maxEntries; i++)
 		{
 			bitmap = offscreenCache->entries[i];
-
-			if (bitmap)
-				bitmap->Free(offscreenCache->update->context, bitmap);
+			Bitmap_Free(offscreenCache->update->context, bitmap);
 		}
 
 		free(offscreenCache->entries);

@@ -34,13 +34,18 @@
 #include <freerdp/gdi/bitmap.h>
 
 #include "../gdi/gdi.h"
+#include "../core/graphics.h"
 
 #define TAG FREERDP_TAG("cache.bitmap")
 
 static rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmapCache, UINT32 id,
                                    UINT32 index);
-static void bitmap_cache_put(rdpBitmapCache* bitmap_cache, UINT32 id,
+static BOOL bitmap_cache_put(rdpBitmapCache* bitmap_cache, UINT32 id,
                              UINT32 index, rdpBitmap* bitmap);
+
+static void bitmap_free(rdpContext* context, rdpBitmap* bitmap)
+{
+}
 
 static BOOL update_gdi_memblt(rdpContext* context,
                               MEMBLT_ORDER* memblt)
@@ -119,25 +124,22 @@ static BOOL update_gdi_cache_bitmap(rdpContext* context,
 	                        cacheBitmap->bitmapBpp, cacheBitmap->bitmapLength,
 	                        cacheBitmap->compressed, RDP_CODEC_ID_NONE))
 	{
-		bitmap->Free(context, bitmap);
+		Bitmap_Free(context, bitmap);
 		return FALSE;
 	}
 
 	if (!bitmap->New(context, bitmap))
 	{
-		bitmap->Free(context, bitmap);
+		Bitmap_Free(context, bitmap);
 		return FALSE;
 	}
 
 	prevBitmap = bitmap_cache_get(cache->bitmap, cacheBitmap->cacheId,
 	                              cacheBitmap->cacheIndex);
-
-	if (prevBitmap != NULL)
-		prevBitmap->Free(context, prevBitmap);
-
-	bitmap_cache_put(cache->bitmap, cacheBitmap->cacheId, cacheBitmap->cacheIndex,
-	                 bitmap);
-	return TRUE;
+	Bitmap_Free(context, prevBitmap);
+	return bitmap_cache_put(cache->bitmap, cacheBitmap->cacheId,
+	                        cacheBitmap->cacheIndex,
+	                        bitmap);
 }
 
 static BOOL update_gdi_cache_bitmap_v2(rdpContext* context,
@@ -171,7 +173,7 @@ static BOOL update_gdi_cache_bitmap_v2(rdpContext* context,
 	                        cacheBitmapV2->compressed,
 	                        RDP_CODEC_ID_NONE))
 	{
-		bitmap->Free(context, bitmap);
+		Bitmap_Free(context, bitmap);
 		return FALSE;
 	}
 
@@ -180,16 +182,13 @@ static BOOL update_gdi_cache_bitmap_v2(rdpContext* context,
 
 	if (!bitmap->New(context, bitmap))
 	{
-		bitmap->Free(context, bitmap);
+		Bitmap_Free(context, bitmap);
 		return FALSE;
 	}
 
-	if (prevBitmap)
-		prevBitmap->Free(context, prevBitmap);
-
-	bitmap_cache_put(cache->bitmap, cacheBitmapV2->cacheId,
-	                 cacheBitmapV2->cacheIndex, bitmap);
-	return TRUE;
+	Bitmap_Free(context, prevBitmap);
+	return bitmap_cache_put(cache->bitmap, cacheBitmapV2->cacheId,
+	                        cacheBitmapV2->cacheIndex, bitmap);
 }
 
 static BOOL update_gdi_cache_bitmap_v3(rdpContext* context,
@@ -217,25 +216,21 @@ static BOOL update_gdi_cache_bitmap_v3(rdpContext* context,
 	                        bitmapData->bpp, bitmapData->length, compressed,
 	                        bitmapData->codecID))
 	{
-		bitmap->Free(context, bitmap);
+		Bitmap_Free(context, bitmap);
 		return FALSE;
 	}
 
 	if (!bitmap->New(context, bitmap))
 	{
-		bitmap->Free(context, bitmap);
+		Bitmap_Free(context, bitmap);
 		return FALSE;
 	}
 
 	prevBitmap = bitmap_cache_get(cache->bitmap, cacheBitmapV3->cacheId,
 	                              cacheBitmapV3->cacheIndex);
-
-	if (prevBitmap)
-		prevBitmap->Free(context, prevBitmap);
-
-	bitmap_cache_put(cache->bitmap, cacheBitmapV3->cacheId,
-	                 cacheBitmapV3->cacheIndex, bitmap);
-	return TRUE;
+	Bitmap_Free(context, prevBitmap);
+	return bitmap_cache_put(cache->bitmap, cacheBitmapV3->cacheId,
+	                        cacheBitmapV3->cacheIndex, bitmap);
 }
 
 rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmapCache, UINT32 id,
@@ -263,13 +258,13 @@ rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmapCache, UINT32 id,
 	return bitmap;
 }
 
-void bitmap_cache_put(rdpBitmapCache* bitmapCache, UINT32 id, UINT32 index,
+BOOL bitmap_cache_put(rdpBitmapCache* bitmapCache, UINT32 id, UINT32 index,
                       rdpBitmap* bitmap)
 {
 	if (id > bitmapCache->maxCells)
 	{
 		WLog_ERR(TAG,  "put invalid bitmap cell id: %d", id);
-		return;
+		return FALSE;
 	}
 
 	if (index == BITMAP_CACHE_WAITING_LIST_INDEX)
@@ -279,10 +274,11 @@ void bitmap_cache_put(rdpBitmapCache* bitmapCache, UINT32 id, UINT32 index,
 	else if (index > bitmapCache->cells[id].number)
 	{
 		WLog_ERR(TAG,  "put invalid bitmap index %d in cell id: %d", index, id);
-		return;
+		return FALSE;
 	}
 
 	bitmapCache->cells[id].entries[index] = bitmap;
+	return TRUE;
 }
 
 void bitmap_cache_register_callbacks(rdpUpdate* update)
@@ -335,7 +331,7 @@ fail:
 	{
 		for (i = 0; i < (int) bitmapCache->maxCells; i++)
 			free(bitmapCache->cells[i].entries);
-		}
+	}
 
 	free(bitmapCache);
 	return NULL;
@@ -353,9 +349,7 @@ void bitmap_cache_free(rdpBitmapCache* bitmapCache)
 			for (j = 0; j < (int) bitmapCache->cells[i].number + 1; j++)
 			{
 				bitmap = bitmapCache->cells[i].entries[j];
-
-				if (bitmap)
-					bitmap->Free(bitmapCache->context, bitmap);
+				Bitmap_Free(bitmapCache->context, bitmap);
 			}
 
 			free(bitmapCache->cells[i].entries);
