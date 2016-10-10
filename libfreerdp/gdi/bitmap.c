@@ -273,10 +273,10 @@ static UINT32 process_rop(UINT32 src, UINT32 dst, UINT32 pat, const char* rop,
 	return stack[0];
 }
 
-static BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, UINT32 nXDest,
-                         UINT32 nYDest, UINT32 nXSrc, UINT32 nYSrc, UINT32 x, UINT32 y,
-                         BOOL useSrc, BOOL usePat, UINT32 style,
-                         const char* rop, const gdiPalette* palette)
+static INLINE BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, UINT32 nXDest,
+                                UINT32 nYDest, UINT32 nXSrc, UINT32 nYSrc, UINT32 x, UINT32 y,
+                                BOOL useSrc, BOOL usePat, UINT32 style,
+                                const char* rop, const gdiPalette* palette)
 {
 	UINT32 dstColor;
 	UINT32 colorA;
