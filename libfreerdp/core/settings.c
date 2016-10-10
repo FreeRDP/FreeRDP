@@ -434,7 +434,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->NoBitmapCompressionHeader = TRUE;
 	settings->RefreshRect = TRUE;
 	settings->SuppressOutput = TRUE;
-	settings->GlyphSupportLevel = GLYPH_SUPPORT_FULL;
+	settings->GlyphSupportLevel = GLYPH_SUPPORT_NONE;
 	settings->GlyphCache = malloc(sizeof(GLYPH_CACHE_DEFINITION) * 10);
 
 	if (!settings->GlyphCache)
