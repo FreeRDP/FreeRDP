@@ -56,7 +56,7 @@ struct _wClipboard
 	/* clipboard data */
 
 	UINT32 size;
-	const void* data;
+	void* data;
 	UINT32 formatId;
 	UINT32 sequenceNumber;
 

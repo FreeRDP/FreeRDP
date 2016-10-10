@@ -38,9 +38,9 @@ FREERDP_LOCAL BOOL rdp_write_client_time_zone(wStream* s,
 
 #define TIMEZONE_TAG FREERDP_TAG("core.timezone")
 #ifdef WITH_DEBUG_TIMEZONE
-#define DEBUG_TIMEZONE(fmt, ...) WLog_DBG(TIMEZONE_TAG, fmt, ## __VA_ARGS__)
+#define DEBUG_TIMEZONE(...) WLog_DBG(TIMEZONE_TAG, __VA_ARGS__)
 #else
-#define DEBUG_TIMEZONE(fmt, ...) do { } while (0)
+#define DEBUG_TIMEZONE(...) do { } while (0)
 #endif
 
 #endif /* __TIMEZONE_H */

@@ -241,9 +241,9 @@ FREERDP_LOCAL void rdp_free(rdpRdp* rdp);
 
 #define RDP_TAG FREERDP_TAG("core.rdp")
 #ifdef WITH_DEBUG_RDP
-#define DEBUG_RDP(fmt, ...) WLog_DBG(RDP_TAG, fmt, ## __VA_ARGS__)
+#define DEBUG_RDP(...) WLog_DBG(RDP_TAG, __VA_ARGS__)
 #else
-#define DEBUG_RDP(fmt, ...) do { } while (0)
+#define DEBUG_RDP(...) do { } while (0)
 #endif
 
 BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, int length, UINT16 securityFlags);

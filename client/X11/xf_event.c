@@ -80,9 +80,9 @@ const char* const X11_EVENT_STRINGS[] =
 };
 
 #ifdef WITH_DEBUG_X11
-#define DEBUG_X11(fmt, ...) WLog_DBG(TAG, fmt, ## __VA_ARGS__)
+#define DEBUG_X11(...) WLog_DBG(TAG, __VA_ARGS__)
 #else
-#define DEBUG_X11(fmt, ...) do { } while (0)
+#define DEBUG_X11(...) do { } while (0)
 #endif
 
 BOOL xf_event_action_script_init(xfContext* xfc)

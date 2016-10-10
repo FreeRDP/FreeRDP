@@ -74,8 +74,8 @@ typedef struct tagCHANNEL_DEF
 	char name[CHANNEL_NAME_LEN + 1];
 	ULONG options;
 } CHANNEL_DEF;
-typedef CHANNEL_DEF *PCHANNEL_DEF;
-typedef PCHANNEL_DEF *PPCHANNEL_DEF;
+typedef CHANNEL_DEF* PCHANNEL_DEF;
+typedef PCHANNEL_DEF* PPCHANNEL_DEF;
 
 typedef struct tagCHANNEL_PDU_HEADER
 {
@@ -117,14 +117,14 @@ typedef struct tagCHANNEL_PDU_HEADER
 #endif
 
 typedef VOID VCAPITYPE CHANNEL_INIT_EVENT_FN(LPVOID pInitHandle,
-		UINT event, LPVOID pData, UINT dataLength);
+        UINT event, LPVOID pData, UINT dataLength);
 
-typedef CHANNEL_INIT_EVENT_FN *PCHANNEL_INIT_EVENT_FN;
+typedef CHANNEL_INIT_EVENT_FN* PCHANNEL_INIT_EVENT_FN;
 
 typedef VOID VCAPITYPE CHANNEL_INIT_EVENT_EX_FN(LPVOID lpUserParam,
-		LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength);
+        LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength);
 
-typedef CHANNEL_INIT_EVENT_EX_FN *PCHANNEL_INIT_EVENT_EX_FN;
+typedef CHANNEL_INIT_EVENT_EX_FN* PCHANNEL_INIT_EVENT_EX_FN;
 
 #define CHANNEL_EVENT_INITIALIZED			0
 #define CHANNEL_EVENT_CONNECTED				1
@@ -138,14 +138,15 @@ typedef CHANNEL_INIT_EVENT_EX_FN *PCHANNEL_INIT_EVENT_EX_FN;
 #define CHANNEL_EVENT_WRITE_CANCELLED			12
 
 typedef VOID VCAPITYPE CHANNEL_OPEN_EVENT_FN(DWORD openHandle, UINT event,
-		LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags);
+        LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags);
 
-typedef CHANNEL_OPEN_EVENT_FN *PCHANNEL_OPEN_EVENT_FN;
+typedef CHANNEL_OPEN_EVENT_FN* PCHANNEL_OPEN_EVENT_FN;
 
-typedef VOID VCAPITYPE CHANNEL_OPEN_EVENT_EX_FN(LPVOID lpUserParam, DWORD openHandle, UINT event,
-		LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags);
+typedef VOID VCAPITYPE CHANNEL_OPEN_EVENT_EX_FN(LPVOID lpUserParam,
+        DWORD openHandle, UINT event,
+        LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags);
 
-typedef CHANNEL_OPEN_EVENT_EX_FN *PCHANNEL_OPEN_EVENT_EX_FN;
+typedef CHANNEL_OPEN_EVENT_EX_FN* PCHANNEL_OPEN_EVENT_EX_FN;
 
 #define CHANNEL_RC_OK					0
 #define CHANNEL_RC_ALREADY_INITIALIZED			1
@@ -171,43 +172,51 @@ typedef CHANNEL_OPEN_EVENT_EX_FN *PCHANNEL_OPEN_EVENT_EX_FN;
 
 #define VIRTUAL_CHANNEL_VERSION_WIN2000			1
 
-typedef UINT VCAPITYPE VIRTUALCHANNELINIT(LPVOID* ppInitHandle, PCHANNEL_DEF pChannel,
-		INT channelCount, ULONG versionRequested, PCHANNEL_INIT_EVENT_FN pChannelInitEventProc);
+typedef UINT VCAPITYPE VIRTUALCHANNELINIT(LPVOID* ppInitHandle,
+        PCHANNEL_DEF pChannel,
+        INT channelCount, ULONG versionRequested,
+        PCHANNEL_INIT_EVENT_FN pChannelInitEventProc);
 
-typedef VIRTUALCHANNELINIT *PVIRTUALCHANNELINIT;
+typedef VIRTUALCHANNELINIT* PVIRTUALCHANNELINIT;
 
-typedef UINT VCAPITYPE VIRTUALCHANNELINITEX(LPVOID lpUserParam, LPVOID pInitHandle, PCHANNEL_DEF pChannel,
-		INT channelCount, ULONG versionRequested, PCHANNEL_INIT_EVENT_EX_FN pChannelInitEventProcEx);
+typedef UINT VCAPITYPE VIRTUALCHANNELINITEX(LPVOID lpUserParam,
+        LPVOID pInitHandle, PCHANNEL_DEF pChannel,
+        INT channelCount, ULONG versionRequested,
+        PCHANNEL_INIT_EVENT_EX_FN pChannelInitEventProcEx);
 
-typedef VIRTUALCHANNELINITEX *PVIRTUALCHANNELINITEX;
+typedef VIRTUALCHANNELINITEX* PVIRTUALCHANNELINITEX;
 
-typedef UINT VCAPITYPE VIRTUALCHANNELOPEN(LPVOID pInitHandle, LPDWORD pOpenHandle,
-		PCHAR pChannelName, PCHANNEL_OPEN_EVENT_FN pChannelOpenEventProc);
+typedef UINT VCAPITYPE VIRTUALCHANNELOPEN(LPVOID pInitHandle,
+        LPDWORD pOpenHandle,
+        PCHAR pChannelName, PCHANNEL_OPEN_EVENT_FN pChannelOpenEventProc);
 
-typedef VIRTUALCHANNELOPEN *PVIRTUALCHANNELOPEN;
+typedef VIRTUALCHANNELOPEN* PVIRTUALCHANNELOPEN;
 
-typedef UINT VCAPITYPE VIRTUALCHANNELOPENEX(LPVOID pInitHandle, LPDWORD pOpenHandle,
-		PCHAR pChannelName, PCHANNEL_OPEN_EVENT_EX_FN pChannelOpenEventProcEx);
+typedef UINT VCAPITYPE VIRTUALCHANNELOPENEX(LPVOID pInitHandle,
+        LPDWORD pOpenHandle,
+        PCHAR pChannelName, PCHANNEL_OPEN_EVENT_EX_FN pChannelOpenEventProcEx);
 
-typedef VIRTUALCHANNELOPENEX *PVIRTUALCHANNELOPENEX;
+typedef VIRTUALCHANNELOPENEX* PVIRTUALCHANNELOPENEX;
 
 typedef UINT VCAPITYPE VIRTUALCHANNELCLOSE(DWORD openHandle);
 
-typedef VIRTUALCHANNELCLOSE *PVIRTUALCHANNELCLOSE;
+typedef VIRTUALCHANNELCLOSE* PVIRTUALCHANNELCLOSE;
 
-typedef UINT VCAPITYPE VIRTUALCHANNELCLOSEEX(LPVOID pInitHandle, DWORD openHandle);
+typedef UINT VCAPITYPE VIRTUALCHANNELCLOSEEX(LPVOID pInitHandle,
+        DWORD openHandle);
 
-typedef VIRTUALCHANNELCLOSEEX *PVIRTUALCHANNELCLOSEEX;
+typedef VIRTUALCHANNELCLOSEEX* PVIRTUALCHANNELCLOSEEX;
 
 typedef UINT VCAPITYPE VIRTUALCHANNELWRITE(DWORD openHandle,
-		LPVOID pData, ULONG dataLength, LPVOID pUserData);
+        LPVOID pData, ULONG dataLength, LPVOID pUserData);
 
-typedef VIRTUALCHANNELWRITE *PVIRTUALCHANNELWRITE;
+typedef VIRTUALCHANNELWRITE* PVIRTUALCHANNELWRITE;
 
-typedef UINT VCAPITYPE VIRTUALCHANNELWRITEEX(LPVOID pInitHandle, DWORD openHandle,
-		LPVOID pData, ULONG dataLength, LPVOID pUserData);
+typedef UINT VCAPITYPE VIRTUALCHANNELWRITEEX(LPVOID pInitHandle,
+        DWORD openHandle,
+        LPVOID pData, ULONG dataLength, LPVOID pUserData);
 
-typedef VIRTUALCHANNELWRITEEX *PVIRTUALCHANNELWRITEEX;
+typedef VIRTUALCHANNELWRITEEX* PVIRTUALCHANNELWRITEEX;
 
 typedef struct tagCHANNEL_ENTRY_POINTS
 {
@@ -231,13 +240,15 @@ typedef struct tagCHANNEL_ENTRY_POINTS_EX
 
 typedef BOOL VCAPITYPE VIRTUALCHANNELENTRY(PCHANNEL_ENTRY_POINTS pEntryPoints);
 
-typedef VIRTUALCHANNELENTRY *PVIRTUALCHANNELENTRY;
+typedef VIRTUALCHANNELENTRY* PVIRTUALCHANNELENTRY;
 
-typedef BOOL VCAPITYPE VIRTUALCHANNELENTRYEX(PCHANNEL_ENTRY_POINTS_EX pEntryPointsEx, PVOID pInitHandle);
+typedef BOOL VCAPITYPE VIRTUALCHANNELENTRYEX(PCHANNEL_ENTRY_POINTS_EX
+        pEntryPointsEx, PVOID pInitHandle);
 
-typedef VIRTUALCHANNELENTRYEX *PVIRTUALCHANNELENTRYEX;
+typedef VIRTUALCHANNELENTRYEX* PVIRTUALCHANNELENTRYEX;
 
-typedef HRESULT (VCAPITYPE *PFNVCAPIGETINSTANCE)(REFIID refiid, PULONG pNumObjs, PVOID* ppObjArray);
+typedef HRESULT(VCAPITYPE* PFNVCAPIGETINSTANCE)(REFIID refiid, PULONG pNumObjs,
+        PVOID* ppObjArray);
 
 #endif
 
@@ -298,14 +309,14 @@ typedef HRESULT (VCAPITYPE *PFNVCAPIGETINSTANCE)(REFIID refiid, PULONG pNumObjs,
 #define WTS_SECURITY_USER_ACCESS		(WTS_SECURITY_CURRENT_GUEST_ACCESS | WTS_SECURITY_QUERY_INFORMATION | WTS_SECURITY_CONNECT)
 
 #define WTS_SECURITY_CURRENT_USER_ACCESS	(WTS_SECURITY_SET_INFORMATION | WTS_SECURITY_RESET \
-						 WTS_SECURITY_VIRTUAL_CHANNELS | WTS_SECURITY_LOGOFF \
-						 WTS_SECURITY_DISCONNECT)
+        WTS_SECURITY_VIRTUAL_CHANNELS | WTS_SECURITY_LOGOFF \
+        WTS_SECURITY_DISCONNECT)
 
 #define WTS_SECURITY_ALL_ACCESS			(STANDARD_RIGHTS_REQUIRED | WTS_SECURITY_QUERY_INFORMATION | \
-						 WTS_SECURITY_SET_INFORMATION | WTS_SECURITY_RESET | \
-						 WTS_SECURITY_VIRTUAL_CHANNELS | WTS_SECURITY_REMOTE_CONTROL | \
-						 WTS_SECURITY_LOGON | WTS_SECURITY_MESSAGE | \
-						 WTS_SECURITY_CONNECT | WTS_SECURITY_DISCONNECT)
+        WTS_SECURITY_SET_INFORMATION | WTS_SECURITY_RESET | \
+        WTS_SECURITY_VIRTUAL_CHANNELS | WTS_SECURITY_REMOTE_CONTROL | \
+        WTS_SECURITY_LOGON | WTS_SECURITY_MESSAGE | \
+        WTS_SECURITY_CONNECT | WTS_SECURITY_DISCONNECT)
 
 typedef enum _WTS_CONNECTSTATE_CLASS
 {
@@ -318,7 +329,7 @@ typedef enum _WTS_CONNECTSTATE_CLASS
 	WTSListen,
 	WTSReset,
 	WTSDown,
-	WTSInit,
+	WTSInit
 } WTS_CONNECTSTATE_CLASS;
 
 typedef struct _WTS_SERVER_INFOW
@@ -485,7 +496,7 @@ typedef struct _WTSINFOA
 	DWORD OutgoingCompressedBy;
 	CHAR WinStationName[WINSTATIONNAME_LENGTH];
 	CHAR Domain[DOMAIN_LENGTH];
-	CHAR UserName[USERNAME_LENGTH+1];
+	CHAR UserName[USERNAME_LENGTH + 1];
 	LARGE_INTEGER ConnectTime;
 	LARGE_INTEGER DisconnectTime;
 	LARGE_INTEGER LastInputTime;
@@ -677,7 +688,7 @@ typedef enum _WTS_CONFIG_CLASS
 	WTSUserConfigTerminalServerHomeDir,
 	WTSUserConfigTerminalServerHomeDirDrive,
 	WTSUserConfigfTerminalServerRemoteHomeDir,
-	WTSUserConfigUser,
+	WTSUserConfigUser
 } WTS_CONFIG_CLASS;
 
 typedef enum _WTS_CONFIG_SOURCE
@@ -809,13 +820,13 @@ typedef enum _WTS_TYPE_CLASS
 {
 	WTSTypeProcessInfoLevel0,
 	WTSTypeProcessInfoLevel1,
-	WTSTypeSessionInfoLevel1,
+	WTSTypeSessionInfoLevel1
 } WTS_TYPE_CLASS;
 
 typedef WCHAR WTSLISTENERNAMEW[WTS_LISTENER_NAME_LENGTH + 1];
-typedef WTSLISTENERNAMEW *PWTSLISTENERNAMEW;
+typedef WTSLISTENERNAMEW* PWTSLISTENERNAMEW;
 typedef CHAR WTSLISTENERNAMEA[WTS_LISTENER_NAME_LENGTH + 1];
-typedef WTSLISTENERNAMEA *PWTSLISTENERNAMEA;
+typedef WTSLISTENERNAMEA* PWTSLISTENERNAMEA;
 
 typedef struct _WTSLISTENERCONFIGW
 {
@@ -963,17 +974,25 @@ extern "C" {
 
 WINPR_API BOOL WINAPI WTSStopRemoteControlSession(ULONG LogonId);
 
-WINPR_API BOOL WINAPI WTSStartRemoteControlSessionW(LPWSTR pTargetServerName, ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers);
-WINPR_API BOOL WINAPI WTSStartRemoteControlSessionA(LPSTR pTargetServerName, ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers);
+WINPR_API BOOL WINAPI WTSStartRemoteControlSessionW(LPWSTR pTargetServerName,
+        ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers);
+WINPR_API BOOL WINAPI WTSStartRemoteControlSessionA(LPSTR pTargetServerName,
+        ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers);
 
-WINPR_API BOOL WINAPI WTSStartRemoteControlSessionExW(LPWSTR pTargetServerName, ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers, DWORD flags);
-WINPR_API BOOL WINAPI WTSStartRemoteControlSessionExA(LPSTR pTargetServerName, ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers, DWORD flags);
+WINPR_API BOOL WINAPI WTSStartRemoteControlSessionExW(LPWSTR pTargetServerName,
+        ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers, DWORD flags);
+WINPR_API BOOL WINAPI WTSStartRemoteControlSessionExA(LPSTR pTargetServerName,
+        ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers, DWORD flags);
 
-WINPR_API BOOL WINAPI WTSConnectSessionW(ULONG LogonId, ULONG TargetLogonId, PWSTR pPassword, BOOL bWait);
-WINPR_API BOOL WINAPI WTSConnectSessionA(ULONG LogonId, ULONG TargetLogonId, PSTR pPassword, BOOL bWait);
+WINPR_API BOOL WINAPI WTSConnectSessionW(ULONG LogonId, ULONG TargetLogonId,
+        PWSTR pPassword, BOOL bWait);
+WINPR_API BOOL WINAPI WTSConnectSessionA(ULONG LogonId, ULONG TargetLogonId,
+        PSTR pPassword, BOOL bWait);
 
-WINPR_API BOOL WINAPI WTSEnumerateServersW(LPWSTR pDomainName, DWORD Reserved, DWORD Version, PWTS_SERVER_INFOW* ppServerInfo, DWORD* pCount);
-WINPR_API BOOL WINAPI WTSEnumerateServersA(LPSTR pDomainName, DWORD Reserved, DWORD Version, PWTS_SERVER_INFOA* ppServerInfo, DWORD* pCount);
+WINPR_API BOOL WINAPI WTSEnumerateServersW(LPWSTR pDomainName, DWORD Reserved,
+        DWORD Version, PWTS_SERVER_INFOW* ppServerInfo, DWORD* pCount);
+WINPR_API BOOL WINAPI WTSEnumerateServersA(LPSTR pDomainName, DWORD Reserved,
+        DWORD Version, PWTS_SERVER_INFOA* ppServerInfo, DWORD* pCount);
 
 WINPR_API HANDLE WINAPI WTSOpenServerW(LPWSTR pServerName);
 WINPR_API HANDLE WINAPI WTSOpenServerA(LPSTR pServerName);
@@ -983,54 +1002,81 @@ WINPR_API HANDLE WINAPI WTSOpenServerExA(LPSTR pServerName);
 
 WINPR_API VOID WINAPI WTSCloseServer(HANDLE hServer);
 
-WINPR_API BOOL WINAPI WTSEnumerateSessionsW(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_SESSION_INFOW* ppSessionInfo, DWORD* pCount);
-WINPR_API BOOL WINAPI WTSEnumerateSessionsA(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_SESSION_INFOA* ppSessionInfo, DWORD* pCount);
+WINPR_API BOOL WINAPI WTSEnumerateSessionsW(HANDLE hServer, DWORD Reserved,
+        DWORD Version, PWTS_SESSION_INFOW* ppSessionInfo, DWORD* pCount);
+WINPR_API BOOL WINAPI WTSEnumerateSessionsA(HANDLE hServer, DWORD Reserved,
+        DWORD Version, PWTS_SESSION_INFOA* ppSessionInfo, DWORD* pCount);
 
-WINPR_API BOOL WINAPI WTSEnumerateSessionsExW(HANDLE hServer, DWORD* pLevel, DWORD Filter, PWTS_SESSION_INFO_1W* ppSessionInfo, DWORD* pCount);
-WINPR_API BOOL WINAPI WTSEnumerateSessionsExA(HANDLE hServer, DWORD* pLevel, DWORD Filter, PWTS_SESSION_INFO_1A* ppSessionInfo, DWORD* pCount);
+WINPR_API BOOL WINAPI WTSEnumerateSessionsExW(HANDLE hServer, DWORD* pLevel,
+        DWORD Filter, PWTS_SESSION_INFO_1W* ppSessionInfo, DWORD* pCount);
+WINPR_API BOOL WINAPI WTSEnumerateSessionsExA(HANDLE hServer, DWORD* pLevel,
+        DWORD Filter, PWTS_SESSION_INFO_1A* ppSessionInfo, DWORD* pCount);
 
-WINPR_API BOOL WINAPI WTSEnumerateProcessesW(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_PROCESS_INFOW* ppProcessInfo, DWORD* pCount);
-WINPR_API BOOL WINAPI WTSEnumerateProcessesA(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_PROCESS_INFOA* ppProcessInfo, DWORD* pCount);
+WINPR_API BOOL WINAPI WTSEnumerateProcessesW(HANDLE hServer, DWORD Reserved,
+        DWORD Version, PWTS_PROCESS_INFOW* ppProcessInfo, DWORD* pCount);
+WINPR_API BOOL WINAPI WTSEnumerateProcessesA(HANDLE hServer, DWORD Reserved,
+        DWORD Version, PWTS_PROCESS_INFOA* ppProcessInfo, DWORD* pCount);
 
-WINPR_API BOOL WINAPI WTSTerminateProcess(HANDLE hServer, DWORD ProcessId, DWORD ExitCode);
+WINPR_API BOOL WINAPI WTSTerminateProcess(HANDLE hServer, DWORD ProcessId,
+        DWORD ExitCode);
 
-WINPR_API BOOL WINAPI WTSQuerySessionInformationW(HANDLE hServer, DWORD SessionId, WTS_INFO_CLASS WTSInfoClass, LPWSTR* ppBuffer, DWORD* pBytesReturned);
-WINPR_API BOOL WINAPI WTSQuerySessionInformationA(HANDLE hServer, DWORD SessionId, WTS_INFO_CLASS WTSInfoClass, LPSTR* ppBuffer, DWORD* pBytesReturned);
+WINPR_API BOOL WINAPI WTSQuerySessionInformationW(HANDLE hServer,
+        DWORD SessionId, WTS_INFO_CLASS WTSInfoClass, LPWSTR* ppBuffer,
+        DWORD* pBytesReturned);
+WINPR_API BOOL WINAPI WTSQuerySessionInformationA(HANDLE hServer,
+        DWORD SessionId, WTS_INFO_CLASS WTSInfoClass, LPSTR* ppBuffer,
+        DWORD* pBytesReturned);
 
-WINPR_API BOOL WINAPI WTSQueryUserConfigW(LPWSTR pServerName, LPWSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPWSTR* ppBuffer, DWORD* pBytesReturned);
-WINPR_API BOOL WINAPI WTSQueryUserConfigA(LPSTR pServerName, LPSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPSTR* ppBuffer, DWORD* pBytesReturned);
+WINPR_API BOOL WINAPI WTSQueryUserConfigW(LPWSTR pServerName, LPWSTR pUserName,
+        WTS_CONFIG_CLASS WTSConfigClass, LPWSTR* ppBuffer, DWORD* pBytesReturned);
+WINPR_API BOOL WINAPI WTSQueryUserConfigA(LPSTR pServerName, LPSTR pUserName,
+        WTS_CONFIG_CLASS WTSConfigClass, LPSTR* ppBuffer, DWORD* pBytesReturned);
 
-WINPR_API BOOL WINAPI WTSSetUserConfigW(LPWSTR pServerName, LPWSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPWSTR pBuffer, DWORD DataLength);
-WINPR_API BOOL WINAPI WTSSetUserConfigA(LPSTR pServerName, LPSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPSTR pBuffer, DWORD DataLength);
+WINPR_API BOOL WINAPI WTSSetUserConfigW(LPWSTR pServerName, LPWSTR pUserName,
+                                        WTS_CONFIG_CLASS WTSConfigClass, LPWSTR pBuffer, DWORD DataLength);
+WINPR_API BOOL WINAPI WTSSetUserConfigA(LPSTR pServerName, LPSTR pUserName,
+                                        WTS_CONFIG_CLASS WTSConfigClass, LPSTR pBuffer, DWORD DataLength);
 
-WINPR_API BOOL WINAPI WTSSendMessageW(HANDLE hServer, DWORD SessionId, LPWSTR pTitle, DWORD TitleLength,
-		LPWSTR pMessage, DWORD MessageLength, DWORD Style, DWORD Timeout, DWORD* pResponse, BOOL bWait);
-WINPR_API BOOL WINAPI WTSSendMessageA(HANDLE hServer, DWORD SessionId, LPSTR pTitle, DWORD TitleLength,
-		LPSTR pMessage, DWORD MessageLength, DWORD Style, DWORD Timeout, DWORD* pResponse, BOOL bWait);
+WINPR_API BOOL WINAPI WTSSendMessageW(HANDLE hServer, DWORD SessionId,
+                                      LPWSTR pTitle, DWORD TitleLength,
+                                      LPWSTR pMessage, DWORD MessageLength, DWORD Style, DWORD Timeout,
+                                      DWORD* pResponse, BOOL bWait);
+WINPR_API BOOL WINAPI WTSSendMessageA(HANDLE hServer, DWORD SessionId,
+                                      LPSTR pTitle, DWORD TitleLength,
+                                      LPSTR pMessage, DWORD MessageLength, DWORD Style, DWORD Timeout,
+                                      DWORD* pResponse, BOOL bWait);
 
-WINPR_API BOOL WINAPI WTSDisconnectSession(HANDLE hServer, DWORD SessionId, BOOL bWait);
+WINPR_API BOOL WINAPI WTSDisconnectSession(HANDLE hServer, DWORD SessionId,
+        BOOL bWait);
 
-WINPR_API BOOL WINAPI WTSLogoffSession(HANDLE hServer, DWORD SessionId, BOOL bWait);
+WINPR_API BOOL WINAPI WTSLogoffSession(HANDLE hServer, DWORD SessionId,
+                                       BOOL bWait);
 
 WINPR_API BOOL WINAPI WTSShutdownSystem(HANDLE hServer, DWORD ShutdownFlag);
 
-WINPR_API BOOL WINAPI WTSWaitSystemEvent(HANDLE hServer, DWORD EventMask, DWORD* pEventFlags);
+WINPR_API BOOL WINAPI WTSWaitSystemEvent(HANDLE hServer, DWORD EventMask,
+        DWORD* pEventFlags);
 
-WINPR_API HANDLE WINAPI WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPSTR pVirtualName);
+WINPR_API HANDLE WINAPI WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId,
+        LPSTR pVirtualName);
 
-WINPR_API HANDLE WINAPI WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualName, DWORD flags);
+WINPR_API HANDLE WINAPI WTSVirtualChannelOpenEx(DWORD SessionId,
+        LPSTR pVirtualName, DWORD flags);
 
 WINPR_API BOOL WINAPI WTSVirtualChannelClose(HANDLE hChannelHandle);
 
-WINPR_API BOOL WINAPI WTSVirtualChannelRead(HANDLE hChannelHandle, ULONG TimeOut, PCHAR Buffer, ULONG BufferSize, PULONG pBytesRead);
+WINPR_API BOOL WINAPI WTSVirtualChannelRead(HANDLE hChannelHandle,
+        ULONG TimeOut, PCHAR Buffer, ULONG BufferSize, PULONG pBytesRead);
 
-WINPR_API BOOL WINAPI WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, ULONG Length, PULONG pBytesWritten);
+WINPR_API BOOL WINAPI WTSVirtualChannelWrite(HANDLE hChannelHandle,
+        PCHAR Buffer, ULONG Length, PULONG pBytesWritten);
 
 WINPR_API BOOL WINAPI WTSVirtualChannelPurgeInput(HANDLE hChannelHandle);
 
 WINPR_API BOOL WINAPI WTSVirtualChannelPurgeOutput(HANDLE hChannelHandle);
 
-WINPR_API BOOL WINAPI WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CLASS WtsVirtualClass, PVOID* ppBuffer, DWORD* pBytesReturned);
+WINPR_API BOOL WINAPI WTSVirtualChannelQuery(HANDLE hChannelHandle,
+        WTS_VIRTUAL_CLASS WtsVirtualClass, PVOID* ppBuffer, DWORD* pBytesReturned);
 
 WINPR_API VOID WINAPI WTSFreeMemory(PVOID pMemory);
 
@@ -1038,42 +1084,60 @@ WINPR_API BOOL WINAPI WTSRegisterSessionNotification(HWND hWnd, DWORD dwFlags);
 
 WINPR_API BOOL WINAPI WTSUnRegisterSessionNotification(HWND hWnd);
 
-WINPR_API BOOL WINAPI WTSRegisterSessionNotificationEx(HANDLE hServer, HWND hWnd, DWORD dwFlags);
+WINPR_API BOOL WINAPI WTSRegisterSessionNotificationEx(HANDLE hServer,
+        HWND hWnd, DWORD dwFlags);
 
-WINPR_API BOOL WINAPI WTSUnRegisterSessionNotificationEx(HANDLE hServer, HWND hWnd);
+WINPR_API BOOL WINAPI WTSUnRegisterSessionNotificationEx(HANDLE hServer,
+        HWND hWnd);
 
 WINPR_API BOOL WINAPI WTSQueryUserToken(ULONG SessionId, PHANDLE phToken);
 
-WINPR_API BOOL WINAPI WTSFreeMemoryExW(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory, ULONG NumberOfEntries);
-WINPR_API BOOL WINAPI WTSFreeMemoryExA(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory, ULONG NumberOfEntries);
+WINPR_API BOOL WINAPI WTSFreeMemoryExW(WTS_TYPE_CLASS WTSTypeClass,
+                                       PVOID pMemory, ULONG NumberOfEntries);
+WINPR_API BOOL WINAPI WTSFreeMemoryExA(WTS_TYPE_CLASS WTSTypeClass,
+                                       PVOID pMemory, ULONG NumberOfEntries);
 
-WINPR_API BOOL WINAPI WTSEnumerateProcessesExW(HANDLE hServer, DWORD* pLevel, DWORD SessionId, LPWSTR* ppProcessInfo, DWORD* pCount);
-WINPR_API BOOL WINAPI WTSEnumerateProcessesExA(HANDLE hServer, DWORD* pLevel, DWORD SessionId, LPSTR* ppProcessInfo, DWORD* pCount);
+WINPR_API BOOL WINAPI WTSEnumerateProcessesExW(HANDLE hServer, DWORD* pLevel,
+        DWORD SessionId, LPWSTR* ppProcessInfo, DWORD* pCount);
+WINPR_API BOOL WINAPI WTSEnumerateProcessesExA(HANDLE hServer, DWORD* pLevel,
+        DWORD SessionId, LPSTR* ppProcessInfo, DWORD* pCount);
 
-WINPR_API BOOL WINAPI WTSEnumerateListenersW(HANDLE hServer, PVOID pReserved, DWORD Reserved, PWTSLISTENERNAMEW pListeners, DWORD* pCount);
-WINPR_API BOOL WINAPI WTSEnumerateListenersA(HANDLE hServer, PVOID pReserved, DWORD Reserved, PWTSLISTENERNAMEA pListeners, DWORD* pCount);
+WINPR_API BOOL WINAPI WTSEnumerateListenersW(HANDLE hServer, PVOID pReserved,
+        DWORD Reserved, PWTSLISTENERNAMEW pListeners, DWORD* pCount);
+WINPR_API BOOL WINAPI WTSEnumerateListenersA(HANDLE hServer, PVOID pReserved,
+        DWORD Reserved, PWTSLISTENERNAMEA pListeners, DWORD* pCount);
 
-WINPR_API BOOL WINAPI WTSQueryListenerConfigW(HANDLE hServer, PVOID pReserved, DWORD Reserved, LPWSTR pListenerName, PWTSLISTENERCONFIGW pBuffer);
-WINPR_API BOOL WINAPI WTSQueryListenerConfigA(HANDLE hServer, PVOID pReserved, DWORD Reserved, LPSTR pListenerName, PWTSLISTENERCONFIGA pBuffer);
+WINPR_API BOOL WINAPI WTSQueryListenerConfigW(HANDLE hServer, PVOID pReserved,
+        DWORD Reserved, LPWSTR pListenerName, PWTSLISTENERCONFIGW pBuffer);
+WINPR_API BOOL WINAPI WTSQueryListenerConfigA(HANDLE hServer, PVOID pReserved,
+        DWORD Reserved, LPSTR pListenerName, PWTSLISTENERCONFIGA pBuffer);
 
-WINPR_API BOOL WINAPI WTSCreateListenerW(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-		LPWSTR pListenerName, PWTSLISTENERCONFIGW pBuffer, DWORD flag);
-WINPR_API BOOL WINAPI WTSCreateListenerA(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-		LPSTR pListenerName, PWTSLISTENERCONFIGA pBuffer, DWORD flag);
+WINPR_API BOOL WINAPI WTSCreateListenerW(HANDLE hServer, PVOID pReserved,
+        DWORD Reserved,
+        LPWSTR pListenerName, PWTSLISTENERCONFIGW pBuffer, DWORD flag);
+WINPR_API BOOL WINAPI WTSCreateListenerA(HANDLE hServer, PVOID pReserved,
+        DWORD Reserved,
+        LPSTR pListenerName, PWTSLISTENERCONFIGA pBuffer, DWORD flag);
 
-WINPR_API BOOL WINAPI WTSSetListenerSecurityW(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-		LPWSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
-		PSECURITY_DESCRIPTOR pSecurityDescriptor);
-WINPR_API BOOL WINAPI WTSSetListenerSecurityA(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-		LPSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
-		PSECURITY_DESCRIPTOR pSecurityDescriptor);
+WINPR_API BOOL WINAPI WTSSetListenerSecurityW(HANDLE hServer, PVOID pReserved,
+        DWORD Reserved,
+        LPWSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
+        PSECURITY_DESCRIPTOR pSecurityDescriptor);
+WINPR_API BOOL WINAPI WTSSetListenerSecurityA(HANDLE hServer, PVOID pReserved,
+        DWORD Reserved,
+        LPSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
+        PSECURITY_DESCRIPTOR pSecurityDescriptor);
 
-WINPR_API BOOL WINAPI WTSGetListenerSecurityW(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-		LPWSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
-		PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength, LPDWORD lpnLengthNeeded);
-WINPR_API BOOL WINAPI WTSGetListenerSecurityA(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-		LPSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
-		PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength, LPDWORD lpnLengthNeeded);
+WINPR_API BOOL WINAPI WTSGetListenerSecurityW(HANDLE hServer, PVOID pReserved,
+        DWORD Reserved,
+        LPWSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
+        PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength,
+        LPDWORD lpnLengthNeeded);
+WINPR_API BOOL WINAPI WTSGetListenerSecurityA(HANDLE hServer, PVOID pReserved,
+        DWORD Reserved,
+        LPSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
+        PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength,
+        LPDWORD lpnLengthNeeded);
 
 /**
  * WTSEnableChildSessions, WTSIsChildSessionsEnabled and WTSGetChildSessionId
@@ -1088,7 +1152,7 @@ WINPR_API BOOL CDECL WTSIsChildSessionsEnabled(PBOOL pbEnabled);
 WINPR_API BOOL CDECL WTSGetChildSessionId(PULONG pSessionId);
 
 WINPR_API BOOL CDECL WTSLogonUser(HANDLE hServer, LPCSTR username,
-		LPCSTR password, LPCSTR domain);
+                                  LPCSTR password, LPCSTR domain);
 
 WINPR_API BOOL CDECL WTSLogoffUser(HANDLE hServer);
 
@@ -1154,156 +1218,206 @@ WINPR_API DWORD WINAPI WTSGetActiveConsoleSessionId(void);
 
 #endif
 
-typedef BOOL (WINAPI * WTS_STOP_REMOTE_CONTROL_SESSION_FN)(ULONG LogonId);
+typedef BOOL (WINAPI* WTS_STOP_REMOTE_CONTROL_SESSION_FN)(ULONG LogonId);
 
-typedef BOOL (WINAPI * WTS_START_REMOTE_CONTROL_SESSION_FN_W)(LPWSTR pTargetServerName,
-		ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers);
-typedef BOOL (WINAPI * WTS_START_REMOTE_CONTROL_SESSION_FN_A)(LPSTR pTargetServerName,
-		ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers);
+typedef BOOL (WINAPI* WTS_START_REMOTE_CONTROL_SESSION_FN_W)(
+    LPWSTR pTargetServerName,
+    ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers);
+typedef BOOL (WINAPI* WTS_START_REMOTE_CONTROL_SESSION_FN_A)(
+    LPSTR pTargetServerName,
+    ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers);
 
-typedef BOOL (WINAPI * WTS_START_REMOTE_CONTROL_SESSION_EX_FN_W)(LPWSTR pTargetServerName,
-		ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers, DWORD flags);
-typedef BOOL (WINAPI * WTS_START_REMOTE_CONTROL_SESSION_EX_FN_A)(LPSTR pTargetServerName,
-		ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers, DWORD flags);
+typedef BOOL (WINAPI* WTS_START_REMOTE_CONTROL_SESSION_EX_FN_W)(
+    LPWSTR pTargetServerName,
+    ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers, DWORD flags);
+typedef BOOL (WINAPI* WTS_START_REMOTE_CONTROL_SESSION_EX_FN_A)(
+    LPSTR pTargetServerName,
+    ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers, DWORD flags);
 
-typedef BOOL (WINAPI * WTS_CONNECT_SESSION_FN_W)(ULONG LogonId, ULONG TargetLogonId, PWSTR pPassword, BOOL bWait);
-typedef BOOL (WINAPI * WTS_CONNECT_SESSION_FN_A)(ULONG LogonId, ULONG TargetLogonId, PSTR pPassword, BOOL bWait);
+typedef BOOL (WINAPI* WTS_CONNECT_SESSION_FN_W)(ULONG LogonId,
+        ULONG TargetLogonId, PWSTR pPassword, BOOL bWait);
+typedef BOOL (WINAPI* WTS_CONNECT_SESSION_FN_A)(ULONG LogonId,
+        ULONG TargetLogonId, PSTR pPassword, BOOL bWait);
 
-typedef BOOL (WINAPI * WTS_ENUMERATE_SERVERS_FN_W)(LPWSTR pDomainName,
-		DWORD Reserved, DWORD Version, PWTS_SERVER_INFOW* ppServerInfo, DWORD* pCount);
-typedef BOOL (WINAPI * WTS_ENUMERATE_SERVERS_FN_A)(LPSTR pDomainName,
-		DWORD Reserved, DWORD Version, PWTS_SERVER_INFOA* ppServerInfo, DWORD* pCount);
+typedef BOOL (WINAPI* WTS_ENUMERATE_SERVERS_FN_W)(LPWSTR pDomainName,
+        DWORD Reserved, DWORD Version, PWTS_SERVER_INFOW* ppServerInfo, DWORD* pCount);
+typedef BOOL (WINAPI* WTS_ENUMERATE_SERVERS_FN_A)(LPSTR pDomainName,
+        DWORD Reserved, DWORD Version, PWTS_SERVER_INFOA* ppServerInfo, DWORD* pCount);
 
-typedef HANDLE (WINAPI * WTS_OPEN_SERVER_FN_W)(LPWSTR pServerName);
-typedef HANDLE (WINAPI * WTS_OPEN_SERVER_FN_A)(LPSTR pServerName);
+typedef HANDLE(WINAPI* WTS_OPEN_SERVER_FN_W)(LPWSTR pServerName);
+typedef HANDLE(WINAPI* WTS_OPEN_SERVER_FN_A)(LPSTR pServerName);
 
-typedef HANDLE (WINAPI * WTS_OPEN_SERVER_EX_FN_W)(LPWSTR pServerName);
-typedef HANDLE (WINAPI * WTS_OPEN_SERVER_EX_FN_A)(LPSTR pServerName);
+typedef HANDLE(WINAPI* WTS_OPEN_SERVER_EX_FN_W)(LPWSTR pServerName);
+typedef HANDLE(WINAPI* WTS_OPEN_SERVER_EX_FN_A)(LPSTR pServerName);
 
-typedef VOID (WINAPI * WTS_CLOSE_SERVER_FN)(HANDLE hServer);
+typedef VOID (WINAPI* WTS_CLOSE_SERVER_FN)(HANDLE hServer);
 
-typedef BOOL (WINAPI * WTS_ENUMERATE_SESSIONS_FN_W)(HANDLE hServer,
-		DWORD Reserved, DWORD Version, PWTS_SESSION_INFOW* ppSessionInfo, DWORD* pCount);
-typedef BOOL (WINAPI * WTS_ENUMERATE_SESSIONS_FN_A)(HANDLE hServer,
-		DWORD Reserved, DWORD Version, PWTS_SESSION_INFOA* ppSessionInfo, DWORD* pCount);
+typedef BOOL (WINAPI* WTS_ENUMERATE_SESSIONS_FN_W)(HANDLE hServer,
+        DWORD Reserved, DWORD Version, PWTS_SESSION_INFOW* ppSessionInfo,
+        DWORD* pCount);
+typedef BOOL (WINAPI* WTS_ENUMERATE_SESSIONS_FN_A)(HANDLE hServer,
+        DWORD Reserved, DWORD Version, PWTS_SESSION_INFOA* ppSessionInfo,
+        DWORD* pCount);
 
-typedef BOOL (WINAPI * WTS_ENUMERATE_SESSIONS_EX_FN_W)(HANDLE hServer,
-		DWORD* pLevel, DWORD Filter, PWTS_SESSION_INFO_1W* ppSessionInfo, DWORD* pCount);
-typedef BOOL (WINAPI * WTS_ENUMERATE_SESSIONS_EX_FN_A)(HANDLE hServer,
-		DWORD* pLevel, DWORD Filter, PWTS_SESSION_INFO_1A* ppSessionInfo, DWORD* pCount);
+typedef BOOL (WINAPI* WTS_ENUMERATE_SESSIONS_EX_FN_W)(HANDLE hServer,
+        DWORD* pLevel, DWORD Filter, PWTS_SESSION_INFO_1W* ppSessionInfo,
+        DWORD* pCount);
+typedef BOOL (WINAPI* WTS_ENUMERATE_SESSIONS_EX_FN_A)(HANDLE hServer,
+        DWORD* pLevel, DWORD Filter, PWTS_SESSION_INFO_1A* ppSessionInfo,
+        DWORD* pCount);
 
-typedef BOOL (WINAPI * WTS_ENUMERATE_PROCESSES_FN_W)(HANDLE hServer,
-		DWORD Reserved, DWORD Version, PWTS_PROCESS_INFOW* ppProcessInfo, DWORD* pCount);
-typedef BOOL (WINAPI * WTS_ENUMERATE_PROCESSES_FN_A)(HANDLE hServer,
-		DWORD Reserved, DWORD Version, PWTS_PROCESS_INFOA* ppProcessInfo, DWORD* pCount);
+typedef BOOL (WINAPI* WTS_ENUMERATE_PROCESSES_FN_W)(HANDLE hServer,
+        DWORD Reserved, DWORD Version, PWTS_PROCESS_INFOW* ppProcessInfo,
+        DWORD* pCount);
+typedef BOOL (WINAPI* WTS_ENUMERATE_PROCESSES_FN_A)(HANDLE hServer,
+        DWORD Reserved, DWORD Version, PWTS_PROCESS_INFOA* ppProcessInfo,
+        DWORD* pCount);
 
-typedef BOOL (WINAPI * WTS_TERMINATE_PROCESS_FN)(HANDLE hServer, DWORD ProcessId, DWORD ExitCode);
+typedef BOOL (WINAPI* WTS_TERMINATE_PROCESS_FN)(HANDLE hServer, DWORD ProcessId,
+        DWORD ExitCode);
 
-typedef BOOL (WINAPI * WTS_QUERY_SESSION_INFORMATION_FN_W)(HANDLE hServer,
-		DWORD SessionId, WTS_INFO_CLASS WTSInfoClass, LPWSTR* ppBuffer, DWORD* pBytesReturned);
-typedef BOOL (WINAPI * WTS_QUERY_SESSION_INFORMATION_FN_A)(HANDLE hServer,
-		DWORD SessionId, WTS_INFO_CLASS WTSInfoClass, LPSTR* ppBuffer, DWORD* pBytesReturned);
+typedef BOOL (WINAPI* WTS_QUERY_SESSION_INFORMATION_FN_W)(HANDLE hServer,
+        DWORD SessionId, WTS_INFO_CLASS WTSInfoClass, LPWSTR* ppBuffer,
+        DWORD* pBytesReturned);
+typedef BOOL (WINAPI* WTS_QUERY_SESSION_INFORMATION_FN_A)(HANDLE hServer,
+        DWORD SessionId, WTS_INFO_CLASS WTSInfoClass, LPSTR* ppBuffer,
+        DWORD* pBytesReturned);
 
-typedef BOOL (WINAPI * WTS_QUERY_USER_CONFIG_FN_W)(LPWSTR pServerName,
-		LPWSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPWSTR* ppBuffer, DWORD* pBytesReturned);
-typedef BOOL (WINAPI * WTS_QUERY_USER_CONFIG_FN_A)(LPSTR pServerName,
-		LPSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPSTR* ppBuffer, DWORD* pBytesReturned);
+typedef BOOL (WINAPI* WTS_QUERY_USER_CONFIG_FN_W)(LPWSTR pServerName,
+        LPWSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPWSTR* ppBuffer,
+        DWORD* pBytesReturned);
+typedef BOOL (WINAPI* WTS_QUERY_USER_CONFIG_FN_A)(LPSTR pServerName,
+        LPSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPSTR* ppBuffer,
+        DWORD* pBytesReturned);
 
-typedef BOOL (WINAPI * WTS_SET_USER_CONFIG_FN_W)(LPWSTR pServerName,
-		LPWSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPWSTR pBuffer, DWORD DataLength);
-typedef BOOL (WINAPI * WTS_SET_USER_CONFIG_FN_A)(LPSTR pServerName,
-		LPSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPSTR pBuffer, DWORD DataLength);
+typedef BOOL (WINAPI* WTS_SET_USER_CONFIG_FN_W)(LPWSTR pServerName,
+        LPWSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPWSTR pBuffer,
+        DWORD DataLength);
+typedef BOOL (WINAPI* WTS_SET_USER_CONFIG_FN_A)(LPSTR pServerName,
+        LPSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPSTR pBuffer,
+        DWORD DataLength);
 
-typedef BOOL (WINAPI * WTS_SEND_MESSAGE_FN_W)(HANDLE hServer, DWORD SessionId, LPWSTR pTitle, DWORD TitleLength,
-		LPWSTR pMessage, DWORD MessageLength, DWORD Style, DWORD Timeout, DWORD* pResponse, BOOL bWait);
-typedef BOOL (WINAPI * WTS_SEND_MESSAGE_FN_A)(HANDLE hServer, DWORD SessionId, LPSTR pTitle, DWORD TitleLength,
-		LPSTR pMessage, DWORD MessageLength, DWORD Style, DWORD Timeout, DWORD* pResponse, BOOL bWait);
+typedef BOOL (WINAPI* WTS_SEND_MESSAGE_FN_W)(HANDLE hServer, DWORD SessionId,
+        LPWSTR pTitle, DWORD TitleLength,
+        LPWSTR pMessage, DWORD MessageLength, DWORD Style, DWORD Timeout,
+        DWORD* pResponse, BOOL bWait);
+typedef BOOL (WINAPI* WTS_SEND_MESSAGE_FN_A)(HANDLE hServer, DWORD SessionId,
+        LPSTR pTitle, DWORD TitleLength,
+        LPSTR pMessage, DWORD MessageLength, DWORD Style, DWORD Timeout,
+        DWORD* pResponse, BOOL bWait);
 
-typedef BOOL (WINAPI * WTS_DISCONNECT_SESSION_FN)(HANDLE hServer, DWORD SessionId, BOOL bWait);
+typedef BOOL (WINAPI* WTS_DISCONNECT_SESSION_FN)(HANDLE hServer,
+        DWORD SessionId, BOOL bWait);
 
-typedef BOOL (WINAPI * WTS_LOGOFF_SESSION_FN)(HANDLE hServer, DWORD SessionId, BOOL bWait);
+typedef BOOL (WINAPI* WTS_LOGOFF_SESSION_FN)(HANDLE hServer, DWORD SessionId,
+        BOOL bWait);
 
-typedef BOOL (WINAPI * WTS_SHUTDOWN_SYSTEM_FN)(HANDLE hServer, DWORD ShutdownFlag);
+typedef BOOL (WINAPI* WTS_SHUTDOWN_SYSTEM_FN)(HANDLE hServer,
+        DWORD ShutdownFlag);
 
-typedef BOOL (WINAPI * WTS_WAIT_SYSTEM_EVENT_FN)(HANDLE hServer, DWORD EventMask, DWORD* pEventFlags);
+typedef BOOL (WINAPI* WTS_WAIT_SYSTEM_EVENT_FN)(HANDLE hServer, DWORD EventMask,
+        DWORD* pEventFlags);
 
-typedef HANDLE (WINAPI * WTS_VIRTUAL_CHANNEL_OPEN_FN)(HANDLE hServer, DWORD SessionId, LPSTR pVirtualName);
+typedef HANDLE(WINAPI* WTS_VIRTUAL_CHANNEL_OPEN_FN)(HANDLE hServer,
+        DWORD SessionId, LPSTR pVirtualName);
 
-typedef HANDLE (WINAPI * WTS_VIRTUAL_CHANNEL_OPEN_EX_FN)(DWORD SessionId, LPSTR pVirtualName, DWORD flags);
+typedef HANDLE(WINAPI* WTS_VIRTUAL_CHANNEL_OPEN_EX_FN)(DWORD SessionId,
+        LPSTR pVirtualName, DWORD flags);
 
-typedef BOOL (WINAPI * WTS_VIRTUAL_CHANNEL_CLOSE_FN)(HANDLE hChannelHandle);
+typedef BOOL (WINAPI* WTS_VIRTUAL_CHANNEL_CLOSE_FN)(HANDLE hChannelHandle);
 
-typedef BOOL (WINAPI * WTS_VIRTUAL_CHANNEL_READ_FN)(HANDLE hChannelHandle, ULONG TimeOut, PCHAR Buffer, ULONG BufferSize, PULONG pBytesRead);
+typedef BOOL (WINAPI* WTS_VIRTUAL_CHANNEL_READ_FN)(HANDLE hChannelHandle,
+        ULONG TimeOut, PCHAR Buffer, ULONG BufferSize, PULONG pBytesRead);
 
-typedef BOOL (WINAPI * WTS_VIRTUAL_CHANNEL_WRITE_FN)(HANDLE hChannelHandle, PCHAR Buffer, ULONG Length, PULONG pBytesWritten);
+typedef BOOL (WINAPI* WTS_VIRTUAL_CHANNEL_WRITE_FN)(HANDLE hChannelHandle,
+        PCHAR Buffer, ULONG Length, PULONG pBytesWritten);
 
-typedef BOOL (WINAPI * WTS_VIRTUAL_CHANNEL_PURGE_INPUT_FN)(HANDLE hChannelHandle);
+typedef BOOL (WINAPI* WTS_VIRTUAL_CHANNEL_PURGE_INPUT_FN)(
+    HANDLE hChannelHandle);
 
-typedef BOOL (WINAPI * WTS_VIRTUAL_CHANNEL_PURGE_OUTPUT_FN)(HANDLE hChannelHandle);
+typedef BOOL (WINAPI* WTS_VIRTUAL_CHANNEL_PURGE_OUTPUT_FN)(
+    HANDLE hChannelHandle);
 
-typedef BOOL (WINAPI * WTS_VIRTUAL_CHANNEL_QUERY_FN)(HANDLE hChannelHandle, WTS_VIRTUAL_CLASS WtsVirtualClass, PVOID* ppBuffer, DWORD* pBytesReturned);
+typedef BOOL (WINAPI* WTS_VIRTUAL_CHANNEL_QUERY_FN)(HANDLE hChannelHandle,
+        WTS_VIRTUAL_CLASS WtsVirtualClass, PVOID* ppBuffer, DWORD* pBytesReturned);
 
-typedef VOID (WINAPI * WTS_FREE_MEMORY_FN)(PVOID pMemory);
+typedef VOID (WINAPI* WTS_FREE_MEMORY_FN)(PVOID pMemory);
 
-typedef BOOL (WINAPI * WTS_REGISTER_SESSION_NOTIFICATION_FN)(HWND hWnd, DWORD dwFlags);
+typedef BOOL (WINAPI* WTS_REGISTER_SESSION_NOTIFICATION_FN)(HWND hWnd,
+        DWORD dwFlags);
 
-typedef BOOL (WINAPI * WTS_UNREGISTER_SESSION_NOTIFICATION_FN)(HWND hWnd);
+typedef BOOL (WINAPI* WTS_UNREGISTER_SESSION_NOTIFICATION_FN)(HWND hWnd);
 
-typedef BOOL (WINAPI * WTS_REGISTER_SESSION_NOTIFICATION_EX_FN)(HANDLE hServer, HWND hWnd, DWORD dwFlags);
+typedef BOOL (WINAPI* WTS_REGISTER_SESSION_NOTIFICATION_EX_FN)(HANDLE hServer,
+        HWND hWnd, DWORD dwFlags);
 
-typedef BOOL (WINAPI * WTS_UNREGISTER_SESSION_NOTIFICATION_EX_FN)(HANDLE hServer, HWND hWnd);
+typedef BOOL (WINAPI* WTS_UNREGISTER_SESSION_NOTIFICATION_EX_FN)(HANDLE hServer,
+        HWND hWnd);
 
-typedef BOOL (WINAPI * WTS_QUERY_USER_TOKEN_FN)(ULONG SessionId, PHANDLE phToken);
+typedef BOOL (WINAPI* WTS_QUERY_USER_TOKEN_FN)(ULONG SessionId,
+        PHANDLE phToken);
 
-typedef BOOL (WINAPI * WTS_FREE_MEMORY_EX_FN_W)(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory, ULONG NumberOfEntries);
-typedef BOOL (WINAPI * WTS_FREE_MEMORY_EX_FN_A)(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory, ULONG NumberOfEntries);
+typedef BOOL (WINAPI* WTS_FREE_MEMORY_EX_FN_W)(WTS_TYPE_CLASS WTSTypeClass,
+        PVOID pMemory, ULONG NumberOfEntries);
+typedef BOOL (WINAPI* WTS_FREE_MEMORY_EX_FN_A)(WTS_TYPE_CLASS WTSTypeClass,
+        PVOID pMemory, ULONG NumberOfEntries);
 
-typedef BOOL (WINAPI * WTS_ENUMERATE_PROCESSES_EX_FN_W)(HANDLE hServer,
-		DWORD* pLevel, DWORD SessionId, LPWSTR* ppProcessInfo, DWORD* pCount);
-typedef BOOL (WINAPI * WTS_ENUMERATE_PROCESSES_EX_FN_A)(HANDLE hServer,
-		DWORD* pLevel, DWORD SessionId, LPSTR* ppProcessInfo, DWORD* pCount);
+typedef BOOL (WINAPI* WTS_ENUMERATE_PROCESSES_EX_FN_W)(HANDLE hServer,
+        DWORD* pLevel, DWORD SessionId, LPWSTR* ppProcessInfo, DWORD* pCount);
+typedef BOOL (WINAPI* WTS_ENUMERATE_PROCESSES_EX_FN_A)(HANDLE hServer,
+        DWORD* pLevel, DWORD SessionId, LPSTR* ppProcessInfo, DWORD* pCount);
 
-typedef BOOL (WINAPI * WTS_ENUMERATE_LISTENERS_FN_W)(HANDLE hServer,
-		PVOID pReserved, DWORD Reserved, PWTSLISTENERNAMEW pListeners, DWORD* pCount);
-typedef BOOL (WINAPI * WTS_ENUMERATE_LISTENERS_FN_A)(HANDLE hServer,
-		PVOID pReserved, DWORD Reserved, PWTSLISTENERNAMEA pListeners, DWORD* pCount);
+typedef BOOL (WINAPI* WTS_ENUMERATE_LISTENERS_FN_W)(HANDLE hServer,
+        PVOID pReserved, DWORD Reserved, PWTSLISTENERNAMEW pListeners, DWORD* pCount);
+typedef BOOL (WINAPI* WTS_ENUMERATE_LISTENERS_FN_A)(HANDLE hServer,
+        PVOID pReserved, DWORD Reserved, PWTSLISTENERNAMEA pListeners, DWORD* pCount);
 
-typedef BOOL (WINAPI * WTS_QUERY_LISTENER_CONFIG_FN_W)(HANDLE hServer,
-		PVOID pReserved, DWORD Reserved, LPWSTR pListenerName, PWTSLISTENERCONFIGW pBuffer);
-typedef BOOL (WINAPI * WTS_QUERY_LISTENER_CONFIG_FN_A)(HANDLE hServer,
-		PVOID pReserved, DWORD Reserved, LPSTR pListenerName, PWTSLISTENERCONFIGA pBuffer);
+typedef BOOL (WINAPI* WTS_QUERY_LISTENER_CONFIG_FN_W)(HANDLE hServer,
+        PVOID pReserved, DWORD Reserved, LPWSTR pListenerName,
+        PWTSLISTENERCONFIGW pBuffer);
+typedef BOOL (WINAPI* WTS_QUERY_LISTENER_CONFIG_FN_A)(HANDLE hServer,
+        PVOID pReserved, DWORD Reserved, LPSTR pListenerName,
+        PWTSLISTENERCONFIGA pBuffer);
 
-typedef BOOL (WINAPI * WTS_CREATE_LISTENER_FN_W)(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-		LPWSTR pListenerName, PWTSLISTENERCONFIGW pBuffer, DWORD flag);
-typedef BOOL (WINAPI * WTS_CREATE_LISTENER_FN_A)(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-		LPSTR pListenerName, PWTSLISTENERCONFIGA pBuffer, DWORD flag);
+typedef BOOL (WINAPI* WTS_CREATE_LISTENER_FN_W)(HANDLE hServer, PVOID pReserved,
+        DWORD Reserved,
+        LPWSTR pListenerName, PWTSLISTENERCONFIGW pBuffer, DWORD flag);
+typedef BOOL (WINAPI* WTS_CREATE_LISTENER_FN_A)(HANDLE hServer, PVOID pReserved,
+        DWORD Reserved,
+        LPSTR pListenerName, PWTSLISTENERCONFIGA pBuffer, DWORD flag);
 
-typedef BOOL (WINAPI * WTS_SET_LISTENER_SECURITY_FN_W)(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-		LPWSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
-		PSECURITY_DESCRIPTOR pSecurityDescriptor);
-typedef BOOL (WINAPI * WTS_SET_LISTENER_SECURITY_FN_A)(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-		LPSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
-		PSECURITY_DESCRIPTOR pSecurityDescriptor);
+typedef BOOL (WINAPI* WTS_SET_LISTENER_SECURITY_FN_W)(HANDLE hServer,
+        PVOID pReserved, DWORD Reserved,
+        LPWSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
+        PSECURITY_DESCRIPTOR pSecurityDescriptor);
+typedef BOOL (WINAPI* WTS_SET_LISTENER_SECURITY_FN_A)(HANDLE hServer,
+        PVOID pReserved, DWORD Reserved,
+        LPSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
+        PSECURITY_DESCRIPTOR pSecurityDescriptor);
 
-typedef BOOL (WINAPI * WTS_GET_LISTENER_SECURITY_FN_W)(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-		LPWSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
-		PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength, LPDWORD lpnLengthNeeded);
-typedef BOOL (WINAPI * WTS_GET_LISTENER_SECURITY_FN_A)(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-		LPSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
-		PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength, LPDWORD lpnLengthNeeded);
+typedef BOOL (WINAPI* WTS_GET_LISTENER_SECURITY_FN_W)(HANDLE hServer,
+        PVOID pReserved, DWORD Reserved,
+        LPWSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
+        PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength,
+        LPDWORD lpnLengthNeeded);
+typedef BOOL (WINAPI* WTS_GET_LISTENER_SECURITY_FN_A)(HANDLE hServer,
+        PVOID pReserved, DWORD Reserved,
+        LPSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
+        PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength,
+        LPDWORD lpnLengthNeeded);
 
-typedef BOOL (CDECL * WTS_ENABLE_CHILD_SESSIONS_FN)(BOOL bEnable);
+typedef BOOL (CDECL* WTS_ENABLE_CHILD_SESSIONS_FN)(BOOL bEnable);
 
-typedef BOOL (CDECL * WTS_IS_CHILD_SESSIONS_ENABLED_FN)(PBOOL pbEnabled);
+typedef BOOL (CDECL* WTS_IS_CHILD_SESSIONS_ENABLED_FN)(PBOOL pbEnabled);
 
-typedef BOOL (CDECL * WTS_GET_CHILD_SESSION_ID_FN)(PULONG pSessionId);
+typedef BOOL (CDECL* WTS_GET_CHILD_SESSION_ID_FN)(PULONG pSessionId);
 
-typedef DWORD (WINAPI * WTS_GET_ACTIVE_CONSOLE_SESSION_ID_FN)(void);
+typedef DWORD (WINAPI* WTS_GET_ACTIVE_CONSOLE_SESSION_ID_FN)(void);
 
-typedef BOOL (WINAPI * WTS_LOGON_USER_FN)(HANDLE hServer, LPCSTR username,
-		LPCSTR password, LPCSTR domain);
+typedef BOOL (WINAPI* WTS_LOGON_USER_FN)(HANDLE hServer, LPCSTR username,
+        LPCSTR password, LPCSTR domain);
 
-typedef BOOL (WINAPI * WTS_LOGOFF_USER_FN)(HANDLE hServer);
+typedef BOOL (WINAPI* WTS_LOGOFF_USER_FN)(HANDLE hServer);
 
 struct _WtsApiFunctionTable
 {
@@ -1381,7 +1495,7 @@ struct _WtsApiFunctionTable
 typedef struct _WtsApiFunctionTable WtsApiFunctionTable;
 typedef WtsApiFunctionTable* PWtsApiFunctionTable;
 
-typedef PWtsApiFunctionTable (CDECL * INIT_WTSAPI_FN)(void);
+typedef PWtsApiFunctionTable(CDECL* INIT_WTSAPI_FN)(void);
 
 #ifdef __cplusplus
 extern "C" {

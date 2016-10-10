@@ -252,9 +252,9 @@ FREERDP_LOCAL void license_free(rdpLicense* license);
 
 #define LICENSE_TAG FREERDP_TAG("core.license")
 #ifdef WITH_DEBUG_LICENSE
-#define DEBUG_LICENSE(fmt, ...) WLog_DBG(LICENSE_TAG, fmt, ## __VA_ARGS__)
+#define DEBUG_LICENSE(...) WLog_DBG(LICENSE_TAG, __VA_ARGS__)
 #else
-#define DEBUG_LICENSE(fmt, ...) do { } while (0)
+#define DEBUG_LICENSE(...) do { } while (0)
 #endif
 
 #endif /* __LICENSE_H */

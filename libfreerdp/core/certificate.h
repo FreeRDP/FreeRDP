@@ -72,9 +72,9 @@ FREERDP_LOCAL void key_free(rdpRsaKey* key);
 
 #define CERTIFICATE_TAG FREERDP_TAG("core.certificate")
 #ifdef WITH_DEBUG_CERTIFICATE
-#define DEBUG_CERTIFICATE(fmt, ...) WLog_DBG(CERTIFICATE_TAG, fmt, ## __VA_ARGS__)
+#define DEBUG_CERTIFICATE(...) WLog_DBG(CERTIFICATE_TAG, __VA_ARGS__)
 #else
-#define DEBUG_CERTIFICATE(fmt, ...) do { } while (0)
+#define DEBUG_CERTIFICATE(...) do { } while (0)
 #endif
 
 #endif /* __CERTIFICATE_H */

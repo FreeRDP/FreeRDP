@@ -24,14 +24,18 @@
 
 #ifndef _WIN32
 
-void NdrSimpleTypeBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
-void NdrSimpleTypeMarshall(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, unsigned char FormatChar);
-void NdrSimpleTypeUnmarshall(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, unsigned char FormatChar);
-void NdrSimpleTypeFree(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat);
+void NdrSimpleTypeBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
+                             unsigned char* pMemory, PFORMAT_STRING pFormat);
+void NdrSimpleTypeMarshall(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
+                           unsigned char FormatChar);
+void NdrSimpleTypeUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
+                             unsigned char* pMemory, unsigned char FormatChar);
+void NdrSimpleTypeFree(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
+                       PFORMAT_STRING pFormat);
 
-char NdrGetSimpleTypeBufferAlignment(unsigned char FormatChar);
-char NdrGetSimpleTypeBufferSize(unsigned char FormatChar);
-char NdrGetSimpleTypeMemorySize(unsigned char FormatChar);
+unsigned char NdrGetSimpleTypeBufferAlignment(unsigned char FormatChar);
+unsigned char NdrGetSimpleTypeBufferSize(unsigned char FormatChar);
+unsigned char NdrGetSimpleTypeMemorySize(unsigned char FormatChar);
 int NdrGetTypeFlags(unsigned char FormatChar);
 
 #endif

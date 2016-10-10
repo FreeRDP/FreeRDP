@@ -104,109 +104,80 @@ typedef struct _wLog wLog;
 #define WLOG_PACKET_INBOUND     1
 #define WLOG_PACKET_OUTBOUND    2
 
-WINPR_API BOOL WLog_PrintMessage(wLog* log, wLogMessage* message, ...);
-WINPR_API BOOL WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args);
+WINPR_API BOOL WLog_PrintMessage(wLog* log, DWORD type, DWORD level, DWORD line,
+                                 const char* file, const char* function, ...);
+WINPR_API BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level,
+                                   DWORD line,
+                                   const char* file, const char* function, va_list args);
 
-#define WLog_Print(_log, _log_level, _fmt, ...) \
+#define WLog_Print(_log, _log_level, ...) \
 	do { \
 		if (_log && _log_level >= WLog_GetLogLevel(_log)) { \
-			wLogMessage _log_message; \
-			memset(&_log_message, 0, sizeof(_log_message)); \
-			_log_message.Type = WLOG_MESSAGE_TEXT; \
-			_log_message.Level = _log_level; \
-			_log_message.FormatString = _fmt; \
-			_log_message.LineNumber = __LINE__; \
-			_log_message.FileName = __FILE__; \
-			_log_message.FunctionName = __FUNCTION__; \
-			WLog_PrintMessage(_log, &(_log_message), ## __VA_ARGS__ ); \
+			WLog_PrintMessage(_log, WLOG_MESSAGE_TEXT, _log_level, \
+			                  __LINE__, __FILE__, __FUNCTION__, __VA_ARGS__ ); \
 		} \
 	} while (0)
 
-#define WLog_PrintVA(_log, _log_level, _fmt, _args) \
+#define WLog_PrintVA(_log, _log_level, _args) \
 	do { \
 		if (_log && _log_level >= WLog_GetLogLevel(_log)) { \
-			wLogMessage _log_message; \
-			memset(&_log_message, 0, sizeof(_log_message)); \
-			_log_message.Type = WLOG_MESSAGE_TEXT; \
-			_log_message.Level = _log_level; \
-			_log_message.FormatString = _fmt; \
-			_log_message.LineNumber = __LINE__; \
-			_log_message.FileName = __FILE__; \
-			_log_message.FunctionName = __FUNCTION__; \
-			WLog_PrintMessageVA(_log, &(_log_message), _args); \
+			WLog_PrintMessageVA(_log, WLOG_MESSAGE_TEXT, _log_level, \
+			                    __LINE__, __FILE__, __FUNCTION__, _args ); \
 		} \
 	} while (0)
 
 #define WLog_Data(_log, _log_level, ...) \
 	do { \
 		if (_log && _log_level >= WLog_GetLogLevel(_log)) { \
-			wLogMessage _log_message; \
-			memset(&_log_message, 0, sizeof(_log_message)); \
-			_log_message.Type = WLOG_MESSAGE_DATA; \
-			_log_message.Level = _log_level; \
-			_log_message.FormatString = NULL; \
-			_log_message.LineNumber = __LINE__; \
-			_log_message.FileName = __FILE__; \
-			_log_message.FunctionName = __FUNCTION__; \
-			WLog_PrintMessage(_log, &(_log_message), ## __VA_ARGS__ ); \
+			WLog_PrintMessage(_log, WLOG_MESSAGE_DATA, _log_level, \
+			                  __LINE__, __FILE__, __FUNCTION__, __VA_ARGS__ ); \
 		} \
 	} while (0)
 
 #define WLog_Image(_log, _log_level, ...) \
 	do { \
 		if (_log && _log_level >= WLog_GetLogLevel(_log)) { \
-			wLogMessage _log_message; \
-			memset(&_log_message, 0, sizeof(_log_message)); \
-			_log_message.Type = WLOG_MESSAGE_IMAGE; \
-			_log_message.Level = _log_level; \
-			_log_message.FormatString = NULL; \
-			_log_message.LineNumber = __LINE__; \
-			_log_message.FileName = __FILE__; \
-			_log_message.FunctionName = __FUNCTION__; \
-			WLog_PrintMessage(_log, &(_log_message), ## __VA_ARGS__ ); \
+			WLog_PrintMessage(_log, WLOG_MESSAGE_DATA, _log_level, \
+			                  __LINE__, __FILE__, __FUNCTION__, __VA_ARGS__ ); \
 		} \
 	} while (0)
 
 #define WLog_Packet(_log, _log_level, ...) \
 	do { \
 		if (_log && _log_level >= WLog_GetLogLevel(_log)) { \
-			wLogMessage _log_message; \
-			memset(&_log_message, 0, sizeof(_log_message)); \
-			_log_message.Type = WLOG_MESSAGE_PACKET; \
-			_log_message.Level = _log_level; \
-			_log_message.FormatString = NULL; \
-			_log_message.LineNumber = __LINE__; \
-			_log_message.FileName = __FILE__; \
-			_log_message.FunctionName = __FUNCTION__; \
-			WLog_PrintMessage(_log, &(_log_message), ## __VA_ARGS__ ); \
+			WLog_PrintMessage(_log, WLOG_MESSAGE_PACKET, _log_level, \
+			                  __LINE__, __FILE__, __FUNCTION__, __VA_ARGS__ ); \
 		} \
 	} while (0)
 
-#define WLog_IsLevelActive(_log, _log_level) \
-	(_log ? _log_level >= WLog_GetLogLevel(_log) : FALSE)
-
-#define WLog_LVL(tag, lvl, fmt, ...) WLog_Print(WLog_Get(tag), lvl, fmt, ## __VA_ARGS__)
-#define WLog_VRB(tag, fmt, ...) WLog_Print(WLog_Get(tag), WLOG_TRACE, fmt, ## __VA_ARGS__)
-#define WLog_DBG(tag, fmt, ...) WLog_Print(WLog_Get(tag), WLOG_DEBUG, fmt, ## __VA_ARGS__)
-#define WLog_INFO(tag, fmt, ...) WLog_Print(WLog_Get(tag), WLOG_INFO, fmt, ## __VA_ARGS__)
-#define WLog_WARN(tag, fmt, ...) WLog_Print(WLog_Get(tag), WLOG_WARN, fmt, ## __VA_ARGS__)
-#define WLog_ERR(tag, fmt, ...) WLog_Print(WLog_Get(tag), WLOG_ERROR, fmt, ## __VA_ARGS__)
-#define WLog_FATAL(tag, fmt, ...) WLog_Print(WLog_Get(tag), WLOG_FATAL, fmt, ## __VA_ARGS__)
+#define WLog_LVL(tag, lvl, ...) WLog_Print(WLog_Get(tag), lvl, __VA_ARGS__)
+#define WLog_VRB(tag, ...) WLog_Print(WLog_Get(tag), WLOG_TRACE, __VA_ARGS__)
+#define WLog_DBG(tag, ...) WLog_Print(WLog_Get(tag), WLOG_DEBUG, __VA_ARGS__)
+#define WLog_INFO(tag, ...) WLog_Print(WLog_Get(tag), WLOG_INFO, __VA_ARGS__)
+#define WLog_WARN(tag, ...) WLog_Print(WLog_Get(tag), WLOG_WARN, __VA_ARGS__)
+#define WLog_ERR(tag, ...) WLog_Print(WLog_Get(tag), WLOG_ERROR, __VA_ARGS__)
+#define WLog_FATAL(tag, ...) WLog_Print(WLog_Get(tag), WLOG_FATAL, __VA_ARGS__)
 
 WINPR_API DWORD WLog_GetLogLevel(wLog* log);
 WINPR_API BOOL WLog_SetLogLevel(wLog* log, DWORD logLevel);
 WINPR_API BOOL WLog_SetStringLogLevel(wLog* log, LPCSTR level);
 WINPR_API BOOL WLog_AddStringLogFilters(LPCSTR filter);
 
+static INLINE BOOL WLog_IsLevelActive(wLog* _log, DWORD _log_level)
+{
+	return _log ? _log_level >= WLog_GetLogLevel(_log) : FALSE;
+}
 
 WINPR_API BOOL WLog_SetLogAppenderType(wLog* log, DWORD logAppenderType);
 WINPR_API wLogAppender* WLog_GetLogAppender(wLog* log);
 WINPR_API BOOL WLog_OpenAppender(wLog* log);
 WINPR_API BOOL WLog_CloseAppender(wLog* log);
-WINPR_API BOOL WLog_ConfigureAppender(wLogAppender *appender, const char *setting, void *value);
+WINPR_API BOOL WLog_ConfigureAppender(wLogAppender* appender,
+                                      const char* setting, void* value);
 
 WINPR_API wLogLayout* WLog_GetLogLayout(wLog* log);
-WINPR_API BOOL WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* format);
+WINPR_API BOOL WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout,
+        const char* format);
 
 WINPR_API wLog* WLog_GetRoot(void);
 WINPR_API wLog* WLog_Get(LPCSTR name);
@@ -214,12 +185,13 @@ WINPR_API wLog* WLog_Get(LPCSTR name);
 WINPR_API BOOL WLog_Init(void);
 WINPR_API BOOL WLog_Uninit(void);
 
-typedef BOOL (*wLogCallbackMessage_t)(const wLogMessage *msg);
-typedef BOOL (*wLogCallbackData_t)(const wLogMessage *msg);
-typedef BOOL (*wLogCallbackImage_t)(const wLogMessage *msg);
-typedef BOOL (*wLogCallbackPackage_t)(const wLogMessage *msg);
+typedef BOOL (*wLogCallbackMessage_t)(const wLogMessage* msg);
+typedef BOOL (*wLogCallbackData_t)(const wLogMessage* msg);
+typedef BOOL (*wLogCallbackImage_t)(const wLogMessage* msg);
+typedef BOOL (*wLogCallbackPackage_t)(const wLogMessage* msg);
 
-struct _wLogCallbacks {
+struct _wLogCallbacks
+{
 	wLogCallbackData_t data;
 	wLogCallbackImage_t  image;
 	wLogCallbackMessage_t message;

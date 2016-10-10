@@ -38,9 +38,9 @@
 
 #define TAG CHANNELS_TAG("urbdrc.client")
 #ifdef WITH_DEBUG_DVC
-#define DEBUG_DVC(fmt, ...) WLog_DBG(TAG, fmt, ## __VA_ARGS__)
+#define DEBUG_DVC(...) WLog_DBG(TAG, __VA_ARGS__)
 #else
-#define DEBUG_DVC(fmt, ...) do { } while (0)
+#define DEBUG_DVC(...) do { } while (0)
 #endif
 
 #define CAPABILITIES_NEGOTIATOR				0x00000000
@@ -109,25 +109,25 @@
 
 enum device_text_type
 {
-	DeviceTextDescription = 0, 
+	DeviceTextDescription = 0,
 	DeviceTextLocationInformation = 1,
 };
 
 enum device_descriptor_table
 {
-	B_LENGTH = 0, 
-	B_DESCRIPTOR_TYPE = 1, 
-	BCD_USB = 2, 
+	B_LENGTH = 0,
+	B_DESCRIPTOR_TYPE = 1,
+	BCD_USB = 2,
 	B_DEVICE_CLASS = 4,
-	B_DEVICE_SUBCLASS = 5, 
+	B_DEVICE_SUBCLASS = 5,
 	B_DEVICE_PROTOCOL = 6,
-	B_MAX_PACKET_SIZE0 = 7, 
-	ID_VENDOR = 8, 
+	B_MAX_PACKET_SIZE0 = 7,
+	ID_VENDOR = 8,
 	ID_PRODUCT = 10,
-	BCD_DEVICE = 12, 
+	BCD_DEVICE = 12,
 	I_MANUFACTURER = 14,
-	I_PRODUCT = 15, 
-	I_SERIAL_NUMBER = 16, 
+	I_PRODUCT = 15,
+	I_SERIAL_NUMBER = 16,
 	B_NUM_CONFIGURATIONS = 17
 };
 
@@ -259,11 +259,11 @@ enum device_descriptor_table
 #define USBD_TRANSFER_DIRECTION_IN				1
 
 #define VALID_TRANSFER_FLAGS_MASK				USBD_SHORT_TRANSFER_OK | \
-								USBD_TRANSFER_DIRECTION | \
-								USBD_START_ISO_TRANSFER_ASAP | \
-								USBD_DEFAULT_PIPE_TRANSFER)
- 
-#define ENDPOINT_HALT						0x00  
+	USBD_TRANSFER_DIRECTION | \
+	USBD_START_ISO_TRANSFER_ASAP | \
+	USBD_DEFAULT_PIPE_TRANSFER)
+
+#define ENDPOINT_HALT						0x00
 #define DEVICE_REMOTE_WAKEUP					0x01
 
 /* transfer type */
@@ -318,16 +318,16 @@ enum device_descriptor_table
 
 #define LOG_LEVEL 1
 
-#define dummy_wait_obj(void) do{ sleep(5); } while(0)  
-#define dummy_wait_s_obj(_s) do{ sleep(_s); } while(0)  
+#define dummy_wait_obj(void) do{ sleep(5); } while(0)
+#define dummy_wait_s_obj(_s) do{ sleep(_s); } while(0)
 
 #define ISOCH_FIFO						1
 #define WAIT_COMPLETE_SLEEP					10000  /* for cpu high loading */
 
 #define urbdrc_get_mstime(_t) do { \
-	struct timeval _tp; \
-	gettimeofday(&_tp, 0); \
-	_t = (_tp.tv_sec * 1000) + (_tp.tv_usec / 1000); \
-} while (0)
+		struct timeval _tp; \
+		gettimeofday(&_tp, 0); \
+		_t = (_tp.tv_sec * 1000) + (_tp.tv_usec / 1000); \
+	} while (0)
 
 #endif /* __URBDRC_TYPES_H */

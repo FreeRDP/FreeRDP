@@ -28,16 +28,16 @@
 
 #define KBD_TAG FREERDP_TAG("locale")
 #ifdef WITH_DEBUG_KBD
-#define DEBUG_KBD(fmt, ...) WLog_DBG(KBD_TAG, fmt, ## __VA_ARGS__)
+#define DEBUG_KBD(...) WLog_DBG(KBD_TAG, __VA_ARGS__)
 #else
-#define DEBUG_KBD(fmt, ...) do { } while (0)
+#define DEBUG_KBD(...) do { } while (0)
 #endif
 
 #define TIMEZONE_TAG FREERDP_TAG("timezone")
 #ifdef WITH_DEBUG_TIMEZONE
-#define DEBUG_TIMEZONE(fmt, ...) WLog_DBG(TIMEZONE_TAG, fmt, ## __VA_ARGS__)
+#define DEBUG_TIMEZONE(...) WLog_DBG(TIMEZONE_TAG, __VA_ARGS__)
 #else
-#define DEBUG_TIMEZONE(fmt, ...) do { } while (0)
+#define DEBUG_TIMEZONE(...) do { } while (0)
 #endif
 
 #endif /* __LIBLOCALE_H */

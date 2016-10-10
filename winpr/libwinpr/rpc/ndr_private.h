@@ -35,11 +35,11 @@ extern const NDR_TYPE_MARSHALL_ROUTINE pfnMarshallRoutines[];
 extern const NDR_TYPE_UNMARSHALL_ROUTINE pfnUnmarshallRoutines[];
 extern const NDR_TYPE_FREE_ROUTINE pfnFreeRoutines[];
 
-extern const char SimpleTypeAlignment[];
-extern const char SimpleTypeBufferSize[];
-extern const char SimpleTypeMemorySize[];
+extern const unsigned char SimpleTypeAlignment[];
+extern const unsigned char SimpleTypeBufferSize[];
+extern const unsigned char SimpleTypeMemorySize[];
 
-extern const char NdrTypeFlags[];
+extern const unsigned char NdrTypeFlags[];
 extern const char* FC_TYPE_STRINGS[];
 
 #include "ndr_correlation.h"
