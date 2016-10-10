@@ -1060,6 +1060,12 @@ static BOOL gdi_surface_bits(rdpContext* context,
 			break;
 	}
 
+	if (!gdi_InvalidateRegion(gdi->primary->hdc, cmd->destLeft, cmd->destTop, cmd->width, cmd->height))
+	{
+		WLog_ERR(TAG, "Failed to update invalid region");
+		return FALSE;
+	}
+
 	return TRUE;
 }
 
