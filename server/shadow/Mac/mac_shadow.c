@@ -483,6 +483,8 @@ static int mac_shadow_screen_grab(macShadowSubsystem* subsystem)
 static int mac_shadow_subsystem_process_message(macShadowSubsystem* subsystem,
         wMessage* message)
 {
+    rdpShadowServer* server = subsystem->server;
+    rdpShadowSurface* surface = server->surface;
 	switch (message->id)
 	{
 		case SHADOW_MSG_IN_REFRESH_REQUEST_ID:
