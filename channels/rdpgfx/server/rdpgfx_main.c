@@ -571,6 +571,21 @@ static UINT rdpgfx_write_surface_command(wStream* s,
 	RDPGFX_AVC444_BITMAP_STREAM* havc444 = NULL;
 	UINT32 bitmapDataStart = 0;
 	UINT32 bitmapDataLength = 0;
+	UINT8 pixelFormat = 0;
+	switch (cmd->format)
+	{
+		case PIXEL_FORMAT_BGRX32:
+			pixelFormat = GFX_PIXEL_FORMAT_XRGB_8888;
+			break;
+
+		case PIXEL_FORMAT_BGRA32:
+			pixelFormat = GFX_PIXEL_FORMAT_ARGB_8888;
+			break;
+
+		default:
+			WLog_ERR(TAG, "Format %s not supported!", GetColorFormatName(cmd->format));
+			return ERROR_INVALID_DATA;
+	}
 
 	if (cmd->codecId == RDPGFX_CODECID_CAPROGRESSIVE ||
 	    cmd->codecId == RDPGFX_CODECID_CAPROGRESSIVE_V2)
@@ -579,7 +594,7 @@ static UINT rdpgfx_write_surface_command(wStream* s,
 		Stream_Write_UINT16(s, cmd->surfaceId); /* surfaceId (2 bytes) */
 		Stream_Write_UINT16(s, cmd->codecId); /* codecId (2 bytes) */
 		Stream_Write_UINT32(s, cmd->contextId); /* codecContextId (4 bytes) */
-		Stream_Write_UINT8(s, cmd->format); /* pixelFormat (1 byte) */
+		Stream_Write_UINT8(s, pixelFormat); /* pixelFormat (1 byte) */
 		Stream_Write_UINT32(s, cmd->length); /* bitmapDataLength (4 bytes) */
 		Stream_Write(s, cmd->data, cmd->length);
 	}
@@ -588,7 +603,7 @@ static UINT rdpgfx_write_surface_command(wStream* s,
 		/* Write RDPGFX_CMDID_WIRETOSURFACE_1 format for others */
 		Stream_Write_UINT16(s, cmd->surfaceId); /* surfaceId (2 bytes) */
 		Stream_Write_UINT16(s, cmd->codecId); /* codecId (2 bytes) */
-		Stream_Write_UINT8(s, cmd->format); /* pixelFormat (1 byte) */
+		Stream_Write_UINT8(s, pixelFormat); /* pixelFormat (1 byte) */
 		Stream_Write_UINT16(s, cmd->left); /* left (2 bytes) */
 		Stream_Write_UINT16(s, cmd->top); /* top (2 bytes) */
 		Stream_Write_UINT16(s, cmd->right); /* right (2 bytes) */

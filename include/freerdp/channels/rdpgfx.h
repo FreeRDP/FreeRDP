@@ -177,7 +177,7 @@ struct _RDPGFX_SURFACE_COMMAND
 	UINT32 surfaceId;
 	UINT32 codecId;
 	UINT32 contextId;
-	UINT32 format;
+	UINT32 format; /* FreeRDP color format. @see freerdp/codec/color.h */
 	UINT32 left;
 	UINT32 top;
 	UINT32 right;
