@@ -532,8 +532,6 @@ FREERDP_API DWORD gdi_rop3_code(BYTE code);
 FREERDP_API UINT32 gdi_get_pixel_format(UINT32 bitsPerPixel, BOOL vFlip);
 FREERDP_API BOOL gdi_decode_color(rdpGdi* gdi, const UINT32 srcColor,
                                   UINT32* color, UINT32* format);
-FREERDP_API BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, UINT32 x, UINT32 y);
-FREERDP_API BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, UINT32 x, UINT32 y);
 FREERDP_API BOOL gdi_resize(rdpGdi* gdi, UINT32 width, UINT32 height);
 FREERDP_API BOOL gdi_resize_ex(rdpGdi* gdi, UINT32 width, UINT32 height,
                                UINT32 stride, UINT32 format, BYTE* buffer,

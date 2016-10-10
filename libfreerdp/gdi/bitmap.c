@@ -39,6 +39,7 @@
 
 #include "brush.h"
 #include "clipping.h"
+#include "../gdi/gdi.h"
 
 #define TAG FREERDP_TAG("gdi.bitmap")
 
