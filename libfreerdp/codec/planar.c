@@ -299,7 +299,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 	UINT32 subWidth;
 	UINT32 subHeight;
 	UINT32 planeSize;
-	INT32 rleSizes[4];
+	INT32 rleSizes[4] = { 0, 0, 0, 0 };
 	UINT32 rawSizes[4];
 	UINT32 rawWidths[4];
 	UINT32 rawHeights[4];
