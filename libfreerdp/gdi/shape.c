@@ -131,6 +131,7 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 	BOOL monochrome = FALSE;
 	UINT32 nXDest, nYDest;
 	UINT32 nWidth, nHeight;
+	const BYTE* srcp;
 	gdi_RectToCRgn(rect, &nXDest, &nYDest, &nWidth, &nHeight);
 
 	if (!hdc || !hbr)
@@ -144,16 +145,21 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 		case GDI_BS_SOLID:
 			color = hbr->color;
 
-			for (y = 0; y < nHeight; y++)
+			for (x = 0; x < nWidth; x++)
 			{
-				for (x = 0; x < nWidth; x++)
-				{
-					BYTE* dstp = gdi_get_bitmap_pointer(hdc, nXDest + x,
-					                                    nYDest + y);
+				BYTE* dstp = gdi_get_bitmap_pointer(hdc, nXDest + x,
+				                                    nYDest);
 
-					if (dstp)
-						WriteColor(dstp, hdc->format, color);
-				}
+				if (dstp)
+					WriteColor(dstp, hdc->format, color);
+			}
+
+			srcp = gdi_get_bitmap_pointer(hdc, nXDest, nYDest);
+
+			for (y = 1; y < nHeight; y++)
+			{
+				BYTE* dstp = gdi_get_bitmap_pointer(hdc, nXDest, nYDest + y);
+				memcpy(dstp, srcp, nWidth * GetBytesPerPixel(hdc->format));
 			}
 
 			break;
