@@ -443,8 +443,8 @@ static BOOL test_gdi_BitBlt(UINT32 SrcFormat, UINT32 DstFormat)
 	BOOL rc = FALSE;
 	BOOL failed = FALSE;
 	UINT32 x;
-	HGDI_DC hdcSrc;
-	HGDI_DC hdcDst;
+	HGDI_DC hdcSrc = NULL;
+	HGDI_DC hdcDst = NULL;
 	const UINT32 RawFormat = PIXEL_FORMAT_RGB8;
 	struct test_bitblt tests[] =
 	{
@@ -491,9 +491,9 @@ static BOOL test_gdi_BitBlt(UINT32 SrcFormat, UINT32 DstFormat)
 		{GDI_DPo, bmp_SRC, NULL}
 	};
 	const UINT32 number_tests = sizeof(tests) / sizeof(tests[0]);
-	HGDI_BITMAP hBmpSrc;
-	HGDI_BITMAP hBmpDst;
-	HGDI_BITMAP hBmpDstOriginal;
+	HGDI_BITMAP hBmpSrc = NULL;
+	HGDI_BITMAP hBmpDst = NULL;
+	HGDI_BITMAP hBmpDstOriginal = NULL;
 	HGDI_BRUSH brush;
 	gdiPalette g;
 	gdiPalette* hPalette = &g;
