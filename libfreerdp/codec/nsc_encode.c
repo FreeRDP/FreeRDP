@@ -126,11 +126,27 @@ static void nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, const BYTE* data,
 		{
 			switch (context->pixel_format)
 			{
+				case PIXEL_FORMAT_BGRX32:
+					b_val = *src++;
+					g_val = *src++;
+					r_val = *src++;
+					src++;
+					a_val = 0xFF;
+					break;
+
 				case PIXEL_FORMAT_BGRA32:
 					b_val = *src++;
 					g_val = *src++;
 					r_val = *src++;
 					a_val = *src++;
+					break;
+
+				case PIXEL_FORMAT_RGBX32:
+					r_val = *src++;
+					g_val = *src++;
+					b_val = *src++;
+					src++;
+					a_val = 0xFF;
 					break;
 
 				case PIXEL_FORMAT_RGBA32:

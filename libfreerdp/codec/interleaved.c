@@ -373,7 +373,7 @@ BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
 	}
 
 	if (bpp == 24)
-		DstFormat = PIXEL_FORMAT_XRGB32;
+		DstFormat = PIXEL_FORMAT_BGRX32;
 	else if (bpp == 16)
 		DstFormat = PIXEL_FORMAT_RGB16;
 	else if (bpp == 15)

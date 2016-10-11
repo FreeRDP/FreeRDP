@@ -76,6 +76,17 @@ static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context,
 		{
 			switch (context->pixel_format)
 			{
+				case PIXEL_FORMAT_BGRX32:
+					b_val = _mm_set_epi16(*(src + 28), *(src + 24), *(src + 20), *(src + 16),
+					                      *(src + 12), *(src + 8), *(src + 4), *src);
+					g_val = _mm_set_epi16(*(src + 29), *(src + 25), *(src + 21), *(src + 17),
+					                      *(src + 13), *(src + 9), *(src + 5), *(src + 1));
+					r_val = _mm_set_epi16(*(src + 30), *(src + 26), *(src + 22), *(src + 18),
+					                      *(src + 14), *(src + 10), *(src + 6), *(src + 2));
+					a_val = _mm_set1_epi16(0xFF);
+					src += 32;
+					break;
+
 				case PIXEL_FORMAT_BGRA32:
 					b_val = _mm_set_epi16(*(src + 28), *(src + 24), *(src + 20), *(src + 16),
 					                      *(src + 12), *(src + 8), *(src + 4), *src);
@@ -85,6 +96,17 @@ static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context,
 					                      *(src + 14), *(src + 10), *(src + 6), *(src + 2));
 					a_val = _mm_set_epi16(*(src + 31), *(src + 27), *(src + 23), *(src + 19),
 					                      *(src + 15), *(src + 11), *(src + 7), *(src + 3));
+					src += 32;
+					break;
+
+				case PIXEL_FORMAT_RGBX32:
+					r_val = _mm_set_epi16(*(src + 28), *(src + 24), *(src + 20), *(src + 16),
+					                      *(src + 12), *(src + 8), *(src + 4), *src);
+					g_val = _mm_set_epi16(*(src + 29), *(src + 25), *(src + 21), *(src + 17),
+					                      *(src + 13), *(src + 9), *(src + 5), *(src + 1));
+					b_val = _mm_set_epi16(*(src + 30), *(src + 26), *(src + 22), *(src + 18),
+					                      *(src + 14), *(src + 10), *(src + 6), *(src + 2));
+					a_val = _mm_set1_epi16(0xFF);
 					src += 32;
 					break;
 
