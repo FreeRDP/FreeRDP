@@ -999,14 +999,17 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 	BYTE* pSrcData;
 	xfContext* xfc = (xfContext*) context;
 	BOOL ret = FALSE;
+	DWORD format;
 	rdpGdi* gdi = context->gdi;
 	xf_lock_x11(xfc, FALSE);
 
 	switch (cmd->codecID)
 	{
 		case RDP_CODEC_ID_REMOTEFX:
+			format = PIXEL_FORMAT_BGRX32;
+
 			if (!rfx_process_message(context->codecs->rfx, cmd->bitmapData,
-			                         PIXEL_FORMAT_BGRX32, cmd->bitmapDataLength,
+			                         format, cmd->bitmapDataLength,
 			                         cmd->destLeft, cmd->destTop,
 			                         gdi->primary_buffer, gdi->dstFormat, gdi->stride,
 			                         gdi->height, NULL))
@@ -1016,10 +1019,12 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 			break;
 
 		case RDP_CODEC_ID_NSCODEC:
+			format = FREERDP_VFLIP_PIXEL_FORMAT(gdi->dstFormat);
+
 			if (!nsc_process_message(context->codecs->nsc, cmd->bpp, cmd->width,
-			                         cmd->height,
-			                         cmd->bitmapData, cmd->bitmapDataLength,
-			                         gdi->primary_buffer, gdi->dstFormat, 0, 0, 0, cmd->width, cmd->height))
+			                         cmd->height, cmd->bitmapData, cmd->bitmapDataLength,
+			                         gdi->primary_buffer, format, gdi->stride,
+			                         cmd->destLeft, cmd->destTop, cmd->width, cmd->height))
 				goto fail;
 
 			ret = xf_gdi_update_screen(xfc, cmd, gdi->primary_buffer);
@@ -1027,10 +1032,12 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 
 		case RDP_CODEC_ID_NONE:
 			pSrcData = cmd->bitmapData;
+			format = PIXEL_FORMAT_BGRX32_VF;
 
-			if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, 0, 0, 0,
+			if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, gdi->stride,
+			                        cmd->destLeft, cmd->destTop,
 			                        cmd->width, cmd->height, pSrcData,
-			                        PIXEL_FORMAT_BGRX32_VF, 0, 0, 0, &xfc->context.gdi->palette))
+			                        format, 0, 0, 0, &xfc->context.gdi->palette))
 				goto fail;
 
 			ret = xf_gdi_update_screen(xfc, cmd, gdi->primary_buffer);
