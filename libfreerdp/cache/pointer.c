@@ -33,10 +33,32 @@
 
 #define TAG FREERDP_TAG("cache.pointer")
 
-static void pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index,
+static BOOL pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index,
                               rdpPointer* pointer);
 static const rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache,
         UINT32 index);
+
+static void pointer_free(rdpContext* context, rdpPointer* pointer)
+{
+	if (pointer)
+	{
+		pointer->Free(context, pointer);
+
+		if (pointer->xorMaskData)
+		{
+			free(pointer->xorMaskData);
+			pointer->xorMaskData = NULL;
+		}
+
+		if (pointer->andMaskData)
+		{
+			free(pointer->andMaskData);
+			pointer->andMaskData = NULL;
+		}
+
+		free(pointer);
+	}
+}
 
 static BOOL update_pointer_position(rdpContext* context,
                                     const POINTER_POSITION_UPDATE* pointer_position)
@@ -119,17 +141,18 @@ static BOOL update_pointer_color(rdpContext* context,
 			           pointer->lengthXorMask);
 		}
 
-		pointer->New(context, pointer);
-		pointer_cache_put(cache->pointer, pointer_color->cacheIndex, pointer);
-		pointer->Set(context, pointer);
-		return TRUE;
+		if (!pointer->New(context, pointer))
+			goto out_fail;
+
+		if (!pointer_cache_put(cache->pointer, pointer_color->cacheIndex, pointer))
+			goto out_fail;
+
+		return pointer->Set(context, pointer);
 	}
 
 	return FALSE;
 out_fail:
-	free(pointer->andMaskData);
-	free(pointer->xorMaskData);
-	free(pointer);
+	pointer_free(context, pointer);
 	return FALSE;
 }
 
@@ -181,13 +204,13 @@ static BOOL update_pointer_new(rdpContext* context,
 	if (!pointer->New(context, pointer))
 		goto out_fail;
 
-	pointer_cache_put(cache->pointer, pointer_new->colorPtrAttr.cacheIndex,
-	                  pointer);
+	if (!pointer_cache_put(cache->pointer, pointer_new->colorPtrAttr.cacheIndex,
+	                       pointer))
+		goto out_fail;
+
 	return pointer->Set(context, pointer);
 out_fail:
-	free(pointer->andMaskData);
-	free(pointer->xorMaskData);
-	free(pointer);
+	pointer_free(context, pointer);
 	return FALSE;
 }
 
@@ -222,7 +245,7 @@ const rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache,
 	return pointer;
 }
 
-void pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index,
+BOOL pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index,
                        rdpPointer* pointer)
 {
 	rdpPointer* prevPointer;
@@ -230,15 +253,13 @@ void pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index,
 	if (index >= pointer_cache->cacheSize)
 	{
 		WLog_ERR(TAG,  "invalid pointer index:%d", index);
-		return;
+		return FALSE;
 	}
 
 	prevPointer = pointer_cache->entries[index];
-
-	if (prevPointer != NULL)
-		prevPointer->Free(pointer_cache->update->context, prevPointer);
-
+	pointer_free(pointer_cache->update->context, prevPointer);
 	pointer_cache->entries[index] = pointer;
+	return TRUE;
 }
 
 void pointer_cache_register_callbacks(rdpUpdate* update)
@@ -284,12 +305,7 @@ void pointer_cache_free(rdpPointerCache* pointer_cache)
 		for (i = 0; i < pointer_cache->cacheSize; i++)
 		{
 			pointer = pointer_cache->entries[i];
-
-			if (pointer != NULL)
-			{
-				pointer->Free(pointer_cache->update->context, pointer);
-				pointer_cache->entries[i] = NULL;
-			}
+			pointer_free(pointer_cache->update->context, pointer);
 		}
 
 		free(pointer_cache->entries);

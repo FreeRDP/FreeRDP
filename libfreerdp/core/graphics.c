@@ -25,6 +25,8 @@
 
 #include <freerdp/graphics.h>
 
+#include "graphics.h"
+
 /* Bitmap Class */
 
 rdpBitmap* Bitmap_Alloc(rdpContext* context)
@@ -52,7 +54,7 @@ static BOOL Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	return TRUE;
 }
 
-static void Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
+void Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 {
 	if (bitmap)
 	{
@@ -124,28 +126,6 @@ static BOOL Pointer_New(rdpContext* context, rdpPointer* pointer)
 	proto = context->graphics->Pointer_Prototype;
 	*pointer = *proto;
 	return TRUE;
-}
-
-static void Pointer_Free(rdpContext* context, rdpPointer* pointer)
-{
-	if (pointer)
-	{
-		pointer->Free(context, pointer);
-
-		if (pointer->xorMaskData)
-		{
-			free(pointer->xorMaskData);
-			pointer->xorMaskData = NULL;
-		}
-
-		if (pointer->andMaskData)
-		{
-			free(pointer->andMaskData);
-			pointer->andMaskData = NULL;
-		}
-
-		free(pointer);
-	}
 }
 
 /* static method */
@@ -226,7 +206,7 @@ rdpGraphics* graphics_new(rdpContext* context)
 
 		graphics->Bitmap_Prototype->size = sizeof(rdpBitmap);
 		graphics->Bitmap_Prototype->New = Bitmap_New;
-		graphics->Bitmap_Prototype->Free = Bitmap_Free;
+		graphics->Bitmap_Prototype->Free = NULL;
 		graphics->Pointer_Prototype = (rdpPointer*) calloc(1, sizeof(rdpPointer));
 
 		if (!graphics->Pointer_Prototype)
@@ -238,7 +218,7 @@ rdpGraphics* graphics_new(rdpContext* context)
 
 		graphics->Pointer_Prototype->size = sizeof(rdpPointer);
 		graphics->Pointer_Prototype->New = Pointer_New;
-		graphics->Pointer_Prototype->Free = Pointer_Free;
+		graphics->Pointer_Prototype->Free = NULL;
 		graphics->Glyph_Prototype = (rdpGlyph*) calloc(1, sizeof(rdpGlyph));
 
 		if (!graphics->Glyph_Prototype)

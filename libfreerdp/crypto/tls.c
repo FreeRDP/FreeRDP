@@ -1318,6 +1318,8 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname,
 				                         old_fingerprint);
 			}
 
+			free(old_subject);
+			free(old_issuer);
 			free(old_fingerprint);
 
 			switch (accept_certificate)
