@@ -31,6 +31,7 @@
 @synthesize serverHostname;
 @synthesize username;
 @synthesize password;
+@synthesize modalCode;
 
 - (id)init
 {
@@ -66,7 +67,7 @@
 
 - (BOOL)runModal
 {
-	return [NSApp runModalForWindow:self.window];
+	return (self.modalCode = [NSApp runModalForWindow:self.window]);
 }
 
 - (void)dealloc
