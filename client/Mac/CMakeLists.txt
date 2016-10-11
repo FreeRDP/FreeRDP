@@ -117,11 +117,11 @@ if (${BUILD_SHARED_LIBS})
 			COMMENT "Copying ${LIB} to output directory"
 			COMMAND install_name_tool -change "$<TARGET_SONAME_FILE:${LIB}>"
 				"@executable_path/../Frameworks/${MODULE_OUTPUT_NAME}.framework/Contents/$<TARGET_FILE_NAME:${LIB}>"
-				"${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/${MODULE_NAME}"
+				"${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/${MODULE_OUTPUT_NAME}"
 			COMMENT Setting install name for ${LIB}
 			COMMAND "${CMAKE_COMMAND}" -E echo install_name_tool -change "$<TARGET_SONAME_FILE:${LIB}>"
 				"@executable_path/../Frameworks/${MODULE_OUTPUT_NAME}.framework/Contents/$<TARGET_FILE_NAME:${LIB}>"
-				"${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/${MODULE_NAME}")
+				"${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/${MODULE_OUTPUT_NAME}")
 	endforeach()
 
 	# Call install_name_tool to reassign the library install names in dependent libraries
