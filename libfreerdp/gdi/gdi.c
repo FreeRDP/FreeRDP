@@ -1024,10 +1024,9 @@ static BOOL gdi_surface_bits(rdpContext* context,
 				if (!rfx_process_message(context->codecs->rfx, cmd->bitmapData,
 				                         PIXEL_FORMAT_BGRX32,
 				                         cmd->bitmapDataLength,
-				                         0, 0,
+				                         cmd->destLeft, cmd->destTop,
 				                         gdi->primary_buffer, gdi->dstFormat,
-				                         cmd->width * GetBytesPerPixel(gdi->dstFormat),
-				                         cmd->height, NULL))
+				                         gdi->stride, gdi->height, NULL))
 				{
 					WLog_ERR(TAG, "Failed to process RemoteFX message");
 					return FALSE;
@@ -1061,7 +1060,8 @@ static BOOL gdi_surface_bits(rdpContext* context,
 			break;
 	}
 
-	if (!gdi_InvalidateRegion(gdi->primary->hdc, cmd->destLeft, cmd->destTop, cmd->width, cmd->height))
+	if (!gdi_InvalidateRegion(gdi->primary->hdc, cmd->destLeft, cmd->destTop,
+	                          cmd->width, cmd->height))
 	{
 		WLog_ERR(TAG, "Failed to update invalid region");
 		return FALSE;
