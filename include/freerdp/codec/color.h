@@ -24,6 +24,8 @@
 
 #include <freerdp/api.h>
 #include <winpr/wlog.h>
+#include <freerdp/log.h>
+#define CTAG FREERDP_TAG("codec.color")
 
 #define FREERDP_PIXEL_FORMAT_TYPE_A		0
 #define FREERDP_PIXEL_FORMAT_TYPE_ARGB		1
@@ -570,6 +572,20 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 				tmp = palette->palette[color];
 				SplitColor(tmp, palette->format, _r, _g, _b, _a, NULL);
 			}
+			else
+			{
+				if (_r)
+					*_r = 0x00;
+
+				if (_g)
+					*_g = 0x00;
+
+				if (_b)
+					*_b = 0x00;
+
+				if (_a)
+					*_a = 0x00;
+			}
 
 			break;
 
@@ -592,7 +608,19 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 		/* 4 bpp formats */
 		case PIXEL_FORMAT_A4:
 		default:
-			WLog_ERR("xxxxx", "Unsupported format %s", GetColorFormatName(format));
+			if (_r)
+				*_r = 0x00;
+
+			if (_g)
+				*_g = 0x00;
+
+			if (_b)
+				*_b = 0x00;
+
+			if (_a)
+				*_a = 0x00;
+
+			WLog_ERR(CTAG, "Unsupported format %s", GetColorFormatName(format));
 			break;
 	}
 }
@@ -686,7 +714,7 @@ static INLINE UINT32 GetColor(UINT32 format, BYTE r, BYTE g, BYTE b, BYTE a)
 		/* 1bpp formats */
 		case PIXEL_FORMAT_MONO:
 		default:
-			WLog_ERR("xxxxx", "Unsupported format %s", GetColorFormatName(format));
+			WLog_ERR(CTAG, "Unsupported format %s", GetColorFormatName(format));
 			return 0;
 	}
 }
@@ -762,7 +790,7 @@ static INLINE UINT32 ReadColor(const BYTE* src, UINT32 format)
 			break;
 
 		default:
-			WLog_ERR("xxxxx", "Unsupported format %s", GetColorFormatName(format));
+			WLog_ERR(CTAG, "Unsupported format %s", GetColorFormatName(format));
 			color = 0;
 			break;
 	}
@@ -815,7 +843,7 @@ static INLINE BOOL WriteColor(BYTE* dst, UINT32 format, UINT32 color)
 			break;
 
 		default:
-			WLog_ERR("xxxxx", "Unsupported format %s", GetColorFormatName(format));
+			WLog_ERR(CTAG, "Unsupported format %s", GetColorFormatName(format));
 			return FALSE;
 	}
 
