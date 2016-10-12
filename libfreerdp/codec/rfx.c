@@ -1182,10 +1182,12 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data,
 				UINT32 nYDst = updateRects[j].top;
 				UINT32 nWidth = updateRects[j].right - updateRects[j].left;
 				UINT32 nHeight = updateRects[j].bottom - updateRects[j].top;
+				UINT32 nXSrc = nXDst - updateRect.left;
+				UINT32 nYSrc = nYDst - updateRect.top;
 
 				if (!freerdp_image_copy(dst, dstFormat, dstStride,
 							nXDst, nYDst, nWidth, nHeight,
-							tile->data, format, 64 * GetBytesPerPixel(format), 0, 0, NULL))
+							tile->data, format, 64 * GetBytesPerPixel(format), nXSrc, nYSrc, NULL))
 					goto fail;
 
 				if (invalidRegion)

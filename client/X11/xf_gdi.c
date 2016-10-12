@@ -979,17 +979,17 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 	xfContext* xfc = (xfContext*) context;
 	BOOL ret = TRUE;
 	rdpGdi* gdi = context->gdi;
-	REGION16 invalidRegion;
 	xf_lock_x11(xfc, FALSE);
 
 	switch (cmd->codecID)
 	{
 		case RDP_CODEC_ID_REMOTEFX:
 			if (!rfx_process_message(context->codecs->rfx, cmd->bitmapData,
-			                         PIXEL_FORMAT_XRGB32, cmd->bitmapDataLength,
-			                         cmd->destLeft, cmd->destTop,
-			                         gdi->primary_buffer, gdi->dstFormat, gdi->stride,
-			                         gdi->height, &invalidRegion))
+			                         PIXEL_FORMAT_BGRX32, cmd->bitmapDataLength,
+			                         0, 0,
+			                         gdi->primary_buffer, gdi->dstFormat,
+			                         cmd->width * GetBytesPerPixel(gdi->dstFormat),
+			                         cmd->height, NULL))
 			{
 				WLog_ERR(TAG, "Failed to process RemoteFX message");
 				xf_unlock_x11(xfc, FALSE);
@@ -1005,6 +1005,13 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 			XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 			XSetClipRectangles(xfc->display, xfc->gc, cmd->destLeft, cmd->destTop,
 			                   &rect, 1, YXBanded);
+
+			pDstData = gdi->primary_buffer;
+			image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
+			                     (char*) pDstData, cmd->width, cmd->height, xfc->scanline_pad, 0);
+			XPutImage(xfc->display, xfc->primary, xfc->gc, image, 0, 0,
+			          cmd->destLeft, cmd->destTop, cmd->width, cmd->height);
+			XFree(image);
 
 			/* Invalidate the updated region */
 			if (!xf_gdi_surface_update_frame(xfc, rect.x, rect.y,
