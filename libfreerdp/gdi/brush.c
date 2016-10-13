@@ -866,10 +866,4 @@ HGDI_BRUSH gdi_CreateHatchBrush(HGDI_BITMAP hbmp)
 	hBrush->pattern = hbmp;
 	return hBrush;
 }
-UINT32 gdi_GetBrushStyle(HGDI_DC hdc)
-{
-	if (!hdc || !hdc->brush)
-		return GDI_BS_NULL;
 
-	return hdc->brush->style;
-}

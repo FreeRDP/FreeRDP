@@ -39,6 +39,7 @@
 
 #include "brush.h"
 #include "clipping.h"
+#include "../gdi/gdi.h"
 
 #define TAG FREERDP_TAG("gdi.bitmap")
 
@@ -272,10 +273,10 @@ static UINT32 process_rop(UINT32 src, UINT32 dst, UINT32 pat, const char* rop,
 	return stack[0];
 }
 
-static BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, UINT32 nXDest,
-                         UINT32 nYDest, UINT32 nXSrc, UINT32 nYSrc, UINT32 x, UINT32 y,
-                         BOOL useSrc, BOOL usePat, UINT32 style,
-                         const char* rop, const gdiPalette* palette)
+static INLINE BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, UINT32 nXDest,
+                                UINT32 nYDest, UINT32 nXSrc, UINT32 nYSrc, UINT32 x, UINT32 y,
+                                BOOL useSrc, BOOL usePat, UINT32 style,
+                                const char* rop, const gdiPalette* palette)
 {
 	UINT32 dstColor;
 	UINT32 colorA;
@@ -461,6 +462,8 @@ BOOL gdi_BitBlt(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
                 UINT32 nWidth, UINT32 nHeight, HGDI_DC hdcSrc,
                 UINT32 nXSrc, UINT32 nYSrc, DWORD rop, const gdiPalette* palette)
 {
+	HGDI_BITMAP hSrcBmp, hDstBmp;
+
 	if (!hdcDest)
 		return FALSE;
 
@@ -468,10 +471,44 @@ BOOL gdi_BitBlt(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 	                    &nYSrc))
 		return TRUE;
 
-	if (!BitBlt_process(hdcDest, nXDest, nYDest,
-	                    nWidth, nHeight, hdcSrc,
-	                    nXSrc, nYSrc, gdi_rop_to_string(rop), palette))
-		return FALSE;
+	/* Check which ROP should be performed.
+	 * Some specific ROP are used heavily and are resource intensive,
+	 * add optimized versions for these here.
+	 *
+	 * For all others fall back to the generic implementation.
+	 */
+	switch (rop)
+	{
+		case GDI_SRCCOPY:
+			hSrcBmp = (HGDI_BITMAP) hdcSrc->selectedObject;
+			hDstBmp = (HGDI_BITMAP) hdcDest->selectedObject;
+
+			if (!freerdp_image_copy(hDstBmp->data, hdcDest->format, hDstBmp->scanline,
+			                        nXDest, nYDest, nWidth, nHeight,
+			                        hSrcBmp->data, hdcSrc->format, hSrcBmp->scanline, nXSrc, nYSrc, palette))
+				return FALSE;
+
+			break;
+
+		case GDI_DSTCOPY:
+			hSrcBmp = (HGDI_BITMAP) hdcDest->selectedObject;
+			hDstBmp = (HGDI_BITMAP) hdcDest->selectedObject;
+
+			if (!freerdp_image_copy(hDstBmp->data, hdcDest->format, hDstBmp->scanline,
+			                        nXDest, nYDest, nWidth, nHeight,
+			                        hSrcBmp->data, hdcSrc->format, hSrcBmp->scanline, nXSrc, nYSrc, palette))
+				return FALSE;
+
+			break;
+
+		default:
+			if (!BitBlt_process(hdcDest, nXDest, nYDest,
+			                    nWidth, nHeight, hdcSrc,
+			                    nXSrc, nYSrc, gdi_rop_to_string(rop), palette))
+				return FALSE;
+
+			break;
+	}
 
 	if (!gdi_InvalidateRegion(hdcDest, nXDest, nYDest, nWidth, nHeight))
 		return FALSE;
