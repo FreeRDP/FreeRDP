@@ -946,6 +946,7 @@ BOOL gdi_surface_frame_marker(rdpContext* context,
 static BOOL gdi_surface_bits(rdpContext* context,
                              const SURFACE_BITS_COMMAND* cmd)
 {
+	DWORD format;
 	rdpGdi* gdi;
 
 	if (!context || !cmd)
@@ -961,40 +962,42 @@ static BOOL gdi_surface_bits(rdpContext* context,
 	switch (cmd->codecID)
 	{
 		case RDP_CODEC_ID_REMOTEFX:
+			format = PIXEL_FORMAT_BGRX32;
+
+			if (!rfx_process_message(context->codecs->rfx, cmd->bitmapData,
+			                         format,
+			                         cmd->bitmapDataLength,
+			                         cmd->destLeft, cmd->destTop,
+			                         gdi->primary_buffer, gdi->dstFormat,
+			                         gdi->stride, gdi->height, NULL))
 			{
-				if (!rfx_process_message(context->codecs->rfx, cmd->bitmapData,
-				                         PIXEL_FORMAT_BGRX32,
-				                         cmd->bitmapDataLength,
-				                         0, 0,
-				                         gdi->primary_buffer, gdi->dstFormat,
-				                         cmd->width * GetBytesPerPixel(gdi->dstFormat),
-				                         cmd->height, NULL))
-				{
-					WLog_ERR(TAG, "Failed to process RemoteFX message");
-					return FALSE;
-				}
+				WLog_ERR(TAG, "Failed to process RemoteFX message");
+				return FALSE;
 			}
+
 			break;
 
 		case RDP_CODEC_ID_NSCODEC:
-			{
-				if (!nsc_process_message(context->codecs->nsc, cmd->bpp, cmd->width,
-				                         cmd->height, cmd->bitmapData,
-				                         cmd->bitmapDataLength, gdi->primary_buffer,
-				                         gdi->dstFormat, gdi->stride, cmd->destLeft, cmd->destTop,
-				                         cmd->width, cmd->height))
-					return FALSE;
-			}
+			format = FREERDP_VFLIP_PIXEL_FORMAT(gdi->dstFormat);
+
+			if (!nsc_process_message(context->codecs->nsc, cmd->bpp, cmd->width,
+			                         cmd->height, cmd->bitmapData,
+			                         cmd->bitmapDataLength, gdi->primary_buffer,
+			                         format, gdi->stride, cmd->destLeft, cmd->destTop,
+			                         cmd->width, cmd->height))
+				return FALSE;
+
 			break;
 
 		case RDP_CODEC_ID_NONE:
-			{
-				if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, gdi->stride,
-				                        cmd->destLeft, cmd->destTop, cmd->width, cmd->height,
-				                        cmd->bitmapData, PIXEL_FORMAT_XRGB32_VF, 0, 0, 0,
-				                        &gdi->palette))
-					return FALSE;
-			}
+			format = PIXEL_FORMAT_BGRX32_VF;
+
+			if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, gdi->stride,
+			                        cmd->destLeft, cmd->destTop, cmd->width, cmd->height,
+			                        cmd->bitmapData, format, 0, 0, 0,
+			                        &gdi->palette))
+				return FALSE;
+
 			break;
 
 		default:
@@ -1002,7 +1005,8 @@ static BOOL gdi_surface_bits(rdpContext* context,
 			break;
 	}
 
-	if (!gdi_InvalidateRegion(gdi->primary->hdc, cmd->destLeft, cmd->destTop, cmd->width, cmd->height))
+	if (!gdi_InvalidateRegion(gdi->primary->hdc, cmd->destLeft, cmd->destTop,
+	                          cmd->width, cmd->height))
 	{
 		WLog_ERR(TAG, "Failed to update invalid region");
 		return FALSE;

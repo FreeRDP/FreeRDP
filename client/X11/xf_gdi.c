@@ -970,96 +970,96 @@ static BOOL xf_gdi_surface_update_frame(xfContext* xfc, UINT16 tx, UINT16 ty,
 	return ret;
 }
 
+static BOOL xf_gdi_update_screen(xfContext* xfc,
+                                 const SURFACE_BITS_COMMAND* cmd,
+                                 const BYTE* pSrcData)
+{
+	BOOL ret;
+	XImage* image;
+
+	if (!xfc || !pSrcData)
+		return FALSE;
+
+	XSetFunction(xfc->display, xfc->gc, GXcopy);
+	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
+	image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
+	                     (char*) pSrcData, cmd->width, cmd->height, xfc->scanline_pad, 0);
+
+	if (image)
+	{
+		XPutImage(xfc->display, xfc->primary, xfc->gc, image, 0, 0,
+		          cmd->destLeft, cmd->destTop, cmd->width, cmd->height);
+		XFree(image);
+		ret = xf_gdi_surface_update_frame(xfc, cmd->destLeft, cmd->destTop, cmd->width,
+		                                  cmd->height);
+	}
+
+	XSetClipMask(xfc->display, xfc->gc, None);
+	return ret;
+}
+
 static BOOL xf_gdi_surface_bits(rdpContext* context,
                                 const SURFACE_BITS_COMMAND* cmd)
 {
-	XImage* image;
 	BYTE* pSrcData;
-	BYTE* pDstData;
 	xfContext* xfc = (xfContext*) context;
-	BOOL ret = TRUE;
-	rdpGdi* gdi = context->gdi;
-	REGION16 invalidRegion;
+	BOOL ret = FALSE;
+	DWORD format;
+	DWORD stride;
+	rdpGdi* gdi;
+
+	if (!context || !cmd || !context->gdi)
+		return FALSE;
+
+	gdi = context->gdi;
+	stride = cmd->width * GetBytesPerPixel(gdi->dstFormat);
 	xf_lock_x11(xfc, FALSE);
 
 	switch (cmd->codecID)
 	{
 		case RDP_CODEC_ID_REMOTEFX:
+			format = PIXEL_FORMAT_BGRX32;
+
 			if (!rfx_process_message(context->codecs->rfx, cmd->bitmapData,
-			                         PIXEL_FORMAT_XRGB32, cmd->bitmapDataLength,
-			                         cmd->destLeft, cmd->destTop,
-			                         gdi->primary_buffer, gdi->dstFormat, gdi->stride,
-			                         gdi->height, &invalidRegion))
-			{
-				WLog_ERR(TAG, "Failed to process RemoteFX message");
-				xf_unlock_x11(xfc, FALSE);
-				return FALSE;
-			}
+			                         format, cmd->bitmapDataLength,
+			                         0, 0,
+			                         gdi->primary_buffer, gdi->dstFormat, stride,
+			                         gdi->height, NULL))
+				goto fail;
 
-			XRectangle rect;
-			rect.x = cmd->destLeft;
-			rect.y = cmd->destTop;
-			rect.width = cmd->width;
-			rect.height = cmd->height;
-			XSetFunction(xfc->display, xfc->gc, GXcopy);
-			XSetFillStyle(xfc->display, xfc->gc, FillSolid);
-			XSetClipRectangles(xfc->display, xfc->gc, cmd->destLeft, cmd->destTop,
-			                   &rect, 1, YXBanded);
-
-			/* Invalidate the updated region */
-			if (!xf_gdi_surface_update_frame(xfc, rect.x, rect.y,
-			                                 rect.width, rect.height))
-				ret = FALSE;
-
-			XSetClipMask(xfc->display, xfc->gc, None);
 			break;
 
 		case RDP_CODEC_ID_NSCODEC:
-			if (!nsc_process_message(context->codecs->nsc, cmd->bpp, cmd->width,
-			                         cmd->height,
-			                         cmd->bitmapData, cmd->bitmapDataLength,
-			                         gdi->primary_buffer, gdi->dstFormat, 0, 0, 0, cmd->width, cmd->height))
-			{
-				xf_unlock_x11(xfc, FALSE);
-				return FALSE;
-			}
+			format = FREERDP_VFLIP_PIXEL_FORMAT(gdi->dstFormat);
 
-			XSetFunction(xfc->display, xfc->gc, GXcopy);
-			XSetFillStyle(xfc->display, xfc->gc, FillSolid);
-			pDstData = gdi->primary_buffer;
-			image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
-			                     (char*) pDstData, cmd->width, cmd->height, xfc->scanline_pad, 0);
-			XPutImage(xfc->display, xfc->primary, xfc->gc, image, 0, 0,
-			          cmd->destLeft, cmd->destTop, cmd->width, cmd->height);
-			XFree(image);
-			ret = xf_gdi_surface_update_frame(xfc, cmd->destLeft, cmd->destTop, cmd->width,
-			                                  cmd->height);
-			XSetClipMask(xfc->display, xfc->gc, None);
+			if (!nsc_process_message(context->codecs->nsc, cmd->bpp, cmd->width,
+			                         cmd->height, cmd->bitmapData, cmd->bitmapDataLength,
+			                         gdi->primary_buffer, format, stride,
+			                         0, 0, cmd->width, cmd->height))
+				goto fail;
+
 			break;
 
 		case RDP_CODEC_ID_NONE:
-			XSetFunction(xfc->display, xfc->gc, GXcopy);
-			XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 			pSrcData = cmd->bitmapData;
-			pDstData = gdi->primary_buffer;
-			freerdp_image_copy(pDstData, gdi->dstFormat, 0, 0, 0,
-			                   cmd->width, cmd->height, pSrcData,
-			                   PIXEL_FORMAT_BGRX32_VF, 0, 0, 0, &xfc->context.gdi->palette);
-			image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
-			                     (char*) pDstData, cmd->width, cmd->height, xfc->scanline_pad, 0);
-			XPutImage(xfc->display, xfc->primary, xfc->gc, image, 0, 0,
-			          cmd->destLeft, cmd->destTop,
-			          cmd->width, cmd->height);
-			XFree(image);
-			ret = xf_gdi_surface_update_frame(xfc, cmd->destLeft, cmd->destTop, cmd->width,
-			                                  cmd->height);
-			XSetClipMask(xfc->display, xfc->gc, None);
+			format = PIXEL_FORMAT_BGRX32_VF;
+
+			if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, stride,
+			                        0, 0,
+			                        cmd->width, cmd->height, pSrcData,
+			                        format, 0, 0, 0, &xfc->context.gdi->palette))
+				goto fail;
+
 			break;
 
 		default:
 			WLog_ERR(TAG, "Unsupported codecID %d", cmd->codecID);
+			ret = TRUE;
+			goto fail;
 	}
 
+	ret = xf_gdi_update_screen(xfc, cmd, gdi->primary_buffer);
+fail:
 	xf_unlock_x11(xfc, FALSE);
 	return ret;
 }
