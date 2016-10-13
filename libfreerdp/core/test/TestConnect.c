@@ -8,8 +8,8 @@ static HANDLE s_sync = NULL;
 static int runInstance(int argc, char* argv[], freerdp** inst)
 {
 	int rc = -1;
-
 	freerdp* instance = freerdp_new();
+
 	if (!instance)
 		goto finish;
 
@@ -32,19 +32,19 @@ static int runInstance(int argc, char* argv[], freerdp** inst)
 	}
 
 	rc = 1;
+
 	if (!freerdp_connect(instance))
 		goto finish;
 
 	rc = 2;
+
 	if (!freerdp_disconnect(instance))
 		goto finish;
 
 	rc = 0;
-
 finish:
 	freerdp_context_free(instance);
 	freerdp_free(instance);
-
 	return rc;
 }
 
@@ -58,9 +58,7 @@ static int testTimeout(int port)
 		"/v:192.0.2.1:XXXXX",
 		NULL
 	};
-
 	int rc;
-
 	snprintf(arg1, 18, "/v:192.0.2.1:%d", port);
 	argv[1] = arg1;
 	start = GetTickCount();
@@ -71,6 +69,7 @@ static int testTimeout(int port)
 		return -1;
 
 	diff = end - start;
+
 	if (diff > 16000)
 		return -1;
 
@@ -81,7 +80,8 @@ static int testTimeout(int port)
 	return 0;
 }
 
-struct testThreadArgs {
+struct testThreadArgs
+{
 	int port;
 	freerdp** arg;
 };
@@ -95,12 +95,10 @@ static void* testThread(void* arg)
 		"/v:192.0.2.1:XXXXX",
 		NULL
 	};
-
 	int rc;
-	struct testThreadArgs *args = arg;
+	struct testThreadArgs* args = arg;
 	snprintf(arg1, 18, "/v:192.0.2.1:%d", args->port);
 	argv[1] = arg1;
-
 	rc = runInstance(2, argv, args->arg);
 
 	if (rc != 1)
@@ -117,8 +115,8 @@ static int testAbort(int port)
 	HANDLE thread;
 	struct testThreadArgs args;
 	freerdp* instance = NULL;
-
 	s_sync = CreateEvent(NULL, TRUE, FALSE, NULL);
+
 	if (!s_sync)
 		return -1;
 
@@ -126,7 +124,8 @@ static int testAbort(int port)
 	args.arg = &instance;
 	start = GetTickCount();
 	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)testThread,
-				&args, 0, NULL);
+	                      &args, 0, NULL);
+
 	if (!thread)
 	{
 		CloseHandle(s_sync);
@@ -137,6 +136,7 @@ static int testAbort(int port)
 	WaitForSingleObject(s_sync, INFINITE);
 	freerdp_abort_connect(instance);
 	status = WaitForSingleObject(instance->context->abortEvent, 0);
+
 	if (status != WAIT_OBJECT_0)
 	{
 		CloseHandle(s_sync);
@@ -147,12 +147,11 @@ static int testAbort(int port)
 
 	status = WaitForSingleObject(thread, 20000);
 	end = GetTickCount();
-
 	CloseHandle(s_sync);
 	CloseHandle(thread);
 	s_sync = NULL;
-
 	diff = end - start;
+
 	if (diff > 1000)
 		return -1;
 
@@ -177,15 +176,13 @@ static int testSuccess(int port)
 		"/rfx",
 		NULL
 	};
-	char *commandLine;
+	char* commandLine;
 	int commandLineLen;
-
 	int argc = 4;
 	char* path = TESTING_OUTPUT_DIRECTORY;
 	char* wpath = TESTING_SRC_DIRECTORY;
 	char* exe = GetCombinedPath(path, "server");
 	char* wexe = GetCombinedPath(wpath, "server");
-
 	snprintf(arg1, 18, "/v:127.0.0.1:%d", port);
 	clientArgs[1] = arg1;
 
@@ -219,6 +216,7 @@ static int testSuccess(int port)
 
 	printf("Sample Server: %s\n", exe);
 	printf("Workspace: %s\n", wpath);
+
 	if (!PathFileExistsA(exe))
 	{
 		free(path);
@@ -230,6 +228,7 @@ static int testSuccess(int port)
 	// Start sample server locally.
 	commandLineLen = strlen(exe) + strlen(" --port=XXXXX") + 1;
 	commandLine = malloc(commandLineLen);
+
 	if (!commandLine)
 	{
 		free(path);
@@ -237,13 +236,13 @@ static int testSuccess(int port)
 		free(exe);
 		return -2;
 	}
-	snprintf(commandLine, commandLineLen, "%s --port=%d", exe, port);
 
+	snprintf(commandLine, commandLineLen, "%s --port=%d", exe, port);
 	memset(&si, 0, sizeof(si));
-    si.cb = sizeof(si);
+	si.cb = sizeof(si);
 
 	if (!CreateProcessA(exe, commandLine, NULL, NULL, FALSE, 0, NULL,
-				wpath, &si, &process))
+	                    wpath, &si, &process))
 	{
 		free(exe);
 		free(path);
@@ -255,7 +254,6 @@ static int testSuccess(int port)
 	free(path);
 	free(wpath);
 	free(commandLine);
-
 	Sleep(1 * 1000); /* let the server start */
 	rc = runInstance(argc, clientArgs, NULL);
 
@@ -265,8 +263,8 @@ static int testSuccess(int port)
 	WaitForSingleObject(process.hProcess, INFINITE);
 	CloseHandle(process.hProcess);
 	CloseHandle(process.hThread);
-
 	printf("%s: returned %d!\n", __FUNCTION__, rc);
+
 	if (rc)
 		return -1;
 
@@ -277,7 +275,6 @@ static int testSuccess(int port)
 int TestConnect(int argc, char* argv[])
 {
 	int randomPort;
-
 	randomPort = 3389 + (random() % 200);
 
 	/* Test connect to not existing server,

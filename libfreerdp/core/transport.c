@@ -773,12 +773,13 @@ DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events,
 	if (!transport->GatewayEnabled)
 	{
 		nCount++;
+
 		if (events)
 		{
 			if (nCount > count)
 			{
 				WLog_ERR(TAG, "%s: provided handles array is too small (count=%d nCount=%d)",
-						__FUNCTION__, count, nCount);
+				         __FUNCTION__, count, nCount);
 				return 0;
 			}
 
@@ -867,7 +868,7 @@ int transport_check_fds(rdpTransport* transport)
 		ResetEvent(transport->rereadEvent);
 	}
 
-	while(!freerdp_shall_disconnect(transport->context->instance) && (now < dueDate))
+	while (!freerdp_shall_disconnect(transport->context->instance) && (now < dueDate))
 	{
 		/**
 		 * Note: transport_read_pdu tries to read one PDU from
@@ -922,6 +923,7 @@ int transport_check_fds(rdpTransport* transport)
 		SetEvent(transport->rereadEvent);
 		transport->haveMoreBytesToRead = TRUE;
 	}
+
 	return 0;
 }
 
@@ -1111,6 +1113,7 @@ rdpTransport* transport_new(rdpContext* context)
 		goto out_free_receivebuffer;
 
 	transport->rereadEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
 	if (!transport->rereadEvent || transport->rereadEvent == INVALID_HANDLE_VALUE)
 		goto out_free_connectedEvent;
 
