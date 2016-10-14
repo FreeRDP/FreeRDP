@@ -971,7 +971,7 @@ static jboolean JNICALL jni_freerdp_update_graphics(
 	{
 		rc = freerdp_image_copy(pixels, DstFormat, info.stride, x, y, width, height,
 		                        gdi->primary_buffer, gdi->dstFormat, gdi->stride, x, y,
-		                        &gdi->palette);
+		                        &gdi->palette, FREERDP_FLIP_NONE);
 	}
 
 	if ((ret = AndroidBitmap_unlockPixels(env, bitmap)) < 0)

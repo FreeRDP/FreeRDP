@@ -58,7 +58,7 @@ HBITMAP wf_create_dib(wfContext* wfc, UINT32 width, UINT32 height,
 
 	if (data)
 		freerdp_image_copy(cdata, dstFormat, 0, 0, 0, width, height, data, srcFormat, 0,
-		                   0, 0, &wfc->context.gdi->palette);
+		                   0, 0, &wfc->context.gdi->palette, FREERDP_FLIP_NONE);
 
 	if (pdata)
 		*pdata = cdata;
@@ -243,7 +243,7 @@ static BOOL wf_Pointer_New(rdpContext* context, const rdpPointer* pointer)
 		if (!freerdp_image_copy_from_pointer_data(pdata, gdi->dstFormat, 0, 0, 0,
 		        pointer->width, pointer->height,
 		        pointer->xorMaskData, pointer->lengthXorMask,
-		        pointer->andMaskData, pointer->lengthAndMask, pointer->xorBpp, &gdi->palette))
+		        pointer->andMaskData, pointer->lengthAndMask, pointer->xorBpp, &gdi->palette, FREERDP_FLIP_NONE))
 		{
 			_aligned_free(pdata);
 			goto fail;
