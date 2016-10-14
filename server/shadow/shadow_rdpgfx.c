@@ -27,66 +27,6 @@
 
 #define TAG SERVER_TAG("shadow")
 
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT rdpgfx_caps_advertise(RdpgfxServerContext* context, RDPGFX_CAPS_ADVERTISE_PDU* capsAdvertise)
-{
-	UINT16 index;
-	RDPGFX_CAPS_CONFIRM_PDU pdu;
-	rdpSettings* settings = context->rdpcontext->settings;
-	UINT32 flags = 0;
-
-	for (index = 0; index < capsAdvertise->capsSetCount; index++)
-	{
-		pdu.capsSet = &(capsAdvertise->capsSets[index]);
-		if (pdu.capsSet->version == RDPGFX_CAPVERSION_10)
-		{
-			if (settings)
-			{
-				flags = pdu.capsSet->flags;
-				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
-				settings->GfxH264 = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
-			}
-
-			return context->CapsConfirm(context, &pdu);
-		}
-	}
-	for (index = 0; index < capsAdvertise->capsSetCount; index++)
-	{
-		if (pdu.capsSet->version == RDPGFX_CAPVERSION_81)
-		{
-			if (settings)
-			{
-				flags = pdu.capsSet->flags;
-				settings->GfxThinClient = (flags & RDPGFX_CAPS_FLAG_THINCLIENT);
-				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
-				settings->GfxH264 = (flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED);
-			}
-
-			return context->CapsConfirm(context, &pdu);
-		}
-	}
-	for (index = 0; index < capsAdvertise->capsSetCount; index++)
-	{
-		if (pdu.capsSet->version == RDPGFX_CAPVERSION_8)
-		{
-			if (settings)
-			{
-				flags = pdu.capsSet->flags;
-				settings->GfxThinClient = (flags & RDPGFX_CAPS_FLAG_THINCLIENT);
-				settings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
-			}
-
-			return context->CapsConfirm(context, &pdu);
-		}
-	}
-
-	return CHANNEL_RC_UNSUPPORTED_VERSION;
-}
-
 int shadow_client_rdpgfx_init(rdpShadowClient* client)
 {
 	RdpgfxServerContext* rdpgfx;
@@ -99,8 +39,6 @@ int shadow_client_rdpgfx_init(rdpShadowClient* client)
 	rdpgfx->rdpcontext = &client->context;
 
 	rdpgfx->custom = client;
-
-	rdpgfx->CapsAdvertise = rdpgfx_caps_advertise;
 
 	return 1;
 }
