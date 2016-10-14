@@ -53,8 +53,7 @@ BOOL xf_decode_color(rdpGdi* gdi, const UINT32 srcColor,
 		return FALSE;
 
 	xfc = (xfContext*)gdi->context;
-	SrcFormat = gdi_get_pixel_format(gdi->context->settings->ColorDepth,
-	                                 FALSE);
+	SrcFormat = gdi_get_pixel_format(gdi->context->settings->ColorDepth);
 
 	if (format)
 		*format = SrcFormat;
@@ -98,7 +97,7 @@ static BOOL xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 			freerdp_image_copy(data, gdi->dstFormat, 0, 0, 0,
 			                   bitmap->width, bitmap->height,
 			                   bitmap->data, SrcFormat,
-			                   0, 0, 0, &context->gdi->palette);
+			                   0, 0, 0, &context->gdi->palette, FREERDP_FLIP_NONE);
 			_aligned_free(bitmap->data);
 			bitmap->data = data;
 			bitmap->format = gdi->dstFormat;

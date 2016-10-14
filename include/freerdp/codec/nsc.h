@@ -92,7 +92,7 @@ FREERDP_API BOOL nsc_process_message(NSC_CONTEXT* context, UINT16 bpp,
                                      const BYTE* data, UINT32 length,
                                      BYTE* pDstData, UINT32 DstFormat,
                                      UINT32 nDstStride, UINT32 nXDst, UINT32 nYDst,
-                                     UINT32 nWidth, UINT32 nHeight);
+                                     UINT32 nWidth, UINT32 nHeight, UINT32 flip);
 FREERDP_API BOOL nsc_compose_message(NSC_CONTEXT* context, wStream* s,
                                      const BYTE* bmpdata,
                                      UINT32 width, UINT32 height, UINT32 rowstride);

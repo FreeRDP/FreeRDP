@@ -64,7 +64,7 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 			                   surface->stageScanline, 0, 0,
 			                   surface->gdi.width, surface->gdi.height,
 			                   surface->gdi.data, surface->gdi.format,
-			                   surface->gdi.scanline, 0, 0, NULL);
+			                   surface->gdi.scanline, 0, 0, NULL, FREERDP_FLIP_NONE);
 		}
 
 #ifdef WITH_XRENDER

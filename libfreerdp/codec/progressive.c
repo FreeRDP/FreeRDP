@@ -1930,7 +1930,7 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
 			                        rect->left, rect->top,
 			                        width, height,
 			                        tile->data, PIXEL_FORMAT_BGRX32,
-			                        64 * 4, nXSrc, nYSrc, NULL))
+			                        64 * 4, nXSrc, nYSrc, NULL, FREERDP_FLIP_NONE))
 			{
 				rc = -42;
 				break;

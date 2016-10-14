@@ -559,7 +559,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 		{
 			if (!freerdp_image_copy(pDstData, DstFormat, nDstStep, nXDst, nYDst, w,
 			                        h, pTempData,
-			                        TempFormat, nTempStep, nXDst, nYDst, NULL))
+			                        TempFormat, nTempStep, nXDst, nYDst, NULL, FREERDP_FLIP_NONE))
 				return FALSE;
 		}
 	}

@@ -234,11 +234,11 @@ static Pixmap xf_brush_new(xfContext* xfc, UINT32 width, UINT32 height,
 
 	if (data)
 	{
-		brushFormat = gdi_get_pixel_format(bpp, FALSE);
+		brushFormat = gdi_get_pixel_format(bpp);
 		cdata = (BYTE*) _aligned_malloc(width * height * 4, 16);
 		freerdp_image_copy(cdata, gdi->dstFormat, 0, 0, 0,
 		                   width, height, data, brushFormat, 0, 0, 0,
-		                   &xfc->context.gdi->palette);
+		                   &xfc->context.gdi->palette, FREERDP_FLIP_NONE);
 		image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
 		                     ZPixmap, 0, (char*) cdata, width, height, xfc->scanline_pad, 0);
 		gc = XCreateGC(xfc->display, xfc->drawable, 0, NULL);
@@ -1030,24 +1030,24 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 			break;
 
 		case RDP_CODEC_ID_NSCODEC:
-			format = FREERDP_VFLIP_PIXEL_FORMAT(gdi->dstFormat);
+			format = gdi->dstFormat;
 
 			if (!nsc_process_message(context->codecs->nsc, cmd->bpp, cmd->width,
 			                         cmd->height, cmd->bitmapData, cmd->bitmapDataLength,
 			                         gdi->primary_buffer, format, stride,
-			                         0, 0, cmd->width, cmd->height))
+			                         0, 0, cmd->width, cmd->height, FREERDP_FLIP_VERTICAL))
 				goto fail;
 
 			break;
 
 		case RDP_CODEC_ID_NONE:
 			pSrcData = cmd->bitmapData;
-			format = PIXEL_FORMAT_BGRX32_VF;
+			format = PIXEL_FORMAT_BGRX32;
 
 			if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, stride,
 			                        0, 0,
 			                        cmd->width, cmd->height, pSrcData,
-			                        format, 0, 0, 0, &xfc->context.gdi->palette))
+			                        format, 0, 0, 0, &xfc->context.gdi->palette, FREERDP_FLIP_VERTICAL))
 				goto fail;
 
 			break;
