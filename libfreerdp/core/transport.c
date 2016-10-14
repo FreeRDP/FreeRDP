@@ -380,7 +380,6 @@ static void transport_bio_error_log(LPCSTR tag, LPCSTR biofunc, BIO* bio,
 	unsigned long sslerr;
 	char* buf;
 	wLog* log;
-	wLogMessage log_message;
 	int saveerrno;
 	DWORD level;
 	saveerrno = errno;
