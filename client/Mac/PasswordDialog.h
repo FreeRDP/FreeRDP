@@ -24,14 +24,17 @@
 @public
     NSTextField* usernameText;
     NSTextField* passwordText;
+    NSTextField* domainText;
     NSTextField* messageLabel;
     NSString* serverHostname;
     NSString* username;
     NSString* password;
+    NSString* domain;
     BOOL modalCode;
 }
 @property (retain) IBOutlet NSTextField* usernameText;
 @property (retain) IBOutlet NSTextField* passwordText;
+@property (retain) IBOutlet NSTextField* domainText;
 @property (retain) IBOutlet NSTextField* messageLabel;
 
 - (IBAction)onOK:(NSObject*)sender;
@@ -40,8 +43,9 @@
 @property (retain) NSString* serverHostname;
 @property (retain) NSString* username;
 @property (retain) NSString* password;
-@property BOOL modalCode;
+@property (retain) NSString* domain;
+@property (readonly) BOOL modalCode;
 
-- (BOOL) runModal;
+- (BOOL) runModal:(NSWindow*)mainWindow;
 
 @end
