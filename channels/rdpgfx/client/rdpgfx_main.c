@@ -60,7 +60,7 @@ static UINT rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 	RDPGFX_PLUGIN* gfx;
 	RDPGFX_HEADER header;
 	RDPGFX_CAPSET* capsSet;
-	RDPGFX_CAPSET capsSets[3];
+	RDPGFX_CAPSET capsSets[RDPGFX_NUMBER_CAPSETS];
 	RDPGFX_CAPS_ADVERTISE_PDU pdu;
 	gfx = (RDPGFX_PLUGIN*) callback->plugin;
 	header.flags = 0;
@@ -101,6 +101,9 @@ static UINT rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 
 		if (!gfx->H264)
 			capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
+
+		capsSets[pdu.capsSetCount] = *capsSet;
+		capsSets[pdu.capsSetCount++].version = RDPGFX_CAPVERSION_102;
 	}
 
 	header.pduLength = RDPGFX_HEADER_SIZE + 2 + (pdu.capsSetCount *

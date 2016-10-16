@@ -572,6 +572,7 @@ static UINT rdpgfx_write_surface_command(wStream* s,
 	UINT32 bitmapDataStart = 0;
 	UINT32 bitmapDataLength = 0;
 	UINT8 pixelFormat = 0;
+
 	switch (cmd->format)
 	{
 		case PIXEL_FORMAT_BGRX32:
@@ -1156,8 +1157,7 @@ static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context,
         wStream* s)
 {
 	UINT16 index;
-	RDPGFX_CAPSET* capsSet;
-	RDPGFX_CAPSET capsSets[3];
+	RDPGFX_CAPSET* capsSets;
 	RDPGFX_CAPS_ADVERTISE_PDU pdu;
 	UINT error = CHANNEL_RC_OK;
 	UINT32 capsDataLength;
@@ -1170,24 +1170,22 @@ static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context,
 
 	Stream_Read_UINT16(s, pdu.capsSetCount); /* capsSetCount (2 bytes) */
 
-	if (pdu.capsSetCount > 3)
-	{
-		/* According to the latest spec, capsSetCount <= 3 */
-		WLog_ERR(TAG, "capsSetCount is greater than 3: %u", pdu.capsSetCount);
-		return ERROR_INVALID_DATA;
-	}
-
-	if (Stream_GetRemainingLength(s) < (pdu.capsSetCount * 12))
+	if (Stream_GetRemainingLength(s) < (pdu.capsSetCount * RDPGFX_CAPSET_SIZE))
 	{
 		WLog_ERR(TAG, "not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
+	capsSets = calloc(pdu.capsSetCount, RDPGFX_CAPSET_SIZE);
+
+	if (!capsSets)
+		return ERROR_OUTOFMEMORY;
+
 	pdu.capsSets = (RDPGFX_CAPSET*) capsSets;
 
 	for (index = 0; index < pdu.capsSetCount; index++)
 	{
-		capsSet = &(pdu.capsSets[index]);
+		RDPGFX_CAPSET* capsSet = &(pdu.capsSets[index]);
 		Stream_Read_UINT32(s, capsSet->version); /* version (4 bytes) */
 		Stream_Read_UINT32(s, capsDataLength); /* capsDataLength (4 bytes) */
 
@@ -1195,6 +1193,7 @@ static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context,
 		{
 			WLog_ERR(TAG, "capsDataLength does not equal to 4: %lu",
 			         capsDataLength);
+			free(capsSets);
 			return ERROR_INVALID_DATA;
 		}
 
@@ -1209,6 +1208,7 @@ static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context,
 			WLog_ERR(TAG, "context->CapsAdvertise failed with error %lu", error);
 	}
 
+	free(capsSets);
 	return error;
 }
 
