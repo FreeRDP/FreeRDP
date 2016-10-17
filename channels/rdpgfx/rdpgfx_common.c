@@ -31,7 +31,7 @@
 
 #include "rdpgfx_common.h"
 
-const char* RDPGFX_CMDID_STRINGS[] =
+static const char* RDPGFX_CMDID_STRINGS[] =
 {
 	"RDPGFX_CMDID_UNUSED_0000",
 	"RDPGFX_CMDID_WIRETOSURFACE_1",
@@ -72,20 +72,28 @@ const char* rdpgfx_get_codec_id_string(UINT16 codecId)
 	{
 		case RDPGFX_CODECID_UNCOMPRESSED:
 			return "RDPGFX_CODECID_UNCOMPRESSED";
+
 		case RDPGFX_CODECID_CAVIDEO:
 			return "RDPGFX_CODECID_CAVIDEO";
+
 		case RDPGFX_CODECID_CLEARCODEC:
 			return "RDPGFX_CODECID_CLEARCODEC";
+
 		case RDPGFX_CODECID_PLANAR:
 			return "RDPGFX_CODECID_PLANAR";
+
 		case RDPGFX_CODECID_AVC420:
 			return "RDPGFX_CODECID_AVC420";
+
 		case RDPGFX_CODECID_AVC444:
 			return "RDPGFX_CODECID_AVC444";
+
 		case RDPGFX_CODECID_ALPHA:
 			return "RDPGFX_CODECID_ALPHA";
+
 		case RDPGFX_CODECID_CAPROGRESSIVE:
 			return "RDPGFX_CODECID_CAPROGRESSIVE";
+
 		case RDPGFX_CODECID_CAPROGRESSIVE_V2:
 			return "RDPGFX_CODECID_CAPROGRESSIVE_V2";
 	}
@@ -109,7 +117,6 @@ UINT rdpgfx_read_header(wStream* s, RDPGFX_HEADER* header)
 	Stream_Read_UINT16(s, header->cmdId); /* cmdId (2 bytes) */
 	Stream_Read_UINT16(s, header->flags); /* flags (2 bytes) */
 	Stream_Read_UINT32(s, header->pduLength); /* pduLength (4 bytes) */
-
 	return CHANNEL_RC_OK;
 }
 
@@ -123,7 +130,6 @@ UINT rdpgfx_write_header(wStream* s, RDPGFX_HEADER* header)
 	Stream_Write_UINT16(s, header->cmdId); /* cmdId (2 bytes) */
 	Stream_Write_UINT16(s, header->flags); /* flags (2 bytes) */
 	Stream_Write_UINT32(s, header->pduLength); /* pduLength (4 bytes) */
-
 	return CHANNEL_RC_OK;
 }
 
@@ -142,7 +148,6 @@ UINT rdpgfx_read_point16(wStream* s, RDPGFX_POINT16* pt16)
 
 	Stream_Read_UINT16(s, pt16->x); /* x (2 bytes) */
 	Stream_Read_UINT16(s, pt16->y); /* y (2 bytes) */
-
 	return CHANNEL_RC_OK;
 }
 
@@ -155,7 +160,6 @@ UINT rdpgfx_write_point16(wStream* s, RDPGFX_POINT16* point16)
 {
 	Stream_Write_UINT16(s, point16->x); /* x (2 bytes) */
 	Stream_Write_UINT16(s, point16->y); /* y (2 bytes) */
-
 	return CHANNEL_RC_OK;
 }
 
@@ -176,7 +180,6 @@ UINT rdpgfx_read_rect16(wStream* s, RECTANGLE_16* rect16)
 	Stream_Read_UINT16(s, rect16->top); /* top (2 bytes) */
 	Stream_Read_UINT16(s, rect16->right); /* right (2 bytes) */
 	Stream_Read_UINT16(s, rect16->bottom); /* bottom (2 bytes) */
-
 	return CHANNEL_RC_OK;
 }
 
@@ -191,7 +194,6 @@ UINT rdpgfx_write_rect16(wStream* s, RECTANGLE_16* rect16)
 	Stream_Write_UINT16(s, rect16->top); /* top (2 bytes) */
 	Stream_Write_UINT16(s, rect16->right); /* right (2 bytes) */
 	Stream_Write_UINT16(s, rect16->bottom); /* bottom (2 bytes) */
-
 	return CHANNEL_RC_OK;
 }
 
@@ -212,7 +214,6 @@ UINT rdpgfx_read_color32(wStream* s, RDPGFX_COLOR32* color32)
 	Stream_Read_UINT8(s, color32->G); /* G (1 byte) */
 	Stream_Read_UINT8(s, color32->R); /* R (1 byte) */
 	Stream_Read_UINT8(s, color32->XA); /* XA (1 byte) */
-
 	return CHANNEL_RC_OK;
 }
 
@@ -227,6 +228,5 @@ UINT rdpgfx_write_color32(wStream* s, RDPGFX_COLOR32* color32)
 	Stream_Write_UINT8(s, color32->G); /* G (1 byte) */
 	Stream_Write_UINT8(s, color32->R); /* R (1 byte) */
 	Stream_Write_UINT8(s, color32->XA); /* XA (1 byte) */
-
 	return CHANNEL_RC_OK;
 }

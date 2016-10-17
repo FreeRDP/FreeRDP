@@ -345,8 +345,8 @@ static UINT rdpgfx_send_create_surface_pdu(RdpgfxServerContext* context,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_send_delete_surface_pdu(RdpgfxServerContext* context,
-                                    RDPGFX_DELETE_SURFACE_PDU* pdu)
+static UINT rdpgfx_send_delete_surface_pdu(RdpgfxServerContext* context,
+        RDPGFX_DELETE_SURFACE_PDU* pdu)
 {
 	wStream* s = rdpgfx_server_single_packet_new(RDPGFX_CMDID_DELETESURFACE, 2);
 
@@ -829,8 +829,8 @@ static UINT rdpgfx_send_delete_encoding_context_pdu(RdpgfxServerContext*
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_send_solid_fill_pdu(RdpgfxServerContext* context,
-                                RDPGFX_SOLID_FILL_PDU* pdu)
+static UINT rdpgfx_send_solid_fill_pdu(RdpgfxServerContext* context,
+                                       RDPGFX_SOLID_FILL_PDU* pdu)
 {
 	UINT error = CHANNEL_RC_OK;
 	UINT16 index;
@@ -1576,7 +1576,7 @@ void rdpgfx_server_context_free(RdpgfxServerContext* context)
 	free(context);
 }
 
-FREERDP_API HANDLE rdpgfx_server_get_event_handle(RdpgfxServerContext* context)
+HANDLE rdpgfx_server_get_event_handle(RdpgfxServerContext* context)
 {
 	return context->priv->channelEvent;
 }
