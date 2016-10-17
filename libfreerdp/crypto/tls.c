@@ -863,7 +863,7 @@ BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings)
 
 	if (settings->PrivateKeyFile)
 	{
-		bio = BIO_new_file(settings->PrivateKeyFile, "rb+");
+		bio = BIO_new_file(settings->PrivateKeyFile, "rb");
 
 		if (!bio)
 		{
@@ -907,7 +907,7 @@ BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings)
 
 	if (settings->CertificateFile)
 	{
-		bio = BIO_new_file(settings->CertificateFile, "rb+");
+		bio = BIO_new_file(settings->CertificateFile, "rb");
 
 		if (!bio)
 		{
