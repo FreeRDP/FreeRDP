@@ -21,16 +21,20 @@
 
 @interface PasswordDialog ()
 
+@property BOOL modalCode;
+
 @end
 
 @implementation PasswordDialog
 
 @synthesize usernameText;
 @synthesize passwordText;
+@synthesize domainText;
 @synthesize messageLabel;
 @synthesize serverHostname;
 @synthesize username;
 @synthesize password;
+@synthesize domain;
 @synthesize modalCode;
 
 - (id)init
@@ -44,6 +48,10 @@
 	// Implement this method to handle any initialization after your window controller's window has been loaded from its nib file.
 	[self.window setTitle:self.serverHostname];
 	[messageLabel setStringValue:[NSString stringWithFormat:@"Authenticate to %@", self.serverHostname]];
+	if (self.domain != nil)
+	{
+		[domainText setStringValue:self.domain];
+	}
 	if (self.username != nil)
 	{
 		[usernameText setStringValue:self.username];
@@ -55,29 +63,50 @@
 {
 	self.username = self.usernameText.stringValue;
 	self.password = self.passwordText.stringValue;
-	[self.window orderOut:nil];
+	self.domain = self.domainText.stringValue;
 	[NSApp stopModalWithCode:TRUE];
 }
 
 - (IBAction)onCancel:(NSObject *)sender
 {
-	[self.window orderOut:nil];
 	[NSApp stopModalWithCode:FALSE];
 }
 
-- (BOOL)runModal
+- (BOOL)runModal:(NSWindow*)mainWindow
 {
-	return (self.modalCode = [NSApp runModalForWindow:self.window]);
+	if ([mainWindow respondsToSelector:@selector(beginSheet:completionHandler:)]) {
+
+		[mainWindow beginSheet:self.window completionHandler:nil];
+
+		self.modalCode = [NSApp runModalForWindow: self.window];
+		[mainWindow endSheet: self.window];
+
+	} else {
+		[NSApp beginSheet: self.window
+			modalForWindow: mainWindow
+			modalDelegate: nil
+			didEndSelector: nil
+			contextInfo: nil];
+
+		self.modalCode = [NSApp runModalForWindow: self.window];
+		[NSApp endSheet: self.window];
+	}
+
+	[self.window orderOut:nil];
+
+	return self.modalCode;
 }
 
 - (void)dealloc
 {
 	[usernameText release];
 	[passwordText release];
+	[domainText release];
 	[messageLabel release];
 	[serverHostname release];
 	[username release];
 	[password release];
+	[domain release];
 
 	[super dealloc];
 }

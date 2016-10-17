@@ -965,9 +965,13 @@ BOOL mac_post_connect(freerdp* instance)
 BOOL mac_authenticate(freerdp* instance, char** username, char** password,
                       char** domain)
 {
+	mfContext* mfc = (mfContext*) instance->context;
+	MRDPView* view = (MRDPView*) mfc->view;
+
 	PasswordDialog* dialog = [PasswordDialog new];
-	dialog.serverHostname = [NSString stringWithCString:
-	                         instance->settings->ServerHostname encoding:NSUTF8StringEncoding];
+	dialog.serverHostname = [NSString stringWithFormat:@"%@:%u",
+					[NSString stringWithCString:instance->settings->ServerHostname encoding:NSUTF8StringEncoding],
+					instance->settings->ServerPort];
 
 	if (*username)
 		dialog.username = [NSString stringWithCString:*username encoding:
@@ -977,7 +981,11 @@ BOOL mac_authenticate(freerdp* instance, char** username, char** password,
 		dialog.password = [NSString stringWithCString:*password encoding:
 		                   NSUTF8StringEncoding];
 
-	[dialog performSelectorOnMainThread:@selector(runModal) withObject:nil waitUntilDone:TRUE];
+	if (*domain)
+		dialog.domain = [NSString stringWithCString:*domain encoding:
+		                   NSUTF8StringEncoding];
+
+	[dialog performSelectorOnMainThread:@selector(runModal:) withObject:[view window] waitUntilDone:TRUE];
 
 	BOOL ok = dialog.modalCode;
 
@@ -987,10 +995,16 @@ BOOL mac_authenticate(freerdp* instance, char** username, char** password,
 		                                 NSUTF8StringEncoding];
 		*username = malloc((strlen(submittedUsername) + 1) * sizeof(char));
 		strcpy(*username, submittedUsername);
+
 		const char* submittedPassword = [dialog.password cStringUsingEncoding:
 		                                 NSUTF8StringEncoding];
 		*password = malloc((strlen(submittedPassword) + 1) * sizeof(char));
 		strcpy(*password, submittedPassword);
+
+		const char* submittedDomain = [dialog.domain cStringUsingEncoding:
+		                                 NSUTF8StringEncoding];
+		*domain = malloc((strlen(submittedDomain) + 1) * sizeof(char));
+		strcpy(*domain, submittedDomain);
 	}
 
 	return ok;
