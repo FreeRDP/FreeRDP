@@ -1124,7 +1124,7 @@ fail_primary:
 
 BOOL gdi_resize(rdpGdi* gdi, UINT32 width, UINT32 height)
 {
-	return gdi_resize_ex(gdi, width, height, -1, -1, NULL, NULL);
+	return gdi_resize_ex(gdi, width, height, 0, 0, NULL, NULL);
 }
 
 BOOL gdi_resize_ex(rdpGdi* gdi, UINT32 width, UINT32 height,
