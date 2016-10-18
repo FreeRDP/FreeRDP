@@ -47,9 +47,9 @@ struct _UDEVICE
 {
 	IUDEVICE iface;
 
-	void * udev;
-	void * prev;
-	void * next;
+	void* udev;
+	void* prev;
+	void* next;
 
 	UINT32	UsbDevice; /* An unique interface ID */
 	UINT32	ReqCompletion; /* An unique interface ID */
@@ -61,23 +61,23 @@ struct _UDEVICE
 	int	port_number;
 	int	isCompositeDevice;
 
-	LIBUSB_DEVICE_HANDLE * libusb_handle;
-	LIBUSB_DEVICE_HANDLE * hub_handle;
-	LIBUSB_DEVICE * libusb_dev;
-	LIBUSB_DEVICE_DESCRIPTOR * devDescriptor;
-	MSUSB_CONFIG_DESCRIPTOR * MsConfig;
-	LIBUSB_CONFIG_DESCRIPTOR * LibusbConfig;
+	LIBUSB_DEVICE_HANDLE* libusb_handle;
+	LIBUSB_DEVICE_HANDLE* hub_handle;
+	LIBUSB_DEVICE* libusb_dev;
+	LIBUSB_DEVICE_DESCRIPTOR* devDescriptor;
+	MSUSB_CONFIG_DESCRIPTOR* MsConfig;
+	LIBUSB_CONFIG_DESCRIPTOR* LibusbConfig;
 
-	REQUEST_QUEUE * request_queue;
+	REQUEST_QUEUE* request_queue;
 	/* Used in isochronous transfer */
-	void * isoch_queue;
+	void* isoch_queue;
 
 	HANDLE mutex_isoch;
 	HANDLE sem_id;
 };
-typedef UDEVICE * PUDEVICE;
+typedef UDEVICE* PUDEVICE;
 
-int udev_new_by_id(UINT16 idVendor, UINT16 idProduct, IUDEVICE ***devArray);
+int udev_new_by_id(UINT16 idVendor, UINT16 idProduct, IUDEVICE** *devArray);
 IUDEVICE* udev_new_by_addr(int bus_number, int dev_number);
 
 #endif /* __LIBUSB_UDEVICE_H */

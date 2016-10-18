@@ -37,18 +37,17 @@ static BOOL isoch_queue_has_next(ISOCH_CALLBACK_QUEUE* queue)
 static ISOCH_CALLBACK_DATA* isoch_queue_get_next(ISOCH_CALLBACK_QUEUE* queue)
 {
 	ISOCH_CALLBACK_DATA* isoch;
-
 	isoch = queue->curr;
 	queue->curr = (ISOCH_CALLBACK_DATA*)queue->curr->next;
-
 	return isoch;
 }
 
-static ISOCH_CALLBACK_DATA* isoch_queue_register_data(ISOCH_CALLBACK_QUEUE* queue, void* callback, void* dev)
+static ISOCH_CALLBACK_DATA* isoch_queue_register_data(ISOCH_CALLBACK_QUEUE*
+        queue, void* callback, void* dev)
 {
 	ISOCH_CALLBACK_DATA* isoch;
-
 	isoch = (ISOCH_CALLBACK_DATA*) calloc(1, sizeof(ISOCH_CALLBACK_DATA));
+
 	if (!isoch)
 		return NULL;
 
@@ -71,21 +70,19 @@ static ISOCH_CALLBACK_DATA* isoch_queue_register_data(ISOCH_CALLBACK_QUEUE* queu
 		isoch->prev = (void*)queue->tail;
 		queue->tail = isoch;
 	}
+
 	queue->isoch_num += 1;
-
 	ReleaseMutex(queue->isoch_loading);
-
 	return isoch;
-
 out:
 	free(isoch);
 	return NULL;
 }
 
-static int isoch_queue_unregister_data(ISOCH_CALLBACK_QUEUE* queue, ISOCH_CALLBACK_DATA* isoch)
+static int isoch_queue_unregister_data(ISOCH_CALLBACK_QUEUE* queue,
+                                       ISOCH_CALLBACK_DATA* isoch)
 {
 	ISOCH_CALLBACK_DATA* p;
-
 	queue->rewind(queue);
 
 	while (queue->has_next(queue))
@@ -123,8 +120,8 @@ static int isoch_queue_unregister_data(ISOCH_CALLBACK_QUEUE* queue, ISOCH_CALLBA
 			/* unregistered data is the tail, update tail */
 			queue->tail = (ISOCH_CALLBACK_DATA*)isoch->prev;
 		}
-		queue->isoch_num--;
 
+		queue->isoch_num--;
 		/* free data info */
 		isoch->out_data = NULL;
 
@@ -141,9 +138,7 @@ static int isoch_queue_unregister_data(ISOCH_CALLBACK_QUEUE* queue, ISOCH_CALLBA
 static void isoch_queue_free(ISOCH_CALLBACK_QUEUE* queue)
 {
 	ISOCH_CALLBACK_DATA* isoch;
-
 	WaitForSingleObject(queue->isoch_loading, INFINITE);
-
 	/** unregister all isochronous data*/
 	queue->rewind(queue);
 
@@ -156,7 +151,6 @@ static void isoch_queue_free(ISOCH_CALLBACK_QUEUE* queue)
 	}
 
 	ReleaseMutex(queue->isoch_loading);
-
 	CloseHandle(queue->isoch_loading);
 
 	/* free queue */
@@ -167,18 +161,19 @@ static void isoch_queue_free(ISOCH_CALLBACK_QUEUE* queue)
 ISOCH_CALLBACK_QUEUE* isoch_queue_new()
 {
 	ISOCH_CALLBACK_QUEUE* queue;
-	
 	queue = (ISOCH_CALLBACK_QUEUE*) calloc(1, sizeof(ISOCH_CALLBACK_QUEUE));
+
 	if (!queue)
 		return NULL;
 
 	queue->isoch_loading = CreateMutex(NULL, FALSE, NULL);
+
 	if (!queue->isoch_loading)
 	{
 		free(queue);
 		return NULL;
 	}
-	
+
 	/* load service */
 	queue->get_next = isoch_queue_get_next;
 	queue->has_next = isoch_queue_has_next;
@@ -186,6 +181,5 @@ ISOCH_CALLBACK_QUEUE* isoch_queue_new()
 	queue->register_data = isoch_queue_register_data;
 	queue->unregister_data = isoch_queue_unregister_data;
 	queue->free = isoch_queue_free;
-	
 	return queue;
 }

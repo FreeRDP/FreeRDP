@@ -33,10 +33,6 @@
 #include <freerdp/channels/log.h>
 #include <freerdp/utils/msusb.h>
 
-#include <uuid.h>
-#include <pthread.h>
-#include <semaphore.h>
-
 #include <winpr/stream.h>
 
 #define TAG CHANNELS_TAG("urbdrc.client")
@@ -266,7 +262,7 @@ enum device_descriptor_table
 	USBD_START_ISO_TRANSFER_ASAP | \
 	USBD_DEFAULT_PIPE_TRANSFER)
 
-#define ENDPOINT_HALT						0x00  
+#define ENDPOINT_HALT						0x00
 #define DEVICE_REMOTE_WAKEUP					0x01
 
 /* transfer type */

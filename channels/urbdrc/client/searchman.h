@@ -53,23 +53,23 @@ struct _USB_SEARCHMAN
 	void* urbdrc;
 
 	/* load service */
-	void (*rewind) (USB_SEARCHMAN* seachman);
+	void (*rewind)(USB_SEARCHMAN* seachman);
 	/* show all device in the list */
-	void (*show) (USB_SEARCHMAN* self);
+	void (*show)(USB_SEARCHMAN* self);
 	/* start searchman */
-	BOOL (*start) (USB_SEARCHMAN* self, void * func);
+	BOOL (*start)(USB_SEARCHMAN* self, void* func);
 	/* close searchman */
-	void (*close) (USB_SEARCHMAN* self);
+	void (*close)(USB_SEARCHMAN* self);
 	/* add a new usb device for search */
-	BOOL (*add) (USB_SEARCHMAN* seachman, UINT16 idVendor, UINT16 idProduct);
+	BOOL (*add)(USB_SEARCHMAN* seachman, UINT16 idVendor, UINT16 idProduct);
 	/* remove a usb device from list */
-	int (*remove) (USB_SEARCHMAN* searchman, UINT16 idVendor, UINT16 idProduct);
+	int (*remove)(USB_SEARCHMAN* searchman, UINT16 idVendor, UINT16 idProduct);
 	/* check list has next device*/
-	int (*has_next) (USB_SEARCHMAN* seachman);
+	int (*has_next)(USB_SEARCHMAN* seachman);
 	/* get the device from list*/
-	USB_SEARCHDEV* (*get_next) (USB_SEARCHMAN* seachman);
+	USB_SEARCHDEV* (*get_next)(USB_SEARCHMAN* seachman);
 	/* free! */
-	void (*free) (USB_SEARCHMAN* searchman);
+	void (*free)(USB_SEARCHMAN* searchman);
 };
 
 USB_SEARCHMAN* searchman_new(void* urbdrc, UINT32 UsbDevice);

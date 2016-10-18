@@ -27,10 +27,8 @@
 static TRANSFER_REQUEST* request_queue_get_next(REQUEST_QUEUE* queue)
 {
 	TRANSFER_REQUEST* request;
-
 	request = queue->ireq;
-	queue->ireq = (TRANSFER_REQUEST *)queue->ireq->next;
-
+	queue->ireq = (TRANSFER_REQUEST*)queue->ireq->next;
 	return request;
 }
 
@@ -42,18 +40,18 @@ static int request_queue_has_next(REQUEST_QUEUE* queue)
 		return 1;
 }
 
-static TRANSFER_REQUEST* request_queue_register_request(REQUEST_QUEUE* queue, UINT32 RequestId,
-												 struct libusb_transfer* transfer, BYTE endpoint)
+static TRANSFER_REQUEST* request_queue_register_request(REQUEST_QUEUE* queue,
+        UINT32 RequestId,
+        struct libusb_transfer* transfer, BYTE endpoint)
 {
 	TRANSFER_REQUEST* request;
-
 	request = (TRANSFER_REQUEST*) malloc(sizeof(TRANSFER_REQUEST));
+
 	if (!request)
 		return NULL;
 
 	request->prev = NULL;
 	request->next = NULL;
-
 	request->RequestId = RequestId;
 	request->transfer = transfer;
 	request->endpoint = endpoint;
@@ -78,9 +76,7 @@ static TRANSFER_REQUEST* request_queue_register_request(REQUEST_QUEUE* queue, UI
 
 	queue->request_num += 1;
 	ReleaseMutex(queue->request_loading);
-
 	return request;
-
 out:
 	free(request);
 	return NULL;
@@ -92,17 +88,20 @@ static void request_queue_rewind(REQUEST_QUEUE* queue)
 }
 
 /* Get first*/
-static TRANSFER_REQUEST* request_queue_get_request_by_endpoint(REQUEST_QUEUE* queue, BYTE ep)
+static TRANSFER_REQUEST* request_queue_get_request_by_endpoint(
+    REQUEST_QUEUE* queue, BYTE ep)
 {
-	TRANSFER_REQUEST * request;
+	TRANSFER_REQUEST* request;
 
 	if (WaitForSingleObject(queue->request_loading, INFINITE) != WAIT_OBJECT_0)
 		return NULL;
 
-	queue->rewind (queue);
-	while (queue->has_next (queue))
+	queue->rewind(queue);
+
+	while (queue->has_next(queue))
 	{
-		request = queue->get_next (queue);
+		request = queue->get_next(queue);
+
 		if (request->endpoint == ep)
 		{
 			ReleaseMutex(queue->request_loading);
@@ -115,9 +114,10 @@ static TRANSFER_REQUEST* request_queue_get_request_by_endpoint(REQUEST_QUEUE* qu
 	return NULL;
 }
 
-static int request_queue_unregister_request(REQUEST_QUEUE* queue, UINT32 RequestId)
+static int request_queue_unregister_request(REQUEST_QUEUE* queue,
+        UINT32 RequestId)
 {
-	TRANSFER_REQUEST *request, *request_temp;
+	TRANSFER_REQUEST* request, *request_temp;
 
 	if (!WaitForSingleObject(queue->request_loading, INFINITE) != WAIT_OBJECT_0)
 		return -1;
@@ -130,7 +130,6 @@ static int request_queue_unregister_request(REQUEST_QUEUE* queue, UINT32 Request
 
 		if (request->RequestId == RequestId)
 		{
-
 			if (request->prev != NULL)
 			{
 				request_temp = (TRANSFER_REQUEST*) request->prev;
@@ -149,11 +148,10 @@ static int request_queue_unregister_request(REQUEST_QUEUE* queue, UINT32 Request
 			else
 			{
 				queue->tail = (TRANSFER_REQUEST*) request->prev;
-
 			}
 
 			queue->request_num--;
-			
+
 			if (request)
 			{
 				request->transfer = NULL;
@@ -161,7 +159,6 @@ static int request_queue_unregister_request(REQUEST_QUEUE* queue, UINT32 Request
 			}
 
 			ReleaseMutex(queue->request_loading);
-
 			return 0;
 		}
 	}
@@ -174,12 +171,13 @@ static int request_queue_unregister_request(REQUEST_QUEUE* queue, UINT32 Request
 REQUEST_QUEUE* request_queue_new(void)
 {
 	REQUEST_QUEUE* queue;
-
 	queue = (REQUEST_QUEUE*) calloc(1, sizeof(REQUEST_QUEUE));
+
 	if (!queue)
 		return NULL;
 
 	queue->request_loading = CreateMutex(NULL, FALSE, NULL);
+
 	if (!queue->request_loading)
 	{
 		free(queue);
@@ -193,6 +191,5 @@ REQUEST_QUEUE* request_queue_new(void)
 	queue->register_request = request_queue_register_request;
 	queue->unregister_request = request_queue_unregister_request;
 	queue->get_request_by_ep = request_queue_get_request_by_endpoint;
-
 	return queue;
 }
