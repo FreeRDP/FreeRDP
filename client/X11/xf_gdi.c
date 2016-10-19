@@ -974,7 +974,7 @@ static BOOL xf_gdi_update_screen(xfContext* xfc,
                                  const SURFACE_BITS_COMMAND* cmd,
                                  const BYTE* pSrcData)
 {
-	BOOL ret;
+	BOOL ret = FALSE;
 	XImage* image;
 
 	if (!xfc || !pSrcData)

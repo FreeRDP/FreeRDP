@@ -309,7 +309,7 @@ static BOOL tsmf_stream_process_ack(void* arg, BOOL force)
 	if (!force)
 	{
 		/* Do some min/max ack limiting if we have access to Buffer level information */
-		if (stream->decoder->BufferLevel)
+		if (stream->decoder && stream->decoder->BufferLevel)
 		{
 			/* Try to keep buffer level below max by withholding acks */
 			if (stream->currentBufferLevel > stream->maxBufferLevel)
@@ -744,7 +744,7 @@ static void* tsmf_stream_ack_func(void* arg)
 			{
 				DEBUG_TSMF("END OF STREAM PROCESSING!");
 
-				if (stream->decoder->BufferLevel)
+				if (stream->decoder && stream->decoder->BufferLevel)
 					stream->currentBufferLevel = stream->decoder->BufferLevel(stream->decoder);
 				else
 					stream->currentBufferLevel = 1;
@@ -760,7 +760,7 @@ static void* tsmf_stream_ack_func(void* arg)
 				DEBUG_TSMF("Finishing delayed stream stop, now that eos has processed.");
 				tsmf_stream_flush(stream);
 
-				if (stream->decoder->Control)
+				if (stream->decoder && stream->decoder->Control)
 					stream->decoder->Control(stream->decoder, Control_Stop, NULL);
 			}
 		}

@@ -728,31 +728,41 @@ void glyph_cache_free(rdpGlyphCache* glyphCache)
 	if (glyphCache)
 	{
 		int i;
+		GLYPH_CACHE* cache = glyphCache->glyphCache;
 
-		for (i = 0; i < 10; i++)
+		if (cache)
 		{
-			UINT32 j;
-
-			for (j = 0; j < glyphCache->glyphCache[i].number; j++)
+			for (i = 0; i < 10; i++)
 			{
-				rdpGlyph* glyph;
-				glyph = glyphCache->glyphCache[i].entries[j];
+				UINT32 j;
+				rdpGlyph** entries = cache[i].entries;
 
-				if (glyph)
+				if (!entries)
+					continue;
+
+				for (j = 0; j < cache[i].number; j++)
 				{
-					glyph->Free(glyphCache->context, glyph);
-					glyphCache->glyphCache[i].entries[j] = NULL;
-				}
-			}
+					rdpGlyph* glyph = entries[j];
 
-			free(glyphCache->glyphCache[i].entries);
-			glyphCache->glyphCache[i].entries = NULL;
+					if (glyph)
+					{
+						glyph->Free(glyphCache->context, glyph);
+						entries[j] = NULL;
+					}
+				}
+
+				free(entries);
+				cache[i].entries = NULL;
+			}
 		}
 
-		for (i = 0; i < 256; i++)
+		if (glyphCache->fragCache.entries)
 		{
-			free(glyphCache->fragCache.entries[i].fragment);
-			glyphCache->fragCache.entries[i].fragment = NULL;
+			for (i = 0; i < 256; i++)
+			{
+				free(glyphCache->fragCache.entries[i].fragment);
+				glyphCache->fragCache.entries[i].fragment = NULL;
+			}
 		}
 
 		free(glyphCache->fragCache.entries);
