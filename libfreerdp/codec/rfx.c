@@ -1188,7 +1188,7 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data,
 
 				if (!freerdp_image_copy(dst, dstFormat, dstStride,
 				                        nXDst, nYDst, nWidth, nHeight,
-				                        tile->data, format, stride, nXSrc, nYSrc, NULL))
+				                        tile->data, format, stride, nXSrc, nYSrc, NULL, FREERDP_FLIP_NONE))
 					goto fail;
 
 				if (invalidRegion)

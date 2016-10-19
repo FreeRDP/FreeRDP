@@ -37,7 +37,7 @@ HGDI_BITMAP test_convert_to_bitmap(const BYTE* src, UINT32 SrcFormat,
 		return NULL;
 
 	if (!freerdp_image_copy(data, DstFormat, DstStride, xDst, yDst, nWidth, nHeight,
-	                        src, SrcFormat, SrcStride, xSrc, ySrc, hPalette))
+	                        src, SrcFormat, SrcStride, xSrc, ySrc, hPalette, FREERDP_FLIP_NONE))
 	{
 		_aligned_free(data);
 		return NULL;

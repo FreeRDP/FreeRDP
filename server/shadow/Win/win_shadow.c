@@ -269,7 +269,7 @@ int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 
 	freerdp_image_copy(surface->data, surface->format,
 	                   surface->scanline, x - surface->x, y - surface->y, width, height,
-	                   pDstData, DstFormat, nDstStep, 0, 0, NULL);
+	                   pDstData, DstFormat, nDstStep, 0, 0, NULL, FREERDP_FLIP_NONE);
 	ArrayList_Lock(server->clients);
 	count = ArrayList_Count(server->clients);
 	shadow_subsystem_frame_update((rdpShadowSubsystem*)subsystem);

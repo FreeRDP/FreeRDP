@@ -1032,12 +1032,12 @@ BOOL mf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	mrdpCursor->cursor_data = cursor_data;
 	format = PIXEL_FORMAT_RGBA32;
 
-	if (freerdp_image_copy_from_pointer_data(
+	if (!freerdp_image_copy_from_pointer_data(
 	        cursor_data, format,
 	        0, 0, 0, pointer->width, pointer->height,
 	        pointer->xorMaskData, pointer->lengthXorMask,
 	        pointer->andMaskData, pointer->lengthAndMask,
-	        pointer->xorBpp, NULL) < 0)
+	        pointer->xorBpp, NULL))
 	{
 		free(cursor_data);
 		mrdpCursor->cursor_data = NULL;

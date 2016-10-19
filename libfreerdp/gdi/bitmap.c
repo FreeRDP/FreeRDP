@@ -485,7 +485,7 @@ BOOL gdi_BitBlt(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 
 			if (!freerdp_image_copy(hDstBmp->data, hdcDest->format, hDstBmp->scanline,
 			                        nXDest, nYDest, nWidth, nHeight,
-			                        hSrcBmp->data, hdcSrc->format, hSrcBmp->scanline, nXSrc, nYSrc, palette))
+			                        hSrcBmp->data, hdcSrc->format, hSrcBmp->scanline, nXSrc, nYSrc, palette, FREERDP_FLIP_NONE))
 				return FALSE;
 
 			break;
@@ -496,7 +496,7 @@ BOOL gdi_BitBlt(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 
 			if (!freerdp_image_copy(hDstBmp->data, hdcDest->format, hDstBmp->scanline,
 			                        nXDest, nYDest, nWidth, nHeight,
-			                        hSrcBmp->data, hdcSrc->format, hSrcBmp->scanline, nXSrc, nYSrc, palette))
+			                        hSrcBmp->data, hdcSrc->format, hSrcBmp->scanline, nXSrc, nYSrc, palette, FREERDP_FLIP_NONE))
 				return FALSE;
 
 			break;

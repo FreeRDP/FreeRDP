@@ -103,7 +103,7 @@ static BOOL clear_decompress_nscodec(NSC_CONTEXT* nsc, UINT32 width,
 
 	rc = nsc_process_message(nsc, 32, width, height, Stream_Pointer(s),
 	                         bitmapDataByteCount, pDstData, DstFormat,
-	                         nDstStep, nXDstRel, nYDstRel, width, height);
+	                         nDstStep, nXDstRel, nYDstRel, width, height, FREERDP_FLIP_NONE);
 	Stream_Seek(s, bitmapDataByteCount);
 	return rc;
 }

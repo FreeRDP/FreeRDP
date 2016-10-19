@@ -121,7 +121,7 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 		                        gdi->stride,
 		                        nXDst, nYDst, width, height,
 		                        surface->data, surface->format,
-		                        surface->scanline, nXSrc, nYSrc, NULL))
+		                        surface->scanline, nXSrc, nYSrc, NULL, FREERDP_FLIP_NONE))
 			return CHANNEL_RC_NULL_DATA;
 
 		gdi_InvalidateRegion(gdi->primary->hdc, nXDst, nYDst, width, height);
@@ -210,7 +210,7 @@ static UINT gdi_SurfaceCommand_Uncompressed(rdpGdi* gdi,
 
 	if (!freerdp_image_copy(surface->data, surface->format, surface->scanline,
 	                        cmd->left, cmd->top, cmd->width, cmd->height,
-	                        cmd->data, cmd->format, 0, 0, 0, NULL))
+	                        cmd->data, cmd->format, 0, 0, 0, NULL, FREERDP_FLIP_NONE))
 		return ERROR_INTERNAL_ERROR;
 
 	invalidRect.left = cmd->left;
@@ -843,7 +843,7 @@ static UINT gdi_SurfaceToSurface(RdpgfxClientContext* context,
 		                   destPt->x, destPt->y, nWidth, nHeight,
 		                   surfaceSrc->data, surfaceSrc->format,
 		                   surfaceSrc->scanline,
-		                   rectSrc->left, rectSrc->top, NULL);
+		                   rectSrc->left, rectSrc->top, NULL, FREERDP_FLIP_NONE);
 		invalidRect.left = destPt->x;
 		invalidRect.top = destPt->y;
 		invalidRect.right = destPt->x + rectSrc->right;
@@ -898,7 +898,7 @@ static UINT gdi_SurfaceToCache(RdpgfxClientContext* context,
 
 	freerdp_image_copy(cacheEntry->data, cacheEntry->format, cacheEntry->scanline,
 	                   0, 0, cacheEntry->width, cacheEntry->height, surface->data,
-	                   surface->format, surface->scanline, rect->left, rect->top, NULL);
+	                   surface->format, surface->scanline, rect->left, rect->top, NULL, FREERDP_FLIP_NONE);
 	context->SetCacheSlotData(context, surfaceToCache->cacheSlot,
 	                          (void*) cacheEntry);
 	return CHANNEL_RC_OK;
@@ -932,7 +932,7 @@ static UINT gdi_CacheToSurface(RdpgfxClientContext* context,
 		destPt = &cacheToSurface->destPts[index];
 		freerdp_image_copy(surface->data, surface->format, surface->scanline,
 		                   destPt->x, destPt->y, cacheEntry->width, cacheEntry->height,
-		                   cacheEntry->data, cacheEntry->format, cacheEntry->scanline, 0, 0, NULL);
+		                   cacheEntry->data, cacheEntry->format, cacheEntry->scanline, 0, 0, NULL, FREERDP_FLIP_NONE);
 		invalidRect.left = destPt->x;
 		invalidRect.top = destPt->y;
 		invalidRect.right = destPt->x + cacheEntry->width - 1;

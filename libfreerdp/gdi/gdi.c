@@ -322,8 +322,7 @@ static const BYTE GDI_BS_HATCHED_PATTERNS[] =
 INLINE BOOL gdi_decode_color(rdpGdi* gdi, const UINT32 srcColor,
                              UINT32* color, UINT32* format)
 {
-	UINT32 SrcFormat = gdi_get_pixel_format(gdi->context->settings->ColorDepth,
-	                                        FALSE);
+	UINT32 SrcFormat = gdi_get_pixel_format(gdi->context->settings->ColorDepth);
 
 	if (format)
 		*format = SrcFormat;
@@ -339,30 +338,30 @@ INLINE DWORD gdi_rop3_code(BYTE code)
 	return rop3_code_table[code];
 }
 
-UINT32 gdi_get_pixel_format(UINT32 bitsPerPixel, BOOL vFlip)
+UINT32 gdi_get_pixel_format(UINT32 bitsPerPixel)
 {
-	UINT32 format = PIXEL_FORMAT_XBGR32_VF;
+	UINT32 format = PIXEL_FORMAT_XBGR32;
 
 	switch (bitsPerPixel)
 	{
 		case 32:
-			format = vFlip ? PIXEL_FORMAT_ABGR32_VF : PIXEL_FORMAT_ABGR32;
+			format = PIXEL_FORMAT_ABGR32;
 			break;
 
 		case 24:
-			format = vFlip ? PIXEL_FORMAT_BGR24_VF : PIXEL_FORMAT_BGR24;
+			format = PIXEL_FORMAT_BGR24;
 			break;
 
 		case 16:
-			format = vFlip ? PIXEL_FORMAT_RGB16_VF : PIXEL_FORMAT_RGB16;
+			format = PIXEL_FORMAT_RGB16;
 			break;
 
 		case 15:
-			format = vFlip ? PIXEL_FORMAT_RGB15_VF : PIXEL_FORMAT_RGB15;
+			format = PIXEL_FORMAT_RGB15;
 			break;
 
 		case 8:
-			format = vFlip ? PIXEL_FORMAT_RGB8_VF : PIXEL_FORMAT_RGB8;
+			format = PIXEL_FORMAT_RGB8;
 			break;
 	}
 
@@ -576,11 +575,11 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 
 				if (brush->bpp > 1)
 				{
-					brushFormat = gdi_get_pixel_format(brush->bpp, FALSE);
+					brushFormat = gdi_get_pixel_format(brush->bpp);
 
 					if (!freerdp_image_copy(data, gdi->drawing->hdc->format, 0, 0, 0,
 					                        8, 8, brush->data, brushFormat, 0, 0, 0,
-					                        &gdi->palette))
+					                        &gdi->palette, FREERDP_FLIP_NONE))
 						goto out_error;
 				}
 				else
@@ -822,11 +821,11 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 
 				if (brush->bpp > 1)
 				{
-					brushFormat = gdi_get_pixel_format(brush->bpp, FALSE);
+					brushFormat = gdi_get_pixel_format(brush->bpp);
 
 					if (!freerdp_image_copy(data, gdi->drawing->hdc->format, 0, 0, 0,
 					                        8, 8, brush->data, brushFormat,
-					                        0, 0, 0, &gdi->palette))
+					                        0, 0, 0, &gdi->palette, FREERDP_FLIP_NONE))
 					{
 						ret = FALSE;
 						_aligned_free(data);
@@ -978,24 +977,24 @@ static BOOL gdi_surface_bits(rdpContext* context,
 			break;
 
 		case RDP_CODEC_ID_NSCODEC:
-			format = FREERDP_VFLIP_PIXEL_FORMAT(gdi->dstFormat);
+			format = gdi->dstFormat;
 
 			if (!nsc_process_message(context->codecs->nsc, cmd->bpp, cmd->width,
 			                         cmd->height, cmd->bitmapData,
 			                         cmd->bitmapDataLength, gdi->primary_buffer,
 			                         format, gdi->stride, cmd->destLeft, cmd->destTop,
-			                         cmd->width, cmd->height))
+			                         cmd->width, cmd->height, FREERDP_FLIP_VERTICAL))
 				return FALSE;
 
 			break;
 
 		case RDP_CODEC_ID_NONE:
-			format = PIXEL_FORMAT_BGRX32_VF;
+			format = PIXEL_FORMAT_BGRX32;
 
 			if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, gdi->stride,
 			                        cmd->destLeft, cmd->destTop, cmd->width, cmd->height,
 			                        cmd->bitmapData, format, 0, 0, 0,
-			                        &gdi->palette))
+			                        &gdi->palette, FREERDP_FLIP_VERTICAL))
 				return FALSE;
 
 			break;
@@ -1161,7 +1160,7 @@ BOOL gdi_init(freerdp* instance, UINT32 format)
 BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
                  void (*pfree)(void*))
 {
-	UINT32 SrcFormat = gdi_get_pixel_format(instance->settings->ColorDepth, FALSE);
+	UINT32 SrcFormat = gdi_get_pixel_format(instance->settings->ColorDepth);
 	rdpGdi* gdi = (rdpGdi*) calloc(1, sizeof(rdpGdi));
 	rdpContext* context = instance->context;
 
