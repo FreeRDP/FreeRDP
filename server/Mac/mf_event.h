@@ -18,7 +18,6 @@
  */
 
 #ifndef __MF_EVENT_H
-#define __XMF_EVENT_H
 
 typedef struct mf_event mfEvent;
 typedef struct mf_event_queue mfEventQueue;
