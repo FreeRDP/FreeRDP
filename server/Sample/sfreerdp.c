@@ -60,7 +60,7 @@ BOOL test_peer_context_new(freerdp_peer* client, testPeerContext* context)
 		goto fail_rfx_context;
 
 	if (!rfx_context_reset(context->rfx_context, SAMPLE_SERVER_DEFAULT_WIDTH,
-			       SAMPLE_SERVER_DEFAULT_HEIGHT))
+	                       SAMPLE_SERVER_DEFAULT_HEIGHT))
 		goto fail_rfx_context;
 
 	context->rfx_context->mode = RLGR3;
@@ -197,7 +197,7 @@ static BOOL test_peer_draw_background(freerdp_peer* client)
 	if (client->settings->RemoteFxCodec)
 	{
 		if (!rfx_compose_message(context->rfx_context, s,
-					 &rect, 1, rgb_data, rect.width, rect.height, rect.width * 3))
+		                         &rect, 1, rgb_data, rect.width, rect.height, rect.width * 3))
 		{
 			goto out;
 		}
@@ -207,7 +207,7 @@ static BOOL test_peer_draw_background(freerdp_peer* client)
 	else
 	{
 		nsc_compose_message(context->nsc_context, s,
-				    rgb_data, rect.width, rect.height, rect.width * 3);
+		                    rgb_data, rect.width, rect.height, rect.width * 3);
 		cmd->codecID = client->settings->NSCodecId;
 	}
 
@@ -279,7 +279,7 @@ static BOOL test_peer_load_icon(freerdp_peer* client)
 
 	/* background with same size, which will be used to erase the icon from old position */
 	if (!(context->bg_data = malloc(context->icon_width * context->icon_height *
-					3)))
+	                                3)))
 		goto out_fail;
 
 	memset(context->bg_data, 0xA0, context->icon_width * context->icon_height * 3);
@@ -323,13 +323,13 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 		if (client->settings->RemoteFxCodec)
 		{
 			rfx_compose_message(context->rfx_context, s,
-					    &rect, 1, context->bg_data, rect.width, rect.height, rect.width * 3);
+			                    &rect, 1, context->bg_data, rect.width, rect.height, rect.width * 3);
 			cmd->codecID = client->settings->RemoteFxCodecId;
 		}
 		else
 		{
 			nsc_compose_message(context->nsc_context, s,
-					    context->bg_data, rect.width, rect.height, rect.width * 3);
+			                    context->bg_data, rect.width, rect.height, rect.width * 3);
 			cmd->codecID = client->settings->NSCodecId;
 		}
 
@@ -350,13 +350,13 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 	if (client->settings->RemoteFxCodec)
 	{
 		rfx_compose_message(context->rfx_context, s,
-				    &rect, 1, context->icon_data, rect.width, rect.height, rect.width * 3);
+		                    &rect, 1, context->icon_data, rect.width, rect.height, rect.width * 3);
 		cmd->codecID = client->settings->RemoteFxCodecId;
 	}
 	else
 	{
 		nsc_compose_message(context->nsc_context, s,
-				    context->icon_data, rect.width, rect.height, rect.width * 3);
+		                    context->icon_data, rect.width, rect.height, rect.width * 3);
 		cmd->codecID = client->settings->NSCodecId;
 	}
 
@@ -376,7 +376,7 @@ static void test_peer_draw_icon(freerdp_peer* client, int x, int y)
 }
 
 static BOOL test_sleep_tsdiff(UINT32* old_sec, UINT32* old_usec, UINT32 new_sec,
-			      UINT32 new_usec)
+                              UINT32 new_usec)
 {
 	INT32 sec, usec;
 
@@ -448,7 +448,7 @@ BOOL tf_peer_dump_rfx(freerdp_peer* client)
 
 		if (test_dump_rfx_realtime
 		    && test_sleep_tsdiff(&prev_seconds, &prev_useconds, record.header.ts_sec,
-					 record.header.ts_usec) == FALSE)
+		                         record.header.ts_usec) == FALSE)
 			break;
 
 		update->SurfaceCommand(update->context, s);
@@ -472,7 +472,7 @@ static void* tf_debug_channel_thread_func(void* arg)
 	testPeerContext* context = (testPeerContext*) arg;
 
 	if (WTSVirtualChannelQuery(context->debug_channel, WTSVirtualFileHandle,
-				   &buffer, &BytesReturned) == TRUE)
+	                           &buffer, &BytesReturned) == TRUE)
 	{
 		fd = *((void**) buffer);
 		WTSFreeMemory(buffer);
@@ -494,7 +494,7 @@ static void* tf_debug_channel_thread_func(void* arg)
 		Stream_SetPosition(s, 0);
 
 		if (WTSVirtualChannelRead(context->debug_channel, 0, (PCHAR) Stream_Buffer(s),
-					  Stream_Capacity(s), &BytesReturned) == FALSE)
+		                          Stream_Capacity(s), &BytesReturned) == FALSE)
 		{
 			if (BytesReturned == 0)
 				break;
@@ -502,7 +502,7 @@ static void* tf_debug_channel_thread_func(void* arg)
 			Stream_EnsureRemainingCapacity(s, BytesReturned);
 
 			if (WTSVirtualChannelRead(context->debug_channel, 0, (PCHAR) Stream_Buffer(s),
-						  Stream_Capacity(s), &BytesReturned) == FALSE)
+			                          Stream_Capacity(s), &BytesReturned) == FALSE)
 			{
 				/* should not happen */
 				break;
@@ -527,25 +527,25 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 	 * callback returns.
 	 */
 	WLog_DBG(TAG, "Client %s is activated (osMajorType %d osMinorType %d)",
-		 client->local ? "(local)" : client->hostname,
-		 client->settings->OsMajorType, client->settings->OsMinorType);
+	         client->local ? "(local)" : client->hostname,
+	         client->settings->OsMajorType, client->settings->OsMinorType);
 
 	if (client->settings->AutoLogonEnabled)
 	{
 		WLog_DBG(TAG, " and wants to login automatically as %s\\%s",
-			 client->settings->Domain ? client->settings->Domain : "",
-			 client->settings->Username);
+		         client->settings->Domain ? client->settings->Domain : "",
+		         client->settings->Username);
 		/* A real server may perform OS login here if NLA is not executed previously. */
 	}
 
 	WLog_DBG(TAG, "");
 	WLog_DBG(TAG, "Client requested desktop: %dx%dx%d",
-		 client->settings->DesktopWidth, client->settings->DesktopHeight,
-		 client->settings->ColorDepth);
+	         client->settings->DesktopWidth, client->settings->DesktopHeight,
+	         client->settings->ColorDepth);
 #if (SAMPLE_SERVER_USE_CLIENT_RESOLUTION == 1)
 
 	if (!rfx_context_reset(context->rfx_context, client->settings->DesktopWidth,
-			       client->settings->DesktopHeight))
+	                       client->settings->DesktopHeight))
 		return FALSE;
 
 	WLog_DBG(TAG, "Using resolution requested by client.");
@@ -553,7 +553,7 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 	client->settings->DesktopWidth = context->rfx_context->width;
 	client->settings->DesktopHeight = context->rfx_context->height;
 	WLog_DBG(TAG, "Resizing client to %dx%d", client->settings->DesktopWidth,
-		 client->settings->DesktopHeight);
+	         client->settings->DesktopHeight);
 	client->update->DesktopResize(client->update->context);
 #endif
 
@@ -567,7 +567,7 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 	if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, "rdpdbg"))
 	{
 		context->debug_channel = WTSVirtualChannelOpen(context->vcm,
-					 WTS_CURRENT_SESSION, "rdpdbg");
+		                         WTS_CURRENT_SESSION, "rdpdbg");
 
 		if (context->debug_channel != NULL)
 		{
@@ -580,8 +580,8 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 			}
 
 			if (!(context->debug_channel_thread = CreateThread(NULL, 0,
-							      (LPTHREAD_START_ROUTINE) tf_debug_channel_thread_func, (void*) context, 0,
-							      NULL)))
+			                                      (LPTHREAD_START_ROUTINE) tf_debug_channel_thread_func, (void*) context, 0,
+			                                      NULL)))
 			{
 				WLog_ERR(TAG, "Failed to create debug channel thread");
 				CloseHandle(context->stopEvent);
@@ -641,7 +641,7 @@ BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 	rdpUpdate* update = client->update;
 	testPeerContext* context = (testPeerContext*) input->context;
 	WLog_DBG(TAG, "Client sent a keyboard event (flags:0x%X code:0x%X)", flags,
-		 code);
+	         code);
 
 	if ((flags & 0x4000) && code == 0x22) /* 'g' key */
 	{
@@ -657,7 +657,7 @@ BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 		}
 
 		if (!rfx_context_reset(context->rfx_context, client->settings->DesktopWidth,
-				       client->settings->DesktopHeight))
+		                       client->settings->DesktopHeight))
 			return FALSE;
 
 		update->DesktopResize(update->context);
@@ -698,7 +698,7 @@ BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 BOOL tf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	WLog_DBG(TAG, "Client sent a unicode keyboard event (flags:0x%X code:0x%X)",
-		 flags, code);
+	         flags, code);
 	return TRUE;
 }
 
@@ -710,14 +710,14 @@ BOOL tf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 }
 
 BOOL tf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x,
-				  UINT16 y)
+                                  UINT16 y)
 {
 	//WLog_DBG(TAG, "Client sent an extended mouse event (flags:0x%X pos:%d,%d)", flags, x, y);
 	return TRUE;
 }
 
 static BOOL tf_peer_refresh_rect(rdpContext* context, BYTE count,
-				 const RECTANGLE_16* areas)
+                                 const RECTANGLE_16* areas)
 {
 	BYTE i;
 	WLog_DBG(TAG, "Client requested to refresh:");
@@ -725,19 +725,19 @@ static BOOL tf_peer_refresh_rect(rdpContext* context, BYTE count,
 	for (i = 0; i < count; i++)
 	{
 		WLog_DBG(TAG, "  (%d, %d) (%d, %d)", areas[i].left, areas[i].top,
-			 areas[i].right, areas[i].bottom);
+		         areas[i].right, areas[i].bottom);
 	}
 
 	return TRUE;
 }
 
 static BOOL tf_peer_suppress_output(rdpContext* context, BYTE allow,
-				    const RECTANGLE_16* area)
+                                    const RECTANGLE_16* area)
 {
 	if (allow > 0)
 	{
 		WLog_DBG(TAG, "Client restore output (%d, %d) (%d, %d).", area->left, area->top,
-			 area->right, area->bottom);
+		         area->right, area->bottom);
 	}
 	else
 	{
@@ -798,7 +798,7 @@ static void* test_peer_mainloop(void* arg)
 	client->Initialize(client);
 	context = (testPeerContext*) client->context;
 	WLog_INFO(TAG, "We've got a client %s",
-		  client->local ? "(local)" : client->hostname);
+	          client->local ? "(local)" : client->hostname);
 
 	while (1)
 	{
@@ -821,7 +821,7 @@ static void* test_peer_mainloop(void* arg)
 	}
 
 	WLog_INFO(TAG, "Client %s disconnected.",
-		  client->local ? "(local)" : client->hostname);
+	          client->local ? "(local)" : client->hostname);
 	client->Disconnect(client);
 	freerdp_peer_context_free(client);
 	freerdp_peer_free(client);
@@ -833,7 +833,7 @@ static BOOL test_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 	HANDLE hThread;
 
 	if (!(hThread = CreateThread(NULL, 0,
-				     (LPTHREAD_START_ROUTINE) test_peer_mainloop, (void*) client, 0, NULL)))
+	                             (LPTHREAD_START_ROUTINE) test_peer_mainloop, (void*) client, 0, NULL)))
 		return FALSE;
 
 	CloseHandle(hThread);
@@ -881,6 +881,7 @@ int main(int argc, char* argv[])
 	char* file;
 	char name[MAX_PATH];
 	int port = 3389, i;
+	BOOL localOnly = FALSE;
 
 	for (i = 1; i < argc; i++)
 	{
@@ -900,6 +901,8 @@ int main(int argc, char* argv[])
 			if ((port < 1) || (port > 0xFFFF))
 				return -1;
 		}
+		else if (strcmp(arg, "--local-only"))
+			localOnly = TRUE;
 		else if (strncmp(arg, "--", 2))
 			test_pcap_file = arg;
 	}
@@ -929,7 +932,7 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-	if (instance->Open(instance, NULL, port) &&
+	if ((localOnly || instance->Open(instance, NULL, port)) &&
 	    instance->OpenLocal(instance, file))
 	{
 		/* Entering the server main loop. In a real server the listener can be run in its own thread. */

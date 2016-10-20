@@ -157,6 +157,7 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "codec-cache", COMMAND_LINE_VALUE_REQUIRED, "<rfx|nsc|jpeg>", NULL, NULL, -1, NULL, "bitmap codec cache" },
 	{ "fast-path", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Enable fast-path input/output" },
 	{ "max-fast-path-size", COMMAND_LINE_VALUE_OPTIONAL, "<size>", NULL, NULL, -1, NULL, "specify maximum fast-path update size" },
+	{ "max-loop-time", COMMAND_LINE_VALUE_REQUIRED, "<time>", NULL, NULL, -1, NULL, "specify maximum time in milliseconds spend treating packets"},
 	{ "async-input", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "asynchronous input" },
 	{ "async-update", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "asynchronous update" },
 	{ "async-transport", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "asynchronous transport (unstable)" },
@@ -2304,6 +2305,20 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchCase(arg, "max-fast-path-size")
 		{
 			settings->MultifragMaxRequestSize = atoi(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "max-loop-time")
+		{
+			settings->MaxTimeInCheckLoop = atoi(arg->Value);
+			if (settings->MaxTimeInCheckLoop < 0)
+			{
+				WLog_ERR(TAG, "invalid max loop time: %s", arg->Value);
+				return COMMAND_LINE_ERROR;
+			}
+
+			if (settings->MaxTimeInCheckLoop == 0)
+			{
+				settings->MaxTimeInCheckLoop = 10 * 60 * 60 * 1000; /* 10 hours can be considered as infinite */
+			}
 		}
 		CommandLineSwitchCase(arg, "async-input")
 		{

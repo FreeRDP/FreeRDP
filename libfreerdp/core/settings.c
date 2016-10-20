@@ -277,6 +277,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 	settings->ServerMode = (flags & FREERDP_SETTINGS_SERVER_MODE) ? TRUE : FALSE;
 	settings->WaitForOutputBufferFlush = TRUE;
+	settings->MaxTimeInCheckLoop = 100;
 	settings->DesktopWidth = 1024;
 	settings->DesktopHeight = 768;
 	settings->Workarea = FALSE;

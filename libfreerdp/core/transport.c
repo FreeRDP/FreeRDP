@@ -756,38 +756,59 @@ out_cleanup:
 DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events,
                                   DWORD count)
 {
-	DWORD nCount = 0;
+	DWORD nCount = 1; /* always the reread Event */
 	DWORD tmp;
+
+	if (events)
+	{
+		if (count < 1)
+		{
+			WLog_ERR(TAG, "%s: provided handles array is too small", __FUNCTION__);
+			return 0;
+		}
+
+		events[0] = transport->rereadEvent;
+	}
 
 	if (!transport->GatewayEnabled)
 	{
-		if (events && (nCount < count))
-		{
-			if (BIO_get_event(transport->frontBio, &events[nCount]) != 1)
-				return 0;
+		nCount++;
 
-			nCount++;
+		if (events)
+		{
+			if (nCount > count)
+			{
+				WLog_ERR(TAG, "%s: provided handles array is too small (count=%d nCount=%d)",
+				         __FUNCTION__, count, nCount);
+				return 0;
+			}
+
+			if (BIO_get_event(transport->frontBio, &events[1]) != 1)
+			{
+				WLog_ERR(TAG, "%s: error getting the frontBio handle", __FUNCTION__);
+				return 0;
+			}
 		}
 	}
 	else
 	{
 		if (transport->rdg)
 		{
-			tmp = rdg_get_event_handles(transport->rdg, events, nCount - count);
+			tmp = rdg_get_event_handles(transport->rdg, &events[1], count - 1);
 
 			if (tmp == 0)
 				return 0;
 
-			nCount = tmp;
+			nCount += tmp;
 		}
 		else if (transport->tsg)
 		{
-			tmp = tsg_get_event_handles(transport->tsg, events, nCount - count);
+			tmp = tsg_get_event_handles(transport->tsg, &events[1], count - 1);
 
 			if (tmp == 0)
 				return 0;
 
-			nCount = tmp;
+			nCount += tmp;
 		}
 	}
 
@@ -800,12 +821,14 @@ void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 	DWORD nCount;
 	HANDLE events[64];
 	nCount = transport_get_event_handles(transport, events, 64);
-	*rcount = nCount;
+	*rcount = nCount + 1;
 
 	for (index = 0; index < nCount; index++)
 	{
 		rfds[index] = GetEventWaitObject(events[index]);
 	}
+
+	rfds[nCount + 1] = GetEventWaitObject(transport->rereadEvent);
 }
 
 BOOL transport_is_write_blocked(rdpTransport* transport)
@@ -833,11 +856,19 @@ int transport_check_fds(rdpTransport* transport)
 	int status;
 	int recv_status;
 	wStream* received;
+	DWORD now = GetTickCount();
+	DWORD dueDate = now + transport->settings->MaxTimeInCheckLoop;
 
 	if (!transport)
 		return -1;
 
-	while (!freerdp_shall_disconnect(transport->context->instance))
+	if (transport->haveMoreBytesToRead)
+	{
+		transport->haveMoreBytesToRead = FALSE;
+		ResetEvent(transport->rereadEvent);
+	}
+
+	while (!freerdp_shall_disconnect(transport->context->instance) && (now < dueDate))
 	{
 		/**
 		 * Note: transport_read_pdu tries to read one PDU from
@@ -883,6 +914,14 @@ int transport_check_fds(rdpTransport* transport)
 			         recv_status);
 			return -1;
 		}
+
+		now = GetTickCount();
+	}
+
+	if (now >= dueDate)
+	{
+		SetEvent(transport->rereadEvent);
+		transport->haveMoreBytesToRead = TRUE;
 	}
 
 	return 0;
@@ -1073,12 +1112,18 @@ rdpTransport* transport_new(rdpContext* context)
 	    || transport->connectedEvent == INVALID_HANDLE_VALUE)
 		goto out_free_receivebuffer;
 
+	transport->rereadEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+	if (!transport->rereadEvent || transport->rereadEvent == INVALID_HANDLE_VALUE)
+		goto out_free_connectedEvent;
+
+	transport->haveMoreBytesToRead = FALSE;
 	transport->blocking = TRUE;
 	transport->GatewayEnabled = FALSE;
 	transport->layer = TRANSPORT_LAYER_TCP;
 
 	if (!InitializeCriticalSectionAndSpinCount(&(transport->ReadLock), 4000))
-		goto out_free_connectedEvent;
+		goto out_free_rereadEvent;
 
 	if (!InitializeCriticalSectionAndSpinCount(&(transport->WriteLock), 4000))
 		goto out_free_readlock;
@@ -1086,6 +1131,8 @@ rdpTransport* transport_new(rdpContext* context)
 	return transport;
 out_free_readlock:
 	DeleteCriticalSection(&(transport->ReadLock));
+out_free_rereadEvent:
+	CloseHandle(transport->rereadEvent);
 out_free_connectedEvent:
 	CloseHandle(transport->connectedEvent);
 out_free_receivebuffer:
@@ -1109,6 +1156,7 @@ void transport_free(rdpTransport* transport)
 
 	StreamPool_Free(transport->ReceivePool);
 	CloseHandle(transport->connectedEvent);
+	CloseHandle(transport->rereadEvent);
 	DeleteCriticalSection(&(transport->ReadLock));
 	DeleteCriticalSection(&(transport->WriteLock));
 	free(transport);
