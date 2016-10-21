@@ -26,9 +26,10 @@
 #include <winpr/stream.h>
 
 #include <freerdp/channels/rdpgfx.h>
+#include <freerdp/api.h>
 
 #include "rdpgfx_main.h"
 
-UINT rdpgfx_decode(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd);
+FREERDP_LOCAL UINT rdpgfx_decode(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd);
 
 #endif /* FREERDP_CHANNEL_RDPGFX_CLIENT_CODEC_H */
