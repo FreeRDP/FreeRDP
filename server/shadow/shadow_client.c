@@ -1454,7 +1454,6 @@ static void* shadow_client_thread(rdpShadowClient* client)
 	wMessage pointerAlphaMsg;
 	wMessage audioVolumeMsg;
 	HANDLE events[32];
-	HANDLE ClientEvent;
 	HANDLE ChannelEvent;
 	void* UpdateSubscriber;
 	HANDLE UpdateEvent;
@@ -1497,14 +1496,23 @@ static void* shadow_client_thread(rdpShadowClient* client)
 		goto out;
 
 	UpdateEvent = shadow_multiclient_getevent(UpdateSubscriber);
-	ClientEvent = peer->GetEventHandle(peer);
 	ChannelEvent = WTSVirtualChannelManagerGetEventHandle(client->vcm);
 
 	while (1)
 	{
 		nCount = 0;
 		events[nCount++] = UpdateEvent;
-		events[nCount++] = ClientEvent;
+		{
+			DWORD tmp = peer->GetEventHandles(peer, &events[nCount], 64 - nCount);
+
+			if (tmp == 0)
+			{
+				WLog_ERR(TAG, "Failed to get FreeRDP transport event handles");
+				break;
+			}
+
+			nCount += tmp;
+		}
 		events[nCount++] = ChannelEvent;
 		events[nCount++] = MessageQueue_Event(MsgQueue);
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
@@ -1559,14 +1567,13 @@ static void* shadow_client_thread(rdpShadowClient* client)
 			(void)shadow_multiclient_consume(UpdateSubscriber);
 		}
 
-		if (WaitForSingleObject(ClientEvent, 0) == WAIT_OBJECT_0)
+		if (!peer->CheckFileDescriptor(peer))
 		{
-			if (!peer->CheckFileDescriptor(peer))
-			{
-				WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
-				break;
-			}
-
+			WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
+			break;
+		}
+		else
+		{
 			if (WTSVirtualChannelManagerIsChannelJoined(client->vcm, "drdynvc"))
 			{
 				/* Dynamic channel status may have been changed after processing */

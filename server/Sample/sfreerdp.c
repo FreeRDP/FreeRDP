@@ -803,7 +803,17 @@ static void* test_peer_mainloop(void* arg)
 	while (1)
 	{
 		count = 0;
-		handles[count++] = client->GetEventHandle(client);
+		{
+			DWORD tmp = client->GetEventHandles(client, &handles[count], 32 - count);
+
+			if (tmp == 0)
+			{
+				WLog_ERR(TAG, "Failed to get FreeRDP transport event handles");
+				break;
+			}
+
+			count += tmp;
+		}
 		handles[count++] = WTSVirtualChannelManagerGetEventHandle(context->vcm);
 		status = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
 
