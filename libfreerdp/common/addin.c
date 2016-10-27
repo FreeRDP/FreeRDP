@@ -32,6 +32,8 @@
 #include <freerdp/addin.h>
 #include <freerdp/build-config.h>
 
+#include <freerdp/log.h>
+#define TAG FREERDP_TAG("addin")
 
 LPSTR freerdp_get_library_install_path(void)
 {
@@ -292,6 +294,9 @@ PVIRTUALCHANNELENTRY freerdp_load_channel_addin_entry(LPCSTR pszName,
 	if (!entry)
 		entry = freerdp_load_dynamic_channel_addin_entry(pszName, pszSubsystem, pszType,
 		        dwFlags);
+
+	if (!entry)
+		WLog_WARN(TAG, "Failed to load channel %s [%s]", pszName, pszSubsystem);
 
 	return entry;
 }
