@@ -698,8 +698,16 @@ static UINT gdi_CreateSurface(RdpgfxClientContext* context,
 			return ERROR_INTERNAL_ERROR;
 	}
 
-	surface->scanline = (surface->width + (surface->width % 4)) * 4;
-	surface->data = (BYTE*) calloc(1, surface->scanline * surface->height);
+	surface->scanline = surface->width * 4;
+	{
+		const UINT32 align = 16;
+		const UINT32 pad = align - (surface->scanline % align);
+
+		if (align != pad)
+			surface->scanline += pad;
+
+		surface->data = (BYTE*) calloc(1, surface->scanline * surface->height);
+	}
 
 	if (!surface->data)
 	{
