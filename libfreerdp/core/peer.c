@@ -248,6 +248,14 @@ static BOOL freerdp_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 	return TRUE;
 }
 
+static HANDLE freerdp_peer_get_event_handle(freerdp_peer* client)
+{
+	HANDLE hEvent = NULL;
+	rdpTransport* transport = client->context->rdp->transport;
+	BIO_get_event(transport->frontBio, &hEvent);
+	return hEvent;
+}
+
 static DWORD freerdp_peer_get_event_handles(freerdp_peer* client, HANDLE* events, DWORD count)
 {
 	DWORD nCount = 0;
@@ -807,6 +815,7 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 		client->ContextSize = sizeof(rdpContext);
 		client->Initialize = freerdp_peer_initialize;
 		client->GetFileDescriptor = freerdp_peer_get_fds;
+		client->GetEventHandle = freerdp_peer_get_event_handle;
 		client->GetEventHandles = freerdp_peer_get_event_handles;
 		client->CheckFileDescriptor = freerdp_peer_check_fds;
 		client->Close = freerdp_peer_close;
