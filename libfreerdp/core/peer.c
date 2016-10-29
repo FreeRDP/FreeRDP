@@ -258,13 +258,7 @@ static HANDLE freerdp_peer_get_event_handle(freerdp_peer* client)
 
 static DWORD freerdp_peer_get_event_handles(freerdp_peer* client, HANDLE* events, DWORD count)
 {
-	DWORD nCount = 0;
-	nCount += transport_get_event_handles(client->context->rdp->transport, events, count);
-
-	if (nCount == 0)
-		return 0;
-
-	return nCount;
+	return transport_get_event_handles(client->context->rdp->transport, events, count);
 }
 
 static BOOL freerdp_peer_check_fds(freerdp_peer* peer)
