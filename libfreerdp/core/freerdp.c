@@ -37,6 +37,7 @@
 #include <winpr/string.h>
 #include <winpr/stream.h>
 #include <winpr/wtsapi.h>
+#include <winpr/debug.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/error.h>
@@ -63,7 +64,12 @@ void freerdp_channel_init_thread_context(rdpContext* context)
 freerdp* freerdp_channel_get_instance(void)
 {
 	if (!s_TLSContext)
+	{
+		WLog_ERR(TAG,
+		         "Funcion was called from thread that did not call freerdp_channel_init_thread_context");
+		winpr_log_backtrace(TAG, WLOG_ERROR, 20);
 		return NULL;
+	}
 
 	return s_TLSContext->instance;
 }
@@ -76,7 +82,12 @@ rdpContext* freerdp_channel_get_context(void)
 rdpChannels* freerdp_channel_get_channels_context(void)
 {
 	if (!s_TLSContext)
+	{
+		WLog_ERR(TAG,
+		         "Funcion was called from thread that did not call freerdp_channel_init_thread_context");
+		winpr_log_backtrace(TAG, WLOG_ERROR, 20);
 		return NULL;
+	}
 
 	return s_TLSContext->channels;
 }

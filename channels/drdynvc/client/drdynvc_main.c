@@ -275,7 +275,7 @@ static UINT dvcman_load_addin(IWTSVirtualChannelManager* pChannelMgr,
 		return pDVCPluginEntry((IDRDYNVC_ENTRY_POINTS*) &entryPoints);
 	}
 
-	return CHANNEL_RC_OK;
+	return ERROR_INVALID_FUNCTION;
 }
 
 static DVCMAN_CHANNEL* dvcman_channel_new(IWTSVirtualChannelManager*
