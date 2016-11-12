@@ -48,7 +48,7 @@ struct rdp_client_entry_points_v1
 	rdpSettings* settings;
 
 	pRdpGlobalInit GlobalInit;/*初始化本地化的设置和Linux系统的信号量 2016-11-12 10:11:50*/
-	pRdpGlobalUninit GlobalUninit;
+	pRdpGlobalUninit GlobalUninit;/*最终化函数，当前是空函数 2016-11-12 10:19:52*/
 
 	DWORD ContextSize;
 	pRdpClientNew ClientNew;
