@@ -42,8 +42,8 @@ typedef int (*pRdpClientStop)(rdpContext* context);
 
 struct rdp_client_entry_points_v1
 {
-	DWORD Size;
-	DWORD Version;
+	DWORD Size; /*自身结构的大小2016-11-12 9:58:40*/
+	DWORD Version; /*值是RDP_CLIENT_INTERFACE_VERSION宏 2016-11-12 10:01:16*/
 
 	rdpSettings* settings;
 
