@@ -696,14 +696,13 @@ static BOOL gdi_line_to(rdpContext* context, const LINE_TO_ORDER* lineTo)
 {
 	UINT32 color;
 	HGDI_PEN hPen;
-	UINT32 SrcFormat;
 	rdpGdi* gdi = context->gdi;
 
-	if (!gdi_decode_color(gdi, lineTo->backColor, &color, &SrcFormat))
+	if (!gdi_decode_color(gdi, lineTo->backColor, &color, NULL))
 		return FALSE;
 
 	if (!(hPen = gdi_CreatePen(lineTo->penStyle, lineTo->penWidth, color,
-	                           SrcFormat, &gdi->palette)))
+	                           gdi->drawing->hdc->format, &gdi->palette)))
 		return FALSE;
 
 	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT) hPen);
@@ -722,13 +721,13 @@ static BOOL gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 	UINT32 color;
 	HGDI_PEN hPen;
 	DELTA_POINT* points;
-	UINT32 SrcFormat;
 	rdpGdi* gdi = context->gdi;
 
-	if (!gdi_decode_color(gdi, polyline->penColor, &color, &SrcFormat))
+	if (!gdi_decode_color(gdi, polyline->penColor, &color, NULL))
 		return FALSE;
 
-	if (!(hPen = gdi_CreatePen(GDI_PS_SOLID, 1, color, SrcFormat, &gdi->palette)))
+	if (!(hPen = gdi_CreatePen(GDI_PS_SOLID, 1, color, gdi->drawing->hdc->format,
+	                           &gdi->palette)))
 		return FALSE;
 
 	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT) hPen);
