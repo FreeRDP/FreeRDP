@@ -104,7 +104,6 @@ struct rdp_channels
 	wMessageQueue* queue;
 
 	DrdynvcClientContext* drdynvc;
-	UINT64 openHandleSeq;
 	CRITICAL_SECTION channelsLock;
 	wHashTable* openHandles;
 };

@@ -30,7 +30,7 @@
 
 #define TAG CHANNELS_TAG("drdynvc.client")
 
-static WINPR_TLS drdynvcPlugin* s_TLSPluginContext = NULL;
+static rdpChannelHandles g_ChannelHandles = { NULL, NULL };
 
 static void dvcman_channel_free(void* channel);
 static UINT drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId,
@@ -1199,8 +1199,8 @@ static void VCAPITYPE drdynvc_virtual_channel_open_event(DWORD openHandle,
         UINT event,
         LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
-	drdynvcPlugin* drdynvc = s_TLSPluginContext;
 	UINT error = CHANNEL_RC_OK;
+	drdynvcPlugin* drdynvc = (drdynvcPlugin*) freerdp_channel_get_open_handle_data(&g_ChannelHandles, openHandle);
 
 	if (!drdynvc || (drdynvc->OpenHandle != openHandle))
 	{
@@ -1305,6 +1305,8 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc,
 		return status;
 	}
 
+	freerdp_channel_add_open_handle_data(&g_ChannelHandles, drdynvc->OpenHandle, (void*) drdynvc);
+
 	drdynvc->queue = MessageQueue_New(NULL);
 
 	if (!drdynvc->queue)
@@ -1398,6 +1400,8 @@ static UINT drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
 		drdynvc->channel_mgr = NULL;
 	}
 
+	freerdp_channel_remove_open_handle_data(&g_ChannelHandles, drdynvc->OpenHandle);
+
 	return status;
 }
 
@@ -1408,6 +1412,7 @@ static UINT drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
  */
 static UINT drdynvc_virtual_channel_event_terminated(drdynvcPlugin* drdynvc)
 {
+	freerdp_channel_remove_init_handle_data(&g_ChannelHandles, (void*) drdynvc);
 	drdynvc->InitHandle = 0;
 	free(drdynvc);
 	return CHANNEL_RC_OK;
@@ -1417,8 +1422,8 @@ static VOID VCAPITYPE drdynvc_virtual_channel_init_event(LPVOID pInitHandle,
         UINT event, LPVOID pData,
         UINT dataLength)
 {
-	drdynvcPlugin* drdynvc = s_TLSPluginContext;
 	UINT error = CHANNEL_RC_OK;
+	drdynvcPlugin* drdynvc = (drdynvcPlugin*) freerdp_channel_get_init_handle_data(&g_ChannelHandles, pInitHandle);
 
 	if (!drdynvc || (drdynvc->InitHandle != pInitHandle))
 	{
@@ -1536,7 +1541,9 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	        (drdynvc->channelEntryPoints.ppInterface);
 	drdynvc->channelEntryPoints.ppInterface = &
 	        (drdynvc->channelEntryPoints.pInterface);
-	s_TLSPluginContext = drdynvc;
+
+	freerdp_channel_add_init_handle_data(&g_ChannelHandles, drdynvc->InitHandle, (void*) drdynvc);
+
 	return TRUE;
 }
 

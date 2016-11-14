@@ -33,7 +33,7 @@
 
 #include "remdesk_main.h"
 
-static WINPR_TLS remdeskPlugin* s_TLSPluginContext = NULL;
+static rdpChannelHandles g_ChannelHandles = { NULL, NULL };
 
 static RemdeskClientContext* remdesk_get_client_interface(
     remdeskPlugin* remdesk)
@@ -806,8 +806,8 @@ static VOID VCAPITYPE remdesk_virtual_channel_open_event(DWORD openHandle,
         UINT event,
         LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
-	remdeskPlugin* remdesk = s_TLSPluginContext;
 	UINT error = CHANNEL_RC_OK;
+	remdeskPlugin* remdesk = (remdeskPlugin*) freerdp_channel_get_open_handle_data(&g_ChannelHandles, openHandle);
 
 	if (!remdesk || (remdesk->OpenHandle != openHandle))
 	{
@@ -911,6 +911,8 @@ static UINT remdesk_virtual_channel_event_connected(remdeskPlugin* remdesk,
 		return status;
 	}
 
+	freerdp_channel_add_open_handle_data(&g_ChannelHandles, remdesk->OpenHandle, (void*) remdesk);
+
 	remdesk->queue = MessageQueue_New(NULL);
 
 	if (!remdesk->queue)
@@ -975,11 +977,14 @@ static UINT remdesk_virtual_channel_event_disconnected(remdeskPlugin* remdesk)
 		remdesk->data_in = NULL;
 	}
 
+	freerdp_channel_remove_open_handle_data(&g_ChannelHandles, remdesk->OpenHandle);
+
 	return rc;
 }
 
 static void remdesk_virtual_channel_event_terminated(remdeskPlugin* remdesk)
 {
+	freerdp_channel_remove_init_handle_data(&g_ChannelHandles, (void*) remdesk);
 	remdesk->InitHandle = 0;
 	free(remdesk);
 }
@@ -988,8 +993,8 @@ static VOID VCAPITYPE remdesk_virtual_channel_init_event(LPVOID pInitHandle,
         UINT event, LPVOID pData,
         UINT dataLength)
 {
-	remdeskPlugin* remdesk = s_TLSPluginContext;
 	UINT error = CHANNEL_RC_OK;
+	remdeskPlugin* remdesk = (remdeskPlugin*) freerdp_channel_get_init_handle_data(&g_ChannelHandles, pInitHandle);
 
 	if (!remdesk || (remdesk->InitHandle != pInitHandle))
 	{
@@ -1090,7 +1095,9 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	        (remdesk->channelEntryPoints.ppInterface);
 	remdesk->channelEntryPoints.ppInterface = &
 	        (remdesk->channelEntryPoints.pInterface);
-	s_TLSPluginContext = remdesk;
+
+	freerdp_channel_add_init_handle_data(&g_ChannelHandles, remdesk->InitHandle, (void*) remdesk);
+
 	return TRUE;
 error_out:
 

@@ -32,6 +32,10 @@
 #define TAG FREERDP_TAG("core.client")
 
 static WINPR_TLS void* g_pInterface = NULL;
+static WINPR_TLS rdpChannels* g_channels = NULL; /* use only for VirtualChannelInit hack */
+
+static UINT32 g_OpenHandleSeq = 1; /* use global counter to ensure uniqueness across channel manager instances */
+static rdpChannelHandles g_ChannelHandles = { NULL, NULL };
 
 static CHANNEL_OPEN_DATA* freerdp_channels_find_channel_open_data_by_name(
     rdpChannels* channels, const char* name)
@@ -83,7 +87,6 @@ rdpChannels* freerdp_channels_new(freerdp* instance)
 		goto error;
 
 	channels->instance = instance;
-	channels->openHandleSeq = 1;
 	channels->queue = MessageQueue_New(NULL);
 
 	if (!channels->queue)
@@ -125,6 +128,8 @@ void freerdp_channels_free(rdpChannels* channels)
 			free(pChannelOpenData->pInterface);
 			pChannelOpenData->pInterface = NULL;
 		}
+
+		freerdp_channel_remove_open_handle_data(&g_ChannelHandles, pChannelOpenData->OpenHandle);
 
 		if (channels->openHandles)
 			HashTable_Remove(channels->openHandles,
@@ -510,12 +515,12 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInit(LPVOID* ppInitHandle,
 	void* pInterface;
 	DWORD OpenHandle;
 	CHANNEL_DEF* channel;
-	rdpChannels* channels = freerdp_channel_get_channels_context();
 	rdpSettings* settings;
 	PCHANNEL_DEF pChannelDef;
 	CHANNEL_INIT_DATA* pChannelInitData;
 	CHANNEL_OPEN_DATA* pChannelOpenData;
 	CHANNEL_CLIENT_DATA* pChannelClientData;
+	rdpChannels* channels = g_channels;
 
 	if (!ppInitHandle || !channels)
 		return CHANNEL_RC_BAD_INIT_HANDLE;
@@ -567,9 +572,10 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInit(LPVOID* ppInitHandle,
 	{
 		pChannelDef = &pChannel[index];
 		pChannelOpenData = &channels->openDataList[channels->openDataCount];
-		OpenHandle = channels->openHandleSeq++;
+		OpenHandle = g_OpenHandleSeq++;
 		pChannelOpenData->OpenHandle = OpenHandle;
 		pChannelOpenData->channels = channels;
+		freerdp_channel_add_open_handle_data(&g_ChannelHandles, OpenHandle, (void*) channels);
 		HashTable_Add(channels->openHandles, (void*)(UINT_PTR) OpenHandle,
 		              (void*) pChannelOpenData);
 		pChannelOpenData->flags = 1; /* init */
@@ -629,8 +635,8 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelOpen(LPVOID pInitHandle,
 
 static UINT VCAPITYPE FreeRDP_VirtualChannelClose(DWORD openHandle)
 {
-	rdpChannels* channels = freerdp_channel_get_channels_context();
 	CHANNEL_OPEN_DATA* pChannelOpenData;
+	rdpChannels* channels = (rdpChannels*) freerdp_channel_get_open_handle_data(&g_ChannelHandles, openHandle);
 
 	if (!channels)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
@@ -652,9 +658,9 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelWrite(DWORD openHandle,
         LPVOID pData,
         ULONG dataLength, LPVOID pUserData)
 {
-	rdpChannels* channels = freerdp_channel_get_channels_context();
 	CHANNEL_OPEN_DATA* pChannelOpenData;
 	CHANNEL_OPEN_EVENT* pChannelOpenEvent;
+	rdpChannels* channels = (rdpChannels*) freerdp_channel_get_open_handle_data(&g_ChannelHandles, openHandle);
 
 	if (!channels)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
@@ -749,6 +755,7 @@ int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings,
 	channels->can_call_init = TRUE;
 	EnterCriticalSection(&channels->channelsLock);
 	g_pInterface = NULL;
+	g_channels = channels;
 	status = pChannelClientData->entry((PCHANNEL_ENTRY_POINTS) &EntryPoints);
 	LeaveCriticalSection(&channels->channelsLock);
 	/* disable MyVirtualChannelInit */

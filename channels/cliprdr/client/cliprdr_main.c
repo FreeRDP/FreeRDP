@@ -34,6 +34,8 @@
 #include "cliprdr_main.h"
 #include "cliprdr_format.h"
 
+static rdpChannelHandles g_ChannelHandles = { NULL, NULL };
+
 static const char* const CB_MSG_TYPE_STRINGS[] =
 {
 	"",
@@ -49,8 +51,6 @@ static const char* const CB_MSG_TYPE_STRINGS[] =
 	"CB_LOCK_CLIPDATA",
 	"CB_UNLOCK_CLIPDATA"
 };
-
-static WINPR_TLS cliprdrPlugin* s_TLSPluginContext = NULL;
 
 CliprdrClientContext* cliprdr_get_client_interface(cliprdrPlugin* cliprdr)
 {
@@ -1017,8 +1017,8 @@ static VOID VCAPITYPE cliprdr_virtual_channel_open_event(DWORD openHandle,
         UINT event,
         LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
-	cliprdrPlugin* cliprdr = s_TLSPluginContext;
 	UINT error = CHANNEL_RC_OK;
+	cliprdrPlugin* cliprdr = (cliprdrPlugin*) freerdp_channel_get_open_handle_data(&g_ChannelHandles, openHandle);
 
 	if (!cliprdr || (cliprdr->OpenHandle != openHandle))
 	{
@@ -1113,6 +1113,8 @@ static UINT cliprdr_virtual_channel_event_connected(cliprdrPlugin* cliprdr,
 		return status;
 	}
 
+	freerdp_channel_add_open_handle_data(&g_ChannelHandles, cliprdr->OpenHandle, (void*) cliprdr);
+
 	cliprdr->queue = MessageQueue_New(NULL);
 
 	if (!cliprdr->queue)
@@ -1170,6 +1172,8 @@ static UINT cliprdr_virtual_channel_event_disconnected(cliprdrPlugin* cliprdr)
 		cliprdr->data_in = NULL;
 	}
 
+	freerdp_channel_remove_open_handle_data(&g_ChannelHandles, cliprdr->OpenHandle);
+
 	return CHANNEL_RC_OK;
 }
 
@@ -1180,6 +1184,7 @@ static UINT cliprdr_virtual_channel_event_disconnected(cliprdrPlugin* cliprdr)
  */
 static UINT cliprdr_virtual_channel_event_terminated(cliprdrPlugin* cliprdr)
 {
+	freerdp_channel_remove_init_handle_data(&g_ChannelHandles, (void*) cliprdr);
 	free(cliprdr);
 	return CHANNEL_RC_OK;
 }
@@ -1188,8 +1193,8 @@ static VOID VCAPITYPE cliprdr_virtual_channel_init_event(LPVOID pInitHandle,
         UINT event, LPVOID pData,
         UINT dataLength)
 {
-	cliprdrPlugin* cliprdr = s_TLSPluginContext;
 	UINT error = CHANNEL_RC_OK;
+	cliprdrPlugin* cliprdr = (cliprdrPlugin*) freerdp_channel_get_init_handle_data(&g_ChannelHandles, pInitHandle);
 
 	if (!cliprdr || (cliprdr->InitHandle != pInitHandle))
 	{
@@ -1310,6 +1315,8 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	        (cliprdr->channelEntryPoints.ppInterface);
 	cliprdr->channelEntryPoints.ppInterface = &
 	        (cliprdr->channelEntryPoints.pInterface);
-	s_TLSPluginContext = cliprdr;
+
+	freerdp_channel_add_init_handle_data(&g_ChannelHandles, cliprdr->InitHandle, (void*) cliprdr);
+
 	return TRUE;
 }
