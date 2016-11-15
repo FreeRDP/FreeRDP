@@ -45,7 +45,7 @@ void* smartcard_context_thread(SMARTCARD_CONTEXT* pContext)
 	SMARTCARD_OPERATION* operation;
 	UINT error = CHANNEL_RC_OK;
 	smartcard = pContext->smartcard;
-	freerdp_channel_init_thread_context(smartcard->rdpcontext);
+
 	nCount = 0;
 	hEvents[nCount++] = MessageQueue_Event(pContext->IrpQueue);
 
@@ -516,7 +516,7 @@ static void* smartcard_thread_func(void* arg)
 	wMessage message;
 	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) arg;
 	UINT error = CHANNEL_RC_OK;
-	freerdp_channel_init_thread_context(smartcard->rdpcontext);
+
 	nCount = 0;
 	hEvents[nCount++] = MessageQueue_Event(smartcard->IrpQueue);
 	hEvents[nCount++] = Queue_Event(smartcard->CompletedIrpQueue);

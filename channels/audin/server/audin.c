@@ -417,7 +417,6 @@ static void* audin_server_thread_func(void* arg)
 	buffer = NULL;
 	BytesReturned = 0;
 	ChannelEvent = NULL;
-	freerdp_channel_init_thread_context(audin->context.rdpcontext);
 
 	if (WTSVirtualChannelQuery(audin->audin_channel, WTSVirtualEventHandle, &buffer,
 	                           &BytesReturned) == TRUE)

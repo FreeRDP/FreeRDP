@@ -1052,7 +1052,6 @@ static void* cliprdr_virtual_channel_client_thread(void* arg)
 	wMessage message;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) arg;
 	UINT error = CHANNEL_RC_OK;
-	freerdp_channel_init_thread_context(cliprdr->context->rdpcontext);
 
 	while (1)
 	{

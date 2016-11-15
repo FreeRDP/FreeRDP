@@ -187,7 +187,7 @@ static void* encomsp_server_thread(void* arg)
 	UINT error = CHANNEL_RC_OK;
 	DWORD status;
 	context = (EncomspServerContext*) arg;
-	freerdp_channel_init_thread_context(context->rdpcontext);
+
 	buffer = NULL;
 	BytesReturned = 0;
 	ChannelEvent = NULL;

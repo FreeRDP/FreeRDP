@@ -237,7 +237,6 @@ static void* printer_thread_func(void* arg)
 	PRINTER_DEVICE* printer_dev = (PRINTER_DEVICE*) arg;
 	HANDLE obj[] = {printer_dev->event, printer_dev->stopEvent};
 	UINT error = CHANNEL_RC_OK;
-	freerdp_channel_init_thread_context(printer_dev->rdpcontext);
 
 	while (1)
 	{

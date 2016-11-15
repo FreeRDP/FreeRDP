@@ -117,7 +117,6 @@ static void* echo_server_thread_func(void* arg)
 	echo_server* echo = (echo_server*) arg;
 	UINT error;
 	DWORD status;
-	freerdp_channel_init_thread_context(echo->context.rdpcontext);
 
 	if ((error = echo_server_open_channel(echo)))
 	{

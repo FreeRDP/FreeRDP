@@ -718,7 +718,7 @@ static void* tsmf_stream_ack_func(void* arg)
 	TSMF_STREAM* stream = (TSMF_STREAM*) arg;
 	UINT error = CHANNEL_RC_OK;
 	DEBUG_TSMF("in %d", stream->stream_id);
-	freerdp_channel_init_thread_context(stream->rdpcontext);
+
 	hdl[0] = stream->stopEvent;
 	hdl[1] = Queue_Event(stream->sample_ack_list);
 
@@ -806,7 +806,6 @@ static void* tsmf_stream_playback_func(void* arg)
 	UINT error = CHANNEL_RC_OK;
 	DWORD status;
 	DEBUG_TSMF("in %d", stream->stream_id);
-	freerdp_channel_init_thread_context(stream->rdpcontext);
 
 	if (stream->major_type == TSMF_MAJOR_TYPE_AUDIO &&
 	    stream->sample_rate && stream->channels && stream->bits_per_sample)

@@ -462,7 +462,6 @@ static void* irp_thread_func(void* arg)
 {
 	IRP_THREAD_DATA* data = (IRP_THREAD_DATA*)arg;
 	UINT error;
-	freerdp_channel_init_thread_context(data->serial->rdpcontext);
 
 	/* blocks until the end of the request */
 	if ((error = serial_process_irp(data->serial, data->irp)))
@@ -680,7 +679,6 @@ static void* serial_thread_func(void* arg)
 	wMessage message;
 	SERIAL_DEVICE* serial = (SERIAL_DEVICE*) arg;
 	UINT error = CHANNEL_RC_OK;
-	freerdp_channel_init_thread_context(serial->rdpcontext);
 
 	while (1)
 	{

@@ -848,7 +848,7 @@ static void* remdesk_virtual_channel_client_thread(void* arg)
 	wMessage message;
 	remdeskPlugin* remdesk = (remdeskPlugin*) arg;
 	UINT error = CHANNEL_RC_OK;
-	freerdp_channel_init_thread_context(remdesk->rdpcontext);
+
 	remdesk_process_connect(remdesk);
 
 	while (1)

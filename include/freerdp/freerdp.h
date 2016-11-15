@@ -307,10 +307,6 @@ FREERDP_API BOOL freerdp_shall_disconnect(freerdp* instance);
 FREERDP_API BOOL freerdp_disconnect(freerdp* instance);
 FREERDP_API BOOL freerdp_reconnect(freerdp* instance);
 
-FREERDP_API void freerdp_channel_init_thread_context(rdpContext* context);
-FREERDP_API freerdp* freerdp_channel_get_instance(void);
-FREERDP_API rdpContext* freerdp_channel_get_context(void);
-
 FREERDP_API UINT freerdp_channel_add_init_handle_data(rdpChannelHandles* handles, void* pInitHandle, void* pUserData);
 FREERDP_API void* freerdp_channel_get_init_handle_data(rdpChannelHandles* handles, void* pInitHandle);
 FREERDP_API void freerdp_channel_remove_init_handle_data(rdpChannelHandles* handles, void* pInitHandle);

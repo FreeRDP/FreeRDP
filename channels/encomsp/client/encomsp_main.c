@@ -1045,7 +1045,7 @@ static void* encomsp_virtual_channel_client_thread(void* arg)
 	wMessage message;
 	encomspPlugin* encomsp = (encomspPlugin*) arg;
 	UINT error = CHANNEL_RC_OK;
-	freerdp_channel_init_thread_context(encomsp->rdpcontext);
+
 	encomsp_process_connect(encomsp);
 
 	while (1)

@@ -586,7 +586,6 @@ static void* rail_virtual_channel_client_thread(void* arg)
 	wMessage message;
 	railPlugin* rail = (railPlugin*) arg;
 	UINT error = CHANNEL_RC_OK;
-	freerdp_channel_init_thread_context(rail->rdpcontext);
 
 	while (1)
 	{

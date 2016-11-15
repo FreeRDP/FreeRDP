@@ -113,7 +113,7 @@ static void* rdpsnd_schedule_thread(void* arg)
 	HANDLE events[2];
 	UINT error = CHANNEL_RC_OK;
 	DWORD status;
-	freerdp_channel_init_thread_context(rdpsnd->rdpcontext);
+
 	events[0] = MessageQueue_Event(rdpsnd->MsgPipe->Out);
 	events[1] = rdpsnd->stopEvent;
 
@@ -1247,7 +1247,6 @@ static void* rdpsnd_virtual_channel_client_thread(void* arg)
 	wMessage message;
 	rdpsndPlugin* rdpsnd = (rdpsndPlugin*) arg;
 	UINT error;
-	freerdp_channel_init_thread_context(rdpsnd->rdpcontext);
 
 	if ((error = rdpsnd_process_connect(rdpsnd)))
 	{

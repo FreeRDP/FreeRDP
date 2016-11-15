@@ -864,7 +864,6 @@ static void* drive_hotplug_thread_func(void* arg)
 	UINT error = 0;
 	DWORD status;
 	rdpdr = (rdpdrPlugin*) arg;
-	freerdp_channel_init_thread_context(rdpdr->rdpcontext);
 
 	if (!(rdpdr->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 	{
@@ -1562,8 +1561,6 @@ static void* rdpdr_virtual_channel_client_thread(void* arg)
 		ExitThread((DWORD) CHANNEL_RC_NULL_DATA);
 		return NULL;
 	}
-
-	freerdp_channel_init_thread_context(rdpdr->rdpcontext);
 
 	if ((error = rdpdr_process_connect(rdpdr)))
 	{

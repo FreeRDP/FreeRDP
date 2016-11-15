@@ -592,7 +592,7 @@ static void* remdesk_server_thread(void* arg)
 	RemdeskServerContext* context;
 	UINT error;
 	context = (RemdeskServerContext*) arg;
-	freerdp_channel_init_thread_context(context->rdpcontext);
+
 	buffer = NULL;
 	BytesReturned = 0;
 	ChannelEvent = NULL;

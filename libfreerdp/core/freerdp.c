@@ -51,34 +51,6 @@
 
 /* connectErrorCode is 'extern' in error.h. See comment there.*/
 
-/* Thread local storage variables.
- * They need to be initialized in every thread that
- * has to use them. */
-static WINPR_TLS rdpContext* s_TLSContext = NULL;
-
-void freerdp_channel_init_thread_context(rdpContext* context)
-{
-	s_TLSContext = context;
-}
-
-freerdp* freerdp_channel_get_instance(void)
-{
-	if (!s_TLSContext)
-	{
-		WLog_ERR(TAG,
-		         "Funcion was called from thread that did not call freerdp_channel_init_thread_context");
-		winpr_log_backtrace(TAG, WLOG_ERROR, 20);
-		return NULL;
-	}
-
-	return s_TLSContext->instance;
-}
-
-rdpContext* freerdp_channel_get_context(void)
-{
-	return s_TLSContext;
-}
-
 UINT freerdp_channel_add_init_handle_data(rdpChannelHandles* handles, void* pInitHandle, void* pUserData)
 {
 	if (!handles->init)
@@ -181,7 +153,6 @@ BOOL freerdp_connect(freerdp* instance)
 	if (!instance)
 		return FALSE;
 
-	freerdp_channel_init_thread_context(instance->context);
 	/* We always set the return code to 0 before we start the connect sequence*/
 	connectErrorCode = 0;
 	freerdp_set_last_error(instance->context, FREERDP_ERROR_SUCCESS);
