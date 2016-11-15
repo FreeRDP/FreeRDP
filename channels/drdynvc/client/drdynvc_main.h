@@ -115,7 +115,7 @@ typedef enum _DRDYNVC_STATE DRDYNVC_STATE;
 struct drdynvc_plugin
 {
 	CHANNEL_DEF channelDef;
-	CHANNEL_ENTRY_POINTS_FREERDP channelEntryPoints;
+	CHANNEL_ENTRY_POINTS_FREERDP_EX channelEntryPoints;
 
 	wLog* log;
 	HANDLE thread;
@@ -133,7 +133,6 @@ struct drdynvc_plugin
 	int PriorityCharge2;
 	int PriorityCharge3;
 	rdpContext* rdpcontext;
-
 
 	IWTSVirtualChannelManager* channel_mgr;
 };

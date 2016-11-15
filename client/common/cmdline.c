@@ -2521,11 +2521,23 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 static BOOL freerdp_client_load_static_channel_addin(rdpChannels* channels,
         rdpSettings* settings, char* name, void* data)
 {
-	PVIRTUALCHANNELENTRY entry;
+	PVIRTUALCHANNELENTRY entry = NULL;
+	PVIRTUALCHANNELENTRYEX entryEx = NULL;
 
 	entry = freerdp_load_channel_addin_entry(name, NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC);
 
-	if (entry)
+	if (!strcmp(name, "drdynvc"))
+		entryEx = (PVIRTUALCHANNELENTRYEX) entry;
+
+	if (entryEx)
+	{
+		if (freerdp_channels_client_load_ex(channels, settings, entryEx, data) == 0)
+		{
+			WLog_INFO(TAG, "loading channelEx %s", name);
+			return TRUE;
+		}
+	}
+	else if (entry)
 	{
 		if (freerdp_channels_client_load(channels, settings, entry, data) == 0)
 		{

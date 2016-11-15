@@ -1071,7 +1071,7 @@ int freerdp_channels_client_load_ex(rdpChannels* channels, rdpSettings* settings
 
 	if (!status)
 	{
-		WLog_ERR(TAG,  "error: channel export function call failed");
+		WLog_ERR(TAG, "error: channel export function call failed");
 		return 1;
 	}
 
