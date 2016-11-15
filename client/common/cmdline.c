@@ -2522,8 +2522,8 @@ static BOOL freerdp_client_load_static_channel_addin(rdpChannels* channels,
         rdpSettings* settings, char* name, void* data)
 {
 	PVIRTUALCHANNELENTRY entry;
-	entry = freerdp_load_channel_addin_entry(name, NULL, NULL,
-	        FREERDP_ADDIN_CHANNEL_STATIC);
+
+	entry = freerdp_load_channel_addin_entry(name, NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC);
 
 	if (entry)
 	{

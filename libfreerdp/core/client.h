@@ -44,6 +44,7 @@ struct rdp_channel_client_data
 	PCHANNEL_INIT_EVENT_FN pChannelInitEventProc;
 	PCHANNEL_INIT_EVENT_EX_FN pChannelInitEventProcEx;
 	void* pInitHandle;
+	void* lpUserParam;
 };
 typedef struct rdp_channel_client_data CHANNEL_CLIENT_DATA;
 
