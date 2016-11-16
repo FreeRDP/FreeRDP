@@ -737,16 +737,6 @@ HttpResponse* http_response_recv(rdpTls* tls)
 
 			response->BodyLength = Stream_GetPosition(s) - payloadOffset;
 
-			if (response->BodyLength > 0)
-			{
-				response->BodyContent = (BYTE*) malloc(response->BodyLength);
-
-				if (!response->BodyContent)
-					goto out_error;
-
-				CopyMemory(response->BodyContent, payload, response->BodyLength);
-			}
-
 			bodyLength = 0; /* expected body length */
 
 			if (response->ContentType)
@@ -761,6 +751,39 @@ HttpResponse* http_response_recv(rdpTls* tls)
 			else
 			{
 				bodyLength = response->BodyLength;
+			}
+
+			// Fetch remaining body!
+			while (response->BodyLength < bodyLength)
+			{
+				if (!Stream_EnsureRemainingCapacity(s, bodyLength - response->BodyLength))
+					goto out_error;
+
+				status = BIO_read(tls->bio, Stream_Pointer(s), bodyLength - response->BodyLength);
+
+				if (status <= 0)
+				{
+					if (!BIO_should_retry(tls->bio))
+						goto out_error;
+
+					USleep(100);
+					continue;
+				}
+
+				Stream_Seek(s, status);
+				response->BodyLength += status;
+
+			}
+
+			if (response->BodyLength > 0)
+			{
+				response->BodyContent = (BYTE*) malloc(response->BodyLength);
+
+				if (!response->BodyContent)
+					goto out_error;
+
+				CopyMemory(response->BodyContent, payload, response->BodyLength);
+				response->BodyLength = bodyLength;
 			}
 
 			if (bodyLength != response->BodyLength)
