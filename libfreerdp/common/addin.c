@@ -288,12 +288,13 @@ PVIRTUALCHANNELENTRY freerdp_load_channel_addin_entry(LPCSTR pszName,
 	PVIRTUALCHANNELENTRY entry = NULL;
 
 	if (freerdp_load_static_channel_addin_entry)
-		entry = freerdp_load_static_channel_addin_entry(pszName, pszSubsystem, pszType,
-		        dwFlags);
+		entry = freerdp_load_static_channel_addin_entry(pszName, pszSubsystem, pszType, dwFlags);
+
+	if (dwFlags & FREERDP_ADDIN_CHANNEL_ENTRYEX)
+		return entry; /* don't warn, don't try dynamic entries for VirtualChannelEntryEx */
 
 	if (!entry)
-		entry = freerdp_load_dynamic_channel_addin_entry(pszName, pszSubsystem, pszType,
-		        dwFlags);
+		entry = freerdp_load_dynamic_channel_addin_entry(pszName, pszSubsystem, pszType, dwFlags);
 
 	if (!entry)
 		WLog_WARN(TAG, "Failed to load channel %s [%s]", pszName, pszSubsystem);

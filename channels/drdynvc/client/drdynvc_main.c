@@ -1422,9 +1422,9 @@ static int drdynvc_get_version(DrdynvcClientContext* context)
 }
 
 /* drdynvc is always built-in */
-#define VirtualChannelEntry	drdynvc_VirtualChannelEntry
+#define VirtualChannelEntryEx	drdynvc_VirtualChannelEntryEx
 
-BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS_EX pEntryPoints, PVOID pInitHandle)
+BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_EX pEntryPoints, PVOID pInitHandle)
 {
 	UINT rc;
 	drdynvcPlugin* drdynvc;

@@ -2524,10 +2524,11 @@ static BOOL freerdp_client_load_static_channel_addin(rdpChannels* channels,
 	PVIRTUALCHANNELENTRY entry = NULL;
 	PVIRTUALCHANNELENTRYEX entryEx = NULL;
 
-	entry = freerdp_load_channel_addin_entry(name, NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC);
+	entryEx = (PVIRTUALCHANNELENTRYEX) freerdp_load_channel_addin_entry(name, NULL, NULL,
+						FREERDP_ADDIN_CHANNEL_STATIC | FREERDP_ADDIN_CHANNEL_ENTRYEX);
 
-	if (!strcmp(name, "drdynvc"))
-		entryEx = (PVIRTUALCHANNELENTRYEX) entry;
+	if (!entryEx)
+		entry = freerdp_load_channel_addin_entry(name, NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC);
 
 	if (entryEx)
 	{
