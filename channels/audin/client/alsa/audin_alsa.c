@@ -230,7 +230,7 @@ static void* audin_alsa_thread_func(void* arg)
 	AudinALSADevice* alsa = (AudinALSADevice*) arg;
 	DWORD status;
 	DEBUG_DVC("in");
-	freerdp_channel_init_thread_context(alsa->rdpcontext);
+
 	rbytes_per_frame = alsa->actual_channels * alsa->bytes_per_channel;
 	tbytes_per_frame = alsa->target_channels * alsa->bytes_per_channel;
 	buffer = (BYTE*) calloc(1, rbytes_per_frame * alsa->frames_per_packet);

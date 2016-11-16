@@ -683,7 +683,6 @@ static void* drive_thread_func(void* arg)
 	wMessage message;
 	DRIVE_DEVICE* drive = (DRIVE_DEVICE*) arg;
 	UINT error = CHANNEL_RC_OK;
-	freerdp_channel_init_thread_context(drive->rdpcontext);
 
 	while (1)
 	{

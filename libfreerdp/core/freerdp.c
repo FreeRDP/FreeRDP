@@ -51,45 +51,84 @@
 
 /* connectErrorCode is 'extern' in error.h. See comment there.*/
 
-/* Thread local storage variables.
- * They need to be initialized in every thread that
- * has to use them. */
-static WINPR_TLS rdpContext* s_TLSContext = NULL;
-
-void freerdp_channel_init_thread_context(rdpContext* context)
+UINT freerdp_channel_add_init_handle_data(rdpChannelHandles* handles, void* pInitHandle, void* pUserData)
 {
-	s_TLSContext = context;
-}
+	if (!handles->init)
+		handles->init = ListDictionary_New(TRUE);
 
-freerdp* freerdp_channel_get_instance(void)
-{
-	if (!s_TLSContext)
+	if (!handles->init)
 	{
-		WLog_ERR(TAG,
-		         "Funcion was called from thread that did not call freerdp_channel_init_thread_context");
-		winpr_log_backtrace(TAG, WLOG_ERROR, 20);
-		return NULL;
+		WLog_ERR(TAG, "ListDictionary_New failed!");
+		return ERROR_NOT_ENOUGH_MEMORY;
 	}
 
-	return s_TLSContext->instance;
-}
-
-rdpContext* freerdp_channel_get_context(void)
-{
-	return s_TLSContext;
-}
-
-rdpChannels* freerdp_channel_get_channels_context(void)
-{
-	if (!s_TLSContext)
+	if (!ListDictionary_Add(handles->init, pInitHandle, pUserData))
 	{
-		WLog_ERR(TAG,
-		         "Funcion was called from thread that did not call freerdp_channel_init_thread_context");
-		winpr_log_backtrace(TAG, WLOG_ERROR, 20);
-		return NULL;
+		WLog_ERR(TAG, "ListDictionary_Add failed!");
+		return ERROR_INTERNAL_ERROR;
 	}
 
-	return s_TLSContext->channels;
+	return CHANNEL_RC_OK;
+}
+
+void* freerdp_channel_get_init_handle_data(rdpChannelHandles* handles, void* pInitHandle)
+{
+	void* pUserData = NULL;
+	pUserData = ListDictionary_GetItemValue(handles->init, pInitHandle);
+	return pUserData;
+}
+
+void freerdp_channel_remove_init_handle_data(rdpChannelHandles* handles, void* pInitHandle)
+{
+	ListDictionary_Remove(handles->init, pInitHandle);
+
+	if (ListDictionary_Count(handles->init) < 1)
+	{
+		ListDictionary_Free(handles->init);
+		handles->init = NULL;
+	}
+}
+
+UINT freerdp_channel_add_open_handle_data(rdpChannelHandles* handles, DWORD openHandle, void* pUserData)
+{
+	void* pOpenHandle = (void*) (size_t) openHandle;
+
+	if (!handles->open)
+		handles->open = ListDictionary_New(TRUE);
+
+	if (!handles->open)
+	{
+		WLog_ERR(TAG, "ListDictionary_New failed!");
+		return ERROR_NOT_ENOUGH_MEMORY;
+	}
+
+	if (!ListDictionary_Add(handles->open, pOpenHandle, pUserData))
+	{
+		WLog_ERR(TAG, "ListDictionary_Add failed!");
+		return ERROR_INTERNAL_ERROR;
+	}
+
+	return CHANNEL_RC_OK;
+}
+
+void* freerdp_channel_get_open_handle_data(rdpChannelHandles* handles, DWORD openHandle)
+{
+	void* pUserData = NULL;
+	void* pOpenHandle = (void*) (size_t) openHandle;
+	pUserData = ListDictionary_GetItemValue(handles->open, pOpenHandle);
+	return pUserData;
+}
+
+void freerdp_channel_remove_open_handle_data(rdpChannelHandles* handles, DWORD openHandle)
+{
+	void* pOpenHandle = (void*) (size_t) openHandle;
+	ListDictionary_Remove(handles->open, pOpenHandle);
+
+	if (ListDictionary_Count(handles->open) < 1)
+	{
+		ListDictionary_Free(handles->open);
+		handles->open = NULL;
+	}
 }
 
 /** Creates a new connection based on the settings found in the "instance" parameter
@@ -114,7 +153,6 @@ BOOL freerdp_connect(freerdp* instance)
 	if (!instance)
 		return FALSE;
 
-	freerdp_channel_init_thread_context(instance->context);
 	/* We always set the return code to 0 before we start the connect sequence*/
 	connectErrorCode = 0;
 	freerdp_set_last_error(instance->context, FREERDP_ERROR_SUCCESS);

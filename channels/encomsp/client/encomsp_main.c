@@ -31,7 +31,7 @@
 
 #include "encomsp_main.h"
 
-static WINPR_TLS encomspPlugin* s_TLSPluginContext = NULL;
+static rdpChannelHandles g_ChannelHandles = { NULL, NULL };
 
 /**
  * Function description
@@ -1005,8 +1005,8 @@ static VOID VCAPITYPE encomsp_virtual_channel_open_event(DWORD openHandle,
         UINT event,
         LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
-	encomspPlugin* encomsp = s_TLSPluginContext;
 	UINT error = CHANNEL_RC_OK;
+	encomspPlugin* encomsp = (encomspPlugin*) freerdp_channel_get_open_handle_data(&g_ChannelHandles, openHandle);
 
 	if (!encomsp || (encomsp->OpenHandle != openHandle))
 	{
@@ -1045,7 +1045,7 @@ static void* encomsp_virtual_channel_client_thread(void* arg)
 	wMessage message;
 	encomspPlugin* encomsp = (encomspPlugin*) arg;
 	UINT error = CHANNEL_RC_OK;
-	freerdp_channel_init_thread_context(encomsp->rdpcontext);
+
 	encomsp_process_connect(encomsp);
 
 	while (1)
@@ -1107,6 +1107,8 @@ static UINT encomsp_virtual_channel_event_connected(encomspPlugin* encomsp,
 		return status;
 	}
 
+	freerdp_channel_add_open_handle_data(&g_ChannelHandles, encomsp->OpenHandle, (void*) encomsp);
+
 	encomsp->queue = MessageQueue_New(NULL);
 
 	if (!encomsp->queue)
@@ -1165,6 +1167,8 @@ static UINT encomsp_virtual_channel_event_disconnected(encomspPlugin* encomsp)
 		encomsp->data_in = NULL;
 	}
 
+	freerdp_channel_remove_open_handle_data(&g_ChannelHandles, encomsp->OpenHandle);
+
 	return CHANNEL_RC_OK;
 }
 
@@ -1176,6 +1180,7 @@ static UINT encomsp_virtual_channel_event_disconnected(encomspPlugin* encomsp)
  */
 static UINT encomsp_virtual_channel_event_terminated(encomspPlugin* encomsp)
 {
+	freerdp_channel_remove_init_handle_data(&g_ChannelHandles, (void*) encomsp);
 	encomsp->InitHandle = 0;
 	free(encomsp);
 	return CHANNEL_RC_OK;
@@ -1185,8 +1190,8 @@ static VOID VCAPITYPE encomsp_virtual_channel_init_event(LPVOID pInitHandle,
         UINT event, LPVOID pData,
         UINT dataLength)
 {
-	encomspPlugin* encomsp = s_TLSPluginContext;
 	UINT error = CHANNEL_RC_OK;
+	encomspPlugin* encomsp = (encomspPlugin*) freerdp_channel_get_init_handle_data(&g_ChannelHandles, pInitHandle);
 
 	if (!encomsp || (encomsp->InitHandle != pInitHandle))
 	{
@@ -1297,7 +1302,9 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	        (encomsp->channelEntryPoints.ppInterface);
 	encomsp->channelEntryPoints.ppInterface = &
 	        (encomsp->channelEntryPoints.pInterface);
-	s_TLSPluginContext = encomsp;
+
+	freerdp_channel_add_init_handle_data(&g_ChannelHandles, encomsp->InitHandle, (void*) encomsp);
+
 	return TRUE;
 error_out:
 

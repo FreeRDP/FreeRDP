@@ -310,7 +310,6 @@ static void* parallel_thread_func(void* arg)
 	wMessage message;
 	PARALLEL_DEVICE* parallel = (PARALLEL_DEVICE*) arg;
 	UINT error = CHANNEL_RC_OK;
-	freerdp_channel_init_thread_context(parallel->rdpcontext);
 
 	while (1)
 	{

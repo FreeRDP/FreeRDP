@@ -176,7 +176,6 @@ static void* rdpei_schedule_thread(void* arg)
 	RdpeiClientContext* context = (RdpeiClientContext*) rdpei->iface.pInterface;
 	HANDLE hdl[] = {rdpei->event, rdpei->stopEvent};
 	UINT error = CHANNEL_RC_OK;
-	freerdp_channel_init_thread_context(rdpei->rdpcontext);
 
 	if (!rdpei)
 	{

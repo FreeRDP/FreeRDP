@@ -93,7 +93,7 @@ struct rdpsnd_plugin
 	rdpContext* rdpcontext;
 };
 
-static WINPR_TLS rdpsndPlugin* s_TLSPluginContext = NULL;
+static rdpChannelHandles g_ChannelHandles = { NULL, NULL };
 
 /**
  * Function description
@@ -113,7 +113,7 @@ static void* rdpsnd_schedule_thread(void* arg)
 	HANDLE events[2];
 	UINT error = CHANNEL_RC_OK;
 	DWORD status;
-	freerdp_channel_init_thread_context(rdpsnd->rdpcontext);
+
 	events[0] = MessageQueue_Event(rdpsnd->MsgPipe->Out);
 	events[1] = rdpsnd->stopEvent;
 
@@ -1209,8 +1209,8 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_open_event(DWORD openHandle,
         UINT event,
         LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
-	rdpsndPlugin* rdpsnd = s_TLSPluginContext;
 	UINT error = CHANNEL_RC_OK;
+	rdpsndPlugin* rdpsnd = (rdpsndPlugin*) freerdp_channel_get_open_handle_data(&g_ChannelHandles, openHandle);
 
 	if (!rdpsnd || (rdpsnd->OpenHandle != openHandle))
 	{
@@ -1247,7 +1247,6 @@ static void* rdpsnd_virtual_channel_client_thread(void* arg)
 	wMessage message;
 	rdpsndPlugin* rdpsnd = (rdpsndPlugin*) arg;
 	UINT error;
-	freerdp_channel_init_thread_context(rdpsnd->rdpcontext);
 
 	if ((error = rdpsnd_process_connect(rdpsnd)))
 	{
@@ -1302,12 +1301,12 @@ out:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpsnd_virtual_channel_event_connected(rdpsndPlugin* plugin,
+static UINT rdpsnd_virtual_channel_event_connected(rdpsndPlugin* rdpsnd,
         LPVOID pData, UINT32 dataLength)
 {
 	UINT32 status;
-	status = plugin->channelEntryPoints.pVirtualChannelOpen(plugin->InitHandle,
-	         &plugin->OpenHandle, plugin->channelDef.name,
+	status = rdpsnd->channelEntryPoints.pVirtualChannelOpen(rdpsnd->InitHandle,
+	         &rdpsnd->OpenHandle, rdpsnd->channelDef.name,
 	         rdpsnd_virtual_channel_open_event);
 
 	if (status != CHANNEL_RC_OK)
@@ -1317,23 +1316,25 @@ static UINT rdpsnd_virtual_channel_event_connected(rdpsndPlugin* plugin,
 		return status;
 	}
 
-	plugin->MsgPipe = MessagePipe_New();
+	freerdp_channel_add_open_handle_data(&g_ChannelHandles, rdpsnd->OpenHandle, (void*) rdpsnd);
 
-	if (!plugin->MsgPipe)
+	rdpsnd->MsgPipe = MessagePipe_New();
+
+	if (!rdpsnd->MsgPipe)
 	{
 		WLog_ERR(TAG, "unable to create message pipe");
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	plugin->thread = CreateThread(NULL, 0,
-	                              (LPTHREAD_START_ROUTINE) rdpsnd_virtual_channel_client_thread, (void*) plugin,
+	rdpsnd->thread = CreateThread(NULL, 0,
+	                              (LPTHREAD_START_ROUTINE) rdpsnd_virtual_channel_client_thread, (void*) rdpsnd,
 	                              0, NULL);
 
-	if (!plugin->thread)
+	if (!rdpsnd->thread)
 	{
 		WLog_ERR(TAG, "unable to create thread");
-		MessagePipe_Free(plugin->MsgPipe);
-		plugin->MsgPipe = NULL;
+		MessagePipe_Free(rdpsnd->MsgPipe);
+		rdpsnd->MsgPipe = NULL;
 		return ERROR_INTERNAL_ERROR;
 	}
 
@@ -1403,11 +1404,14 @@ static UINT rdpsnd_virtual_channel_event_disconnected(rdpsndPlugin* rdpsnd)
 		rdpsnd->device_name = NULL;
 	}
 
+	freerdp_channel_remove_open_handle_data(&g_ChannelHandles, rdpsnd->OpenHandle);
+
 	return CHANNEL_RC_OK;
 }
 
 static void rdpsnd_virtual_channel_event_terminated(rdpsndPlugin* rdpsnd)
 {
+	freerdp_channel_remove_init_handle_data(&g_ChannelHandles, (void*) rdpsnd);
 	rdpsnd->InitHandle = 0;
 	free(rdpsnd);
 }
@@ -1415,8 +1419,8 @@ static void rdpsnd_virtual_channel_event_terminated(rdpsndPlugin* rdpsnd)
 static VOID VCAPITYPE rdpsnd_virtual_channel_init_event(LPVOID pInitHandle,
         UINT event, LPVOID pData, UINT dataLength)
 {
-	rdpsndPlugin* plugin = s_TLSPluginContext;
 	UINT error = CHANNEL_RC_OK;
+	rdpsndPlugin* plugin = (rdpsndPlugin*) freerdp_channel_get_init_handle_data(&g_ChannelHandles, pInitHandle);
 
 	if (!plugin || (plugin->InitHandle != pInitHandle))
 	{
@@ -1513,6 +1517,7 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 		return FALSE;
 	}
 
-	s_TLSPluginContext = rdpsnd;
+	freerdp_channel_add_init_handle_data(&g_ChannelHandles, rdpsnd->InitHandle, (void*) rdpsnd);
+
 	return TRUE;
 }

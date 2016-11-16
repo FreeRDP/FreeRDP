@@ -33,7 +33,7 @@
 #include "rail_orders.h"
 #include "rail_main.h"
 
-static WINPR_TLS railPlugin* s_TLSPluginContext = NULL;
+static rdpChannelHandles g_ChannelHandles = { NULL, NULL };
 
 RailClientContext* rail_get_client_interface(railPlugin* rail)
 {
@@ -546,8 +546,8 @@ static VOID VCAPITYPE rail_virtual_channel_open_event(DWORD openHandle,
         UINT event,
         LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
-	railPlugin* rail = s_TLSPluginContext;
 	UINT error = CHANNEL_RC_OK;
+	railPlugin* rail = (railPlugin*) freerdp_channel_get_open_handle_data(&g_ChannelHandles, openHandle);
 
 	if (!rail || (rail->OpenHandle != openHandle))
 	{
@@ -586,7 +586,6 @@ static void* rail_virtual_channel_client_thread(void* arg)
 	wMessage message;
 	railPlugin* rail = (railPlugin*) arg;
 	UINT error = CHANNEL_RC_OK;
-	freerdp_channel_init_thread_context(rail->rdpcontext);
 
 	while (1)
 	{
@@ -645,6 +644,8 @@ static UINT rail_virtual_channel_event_connected(railPlugin* rail, LPVOID pData,
 		         WTSErrorToString(status), status);
 		return status;
 	}
+
+	freerdp_channel_add_open_handle_data(&g_ChannelHandles, rail->OpenHandle, (void*) rail);
 
 	rail->queue = MessageQueue_New(NULL);
 
@@ -705,11 +706,14 @@ static UINT rail_virtual_channel_event_disconnected(railPlugin* rail)
 		rail->data_in = NULL;
 	}
 
+	freerdp_channel_remove_open_handle_data(&g_ChannelHandles, rail->OpenHandle);
+
 	return CHANNEL_RC_OK;
 }
 
 static void rail_virtual_channel_event_terminated(railPlugin* rail)
 {
+	freerdp_channel_remove_init_handle_data(&g_ChannelHandles, (void*) rail);
 	rail->InitHandle = 0;
 	free(rail);
 }
@@ -717,8 +721,8 @@ static void rail_virtual_channel_event_terminated(railPlugin* rail)
 static VOID VCAPITYPE rail_virtual_channel_init_event(LPVOID pInitHandle,
         UINT event, LPVOID pData, UINT dataLength)
 {
-	railPlugin* rail = s_TLSPluginContext;
 	UINT error = CHANNEL_RC_OK;
+	railPlugin* rail = (railPlugin*) freerdp_channel_get_init_handle_data(&g_ChannelHandles, pInitHandle);
 
 	if (!rail || (rail->InitHandle != pInitHandle))
 	{
@@ -836,7 +840,9 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 	rail->channelEntryPoints.pInterface = *(rail->channelEntryPoints.ppInterface);
 	rail->channelEntryPoints.ppInterface = &(rail->channelEntryPoints.pInterface);
-	s_TLSPluginContext = rail;
+
+	freerdp_channel_add_init_handle_data(&g_ChannelHandles, rail->InitHandle, (void*) rail);
+
 	return TRUE;
 error_out:
 

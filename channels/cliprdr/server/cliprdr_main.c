@@ -1328,7 +1328,7 @@ static void* cliprdr_server_thread(void* arg)
 	CliprdrServerContext* context = (CliprdrServerContext*) arg;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 	UINT error;
-	freerdp_channel_init_thread_context(context->rdpcontext);
+
 	ChannelEvent = context->GetEventHandle(context);
 	nCount = 0;
 	events[nCount++] = cliprdr->StopEvent;

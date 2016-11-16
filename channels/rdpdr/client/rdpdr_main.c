@@ -67,6 +67,8 @@
 
 #include "rdpdr_main.h"
 
+static rdpChannelHandles g_ChannelHandles = { NULL, NULL };
+
 typedef struct _DEVICE_DRIVE_EXT DEVICE_DRIVE_EXT;
 
 struct _DEVICE_DRIVE_EXT
@@ -74,8 +76,6 @@ struct _DEVICE_DRIVE_EXT
 	DEVICE device;
 	char* path;
 };
-
-static WINPR_TLS rdpdrPlugin* s_TLSPluginContext = NULL;
 
 /**
  * Function description
@@ -864,7 +864,6 @@ static void* drive_hotplug_thread_func(void* arg)
 	UINT error = 0;
 	DWORD status;
 	rdpdr = (rdpdrPlugin*) arg;
-	freerdp_channel_init_thread_context(rdpdr->rdpcontext);
 
 	if (!(rdpdr->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 	{
@@ -1516,8 +1515,8 @@ static VOID VCAPITYPE rdpdr_virtual_channel_open_event(DWORD openHandle,
         UINT event,
         LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
-	rdpdrPlugin* rdpdr = s_TLSPluginContext;
 	UINT error = CHANNEL_RC_OK;
+	rdpdrPlugin* rdpdr = (rdpdrPlugin*) freerdp_channel_get_open_handle_data(&g_ChannelHandles, openHandle);
 
 	if (!rdpdr || !pData || (rdpdr->OpenHandle != openHandle))
 	{
@@ -1562,9 +1561,6 @@ static void* rdpdr_virtual_channel_client_thread(void* arg)
 		ExitThread((DWORD) CHANNEL_RC_NULL_DATA);
 		return NULL;
 	}
-
-	freerdp_channel_init_thread_context(rdpdr->rdpcontext);
-	s_TLSPluginContext = rdpdr;
 
 	if ((error = rdpdr_process_connect(rdpdr)))
 	{
@@ -1629,6 +1625,8 @@ static UINT rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr,
 		         WTSErrorToString(status), status);
 		return status;
 	}
+
+	freerdp_channel_add_open_handle_data(&g_ChannelHandles, rdpdr->OpenHandle, (void*) rdpdr);
 
 	rdpdr->queue = MessageQueue_New(NULL);
 
@@ -1699,11 +1697,14 @@ static UINT rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
 		rdpdr->devman = NULL;
 	}
 
+	freerdp_channel_remove_open_handle_data(&g_ChannelHandles, rdpdr->OpenHandle);
+
 	return error;
 }
 
 static void rdpdr_virtual_channel_event_terminated(rdpdrPlugin* rdpdr)
 {
+	freerdp_channel_remove_init_handle_data(&g_ChannelHandles, (void*) rdpdr);
 	free(rdpdr);
 }
 
@@ -1711,8 +1712,8 @@ static VOID VCAPITYPE rdpdr_virtual_channel_init_event(LPVOID pInitHandle,
         UINT event,
         LPVOID pData, UINT dataLength)
 {
-	rdpdrPlugin* rdpdr = s_TLSPluginContext;
 	UINT error = CHANNEL_RC_OK;
+	rdpdrPlugin* rdpdr = (rdpdrPlugin*) freerdp_channel_get_init_handle_data(&g_ChannelHandles, pInitHandle);
 
 	if (!rdpdr || (rdpdr->InitHandle != pInitHandle))
 	{
@@ -1798,6 +1799,7 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 		return FALSE;
 	}
 
-	s_TLSPluginContext = rdpdr;
+	freerdp_channel_add_init_handle_data(&g_ChannelHandles, rdpdr->InitHandle, (void*) rdpdr);
+
 	return TRUE;
 }

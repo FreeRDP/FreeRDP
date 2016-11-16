@@ -246,7 +246,7 @@ static void* rdpsnd_server_thread(void* arg)
 	RdpsndServerContext* context;
 	UINT error = CHANNEL_RC_OK;
 	context = (RdpsndServerContext*)arg;
-	freerdp_channel_init_thread_context(context->rdpcontext);
+
 	nCount = 0;
 	events[nCount++] = context->priv->channelEvent;
 	events[nCount++] = context->priv->StopEvent;

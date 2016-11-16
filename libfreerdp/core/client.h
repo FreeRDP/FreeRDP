@@ -40,8 +40,11 @@
 struct rdp_channel_client_data
 {
 	PVIRTUALCHANNELENTRY entry;
+	PVIRTUALCHANNELENTRYEX entryEx;
 	PCHANNEL_INIT_EVENT_FN pChannelInitEventProc;
+	PCHANNEL_INIT_EVENT_EX_FN pChannelInitEventProcEx;
 	void* pInitHandle;
+	void* lpUserParam;
 };
 typedef struct rdp_channel_client_data CHANNEL_CLIENT_DATA;
 
@@ -53,7 +56,9 @@ struct rdp_channel_open_data
 	int flags;
 	void* pInterface;
 	rdpChannels* channels;
+	void* lpUserParam;
 	PCHANNEL_OPEN_EVENT_FN pChannelOpenEventProc;
+	PCHANNEL_OPEN_EVENT_EX_FN pChannelOpenEventProcEx;
 };
 typedef struct rdp_channel_open_data CHANNEL_OPEN_DATA;
 
@@ -104,7 +109,6 @@ struct rdp_channels
 	wMessageQueue* queue;
 
 	DrdynvcClientContext* drdynvc;
-	UINT64 openHandleSeq;
 	CRITICAL_SECTION channelsLock;
 	wHashTable* openHandles;
 };
