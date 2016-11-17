@@ -29,6 +29,18 @@
 
 #define TAG FREERDP_TAG("gdi")
 
+static DWORD gfx_align_scanline(DWORD widthInBytes, DWORD alignment)
+{
+	const UINT32 align = 16;
+	const UINT32 pad = align - (widthInBytes % alignment);
+	UINT32 scanline = widthInBytes;
+
+	if (align != pad)
+		scanline += pad;
+
+	return scanline;
+}
+
 /**
  * Function description
  *
@@ -698,7 +710,7 @@ static UINT gdi_CreateSurface(RdpgfxClientContext* context,
 			return ERROR_INTERNAL_ERROR;
 	}
 
-	surface->scanline = (surface->width + (surface->width % 4)) * 4;
+	surface->scanline = gfx_align_scanline(surface->width * 4, 16);
 	surface->data = (BYTE*) calloc(1, surface->scanline * surface->height);
 
 	if (!surface->data)
@@ -887,7 +899,7 @@ static UINT gdi_SurfaceToCache(RdpgfxClientContext* context,
 	cacheEntry->width = (UINT32)(rect->right - rect->left);
 	cacheEntry->height = (UINT32)(rect->bottom - rect->top);
 	cacheEntry->format = surface->format;
-	cacheEntry->scanline = (cacheEntry->width + (cacheEntry->width % 4)) * 4;
+	cacheEntry->scanline = gfx_align_scanline(cacheEntry->width * 4, 16);
 	cacheEntry->data = (BYTE*) calloc(1, cacheEntry->scanline * cacheEntry->height);
 
 	if (!cacheEntry->data)
