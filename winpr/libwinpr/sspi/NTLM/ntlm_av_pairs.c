@@ -246,19 +246,19 @@ typedef struct gss_channel_bindings_struct {
 } *gss_channel_bindings_t;
  */
 
-static void ntlm_md5_update_uint32_be(WINPR_MD5_CTX* md5, UINT32 num)
+static void ntlm_md5_update_uint32_be(WINPR_DIGEST_CTX* md5, UINT32 num)
 {
 	BYTE be32[4];
 	be32[0] = (num >> 0) & 0xFF;
 	be32[1] = (num >> 8) & 0xFF;
 	be32[2] = (num >> 16) & 0xFF;
 	be32[3] = (num >> 24) & 0xFF;
-	winpr_MD5_Update(md5, be32, 4);
+	winpr_Digest_Update(md5, be32, 4);
 }
 
 void ntlm_compute_channel_bindings(NTLM_CONTEXT* context)
 {
-	WINPR_MD5_CTX md5;
+	WINPR_DIGEST_CTX* md5;
 	BYTE* ChannelBindingToken;
 	UINT32 ChannelBindingTokenLength;
 	SEC_CHANNEL_BINDINGS* ChannelBindings;
@@ -269,16 +269,20 @@ void ntlm_compute_channel_bindings(NTLM_CONTEXT* context)
 	if (!ChannelBindings)
 		return;
 
+	if (!(md5 = winpr_Digest_New(WINPR_MD_MD5)))
+		return;
+
 	ChannelBindingTokenLength = context->Bindings.BindingsLength - sizeof(SEC_CHANNEL_BINDINGS);
 	ChannelBindingToken = &((BYTE*) ChannelBindings)[ChannelBindings->dwApplicationDataOffset];
-	winpr_MD5_Init(&md5);
-	ntlm_md5_update_uint32_be(&md5, ChannelBindings->dwInitiatorAddrType);
-	ntlm_md5_update_uint32_be(&md5, ChannelBindings->cbInitiatorLength);
-	ntlm_md5_update_uint32_be(&md5, ChannelBindings->dwAcceptorAddrType);
-	ntlm_md5_update_uint32_be(&md5, ChannelBindings->cbAcceptorLength);
-	ntlm_md5_update_uint32_be(&md5, ChannelBindings->cbApplicationDataLength);
-	winpr_MD5_Update(&md5, (void*) ChannelBindingToken, ChannelBindingTokenLength);
-	winpr_MD5_Final(&md5, context->ChannelBindingsHash, WINPR_MD5_DIGEST_LENGTH);
+
+	ntlm_md5_update_uint32_be(md5, ChannelBindings->dwInitiatorAddrType);
+	ntlm_md5_update_uint32_be(md5, ChannelBindings->cbInitiatorLength);
+	ntlm_md5_update_uint32_be(md5, ChannelBindings->dwAcceptorAddrType);
+	ntlm_md5_update_uint32_be(md5, ChannelBindings->cbAcceptorLength);
+	ntlm_md5_update_uint32_be(md5, ChannelBindings->cbApplicationDataLength);
+
+	winpr_Digest_Update(md5, (void*) ChannelBindingToken, ChannelBindingTokenLength);
+	winpr_Digest_Final(md5, context->ChannelBindingsHash, WINPR_MD5_DIGEST_LENGTH);
 }
 
 void ntlm_compute_single_host_data(NTLM_CONTEXT* context)

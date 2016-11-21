@@ -35,9 +35,21 @@
 #include "../log.h"
 #define TAG WINPR_TAG("utils.ssl")
 
+static BOOL g_winpr_openssl_initialized_by_winpr = FALSE;
+
+
+/**
+ * Note from OpenSSL 1.1.0 "CHANGES":
+ * OpenSSL now uses a new threading API. It is no longer necessary to
+ * set locking callbacks to use OpenSSL in a multi-threaded environment.
+ */
+
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+
+#define WINPR_OPENSSL_LOCKING_REQUIRED 1
+
 static int g_winpr_openssl_num_locks = 0;
 static HANDLE* g_winpr_openssl_locks = NULL;
-static BOOL g_winpr_openssl_initialized_by_winpr = FALSE;
 
 struct CRYPTO_dynlock_value
 {
@@ -220,6 +232,9 @@ static BOOL _winpr_openssl_cleanup_locking(void)
 	return TRUE;
 }
 
+#endif /* OpenSSL < 1.1.0 */
+
+
 static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVOID* context)
 {
 	DWORD flags = param ? *(PDWORD)param : WINPR_SSL_INIT_DEFAULT;
@@ -229,6 +244,7 @@ static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVO
 		return TRUE;
 	}
 
+#ifdef WINPR_OPENSSL_LOCKING_REQUIRED
 	if (flags & WINPR_SSL_INIT_ENABLE_LOCKING)
 	{
 		if (!_winpr_openssl_initialize_locking())
@@ -236,7 +252,7 @@ static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVO
 			return FALSE;
 		}
 	}
-
+#endif
 	/* SSL_load_error_strings() is void */
 	SSL_load_error_strings();
 	/* SSL_library_init() always returns "1" */
@@ -265,7 +281,9 @@ BOOL winpr_CleanupSSL(DWORD flags)
 		}
 
 		g_winpr_openssl_initialized_by_winpr = FALSE;
+#ifdef WINPR_OPENSSL_LOCKING_REQUIRED
 		_winpr_openssl_cleanup_locking();
+#endif
 		CRYPTO_cleanup_all_ex_data();
 		ERR_free_strings();
 		EVP_cleanup();

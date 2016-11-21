@@ -80,7 +80,6 @@ struct rdp_nla
 	SecBuffer authInfo;
 	SecBuffer PublicKey;
 	SecBuffer tsCredentials;
-	WINPR_RC4_CTX rc4SealState;
 	LPTSTR ServicePrincipalName;
 	SEC_WINNT_AUTH_IDENTITY* identity;
 	PSecurityFunctionTable table;

@@ -1646,12 +1646,6 @@ void rdp_reset(rdpRdp* rdp)
 		rdp->fips_decrypt = NULL;
 	}
 
-	if (rdp->fips_hmac)
-	{
-		free(rdp->fips_hmac);
-		rdp->fips_hmac = NULL;
-	}
-
 	if (settings->ServerRandom)
 	{
 		free(settings->ServerRandom);
@@ -1699,7 +1693,6 @@ void rdp_free(rdpRdp* rdp)
 		winpr_RC4_Free(rdp->rc4_encrypt_key);
 		winpr_Cipher_Free(rdp->fips_encrypt);
 		winpr_Cipher_Free(rdp->fips_decrypt);
-		free(rdp->fips_hmac);
 		freerdp_settings_free(rdp->settings);
 		freerdp_settings_free(rdp->settingsCopy);
 		transport_free(rdp->transport);

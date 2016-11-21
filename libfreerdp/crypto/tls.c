@@ -34,6 +34,7 @@
 #include <freerdp/log.h>
 #include <freerdp/crypto/tls.h>
 #include "../core/tcp.h"
+#include "opensslcompat.h"
 
 #ifdef HAVE_POLL_H
 #include <poll.h>
@@ -44,6 +45,30 @@
 #endif
 
 #define TAG FREERDP_TAG("crypto")
+
+
+
+/**
+ * Earlier Microsoft iOS RDP clients have sent a null or even double null
+ * terminated hostname in the SNI TLS extension.
+ * If the length indicator does not equal the hostname strlen OpenSSL
+ * will abort (see openssl:ssl/t1_lib.c).
+ * Here is a tcpdump segment of Microsoft Remote Desktop Client Version
+ * 8.1.7 running on an iPhone 4 with iOS 7.1.2 showing the transmitted
+ * SNI hostname TLV blob when connection to server "abcd":
+ * 00                  name_type 0x00 (host_name)
+ * 00 06               length_in_bytes 0x0006
+ * 61 62 63 64 00 00   host_name "abcd\0\0"
+ *
+ * Currently the only (runtime) workaround is setting an openssl tls
+ * extension debug callback that sets the SSL context's servername_done
+ * to 1 which effectively disables the parsing of that extension type.
+ *
+ * Nowadays this workaround is not required anymore but still can be
+ * activated by adding the following define:
+ *
+ * #define MICROSOFT_IOS_SNI_BUG
+ */
 
 struct _BIO_RDP_TLS
 {
@@ -62,7 +87,7 @@ static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 {
 	int error;
 	int status;
-	BIO_RDP_TLS* tls = (BIO_RDP_TLS*) bio->ptr;
+	BIO_RDP_TLS* tls = (BIO_RDP_TLS*) BIO_get_data(bio);
 
 	if (!buf || !tls)
 		return 0;
@@ -91,12 +116,12 @@ static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 
 			case SSL_ERROR_WANT_X509_LOOKUP:
 				BIO_set_flags(bio, BIO_FLAGS_IO_SPECIAL);
-				bio->retry_reason = BIO_RR_SSL_X509_LOOKUP;
+				BIO_set_retry_reason(bio, BIO_RR_SSL_X509_LOOKUP);
 				break;
 
 			case SSL_ERROR_WANT_CONNECT:
 				BIO_set_flags(bio, BIO_FLAGS_IO_SPECIAL);
-				bio->retry_reason = BIO_RR_CONNECT;
+				BIO_set_retry_reason(bio, BIO_RR_CONNECT);
 				break;
 
 			case SSL_ERROR_SYSCALL:
@@ -116,7 +141,7 @@ static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 {
 	int error;
 	int status;
-	BIO_RDP_TLS* tls = (BIO_RDP_TLS*) bio->ptr;
+	BIO_RDP_TLS* tls = (BIO_RDP_TLS*) BIO_get_data(bio);
 
 	if (!buf || !tls)
 		return 0;
@@ -145,17 +170,17 @@ static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 
 			case SSL_ERROR_WANT_X509_LOOKUP:
 				BIO_set_flags(bio, BIO_FLAGS_IO_SPECIAL);
-				bio->retry_reason = BIO_RR_SSL_X509_LOOKUP;
+				BIO_set_retry_reason(bio, BIO_RR_SSL_X509_LOOKUP);
 				break;
 
 			case SSL_ERROR_WANT_ACCEPT:
 				BIO_set_flags(bio, BIO_FLAGS_IO_SPECIAL);
-				bio->retry_reason = BIO_RR_ACCEPT;
+				BIO_set_retry_reason(bio, BIO_RR_ACCEPT);
 				break;
 
 			case SSL_ERROR_WANT_CONNECT:
 				BIO_set_flags(bio, BIO_FLAGS_IO_SPECIAL);
-				bio->retry_reason = BIO_RR_CONNECT;
+				BIO_set_retry_reason(bio, BIO_RR_CONNECT);
 				break;
 
 			case SSL_ERROR_SSL:
@@ -203,9 +228,12 @@ static int bio_rdp_tls_gets(BIO* bio, char* str, int size)
 
 static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 {
-	BIO* rbio;
+	BIO* ssl_rbio;
+	BIO* ssl_wbio;
+	BIO* next_bio;
 	int status = -1;
-	BIO_RDP_TLS* tls = (BIO_RDP_TLS*) bio->ptr;
+	BIO_RDP_TLS* tls = (BIO_RDP_TLS*) BIO_get_data(bio);
+
 
 	if (!tls)
 		return 0;
@@ -213,29 +241,39 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 	if (!tls->ssl && (cmd != BIO_C_SET_SSL))
 		return 0;
 
+	next_bio = BIO_next(bio);
+	ssl_rbio = tls->ssl ? SSL_get_rbio(tls->ssl) : NULL;
+	ssl_wbio = tls->ssl ? SSL_get_wbio(tls->ssl) : NULL;
+
 	switch (cmd)
 	{
 		case BIO_CTRL_RESET:
 			SSL_shutdown(tls->ssl);
-
+#if 1
+			if (SSL_in_connect_init(tls->ssl))
+				SSL_set_connect_state(tls->ssl);
+			else if (SSL_in_accept_init(tls->ssl))
+				SSL_set_accept_state(tls->ssl);
+#else
 			if (tls->ssl->handshake_func == tls->ssl->method->ssl_connect)
 				SSL_set_connect_state(tls->ssl);
 			else if (tls->ssl->handshake_func == tls->ssl->method->ssl_accept)
 				SSL_set_accept_state(tls->ssl);
+#endif
 
 			SSL_clear(tls->ssl);
 
-			if (bio->next_bio)
-				status = BIO_ctrl(bio->next_bio, cmd, num, ptr);
-			else if (tls->ssl->rbio)
-				status = BIO_ctrl(tls->ssl->rbio, cmd, num, ptr);
+			if (next_bio)
+				status = BIO_ctrl(next_bio, cmd, num, ptr);
+			else if (ssl_rbio)
+				status = BIO_ctrl(ssl_rbio, cmd, num, ptr);
 			else
 				status = 1;
 
 			break;
 
 		case BIO_C_GET_FD:
-			status = BIO_ctrl(tls->ssl->rbio, cmd, num, ptr);
+			status = BIO_ctrl(ssl_rbio, cmd, num, ptr);
 			break;
 
 		case BIO_CTRL_INFO:
@@ -261,53 +299,67 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 			break;
 
 		case BIO_CTRL_GET_CLOSE:
-			status = bio->shutdown;
+			status = BIO_get_shutdown(bio);
 			break;
 
 		case BIO_CTRL_SET_CLOSE:
-			bio->shutdown = (int) num;
+			BIO_set_shutdown(bio, (int) num);
 			status = 1;
 			break;
 
 		case BIO_CTRL_WPENDING:
-			status = BIO_ctrl(tls->ssl->wbio, cmd, num, ptr);
+			status = BIO_ctrl(ssl_wbio, cmd, num, ptr);
 			break;
 
 		case BIO_CTRL_PENDING:
 			status = SSL_pending(tls->ssl);
 
 			if (status == 0)
-				status = BIO_pending(tls->ssl->rbio);
+				status = BIO_pending(ssl_rbio);
 
 			break;
 
 		case BIO_CTRL_FLUSH:
 			BIO_clear_retry_flags(bio);
-			status = BIO_ctrl(tls->ssl->wbio, cmd, num, ptr);
+			status = BIO_ctrl(ssl_wbio, cmd, num, ptr);
 			BIO_copy_next_retry(bio);
 			status = 1;
 			break;
 
 		case BIO_CTRL_PUSH:
-			if (bio->next_bio && (bio->next_bio != tls->ssl->rbio))
+			if (next_bio && (next_bio != ssl_rbio))
 			{
-				SSL_set_bio(tls->ssl, bio->next_bio, bio->next_bio);
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+				SSL_set_bio(tls->ssl, next_bio, next_bio);
 				CRYPTO_add(&(bio->next_bio->references), 1, CRYPTO_LOCK_BIO);
+#else
+				/*
+				 * We are going to pass ownership of next to the SSL object...but
+				 * we don't own a reference to pass yet - so up ref
+				 */
+				BIO_up_ref(next_bio);
+				SSL_set_bio(tls->ssl, next_bio, next_bio);
+#endif
 			}
 
 			status = 1;
 			break;
 
 		case BIO_CTRL_POP:
+			/* Only detach if we are the BIO explicitly being popped */
 			if (bio == ptr)
 			{
-				if (tls->ssl->rbio != tls->ssl->wbio)
-					BIO_free_all(tls->ssl->wbio);
+				if (ssl_rbio != ssl_wbio)
+					BIO_free_all(ssl_wbio);
 
-				if (bio->next_bio)
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+				if (next_bio)
 					CRYPTO_add(&(bio->next_bio->references), -1, CRYPTO_LOCK_BIO);
-
 				tls->ssl->wbio = tls->ssl->rbio = NULL;
+#else
+				/* OpenSSL 1.1: This will also clear the reference we obtained during push */
+				SSL_set_bio(tls->ssl, NULL, NULL);
+#endif
 			}
 
 			status = 1;
@@ -323,29 +375,36 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 			break;
 
 		case BIO_C_SET_SSL:
-			bio->shutdown = (int) num;
+			BIO_set_shutdown(bio, (int) num);
 
 			if (ptr)
-				tls->ssl = (SSL*) ptr;
-
-			rbio = SSL_get_rbio(tls->ssl);
-
-			if (rbio)
 			{
-				if (bio->next_bio)
-					BIO_push(rbio, bio->next_bio);
-
-				bio->next_bio = rbio;
-				CRYPTO_add(&(rbio->references), 1, CRYPTO_LOCK_BIO);
+				tls->ssl = (SSL*) ptr;
+				ssl_rbio = SSL_get_rbio(tls->ssl);
+				ssl_wbio = SSL_get_wbio(tls->ssl);
 			}
 
-			bio->init = 1;
+			if (ssl_rbio)
+			{
+				if (next_bio)
+					BIO_push(ssl_rbio, next_bio);
+
+				BIO_set_next(bio, ssl_rbio);
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+				CRYPTO_add(&(ssl_rbio->references), 1, CRYPTO_LOCK_BIO);
+#else
+				BIO_up_ref(ssl_rbio);
+#endif
+			}
+
+			BIO_set_init(bio, 1);
+
 			status = 1;
 			break;
 
 		case BIO_C_DO_STATE_MACHINE:
 			BIO_clear_flags(bio, BIO_FLAGS_READ | BIO_FLAGS_WRITE | BIO_FLAGS_IO_SPECIAL);
-			bio->retry_reason = 0;
+			BIO_set_retry_reason(bio, 0);
 			status = SSL_do_handshake(tls->ssl);
 
 			if (status <= 0)
@@ -362,7 +421,7 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 
 					case SSL_ERROR_WANT_CONNECT:
 						BIO_set_flags(bio, BIO_FLAGS_IO_SPECIAL | BIO_FLAGS_SHOULD_RETRY);
-						bio->retry_reason = bio->next_bio->retry_reason;
+						BIO_set_retry_reason(bio, BIO_get_retry_reason(next_bio));
 						break;
 
 					default:
@@ -374,7 +433,7 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 			break;
 
 		default:
-			status = BIO_ctrl(tls->ssl->rbio, cmd, num, ptr);
+			status = BIO_ctrl(ssl_rbio, cmd, num, ptr);
 			break;
 	}
 
@@ -384,17 +443,16 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 static int bio_rdp_tls_new(BIO* bio)
 {
 	BIO_RDP_TLS* tls;
-	bio->init = 0;
-	bio->num = 0;
-	bio->flags = BIO_FLAGS_SHOULD_RETRY;
-	bio->next_bio = NULL;
-	tls = calloc(1, sizeof(BIO_RDP_TLS));
 
-	if (!tls)
+	BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+
+	if (!(tls = calloc(1, sizeof(BIO_RDP_TLS))))
 		return 0;
 
-	bio->ptr = (void*) tls;
 	InitializeCriticalSectionAndSpinCount(&tls->lock, 4000);
+
+	BIO_set_data(bio, (void*) tls);
+
 	return 1;
 }
 
@@ -405,21 +463,20 @@ static int bio_rdp_tls_free(BIO* bio)
 	if (!bio)
 		return 0;
 
-	tls = (BIO_RDP_TLS*) bio->ptr;
+	tls = (BIO_RDP_TLS*) BIO_get_data(bio);
 
 	if (!tls)
 		return 0;
 
-	if (bio->shutdown)
+	if (BIO_get_shutdown(bio))
 	{
-		if (bio->init && tls->ssl)
+		if (BIO_get_init(bio) && tls->ssl)
 		{
 			SSL_shutdown(tls->ssl);
 			SSL_free(tls->ssl);
 		}
-
-		bio->init = 0;
-		bio->flags = 0;
+		BIO_set_init(bio, 0);
+		BIO_set_flags(bio, 0);
 	}
 
 	DeleteCriticalSection(&tls->lock);
@@ -435,7 +492,7 @@ static long bio_rdp_tls_callback_ctrl(BIO* bio, int cmd, bio_info_cb* fp)
 	if (!bio)
 		return 0;
 
-	tls = (BIO_RDP_TLS*) bio->ptr;
+	tls = (BIO_RDP_TLS*) BIO_get_data(bio);
 
 	if (!tls)
 		return 0;
@@ -448,7 +505,7 @@ static long bio_rdp_tls_callback_ctrl(BIO* bio, int cmd, bio_info_cb* fp)
 			break;
 
 		default:
-			status = BIO_callback_ctrl(tls->ssl->rbio, cmd, fp);
+			status = BIO_callback_ctrl(SSL_get_rbio(tls->ssl), cmd, fp);
 			break;
 	}
 
@@ -457,23 +514,26 @@ static long bio_rdp_tls_callback_ctrl(BIO* bio, int cmd, bio_info_cb* fp)
 
 #define BIO_TYPE_RDP_TLS	68
 
-static BIO_METHOD bio_rdp_tls_methods =
-{
-	BIO_TYPE_RDP_TLS,
-	"RdpTls",
-	bio_rdp_tls_write,
-	bio_rdp_tls_read,
-	bio_rdp_tls_puts,
-	bio_rdp_tls_gets,
-	bio_rdp_tls_ctrl,
-	bio_rdp_tls_new,
-	bio_rdp_tls_free,
-	bio_rdp_tls_callback_ctrl,
-};
-
 BIO_METHOD* BIO_s_rdp_tls(void)
 {
-	return &bio_rdp_tls_methods;
+	static BIO_METHOD* bio_methods = NULL;
+
+	if (bio_methods == NULL)
+	{
+		if (!(bio_methods = BIO_meth_new(BIO_TYPE_RDP_TLS, "RdpTls")))
+			return NULL;
+
+		BIO_meth_set_write(bio_methods, bio_rdp_tls_write);
+		BIO_meth_set_read(bio_methods, bio_rdp_tls_read);
+		BIO_meth_set_puts(bio_methods, bio_rdp_tls_puts);
+		BIO_meth_set_gets(bio_methods, bio_rdp_tls_gets);
+		BIO_meth_set_ctrl(bio_methods, bio_rdp_tls_ctrl);
+		BIO_meth_set_create(bio_methods, bio_rdp_tls_new);
+		BIO_meth_set_destroy(bio_methods, bio_rdp_tls_free);
+		BIO_meth_set_callback_ctrl(bio_methods, bio_rdp_tls_callback_ctrl);
+	}
+
+	return bio_methods;
 }
 
 BIO* BIO_new_rdp_tls(SSL_CTX* ctx, int client)
@@ -805,11 +865,10 @@ int tls_connect(rdpTls* tls, BIO* underlying)
 	return tls_do_handshake(tls, TRUE);
 }
 
-#ifndef OPENSSL_NO_TLSEXT
+#if defined(MICROSOFT_IOS_SNI_BUG) && !defined(OPENSSL_NO_TLSEXT)
 static void tls_openssl_tlsext_debug_callback(SSL* s, int client_server,
         int type, unsigned char* data, int len, void* arg)
 {
-	/* see code comment in tls_accept() below */
 	if (type == TLSEXT_TYPE_server_name)
 	{
 		WLog_DBG(TAG, "Client uses SNI (extension disabled)");
@@ -949,23 +1008,7 @@ BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings)
 		return FALSE;
 	}
 
-#ifndef OPENSSL_NO_TLSEXT
-	/**
-	 * The Microsoft iOS clients eventually send a null or even double null
-	 * terminated hostname in the SNI TLS extension!
-	 * If the length indicator does not equal the hostname strlen OpenSSL
-	 * will abort (see openssl:ssl/t1_lib.c).
-	 * Here is a tcpdump segment of Microsoft Remote Desktop Client Version
-	 * 8.1.7 running on an iPhone 4 with iOS 7.1.2 showing the transmitted
-	 * SNI hostname TLV blob when connection to server "abcd":
-	 * 00                  name_type 0x00 (host_name)
-	 * 00 06               length_in_bytes 0x0006
-	 * 61 62 63 64 00 00   host_name "abcd\0\0"
-	 *
-	 * Currently the only (runtime) workaround is setting an openssl tls
-	 * extension debug callback that sets the SSL context's servername_done
-	 * to 1 which effectively disables the parsing of that extension type.
-	 */
+#if defined(MICROSOFT_IOS_SNI_BUG) && !defined(OPENSSL_NO_TLSEXT)
 	SSL_set_tlsext_debug_callback(tls->ssl, tls_openssl_tlsext_debug_callback);
 #endif
 	return tls_do_handshake(tls, FALSE) > 0;
@@ -979,6 +1022,12 @@ BOOL tls_send_alert(rdpTls* tls)
 	if (!tls->ssl)
 		return TRUE;
 
+/**
+ * FIXME: The following code does not work on OpenSSL > 1.1.0 because the
+ *        SSL struct is opaqe now
+ */
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	if (tls->alertDescription != TLS_ALERT_DESCRIPTION_CLOSE_NOTIFY)
 	{
 		/**
@@ -990,10 +1039,13 @@ BOOL tls_send_alert(rdpTls* tls)
 		 * Manually sending a TLS alert is necessary in certain cases,
 		 * like when server-side NLA results in an authentication failure.
 		 */
+		SSL_SESSION* ssl_session = SSL_get_session(tls->ssl);
+		SSL_CTX* ssl_ctx = SSL_get_SSL_CTX(tls->ssl);
+
 		SSL_set_quiet_shutdown(tls->ssl, 1);
 
-		if ((tls->alertLevel == TLS_ALERT_LEVEL_FATAL) && (tls->ssl->session))
-			SSL_CTX_remove_session(tls->ssl->ctx, tls->ssl->session);
+		if ((tls->alertLevel == TLS_ALERT_LEVEL_FATAL) && (ssl_session))
+			SSL_CTX_remove_session(ssl_ctx, ssl_session);
 
 		tls->ssl->s3->alert_dispatch = 1;
 		tls->ssl->s3->send_alert[0] = tls->alertLevel;
@@ -1002,6 +1054,7 @@ BOOL tls_send_alert(rdpTls* tls)
 		if (tls->ssl->s3->wbuf.left == 0)
 			tls->ssl->method->ssl_dispatch_alert(tls->ssl);
 	}
+#endif
 
 	return TRUE;
 }
@@ -1015,7 +1068,7 @@ BIO* findBufferedBio(BIO* front)
 		if (BIO_method_type(ret) == BIO_TYPE_BUFFERED)
 			return ret;
 
-		ret = ret->next_bio;
+		ret = BIO_next(ret);
 	}
 
 	return ret;

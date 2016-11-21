@@ -35,18 +35,18 @@
 BYTE* NTOWFv1W(LPWSTR Password, UINT32 PasswordLength, BYTE* NtHash)
 {
 	BOOL allocate = !NtHash;
-	WINPR_MD4_CTX md4;
+	WINPR_DIGEST_CTX* md4;
 
 	if (!Password)
 		return NULL;
 
-	if (!winpr_MD4_Init(&md4))
+	if (!(md4 = winpr_Digest_New(WINPR_MD_MD4)))
 		return NULL;
-	if (!winpr_MD4_Update(&md4, (BYTE*) Password, (size_t) PasswordLength))
+	if (!winpr_Digest_Update(md4, (BYTE*) Password, (size_t) PasswordLength))
 		return NULL;
 	if (!NtHash && !(NtHash = malloc(WINPR_MD4_DIGEST_LENGTH)))
 		return NULL;
-	if (!winpr_MD4_Final(&md4, NtHash, WINPR_MD4_DIGEST_LENGTH))
+	if (!winpr_Digest_Final(md4, NtHash, WINPR_MD4_DIGEST_LENGTH))
 	{
 		if (allocate)
 			free(NtHash);
