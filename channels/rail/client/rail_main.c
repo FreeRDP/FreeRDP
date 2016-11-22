@@ -33,8 +33,6 @@
 #include "rail_orders.h"
 #include "rail_main.h"
 
-static rdpChannelHandles g_ChannelHandles = { NULL, NULL };
-
 RailClientContext* rail_get_client_interface(railPlugin* rail)
 {
 	RailClientContext* pInterface;
@@ -57,14 +55,14 @@ static UINT rail_send(railPlugin* rail, wStream* s)
 	}
 	else
 	{
-		status = rail->channelEntryPoints.pVirtualChannelWrite(rail->OpenHandle,
+		status = rail->channelEntryPoints.pVirtualChannelWriteEx(rail->InitHandle, rail->OpenHandle,
 		         Stream_Buffer(s), (UINT32) Stream_GetPosition(s), s);
 	}
 
 	if (status != CHANNEL_RC_OK)
 	{
 		Stream_Free(s, TRUE);
-		WLog_ERR(TAG,  "VirtualChannelWrite failed with %s [%08X]",
+		WLog_ERR(TAG,  "pVirtualChannelWriteEx failed with %s [%08X]",
 		         WTSErrorToString(status), status);
 	}
 
@@ -542,16 +540,16 @@ static UINT rail_virtual_channel_event_data_received(railPlugin* rail,
 	return CHANNEL_RC_OK;
 }
 
-static VOID VCAPITYPE rail_virtual_channel_open_event(DWORD openHandle,
+static VOID VCAPITYPE rail_virtual_channel_open_event_ex(LPVOID lpUserParam, DWORD openHandle,
         UINT event,
         LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	UINT error = CHANNEL_RC_OK;
-	railPlugin* rail = (railPlugin*) freerdp_channel_get_open_handle_data(&g_ChannelHandles, openHandle);
+	railPlugin* rail = (railPlugin*) lpUserParam;
 
 	if (!rail || (rail->OpenHandle != openHandle))
 	{
-		WLog_ERR(TAG, "rail_virtual_channel_open_event: error no match");
+		WLog_ERR(TAG, "error no match");
 		return;
 	}
 
@@ -635,8 +633,8 @@ static UINT rail_virtual_channel_event_connected(railPlugin* rail, LPVOID pData,
         UINT32 dataLength)
 {
 	UINT status;
-	status = rail->channelEntryPoints.pVirtualChannelOpen(rail->InitHandle,
-	         &rail->OpenHandle, rail->channelDef.name, rail_virtual_channel_open_event);
+	status = rail->channelEntryPoints.pVirtualChannelOpenEx(rail->InitHandle,
+	         &rail->OpenHandle, rail->channelDef.name, rail_virtual_channel_open_event_ex);
 
 	if (status != CHANNEL_RC_OK)
 	{
@@ -644,8 +642,6 @@ static UINT rail_virtual_channel_event_connected(railPlugin* rail, LPVOID pData,
 		         WTSErrorToString(status), status);
 		return status;
 	}
-
-	freerdp_channel_add_open_handle_data(&g_ChannelHandles, rail->OpenHandle, (void*) rail);
 
 	rail->queue = MessageQueue_New(NULL);
 
@@ -689,11 +685,11 @@ static UINT rail_virtual_channel_event_disconnected(railPlugin* rail)
 	CloseHandle(rail->thread);
 	rail->queue = NULL;
 	rail->thread = NULL;
-	rc = rail->channelEntryPoints.pVirtualChannelClose(rail->OpenHandle);
+	rc = rail->channelEntryPoints.pVirtualChannelCloseEx(rail->InitHandle, rail->OpenHandle);
 
 	if (CHANNEL_RC_OK != rc)
 	{
-		WLog_ERR(TAG, "pVirtualChannelClose failed with %s [%08X]",
+		WLog_ERR(TAG, "pVirtualChannelCloseEx failed with %s [%08X]",
 		         WTSErrorToString(rc), rc);
 		return rc;
 	}
@@ -706,27 +702,24 @@ static UINT rail_virtual_channel_event_disconnected(railPlugin* rail)
 		rail->data_in = NULL;
 	}
 
-	freerdp_channel_remove_open_handle_data(&g_ChannelHandles, rail->OpenHandle);
-
 	return CHANNEL_RC_OK;
 }
 
 static void rail_virtual_channel_event_terminated(railPlugin* rail)
 {
-	freerdp_channel_remove_init_handle_data(&g_ChannelHandles, (void*) rail);
 	rail->InitHandle = 0;
 	free(rail);
 }
 
-static VOID VCAPITYPE rail_virtual_channel_init_event(LPVOID pInitHandle,
+static VOID VCAPITYPE rail_virtual_channel_init_event_ex(LPVOID lpUserParam, LPVOID pInitHandle,
         UINT event, LPVOID pData, UINT dataLength)
 {
 	UINT error = CHANNEL_RC_OK;
-	railPlugin* rail = (railPlugin*) freerdp_channel_get_init_handle_data(&g_ChannelHandles, pInitHandle);
+	railPlugin* rail = (railPlugin*) lpUserParam;
 
 	if (!rail || (rail->InitHandle != pInitHandle))
 	{
-		WLog_ERR(TAG,  "rail_virtual_channel_init_event: error no match");
+		WLog_ERR(TAG,  "error no match");
 		return;
 	}
 
@@ -752,19 +745,18 @@ static VOID VCAPITYPE rail_virtual_channel_init_event(LPVOID pInitHandle,
 	}
 
 	if (error && rail->rdpcontext)
-		setChannelError(rail->rdpcontext, error,
-		                "rail_virtual_channel_init_event reported an error");
+		setChannelError(rail->rdpcontext, error, "rail_virtual_channel_init_event_ex reported an error");
 }
 
 /* rail is always built-in */
-#define VirtualChannelEntry	rail_VirtualChannelEntry
+#define VirtualChannelEntryEx	rail_VirtualChannelEntryEx
 
-BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
+BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID pInitHandle)
 {
 	UINT rc;
 	railPlugin* rail;
 	RailClientContext* context = NULL;
-	CHANNEL_ENTRY_POINTS_FREERDP* pEntryPointsEx;
+	CHANNEL_ENTRY_POINTS_FREERDP_EX* pEntryPointsEx;
 	BOOL isFreerdp = FALSE;
 	rail = (railPlugin*) calloc(1, sizeof(railPlugin));
 
@@ -780,9 +772,9 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	    CHANNEL_OPTION_COMPRESS_RDP |
 	    CHANNEL_OPTION_SHOW_PROTOCOL;
 	strcpy(rail->channelDef.name, "rail");
-	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP*) pEntryPoints;
+	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*) pEntryPoints;
 
-	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP)) &&
+	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX)) &&
 	    (pEntryPointsEx->MagicNumber == FREERDP_CHANNEL_MAGIC_NUMBER))
 	{
 		context = (RailClientContext*) calloc(1, sizeof(RailClientContext));
@@ -824,24 +816,25 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 	WLog_Init();
 	rail->log = WLog_Get("com.freerdp.channels.rail.client");
-	WLog_Print(rail->log, WLOG_DEBUG, "VirtualChannelEntry");
+	WLog_Print(rail->log, WLOG_DEBUG, "VirtualChannelEntryEx");
 	CopyMemory(&(rail->channelEntryPoints), pEntryPoints,
-	           sizeof(CHANNEL_ENTRY_POINTS_FREERDP));
-	rc = rail->channelEntryPoints.pVirtualChannelInit(&rail->InitHandle,
+	           sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX));
+
+	rail->InitHandle = pInitHandle;
+
+	rc = rail->channelEntryPoints.pVirtualChannelInitEx((void*) rail, pInitHandle,
 	        &rail->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000,
-	        rail_virtual_channel_init_event);
+	        rail_virtual_channel_init_event_ex);
 
 	if (CHANNEL_RC_OK != rc)
 	{
-		WLog_ERR(TAG, "pVirtualChannelInit failed with %s [%08X]",
+		WLog_ERR(TAG, "failed with %s [%08X]",
 		         WTSErrorToString(rc), rc);
 		goto error_out;
 	}
 
 	rail->channelEntryPoints.pInterface = *(rail->channelEntryPoints.ppInterface);
 	rail->channelEntryPoints.ppInterface = &(rail->channelEntryPoints.pInterface);
-
-	freerdp_channel_add_init_handle_data(&g_ChannelHandles, rail->InitHandle, (void*) rail);
 
 	return TRUE;
 error_out:

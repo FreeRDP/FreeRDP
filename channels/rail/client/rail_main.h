@@ -39,7 +39,7 @@
 struct rail_plugin
 {
 	CHANNEL_DEF channelDef;
-	CHANNEL_ENTRY_POINTS_FREERDP channelEntryPoints;
+	CHANNEL_ENTRY_POINTS_FREERDP_EX channelEntryPoints;
 
 	RailClientContext* context;
 
