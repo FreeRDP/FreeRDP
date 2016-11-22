@@ -1288,7 +1288,7 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 
 	cliprdr->InitHandle = pInitHandle;
 
-	rc = cliprdr->channelEntryPoints.pVirtualChannelInitEx((void*) cliprdr, &cliprdr->InitHandle,
+	rc = cliprdr->channelEntryPoints.pVirtualChannelInitEx((void*) cliprdr, pInitHandle,
 	        &cliprdr->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000,
 	        cliprdr_virtual_channel_init_event_ex);
 
