@@ -31,8 +31,6 @@
 
 #include "encomsp_main.h"
 
-static rdpChannelHandles g_ChannelHandles = { NULL, NULL };
-
 /**
  * Function description
  *
@@ -120,11 +118,11 @@ static UINT encomsp_virtual_channel_write(encomspPlugin* encomsp, wStream* s)
 	WLog_INFO(TAG, "EncomspWrite (%d)", Stream_Length(s));
 	winpr_HexDump(Stream_Buffer(s), Stream_Length(s));
 #endif
-	status = encomsp->channelEntryPoints.pVirtualChannelWrite(encomsp->OpenHandle,
+	status = encomsp->channelEntryPoints.pVirtualChannelWriteEx(encomsp->InitHandle, encomsp->OpenHandle,
 	         Stream_Buffer(s), (UINT32) Stream_Length(s), s);
 
 	if (status != CHANNEL_RC_OK)
-		WLog_ERR(TAG,  "VirtualChannelWrite failed with %s [%08X]",
+		WLog_ERR(TAG,  "VirtualChannelWriteEx failed with %s [%08X]",
 		         WTSErrorToString(status), status);
 
 	return status;
@@ -928,14 +926,14 @@ static int encomsp_send(encomspPlugin* encomsp, wStream* s)
 	}
 	else
 	{
-		status = plugin->channelEntryPoints.pVirtualChannelWrite(plugin->OpenHandle,
+		status = plugin->channelEntryPoints.pVirtualChannelWriteEx(plugin->InitHandle, plugin->OpenHandle,
 		         Stream_Buffer(s), (UINT32) Stream_GetPosition(s), s);
 	}
 
 	if (status != CHANNEL_RC_OK)
 	{
 		Stream_Free(s, TRUE);
-		WLog_ERR(TAG,  "VirtualChannelWrite failed with %s [%08X]",
+		WLog_ERR(TAG,  "VirtualChannelWriteEx failed with %s [%08X]",
 		         WTSErrorToString(status), status);
 	}
 
@@ -1001,16 +999,15 @@ static UINT encomsp_virtual_channel_event_data_received(encomspPlugin* encomsp,
 	return CHANNEL_RC_OK;
 }
 
-static VOID VCAPITYPE encomsp_virtual_channel_open_event(DWORD openHandle,
-        UINT event,
+static VOID VCAPITYPE encomsp_virtual_channel_open_event_ex(LPVOID lpUserParam, DWORD openHandle, UINT event,
         LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	UINT error = CHANNEL_RC_OK;
-	encomspPlugin* encomsp = (encomspPlugin*) freerdp_channel_get_open_handle_data(&g_ChannelHandles, openHandle);
+	encomspPlugin* encomsp = (encomspPlugin*) lpUserParam;
 
 	if (!encomsp || (encomsp->OpenHandle != openHandle))
 	{
-		WLog_ERR(TAG,  "encomsp_virtual_channel_open_event: error no match");
+		WLog_ERR(TAG,  "error no match");
 		return;
 	}
 
@@ -1033,8 +1030,7 @@ static VOID VCAPITYPE encomsp_virtual_channel_open_event(DWORD openHandle,
 	}
 
 	if (error && encomsp->rdpcontext)
-		setChannelError(encomsp->rdpcontext, error,
-		                "encomsp_virtual_channel_open_event reported an error");
+		setChannelError(encomsp->rdpcontext, error, "encomsp_virtual_channel_open_event reported an error");
 
 	return;
 }
@@ -1096,9 +1092,9 @@ static UINT encomsp_virtual_channel_event_connected(encomspPlugin* encomsp,
         LPVOID pData, UINT32 dataLength)
 {
 	UINT32 status;
-	status = encomsp->channelEntryPoints.pVirtualChannelOpen(encomsp->InitHandle,
+	status = encomsp->channelEntryPoints.pVirtualChannelOpenEx(encomsp->InitHandle,
 	         &encomsp->OpenHandle, encomsp->channelDef.name,
-	         encomsp_virtual_channel_open_event);
+	         encomsp_virtual_channel_open_event_ex);
 
 	if (status != CHANNEL_RC_OK)
 	{
@@ -1106,8 +1102,6 @@ static UINT encomsp_virtual_channel_event_connected(encomspPlugin* encomsp,
 		         WTSErrorToString(status), status);
 		return status;
 	}
-
-	freerdp_channel_add_open_handle_data(&g_ChannelHandles, encomsp->OpenHandle, (void*) encomsp);
 
 	encomsp->queue = MessageQueue_New(NULL);
 
@@ -1150,7 +1144,7 @@ static UINT encomsp_virtual_channel_event_disconnected(encomspPlugin* encomsp)
 	CloseHandle(encomsp->thread);
 	encomsp->queue = NULL;
 	encomsp->thread = NULL;
-	rc = encomsp->channelEntryPoints.pVirtualChannelClose(encomsp->OpenHandle);
+	rc = encomsp->channelEntryPoints.pVirtualChannelCloseEx(encomsp->InitHandle, encomsp->OpenHandle);
 
 	if (CHANNEL_RC_OK != rc)
 	{
@@ -1167,8 +1161,6 @@ static UINT encomsp_virtual_channel_event_disconnected(encomspPlugin* encomsp)
 		encomsp->data_in = NULL;
 	}
 
-	freerdp_channel_remove_open_handle_data(&g_ChannelHandles, encomsp->OpenHandle);
-
 	return CHANNEL_RC_OK;
 }
 
@@ -1180,22 +1172,20 @@ static UINT encomsp_virtual_channel_event_disconnected(encomspPlugin* encomsp)
  */
 static UINT encomsp_virtual_channel_event_terminated(encomspPlugin* encomsp)
 {
-	freerdp_channel_remove_init_handle_data(&g_ChannelHandles, (void*) encomsp);
 	encomsp->InitHandle = 0;
 	free(encomsp);
 	return CHANNEL_RC_OK;
 }
 
-static VOID VCAPITYPE encomsp_virtual_channel_init_event(LPVOID pInitHandle,
-        UINT event, LPVOID pData,
-        UINT dataLength)
+static VOID VCAPITYPE encomsp_virtual_channel_init_event_ex(LPVOID lpUserParam, LPVOID pInitHandle,
+        UINT event, LPVOID pData, UINT dataLength)
 {
 	UINT error = CHANNEL_RC_OK;
-	encomspPlugin* encomsp = (encomspPlugin*) freerdp_channel_get_init_handle_data(&g_ChannelHandles, pInitHandle);
+	encomspPlugin* encomsp = (encomspPlugin*) lpUserParam;
 
 	if (!encomsp || (encomsp->InitHandle != pInitHandle))
 	{
-		WLog_ERR(TAG,  "encomsp_virtual_channel_init_event: error no match");
+		WLog_ERR(TAG,  "error no match");
 		return;
 	}
 
@@ -1225,19 +1215,18 @@ static VOID VCAPITYPE encomsp_virtual_channel_init_event(LPVOID pInitHandle,
 	}
 
 	if (error && encomsp->rdpcontext)
-		setChannelError(encomsp->rdpcontext, error,
-		                "encomsp_virtual_channel_init_event reported an error");
+		setChannelError(encomsp->rdpcontext, error, "encomsp_virtual_channel_init_event reported an error");
 }
 
 /* encomsp is always built-in */
-#define VirtualChannelEntry	encomsp_VirtualChannelEntry
+#define VirtualChannelEntryEx	encomsp_VirtualChannelEntryEx
 
-BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
+BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_EX pEntryPoints, PVOID pInitHandle)
 {
 	UINT rc;
 	encomspPlugin* encomsp;
 	EncomspClientContext* context = NULL;
-	CHANNEL_ENTRY_POINTS_FREERDP* pEntryPointsEx;
+	CHANNEL_ENTRY_POINTS_FREERDP_EX* pEntryPointsEx;
 	BOOL isFreerdp = FALSE;
 	encomsp = (encomspPlugin*) calloc(1, sizeof(encomspPlugin));
 
@@ -1253,9 +1242,9 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	    CHANNEL_OPTION_COMPRESS_RDP |
 	    CHANNEL_OPTION_SHOW_PROTOCOL;
 	strcpy(encomsp->channelDef.name, "encomsp");
-	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP*) pEntryPoints;
+	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*) pEntryPoints;
 
-	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP)) &&
+	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX)) &&
 	    (pEntryPointsEx->MagicNumber == FREERDP_CHANNEL_MAGIC_NUMBER))
 	{
 		context = (EncomspClientContext*) calloc(1, sizeof(EncomspClientContext));
@@ -1286,14 +1275,15 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	}
 
 	CopyMemory(&(encomsp->channelEntryPoints), pEntryPoints,
-	           sizeof(CHANNEL_ENTRY_POINTS_FREERDP));
-	rc = encomsp->channelEntryPoints.pVirtualChannelInit(&encomsp->InitHandle,
+	           sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX));
+	encomsp->InitHandle = pInitHandle;
+	rc = encomsp->channelEntryPoints.pVirtualChannelInitEx((void*) encomsp, pInitHandle,
 	        &encomsp->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000,
-	        encomsp_virtual_channel_init_event);
+	        encomsp_virtual_channel_init_event_ex);
 
 	if (CHANNEL_RC_OK != rc)
 	{
-		WLog_ERR(TAG, "pVirtualChannelInit failed with %s [%08X]",
+		WLog_ERR(TAG, "failed with %s [%08X]",
 		         WTSErrorToString(rc), rc);
 		goto error_out;
 	}
@@ -1302,8 +1292,6 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	        (encomsp->channelEntryPoints.ppInterface);
 	encomsp->channelEntryPoints.ppInterface = &
 	        (encomsp->channelEntryPoints.pInterface);
-
-	freerdp_channel_add_init_handle_data(&g_ChannelHandles, encomsp->InitHandle, (void*) encomsp);
 
 	return TRUE;
 error_out:
