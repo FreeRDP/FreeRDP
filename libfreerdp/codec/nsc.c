@@ -47,7 +47,7 @@ static void nsc_decode(NSC_CONTEXT* context)
 	UINT16 x;
 	UINT16 y;
 	UINT16 rw = ROUND_UP_TO(context->width, 8);
-	BYTE shift = context->ColorLossLevel - 1; /* colorloss recovery + YCoCg shift */;
+	BYTE shift = context->ColorLossLevel - 1; /* colorloss recovery + YCoCg shift */
 	BYTE* bmpdata = context->BitmapData;
 
 	for (y = 0; y < context->height; y++)
@@ -55,7 +55,7 @@ static void nsc_decode(NSC_CONTEXT* context)
 		const BYTE* yplane;
 		const BYTE* coplane;
 		const BYTE* cgplane;
-		const BYTE* aplane = context->priv->PlaneBuffers[3] + y * context->width; /* A */;
+		const BYTE* aplane = context->priv->PlaneBuffers[3] + y * context->width; /* A */
 
 		if (context->ChromaSubsamplingLevel)
 		{

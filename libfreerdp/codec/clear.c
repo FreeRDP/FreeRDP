@@ -141,10 +141,11 @@ static BOOL clear_decompress_subcode_rlex(wStream* s,
 	for (i = 0; i < paletteCount; i++)
 	{
 		BYTE r, g, b;
+		UINT32 color;
 		Stream_Read_UINT8(s, b);
 		Stream_Read_UINT8(s, g);
 		Stream_Read_UINT8(s, r);
-		UINT32 color = GetColor(SrcFormat, r, g, b, 0xFF);
+		color = GetColor(SrcFormat, r, g, b, 0xFF);
 		palette[i] = ConvertColor(color, SrcFormat, DstFormat, NULL);
 	}
 
@@ -397,7 +398,7 @@ static BOOL clear_decompress_subcodecs_data(CLEAR_CONTEXT* clear, wStream* s,
 		{
 			case 0: /* Uncompressed */
 				{
-					UINT32 nSrcStep = width * GetBytesPerPixel(PIXEL_FORMAT_BGR24);;
+					UINT32 nSrcStep = width * GetBytesPerPixel(PIXEL_FORMAT_BGR24);
 					UINT32 nSrcSize = nSrcStep * height;
 
 					if (bitmapDataByteCount != nSrcSize)
