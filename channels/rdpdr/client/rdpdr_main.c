@@ -67,8 +67,6 @@
 
 #include "rdpdr_main.h"
 
-static rdpChannelHandles g_ChannelHandles = { NULL, NULL };
-
 typedef struct _DEVICE_DRIVE_EXT DEVICE_DRIVE_EXT;
 
 struct _DEVICE_DRIVE_EXT
@@ -1430,14 +1428,14 @@ UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 		status = CHANNEL_RC_BAD_INIT_HANDLE;
 	else
 	{
-		status = plugin->channelEntryPoints.pVirtualChannelWrite(plugin->OpenHandle,
+		status = plugin->channelEntryPoints.pVirtualChannelWriteEx(plugin->InitHandle, plugin->OpenHandle,
 		         Stream_Buffer(s), (UINT32) Stream_GetPosition(s), s);
 	}
 
 	if (status != CHANNEL_RC_OK)
 	{
 		Stream_Free(s, TRUE);
-		WLog_ERR(TAG,  "VirtualChannelWrite failed with %s [%08X]",
+		WLog_ERR(TAG,  "pVirtualChannelWriteEx failed with %s [%08X]",
 		         WTSErrorToString(status), status);
 	}
 
@@ -1511,16 +1509,15 @@ static UINT rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr,
 	return CHANNEL_RC_OK;
 }
 
-static VOID VCAPITYPE rdpdr_virtual_channel_open_event(DWORD openHandle,
-        UINT event,
+static VOID VCAPITYPE rdpdr_virtual_channel_open_event_ex(LPVOID lpUserParam, DWORD openHandle, UINT event,
         LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	UINT error = CHANNEL_RC_OK;
-	rdpdrPlugin* rdpdr = (rdpdrPlugin*) freerdp_channel_get_open_handle_data(&g_ChannelHandles, openHandle);
+	rdpdrPlugin* rdpdr = (rdpdrPlugin*) lpUserParam;
 
 	if (!rdpdr || !pData || (rdpdr->OpenHandle != openHandle))
 	{
-		WLog_ERR(TAG,  "rdpdr_virtual_channel_open_event: error no match");
+		WLog_ERR(TAG,  "error no match");
 		return;
 	}
 
@@ -1544,7 +1541,7 @@ static VOID VCAPITYPE rdpdr_virtual_channel_open_event(DWORD openHandle,
 
 	if (error && rdpdr->rdpcontext)
 		setChannelError(rdpdr->rdpcontext, error,
-		                "rdpdr_virtual_channel_open_event reported an error");
+		                "rdpdr_virtual_channel_open_event_ex reported an error");
 
 	return;
 }
@@ -1616,17 +1613,15 @@ static UINT rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr,
         LPVOID pData, UINT32 dataLength)
 {
 	UINT32 status;
-	status = rdpdr->channelEntryPoints.pVirtualChannelOpen(rdpdr->InitHandle,
-	         &rdpdr->OpenHandle, rdpdr->channelDef.name, rdpdr_virtual_channel_open_event);
+	status = rdpdr->channelEntryPoints.pVirtualChannelOpenEx(rdpdr->InitHandle,
+	         &rdpdr->OpenHandle, rdpdr->channelDef.name, rdpdr_virtual_channel_open_event_ex);
 
 	if (status != CHANNEL_RC_OK)
 	{
-		WLog_ERR(TAG,  "pVirtualChannelOpen failed with %s [%08X]",
+		WLog_ERR(TAG,  "pVirtualChannelOpenEx failed with %s [%08X]",
 		         WTSErrorToString(status), status);
 		return status;
 	}
-
-	freerdp_channel_add_open_handle_data(&g_ChannelHandles, rdpdr->OpenHandle, (void*) rdpdr);
 
 	rdpdr->queue = MessageQueue_New(NULL);
 
@@ -1675,11 +1670,11 @@ static UINT rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
 		return error;
 	}
 
-	error = rdpdr->channelEntryPoints.pVirtualChannelClose(rdpdr->OpenHandle);
+	error = rdpdr->channelEntryPoints.pVirtualChannelCloseEx(rdpdr->InitHandle, rdpdr->OpenHandle);
 
 	if (CHANNEL_RC_OK != error)
 	{
-		WLog_ERR(TAG, "pVirtualChannelClose failed with %s [%08X]",
+		WLog_ERR(TAG, "pVirtualChannelCloseEx failed with %s [%08X]",
 		         WTSErrorToString(error), error);
 	}
 
@@ -1697,23 +1692,22 @@ static UINT rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
 		rdpdr->devman = NULL;
 	}
 
-	freerdp_channel_remove_open_handle_data(&g_ChannelHandles, rdpdr->OpenHandle);
 
 	return error;
 }
 
 static void rdpdr_virtual_channel_event_terminated(rdpdrPlugin* rdpdr)
 {
-	freerdp_channel_remove_init_handle_data(&g_ChannelHandles, (void*) rdpdr);
+	rdpdr->InitHandle = 0;
 	free(rdpdr);
 }
 
-static VOID VCAPITYPE rdpdr_virtual_channel_init_event(LPVOID pInitHandle,
+static VOID VCAPITYPE rdpdr_virtual_channel_init_event_ex(LPVOID lpUserParam, LPVOID pInitHandle,
         UINT event,
         LPVOID pData, UINT dataLength)
 {
 	UINT error = CHANNEL_RC_OK;
-	rdpdrPlugin* rdpdr = (rdpdrPlugin*) freerdp_channel_get_init_handle_data(&g_ChannelHandles, pInitHandle);
+	rdpdrPlugin* rdpdr = (rdpdrPlugin*) lpUserParam;
 
 	if (!rdpdr || (rdpdr->InitHandle != pInitHandle))
 	{
@@ -1752,17 +1746,17 @@ static VOID VCAPITYPE rdpdr_virtual_channel_init_event(LPVOID pInitHandle,
 
 	if (error && rdpdr->rdpcontext)
 		setChannelError(rdpdr->rdpcontext, error,
-		                "rdpdr_virtual_channel_init_event reported an error");
+		                "rdpdr_virtual_channel_init_event_ex reported an error");
 }
 
 /* rdpdr is always built-in */
-#define VirtualChannelEntry	rdpdr_VirtualChannelEntry
+#define VirtualChannelEntryEx	rdpdr_VirtualChannelEntryEx
 
-BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
+BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID pInitHandle)
 {
 	UINT rc;
 	rdpdrPlugin* rdpdr;
-	CHANNEL_ENTRY_POINTS_FREERDP* pEntryPointsEx;
+	CHANNEL_ENTRY_POINTS_FREERDP_EX* pEntryPointsEx;
 	rdpdr = (rdpdrPlugin*) calloc(1, sizeof(rdpdrPlugin));
 
 	if (!rdpdr)
@@ -1775,31 +1769,33 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	    CHANNEL_OPTION_INITIALIZED |
 	    CHANNEL_OPTION_ENCRYPT_RDP |
 	    CHANNEL_OPTION_COMPRESS_RDP;
+
 	strcpy(rdpdr->channelDef.name, "rdpdr");
 	rdpdr->sequenceId = 0;
-	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP*) pEntryPoints;
+	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*) pEntryPoints;
 
-	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP)) &&
+	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX)) &&
 	    (pEntryPointsEx->MagicNumber == FREERDP_CHANNEL_MAGIC_NUMBER))
 	{
 		rdpdr->rdpcontext = pEntryPointsEx->context;
 	}
 
 	CopyMemory(&(rdpdr->channelEntryPoints), pEntryPoints,
-	           sizeof(CHANNEL_ENTRY_POINTS_FREERDP));
-	rc = rdpdr->channelEntryPoints.pVirtualChannelInit(&rdpdr->InitHandle,
+	           sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX));
+
+	rdpdr->InitHandle = pInitHandle;
+
+	rc = rdpdr->channelEntryPoints.pVirtualChannelInitEx((void*) rdpdr, pInitHandle,
 	        &rdpdr->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000,
-	        rdpdr_virtual_channel_init_event);
+	        rdpdr_virtual_channel_init_event_ex);
 
 	if (CHANNEL_RC_OK != rc)
 	{
-		WLog_ERR(TAG, "pVirtualChannelInit failed with %s [%08X]",
+		WLog_ERR(TAG, "pVirtualChannelInitEx failed with %s [%08X]",
 		         WTSErrorToString(rc), rc);
 		free(rdpdr);
 		return FALSE;
 	}
-
-	freerdp_channel_add_init_handle_data(&g_ChannelHandles, rdpdr->InitHandle, (void*) rdpdr);
 
 	return TRUE;
 }
