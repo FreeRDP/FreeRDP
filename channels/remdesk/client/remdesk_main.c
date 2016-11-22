@@ -33,8 +33,6 @@
 
 #include "remdesk_main.h"
 
-static rdpChannelHandles g_ChannelHandles = { NULL, NULL };
-
 static RemdeskClientContext* remdesk_get_client_interface(
     remdeskPlugin* remdesk)
 {
@@ -58,11 +56,11 @@ static UINT remdesk_virtual_channel_write(remdeskPlugin* remdesk, wStream* s)
 		return CHANNEL_RC_INVALID_INSTANCE;
 	}
 
-	status = remdesk->channelEntryPoints.pVirtualChannelWrite(remdesk->OpenHandle,
+	status = remdesk->channelEntryPoints.pVirtualChannelWriteEx(remdesk->InitHandle, remdesk->OpenHandle,
 	         Stream_Buffer(s), (UINT32) Stream_Length(s), s);
 
 	if (status != CHANNEL_RC_OK)
-		WLog_ERR(TAG,  "VirtualChannelWrite failed with %s [%08X]",
+		WLog_ERR(TAG,  "pVirtualChannelWriteEx failed with %s [%08X]",
 		         WTSErrorToString(status), status);
 
 	return status;
@@ -727,14 +725,14 @@ static UINT remdesk_send(remdeskPlugin* remdesk, wStream* s)
 	}
 	else
 	{
-		status = plugin->channelEntryPoints.pVirtualChannelWrite(plugin->OpenHandle,
+		status = plugin->channelEntryPoints.pVirtualChannelWriteEx(plugin->InitHandle, plugin->OpenHandle,
 		         Stream_Buffer(s), (UINT32) Stream_GetPosition(s), s);
 	}
 
 	if (status != CHANNEL_RC_OK)
 	{
 		Stream_Free(s, TRUE);
-		WLog_ERR(TAG,  "VirtualChannelWrite failed with %s [%08X]",
+		WLog_ERR(TAG,  "pVirtualChannelWriteEx failed with %s [%08X]",
 		         WTSErrorToString(status), status);
 	}
 
@@ -802,12 +800,11 @@ static UINT remdesk_virtual_channel_event_data_received(remdeskPlugin* remdesk,
 	return CHANNEL_RC_OK;
 }
 
-static VOID VCAPITYPE remdesk_virtual_channel_open_event(DWORD openHandle,
-        UINT event,
+static VOID VCAPITYPE remdesk_virtual_channel_open_event_ex(LPVOID lpUserParam, DWORD openHandle, UINT event,
         LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	UINT error = CHANNEL_RC_OK;
-	remdeskPlugin* remdesk = (remdeskPlugin*) freerdp_channel_get_open_handle_data(&g_ChannelHandles, openHandle);
+	remdeskPlugin* remdesk = (remdeskPlugin*) lpUserParam;
 
 	if (!remdesk || (remdesk->OpenHandle != openHandle))
 	{
@@ -839,7 +836,7 @@ static VOID VCAPITYPE remdesk_virtual_channel_open_event(DWORD openHandle,
 
 	if (error && remdesk->rdpcontext)
 		setChannelError(remdesk->rdpcontext, error,
-		                "remdesk_virtual_channel_open_event reported an error");
+		                "remdesk_virtual_channel_open_event_ex reported an error");
 }
 
 static void* remdesk_virtual_channel_client_thread(void* arg)
@@ -900,18 +897,16 @@ static UINT remdesk_virtual_channel_event_connected(remdeskPlugin* remdesk,
 {
 	UINT32 status;
 	UINT error;
-	status = remdesk->channelEntryPoints.pVirtualChannelOpen(remdesk->InitHandle,
+	status = remdesk->channelEntryPoints.pVirtualChannelOpenEx(remdesk->InitHandle,
 	         &remdesk->OpenHandle, remdesk->channelDef.name,
-	         remdesk_virtual_channel_open_event);
+	         remdesk_virtual_channel_open_event_ex);
 
 	if (status != CHANNEL_RC_OK)
 	{
-		WLog_ERR(TAG,  "pVirtualChannelOpen failed with %s [%08X]",
+		WLog_ERR(TAG,  "pVirtualChannelOpenEx failed with %s [%08X]",
 		         WTSErrorToString(status), status);
 		return status;
 	}
-
-	freerdp_channel_add_open_handle_data(&g_ChannelHandles, remdesk->OpenHandle, (void*) remdesk);
 
 	remdesk->queue = MessageQueue_New(NULL);
 
@@ -961,11 +956,11 @@ static UINT remdesk_virtual_channel_event_disconnected(remdeskPlugin* remdesk)
 	CloseHandle(remdesk->thread);
 	remdesk->queue = NULL;
 	remdesk->thread = NULL;
-	rc = remdesk->channelEntryPoints.pVirtualChannelClose(remdesk->OpenHandle);
+	rc = remdesk->channelEntryPoints.pVirtualChannelCloseEx(remdesk->InitHandle, remdesk->OpenHandle);
 
 	if (CHANNEL_RC_OK != rc)
 	{
-		WLog_ERR(TAG, "pVirtualChannelClose failed with %s [%08X]",
+		WLog_ERR(TAG, "pVirtualChannelCloseEx failed with %s [%08X]",
 		         WTSErrorToString(rc), rc);
 	}
 
@@ -977,24 +972,21 @@ static UINT remdesk_virtual_channel_event_disconnected(remdeskPlugin* remdesk)
 		remdesk->data_in = NULL;
 	}
 
-	freerdp_channel_remove_open_handle_data(&g_ChannelHandles, remdesk->OpenHandle);
-
 	return rc;
 }
 
 static void remdesk_virtual_channel_event_terminated(remdeskPlugin* remdesk)
 {
-	freerdp_channel_remove_init_handle_data(&g_ChannelHandles, (void*) remdesk);
 	remdesk->InitHandle = 0;
 	free(remdesk);
 }
 
-static VOID VCAPITYPE remdesk_virtual_channel_init_event(LPVOID pInitHandle,
+static VOID VCAPITYPE remdesk_virtual_channel_init_event_ex(LPVOID lpUserParam, LPVOID pInitHandle,
         UINT event, LPVOID pData,
         UINT dataLength)
 {
 	UINT error = CHANNEL_RC_OK;
-	remdeskPlugin* remdesk = (remdeskPlugin*) freerdp_channel_get_init_handle_data(&g_ChannelHandles, pInitHandle);
+	remdeskPlugin* remdesk = (remdeskPlugin*) lpUserParam;
 
 	if (!remdesk || (remdesk->InitHandle != pInitHandle))
 	{
@@ -1030,14 +1022,14 @@ static VOID VCAPITYPE remdesk_virtual_channel_init_event(LPVOID pInitHandle,
 }
 
 /* remdesk is always built-in */
-#define VirtualChannelEntry	remdesk_VirtualChannelEntry
+#define VirtualChannelEntryEx	remdesk_VirtualChannelEntryEx
 
-BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
+BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID pInitHandle)
 {
 	UINT rc;
 	remdeskPlugin* remdesk;
 	RemdeskClientContext* context = NULL;
-	CHANNEL_ENTRY_POINTS_FREERDP* pEntryPointsEx;
+	CHANNEL_ENTRY_POINTS_FREERDP_EX* pEntryPointsEx;
 
 	if (!pEntryPoints)
 	{
@@ -1057,11 +1049,12 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	    CHANNEL_OPTION_ENCRYPT_RDP |
 	    CHANNEL_OPTION_COMPRESS_RDP |
 	    CHANNEL_OPTION_SHOW_PROTOCOL;
+
 	strcpy(remdesk->channelDef.name, "remdesk");
 	remdesk->Version = 2;
-	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP*) pEntryPoints;
+	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*) pEntryPoints;
 
-	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP)) &&
+	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX)) &&
 	    (pEntryPointsEx->MagicNumber == FREERDP_CHANNEL_MAGIC_NUMBER))
 	{
 		context = (RemdeskClientContext*) calloc(1, sizeof(RemdeskClientContext));
@@ -1079,14 +1072,17 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	}
 
 	CopyMemory(&(remdesk->channelEntryPoints), pEntryPoints,
-	           sizeof(CHANNEL_ENTRY_POINTS_FREERDP));
-	rc = remdesk->channelEntryPoints.pVirtualChannelInit(&remdesk->InitHandle,
+	           sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX));
+
+	remdesk->InitHandle = pInitHandle;
+
+	rc = remdesk->channelEntryPoints.pVirtualChannelInitEx((void*) remdesk, pInitHandle,
 	        &remdesk->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000,
-	        remdesk_virtual_channel_init_event);
+	        remdesk_virtual_channel_init_event_ex);
 
 	if (CHANNEL_RC_OK != rc)
 	{
-		WLog_ERR(TAG, "pVirtualChannelInit failed with %s [%08X]",
+		WLog_ERR(TAG, "pVirtualChannelInitEx failed with %s [%08X]",
 		         WTSErrorToString(rc), rc);
 		goto error_out;
 	}
@@ -1095,8 +1091,6 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	        (remdesk->channelEntryPoints.ppInterface);
 	remdesk->channelEntryPoints.ppInterface = &
 	        (remdesk->channelEntryPoints.pInterface);
-
-	freerdp_channel_add_init_handle_data(&g_ChannelHandles, remdesk->InitHandle, (void*) remdesk);
 
 	return TRUE;
 error_out:
