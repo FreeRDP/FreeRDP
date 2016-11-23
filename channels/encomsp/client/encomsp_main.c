@@ -118,7 +118,8 @@ static UINT encomsp_virtual_channel_write(encomspPlugin* encomsp, wStream* s)
 	WLog_INFO(TAG, "EncomspWrite (%d)", Stream_Length(s));
 	winpr_HexDump(Stream_Buffer(s), Stream_Length(s));
 #endif
-	status = encomsp->channelEntryPoints.pVirtualChannelWriteEx(encomsp->InitHandle, encomsp->OpenHandle,
+	status = encomsp->channelEntryPoints.pVirtualChannelWriteEx(encomsp->InitHandle,
+	         encomsp->OpenHandle,
 	         Stream_Buffer(s), (UINT32) Stream_Length(s), s);
 
 	if (status != CHANNEL_RC_OK)
@@ -999,7 +1000,8 @@ static UINT encomsp_virtual_channel_event_data_received(encomspPlugin* encomsp,
 	return CHANNEL_RC_OK;
 }
 
-static VOID VCAPITYPE encomsp_virtual_channel_open_event_ex(LPVOID lpUserParam, DWORD openHandle, UINT event,
+static VOID VCAPITYPE encomsp_virtual_channel_open_event_ex(LPVOID lpUserParam, DWORD openHandle,
+        UINT event,
         LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	UINT error = CHANNEL_RC_OK;
@@ -1041,7 +1043,6 @@ static void* encomsp_virtual_channel_client_thread(void* arg)
 	wMessage message;
 	encomspPlugin* encomsp = (encomspPlugin*) arg;
 	UINT error = CHANNEL_RC_OK;
-
 	encomsp_process_connect(encomsp);
 
 	while (1)
@@ -1268,7 +1269,6 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_EX pEntryPoints, PVOI
 		    encomsp_send_change_participant_control_level_pdu;
 		context->GraphicsStreamPaused = NULL;
 		context->GraphicsStreamResumed = NULL;
-		*(pEntryPointsEx->ppInterface) = (void*) context;
 		encomsp->context = context;
 		encomsp->rdpcontext = pEntryPointsEx->context;
 		isFreerdp = TRUE;
@@ -1277,7 +1277,7 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_EX pEntryPoints, PVOI
 	CopyMemory(&(encomsp->channelEntryPoints), pEntryPoints,
 	           sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX));
 	encomsp->InitHandle = pInitHandle;
-	rc = encomsp->channelEntryPoints.pVirtualChannelInitEx((void*) encomsp, pInitHandle,
+	rc = encomsp->channelEntryPoints.pVirtualChannelInitEx(encomsp, context, pInitHandle,
 	        &encomsp->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000,
 	        encomsp_virtual_channel_init_event_ex);
 
@@ -1288,16 +1288,9 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_EX pEntryPoints, PVOI
 		goto error_out;
 	}
 
-	encomsp->channelEntryPoints.pInterface = *
-	        (encomsp->channelEntryPoints.ppInterface);
-	encomsp->channelEntryPoints.ppInterface = &
-	        (encomsp->channelEntryPoints.pInterface);
-
+	encomsp->channelEntryPoints.pInterface = context;
 	return TRUE;
 error_out:
-
-	if (context)
-		*(pEntryPointsEx->ppInterface) = NULL;
 
 	if (isFreerdp)
 		free(encomsp->context);

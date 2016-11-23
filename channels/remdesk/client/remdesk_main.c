@@ -56,7 +56,8 @@ static UINT remdesk_virtual_channel_write(remdeskPlugin* remdesk, wStream* s)
 		return CHANNEL_RC_INVALID_INSTANCE;
 	}
 
-	status = remdesk->channelEntryPoints.pVirtualChannelWriteEx(remdesk->InitHandle, remdesk->OpenHandle,
+	status = remdesk->channelEntryPoints.pVirtualChannelWriteEx(remdesk->InitHandle,
+	         remdesk->OpenHandle,
 	         Stream_Buffer(s), (UINT32) Stream_Length(s), s);
 
 	if (status != CHANNEL_RC_OK)
@@ -800,7 +801,8 @@ static UINT remdesk_virtual_channel_event_data_received(remdeskPlugin* remdesk,
 	return CHANNEL_RC_OK;
 }
 
-static VOID VCAPITYPE remdesk_virtual_channel_open_event_ex(LPVOID lpUserParam, DWORD openHandle, UINT event,
+static VOID VCAPITYPE remdesk_virtual_channel_open_event_ex(LPVOID lpUserParam, DWORD openHandle,
+        UINT event,
         LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	UINT error = CHANNEL_RC_OK;
@@ -845,7 +847,6 @@ static void* remdesk_virtual_channel_client_thread(void* arg)
 	wMessage message;
 	remdeskPlugin* remdesk = (remdeskPlugin*) arg;
 	UINT error = CHANNEL_RC_OK;
-
 	remdesk_process_connect(remdesk);
 
 	while (1)
@@ -1049,7 +1050,6 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 	    CHANNEL_OPTION_ENCRYPT_RDP |
 	    CHANNEL_OPTION_COMPRESS_RDP |
 	    CHANNEL_OPTION_SHOW_PROTOCOL;
-
 	strcpy(remdesk->channelDef.name, "remdesk");
 	remdesk->Version = 2;
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*) pEntryPoints;
@@ -1066,17 +1066,14 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 		}
 
 		context->handle = (void*) remdesk;
-		*(pEntryPointsEx->ppInterface) = (void*) context;
 		remdesk->context = context;
 		remdesk->rdpcontext = pEntryPointsEx->context;
 	}
 
 	CopyMemory(&(remdesk->channelEntryPoints), pEntryPoints,
 	           sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX));
-
 	remdesk->InitHandle = pInitHandle;
-
-	rc = remdesk->channelEntryPoints.pVirtualChannelInitEx((void*) remdesk, pInitHandle,
+	rc = remdesk->channelEntryPoints.pVirtualChannelInitEx(remdesk, context, pInitHandle,
 	        &remdesk->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000,
 	        remdesk_virtual_channel_init_event_ex);
 
@@ -1087,17 +1084,9 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 		goto error_out;
 	}
 
-	remdesk->channelEntryPoints.pInterface = *
-	        (remdesk->channelEntryPoints.ppInterface);
-	remdesk->channelEntryPoints.ppInterface = &
-	        (remdesk->channelEntryPoints.pInterface);
-
+	remdesk->channelEntryPoints.pInterface = context;
 	return TRUE;
 error_out:
-
-	if (context)
-		*(pEntryPointsEx->ppInterface) = NULL;
-
 	free(remdesk);
 	free(context);
 	return FALSE;

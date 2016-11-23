@@ -809,7 +809,6 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 		context->ClientGetAppIdRequest = rail_client_get_appid_request;
 		context->ServerGetAppIdResponse = rail_server_get_appid_response;
 		rail->rdpcontext = pEntryPointsEx->context;
-		*(pEntryPointsEx->ppInterface) = (void*) context;
 		rail->context = context;
 		isFreerdp = TRUE;
 	}
@@ -819,10 +818,8 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 	WLog_Print(rail->log, WLOG_DEBUG, "VirtualChannelEntryEx");
 	CopyMemory(&(rail->channelEntryPoints), pEntryPoints,
 	           sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX));
-
 	rail->InitHandle = pInitHandle;
-
-	rc = rail->channelEntryPoints.pVirtualChannelInitEx((void*) rail, pInitHandle,
+	rc = rail->channelEntryPoints.pVirtualChannelInitEx(rail, context, pInitHandle,
 	        &rail->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000,
 	        rail_virtual_channel_init_event_ex);
 
@@ -833,14 +830,9 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 		goto error_out;
 	}
 
-	rail->channelEntryPoints.pInterface = *(rail->channelEntryPoints.ppInterface);
-	rail->channelEntryPoints.ppInterface = &(rail->channelEntryPoints.pInterface);
-
+	rail->channelEntryPoints.pInterface = context;
 	return TRUE;
 error_out:
-
-	if (context)
-		*(pEntryPointsEx->ppInterface) = NULL;
 
 	if (isFreerdp)
 		free(rail->context);

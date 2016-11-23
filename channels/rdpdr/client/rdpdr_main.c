@@ -1509,7 +1509,8 @@ static UINT rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr,
 	return CHANNEL_RC_OK;
 }
 
-static VOID VCAPITYPE rdpdr_virtual_channel_open_event_ex(LPVOID lpUserParam, DWORD openHandle, UINT event,
+static VOID VCAPITYPE rdpdr_virtual_channel_open_event_ex(LPVOID lpUserParam, DWORD openHandle,
+        UINT event,
         LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	UINT error = CHANNEL_RC_OK;
@@ -1692,7 +1693,6 @@ static UINT rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
 		rdpdr->devman = NULL;
 	}
 
-
 	return error;
 }
 
@@ -1769,7 +1769,6 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 	    CHANNEL_OPTION_INITIALIZED |
 	    CHANNEL_OPTION_ENCRYPT_RDP |
 	    CHANNEL_OPTION_COMPRESS_RDP;
-
 	strcpy(rdpdr->channelDef.name, "rdpdr");
 	rdpdr->sequenceId = 0;
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*) pEntryPoints;
@@ -1782,10 +1781,8 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 
 	CopyMemory(&(rdpdr->channelEntryPoints), pEntryPoints,
 	           sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX));
-
 	rdpdr->InitHandle = pInitHandle;
-
-	rc = rdpdr->channelEntryPoints.pVirtualChannelInitEx((void*) rdpdr, pInitHandle,
+	rc = rdpdr->channelEntryPoints.pVirtualChannelInitEx(rdpdr, NULL, pInitHandle,
 	        &rdpdr->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000,
 	        rdpdr_virtual_channel_init_event_ex);
 

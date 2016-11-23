@@ -111,7 +111,6 @@ static void* rdpsnd_schedule_thread(void* arg)
 	HANDLE events[2];
 	UINT error = CHANNEL_RC_OK;
 	DWORD status;
-
 	events[0] = MessageQueue_Event(rdpsnd->MsgPipe->Out);
 	events[1] = rdpsnd->stopEvent;
 
@@ -1203,7 +1202,8 @@ static UINT rdpsnd_virtual_channel_event_data_received(rdpsndPlugin* plugin,
 	return CHANNEL_RC_OK;
 }
 
-static VOID VCAPITYPE rdpsnd_virtual_channel_open_event_ex(LPVOID lpUserParam, DWORD openHandle, UINT event,
+static VOID VCAPITYPE rdpsnd_virtual_channel_open_event_ex(LPVOID lpUserParam, DWORD openHandle,
+        UINT event,
         LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	UINT error = CHANNEL_RC_OK;
@@ -1485,7 +1485,6 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 	rdpsnd->channelDef.options =
 	    CHANNEL_OPTION_INITIALIZED |
 	    CHANNEL_OPTION_ENCRYPT_RDP;
-
 	strcpy(rdpsnd->channelDef.name, "rdpsnd");
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*) pEntryPoints;
 
