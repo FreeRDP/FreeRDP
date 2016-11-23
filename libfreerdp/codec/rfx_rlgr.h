@@ -24,6 +24,9 @@
 #include <freerdp/api.h>
 
 FREERDP_LOCAL int rfx_rlgr_encode(RLGR_MODE mode, const INT16* data,
-                                  int data_size, BYTE* buffer, int buffer_size);
+                                  UINT32 data_size, BYTE* buffer, UINT32 buffer_size);
+
+FREERDP_LOCAL int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 SrcSize,
+                                  INT16* pDstData, UINT32 DstSize);
 
 #endif /* __RFX_RLGR_H */
