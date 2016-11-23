@@ -232,11 +232,8 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 
 	if (xfc->scanline_pad > 0)
 	{
-		const UINT32 align = xfc->scanline_pad / 8;
-		const UINT32 pad = align - (surface->gdi.scanline % align);
-
-		if (align != pad)
-			surface->gdi.scanline += pad;
+		surface->gdi.scanline += (xfc->scanline_pad / 8);
+		surface->gdi.scanline -= (surface->gdi.scanline % (xfc->scanline_pad / 8));
 	}
 
 	size = surface->gdi.scanline * surface->gdi.height;
