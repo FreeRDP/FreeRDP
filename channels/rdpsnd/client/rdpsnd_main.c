@@ -1500,7 +1500,7 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 
 	rdpsnd->InitHandle = pInitHandle;
 
-	rc = rdpsnd->channelEntryPoints.pVirtualChannelInitEx((void*)rdpsnd, pInitHandle,
+	rc = rdpsnd->channelEntryPoints.pVirtualChannelInitEx(rdpsnd, NULL, pInitHandle,
 	        &rdpsnd->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000,
 	        rdpsnd_virtual_channel_init_event_ex);
 
