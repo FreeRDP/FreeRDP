@@ -461,10 +461,17 @@ static BOOL xf_hw_end_paint(rdpContext* context)
 
 static BOOL xf_hw_desktop_resize(rdpContext* context)
 {
+	rdpGdi* gdi = context->gdi;
 	xfContext* xfc = (xfContext*) context;
-	BOOL ret;
+	rdpSettings* settings = context->settings;
+	BOOL ret = FALSE;
 	xf_lock_x11(xfc, TRUE);
+
+	if (!gdi_resize(gdi, settings->DesktopWidth, settings->DesktopHeight))
+		goto out;
+
 	ret = xf_desktop_resize(context);
+out:
 	xf_unlock_x11(xfc, TRUE);
 	return ret;
 }
