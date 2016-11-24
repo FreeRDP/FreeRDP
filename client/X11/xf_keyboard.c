@@ -485,6 +485,17 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 			return TRUE;
 		}
 	}
+	
+	// Ungrab keyboard
+	if (mod.Ctrl && mod.Alt) // TODO make an option to choose which button combination does it
+	{
+		if (!xfc->fullscreen)
+		{
+			xf_toggle_control(xfc);
+		}
+		XUngrabKeyboard(xfc->display, CurrentTime);
+		return TRUE;
+	}
 
 #if 0 /* set to 1 to enable multi touch gesture simulation via keyboard */
 #ifdef WITH_XRENDER
