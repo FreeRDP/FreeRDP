@@ -438,7 +438,7 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 		srcVMultiplier = -1;
 	}
 
-	if (SrcFormat == DstFormat)
+	if (AreColorFormatsEqualNoAlpha(SrcFormat, DstFormat))
 	{
 		INT32 y;
 

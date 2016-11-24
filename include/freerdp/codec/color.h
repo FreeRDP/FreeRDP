@@ -100,6 +100,14 @@ typedef struct gdi_palette gdiPalette;
 extern "C" {
 #endif
 
+/* Compare two color formats but ignore differences in alpha channel.
+ */
+static INLINE DWORD AreColorFormatsEqualNoAlpha(DWORD first, DWORD second)
+{
+	const DWORD mask = ~(8 << 12);
+	return (first & mask) == (second & mask);
+}
+
 /* Color Space Conversions: http://msdn.microsoft.com/en-us/library/ff566496/ */
 
 /***
