@@ -3014,7 +3014,7 @@ static BOOL RunTestPlanarSingleColor(BITMAP_PLANAR_CONTEXT* planar,
 	       GetColorFormatName(dstFormat));
 	fflush(stdout);
 
-	for (j = 0; j < 0x1000; j += 8)
+	for (j = 0; j < 100; j += 8)
 	{
 		for (i = 4; i < 64; i += 8)
 		{
