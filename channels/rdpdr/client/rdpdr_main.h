@@ -49,7 +49,7 @@ typedef struct rdpdr_plugin rdpdrPlugin;
 struct rdpdr_plugin
 {
 	CHANNEL_DEF channelDef;
-	CHANNEL_ENTRY_POINTS_FREERDP channelEntryPoints;
+	CHANNEL_ENTRY_POINTS_FREERDP_EX channelEntryPoints;
 
 	HANDLE thread;
 	wStream* data_in;

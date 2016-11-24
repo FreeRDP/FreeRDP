@@ -21,7 +21,7 @@ set(${MODULE_PREFIX}_SRCS
 	rdpsnd_main.c
 	rdpsnd_main.h)
 
-add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntry")
+add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntryEx")
 
 
 
