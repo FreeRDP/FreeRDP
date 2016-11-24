@@ -13,20 +13,22 @@
 #define _ANDROID_JNI_UTILS_H_
 
 #include <jni.h>
+#include <freerdp/api.h>
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-JNIEnv* getJNIEnv();
-JavaVM* getJavaVM();
+FREERDP_LOCAL JNIEnv* getJNIEnv();
+FREERDP_LOCAL JavaVM* getJavaVM();
 
-char* get_string_from_string_builder(JNIEnv* env, jobject strBuilder);
-jobject create_string_builder(JNIEnv *env, char* initialStr);
-jstring jniNewStringUTF(JNIEnv* env, const char* in, int len);
+FREERDP_LOCAL char* get_string_from_string_builder(JNIEnv* env,
+        jobject strBuilder);
+FREERDP_LOCAL jobject create_string_builder(JNIEnv* env, char* initialStr);
+FREERDP_LOCAL jstring jniNewStringUTF(JNIEnv* env, const char* in, int len);
 
-extern JavaVM *g_JavaVm;
+FREERDP_LOCAL extern JavaVM* g_JavaVm;
 
 #ifdef __cplusplus
 }
