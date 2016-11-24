@@ -132,6 +132,7 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 	UINT32 nXDest, nYDest;
 	UINT32 nWidth, nHeight;
 	const BYTE* srcp;
+	DWORD formatSize;
 	gdi_RectToCRgn(rect, &nXDest, &nYDest, &nWidth, &nHeight);
 
 	if (!hdc || !hbr)
@@ -155,11 +156,12 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 			}
 
 			srcp = gdi_get_bitmap_pointer(hdc, nXDest, nYDest);
+			formatSize = GetBytesPerPixel(hdc->format);
 
 			for (y = 1; y < nHeight; y++)
 			{
 				BYTE* dstp = gdi_get_bitmap_pointer(hdc, nXDest, nYDest + y);
-				memcpy(dstp, srcp, nWidth * GetBytesPerPixel(hdc->format));
+				memcpy(dstp, srcp, nWidth * formatSize);
 			}
 
 			break;
@@ -167,15 +169,15 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 		case GDI_BS_HATCHED:
 		case GDI_BS_PATTERN:
 			monochrome = (hbr->pattern->format == PIXEL_FORMAT_MONO);
+			formatSize = GetBytesPerPixel(hbr->pattern->format);
 
 			for (y = 0; y < nHeight; y++)
 			{
 				for (x = 0; x < nWidth; x++)
 				{
 					const UINT32 yOffset = ((nYDest + y) * hbr->pattern->width %
-					                        hbr->pattern->height) * GetBytesPerPixel(hbr->pattern->format);
-					const UINT32 xOffset = ((nXDest + x) % hbr->pattern->width) * GetBytesPerPixel(
-					                           hbr->pattern->format);
+					                        hbr->pattern->height) * formatSize;
+					const UINT32 xOffset = ((nXDest + x) % hbr->pattern->width) * formatSize;
 					const BYTE* patp = &hbr->pattern->data[yOffset + xOffset];
 					BYTE* dstp = gdi_get_bitmap_pointer(hdc, nXDest + x,
 					                                    nYDest + y);
