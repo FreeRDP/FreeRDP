@@ -39,7 +39,6 @@
 #include <mbedtls/cipher.h>
 #endif
 
-
 /**
  * RC4
  */
@@ -69,12 +68,13 @@ BOOL winpr_RC4_Update(WINPR_RC4_CTX* ctx, size_t length, const BYTE* input, BYTE
 {
 #if defined(WITH_OPENSSL)
 	RC4((RC4_KEY*) ctx, length, input, output);
+	return TRUE;
 
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_ARC4_C)
-	if (mbedtls_arc4_crypt((mbedtls_arc4_context*) ctx, length, input, output) != 0)
-		return FALSE;
+	if (mbedtls_arc4_crypt((mbedtls_arc4_context*) ctx, length, input, output) == 0)
+		return TRUE;
 #endif
-	return TRUE;
+	return FALSE;
 }
 
 void winpr_RC4_Free(WINPR_RC4_CTX* ctx)
@@ -308,6 +308,7 @@ const EVP_CIPHER* winpr_openssl_get_evp_cipher(int cipher)
 
 	return evp;
 }
+
 #elif defined(WITH_MBEDTLS)
 mbedtls_cipher_type_t winpr_mbedtls_get_cipher_type(int cipher)
 {
@@ -592,15 +593,18 @@ BOOL winpr_Cipher_Update(WINPR_CIPHER_CTX* ctx, const BYTE* input, size_t ilen, 
 #if defined(WITH_OPENSSL)
 	int outl = (int) *olen;
 
-	if (EVP_CipherUpdate((EVP_CIPHER_CTX*) ctx, output, &outl, input, ilen) != 1)
-		return FALSE;
+	if (EVP_CipherUpdate((EVP_CIPHER_CTX*) ctx, output, &outl, input, ilen) == 1)
+	{
+		*olen = (size_t) outl;
+		return TRUE;
+	}
 
-	*olen = (size_t) outl;
 #elif defined(WITH_MBEDTLS)
-	if (mbedtls_cipher_update((mbedtls_cipher_context_t*) ctx, input, ilen, output, olen) != 0)
-		return FALSE;
+	if (mbedtls_cipher_update((mbedtls_cipher_context_t*) ctx, input, ilen, output, olen) == 0)
+		return TRUE;
 #endif
-	return TRUE;
+
+	return FALSE;
 }
 
 BOOL winpr_Cipher_Final(WINPR_CIPHER_CTX* ctx, BYTE* output, size_t* olen)
@@ -608,15 +612,18 @@ BOOL winpr_Cipher_Final(WINPR_CIPHER_CTX* ctx, BYTE* output, size_t* olen)
 #if defined(WITH_OPENSSL)
 	int outl = (int) *olen;
 
-	if (EVP_CipherFinal_ex((EVP_CIPHER_CTX*) ctx, output, &outl) != 1)
-		return FALSE;
+	if (EVP_CipherFinal_ex((EVP_CIPHER_CTX*) ctx, output, &outl) == 1)
+	{
+		*olen = (size_t) outl;
+		return TRUE;
+	}
 
-	*olen = (size_t) outl;
 #elif defined(WITH_MBEDTLS)
-	if (mbedtls_cipher_finish((mbedtls_cipher_context_t*) ctx, output, olen) != 0)
-		return FALSE;
+	if (mbedtls_cipher_finish((mbedtls_cipher_context_t*) ctx, output, olen) == 0)
+		return TRUE;
 #endif
-	return TRUE;
+
+	return FALSE;
 }
 
 void winpr_Cipher_Free(WINPR_CIPHER_CTX* ctx)

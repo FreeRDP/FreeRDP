@@ -642,10 +642,11 @@ typedef struct _winpr_hmac_ctx_private_st WINPR_HMAC_CTX;
 extern "C" {
 #endif
 
-WINPR_API WINPR_HMAC_CTX* winpr_HMAC_New(WINPR_MD_TYPE md, const BYTE* key, size_t keylen);
+WINPR_API WINPR_HMAC_CTX* winpr_HMAC_New(void);
+WINPR_API BOOL winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, WINPR_MD_TYPE md, const BYTE* key, size_t keylen);
 WINPR_API BOOL winpr_HMAC_Update(WINPR_HMAC_CTX* ctx, const BYTE* input, size_t ilen);
 WINPR_API BOOL winpr_HMAC_Final(WINPR_HMAC_CTX* ctx, BYTE* output, size_t ilen);
-//WINPR_API void winpr_HMAC_Free(WINPR_HMAC_CTX* ctx);
+WINPR_API void winpr_HMAC_Free(WINPR_HMAC_CTX* ctx);
 WINPR_API BOOL winpr_HMAC(WINPR_MD_TYPE md, const BYTE* key, size_t keylen,
             const BYTE* input, size_t ilen, BYTE* output, size_t olen);
 
@@ -663,7 +664,8 @@ typedef struct _winpr_digest_ctx_private_st WINPR_DIGEST_CTX;
 extern "C" {
 #endif
 
-WINPR_API WINPR_DIGEST_CTX* winpr_Digest_New(WINPR_MD_TYPE md);
+WINPR_API WINPR_DIGEST_CTX* winpr_Digest_New(void);
+WINPR_API BOOL winpr_Digest_Init(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md);
 WINPR_API BOOL winpr_Digest_Update(WINPR_DIGEST_CTX* ctx, const BYTE* input, size_t ilen);
 WINPR_API BOOL winpr_Digest_Final(WINPR_DIGEST_CTX* ctx, BYTE* output, size_t ilen);
 WINPR_API void winpr_Digest_Free(WINPR_DIGEST_CTX* ctx);

@@ -45,7 +45,6 @@ static const char* const INFO_TYPE_LOGON_STRINGS[4] =
 
 BOOL rdp_compute_client_auto_reconnect_cookie(rdpRdp* rdp)
 {
-	WINPR_HMAC_CTX* hmac;
 	BYTE ClientRandom[32];
 	BYTE AutoReconnectRandom[32];
 	ARC_SC_PRIVATE_PACKET* serverCookie;
@@ -70,11 +69,7 @@ BOOL rdp_compute_client_auto_reconnect_cookie(rdpRdp* rdp)
 
 	/* SecurityVerifier = HMAC_MD5(AutoReconnectRandom, ClientRandom) */
 
-	if (!(hmac = winpr_HMAC_New(WINPR_MD_MD5, AutoReconnectRandom, 16)))
-		return FALSE;
-	if (!winpr_HMAC_Update(hmac, ClientRandom, 32))
-		return FALSE;
-	if (!winpr_HMAC_Final(hmac, clientCookie->securityVerifier, 16))
+	if (!winpr_HMAC(WINPR_MD_MD5, AutoReconnectRandom, 16, ClientRandom, 32, clientCookie->securityVerifier, 16))
 		return FALSE;
 
 	return TRUE;

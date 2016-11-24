@@ -249,17 +249,11 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 	{
 		case BIO_CTRL_RESET:
 			SSL_shutdown(tls->ssl);
-#if 1
+
 			if (SSL_in_connect_init(tls->ssl))
 				SSL_set_connect_state(tls->ssl);
 			else if (SSL_in_accept_init(tls->ssl))
 				SSL_set_accept_state(tls->ssl);
-#else
-			if (tls->ssl->handshake_func == tls->ssl->method->ssl_connect)
-				SSL_set_connect_state(tls->ssl);
-			else if (tls->ssl->handshake_func == tls->ssl->method->ssl_accept)
-				SSL_set_accept_state(tls->ssl);
-#endif
 
 			SSL_clear(tls->ssl);
 
