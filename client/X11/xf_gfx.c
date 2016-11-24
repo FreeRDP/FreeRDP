@@ -176,6 +176,21 @@ UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y,
 	return status;
 }
 
+static INLINE UINT32 x11_pad_scanline(UINT32 scanline, UINT32 inPad)
+{
+	if (inPad > 0)
+	{
+		const UINT32 align = inPad / 8;
+		const UINT32 pad = align - scanline % align;
+
+		if (align != pad)
+			scanline += pad;
+	}
+
+	return scanline;
+}
+
+
 /**
  * Function description
  *
@@ -229,13 +244,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 
 	surface->gdi.scanline = surface->gdi.width * GetBytesPerPixel(
 	                            surface->gdi.format);
-
-	if (xfc->scanline_pad > 0)
-	{
-		surface->gdi.scanline += (xfc->scanline_pad / 8);
-		surface->gdi.scanline -= (surface->gdi.scanline % (xfc->scanline_pad / 8));
-	}
-
+	surface->gdi.scanline = x11_pad_scanline(surface->gdi.scanline, xfc->scanline_pad);
 	size = surface->gdi.scanline * surface->gdi.height;
 	surface->gdi.data = (BYTE*) _aligned_malloc(size, 16);
 
@@ -258,13 +267,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 		UINT32 width = surface->gdi.width;
 		UINT32 bytes = GetBytesPerPixel(gdi->dstFormat);
 		surface->stageScanline = width * bytes;
-
-		if (xfc->scanline_pad > 0)
-		{
-			surface->stageScanline += (xfc->scanline_pad / 8);
-			surface->stageScanline -= (surface->stageScanline % (xfc->scanline_pad / 8));
-		}
-
+		surface->stageScanline = x11_pad_scanline(surface->stageScanline, xfc->scanline_pad);
 		size = surface->stageScanline * surface->gdi.height;
 		surface->stage = (BYTE*) _aligned_malloc(size, 16);
 
