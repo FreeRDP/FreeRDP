@@ -77,7 +77,6 @@ int freerdp_assistance_crypt_derive_key_sha1(BYTE* hash, int hashLength, BYTE* k
 	BYTE* buffer;
 	BYTE pad1[64];
 	BYTE pad2[64];
-	WINPR_SHA1_CTX hashCtx;
 
 	memset(pad1, 0x36, 64);
 	memset(pad2, 0x5C, 64);
@@ -93,18 +92,10 @@ int freerdp_assistance_crypt_derive_key_sha1(BYTE* hash, int hashLength, BYTE* k
 	if (!buffer)
 		goto fail;
 
-	if (!winpr_SHA1_Init(&hashCtx))
-		goto fail;
-	if (!winpr_SHA1_Update(&hashCtx, pad1, 64))
-		goto fail;
-	if (!winpr_SHA1_Final(&hashCtx, buffer, hashLength))
+	if (!winpr_Digest(WINPR_MD_SHA1, pad1, 64, buffer, hashLength))
 		goto fail;
 
-	if (!winpr_SHA1_Init(&hashCtx))
-		goto fail;
-	if (!winpr_SHA1_Update(&hashCtx, pad2, 64))
-		goto fail;
-	if (!winpr_SHA1_Final(&hashCtx, &buffer[hashLength], hashLength))
+	if (!winpr_Digest(WINPR_MD_SHA1, pad2, 64, &buffer[hashLength], hashLength))
 		goto fail;
 
 	CopyMemory(key, buffer, keyLength);
@@ -550,7 +541,6 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 {
 	BOOL rc;
 	int status;
-	WINPR_MD5_CTX md5Ctx;
 	int cbPasswordW;
 	int cbPassStubW;
 	int EncryptedSize;
@@ -568,17 +558,7 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 
 	cbPasswordW = (status - 1) * 2;
 
-	if (!winpr_MD5_Init(&md5Ctx))
-	{
-		free (PasswordW);
-		return NULL;
-	}
-	if (!winpr_MD5_Update(&md5Ctx, (BYTE*)PasswordW, cbPasswordW))
-	{
-		free (PasswordW);
-		return NULL;
-	}
-	if (!winpr_MD5_Final(&md5Ctx, (BYTE*) PasswordHash, sizeof(PasswordHash)))
+	if (!winpr_Digest(WINPR_MD_MD5, (BYTE*)PasswordW, cbPasswordW, (BYTE*) PasswordHash, sizeof(PasswordHash)))
 	{
 		free (PasswordW);
 		return NULL;
@@ -665,7 +645,6 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 int freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* password)
 {
 	int status;
-	WINPR_SHA1_CTX shaCtx;
 	int cbPasswordW;
 	int cchOutW = 0;
 	WCHAR* pbOutW = NULL;
@@ -684,9 +663,7 @@ int freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* password)
 
 	cbPasswordW = (status - 1) * 2;
 
-	if (!winpr_SHA1_Init(&shaCtx) ||
-	    !winpr_SHA1_Update(&shaCtx, (BYTE*)PasswordW, cbPasswordW) ||
-	    !winpr_SHA1_Final(&shaCtx, PasswordHash, sizeof(PasswordHash)))
+	if (!winpr_Digest(WINPR_MD_SHA1, (BYTE*)PasswordW, cbPasswordW, PasswordHash, sizeof(PasswordHash)))
 	{
 		free (PasswordW);
 		return -1;

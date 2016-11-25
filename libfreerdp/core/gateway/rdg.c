@@ -35,6 +35,7 @@
 
 #include "rdg.h"
 #include "../rdp.h"
+#include "../../crypto/opensslcompat.h"
 
 #define TAG FREERDP_TAG("core.gateway.rdg")
 
@@ -1389,7 +1390,7 @@ long rdg_bio_callback(BIO* bio, int mode, const char* argp, int argi, long argl,
 static int rdg_bio_write(BIO* bio, const char* buf, int num)
 {
 	int status;
-	rdpRdg* rdg = (rdpRdg*) bio->ptr;
+	rdpRdg* rdg = (rdpRdg*) BIO_get_data(bio);
 
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
 
@@ -1418,7 +1419,7 @@ static int rdg_bio_write(BIO* bio, const char* buf, int num)
 static int rdg_bio_read(BIO* bio, char* buf, int size)
 {
 	int status;
-	rdpRdg* rdg = (rdpRdg*) bio->ptr;
+	rdpRdg* rdg = (rdpRdg*) BIO_get_data(bio);
 
 	status = rdg_read_data_packet(rdg, (BYTE*) buf, size);
 
@@ -1454,7 +1455,7 @@ static int rdg_bio_gets(BIO* bio, char* str, int size)
 static long rdg_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 {
 	int status = 0;
-	rdpRdg* rdg = (rdpRdg*)bio->ptr;
+	rdpRdg* rdg = (rdpRdg*) BIO_get_data(bio);
 	rdpTls* tlsOut = rdg->tlsOut;
 	rdpTls* tlsIn = rdg->tlsIn;
 
@@ -1516,10 +1517,8 @@ static long rdg_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 
 static int rdg_bio_new(BIO* bio)
 {
-	bio->init = 1;
-	bio->num = 0;
-	bio->ptr = NULL;
-	bio->flags = BIO_FLAGS_SHOULD_RETRY;
+	BIO_set_init(bio, 1);
+	BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 	return 1;
 }
 
@@ -1528,23 +1527,25 @@ static int rdg_bio_free(BIO* bio)
 	return 1;
 }
 
-static BIO_METHOD rdg_bio_methods =
-{
-	BIO_TYPE_TSG,
-	"RDGateway",
-	rdg_bio_write,
-	rdg_bio_read,
-	rdg_bio_puts,
-	rdg_bio_gets,
-	rdg_bio_ctrl,
-	rdg_bio_new,
-	rdg_bio_free,
-	NULL,
-};
-
 BIO_METHOD* BIO_s_rdg(void)
 {
-	return &rdg_bio_methods;
+	static BIO_METHOD* bio_methods = NULL;
+
+	if (bio_methods == NULL)
+	{
+		if (!(bio_methods = BIO_meth_new(BIO_TYPE_TSG, "RDGateway")))
+			return NULL;
+
+		BIO_meth_set_write(bio_methods, rdg_bio_write);
+		BIO_meth_set_read(bio_methods, rdg_bio_read);
+		BIO_meth_set_puts(bio_methods, rdg_bio_puts);
+		BIO_meth_set_gets(bio_methods, rdg_bio_gets);
+		BIO_meth_set_ctrl(bio_methods, rdg_bio_ctrl);
+		BIO_meth_set_create(bio_methods, rdg_bio_new);
+		BIO_meth_set_destroy(bio_methods, rdg_bio_free);
+	}
+
+	return bio_methods;
 }
 
 rdpRdg* rdg_new(rdpTransport* transport)
@@ -1610,7 +1611,7 @@ rdpRdg* rdg_new(rdpTransport* transport)
 		if (!rdg->frontBio)
 			goto rdg_alloc_error;
 
-		rdg->frontBio->ptr = rdg;
+		BIO_set_data(rdg->frontBio, rdg);
 
 		rdg->readEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 

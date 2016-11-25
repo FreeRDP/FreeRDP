@@ -490,31 +490,25 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 
 	if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
-		rdp->fips_encrypt = winpr_Cipher_New( WINPR_CIPHER_DES_EDE3_CBC,
-							WINPR_ENCRYPT,
-							rdp->fips_encrypt_key,
-							fips_ivec);
+		rdp->fips_encrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC,
+		                                     WINPR_ENCRYPT,
+		                                     rdp->fips_encrypt_key,
+		                                     fips_ivec);
 		if (!rdp->fips_encrypt)
 		{
 			WLog_ERR(TAG, "unable to allocate des3 encrypt key");
 			goto end;
 		}
 		rdp->fips_decrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC,
-						     WINPR_DECRYPT,
-						     rdp->fips_decrypt_key,
-						     fips_ivec);
+		                                     WINPR_DECRYPT,
+		                                     rdp->fips_decrypt_key,
+		                                     fips_ivec);
 		if (!rdp->fips_decrypt)
 		{
 			WLog_ERR(TAG, "unable to allocate des3 decrypt key");
 			goto end;
 		}
 
-		rdp->fips_hmac = calloc(1, sizeof(WINPR_HMAC_CTX));
-		if (!rdp->fips_hmac)
-		{
-			WLog_ERR(TAG, "unable to allocate fips hmac");
-			goto end;
-		}
 		ret = TRUE;
 		goto end;
 	}
@@ -636,12 +630,6 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 			goto end;
 		}
 
-		rdp->fips_hmac = calloc(1, sizeof(WINPR_HMAC_CTX));
-		if (!rdp->fips_hmac)
-		{
-			WLog_ERR(TAG, "unable to allocate fips hmac");
-			goto end;
-		}
 		ret = TRUE;
 		goto end;
 	}

@@ -614,134 +614,10 @@ BOOL CryptBinaryToStringA(CONST BYTE* pbBinary, DWORD cbBinary, DWORD dwFlags, L
  * Custom Crypto API Abstraction Layer
  */
 
-/**
- * MD5 hashing
- */
-
-struct _OPENSSL_MD5_CTX
-{
-	UINT32 A, B, C, D;
-	UINT32 Nl, Nh;
-	UINT32 data[16];
-	UINT32 num;
-};
-typedef struct _OPENSSL_MD5_CTX OPENSSL_MD5_CTX;
-
-struct _MBEDTLS_MD5_CTX
-{
-	UINT32 total[2];
-	UINT32 state[4];
-	BYTE buffer[64];
-};
-typedef struct _MBEDTLS_MD5_CTX MBEDTLS_MD5_CTX;
-
-union _WINPR_MD5_CTX
-{
-	OPENSSL_MD5_CTX openssl;
-	MBEDTLS_MD5_CTX mbedtls;
-};
-typedef union _WINPR_MD5_CTX WINPR_MD5_CTX;
-
-#define WINPR_MD5_DIGEST_LENGTH        16
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-WINPR_API BOOL winpr_MD5_Init(WINPR_MD5_CTX* ctx);
-WINPR_API BOOL winpr_MD5_Update(WINPR_MD5_CTX* ctx, const BYTE* input, size_t ilen);
-WINPR_API BOOL winpr_MD5_Final(WINPR_MD5_CTX* ctx, BYTE* output, size_t ilen);
-WINPR_API BOOL winpr_MD5(const BYTE* input, size_t ilen, BYTE* output, size_t olen);
-
-#ifdef __cplusplus
-}
-#endif
-
-/**
- * MD4 hashing
- */
-
-struct _OPENSSL_MD4_CTX
-{
-	UINT32 A, B, C, D;
-	UINT32 Nl, Nh;
-	UINT32 data[16];
-	UINT32 num;
-};
-typedef struct _OPENSSL_MD4_CTX OPENSSL_MD4_CTX;
-
-struct _MBEDTLS_MD4_CTX
-{
-	UINT32 total[2];
-	UINT32 state[4];
-	BYTE buffer[64];
-};
-typedef struct _MBEDTLS_MD4_CTX MBEDTLS_MD4_CTX;
-
-union _WINPR_MD4_CTX
-{
-	OPENSSL_MD4_CTX openssl;
-	MBEDTLS_MD4_CTX mbedtls;
-};
-typedef union _WINPR_MD4_CTX WINPR_MD4_CTX;
-
 #define WINPR_MD4_DIGEST_LENGTH        16
+#define WINPR_MD5_DIGEST_LENGTH        16
+#define WINPR_SHA1_DIGEST_LENGTH       20
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-WINPR_API BOOL winpr_MD4_Init(WINPR_MD4_CTX* ctx);
-WINPR_API BOOL winpr_MD4_Update(WINPR_MD4_CTX* ctx, const BYTE* input, size_t ilen);
-WINPR_API BOOL winpr_MD4_Final(WINPR_MD4_CTX* ctx, BYTE* output, size_t ilen);
-WINPR_API BOOL winpr_MD4(const BYTE* input, size_t ilen, BYTE* output, size_t olen);
-
-#ifdef __cplusplus
-}
-#endif
-
-/**
- * SHA1 Hashing
- */
-
-#define WINPR_SHA1_DIGEST_LENGTH	20
-
-struct _OPENSSL_SHA1_CTX
-{
-	UINT32 h0, h1, h2, h3, h4;
-	UINT32 Nl, Nh;
-	UINT32 data[16];
-	UINT32 num;
-};
-typedef struct _OPENSSL_SHA1_CTX OPENSSL_SHA1_CTX;
-
-struct _MBEDTLS_SHA1_CTX
-{
-	UINT32 total[2];
-	UINT32 state[5];
-	BYTE buffer[64];
-};
-typedef struct _MBEDTLS_SHA1_CTX MBEDTLS_SHA1_CTX;
-
-union _WINPR_SHA1_CTX
-{
-	OPENSSL_SHA1_CTX openssl;
-	MBEDTLS_SHA1_CTX mbedtls;
-};
-typedef union _WINPR_SHA1_CTX WINPR_SHA1_CTX;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-WINPR_API BOOL winpr_SHA1_Init(WINPR_SHA1_CTX* ctx);
-WINPR_API BOOL winpr_SHA1_Update(WINPR_SHA1_CTX* ctx, const BYTE* input, size_t ilen);
-WINPR_API BOOL winpr_SHA1_Final(WINPR_SHA1_CTX* ctx, BYTE* output, size_t ilen);
-WINPR_API BOOL winpr_SHA1(const BYTE* input, size_t ilen, BYTE* output, size_t olen);
-
-#ifdef __cplusplus
-}
-#endif
 
 /**
  * HMAC
@@ -760,50 +636,17 @@ typedef enum
     WINPR_MD_RIPEMD160	= 9
 } WINPR_MD_TYPE;
 
-struct _OPENSSL_EVP_MD_CTX
-{
-	const void* digest;
-	void* engine;
-	unsigned long flags;
-	void* md_data;
-	void* pctx;
-	void* update;
-};
-typedef struct _OPENSSL_EVP_MD_CTX OPENSSL_EVP_MD_CTX;
-
-struct _OPENSSL_HMAC_CTX
-{
-	const void* md;
-	OPENSSL_EVP_MD_CTX md_ctx;
-	OPENSSL_EVP_MD_CTX i_ctx;
-	OPENSSL_EVP_MD_CTX o_ctx;
-	unsigned int key_length;
-	unsigned char key[128];
-};
-typedef struct _OPENSSL_HMAC_CTX OPENSSL_HMAC_CTX;
-
-struct _MBEDTLS_HMAC_CTX
-{
-	    const void* md_info;
-	    void* md_ctx;
-	    void* hmac_ctx;
-};
-typedef struct _MBEDTLS_HMAC_CTX MBEDTLS_HMAC_CTX;
-
-union _WINPR_HMAC_CTX
-{
-	OPENSSL_HMAC_CTX openssl;
-	MBEDTLS_HMAC_CTX mbedtls;
-};
-typedef union _WINPR_HMAC_CTX WINPR_HMAC_CTX;
+typedef struct _winpr_hmac_ctx_private_st WINPR_HMAC_CTX;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-WINPR_API BOOL winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, WINPR_MD_TYPE  md, const BYTE* key, size_t keylen);
+WINPR_API WINPR_HMAC_CTX* winpr_HMAC_New(void);
+WINPR_API BOOL winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, WINPR_MD_TYPE md, const BYTE* key, size_t keylen);
 WINPR_API BOOL winpr_HMAC_Update(WINPR_HMAC_CTX* ctx, const BYTE* input, size_t ilen);
 WINPR_API BOOL winpr_HMAC_Final(WINPR_HMAC_CTX* ctx, BYTE* output, size_t ilen);
+WINPR_API void winpr_HMAC_Free(WINPR_HMAC_CTX* ctx);
 WINPR_API BOOL winpr_HMAC(WINPR_MD_TYPE md, const BYTE* key, size_t keylen,
             const BYTE* input, size_t ilen, BYTE* output, size_t olen);
 
@@ -815,41 +658,17 @@ WINPR_API BOOL winpr_HMAC(WINPR_MD_TYPE md, const BYTE* key, size_t keylen,
  * Generic Digest API
  */
 
-struct _OPENSSL_DIGEST_CTX
-{
-	const void* digest;
-	void* engine;
-	unsigned long flags;
-	void* md_data;
-	void* pctx;
-	void* update;
-	BYTE winpr_pad[8];
-};
-typedef struct _OPENSSL_DIGEST_CTX OPENSSL_DIGEST_CTX;
-
-struct _MBEDTLS_DIGEST_CTX
-{
-	const void* md_info;
-	void* md_ctx;
-	void* hmac_ctx;
-	BYTE winpr_pad[8];
-};
-typedef struct _MBEDTLS_DIGEST_CTX MBEDTLS_DIGEST_CTX;
-
-union _WINPR_DIGEST_CTX
-{
-	OPENSSL_DIGEST_CTX openssl;
-	MBEDTLS_DIGEST_CTX mbedtls;
-};
-typedef union _WINPR_DIGEST_CTX WINPR_DIGEST_CTX;
+typedef struct _winpr_digest_ctx_private_st WINPR_DIGEST_CTX;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+WINPR_API WINPR_DIGEST_CTX* winpr_Digest_New(void);
 WINPR_API BOOL winpr_Digest_Init(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md);
 WINPR_API BOOL winpr_Digest_Update(WINPR_DIGEST_CTX* ctx, const BYTE* input, size_t ilen);
 WINPR_API BOOL winpr_Digest_Final(WINPR_DIGEST_CTX* ctx, BYTE* output, size_t ilen);
+WINPR_API void winpr_Digest_Free(WINPR_DIGEST_CTX* ctx);
 WINPR_API BOOL winpr_Digest(int md, const BYTE* input, size_t ilen, BYTE* output, size_t olen);
 
 #ifdef __cplusplus
@@ -875,27 +694,7 @@ WINPR_API int winpr_RAND_pseudo(BYTE* output, size_t len);
  * RC4
  */
 
-struct _OPENSSL_RC4_CTX
-{
-	int x, y;
-	int data[256];
-};
-typedef struct _OPENSSL_RC4_CTX OPENSSL_RC4_CTX;
-
-struct _MBEDTLS_RC4_CTX
-{
-	int x;
-	int y;
-	BYTE m[256];
-};
-typedef struct _MBEDTLS_RC4_CTX MBEDTLS_RC4_CTX;
-
-union _WINPR_RC4_CTX
-{
-	OPENSSL_RC4_CTX openssl;
-	MBEDTLS_RC4_CTX mbedtls;
-};
-typedef union _WINPR_RC4_CTX WINPR_RC4_CTX;
+typedef struct _winpr_rc4_ctx_private_st WINPR_RC4_CTX;
 
 #ifdef __cplusplus
 extern "C" {
@@ -970,49 +769,7 @@ WINPR_API void winpr_RC4_Free(WINPR_RC4_CTX* ctx);
 #define WINPR_CIPHER_CAMELLIA_192_CCM		47
 #define WINPR_CIPHER_CAMELLIA_256_CCM		48
 
-struct _OPENSSL_CIPHER_CTX
-{
-	const void* cipher;
-	void* engine;
-	int encrypt;
-	int buf_len;
-	BYTE oiv[16];
-	BYTE iv[16];
-	BYTE buf[32];
-	int num;
-	void* app_data;
-	int key_len;
-	unsigned long flags;
-	void* cipher_data;
-	int final_used;
-	int block_mask;
-	BYTE final[32];
-	BYTE winpr_pad[32];
-};
-typedef struct _OPENSSL_CIPHER_CTX OPENSSL_CIPHER_CTX;
-
-struct _MBEDTLS_CIPHER_CTX
-{
-	const void* cipher_info;
-	int key_bitlen;
-	int operation;
-	void* add_padding;
-	int* get_padding;
-	BYTE unprocessed_data[16];
-	size_t unprocessed_len;
-	BYTE iv[16];
-	size_t iv_size;
-	void* cipher_ctx;
-	BYTE winpr_pad[32];
-};
-typedef struct _MBEDTLS_CIPHER_CTX MBEDTLS_CIPHER_CTX;
-
-union _WINPR_CIPHER_CTX
-{
-	OPENSSL_CIPHER_CTX openssl;
-	MBEDTLS_CIPHER_CTX mbedtls;
-};
-typedef union _WINPR_CIPHER_CTX WINPR_CIPHER_CTX;
+typedef struct _winpr_cipher_ctx_private_st WINPR_CIPHER_CTX;
 
 #ifdef __cplusplus
 extern "C" {
@@ -1035,7 +792,7 @@ WINPR_API void winpr_Cipher_Free(WINPR_CIPHER_CTX* ctx);
 extern "C" {
 #endif
 
-WINPR_API int winpr_openssl_BytesToKey(int cipher, int md, const BYTE* salt, const BYTE* data, int datal, int count, BYTE* key, BYTE* iv);
+WINPR_API int winpr_Cipher_BytesToKey(int cipher, int md, const BYTE* salt, const BYTE* data, int datal, int count, BYTE* key, BYTE* iv);
 
 #ifdef __cplusplus
 }

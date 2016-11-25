@@ -177,7 +177,7 @@ BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 	winpr_RAND(pMemBlock->salt, 8);
 	winpr_RAND(randomKey, sizeof(randomKey));
 
-	winpr_openssl_BytesToKey(WINPR_CIPHER_AES_256_CBC, WINPR_MD_SHA1,
+	winpr_Cipher_BytesToKey(WINPR_CIPHER_AES_256_CBC, WINPR_MD_SHA1,
 			pMemBlock->salt, randomKey, sizeof(randomKey), 4, pMemBlock->key, pMemBlock->iv);
 
 	SecureZeroMemory(randomKey, sizeof(randomKey));

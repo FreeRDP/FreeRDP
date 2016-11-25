@@ -84,6 +84,7 @@
 #include <winpr/stream.h>
 
 #include "tcp.h"
+#include "../crypto/opensslcompat.h"
 
 #define TAG FREERDP_TAG("core")
 
@@ -108,7 +109,7 @@ static int transport_bio_simple_write(BIO* bio, const char* buf, int size)
 {
 	int error;
 	int status = 0;
-	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) bio->ptr;
+	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) BIO_get_data(bio);
 
 	if (!buf)
 		return 0;
@@ -139,7 +140,7 @@ static int transport_bio_simple_read(BIO* bio, char* buf, int size)
 {
 	int error;
 	int status = 0;
-	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) bio->ptr;
+	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) BIO_get_data(bio);
 
 	if (!buf)
 		return 0;
@@ -189,7 +190,7 @@ static int transport_bio_simple_gets(BIO* bio, char* str, int size)
 static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 {
 	int status = -1;
-	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) bio->ptr;
+	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) BIO_get_data(bio);
 
 	if (cmd == BIO_C_SET_SOCKET)
 	{
@@ -199,7 +200,7 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 	}
 	else if (cmd == BIO_C_GET_SOCKET)
 	{
-		if (!bio->init || !arg2)
+		if (!BIO_get_init(bio) || !arg2)
 			return 0;
 
 		*((ULONG_PTR*) arg2) = (ULONG_PTR) ptr->socket;
@@ -208,7 +209,7 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 	}
 	else if (cmd == BIO_C_GET_EVENT)
 	{
-		if (!bio->init || !arg2)
+		if (!BIO_get_init(bio) || !arg2)
 			return 0;
 
 		*((ULONG_PTR*) arg2) = (ULONG_PTR) ptr->hEvent;
@@ -319,7 +320,7 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 			break;
 
 		case BIO_C_GET_FD:
-			if (bio->init)
+			if (BIO_get_init(bio))
 			{
 				if (arg2)
 					*((int*) arg2) = (int) ptr->socket;
@@ -328,11 +329,11 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 			break;
 
 		case BIO_CTRL_GET_CLOSE:
-			status = bio->shutdown;
+			status = BIO_get_shutdown(bio);
 			break;
 
 		case BIO_CTRL_SET_CLOSE:
-			bio->shutdown = (int) arg1;
+			BIO_set_shutdown(bio, (int) arg1);
 			status = 1;
 			break;
 
@@ -354,13 +355,13 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 
 static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown)
 {
-	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) bio->ptr;
+	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) BIO_get_data(bio);
 
 	ptr->socket = socket;
 
-	bio->shutdown = shutdown;
-	bio->flags = BIO_FLAGS_SHOULD_RETRY;
-	bio->init = 1;
+	BIO_set_shutdown(bio, shutdown);
+	BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+	BIO_set_init(bio, 1);
 
 	ptr->hEvent = WSACreateEvent();
 
@@ -379,11 +380,11 @@ static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown)
 
 static int transport_bio_simple_uninit(BIO* bio)
 {
-	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) bio->ptr;
+	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) BIO_get_data(bio);
 
-	if (bio->shutdown)
+	if (BIO_get_shutdown(bio))
 	{
-		if (bio->init)
+		if (BIO_get_init(bio))
 		{
 			_shutdown(ptr->socket, SD_BOTH);
 			closesocket(ptr->socket);
@@ -397,8 +398,8 @@ static int transport_bio_simple_uninit(BIO* bio)
 		ptr->hEvent = NULL;
 	}
 
-	bio->init = 0;
-	bio->flags = 0;
+	BIO_set_init(bio, 0);
+	BIO_set_flags(bio, 0);
 
 	return 1;
 }
@@ -407,53 +408,57 @@ static int transport_bio_simple_new(BIO* bio)
 {
 	WINPR_BIO_SIMPLE_SOCKET* ptr;
 
-	bio->init = 0;
-	bio->ptr = NULL;
-	bio->flags = BIO_FLAGS_SHOULD_RETRY;
+	BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 
 	ptr = (WINPR_BIO_SIMPLE_SOCKET*) calloc(1, sizeof(WINPR_BIO_SIMPLE_SOCKET));
 
 	if (!ptr)
 		return 0;
 
-	bio->ptr = ptr;
+	BIO_set_data(bio, ptr);
 
 	return 1;
 }
 
 static int transport_bio_simple_free(BIO* bio)
 {
+	WINPR_BIO_SIMPLE_SOCKET* ptr;
+
 	if (!bio)
 		return 0;
 
 	transport_bio_simple_uninit(bio);
 
-	if (bio->ptr)
+	ptr = (WINPR_BIO_SIMPLE_SOCKET*) BIO_get_data(bio);
+
+	if (ptr)
 	{
-		free(bio->ptr);
-		bio->ptr = NULL;
+		BIO_set_data(bio, NULL);
+		free(ptr);
 	}
 
 	return 1;
 }
 
-static BIO_METHOD transport_bio_simple_socket_methods =
-{
-	BIO_TYPE_SIMPLE,
-	"SimpleSocket",
-	transport_bio_simple_write,
-	transport_bio_simple_read,
-	transport_bio_simple_puts,
-	transport_bio_simple_gets,
-	transport_bio_simple_ctrl,
-	transport_bio_simple_new,
-	transport_bio_simple_free,
-	NULL,
-};
-
 BIO_METHOD* BIO_s_simple_socket(void)
 {
-	return &transport_bio_simple_socket_methods;
+	static BIO_METHOD* bio_methods = NULL;
+
+	if (bio_methods == NULL)
+	{
+		if (!(bio_methods = BIO_meth_new(BIO_TYPE_SIMPLE, "SimpleSocket")))
+			return NULL;
+
+		BIO_meth_set_write(bio_methods, transport_bio_simple_write);
+		BIO_meth_set_read(bio_methods, transport_bio_simple_read);
+		BIO_meth_set_puts(bio_methods, transport_bio_simple_puts);
+		BIO_meth_set_gets(bio_methods, transport_bio_simple_gets);
+		BIO_meth_set_ctrl(bio_methods, transport_bio_simple_ctrl);
+		BIO_meth_set_create(bio_methods, transport_bio_simple_new);
+		BIO_meth_set_destroy(bio_methods, transport_bio_simple_free);
+	}
+
+	return bio_methods;
 }
 
 /* Buffered Socket BIO */
@@ -479,7 +484,8 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 	int nchunks;
 	int committedBytes;
 	DataChunk chunks[2];
-	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*) bio->ptr;
+	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*) BIO_get_data(bio);
+	BIO* next_bio = NULL;
 
 	ret = num;
 	ptr->writeBlocked = FALSE;
@@ -496,23 +502,24 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 
 	committedBytes = 0;
 	nchunks = ringbuffer_peek(&ptr->xmitBuffer, chunks, ringbuffer_used(&ptr->xmitBuffer));
+	next_bio = BIO_next(bio);
 
 	for (i = 0; i < nchunks; i++)
 	{
 		while (chunks[i].size)
 		{
-			status = BIO_write(bio->next_bio, chunks[i].data, chunks[i].size);
+			status = BIO_write(next_bio, chunks[i].data, chunks[i].size);
 
 			if (status <= 0)
 			{
-				if (!BIO_should_retry(bio->next_bio))
+				if (!BIO_should_retry(next_bio))
 				{
 					BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 					ret = -1; /* fatal error */
 					goto out;
 				}
 
-				if (BIO_should_write(bio->next_bio))
+				if (BIO_should_write(next_bio))
 				{
 					BIO_set_flags(bio, BIO_FLAGS_WRITE);
 					ptr->writeBlocked = TRUE;
@@ -535,16 +542,17 @@ out:
 static int transport_bio_buffered_read(BIO* bio, char* buf, int size)
 {
 	int status;
-	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*) bio->ptr;
+	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*) BIO_get_data(bio);
+	BIO* next_bio = BIO_next(bio);
 
 	ptr->readBlocked = FALSE;
 	BIO_clear_flags(bio, BIO_FLAGS_READ);
 
-	status = BIO_read(bio->next_bio, buf, size);
+	status = BIO_read(next_bio, buf, size);
 
 	if (status <= 0)
 	{
-		if (!BIO_should_retry(bio->next_bio))
+		if (!BIO_should_retry(next_bio))
 		{
 			BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 			goto out;
@@ -552,7 +560,7 @@ static int transport_bio_buffered_read(BIO* bio, char* buf, int size)
 
 		BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 
-		if (BIO_should_read(bio->next_bio))
+		if (BIO_should_read(next_bio))
 		{
 			BIO_set_flags(bio, BIO_FLAGS_READ);
 			ptr->readBlocked = TRUE;
@@ -577,7 +585,7 @@ static int transport_bio_buffered_gets(BIO* bio, char* str, int size)
 static long transport_bio_buffered_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 {
 	int status = -1;
-	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*) bio->ptr;
+	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*) BIO_get_data(bio);
 
 	switch (cmd)
 	{
@@ -605,7 +613,7 @@ static long transport_bio_buffered_ctrl(BIO* bio, int cmd, long arg1, void* arg2
 			break;
 
 		default:
-			status = BIO_ctrl(bio->next_bio, cmd, arg1, arg2);
+			status = BIO_ctrl(BIO_next(bio), cmd, arg1, arg2);
 			break;
 	}
 
@@ -616,17 +624,15 @@ static int transport_bio_buffered_new(BIO* bio)
 {
 	WINPR_BIO_BUFFERED_SOCKET* ptr;
 
-	bio->init = 1;
-	bio->num = 0;
-	bio->ptr = NULL;
-	bio->flags = BIO_FLAGS_SHOULD_RETRY;
+	BIO_set_init(bio, 1);
+	BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 
 	ptr = (WINPR_BIO_BUFFERED_SOCKET*) calloc(1, sizeof(WINPR_BIO_BUFFERED_SOCKET));
 
 	if (!ptr)
 		return -1;
 
-	bio->ptr = (void*) ptr;
+	BIO_set_data(bio, (void*) ptr);
 
 	if (!ringbuffer_init(&ptr->xmitBuffer, 0x10000))
 		return -1;
@@ -636,12 +642,13 @@ static int transport_bio_buffered_new(BIO* bio)
 
 static int transport_bio_buffered_free(BIO* bio)
 {
-	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*) bio->ptr;
+	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*) BIO_get_data(bio);
+	BIO* next_bio = BIO_next(bio);
 
-	if (bio->next_bio)
+	if (next_bio)
 	{
-		BIO_free(bio->next_bio);
-		bio->next_bio = NULL;
+		BIO_free(next_bio);
+		BIO_set_next(bio, NULL);
 	}
 
 	ringbuffer_destroy(&ptr->xmitBuffer);
@@ -651,23 +658,25 @@ static int transport_bio_buffered_free(BIO* bio)
 	return 1;
 }
 
-static BIO_METHOD transport_bio_buffered_socket_methods =
-{
-	BIO_TYPE_BUFFERED,
-	"BufferedSocket",
-	transport_bio_buffered_write,
-	transport_bio_buffered_read,
-	transport_bio_buffered_puts,
-	transport_bio_buffered_gets,
-	transport_bio_buffered_ctrl,
-	transport_bio_buffered_new,
-	transport_bio_buffered_free,
-	NULL,
-};
-
 BIO_METHOD* BIO_s_buffered_socket(void)
 {
-	return &transport_bio_buffered_socket_methods;
+	static BIO_METHOD* bio_methods = NULL;
+
+	if (bio_methods == NULL)
+	{
+		if (!(bio_methods = BIO_meth_new(BIO_TYPE_BUFFERED, "BufferedSocket")))
+			return NULL;
+
+		BIO_meth_set_write(bio_methods, transport_bio_buffered_write);
+		BIO_meth_set_read(bio_methods, transport_bio_buffered_read);
+		BIO_meth_set_puts(bio_methods, transport_bio_buffered_puts);
+		BIO_meth_set_gets(bio_methods, transport_bio_buffered_gets);
+		BIO_meth_set_ctrl(bio_methods, transport_bio_buffered_ctrl);
+		BIO_meth_set_create(bio_methods, transport_bio_buffered_new);
+		BIO_meth_set_destroy(bio_methods, transport_bio_buffered_free);
+	}
+
+	return bio_methods;
 }
 
 char* freerdp_tcp_get_ip_address(int sockfd)

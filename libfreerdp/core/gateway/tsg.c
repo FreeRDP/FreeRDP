@@ -35,6 +35,7 @@
 #include "rpc_bind.h"
 #include "rpc_client.h"
 #include "tsg.h"
+#include "../../crypto/opensslcompat.h"
 
 #define TAG FREERDP_TAG("core.gateway.tsg")
 
@@ -1770,7 +1771,7 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, int timeout)
 	if (!tsg->bio)
 		return FALSE;
 
-	tsg->bio->ptr = (void*) tsg;
+	BIO_set_data(tsg->bio, (void*) tsg);
 
 	return TRUE;
 }
@@ -1937,7 +1938,7 @@ long transport_bio_tsg_callback(BIO* bio, int mode, const char* argp, int argi, 
 static int transport_bio_tsg_write(BIO* bio, const char* buf, int num)
 {
 	int status;
-	rdpTsg* tsg = (rdpTsg*) bio->ptr;
+	rdpTsg* tsg = (rdpTsg*) BIO_get_data(bio);
 
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
 
@@ -1964,7 +1965,7 @@ static int transport_bio_tsg_write(BIO* bio, const char* buf, int num)
 static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
 {
 	int status;
-	rdpTsg* tsg = (rdpTsg*) bio->ptr;
+	rdpTsg* tsg = (rdpTsg*) BIO_get_data(bio);
 
 	BIO_clear_flags(bio, BIO_FLAGS_READ);
 
@@ -2001,7 +2002,7 @@ static int transport_bio_tsg_gets(BIO* bio, char* str, int size)
 static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 {
 	int status = 0;
-	rdpTsg* tsg = (rdpTsg*) bio->ptr;
+	rdpTsg* tsg = (rdpTsg*) BIO_get_data(bio);
 	RpcVirtualConnection* connection = tsg->rpc->VirtualConnection;
 	RpcInChannel* inChannel = connection->DefaultInChannel;
 	RpcOutChannel* outChannel = connection->DefaultOutChannel;
@@ -2064,10 +2065,8 @@ static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 
 static int transport_bio_tsg_new(BIO* bio)
 {
-	bio->init = 1;
-	bio->num = 0;
-	bio->ptr = NULL;
-	bio->flags = BIO_FLAGS_SHOULD_RETRY;
+	BIO_set_init(bio, 1);
+	BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 	return 1;
 }
 
@@ -2076,21 +2075,23 @@ static int transport_bio_tsg_free(BIO* bio)
 	return 1;
 }
 
-static BIO_METHOD transport_bio_tsg_methods =
-{
-	BIO_TYPE_TSG,
-	"TSGateway",
-	transport_bio_tsg_write,
-	transport_bio_tsg_read,
-	transport_bio_tsg_puts,
-	transport_bio_tsg_gets,
-	transport_bio_tsg_ctrl,
-	transport_bio_tsg_new,
-	transport_bio_tsg_free,
-	NULL,
-};
-
 BIO_METHOD* BIO_s_tsg(void)
 {
-	return &transport_bio_tsg_methods;
+	static BIO_METHOD* bio_methods = NULL;
+
+	if (bio_methods == NULL)
+	{
+		if (!(bio_methods = BIO_meth_new(BIO_TYPE_TSG, "TSGateway")))
+			return NULL;
+
+		BIO_meth_set_write(bio_methods, transport_bio_tsg_write);
+		BIO_meth_set_read(bio_methods, transport_bio_tsg_read);
+		BIO_meth_set_puts(bio_methods, transport_bio_tsg_puts);
+		BIO_meth_set_gets(bio_methods, transport_bio_tsg_gets);
+		BIO_meth_set_ctrl(bio_methods, transport_bio_tsg_ctrl);
+		BIO_meth_set_create(bio_methods, transport_bio_tsg_new);
+		BIO_meth_set_destroy(bio_methods, transport_bio_tsg_free);
+	}
+
+	return bio_methods;
 }

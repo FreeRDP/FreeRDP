@@ -26,7 +26,8 @@ freerdp_module_add(
 	base64.c
 	certificate.c
 	crypto.c
-	tls.c)
+	tls.c
+	opensslcompat.c)
 
 freerdp_include_directory_add(${OPENSSL_INCLUDE_DIR})
 

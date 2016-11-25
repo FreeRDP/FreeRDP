@@ -756,6 +756,7 @@ endif()
 
 if(OPENSSL_FOUND)
 	add_definitions("-DWITH_OPENSSL")
+	message(STATUS "Using OpenSSL Version: ${OPENSSL_VERSION}")
 endif()
 
 if(MBEDTLS_FOUND)
