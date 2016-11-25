@@ -25,14 +25,13 @@
 #include "config.h"
 #endif
 
+#include <winpr/stream.h>
+#include <winpr/synch.h>
+
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
 #include <freerdp/channels/log.h>
 #include <freerdp/utils/msusb.h>
-
-#include <uuid.h>
-#include <pthread.h>
-#include <semaphore.h>
 
 #include <winpr/stream.h>
 
@@ -318,16 +317,7 @@ enum device_descriptor_table
 
 #define LOG_LEVEL 1
 
-#define dummy_wait_obj(void) do{ sleep(5); } while(0)
-#define dummy_wait_s_obj(_s) do{ sleep(_s); } while(0)
-
 #define ISOCH_FIFO						1
 #define WAIT_COMPLETE_SLEEP					10000  /* for cpu high loading */
-
-#define urbdrc_get_mstime(_t) do { \
-		struct timeval _tp; \
-		gettimeofday(&_tp, 0); \
-		_t = (_tp.tv_sec * 1000) + (_tp.tv_usec / 1000); \
-	} while (0)
 
 #endif /* __URBDRC_TYPES_H */
