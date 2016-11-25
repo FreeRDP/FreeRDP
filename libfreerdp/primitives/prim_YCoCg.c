@@ -32,21 +32,98 @@
 #endif /* !MINMAX */
 
 /* ------------------------------------------------------------------------- */
+static INLINE BYTE* writePixelBGRX(BYTE* dst, DWORD formatSize, UINT32 format,
+                                   BYTE R, BYTE G, BYTE B, BYTE A)
+{
+	dst[0] = B;
+	dst[1] = G;
+	dst[2] = R;
+	dst[3] = A;
+	return dst + formatSize;
+}
+
+static INLINE BYTE* writePixelRGBX(BYTE* dst, DWORD formatSize, UINT32 format,
+                                   BYTE R, BYTE G, BYTE B, BYTE A)
+{
+	dst[0] = R;
+	dst[1] = G;
+	dst[2] = B;
+	dst[3] = A;
+	return dst + formatSize;
+}
+
+static INLINE BYTE* writePixelXBGR(BYTE* dst, DWORD formatSize, UINT32 format,
+                                   BYTE R, BYTE G, BYTE B, BYTE A)
+{
+	dst[0] = A;
+	dst[1] = B;
+	dst[2] = G;
+	dst[3] = R;
+	return dst + formatSize;
+}
+
+static INLINE BYTE* writePixelXRGB(BYTE* dst, DWORD formatSize, UINT32 format,
+                                   BYTE R, BYTE G, BYTE B, BYTE A)
+{
+	dst[0] = A;
+	dst[1] = R;
+	dst[2] = G;
+	dst[3] = B;
+	return dst + formatSize;
+}
+
+static INLINE BYTE* writePixelGeneric(BYTE* dst, DWORD formatSize, UINT32 format,
+                                      BYTE R, BYTE G, BYTE B, BYTE A)
+{
+	UINT32 color = GetColor(format, R, G, B, A);
+	WriteColor(dst, format, color);
+	return dst + formatSize;
+}
+
+typedef BYTE* (*fkt_writePixel)(BYTE*, DWORD, UINT32, BYTE, BYTE, BYTE, BYTE);
+
+static INLINE fkt_writePixel getWriteFunction(DWORD format)
+{
+	switch (format)
+	{
+		case PIXEL_FORMAT_ARGB32:
+		case PIXEL_FORMAT_XRGB32:
+			return writePixelXRGB;
+
+		case PIXEL_FORMAT_ABGR32:
+		case PIXEL_FORMAT_XBGR32:
+			return writePixelXBGR;
+
+		case PIXEL_FORMAT_RGBA32:
+		case PIXEL_FORMAT_RGBX32:
+			return writePixelRGBX;
+
+		case PIXEL_FORMAT_BGRA32:
+		case PIXEL_FORMAT_BGRX32:
+			return writePixelBGRX;
+
+		default:
+			return writePixelGeneric;
+	}
+}
+
 static pstatus_t general_YCoCgToRGB_8u_AC4R(
-		const BYTE* pSrc, INT32 srcStep,
-		BYTE* pDst, UINT32 DstFormat, INT32 dstStep,
-		UINT32 width, UINT32 height,
-		UINT8 shift,
-		BOOL withAlpha)
+    const BYTE* pSrc, INT32 srcStep,
+    BYTE* pDst, UINT32 DstFormat, INT32 dstStep,
+    UINT32 width, UINT32 height,
+    UINT8 shift,
+    BOOL withAlpha)
 {
 	BYTE A;
 	UINT32 x, y;
 	BYTE* dptr = pDst;
 	const BYTE* sptr = pSrc;
 	INT16 Cg, Co, Y, T, R, G, B;
+	const DWORD formatSize = GetBytesPerPixel(DstFormat);
+	fkt_writePixel writePixel = getWriteFunction(DstFormat);
 	int cll = shift - 1;  /* -1 builds in the /2's */
 	UINT32 srcPad = srcStep - (width * 4);
-	UINT32 dstPad = dstStep - (width * GetBytesPerPixel(DstFormat));
+	UINT32 dstPad = dstStep - (width * formatSize);
 
 	for (y = 0; y < height; y++)
 	{
@@ -66,12 +143,8 @@ static pstatus_t general_YCoCgToRGB_8u_AC4R(
 			R  = T + Co;
 			G  = Y + Cg;
 			B  = T - Co;
-
-			color = GetColor(DstFormat,
-					 MINMAX(R, 0, 255), MINMAX(G, 0, 255),
-					 MINMAX(B, 0, 255), A);
-			WriteColor(dptr, DstFormat, color);
-			dptr += GetBytesPerPixel(DstFormat);
+			dptr = (*writePixel)(dptr, formatSize, DstFormat, MINMAX(R, 0, 255),
+			                     MINMAX(G, 0, 255), MINMAX(B, 0, 255), A);
 		}
 
 		sptr += srcPad;
