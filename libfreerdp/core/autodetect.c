@@ -377,7 +377,7 @@ static BOOL autodetect_recv_bandwidth_measure_start(rdpRdp* rdp, wStream* s, AUT
 	if (autodetectReqPdu->headerLength != 0x06)
 		return FALSE;
 
-	WLog_VRB(AUTODETECT_TAG, "received Bandwidth Measure Start PDU - time=%lu", GetTickCountPrecise());
+	WLog_VRB(AUTODETECT_TAG, "received Bandwidth Measure Start PDU - time=%lu", (unsigned long) GetTickCountPrecise());
 
 	/* Initialize bandwidth measurement parameters */
 	rdp->autodetect->bandwidthMeasureStartTime = GetTickCountPrecise();

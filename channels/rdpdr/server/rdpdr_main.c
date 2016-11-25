@@ -565,7 +565,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext*
 	if ((error = rdpdr_server_write_general_capability_set(context, s)))
 	{
 		WLog_ERR(TAG,
-		         "rdpdr_server_write_general_capability_set failed with error %lu!", error);
+		         "rdpdr_server_write_general_capability_set failed with error %u!", error);
 		return error;
 	}
 
@@ -573,7 +573,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext*
 	{
 		if ((error = rdpdr_server_write_drive_capability_set(context, s)))
 		{
-			WLog_ERR(TAG, "rdpdr_server_write_drive_capability_set failed with error %lu!",
+			WLog_ERR(TAG, "rdpdr_server_write_drive_capability_set failed with error %u!",
 			         error);
 			return error;
 		}
@@ -583,7 +583,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext*
 	{
 		if ((error = rdpdr_server_write_port_capability_set(context, s)))
 		{
-			WLog_ERR(TAG, "rdpdr_server_write_port_capability_set failed with error %lu!",
+			WLog_ERR(TAG, "rdpdr_server_write_port_capability_set failed with error %u!",
 			         error);
 			return error;
 		}
@@ -594,7 +594,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext*
 		if ((error = rdpdr_server_write_printer_capability_set(context, s)))
 		{
 			WLog_ERR(TAG,
-			         "rdpdr_server_write_printer_capability_set failed with error %lu!", error);
+			         "rdpdr_server_write_printer_capability_set failed with error %u!", error);
 			return error;
 		}
 	}
@@ -604,7 +604,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext*
 		if ((error = rdpdr_server_write_smartcard_capability_set(context, s)))
 		{
 			WLog_ERR(TAG,
-			         "rdpdr_server_write_printer_capability_set failed with error %lu!", error);
+			         "rdpdr_server_write_printer_capability_set failed with error %u!", error);
 			return error;
 		}
 	}
@@ -643,7 +643,7 @@ static UINT rdpdr_server_receive_core_capability_response(
 	{
 		if ((status = rdpdr_server_read_capability_set_header(s, &capabilityHeader)))
 		{
-			WLog_ERR(TAG, "rdpdr_server_read_capability_set_header failed with error %lu!",
+			WLog_ERR(TAG, "rdpdr_server_read_capability_set_header failed with error %u!",
 			         status);
 			return status;
 		}
@@ -654,7 +654,7 @@ static UINT rdpdr_server_receive_core_capability_response(
 				if ((status = rdpdr_server_read_general_capability_set(context, s,
 				              &capabilityHeader)))
 				{
-					WLog_ERR(TAG, "rdpdr_server_read_general_capability_set failed with error %lu!",
+					WLog_ERR(TAG, "rdpdr_server_read_general_capability_set failed with error %u!",
 					         status);
 					return status;
 				}
@@ -665,7 +665,7 @@ static UINT rdpdr_server_receive_core_capability_response(
 				if ((status = rdpdr_server_read_printer_capability_set(context, s,
 				              &capabilityHeader)))
 				{
-					WLog_ERR(TAG, "rdpdr_server_read_printer_capability_set failed with error %lu!",
+					WLog_ERR(TAG, "rdpdr_server_read_printer_capability_set failed with error %u!",
 					         status);
 					return status;
 				}
@@ -676,7 +676,7 @@ static UINT rdpdr_server_receive_core_capability_response(
 				if ((status = rdpdr_server_read_port_capability_set(context, s,
 				              &capabilityHeader)))
 				{
-					WLog_ERR(TAG, "rdpdr_server_read_port_capability_set failed with error %lu!",
+					WLog_ERR(TAG, "rdpdr_server_read_port_capability_set failed with error %u!",
 					         status);
 					return status;
 				}
@@ -687,7 +687,7 @@ static UINT rdpdr_server_receive_core_capability_response(
 				if ((status = rdpdr_server_read_drive_capability_set(context, s,
 				              &capabilityHeader)))
 				{
-					WLog_ERR(TAG, "rdpdr_server_read_drive_capability_set failed with error %lu!",
+					WLog_ERR(TAG, "rdpdr_server_read_drive_capability_set failed with error %u!",
 					         status);
 					return status;
 				}
@@ -699,7 +699,7 @@ static UINT rdpdr_server_receive_core_capability_response(
 				              &capabilityHeader)))
 				{
 					WLog_ERR(TAG,
-					         "rdpdr_server_read_smartcard_capability_set failed with error %lu!", status);
+					         "rdpdr_server_read_smartcard_capability_set failed with error %u!", status);
 					return status;
 				}
 
@@ -1020,7 +1020,7 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
 			case PAKID_CORE_CLIENTID_CONFIRM:
 				if ((error = rdpdr_server_receive_announce_response(context, s, header)))
 				{
-					WLog_ERR(TAG, "rdpdr_server_receive_announce_response failed with error %lu!",
+					WLog_ERR(TAG, "rdpdr_server_receive_announce_response failed with error %u!",
 					         error);
 					return error;
 				}
@@ -1030,7 +1030,7 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
 			case PAKID_CORE_CLIENT_NAME:
 				if ((error = rdpdr_server_receive_client_name_request(context, s, header)))
 				{
-					WLog_ERR(TAG, "rdpdr_server_receive_client_name_request failed with error %lu!",
+					WLog_ERR(TAG, "rdpdr_server_receive_client_name_request failed with error %u!",
 					         error);
 					return error;
 				}
@@ -1038,13 +1038,13 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
 				if ((error = rdpdr_server_send_core_capability_request(context)))
 				{
 					WLog_ERR(TAG,
-					         "rdpdr_server_send_core_capability_request failed with error %lu!", error);
+					         "rdpdr_server_send_core_capability_request failed with error %u!", error);
 					return error;
 				}
 
 				if ((error = rdpdr_server_send_client_id_confirm(context)))
 				{
-					WLog_ERR(TAG, "rdpdr_server_send_client_id_confirm failed with error %lu!",
+					WLog_ERR(TAG, "rdpdr_server_send_client_id_confirm failed with error %u!",
 					         error);
 					return error;
 				}
@@ -1055,14 +1055,14 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
 				if ((error = rdpdr_server_receive_core_capability_response(context, s, header)))
 				{
 					WLog_ERR(TAG,
-					         "rdpdr_server_receive_core_capability_response failed with error %lu!", error);
+					         "rdpdr_server_receive_core_capability_response failed with error %u!", error);
 					return error;
 				}
 
 				if (context->priv->UserLoggedOnPdu)
 					if ((error = rdpdr_server_send_user_logged_on(context)))
 					{
-						WLog_ERR(TAG, "rdpdr_server_send_user_logged_on failed with error %lu!", error);
+						WLog_ERR(TAG, "rdpdr_server_send_user_logged_on failed with error %u!", error);
 						return error;
 					}
 
@@ -1073,7 +1073,7 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
 				             header)))
 				{
 					WLog_ERR(TAG,
-					         "rdpdr_server_receive_device_list_announce_request failed with error %lu!",
+					         "rdpdr_server_receive_device_list_announce_request failed with error %u!",
 					         error);
 					return error;
 				}
@@ -1090,7 +1090,7 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
 				if ((error = rdpdr_server_receive_device_io_completion(context, s, header)))
 				{
 					WLog_ERR(TAG,
-					         "rdpdr_server_receive_device_io_completion failed with error %lu!", error);
+					         "rdpdr_server_receive_device_io_completion failed with error %u!", error);
 					return error;
 				}
 
@@ -1101,7 +1101,7 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
 				             header)))
 				{
 					WLog_ERR(TAG,
-					         "rdpdr_server_receive_device_io_completion failed with error %lu!", error);
+					         "rdpdr_server_receive_device_io_completion failed with error %u!", error);
 					return error;
 				}
 
@@ -1176,7 +1176,7 @@ static void* rdpdr_server_thread(void* arg)
 
 	if ((error = rdpdr_server_send_announce_request(context)))
 	{
-		WLog_ERR(TAG, "rdpdr_server_send_announce_request failed with error %lu!",
+		WLog_ERR(TAG, "rdpdr_server_send_announce_request failed with error %u!",
 		         error);
 		goto out_stream;
 	}
@@ -1189,7 +1189,7 @@ static void* rdpdr_server_thread(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %u!", error);
 			goto out_stream;
 		}
 
@@ -1198,7 +1198,7 @@ static void* rdpdr_server_thread(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %u!", error);
 			goto out_stream;
 		}
 
@@ -1226,7 +1226,7 @@ static void* rdpdr_server_thread(void* arg)
 
 				if ((error = rdpdr_server_receive_pdu(context, s, &header)))
 				{
-					WLog_ERR(TAG, "rdpdr_server_receive_pdu failed with error %lu!", error);
+					WLog_ERR(TAG, "rdpdr_server_receive_pdu failed with error %u!", error);
 					goto out_stream;
 				}
 			}
@@ -1295,7 +1295,7 @@ static UINT rdpdr_server_stop(RdpdrServerContext* context)
 		if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %u!", error);
 			return error;
 		}
 
@@ -1906,7 +1906,7 @@ static UINT rdpdr_server_drive_query_directory_callback2(
 		if ((error = rdpdr_server_read_file_directory_information(s, &fdi)))
 		{
 			WLog_ERR(TAG,
-			         "rdpdr_server_read_file_directory_information failed with error %lu!", error);
+			         "rdpdr_server_read_file_directory_information failed with error %u!", error);
 			return error;
 		}
 	}

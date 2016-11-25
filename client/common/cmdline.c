@@ -2309,13 +2309,13 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		CommandLineSwitchCase(arg, "max-loop-time")
 		{
 			settings->MaxTimeInCheckLoop = atoi(arg->Value);
-			if (settings->MaxTimeInCheckLoop < 0)
+			if ((long) settings->MaxTimeInCheckLoop < 0)
 			{
 				WLog_ERR(TAG, "invalid max loop time: %s", arg->Value);
 				return COMMAND_LINE_ERROR;
 			}
 
-			if (settings->MaxTimeInCheckLoop == 0)
+			if ((long) settings->MaxTimeInCheckLoop <= 0)
 			{
 				settings->MaxTimeInCheckLoop = 10 * 60 * 60 * 1000; /* 10 hours can be considered as infinite */
 			}

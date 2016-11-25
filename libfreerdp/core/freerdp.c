@@ -902,7 +902,7 @@ BOOL checkChannelErrorEvent(rdpContext* context)
 {
 	if (WaitForSingleObject(context->channelErrorEvent, 0) == WAIT_OBJECT_0)
 	{
-		WLog_ERR(TAG, "%s. Error was %lu", context->errorDescription,
+		WLog_ERR(TAG, "%s. Error was %u", context->errorDescription,
 		         context->channelErrorNum);
 		return FALSE;
 	}

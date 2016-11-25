@@ -729,7 +729,7 @@ static void* tsmf_stream_ack_func(void* arg)
 		if (ev == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %u!", error);
 			break;
 		}
 
@@ -839,7 +839,7 @@ static void* tsmf_stream_playback_func(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %u!", error);
 			break;
 		}
 
@@ -848,7 +848,7 @@ static void* tsmf_stream_playback_func(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %u!", error);
 			break;
 		}
 
@@ -1056,7 +1056,7 @@ UINT tsmf_presentation_sync(TSMF_PRESENTATION* presentation)
 		if (WaitForSingleObject(stream->ready, 500) == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %u!", error);
 			return error;
 		}
 	}
@@ -1252,13 +1252,13 @@ error_add:
 	SetEvent(stream->stopEvent);
 
 	if (WaitForSingleObject(stream->ack_thread, INFINITE) == WAIT_FAILED)
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", (unsigned long) GetLastError());
 
 error_ack_thread:
 	SetEvent(stream->stopEvent);
 
 	if (WaitForSingleObject(stream->play_thread, INFINITE) == WAIT_FAILED)
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", (unsigned long) GetLastError());
 
 error_play_thread:
 	Queue_Free(stream->sample_ack_list);
@@ -1392,7 +1392,7 @@ void _tsmf_stream_free(TSMF_STREAM* stream)
 	{
 		if (WaitForSingleObject(stream->play_thread, INFINITE) == WAIT_FAILED)
 		{
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", (unsigned long) GetLastError());
 			return;
 		}
 
@@ -1404,7 +1404,7 @@ void _tsmf_stream_free(TSMF_STREAM* stream)
 	{
 		if (WaitForSingleObject(stream->ack_thread, INFINITE) == WAIT_FAILED)
 		{
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", (unsigned long) GetLastError());
 			return;
 		}
 

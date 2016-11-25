@@ -510,7 +510,7 @@ static void* tf_debug_channel_thread_func(void* arg)
 		}
 
 		Stream_SetPosition(s, BytesReturned);
-		WLog_DBG(TAG, "got %lu bytes", BytesReturned);
+		WLog_DBG(TAG, "got %lu bytes", (unsigned long) BytesReturned);
 	}
 
 	Stream_Free(s, TRUE);

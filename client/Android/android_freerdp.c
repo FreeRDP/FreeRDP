@@ -588,8 +588,8 @@ static int android_freerdp_run(freerdp* instance)
 
 		if ((status == WAIT_FAILED))
 		{
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with %lu [%08lX]",
-			         status, GetLastError());
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with %u [%08lX]",
+			         (unsigned)status, GetLastError());
 			break;
 		}
 

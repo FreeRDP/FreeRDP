@@ -121,7 +121,7 @@ static void* rdpsnd_schedule_thread(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %u!", error);
 			break;
 		}
 
@@ -130,7 +130,7 @@ static void* rdpsnd_schedule_thread(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %u!", error);
 			break;
 		}
 
@@ -142,7 +142,7 @@ static void* rdpsnd_schedule_thread(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %u!", error);
 			break;
 		}
 
@@ -811,7 +811,7 @@ static UINT rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name,
 	entryPoints.args = args;
 
 	if ((error = entry(&entryPoints)))
-		WLog_ERR(TAG, "%s entry returns error %lu", name, error);
+		WLog_ERR(TAG, "%s entry returns error %u", name, error);
 
 	WLog_INFO(TAG, "Loaded %s backend for rdpsnd", name);
 	return error;
@@ -955,7 +955,7 @@ static UINT rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 
 		if ((status = rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args)))
 		{
-			WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu",
+			WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %u",
 			         rdpsnd->subsystem, status);
 			return status;
 		}
@@ -970,7 +970,7 @@ static UINT rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 			device_name = "";
 
 			if ((status = rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args)))
-				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu",
+				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %u",
 				         subsystem_name, status);
 		}
 
@@ -983,7 +983,7 @@ static UINT rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 			device_name = "";
 
 			if ((status = rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args)))
-				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu",
+				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %u",
 				         subsystem_name, status);
 		}
 
@@ -996,7 +996,7 @@ static UINT rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 			device_name = "";
 
 			if ((status = rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args)))
-				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu",
+				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %u",
 				         subsystem_name, status);
 		}
 
@@ -1009,7 +1009,7 @@ static UINT rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 			device_name = "default";
 
 			if ((status = rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args)))
-				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu",
+				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %u",
 				         subsystem_name, status);
 		}
 
@@ -1022,7 +1022,7 @@ static UINT rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 			device_name = "";
 
 			if ((status = rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args)))
-				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu",
+				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %u",
 				         subsystem_name, status);
 		}
 
@@ -1035,7 +1035,7 @@ static UINT rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 			device_name = "default";
 
 			if ((status = rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args)))
-				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu",
+				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %u",
 				         subsystem_name, status);
 		}
 
@@ -1048,7 +1048,7 @@ static UINT rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 			device_name = "";
 
 			if ((status = rdpsnd_load_device_plugin(rdpsnd, subsystem_name, args)))
-				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %lu",
+				WLog_ERR(TAG, "unable to load the %s subsystem plugin because of error %u",
 				         subsystem_name, status);
 		}
 
@@ -1103,7 +1103,7 @@ static void rdpsnd_process_disconnect(rdpsndPlugin* rdpsnd)
 
 		if (WaitForSingleObject(rdpsnd->ScheduleThread, INFINITE) == WAIT_FAILED)
 		{
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", GetLastError());
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", (unsigned long) GetLastError());
 			return;
 		}
 
@@ -1221,7 +1221,7 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_open_event_ex(LPVOID lpUserParam, D
 			if ((error = rdpsnd_virtual_channel_event_data_received(rdpsnd, pData,
 			             dataLength, totalLength, dataFlags)))
 				WLog_ERR(TAG,
-				         "rdpsnd_virtual_channel_event_data_received failed with error %lu", error);
+				         "rdpsnd_virtual_channel_event_data_received failed with error %u", error);
 
 			break;
 
@@ -1349,7 +1349,7 @@ static UINT rdpsnd_virtual_channel_event_disconnected(rdpsndPlugin* rdpsnd)
 	if (WaitForSingleObject(rdpsnd->thread, INFINITE) == WAIT_FAILED)
 	{
 		error = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %u!", error);
 		return error;
 	}
 
@@ -1424,7 +1424,7 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_init_event_ex(LPVOID lpUserParam, L
 	{
 		case CHANNEL_EVENT_CONNECTED:
 			if ((error = rdpsnd_virtual_channel_event_connected(plugin, pData, dataLength)))
-				WLog_ERR(TAG, "rdpsnd_virtual_channel_event_connected failed with error %lu!",
+				WLog_ERR(TAG, "rdpsnd_virtual_channel_event_connected failed with error %u!",
 				         error);
 
 			break;
@@ -1432,7 +1432,7 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_init_event_ex(LPVOID lpUserParam, L
 		case CHANNEL_EVENT_DISCONNECTED:
 			if ((error = rdpsnd_virtual_channel_event_disconnected(plugin)))
 				WLog_ERR(TAG,
-				         "rdpsnd_virtual_channel_event_disconnected failed with error %lu!", error);
+				         "rdpsnd_virtual_channel_event_disconnected failed with error %u!", error);
 
 			break;
 
@@ -1440,7 +1440,7 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_init_event_ex(LPVOID lpUserParam, L
 			if (plugin->thread != NULL)
 				if ((error = rdpsnd_virtual_channel_event_disconnected(plugin)))
 					WLog_ERR(TAG,
-					         "rdpsnd_virtual_channel_event_disconnected failed with error %lu!", error);
+					         "rdpsnd_virtual_channel_event_disconnected failed with error %u!", error);
 
 			rdpsnd_virtual_channel_event_terminated(plugin);
 			plugin = NULL;

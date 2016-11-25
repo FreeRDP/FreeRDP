@@ -314,7 +314,7 @@ static void serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 		irp->IoStatus = _GetLastErrorToIoStatus(serial);
 	}
 
-	WLog_Print(serial->log, WLOG_DEBUG, "%lu bytes written to %s", nbWritten,
+	WLog_Print(serial->log, WLOG_DEBUG, "%lu bytes written to %s", (unsigned long) nbWritten,
 	           serial->device.name);
 	Stream_Write_UINT32(irp->output, nbWritten); /* Length (4 bytes) */
 	Stream_Write_UINT8(irp->output, 0); /* Padding (1 byte) */
@@ -434,7 +434,7 @@ static UINT serial_process_irp(SERIAL_DEVICE* serial, IRP* irp)
 
 		case IRP_MJ_READ:
 			if ((error = serial_process_irp_read(serial, irp)))
-				WLog_ERR(TAG, "serial_process_irp_read failed with error %lu!", error);
+				WLog_ERR(TAG, "serial_process_irp_read failed with error %u!", error);
 
 			break;
 
@@ -444,7 +444,7 @@ static UINT serial_process_irp(SERIAL_DEVICE* serial, IRP* irp)
 
 		case IRP_MJ_DEVICE_CONTROL:
 			if ((error = serial_process_irp_device_control(serial, irp)))
-				WLog_ERR(TAG, "serial_process_irp_device_control failed with error %lu!",
+				WLog_ERR(TAG, "serial_process_irp_device_control failed with error %u!",
 				         error);
 
 			break;
@@ -466,7 +466,7 @@ static void* irp_thread_func(void* arg)
 	/* blocks until the end of the request */
 	if ((error = serial_process_irp(data->serial, data->irp)))
 	{
-		WLog_ERR(TAG, "serial_process_irp failed with error %lu", error);
+		WLog_ERR(TAG, "serial_process_irp failed with error %u", error);
 		goto error_out;
 	}
 
@@ -760,7 +760,7 @@ static UINT serial_free(DEVICE* device)
 	if (WaitForSingleObject(serial->MainThread, INFINITE) == WAIT_FAILED)
 	{
 		error = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %u!", error);
 		return error;
 	}
 
@@ -922,7 +922,7 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		if ((error = pEntryPoints->RegisterDevice(pEntryPoints->devman,
 		             (DEVICE*) serial)))
 		{
-			WLog_ERR(TAG, "EntryPoints->RegisterDevice failed with error %lu!", error);
+			WLog_ERR(TAG, "EntryPoints->RegisterDevice failed with error %u!", error);
 			goto error_out;
 		}
 

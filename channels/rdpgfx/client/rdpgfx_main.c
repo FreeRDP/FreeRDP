@@ -119,7 +119,7 @@ static UINT rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 
 	if ((error = rdpgfx_write_header(s, &header)))
 	{
-		WLog_ERR(TAG, "rdpgfx_write_header failed with error %lu!", error);
+		WLog_ERR(TAG, "rdpgfx_write_header failed with error %u!", error);
 		return error;
 	}
 
@@ -193,7 +193,7 @@ static UINT rdpgfx_send_frame_acknowledge_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 
 	if ((error = rdpgfx_write_header(s, &header)))
 	{
-		WLog_ERR(TAG, "rdpgfx_write_header failed with error %lu!", error);
+		WLog_ERR(TAG, "rdpgfx_write_header failed with error %u!", error);
 		return error;
 	}
 
@@ -277,7 +277,7 @@ static UINT rdpgfx_recv_reset_graphics_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 		IFCALLRET(context->ResetGraphics, error, context, &pdu);
 
 		if (error)
-			WLog_ERR(TAG, "context->ResetGraphics failed with error %lu", error);
+			WLog_ERR(TAG, "context->ResetGraphics failed with error %u", error);
 	}
 
 	free(pdu.monitorDefArray);
@@ -311,7 +311,7 @@ static UINT rdpgfx_recv_evict_cache_entry_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 		IFCALLRET(context->EvictCacheEntry, error, context, &pdu);
 
 		if (error)
-			WLog_ERR(TAG, "context->EvictCacheEntry failed with error %lu", error);
+			WLog_ERR(TAG, "context->EvictCacheEntry failed with error %u", error);
 	}
 
 	return error;
@@ -366,7 +366,7 @@ static UINT rdpgfx_recv_cache_import_reply_pdu(RDPGFX_CHANNEL_CALLBACK* callback
 		IFCALLRET(context->CacheImportReply, error, context, &pdu);
 
 		if (error)
-			WLog_ERR(TAG, "context->CacheImportReply failed with error %lu", error);
+			WLog_ERR(TAG, "context->CacheImportReply failed with error %u", error);
 	}
 
 	free(pdu.cacheSlots);
@@ -405,7 +405,7 @@ static UINT rdpgfx_recv_create_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 		IFCALLRET(context->CreateSurface, error, context, &pdu);
 
 		if (error)
-			WLog_ERR(TAG, "context->CreateSurface failed with error %lu", error);
+			WLog_ERR(TAG, "context->CreateSurface failed with error %u", error);
 	}
 
 	return error;
@@ -438,7 +438,7 @@ static UINT rdpgfx_recv_delete_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 		IFCALLRET(context->DeleteSurface, error, context, &pdu);
 
 		if (error)
-			WLog_ERR(TAG, "context->DeleteSurface failed with error %lu", error);
+			WLog_ERR(TAG, "context->DeleteSurface failed with error %u", error);
 	}
 
 	return error;
@@ -473,7 +473,7 @@ static UINT rdpgfx_recv_start_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 		IFCALLRET(context->StartFrame, error, context, &pdu);
 
 		if (error)
-			WLog_ERR(TAG, "context->StartFrame failed with error %lu", error);
+			WLog_ERR(TAG, "context->StartFrame failed with error %u", error);
 	}
 
 	gfx->UnacknowledgedFrames++;
@@ -501,7 +501,7 @@ static UINT rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 	}
 
 	Stream_Read_UINT32(s, pdu.frameId); /* frameId (4 bytes) */
-	WLog_DBG(TAG, "RecvEndFramePdu: frameId: %d", pdu.frameId);
+	WLog_DBG(TAG, "RecvEndFramePdu: frameId: %lu", (unsigned long) pdu.frameId);
 
 	if (context)
 	{
@@ -509,7 +509,7 @@ static UINT rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 
 		if (error)
 		{
-			WLog_ERR(TAG, "context->EndFrame failed with error %lu", error);
+			WLog_ERR(TAG, "context->EndFrame failed with error %u", error);
 			return error;
 		}
 	}
@@ -525,14 +525,14 @@ static UINT rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 
 		if (gfx->TotalDecodedFrames == 1)
 			if ((error = rdpgfx_send_frame_acknowledge_pdu(callback, &ack)))
-				WLog_ERR(TAG, "rdpgfx_send_frame_acknowledge_pdu failed with error %lu", error);
+				WLog_ERR(TAG, "rdpgfx_send_frame_acknowledge_pdu failed with error %u", error);
 	}
 	else
 	{
 		ack.queueDepth = QUEUE_DEPTH_UNAVAILABLE;
 
 		if ((error = rdpgfx_send_frame_acknowledge_pdu(callback, &ack)))
-			WLog_ERR(TAG, "rdpgfx_send_frame_acknowledge_pdu failed with error %lu", error);
+			WLog_ERR(TAG, "rdpgfx_send_frame_acknowledge_pdu failed with error %u", error);
 	}
 
 	return error;
@@ -563,7 +563,7 @@ static UINT rdpgfx_recv_wire_to_surface_1_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 
 	if ((error = rdpgfx_read_rect16(s, &(pdu.destRect)))) /* destRect (8 bytes) */
 	{
-		WLog_ERR(TAG, "rdpgfx_read_rect16 failed with error %lu", error);
+		WLog_ERR(TAG, "rdpgfx_read_rect16 failed with error %u", error);
 		return error;
 	}
 
@@ -578,12 +578,13 @@ static UINT rdpgfx_recv_wire_to_surface_1_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 	pdu.bitmapData = Stream_Pointer(s);
 	Stream_Seek(s, pdu.bitmapDataLength);
 	WLog_DBG(TAG,
-	         "RecvWireToSurface1Pdu: surfaceId: %lu codecId: %s (0x%04lX) pixelFormat: 0x%04lX "
-	         "destRect: left: %lu top: %lu right: %lu bottom: %lu bitmapDataLength: %lu",
-	         pdu.surfaceId, rdpgfx_get_codec_id_string(pdu.codecId), pdu.codecId,
-	         pdu.pixelFormat,
-	         pdu.destRect.left, pdu.destRect.top, pdu.destRect.right, pdu.destRect.bottom,
-	         pdu.bitmapDataLength);
+		"RecvWireToSurface1Pdu: surfaceId: %lu codecId: %s (0x%04lX) pixelFormat: 0x%04lX "
+		"destRect: left: %lu top: %lu right: %lu bottom: %lu bitmapDataLength: %lu",
+		(unsigned long) pdu.surfaceId, rdpgfx_get_codec_id_string(pdu.codecId),
+		(unsigned long) pdu.codecId, (unsigned long) pdu.pixelFormat,
+		(unsigned long) pdu.destRect.left, (unsigned long) pdu.destRect.top,
+		(unsigned long) pdu.destRect.right, (unsigned long) pdu.destRect.bottom,
+		(unsigned long) pdu.bitmapDataLength);
 	cmd.surfaceId = pdu.surfaceId;
 	cmd.codecId = pdu.codecId;
 	cmd.contextId = 0;
@@ -612,7 +613,7 @@ static UINT rdpgfx_recv_wire_to_surface_1_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 	cmd.data = pdu.bitmapData;
 
 	if ((error = rdpgfx_decode(gfx, &cmd)))
-		WLog_ERR(TAG, "rdpgfx_decode failed with error %lu!", error);
+		WLog_ERR(TAG, "rdpgfx_decode failed with error %u!", error);
 
 	return error;
 }
@@ -666,7 +667,7 @@ static UINT rdpgfx_recv_wire_to_surface_2_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 		IFCALLRET(context->SurfaceCommand, error, context, &cmd);
 
 		if (error)
-			WLog_ERR(TAG, "context->SurfaceCommand failed with error %lu", error);
+			WLog_ERR(TAG, "context->SurfaceCommand failed with error %u", error);
 	}
 
 	return error;
@@ -701,7 +702,7 @@ static UINT rdpgfx_recv_delete_encoding_context_pdu(RDPGFX_CHANNEL_CALLBACK*
 		IFCALLRET(context->DeleteEncodingContext, error, context, &pdu);
 
 		if (error)
-			WLog_ERR(TAG, "context->DeleteEncodingContext failed with error %lu", error);
+			WLog_ERR(TAG, "context->DeleteEncodingContext failed with error %u", error);
 	}
 
 	return error;
@@ -732,7 +733,7 @@ static UINT rdpgfx_recv_solid_fill_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStrea
 	if ((error = rdpgfx_read_color32(s,
 	                                 &(pdu.fillPixel)))) /* fillPixel (4 bytes) */
 	{
-		WLog_ERR(TAG, "rdpgfx_read_color32 failed with error %lu!", error);
+		WLog_ERR(TAG, "rdpgfx_read_color32 failed with error %u!", error);
 		return error;
 	}
 
@@ -758,7 +759,7 @@ static UINT rdpgfx_recv_solid_fill_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStrea
 
 		if ((error = rdpgfx_read_rect16(s, fillRect)))
 		{
-			WLog_ERR(TAG, "rdpgfx_read_rect16 failed with error %lu!", error);
+			WLog_ERR(TAG, "rdpgfx_read_rect16 failed with error %u!", error);
 			free(pdu.fillRects);
 			return error;
 		}
@@ -772,7 +773,7 @@ static UINT rdpgfx_recv_solid_fill_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStrea
 		IFCALLRET(context->SolidFill, error, context, &pdu);
 
 		if (error)
-			WLog_ERR(TAG, "context->SolidFill failed with error %lu", error);
+			WLog_ERR(TAG, "context->SolidFill failed with error %u", error);
 	}
 
 	free(pdu.fillRects);
@@ -805,7 +806,7 @@ static UINT rdpgfx_recv_surface_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK*
 
 	if ((error = rdpgfx_read_rect16(s, &(pdu.rectSrc)))) /* rectSrc (8 bytes ) */
 	{
-		WLog_ERR(TAG, "rdpgfx_read_rect16 failed with error %lu!", error);
+		WLog_ERR(TAG, "rdpgfx_read_rect16 failed with error %u!", error);
 		return error;
 	}
 
@@ -832,7 +833,7 @@ static UINT rdpgfx_recv_surface_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK*
 
 		if ((error = rdpgfx_read_point16(s, destPt)))
 		{
-			WLog_ERR(TAG, "rdpgfx_read_point16 failed with error %lu!", error);
+			WLog_ERR(TAG, "rdpgfx_read_point16 failed with error %u!", error);
 			free(pdu.destPts);
 			return error;
 		}
@@ -849,7 +850,7 @@ static UINT rdpgfx_recv_surface_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK*
 		IFCALLRET(context->SurfaceToSurface, error, context, &pdu);
 
 		if (error)
-			WLog_ERR(TAG, "context->SurfaceToSurface failed with error %lu", error);
+			WLog_ERR(TAG, "context->SurfaceToSurface failed with error %u", error);
 	}
 
 	free(pdu.destPts);
@@ -881,7 +882,7 @@ static UINT rdpgfx_recv_surface_to_cache_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 
 	if ((error = rdpgfx_read_rect16(s, &(pdu.rectSrc)))) /* rectSrc (8 bytes ) */
 	{
-		WLog_ERR(TAG, "rdpgfx_read_rect16 failed with error %lu!", error);
+		WLog_ERR(TAG, "rdpgfx_read_rect16 failed with error %u!", error);
 		return error;
 	}
 
@@ -897,7 +898,7 @@ static UINT rdpgfx_recv_surface_to_cache_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 		IFCALLRET(context->SurfaceToCache, error, context, &pdu);
 
 		if (error)
-			WLog_ERR(TAG, "context->SurfaceToCache failed with error %lu", error);
+			WLog_ERR(TAG, "context->SurfaceToCache failed with error %u", error);
 	}
 
 	return error;
@@ -949,7 +950,7 @@ static UINT rdpgfx_recv_cache_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 
 		if ((error = rdpgfx_read_point16(s, destPt)))
 		{
-			WLog_ERR(TAG, "rdpgfx_read_point16 failed with error %lu", error);
+			WLog_ERR(TAG, "rdpgfx_read_point16 failed with error %u", error);
 			free(pdu.destPts);
 			return error;
 		}
@@ -964,7 +965,7 @@ static UINT rdpgfx_recv_cache_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 		IFCALLRET(context->CacheToSurface, error, context, &pdu);
 
 		if (error)
-			WLog_ERR(TAG, "context->CacheToSurface failed with error %lu", error);
+			WLog_ERR(TAG, "context->CacheToSurface failed with error %u", error);
 	}
 
 	free(pdu.destPts);
@@ -1003,7 +1004,7 @@ static UINT rdpgfx_recv_map_surface_to_output_pdu(RDPGFX_CHANNEL_CALLBACK*
 		IFCALLRET(context->MapSurfaceToOutput, error, context, &pdu);
 
 		if (error)
-			WLog_ERR(TAG, "context->MapSurfaceToOutput failed with error %lu", error);
+			WLog_ERR(TAG, "context->MapSurfaceToOutput failed with error %u", error);
 	}
 
 	return error;
@@ -1041,7 +1042,7 @@ static UINT rdpgfx_recv_map_surface_to_window_pdu(RDPGFX_CHANNEL_CALLBACK* callb
 		IFCALLRET(context->MapSurfaceToWindow, error, context, &pdu);
 
 		if (error)
-			WLog_ERR(TAG, "context->MapSurfaceToWindow failed with error %lu", error);
+			WLog_ERR(TAG, "context->MapSurfaceToWindow failed with error %u", error);
 	}
 
 	return error;
@@ -1061,7 +1062,7 @@ static UINT rdpgfx_recv_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 
 	if ((error = rdpgfx_read_header(s, &header)))
 	{
-		WLog_ERR(TAG, "rdpgfx_read_header failed with error %lu!", error);
+		WLog_ERR(TAG, "rdpgfx_read_header failed with error %u!", error);
 		return error;
 	}
 
@@ -1075,110 +1076,110 @@ static UINT rdpgfx_recv_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 	{
 		case RDPGFX_CMDID_WIRETOSURFACE_1:
 			if ((error = rdpgfx_recv_wire_to_surface_1_pdu(callback, s)))
-				WLog_ERR(TAG, "rdpgfx_recv_wire_to_surface_1_pdu failed with error %lu!",
+				WLog_ERR(TAG, "rdpgfx_recv_wire_to_surface_1_pdu failed with error %u!",
 				         error);
 
 			break;
 
 		case RDPGFX_CMDID_WIRETOSURFACE_2:
 			if ((error = rdpgfx_recv_wire_to_surface_2_pdu(callback, s)))
-				WLog_ERR(TAG, "rdpgfx_recv_wire_to_surface_2_pdu failed with error %lu!",
+				WLog_ERR(TAG, "rdpgfx_recv_wire_to_surface_2_pdu failed with error %u!",
 				         error);
 
 			break;
 
 		case RDPGFX_CMDID_DELETEENCODINGCONTEXT:
 			if ((error = rdpgfx_recv_delete_encoding_context_pdu(callback, s)))
-				WLog_ERR(TAG, "rdpgfx_recv_delete_encoding_context_pdu failed with error %lu!",
+				WLog_ERR(TAG, "rdpgfx_recv_delete_encoding_context_pdu failed with error %u!",
 				         error);
 
 			break;
 
 		case RDPGFX_CMDID_SOLIDFILL:
 			if ((error = rdpgfx_recv_solid_fill_pdu(callback, s)))
-				WLog_ERR(TAG, "rdpgfx_recv_solid_fill_pdu failed with error %lu!", error);
+				WLog_ERR(TAG, "rdpgfx_recv_solid_fill_pdu failed with error %u!", error);
 
 			break;
 
 		case RDPGFX_CMDID_SURFACETOSURFACE:
 			if ((error = rdpgfx_recv_surface_to_surface_pdu(callback, s)))
-				WLog_ERR(TAG, "rdpgfx_recv_surface_to_surface_pdu failed with error %lu!",
+				WLog_ERR(TAG, "rdpgfx_recv_surface_to_surface_pdu failed with error %u!",
 				         error);
 
 			break;
 
 		case RDPGFX_CMDID_SURFACETOCACHE:
 			if ((error = rdpgfx_recv_surface_to_cache_pdu(callback, s)))
-				WLog_ERR(TAG, "rdpgfx_recv_surface_to_cache_pdu failed with error %lu!", error);
+				WLog_ERR(TAG, "rdpgfx_recv_surface_to_cache_pdu failed with error %u!", error);
 
 			break;
 
 		case RDPGFX_CMDID_CACHETOSURFACE:
 			if ((error = rdpgfx_recv_cache_to_surface_pdu(callback, s)))
-				WLog_ERR(TAG, "rdpgfx_recv_cache_to_surface_pdu failed with error %lu!", error);
+				WLog_ERR(TAG, "rdpgfx_recv_cache_to_surface_pdu failed with error %u!", error);
 
 			break;
 
 		case RDPGFX_CMDID_EVICTCACHEENTRY:
 			if ((error = rdpgfx_recv_evict_cache_entry_pdu(callback, s)))
-				WLog_ERR(TAG, "rdpgfx_recv_evict_cache_entry_pdu failed with error %lu!",
+				WLog_ERR(TAG, "rdpgfx_recv_evict_cache_entry_pdu failed with error %u!",
 				         error);
 
 			break;
 
 		case RDPGFX_CMDID_CREATESURFACE:
 			if ((error = rdpgfx_recv_create_surface_pdu(callback, s)))
-				WLog_ERR(TAG, "rdpgfx_recv_create_surface_pdu failed with error %lu!", error);
+				WLog_ERR(TAG, "rdpgfx_recv_create_surface_pdu failed with error %u!", error);
 
 			break;
 
 		case RDPGFX_CMDID_DELETESURFACE:
 			if ((error = rdpgfx_recv_delete_surface_pdu(callback, s)))
-				WLog_ERR(TAG, "rdpgfx_recv_delete_surface_pdu failed with error %lu!", error);
+				WLog_ERR(TAG, "rdpgfx_recv_delete_surface_pdu failed with error %u!", error);
 
 			break;
 
 		case RDPGFX_CMDID_STARTFRAME:
 			if ((error = rdpgfx_recv_start_frame_pdu(callback, s)))
-				WLog_ERR(TAG, "rdpgfx_recv_start_frame_pdu failed with error %lu!", error);
+				WLog_ERR(TAG, "rdpgfx_recv_start_frame_pdu failed with error %u!", error);
 
 			break;
 
 		case RDPGFX_CMDID_ENDFRAME:
 			if ((error = rdpgfx_recv_end_frame_pdu(callback, s)))
-				WLog_ERR(TAG, "rdpgfx_recv_end_frame_pdu failed with error %lu!", error);
+				WLog_ERR(TAG, "rdpgfx_recv_end_frame_pdu failed with error %u!", error);
 
 			break;
 
 		case RDPGFX_CMDID_RESETGRAPHICS:
 			if ((error = rdpgfx_recv_reset_graphics_pdu(callback, s)))
-				WLog_ERR(TAG, "rdpgfx_recv_reset_graphics_pdu failed with error %lu!", error);
+				WLog_ERR(TAG, "rdpgfx_recv_reset_graphics_pdu failed with error %u!", error);
 
 			break;
 
 		case RDPGFX_CMDID_MAPSURFACETOOUTPUT:
 			if ((error = rdpgfx_recv_map_surface_to_output_pdu(callback, s)))
-				WLog_ERR(TAG, "rdpgfx_recv_map_surface_to_output_pdu failed with error %lu!",
+				WLog_ERR(TAG, "rdpgfx_recv_map_surface_to_output_pdu failed with error %u!",
 				         error);
 
 			break;
 
 		case RDPGFX_CMDID_CACHEIMPORTREPLY:
 			if ((error = rdpgfx_recv_cache_import_reply_pdu(callback, s)))
-				WLog_ERR(TAG, "rdpgfx_recv_cache_import_reply_pdu failed with error %lu!",
+				WLog_ERR(TAG, "rdpgfx_recv_cache_import_reply_pdu failed with error %u!",
 				         error);
 
 			break;
 
 		case RDPGFX_CMDID_CAPSCONFIRM:
 			if ((error = rdpgfx_recv_caps_confirm_pdu(callback, s)))
-				WLog_ERR(TAG, "rdpgfx_recv_caps_confirm_pdu failed with error %lu!", error);
+				WLog_ERR(TAG, "rdpgfx_recv_caps_confirm_pdu failed with error %u!", error);
 
 			break;
 
 		case RDPGFX_CMDID_MAPSURFACETOWINDOW:
 			if ((error = rdpgfx_recv_map_surface_to_window_pdu(callback, s)))
-				WLog_ERR(TAG, "rdpgfx_recv_map_surface_to_window_pdu failed with error %lu!",
+				WLog_ERR(TAG, "rdpgfx_recv_map_surface_to_window_pdu failed with error %u!",
 				         error);
 
 			break;
@@ -1243,7 +1244,7 @@ static UINT rdpgfx_on_data_received(IWTSVirtualChannelCallback*
 	{
 		if ((error = rdpgfx_recv_pdu(callback, s)))
 		{
-			WLog_ERR(TAG, "rdpgfx_recv_pdu failed with error %lu!", error);
+			WLog_ERR(TAG, "rdpgfx_recv_pdu failed with error %u!", error);
 			break;
 		}
 	}
@@ -1428,7 +1429,7 @@ static UINT rdpgfx_plugin_terminated(IWTSPlugin* pPlugin)
 
 			if (error)
 			{
-				WLog_ERR(TAG, "context->DeleteSurface failed with error %lu", error);
+				WLog_ERR(TAG, "context->DeleteSurface failed with error %u", error);
 				free(pKeys);
 				free(context);
 				free(gfx);
@@ -1453,7 +1454,7 @@ static UINT rdpgfx_plugin_terminated(IWTSPlugin* pPlugin)
 
 				if (error)
 				{
-					WLog_ERR(TAG, "context->EvictCacheEntry failed with error %lu", error);
+					WLog_ERR(TAG, "context->EvictCacheEntry failed with error %u", error);
 					free(context);
 					free(gfx);
 					return error;

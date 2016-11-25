@@ -19,13 +19,11 @@ static BOOL similar(const BYTE* src, const BYTE* dst, size_t size)
 
 	for (x = 0; x < size; x++)
 	{
-		volatile double val1 = (double)src[x];
-		volatile double val2 = (double)dst[x];
-		volatile double diff = val1 - val2;
+		int diff = src[x] - dst[x];
 
 		if (abs(diff) > 2)
 		{
-			fprintf(stderr, "%lu %02X : %02X diff=%lf\n", (unsigned long)x, val1, val2, diff);
+			fprintf(stderr, "%lu %02X : %02X diff=%d\n", (unsigned long)x, src[x], dst[x], abs(diff));
 			return FALSE;
 		}
 	}
@@ -145,7 +143,8 @@ static BOOL TestPrimitiveYUVCombine(void)
 	awidth = roi.width + 16 - roi.width % 16;
 	aheight = roi.height + 16 - roi.height % 16;
 	fprintf(stderr, "Running YUVCombine on frame size %lux%lu [%lux%lu]\n",
-		roi.width, roi.height, awidth, aheight);
+		(unsigned long) roi.width, (unsigned long) roi.height,
+		(unsigned long) awidth, (unsigned long) aheight);
 
 	if (!prims || !prims->YUV420CombineToYUV444)
 		goto fail;
@@ -333,7 +332,7 @@ static BOOL TestPrimitiveYUV(BOOL use444)
 	}
 
 	fprintf(stderr, "Running AVC%s on frame size %lux%lu\n", use444 ? "444" : "420",
-		roi.width, roi.height);
+		(unsigned long) roi.width, (unsigned long) roi.height);
 
 	/* Test RGB to YUV444 conversion and vice versa */
 	if (!(rgb = set_padding(size * sizeof(UINT32), padding)))

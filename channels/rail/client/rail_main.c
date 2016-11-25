@@ -179,14 +179,14 @@ static UINT rail_send_client_sysparam(RailClientContext* context,
 
 	if ((error = rail_write_client_sysparam_order(s, sysparam)))
 	{
-		WLog_ERR(TAG, "rail_write_client_sysparam_order failed with error %lu!", error);
+		WLog_ERR(TAG, "rail_write_client_sysparam_order failed with error %u!", error);
 		Stream_Free(s, TRUE);
 		return error;
 	}
 
 	if ((error = rail_send_pdu(rail, s, RDP_RAIL_ORDER_SYSPARAM)))
 	{
-		WLog_ERR(TAG, "rail_send_pdu failed with error %lu!", error);
+		WLog_ERR(TAG, "rail_send_pdu failed with error %u!", error);
 	}
 
 	Stream_Free(s, TRUE);
@@ -209,7 +209,7 @@ static UINT rail_client_system_param(RailClientContext* context,
 
 		if ((error = rail_send_client_sysparam(context, sysparam)))
 		{
-			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %lu!", error);
+			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %u!", error);
 			return error;
 		}
 	}
@@ -220,7 +220,7 @@ static UINT rail_client_system_param(RailClientContext* context,
 
 		if ((error = rail_send_client_sysparam(context, sysparam)))
 		{
-			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %lu!", error);
+			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %u!", error);
 			return error;
 		}
 	}
@@ -231,7 +231,7 @@ static UINT rail_client_system_param(RailClientContext* context,
 
 		if ((error = rail_send_client_sysparam(context, sysparam)))
 		{
-			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %lu!", error);
+			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %u!", error);
 			return error;
 		}
 	}
@@ -242,7 +242,7 @@ static UINT rail_client_system_param(RailClientContext* context,
 
 		if ((error = rail_send_client_sysparam(context, sysparam)))
 		{
-			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %lu!", error);
+			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %u!", error);
 			return error;
 		}
 	}
@@ -253,7 +253,7 @@ static UINT rail_client_system_param(RailClientContext* context,
 
 		if ((error = rail_send_client_sysparam(context, sysparam)))
 		{
-			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %lu!", error);
+			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %u!", error);
 			return error;
 		}
 	}
@@ -264,7 +264,7 @@ static UINT rail_client_system_param(RailClientContext* context,
 
 		if ((error = rail_send_client_sysparam(context, sysparam)))
 		{
-			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %lu!", error);
+			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %u!", error);
 			return error;
 		}
 	}
@@ -275,7 +275,7 @@ static UINT rail_client_system_param(RailClientContext* context,
 
 		if ((error = rail_send_client_sysparam(context, sysparam)))
 		{
-			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %lu!", error);
+			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %u!", error);
 			return error;
 		}
 	}
@@ -558,7 +558,7 @@ static VOID VCAPITYPE rail_virtual_channel_open_event_ex(LPVOID lpUserParam, DWO
 		case CHANNEL_EVENT_DATA_RECEIVED:
 			if ((error = rail_virtual_channel_event_data_received(rail, pData, dataLength,
 			             totalLength, dataFlags)))
-				WLog_ERR(TAG, "rail_virtual_channel_event_data_received failed with error %lu!",
+				WLog_ERR(TAG, "rail_virtual_channel_event_data_received failed with error %u!",
 				         error);
 
 			break;
@@ -677,7 +677,7 @@ static UINT rail_virtual_channel_event_disconnected(railPlugin* rail)
 	    && (WaitForSingleObject(rail->thread, INFINITE) == WAIT_FAILED))
 	{
 		rc = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", rc);
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %u", rc);
 		return rc;
 	}
 
@@ -727,14 +727,14 @@ static VOID VCAPITYPE rail_virtual_channel_init_event_ex(LPVOID lpUserParam, LPV
 	{
 		case CHANNEL_EVENT_CONNECTED:
 			if ((error = rail_virtual_channel_event_connected(rail, pData, dataLength)))
-				WLog_ERR(TAG, "rail_virtual_channel_event_connected failed with error %lu!",
+				WLog_ERR(TAG, "rail_virtual_channel_event_connected failed with error %u!",
 				         error);
 
 			break;
 
 		case CHANNEL_EVENT_DISCONNECTED:
 			if ((error = rail_virtual_channel_event_disconnected(rail)))
-				WLog_ERR(TAG, "rail_virtual_channel_event_disconnected failed with error %lu!",
+				WLog_ERR(TAG, "rail_virtual_channel_event_disconnected failed with error %u!",
 				         error);
 
 			break;

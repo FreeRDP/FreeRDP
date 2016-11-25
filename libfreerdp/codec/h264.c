@@ -952,7 +952,7 @@ static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData,
 
 		if (status < 0)
 		{
-			WLog_ERR(TAG, "Failed to get OpenH264 default parameters (status=%ld)", status);
+			WLog_ERR(TAG, "Failed to get OpenH264 default parameters (status=%d)", status);
 			return status;
 		}
 
@@ -998,7 +998,7 @@ static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData,
 
 		if (status < 0)
 		{
-			WLog_ERR(TAG, "Failed to initialize OpenH264 encoder (status=%ld)", status);
+			WLog_ERR(TAG, "Failed to initialize OpenH264 encoder (status=%d)", status);
 			return status;
 		}
 
@@ -1008,7 +1008,7 @@ static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData,
 
 		if (status < 0)
 		{
-			WLog_ERR(TAG, "Failed to get initial OpenH264 encoder parameters (status=%ld)",
+			WLog_ERR(TAG, "Failed to get initial OpenH264 encoder parameters (status=%d)",
 			         status);
 			return status;
 		}
@@ -1028,7 +1028,7 @@ static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData,
 
 					if (status < 0)
 					{
-						WLog_ERR(TAG, "Failed to set encoder bitrate (status=%ld)", status);
+						WLog_ERR(TAG, "Failed to set encoder bitrate (status=%d)", status);
 						return status;
 					}
 				}
@@ -1041,7 +1041,7 @@ static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData,
 
 					if (status < 0)
 					{
-						WLog_ERR(TAG, "Failed to set encoder framerate (status=%ld)", status);
+						WLog_ERR(TAG, "Failed to set encoder framerate (status=%d)", status);
 						return status;
 					}
 				}
@@ -1058,7 +1058,7 @@ static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData,
 
 					if (status < 0)
 					{
-						WLog_ERR(TAG, "Failed to set encoder parameters (status=%ld)", status);
+						WLog_ERR(TAG, "Failed to set encoder parameters (status=%d)", status);
 						return status;
 					}
 				}
@@ -1082,7 +1082,7 @@ static int openh264_compress(H264_CONTEXT* h264, BYTE** ppDstData,
 
 	if (status < 0)
 	{
-		WLog_ERR(TAG, "Failed to encode frame (status=%ld)", status);
+		WLog_ERR(TAG, "Failed to encode frame (status=%d)", status);
 		return status;
 	}
 

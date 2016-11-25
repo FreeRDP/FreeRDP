@@ -580,7 +580,7 @@ UINT tsmf_ifman_on_sample(TSMF_IFMAN* ifman)
 	UINT64 ThrottleDuration;
 	UINT32 SampleExtensions;
 	UINT32 cbData;
-    UINT error;
+	UINT error;
 
 	if (Stream_GetRemainingLength(ifman->input) < 60)
 		return ERROR_INVALID_DATA;
@@ -628,7 +628,7 @@ UINT tsmf_ifman_on_sample(TSMF_IFMAN* ifman)
 
 	if ((error = tsmf_presentation_sync(presentation)))
     {
-        WLog_ERR(TAG, "tsmf_presentation_sync failed with error %lu", error);
+        WLog_ERR(TAG, "tsmf_presentation_sync failed with error %u", error);
         return error;
     }
 	ifman->output_pending = TRUE;

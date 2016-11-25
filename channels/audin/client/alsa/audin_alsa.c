@@ -149,7 +149,7 @@ static UINT audin_alsa_thread_receive(AudinALSADevice* alsa, BYTE* src,
 		if (status == WAIT_FAILED)
 		{
 			ret = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", ret);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %u!", ret);
 			break;
 		}
 
@@ -193,7 +193,7 @@ static UINT audin_alsa_thread_receive(AudinALSADevice* alsa, BYTE* src,
 			if (status == WAIT_FAILED)
 			{
 				ret = GetLastError();
-				WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", ret);
+				WLog_ERR(TAG, "WaitForSingleObject failed with error %u!", ret);
 				break;
 			}
 
@@ -239,10 +239,6 @@ static void* audin_alsa_thread_func(void* arg)
 	{
 		WLog_ERR(TAG, "calloc failed!");
 		error = CHANNEL_RC_NO_MEMORY;
-
-		if (alsa->rdpcontext)
-			setChannelError(alsa->rdpcontext, error, "calloc failed!");
-
 		goto out;
 	}
 
@@ -252,6 +248,7 @@ static void* audin_alsa_thread_func(void* arg)
 	                          SND_PCM_STREAM_CAPTURE, 0)) < 0)
 	{
 		WLog_ERR(TAG, "snd_pcm_open (%s)", snd_strerror(error));
+		error = CHANNEL_RC_INITIALIZATION_ERROR;
 		goto out;
 	}
 
@@ -268,7 +265,7 @@ static void* audin_alsa_thread_func(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %ld!", error);
 			break;
 		}
 
@@ -290,7 +287,7 @@ static void* audin_alsa_thread_func(void* arg)
 
 		if ((error = audin_alsa_thread_receive(alsa, buffer, error * rbytes_per_frame)))
 		{
-			WLog_ERR(TAG, "audin_alsa_thread_receive failed with error %lu", error);
+			WLog_ERR(TAG, "audin_alsa_thread_receive failed with error %ld", error);
 			break;
 		}
 	}
@@ -466,7 +463,7 @@ static UINT audin_alsa_close(IAudinDevice* device)
 		if (WaitForSingleObject(alsa->thread, INFINITE) == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %u", error);
 			return error;
 		}
 
@@ -565,7 +562,7 @@ UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS
 
 	if ((error = audin_alsa_parse_addin_args(alsa, args)))
 	{
-		WLog_ERR(TAG, "audin_alsa_parse_addin_args failed with errorcode %lu!", error);
+		WLog_ERR(TAG, "audin_alsa_parse_addin_args failed with errorcode %u!", error);
 		goto error_out;
 	}
 
@@ -600,7 +597,7 @@ UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS
 	if ((error = pEntryPoints->pRegisterAudinDevice(pEntryPoints->plugin,
 	             (IAudinDevice*) alsa)))
 	{
-		WLog_ERR(TAG, "RegisterAudinDevice failed with error %lu!", error);
+		WLog_ERR(TAG, "RegisterAudinDevice failed with error %u!", error);
 		goto error_out;
 	}
 

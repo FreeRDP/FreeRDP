@@ -386,7 +386,7 @@ int android_RecIn(OPENSL_STREAM* p, short* buffer, int size)
 
 		if (status == WAIT_FAILED)
 		{
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", GetLastError());
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", (unsigned long)GetLastError());
 			return -1;
 		}
 	}

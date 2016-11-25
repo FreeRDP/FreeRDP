@@ -568,7 +568,7 @@ static void *urbdrc_search_usb_device(void *arg) {
         if (status == WAIT_FAILED)
         {
             error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", (unsigned long) error);
             return 0;
         }
 
@@ -815,7 +815,7 @@ static void* urbdrc_search_usb_device(void* arg)
         if (status == WAIT_FAILED)
         {
             error = GetLastError();
-            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", (unsigned long) error);
             goto out;
         }
 
@@ -824,7 +824,7 @@ static void* urbdrc_search_usb_device(void* arg)
         if (status == WAIT_FAILED)
         {
             error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", (unsigned long) error);
             goto out;
         }
 
@@ -839,7 +839,7 @@ static void* urbdrc_search_usb_device(void* arg)
         if (status == WAIT_FAILED)
         {
             error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", (unsigned long) error);
             goto out;
         }
 
@@ -923,7 +923,7 @@ static void* urbdrc_search_usb_device(void* arg)
                         if (status == WAIT_FAILED)
                         {
                             error = GetLastError();
-                            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+                            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", (unsigned long) error);
                             goto out;
                         }
 
@@ -932,7 +932,7 @@ static void* urbdrc_search_usb_device(void* arg)
                         if (status == WAIT_FAILED)
                         {
                             error = GetLastError();
-                            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+                            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", (unsigned long) error);
                             goto out;
                         }
 
@@ -995,7 +995,7 @@ static void* urbdrc_search_usb_device(void* arg)
                     if (status == WAIT_FAILED)
                     {
                         error = GetLastError();
-                        WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+                        WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", (unsigned long) error);
                         goto out;
                     }
 
@@ -1004,7 +1004,7 @@ static void* urbdrc_search_usb_device(void* arg)
                     if (status == WAIT_FAILED)
                     {
                         error = GetLastError();
-                        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+                        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", (unsigned long) error);
                         goto out;
                     }
 

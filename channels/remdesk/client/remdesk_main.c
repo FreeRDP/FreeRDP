@@ -156,7 +156,7 @@ static UINT remdesk_read_channel_header(wStream* s,
 
 	if ((ChannelNameLen % 2) != 0)
 	{
-		WLog_ERR(TAG, "ChannelNameLen  % 2) != 0 ");
+		WLog_ERR(TAG, "ChannelNameLen %% 2) != 0 ");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -293,7 +293,7 @@ static UINT remdesk_send_ctl_version_info_pdu(remdeskPlugin* remdesk)
 	Stream_SealLength(s);
 
 	if ((error = remdesk_virtual_channel_write(remdesk, s)))
-		WLog_ERR(TAG, "remdesk_virtual_channel_write failed with error %lu!", error);
+		WLog_ERR(TAG, "remdesk_virtual_channel_write failed with error %u!", error);
 
 	if (error != CHANNEL_RC_OK)
 		Stream_Free(s, TRUE);
@@ -341,7 +341,7 @@ static UINT remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 
 	if ((error = remdesk_generate_expert_blob(remdesk)))
 	{
-		WLog_ERR(TAG, "remdesk_generate_expert_blob failed with error %lu", error);
+		WLog_ERR(TAG, "remdesk_generate_expert_blob failed with error %u", error);
 		return error;
 	}
 
@@ -384,7 +384,7 @@ static UINT remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 	Stream_SealLength(s);
 
 	if ((error = remdesk_virtual_channel_write(remdesk, s)))
-		WLog_ERR(TAG, "remdesk_virtual_channel_write failed with error %lu!", error);
+		WLog_ERR(TAG, "remdesk_virtual_channel_write failed with error %u!", error);
 
 out:
 	free(raConnectionStringW);
@@ -436,7 +436,7 @@ static UINT remdesk_send_ctl_remote_control_desktop_pdu(remdeskPlugin* remdesk)
 	Stream_SealLength(s);
 
 	if ((error = remdesk_virtual_channel_write(remdesk, s)))
-		WLog_ERR(TAG, "remdesk_virtual_channel_write failed with error %lu!", error);
+		WLog_ERR(TAG, "remdesk_virtual_channel_write failed with error %u!", error);
 
 out:
 	free(raConnectionStringW);
@@ -463,7 +463,7 @@ static UINT remdesk_send_ctl_verify_password_pdu(remdeskPlugin* remdesk)
 
 	if ((error = remdesk_generate_expert_blob(remdesk)))
 	{
-		WLog_ERR(TAG, "remdesk_generate_expert_blob failed with error %lu!", error);
+		WLog_ERR(TAG, "remdesk_generate_expert_blob failed with error %u!", error);
 		return error;
 	}
 
@@ -493,7 +493,7 @@ static UINT remdesk_send_ctl_verify_password_pdu(remdeskPlugin* remdesk)
 	Stream_SealLength(s);
 
 	if ((error = remdesk_virtual_channel_write(remdesk, s)))
-		WLog_ERR(TAG, "remdesk_virtual_channel_write failed with error %lu!", error);
+		WLog_ERR(TAG, "remdesk_virtual_channel_write failed with error %u!", error);
 
 out:
 	free(expertBlobW);
@@ -517,7 +517,7 @@ static UINT remdesk_send_ctl_expert_on_vista_pdu(remdeskPlugin* remdesk)
 
 	if ((error = remdesk_generate_expert_blob(remdesk)))
 	{
-		WLog_ERR(TAG, "remdesk_generate_expert_blob failed with error %lu!", error);
+		WLog_ERR(TAG, "remdesk_generate_expert_blob failed with error %u!", error);
 		return error;
 	}
 
@@ -568,7 +568,7 @@ static UINT remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s,
 
 		case REMDESK_CTL_RESULT:
 			if ((error = remdesk_recv_ctl_result_pdu(remdesk, s, header, &result)))
-				WLog_ERR(TAG, "remdesk_recv_ctl_result_pdu failed with error %lu", error);
+				WLog_ERR(TAG, "remdesk_recv_ctl_result_pdu failed with error %u", error);
 
 			break;
 
@@ -577,7 +577,7 @@ static UINT remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s,
 
 		case REMDESK_CTL_SERVER_ANNOUNCE:
 			if ((error = remdesk_recv_ctl_server_announce_pdu(remdesk, s, header)))
-				WLog_ERR(TAG, "remdesk_recv_ctl_server_announce_pdu failed with error %lu",
+				WLog_ERR(TAG, "remdesk_recv_ctl_server_announce_pdu failed with error %u",
 				         error);
 
 			break;
@@ -588,7 +588,7 @@ static UINT remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s,
 		case REMDESK_CTL_VERSIONINFO:
 			if ((error = remdesk_recv_ctl_version_info_pdu(remdesk, s, header)))
 			{
-				WLog_ERR(TAG, "remdesk_recv_ctl_version_info_pdu failed with error %lu", error);
+				WLog_ERR(TAG, "remdesk_recv_ctl_version_info_pdu failed with error %u", error);
 				break;
 			}
 
@@ -596,20 +596,20 @@ static UINT remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s,
 			{
 				if ((error = remdesk_send_ctl_version_info_pdu(remdesk)))
 				{
-					WLog_ERR(TAG, "remdesk_send_ctl_version_info_pdu failed with error %lu", error);
+					WLog_ERR(TAG, "remdesk_send_ctl_version_info_pdu failed with error %u", error);
 					break;
 				}
 
 				if ((error = remdesk_send_ctl_authenticate_pdu(remdesk)))
 				{
-					WLog_ERR(TAG, "remdesk_send_ctl_authenticate_pdu failed with error %lu", error);
+					WLog_ERR(TAG, "remdesk_send_ctl_authenticate_pdu failed with error %u", error);
 					break;
 				}
 
 				if ((error = remdesk_send_ctl_remote_control_desktop_pdu(remdesk)))
 				{
 					WLog_ERR(TAG,
-					         "remdesk_send_ctl_remote_control_desktop_pdu failed with error %lu", error);
+					         "remdesk_send_ctl_remote_control_desktop_pdu failed with error %u", error);
 					break;
 				}
 			}
@@ -617,14 +617,14 @@ static UINT remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s,
 			{
 				if ((error = remdesk_send_ctl_expert_on_vista_pdu(remdesk)))
 				{
-					WLog_ERR(TAG, "remdesk_send_ctl_expert_on_vista_pdu failed with error %lu",
+					WLog_ERR(TAG, "remdesk_send_ctl_expert_on_vista_pdu failed with error %u",
 					         error);
 					break;
 				}
 
 				if ((error = remdesk_send_ctl_verify_password_pdu(remdesk)))
 				{
-					WLog_ERR(TAG, "remdesk_send_ctl_verify_password_pdu failed with error %lu",
+					WLog_ERR(TAG, "remdesk_send_ctl_verify_password_pdu failed with error %u",
 					         error);
 					break;
 				}
@@ -675,7 +675,7 @@ static UINT remdesk_process_receive(remdeskPlugin* remdesk, wStream* s)
 
 	if ((status = remdesk_read_channel_header(s, &header)))
 	{
-		WLog_ERR(TAG, "remdesk_read_channel_header failed with error %lu", status);
+		WLog_ERR(TAG, "remdesk_read_channel_header failed with error %u", status);
 		return status;
 	}
 
@@ -820,7 +820,7 @@ static VOID VCAPITYPE remdesk_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 			if ((error = remdesk_virtual_channel_event_data_received(remdesk, pData,
 			             dataLength, totalLength, dataFlags)))
 				WLog_ERR(TAG,
-				         "remdesk_virtual_channel_event_data_received failed with error %lu!", error);
+				         "remdesk_virtual_channel_event_data_received failed with error %u!", error);
 
 			break;
 
@@ -832,7 +832,7 @@ static VOID VCAPITYPE remdesk_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 			break;
 
 		default:
-			WLog_ERR(TAG, "unhandled event %lu!", event);
+			WLog_ERR(TAG, "unhandled event %u!", event);
 			error = ERROR_INTERNAL_ERROR;
 	}
 
@@ -874,7 +874,7 @@ static void* remdesk_virtual_channel_client_thread(void* arg)
 
 			if ((error = remdesk_process_receive(remdesk, data)))
 			{
-				WLog_ERR(TAG, "remdesk_process_receive failed with error %lu!", error);
+				WLog_ERR(TAG, "remdesk_process_receive failed with error %u!", error);
 				break;
 			}
 		}
@@ -949,7 +949,7 @@ static UINT remdesk_virtual_channel_event_disconnected(remdeskPlugin* remdesk)
 	    && (WaitForSingleObject(remdesk->thread, INFINITE) == WAIT_FAILED))
 	{
 		rc = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", rc);
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %u", rc);
 		return rc;
 	}
 
@@ -1000,7 +1000,7 @@ static VOID VCAPITYPE remdesk_virtual_channel_init_event_ex(LPVOID lpUserParam, 
 		case CHANNEL_EVENT_CONNECTED:
 			if ((error = remdesk_virtual_channel_event_connected(remdesk, pData,
 			             dataLength)))
-				WLog_ERR(TAG,  "remdesk_virtual_channel_event_connected failed with error %lu",
+				WLog_ERR(TAG,  "remdesk_virtual_channel_event_connected failed with error %u",
 				         error);
 
 			break;
@@ -1008,7 +1008,7 @@ static VOID VCAPITYPE remdesk_virtual_channel_init_event_ex(LPVOID lpUserParam, 
 		case CHANNEL_EVENT_DISCONNECTED:
 			if ((error = remdesk_virtual_channel_event_disconnected(remdesk)))
 				WLog_ERR(TAG,
-				         "remdesk_virtual_channel_event_disconnected failed with error %lu", error);
+				         "remdesk_virtual_channel_event_disconnected failed with error %u", error);
 
 			break;
 

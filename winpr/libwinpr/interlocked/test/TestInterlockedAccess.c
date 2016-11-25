@@ -30,7 +30,7 @@ int TestInterlockedAccess(int argc, char* argv[])
 
 	if (*Addend != 10)
 	{
-		printf("InterlockedIncrement failure: Actual: %d, Expected: %d\n", (int) *Addend, 10);
+		printf("InterlockedIncrement failure: Actual: %ld, Expected: 10\n", (long) *Addend);
 		return -1;
 	}
 
@@ -41,7 +41,7 @@ int TestInterlockedAccess(int argc, char* argv[])
 
 	if (*Addend != 0)
 	{
-		printf("InterlockedDecrement failure: Actual: %d, Expected: %d\n", (int) *Addend, 0);
+		printf("InterlockedDecrement failure: Actual: %ld, Expected: 0\n", (long) *Addend);
 		return -1;
 	}
 
@@ -61,13 +61,13 @@ int TestInterlockedAccess(int argc, char* argv[])
 
 	if (oldValue != 0xAA)
 	{
-		printf("InterlockedExchange failure: Actual: 0x%08X, Expected: 0x%08X\n", (int) oldValue, 0xAA);
+		printf("InterlockedExchange failure: Actual: 0x%08lX, Expected: 0xAA\n", (long) oldValue);
 		return -1;
 	}
 
 	if (*Target != 0xFF)
 	{
-		printf("InterlockedExchange failure: Actual: 0x%08X, Expected: 0x%08X\n", (int) *Target, 0xFF);
+		printf("InterlockedExchange failure: Actual: 0x%08lX, Expected: 0xFF\n", (long) *Target);
 		return -1;
 	}
 
@@ -79,13 +79,13 @@ int TestInterlockedAccess(int argc, char* argv[])
 
 	if (oldValue != 25)
 	{
-		printf("InterlockedExchangeAdd failure: Actual: %d, Expected: %d\n", (int) oldValue, 25);
+		printf("InterlockedExchangeAdd failure: Actual: %ld, Expected: 25\n", (long) oldValue);
 		return -1;
 	}
 
 	if (*Addend != 125)
 	{
-		printf("InterlockedExchangeAdd failure: Actual: %d, Expected: %d\n", (int) *Addend, 125);
+		printf("InterlockedExchangeAdd failure: Actual: %ld, Expected: 125\n", (long) *Addend);
 		return -1;
 	}
 
@@ -104,13 +104,13 @@ int TestInterlockedAccess(int argc, char* argv[])
 
 	if (oldValue != 0xAABBCCDD)
 	{
-		printf("InterlockedCompareExchange failure: Actual: 0x%08X, Expected: 0x%08X\n", (int) oldValue, 0xAABBCCDD);
+		printf("InterlockedCompareExchange failure: Actual: 0x%08lX, Expected: 0xAABBCCDD\n", (long) oldValue);
 		return -1;
 	}
 
 	if (*Destination != 0xCCDDEEFF)
 	{
-		printf("InterlockedCompareExchange failure: Actual: 0x%08X, Expected: 0x%08X\n", (int) *Destination, 0xCCDDEEFF);
+		printf("InterlockedCompareExchange failure: Actual: 0x%08lX, Expected: 0xCCDDEEFF\n", (long) *Destination);
 		return -1;
 	}
 
@@ -122,13 +122,13 @@ int TestInterlockedAccess(int argc, char* argv[])
 
 	if (oldValue != 0xAABBCCDD)
 	{
-		printf("InterlockedCompareExchange failure: Actual: 0x%08X, Expected: 0x%08X\n", (int) oldValue, 0xAABBCCDD);
+		printf("InterlockedCompareExchange failure: Actual: 0x%08lX, Expected: 0xAABBCCDD\n", (long) oldValue);
 		return -1;
 	}
 
 	if (*Destination != 0xAABBCCDD)
 	{
-		printf("InterlockedCompareExchange failure: Actual: 0x%08X, Expected: 0x%08X\n", (int) *Destination, 0xAABBCCDD);
+		printf("InterlockedCompareExchange failure: Actual: 0x%08lX, Expected: 0xAABBCCDD\n", (long) *Destination);
 		return -1;
 	}
 
@@ -147,13 +147,13 @@ int TestInterlockedAccess(int argc, char* argv[])
 
 	if (oldValue64 != 0x66778899AABBCCDD)
 	{
-		printf("InterlockedCompareExchange failure: Actual: %lld, Expected: %lld\n", oldValue64, (LONGLONG) 0x66778899AABBCCDD);
+		printf("InterlockedCompareExchange failure: Actual: 0x%016llX, Expected: 0x66778899AABBCCDD\n", (long long) oldValue64);
 		return -1;
 	}
 
 	if (*Destination64 != 0x8899AABBCCDDEEFF)
 	{
-		printf("InterlockedCompareExchange failure: Actual: %lld, Expected: %lld\n",  *Destination64, (LONGLONG) 0x8899AABBCCDDEEFF);
+		printf("InterlockedCompareExchange failure: Actual: 0x%016llX, Expected: 0x8899AABBCCDDEEFF\n", (long long) *Destination64);
 		return -1;
 	}
 
@@ -165,13 +165,13 @@ int TestInterlockedAccess(int argc, char* argv[])
 
 	if (oldValue64 != 0x66778899AABBCCDD)
 	{
-		printf("InterlockedCompareExchange failure: Actual: %lld, Expected: %lld\n", oldValue64, (LONGLONG) 0x66778899AABBCCDD);
+		printf("InterlockedCompareExchange failure: Actual: 0x%016llX, Expected: 0x66778899AABBCCDD\n", (long long) oldValue64);
 		return -1;
 	}
 
 	if (*Destination64 != 0x66778899AABBCCDD)
 	{
-		printf("InterlockedCompareExchange failure: Actual: %lld, Expected: %lld\n",  *Destination64, (LONGLONG) 0x66778899AABBCCDD);
+		printf("InterlockedCompareExchange failure: Actual: 0x%016llX, Expected: 0x66778899AABBCCDD\n", (long long) *Destination64);
 		return -1;
 	}
 

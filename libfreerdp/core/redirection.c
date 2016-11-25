@@ -91,13 +91,13 @@ static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t m
 
 	if ((length % 2) || length < 2 || length > maxLength)
 	{
-		WLog_ERR(TAG,  "rdp_redirection_read_string failure: invalid unicode string length: %lu", length);
+		WLog_ERR(TAG,  "rdp_redirection_read_string failure: invalid unicode string length: %lu", (unsigned long) length);
 		return FALSE;
 	}
 
 	if (Stream_GetRemainingLength(s) < length)
 	{
-		WLog_ERR(TAG,  "rdp_redirection_read_string failure: insufficient stream length (%lu bytes required)", length);
+		WLog_ERR(TAG,  "rdp_redirection_read_string failure: insufficient stream length (%lu bytes required)", (unsigned long) length);
 		return FALSE;
 	}
 

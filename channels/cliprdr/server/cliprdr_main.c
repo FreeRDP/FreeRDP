@@ -545,7 +545,7 @@ static UINT cliprdr_server_receive_capabilities(CliprdrServerContext* context,
 			case CB_CAPSTYPE_GENERAL:
 				if ((error = cliprdr_server_receive_general_capability(context, s)))
 				{
-					WLog_ERR(TAG, "cliprdr_server_receive_general_capability failed with error %lu",
+					WLog_ERR(TAG, "cliprdr_server_receive_general_capability failed with error %u",
 					         error);
 					return error;
 				}
@@ -580,7 +580,7 @@ static UINT cliprdr_server_receive_temporary_directory(CliprdrServerContext*
 	if ((slength = Stream_GetRemainingLength(s)) < 520)
 	{
 		WLog_ERR(TAG,
-		         "Stream_GetRemainingLength returned %d but should at least be 520", slength);
+		         "Stream_GetRemainingLength returned %lu but should at least be 520", (unsigned long) slength);
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
@@ -613,7 +613,7 @@ static UINT cliprdr_server_receive_temporary_directory(CliprdrServerContext*
 	IFCALLRET(context->TempDirectory, error, context, &tempDirectory);
 
 	if (error)
-		WLog_ERR(TAG, "TempDirectory failed with error %lu!", error);
+		WLog_ERR(TAG, "TempDirectory failed with error %u!", error);
 
 	return error;
 }
@@ -790,7 +790,7 @@ static UINT cliprdr_server_receive_format_list(CliprdrServerContext* context,
 	IFCALLRET(context->ClientFormatList, error, context, &formatList);
 
 	if (error)
-		WLog_ERR(TAG, "ClientFormatList failed with error %lu!", error);
+		WLog_ERR(TAG, "ClientFormatList failed with error %u!", error);
 
 out:
 
@@ -821,7 +821,7 @@ static UINT cliprdr_server_receive_format_list_response(
 	          &formatListResponse);
 
 	if (error)
-		WLog_ERR(TAG, "ClientFormatListResponse failed with error %lu!", error);
+		WLog_ERR(TAG, "ClientFormatListResponse failed with error %u!", error);
 
 	return error;
 }
@@ -851,7 +851,7 @@ static UINT cliprdr_server_receive_lock_clipdata(CliprdrServerContext* context,
 	IFCALLRET(context->ClientLockClipboardData, error, context, &lockClipboardData);
 
 	if (error)
-		WLog_ERR(TAG, "ClientLockClipboardData failed with error %lu!", error);
+		WLog_ERR(TAG, "ClientLockClipboardData failed with error %u!", error);
 
 	return error;
 }
@@ -883,7 +883,7 @@ static UINT cliprdr_server_receive_unlock_clipdata(CliprdrServerContext*
 	          &unlockClipboardData);
 
 	if (error)
-		WLog_ERR(TAG, "ClientUnlockClipboardData failed with error %lu!", error);
+		WLog_ERR(TAG, "ClientUnlockClipboardData failed with error %u!", error);
 
 	return error;
 }
@@ -914,7 +914,7 @@ static UINT cliprdr_server_receive_format_data_request(CliprdrServerContext*
 	IFCALLRET(context->ClientFormatDataRequest, error, context, &formatDataRequest);
 
 	if (error)
-		WLog_ERR(TAG, "ClientFormatDataRequest failed with error %lu!", error);
+		WLog_ERR(TAG, "ClientFormatDataRequest failed with error %u!", error);
 
 	return error;
 }
@@ -951,7 +951,7 @@ static UINT cliprdr_server_receive_format_data_response(
 	          &formatDataResponse);
 
 	if (error)
-		WLog_ERR(TAG, "ClientFormatDataResponse failed with error %lu!", error);
+		WLog_ERR(TAG, "ClientFormatDataResponse failed with error %u!", error);
 
 	free(formatDataResponse.requestedFormatData);
 	return error;
@@ -993,7 +993,7 @@ static UINT cliprdr_server_receive_filecontents_request(
 	IFCALLRET(context->ClientFileContentsRequest, error, context, &request);
 
 	if (error)
-		WLog_ERR(TAG, "ClientFileContentsRequest failed with error %lu!", error);
+		WLog_ERR(TAG, "ClientFileContentsRequest failed with error %u!", error);
 
 	return error;
 }
@@ -1025,7 +1025,7 @@ static UINT cliprdr_server_receive_filecontents_response(
 	IFCALLRET(context->ClientFileContentsResponse, error, context, &response);
 
 	if (error)
-		WLog_ERR(TAG, "ClientFileContentsResponse failed with error %lu!", error);
+		WLog_ERR(TAG, "ClientFileContentsResponse failed with error %u!", error);
 
 	return error;
 }
@@ -1047,7 +1047,7 @@ static UINT cliprdr_server_receive_pdu(CliprdrServerContext* context,
 	{
 		case CB_CLIP_CAPS:
 			if ((error = cliprdr_server_receive_capabilities(context, s, header)))
-				WLog_ERR(TAG, "cliprdr_server_receive_capabilities failed with error %lu!",
+				WLog_ERR(TAG, "cliprdr_server_receive_capabilities failed with error %u!",
 				         error);
 
 			break;
@@ -1055,13 +1055,13 @@ static UINT cliprdr_server_receive_pdu(CliprdrServerContext* context,
 		case CB_TEMP_DIRECTORY:
 			if ((error = cliprdr_server_receive_temporary_directory(context, s, header)))
 				WLog_ERR(TAG,
-				         "cliprdr_server_receive_temporary_directory failed with error %lu!", error);
+				         "cliprdr_server_receive_temporary_directory failed with error %u!", error);
 
 			break;
 
 		case CB_FORMAT_LIST:
 			if ((error = cliprdr_server_receive_format_list(context, s, header)))
-				WLog_ERR(TAG, "cliprdr_server_receive_format_list failed with error %lu!",
+				WLog_ERR(TAG, "cliprdr_server_receive_format_list failed with error %u!",
 				         error);
 
 			break;
@@ -1069,20 +1069,20 @@ static UINT cliprdr_server_receive_pdu(CliprdrServerContext* context,
 		case CB_FORMAT_LIST_RESPONSE:
 			if ((error = cliprdr_server_receive_format_list_response(context, s, header)))
 				WLog_ERR(TAG,
-				         "cliprdr_server_receive_format_list_response failed with error %lu!", error);
+				         "cliprdr_server_receive_format_list_response failed with error %u!", error);
 
 			break;
 
 		case CB_LOCK_CLIPDATA:
 			if ((error = cliprdr_server_receive_lock_clipdata(context, s, header)))
-				WLog_ERR(TAG, "cliprdr_server_receive_lock_clipdata failed with error %lu!",
+				WLog_ERR(TAG, "cliprdr_server_receive_lock_clipdata failed with error %u!",
 				         error);
 
 			break;
 
 		case CB_UNLOCK_CLIPDATA:
 			if ((error = cliprdr_server_receive_unlock_clipdata(context, s, header)))
-				WLog_ERR(TAG, "cliprdr_server_receive_unlock_clipdata failed with error %lu!",
+				WLog_ERR(TAG, "cliprdr_server_receive_unlock_clipdata failed with error %u!",
 				         error);
 
 			break;
@@ -1090,28 +1090,28 @@ static UINT cliprdr_server_receive_pdu(CliprdrServerContext* context,
 		case CB_FORMAT_DATA_REQUEST:
 			if ((error = cliprdr_server_receive_format_data_request(context, s, header)))
 				WLog_ERR(TAG,
-				         "cliprdr_server_receive_format_data_request failed with error %lu!", error);
+				         "cliprdr_server_receive_format_data_request failed with error %u!", error);
 
 			break;
 
 		case CB_FORMAT_DATA_RESPONSE:
 			if ((error = cliprdr_server_receive_format_data_response(context, s, header)))
 				WLog_ERR(TAG,
-				         "cliprdr_server_receive_format_data_response failed with error %lu!", error);
+				         "cliprdr_server_receive_format_data_response failed with error %u!", error);
 
 			break;
 
 		case CB_FILECONTENTS_REQUEST:
 			if ((error = cliprdr_server_receive_filecontents_request(context, s, header)))
 				WLog_ERR(TAG,
-				         "cliprdr_server_receive_filecontents_request failed with error %lu!", error);
+				         "cliprdr_server_receive_filecontents_request failed with error %u!", error);
 
 			break;
 
 		case CB_FILECONTENTS_RESPONSE:
 			if ((error = cliprdr_server_receive_filecontents_response(context, s, header)))
 				WLog_ERR(TAG,
-				         "cliprdr_server_receive_filecontents_response failed with error %lu!", error);
+				         "cliprdr_server_receive_filecontents_response failed with error %u!", error);
 
 			break;
 
@@ -1164,13 +1164,13 @@ static UINT cliprdr_server_init(CliprdrServerContext* context)
 
 	if ((error = context->ServerCapabilities(context, &capabilities)))
 	{
-		WLog_ERR(TAG, "ServerCapabilities failed with error %lu!", error);
+		WLog_ERR(TAG, "ServerCapabilities failed with error %u!", error);
 		return error;
 	}
 
 	if ((error = context->MonitorReady(context, &monitorReady)))
 	{
-		WLog_ERR(TAG, "MonitorReady failed with error %lu!", error);
+		WLog_ERR(TAG, "MonitorReady failed with error %u!", error);
 		return error;
 	}
 
@@ -1203,7 +1203,7 @@ UINT cliprdr_server_read(CliprdrServerContext* context)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %u", error);
 			return error;
 		}
 
@@ -1245,7 +1245,7 @@ UINT cliprdr_server_read(CliprdrServerContext* context)
 			if (status == WAIT_FAILED)
 			{
 				error = GetLastError();
-				WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+				WLog_ERR(TAG, "WaitForSingleObject failed with error %u", error);
 				return error;
 			}
 
@@ -1270,7 +1270,7 @@ UINT cliprdr_server_read(CliprdrServerContext* context)
 
 			if ((error = cliprdr_server_receive_pdu(context, s, &header)))
 			{
-				WLog_ERR(TAG, "cliprdr_server_receive_pdu failed with error code %lu!", error);
+				WLog_ERR(TAG, "cliprdr_server_receive_pdu failed with error code %u!", error);
 				return error;
 			}
 
@@ -1281,7 +1281,7 @@ UINT cliprdr_server_read(CliprdrServerContext* context)
 			if (status == WAIT_FAILED)
 			{
 				error = GetLastError();
-				WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+				WLog_ERR(TAG, "WaitForSingleObject failed with error %u", error);
 				return error;
 			}
 
@@ -1336,7 +1336,7 @@ static void* cliprdr_server_thread(void* arg)
 
 	if ((error = cliprdr_server_init(context)))
 	{
-		WLog_ERR(TAG, "cliprdr_server_init failed with error %lu!", error);
+		WLog_ERR(TAG, "cliprdr_server_init failed with error %u!", error);
 		goto out;
 	}
 
@@ -1347,7 +1347,7 @@ static void* cliprdr_server_thread(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %u", error);
 			goto out;
 		}
 
@@ -1356,7 +1356,7 @@ static void* cliprdr_server_thread(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %u", error);
 			goto out;
 		}
 
@@ -1368,7 +1368,7 @@ static void* cliprdr_server_thread(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %u", error);
 			goto out;
 		}
 
@@ -1376,7 +1376,7 @@ static void* cliprdr_server_thread(void* arg)
 		{
 			if ((error = context->CheckEventHandle(context)))
 			{
-				WLog_ERR(TAG, "CheckEventHandle failed with error %lu!", error);
+				WLog_ERR(TAG, "CheckEventHandle failed with error %u!", error);
 				break;
 			}
 		}
@@ -1507,7 +1507,7 @@ static UINT cliprdr_server_stop(CliprdrServerContext* context)
 		if (WaitForSingleObject(cliprdr->Thread, INFINITE) == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %u", error);
 			return error;
 		}
 

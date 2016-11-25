@@ -60,7 +60,7 @@ static INLINE BOOL shadow_client_rdpgfx_new_surface(rdpShadowClient* client)
 
 	if (error)
 	{
-		WLog_ERR(TAG, "CreateSurface failed with error %lu", error);
+		WLog_ERR(TAG, "CreateSurface failed with error %u", error);
 		return FALSE;
 	}
 
@@ -68,7 +68,7 @@ static INLINE BOOL shadow_client_rdpgfx_new_surface(rdpShadowClient* client)
 
 	if (error)
 	{
-		WLog_ERR(TAG, "MapSurfaceToOutput failed with error %lu", error);
+		WLog_ERR(TAG, "MapSurfaceToOutput failed with error %u", error);
 		return FALSE;
 	}
 
@@ -85,7 +85,7 @@ static INLINE BOOL shadow_client_rdpgfx_release_surface(rdpShadowClient* client)
 
 	if (error)
 	{
-		WLog_ERR(TAG, "DeleteSurface failed with error %lu", error);
+		WLog_ERR(TAG, "DeleteSurface failed with error %u", error);
 		return FALSE;
 	}
 
@@ -106,7 +106,7 @@ static INLINE BOOL shadow_client_rdpgfx_reset_graphic(rdpShadowClient* client)
 
 	if (error)
 	{
-		WLog_ERR(TAG, "ResetGraphics failed with error %lu", error);
+		WLog_ERR(TAG, "ResetGraphics failed with error %u", error);
 		return FALSE;
 	}
 
@@ -766,7 +766,7 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client,
 
 		if (error)
 		{
-			WLog_ERR(TAG, "SurfaceFrameCommand failed with error %lu", error);
+			WLog_ERR(TAG, "SurfaceFrameCommand failed with error %u", error);
 			return FALSE;
 		}
 	}

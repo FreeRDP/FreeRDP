@@ -122,7 +122,7 @@ static UINT encomsp_recv_change_participant_control_level_pdu(
 	IFCALLRET(context->ChangeParticipantControlLevel, error, context, &pdu);
 
 	if (error)
-		WLog_ERR(TAG, "context->ChangeParticipantControlLevel failed with error %lu",
+		WLog_ERR(TAG, "context->ChangeParticipantControlLevel failed with error %u",
 		         error);
 
 	return error;
@@ -143,7 +143,7 @@ static UINT encomsp_server_receive_pdu(EncomspServerContext* context,
 	{
 		if ((error = encomsp_read_header(s, &header)))
 		{
-			WLog_ERR(TAG, "encomsp_read_header failed with error %lu!", error);
+			WLog_ERR(TAG, "encomsp_read_header failed with error %u!", error);
 			return error;
 		}
 
@@ -157,7 +157,7 @@ static UINT encomsp_server_receive_pdu(EncomspServerContext* context,
 				             &header)))
 				{
 					WLog_ERR(TAG,
-					         "encomsp_recv_change_participant_control_level_pdu failed with error %lu!",
+					         "encomsp_recv_change_participant_control_level_pdu failed with error %u!",
 					         error);
 					return error;
 				}
@@ -220,7 +220,7 @@ static void* encomsp_server_thread(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %u", error);
 			break;
 		}
 
@@ -229,7 +229,7 @@ static void* encomsp_server_thread(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %u", error);
 			break;
 		}
 
@@ -269,7 +269,7 @@ static void* encomsp_server_thread(void* arg)
 
 				if ((error = encomsp_server_receive_pdu(context, s)))
 				{
-					WLog_ERR(TAG, "encomsp_server_receive_pdu failed with error %lu!", error);
+					WLog_ERR(TAG, "encomsp_server_receive_pdu failed with error %u!", error);
 					break;
 				}
 
@@ -333,7 +333,7 @@ static UINT encomsp_server_stop(EncomspServerContext* context)
 	if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
 	{
 		error = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %u", error);
 		return error;
 	}
 

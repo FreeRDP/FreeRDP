@@ -686,7 +686,7 @@ UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS p
 	{
 		if ((error = rdpsnd_alsa_parse_addin_args((rdpsndDevicePlugin *) alsa, args)))
 		{
-			WLog_ERR(TAG, "rdpsnd_alsa_parse_addin_args failed with error %lu", error);
+			WLog_ERR(TAG, "rdpsnd_alsa_parse_addin_args failed with error %u", error);
 			goto error_parse_args;
 		}
 	}
