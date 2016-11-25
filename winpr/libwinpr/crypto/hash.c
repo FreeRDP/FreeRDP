@@ -235,11 +235,17 @@ BOOL winpr_HMAC_Update(WINPR_HMAC_CTX* ctx, const BYTE* input, size_t ilen)
 
 BOOL winpr_HMAC_Final(WINPR_HMAC_CTX* ctx, BYTE* output, size_t olen)
 {
+#if defined(WITH_OPENSSL)
+	HMAC_CTX* hmac;
+#elif defined(WITH_MBEDTLS)
+	mbedtls_md_context_t* mdctx;
+#endif
+
 	if (!ctx)
 		return FALSE;
 
 #if defined(WITH_OPENSSL)
-	HMAC_CTX* hmac = (HMAC_CTX*) ctx;
+	hmac = (HMAC_CTX*) ctx;
 #if (OPENSSL_VERSION_NUMBER < 0x10000000L)
 	HMAC_Final(hmac, output, NULL); /* no return value on OpenSSL 0.9.x */
 	return TRUE;
@@ -249,7 +255,7 @@ BOOL winpr_HMAC_Final(WINPR_HMAC_CTX* ctx, BYTE* output, size_t olen)
 #endif
 
 #elif defined(WITH_MBEDTLS)
-	mbedtls_md_context_t* mdctx = (mbedtls_md_context_t*) ctx;
+	mdctx = (mbedtls_md_context_t*) ctx;
 	if (mbedtls_md_hmac_finish(mdctx, output) == 0)
 		return TRUE;
 #endif
