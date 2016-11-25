@@ -65,7 +65,7 @@ static void rfx_decode_component(RFX_CONTEXT* context,
 	dwt_buffer = BufferPool_Take(context->priv->BufferPool, -1); /* dwt_buffer */
 	PROFILER_ENTER(context->priv->prof_rfx_decode_component);
 	PROFILER_ENTER(context->priv->prof_rfx_rlgr_decode);
-	rfx_rlgr_decode(data, size, buffer, 4096, (context->mode == RLGR1) ? 1 : 3);
+	context->rlgr_decode(context->mode, data, size, buffer, 4096);
 	PROFILER_EXIT(context->priv->prof_rfx_rlgr_decode);
 	PROFILER_ENTER(context->priv->prof_rfx_differential_decode);
 	rfx_differential_decode(buffer + 4032, 64);

@@ -249,7 +249,7 @@ static void rfx_encode_component(RFX_CONTEXT* context,
 	rfx_differential_encode(data + 4032, 64);
 	PROFILER_EXIT(context->priv->prof_rfx_differential_encode);
 	PROFILER_ENTER(context->priv->prof_rfx_rlgr_encode);
-	*size = rfx_rlgr_encode(context->mode, data, 4096, buffer, buffer_size);
+	*size = context->rlgr_encode(context->mode, data, 4096, buffer, buffer_size);
 	PROFILER_EXIT(context->priv->prof_rfx_rlgr_encode);
 	PROFILER_EXIT(context->priv->prof_rfx_encode_component);
 	BufferPool_Return(context->priv->BufferPool, dwt_buffer);

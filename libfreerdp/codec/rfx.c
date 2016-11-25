@@ -337,6 +337,8 @@ RFX_CONTEXT* rfx_context_new(BOOL encoder)
 	context->quantization_encode = rfx_quantization_encode;
 	context->dwt_2d_decode = rfx_dwt_2d_decode;
 	context->dwt_2d_encode = rfx_dwt_2d_encode;
+	context->rlgr_decode = rfx_rlgr_decode;
+	context->rlgr_encode = rfx_rlgr_encode;
 	RFX_INIT_SIMD(context);
 	context->state = RFX_STATE_SEND_HEADERS;
 	return context;
