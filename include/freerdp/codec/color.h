@@ -213,28 +213,28 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 		/* 32bpp formats */
 		case PIXEL_FORMAT_ARGB32:
 			if (_a)
-				*_a = color >> 24;
+				*_a = (BYTE)(color >> 24);
 
 			if (_r)
-				*_r = color >> 16;
+				*_r = (BYTE)(color >> 16);
 
 			if (_g)
-				*_g = color >> 8;
+				*_g = (BYTE)(color >> 8);
 
 			if (_b)
-				*_b = color;
+				*_b = (BYTE)color;
 
 			break;
 
 		case PIXEL_FORMAT_XRGB32:
 			if (_r)
-				*_r = color >> 16;
+				*_r = (BYTE)(color >> 16);
 
 			if (_g)
-				*_g = color >> 8;
+				*_g = (BYTE)(color >> 8);
 
 			if (_b)
-				*_b = color;
+				*_b = (BYTE)color;
 
 			if (_a)
 				*_a = 0xFF;
@@ -243,28 +243,28 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 
 		case PIXEL_FORMAT_ABGR32:
 			if (_a)
-				*_a = color >> 24;
+				*_a = (BYTE)(color >> 24);
 
 			if (_b)
-				*_b = color >> 16;
+				*_b = (BYTE)(color >> 16);
 
 			if (_g)
-				*_g = color >> 8;
+				*_g = (BYTE)(color >> 8);
 
 			if (_r)
-				*_r = color;
+				*_r = (BYTE)color;
 
 			break;
 
 		case PIXEL_FORMAT_XBGR32:
 			if (_b)
-				*_b = color >> 16;
+				*_b = (BYTE)(color >> 16);
 
 			if (_g)
-				*_g = color >> 8;
+				*_g = (BYTE)(color >> 8);
 
 			if (_r)
-				*_r = color;
+				*_r = (BYTE)color;
 
 			if (_a)
 				*_a = 0xFF;
@@ -273,28 +273,28 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 
 		case PIXEL_FORMAT_RGBA32:
 			if (_r)
-				*_r = color >> 24;
+				*_r = (BYTE)(color >> 24);
 
 			if (_g)
-				*_g = color >> 16;
+				*_g = (BYTE)(color >> 16);
 
 			if (_b)
-				*_b = color >> 8;
+				*_b = (BYTE)(color >> 8);
 
 			if (_a)
-				*_a = color;
+				*_a = (BYTE)color;
 
 			break;
 
 		case PIXEL_FORMAT_RGBX32:
 			if (_r)
-				*_r = color >> 24;
+				*_r = (BYTE)(color >> 24);
 
 			if (_g)
-				*_g = color >> 16;
+				*_g = (BYTE)(color >> 16);
 
 			if (_b)
-				*_b = color >> 8;
+				*_b = (BYTE)(color >> 8);
 
 			if (_a)
 				*_a = 0xFF;
@@ -303,28 +303,28 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 
 		case PIXEL_FORMAT_BGRA32:
 			if (_b)
-				*_b = color >> 24;
+				*_b = (BYTE)(color >> 24);
 
 			if (_g)
-				*_g = color >> 16;
+				*_g = (BYTE)(color >> 16);
 
 			if (_r)
-				*_r = color >> 8;
+				*_r = (BYTE)(color >> 8);
 
 			if (_a)
-				*_a = color;
+				*_a = (BYTE)color;
 
 			break;
 
 		case PIXEL_FORMAT_BGRX32:
 			if (_b)
-				*_b = color >> 24;
+				*_b = (BYTE)(color >> 24);
 
 			if (_g)
-				*_g = color >> 16;
+				*_g = (BYTE)(color >> 16);
 
 			if (_r)
-				*_r = color >> 8;
+				*_r = (BYTE)(color >> 8);
 
 			if (_a)
 				*_a = 0xFF;
@@ -334,13 +334,13 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 		/* 24bpp formats */
 		case PIXEL_FORMAT_RGB24:
 			if (_r)
-				*_r = color >> 16;
+				*_r = (BYTE)(color >> 16);
 
 			if (_g)
-				*_g = color >> 8;
+				*_g = (BYTE)(color >> 8);
 
 			if (_b)
-				*_b = color;
+				*_b = (BYTE)color;
 
 			if (_a)
 				*_a = 0xFF;
@@ -349,13 +349,13 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 
 		case PIXEL_FORMAT_BGR24:
 			if (_b)
-				*_b = color >> 16;
+				*_b = (BYTE)(color >> 16);
 
 			if (_g)
-				*_g = color >> 8;
+				*_g = (BYTE)(color >> 8);
 
 			if (_r)
-				*_r = color;
+				*_r = (BYTE)color;
 
 			if (_a)
 				*_a = 0xFF;
@@ -365,13 +365,13 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 		/* 16bpp formats */
 		case PIXEL_FORMAT_RGB16:
 			if (_r)
-				*_r = ((color >> 11) & 0x1F) << 3;
+				*_r = (BYTE)(((color >> 11) & 0x1F) << 3);
 
 			if (_g)
-				*_g = ((color >> 5) & 0x3F) << 2;
+				*_g = (BYTE)(((color >> 5) & 0x3F) << 2);
 
 			if (_b)
-				*_b = (color & 0x1F) << 3;
+				*_b = (BYTE)((color & 0x1F) << 3);
 
 			if (_a)
 				*_a = 0xFF;
@@ -380,13 +380,13 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 
 		case PIXEL_FORMAT_BGR16:
 			if (_b)
-				*_b = ((color >> 11) & 0x1F) << 3;
+				*_b = (BYTE)(((color >> 11) & 0x1F) << 3);
 
 			if (_g)
-				*_g = ((color >> 5) & 0x3F) << 2;
+				*_g = (BYTE)(((color >> 5) & 0x3F) << 2);
 
 			if (_r)
-				*_r = (color & 0x1F) << 3;
+				*_r = (BYTE)((color & 0x1F) << 3);
 
 			if (_a)
 				*_a = 0xFF;
@@ -395,13 +395,13 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 
 		case PIXEL_FORMAT_ARGB15:
 			if (_r)
-				*_r = ((color >> 10) & 0x1F) << 3;
+				*_r = (BYTE)(((color >> 10) & 0x1F) << 3);
 
 			if (_g)
-				*_g = ((color >> 5) & 0x1F) << 3;
+				*_g = (BYTE)(((color >> 5) & 0x1F) << 3);
 
 			if (_b)
-				*_b = (color & 0x1F) << 3;
+				*_b = (BYTE)((color & 0x1F) << 3);
 
 			if (_a)
 				*_a = color & 0x8000 ? 0xFF : 0x00;
@@ -410,13 +410,13 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 
 		case PIXEL_FORMAT_ABGR15:
 			if (_b)
-				*_b = ((color >> 10) & 0x1F) << 3;
+				*_b = (BYTE)(((color >> 10) & 0x1F) << 3);
 
 			if (_g)
-				*_g = ((color >> 5) & 0x1F) << 3;
+				*_g = (BYTE)(((color >> 5) & 0x1F) << 3);
 
 			if (_r)
-				*_r = (color & 0x1F) << 3;
+				*_r = (BYTE)((color & 0x1F) << 3);
 
 			if (_a)
 				*_a = color & 0x8000 ? 0xFF : 0x00;
@@ -426,13 +426,13 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 		/* 15bpp formats */
 		case PIXEL_FORMAT_RGB15:
 			if (_r)
-				*_r = ((color >> 10) & 0x1F) << 3;
+				*_r = (BYTE)(((color >> 10) & 0x1F) << 3);
 
 			if (_g)
-				*_g = ((color >> 5) & 0x1F) << 3;
+				*_g = (BYTE)(((color >> 5) & 0x1F) << 3);
 
 			if (_b)
-				*_b = (color & 0x1F) << 3;
+				*_b = (BYTE)((color & 0x1F) << 3);
 
 			if (_a)
 				*_a = 0xFF;
@@ -441,13 +441,13 @@ static INLINE void SplitColor(UINT32 color, UINT32 format, BYTE* _r, BYTE* _g,
 
 		case PIXEL_FORMAT_BGR15:
 			if (_b)
-				*_b = ((color >> 10) & 0x1F) << 3;
+				*_b = (BYTE)(((color >> 10) & 0x1F) << 3);
 
 			if (_g)
-				*_g = ((color >> 5) & 0x1F) << 3;
+				*_g = (BYTE)(((color >> 5) & 0x1F) << 3);
 
 			if (_r)
-				*_r = (color & 0x1F) << 3;
+				*_r = (BYTE)((color & 0x1F) << 3);
 
 			if (_a)
 				*_a = 0xFF;
@@ -702,33 +702,33 @@ static INLINE BOOL WriteColor(BYTE* dst, UINT32 format, UINT32 color)
 	switch (GetBitsPerPixel(format))
 	{
 		case 32:
-			dst[0] = color >> 24;
-			dst[1] = color >> 16;
-			dst[2] = color >> 8;
-			dst[3] = color;
+			dst[0] = (BYTE)(color >> 24);
+			dst[1] = (BYTE)(color >> 16);
+			dst[2] = (BYTE)(color >> 8);
+			dst[3] = (BYTE)color;
 			break;
 
 		case 24:
-			dst[0] = color >> 16;
-			dst[1] = color >> 8;
-			dst[2] = color;
+			dst[0] = (BYTE)(color >> 16);
+			dst[1] = (BYTE)(color >> 8);
+			dst[2] = (BYTE)color;
 			break;
 
 		case 16:
-			dst[1] = color >> 8;
-			dst[0] = color;
+			dst[1] = (BYTE)(color >> 8);
+			dst[0] = (BYTE)color;
 			break;
 
 		case 15:
 			if (!ColorHasAlpha(format))
 				color = color & 0x7FFF;
 
-			dst[1] = color >> 8;
-			dst[0] = color;
+			dst[1] = (BYTE)(color >> 8);
+			dst[0] = (BYTE)color;
 			break;
 
 		case 8:
-			dst[0] = color;
+			dst[0] = (BYTE)color;
 			break;
 
 		default:
