@@ -429,9 +429,9 @@ static pstatus_t general_YUV444ToRGB_8u_P3AC4R(
 	UINT32 x, y;
 	UINT32 nWidth, nHeight;
 	const DWORD formatSize = GetBytesPerPixel(DstFormat);
+	fkt_writeYUVPixel writeYUVPixel = getWriteFunction(DstFormat);
 	nWidth = roi->width;
 	nHeight = roi->height;
-	fkt_writeYUVPixel writeYUVPixel = getWriteFunction(DstFormat);
 
 	for (y = 0; y < nHeight; y++)
 	{
