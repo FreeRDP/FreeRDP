@@ -290,6 +290,7 @@ BOOL winpr_CleanupSSL(DWORD flags)
 		flags |= WINPR_SSL_CLEANUP_THREAD;
 	}
 
+#ifdef WINPR_OPENSSL_LOCKING_REQUIRED
 	if (flags & WINPR_SSL_CLEANUP_THREAD)
 	{
 #if (OPENSSL_VERSION_NUMBER < 0x10000000L)
@@ -298,7 +299,7 @@ BOOL winpr_CleanupSSL(DWORD flags)
 		ERR_remove_thread_state(NULL);
 #endif
 	}
-
+#endif
 	return TRUE;
 }
 
