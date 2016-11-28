@@ -230,7 +230,7 @@ static UINT audin_winmm_close(IAudinDevice* device)
     if (status == WAIT_FAILED)
     {
         error = GetLastError();
-        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+        WLog_ERR(TAG, "WaitForSingleObject failed with error %u!", error);
         return error;
     }
 

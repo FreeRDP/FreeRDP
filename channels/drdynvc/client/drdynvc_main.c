@@ -345,7 +345,7 @@ static void dvcman_free(IWTSVirtualChannelManager* pChannelMgr)
 
 		if (pPlugin->Terminated)
 			if ((error = pPlugin->Terminated(pPlugin)))
-				WLog_ERR(TAG, "Terminated failed with error %lu!", error);
+				WLog_ERR(TAG, "Terminated failed with error %u!", error);
 	}
 
 	dvcman->num_plugins = 0;
@@ -372,7 +372,7 @@ static UINT dvcman_init(IWTSVirtualChannelManager* pChannelMgr)
 		if (pPlugin->Initialize)
 			if ((error = pPlugin->Initialize(pPlugin, pChannelMgr)))
 			{
-				WLog_ERR(TAG, "Initialize failed with error %lu!", error);
+				WLog_ERR(TAG, "Initialize failed with error %u!", error);
 				return error;
 			}
 	}
@@ -461,7 +461,7 @@ static UINT dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr,
 				          listener->iface.pInterface);
 
 				if (error)
-					WLog_ERR(TAG, "context.ReceiveSamples failed with error %lu", error);
+					WLog_ERR(TAG, "context.ReceiveSamples failed with error %u", error);
 
 				return error;
 			}
@@ -469,7 +469,7 @@ static UINT dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr,
 			{
 				if (error)
 				{
-					WLog_ERR(TAG, "OnNewChannelConnection failed with error %lu!", error);
+					WLog_ERR(TAG, "OnNewChannelConnection failed with error %u!", error);
 					return error;
 				}
 				else
@@ -509,7 +509,7 @@ static UINT dvcman_open_channel(IWTSVirtualChannelManager* pChannelMgr,
 
 		if ((pCallback->OnOpen) && (error = pCallback->OnOpen(pCallback)))
 		{
-			WLog_ERR(TAG, "OnOpen failed with eror %lu!", error);
+			WLog_ERR(TAG, "OnOpen failed with eror %u!", error);
 			return error;
 		}
 
@@ -552,7 +552,7 @@ static UINT dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr,
 
 		if (error)
 		{
-			WLog_ERR(TAG, "OnChannelDisconnected returned with error %lu!", error);
+			WLog_ERR(TAG, "OnChannelDisconnected returned with error %u!", error);
 			return error;
 		}
 
@@ -561,7 +561,7 @@ static UINT dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr,
 
 		if ((ichannel->Close) && (error = ichannel->Close(ichannel)))
 		{
-			WLog_ERR(TAG, "Close failed with eror %lu!", error);
+			WLog_ERR(TAG, "Close failed with eror %u!", error);
 			return error;
 		}
 	}
@@ -965,14 +965,14 @@ static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp,
 	{
 		if ((status = dvcman_open_channel(drdynvc->channel_mgr, ChannelId)))
 		{
-			WLog_ERR(TAG, "dvcman_open_channel failed with error %lu!", status);
+			WLog_ERR(TAG, "dvcman_open_channel failed with error %u!", status);
 			return status;
 		}
 	}
 	else
 	{
 		if ((status = dvcman_close_channel(drdynvc->channel_mgr, ChannelId)))
-			WLog_ERR(TAG, "dvcman_close_channel failed with error %lu!", status);
+			WLog_ERR(TAG, "dvcman_close_channel failed with error %u!", status);
 	}
 
 	return status;
@@ -1035,7 +1035,7 @@ static UINT drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp,
 
 	if ((error = dvcman_close_channel(drdynvc->channel_mgr, ChannelId)))
 	{
-		WLog_ERR(TAG, "dvcman_close_channel failed with error %lu!", error);
+		WLog_ERR(TAG, "dvcman_close_channel failed with error %u!", error);
 		return error;
 	}
 
@@ -1074,8 +1074,7 @@ static UINT drdynvc_order_recv(drdynvcPlugin* drdynvc, wStream* s)
 	Cmd = (value & 0xf0) >> 4;
 	Sp = (value & 0x0c) >> 2;
 	cbChId = (value & 0x03) >> 0;
-	WLog_DBG(TAG, "order_recv: Cmd=0x%x, Sp=%d cbChId=%d, ChannelId=%d", Cmd, Sp,
-	         cbChId);
+	WLog_DBG(TAG, "order_recv: Cmd=0x%x, Sp=%d cbChId=%d", Cmd, Sp,cbChId);
 
 	switch (Cmd)
 	{
@@ -1184,7 +1183,7 @@ static void VCAPITYPE drdynvc_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 		case CHANNEL_EVENT_DATA_RECEIVED:
 			if ((error = drdynvc_virtual_channel_event_data_received(drdynvc, pData, dataLength, totalLength,
 			             dataFlags)))
-				WLog_ERR(TAG, "drdynvc_virtual_channel_event_data_received failed with error %lu", error);
+				WLog_ERR(TAG, "drdynvc_virtual_channel_event_data_received failed with error %u", error);
 
 			break;
 
@@ -1233,7 +1232,7 @@ static void* drdynvc_virtual_channel_client_thread(void* arg)
 			if ((error = drdynvc_order_recv(drdynvc, data)))
 			{
 				Stream_Free(data, TRUE);
-				WLog_ERR(TAG, "drdynvc_order_recv failed with error %lu!", error);
+				WLog_ERR(TAG, "drdynvc_order_recv failed with error %u!", error);
 				break;
 			}
 
@@ -1303,7 +1302,7 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 
 	if ((error = dvcman_init(drdynvc->channel_mgr)))
 	{
-		WLog_ERR(TAG, "dvcman_init failed with error %lu!", error);
+		WLog_ERR(TAG, "dvcman_init failed with error %u!", error);
 		goto error;
 	}
 
@@ -1335,7 +1334,7 @@ static UINT drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
 	    (WaitForSingleObject(drdynvc->thread, INFINITE) == WAIT_FAILED))
 	{
 		status = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", status);
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %u", status);
 		return status;
 	}
 
@@ -1397,19 +1396,19 @@ static VOID VCAPITYPE drdynvc_virtual_channel_init_event_ex(LPVOID lpUserParam, 
 	{
 		case CHANNEL_EVENT_CONNECTED:
 			if ((error = drdynvc_virtual_channel_event_connected(drdynvc, pData, dataLength)))
-				WLog_ERR(TAG, "drdynvc_virtual_channel_event_connected failed with error %lu", error);
+				WLog_ERR(TAG, "drdynvc_virtual_channel_event_connected failed with error %u", error);
 
 			break;
 
 		case CHANNEL_EVENT_DISCONNECTED:
 			if ((error =  drdynvc_virtual_channel_event_disconnected(drdynvc)))
-				WLog_ERR(TAG, "drdynvc_virtual_channel_event_disconnected failed with error %lu", error);
+				WLog_ERR(TAG, "drdynvc_virtual_channel_event_disconnected failed with error %u", error);
 
 			break;
 
 		case CHANNEL_EVENT_TERMINATED:
 			if ((error =  drdynvc_virtual_channel_event_terminated(drdynvc)))
-				WLog_ERR(TAG, "drdynvc_virtual_channel_event_terminated failed with error %lu", error);
+				WLog_ERR(TAG, "drdynvc_virtual_channel_event_terminated failed with error %u", error);
 
 			break;
 	}

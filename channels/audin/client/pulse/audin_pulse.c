@@ -558,7 +558,7 @@ UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEn
 
 	if ((error = audin_pulse_parse_addin_args(pulse, args)))
 	{
-		WLog_ERR(TAG, "audin_pulse_parse_addin_args failed with error %lu!", error);
+		WLog_ERR(TAG, "audin_pulse_parse_addin_args failed with error %u!", error);
 		goto error_out;
 	}
 
@@ -598,7 +598,7 @@ UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEn
 
 	if ((error = pEntryPoints->pRegisterAudinDevice(pEntryPoints->plugin, (IAudinDevice*) pulse)))
 	{
-		WLog_ERR(TAG, "RegisterAudinDevice failed with error %lu!", error);
+		WLog_ERR(TAG, "RegisterAudinDevice failed with error %u!", error);
 		goto error_out;
 	}
 

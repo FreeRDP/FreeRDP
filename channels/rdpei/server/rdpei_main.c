@@ -185,7 +185,7 @@ static UINT read_cs_ready_message(RdpeiServerContext *context, wStream *s)
 
 	IFCALLRET(context->onClientReady, error, context);
 	if (error)
-		WLog_ERR(TAG, "context->onClientReady failed with error %lu", error);
+		WLog_ERR(TAG, "context->onClientReady failed with error %u", error);
 
 	return error;
 }
@@ -271,7 +271,7 @@ static UINT read_touch_frame(RdpeiServerContext *context, wStream *s, RDPINPUT_T
 	{
 		if ((error = read_touch_contact_data(context, s, contact)))
 		{
-			WLog_ERR(TAG, "read_touch_contact_data failed with error %lu!", error);
+			WLog_ERR(TAG, "read_touch_contact_data failed with error %u!", error);
 			frame->contactCount = i;
 			touch_frame_reset(frame);
 			return error;
@@ -311,7 +311,7 @@ static UINT read_touch_event(RdpeiServerContext *context, wStream *s)
 	{
 		if ((error = read_touch_frame(context, s, frame)))
 		{
-			WLog_ERR(TAG, "read_touch_contact_data failed with error %lu!", error);
+			WLog_ERR(TAG, "read_touch_contact_data failed with error %u!", error);
 			event->frameCount = i;
 			goto out_cleanup;
 		}
@@ -320,7 +320,7 @@ static UINT read_touch_event(RdpeiServerContext *context, wStream *s)
 
 	IFCALLRET(context->onTouchEvent, error, context, event);
 	if (error)
-		WLog_ERR(TAG, "context->onTouchEvent failed with error %lu", error);
+		WLog_ERR(TAG, "context->onTouchEvent failed with error %u", error);
 
 out_cleanup:
 	touch_event_reset(event);
@@ -347,7 +347,7 @@ static UINT read_dismiss_hovering_contact(RdpeiServerContext *context, wStream *
 
 	IFCALLRET(context->onTouchReleased, error, context, contactId);
 	if (error)
-		WLog_ERR(TAG, "context->onTouchReleased failed with error %lu", error);
+		WLog_ERR(TAG, "context->onTouchReleased failed with error %u", error);
 
 	return error;
 }
@@ -420,7 +420,7 @@ UINT rdpei_server_handle_messages(RdpeiServerContext *context) {
 
 		if ((error = read_cs_ready_message(context, s)))
 		{
-			WLog_ERR(TAG, "read_cs_ready_message failed with error %lu", error);
+			WLog_ERR(TAG, "read_cs_ready_message failed with error %u", error);
 			return error;
 		}
 		break;
@@ -428,14 +428,14 @@ UINT rdpei_server_handle_messages(RdpeiServerContext *context) {
 	case EVENTID_TOUCH:
 		if ((error = read_touch_event(context, s)))
 		{
-			WLog_ERR(TAG, "read_touch_event failed with error %lu", error);
+			WLog_ERR(TAG, "read_touch_event failed with error %u", error);
 			return error;
 		}
 		break;
 	case EVENTID_DISMISS_HOVERING_CONTACT:
 		if ((error = read_dismiss_hovering_contact(context, s)))
 		{
-			WLog_ERR(TAG, "read_dismiss_hovering_contact failed with error %lu", error);
+			WLog_ERR(TAG, "read_dismiss_hovering_contact failed with error %u", error);
 			return error;
 		}
 		break;

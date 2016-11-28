@@ -178,7 +178,7 @@ static UINT encomsp_recv_filter_updated_pdu(encomspPlugin* encomsp, wStream* s,
 	IFCALLRET(context->FilterUpdated, error, context, &pdu);
 
 	if (error)
-		WLog_ERR(TAG, "context->FilterUpdated failed with error %lu", error);
+		WLog_ERR(TAG, "context->FilterUpdated failed with error %u", error);
 
 	return error;
 }
@@ -214,7 +214,7 @@ static UINT encomsp_recv_application_created_pdu(encomspPlugin* encomsp,
 
 	if ((error = encomsp_read_unicode_string(s, &(pdu.Name))))
 	{
-		WLog_ERR(TAG, "encomsp_read_unicode_string failed with error %lu", error);
+		WLog_ERR(TAG, "encomsp_read_unicode_string failed with error %u", error);
 		return error;
 	}
 
@@ -240,7 +240,7 @@ static UINT encomsp_recv_application_created_pdu(encomspPlugin* encomsp,
 	IFCALLRET(context->ApplicationCreated, error, context, &pdu);
 
 	if (error)
-		WLog_ERR(TAG, "context->ApplicationCreated failed with error %lu", error);
+		WLog_ERR(TAG, "context->ApplicationCreated failed with error %u", error);
 
 	return error;
 }
@@ -294,7 +294,7 @@ static UINT encomsp_recv_application_removed_pdu(encomspPlugin* encomsp,
 	IFCALLRET(context->ApplicationRemoved, error, context, &pdu);
 
 	if (error)
-		WLog_ERR(TAG, "context->ApplicationRemoved failed with error %lu", error);
+		WLog_ERR(TAG, "context->ApplicationRemoved failed with error %u", error);
 
 	return error;
 }
@@ -331,7 +331,7 @@ static UINT encomsp_recv_window_created_pdu(encomspPlugin* encomsp, wStream* s,
 
 	if ((error = encomsp_read_unicode_string(s, &(pdu.Name))))
 	{
-		WLog_ERR(TAG, "encomsp_read_unicode_string failed with error %lu", error);
+		WLog_ERR(TAG, "encomsp_read_unicode_string failed with error %u", error);
 		return error;
 	}
 
@@ -357,7 +357,7 @@ static UINT encomsp_recv_window_created_pdu(encomspPlugin* encomsp, wStream* s,
 	IFCALLRET(context->WindowCreated, error, context, &pdu);
 
 	if (error)
-		WLog_ERR(TAG, "context->WindowCreated failed with error %lu", error);
+		WLog_ERR(TAG, "context->WindowCreated failed with error %u", error);
 
 	return error;
 }
@@ -411,7 +411,7 @@ static UINT encomsp_recv_window_removed_pdu(encomspPlugin* encomsp, wStream* s,
 	IFCALLRET(context->WindowRemoved, error, context, &pdu);
 
 	if (error)
-		WLog_ERR(TAG, "context->WindowRemoved failed with error %lu", error);
+		WLog_ERR(TAG, "context->WindowRemoved failed with error %u", error);
 
 	return error;
 }
@@ -465,7 +465,7 @@ static UINT encomsp_recv_show_window_pdu(encomspPlugin* encomsp, wStream* s,
 	IFCALLRET(context->ShowWindow, error, context, &pdu);
 
 	if (error)
-		WLog_ERR(TAG, "context->ShowWindow failed with error %lu", error);
+		WLog_ERR(TAG, "context->ShowWindow failed with error %u", error);
 
 	return error;
 }
@@ -502,7 +502,7 @@ static UINT encomsp_recv_participant_created_pdu(encomspPlugin* encomsp,
 
 	if ((error = encomsp_read_unicode_string(s, &(pdu.FriendlyName))))
 	{
-		WLog_ERR(TAG, "encomsp_read_unicode_string failed with error %lu", error);
+		WLog_ERR(TAG, "encomsp_read_unicode_string failed with error %u", error);
 		return error;
 	}
 
@@ -528,7 +528,7 @@ static UINT encomsp_recv_participant_created_pdu(encomspPlugin* encomsp,
 	IFCALLRET(context->ParticipantCreated, error, context, &pdu);
 
 	if (error)
-		WLog_ERR(TAG, "context->ParticipantCreated failed with error %lu", error);
+		WLog_ERR(TAG, "context->ParticipantCreated failed with error %u", error);
 
 	return error;
 }
@@ -584,7 +584,7 @@ static UINT encomsp_recv_participant_removed_pdu(encomspPlugin* encomsp,
 	IFCALLRET(context->ParticipantRemoved, error, context, &pdu);
 
 	if (error)
-		WLog_ERR(TAG, "context->ParticipantRemoved failed with error %lu", error);
+		WLog_ERR(TAG, "context->ParticipantRemoved failed with error %u", error);
 
 	return error;
 }
@@ -639,7 +639,7 @@ static UINT encomsp_recv_change_participant_control_level_pdu(
 	IFCALLRET(context->ChangeParticipantControlLevel, error, context, &pdu);
 
 	if (error)
-		WLog_ERR(TAG, "context->ChangeParticipantControlLevel failed with error %lu",
+		WLog_ERR(TAG, "context->ChangeParticipantControlLevel failed with error %u",
 		         error);
 
 	return error;
@@ -670,7 +670,7 @@ static UINT encomsp_send_change_participant_control_level_pdu(
 
 	if ((error = encomsp_write_header(s, (ENCOMSP_ORDER_HEADER*) pdu)))
 	{
-		WLog_ERR(TAG, "encomsp_write_header failed with error %lu!", error);
+		WLog_ERR(TAG, "encomsp_write_header failed with error %u!", error);
 		return error;
 	}
 
@@ -721,7 +721,7 @@ static UINT encomsp_recv_graphics_stream_paused_pdu(encomspPlugin* encomsp,
 	IFCALLRET(context->GraphicsStreamPaused, error, context, &pdu);
 
 	if (error)
-		WLog_ERR(TAG, "context->GraphicsStreamPaused failed with error %lu", error);
+		WLog_ERR(TAG, "context->GraphicsStreamPaused failed with error %u", error);
 
 	return error;
 }
@@ -767,7 +767,7 @@ static UINT encomsp_recv_graphics_stream_resumed_pdu(encomspPlugin* encomsp,
 	IFCALLRET(context->GraphicsStreamResumed, error, context, &pdu);
 
 	if (error)
-		WLog_ERR(TAG, "context->GraphicsStreamResumed failed with error %lu", error);
+		WLog_ERR(TAG, "context->GraphicsStreamResumed failed with error %u", error);
 
 	return error;
 }
@@ -786,7 +786,7 @@ static UINT encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
 	{
 		if ((error = encomsp_read_header(s, &header)))
 		{
-			WLog_ERR(TAG, "encomsp_read_header failed with error %lu!", error);
+			WLog_ERR(TAG, "encomsp_read_header failed with error %u!", error);
 			return error;
 		}
 
@@ -797,7 +797,7 @@ static UINT encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
 			case ODTYPE_FILTER_STATE_UPDATED:
 				if ((error = encomsp_recv_filter_updated_pdu(encomsp, s, &header)))
 				{
-					WLog_ERR(TAG, "encomsp_recv_filter_updated_pdu failed with error %lu!", error);
+					WLog_ERR(TAG, "encomsp_recv_filter_updated_pdu failed with error %u!", error);
 					return error;
 				}
 
@@ -806,7 +806,7 @@ static UINT encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
 			case ODTYPE_APP_REMOVED:
 				if ((error = encomsp_recv_application_removed_pdu(encomsp, s, &header)))
 				{
-					WLog_ERR(TAG, "encomsp_recv_application_removed_pdu failed with error %lu!",
+					WLog_ERR(TAG, "encomsp_recv_application_removed_pdu failed with error %u!",
 					         error);
 					return error;
 				}
@@ -816,7 +816,7 @@ static UINT encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
 			case ODTYPE_APP_CREATED:
 				if ((error = encomsp_recv_application_created_pdu(encomsp, s, &header)))
 				{
-					WLog_ERR(TAG, "encomsp_recv_application_removed_pdu failed with error %lu!",
+					WLog_ERR(TAG, "encomsp_recv_application_removed_pdu failed with error %u!",
 					         error);
 					return error;
 				}
@@ -826,7 +826,7 @@ static UINT encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
 			case ODTYPE_WND_REMOVED:
 				if ((error = encomsp_recv_window_removed_pdu(encomsp, s, &header)))
 				{
-					WLog_ERR(TAG, "encomsp_recv_window_removed_pdu failed with error %lu!", error);
+					WLog_ERR(TAG, "encomsp_recv_window_removed_pdu failed with error %u!", error);
 					return error;
 				}
 
@@ -835,7 +835,7 @@ static UINT encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
 			case ODTYPE_WND_CREATED:
 				if ((error = encomsp_recv_window_created_pdu(encomsp, s, &header)))
 				{
-					WLog_ERR(TAG, "encomsp_recv_window_created_pdu failed with error %lu!", error);
+					WLog_ERR(TAG, "encomsp_recv_window_created_pdu failed with error %u!", error);
 					return error;
 				}
 
@@ -844,7 +844,7 @@ static UINT encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
 			case ODTYPE_WND_SHOW:
 				if ((error = encomsp_recv_show_window_pdu(encomsp, s, &header)))
 				{
-					WLog_ERR(TAG, "encomsp_recv_show_window_pdu failed with error %lu!", error);
+					WLog_ERR(TAG, "encomsp_recv_show_window_pdu failed with error %u!", error);
 					return error;
 				}
 
@@ -853,7 +853,7 @@ static UINT encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
 			case ODTYPE_PARTICIPANT_REMOVED:
 				if ((error = encomsp_recv_participant_removed_pdu(encomsp, s, &header)))
 				{
-					WLog_ERR(TAG, "encomsp_recv_participant_removed_pdu failed with error %lu!",
+					WLog_ERR(TAG, "encomsp_recv_participant_removed_pdu failed with error %u!",
 					         error);
 					return error;
 				}
@@ -863,7 +863,7 @@ static UINT encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
 			case ODTYPE_PARTICIPANT_CREATED:
 				if ((error = encomsp_recv_participant_created_pdu(encomsp, s, &header)))
 				{
-					WLog_ERR(TAG, "encomsp_recv_participant_created_pdu failed with error %lu!",
+					WLog_ERR(TAG, "encomsp_recv_participant_created_pdu failed with error %u!",
 					         error);
 					return error;
 				}
@@ -875,7 +875,7 @@ static UINT encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
 				             &header)))
 				{
 					WLog_ERR(TAG,
-					         "encomsp_recv_change_participant_control_level_pdu failed with error %lu!",
+					         "encomsp_recv_change_participant_control_level_pdu failed with error %u!",
 					         error);
 					return error;
 				}
@@ -885,7 +885,7 @@ static UINT encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
 			case ODTYPE_GRAPHICS_STREAM_PAUSED:
 				if ((error = encomsp_recv_graphics_stream_paused_pdu(encomsp, s, &header)))
 				{
-					WLog_ERR(TAG, "encomsp_recv_graphics_stream_paused_pdu failed with error %lu!",
+					WLog_ERR(TAG, "encomsp_recv_graphics_stream_paused_pdu failed with error %u!",
 					         error);
 					return error;
 				}
@@ -895,7 +895,7 @@ static UINT encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
 			case ODTYPE_GRAPHICS_STREAM_RESUMED:
 				if ((error = encomsp_recv_graphics_stream_resumed_pdu(encomsp, s, &header)))
 				{
-					WLog_ERR(TAG, "encomsp_recv_graphics_stream_resumed_pdu failed with error %lu!",
+					WLog_ERR(TAG, "encomsp_recv_graphics_stream_resumed_pdu failed with error %u!",
 					         error);
 					return error;
 				}
@@ -1019,7 +1019,7 @@ static VOID VCAPITYPE encomsp_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 			if ((error = encomsp_virtual_channel_event_data_received(encomsp, pData,
 			             dataLength, totalLength, dataFlags)))
 				WLog_ERR(TAG,
-				         "encomsp_virtual_channel_event_data_received failed with error %lu", error);
+				         "encomsp_virtual_channel_event_data_received failed with error %u", error);
 
 			break;
 
@@ -1070,7 +1070,7 @@ static void* encomsp_virtual_channel_client_thread(void* arg)
 
 			if ((error = encomsp_process_receive(encomsp, data)))
 			{
-				WLog_ERR(TAG, "encomsp_process_receive failed with error %lu!", error);
+				WLog_ERR(TAG, "encomsp_process_receive failed with error %u!", error);
 				break;
 			}
 		}
@@ -1137,7 +1137,7 @@ static UINT encomsp_virtual_channel_event_disconnected(encomspPlugin* encomsp)
 	    && (WaitForSingleObject(encomsp->thread, INFINITE) == WAIT_FAILED))
 	{
 		rc = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", rc);
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %u", rc);
 		return rc;
 	}
 
@@ -1195,7 +1195,7 @@ static VOID VCAPITYPE encomsp_virtual_channel_init_event_ex(LPVOID lpUserParam, 
 		case CHANNEL_EVENT_CONNECTED:
 			if ((error = encomsp_virtual_channel_event_connected(encomsp, pData,
 			             dataLength)))
-				WLog_ERR(TAG, "encomsp_virtual_channel_event_connected failed with error %lu",
+				WLog_ERR(TAG, "encomsp_virtual_channel_event_connected failed with error %u",
 				         error);
 
 			break;
@@ -1203,7 +1203,7 @@ static VOID VCAPITYPE encomsp_virtual_channel_init_event_ex(LPVOID lpUserParam, 
 		case CHANNEL_EVENT_DISCONNECTED:
 			if ((error = encomsp_virtual_channel_event_disconnected(encomsp)))
 				WLog_ERR(TAG,
-				         "encomsp_virtual_channel_event_disconnected failed with error %lu", error);
+				         "encomsp_virtual_channel_event_disconnected failed with error %u", error);
 
 			break;
 

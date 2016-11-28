@@ -379,7 +379,7 @@ static UINT parallel_free(DEVICE* device)
 	    && (WaitForSingleObject(parallel->thread, INFINITE) == WAIT_FAILED))
 	{
 		error = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %u!", error);
 		return error;
 	}
 
@@ -461,7 +461,7 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		if ((error = pEntryPoints->RegisterDevice(pEntryPoints->devman,
 		             (DEVICE*) parallel)))
 		{
-			WLog_ERR(TAG, "RegisterDevice failed with error %lu!", error);
+			WLog_ERR(TAG, "RegisterDevice failed with error %u!", error);
 			goto error_out;
 		}
 

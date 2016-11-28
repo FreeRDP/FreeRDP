@@ -374,13 +374,13 @@ static UINT audin_process_open(IWTSVirtualChannelCallback* pChannelCallback, wSt
 		IFCALLRET(audin->device->SetFormat, error, audin->device, format, FramesPerPacket);
 		if (error != CHANNEL_RC_OK)
 		{
-			WLog_ERR(TAG, "SetFormat failed with errorcode %lu", error);
+			WLog_ERR(TAG, "SetFormat failed with errorcode %u", error);
 			return error;
 		}
 		IFCALLRET(audin->device->Open, error, audin->device, audin_receive_wave_data, callback);
 		if (error != CHANNEL_RC_OK)
 		{
-			WLog_ERR(TAG, "Open failed with errorcode %lu", error);
+			WLog_ERR(TAG, "Open failed with errorcode %u", error);
 			return error;
 		}
 	}
@@ -428,19 +428,19 @@ static UINT audin_process_format_change(IWTSVirtualChannelCallback* pChannelCall
 		IFCALLRET(audin->device->Close, error, audin->device);
 		if (error != CHANNEL_RC_OK)
 		{
-			WLog_ERR(TAG, "Close failed with errorcode %lu", error);
+			WLog_ERR(TAG, "Close failed with errorcode %u", error);
 			return error;
 		}
 		IFCALLRET(audin->device->SetFormat, error, audin->device, format, 0);
 		if (error != CHANNEL_RC_OK)
 		{
-			WLog_ERR(TAG, "SetFormat failed with errorcode %lu", error);
+			WLog_ERR(TAG, "SetFormat failed with errorcode %u", error);
 			return error;
 		}
 		IFCALLRET(audin->device->Open, error, audin->device, audin_receive_wave_data, callback);
 		if (error != CHANNEL_RC_OK)
 		{
-			WLog_ERR(TAG, "Open failed with errorcode %lu", error);
+			WLog_ERR(TAG, "Open failed with errorcode %u", error);
 			return error;
 		}
 	}
@@ -509,7 +509,7 @@ static UINT audin_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	{
 		IFCALLRET(audin->device->Close, error, audin->device);
 		if (error != CHANNEL_RC_OK)
-			WLog_ERR(TAG, "Close failed with errorcode %lu", error);
+			WLog_ERR(TAG, "Close failed with errorcode %u", error);
 	}
 
 	free(callback->formats);
@@ -593,7 +593,7 @@ static UINT audin_plugin_terminated(IWTSPlugin* pPlugin)
 		IFCALLRET(audin->device->Free, error, audin->device);
 		if (error != CHANNEL_RC_OK)
 		{
-			WLog_ERR(TAG, "Free failed with errorcode %lu", error);
+			WLog_ERR(TAG, "Free failed with errorcode %u", error);
 			// dont stop on error
 		}
 		audin->device = NULL;
@@ -662,7 +662,7 @@ static UINT audin_load_device_plugin(IWTSPlugin* pPlugin, const char* name, ADDI
 
 	if ((error = entry(&entryPoints)))
 	{
-		WLog_ERR(TAG, "%s entry returned error %lu.", name, error);
+		WLog_ERR(TAG, "%s entry returned error %u.", name, error);
 		return error;
 	}
 
@@ -744,7 +744,7 @@ BOOL audin_process_addin_args(AUDIN_PLUGIN* audin, ADDIN_ARGV* args)
 		{
 			if ((error = audin_set_subsystem(audin, arg->Value)))
 			{
-				WLog_ERR(TAG, "audin_set_subsystem failed with error %lu!", error);
+				WLog_ERR(TAG, "audin_set_subsystem failed with error %u!", error);
 				return FALSE;
 			}
 		}
@@ -752,7 +752,7 @@ BOOL audin_process_addin_args(AUDIN_PLUGIN* audin, ADDIN_ARGV* args)
 		{
 			if ((error = audin_set_device_name(audin, arg->Value)))
 			{
-				WLog_ERR(TAG, "audin_set_device_name failed with error %lu!", error);
+				WLog_ERR(TAG, "audin_set_device_name failed with error %u!", error);
 				return FALSE;
 			}
 		}
@@ -858,7 +858,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	{
 		if ((error = audin_load_device_plugin((IWTSPlugin*) audin, audin->subsystem, args)))
 		{
-			WLog_ERR(TAG, "audin_load_device_plugin %s failed with error %lu!",
+			WLog_ERR(TAG, "audin_load_device_plugin %s failed with error %u!",
 					 audin->subsystem, error);
 			goto out;
 		}
@@ -869,17 +869,17 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		{
 			if ((error = audin_set_subsystem(audin, entry->subsystem)))
 			{
-				WLog_ERR(TAG, "audin_set_subsystem for %s failed with error %lu!",
+				WLog_ERR(TAG, "audin_set_subsystem for %s failed with error %u!",
 					 entry->subsystem, error);
 			}
 			else if ((error = audin_set_device_name(audin, entry->device)))
 			{
-				WLog_ERR(TAG, "audin_set_device_name for %s failed with error %lu!",
+				WLog_ERR(TAG, "audin_set_device_name for %s failed with error %u!",
 					 entry->subsystem, error);
 			}
 			else if ((error = audin_load_device_plugin((IWTSPlugin*) audin, audin->subsystem, args)))
 			{
-				WLog_ERR(TAG, "audin_load_device_plugin %s failed with error %lu!",
+				WLog_ERR(TAG, "audin_load_device_plugin %s failed with error %u!",
 					 entry->subsystem, error);
 			}
 

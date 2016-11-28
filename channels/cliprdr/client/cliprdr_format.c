@@ -265,7 +265,7 @@ UINT cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, wStream* s, UI
 
 	IFCALLRET(context->ServerFormatListResponse, error, context, &formatListResponse);
 	if (error)
-		WLog_ERR(TAG, "ServerFormatListResponse failed with error %lu!", error);
+		WLog_ERR(TAG, "ServerFormatListResponse failed with error %u!", error);
 
 	return error;
 }
@@ -298,7 +298,7 @@ UINT cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* s, UIN
 
 	IFCALLRET(context->ServerFormatDataRequest, error, context, &formatDataRequest);
 	if (error)
-		WLog_ERR(TAG, "ServerFormatDataRequest failed with error %lu!", error);
+		WLog_ERR(TAG, "ServerFormatDataRequest failed with error %u!", error);
 
 	return error;
 }
@@ -332,7 +332,7 @@ UINT cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UI
 
 	IFCALLRET(context->ServerFormatDataResponse, error, context, &formatDataResponse);
 	if (error)
-		WLog_ERR(TAG, "ServerFormatDataResponse failed with error %lu!", error);
+		WLog_ERR(TAG, "ServerFormatDataResponse failed with error %u!", error);
 
 	return error;
 }

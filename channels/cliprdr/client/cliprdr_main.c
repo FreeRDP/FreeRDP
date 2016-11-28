@@ -198,7 +198,7 @@ static UINT cliprdr_process_general_capability(cliprdrPlugin* cliprdr,
 	IFCALLRET(context->ServerCapabilities, error, context, &capabilities);
 
 	if (error)
-		WLog_ERR(TAG, "ServerCapabilities failed with error %lu!", error);
+		WLog_ERR(TAG, "ServerCapabilities failed with error %u!", error);
 
 	return error;
 }
@@ -230,7 +230,7 @@ static UINT cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, wStream* s,
 			case CB_CAPSTYPE_GENERAL:
 				if ((error = cliprdr_process_general_capability(cliprdr, s)))
 				{
-					WLog_ERR(TAG, "cliprdr_process_general_capability failed with error %lu!",
+					WLog_ERR(TAG, "cliprdr_process_general_capability failed with error %u!",
 					         error);
 					return error;
 				}
@@ -286,7 +286,7 @@ static UINT cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr, wStream* s,
 	IFCALLRET(context->MonitorReady, error, context, &monitorReady);
 
 	if (error)
-		WLog_ERR(TAG, "MonitorReady failed with error %lu!", error);
+		WLog_ERR(TAG, "MonitorReady failed with error %u!", error);
 
 	return error;
 }
@@ -334,7 +334,7 @@ static UINT cliprdr_process_filecontents_request(cliprdrPlugin* cliprdr,
 	IFCALLRET(context->ServerFileContentsRequest, error, context, &request);
 
 	if (error)
-		WLog_ERR(TAG, "ServerFileContentsRequest failed with error %lu!", error);
+		WLog_ERR(TAG, "ServerFileContentsRequest failed with error %u!", error);
 
 	return error;
 }
@@ -373,7 +373,7 @@ static UINT cliprdr_process_filecontents_response(cliprdrPlugin* cliprdr,
 	IFCALLRET(context->ServerFileContentsResponse, error, context, &response);
 
 	if (error)
-		WLog_ERR(TAG, "ServerFileContentsResponse failed with error %lu!", error);
+		WLog_ERR(TAG, "ServerFileContentsResponse failed with error %u!", error);
 
 	return error;
 }
@@ -410,7 +410,7 @@ static UINT cliprdr_process_lock_clipdata(cliprdrPlugin* cliprdr, wStream* s,
 	IFCALLRET(context->ServerLockClipboardData, error, context, &lockClipboardData);
 
 	if (error)
-		WLog_ERR(TAG, "ServerLockClipboardData failed with error %lu!", error);
+		WLog_ERR(TAG, "ServerLockClipboardData failed with error %u!", error);
 
 	return error;
 }
@@ -449,7 +449,7 @@ static UINT cliprdr_process_unlock_clipdata(cliprdrPlugin* cliprdr, wStream* s,
 	          &unlockClipboardData);
 
 	if (error)
-		WLog_ERR(TAG, "ServerUnlockClipboardData failed with error %lu!", error);
+		WLog_ERR(TAG, "ServerUnlockClipboardData failed with error %u!", error);
 
 	return error;
 }
@@ -478,26 +478,26 @@ static UINT cliprdr_order_recv(cliprdrPlugin* cliprdr, wStream* s)
 	{
 		case CB_CLIP_CAPS:
 			if ((error = cliprdr_process_clip_caps(cliprdr, s, dataLen, msgFlags)))
-				WLog_ERR(TAG, "cliprdr_process_clip_caps failed with error %lu!", error);
+				WLog_ERR(TAG, "cliprdr_process_clip_caps failed with error %u!", error);
 
 			break;
 
 		case CB_MONITOR_READY:
 			if ((error = cliprdr_process_monitor_ready(cliprdr, s, dataLen, msgFlags)))
-				WLog_ERR(TAG, "cliprdr_process_monitor_ready failed with error %lu!", error);
+				WLog_ERR(TAG, "cliprdr_process_monitor_ready failed with error %u!", error);
 
 			break;
 
 		case CB_FORMAT_LIST:
 			if ((error = cliprdr_process_format_list(cliprdr, s, dataLen, msgFlags)))
-				WLog_ERR(TAG, "cliprdr_process_format_list failed with error %lu!", error);
+				WLog_ERR(TAG, "cliprdr_process_format_list failed with error %u!", error);
 
 			break;
 
 		case CB_FORMAT_LIST_RESPONSE:
 			if ((error = cliprdr_process_format_list_response(cliprdr, s, dataLen,
 			             msgFlags)))
-				WLog_ERR(TAG, "cliprdr_process_format_list_response failed with error %lu!",
+				WLog_ERR(TAG, "cliprdr_process_format_list_response failed with error %u!",
 				         error);
 
 			break;
@@ -505,7 +505,7 @@ static UINT cliprdr_order_recv(cliprdrPlugin* cliprdr, wStream* s)
 		case CB_FORMAT_DATA_REQUEST:
 			if ((error = cliprdr_process_format_data_request(cliprdr, s, dataLen,
 			             msgFlags)))
-				WLog_ERR(TAG, "cliprdr_process_format_data_request failed with error %lu!",
+				WLog_ERR(TAG, "cliprdr_process_format_data_request failed with error %u!",
 				         error);
 
 			break;
@@ -513,7 +513,7 @@ static UINT cliprdr_order_recv(cliprdrPlugin* cliprdr, wStream* s)
 		case CB_FORMAT_DATA_RESPONSE:
 			if ((error = cliprdr_process_format_data_response(cliprdr, s, dataLen,
 			             msgFlags)))
-				WLog_ERR(TAG, "cliprdr_process_format_data_response failed with error %lu!",
+				WLog_ERR(TAG, "cliprdr_process_format_data_response failed with error %u!",
 				         error);
 
 			break;
@@ -521,7 +521,7 @@ static UINT cliprdr_order_recv(cliprdrPlugin* cliprdr, wStream* s)
 		case CB_FILECONTENTS_REQUEST:
 			if ((error = cliprdr_process_filecontents_request(cliprdr, s, dataLen,
 			             msgFlags)))
-				WLog_ERR(TAG, "cliprdr_process_filecontents_request failed with error %lu!",
+				WLog_ERR(TAG, "cliprdr_process_filecontents_request failed with error %u!",
 				         error);
 
 			break;
@@ -529,20 +529,20 @@ static UINT cliprdr_order_recv(cliprdrPlugin* cliprdr, wStream* s)
 		case CB_FILECONTENTS_RESPONSE:
 			if ((error = cliprdr_process_filecontents_response(cliprdr, s, dataLen,
 			             msgFlags)))
-				WLog_ERR(TAG, "cliprdr_process_filecontents_response failed with error %lu!",
+				WLog_ERR(TAG, "cliprdr_process_filecontents_response failed with error %u!",
 				         error);
 
 			break;
 
 		case CB_LOCK_CLIPDATA:
 			if ((error = cliprdr_process_lock_clipdata(cliprdr, s, dataLen, msgFlags)))
-				WLog_ERR(TAG, "cliprdr_process_lock_clipdata failed with error %lu!", error);
+				WLog_ERR(TAG, "cliprdr_process_lock_clipdata failed with error %u!", error);
 
 			break;
 
 		case CB_UNLOCK_CLIPDATA:
 			if ((error = cliprdr_process_unlock_clipdata(cliprdr, s, dataLen, msgFlags)))
-				WLog_ERR(TAG, "cliprdr_process_lock_clipdata failed with error %lu!", error);
+				WLog_ERR(TAG, "cliprdr_process_lock_clipdata failed with error %u!", error);
 
 			break;
 
@@ -1030,7 +1030,7 @@ static VOID VCAPITYPE cliprdr_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 		case CHANNEL_EVENT_DATA_RECEIVED:
 			if ((error = cliprdr_virtual_channel_event_data_received(cliprdr, pData, dataLength,
 			             totalLength, dataFlags)))
-				WLog_ERR(TAG, "failed with error %lu", error);
+				WLog_ERR(TAG, "failed with error %u", error);
 
 			break;
 
@@ -1079,7 +1079,7 @@ static void* cliprdr_virtual_channel_client_thread(void* arg)
 
 			if ((error = cliprdr_order_recv(cliprdr, data)))
 			{
-				WLog_ERR(TAG, "cliprdr_order_recv failed with error %lu!", error);
+				WLog_ERR(TAG, "cliprdr_order_recv failed with error %u!", error);
 				break;
 			}
 		}
@@ -1147,7 +1147,7 @@ static UINT cliprdr_virtual_channel_event_disconnected(cliprdrPlugin* cliprdr)
 	    && (WaitForSingleObject(cliprdr->thread, INFINITE) == WAIT_FAILED))
 	{
 		rc = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", rc);
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %u", rc);
 		return rc;
 	}
 
@@ -1202,7 +1202,7 @@ static VOID VCAPITYPE cliprdr_virtual_channel_init_event_ex(LPVOID lpUserParam, 
 		case CHANNEL_EVENT_CONNECTED:
 			if ((error = cliprdr_virtual_channel_event_connected(cliprdr, pData,
 			             dataLength)))
-				WLog_ERR(TAG, "cliprdr_virtual_channel_event_connected failed with error %lu!",
+				WLog_ERR(TAG, "cliprdr_virtual_channel_event_connected failed with error %u!",
 				         error);
 
 			break;
@@ -1210,13 +1210,13 @@ static VOID VCAPITYPE cliprdr_virtual_channel_init_event_ex(LPVOID lpUserParam, 
 		case CHANNEL_EVENT_DISCONNECTED:
 			if ((error = cliprdr_virtual_channel_event_disconnected(cliprdr)))
 				WLog_ERR(TAG,
-				         "cliprdr_virtual_channel_event_disconnected failed with error %lu!", error);
+				         "cliprdr_virtual_channel_event_disconnected failed with error %u!", error);
 
 			break;
 
 		case CHANNEL_EVENT_TERMINATED:
 			if ((error = cliprdr_virtual_channel_event_terminated(cliprdr)))
-				WLog_ERR(TAG, "cliprdr_virtual_channel_event_terminated failed with error %lu!",
+				WLog_ERR(TAG, "cliprdr_virtual_channel_event_terminated failed with error %u!",
 				         error);
 
 			break;

@@ -88,7 +88,7 @@ static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s,
 		regionRect = &(meta->regionRects[index]);
 		if ((error = rdpgfx_read_rect16(s, regionRect)))
 		{
-			WLog_ERR(TAG, "rdpgfx_read_rect16 failed with error %lu!", error);
+			WLog_ERR(TAG, "rdpgfx_read_rect16 failed with error %u!", error);
 			goto error_out;
 		}
 		WLog_DBG(TAG, "regionRects[%d]: left: %d top: %d right: %d bottom: %d",
@@ -146,7 +146,7 @@ static UINT rdpgfx_decode_AVC420(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 
 	if ((error = rdpgfx_read_h264_metablock(gfx, s, &(h264.meta))))
 	{
-		WLog_ERR(TAG, "rdpgfx_read_h264_metablock failed with error %lu!", error);
+		WLog_ERR(TAG, "rdpgfx_read_h264_metablock failed with error %u!", error);
 		return error;
 	}
 
@@ -161,7 +161,7 @@ static UINT rdpgfx_decode_AVC420(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 	{
 		IFCALLRET(context->SurfaceCommand, error, context, cmd);
 		if (error)
-			WLog_ERR(TAG, "context->SurfaceCommand failed with error %lu", error);
+			WLog_ERR(TAG, "context->SurfaceCommand failed with error %u", error);
 	}
 
 	free(h264.meta.regionRects);
@@ -205,7 +205,7 @@ static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 	pos1 = Stream_GetPosition(s);
 	if ((error = rdpgfx_read_h264_metablock(gfx, s, &(h264.bitstream[0].meta))))
 	{
-		WLog_ERR(TAG, "rdpgfx_read_h264_metablock failed with error %lu!", error);
+		WLog_ERR(TAG, "rdpgfx_read_h264_metablock failed with error %u!", error);
 		return error;
 	}
 	pos2 = Stream_GetPosition(s);
@@ -223,7 +223,7 @@ static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 
 		if ((error = rdpgfx_read_h264_metablock(gfx, s, &(h264.bitstream[1].meta))))
 		{
-			WLog_ERR(TAG, "rdpgfx_read_h264_metablock failed with error %lu!", error);
+			WLog_ERR(TAG, "rdpgfx_read_h264_metablock failed with error %u!", error);
 			return error;
 		}
 
@@ -244,7 +244,7 @@ static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 	{
 		IFCALLRET(context->SurfaceCommand, error, context, cmd);
 		if (error)
-			WLog_ERR(TAG, "context->SurfaceCommand failed with error %lu", error);
+			WLog_ERR(TAG, "context->SurfaceCommand failed with error %u", error);
 	}
 
 	free(h264.bitstream[0].meta.regionRects);
@@ -270,7 +270,7 @@ UINT rdpgfx_decode(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 		case RDPGFX_CODECID_AVC420:
 			if ((error = rdpgfx_decode_AVC420(gfx, cmd)))
 			{
-				WLog_ERR(TAG, "rdpgfx_decode_AVC420 failed with error %lu", error);
+				WLog_ERR(TAG, "rdpgfx_decode_AVC420 failed with error %u", error);
 				return error;
 			}
 			break;
@@ -278,7 +278,7 @@ UINT rdpgfx_decode(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 		case RDPGFX_CODECID_AVC444:
 			if ((error = rdpgfx_decode_AVC444(gfx, cmd)))
 			{
-				WLog_ERR(TAG, "rdpgfx_decode_AVC444 failed with error %lu", error);
+				WLog_ERR(TAG, "rdpgfx_decode_AVC444 failed with error %u", error);
 				return error;
 			}
 			break;
@@ -288,7 +288,7 @@ UINT rdpgfx_decode(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 			{
 				IFCALLRET(context->SurfaceCommand, error, context, cmd);
 				if (error)
-					WLog_ERR(TAG, "context->SurfaceCommand failed with error %lu", error);
+					WLog_ERR(TAG, "context->SurfaceCommand failed with error %u", error);
 			}
 			break;
 	}

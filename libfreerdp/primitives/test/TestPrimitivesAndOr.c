@@ -37,8 +37,15 @@ static BOOL test_and_32u_impl(const char* name, __andC_32u_t fkt,
 	{
 		if (dst[i] != (src[i] & val))
 		{
-			printf("AND %s FAIL[%d] 0x%08x&0x%08x=0x%08x, got 0x%08x\n",
-			       name, i, src[i], val, src[i] & val, dst[i]);
+
+			printf("AND %s FAIL[%lu] 0x%08lx&0x%08lx=0x%08lx, got 0x%08lx\n",
+				name,
+				(unsigned long) i,
+				(unsigned long) src[i],
+				(unsigned long) val,
+				(unsigned long) (src[i] & val),
+				(unsigned long) dst[i]);
+
 			return FALSE;
 		}
 	}

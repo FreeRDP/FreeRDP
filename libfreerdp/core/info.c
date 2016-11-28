@@ -861,7 +861,7 @@ BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s, logon_info *info)
 	{
 		if ((cbDomain % 2) || cbDomain > 52)
 		{
-			WLog_ERR(TAG, "protocol error: invalid cbDomain value: %lu", cbDomain);
+			WLog_ERR(TAG, "protocol error: invalid cbDomain value: %lu", (unsigned long) cbDomain);
 			goto fail;
 		}
 		wstr = (WCHAR*) Stream_Pointer(s);
@@ -888,7 +888,7 @@ BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s, logon_info *info)
 	{
 		if ((cbUserName % 2) || cbUserName > 512)
 		{
-			WLog_ERR(TAG, "protocol error: invalid cbUserName value: %lu", cbUserName);
+			WLog_ERR(TAG, "protocol error: invalid cbUserName value: %lu", (unsigned long) cbUserName);
 			goto fail;
 		}
 		wstr = (WCHAR*) Stream_Pointer(s);
@@ -951,7 +951,7 @@ BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info *info)
 	{
 		if ((cbDomain % 2) || cbDomain > 52)
 		{
-			WLog_ERR(TAG, "protocol error: invalid cbDomain value: %lu", cbDomain);
+			WLog_ERR(TAG, "protocol error: invalid cbDomain value: %lu", (unsigned long) cbDomain);
 			goto fail;
 		}
 		if (Stream_GetRemainingLength(s) < (size_t) cbDomain)
@@ -983,7 +983,7 @@ BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info *info)
 	{
 		if ((cbUserName % 2) || cbUserName < 2 || cbUserName > 512)
 		{
-			WLog_ERR(TAG, "protocol error: invalid cbUserName value: %lu", cbUserName);
+			WLog_ERR(TAG, "protocol error: invalid cbUserName value: %lu", (unsigned long) cbUserName);
 			goto fail;
 		}
 		if (Stream_GetRemainingLength(s) < (size_t) cbUserName)

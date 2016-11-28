@@ -196,7 +196,7 @@ static void* rdpei_schedule_thread(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %u!", error);
 			break;
 		}
 
@@ -207,7 +207,7 @@ static void* rdpei_schedule_thread(void* arg)
 
 		if ((error = rdpei_add_frame(context)))
 		{
-			WLog_ERR(TAG, "rdpei_add_frame failed with error %lu!", error);
+			WLog_ERR(TAG, "rdpei_add_frame failed with error %u!", error);
 			break;
 		}
 
@@ -215,7 +215,7 @@ static void* rdpei_schedule_thread(void* arg)
 		{
 			if ((error = rdpei_send_frame(context)))
 			{
-				WLog_ERR(TAG, "rdpei_send_frame failed with error %lu!", error);
+				WLog_ERR(TAG, "rdpei_send_frame failed with error %u!", error);
 				break;
 			}
 		}
@@ -426,7 +426,7 @@ UINT rdpei_send_touch_event_pdu(RDPEI_CHANNEL_CALLBACK* callback,
 
 	if ((status = rdpei_write_touch_frame(s, frame)))
 	{
-		WLog_ERR(TAG, "rdpei_write_touch_frame failed with error %lu!", status);
+		WLog_ERR(TAG, "rdpei_write_touch_frame failed with error %u!", status);
 		Stream_Free(s, TRUE);
 		return status;
 	}
@@ -471,7 +471,7 @@ UINT rdpei_recv_suspend_touch_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 	IFCALLRET(rdpei->SuspendTouch, error, rdpei);
 
 	if (error)
-		WLog_ERR(TAG, "rdpei->SuspendTouch failed with error %lu!", error);
+		WLog_ERR(TAG, "rdpei->SuspendTouch failed with error %u!", error);
 
 	return error;
 }
@@ -488,7 +488,7 @@ UINT rdpei_recv_resume_touch_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 	IFCALLRET(rdpei->ResumeTouch, error, rdpei);
 
 	if (error)
-		WLog_ERR(TAG, "rdpei->ResumeTouch failed with error %lu!", error);
+		WLog_ERR(TAG, "rdpei->ResumeTouch failed with error %u!", error);
 
 	return error;
 }
@@ -515,13 +515,13 @@ UINT rdpei_recv_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 		case EVENTID_SC_READY:
 			if ((error = rdpei_recv_sc_ready_pdu(callback, s)))
 			{
-				WLog_ERR(TAG, "rdpei_recv_sc_ready_pdu failed with error %lu!", error);
+				WLog_ERR(TAG, "rdpei_recv_sc_ready_pdu failed with error %u!", error);
 				return error;
 			}
 
 			if ((error = rdpei_send_cs_ready_pdu(callback)))
 			{
-				WLog_ERR(TAG, "rdpei_send_cs_ready_pdu failed with error %lu!", error);
+				WLog_ERR(TAG, "rdpei_send_cs_ready_pdu failed with error %u!", error);
 				return error;
 			}
 
@@ -530,7 +530,7 @@ UINT rdpei_recv_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 		case EVENTID_SUSPEND_TOUCH:
 			if ((error = rdpei_recv_suspend_touch_pdu(callback, s)))
 			{
-				WLog_ERR(TAG, "rdpei_recv_suspend_touch_pdu failed with error %lu!", error);
+				WLog_ERR(TAG, "rdpei_recv_suspend_touch_pdu failed with error %u!", error);
 				return error;
 			}
 
@@ -539,7 +539,7 @@ UINT rdpei_recv_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 		case EVENTID_RESUME_TOUCH:
 			if ((error = rdpei_recv_resume_touch_pdu(callback, s)))
 			{
-				WLog_ERR(TAG, "rdpei_recv_resume_touch_pdu failed with error %lu!", error);
+				WLog_ERR(TAG, "rdpei_recv_resume_touch_pdu failed with error %u!", error);
 				return error;
 			}
 
@@ -634,7 +634,7 @@ static UINT rdpei_plugin_initialize(IWTSPlugin* pPlugin,
 	if ((error = pChannelMgr->CreateListener(pChannelMgr, RDPEI_DVC_CHANNEL_NAME, 0,
 	             (IWTSListenerCallback*) rdpei->listener_callback, &(rdpei->listener))))
 	{
-		WLog_ERR(TAG, "ChannelMgr->CreateListener failed with error %lu!", error);
+		WLog_ERR(TAG, "ChannelMgr->CreateListener failed with error %u!", error);
 		goto error_out;
 	}
 
@@ -687,7 +687,7 @@ static UINT rdpei_plugin_terminated(IWTSPlugin* pPlugin)
 	if (WaitForSingleObject(rdpei->thread, INFINITE) == WAIT_FAILED)
 	{
 		error = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %u!", error);
 		return error;
 	}
 
@@ -737,7 +737,7 @@ UINT rdpei_send_frame(RdpeiClientContext* context)
 
 	if ((error = rdpei_send_touch_event_pdu(callback, &rdpei->frame)))
 	{
-		WLog_ERR(TAG, "rdpei_send_touch_event_pdu failed with error %lu!", error);
+		WLog_ERR(TAG, "rdpei_send_touch_event_pdu failed with error %u!", error);
 		return error;
 	}
 
@@ -901,7 +901,7 @@ UINT rdpei_touch_end(RdpeiClientContext* context, int externalId, int x, int y,
 		{
 			if ((error = context->TouchUpdate(context, externalId, x, y, &tempvalue)))
 			{
-				WLog_ERR(TAG, "context->TouchUpdate failed with error %lu!", error);
+				WLog_ERR(TAG, "context->TouchUpdate failed with error %u!", error);
 				return error;
 			}
 		}
@@ -913,7 +913,7 @@ UINT rdpei_touch_end(RdpeiClientContext* context, int externalId, int x, int y,
 
 		if ((error = context->AddContact(context, &contact)))
 		{
-			WLog_ERR(TAG, "context->AddContact failed with error %lu!", error);
+			WLog_ERR(TAG, "context->AddContact failed with error %u!", error);
 			return error;
 		}
 
@@ -998,7 +998,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		if ((error = pEntryPoints->RegisterPlugin(pEntryPoints, "rdpei",
 		             (IWTSPlugin*) rdpei)))
 		{
-			WLog_ERR(TAG, "EntryPoints->RegisterPlugin failed with error %lu!", error);
+			WLog_ERR(TAG, "EntryPoints->RegisterPlugin failed with error %u!", error);
 			error = CHANNEL_RC_NO_MEMORY;
 			goto error_out;
 		}

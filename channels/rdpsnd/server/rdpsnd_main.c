@@ -115,7 +115,7 @@ static UINT rdpsnd_server_recv_waveconfirm(RdpsndServerContext* context,
 	IFCALLRET(context->ConfirmBlock, error,  context, confirmBlockNum, timestamp);
 
 	if (error)
-		WLog_ERR(TAG, "context->ConfirmBlock failed with error %lu", error);
+		WLog_ERR(TAG, "context->ConfirmBlock failed with error %u", error);
 
 	return error;
 }
@@ -253,7 +253,7 @@ static void* rdpsnd_server_thread(void* arg)
 
 	if ((error = rdpsnd_server_send_formats(context, context->priv->rdpsnd_pdu)))
 	{
-		WLog_ERR(TAG, "rdpsnd_server_send_formats failed with error %lu", error);
+		WLog_ERR(TAG, "rdpsnd_server_send_formats failed with error %u", error);
 		goto out;
 	}
 
@@ -264,7 +264,7 @@ static void* rdpsnd_server_thread(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %u!", error);
 			break;
 		}
 
@@ -273,7 +273,7 @@ static void* rdpsnd_server_thread(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %u!", error);
 			break;
 		}
 
@@ -282,7 +282,7 @@ static void* rdpsnd_server_thread(void* arg)
 
 		if ((error = rdpsnd_server_handle_messages(context)))
 		{
-			WLog_ERR(TAG, "rdpsnd_server_handle_messages failed with error %lu", error);
+			WLog_ERR(TAG, "rdpsnd_server_handle_messages failed with error %u", error);
 			break;
 		}
 	}
@@ -555,7 +555,7 @@ static UINT rdpsnd_server_send_samples(RdpsndServerContext* context,
 		{
 			if ((error = rdpsnd_server_send_audio_pdu(context, wTimestamp)))
 			{
-				WLog_ERR(TAG, "rdpsnd_server_send_audio_pdu failed with error %lu", error);
+				WLog_ERR(TAG, "rdpsnd_server_send_audio_pdu failed with error %u", error);
 				break;
 			}
 		}
@@ -616,7 +616,7 @@ static UINT rdpsnd_server_close(RdpsndServerContext* context)
 		}
 		else if ((error = rdpsnd_server_send_audio_pdu(context, 0)))
 		{
-			WLog_ERR(TAG, "rdpsnd_server_send_audio_pdu failed with error %lu", error);
+			WLog_ERR(TAG, "rdpsnd_server_send_audio_pdu failed with error %u", error);
 		}
 	}
 
@@ -742,7 +742,7 @@ static UINT rdpsnd_server_stop(RdpsndServerContext* context)
 			if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
 			{
 				error = GetLastError();
-				WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+				WLog_ERR(TAG, "WaitForSingleObject failed with error %u!", error);
 				return error;
 			}
 

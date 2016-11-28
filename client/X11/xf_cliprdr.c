@@ -427,8 +427,8 @@ static CLIPRDR_FORMAT* xf_cliprdr_get_raw_server_formats(xfClipboard* clipboard,
 	else
 	{
 		WLog_ERR(TAG,
-		         "failed to retrieve raw format list: data=%p, length=%lu, format=%d, type=%d (expected=%d)",
-		         data, length, format, type, clipboard->raw_format_list_atom);
+		         "failed to retrieve raw format list: data=%p, length=%lu, format=%d, type=%lu (expected=%lu)",
+		         data, length, format, (unsigned long) type, (unsigned long) clipboard->raw_format_list_atom);
 	}
 
 	if (data)
@@ -457,13 +457,13 @@ static CLIPRDR_FORMAT* xf_cliprdr_get_formats_from_targets(
 	{
 		if (!data)
 		{
-			WLog_ERR(TAG, "XGetWindowProperty set length = %d but data is NULL", length);
+			WLog_ERR(TAG, "XGetWindowProperty set length = %lu but data is NULL", length);
 			goto out;
 		}
 
 		if (!(formats = (CLIPRDR_FORMAT*) calloc(length, sizeof(CLIPRDR_FORMAT))))
 		{
-			WLog_ERR(TAG, "failed to allocate %d CLIPRDR_FORMAT structs", length);
+			WLog_ERR(TAG, "failed to allocate %lu CLIPRDR_FORMAT structs", length);
 			goto out;
 		}
 	}

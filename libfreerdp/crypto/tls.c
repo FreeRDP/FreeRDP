@@ -1354,7 +1354,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname,
 			if (!certificate_get_stored_data(tls->certificate_store,
 			                                 certificate_data, &old_subject,
 			                                 &old_issuer, &old_fingerprint))
-				WLog_WARN(TAG, "Failed to get certificate entry for %s:hu",
+				WLog_WARN(TAG, "Failed to get certificate entry for %s:%d",
 				          hostname, port);
 
 			if (instance->VerifyChangedCertificate)

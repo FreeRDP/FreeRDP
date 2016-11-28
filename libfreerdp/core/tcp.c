@@ -770,7 +770,7 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd,
 	status = WSAEventSelect(sockfd, handles[count++], FD_READ | FD_WRITE | FD_CONNECT | FD_CLOSE);
 	if (status < 0)
 	{
-		WLog_ERR(TAG, "WSAEventSelect failed with %lX", WSAGetLastError());
+		WLog_ERR(TAG, "WSAEventSelect failed with %d", WSAGetLastError());
 		return FALSE;
 	}
 
@@ -811,7 +811,7 @@ static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd,
 
 	if (status < 0)
 	{
-		WLog_ERR(TAG, "WSAEventSelect failed with %lX", WSAGetLastError());
+		WLog_ERR(TAG, "WSAEventSelect failed with %d", WSAGetLastError());
 		return FALSE;
 	}
 

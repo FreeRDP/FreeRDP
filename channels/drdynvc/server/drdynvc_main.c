@@ -161,7 +161,7 @@ static UINT drdynvc_server_stop(DrdynvcServerContext* context)
 	if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
 	{
 		error = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %u!", error);
 		return error;
 	}
 
