@@ -4,6 +4,7 @@
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2014 Hewlett-Packard Development Company, L.P.
+ * Copyright 2016 David PHAM-VAN <d.phamvan@inuvika.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +45,8 @@
 #include <assert.h>
 #include <pthread.h>
 #include <dirent.h>
+#include <libgen.h>
+#include <errno.h>
 
 #include <sys/un.h>
 #include <sys/stat.h>
@@ -172,6 +175,10 @@
  * Asynchronous I/O User Guide:
  * http://code.google.com/p/kernel/wiki/AIOUserGuide
  */
+
+#define EPOCH_DIFF 11644473600LL
+#define STAT_TIME_TO_FILETIME(_t) (((UINT64)(_t) + EPOCH_DIFF) * 10000000LL)
+
 
 static wArrayList *_HandleCreators;
 
@@ -459,6 +466,94 @@ BOOL FlushFileBuffers(HANDLE hFile)
 
 	WLog_ERR(TAG, "FlushFileBuffers operation not implemented");
 	return FALSE;
+}
+
+BOOL WINAPI GetFileAttributesExA(LPCSTR lpFileName, GET_FILEEX_INFO_LEVELS fInfoLevelId,
+																 LPVOID lpFileInformation)
+{
+	LPWIN32_FILE_ATTRIBUTE_DATA fd = lpFileInformation;
+	WIN32_FIND_DATAA findFileData;
+	HANDLE hFind;
+
+	if (!(hFind = FindFirstFileA(lpFileName, &findFileData) == INVALID_HANDLE_VALUE))
+		FindClose(hFind);
+
+	fd->dwFileAttributes = findFileData.dwFileAttributes;
+	fd->ftCreationTime = findFileData.ftCreationTime;
+	fd->ftLastAccessTime = findFileData.ftLastAccessTime;
+	fd->ftLastWriteTime = findFileData.ftLastWriteTime;
+	fd->nFileSizeHigh = findFileData.nFileSizeHigh;
+	fd->nFileSizeLow = findFileData.nFileSizeLow;
+	return TRUE;
+}
+
+BOOL WINAPI GetFileAttributesExW(LPCWSTR lpFileName, GET_FILEEX_INFO_LEVELS fInfoLevelId,
+																 LPVOID lpFileInformation)
+{
+	BOOL ret;
+	LPSTR lpCFileName;
+	ConvertFromUnicode(CP_UTF8, 0, lpFileName, -1, &lpCFileName, 0, NULL, NULL);
+	ret = GetFileAttributesExA(lpCFileName, fInfoLevelId, lpFileInformation);
+	free(lpCFileName);
+	return ret;
+}
+
+DWORD WINAPI GetFileAttributesA(LPCSTR lpFileName)
+{
+	WIN32_FIND_DATAA findFileData;
+	HANDLE hFind;
+
+	if ((hFind = FindFirstFileA(lpFileName, &findFileData)) == INVALID_HANDLE_VALUE)
+		return INVALID_FILE_ATTRIBUTES;
+
+	FindClose(hFind);
+	return findFileData.dwFileAttributes;
+}
+
+DWORD WINAPI GetFileAttributesW(LPCWSTR lpFileName)
+{
+	DWORD ret;
+	LPSTR lpCFileName;
+	ConvertFromUnicode(CP_UTF8, 0, lpFileName, -1, &lpCFileName, 0, NULL, NULL);
+	ret = GetFileAttributesA(lpCFileName);
+	free(lpCFileName);
+	return ret;
+}
+
+BOOL SetFileAttributesA(LPCSTR lpFileName, DWORD dwFileAttributes)
+{
+	struct stat st;
+
+	if (stat(lpFileName, &st) != 0)
+	{
+		return FALSE;
+	}
+
+	if (dwFileAttributes & FILE_ATTRIBUTE_READONLY)
+	{
+		st.st_mode &= ~(S_IWUSR | S_IWGRP | S_IWOTH);
+	}
+	else
+	{
+		st.st_mode |= S_IWUSR;
+	}
+
+	if (chmod(lpFileName, st.st_mode) != 0)
+	{
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+BOOL SetFileAttributesW(LPCWSTR lpFileName, DWORD dwFileAttributes)
+{
+	BOOL ret;
+	LPSTR lpCFileName;
+	ConvertFromUnicode(CP_UTF8, 0, lpFileName, -1, &lpCFileName, 0, NULL, NULL);
+	ret = SetFileAttributesA(lpCFileName,dwFileAttributes);
+	free(lpCFileName);
+	return ret;
 }
 
 BOOL SetEndOfFile(HANDLE hFile)
@@ -816,17 +911,88 @@ BOOL CreateDirectoryA(LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttribu
 
 BOOL CreateDirectoryW(LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
-	return FALSE;
+	char* utfPathName = NULL;
+	BOOL ret;
+
+	ConvertFromUnicode(CP_UTF8, 0, lpPathName, -1, &utfPathName, 0, NULL, NULL);
+	ret = CreateDirectoryA(utfPathName, lpSecurityAttributes);
+	free(utfPathName);
+	return ret;
 }
 
 BOOL RemoveDirectoryA(LPCSTR lpPathName)
 {
-	return (rmdir(lpPathName) == 0);
+	int ret = rmdir(lpPathName);
+	if (ret != 0)
+		SetLastError(map_posix_err(errno));
+	else
+		SetLastError(STATUS_SUCCESS);
+	return ret == 0;
 }
 
 BOOL RemoveDirectoryW(LPCWSTR lpPathName)
 {
-	return FALSE;
+	char* utfPathName = NULL;
+	BOOL ret;
+
+	ConvertFromUnicode(CP_UTF8, 0, lpPathName, -1, &utfPathName, 0, NULL, NULL);
+	ret = RemoveDirectoryA(utfPathName);
+	free(utfPathName);
+	return ret;
+}
+
+BOOL MoveFileExA(LPCSTR lpExistingFileName, LPCSTR lpNewFileName, DWORD dwFlags)
+{
+	struct stat st;
+	int ret;
+	ret = stat(lpNewFileName, &st);
+
+	if ((dwFlags & MOVEFILE_REPLACE_EXISTING) == 0)
+	{
+		if (ret == 0)
+		{
+			SetLastError(ERROR_ALREADY_EXISTS);
+			return FALSE;
+		}
+	}
+	else
+	{
+		if (ret == 0 && (st.st_mode & S_IWUSR) == 0)
+		{
+			SetLastError(ERROR_ACCESS_DENIED);
+			return FALSE;
+		}
+	}
+
+	ret = rename(lpExistingFileName, lpNewFileName);
+
+	if (ret != 0)
+		SetLastError(map_posix_err(errno));
+
+	return ret == 0;
+}
+
+BOOL MoveFileExW(LPCWSTR lpExistingFileName, LPCWSTR lpNewFileName, DWORD dwFlags)
+{
+	LPSTR lpCExistingFileName;
+	LPSTR lpCNewFileName;
+	BOOL ret;
+	ConvertFromUnicode(CP_UTF8, 0, lpExistingFileName, -1, &lpCExistingFileName, 0, NULL, NULL);
+	ConvertFromUnicode(CP_UTF8, 0, lpNewFileName, -1, &lpCNewFileName, 0, NULL, NULL);
+	ret = MoveFileExA(lpCExistingFileName, lpCNewFileName, dwFlags);
+	free(lpCNewFileName);
+	free(lpCExistingFileName);
+	return ret;
+}
+
+BOOL MoveFileA(LPCSTR lpExistingFileName, LPCSTR lpNewFileName)
+{
+	return MoveFileExA(lpExistingFileName, lpNewFileName, 0);
+}
+
+BOOL MoveFileW(LPCWSTR lpExistingFileName, LPCWSTR lpNewFileName)
+{
+	return MoveFileExW(lpExistingFileName, lpNewFileName, 0);
 }
 
 #endif

@@ -4,6 +4,7 @@
  *
  * Copyright 2015 Thincast Technologies GmbH
  * Copyright 2015 Bernhard Miklautz <bernhard.miklautz@thincast.com>
+ * Copyright 2016 David PHAM-VAN <d.phamvan@inuvika.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +44,13 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+
+#ifdef ANDROID
+#include <sys/vfs.h>
+#else
+#include <sys/statvfs.h>
+#endif
+
 
 static BOOL FileIsHandled(HANDLE handle)
 {
@@ -532,6 +540,51 @@ static const char* FileGetMode(DWORD dwDesiredAccess, DWORD dwCreationDispositio
 	}
 }
 
+UINT32 map_posix_err(int fs_errno)
+{
+	UINT32 rc;
+
+	/* try to return NTSTATUS version of error code */
+
+	switch (fs_errno)
+	{
+		case 0:
+			rc = STATUS_SUCCESS;
+			break;
+
+		case EPERM:
+		case EACCES:
+			rc = ERROR_ACCESS_DENIED;
+			break;
+
+		case ENOENT:
+			rc = ERROR_FILE_NOT_FOUND;
+			break;
+
+		case EBUSY:
+			rc = ERROR_BUSY_DRIVE;
+			break;
+
+		case EEXIST:
+			rc  = ERROR_FILE_EXISTS;
+			break;
+
+		case EISDIR:
+			rc = STATUS_FILE_IS_A_DIRECTORY;
+			break;
+
+		case ENOTEMPTY:
+			rc = STATUS_DIRECTORY_NOT_EMPTY;
+			break;
+
+		default:
+			rc = STATUS_UNSUCCESSFUL;
+			break;
+	}
+	
+	return rc;
+}
+
 static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
 				  DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
@@ -693,6 +746,39 @@ BOOL SetStdHandle(DWORD nStdHandle, HANDLE hHandle)
 BOOL SetStdHandleEx(DWORD dwStdHandle, HANDLE hNewHandle, HANDLE* phOldHandle)
 {
 	return FALSE;
+}
+
+BOOL GetDiskFreeSpaceA(LPCSTR lpRootPathName, LPDWORD lpSectorsPerCluster,
+											 LPDWORD lpBytesPerSector, LPDWORD lpNumberOfFreeClusters, LPDWORD lpTotalNumberOfClusters)
+{
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__)
+#define STATVFS statvfs
+#elif defined(ANDROID)
+#define STATVFS statfs
+#else
+#define STATVFS statvfs
+#endif
+
+	struct STATVFS svfst;
+	STATVFS(lpRootPathName, &svfst);
+	*lpSectorsPerCluster = svfst.f_frsize;
+	*lpBytesPerSector = 1;
+	*lpNumberOfFreeClusters = svfst.f_bavail;
+	*lpTotalNumberOfClusters = svfst.f_blocks;
+	return TRUE;
+}
+
+BOOL GetDiskFreeSpaceW(LPCWSTR lpwRootPathName, LPDWORD lpSectorsPerCluster,
+											 LPDWORD lpBytesPerSector, LPDWORD lpNumberOfFreeClusters, LPDWORD lpTotalNumberOfClusters)
+{
+	LPSTR lpRootPathName;
+	BOOL ret;
+
+	ConvertFromUnicode(CP_UTF8, 0, lpwRootPathName, -1, &lpRootPathName, 0, NULL, NULL);
+	ret = GetDiskFreeSpaceA(lpRootPathName, lpSectorsPerCluster, lpBytesPerSector,
+													 lpNumberOfFreeClusters, lpTotalNumberOfClusters);
+	free(lpRootPathName);
+	return ret;
 }
 
 #endif /* _WIN32 */

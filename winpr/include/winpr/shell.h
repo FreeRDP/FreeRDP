@@ -3,6 +3,7 @@
  * Shell Functions
  *
  * Copyright 2015 Dell Software <Mike.McDonald@software.dell.com>
+ * Copyright 2016 David PHAM-VAN <d.phamvan@inuvika.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,14 +37,20 @@ WINPR_API BOOL GetUserProfileDirectoryA(HANDLE hToken, LPSTR lpProfileDir, LPDWO
 
 WINPR_API BOOL GetUserProfileDirectoryW(HANDLE hToken, LPWSTR lpProfileDir, LPDWORD lpcchSize);
 
+WINPR_API BOOL PathIsDirectoryEmptyA(LPCSTR pszPath);
+
+WINPR_API BOOL PathIsDirectoryEmptyW(LPCWSTR pszPath);
+
 #ifdef __cplusplus
 }
 #endif
 
 #ifdef UNICODE
 #define GetUserProfileDirectory GetUserProfileDirectoryW
+#define PathIsDirectoryEmpty	PathIsDirectoryEmptyW
 #else
 #define GetUserProfileDirectory GetUserProfileDirectoryA
+#define PathIsDirectoryEmpty	PathIsDirectoryEmptyA
 #endif
 
 #endif
