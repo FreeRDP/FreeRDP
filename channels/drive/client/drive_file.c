@@ -337,6 +337,11 @@ DRIVE_FILE* drive_file_new(const WCHAR* base_path, const WCHAR* path, UINT32 Pat
 		return NULL;
 	}
 
+	if (DesiredAccess & 0x1000L)
+	{
+		DesiredAccess = (DesiredAccess & ~0x1000L) | GENERIC_WRITE;
+	}
+
 	file->file_handle = INVALID_HANDLE_VALUE;
 	file->find_handle = INVALID_HANDLE_VALUE;
 	file->id = id;
@@ -625,6 +630,8 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 				WLog_ERR(TAG, "Unable to truncate %s to %"PRId64"", file->fullpath, size);
 				return FALSE;
 			}
+
+			liSize.QuadPart = size & 0xFFFFFFFF;
 
 			if (SetFilePointer(file->file_handle, liSize.LowPart, &liSize.HighPart,
 			                   FILE_BEGIN) == INVALID_SET_FILE_POINTER)
