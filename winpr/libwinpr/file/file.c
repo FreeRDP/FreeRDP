@@ -524,7 +524,7 @@ static HANDLE_OPS shmOps = {
 
 static const char* FileGetMode(DWORD dwDesiredAccess, DWORD dwCreationDisposition, BOOL* create)
 {
-	BOOL writeable = dwDesiredAccess & GENERIC_WRITE;
+	BOOL writeable = dwDesiredAccess & (GENERIC_WRITE | STANDARD_RIGHTS_WRITE | FILE_WRITE_DATA | FILE_APPEND_DATA);
 
 	switch(dwCreationDisposition)
 	{
@@ -539,7 +539,7 @@ static const char* FileGetMode(DWORD dwDesiredAccess, DWORD dwCreationDispositio
 		return "rb+";
 	case OPEN_EXISTING:
 		*create = FALSE;
-		return "rb+";
+		return (writeable) ? "rb+" : "rb";
 	case TRUNCATE_EXISTING:
 		*create = FALSE;
 		return "wb+";
@@ -602,6 +602,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 	const char* mode = FileGetMode(dwDesiredAccess, dwCreationDisposition, &create);
 	int lock = 0;
 	FILE* fp = NULL;
+	struct stat st;
 
 	if (dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED)
 	{
@@ -637,9 +638,21 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 
 	if (create)
 	{
+		if (dwCreationDisposition == CREATE_NEW)
+		{
+			if (stat(pFile->lpFileName, &st) == 0)
+			{
+				SetLastError(ERROR_FILE_EXISTS);
+				free(pFile->lpFileName);
+				free(pFile);
+				return INVALID_HANDLE_VALUE;
+			}
+		}
+
 		fp = fopen(pFile->lpFileName, "ab");
 		if (!fp)
 		{
+			SetLastError(map_posix_err(errno));
 			free(pFile->lpFileName);
 			free(pFile);
 			return INVALID_HANDLE_VALUE;
@@ -656,6 +669,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 	{
 		/* This case can occur when trying to open a
 		 * not existing file without create flag. */
+		SetLastError(map_posix_err(errno));
 		free(pFile->lpFileName);
 		free(pFile);
 		return INVALID_HANDLE_VALUE;
@@ -674,6 +688,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 		{
 			WLog_ERR(TAG, "flock failed with %s [0x%08X]",
 				 strerror(errno), errno);
+			SetLastError(map_posix_err(errno));
 			FileCloseHandle(pFile);
 			return INVALID_HANDLE_VALUE;
 		}
@@ -681,6 +696,13 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 		pFile->bLocked = TRUE;
 	}
 
+	if (fstat(fileno(pFile->fp), &st)==0 && dwFlagsAndAttributes & FILE_ATTRIBUTE_READONLY)
+	{
+			st.st_mode &= ~(S_IWUSR|S_IWGRP|S_IWOTH);
+			fchmod(fileno(pFile->fp), st.st_mode);
+	}
+
+	SetLastError(STATUS_SUCCESS);
 	return pFile;
 }
 
