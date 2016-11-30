@@ -105,10 +105,12 @@ static BOOL FileSetEndOfFile(HANDLE hFile)
 		return FALSE;
 
 	size = ftell(pFile->fp);
+	errno = 0;
 	if (ftruncate(fileno(pFile->fp), size) < 0)
 	{
 		WLog_ERR(TAG, "ftruncate %s failed with %s [0x%08X]",
 			pFile->lpFileName, strerror(errno), errno);
+		SetLastError(map_posix_err(errno));
 		return FALSE;
 	}
 
@@ -169,9 +171,10 @@ static BOOL FileRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		return FALSE;
 
 	file = (WINPR_FILE *)Object;
-	io_status = fread(lpBuffer, nNumberOfBytesToRead, 1, file->fp);
+	errno = 0;
+	io_status = fread(lpBuffer, 1, nNumberOfBytesToRead, file->fp);
 
-	if (io_status != 1)
+	if (io_status == 0 && errno != 0)
 	{
 		status = FALSE;
 
@@ -180,11 +183,13 @@ static BOOL FileRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 			case EWOULDBLOCK:
 				SetLastError(ERROR_NO_DATA);
 				break;
+			default:
+				SetLastError(map_posix_err(errno));
 		}
 	}
 
 	if (lpNumberOfBytesRead)
-		*lpNumberOfBytesRead = nNumberOfBytesToRead;
+		*lpNumberOfBytesRead = io_status;
 
 	return status;
 }
@@ -207,11 +212,15 @@ static BOOL FileWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrit
 
 	file = (WINPR_FILE *)Object;
 
-	io_status = fwrite(lpBuffer, nNumberOfBytesToWrite, 1, file->fp);
-	if (io_status != 1)
+	errno = 0;
+	io_status = fwrite(lpBuffer, 1, nNumberOfBytesToWrite, file->fp);
+	if (io_status == 0 && errno != 0)
+	{
+		SetLastError(map_posix_err(errno));
 		return FALSE;
+	}
 
-	*lpNumberOfBytesWritten = nNumberOfBytesToWrite;
+	*lpNumberOfBytesWritten = io_status;
 	return TRUE;
 }
 
