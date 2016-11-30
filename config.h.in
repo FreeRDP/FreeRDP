@@ -71,6 +71,7 @@
 #cmakedefine WITH_DEBUG_RAIL
 #cmakedefine WITH_DEBUG_RDP
 #cmakedefine WITH_DEBUG_REDIR
+#cmakedefine WITH_DEBUG_RDPDR
 #cmakedefine WITH_DEBUG_RFX
 #cmakedefine WITH_DEBUG_SCARD
 #cmakedefine WITH_DEBUG_SND
