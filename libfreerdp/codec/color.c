@@ -269,7 +269,7 @@ BOOL freerdp_image_copy_from_pointer_data(
 
 				if (xorBpp == 8 && !palette)
 				{
-					WLog_ERR(TAG, "null palette in convertion from %d bpp to %d bpp",
+					WLog_ERR(TAG, "null palette in conversion from %d bpp to %d bpp",
 					         xorBpp, dstBitsPerPixel);
 					return -1;
 				}

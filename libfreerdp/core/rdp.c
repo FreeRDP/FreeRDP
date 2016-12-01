@@ -791,7 +791,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 		{
 			if (!(cs = StreamPool_Take(rdp->transport->ReceivePool, DstSize)))
 			{
-				WLog_ERR(TAG, "Coudn't take stream from pool");
+				WLog_ERR(TAG, "Couldn't take stream from pool");
 				return -1;
 			}
 

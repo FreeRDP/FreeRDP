@@ -165,7 +165,7 @@ static UINT read_cs_ready_message(RdpeiServerContext *context, wStream *s)
 	UINT error = CHANNEL_RC_OK;
 	if (Stream_GetRemainingLength(s) < 10)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -199,7 +199,7 @@ static UINT read_touch_contact_data(RdpeiServerContext *context, wStream *s, RDP
 {
 	if (Stream_GetRemainingLength(s) < 1)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -339,7 +339,7 @@ static UINT read_dismiss_hovering_contact(RdpeiServerContext *context, wStream *
 
 	if (Stream_GetRemainingLength(s) < 1)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 

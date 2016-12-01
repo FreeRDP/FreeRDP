@@ -40,7 +40,7 @@ static UINT encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	if (Stream_GetRemainingLength(s) < ENCOMSP_ORDER_HEADER_SIZE)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -72,7 +72,7 @@ static UINT encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str)
 
 	if (Stream_GetRemainingLength(s) < 2)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -86,7 +86,7 @@ static UINT encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str)
 
 	if (Stream_GetRemainingLength(s) < (size_t)(str->cchString * 2))
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -151,7 +151,7 @@ static UINT encomsp_recv_filter_updated_pdu(encomspPlugin* encomsp, wStream* s,
 
 	if (Stream_GetRemainingLength(s) < 1)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -160,7 +160,7 @@ static UINT encomsp_recv_filter_updated_pdu(encomspPlugin* encomsp, wStream* s,
 
 	if ((beg + header->Length) < end)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -168,7 +168,7 @@ static UINT encomsp_recv_filter_updated_pdu(encomspPlugin* encomsp, wStream* s,
 	{
 		if (Stream_GetRemainingLength(s) < (size_t)((beg + header->Length) - end))
 		{
-			WLog_ERR(TAG, "Not enought data!");
+			WLog_ERR(TAG, "Not enough data!");
 			return ERROR_INVALID_DATA;
 		}
 
@@ -205,7 +205,7 @@ static UINT encomsp_recv_application_created_pdu(encomspPlugin* encomsp,
 
 	if (Stream_GetRemainingLength(s) < 6)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -222,7 +222,7 @@ static UINT encomsp_recv_application_created_pdu(encomspPlugin* encomsp,
 
 	if ((beg + header->Length) < end)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -230,7 +230,7 @@ static UINT encomsp_recv_application_created_pdu(encomspPlugin* encomsp,
 	{
 		if (Stream_GetRemainingLength(s) < (size_t)((beg + header->Length) - end))
 		{
-			WLog_ERR(TAG, "Not enought data!");
+			WLog_ERR(TAG, "Not enough data!");
 			return ERROR_INVALID_DATA;
 		}
 
@@ -267,7 +267,7 @@ static UINT encomsp_recv_application_removed_pdu(encomspPlugin* encomsp,
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -276,7 +276,7 @@ static UINT encomsp_recv_application_removed_pdu(encomspPlugin* encomsp,
 
 	if ((beg + header->Length) < end)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -284,7 +284,7 @@ static UINT encomsp_recv_application_removed_pdu(encomspPlugin* encomsp,
 	{
 		if (Stream_GetRemainingLength(s) < (size_t)((beg + header->Length) - end))
 		{
-			WLog_ERR(TAG, "Not enought data!");
+			WLog_ERR(TAG, "Not enough data!");
 			return ERROR_INVALID_DATA;
 		}
 
@@ -321,7 +321,7 @@ static UINT encomsp_recv_window_created_pdu(encomspPlugin* encomsp, wStream* s,
 
 	if (Stream_GetRemainingLength(s) < 10)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -339,7 +339,7 @@ static UINT encomsp_recv_window_created_pdu(encomspPlugin* encomsp, wStream* s,
 
 	if ((beg + header->Length) < end)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -347,7 +347,7 @@ static UINT encomsp_recv_window_created_pdu(encomspPlugin* encomsp, wStream* s,
 	{
 		if (Stream_GetRemainingLength(s) < (size_t)((beg + header->Length) - end))
 		{
-			WLog_ERR(TAG, "Not enought data!");
+			WLog_ERR(TAG, "Not enough data!");
 			return ERROR_INVALID_DATA;
 		}
 
@@ -384,7 +384,7 @@ static UINT encomsp_recv_window_removed_pdu(encomspPlugin* encomsp, wStream* s,
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -393,7 +393,7 @@ static UINT encomsp_recv_window_removed_pdu(encomspPlugin* encomsp, wStream* s,
 
 	if ((beg + header->Length) < end)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -401,7 +401,7 @@ static UINT encomsp_recv_window_removed_pdu(encomspPlugin* encomsp, wStream* s,
 	{
 		if (Stream_GetRemainingLength(s) < (size_t)((beg + header->Length) - end))
 		{
-			WLog_ERR(TAG, "Not enought data!");
+			WLog_ERR(TAG, "Not enough data!");
 			return ERROR_INVALID_DATA;
 		}
 
@@ -438,7 +438,7 @@ static UINT encomsp_recv_show_window_pdu(encomspPlugin* encomsp, wStream* s,
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -447,7 +447,7 @@ static UINT encomsp_recv_show_window_pdu(encomspPlugin* encomsp, wStream* s,
 
 	if ((beg + header->Length) < end)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -455,7 +455,7 @@ static UINT encomsp_recv_show_window_pdu(encomspPlugin* encomsp, wStream* s,
 	{
 		if (Stream_GetRemainingLength(s) < (size_t)((beg + header->Length) - end))
 		{
-			WLog_ERR(TAG, "Not enought data!");
+			WLog_ERR(TAG, "Not enough data!");
 			return ERROR_INVALID_DATA;
 		}
 
@@ -492,7 +492,7 @@ static UINT encomsp_recv_participant_created_pdu(encomspPlugin* encomsp,
 
 	if (Stream_GetRemainingLength(s) < 10)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -510,7 +510,7 @@ static UINT encomsp_recv_participant_created_pdu(encomspPlugin* encomsp,
 
 	if ((beg + header->Length) < end)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -518,7 +518,7 @@ static UINT encomsp_recv_participant_created_pdu(encomspPlugin* encomsp,
 	{
 		if (Stream_GetRemainingLength(s) < (size_t)((beg + header->Length) - end))
 		{
-			WLog_ERR(TAG, "Not enought data!");
+			WLog_ERR(TAG, "Not enough data!");
 			return ERROR_INVALID_DATA;
 		}
 
@@ -555,7 +555,7 @@ static UINT encomsp_recv_participant_removed_pdu(encomspPlugin* encomsp,
 
 	if (Stream_GetRemainingLength(s) < 12)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -566,7 +566,7 @@ static UINT encomsp_recv_participant_removed_pdu(encomspPlugin* encomsp,
 
 	if ((beg + header->Length) < end)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -574,7 +574,7 @@ static UINT encomsp_recv_participant_removed_pdu(encomspPlugin* encomsp,
 	{
 		if (Stream_GetRemainingLength(s) < (size_t)((beg + header->Length) - end))
 		{
-			WLog_ERR(TAG, "Not enought data!");
+			WLog_ERR(TAG, "Not enough data!");
 			return ERROR_INVALID_DATA;
 		}
 
@@ -611,7 +611,7 @@ static UINT encomsp_recv_change_participant_control_level_pdu(
 
 	if (Stream_GetRemainingLength(s) < 6)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -621,7 +621,7 @@ static UINT encomsp_recv_change_participant_control_level_pdu(
 
 	if ((beg + header->Length) < end)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -629,7 +629,7 @@ static UINT encomsp_recv_change_participant_control_level_pdu(
 	{
 		if (Stream_GetRemainingLength(s) < (size_t)((beg + header->Length) - end))
 		{
-			WLog_ERR(TAG, "Not enought data!");
+			WLog_ERR(TAG, "Not enough data!");
 			return ERROR_INVALID_DATA;
 		}
 
@@ -703,7 +703,7 @@ static UINT encomsp_recv_graphics_stream_paused_pdu(encomspPlugin* encomsp,
 
 	if ((beg + header->Length) < end)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -711,7 +711,7 @@ static UINT encomsp_recv_graphics_stream_paused_pdu(encomspPlugin* encomsp,
 	{
 		if (Stream_GetRemainingLength(s) < (size_t)((beg + header->Length) - end))
 		{
-			WLog_ERR(TAG, "Not enought data!");
+			WLog_ERR(TAG, "Not enough data!");
 			return ERROR_INVALID_DATA;
 		}
 
@@ -749,7 +749,7 @@ static UINT encomsp_recv_graphics_stream_resumed_pdu(encomspPlugin* encomsp,
 
 	if ((beg + header->Length) < end)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -757,7 +757,7 @@ static UINT encomsp_recv_graphics_stream_resumed_pdu(encomspPlugin* encomsp,
 	{
 		if (Stream_GetRemainingLength(s) < (size_t)((beg + header->Length) - end))
 		{
-			WLog_ERR(TAG, "Not enought data!");
+			WLog_ERR(TAG, "Not enough data!");
 			return ERROR_INVALID_DATA;
 		}
 

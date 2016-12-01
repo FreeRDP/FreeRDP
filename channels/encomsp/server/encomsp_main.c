@@ -94,7 +94,7 @@ static UINT encomsp_recv_change_participant_control_level_pdu(
 
 	if (Stream_GetRemainingLength(s) < 6)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -104,7 +104,7 @@ static UINT encomsp_recv_change_participant_control_level_pdu(
 
 	if ((beg + header->Length) < end)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -112,7 +112,7 @@ static UINT encomsp_recv_change_participant_control_level_pdu(
 	{
 		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
 		{
-			WLog_ERR(TAG, "Not enought data!");
+			WLog_ERR(TAG, "Not enough data!");
 			return ERROR_INVALID_DATA;
 		}
 

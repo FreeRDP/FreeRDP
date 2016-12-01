@@ -68,7 +68,7 @@
 		"The connection was cancelled."
 
 #define ERRCONNECT_SECURITY_NEGO_CONNECT_FAILED_STRING \
-		"The connection failed at negociating security settings."
+		"The connection failed at negotiating security settings."
 
 #define ERRCONNECT_CONNECT_TRANSPORT_FAILED_STRING \
 		"The connection transport layer failed."
