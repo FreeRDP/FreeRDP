@@ -257,8 +257,8 @@ static UINT gdi_SurfaceCommand_RemoteFX(rdpGdi* gdi,
 	if (!surface)
 		return ERROR_INTERNAL_ERROR;
 
-	if (!rfx_process_message(surface->codecs->rfx, cmd->data, cmd->format,
-	                         cmd->length,
+	rfx_context_set_pixel_format(surface->codecs->rfx, cmd->format);
+	if (!rfx_process_message(surface->codecs->rfx, cmd->data, cmd->length,
 	                         cmd->left, cmd->top,
 	                         surface->data, surface->format, surface->scanline,
 	                         surface->height, &surface->invalidRegion))

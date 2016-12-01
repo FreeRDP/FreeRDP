@@ -171,8 +171,7 @@ struct _RFX_CONTEXT
 FREERDP_API void rfx_context_set_pixel_format(RFX_CONTEXT* context,
         UINT32 pixel_format);
 
-FREERDP_API BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data,
-                                     UINT32 format, UINT32 length,
+FREERDP_API BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length,
                                      UINT32 left, UINT32 top,
                                      BYTE* dst, UINT32 dstFormat,
                                      UINT32 dstStride, UINT32 dstHeight,

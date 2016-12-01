@@ -996,8 +996,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context,
 	return rc;
 }
 
-BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data,
-                         UINT32 format, UINT32 length,
+BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length,
                          UINT32 left, UINT32 top,
                          BYTE* dst, UINT32 dstFormat,
                          UINT32 dstStride, UINT32 dstHeight,
@@ -1153,7 +1152,7 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data,
 		UINT32 nbUpdateRects;
 		REGION16 clippingRects;
 		const RECTANGLE_16* updateRects;
-		const DWORD formatSize = GetBytesPerPixel(format);
+		const DWORD formatSize = GetBytesPerPixel(context->pixel_format);
 		region16_init(&clippingRects);
 
 		for (i = 0; i < message->numRects; i++)
@@ -1191,7 +1190,7 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data,
 
 				if (!freerdp_image_copy(dst, dstFormat, dstStride,
 				                        nXDst, nYDst, nWidth, nHeight,
-				                        tile->data, format, stride, nXSrc, nYSrc, NULL, FREERDP_FLIP_NONE))
+				                        tile->data, context->pixel_format, stride, nXSrc, nYSrc, NULL, FREERDP_FLIP_NONE))
 					goto fail;
 
 				if (invalidRegion)
