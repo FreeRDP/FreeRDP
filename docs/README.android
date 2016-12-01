@@ -14,7 +14,7 @@ For the Android port some additional dependencies need to be fulfilled:
 
 * for JNI
 - CMake >= 3.0
-- Android NDK (>= r9) (and <= 10e if build with OpenH264)
+- Android NDK (>= r9)
 
 * for the Java GUI
 - Android SDK

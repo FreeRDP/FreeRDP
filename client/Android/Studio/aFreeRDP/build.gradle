@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 21
-    buildToolsVersion "24.0.0"
+    compileSdkVersion 25
+    buildToolsVersion "25.0.1"
 
     defaultConfig {
         applicationId "com.freerdp.afreerdp"
         minSdkVersion 14
-        targetSdkVersion 21
+        targetSdkVersion 25
     }
 
     buildTypes {
