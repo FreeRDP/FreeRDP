@@ -589,7 +589,6 @@ BOOL security_key_update(BYTE* key, BYTE* update_key, int key_len, rdpRdp* rdp)
 	WINPR_DIGEST_CTX* sha1 = NULL;
 	WINPR_DIGEST_CTX* md5 = NULL;
 	WINPR_RC4_CTX* rc4 = NULL;
-	BOOL rc;
 	BYTE salt[] = { 0xD1, 0x26, 0x9E }; /* 40 bits: 3 bytes, 56 bits: 1 byte */
 	BOOL result = FALSE;
 
