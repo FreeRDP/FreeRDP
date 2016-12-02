@@ -89,17 +89,29 @@ BOOL WINAPI Win32_WTSVirtualChannelClose(HANDLE hChannel);
 
 static void *_wts_malloc(size_t size)
 {
+#ifdef _UWP
+	return malloc(size);
+#else
 	return (PVOID)LocalAlloc(LMEM_FIXED, size);
+#endif
 }
 
 static void *_wts_calloc(size_t nmemb, size_t size)
 {
+#ifdef _UWP
+	return calloc(nmemb, size);
+#else
 	return (PVOID)LocalAlloc(LMEM_FIXED | LMEM_ZEROINIT, nmemb * size);
+#endif
 }
 
 static void _wts_free(void* ptr)
 {
+#ifdef _UWP
+	free(ptr);
+#else
 	LocalFree((HLOCAL)ptr);
+#endif
 }
 
 BOOL Win32_WTSVirtualChannelReadAsync(WTSAPI_CHANNEL* pChannel)
