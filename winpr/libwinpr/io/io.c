@@ -199,6 +199,13 @@ BOOL CancelSynchronousIo(HANDLE hThread)
 
 #ifdef _UWP
 
+#include <winpr/crt.h>
+#include <winpr/wlog.h>
+
+#include "../log.h"
+
+#define TAG WINPR_TAG("io")
+
 BOOL GetOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped, LPDWORD lpNumberOfBytesTransferred, BOOL bWait)
 {
 	return GetOverlappedResultEx(hFile, lpOverlapped, lpNumberOfBytesTransferred, bWait ? INFINITE : 0, TRUE);
