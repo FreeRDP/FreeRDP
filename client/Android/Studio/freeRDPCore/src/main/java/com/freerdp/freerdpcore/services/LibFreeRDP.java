@@ -52,37 +52,37 @@ public class LibFreeRDP {
 
     private static native String freerdp_get_build_config();
 
-    private static native int freerdp_new(Context context);
+    private static native long freerdp_new(Context context);
 
-    private static native void freerdp_free(int inst);
+    private static native void freerdp_free(long inst);
 
-    private static native boolean freerdp_parse_arguments(int inst, String[] args);
+    private static native boolean freerdp_parse_arguments(long inst, String[] args);
 
-    private static native boolean freerdp_connect(int inst);
+    private static native boolean freerdp_connect(long inst);
 
-    private static native boolean freerdp_disconnect(int inst);
+    private static native boolean freerdp_disconnect(long inst);
 
-    private static native boolean freerdp_update_graphics(int inst,
+    private static native boolean freerdp_update_graphics(long inst,
                                                           Bitmap bitmap, int x, int y, int width, int height);
 
-    private static native boolean freerdp_send_cursor_event(int inst, int x, int y, int flags);
+    private static native boolean freerdp_send_cursor_event(long inst, int x, int y, int flags);
 
-    private static native boolean freerdp_send_key_event(int inst, int keycode, boolean down);
+    private static native boolean freerdp_send_key_event(long inst, int keycode, boolean down);
 
-    private static native boolean freerdp_send_unicodekey_event(int inst, int keycode);
+    private static native boolean freerdp_send_unicodekey_event(long inst, int keycode);
 
-    private static native boolean freerdp_send_clipboard_data(int inst, String data);
+    private static native boolean freerdp_send_clipboard_data(long inst, String data);
 
     public static interface EventListener {
-        void OnPreConnect(int instance);
+        void OnPreConnect(long instance);
 
-        void OnConnectionSuccess(int instance);
+        void OnConnectionSuccess(long instance);
 
-        void OnConnectionFailure(int instance);
+        void OnConnectionFailure(long instance);
 
-        void OnDisconnecting(int instance);
+        void OnDisconnecting(long instance);
 
-        void OnDisconnected(int instance);
+        void OnDisconnected(long instance);
     }
 
     public static interface UIEventListener {
@@ -112,23 +112,23 @@ public class LibFreeRDP {
         listener = l;
     }
 
-    public static int newInstance(Context context) {
+    public static long newInstance(Context context) {
         return freerdp_new(context);
     }
 
-    public static void freeInstance(int inst) {
+    public static void freeInstance(long inst) {
         freerdp_free(inst);
     }
 
-    public static boolean connect(int inst) {
+    public static boolean connect(long inst) {
         return freerdp_connect(inst);
     }
 
-    public static boolean disconnect(int inst) {
+    public static boolean disconnect(long inst) {
         return freerdp_disconnect(inst);
     }
 
-    public static boolean cancelConnection(int inst) {
+    public static boolean cancelConnection(long inst) {
         return freerdp_disconnect(inst);
     }
 
@@ -139,7 +139,7 @@ public class LibFreeRDP {
         return "-" + name;
     }
 
-    public static boolean setConnectionInfo(int inst, BookmarkBase bookmark) {
+    public static boolean setConnectionInfo(long inst, BookmarkBase bookmark) {
         BookmarkBase.ScreenSettings screenSettings = bookmark.getActiveScreenSettings();
         BookmarkBase.AdvancedSettings advanced = bookmark.getAdvancedSettings();
         BookmarkBase.DebugSettings debug = bookmark.getDebugSettings();
@@ -278,7 +278,7 @@ public class LibFreeRDP {
         return freerdp_parse_arguments(inst, arrayArgs);
     }
     
-    public static boolean setConnectionInfo(int inst, Uri openUri) {
+    public static boolean setConnectionInfo(long inst, Uri openUri) {
         ArrayList<String> args = new ArrayList<String>();
 
         // Parse URI from query string. Same key overwrite previous one
@@ -329,52 +329,52 @@ public class LibFreeRDP {
         return freerdp_parse_arguments(inst, arrayArgs);
     }
 
-    public static boolean updateGraphics(int inst, Bitmap bitmap, int x, int y, int width, int height) {
+    public static boolean updateGraphics(long inst, Bitmap bitmap, int x, int y, int width, int height) {
         return freerdp_update_graphics(inst, bitmap, x, y, width, height);
     }
 
-    public static boolean sendCursorEvent(int inst, int x, int y, int flags) {
+    public static boolean sendCursorEvent(long inst, int x, int y, int flags) {
         return freerdp_send_cursor_event(inst, x, y, flags);
     }
 
-    public static boolean sendKeyEvent(int inst, int keycode, boolean down) {
+    public static boolean sendKeyEvent(long inst, int keycode, boolean down) {
         return freerdp_send_key_event(inst, keycode, down);
     }
 
-    public static boolean sendUnicodeKeyEvent(int inst, int keycode) {
+    public static boolean sendUnicodeKeyEvent(long inst, int keycode) {
         return freerdp_send_unicodekey_event(inst, keycode);
     }
 
-    public static boolean sendClipboardData(int inst, String data) {
+    public static boolean sendClipboardData(long inst, String data) {
         return freerdp_send_clipboard_data(inst, data);
     }
 
-    private static void OnConnectionSuccess(int inst) {
+    private static void OnConnectionSuccess(long inst) {
         if (listener != null)
             listener.OnConnectionSuccess(inst);
     }
 
-    private static void OnConnectionFailure(int inst) {
+    private static void OnConnectionFailure(long inst) {
         if (listener != null)
             listener.OnConnectionFailure(inst);
     }
 
-    private static void OnPreConnect(int inst) {
+    private static void OnPreConnect(long inst) {
         if (listener != null)
             listener.OnPreConnect(inst);
     }
 
-    private static void OnDisconnecting(int inst) {
+    private static void OnDisconnecting(long inst) {
         if (listener != null)
             listener.OnDisconnecting(inst);
     }
 
-    private static void OnDisconnected(int inst) {
+    private static void OnDisconnected(long inst) {
         if (listener != null)
             listener.OnDisconnected(inst);
     }
 
-    private static void OnSettingsChanged(int inst, int width, int height, int bpp) {
+    private static void OnSettingsChanged(long inst, int width, int height, int bpp) {
         SessionState s = GlobalApp.getSession(inst);
         if (s == null)
             return;
@@ -383,7 +383,7 @@ public class LibFreeRDP {
             uiEventListener.OnSettingsChanged(width, height, bpp);
     }
 
-    private static boolean OnAuthenticate(int inst, StringBuilder username, StringBuilder domain, StringBuilder password) {
+    private static boolean OnAuthenticate(long inst, StringBuilder username, StringBuilder domain, StringBuilder password) {
         SessionState s = GlobalApp.getSession(inst);
         if (s == null)
             return false;
@@ -393,7 +393,7 @@ public class LibFreeRDP {
         return false;
     }
 
-    private static boolean OnGatewayAuthenticate(int inst, StringBuilder username, StringBuilder
+    private static boolean OnGatewayAuthenticate(long inst, StringBuilder username, StringBuilder
             domain, StringBuilder password) {
         SessionState s = GlobalApp.getSession(inst);
         if (s == null)
@@ -404,7 +404,7 @@ public class LibFreeRDP {
         return false;
     }
 
-    private static int OnVerifyCertificate(int inst, String commonName, String subject,
+    private static int OnVerifyCertificate(long inst, String commonName, String subject,
                                            String issuer, String fingerprint, boolean
                                                    hostMismatch) {
         SessionState s = GlobalApp.getSession(inst);
@@ -417,7 +417,7 @@ public class LibFreeRDP {
         return 0;
     }
 
-    private static int OnVerifyChangedCertificate(int inst, String commonName, String subject,
+    private static int OnVerifyChangedCertificate(long inst, String commonName, String subject,
                                            String issuer, String fingerprint, String oldSubject,
                                            String oldIssuer, String oldFingerprint) {
         SessionState s = GlobalApp.getSession(inst);
@@ -430,7 +430,7 @@ public class LibFreeRDP {
         return 0;
     }
 
-    private static void OnGraphicsUpdate(int inst, int x, int y, int width, int height) {
+    private static void OnGraphicsUpdate(long inst, int x, int y, int width, int height) {
         SessionState s = GlobalApp.getSession(inst);
         if (s == null)
             return;
@@ -439,7 +439,7 @@ public class LibFreeRDP {
             uiEventListener.OnGraphicsUpdate(x, y, width, height);
     }
 
-    private static void OnGraphicsResize(int inst, int width, int height, int bpp) {
+    private static void OnGraphicsResize(long inst, int width, int height, int bpp) {
         SessionState s = GlobalApp.getSession(inst);
         if (s == null)
             return;
@@ -448,7 +448,7 @@ public class LibFreeRDP {
             uiEventListener.OnGraphicsResize(width, height, bpp);
     }
 
-    private static void OnRemoteClipboardChanged(int inst, String data) {
+    private static void OnRemoteClipboardChanged(long inst, String data) {
         SessionState s = GlobalApp.getSession(inst);
         if (s == null)
             return;

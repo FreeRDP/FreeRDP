@@ -212,7 +212,7 @@ public class SessionActivity extends ActionBarActivity implements
 				return;
 
 			// is this event for the current session?
-			if (session.getInstance() != intent.getExtras().getInt(
+			if (session.getInstance() != intent.getExtras().getLong(
 					GlobalApp.EVENT_PARAM, -1))
 				return;
 

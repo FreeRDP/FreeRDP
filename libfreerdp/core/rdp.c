@@ -1110,7 +1110,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	UINT16 pduLength;
 	UINT16 pduSource;
 	UINT16 channelId = 0;
-	UINT16 securityFlags;
+	UINT16 securityFlags = 0;
 	int nextPosition;
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))

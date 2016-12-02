@@ -777,7 +777,7 @@ BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s)
 {
 	UINT16 length;
 	UINT16 channelId;
-	UINT16 securityFlags;
+	UINT16 securityFlags = 0;
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 		return FALSE;

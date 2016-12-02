@@ -3806,7 +3806,7 @@ static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings,
 BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId)
 {
 	UINT16 length;
-	UINT16 securityFlags;
+	UINT16 securityFlags = 0;
 
 	if (!rdp_read_header(rdp, s, &length, pChannelId))
 		return FALSE;
