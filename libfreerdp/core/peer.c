@@ -360,7 +360,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 	UINT16 pduLength;
 	UINT16 pduSource;
 	UINT16 channelId;
-	UINT16 securityFlags;
+	UINT16 securityFlags = 0;
 	rdp = client->context->rdp;
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
