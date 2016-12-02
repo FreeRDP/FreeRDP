@@ -139,7 +139,7 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_addin(LPCSTR pszFileName,
 	HINSTANCE library = NULL;
 	size_t cchFileName;
 	size_t cchFilePath;
-	LPSTR pszAddinFile;
+	LPSTR pszAddinFile = NULL;
 	LPSTR pszFilePath = NULL;
 	LPSTR pszRelativeFilePath = NULL;
 	size_t cchAddinFile;

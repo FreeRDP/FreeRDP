@@ -367,7 +367,7 @@ BOOL freerdp_channels_is_virtual_channel_entry_ex(LPCSTR pszName)
 	return FALSE;
 }
 
-void* freerdp_channels_load_static_addin_entry(LPCSTR pszName, LPSTR pszSubsystem, LPSTR pszType, DWORD dwFlags)
+PVIRTUALCHANNELENTRY freerdp_channels_load_static_addin_entry(LPCSTR pszName, LPSTR pszSubsystem, LPSTR pszType, DWORD dwFlags)
 {
 	int i, j;
 	STATIC_SUBSYSTEM_ENTRY* subsystems;
@@ -387,11 +387,11 @@ void* freerdp_channels_load_static_addin_entry(LPCSTR pszName, LPSTR pszSubsyste
 						if (pszType)
 						{
 							if (strcmp(subsystems[j].type, pszType) == 0)
-								return (void*) subsystems[j].entry;
+								return subsystems[j].entry;
 						}
 						else
 						{
-							return (void*) subsystems[j].entry;
+							return subsystems[j].entry;
 						}
 					}
 				}
@@ -404,7 +404,7 @@ void* freerdp_channels_load_static_addin_entry(LPCSTR pszName, LPSTR pszSubsyste
 						return NULL;
 				}
 			
-				return (void*) CLIENT_STATIC_ADDIN_TABLE[i].entry;
+				return CLIENT_STATIC_ADDIN_TABLE[i].entry;
 			}
 		}
 	}

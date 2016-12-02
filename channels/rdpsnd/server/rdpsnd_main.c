@@ -105,7 +105,7 @@ static UINT rdpsnd_server_recv_waveconfirm(RdpsndServerContext* context,
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_ERR(TAG, "not enought data in stream!");
+		WLog_ERR(TAG, "not enough data in stream!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -132,7 +132,7 @@ static UINT rdpsnd_server_recv_quality_mode(RdpsndServerContext* context,
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_ERR(TAG, "not enought data in stream!");
+		WLog_ERR(TAG, "not enough data in stream!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -157,7 +157,7 @@ static UINT rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 
 	if (Stream_GetRemainingLength(s) < 20)
 	{
-		WLog_ERR(TAG, "not enought data in stream!");
+		WLog_ERR(TAG, "not enough data in stream!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -173,7 +173,7 @@ static UINT rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 	/* this check is only a guess as cbSize can influence the size of a format record */
 	if (Stream_GetRemainingLength(s) < context->num_client_formats * 18)
 	{
-		WLog_ERR(TAG, "not enought data in stream!");
+		WLog_ERR(TAG, "not enough data in stream!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -196,7 +196,7 @@ static UINT rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 	{
 		if (Stream_GetRemainingLength(s) < 18)
 		{
-			WLog_ERR(TAG, "not enought data in stream!");
+			WLog_ERR(TAG, "not enough data in stream!");
 			error = ERROR_INVALID_DATA;
 			goto out_free;
 		}
@@ -942,7 +942,7 @@ UINT rdpsnd_server_handle_messages(RdpsndServerContext* context)
 			break;
 
 		default:
-			WLog_ERR(TAG,  "UNKOWN MESSAGE TYPE!! (%#0X)", priv->msgType);
+			WLog_ERR(TAG,  "UNKNOWN MESSAGE TYPE!! (%#0X)", priv->msgType);
 			ret = ERROR_INVALID_DATA;
 			break;
 	}

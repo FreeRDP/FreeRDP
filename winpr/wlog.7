@@ -1,8 +1,8 @@
 .\" Written by David Fort (contact@hardening-consulting.com)
 .\" Process this file with
-.\" groff -man -Tascii foo.1
+.\" groff -man -Tascii wlog.7
 .\"
-.TH wLog 13 "June 2016" Version "1.0"
+.TH wLog 7 "June 2016" Version "2.0"
 .SH NAME
 wLog \- WinPR logging facility
 
@@ -48,12 +48,12 @@ This appender outputs messages to journald.
 The WLog are complementary, the higher level always includes the lower ones.
 The level list below is top down. Top the highest level.
 
-.IP TRACE 
+.IP TRACE
 print everything including packets dumps
-.IP DEBUG 
+.IP DEBUG
 debug messages
 .IP INFO
-general informations
+general information
 .IP WARN
 warnings
 .IP ERROR
@@ -104,23 +104,23 @@ WLOG_PREFIX="pid=%pid:tid=%tid:fn=%fn -" xfreerdp /v:xxx
 .SH ENVIRONMENT
 .IP WLOG_APPENDER
 The kind of appender, the accepted values are: CONSOLE, FILE, BINARY, SYSLOG, JOURNALD or UDP
-  
+
 .IP WLOG_PREFIX
 configure the prefix used for outputting the message (see Format for more details and examples)
 
 .IP WLOG_LEVEL
-the level to output messages for 
+the level to output messages for
 
 .IP WLOG_FILTER
 sets a filter for WLog messages. Only the filtered messages are
-printed. The format of the filter is a serie of \<logger name\>:\<level\> separated by
+printed. The format of the filter is a series of \<logger name\>:\<level\> separated by
 comas
 
 example: WLOG_FILTER=core.channel:DEBUG,dummy:TRACE
 will display debug messages for the core.channel logger and trace level for the dummy logger
 
 .IP WLOG_FILEAPPENDER_OUTPUT_FILE_PATH
-When using the file appender it may contains the output log file's path 
+When using the file appender it may contains the output log file's path
 
 .IP WLOG_FILEAPPENDER_OUTPUT_FILE_NAME
 When using the file appender it may contains the output log file's name
@@ -130,13 +130,13 @@ When using the systemd journal appender, this variable contains the id used with
 the journal (by default the executable's name)
 
 .IP WLOG_UDP_TARGET
-target to use for the UDP appender in the format 
+target to use for the UDP appender in the format
 .B host:port
 
 .SH BUGS
 Please report any bugs using the bug reporting form on the
 .B FreeRDP
-web site 
+web site
 
 .SH "SEE ALSO"
 Additional information and the latest version is available

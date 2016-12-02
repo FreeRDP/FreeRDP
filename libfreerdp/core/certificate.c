@@ -516,7 +516,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 
 	if (Stream_GetRemainingLength(s) < wSignatureBlobLen)
 	{
-		WLog_ERR(TAG, "not enought bytes for signature(len=%d)", wSignatureBlobLen);
+		WLog_ERR(TAG, "not enough bytes for signature(len=%d)", wSignatureBlobLen);
 		return FALSE;
 	}
 

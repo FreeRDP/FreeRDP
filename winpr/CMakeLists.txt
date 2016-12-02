@@ -176,9 +176,9 @@ endif()
 
 if(WITH_MANPAGES)
 	if(OPENBSD)
-	    install(FILES wlog.1 DESTINATION man/man1)
+	    install(FILES wlog.7 DESTINATION man/man7)
 	else()
-	    install(FILES wlog.1 DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/man/man1)
+	    install(FILES wlog.7 DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/man/man7)
 	endif()
 endif(WITH_MANPAGES)
 

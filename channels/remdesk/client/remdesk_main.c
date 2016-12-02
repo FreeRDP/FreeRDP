@@ -141,7 +141,7 @@ static UINT remdesk_read_channel_header(wStream* s,
 
 	if (Stream_GetRemainingLength(s) < 8)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -162,7 +162,7 @@ static UINT remdesk_read_channel_header(wStream* s,
 
 	if (Stream_GetRemainingLength(s) < ChannelNameLen)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -256,7 +256,7 @@ static UINT remdesk_recv_ctl_version_info_pdu(remdeskPlugin* remdesk,
 
 	if (Stream_GetRemainingLength(s) < 8)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -313,7 +313,7 @@ static UINT remdesk_recv_ctl_result_pdu(remdeskPlugin* remdesk, wStream* s,
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -553,7 +553,7 @@ static UINT remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s,
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 

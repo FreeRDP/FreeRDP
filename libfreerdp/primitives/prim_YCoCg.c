@@ -129,7 +129,6 @@ static pstatus_t general_YCoCgToRGB_8u_AC4R(
 	{
 		for (x = 0; x < width; x++)
 		{
-			UINT32 color;
 			/* Note: shifts must be done before sign-conversion. */
 			Cg = (INT16)((INT8)((*sptr++) << cll));
 			Co = (INT16)((INT8)((*sptr++) << cll));

@@ -509,7 +509,7 @@ static UINT dvcman_open_channel(IWTSVirtualChannelManager* pChannelMgr,
 
 		if ((pCallback->OnOpen) && (error = pCallback->OnOpen(pCallback)))
 		{
-			WLog_ERR(TAG, "OnOpen failed with eror %u!", error);
+			WLog_ERR(TAG, "OnOpen failed with error %u!", error);
 			return error;
 		}
 
@@ -561,7 +561,7 @@ static UINT dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr,
 
 		if ((ichannel->Close) && (error = ichannel->Close(ichannel)))
 		{
-			WLog_ERR(TAG, "Close failed with eror %u!", error);
+			WLog_ERR(TAG, "Close failed with error %u!", error);
 			return error;
 		}
 	}
