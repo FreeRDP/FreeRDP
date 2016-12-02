@@ -960,10 +960,7 @@ static BOOL gdi_surface_bits(rdpContext* context,
 	switch (cmd->codecID)
 	{
 		case RDP_CODEC_ID_REMOTEFX:
-			format = PIXEL_FORMAT_BGRX32;
-
 			if (!rfx_process_message(context->codecs->rfx, cmd->bitmapData,
-			                         format,
 			                         cmd->bitmapDataLength,
 			                         cmd->destLeft, cmd->destTop,
 			                         gdi->primary_buffer, gdi->dstFormat,
