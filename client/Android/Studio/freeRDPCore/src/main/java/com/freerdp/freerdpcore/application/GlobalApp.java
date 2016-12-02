@@ -27,7 +27,7 @@ import com.freerdp.freerdpcore.services.ManualBookmarkGateway;
 import com.freerdp.freerdpcore.services.QuickConnectHistoryGateway;
 
 public class GlobalApp extends Application implements LibFreeRDP.EventListener {
-    private static Map<Integer, SessionState> sessionMap;
+    private static Map<Long, SessionState> sessionMap;
 
     private static final String TAG = "GlobalApp";
 
@@ -70,7 +70,7 @@ public class GlobalApp extends Application implements LibFreeRDP.EventListener {
 
 
     public GlobalApp() {
-        sessionMap = Collections.synchronizedMap(new HashMap<Integer, SessionState>());
+        sessionMap = Collections.synchronizedMap(new HashMap<Long, SessionState>());
 
         LibFreeRDP.setEventListener(this);
     }
@@ -126,17 +126,17 @@ public class GlobalApp extends Application implements LibFreeRDP.EventListener {
     // RDP session handling
     static public SessionState createSession(BookmarkBase bookmark, Context context) {
         SessionState session = new SessionState(LibFreeRDP.newInstance(context), bookmark);
-        sessionMap.put(Integer.valueOf(session.getInstance()), session);
+        sessionMap.put(Long.valueOf(session.getInstance()), session);
         return session;
     }
     
     static public SessionState createSession(Uri openUri, Context context) {
         SessionState session = new SessionState(LibFreeRDP.newInstance(context), openUri);
-        sessionMap.put(Integer.valueOf(session.getInstance()), session);
+        sessionMap.put(Long.valueOf(session.getInstance()), session);
         return session;
     }
 
-    static public SessionState getSession(int instance) {
+    static public SessionState getSession(long instance) {
         return sessionMap.get(instance);
     }
 
@@ -145,7 +145,7 @@ public class GlobalApp extends Application implements LibFreeRDP.EventListener {
         return new ArrayList<SessionState>(sessionMap.values());
     }
 
-    static public void freeSession(int instance) {
+    static public void freeSession(long instance) {
         if (GlobalApp.sessionMap.containsKey(instance)) {
             GlobalApp.sessionMap.remove(instance);
             LibFreeRDP.freeInstance(instance);
@@ -153,7 +153,7 @@ public class GlobalApp extends Application implements LibFreeRDP.EventListener {
     }
 
     // helper to send FreeRDP notifications
-    private void sendRDPNotification(int type, int param) {
+    private void sendRDPNotification(int type, long param) {
         // send broadcast
         Intent intent = new Intent(ACTION_EVENT_FREERDP);
         intent.putExtra(EVENT_TYPE, type);
@@ -162,32 +162,32 @@ public class GlobalApp extends Application implements LibFreeRDP.EventListener {
     }
 
     @Override
-    public void OnPreConnect(int instance) {
+    public void OnPreConnect(long instance) {
         Log.v(TAG, "OnPreConnect");
     }
 
     // //////////////////////////////////////////////////////////////////////
     // Implementation of LibFreeRDP.EventListener
-    public void OnConnectionSuccess(int instance) {
+    public void OnConnectionSuccess(long instance) {
         Log.v(TAG, "OnConnectionSuccess");
         sendRDPNotification(FREERDP_EVENT_CONNECTION_SUCCESS, instance);
     }
 
-    public void OnConnectionFailure(int instance) {
+    public void OnConnectionFailure(long instance) {
         Log.v(TAG, "OnConnectionFailure");
 
         // send notification to session activity
         sendRDPNotification(FREERDP_EVENT_CONNECTION_FAILURE, instance);
     }
 
-    public void OnDisconnecting(int instance) {
+    public void OnDisconnecting(long instance) {
         Log.v(TAG, "OnDisconnecting");
 
         // send disconnect notification
         sendRDPNotification(FREERDP_EVENT_DISCONNECTED, instance);
     }
 
-    public void OnDisconnected(int instance) {
+    public void OnDisconnected(long instance) {
         Log.v(TAG, "OnDisconnected");
     }
 }
