@@ -662,7 +662,7 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
 				return FALSE;
 			}
 
-			Stream_Read_UINT16(s, vBarHeader);;
+			Stream_Read_UINT16(s, vBarHeader);
 			suboffset += 2;
 			vBarHeight = (yEnd - yStart + 1);
 
@@ -751,7 +751,6 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
 				}
 
 				suboffset += (vBarShortPixelCount * 3);
-				vBarShortEntry->count = vBarShortPixelCount;
 				clear->ShortVBarStorageCursor =
 				    (clear->ShortVBarStorageCursor + 1) % CLEARCODEC_VBAR_SHORT_SIZE;
 				vBarUpdate = TRUE;
