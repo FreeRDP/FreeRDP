@@ -374,7 +374,7 @@ BOOL freerdp_image_copy_from_pointer_data(
 					}
 				}
 
-				return TRUE
+				return TRUE;
 			}
 
 		default:
