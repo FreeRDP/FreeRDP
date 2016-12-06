@@ -127,7 +127,7 @@ BOOL freerdp_image_copy_from_monochrome(BYTE* pDstData, UINT32 DstFormat,
 		}
 	}
 
-	return 1;
+	return TRUE;
 }
 
 static INLINE UINT32 freerdp_image_inverted_pointer_color(UINT32 x, UINT32 y,
@@ -188,22 +188,22 @@ BOOL freerdp_image_copy_from_pointer_data(
 	andStep += (andStep % 2);
 
 	if (!xorMask || (xorMaskLength == 0))
-		return -1;
+		return FALSE;
 
 	switch (xorBpp)
 	{
 		case 1:
 			if (!andMask || (andMaskLength == 0))
-				return -1;
+				return FALSE;
 
 			xorStep = (nWidth + 7) / 8;
 			xorStep += (xorStep % 2);
 
 			if (xorStep * nHeight > xorMaskLength)
-				return -1;
+				return FALSE;
 
 			if (andStep * nHeight > andMaskLength)
-				return -1;
+				return FALSE;
 
 			for (y = 0; y < nHeight; y++)
 			{
@@ -257,7 +257,7 @@ BOOL freerdp_image_copy_from_pointer_data(
 				}
 			}
 
-			return 1;
+			return TRUE;
 
 		case 8:
 		case 16:
@@ -271,16 +271,16 @@ BOOL freerdp_image_copy_from_pointer_data(
 				{
 					WLog_ERR(TAG, "null palette in conversion from %d bpp to %d bpp",
 					         xorBpp, dstBitsPerPixel);
-					return -1;
+					return FALSE;
 				}
 
 				if (xorStep * nHeight > xorMaskLength)
-					return -1;
+					return FALSE;
 
 				if (andMask)
 				{
 					if (andStep * nHeight > andMaskLength)
-						return -1;
+						return FALSE;
 				}
 
 				for (y = 0; y < nHeight; y++)
@@ -374,13 +374,13 @@ BOOL freerdp_image_copy_from_pointer_data(
 					}
 				}
 
-				return 1;
+				return TRUE;
 			}
 
 		default:
 			WLog_ERR(TAG, "failed to convert from %d bpp to %d bpp",
 			         xorBpp, dstBitsPerPixel);
-			return -1;
+			return FALSE;
 	}
 }
 
