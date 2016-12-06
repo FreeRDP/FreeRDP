@@ -33,14 +33,6 @@
 #endif /* !MINMAX */
 
 /* ------------------------------------------------------------------------- */
-static INLINE BYTE* writePixel(BYTE* dst, UINT32 format, BYTE r, BYTE g, BYTE b)
-{
-	UINT32 color = GetColor(format, r, g, b, 0);
-	WriteColor(dst, format, color);
-	return dst + GetBytesPerPixel(format);
-}
-
-
 static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(
     const INT16* pSrc[3], UINT32 srcStep,
     BYTE* pDst, UINT32 DstFormat, UINT32 dstStep,
@@ -55,6 +47,8 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(
 	const INT16* pCr = pSrc[2];
 	int srcPad = (srcStep - (roi->width * 2)) / 2;
 	int dstPad = (dstStep - (roi->width * 4)) / 4;
+	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat);
+	const DWORD formatSize = GetBytesPerPixel(DstFormat);
 
 	for (y = 0; y < roi->height; y++)
 	{
@@ -82,7 +76,7 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(
 			else if (B > 255)
 				B = 255;
 
-			pRGB = writePixel(pRGB, DstFormat, R, G, B);
+			pRGB = (*writePixel)(pRGB, formatSize, DstFormat, R, G, B, 0xFF);
 			pY++;
 			pCb++;
 			pCr++;
@@ -111,6 +105,8 @@ static pstatus_t general_yCbCrToBGR_16s8u_P3AC4R(
 	const INT16* pCr = pSrc[2];
 	UINT32 srcPad = (srcStep - (roi->width * 2)) / 2;
 	UINT32 dstPad = (dstStep - (roi->width * 4)) / 4;
+	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat);
+	const DWORD formatSize = GetBytesPerPixel(DstFormat);
 
 	for (y = 0; y < roi->height; y++)
 	{
@@ -138,7 +134,7 @@ static pstatus_t general_yCbCrToBGR_16s8u_P3AC4R(
 			else if (B > 255)
 				B = 255;
 
-			pRGB = writePixel(pRGB, DstFormat, R, G, B);
+			pRGB = (*writePixel)(pRGB, formatSize, DstFormat, R, G, B, 0xFF);
 			pY++;
 			pCb++;
 			pCr++;
@@ -303,6 +299,150 @@ static pstatus_t general_RGBToYCbCr_16s16s_P3P3(
 	return PRIMITIVES_SUCCESS;
 }
 
+static INLINE void writeScanlineGeneric(BYTE* dst, DWORD formatSize, UINT32 DstFormat,
+                                        const INT16* r, const INT16* g, const INT16* b, DWORD width)
+{
+	DWORD x;
+	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat);
+
+	for (x = 0; x < width; x++)
+		dst = (*writePixel)(dst, formatSize, DstFormat, *r++, *g++, *b++, 0xFF);
+}
+
+static INLINE void writeScanlineRGB(BYTE* dst, DWORD formatSize, UINT32 DstFormat,
+                                    const INT16* r, const INT16* g, const INT16* b, DWORD width)
+{
+	DWORD x;
+
+	for (x = 0; x < width; x++)
+	{
+		const BYTE R = *r++;
+		const BYTE G = *g++;
+		const BYTE B = *b++;
+		*dst++ = R;
+		*dst++ = G;
+		*dst++ = B;
+	}
+}
+
+static INLINE void writeScanlineBGR(BYTE* dst, DWORD formatSize, UINT32 DstFormat,
+                                    const INT16* r, const INT16* g, const INT16* b, DWORD width)
+{
+	DWORD x;
+
+	for (x = 0; x < width; x++)
+	{
+		const BYTE R = *r++;
+		const BYTE G = *g++;
+		const BYTE B = *b++;
+		*dst++ = B;
+		*dst++ = G;
+		*dst++ = R;
+	}
+}
+
+static INLINE void writeScanlineBGRX(BYTE* dst, DWORD formatSize, UINT32 DstFormat,
+                                     const INT16* r, const INT16* g, const INT16* b, DWORD width)
+{
+	DWORD x;
+
+	for (x = 0; x < width; x++)
+	{
+		const BYTE R = *r++;
+		const BYTE G = *g++;
+		const BYTE B = *b++;
+		*dst++ = B;
+		*dst++ = G;
+		*dst++ = R;
+		*dst++ = 0xFF;
+	}
+}
+
+static INLINE void writeScanlineRGBX(BYTE* dst, DWORD formatSize, UINT32 DstFormat,
+                                     const INT16* r, const INT16* g, const INT16* b, DWORD width)
+{
+	DWORD x;
+
+	for (x = 0; x < width; x++)
+	{
+		const BYTE R = *r++;
+		const BYTE G = *g++;
+		const BYTE B = *b++;
+		*dst++ = R;
+		*dst++ = G;
+		*dst++ = B;
+		*dst++ = 0xFF;
+	}
+}
+
+static INLINE void writeScanlineXBGR(BYTE* dst, DWORD formatSize, UINT32 DstFormat,
+                                     const INT16* r, const INT16* g, const INT16* b, DWORD width)
+{
+	DWORD x;
+
+	for (x = 0; x < width; x++)
+	{
+		const BYTE R = *r++;
+		const BYTE G = *g++;
+		const BYTE B = *b++;
+		*dst++ = 0xFF;
+		*dst++ = B;
+		*dst++ = G;
+		*dst++ = R;
+	}
+}
+
+static INLINE void writeScanlineXRGB(BYTE* dst, DWORD formatSize, UINT32 DstFormat,
+                                     const INT16* r, const INT16* g, const INT16* b, DWORD width)
+{
+	DWORD x;
+
+	for (x = 0; x < width; x++)
+	{
+		const BYTE R = *r++;
+		const BYTE G = *g++;
+		const BYTE B = *b++;
+		*dst++ = 0xFF;
+		*dst++ = R;
+		*dst++ = G;
+		*dst++ = B;
+	}
+}
+
+typedef void (*fkt_writeScanline)(BYTE*, DWORD, UINT32, const INT16*,
+                                  const INT16*, const INT16*, DWORD);
+
+static INLINE fkt_writeScanline getScanlineWriteFunction(DWORD format)
+{
+	switch (format)
+	{
+		case PIXEL_FORMAT_ARGB32:
+		case PIXEL_FORMAT_XRGB32:
+			return writeScanlineXRGB;
+
+		case PIXEL_FORMAT_ABGR32:
+		case PIXEL_FORMAT_XBGR32:
+			return writeScanlineXBGR;
+
+		case PIXEL_FORMAT_RGBA32:
+		case PIXEL_FORMAT_RGBX32:
+			return writeScanlineRGBX;
+
+		case PIXEL_FORMAT_BGRA32:
+		case PIXEL_FORMAT_BGRX32:
+			return writeScanlineBGRX;
+
+		case PIXEL_FORMAT_BGR24:
+			return writeScanlineBGR;
+
+		case PIXEL_FORMAT_RGB24:
+			return writeScanlineRGB;
+
+		default:
+			return writeScanlineGeneric;
+	}
+}
+
 /* ------------------------------------------------------------------------- */
 static pstatus_t general_RGBToRGB_16s8u_P3AC4R(
     const INT16* const pSrc[3],	/* 16-bit R,G, and B arrays */
@@ -315,20 +455,18 @@ static pstatus_t general_RGBToRGB_16s8u_P3AC4R(
 	const INT16* r  = pSrc[0];
 	const INT16* g  = pSrc[1];
 	const INT16* b  = pSrc[2];
-	BYTE* dst = pDst;
-	UINT32 x, y;
-	UINT32 srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
-	UINT32 dstbump = (dstStep - (roi->width * sizeof(UINT32)));
+	UINT32 y;
+	const DWORD srcAdd = srcStep / sizeof(INT16);
+	fkt_writeScanline writeScanline = getScanlineWriteFunction(DstFormat);
+	const DWORD formatSize = GetBytesPerPixel(DstFormat);
 
 	for (y = 0; y < roi->height; ++y)
 	{
-		for (x = 0; x < roi->width; ++x)
-			dst = writePixel(dst, DstFormat, *r++, *g++, *b++);
-
-		dst += dstbump;
-		r += srcbump;
-		g += srcbump;
-		b += srcbump;
+		(*writeScanline)(pDst, formatSize, DstFormat, r, g, b, roi->width);
+		pDst += dstStep;
+		r += srcAdd;
+		g += srcAdd;
+		b += srcAdd;
 	}
 
 	return PRIMITIVES_SUCCESS;
