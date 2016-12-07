@@ -83,7 +83,7 @@ FREERDP_API INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
 
 FREERDP_API BOOL clear_context_reset(CLEAR_CONTEXT* clear);
 
-FREERDP_API CLEAR_CONTEXT* clear_context_new(BOOL Compressor);
+FREERDP_API CLEAR_CONTEXT* clear_context_new(BOOL Compressor, UINT32 format);
 FREERDP_API void clear_context_free(CLEAR_CONTEXT* clear);
 
 #ifdef __cplusplus

@@ -1140,7 +1140,7 @@ BOOL clear_context_reset(CLEAR_CONTEXT* clear)
 	clear->ShortVBarStorageCursor = 0;
 	return TRUE;
 }
-CLEAR_CONTEXT* clear_context_new(BOOL Compressor)
+CLEAR_CONTEXT* clear_context_new(BOOL Compressor, UINT32 format)
 {
 	CLEAR_CONTEXT* clear;
 	clear = (CLEAR_CONTEXT*) calloc(1, sizeof(CLEAR_CONTEXT));
@@ -1150,12 +1150,12 @@ CLEAR_CONTEXT* clear_context_new(BOOL Compressor)
 
 	clear->Compressor = Compressor;
 	clear->nsc = nsc_context_new();
-	clear->format = PIXEL_FORMAT_BGRX32;
+	clear->format = format;
 
 	if (!clear->nsc)
 		goto error_nsc;
 
-	nsc_context_set_pixel_format(clear->nsc, PIXEL_FORMAT_RGB24);
+	nsc_context_set_pixel_format(clear->nsc, format);
 	clear->TempSize = 512 * 512 * 4;
 	clear->TempBuffer = (BYTE*) malloc(clear->TempSize);
 

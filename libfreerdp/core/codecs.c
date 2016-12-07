@@ -24,6 +24,7 @@
 #include "rdp.h"
 
 #include <freerdp/codecs.h>
+#include <freerdp/gdi/gdi.h>
 
 #define TAG FREERDP_TAG("core.codecs")
 
@@ -68,7 +69,9 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags,
 
 	if ((flags & FREERDP_CODEC_CLEARCODEC) && !codecs->clear)
 	{
-		if (!(codecs->clear = clear_context_new(FALSE)))
+		const UINT32 format = codecs->context->gdi->dstFormat;
+
+		if (!(codecs->clear = clear_context_new(FALSE, format)))
 		{
 			WLog_ERR(TAG, "Failed to create clear codec context");
 			return FALSE;
