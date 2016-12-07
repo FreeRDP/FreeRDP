@@ -39,7 +39,7 @@ struct _CLEAR_GLYPH_ENTRY
 {
 	UINT32 size;
 	UINT32 count;
-	UINT32* pixels;
+	BYTE* pixels;
 };
 typedef struct _CLEAR_GLYPH_ENTRY CLEAR_GLYPH_ENTRY;
 
