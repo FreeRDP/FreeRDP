@@ -2,7 +2,7 @@
  * FreeRDP: A Remote Desktop Protocol Implementation
  * HTTP Proxy support
  *
- * Copyright 2015 Christian Plattner <ccpp@gmx.at>
+ * Copyright 2016 Christian Plattner <ccpp@gmx.at>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,11 @@
  * limitations under the License.
  */
 
-/* Probably this is more portable */
-#define TRIO_REPLACE_STDIO
 
 #include "proxy.h"
 #include "freerdp/settings.h"
 #include "tcp.h"
 
-#include "winpr/libwinpr/utils/trio/trio.h"	/* asprintf */
 #include "winpr/environment.h"	/* For GetEnvironmentVariableA */
 
 #define CRLF "\r\n"
@@ -67,36 +64,39 @@ void http_proxy_read_environment(rdpSettings *settings, char *envname)
 BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)
 {
 	int status;
-	char *send_buf, recv_buf[512], *eol;
+	wStream* s;
+	char port_str[10], recv_buf[256], *eol;
 	int resultsize;
-	int send_length;
 
-	send_length = trio_asprintf(&send_buf,
-			"CONNECT %s:%d HTTP/1.1" CRLF
-			"Host: %s:%d" CRLF CRLF,
-			hostname, port,
-			hostname, port);
+	_itoa_s(port, port_str, sizeof(port_str), 10);
 
-	if (send_length <= 0) {
-		fprintf(stderr, "HTTP proxy: failed to allocate memory\n");
-		return FALSE;
-	}
+	s = Stream_New(NULL, 200);
+	Stream_Write(s, "CONNECT ", 8);
+	Stream_Write(s, hostname, strlen(hostname));
+	Stream_Write_UINT8(s, ':');
+	Stream_Write(s, port_str, strlen(port_str));
+	Stream_Write(s, " HTTP/1.1" CRLF "Host: ", 17);
+	Stream_Write(s, hostname, strlen(hostname));
+	Stream_Write_UINT8(s, ':');
+	Stream_Write(s, port_str, strlen(port_str));
+	Stream_Write(s, CRLF CRLF, 4);
 
-	status = BIO_write(bufferedBio, send_buf, send_length);
-	free(send_buf);
-	send_buf = NULL;
+	status = BIO_write(bufferedBio, Stream_Buffer(s), Stream_GetPosition(s));
 
-	if (status != send_length) {
+	if (status != Stream_GetPosition(s)) {
 		fprintf(stderr, "HTTP proxy: failed to write CONNECT request\n");
 		return FALSE;
 	}
+
+	Stream_Free(s, TRUE);
+	s = NULL;
 
 	/* Read result until CR-LF-CR-LF.
 	 * Keep recv_buf a null-terminated string. */
 
 	memset(recv_buf, '\0', sizeof(recv_buf));
 	resultsize = 0;
-	while ( strstr(recv_buf, "\r\n\r\n") == NULL ) {
+	while ( strstr(recv_buf, CRLF CRLF) == NULL ) {
 		if (resultsize >= sizeof(recv_buf)-1) {
 			fprintf(stderr, "HTTP Reply headers too long.\n");
 			return FALSE;
