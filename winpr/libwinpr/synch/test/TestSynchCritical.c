@@ -201,6 +201,11 @@ static PVOID TestSynchCritical_Main(PVOID arg)
 	dwThreadCount = sysinfo.dwNumberOfProcessors > 1 ? sysinfo.dwNumberOfProcessors : 2;
 
 	hThreads = (HANDLE*) calloc(dwThreadCount, sizeof(HANDLE));
+	if (!hThreads)
+	{
+		printf("Problem allocating memory\n");
+		goto fail;
+	}
 
 	for (j = 0; j < TEST_SYNC_CRITICAL_TEST1_RUNS; j++)
 	{
@@ -212,8 +217,13 @@ static PVOID TestSynchCritical_Main(PVOID arg)
 
 		/* the TestSynchCritical_Test1 threads shall run until bTest1Running is FALSE */
 		bTest1Running = TRUE;
-		for (i = 0; i < (int) dwThreadCount; i++) {
-			hThreads[i] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) TestSynchCritical_Test1, &bTest1Running, 0, NULL);
+		for (i = 0; i < (int) dwThreadCount; i++)
+		{
+			if (!(hThreads[i] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) TestSynchCritical_Test1, &bTest1Running, 0, NULL)))
+			{
+				printf("CriticalSection failure: Failed to create test_1 thread #%d\n", i);
+				goto fail;
+			}
 		}
 
 		/* let it run for TEST_SYNC_CRITICAL_TEST1_RUNTIME_MS ... */
@@ -260,7 +270,11 @@ static PVOID TestSynchCritical_Main(PVOID arg)
 		goto fail;
 	}
 	/* This thread tries to call TryEnterCriticalSection which must fail */
-	hThread = CreateThread(NULL, 0,  (LPTHREAD_START_ROUTINE) TestSynchCritical_Test2, NULL, 0, NULL);
+	if (!(hThread = CreateThread(NULL, 0,  (LPTHREAD_START_ROUTINE) TestSynchCritical_Test2, NULL, 0, NULL)))
+	{
+		printf("CriticalSection failure: Failed to create test_2 thread\n");
+		goto fail;
+	}
 	if (WaitForSingleObject(hThread, INFINITE) != WAIT_OBJECT_0)
 	{
 		printf("CriticalSection failure: Failed to wait for thread\n");
@@ -295,7 +309,11 @@ int TestSynchCritical(int argc, char* argv[])
 
 	printf("Deadlock will be assumed after %u ms.\n", dwDeadLockDetectionTimeMs);
 
-	hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) TestSynchCritical_Main, &bThreadTerminated, 0, NULL);
+	if (!(hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) TestSynchCritical_Main, &bThreadTerminated, 0, NULL)))
+	{
+		printf("CriticalSection failure: Failed to create main thread\n");
+		return -1;
+	}
 
 	/**
 	 * We have to be able to detect dead locks in this test.

@@ -48,7 +48,7 @@ namespace TimeZones
     struct TIME_ZONE_ENTRY
     {
         public string Id;
-        public UInt32 Bias;
+        public Int32 Bias;
         public bool SupportsDST;
         public string DisplayName;
         public string StandardName;
@@ -70,27 +70,13 @@ namespace TimeZones
 
             stream.WriteLine();
 
-            stream.WriteLine("struct _SYSTEM_TIME_ENTRY");
-            stream.WriteLine("{");
-            stream.WriteLine("\tuint16 wYear;");
-            stream.WriteLine("\tuint16 wMonth;");
-            stream.WriteLine("\tuint16 wDayOfWeek;");
-            stream.WriteLine("\tuint16 wDay;");
-            stream.WriteLine("\tuint16 wHour;");
-            stream.WriteLine("\tuint16 wMinute;");
-            stream.WriteLine("\tuint16 wSecond;");
-            stream.WriteLine("\tuint16 wMilliseconds;");
-            stream.WriteLine("};");
-            stream.WriteLine("typedef struct _SYSTEM_TIME_ENTRY SYSTEM_TIME_ENTRY;");
-            stream.WriteLine();
-
             stream.WriteLine("struct _TIME_ZONE_RULE_ENTRY");
             stream.WriteLine("{");
-            stream.WriteLine("\tuint64 TicksStart;");
-            stream.WriteLine("\tuint64 TicksEnd;");
-            stream.WriteLine("\tsint32 DaylightDelta;");
-            stream.WriteLine("\tSYSTEM_TIME_ENTRY StandardDate;");
-            stream.WriteLine("\tSYSTEM_TIME_ENTRY DaylightDate;");
+            stream.WriteLine("\tUINT64 TicksStart;");
+            stream.WriteLine("\tUINT64 TicksEnd;");
+            stream.WriteLine("\tINT32 DaylightDelta;");
+            stream.WriteLine("\tSYSTEMTIME StandardDate;");
+            stream.WriteLine("\tSYSTEMTIME DaylightDate;");
             stream.WriteLine("};");
             stream.WriteLine("typedef struct _TIME_ZONE_RULE_ENTRY TIME_ZONE_RULE_ENTRY;");
             stream.WriteLine();
@@ -98,13 +84,13 @@ namespace TimeZones
             stream.WriteLine("struct _TIME_ZONE_ENTRY");
             stream.WriteLine("{");
             stream.WriteLine("\tconst char* Id;");
-            stream.WriteLine("\tuint32 Bias;");
-            stream.WriteLine("\tboolean SupportsDST;");
+            stream.WriteLine("\tINT32 Bias;");
+            stream.WriteLine("\tBOOL SupportsDST;");
             stream.WriteLine("\tconst char* DisplayName;");
             stream.WriteLine("\tconst char* StandardName;");
             stream.WriteLine("\tconst char* DaylightName;");
             stream.WriteLine("\tTIME_ZONE_RULE_ENTRY* RuleTable;");
-            stream.WriteLine("\tuint32 RuleTableCount;");
+            stream.WriteLine("\tUINT32 RuleTableCount;");
             stream.WriteLine("};");
             stream.WriteLine("typedef struct _TIME_ZONE_ENTRY TIME_ZONE_ENTRY;");
             stream.WriteLine();
@@ -141,7 +127,7 @@ namespace TimeZones
                     tzr.StandardDate.wYear = (UInt16)0;
                     tzr.StandardDate.wMonth = (UInt16)transition.Month;
                     tzr.StandardDate.wDayOfWeek = (UInt16)transition.DayOfWeek;
-                    tzr.StandardDate.wDay = (UInt16)transition.Day;
+                    tzr.StandardDate.wDay = (UInt16)transition.Week;
                     tzr.StandardDate.wHour = (UInt16)time.Hour;
                     tzr.StandardDate.wMinute = (UInt16)time.Minute;
                     tzr.StandardDate.wSecond = (UInt16)time.Second;
@@ -153,7 +139,7 @@ namespace TimeZones
                     tzr.DaylightDate.wYear = (UInt16)0;
                     tzr.DaylightDate.wMonth = (UInt16)transition.Month;
                     tzr.DaylightDate.wDayOfWeek = (UInt16)transition.DayOfWeek;
-                    tzr.DaylightDate.wDay = (UInt16)transition.Day;
+                    tzr.DaylightDate.wDay = (UInt16)transition.Week;
                     tzr.DaylightDate.wHour = (UInt16)time.Hour;
                     tzr.DaylightDate.wMinute = (UInt16)time.Minute;
                     tzr.DaylightDate.wSecond = (UInt16)time.Second;
@@ -193,24 +179,13 @@ namespace TimeZones
 
             foreach (TimeZoneInfo timeZone in timeZones)
             {
-                Int32 sbias;
                 TIME_ZONE_ENTRY tz;
                 TimeSpan offset = timeZone.BaseUtcOffset;
 
                 rules = timeZone.GetAdjustmentRules();
 
                 tz.Id = timeZone.Id;
-
-                if (offset.Hours >= 0)
-                {
-                    sbias = (offset.Hours * 60) + offset.Minutes;
-                    tz.Bias = (UInt32) sbias;
-                }
-                else
-                {
-                    sbias = (offset.Hours * 60) + offset.Minutes;
-                    tz.Bias = (UInt32) (1440 + sbias);
-                }
+		tz.Bias = -(Int32)offset.TotalMinutes;
 
                 tz.SupportsDST = timeZone.SupportsDaylightSavingTime;
 
@@ -233,7 +208,7 @@ namespace TimeZones
                 stream.WriteLine("\t{");
 
                 stream.WriteLine("\t\t\"{0}\", {1}, {2}, \"{3}\",",
-                    tz.Id, tz.Bias, tz.SupportsDST ? "true" : "false", tz.DisplayName);
+                    tz.Id, tz.Bias, tz.SupportsDST ? "TRUE" : "FALSE", tz.DisplayName);
 
                 stream.WriteLine("\t\t\"{0}\", \"{1}\",", tz.StandardName, tz.DaylightName);
                 stream.WriteLine("\t\t{0}, {1}", tz.RuleTable, tz.RuleTableCount);

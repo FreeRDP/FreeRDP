@@ -375,4 +375,16 @@ typedef struct _RAIL_COMPARTMENT_INFO_ORDER RAIL_COMPARTMENT_INFO_ORDER;
 #define RDP_RAIL_ORDER_COMPARTMENTINFO	0x0012
 #define RDP_RAIL_ORDER_HANDSHAKE_EX	0x0013
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+FREERDP_API BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string);
+
+#ifdef __cplusplus
+}
+#endif
+
+
 #endif /* FREERDP_RAIL_GLOBAL_H */

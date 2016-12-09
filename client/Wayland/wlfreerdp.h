@@ -20,25 +20,34 @@
 #ifndef __WLFREERDP_H
 #define __WLFREERDP_H
 
+#include <freerdp/client/encomsp.h>
+#include <freerdp/client/rdpei.h>
+#include <freerdp/gdi/gfx.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/log.h>
 #include <winpr/wtypes.h>
+#include <uwac/uwac.h>
 
 #define TAG CLIENT_TAG("wayland")
 
 typedef struct wlf_context wlfContext;
 
-#include "wlf_display.h"
-#include "wlf_window.h"
-#include "wlf_input.h"
 
 struct wlf_context
 {
 	rdpContext context;
 
-	wlfDisplay* display;
-	wlfWindow* window;
-	wlfInput* input;
+	UwacDisplay* display;
+	HANDLE displayHandle;
+	UwacWindow* window;
+
+	BOOL waitingFrameDone;
+	BOOL haveDamage;
+
+	/* Channels */
+	RdpeiClientContext* rdpei;
+	RdpgfxClientContext* gfx;
+	EncomspClientContext* encomsp;
 };
 
 #endif /* __WLFREERDP_H */

@@ -3,6 +3,8 @@
  * NSCodec Encoder
  *
  * Copyright 2012 Vic Lee
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2016 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +22,9 @@
 #ifndef __NSC_ENCODE_H
 #define __NSC_ENCODE_H
 
-void nsc_encode(NSC_CONTEXT* context, BYTE* bmpdata, int rowstride);
+#include <freerdp/api.h>
+
+FREERDP_LOCAL void nsc_encode(NSC_CONTEXT* context, const BYTE* bmpdata,
+                              UINT32 rowstride);
 
 #endif

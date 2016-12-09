@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -84,6 +85,8 @@ char* GetDeviceFileUnixDomainSocketBaseFilePathA()
 	char* lpPipePath;
 
 	lpTempPath = GetKnownPath(KNOWN_PATH_TEMP);
+	if (!lpTempPath)
+		return NULL;
 	lpPipePath = GetCombinedPath(lpTempPath, ".device");
 
 	free(lpTempPath);
@@ -93,13 +96,21 @@ char* GetDeviceFileUnixDomainSocketBaseFilePathA()
 
 char* GetDeviceFileUnixDomainSocketFilePathA(LPCSTR lpName)
 {
-	char* lpPipePath;
-	char* lpFileName;
-	char* lpFilePath;
+	char* lpPipePath = NULL;
+	char* lpFileName = NULL;
+	char* lpFilePath = NULL;
 
 	lpPipePath = GetDeviceFileUnixDomainSocketBaseFilePathA();
+	if (!lpPipePath)
+		return NULL;
 
 	lpFileName = GetDeviceFileNameWithoutPrefixA(lpName);
+	if (!lpFileName)
+	{
+		free(lpFilePath);
+		return NULL;
+	}
+
 	lpFilePath = GetCombinedPath(lpPipePath, (char*) lpFileName);
 
 	free(lpPipePath);
@@ -122,6 +133,9 @@ NTSTATUS _IoCreateDeviceEx(PDRIVER_OBJECT_EX DriverObject, ULONG DeviceExtension
 
 	DeviceBasePath = GetDeviceFileUnixDomainSocketBaseFilePathA();
 
+	if (!DeviceBasePath)
+		return STATUS_NO_MEMORY;
+
 	if (!PathFileExistsA(DeviceBasePath))
 	{
 		if (!mkdir(DeviceBasePath, S_IRUSR | S_IWUSR | S_IXUSR))
@@ -130,26 +144,63 @@ NTSTATUS _IoCreateDeviceEx(PDRIVER_OBJECT_EX DriverObject, ULONG DeviceExtension
 			return STATUS_ACCESS_DENIED;
 		}
 	}
+	free(DeviceBasePath);
 
-	pDeviceObjectEx = (DEVICE_OBJECT_EX*) malloc(sizeof(DEVICE_OBJECT_EX));
+	pDeviceObjectEx = (DEVICE_OBJECT_EX*) calloc(1, sizeof(DEVICE_OBJECT_EX));
 
 	if (!pDeviceObjectEx)
+		return STATUS_NO_MEMORY;
+
+	ConvertFromUnicode(CP_UTF8, 0, DeviceName->Buffer, DeviceName->Length / 2, &(pDeviceObjectEx->DeviceName), 0, NULL, NULL);
+	if (!pDeviceObjectEx->DeviceName)
 	{
+		free(pDeviceObjectEx);
 		return STATUS_NO_MEMORY;
 	}
 
-	ZeroMemory(pDeviceObjectEx, sizeof(DEVICE_OBJECT_EX));
-
-	ConvertFromUnicode(CP_UTF8, 0, DeviceName->Buffer, DeviceName->Length / 2, &(pDeviceObjectEx->DeviceName), 0, NULL, NULL);
-
 	pDeviceObjectEx->DeviceFileName = GetDeviceFileUnixDomainSocketFilePathA(pDeviceObjectEx->DeviceName);
+	if (!pDeviceObjectEx->DeviceFileName)
+	{
+		free(pDeviceObjectEx->DeviceName);
+		free(pDeviceObjectEx);
+		return STATUS_NO_MEMORY;
+	}
 
 	if (PathFileExistsA(pDeviceObjectEx->DeviceFileName))
 	{
-		unlink(pDeviceObjectEx->DeviceFileName);
+		if (unlink(pDeviceObjectEx->DeviceFileName) == -1)
+		{
+			free(pDeviceObjectEx->DeviceName);
+			free(pDeviceObjectEx->DeviceFileName);
+			free(pDeviceObjectEx);
+			return STATUS_ACCESS_DENIED;
+		}
+
 	}
 
 	status = mkfifo(pDeviceObjectEx->DeviceFileName, 0666);
+	if (status != 0)
+	{
+		free(pDeviceObjectEx->DeviceName);
+		free(pDeviceObjectEx->DeviceFileName);
+		free(pDeviceObjectEx);
+		switch (errno)
+		{
+			case EACCES:
+				return STATUS_ACCESS_DENIED;
+			case EEXIST:
+				return STATUS_OBJECT_NAME_EXISTS;
+			case ENAMETOOLONG:
+				return STATUS_NAME_TOO_LONG;
+			case ENOENT:
+			case ENOTDIR:
+				return STATUS_NOT_A_DIRECTORY;
+			case ENOSPC:
+				return STATUS_DISK_FULL;
+			default:
+				return STATUS_INTERNAL_ERROR;
+		}
+	}
 
 	*((ULONG_PTR*) (DeviceObject)) = (ULONG_PTR) pDeviceObjectEx;
 

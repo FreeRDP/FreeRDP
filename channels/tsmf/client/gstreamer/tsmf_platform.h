@@ -38,12 +38,16 @@ typedef struct _TSMFGstreamerDecoder
 
 	GstElement *pipe;
 	GstElement *src;
+	GstElement *queue;
 	GstElement *outsink;
 	GstElement *volume;
 
 	BOOL ready;
 	BOOL paused;
+	UINT64 last_sample_start_time;
 	UINT64 last_sample_end_time;
+	BOOL seeking;
+	UINT64 seek_offset;
 
 	double gstVolume;
 	BOOL gstMuted;
@@ -74,8 +78,8 @@ int tsmf_window_resize(TSMFGstreamerDecoder* decoder, int x, int y,
 					   int width, int height, int nr_rect, RDP_RECT *visible);
 int tsmf_window_destroy(TSMFGstreamerDecoder* decoder);
 
-int tsmf_window_pause(TSMFGstreamerDecoder* decoder);
-int tsmf_window_resume(TSMFGstreamerDecoder* decoder);
+int tsmf_window_map(TSMFGstreamerDecoder* decoder);
+int tsmf_window_unmap(TSMFGstreamerDecoder* decoder);
 
 BOOL tsmf_gstreamer_add_pad(TSMFGstreamerDecoder* mdecoder);
 void tsmf_gstreamer_remove_pad(TSMFGstreamerDecoder* mdecoder);

@@ -23,6 +23,6 @@
 
 #include "rdpdr_main.h"
 
-IRP* irp_new(DEVMAN* devman, wStream* s);
+IRP* irp_new(DEVMAN* devman, wStream* s, UINT* error);
 
 #endif /* FREERDP_CHANNEL_RDPDR_CLIENT_IRP_H */

@@ -224,10 +224,16 @@ void* BufferPool_Take(wBufferPool* pool, int size)
 		{
 			if (!size)
 				buffer = NULL;
-			else if (pool->alignment)
-				buffer = _aligned_malloc(size, pool->alignment);
 			else
-				buffer = malloc(size);
+			{
+				if (pool->alignment)
+					buffer = _aligned_malloc(size, pool->alignment);
+				else
+					buffer = malloc(size);
+
+				if (!buffer)
+					goto out_error;
+			}
 		}
 		else
 		{
@@ -235,19 +241,16 @@ void* BufferPool_Take(wBufferPool* pool, int size)
 
 			if (maxSize < size)
 			{
+				void *newBuffer;
 				if (pool->alignment)
-				{
-					_aligned_free(buffer);
-					buffer = _aligned_malloc(size, pool->alignment);
-				}
+					newBuffer = _aligned_realloc(buffer, size, pool->alignment);
 				else
-				{
-					void *newBuffer = realloc(buffer, size);
-					if (!newBuffer)
-						goto out_error;
+					newBuffer = realloc(buffer, size);
 
-					buffer = newBuffer;
-				}
+				if (!newBuffer)
+					goto out_error_no_free;
+
+				buffer = newBuffer;
 			}
 
 			if (!BufferPool_ShiftAvailable(pool, foundIndex, -1))
@@ -279,9 +282,11 @@ void* BufferPool_Take(wBufferPool* pool, int size)
 	return buffer;
 
 out_error:
-	if (buffer)
+	if (pool->alignment)
+		_aligned_free(buffer);
+	else
 		free(buffer);
-
+out_error_no_free:
 	if (pool->synchronized)
 		LeaveCriticalSection(&pool->lock);
 	return NULL;
@@ -448,6 +453,8 @@ wBufferPool* BufferPool_New(BOOL synchronized, int fixedSize, DWORD alignment)
 			pool->size = 0;
 			pool->capacity = 32;
 			pool->array = (void**) malloc(sizeof(void*) * pool->capacity);
+			if (!pool->array)
+				goto out_error;
 		}
 		else
 		{
@@ -456,14 +463,27 @@ wBufferPool* BufferPool_New(BOOL synchronized, int fixedSize, DWORD alignment)
 			pool->aSize = 0;
 			pool->aCapacity = 32;
 			pool->aArray = (wBufferPoolItem*) malloc(sizeof(wBufferPoolItem) * pool->aCapacity);
+			if (!pool->aArray)
+				goto out_error;
 
 			pool->uSize = 0;
 			pool->uCapacity = 32;
 			pool->uArray = (wBufferPoolItem*) malloc(sizeof(wBufferPoolItem) * pool->uCapacity);
+			if (!pool->uArray)
+			{
+				free(pool->aArray);
+				goto out_error;
+			}
 		}
 	}
 
 	return pool;
+
+out_error:
+	if (pool->synchronized)
+		DeleteCriticalSection(&pool->lock);
+	free(pool);
+	return NULL;
 }
 
 void BufferPool_Free(wBufferPool* pool)

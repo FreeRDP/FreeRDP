@@ -31,6 +31,9 @@
 #include <fcntl.h>
 #endif
 
+#include "../log.h"
+#define TAG WINPR_TAG("sysinfo")
+
 /**
  * api-ms-win-core-sysinfo-l1-1-1.dll:
  *
@@ -54,6 +57,7 @@
 #ifndef _WIN32
 
 #include <time.h>
+#include <sys/time.h>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -67,9 +71,6 @@ defined(__FreeBSD__) || defined(__NetBSD__) || \
 defined(__OpenBSD__) || defined(__DragonFly__)
 #include <sys/sysctl.h>
 #endif
-
-#include "../log.h"
-#define TAG WINPR_TAG("sysinfo")
 
 static DWORD GetProcessorArchitecture()
 {
@@ -105,7 +106,7 @@ static DWORD GetNumberOfProcessors()
 		int mib[4];
 		size_t length = sizeof(numCPUs);
 		mib[0] = CTL_HW;
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
 		mib[1] = HW_NCPU;
 #else
 		mib[1] = HW_AVAILCPU;
@@ -129,11 +130,35 @@ static DWORD GetNumberOfProcessors()
 	return numCPUs;
 }
 
+static DWORD GetSystemPageSize()
+{
+	DWORD dwPageSize = 0;
+	long sc_page_size = -1;
+
+#if defined(_SC_PAGESIZE)
+	if (sc_page_size < 0)
+		sc_page_size = sysconf(_SC_PAGESIZE);
+#endif
+
+#if defined(_SC_PAGE_SIZE)
+	if (sc_page_size < 0)
+		sc_page_size = sysconf(_SC_PAGE_SIZE);
+#endif
+
+	if (sc_page_size > 0)
+		dwPageSize = (DWORD) sc_page_size;
+
+	if (dwPageSize < 4096)
+		dwPageSize = 4096;
+
+	return dwPageSize;
+}
+
 void GetSystemInfo(LPSYSTEM_INFO lpSystemInfo)
 {
 	lpSystemInfo->wProcessorArchitecture = GetProcessorArchitecture();
 	lpSystemInfo->wReserved = 0;
-	lpSystemInfo->dwPageSize = 0;
+	lpSystemInfo->dwPageSize = GetSystemPageSize();
 	lpSystemInfo->lpMinimumApplicationAddress = NULL;
 	lpSystemInfo->lpMaximumApplicationAddress = NULL;
 	lpSystemInfo->dwActiveProcessorMask = 0;
@@ -147,115 +172,6 @@ void GetSystemInfo(LPSYSTEM_INFO lpSystemInfo)
 void GetNativeSystemInfo(LPSYSTEM_INFO lpSystemInfo)
 {
 	GetSystemInfo(lpSystemInfo);
-}
-
-BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
-{
-	char* dot;
-	int length;
-	char hostname[256];
-	gethostname(hostname, sizeof(hostname));
-	length = strlen(hostname);
-	dot = strchr(hostname, '.');
-
-	if (dot)
-		length = dot - hostname;
-
-	if (*lpnSize <= length)
-	{
-		*lpnSize = length + 1;
-		return 0;
-	}
-
-	if (!lpBuffer)
-		return 0;
-
-	CopyMemory(lpBuffer, hostname, length);
-	lpBuffer[length] = '\0';
-	return TRUE;
-}
-
-BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD lpnSize)
-{
-	int length;
-	char hostname[256];
-
-	if ((NameType == ComputerNameNetBIOS) || (NameType == ComputerNamePhysicalNetBIOS))
-		return GetComputerNameA(lpBuffer, lpnSize);
-
-	gethostname(hostname, sizeof(hostname));
-	length = strlen(hostname);
-
-	switch (NameType)
-	{
-		case ComputerNameDnsHostname:
-		case ComputerNameDnsDomain:
-		case ComputerNameDnsFullyQualified:
-		case ComputerNamePhysicalDnsHostname:
-		case ComputerNamePhysicalDnsDomain:
-		case ComputerNamePhysicalDnsFullyQualified:
-			if (*lpnSize <= length)
-			{
-				*lpnSize = length + 1;
-				return FALSE;
-			}
-
-			if (!lpBuffer)
-				return FALSE;
-
-			CopyMemory(lpBuffer, hostname, length);
-			lpBuffer[length] = '\0';
-			break;
-
-		default:
-			return FALSE;
-	}
-
-	return TRUE;
-}
-
-BOOL GetComputerNameExW(COMPUTER_NAME_FORMAT NameType, LPWSTR lpBuffer, LPDWORD nSize)
-{
-	WLog_ERR(TAG, "GetComputerNameExW unimplemented");
-	return 0;
-}
-
-/* OSVERSIONINFOEX Structure:
- * http://msdn.microsoft.com/en-us/library/windows/desktop/ms724833
- */
-
-BOOL GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
-{
-	/* Windows 7 SP1 Version Info */
-	if ((lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOA)) ||
-			(lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOEXA)))
-	{
-		lpVersionInformation->dwMajorVersion = 6;
-		lpVersionInformation->dwMinorVersion = 1;
-		lpVersionInformation->dwBuildNumber = 7601;
-		lpVersionInformation->dwPlatformId = VER_PLATFORM_WIN32_NT;
-		ZeroMemory(lpVersionInformation->szCSDVersion, sizeof(lpVersionInformation->szCSDVersion));
-
-		if (lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOEXA))
-		{
-			LPOSVERSIONINFOEXA lpVersionInformationEx = (LPOSVERSIONINFOEXA) lpVersionInformation;
-			lpVersionInformationEx->wServicePackMajor = 1;
-			lpVersionInformationEx->wServicePackMinor = 0;
-			lpVersionInformationEx->wSuiteMask = 0;
-			lpVersionInformationEx->wProductType = VER_NT_WORKSTATION;
-			lpVersionInformationEx->wReserved = 0;
-		}
-
-		return 1;
-	}
-
-	return 0;
-}
-
-BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation)
-{
-	WLog_ERR(TAG, "GetVersionExW unimplemented");
-	return 1;
 }
 
 void GetSystemTime(LPSYSTEMTIME lpSystemTime)
@@ -358,9 +274,169 @@ DWORD GetTickCount(void)
 }
 #endif // _WIN32
 
+#if !defined(_WIN32) || defined(_UWP)
+
+/* OSVERSIONINFOEX Structure:
+* http://msdn.microsoft.com/en-us/library/windows/desktop/ms724833
+*/
+
+BOOL GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
+{
+#ifdef _UWP
+	/* Windows 10 Version Info */
+	if ((lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOA)) ||
+		(lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOEXA)))
+	{
+		lpVersionInformation->dwMajorVersion = 10;
+		lpVersionInformation->dwMinorVersion = 0;
+		lpVersionInformation->dwBuildNumber = 0;
+		lpVersionInformation->dwPlatformId = VER_PLATFORM_WIN32_NT;
+		ZeroMemory(lpVersionInformation->szCSDVersion, sizeof(lpVersionInformation->szCSDVersion));
+
+		if (lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOEXA))
+		{
+			LPOSVERSIONINFOEXA lpVersionInformationEx = (LPOSVERSIONINFOEXA)lpVersionInformation;
+			lpVersionInformationEx->wServicePackMajor = 0;
+			lpVersionInformationEx->wServicePackMinor = 0;
+			lpVersionInformationEx->wSuiteMask = 0;
+			lpVersionInformationEx->wProductType = VER_NT_WORKSTATION;
+			lpVersionInformationEx->wReserved = 0;
+		}
+
+		return TRUE;
+	}
+#else
+	/* Windows 7 SP1 Version Info */
+	if ((lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOA)) ||
+		(lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOEXA)))
+	{
+		lpVersionInformation->dwMajorVersion = 6;
+		lpVersionInformation->dwMinorVersion = 1;
+		lpVersionInformation->dwBuildNumber = 7601;
+		lpVersionInformation->dwPlatformId = VER_PLATFORM_WIN32_NT;
+		ZeroMemory(lpVersionInformation->szCSDVersion, sizeof(lpVersionInformation->szCSDVersion));
+
+		if (lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOEXA))
+		{
+			LPOSVERSIONINFOEXA lpVersionInformationEx = (LPOSVERSIONINFOEXA)lpVersionInformation;
+			lpVersionInformationEx->wServicePackMajor = 1;
+			lpVersionInformationEx->wServicePackMinor = 0;
+			lpVersionInformationEx->wSuiteMask = 0;
+			lpVersionInformationEx->wProductType = VER_NT_WORKSTATION;
+			lpVersionInformationEx->wReserved = 0;
+		}
+
+		return TRUE;
+	}
+#endif
+
+	return FALSE;
+}
+
+BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation)
+{
+	ZeroMemory(lpVersionInformation->szCSDVersion, sizeof(lpVersionInformation->szCSDVersion));
+	return GetVersionExA((LPOSVERSIONINFOA) lpVersionInformation);
+}
+
+#endif
+
+#if !defined(_WIN32) || defined(_UWP)
+
+BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
+{
+	char* dot;
+	int length;
+	char hostname[256];
+
+	if (gethostname(hostname, sizeof(hostname)) == -1)
+		return FALSE;
+
+	length = (int) strlen(hostname);
+	dot = strchr(hostname, '.');
+
+	if (dot)
+		length = (int) (dot - hostname);
+
+	if (*lpnSize <= (DWORD) length)
+	{
+		SetLastError(ERROR_BUFFER_OVERFLOW);
+		*lpnSize = length + 1;
+		return FALSE;
+	}
+
+	if (!lpBuffer)
+		return FALSE;
+
+	CopyMemory(lpBuffer, hostname, length);
+	lpBuffer[length] = '\0';
+	*lpnSize = length;
+
+	return TRUE;
+}
+
+BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD lpnSize)
+{
+	int length;
+	char hostname[256];
+
+	if ((NameType == ComputerNameNetBIOS) || (NameType == ComputerNamePhysicalNetBIOS))
+		return GetComputerNameA(lpBuffer, lpnSize);
+
+	if (gethostname(hostname, sizeof(hostname)) == -1)
+		return FALSE;
+
+	length = (int) strlen(hostname);
+
+	switch (NameType)
+	{
+		case ComputerNameDnsHostname:
+		case ComputerNameDnsDomain:
+		case ComputerNameDnsFullyQualified:
+		case ComputerNamePhysicalDnsHostname:
+		case ComputerNamePhysicalDnsDomain:
+		case ComputerNamePhysicalDnsFullyQualified:
+			if (*lpnSize <= (DWORD) length)
+			{
+				*lpnSize = length + 1;
+				SetLastError(ERROR_MORE_DATA);
+				return FALSE;
+			}
+
+			if (!lpBuffer)
+				return FALSE;
+
+			CopyMemory(lpBuffer, hostname, length);
+			lpBuffer[length] = '\0';
+			break;
+
+		default:
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+BOOL GetComputerNameExW(COMPUTER_NAME_FORMAT NameType, LPWSTR lpBuffer, LPDWORD nSize)
+{
+	WLog_ERR(TAG, "GetComputerNameExW unimplemented");
+	return FALSE;
+}
+
+#endif
+
+#if defined(_UWP)
+
+DWORD GetTickCount(void)
+{
+	return (DWORD) GetTickCount64();
+}
+
+#endif
+
 #if (!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0600))
 
-ULONGLONG GetTickCount64(void)
+ULONGLONG winpr_GetTickCount64(void)
 {
 	ULONGLONG ticks = 0;
 #if defined(__linux__)
@@ -649,6 +725,21 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 }
 
 #endif //_WIN32
+
+DWORD GetTickCountPrecise(void)
+{
+#ifdef _WIN32
+	LARGE_INTEGER freq;
+	LARGE_INTEGER current;
+
+	QueryPerformanceFrequency(&freq);
+	QueryPerformanceCounter(&current);
+
+	return (DWORD) (current.QuadPart * 1000LL / freq.QuadPart);
+#else
+	return GetTickCount();
+#endif
+}
 
 BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 {

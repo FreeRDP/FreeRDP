@@ -2,6 +2,8 @@
  * FreeRDP: A Remote Desktop Protocol Implementation
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +29,12 @@
 
 #define TAG SERVER_TAG("shadow")
 
-static int encomsp_change_participant_control_level(EncomspServerContext* context,
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT encomsp_change_participant_control_level(EncomspServerContext* context,
 		ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU* pdu)
 {
 	BOOL inLobby;
@@ -90,7 +97,7 @@ static int encomsp_change_participant_control_level(EncomspServerContext* contex
 		client->inLobby = inLobby;
 	}
 
-	return 1;
+	return CHANNEL_RC_OK;
 }
 
 int shadow_client_encomsp_init(rdpShadowClient* client)
@@ -98,6 +105,8 @@ int shadow_client_encomsp_init(rdpShadowClient* client)
 	EncomspServerContext* encomsp;
 
 	encomsp = client->encomsp = encomsp_server_context_new(client->vcm);
+
+	encomsp->rdpcontext = &client->context;
 
 	encomsp->custom = (void*) client;
 
@@ -109,3 +118,11 @@ int shadow_client_encomsp_init(rdpShadowClient* client)
 	return 1;
 }
 
+void shadow_client_encomsp_uninit(rdpShadowClient* client)
+{
+	if (client->encomsp) {
+		client->encomsp->Stop(client->encomsp);
+		encomsp_server_context_free(client->encomsp);
+		client->encomsp = NULL;
+	}
+}

@@ -23,16 +23,11 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include <winpr/crt.h>
 #include <winpr/tchar.h>
 #include <winpr/dsparse.h>
 
 #include <freerdp/log.h>
-#include <openssl/rand.h>
 
 #include "http.h"
 
@@ -44,29 +39,13 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* 
 {
 	SECURITY_STATUS status;
 
-	sspi_GlobalInit();
-
 	ntlm->http = http;
 	ntlm->Bindings = Bindings;
 
-#ifdef WITH_NATIVE_SSPI
-	{
-		HMODULE hSSPI;
-		INIT_SECURITY_INTERFACE InitSecurityInterface;
-		PSecurityFunctionTable pSecurityInterface = NULL;
+	ntlm->table = InitSecurityInterfaceEx(0);
 
-		hSSPI = LoadLibrary(_T("secur32.dll"));
-
-#ifdef UNICODE
-		InitSecurityInterface = (INIT_SECURITY_INTERFACE) GetProcAddress(hSSPI, "InitSecurityInterfaceW");
-#else
-		InitSecurityInterface = (INIT_SECURITY_INTERFACE) GetProcAddress(hSSPI, "InitSecurityInterfaceA");
-#endif
-		ntlm->table = (*InitSecurityInterface)();
-	}
-#else
-	ntlm->table = InitSecurityInterface();
-#endif
+	if (!ntlm->table)
+		return FALSE;
 
 	sspi_SetAuthIdentity(&(ntlm->identity), user, domain, password);
 
@@ -74,18 +53,21 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* 
 
 	if (status != SEC_E_OK)
 	{
-		WLog_ERR(TAG,  "QuerySecurityPackageInfo status: 0x%08X", status);
+		WLog_ERR(TAG, "QuerySecurityPackageInfo status %s [%08X]",
+			 GetSecurityStatusString(status), status);
 		return FALSE;
 	}
 
 	ntlm->cbMaxToken = ntlm->pPackageInfo->cbMaxToken;
 
 	status = ntlm->table->AcquireCredentialsHandle(NULL, NTLMSP_NAME,
-			SECPKG_CRED_OUTBOUND, NULL, &ntlm->identity, NULL, NULL, &ntlm->credentials, &ntlm->expiration);
+						       SECPKG_CRED_OUTBOUND, NULL, &ntlm->identity, NULL, NULL,
+						       &ntlm->credentials, &ntlm->expiration);
 
 	if (status != SEC_E_OK)
 	{
-		WLog_ERR(TAG,  "AcquireCredentialsHandle status: 0x%08X", status);
+		WLog_ERR(TAG, "AcquireCredentialsHandle status %s [%08X]",
+			 GetSecurityStatusString(status), status);
 		return FALSE;
 	}
 
@@ -104,12 +86,12 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* 
 	}
 	else
 	{
-		/** 
-		 * flags for RPC authentication:
-		 * RPC_C_AUTHN_LEVEL_PKT_INTEGRITY:
-		 * ISC_REQ_USE_DCE_STYLE | ISC_REQ_DELEGATE | ISC_REQ_MUTUAL_AUTH |
-		 * ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT
-		 */
+		/**
+	 * flags for RPC authentication:
+	 * RPC_C_AUTHN_LEVEL_PKT_INTEGRITY:
+	 * ISC_REQ_USE_DCE_STYLE | ISC_REQ_DELEGATE | ISC_REQ_MUTUAL_AUTH |
+	 * ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT
+	 */
 
 		ntlm->fContextReq |= ISC_REQ_USE_DCE_STYLE;
 		ntlm->fContextReq |= ISC_REQ_DELEGATE | ISC_REQ_MUTUAL_AUTH;
@@ -121,46 +103,48 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* 
 
 BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, char* hostname)
 {
-	int length;
-	DWORD status;
-	DWORD SpnLength;
-	LPTSTR hostnameX;
-
-	length = 0;
+	BOOL status = FALSE;
+	DWORD SpnLength = 0;
+	LPTSTR hostnameX = NULL;
 
 #ifdef UNICODE
-	length = strlen(hostname);
-	hostnameX = (LPWSTR) malloc((length + 1)* sizeof(TCHAR));
-	MultiByteToWideChar(CP_UTF8, 0, hostname, length, hostnameX, length);
-	hostnameX[length] = 0;
+	ConvertToUnicode(CP_UTF8, 0, hostname, -1, (LPWSTR*) &hostnameX, 0);
 #else
-	hostnameX = hostname;
+	hostnameX = _strdup(hostname);
 #endif
+
+	if (!hostnameX)
+		return FALSE;
 
 	if (!ServiceClass)
 	{
 		ntlm->ServicePrincipalName = (LPTSTR) _tcsdup(hostnameX);
+
+		free(hostnameX);
+
 		if (!ntlm->ServicePrincipalName)
 			return FALSE;
+
 		return TRUE;
 	}
 
-	SpnLength = 0;
-	status = DsMakeSpn(ServiceClass, hostnameX, NULL, 0, NULL, &SpnLength, NULL);
-
-	if (status != ERROR_BUFFER_OVERFLOW)
-		return FALSE;
+	if (DsMakeSpn(ServiceClass, hostnameX, NULL, 0, NULL, &SpnLength, NULL) != ERROR_BUFFER_OVERFLOW)
+		goto error;
 
 	ntlm->ServicePrincipalName = (LPTSTR) malloc(SpnLength * sizeof(TCHAR));
+
 	if (!ntlm->ServicePrincipalName)
-		return FALSE;
+		goto error;
 
-	status = DsMakeSpn(ServiceClass, hostnameX, NULL, 0, NULL, &SpnLength, ntlm->ServicePrincipalName);
+	if (DsMakeSpn(ServiceClass, hostnameX, NULL, 0, NULL, &SpnLength, ntlm->ServicePrincipalName) != ERROR_SUCCESS)
+		goto error;
 
-	if (status != ERROR_SUCCESS)
-		return FALSE;
+	status = TRUE;
 
-	return TRUE;
+error:
+	free(hostnameX);
+
+	return status;
 }
 
 /**
@@ -239,26 +223,43 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 
 	if ((!ntlm) || (!ntlm->table))
 	{
-		WLog_ERR(TAG,  "ntlm_authenticate: invalid ntlm context");
+		WLog_ERR(TAG, "ntlm_authenticate: invalid ntlm context");
 		return FALSE;
 	}
 
 	status = ntlm->table->InitializeSecurityContext(&ntlm->credentials,
-			(ntlm->haveContext) ? &ntlm->context : NULL,
-			(ntlm->ServicePrincipalName) ? ntlm->ServicePrincipalName : NULL,
-			ntlm->fContextReq, 0, SECURITY_NATIVE_DREP,
-			(ntlm->haveInputBuffer) ? &ntlm->inputBufferDesc : NULL,
-			0, &ntlm->context, &ntlm->outputBufferDesc,
-			&ntlm->pfContextAttr, &ntlm->expiration);
+							(ntlm->haveContext) ? &ntlm->context : NULL,
+							(ntlm->ServicePrincipalName) ? ntlm->ServicePrincipalName : NULL,
+							ntlm->fContextReq, 0, SECURITY_NATIVE_DREP,
+							(ntlm->haveInputBuffer) ? &ntlm->inputBufferDesc : NULL,
+							0, &ntlm->context, &ntlm->outputBufferDesc,
+							&ntlm->pfContextAttr, &ntlm->expiration);
+
+	WLog_VRB(TAG, "InitializeSecurityContext status %s [%08X]",
+		 GetSecurityStatusString(status), status);
 
 	if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED) || (status == SEC_E_OK))
 	{
-		if (ntlm->table->CompleteAuthToken != NULL)
-			ntlm->table->CompleteAuthToken(&ntlm->context, &ntlm->outputBufferDesc);
-
-		if (ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes) != SEC_E_OK)
+		if ((status != SEC_E_OK) && ntlm->table->CompleteAuthToken)
 		{
-			WLog_ERR(TAG,  "QueryContextAttributes SECPKG_ATTR_SIZES failure");
+			SECURITY_STATUS cStatus;
+			
+			cStatus = ntlm->table->CompleteAuthToken(&ntlm->context, &ntlm->outputBufferDesc);
+
+			if (cStatus != SEC_E_OK)
+			{
+				WLog_WARN(TAG, "CompleteAuthToken status  %s [%08X]",
+					GetSecurityStatusString(cStatus), cStatus);
+				return FALSE;
+			}
+		}
+
+		status = ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes);
+
+		if (status != SEC_E_OK)
+		{
+			WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure %s [%08X]",
+				 GetSecurityStatusString(status), status);
 			return FALSE;
 		}
 
@@ -271,6 +272,7 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 	if (ntlm->haveInputBuffer)
 	{
 		free(ntlm->inputBuffer[0].pvBuffer);
+		ntlm->inputBuffer[0].pvBuffer = NULL;
 	}
 
 	ntlm->haveInputBuffer = TRUE;
@@ -282,33 +284,64 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 void ntlm_client_uninit(rdpNtlm* ntlm)
 {
 	free(ntlm->identity.User);
+	ntlm->identity.User = NULL;
+
 	free(ntlm->identity.Domain);
+	ntlm->identity.Domain = NULL;
+
 	free(ntlm->identity.Password);
+	ntlm->identity.Password = NULL;
+
 	free(ntlm->ServicePrincipalName);
+	ntlm->ServicePrincipalName = NULL;
 
 	if (ntlm->table)
 	{
-		ntlm->table->FreeCredentialsHandle(&ntlm->credentials);
-		ntlm->table->FreeContextBuffer(ntlm->pPackageInfo);
-		ntlm->table->DeleteSecurityContext(&ntlm->context);
+		SECURITY_STATUS status;
+
+		status = ntlm->table->FreeCredentialsHandle(&ntlm->credentials);
+		if (status != SEC_E_OK)
+		{
+			WLog_WARN(TAG, "FreeCredentialsHandle status %s [%08X]",
+				  GetSecurityStatusString(status), status);
+		}
+		status = ntlm->table->FreeContextBuffer(ntlm->pPackageInfo);
+		if (status != SEC_E_OK)
+		{
+			WLog_WARN(TAG, "FreeContextBuffer status %s [%08X]",
+				  GetSecurityStatusString(status), status);
+		}
+		status = ntlm->table->DeleteSecurityContext(&ntlm->context);
+		if (status != SEC_E_OK)
+		{
+			WLog_WARN(TAG, "DeleteSecurityContext status %s [%08X]",
+				  GetSecurityStatusString(status), status);
+		}
+		ntlm->table = NULL;
 	}
 }
 
 rdpNtlm* ntlm_new()
 {
-	return (rdpNtlm*) calloc(1, sizeof(rdpNtlm));
+	rdpNtlm* ntlm;
+
+	ntlm = (rdpNtlm*) calloc(1, sizeof(rdpNtlm));
+
+	return ntlm;
 }
 
 void ntlm_free(rdpNtlm* ntlm)
 {
-	if (ntlm)
-	{
-		if (ntlm->outputBuffer[0].pvBuffer)
-		{
-			free(ntlm->outputBuffer[0].pvBuffer);
-			ntlm->outputBuffer[0].pvBuffer = NULL;
-		}
+	if (!ntlm)
+		return;
 
-		free(ntlm);
+	if (ntlm->outputBuffer[0].pvBuffer)
+	{
+		free(ntlm->outputBuffer[0].pvBuffer);
+		ntlm->outputBuffer[0].pvBuffer = NULL;
 	}
+
+	ntlm_client_uninit(ntlm);
+
+	free(ntlm);
 }

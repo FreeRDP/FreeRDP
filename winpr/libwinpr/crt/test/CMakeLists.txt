@@ -8,7 +8,6 @@ set(${MODULE_PREFIX}_TESTS
 	TestTypes.c
 	TestAlignment.c
 	TestString.c
-	TestIntrinsics.c
 	TestUnicodeConversion.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS

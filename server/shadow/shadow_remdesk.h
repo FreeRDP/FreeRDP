@@ -29,6 +29,7 @@ extern "C" {
 #endif
 
 int shadow_client_remdesk_init(rdpShadowClient* client);
+void shadow_client_remdesk_uninit(rdpShadowClient* client);
 
 #ifdef __cplusplus
 }

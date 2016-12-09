@@ -26,72 +26,30 @@
 
 #include <winpr/sysinfo.h>
 #include <winpr/platform.h>
+#include <winpr/crypto.h>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
+primitives_t* generic = NULL;
+primitives_t* optimized = NULL;
 BOOL g_TestPrimitivesPerformance = FALSE;
+UINT32 g_Iterations = 1000;
+
 int test_sizes[] = { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 };
-
-/* ------------------------------------------------------------------------- */
-static void get_random_data_lrand(void *buffer, size_t size)
-{
-	static int seeded = 0;
-	long int *ptr = (long int *) buffer;
-	unsigned char *cptr;
-
-	if (!seeded)
-	{
-		seeded = 1;
-		srand48(time(NULL));
-	}
-	/* This isn't the perfect random number generator, but that's okay. */
-	while (size >= sizeof(long int))
-	{
-		*ptr++ = lrand48();
-		size -= sizeof(long int);
-	}
-	cptr = (unsigned char *) ptr;
-	while (size > 0)
-	{
-		*cptr++ = lrand48() & 0xff;
-		--size;
-	}
-}
-
-/* ------------------------------------------------------------------------- */
-void get_random_data(void *buffer, size_t size)
-{
-#ifdef __linux__
-	size_t offset = 0;
-	int fd = open("/dev/urandom", O_RDONLY);
-	if (fd < 0)
-	{
-		get_random_data_lrand(buffer, size);
-		return;
-	}
-
-	while (size > 0)
-	{
-		ssize_t count = read(fd, buffer+offset, size);
-		size -= count;
-		offset += count;
-	}
-	close(fd);
-#else
-	get_random_data_lrand(buffer, size);
-#endif
-}
 
 /* ------------------------------------------------------------------------- */
 
 #ifdef _WIN32
-float _delta_time(const struct timespec *t0, const struct timespec *t1) { return 0.0f; }
-#else
-float _delta_time(const struct timespec *t0, const struct timespec *t1)
+float _delta_time(const struct timespec* t0, const struct timespec* t1)
 {
-	INT64 secs = (INT64) (t1->tv_sec) - (INT64) (t0->tv_sec);
+	return 0.0f;
+}
+#else
+float _delta_time(const struct timespec* t0, const struct timespec* t1)
+{
+	INT64 secs = (INT64)(t1->tv_sec) - (INT64)(t0->tv_sec);
 	long nsecs = t1->tv_nsec - t0->tv_nsec;
 	double retval;
 
@@ -107,22 +65,49 @@ float _delta_time(const struct timespec *t0, const struct timespec *t1)
 #endif
 
 /* ------------------------------------------------------------------------- */
-void _floatprint(float t, char *output)
+void _floatprint(float t, char* output)
 {
 	/* I don't want to link against -lm, so avoid log,exp,... */
 	float f = 10.0;
 	int i;
+
 	while (t > f) f *= 10.0;
+
 	f /= 1000.0;
-	i = ((int) (t/f+0.5)) * (int) f;
+	i = ((int)(t / f + 0.5)) * (int) f;
+
 	if (t < 0.0) sprintf(output, "%f", t);
-	else if (i == 0) sprintf(output, "%d", (int) (t+0.5));
+	else if (i == 0) sprintf(output, "%d", (int)(t + 0.5));
 	else if (t < 1e+3) sprintf(output, "%3d", i);
 	else if (t < 1e+6) sprintf(output, "%3d,%03d",
-			i/1000, i % 1000);
+					   i / 1000, i % 1000);
 	else if (t < 1e+9) sprintf(output, "%3d,%03d,000",
-			i/1000000, (i % 1000000) / 1000);
+					   i / 1000000, (i % 1000000) / 1000);
 	else if (t < 1e+12) sprintf(output, "%3d,%03d,000,000",
-			i/1000000000, (i % 1000000000) / 1000000);
+					    i / 1000000000, (i % 1000000000) / 1000000);
 	else sprintf(output, "%f", t);
+}
+
+
+void prim_test_setup(BOOL performance) {
+	generic = primitives_get_generic();
+	optimized = primitives_get();
+	g_TestPrimitivesPerformance = performance;
+}
+
+
+BOOL speed_test(const char* name, const char* dsc, UINT32 iterations,
+		pstatus_t(*generic)(), pstatus_t(*optimised)(), ...)
+{
+	UINT32 i;
+
+	if (!name || !generic || !optimised || (iterations == 0))
+		return FALSE;
+
+	for (i=0; i<iterations; i++)
+	{
+
+	}
+
+	return TRUE;
 }

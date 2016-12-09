@@ -21,6 +21,7 @@ set(${MODULE_PREFIX}_COLLECTIONS_SRCS
 	collections/Queue.c
 	collections/Stack.c
 	collections/PubSub.c
+	collections/BipBuffer.c
 	collections/BitStream.c
 	collections/Reference.c
 	collections/ArrayList.c
@@ -50,6 +51,23 @@ set(${MODULE_PREFIX}_TRIO_SRCS
 	trio/triop.h
 	trio/triostr.c
 	trio/triostr.h)
+
+if (HAVE_SYSLOG_H)
+	set(SYSLOG_SRCS
+		wlog/SyslogAppender.c
+		wlog/SyslogAppender.h
+	)
+endif()
+
+if (LIBSYSTEMD_FOUND)
+	set(JOURNALD_SRCS
+		wlog/JournaldAppender.c
+		wlog/JournaldAppender.h
+	)
+
+	winpr_include_directory_add(${LIBSYSTEMD_INCLUDE_DIR})
+	winpr_library_add(${LIBSYSTEMD_LIBRARY})
+endif()
 	
 set(${MODULE_PREFIX}_WLOG_SRCS
 	wlog/wlog.c
@@ -59,7 +77,6 @@ set(${MODULE_PREFIX}_WLOG_SRCS
 	wlog/Message.c
 	wlog/Message.h
 	wlog/TextMessage.c
-	wlog/TextMessage.h
 	wlog/DataMessage.c
 	wlog/DataMessage.h
 	wlog/ImageMessage.c
@@ -75,7 +92,13 @@ set(${MODULE_PREFIX}_WLOG_SRCS
 	wlog/CallbackAppender.c
 	wlog/CallbackAppender.h
 	wlog/ConsoleAppender.c
-	wlog/ConsoleAppender.h)
+	wlog/ConsoleAppender.h
+	wlog/UdpAppender.c
+	wlog/UdpAppender.h
+	${SYSLOG_SRCS}
+	${JOURNALD_SRCS}
+	)
+
 
 set(${MODULE_PREFIX}_SRCS
 	ini.c
@@ -85,6 +108,7 @@ set(${MODULE_PREFIX}_SRCS
 	print.c
 	stream.c
 	debug.c
+	winpr.c
 	cmdline.c
 	ssl.c)
 
@@ -101,16 +125,24 @@ winpr_module_add(${${MODULE_PREFIX}_SRCS}
 winpr_include_directory_add(
 	"lodepng"
 	"trio"
-	"."
-	${ZLIB_INCLUDE_DIRS}
-	${OPENSSL_INCLUDE_DIR})
+	".")
+	
+if(OPENSSL_FOUND)
+	winpr_include_directory_add(${OPENSSL_INCLUDE_DIR})
+	winpr_library_add(${OPENSSL_LIBRARIES})
+endif()
 
-winpr_library_add(
-	${ZLIB_LIBRARIES}
-	${OPENSSL_LIBRARIES})
+if(MBEDTLS_FOUND)
+	winpr_include_directory_add(${MBEDTLS_INCLUDE_DIR})
+	winpr_library_add(${MBEDTLS_LIBRARIES})
+endif()
 
 if(UNIX)
 	winpr_library_add(m)
+endif()
+
+if(FREEBSD)
+	winpr_library_add(execinfo)
 endif()
 
 if(WIN32)

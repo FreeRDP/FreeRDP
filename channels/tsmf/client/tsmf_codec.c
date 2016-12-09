@@ -75,6 +75,13 @@ static const TSMFMediaTypeMap tsmf_sub_type_map[] =
 		TSMF_SUB_TYPE_WVC1
 	},
 
+        /* 00000160-0000-0010-8000-00AA00389B71 */
+	{
+		{ 0x60, 0x01, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 },
+		"MEDIASUBTYPE_WMAudioV1", /* V7, V8 has the same GUID */
+		TSMF_SUB_TYPE_WMA1
+	},
+
 	/* 00000161-0000-0010-8000-00AA00389B71 */
 	{
 		{ 0x61, 0x01, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 },
@@ -171,6 +178,13 @@ static const TSMFMediaTypeMap tsmf_sub_type_map[] =
 		{ 0x4D, 0x50, 0x34, 0x32, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 },
 		"MEDIASUBTYPE_MP42",
 		TSMF_SUB_TYPE_MP42
+	},
+
+	/* 3253344D-0000-0010-8000-00AA00389B71 */
+	{
+		{ 0x4D, 0x34, 0x53, 0x32, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 },
+		"MEDIASUBTYPE_MP42",
+		TSMF_SUB_TYPE_M4S2
 	},
 
 	/* E436EB81-524F-11CE-9F53-0020AF0BA770 */
@@ -288,30 +302,18 @@ static const TSMFMediaTypeMap tsmf_format_type_map[] =
 static void tsmf_print_guid(const BYTE* guid)
 {
 #ifdef WITH_DEBUG_TSMF
-	int i;
+	char guidString[37];
 
-	for (i = 3; i >= 0; i--)
-		WLog_INFO(TAG,  "%02X", guid[i]);
+	snprintf(guidString, sizeof(guidString), "%02X%02X%02X%02X-%02X%02X-%02X%02X-%02X%02X-%02X%02X%02X%02X%02X%02X",
+			guid[3], guid[2], guid[1], guid[0],
+			guid[5], guid[4],
+			guid[7], guid[6],
+			guid[8], guid[9],
+			guid[10], guid[11], guid[12], guid[13], guid[14], guid[15]
+	);
 
-	WLog_INFO(TAG,  "-");
 
-	for (i = 5; i >= 4; i--)
-		WLog_INFO(TAG,  "%02X", guid[i]);
-
-	WLog_INFO(TAG,  "-");
-
-	for (i = 7; i >= 6; i--)
-		WLog_INFO(TAG,  "%02X", guid[i]);
-
-	WLog_INFO(TAG,  "-");
-
-	for (i = 8; i < 16; i++)
-	{
-		WLog_INFO(TAG,  "%02X", guid[i]);
-
-		if (i == 9)
-			WLog_INFO(TAG,  "-");
-	}
+	WLog_INFO(TAG, "%s", guidString);
 #endif
 }
 
@@ -321,6 +323,9 @@ static UINT32 tsmf_codec_parse_BITMAPINFOHEADER(TS_AM_MEDIA_TYPE* mediatype, wSt
 	UINT32 biSize;
 	UINT32 biWidth;
 	UINT32 biHeight;
+
+	if (Stream_GetRemainingLength(s) < 40)
+		return 0;
 	Stream_Read_UINT32(s, biSize);
 	Stream_Read_UINT32(s, biWidth);
 	Stream_Read_UINT32(s, biHeight);
@@ -333,6 +338,9 @@ static UINT32 tsmf_codec_parse_BITMAPINFOHEADER(TS_AM_MEDIA_TYPE* mediatype, wSt
 		mediatype->Height = biHeight;
 
 	/* Assume there will be no color table for video? */
+	if ((biSize < 40) || (Stream_GetRemainingLength(s) < (biSize-40)))
+		return 0;
+
 	if (bypass && biSize > 40)
 		Stream_Seek(s, biSize - 40);
 
@@ -343,7 +351,11 @@ static UINT32 tsmf_codec_parse_BITMAPINFOHEADER(TS_AM_MEDIA_TYPE* mediatype, wSt
 static UINT32 tsmf_codec_parse_VIDEOINFOHEADER2(TS_AM_MEDIA_TYPE* mediatype, wStream* s)
 {
 	UINT64 AvgTimePerFrame;
+
 	/* VIDEOINFOHEADER2.rcSource, RECT(LONG left, LONG top, LONG right, LONG bottom) */
+	if (Stream_GetRemainingLength(s) < 72)
+		return 0;
+
 	Stream_Seek_UINT32(s);
 	Stream_Seek_UINT32(s);
 	Stream_Read_UINT32(s, mediatype->Width);
@@ -377,6 +389,10 @@ static UINT32 tsmf_codec_parse_VIDEOINFOHEADER(TS_AM_MEDIA_TYPE* mediatype, wStr
 	} VIDEOINFOHEADER;
 	*/
 	UINT64 AvgTimePerFrame;
+
+	if (Stream_GetRemainingLength(s) < 48)
+		return 0;
+
 	/* VIDEOINFOHEADER.rcSource, RECT(LONG left, LONG top, LONG right, LONG bottom) */
 	Stream_Seek_UINT32(s);
 	Stream_Seek_UINT32(s);
@@ -395,76 +411,17 @@ static UINT32 tsmf_codec_parse_VIDEOINFOHEADER(TS_AM_MEDIA_TYPE* mediatype, wStr
 	return 48;
 }
 
-BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, wStream* s)
+static BOOL tsmf_read_format_type(TS_AM_MEDIA_TYPE* mediatype, wStream* s, UINT32 cbFormat)
 {
-	int i;
-	UINT32 cbFormat;
-	BOOL ret = TRUE;
-	memset(mediatype, 0, sizeof(TS_AM_MEDIA_TYPE));
-	/* MajorType */
-	DEBUG_TSMF("MajorType:");
-	tsmf_print_guid(Stream_Pointer(s));
-
-	for (i = 0; tsmf_major_type_map[i].type != TSMF_MAJOR_TYPE_UNKNOWN; i++)
-	{
-		if (memcmp(tsmf_major_type_map[i].guid, Stream_Pointer(s), 16) == 0)
-			break;
-	}
-
-	mediatype->MajorType = tsmf_major_type_map[i].type;
-
-	if (mediatype->MajorType == TSMF_MAJOR_TYPE_UNKNOWN)
-		ret = FALSE;
-
-	DEBUG_TSMF("MajorType %s", tsmf_major_type_map[i].name);
-	Stream_Seek(s, 16);
-	/* SubType */
-	DEBUG_TSMF("SubType:");
-	tsmf_print_guid(Stream_Pointer(s));
-
-	for (i = 0; tsmf_sub_type_map[i].type != TSMF_SUB_TYPE_UNKNOWN; i++)
-	{
-		if (memcmp(tsmf_sub_type_map[i].guid, Stream_Pointer(s), 16) == 0)
-			break;
-	}
-
-	mediatype->SubType = tsmf_sub_type_map[i].type;
-
-	if (mediatype->SubType == TSMF_SUB_TYPE_UNKNOWN)
-		ret = FALSE;
-
-	DEBUG_TSMF("SubType %s", tsmf_sub_type_map[i].name);
-	Stream_Seek(s, 16);
-	/* bFixedSizeSamples, bTemporalCompression, SampleSize */
-	Stream_Seek(s, 12);
-	/* FormatType */
-	DEBUG_TSMF("FormatType:");
-	tsmf_print_guid(Stream_Pointer(s));
-
-	for (i = 0; tsmf_format_type_map[i].type != TSMF_FORMAT_TYPE_UNKNOWN; i++)
-	{
-		if (memcmp(tsmf_format_type_map[i].guid, Stream_Pointer(s), 16) == 0)
-			break;
-	}
-
-	mediatype->FormatType = tsmf_format_type_map[i].type;
-
-	if (mediatype->FormatType == TSMF_FORMAT_TYPE_UNKNOWN)
-		ret = FALSE;
-
-	DEBUG_TSMF("FormatType %s", tsmf_format_type_map[i].name);
-	Stream_Seek(s, 16);
-	/* cbFormat */
-	Stream_Read_UINT32(s, cbFormat);
-	DEBUG_TSMF("cbFormat %d", cbFormat);
-#ifdef WITH_DEBUG_TSMF
-	winpr_HexDump(TAG, WLOG_DEBUG, Stream_Pointer(s), cbFormat);
-#endif
+	int i, j;
 
 	switch (mediatype->FormatType)
 	{
 		case TSMF_FORMAT_TYPE_MFVIDEOFORMAT:
 			/* http://msdn.microsoft.com/en-us/library/aa473808.aspx */
+			if (Stream_GetRemainingLength(s) < 176)
+				return FALSE;
+
 			Stream_Seek(s, 8); /* dwSize and ? */
 			Stream_Read_UINT32(s, mediatype->Width); /* videoInfo.dwWidth */
 			Stream_Read_UINT32(s, mediatype->Height); /* videoInfo.dwHeight */
@@ -481,10 +438,13 @@ BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, wStream* s)
 				mediatype->ExtraDataSize = cbFormat - 176;
 				mediatype->ExtraData = Stream_Pointer(s);
 			}
-
 			break;
+
 		case TSMF_FORMAT_TYPE_WAVEFORMATEX:
 			/* http://msdn.microsoft.com/en-us/library/dd757720.aspx */
+			if (Stream_GetRemainingLength(s) < 18)
+				return FALSE;
+
 			Stream_Seek_UINT16(s);
 			Stream_Read_UINT16(s, mediatype->Channels);
 			Stream_Read_UINT32(s, mediatype->SamplesPerSecond.Numerator);
@@ -496,47 +456,156 @@ BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, wStream* s)
 			Stream_Read_UINT16(s, mediatype->ExtraDataSize);
 
 			if (mediatype->ExtraDataSize > 0)
+			{
+				if (Stream_GetRemainingLength(s) < mediatype->ExtraDataSize)
+					return FALSE;
 				mediatype->ExtraData = Stream_Pointer(s);
-
+			}
 			break;
+
 		case TSMF_FORMAT_TYPE_MPEG1VIDEOINFO:
 			/* http://msdn.microsoft.com/en-us/library/dd390700.aspx */
 			i = tsmf_codec_parse_VIDEOINFOHEADER(mediatype, s);
-			i += tsmf_codec_parse_BITMAPINFOHEADER(mediatype, s, TRUE);
+			if (!i)
+				return FALSE;
+			j = tsmf_codec_parse_BITMAPINFOHEADER(mediatype, s, TRUE);
+			if (!j)
+				return FALSE;
+			i += j;
 
 			if (cbFormat > i)
 			{
 				mediatype->ExtraDataSize = cbFormat - i;
+				if (Stream_GetRemainingLength(s) < mediatype->ExtraDataSize)
+					return FALSE;
 				mediatype->ExtraData = Stream_Pointer(s);
 			}
-
 			break;
+
 		case TSMF_FORMAT_TYPE_MPEG2VIDEOINFO:
 			/* http://msdn.microsoft.com/en-us/library/dd390707.aspx */
 			i = tsmf_codec_parse_VIDEOINFOHEADER2(mediatype, s);
-			i += tsmf_codec_parse_BITMAPINFOHEADER(mediatype, s, TRUE);
+			if (!i)
+				return FALSE;
+			j = tsmf_codec_parse_BITMAPINFOHEADER(mediatype, s, TRUE);
+			if (!j)
+				return FALSE;
+			i += j;
 
 			if (cbFormat > i)
 			{
 				mediatype->ExtraDataSize = cbFormat - i;
+				if (Stream_GetRemainingLength(s) < mediatype->ExtraDataSize)
+					return FALSE;
 				mediatype->ExtraData = Stream_Pointer(s);
 			}
-
 			break;
+
 		case TSMF_FORMAT_TYPE_VIDEOINFO2:
 			i = tsmf_codec_parse_VIDEOINFOHEADER2(mediatype, s);
-			i += tsmf_codec_parse_BITMAPINFOHEADER(mediatype, s, FALSE);
+			if (!i)
+				return FALSE;
+			j = tsmf_codec_parse_BITMAPINFOHEADER(mediatype, s, FALSE);
+			if (!j)
+				return FALSE;
+			i += j;
 
 			if (cbFormat > i)
 			{
 				mediatype->ExtraDataSize = cbFormat - i;
+				if (Stream_GetRemainingLength(s) < mediatype->ExtraDataSize)
+					return FALSE;
 				mediatype->ExtraData = Stream_Pointer(s);
 			}
-
 			break;
+
 		default:
+			WLog_INFO(TAG, "unhandled format type 0x%x", mediatype->FormatType);
 			break;
 	}
+	return TRUE;
+}
+
+BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, wStream* s)
+{
+	UINT32 cbFormat;
+	BOOL ret = TRUE;
+	int i;
+
+	ZeroMemory(mediatype, sizeof(TS_AM_MEDIA_TYPE));
+
+	/* MajorType */
+	DEBUG_TSMF("MediaMajorType:");
+	if (Stream_GetRemainingLength(s) < 16)
+		return FALSE;
+	tsmf_print_guid(Stream_Pointer(s));
+
+	for (i = 0; tsmf_major_type_map[i].type != TSMF_MAJOR_TYPE_UNKNOWN; i++)
+	{
+		if (memcmp(tsmf_major_type_map[i].guid, Stream_Pointer(s), 16) == 0)
+			break;
+	}
+
+	mediatype->MajorType = tsmf_major_type_map[i].type;
+	if (mediatype->MajorType == TSMF_MAJOR_TYPE_UNKNOWN)
+		ret = FALSE;
+
+	DEBUG_TSMF("MediaMajorType %s", tsmf_major_type_map[i].name);
+	Stream_Seek(s, 16);
+
+	/* SubType */
+	DEBUG_TSMF("MediaSubType:");
+	if (Stream_GetRemainingLength(s) < 16)
+		return FALSE;
+	tsmf_print_guid(Stream_Pointer(s));
+
+	for (i = 0; tsmf_sub_type_map[i].type != TSMF_SUB_TYPE_UNKNOWN; i++)
+	{
+		if (memcmp(tsmf_sub_type_map[i].guid, Stream_Pointer(s), 16) == 0)
+			break;
+	}
+
+	mediatype->SubType = tsmf_sub_type_map[i].type;
+	if (mediatype->SubType == TSMF_SUB_TYPE_UNKNOWN)
+		ret = FALSE;
+
+	DEBUG_TSMF("MediaSubType %s", tsmf_sub_type_map[i].name);
+	Stream_Seek(s, 16);
+
+	/* bFixedSizeSamples, bTemporalCompression, SampleSize */
+	if (Stream_GetRemainingLength(s) < 12)
+		return FALSE;
+	Stream_Seek(s, 12);
+
+	/* FormatType */
+	DEBUG_TSMF("FormatType:");
+	if (Stream_GetRemainingLength(s) < 16)
+		return FALSE;
+	tsmf_print_guid(Stream_Pointer(s));
+
+	for (i = 0; tsmf_format_type_map[i].type != TSMF_FORMAT_TYPE_UNKNOWN; i++)
+	{
+		if (memcmp(tsmf_format_type_map[i].guid, Stream_Pointer(s), 16) == 0)
+			break;
+	}
+
+	mediatype->FormatType = tsmf_format_type_map[i].type;
+	if (mediatype->FormatType == TSMF_FORMAT_TYPE_UNKNOWN)
+		ret = FALSE;
+
+	DEBUG_TSMF("FormatType %s", tsmf_format_type_map[i].name);
+	Stream_Seek(s, 16);
+
+	/* cbFormat */
+	if (Stream_GetRemainingLength(s) < 4)
+		return FALSE;
+	Stream_Read_UINT32(s, cbFormat);
+	DEBUG_TSMF("cbFormat %d", cbFormat);
+#ifdef WITH_DEBUG_TSMF
+	winpr_HexDump(TAG, WLOG_DEBUG, Stream_Pointer(s), cbFormat);
+#endif
+
+	ret = tsmf_read_format_type(mediatype, s, cbFormat);
 
 	if (mediatype->SamplesPerSecond.Numerator == 0)
 		mediatype->SamplesPerSecond.Numerator = 1;
@@ -550,11 +619,22 @@ BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, wStream* s)
 BOOL tsmf_codec_check_media_type(const char* decoder_name, wStream* s)
 {
 	BYTE* m;
-	BOOL ret;
+	BOOL ret = FALSE;
 	TS_AM_MEDIA_TYPE mediatype;
 
+	static BOOL decoderAvailable = FALSE;
+	static BOOL firstRun = TRUE;
+
+	if (firstRun)
+	{
+		firstRun =FALSE;
+		if (tsmf_check_decoder_available(decoder_name))
+			decoderAvailable = TRUE;
+	}
+
 	Stream_GetPointer(s, m);
-	ret = tsmf_codec_parse_media_type(&mediatype, s);
+	if (decoderAvailable)
+		ret = tsmf_codec_parse_media_type(&mediatype, s);
 	Stream_SetPointer(s, m);
 
 	if (ret)

@@ -155,6 +155,8 @@ int mf_mlion_screen_updates_init()
 	mf_mlion_display_info(&pixelWidth, &pixelHeight, &scale);
 	
 	localBuf = malloc(pixelWidth * pixelHeight * 4);
+	if (!localBuf)
+		return -1;
 	
 	CFDictionaryRef opts;
 	
@@ -206,8 +208,6 @@ int mf_mlion_stop_getting_screen_updates()
 		return 1;
 	}
 	
-	return 0;
-
 	return 0;
 }
 

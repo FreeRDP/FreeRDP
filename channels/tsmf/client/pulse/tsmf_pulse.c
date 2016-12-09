@@ -325,13 +325,14 @@ static UINT64 tsmf_pulse_get_latency(ITSMFAudioDevice *audio)
 	return latency;
 }
 
-static void tsmf_pulse_flush(ITSMFAudioDevice *audio)
+static BOOL tsmf_pulse_flush(ITSMFAudioDevice *audio)
 {
 	TSMFPulseAudioDevice *pulse = (TSMFPulseAudioDevice *) audio;
 	pa_threaded_mainloop_lock(pulse->mainloop);
 	tsmf_pulse_wait_for_operation(pulse,
 								  pa_stream_flush(pulse->stream, tsmf_pulse_stream_success_callback, pulse));
 	pa_threaded_mainloop_unlock(pulse->mainloop);
+	return TRUE;
 }
 
 static void tsmf_pulse_free(ITSMFAudioDevice *audio)
@@ -357,15 +358,17 @@ static void tsmf_pulse_free(ITSMFAudioDevice *audio)
 	free(pulse);
 }
 
-#ifdef STATIC_CHANNELS
-#define freerdp_tsmf_client_audio_subsystem_entry	pulse_freerdp_tsmf_client_audio_subsystem_entry
+#ifdef BUILTIN_CHANNELS
+ITSMFAudioDevice *pulse_freerdp_tsmf_client_audio_subsystem_entry(void)
+#else
+FREERDP_API ITSMFAudioDevice *freerdp_tsmf_client_audio_subsystem_entry(void)
 #endif
-
-ITSMFAudioDevice *freerdp_tsmf_client_audio_subsystem_entry(void)
 {
 	TSMFPulseAudioDevice *pulse;
-	pulse = (TSMFPulseAudioDevice *) malloc(sizeof(TSMFPulseAudioDevice));
-	ZeroMemory(pulse, sizeof(TSMFPulseAudioDevice));
+
+	pulse = (TSMFPulseAudioDevice *) calloc(1, sizeof(TSMFPulseAudioDevice));
+	if (!pulse)
+		return NULL;
 	pulse->iface.Open = tsmf_pulse_open;
 	pulse->iface.SetFormat = tsmf_pulse_set_format;
 	pulse->iface.Play = tsmf_pulse_play;

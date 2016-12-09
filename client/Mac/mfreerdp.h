@@ -54,17 +54,10 @@ struct mf_context
 	HANDLE stopEvent;
 	HANDLE keyboardThread;
 	enum APPLE_KEYBOARD_TYPE appleKeyboardType;
-	
-	HGDI_DC hdc;
-	UINT16 srcBpp;
-	UINT16 dstBpp;
-	freerdp* instance;
 
 	DWORD mainThreadId;
 	DWORD keyboardThreadId;
-	BOOL disconnect;
-	BOOL sw_gdi;
-	
+
 	BOOL clipboardSync;
 	wClipboard* clipboard;
 	UINT32 numServerFormats;

@@ -26,7 +26,6 @@
 #include "../handle/nonehandle.h"
 
 #include <winpr/thread.h>
-#include <fcntl.h>
 
 /**
  * CreateProcessA
@@ -54,69 +53,25 @@
 
 #ifndef _WIN32
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
 #include <winpr/crt.h>
-#include <winpr/heap.h>
 #include <winpr/path.h>
-#include <winpr/tchar.h>
 #include <winpr/environment.h>
 
-#include <pwd.h>
 #include <grp.h>
 
-#include <errno.h>
-#include <string.h>
 #include <signal.h>
-#include <sys/wait.h>
-#include <sys/types.h>
-
-#include <pthread.h>
 
 #include "thread.h"
 
-#include "../handle/handle.h"
 #include "../security/security.h"
 
-static HANDLE_CLOSE_CB _ProcessHandleCloseCb;
-static pthread_once_t process_initialized = PTHREAD_ONCE_INIT;
-
-char** EnvironmentBlockToEnvpA(LPCH lpszEnvironmentBlock)
-{
-	char* p;
-	int index;
-	int count;
-	int length;
-	char** envp = NULL;
-
-	count = 0;
-	p = (char*) lpszEnvironmentBlock;
-
-	while (p[0] && p[1])
-	{
-		length = strlen(p);
-		p += (length + 1);
-		count++;
-	}
-
-	index = 0;
-	p = (char*) lpszEnvironmentBlock;
-
-	envp = (char**) calloc(count + 1, sizeof(char*));
-	envp[count] = NULL;
-
-	while (p[0] && p[1])
-	{
-		length = strlen(p);
-		envp[index] = _strdup(p);
-		p += (length + 1);
-		index++;
-	}
-
-	return envp;
-}
+#ifndef NSIG
+#ifdef SIGMAX
+#define NSIG SIGMAX
+#else
+#define NSIG 64
+#endif
+#endif
 
 /**
  * If the file name does not contain a directory path, the system searches for the executable file in the following sequence:
@@ -132,7 +87,7 @@ char** EnvironmentBlockToEnvpA(LPCH lpszEnvironmentBlock)
  *    this per-application path in the search sequence, use the ShellExecute function.
  */
 
-char* FindApplicationPath(char* application)
+static char* FindApplicationPath(char* application)
 {
 	char* path;
 	char* save;
@@ -149,9 +104,12 @@ char* FindApplicationPath(char* application)
 	nSize = GetEnvironmentVariableA("PATH", NULL, 0);
 
 	if (!nSize)
-		return application;
+		return _strdup(application);
 
 	lpSystemPath = (LPSTR) malloc(nSize);
+	if (!lpSystemPath)
+		return NULL;
+
 	nSize = GetEnvironmentVariableA("PATH", lpSystemPath, nSize);
 
 	save = NULL;
@@ -186,7 +144,6 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 		LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
 	pid_t pid;
-	int flags;
 	int numArgs;
 	LPSTR* pArgs = NULL;
 	char** envp = NULL;
@@ -196,14 +153,18 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	WINPR_ACCESS_TOKEN* token;
 	LPTCH lpszEnvironmentBlock;
 	BOOL ret = FALSE;
+	sigset_t oldSigMask;
+	sigset_t newSigMask;
+	BOOL restoreSigMask = FALSE;
 
 	pid = 0;
 	numArgs = 0;
 	lpszEnvironmentBlock = NULL;
 
 	pArgs = CommandLineToArgvA(lpCommandLine, &numArgs);
+	if (!pArgs)
+		return FALSE;
 
-	flags = 0;
 
 	token = (WINPR_ACCESS_TOKEN*) hToken;
 
@@ -214,12 +175,20 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	else
 	{
 		lpszEnvironmentBlock = GetEnvironmentStrings();
+		if (!lpszEnvironmentBlock)
+			goto finish;
 		envp = EnvironmentBlockToEnvpA(lpszEnvironmentBlock);
 	}
+	if (!envp)
+		goto finish;
 
 	filename = FindApplicationPath(pArgs[0]);
 	if (NULL == filename)
 		goto finish;
+
+	/* block all signals so that the child can safely reset the caller's handlers */
+	sigfillset(&newSigMask);
+	restoreSigMask = !pthread_sigmask(SIG_SETMASK, &newSigMask, &oldSigMask);
 
 	/* fork and exec */
 
@@ -234,18 +203,53 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	if (pid == 0)
 	{
 		/* child process */
-#ifdef __sun
-	closefrom(3);
-#else
-	int maxfd;
-#ifdef F_MAXFD // on some BSD derivates
-	maxfd = fcntl(0, F_MAXFD);
-#else
-	maxfd = sysconf(_SC_OPEN_MAX);
+#ifndef __sun
+		int maxfd;
 #endif
-	int fd;
-	for(fd=3; fd<maxfd; fd++)
-		close(fd);
+		int fd;
+		int sig;
+		sigset_t set;
+		struct sigaction act;
+
+		/* set default signal handlers */
+		memset(&act, 0, sizeof(act));
+		act.sa_handler = SIG_DFL;
+		act.sa_flags = 0;
+		sigemptyset(&act.sa_mask);
+		for (sig = 1; sig < NSIG; sig++)
+			sigaction(sig, &act, NULL);
+		/* unblock all signals */
+		sigfillset(&set);
+		pthread_sigmask(SIG_UNBLOCK, &set, NULL);
+
+		if (lpStartupInfo)
+		{
+			int handle_fd;
+
+			handle_fd = winpr_Handle_getFd(lpStartupInfo->hStdOutput);
+			if (handle_fd != -1)
+				dup2(handle_fd, STDOUT_FILENO);
+
+			handle_fd = winpr_Handle_getFd(lpStartupInfo->hStdError);
+			if (handle_fd != -1)
+				dup2(handle_fd, STDERR_FILENO);
+
+			handle_fd = winpr_Handle_getFd(lpStartupInfo->hStdInput);
+			if (handle_fd != -1)
+				dup2(handle_fd, STDIN_FILENO);
+		}
+
+
+#ifdef __sun
+		closefrom(3);
+#else
+#ifdef F_MAXFD // on some BSD derivates
+		maxfd = fcntl(0, F_MAXFD);
+#else
+		maxfd = sysconf(_SC_OPEN_MAX);
+#endif
+		for(fd=3; fd<maxfd; fd++)
+			close(fd);
 #endif // __sun
 
 		if (token)
@@ -265,10 +269,11 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 			if (token->UserId)
 				setuid((uid_t) token->UserId);
 
-			/* TODO: add better cwd handling and error checking */
-			if (lpCurrentDirectory && strlen(lpCurrentDirectory) > 0)
-				chdir(lpCurrentDirectory);
 		}
+
+		/* TODO: add better cwd handling and error checking */
+		if (lpCurrentDirectory && strlen(lpCurrentDirectory) > 0)
+			chdir(lpCurrentDirectory);
 
 		if (execve(filename, pArgs, envp) < 0)
 		{
@@ -304,10 +309,13 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	ret = TRUE;
 
 finish:
-	if (filename)
-	{
-		free(filename);
-	}
+
+	/* restore caller's original signal mask */
+	if (restoreSigMask)
+		pthread_sigmask(SIG_SETMASK, &oldSigMask, NULL);
+
+
+	free(filename);
 
 	if (pArgs)
 	{
@@ -448,7 +456,7 @@ BOOL TerminateProcess(HANDLE hProcess, UINT uExitCode)
 
 	process = (WINPR_PROCESS*) hProcess;
 
-	if (!process)
+	if (!process || (process->pid <= 0))
 		return FALSE;
 
 	if (kill(process->pid, SIGTERM))
@@ -458,7 +466,7 @@ BOOL TerminateProcess(HANDLE hProcess, UINT uExitCode)
 }
 
 
-BOOL ProcessHandleCloseHandle(HANDLE handle)
+static BOOL ProcessHandleCloseHandle(HANDLE handle)
 {
 	WINPR_PROCESS* process = (WINPR_PROCESS*) handle;
 	free(process);
@@ -478,12 +486,24 @@ static BOOL ProcessHandleIsHandle(HANDLE handle)
 	return TRUE;
 }
 
-static void ProcessHandleInitialize(void)
+static int ProcessGetFd(HANDLE handle)
 {
-	_ProcessHandleCloseCb.IsHandled = ProcessHandleIsHandle;
-	_ProcessHandleCloseCb.CloseHandle = ProcessHandleCloseHandle;
-	RegisterHandleCloseCb(&_ProcessHandleCloseCb);
+	WINPR_PROCESS *process = (WINPR_PROCESS *)handle;
+
+	if (!ProcessHandleIsHandle(handle))
+		return -1;
+
+	/* TODO: Process does not support fd... */
+	(void)process;
+	return -1;
 }
+
+static HANDLE_OPS ops = {
+		ProcessHandleIsHandle,
+		ProcessHandleCloseHandle,
+		ProcessGetFd,
+		NULL /* CleanupHandle */
+};
 
 HANDLE CreateProcessHandle(pid_t pid)
 {
@@ -493,13 +513,12 @@ HANDLE CreateProcessHandle(pid_t pid)
 	if (!process)
 		return NULL;
 
-	pthread_once(&process_initialized, ProcessHandleInitialize);
 	process->pid = pid;
 	process->Type = HANDLE_TYPE_PROCESS;
+	process->ops = &ops;
 
 	return (HANDLE)process;
 }
-
 
 #endif
 

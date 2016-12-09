@@ -187,6 +187,8 @@ WINPR_API BOOL WaitOnAddress(VOID volatile *Address, PVOID CompareAddress, SIZE_
 
 #define WAIT_FAILED		((DWORD) 0xFFFFFFFF)
 
+#define MAXIMUM_WAIT_OBJECTS	64
+
 WINPR_API DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds);
 WINPR_API DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertable);
 WINPR_API DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll, DWORD dwMilliseconds);
@@ -275,8 +277,27 @@ WINPR_API BOOL DeleteTimerQueueTimer(HANDLE TimerQueue, HANDLE Timer, HANDLE Com
 #endif
 
 #if (defined(_WIN32) && (_WIN32_WINNT < 0x0600))
+#define InitializeCriticalSectionEx(lpCriticalSection, dwSpinCount, Flags) InitializeCriticalSectionAndSpinCount(lpCriticalSection, dwSpinCount)
+#endif
 
-WINPR_API BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags);
+#ifndef _RTL_RUN_ONCE_DEF
+#define _RTL_RUN_ONCE_DEF
+
+#define RTL_RUN_ONCE_INIT		{ 0 }
+
+#define RTL_RUN_ONCE_CHECK_ONLY		0x00000001
+#define RTL_RUN_ONCE_ASYNC		0x00000002
+#define RTL_RUN_ONCE_INIT_FAILED	0x00000004
+
+#define RTL_RUN_ONCE_CTX_RESERVED_BITS	2
+
+typedef struct _RTL_RUN_ONCE
+{
+	PVOID Ptr;
+} RTL_RUN_ONCE, *PRTL_RUN_ONCE;
+
+typedef ULONG CALLBACK RTL_RUN_ONCE_INIT_FN (PRTL_RUN_ONCE RunOnce, PVOID Parameter, PVOID* Context);
+typedef RTL_RUN_ONCE_INIT_FN *PRTL_RUN_ONCE_INIT_FN;
 
 #endif
 
@@ -284,29 +305,31 @@ WINPR_API BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection,
 
 /* One-Time Initialization */
 
-typedef struct _RTL_RUN_ONCE
-{
-	PVOID Ptr;
-} RTL_RUN_ONCE, *PRTL_RUN_ONCE;
-
-#define RTL_RUN_ONCE_INIT	{ 0 }
 #define INIT_ONCE_STATIC_INIT	RTL_RUN_ONCE_INIT
 
 typedef RTL_RUN_ONCE INIT_ONCE;
 typedef PRTL_RUN_ONCE PINIT_ONCE;
 typedef PRTL_RUN_ONCE LPINIT_ONCE;
-typedef BOOL CALLBACK (*PINIT_ONCE_FN) (PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context);
+typedef BOOL (CALLBACK * PINIT_ONCE_FN)(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context);
 
-WINPR_API BOOL InitOnceBeginInitialize(LPINIT_ONCE lpInitOnce, DWORD dwFlags, PBOOL fPending, LPVOID* lpContext);
-WINPR_API BOOL InitOnceComplete(LPINIT_ONCE lpInitOnce, DWORD dwFlags, LPVOID lpContext);
-WINPR_API BOOL InitOnceExecuteOnce(PINIT_ONCE InitOnce, PINIT_ONCE_FN InitFn, PVOID Parameter, LPVOID* Context);
-WINPR_API VOID InitOnceInitialize(PINIT_ONCE InitOnce);
+WINPR_API BOOL winpr_InitOnceBeginInitialize(LPINIT_ONCE lpInitOnce, DWORD dwFlags, PBOOL fPending, LPVOID* lpContext);
+WINPR_API BOOL winpr_InitOnceComplete(LPINIT_ONCE lpInitOnce, DWORD dwFlags, LPVOID lpContext);
+WINPR_API BOOL winpr_InitOnceExecuteOnce(PINIT_ONCE InitOnce, PINIT_ONCE_FN InitFn, PVOID Parameter, LPVOID* Context);
+WINPR_API VOID winpr_InitOnceInitialize(PINIT_ONCE InitOnce);
 
+#define InitOnceBeginInitialize winpr_InitOnceBeginInitialize
+#define InitOnceComplete winpr_InitOnceComplete
+#define InitOnceExecuteOnce winpr_InitOnceExecuteOnce
+#define InitOnceInitialize winpr_InitOnceInitialize
 #endif
 
 /* Synchronization Barrier */
 
-#if (!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0602))
+#if (!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0602) && !defined(_SYNCHAPI_H_))
+#define WINPR_SYNCHRONIZATION_BARRIER	1
+#endif
+
+#ifdef WINPR_SYNCHRONIZATION_BARRIER
 
 typedef struct _RTL_BARRIER
 {
@@ -325,9 +348,13 @@ typedef PRTL_BARRIER LPSYNCHRONIZATION_BARRIER;
 #define SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY	0x02
 #define SYNCHRONIZATION_BARRIER_FLAGS_NO_DELETE		0x04
 
-WINPR_API BOOL WINAPI InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, LONG lTotalThreads, LONG lSpinCount);
-WINPR_API BOOL WINAPI EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, DWORD dwFlags);
-WINPR_API BOOL WINAPI DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier);
+WINPR_API BOOL WINAPI winpr_InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, LONG lTotalThreads, LONG lSpinCount);
+WINPR_API BOOL WINAPI winpr_EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, DWORD dwFlags);
+WINPR_API BOOL WINAPI winpr_DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier);
+
+#define InitializeSynchronizationBarrier winpr_InitializeSynchronizationBarrier
+#define EnterSynchronizationBarrier winpr_EnterSynchronizationBarrier
+#define DeleteSynchronizationBarrier winpr_DeleteSynchronizationBarrier
 
 #endif
 
@@ -336,9 +363,9 @@ WINPR_API BOOL WINAPI DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpB
 WINPR_API VOID USleep(DWORD dwMicroseconds);
 
 WINPR_API HANDLE CreateFileDescriptorEventW(LPSECURITY_ATTRIBUTES lpEventAttributes,
-		BOOL bManualReset, BOOL bInitialState, int FileDescriptor);
+		BOOL bManualReset, BOOL bInitialState, int FileDescriptor, ULONG mode);
 WINPR_API HANDLE CreateFileDescriptorEventA(LPSECURITY_ATTRIBUTES lpEventAttributes,
-		BOOL bManualReset, BOOL bInitialState, int FileDescriptor);
+		BOOL bManualReset, BOOL bInitialState, int FileDescriptor, ULONG mode);
 
 WINPR_API HANDLE CreateWaitObjectEvent(LPSECURITY_ATTRIBUTES lpEventAttributes,
 		BOOL bManualReset, BOOL bInitialState, void* pObject);
@@ -350,7 +377,7 @@ WINPR_API HANDLE CreateWaitObjectEvent(LPSECURITY_ATTRIBUTES lpEventAttributes,
 #endif
 
 WINPR_API int GetEventFileDescriptor(HANDLE hEvent);
-WINPR_API int SetEventFileDescriptor(HANDLE hEvent, int FileDescriptor);
+WINPR_API int SetEventFileDescriptor(HANDLE hEvent, int FileDescriptor, ULONG mode);
 
 WINPR_API void* GetEventWaitObject(HANDLE hEvent);
 

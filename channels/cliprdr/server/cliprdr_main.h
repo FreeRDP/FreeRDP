@@ -40,11 +40,6 @@ struct _cliprdr_server_private
 	void* ChannelHandle;
 	HANDLE ChannelEvent;
 
-	BOOL useLongFormatNames;
-	BOOL streamFileClipEnabled;
-	BOOL fileClipNoFilePaths;
-	BOOL canLockClipData;
-
 	wStream* s;
 	char* temporaryDirectory;
 };

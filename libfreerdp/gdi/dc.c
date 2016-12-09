@@ -3,6 +3,8 @@
  * GDI Device Context Functions
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2016 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +26,10 @@
 #endif
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
-#include <freerdp/codec/color.h>
 
 #include <freerdp/gdi/region.h>
 
@@ -41,14 +41,24 @@
  * @return current device context
  */
 
-HGDI_DC gdi_GetDC()
+HGDI_DC gdi_GetDC(void)
 {
-	HGDI_DC hDC = (HGDI_DC) malloc(sizeof(GDI_DC));
-	hDC->bytesPerPixel = 4;
-	hDC->bitsPerPixel = 32;
+	HGDI_DC hDC = (HGDI_DC) calloc(1, sizeof(GDI_DC));
+
+	if (!hDC)
+		return NULL;
+
+	hDC->format = PIXEL_FORMAT_XRGB32;
 	hDC->drawMode = GDI_R2_BLACK;
 	hDC->clip = gdi_CreateRectRgn(0, 0, 0, 0);
-	hDC->clip->null = 1;
+
+	if (!hDC->clip)
+	{
+		free(hDC);
+		return NULL;
+	}
+
+	hDC->clip->null = TRUE;
 	hDC->hwnd = NULL;
 	return hDC;
 }
@@ -59,31 +69,40 @@ HGDI_DC gdi_GetDC()
  * @return new device context
  */
 
-HGDI_DC gdi_CreateDC(UINT32 flags, int bpp)
+HGDI_DC gdi_CreateDC(UINT32 format)
 {
-	HGDI_DC hDC = (HGDI_DC) malloc(sizeof(GDI_DC));
+	HGDI_DC hDC;
+
+	if (!(hDC = (HGDI_DC) calloc(1, sizeof(GDI_DC))))
+		return NULL;
 
 	hDC->drawMode = GDI_R2_BLACK;
-	hDC->clip = gdi_CreateRectRgn(0, 0, 0, 0);
-	hDC->clip->null = 1;
+
+	if (!(hDC->clip = gdi_CreateRectRgn(0, 0, 0, 0)))
+		goto fail;
+
+	hDC->clip->null = TRUE;
 	hDC->hwnd = NULL;
+	hDC->format = format;
 
-	hDC->bitsPerPixel = bpp;
-	hDC->bytesPerPixel = bpp / 8;
+	if (!(hDC->hwnd = (HGDI_WND) calloc(1, sizeof(GDI_WND))))
+		goto fail;
 
-	hDC->alpha = (flags & CLRCONV_ALPHA) ? TRUE : FALSE;
-	hDC->invert = (flags & CLRCONV_INVERT) ? TRUE : FALSE;
-	hDC->rgb555 = (flags & CLRCONV_RGB555) ? TRUE : FALSE;
+	if (!(hDC->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0)))
+		goto fail;
 
-	hDC->hwnd = (HGDI_WND) malloc(sizeof(GDI_WND));
-	hDC->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0);
-	hDC->hwnd->invalid->null = 1;
-
+	hDC->hwnd->invalid->null = TRUE;
 	hDC->hwnd->count = 32;
-	hDC->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * hDC->hwnd->count);
-	hDC->hwnd->ninvalid = 0;
 
+	if (!(hDC->hwnd->cinvalid = (HGDI_RGN) calloc(hDC->hwnd->count,
+	                            sizeof(GDI_RGN))))
+		goto fail;
+
+	hDC->hwnd->ninvalid = 0;
 	return hDC;
+fail:
+	gdi_DeleteDC(hDC);
+	return NULL;
 }
 
 /**
@@ -95,16 +114,21 @@ HGDI_DC gdi_CreateDC(UINT32 flags, int bpp)
 
 HGDI_DC gdi_CreateCompatibleDC(HGDI_DC hdc)
 {
-	HGDI_DC hDC = (HGDI_DC) malloc(sizeof(GDI_DC));
-	hDC->bytesPerPixel = hdc->bytesPerPixel;
-	hDC->bitsPerPixel = hdc->bitsPerPixel;
+	HGDI_DC hDC = (HGDI_DC) calloc(1, sizeof(GDI_DC));
+
+	if (!hDC)
+		return NULL;
+
+	if (!(hDC->clip = gdi_CreateRectRgn(0, 0, 0, 0)))
+	{
+		free(hDC);
+		return NULL;
+	}
+
+	hDC->clip->null = TRUE;
+	hDC->format = hdc->format;
 	hDC->drawMode = hdc->drawMode;
-	hDC->clip = gdi_CreateRectRgn(0, 0, 0, 0);
-	hDC->clip->null = 1;
 	hDC->hwnd = NULL;
-	hDC->alpha = hdc->alpha;
-	hDC->invert = hdc->invert;
-	hDC->rgb555 = hdc->rgb555;
 	return hDC;
 }
 
@@ -140,15 +164,17 @@ HGDIOBJECT gdi_SelectObject(HGDI_DC hdc, HGDIOBJECT hgdiobject)
 	else if (hgdiobject->objectType == GDIOBJECT_REGION)
 	{
 		hdc->selectedObject = hgdiobject;
+		previousSelectedObject = (HGDIOBJECT) COMPLEXREGION;
 	}
 	else if (hgdiobject->objectType == GDIOBJECT_RECT)
 	{
 		hdc->selectedObject = hgdiobject;
+		previousSelectedObject = (HGDIOBJECT) SIMPLEREGION;
 	}
 	else
 	{
 		/* Unknown GDI Object Type */
-		return 0;
+		return NULL;
 	}
 
 	return previousSelectedObject;
@@ -158,20 +184,23 @@ HGDIOBJECT gdi_SelectObject(HGDI_DC hdc, HGDIOBJECT hgdiobject)
  * Delete a GDI object.\n
  * @msdn{dd183539}
  * @param hgdiobject GDI object
- * @return 1 if successful, 0 otherwise
+ * @return nonzero if successful, 0 otherwise
  */
 
-int gdi_DeleteObject(HGDIOBJECT hgdiobject)
+BOOL gdi_DeleteObject(HGDIOBJECT hgdiobject)
 {
 	if (!hgdiobject)
-		return 0;
+		return FALSE;
 
 	if (hgdiobject->objectType == GDIOBJECT_BITMAP)
 	{
 		HGDI_BITMAP hBitmap = (HGDI_BITMAP) hgdiobject;
 
-		if (hBitmap->data)
-			_aligned_free(hBitmap->data);
+		if (hBitmap->data && hBitmap->free)
+		{
+			hBitmap->free(hBitmap->data);
+			hBitmap->data = NULL;
+		}
 
 		free(hBitmap);
 	}
@@ -183,13 +212,6 @@ int gdi_DeleteObject(HGDIOBJECT hgdiobject)
 	else if (hgdiobject->objectType == GDIOBJECT_BRUSH)
 	{
 		HGDI_BRUSH hBrush = (HGDI_BRUSH) hgdiobject;
-
-		if(hBrush->style == GDI_BS_PATTERN)
-		{
-			if (hBrush->pattern != NULL)
-				gdi_DeleteObject((HGDIOBJECT) hBrush->pattern);
-		}
-
 		free(hBrush);
 	}
 	else if (hgdiobject->objectType == GDIOBJECT_REGION)
@@ -204,34 +226,34 @@ int gdi_DeleteObject(HGDIOBJECT hgdiobject)
 	{
 		/* Unknown GDI Object Type */
 		free(hgdiobject);
-		return 0;
+		return FALSE;
 	}
 
-	return 1;
+	return TRUE;
 }
+
 
 /**
  * Delete device context.\n
  * @msdn{dd183533}
  * @param hdc device context
- * @return 1 if successful, 0 otherwise
+ * @return nonzero if successful, 0 otherwise
  */
 
-int gdi_DeleteDC(HGDI_DC hdc)
+BOOL gdi_DeleteDC(HGDI_DC hdc)
 {
-	if (hdc->hwnd)
+	if (hdc)
 	{
-		if (hdc->hwnd->cinvalid != NULL)
+		if (hdc->hwnd)
+		{
 			free(hdc->hwnd->cinvalid);
-
-		if (hdc->hwnd->invalid != NULL)
 			free(hdc->hwnd->invalid);
+			free(hdc->hwnd);
+		}
 
-		free(hdc->hwnd);
+		free(hdc->clip);
+		free(hdc);
 	}
 
-	free(hdc->clip);
-	free(hdc);
-
-	return 1;
+	return TRUE;
 }

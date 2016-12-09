@@ -1,0 +1,15 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=@CMAKE_INSTALL_PREFIX@
+libdir=@CMAKE_INSTALL_FULL_LIBDIR@
+includedir=${prefix}/@FREERDP_INCLUDE_DIR@
+libs=-lfreerdp
+
+Name: FreeRDP
+Description: FreeRDP: A Remote Desktop Protocol Implementation
+URL: http://www.freerdp.com/
+Version: @FREERDP_VERSION@
+Requires: 
+Requires.private: @WINPR_PKG_CONFIG_FILENAME@ libssl
+Libs: -L${libdir} ${libs}
+Libs.private: -ldl -lpthread
+Cflags: -I${includedir}

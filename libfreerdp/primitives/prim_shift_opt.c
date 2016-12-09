@@ -32,23 +32,23 @@
 
 #include "prim_internal.h"
 #include "prim_templates.h"
-#include "prim_shift.h"
 
+static primitives_t* generic = NULL;
 
 #ifdef WITH_SSE2
 # if !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS)
 /* ------------------------------------------------------------------------- */
-SSE3_SCD_ROUTINE(sse2_lShiftC_16s, INT16, general_lShiftC_16s,
-	_mm_slli_epi16, *dptr++ = *sptr++ << val)
+SSE3_SCD_ROUTINE(sse2_lShiftC_16s, INT16, generic->lShiftC_16s,
+		 _mm_slli_epi16, *dptr++ = *sptr++ << val)
 /* ------------------------------------------------------------------------- */
-SSE3_SCD_ROUTINE(sse2_rShiftC_16s, INT16, general_rShiftC_16s,
-	_mm_srai_epi16, *dptr++ = *sptr++ >> val)
+SSE3_SCD_ROUTINE(sse2_rShiftC_16s, INT16, generic->rShiftC_16s,
+		 _mm_srai_epi16, *dptr++ = *sptr++ >> val)
 /* ------------------------------------------------------------------------- */
-SSE3_SCD_ROUTINE(sse2_lShiftC_16u, UINT16, general_lShiftC_16u,
-	_mm_slli_epi16, *dptr++ = *sptr++ << val)
+SSE3_SCD_ROUTINE(sse2_lShiftC_16u, UINT16, generic->lShiftC_16u,
+		 _mm_slli_epi16, *dptr++ = *sptr++ << val)
 /* ------------------------------------------------------------------------- */
-SSE3_SCD_ROUTINE(sse2_rShiftC_16u, UINT16, general_rShiftC_16u,
-	_mm_srli_epi16, *dptr++ = *sptr++ >> val)
+SSE3_SCD_ROUTINE(sse2_rShiftC_16u, UINT16, generic->rShiftC_16u,
+		 _mm_srli_epi16, *dptr++ = *sptr++ >> val)
 # endif /* !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS) */
 #endif
 
@@ -59,22 +59,26 @@ SSE3_SCD_ROUTINE(sse2_rShiftC_16u, UINT16, general_rShiftC_16u,
  */
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_shift_opt(primitives_t *prims)
+void primitives_init_shift_opt(primitives_t* prims)
 {
+	generic = primitives_get_generic();
+	primitives_init_shift(prims);
 #if defined(WITH_IPP)
 	prims->lShiftC_16s = (__lShiftC_16s_t) ippsLShiftC_16s;
 	prims->rShiftC_16s = (__rShiftC_16s_t) ippsRShiftC_16s;
 	prims->lShiftC_16u = (__lShiftC_16u_t) ippsLShiftC_16u;
 	prims->rShiftC_16u = (__rShiftC_16u_t) ippsRShiftC_16u;
 #elif defined(WITH_SSE2)
+
 	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE)
-			&& IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
+	    && IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
 	{
 		prims->lShiftC_16s = sse2_lShiftC_16s;
 		prims->rShiftC_16s = sse2_rShiftC_16s;
 		prims->lShiftC_16u = sse2_lShiftC_16u;
 		prims->rShiftC_16u = sse2_rShiftC_16u;
 	}
+
 #endif
 }
 

@@ -12,7 +12,7 @@ void CALLBACK test_WorkCallback(PTP_CALLBACK_INSTANCE instance, void* context, P
 	BYTE b[1024];
 	BYTE c[1024];
 
-	printf("Hello %s: %d (thread: %d)\n", (char*) context,
+	printf("Hello %s: %3d (thread: 0x%08X)\n", (char*) context,
 		InterlockedIncrement(&count), GetCurrentThreadId());
 
 	for (index = 0; index < 100; index++)
@@ -58,9 +58,18 @@ int TestPoolWork(int argc, char* argv[])
 
 	printf("Private Thread Pool\n");
 
-	pool = CreateThreadpool(NULL);
+	if (!(pool = CreateThreadpool(NULL)))
+	{
+		printf("CreateThreadpool failure\n");
+		return -1;
+	}
 
-	SetThreadpoolThreadMinimum(pool, 4);
+	if (!SetThreadpoolThreadMinimum(pool, 4))
+	{
+		printf("SetThreadpoolThreadMinimum failure\n");
+		return -1;
+	}
+
 	SetThreadpoolThreadMaximum(pool, 8);
 
 	InitializeThreadpoolEnvironment(&environment);
@@ -95,7 +104,16 @@ int TestPoolWork(int argc, char* argv[])
 
 	DestroyThreadpoolEnvironment(&environment);
 
-	CloseThreadpoolWork(work);
+	/**
+	 * See Remarks at https://msdn.microsoft.com/en-us/library/windows/desktop/ms682043(v=vs.85).aspx
+	 * If there is a cleanup group associated with the work object,
+	 * it is not necessary to call CloseThreadpoolWork !
+	 * calling the CloseThreadpoolCleanupGroupMembers function releases the work, wait,
+	 * and timer objects associated with the cleanup group.
+	 */
+
+	/* CloseThreadpoolWork(work); // this would segfault, see comment above. */
+
 	CloseThreadpool(pool);
 
 	return 0;

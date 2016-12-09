@@ -31,10 +31,20 @@
 
 #include <freerdp/log.h>
 #include <freerdp/cache/bitmap.h>
+#include <freerdp/gdi/bitmap.h>
+
+#include "../gdi/gdi.h"
+#include "../core/graphics.h"
 
 #define TAG FREERDP_TAG("cache.bitmap")
 
-void update_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
+static rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmapCache, UINT32 id,
+				   UINT32 index);
+static BOOL bitmap_cache_put(rdpBitmapCache* bitmap_cache, UINT32 id,
+			     UINT32 index, rdpBitmap* bitmap);
+
+static BOOL update_gdi_memblt(rdpContext* context,
+			      MEMBLT_ORDER* memblt)
 {
 	rdpBitmap* bitmap;
 	rdpCache* cache = context->cache;
@@ -42,78 +52,104 @@ void update_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 	if (memblt->cacheId == 0xFF)
 		bitmap = offscreen_cache_get(cache->offscreen, memblt->cacheIndex);
 	else
-		bitmap = bitmap_cache_get(cache->bitmap, (BYTE) memblt->cacheId, memblt->cacheIndex);
+		bitmap = bitmap_cache_get(cache->bitmap, (BYTE) memblt->cacheId,
+					  memblt->cacheIndex);
+
 	/* XP-SP2 servers sometimes ask for cached bitmaps they've never defined. */
-	if (bitmap == NULL) return;
+	if (bitmap == NULL)
+		return TRUE;
 
 	memblt->bitmap = bitmap;
-	IFCALL(cache->bitmap->MemBlt, context, memblt);
+	return IFCALLRESULT(TRUE, cache->bitmap->MemBlt, context, memblt);
 }
 
-void update_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
+static BOOL update_gdi_mem3blt(rdpContext* context,
+			       MEM3BLT_ORDER* mem3blt)
 {
 	BYTE style;
 	rdpBitmap* bitmap;
 	rdpCache* cache = context->cache;
 	rdpBrush* brush = &mem3blt->brush;
+	BOOL ret = TRUE;
 
 	if (mem3blt->cacheId == 0xFF)
 		bitmap = offscreen_cache_get(cache->offscreen, mem3blt->cacheIndex);
 	else
-		bitmap = bitmap_cache_get(cache->bitmap, (BYTE) mem3blt->cacheId, mem3blt->cacheIndex);
+		bitmap = bitmap_cache_get(cache->bitmap, (BYTE) mem3blt->cacheId,
+					  mem3blt->cacheIndex);
 
 	/* XP-SP2 servers sometimes ask for cached bitmaps they've never defined. */
 	if (!bitmap)
-		return;
+		return TRUE;
 
 	style = brush->style;
 
 	if (brush->style & CACHED_BRUSH)
 	{
 		brush->data = brush_cache_get(cache->brush, brush->index, &brush->bpp);
+
+		if (!brush->data)
+			return FALSE;
+
 		brush->style = 0x03;
 	}
 
 	mem3blt->bitmap = bitmap;
-	IFCALL(cache->bitmap->Mem3Blt, context, mem3blt);
+	IFCALLRET(cache->bitmap->Mem3Blt, ret, context, mem3blt);
 	brush->style = style;
+	return ret;
 }
 
-void update_gdi_cache_bitmap(rdpContext* context, CACHE_BITMAP_ORDER* cacheBitmap)
+static BOOL update_gdi_cache_bitmap(rdpContext* context,
+				    const CACHE_BITMAP_ORDER* cacheBitmap)
 {
 	rdpBitmap* bitmap;
 	rdpBitmap* prevBitmap;
 	rdpCache* cache = context->cache;
-
 	bitmap = Bitmap_Alloc(context);
 
-	Bitmap_SetDimensions(context, bitmap, cacheBitmap->bitmapWidth, cacheBitmap->bitmapHeight);
+	if (!bitmap)
+		return FALSE;
 
-	bitmap->Decompress(context, bitmap,
-			cacheBitmap->bitmapDataStream, cacheBitmap->bitmapWidth, cacheBitmap->bitmapHeight,
-			cacheBitmap->bitmapBpp, cacheBitmap->bitmapLength,
-			cacheBitmap->compressed, RDP_CODEC_ID_NONE);
+	Bitmap_SetDimensions(bitmap, cacheBitmap->bitmapWidth,
+			     cacheBitmap->bitmapHeight);
 
-	bitmap->New(context, bitmap);
+	if (!bitmap->Decompress(context, bitmap,
+				cacheBitmap->bitmapDataStream, cacheBitmap->bitmapWidth,
+				cacheBitmap->bitmapHeight,
+				cacheBitmap->bitmapBpp, cacheBitmap->bitmapLength,
+				cacheBitmap->compressed, RDP_CODEC_ID_NONE))
+	{
+		Bitmap_Free(context, bitmap);
+		return FALSE;
+	}
 
-	prevBitmap = bitmap_cache_get(cache->bitmap, cacheBitmap->cacheId, cacheBitmap->cacheIndex);
+	if (!bitmap->New(context, bitmap))
+	{
+		Bitmap_Free(context, bitmap);
+		return FALSE;
+	}
 
-	if (prevBitmap != NULL)
-		Bitmap_Free(context, prevBitmap);
-
-	bitmap_cache_put(cache->bitmap, cacheBitmap->cacheId, cacheBitmap->cacheIndex, bitmap);
+	prevBitmap = bitmap_cache_get(cache->bitmap, cacheBitmap->cacheId,
+				      cacheBitmap->cacheIndex);
+	Bitmap_Free(context, prevBitmap);
+	return bitmap_cache_put(cache->bitmap, cacheBitmap->cacheId,
+				cacheBitmap->cacheIndex,
+				bitmap);
 }
 
-void update_gdi_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORDER* cacheBitmapV2)
+static BOOL update_gdi_cache_bitmap_v2(rdpContext* context,
+				       CACHE_BITMAP_V2_ORDER* cacheBitmapV2)
+
 {
 	rdpBitmap* bitmap;
 	rdpBitmap* prevBitmap;
 	rdpCache* cache = context->cache;
 	rdpSettings* settings = context->settings;
-
 	bitmap = Bitmap_Alloc(context);
 
-	Bitmap_SetDimensions(context, bitmap, cacheBitmapV2->bitmapWidth, cacheBitmapV2->bitmapHeight);
+	if (!bitmap)
+		return FALSE;
 
 	if (!cacheBitmapV2->bitmapBpp)
 		cacheBitmapV2->bitmapBpp = settings->ColorDepth;
@@ -121,22 +157,38 @@ void update_gdi_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORDER* cach
 	if ((settings->ColorDepth == 15) && (cacheBitmapV2->bitmapBpp == 16))
 		cacheBitmapV2->bitmapBpp = settings->ColorDepth;
 
-	bitmap->Decompress(context, bitmap,
-			cacheBitmapV2->bitmapDataStream, cacheBitmapV2->bitmapWidth, cacheBitmapV2->bitmapHeight,
-			cacheBitmapV2->bitmapBpp, cacheBitmapV2->bitmapLength,
-			cacheBitmapV2->compressed, RDP_CODEC_ID_NONE);
+	Bitmap_SetDimensions(bitmap, cacheBitmapV2->bitmapWidth,
+			     cacheBitmapV2->bitmapHeight);
 
-	bitmap->New(context, bitmap);
+	if (!bitmap->Decompress(context, bitmap,
+				cacheBitmapV2->bitmapDataStream,
+				cacheBitmapV2->bitmapWidth,
+				cacheBitmapV2->bitmapHeight,
+				cacheBitmapV2->bitmapBpp,
+				cacheBitmapV2->bitmapLength,
+				cacheBitmapV2->compressed,
+				RDP_CODEC_ID_NONE))
+	{
+		Bitmap_Free(context, bitmap);
+		return FALSE;
+	}
 
-	prevBitmap = bitmap_cache_get(cache->bitmap, cacheBitmapV2->cacheId, cacheBitmapV2->cacheIndex);
+	prevBitmap = bitmap_cache_get(cache->bitmap, cacheBitmapV2->cacheId,
+				      cacheBitmapV2->cacheIndex);
 
-	if (prevBitmap)
-		Bitmap_Free(context, prevBitmap);
+	if (!bitmap->New(context, bitmap))
+	{
+		Bitmap_Free(context, bitmap);
+		return FALSE;
+	}
 
-	bitmap_cache_put(cache->bitmap, cacheBitmapV2->cacheId, cacheBitmapV2->cacheIndex, bitmap);
+	Bitmap_Free(context, prevBitmap);
+	return bitmap_cache_put(cache->bitmap, cacheBitmapV2->cacheId,
+				cacheBitmapV2->cacheIndex, bitmap);
 }
 
-void update_gdi_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORDER* cacheBitmapV3)
+static BOOL update_gdi_cache_bitmap_v3(rdpContext* context,
+				       CACHE_BITMAP_V3_ORDER* cacheBitmapV3)
 {
 	rdpBitmap* bitmap;
 	rdpBitmap* prevBitmap;
@@ -144,79 +196,41 @@ void update_gdi_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORDER* cach
 	rdpCache* cache = context->cache;
 	rdpSettings* settings = context->settings;
 	BITMAP_DATA_EX* bitmapData = &cacheBitmapV3->bitmapData;
-
 	bitmap = Bitmap_Alloc(context);
 
-	Bitmap_SetDimensions(context, bitmap, bitmapData->width, bitmapData->height);
+	if (!bitmap)
+		return FALSE;
 
 	if (!cacheBitmapV3->bpp)
 		cacheBitmapV3->bpp = settings->ColorDepth;
 
 	compressed = (bitmapData->codecID != RDP_CODEC_ID_NONE);
+	Bitmap_SetDimensions(bitmap, bitmapData->width, bitmapData->height);
 
-	bitmap->Decompress(context, bitmap,
-			bitmapData->data, bitmap->width, bitmap->height,
-			bitmapData->bpp, bitmapData->length, compressed,
-			bitmapData->codecID);
-
-	bitmap->New(context, bitmap);
-
-	prevBitmap = bitmap_cache_get(cache->bitmap, cacheBitmapV3->cacheId, cacheBitmapV3->cacheIndex);
-
-	if (prevBitmap)
-		Bitmap_Free(context, prevBitmap);
-
-	bitmap_cache_put(cache->bitmap, cacheBitmapV3->cacheId, cacheBitmapV3->cacheIndex, bitmap);
-}
-
-void update_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
-{
-	int i;
-	BOOL reused = TRUE;
-	rdpBitmap* bitmap;
-	BITMAP_DATA* bitmapData;
-	rdpCache* cache = context->cache;
-
-	if (!cache->bitmap->bitmap)
+	if (!bitmap->Decompress(context, bitmap,
+				bitmapData->data, bitmapData->width, bitmapData->height,
+				bitmapData->bpp, bitmapData->length, compressed,
+				bitmapData->codecID))
 	{
-		cache->bitmap->bitmap = Bitmap_Alloc(context);
-		cache->bitmap->bitmap->ephemeral = TRUE;
-		reused = FALSE;
+		Bitmap_Free(context, bitmap);
+		return FALSE;
 	}
 
-	bitmap = cache->bitmap->bitmap;
-
-	for (i = 0; i < (int) bitmapUpdate->number; i++)
+	if (!bitmap->New(context, bitmap))
 	{
-		bitmapData = &bitmapUpdate->rectangles[i];
-
-		bitmap->bpp = bitmapData->bitsPerPixel;
-		bitmap->length = bitmapData->bitmapLength;
-		bitmap->compressed = bitmapData->compressed;
-
-		Bitmap_SetRectangle(context, bitmap,
-				bitmapData->destLeft, bitmapData->destTop,
-				bitmapData->destRight, bitmapData->destBottom);
-
-		Bitmap_SetDimensions(context, bitmap, bitmapData->width, bitmapData->height);
-
-		bitmap->Decompress(context, bitmap,
-				bitmapData->bitmapDataStream, bitmapData->width, bitmapData->height,
-				bitmapData->bitsPerPixel, bitmapData->bitmapLength,
-				bitmapData->compressed, RDP_CODEC_ID_NONE);
-
-		if (reused)
-			bitmap->Free(context, bitmap);
-		else
-			reused = TRUE;
-
-		bitmap->New(context, bitmap);
-
-		bitmap->Paint(context, bitmap);
+		Bitmap_Free(context, bitmap);
+		return FALSE;
 	}
+
+	prevBitmap = bitmap_cache_get(cache->bitmap, cacheBitmapV3->cacheId,
+				      cacheBitmapV3->cacheIndex);
+	Bitmap_Free(context, prevBitmap);
+	return bitmap_cache_put(cache->bitmap, cacheBitmapV3->cacheId,
+				cacheBitmapV3->cacheIndex, bitmap);
 }
 
-rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmapCache, UINT32 id, UINT32 index)
+rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmapCache, UINT32 id,
+			    UINT32 index)
 {
 	rdpBitmap* bitmap;
 
@@ -237,16 +251,16 @@ rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmapCache, UINT32 id, UINT32 index
 	}
 
 	bitmap = bitmapCache->cells[id].entries[index];
-
 	return bitmap;
 }
 
-void bitmap_cache_put(rdpBitmapCache* bitmapCache, UINT32 id, UINT32 index, rdpBitmap* bitmap)
+BOOL bitmap_cache_put(rdpBitmapCache* bitmapCache, UINT32 id, UINT32 index,
+		      rdpBitmap* bitmap)
 {
 	if (id > bitmapCache->maxCells)
 	{
 		WLog_ERR(TAG,  "put invalid bitmap cell id: %d", id);
-		return;
+		return FALSE;
 	}
 
 	if (index == BITMAP_CACHE_WAITING_LIST_INDEX)
@@ -256,61 +270,67 @@ void bitmap_cache_put(rdpBitmapCache* bitmapCache, UINT32 id, UINT32 index, rdpB
 	else if (index > bitmapCache->cells[id].number)
 	{
 		WLog_ERR(TAG,  "put invalid bitmap index %d in cell id: %d", index, id);
-		return;
+		return FALSE;
 	}
 
 	bitmapCache->cells[id].entries[index] = bitmap;
+	return TRUE;
 }
 
 void bitmap_cache_register_callbacks(rdpUpdate* update)
 {
 	rdpCache* cache = update->context->cache;
-
 	cache->bitmap->MemBlt = update->primary->MemBlt;
 	cache->bitmap->Mem3Blt = update->primary->Mem3Blt;
-
 	update->primary->MemBlt = update_gdi_memblt;
 	update->primary->Mem3Blt = update_gdi_mem3blt;
-
 	update->secondary->CacheBitmap = update_gdi_cache_bitmap;
 	update->secondary->CacheBitmapV2 = update_gdi_cache_bitmap_v2;
 	update->secondary->CacheBitmapV3 = update_gdi_cache_bitmap_v3;
-
-	update->BitmapUpdate = update_gdi_bitmap_update;
+	update->BitmapUpdate = gdi_bitmap_update;
 }
 
 rdpBitmapCache* bitmap_cache_new(rdpSettings* settings)
 {
 	int i;
 	rdpBitmapCache* bitmapCache;
-
 	bitmapCache = (rdpBitmapCache*) calloc(1, sizeof(rdpBitmapCache));
 
-	if (bitmapCache)
+	if (!bitmapCache)
+		return NULL;
+
+	bitmapCache->settings = settings;
+	bitmapCache->update = ((freerdp*) settings->instance)->update;
+	bitmapCache->context = bitmapCache->update->context;
+	bitmapCache->maxCells = settings->BitmapCacheV2NumCells;
+	bitmapCache->cells = (BITMAP_V2_CELL*) calloc(bitmapCache->maxCells,
+			     sizeof(BITMAP_V2_CELL));
+
+	if (!bitmapCache->cells)
+		goto fail;
+
+	for (i = 0; i < (int) bitmapCache->maxCells; i++)
 	{
-		bitmapCache->settings = settings;
-		bitmapCache->update = ((freerdp*) settings->instance)->update;
-		bitmapCache->context = bitmapCache->update->context;
+		bitmapCache->cells[i].number = settings->BitmapCacheV2CellInfo[i].numEntries;
+		/* allocate an extra entry for BITMAP_CACHE_WAITING_LIST_INDEX */
+		bitmapCache->cells[i].entries = (rdpBitmap**) calloc((
+						    bitmapCache->cells[i].number + 1), sizeof(rdpBitmap*));
 
-		bitmapCache->maxCells = settings->BitmapCacheV2NumCells;
-
-		bitmapCache->cells = (BITMAP_V2_CELL*) calloc(bitmapCache->maxCells, sizeof(BITMAP_V2_CELL));
-
-		if (!bitmapCache->cells)
-		{
-			free(bitmapCache);
-			return NULL;
-		}
-
-		for (i = 0; i < (int) bitmapCache->maxCells; i++)
-		{
-			bitmapCache->cells[i].number = settings->BitmapCacheV2CellInfo[i].numEntries;
-			/* allocate an extra entry for BITMAP_CACHE_WAITING_LIST_INDEX */
-			bitmapCache->cells[i].entries = (rdpBitmap**) calloc((bitmapCache->cells[i].number + 1), sizeof(rdpBitmap*));
-		}
+		if (!bitmapCache->cells[i].entries)
+			goto fail;
 	}
 
 	return bitmapCache;
+fail:
+
+	if (bitmapCache->cells)
+	{
+		for (i = 0; i < (int) bitmapCache->maxCells; i++)
+			free(bitmapCache->cells[i].entries);
+	}
+
+	free(bitmapCache);
+	return NULL;
 }
 
 void bitmap_cache_free(rdpBitmapCache* bitmapCache)
@@ -325,16 +345,11 @@ void bitmap_cache_free(rdpBitmapCache* bitmapCache)
 			for (j = 0; j < (int) bitmapCache->cells[i].number + 1; j++)
 			{
 				bitmap = bitmapCache->cells[i].entries[j];
-
-				if (bitmap)
-					Bitmap_Free(bitmapCache->context, bitmap);
+				Bitmap_Free(bitmapCache->context, bitmap);
 			}
 
 			free(bitmapCache->cells[i].entries);
 		}
-
-		if (bitmapCache->bitmap)
-			Bitmap_Free(bitmapCache->context, bitmapCache->bitmap);
 
 		free(bitmapCache->cells);
 		free(bitmapCache);

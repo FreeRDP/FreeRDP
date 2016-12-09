@@ -4,6 +4,8 @@
  *
  * Copyright 2011 Jiten Pathy
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +29,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/crypto.h>
 
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
@@ -345,8 +348,7 @@ void certificate_free_x509_certificate_chain(rdpX509CertChain* x509_cert_chain)
 
 	for (i = 0; i < (int)x509_cert_chain->count; i++)
 	{
-		if (x509_cert_chain->array[i].data)
-			free(x509_cert_chain->array[i].data);
+		free(x509_cert_chain->array[i].data);
 	}
 
 	free(x509_cert_chain->array);
@@ -397,18 +399,17 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
 		const BYTE* sigdata, int sigdatalen, wStream* s, UINT32 siglen)
 {
 	int i, sum;
-	CryptoMd5 md5ctx;
+	WINPR_MD5_CTX md5ctx;
 	BYTE sig[TSSK_KEY_LENGTH];
 	BYTE encsig[TSSK_KEY_LENGTH + 8];
-	BYTE md5hash[CRYPTO_MD5_DIGEST_LENGTH];
+	BYTE md5hash[WINPR_MD5_DIGEST_LENGTH];
 
-	md5ctx = crypto_md5_init();
-
-	if (!md5ctx)
-		return FALSE;
-
-	crypto_md5_update(md5ctx, sigdata, sigdatalen);
-	crypto_md5_final(md5ctx, md5hash);
+	if (!winpr_MD5_Init(&md5ctx))
+            return FALSE;
+	if (!winpr_MD5_Update(&md5ctx, sigdata, sigdatalen))
+            return FALSE;
+	if (!winpr_MD5_Final(&md5ctx, md5hash, sizeof(md5hash)))
+            return FALSE;
 	Stream_Read(s, encsig, siglen);
 
 	/* Last 8 bytes shall be all zero. */
@@ -572,7 +573,7 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 		if (Stream_GetRemainingLength(s) < certLength)
 			return FALSE;
 
-		DEBUG_CERTIFICATE("\nX.509 Certificate #%d, length:%d", i + 1, certLength);
+		DEBUG_CERTIFICATE("X.509 Certificate #%d, length:%d", i + 1, certLength);
 		certificate->x509_cert_chain->array[i].data = (BYTE*) malloc(certLength);
 
 		if (!certificate->x509_cert_chain->array[i].data)
@@ -591,8 +592,7 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 			
 			DEBUG_LICENSE("modulus length:%d", (int) cert_info.ModulusLength);
 
-			if (cert_info.Modulus)
-				free(cert_info.Modulus);
+			free(cert_info.Modulus);
 
 			if (!ret)
 			{
@@ -632,6 +632,13 @@ BOOL certificate_read_server_certificate(rdpCertificate* certificate, BYTE* serv
 		return TRUE;
 
 	s = Stream_New(server_cert, length);
+
+	if (!s)
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
+		return FALSE;
+	}
+
 	Stream_Read_UINT32(s, dwVersion); /* dwVersion (4 bytes) */
 
 	switch (dwVersion & CERT_CHAIN_VERSION_MASK)
@@ -655,50 +662,22 @@ BOOL certificate_read_server_certificate(rdpCertificate* certificate, BYTE* serv
 	return ret;
 }
 
-rdpRsaKey* key_new(const char* keyfile)
+rdpRsaKey* key_new_from_content(const char *keycontent, const char *keyfile)
 {
 	BIO* bio = NULL;
-	FILE* fp = NULL;
 	RSA* rsa = NULL;
-	int length;
-	BYTE* buffer = NULL;
 	rdpRsaKey* key = NULL;
 
 	key = (rdpRsaKey*) calloc(1, sizeof(rdpRsaKey));
-
 	if (!key)
 		return NULL;
 
-	fp = fopen(keyfile, "r+b");
-
-	if (!fp)
-	{
-		WLog_ERR(TAG, "unable to open RSA key file %s: %s.", keyfile, strerror(errno));
-		goto out_free;
-	}
-
-	fseek(fp, 0, SEEK_END);
-	length = ftell(fp);
-	fseek(fp, 0, SEEK_SET);
-
-	buffer = (BYTE*) malloc(length);
-
-	if (!buffer)
-		goto out_free;
-
-	fread((void*) buffer, length, 1, fp);
-	fclose(fp);
-
-	bio = BIO_new_mem_buf((void*) buffer, length);
-
+	bio = BIO_new_mem_buf((void *)keycontent, strlen(keycontent));
 	if (!bio)
 		goto out_free;
 
 	rsa = PEM_read_bio_RSAPrivateKey(bio, NULL, NULL, NULL);
-
 	BIO_free(bio);
-	free(buffer);
-	buffer = NULL;
 
 	if (!rsa)
 	{
@@ -748,16 +727,55 @@ rdpRsaKey* key_new(const char* keyfile)
 	crypto_reverse(key->exponent, sizeof(key->exponent));
 	RSA_free(rsa);
 	return key;
+
 out_free_modulus:
 	free(key->Modulus);
 out_free_rsa:
 	RSA_free(rsa);
 out_free:
+	free(key);
+	return NULL;
+}
+
+
+rdpRsaKey* key_new(const char* keyfile)
+{
+	FILE* fp = NULL;
+	int length;
+	char* buffer = NULL;
+	rdpRsaKey* key = NULL;
+
+	fp = fopen(keyfile, "r+b");
+	if (!fp)
+	{
+		WLog_ERR(TAG, "unable to open RSA key file %s: %s.", keyfile, strerror(errno));
+		goto out_free;
+	}
+
+	if (fseek(fp, 0, SEEK_END) < 0)
+		goto out_free;
+	if ((length = ftell(fp)) < 0)
+		goto out_free;
+	if (fseek(fp, 0, SEEK_SET) < 0)
+		goto out_free;
+
+	buffer = (char *)malloc(length + 1);
+	if (!buffer)
+		goto out_free;
+
+	if (fread((void*) buffer, length, 1, fp) != 1)
+		goto out_free;
+	fclose(fp);
+	buffer[length] = '\0';
+
+	key = key_new_from_content(buffer, keyfile);
+	free(buffer);
+	return key;
+
+out_free:
 	if (fp)
 		fclose(fp);
-	if (buffer)
-		free(buffer);
-	free(key);
+	free(buffer);
 	return NULL;
 }
 
@@ -766,11 +784,77 @@ void key_free(rdpRsaKey* key)
 	if (!key)
 		return;
 
-	if (key->Modulus)
-		free(key->Modulus);
-
+	free(key->Modulus);
 	free(key->PrivateExponent);
 	free(key);
+}
+
+rdpCertificate* certificate_clone(rdpCertificate* certificate)
+{
+	int index;
+	rdpCertificate* _certificate = (rdpCertificate*) calloc(1, sizeof(rdpCertificate));
+
+	if (!_certificate)
+		return NULL;
+
+	CopyMemory(_certificate, certificate, sizeof(rdpCertificate));
+
+	if (certificate->cert_info.ModulusLength)
+	{
+		_certificate->cert_info.Modulus = (BYTE*) malloc(certificate->cert_info.ModulusLength);
+		if (!_certificate->cert_info.Modulus)
+			goto out_fail;
+		CopyMemory(_certificate->cert_info.Modulus, certificate->cert_info.Modulus, certificate->cert_info.ModulusLength);
+		_certificate->cert_info.ModulusLength = certificate->cert_info.ModulusLength;
+	}
+
+	if (certificate->x509_cert_chain)
+	{
+		_certificate->x509_cert_chain = (rdpX509CertChain*) malloc(sizeof(rdpX509CertChain));
+		if (!_certificate->x509_cert_chain)
+			goto out_fail;
+		CopyMemory(_certificate->x509_cert_chain, certificate->x509_cert_chain, sizeof(rdpX509CertChain));
+
+		if (certificate->x509_cert_chain->count)
+		{
+			_certificate->x509_cert_chain->array = (rdpCertBlob*) calloc(certificate->x509_cert_chain->count, sizeof(rdpCertBlob));
+			if (!_certificate->x509_cert_chain->array)
+				goto out_fail;
+
+			for (index = 0; index < certificate->x509_cert_chain->count; index++)
+			{
+				_certificate->x509_cert_chain->array[index].length = certificate->x509_cert_chain->array[index].length;
+
+				if (certificate->x509_cert_chain->array[index].length)
+				{
+					_certificate->x509_cert_chain->array[index].data = (BYTE*) malloc(certificate->x509_cert_chain->array[index].length);
+					if (!_certificate->x509_cert_chain->array[index].data)
+					{
+						for (--index; index >= 0; --index)
+						{
+							if (certificate->x509_cert_chain->array[index].length)
+								free(_certificate->x509_cert_chain->array[index].data);
+						}
+						goto out_fail;
+					}
+					CopyMemory(_certificate->x509_cert_chain->array[index].data, certificate->x509_cert_chain->array[index].data,
+							_certificate->x509_cert_chain->array[index].length);
+				}
+			}
+		}
+	}
+
+	return _certificate;
+
+out_fail:
+	if (_certificate->x509_cert_chain)
+	{
+		free(_certificate->x509_cert_chain->array);
+		free(_certificate->x509_cert_chain);
+	}
+	free(_certificate->cert_info.Modulus);
+	free(_certificate);
+	return NULL;
 }
 
 /**
@@ -796,8 +880,7 @@ void certificate_free(rdpCertificate* certificate)
 
 	certificate_free_x509_certificate_chain(certificate->x509_cert_chain);
 
-	if (certificate->cert_info.Modulus)
-		free(certificate->cert_info.Modulus);
+	free(certificate->cert_info.Modulus);
 
 	free(certificate);
 }

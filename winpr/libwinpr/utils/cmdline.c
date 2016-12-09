@@ -115,7 +115,7 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 		sigil_index = 0;
 		sigil_length = 0;
 		sigil = (char*) &argv[i][sigil_index];
-		length = strlen(argv[i]);
+		length = (int) strlen(argv[i]);
 
 		if ((sigil[0] == '/') && (flags & COMMAND_LINE_SIGIL_SLASH))
 		{
@@ -160,8 +160,11 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 		if ((sigil_length > 0) || (flags & COMMAND_LINE_SIGIL_NONE) ||
 				(flags & COMMAND_LINE_SIGIL_NOT_ESCAPED))
 		{
-			if (length < (sigil_length + 1))
+			if (length < (sigil_length + 1)) {
+				if ((flags & COMMAND_LINE_IGN_UNKNOWN_KEYWORD))
+					continue;
 				return COMMAND_LINE_ERROR_NO_KEYWORD;
+			}
 
 			keyword_index = sigil_index + sigil_length;
 			keyword = (char*) &argv[i][keyword_index];
@@ -195,9 +198,9 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 			if (separator)
 			{
 				separator_length = 1;
-				separator_index = (separator - argv[i]);
+				separator_index = (int) (separator - argv[i]);
 
-				keyword_length = (separator - keyword);
+				keyword_length = (int) (separator - keyword);
 
 				value_index = separator_index + separator_length;
 				value = (char*) &argv[i][value_index];
@@ -275,7 +278,7 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 					{
 						i++;
 						value_index = 0;
-						length = strlen(argv[i]);
+						length = (int) strlen(argv[i]);
 
 						value = (char*) &argv[i][value_index];
 						value_length = (length - value_index);
@@ -360,9 +363,11 @@ int CommandLineParseArgumentsA(int argc, LPCSTR* argv, COMMAND_LINE_ARGUMENT_A* 
 						return COMMAND_LINE_STATUS_PRINT_HELP;
 				else if (options[j].Flags & COMMAND_LINE_PRINT_VERSION)
 						return COMMAND_LINE_STATUS_PRINT_VERSION;
+				else if (options[j].Flags & COMMAND_LINE_PRINT_BUILDCONFIG)
+						return COMMAND_LINE_STATUS_PRINT_BUILDCONFIG;
 			}
 			
-			if (!found)
+			if (!found && (flags & COMMAND_LINE_IGN_UNKNOWN_KEYWORD) == 0)
 				return COMMAND_LINE_ERROR_NO_KEYWORD;
 		}
 	}

@@ -30,9 +30,14 @@
 #include <winpr/sysinfo.h>
 #include <winpr/environment.h>
 
-#include <winpr/wlog.h>
+#include "wlog.h"
 
 #include "wlog/Layout.h"
+
+#if defined __linux__ && !defined ANDROID
+#include <unistd.h>
+#include <sys/syscall.h>
+#endif
 
 extern const char* WLOG_LEVELS[7];
 
@@ -60,7 +65,7 @@ void WLog_PrintMessagePrefix(wLog* log, wLogMessage* message, const char* format
 	va_end(args);
 }
 
-void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* message)
+BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* message)
 {
 	char* p;
 	int index;
@@ -126,28 +131,38 @@ void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 				{
 					args[argc++] = (void*) (size_t) message->LineNumber;
 					format[index++] = '%';
-					format[index++] = 'd';
+					format[index++] = 'u';
 					p++;
 				}
 				else if ((p[0] == 'p') && (p[1] == 'i') && (p[2] == 'd')) /* process id */
 				{
 					args[argc++] = (void*) (size_t) GetCurrentProcessId();
 					format[index++] = '%';
-					format[index++] = 'd';
+					format[index++] = 'u';
 					p += 2;
 				}
 				else if ((p[0] == 't') && (p[1] == 'i') && (p[2] == 'd')) /* thread id */
 				{
+#if defined __linux__ && !defined ANDROID
+					/* On Linux we prefer to see the LWP id */
+					args[argc++] = (void*) (size_t) syscall(SYS_gettid);;
+					format[index++] = '%';
+					format[index++] = 'l';
+					format[index++] = 'd';
+#else
 					args[argc++] = (void*) (size_t) GetCurrentThreadId();
 					format[index++] = '%';
-					format[index++] = 'd';
+					format[index++] = '0';
+					format[index++] = '8';
+					format[index++] = 'x';
+#endif
 					p += 2;
 				}
 				else if ((p[0] == 'y') && (p[1] == 'r')) /* year */
 				{
 					args[argc++] = (void*) (size_t) localTime.wYear;
 					format[index++] = '%';
-					format[index++] = 'd';
+					format[index++] = 'u';
 					p++;
 				}
 				else if ((p[0] == 'm') && (p[1] == 'o')) /* month */
@@ -156,7 +171,7 @@ void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 					format[index++] = '%';
 					format[index++] = '0';
 					format[index++] = '2';
-					format[index++] = 'd';
+					format[index++] = 'u';
 					p++;
 				}
 				else if ((p[0] == 'd') && (p[1] == 'w')) /* day of week */
@@ -165,7 +180,7 @@ void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 					format[index++] = '%';
 					format[index++] = '0';
 					format[index++] = '2';
-					format[index++] = 'd';
+					format[index++] = 'u';
 					p++;
 				}
 				else if ((p[0] == 'd') && (p[1] == 'y')) /* day */
@@ -174,7 +189,7 @@ void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 					format[index++] = '%';
 					format[index++] = '0';
 					format[index++] = '2';
-					format[index++] = 'd';
+					format[index++] = 'u';
 					p++;
 				}
 				else if ((p[0] == 'h') && (p[1] == 'r')) /* hours */
@@ -183,7 +198,7 @@ void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 					format[index++] = '%';
 					format[index++] = '0';
 					format[index++] = '2';
-					format[index++] = 'd';
+					format[index++] = 'u';
 					p++;
 				}
 				else if ((p[0] == 'm') && (p[1] == 'i')) /* minutes */
@@ -192,7 +207,7 @@ void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 					format[index++] = '%';
 					format[index++] = '0';
 					format[index++] = '2';
-					format[index++] = 'd';
+					format[index++] = 'u';
 					p++;
 				}
 				else if ((p[0] == 's') && (p[1] == 'e')) /* seconds */
@@ -201,7 +216,7 @@ void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 					format[index++] = '%';
 					format[index++] = '0';
 					format[index++] = '2';
-					format[index++] = 'd';
+					format[index++] = 'u';
 					p++;
 				}
 				else if ((p[0] == 'm') && (p[1] == 'l')) /* milliseconds */
@@ -210,7 +225,7 @@ void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 					format[index++] = '%';
 					format[index++] = '0';
 					format[index++] = '3';
-					format[index++] = 'd';
+					format[index++] = 'u';
 					p++;
 				}
 			}
@@ -312,6 +327,7 @@ void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 					args[11], args[12], args[13], args[14], args[15]);
 			break;
 	}
+	return TRUE;
 }
 
 wLogLayout* WLog_GetLogLayout(wLog* log)
@@ -323,16 +339,18 @@ wLogLayout* WLog_GetLogLayout(wLog* log)
 	return appender->Layout;
 }
 
-void WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* format)
+BOOL WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* format)
 {
-	if (layout->FormatString)
-	{
-		free(layout->FormatString);
-		layout->FormatString = NULL;
-	}
+	free(layout->FormatString);
+	layout->FormatString = NULL;
 
 	if (format)
+	{
 		layout->FormatString = _strdup(format);
+		if (!layout->FormatString)
+			return FALSE;
+	}
+	return TRUE;
 }
 
 wLogLayout* WLog_Layout_New(wLog* log)
@@ -342,28 +360,37 @@ wLogLayout* WLog_Layout_New(wLog* log)
 	wLogLayout* layout;
 
 	layout = (wLogLayout*) calloc(1, sizeof(wLogLayout));
+	if (!layout)
+		return NULL;
 
-	if (layout)
+	nSize = GetEnvironmentVariableA("WLOG_PREFIX", NULL, 0);
+	if (nSize)
 	{
-		nSize = GetEnvironmentVariableA("WLOG_PREFIX", NULL, 0);
-
-		if (nSize)
+		env = (LPSTR) malloc(nSize);
+		if (!env)
 		{
-			env = (LPSTR) malloc(nSize);
-			nSize = GetEnvironmentVariableA("WLOG_PREFIX", env, nSize);
+			free(layout);
+			return NULL;
 		}
+		nSize = GetEnvironmentVariableA("WLOG_PREFIX", env, nSize);
+	}
 
-		if (env)
-			layout->FormatString = env;
-		else
-		{
+	if (env)
+		layout->FormatString = env;
+	else
+	{
 #ifdef ANDROID
-			layout->FormatString = _strdup("[pid=%pid:tid=%tid] - ");
+		layout->FormatString = _strdup("[pid=%pid:tid=%tid] - ");
 #else
-			layout->FormatString = _strdup("[%hr:%mi:%se:%ml] [%pid:%tid] [%lv][%mn] - ");
+		layout->FormatString = _strdup("[%hr:%mi:%se:%ml] [%pid:%tid] [%lv][%mn] - ");
 #endif
+		if (!layout->FormatString)
+		{
+			free(layout);
+			return NULL;
 		}
 	}
+
 
 	return layout;
 }

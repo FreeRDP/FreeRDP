@@ -26,11 +26,14 @@ extern "C" {
 #endif
 
 #include <winpr/wtypes.h>
+#include <winpr/winpr.h>
 
-WINPR_API void *winpr_backtrace(DWORD size);
-WINPR_API void winpr_backtrace_free(void *buffer);
-WINPR_API char **winpr_backtrace_symbols(void *buffer, size_t *used);
-WINPR_API void winpr_backtrace_symbols_fd(void *buffer, int fd);
+WINPR_API void winpr_log_backtrace(const char* tag, DWORD level, DWORD size);
+WINPR_API void* winpr_backtrace(DWORD size);
+WINPR_API void winpr_backtrace_free(void* buffer);
+WINPR_API char** winpr_backtrace_symbols(void* buffer, size_t* used);
+WINPR_API void winpr_backtrace_symbols_fd(void* buffer, int fd);
+WINPR_API char* winpr_strerror(DWORD dw, char* dmsg, size_t size);
 
 #ifdef __cplusplus
 }

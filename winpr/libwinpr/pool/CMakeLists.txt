@@ -23,7 +23,6 @@ winpr_module_add(
 	cleanup_group.c
 	pool.c
 	pool.h
-	callback_environment.c
 	callback.c
 	callback_cleanup.c)
 

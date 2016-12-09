@@ -22,18 +22,18 @@
 #endif
 
 #include <errno.h>
+#include <stdio.h>
 #include <wctype.h>
 
 #include <winpr/crt.h>
+#include <winpr/endian.h>
 
 /* String Manipulation (CRT): http://msdn.microsoft.com/en-us/library/f0151s4x.aspx */
 
-#ifndef _WIN32
-
-#include "casing.c"
-
 #include "../log.h"
 #define TAG WINPR_TAG("crt")
+
+#ifndef _WIN32
 
 char* _strdup(const char* strSource)
 {
@@ -57,9 +57,7 @@ WCHAR* _wcsdup(const WCHAR* strSource)
 	if (strSource == NULL)
 		return NULL;
 
-#if defined(sun) && sun
-	strDestination = wsdup(strSource);
-#elif defined(__APPLE__) && defined(__MACH__) || defined(ANDROID)
+#if defined(__APPLE__) && defined(__MACH__) || defined(ANDROID) || defined(sun)
 	strDestination = malloc(wcslen((wchar_t*)strSource));
 
 	if (strDestination != NULL)
@@ -89,13 +87,17 @@ int _strnicmp(const char* string1, const char* string2, size_t count)
 
 int _wcscmp(const WCHAR* string1, const WCHAR* string2)
 {
+	WCHAR value1, value2;
+
 	while (*string1 && (*string1 == *string2))
 	{
 		string1++;
 		string2++;
 	}
 
-	return *string1 - *string2;
+	Data_Read_UINT16(string1, value1);
+	Data_Read_UINT16(string2, value2);
+	return value1 - value2;
 }
 
 /* _wcslen -> wcslen */
@@ -118,11 +120,13 @@ size_t _wcslen(const WCHAR* str)
 WCHAR* _wcschr(const WCHAR* str, WCHAR c)
 {
 	WCHAR* p = (WCHAR*) str;
+	WCHAR value;
 
-	while (*p && (*p != c))
+	Data_Write_UINT16(&value, c);
+	while (*p && (*p != value))
 		p++;
 
-	return ((*p == c) ? p : NULL);
+	return ((*p == value) ? p : NULL);
 }
 
 char* strtok_s(char* strToken, const char* strDelimit, char** context)
@@ -133,20 +137,29 @@ char* strtok_s(char* strToken, const char* strDelimit, char** context)
 WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context)
 {
 	WCHAR* nextToken;
+	WCHAR value;
 
 	if (!strToken)
 		strToken = *context;
 
-	while (*strToken && _wcschr(strDelimit, *strToken))
+	Data_Read_UINT16(strToken, value);
+	while (*strToken && _wcschr(strDelimit, value))
+	{
 		strToken++;
+		Data_Read_UINT16(strToken, value);
+	}
 
 	if (!*strToken)
 		return NULL;
 
 	nextToken = strToken++;
 
-	while (*strToken && !(_wcschr(strDelimit, *strToken)))
+	Data_Read_UINT16(strToken, value);
+	while (*strToken && !(_wcschr(strDelimit, value)))
+	{
 		strToken++;
+		Data_Read_UINT16(strToken, value);
+	}
 
 	if (*strToken)
 		*strToken++ = 0;
@@ -155,9 +168,15 @@ WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context)
 	return nextToken;
 }
 
+#endif
+
+#if !defined(_WIN32) || defined(_UWP)
+
 /* Windows API Sets - api-ms-win-core-string-l2-1-0.dll
  * http://msdn.microsoft.com/en-us/library/hh802935/
  */
+
+#include "casing.c"
 
 LPSTR CharUpperA(LPSTR lpsz)
 {
@@ -167,7 +186,7 @@ LPSTR CharUpperA(LPSTR lpsz)
 	if (!lpsz)
 		return NULL;
 
-	length = strlen(lpsz);
+	length = (int) strlen(lpsz);
 
 	if (length < 1)
 		return (LPSTR) NULL;
@@ -200,7 +219,7 @@ LPWSTR CharUpperW(LPWSTR lpsz)
 
 DWORD CharUpperBuffA(LPSTR lpsz, DWORD cchLength)
 {
-	int i;
+	DWORD i;
 
 	if (cchLength < 1)
 		return 0;
@@ -217,10 +236,13 @@ DWORD CharUpperBuffA(LPSTR lpsz, DWORD cchLength)
 DWORD CharUpperBuffW(LPWSTR lpsz, DWORD cchLength)
 {
 	DWORD i;
+	WCHAR value;
 
 	for (i = 0; i < cchLength; i++)
 	{
-		lpsz[i] = WINPR_TOUPPERW(lpsz[i]);
+		Data_Read_UINT16(&lpsz[i], value);
+		value = WINPR_TOUPPERW(value);
+		Data_Write_UINT16(&lpsz[i], value);
 	}
 
 	return cchLength;
@@ -234,7 +256,7 @@ LPSTR CharLowerA(LPSTR lpsz)
 	if (!lpsz)
 		return (LPSTR) NULL;
 
-	length = strlen(lpsz);
+	length = (int) strlen(lpsz);
 
 	if (length < 1)
 		return (LPSTR) NULL;
@@ -267,7 +289,7 @@ LPWSTR CharLowerW(LPWSTR lpsz)
 
 DWORD CharLowerBuffA(LPSTR lpsz, DWORD cchLength)
 {
-	int i;
+	DWORD i;
 
 	if (cchLength < 1)
 		return 0;
@@ -284,10 +306,13 @@ DWORD CharLowerBuffA(LPSTR lpsz, DWORD cchLength)
 DWORD CharLowerBuffW(LPWSTR lpsz, DWORD cchLength)
 {
 	DWORD i;
+	WCHAR value;
 
 	for (i = 0; i < cchLength; i++)
 	{
-		lpsz[i] = WINPR_TOLOWERW(lpsz[i]);
+		Data_Read_UINT16(&lpsz[i], value);
+		value = WINPR_TOLOWERW(value);
+		Data_Write_UINT16(&lpsz[i], value);
 	}
 
 	return cchLength;
@@ -352,7 +377,7 @@ BOOL IsCharLowerW(WCHAR ch)
 
 int lstrlenA(LPCSTR lpString)
 {
-	return strlen(lpString);
+	return (int) strlen(lpString);
 }
 
 int lstrlenW(LPCWSTR lpString)
@@ -367,7 +392,7 @@ int lstrlenW(LPCWSTR lpString)
 	while (*p)
 		p++;
 
-	return p - lpString;
+	return (int) (p - lpString);
 }
 
 int lstrcmpA(LPCSTR lpString1, LPCSTR lpString2)
@@ -377,13 +402,17 @@ int lstrcmpA(LPCSTR lpString1, LPCSTR lpString2)
 
 int lstrcmpW(LPCWSTR lpString1, LPCWSTR lpString2)
 {
+	WCHAR value1, value2;
+
 	while (*lpString1 && (*lpString1 == *lpString2))
 	{
 		lpString1++;
 		lpString2++;
 	}
 
-	return *lpString1 - *lpString2;
+	Data_Read_UINT16(lpString1, value1);
+	Data_Read_UINT16(lpString2, value2);
+	return value1 - value2;
 }
 
 #endif
@@ -411,7 +440,7 @@ int ConvertLineEndingToLF(char* str, int size)
 		}
 	}
 
-	status = pOutput - str;
+	status = (int) (pOutput - str);
 
 	return status;
 }
@@ -460,8 +489,65 @@ char* ConvertLineEndingToCRLF(const char* str, int* size)
 		pInput++;
 	}
 
-	*size = pOutput - newStr;
+	*size = (int) (pOutput - newStr);
 
 	return newStr;
 }
 
+char* StrSep(char** stringp, const char* delim)
+{
+	char* start = *stringp;
+	char* p;
+
+	p = (start != NULL) ? strpbrk(start, delim) : NULL;
+
+	if (!p)
+		*stringp = NULL;
+	else
+	{
+		*p = '\0';
+		*stringp = p + 1;
+	}
+
+	return start;
+}
+
+INT64 GetLine(char** lineptr, size_t* size, FILE* stream)
+{
+#if defined(_WIN32)
+	char c;
+	char *n;
+	size_t step = 32;
+	size_t used = 0;
+
+	if (!lineptr || !size)
+	{
+		errno = EINVAL;
+		return -1;
+	}
+
+	do
+	{
+		if (used + 2 >= *size)
+		{
+			*size += step;
+			n = realloc(*lineptr, *size);
+			if (!n)
+			{
+				return -1;
+			}
+			*lineptr = n;
+		}
+        c = fgetc(stream);
+        if (c != EOF)
+            (*lineptr)[used++] = c;
+    } while((c != '\n') && (c != '\r') && (c != EOF));
+    (*lineptr)[used] = '\0';
+
+	return used;
+#elif !defined(ANDROID) && !defined(IOS)
+	return getline(lineptr, size, stream);
+#else
+	return -1;
+#endif
+}

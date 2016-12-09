@@ -23,78 +23,68 @@
 
 #include <winpr/crt.h>
 #include <winpr/pool.h>
+#include <winpr/library.h>
 
 #include "pool.h"
 
+#ifdef WINPR_THREAD_POOL
+
 #ifdef _WIN32
-
-static BOOL module_initialized = FALSE;
-static BOOL module_available = FALSE;
-static HMODULE kernel32_module = NULL;
-
+static INIT_ONCE init_once_module = INIT_ONCE_STATIC_INIT;
 static PTP_CLEANUP_GROUP (WINAPI * pCreateThreadpoolCleanupGroup)();
 static VOID (WINAPI * pCloseThreadpoolCleanupGroupMembers)(PTP_CLEANUP_GROUP ptpcg, BOOL fCancelPendingCallbacks, PVOID pvCleanupContext);
 static VOID (WINAPI * pCloseThreadpoolCleanupGroup)(PTP_CLEANUP_GROUP ptpcg);
 
-static void module_init()
+static BOOL CALLBACK init_module(PINIT_ONCE once, PVOID param, PVOID *context)
 {
-	if (module_initialized)
-		return;
-
-	kernel32_module = LoadLibraryA("kernel32.dll");
-	module_initialized = TRUE;
-
-	if (!kernel32_module)
-		return;
-
-	module_available = TRUE;
-
-	pCreateThreadpoolCleanupGroup = (void*) GetProcAddress(kernel32_module, "CreateThreadpoolCleanupGroup");
-	pCloseThreadpoolCleanupGroupMembers = (void*) GetProcAddress(kernel32_module, "CloseThreadpoolCleanupGroupMembers");
-	pCloseThreadpoolCleanupGroup = (void*) GetProcAddress(kernel32_module, "CloseThreadpoolCleanupGroup");
+	HMODULE kernel32 = LoadLibraryA("kernel32.dll");
+	if (kernel32)
+	{
+		pCreateThreadpoolCleanupGroup = (void*)GetProcAddress(kernel32, "CreateThreadpoolCleanupGroup");
+		pCloseThreadpoolCleanupGroupMembers = (void*)GetProcAddress(kernel32, "CloseThreadpoolCleanupGroupMembers");
+		pCloseThreadpoolCleanupGroup = (void*)GetProcAddress(kernel32, "CloseThreadpoolCleanupGroup");
+	}
+	return TRUE;
 }
-
 #endif
 
-#if WINPR_THREAD_POOL
-
-PTP_CLEANUP_GROUP CreateThreadpoolCleanupGroup()
+PTP_CLEANUP_GROUP winpr_CreateThreadpoolCleanupGroup()
 {
 	PTP_CLEANUP_GROUP cleanupGroup = NULL;
 #ifdef _WIN32
-	module_init();
-
+	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);
 	if (pCreateThreadpoolCleanupGroup)
 		return pCreateThreadpoolCleanupGroup();
-#else
-	cleanupGroup = (PTP_CLEANUP_GROUP) malloc(sizeof(TP_CLEANUP_GROUP));
 #endif
+	cleanupGroup = (PTP_CLEANUP_GROUP) malloc(sizeof(TP_CLEANUP_GROUP));
 	return cleanupGroup;
 }
 
-VOID CloseThreadpoolCleanupGroupMembers(PTP_CLEANUP_GROUP ptpcg, BOOL fCancelPendingCallbacks, PVOID pvCleanupContext)
+VOID winpr_CloseThreadpoolCleanupGroupMembers(PTP_CLEANUP_GROUP ptpcg, BOOL fCancelPendingCallbacks, PVOID pvCleanupContext)
 {
 #ifdef _WIN32
-	module_init();
-
+	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);
 	if (pCloseThreadpoolCleanupGroupMembers)
+	{
 		pCloseThreadpoolCleanupGroupMembers(ptpcg, fCancelPendingCallbacks, pvCleanupContext);
-#else
-
+		return;
+	}
 #endif
+	/* No default implementation */
 }
 
-VOID CloseThreadpoolCleanupGroup(PTP_CLEANUP_GROUP ptpcg)
+VOID winpr_CloseThreadpoolCleanupGroup(PTP_CLEANUP_GROUP ptpcg)
 {
 #ifdef _WIN32
-	module_init();
-
+	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);
 	if (pCloseThreadpoolCleanupGroup)
+	{
 		pCloseThreadpoolCleanupGroup(ptpcg);
-#else
-	free(ptpcg);
+		return;
+	}
 #endif
+	free(ptpcg);
 }
 
-#endif
+#endif /* WINPR_THREAD_POOL defined */
 

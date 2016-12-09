@@ -37,9 +37,7 @@ struct _RDPSND_WAVE
 	UINT16 wTimeStampA;
 	UINT16 wTimeStampB;
 
-	UINT16 wLatency;
 	UINT16 wAudioLength;
-	UINT16 wPlaybackDelay;
 
 	UINT32 wLocalTimeA;
 	UINT32 wLocalTimeB;
@@ -53,18 +51,18 @@ typedef struct rdpsnd_plugin rdpsndPlugin;
 typedef struct rdpsnd_device_plugin rdpsndDevicePlugin;
 
 typedef BOOL (*pcFormatSupported) (rdpsndDevicePlugin* device, AUDIO_FORMAT* format);
-typedef void (*pcOpen) (rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency);
-typedef void (*pcSetFormat) (rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency);
+typedef BOOL (*pcOpen) (rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency);
+typedef BOOL (*pcSetFormat) (rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency);
 typedef UINT32 (*pcGetVolume) (rdpsndDevicePlugin* device);
-typedef void (*pcSetVolume) (rdpsndDevicePlugin* device, UINT32 value);
+typedef BOOL (*pcSetVolume) (rdpsndDevicePlugin* device, UINT32 value);
 typedef void (*pcPlay) (rdpsndDevicePlugin* device, BYTE* data, int size);
 typedef void (*pcStart) (rdpsndDevicePlugin* device);
 typedef void (*pcClose) (rdpsndDevicePlugin* device);
 typedef void (*pcFree) (rdpsndDevicePlugin* device);
 
-typedef void (*pcWaveDecode) (rdpsndDevicePlugin* device, RDPSND_WAVE* wave);
+typedef BOOL (*pcWaveDecode) (rdpsndDevicePlugin* device, RDPSND_WAVE* wave);
 typedef void (*pcWavePlay) (rdpsndDevicePlugin* device, RDPSND_WAVE* wave);
-typedef void (*pcWaveConfirm) (rdpsndDevicePlugin* device, RDPSND_WAVE* wave);
+typedef UINT (*pcWaveConfirm) (rdpsndDevicePlugin* device, RDPSND_WAVE* wave);
 
 struct rdpsnd_device_plugin
 {
@@ -100,7 +98,7 @@ struct _FREERDP_RDPSND_DEVICE_ENTRY_POINTS
 typedef struct _FREERDP_RDPSND_DEVICE_ENTRY_POINTS FREERDP_RDPSND_DEVICE_ENTRY_POINTS;
 typedef FREERDP_RDPSND_DEVICE_ENTRY_POINTS* PFREERDP_RDPSND_DEVICE_ENTRY_POINTS;
 
-typedef int (*PFREERDP_RDPSND_DEVICE_ENTRY)(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints);
+typedef UINT (*PFREERDP_RDPSND_DEVICE_ENTRY)(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints);
 
 #endif /* FREERDP_CHANNEL_CLIENT_RDPSND_H */
 

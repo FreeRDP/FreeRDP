@@ -2708,8 +2708,5 @@ NCRUSH_CONTEXT* ncrush_context_new(BOOL Compressor)
 
 void ncrush_context_free(NCRUSH_CONTEXT* ncrush)
 {
-	if (ncrush)
-	{
-		free(ncrush);
-	}
+	free(ncrush);
 }

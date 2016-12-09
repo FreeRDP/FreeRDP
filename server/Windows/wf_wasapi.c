@@ -36,6 +36,7 @@ int wf_rdpsnd_set_latest_peer(wfPeerContext* peer)
 int wf_wasapi_activate(RdpsndServerContext* context)
 {
 	wchar_t * pattern = L"Stereo Mix";
+	HANDLE hThread;
 
 	wf_wasapi_get_device_string(pattern, &devStr);
 
@@ -46,7 +47,12 @@ int wf_wasapi_activate(RdpsndServerContext* context)
 	}
 
 	WLog_DBG(TAG, "RDPSND (WASAPI) Activated");
-	CreateThread(NULL, 0, wf_rdpsnd_wasapi_thread, latestPeer, 0, NULL);
+	if (!(hThread = CreateThread(NULL, 0, wf_rdpsnd_wasapi_thread, latestPeer, 0, NULL)))
+	{
+		WLog_ERR(TAG, "CreateThread failed");
+		return 1;
+	}
+	CloseHandle(hThread);
 
 	return 0;
 }
@@ -125,8 +131,9 @@ int wf_wasapi_get_device_string(LPWSTR pattern, LPWSTR * deviceStr)
 			WLog_INFO(TAG, "Using sound ouput endpoint: [%s] (%s)", nameVar.pwszVal, pwszID);
 			//WLog_INFO(TAG, "matched %d characters", wcscmp(pattern, nameVar.pwszVal);
 			devStrLen = wcslen(pwszID);
-			*deviceStr = (LPWSTR) malloc((devStrLen * 2) + 2);
-			ZeroMemory(*deviceStr, (devStrLen * 2) + 2);
+			*deviceStr = (LPWSTR) calloc(1, (devStrLen * 2) + 2);
+			if (!deviceStr)
+				return -1;
 			wcscpy_s(*deviceStr, devStrLen+1, pwszID);
 		}
 		CoTaskMemFree(pwszID);

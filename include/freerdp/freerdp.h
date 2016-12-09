@@ -3,8 +3,8 @@
  * FreeRDP Interface
  *
  * Copyright 2009-2011 Jay Sorg
- * Copyright 2014 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
- *
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,21 +59,68 @@ typedef RDP_CLIENT_ENTRY_POINTS_V1 RDP_CLIENT_ENTRY_POINTS;
 extern "C" {
 #endif
 
-typedef int (*pContextNew)(freerdp* instance, rdpContext* context);
+typedef BOOL (*pContextNew)(freerdp* instance, rdpContext* context);
 typedef void (*pContextFree)(freerdp* instance, rdpContext* context);
 
 typedef BOOL (*pPreConnect)(freerdp* instance);
 typedef BOOL (*pPostConnect)(freerdp* instance);
 typedef void (*pPostDisconnect)(freerdp* instance);
-typedef BOOL (*pAuthenticate)(freerdp* instance, char** username, char** password, char** domain);
-typedef BOOL (*pVerifyCertificate)(freerdp* instance, char* subject, char* issuer, char* fingerprint);
-typedef BOOL (*pVerifyChangedCertificate)(freerdp* instance, char* subject, char* issuer, char* new_fingerprint, char* old_fingerprint);
-typedef int (*pVerifyX509Certificate)(freerdp* instance, BYTE* data, int length, const char* hostname, int port, DWORD flags);
+typedef BOOL (*pAuthenticate)(freerdp* instance, char** username,
+                              char** password, char** domain);
+
+/** @brief Callback used if user interaction is required to accept
+ *         an unknown certificate.
+ *
+ *  @param common_name      The certificate registered hostname.
+ *  @param subject          The common name of the certificate.
+ *  @param issuer           The issuer of the certificate.
+ *  @param fingerprint      The fingerprint of the certificate.
+ *  @param host_mismatch    A flag indicating the certificate
+ *                          subject does not match the host connecting to.
+ *
+ *  @return 1 to accept and store a certificate, 2 to accept
+ *          a certificate only for this session, 0 otherwise.
+ */
+typedef DWORD (*pVerifyCertificate)(freerdp* instance,
+                                    const char* common_name,
+                                    const char* subject,
+                                    const char* issuer,
+                                    const char* fingerprint,
+                                    BOOL host_mismatch);
+
+/** @brief Callback used if user interaction is required to accept
+ *         a changed certificate.
+ *
+ *  @param common_name      The certificate registered hostname.
+ *  @param subject          The common name of the new certificate.
+ *  @param issuer           The issuer of the new certificate.
+ *  @param fingerprint      The fingerprint of the new certificate.
+ *  @param old_subject      The common name of the old certificate.
+ *  @param old_issuer       The issuer of the new certificate.
+ *  @param old_fingerprint  The fingerprint of the old certificate.
+ *
+ *  @return 1 to accept and store a certificate, 2 to accept
+ *          a certificate only for this session, 0 otherwise.
+ */
+
+typedef DWORD (*pVerifyChangedCertificate)(freerdp* instance,
+        const char* common_name,
+        const char* subject,
+        const char* issuer,
+        const char* new_fingerprint,
+        const char* old_subject,
+        const char* old_issuer,
+        const char* old_fingerprint);
+typedef int (*pVerifyX509Certificate)(freerdp* instance, BYTE* data,
+                                      int length, const char* hostname,
+                                      int port, DWORD flags);
 
 typedef int (*pLogonErrorInfo)(freerdp* instance, UINT32 data, UINT32 type);
 
-typedef int (*pSendChannelData)(freerdp* instance, UINT16 channelId, BYTE* data, int size);
-typedef int (*pReceiveChannelData)(freerdp* instance, UINT16 channelId, BYTE* data, int size, int flags, int totalSize);
+typedef int (*pSendChannelData)(freerdp* instance, UINT16 channelId, BYTE* data,
+                                int size);
+typedef int (*pReceiveChannelData)(freerdp* instance, UINT16 channelId,
+                                   BYTE* data, int size, int flags, int totalSize);
 
 /**
  * Defines the context for a given instance of RDP connection.
@@ -107,7 +154,11 @@ struct rdp_context
 
 	ALIGN64 wPubSub* pubSub; /* (offset 18) */
 
-	UINT64 paddingB[32 - 19]; /* 19 */
+	ALIGN64 HANDLE channelErrorEvent; /* (offset 19)*/
+	ALIGN64 UINT channelErrorNum; /*(offset 20)*/
+	ALIGN64 char* errorDescription; /*(offset 21)*/
+
+	UINT64 paddingB[32 - 22]; /* 22 */
 
 	ALIGN64 rdpRdp* rdp; /**< (offset 32)
 					Pointer to a rdp_rdp structure used to keep the connection's parameters.
@@ -127,7 +178,8 @@ struct rdp_context
 	ALIGN64 rdpMetrics* metrics; /* 41 */
 	ALIGN64 rdpCodecs* codecs; /* 42 */
 	ALIGN64 rdpAutoDetect* autodetect; /* 43 */
-	UINT64 paddingC[64 - 44]; /* 44 */
+	ALIGN64 HANDLE abortEvent; /* 44 */
+	UINT64 paddingC[64 - 45]; /* 45 */
 
 	UINT64 paddingD[96 - 64]; /* 64 */
 	UINT64 paddingE[128 - 96]; /* 96 */
@@ -207,13 +259,15 @@ struct rdp_freerdp
 											   Callback for certificate validation.
 											   Used to verify that an unknown certificate is trusted. */
 	ALIGN64 pVerifyChangedCertificate VerifyChangedCertificate; /**< (offset 52)
-															 Callback for changed certificate validation. 
+															 Callback for changed certificate validation.
 															 Used when a certificate differs from stored fingerprint.
 															 If returns TRUE, the new fingerprint will be trusted and old thrown out. */
 
-	ALIGN64 pVerifyX509Certificate VerifyX509Certificate;  /**< (offset 53)  Callback for X509 certificate verification (PEM format) */
+	ALIGN64 pVerifyX509Certificate
+	VerifyX509Certificate;  /**< (offset 53)  Callback for X509 certificate verification (PEM format) */
 
-	ALIGN64 pLogonErrorInfo LogonErrorInfo; /**< (offset 54)  Callback for logon error info, important for logon system messages with RemoteApp */
+	ALIGN64 pLogonErrorInfo
+	LogonErrorInfo; /**< (offset 54)  Callback for logon error info, important for logon system messages with RemoteApp */
 
 	ALIGN64 pPostDisconnect PostDisconnect; /**< (offset 55)
 																						Callback for cleaning up resources allocated
@@ -237,26 +291,45 @@ struct rdp_freerdp
 	UINT64 paddingE[80 - 66]; /* 66 */
 };
 
-FREERDP_API int freerdp_context_new(freerdp* instance);
+FREERDP_API BOOL freerdp_context_new(freerdp* instance);
 FREERDP_API void freerdp_context_free(freerdp* instance);
 
 FREERDP_API BOOL freerdp_connect(freerdp* instance);
+FREERDP_API BOOL freerdp_abort_connect(freerdp* instance);
 FREERDP_API BOOL freerdp_shall_disconnect(freerdp* instance);
 FREERDP_API BOOL freerdp_disconnect(freerdp* instance);
 FREERDP_API BOOL freerdp_reconnect(freerdp* instance);
 
-FREERDP_API BOOL freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount);
+FREERDP_API void freerdp_channel_init_thread_context(rdpContext* context);
+FREERDP_API freerdp* freerdp_channel_get_instance(void);
+FREERDP_API rdpContext* freerdp_channel_get_context(void);
+FREERDP_API rdpChannels* freerdp_channel_get_channels_context(void);
+
+FREERDP_API BOOL freerdp_get_fds(freerdp* instance, void** rfds, int* rcount,
+                                 void** wfds, int* wcount);
 FREERDP_API BOOL freerdp_check_fds(freerdp* instance);
 
-FREERDP_API wMessageQueue* freerdp_get_message_queue(freerdp* instance, DWORD id);
-FREERDP_API HANDLE freerdp_get_message_queue_event_handle(freerdp* instance, DWORD id);
-FREERDP_API int freerdp_message_queue_process_message(freerdp* instance, DWORD id, wMessage* message);
-FREERDP_API int freerdp_message_queue_process_pending_messages(freerdp* instance, DWORD id);
+FREERDP_API DWORD freerdp_get_event_handles(rdpContext* context, HANDLE* events,
+        DWORD count);
+FREERDP_API BOOL freerdp_check_event_handles(rdpContext* context);
+
+FREERDP_API wMessageQueue* freerdp_get_message_queue(freerdp* instance,
+        DWORD id);
+FREERDP_API HANDLE freerdp_get_message_queue_event_handle(freerdp* instance,
+        DWORD id);
+FREERDP_API int freerdp_message_queue_process_message(freerdp* instance,
+        DWORD id, wMessage* message);
+FREERDP_API int freerdp_message_queue_process_pending_messages(
+    freerdp* instance, DWORD id);
 
 FREERDP_API UINT32 freerdp_error_info(freerdp* instance);
 FREERDP_API void freerdp_set_error_info(rdpRdp* rdp, UINT32 error);
 
 FREERDP_API void freerdp_get_version(int* major, int* minor, int* revision);
+FREERDP_API const char* freerdp_get_version_string(void);
+FREERDP_API const char* freerdp_get_build_date(void);
+FREERDP_API const char* freerdp_get_build_revision(void);
+FREERDP_API const char* freerdp_get_build_config(void);
 
 FREERDP_API freerdp* freerdp_new(void);
 FREERDP_API void freerdp_free(freerdp* instance);
@@ -265,7 +338,20 @@ FREERDP_API BOOL freerdp_focus_required(freerdp* instance);
 FREERDP_API void freerdp_set_focus(freerdp* instance);
 
 FREERDP_API UINT32 freerdp_get_last_error(rdpContext* context);
+FREERDP_API const char* freerdp_get_last_error_name(UINT32 error);
+FREERDP_API const char* freerdp_get_last_error_string(UINT32 error);
 FREERDP_API void freerdp_set_last_error(rdpContext* context, UINT32 lastError);
+
+FREERDP_API ULONG freerdp_get_transport_sent(rdpContext* context,
+        BOOL resetCount);
+
+FREERDP_API void clearChannelError(rdpContext* context);
+FREERDP_API HANDLE getChannelErrorEventHandle(rdpContext* context);
+FREERDP_API UINT getChannelError(rdpContext* context);
+FREERDP_API const char* getChannelErrorDescription(rdpContext* context);
+FREERDP_API void setChannelError(rdpContext* context, UINT errorNum,
+                                 char* description);
+FREERDP_API BOOL checkChannelErrorEvent(rdpContext* context);
 
 #ifdef __cplusplus
 }

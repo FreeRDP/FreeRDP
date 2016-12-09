@@ -36,12 +36,13 @@
 
 static wArrayList* g_WindowClasses = NULL;
 
-void InitializeWindowClasses()
+BOOL InitializeWindowClasses()
 {
 	if (g_WindowClasses)
-		return;
+		return TRUE;
 
 	g_WindowClasses = ArrayList_New(TRUE);
+	return g_WindowClasses != NULL;
 }
 
 WNDCLASSEXA* CloneWindowClass(CONST WNDCLASSEXA* lpwcx)
@@ -57,6 +58,13 @@ WNDCLASSEXA* CloneWindowClass(CONST WNDCLASSEXA* lpwcx)
 
 	_lpwcx->lpszClassName = _strdup(lpwcx->lpszClassName);
 	_lpwcx->lpszMenuName = _strdup(lpwcx->lpszMenuName);
+	if (!_lpwcx->lpszClassName || !_lpwcx->lpszMenuName)
+	{
+		free((LPSTR)_lpwcx->lpszClassName);
+		free((LPSTR)_lpwcx->lpszMenuName);
+		free(_lpwcx);
+		return NULL;
+	}
 
 	return _lpwcx;
 }
@@ -153,8 +161,7 @@ BOOL WINAPI DestroyWindow(HWND hWnd)
 
 	free(pWnd->lpClassName);
 
-	if (pWnd->lpWindowName)
-		free(pWnd->lpWindowName);
+	free(pWnd->lpWindowName);
 
 	free(pWnd);
 
@@ -180,13 +187,12 @@ ATOM WINAPI RegisterClassExA(CONST WNDCLASSEXA* lpwcx)
 {
 	WNDCLASSEXA* _lpwcx;
 
-	InitializeWindowClasses();
+	if (!InitializeWindowClasses())
+		return 0;
 
 	_lpwcx = CloneWindowClass(lpwcx);
 
-	ArrayList_Add(g_WindowClasses, (void*) _lpwcx);
-
-	return 1;
+	return ArrayList_Add(g_WindowClasses, (void*) _lpwcx) >= 0;
 }
 
 ATOM WINAPI RegisterClassExW(CONST WNDCLASSEXW* lpwcx)
@@ -234,9 +240,15 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName,
 	pWnd->nWidth = nWidth;
 	pWnd->nHeight = nHeight;
 	pWnd->lpClassName = _strdup(lpClassName);
+	if (!pWnd->lpClassName)
+		goto out_fail;
 
 	if (lpWindowName)
+	{
 		pWnd->lpWindowName = _strdup(lpWindowName);
+		if (!pWnd->lpWindowName)
+			goto out_fail;
+	}
 
 	pWnd->hWndParent = hWndParent;
 	pWnd->hMenu = hMenu;
@@ -245,6 +257,12 @@ HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName,
 	pWnd->lpwcx = lpwcx;
 
 	return hWnd;
+
+out_fail:
+	free(pWnd->lpClassName);
+	free(pWnd->lpWindowName);
+	free(pWnd);
+	return NULL;
 }
 
 HWND WINAPI CreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName,

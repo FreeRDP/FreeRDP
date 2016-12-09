@@ -28,6 +28,7 @@
 #include <winpr/synch.h>
 
 #ifndef _WIN32
+#include <unistd.h>
 #include <errno.h>
 #include <sys/time.h>
 #include <signal.h>
@@ -41,6 +42,80 @@
 
 #include "../log.h"
 #define TAG WINPR_TAG("synch.timer")
+
+static BOOL TimerCloseHandle(HANDLE handle);
+
+static BOOL TimerIsHandled(HANDLE handle)
+{
+	WINPR_TIMER* pTimer = (WINPR_TIMER*) handle;
+
+	if (!pTimer || (pTimer->Type != HANDLE_TYPE_TIMER))
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static int TimerGetFd(HANDLE handle)
+{
+	WINPR_TIMER *timer = (WINPR_TIMER *)handle;
+
+	if (!TimerIsHandled(handle))
+		return -1;
+
+	return timer->fd;
+}
+
+static DWORD  TimerCleanupHandle(HANDLE handle)
+{
+	int length;
+	UINT64 expirations;
+	WINPR_TIMER *timer = (WINPR_TIMER *)handle;
+
+	if (!TimerIsHandled(handle))
+		return WAIT_FAILED;
+
+	length = read(timer->fd, (void *) &expirations, sizeof(UINT64));
+
+	if (length != 8)
+	{
+		if (length == -1)
+		{
+			if (errno == ETIMEDOUT)
+				return WAIT_TIMEOUT;
+
+			WLog_ERR(TAG, "timer read() failure [%d] %s", errno, strerror(errno));
+		}
+		else
+		{
+			WLog_ERR(TAG, "timer read() failure - incorrect number of bytes read");
+		}
+
+		return WAIT_FAILED;
+	}
+
+	return WAIT_OBJECT_0;
+}
+
+BOOL TimerCloseHandle(HANDLE handle) {
+	WINPR_TIMER* timer;
+	timer = (WINPR_TIMER*) handle;
+
+  if (!TimerIsHandled(handle))
+    return FALSE;
+
+#ifdef __linux__
+
+	if (timer->fd != -1)
+		close(timer->fd);
+
+#endif
+	free(timer);
+
+  return TRUE;
+}
 
 #ifdef WITH_POSIX_TIMER
 
@@ -90,6 +165,8 @@ int InstallWaitableTimerSignalHandler()
 
 int InitializeWaitableTimer(WINPR_TIMER* timer)
 {
+	int result = 0;
+
 	if (!timer->lpArgToCompletionRoutine)
 	{
 #ifdef HAVE_TIMERFD_H
@@ -109,7 +186,9 @@ int InitializeWaitableTimer(WINPR_TIMER* timer)
 			close(timer->fd);
 			return -1;
 		}
-
+#else
+		WLog_ERR(TAG, "%s: os specific implementation is missing", __FUNCTION__);
+		result = -1;
 #endif
 	}
 	else
@@ -127,13 +206,23 @@ int InitializeWaitableTimer(WINPR_TIMER* timer)
 			WLog_ERR(TAG,"timer_create");
 			return -1;
 		}
-
+#else
+		WLog_ERR(TAG, "%s: os specific implementation is missing", __FUNCTION__);
+		result = -1;
 #endif
 	}
 
 	timer->bInit = TRUE;
-	return 0;
+	return result;
 }
+
+
+static HANDLE_OPS ops = {
+		TimerIsHandled,
+		TimerCloseHandle,
+		TimerGetFd,
+		TimerCleanupHandle
+};
 
 /**
  * Waitable Timer
@@ -143,11 +232,11 @@ HANDLE CreateWaitableTimerA(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManua
 {
 	HANDLE handle = NULL;
 	WINPR_TIMER* timer;
-	timer = (WINPR_TIMER*) malloc(sizeof(WINPR_TIMER));
 
+	timer = (WINPR_TIMER*) calloc(1, sizeof(WINPR_TIMER));
 	if (timer)
 	{
-		WINPR_HANDLE_SET_TYPE(timer, HANDLE_TYPE_TIMER);
+		WINPR_HANDLE_SET_TYPE_AND_MODE(timer, HANDLE_TYPE_TIMER, WINPR_FD_READ);
 		handle = (HANDLE) timer;
 		timer->fd = -1;
 		timer->lPeriod = 0;
@@ -155,6 +244,7 @@ HANDLE CreateWaitableTimerA(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManua
 		timer->pfnCompletionRoutine = NULL;
 		timer->lpArgToCompletionRoutine = NULL;
 		timer->bInit = FALSE;
+		timer->ops = &ops;
 	}
 
 	return handle;
@@ -181,7 +271,7 @@ BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPerio
 					  PTIMERAPCROUTINE pfnCompletionRoutine, LPVOID lpArgToCompletionRoutine, BOOL fResume)
 {
 	ULONG Type;
-	PVOID Object;
+	WINPR_HANDLE* Object;
 	WINPR_TIMER* timer;
 #ifdef WITH_POSIX_TIMER
 	LONGLONG seconds = 0;
@@ -281,7 +371,7 @@ BOOL SetWaitableTimerEx(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPer
 						PTIMERAPCROUTINE pfnCompletionRoutine, LPVOID lpArgToCompletionRoutine, PREASON_CONTEXT WakeContext, ULONG TolerableDelay)
 {
 	ULONG Type;
-	PVOID Object;
+	WINPR_HANDLE* Object;
 	WINPR_TIMER* timer;
 
 	if (!winpr_Handle_GetInfo(hTimer, &Type, &Object))
@@ -524,12 +614,11 @@ HANDLE CreateTimerQueue(void)
 {
 	HANDLE handle = NULL;
 	WINPR_TIMER_QUEUE* timerQueue;
-	timerQueue = (WINPR_TIMER_QUEUE*) malloc(sizeof(WINPR_TIMER_QUEUE));
+	timerQueue = (WINPR_TIMER_QUEUE*) calloc(1, sizeof(WINPR_TIMER_QUEUE));
 
 	if (timerQueue)
 	{
-		ZeroMemory(timerQueue, sizeof(WINPR_TIMER_QUEUE));
-		WINPR_HANDLE_SET_TYPE(timerQueue, HANDLE_TYPE_TIMER_QUEUE);
+		WINPR_HANDLE_SET_TYPE_AND_MODE(timerQueue, HANDLE_TYPE_TIMER_QUEUE, WINPR_FD_READ);
 		handle = (HANDLE) timerQueue;
 		timerQueue->activeHead = NULL;
 		timerQueue->inactiveHead = NULL;
@@ -558,13 +647,18 @@ BOOL DeleteTimerQueueEx(HANDLE TimerQueue, HANDLE CompletionEvent)
 	pthread_mutex_unlock(&(timerQueue->cond_mutex));
 	pthread_join(timerQueue->thread, &rvalue);
 
-	if (CompletionEvent == INVALID_HANDLE_VALUE)
+	/**
+	 * Quote from MSDN regarding CompletionEvent:
+	 * If this parameter is INVALID_HANDLE_VALUE, the function waits for
+	 * all callback functions to complete before returning.
+	 * If this parameter is NULL, the function marks the timer for
+	 * deletion and returns immediately.
+	 *
+	 * Note: The current WinPR implementation implicitly waits for any
+	 * callback functions to complete (see pthread_join above)
+	 */
+
 	{
-		/* Wait for all callback functions to complete before returning */
-	}
-	else
-	{
-		/* Cancel all timers and return immediately */
 		/* Move all active timers to the inactive timer list */
 		node = timerQueue->activeHead;
 
@@ -623,7 +717,7 @@ BOOL CreateTimerQueueTimer(PHANDLE phNewTimer, HANDLE TimerQueue,
 	if (!timer)
 		return FALSE;
 
-	WINPR_HANDLE_SET_TYPE(timer, HANDLE_TYPE_TIMER_QUEUE_TIMER);
+	WINPR_HANDLE_SET_TYPE_AND_MODE(timer, HANDLE_TYPE_TIMER_QUEUE_TIMER, WINPR_FD_READ);
 	*((UINT_PTR*) phNewTimer) = (UINT_PTR)(HANDLE) timer;
 	timespec_copy(&(timer->StartTime), &CurrentTime);
 	timespec_add_ms(&(timer->StartTime), DueTime);
@@ -682,15 +776,18 @@ BOOL DeleteTimerQueueTimer(HANDLE TimerQueue, HANDLE Timer, HANDLE CompletionEve
 	timer = (WINPR_TIMER_QUEUE_TIMER*) Timer;
 	pthread_mutex_lock(&(timerQueue->cond_mutex));
 
-	if (CompletionEvent == INVALID_HANDLE_VALUE)
-	{
-		/* Wait for all callback functions to complete before returning */
-	}
-	else
-	{
-		/* Cancel timer and return immediately */
-		RemoveTimerQueueTimer(&(timerQueue->activeHead), timer);
-	}
+	/**
+	 * Quote from MSDN regarding CompletionEvent:
+	 * If this parameter is INVALID_HANDLE_VALUE, the function waits for
+	 * all callback functions to complete before returning.
+	 * If this parameter is NULL, the function marks the timer for
+	 * deletion and returns immediately.
+	 *
+	 * Note: The current WinPR implementation implicitly waits for any
+	 * callback functions to complete (see cond_mutex usage)
+	 */
+
+	RemoveTimerQueueTimer(&(timerQueue->activeHead), timer);
 
 	pthread_cond_signal(&(timerQueue->cond));
 	pthread_mutex_unlock(&(timerQueue->cond_mutex));

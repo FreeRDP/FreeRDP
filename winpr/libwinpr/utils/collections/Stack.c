@@ -127,8 +127,15 @@ void Stack_Push(wStack* stack, void* obj)
 
 	if ((stack->size + 1) >= stack->capacity)
 	{
-		stack->capacity *= 2;
-		stack->array = (void**) realloc(stack->array, sizeof(void*) * stack->capacity);
+		int new_cap;
+		void **new_arr;
+
+		new_cap = stack->capacity * 2;
+		new_arr = (void**) realloc(stack->array, sizeof(void*) * new_cap);
+		if (!new_arr)
+			return;
+		stack->array = new_arr;
+		stack->capacity = new_cap;
 	}
 
 	stack->array[(stack->size)++] = obj;

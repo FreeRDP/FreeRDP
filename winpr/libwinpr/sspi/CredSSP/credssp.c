@@ -78,9 +78,6 @@ CREDSSP_CONTEXT* credssp_ContextNew()
 
 void credssp_ContextFree(CREDSSP_CONTEXT* context)
 {
-	if (!context)
-		return;
-
 	free(context);
 }
 

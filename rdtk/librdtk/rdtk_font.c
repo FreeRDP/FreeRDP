@@ -404,7 +404,9 @@ int rdtk_font_parse_descriptor_buffer(rdtkFont* font, BYTE* buffer, int size)
 	}
 
 	font->glyphCount = count;
-	font->glyphs = (rdtkGlyph*) calloc(font->glyphCount, sizeof(rdtkGlyph));
+	font->glyphs = NULL;
+	if (count > 0)
+		font->glyphs = (rdtkGlyph*) calloc(font->glyphCount, sizeof(rdtkGlyph));
 
 	if (!font->glyphs)
 		return -1;
@@ -644,10 +646,8 @@ rdtkFont* rdtk_font_new(rdtkEngine* engine, const char* path, const char* file)
 	return font;
 
 cleanup:
-	if (fontImageFile)
-		free (fontImageFile);
-	if (fontDescriptorFile)
-		free (fontDescriptorFile);
+	free(fontImageFile);
+	free(fontDescriptorFile);
 	if (font)
 	{
 		if (font->image)
@@ -710,10 +710,14 @@ rdtkFont* rdtk_embedded_font_new(rdtkEngine* engine, BYTE* imageData, int imageS
 
 void rdtk_font_free(rdtkFont* font)
 {
-	if (!font)
-		return;
-
-	free(font);
+	if (font)
+	{
+		free(font->family);
+		free(font->style);
+		winpr_image_free(font->image, TRUE);
+		free(font->glyphs);
+		free(font);
+	}
 }
 
 int rdtk_font_engine_init(rdtkEngine* engine)

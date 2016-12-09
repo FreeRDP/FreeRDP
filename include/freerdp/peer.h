@@ -29,32 +29,37 @@
 
 #include <winpr/sspi.h>
 
-typedef void (*psPeerContextNew)(freerdp_peer* client, rdpContext* context);
-typedef void (*psPeerContextFree)(freerdp_peer* client, rdpContext* context);
+typedef BOOL (*psPeerContextNew)(freerdp_peer* peer, rdpContext* context);
+typedef void (*psPeerContextFree)(freerdp_peer* peer, rdpContext* context);
 
-typedef BOOL (*psPeerInitialize)(freerdp_peer* client);
-typedef BOOL (*psPeerGetFileDescriptor)(freerdp_peer* client, void** rfds, int* rcount);
-typedef HANDLE (*psPeerGetEventHandle)(freerdp_peer* client);
-typedef HANDLE (*psPeerGetReceiveEventHandle)(freerdp_peer* client);
-typedef BOOL (*psPeerCheckFileDescriptor)(freerdp_peer* client);
-typedef BOOL (*psPeerIsWriteBlocked)(freerdp_peer* client);
-typedef int (*psPeerDrainOutputBuffer)(freerdp_peer* client);
-typedef BOOL (*psPeerClose)(freerdp_peer* client);
-typedef void (*psPeerDisconnect)(freerdp_peer* client);
-typedef BOOL (*psPeerCapabilities)(freerdp_peer* client);
-typedef BOOL (*psPeerPostConnect)(freerdp_peer* client);
-typedef BOOL (*psPeerActivate)(freerdp_peer* client);
-typedef BOOL (*psPeerLogon)(freerdp_peer* client, SEC_WINNT_AUTH_IDENTITY* identity, BOOL automatic);
+typedef BOOL (*psPeerInitialize)(freerdp_peer* peer);
+typedef BOOL (*psPeerGetFileDescriptor)(freerdp_peer* peer, void** rfds, int* rcount);
+typedef HANDLE(*psPeerGetEventHandle)(freerdp_peer* peer);
+typedef DWORD (*psPeerGetEventHandles)(freerdp_peer* peer, HANDLE* events, DWORD count);
+typedef HANDLE(*psPeerGetReceiveEventHandle)(freerdp_peer* peer);
+typedef BOOL (*psPeerCheckFileDescriptor)(freerdp_peer* peer);
+typedef BOOL (*psPeerIsWriteBlocked)(freerdp_peer* peer);
+typedef int (*psPeerDrainOutputBuffer)(freerdp_peer* peer);
+typedef BOOL (*psPeerHasMoreToRead)(freerdp_peer* peer);
+typedef BOOL (*psPeerClose)(freerdp_peer* peer);
+typedef void (*psPeerDisconnect)(freerdp_peer* peer);
+typedef BOOL (*psPeerCapabilities)(freerdp_peer* peer);
+typedef BOOL (*psPeerPostConnect)(freerdp_peer* peer);
+typedef BOOL (*psPeerActivate)(freerdp_peer* peer);
+typedef BOOL (*psPeerLogon)(freerdp_peer* peer, SEC_WINNT_AUTH_IDENTITY* identity, BOOL automatic);
 
-typedef int (*psPeerSendChannelData)(freerdp_peer* client, UINT16 channelId, BYTE* data, int size);
-typedef int (*psPeerReceiveChannelData)(freerdp_peer* client, UINT16 channelId, BYTE* data, int size, int flags, int totalSize);
+typedef int (*psPeerSendChannelData)(freerdp_peer* peer, UINT16 channelId, BYTE* data, int size);
+typedef int (*psPeerReceiveChannelData)(freerdp_peer* peer, UINT16 channelId, BYTE* data, int size,
+                                        int flags, int totalSize);
 
-typedef HANDLE (*psPeerVirtualChannelOpen)(freerdp_peer* client, const char* name, UINT32 flags);
-typedef BOOL (*psPeerVirtualChannelClose)(freerdp_peer* client, HANDLE hChannel);
-typedef int (*psPeerVirtualChannelRead)(freerdp_peer* client, HANDLE hChannel, BYTE* buffer, UINT32 length);
-typedef int (*psPeerVirtualChannelWrite)(freerdp_peer* client, HANDLE hChannel, BYTE* buffer, UINT32 length);
-typedef void* (*psPeerVirtualChannelGetData)(freerdp_peer* client, HANDLE hChannel);
-typedef int (*psPeerVirtualChannelSetData)(freerdp_peer* client, HANDLE hChannel, void* data);
+typedef HANDLE(*psPeerVirtualChannelOpen)(freerdp_peer* peer, const char* name, UINT32 flags);
+typedef BOOL (*psPeerVirtualChannelClose)(freerdp_peer* peer, HANDLE hChannel);
+typedef int (*psPeerVirtualChannelRead)(freerdp_peer* peer, HANDLE hChannel, BYTE* buffer,
+                                        UINT32 length);
+typedef int (*psPeerVirtualChannelWrite)(freerdp_peer* peer, HANDLE hChannel, BYTE* buffer,
+        UINT32 length);
+typedef void* (*psPeerVirtualChannelGetData)(freerdp_peer* peer, HANDLE hChannel);
+typedef int (*psPeerVirtualChannelSetData)(freerdp_peer* peer, HANDLE hChannel, void* data);
 
 struct rdp_freerdp_peer
 {
@@ -106,13 +111,15 @@ struct rdp_freerdp_peer
 
 	psPeerIsWriteBlocked IsWriteBlocked;
 	psPeerDrainOutputBuffer DrainOutputBuffer;
+	psPeerHasMoreToRead HasMoreToRead;
+	psPeerGetEventHandles GetEventHandles;
 };
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-FREERDP_API void freerdp_peer_context_new(freerdp_peer* client);
+FREERDP_API BOOL freerdp_peer_context_new(freerdp_peer* client);
 FREERDP_API void freerdp_peer_context_free(freerdp_peer* client);
 
 FREERDP_API freerdp_peer* freerdp_peer_new(int sockfd);

@@ -20,10 +20,6 @@
 #ifndef WINPR_WLOG_IMAGE_MESSAGE_PRIVATE_H
 #define WINPR_WLOG_IMAGE_MESSAGE_PRIVATE_H
 
-#include <winpr/wlog.h>
-
-#include "wlog/wlog.h"
-
-int WLog_ImageMessage_Write(char* filename, void* data, int width, int height, int bpp);
+BOOL WLog_ImageMessage_Write(char* filename, void* data, int width, int height, int bpp);
 
 #endif /* WINPR_WLOG_IMAGE_MESSAGE_PRIVATE_H */

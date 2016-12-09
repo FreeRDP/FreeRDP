@@ -28,9 +28,6 @@
 
 #include <pthread.h>
 
-static HANDLE_CLOSE_CB _NoneHandleCloseCb;
-static pthread_once_t none_initialized = PTHREAD_ONCE_INIT;
-
 static BOOL NoneHandleCloseHandle(HANDLE handle)
 {
 	WINPR_NONE_HANDLE* none = (WINPR_NONE_HANDLE*) handle;
@@ -51,12 +48,20 @@ static BOOL NoneHandleIsHandle(HANDLE handle)
 	return TRUE;
 }
 
-static void NoneHandleInitialize(void)
+static int NoneHandleGetFd(HANDLE handle)
 {
-	_NoneHandleCloseCb.IsHandled = NoneHandleIsHandle;
-	_NoneHandleCloseCb.CloseHandle = NoneHandleCloseHandle;
-	RegisterHandleCloseCb(&_NoneHandleCloseCb);
+	if (!NoneHandleIsHandle(handle))
+		return -1;
+
+	return -1;
 }
+
+static HANDLE_OPS ops = {
+		NoneHandleIsHandle,
+		NoneHandleCloseHandle,
+		NoneHandleGetFd,
+		NULL /* CleanupHandle */
+};
 
 HANDLE CreateNoneHandle()
 {
@@ -66,7 +71,7 @@ HANDLE CreateNoneHandle()
 	if (!none)
 		return NULL;
 
-	pthread_once(&none_initialized, NoneHandleInitialize);
+	none->ops = &ops;
 
 	return (HANDLE)none;
 }

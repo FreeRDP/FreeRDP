@@ -60,7 +60,7 @@ set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/resources\\\\FreeRDP_Install.bmp")
 set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/resources\\\\FreeRDP_Icon_96px.ico")
 set(CPACK_NSIS_MUI_UNICON "${CMAKE_SOURCE_DIR}/resource\\\\FreeRDP_Icon_96px.ico")
 
-set(CPACK_COMPONENTS_ALL client server libraries headers)
+set(CPACK_COMPONENTS_ALL client server libraries headers symbols tools)
 
 if(MSVC)
 	if(MSVC_RUNTIME STREQUAL "dynamic")
@@ -84,6 +84,12 @@ set(CPACK_COMPONENT_LIBRARIES_GROUP "Runtime")
 
 set(CPACK_COMPONENT_HEADERS_DISPLAY_NAME "Headers")
 set(CPACK_COMPONENT_HEADERS_GROUP "Development")
+
+set(CPACK_COMPONENT_SYMBOLS_DISPLAY_NAME "Symbols")
+set(CPACK_COMPONENT_SYMBOLS_GROUP "Development")
+
+set(CPACK_COMPONENT_TOOLS_DISPLAY_NAME "Tools")
+set(CPACK_COMPONENT_TOOLS_GROUP "Applications")
 
 set(CPACK_COMPONENT_GROUP_RUNTIME_DESCRIPTION "Runtime")
 set(CPACK_COMPONENT_GROUP_APPLICATIONS_DESCRIPTION "Applications")

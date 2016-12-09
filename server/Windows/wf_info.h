@@ -25,12 +25,12 @@
 #define WF_INFO_DEFAULT_FPS 24
 #define WF_INFO_MAXPEERS 32
 
-int wf_info_lock(wfInfo* wfi);
-int wf_info_try_lock(wfInfo* wfi, DWORD dwMilliseconds);
-int wf_info_unlock(wfInfo* wfi);
+BOOL wf_info_lock(wfInfo* wfi);
+BOOL wf_info_try_lock(wfInfo* wfi, DWORD dwMilliseconds);
+BOOL wf_info_unlock(wfInfo* wfi);
 
 wfInfo* wf_info_get_instance(void);
-void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context);
+BOOL wf_info_peer_register(wfInfo* wfi, wfPeerContext* context);
 void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context);
 
 BOOL wf_info_have_updates(wfInfo* wfi);

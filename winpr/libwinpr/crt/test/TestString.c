@@ -16,6 +16,10 @@ static WCHAR testToken1W[] = { 	'q', 'u', 'i', 'c', 'k', '\0' };
 static WCHAR testToken2W[] = { 	'b', 'r', 'o', 'w', 'n', '\0' };
 static WCHAR testToken3W[] = { 'f', 'o', 'x', '\0' };
 
+#define testToken1W_Length	((sizeof(testToken1W) / sizeof(WCHAR)) - 1)
+#define testToken2W_Length	((sizeof(testToken2W) / sizeof(WCHAR)) - 1)
+#define testToken3W_Length	((sizeof(testToken3W) / sizeof(WCHAR)) - 1)
+
 static WCHAR testTokensW[] =
 {
 	'q', 'u', 'i', 'c', 'k', '\r', '\n',
@@ -23,7 +27,11 @@ static WCHAR testTokensW[] =
 	'f', 'o', 'x', '\r', '\n', '\0'
 };
 
+#define testTokensW_Length	((sizeof(testTokensW) / sizeof(WCHAR)) - 1)
+
 static WCHAR testDelimiter[] = { '\r', '\n', '\0' };
+
+#define testDelimiter_Length	((sizeof(testDelimiter) / sizeof(WCHAR)) - 1)
 
 int TestString(int argc, char* argv[])
 {
@@ -31,6 +39,16 @@ int TestString(int argc, char* argv[])
 	size_t pos;
 	size_t length;
 	WCHAR* context;
+
+#ifdef __BIG_ENDIAN__
+	/* Be sure that we always use LE encoded string */
+	ByteSwapUnicode(testStringW, testStringW_Length);
+	ByteSwapUnicode(testToken1W, testToken1W_Length);
+	ByteSwapUnicode(testToken2W, testToken2W_Length);
+	ByteSwapUnicode(testToken3W, testToken3W_Length);
+	ByteSwapUnicode(testTokensW, testTokensW_Length);
+	ByteSwapUnicode(testDelimiter, testDelimiter_Length);
+#endif
 
 	/* _wcslen */
 

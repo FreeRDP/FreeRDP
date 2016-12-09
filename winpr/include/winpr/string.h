@@ -59,8 +59,20 @@ WINPR_API int _wcscmp(const WCHAR* string1, const WCHAR* string2);
 WINPR_API size_t _wcslen(const WCHAR* str);
 WINPR_API WCHAR* _wcschr(const WCHAR* str, WCHAR c);
 
-WINPR_API char* strtok_s(char* strToken, const char* strDelimit, char** context);
-WINPR_API WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context);
+WINPR_API char* strtok_s(char* strToken, const char* strDelimit,
+                         char** context);
+WINPR_API WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit,
+                          WCHAR** context);
+
+#else
+
+#define _wcscmp		wcscmp
+#define _wcslen		wcslen
+#define _wcschr		wcschr
+
+#endif
+
+#if !defined(_WIN32) || defined(_UWP)
 
 WINPR_API LPSTR CharUpperA(LPSTR lpsz);
 WINPR_API LPWSTR CharUpperW(LPWSTR lpsz);
@@ -152,39 +164,48 @@ WINPR_API int lstrcmpW(LPCWSTR lpString1, LPCWSTR lpString2);
 #define lstrcmp		lstrcmpA
 #endif
 
-#define	 sprintf_s	snprintf
-#define _scprintf(_fmt, ...) snprintf(NULL, 0, _fmt, ## __VA_ARGS__)
+#endif
 
-#define _scprintf(_fmt, ...)	snprintf(NULL, 0, _fmt, ## __VA_ARGS__)
+#ifndef _WIN32
+
+#define	 sprintf_s	snprintf
+#define	 _snprintf	snprintf
+#define _scprintf(...) snprintf(NULL, 0, __VA_ARGS__)
+
+#define _scprintf(...)	snprintf(NULL, 0, __VA_ARGS__)
 
 /* Unicode Conversion */
 
-WINPR_API int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
-		int cbMultiByte, LPWSTR lpWideCharStr, int cchWideChar);
+WINPR_API int MultiByteToWideChar(UINT CodePage, DWORD dwFlags,
+                                  LPCSTR lpMultiByteStr,
+                                  int cbMultiByte, LPWSTR lpWideCharStr, int cchWideChar);
 
-WINPR_API int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int cchWideChar,
-		LPSTR lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar, LPBOOL lpUsedDefaultChar);
-
-#else
-
-#define _wcscmp		wcscmp
-#define _wcslen		wcslen
-#define _wcschr		wcschr
+WINPR_API int WideCharToMultiByte(UINT CodePage, DWORD dwFlags,
+                                  LPCWSTR lpWideCharStr, int cchWideChar,
+                                  LPSTR lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar,
+                                  LPBOOL lpUsedDefaultChar);
 
 #endif
 
 /* Extended API */
 
-WINPR_API int ConvertToUnicode(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
-		int cbMultiByte, LPWSTR* lpWideCharStr, int cchWideChar);
+WINPR_API int ConvertToUnicode(UINT CodePage, DWORD dwFlags,
+                               LPCSTR lpMultiByteStr,
+                               int cbMultiByte, LPWSTR* lpWideCharStr, int cchWideChar);
 
-WINPR_API int ConvertFromUnicode(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int cchWideChar,
-		LPSTR* lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar, LPBOOL lpUsedDefaultChar);
+WINPR_API int ConvertFromUnicode(UINT CodePage, DWORD dwFlags,
+                                 LPCWSTR lpWideCharStr, int cchWideChar,
+                                 LPSTR* lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar,
+                                 LPBOOL lpUsedDefaultChar);
 
 WINPR_API void ByteSwapUnicode(WCHAR* wstr, int length);
 
 WINPR_API int ConvertLineEndingToLF(char* str, int size);
 WINPR_API char* ConvertLineEndingToCRLF(const char* str, int* size);
+
+WINPR_API char* StrSep(char** stringp, const char* delim);
+
+WINPR_API INT64 GetLine(char** lineptr, size_t* size, FILE* stream);
 
 #ifdef __cplusplus
 }

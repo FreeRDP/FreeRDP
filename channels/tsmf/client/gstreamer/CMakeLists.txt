@@ -47,10 +47,11 @@ else()
 	set(SRC ${SRC}
 		tsmf_X11.c)
 	set(LIBS ${LIBS} ${X11_LIBRARIES} ${XEXT_LIBRARIES})
+	if (NOT APPLE)
+		list(APPEND LIBS rt)
+	endif()
 
-	if(NOT XEXT_FOUND)
-		message(FATAL_ERROR "Xext library not found, but required for TSMF module.")
-	else()
+	if(XEXT_FOUND)
 		add_definitions(-DWITH_XEXT=1)
 	endif()
 
@@ -61,9 +62,4 @@ set(${MODULE_PREFIX}_SRCS "${SRC}")
 include_directories(..)
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
-
-
-
-target_link_libraries(${MODULE_NAME} ${LIBS} freerdp)
-
-install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_ADDIN_PATH} EXPORT FreeRDPTargets)
+target_link_libraries(${MODULE_NAME} ${LIBS} winpr)

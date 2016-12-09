@@ -89,7 +89,7 @@
 
 /* Defined in wincred.h, do not redefine */
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(_UWP)
 
 #include <wincred.h>
 
@@ -121,21 +121,6 @@
 #define FACILITY_CLUSTER_ERROR_CODE					0x13
 #define FACILITY_ACPI_ERROR_CODE					0x14
 #define FACILITY_SXS_ERROR_CODE						0x15
-
-//#define DBG_EXCEPTION_HANDLED						((NTSTATUS)0x00010001)
-//#define DBG_CONTINUE							((NTSTATUS)0x00010002)
-#define DBG_REPLY_LATER							((NTSTATUS)0x40010001)
-#define DBG_UNABLE_TO_PROVIDE_HANDLE					((NTSTATUS)0x40010002)
-//#define DBG_TERMINATE_THREAD						((NTSTATUS)0x40010003)
-//#define DBG_TERMINATE_PROCESS						((NTSTATUS)0x40010004)
-//#define DBG_CONTROL_C							((NTSTATUS)0x40010005)
-//#define DBG_PRINTEXCEPTION_C						((NTSTATUS)0x40010006)
-//#define DBG_RIPEXCEPTION						((NTSTATUS)0x40010007)
-//#define DBG_CONTROL_BREAK						((NTSTATUS)0x40010008)
-//#define DBG_COMMAND_EXCEPTION						((NTSTATUS)0x40010009)
-//#define DBG_EXCEPTION_NOT_HANDLED					((NTSTATUS)0x80010001)
-#define DBG_NO_STATE_CHANGE						((NTSTATUS)0xC0010001)
-#define DBG_APP_NOT_IDLE						((NTSTATUS)0xC0010002)
 
 /**
  * NTSTATUS codes
@@ -977,6 +962,7 @@
 #define STATUS_WAIT_FOR_OPLOCK						((NTSTATUS)0x00000367)
 #define STATUS_MOUNT_POINT_NOT_RESOLVED					((NTSTATUS)0xC0000368)
 #define STATUS_INVALID_DEVICE_OBJECT_PARAMETER				((NTSTATUS)0xC0000369)
+/* The following is not a typo. It's the same spelling as in the Microsoft headers */
 #define STATUS_MCA_OCCURED						((NTSTATUS)0xC000036A)
 #define STATUS_DRIVER_BLOCKED_CRITICAL					((NTSTATUS)0xC000036B)
 #define STATUS_DRIVER_BLOCKED						((NTSTATUS)0xC000036C)
@@ -1269,6 +1255,14 @@
 
 /* Defined in winternl.h, always define since we do not include this header */
 
+/* defined in ntstatus.h */
+#if !defined(NTSTATUS_FROM_WIN32) && !defined(INLINE_NTSTATUS_FROM_WIN32)
+static INLINE NTSTATUS NTSTATUS_FROM_WIN32(long x)
+{
+	return x <= 0 ? (NTSTATUS)x : (NTSTATUS) (((x) & 0x0000FFFF) | (0x7 << 16) | 0xC0000000);
+}
+#endif
+
 #ifdef _WIN32
 
 /**
@@ -1336,7 +1330,7 @@ typedef enum _FILE_INFORMATION_CLASS
 	FileShortNameInformation
 } FILE_INFORMATION_CLASS;
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(_UWP)
 
 #define FILE_SUPERSEDE				0x00000000
 #define FILE_OPEN				0x00000001
@@ -1435,13 +1429,21 @@ typedef struct _IO_STATUS_BLOCK
 {
 	union
 	{
+#ifdef _WIN32
+		NTSTATUS Status;
+#else
 		NTSTATUS status;
+#endif
 		PVOID Pointer;
 	};
 	ULONG_PTR Information;
 } IO_STATUS_BLOCK, *PIO_STATUS_BLOCK;
 
 typedef VOID (*PIO_APC_ROUTINE)(PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, ULONG Reserved);
+
+#endif
+
+#if !defined(_WIN32)
 
 typedef struct _PEB PEB;
 typedef struct _PEB* PPEB;

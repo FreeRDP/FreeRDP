@@ -744,7 +744,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 		return -1;
 	}
 
-	subsystem->pInvitation->lpVtbl->get_ConnectionString(subsystem->pInvitation, &bstrConnectionString);
+	hr = subsystem->pInvitation->lpVtbl->get_ConnectionString(subsystem->pInvitation, &bstrConnectionString);
 
 	if (FAILED(hr))
 	{
@@ -752,10 +752,24 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 		return -1;
 	}
 
+	status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) bstrConnectionString,
+		((UINT32*) bstrConnectionString)[-1], &(file->ConnectionString2), 0, NULL, NULL);
+
+	SysFreeString(bstrConnectionString);
+
+	if (status < 1)
+	{
+		WLog_ERR(TAG, "failed to convert connection string");
+		return -1;
+	}
+
 	file = subsystem->pAssistanceFile = freerdp_assistance_file_new();
 
-	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) bstrConnectionString,
-		((UINT32*) bstrConnectionString)[-1], &(file->ConnectionString2), 0, NULL, NULL);
+	if (!file)
+	{
+		WLog_ERR(TAG, "freerdp_assistance_file_new() failed");
+		return -1;
+	}
 
 	status = freerdp_assistance_parse_connection_string2(file);
 
@@ -764,21 +778,24 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	WLog_INFO(TAG, "ConnectionString: %s", file->ConnectionString2);
 
-	if (0)
+#if 0
+	FILE* fp;
+	size_t size;
+
+	fp = fopen("inv.xml", "w+b");
+
+	if (fp)
 	{
-		FILE* fp;
-		size_t size;
-
-		fp = fopen("inv.xml", "w+b");
-
-		if (fp)
+		size = strlen(file->ConnectionString2);
+		if (fwrite(file->ConnectionString2, size, 1, fp) != 1 || fwrite("\r\n", 2, 1, fp) != 1)
 		{
-			size = strlen(file->ConnectionString2);
-			fwrite(file->ConnectionString2, 1, size, fp);
-			fwrite("\r\n", 1, 2, fp);
 			fclose(fp);
+			WLog_ERR(TAG, "Problem writing to inv.xml");
+			return -1;
 		}
+		fclose(fp);
 	}
+#endif
 
 	status = win_shadow_rdp_init(subsystem);
 

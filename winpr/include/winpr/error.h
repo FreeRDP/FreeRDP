@@ -518,6 +518,7 @@
 #define ERROR_DEVICE_ENUMERATION_ERROR							0x00000288
 #define ERROR_MOUNT_POINT_NOT_RESOLVED							0x00000289
 #define ERROR_INVALID_DEVICE_OBJECT_PARAMETER						0x0000028A
+/* The following is not a typo. It's the same spelling as in the Microsoft headers */
 #define ERROR_MCA_OCCURED								0x0000028B
 #define ERROR_DRIVER_DATABASE_ERROR							0x0000028C
 #define ERROR_SYSTEM_HIVE_TOO_LARGE							0x0000028D

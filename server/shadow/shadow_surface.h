@@ -24,27 +24,13 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 
-struct rdp_shadow_surface
-{
-	rdpShadowServer* server;
-
-	int x;
-	int y;
-	int width;
-	int height;
-	int scanline;
-	BYTE* data;
-
-	CRITICAL_SECTION lock;
-	REGION16 invalidRegion;
-};
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 rdpShadowSurface* shadow_surface_new(rdpShadowServer* server, int x, int y, int width, int height);
 void shadow_surface_free(rdpShadowSurface* surface);
+BOOL shadow_surface_resize(rdpShadowSurface *surface, int x, int y, int width, int height);
 
 #ifdef __cplusplus
 }

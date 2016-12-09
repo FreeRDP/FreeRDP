@@ -3,6 +3,8 @@
  * Echo Virtual Channel Extension
  *
  * Copyright 2013 Christian Hofstaedtler
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,15 +25,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include <winpr/crt.h>
 #include <winpr/stream.h>
-#include <winpr/cmdline.h>
-
-#include <freerdp/addin.h>
 
 #include "echo_main.h"
+#include <freerdp/channels/log.h>
+
+#define TAG CHANNELS_TAG("echo.client")
 
 typedef struct _ECHO_LISTENER_CALLBACK ECHO_LISTENER_CALLBACK;
 struct _ECHO_LISTENER_CALLBACK
@@ -60,30 +61,42 @@ struct _ECHO_PLUGIN
 	ECHO_LISTENER_CALLBACK* listener_callback;
 };
 
-static int echo_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream *data)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT echo_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream *data)
 {
-	int status;
 	ECHO_CHANNEL_CALLBACK* callback = (ECHO_CHANNEL_CALLBACK*) pChannelCallback;
 	BYTE* pBuffer = Stream_Pointer(data);
 	UINT32 cbSize = Stream_GetRemainingLength(data);
 
 	/* echo back what we have received. ECHO does not have any message IDs. */
-	status = callback->channel->Write(callback->channel, cbSize, pBuffer, NULL);
-
-	return status;
+	return callback->channel->Write(callback->channel, cbSize, pBuffer, NULL);
 }
 
-static int echo_on_close(IWTSVirtualChannelCallback* pChannelCallback)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT echo_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 {
 	ECHO_CHANNEL_CALLBACK* callback = (ECHO_CHANNEL_CALLBACK*) pChannelCallback;
 
 	free(callback);
 
-	return 0;
+	return CHANNEL_RC_OK;
 }
 
-static int echo_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
-	IWTSVirtualChannel* pChannel, BYTE* Data, int* pbAccept,
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT echo_on_new_channel_connection(IWTSListenerCallback* pListenerCallback,
+	IWTSVirtualChannel* pChannel, BYTE* Data, BOOL* pbAccept,
 	IWTSVirtualChannelCallback** ppCallback)
 {
 	ECHO_CHANNEL_CALLBACK* callback;
@@ -92,7 +105,10 @@ static int echo_on_new_channel_connection(IWTSListenerCallback* pListenerCallbac
 	callback = (ECHO_CHANNEL_CALLBACK*) calloc(1, sizeof(ECHO_CHANNEL_CALLBACK));
 
 	if (!callback)
-		return -1;
+	{
+		WLog_ERR(TAG, "calloc failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	callback->iface.OnDataReceived = echo_on_data_received;
 	callback->iface.OnClose = echo_on_close;
@@ -102,17 +118,25 @@ static int echo_on_new_channel_connection(IWTSListenerCallback* pListenerCallbac
 
 	*ppCallback = (IWTSVirtualChannelCallback*) callback;
 
-	return 0;
+	return CHANNEL_RC_OK;
 }
 
-static int echo_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT echo_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr)
 {
 	ECHO_PLUGIN* echo = (ECHO_PLUGIN*) pPlugin;
 
 	echo->listener_callback = (ECHO_LISTENER_CALLBACK*) calloc(1, sizeof(ECHO_LISTENER_CALLBACK));
 
 	if (!echo->listener_callback)
-		return -1;
+	{
+		WLog_ERR(TAG, "calloc failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	echo->listener_callback->iface.OnNewChannelConnection = echo_on_new_channel_connection;
 	echo->listener_callback->plugin = pPlugin;
@@ -122,25 +146,34 @@ static int echo_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager
 		(IWTSListenerCallback*) echo->listener_callback, NULL);
 }
 
-static int echo_plugin_terminated(IWTSPlugin* pPlugin)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT echo_plugin_terminated(IWTSPlugin* pPlugin)
 {
 	ECHO_PLUGIN* echo = (ECHO_PLUGIN*) pPlugin;
 
-	if (echo)
-	{
-		free(echo);
-	}
+	free(echo);
 
-	return 0;
+	return CHANNEL_RC_OK;
 }
 
-#ifdef STATIC_CHANNELS
+#ifdef BUILTIN_CHANNELS
 #define DVCPluginEntry		echo_DVCPluginEntry
+#else
+#define DVCPluginEntry		FREERDP_API DVCPluginEntry
 #endif
 
-int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
-	int status = 0;
+	UINT status = CHANNEL_RC_OK;
 	ECHO_PLUGIN* echo;
 
 	echo = (ECHO_PLUGIN*) pEntryPoints->GetPlugin(pEntryPoints, "echo");
@@ -150,7 +183,10 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		echo = (ECHO_PLUGIN*) calloc(1, sizeof(ECHO_PLUGIN));
 
 		if (!echo)
-			return -1;
+		{
+			WLog_ERR(TAG, "calloc failed!");
+			return CHANNEL_RC_NO_MEMORY;
+		}
 
 		echo->iface.Initialize = echo_plugin_initialize;
 		echo->iface.Connected = NULL;

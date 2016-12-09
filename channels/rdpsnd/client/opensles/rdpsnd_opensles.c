@@ -3,6 +3,8 @@
  * Audio Output Virtual Channel
  *
  * Copyright 2013 Armin Novak <armin.novak@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,7 +104,7 @@ static bool rdpsnd_opensles_check_handle(const rdpsndopenslesPlugin *hdl)
 	return rc;
 }
 
-static void rdpsnd_opensles_set_volume(rdpsndDevicePlugin* device,
+static BOOL rdpsnd_opensles_set_volume(rdpsndDevicePlugin* device,
 		UINT32 volume);
 
 static int rdpsnd_opensles_set_params(rdpsndopenslesPlugin* opensles)
@@ -120,7 +122,7 @@ static int rdpsnd_opensles_set_params(rdpsndopenslesPlugin* opensles)
 	return 0;
 }
 
-static void rdpsnd_opensles_set_format(rdpsndDevicePlugin* device,
+static BOOL rdpsnd_opensles_set_format(rdpsndDevicePlugin* device,
 		AUDIO_FORMAT* format, int latency)
 {
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
@@ -136,42 +138,17 @@ static void rdpsnd_opensles_set_format(rdpsndDevicePlugin* device,
 
 		opensles->rate = format->nSamplesPerSec;
 		opensles->channels = format->nChannels;
-
-		switch (format->wFormatTag)
-		{
-			case WAVE_FORMAT_PCM:
-				switch (format->wBitsPerSample)
-				{
-					case 4:
-						opensles->format = WAVE_FORMAT_ADPCM;
-						break;
-
-					case 8:
-						opensles->format = WAVE_FORMAT_PCM;
-						break;
-
-					case 16:
-						opensles->format = WAVE_FORMAT_ADPCM;
-						break;
-				}
-				break;
-
-			case WAVE_FORMAT_ADPCM:
-			case WAVE_FORMAT_DVI_ADPCM:
-				opensles->format = format->wFormatTag;
-				break;
-		}
-	
+		opensles->format = format->wFormatTag;
 		opensles->wformat = format->wFormatTag;
 		opensles->block_size = format->nBlockAlign;
 	}
 
 	opensles->latency = latency;
 
-	rdpsnd_opensles_set_params(opensles);
+	return (rdpsnd_opensles_set_params(opensles) == 0);
 }
 
-static void rdpsnd_opensles_open(rdpsndDevicePlugin* device,
+static BOOL rdpsnd_opensles_open(rdpsndDevicePlugin* device,
 		AUDIO_FORMAT* format, int latency)
 {
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
@@ -179,11 +156,10 @@ static void rdpsnd_opensles_open(rdpsndDevicePlugin* device,
 	DEBUG_SND("opensles=%p format=%p, latency=%d, rate=%d",
 			opensles, format, latency, opensles->rate);
 	
-	if( rdpsnd_opensles_check_handle(opensles))
-		return;
+	if (rdpsnd_opensles_check_handle(opensles))
+		return TRUE;
 
-	opensles->stream = android_OpenAudioDevice(
-		opensles->rate, opensles->channels, 20);
+	opensles->stream = android_OpenAudioDevice(opensles->rate, opensles->channels, 20);
 	assert(opensles->stream);
 
 	if (!opensles->stream)
@@ -192,6 +168,7 @@ static void rdpsnd_opensles_open(rdpsndDevicePlugin* device,
 		rdpsnd_opensles_set_volume(device, opensles->volume);
 
 	rdpsnd_opensles_set_format(device, format, latency);
+	return TRUE;
 }
 
 static void rdpsnd_opensles_close(rdpsndDevicePlugin* device)
@@ -290,7 +267,7 @@ static UINT32 rdpsnd_opensles_get_volume(rdpsndDevicePlugin* device)
 	return opensles->volume;
 }
 
-static void rdpsnd_opensles_set_volume(rdpsndDevicePlugin* device,
+static BOOL rdpsnd_opensles_set_volume(rdpsndDevicePlugin* device,
 		UINT32 value)
 {
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
@@ -313,6 +290,8 @@ static void rdpsnd_opensles_set_volume(rdpsndDevicePlugin* device,
 			android_SetOutputVolume(opensles->stream, vol);
 		}
 	}
+
+	return TRUE;
 }
 
 static void rdpsnd_opensles_play(rdpsndDevicePlugin* device,
@@ -395,7 +374,7 @@ static int rdpsnd_opensles_parse_addin_args(rdpsndDevicePlugin* device,
 
 	DEBUG_SND("opensles=%p, args=%p", opensles, args);
 
-	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
+	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
 
 	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
 			rdpsnd_opensles_args, flags, opensles, NULL, NULL);
@@ -414,6 +393,8 @@ static int rdpsnd_opensles_parse_addin_args(rdpsndDevicePlugin* device,
 		CommandLineSwitchCase(arg, "dev")
 		{
 			opensles->device_name = _strdup(arg->Value);
+			if (!opensles->device_name)
+				return ERROR_OUTOFMEMORY;
 		}
 
 		CommandLineSwitchEnd(arg)
@@ -423,21 +404,31 @@ static int rdpsnd_opensles_parse_addin_args(rdpsndDevicePlugin* device,
 	return status;
 }
 
-#ifdef STATIC_CHANNELS
+#ifdef BUILTIN_CHANNELS
 #define freerdp_rdpsnd_client_subsystem_entry \
 	opensles_freerdp_rdpsnd_client_subsystem_entry
+#else
+#define freerdp_rdpsnd_client_subsystem_entry \
+	FREERDP_API freerdp_rdpsnd_client_subsystem_entry
 #endif
 
-int freerdp_rdpsnd_client_subsystem_entry(
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT freerdp_rdpsnd_client_subsystem_entry(
 		PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	ADDIN_ARGV* args;
 	rdpsndopenslesPlugin* opensles;
+	UINT error;
 
 	DEBUG_SND("pEntryPoints=%p", pEntryPoints);
 
-	opensles = (rdpsndopenslesPlugin*) malloc(sizeof(rdpsndopenslesPlugin));
-	ZeroMemory(opensles, sizeof(rdpsndopenslesPlugin));
+	opensles = (rdpsndopenslesPlugin*) calloc(1, sizeof(rdpsndopenslesPlugin));
+	if (!opensles)
+		return CHANNEL_RC_NO_MEMORY;
 
 	opensles->device.Open = rdpsnd_opensles_open;
 	opensles->device.FormatSupported = rdpsnd_opensles_format_supported;
@@ -453,17 +444,34 @@ int freerdp_rdpsnd_client_subsystem_entry(
 	rdpsnd_opensles_parse_addin_args((rdpsndDevicePlugin*) opensles, args);
 
 	if (!opensles->device_name)
+	{
 		opensles->device_name = _strdup("default");
+		if (!opensles->device_name)
+		{
+			error = CHANNEL_RC_NO_MEMORY;
+			goto outstrdup;
+		}
+	}
 
 	opensles->rate = 44100;
 	opensles->channels = 2;
 	opensles->format = WAVE_FORMAT_ADPCM;
 
 	opensles->dsp_context = freerdp_dsp_context_new();
+	if (!opensles->dsp_context)
+	{
+		error = CHANNEL_RC_NO_MEMORY;
+		goto out_dsp_new;
+	}
 
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd,
 			(rdpsndDevicePlugin*) opensles);
 
 	DEBUG_SND("success");
-	return 0;
+	return CHANNEL_RC_OK;
+out_dsp_new:
+	free(opensles->device_name);
+outstrdup:
+	free(opensles);
+	return error;
 }

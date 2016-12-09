@@ -105,7 +105,7 @@ PFORMAT_STRING NdrpComputeCount(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 
 		case FC_CALLBACK:
 			{
-				WLog_ERR(TAG, "warning: NdrpComputeConformance FC_CALLBACK unimplemented\n");
+				WLog_ERR(TAG, "warning: NdrpComputeConformance FC_CALLBACK unimplemented");
 			}
 			break;
 	}

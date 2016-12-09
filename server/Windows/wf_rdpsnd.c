@@ -142,12 +142,16 @@ int wf_rdpsnd_unlock()
 
 BOOL wf_peer_rdpsnd_init(wfPeerContext* context)
 {
-	wfInfo* wfi;
+	wfInfo* wfi = wf_info_get_instance();
 	
-	wfi = wf_info_get_instance();
+	if (!wfi)
+		return FALSE;
 
-	wfi->snd_mutex = CreateMutex(NULL, FALSE, NULL);
+	if (!(wfi->snd_mutex = CreateMutex(NULL, FALSE, NULL)))
+		return FALSE;
+
 	context->rdpsnd = rdpsnd_server_context_new(context->vcm);
+	context->rdpsnd->rdpcontext = &context->_p;
 	context->rdpsnd->data = context;
 
 	context->rdpsnd->server_formats = supported_audio_formats;

@@ -68,8 +68,7 @@ static BOOL tsmf_alsa_open(ITSMFAudioDevice *audio, const char *device)
 	TSMFAlsaAudioDevice *alsa = (TSMFAlsaAudioDevice *) audio;
 	if(!device)
 	{
-		if(!alsa->device[0])
-			strncpy(alsa->device, "default", sizeof(alsa->device));
+		strncpy(alsa->device, "default", sizeof(alsa->device));
 	}
 	else
 	{
@@ -182,15 +181,14 @@ static BOOL tsmf_alsa_play(ITSMFAudioDevice *audio, BYTE *data, UINT32 data_size
 				snd_pcm_recover(alsa->out_handle, error, 0);
 				error = 0;
 			}
-			else
-				if(error < 0)
-				{
-					DEBUG_TSMF("error len %d", error);
-					snd_pcm_close(alsa->out_handle);
-					alsa->out_handle = 0;
-					tsmf_alsa_open_device(alsa);
-					break;
-				}
+			else if(error < 0)
+			{
+				DEBUG_TSMF("error len %d", error);
+				snd_pcm_close(alsa->out_handle);
+				alsa->out_handle = 0;
+				tsmf_alsa_open_device(alsa);
+				break;
+			}
 			DEBUG_TSMF("%d frames played.", error);
 			if(error == 0)
 				break;
@@ -215,8 +213,9 @@ static UINT64 tsmf_alsa_get_latency(ITSMFAudioDevice *audio)
 	return latency;
 }
 
-static void tsmf_alsa_flush(ITSMFAudioDevice *audio)
+static BOOL tsmf_alsa_flush(ITSMFAudioDevice *audio)
 {
+	return TRUE;
 }
 
 static void tsmf_alsa_free(ITSMFAudioDevice *audio)
@@ -232,8 +231,10 @@ static void tsmf_alsa_free(ITSMFAudioDevice *audio)
 	free(alsa);
 }
 
-#ifdef STATIC_CHANNELS
+#ifdef BUILTIN_CHANNELS
 #define freerdp_tsmf_client_audio_subsystem_entry	alsa_freerdp_tsmf_client_audio_subsystem_entry
+#else
+#define freerdp_tsmf_client_audio_subsystem_entry	FREERDP_API freerdp_tsmf_client_audio_subsystem_entry
 #endif
 
 ITSMFAudioDevice *freerdp_tsmf_client_audio_subsystem_entry(void)

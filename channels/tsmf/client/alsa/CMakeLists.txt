@@ -26,7 +26,4 @@ include_directories(${ALSA_INCLUDE_DIRS})
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
 
 
-
-target_link_libraries(${MODULE_NAME} freerdp ${ALSA_LIBRARIES})
-
-install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_ADDIN_PATH} EXPORT FreeRDPTargets)
+target_link_libraries(${MODULE_NAME} ${ALSA_LIBRARIES} winpr freerdp)

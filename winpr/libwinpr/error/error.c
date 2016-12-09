@@ -41,12 +41,21 @@ UINT SetErrorMode(UINT uMode)
 
 DWORD GetLastError(VOID)
 {
-	return NtCurrentTeb()->LastErrorValue;
+	PTEB pt = NtCurrentTeb();
+	if (pt)
+	{
+		return NtCurrentTeb()->LastErrorValue;
+	}
+	return ERROR_OUTOFMEMORY;
 }
 
 VOID SetLastError(DWORD dwErrCode)
 {
-	NtCurrentTeb()->LastErrorValue = dwErrCode;
+	PTEB pt = NtCurrentTeb();
+	if (pt)
+	{
+		pt->LastErrorValue = dwErrCode;
+	}
 }
 
 VOID RestoreLastError(DWORD dwErrCode)

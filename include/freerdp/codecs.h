@@ -39,7 +39,8 @@
 #define FREERDP_CODEC_CLEARCODEC		0x00000010
 #define FREERDP_CODEC_ALPHACODEC		0x00000020
 #define FREERDP_CODEC_PROGRESSIVE		0x00000040
-#define FREERDP_CODEC_H264			0x00000080
+#define FREERDP_CODEC_AVC420			0x00000080
+#define FREERDP_CODEC_AVC444			0x00000100
 #define FREERDP_CODEC_ALL			0xFFFFFFFF
 
 struct rdp_codecs
@@ -59,8 +60,10 @@ struct rdp_codecs
  extern "C" {
 #endif
 
-FREERDP_API int freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags);
-FREERDP_API int freerdp_client_codecs_reset(rdpCodecs* codecs, UINT32 flags);
+FREERDP_API BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags,
+					     UINT32 width, UINT32 height);
+FREERDP_API BOOL freerdp_client_codecs_reset(rdpCodecs* codecs, UINT32 flags,
+					     UINT32 width, UINT32 height);
 
 FREERDP_API rdpCodecs* codecs_new(rdpContext* context);
 FREERDP_API void codecs_free(rdpCodecs* codecs);

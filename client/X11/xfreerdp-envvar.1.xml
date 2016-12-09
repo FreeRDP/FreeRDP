@@ -1,0 +1,15 @@
+<refsect1>
+	<title>Environment variables</title>
+
+	<variablelist>
+		<varlistentry>
+			<term>wlog environment variable</term>
+			<listitem>
+				<para>xfreerdp uses wLog as its log facility, you can refer to the
+				corresponding man page (wlog(1)) for more informations. Arguments passed
+				via the <replaceable>/log-level</replaceable> or <replaceable>/log-filters</replaceable>
+				have precedence over the environment variables.</para>
+			</listitem>
+		</varlistentry>
+	</variablelist>
+</refsect1>

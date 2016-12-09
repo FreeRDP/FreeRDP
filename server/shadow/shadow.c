@@ -40,27 +40,44 @@ static BOOL g_MessagePump = FALSE;
 int main(int argc, char** argv)
 {
 	MSG msg;
-	int status;
+	int status = 0;
 	DWORD dwExitCode;
+	rdpSettings* settings;
 	rdpShadowServer* server;
+
+	shadow_subsystem_set_entry_builtin(NULL);
 
 	server = shadow_server_new();
 
 	if (!server)
-		return 0;
+	{
+		status = -1;
+		goto fail_server_new;
+	}
 
-	status = shadow_server_parse_command_line(server, argc, argv);
+	settings = server->settings;
 
-	status = shadow_server_command_line_status_print(server, argc, argv, status);
+	settings->NlaSecurity = FALSE;
+	settings->TlsSecurity = TRUE;
+	settings->RdpSecurity = TRUE;
 
-	if (status < 0)
-		return 0;
+#ifdef WITH_SHADOW_X11
+	server->authentication = TRUE;
+#else
+	server->authentication = FALSE;
+#endif
 
-	if (shadow_server_init(server) < 0)
-		return 0;
+	if ((status = shadow_server_parse_command_line(server, argc, argv)) < 0)
+	{
+		shadow_server_command_line_status_print(server, argc, argv, status);
+		goto fail_parse_command_line;
+	}
 
-	if (shadow_server_start(server) < 0)
-		return 0;
+	if ((status = shadow_server_init(server)) < 0)
+		goto fail_server_init;
+
+	if ((status = shadow_server_start(server)) < 0)
+		goto fail_server_start;
 
 	if (g_MessagePump)
 	{
@@ -73,10 +90,17 @@ int main(int argc, char** argv)
 
 	WaitForSingleObject(server->thread, INFINITE);
 
-	GetExitCodeThread(server->thread, &dwExitCode);
+	if (!GetExitCodeThread(server->thread, &dwExitCode))
+		status = -1;
+	else
+		status = (int) dwExitCode;
 
+fail_server_start:
+	shadow_server_uninit(server);
+fail_server_init:
+fail_parse_command_line:
 	shadow_server_free(server);
-
-	return 0;
+fail_server_new:
+	return status;
 }
 

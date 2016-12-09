@@ -63,19 +63,23 @@ static INLINE UINT64 _rotr64(UINT64 value, int shift) {
 
 #else
 
-#define _byteswap_ulong(_val)	(((_val) >> 24) | \
-				(((_val) & 0x00FF0000) >> 8) | \
-				(((_val) & 0x0000FF00) << 8) | \
-				((_val) << 24))
+static INLINE UINT32 _byteswap_ulong(UINT32 _val) {
+	return  (((_val) >> 24) | \
+		(((_val) & 0x00FF0000) >> 8) | \
+		(((_val) & 0x0000FF00) << 8) | \
+		((_val) << 24));
+}
 
-#define	_byteswap_uint64(_val)	(((_val) << 56) | \
-				(((_val) << 40) & 0xFF000000000000) | \
-				(((_val) << 24) & 0xFF0000000000) | \
-				(((_val) << 8)  & 0xFF00000000) | \
-				(((_val) >> 8)  & 0xFF000000) | \
-				(((_val) >> 24) & 0xFF0000) | \
-				(((_val) >> 40) & 0xFF00) | \
-				((_val)  >> 56))
+static INLINE UINT64 _byteswap_uint64(UINT64 _val) {
+	return  (((_val) << 56) | \
+		(((_val) << 40) & 0xFF000000000000) | \
+		(((_val) << 24) & 0xFF0000000000) | \
+		(((_val) << 8)  & 0xFF00000000) | \
+		(((_val) >> 8)  & 0xFF000000) | \
+		(((_val) >> 24) & 0xFF0000) | \
+		(((_val) >> 40) & 0xFF00) | \
+		((_val)  >> 56));
+}
 
 #endif
 
@@ -85,54 +89,13 @@ static INLINE UINT64 _rotr64(UINT64 value, int shift) {
 
 #else
 
-#define _byteswap_ushort(_val)	(((_val) >> 8) | ((_val) << 8))
-
-#endif
-
-/**
- * __lzcnt16, __lzcnt, __lzcnt64:
- * http://msdn.microsoft.com/en-us/library/bb384809/
- */
-
-#if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2))
-
-/**
- * __lzcnt16, __lzcnt, __lzcnt64:
- * http://msdn.microsoft.com/en-us/library/bb384809/
- *
- * Beware: the result of __builtin_clz(0) is undefined
- */
-
-static INLINE UINT32 __lzcnt(UINT32 _val32) {
-	return _val32 ? ((UINT32) __builtin_clz(_val32)) : 32;
-}
-
-static INLINE UINT16 __lzcnt16(UINT16 _val16) {
-	return _val16 ? ((UINT16) (__builtin_clz((UINT32) _val16) - 16)) : 16;
-}
-
-#else
-
-static INLINE UINT32 __lzcnt(UINT32 x) {
-	unsigned y;
-	int n = 32;
-	y = x >> 16;  if (y != 0) { n = n - 16; x = y; }
-	y = x >>  8;  if (y != 0) { n = n -  8; x = y; }
-	y = x >>  4;  if (y != 0) { n = n -  4; x = y; }
-	y = x >>  2;  if (y != 0) { n = n -  2; x = y; }
-	y = x >>  1;  if (y != 0) return n - 2;
-	return n - x;
-}
-
-static INLINE UINT16 __lzcnt16(UINT16 x) {
-	return ((UINT16) __lzcnt((UINT32) x));
+static INLINE UINT16 _byteswap_ushort(UINT16 _val) {
+	return (((_val) >> 8) | ((_val) << 8));
 }
 
 #endif
 
-#endif
 
-#ifndef _WIN32
 
 #define CopyMemory(Destination, Source, Length)		memcpy((Destination), (Source), (Length))
 #define MoveMemory(Destination, Source, Length)		memmove((Destination), (Source), (Length))

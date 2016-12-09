@@ -28,7 +28,9 @@
 
 #include "wf_client.h"
 
-void wf_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEventArgs* e);
-void wf_OnChannelDisconnectedEventHandler(rdpContext* context, ChannelDisconnectedEventArgs* e);
+void wf_OnChannelConnectedEventHandler(rdpContext* context,
+                                       ChannelConnectedEventArgs* e);
+void wf_OnChannelDisconnectedEventHandler(rdpContext* context,
+        ChannelDisconnectedEventArgs* e);
 
 #endif

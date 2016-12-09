@@ -23,6 +23,8 @@
 
 #include <stdlib.h>
 
+#include <freerdp/build-config.h>
+
 #include <winpr/tchar.h>
 #include <winpr/windows.h>
 
@@ -34,10 +36,13 @@
 #include <freerdp/log.h>
 #define TAG SERVER_TAG("windows")
 
+#define SERVER_KEY "Software\\"FREERDP_VENDOR_STRING"\\" \
+		FREERDP_PRODUCT_STRING"\\Server"
+
 static wfInfo* wfInfoInstance = NULL;
 static int _IDcount = 0;
 
-int wf_info_lock(wfInfo* wfi)
+BOOL wf_info_lock(wfInfo* wfi)
 {
 	DWORD dRes;
 
@@ -48,22 +53,19 @@ int wf_info_lock(wfInfo* wfi)
 	case WAIT_ABANDONED:
 	case WAIT_OBJECT_0:
 		return TRUE;
-		break;
 
 	case WAIT_TIMEOUT:
 		return FALSE;
-		break;
 
 	case WAIT_FAILED:
 		WLog_ERR(TAG, "wf_info_lock failed with 0x%08X", GetLastError());
-		return -1;
-		break;
+		return FALSE;
 	}
 
-	return -1;
+	return FALSE;
 }
 
-int wf_info_try_lock(wfInfo* wfi, DWORD dwMilliseconds)
+BOOL wf_info_try_lock(wfInfo* wfi, DWORD dwMilliseconds)
 {
 	DWORD dRes;
 
@@ -74,27 +76,24 @@ int wf_info_try_lock(wfInfo* wfi, DWORD dwMilliseconds)
 	case WAIT_ABANDONED:
 	case WAIT_OBJECT_0:
 		return TRUE;
-		break;
 
 	case WAIT_TIMEOUT:
 		return FALSE;
-		break;
 
 	case WAIT_FAILED:
 		WLog_ERR(TAG, "wf_info_try_lock failed with 0x%08X", GetLastError());
-		return -1;
-		break;
+		return FALSE;
 	}
 
-	return -1;
+	return FALSE;
 }
 
-int wf_info_unlock(wfInfo* wfi)
+BOOL wf_info_unlock(wfInfo* wfi)
 {
-	if (ReleaseMutex(wfi->mutex) == 0)
+	if (!ReleaseMutex(wfi->mutex))
 	{
 		WLog_ERR(TAG, "wf_info_unlock failed with 0x%08X", GetLastError());
-		return -1;
+		return FALSE;
 	}
 
 	return TRUE;
@@ -104,8 +103,7 @@ wfInfo* wf_info_init()
 {
 	wfInfo* wfi;
 
-	wfi = (wfInfo*) malloc(sizeof(wfInfo));
-	ZeroMemory(wfi, sizeof(wfInfo));
+	wfi = (wfInfo*) calloc(1, sizeof(wfInfo));
 
 	if (wfi != NULL)
 	{
@@ -117,38 +115,61 @@ wfInfo* wf_info_init()
 
 		wfi->mutex = CreateMutex(NULL, FALSE, NULL);
 
-		if (wfi->mutex == NULL) 
+		if (wfi->mutex == NULL)
 		{
 			WLog_ERR(TAG, "CreateMutex error: %d", GetLastError());
+			free(wfi);
+			return NULL;
 		}
 
 		wfi->updateSemaphore = CreateSemaphore(NULL, 0, 32, NULL);
+		if (!wfi->updateSemaphore)
+		{
+			WLog_ERR(TAG, "CreateSemaphore error: %d", GetLastError());
+			CloseHandle(wfi->mutex);
+			free(wfi);
+			return NULL;
+		}
 
 		wfi->updateThread = CreateThread(NULL, 0, wf_update_thread, wfi, CREATE_SUSPENDED, NULL);
 
 		if (!wfi->updateThread)
 		{
 			WLog_ERR(TAG, "Failed to create update thread");
+			CloseHandle(wfi->mutex);
+			CloseHandle(wfi->updateSemaphore);
+			free(wfi);
+			return NULL;
 		}
 
-		wfi->peers = (freerdp_peer**) malloc(sizeof(freerdp_peer*) * WF_INFO_MAXPEERS);
-		memset(wfi->peers, 0, sizeof(freerdp_peer*) * WF_INFO_MAXPEERS);
+		wfi->peers = (freerdp_peer**) calloc(WF_INFO_MAXPEERS, sizeof(freerdp_peer*));
+		if (!wfi->peers)
+		{
+			WLog_ERR(TAG, "Failed to allocate memory for peer");
+			CloseHandle(wfi->mutex);
+			CloseHandle(wfi->updateSemaphore);
+			CloseHandle(wfi->updateThread);
+			free(wfi);
+			return NULL;
+		}
 
 		//Set FPS
 		wfi->framesPerSecond = WF_INFO_DEFAULT_FPS;
 
-		status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+		status = RegOpenKeyExA(HKEY_LOCAL_MACHINE, SERVER_KEY, 0,
+					KEY_READ | KEY_WOW64_64KEY, &hKey);
 		if (status == ERROR_SUCCESS)
 		{
 			if (RegQueryValueEx(hKey, _T("FramesPerSecond"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
-				wfi->framesPerSecond = dwValue;		
+				wfi->framesPerSecond = dwValue;
 		}
 		RegCloseKey(hKey);
 
 		//Set input toggle
 		wfi->input_disabled = FALSE;
 
-		status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+		status = RegOpenKeyExA(HKEY_LOCAL_MACHINE, SERVER_KEY,
+					0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 		if (status == ERROR_SUCCESS)
 		{
 			if (RegQueryValueEx(hKey, _T("DisableInput"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
@@ -171,61 +192,70 @@ wfInfo* wf_info_get_instance()
 	return wfInfoInstance;
 }
 
-void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
+BOOL wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 {
-	if (wf_info_lock(wfi) > 0)
-	{
-		int i;
-		int peerId;
-		if (wfi->peerCount == WF_INFO_MAXPEERS)
-		{
-			context->socketClose = TRUE;
-			wf_info_unlock(wfi);
-			return;
-		}
+	int i;
+	int peerId;
 
-		context->info = wfi;
-		context->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (!wfi || !context)
+		return FALSE;
 
-		//get the offset of the top left corner of selected screen
-		EnumDisplayMonitors(NULL, NULL, wf_info_monEnumCB, 0);
-		_IDcount = 0;
+	if (!wf_info_lock(wfi))
+		return FALSE;
+
+	if (wfi->peerCount == WF_INFO_MAXPEERS)
+		goto fail_peer_count;
+
+	context->info = wfi;
+	if (!(context->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+		goto fail_update_event;
+
+	//get the offset of the top left corner of selected screen
+	EnumDisplayMonitors(NULL, NULL, wf_info_monEnumCB, 0);
+	_IDcount = 0;
 
 #ifdef WITH_DXGI_1_2
-		if (wfi->peerCount == 0)
-			wf_dxgi_init(wfi);
+	if (wfi->peerCount == 0)
+		if (wf_dxgi_init(wfi) != 0)
+			goto fail_driver_init;
 #else
-		if (wf_mirror_driver_activate(wfi) == FALSE)
-		{
-			context->socketClose = TRUE;
-			wf_info_unlock(wfi);
-			return;
-		}
+	if (!wf_mirror_driver_activate(wfi))
+		goto fail_driver_init;
 #endif
-		//look trhough the array of peers until an empty slot
-		for(i=0; i<WF_INFO_MAXPEERS; ++i)
+	//look through the array of peers until an empty slot
+	for (i = 0; i < WF_INFO_MAXPEERS; ++i)
+	{
+		//empty index will be our peer id
+		if (wfi->peers[i] == NULL)
 		{
-			//empty index will be our peer id
-			if (wfi->peers[i] == NULL)
-			{
-				peerId = i;
-				break;
-			}
+			peerId = i;
+			break;
 		}
-
-		wfi->peers[peerId] = ((rdpContext*) context)->peer;
-		wfi->peers[peerId]->pId = peerId;
-		wfi->peerCount++;
-		WLog_INFO(TAG, "Registering Peer: id=%d #=%d", peerId, wfi->peerCount);
-		wf_info_unlock(wfi);
-
-		wfreerdp_server_peer_callback_event(peerId, WF_SRV_CALLBACK_EVENT_CONNECT);
 	}
+
+	wfi->peers[peerId] = ((rdpContext*) context)->peer;
+	wfi->peers[peerId]->pId = peerId;
+	wfi->peerCount++;
+
+	WLog_INFO(TAG, "Registering Peer: id=%d #=%d", peerId, wfi->peerCount);
+	wf_info_unlock(wfi);
+	wfreerdp_server_peer_callback_event(peerId, WF_SRV_CALLBACK_EVENT_CONNECT);
+
+	return TRUE;
+
+fail_driver_init:
+	CloseHandle(context->updateEvent);
+	context->updateEvent = NULL;
+fail_update_event:
+fail_peer_count:
+	context->socketClose = TRUE;
+	wf_info_unlock(wfi);
+	return FALSE;
 }
 
 void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 {
-	if (wf_info_lock(wfi) > 0)
+	if (wf_info_lock(wfi))
 	{
 		int peerId;
 
@@ -249,7 +279,7 @@ void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 BOOL wf_info_have_updates(wfInfo* wfi)
 {
 #ifdef WITH_DXGI_1_2
-	if(wfi->framesWaiting == 0)
+	if (wfi->framesWaiting == 0)
 		return FALSE;
 #else
 	if (wfi->nextUpdate == wfi->lastUpdate)
@@ -358,14 +388,16 @@ BOOL CALLBACK wf_info_monEnumCB(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMo
 	wfInfo * wfi;
 
 	wfi = wf_info_get_instance();
+	if (!wfi)
+		return FALSE;
 
-	if(_IDcount == wfi->screenID)
+	if (_IDcount == wfi->screenID)
 	{
 		wfi->servscreen_xoffset = lprcMonitor->left;
 		wfi->servscreen_yoffset = lprcMonitor->top;
 	}
-	
-	_IDcount++;	
+
+	_IDcount++;
 
 	return TRUE;
 }

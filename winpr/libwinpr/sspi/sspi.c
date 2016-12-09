@@ -35,15 +35,21 @@
 static wLog* g_Log = NULL;
 
 static BOOL g_Initialized = FALSE;
+#if defined(WITH_NATIVE_SSPI)
 static HMODULE g_SspiModule = NULL;
+#endif
 
 static SecurityFunctionTableW* g_SspiW = NULL;
 static SecurityFunctionTableA* g_SspiA = NULL;
 
-SecurityFunctionTableA sspi_SecurityFunctionTableA;
-SecurityFunctionTableW sspi_SecurityFunctionTableW;
+#if defined(WITH_NATIVE_SSPI)
+static BOOL ShouldUseNativeSspi(void);
+static BOOL InitializeSspiModule_Native(void);
+#endif
+static void InitializeSspiModule(DWORD flags);
 
-BOOL ShouldUseNativeSspi()
+#if defined(WITH_NATIVE_SSPI)
+BOOL ShouldUseNativeSspi(void)
 {
 	BOOL status = FALSE;
 #ifdef _WIN32
@@ -56,6 +62,8 @@ BOOL ShouldUseNativeSspi()
 		return TRUE;
 
 	env = (LPSTR) malloc(nSize);
+	if (!env)
+		return TRUE;
 	nSize = GetEnvironmentVariableA("WINPR_NATIVE_SSPI", env, nSize);
 
 	if (strcmp(env, "0") == 0)
@@ -67,7 +75,9 @@ BOOL ShouldUseNativeSspi()
 #endif
 	return status;
 }
+#endif
 
+#if defined(WITH_NATIVE_SSPI)
 BOOL InitializeSspiModule_Native(void)
 {
 	INIT_SECURITY_INTERFACE_W pInitSecurityInterfaceW;
@@ -92,6 +102,7 @@ BOOL InitializeSspiModule_Native(void)
 
 	return TRUE;
 }
+#endif
 
 void InitializeSspiModule(DWORD flags)
 {
@@ -106,6 +117,7 @@ void InitializeSspiModule(DWORD flags)
 
 	g_Log = WLog_Get("com.winpr.sspi");
 
+#if defined(WITH_NATIVE_SSPI)
 	if (flags && (flags & SSPI_INTERFACE_NATIVE))
 	{
 		status = InitializeSspiModule_Native();
@@ -121,6 +133,7 @@ void InitializeSspiModule(DWORD flags)
 	{
 		status = InitializeSspiModule_Native();
 	}
+#endif
 
 	if (!status)
 	{
@@ -306,6 +319,30 @@ const char* GetSecurityStatusString(SECURITY_STATUS status)
 	return "SEC_E_UNKNOWN";
 }
 
+BOOL IsSecurityStatusError(SECURITY_STATUS status)
+{
+	BOOL error = TRUE;
+
+	switch (status)
+	{
+		case SEC_E_OK:
+		case SEC_I_CONTINUE_NEEDED:
+		case SEC_I_COMPLETE_NEEDED:
+		case SEC_I_COMPLETE_AND_CONTINUE:
+		case SEC_I_LOCAL_LOGON:
+		case SEC_I_CONTEXT_EXPIRED:
+		case SEC_I_INCOMPLETE_CREDENTIALS:
+		case SEC_I_RENEGOTIATE:
+		case SEC_I_NO_LSA_CONTEXT:
+		case SEC_I_SIGNATURE_NEEDED:
+		case SEC_I_NO_RENEGOTIATION:
+			error = FALSE;
+			break;
+	}
+
+	return error;
+}
+
 SecurityFunctionTableW* SEC_ENTRY InitSecurityInterfaceExW(DWORD flags)
 {
 	if (!g_Initialized)
@@ -313,7 +350,7 @@ SecurityFunctionTableW* SEC_ENTRY InitSecurityInterfaceExW(DWORD flags)
 
 	WLog_Print(g_Log, WLOG_DEBUG, "InitSecurityInterfaceExW");
 
-	return &sspi_SecurityFunctionTableW;
+	return g_SspiW;
 }
 
 SecurityFunctionTableA* SEC_ENTRY InitSecurityInterfaceExA(DWORD flags)
@@ -323,7 +360,7 @@ SecurityFunctionTableA* SEC_ENTRY InitSecurityInterfaceExA(DWORD flags)
 
 	WLog_Print(g_Log, WLOG_DEBUG, "InitSecurityInterfaceExA");
 
-	return &sspi_SecurityFunctionTableA;
+	return g_SspiA;
 }
 
 /**
@@ -373,7 +410,7 @@ SecurityFunctionTableW* SEC_ENTRY sspi_InitSecurityInterfaceW(void)
 
 	WLog_Print(g_Log, WLOG_DEBUG, "InitSecurityInterfaceW");
 
-	return &sspi_SecurityFunctionTableW;
+	return g_SspiW;
 }
 
 SecurityFunctionTableA* SEC_ENTRY sspi_InitSecurityInterfaceA(void)
@@ -383,7 +420,7 @@ SecurityFunctionTableA* SEC_ENTRY sspi_InitSecurityInterfaceA(void)
 
 	WLog_Print(g_Log, WLOG_DEBUG, "InitSecurityInterfaceA");
 
-	return &sspi_SecurityFunctionTableA;
+	return g_SspiA;
 }
 
 SECURITY_STATUS SEC_ENTRY sspi_QuerySecurityPackageInfoW(SEC_WCHAR* pszPackageName, PSecPkgInfoW* ppPackageInfo)
@@ -423,8 +460,8 @@ SECURITY_STATUS SEC_ENTRY sspi_QuerySecurityPackageInfoA(SEC_CHAR* pszPackageNam
 /* Credential Management */
 
 SECURITY_STATUS SEC_ENTRY sspi_AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal, SEC_WCHAR* pszPackage,
-		ULONG fCredentialUse, void* pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
-		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
+							 ULONG fCredentialUse, void* pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
+							 void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
 	SECURITY_STATUS status;
 
@@ -435,7 +472,7 @@ SECURITY_STATUS SEC_ENTRY sspi_AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = g_SspiW->AcquireCredentialsHandleW(pszPrincipal, pszPackage, fCredentialUse,
-		pvLogonID, pAuthData, pGetKeyFn, pvGetKeyArgument, phCredential, ptsExpiry);
+						    pvLogonID, pAuthData, pGetKeyFn, pvGetKeyArgument, phCredential, ptsExpiry);
 
 	WLog_Print(g_Log, WLOG_DEBUG, "AcquireCredentialsHandleW: %s (0x%04X)", GetSecurityStatusString(status), status);
 
@@ -443,8 +480,8 @@ SECURITY_STATUS SEC_ENTRY sspi_AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal
 }
 
 SECURITY_STATUS SEC_ENTRY sspi_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage,
-		ULONG fCredentialUse, void* pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
-		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
+							 ULONG fCredentialUse, void* pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
+							 void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
 	SECURITY_STATUS status;
 
@@ -455,7 +492,7 @@ SECURITY_STATUS SEC_ENTRY sspi_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal,
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = g_SspiA->AcquireCredentialsHandleA(pszPrincipal, pszPackage, fCredentialUse,
-		pvLogonID, pAuthData, pGetKeyFn, pvGetKeyArgument, phCredential, ptsExpiry);
+						    pvLogonID, pAuthData, pGetKeyFn, pvGetKeyArgument, phCredential, ptsExpiry);
 
 	WLog_Print(g_Log, WLOG_DEBUG, "AcquireCredentialsHandleA: %s (0x%04X)", GetSecurityStatusString(status), status);
 
@@ -567,8 +604,8 @@ SECURITY_STATUS SEC_ENTRY sspi_QueryCredentialsAttributesA(PCredHandle phCredent
 /* Context Management */
 
 SECURITY_STATUS SEC_ENTRY sspi_AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext,
-		PSecBufferDesc pInput, ULONG fContextReq, ULONG TargetDataRep, PCtxtHandle phNewContext,
-		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsTimeStamp)
+						     PSecBufferDesc pInput, ULONG fContextReq, ULONG TargetDataRep, PCtxtHandle phNewContext,
+						     PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsTimeStamp)
 {
 	SECURITY_STATUS status;
 
@@ -579,7 +616,7 @@ SECURITY_STATUS SEC_ENTRY sspi_AcceptSecurityContext(PCredHandle phCredential, P
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = g_SspiW->AcceptSecurityContext(phCredential, phContext, pInput, fContextReq,
-		TargetDataRep, phNewContext, pOutput, pfContextAttr, ptsTimeStamp);
+						TargetDataRep, phNewContext, pOutput, pfContextAttr, ptsTimeStamp);
 
 	WLog_Print(g_Log, WLOG_DEBUG, "AcceptSecurityContext: %s (0x%04X)", GetSecurityStatusString(status), status);
 
@@ -672,9 +709,9 @@ SECURITY_STATUS SEC_ENTRY sspi_ImpersonateSecurityContext(PCtxtHandle phContext)
 }
 
 SECURITY_STATUS SEC_ENTRY sspi_InitializeSecurityContextW(PCredHandle phCredential, PCtxtHandle phContext,
-		SEC_WCHAR* pszTargetName, ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
-		PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
-		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
+							  SEC_WCHAR* pszTargetName, ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
+							  PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
+							  PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
 	SECURITY_STATUS status;
 
@@ -685,8 +722,8 @@ SECURITY_STATUS SEC_ENTRY sspi_InitializeSecurityContextW(PCredHandle phCredenti
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = g_SspiW->InitializeSecurityContextW(phCredential, phContext,
-		pszTargetName, fContextReq, Reserved1, TargetDataRep, pInput,
-		Reserved2, phNewContext, pOutput, pfContextAttr, ptsExpiry);
+						     pszTargetName, fContextReq, Reserved1, TargetDataRep, pInput,
+						     Reserved2, phNewContext, pOutput, pfContextAttr, ptsExpiry);
 
 	WLog_Print(g_Log, WLOG_DEBUG, "InitializeSecurityContextW: %s (0x%04X)", GetSecurityStatusString(status), status);
 
@@ -694,9 +731,9 @@ SECURITY_STATUS SEC_ENTRY sspi_InitializeSecurityContextW(PCredHandle phCredenti
 }
 
 SECURITY_STATUS SEC_ENTRY sspi_InitializeSecurityContextA(PCredHandle phCredential, PCtxtHandle phContext,
-		SEC_CHAR* pszTargetName, ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
-		PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
-		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
+							  SEC_CHAR* pszTargetName, ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
+							  PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
+							  PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
 	SECURITY_STATUS status;
 
@@ -707,8 +744,8 @@ SECURITY_STATUS SEC_ENTRY sspi_InitializeSecurityContextA(PCredHandle phCredenti
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = g_SspiA->InitializeSecurityContextA(phCredential, phContext,
-		pszTargetName, fContextReq, Reserved1, TargetDataRep, pInput,
-		Reserved2, phNewContext, pOutput, pfContextAttr, ptsExpiry);
+						     pszTargetName, fContextReq, Reserved1, TargetDataRep, pInput,
+						     Reserved2, phNewContext, pOutput, pfContextAttr, ptsExpiry);
 
 	WLog_Print(g_Log, WLOG_DEBUG, "InitializeSecurityContextA: %s (0x%04X)", GetSecurityStatusString(status), status);
 

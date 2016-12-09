@@ -26,6 +26,7 @@ typedef struct _RTS_PDU_SIGNATURE_ENTRY RTS_PDU_SIGNATURE_ENTRY;
 #include "rts.h"
 
 #include <winpr/wtypes.h>
+#include <freerdp/api.h>
 
 struct rts_pdu_signature
 {
@@ -116,70 +117,75 @@ struct _RTS_PDU_SIGNATURE_ENTRY
 #define RTS_PDU_FLOW_CONTROL_ACK			(RTS_PDU_OUT_OF_SEQUENCE | 0x00000005)
 #define RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION	(RTS_PDU_OUT_OF_SEQUENCE | 0x00000006)
 
-extern RtsPduSignature RTS_PDU_CONN_A1_SIGNATURE;
-extern RtsPduSignature RTS_PDU_CONN_A2_SIGNATURE;
-extern RtsPduSignature RTS_PDU_CONN_A3_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_CONN_A1_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_CONN_A2_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_CONN_A3_SIGNATURE;
 
-extern RtsPduSignature RTS_PDU_CONN_B1_SIGNATURE;
-extern RtsPduSignature RTS_PDU_CONN_B2_SIGNATURE;
-extern RtsPduSignature RTS_PDU_CONN_B3_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_CONN_B1_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_CONN_B2_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_CONN_B3_SIGNATURE;
 
-extern RtsPduSignature RTS_PDU_CONN_C1_SIGNATURE;
-extern RtsPduSignature RTS_PDU_CONN_C2_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_CONN_C1_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_CONN_C2_SIGNATURE;
 
-extern RtsPduSignature RTS_PDU_IN_R1_A1_SIGNATURE;
-extern RtsPduSignature RTS_PDU_IN_R1_A2_SIGNATURE;
-extern RtsPduSignature RTS_PDU_IN_R1_A3_SIGNATURE;
-extern RtsPduSignature RTS_PDU_IN_R1_A4_SIGNATURE;
-extern RtsPduSignature RTS_PDU_IN_R1_A5_SIGNATURE;
-extern RtsPduSignature RTS_PDU_IN_R1_A6_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_IN_R1_A1_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_IN_R1_A2_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_IN_R1_A3_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_IN_R1_A4_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_IN_R1_A5_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_IN_R1_A6_SIGNATURE;
 
-extern RtsPduSignature RTS_PDU_IN_R1_B1_SIGNATURE;
-extern RtsPduSignature RTS_PDU_IN_R1_B2_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_IN_R1_B1_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_IN_R1_B2_SIGNATURE;
 
-extern RtsPduSignature RTS_PDU_IN_R2_A1_SIGNATURE;
-extern RtsPduSignature RTS_PDU_IN_R2_A2_SIGNATURE;
-extern RtsPduSignature RTS_PDU_IN_R2_A3_SIGNATURE;
-extern RtsPduSignature RTS_PDU_IN_R2_A4_SIGNATURE;
-extern RtsPduSignature RTS_PDU_IN_R2_A5_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_IN_R2_A1_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_IN_R2_A2_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_IN_R2_A3_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_IN_R2_A4_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_IN_R2_A5_SIGNATURE;
 
-extern RtsPduSignature RTS_PDU_OUT_R1_A1_SIGNATURE;
-extern RtsPduSignature RTS_PDU_OUT_R1_A2_SIGNATURE;
-extern RtsPduSignature RTS_PDU_OUT_R1_A3_SIGNATURE;
-extern RtsPduSignature RTS_PDU_OUT_R1_A4_SIGNATURE;
-extern RtsPduSignature RTS_PDU_OUT_R1_A5_SIGNATURE;
-extern RtsPduSignature RTS_PDU_OUT_R1_A6_SIGNATURE;
-extern RtsPduSignature RTS_PDU_OUT_R1_A7_SIGNATURE;
-extern RtsPduSignature RTS_PDU_OUT_R1_A8_SIGNATURE;
-extern RtsPduSignature RTS_PDU_OUT_R1_A9_SIGNATURE;
-extern RtsPduSignature RTS_PDU_OUT_R1_A10_SIGNATURE;
-extern RtsPduSignature RTS_PDU_OUT_R1_A11_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_OUT_R1_A1_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_OUT_R1_A2_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_OUT_R1_A3_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_OUT_R1_A4_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_OUT_R1_A5_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_OUT_R1_A6_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_OUT_R1_A7_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_OUT_R1_A8_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_OUT_R1_A9_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_OUT_R1_A10_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_OUT_R1_A11_SIGNATURE;
 
-extern RtsPduSignature RTS_PDU_OUT_R2_A1_SIGNATURE;
-extern RtsPduSignature RTS_PDU_OUT_R2_A2_SIGNATURE;
-extern RtsPduSignature RTS_PDU_OUT_R2_A3_SIGNATURE;
-extern RtsPduSignature RTS_PDU_OUT_R2_A4_SIGNATURE;
-extern RtsPduSignature RTS_PDU_OUT_R2_A5_SIGNATURE;
-extern RtsPduSignature RTS_PDU_OUT_R2_A6_SIGNATURE;
-extern RtsPduSignature RTS_PDU_OUT_R2_A7_SIGNATURE;
-extern RtsPduSignature RTS_PDU_OUT_R2_A8_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_OUT_R2_A1_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_OUT_R2_A2_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_OUT_R2_A3_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_OUT_R2_A4_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_OUT_R2_A5_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_OUT_R2_A6_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_OUT_R2_A7_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_OUT_R2_A8_SIGNATURE;
 
-extern RtsPduSignature RTS_PDU_OUT_R2_B1_SIGNATURE;
-extern RtsPduSignature RTS_PDU_OUT_R2_B2_SIGNATURE;
-extern RtsPduSignature RTS_PDU_OUT_R2_B3_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_OUT_R2_B1_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_OUT_R2_B2_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_OUT_R2_B3_SIGNATURE;
 
-extern RtsPduSignature RTS_PDU_OUT_R2_C1_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_OUT_R2_C1_SIGNATURE;
 
-extern RtsPduSignature RTS_PDU_KEEP_ALIVE_SIGNATURE;
-extern RtsPduSignature RTS_PDU_PING_TRAFFIC_SENT_NOTIFY_SIGNATURE;
-extern RtsPduSignature RTS_PDU_ECHO_SIGNATURE;
-extern RtsPduSignature RTS_PDU_PING_SIGNATURE;
-extern RtsPduSignature RTS_PDU_FLOW_CONTROL_ACK_SIGNATURE;
-extern RtsPduSignature RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_KEEP_ALIVE_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_PING_TRAFFIC_SENT_NOTIFY_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_ECHO_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_PING_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature RTS_PDU_FLOW_CONTROL_ACK_SIGNATURE;
+FREERDP_LOCAL extern RtsPduSignature
+RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION_SIGNATURE;
 
-BOOL rts_match_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature, rpcconn_rts_hdr_t* rts);
-int rts_extract_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature, rpcconn_rts_hdr_t* rts);
-UINT32 rts_identify_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature, RTS_PDU_SIGNATURE_ENTRY** entry);
-int rts_print_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature);
+FREERDP_LOCAL BOOL rts_match_pdu_signature(rdpRpc* rpc,
+        RtsPduSignature* signature, rpcconn_rts_hdr_t* rts);
+FREERDP_LOCAL int rts_extract_pdu_signature(rdpRpc* rpc,
+        RtsPduSignature* signature, rpcconn_rts_hdr_t* rts);
+FREERDP_LOCAL UINT32 rts_identify_pdu_signature(rdpRpc* rpc,
+        RtsPduSignature* signature, RTS_PDU_SIGNATURE_ENTRY** entry);
+FREERDP_LOCAL int rts_print_pdu_signature(rdpRpc* rpc,
+        RtsPduSignature* signature);
 
 #endif

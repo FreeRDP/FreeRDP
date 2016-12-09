@@ -2079,12 +2079,12 @@ static UINT32 TEST_XRGB_IMAGE[4096] =
 	0xFF169ff8, 0xFF159ef7, 0xFF149df7, 0xFF139cf6, 0xFF129bf5, 0xFF129bf5, 0xFF129bf5, 0xFF129bf5
 };
 
-static int test_bmp_cmp_count(const BYTE* mem1, const BYTE* mem2, int size, int channel, int margin)
+static int test_bmp_cmp_count(const BYTE* mem1, const BYTE* mem2, int size,
+			      int channel, int margin)
 {
 	int error;
 	int count = 0;
 	int index = 0;
-
 	size /= 4;
 	mem1 += channel;
 	mem2 += channel;
@@ -2106,17 +2106,18 @@ static int test_bmp_cmp_count(const BYTE* mem1, const BYTE* mem2, int size, int 
 	return count;
 }
 
-static int test_bmp_cmp_dump(const BYTE* actual, const BYTE* expected, int size, int channel, int margin)
+static int test_bmp_cmp_dump(const BYTE* actual, const BYTE* expected, int size,
+			     int channel, int margin)
 {
 	int x, y;
 	int error[3];
-	UINT32 pixel;
+	UINT32 pixel = 0;
 	int count = 0;
 	int index = 0;
 	BYTE R, G, B;
 	BYTE eR, eG, eB;
 	INT16 Y, Cb, Cr;
-
+	R = G = B = eR = eG = eB = 0;
 	size /= 4;
 	actual += channel;
 	expected += channel;
@@ -2126,18 +2127,14 @@ static int test_bmp_cmp_dump(const BYTE* actual, const BYTE* expected, int size,
 		if (*actual != *expected)
 		{
 			pixel = *((UINT32*) &actual[-channel]);
-			GetRGB32(R, G, B, pixel);
-
+			pixel = GetColor(PIXEL_FORMAT_XRGB32, R, G, B, 0xff);
 			pixel = *((UINT32*) &expected[-channel]);
-			GetRGB32(eR, eG, eB, pixel);
-
+			pixel = GetColor(PIXEL_FORMAT_XRGB32, eR, eG, eB, 0xFF);
 			Y = TEST_Y_COMPONENT[index];
 			Cb = TEST_CB_COMPONENT[index];
 			Cr = TEST_CR_COMPONENT[index];
-
 			x = index % 64;
 			y = (index - x) / 64;
-
 			error[0] = (R > eR) ? R - eR : eR - R;
 			error[1] = (G > eG) ? G - eG : eG - G;
 			error[2] = (B > eB) ? B - eB : eB - B;
@@ -2145,7 +2142,7 @@ static int test_bmp_cmp_dump(const BYTE* actual, const BYTE* expected, int size,
 			if ((error[0] > margin) || (error[1] > margin) || (error[2] > margin))
 			{
 				printf("(%2d,%2d)    Y: %+5d Cb: %+5d Cr: %+5d    R: %03d/%03d G: %03d/%03d B: %03d/%03d    %d %d %d\n",
-						x, y, Y, Cb, Cr, R, eR, G, eG, B, eB, R - eR, G - eG, B - eB);
+				       x, y, Y, Cb, Cr, R, eR, G, eG, B, eB, R - eR, G - eG, B - eB);
 				count++;
 			}
 		}
@@ -2157,11 +2154,11 @@ static int test_bmp_cmp_dump(const BYTE* actual, const BYTE* expected, int size,
 	return count;
 }
 
-static void test_fill_bitmap_channel(BYTE* data, int width, int height, BYTE value, int nChannel)
+static void test_fill_bitmap_channel(BYTE* data, int width, int height,
+				     BYTE value, int nChannel)
 {
 	int x, y;
 	BYTE* pChannel;
-
 	pChannel = data + nChannel;
 
 	for (y = 0; y < height; y++)
@@ -2195,40 +2192,30 @@ int test_YCbCr_fp(TEST_FP_TYPE coeffs[4], INT16 YCbCr[3], BYTE RGB[3])
 	TEST_FP_TYPE Y, Cb, Cr;
 	TEST_FP_TYPE fR, fG, fB;
 	TEST_FP_TYPE fR1, fR2;
-
-	Y = (TEST_FP_TYPE) (YCbCr[0] + 4096);
-	Cb = (TEST_FP_TYPE) (YCbCr[1]);
-	Cr = (TEST_FP_TYPE) (YCbCr[2]);
-
+	Y = (TEST_FP_TYPE)(YCbCr[0] + 4096);
+	Cb = (TEST_FP_TYPE)(YCbCr[1]);
+	Cr = (TEST_FP_TYPE)(YCbCr[2]);
 #if 1
 	fR1 = Cr * coeffs[0];
 	fR2 = fR1 + Y + 16.0f;
-
 	fR = ((Cr * coeffs[0]) + Y + 16.0f);
 	fG = (Y - (Cb * coeffs[1]) - (Cr * coeffs[2]) + 16.0f);
 	fB = ((Cb * coeffs[3]) + Y + 16.0f);
-
 	printf("fR: %f fG: %f fB: %f fY: %f\n", fR, fG, fB, Y);
-
 	R = (INT16) fR;
 	G = (INT16) fG;
 	B = (INT16) fB;
-
 	printf("mR: %d mG: %d mB: %d\n",
-			(R - 16) % 32, (G - 16) % 32, (B - 16) % 32);
-
+	       (R - 16) % 32, (G - 16) % 32, (B - 16) % 32);
 	printf("iR: %d iG: %d iB: %d\n", R, G, B);
-
 	R >>= 5;
 	G >>= 5;
 	B >>= 5;
-
 	printf("R5: %d G5: %d B5: %d\n", R, G, B);
-
 #else
-	R = ((INT16) (((Cr * coeffs[0]) + Y + 16.0f)) >> 5);
-	G = ((INT16) ((Y - (Cb * coeffs[1]) - (Cr * coeffs[2]) + 16.0f)) >> 5);
-	B = ((INT16) (((Cb * coeffs[3]) + Y + 16.0f)) >> 5);
+	R = ((INT16)(((Cr * coeffs[0]) + Y + 16.0f)) >> 5);
+	G = ((INT16)((Y - (Cb * coeffs[1]) - (Cr * coeffs[2]) + 16.0f)) >> 5);
+	B = ((INT16)(((Cb * coeffs[3]) + Y + 16.0f)) >> 5);
 #endif
 
 	if (R < 0)
@@ -2256,7 +2243,6 @@ int test_YCbCr_fp(TEST_FP_TYPE coeffs[4], INT16 YCbCr[3], BYTE RGB[3])
 	//printf("[2]: %20.20lf\n", coeffs[2]);
 	//printf("[3]: %20.20lf\n", coeffs[3]);
 	printf("--------------------------------\n\n");
-
 	return 0;
 }
 
@@ -2288,6 +2274,7 @@ int test_YCbCr_pixels()
 
 int TestPrimitivesYCbCr(int argc, char* argv[])
 {
+	pstatus_t status = PRIMITIVES_SUCCESS;
 	int size;
 	int cnt[3];
 	float err[3];
@@ -2297,11 +2284,8 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 	INT16* pYCbCr[3];
 	const primitives_t* prims = primitives_get();
 	static const prim_size_t roi_64x64 = { 64, 64 };
-
 	//return test_YCbCr_pixels();
-
 	expected = (BYTE*) TEST_XRGB_IMAGE;
-
 	size = 64 * 64 * 4;
 	actual = _aligned_malloc(size, 16);
 
@@ -2309,34 +2293,29 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 		return 1;
 
 	ZeroMemory(actual, size);
-
 	pYCbCr[0] = TEST_Y_COMPONENT;
 	pYCbCr[1] = TEST_CB_COMPONENT;
 	pYCbCr[2] = TEST_CR_COMPONENT;
 
 	if (1)
 	{
-		prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**) pYCbCr, 64 * 2,
-				actual, 64 * 4, &roi_64x64);
+		status = prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**) pYCbCr, 64 * 2,
+					       actual, PIXEL_FORMAT_BGRA32,
+					       64 * 4, &roi_64x64);
 	}
 	else
 	{
 		INT16* pSrcDst[3];
-
 		pSrcDst[0] = _aligned_malloc(4096 * 2, 16);
 		pSrcDst[1] = _aligned_malloc(4096 * 2, 16);
 		pSrcDst[2] = _aligned_malloc(4096 * 2, 16);
-
 		CopyMemory(pSrcDst[0], pYCbCr[0], 4096 * 2);
 		CopyMemory(pSrcDst[1], pYCbCr[1], 4096 * 2);
 		CopyMemory(pSrcDst[2], pYCbCr[2], 4096 * 2);
-
 		prims->yCbCrToRGB_16s16s_P3P3((const INT16**) pSrcDst, 64 * 2,
-				pSrcDst, 64 * 2, &roi_64x64);
-
+					      pSrcDst, 64 * 2, &roi_64x64);
 		prims->RGBToRGB_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * 2,
-				actual, 64 * 4, &roi_64x64);
-
+					     actual, 64 * 4, PIXEL_FORMAT_BGRA32, &roi_64x64);
 		_aligned_free(pSrcDst[0]);
 		_aligned_free(pSrcDst[1]);
 		_aligned_free(pSrcDst[2]);
@@ -2362,10 +2341,8 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 
 	cnt[2] = test_bmp_cmp_count(actual, expected, size, 2, margin); /* red */
 	err[2] = ((float) cnt[2]) / ((float) size / 4) * 100.0f;
-
 	cnt[1] = test_bmp_cmp_count(actual, expected, size, 1, margin); /* green */
 	err[1] = ((float) cnt[1]) / ((float) size / 4) * 100.0f;
-
 	cnt[0] = test_bmp_cmp_count(actual, expected, size, 0, margin); /* blue */
 	err[0] = ((float) cnt[0]) / ((float) size / 4) * 100.0f;
 
@@ -2373,20 +2350,16 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 	{
 		printf("Red Error Dump:\n");
 		test_bmp_cmp_dump(actual, expected, size, 2, margin); /* red */
-
 		printf("Green Error Dump:\n");
 		test_bmp_cmp_dump(actual, expected, size, 1, margin); /* green */
-
 		printf("Blue Error Dump:\n");
 		test_bmp_cmp_dump(actual, expected, size, 0, margin); /* blue */
-
 		printf("R: diff: %d (%f%%)\n", cnt[2], err[2]);
 		printf("G: diff: %d (%f%%)\n", cnt[1], err[1]);
 		printf("B: diff: %d (%f%%)\n", cnt[0], err[0]);
 	}
 
 	_aligned_free(actual);
-
-	return 0;
+	return (status == PRIMITIVES_SUCCESS) ? 0 : 1;
 }
 

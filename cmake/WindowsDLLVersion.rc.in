@@ -19,7 +19,7 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "@RC_VERSION_VENDOR@"
             VALUE "FileDescription", "@RC_VERSION_DESCRIPTION@"
-            VALUE "FileVersion", "@RC_VERSION_MAJOR@,@RC_VERSION_MINOR@,@RC_VERSION_BUILD@,@RC_VERSION_PATCH@"
+            VALUE "FileVersion", "@RC_VERSION_MAJOR@,@RC_VERSION_MINOR@,@RC_VERSION_PATCH@,@RC_VERSION_BUILD@"
             VALUE "InternalName", "@RC_VERSION_FILE@"
             VALUE "LegalCopyright", "Copyright (C) 2011-@RC_VERSION_YEAR@"
             VALUE "OriginalFilename", "@RC_VERSION_FILE@"

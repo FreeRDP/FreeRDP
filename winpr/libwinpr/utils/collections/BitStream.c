@@ -161,7 +161,7 @@ const char* BYTE_BIT_STRINGS_MSB[256] =
 	"00111111", "10111111", "01111111", "11111111"
 };
 
-void BitDump(const char* tag, int level, const BYTE* buffer, UINT32 length, UINT32 flags)
+void BitDump(const char* tag, UINT32 level, const BYTE* buffer, UINT32 length, UINT32 flags)
 {
 	DWORD i;
 	int nbits;
@@ -343,17 +343,13 @@ wBitStream* BitStream_New()
 	wBitStream* bs = NULL;
 	bs = (wBitStream*) calloc(1, sizeof(wBitStream));
 
-	if (bs)
-	{
-	}
-
 	return bs;
 }
 
 void BitStream_Free(wBitStream* bs)
 {
-	if (bs)
-	{
-		free(bs);
-	}
+	if (!bs)
+		return;
+
+	free(bs);
 }

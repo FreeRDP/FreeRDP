@@ -47,9 +47,9 @@ struct winpr_named_pipe
 	int clientfd;
 	int serverfd;
 
-	const char* name;
-	const char* lpFileName;
-	const char* lpFilePath;
+	char* name;
+	char* lpFileName;
+	char* lpFilePath;
 
 	BOOL ServerMode;
 	DWORD dwOpenMode;
@@ -65,6 +65,11 @@ struct winpr_named_pipe
 };
 
 BOOL winpr_destroy_named_pipe(WINPR_NAMED_PIPE* pNamedPipe);
+
+BOOL NamedPipeRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
+					LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
+BOOL NamedPipeWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
+						LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
 
 #endif
 

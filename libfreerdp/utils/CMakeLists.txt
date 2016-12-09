@@ -32,7 +32,7 @@ endif()
 
 freerdp_module_add(${${MODULE_PREFIX}_SRCS})
 
-freerdp_library_add(${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
+freerdp_library_add(${CMAKE_THREAD_LIBS_INIT})
 
 if(WIN32)
 	freerdp_library_add(ws2_32)

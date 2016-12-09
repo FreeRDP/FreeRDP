@@ -49,12 +49,13 @@ struct rdp_shadow_encoder
 	NSC_CONTEXT* nsc;
 	BITMAP_PLANAR_CONTEXT* planar;
 	BITMAP_INTERLEAVED_CONTEXT* interleaved;
+	H264_CONTEXT* h264;
 
 	int fps;
 	int maxFps;
 	BOOL frameAck;
 	UINT32 frameId;
-	wListDictionary* frameList;
+	UINT32 lastAckframeId;
 };
 
 #ifdef __cplusplus
@@ -63,7 +64,7 @@ extern "C" {
 
 int shadow_encoder_reset(rdpShadowEncoder* encoder);
 int shadow_encoder_prepare(rdpShadowEncoder* encoder, UINT32 codecs);
-int shadow_encoder_create_frame_id(rdpShadowEncoder* encoder);
+UINT32 shadow_encoder_create_frame_id(rdpShadowEncoder* encoder);
 
 rdpShadowEncoder* shadow_encoder_new(rdpShadowClient* client);
 void shadow_encoder_free(rdpShadowEncoder* encoder);

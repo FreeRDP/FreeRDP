@@ -105,6 +105,10 @@ BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)
 		status = BIO_read(bufferedBio, (BYTE*)recv_buf + resultsize, sizeof(recv_buf)-resultsize-1);
 		if (status < 0) {
 			/* Error? */
+			if (BIO_should_retry(bufferedBio)) {
+				USleep(100);
+				continue;
+			}
 			return FALSE;
 		}
 		else if (status == 0) {

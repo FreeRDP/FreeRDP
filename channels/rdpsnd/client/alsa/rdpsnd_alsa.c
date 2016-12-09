@@ -4,6 +4,8 @@
  *
  * Copyright 2009-2011 Jay Sorg
  * Copyright 2010-2011 Vic Lee
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,8 +62,6 @@ struct rdpsnd_alsa_plugin
 	int bytes_per_channel;
 	snd_pcm_uframes_t buffer_size;
 	snd_pcm_uframes_t period_size;
-	snd_pcm_uframes_t start_threshold;
-	snd_async_handler_t* pcm_callback;
 	FREERDP_DSP_CONTEXT* dsp_context;
 };
 
@@ -104,18 +104,41 @@ static int rdpsnd_alsa_set_hw_params(rdpsndAlsaPlugin* alsa)
 	status = snd_pcm_hw_params_get_buffer_size_max(hw_params, &buffer_size_max);
 	SND_PCM_CHECK("snd_pcm_hw_params_get_buffer_size_max", status);
 
-	if (alsa->buffer_size > buffer_size_max)
+	/**
+	 * ALSA Parameters
+	 *
+	 * http://www.alsa-project.org/main/index.php/FramesPeriods
+	 *
+	 * buffer_size = period_size * periods
+	 * period_bytes = period_size * bytes_per_frame
+	 * bytes_per_frame = channels * bytes_per_sample
+	 *
+	 * A frame is equivalent of one sample being played,
+	 * irrespective of the number of channels or the number of bits
+	 *
+	 * A period is the number of frames in between each hardware interrupt.
+	 *
+	 * The buffer size always has to be greater than one period size.
+	 * Commonly this is (2 * period_size), but some hardware can do 8 periods per buffer.
+	 * It is also possible for the buffer size to not be an integer multiple of the period size.
+	 */
+
+	int interrupts_per_sec_near = 50;
+	int bytes_per_sec = (alsa->actual_rate * alsa->bytes_per_channel * alsa->actual_channels);
+
+	alsa->buffer_size = buffer_size_max;
+	alsa->period_size = (bytes_per_sec / interrupts_per_sec_near);
+
+	if (alsa->period_size > buffer_size_max)
 	{
-		WLog_ERR(TAG,  "Warning: requested sound buffer size %d, got %d instead\n",
+		WLog_ERR(TAG, "Warning: requested sound buffer size %d, got %d instead\n",
 				 (int) alsa->buffer_size, (int) buffer_size_max);
-		alsa->buffer_size = buffer_size_max;
+		alsa->period_size = (buffer_size_max / 8);
 	}
 
 	/* Set buffer size */
 	status = snd_pcm_hw_params_set_buffer_size_near(alsa->pcm_handle, hw_params, &alsa->buffer_size);
 	SND_PCM_CHECK("snd_pcm_hw_params_set_buffer_size_near", status);
-
-	alsa->period_size = alsa->buffer_size / 2;
 
 	/* Set period size */
 	status = snd_pcm_hw_params_set_period_size_near(alsa->pcm_handle, hw_params, &alsa->period_size, NULL);
@@ -134,15 +157,16 @@ static int rdpsnd_alsa_set_sw_params(rdpsndAlsaPlugin* alsa)
 	int status;
 	snd_pcm_sw_params_t* sw_params;
 
-	alsa->start_threshold = alsa->buffer_size;
-
 	status = snd_pcm_sw_params_malloc(&sw_params);
 	SND_PCM_CHECK("snd_pcm_sw_params_malloc", status);
 
 	status = snd_pcm_sw_params_current(alsa->pcm_handle, sw_params);
 	SND_PCM_CHECK("snd_pcm_sw_params_current", status);
 
-	status = snd_pcm_sw_params_set_start_threshold(alsa->pcm_handle, sw_params, alsa->start_threshold);
+	status = snd_pcm_sw_params_set_avail_min(alsa->pcm_handle, sw_params, (alsa->bytes_per_channel * alsa->actual_channels));
+	SND_PCM_CHECK("snd_pcm_sw_params_set_avail_min", status);
+
+	status = snd_pcm_sw_params_set_start_threshold(alsa->pcm_handle, sw_params, alsa->block_size);
 	SND_PCM_CHECK("snd_pcm_sw_params_set_start_threshold", status);
 
 	status = snd_pcm_sw_params(alsa->pcm_handle, sw_params);
@@ -170,31 +194,7 @@ static int rdpsnd_alsa_validate_params(rdpsndAlsaPlugin* alsa)
 
 static int rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
 {
-	/**
-	 * ALSA Parameters
-	 *
-	 * http://www.alsa-project.org/main/index.php/FramesPeriods
-	 *
-	 * buffer_size = period_size * periods
-	 * period_bytes = period_size * bytes_per_frame
-	 * bytes_per_frame = channels * bytes_per_sample
-	 *
-	 * A frame is equivalent of one sample being played,
-	 * irrespective of the number of channels or the number of bits
-	 *
-	 * A period is the number of frames in between each hardware interrupt.
-	 *
-	 * The buffer size always has to be greater than one period size.
-	 * Commonly this is (2 * period_size), but some hardware can do 8 periods per buffer.
-	 * It is also possible for the buffer size to not be an integer multiple of the period size.
-	 */
-
-	int interrupts_per_sec_near = 20;
-	int bytes_per_sec = alsa->actual_rate * alsa->bytes_per_channel * alsa->actual_channels;
-
 	snd_pcm_drop(alsa->pcm_handle);
-
-	alsa->buffer_size =  bytes_per_sec / (interrupts_per_sec_near / 2);
 
 	if (rdpsnd_alsa_set_hw_params(alsa) < 0)
 		return -1;
@@ -202,12 +202,10 @@ static int rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
 	if (rdpsnd_alsa_set_sw_params(alsa) < 0)
 		return -1;
 
-	rdpsnd_alsa_validate_params(alsa);
-
-	return 0;
+	return rdpsnd_alsa_validate_params(alsa);
 }
 
-static void rdpsnd_alsa_set_format(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
+static BOOL rdpsnd_alsa_set_format(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
 {
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
 
@@ -248,76 +246,73 @@ static void rdpsnd_alsa_set_format(rdpsndDevicePlugin* device, AUDIO_FORMAT* for
 
 	alsa->latency = latency;
 
-	rdpsnd_alsa_set_params(alsa);
+	return (rdpsnd_alsa_set_params(alsa) == 0);
 }
 
-static void rdpsnd_alsa_open_mixer(rdpsndAlsaPlugin* alsa)
+static BOOL rdpsnd_alsa_open_mixer(rdpsndAlsaPlugin* alsa)
 {
 	int status;
 
 	if (alsa->mixer_handle)
-		return;
+		return TRUE;
 
 	status = snd_mixer_open(&alsa->mixer_handle, 0);
-
 	if (status < 0)
 	{
 		WLog_ERR(TAG, "snd_mixer_open failed");
-		return;
+		return FALSE;
 	}
 
 	status = snd_mixer_attach(alsa->mixer_handle, alsa->device_name);
-
 	if (status < 0)
 	{
 		WLog_ERR(TAG, "snd_mixer_attach failed");
 		snd_mixer_close(alsa->mixer_handle);
-		return;
+		return FALSE;
 	}
 
 	status = snd_mixer_selem_register(alsa->mixer_handle, NULL, NULL);
-
 	if (status < 0)
 	{
 		WLog_ERR(TAG, "snd_mixer_selem_register failed");
 		snd_mixer_close(alsa->mixer_handle);
-		return;
+		return FALSE;
 	}
 
 	status = snd_mixer_load(alsa->mixer_handle);
-
 	if (status < 0)
 	{
 		WLog_ERR(TAG, "snd_mixer_load failed");
 		snd_mixer_close(alsa->mixer_handle);
-		return;
+		return FALSE;
 	}
+
+	return TRUE;
 }
 
-static void rdpsnd_alsa_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
+static BOOL rdpsnd_alsa_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
 {
 	int mode;
 	int status;
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
 
 	if (alsa->pcm_handle)
-		return;
+		return TRUE;
 
 	mode = 0;
-	//mode |= SND_PCM_NONBLOCK;
+	/*mode |= SND_PCM_NONBLOCK;*/
 
 	status = snd_pcm_open(&alsa->pcm_handle, alsa->device_name, SND_PCM_STREAM_PLAYBACK, mode);
-
 	if (status < 0)
 	{
 		WLog_ERR(TAG, "snd_pcm_open failed");
+		return FALSE;
 	}
-	else
-	{
-		freerdp_dsp_context_reset_adpcm(alsa->dsp_context);
-		rdpsnd_alsa_set_format(device, format, latency);
-		rdpsnd_alsa_open_mixer(alsa);
-	}
+
+	freerdp_dsp_context_reset_adpcm(alsa->dsp_context);
+
+	return rdpsnd_alsa_set_format(device, format, latency) &&
+			rdpsnd_alsa_open_mixer(alsa);
 }
 
 static void rdpsnd_alsa_close(rdpsndDevicePlugin* device)
@@ -388,12 +383,9 @@ static BOOL rdpsnd_alsa_format_supported(rdpsndDevicePlugin* device, AUDIO_FORMA
 			break;
 
 		case WAVE_FORMAT_ALAW:
-			break;
-
 		case WAVE_FORMAT_MULAW:
-			break;
-
 		case WAVE_FORMAT_GSM610:
+		default:
 			break;
 	}
 
@@ -438,7 +430,7 @@ static UINT32 rdpsnd_alsa_get_volume(rdpsndDevicePlugin* device)
 	return dwVolume;
 }
 
-static void rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, UINT32 value)
+static BOOL rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 {
 	long left;
 	long right;
@@ -449,8 +441,8 @@ static void rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 	snd_mixer_elem_t* elem;
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
 
-	if (!alsa->mixer_handle)
-		rdpsnd_alsa_open_mixer(alsa);
+	if (!alsa->mixer_handle && !rdpsnd_alsa_open_mixer(alsa))
+			return FALSE;
 
 	left = (value & 0xFFFF);
 	right = ((value >> 16) & 0xFFFF);
@@ -462,10 +454,16 @@ static void rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 			snd_mixer_selem_get_playback_volume_range(elem, &volume_min, &volume_max);
 			volume_left = volume_min + (left * (volume_max - volume_min)) / 0xFFFF;
 			volume_right = volume_min + (right * (volume_max - volume_min)) / 0xFFFF;
-			snd_mixer_selem_set_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, volume_left);
-			snd_mixer_selem_set_playback_volume(elem, SND_MIXER_SCHN_FRONT_RIGHT, volume_right);
+			if ((snd_mixer_selem_set_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, volume_left) < 0) ||
+				(snd_mixer_selem_set_playback_volume(elem, SND_MIXER_SCHN_FRONT_RIGHT, volume_right) < 0))
+			{
+				WLog_ERR(TAG, "error setting the volume\n");
+				return FALSE;
+			}
 		}
 	}
+
+	return TRUE;
 }
 
 static BYTE* rdpsnd_alsa_process_audio_sample(rdpsndDevicePlugin* device, BYTE* data, int* size)
@@ -520,7 +518,7 @@ static BYTE* rdpsnd_alsa_process_audio_sample(rdpsndDevicePlugin* device, BYTE* 
 	return data;
 }
 
-static void rdpsnd_alsa_wave_decode(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
+static BOOL rdpsnd_alsa_wave_decode(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 {
 	int size;
 	BYTE* data;
@@ -529,8 +527,12 @@ static void rdpsnd_alsa_wave_decode(rdpsndDevicePlugin* device, RDPSND_WAVE* wav
 	data = rdpsnd_alsa_process_audio_sample(device, wave->data, &size);
 
 	wave->data = (BYTE*) malloc(size);
+	if (!wave->data)
+		return FALSE;
 	CopyMemory(wave->data, data, size);
 	wave->length = size;
+
+	return TRUE;
 }
 
 static void rdpsnd_alsa_wave_play(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
@@ -543,7 +545,6 @@ static void rdpsnd_alsa_wave_play(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 	UINT32 wCurrentTime;
 	snd_htimestamp_t tstamp;
 	snd_pcm_uframes_t frames;
-
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
 
 	offset = 0;
@@ -591,15 +592,9 @@ static void rdpsnd_alsa_wave_play(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 
 	free(data);
 
-	snd_pcm_htimestamp(alsa->pcm_handle, &frames, &tstamp);
-
-	wave->wPlaybackDelay = ((frames * 1000) / alsa->actual_rate);
-
-	wave->wLocalTimeB = GetTickCount();
-	wave->wLocalTimeB += wave->wPlaybackDelay;
-	wave->wLatency = (UINT16) (wave->wLocalTimeB - wave->wLocalTimeA);
-	wave->wTimeStampB = wave->wTimeStampA + wave->wLatency;
-	//WLog_ERR(TAG,  "wTimeStampA: %d wTimeStampB: %d wLatency: %d\n", wave->wTimeStampA, wave->wTimeStampB, wave->wLatency);
+	/* From rdpsnd_main.c */
+	wave->wTimeStampB = wave->wTimeStampA + wave->wAudioLength + 65;
+	wave->wLocalTimeB = wave->wLocalTimeA + wave->wAudioLength + 65;
 }
 
 static COMMAND_LINE_ARGUMENT_A rdpsnd_alsa_args[] =
@@ -608,18 +603,26 @@ static COMMAND_LINE_ARGUMENT_A rdpsnd_alsa_args[] =
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
-static int rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* args)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* args)
 {
 	int status;
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*) device;
 
-	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
+	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
 
 	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv, rdpsnd_alsa_args, flags, alsa, NULL, NULL);
 	if (status < 0)
-		return status;
+	{
+		WLog_ERR(TAG, "CommandLineParseArgumentsA failed!");
+		return CHANNEL_RC_INITIALIZATION_ERROR;
+	}
 
 	arg = rdpsnd_alsa_args;
 
@@ -633,26 +636,40 @@ static int rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV* 
 		CommandLineSwitchCase(arg, "dev")
 		{
 			alsa->device_name = _strdup(arg->Value);
+			if (!alsa->device_name)
+				return CHANNEL_RC_NO_MEMORY;
 		}
 
 		CommandLineSwitchEnd(arg)
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 
-	return status;
+	return CHANNEL_RC_OK;
 }
 
-#ifdef STATIC_CHANNELS
+#ifdef BUILTIN_CHANNELS
 #define freerdp_rdpsnd_client_subsystem_entry	alsa_freerdp_rdpsnd_client_subsystem_entry
+#else
+#define freerdp_rdpsnd_client_subsystem_entry	FREERDP_API freerdp_rdpsnd_client_subsystem_entry
 #endif
 
-int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	ADDIN_ARGV* args;
 	rdpsndAlsaPlugin* alsa;
+	UINT error;
 
-	alsa = (rdpsndAlsaPlugin*) malloc(sizeof(rdpsndAlsaPlugin));
-	ZeroMemory(alsa, sizeof(rdpsndAlsaPlugin));
+	alsa = (rdpsndAlsaPlugin*) calloc(1, sizeof(rdpsndAlsaPlugin));
+	if (!alsa)
+	{
+		WLog_ERR(TAG, "calloc failed!");
+		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	alsa->device.Open = rdpsnd_alsa_open;
 	alsa->device.FormatSupported = rdpsnd_alsa_format_supported;
@@ -665,10 +682,26 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	alsa->device.Free = rdpsnd_alsa_free;
 
 	args = pEntryPoints->args;
-	rdpsnd_alsa_parse_addin_args((rdpsndDevicePlugin*) alsa, args);
+	if (args->argc > 1)
+	{
+		if ((error = rdpsnd_alsa_parse_addin_args((rdpsndDevicePlugin *) alsa, args)))
+		{
+			WLog_ERR(TAG, "rdpsnd_alsa_parse_addin_args failed with error %lu", error);
+			goto error_parse_args;
+		}
+	}
+
 
 	if (!alsa->device_name)
+	{
 		alsa->device_name = _strdup("default");
+		if (!alsa->device_name)
+		{
+			WLog_ERR(TAG, "_strdup failed!");
+			error = CHANNEL_RC_NO_MEMORY;
+			goto error_strdup;
+		}
+	}
 
 	alsa->pcm_handle = 0;
 	alsa->source_rate = 22050;
@@ -679,8 +712,22 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	alsa->bytes_per_channel = 2;
 
 	alsa->dsp_context = freerdp_dsp_context_new();
+	if (!alsa->dsp_context)
+	{
+		WLog_ERR(TAG, "freerdp_dsp_context_new failed!");
+		error = CHANNEL_RC_NO_MEMORY;
+		goto error_dsp_context;
+	}
 
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*) alsa);
 
-	return 0;
+	return CHANNEL_RC_OK;
+
+error_dsp_context:
+	freerdp_dsp_context_free(alsa->dsp_context);
+error_strdup:
+	free(alsa->device_name);
+error_parse_args:
+	free(alsa);
+	return error;
 }

@@ -21,8 +21,9 @@
 #define __RFX_DIFFERENTIAL_H
 
 #include <freerdp/codec/rfx.h>
+#include <freerdp/api.h>
 
-void rfx_differential_decode(INT16* buffer, int size);
-void rfx_differential_encode(INT16* buffer, int size);
+FREERDP_LOCAL void rfx_differential_decode(INT16* buffer, int size);
+FREERDP_LOCAL void rfx_differential_encode(INT16* buffer, int size);
 
 #endif /* __RFX_DIFFERENTIAL_H */

@@ -1326,22 +1326,22 @@ int rdtk_get_embedded_resource_file(const char* filename, BYTE** pData)
 {
 	if (strcmp(filename, "source_serif_pro_regular_12.png") == 0)
 	{
-		*pData = (BYTE*) source_serif_pro_regular_12_png;
+		*pData = source_serif_pro_regular_12_png;
 		return source_serif_pro_regular_12_png_len;
 	}
 	else if (strcmp(filename, "source_serif_pro_regular_12.xml") == 0)
 	{
-		*pData = (BYTE*) source_serif_pro_regular_12_xml;
+		*pData = source_serif_pro_regular_12_xml;
 		return source_serif_pro_regular_12_xml_len;
 	}
 	else if (strcmp(filename, "btn_default_normal.9.png") == 0)
 	{
-		*pData = (BYTE*) btn_default_normal_9_png;
+		*pData = btn_default_normal_9_png;
 		return btn_default_normal_9_png_len;
 	}
 	else if (strcmp(filename, "textfield_default.9.png") == 0)
 	{
-		*pData = (BYTE*) textfield_default_9_png;
+		*pData = textfield_default_9_png;
 		return textfield_default_9_png_len;
 	}
 

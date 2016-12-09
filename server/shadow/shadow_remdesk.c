@@ -2,6 +2,8 @@
  * FreeRDP: A Remote Desktop Protocol Implementation
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +31,7 @@ int shadow_client_remdesk_init(rdpShadowClient* client)
 	RemdeskServerContext* remdesk;
 
 	remdesk = client->remdesk = remdesk_server_context_new(client->vcm);
+	remdesk->rdpcontext = &client->context;
 
 	remdesk->custom = (void*) client;
 
@@ -36,4 +39,13 @@ int shadow_client_remdesk_init(rdpShadowClient* client)
 		client->remdesk->Start(client->remdesk);
 
 	return 1;
+}
+
+void shadow_client_remdesk_uninit(rdpShadowClient* client)
+{
+	if (client->remdesk) {
+		client->remdesk->Stop(client->remdesk);
+		remdesk_server_context_free(client->remdesk);
+		client->remdesk = NULL;
+	}
 }

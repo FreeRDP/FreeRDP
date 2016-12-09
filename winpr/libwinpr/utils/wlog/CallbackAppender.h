@@ -20,11 +20,8 @@
 #ifndef WINPR_WLOG_CALLBACK_APPENDER_PRIVATE_H
 #define WINPR_WLOG_CALLBACK_APPENDER_PRIVATE_H
 
-#include <winpr/wlog.h>
+#include "wlog.h"
 
-#include "wlog/wlog.h"
-
-WINPR_API wLogCallbackAppender* WLog_CallbackAppender_New(wLog* log);
-WINPR_API void WLog_CallbackAppender_Free(wLog* log, wLogCallbackAppender* appender);
+wLogAppender* WLog_CallbackAppender_New(wLog* log);
 
 #endif /* WINPR_WLOG_CALLBACK_APPENDER_PRIVATE_H */

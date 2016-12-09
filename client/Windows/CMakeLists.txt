@@ -40,7 +40,7 @@ set(${MODULE_PREFIX}_SRCS
 
 # On windows create dll version information.
 # Vendor, product and year are already set in top level CMakeLists.txt
-if (WIN32)
+if (WIN32 AND BUILD_SHARED_LIBS)
   set (RC_VERSION_MAJOR ${FREERDP_VERSION_MAJOR})
   set (RC_VERSION_MINOR ${FREERDP_VERSION_MINOR})
   set (RC_VERSION_BUILD ${FREERDP_VERSION_REVISION})
@@ -66,12 +66,14 @@ if(WITH_CLIENT_INTERFACE)
 		add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 	endif()
 	if (WITH_LIBRARY_VERSIONING)
-  	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
+	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
   endif()
-  
+
 else()
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} cli/wfreerdp.c cli/wfreerdp.h)
 	add_executable(${MODULE_NAME} WIN32 ${${MODULE_PREFIX}_SRCS})
+	include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+	set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "wfreerdp")
 endif()
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client)
@@ -79,10 +81,16 @@ set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr freerdp)
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 if(WITH_CLIENT_INTERFACE)
-	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries EXPORT FreeRDPTargets)
+	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries)
+	if (WITH_DEBUG_SYMBOLS AND MSVC AND BUILD_SHARED_LIBS)
+		install(FILES ${CMAKE_PDB_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT symbols)
+	endif()
 	add_subdirectory(cli)
 else()
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
+	if (WITH_DEBUG_SYMBOLS AND MSVC)
+		install(FILES ${CMAKE_PDB_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT symbols)
+	endif()
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/Windows")

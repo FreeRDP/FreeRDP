@@ -36,7 +36,7 @@
 
 #endif
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(_UWP)
 
 #ifndef SEC_ENTRY
 #define SEC_ENTRY
@@ -55,7 +55,10 @@ typedef struct _SECURITY_INTEGER SECURITY_INTEGER;
 typedef SECURITY_INTEGER TimeStamp;
 typedef SECURITY_INTEGER* PTimeStamp;
 
-typedef UINT32 SECURITY_STATUS;
+#ifndef __SECSTATUS_DEFINED__
+typedef LONG SECURITY_STATUS;
+#define __SECSTATUS_DEFINED__
+#endif
 
 struct _SecPkgInfoA
 {
@@ -252,7 +255,7 @@ typedef SecPkgInfoW* PSecPkgInfoW;
 #define SECPKG_ATTR_NEGO_STATUS				32
 #define SECPKG_ATTR_CONTEXT_DELETED			33
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(_UWP)
 
 struct _SecPkgContext_AccessToken
 {
@@ -579,7 +582,10 @@ typedef SecPkgCredentials_NamesW* PSecPkgCredentials_NamesW;
 #define SEC_WINNT_AUTH_IDENTITY_ANSI		0x1
 #define SEC_WINNT_AUTH_IDENTITY_UNICODE		0x2
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(_UWP)
+
+#ifndef _AUTH_IDENTITY_DEFINED
+#define _AUTH_IDENTITY_DEFINED
 
 typedef struct _SEC_WINNT_AUTH_IDENTITY_W
 {
@@ -614,6 +620,8 @@ struct _SEC_WINNT_AUTH_IDENTITY
 	UINT32 Flags;
 };
 typedef struct _SEC_WINNT_AUTH_IDENTITY SEC_WINNT_AUTH_IDENTITY;
+
+#endif /* _AUTH_IDENTITY_DEFINED */
 
 struct _SecHandle
 {
@@ -665,7 +673,7 @@ typedef CtxtHandle* PCtxtHandle;
 #define SECBUFFER_READONLY_WITH_CHECKSUM	0x10000000
 #define SECBUFFER_RESERVED			0x60000000
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(_UWP)
 
 struct _SecBuffer
 {
@@ -997,10 +1005,16 @@ extern "C" {
 #define SECPKG_ATTR_AUTH_IDENTITY			1001
 #define SECPKG_ATTR_AUTH_PASSWORD			1002
 #define SECPKG_ATTR_AUTH_NTLM_HASH			1003
+#define SECPKG_ATTR_AUTH_NTLM_SAM_FILE			1004
 #define SECPKG_ATTR_AUTH_NTLM_MESSAGE			1100
 #define SECPKG_ATTR_AUTH_NTLM_TIMESTAMP			1101
 #define SECPKG_ATTR_AUTH_NTLM_CLIENT_CHALLENGE		1102
 #define SECPKG_ATTR_AUTH_NTLM_SERVER_CHALLENGE		1103
+#define SECPKG_ATTR_AUTH_NTLM_NTPROOF_VALUE		1104
+#define SECPKG_ATTR_AUTH_NTLM_RANDKEY			1105
+#define SECPKG_ATTR_AUTH_NTLM_MIC			1106
+#define SECPKG_ATTR_AUTH_NTLM_MIC_VALUE			1107
+
 
 struct _SecPkgContext_AuthIdentity
 {

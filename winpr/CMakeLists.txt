@@ -28,6 +28,7 @@ endif()
 # Include cmake modules
 include(CheckIncludeFiles)
 include(CheckLibraryExists)
+include(CheckSymbolExists)
 include(CheckStructHasMember)
 include(FindPkgConfig)
 include(TestBigEndian)
@@ -40,17 +41,111 @@ include(CheckCmakeCompat)
 include(FindFeature)
 include(AutoVersioning)
 include(ConfigOptions)
+include(ComplexLibrary)
+include(FeatureSummary)
 include(CheckCCompilerFlag)
 include(GNUInstallDirsWrapper)
 include(CMakePackageConfigHelpers)
 
 # Soname versioning
-set(WINPR_VERSION_MAJOR "1")
-set(WINPR_VERSION_MINOR "1")
+set(WINPR_VERSION_MAJOR "2")
+set(WINPR_VERSION_MINOR "0")
 set(WINPR_VERSION_REVISION "0")
-set(WINPR_VERSION "${WINPR_VERSION_MAJOR}.${WINPR_VERSION_MINOR}")
-set(WINPR_VERSION_FULL "${WINPR_VERSION}.${WINPR_VERSION_REVISION}")
-set(WINPR_VERSION_FULL ${WINPR_VERSION_FULL} PARENT_SCOPE)
+set(WINPR_VERSION "${WINPR_VERSION_MAJOR}.${WINPR_VERSION_MINOR}.${WINPR_VERSION_REVISION}")
+set(WINPR_VERSION_FULL "${WINPR_VERSION}")
+set(WINPR_API_VERSION "${WINPR_VERSION_MAJOR}")
+
+if(NOT IOS)
+	check_include_files(stdbool.h WINPR_HAVE_STDBOOL_H)
+	check_include_files(stdint.h WINPR_HAVE_STDINT_H)
+else(NOT IOS)
+	set(WINPR_HAVE_STDBOOL_H 1)
+	set(WINPR_HAVE_STDINT_H 1)
+endif(NOT IOS)
+
+if(FREERDP_BUILD)
+	set(WINPR_VERSION_FULL ${WINPR_VERSION_FULL} PARENT_SCOPE)
+	set(WINPR_VERSION ${WINPR_VERSION} PARENT_SCOPE)
+	set(WINPR_API_VERSION ${WINPR_API_VERSION} PARENT_SCOPE)
+else()
+	set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+
+	if(NOT IOS)
+		find_package(Threads REQUIRED)
+	endif()
+
+	# Include files
+	if(NOT IOS)
+		check_include_files(fcntl.h HAVE_FCNTL_H)
+		check_include_files(unistd.h HAVE_UNISTD_H)
+		check_include_files(execinfo.h HAVE_EXECINFO_H)
+		check_include_files(inttypes.h HAVE_INTTYPES_H)
+		check_include_files(sys/modem.h HAVE_SYS_MODEM_H)
+		check_include_files(sys/filio.h HAVE_SYS_FILIO_H)
+		check_include_files(sys/sockio.h HAVE_SYS_SOCKIO_H)
+		check_include_files(sys/strtio.h HAVE_SYS_STRTIO_H)
+		check_include_files(sys/select.h HAVE_SYS_SELECT_H)
+	else()
+		set(HAVE_FCNTL_H 1)
+		set(HAVE_UNISTD_H 1)
+		set(HAVE_INTTYPES_H 1)
+		set(HAVE_SYS_FILIO_H 1)
+	endif()
+
+	if(NOT IOS)
+		check_struct_has_member("struct tm" tm_gmtoff time.h HAVE_TM_GMTOFF)
+	else()
+		set(HAVE_TM_GMTOFF 1)
+	endif()
+
+	if(NOT WIN32)
+		CHECK_SYMBOL_EXISTS(pthread_mutex_timedlock pthread.h HAVE_PTHREAD_MUTEX_TIMEDLOCK_SYMBOL)
+		if (NOT HAVE_PTHREAD_MUTEX_TIMEDLOCK_SYMBOL)
+			CHECK_LIBRARY_EXISTS(pthread pthread_mutex_timedlock "" HAVE_PTHREAD_MUTEX_TIMEDLOCK_LIB)
+		endif (NOT HAVE_PTHREAD_MUTEX_TIMEDLOCK_SYMBOL)
+		if (NOT HAVE_PTHREAD_MUTEX_TIMEDLOCK_LIB)
+			CHECK_LIBRARY_EXISTS(pthreads pthread_mutex_timedlock "" HAVE_PTHREAD_MUTEX_TIMEDLOCK_LIBS)
+		endif (NOT HAVE_PTHREAD_MUTEX_TIMEDLOCK_LIB)
+
+		if (HAVE_PTHREAD_MUTEX_TIMEDLOCK_SYMBOL OR HAVE_PTHREAD_MUTEX_TIMEDLOCK_LIB OR HAVE_PTHREAD_MUTEX_TIMEDLOCK_LIBS)
+			set(HAVE_PTHREAD_MUTEX_TIMEDLOCK ON)
+		endif (HAVE_PTHREAD_MUTEX_TIMEDLOCK_SYMBOL OR HAVE_PTHREAD_MUTEX_TIMEDLOCK_LIB OR HAVE_PTHREAD_MUTEX_TIMEDLOCK_LIBS)
+	endif()
+
+	set(OPENSSL_FEATURE_TYPE "OPTIONAL")
+	set(OPENSSL_FEATURE_PURPOSE "cryptography")
+	set(OPENSSL_FEATURE_DESCRIPTION "encryption, certificate validation, hashing functions")
+
+	set(MBEDTLS_FEATURE_TYPE "OPTIONAL")
+	set(MBEDTLS_FEATURE_PURPOSE "cryptography")
+	set(MBEDTLS_FEATURE_DESCRIPTION "encryption, certificate validation, hashing functions")
+
+	find_feature(OpenSSL ${OPENSSL_FEATURE_TYPE} ${OPENSSL_FEATURE_PURPOSE} ${OPENSSL_FEATURE_DESCRIPTION})
+	find_feature(MbedTLS ${MBEDTLS_FEATURE_TYPE} ${MBEDTLS_FEATURE_PURPOSE} ${MBEDTLS_FEATURE_DESCRIPTION})
+
+	if(OPENSSL_FOUND)
+		add_definitions("-DWITH_OPENSSL")
+	endif()
+
+	if(MBEDTLS_FOUND)
+		add_definitions("-DWITH_MBEDTLS")
+	endif()
+
+	# Include directories
+	include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
+	# Configure files
+	add_definitions("-DHAVE_CONFIG_H")
+	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+
+	enable_testing()
+
+	if(MSVC)
+		set(TESTING_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+	else()
+		set(TESTING_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Testing")
+	endif()
+endif()
 
 # Default to release build type
 if(NOT CMAKE_BUILD_TYPE)
@@ -71,9 +166,21 @@ add_subdirectory(include)
 
 add_subdirectory(libwinpr)
 
-if(NOT ANDROID AND NOT IOS)
+if(NOT ANDROID AND NOT IOS AND NOT UWP)
 	add_subdirectory(tools)
 endif()
+
+if(BUILD_TESTING)
+	add_subdirectory(test)
+endif()
+
+if(WITH_MANPAGES)
+	if(OPENBSD)
+	    install(FILES wlog.1 DESTINATION man/man1)
+	else()
+	    install(FILES wlog.1 DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/man/man1)
+	endif()
+endif(WITH_MANPAGES)
 
 # Exporting
 
@@ -81,15 +188,13 @@ if(${CMAKE_VERSION} VERSION_GREATER "2.8.10")
 
 	export(PACKAGE winpr)
 
-	set(WINPR_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/WinPR")
+	set(WINPR_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/WinPR${WINPR_VERSION_MAJOR}")
 
-	set(WINPR_INCLUDE_DIR "include")
-	# Keep this for legacy builds
-	set(WINPR_MONOLITHIC_BUILD OFF)
+	set(WINPR_INCLUDE_DIR "include/winpr${WINPR_VERSION_MAJOR}")
 
 	configure_package_config_file(WinPRConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/WinPRConfig.cmake
 		INSTALL_DESTINATION ${WINPR_CMAKE_INSTALL_DIR}
-		PATH_VARS WINPR_INCLUDE_DIR WINPR_MONOLITHIC_BUILD)
+		PATH_VARS WINPR_INCLUDE_DIR)
 
 	write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/WinPRConfigVersion.cmake
 		VERSION ${WINPR_VERSION} COMPATIBILITY SameMajorVersion)
@@ -101,3 +206,8 @@ if(${CMAKE_VERSION} VERSION_GREATER "2.8.10")
 
 endif()
 
+if(FREERDP_BUILD)
+	set(WINPR_PKG_CONFIG_FILENAME winpr${WINPR_VERSION_MAJOR} PARENT_SCOPE)
+endif()
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/winpr.pc.in ${CMAKE_CURRENT_BINARY_DIR}/winpr${WINPR_VERSION_MAJOR}.pc @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/winpr${WINPR_VERSION_MAJOR}.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)

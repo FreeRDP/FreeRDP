@@ -47,7 +47,7 @@ struct _USB_SEARCHMAN
 	pthread_mutex_t mutex;
 	HANDLE term_event;
 	sem_t sem_term;
-	int strated;
+	int started;
 
 	/* for urbdrc channel call back */
 	void* urbdrc;
@@ -57,11 +57,11 @@ struct _USB_SEARCHMAN
 	/* show all device in the list */
 	void (*show) (USB_SEARCHMAN* self);
 	/* start searchman */
-	void (*start) (USB_SEARCHMAN* self, void * func);
+	BOOL (*start) (USB_SEARCHMAN* self, void * func);
 	/* close searchman */
 	void (*close) (USB_SEARCHMAN* self);
 	/* add a new usb device for search */
-	int (*add) (USB_SEARCHMAN* seachman, UINT16 idVendor, UINT16 idProduct);
+	BOOL (*add) (USB_SEARCHMAN* seachman, UINT16 idVendor, UINT16 idProduct);
 	/* remove a usb device from list */
 	int (*remove) (USB_SEARCHMAN* searchman, UINT16 idVendor, UINT16 idProduct);
 	/* check list has next device*/

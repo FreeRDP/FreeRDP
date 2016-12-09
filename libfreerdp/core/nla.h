@@ -17,16 +17,17 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CORE_CREDSSP_H
-#define FREERDP_CORE_CREDSSP_H
+#ifndef FREERDP_CORE_NLA_H
+#define FREERDP_CORE_NLA_H
 
-typedef struct rdp_credssp rdpCredssp;
+typedef struct rdp_nla rdpNla;
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 
 #include <winpr/sspi.h>
 #include <winpr/stream.h>
+#include <winpr/crypto.h>
 
 #include <freerdp/crypto/tls.h>
 #include <freerdp/crypto/ber.h>
@@ -35,32 +36,66 @@ typedef struct rdp_credssp rdpCredssp;
 
 #include "transport.h"
 
-struct rdp_credssp
+enum _NLA_STATE
+{
+	NLA_STATE_INITIAL,
+	NLA_STATE_NEGO_TOKEN,
+	NLA_STATE_PUB_KEY_AUTH,
+	NLA_STATE_AUTH_INFO,
+	NLA_STATE_POST_NEGO,
+	NLA_STATE_FINAL
+};
+typedef enum _NLA_STATE NLA_STATE;
+
+struct rdp_nla
 {
 	BOOL server;
-	int send_seq_num;
-	int recv_seq_num;
+	NLA_STATE state;
+	int sendSeqNum;
+	int recvSeqNum;
 	freerdp* instance;
 	CtxtHandle context;
 	LPTSTR SspiModule;
+	char* SamFile;
 	rdpSettings* settings;
 	rdpTransport* transport;
+	UINT32 cbMaxToken;
+	UINT32 version;
+	UINT32 errorCode;
+	ULONG fContextReq;
+	ULONG pfContextAttr;
+	BOOL haveContext;
+	BOOL haveInputBuffer;
+	BOOL havePubKeyAuth;
+	SECURITY_STATUS status;
+	CredHandle credentials;
+	TimeStamp expiration;
+	PSecPkgInfo pPackageInfo;
+	SecBuffer inputBuffer;
+	SecBuffer outputBuffer;
+	SecBufferDesc inputBufferDesc;
+	SecBufferDesc outputBufferDesc;
 	SecBuffer negoToken;
 	SecBuffer pubKeyAuth;
 	SecBuffer authInfo;
 	SecBuffer PublicKey;
-	SecBuffer ts_credentials;
-	CryptoRc4 rc4_seal_state;
+	SecBuffer tsCredentials;
+	WINPR_RC4_CTX rc4SealState;
 	LPTSTR ServicePrincipalName;
-	SEC_WINNT_AUTH_IDENTITY identity;
+	SEC_WINNT_AUTH_IDENTITY* identity;
 	PSecurityFunctionTable table;
 	SecPkgContext_Sizes ContextSizes;
 };
 
-int credssp_authenticate(rdpCredssp* credssp);
-LPTSTR credssp_make_spn(const char* ServiceClass, const char* hostname);
+FREERDP_LOCAL int nla_authenticate(rdpNla* nla);
+FREERDP_LOCAL LPTSTR nla_make_spn(const char* ServiceClass,
+                                  const char* hostname);
 
-rdpCredssp* credssp_new(freerdp* instance, rdpTransport* transport, rdpSettings* settings);
-void credssp_free(rdpCredssp* credssp);
+FREERDP_LOCAL int nla_client_begin(rdpNla* nla);
+FREERDP_LOCAL int nla_recv_pdu(rdpNla* nla, wStream* s);
 
-#endif /* FREERDP_CORE_CREDSSP_H */
+FREERDP_LOCAL rdpNla* nla_new(freerdp* instance, rdpTransport* transport,
+                              rdpSettings* settings);
+FREERDP_LOCAL void nla_free(rdpNla* nla);
+
+#endif /* FREERDP_CORE_NLA_H */

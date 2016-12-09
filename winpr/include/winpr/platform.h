@@ -22,7 +22,6 @@
 
 #include <stdlib.h>
 
-#include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
 /*

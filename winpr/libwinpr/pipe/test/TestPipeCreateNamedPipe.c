@@ -36,12 +36,6 @@ static void* named_pipe_client_thread(void* arg)
 	WaitForSingleObject(ReadyEvent, INFINITE);
 	hNamedPipe = CreateFile(lpszPipeNameMt, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 
-	if (!hNamedPipe)
-	{
-		printf("%s:Named Pipe CreateFile failure: NULL handle\n", __FUNCTION__);
-		goto out;
-	}
-
 	if (hNamedPipe == INVALID_HANDLE_VALUE)
 	{
 		printf("%s: Named Pipe CreateFile failure: INVALID_HANDLE_VALUE\n", __FUNCTION__);
@@ -82,7 +76,7 @@ static void* named_pipe_client_thread(void* arg)
 		goto out;
 	}
 
-	printf("Client ReadFile (%d):\n", lpNumberOfBytesRead);
+	printf("Client ReadFile: %u bytes\n", lpNumberOfBytesRead);
 	winpr_HexDump("pipe.test", WLOG_DEBUG, lpReadBuffer, lpNumberOfBytesRead);
 	fSuccess = TRUE;
 out:
@@ -124,10 +118,16 @@ static void* named_pipe_server_thread(void* arg)
 	}
 
 	SetEvent(ReadyEvent);
-	fConnected = ConnectNamedPipe(hNamedPipe, NULL);
 
-	if (!fConnected)
-		fConnected = (GetLastError() == ERROR_PIPE_CONNECTED);
+	/**
+	 * Note:
+	 * If a client connects before ConnectNamedPipe is called, the function returns zero and
+	 * GetLastError returns ERROR_PIPE_CONNECTED. This can happen if a client connects in the
+	 * interval between the call to CreateNamedPipe and the call to ConnectNamedPipe.
+	 * In this situation, there is a good connection between client and server, even though
+	 * the function returns zero.
+	 */
+	fConnected = ConnectNamedPipe(hNamedPipe, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
 
 	if (!fConnected)
 	{
@@ -135,7 +135,7 @@ static void* named_pipe_server_thread(void* arg)
 		goto out;
 	}
 
-	if (!(lpReadBuffer = (BYTE*) malloc(PIPE_BUFFER_SIZE)))
+	if (!(lpReadBuffer = (BYTE*) calloc(1, PIPE_BUFFER_SIZE)))
 	{
 		printf("%s: Error allocating read buffer\n", __FUNCTION__);
 		goto out;
@@ -149,7 +149,6 @@ static void* named_pipe_server_thread(void* arg)
 
 	lpNumberOfBytesRead = 0;
 	nNumberOfBytesToRead = PIPE_BUFFER_SIZE;
-	ZeroMemory(lpReadBuffer, PIPE_BUFFER_SIZE);
 
 	if (!ReadFile(hNamedPipe, lpReadBuffer, nNumberOfBytesToRead, &lpNumberOfBytesRead, NULL) ||
 			lpNumberOfBytesRead != nNumberOfBytesToRead)
@@ -158,7 +157,7 @@ static void* named_pipe_server_thread(void* arg)
 		goto out;
 	}
 
-	printf("Server ReadFile (%d):\n", lpNumberOfBytesRead);
+	printf("Server ReadFile: %u bytes\n", lpNumberOfBytesRead);
 	winpr_HexDump("pipe.test", WLOG_DEBUG, lpReadBuffer, lpNumberOfBytesRead);
 	lpNumberOfBytesWritten = 0;
 	nNumberOfBytesToWrite = PIPE_BUFFER_SIZE;
@@ -253,16 +252,27 @@ static void* named_pipe_single_thread(void* arg)
 
 	for (i = 0; i < numPipes; i++)
 	{
-		if (!(clients[i] = CreateFile(lpszPipeNameSt, GENERIC_READ | GENERIC_WRITE,
-									  0, NULL, OPEN_EXISTING, 0, NULL)))
+		BOOL fConnected;
+		if ((clients[i] = CreateFile(lpszPipeNameSt, GENERIC_READ | GENERIC_WRITE,
+									  0, NULL, OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
 		{
 			printf("%s: CreateFile #%d failed\n", __FUNCTION__, i);
 			goto out;
 		}
 
-		if (!ConnectNamedPipe(servers[i], NULL))
+		/**
+		 * Note:
+		 * If a client connects before ConnectNamedPipe is called, the function returns zero and
+		 * GetLastError returns ERROR_PIPE_CONNECTED. This can happen if a client connects in the
+		 * interval between the call to CreateNamedPipe and the call to ConnectNamedPipe.
+		 * In this situation, there is a good connection between client and server, even though
+		 * the function returns zero.
+		 */
+		fConnected = ConnectNamedPipe(servers[i], NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
+
+		if (!fConnected)
 		{
-			printf("%s: ConnectNamedPipe #%d failed\n", __FUNCTION__, i);
+			printf("%s: ConnectNamedPipe #%d failed. (%u)\n", __FUNCTION__, i, GetLastError());
 			goto out;
 		}
 	}
@@ -402,7 +412,7 @@ static void* named_pipe_single_thread(void* arg)
 		goto out;
 	}
 
-	if (WriteFile(clients[i], sndbuf, sizeof(sndbuf), &dwWritten, NULL))
+	if (WriteFile(servers[i], sndbuf, sizeof(sndbuf), &dwWritten, NULL))
 	{
 		printf("%s: Error WriteFile on server end should have failed after CloseHandle on client\n", __FUNCTION__);
 		goto out;
@@ -436,13 +446,40 @@ int TestPipeCreateNamedPipe(int argc, char* argv[])
 	HANDLE SingleThread;
 	HANDLE ClientThread;
 	HANDLE ServerThread;
+	HANDLE hPipe;
+
+	/* Verify that CreateNamedPipe returns INVALID_HANDLE_VALUE on failure */
+	hPipe = CreateNamedPipeA(NULL, 0, 0, 0, 0, 0, 0, NULL);
+	if (hPipe != INVALID_HANDLE_VALUE)
+	{
+		printf("CreateNamedPipe unexpectedly returned %p instead of INVALID_HANDLE_VALUE (%p)\n",
+			hPipe, INVALID_HANDLE_VALUE);
+		return -1;
+	}
+
 #ifndef _WIN32
 	signal(SIGPIPE, SIG_IGN);
 #endif
-	ReadyEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	SingleThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) named_pipe_single_thread, NULL, 0, NULL);
-	ClientThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) named_pipe_client_thread, NULL, 0, NULL);
-	ServerThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) named_pipe_server_thread, NULL, 0, NULL);
+	if (!(ReadyEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	{
+		printf("CreateEvent failure: (%d)\n", GetLastError());
+		return -1;
+	}
+	if (!(SingleThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) named_pipe_single_thread, NULL, 0, NULL)))
+	{
+		printf("CreateThread (SingleThread) failure: (%d)\n", GetLastError());
+		return -1;
+	}
+	if (!(ClientThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) named_pipe_client_thread, NULL, 0, NULL)))
+	{
+		printf("CreateThread (ClientThread) failure: (%d)\n", GetLastError());
+		return -1;
+	}
+	if (!(ServerThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) named_pipe_server_thread, NULL, 0, NULL)))
+	{
+		printf("CreateThread (ServerThread) failure: (%d)\n", GetLastError());
+		return -1;
+	}
 	WaitForSingleObject(SingleThread, INFINITE);
 	WaitForSingleObject(ClientThread, INFINITE);
 	WaitForSingleObject(ServerThread, INFINITE);
@@ -451,4 +488,3 @@ int TestPipeCreateNamedPipe(int argc, char* argv[])
 	CloseHandle(ServerThread);
 	return testFailed;
 }
-

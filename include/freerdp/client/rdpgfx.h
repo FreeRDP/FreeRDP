@@ -3,6 +3,8 @@
  * Graphics Pipeline Extension
  *
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,27 +30,51 @@
 
 typedef struct _rdpgfx_client_context RdpgfxClientContext;
 
-typedef int (*pcRdpgfxResetGraphics)(RdpgfxClientContext* context, RDPGFX_RESET_GRAPHICS_PDU* resetGraphics);
-typedef int (*pcRdpgfxStartFrame)(RdpgfxClientContext* context, RDPGFX_START_FRAME_PDU* startFrame);
-typedef int (*pcRdpgfxEndFrame)(RdpgfxClientContext* context, RDPGFX_END_FRAME_PDU* endFrame);
-typedef int (*pcRdpgfxSurfaceCommand)(RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd);
-typedef int (*pcRdpgfxDeleteEncodingContext)(RdpgfxClientContext* context, RDPGFX_DELETE_ENCODING_CONTEXT_PDU* deleteEncodingContext);
-typedef int (*pcRdpgfxCreateSurface)(RdpgfxClientContext* context, RDPGFX_CREATE_SURFACE_PDU* createSurface);
-typedef int (*pcRdpgfxDeleteSurface)(RdpgfxClientContext* context, RDPGFX_DELETE_SURFACE_PDU* deleteSurface);
-typedef int (*pcRdpgfxSolidFill)(RdpgfxClientContext* context, RDPGFX_SOLID_FILL_PDU* solidFill);
-typedef int (*pcRdpgfxSurfaceToSurface)(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFACE_PDU* surfaceToSurface);
-typedef int (*pcRdpgfxSurfaceToCache)(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_CACHE_PDU* surfaceToCache);
-typedef int (*pcRdpgfxCacheToSurface)(RdpgfxClientContext* context, RDPGFX_CACHE_TO_SURFACE_PDU* cacheToSurface);
-typedef int (*pcRdpgfxCacheImportOffer)(RdpgfxClientContext* context, RDPGFX_CACHE_IMPORT_OFFER_PDU* cacheImportOffer);
-typedef int (*pcRdpgfxCacheImportReply)(RdpgfxClientContext* context, RDPGFX_CACHE_IMPORT_REPLY_PDU* cacheImportReply);
-typedef int (*pcRdpgfxEvictCacheEntry)(RdpgfxClientContext* context, RDPGFX_EVICT_CACHE_ENTRY_PDU* evictCacheEntry);
-typedef int (*pcRdpgfxMapSurfaceToOutput)(RdpgfxClientContext* context, RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU* surfaceToOutput);
-typedef int (*pcRdpgfxMapSurfaceToWindow)(RdpgfxClientContext* context, RDPGFX_MAP_SURFACE_TO_WINDOW_PDU* surfaceToWindow);
+typedef UINT(*pcRdpgfxResetGraphics)(RdpgfxClientContext* context,
+                                     const RDPGFX_RESET_GRAPHICS_PDU* resetGraphics);
+typedef UINT(*pcRdpgfxStartFrame)(RdpgfxClientContext* context,
+                                  const RDPGFX_START_FRAME_PDU* startFrame);
+typedef UINT(*pcRdpgfxEndFrame)(RdpgfxClientContext* context,
+                                const RDPGFX_END_FRAME_PDU* endFrame);
+typedef UINT(*pcRdpgfxSurfaceCommand)(RdpgfxClientContext* context,
+                                      const RDPGFX_SURFACE_COMMAND* cmd);
+typedef UINT(*pcRdpgfxDeleteEncodingContext)(RdpgfxClientContext* context,
+        const RDPGFX_DELETE_ENCODING_CONTEXT_PDU* deleteEncodingContext);
+typedef UINT(*pcRdpgfxCreateSurface)(RdpgfxClientContext* context,
+                                     const RDPGFX_CREATE_SURFACE_PDU* createSurface);
+typedef UINT(*pcRdpgfxDeleteSurface)(RdpgfxClientContext* context,
+                                     const RDPGFX_DELETE_SURFACE_PDU* deleteSurface);
+typedef UINT(*pcRdpgfxSolidFill)(RdpgfxClientContext* context,
+                                 const RDPGFX_SOLID_FILL_PDU* solidFill);
+typedef UINT(*pcRdpgfxSurfaceToSurface)(RdpgfxClientContext* context,
+                                        const RDPGFX_SURFACE_TO_SURFACE_PDU* surfaceToSurface);
+typedef UINT(*pcRdpgfxSurfaceToCache)(RdpgfxClientContext* context,
+                                      const RDPGFX_SURFACE_TO_CACHE_PDU* surfaceToCache);
+typedef UINT(*pcRdpgfxCacheToSurface)(RdpgfxClientContext* context,
+                                      const RDPGFX_CACHE_TO_SURFACE_PDU* cacheToSurface);
+typedef UINT(*pcRdpgfxCacheImportOffer)(RdpgfxClientContext* context,
+                                        const RDPGFX_CACHE_IMPORT_OFFER_PDU* cacheImportOffer);
+typedef UINT(*pcRdpgfxCacheImportReply)(RdpgfxClientContext* context,
+                                        const RDPGFX_CACHE_IMPORT_REPLY_PDU* cacheImportReply);
+typedef UINT(*pcRdpgfxEvictCacheEntry)(RdpgfxClientContext* context,
+                                       const RDPGFX_EVICT_CACHE_ENTRY_PDU* evictCacheEntry);
+typedef UINT(*pcRdpgfxMapSurfaceToOutput)(RdpgfxClientContext* context,
+        const RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU* surfaceToOutput);
+typedef UINT(*pcRdpgfxMapSurfaceToWindow)(RdpgfxClientContext* context,
+        const RDPGFX_MAP_SURFACE_TO_WINDOW_PDU* surfaceToWindow);
 
-typedef int (*pcRdpgfxSetSurfaceData)(RdpgfxClientContext* context, UINT16 surfaceId, void* pData);
-typedef void* (*pcRdpgfxGetSurfaceData)(RdpgfxClientContext* context, UINT16 surfaceId);
-typedef int (*pcRdpgfxSetCacheSlotData)(RdpgfxClientContext* context, UINT16 cacheSlot, void* pData);
-typedef void* (*pcRdpgfxGetCacheSlotData)(RdpgfxClientContext* context, UINT16 cacheSlot);
+typedef UINT(*pcRdpgfxSetSurfaceData)(RdpgfxClientContext* context,
+                                      UINT16 surfaceId, void* pData);
+typedef void* (*pcRdpgfxGetSurfaceData)(RdpgfxClientContext* context,
+                                        UINT16 surfaceId);
+typedef UINT(*pcRdpgfxGetSurfaceIds)(RdpgfxClientContext* context,
+                                     UINT16** ppSurfaceIds, UINT16* count);
+typedef UINT(*pcRdpgfxSetCacheSlotData)(RdpgfxClientContext* context,
+                                        UINT16 cacheSlot, void* pData);
+typedef void* (*pcRdpgfxGetCacheSlotData)(RdpgfxClientContext* context,
+        UINT16 cacheSlot);
+
+typedef UINT(*pcRdpgfxUpdateSurfaces)(RdpgfxClientContext* context);
 
 struct _rdpgfx_client_context
 {
@@ -72,10 +98,13 @@ struct _rdpgfx_client_context
 	pcRdpgfxMapSurfaceToOutput MapSurfaceToOutput;
 	pcRdpgfxMapSurfaceToWindow MapSurfaceToWindow;
 
+	pcRdpgfxGetSurfaceIds GetSurfaceIds;
 	pcRdpgfxSetSurfaceData SetSurfaceData;
 	pcRdpgfxGetSurfaceData GetSurfaceData;
 	pcRdpgfxSetCacheSlotData SetCacheSlotData;
 	pcRdpgfxGetCacheSlotData GetCacheSlotData;
+
+	pcRdpgfxUpdateSurfaces UpdateSurfaces;
 };
 
 #endif /* FREERDP_CHANNEL_CLIENT_RDPGFX_H */

@@ -26,9 +26,6 @@ include_directories(${PULSE_INCLUDE_DIR})
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
 
 
-
-set(${MODULE_PREFIX}_LIBS freerdp ${PULSE_LIBRARY})
+set(${MODULE_PREFIX}_LIBS freerdp ${PULSE_LIBRARY} winpr)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-
-install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_ADDIN_PATH} EXPORT FreeRDPTargets)

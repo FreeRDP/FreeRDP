@@ -3,6 +3,8 @@
  * Image Utils
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 Inuvika Inc.
+ * Copyright 2016 David PHAM-VAN <d.phamvan@inuvika.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +41,7 @@ int winpr_bitmap_write(const char* filename, BYTE* data, int width, int height, 
 	FILE* fp;
 	WINPR_BITMAP_FILE_HEADER bf;
 	WINPR_BITMAP_INFO_HEADER bi;
+	int ret = 1;
 
 	fp = fopen(filename, "w+b");
 
@@ -67,13 +70,14 @@ int winpr_bitmap_write(const char* filename, BYTE* data, int width, int height, 
 	bi.biClrImportant = 0;
 	bi.biSize = sizeof(WINPR_BITMAP_INFO_HEADER);
 
-	fwrite((void*) &bf, sizeof(WINPR_BITMAP_FILE_HEADER), 1, fp);
-	fwrite((void*) &bi, sizeof(WINPR_BITMAP_INFO_HEADER), 1, fp);
-	fwrite((void*) data, bi.biSizeImage, 1, fp);
+	if (fwrite((void*) &bf, sizeof(WINPR_BITMAP_FILE_HEADER), 1, fp) != 1 ||
+			fwrite((void*) &bi, sizeof(WINPR_BITMAP_INFO_HEADER), 1, fp) != 1 ||
+			fwrite((void*) data, bi.biSizeImage, 1, fp) != 1)
+		ret = -1;
 
 	fclose(fp);
 
-	return 1;
+	return ret;
 }
 
 int winpr_image_write(wImage* image, const char* filename)
@@ -113,9 +117,11 @@ int winpr_image_png_read_fp(wImage* image, FILE* fp)
 	if (!data)
 		return -1;
 
-	fread((void*) data, size, 1, fp);
-
-	fclose(fp);
+	if (fread((void*) data, size, 1, fp) != 1)
+	{
+		free(data);
+		return -1;
+	}
 
 	lodepng_status = lodepng_decode32(&(image->data), &width, &height, data, size);
 
@@ -163,14 +169,16 @@ int winpr_image_bitmap_read_fp(wImage* image, FILE* fp)
 	WINPR_BITMAP_FILE_HEADER bf;
 	WINPR_BITMAP_INFO_HEADER bi;
 
-	fread((void*) &bf, sizeof(WINPR_BITMAP_FILE_HEADER), 1, fp);
+	if (fread((void*) &bf, sizeof(WINPR_BITMAP_FILE_HEADER), 1, fp) != 1)
+		return -1;
 
 	if ((bf.bfType[0] != 'B') || (bf.bfType[1] != 'M'))
 		return -1;
 
 	image->type = WINPR_IMAGE_BITMAP;
 
-	fread((void*) &bi, sizeof(WINPR_BITMAP_INFO_HEADER), 1, fp);
+	if (fread((void*) &bi, sizeof(WINPR_BITMAP_INFO_HEADER), 1, fp) != 1)
+		return -1;
 
 	if (ftell(fp) != bf.bfOffBits)
 	{
@@ -192,7 +200,7 @@ int winpr_image_bitmap_read_fp(wImage* image, FILE* fp)
 
 	image->bitsPerPixel = bi.biBitCount;
 	image->bytesPerPixel = (image->bitsPerPixel / 8);
-	image->scanline = (bi.biSizeImage / bi.biHeight);
+	image->scanline = (bi.biSizeImage / image->height);
 
 	image->data = (BYTE*) malloc(bi.biSizeImage);
 
@@ -201,7 +209,12 @@ int winpr_image_bitmap_read_fp(wImage* image, FILE* fp)
 
 	if (!vFlip)
 	{
-		fread((void*) image->data, bi.biSizeImage, 1, fp);
+		if (fread((void*) image->data, bi.biSizeImage, 1, fp) != 1)
+		{
+			free(image->data);
+			image->data = NULL;
+			return -1;
+		}
 	}
 	else
 	{
@@ -209,12 +222,15 @@ int winpr_image_bitmap_read_fp(wImage* image, FILE* fp)
 
 		for (index = 0; index < image->height; index++)
 		{
-			fread((void*) pDstData, image->scanline, 1, fp);
+			if (fread((void*) pDstData, image->scanline, 1, fp) != 1)
+			{
+				free(image->data);
+				image->data = NULL;
+				return -1;
+			}
 			pDstData -= image->scanline;
 		}
 	}
-
-	fclose(fp);
 
 	return 1;
 }
@@ -261,7 +277,7 @@ int winpr_image_bitmap_read_buffer(wImage* image, BYTE* buffer, int size)
 
 	image->bitsPerPixel = bi.biBitCount;
 	image->bytesPerPixel = (image->bitsPerPixel / 8);
-	image->scanline = (bi.biSizeImage / bi.biHeight);
+	image->scanline = (bi.biSizeImage / image->height);
 
 	image->data = (BYTE*) malloc(bi.biSizeImage);
 
@@ -294,7 +310,7 @@ int winpr_image_read(wImage* image, const char* filename)
 	BYTE sig[8];
 	int status = -1;
 
-	fp = fopen(filename, "r+b");
+	fp = fopen(filename, "rb");
 
 	if (!fp)
 	{
@@ -302,8 +318,11 @@ int winpr_image_read(wImage* image, const char* filename)
 		return -1;
 	}
 
-	fread((void*) &sig, sizeof(sig), 1, fp);
-	fseek(fp, 0, SEEK_SET);
+	if (fread((void*) &sig, sizeof(sig), 1, fp) != 1 || fseek(fp, 0, SEEK_SET) < 0)
+	{
+		fclose(fp);
+		return -1;
+	}
 
 	if ((sig[0] == 'B') && (sig[1] == 'M'))
 	{
@@ -316,10 +335,7 @@ int winpr_image_read(wImage* image, const char* filename)
 		image->type = WINPR_IMAGE_PNG;
 		status = winpr_image_png_read_fp(image, fp);
 	}
-	else
-	{
-		fclose(fp);
-	}
+	fclose(fp);
 
 	return status;
 }

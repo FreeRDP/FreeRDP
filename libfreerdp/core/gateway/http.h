@@ -26,8 +26,10 @@ typedef struct _http_response HttpResponse;
 
 #include <freerdp/types.h>
 #include <freerdp/crypto/tls.h>
+#include <freerdp/api.h>
 
 #include <winpr/stream.h>
+#include <winpr/winhttp.h>
 
 struct _http_context
 {
@@ -39,19 +41,29 @@ struct _http_context
 	char* CacheControl;
 	char* Connection;
 	char* Pragma;
+	char* RdgConnectionId;
 };
 
-void http_context_set_method(HttpContext* http_context, char* method);
-void http_context_set_uri(HttpContext* http_context, char* uri);
-void http_context_set_user_agent(HttpContext* http_context, char* user_agent);
-void http_context_set_host(HttpContext* http_context, char* host);
-void http_context_set_accept(HttpContext* http_context, char* accept);
-void http_context_set_cache_control(HttpContext* http_context, char* cache_control);
-void http_context_set_connection(HttpContext* http_context, char* connection);
-void http_context_set_pragma(HttpContext* http_context, char* pragma);
+FREERDP_LOCAL BOOL http_context_set_method(HttpContext* context,
+        const char* Method);
+FREERDP_LOCAL BOOL http_context_set_uri(HttpContext* context, const char* URI);
+FREERDP_LOCAL BOOL http_context_set_user_agent(HttpContext* context,
+        const char* UserAgent);
+FREERDP_LOCAL BOOL http_context_set_host(HttpContext* context,
+        const char* Host);
+FREERDP_LOCAL BOOL http_context_set_accept(HttpContext* context,
+        const char* Accept);
+FREERDP_LOCAL BOOL http_context_set_cache_control(HttpContext* context,
+        const char* CacheControl);
+FREERDP_LOCAL BOOL http_context_set_connection(HttpContext* context,
+        const char* Connection);
+FREERDP_LOCAL BOOL http_context_set_pragma(HttpContext* context,
+        const char* Pragma);
+FREERDP_LOCAL BOOL http_context_set_rdg_connection_id(HttpContext* context,
+        const char* RdgConnectionId);
 
 HttpContext* http_context_new(void);
-void http_context_free(HttpContext* http_context);
+void http_context_free(HttpContext* context);
 
 struct _http_request
 {
@@ -62,17 +74,24 @@ struct _http_request
 	char* Authorization;
 	int ContentLength;
 	char* Content;
+	char* TransferEncoding;
 };
 
-void http_request_set_method(HttpRequest* http_request, char* method);
-void http_request_set_uri(HttpRequest* http_request, char* uri);
-void http_request_set_auth_scheme(HttpRequest* http_request, char* auth_scheme);
-void http_request_set_auth_param(HttpRequest* http_request, char* auth_param);
+FREERDP_LOCAL BOOL http_request_set_method(HttpRequest* request,
+        const char* Method);
+FREERDP_LOCAL BOOL http_request_set_uri(HttpRequest* request, const char* URI);
+FREERDP_LOCAL BOOL http_request_set_auth_scheme(HttpRequest* request,
+        const char* AuthScheme);
+FREERDP_LOCAL BOOL http_request_set_auth_param(HttpRequest* request,
+        const char* AuthParam);
+FREERDP_LOCAL BOOL http_request_set_transfer_encoding(HttpRequest* request,
+        const char* TransferEncoding);
 
-wStream* http_request_write(HttpContext* http_context, HttpRequest* http_request);
+FREERDP_LOCAL wStream* http_request_write(HttpContext* context,
+        HttpRequest* request);
 
-HttpRequest* http_request_new(void);
-void http_request_free(HttpRequest* http_request);
+FREERDP_LOCAL HttpRequest* http_request_new(void);
+FREERDP_LOCAL void http_request_free(HttpRequest* request);
 
 struct _http_response
 {
@@ -82,17 +101,20 @@ struct _http_response
 	int StatusCode;
 	char* ReasonPhrase;
 
-	wListDictionary *Authenticates;
 	int ContentLength;
-	BYTE *BodyContent;
-	int bodyLen;
+	char* ContentType;
+
+	int BodyLength;
+	BYTE* BodyContent;
+
+	wListDictionary* Authenticates;
 };
 
-void http_response_print(HttpResponse* http_response);
+FREERDP_LOCAL void http_response_print(HttpResponse* response);
 
-HttpResponse* http_response_recv(rdpTls* tls);
+FREERDP_LOCAL HttpResponse* http_response_recv(rdpTls* tls);
 
-HttpResponse* http_response_new(void);
-void http_response_free(HttpResponse* http_response);
+FREERDP_LOCAL HttpResponse* http_response_new(void);
+FREERDP_LOCAL void http_response_free(HttpResponse* response);
 
 #endif /* FREERDP_CORE_HTTP_H */

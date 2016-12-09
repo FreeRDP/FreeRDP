@@ -25,11 +25,6 @@ set(${MODULE_PREFIX}_SRCS
 
 freerdp_module_add(${${MODULE_PREFIX}_SRCS})
 
-freerdp_include_directory_add(${OPENSSL_INCLUDE_DIR})
-freerdp_include_directory_add(${ZLIB_INCLUDE_DIRS})
-
-freerdp_library_add(${OPENSSL_LIBRARIES} ${ZLIB_LIBRARIES})
-
 if(BUILD_TESTING)
 	add_subdirectory(test)
 endif()

@@ -5,7 +5,6 @@ set(MODULE_PREFIX "TEST_FREERDP_PRIMITIVES")
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
-	TestPrimitives16to32bpp.c
 	TestPrimitivesAdd.c
 	TestPrimitivesAlphaComp.c
 	TestPrimitivesAndOr.c
@@ -14,6 +13,7 @@ set(${MODULE_PREFIX}_TESTS
 	TestPrimitivesSet.c
 	TestPrimitivesShift.c
 	TestPrimitivesSign.c
+	TestPrimitivesYUV.c
 	TestPrimitivesYCbCr.c
 	TestPrimitivesYCoCg.c)
 

@@ -22,52 +22,61 @@
 
 #include "shadow.h"
 
-void shadow_input_synchronize_event(rdpInput* input, UINT32 flags)
+BOOL shadow_input_synchronize_event(rdpInput* input, UINT32 flags)
 {
 	rdpShadowClient* client = (rdpShadowClient*) input->context;
 	rdpShadowSubsystem* subsystem = client->server->subsystem;
 
 	if (!client->mayInteract)
-		return;
+		return TRUE;
 
 	if (subsystem->SynchronizeEvent)
 	{
-		subsystem->SynchronizeEvent(subsystem, flags);
+		subsystem->SynchronizeEvent(subsystem, client, flags);
 	}
+	return TRUE;
 }
 
-void shadow_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
+BOOL shadow_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	rdpShadowClient* client = (rdpShadowClient*) input->context;
 	rdpShadowSubsystem* subsystem = client->server->subsystem;
 
 	if (!client->mayInteract)
-		return;
+		return TRUE;
 	
 	if (subsystem->KeyboardEvent)
 	{
-		subsystem->KeyboardEvent(subsystem, flags, code);
+		subsystem->KeyboardEvent(subsystem, client, flags, code);
 	}
+	return TRUE;
 }
 
-void shadow_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
+BOOL shadow_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	rdpShadowClient* client = (rdpShadowClient*) input->context;
 	rdpShadowSubsystem* subsystem = client->server->subsystem;
 
 	if (!client->mayInteract)
-		return;
+		return TRUE;
 
 	if (subsystem->UnicodeKeyboardEvent)
 	{
-		subsystem->UnicodeKeyboardEvent(subsystem, flags, code);
+		subsystem->UnicodeKeyboardEvent(subsystem, client, flags, code);
 	}
+	return TRUE;
 }
 
-void shadow_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+BOOL shadow_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	rdpShadowClient* client = (rdpShadowClient*) input->context;
 	rdpShadowSubsystem* subsystem = client->server->subsystem;
+
+	if (client->server->shareSubRect)
+	{
+		x += client->server->subRect.left;
+		y += client->server->subRect.top;
+	}
 
 	if (!(flags & PTR_FLAGS_WHEEL))
 	{
@@ -80,34 +89,42 @@ void shadow_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 			flags &= ~PTR_FLAGS_MOVE;
 
 			if (!(flags & (PTR_FLAGS_BUTTON1 | PTR_FLAGS_BUTTON2 | PTR_FLAGS_BUTTON3)))
-				return;
+				return TRUE;
 		}
 	}
 
 	if (!client->mayInteract)
-		return;
+		return TRUE;
 
 	if (subsystem->MouseEvent)
 	{
-		subsystem->MouseEvent(subsystem, flags, x, y);
+		subsystem->MouseEvent(subsystem, client, flags, x, y);
 	}
+	return TRUE;
 }
 
-void shadow_input_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+BOOL shadow_input_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	rdpShadowClient* client = (rdpShadowClient*) input->context;
 	rdpShadowSubsystem* subsystem = client->server->subsystem;
+
+	if (client->server->shareSubRect)
+	{
+		x += client->server->subRect.left;
+		y += client->server->subRect.top;
+	}
 
 	client->pointerX = x;
 	client->pointerY = y;
 
 	if (!client->mayInteract)
-		return;
+		return TRUE;
 
 	if (subsystem->ExtendedMouseEvent)
 	{
-		subsystem->ExtendedMouseEvent(subsystem, flags, x, y);
+		subsystem->ExtendedMouseEvent(subsystem, client, flags, x, y);
 	}
+	return TRUE;
 }
 
 void shadow_input_register_callbacks(rdpInput* input)

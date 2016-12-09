@@ -46,6 +46,12 @@ int TestCryptoCertEnumCertificatesInStore(int argc, char* argv[])
 		status = CertGetNameString(pCertContext, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL, NULL, 0);
 
 		pszNameString = (LPTSTR) malloc(status * sizeof(TCHAR));
+		if (!pszNameString)
+		{
+			printf("Unable to allocate memory\n");
+			return -1;
+		}
+
 		status = CertGetNameString(pCertContext, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL, pszNameString, status);
 
 		_tprintf(_T("Certificate #%d: %s\n"), index++, pszNameString);

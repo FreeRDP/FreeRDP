@@ -694,12 +694,8 @@ void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context)
 {
 	if (context)
 	{
-		if (context->resampled_buffer)
-			free(context->resampled_buffer);
-
-		if (context->adpcm_buffer)
-			free(context->adpcm_buffer);
-
+		free(context->resampled_buffer);
+		free(context->adpcm_buffer);
 		free(context);
 	}
 }

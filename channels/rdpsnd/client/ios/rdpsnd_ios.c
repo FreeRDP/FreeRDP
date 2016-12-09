@@ -3,6 +3,8 @@
  * Audio Output Virtual Channel
  *
  * Copyright 2013 Dell Software <Mike.McDonald@software.dell.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,12 +100,14 @@ static BOOL rdpsnd_ios_format_supported(rdpsndDevicePlugin* __unused device, AUD
 	return 0;
 }
 
-static void rdpsnd_ios_set_format(rdpsndDevicePlugin* __unused device, AUDIO_FORMAT* __unused format, int __unused latency)
+static BOOL rdpsnd_ios_set_format(rdpsndDevicePlugin* __unused device, AUDIO_FORMAT* __unused format, int __unused latency)
 {
+	return TRUE;
 }
 
-static void rdpsnd_ios_set_volume(rdpsndDevicePlugin* __unused device, UINT32 __unused value)
+static BOOL rdpsnd_ios_set_volume(rdpsndDevicePlugin* __unused device, UINT32 __unused value)
 {
+	return TRUE;
 }
 
 static void rdpsnd_ios_start(rdpsndDevicePlugin* device)
@@ -153,14 +157,12 @@ static void rdpsnd_ios_play(rdpsndDevicePlugin* device, BYTE* data, int size)
 	rdpsnd_ios_start(device);
 }
 
-static void rdpsnd_ios_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int __unused latency)
+static BOOL rdpsnd_ios_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int __unused latency)
 {
 	rdpsndIOSPlugin *p = THIS(device);
 
 	if (p->is_opened)
-	{
-		return;
-	}
+		return TRUE;
 
 	/* Find the output audio unit. */
 	AudioComponentDescription desc;
@@ -171,11 +173,13 @@ static void rdpsnd_ios_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
 	desc.componentFlagsMask = 0;
 
 	AudioComponent audioComponent = AudioComponentFindNext(NULL, &desc);
-	if (audioComponent == NULL) return;
+	if (audioComponent == NULL)
+		return FALSE;
 
 	/* Open the audio unit. */
 	OSStatus status = AudioComponentInstanceNew(audioComponent, &p->audio_unit);
-	if (status != 0) return;
+	if (status != 0)
+		return FALSE;
 
 	/* Set the format for the AudioUnit. */
 	AudioStreamBasicDescription audioFormat = {0};
@@ -199,7 +203,7 @@ static void rdpsnd_ios_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
 	{
 		AudioComponentInstanceDispose(p->audio_unit);
 		p->audio_unit = NULL;
-		return;
+		return FALSE;
 	}
 
 	/* Set up the AudioUnit callback. */
@@ -217,7 +221,7 @@ static void rdpsnd_ios_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
 	{
 		AudioComponentInstanceDispose(p->audio_unit);
 		p->audio_unit = NULL;
-		return;
+		return FALSE;
 	}
 
 	/* Initialize the AudioUnit. */
@@ -226,7 +230,7 @@ static void rdpsnd_ios_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
 	{
 		AudioComponentInstanceDispose(p->audio_unit);
 		p->audio_unit = NULL;
-		return;
+		return FALSE;
 	}
 
 	/* Allocate the circular buffer. */
@@ -236,10 +240,11 @@ static void rdpsnd_ios_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
 		AudioUnitUninitialize(p->audio_unit);
 		AudioComponentInstanceDispose(p->audio_unit);
 		p->audio_unit = NULL;
-		return;
+		return FALSE;
 	}
 
 	p->is_opened = 1;
+	return TRUE;
 }
 
 static void rdpsnd_ios_close(rdpsndDevicePlugin* device)
@@ -274,16 +279,23 @@ static void rdpsnd_ios_free(rdpsndDevicePlugin* device)
 	free(p);
 }
 
-#ifdef STATIC_CHANNELS
+#ifdef BUILTIN_CHANNELS
 #define freerdp_rdpsnd_client_subsystem_entry	ios_freerdp_rdpsnd_client_subsystem_entry
+#else
+#define freerdp_rdpsnd_client_subsystem_entry	FREERDP_API freerdp_rdpsnd_client_subsystem_entry
 #endif
 
-int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	rdpsndIOSPlugin* p = (rdpsndIOSPlugin*) calloc(1, sizeof(rdpsndIOSPlugin));
 
 	if (!p)
-		return -1;
+		return CHANNEL_RC_NO_MEMORY;
 
 	p->device.Open = rdpsnd_ios_open;
 	p->device.FormatSupported = rdpsnd_ios_format_supported;
@@ -296,5 +308,5 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*)p);
 
-	return 0;
+	return CHANNEL_RC_OK;
 }

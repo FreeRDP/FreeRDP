@@ -59,7 +59,7 @@ LPVOID HeapReAlloc(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem, SIZE_T dwBytes)
 BOOL HeapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem)
 {
 	free(lpMem);
-	return 1;
+	return TRUE;
 }
 
 #endif

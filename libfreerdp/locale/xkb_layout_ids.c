@@ -61,7 +61,7 @@ static const XKB_VARIANT us_variants[] =
 	{ "dvorak-l",		KBD_UNITED_STATES_DVORAK_FOR_LEFT_HAND }, /* Left handed Dvorak */
 	{ "dvorak-r",		KBD_UNITED_STATES_DVORAK_FOR_RIGHT_HAND }, /* Right handed Dvorak */
 	{ "dvorak-classic",	KBD_UNITED_STATES_DVORAK }, /* Classic Dvorak */
-	{ "dvp",		KBD_UNITED_STATES_DVORAK }, /* Programmer Dvorak */
+	{ "dvp",		KBD_UNITED_STATES_DVORAK_PROGRAMMER }, /* Programmer Dvorak */
 	{ "rus",		0 }, /* Russian phonetic */
 	{ "mac",		KBD_US }, /* Macintosh */
 	{ "altgr-intl",		KBD_UNITED_STATES_INTERNATIONAL }, /* International (AltGr dead keys) */
@@ -329,7 +329,7 @@ static const XKB_VARIANT fr_variants[] =
 	{ "latin9",		0 }, /* (Legacy) Alternative */
 	{ "latin9_nodeadkeys",	0 }, /* (Legacy) Alternative, eliminate dead keys */
 	{ "latin9_sundeadkeys",	0 }, /* (Legacy) Alternative, Sun dead keys */
-	{ "bepo",		0 }, /* Bepo, ergonomic, Dvorak way */
+	{ "bepo",		KBD_FRENCH_BEPO }, /* Bepo, ergonomic, Dvorak way */
 	{ "bepo_latin9",	0 }, /* Bepo, ergonomic, Dvorak way, latin-9 only */
 	{ "dvorak",		0 }, /* Dvorak */
 	{ "mac",		0 }, /* Macintosh */
@@ -887,7 +887,7 @@ static const XKB_LAYOUT xkbLayouts[] =
 	{ "ie",		 KBD_UNITED_KINGDOM, ie_variants }, /* Ireland */
 	{ "pk",		 0, pk_variants }, /* Pakistan */
 	{ "mv",		 0, NULL }, /* Maldives */
-	{ "za",		 0, NULL }, /* South Africa */
+	{ "za",		 KBD_US, NULL }, /* South Africa */
 	{ "epo",	 0, epo_variants }, /* Esperanto */
 	{ "np",		 KBD_NEPALI, NULL }, /* Nepal */
 	{ "ng",		 0, ng_variants }, /* Nigeria */
@@ -910,11 +910,13 @@ UINT32 find_keyboard_layout_in_xorg_rules(char* layout, char* variant)
 	{
 		if (strcmp(xkbLayouts[i].layout, layout) == 0)
 		{
-			for (j = 0; xkbLayouts[i].variants[j].variant != NULL && strlen(xkbLayouts[i].variants[j].variant) > 0; j++)
+			const XKB_VARIANT *variants = xkbLayouts[i].variants;
+			if (variants)
 			{
-				if (strcmp(xkbLayouts[i].variants[j].variant, variant) == 0)
+				for (j = 0; variants[j].variant != NULL && strlen(variants[j].variant) > 0; j++)
 				{
-					return xkbLayouts[i].variants[j].keyboardLayoutID;
+					if (strcmp(variants[j].variant, variant) == 0)
+						return variants[j].keyboardLayoutID;
 				}
 			}
 

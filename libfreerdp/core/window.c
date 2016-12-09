@@ -30,21 +30,37 @@
 
 #define TAG FREERDP_TAG("core.window")
 
-static BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
+BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
 {
+	UINT16 new_len;
+	BYTE *new_str;
+
 	if (Stream_GetRemainingLength(s) < 2)
 		return FALSE;
 
-	Stream_Read_UINT16(s, unicode_string->length); /* cbString (2 bytes) */
+	Stream_Read_UINT16(s, new_len); /* cbString (2 bytes) */
 
-	if (Stream_GetRemainingLength(s) < unicode_string->length)
+	if (Stream_GetRemainingLength(s) < new_len)
 		return FALSE;
 
-	if (!unicode_string->string)
-		unicode_string->string = (BYTE*) malloc(unicode_string->length);
-	else
-		unicode_string->string = (BYTE*) realloc(unicode_string->string, unicode_string->length);
+	if (!new_len)
+	{
+		free(unicode_string->string);
+		unicode_string->string = NULL;
+		unicode_string->length = 0;
+		return TRUE;
+	}
 
+	new_str = (BYTE*) realloc(unicode_string->string, new_len);
+	if (!new_str)
+	{
+		free (unicode_string->string);
+		unicode_string->string = NULL;
+		return FALSE;
+	}
+
+	unicode_string->string = new_str;
+	unicode_string->length = new_len;
 	Stream_Read(s, unicode_string->string, unicode_string->length);
 
 	return TRUE;
@@ -95,7 +111,11 @@ BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 	/* bitsMask */
 	newBitMask = (BYTE*) realloc(iconInfo->bitsMask, iconInfo->cbBitsMask);
 	if (!newBitMask)
+	{
+		free (iconInfo->bitsMask);
+		iconInfo->bitsMask = NULL;
 		return FALSE;
+	}
 	iconInfo->bitsMask = newBitMask;
 
 	Stream_Read(s, iconInfo->bitsMask, iconInfo->cbBitsMask);
@@ -104,11 +124,24 @@ BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 	if (iconInfo->colorTable == NULL)
 	{
 		if (iconInfo->cbColorTable)
+		{
 			iconInfo->colorTable = (BYTE*) malloc(iconInfo->cbColorTable);
+			if (!iconInfo->colorTable)
+				return FALSE;
+		}
 	}
 	else if (iconInfo->cbColorTable)
 	{
-		iconInfo->colorTable = (BYTE*) realloc(iconInfo->colorTable, iconInfo->cbColorTable);
+		BYTE *new_tab;
+
+		new_tab = (BYTE*) realloc(iconInfo->colorTable, iconInfo->cbColorTable);
+		if (!new_tab)
+		{
+			free (iconInfo->colorTable);
+			iconInfo->colorTable = NULL;
+			return FALSE;
+		}
+		iconInfo->colorTable = new_tab;
 	}
 	else
 	{
@@ -122,7 +155,11 @@ BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 	/* bitsColor */
 	newBitMask = (BYTE *)realloc(iconInfo->bitsColor, iconInfo->cbBitsColor);
 	if (!newBitMask)
+	{
+		free (iconInfo->bitsColor);
+		iconInfo->bitsColor = NULL;
 		return FALSE;
+	}
 	iconInfo->bitsColor = newBitMask;
 
 	Stream_Read(s, iconInfo->bitsColor, iconInfo->cbBitsColor);
@@ -259,6 +296,8 @@ BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WI
 
 		size = sizeof(RECTANGLE_16) * windowState->numWindowRects;
 		windowState->windowRects = (RECTANGLE_16*) malloc(size);
+		if (!windowState->windowRects)
+			return FALSE;
 
 		if (Stream_GetRemainingLength(s) < 8 * windowState->numWindowRects)
 			return FALSE;
@@ -291,6 +330,8 @@ BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WI
 
 		size = sizeof(RECTANGLE_16) * windowState->numVisibilityRects;
 		windowState->visibilityRects = (RECTANGLE_16*) malloc(size);
+		if (!windowState->visibilityRects)
+			return FALSE;
 
 		if (Stream_GetRemainingLength(s) < windowState->numVisibilityRects * 8)
 			return FALSE;
@@ -309,8 +350,9 @@ BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WI
 
 BOOL update_read_window_icon_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* window_icon)
 {
-	window_icon->iconInfo = (ICON_INFO*) malloc(sizeof(ICON_INFO));
-	ZeroMemory(window_icon->iconInfo, sizeof(ICON_INFO));
+	window_icon->iconInfo = (ICON_INFO*) calloc(1, sizeof(ICON_INFO));
+	if (!window_icon->iconInfo)
+		return FALSE;
 
 	return update_read_icon_info(s, window_icon->iconInfo); /* iconInfo (ICON_INFO) */
 }
@@ -329,6 +371,7 @@ BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s, WINDOW_ORDER_I
 {
 	rdpContext* context = update->context;
 	rdpWindowUpdate* window = update->window;
+	BOOL result = TRUE;
 
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
@@ -340,20 +383,20 @@ BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s, WINDOW_ORDER_I
 		if (!update_read_window_icon_order(s, orderInfo, &window->window_icon))
 			return FALSE;
 		WLog_Print(update->log, WLOG_DEBUG, "WindowIcon");
-		IFCALL(window->WindowIcon, context, orderInfo, &window->window_icon);
+		IFCALLRET(window->WindowIcon, result, context, orderInfo, &window->window_icon);
 	}
 	else if (orderInfo->fieldFlags & WINDOW_ORDER_CACHED_ICON)
 	{
 		if (!update_read_window_cached_icon_order(s, orderInfo, &window->window_cached_icon))
 			return FALSE;
 		WLog_Print(update->log, WLOG_DEBUG, "WindowCachedIcon");
-		IFCALL(window->WindowCachedIcon, context, orderInfo, &window->window_cached_icon);
+		IFCALLRET(window->WindowCachedIcon, result, context, orderInfo, &window->window_cached_icon);
 	}
 	else if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_DELETED)
 	{
 		update_read_window_delete_order(s, orderInfo);
 		WLog_Print(update->log, WLOG_DEBUG, "WindowDelete");
-		IFCALL(window->WindowDelete, context, orderInfo);
+		IFCALLRET(window->WindowDelete, result, context, orderInfo);
 	}
 	else
 	{
@@ -363,16 +406,16 @@ BOOL update_recv_window_info_order(rdpUpdate* update, wStream* s, WINDOW_ORDER_I
 		if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_NEW)
 		{
 			WLog_Print(update->log, WLOG_DEBUG, "WindowCreate");
-			IFCALL(window->WindowCreate, context, orderInfo, &window->window_state);
+			IFCALLRET(window->WindowCreate, result, context, orderInfo, &window->window_state);
 		}
 		else
 		{
 			WLog_Print(update->log, WLOG_DEBUG, "WindowUpdate");
-			IFCALL(window->WindowUpdate, context, orderInfo, &window->window_state);
+			IFCALLRET(window->WindowUpdate, result, context, orderInfo, &window->window_state);
 		}
 	}
 
-	return TRUE;
+	return result;
 }
 
 BOOL update_read_notification_icon_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notify_icon_state)
@@ -428,6 +471,7 @@ BOOL update_recv_notification_icon_info_order(rdpUpdate* update, wStream* s, WIN
 {
 	rdpContext* context = update->context;
 	rdpWindowUpdate* window = update->window;
+	BOOL result = TRUE;
 
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
@@ -439,7 +483,7 @@ BOOL update_recv_notification_icon_info_order(rdpUpdate* update, wStream* s, WIN
 	{
 		update_read_notification_icon_delete_order(s, orderInfo);
 		WLog_Print(update->log, WLOG_DEBUG, "NotifyIconDelete");
-		IFCALL(window->NotifyIconDelete, context, orderInfo);
+		IFCALLRET(window->NotifyIconDelete, result, context, orderInfo);
 	}
 	else
 	{
@@ -449,16 +493,16 @@ BOOL update_recv_notification_icon_info_order(rdpUpdate* update, wStream* s, WIN
 		if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_NEW)
 		{
 			WLog_Print(update->log, WLOG_DEBUG, "NotifyIconCreate");
-			IFCALL(window->NotifyIconCreate, context, orderInfo, &window->notify_icon_state);
+			IFCALLRET(window->NotifyIconCreate, result, context, orderInfo, &window->notify_icon_state);
 		}
 		else
 		{
 			WLog_Print(update->log, WLOG_DEBUG, "NotifyIconUpdate");
-			IFCALL(window->NotifyIconUpdate, context, orderInfo, &window->notify_icon_state);
+			IFCALLRET(window->NotifyIconUpdate, result, context, orderInfo, &window->notify_icon_state);
 		}
 	}
 
-	return TRUE;
+	return result;
 }
 
 BOOL update_read_desktop_actively_monitored_order(wStream* s, WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitored_desktop)
@@ -476,6 +520,8 @@ BOOL update_read_desktop_actively_monitored_order(wStream* s, WINDOW_ORDER_INFO*
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ZORDER)
 	{
+		UINT32 *newid;
+
 		if (Stream_GetRemainingLength(s) < 1)
 			return FALSE;
 
@@ -484,17 +530,23 @@ BOOL update_read_desktop_actively_monitored_order(wStream* s, WINDOW_ORDER_INFO*
 		if (Stream_GetRemainingLength(s) < 4 * monitored_desktop->numWindowIds)
 			return FALSE;
 
-		size = sizeof(UINT32) * monitored_desktop->numWindowIds;
+		if (monitored_desktop->numWindowIds > 0) {
+			size = sizeof(UINT32) * monitored_desktop->numWindowIds;
 
-		if (monitored_desktop->windowIds == NULL)
-			monitored_desktop->windowIds = (UINT32*) malloc(size);
-		else
-			monitored_desktop->windowIds = (UINT32*) realloc(monitored_desktop->windowIds, size);
+			newid = (UINT32*)realloc(monitored_desktop->windowIds, size);
+			if (!newid)
+			{
+				free(monitored_desktop->windowIds);
+				monitored_desktop->windowIds = NULL;
+				return FALSE;
+			}
+			monitored_desktop->windowIds = newid;
 
-		/* windowIds */
-		for (i = 0; i < (int) monitored_desktop->numWindowIds; i++)
-		{
-			Stream_Read_UINT32(s, monitored_desktop->windowIds[i]);
+			/* windowIds */
+			for (i = 0; i < (int)monitored_desktop->numWindowIds; i++)
+			{
+				Stream_Read_UINT32(s, monitored_desktop->windowIds[i]);
+			}
 		}
 	}
 
@@ -510,22 +562,23 @@ BOOL update_recv_desktop_info_order(rdpUpdate* update, wStream* s, WINDOW_ORDER_
 {
 	rdpContext* context = update->context;
 	rdpWindowUpdate* window = update->window;
+	BOOL result = TRUE;
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_NONE)
 	{
 		update_read_desktop_non_monitored_order(s, orderInfo);
 		WLog_Print(update->log, WLOG_DEBUG, "NonMonitoredDesktop");
-		IFCALL(window->NonMonitoredDesktop, context, orderInfo);
+		IFCALLRET(window->NonMonitoredDesktop, result, context, orderInfo);
 	}
 	else
 	{
 		if (!update_read_desktop_actively_monitored_order(s, orderInfo, &window->monitored_desktop))
 			return FALSE;
 		WLog_Print(update->log, WLOG_DEBUG, "ActivelyMonitoredDesktop");
-		IFCALL(window->MonitoredDesktop, context, orderInfo, &window->monitored_desktop);
+		IFCALLRET(window->MonitoredDesktop, result, context, orderInfo, &window->monitored_desktop);
 	}
 
-	return TRUE;
+	return result;
 }
 
 BOOL update_recv_altsec_window_order(rdpUpdate* update, wStream* s)

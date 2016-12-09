@@ -124,7 +124,9 @@ static void* base64_decode(const char* s, int length, int* data_len)
 	if (length % 4)
 		return NULL;
 
-	q = data = (BYTE*) malloc(length / 4 * 3);
+	q = data = (BYTE*) malloc(length / 4 * 3 + 1);
+	if (!q)
+		return NULL;
 
 	/* first treat complete blocks */
 	nBlocks = (length / 4);
@@ -182,6 +184,7 @@ static void* base64_decode(const char* s, int length, int* data_len)
 	}
 
 	*data_len = outputLen;
+	data[outputLen] = '\0';
 
 	return data;
 out_free:

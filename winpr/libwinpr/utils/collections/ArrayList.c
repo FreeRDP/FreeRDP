@@ -207,7 +207,7 @@ void ArrayList_Clear(wArrayList *arrayList)
 
 BOOL ArrayList_Contains(wArrayList *arrayList, void *obj)
 {
-	DWORD index;
+	int index;
 	BOOL rc = FALSE;
 
 	if (arrayList->synchronized)
@@ -470,6 +470,9 @@ out_free:
 
 void ArrayList_Free(wArrayList *arrayList)
 {
+	if (!arrayList)
+		return;
+
 	ArrayList_Clear(arrayList);
 	DeleteCriticalSection(&arrayList->lock);
 	free(arrayList->array);

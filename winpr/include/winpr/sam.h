@@ -28,7 +28,7 @@ struct winpr_sam
 	FILE* fp;
 	char* line;
 	char* buffer;
-	BOOL read_only;
+	BOOL readOnly;
 };
 typedef struct winpr_sam WINPR_SAM;
 
@@ -50,9 +50,10 @@ extern "C" {
 WINPR_API WINPR_SAM_ENTRY* SamLookupUserA(WINPR_SAM* sam, LPSTR User, UINT32 UserLength, LPSTR Domain, UINT32 DomainLength);
 WINPR_API WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, UINT32 UserLength, LPWSTR Domain, UINT32 DomainLength);
 
+WINPR_API void SamResetEntry(WINPR_SAM_ENTRY* entry);
 WINPR_API void SamFreeEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry);
 
-WINPR_API WINPR_SAM* SamOpen(BOOL read_only);
+WINPR_API WINPR_SAM* SamOpen(const char* filename, BOOL readOnly);
 WINPR_API void SamClose(WINPR_SAM* sam);
 
 #ifdef __cplusplus

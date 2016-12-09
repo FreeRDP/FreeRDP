@@ -15,7 +15,8 @@ static void* message_echo_pipe_client_thread(void* arg)
 
 	while (index < 100)
 	{
-		MessageQueue_Post(pipe->In, NULL, 0, (void*) (size_t) index, NULL);
+		if (!MessageQueue_Post(pipe->In, NULL, 0, (void*) (size_t) index, NULL))
+			break;
 
 		if (!MessageQueue_Wait(pipe->Out))
 			break;
@@ -56,7 +57,8 @@ static void* message_echo_pipe_server_thread(void* arg)
 
 			count = (int) (size_t) message.wParam;
 
-			MessageQueue_Dispatch(pipe->Out, &message);
+			if (!MessageQueue_Dispatch(pipe->Out, &message))
+				break;
 		}
 	}
 
@@ -65,17 +67,41 @@ static void* message_echo_pipe_server_thread(void* arg)
 
 int TestMessagePipe(int argc, char* argv[])
 {
-	HANDLE ClientThread;
-	HANDLE ServerThread;
-	wMessagePipe* EchoPipe;
+	HANDLE ClientThread = NULL;
+	HANDLE ServerThread = NULL;
+	wMessagePipe* EchoPipe = NULL;
+	int ret = 1;
 
-	EchoPipe = MessagePipe_New();
+	if (!(EchoPipe = MessagePipe_New()))
+	{
+		printf("failed to create message pipe\n");
+		goto out;
+	}
 
-	ClientThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) message_echo_pipe_client_thread, (void*) EchoPipe, 0, NULL);
-	ServerThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) message_echo_pipe_server_thread, (void*) EchoPipe, 0, NULL);
+	if (!(ClientThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) message_echo_pipe_client_thread, (void*) EchoPipe, 0, NULL)))
+	{
+		printf("failed to create client thread\n");
+		goto out;
+	}
+
+	if (!(ServerThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) message_echo_pipe_server_thread, (void*) EchoPipe, 0, NULL)))
+	{
+		printf("failed to create server thread\n");
+		goto out;
+	}
 
 	WaitForSingleObject(ClientThread, INFINITE);
 	WaitForSingleObject(ServerThread, INFINITE);
 
-	return 0;
+	ret = 0;
+
+out:
+	if (EchoPipe)
+		MessagePipe_Free(EchoPipe);
+	if (ClientThread)
+		CloseHandle(ClientThread);
+	if (ServerThread)
+		CloseHandle(ServerThread);
+
+	return ret;
 }

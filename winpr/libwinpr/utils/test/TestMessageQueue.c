@@ -29,18 +29,28 @@ int TestMessageQueue(int argc, char* argv[])
 	HANDLE thread;
 	wMessageQueue* queue;
 
-	queue = MessageQueue_New(NULL);
+	if (!(queue = MessageQueue_New(NULL)))
+	{
+		printf("failed to create message queue\n");
+		return 1;
+	}
 
-	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) message_queue_consumer_thread, (void*) queue, 0, NULL);
+	if (!(thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) message_queue_consumer_thread, (void*) queue, 0, NULL)))
+	{
+		printf("failed to create thread\n");
+		MessageQueue_Free(queue);
+		return 1;
+	}
 
-	MessageQueue_Post(queue, NULL, 123, NULL, NULL);
-	MessageQueue_Post(queue, NULL, 456, NULL, NULL);
-	MessageQueue_Post(queue, NULL, 789, NULL, NULL);
-	MessageQueue_PostQuit(queue, 0);
-
-	WaitForSingleObject(thread, INFINITE);
+	if (!MessageQueue_Post(queue, NULL, 123, NULL, NULL) ||
+			!MessageQueue_Post(queue, NULL, 456, NULL, NULL) ||
+			!MessageQueue_Post(queue, NULL, 789, NULL, NULL) ||
+			!MessageQueue_PostQuit(queue, 0) ||
+			WaitForSingleObject(thread, INFINITE) != WAIT_OBJECT_0)
+		return -1;
 
 	MessageQueue_Free(queue);
+	CloseHandle(thread);
 
 	return 0;
 }

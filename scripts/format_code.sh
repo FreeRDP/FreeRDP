@@ -9,7 +9,7 @@ fi
 
 # Need at least astyle 2.03 due to bugs in older versions
 # indenting headers with extern "C"
-STR_VERSION=$(($ASTYLE --version) 2>&1)
+STR_VERSION=$($ASTYLE --version 2>&1)
 VERSION=$(echo $STR_VERSION | cut -d ' ' -f4)
 MAJOR_VERSION=$(echo $VERSION | cut -d'.' -f1)
 MINOR_VERSION=$(echo $VERSION | cut -d'.' -f2)
@@ -30,9 +30,10 @@ if [ $# -le 0 ]; then
   exit 2
 fi
 
-$ASTYLE --lineend=linux --mode=c --indent=force-tab=4 --brackets=linux --pad-header \
-							   --indent-switches --indent-cases --indent-preprocessor \
+$ASTYLE --lineend=linux --mode=c --indent=tab=4 --pad-header --pad-oper --style=allman --min-conditional-indent=0 \
+							   --indent-switches --indent-cases --indent-preprocessor -k1 --max-code-length=100 \
 							   --indent-col1-comments --delete-empty-lines --break-closing-brackets \
-							   --align-pointer=type --indent-labels --brackets=break \
+							   --align-pointer=type --indent-labels -xe --break-after-logical \
 							   --unpad-paren --break-blocks $@
-							   exit $?
+
+exit $?

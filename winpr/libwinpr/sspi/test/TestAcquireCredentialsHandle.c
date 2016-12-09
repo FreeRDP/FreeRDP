@@ -22,11 +22,19 @@ int TestAcquireCredentialsHandle(int argc, char* argv[])
 	table = InitSecurityInterface();
 
 	identity.User = (UINT16*) _strdup(test_User);
-	identity.UserLength = sizeof(test_User);
 	identity.Domain = (UINT16*) _strdup(test_Domain);
-	identity.DomainLength = sizeof(test_Domain);
 	identity.Password = (UINT16*) _strdup(test_Password);
-	identity.PasswordLength = sizeof(test_Password);
+	if (!identity.User || !identity.Domain || !identity.Password)
+	{
+		free(identity.User);
+		free(identity.Domain);
+		free(identity.Password);
+		fprintf(stderr, "Memory allocation failed\n");
+		return -1;
+	}
+	identity.UserLength = strlen(test_User);
+	identity.DomainLength = strlen(test_Domain);
+	identity.PasswordLength = strlen(test_Password);
 	identity.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
 
 	status = table->AcquireCredentialsHandle(NULL, NTLMSP_NAME,

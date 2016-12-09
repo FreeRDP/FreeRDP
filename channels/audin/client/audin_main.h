@@ -33,9 +33,9 @@
 #define TAG CHANNELS_TAG("audin.client")
 
 #ifdef WITH_DEBUG_DVC
-#define DEBUG_DVC(fmt, ...) WLog_DBG(TAG, fmt, ## __VA_ARGS__)
+#define DEBUG_DVC(...) WLog_DBG(TAG, __VA_ARGS__)
 #else
-#define DEBUG_DVC(fmt, ...) do { } while (0)
+#define DEBUG_DVC(...) do { } while (0)
 #endif
 
 #endif /* FREERDP_AUDIN_CLIENT_MAIN_H */

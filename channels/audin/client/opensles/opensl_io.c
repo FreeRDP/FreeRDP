@@ -234,7 +234,8 @@ OPENSL_STREAM *android_OpenRecDevice(char *name, int sr, int inchannels,
   
   OPENSL_STREAM *p;
   p = (OPENSL_STREAM *) calloc(sizeof(OPENSL_STREAM),1);
-	memset(p, 0, sizeof(OPENSL_STREAM));
+  if (!p)
+	  return NULL;
 
   p->inchannels = inchannels;
   p->sr = sr;
@@ -314,7 +315,14 @@ void bqRecorderCallback(SLAndroidSimpleBufferQueueItf bq, void *context)
 	assert(p->queue);
 
 	e = calloc(1, sizeof(queue_element));
+	if (!e)
+		return;
 	e->data = calloc(p->buffersize, p->bits_per_sample / 8);
+	if (!e->data)
+	{
+		free(e);
+		return;
+	}
 	e->size = p->buffersize * p->bits_per_sample / 8;
 
 	Queue_Enqueue(p->queue, p->next);
@@ -331,6 +339,7 @@ int android_RecIn(OPENSL_STREAM *p,short *buffer,int size)
 {
 	queue_element *e;
 	int rc;
+    DWORD status;
 
 	assert(p);
 	assert(buffer);
@@ -340,6 +349,7 @@ int android_RecIn(OPENSL_STREAM *p,short *buffer,int size)
 	if (!p->prep)
 	{
 		p->prep = calloc(1, sizeof(queue_element));
+
 		p->prep->data = calloc(p->buffersize, p->bits_per_sample / 8);
 		p->prep->size = p->buffersize * p->bits_per_sample / 8;
 
@@ -357,7 +367,15 @@ int android_RecIn(OPENSL_STREAM *p,short *buffer,int size)
 
 	/* Wait for queue to be filled... */
 	if (!Queue_Count(p->queue))
-		WaitForSingleObject(p->queue->event, INFINITE);
+    {
+        status = WaitForSingleObject(p->queue->event, INFINITE);
+        if (status == WAIT_FAILED)
+        {
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", GetLastError());
+            return -1;
+        }
+    }
+
 
 	e = Queue_Dequeue(p->queue);
 	if (!e)
@@ -374,6 +392,6 @@ int android_RecIn(OPENSL_STREAM *p,short *buffer,int size)
 	free(e->data);
 	free(e);
 
-  return rc;
+    return rc;
 }
 

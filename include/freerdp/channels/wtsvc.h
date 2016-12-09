@@ -43,6 +43,14 @@
 extern "C" {
 #endif
 
+enum
+{
+	DRDYNVC_STATE_NONE = 0,
+	DRDYNVC_STATE_INITIALIZED = 1,
+	DRDYNVC_STATE_READY = 2,
+	DRDYNVC_STATE_FAILED = 3
+};
+
 /**
  * WTSVirtualChannelManager functions are FreeRDP extensions to the API.
  */
@@ -51,6 +59,7 @@ FREERDP_API void WTSVirtualChannelManagerGetFileDescriptor(HANDLE hServer, void*
 FREERDP_API BOOL WTSVirtualChannelManagerCheckFileDescriptor(HANDLE hServer);
 FREERDP_API HANDLE WTSVirtualChannelManagerGetEventHandle(HANDLE hServer);
 FREERDP_API BOOL WTSVirtualChannelManagerIsChannelJoined(HANDLE hServer, const char* name);
+FREERDP_API BYTE WTSVirtualChannelManagerGetDrdynvcState(HANDLE hServer);
 
 /**
  * Extended FreeRDP WTS functions for channel handling

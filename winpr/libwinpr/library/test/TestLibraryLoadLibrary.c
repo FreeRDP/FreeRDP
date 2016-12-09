@@ -8,47 +8,41 @@
 
 int TestLibraryLoadLibrary(int argc, char* argv[])
 {
-	char* str;
-	int length;
-	LPTSTR BasePath;
 	HINSTANCE library;
-	LPCTSTR SharedLibraryExtension;
-	TCHAR LibraryPath[PATHCCH_MAX_CCH];
+	LPCSTR SharedLibraryExtension;
+	CHAR LibraryPath[PATHCCH_MAX_CCH];
+	PCHAR p;
 
-	str = argv[1];
-
-#ifdef UNICODE
-	length = MultiByteToWideChar(CP_UTF8, 0, str, strlen(str), NULL, 0);
-	BasePath = (WCHAR*) malloc((length + 1) * sizeof(WCHAR));
-	MultiByteToWideChar(CP_UTF8, 0, str, length, (LPWSTR) BasePath, length * sizeof(WCHAR));
-	BasePath[length] = 0;
-#else
-	BasePath = _strdup(str);
-	length = strlen(BasePath);
-#endif
-
-	CopyMemory(LibraryPath, BasePath, length * sizeof(TCHAR));
-	LibraryPath[length] = 0;
-
-	NativePathCchAppend(LibraryPath, PATHCCH_MAX_CCH, _T("TestLibraryA")); /* subdirectory */
-	NativePathCchAppend(LibraryPath, PATHCCH_MAX_CCH, _T("TestLibraryA")); /* file name without extension */
-
-	SharedLibraryExtension = PathGetSharedLibraryExtension(PATH_SHARED_LIB_EXT_WITH_DOT);
-	NativePathCchAddExtension(LibraryPath, PATHCCH_MAX_CCH, SharedLibraryExtension); /* add shared library extension */
-
-	_tprintf(_T("Loading Library: %s\n"), LibraryPath);
-
-	library = LoadLibrary(LibraryPath);
-
-	if (!library)
+	if (!GetModuleFileNameA(NULL, LibraryPath, PATHCCH_MAX_CCH))
 	{
-		_tprintf(_T("LoadLibrary failure\n"));
+		printf("%s: GetModuleFilenameA failed: 0x%08X\n", __FUNCTION__, GetLastError());
+		return -1;
+	}
+
+	/* PathCchRemoveFileSpec is not implemented in WinPR */
+
+	if (!(p = strrchr(LibraryPath, PathGetSeparatorA(PATH_STYLE_NATIVE))))
+	{
+		printf("%s: Error identifying module directory path\n", __FUNCTION__);
+		return -1;
+	}
+	*p = 0;
+
+	NativePathCchAppendA(LibraryPath, PATHCCH_MAX_CCH, "TestLibraryA");
+	SharedLibraryExtension = PathGetSharedLibraryExtensionA(PATH_SHARED_LIB_EXT_WITH_DOT);
+	NativePathCchAddExtensionA(LibraryPath, PATHCCH_MAX_CCH, SharedLibraryExtension);
+
+	printf("%s: Loading Library: '%s'\n", __FUNCTION__, LibraryPath);
+
+	if (!(library = LoadLibraryA(LibraryPath)))
+	{
+		printf("%s: LoadLibraryA failure: 0x%08X\n", __FUNCTION__, GetLastError());
 		return -1;
 	}
 
 	if (!FreeLibrary(library))
 	{
-		_tprintf(_T("FreeLibrary failure\n"));
+		printf("%s: FreeLibrary failure: 0x%08X\n", __FUNCTION__, GetLastError());
 		return -1;
 	}
 

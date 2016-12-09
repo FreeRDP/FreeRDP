@@ -3,6 +3,8 @@
  * FreeRDP Sample Server (Lync Multiparty)
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +28,12 @@
 BOOL sf_peer_encomsp_init(testPeerContext* context)
 {
 	context->encomsp = encomsp_server_context_new(context->vcm);
+	context->encomsp->rdpcontext = &context->_p;
 
 	if (!context->encomsp)
 		return FALSE;
 
-	if (context->encomsp->Start(context->encomsp) < 0)
+	if (context->encomsp->Start(context->encomsp) != CHANNEL_RC_OK)
 		return FALSE;
 
 	return TRUE;

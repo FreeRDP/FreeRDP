@@ -89,22 +89,22 @@ int region16_n_rects(const REGION16 *region)
 	return region->data->nbRects;
 }
 
-const RECTANGLE_16 *region16_rects(const REGION16 *region, int *nbRects)
+const RECTANGLE_16 *region16_rects(const REGION16 *region, UINT32 *nbRects)
 {
 	REGION16_DATA *data;
 
 	assert(region);
-	assert(region->data);
 
 	data = region->data;
 	if (!data)
 	{
 		if (nbRects)
 			*nbRects = 0;
-		return 0;
+		return NULL;
 	}
 
-	*nbRects = data->nbRects;
+	if (nbRects)
+		*nbRects = data->nbRects;
 	return (RECTANGLE_16 *)(data + 1);
 }
 
@@ -132,7 +132,10 @@ static RECTANGLE_16 *region16_extents_noconst(REGION16 *region)
 
 BOOL rectangle_is_empty(const RECTANGLE_16 *rect)
 {
-	return (rect->left + rect->top + rect->right + rect->bottom) ? TRUE : FALSE;
+	/* A rectangle with width = 0 or height = 0 should be regarded
+	 * as empty.
+	 */
+	return ((rect->left == rect->right) || (rect->top == rect->bottom)) ? TRUE : FALSE;
 }
 
 BOOL region16_is_empty(const REGION16 *region)
@@ -229,7 +232,7 @@ BOOL region16_copy(REGION16 *dst, const REGION16 *src)
 void region16_print(const REGION16 *region)
 {
 	const RECTANGLE_16 *rects;
-	int nbRects, i;
+	UINT32 nbRects, i;
 	int currentBandY = -1;
 
 	rects = region16_rects(region, &nbRects);
@@ -240,18 +243,18 @@ void region16_print(const REGION16 *region)
 		if (rects->top != currentBandY)
 		{
 			currentBandY = rects->top;
-			WLog_DBG(TAG,  "\nband %d: ", currentBandY);
+			WLog_DBG(TAG,  "band %d: ", currentBandY);
 		}
 
 		WLog_DBG(TAG,  "(%d,%d-%d,%d)", rects->left, rects->top, rects->right, rects->bottom);
 	}
 }
 
-void region16_copy_band_with_union(RECTANGLE_16 *dst,
+static void region16_copy_band_with_union(RECTANGLE_16 *dst,
 		const RECTANGLE_16 *src, const RECTANGLE_16 *end,
 		UINT16 newTop, UINT16 newBottom,
 		const RECTANGLE_16 *unionRect,
-		int *dstCounter,
+		UINT32 *dstCounter,
 		const RECTANGLE_16 **srcPtr, RECTANGLE_16 **dstPtr)
 {
 	UINT16 refY = src->top;
@@ -483,7 +486,7 @@ BOOL region16_union_rect(REGION16 *dst, const REGION16 *src, const RECTANGLE_16 
 	const RECTANGLE_16 *currentBand, *endSrcRect, *nextBand;
 	REGION16_DATA* newItems = NULL;
 	RECTANGLE_16* dstRect = NULL;
-	int usedRects, srcNbRects;
+	UINT32 usedRects, srcNbRects;
 	UINT16 topInterBand;
 
 	assert(src);
@@ -526,7 +529,7 @@ BOOL region16_union_rect(REGION16 *dst, const REGION16 *src, const RECTANGLE_16 
 		dstRect->top = rect->top;
 		dstRect->left = rect->left;
 		dstRect->right = rect->right;
-		dstRect->bottom = srcExtents->top;
+		dstRect->bottom = MIN(srcExtents->top, rect->bottom);
 
 		usedRects++;
 		dstRect++;
@@ -549,7 +552,7 @@ BOOL region16_union_rect(REGION16 *dst, const REGION16 *src, const RECTANGLE_16 
 						+----+
 
 			   =================
-                   band of srcRect
+		   band of srcRect
 			   =================
 						+----+
 						|    |   rect (case 2)
@@ -566,17 +569,17 @@ BOOL region16_union_rect(REGION16 *dst, const REGION16 *src, const RECTANGLE_16 
 		{
 
 			/* rect overlaps the band:
-		                           |    |  |    |
-             ====^=================|    |==|    |=========================== band
-                 |   top split     |    |  |    |
-                 v                 | 1  |  | 2  |
-                 ^                 |    |  |    |  +----+   +----+
-                 |   merge zone    |    |  |    |  |    |   | 4  |
-                 v                 +----+  |    |  |    |   +----+
-                 ^                         |    |  | 3  |
-                 |   bottom split          |    |  |    |
-             ====v=========================|    |==|    |===================
-                                           |    |  |    |
+					   |    |  |    |
+	     ====^=================|    |==|    |=========================== band
+		 |   top split     |    |  |    |
+		 v                 | 1  |  | 2  |
+		 ^                 |    |  |    |  +----+   +----+
+		 |   merge zone    |    |  |    |  |    |   | 4  |
+		 v                 +----+  |    |  |    |   +----+
+		 ^                         |    |  | 3  |
+		 |   bottom split          |    |  |    |
+	     ====v=========================|    |==|    |===================
+					   |    |  |    |
 
 			 possible cases:
 			 1) no top split, merge zone then a bottom split. The band will be splitted
@@ -688,7 +691,7 @@ BOOL region16_union_rect(REGION16 *dst, const REGION16 *src, const RECTANGLE_16 
 BOOL region16_intersects_rect(const REGION16 *src, const RECTANGLE_16 *arg2)
 {
 	const RECTANGLE_16 *rect, *endPtr, *srcExtents;
-	int nbRects;
+	UINT32 nbRects;
 
 	assert(src);
 	assert(src->data);
@@ -722,7 +725,7 @@ BOOL region16_intersect_rect(REGION16 *dst, const REGION16 *src, const RECTANGLE
 	REGION16_DATA *newItems;
 	const RECTANGLE_16 *srcPtr, *endPtr, *srcExtents;
 	RECTANGLE_16 *dstPtr;
-	int nbRects, usedRects;
+	UINT32 nbRects, usedRects;
 	RECTANGLE_16 common, newExtents;
 
 	assert(src);
@@ -770,10 +773,21 @@ BOOL region16_intersect_rect(REGION16 *dst, const REGION16 *src, const RECTANGLE
 			usedRects++;
 			dstPtr++;
 
-			newExtents.top = MIN(common.top, newExtents.top);
-			newExtents.left = MIN(common.left, newExtents.left);
-			newExtents.bottom = MAX(common.bottom, newExtents.bottom);
-			newExtents.right = MAX(common.right, newExtents.right);
+			if (rectangle_is_empty(&newExtents))
+			{
+				/* Check if the existing newExtents is empty. If it is empty, use
+				 * new common directly. We do not need to check common rectangle
+				 * because the rectangles_intersection() ensures that it is not empty.
+				 */
+				newExtents = common;
+			}
+			else
+			{
+				newExtents.top = MIN(common.top, newExtents.top);
+				newExtents.left = MIN(common.left, newExtents.left);
+				newExtents.bottom = MAX(common.bottom, newExtents.bottom);
+				newExtents.right = MAX(common.right, newExtents.right);
+			}
 		}
 	}
 
@@ -798,10 +812,12 @@ BOOL region16_intersect_rect(REGION16 *dst, const REGION16 *src, const RECTANGLE
 void region16_uninit(REGION16 *region)
 {
 	assert(region);
-	assert(region->data);
 
-	if (region->data->size)
-		free(region->data);
+	if (region->data)
+	{
+		if (region->data->size)
+			free(region->data);
 
-	region->data = NULL;
+		region->data = NULL;
+	}
 }

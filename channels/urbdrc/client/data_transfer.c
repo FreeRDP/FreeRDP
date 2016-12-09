@@ -223,15 +223,15 @@ static int urbdrc_process_io_control(URBDRC_CHANNEL_CALLBACK* callback, BYTE* da
 	data_read_UINT32(data + 12 + InputBufferSize, RequestId);
 
 	pdev = udevman->get_udevice_by_UsbDevice(udevman, UsbDevice);
-
 	if (pdev == NULL)
 		return 0;
 
 	InterfaceId = ((STREAM_ID_PROXY<<30) | pdev->get_ReqCompletion(pdev));
 
 	/**  process */
-	OutputBuffer = (BYTE *)malloc(OutputBufferSize);
-	memset(OutputBuffer, 0, OutputBufferSize);
+	OutputBuffer = (BYTE *)calloc(1, OutputBufferSize);
+	if (!OutputBuffer)
+		return ERROR_OUTOFMEMORY;
 
 	switch (IoControlCode)
 	{
@@ -280,14 +280,18 @@ static int urbdrc_process_io_control(URBDRC_CHANNEL_CALLBACK* callback, BYTE* da
 		default:
 			WLog_DBG(TAG, "urbdrc_process_io_control: unknown IoControlCode 0x%X", IoControlCode);
 			zfree(OutputBuffer);
-			return -1;
+			return ERROR_INVALID_OPERATION;
 			break;
 	}
 
 	offset = 28;
 	out_size = offset + OutputBufferSize;
-	out_data = (BYTE *) malloc(out_size);
-	memset(out_data, 0, out_size);
+	out_data = (BYTE *) calloc(1, out_size);
+	if (!out_data)
+	{
+		zfree(OutputBuffer);
+		return ERROR_OUTOFMEMORY;
+	}
 	data_write_UINT32(out_data + 0, InterfaceId); /** interface */
 	data_write_UINT32(out_data + 4, MessageId); /** message id */
 	data_write_UINT32(out_data + 8, IOCONTROL_COMPLETION); /** function id */
@@ -296,7 +300,7 @@ static int urbdrc_process_io_control(URBDRC_CHANNEL_CALLBACK* callback, BYTE* da
 	data_write_UINT32(out_data + 20, OutputBufferSize); /** Information */
 	data_write_UINT32(out_data + 24, OutputBufferSize); /** OutputBufferSize */
 
-	for (i=0;i<OutputBufferSize;i++)
+	for (i = 0; i < OutputBufferSize; i++)
 	{
 		data_write_BYTE(out_data + offset, OutputBuffer[i]); /** OutputBuffer */
 		offset += 1;
@@ -308,7 +312,7 @@ static int urbdrc_process_io_control(URBDRC_CHANNEL_CALLBACK* callback, BYTE* da
 	zfree(out_data);
 	zfree(OutputBuffer);
 
-	return 0;
+	return CHANNEL_RC_OK;
 }
 
 static int urbdrc_process_internal_io_control(URBDRC_CHANNEL_CALLBACK* callback, BYTE* data,
@@ -1281,7 +1285,7 @@ static int urb_os_feature_descriptor_request(URBDRC_CHANNEL_CALLBACK * callback,
 
 	data_read_UINT32(data + 0, RequestId);
 	data_read_BYTE(data + 4, Recipient); /** Recipient */
-	Recipient = Recipient && 0x1f;
+	Recipient = (Recipient & 0x1f); /* XXX: origin: Recipient && 0x1f !? */
 	data_read_BYTE(data + 5, InterfaceNumber); /** InterfaceNumber */
 	data_read_BYTE(data + 6, Ms_PageIndex); /** Ms_PageIndex */
 	data_read_UINT16(data + 7, Ms_featureDescIndex); /** Ms_featureDescIndex */

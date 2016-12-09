@@ -28,6 +28,7 @@ set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TEST
 foreach(test ${${MODULE_PREFIX}_TESTS})
 	get_filename_component(TestName ${test} NAME_WE)
 	add_test(${TestName} ${TESTING_OUTPUT_DIRECTORY}/${MODULE_NAME} ${TestName})
+	set_tests_properties(${TestName} PROPERTIES LABELS "comm" )
 endforeach()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Test")

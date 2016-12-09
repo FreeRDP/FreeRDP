@@ -240,8 +240,9 @@ int schannel_send(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phCont
 	ZeroMemory(&StreamSizes, sizeof(SecPkgContext_StreamSizes));
 	status = table->QueryContextAttributes(phContext, SECPKG_ATTR_STREAM_SIZES, &StreamSizes);
 	ioBufferLength = StreamSizes.cbHeader + StreamSizes.cbMaximumMessage + StreamSizes.cbTrailer;
-	ioBuffer = (BYTE*) malloc(ioBufferLength);
-	ZeroMemory(ioBuffer, ioBufferLength);
+	ioBuffer = (BYTE*) calloc(1, ioBufferLength);
+	if (!ioBuffer)
+		return -1;
 	pMessageBuffer = ioBuffer + StreamSizes.cbHeader;
 	CopyMemory(pMessageBuffer, buffer, length);
 	Buffers[0].pvBuffer = ioBuffer;
@@ -296,8 +297,9 @@ int schannel_recv(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phCont
 	ZeroMemory(&StreamSizes, sizeof(SecPkgContext_StreamSizes));
 	status = table->QueryContextAttributes(phContext, SECPKG_ATTR_STREAM_SIZES, &StreamSizes);
 	ioBufferLength = StreamSizes.cbHeader + StreamSizes.cbMaximumMessage + StreamSizes.cbTrailer;
-	ioBuffer = (BYTE*) malloc(ioBufferLength);
-	ZeroMemory(ioBuffer, ioBufferLength);
+	ioBuffer = (BYTE*) calloc(1, ioBufferLength);
+	if (!ioBuffer)
+		return -1;
 
 	if (!ReadFile(hPipe, ioBuffer, ioBufferLength, &NumberOfBytesRead, NULL))
 	{
@@ -401,6 +403,11 @@ static void* schannel_test_server_thread(void* arg)
 
 	cchNameString = CertGetNameString(pCertContext, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL, NULL, 0);
 	pszNameString = (LPTSTR) malloc(cchNameString * sizeof(TCHAR));
+	if (!pszNameString)
+	{
+		printf("Memory allocation failed\n");
+		return NULL;
+	}
 	cchNameString = CertGetNameString(pCertContext, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL, pszNameString, cchNameString);
 	_tprintf(_T("Certificate Name: %s\n"), pszNameString);
 	ZeroMemory(&cred, sizeof(SCHANNEL_CRED));
@@ -422,8 +429,16 @@ static void* schannel_test_server_thread(void* arg)
 
 	extraData = FALSE;
 	g_ServerWait = TRUE;
-	lpTokenIn = (BYTE*) malloc(cbMaxToken);
-	lpTokenOut = (BYTE*) malloc(cbMaxToken);
+	if (!(lpTokenIn = (BYTE*) malloc(cbMaxToken)))
+	{
+		printf("Memory allocation failed\n");
+		return NULL;
+	}
+	if (!(lpTokenOut = (BYTE*) malloc(cbMaxToken)))
+	{
+		printf("Memory allocation failed\n");
+		return NULL;
+	}
 	fContextReq = ASC_REQ_STREAM |
 				  ASC_REQ_SEQUENCE_DETECT | ASC_REQ_REPLAY_DETECT |
 				  ASC_REQ_CONFIDENTIALITY | ASC_REQ_EXTENDED_ERROR;
@@ -534,34 +549,42 @@ static void* schannel_test_server_thread(void* arg)
 int dump_test_certificate_files()
 {
 	FILE* fp;
-	char* fullpath;
+	char* fullpath = NULL;
+	int ret = -1;
+
 	/*
 	 * Output Certificate File
 	 */
 	fullpath = GetCombinedPath("/tmp", "localhost.crt");
-	fp = fopen(fullpath, "w+");
+	if (!fullpath)
+		return -1;
 
+	fp = fopen(fullpath, "w+");
 	if (fp)
 	{
-		fwrite((void*) test_localhost_crt, sizeof(test_localhost_crt), 1, fp);
+		if (fwrite((void*) test_localhost_crt, sizeof(test_localhost_crt), 1, fp) != 1)
+			goto out_fail;
 		fclose(fp);
+		fp = NULL;
 	}
-
 	free(fullpath);
+
 	/*
 	 * Output Private Key File
 	 */
 	fullpath = GetCombinedPath("/tmp", "localhost.key");
+	if (!fullpath)
+		return -1;
 	fp = fopen(fullpath, "w+");
+	if (fp && fwrite((void*) test_localhost_key, sizeof(test_localhost_key), 1, fp) != 1)
+			goto out_fail;
 
-	if (fp)
-	{
-		fwrite((void*) test_localhost_key, sizeof(test_localhost_key), 1, fp);
-		fclose(fp);
-	}
-
+	ret = 1;
+out_fail:
 	free(fullpath);
-	return 1;
+	if (fp)
+		fclose(fp);
+	return ret;
 }
 
 int TestSchannel(int argc, char* argv[])
@@ -610,7 +633,12 @@ int TestSchannel(int argc, char* argv[])
 		return -1;
 	}
 
-	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) schannel_test_server_thread, NULL, 0, NULL);
+	if (!(thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) schannel_test_server_thread, NULL, 0, NULL)))
+	{
+		printf("Failed to create server thread\n");
+		return -1;
+	}
+
 	table = InitSecurityInterface();
 	status = QuerySecurityPackageInfo(SCHANNEL_NAME, &pPackageInfo);
 
@@ -691,8 +719,16 @@ int TestSchannel(int argc, char* argv[])
 				  ISC_REQ_SEQUENCE_DETECT | ISC_REQ_REPLAY_DETECT |
 				  ISC_REQ_CONFIDENTIALITY | ISC_RET_EXTENDED_ERROR |
 				  ISC_REQ_MANUAL_CRED_VALIDATION | ISC_REQ_INTEGRITY;
-	lpTokenIn = (BYTE*) malloc(cbMaxToken);
-	lpTokenOut = (BYTE*) malloc(cbMaxToken);
+	if (!(lpTokenIn = (BYTE*) malloc(cbMaxToken)))
+	{
+		printf("Memory allocation failed\n");
+		return -1;
+	}
+	if (!(lpTokenOut = (BYTE*) malloc(cbMaxToken)))
+	{
+		printf("Memory allocation failed\n");
+		return -1;
+	}
 	ZeroMemory(&SecBuffer_in, sizeof(SecBuffer_in));
 	ZeroMemory(&SecBuffer_out, sizeof(SecBuffer_out));
 	ZeroMemory(&SecBufferDesc_in, sizeof(SecBufferDesc));

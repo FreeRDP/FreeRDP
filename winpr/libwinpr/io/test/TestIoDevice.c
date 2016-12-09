@@ -19,6 +19,9 @@ int TestIoDevice(int argc, char* argv[])
 			&uString, FILE_DEVICE_UNKNOWN,
 			0, FALSE, &pDeviceObject);
 
+	if (NtStatus != STATUS_SUCCESS)
+		return -1;
+
 	_IoDeleteDeviceEx(pDeviceObject);
 
 	_RtlFreeUnicodeString(&uString);

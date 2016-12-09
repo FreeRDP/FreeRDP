@@ -849,6 +849,12 @@ static BOOL _set_timeouts(WINPR_COMM *pComm, const SERIAL_TIMEOUTS *pTimeouts)
 	pComm->timeouts.WriteTotalTimeoutMultiplier = pTimeouts->WriteTotalTimeoutMultiplier;
 	pComm->timeouts.WriteTotalTimeoutConstant   = pTimeouts->WriteTotalTimeoutConstant;
 
+	CommLog_Print(WLOG_DEBUG, "ReadIntervalTimeout %d", pComm->timeouts.ReadIntervalTimeout);
+	CommLog_Print(WLOG_DEBUG, "ReadTotalTimeoutMultiplier %d", pComm->timeouts.ReadTotalTimeoutMultiplier);
+	CommLog_Print(WLOG_DEBUG, "ReadTotalTimeoutConstant %d", pComm->timeouts.ReadTotalTimeoutConstant);
+	CommLog_Print(WLOG_DEBUG, "WriteTotalTimeoutMultiplier %d", pComm->timeouts.WriteTotalTimeoutMultiplier);
+	CommLog_Print(WLOG_DEBUG, "WriteTotalTimeoutConstant %d", pComm->timeouts.WriteTotalTimeoutConstant);
+
 	return TRUE;
 }
 
@@ -1338,7 +1344,7 @@ static BOOL _get_commstatus(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus)
 	}
 	else
 	{
-		/* FIXME: "is 80 percent full" from the specs is ambiguous, need to track when it previously occured? */
+		/* FIXME: "is 80 percent full" from the specs is ambiguous, need to track when it previously * occurred? */
 		pComm->PendingEvents &= ~SERIAL_EV_RX80FULL;
 	}
 

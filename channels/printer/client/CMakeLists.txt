@@ -30,7 +30,7 @@ if(WITH_CUPS)
 	add_definitions(-DWITH_CUPS)
 endif()
 
-if(WIN32)
+if(WIN32 AND NOT UWP)
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS}
 		printer_win.c
 		printer_win.h)
@@ -48,6 +48,9 @@ endif()
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
-install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_ADDIN_PATH} EXPORT FreeRDPTargets)
+
+if (WITH_DEBUG_SYMBOLS AND MSVC AND NOT BUILTIN_CHANNELS AND BUILD_SHARED_LIBS)
+	install(FILES ${CMAKE_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${FREERDP_ADDIN_PATH} COMPONENT symbols)
+endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")

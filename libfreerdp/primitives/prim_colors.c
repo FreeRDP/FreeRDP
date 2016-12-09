@@ -23,9 +23,9 @@
 
 #include <freerdp/types.h>
 #include <freerdp/primitives.h>
+#include <freerdp/codec/color.h>
 
 #include "prim_internal.h"
-#include "prim_colors.h"
 
 #ifndef MINMAX
 #define MINMAX(_v_, _l_, _h_) \
@@ -33,11 +33,20 @@
 #endif /* !MINMAX */
 
 /* ------------------------------------------------------------------------- */
-
-pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(const INT16* pSrc[3], int srcStep,
-		BYTE* pDst, int dstStep, const prim_size_t* roi)
+static INLINE BYTE* writePixel(BYTE* dst, UINT32 format, BYTE r, BYTE g, BYTE b)
 {
-	int x, y;
+	UINT32 color = GetColor(format, r, g, b, 0);
+	WriteColor(dst, format, color);
+	return dst + GetBytesPerPixel(format);
+}
+
+
+static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(
+    const INT16* pSrc[3], UINT32 srcStep,
+    BYTE* pDst, UINT32 DstFormat, UINT32 dstStep,
+    const prim_size_t* roi)
+{
+	UINT32 x, y;
 	INT16 R, G, B;
 	float Y, Cb, Cr;
 	BYTE* pRGB = pDst;
@@ -51,13 +60,12 @@ pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(const INT16* pSrc[3], int srcStep,
 	{
 		for (x = 0; x < roi->width; x++)
 		{
-			Y = (float) (pY[0] + 4096);
-			Cb = (float) (pCb[0]);
-			Cr = (float) (pCr[0]);
-
-			R = ((INT16) (((Cr * 1.402525f) + Y + 16.0f)) >> 5);
-			G = ((INT16) ((Y - (Cb * 0.343730f) - (Cr * 0.714401f) + 16.0f)) >> 5);
-			B = ((INT16) (((Cb * 1.769905f) + Y + 16.0f)) >> 5);
+			Y = (float)(pY[0] + 4096);
+			Cb = (float)(pCb[0]);
+			Cr = (float)(pCr[0]);
+			R = ((INT16)(((Cr * 1.402525f) + Y + 16.0f)) >> 5);
+			G = ((INT16)((Y - (Cb * 0.343730f) - (Cr * 0.714401f) + 16.0f)) >> 5);
+			B = ((INT16)(((Cb * 1.769905f) + Y + 16.0f)) >> 5);
 
 			if (R < 0)
 				R = 0;
@@ -74,11 +82,7 @@ pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(const INT16* pSrc[3], int srcStep,
 			else if (B > 255)
 				B = 255;
 
-			*pRGB++ = (BYTE) B;
-			*pRGB++ = (BYTE) G;
-			*pRGB++ = (BYTE) R;
-			*pRGB++ = 0xFF;
-
+			pRGB = writePixel(pRGB, DstFormat, R, G, B);
 			pY++;
 			pCb++;
 			pCr++;
@@ -93,30 +97,31 @@ pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(const INT16* pSrc[3], int srcStep,
 	return PRIMITIVES_SUCCESS;
 }
 
-pstatus_t general_yCbCrToBGR_16s8u_P3AC4R(const INT16* pSrc[3], int srcStep,
-		BYTE* pDst, int dstStep, const prim_size_t* roi)
+static pstatus_t general_yCbCrToBGR_16s8u_P3AC4R(
+    const INT16* pSrc[3], UINT32 srcStep,
+    BYTE* pDst, UINT32 DstFormat, UINT32 dstStep,
+    const prim_size_t* roi)
 {
-	int x, y;
+	UINT32 x, y;
 	INT16 R, G, B;
 	float Y, Cb, Cr;
 	BYTE* pRGB = pDst;
 	const INT16* pY  = pSrc[0];
 	const INT16* pCb = pSrc[1];
 	const INT16* pCr = pSrc[2];
-	int srcPad = (srcStep - (roi->width * 2)) / 2;
-	int dstPad = (dstStep - (roi->width * 4)) / 4;
+	UINT32 srcPad = (srcStep - (roi->width * 2)) / 2;
+	UINT32 dstPad = (dstStep - (roi->width * 4)) / 4;
 
 	for (y = 0; y < roi->height; y++)
 	{
 		for (x = 0; x < roi->width; x++)
 		{
-			Y = (float) (pY[0] + 4096);
-			Cb = (float) (pCb[0]);
-			Cr = (float) (pCr[0]);
-
-			R = ((INT16) (((Cr * 1.402525f) + Y + 16.0f)) >> 5);
-			G = ((INT16) ((Y - (Cb * 0.343730f) - (Cr * 0.714401f) + 16.0f)) >> 5);
-			B = ((INT16) (((Cb * 1.769905f) + Y + 16.0f)) >> 5);
+			Y = (float)(pY[0] + 4096);
+			Cb = (float)(pCb[0]);
+			Cr = (float)(pCr[0]);
+			R = ((INT16)(((Cr * 1.402525f) + Y + 16.0f)) >> 5);
+			G = ((INT16)((Y - (Cb * 0.343730f) - (Cr * 0.714401f) + 16.0f)) >> 5);
+			B = ((INT16)(((Cb * 1.769905f) + Y + 16.0f)) >> 5);
 
 			if (R < 0)
 				R = 0;
@@ -133,11 +138,7 @@ pstatus_t general_yCbCrToBGR_16s8u_P3AC4R(const INT16* pSrc[3], int srcStep,
 			else if (B > 255)
 				B = 255;
 
-			*pRGB++ = (BYTE) R;
-			*pRGB++ = (BYTE) G;
-			*pRGB++ = (BYTE) B;
-			*pRGB++ = 0xFF;
-
+			pRGB = writePixel(pRGB, DstFormat, R, G, B);
 			pY++;
 			pCb++;
 			pCr++;
@@ -154,10 +155,10 @@ pstatus_t general_yCbCrToBGR_16s8u_P3AC4R(const INT16* pSrc[3], int srcStep,
 
 /* ------------------------------------------------------------------------- */
 
-pstatus_t general_yCbCrToRGB_16s16s_P3P3(
-	const INT16 *pSrc[3],  INT32 srcStep,
-	INT16 *pDst[3],  INT32 dstStep,
-	const prim_size_t *roi)	/* region of interest */
+static pstatus_t general_yCbCrToRGB_16s16s_P3P3(
+    const INT16* pSrc[3],  INT32 srcStep,
+    INT16* pDst[3],  INT32 dstStep,
+    const prim_size_t* roi)	/* region of interest */
 {
 	/**
 	 * The decoded YCbCr coeffectients are represented as 11.5 fixed-point
@@ -170,29 +171,29 @@ pstatus_t general_yCbCrToRGB_16s16s_P3P3(
 	 * by << 5 when interpreted as INT16.
 	 * It was scaled in the quantization phase, so we must scale it back here.
 	 */
-	const INT16 *yptr  = pSrc[0];
-	const INT16 *cbptr = pSrc[1];
-	const INT16 *crptr = pSrc[2];
-	INT16 *rptr = pDst[0];
-	INT16 *gptr = pDst[1];
-	INT16 *bptr = pDst[2];
-	int srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
-	int dstbump = (dstStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
-	int y;
+	const INT16* yptr  = pSrc[0];
+	const INT16* cbptr = pSrc[1];
+	const INT16* crptr = pSrc[2];
+	INT16* rptr = pDst[0];
+	INT16* gptr = pDst[1];
+	INT16* bptr = pDst[2];
+	UINT32 srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
+	UINT32 dstbump = (dstStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
+	UINT32 y;
 
-	for (y=0; y<roi->height; y++)
+	for (y = 0; y < roi->height; y++)
 	{
-		int x;
-		for (x=0; x<roi->width; ++x)
+		UINT32 x;
+
+		for (x = 0; x < roi->width; ++x)
 		{
 			/* INT32 is used intentionally because we calculate
 			 * with shifted factors!
 			 */
-			INT32 y  = (INT32) (*yptr++);
-			INT32 cb = (INT32) (*cbptr++);
-			INT32 cr = (INT32) (*crptr++);
-			INT32 r,g,b;
-
+			INT32 y  = (INT32)(*yptr++);
+			INT32 cb = (INT32)(*cbptr++);
+			INT32 cr = (INT32)(*crptr++);
+			INT32 r, g, b;
 			/*
 			 * This is the slow floating point version kept here for reference.
 			 * y = y + 4096; // 128<<5=4096 so that we can scale the sum by>>5
@@ -203,7 +204,6 @@ pstatus_t general_yCbCrToRGB_16s16s_P3P3(
 			 * cb_g_buf[i] = MINMAX(g>>5, 0, 255);
 			 * cr_b_buf[i] = MINMAX(b>>5, 0, 255);
 			 */
-
 			/*
 			 * We scale the factors by << 16 into 32-bit integers in order to
 			 * avoid slower floating point multiplications.  Since the final
@@ -214,16 +214,15 @@ pstatus_t general_yCbCrToRGB_16s16s_P3P3(
 			 * G: 0.344 << 16 = 22544, 0.714 << 16 = 46792
 			 * B: 1.770 << 16 = 115998
 			 */
-			y = (y+4096)<<16;
-
-			r = y + cr*91947;
-			g = y - cb*22544 - cr*46792;
-			b = y + cb*115998;
-
-			*rptr++ = MINMAX(r>>21, 0, 255);
-			*gptr++ = MINMAX(g>>21, 0, 255);
-			*bptr++ = MINMAX(b>>21, 0, 255);
+			y = (y + 4096) << 16;
+			r = y + cr * 91947;
+			g = y - cb * 22544 - cr * 46792;
+			b = y + cb * 115998;
+			*rptr++ = MINMAX(r >> 21, 0, 255);
+			*gptr++ = MINMAX(g >> 21, 0, 255);
+			*bptr++ = MINMAX(b >> 21, 0, 255);
 		}
+
 		yptr  += srcbump;
 		cbptr += srcbump;
 		crptr += srcbump;
@@ -231,14 +230,15 @@ pstatus_t general_yCbCrToRGB_16s16s_P3P3(
 		gptr += dstbump;
 		bptr += dstbump;
 	}
+
 	return PRIMITIVES_SUCCESS;
 }
 
 /* ------------------------------------------------------------------------- */
-pstatus_t general_RGBToYCbCr_16s16s_P3P3(
-	const INT16 *pSrc[3],  INT32 srcStep,
-	INT16 *pDst[3],  INT32 dstStep,
-	const prim_size_t *roi)	/* region of interest */
+static pstatus_t general_RGBToYCbCr_16s16s_P3P3(
+    const INT16* pSrc[3],  INT32 srcStep,
+    INT16* pDst[3],  INT32 dstStep,
+    const prim_size_t* roi)	/* region of interest */
 {
 	/* The encoded YCbCr coefficients are represented as 11.5 fixed-point
 	 * numbers:
@@ -250,36 +250,36 @@ pstatus_t general_RGBToYCbCr_16s16s_P3P3(
 	 * is scaled by << 5 when interpreted as INT16.
 	 * It will be scaled down to original during the quantization phase.
 	 */
-	const INT16 *rptr = pSrc[0];
-	const INT16 *gptr = pSrc[1];
-	const INT16 *bptr = pSrc[2];
-	INT16 *yptr  = pDst[0];
-	INT16 *cbptr = pDst[1];
-	INT16 *crptr = pDst[2];
-	int srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
-	int dstbump = (dstStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
-	int y;
+	const INT16* rptr = pSrc[0];
+	const INT16* gptr = pSrc[1];
+	const INT16* bptr = pSrc[2];
+	INT16* yptr  = pDst[0];
+	INT16* cbptr = pDst[1];
+	INT16* crptr = pDst[2];
+	UINT32 srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
+	UINT32 dstbump = (dstStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
+	UINT32 y;
 
-	for (y=0; y<roi->height; y++)
+	for (y = 0; y < roi->height; y++)
 	{
-		int x;
-		for (x=0; x<roi->width; ++x)
+		UINT32 x;
+
+		for (x = 0; x < roi->width; ++x)
 		{
 			/* INT32 is used intentionally because we calculate with
 			 * shifted factors!
 			 */
-			INT32 r = (INT32) (*rptr++);
-			INT32 g = (INT32) (*gptr++);
-			INT32 b = (INT32) (*bptr++);
-
+			INT32 r = (INT32)(*rptr++);
+			INT32 g = (INT32)(*gptr++);
+			INT32 b = (INT32)(*bptr++);
 			/* We scale the factors by << 15 into 32-bit integers in order
 			 * to avoid slower floating point multiplications.  Since the
 			 * terms need to be scaled by << 5 we simply scale the final
 			 * sum by >> 10
 			 *
-			 * Y:  0.299000 << 15 = 9798,  0.587000 << 15 = 19235, 
+			 * Y:  0.299000 << 15 = 9798,  0.587000 << 15 = 19235,
 			 *     0.114000 << 15 = 3735
-			 * Cb: 0.168935 << 15 = 5535,  0.331665 << 15 = 10868, 
+			 * Cb: 0.168935 << 15 = 5535,  0.331665 << 15 = 10868,
 			 *     0.500590 << 15 = 16403
 			 * Cr: 0.499813 << 15 = 16377, 0.418531 << 15 = 13714,
 			 *     0.081282 << 15 = 2663
@@ -287,11 +287,11 @@ pstatus_t general_RGBToYCbCr_16s16s_P3P3(
 			INT32 y  = (r *  9798 + g *  19235 + b *  3735) >> 10;
 			INT32 cb = (r * -5535 + g * -10868 + b * 16403) >> 10;
 			INT32 cr = (r * 16377 + g * -13714 + b * -2663) >> 10;
-
 			*yptr++  = (INT16) MINMAX(y - 4096, -4096, 4095);
 			*cbptr++ = (INT16) MINMAX(cb, -4096, 4095);
 			*crptr++ = (INT16) MINMAX(cr, -4096, 4095);
 		}
+
 		yptr  += srcbump;
 		cbptr += srcbump;
 		crptr += srcbump;
@@ -299,39 +299,38 @@ pstatus_t general_RGBToYCbCr_16s16s_P3P3(
 		gptr += dstbump;
 		bptr += dstbump;
 	}
+
 	return PRIMITIVES_SUCCESS;
 }
 
 /* ------------------------------------------------------------------------- */
-pstatus_t general_RGBToRGB_16s8u_P3AC4R(
-	const INT16 *pSrc[3],	/* 16-bit R,G, and B arrays */
-	int srcStep,			/* bytes between rows in source data */
-	BYTE *pDst,			/* 32-bit interleaved ARGB (ABGR?) data */
-	int dstStep,			/* bytes between rows in dest data */
-	const prim_size_t *roi)	/* region of interest */
+static pstatus_t general_RGBToRGB_16s8u_P3AC4R(
+    const INT16* const pSrc[3],	/* 16-bit R,G, and B arrays */
+    UINT32 srcStep,			/* bytes between rows in source data */
+    BYTE* pDst,			/* 32-bit interleaved ARGB (ABGR?) data */
+    UINT32 dstStep,			/* bytes between rows in dest data */
+    UINT32 DstFormat,
+    const prim_size_t* roi)	/* region of interest */
 {
-	const INT16 *r  = pSrc[0];
-	const INT16 *g  = pSrc[1];
-	const INT16 *b  = pSrc[2];
-	BYTE *dst = pDst;
-	int x,y;
-	int srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
-	int dstbump = (dstStep - (roi->width * sizeof(UINT32)));
+	const INT16* r  = pSrc[0];
+	const INT16* g  = pSrc[1];
+	const INT16* b  = pSrc[2];
+	BYTE* dst = pDst;
+	UINT32 x, y;
+	UINT32 srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
+	UINT32 dstbump = (dstStep - (roi->width * sizeof(UINT32)));
 
-	for (y=0; y<roi->height; ++y)
+	for (y = 0; y < roi->height; ++y)
 	{
-		for (x=0; x<roi->width; ++x)
-		{
-			*dst++ = (BYTE) (*b++);
-			*dst++ = (BYTE) (*g++);
-			*dst++ = (BYTE) (*r++);
-			*dst++ = ((BYTE) (0xFFU));
-		}
+		for (x = 0; x < roi->width; ++x)
+			dst = writePixel(dst, DstFormat, *r++, *g++, *b++);
+
 		dst += dstbump;
 		r += srcbump;
 		g += srcbump;
 		b += srcbump;
 	}
+
 	return PRIMITIVES_SUCCESS;
 }
 
@@ -343,13 +342,4 @@ void primitives_init_colors(primitives_t* prims)
 	prims->yCbCrToRGB_16s16s_P3P3 = general_yCbCrToRGB_16s16s_P3P3;
 	prims->RGBToYCbCr_16s16s_P3P3 = general_RGBToYCbCr_16s16s_P3P3;
 	prims->RGBToRGB_16s8u_P3AC4R  = general_RGBToRGB_16s8u_P3AC4R;
-
-	primitives_init_colors_opt(prims);
 }
-
-/* ------------------------------------------------------------------------- */
-void primitives_deinit_colors(primitives_t* prims)
-{
-	/* Nothing to do. */
-}
-

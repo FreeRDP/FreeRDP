@@ -437,7 +437,7 @@ void rdtk_nine_patch_free(rdtkNinePatch* ninePatch)
 int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 {
 	int status;
-	wImage* image;
+	wImage* image = NULL;
 	rdtkNinePatch* ninePatch;
 
 	if (!engine->button9patch)

@@ -25,13 +25,15 @@
 
 double metrics_write_bytes(rdpMetrics* metrics, UINT32 UncompressedBytes, UINT32 CompressedBytes)
 {
-	double CompressionRatio;
+	double CompressionRatio = 0.0;
 
 	metrics->TotalUncompressedBytes += UncompressedBytes;
 	metrics->TotalCompressedBytes += CompressedBytes;
 
-	CompressionRatio = ((double) CompressedBytes) / ((double) UncompressedBytes);
-	metrics->TotalCompressionRatio = ((double) metrics->TotalCompressedBytes) / ((double) metrics->TotalUncompressedBytes);
+	if (UncompressedBytes != 0)
+		CompressionRatio = ((double) CompressedBytes) / ((double) UncompressedBytes);
+	if (metrics->TotalUncompressedBytes != 0)
+		metrics->TotalCompressionRatio = ((double) metrics->TotalCompressedBytes) / ((double) metrics->TotalUncompressedBytes);
 
 	return CompressionRatio;
 }
@@ -52,8 +54,5 @@ rdpMetrics* metrics_new(rdpContext* context)
 
 void metrics_free(rdpMetrics* metrics)
 {
-	if (!metrics)
-		return;
-
 	free(metrics);
 }

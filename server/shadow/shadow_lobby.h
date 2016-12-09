@@ -30,7 +30,7 @@
 extern "C" {
 #endif
 
-int shadow_client_init_lobby(rdpShadowClient* client);
+BOOL shadow_client_init_lobby(rdpShadowServer* server);
 
 #ifdef __cplusplus
 }

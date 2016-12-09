@@ -18,10 +18,16 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/ssl.h>
 #include <winpr/thread.h>
+
+#ifdef WITH_OPENSSL
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -60,12 +66,15 @@ static void _winpr_openssl_locking(int mode, int type, const char* file, int lin
 
 static struct CRYPTO_dynlock_value* _winpr_openssl_dynlock_create(const char* file, int line)
 {
-	struct CRYPTO_dynlock_value* dynlock = (struct CRYPTO_dynlock_value*)
-										   malloc(sizeof(struct CRYPTO_dynlock_value));
+	struct CRYPTO_dynlock_value* dynlock;
 
-	if (dynlock)
+	if (!(dynlock = (struct CRYPTO_dynlock_value*) malloc(sizeof(struct CRYPTO_dynlock_value))))
+		return NULL;
+
+	if (!(dynlock->mutex = CreateMutex(NULL, FALSE, NULL)))
 	{
-		dynlock->mutex = CreateMutex(NULL, FALSE, NULL);
+		free(dynlock);
+		return NULL;
 	}
 
 	return dynlock;
@@ -119,7 +128,8 @@ static BOOL _winpr_openssl_initialize_locking(void)
 
 					while (i--)
 					{
-						CloseHandle(g_winpr_openssl_locks[i]);
+						if (locks[i])
+							CloseHandle(locks[i]);
 					}
 
 					free(locks);
@@ -273,3 +283,17 @@ BOOL winpr_CleanupSSL(DWORD flags)
 
 	return TRUE;
 }
+
+#else
+
+BOOL winpr_InitializeSSL(DWORD flags)
+{
+	return TRUE;
+}
+
+BOOL winpr_CleanupSSL(DWORD flags)
+{
+	return TRUE;
+}
+
+#endif

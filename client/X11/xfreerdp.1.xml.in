@@ -4,6 +4,7 @@ PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 	<!ENTITY syntax SYSTEM "xfreerdp-argument.1.xml">
 	<!ENTITY channels SYSTEM "xfreerdp-channels.1.xml">
+	<!ENTITY envvar SYSTEM "xfreerdp-envvar.1.xml">
 	<!ENTITY examples SYSTEM "xfreerdp-examples.1.xml">
 	]
 >
@@ -48,6 +49,8 @@ PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 	&syntax;
 
 	&channels;
+
+	&envvar;
 
 	&examples;
 

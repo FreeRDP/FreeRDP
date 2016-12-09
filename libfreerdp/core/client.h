@@ -29,6 +29,7 @@
 #include <freerdp/svc.h>
 #include <freerdp/peer.h>
 #include <freerdp/addin.h>
+#include <freerdp/api.h>
 
 #include <freerdp/client/channels.h>
 #include <freerdp/client/drdynvc.h>
@@ -93,10 +94,9 @@ struct rdp_channels
 
 	/* control for entry into MyVirtualChannelInit */
 	int can_call_init;
-	rdpSettings* settings;
 
 	/* true once freerdp_channels_post_connect is called */
-	int is_connected;
+	BOOL connected;
 
 	/* used for locating the channels for a given instance */
 	freerdp* instance;
@@ -104,6 +104,19 @@ struct rdp_channels
 	wMessageQueue* queue;
 
 	DrdynvcClientContext* drdynvc;
+	UINT64 openHandleSeq;
+	CRITICAL_SECTION channelsLock;
+	wHashTable* openHandles;
 };
 
+FREERDP_LOCAL rdpChannels* freerdp_channels_new(freerdp* instance);
+FREERDP_LOCAL UINT freerdp_channels_disconnect(rdpChannels* channels,
+        freerdp* instance);
+FREERDP_LOCAL void freerdp_channels_close(rdpChannels* channels,
+        freerdp* instance);
+FREERDP_LOCAL void freerdp_channels_free(rdpChannels* channels);
+FREERDP_LOCAL UINT freerdp_channels_pre_connect(rdpChannels* channels,
+        freerdp* instance);
+FREERDP_LOCAL UINT freerdp_channels_post_connect(rdpChannels* channels,
+        freerdp* instance);
 #endif /* FREERDP_CORE_CLIENT_H */

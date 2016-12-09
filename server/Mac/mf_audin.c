@@ -3,6 +3,8 @@
  * FreeRDP Mac OS X Server (Audio Input)
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,24 +36,41 @@ static const AUDIO_FORMAT supported_audio_formats[] =
 	{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, NULL }
 };
 
-static void mf_peer_audin_opening(audin_server_context* context)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT mf_peer_audin_opening(audin_server_context* context)
 {
 	context->SelectFormat(context, 0);
+	return CHANNEL_RC_OK;
 }
 
-static void mf_peer_audin_open_result(audin_server_context* context, UINT32 result)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT mf_peer_audin_open_result(audin_server_context* context, UINT32 result)
 {
-
+	return CHANNEL_RC_OK;
 }
 
-static void mf_peer_audin_receive_samples(audin_server_context* context, const void* buf, int nframes)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT mf_peer_audin_receive_samples(audin_server_context* context, const void* buf, int nframes)
 {
-
+	return CHANNEL_RC_OK;
 }
 
 void mf_peer_audin_init(mfPeerContext* context)
 {
 	context->audin = audin_server_context_new(context->vcm);
+	context->audin->rdpcontext = &context->_p;
 	context->audin->data = context;
 	
 	context->audin->server_formats = supported_audio_formats;

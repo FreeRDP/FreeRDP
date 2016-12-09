@@ -46,6 +46,10 @@ typedef struct xf_window xfWindow;
 #define _NET_WM_MOVERESIZE_MOVE_KEYBOARD    10   /* move via keyboard */
 #define _NET_WM_MOVERESIZE_CANCEL           11   /* cancel operation */
 
+#define _NET_WM_STATE_REMOVE 0 /* remove/unset property */
+#define _NET_WM_STATE_ADD 1 /* add/set property */
+#define _NET_WM_STATE_TOGGLE 2 /* toggle property */
+
 enum xf_localmove_state
 {
 	LMS_NOT_ACTIVE,
@@ -76,7 +80,6 @@ struct xf_window
 	int shmid;
 	Window handle;
 	Window* xfwin;
-	BOOL fullscreen;
 	BOOL decorations;
 	BOOL is_mapped;
 	BOOL is_transient;
@@ -99,24 +102,27 @@ struct xf_app_window
 	UINT32 dwExStyle;
 	UINT32 showState;
 
-	UINT32 clientOffsetX;
-	UINT32 clientOffsetY;
+	INT32 clientOffsetX;
+	INT32 clientOffsetY;
 	UINT32 clientAreaWidth;
 	UINT32 clientAreaHeight;
 
-	UINT32 windowOffsetX;
-	UINT32 windowOffsetY;
-	UINT32 windowClientDeltaX;
-	UINT32 windowClientDeltaY;
+	INT32 windowOffsetX;
+	INT32 windowOffsetY;
+	INT32 windowClientDeltaX;
+	INT32 windowClientDeltaY;
 	UINT32 windowWidth;
 	UINT32 windowHeight;
 	UINT32 numWindowRects;
 	RECTANGLE_16* windowRects;
 
-	UINT32 visibleOffsetX;
-	UINT32 visibleOffsetY;
+	INT32 visibleOffsetX;
+	INT32 visibleOffsetY;
 	UINT32 numVisibilityRects;
 	RECTANGLE_16* visibilityRects;
+
+	UINT32 localWindowOffsetCorrX;
+	UINT32 localWindowOffsetCorrY;
 
 	GC gc;
 	int shmid;
@@ -140,7 +146,7 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen);
 void xf_SetWindowDecorations(xfContext* xfc, Window window, BOOL show);
 void xf_SetWindowUnlisted(xfContext* xfc, Window window);
 
-xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int height, BOOL decorations);
+xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int height);
 void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width, int height);
 void xf_DestroyDesktopWindow(xfContext* xfc, xfWindow* window);
 
@@ -154,7 +160,7 @@ void xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int wid
 void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state);
 //void xf_SetWindowIcon(xfContext* xfc, xfAppWindow* appWindow, rdpIcon* icon);
 void xf_SetWindowRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rects, int nrects);
-void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rects, int nrects);
+void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, UINT32 rectsOffsetX, UINT32 rectsOffsetY, RECTANGLE_16* rects, int nrects);
 void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UINT32 ex_style);
 void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width, int height);
 void xf_DestroyWindow(xfContext* xfc, xfAppWindow* appWindow);

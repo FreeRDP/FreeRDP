@@ -108,7 +108,8 @@ int main(int argc, char* argv[])
 
 	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
 	
-	instance = freerdp_listener_new();
+	if (!(instance = freerdp_listener_new()))
+		return 1;
 
 	instance->PeerAccepted = mf_peer_accepted;
 
