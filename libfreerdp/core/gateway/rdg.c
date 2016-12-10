@@ -902,16 +902,10 @@ BOOL rdg_tls_out_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int tim
 	BIO* bufferedBio = NULL;
 	rdpSettings* settings = rdg->settings;
 	const char *peerHostname = settings->GatewayHostname;
-	int peerPort = settings->GatewayPort;
-	BOOL isProxyConnection = FALSE;
+	UINT16 peerPort = settings->GatewayPort;
+	BOOL isProxyConnection = proxy_prepare(settings, &peerHostname, &peerPort, TRUE);
 
 	assert(hostname != NULL);
-
-	if (settings->HTTPProxyEnabled) {
-		peerHostname = settings->HTTPProxyHostname;
-		peerPort = settings->HTTPProxyPort;
-		isProxyConnection = TRUE;
-	}
 
 	sockfd = freerdp_tcp_connect(rdg->context, settings, peerHostname,
 					peerPort, timeout);
@@ -942,8 +936,8 @@ BOOL rdg_tls_out_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int tim
 	status = BIO_set_nonblock(bufferedBio, TRUE);
 
 	if (isProxyConnection) {
-		if (!http_proxy_connect(bufferedBio, settings->GatewayHostname, settings->GatewayPort))
-			return -1;
+		if (!proxy_connect(settings, bufferedBio, settings->GatewayHostname, settings->GatewayPort))
+			return FALSE;
 	}
 
 	if (!status)
@@ -978,9 +972,9 @@ BOOL rdg_tls_in_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int time
 
 	assert(hostname != NULL);
 
-	if (settings->HTTPProxyEnabled) {
-		peerHostname = settings->HTTPProxyHostname;
-		peerPort = settings->HTTPProxyPort;
+	if (settings->ProxyType) {
+		peerHostname = settings->ProxyHostname;
+		peerPort = settings->ProxyPort;
 		isProxyConnection = TRUE;
 	}
 

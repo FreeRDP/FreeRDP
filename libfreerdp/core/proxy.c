@@ -17,6 +17,7 @@
  * limitations under the License.
  */
 
+#include <ctype.h>
 
 #include "proxy.h"
 #include "freerdp/settings.h"
@@ -27,40 +28,101 @@
 #define CRLF "\r\n"
 #define TAG FREERDP_TAG("core.proxy")
 
-void http_proxy_read_environment(rdpSettings *settings, char *envname)
+BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port);
+void proxy_read_environment(rdpSettings *settings, char *envname);
+
+BOOL proxy_prepare(rdpSettings *settings, const char **lpPeerHostname, UINT16 *lpPeerPort, BOOL isHTTPS)
+{
+	/* For TSGateway, find the system HTTPS proxy automatically */
+	if (!settings->ProxyType)
+		proxy_read_environment(settings, "https_proxy");
+
+	if (!settings->ProxyType)
+		proxy_read_environment(settings, "HTTPS_PROXY");
+
+	if (settings->ProxyType) {
+		*lpPeerHostname = settings->ProxyHostname;
+		*lpPeerPort = settings->ProxyPort;
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+void proxy_read_environment(rdpSettings *settings, char *envname)
 {
 	char env[256];
 	DWORD envlen;
-	char *hostname, *pport;
 
-	envlen = GetEnvironmentVariableA(envname, env, sizeof(env));
+	envlen = GetEnvironmentVariableA(envname, env, sizeof(env)-1);
 	if(!envlen)
 		return;
 
-	if (strncmp(env, "http://", 7)) {
-		WLog_ERR(TAG, "Proxy url must have scheme http. Ignoring.");
-		return;
+	env[envlen] = '\0';
+
+	proxy_parse_uri(settings, env);
+}
+
+BOOL proxy_parse_uri(rdpSettings *settings, const char *uri)
+{
+	const char *hostname, *pport;
+	const char *protocol;
+	const char *p;
+	int hostnamelen;
+
+	p = strstr(uri, "://");
+	if (p) {
+		protocol = uri;
+		if (p == uri+4 && !strncmp("http", uri, 4)) {
+			settings->ProxyType = PROXY_TYPE_HTTP;
+		} else {
+			WLog_ERR(TAG, "Only HTTP proxys supported by now");
+			return FALSE;
+		}
+		uri = p + 3;
+	} else {
+		WLog_ERR(TAG, "No scheme in proxy URI");
+		return FALSE;
 	}
 
-	settings->HTTPProxyEnabled = TRUE;
-
-	hostname = env + 7;
+	hostname = uri;
 	pport = strchr(hostname, ':');
 	if (pport) {
-		*pport = '\0';
-		settings->HTTPProxyPort = atoi(pport+1);
+		if (!isdigit(*(pport+1))) {
+			WLog_ERR(TAG, "Could not parse proxy port");
+			return FALSE;
+		}
+		settings->ProxyPort = atoi(pport+1);
 	}
 	else {
 		/* The default is 80. Also for Proxys. */
-		settings->HTTPProxyPort = 80;
+		settings->ProxyPort = 80;
 
 		pport = strchr(hostname, '/');
-		if(pport)
-			*pport = '\0';
 	}
 
-	freerdp_set_param_string(settings, FreeRDP_HTTPProxyHostname, hostname);
-	WLog_INFO(TAG, "Parsed proxy configuration: %s:%d", settings->HTTPProxyHostname, settings->HTTPProxyPort);
+	if(pport) {
+		hostnamelen = pport - hostname;
+	} else {
+		hostnamelen = strlen(hostname);
+	}
+
+	settings->ProxyHostname = strndup(hostname, hostnamelen);
+	WLog_INFO(TAG, "Parsed proxy configuration: %s://%s:%d", protocol, settings->ProxyHostname, settings->ProxyPort);
+	return TRUE;
+}
+
+BOOL proxy_connect(rdpSettings *settings, BIO *bufferedBio, const char *hostname, UINT16 port)
+{
+	switch (settings->ProxyType) {
+	case PROXY_TYPE_NONE:
+		return TRUE;
+	case PROXY_TYPE_HTTP:
+		return http_proxy_connect(bufferedBio, hostname, port);
+	default:
+		WLog_ERR(TAG, "Invalid internal proxy configuration");
+		return FALSE;
+	}
 }
 
 BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)

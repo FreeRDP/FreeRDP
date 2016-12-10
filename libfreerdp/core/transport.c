@@ -51,7 +51,6 @@
 #include "fastpath.h"
 #include "transport.h"
 #include "rdp.h"
-#include "proxy.h"
 
 #define TAG FREERDP_TAG("core.transport")
 
@@ -225,13 +224,6 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname,
 
 	if (transport->GatewayEnabled)
 	{
-		/* For TSGateway, find the system HTTPS proxy automatically */
-		if (!transport->settings->HTTPProxyEnabled)
-			http_proxy_read_environment(settings, "https_proxy");
-
-		if (!transport->settings->HTTPProxyEnabled)
-			http_proxy_read_environment(settings, "HTTPS_PROXY");
-
 		if (!status && settings->GatewayHttpTransport)
 		{
 			transport->rdg = rdg_new(transport);

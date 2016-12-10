@@ -760,14 +760,8 @@ int rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 	rdpContext* context = rpc->context;
 	rdpSettings* settings = context->settings;
 	const char *peerHostname = settings->GatewayHostname;
-	int peerPort = settings->GatewayPort;
-	BOOL isProxyConnection = FALSE;
-
-	if (settings->HTTPProxyEnabled) {
-		peerHostname = settings->HTTPProxyHostname;
-		peerPort = settings->HTTPProxyPort;
-		isProxyConnection = TRUE;
-	}
+	UINT16 peerPort = settings->GatewayPort;
+	BOOL isProxyConnection = proxy_prepare(settings, &peerHostname, &peerPort, TRUE);
 
 	sockfd = freerdp_tcp_connect(context, settings, peerHostname,
 					peerPort, timeout);
@@ -793,7 +787,7 @@ int rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 		return -1;
 
 	if (isProxyConnection) {
-		if (!http_proxy_connect(bufferedBio, settings->GatewayHostname, settings->GatewayPort))
+		if (!proxy_connect(settings, bufferedBio, settings->GatewayHostname, settings->GatewayPort))
 			return -1;
 	}
 

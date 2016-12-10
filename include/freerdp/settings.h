@@ -470,6 +470,9 @@ struct _RDPDR_PARALLEL
 };
 typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 
+#define PROXY_TYPE_NONE		0
+#define PROXY_TYPE_HTTP		1
+
 /* Settings */
 
 #ifdef __GNUC__
@@ -686,9 +689,9 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_GatewayRpcTransport				1994
 #define FreeRDP_GatewayHttpTransport				1995
 #define FreeRDP_GatewayUdpTransport				1996
-#define FreeRDP_HTTPProxyEnabled				2015
-#define FreeRDP_HTTPProxyHostname				2016
-#define FreeRDP_HTTPProxyPort   				2017
+#define FreeRDP_ProxyType					2015
+#define FreeRDP_ProxyHostname					2016
+#define FreeRDP_ProxyPort   					2017
 #define FreeRDP_RemoteApplicationMode				2112
 #define FreeRDP_RemoteApplicationName				2113
 #define FreeRDP_RemoteApplicationIcon				2114
@@ -1145,13 +1148,13 @@ struct rdp_settings
 	ALIGN64 BOOL GatewayRpcTransport; /* 1994 */
 	ALIGN64 BOOL GatewayHttpTransport; /* 1995 */
 	ALIGN64 BOOL GatewayUdpTransport; /* 1996 */
-	UINT64 padding2048[2048 - 1997]; /* 1997 */
-	UINT64 padding2112[2112 - 2048]; /* 2048 */
+	UINT64 padding2048[2015 - 1997]; /* 1997 */
 
-	/* HTTP Proxy */
-	ALIGN64 BOOL HTTPProxyEnabled;	/* 1995 */
-	ALIGN64 char* HTTPProxyHostname;	/* 1996 */
-	ALIGN64 UINT32 HTTPProxyPort;	/* 1997 */
+	/* Proxy */
+	ALIGN64 UINT32 ProxyType; 	/* 2015 */
+	ALIGN64 char* ProxyHostname;	/* 2016 */
+	ALIGN64 UINT16 ProxyPort;	/* 2017 */
+	UINT64 padding2112[2112 - 2018]; /* 2018 */
 
 	/**
 	 * RemoteApp

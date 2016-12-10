@@ -23,7 +23,8 @@
 #include "freerdp/settings.h"
 #include <openssl/bio.h>
 
-void http_proxy_read_environment(rdpSettings *settings, char *envname);
-BOOL http_proxy_connect(BIO *bio, const char* hostname, UINT16 port);
+BOOL proxy_prepare(rdpSettings *settings, const char **lpPeerHostname, UINT16 *lpPeerPort, BOOL isHTTPS);
+BOOL proxy_parse_uri(rdpSettings *settings, const char *uri);
+BOOL proxy_connect(rdpSettings *settings, BIO *bio, const char* hostname, UINT16 port);
 
 #endif
