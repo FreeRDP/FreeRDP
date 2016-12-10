@@ -25,6 +25,7 @@
 #include "winpr/environment.h"	/* For GetEnvironmentVariableA */
 
 #define CRLF "\r\n"
+#define TAG FREERDP_TAG("core.proxy")
 
 void http_proxy_read_environment(rdpSettings *settings, char *envname)
 {
@@ -37,7 +38,7 @@ void http_proxy_read_environment(rdpSettings *settings, char *envname)
 		return;
 
 	if (strncmp(env, "http://", 7)) {
-		fprintf(stderr, "Proxy url must have scheme http. Ignoring.\n");
+		WLog_ERR(TAG, "Proxy url must have scheme http. Ignoring.");
 		return;
 	}
 
@@ -59,6 +60,7 @@ void http_proxy_read_environment(rdpSettings *settings, char *envname)
 	}
 
 	freerdp_set_param_string(settings, FreeRDP_HTTPProxyHostname, hostname);
+	WLog_INFO(TAG, "Parsed proxy configuration: %s:%d", settings->HTTPProxyHostname, settings->HTTPProxyPort);
 }
 
 BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)
@@ -84,7 +86,7 @@ BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)
 	status = BIO_write(bufferedBio, Stream_Buffer(s), Stream_GetPosition(s));
 
 	if (status != Stream_GetPosition(s)) {
-		fprintf(stderr, "HTTP proxy: failed to write CONNECT request\n");
+		WLog_ERR(TAG, "HTTP proxy: failed to write CONNECT request");
 		return FALSE;
 	}
 
@@ -98,7 +100,7 @@ BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)
 	resultsize = 0;
 	while ( strstr(recv_buf, CRLF CRLF) == NULL ) {
 		if (resultsize >= sizeof(recv_buf)-1) {
-			fprintf(stderr, "HTTP Reply headers too long.\n");
+			WLog_ERR(TAG, "HTTP Reply headers too long.");
 			return FALSE;
 		}
 
@@ -109,11 +111,12 @@ BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)
 				USleep(100);
 				continue;
 			}
+			WLog_ERR(TAG, "Failed reading reply from HTTP proxy (Status %d)", status);
 			return FALSE;
 		}
 		else if (status == 0) {
 			/* Error? */
-			fprintf(stderr, "BIO_read() returned zero\n");
+			WLog_ERR(TAG, "Failed reading reply from HTTP proxy (BIO_read returned zero)");
 			return FALSE;
 		}
 		resultsize += status;
@@ -128,7 +131,7 @@ BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)
 
 	*eol = '\0';
 
-	fprintf(stderr, "HTTP proxy: %s\n", recv_buf);
+	WLog_INFO(TAG, "HTTP Proxy: %s", recv_buf);
 
 	if (strlen(recv_buf) < 12) {
 		return FALSE;
