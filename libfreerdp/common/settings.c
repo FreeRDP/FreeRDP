@@ -2687,6 +2687,10 @@ int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 			tmp = &settings->GatewayDomain;
 			break;
 
+		case FreeRDP_HTTPProxyHostname:
+			tmp = &settings->HTTPProxyHostname;
+			break;
+
 		case FreeRDP_RemoteApplicationName:
 			tmp = &settings->RemoteApplicationName;
 			break;
