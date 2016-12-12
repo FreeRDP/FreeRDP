@@ -974,7 +974,7 @@ static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* clear,
 				return FALSE;
 			}
 
-			glyphEntry->pixels = tmp;
+			glyphEntry->pixels = (UINT32*)tmp;
 		}
 
 		if (!glyphEntry->pixels)
@@ -984,12 +984,21 @@ static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* clear,
 		}
 
 		if (ppGlyphData)
-			*ppGlyphData = glyphEntry->pixels;
+			*ppGlyphData = (BYTE*)glyphEntry->pixels;
 
 		return TRUE;
 	}
 
 	return TRUE;
+}
+
+static INLINE BOOL updateContextFormat(CLEAR_CONTEXT* clear, UINT32 DstFormat)
+{
+	if (!clear || !clear->nsc)
+		return FALSE;
+
+	clear->format = DstFormat;
+	return nsc_context_set_pixel_format(clear->nsc, DstFormat);
 }
 
 INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
@@ -1028,6 +1037,9 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
 		WLog_ERR(TAG, "stream short %lu [%lu expected]", Stream_GetRemainingLength(s), 2);
 		goto fail;
 	}
+
+	if (!updateContextFormat(clear, DstFormat))
+		goto fail;
 
 	Stream_Read_UINT8(s, glyphFlags);
 	Stream_Read_UINT8(s, seqNumber);
@@ -1140,7 +1152,7 @@ BOOL clear_context_reset(CLEAR_CONTEXT* clear)
 	clear->ShortVBarStorageCursor = 0;
 	return TRUE;
 }
-CLEAR_CONTEXT* clear_context_new(BOOL Compressor, UINT32 format)
+CLEAR_CONTEXT* clear_context_new(BOOL Compressor)
 {
 	CLEAR_CONTEXT* clear;
 	clear = (CLEAR_CONTEXT*) calloc(1, sizeof(CLEAR_CONTEXT));
@@ -1150,12 +1162,13 @@ CLEAR_CONTEXT* clear_context_new(BOOL Compressor, UINT32 format)
 
 	clear->Compressor = Compressor;
 	clear->nsc = nsc_context_new();
-	clear->format = format;
 
 	if (!clear->nsc)
 		goto error_nsc;
 
-	nsc_context_set_pixel_format(clear->nsc, format);
+	if (!updateContextFormat(clear, PIXEL_FORMAT_BGRX32))
+		goto error_nsc;
+
 	clear->TempSize = 512 * 512 * 4;
 	clear->TempBuffer = (BYTE*) malloc(clear->TempSize);
 

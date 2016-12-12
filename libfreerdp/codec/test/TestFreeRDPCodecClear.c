@@ -43,7 +43,7 @@ static BOOL test_ClearDecompressExample(UINT32 nr, const BYTE* pSrcData,
 {
 	int status;
 	BYTE pDstData[16384];
-	CLEAR_CONTEXT* clear = clear_context_new(FALSE, PIXEL_FORMAT_BGRA32);
+	CLEAR_CONTEXT* clear = clear_context_new(FALSE);
 
 	if (!clear)
 		return FALSE;
