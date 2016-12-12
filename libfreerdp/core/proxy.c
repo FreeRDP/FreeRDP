@@ -68,13 +68,14 @@ BOOL proxy_parse_uri(rdpSettings *settings, const char *uri)
 	const char *hostname, *pport;
 	const char *protocol;
 	const char *p;
+	UINT16 port;
 	int hostnamelen;
 
 	p = strstr(uri, "://");
 	if (p) {
-		protocol = uri;
 		if (p == uri+4 && !strncmp("http", uri, 4)) {
 			settings->ProxyType = PROXY_TYPE_HTTP;
+			protocol = "http";
 		} else {
 			WLog_ERR(TAG, "Only HTTP proxys supported by now");
 			return FALSE;
@@ -92,11 +93,11 @@ BOOL proxy_parse_uri(rdpSettings *settings, const char *uri)
 			WLog_ERR(TAG, "Could not parse proxy port");
 			return FALSE;
 		}
-		settings->ProxyPort = atoi(pport+1);
+		port = atoi(pport+1);
 	}
 	else {
 		/* The default is 80. Also for Proxys. */
-		settings->ProxyPort = 80;
+		port = 80;
 
 		pport = strchr(hostname, '/');
 	}
@@ -107,7 +108,14 @@ BOOL proxy_parse_uri(rdpSettings *settings, const char *uri)
 		hostnamelen = strlen(hostname);
 	}
 
-	settings->ProxyHostname = strndup(hostname, hostnamelen);
+	settings->ProxyHostname = calloc(1, hostnamelen + 1);
+	if (!settings->ProxyHostname) {
+		WLog_ERR(TAG, "Not enough memory");
+		return FALSE;
+	}
+	memcpy(settings->ProxyHostname, hostname, hostnamelen);
+	settings->ProxyPort = port;
+
 	WLog_INFO(TAG, "Parsed proxy configuration: %s://%s:%d", protocol, settings->ProxyHostname, settings->ProxyPort);
 	return TRUE;
 }
