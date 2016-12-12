@@ -51,16 +51,22 @@ BOOL proxy_prepare(rdpSettings *settings, const char **lpPeerHostname, UINT16 *l
 
 void proxy_read_environment(rdpSettings *settings, char *envname)
 {
-	char env[256];
 	DWORD envlen;
+	char *env;
 
-	envlen = GetEnvironmentVariableA(envname, env, sizeof(env)-1);
+	envlen = GetEnvironmentVariableA(envname, NULL, 0);
 	if(!envlen)
 		return;
 
-	env[envlen] = '\0';
+	env = calloc(1, envlen + 1);
+	if (!env) {
+		WLog_ERR(TAG, "Not enough memory");
+		return;
+	}
+	envlen = GetEnvironmentVariableA(envname, env, envlen);
 
 	proxy_parse_uri(settings, env);
+	free(env);
 }
 
 BOOL proxy_parse_uri(rdpSettings *settings, const char *uri)
