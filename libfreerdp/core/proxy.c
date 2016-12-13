@@ -29,9 +29,10 @@
 #define TAG FREERDP_TAG("core.proxy")
 
 BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port);
-void proxy_read_environment(rdpSettings *settings, char *envname);
+void proxy_read_environment(rdpSettings* settings, char* envname);
 
-BOOL proxy_prepare(rdpSettings *settings, const char **lpPeerHostname, UINT16 *lpPeerPort, BOOL isHTTPS)
+BOOL proxy_prepare(rdpSettings* settings, const char** lpPeerHostname, UINT16* lpPeerPort,
+                   BOOL isHTTPS)
 {
 	/* For TSGateway, find the system HTTPS proxy automatically */
 	if (!settings->ProxyType)
@@ -40,7 +41,8 @@ BOOL proxy_prepare(rdpSettings *settings, const char **lpPeerHostname, UINT16 *l
 	if (!settings->ProxyType)
 		proxy_read_environment(settings, "HTTPS_PROXY");
 
-	if (settings->ProxyType) {
+	if (settings->ProxyType)
+	{
 		*lpPeerHostname = settings->ProxyHostname;
 		*lpPeerPort = settings->ProxyPort;
 		return TRUE;
@@ -49,93 +51,115 @@ BOOL proxy_prepare(rdpSettings *settings, const char **lpPeerHostname, UINT16 *l
 	return FALSE;
 }
 
-void proxy_read_environment(rdpSettings *settings, char *envname)
+void proxy_read_environment(rdpSettings* settings, char* envname)
 {
 	DWORD envlen;
-	char *env;
-
+	char* env;
 	envlen = GetEnvironmentVariableA(envname, NULL, 0);
-	if(!envlen)
+
+	if (!envlen)
 		return;
 
 	env = calloc(1, envlen + 1);
-	if (!env) {
+
+	if (!env)
+	{
 		WLog_ERR(TAG, "Not enough memory");
 		return;
 	}
-	envlen = GetEnvironmentVariableA(envname, env, envlen);
 
+	envlen = GetEnvironmentVariableA(envname, env, envlen);
 	proxy_parse_uri(settings, env);
 	free(env);
 }
 
-BOOL proxy_parse_uri(rdpSettings *settings, const char *uri)
+BOOL proxy_parse_uri(rdpSettings* settings, const char* uri)
 {
-	const char *hostname, *pport;
-	const char *protocol;
-	const char *p;
+	const char* hostname, *pport;
+	const char* protocol;
+	const char* p;
 	UINT16 port;
 	int hostnamelen;
-
 	p = strstr(uri, "://");
-	if (p) {
-		if (p == uri+4 && !strncmp("http", uri, 4)) {
+
+	if (p)
+	{
+		if (p == uri + 4 && !strncmp("http", uri, 4))
+		{
 			settings->ProxyType = PROXY_TYPE_HTTP;
 			protocol = "http";
-		} else {
+		}
+		else
+		{
 			WLog_ERR(TAG, "Only HTTP proxys supported by now");
 			return FALSE;
 		}
+
 		uri = p + 3;
-	} else {
+	}
+	else
+	{
 		WLog_ERR(TAG, "No scheme in proxy URI");
 		return FALSE;
 	}
 
 	hostname = uri;
 	pport = strchr(hostname, ':');
-	if (pport) {
-		if (!isdigit(*(pport+1))) {
+
+	if (pport)
+	{
+		if (!isdigit(*(pport + 1)))
+		{
 			WLog_ERR(TAG, "Could not parse proxy port");
 			return FALSE;
 		}
-		port = atoi(pport+1);
+
+		port = atoi(pport + 1);
 	}
-	else {
+	else
+	{
 		/* The default is 80. Also for Proxys. */
 		port = 80;
-
 		pport = strchr(hostname, '/');
 	}
 
-	if(pport) {
+	if (pport)
+	{
 		hostnamelen = pport - hostname;
-	} else {
+	}
+	else
+	{
 		hostnamelen = strlen(hostname);
 	}
 
 	settings->ProxyHostname = calloc(1, hostnamelen + 1);
-	if (!settings->ProxyHostname) {
+
+	if (!settings->ProxyHostname)
+	{
 		WLog_ERR(TAG, "Not enough memory");
 		return FALSE;
 	}
+
 	memcpy(settings->ProxyHostname, hostname, hostnamelen);
 	settings->ProxyPort = port;
-
-	WLog_INFO(TAG, "Parsed proxy configuration: %s://%s:%d", protocol, settings->ProxyHostname, settings->ProxyPort);
+	WLog_INFO(TAG, "Parsed proxy configuration: %s://%s:%d", protocol, settings->ProxyHostname,
+	          settings->ProxyPort);
 	return TRUE;
 }
 
-BOOL proxy_connect(rdpSettings *settings, BIO *bufferedBio, const char *hostname, UINT16 port)
+BOOL proxy_connect(rdpSettings* settings, BIO* bufferedBio, const char* hostname, UINT16 port)
 {
-	switch (settings->ProxyType) {
-	case PROXY_TYPE_NONE:
-		return TRUE;
-	case PROXY_TYPE_HTTP:
-		return http_proxy_connect(bufferedBio, hostname, port);
-	default:
-		WLog_ERR(TAG, "Invalid internal proxy configuration");
-		return FALSE;
+	switch (settings->ProxyType)
+	{
+		case PROXY_TYPE_NONE:
+			return TRUE;
+
+		case PROXY_TYPE_HTTP:
+			return http_proxy_connect(bufferedBio, hostname, port);
+
+		default:
+			WLog_ERR(TAG, "Invalid internal proxy configuration");
+			return FALSE;
 	}
 }
 
@@ -161,7 +185,8 @@ BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)
 
 	status = BIO_write(bufferedBio, Stream_Buffer(s), Stream_GetPosition(s));
 
-	if (status != Stream_GetPosition(s)) {
+	if (status != Stream_GetPosition(s))
+	{
 		WLog_ERR(TAG, "HTTP proxy: failed to write CONNECT request");
 		return FALSE;
 	}
@@ -174,33 +199,44 @@ BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)
 
 	memset(recv_buf, '\0', sizeof(recv_buf));
 	resultsize = 0;
-	while ( strstr(recv_buf, CRLF CRLF) == NULL ) {
-		if (resultsize >= sizeof(recv_buf)-1) {
+
+	while (strstr(recv_buf, CRLF CRLF) == NULL)
+	{
+		if (resultsize >= sizeof(recv_buf) - 1)
+		{
 			WLog_ERR(TAG, "HTTP Reply headers too long.");
 			return FALSE;
 		}
 
-		status = BIO_read(bufferedBio, (BYTE*)recv_buf + resultsize, sizeof(recv_buf)-resultsize-1);
-		if (status < 0) {
+		status = BIO_read(bufferedBio, (BYTE*)recv_buf + resultsize, sizeof(recv_buf) - resultsize - 1);
+
+		if (status < 0)
+		{
 			/* Error? */
-			if (BIO_should_retry(bufferedBio)) {
+			if (BIO_should_retry(bufferedBio))
+			{
 				USleep(100);
 				continue;
 			}
+
 			WLog_ERR(TAG, "Failed reading reply from HTTP proxy (Status %d)", status);
 			return FALSE;
 		}
-		else if (status == 0) {
+		else if (status == 0)
+		{
 			/* Error? */
 			WLog_ERR(TAG, "Failed reading reply from HTTP proxy (BIO_read returned zero)");
 			return FALSE;
 		}
+
 		resultsize += status;
 	}
 
 	/* Extract HTTP status line */
 	eol = strchr(recv_buf, '\r');
-	if (!eol) {
+
+	if (!eol)
+	{
 		/* should never happen */
 		return FALSE;
 	}
@@ -209,14 +245,16 @@ BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)
 
 	WLog_INFO(TAG, "HTTP Proxy: %s", recv_buf);
 
-	if (strlen(recv_buf) < 12) {
+	if (strlen(recv_buf) < 12)
+	{
 		return FALSE;
 	}
 
 	recv_buf[7] = 'X';
+
 	if (strncmp(recv_buf, "HTTP/1.X 200", 12))
 		return FALSE;
-	
+
 	return TRUE;
 }
 
