@@ -40,7 +40,7 @@ int TestSynchWaitableTimer(int argc, char* argv[])
 
 	if (status != WAIT_TIMEOUT)
 	{
-		printf("WaitForSingleObject(timer, 2000) failure: Actual: 0x%04X, Expected: 0x%04X\n", status, WAIT_TIMEOUT);
+		printf("WaitForSingleObject(timer, 2000) failure: Actual: 0x%08"PRIX32", Expected: 0x%08X\n", status, WAIT_TIMEOUT);
 		goto out;
 	}
 

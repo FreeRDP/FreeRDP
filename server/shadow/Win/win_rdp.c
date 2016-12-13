@@ -213,7 +213,7 @@ void* shw_client_thread(void* arg)
 		if (MsgWaitForMultipleObjects(fds_count, fds, FALSE, 1000,
 		                              QS_ALLINPUT) == WAIT_FAILED)
 		{
-			WLog_ERR(TAG, "MsgWaitForMultipleObjects failure: 0x%08X", GetLastError());
+			WLog_ERR(TAG, "MsgWaitForMultipleObjects failure: 0x%08lX", GetLastError());
 			break;
 		}
 

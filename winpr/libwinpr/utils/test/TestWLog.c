@@ -1,4 +1,3 @@
-
 #include <winpr/crt.h>
 #include <winpr/tchar.h>
 #include <winpr/path.h>

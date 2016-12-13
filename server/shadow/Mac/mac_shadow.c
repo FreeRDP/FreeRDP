@@ -495,7 +495,7 @@ static int mac_shadow_subsystem_process_message(macShadowSubsystem* subsystem,
 			break;
 
 		default:
-			WLog_ERR(TAG, "Unknown message id: %u", message->id);
+			WLog_ERR(TAG, "Unknown message id: %"PRIu32"", message->id);
 			break;
 	}
 

@@ -22,7 +22,7 @@ int TestEnumerateSecurityPackages(int argc, char* argv[])
 		return -1;	
 	}
 
-	_tprintf(_T("\nEnumerateSecurityPackages (%d):\n"), (unsigned int)cPackages);
+	_tprintf(_T("\nEnumerateSecurityPackages (%")_T(PRIu32)_T("):\n"), cPackages);
 
 	for (index = 0; index < (int) cPackages; index++)
 	{

@@ -52,7 +52,7 @@ UINT tsmf_ifman_rim_exchange_capability_request(TSMF_IFMAN* ifman)
 		return ERROR_INVALID_DATA;
 	Stream_Read_UINT32(ifman->input, CapabilityValue);
 
-	DEBUG_TSMF("server CapabilityValue %d", CapabilityValue);
+	DEBUG_TSMF("server CapabilityValue %"PRIu32"", CapabilityValue);
 
 	if (!Stream_EnsureRemainingCapacity(ifman->output, 8))
 		return ERROR_INVALID_DATA;
@@ -106,19 +106,19 @@ UINT tsmf_ifman_exchange_capability_request(TSMF_IFMAN* ifman)
 					return ERROR_INVALID_DATA;
 
 				Stream_Read_UINT32(ifman->output, v);
-				DEBUG_TSMF("server protocol version %d", v);
+				DEBUG_TSMF("server protocol version %"PRIu32"", v);
 				break;
 			case 2: /* Supported platform */
 				if (Stream_GetRemainingLength(ifman->output) < 4)
 					return ERROR_INVALID_DATA;
 
 				Stream_Peek_UINT32(ifman->output, v);
-				DEBUG_TSMF("server supported platform %d", v);
+				DEBUG_TSMF("server supported platform %"PRIu32"", v);
 				/* Claim that we support both MF and DShow platforms. */
 				Stream_Write_UINT32(ifman->output, MMREDIR_CAPABILITY_PLATFORM_MF | MMREDIR_CAPABILITY_PLATFORM_DSHOW);
 				break;
 			default:
-				WLog_ERR(TAG, "skipping unknown capability type %d", CapabilityType);
+				WLog_ERR(TAG, "skipping unknown capability type %"PRIu32"", CapabilityType);
 				break;
 		}
 		Stream_SetPosition(ifman->output, pos + cbCapabilityLength);
@@ -148,7 +148,7 @@ UINT tsmf_ifman_check_format_support_request(TSMF_IFMAN* ifman)
 	Stream_Seek_UINT32(ifman->input); /* NoRolloverFlags (4 bytes) */
 	Stream_Read_UINT32(ifman->input, numMediaType);
 
-	DEBUG_TSMF("PlatformCookie %d numMediaType %d", PlatformCookie, numMediaType);
+	DEBUG_TSMF("PlatformCookie %"PRIu32" numMediaType %"PRIu32"", PlatformCookie, numMediaType);
 
 	if (!tsmf_codec_check_media_type(ifman->decoder_name, ifman->input))
 		FormatSupported = 0;
@@ -414,9 +414,9 @@ UINT tsmf_ifman_on_stream_volume(TSMF_IFMAN* ifman)
 
 	Stream_Seek(ifman->input, 16);
 	Stream_Read_UINT32(ifman->input, newVolume);
-	DEBUG_TSMF("on stream volume: new volume=[%d]", newVolume);
+	DEBUG_TSMF("on stream volume: new volume=[%"PRIu32"]", newVolume);
 	Stream_Read_UINT32(ifman->input, muted);
-	DEBUG_TSMF("on stream volume: muted=[%d]", muted);
+	DEBUG_TSMF("on stream volume: muted=[%"PRIu32"]", muted);
 
 	if (!tsmf_presentation_volume_changed(presentation, newVolume, muted))
 		return ERROR_INVALID_OPERATION;
@@ -447,9 +447,9 @@ UINT tsmf_ifman_on_channel_volume(TSMF_IFMAN* ifman)
 		UINT32 changedChannel;
 		Stream_Seek(ifman->input, 16);
 		Stream_Read_UINT32(ifman->input, channelVolume);
-		DEBUG_TSMF("on channel volume: channel volume=[%d]", channelVolume);
+		DEBUG_TSMF("on channel volume: channel volume=[%"PRIu32"]", channelVolume);
 		Stream_Read_UINT32(ifman->input, changedChannel);
-		DEBUG_TSMF("on stream volume: changed channel=[%d]", changedChannel);
+		DEBUG_TSMF("on stream volume: changed channel=[%"PRIu32"]", changedChannel);
 	}
 
 	ifman->output_pending = TRUE;
@@ -508,7 +508,7 @@ UINT tsmf_ifman_update_geometry_info(TSMF_IFMAN* ifman)
 	Stream_SetPosition(ifman->input, pos + numGeometryInfo);
 	Stream_Read_UINT32(ifman->input, cbVisibleRect);
 	num_rects = cbVisibleRect / 16;
-	DEBUG_TSMF("numGeometryInfo %d Width %d Height %d Left %d Top %d cbVisibleRect %d num_rects %d",
+	DEBUG_TSMF("numGeometryInfo %"PRIu32" Width %"PRIu32" Height %"PRIu32" Left %"PRIu32" Top %"PRIu32" cbVisibleRect %"PRIu32" num_rects %d",
 			   numGeometryInfo, Width, Height, Left, Top, cbVisibleRect, num_rects);
 
 	if (num_rects > 0)
@@ -527,7 +527,7 @@ UINT tsmf_ifman_update_geometry_info(TSMF_IFMAN* ifman)
 			Stream_Seek_UINT16(ifman->input);
 			rects[i].width -= rects[i].x;
 			rects[i].height -= rects[i].y;
-			DEBUG_TSMF("rect %d: %d %d %d %d", i,
+			DEBUG_TSMF("rect %d: %"PRId16" %"PRId16" %"PRId16" %"PRId16"", i,
 					   rects[i].x, rects[i].y, rects[i].width, rects[i].height);
 		}
 	}
@@ -597,10 +597,10 @@ UINT tsmf_ifman_on_sample(TSMF_IFMAN* ifman)
 	if (Stream_GetRemainingLength(ifman->input) < cbData)
 		return ERROR_INVALID_DATA;
 
-	DEBUG_TSMF("MessageId %d StreamId %d SampleStartTime %lu SampleEndTime %lu "
-			   "ThrottleDuration %d SampleExtensions %d cbData %d",
+	DEBUG_TSMF("MessageId %"PRIu32" StreamId %"PRIu32" SampleStartTime %"PRIu64" SampleEndTime %"PRIu64" "
+			   "ThrottleDuration %"PRIu64" SampleExtensions %"PRIu32" cbData %"PRIu32"",
 			   ifman->message_id, StreamId, SampleStartTime, SampleEndTime,
-			   (int)ThrottleDuration, SampleExtensions, cbData);
+			   ThrottleDuration, SampleExtensions, cbData);
 
 	presentation = tsmf_presentation_find_by_id(ifman->presentation_id);
 
@@ -628,7 +628,7 @@ UINT tsmf_ifman_on_sample(TSMF_IFMAN* ifman)
 
 	if ((error = tsmf_presentation_sync(presentation)))
     {
-        WLog_ERR(TAG, "tsmf_presentation_sync failed with error %u", error);
+        WLog_ERR(TAG, "tsmf_presentation_sync failed with error %"PRIu32"", error);
         return error;
     }
 	ifman->output_pending = TRUE;
@@ -653,7 +653,7 @@ UINT tsmf_ifman_on_flush(TSMF_IFMAN* ifman)
 	Stream_Seek(ifman->input, 16);
 	Stream_Read_UINT32(ifman->input, StreamId);
 
-	DEBUG_TSMF("StreamId %d", StreamId);
+	DEBUG_TSMF("StreamId %"PRIu32"", StreamId);
 
 	presentation = tsmf_presentation_find_by_id(ifman->presentation_id);
 	if (!presentation)
@@ -706,7 +706,7 @@ UINT tsmf_ifman_on_end_of_stream(TSMF_IFMAN* ifman)
                 	tsmf_stream_end(stream, ifman->message_id, ifman->channel_callback);
 	}
 
-	DEBUG_TSMF("StreamId %d", StreamId);
+	DEBUG_TSMF("StreamId %"PRIu32"", StreamId);
 
 	ifman->output_pending = TRUE;
 

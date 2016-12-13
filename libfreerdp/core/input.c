@@ -168,7 +168,7 @@ BOOL input_send_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 	{
 		if (flags & PTR_FLAGS_HWHEEL)
 		{
-			WLog_WARN(TAG, "skip mouse event %hux%hu flags=%08X, no horizontal mouse wheel supported",
+			WLog_WARN(TAG, "skip mouse event %"PRIu16"x%"PRIu16" flags=0x%04"PRIX16", no horizontal mouse wheel supported",
 			          x, y, flags);
 			return TRUE;
 		}
@@ -322,7 +322,7 @@ BOOL input_send_fastpath_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UI
 	{
 		if (flags & PTR_FLAGS_HWHEEL)
 		{
-			WLog_WARN(TAG, "skip mouse event %hux%hu flags=%08X, no horizontal mouse wheel supported",
+			WLog_WARN(TAG, "skip mouse event %"PRIu16"x%"PRIu16" flags=0x%04"PRIX16", no horizontal mouse wheel supported",
 			          x, y, flags);
 			return TRUE;
 		}
@@ -555,7 +555,7 @@ static BOOL input_recv_event(rdpInput* input, wStream* s)
 			break;
 
 		default:
-			WLog_ERR(TAG,  "Unknown messageType %u", messageType);
+			WLog_ERR(TAG,  "Unknown messageType %"PRIu16"", messageType);
 			/* Each input event uses 6 bytes. */
 			Stream_Seek(s, 6);
 			break;

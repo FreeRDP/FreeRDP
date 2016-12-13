@@ -444,7 +444,7 @@ void reg_print_value(Reg* reg, RegVal* value)
 
 	if (value->type == REG_DWORD)
 	{
-		WLog_INFO(TAG, "dword:%08X", (int) value->data.dword);
+		WLog_INFO(TAG, "dword:%08"PRIX32"", value->data.dword);
 	}
 	else if (value->type == REG_SZ)
 	{

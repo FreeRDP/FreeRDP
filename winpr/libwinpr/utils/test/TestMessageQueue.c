@@ -17,7 +17,7 @@ static void* message_queue_consumer_thread(void* arg)
 			if (message.id == WMQ_QUIT)
 				break;
 
-			printf("Message.Type: %d\n", message.id);
+			printf("Message.Type: %"PRIu32"\n", message.id);
 		}
 	}
 

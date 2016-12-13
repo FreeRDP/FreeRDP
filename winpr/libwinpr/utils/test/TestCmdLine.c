@@ -179,7 +179,7 @@ int TestCmdLine(int argc, char* argv[])
 
 	if ((width != 1024) || (height != 768))
 	{
-		printf("Unexpected width and height: Actual: (%dx%d), Expected: (%dx%d)\n", width, height, 1024, 768);
+		printf("Unexpected width and height: Actual: (%dx%d), Expected: (1024x768)\n", width, height);
 		return -1;
 	}
 

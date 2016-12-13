@@ -188,7 +188,7 @@ BOOL freerdp_connect(freerdp* instance)
 	/* --authonly tests the connection without a UI */
 	if (instance->settings->AuthenticationOnly)
 	{
-		WLog_ERR(TAG, "Authentication only, exit status %d", !status);
+		WLog_ERR(TAG, "Authentication only, exit status %"PRId32"", !status);
 		goto freerdp_connect_finally;
 	}
 
@@ -363,7 +363,7 @@ BOOL freerdp_check_event_handles(rdpContext* context)
 
 	if (!status)
 	{
-		WLog_ERR(TAG, "freerdp_check_fds() failed - %i", status);
+		WLog_ERR(TAG, "freerdp_check_fds() failed - %"PRIi32"", status);
 		return FALSE;
 	}
 
@@ -371,7 +371,7 @@ BOOL freerdp_check_event_handles(rdpContext* context)
 
 	if (!status)
 	{
-		WLog_ERR(TAG, "freerdp_channels_check_fds() failed - %i", status);
+		WLog_ERR(TAG, "freerdp_channels_check_fds() failed - %"PRIi32"", status);
 		return FALSE;
 	}
 
@@ -796,7 +796,7 @@ const char* freerdp_get_last_error_string(UINT32 code)
 void freerdp_set_last_error(rdpContext* context, UINT32 lastError)
 {
 	if (lastError)
-		WLog_ERR(TAG, "freerdp_set_last_error %s [0x%04X]",
+		WLog_ERR(TAG, "freerdp_set_last_error %s [0x%08"PRIX32"]",
 		         freerdp_get_last_error_name(lastError), lastError);
 
 	context->LastError = lastError;
@@ -902,7 +902,7 @@ BOOL checkChannelErrorEvent(rdpContext* context)
 {
 	if (WaitForSingleObject(context->channelErrorEvent, 0) == WAIT_OBJECT_0)
 	{
-		WLog_ERR(TAG, "%s. Error was %u", context->errorDescription,
+		WLog_ERR(TAG, "%s. Error was %"PRIu32"", context->errorDescription,
 		         context->channelErrorNum);
 		return FALSE;
 	}

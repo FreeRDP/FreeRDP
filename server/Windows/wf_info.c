@@ -58,7 +58,7 @@ BOOL wf_info_lock(wfInfo* wfi)
 		return FALSE;
 
 	case WAIT_FAILED:
-		WLog_ERR(TAG, "wf_info_lock failed with 0x%08X", GetLastError());
+		WLog_ERR(TAG, "wf_info_lock failed with 0x%08lX", GetLastError());
 		return FALSE;
 	}
 
@@ -81,7 +81,7 @@ BOOL wf_info_try_lock(wfInfo* wfi, DWORD dwMilliseconds)
 		return FALSE;
 
 	case WAIT_FAILED:
-		WLog_ERR(TAG, "wf_info_try_lock failed with 0x%08X", GetLastError());
+		WLog_ERR(TAG, "wf_info_try_lock failed with 0x%08lX", GetLastError());
 		return FALSE;
 	}
 
@@ -92,7 +92,7 @@ BOOL wf_info_unlock(wfInfo* wfi)
 {
 	if (!ReleaseMutex(wfi->mutex))
 	{
-		WLog_ERR(TAG, "wf_info_unlock failed with 0x%08X", GetLastError());
+		WLog_ERR(TAG, "wf_info_unlock failed with 0x%08lX", GetLastError());
 		return FALSE;
 	}
 
@@ -117,7 +117,7 @@ wfInfo* wf_info_init()
 
 		if (wfi->mutex == NULL)
 		{
-			WLog_ERR(TAG, "CreateMutex error: %d", GetLastError());
+			WLog_ERR(TAG, "CreateMutex error: %lu", GetLastError());
 			free(wfi);
 			return NULL;
 		}
@@ -125,7 +125,7 @@ wfInfo* wf_info_init()
 		wfi->updateSemaphore = CreateSemaphore(NULL, 0, 32, NULL);
 		if (!wfi->updateSemaphore)
 		{
-			WLog_ERR(TAG, "CreateSemaphore error: %d", GetLastError());
+			WLog_ERR(TAG, "CreateSemaphore error: %lu", GetLastError());
 			CloseHandle(wfi->mutex);
 			free(wfi);
 			return NULL;
@@ -341,7 +341,7 @@ void wf_info_find_invalid_region(wfInfo* wfi)
 	if (wfi->invalid.bottom >= wfi->servscreen_height)
 		wfi->invalid.bottom = wfi->servscreen_height - 1;
 
-	//WLog_DBG(TAG, "invalid region: (%d, %d), (%d, %d)", wfi->invalid.left, wfi->invalid.top, wfi->invalid.right, wfi->invalid.bottom);
+	//WLog_DBG(TAG, "invalid region: (%"PRId32", %"PRId32"), (%"PRId32", %"PRId32")", wfi->invalid.left, wfi->invalid.top, wfi->invalid.right, wfi->invalid.bottom);
 }
 
 void wf_info_clear_invalid_region(wfInfo* wfi)

@@ -422,7 +422,7 @@ int mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** p
 		}
 
 #ifdef DEBUG_MPPC
-		WLog_DBG(TAG, "<%d,%d>", (int) CopyOffset, (int) LengthOfMatch);
+		WLog_DBG(TAG, "<%"PRIu32",%"PRIu32">", CopyOffset, LengthOfMatch);
 #endif
 
 		if ((HistoryPtr + LengthOfMatch - 1) > HistoryBufferEnd)
@@ -542,7 +542,7 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppD
 			accumulator = Sym1;
 
 #ifdef DEBUG_MPPC
-			WLog_DBG(TAG, "%c", accumulator);
+			WLog_DBG(TAG, "%"PRIu32"", accumulator);
 #endif
 
 			if (accumulator < 0x80)
@@ -576,7 +576,7 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppD
 			}
 
 #ifdef DEBUG_MPPC
-			WLog_DBG(TAG, "<%d,%d>", (int) CopyOffset, (int) LengthOfMatch);
+			WLog_DBG(TAG, "<%"PRIu32",%"PRIu32">", CopyOffset, LengthOfMatch);
 #endif
 
 			/* Encode CopyOffset */
@@ -751,7 +751,7 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppD
 		accumulator = *pSrcPtr;
 
 #ifdef DEBUG_MPPC
-		WLog_DBG(TAG, "%c", accumulator);
+		WLog_DBG(TAG, "%"PRIu32"", accumulator);
 #endif
 
 		if (accumulator < 0x80)

@@ -135,7 +135,7 @@ DWORD freerdp_keyboard_init(DWORD keyboardLayoutId)
 
 DWORD freerdp_keyboard_get_rdp_scancode_from_x11_keycode(DWORD keycode)
 {
-	DEBUG_KBD("x11 keycode: %02X -> rdp code: %02X%s", keycode,
+	DEBUG_KBD("x11 keycode: %02"PRIX32" -> rdp code: %02"PRIX8"%s", keycode,
 		RDP_SCANCODE_CODE(X11_KEYCODE_TO_VIRTUAL_SCANCODE[keycode]),
 		RDP_SCANCODE_EXTENDED(X11_KEYCODE_TO_VIRTUAL_SCANCODE[keycode]) ? " extended" : "");
 

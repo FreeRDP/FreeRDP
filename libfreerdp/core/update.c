@@ -180,7 +180,7 @@ BOOL update_read_bitmap_update(rdpUpdate* update, wStream* s,
 		return FALSE;
 
 	Stream_Read_UINT16(s, bitmapUpdate->number); /* numberRectangles (2 bytes) */
-	WLog_Print(update->log, WLOG_TRACE, "BitmapUpdate: %d", bitmapUpdate->number);
+	WLog_Print(update->log, WLOG_TRACE, "BitmapUpdate: %"PRIu32"", bitmapUpdate->number);
 
 	if (bitmapUpdate->number > bitmapUpdate->count)
 	{
@@ -314,7 +314,7 @@ BOOL update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color,
                                int xorBpp)
 {
 	BYTE* newMask;
-	int scanlineSize;
+	UINT32 scanlineSize;
 
 	if (Stream_GetRemainingLength(s) < 14)
 		return FALSE;
@@ -375,7 +375,7 @@ BOOL update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color,
 
 		if (scanlineSize * pointer_color->height != pointer_color->lengthXorMask)
 		{
-			WLog_ERR(TAG,  "invalid lengthXorMask: width=%d height=%d, %d instead of %d",
+			WLog_ERR(TAG,  "invalid lengthXorMask: width=%"PRIu32" height=%"PRIu32", %"PRIu32" instead of %"PRIu32"",
 			         pointer_color->width, pointer_color->height,
 			         pointer_color->lengthXorMask, scanlineSize * pointer_color->height);
 			return FALSE;
@@ -407,7 +407,7 @@ BOOL update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color,
 
 		if (scanlineSize * pointer_color->height != pointer_color->lengthAndMask)
 		{
-			WLog_ERR(TAG,  "invalid lengthAndMask: %d instead of %d",
+			WLog_ERR(TAG,  "invalid lengthAndMask: %"PRIu32" instead of %"PRIu32"",
 			         pointer_color->lengthAndMask, scanlineSize * pointer_color->height);
 			return FALSE;
 		}
@@ -436,7 +436,7 @@ BOOL update_read_pointer_new(wStream* s, POINTER_NEW_UPDATE* pointer_new)
 
 	if ((pointer_new->xorBpp < 1) || (pointer_new->xorBpp > 32))
 	{
-		WLog_ERR(TAG,  "invalid xorBpp %d", pointer_new->xorBpp);
+		WLog_ERR(TAG,  "invalid xorBpp %"PRIu32"", pointer_new->xorBpp);
 		return FALSE;
 	}
 
@@ -672,7 +672,7 @@ static BOOL update_end_paint(rdpContext* context)
 
 	if (update->numberOrders > 0)
 	{
-		WLog_ERR(TAG,  "sending %d orders", update->numberOrders);
+		WLog_ERR(TAG,  "sending %"PRIu16" orders", update->numberOrders);
 		fastpath_send_update_pdu(context->rdp->fastpath, FASTPATH_UPDATETYPE_ORDERS, s,
 		                         FALSE);
 	}

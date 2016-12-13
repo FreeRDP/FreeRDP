@@ -302,7 +302,7 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
 			break;
 
 		default:
-			WLog_ERR(TAG, "Invalid color depth %d", bpp);
+			WLog_ERR(TAG, "Invalid color depth %"PRIu32"", bpp);
 			return FALSE;
 	}
 
@@ -367,7 +367,7 @@ BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
 	if ((nWidth > 64) || (nHeight > 64))
 	{
 		WLog_ERR(TAG,
-		         "interleaved_compress: width (%d) or height (%d) is greater than 64", nWidth,
+		         "interleaved_compress: width (%"PRIu32") or height (%"PRIu32") is greater than 64", nWidth,
 		         nHeight);
 		return FALSE;
 	}

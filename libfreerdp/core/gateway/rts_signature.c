@@ -324,7 +324,7 @@ int rts_print_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature)
 {
 	UINT32 SignatureId;
 	RTS_PDU_SIGNATURE_ENTRY* entry;
-	WLog_INFO(TAG,  "RTS PDU Signature: Flags: 0x%04X NumberOfCommands: %d",
+	WLog_INFO(TAG,  "RTS PDU Signature: Flags: 0x%04"PRIX16" NumberOfCommands: %"PRIu16"",
 			  signature->Flags, signature->NumberOfCommands);
 	SignatureId = rts_identify_pdu_signature(rpc, signature, &entry);
 

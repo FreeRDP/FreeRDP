@@ -42,20 +42,20 @@ static SLresult openSLCreateEngine(OPENSL_STREAM* p)
 	SLresult result;
 	// create engine
 	result = slCreateEngine(&(p->engineObject), 0, NULL, 0, NULL, NULL);
-	DEBUG_SND("engineObject=%p", p->engineObject);
+	DEBUG_SND("engineObject=%p", (void*) p->engineObject);
 
 	if (result != SL_RESULT_SUCCESS) goto  engine_end;
 
 	// realize the engine
 	result = (*p->engineObject)->Realize(p->engineObject, SL_BOOLEAN_FALSE);
-	DEBUG_SND("Realize=%d", result);
+	DEBUG_SND("Realize=%"PRIu32"", result);
 
 	if (result != SL_RESULT_SUCCESS) goto engine_end;
 
 	// get the engine interface, which is needed in order to create other objects
 	result = (*p->engineObject)->GetInterface(p->engineObject, SL_IID_ENGINE,
 	         &(p->engineEngine));
-	DEBUG_SND("engineEngine=%p", p->engineEngine);
+	DEBUG_SND("engineEngine=%p", (void*) p->engineEngine);
 
 	if (result != SL_RESULT_SUCCESS) goto  engine_end;
 
@@ -139,14 +139,14 @@ static SLresult openSLPlayOpen(OPENSL_STREAM* p)
 		const SLboolean req[] = {SL_BOOLEAN_FALSE};
 		result = (*p->engineEngine)->CreateOutputMix(p->engineEngine,
 		         &(p->outputMixObject), 1, ids, req);
-		DEBUG_SND("engineEngine=%p", p->engineEngine);
+		DEBUG_SND("engineEngine=%p", (void*) p->engineEngine);
 		assert(!result);
 
 		if (result != SL_RESULT_SUCCESS) goto end_openaudio;
 
 		// realize the output mix
 		result = (*p->outputMixObject)->Realize(p->outputMixObject, SL_BOOLEAN_FALSE);
-		DEBUG_SND("Realize=%d", result);
+		DEBUG_SND("Realize=%"PRIu32"", result);
 		assert(!result);
 
 		if (result != SL_RESULT_SUCCESS) goto end_openaudio;
@@ -170,14 +170,14 @@ static SLresult openSLPlayOpen(OPENSL_STREAM* p)
 		const SLboolean req1[] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
 		result = (*p->engineEngine)->CreateAudioPlayer(p->engineEngine,
 		         &(p->bqPlayerObject), &audioSrc, &audioSnk, 2, ids1, req1);
-		DEBUG_SND("bqPlayerObject=%p", p->bqPlayerObject);
+		DEBUG_SND("bqPlayerObject=%p", (void*) p->bqPlayerObject);
 		assert(!result);
 
 		if (result != SL_RESULT_SUCCESS) goto end_openaudio;
 
 		// realize the player
 		result = (*p->bqPlayerObject)->Realize(p->bqPlayerObject, SL_BOOLEAN_FALSE);
-		DEBUG_SND("Realize=%d", result);
+		DEBUG_SND("Realize=%"PRIu32"", result);
 		assert(!result);
 
 		if (result != SL_RESULT_SUCCESS) goto end_openaudio;
@@ -185,7 +185,7 @@ static SLresult openSLPlayOpen(OPENSL_STREAM* p)
 		// get the play interface
 		result = (*p->bqPlayerObject)->GetInterface(p->bqPlayerObject, SL_IID_PLAY,
 		         &(p->bqPlayerPlay));
-		DEBUG_SND("bqPlayerPlay=%p", p->bqPlayerPlay);
+		DEBUG_SND("bqPlayerPlay=%p", (void*) p->bqPlayerPlay);
 		assert(!result);
 
 		if (result != SL_RESULT_SUCCESS) goto end_openaudio;
@@ -193,7 +193,7 @@ static SLresult openSLPlayOpen(OPENSL_STREAM* p)
 		// get the volume interface
 		result = (*p->bqPlayerObject)->GetInterface(p->bqPlayerObject, SL_IID_VOLUME,
 		         &(p->bqPlayerVolume));
-		DEBUG_SND("bqPlayerVolume=%p", p->bqPlayerVolume);
+		DEBUG_SND("bqPlayerVolume=%p", (void*) p->bqPlayerVolume);
 		assert(!result);
 
 		if (result != SL_RESULT_SUCCESS) goto end_openaudio;
@@ -202,7 +202,7 @@ static SLresult openSLPlayOpen(OPENSL_STREAM* p)
 		result = (*p->bqPlayerObject)->GetInterface(p->bqPlayerObject,
 		         SL_IID_ANDROIDSIMPLEBUFFERQUEUE,
 		         &(p->bqPlayerBufferQueue));
-		DEBUG_SND("bqPlayerBufferQueue=%p", p->bqPlayerBufferQueue);
+		DEBUG_SND("bqPlayerBufferQueue=%p", (void*) p->bqPlayerBufferQueue);
 		assert(!result);
 
 		if (result != SL_RESULT_SUCCESS) goto end_openaudio;
@@ -210,7 +210,7 @@ static SLresult openSLPlayOpen(OPENSL_STREAM* p)
 		// register callback on the buffer queue
 		result = (*p->bqPlayerBufferQueue)->RegisterCallback(p->bqPlayerBufferQueue,
 		         bqPlayerCallback, p);
-		DEBUG_SND("bqPlayerCallback=%p", p->bqPlayerCallback);
+		DEBUG_SND("bqPlayerCallback=%p", (void*) p->bqPlayerCallback);
 		assert(!result);
 
 		if (result != SL_RESULT_SUCCESS) goto end_openaudio;
@@ -218,7 +218,7 @@ static SLresult openSLPlayOpen(OPENSL_STREAM* p)
 		// set the player's state to playing
 		result = (*p->bqPlayerPlay)->SetPlayState(p->bqPlayerPlay,
 		         SL_PLAYSTATE_PLAYING);
-		DEBUG_SND("SetPlayState=%d", result);
+		DEBUG_SND("SetPlayState=%"PRIu32"", result);
 		assert(!result);
 	end_openaudio:
 		assert(!result);

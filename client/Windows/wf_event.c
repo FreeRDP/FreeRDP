@@ -86,8 +86,8 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 
 				input = wfc->context.input;
 				rdp_scancode = MAKE_RDP_SCANCODE((BYTE) p->scanCode, p->flags & LLKHF_EXTENDED);
-				DEBUG_KBD("keydown %d scanCode %04X flags %02X vkCode %02X",
-				          (wParam == WM_KEYDOWN), (BYTE) p->scanCode, p->flags, p->vkCode);
+				DEBUG_KBD("keydown %d scanCode 0x%08lX flags 0x%08lX vkCode 0x%08lX",
+				          (wParam == WM_KEYDOWN), p->scanCode, p->flags, p->vkCode);
 
 				if (wfc->fs_toggle &&
 				    ((p->vkCode == VK_RETURN) || (p->vkCode == VK_CANCEL)) &&

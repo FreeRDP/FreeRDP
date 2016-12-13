@@ -418,7 +418,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu, CONTEXT_HANDLE* 
 
 		if (versionCaps->tsgHeader.ComponentId != TS_GATEWAY_TRANSPORT)
 		{
-			WLog_ERR(TAG, "Unexpected ComponentId: 0x%04X, Expected TS_GATEWAY_TRANSPORT",
+			WLog_ERR(TAG, "Unexpected ComponentId: 0x%04"PRIX16", Expected TS_GATEWAY_TRANSPORT",
 					 versionCaps->tsgHeader.ComponentId);
 			free(packetCapsResponse);
 			free(versionCaps);
@@ -452,7 +452,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu, CONTEXT_HANDLE* 
 
 		if ((SwitchValue != TSG_CAPABILITY_TYPE_NAP) || (tsgCaps->capabilityType != TSG_CAPABILITY_TYPE_NAP))
 		{
-			WLog_ERR(TAG, "Unexpected CapabilityType: 0x%08X, Expected TSG_CAPABILITY_TYPE_NAP",
+			WLog_ERR(TAG, "Unexpected CapabilityType: 0x%08"PRIX32", Expected TSG_CAPABILITY_TYPE_NAP",
 					 tsgCaps->capabilityType);
 			free(tsgCaps);
 			free(versionCaps);
@@ -484,7 +484,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu, CONTEXT_HANDLE* 
 
 				if (MsgBytes > TSG_MESSAGING_MAX_MESSAGE_LENGTH)
 				{
-					WLog_ERR(TAG, "Out of Spec Message Length %d", MsgBytes);
+					WLog_ERR(TAG, "Out of Spec Message Length %"PRIu32"", MsgBytes);
 					free(tsgCaps);
 					free(versionCaps);
 					free(packetCapsResponse);
@@ -501,7 +501,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu, CONTEXT_HANDLE* 
 				break;
 
 			default:
-				WLog_ERR(TAG, "Unexpected Message Type: 0x%X", (int) MessageSwitchValue);
+				WLog_ERR(TAG, "Unexpected Message Type: 0x%"PRIX32"", MessageSwitchValue);
 				free(tsgCaps);
 				free(versionCaps);
 				free(packetCapsResponse);
@@ -580,7 +580,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu, CONTEXT_HANDLE* 
 
 		if (versionCaps->tsgHeader.ComponentId != TS_GATEWAY_TRANSPORT)
 		{
-			WLog_ERR(TAG, "Unexpected ComponentId: 0x%04X, Expected TS_GATEWAY_TRANSPORT",
+			WLog_ERR(TAG, "Unexpected ComponentId: 0x%04"PRIX16", Expected TS_GATEWAY_TRANSPORT",
 					 versionCaps->tsgHeader.ComponentId);
 			free(versionCaps);
 			free(packetQuarEncResponse);
@@ -612,8 +612,8 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu, CONTEXT_HANDLE* 
 	}
 	else
 	{
-		WLog_ERR(TAG, "Unexpected PacketId: 0x%08X, Expected TSG_PACKET_TYPE_CAPS_RESPONSE "
-				 "or TSG_PACKET_TYPE_QUARENC_RESPONSE", packet->packetId);
+		WLog_ERR(TAG, "Unexpected PacketId: 0x%08"PRIX32", Expected TSG_PACKET_TYPE_CAPS_RESPONSE "
+				"or TSG_PACKET_TYPE_QUARENC_RESPONSE", packet->packetId);
 		free(packet);
 		return FALSE;
 	}
@@ -732,7 +732,7 @@ BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 
 	if ((packet->packetId != TSG_PACKET_TYPE_RESPONSE) || (SwitchValue != TSG_PACKET_TYPE_RESPONSE))
 	{
-		WLog_ERR(TAG, "Unexpected PacketId: 0x%08X, Expected TSG_PACKET_TYPE_RESPONSE",
+		WLog_ERR(TAG, "Unexpected PacketId: 0x%08"PRIX32", Expected TSG_PACKET_TYPE_RESPONSE",
 				 packet->packetId);
 		free(packet);
 		return FALSE;
@@ -752,7 +752,7 @@ BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 
 	if (packetResponse->flags != TSG_PACKET_TYPE_QUARREQUEST)
 	{
-		WLog_ERR(TAG, "Unexpected Packet Response Flags: 0x%08X, Expected TSG_PACKET_TYPE_QUARREQUEST",
+		WLog_ERR(TAG, "Unexpected Packet Response Flags: 0x%08"PRIX32", Expected TSG_PACKET_TYPE_QUARREQUEST",
 				 packetResponse->flags);
 		free(packet);
 		free(packetResponse);
@@ -776,7 +776,7 @@ BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 
 	if (SizeValue != packetResponse->responseDataLen)
 	{
-		WLog_ERR(TAG, "Unexpected size value: %d, expected: %d",
+		WLog_ERR(TAG, "Unexpected size value: %"PRIu32", expected: %"PRIu32"",
 				 SizeValue, packetResponse->responseDataLen);
 		free(packetResponse);
 		free(packet);
@@ -885,7 +885,7 @@ BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 
 	if ((packet->packetId != TSG_PACKET_TYPE_MESSAGE_PACKET) || (SwitchValue != TSG_PACKET_TYPE_MESSAGE_PACKET))
 	{
-		WLog_ERR(TAG, "Unexpected PacketId: 0x%08X, Expected TSG_PACKET_TYPE_MESSAGE_PACKET",
+		WLog_ERR(TAG, "Unexpected PacketId: 0x%08"PRIX32", Expected TSG_PACKET_TYPE_MESSAGE_PACKET",
 				 packet->packetId);
 		free(packet);
 		return FALSE;
@@ -972,7 +972,7 @@ BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 			break;
 
 		default:
-			WLog_ERR(TAG, "unexpected message type: %d", SwitchValue);
+			WLog_ERR(TAG, "unexpected message type: %"PRIu32"", SwitchValue);
 			status = FALSE;
 			break;
 	}
@@ -1514,7 +1514,7 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 			}
 			else
 			{
-				WLog_ERR(TAG, "TSG_STATE_AUTHORIZED unexpected OpNum: %d\n", call->OpNum);
+				WLog_ERR(TAG, "TSG_STATE_AUTHORIZED unexpected OpNum: %"PRIu32"\n", call->OpNum);
 			}
 
 			break;

@@ -592,13 +592,13 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 			hFd = CreateFileA(file->fullpath, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 			if (hFd == INVALID_HANDLE_VALUE)
 			{
-				WLog_ERR(TAG, "Unable to truncate %s to %lld", file->fullpath, (long long) size);
+				WLog_ERR(TAG, "Unable to truncate %s to %"PRId64"", file->fullpath, size);
 				return FALSE;
 			}
 			liSize.QuadPart = size;
 			if (SetFilePointer(hFd, liSize.LowPart, &liSize.HighPart, FILE_BEGIN) == 0)
 			{
-				WLog_ERR(TAG, "Unable to truncate %s to %lld", file->fullpath, (long long) size);
+				WLog_ERR(TAG, "Unable to truncate %s to %"PRId64"", file->fullpath, size);
 				CloseHandle(hFd);
 				return FALSE;
 			}

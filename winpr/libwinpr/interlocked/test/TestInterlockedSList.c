@@ -56,7 +56,7 @@ int TestInterlockedSList(int argc, char* argv[])
 		}
   
 		pProgramItem = (PPROGRAM_ITEM) pListEntry;
-		printf("Signature is %d\n", (int) pProgramItem->Signature);
+		printf("Signature is %"PRIu32"\n", pProgramItem->Signature);
 
 		/* 
 		 * This example assumes that the SLIST_ENTRY structure is the 

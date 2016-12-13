@@ -173,7 +173,7 @@ static void dump_thread(WINPR_THREAD* thread)
 	msg = winpr_backtrace_symbols(stack, &used);
 
 	for (i = 0; i < used; i++)
-		WLog_DBG(TAG, "[%d]: %s", i, msg[i]);
+		WLog_DBG(TAG, "[%"PRIdz"]: %s", i, msg[i]);
 
 	free(msg);
 	winpr_backtrace_free(stack);
@@ -181,7 +181,7 @@ static void dump_thread(WINPR_THREAD* thread)
 	msg = winpr_backtrace_symbols(thread->create_stack, &used);
 
 	for (i = 0; i < used; i++)
-		WLog_DBG(TAG, "[%d]: %s", i, msg[i]);
+		WLog_DBG(TAG, "[%"PRIdz"]: %s", i, msg[i]);
 
 	free(msg);
 
@@ -199,7 +199,7 @@ static void dump_thread(WINPR_THREAD* thread)
 		msg = winpr_backtrace_symbols(thread->exit_stack, &used);
 
 		for (i = 0; i < used; i++)
-			WLog_DBG(TAG, "[%d]: %s", i, msg[i]);
+			WLog_DBG(TAG, "[%"PRIdz"]: %s", i, msg[i]);
 
 		free(msg);
 	}
@@ -296,7 +296,7 @@ static void* thread_launcher(void* arg)
 
 	if (!(fkt = (fkt_t)thread->lpStartAddress))
 	{
-		WLog_ERR(TAG, "Thread function argument is %p", fkt);
+		WLog_ERR(TAG, "Thread function argument is %p", (void *)fkt);
 		goto exit;
 	}
 
@@ -768,7 +768,7 @@ VOID DumpThreadHandles(void)
 
 	for (i = 0; i < used; i++)
 	{
-		WLog_DBG(TAG, "[%d]: %s", i, msg[i]);
+		WLog_DBG(TAG, "[%"PRIdz"]: %s", i, msg[i]);
 	}
 
 	free(msg);
@@ -795,7 +795,7 @@ VOID DumpThreadHandles(void)
 
 			for (i = 0; i < used; i++)
 			{
-				WLog_DBG(TAG, "[%d]: %s", i, msg[i]);
+				WLog_DBG(TAG, "[%"PRIdz"]: %s", i, msg[i]);
 			}
 
 			free(msg);
@@ -810,7 +810,7 @@ VOID DumpThreadHandles(void)
 				msg = winpr_backtrace_symbols(thread->exit_stack, &used);
 
 				for (i = 0; i < used; i++)
-					WLog_DBG(TAG, "[%d]: %s", i, msg[i]);
+					WLog_DBG(TAG, "[%"PRIdz"]: %s", i, msg[i]);
 
 				free(msg);
 			}

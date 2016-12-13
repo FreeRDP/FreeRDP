@@ -39,7 +39,7 @@ int IDcount = 0;
 
 BOOL CALLBACK moncb(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
 {
-	WLog_DBG(TAG, "%d\t(%d, %d), (%d, %d)",
+	WLog_DBG(TAG, "%d\t(%ld, %ld), (%ld, %ld)",
 			 IDcount, lprcMonitor->left, lprcMonitor->top,
 			 lprcMonitor->right, lprcMonitor->bottom);
 	IDcount++;

@@ -332,7 +332,7 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 	rle = (FormatHeader & PLANAR_FORMAT_HEADER_RLE) ? TRUE : FALSE;
 	alpha = (FormatHeader & PLANAR_FORMAT_HEADER_NA) ? FALSE : TRUE;
 
-	//WLog_INFO(TAG, "CLL: %d CS: %d RLE: %d ALPHA: %d", cll, cs, rle, alpha);
+	//WLog_INFO(TAG, "CLL: %"PRIu32" CS: %"PRIu8" RLE: %"PRIu8" ALPHA: %"PRIu8"", cll, cs, rle, alpha);
 
 	if (!cll && cs)
 		return FALSE; /* Chroma subsampling requires YCoCg */
@@ -1104,7 +1104,7 @@ BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context,
 			offset += dstSizes[2];
 			context->rlePlanes[3] = &context->rlePlanesBuffer[offset];
 			offset += dstSizes[3];
-			//WLog_DBG(TAG, "R: [%d/%d] G: [%d/%d] B: [%d/%d]",
+			//WLog_DBG(TAG, "R: [%"PRIu32"/%"PRIu32"] G: [%"PRIu32"/%"PRIu32"] B: [%"PRIu32"/%"PRIu32"]",
 			//		dstSizes[1], planeSize, dstSizes[2], planeSize, dstSizes[3], planeSize);
 		}
 	}

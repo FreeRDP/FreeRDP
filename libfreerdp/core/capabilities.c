@@ -283,7 +283,7 @@ static BOOL rdp_print_general_capability_set(wStream* s, UINT16 length)
 	if (length < 24)
 		return FALSE;
 
-	WLog_INFO(TAG,  "GeneralCapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "GeneralCapabilitySet (length %"PRIu16"):", length);
 	Stream_Read_UINT16(s, osMajorType); /* osMajorType (2 bytes) */
 	Stream_Read_UINT16(s, osMinorType); /* osMinorType (2 bytes) */
 	Stream_Read_UINT16(s, protocolVersion); /* protocolVersion (2 bytes) */
@@ -299,17 +299,17 @@ static BOOL rdp_print_general_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT8(s, refreshRectSupport); /* refreshRectSupport (1 byte) */
 	Stream_Read_UINT8(s,
 	                  suppressOutputSupport); /* suppressOutputSupport (1 byte) */
-	WLog_INFO(TAG,  "\tosMajorType: 0x%04X", osMajorType);
-	WLog_INFO(TAG,  "\tosMinorType: 0x%04X", osMinorType);
-	WLog_INFO(TAG,  "\tprotocolVersion: 0x%04X", protocolVersion);
-	WLog_INFO(TAG,  "\tpad2OctetsA: 0x%04X", pad2OctetsA);
-	WLog_INFO(TAG,  "\tgeneralCompressionTypes: 0x%04X", generalCompressionTypes);
-	WLog_INFO(TAG,  "\textraFlags: 0x%04X", extraFlags);
-	WLog_INFO(TAG,  "\tupdateCapabilityFlag: 0x%04X", updateCapabilityFlag);
-	WLog_INFO(TAG,  "\tremoteUnshareFlag: 0x%04X", remoteUnshareFlag);
-	WLog_INFO(TAG,  "\tgeneralCompressionLevel: 0x%04X", generalCompressionLevel);
-	WLog_INFO(TAG,  "\trefreshRectSupport: 0x%02X", refreshRectSupport);
-	WLog_INFO(TAG,  "\tsuppressOutputSupport: 0x%02X", suppressOutputSupport);
+	WLog_INFO(TAG,  "\tosMajorType: 0x%04"PRIX16"", osMajorType);
+	WLog_INFO(TAG,  "\tosMinorType: 0x%04"PRIX16"", osMinorType);
+	WLog_INFO(TAG,  "\tprotocolVersion: 0x%04"PRIX16"", protocolVersion);
+	WLog_INFO(TAG,  "\tpad2OctetsA: 0x%04"PRIX16"", pad2OctetsA);
+	WLog_INFO(TAG,  "\tgeneralCompressionTypes: 0x%04"PRIX16"", generalCompressionTypes);
+	WLog_INFO(TAG,  "\textraFlags: 0x%04"PRIX16"", extraFlags);
+	WLog_INFO(TAG,  "\tupdateCapabilityFlag: 0x%04"PRIX16"", updateCapabilityFlag);
+	WLog_INFO(TAG,  "\tremoteUnshareFlag: 0x%04"PRIX16"", remoteUnshareFlag);
+	WLog_INFO(TAG,  "\tgeneralCompressionLevel: 0x%04"PRIX16"", generalCompressionLevel);
+	WLog_INFO(TAG,  "\trefreshRectSupport: 0x%02"PRIX8"", refreshRectSupport);
+	WLog_INFO(TAG,  "\tsuppressOutputSupport: 0x%02"PRIX8"", suppressOutputSupport);
 	return TRUE;
 }
 
@@ -454,7 +454,7 @@ static BOOL rdp_print_bitmap_capability_set(wStream* s, UINT16 length)
 	BYTE drawingFlags;
 	UINT16 multipleRectangleSupport;
 	UINT16 pad2OctetsB;
-	WLog_INFO(TAG,  "BitmapCapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "BitmapCapabilitySet (length %"PRIu16"):", length);
 
 	if (length < 28)
 		return FALSE;
@@ -477,19 +477,19 @@ static BOOL rdp_print_bitmap_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT16(s,
 	                   multipleRectangleSupport); /* multipleRectangleSupport (2 bytes) */
 	Stream_Read_UINT16(s, pad2OctetsB); /* pad2OctetsB (2 bytes) */
-	WLog_INFO(TAG,  "\tpreferredBitsPerPixel: 0x%04X", preferredBitsPerPixel);
-	WLog_INFO(TAG,  "\treceive1BitPerPixel: 0x%04X", receive1BitPerPixel);
-	WLog_INFO(TAG,  "\treceive4BitsPerPixel: 0x%04X", receive4BitsPerPixel);
-	WLog_INFO(TAG,  "\treceive8BitsPerPixel: 0x%04X", receive8BitsPerPixel);
-	WLog_INFO(TAG,  "\tdesktopWidth: 0x%04X", desktopWidth);
-	WLog_INFO(TAG,  "\tdesktopHeight: 0x%04X", desktopHeight);
-	WLog_INFO(TAG,  "\tpad2Octets: 0x%04X", pad2Octets);
-	WLog_INFO(TAG,  "\tdesktopResizeFlag: 0x%04X", desktopResizeFlag);
-	WLog_INFO(TAG,  "\tbitmapCompressionFlag: 0x%04X", bitmapCompressionFlag);
-	WLog_INFO(TAG,  "\thighColorFlags: 0x%02X", highColorFlags);
-	WLog_INFO(TAG,  "\tdrawingFlags: 0x%02X", drawingFlags);
-	WLog_INFO(TAG,  "\tmultipleRectangleSupport: 0x%04X", multipleRectangleSupport);
-	WLog_INFO(TAG,  "\tpad2OctetsB: 0x%04X", pad2OctetsB);
+	WLog_INFO(TAG,  "\tpreferredBitsPerPixel: 0x%04"PRIX16"", preferredBitsPerPixel);
+	WLog_INFO(TAG,  "\treceive1BitPerPixel: 0x%04"PRIX16"", receive1BitPerPixel);
+	WLog_INFO(TAG,  "\treceive4BitsPerPixel: 0x%04"PRIX16"", receive4BitsPerPixel);
+	WLog_INFO(TAG,  "\treceive8BitsPerPixel: 0x%04"PRIX16"", receive8BitsPerPixel);
+	WLog_INFO(TAG,  "\tdesktopWidth: 0x%04"PRIX16"", desktopWidth);
+	WLog_INFO(TAG,  "\tdesktopHeight: 0x%04"PRIX16"", desktopHeight);
+	WLog_INFO(TAG,  "\tpad2Octets: 0x%04"PRIX16"", pad2Octets);
+	WLog_INFO(TAG,  "\tdesktopResizeFlag: 0x%04"PRIX16"", desktopResizeFlag);
+	WLog_INFO(TAG,  "\tbitmapCompressionFlag: 0x%04"PRIX16"", bitmapCompressionFlag);
+	WLog_INFO(TAG,  "\thighColorFlags: 0x%02"PRIX8"", highColorFlags);
+	WLog_INFO(TAG,  "\tdrawingFlags: 0x%02"PRIX8"", drawingFlags);
+	WLog_INFO(TAG,  "\tmultipleRectangleSupport: 0x%04"PRIX16"", multipleRectangleSupport);
+	WLog_INFO(TAG,  "\tpad2OctetsB: 0x%04"PRIX16"", pad2OctetsB);
 	return TRUE;
 }
 
@@ -637,7 +637,7 @@ static BOOL rdp_print_order_capability_set(wStream* s, UINT16 length)
 	UINT16 pad2OctetsD;
 	UINT16 textANSICodePage;
 	UINT16 pad2OctetsE;
-	WLog_INFO(TAG,  "OrderCapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "OrderCapabilitySet (length %"PRIu16"):", length);
 
 	if (length < 88)
 		return FALSE;
@@ -661,59 +661,59 @@ static BOOL rdp_print_order_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT16(s, pad2OctetsD); /* pad2OctetsD (2 bytes) */
 	Stream_Read_UINT16(s, textANSICodePage); /* textANSICodePage (2 bytes) */
 	Stream_Read_UINT16(s, pad2OctetsE); /* pad2OctetsE (2 bytes) */
-	WLog_INFO(TAG,  "\tpad4OctetsA: 0x%08X", pad4OctetsA);
-	WLog_INFO(TAG,  "\tdesktopSaveXGranularity: 0x%04X", desktopSaveXGranularity);
-	WLog_INFO(TAG,  "\tdesktopSaveYGranularity: 0x%04X", desktopSaveYGranularity);
-	WLog_INFO(TAG,  "\tpad2OctetsA: 0x%04X", pad2OctetsA);
-	WLog_INFO(TAG,  "\tmaximumOrderLevel: 0x%04X", maximumOrderLevel);
-	WLog_INFO(TAG,  "\tnumberFonts: 0x%04X", numberFonts);
-	WLog_INFO(TAG,  "\torderFlags: 0x%04X", orderFlags);
+	WLog_INFO(TAG,  "\tpad4OctetsA: 0x%08"PRIX32"", pad4OctetsA);
+	WLog_INFO(TAG,  "\tdesktopSaveXGranularity: 0x%04"PRIX16"", desktopSaveXGranularity);
+	WLog_INFO(TAG,  "\tdesktopSaveYGranularity: 0x%04"PRIX16"", desktopSaveYGranularity);
+	WLog_INFO(TAG,  "\tpad2OctetsA: 0x%04"PRIX16"", pad2OctetsA);
+	WLog_INFO(TAG,  "\tmaximumOrderLevel: 0x%04"PRIX16"", maximumOrderLevel);
+	WLog_INFO(TAG,  "\tnumberFonts: 0x%04"PRIX16"", numberFonts);
+	WLog_INFO(TAG,  "\torderFlags: 0x%04"PRIX16"", orderFlags);
 	WLog_INFO(TAG,  "\torderSupport:");
-	WLog_INFO(TAG,  "\t\tDSTBLT: %d", orderSupport[NEG_DSTBLT_INDEX]);
-	WLog_INFO(TAG,  "\t\tPATBLT: %d", orderSupport[NEG_PATBLT_INDEX]);
-	WLog_INFO(TAG,  "\t\tSCRBLT: %d", orderSupport[NEG_SCRBLT_INDEX]);
-	WLog_INFO(TAG,  "\t\tMEMBLT: %d", orderSupport[NEG_MEMBLT_INDEX]);
-	WLog_INFO(TAG,  "\t\tMEM3BLT: %d", orderSupport[NEG_MEM3BLT_INDEX]);
-	WLog_INFO(TAG,  "\t\tATEXTOUT: %d", orderSupport[NEG_ATEXTOUT_INDEX]);
-	WLog_INFO(TAG,  "\t\tAEXTTEXTOUT: %d", orderSupport[NEG_AEXTTEXTOUT_INDEX]);
-	WLog_INFO(TAG,  "\t\tDRAWNINEGRID: %d", orderSupport[NEG_DRAWNINEGRID_INDEX]);
-	WLog_INFO(TAG,  "\t\tLINETO: %d", orderSupport[NEG_LINETO_INDEX]);
-	WLog_INFO(TAG,  "\t\tMULTI_DRAWNINEGRID: %d",
+	WLog_INFO(TAG,  "\t\tDSTBLT: %"PRIu8"", orderSupport[NEG_DSTBLT_INDEX]);
+	WLog_INFO(TAG,  "\t\tPATBLT: %"PRIu8"", orderSupport[NEG_PATBLT_INDEX]);
+	WLog_INFO(TAG,  "\t\tSCRBLT: %"PRIu8"", orderSupport[NEG_SCRBLT_INDEX]);
+	WLog_INFO(TAG,  "\t\tMEMBLT: %"PRIu8"", orderSupport[NEG_MEMBLT_INDEX]);
+	WLog_INFO(TAG,  "\t\tMEM3BLT: %"PRIu8"", orderSupport[NEG_MEM3BLT_INDEX]);
+	WLog_INFO(TAG,  "\t\tATEXTOUT: %"PRIu8"", orderSupport[NEG_ATEXTOUT_INDEX]);
+	WLog_INFO(TAG,  "\t\tAEXTTEXTOUT: %"PRIu8"", orderSupport[NEG_AEXTTEXTOUT_INDEX]);
+	WLog_INFO(TAG,  "\t\tDRAWNINEGRID: %"PRIu8"", orderSupport[NEG_DRAWNINEGRID_INDEX]);
+	WLog_INFO(TAG,  "\t\tLINETO: %"PRIu8"", orderSupport[NEG_LINETO_INDEX]);
+	WLog_INFO(TAG,  "\t\tMULTI_DRAWNINEGRID: %"PRIu8"",
 	          orderSupport[NEG_MULTI_DRAWNINEGRID_INDEX]);
-	WLog_INFO(TAG,  "\t\tOPAQUE_RECT: %d", orderSupport[NEG_OPAQUE_RECT_INDEX]);
-	WLog_INFO(TAG,  "\t\tSAVEBITMAP: %d", orderSupport[NEG_SAVEBITMAP_INDEX]);
-	WLog_INFO(TAG,  "\t\tWTEXTOUT: %d", orderSupport[NEG_WTEXTOUT_INDEX]);
-	WLog_INFO(TAG,  "\t\tMEMBLT_V2: %d", orderSupport[NEG_MEMBLT_V2_INDEX]);
-	WLog_INFO(TAG,  "\t\tMEM3BLT_V2: %d", orderSupport[NEG_MEM3BLT_V2_INDEX]);
-	WLog_INFO(TAG,  "\t\tMULTIDSTBLT: %d", orderSupport[NEG_MULTIDSTBLT_INDEX]);
-	WLog_INFO(TAG,  "\t\tMULTIPATBLT: %d", orderSupport[NEG_MULTIPATBLT_INDEX]);
-	WLog_INFO(TAG,  "\t\tMULTISCRBLT: %d", orderSupport[NEG_MULTISCRBLT_INDEX]);
-	WLog_INFO(TAG,  "\t\tMULTIOPAQUERECT: %d",
+	WLog_INFO(TAG,  "\t\tOPAQUE_RECT: %"PRIu8"", orderSupport[NEG_OPAQUE_RECT_INDEX]);
+	WLog_INFO(TAG,  "\t\tSAVEBITMAP: %"PRIu8"", orderSupport[NEG_SAVEBITMAP_INDEX]);
+	WLog_INFO(TAG,  "\t\tWTEXTOUT: %"PRIu8"", orderSupport[NEG_WTEXTOUT_INDEX]);
+	WLog_INFO(TAG,  "\t\tMEMBLT_V2: %"PRIu8"", orderSupport[NEG_MEMBLT_V2_INDEX]);
+	WLog_INFO(TAG,  "\t\tMEM3BLT_V2: %"PRIu8"", orderSupport[NEG_MEM3BLT_V2_INDEX]);
+	WLog_INFO(TAG,  "\t\tMULTIDSTBLT: %"PRIu8"", orderSupport[NEG_MULTIDSTBLT_INDEX]);
+	WLog_INFO(TAG,  "\t\tMULTIPATBLT: %"PRIu8"", orderSupport[NEG_MULTIPATBLT_INDEX]);
+	WLog_INFO(TAG,  "\t\tMULTISCRBLT: %"PRIu8"", orderSupport[NEG_MULTISCRBLT_INDEX]);
+	WLog_INFO(TAG,  "\t\tMULTIOPAQUERECT: %"PRIu8"",
 	          orderSupport[NEG_MULTIOPAQUERECT_INDEX]);
-	WLog_INFO(TAG,  "\t\tFAST_INDEX: %d", orderSupport[NEG_FAST_INDEX_INDEX]);
-	WLog_INFO(TAG,  "\t\tPOLYGON_SC: %d", orderSupport[NEG_POLYGON_SC_INDEX]);
-	WLog_INFO(TAG,  "\t\tPOLYGON_CB: %d", orderSupport[NEG_POLYGON_CB_INDEX]);
-	WLog_INFO(TAG,  "\t\tPOLYLINE: %d", orderSupport[NEG_POLYLINE_INDEX]);
-	WLog_INFO(TAG,  "\t\tUNUSED23: %d", orderSupport[NEG_UNUSED23_INDEX]);
-	WLog_INFO(TAG,  "\t\tFAST_GLYPH: %d", orderSupport[NEG_FAST_GLYPH_INDEX]);
-	WLog_INFO(TAG,  "\t\tELLIPSE_SC: %d", orderSupport[NEG_ELLIPSE_SC_INDEX]);
-	WLog_INFO(TAG,  "\t\tELLIPSE_CB: %d", orderSupport[NEG_ELLIPSE_CB_INDEX]);
-	WLog_INFO(TAG,  "\t\tGLYPH_INDEX: %d", orderSupport[NEG_GLYPH_INDEX_INDEX]);
-	WLog_INFO(TAG,  "\t\tGLYPH_WEXTTEXTOUT: %d",
+	WLog_INFO(TAG,  "\t\tFAST_INDEX: %"PRIu8"", orderSupport[NEG_FAST_INDEX_INDEX]);
+	WLog_INFO(TAG,  "\t\tPOLYGON_SC: %"PRIu8"", orderSupport[NEG_POLYGON_SC_INDEX]);
+	WLog_INFO(TAG,  "\t\tPOLYGON_CB: %"PRIu8"", orderSupport[NEG_POLYGON_CB_INDEX]);
+	WLog_INFO(TAG,  "\t\tPOLYLINE: %"PRIu8"", orderSupport[NEG_POLYLINE_INDEX]);
+	WLog_INFO(TAG,  "\t\tUNUSED23: %"PRIu8"", orderSupport[NEG_UNUSED23_INDEX]);
+	WLog_INFO(TAG,  "\t\tFAST_GLYPH: %"PRIu8"", orderSupport[NEG_FAST_GLYPH_INDEX]);
+	WLog_INFO(TAG,  "\t\tELLIPSE_SC: %"PRIu8"", orderSupport[NEG_ELLIPSE_SC_INDEX]);
+	WLog_INFO(TAG,  "\t\tELLIPSE_CB: %"PRIu8"", orderSupport[NEG_ELLIPSE_CB_INDEX]);
+	WLog_INFO(TAG,  "\t\tGLYPH_INDEX: %"PRIu8"", orderSupport[NEG_GLYPH_INDEX_INDEX]);
+	WLog_INFO(TAG,  "\t\tGLYPH_WEXTTEXTOUT: %"PRIu8"",
 	          orderSupport[NEG_GLYPH_WEXTTEXTOUT_INDEX]);
-	WLog_INFO(TAG,  "\t\tGLYPH_WLONGTEXTOUT: %d",
+	WLog_INFO(TAG,  "\t\tGLYPH_WLONGTEXTOUT: %"PRIu8"",
 	          orderSupport[NEG_GLYPH_WLONGTEXTOUT_INDEX]);
-	WLog_INFO(TAG,  "\t\tGLYPH_WLONGEXTTEXTOUT: %d",
+	WLog_INFO(TAG,  "\t\tGLYPH_WLONGEXTTEXTOUT: %"PRIu8"",
 	          orderSupport[NEG_GLYPH_WLONGEXTTEXTOUT_INDEX]);
-	WLog_INFO(TAG,  "\t\tUNUSED31: %d", orderSupport[NEG_UNUSED31_INDEX]);
-	WLog_INFO(TAG,  "\ttextFlags: 0x%04X", textFlags);
-	WLog_INFO(TAG,  "\torderSupportExFlags: 0x%04X", orderSupportExFlags);
-	WLog_INFO(TAG,  "\tpad4OctetsB: 0x%08X", pad4OctetsB);
-	WLog_INFO(TAG,  "\tdesktopSaveSize: 0x%08X", desktopSaveSize);
-	WLog_INFO(TAG,  "\tpad2OctetsC: 0x%04X", pad2OctetsC);
-	WLog_INFO(TAG,  "\tpad2OctetsD: 0x%04X", pad2OctetsD);
-	WLog_INFO(TAG,  "\ttextANSICodePage: 0x%04X", textANSICodePage);
-	WLog_INFO(TAG,  "\tpad2OctetsE: 0x%04X", pad2OctetsE);
+	WLog_INFO(TAG,  "\t\tUNUSED31: %"PRIu8"", orderSupport[NEG_UNUSED31_INDEX]);
+	WLog_INFO(TAG,  "\ttextFlags: 0x%04"PRIX16"", textFlags);
+	WLog_INFO(TAG,  "\torderSupportExFlags: 0x%04"PRIX16"", orderSupportExFlags);
+	WLog_INFO(TAG,  "\tpad4OctetsB: 0x%08"PRIX32"", pad4OctetsB);
+	WLog_INFO(TAG,  "\tdesktopSaveSize: 0x%08"PRIX32"", desktopSaveSize);
+	WLog_INFO(TAG,  "\tpad2OctetsC: 0x%04"PRIX16"", pad2OctetsC);
+	WLog_INFO(TAG,  "\tpad2OctetsD: 0x%04"PRIX16"", pad2OctetsD);
+	WLog_INFO(TAG,  "\ttextANSICodePage: 0x%04"PRIX16"", textANSICodePage);
+	WLog_INFO(TAG,  "\tpad2OctetsE: 0x%04"PRIX16"", pad2OctetsE);
 	return TRUE;
 }
 
@@ -794,7 +794,7 @@ static BOOL rdp_print_bitmap_cache_capability_set(wStream* s, UINT16 length)
 	UINT16 Cache1MaximumCellSize;
 	UINT16 Cache2Entries;
 	UINT16 Cache2MaximumCellSize;
-	WLog_INFO(TAG,  "BitmapCacheCapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "BitmapCacheCapabilitySet (length %"PRIu16"):", length);
 
 	if (length < 40)
 		return FALSE;
@@ -814,18 +814,18 @@ static BOOL rdp_print_bitmap_cache_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT16(s, Cache2Entries); /* Cache2Entries (2 bytes) */
 	Stream_Read_UINT16(s,
 	                   Cache2MaximumCellSize); /* Cache2MaximumCellSize (2 bytes) */
-	WLog_INFO(TAG,  "\tpad1: 0x%08X", pad1);
-	WLog_INFO(TAG,  "\tpad2: 0x%08X", pad2);
-	WLog_INFO(TAG,  "\tpad3: 0x%08X", pad3);
-	WLog_INFO(TAG,  "\tpad4: 0x%08X", pad4);
-	WLog_INFO(TAG,  "\tpad5: 0x%08X", pad5);
-	WLog_INFO(TAG,  "\tpad6: 0x%08X", pad6);
-	WLog_INFO(TAG,  "\tCache0Entries: 0x%04X", Cache0Entries);
-	WLog_INFO(TAG,  "\tCache0MaximumCellSize: 0x%04X", Cache0MaximumCellSize);
-	WLog_INFO(TAG,  "\tCache1Entries: 0x%04X", Cache1Entries);
-	WLog_INFO(TAG,  "\tCache1MaximumCellSize: 0x%04X", Cache1MaximumCellSize);
-	WLog_INFO(TAG,  "\tCache2Entries: 0x%04X", Cache2Entries);
-	WLog_INFO(TAG,  "\tCache2MaximumCellSize: 0x%04X", Cache2MaximumCellSize);
+	WLog_INFO(TAG,  "\tpad1: 0x%08"PRIX32"", pad1);
+	WLog_INFO(TAG,  "\tpad2: 0x%08"PRIX32"", pad2);
+	WLog_INFO(TAG,  "\tpad3: 0x%08"PRIX32"", pad3);
+	WLog_INFO(TAG,  "\tpad4: 0x%08"PRIX32"", pad4);
+	WLog_INFO(TAG,  "\tpad5: 0x%08"PRIX32"", pad5);
+	WLog_INFO(TAG,  "\tpad6: 0x%08"PRIX32"", pad6);
+	WLog_INFO(TAG,  "\tCache0Entries: 0x%04"PRIX16"", Cache0Entries);
+	WLog_INFO(TAG,  "\tCache0MaximumCellSize: 0x%04"PRIX16"", Cache0MaximumCellSize);
+	WLog_INFO(TAG,  "\tCache1Entries: 0x%04"PRIX16"", Cache1Entries);
+	WLog_INFO(TAG,  "\tCache1MaximumCellSize: 0x%04"PRIX16"", Cache1MaximumCellSize);
+	WLog_INFO(TAG,  "\tCache2Entries: 0x%04"PRIX16"", Cache2Entries);
+	WLog_INFO(TAG,  "\tCache2MaximumCellSize: 0x%04"PRIX16"", Cache2MaximumCellSize);
 	return TRUE;
 }
 
@@ -879,7 +879,7 @@ static BOOL rdp_print_control_capability_set(wStream* s, UINT16 length)
 	UINT16 remoteDetachFlag;
 	UINT16 controlInterest;
 	UINT16 detachInterest;
-	WLog_INFO(TAG,  "ControlCapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "ControlCapabilitySet (length %"PRIu16"):", length);
 
 	if (length < 12)
 		return FALSE;
@@ -888,10 +888,10 @@ static BOOL rdp_print_control_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT16(s, remoteDetachFlag); /* remoteDetachFlag (2 bytes) */
 	Stream_Read_UINT16(s, controlInterest); /* controlInterest (2 bytes) */
 	Stream_Read_UINT16(s, detachInterest); /* detachInterest (2 bytes) */
-	WLog_INFO(TAG,  "\tcontrolFlags: 0x%04X", controlFlags);
-	WLog_INFO(TAG,  "\tremoteDetachFlag: 0x%04X", remoteDetachFlag);
-	WLog_INFO(TAG,  "\tcontrolInterest: 0x%04X", controlInterest);
-	WLog_INFO(TAG,  "\tdetachInterest: 0x%04X", detachInterest);
+	WLog_INFO(TAG,  "\tcontrolFlags: 0x%04"PRIX16"", controlFlags);
+	WLog_INFO(TAG,  "\tremoteDetachFlag: 0x%04"PRIX16"", remoteDetachFlag);
+	WLog_INFO(TAG,  "\tcontrolInterest: 0x%04"PRIX16"", controlInterest);
+	WLog_INFO(TAG,  "\tdetachInterest: 0x%04"PRIX16"", detachInterest);
 	return TRUE;
 }
 
@@ -947,7 +947,7 @@ static BOOL rdp_print_window_activation_capability_set(wStream* s,
 	UINT16 helpKeyIndexFlag;
 	UINT16 helpExtendedKeyFlag;
 	UINT16 windowManagerKeyFlag;
-	WLog_INFO(TAG,  "WindowActivationCapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "WindowActivationCapabilitySet (length %"PRIu16"):", length);
 
 	if (length < 12)
 		return FALSE;
@@ -957,10 +957,10 @@ static BOOL rdp_print_window_activation_capability_set(wStream* s,
 	Stream_Read_UINT16(s, helpExtendedKeyFlag); /* helpExtendedKeyFlag (2 bytes) */
 	Stream_Read_UINT16(s,
 	                   windowManagerKeyFlag); /* windowManagerKeyFlag (2 bytes) */
-	WLog_INFO(TAG,  "\thelpKeyFlag: 0x%04X", helpKeyFlag);
-	WLog_INFO(TAG,  "\thelpKeyIndexFlag: 0x%04X", helpKeyIndexFlag);
-	WLog_INFO(TAG,  "\thelpExtendedKeyFlag: 0x%04X", helpExtendedKeyFlag);
-	WLog_INFO(TAG,  "\twindowManagerKeyFlag: 0x%04X", windowManagerKeyFlag);
+	WLog_INFO(TAG,  "\thelpKeyFlag: 0x%04"PRIX16"", helpKeyFlag);
+	WLog_INFO(TAG,  "\thelpKeyIndexFlag: 0x%04"PRIX16"", helpKeyIndexFlag);
+	WLog_INFO(TAG,  "\thelpExtendedKeyFlag: 0x%04"PRIX16"", helpExtendedKeyFlag);
+	WLog_INFO(TAG,  "\twindowManagerKeyFlag: 0x%04"PRIX16"", windowManagerKeyFlag);
 	return TRUE;
 }
 
@@ -1043,14 +1043,14 @@ static BOOL rdp_print_pointer_capability_set(wStream* s, UINT16 length)
 	if (length < 10)
 		return FALSE;
 
-	WLog_INFO(TAG,  "PointerCapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "PointerCapabilitySet (length %"PRIu16"):", length);
 	Stream_Read_UINT16(s, colorPointerFlag); /* colorPointerFlag (2 bytes) */
 	Stream_Read_UINT16(s,
 	                   colorPointerCacheSize); /* colorPointerCacheSize (2 bytes) */
 	Stream_Read_UINT16(s, pointerCacheSize); /* pointerCacheSize (2 bytes) */
-	WLog_INFO(TAG,  "\tcolorPointerFlag: 0x%04X", colorPointerFlag);
-	WLog_INFO(TAG,  "\tcolorPointerCacheSize: 0x%04X", colorPointerCacheSize);
-	WLog_INFO(TAG,  "\tpointerCacheSize: 0x%04X", pointerCacheSize);
+	WLog_INFO(TAG,  "\tcolorPointerFlag: 0x%04"PRIX16"", colorPointerFlag);
+	WLog_INFO(TAG,  "\tcolorPointerCacheSize: 0x%04"PRIX16"", colorPointerCacheSize);
+	WLog_INFO(TAG,  "\tpointerCacheSize: 0x%04"PRIX16"", pointerCacheSize);
 	return TRUE;
 }
 
@@ -1100,15 +1100,15 @@ static BOOL rdp_print_share_capability_set(wStream* s, UINT16 length)
 {
 	UINT16 nodeId;
 	UINT16 pad2Octets;
-	WLog_INFO(TAG,  "ShareCapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "ShareCapabilitySet (length %"PRIu16"):", length);
 
 	if (length < 8)
 		return FALSE;
 
 	Stream_Read_UINT16(s, nodeId); /* nodeId (2 bytes) */
 	Stream_Read_UINT16(s, pad2Octets); /* pad2Octets (2 bytes) */
-	WLog_INFO(TAG,  "\tnodeId: 0x%04X", nodeId);
-	WLog_INFO(TAG,  "\tpad2Octets: 0x%04X", pad2Octets);
+	WLog_INFO(TAG,  "\tnodeId: 0x%04"PRIX16"", nodeId);
+	WLog_INFO(TAG,  "\tpad2Octets: 0x%04"PRIX16"", pad2Octets);
 	return TRUE;
 }
 
@@ -1157,15 +1157,15 @@ static BOOL rdp_print_color_cache_capability_set(wStream* s, UINT16 length)
 {
 	UINT16 colorTableCacheSize;
 	UINT16 pad2Octets;
-	WLog_INFO(TAG,  "ColorCacheCapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "ColorCacheCapabilitySet (length %"PRIu16"):", length);
 
 	if (length < 8)
 		return FALSE;
 
 	Stream_Read_UINT16(s, colorTableCacheSize); /* colorTableCacheSize (2 bytes) */
 	Stream_Read_UINT16(s, pad2Octets); /* pad2Octets (2 bytes) */
-	WLog_INFO(TAG,  "\tcolorTableCacheSize: 0x%04X", colorTableCacheSize);
-	WLog_INFO(TAG,  "\tpad2Octets: 0x%04X", pad2Octets);
+	WLog_INFO(TAG,  "\tcolorTableCacheSize: 0x%04"PRIX16"", colorTableCacheSize);
+	WLog_INFO(TAG,  "\tpad2Octets: 0x%04"PRIX16"", pad2Octets);
 	return TRUE;
 }
 
@@ -1218,15 +1218,15 @@ static BOOL rdp_print_sound_capability_set(wStream* s, UINT16 length)
 {
 	UINT16 soundFlags;
 	UINT16 pad2OctetsA;
-	WLog_INFO(TAG,  "SoundCapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "SoundCapabilitySet (length %"PRIu16"):", length);
 
 	if (length < 8)
 		return FALSE;
 
 	Stream_Read_UINT16(s, soundFlags); /* soundFlags (2 bytes) */
 	Stream_Read_UINT16(s, pad2OctetsA); /* pad2OctetsA (2 bytes) */
-	WLog_INFO(TAG,  "\tsoundFlags: 0x%04X", soundFlags);
-	WLog_INFO(TAG,  "\tpad2OctetsA: 0x%04X", pad2OctetsA);
+	WLog_INFO(TAG,  "\tsoundFlags: 0x%04"PRIX16"", soundFlags);
+	WLog_INFO(TAG,  "\tpad2OctetsA: 0x%04"PRIX16"", pad2OctetsA);
 	return TRUE;
 }
 
@@ -1339,7 +1339,7 @@ static BOOL rdp_print_input_capability_set(wStream* s, UINT16 length)
 	UINT32 keyboardType;
 	UINT32 keyboardSubType;
 	UINT32 keyboardFunctionKey;
-	WLog_INFO(TAG,  "InputCapabilitySet (length %d)", length);
+	WLog_INFO(TAG,  "InputCapabilitySet (length %"PRIu16")", length);
 
 	if (length < 88)
 		return FALSE;
@@ -1351,12 +1351,12 @@ static BOOL rdp_print_input_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT32(s, keyboardSubType); /* keyboardSubType (4 bytes) */
 	Stream_Read_UINT32(s, keyboardFunctionKey); /* keyboardFunctionKeys (4 bytes) */
 	Stream_Seek(s, 64); /* imeFileName (64 bytes) */
-	WLog_INFO(TAG,  "\tinputFlags: 0x%04X", inputFlags);
-	WLog_INFO(TAG,  "\tpad2OctetsA: 0x%04X", pad2OctetsA);
-	WLog_INFO(TAG,  "\tkeyboardLayout: 0x%08X", keyboardLayout);
-	WLog_INFO(TAG,  "\tkeyboardType: 0x%08X", keyboardType);
-	WLog_INFO(TAG,  "\tkeyboardSubType: 0x%08X", keyboardSubType);
-	WLog_INFO(TAG,  "\tkeyboardFunctionKey: 0x%08X", keyboardFunctionKey);
+	WLog_INFO(TAG,  "\tinputFlags: 0x%04"PRIX16"", inputFlags);
+	WLog_INFO(TAG,  "\tpad2OctetsA: 0x%04"PRIX16"", pad2OctetsA);
+	WLog_INFO(TAG,  "\tkeyboardLayout: 0x%08"PRIX32"", keyboardLayout);
+	WLog_INFO(TAG,  "\tkeyboardType: 0x%08"PRIX32"", keyboardType);
+	WLog_INFO(TAG,  "\tkeyboardSubType: 0x%08"PRIX32"", keyboardSubType);
+	WLog_INFO(TAG,  "\tkeyboardFunctionKey: 0x%08"PRIX32"", keyboardFunctionKey);
 	return TRUE;
 }
 
@@ -1405,7 +1405,7 @@ static BOOL rdp_print_font_capability_set(wStream* s, UINT16 length)
 {
 	UINT16 fontSupportFlags = 0;
 	UINT16 pad2Octets = 0;
-	WLog_INFO(TAG,  "FontCapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "FontCapabilitySet (length %"PRIu16"):", length);
 
 	if (length > 4)
 		Stream_Read_UINT16(s, fontSupportFlags); /* fontSupportFlags (2 bytes) */
@@ -1413,8 +1413,8 @@ static BOOL rdp_print_font_capability_set(wStream* s, UINT16 length)
 	if (length > 6)
 		Stream_Read_UINT16(s, pad2Octets); /* pad2Octets (2 bytes) */
 
-	WLog_INFO(TAG,  "\tfontSupportFlags: 0x%04X", fontSupportFlags);
-	WLog_INFO(TAG,  "\tpad2Octets: 0x%04X", pad2Octets);
+	WLog_INFO(TAG,  "\tfontSupportFlags: 0x%04"PRIX16"", fontSupportFlags);
+	WLog_INFO(TAG,  "\tpad2Octets: 0x%04"PRIX16"", pad2Octets);
 	return TRUE;
 }
 
@@ -1459,13 +1459,13 @@ static BOOL rdp_write_brush_capability_set(wStream* s, rdpSettings* settings)
 static BOOL rdp_print_brush_capability_set(wStream* s, UINT16 length)
 {
 	UINT32 brushSupportLevel;
-	WLog_INFO(TAG,  "BrushCapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "BrushCapabilitySet (length %"PRIu16"):", length);
 
 	if (length < 8)
 		return FALSE;
 
 	Stream_Read_UINT32(s, brushSupportLevel); /* brushSupportLevel (4 bytes) */
-	WLog_INFO(TAG,  "\tbrushSupportLevel: 0x%08X", brushSupportLevel);
+	WLog_INFO(TAG,  "\tbrushSupportLevel: 0x%08"PRIX32"", brushSupportLevel);
 	return TRUE;
 }
 
@@ -1590,7 +1590,7 @@ static BOOL rdp_print_glyph_cache_capability_set(wStream* s, UINT16 length)
 	GLYPH_CACHE_DEFINITION fragCache;
 	UINT16 glyphSupportLevel;
 	UINT16 pad2Octets;
-	WLog_INFO(TAG,  "GlyphCacheCapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "GlyphCacheCapabilitySet (length %"PRIu16"):", length);
 
 	if (length < 52)
 		return FALSE;
@@ -1609,30 +1609,30 @@ static BOOL rdp_print_glyph_cache_capability_set(wStream* s, UINT16 length)
 	rdp_read_cache_definition(s, &fragCache);  /* fragCache (4 bytes) */
 	Stream_Read_UINT16(s, glyphSupportLevel); /* glyphSupportLevel (2 bytes) */
 	Stream_Read_UINT16(s, pad2Octets); /* pad2Octets (2 bytes) */
-	WLog_INFO(TAG,  "\tglyphCache0: Entries: %d MaximumCellSize: %d",
+	WLog_INFO(TAG,  "\tglyphCache0: Entries: %"PRIu16" MaximumCellSize: %"PRIu16"",
 	          glyphCache[0].cacheEntries, glyphCache[0].cacheMaximumCellSize);
-	WLog_INFO(TAG,  "\tglyphCache1: Entries: %d MaximumCellSize: %d",
+	WLog_INFO(TAG,  "\tglyphCache1: Entries: %"PRIu16" MaximumCellSize: %"PRIu16"",
 	          glyphCache[1].cacheEntries, glyphCache[1].cacheMaximumCellSize);
-	WLog_INFO(TAG,  "\tglyphCache2: Entries: %d MaximumCellSize: %d",
+	WLog_INFO(TAG,  "\tglyphCache2: Entries: %"PRIu16" MaximumCellSize: %"PRIu16"",
 	          glyphCache[2].cacheEntries, glyphCache[2].cacheMaximumCellSize);
-	WLog_INFO(TAG,  "\tglyphCache3: Entries: %d MaximumCellSize: %d",
+	WLog_INFO(TAG,  "\tglyphCache3: Entries: %"PRIu16" MaximumCellSize: %"PRIu16"",
 	          glyphCache[3].cacheEntries, glyphCache[3].cacheMaximumCellSize);
-	WLog_INFO(TAG,  "\tglyphCache4: Entries: %d MaximumCellSize: %d",
+	WLog_INFO(TAG,  "\tglyphCache4: Entries: %"PRIu16" MaximumCellSize: %"PRIu16"",
 	          glyphCache[4].cacheEntries, glyphCache[4].cacheMaximumCellSize);
-	WLog_INFO(TAG,  "\tglyphCache5: Entries: %d MaximumCellSize: %d",
+	WLog_INFO(TAG,  "\tglyphCache5: Entries: %"PRIu16" MaximumCellSize: %"PRIu16"",
 	          glyphCache[5].cacheEntries, glyphCache[5].cacheMaximumCellSize);
-	WLog_INFO(TAG,  "\tglyphCache6: Entries: %d MaximumCellSize: %d",
+	WLog_INFO(TAG,  "\tglyphCache6: Entries: %"PRIu16" MaximumCellSize: %"PRIu16"",
 	          glyphCache[6].cacheEntries, glyphCache[6].cacheMaximumCellSize);
-	WLog_INFO(TAG,  "\tglyphCache7: Entries: %d MaximumCellSize: %d",
+	WLog_INFO(TAG,  "\tglyphCache7: Entries: %"PRIu16" MaximumCellSize: %"PRIu16"",
 	          glyphCache[7].cacheEntries, glyphCache[7].cacheMaximumCellSize);
-	WLog_INFO(TAG,  "\tglyphCache8: Entries: %d MaximumCellSize: %d",
+	WLog_INFO(TAG,  "\tglyphCache8: Entries: %"PRIu16" MaximumCellSize: %"PRIu16"",
 	          glyphCache[8].cacheEntries, glyphCache[8].cacheMaximumCellSize);
-	WLog_INFO(TAG,  "\tglyphCache9: Entries: %d MaximumCellSize: %d",
+	WLog_INFO(TAG,  "\tglyphCache9: Entries: %"PRIu16" MaximumCellSize: %"PRIu16"",
 	          glyphCache[9].cacheEntries, glyphCache[9].cacheMaximumCellSize);
-	WLog_INFO(TAG,  "\tfragCache: Entries: %d MaximumCellSize: %d",
+	WLog_INFO(TAG,  "\tfragCache: Entries: %"PRIu16" MaximumCellSize: %"PRIu16"",
 	          fragCache.cacheEntries, fragCache.cacheMaximumCellSize);
-	WLog_INFO(TAG,  "\tglyphSupportLevel: 0x%04X", glyphSupportLevel);
-	WLog_INFO(TAG,  "\tpad2Octets: 0x%04X", pad2Octets);
+	WLog_INFO(TAG,  "\tglyphSupportLevel: 0x%04"PRIX16"", glyphSupportLevel);
+	WLog_INFO(TAG,  "\tpad2Octets: 0x%04"PRIX16"", pad2Octets);
 	return TRUE;
 }
 
@@ -1702,7 +1702,7 @@ static BOOL rdp_print_offscreen_bitmap_cache_capability_set(wStream* s,
 	UINT32 offscreenSupportLevel;
 	UINT16 offscreenCacheSize;
 	UINT16 offscreenCacheEntries;
-	WLog_INFO(TAG,  "OffscreenBitmapCacheCapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "OffscreenBitmapCacheCapabilitySet (length %"PRIu16"):", length);
 
 	if (length < 12)
 		return FALSE;
@@ -1712,9 +1712,9 @@ static BOOL rdp_print_offscreen_bitmap_cache_capability_set(wStream* s,
 	Stream_Read_UINT16(s, offscreenCacheSize); /* offscreenCacheSize (2 bytes) */
 	Stream_Read_UINT16(s,
 	                   offscreenCacheEntries); /* offscreenCacheEntries (2 bytes) */
-	WLog_INFO(TAG,  "\toffscreenSupportLevel: 0x%08X", offscreenSupportLevel);
-	WLog_INFO(TAG,  "\toffscreenCacheSize: 0x%04X", offscreenCacheSize);
-	WLog_INFO(TAG,  "\toffscreenCacheEntries: 0x%04X", offscreenCacheEntries);
+	WLog_INFO(TAG,  "\toffscreenSupportLevel: 0x%08"PRIX32"", offscreenSupportLevel);
+	WLog_INFO(TAG,  "\toffscreenCacheSize: 0x%04"PRIX16"", offscreenCacheSize);
+	WLog_INFO(TAG,  "\toffscreenCacheEntries: 0x%04"PRIX16"", offscreenCacheEntries);
 	return TRUE;
 }
 
@@ -1773,7 +1773,7 @@ static BOOL rdp_print_bitmap_cache_host_support_capability_set(wStream* s,
 	BYTE cacheVersion;
 	BYTE pad1;
 	UINT16 pad2;
-	WLog_INFO(TAG,  "BitmapCacheHostSupportCapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "BitmapCacheHostSupportCapabilitySet (length %"PRIu16"):", length);
 
 	if (length < 8)
 		return FALSE;
@@ -1781,9 +1781,9 @@ static BOOL rdp_print_bitmap_cache_host_support_capability_set(wStream* s,
 	Stream_Read_UINT8(s, cacheVersion); /* cacheVersion (1 byte) */
 	Stream_Read_UINT8(s, pad1); /* pad1 (1 byte) */
 	Stream_Read_UINT16(s, pad2); /* pad2 (2 bytes) */
-	WLog_INFO(TAG,  "\tcacheVersion: 0x%02X", cacheVersion);
-	WLog_INFO(TAG,  "\tpad1: 0x%02X", pad1);
-	WLog_INFO(TAG,  "\tpad2: 0x%04X", pad2);
+	WLog_INFO(TAG,  "\tcacheVersion: 0x%02"PRIX8"", cacheVersion);
+	WLog_INFO(TAG,  "\tpad1: 0x%02"PRIX8"", pad1);
+	WLog_INFO(TAG,  "\tpad2: 0x%04"PRIX16"", pad2);
 	return TRUE;
 }
 
@@ -1885,7 +1885,7 @@ static BOOL rdp_print_bitmap_cache_v2_capability_set(wStream* s, UINT16 length)
 	BYTE pad2;
 	BYTE numCellCaches;
 	BITMAP_CACHE_V2_CELL_INFO bitmapCacheV2CellInfo[5];
-	WLog_INFO(TAG,  "BitmapCacheV2CapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "BitmapCacheV2CapabilitySet (length %"PRIu16"):", length);
 
 	if (length < 40)
 		return FALSE;
@@ -1904,18 +1904,18 @@ static BOOL rdp_print_bitmap_cache_v2_capability_set(wStream* s, UINT16 length)
 	rdp_read_bitmap_cache_cell_info(s,
 	                                &bitmapCacheV2CellInfo[4]); /* bitmapCache4CellInfo (4 bytes) */
 	Stream_Seek(s, 12); /* pad3 (12 bytes) */
-	WLog_INFO(TAG,  "\tcacheFlags: 0x%04X", cacheFlags);
-	WLog_INFO(TAG,  "\tpad2: 0x%02X", pad2);
-	WLog_INFO(TAG,  "\tnumCellCaches: 0x%02X", numCellCaches);
-	WLog_INFO(TAG,  "\tbitmapCache0CellInfo: numEntries: %d persistent: %d",
+	WLog_INFO(TAG,  "\tcacheFlags: 0x%04"PRIX16"", cacheFlags);
+	WLog_INFO(TAG,  "\tpad2: 0x%02"PRIX8"", pad2);
+	WLog_INFO(TAG,  "\tnumCellCaches: 0x%02"PRIX8"", numCellCaches);
+	WLog_INFO(TAG,  "\tbitmapCache0CellInfo: numEntries: %"PRIu32" persistent: %"PRId32"",
 	          bitmapCacheV2CellInfo[0].numEntries, bitmapCacheV2CellInfo[0].persistent);
-	WLog_INFO(TAG,  "\tbitmapCache1CellInfo: numEntries: %d persistent: %d",
+	WLog_INFO(TAG,  "\tbitmapCache1CellInfo: numEntries: %"PRIu32" persistent: %"PRId32"",
 	          bitmapCacheV2CellInfo[1].numEntries, bitmapCacheV2CellInfo[1].persistent);
-	WLog_INFO(TAG,  "\tbitmapCache2CellInfo: numEntries: %d persistent: %d",
+	WLog_INFO(TAG,  "\tbitmapCache2CellInfo: numEntries: %"PRIu32" persistent: %"PRId32"",
 	          bitmapCacheV2CellInfo[2].numEntries, bitmapCacheV2CellInfo[2].persistent);
-	WLog_INFO(TAG,  "\tbitmapCache3CellInfo: numEntries: %d persistent: %d",
+	WLog_INFO(TAG,  "\tbitmapCache3CellInfo: numEntries: %"PRIu32" persistent: %"PRId32"",
 	          bitmapCacheV2CellInfo[3].numEntries, bitmapCacheV2CellInfo[3].persistent);
-	WLog_INFO(TAG,  "\tbitmapCache4CellInfo: numEntries: %d persistent: %d",
+	WLog_INFO(TAG,  "\tbitmapCache4CellInfo: numEntries: %"PRIu32" persistent: %"PRId32"",
 	          bitmapCacheV2CellInfo[4].numEntries, bitmapCacheV2CellInfo[4].persistent);
 	return TRUE;
 }
@@ -1979,7 +1979,7 @@ static BOOL rdp_print_virtual_channel_capability_set(wStream* s, UINT16 length)
 {
 	UINT32 flags;
 	UINT32 VCChunkSize;
-	WLog_INFO(TAG,  "VirtualChannelCapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "VirtualChannelCapabilitySet (length %"PRIu16"):", length);
 
 	if (length < 8)
 		return FALSE;
@@ -1991,8 +1991,8 @@ static BOOL rdp_print_virtual_channel_capability_set(wStream* s, UINT16 length)
 	else
 		VCChunkSize = 1600;
 
-	WLog_INFO(TAG,  "\tflags: 0x%08X", flags);
-	WLog_INFO(TAG,  "\tVCChunkSize: 0x%08X", VCChunkSize);
+	WLog_INFO(TAG,  "\tflags: 0x%08"PRIX32"", flags);
+	WLog_INFO(TAG,  "\tVCChunkSize: 0x%08"PRIX32"", VCChunkSize);
 	return TRUE;
 }
 
@@ -2089,7 +2089,7 @@ static BOOL rdp_print_draw_nine_grid_cache_capability_set(wStream* s,
 	UINT32 drawNineGridSupportLevel;
 	UINT16 DrawNineGridCacheSize;
 	UINT16 DrawNineGridCacheEntries;
-	WLog_INFO(TAG,  "DrawNineGridCacheCapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "DrawNineGridCacheCapabilitySet (length %"PRIu16"):", length);
 
 	if (length < 12)
 		return FALSE;
@@ -2181,7 +2181,7 @@ static BOOL rdp_print_draw_gdiplus_cache_capability_set(wStream* s,
 	UINT32 drawGdiPlusSupportLevel;
 	UINT32 GdipVersion;
 	UINT32 drawGdiplusCacheLevel;
-	WLog_INFO(TAG,  "DrawGdiPlusCacheCapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "DrawGdiPlusCacheCapabilitySet (length %"PRIu16"):", length);
 
 	if (length < 40)
 		return FALSE;
@@ -2257,13 +2257,13 @@ static BOOL rdp_write_remote_programs_capability_set(wStream* s,
 static BOOL rdp_print_remote_programs_capability_set(wStream* s, UINT16 length)
 {
 	UINT32 railSupportLevel;
-	WLog_INFO(TAG,  "RemoteProgramsCapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "RemoteProgramsCapabilitySet (length %"PRIu16"):", length);
 
 	if (length < 8)
 		return FALSE;
 
 	Stream_Read_UINT32(s, railSupportLevel); /* railSupportLevel (4 bytes) */
-	WLog_INFO(TAG,  "\trailSupportLevel: 0x%08X", railSupportLevel);
+	WLog_INFO(TAG,  "\trailSupportLevel: 0x%08"PRIX32"", railSupportLevel);
 	return TRUE;
 }
 
@@ -2319,7 +2319,7 @@ static BOOL rdp_print_window_list_capability_set(wStream* s, UINT16 length)
 	UINT32 wndSupportLevel;
 	BYTE numIconCaches;
 	UINT16 numIconCacheEntries;
-	WLog_INFO(TAG,  "WindowListCapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "WindowListCapabilitySet (length %"PRIu16"):", length);
 
 	if (length < 11)
 		return FALSE;
@@ -2327,9 +2327,9 @@ static BOOL rdp_print_window_list_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT32(s, wndSupportLevel); /* wndSupportLevel (4 bytes) */
 	Stream_Read_UINT8(s, numIconCaches); /* numIconCaches (1 byte) */
 	Stream_Read_UINT16(s, numIconCacheEntries); /* numIconCacheEntries (2 bytes) */
-	WLog_INFO(TAG,  "\twndSupportLevel: 0x%08X", wndSupportLevel);
-	WLog_INFO(TAG,  "\tnumIconCaches: 0x%02X", numIconCaches);
-	WLog_INFO(TAG,  "\tnumIconCacheEntries: 0x%04X", numIconCacheEntries);
+	WLog_INFO(TAG,  "\twndSupportLevel: 0x%08"PRIX32"", wndSupportLevel);
+	WLog_INFO(TAG,  "\tnumIconCaches: 0x%02"PRIX8"", numIconCaches);
+	WLog_INFO(TAG,  "\tnumIconCacheEntries: 0x%04"PRIX16"", numIconCacheEntries);
 	return TRUE;
 }
 
@@ -2380,14 +2380,14 @@ static BOOL rdp_print_desktop_composition_capability_set(wStream* s,
         UINT16 length)
 {
 	UINT16 compDeskSupportLevel;
-	WLog_INFO(TAG,  "DesktopCompositionCapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "DesktopCompositionCapabilitySet (length %"PRIu16"):", length);
 
 	if (length < 6)
 		return FALSE;
 
 	Stream_Read_UINT16(s,
 	                   compDeskSupportLevel); /* compDeskSupportLevel (2 bytes) */
-	WLog_INFO(TAG,  "\tcompDeskSupportLevel: 0x%04X", compDeskSupportLevel);
+	WLog_INFO(TAG,  "\tcompDeskSupportLevel: 0x%04"PRIX16"", compDeskSupportLevel);
 	return TRUE;
 }
 
@@ -2508,13 +2508,13 @@ static BOOL rdp_print_multifragment_update_capability_set(wStream* s,
         UINT16 length)
 {
 	UINT32 maxRequestSize;
-	WLog_INFO(TAG,  "MultifragmentUpdateCapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "MultifragmentUpdateCapabilitySet (length %"PRIu16"):", length);
 
 	if (length < 8)
 		return FALSE;
 
 	Stream_Read_UINT32(s, maxRequestSize); /* maxRequestSize (4 bytes) */
-	WLog_INFO(TAG,  "\tmaxRequestSize: 0x%04X", maxRequestSize);
+	WLog_INFO(TAG,  "\tmaxRequestSize: 0x%08"PRIX32"", maxRequestSize);
 	return TRUE;
 }
 
@@ -2569,14 +2569,14 @@ static BOOL rdp_write_large_pointer_capability_set(wStream* s,
 static BOOL rdp_print_large_pointer_capability_set(wStream* s, UINT16 length)
 {
 	UINT16 largePointerSupportFlags;
-	WLog_INFO(TAG,  "LargePointerCapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "LargePointerCapabilitySet (length %"PRIu16"):", length);
 
 	if (length < 6)
 		return FALSE;
 
 	Stream_Read_UINT16(s,
 	                   largePointerSupportFlags); /* largePointerSupportFlags (2 bytes) */
-	WLog_INFO(TAG,  "\tlargePointerSupportFlags: 0x%04X", largePointerSupportFlags);
+	WLog_INFO(TAG,  "\tlargePointerSupportFlags: 0x%04"PRIX16"", largePointerSupportFlags);
 	return TRUE;
 }
 
@@ -2636,21 +2636,21 @@ static BOOL rdp_print_surface_commands_capability_set(wStream* s, UINT16 length)
 {
 	UINT32 cmdFlags;
 	UINT32 reserved;
-	WLog_INFO(TAG,  "SurfaceCommandsCapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "SurfaceCommandsCapabilitySet (length %"PRIu16"):", length);
 
 	if (length < 12)
 		return FALSE;
 
 	Stream_Read_UINT32(s, cmdFlags); /* cmdFlags (4 bytes) */
 	Stream_Read_UINT32(s, reserved); /* reserved (4 bytes) */
-	WLog_INFO(TAG,  "\tcmdFlags: 0x%08X", cmdFlags);
-	WLog_INFO(TAG,  "\treserved: 0x%08X", reserved);
+	WLog_INFO(TAG,  "\tcmdFlags: 0x%08"PRIX32"", cmdFlags);
+	WLog_INFO(TAG,  "\treserved: 0x%08"PRIX32"", reserved);
 	return TRUE;
 }
 
 static void rdp_print_bitmap_codec_guid(const GUID* guid)
 {
-	WLog_INFO(TAG,  "%08X%04X%04X%02X%02X%02X%02X%02X%02X%02X%02X",
+	WLog_INFO(TAG,  "%08"PRIX32"%04"PRIX16"%04"PRIX16"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"",
 	          guid->Data1, guid->Data2, guid->Data3,
 	          guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
 	          guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
@@ -2895,8 +2895,8 @@ static BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, UINT16 length,
 			if (Stream_GetPosition(s) != end)
 			{
 				WLog_ERR(TAG,
-				         "error while reading codec properties: actual offset: %d expected offset: %d",
-				         (int) Stream_GetPosition(s), end);
+				         "error while reading codec properties: actual offset: %"PRIuz" expected offset: %"PRIu32"",
+				         Stream_GetPosition(s), end);
 				Stream_SetPosition(s, end);
 			}
 
@@ -3184,14 +3184,14 @@ static BOOL rdp_print_bitmap_codecs_capability_set(wStream* s, UINT16 length)
 	BYTE codecId;
 	UINT16 codecPropertiesLength;
 	UINT16 remainingLength;
-	WLog_INFO(TAG,  "BitmapCodecsCapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "BitmapCodecsCapabilitySet (length %"PRIu16"):", length);
 
 	if (length < 5)
 		return FALSE;
 
 	Stream_Read_UINT8(s, bitmapCodecCount); /* bitmapCodecCount (1 byte) */
 	remainingLength = length - 5;
-	WLog_INFO(TAG,  "\tbitmapCodecCount: %d", bitmapCodecCount);
+	WLog_INFO(TAG,  "\tbitmapCodecCount: %"PRIu8"", bitmapCodecCount);
 
 	while (bitmapCodecCount > 0)
 	{
@@ -3203,10 +3203,10 @@ static BOOL rdp_print_bitmap_codecs_capability_set(wStream* s, UINT16 length)
 		WLog_INFO(TAG,  "\tcodecGuid: 0x");
 		rdp_print_bitmap_codec_guid(&codecGuid);
 		WLog_INFO(TAG,  " (%s)", rdp_get_bitmap_codec_guid_name(&codecGuid));
-		WLog_INFO(TAG,  "\tcodecId: %d", codecId);
+		WLog_INFO(TAG,  "\tcodecId: %"PRIu8"", codecId);
 		Stream_Read_UINT16(s,
 		                   codecPropertiesLength); /* codecPropertiesLength (2 bytes) */
-		WLog_INFO(TAG,  "\tcodecPropertiesLength: %d", codecPropertiesLength);
+		WLog_INFO(TAG,  "\tcodecPropertiesLength: %"PRIu16"", codecPropertiesLength);
 		remainingLength -= 19;
 
 		if (remainingLength < codecPropertiesLength)
@@ -3269,13 +3269,13 @@ static BOOL rdp_print_frame_acknowledge_capability_set(wStream* s,
         UINT16 length)
 {
 	UINT32 frameAcknowledge;
-	WLog_INFO(TAG,  "FrameAcknowledgeCapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "FrameAcknowledgeCapabilitySet (length %"PRIu16"):", length);
 
 	if (length < 8)
 		return FALSE;
 
 	Stream_Read_UINT32(s, frameAcknowledge); /* frameAcknowledge (4 bytes) */
-	WLog_INFO(TAG,  "\tframeAcknowledge: 0x%08X", frameAcknowledge);
+	WLog_INFO(TAG,  "\tframeAcknowledge: 0x%08"PRIX32"", frameAcknowledge);
 	return TRUE;
 }
 
@@ -3309,13 +3309,13 @@ static BOOL rdp_print_bitmap_cache_v3_codec_id_capability_set(wStream* s,
         UINT16 length)
 {
 	BYTE bitmapCacheV3CodecId;
-	WLog_INFO(TAG,  "BitmapCacheV3CodecIdCapabilitySet (length %d):", length);
+	WLog_INFO(TAG,  "BitmapCacheV3CodecIdCapabilitySet (length %"PRIu16"):", length);
 
 	if (length < 5)
 		return FALSE;
 
 	Stream_Read_UINT8(s, bitmapCacheV3CodecId); /* bitmapCacheV3CodecId (1 byte) */
-	WLog_INFO(TAG,  "\tbitmapCacheV3CodecId: 0x%02X", bitmapCacheV3CodecId);
+	WLog_INFO(TAG,  "\tbitmapCacheV3CodecId: 0x%02"PRIX8"", bitmapCacheV3CodecId);
 	return TRUE;
 }
 
@@ -3516,14 +3516,14 @@ static BOOL rdp_print_capability_sets(wStream* s, UINT16 numberCapabilities,
 				break;
 
 			default:
-				WLog_ERR(TAG,  "unknown capability type %d", type);
+				WLog_ERR(TAG,  "unknown capability type %"PRIu16"", type);
 				break;
 		}
 
 		if (Stream_Pointer(s) != em)
 		{
-			WLog_ERR(TAG,  "incorrect offset, type:0x%02X actual:%d expected:%d",
-			         type, (int)(Stream_Pointer(s) - bm), (int)(em - bm));
+			WLog_ERR(TAG,  "incorrect offset, type:0x%04"PRIX16" actual:%"PRIuz" expected:%"PRIuz"",
+			         type, Stream_Pointer(s) - bm, em - bm);
 		}
 
 		Stream_SetPointer(s, em);
@@ -3556,7 +3556,7 @@ static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings,
 		}
 		else
 		{
-			WLog_WARN(TAG,  "not handling capability type %d yet", type);
+			WLog_WARN(TAG,  "not handling capability type %"PRIu16" yet", type);
 		}
 
 		em = bm + length;
@@ -3752,7 +3752,7 @@ static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings,
 						break;
 
 					default:
-						WLog_ERR(TAG, "capability %s(%d) not expected from client",
+						WLog_ERR(TAG, "capability %s(%"PRIu16") not expected from client",
 						         get_capability_name(type), type);
 						return FALSE;
 				}
@@ -3769,7 +3769,7 @@ static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings,
 						break;
 
 					default:
-						WLog_ERR(TAG, "capability %s(%d) not expected from server",
+						WLog_ERR(TAG, "capability %s(%"PRIu16") not expected from server",
 						         get_capability_name(type), type);
 						return FALSE;
 				}
@@ -3778,8 +3778,8 @@ static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings,
 
 		if (Stream_Pointer(s) != em)
 		{
-			WLog_ERR(TAG,  "incorrect offset, type:0x%02X actual:%d expected:%d",
-			         type, (int)(Stream_Pointer(s) - bm), (int)(em - bm));
+			WLog_ERR(TAG,  "incorrect offset, type:0x%04"PRIX16" actual:%"PRIuz" expected:%"PRIuz"",
+			         type, Stream_Pointer(s) - bm, em - bm);
 		}
 
 		Stream_SetPointer(s, em);
@@ -3789,7 +3789,7 @@ static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings,
 	if (numberCapabilities)
 	{
 		WLog_ERR(TAG,
-		         "strange we haven't read the number of announced capacity sets, read=%d expected=%d",
+		         "strange we haven't read the number of announced capacity sets, read=%d expected=%"PRIu16"",
 		         count - numberCapabilities, count);
 	}
 
@@ -3835,7 +3835,7 @@ BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId)
 
 		if ((mcsMessageChannelId == 0) || (*pChannelId != mcsMessageChannelId))
 		{
-			WLog_ERR(TAG,  "unexpected MCS channel id %04x received", *pChannelId);
+			WLog_ERR(TAG,  "unexpected MCS channel id %04"PRIx16" received", *pChannelId);
 			return FALSE;
 		}
 	}
@@ -3880,7 +3880,7 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 	if (pduType != PDU_TYPE_DEMAND_ACTIVE)
 	{
 		if (pduType != PDU_TYPE_SERVER_REDIRECTION)
-			WLog_ERR(TAG, "expected PDU_TYPE_DEMAND_ACTIVE %04x, got %04x",
+			WLog_ERR(TAG, "expected PDU_TYPE_DEMAND_ACTIVE %04x, got %04"PRIx16"",
 			         PDU_TYPE_DEMAND_ACTIVE, pduType);
 
 		return FALSE;

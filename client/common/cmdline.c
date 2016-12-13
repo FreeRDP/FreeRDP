@@ -1362,7 +1362,7 @@ int freerdp_client_settings_command_line_status_print(rdpSettings* settings,
 			printf("\nKeyboard Layouts\n");
 
 			for (i = 0; layouts[i].code; i++)
-				printf("0x%08X\t%s\n", (int) layouts[i].code, layouts[i].name);
+				printf("0x%08"PRIX32"\t%s\n", layouts[i].code, layouts[i].name);
 
 			free(layouts);
 			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_VARIANT);
@@ -1370,7 +1370,7 @@ int freerdp_client_settings_command_line_status_print(rdpSettings* settings,
 			printf("\nKeyboard Layout Variants\n");
 
 			for (i = 0; layouts[i].code; i++)
-				printf("0x%08X\t%s\n", (int) layouts[i].code, layouts[i].name);
+				printf("0x%08"PRIX32"\t%s\n", layouts[i].code, layouts[i].name);
 
 			free(layouts);
 			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_IME);
@@ -1378,7 +1378,7 @@ int freerdp_client_settings_command_line_status_print(rdpSettings* settings,
 			printf("\nKeyboard Input Method Editors (IMEs)\n");
 
 			for (i = 0; layouts[i].code; i++)
-				printf("0x%08X\t%s\n", (int) layouts[i].code, layouts[i].name);
+				printf("0x%08"PRIX32"\t%s\n", layouts[i].code, layouts[i].name);
 
 			free(layouts);
 			printf("\n");
@@ -1497,7 +1497,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 					settings->ServerPort = atoi(&p2[2]);
 				}
 
-				printf("hostname %s port %d\n", settings->ServerHostname, settings->ServerPort);
+				printf("hostname %s port %"PRIu32"\n", settings->ServerHostname, settings->ServerPort);
 			}
 		}
 		CommandLineSwitchCase(arg, "spn-class")

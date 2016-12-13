@@ -522,7 +522,7 @@ static void winpr_unref_named_pipe(WINPR_NAMED_PIPE* pNamedPipe)
 
 	assert(pNamedPipe->name);
 	assert(g_NamedPipeServerSockets);
-	//WLog_VRB(TAG, "%p (%s)", pNamedPipe, pNamedPipe->name);
+	//WLog_VRB(TAG, "%p (%s)", (void*) pNamedPipe, pNamedPipe->name);
 	ArrayList_Lock(g_NamedPipeServerSockets);
 
 	for (index = 0; index < ArrayList_Count(g_NamedPipeServerSockets); index++)
@@ -615,7 +615,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 		if (!strcmp(baseSocket->name, lpName))
 		{
 			serverfd = baseSocket->serverfd;
-			//WLog_DBG(TAG, "using shared socked resource for pipe %p (%s)", pNamedPipe, lpName);
+			//WLog_DBG(TAG, "using shared socked resource for pipe %p (%s)", (void*) pNamedPipe, lpName);
 			break;
 		}
 	}
@@ -685,7 +685,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 			free(baseSocket->name);
 			goto out;
 		}
-		//WLog_DBG(TAG, "created shared socked resource for pipe %p (%s). base serverfd = %d", pNamedPipe, lpName, serverfd);
+		//WLog_DBG(TAG, "created shared socked resource for pipe %p (%s). base serverfd = %d", (void*) pNamedPipe, lpName, serverfd);
 	}
 
 	pNamedPipe->serverfd = dup(baseSocket->serverfd);

@@ -45,8 +45,8 @@
 
 #define TEST_SIZEOF_TYPE(_name) \
 	if (sizeof(_name) != EXPECTED_SIZEOF_ ##_name) { \
-		fprintf(stderr, "sizeof(%s) mismatch: Actual: %d, Expected: %d\n", \
-			#_name, (int) sizeof(_name), (int) EXPECTED_SIZEOF_ ##_name); \
+		fprintf(stderr, "sizeof(%s) mismatch: Actual: %"PRIuz", Expected: %"PRIuz"\n", \
+			#_name, sizeof(_name), (size_t) EXPECTED_SIZEOF_ ##_name); \
 		status = -1; \
 	}
 

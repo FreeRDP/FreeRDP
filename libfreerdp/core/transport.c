@@ -778,7 +778,7 @@ DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events,
 		{
 			if (nCount > count)
 			{
-				WLog_ERR(TAG, "%s: provided handles array is too small (count=%d nCount=%d)",
+				WLog_ERR(TAG, "%s: provided handles array is too small (count=%"PRIu32" nCount=%"PRIu32")",
 				         __FUNCTION__, count, nCount);
 				return 0;
 			}
@@ -1027,7 +1027,7 @@ static void* transport_client_thread(void* arg)
 			break;
 
 		default:
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with status 0x%08X", status);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with status 0x%08"PRIX32"", status);
 			dwExitCode = 1;
 			goto out;
 	}
@@ -1072,7 +1072,7 @@ static void* transport_client_thread(void* arg)
 			if (status == WAIT_TIMEOUT)
 				WLog_ERR(TAG, "WaitForMultipleObjects returned WAIT_TIMEOUT");
 			else
-				WLog_ERR(TAG, "WaitForMultipleObjects returned 0x%08X", status);
+				WLog_ERR(TAG, "WaitForMultipleObjects returned 0x%08"PRIX32"", status);
 
 			dwExitCode = 1;
 			break;

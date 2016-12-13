@@ -14,8 +14,8 @@ int TestSmartCardListReaders(int argc, char* argv[])
 
 	if (lStatus != SCARD_S_SUCCESS)
 	{
-		printf("SCardEstablishContext failure: %s (0x%08X)\n",
-				SCardGetErrorString(lStatus), (int) lStatus);
+		printf("SCardEstablishContext failure: %s (0x%08"PRIX32")\n",
+				SCardGetErrorString(lStatus), lStatus);
 		return 0;
 	}
 

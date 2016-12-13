@@ -97,7 +97,7 @@ int wf_dxgi_createDevice(wfInfo* wfi)
 		if (SUCCEEDED(status))
 			break;
 
-		WLog_INFO(TAG, "D3D11CreateDevice returned [%d] for Driver Type %d", status, DriverTypes[DriverTypeIndex]);
+		WLog_INFO(TAG, "D3D11CreateDevice returned [%ld] for Driver Type %d", status, DriverTypes[DriverTypeIndex]);
 	}
 
 	if (FAILED(status))
@@ -153,7 +153,7 @@ int wf_dxgi_getDuplication(wfInfo* wfi)
 			return 1;
 		}
 
-		WLog_INFO(TAG, "Output %d: [%s] [%d]", i, pDesc->DeviceName, pDesc->AttachedToDesktop);
+		WLog_INFO(TAG, "Output %u: [%s] [%d]", i, pDesc->DeviceName, pDesc->AttachedToDesktop);
 
 		if (pDesc->AttachedToDesktop)
 			dTop = i;
@@ -196,7 +196,7 @@ int wf_dxgi_getDuplication(wfInfo* wfi)
 			return 1;
 		}
 
-		WLog_ERR(TAG, "Failed to get duplicate output. Status = %#X", status);
+		WLog_ERR(TAG, "Failed to get duplicate output. Status = %ld", status);
 		return 1;
 	}
 
@@ -268,7 +268,7 @@ int wf_dxgi_nextFrame(wfInfo* wfi, UINT timeout)
 	{
 		if (status == DXGI_ERROR_ACCESS_LOST)
 		{
-			WLog_ERR(TAG, "Failed to acquire next frame with status=%#X", status);
+			WLog_ERR(TAG, "Failed to acquire next frame with status=%ld", status);
 			WLog_ERR(TAG, "Trying to reinitialize due to ACCESS LOST...");
 
 			if (gAcquiredDesktopImage)
@@ -289,12 +289,12 @@ int wf_dxgi_nextFrame(wfInfo* wfi, UINT timeout)
 		}
 		else
 		{
-			WLog_ERR(TAG, "Failed to acquire next frame with status=%#X", status);
+			WLog_ERR(TAG, "Failed to acquire next frame with status=%ld", status);
 			status = gOutputDuplication->lpVtbl->ReleaseFrame(gOutputDuplication);
 
 			if (FAILED(status))
 			{
-				WLog_ERR(TAG, "Failed to release frame with status=%d", status);
+				WLog_ERR(TAG, "Failed to release frame with status=%ld", status);
 			}
 		
 			return 1;
@@ -318,7 +318,7 @@ int wf_dxgi_nextFrame(wfInfo* wfi, UINT timeout)
 
 		if (FAILED(status))
 		{
-			WLog_ERR(TAG, "Failed to release frame with status=%d", status);
+			WLog_ERR(TAG, "Failed to release frame with status=%ld", status);
 		}
 	}
 

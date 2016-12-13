@@ -118,7 +118,7 @@ void wf_update_encode(wfInfo* wfi)
 	rect.y = 0;
 	rect.width = (UINT16) width;
 	rect.height = (UINT16) height;
-	//WLog_DBG(TAG, "x:%d y:%d w:%d h:%d", wfi->invalid.left, wfi->invalid.top, width, height);
+	//WLog_DBG(TAG, "x:%"PRId32" y:%"PRId32" w:%ld h:%ld", wfi->invalid.left, wfi->invalid.top, width, height);
 	Stream_Clear(wfi->s);
 
 	if (!(rfx_compose_message(wfi->rfx_context, wfi->s, &rect, 1,

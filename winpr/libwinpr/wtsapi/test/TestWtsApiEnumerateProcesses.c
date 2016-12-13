@@ -28,16 +28,16 @@ int TestWtsApiEnumerateProcesses(int argc, char* argv[])
 
 	if (!bSuccess)
 	{
-		printf("WTSEnumerateProcesses failed: %u\n", GetLastError());
+		printf("WTSEnumerateProcesses failed: %"PRIu32"\n", GetLastError());
 		return -1;
 	}
 
 #if 0
 	{
 		DWORD i;
-		printf("WTSEnumerateProcesses enumerated %u processs:\n", count);
+		printf("WTSEnumerateProcesses enumerated %"PRIu32" processs:\n", count);
 		for (i = 0; i < count; i++)
-			printf("\t[%u]: %s (%lu)\n", i, pProcessInfo[i].pProcessName, pProcessInfo[i].ProcessId);
+			printf("\t[%"PRIu32"]: %s (%"PRIu32")\n", i, pProcessInfo[i].pProcessName, pProcessInfo[i].ProcessId);
 	}
 #endif
 

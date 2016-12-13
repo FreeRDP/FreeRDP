@@ -112,7 +112,7 @@ static BOOL log_recursion(LPCSTR file, LPCSTR fkt, int line)
 		return FALSE;
 
 	for (i = 0; i < used; i++)
-		if (fprintf(stderr, "%s: %lu: %s\n", fkt, (unsigned long)i, msg[i]) < 0)
+		if (fprintf(stderr, "%s: %"PRIuz": %s\n", fkt, i, msg[i]) < 0)
 			return FALSE;
 
 #endif

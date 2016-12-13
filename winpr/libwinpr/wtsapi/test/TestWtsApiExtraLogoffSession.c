@@ -16,7 +16,7 @@ int TestWtsApiExtraLogoffSession(int argc, char* argv[])
 
 	if (!bSuccess)
 	{
-		printf("WTSLogoffSession failed: %d\n", (int) GetLastError());
+		printf("WTSLogoffSession failed: %"PRIu32"\n", GetLastError());
 		return -1;
 	}
 

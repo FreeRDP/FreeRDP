@@ -474,7 +474,7 @@ int rts_recv_CONN_A3_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 	rts_connection_timeout_command_read(rpc, &buffer[24], length - 24, &ConnectionTimeout);
 
-	WLog_DBG(TAG, "Receiving CONN/A3 RTS PDU: ConnectionTimeout: %d", ConnectionTimeout);
+	WLog_DBG(TAG, "Receiving CONN/A3 RTS PDU: ConnectionTimeout: %"PRIu32"", ConnectionTimeout);
 
 	rpc->VirtualConnection->DefaultInChannel->PingOriginator.ConnectionTimeout = ConnectionTimeout;
 
@@ -541,7 +541,7 @@ int rts_recv_CONN_C2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	offset += rts_receive_window_size_command_read(rpc, &buffer[offset], length - offset, &ReceiveWindowSize) + 4;
 	offset += rts_connection_timeout_command_read(rpc, &buffer[offset], length - offset, &ConnectionTimeout) + 4;
 
-	WLog_DBG(TAG, "Receiving CONN/C2 RTS PDU: ConnectionTimeout: %d ReceiveWindowSize: %d",
+	WLog_DBG(TAG, "Receiving CONN/C2 RTS PDU: ConnectionTimeout: %"PRIu32" ReceiveWindowSize: %"PRIu32"",
 			ConnectionTimeout, ReceiveWindowSize);
 
 	rpc->VirtualConnection->DefaultInChannel->PingOriginator.ConnectionTimeout = ConnectionTimeout;
@@ -641,7 +641,7 @@ int rts_recv_flow_control_ack_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	offset += rts_flow_control_ack_command_read(rpc, &buffer[offset], length - offset,
 			&BytesReceived, &AvailableWindow, (BYTE*) &ChannelCookie) + 4;
 
-	WLog_ERR(TAG, "Receiving FlowControlAck RTS PDU: BytesReceived: %d AvailableWindow: %d",
+	WLog_ERR(TAG, "Receiving FlowControlAck RTS PDU: BytesReceived: %"PRIu32" AvailableWindow: %"PRIu32"",
 			BytesReceived, AvailableWindow);
 
 	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow =
@@ -679,7 +679,7 @@ int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, BYTE* buffer, UI
 	offset += rts_flow_control_ack_command_read(rpc, &buffer[offset], length - offset,
 			&BytesReceived, &AvailableWindow, (BYTE*) &ChannelCookie) + 4;
 
-	WLog_DBG(TAG, "Receiving FlowControlAckWithDestination RTS PDU: BytesReceived: %d AvailableWindow: %d",
+	WLog_DBG(TAG, "Receiving FlowControlAckWithDestination RTS PDU: BytesReceived: %"PRIu32" AvailableWindow: %"PRIu32"",
 			BytesReceived, AvailableWindow);
 
 	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow =
@@ -786,7 +786,7 @@ int rts_command_length(rdpRpc* rpc, UINT32 CommandType, BYTE* buffer, UINT32 len
 			break;
 
 		default:
-			WLog_ERR(TAG, "Error: Unknown RTS Command Type: 0x%x", CommandType);
+			WLog_ERR(TAG, "Error: Unknown RTS Command Type: 0x%"PRIx32"", CommandType);
 			return -1;
 			break;
 	}
@@ -1024,7 +1024,7 @@ int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 	if (status < 0)
 	{
-		WLog_ERR(TAG, "error parsing RTS PDU with signature id: 0x%08X", SignatureId);
+		WLog_ERR(TAG, "error parsing RTS PDU with signature id: 0x%08"PRIX32"", SignatureId);
 		rts_print_pdu_signature(rpc, &signature);
 	}
 

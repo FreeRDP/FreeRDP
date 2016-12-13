@@ -44,7 +44,7 @@ static void* test_error_thread(void* arg)
 		SetLastError(dwErrorSet);
 		if ((dwErrorGet = GetLastError()) != dwErrorSet)
 		{
-			printf("GetLastError() failure (thread %d): Expected: 0x%04X, Actual: 0x%04X\n",
+			printf("GetLastError() failure (thread %d): Expected: 0x%08"PRIX32", Actual: 0x%08"PRIX32"\n",
 				id, dwErrorSet, dwErrorGet);
 			if (!status)
 				status = -1;
@@ -73,7 +73,7 @@ int TestErrorSetLastError(int argc, char* argv[])
 
 	if (error != ERROR_ACCESS_DENIED)
 	{
-		printf("GetLastError() failure: Expected: 0x%04X, Actual: 0x%04X\n",
+		printf("GetLastError() failure: Expected: 0x%08X, Actual: 0x%08"PRIX32"\n",
 				ERROR_ACCESS_DENIED, error);
 		return -1;
 	}
@@ -113,7 +113,7 @@ int TestErrorSetLastError(int argc, char* argv[])
 
 	if (error != ERROR_ACCESS_DENIED)
 	{
-		printf("GetLastError() failure: Expected: 0x%04X, Actual: 0x%04X\n",
+		printf("GetLastError() failure: Expected: 0x%08X, Actual: 0x%08"PRIX32"\n",
 				ERROR_ACCESS_DENIED, error);
 		return -1;
 	}
@@ -124,7 +124,7 @@ int TestErrorSetLastError(int argc, char* argv[])
 		return -1;
 	}
 
-	printf("Completed %d iterations.\n", *pLoopCount);
+	printf("Completed %"PRId32" iterations.\n", *pLoopCount);
 
 	return status;
 }

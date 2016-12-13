@@ -236,7 +236,7 @@ rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmapCache, UINT32 id,
 
 	if (id > bitmapCache->maxCells)
 	{
-		WLog_ERR(TAG,  "get invalid bitmap cell id: %d", id);
+		WLog_ERR(TAG,  "get invalid bitmap cell id: %"PRIu32"", id);
 		return NULL;
 	}
 
@@ -246,7 +246,7 @@ rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmapCache, UINT32 id,
 	}
 	else if (index > bitmapCache->cells[id].number)
 	{
-		WLog_ERR(TAG,  "get invalid bitmap index %d in cell id: %d", index, id);
+		WLog_ERR(TAG,  "get invalid bitmap index %"PRIu32" in cell id: %"PRIu32"", index, id);
 		return NULL;
 	}
 
@@ -259,7 +259,7 @@ BOOL bitmap_cache_put(rdpBitmapCache* bitmapCache, UINT32 id, UINT32 index,
 {
 	if (id > bitmapCache->maxCells)
 	{
-		WLog_ERR(TAG,  "put invalid bitmap cell id: %d", id);
+		WLog_ERR(TAG,  "put invalid bitmap cell id: %"PRIu32"", id);
 		return FALSE;
 	}
 
@@ -269,7 +269,7 @@ BOOL bitmap_cache_put(rdpBitmapCache* bitmapCache, UINT32 id, UINT32 index,
 	}
 	else if (index > bitmapCache->cells[id].number)
 	{
-		WLog_ERR(TAG,  "put invalid bitmap index %d in cell id: %d", index, id);
+		WLog_ERR(TAG,  "put invalid bitmap index %"PRIu32" in cell id: %"PRIu32"", index, id);
 		return FALSE;
 	}
 

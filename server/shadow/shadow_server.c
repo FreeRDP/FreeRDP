@@ -363,7 +363,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 				width = monitor->right - monitor->left;
 				height = monitor->bottom - monitor->top;
 
-				WLog_INFO(TAG, "      %s [%d] %dx%d\t+%d+%d",
+				WLog_INFO(TAG, "      %s [%d] %dx%d\t+%"PRId32"+%"PRId32"",
 					(monitor->flags == 1) ? "*" : " ", index,
 					width, height, monitor->left, monitor->top);
 			}

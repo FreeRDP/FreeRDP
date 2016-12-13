@@ -124,7 +124,7 @@ static UINT audin_server_recv_version(audin_server* audin, wStream* s,
 
 	if (length < 4)
 	{
-		WLog_ERR(TAG, "error parsing version info: expected at least 4 bytes, got %d",
+		WLog_ERR(TAG, "error parsing version info: expected at least 4 bytes, got %"PRIu32"",
 		         length);
 		return ERROR_INVALID_DATA;
 	}
@@ -133,7 +133,7 @@ static UINT audin_server_recv_version(audin_server* audin, wStream* s,
 
 	if (Version < 1)
 	{
-		WLog_ERR(TAG, "expected Version > 0 but got %d", Version);
+		WLog_ERR(TAG, "expected Version > 0 but got %"PRIu32"", Version);
 		return ERROR_INVALID_DATA;
 	}
 
@@ -207,7 +207,7 @@ static UINT audin_server_recv_formats(audin_server* audin, wStream* s,
 
 	if (length < 8)
 	{
-		WLog_ERR(TAG, "error parsing rec formats: expected at least 8 bytes, got %d",
+		WLog_ERR(TAG, "error parsing rec formats: expected at least 8 bytes, got %"PRIu32"",
 		         length);
 		return ERROR_INVALID_DATA;
 	}
@@ -236,7 +236,7 @@ static UINT audin_server_recv_formats(audin_server* audin, wStream* s,
 		{
 			free(audin->context.client_formats);
 			audin->context.client_formats = NULL;
-			WLog_ERR(TAG, "expected length at least 18, but got %d", length);
+			WLog_ERR(TAG, "expected length at least 18, but got %"PRIu32"", length);
 			return ERROR_INVALID_DATA;
 		}
 
@@ -257,7 +257,7 @@ static UINT audin_server_recv_formats(audin_server* audin, wStream* s,
 	IFCALLRET(audin->context.Opening, success, &audin->context);
 
 	if (success)
-		WLog_ERR(TAG, "context.Opening failed with error %u", success);
+		WLog_ERR(TAG, "context.Opening failed with error %"PRIu32"", success);
 
 	return success;
 }
@@ -314,7 +314,7 @@ static UINT audin_server_recv_open_reply(audin_server* audin, wStream* s,
 
 	if (length < 4)
 	{
-		WLog_ERR(TAG, "error parsing version info: expected at least 4 bytes, got %d",
+		WLog_ERR(TAG, "error parsing version info: expected at least 4 bytes, got %"PRIu32"",
 		         length);
 		return ERROR_INVALID_DATA;
 	}
@@ -323,7 +323,7 @@ static UINT audin_server_recv_open_reply(audin_server* audin, wStream* s,
 	IFCALLRET(audin->context.OpenResult, success, &audin->context, Result);
 
 	if (success)
-		WLog_ERR(TAG, "context.OpenResult failed with error %u", success);
+		WLog_ERR(TAG, "context.OpenResult failed with error %"PRIu32"", success);
 
 	return success;
 }
@@ -396,7 +396,7 @@ static UINT audin_server_recv_data(audin_server* audin, wStream* s,
 	IFCALLRET(audin->context.ReceiveSamples, success, &audin->context, src, frames);
 
 	if (success)
-		WLog_ERR(TAG, "context.ReceiveSamples failed with error %u", success);
+		WLog_ERR(TAG, "context.ReceiveSamples failed with error %"PRIu32"", success);
 
 	return success;
 }
@@ -448,7 +448,7 @@ static void* audin_server_thread_func(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %u", error);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %"PRIu32"", error);
 			goto out;
 		}
 
@@ -480,7 +480,7 @@ static void* audin_server_thread_func(void* arg)
 	{
 		if ((error = audin_server_send_version(audin, s)))
 		{
-			WLog_ERR(TAG, "audin_server_send_version failed with error %u!", error);
+			WLog_ERR(TAG, "audin_server_send_version failed with error %"PRIu32"!", error);
 			goto out_capacity;
 		}
 	}
@@ -494,7 +494,7 @@ static void* audin_server_thread_func(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %u", error);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %"PRIu32"", error);
 			goto out;
 		}
 
@@ -529,13 +529,13 @@ static void* audin_server_thread_func(void* arg)
 			case MSG_SNDIN_VERSION:
 				if ((error = audin_server_recv_version(audin, s, BytesReturned)))
 				{
-					WLog_ERR(TAG, "audin_server_recv_version failed with error %u!", error);
+					WLog_ERR(TAG, "audin_server_recv_version failed with error %"PRIu32"!", error);
 					goto out_capacity;
 				}
 
 				if ((error = audin_server_send_formats(audin, s)))
 				{
-					WLog_ERR(TAG, "audin_server_send_formats failed with error %u!", error);
+					WLog_ERR(TAG, "audin_server_send_formats failed with error %"PRIu32"!", error);
 					goto out_capacity;
 				}
 
@@ -544,13 +544,13 @@ static void* audin_server_thread_func(void* arg)
 			case MSG_SNDIN_FORMATS:
 				if ((error = audin_server_recv_formats(audin, s, BytesReturned)))
 				{
-					WLog_ERR(TAG, "audin_server_recv_formats failed with error %u!", error);
+					WLog_ERR(TAG, "audin_server_recv_formats failed with error %"PRIu32"!", error);
 					goto out_capacity;
 				}
 
 				if ((error = audin_server_send_open(audin, s)))
 				{
-					WLog_ERR(TAG, "audin_server_send_open failed with error %u!", error);
+					WLog_ERR(TAG, "audin_server_send_open failed with error %"PRIu32"!", error);
 					goto out_capacity;
 				}
 
@@ -559,7 +559,7 @@ static void* audin_server_thread_func(void* arg)
 			case MSG_SNDIN_OPEN_REPLY:
 				if ((error = audin_server_recv_open_reply(audin, s, BytesReturned)))
 				{
-					WLog_ERR(TAG, "audin_server_recv_open_reply failed with error %u!", error);
+					WLog_ERR(TAG, "audin_server_recv_open_reply failed with error %"PRIu32"!", error);
 					goto out_capacity;
 				}
 
@@ -571,7 +571,7 @@ static void* audin_server_thread_func(void* arg)
 			case MSG_SNDIN_DATA:
 				if ((error = audin_server_recv_data(audin, s, BytesReturned)))
 				{
-					WLog_ERR(TAG, "audin_server_recv_data failed with error %u!", error);
+					WLog_ERR(TAG, "audin_server_recv_data failed with error %"PRIu32"!", error);
 					goto out_capacity;
 				};
 
@@ -581,7 +581,7 @@ static void* audin_server_thread_func(void* arg)
 				break;
 
 			default:
-				WLog_ERR(TAG, "audin_server_thread_func: unknown MessageId %d", MessageId);
+				WLog_ERR(TAG, "audin_server_thread_func: unknown MessageId %"PRIu8"", MessageId);
 				break;
 		}
 	}
@@ -658,7 +658,7 @@ static BOOL audin_server_close(audin_server_context* context)
 
 		if (WaitForSingleObject(audin->thread, INFINITE) == WAIT_FAILED)
 		{
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", (unsigned long)GetLastError());
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"", GetLastError());
 			return FALSE;
 		}
 

@@ -110,7 +110,7 @@ BOOL wf_peer_post_connect(freerdp_peer* client)
 	if ((settings->DesktopWidth != wfi->servscreen_width) || (settings->DesktopHeight != wfi->servscreen_height))
 	{
 		/*
-		WLog_DBG(TAG, "Client requested resolution %dx%d, but will resize to %dx%d",
+		WLog_DBG(TAG, "Client requested resolution %"PRIu32"x%"PRIu32", but will resize to %dx%d",
 			settings->DesktopWidth, settings->DesktopHeight, wfi->servscreen_width, wfi->servscreen_height);
 			*/
 

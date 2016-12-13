@@ -286,7 +286,7 @@ static INLINE BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, UINT32 nXDest,
 
 	if (!dstp)
 	{
-		WLog_ERR(TAG, "dstp=%p", dstp);
+		WLog_ERR(TAG, "dstp=%p", (void*) dstp);
 		return FALSE;
 	}
 
@@ -298,7 +298,7 @@ static INLINE BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, UINT32 nXDest,
 
 		if (!srcp)
 		{
-			WLog_ERR(TAG, "srcp=%p", srcp);
+			WLog_ERR(TAG, "srcp=%p", (void*) srcp);
 			return FALSE;
 		}
 
@@ -321,7 +321,7 @@ static INLINE BOOL BitBlt_write(HGDI_DC hdcDest, HGDI_DC hdcSrc, UINT32 nXDest,
 
 					if (!patp)
 					{
-						WLog_ERR(TAG, "patp=%p", patp);
+						WLog_ERR(TAG, "patp=%p", (void*) patp);
 						return FALSE;
 					}
 

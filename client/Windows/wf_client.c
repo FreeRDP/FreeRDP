@@ -263,7 +263,7 @@ static BOOL wf_pre_connect(freerdp* instance)
 	if ((settings->DesktopWidth < 64) || (settings->DesktopHeight < 64) ||
 	    (settings->DesktopWidth > 4096) || (settings->DesktopHeight > 4096))
 	{
-		WLog_ERR(TAG, "invalid dimensions %d %d", settings->DesktopWidth,
+		WLog_ERR(TAG, "invalid dimensions %lu %lu", settings->DesktopWidth,
 		         settings->DesktopHeight);
 		return FALSE;
 	}
@@ -335,7 +335,7 @@ static BOOL wf_post_connect(freerdp* instance)
 		_snwprintf(lpWindowName, ARRAYSIZE(lpWindowName), L"FreeRDP: %S",
 		           settings->ServerHostname);
 	else
-		_snwprintf(lpWindowName, ARRAYSIZE(lpWindowName), L"FreeRDP: %S:%d",
+		_snwprintf(lpWindowName, ARRAYSIZE(lpWindowName), L"FreeRDP: %S:%u",
 		           settings->ServerHostname, settings->ServerPort);
 
 	if (settings->EmbeddedWindow)
@@ -425,7 +425,7 @@ static BOOL wf_authenticate_raw(freerdp* instance, const char* title,
 
 	if (status != NO_ERROR)
 	{
-		WLog_ERR(TAG, "CredUIPromptForCredentials unexpected status: 0x%08X", status);
+		WLog_ERR(TAG, "CredUIPromptForCredentials unexpected status: 0x%08lX", status);
 		return FALSE;
 	}
 
@@ -569,7 +569,7 @@ static BOOL wf_auto_reconnect(freerdp* instance)
 			return FALSE;
 
 		/* Attempt the next reconnect */
-		WLog_INFO(TAG,  "Attempting reconnect (%u of %u)", num_retries, max_retries);
+		WLog_INFO(TAG,  "Attempting reconnect (%lu of %lu)", num_retries, max_retries);
 
 		if (freerdp_reconnect(instance))
 		{
@@ -678,7 +678,7 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 		if (MsgWaitForMultipleObjects(nCount, handles, FALSE, 1000,
 		                              QS_ALLINPUT) == WAIT_FAILED)
 		{
-			WLog_ERR(TAG, "wfreerdp_run: WaitForMultipleObjects failed: 0x%04X",
+			WLog_ERR(TAG, "wfreerdp_run: WaitForMultipleObjects failed: 0x%08lX",
 			         GetLastError());
 			break;
 		}

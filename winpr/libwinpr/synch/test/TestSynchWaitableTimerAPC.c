@@ -22,7 +22,7 @@ VOID CALLBACK TimerAPCProc(LPVOID lpArg, DWORD dwTimerLowValue, DWORD dwTimerHig
 
 	apcData = (APC_DATA*) lpArg;
 
-	printf("TimerAPCProc: time: %d\n", CurrentTime - apcData->StartTime);
+	printf("TimerAPCProc: time: %"PRIu32"\n", CurrentTime - apcData->StartTime);
 
 	g_Count++;
 
@@ -95,7 +95,7 @@ int TestSynchWaitableTimerAPC(int argc, char* argv[])
 		if (rc == 0x000000C0L) /* WAIT_IO_COMPLETION */
 			continue;
 
-		printf("Failed to wait for completion event (%u)\n", GetLastError());
+		printf("Failed to wait for completion event (%"PRIu32")\n", GetLastError());
 		goto cleanup;
 	}
 

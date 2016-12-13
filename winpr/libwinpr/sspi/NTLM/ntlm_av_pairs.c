@@ -89,7 +89,7 @@ void ntlm_print_av_pair_list(NTLM_AV_PAIR* pAvPairList)
 
 	while (ntlm_av_pair_get_id(pAvPair) != MsvAvEOL)
 	{
-		WLog_INFO(TAG, "\t%s AvId: %d AvLen: %d",
+		WLog_INFO(TAG, "\t%s AvId: %"PRIu16" AvLen: %"PRIu16"",
 				  AV_PAIR_STRINGS[ntlm_av_pair_get_id(pAvPair)],
 				  ntlm_av_pair_get_id(pAvPair),
 				  ntlm_av_pair_get_len(pAvPair));
