@@ -124,7 +124,6 @@ static BOOL clear_decompress_subcode_rlex(wStream* s,
 {
 	UINT32 x = 0, y = 0;
 	UINT32 i;
-	UINT32 SrcFormat = PIXEL_FORMAT_BGR24;
 	UINT32 pixelCount;
 	UINT32 nSrcStep;
 	UINT32 bitmapDataOffset;
@@ -156,12 +155,10 @@ static BOOL clear_decompress_subcode_rlex(wStream* s,
 	for (i = 0; i < paletteCount; i++)
 	{
 		BYTE r, g, b;
-		UINT32 color;
 		Stream_Read_UINT8(s, b);
 		Stream_Read_UINT8(s, g);
 		Stream_Read_UINT8(s, r);
-		color = GetColor(SrcFormat, r, g, b, 0xFF);
-		palette[i] = ConvertColor(color, SrcFormat, DstFormat, NULL);
+		palette[i] = GetColor(DstFormat, r, g, b, 0xFF);
 	}
 
 	pixelIndex = 0;
@@ -887,9 +884,12 @@ static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* clear,
                                         BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
                                         UINT32 nXDst, UINT32 nYDst,
                                         UINT32 nDstWidth, UINT32 nDstHeight,
-                                        const gdiPalette* palette)
+                                        const gdiPalette* palette, BYTE** ppGlyphData)
 {
 	UINT16 glyphIndex = 0;
+
+	if (ppGlyphData)
+		*ppGlyphData = NULL;
 
 	if ((glyphFlags & CLEARCODEC_FLAG_GLYPH_HIT) &&
 	    !(glyphFlags & CLEARCODEC_FLAG_GLYPH_INDEX))
@@ -958,24 +958,23 @@ static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* clear,
 
 	if (glyphFlags & CLEARCODEC_FLAG_GLYPH_INDEX)
 	{
-		BYTE* glyphData;
-		UINT32 nSrcStep;
+		const UINT32 bpp = GetBytesPerPixel(clear->format);
 		CLEAR_GLYPH_ENTRY* glyphEntry = &(clear->GlyphCache[glyphIndex]);
 		glyphEntry->count = nWidth * nHeight;
 
 		if (glyphEntry->count > glyphEntry->size)
 		{
-			UINT32* tmp;
+			BYTE* tmp;
 			glyphEntry->size = glyphEntry->count;
-			tmp = (UINT32*) realloc(glyphEntry->pixels, glyphEntry->size * 4);
+			tmp = realloc(glyphEntry->pixels, glyphEntry->size * bpp);
 
 			if (!tmp)
 			{
-				WLog_ERR(TAG, "glyphEntry->pixels realloc %lu failed!", glyphEntry->size * 4);
+				WLog_ERR(TAG, "glyphEntry->pixels realloc %lu failed!", glyphEntry->size * bpp);
 				return FALSE;
 			}
 
-			glyphEntry->pixels = tmp;
+			glyphEntry->pixels = (UINT32*)tmp;
 		}
 
 		if (!glyphEntry->pixels)
@@ -984,17 +983,22 @@ static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* clear,
 			return FALSE;
 		}
 
-		glyphData = (BYTE*) glyphEntry->pixels;
-		nSrcStep = nWidth * GetBytesPerPixel(clear->format);
+		if (ppGlyphData)
+			*ppGlyphData = (BYTE*)glyphEntry->pixels;
 
-		if (!convert_color(pDstData, nDstStep, DstFormat,
-		                   nXDst, nYDst, nWidth, nHeight,
-		                   glyphData, nSrcStep, clear->format,
-		                   nDstWidth, nDstHeight, palette))
-			return FALSE;
+		return TRUE;
 	}
 
 	return TRUE;
+}
+
+static INLINE BOOL updateContextFormat(CLEAR_CONTEXT* clear, UINT32 DstFormat)
+{
+	if (!clear || !clear->nsc)
+		return FALSE;
+
+	clear->format = DstFormat;
+	return nsc_context_set_pixel_format(clear->nsc, DstFormat);
 }
 
 INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
@@ -1010,6 +1014,7 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
 	UINT32 bandsByteCount;
 	UINT32 subcodecByteCount;
 	wStream* s;
+	BYTE* glyphData = NULL;
 
 	if (!pDstData)
 		return -1002;
@@ -1032,6 +1037,9 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
 		WLog_ERR(TAG, "stream short %lu [%lu expected]", Stream_GetRemainingLength(s), 2);
 		goto fail;
 	}
+
+	if (!updateContextFormat(clear, DstFormat))
+		goto fail;
 
 	Stream_Read_UINT8(s, glyphFlags);
 	Stream_Read_UINT8(s, seqNumber);
@@ -1058,7 +1066,7 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
 	if (!clear_decompress_glyph_data(clear, s, glyphFlags, nWidth,
 	                                 nHeight, pDstData, DstFormat,
 	                                 nDstStep, nXDst, nYDst,
-	                                 nDstWidth, nDstHeight, palette))
+	                                 nDstWidth, nDstHeight, palette, &glyphData))
 	{
 		WLog_ERR(TAG, "clear_decompress_glyph_data failed!");
 		goto fail;
@@ -1113,6 +1121,14 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
 		}
 	}
 
+	if (glyphData)
+	{
+		if (!freerdp_image_copy(glyphData, clear->format, 0, 0, 0, nWidth, nHeight,
+		                        pDstData, DstFormat, nDstStep, nXDst, nYDst, palette,
+		                        FREERDP_FLIP_NONE))
+			goto fail;
+	}
+
 finish:
 	rc = 0;
 fail:
@@ -1146,12 +1162,13 @@ CLEAR_CONTEXT* clear_context_new(BOOL Compressor)
 
 	clear->Compressor = Compressor;
 	clear->nsc = nsc_context_new();
-	clear->format = PIXEL_FORMAT_BGRX32;
 
 	if (!clear->nsc)
 		goto error_nsc;
 
-	nsc_context_set_pixel_format(clear->nsc, PIXEL_FORMAT_RGB24);
+	if (!updateContextFormat(clear, PIXEL_FORMAT_BGRX32))
+		goto error_nsc;
+
 	clear->TempSize = 512 * 512 * 4;
 	clear->TempBuffer = (BYTE*) malloc(clear->TempSize);
 

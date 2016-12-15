@@ -1039,7 +1039,7 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 
 		case RDP_CODEC_ID_NONE:
 			pSrcData = cmd->bitmapData;
-			format = PIXEL_FORMAT_BGRX32;
+			format = gdi_get_pixel_format(cmd->bpp);
 
 			if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, stride,
 			                        0, 0,

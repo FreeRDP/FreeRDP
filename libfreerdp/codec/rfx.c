@@ -1191,7 +1191,10 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length,
 				if (!freerdp_image_copy(dst, dstFormat, dstStride,
 				                        nXDst, nYDst, nWidth, nHeight,
 				                        tile->data, context->pixel_format, stride, nXSrc, nYSrc, NULL, FREERDP_FLIP_NONE))
+				{
+					region16_uninit(&updateRegion);
 					goto fail;
+				}
 
 				if (invalidRegion)
 					region16_union_rect(invalidRegion, invalidRegion, &updateRects[j]);
@@ -1207,7 +1210,6 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length,
 	}
 
 fail:
-	region16_uninit(&updateRegion);
 	Stream_Free(s, FALSE);
 	rfx_message_free(context, message);
 	return FALSE;

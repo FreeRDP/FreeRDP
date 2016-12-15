@@ -985,7 +985,7 @@ static BOOL gdi_surface_bits(rdpContext* context,
 			break;
 
 		case RDP_CODEC_ID_NONE:
-			format = PIXEL_FORMAT_BGRX32;
+			format = gdi_get_pixel_format(cmd->bpp);
 
 			if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, gdi->stride,
 			                        cmd->destLeft, cmd->destTop, cmd->width, cmd->height,
