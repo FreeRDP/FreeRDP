@@ -1419,10 +1419,7 @@ static BOOL xf_auto_reconnect(freerdp* instance)
 		WLog_INFO(TAG, "Attempting reconnect (%u of %u)", numRetries, maxRetries);
 
 		if (freerdp_reconnect(instance))
-		{
-			freerdp_abort_connect(instance);
 			return TRUE;
-		}
 
 		sleep(5);
 	}
@@ -1513,10 +1510,10 @@ static void* xf_client_thread(void* param)
 	while (!freerdp_shall_disconnect(instance))
 	{
 		/*
-		     * win8 and server 2k12 seem to have some timing issue/race condition
-		     * when a initial sync request is send to sync the keyboard indicators
-		     * sending the sync event twice fixed this problem
-		     */
+			 * win8 and server 2k12 seem to have some timing issue/race condition
+			 * when a initial sync request is send to sync the keyboard indicators
+			 * sending the sync event twice fixed this problem
+			 */
 		if (freerdp_focus_required(instance))
 		{
 			xf_keyboard_focus_in(xfc);
