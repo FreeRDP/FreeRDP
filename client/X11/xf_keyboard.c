@@ -487,7 +487,7 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 	}
 	
 	// Ungrab keyboard
-	if (mod.Ctrl && mod.Alt) // TODO make an option to choose which button combination does it
+	if (mod.RightCtrl)
 	{
 		if (!xfc->fullscreen)
 		{
