@@ -14,7 +14,7 @@ int TestGetNativeSystemInfo(int argc, char* argv[])
 	printf("\tdwPageSize: 0x%08"PRIX32"\n", sysinfo.dwPageSize);
 	printf("\tlpMinimumApplicationAddress: %p\n", sysinfo.lpMinimumApplicationAddress);
 	printf("\tlpMaximumApplicationAddress: %p\n", sysinfo.lpMaximumApplicationAddress);
-	printf("\tdwActiveProcessorMask: 0x%08"PRIXz"\n", sysinfo.dwActiveProcessorMask);
+	printf("\tdwActiveProcessorMask: %p\n", (void*) sysinfo.dwActiveProcessorMask);
 	printf("\tdwNumberOfProcessors: %"PRIu32"\n", sysinfo.dwNumberOfProcessors);
 	printf("\tdwProcessorType: %"PRIu32"\n", sysinfo.dwProcessorType);
 	printf("\tdwAllocationGranularity: %"PRIu32"\n", sysinfo.dwAllocationGranularity);

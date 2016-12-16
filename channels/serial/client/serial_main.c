@@ -665,8 +665,7 @@ static void terminate_pending_irp_threads(SERIAL_DEVICE* serial)
 		}
 
 		CloseHandle(irpThread);
-		WLog_Print(serial->log, WLOG_DEBUG, "IRP thread terminated, CompletionId %"PRIuz"",
-		           id);
+		WLog_Print(serial->log, WLOG_DEBUG, "IRP thread terminated, CompletionId %p", (void*) id);
 	}
 
 	ListDictionary_Clear(serial->IrpThreads);
