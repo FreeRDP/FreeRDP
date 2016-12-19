@@ -340,7 +340,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 
 	if (!nCount || (nCount > MAXIMUM_WAIT_OBJECTS))
 	{
-		WLog_ERR(TAG, "invalid handles count(%d)", nCount);
+		WLog_ERR(TAG, "invalid handles count(%"PRIu32")", nCount);
 		return WAIT_FAILED;
 	}
 
@@ -447,10 +447,10 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 		if (status < 0)
 		{
 #ifdef HAVE_POLL_H
-			WLog_ERR(TAG, "poll() handle %d (%d) failure [%d] %s", index, nCount, errno,
+			WLog_ERR(TAG, "poll() handle %d (%"PRIu32") failure [%d] %s", index, nCount, errno,
 					 strerror(errno));
 #else
-			WLog_ERR(TAG, "select() handle %d (%d) failure [%d] %s", index, nCount, errno,
+			WLog_ERR(TAG, "select() handle %d (%"PRIu32") failure [%d] %s", index, nCount, errno,
 					 strerror(errno));
 #endif
 			winpr_log_backtrace(TAG, WLOG_ERROR, 20);

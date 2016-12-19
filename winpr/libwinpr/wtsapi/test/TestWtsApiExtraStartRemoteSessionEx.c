@@ -21,7 +21,7 @@ int TestWtsApiExtraStartRemoteSessionEx(int argc, char* argv[])
 
 	if (!bSuccess)
 	{
-		printf("WTSStartRemoteControlSessionEx failed: %d\n", (int) GetLastError());
+		printf("WTSStartRemoteControlSessionEx failed: %"PRIu32"\n", GetLastError());
 		return -1;
 	}
 

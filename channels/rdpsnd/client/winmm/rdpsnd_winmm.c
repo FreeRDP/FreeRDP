@@ -128,7 +128,7 @@ static void CALLBACK rdpsnd_winmm_callback_function(HWAVEOUT hwo, UINT uMsg, DWO
 				if (!wave)
 					return;
 
-				WLog_DBG(TAG,  "MM_WOM_DONE: dwBufferLength: %d cBlockNo: %d",
+				WLog_DBG(TAG,  "MM_WOM_DONE: dwBufferLength: %"PRIu32" cBlockNo: %"PRIu8"",
 						 lpWaveHdr->dwBufferLength, wave->cBlockNo);
 				wave->wLocalTimeB = GetTickCount();
 				wTimeDelta = wave->wLocalTimeB - wave->wLocalTimeA;
@@ -161,7 +161,7 @@ static BOOL rdpsnd_winmm_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, 
 
 	if (mmResult != MMSYSERR_NOERROR)
 	{
-		WLog_ERR(TAG,  "waveOutOpen failed: %d", mmResult);
+		WLog_ERR(TAG,  "waveOutOpen failed: %"PRIu32"", mmResult);
 		return FALSE;
 	}
 
@@ -169,7 +169,7 @@ static BOOL rdpsnd_winmm_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, 
 
 	if (mmResult != MMSYSERR_NOERROR)
 	{
-		WLog_ERR(TAG,  "waveOutSetVolume failed: %d", mmResult);
+		WLog_ERR(TAG,  "waveOutSetVolume failed: %"PRIu32"", mmResult);
 		return FALSE;
 	}
 
@@ -189,7 +189,7 @@ static void rdpsnd_winmm_close(rdpsndDevicePlugin* device)
 
 		if (mmResult != MMSYSERR_NOERROR)
 		{
-			WLog_ERR(TAG,  "waveOutClose failure: %d", mmResult);
+			WLog_ERR(TAG,  "waveOutClose failure: %"PRIu32"", mmResult);
 		}
 		
 		winmm->hWaveOut = NULL;
@@ -322,7 +322,7 @@ void rdpsnd_winmm_wave_play(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 
 	if (mmResult != MMSYSERR_NOERROR)
 	{
-		WLog_ERR(TAG,  "waveOutPrepareHeader failure: %d", mmResult);
+		WLog_ERR(TAG,  "waveOutPrepareHeader failure: %"PRIu32"", mmResult);
 		return;
 	}
 
@@ -330,7 +330,7 @@ void rdpsnd_winmm_wave_play(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 
 	if (mmResult != MMSYSERR_NOERROR)
 	{
-		WLog_ERR(TAG,  "waveOutWrite failure: %d", mmResult);
+		WLog_ERR(TAG,  "waveOutWrite failure: %"PRIu32"", mmResult);
 		waveOutUnprepareHeader(winmm->hWaveOut, lpWaveHdr, sizeof(WAVEHDR));
 		free(lpWaveHdr);
 		return;

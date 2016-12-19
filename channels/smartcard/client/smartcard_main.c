@@ -56,7 +56,7 @@ void* smartcard_context_thread(SMARTCARD_CONTEXT* pContext)
 		if (waitStatus == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %u!", error);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %"PRIu32"!", error);
 			break;
 		}
 
@@ -65,7 +65,7 @@ void* smartcard_context_thread(SMARTCARD_CONTEXT* pContext)
 		if (waitStatus == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %u!", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", error);
 			break;
 		}
 
@@ -87,7 +87,7 @@ void* smartcard_context_thread(SMARTCARD_CONTEXT* pContext)
 			{
 				if ((status = smartcard_irp_device_control_call(smartcard, operation)))
 				{
-					WLog_ERR(TAG, "smartcard_irp_device_control_call failed with error %u",
+					WLog_ERR(TAG, "smartcard_irp_device_control_call failed with error %"PRIu32"",
 					         status);
 					break;
 				}
@@ -162,7 +162,7 @@ void smartcard_context_free(SMARTCARD_CONTEXT* pContext)
 
 	if (MessageQueue_PostQuit(pContext->IrpQueue, 0)
 	    && (WaitForSingleObject(pContext->thread, INFINITE) == WAIT_FAILED))
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", (unsigned long) GetLastError());
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", GetLastError());
 
 	CloseHandle(pContext->thread);
 	MessageQueue_Free(pContext->IrpQueue);
@@ -237,7 +237,7 @@ static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard)
 
 				if (MessageQueue_PostQuit(pContext->IrpQueue, 0)
 				    && (WaitForSingleObject(pContext->thread, INFINITE) == WAIT_FAILED))
-					WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", (unsigned long) GetLastError());
+					WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", GetLastError());
 
 				CloseHandle(pContext->thread);
 				MessageQueue_Free(pContext->IrpQueue);
@@ -273,7 +273,7 @@ static UINT smartcard_free(DEVICE* device)
 		    && (WaitForSingleObject(smartcard->thread, INFINITE) == WAIT_FAILED))
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %u!", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", error);
 			return error;
 		}
 
@@ -465,7 +465,7 @@ UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		{
 			if ((status = smartcard_irp_device_control_call(smartcard, operation)))
 			{
-				WLog_ERR(TAG, "smartcard_irp_device_control_call failed with error %ld!",
+				WLog_ERR(TAG, "smartcard_irp_device_control_call failed with error %"PRId32"!",
 				         status);
 				return (UINT32)status;
 			}
@@ -493,7 +493,7 @@ UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	else
 	{
 		WLog_ERR(TAG,
-		         "Unexpected SmartCard IRP: MajorFunction 0x%08X MinorFunction: 0x%08X",
+		         "Unexpected SmartCard IRP: MajorFunction 0x%08"PRIX32" MinorFunction: 0x%08"PRIX32"",
 		         irp->MajorFunction, irp->MinorFunction);
 		irp->IoStatus = (UINT32)STATUS_NOT_SUPPORTED;
 
@@ -528,7 +528,7 @@ static void* smartcard_thread_func(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %u!", error);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %"PRIu32"!", error);
 			break;
 		}
 
@@ -537,7 +537,7 @@ static void* smartcard_thread_func(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %u!", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", error);
 			break;
 		}
 
@@ -559,7 +559,7 @@ static void* smartcard_thread_func(void* arg)
 					if (status == WAIT_FAILED)
 					{
 						error = GetLastError();
-						WLog_ERR(TAG, "WaitForSingleObject failed with error %u!", error);
+						WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", error);
 						goto out;
 					}
 
@@ -577,7 +577,7 @@ static void* smartcard_thread_func(void* arg)
 							if (status == WAIT_FAILED)
 							{
 								error = GetLastError();
-								WLog_ERR(TAG, "WaitForSingleObject failed with error %u!", error);
+								WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", error);
 								goto out;
 							}
 
@@ -587,7 +587,7 @@ static void* smartcard_thread_func(void* arg)
 
 						if ((error = smartcard_complete_irp(smartcard, irp)))
 						{
-							WLog_ERR(TAG, "smartcard_complete_irp failed with error %u!", error);
+							WLog_ERR(TAG, "smartcard_complete_irp failed with error %"PRIu32"!", error);
 							goto out;
 						}
 					}
@@ -602,7 +602,7 @@ static void* smartcard_thread_func(void* arg)
 			{
 				if ((error = smartcard_process_irp(smartcard, irp)))
 				{
-					WLog_ERR(TAG, "smartcard_process_irp failed with error %u!", error);
+					WLog_ERR(TAG, "smartcard_process_irp failed with error %"PRIu32"!", error);
 					goto out;
 				}
 			}
@@ -613,7 +613,7 @@ static void* smartcard_thread_func(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %u!", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", error);
 			break;
 		}
 
@@ -630,7 +630,7 @@ static void* smartcard_thread_func(void* arg)
 					if (status == WAIT_FAILED)
 					{
 						error = GetLastError();
-						WLog_ERR(TAG, "WaitForSingleObject failed with error %u!", error);
+						WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", error);
 						break;
 					}
 
@@ -646,7 +646,7 @@ static void* smartcard_thread_func(void* arg)
 						goto out;
 					}
 
-					WLog_ERR(TAG, "smartcard_complete_irp failed with error %u!", error);
+					WLog_ERR(TAG, "smartcard_complete_irp failed with error %"PRIu32"!", error);
 					goto out;
 				}
 			}

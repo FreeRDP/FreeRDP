@@ -27,7 +27,7 @@ int TestNtCreateFile(int argc, char* argv[])
 	ntstatus = _RtlAnsiStringToUnicodeString(&uString, &aString, TRUE);
 	if (ntstatus != STATUS_SUCCESS)
 	{
-		printf("_RtlAnsiStringToUnicodeString failure: 0x%08X\n", ntstatus);
+		printf("_RtlAnsiStringToUnicodeString failure: 0x%08"PRIX32"\n", ntstatus);
 		goto out;
 	}
 
@@ -45,7 +45,7 @@ int TestNtCreateFile(int argc, char* argv[])
 
 	if (ntstatus != STATUS_SUCCESS)
 	{
-		printf("_NtCreateFile failure: 0x%08X\n", ntstatus);
+		printf("_NtCreateFile failure: 0x%08"PRIX32"\n", ntstatus);
 		goto out;
 	}
 
@@ -55,7 +55,7 @@ int TestNtCreateFile(int argc, char* argv[])
 
 	if (ntstatus != STATUS_SUCCESS)
 	{
-		printf("_NtClose failure: 0x%08X\n", ntstatus);
+		printf("_NtClose failure: 0x%08"PRIX32"\n", ntstatus);
 		goto out;
 	}
 

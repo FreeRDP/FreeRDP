@@ -123,14 +123,14 @@ static BOOL tsmf_alsa_set_format(ITSMFAudioDevice *audio,
 	snd_pcm_sw_params(alsa->out_handle, sw_params);
 	snd_pcm_sw_params_free(sw_params);
 	snd_pcm_prepare(alsa->out_handle);
-	DEBUG_TSMF("sample_rate %d channels %d bits_per_sample %d",
+	DEBUG_TSMF("sample_rate %"PRIu32" channels %"PRIu32" bits_per_sample %"PRIu32"",
 			   sample_rate, channels, bits_per_sample);
-	DEBUG_TSMF("hardware buffer %d frames", (int)frames);
+	DEBUG_TSMF("hardware buffer %lu frames", frames);
 	if((alsa->actual_rate != alsa->source_rate) ||
 			(alsa->actual_channels != alsa->source_channels))
 	{
-		DEBUG_TSMF("actual rate %d / channel %d is different "
-				   "from source rate %d / channel %d, resampling required.",
+		DEBUG_TSMF("actual rate %"PRIu32" / channel %"PRIu32" is different "
+		           "from source rate %"PRIu32" / channel %"PRIu32", resampling required.",
 				   alsa->actual_rate, alsa->actual_channels,
 				   alsa->source_rate, alsa->source_channels);
 	}
@@ -148,7 +148,7 @@ static BOOL tsmf_alsa_play(ITSMFAudioDevice *audio, BYTE *data, UINT32 data_size
 	int rbytes_per_frame;
 	int sbytes_per_frame;
 	TSMFAlsaAudioDevice *alsa = (TSMFAlsaAudioDevice *) audio;
-	DEBUG_TSMF("data_size %d", data_size);
+	DEBUG_TSMF("data_size %"PRIu32"", data_size);
 	if(alsa->out_handle)
 	{
 		sbytes_per_frame = alsa->source_channels * alsa->bytes_per_sample;
@@ -164,7 +164,7 @@ static BOOL tsmf_alsa_play(ITSMFAudioDevice *audio, BYTE *data, UINT32 data_size
 										alsa->source_channels, alsa->source_rate, data_size / sbytes_per_frame,
 										alsa->actual_channels, alsa->actual_rate);
 			frames = alsa->dsp_context->resampled_frames;
-			DEBUG_TSMF("resampled %d frames at %d to %d frames at %d",
+			DEBUG_TSMF("resampled %"PRIu32" frames at %"PRIu32" to %d frames at %"PRIu32"",
 					   data_size / sbytes_per_frame, alsa->source_rate, frames, alsa->actual_rate);
 			data_size = frames * rbytes_per_frame;
 			src = alsa->dsp_context->resampled_buffer;

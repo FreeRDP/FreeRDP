@@ -19,11 +19,11 @@ int TestWtsApiExtraSendMessage(int argc, char* argv[])
 
 	if (!bSuccess)
 	{
-		printf("WTSSendMessage failed: %d\n", (int) GetLastError());
+		printf("WTSSendMessage failed: %"PRIu32"\n", GetLastError());
 		return -1;
 	}
 
-	printf("WTSSendMessage got result: %d\n", (int) result);
+	printf("WTSSendMessage got result: %"PRIu32"\n", result);
 
 	return 0;
 }

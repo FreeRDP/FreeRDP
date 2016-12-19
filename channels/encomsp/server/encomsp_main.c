@@ -122,7 +122,7 @@ static UINT encomsp_recv_change_participant_control_level_pdu(
 	IFCALLRET(context->ChangeParticipantControlLevel, error, context, &pdu);
 
 	if (error)
-		WLog_ERR(TAG, "context->ChangeParticipantControlLevel failed with error %u",
+		WLog_ERR(TAG, "context->ChangeParticipantControlLevel failed with error %"PRIu32"",
 		         error);
 
 	return error;
@@ -143,11 +143,11 @@ static UINT encomsp_server_receive_pdu(EncomspServerContext* context,
 	{
 		if ((error = encomsp_read_header(s, &header)))
 		{
-			WLog_ERR(TAG, "encomsp_read_header failed with error %u!", error);
+			WLog_ERR(TAG, "encomsp_read_header failed with error %"PRIu32"!", error);
 			return error;
 		}
 
-		WLog_INFO(TAG, "EncomspReceive: Type: %d Length: %d", header.Type,
+		WLog_INFO(TAG, "EncomspReceive: Type: %"PRIu16" Length: %"PRIu16"", header.Type,
 		          header.Length);
 
 		switch (header.Type)
@@ -157,7 +157,7 @@ static UINT encomsp_server_receive_pdu(EncomspServerContext* context,
 				             &header)))
 				{
 					WLog_ERR(TAG,
-					         "encomsp_recv_change_participant_control_level_pdu failed with error %u!",
+					         "encomsp_recv_change_participant_control_level_pdu failed with error %"PRIu32"!",
 					         error);
 					return error;
 				}
@@ -165,7 +165,7 @@ static UINT encomsp_server_receive_pdu(EncomspServerContext* context,
 				break;
 
 			default:
-				WLog_ERR(TAG, "header.Type unknown %d!", header.Type);
+				WLog_ERR(TAG, "header.Type unknown %"PRIu16"!", header.Type);
 				return ERROR_INVALID_DATA;
 				break;
 		}
@@ -220,7 +220,7 @@ static void* encomsp_server_thread(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %u", error);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %"PRIu32"", error);
 			break;
 		}
 
@@ -229,7 +229,7 @@ static void* encomsp_server_thread(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %u", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"", error);
 			break;
 		}
 
@@ -269,7 +269,7 @@ static void* encomsp_server_thread(void* arg)
 
 				if ((error = encomsp_server_receive_pdu(context, s)))
 				{
-					WLog_ERR(TAG, "encomsp_server_receive_pdu failed with error %u!", error);
+					WLog_ERR(TAG, "encomsp_server_receive_pdu failed with error %"PRIu32"!", error);
 					break;
 				}
 
@@ -333,7 +333,7 @@ static UINT encomsp_server_stop(EncomspServerContext* context)
 	if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
 	{
 		error = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %u", error);
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"", error);
 		return error;
 	}
 

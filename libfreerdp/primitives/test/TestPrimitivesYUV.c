@@ -23,7 +23,7 @@ static BOOL similar(const BYTE* src, const BYTE* dst, size_t size)
 
 		if (abs(diff) > 2)
 		{
-			fprintf(stderr, "%lu %02X : %02X diff=%d\n", (unsigned long)x, src[x], dst[x], abs(diff));
+			fprintf(stderr, "%"PRIuz" %02"PRIX8" : %02"PRIX8" diff=%d\n", x, src[x], dst[x], abs(diff));
 			return FALSE;
 		}
 	}
@@ -67,8 +67,8 @@ static BOOL check_padding(const BYTE* psrc, size_t size, size_t padding,
 			while ((x < halfPad) && (*esrc++ != 'A'))
 				x++;
 
-			fprintf(stderr, "Buffer underflow detected %02x != %02X %s [%lu-%lu]\n",
-				d, 'A', buffer, (unsigned long)start, (unsigned long)x);
+			fprintf(stderr, "Buffer underflow detected %02"PRIx8" != %02X %s [%"PRIuz"-%"PRIuz"]\n",
+				d, 'A', buffer, start, x);
 			return FALSE;
 		}
 
@@ -79,8 +79,8 @@ static BOOL check_padding(const BYTE* psrc, size_t size, size_t padding,
 			while ((x < halfPad) && (*esrc++ != 'A'))
 				x++;
 
-			fprintf(stderr, "Buffer overflow detected %02x != %02X %s [%lu-%lu]\n",
-				d, 'A', buffer, (unsigned long)start, (unsigned long)x);
+			fprintf(stderr, "Buffer overflow detected %02"PRIx8" != %02X %s [%"PRIuz"-%"PRIuz"]\n",
+				d, 'A', buffer, start, x);
 			return FALSE;
 		}
 	}
@@ -142,9 +142,8 @@ static BOOL TestPrimitiveYUVCombine(void)
 	get_size(&roi.width, &roi.height);
 	awidth = roi.width + 16 - roi.width % 16;
 	aheight = roi.height + 16 - roi.height % 16;
-	fprintf(stderr, "Running YUVCombine on frame size %lux%lu [%lux%lu]\n",
-		(unsigned long) roi.width, (unsigned long) roi.height,
-		(unsigned long) awidth, (unsigned long) aheight);
+	fprintf(stderr, "Running YUVCombine on frame size %"PRIu32"x%"PRIu32" [%"PRIu32"x%"PRIu32"]\n",
+		roi.width, roi.height, awidth, aheight);
 
 	if (!prims || !prims->YUV420CombineToYUV444)
 		goto fail;
@@ -331,8 +330,8 @@ static BOOL TestPrimitiveYUV(BOOL use444)
 			return FALSE;
 	}
 
-	fprintf(stderr, "Running AVC%s on frame size %lux%lu\n", use444 ? "444" : "420",
-		(unsigned long) roi.width, (unsigned long) roi.height);
+	fprintf(stderr, "Running AVC%s on frame size %"PRIu32"x%"PRIu32"\n", use444 ? "444" : "420",
+		roi.width, roi.height);
 
 	/* Test RGB to YUV444 conversion and vice versa */
 	if (!(rgb = set_padding(size * sizeof(UINT32), padding)))

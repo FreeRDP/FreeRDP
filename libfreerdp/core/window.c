@@ -79,7 +79,7 @@ BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 
 	if ((iconInfo->bpp < 1) || (iconInfo->bpp > 32))
 	{
-		WLog_ERR(TAG, "invalid bpp value %d", iconInfo->bpp);
+		WLog_ERR(TAG, "invalid bpp value %"PRIu32"", iconInfo->bpp);
 		return FALSE;
 	}
 

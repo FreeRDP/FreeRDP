@@ -107,7 +107,7 @@ extern "C" {
 				} \
 			} \
 		} else { \
-			WLog_WARN("com.winpr.bitstream", "warning: BitStream_Shift(%d)", _nbits); \
+			WLog_WARN("com.winpr.bitstream", "warning: BitStream_Shift(%u)", (unsigned)_nbits); \
 		} \
 	} while(0)
 

@@ -101,13 +101,13 @@ void string_hexdump(BYTE* data, int length)
 			line = 16;
 
 		for (i = 0; i < line; i++)
-			printf("%02x ", p[i]);
+			printf("%02"PRIx8" ", p[i]);
 
 		for (; i < 16; i++)
 			printf("   ");
 
 		for (i = 0; i < line; i++)
-			printf("%c", (p[i] >= 0x20 && p[i] < 0x7F) ? p[i] : '.');
+			printf("%c", (p[i] >= 0x20 && p[i] < 0x7F) ? (char) p[i] : '.');
 
 		printf("\n");
 
@@ -152,7 +152,7 @@ int convert_utf8_to_utf16(BYTE* lpMultiByteStr, BYTE* expected_lpWideCharStr, in
 	if (!length)
 	{
 		DWORD error = GetLastError();
-		printf("MultiByteToWideChar error: 0x%08X\n", error);
+		printf("MultiByteToWideChar error: 0x%08"PRIX32"\n", error);
 		return -1;
 	}
 
@@ -224,7 +224,7 @@ int convert_utf16_to_utf8(BYTE* lpWideCharStr, BYTE* expected_lpMultiByteStr, in
 	if (!length)
 	{
 		DWORD error = GetLastError();
-		printf("WideCharToMultiByte error: 0x%08X\n", error);
+		printf("WideCharToMultiByte error: 0x%08"PRIX32"\n", error);
 		return -1;
 	}
 
@@ -581,7 +581,7 @@ int TestUnicodeConversion(int argc, char* argv[])
 		WCHAR *dst = NULL;
 		int num;
 		num = ConvertToUnicode(CP_UTF8, 0, src, 16, &dst, 0);
-		printf("ConvertToUnicode returned %d dst=%p\n", num, dst);
+		printf("ConvertToUnicode returned %d dst=%p\n", num, (void*) dst);
 		string_hexdump((BYTE*)dst, num * 2 + 2);
 
 	}

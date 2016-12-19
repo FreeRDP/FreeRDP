@@ -280,7 +280,7 @@ static void* audin_oss_thread_func(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %u", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"", error);
 			goto err_out;
 		}
 
@@ -334,7 +334,7 @@ static void* audin_oss_thread_func(void* arg)
 
 		if ((error = oss->receive(encoded_data, encoded_size, oss->user_data)))
 		{
-			WLog_ERR(TAG, "oss->receive failed with error %u", error);
+			WLog_ERR(TAG, "oss->receive failed with error %"PRIu32"", error);
 			break;
 		}
 	}
@@ -406,7 +406,7 @@ static UINT audin_oss_close(IAudinDevice* device)
 		if (WaitForSingleObject(oss->thread, INFINITE) == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %u", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"", error);
 			return error;
 		}
 
@@ -538,7 +538,7 @@ UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS
 
 	if ((error = audin_oss_parse_addin_args(oss, args)))
 	{
-		WLog_ERR(TAG, "audin_oss_parse_addin_args failed with errorcode %u!", error);
+		WLog_ERR(TAG, "audin_oss_parse_addin_args failed with errorcode %"PRIu32"!", error);
 		goto error_out;
 	}
 
@@ -554,7 +554,7 @@ UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS
 	if ((error = pEntryPoints->pRegisterAudinDevice(pEntryPoints->plugin,
 	             (IAudinDevice*) oss)))
 	{
-		WLog_ERR(TAG, "RegisterAudinDevice failed with error %u!", error);
+		WLog_ERR(TAG, "RegisterAudinDevice failed with error %"PRIu32"!", error);
 		goto error_out;
 	}
 

@@ -26,7 +26,7 @@ static int start_threads(DWORD count, HANDLE *threads)
 
 		if (!threads[i])
 		{
-			printf("CreateThread [%i] failure\n", i);
+			printf("CreateThread [%"PRIu32"] failure\n", i);
 			return -1;
 		}
 	}
@@ -42,7 +42,7 @@ static int close_threads(DWORD count, HANDLE *threads)
 	{
 		if (!CloseHandle(threads[i]))
 		{
-			printf("CloseHandle [%d] failure\n", i);
+			printf("CloseHandle [%"PRIu32"] failure\n", i);
 			return -1;
 		}
 	}

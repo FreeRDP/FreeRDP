@@ -220,10 +220,10 @@ char* crypto_cert_fingerprint(X509* xcert)
 	p = fp_buffer;
 	for (i = 0; i < (int) (fp_len - 1); i++)
 	{
-		sprintf(p, "%02x:", fp[i]);
+		sprintf(p, "%02"PRIx8":", fp[i]);
 		p = &fp_buffer[(i + 1) * 3];
 	}
-	sprintf(p, "%02x", fp[i]);
+	sprintf(p, "%02"PRIx8"", fp[i]);
 
 	return fp_buffer;
 }

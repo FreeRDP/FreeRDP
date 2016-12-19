@@ -44,7 +44,7 @@ void buildhashtable(void)
 			HashTable[h] ^= 0xfe0;
 		}
 
-		printf("at %d %d=0x%hhx\n", i, h, HashTable[h]);
+		printf("at %d %"PRIu16"=0x%"PRIx16"\n", i, h, HashTable[h]);
 	}
 }
 
@@ -69,14 +69,14 @@ main()
 	for (i = 0; i < 32; i++)
 	{
 		if (i == 31)
-			printf("0x%hx };\n", HashTable[i]);
+			printf("0x%"PRIx16" };\n", HashTable[i]);
 		else
-			printf("0x%hx, ", HashTable[i]);
+			printf("0x%"PRIx16", ", HashTable[i]);
 	}
 
 	for (i = 0; i < 32; i++)
 		if (i != getvalue(HuffCodeLOM[i]))
-			printf("Fail :( at %d : 0x%04x got %d\n", i, HuffCodeLOM[i],
+			printf("Fail :( at %d : 0x%04"PRIx16" got %"PRIu8"\n", i, HuffCodeLOM[i],
 			       getvalue(HuffCodeLOM[i]));
 
 	return 0;

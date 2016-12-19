@@ -160,7 +160,7 @@ static BOOL tsmf_oss_set_format(ITSMFAudioDevice* audio, UINT32 sample_rate, UIN
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_SETFRAGMENT, &tmp) == -1)
 		OSS_LOG_ERR("SNDCTL_DSP_SETFRAGMENT failed", errno);
 
-	DEBUG_TSMF("sample_rate %d channels %d bits_per_sample %d",
+	DEBUG_TSMF("sample_rate %"PRIu32" channels %"PRIu32" bits_per_sample %"PRIu32"",
 			   sample_rate, channels, bits_per_sample);
 	return TRUE;
 }
@@ -170,7 +170,7 @@ static BOOL tsmf_oss_play(ITSMFAudioDevice* audio, BYTE* data, UINT32 data_size)
 	int status;
 	UINT32 offset;
 	TSMFOssAudioDevice* oss = (TSMFOssAudioDevice*)audio;
-	DEBUG_TSMF("tsmf_oss_play: data_size %d", data_size);
+	DEBUG_TSMF("tsmf_oss_play: data_size %"PRIu32"", data_size);
 
 	if (oss == NULL || oss->pcm_handle == -1)
 		return FALSE;

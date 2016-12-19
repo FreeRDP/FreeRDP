@@ -70,7 +70,7 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, BYTE* data, int size)
 
 	if (!channel)
 	{
-		WLog_ERR(TAG,  "freerdp_channel_send: unknown channelId %d", channelId);
+		WLog_ERR(TAG,  "freerdp_channel_send: unknown channelId %"PRIu16"", channelId);
 		return FALSE;
 	}
 

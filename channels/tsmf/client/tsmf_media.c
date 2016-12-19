@@ -386,7 +386,7 @@ static char* guid_to_string(const BYTE* guid, char* str, size_t len)
 		return NULL;
 
 	for (i = 0; i < GUID_SIZE && len > 2 * i; i++)
-		sprintf_s(str + (2 * i), len - 2 * i, "%02X", guid[i]);
+		sprintf_s(str + (2 * i), len - 2 * i, "%02"PRIX8"", guid[i]);
 
 	return str;
 }
@@ -430,8 +430,8 @@ static BOOL tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 	TSMF_CHANNEL_CALLBACK* callback = (TSMF_CHANNEL_CALLBACK*)
 	                                  sample->channel_callback;
 	TsmfClientContext* tsmf = (TsmfClientContext*) callback->plugin->pInterface;
-	DEBUG_TSMF("MessageId %d EndTime %d data_size %d consumed.",
-	           sample->sample_id, (int) sample->end_time, sample->data_size);
+	DEBUG_TSMF("MessageId %"PRIu32" EndTime %"PRIu64" data_size %"PRIu32" consumed.",
+	           sample->sample_id, sample->end_time, sample->data_size);
 
 	if (sample->data)
 	{
@@ -467,7 +467,7 @@ static BOOL tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 			sprintf_s(buf, sizeof(buf), "/tmp/FreeRDP_Frame_%d.ppm", frame_id);
 			fp = fopen(buf, "wb");
 			fwrite("P5\n", 1, 3, fp);
-			sprintf_s(buf, sizeof(buf), "%d %d\n", sample->stream->width,
+			sprintf_s(buf, sizeof(buf), "%"PRIu32" %"PRIu32"\n", sample->stream->width,
 			          sample->stream->height);
 			fwrite(buf, 1, strlen(buf), fp);
 			fwrite("255\n", 1, 4, fp);
@@ -496,8 +496,8 @@ static BOOL tsmf_sample_playback_audio(TSMF_SAMPLE* sample)
 	UINT64 latency = 0;
 	TSMF_STREAM* stream = sample->stream;
 	BOOL ret;
-	DEBUG_TSMF("MessageId %d EndTime %d consumed.",
-	           sample->sample_id, (int)sample->end_time);
+	DEBUG_TSMF("MessageId %"PRIu32" EndTime %"PRIu64" consumed.",
+	           sample->sample_id, sample->end_time);
 
 	if (stream->audio && sample->data)
 	{
@@ -638,7 +638,7 @@ static BOOL tsmf_sample_playback(TSMF_SAMPLE* sample)
 
 			if (ret && (width != stream->width || height != stream->height))
 			{
-				DEBUG_TSMF("video dimension changed to %d x %d", width, height);
+				DEBUG_TSMF("video dimension changed to %"PRIu32" x %"PRIu32"", width, height);
 				stream->width = width;
 				stream->height = height;
 			}
@@ -717,7 +717,7 @@ static void* tsmf_stream_ack_func(void* arg)
 	HANDLE hdl[2];
 	TSMF_STREAM* stream = (TSMF_STREAM*) arg;
 	UINT error = CHANNEL_RC_OK;
-	DEBUG_TSMF("in %d", stream->stream_id);
+	DEBUG_TSMF("in %"PRIu32"", stream->stream_id);
 
 	hdl[0] = stream->stopEvent;
 	hdl[1] = Queue_Event(stream->sample_ack_list);
@@ -729,7 +729,7 @@ static void* tsmf_stream_ack_func(void* arg)
 		if (ev == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %u!", error);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %"PRIu32"!", error);
 			break;
 		}
 
@@ -792,7 +792,7 @@ static void* tsmf_stream_ack_func(void* arg)
 		setChannelError(stream->rdpcontext, error,
 		                "tsmf_stream_ack_func reported an error");
 
-	DEBUG_TSMF("out %d", stream->stream_id);
+	DEBUG_TSMF("out %"PRIu32"", stream->stream_id);
 	ExitThread(0);
 	return NULL;
 }
@@ -805,7 +805,7 @@ static void* tsmf_stream_playback_func(void* arg)
 	TSMF_PRESENTATION* presentation = stream->presentation;
 	UINT error = CHANNEL_RC_OK;
 	DWORD status;
-	DEBUG_TSMF("in %d", stream->stream_id);
+	DEBUG_TSMF("in %"PRIu32"", stream->stream_id);
 
 	if (stream->major_type == TSMF_MAJOR_TYPE_AUDIO &&
 	    stream->sample_rate && stream->channels && stream->bits_per_sample)
@@ -839,7 +839,7 @@ static void* tsmf_stream_playback_func(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %u!", error);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %"PRIu32"!", error);
 			break;
 		}
 
@@ -848,7 +848,7 @@ static void* tsmf_stream_playback_func(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %u!", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", error);
 			break;
 		}
 
@@ -882,7 +882,7 @@ static void* tsmf_stream_playback_func(void* arg)
 		setChannelError(stream->rdpcontext, error,
 		                "tsmf_stream_playback_func reported an error");
 
-	DEBUG_TSMF("out %d", stream->stream_id);
+	DEBUG_TSMF("out %"PRIu32"", stream->stream_id);
 	ExitThread(0);
 	return NULL;
 }
@@ -1056,7 +1056,7 @@ UINT tsmf_presentation_sync(TSMF_PRESENTATION* presentation)
 		if (WaitForSingleObject(stream->ready, 500) == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %u!", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", error);
 			return error;
 		}
 	}
@@ -1188,7 +1188,7 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id,
 
 	if (stream)
 	{
-		WLog_ERR(TAG, "duplicated stream id %d!", stream_id);
+		WLog_ERR(TAG, "duplicated stream id %"PRIu32"!", stream_id);
 		return NULL;
 	}
 
@@ -1252,13 +1252,13 @@ error_add:
 	SetEvent(stream->stopEvent);
 
 	if (WaitForSingleObject(stream->ack_thread, INFINITE) == WAIT_FAILED)
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", (unsigned long) GetLastError());
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", GetLastError());
 
 error_ack_thread:
 	SetEvent(stream->stopEvent);
 
 	if (WaitForSingleObject(stream->play_thread, INFINITE) == WAIT_FAILED)
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", (unsigned long) GetLastError());
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", GetLastError());
 
 error_play_thread:
 	Queue_Free(stream->sample_ack_list);
@@ -1323,7 +1323,7 @@ BOOL tsmf_stream_set_format(TSMF_STREAM* stream, const char* name, wStream* s)
 
 	if (mediatype.MajorType == TSMF_MAJOR_TYPE_VIDEO)
 	{
-		DEBUG_TSMF("video width %d height %d bit_rate %d frame_rate %f codec_data %d",
+		DEBUG_TSMF("video width %"PRIu32" height %"PRIu32" bit_rate %"PRIu32" frame_rate %f codec_data %"PRIu32"",
 		           mediatype.Width, mediatype.Height, mediatype.BitRate,
 		           (double) mediatype.SamplesPerSecond.Numerator / (double)
 		           mediatype.SamplesPerSecond.Denominator,
@@ -1333,7 +1333,7 @@ BOOL tsmf_stream_set_format(TSMF_STREAM* stream, const char* name, wStream* s)
 	}
 	else if (mediatype.MajorType == TSMF_MAJOR_TYPE_AUDIO)
 	{
-		DEBUG_TSMF("audio channel %d sample_rate %d bits_per_sample %d codec_data %d",
+		DEBUG_TSMF("audio channel %"PRIu32" sample_rate %"PRIu32" bits_per_sample %"PRIu32" codec_data %"PRIu32"",
 		           mediatype.Channels, mediatype.SamplesPerSecond.Numerator,
 		           mediatype.BitsPerSample,
 		           mediatype.ExtraDataSize);
@@ -1392,7 +1392,7 @@ void _tsmf_stream_free(TSMF_STREAM* stream)
 	{
 		if (WaitForSingleObject(stream->play_thread, INFINITE) == WAIT_FAILED)
 		{
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", (unsigned long) GetLastError());
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", GetLastError());
 			return;
 		}
 
@@ -1404,7 +1404,7 @@ void _tsmf_stream_free(TSMF_STREAM* stream)
 	{
 		if (WaitForSingleObject(stream->ack_thread, INFINITE) == WAIT_FAILED)
 		{
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", (unsigned long) GetLastError());
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", GetLastError());
 			return;
 		}
 

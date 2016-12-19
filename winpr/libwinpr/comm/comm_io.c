@@ -223,7 +223,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		if (tcsetattr(pComm->fd, TCSANOW, &currentTermios) < 0)
 		{
 			CommLog_Print(WLOG_WARN,
-			              "CommReadFile failure, could not apply new timeout values: VMIN=%u, VTIME=%u",
+			              "CommReadFile failure, could not apply new timeout values: VMIN=%"PRIu8", VTIME=%"PRIu8"",
 			              vmin, vtime);
 			SetLastError(ERROR_IO_DEVICE);
 			goto return_false;
@@ -315,12 +315,12 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		if (nbRead < 0)
 		{
 			CommLog_Print(WLOG_WARN,
-			              "CommReadFile failed, ReadIntervalTimeout=%lu, ReadTotalTimeoutMultiplier=%lu, ReadTotalTimeoutConstant=%lu VMIN=%u, VTIME=%u",
+			              "CommReadFile failed, ReadIntervalTimeout=%"PRIu32", ReadTotalTimeoutMultiplier=%"PRIu32", ReadTotalTimeoutConstant=%"PRIu32" VMIN=%u, VTIME=%u",
 			              pTimeouts->ReadIntervalTimeout, pTimeouts->ReadTotalTimeoutMultiplier,
 			              pTimeouts->ReadTotalTimeoutConstant,
 			              currentTermios.c_cc[VMIN], currentTermios.c_cc[VTIME]);
 			CommLog_Print(WLOG_WARN,
-			              "CommReadFile failed, nNumberOfBytesToRead=%lu, errno=[%d] %s",
+			              "CommReadFile failed, nNumberOfBytesToRead=%"PRIu32", errno=[%d] %s",
 			              nNumberOfBytesToRead, errno, strerror(errno));
 
 			if (errno == EAGAIN)
@@ -516,7 +516,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer,
 			if (nbWritten < 0)
 			{
 				CommLog_Print(WLOG_WARN,
-				              "CommWriteFile failed after %lu bytes written, errno=[%d] %s\n",
+				              "CommWriteFile failed after %"PRIu32" bytes written, errno=[%d] %s\n",
 				              *lpNumberOfBytesWritten, errno, strerror(errno));
 
 				if (errno == EAGAIN)

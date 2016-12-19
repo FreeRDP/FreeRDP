@@ -755,11 +755,11 @@ int test_MppcCompressBellsRdp5()
 	DstSize = sizeof(OutputBuffer);
 	pDstData = OutputBuffer;
 	status = mppc_compress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
-	printf("Flags: 0x%04X DstSize: %d\n", Flags, DstSize);
+	printf("Flags: 0x%08"PRIX32" DstSize: %"PRIu32"\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
-		printf("MppcCompressBellsRdp5: output size mismatch: Actual: %d, Expected: %d\n", DstSize, expectedSize);
+		printf("MppcCompressBellsRdp5: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n", DstSize, expectedSize);
 		return -1;
 	}
 
@@ -795,11 +795,11 @@ int test_MppcCompressBellsRdp4()
 	DstSize = sizeof(OutputBuffer);
 	pDstData = OutputBuffer;
 	status = mppc_compress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
-	printf("flags: 0x%04X size: %d\n", Flags, DstSize);
+	printf("flags: 0x%08"PRIX32" size: %"PRIu32"\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
-		printf("MppcCompressBellsRdp4: output size mismatch: Actual: %d, Expected: %d\n", DstSize, expectedSize);
+		printf("MppcCompressBellsRdp4: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n", DstSize, expectedSize);
 		return -1;
 	}
 
@@ -833,11 +833,11 @@ int test_MppcDecompressBellsRdp5()
 	Flags = PACKET_AT_FRONT | PACKET_COMPRESSED | 1;
 	expectedSize = sizeof(TEST_MPPC_BELLS) - 1;
 	status = mppc_decompress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, Flags);
-	printf("flags: 0x%04X size: %d\n", Flags, DstSize);
+	printf("flags: 0x%08"PRIX32" size: %"PRIu32"\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
-		printf("MppcDecompressBellsRdp5: output size mismatch: Actual: %d, Expected: %d\n", DstSize, expectedSize);
+		printf("MppcDecompressBellsRdp5: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n", DstSize, expectedSize);
 		return -1;
 	}
 
@@ -867,11 +867,11 @@ int test_MppcDecompressBellsRdp4()
 	Flags = PACKET_AT_FRONT | PACKET_COMPRESSED | 0;
 	expectedSize = sizeof(TEST_MPPC_BELLS) - 1;
 	status = mppc_decompress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, Flags);
-	printf("flags: 0x%04X size: %d\n", Flags, DstSize);
+	printf("flags: 0x%08"PRIX32" size: %"PRIu32"\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
-		printf("MppcDecompressBellsRdp4: output size mismatch: Actual: %d, Expected: %d\n", DstSize, expectedSize);
+		printf("MppcDecompressBellsRdp4: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n", DstSize, expectedSize);
 		return -1;
 	}
 
@@ -903,11 +903,11 @@ int test_MppcCompressIslandRdp5()
 	DstSize = sizeof(OutputBuffer);
 	pDstData = OutputBuffer;
 	status = mppc_compress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
-	printf("Flags: 0x%04X DstSize: %d\n", Flags, DstSize);
+	printf("Flags: 0x%08"PRIX32" DstSize: %"PRIu32"\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
-		printf("MppcCompressIslandRdp5: output size mismatch: Actual: %d, Expected: %d\n", DstSize, expectedSize);
+		printf("MppcCompressIslandRdp5: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n", DstSize, expectedSize);
 		return -1;
 	}
 
@@ -943,11 +943,11 @@ int test_MppcCompressBufferRdp5()
 	DstSize = sizeof(OutputBuffer);
 	pDstData = OutputBuffer;
 	status = mppc_compress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
-	printf("flags: 0x%04X size: %d\n", Flags, DstSize);
+	printf("flags: 0x%08"PRIX32" size: %"PRIu32"\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
-		printf("MppcCompressBufferRdp5: output size mismatch: Actual: %d, Expected: %d\n", DstSize, expectedSize);
+		printf("MppcCompressBufferRdp5: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n", DstSize, expectedSize);
 		return -1;
 	}
 
@@ -977,11 +977,11 @@ int test_MppcDecompressBufferRdp5()
 	Flags = PACKET_AT_FRONT | PACKET_COMPRESSED | 1;
 	expectedSize = sizeof(TEST_RDP5_UNCOMPRESSED_DATA);
 	status = mppc_decompress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, Flags);
-	printf("flags: 0x%04X size: %d\n", Flags, DstSize);
+	printf("flags: 0x%08"PRIX32" size: %"PRIu32"\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
-		printf("MppcDecompressBufferRdp5: output size mismatch: Actual: %d, Expected: %d\n", DstSize, expectedSize);
+		printf("MppcDecompressBufferRdp5: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n", DstSize, expectedSize);
 		return -1;
 	}
 

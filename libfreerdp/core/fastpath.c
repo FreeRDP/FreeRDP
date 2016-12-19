@@ -255,7 +255,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 	rdpPointerUpdate* pointer = update->pointer;
 
 #ifdef WITH_DEBUG_RDP
-	DEBUG_RDP("recv Fast-Path %s Update (0x%X), length:%d",
+	DEBUG_RDP("recv Fast-Path %s Update (0x%02"PRIX8"), length:%"PRIu32"",
 		updateCode < ARRAYSIZE(FASTPATH_UPDATETYPE_STRINGS) ? FASTPATH_UPDATETYPE_STRINGS[updateCode] : "???", updateCode, size);
 #endif
 
@@ -338,7 +338,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 			break;
 
 		default:
-			WLog_ERR(TAG, "unknown updateCode 0x%X", updateCode);
+			WLog_ERR(TAG, "unknown updateCode 0x%02"PRIX8"", updateCode);
 			break;
 	}
 
@@ -453,7 +453,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 			if (totalSize > transport->settings->MultifragMaxRequestSize)
 			{
-				WLog_ERR(TAG, "Total size (%d) exceeds MultifragMaxRequestSize (%d)",
+				WLog_ERR(TAG, "Total size (%"PRIu32") exceeds MultifragMaxRequestSize (%"PRIu32")",
 						 totalSize, transport->settings->MultifragMaxRequestSize);
 				goto out_fail;
 			}
@@ -480,7 +480,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 			if (totalSize > transport->settings->MultifragMaxRequestSize)
 			{
-				WLog_ERR(TAG, "Total size (%d) exceeds MultifragMaxRequestSize (%d)",
+				WLog_ERR(TAG, "Total size (%"PRIu32") exceeds MultifragMaxRequestSize (%"PRIu32")",
 						 totalSize, transport->settings->MultifragMaxRequestSize);
 				goto out_fail;
 			}
@@ -508,7 +508,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 			if (totalSize > transport->settings->MultifragMaxRequestSize)
 			{
-				WLog_ERR(TAG, "Total size (%d) exceeds MultifragMaxRequestSize (%d)",
+				WLog_ERR(TAG, "Total size (%"PRIu32") exceeds MultifragMaxRequestSize (%"PRIu32")",
 						 totalSize, transport->settings->MultifragMaxRequestSize);
 				goto out_fail;
 			}
@@ -713,7 +713,7 @@ static BOOL fastpath_recv_input_event(rdpFastPath* fastpath, wStream* s)
 			break;
 
 		default:
-			WLog_ERR(TAG, "Unknown eventCode %d", eventCode);
+			WLog_ERR(TAG, "Unknown eventCode %"PRIu8"", eventCode);
 			break;
 	}
 
@@ -962,7 +962,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 	/* check if the client's fast path pdu buffer is large enough */
 	if (totalLength > settings->MultifragMaxRequestSize)
 	{
-		WLog_ERR(TAG, "fast path update size (%u) exceeds the client's maximum request size (%u)",
+		WLog_ERR(TAG, "fast path update size (%"PRIu32") exceeds the client's maximum request size (%"PRIu32")",
 				 totalLength, settings->MultifragMaxRequestSize);
 		return FALSE;
 	}

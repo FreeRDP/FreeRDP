@@ -70,7 +70,7 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 	if (!bind_address)
 		hints.ai_flags = AI_PASSIVE;
 
-	sprintf_s(servname, sizeof(servname), "%d", port);
+	sprintf_s(servname, sizeof(servname), "%"PRIu16"", port);
 	status = getaddrinfo(bind_address, servname, &hints, &res);
 
 	if (status != 0)

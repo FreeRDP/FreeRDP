@@ -68,21 +68,21 @@ int TestThreadCreateProcess(int argc, char* argv[])
 
 	if (!status)
 	{
-		printf("CreateProcess failed. error=%d\n", GetLastError());
+		printf("CreateProcess failed. error=%"PRIu32"\n", GetLastError());
 		return 1;
 	}
 
 	if (WaitForSingleObject(ProcessInformation.hProcess, 5000) != WAIT_OBJECT_0)
 	{
-		printf("Failed to wait for first process. error=%d\n", GetLastError());
+		printf("Failed to wait for first process. error=%"PRIu32"\n", GetLastError());
 		return 1;
 	}
 
 	exitCode = 0;
 	status = GetExitCodeProcess(ProcessInformation.hProcess, &exitCode);
 
-	printf("GetExitCodeProcess status: %d\n", status);
-	printf("Process exited with code: 0x%08X\n", exitCode);
+	printf("GetExitCodeProcess status: %"PRId32"\n", status);
+	printf("Process exited with code: 0x%08"PRIX32"\n", exitCode);
 
 	CloseHandle(ProcessInformation.hProcess);
 	CloseHandle(ProcessInformation.hThread);
@@ -97,7 +97,7 @@ int TestThreadCreateProcess(int argc, char* argv[])
 
 	if (!CreatePipe(&pipe_read, &pipe_write, &saAttr, 0))
 	{
-		printf("Pipe creation failed. error=%d\n", GetLastError());
+		printf("Pipe creation failed. error=%"PRIu32"\n", GetLastError());
 		return 1;
 	}
 
@@ -113,7 +113,7 @@ int TestThreadCreateProcess(int argc, char* argv[])
 
 	if (!(lpEnvironment = calloc(1, sizeof(TESTENV_T) + sizeof(TCHAR))))
 	{
-		printf("Failed to allocate environment buffer. error=%d\n", GetLastError());
+		printf("Failed to allocate environment buffer. error=%"PRIu32"\n", GetLastError());
 		return 1;
 	}
 	memcpy(lpEnvironment, (void*)TESTENV_T, sizeof(TESTENV_T));
@@ -136,13 +136,13 @@ int TestThreadCreateProcess(int argc, char* argv[])
 	{
 		CloseHandle(pipe_read);
 		CloseHandle(pipe_write);
-		printf("CreateProcess failed. error=%d\n", GetLastError());
+		printf("CreateProcess failed. error=%"PRIu32"\n", GetLastError());
 		return 1;
 	}
 
 	if (WaitForSingleObject(ProcessInformation.hProcess, 5000) != WAIT_OBJECT_0)
 	{
-		printf("Failed to wait for second process. error=%d\n", GetLastError());
+		printf("Failed to wait for second process. error=%"PRIu32"\n", GetLastError());
 		return 1;
 	}
 
@@ -160,8 +160,8 @@ int TestThreadCreateProcess(int argc, char* argv[])
 	exitCode = 0;
 	status = GetExitCodeProcess(ProcessInformation.hProcess, &exitCode);
 
-	printf("GetExitCodeProcess status: %d\n", status);
-	printf("Process exited with code: 0x%08X\n", exitCode);
+	printf("GetExitCodeProcess status: %"PRId32"\n", status);
+	printf("Process exited with code: 0x%08"PRIX32"\n", exitCode);
 
 	CloseHandle(ProcessInformation.hProcess);
 	CloseHandle(ProcessInformation.hThread);

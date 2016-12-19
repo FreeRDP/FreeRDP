@@ -68,7 +68,7 @@ static int rdpsnd_opensles_volume_to_millibel(unsigned short level, int max)
 	const int min = SL_MILLIBEL_MIN;
 	const int step = max - min;
 	const int rc = (level * step / 0xFFFF) + min;
-	DEBUG_SND("level=%d, min=%d, max=%d, step=%d, result=%d",
+	DEBUG_SND("level=%hu, min=%d, max=%d, step=%d, result=%d",
 	          level, min, max, step, rc);
 	return rc;
 }
@@ -106,7 +106,7 @@ static BOOL rdpsnd_opensles_set_volume(rdpsndDevicePlugin* device,
 
 static int rdpsnd_opensles_set_params(rdpsndopenslesPlugin* opensles)
 {
-	DEBUG_SND("opensles=%p", opensles);
+	DEBUG_SND("opensles=%p", (void*) opensles);
 
 	if (!rdpsnd_opensles_check_handle(opensles))
 		return 0;
@@ -124,11 +124,11 @@ static BOOL rdpsnd_opensles_set_format(rdpsndDevicePlugin* device,
 {
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
 	rdpsnd_opensles_check_handle(opensles);
-	DEBUG_SND("opensles=%p format=%p, latency=%d", opensles, format, latency);
+	DEBUG_SND("opensles=%p format=%p, latency=%d", (void*) opensles, (void*) format, latency);
 
 	if (format)
 	{
-		DEBUG_SND("format=%d, cbsize=%d, samples=%d, bits=%d, channels=%d, align=%d",
+		DEBUG_SND("format=%"PRIu16", cbsize=%"PRIu16", samples=%"PRIu32", bits=%"PRIu16", channels=%"PRIu16", align=%"PRIu16"",
 		          format->wFormatTag, format->cbSize, format->nSamplesPerSec,
 		          format->wBitsPerSample,	format->nChannels, format->nBlockAlign);
 		opensles->rate = format->nSamplesPerSec;
@@ -146,8 +146,8 @@ static BOOL rdpsnd_opensles_open(rdpsndDevicePlugin* device,
                                  AUDIO_FORMAT* format, int latency)
 {
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
-	DEBUG_SND("opensles=%p format=%p, latency=%d, rate=%d",
-	          opensles, format, latency, opensles->rate);
+	DEBUG_SND("opensles=%p format=%p, latency=%d, rate=%"PRIu32"",
+			(void*) opensles, (void*) format, latency, opensles->rate);
 
 	if (rdpsnd_opensles_check_handle(opensles))
 		return TRUE;
@@ -168,7 +168,7 @@ static BOOL rdpsnd_opensles_open(rdpsndDevicePlugin* device,
 static void rdpsnd_opensles_close(rdpsndDevicePlugin* device)
 {
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
-	DEBUG_SND("opensles=%p", opensles);
+	DEBUG_SND("opensles=%p", (void*) opensles);
 
 	if (!rdpsnd_opensles_check_handle(opensles))
 		return;
@@ -180,7 +180,7 @@ static void rdpsnd_opensles_close(rdpsndDevicePlugin* device)
 static void rdpsnd_opensles_free(rdpsndDevicePlugin* device)
 {
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
-	DEBUG_SND("opensles=%p", opensles);
+	DEBUG_SND("opensles=%p", (void*) opensles);
 	assert(opensles);
 	assert(opensles->device_name);
 	free(opensles->device_name);
@@ -192,7 +192,7 @@ static void rdpsnd_opensles_free(rdpsndDevicePlugin* device)
 static BOOL rdpsnd_opensles_format_supported(rdpsndDevicePlugin* device,
         AUDIO_FORMAT* format)
 {
-	DEBUG_SND("format=%d, cbsize=%d, samples=%d, bits=%d, channels=%d, align=%d",
+	DEBUG_SND("format=%"PRIu16", cbsize=%"PRIu16", samples=%"PRIu32", bits=%"PRIu16", channels=%"PRIu16", align=%"PRIu16"",
 	          format->wFormatTag, format->cbSize, format->nSamplesPerSec,
 	          format->wBitsPerSample,	format->nChannels, format->nBlockAlign);
 	assert(device);
@@ -235,7 +235,7 @@ static BOOL rdpsnd_opensles_format_supported(rdpsndDevicePlugin* device,
 static UINT32 rdpsnd_opensles_get_volume(rdpsndDevicePlugin* device)
 {
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
-	DEBUG_SND("opensles=%p", opensles);
+	DEBUG_SND("opensles=%p", (void*) opensles);
 	assert(opensles);
 
 	if (opensles->stream)
@@ -259,7 +259,7 @@ static BOOL rdpsnd_opensles_set_volume(rdpsndDevicePlugin* device,
                                        UINT32 value)
 {
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
-	DEBUG_SND("opensles=%p, value=%d", opensles, value);
+	DEBUG_SND("opensles=%p, value=%"PRIu32"", (void*) opensles, value);
 	assert(opensles);
 	opensles->volume = value;
 
@@ -293,15 +293,16 @@ static void rdpsnd_opensles_play(rdpsndDevicePlugin* device,
 	} src;
 	int ret;
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
-	DEBUG_SND("opensles=%p, data=%p, size=%d", opensles, data, size);
+	DEBUG_SND("opensles=%p, data=%p, size=%d", (void*) opensles, (void*) data, size);
 
 	if (!rdpsnd_opensles_check_handle(opensles))
 		return;
 
 	if (opensles->format == WAVE_FORMAT_ADPCM)
 	{
-		DEBUG_SND("dsp_context=%p, channels=%d, block_size=%d",
-		          opensles->dsp_context, opensles->channels, opensles->block_size);
+		DEBUG_SND("dsp_context=%p, channels=%"PRIu32", block_size=%d",
+		          (void*) opensles->dsp_context, opensles->channels, opensles->block_size);
+
 		opensles->dsp_context->decode_ms_adpcm(opensles->dsp_context,
 		                                       data, size, opensles->channels, opensles->block_size);
 		size = opensles->dsp_context->adpcm_size;
@@ -309,8 +310,9 @@ static void rdpsnd_opensles_play(rdpsndDevicePlugin* device,
 	}
 	else if (opensles->format == WAVE_FORMAT_DVI_ADPCM)
 	{
-		DEBUG_SND("dsp_context=%p, channels=%d, block_size=%d",
-		          opensles->dsp_context, opensles->channels, opensles->block_size);
+		DEBUG_SND("dsp_context=%p, channels=%"PRIu32", block_size=%d",
+		          (void*) opensles->dsp_context, opensles->channels, opensles->block_size);
+
 		opensles->dsp_context->decode_ima_adpcm(opensles->dsp_context,
 		                                        data, size, opensles->channels, opensles->block_size);
 		size = opensles->dsp_context->adpcm_size;
@@ -321,7 +323,7 @@ static void rdpsnd_opensles_play(rdpsndDevicePlugin* device,
 		src.b = data;
 	}
 
-	DEBUG_SND("size=%d, src=%p", size, src.b);
+	DEBUG_SND("size=%d, src=%p", size, (void*) src.b);
 	assert(0 == size % 2);
 	assert(size > 0);
 	assert(src.b);
@@ -335,7 +337,7 @@ static void rdpsnd_opensles_start(rdpsndDevicePlugin* device)
 {
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
 	rdpsnd_opensles_check_handle(opensles);
-	DEBUG_SND("opensles=%p", opensles);
+	DEBUG_SND("opensles=%p", (void*) opensles);
 }
 
 static COMMAND_LINE_ARGUMENT_A rdpsnd_opensles_args[] =
@@ -356,7 +358,7 @@ static int rdpsnd_opensles_parse_addin_args(rdpsndDevicePlugin* device,
 	rdpsndopenslesPlugin* opensles = (rdpsndopenslesPlugin*) device;
 	assert(opensles);
 	assert(args);
-	DEBUG_SND("opensles=%p, args=%p", opensles, args);
+	DEBUG_SND("opensles=%p, args=%p", (void*) opensles, (void*) args);
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON |
 	        COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
 	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
@@ -406,7 +408,7 @@ UINT freerdp_rdpsnd_client_subsystem_entry(
 	ADDIN_ARGV* args;
 	rdpsndopenslesPlugin* opensles;
 	UINT error;
-	DEBUG_SND("pEntryPoints=%p", pEntryPoints);
+	DEBUG_SND("pEntryPoints=%p", (void*) pEntryPoints);
 	opensles = (rdpsndopenslesPlugin*) calloc(1, sizeof(rdpsndopenslesPlugin));
 
 	if (!opensles)

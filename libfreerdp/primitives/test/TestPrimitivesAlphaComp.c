@@ -112,7 +112,7 @@ static BOOL check(const BYTE* pSrc1,  UINT32 src1Step,
 
 			if (colordist(c0, c1) > TOLERANCE)
 			{
-				printf("alphaComp-general: [%d,%d] 0x%08x+0x%08x=0x%08x, got 0x%08x\n",
+				printf("alphaComp-general: [%"PRIu32",%"PRIu32"] 0x%08"PRIx32"+0x%08"PRIx32"=0x%08"PRIx32", got 0x%08"PRIx32"\n",
 				       x, y, s1, s2, c0, c1);
 				return FALSE;
 			}

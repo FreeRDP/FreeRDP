@@ -2983,7 +2983,7 @@ static BOOL RunTestPlanar(BITMAP_PLANAR_CONTEXT* planar, const BYTE* srcBitmap,
 	                       decompressedBitmap,
 	                       dstFormat, 0, 0, 0, width, height, FALSE))
 	{
-		printf("failed to decompress experimental bitmap 01: width: %d height: %d\n",
+		printf("failed to decompress experimental bitmap 01: width: %"PRIu32" height: %"PRIu32"\n",
 		       width, height);
 		goto fail;
 	}

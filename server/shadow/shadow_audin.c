@@ -76,7 +76,7 @@ static UINT AudinServerOpening(audin_server_context* context)
  */
 static UINT AudinServerOpenResult(audin_server_context* context, UINT32 result)
 {
-	WLog_INFO(TAG, "AUDIN open result %u.\n", result);
+	WLog_INFO(TAG, "AUDIN open result %"PRIu32".\n", result);
 	return CHANNEL_RC_OK;
 }
 /**

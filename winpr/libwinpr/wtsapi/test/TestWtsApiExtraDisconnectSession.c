@@ -14,7 +14,7 @@ int TestWtsApiExtraDisconnectSession(int argc, char* argv[])
 
 	if (!bSuccess)
 	{
-		printf("WTSDisconnectSession failed: %d\n", (int) GetLastError());
+		printf("WTSDisconnectSession failed: %"PRIu32"\n", GetLastError());
 		return -1;
 	}
 

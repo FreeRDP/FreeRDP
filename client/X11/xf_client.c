@@ -1416,7 +1416,7 @@ static BOOL xf_auto_reconnect(freerdp* instance)
 		}
 
 		/* Attempt the next reconnect */
-		WLog_INFO(TAG, "Attempting reconnect (%u of %u)", numRetries, maxRetries);
+		WLog_INFO(TAG, "Attempting reconnect (%"PRIu32" of %"PRIu32")", numRetries, maxRetries);
 
 		if (freerdp_reconnect(instance))
 			return TRUE;
@@ -1458,7 +1458,7 @@ static void* xf_client_thread(void* param)
 	/* --authonly ? */
 	if (instance->settings->AuthenticationOnly)
 	{
-		WLog_ERR(TAG, "Authentication only, exit status %d", !status);
+		WLog_ERR(TAG, "Authentication only, exit status %"PRId32"", !status);
 
 		if (!status)
 		{
@@ -1476,7 +1476,7 @@ static void* xf_client_thread(void* param)
 
 	if (!status)
 	{
-		WLog_ERR(TAG, "Freerdp connect error exit status %d", !status);
+		WLog_ERR(TAG, "Freerdp connect error exit status %"PRId32"", !status);
 		exit_code = freerdp_error_info(instance);
 
 		if (freerdp_get_last_error(instance->context) ==

@@ -969,7 +969,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
 #ifdef WITH_DEBUG_NTLM
 	WLog_DBG(TAG, "Data Buffer (length = %d)", length);
 	winpr_HexDump(TAG, WLOG_DEBUG, data, length);
-	WLog_DBG(TAG, "Encrypted Data Buffer (length = %d)", (int) data_buffer->cbBuffer);
+	WLog_DBG(TAG, "Encrypted Data Buffer (length = %"PRIu32")", data_buffer->cbBuffer);
 	winpr_HexDump(TAG, WLOG_DEBUG, data_buffer->pvBuffer, data_buffer->cbBuffer);
 #endif
 	free(data);
@@ -982,7 +982,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
 	Data_Write_UINT32(&signature[12], SeqNo);
 	context->SendSeqNum++;
 #ifdef WITH_DEBUG_NTLM
-	WLog_DBG(TAG, "Signature (length = %d)", (int) signature_buffer->cbBuffer);
+	WLog_DBG(TAG, "Signature (length = %"PRIu32")", signature_buffer->cbBuffer);
 	winpr_HexDump(TAG, WLOG_DEBUG, signature_buffer->pvBuffer, signature_buffer->cbBuffer);
 #endif
 	return SEC_E_OK;
@@ -1055,7 +1055,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferD
 #ifdef WITH_DEBUG_NTLM
 	WLog_DBG(TAG, "Encrypted Data Buffer (length = %d)", length);
 	winpr_HexDump(TAG, WLOG_DEBUG, data, length);
-	WLog_DBG(TAG, "Data Buffer (length = %d)", (int) data_buffer->cbBuffer);
+	WLog_DBG(TAG, "Data Buffer (length = %"PRIu32")", data_buffer->cbBuffer);
 	winpr_HexDump(TAG, WLOG_DEBUG, data_buffer->pvBuffer, data_buffer->cbBuffer);
 #endif
 	free(data);

@@ -252,7 +252,7 @@ static UINT parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
 		case IRP_MJ_CREATE:
 			if ((error = parallel_process_irp_create(parallel, irp)))
 			{
-				WLog_ERR(TAG, "parallel_process_irp_create failed with error %d!", error);
+				WLog_ERR(TAG, "parallel_process_irp_create failed with error %"PRIu32"!", error);
 				return error;
 			}
 
@@ -261,7 +261,7 @@ static UINT parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
 		case IRP_MJ_CLOSE:
 			if ((error = parallel_process_irp_close(parallel, irp)))
 			{
-				WLog_ERR(TAG, "parallel_process_irp_close failed with error %d!", error);
+				WLog_ERR(TAG, "parallel_process_irp_close failed with error %"PRIu32"!", error);
 				return error;
 			}
 
@@ -270,7 +270,7 @@ static UINT parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
 		case IRP_MJ_READ:
 			if ((error = parallel_process_irp_read(parallel, irp)))
 			{
-				WLog_ERR(TAG, "parallel_process_irp_read failed with error %d!", error);
+				WLog_ERR(TAG, "parallel_process_irp_read failed with error %"PRIu32"!", error);
 				return error;
 			}
 
@@ -279,7 +279,7 @@ static UINT parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
 		case IRP_MJ_WRITE:
 			if ((error = parallel_process_irp_write(parallel, irp)))
 			{
-				WLog_ERR(TAG, "parallel_process_irp_write failed with error %d!", error);
+				WLog_ERR(TAG, "parallel_process_irp_write failed with error %"PRIu32"!", error);
 				return error;
 			}
 
@@ -288,7 +288,7 @@ static UINT parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
 		case IRP_MJ_DEVICE_CONTROL:
 			if ((error = parallel_process_irp_device_control(parallel, irp)))
 			{
-				WLog_ERR(TAG, "parallel_process_irp_device_control failed with error %d!",
+				WLog_ERR(TAG, "parallel_process_irp_device_control failed with error %"PRIu32"!",
 				         error);
 				return error;
 			}
@@ -334,7 +334,7 @@ static void* parallel_thread_func(void* arg)
 
 		if ((error = parallel_process_irp(parallel, irp)))
 		{
-			WLog_ERR(TAG, "parallel_process_irp failed with error %d!", error);
+			WLog_ERR(TAG, "parallel_process_irp failed with error %"PRIu32"!", error);
 			break;
 		}
 	}
@@ -379,7 +379,7 @@ static UINT parallel_free(DEVICE* device)
 	    && (WaitForSingleObject(parallel->thread, INFINITE) == WAIT_FAILED))
 	{
 		error = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %u!", error);
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", error);
 		return error;
 	}
 
@@ -461,7 +461,7 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		if ((error = pEntryPoints->RegisterDevice(pEntryPoints->devman,
 		             (DEVICE*) parallel)))
 		{
-			WLog_ERR(TAG, "RegisterDevice failed with error %u!", error);
+			WLog_ERR(TAG, "RegisterDevice failed with error %"PRIu32"!", error);
 			goto error_out;
 		}
 

@@ -38,7 +38,7 @@ static void* named_pipe_client_thread(void* arg)
 	status = WaitForSingleObject(serverReadyEvent, PIPE_TIMEOUT_MS);
 	if (status != WAIT_OBJECT_0)
 	{
-		printf("client: failed to wait for server ready event: %u\n", status);
+		printf("client: failed to wait for server ready event: %"PRIu32"\n", status);
 		goto finish;
 	}
 
@@ -48,7 +48,7 @@ static void* named_pipe_client_thread(void* arg)
 	ZeroMemory(&overlapped, sizeof(OVERLAPPED));
 	if (!(hEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 	{
-		printf("client: CreateEvent failure: %u\n", GetLastError());
+		printf("client: CreateEvent failure: %"PRIu32"\n", GetLastError());
 		goto finish;
 	}
 	overlapped.hEvent = hEvent;
@@ -61,7 +61,7 @@ static void* named_pipe_client_thread(void* arg)
 
 	if (hNamedPipe == INVALID_HANDLE_VALUE)
 	{
-		printf("client: Named Pipe CreateFile failure: %u\n", GetLastError());
+		printf("client: Named Pipe CreateFile failure: %"PRIu32"\n", GetLastError());
 		goto finish;
 	}
 
@@ -78,24 +78,24 @@ static void* named_pipe_client_thread(void* arg)
 
 	if (!fSuccess)
 	{
-		printf("client: NamedPipe WriteFile failure (initial): %u\n", GetLastError());
+		printf("client: NamedPipe WriteFile failure (initial): %"PRIu32"\n", GetLastError());
 		goto finish;
 	}
 
 	status = WaitForSingleObject(hEvent, PIPE_TIMEOUT_MS);
 	if (status != WAIT_OBJECT_0)
 	{
-		printf("client: failed to wait for overlapped event (write): %u\n", status);
+		printf("client: failed to wait for overlapped event (write): %"PRIu32"\n", status);
 		goto finish;
 	}
 
 	fSuccess = GetOverlappedResult(hNamedPipe, &overlapped, &NumberOfBytesTransferred, FALSE);
 	if (!fSuccess)
 	{
-		printf("client: NamedPipe WriteFile failure (final): %u\n", GetLastError());
+		printf("client: NamedPipe WriteFile failure (final): %"PRIu32"\n", GetLastError());
 		goto finish;
 	}
-	printf("client: WriteFile transferred %u bytes:\n", NumberOfBytesTransferred);
+	printf("client: WriteFile transferred %"PRIu32" bytes:\n", NumberOfBytesTransferred);
 
 
 	/* 4: read from named pipe */
@@ -116,25 +116,25 @@ static void* named_pipe_client_thread(void* arg)
 
 	if (!fSuccess)
 	{
-		printf("client: NamedPipe ReadFile failure (initial): %u\n", GetLastError());
+		printf("client: NamedPipe ReadFile failure (initial): %"PRIu32"\n", GetLastError());
 		goto finish;
 	}
 
 	status = WaitForMultipleObjects(1, &hEvent, FALSE, PIPE_TIMEOUT_MS);
 	if (status != WAIT_OBJECT_0)
 	{
-		printf("client: failed to wait for overlapped event (read): %u\n", status);
+		printf("client: failed to wait for overlapped event (read): %"PRIu32"\n", status);
 		goto finish;
 	}
 
 	fSuccess = GetOverlappedResult(hNamedPipe, &overlapped, &NumberOfBytesTransferred, TRUE);
 	if (!fSuccess)
 	{
-		printf("client: NamedPipe ReadFile failure (final): %u\n", GetLastError());
+		printf("client: NamedPipe ReadFile failure (final): %"PRIu32"\n", GetLastError());
 		goto finish;
 	}
 
-	printf("client: ReadFile transferred %u bytes:\n", NumberOfBytesTransferred);
+	printf("client: ReadFile transferred %"PRIu32" bytes:\n", NumberOfBytesTransferred);
 	winpr_HexDump("pipe.test", WLOG_DEBUG, lpReadBuffer, NumberOfBytesTransferred);
 
 	if (NumberOfBytesTransferred != PIPE_BUFFER_SIZE || memcmp(lpReadBuffer, SERVER_MESSAGE, PIPE_BUFFER_SIZE))
@@ -174,7 +174,7 @@ static void* named_pipe_server_thread(void* arg)
 	ZeroMemory(&overlapped, sizeof(OVERLAPPED));
 	if (!(hEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 	{
-		printf("server: CreateEvent failure: %u\n", GetLastError());
+		printf("server: CreateEvent failure: %"PRIu32"\n", GetLastError());
 		SetEvent(serverReadyEvent); /* unblock client thread */
 		goto finish;
 	}
@@ -189,7 +189,7 @@ static void* named_pipe_server_thread(void* arg)
 
 	if (hNamedPipe == INVALID_HANDLE_VALUE)
 	{
-		printf("server: CreateNamedPipe failure: %u\n", GetLastError());
+		printf("server: CreateNamedPipe failure: %"PRIu32"\n", GetLastError());
 		SetEvent(serverReadyEvent); /* unblock client thread */
 		goto finish;
 	}
@@ -223,7 +223,7 @@ static void* named_pipe_server_thread(void* arg)
 	if (!fConnected)
 		fConnected = (status == ERROR_PIPE_CONNECTED);
 
-	printf("server: ConnectNamedPipe status: %u\n", status);
+	printf("server: ConnectNamedPipe status: %"PRIu32"\n", status);
 
 	if (!fConnected && status == ERROR_IO_PENDING)
 	{
@@ -233,12 +233,12 @@ static void* named_pipe_server_thread(void* arg)
 		if (status == WAIT_OBJECT_0)
 			fConnected = GetOverlappedResult(hNamedPipe, &overlapped, &dwDummy, FALSE);
 		else
-			printf("server: failed to wait for overlapped event (connect): %u\n", status);
+			printf("server: failed to wait for overlapped event (connect): %"PRIu32"\n", status);
 	}
 
 	if (!fConnected)
 	{
-		printf("server: ConnectNamedPipe failed: %u\n", status);
+		printf("server: ConnectNamedPipe failed: %"PRIu32"\n", status);
 		goto finish;
 	}
 
@@ -263,25 +263,25 @@ static void* named_pipe_server_thread(void* arg)
 
 	if (!fSuccess)
 	{
-		printf("server: NamedPipe ReadFile failure (initial): %u\n", GetLastError());
+		printf("server: NamedPipe ReadFile failure (initial): %"PRIu32"\n", GetLastError());
 		goto finish;
 	}
 
 	status = WaitForSingleObject(hEvent, PIPE_TIMEOUT_MS);
 	if (status != WAIT_OBJECT_0)
 	{
-		printf("server: failed to wait for overlapped event (read): %u\n", status);
+		printf("server: failed to wait for overlapped event (read): %"PRIu32"\n", status);
 		goto finish;
 	}
 
 	fSuccess = GetOverlappedResult(hNamedPipe, &overlapped, &NumberOfBytesTransferred, FALSE);
 	if (!fSuccess)
 	{
-		printf("server: NamedPipe ReadFile failure (final): %u\n", GetLastError());
+		printf("server: NamedPipe ReadFile failure (final): %"PRIu32"\n", GetLastError());
 		goto finish;
 	}
 
-	printf("server: ReadFile transferred %u bytes:\n", NumberOfBytesTransferred);
+	printf("server: ReadFile transferred %"PRIu32" bytes:\n", NumberOfBytesTransferred);
 	winpr_HexDump("pipe.test", WLOG_DEBUG, lpReadBuffer, NumberOfBytesTransferred);
 
 	if (NumberOfBytesTransferred != PIPE_BUFFER_SIZE || memcmp(lpReadBuffer, CLIENT_MESSAGE, PIPE_BUFFER_SIZE))
@@ -303,25 +303,25 @@ static void* named_pipe_server_thread(void* arg)
 
 	if (!fSuccess)
 	{
-		printf("server: NamedPipe WriteFile failure (initial): %u\n", GetLastError());
+		printf("server: NamedPipe WriteFile failure (initial): %"PRIu32"\n", GetLastError());
 		goto finish;
 	}
 
 	status = WaitForSingleObject(hEvent, PIPE_TIMEOUT_MS);
 	if (status != WAIT_OBJECT_0)
 	{
-		printf("server: failed to wait for overlapped event (write): %u\n", status);
+		printf("server: failed to wait for overlapped event (write): %"PRIu32"\n", status);
 		goto finish;
 	}
 
 	fSuccess = GetOverlappedResult(hNamedPipe, &overlapped, &NumberOfBytesTransferred, FALSE);
 	if (!fSuccess)
 	{
-		printf("server: NamedPipe WriteFile failure (final): %u\n", GetLastError());
+		printf("server: NamedPipe WriteFile failure (final): %"PRIu32"\n", GetLastError());
 		goto finish;
 	}
 
-	printf("server: WriteFile transferred %u bytes:\n", NumberOfBytesTransferred);
+	printf("server: WriteFile transferred %"PRIu32" bytes:\n", NumberOfBytesTransferred);
 	//winpr_HexDump("pipe.test", WLOG_DEBUG, lpWriteBuffer, NumberOfBytesTransferred);
 
 	bServerSuccess = TRUE;
@@ -345,29 +345,29 @@ int TestPipeCreateNamedPipeOverlapped(int argc, char* argv[])
 
 	if (!(serverReadyEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 	{
-		printf("CreateEvent failed: %d\n", GetLastError());
+		printf("CreateEvent failed: %"PRIu32"\n", GetLastError());
 		goto out;
 	}
 	if (!(ClientThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) named_pipe_client_thread, NULL, 0, NULL)))
 	{
-		printf("CreateThread (client) failed: %d\n", GetLastError());
+		printf("CreateThread (client) failed: %"PRIu32"\n", GetLastError());
 		goto out;
 	}
 	if (!(ServerThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) named_pipe_server_thread, NULL, 0, NULL)))
 	{
-		printf("CreateThread (server) failed: %d\n", GetLastError());
+		printf("CreateThread (server) failed: %"PRIu32"\n", GetLastError());
 		goto out;
 	}
 
 	if (WAIT_OBJECT_0 != WaitForSingleObject(ClientThread, INFINITE))
 	{
-		printf("%s: Failed to wait for client thread: %u\n",
+		printf("%s: Failed to wait for client thread: %"PRIu32"\n",
 			__FUNCTION__,  GetLastError());
 		goto out;
 	}
 	if (WAIT_OBJECT_0 != WaitForSingleObject(ServerThread, INFINITE))
 	{
-		printf("%s: Failed to wait for server thread: %u\n",
+		printf("%s: Failed to wait for server thread: %"PRIu32"\n",
 			__FUNCTION__,  GetLastError());
 		goto out;
 	}

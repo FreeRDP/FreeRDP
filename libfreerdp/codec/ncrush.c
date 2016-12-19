@@ -1850,8 +1850,8 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BY
 
 			if (HistoryPtr >= HistoryBufferEnd)
 			{
-				WLog_ERR(TAG,  "ncrush_decompress error: HistoryPtr (%p) >= HistoryBufferEnd (%p)",
-						 HistoryPtr, HistoryBufferEnd);
+				WLog_ERR(TAG, "ncrush_decompress error: HistoryPtr (%p) >= HistoryBufferEnd (%p)",
+					(void*) HistoryPtr, (void*) HistoryBufferEnd);
 				return -1003;
 			}
 

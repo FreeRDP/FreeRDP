@@ -29,7 +29,7 @@ int TestPathCchAddBackslashEx(int argc, char* argv[])
 
 	if (status != S_OK)
 	{
-		_tprintf(_T("PathCchAddBackslash status: 0x%08X\n"), status);
+		_tprintf(_T("PathCchAddBackslash status: 0x%08")_T(PRIX32)_T("\n"), status);
 		return -1;
 	}
 
@@ -47,7 +47,7 @@ int TestPathCchAddBackslashEx(int argc, char* argv[])
 
 	if (status != S_FALSE)
 	{
-		_tprintf(_T("PathCchAddBackslash status: 0x%08X\n"), status);
+		_tprintf(_T("PathCchAddBackslash status: 0x%08")_T(PRIX32)_T("\n"), status);
 		return -1;
 	}
 
@@ -63,7 +63,7 @@ int TestPathCchAddBackslashEx(int argc, char* argv[])
 
 	if (SUCCEEDED(status))
 	{
-		_tprintf(_T("PathCchAddBackslashEx unexpectedly succeded with null buffer. Status: 0x%08X\n"), (unsigned) status);
+		_tprintf(_T("PathCchAddBackslashEx unexpectedly succeded with null buffer. Status: 0x%08")_T(PRIX32)_T("\n"), status);
 		return -1;
 	}
 
@@ -75,7 +75,7 @@ int TestPathCchAddBackslashEx(int argc, char* argv[])
 
 	if (SUCCEEDED(status))
 	{
-		_tprintf(_T("PathCchAddBackslashEx unexpectedly succeded with insufficient buffer size. Status: 0x%08X\n"), (unsigned) status);
+		_tprintf(_T("PathCchAddBackslashEx unexpectedly succeded with insufficient buffer size. Status: 0x%08")_T(PRIX32)_T("\n"), status);
 		return -1;
 	}
 
@@ -87,7 +87,7 @@ int TestPathCchAddBackslashEx(int argc, char* argv[])
 
 	if (status != S_OK)
 	{
-		_tprintf(_T("PathCchAddBackslashEx failed with status: 0x%08X\n"), (unsigned) status);
+		_tprintf(_T("PathCchAddBackslashEx failed with status: 0x%08")_T(PRIX32)_T("\n"), status);
 		return -1;
 	}
 

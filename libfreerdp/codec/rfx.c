@@ -433,7 +433,7 @@ static BOOL rfx_process_message_sync(RFX_CONTEXT* context, wStream* s)
 
 	if (magic != WF_MAGIC)
 	{
-		WLog_ERR(TAG, "invalid magic number 0x%X", magic);
+		WLog_ERR(TAG, "invalid magic number 0x%08"PRIX32"", magic);
 		return FALSE;
 	}
 
@@ -442,11 +442,11 @@ static BOOL rfx_process_message_sync(RFX_CONTEXT* context, wStream* s)
 
 	if (context->version != WF_VERSION_1_0)
 	{
-		WLog_ERR(TAG, "invalid version number 0x%04X", context->version);
+		WLog_ERR(TAG, "invalid version number 0x%08"PRIX32"", context->version);
 		return FALSE;
 	}
 
-	WLog_Print(context->priv->log, WLOG_DEBUG, "version 0x%X", context->version);
+	WLog_Print(context->priv->log, WLOG_DEBUG, "version 0x%08"PRIX32"", context->version);
 	context->decodedHeaderBlocks |= _RFX_DECODED_SYNC;
 	return TRUE;
 }
@@ -470,24 +470,24 @@ static BOOL rfx_process_message_codec_versions(RFX_CONTEXT* context, wStream* s)
 
 	if (numCodecs != 1)
 	{
-		WLog_ERR(TAG, "%s: numCodes is 0x%02X (must be 0x01)", __FUNCTION__, numCodecs);
+		WLog_ERR(TAG, "%s: numCodes is 0x%02"PRIX8" (must be 0x01)", __FUNCTION__, numCodecs);
 		return FALSE;
 	}
 
 	if (context->codec_id != 0x01)
 	{
-		WLog_ERR(TAG, "%s: invalid codec id (0x%02X)", __FUNCTION__, context->codec_id);
+		WLog_ERR(TAG, "%s: invalid codec id (0x%02"PRIX32")", __FUNCTION__, context->codec_id);
 		return FALSE;
 	}
 
 	if (context->codec_version != WF_VERSION_1_0)
 	{
-		WLog_ERR(TAG, "%s: invalid codec version (0x%04X)", __FUNCTION__,
+		WLog_ERR(TAG, "%s: invalid codec version (0x%08"PRIX32")", __FUNCTION__,
 		         context->codec_version);
 		return FALSE;
 	}
 
-	WLog_Print(context->priv->log, WLOG_DEBUG, "id %d version 0x%X.",
+	WLog_Print(context->priv->log, WLOG_DEBUG, "id %"PRIu32" version 0x%"PRIX32".",
 	           context->codec_id, context->codec_version);
 	context->decodedHeaderBlocks |= _RFX_DECODED_VERSIONS;
 	return TRUE;
@@ -519,7 +519,7 @@ static BOOL rfx_process_message_channels(RFX_CONTEXT* context, wStream* s)
 
 	if (Stream_GetRemainingLength(s) < (size_t)(numChannels * 5))
 	{
-		WLog_ERR(TAG, "RfxMessageChannels packet too small for numChannels=%d",
+		WLog_ERR(TAG, "RfxMessageChannels packet too small for numChannels=%"PRIu8"",
 		         numChannels);
 		return FALSE;
 	}
@@ -529,7 +529,7 @@ static BOOL rfx_process_message_channels(RFX_CONTEXT* context, wStream* s)
 
 	if (channelId != 0x00)
 	{
-		WLog_ERR(TAG, "channelId:0x%02X, expected:0x00", channelId);
+		WLog_ERR(TAG, "channelId:0x%02"PRIX8", expected:0x00", channelId);
 		return FALSE;
 	}
 
@@ -538,14 +538,14 @@ static BOOL rfx_process_message_channels(RFX_CONTEXT* context, wStream* s)
 
 	if (!context->width || !context->height)
 	{
-		WLog_ERR(TAG, "%s: invalid channel with/height: %ux%u", __FUNCTION__,
+		WLog_ERR(TAG, "%s: invalid channel with/height: %"PRIu16"x%"PRIu16"", __FUNCTION__,
 		         context->width, context->height);
 		return FALSE;
 	}
 
 	/* Now, only the first monitor can be used, therefore the other channels will be ignored. */
 	Stream_Seek(s, 5 * (numChannels - 1));
-	WLog_Print(context->priv->log, WLOG_DEBUG, "numChannels %d id %d, %dx%d.",
+	WLog_Print(context->priv->log, WLOG_DEBUG, "numChannels %"PRIu8" id %"PRIu8", %"PRIu16"x%"PRIu16".",
 	           numChannels, channelId, context->width, context->height);
 	context->decodedHeaderBlocks |= _RFX_DECODED_CHANNELS;
 	return TRUE;
@@ -569,7 +569,7 @@ static BOOL rfx_process_message_context(RFX_CONTEXT* context, wStream* s)
 	                   tileSize); /* tileSize (2 bytes), must be set to CT_TILE_64x64 (0x0040) */
 	Stream_Read_UINT16(s, properties); /* properties (2 bytes) */
 	WLog_Print(context->priv->log, WLOG_DEBUG,
-	           "ctxId %d tileSize %d properties 0x%X.",
+	           "ctxId %"PRIu8" tileSize %"PRIu16" properties 0x%04"PRIX16".",
 	           ctxId, tileSize, properties);
 	context->properties = properties;
 	context->flags = (properties & 0x0007);
@@ -628,7 +628,7 @@ static BOOL rfx_process_message_frame_begin(RFX_CONTEXT* context,
 	                   frameIdx); /* frameIdx (4 bytes), if codec is in video mode, must be ignored */
 	Stream_Read_UINT16(s, numRegions); /* numRegions (2 bytes) */
 	WLog_Print(context->priv->log, WLOG_DEBUG,
-	           "RFX_FRAME_BEGIN: frameIdx: %d numRegions: %d", frameIdx, numRegions);
+	           "RFX_FRAME_BEGIN: frameIdx: %"PRIu32" numRegions: %"PRIu16"", frameIdx, numRegions);
 	return TRUE;
 }
 
@@ -691,7 +691,7 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context,
 
 	if (Stream_GetRemainingLength(s) < (size_t)(8 * message->numRects))
 	{
-		WLog_ERR(TAG, "%s: packet too small for num_rects=%d", __FUNCTION__,
+		WLog_ERR(TAG, "%s: packet too small for num_rects=%"PRIu16"", __FUNCTION__,
 		         message->numRects);
 		return FALSE;
 	}
@@ -708,7 +708,7 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context,
 		Stream_Read_UINT16(s, rect->y); /* y (2 bytes) */
 		Stream_Read_UINT16(s, rect->width); /* width (2 bytes) */
 		Stream_Read_UINT16(s, rect->height); /* height (2 bytes) */
-		WLog_Print(context->priv->log, WLOG_DEBUG, "rect %d (x,y=%d,%d w,h=%d %d).", i,
+		WLog_Print(context->priv->log, WLOG_DEBUG, "rect %d (x,y=%"PRIu16",%"PRIu16" w,h=%"PRIu16" %"PRIu16").", i,
 		           rect->x, rect->y,
 		           rect->width, rect->height);
 	}
@@ -726,13 +726,13 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context,
 
 	if (regionType != CBT_REGION)
 	{
-		WLog_ERR(TAG, "%s: invalid region type 0x%04X", __FUNCTION__, regionType);
+		WLog_ERR(TAG, "%s: invalid region type 0x%04"PRIX16"", __FUNCTION__, regionType);
 		return TRUE;
 	}
 
 	if (numTileSets != 0x0001)
 	{
-		WLog_ERR(TAG, "%s: invalid number of tilesets (%u)", __FUNCTION__, numTileSets);
+		WLog_ERR(TAG, "%s: invalid number of tilesets (%"PRIu16")", __FUNCTION__, numTileSets);
 		return FALSE;
 	}
 
@@ -824,7 +824,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context,
 	/* quantVals */
 	if (Stream_GetRemainingLength(s) < (size_t)(context->numQuant * 5))
 	{
-		WLog_ERR(TAG, "RfxMessageTileSet packet too small for num_quants=%d",
+		WLog_ERR(TAG, "RfxMessageTileSet packet too small for num_quants=%"PRIu8"",
 		         context->numQuant);
 		return FALSE;
 	}
@@ -848,7 +848,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context,
 		*quants++ = (quant & 0x0F);
 		*quants++ = (quant >> 4);
 		WLog_Print(context->priv->log, WLOG_DEBUG,
-		           "quant %d (%d %d %d %d %d %d %d %d %d %d).",
+		           "quant %d (%"PRIu32" %"PRIu32" %"PRIu32" %"PRIu32" %"PRIu32" %"PRIu32" %"PRIu32" %"PRIu32" %"PRIu32" %"PRIu32").",
 		           i, context->quants[i * 10], context->quants[i * 10 + 1],
 		           context->quants[i * 10 + 2], context->quants[i * 10 + 3],
 		           context->quants[i * 10 + 4], context->quants[i * 10 + 5],
@@ -900,7 +900,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context,
 		/* RFX_TILE */
 		if (Stream_GetRemainingLength(s) < 6)
 		{
-			WLog_ERR(TAG, "RfxMessageTileSet packet too small to read tile %d/%d", i,
+			WLog_ERR(TAG, "RfxMessageTileSet packet too small to read tile %d/%"PRIu16"", i,
 			         message->numTiles);
 			rc = FALSE;
 			break;
@@ -913,7 +913,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context,
 		if (Stream_GetRemainingLength(s) < blockLen - 6)
 		{
 			WLog_ERR(TAG,
-			         "RfxMessageTileSet not enough bytes to read tile %d/%d with blocklen=%d",
+			         "RfxMessageTileSet not enough bytes to read tile %d/%"PRIu16" with blocklen=%"PRIu32"",
 			         i, message->numTiles, blockLen);
 			rc = FALSE;
 			break;
@@ -923,7 +923,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context,
 
 		if (blockType != CBT_TILE)
 		{
-			WLog_ERR(TAG, "unknown block type 0x%X, expected CBT_TILE (0xCAC3).",
+			WLog_ERR(TAG, "unknown block type 0x%"PRIX32", expected CBT_TILE (0xCAC3).",
 			         blockType);
 			rc = FALSE;
 			break;
@@ -1027,7 +1027,7 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length,
 		/* RFX_BLOCKT */
 		Stream_Read_UINT16(s, blockType); /* blockType (2 bytes) */
 		Stream_Read_UINT32(s, blockLen); /* blockLen (4 bytes) */
-		WLog_Print(context->priv->log, WLOG_DEBUG, "blockType 0x%X blockLen %d",
+		WLog_Print(context->priv->log, WLOG_DEBUG, "blockType 0x%"PRIX32" blockLen %"PRIu32"",
 		           blockType, blockLen);
 
 		if (blockLen == 0)
@@ -1038,7 +1038,7 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length,
 
 		if (Stream_GetRemainingLength(s) < blockLen - 6)
 		{
-			WLog_ERR(TAG, "%s: packet too small for blocklen=%d", __FUNCTION__, blockLen);
+			WLog_ERR(TAG, "%s: packet too small for blocklen=%"PRIu32"", __FUNCTION__, blockLen);
 			goto fail;
 		}
 
@@ -1066,7 +1066,7 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length,
 
 			if (codecId != 0x01)
 			{
-				WLog_ERR(TAG, "%s: invalid codecId 0x%02X", __FUNCTION__, codecId);
+				WLog_ERR(TAG, "%s: invalid codecId 0x%02"PRIX8"", __FUNCTION__, codecId);
 				goto fail;
 			}
 
@@ -1075,7 +1075,7 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length,
 				/* If the blockType is set to WBT_CONTEXT, then channelId MUST be set to 0xFF.*/
 				if (channelId != 0xFF)
 				{
-					WLog_ERR(TAG, "%s: invalid channelId 0x%02X for blockType 0x%04X", __FUNCTION__,
+					WLog_ERR(TAG, "%s: invalid channelId 0x%02"PRIX8" for blockType 0x%08"PRIX32"", __FUNCTION__,
 					         channelId, blockType);
 					goto fail;
 				}
@@ -1085,7 +1085,7 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length,
 				/* For all other values of blockType, channelId MUST be set to 0x00. */
 				if (channelId != 0x00)
 				{
-					WLog_ERR(TAG, "%s: invalid channelId 0x%02X for blockType WBT_CONTEXT",
+					WLog_ERR(TAG, "%s: invalid channelId 0x%02"PRIX8" for blockType WBT_CONTEXT",
 					         __FUNCTION__, channelId);
 					goto fail;
 				}
@@ -1139,7 +1139,7 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length,
 				break;
 
 			default:
-				WLog_ERR(TAG, "%s: unknown blockType 0x%X", __FUNCTION__, blockType);
+				WLog_ERR(TAG, "%s: unknown blockType 0x%"PRIX32"", __FUNCTION__, blockType);
 				goto fail;
 		}
 
@@ -1780,7 +1780,7 @@ static BOOL rfx_write_message_tileset(RFX_CONTEXT* context, wStream* s,
 
 #ifdef WITH_DEBUG_RFX
 	WLog_Print(context->priv->log, WLOG_DEBUG,
-	           "numQuant: %d numTiles: %d tilesDataSize: %d",
+	           "numQuant: %"PRIu16" numTiles: %"PRIu16" tilesDataSize: %"PRIu32"",
 	           message->numQuant, message->numTiles, message->tilesDataSize);
 #endif
 	return TRUE;

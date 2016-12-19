@@ -42,27 +42,27 @@ static SLresult openSLCreateEngine(OPENSL_STREAM* p)
 	SLresult result;
 	// create engine
 	result = slCreateEngine(&(p->engineObject), 0, NULL, 0, NULL, NULL);
-	DEBUG_DVC("engineObject=%p", p->engineObject);
+	DEBUG_DVC("engineObject=%p", (void*) p->engineObject);
 
 	if (result != SL_RESULT_SUCCESS) goto  engine_end;
 
 	// realize the engine
 	result = (*p->engineObject)->Realize(p->engineObject, SL_BOOLEAN_FALSE);
-	DEBUG_DVC("Realize=%d", result);
+	DEBUG_DVC("Realize=%"PRIu32"", result);
 
 	if (result != SL_RESULT_SUCCESS) goto engine_end;
 
 	// get the engine interface, which is needed in order to create other objects
 	result = (*p->engineObject)->GetInterface(p->engineObject, SL_IID_ENGINE,
 	         &(p->engineEngine));
-	DEBUG_DVC("engineEngine=%p", p->engineEngine);
+	DEBUG_DVC("engineEngine=%p", (void*) p->engineEngine);
 
 	if (result != SL_RESULT_SUCCESS) goto  engine_end;
 
 	// get the volume interface - important, this is optional!
 	result = (*p->engineObject)->GetInterface(p->engineObject, SL_IID_DEVICEVOLUME,
 	         &(p->deviceVolume));
-	DEBUG_DVC("deviceVolume=%p", p->deviceVolume);
+	DEBUG_DVC("deviceVolume=%p", (void*) p->deviceVolume);
 
 	if (result != SL_RESULT_SUCCESS)
 	{
@@ -180,14 +180,14 @@ static SLresult openSLRecOpen(OPENSL_STREAM* p)
 		const SLboolean req[] = {SL_BOOLEAN_TRUE};
 		result = (*p->engineEngine)->CreateAudioRecorder(p->engineEngine,
 		         &(p->recorderObject), &audioSrc, &audioSnk, 1, id, req);
-		DEBUG_DVC("p->recorderObject=%p", p->recorderObject);
+		DEBUG_DVC("p->recorderObject=%p", (void*) p->recorderObject);
 		assert(!result);
 
 		if (SL_RESULT_SUCCESS != result) goto end_recopen;
 
 		// realize the audio recorder
 		result = (*p->recorderObject)->Realize(p->recorderObject, SL_BOOLEAN_FALSE);
-		DEBUG_DVC("Realize=%d", result);
+		DEBUG_DVC("Realize=%"PRIu32"", result);
 		assert(!result);
 
 		if (SL_RESULT_SUCCESS != result) goto end_recopen;
@@ -195,7 +195,7 @@ static SLresult openSLRecOpen(OPENSL_STREAM* p)
 		// get the record interface
 		result = (*p->recorderObject)->GetInterface(p->recorderObject,
 		         SL_IID_RECORD, &(p->recorderRecord));
-		DEBUG_DVC("p->recorderRecord=%p", p->recorderRecord);
+		DEBUG_DVC("p->recorderRecord=%p", (void*) p->recorderRecord);
 		assert(!result);
 
 		if (SL_RESULT_SUCCESS != result) goto end_recopen;
@@ -204,7 +204,7 @@ static SLresult openSLRecOpen(OPENSL_STREAM* p)
 		result = (*p->recorderObject)->GetInterface(p->recorderObject,
 		         SL_IID_ANDROIDSIMPLEBUFFERQUEUE,
 		         &(p->recorderBufferQueue));
-		DEBUG_DVC("p->recorderBufferQueue=%p", p->recorderBufferQueue);
+		DEBUG_DVC("p->recorderBufferQueue=%p", (void*) p->recorderBufferQueue);
 		assert(!result);
 
 		if (SL_RESULT_SUCCESS != result) goto end_recopen;
@@ -212,7 +212,7 @@ static SLresult openSLRecOpen(OPENSL_STREAM* p)
 		// register callback on the buffer queue
 		result = (*p->recorderBufferQueue)->RegisterCallback(p->recorderBufferQueue,
 		         bqRecorderCallback, p);
-		DEBUG_DVC("p->recorderBufferQueue=%p", p->recorderBufferQueue);
+		DEBUG_DVC("p->recorderBufferQueue=%p", (void*) p->recorderBufferQueue);
 		assert(!result);
 
 		if (SL_RESULT_SUCCESS != result)
@@ -227,7 +227,7 @@ static SLresult openSLRecOpen(OPENSL_STREAM* p)
 // close the OpenSL IO and destroy the audio engine
 static void openSLDestroyEngine(OPENSL_STREAM* p)
 {
-	DEBUG_DVC("p=%p", p);
+	DEBUG_DVC("p=%p", (void*) p);
 
 	// destroy audio recorder object, and invalidate all associated interfaces
 	if (p->recorderObject != NULL)
@@ -288,7 +288,7 @@ OPENSL_STREAM* android_OpenRecDevice(char* name, int sr, int inchannels,
 // close the android audio device
 void android_CloseRecDevice(OPENSL_STREAM* p)
 {
-	DEBUG_DVC("p=%p", p);
+	DEBUG_DVC("p=%p", (void*) p);
 
 	if (p == NULL)
 		return;
@@ -326,7 +326,7 @@ static void bqRecorderCallback(SLAndroidSimpleBufferQueueItf bq, void* context)
 {
 	queue_element* e;
 	OPENSL_STREAM* p = (OPENSL_STREAM*) context;
-	DEBUG_DVC("p=%p", p);
+	DEBUG_DVC("p=%p", (void*) p);
 	assert(p);
 	assert(p->next);
 	assert(p->prep);
@@ -386,7 +386,7 @@ int android_RecIn(OPENSL_STREAM* p, short* buffer, int size)
 
 		if (status == WAIT_FAILED)
 		{
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", (unsigned long)GetLastError());
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"", GetLastError());
 			return -1;
 		}
 	}
@@ -395,7 +395,7 @@ int android_RecIn(OPENSL_STREAM* p, short* buffer, int size)
 
 	if (!e)
 	{
-		WLog_ERR(TAG, "[ERROR] got e=%p from queue", e);
+		WLog_ERR(TAG, "[ERROR] got e=NULL from queue");
 		return -1;
 	}
 

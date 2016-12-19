@@ -286,7 +286,7 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s)
 		return FALSE;
 
 #ifdef WITH_DEBUG_RDP
-	WLog_DBG(TAG, "recv %s Data PDU (0x%02X), length: %d",
+	WLog_DBG(TAG, "recv %s Data PDU (0x%02"PRIX8"), length: %"PRIu16"",
 	         type < ARRAYSIZE(DATA_PDU_TYPE_STRINGS) ? DATA_PDU_TYPE_STRINGS[type] : "???", type, length);
 #endif
 
@@ -345,7 +345,7 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s)
 			break;
 
 		default:
-			WLog_ERR(TAG, "Data PDU type %d", type);
+			WLog_ERR(TAG, "Data PDU type %"PRIu8"", type);
 			break;
 	}
 
@@ -414,7 +414,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 				break;
 
 			default:
-				WLog_ERR(TAG, "Client sent pduType %d", pduType);
+				WLog_ERR(TAG, "Client sent pduType %"PRIu16"", pduType);
 				return -1;
 		}
 	}
@@ -446,7 +446,7 @@ static int peer_recv_fastpath_pdu(freerdp_peer* client, wStream* s)
 
 	if ((length == 0) || (length > Stream_GetRemainingLength(s)))
 	{
-		WLog_ERR(TAG, "incorrect FastPath PDU header length %d", length);
+		WLog_ERR(TAG, "incorrect FastPath PDU header length %"PRIu16"", length);
 		return -1;
 	}
 

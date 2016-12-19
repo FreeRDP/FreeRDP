@@ -56,11 +56,11 @@ static void tsmf_pulse_context_state_callback(pa_context *context, void *userdat
 			break;
 		case PA_CONTEXT_FAILED:
 		case PA_CONTEXT_TERMINATED:
-			DEBUG_TSMF("state %d", (int)state);
+			DEBUG_TSMF("state %d", state);
 			pa_threaded_mainloop_signal(pulse->mainloop, 0);
 			break;
 		default:
-			DEBUG_TSMF("state %d", (int)state);
+			DEBUG_TSMF("state %d", state);
 			break;
 	}
 }
@@ -169,11 +169,11 @@ static void tsmf_pulse_stream_state_callback(pa_stream *stream, void *userdata)
 			break;
 		case PA_STREAM_FAILED:
 		case PA_STREAM_TERMINATED:
-			DEBUG_TSMF("state %d", (int)state);
+			DEBUG_TSMF("state %d", state);
 			pa_threaded_mainloop_signal(pulse->mainloop, 0);
 			break;
 		default:
-			DEBUG_TSMF("state %d", (int)state);
+			DEBUG_TSMF("state %d", state);
 			break;
 	}
 }
@@ -181,7 +181,7 @@ static void tsmf_pulse_stream_state_callback(pa_stream *stream, void *userdata)
 static void tsmf_pulse_stream_request_callback(pa_stream *stream, size_t length, void *userdata)
 {
 	TSMFPulseAudioDevice *pulse = (TSMFPulseAudioDevice *) userdata;
-	DEBUG_TSMF("%d", (int) length);
+	DEBUG_TSMF("%"PRIdz"", length);
 	pa_threaded_mainloop_signal(pulse->mainloop, 0);
 }
 
@@ -267,7 +267,7 @@ static BOOL tsmf_pulse_set_format(ITSMFAudioDevice *audio,
 								  UINT32 sample_rate, UINT32 channels, UINT32 bits_per_sample)
 {
 	TSMFPulseAudioDevice *pulse = (TSMFPulseAudioDevice *) audio;
-	DEBUG_TSMF("sample_rate %d channels %d bits_per_sample %d",
+	DEBUG_TSMF("sample_rate %"PRIu32" channels %"PRIu32" bits_per_sample %"PRIu32"",
 			   sample_rate, channels, bits_per_sample);
 	pulse->sample_spec.rate = sample_rate;
 	pulse->sample_spec.channels = channels;
@@ -281,7 +281,7 @@ static BOOL tsmf_pulse_play(ITSMFAudioDevice *audio, BYTE *data, UINT32 data_siz
 	BYTE *src;
 	int len;
 	int ret;
-	DEBUG_TSMF("data_size %d", data_size);
+	DEBUG_TSMF("data_size %"PRIu32"", data_size);
 	if(pulse->stream)
 	{
 		pa_threaded_mainloop_lock(pulse->mainloop);

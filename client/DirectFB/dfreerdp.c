@@ -273,7 +273,7 @@ static void df_process_channel_event(rdpChannels* channels, freerdp* instance)
 				break;
 
 			default:
-				WLog_ERR(TAG, "df_process_channel_event: unknown event type %d",
+				WLog_ERR(TAG, "df_process_channel_event: unknown event type %"PRIu32"",
 				         GetMessageType(event->id));
 				break;
 		}

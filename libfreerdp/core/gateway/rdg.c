@@ -56,7 +56,7 @@ BOOL rdg_write_packet(rdpRdg* rdg, wStream* sPacket)
 	wStream* sChunk;
 	char chunkSize[11];
 
-	sprintf_s(chunkSize, sizeof(chunkSize), "%X\r\n", (unsigned int) Stream_Length(sPacket));
+	sprintf_s(chunkSize, sizeof(chunkSize), "%"PRIXz"\r\n", Stream_Length(sPacket));
 	sChunk = Stream_New(NULL, strlen(chunkSize) + Stream_Length(sPacket) + 2);
 
 	if (!sChunk)

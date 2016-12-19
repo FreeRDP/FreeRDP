@@ -14,7 +14,7 @@ int TestBipBuffer(int argc, char* argv[])
 
 	data = BipBuffer_WriteReserve(bb, 1024 * 2);
 
-	fprintf(stderr, "BipBuffer_BufferSize: %d\n", (int) BipBuffer_BufferSize(bb));
+	fprintf(stderr, "BipBuffer_BufferSize: %"PRIuz"\n", BipBuffer_BufferSize(bb));
 
 	BipBuffer_Free(bb);
 

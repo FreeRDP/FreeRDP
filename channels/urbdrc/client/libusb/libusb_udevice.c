@@ -203,7 +203,7 @@ static void func_iso_callback(struct libusb_transfer *transfer)
 				}
 				else
 				{
-					//WLog_ERR(TAG,  "actual length %d ", act_len);
+					//WLog_ERR(TAG,  "actual length %"PRIu32"", act_len);
 					//exit(EXIT_FAILURE);
 				}
 			} 
@@ -527,7 +527,7 @@ static int udev_get_hub_handle(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_numb
 		error = 0;
 		WLog_DBG(TAG, "  Port: %d", pdev->port_number);
 		/* gen device path */
-		sprintf(pdev->path, "ugen%d.%d", bus_number, dev_number);
+		sprintf(pdev->path, "ugen%"PRIu16".%"PRIu16"", bus_number, dev_number);
 		WLog_DBG(TAG, "  DevPath: %s", pdev->path);
 		break;
 	}
@@ -540,7 +540,7 @@ static int udev_get_hub_handle(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_numb
 			if ((bus_number != libusb_get_bus_number(libusb_list[i])) ||
 			    (1 != libusb_get_device_address(libusb_list[i]))) /* Root hub allways first on bus. */
 				continue;
-			WLog_DBG(TAG, "  Open hub: %d", bus_number);
+			WLog_DBG(TAG, "  Open hub: %"PRIu16"", bus_number);
 			error = libusb_open(libusb_list[i], &pdev->hub_handle);
 			if (error < 0)
 				WLog_ERR(TAG,"libusb_open error: %i - %s", error, libusb_strerror(error));
@@ -745,8 +745,8 @@ static MSUSB_CONFIG_DESCRIPTOR* libusb_udev_complete_msconfig_setup(IUDEVICE* id
 	LibusbConfig = pdev->LibusbConfig;
 	if (LibusbConfig->bNumInterfaces != MsConfig->NumInterfaces)
 	{
-		WLog_ERR(TAG,  "Select Configuration: Libusb NumberInterfaces(%d) is different "
-			"with MsConfig NumberInterfaces(%d)", 
+		WLog_ERR(TAG,  "Select Configuration: Libusb NumberInterfaces(%"PRIu8") is different "
+			"with MsConfig NumberInterfaces(%"PRIu32")",
 			LibusbConfig->bNumInterfaces, MsConfig->NumInterfaces);
 	}
 
@@ -983,7 +983,7 @@ static int libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextType
 			
 			if (ret <= 0 || ret < 4){
 				WLog_DBG(TAG,"libusb_get_string_descriptor: "
-					"ERROR num %d, iProduct: %d!", ret, devDescriptor->iProduct);
+					"ERROR num %d, iProduct: %"PRIu8"!", ret, devDescriptor->iProduct);
 				memcpy(Buffer, strDesc, strlen(strDesc));
 				Buffer[strlen(strDesc)] = '\0';
 				*BufferSize = (strlen((char *)Buffer)) * 2;
@@ -1002,7 +1002,7 @@ static int libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextType
 		case DeviceTextLocationInformation:
 			bus_number = libusb_get_bus_number(pdev->libusb_dev);
 			device_address = libusb_get_device_address(pdev->libusb_dev);
-			sprintf(deviceLocation, "Port_#%04d.Hub_#%04d", device_address, bus_number);
+			sprintf(deviceLocation, "Port_#%04"PRIu8".Hub_#%04"PRIu8"", device_address, bus_number);
 
 			for(i=0;i<strlen(deviceLocation);i++){
 				Buffer[i*2] = (BYTE)deviceLocation[i];
@@ -1011,7 +1011,7 @@ static int libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextType
 			*BufferSize = (i*2);
 			break;
 		default:
-			WLog_DBG(TAG,"Query Text: unknown TextType %d", TextType);
+			WLog_DBG(TAG,"Query Text: unknown TextType %"PRIu32"", TextType);
 		break;
 	}
 
@@ -1292,7 +1292,7 @@ static int libusb_udev_query_device_port_status(IUDEVICE* idev, UINT32* UsbdStat
 		}
 		else
 		{
-			WLog_DBG(TAG,"PORT STATUS:0x%02x%02x%02x%02x", 
+			WLog_DBG(TAG,"PORT STATUS:0x%02"PRIx8"%02"PRIx8"%02"PRIx8"%02"PRIx8"", 
 				Buffer[3], Buffer[2], Buffer[1], Buffer[0]);
 			success = 1;
 		}
@@ -1433,14 +1433,14 @@ static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev, UINT32 Request
 
 	if (!ep_desc)
 	{
-		WLog_ERR(TAG,  "func_get_ep_desc: endpoint 0x%x is not found!!", EndpointAddress);
+		WLog_ERR(TAG,  "func_get_ep_desc: endpoint 0x%"PRIx32" is not found!!", EndpointAddress);
 		return -1;
 	}
 	transfer_type = (ep_desc->bmAttributes) & 0x3;
 
-	WLog_DBG(TAG,"urb_bulk_or_interrupt_transfer: ep:0x%x "
-		"transfer_type %d flag:%d OutputBufferSize:0x%x", 
-		EndpointAddress, transfer_type, TransferFlags, *BufferSize);
+	WLog_DBG(TAG,"urb_bulk_or_interrupt_transfer: ep:0x%"PRIx32" "
+	        "transfer_type %"PRIu32" flag:%"PRIu32" OutputBufferSize:0x%"PRIx32"",
+	        EndpointAddress, transfer_type, TransferFlags, *BufferSize);
 
 	switch (transfer_type)
 	{
@@ -1468,7 +1468,7 @@ static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev, UINT32 Request
 
 		default:
 			WLog_DBG(TAG,"urb_bulk_or_interrupt_transfer:"
-							" other transfer type 0x%X", transfer_type);
+			         " other transfer type 0x%"PRIX32"", transfer_type);
 			return -1;
 			break;
 	}
@@ -1554,12 +1554,12 @@ static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev, UINT32 Request
 		
 		*BufferSize = transfer->actual_length;
 	}
-	WLog_DBG(TAG,"bulk or interrupt Transfer data size : 0x%x", *BufferSize);
+	WLog_DBG(TAG,"bulk or interrupt Transfer data size : 0x%"PRIx32"", *BufferSize);
 
 	if (request)
 	{
 		if(pdev->request_queue->unregister_request(pdev->request_queue, RequestId))
-			WLog_ERR(TAG,  "request_queue_unregister_request: not fount request 0x%x", RequestId);
+			WLog_ERR(TAG,  "request_queue_unregister_request: not fount request 0x%"PRIx32"", RequestId);
 	}
 
 	libusb_free_transfer(transfer);
@@ -1655,7 +1655,7 @@ cancel_retry:
 		if (!request)
 			continue;
 
-		WLog_DBG(TAG,"CancelId:0x%x RequestId:0x%x endpoint 0x%x!!", 
+		WLog_DBG(TAG,"CancelId:0x%"PRIx32" RequestId:0x%x endpoint 0x%x!!",
 			RequestId, request->RequestId, request->endpoint); 
 
 		if ((request && request->RequestId) == (RequestId && retry_times <= 10))
@@ -1797,8 +1797,8 @@ static IUDEVICE* udev_init(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_number)
 	/* get the first interface and first altsetting */
 	interface_temp = config_temp->interface[0].altsetting[0];
 
-	WLog_DBG(TAG,"Regist Device: Vid: 0x%04X Pid: 0x%04X"
-		" InterfaceClass = 0x%X", 
+	WLog_DBG(TAG,"Regist Device: Vid: 0x%04"PRIX16" Pid: 0x%04"PRIX16""
+		" InterfaceClass = 0x%02"PRIX8"",
 		pdev->devDescriptor->idVendor, 
 		pdev->devDescriptor->idProduct,
 		interface_temp.bInterfaceClass); 
@@ -1883,7 +1883,7 @@ int udev_new_by_id(UINT16 idVendor, UINT16 idProduct, IUDEVICE*** devArray)
 	ssize_t i, total_device;
 	int status, num = 0;
 
-	WLog_INFO(TAG, "VID: 0x%04X, PID: 0x%04X", idVendor, idProduct);
+	WLog_INFO(TAG, "VID: 0x%04"PRIX16", PID: 0x%04"PRIX16"", idVendor, idProduct);
 
 	array = (UDEVICE**) malloc(16 * sizeof(UDEVICE*));
 

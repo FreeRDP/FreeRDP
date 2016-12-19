@@ -56,8 +56,7 @@ int TestString(int argc, char* argv[])
 
 	if (length != testStringW_Length)
 	{
-		printf("_wcslen error: length mismatch: Actual: %lu, Expected: %lu\n", (unsigned long) length,
-		(unsigned long) testStringW_Length);
+		printf("_wcslen error: length mismatch: Actual: %"PRIuz", Expected: %"PRIuz"\n", length, testStringW_Length);
 		return -1;
 	}
 
@@ -68,8 +67,7 @@ int TestString(int argc, char* argv[])
 
 	if (pos != 11)
 	{
-		printf("_wcschr error: position mismatch: Actual: %lu, Expected: %u\n", (unsigned long)pos,
-		11);
+		printf("_wcschr error: position mismatch: Actual: %"PRIuz", Expected: 11\n", pos);
 		return -1;
 	}
 
@@ -78,7 +76,7 @@ int TestString(int argc, char* argv[])
 
 	if (pos != 29)
 	{
-		printf("_wcschr error: position mismatch: Actual: %lu, Expected: %u\n", (unsigned long)pos, 29);
+		printf("_wcschr error: position mismatch: Actual: %"PRIuz", Expected: 29\n", pos);
 		return -1;
 	}
 
@@ -86,8 +84,7 @@ int TestString(int argc, char* argv[])
 
 	if (p != NULL)
 	{
-		printf("_wcschr error: return value mismatch: Actual: 0x%08lX, Expected: 0x%08lX\n", (unsigned
-		long) p, (unsigned long) NULL);
+		printf("_wcschr error: return value mismatch: Actual: %p, Expected: NULL\n", (void*) p);
 		return -1;
 	}
 

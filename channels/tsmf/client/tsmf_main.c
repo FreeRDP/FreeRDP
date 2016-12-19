@@ -59,7 +59,7 @@ BOOL tsmf_send_eos_response(IWTSVirtualChannelCallback* pChannelCallback, UINT32
 		Stream_Write_UINT32(s, callback->stream_id); /* StreamId */
 		Stream_Write_UINT32(s, TSMM_CLIENT_EVENT_ENDOFSTREAM); /* EventId */
 		Stream_Write_UINT32(s, 0); /* cbData */
-		DEBUG_TSMF("EOS response size %i", Stream_GetPosition(s));
+		DEBUG_TSMF("EOS response size %"PRIuz"", Stream_GetPosition(s));
 
 		status = callback->channel->Write(callback->channel, Stream_GetPosition(s), Stream_Buffer(s), NULL);
 		if (status)
@@ -90,13 +90,13 @@ BOOL tsmf_playback_ack(IWTSVirtualChannelCallback *pChannelCallback,
 	Stream_Write_UINT64(s, duration); /* DataDuration */
 	Stream_Write_UINT64(s, data_size); /* cbData */
 
-	DEBUG_TSMF("ACK response size %d", (int) Stream_GetPosition(s));
+	DEBUG_TSMF("ACK response size %"PRIuz"", Stream_GetPosition(s));
 
 	if (!callback || !callback->channel || !callback->channel->Write)
 	{
-		WLog_ERR(TAG, "callback=%p, channel=%p, write=%p", callback,
-				   callback ? callback->channel : NULL,
-				   (callback && callback->channel) ? callback->channel->Write : NULL);
+		WLog_ERR(TAG, "callback=%p, channel=%p, write=%p", (void*) callback,
+		         (void*) (callback ? callback->channel : NULL),
+		         (void*) (callback && callback->channel ? callback->channel->Write : NULL));
 	}
 	else
 	{
@@ -135,7 +135,7 @@ static UINT tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 	/* 2.2.1 Shared Message Header (SHARED_MSG_HEADER) */
 	if (cbSize < 12)
 	{
-		WLog_ERR(TAG, "invalid size. cbSize=%d", cbSize);
+		WLog_ERR(TAG, "invalid size. cbSize=%"PRIu32"", cbSize);
 		return ERROR_INVALID_DATA;
 	}
 
@@ -148,7 +148,7 @@ static UINT tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 	Stream_Read_UINT32(input, MessageId); /* MessageId (4 bytes) */
 	Stream_Read_UINT32(input, FunctionId); /* FunctionId (4 bytes) */
 
-	DEBUG_TSMF("cbSize=%d InterfaceId=0x%X MessageId=0x%X FunctionId=0x%X",
+	DEBUG_TSMF("cbSize=%"PRIu32" InterfaceId=0x%"PRIX32" MessageId=0x%"PRIX32" FunctionId=0x%"PRIX32"",
 			   cbSize, InterfaceId, MessageId, FunctionId);
 
 	ZeroMemory(&ifman, sizeof(TSMF_IFMAN));
@@ -165,7 +165,7 @@ static UINT tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 	ifman.output_pending = FALSE;
 	ifman.output_interface_id = InterfaceId;
 
-	//fprintf(stderr, "InterfaceId: 0x%04X MessageId: 0x%04X FunctionId: 0x%04X\n", InterfaceId, MessageId, FunctionId);
+	//fprintf(stderr, "InterfaceId: 0x%08"PRIX32" MessageId: 0x%08"PRIX32" FunctionId: 0x%08"PRIX32"\n", InterfaceId, MessageId, FunctionId);
 
 	switch (InterfaceId)
 	{
@@ -196,7 +196,7 @@ static UINT tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 					CopyMemory(callback->presentation_id, Stream_Pointer(input), GUID_SIZE);
 					Stream_Seek(input, GUID_SIZE);
 					Stream_Read_UINT32(input, callback->stream_id);
-					DEBUG_TSMF("SET_CHANNEL_PARAMS StreamId=%d", callback->stream_id);
+					DEBUG_TSMF("SET_CHANNEL_PARAMS StreamId=%"PRIu32"", callback->stream_id);
 					ifman.output_pending = TRUE;
 					processed = TRUE;
 					break;
@@ -305,7 +305,7 @@ static UINT tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 
 	if (error)
 	{
-		WLog_ERR(TAG, "ifman data received processing error %d", error);
+		WLog_ERR(TAG, "ifman data received processing error %"PRIu32"", error);
 	}
 
 	if (!processed)
@@ -327,7 +327,7 @@ static UINT tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 
 		if (!processed)
 		{
-			WLog_ERR(TAG, "Unknown InterfaceId: 0x%04X MessageId: 0x%04X FunctionId: 0x%04X\n", InterfaceId, MessageId, FunctionId);
+			WLog_ERR(TAG, "Unknown InterfaceId: 0x%08"PRIX32" MessageId: 0x%08"PRIX32" FunctionId: 0x%08"PRIX32"\n", InterfaceId, MessageId, FunctionId);
 			/* When a request is not implemented we return empty response indicating error */
 		}
 
@@ -346,7 +346,7 @@ static UINT tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 
 		if (error)
 		{
-			WLog_ERR(TAG, "response error %d", error);
+			WLog_ERR(TAG, "response error %"PRIu32"", error);
 		}
 	}
 

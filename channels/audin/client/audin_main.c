@@ -109,7 +109,7 @@ static UINT audin_process_version(IWTSVirtualChannelCallback* pChannelCallback, 
 
 	Stream_Read_UINT32(s, Version);
 
-	DEBUG_DVC("Version=%d", Version);
+	DEBUG_DVC("Version=%"PRIu32"", Version);
 
 	out = Stream_New(NULL, 5);
 
@@ -159,10 +159,10 @@ static UINT audin_process_formats(IWTSVirtualChannelCallback* pChannelCallback, 
 	UINT32 cbSizeFormatsPacket;
 
 	Stream_Read_UINT32(s, NumFormats);
-	DEBUG_DVC("NumFormats %d", NumFormats);
+	DEBUG_DVC("NumFormats %"PRIu32"", NumFormats);
 	if ((NumFormats < 1) || (NumFormats > 1000))
 	{
-		WLog_ERR(TAG, "bad NumFormats %d", NumFormats);
+		WLog_ERR(TAG, "bad NumFormats %"PRIu32"", NumFormats);
 		return ERROR_INVALID_DATA;
 	}
 	Stream_Seek_UINT32(s); /* cbSizeFormatsPacket */
@@ -199,8 +199,8 @@ static UINT audin_process_formats(IWTSVirtualChannelCallback* pChannelCallback, 
 		format.data = Stream_Pointer(s);
 		Stream_Seek(s, format.cbSize);
 
-		DEBUG_DVC("wFormatTag=%d nChannels=%d nSamplesPerSec=%d "
-			"nBlockAlign=%d wBitsPerSample=%d cbSize=%d",
+		DEBUG_DVC("wFormatTag=%"PRIu16" nChannels=%"PRIu16" nSamplesPerSec=%"PRIu32" "
+			"nBlockAlign=%"PRIu16" wBitsPerSample=%"PRIu16" cbSize=%"PRIu16"",
 			format.wFormatTag, format.nChannels, format.nSamplesPerSec,
 			format.nBlockAlign, format.wBitsPerSample, format.cbSize);
 
@@ -358,12 +358,12 @@ static UINT audin_process_open(IWTSVirtualChannelCallback* pChannelCallback, wSt
 	Stream_Read_UINT32(s, FramesPerPacket);
 	Stream_Read_UINT32(s, initialFormat);
 
-	DEBUG_DVC("FramesPerPacket=%d initialFormat=%d",
+	DEBUG_DVC("FramesPerPacket=%"PRIu32" initialFormat=%"PRIu32"",
 		FramesPerPacket, initialFormat);
 
 	if (initialFormat >= (UINT32) callback->formats_count)
 	{
-		WLog_ERR(TAG, "invalid format index %d (total %d)",
+		WLog_ERR(TAG, "invalid format index %"PRIu32" (total %d)",
 				 initialFormat, callback->formats_count);
 		return ERROR_INVALID_DATA;
 	}
@@ -374,13 +374,13 @@ static UINT audin_process_open(IWTSVirtualChannelCallback* pChannelCallback, wSt
 		IFCALLRET(audin->device->SetFormat, error, audin->device, format, FramesPerPacket);
 		if (error != CHANNEL_RC_OK)
 		{
-			WLog_ERR(TAG, "SetFormat failed with errorcode %u", error);
+			WLog_ERR(TAG, "SetFormat failed with errorcode %"PRIu32"", error);
 			return error;
 		}
 		IFCALLRET(audin->device->Open, error, audin->device, audin_receive_wave_data, callback);
 		if (error != CHANNEL_RC_OK)
 		{
-			WLog_ERR(TAG, "Open failed with errorcode %u", error);
+			WLog_ERR(TAG, "Open failed with errorcode %"PRIu32"", error);
 			return error;
 		}
 	}
@@ -412,11 +412,11 @@ static UINT audin_process_format_change(IWTSVirtualChannelCallback* pChannelCall
 
 	Stream_Read_UINT32(s, NewFormat);
 
-	DEBUG_DVC("NewFormat=%d", NewFormat);
+	DEBUG_DVC("NewFormat=%"PRIu32"", NewFormat);
 
 	if (NewFormat >= (UINT32) callback->formats_count)
 	{
-		WLog_ERR(TAG, "invalid format index %d (total %d)",
+		WLog_ERR(TAG, "invalid format index %"PRIu32" (total %d)",
 				 NewFormat, callback->formats_count);
 		return ERROR_INVALID_DATA;
 	}
@@ -428,19 +428,19 @@ static UINT audin_process_format_change(IWTSVirtualChannelCallback* pChannelCall
 		IFCALLRET(audin->device->Close, error, audin->device);
 		if (error != CHANNEL_RC_OK)
 		{
-			WLog_ERR(TAG, "Close failed with errorcode %u", error);
+			WLog_ERR(TAG, "Close failed with errorcode %"PRIu32"", error);
 			return error;
 		}
 		IFCALLRET(audin->device->SetFormat, error, audin->device, format, 0);
 		if (error != CHANNEL_RC_OK)
 		{
-			WLog_ERR(TAG, "SetFormat failed with errorcode %u", error);
+			WLog_ERR(TAG, "SetFormat failed with errorcode %"PRIu32"", error);
 			return error;
 		}
 		IFCALLRET(audin->device->Open, error, audin->device, audin_receive_wave_data, callback);
 		if (error != CHANNEL_RC_OK)
 		{
-			WLog_ERR(TAG, "Open failed with errorcode %u", error);
+			WLog_ERR(TAG, "Open failed with errorcode %"PRIu32"", error);
 			return error;
 		}
 	}
@@ -463,7 +463,7 @@ static UINT audin_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 
 	Stream_Read_UINT8(data, MessageId);
 
-	DEBUG_DVC("MessageId=0x%x", MessageId);
+	DEBUG_DVC("MessageId=0x%02"PRIx8"", MessageId);
 
 	switch (MessageId)
 	{
@@ -484,7 +484,7 @@ static UINT audin_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 			break;
 
 		default:
-			WLog_ERR(TAG, "unknown MessageId=0x%x", MessageId);
+			WLog_ERR(TAG, "unknown MessageId=0x%02"PRIx8"", MessageId);
 			error = ERROR_INVALID_DATA;
 			break;
 	}
@@ -509,7 +509,7 @@ static UINT audin_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	{
 		IFCALLRET(audin->device->Close, error, audin->device);
 		if (error != CHANNEL_RC_OK)
-			WLog_ERR(TAG, "Close failed with errorcode %u", error);
+			WLog_ERR(TAG, "Close failed with errorcode %"PRIu32"", error);
 	}
 
 	free(callback->formats);
@@ -593,7 +593,7 @@ static UINT audin_plugin_terminated(IWTSPlugin* pPlugin)
 		IFCALLRET(audin->device->Free, error, audin->device);
 		if (error != CHANNEL_RC_OK)
 		{
-			WLog_ERR(TAG, "Free failed with errorcode %u", error);
+			WLog_ERR(TAG, "Free failed with errorcode %"PRIu32"", error);
 			// dont stop on error
 		}
 		audin->device = NULL;
@@ -662,7 +662,7 @@ static UINT audin_load_device_plugin(IWTSPlugin* pPlugin, const char* name, ADDI
 
 	if ((error = entry(&entryPoints)))
 	{
-		WLog_ERR(TAG, "%s entry returned error %u.", name, error);
+		WLog_ERR(TAG, "%s entry returned error %"PRIu32".", name, error);
 		return error;
 	}
 
@@ -744,7 +744,7 @@ BOOL audin_process_addin_args(AUDIN_PLUGIN* audin, ADDIN_ARGV* args)
 		{
 			if ((error = audin_set_subsystem(audin, arg->Value)))
 			{
-				WLog_ERR(TAG, "audin_set_subsystem failed with error %u!", error);
+				WLog_ERR(TAG, "audin_set_subsystem failed with error %"PRIu32"!", error);
 				return FALSE;
 			}
 		}
@@ -752,7 +752,7 @@ BOOL audin_process_addin_args(AUDIN_PLUGIN* audin, ADDIN_ARGV* args)
 		{
 			if ((error = audin_set_device_name(audin, arg->Value)))
 			{
-				WLog_ERR(TAG, "audin_set_device_name failed with error %u!", error);
+				WLog_ERR(TAG, "audin_set_device_name failed with error %"PRIu32"!", error);
 				return FALSE;
 			}
 		}
@@ -858,7 +858,7 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	{
 		if ((error = audin_load_device_plugin((IWTSPlugin*) audin, audin->subsystem, args)))
 		{
-			WLog_ERR(TAG, "audin_load_device_plugin %s failed with error %u!",
+			WLog_ERR(TAG, "audin_load_device_plugin %s failed with error %"PRIu32"!",
 					 audin->subsystem, error);
 			goto out;
 		}
@@ -869,17 +869,17 @@ UINT DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		{
 			if ((error = audin_set_subsystem(audin, entry->subsystem)))
 			{
-				WLog_ERR(TAG, "audin_set_subsystem for %s failed with error %u!",
+				WLog_ERR(TAG, "audin_set_subsystem for %s failed with error %"PRIu32"!",
 					 entry->subsystem, error);
 			}
 			else if ((error = audin_set_device_name(audin, entry->device)))
 			{
-				WLog_ERR(TAG, "audin_set_device_name for %s failed with error %u!",
+				WLog_ERR(TAG, "audin_set_device_name for %s failed with error %"PRIu32"!",
 					 entry->subsystem, error);
 			}
 			else if ((error = audin_load_device_plugin((IWTSPlugin*) audin, audin->subsystem, args)))
 			{
-				WLog_ERR(TAG, "audin_load_device_plugin %s failed with error %u!",
+				WLog_ERR(TAG, "audin_load_device_plugin %s failed with error %"PRIu32"!",
 					 entry->subsystem, error);
 			}
 

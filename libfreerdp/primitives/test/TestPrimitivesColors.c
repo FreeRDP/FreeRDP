@@ -63,7 +63,7 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_func(void)
 	{
 		if (out1[i] != out2[i])
 		{
-			printf("RGBToRGB-SSE FAIL: out1[%d]=0x%08x out2[%d]=0x%08x\n",
+			printf("RGBToRGB-SSE FAIL: out1[%d]=0x%08"PRIx32" out2[%d]=0x%08"PRIx32"\n",
 			       i, out1[i], i, out2[i]);
 			failed = TRUE;
 		}
@@ -167,7 +167,7 @@ static BOOL test_yCbCrToRGB_16s16s_P3P3_func(void)
 		    || (ABS(g1[i] - g2[i]) > 1)
 		    || (ABS(b1[i] - b2[i]) > 1))
 		{
-			printf("YCbCrToRGB-SSE FAIL[%d]: %d,%d,%d vs %d,%d,%d\n", i,
+			printf("YCbCrToRGB-SSE FAIL[%d]: %"PRId16",%"PRId16",%"PRId16" vs %"PRId16",%"PRId16",%"PRId16"\n", i,
 			       r1[i], g1[i], b1[i], r2[i], g2[i], b2[i]);
 			return FALSE;
 		}

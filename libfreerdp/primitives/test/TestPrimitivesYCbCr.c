@@ -2141,7 +2141,7 @@ static int test_bmp_cmp_dump(const BYTE* actual, const BYTE* expected, int size,
 
 			if ((error[0] > margin) || (error[1] > margin) || (error[2] > margin))
 			{
-				printf("(%2d,%2d)    Y: %+5d Cb: %+5d Cr: %+5d    R: %03d/%03d G: %03d/%03d B: %03d/%03d    %d %d %d\n",
+				printf("(%2d,%2d)    Y: %+5"PRId16" Cb: %+5"PRId16" Cr: %+5"PRId16"    R: %03"PRIu8"/%03"PRIu8" G: %03"PRIu8"/%03"PRIu8" B: %03"PRIu8"/%03"PRIu8"    %d %d %d\n",
 				       x, y, Y, Cb, Cr, R, eR, G, eG, B, eB, R - eR, G - eG, B - eB);
 				count++;
 			}
@@ -2205,13 +2205,12 @@ int test_YCbCr_fp(TEST_FP_TYPE coeffs[4], INT16 YCbCr[3], BYTE RGB[3])
 	R = (INT16) fR;
 	G = (INT16) fG;
 	B = (INT16) fB;
-	printf("mR: %d mG: %d mB: %d\n",
-	       (R - 16) % 32, (G - 16) % 32, (B - 16) % 32);
-	printf("iR: %d iG: %d iB: %d\n", R, G, B);
+	printf("mR: %d mG: %d mB: %d\n", (R - 16) % 32, (G - 16) % 32, (B - 16) % 32);
+	printf("iR: %"PRId16" iG: %"PRId16" iB: %"PRId16"\n", R, G, B);
 	R >>= 5;
 	G >>= 5;
 	B >>= 5;
-	printf("R5: %d G5: %d B5: %d\n", R, G, B);
+	printf("R5: %"PRId16" G5: %"PRId16" B5: %"PRId16"\n", R, G, B);
 #else
 	R = ((INT16)(((Cr * coeffs[0]) + Y + 16.0f)) >> 5);
 	G = ((INT16)((Y - (Cb * coeffs[1]) - (Cr * coeffs[2]) + 16.0f)) >> 5);
@@ -2234,10 +2233,10 @@ int test_YCbCr_fp(TEST_FP_TYPE coeffs[4], INT16 YCbCr[3], BYTE RGB[3])
 		B = 255;
 
 	printf("--------------------------------\n");
-	printf("R: A: %3d E: %3d %s\n", R, RGB[0], (R == RGB[0]) ? "" : "***");
-	printf("G: A: %3d E: %3d %s\n", G, RGB[1], (G == RGB[1]) ? "" : "***");
-	printf("B: A: %3d E: %3d %s\n", B, RGB[2], (B == RGB[2]) ? "" : "***");
-	printf("Y: %+5d Cb: %+5d Cr: %+5d\n", YCbCr[0], YCbCr[1], YCbCr[2]);
+	printf("R: A: %3"PRId16" E: %3"PRIu8" %s\n", R, RGB[0], (R == RGB[0]) ? "" : "***");
+	printf("G: A: %3"PRId16" E: %3"PRIu8" %s\n", G, RGB[1], (G == RGB[1]) ? "" : "***");
+	printf("B: A: %3"PRId16" E: %3"PRIu8" %s\n", B, RGB[2], (B == RGB[2]) ? "" : "***");
+	printf("Y: %+5"PRId16" Cb: %+5"PRId16" Cr: %+5"PRId16"\n", YCbCr[0], YCbCr[1], YCbCr[2]);
 	//printf("[0]: %20.20lf\n", coeffs[0]);
 	//printf("[1]: %20.20lf\n", coeffs[1]);
 	//printf("[2]: %20.20lf\n", coeffs[2]);

@@ -207,7 +207,7 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BYTE keycode)
 
 	if (rdp_scancode == RDP_SCANCODE_UNKNOWN)
 	{
-		WLog_ERR(TAG,  "Unknown key with X keycode 0x%02x", keycode);
+		WLog_ERR(TAG,  "Unknown key with X keycode 0x%02"PRIx8"", keycode);
 	}
 	else if (rdp_scancode == RDP_SCANCODE_PAUSE &&
 	         !xf_keyboard_key_pressed(xfc, XK_Control_L)

@@ -313,12 +313,12 @@ static BOOL tsmf_ffmpeg_decode_video(ITSMFDecoder* decoder, const BYTE *data, UI
 #endif
 	if (len < 0)
 	{
-		WLog_ERR(TAG, "data_size %d, avcodec_decode_video failed (%d)", data_size, len);
+		WLog_ERR(TAG, "data_size %"PRIu32", avcodec_decode_video failed (%d)", data_size, len);
 		ret = FALSE;
 	}
 	else if (!decoded)
 	{
-		WLog_ERR(TAG, "data_size %d, no frame is decoded.", data_size);
+		WLog_ERR(TAG, "data_size %"PRIu32", no frame is decoded.", data_size);
 		ret = FALSE;
 	}
 	else
@@ -362,11 +362,11 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE *data, UI
 	BYTE *dst;
 	int dst_offset;
 #if 0
-	WLog_DBG(TAG, ("tsmf_ffmpeg_decode_audio: data_size %d", data_size));
+	WLog_DBG(TAG, ("tsmf_ffmpeg_decode_audio: data_size %"PRIu32"", data_size));
 	int i;
 	for(i = 0; i < data_size; i++)
 	{
-		WLog_DBG(TAG, ("%02X ", data[i]));
+		WLog_DBG(TAG, ("%02"PRIX8"", data[i]));
 		if (i % 16 == 15)
 			WLog_DBG(TAG, ("\n"));
 	}
@@ -452,7 +452,7 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE *data, UI
 			/* move the aligned decoded data to original place */
 			memmove(mdecoder->decoded_data, mdecoder->decoded_data + dst_offset, mdecoder->decoded_size);
 		}
-	DEBUG_TSMF("data_size %d decoded_size %d",
+	DEBUG_TSMF("data_size %"PRIu32" decoded_size %"PRIu32"",
 			   data_size, mdecoder->decoded_size);
 	return TRUE;
 }

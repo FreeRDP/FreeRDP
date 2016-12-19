@@ -28,14 +28,14 @@ int TestCommMonitor(int argc, char* argv[])
 
 	if (!fSuccess)
 	{
-		printf("SetCommMask failure: GetLastError() = %d\n", (int) GetLastError());
+		printf("SetCommMask failure: GetLastError() = %"PRIu32"\n", GetLastError());
 		return -1;
 	}
 
 	ZeroMemory(&overlapped, sizeof(OVERLAPPED));
 	if (!(overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 	{
-		printf("CreateEvent failed: GetLastError() = %d\n", (int) GetLastError());
+		printf("CreateEvent failed: GetLastError() = %"PRIu32"\n", GetLastError());
 		return -1;
 	}
 
@@ -61,7 +61,7 @@ int TestCommMonitor(int argc, char* argv[])
 		}
 		else
 		{
-			printf("WaitCommEvent failure: GetLastError() = %d\n", (int) dwError);
+			printf("WaitCommEvent failure: GetLastError() = %"PRIu32"\n", dwError);
 			return -1;
 		}
 	}

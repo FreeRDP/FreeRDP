@@ -119,7 +119,7 @@ typedef struct _SERIAL_HANDFLOW
 #define SERIAL_SP_RS422             ((ULONG)0x00000003)
 #define SERIAL_SP_RS423             ((ULONG)0x00000004)
 #define SERIAL_SP_RS449             ((ULONG)0x00000005)
-#define SERIAL_SP_MODEM             ((ULONG)0X00000006)
+#define SERIAL_SP_MODEM             ((ULONG)0x00000006)
 #define SERIAL_SP_FAX               ((ULONG)0x00000021)
 #define SERIAL_SP_SCANNER           ((ULONG)0x00000022)
 #define SERIAL_SP_BRIDGE            ((ULONG)0x00000100)

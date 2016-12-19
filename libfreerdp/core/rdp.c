@@ -683,7 +683,7 @@ BOOL rdp_recv_server_auto_reconnect_status_pdu(rdpRdp* rdp, wStream* s)
 
 	Stream_Read_UINT32(s, arcStatus); /* arcStatus (4 bytes) */
 
-	WLog_WARN(TAG, "AutoReconnectStatus: 0x%04X", arcStatus);
+	WLog_WARN(TAG, "AutoReconnectStatus: 0x%08"PRIX32"", arcStatus);
 
 	return TRUE;
 }
@@ -783,7 +783,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 
 		if (Stream_GetRemainingLength(s) < (size_t) SrcSize)
 		{
-			WLog_ERR(TAG, "bulk_decompress: not enough bytes for compressedLength %d", compressedLength);
+			WLog_ERR(TAG, "bulk_decompress: not enough bytes for compressedLength %"PRIu16"", compressedLength);
 			return -1;
 		}
 
@@ -809,7 +809,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 		Stream_Seek(s, SrcSize);
 	}
 
-	WLog_DBG(TAG, "recv %s Data PDU (0x%02X), length: %d",
+	WLog_DBG(TAG, "recv %s Data PDU (0x%02"PRIX8"), length: %"PRIu16"",
 			 type < ARRAYSIZE(DATA_PDU_TYPE_STRINGS) ? DATA_PDU_TYPE_STRINGS[type] : "???", type, length);
 
 	switch (type)
@@ -1200,7 +1200,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 					break;
 
 				default:
-					WLog_ERR(TAG, "incorrect PDU type: 0x%04X", pduType);
+					WLog_ERR(TAG, "incorrect PDU type: 0x%04"PRIX16"", pduType);
 					break;
 			}
 
@@ -1242,7 +1242,7 @@ static int rdp_recv_fastpath_pdu(rdpRdp* rdp, wStream* s)
 
 	if ((length == 0) || (length > Stream_GetRemainingLength(s)))
 	{
-		WLog_ERR(TAG, "incorrect FastPath PDU header length %d", length);
+		WLog_ERR(TAG, "incorrect FastPath PDU header length %"PRIu16"", length);
 		return -1;
 	}
 

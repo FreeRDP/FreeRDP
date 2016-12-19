@@ -210,7 +210,7 @@ static BOOL xf_set_rop3(xfContext* xfc, UINT32 rop3)
 
 	if (function < 0)
 	{
-		WLog_ERR(TAG,  "Unsupported ROP3: 0x%08X", rop3);
+		WLog_ERR(TAG,  "Unsupported ROP3: 0x%08"PRIX32"", rop3);
 		XSetFunction(xfc->display, xfc->gc, GXclear);
 		return FALSE;
 	}
@@ -391,7 +391,7 @@ static BOOL xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 			break;
 
 		default:
-			WLog_ERR(TAG,  "unimplemented brush style:%d", brush->style);
+			WLog_ERR(TAG,  "unimplemented brush style:%"PRIu32"", brush->style);
 			goto fail;
 	}
 
@@ -704,7 +704,7 @@ static BOOL xf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 			break;
 
 		default:
-			WLog_ERR(TAG,  "Mem3Blt unimplemented brush style:%d", brush->style);
+			WLog_ERR(TAG,  "Mem3Blt unimplemented brush style:%"PRIu32"", brush->style);
 			goto fail;
 	}
 
@@ -773,7 +773,7 @@ static BOOL xf_gdi_polygon_sc(rdpContext* context,
 			break;
 
 		default:
-			WLog_ERR(TAG,  "PolygonSC unknown fillMode: %d", polygon_sc->fillMode);
+			WLog_ERR(TAG,  "PolygonSC unknown fillMode: %"PRIu32"", polygon_sc->fillMode);
 			break;
 	}
 
@@ -844,7 +844,7 @@ static BOOL xf_gdi_polygon_cb(rdpContext* context,
 			break;
 
 		default:
-			WLog_ERR(TAG, "PolygonCB unknown fillMode: %d", polygon_cb->fillMode);
+			WLog_ERR(TAG, "PolygonCB unknown fillMode: %"PRIu32"", polygon_cb->fillMode);
 			break;
 	}
 
@@ -885,7 +885,7 @@ static BOOL xf_gdi_polygon_cb(rdpContext* context,
 	}
 	else
 	{
-		WLog_ERR(TAG,  "PolygonCB unimplemented brush style:%d", brush->style);
+		WLog_ERR(TAG,  "PolygonCB unimplemented brush style:%"PRIu32"", brush->style);
 	}
 
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
@@ -1050,7 +1050,7 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 			break;
 
 		default:
-			WLog_ERR(TAG, "Unsupported codecID %d", cmd->codecID);
+			WLog_ERR(TAG, "Unsupported codecID %"PRIu32"", cmd->codecID);
 			ret = TRUE;
 			goto fail;
 	}
