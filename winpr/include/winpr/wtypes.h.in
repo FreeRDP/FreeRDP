@@ -127,7 +127,7 @@ typedef unsigned long long      __uint64;
 #endif /* WINPR_HAVE_STDINT_H */
 
 #ifdef WINPR_HAVE_STDINT_H
-#if __ILP64__ || __LP64__
+#if defined(__ILP64__) || defined(__LP64__)
 #define __int3264 int64_t
 #define __uint3264 uint64_t
 #else
@@ -135,7 +135,7 @@ typedef unsigned long long      __uint64;
 #define __uint3264 uint32_t
 #endif
 #else
-#if __ILP64__ || __LP64__
+#if defined(__ILP64__) || defined(__LP64__)
 #define __int3264 __int64
 #define __uint3264 __uint64
 #else
