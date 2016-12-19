@@ -268,7 +268,7 @@ int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 			}
 			else
 			{
-				WLog_ERR(TAG, "RPC_CLIENT_STATE_WAIT_SECURE_BIND_ACK unexpected pdu type: 0x%04X", pdu->Type);
+				WLog_ERR(TAG, "RPC_CLIENT_STATE_WAIT_SECURE_BIND_ACK unexpected pdu type: 0x%08"PRIX32"", pdu->Type);
 				return -1;
 			}
 
@@ -360,7 +360,7 @@ int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 
 		if (rpc->StubCallId != header->common.call_id)
 		{
-			WLog_ERR(TAG, "invalid call_id: actual: %d, expected: %d, frag_count: %d",
+			WLog_ERR(TAG, "invalid call_id: actual: %"PRIu32", expected: %"PRIu32", frag_count: %"PRIu32"",
 				 rpc->StubCallId, header->common.call_id, rpc->StubFragCount);
 		}
 
@@ -450,7 +450,7 @@ int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 	}
 	else
 	{
-		WLog_ERR(TAG, "unexpected RPC PDU type 0x%04X", header->common.ptype);
+		WLog_ERR(TAG, "unexpected RPC PDU type 0x%02"PRIX8"", header->common.ptype);
 		return -1;
 	}
 
@@ -543,7 +543,7 @@ int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 
 		if (statusCode != HTTP_STATUS_OK)
 		{
-			WLog_ERR(TAG, "error! Status Code: %d", statusCode);
+			WLog_ERR(TAG, "error! Status Code: %"PRIu32"", statusCode);
 			http_response_print(response);
 			http_response_free(response);
 
@@ -593,7 +593,7 @@ int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 
 			if (header->frag_length > rpc->max_recv_frag)
 			{
-				WLog_ERR(TAG, "rpc_client_recv: invalid fragment size: %d (max: %d)",
+				WLog_ERR(TAG, "rpc_client_recv: invalid fragment size: %"PRIu16" (max: %"PRIu16")",
 					 header->frag_length, rpc->max_recv_frag);
 				winpr_HexDump(TAG, WLOG_ERROR, Stream_Buffer(fragment), Stream_GetPosition(fragment));
 				return -1;
@@ -922,7 +922,7 @@ int rpc_client_write_call(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	status = ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes);
 	if (status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure %s [%08X]",
+		WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure %s [0x%08"PRIX32"]",
 			 GetSecurityStatusString(status), status);
 		return -1;
 	}
@@ -997,7 +997,7 @@ int rpc_client_write_call(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 
 	if (encrypt_status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "EncryptMessage status %s [%08X]",
+		WLog_ERR(TAG, "EncryptMessage status %s [0x%08"PRIX32"]",
 			 GetSecurityStatusString(encrypt_status), encrypt_status);
 		goto out_free_pdu;
 	}

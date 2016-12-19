@@ -269,7 +269,7 @@ BOOL freerdp_image_copy_from_pointer_data(
 
 				if (xorBpp == 8 && !palette)
 				{
-					WLog_ERR(TAG, "null palette in conversion from %d bpp to %d bpp",
+					WLog_ERR(TAG, "null palette in conversion from %"PRIu32" bpp to %"PRIu32" bpp",
 					         xorBpp, dstBitsPerPixel);
 					return FALSE;
 				}
@@ -378,7 +378,7 @@ BOOL freerdp_image_copy_from_pointer_data(
 			}
 
 		default:
-			WLog_ERR(TAG, "failed to convert from %d bpp to %d bpp",
+			WLog_ERR(TAG, "failed to convert from %"PRIu32" bpp to %"PRIu32" bpp",
 			         xorBpp, dstBitsPerPixel);
 			return FALSE;
 	}

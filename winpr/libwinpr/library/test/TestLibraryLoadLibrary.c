@@ -15,7 +15,7 @@ int TestLibraryLoadLibrary(int argc, char* argv[])
 
 	if (!GetModuleFileNameA(NULL, LibraryPath, PATHCCH_MAX_CCH))
 	{
-		printf("%s: GetModuleFilenameA failed: 0x%08X\n", __FUNCTION__, GetLastError());
+		printf("%s: GetModuleFilenameA failed: 0x%08"PRIX32"\n", __FUNCTION__, GetLastError());
 		return -1;
 	}
 
@@ -36,13 +36,13 @@ int TestLibraryLoadLibrary(int argc, char* argv[])
 
 	if (!(library = LoadLibraryA(LibraryPath)))
 	{
-		printf("%s: LoadLibraryA failure: 0x%08X\n", __FUNCTION__, GetLastError());
+		printf("%s: LoadLibraryA failure: 0x%08"PRIX32"\n", __FUNCTION__, GetLastError());
 		return -1;
 	}
 
 	if (!FreeLibrary(library))
 	{
-		printf("%s: FreeLibrary failure: 0x%08X\n", __FUNCTION__, GetLastError());
+		printf("%s: FreeLibrary failure: 0x%08"PRIX32"\n", __FUNCTION__, GetLastError());
 		return -1;
 	}
 

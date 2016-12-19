@@ -250,7 +250,7 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "ID3D11Device::QueryInterface(IDXGIDevice) failure: %s (0x%04X)",
+		WLog_ERR(TAG, "ID3D11Device::QueryInterface(IDXGIDevice) failure: %s (0x%08lX)",
 			GetDxgiErrorString(hr), hr);
 		return -1;
 	}
@@ -265,7 +265,7 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "IDXGIDevice::GetParent(IDXGIAdapter) failure: %s (0x%04X)",
+		WLog_ERR(TAG, "IDXGIDevice::GetParent(IDXGIAdapter) failure: %s (0x%08lX)",
 			GetDxgiErrorString(hr), hr);
 		return -1;
 	}
@@ -281,7 +281,7 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 
 		if (FAILED(hr))
 		{
-			WLog_ERR(TAG, "IDXGIOutput::GetDesc failure: %s (0x%04X)",
+			WLog_ERR(TAG, "IDXGIOutput::GetDesc failure: %s (0x%08lX)",
 				GetDxgiErrorString(hr), hr);
 			return -1;
 		}
@@ -305,7 +305,7 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "IDXGIAdapter::EnumOutputs failure: %s (0x%04X)",
+		WLog_ERR(TAG, "IDXGIAdapter::EnumOutputs failure: %s (0x%08lX)",
 			GetDxgiErrorString(hr), hr);
 		return -1;
 	}
@@ -320,7 +320,7 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "IDXGIOutput::QueryInterface(IDXGIOutput1) failure: %s (0x%04X)",
+		WLog_ERR(TAG, "IDXGIOutput::QueryInterface(IDXGIOutput1) failure: %s (0x%08lX)",
 			GetDxgiErrorString(hr), hr);
 		return -1;
 	}
@@ -336,7 +336,7 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "IDXGIOutput1::DuplicateOutput failure: %s (0x%04X)",
+		WLog_ERR(TAG, "IDXGIOutput1::DuplicateOutput failure: %s (0x%08lX)",
 			GetDxgiErrorString(hr), hr);
 		return -1;
 	}
@@ -358,7 +358,7 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "ID3D11Device::CreateTexture2D failure: %s (0x%04X)",
+		WLog_ERR(TAG, "ID3D11Device::CreateTexture2D failure: %s (0x%08lX)",
 			GetDxgiErrorString(hr), hr);
 		return -1;
 	}
@@ -394,7 +394,7 @@ int win_shadow_dxgi_init(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "D3D11CreateDevice failure: 0x%04X", hr);
+		WLog_ERR(TAG, "D3D11CreateDevice failure: 0x%08lX", hr);
 		return -1;
 	}
 
@@ -464,7 +464,7 @@ int win_shadow_dxgi_fetch_frame_data(winShadowSubsystem* subsystem,
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "ID3D11Texture2D::QueryInterface(IDXGISurface) failure: %s 0x%04X",
+		WLog_ERR(TAG, "ID3D11Texture2D::QueryInterface(IDXGISurface) failure: %s 0x%08lX",
 			GetDxgiErrorString(hr), hr);
 		return -1;
 	}
@@ -473,7 +473,7 @@ int win_shadow_dxgi_fetch_frame_data(winShadowSubsystem* subsystem,
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "IDXGISurface::Map failure: %s 0x%04X",
+		WLog_ERR(TAG, "IDXGISurface::Map failure: %s 0x%08lX",
 			GetDxgiErrorString(hr), hr);
 
 		if (hr == DXGI_ERROR_DEVICE_REMOVED)
@@ -561,7 +561,7 @@ int win_shadow_dxgi_get_next_frame(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "IDXGIOutputDuplication::AcquireNextFrame failure: %s (0x%04X)",
+		WLog_ERR(TAG, "IDXGIOutputDuplication::AcquireNextFrame failure: %s (0x%08lX)",
 				GetDxgiErrorString(hr), hr);
 
 		if (hr == DXGI_ERROR_ACCESS_LOST)
@@ -613,7 +613,7 @@ int win_shadow_dxgi_get_next_frame(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "IDXGIResource::QueryInterface(ID3D11Texture2D) failure: %s (0x%04X)",
+		WLog_ERR(TAG, "IDXGIResource::QueryInterface(ID3D11Texture2D) failure: %s (0x%08lX)",
 			GetDxgiErrorString(hr), hr);
 		return -1;
 	}
@@ -670,7 +670,7 @@ int win_shadow_dxgi_get_invalid_region(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "IDXGIOutputDuplication::GetFrameMoveRects failure: %s (0x%04X) Size: %d Total %d Used: %d",
+		WLog_ERR(TAG, "IDXGIOutputDuplication::GetFrameMoveRects failure: %s (0x%08lX) Size: %u Total %u Used: %u",
 			GetDxgiErrorString(hr), hr, MoveRectsBufferSize, MetadataBufferSize, UsedBufferSize);
 		return -1;
 	}
@@ -687,7 +687,7 @@ int win_shadow_dxgi_get_invalid_region(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "IDXGIOutputDuplication::GetFrameDirtyRects failure: %s (0x%04X) Size: %d Total %d Used: %d",
+		WLog_ERR(TAG, "IDXGIOutputDuplication::GetFrameDirtyRects failure: %s (0x%08lX) Size: %u Total %u Used: %u",
 			GetDxgiErrorString(hr), hr, DirtyRectsBufferSize, MetadataBufferSize, UsedBufferSize);
 		return -1;
 	}

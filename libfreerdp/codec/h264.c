@@ -226,7 +226,7 @@ static HRESULT mf_create_output_sample(H264_CONTEXT_MF* sys)
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "MFCreateSample failure: 0x%04X", hr);
+		WLog_ERR(TAG, "MFCreateSample failure: 0x%08"PRIX32"", hr);
 		goto error;
 	}
 
@@ -235,7 +235,7 @@ static HRESULT mf_create_output_sample(H264_CONTEXT_MF* sys)
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "GetOutputStreamInfo failure: 0x%04X", hr);
+		WLog_ERR(TAG, "GetOutputStreamInfo failure: 0x%08"PRIX32"", hr);
 		goto error;
 	}
 
@@ -243,7 +243,7 @@ static HRESULT mf_create_output_sample(H264_CONTEXT_MF* sys)
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "MFCreateMemoryBuffer failure: 0x%04X", hr);
+		WLog_ERR(TAG, "MFCreateMemoryBuffer failure: 0x%08"PRIX32"", hr);
 		goto error;
 	}
 
@@ -251,7 +251,7 @@ static HRESULT mf_create_output_sample(H264_CONTEXT_MF* sys)
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "AddBuffer failure: 0x%04X", hr);
+		WLog_ERR(TAG, "AddBuffer failure: 0x%08"PRIX32"", hr);
 		goto error;
 	}
 
@@ -279,7 +279,7 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "MFCreateMemoryBuffer failure: 0x%04X", hr);
+		WLog_ERR(TAG, "MFCreateMemoryBuffer failure: 0x%08"PRIX32"", hr);
 		goto error;
 	}
 
@@ -288,7 +288,7 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "Lock failure: 0x%04X", hr);
+		WLog_ERR(TAG, "Lock failure: 0x%08"PRIX32"", hr);
 		goto error;
 	}
 
@@ -297,7 +297,7 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "SetCurrentLength failure: 0x%04X", hr);
+		WLog_ERR(TAG, "SetCurrentLength failure: 0x%08"PRIX32"", hr);
 		goto error;
 	}
 
@@ -305,7 +305,7 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "Unlock failure: 0x%04X", hr);
+		WLog_ERR(TAG, "Unlock failure: 0x%08"PRIX32"", hr);
 		goto error;
 	}
 
@@ -313,7 +313,7 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "MFCreateSample failure: 0x%04X", hr);
+		WLog_ERR(TAG, "MFCreateSample failure: 0x%08"PRIX32"", hr);
 		goto error;
 	}
 
@@ -321,7 +321,7 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "AddBuffer failure: 0x%04X", hr);
+		WLog_ERR(TAG, "AddBuffer failure: 0x%08"PRIX32"", hr);
 		goto error;
 	}
 
@@ -330,7 +330,7 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "ProcessInput failure: 0x%04X", hr);
+		WLog_ERR(TAG, "ProcessInput failure: 0x%08"PRIX32"", hr);
 		goto error;
 	}
 
@@ -338,7 +338,7 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 
 	if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "mf_create_output_sample failure: 0x%04X", hr);
+		WLog_ERR(TAG, "mf_create_output_sample failure: 0x%08"PRIX32"", hr);
 		goto error;
 	}
 
@@ -367,7 +367,7 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 
 		if (FAILED(hr))
 		{
-			WLog_ERR(TAG, "mf_find_output_type failure: 0x%04X", hr);
+			WLog_ERR(TAG, "mf_find_output_type failure: 0x%08"PRIX32"", hr);
 			goto error;
 		}
 
@@ -376,7 +376,7 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 
 		if (FAILED(hr))
 		{
-			WLog_ERR(TAG, "SetOutputType failure: 0x%04X", hr);
+			WLog_ERR(TAG, "SetOutputType failure: 0x%08"PRIX32"", hr);
 			goto error;
 		}
 
@@ -384,7 +384,7 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 
 		if (FAILED(hr))
 		{
-			WLog_ERR(TAG, "mf_create_output_sample failure: 0x%04X", hr);
+			WLog_ERR(TAG, "mf_create_output_sample failure: 0x%08"PRIX32"", hr);
 			goto error;
 		}
 
@@ -393,7 +393,7 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 
 		if (FAILED(hr))
 		{
-			WLog_ERR(TAG, "GetUINT64(MF_MT_FRAME_SIZE) failure: 0x%04X", hr);
+			WLog_ERR(TAG, "GetUINT64(MF_MT_FRAME_SIZE) failure: 0x%08"PRIX32"", hr);
 			goto error;
 		}
 
@@ -404,7 +404,7 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 
 		if (FAILED(hr))
 		{
-			WLog_ERR(TAG, "GetUINT32(MF_MT_DEFAULT_STRIDE) failure: 0x%04X", hr);
+			WLog_ERR(TAG, "GetUINT32(MF_MT_DEFAULT_STRIDE) failure: 0x%08"PRIX32"", hr);
 			goto error;
 		}
 
@@ -426,7 +426,7 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 	}
 	else if (FAILED(hr))
 	{
-		WLog_ERR(TAG, "ProcessOutput failure: 0x%04X", hr);
+		WLog_ERR(TAG, "ProcessOutput failure: 0x%08"PRIX32"", hr);
 		goto error;
 	}
 	else
@@ -440,7 +440,7 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 
 		if (FAILED(hr))
 		{
-			WLog_ERR(TAG, "GetBufferCount failure: 0x%04X", hr);
+			WLog_ERR(TAG, "GetBufferCount failure: 0x%08"PRIX32"", hr);
 			goto error;
 		}
 
@@ -449,7 +449,7 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 
 		if (FAILED(hr))
 		{
-			WLog_ERR(TAG, "GetBufferByIndex failure: 0x%04X", hr);
+			WLog_ERR(TAG, "GetBufferByIndex failure: 0x%08"PRIX32"", hr);
 			goto error;
 		}
 
@@ -458,7 +458,7 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 
 		if (FAILED(hr))
 		{
-			WLog_ERR(TAG, "Lock failure: 0x%04X", hr);
+			WLog_ERR(TAG, "Lock failure: 0x%08"PRIX32"", hr);
 			goto error;
 		}
 
@@ -472,7 +472,7 @@ static int mf_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 
 		if (FAILED(hr))
 		{
-			WLog_ERR(TAG, "Unlock failure: 0x%04X", hr);
+			WLog_ERR(TAG, "Unlock failure: 0x%08"PRIX32"", hr);
 			goto error;
 		}
 
@@ -592,7 +592,7 @@ static BOOL mf_init(H264_CONTEXT* h264)
 
 		if (FAILED(hr))
 		{
-			WLog_ERR(TAG, "MFStartup failure: 0x%04X", hr);
+			WLog_ERR(TAG, "MFStartup failure: 0x%08"PRIX32"", hr);
 			goto error;
 		}
 
@@ -601,7 +601,7 @@ static BOOL mf_init(H264_CONTEXT* h264)
 
 		if (FAILED(hr))
 		{
-			WLog_ERR(TAG, "CoCreateInstance(CLSID_CMSH264DecoderMFT) failure: 0x%04X", hr);
+			WLog_ERR(TAG, "CoCreateInstance(CLSID_CMSH264DecoderMFT) failure: 0x%08"PRIX32"", hr);
 			goto error;
 		}
 
@@ -610,7 +610,7 @@ static BOOL mf_init(H264_CONTEXT* h264)
 
 		if (FAILED(hr))
 		{
-			WLog_ERR(TAG, "QueryInterface(IID_ICodecAPI) failure: 0x%04X", hr);
+			WLog_ERR(TAG, "QueryInterface(IID_ICodecAPI) failure: 0x%08"PRIX32"", hr);
 			goto error;
 		}
 
@@ -621,7 +621,7 @@ static BOOL mf_init(H264_CONTEXT* h264)
 
 		if (FAILED(hr))
 		{
-			WLog_ERR(TAG, "SetValue(CODECAPI_AVLowLatencyMode) failure: 0x%04X", hr);
+			WLog_ERR(TAG, "SetValue(CODECAPI_AVLowLatencyMode) failure: 0x%08"PRIX32"", hr);
 			goto error;
 		}
 
@@ -629,7 +629,7 @@ static BOOL mf_init(H264_CONTEXT* h264)
 
 		if (FAILED(hr))
 		{
-			WLog_ERR(TAG, "MFCreateMediaType failure: 0x%04X", hr);
+			WLog_ERR(TAG, "MFCreateMediaType failure: 0x%08"PRIX32"", hr);
 			goto error;
 		}
 
@@ -638,7 +638,7 @@ static BOOL mf_init(H264_CONTEXT* h264)
 
 		if (FAILED(hr))
 		{
-			WLog_ERR(TAG, "SetGUID(MF_MT_MAJOR_TYPE) failure: 0x%04X", hr);
+			WLog_ERR(TAG, "SetGUID(MF_MT_MAJOR_TYPE) failure: 0x%08"PRIX32"", hr);
 			goto error;
 		}
 
@@ -647,7 +647,7 @@ static BOOL mf_init(H264_CONTEXT* h264)
 
 		if (FAILED(hr))
 		{
-			WLog_ERR(TAG, "SetGUID(MF_MT_SUBTYPE) failure: 0x%04X", hr);
+			WLog_ERR(TAG, "SetGUID(MF_MT_SUBTYPE) failure: 0x%08"PRIX32"", hr);
 			goto error;
 		}
 
@@ -655,7 +655,7 @@ static BOOL mf_init(H264_CONTEXT* h264)
 
 		if (FAILED(hr))
 		{
-			WLog_ERR(TAG, "SetInputType failure: 0x%04X", hr);
+			WLog_ERR(TAG, "SetInputType failure: 0x%08"PRIX32"", hr);
 			goto error;
 		}
 
@@ -663,7 +663,7 @@ static BOOL mf_init(H264_CONTEXT* h264)
 
 		if (FAILED(hr))
 		{
-			WLog_ERR(TAG, "mf_find_output_type failure: 0x%04X", hr);
+			WLog_ERR(TAG, "mf_find_output_type failure: 0x%08"PRIX32"", hr);
 			goto error;
 		}
 
@@ -672,7 +672,7 @@ static BOOL mf_init(H264_CONTEXT* h264)
 
 		if (FAILED(hr))
 		{
-			WLog_ERR(TAG, "SetOutputType failure: 0x%04X", hr);
+			WLog_ERR(TAG, "SetOutputType failure: 0x%08"PRIX32"", hr);
 			goto error;
 		}
 
@@ -680,7 +680,7 @@ static BOOL mf_init(H264_CONTEXT* h264)
 
 		if (FAILED(hr))
 		{
-			WLog_ERR(TAG, "mf_create_output_sample failure: 0x%04X", hr);
+			WLog_ERR(TAG, "mf_create_output_sample failure: 0x%08"PRIX32"", hr);
 			goto error;
 		}
 	}
@@ -886,7 +886,7 @@ static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData,
 		}
 		else
 		{
-			WLog_WARN(TAG, "DecodeFrame2 state: 0x%02X iBufferStatus: %d", state,
+			WLog_WARN(TAG, "DecodeFrame2 state: 0x%04X iBufferStatus: %d", state,
 			          sBufferInfo.iBufferStatus);
 			return -2002;
 		}
@@ -912,7 +912,7 @@ static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData,
 #if 0
 	WLog_INFO(TAG,
 	          "h264_decompress: state=%u, pYUVData=[%p,%p,%p], bufferStatus=%d, width=%d, height=%d, format=%d, stride=[%d,%d]",
-	          state, pYUVData[0], pYUVData[1], pYUVData[2], sBufferInfo.iBufferStatus,
+	          state, (void*) pYUVData[0], (void*) pYUVData[1], (void*) pYUVData[2], sBufferInfo.iBufferStatus,
 	          pSystemBuffer->iWidth, pSystemBuffer->iHeight, pSystemBuffer->iFormat,
 	          pSystemBuffer->iStride[0], pSystemBuffer->iStride[1]);
 #endif
@@ -1307,9 +1307,9 @@ static int libavcodec_decompress(H264_CONTEXT* h264, BYTE* pSrcData,
 	WLog_INFO(TAG,
 	          "libavcodec_decompress: frame decoded (status=%d, gotFrame=%d, width=%d, height=%d, Y=[%p,%d], U=[%p,%d], V=[%p,%d])",
 	          status, gotFrame, sys->videoFrame->width, sys->videoFrame->height,
-	          sys->videoFrame->data[0], sys->videoFrame->linesize[0],
-	          sys->videoFrame->data[1], sys->videoFrame->linesize[1],
-	          sys->videoFrame->data[2], sys->videoFrame->linesize[2]);
+	          (void*) sys->videoFrame->data[0], sys->videoFrame->linesize[0],
+	          (void*) sys->videoFrame->data[1], sys->videoFrame->linesize[1],
+	          (void*) sys->videoFrame->data[2], sys->videoFrame->linesize[2]);
 #endif
 
 	if (gotFrame)
@@ -1832,7 +1832,7 @@ INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op,
 	}
 
 	WLog_INFO(TAG,
-	          "luma=%llu [avg=%lf] chroma=%llu [avg=%lf] combined=%llu [avg=%lf]",
+	          "luma=%"PRIu64" [avg=%lf] chroma=%"PRIu64" [avg=%lf] combined=%"PRIu64" [avg=%lf]",
 	          op1, op1sum, op2, op2sum, op3, op3sum);
 #endif
 

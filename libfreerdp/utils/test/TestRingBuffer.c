@@ -111,7 +111,7 @@ int TestRingBuffer(int argc, char* argv[])
 
 	if (ringbuffer_used(&ringBuffer) != 15)
 	{
-		fprintf(stderr, "invalid used size got %ld when i would expect 15\n", ringbuffer_used(&ringBuffer));
+		fprintf(stderr, "invalid used size got %"PRIuz" when I would expect 15\n", ringbuffer_used(&ringBuffer));
 		return -1;
 	}
 
@@ -127,14 +127,14 @@ int TestRingBuffer(int argc, char* argv[])
 	{
 		if (chunks[0].data[i] != i % 5)
 		{
-			fprintf(stderr, "invalid byte at %d, got %d instead of %d\n", i, chunks[0].data[i], i % 5);
+			fprintf(stderr, "invalid byte at %d, got %"PRIu8" instead of %d\n", i, chunks[0].data[i], i % 5);
 			return -1;
 		}
 	}
 
 	if (ringbuffer_used(&ringBuffer) != 5)
 	{
-		fprintf(stderr, "invalid used size after read got %ld when i would expect 5\n", ringbuffer_used(&ringBuffer));
+		fprintf(stderr, "invalid used size after read got %"PRIuz" when I would expect 5\n", ringbuffer_used(&ringBuffer));
 		return -1;
 	}
 
@@ -189,7 +189,7 @@ int TestRingBuffer(int argc, char* argv[])
 
 	if (ringbuffer_capacity(&ringBuffer) != 10)
 	{
-		fprintf(stderr, "not the expected capacity, have %ld and expects 10\n", ringbuffer_capacity(&ringBuffer));
+		fprintf(stderr, "not the expected capacity, have %"PRIuz" and expects 10\n", ringbuffer_capacity(&ringBuffer));
 		return -1;
 	}
 	fprintf(stderr, "ok\n");

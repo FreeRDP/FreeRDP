@@ -26,7 +26,7 @@ static int test_CommDevice(LPCTSTR lpDeviceName, BOOL expectedResult)
 {
 	BOOL result;
 	TCHAR lpTargetPath[MAX_PATH];
-	DWORD tcslen;
+	size_t tcslen;
 
 	result = DefineCommDevice(lpDeviceName, _T("/dev/test"));
 	if ((!expectedResult && result) || (expectedResult && !result)) /* logical XOR */
@@ -50,12 +50,12 @@ static int test_CommDevice(LPCTSTR lpDeviceName, BOOL expectedResult)
 		return FALSE;
 	}
 
-	tcslen = QueryCommDevice(lpDeviceName, lpTargetPath, MAX_PATH);
+	tcslen = (size_t) QueryCommDevice(lpDeviceName, lpTargetPath, MAX_PATH);
 	if (expectedResult)
 	{
 		if (tcslen <= _tcslen(lpTargetPath)) /* at least 2 more TCHAR are expected */
 		{
-			_tprintf(_T("QueryCommDevice failure: didn't found the device name: %s\n"), lpDeviceName);
+			_tprintf(_T("QueryCommDevice failure: didn't find the device name: %s\n"), lpDeviceName);
 			return FALSE;
 		}
 
@@ -77,7 +77,7 @@ static int test_CommDevice(LPCTSTR lpDeviceName, BOOL expectedResult)
 	{
 		if (tcslen > 0)
 		{
-			_tprintf(_T("QueryCommDevice failure: device name: %s, expected result: <none>, result: %d %s\n"),
+			_tprintf(_T("QueryCommDevice failure: device name: %s, expected result: <none>, result: %")_T(PRIuz)_T(" %s\n"),
 				lpDeviceName, tcslen, lpTargetPath);
 
 			return FALSE;

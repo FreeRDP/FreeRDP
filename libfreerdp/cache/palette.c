@@ -54,7 +54,7 @@ void* palette_cache_get(rdpPaletteCache* paletteCache, UINT32 index)
 
 	if (index >= paletteCache->maxEntries)
 	{
-		WLog_ERR(TAG,  "invalid color table index: 0x%04X", index);
+		WLog_ERR(TAG,  "invalid color table index: 0x%08"PRIX32"", index);
 		return NULL;
 	}
 
@@ -62,7 +62,7 @@ void* palette_cache_get(rdpPaletteCache* paletteCache, UINT32 index)
 
 	if (!entry)
 	{
-		WLog_ERR(TAG,  "invalid color table at index: 0x%04X", index);
+		WLog_ERR(TAG,  "invalid color table at index: 0x%08"PRIX32"", index);
 		return NULL;
 	}
 
@@ -73,7 +73,7 @@ void palette_cache_put(rdpPaletteCache* paletteCache, UINT32 index, void* entry)
 {
 	if (index >= paletteCache->maxEntries)
 	{
-		WLog_ERR(TAG,  "invalid color table index: 0x%04X", index);
+		WLog_ERR(TAG,  "invalid color table index: 0x%08"PRIX32"", index);
 		free(entry);
 		return;
 	}

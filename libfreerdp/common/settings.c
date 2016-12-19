@@ -400,7 +400,7 @@ out_parallel_name_error:
 
 	}
 
-	WLog_ERR(TAG, "unknown device type %d", device->Type);
+	WLog_ERR(TAG, "unknown device type %"PRIu32"", device->Type);
 	return NULL;
 }
 
@@ -1678,7 +1678,7 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 			break;
 
 		default:
-			WLog_ERR(TAG,  "freerdp_set_param_bool: unknown id %d (param = %d)", id, param);
+			WLog_ERR(TAG,  "freerdp_set_param_bool: unknown id %d (param = %"PRId32")", id, param);
 			return -1;
 	}
 
@@ -2301,7 +2301,7 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 			break;
 
 		default:
-			WLog_ERR(TAG, "freerdp_set_param_uint32: unknown id %d (param = %u)", id, param);
+			WLog_ERR(TAG, "freerdp_set_param_uint32: unknown id %d (param = %"PRIu32")", id, param);
 			return -1;
 	}
 
@@ -2333,7 +2333,7 @@ int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 param)
 			break;
 
 		default:
-			WLog_ERR(TAG,  "freerdp_set_param_uint64: unknown id %d (param = %u)", id, (UINT32) param);
+			WLog_ERR(TAG,  "freerdp_set_param_uint64: unknown id %d (param = %"PRIu64")", id, param);
 			return -1;
 	}
 

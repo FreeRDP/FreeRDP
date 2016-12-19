@@ -539,7 +539,7 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 			}
 
 			free(str);
-			WLog_WARN(TAG,  "-g %s -> /size:%s or /w:%d /h:%d", arg->Value, arg->Value,
+			WLog_WARN(TAG,  "-g %s -> /size:%s or /w:%"PRIu32" /h:%"PRIu32"", arg->Value, arg->Value,
 					  settings->DesktopWidth, settings->DesktopHeight);
 		}
 		CommandLineSwitchCase(arg, "k")
@@ -799,7 +799,7 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 	WLog_WARN(TAG,  "%s -> /v:%s", settings->ServerHostname, settings->ServerHostname);
 
 	if (settings->ServerPort != 3389)
-		WLog_WARN(TAG,  " /port:%d", settings->ServerPort);
+		WLog_WARN(TAG,  " /port:%"PRIu32"", settings->ServerPort);
 
 	WLog_WARN(TAG,  "");
 	return 1;

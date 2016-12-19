@@ -87,13 +87,13 @@ int bulk_compress_validate(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE**
 
 	if (_DstSize != SrcSize)
 	{
-		WLog_DBG(TAG, "compression/decompression size mismatch: Actual: %d, Expected: %d", _DstSize, SrcSize);
+		WLog_DBG(TAG, "compression/decompression size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"", _DstSize, SrcSize);
 		return -1;
 	}
 
 	if (memcmp(_pDstData, pSrcData, SrcSize) != 0)
 	{
-		WLog_DBG(TAG, "compression/decompression input/output mismatch! flags: 0x%04X", _Flags);
+		WLog_DBG(TAG, "compression/decompression input/output mismatch! flags: 0x%08"PRIX32"", _Flags);
 #if 1
 		WLog_DBG(TAG, "Actual:");
 		winpr_HexDump(TAG, WLOG_DEBUG, _pDstData, SrcSize);
@@ -159,11 +159,11 @@ int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstD
 		CompressionRatio = metrics_write_bytes(metrics, UncompressedBytes, CompressedBytes);
 #ifdef WITH_BULK_DEBUG
 		{
-			WLog_DBG(TAG, "Decompress Type: %d Flags: %s (0x%04X) Compression Ratio: %f (%d / %d), Total: %f (%u / %u)",
+			WLog_DBG(TAG, "Decompress Type: %"PRIu32" Flags: %s (0x%08"PRIX32") Compression Ratio: %f (%"PRIu32" / %"PRIu32"), Total: %f (%"PRIu64" / %"PRIu64")",
 					 type, bulk_get_compression_flags_string(flags), flags,
 					 CompressionRatio, CompressedBytes, UncompressedBytes,
-					 metrics->TotalCompressionRatio, (UINT32) metrics->TotalCompressedBytes,
-					 (UINT32) metrics->TotalUncompressedBytes);
+					 metrics->TotalCompressionRatio, metrics->TotalCompressedBytes,
+					 metrics->TotalUncompressedBytes);
 		}
 #endif
 	}
@@ -222,11 +222,11 @@ int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstDat
 		CompressionRatio = metrics_write_bytes(metrics, UncompressedBytes, CompressedBytes);
 #ifdef WITH_BULK_DEBUG
 		{
-			WLog_DBG(TAG, "Compress Type: %d Flags: %s (0x%04X) Compression Ratio: %f (%d / %d), Total: %f (%u / %u)",
+			WLog_DBG(TAG, "Compress Type: %"PRIu32" Flags: %s (0x%08"PRIX32") Compression Ratio: %f (%"PRIu32" / %"PRIu32"), Total: %f (%"PRIu64" / %"PRIu64")",
 					 bulk->CompressionLevel, bulk_get_compression_flags_string(*pFlags), *pFlags,
 					 CompressionRatio, CompressedBytes, UncompressedBytes,
-					 metrics->TotalCompressionRatio, (UINT32) metrics->TotalCompressedBytes,
-					 (UINT32) metrics->TotalUncompressedBytes);
+					 metrics->TotalCompressionRatio, metrics->TotalCompressedBytes,
+					 metrics->TotalUncompressedBytes);
 		}
 #endif
 	}

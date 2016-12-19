@@ -371,7 +371,7 @@ static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown)
 	/* WSAEventSelect automatically sets the socket in non-blocking mode */
 	if (WSAEventSelect(ptr->socket, ptr->hEvent, FD_READ | FD_ACCEPT | FD_CLOSE))
 	{
-		WLog_ERR(TAG, "WSAEventSelect returned %08X", WSAGetLastError());
+		WLog_ERR(TAG, "WSAEventSelect returned 0x%08X", WSAGetLastError());
 		return 0;
 	}
 
@@ -692,7 +692,7 @@ char* freerdp_tcp_get_ip_address(int sockfd)
 	if (getsockname(sockfd, (struct sockaddr*) &sockaddr, &length) == 0)
 	{
 		ip = (BYTE*) (&sockaddr.sin_addr);
-		sprintf_s(ipAddress, sizeof(ipAddress), "%u.%u.%u.%u", ip[0], ip[1], ip[2], ip[3]);
+		sprintf_s(ipAddress, sizeof(ipAddress), "%"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"", ip[0], ip[1], ip[2], ip[3]);
 	}
 	else
 	{
@@ -839,7 +839,7 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames,
 	struct addrinfo** addrs;
 	struct addrinfo** results;
 
-	sprintf_s(port_str, sizeof(port_str) - 1, "%u", port);
+	sprintf_s(port_str, sizeof(port_str) - 1, "%d", port);
 
 	sockfds = (SOCKET*) calloc(count, sizeof(SOCKET));
 	events = (HANDLE*) calloc(count + 1, sizeof(HANDLE));
@@ -862,7 +862,7 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames,
 		hints.ai_socktype = SOCK_STREAM;
 
 		if (ports)
-			sprintf_s(port_str, sizeof(port_str) - 1, "%u", ports[index]);
+			sprintf_s(port_str, sizeof(port_str) - 1, "%"PRIu32"", ports[index]);
 
 		status = getaddrinfo(hostnames[index], port_str, &hints, &result);
 
@@ -910,13 +910,13 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames,
 		events[index] = WSACreateEvent();
 		if (!events[index])
 		{
-			WLog_ERR(TAG, "WSACreateEvent returned %08X", WSAGetLastError());
+			WLog_ERR(TAG, "WSACreateEvent returned 0x%08X", WSAGetLastError());
 			continue;
 		}
 
 		if (WSAEventSelect(sockfd, events[index], FD_READ | FD_WRITE | FD_CONNECT | FD_CLOSE))
 		{
-			WLog_ERR(TAG, "WSAEventSelect returned %08X", WSAGetLastError());
+			WLog_ERR(TAG, "WSAEventSelect returned 0x%08X", WSAGetLastError());
 			continue;
 		}
 
@@ -949,7 +949,7 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames,
 		/* set socket in blocking mode */
 		if (WSAEventSelect(sockfd, NULL, 0))
 		{
-			WLog_ERR(TAG, "WSAEventSelect returned %08X", WSAGetLastError());
+			WLog_ERR(TAG, "WSAEventSelect returned 0x%08X", WSAGetLastError());
 			continue;
 		}
 
@@ -1108,7 +1108,7 @@ int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings,
 			hints.ai_family = AF_UNSPEC;
 			hints.ai_socktype = SOCK_STREAM;
 
-			sprintf_s(port_str, sizeof(port_str) - 1, "%u", port);
+			sprintf_s(port_str, sizeof(port_str) - 1, "%d", port);
 
 			status = getaddrinfo(hostname, port_str, &hints, &result);
 

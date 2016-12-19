@@ -78,7 +78,7 @@ void ntlm_print_negotiate_flags(UINT32 flags)
 {
 	int i;
 	const char* str;
-	WLog_INFO(TAG, "negotiateFlags \"0x%08X\"", flags);
+	WLog_INFO(TAG, "negotiateFlags \"0x%08"PRIX32"\"", flags);
 
 	for (i = 31; i >= 0; i--)
 	{
@@ -182,7 +182,7 @@ void ntlm_free_message_fields_buffer(NTLM_MESSAGE_FIELDS* fields)
 
 void ntlm_print_message_fields(NTLM_MESSAGE_FIELDS* fields, const char* name)
 {
-	WLog_DBG(TAG, "%s (Len: %d MaxLen: %d BufferOffset: %d)",
+	WLog_DBG(TAG, "%s (Len: %"PRIu16" MaxLen: %"PRIu16" BufferOffset: %"PRIu32")",
 			 name, fields->Len, fields->MaxLen, fields->BufferOffset);
 
 	if (fields->Len > 0)
@@ -244,7 +244,7 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	CopyMemory(context->NegotiateMessage.pvBuffer, buffer->pvBuffer, buffer->cbBuffer);
 	context->NegotiateMessage.BufferType = buffer->BufferType;
 #ifdef WITH_DEBUG_NTLM
-	WLog_DBG(TAG, "NEGOTIATE_MESSAGE (length = %d)", (int) context->NegotiateMessage.cbBuffer);
+	WLog_DBG(TAG, "NEGOTIATE_MESSAGE (length = %"PRIu32")", context->NegotiateMessage.cbBuffer);
 	winpr_HexDump(TAG, WLOG_DEBUG, context->NegotiateMessage.pvBuffer, context->NegotiateMessage.cbBuffer);
 	ntlm_print_negotiate_flags(message->NegotiateFlags);
 
@@ -431,7 +431,7 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 
 	if (context->ChallengeTargetInfo.cbBuffer > 0)
 	{
-		WLog_DBG(TAG, "ChallengeTargetInfo (%d):", (int) context->ChallengeTargetInfo.cbBuffer);
+		WLog_DBG(TAG, "ChallengeTargetInfo (%"PRIu32"):", context->ChallengeTargetInfo.cbBuffer);
 		ntlm_print_av_pair_list(context->ChallengeTargetInfo.pvBuffer);
 	}
 
@@ -714,7 +714,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	}
 
 #ifdef WITH_DEBUG_NTLM
-	WLog_DBG(TAG, "AUTHENTICATE_MESSAGE (length = %d)", (int) context->AuthenticateMessage.cbBuffer);
+	WLog_DBG(TAG, "AUTHENTICATE_MESSAGE (length = %"PRIu32")", context->AuthenticateMessage.cbBuffer);
 	winpr_HexDump(TAG, WLOG_DEBUG, context->AuthenticateMessage.pvBuffer, context->AuthenticateMessage.cbBuffer);
 
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
@@ -916,7 +916,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 
 	if (context->AuthenticateTargetInfo.cbBuffer > 0)
 	{
-		WLog_DBG(TAG, "AuthenticateTargetInfo (%d):", (int) context->AuthenticateTargetInfo.cbBuffer);
+		WLog_DBG(TAG, "AuthenticateTargetInfo (%"PRIu32"):", context->AuthenticateTargetInfo.cbBuffer);
 		ntlm_print_av_pair_list(context->AuthenticateTargetInfo.pvBuffer);
 	}
 

@@ -1660,8 +1660,7 @@ static BOOL wf_cliprdr_get_file_contents(WCHAR* file_name, BYTE* buffer,
 
 	if (!ReadFile(hFile, buffer, nRequested, &nGet, NULL))
 	{
-		DWORD err = GetLastError();
-		DEBUG_CLIPRDR("ReadFile failed with 0x%x.", err);
+		DEBUG_CLIPRDR("ReadFile failed with 0x%08lX.", GetLastError());
 		goto error;
 	}
 

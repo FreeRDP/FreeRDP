@@ -115,7 +115,7 @@ UINT disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callbac
 
 	Stream_Write_UINT32(s, NumMonitors); /* NumMonitors (4 bytes) */
 
-	//WLog_ERR(TAG,  "NumMonitors: %d", NumMonitors);
+	//WLog_ERR(TAG,  "NumMonitors: %"PRIu32"", NumMonitors);
 
 	for (index = 0; index < NumMonitors; index++)
 	{
@@ -148,14 +148,14 @@ UINT disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callbac
 		Stream_Write_UINT32(s, Monitors[index].DeviceScaleFactor); /* DeviceScaleFactor (4 bytes) */
 
 #if 0
-		WLog_DBG(TAG,  "\t: Flags: 0x%04X", Monitors[index].Flags);
-		WLog_DBG(TAG,  "\t: Left: %d", Monitors[index].Left);
-		WLog_DBG(TAG,  "\t: Top: %d", Monitors[index].Top);
-		WLog_DBG(TAG,  "\t: Width: %d", Monitors[index].Width);
-		WLog_DBG(TAG,  "\t: Height: %d", Monitors[index].Height);
-		WLog_DBG(TAG,  "\t: PhysicalWidth: %d", Monitors[index].PhysicalWidth);
-		WLog_DBG(TAG,  "\t: PhysicalHeight: %d", Monitors[index].PhysicalHeight);
-		WLog_DBG(TAG,  "\t: Orientation: %d", Monitors[index].Orientation);
+		WLog_DBG(TAG,  "\t: Flags: 0x%08"PRIX32"", Monitors[index].Flags);
+		WLog_DBG(TAG,  "\t: Left: %"PRId32"", Monitors[index].Left);
+		WLog_DBG(TAG,  "\t: Top: %"PRId32"", Monitors[index].Top);
+		WLog_DBG(TAG,  "\t: Width: %"PRIu32"", Monitors[index].Width);
+		WLog_DBG(TAG,  "\t: Height: %"PRIu32"", Monitors[index].Height);
+		WLog_DBG(TAG,  "\t: PhysicalWidth: %"PRIu32"", Monitors[index].PhysicalWidth);
+		WLog_DBG(TAG,  "\t: PhysicalHeight: %"PRIu32"", Monitors[index].PhysicalHeight);
+		WLog_DBG(TAG,  "\t: Orientation: %"PRIu32"", Monitors[index].Orientation);
 #endif
 	}
 
@@ -188,8 +188,8 @@ UINT disp_recv_display_control_caps_pdu(DISP_CHANNEL_CALLBACK* callback, wStream
 	Stream_Read_UINT32(s, disp->MaxNumMonitors); /* MaxNumMonitors (4 bytes) */
 	Stream_Read_UINT32(s, disp->MaxMonitorAreaFactorA); /* MaxMonitorAreaFactorA (4 bytes) */
 	Stream_Read_UINT32(s, disp->MaxMonitorAreaFactorB); /* MaxMonitorAreaFactorB (4 bytes) */
-	//WLog_ERR(TAG,  "DisplayControlCapsPdu: MaxNumMonitors: %d MaxMonitorWidth: %d MaxMonitorHeight: %d",
-	//       disp->MaxNumMonitors, disp->MaxMonitorWidth, disp->MaxMonitorHeight);
+	//WLog_ERR(TAG,  "DisplayControlCapsPdu: MaxNumMonitors: %"PRIu32" MaxMonitorAreaFactorA: %"PRIu32" MaxMonitorAreaFactorB: %"PRIu32"",
+	//       disp->MaxNumMonitors, disp->MaxMonitorAreaFactorA, disp->MaxMonitorAreaFactorB);
 
 	return CHANNEL_RC_OK;
 }
@@ -213,7 +213,7 @@ UINT disp_recv_pdu(DISP_CHANNEL_CALLBACK* callback, wStream* s)
 	Stream_Read_UINT32(s, type); /* Type (4 bytes) */
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 
-	//WLog_ERR(TAG,  "Type: %d Length: %d", type, length);
+	//WLog_ERR(TAG,  "Type: %"PRIu32" Length: %"PRIu32"", type, length);
 
 	switch (type)
 	{
@@ -221,7 +221,7 @@ UINT disp_recv_pdu(DISP_CHANNEL_CALLBACK* callback, wStream* s)
 			return disp_recv_display_control_caps_pdu(callback, s);
 
 		default:
-			WLog_ERR(TAG, "Type %d not recognized!", type);
+			WLog_ERR(TAG, "Type %"PRIu32" not recognized!", type);
 			return ERROR_INTERNAL_ERROR;
 	}
 }

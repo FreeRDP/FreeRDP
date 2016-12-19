@@ -76,7 +76,7 @@ static void* named_pipe_client_thread(void* arg)
 		goto out;
 	}
 
-	printf("Client ReadFile: %u bytes\n", lpNumberOfBytesRead);
+	printf("Client ReadFile: %"PRIu32" bytes\n", lpNumberOfBytesRead);
 	winpr_HexDump("pipe.test", WLOG_DEBUG, lpReadBuffer, lpNumberOfBytesRead);
 	fSuccess = TRUE;
 out:
@@ -157,7 +157,7 @@ static void* named_pipe_server_thread(void* arg)
 		goto out;
 	}
 
-	printf("Server ReadFile: %u bytes\n", lpNumberOfBytesRead);
+	printf("Server ReadFile: %"PRIu32" bytes\n", lpNumberOfBytesRead);
 	winpr_HexDump("pipe.test", WLOG_DEBUG, lpReadBuffer, lpNumberOfBytesRead);
 	lpNumberOfBytesWritten = 0;
 	nNumberOfBytesToWrite = PIPE_BUFFER_SIZE;
@@ -272,7 +272,7 @@ static void* named_pipe_single_thread(void* arg)
 
 		if (!fConnected)
 		{
-			printf("%s: ConnectNamedPipe #%d failed. (%u)\n", __FUNCTION__, i, GetLastError());
+			printf("%s: ConnectNamedPipe #%d failed. (%"PRIu32")\n", __FUNCTION__, i, GetLastError());
 			goto out;
 		}
 	}
@@ -462,22 +462,22 @@ int TestPipeCreateNamedPipe(int argc, char* argv[])
 #endif
 	if (!(ReadyEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 	{
-		printf("CreateEvent failure: (%d)\n", GetLastError());
+		printf("CreateEvent failure: (%"PRIu32")\n", GetLastError());
 		return -1;
 	}
 	if (!(SingleThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) named_pipe_single_thread, NULL, 0, NULL)))
 	{
-		printf("CreateThread (SingleThread) failure: (%d)\n", GetLastError());
+		printf("CreateThread (SingleThread) failure: (%"PRIu32")\n", GetLastError());
 		return -1;
 	}
 	if (!(ClientThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) named_pipe_client_thread, NULL, 0, NULL)))
 	{
-		printf("CreateThread (ClientThread) failure: (%d)\n", GetLastError());
+		printf("CreateThread (ClientThread) failure: (%"PRIu32")\n", GetLastError());
 		return -1;
 	}
 	if (!(ServerThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) named_pipe_server_thread, NULL, 0, NULL)))
 	{
-		printf("CreateThread (ServerThread) failure: (%d)\n", GetLastError());
+		printf("CreateThread (ServerThread) failure: (%"PRIu32")\n", GetLastError());
 		return -1;
 	}
 	WaitForSingleObject(SingleThread, INFINITE);

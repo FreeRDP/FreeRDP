@@ -58,7 +58,7 @@ static UINT sf_peer_audin_opening(audin_server_context* context)
  */
 static UINT sf_peer_audin_open_result(audin_server_context* context, UINT32 result)
 {
-	WLog_DBG(TAG, "AUDIN open result %d.", result);
+	WLog_DBG(TAG, "AUDIN open result %"PRIu32".", result);
 	return CHANNEL_RC_OK;
 }
 

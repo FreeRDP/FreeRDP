@@ -106,10 +106,11 @@ BOOL rdp_read_server_auto_reconnect_cookie(rdpRdp* rdp, wStream* s, logon_info_e
 
 	p = autoReconnectCookie->arcRandomBits;
 
-	WLog_DBG(TAG, "ServerAutoReconnectCookie: Version: %d LogonId: %d SecurityVerifier: "
-			"%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
+	WLog_DBG(TAG, "ServerAutoReconnectCookie: Version: %"PRIu32" LogonId: %"PRIu32" SecurityVerifier: "
+			"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8""
+			"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"",
 			autoReconnectCookie->version, autoReconnectCookie->logonId,
-			p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7],
+			p[0], p[1], p[2],  p[3],  p[4],  p[5],  p[6],  p[7],
 			p[8], p[9], p[10], p[11], p[12], p[13], p[14], p[15]);
 
 	info->LogonId = autoReconnectCookie->logonId;
@@ -168,10 +169,11 @@ void rdp_write_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
 
 	p = autoReconnectCookie->securityVerifier;
 
-	WLog_DBG(TAG, "ClientAutoReconnectCookie: Version: %d LogonId: %d ArcRandomBits: "
-			"%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
+	WLog_DBG(TAG, "ClientAutoReconnectCookie: Version: %"PRIu32" LogonId: %"PRIu32" ArcRandomBits: "
+			"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8""
+			"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"",
 			autoReconnectCookie->version, autoReconnectCookie->logonId,
-			p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7],
+			p[0], p[1], p[2],  p[3],  p[4],  p[5],  p[6],  p[7],
 			p[8], p[9], p[10], p[11], p[12], p[13], p[14], p[15]);
 
 	Stream_Write_UINT32(s, autoReconnectCookie->cbLen); /* cbLen (4 bytes) */
@@ -211,7 +213,7 @@ BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 
 	if ((cbClientAddress % 2) || cbClientAddress > 80)
 	{
-		WLog_ERR(TAG, "protocol error: invalid cbClientAddress value: %u", cbClientAddress);
+		WLog_ERR(TAG, "protocol error: invalid cbClientAddress value: %"PRIu16"", cbClientAddress);
 		return FALSE;
 	}
 
@@ -258,7 +260,7 @@ BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 
 	if ((cbClientDir % 2) || cbClientDir > 512)
 	{
-		WLog_ERR(TAG, "protocol error: invalid cbClientDir value: %u", cbClientDir);
+		WLog_ERR(TAG, "protocol error: invalid cbClientDir value: %"PRIu16"", cbClientDir);
 		return FALSE;
 	}
 
@@ -460,7 +462,7 @@ BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s)
 		 */
 		if ((cbDomain % 2) || cbDomain > 512)
 		{
-			WLog_ERR(TAG, "protocol error: invalid cbDomain value: %u", cbDomain);
+			WLog_ERR(TAG, "protocol error: invalid cbDomain value: %"PRIu16"", cbDomain);
 			return FALSE;
 		}
 		wstr = (WCHAR*) Stream_Pointer(s);
@@ -489,7 +491,7 @@ BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s)
 		 */
 		if ((cbUserName % 2) || cbUserName > 512)
 		{
-			WLog_ERR(TAG, "protocol error: invalid cbUserName value: %u", cbUserName);
+			WLog_ERR(TAG, "protocol error: invalid cbUserName value: %"PRIu16"", cbUserName);
 			return FALSE;
 		}
 		wstr = (WCHAR*) Stream_Pointer(s);
@@ -518,7 +520,7 @@ BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s)
 		 */
 		if ((cbPassword % 2) || cbPassword > 512)
 		{
-			WLog_ERR(TAG, "protocol error: invalid cbPassword value: %u", cbPassword);
+			WLog_ERR(TAG, "protocol error: invalid cbPassword value: %"PRIu16"", cbPassword);
 			return FALSE;
 		}
 		wstr = (WCHAR*) Stream_Pointer(s);
@@ -547,7 +549,7 @@ BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s)
 		 */
 		if ((cbAlternateShell % 2) || cbAlternateShell > 512)
 		{
-			WLog_ERR(TAG, "protocol error: invalid cbAlternateShell value: %u", cbAlternateShell);
+			WLog_ERR(TAG, "protocol error: invalid cbAlternateShell value: %"PRIu16"", cbAlternateShell);
 			return FALSE;
 		}
 		wstr = (WCHAR*) Stream_Pointer(s);
@@ -576,7 +578,7 @@ BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s)
 		 */
 		if ((cbWorkingDir % 2) || cbWorkingDir > 512)
 		{
-			WLog_ERR(TAG, "protocol error: invalid cbWorkingDir value: %u", cbWorkingDir);
+			WLog_ERR(TAG, "protocol error: invalid cbWorkingDir value: %"PRIu16"", cbWorkingDir);
 			return FALSE;
 		}
 		wstr = (WCHAR*) Stream_Pointer(s);
@@ -861,7 +863,7 @@ BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s, logon_info *info)
 	{
 		if ((cbDomain % 2) || cbDomain > 52)
 		{
-			WLog_ERR(TAG, "protocol error: invalid cbDomain value: %lu", (unsigned long) cbDomain);
+			WLog_ERR(TAG, "protocol error: invalid cbDomain value: %"PRIu32"", cbDomain);
 			goto fail;
 		}
 		wstr = (WCHAR*) Stream_Pointer(s);
@@ -888,7 +890,7 @@ BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s, logon_info *info)
 	{
 		if ((cbUserName % 2) || cbUserName > 512)
 		{
-			WLog_ERR(TAG, "protocol error: invalid cbUserName value: %lu", (unsigned long) cbUserName);
+			WLog_ERR(TAG, "protocol error: invalid cbUserName value: %"PRIu32"", cbUserName);
 			goto fail;
 		}
 		wstr = (WCHAR*) Stream_Pointer(s);
@@ -907,7 +909,7 @@ BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s, logon_info *info)
 
 	Stream_Read_UINT32(s, info->sessionId); /* SessionId (4 bytes) */
 
-	WLog_DBG(TAG, "LogonInfoV1: SessionId: 0x%04X UserName: [%s] Domain: [%s]",
+	WLog_DBG(TAG, "LogonInfoV1: SessionId: 0x%08"PRIX32" UserName: [%s] Domain: [%s]",
 		 info->sessionId, info->username, info->domain);
 
 	return TRUE;
@@ -951,7 +953,7 @@ BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info *info)
 	{
 		if ((cbDomain % 2) || cbDomain > 52)
 		{
-			WLog_ERR(TAG, "protocol error: invalid cbDomain value: %lu", (unsigned long) cbDomain);
+			WLog_ERR(TAG, "protocol error: invalid cbDomain value: %"PRIu32"", cbDomain);
 			goto fail;
 		}
 		if (Stream_GetRemainingLength(s) < (size_t) cbDomain)
@@ -983,7 +985,7 @@ BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info *info)
 	{
 		if ((cbUserName % 2) || cbUserName < 2 || cbUserName > 512)
 		{
-			WLog_ERR(TAG, "protocol error: invalid cbUserName value: %lu", (unsigned long) cbUserName);
+			WLog_ERR(TAG, "protocol error: invalid cbUserName value: %"PRIu32"", cbUserName);
 			goto fail;
 		}
 		if (Stream_GetRemainingLength(s) < (size_t) cbUserName)
@@ -1005,7 +1007,7 @@ BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info *info)
 	}
 	Stream_Seek(s, cbUserName); /* userName */
 
-	WLog_DBG(TAG, "LogonInfoV2: SessionId: 0x%04X UserName: [%s] Domain: [%s]",
+	WLog_DBG(TAG, "LogonInfoV2: SessionId: 0x%08"PRIX32" UserName: [%s] Domain: [%s]",
 		 info->sessionId, info->username, info->domain);
 
 	return TRUE;
@@ -1041,7 +1043,7 @@ BOOL rdp_recv_logon_error_info(rdpRdp* rdp, wStream* s, logon_info_ex *info)
 	Stream_Read_UINT32(s, errorNotificationType); /* errorNotificationType (4 bytes) */
 	Stream_Read_UINT32(s, errorNotificationData); /* errorNotificationData (4 bytes) */
 
-	WLog_DBG(TAG, "LogonErrorInfo: Data: 0x%04X Type: 0x%04X",
+	WLog_DBG(TAG, "LogonErrorInfo: Data: 0x%08"PRIX32" Type: 0x%08"PRIX32"",
 			errorNotificationData, errorNotificationType);
 
 	IFCALL(rdp->instance->LogonErrorInfo, rdp->instance, errorNotificationData, errorNotificationType);
@@ -1066,7 +1068,7 @@ BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, wStream* s, logon_info_ex *info)
 	if ((Length < 6) || (Stream_GetRemainingLength(s) < (Length - 6)))
 		return FALSE;
 
-	WLog_DBG(TAG, "LogonInfoExtended: fieldsPresent: 0x%04X", fieldsPresent);
+	WLog_DBG(TAG, "LogonInfoExtended: fieldsPresent: 0x%08"PRIX32"", fieldsPresent);
 
 	/* logonFields */
 
@@ -1156,14 +1158,14 @@ BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 			break;
 
 		default:
-			WLog_ERR(TAG, "Unhandled saveSessionInfo type 0x%x", infoType);
+			WLog_ERR(TAG, "Unhandled saveSessionInfo type 0x%"PRIx32"", infoType);
 			status = TRUE;
 			break;
 	}
 
 	if (!status)
 	{
-		WLog_DBG(TAG, "SaveSessionInfo error: infoType: %s (%d)",
+		WLog_DBG(TAG, "SaveSessionInfo error: infoType: %s (%"PRIu32")",
 				infoType < 4 ? INFO_TYPE_LOGON_STRINGS[infoType % 4] : "Unknown", infoType);
 	}
 
@@ -1330,7 +1332,7 @@ BOOL rdp_send_save_session_info(rdpContext *context, UINT32 type, void *data)
 		status = rdp_write_logon_info_ex(s, (logon_info_ex *)data);
 		break;
 	default:
-		WLog_ERR(TAG, "saveSessionInfo type 0x%x not handled", type);
+		WLog_ERR(TAG, "saveSessionInfo type 0x%"PRIx32" not handled", type);
 		status = FALSE;
 		break;
 	}

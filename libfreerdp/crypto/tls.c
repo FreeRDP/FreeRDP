@@ -762,7 +762,7 @@ int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 
 		if ((status != WAIT_OBJECT_0) && (status != WAIT_TIMEOUT))
 		{
-			WLog_ERR(TAG, "error during WaitForSingleObject(): 0x%04X", status);
+			WLog_ERR(TAG, "error during WaitForSingleObject(): 0x%08"PRIX32"", status);
 			return -1;
 		}
 
@@ -1409,7 +1409,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname,
 void tls_print_certificate_error(char* hostname, UINT16 port, char* fingerprint,
                                  char* hosts_file)
 {
-	WLog_ERR(TAG, "The host key for %s:%hu has changed", hostname, port);
+	WLog_ERR(TAG, "The host key for %s:%"PRIu16" has changed", hostname, port);
 	WLog_ERR(TAG, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 	WLog_ERR(TAG, "@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @");
 	WLog_ERR(TAG, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
@@ -1437,7 +1437,7 @@ void tls_print_certificate_name_mismatch_error(char* hostname, UINT16 port,
 	WLog_ERR(TAG, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 	WLog_ERR(TAG, "@           WARNING: CERTIFICATE NAME MISMATCH!           @");
 	WLog_ERR(TAG, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-	WLog_ERR(TAG, "The hostname used for this connection (%s:%hu) ",
+	WLog_ERR(TAG, "The hostname used for this connection (%s:%"PRIu16") ",
 	         hostname, port);
 	WLog_ERR(TAG, "does not match %s given in the certificate:",
 	         alt_names_count < 1 ? "the name" : "any of the names");

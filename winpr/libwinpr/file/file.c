@@ -99,7 +99,7 @@ static BOOL FileSetEndOfFile(HANDLE hFile)
 	size = ftell(pFile->fp);
 	if (ftruncate(fileno(pFile->fp), size) < 0)
 	{
-		WLog_ERR(TAG, "ftruncate %s failed with %s [%08X]",
+		WLog_ERR(TAG, "ftruncate %s failed with %s [0x%08X]",
 			pFile->lpFileName, strerror(errno), errno);
 		return FALSE;
 	}
@@ -135,7 +135,7 @@ static DWORD FileSetFilePointer(HANDLE hFile, LONG lDistanceToMove,
 
 	if (fseek(pFile->fp, offset, whence))
 	{
-		WLog_ERR(TAG, "fseek(%s) failed with %s [%08X]", pFile->lpFileName,
+		WLog_ERR(TAG, "fseek(%s) failed with %s [0x%08X]", pFile->lpFileName,
 			 strerror(errno), errno);
 		return INVALID_SET_FILE_POINTER;
 	}
@@ -221,14 +221,14 @@ static DWORD FileGetFileSize(HANDLE Object, LPDWORD lpFileSizeHigh)
 
 	if (cur < 0)
 	{
-		WLog_ERR(TAG, "ftell(%s) failed with %s [%08X]", file->lpFileName,
+		WLog_ERR(TAG, "ftell(%s) failed with %s [0x%08X]", file->lpFileName,
 			 strerror(errno), errno);
 		return INVALID_FILE_SIZE;
 	}
 
 	if (fseek(file->fp, 0, SEEK_END) != 0)
 	{
-		WLog_ERR(TAG, "fseek(%s) failed with %s [%08X]", file->lpFileName,
+		WLog_ERR(TAG, "fseek(%s) failed with %s [0x%08X]", file->lpFileName,
 			 strerror(errno), errno);
 		return INVALID_FILE_SIZE;
 	}
@@ -237,14 +237,14 @@ static DWORD FileGetFileSize(HANDLE Object, LPDWORD lpFileSizeHigh)
 
 	if (size < 0)
 	{
-		WLog_ERR(TAG, "ftell(%s) failed with %s [%08X]", file->lpFileName,
+		WLog_ERR(TAG, "ftell(%s) failed with %s [0x%08X]", file->lpFileName,
 			 strerror(errno), errno);
 		return INVALID_FILE_SIZE;
 	}
 
 	if (fseek(file->fp, cur, SEEK_SET) != 0)
 	{
-		WLog_ERR(TAG, "ftell(%s) failed with %s [%08X]", file->lpFileName,
+		WLog_ERR(TAG, "ftell(%s) failed with %s [0x%08X]", file->lpFileName,
 			 strerror(errno), errno);
 		return INVALID_FILE_SIZE;
 	}
@@ -288,7 +288,7 @@ static BOOL FileLockFileEx(HANDLE hFile, DWORD dwFlags, DWORD dwReserved,
 
 	if (flock(fileno(pFile->fp), lock) < 0)
 	{
-		WLog_ERR(TAG, "flock failed with %s [%08X]",
+		WLog_ERR(TAG, "flock failed with %s [0x%08X]",
 			 strerror(errno), errno);
 		return FALSE;
 	}
@@ -314,7 +314,7 @@ static BOOL FileUnlockFile(HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffs
 
 	if (flock(fileno(pFile->fp), LOCK_UN) < 0)
 	{
-		WLog_ERR(TAG, "flock(LOCK_UN) %s failed with %s [%08X]",
+		WLog_ERR(TAG, "flock(LOCK_UN) %s failed with %s [0x%08X]",
 			 pFile->lpFileName, strerror(errno), errno);
 		return FALSE;
 	}
@@ -345,7 +345,7 @@ static BOOL FileUnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfByte
 
 	if (flock(fileno(pFile->fp), LOCK_UN) < 0)
 	{
-		WLog_ERR(TAG, "flock(LOCK_UN) %s failed with %s [%08X]",
+		WLog_ERR(TAG, "flock(LOCK_UN) %s failed with %s [0x%08X]",
 			 pFile->lpFileName, strerror(errno), errno);
 		return FALSE;
 	}
@@ -609,7 +609,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 	{
 		if (flock(fileno(pFile->fp), lock) < 0)
 		{
-			WLog_ERR(TAG, "flock failed with %s [%08X]",
+			WLog_ERR(TAG, "flock failed with %s [0x%08X]",
 				 strerror(errno), errno);
 			FileCloseHandle(pFile);
 			return INVALID_HANDLE_VALUE;

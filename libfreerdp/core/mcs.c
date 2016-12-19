@@ -342,14 +342,14 @@ BOOL mcs_write_domain_parameters(wStream* s, DomainParameters* domainParameters)
 void mcs_print_domain_parameters(DomainParameters* domainParameters)
 {
 	WLog_INFO(TAG,  "DomainParameters {");
-	WLog_INFO(TAG,  "\tmaxChannelIds:%d", domainParameters->maxChannelIds);
-	WLog_INFO(TAG,  "\tmaxUserIds:%d", domainParameters->maxUserIds);
-	WLog_INFO(TAG,  "\tmaxTokenIds:%d", domainParameters->maxTokenIds);
-	WLog_INFO(TAG,  "\tnumPriorities:%d", domainParameters->numPriorities);
-	WLog_INFO(TAG,  "\tminThroughput:%d", domainParameters->minThroughput);
-	WLog_INFO(TAG,  "\tmaxHeight:%d", domainParameters->maxHeight);
-	WLog_INFO(TAG,  "\tmaxMCSPDUsize:%d", domainParameters->maxMCSPDUsize);
-	WLog_INFO(TAG,  "\tprotocolVersion:%d", domainParameters->protocolVersion);
+	WLog_INFO(TAG,  "\tmaxChannelIds:%"PRIu32"", domainParameters->maxChannelIds);
+	WLog_INFO(TAG,  "\tmaxUserIds:%"PRIu32"", domainParameters->maxUserIds);
+	WLog_INFO(TAG,  "\tmaxTokenIds:%"PRIu32"", domainParameters->maxTokenIds);
+	WLog_INFO(TAG,  "\tnumPriorities:%"PRIu32"", domainParameters->numPriorities);
+	WLog_INFO(TAG,  "\tminThroughput:%"PRIu32"", domainParameters->minThroughput);
+	WLog_INFO(TAG,  "\tmaxHeight:%"PRIu32"", domainParameters->maxHeight);
+	WLog_INFO(TAG,  "\tmaxMCSPDUsize:%"PRIu32"", domainParameters->maxMCSPDUsize);
+	WLog_INFO(TAG,  "\tprotocolVersion:%"PRIu32"", domainParameters->protocolVersion);
 	WLog_INFO(TAG,  "}");
 }
 

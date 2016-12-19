@@ -42,7 +42,7 @@ static UINT encomsp_change_participant_control_level(EncomspServerContext* conte
 	BOOL mayInteract;
 	rdpShadowClient* client = (rdpShadowClient*) context->custom;
 
-	WLog_INFO(TAG, "ChangeParticipantControlLevel: ParticipantId: %d Flags: 0x%04X",
+	WLog_INFO(TAG, "ChangeParticipantControlLevel: ParticipantId: %"PRIu32" Flags: 0x%04"PRIX16"",
 			pdu->ParticipantId, pdu->Flags);
 
 	mayView = (pdu->Flags & ENCOMSP_MAY_VIEW) ? TRUE : FALSE;

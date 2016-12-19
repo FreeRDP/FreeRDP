@@ -163,8 +163,8 @@ static BOOL xf_event_execute_action_script(xfContext* xfc, XEvent* event)
 	if (!match)
 		return FALSE;
 
-	sprintf_s(command, sizeof(command), "%s xevent %s %d",
-	          xfc->actionScript, xeventName, (int) xfc->window->handle);
+	sprintf_s(command, sizeof(command), "%s xevent %s %lu",
+	          xfc->actionScript, xeventName, (unsigned long) xfc->window->handle);
 	actionScript = popen(command, "r");
 
 	if (!actionScript)
@@ -976,8 +976,8 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 	xf_event_execute_action_script(xfc, event);
 
 	if (event->type != MotionNotify)
-		DEBUG_X11("%s Event(%d): wnd=0x%04X", X11_EVENT_STRINGS[event->type],
-		          event->type, (UINT32) event->xany.window);
+		DEBUG_X11("%s Event(%d): wnd=0x%08lX", X11_EVENT_STRINGS[event->type],
+		          event->type, (unsigned long) event->xany.window);
 
 	switch (event->type)
 	{

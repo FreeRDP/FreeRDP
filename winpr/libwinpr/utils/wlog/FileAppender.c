@@ -81,7 +81,7 @@ static BOOL WLog_FileAppender_Open(wLog* log, wLogAppender* appender)
 		if (!fileAppender->FileName)
 			return FALSE;
 
-		sprintf_s(fileAppender->FileName, MAX_PATH, "%u.log", (unsigned int) GetCurrentProcessId());
+		sprintf_s(fileAppender->FileName, MAX_PATH, "%"PRIu32".log", GetCurrentProcessId());
 	}
 
 	if (!fileAppender->FullFileName)

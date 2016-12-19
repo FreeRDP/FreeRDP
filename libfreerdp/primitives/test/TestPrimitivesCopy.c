@@ -49,8 +49,8 @@ static BOOL test_copy8u_func(void)
 				{
 					if (dest[i + doff] != data[i + soff])
 					{
-						printf("COPY8U FAIL: off=%d len=%d, dest[%d]=0x%02x"
-						       "data[%d]=0x%02x\n",
+						printf("COPY8U FAIL: off=%d len=%d, dest[%d]=0x%02"PRIx8""
+						       "data[%d]=0x%02"PRIx8"\n",
 						       doff, length, i + doff, dest[i + doff],
 						       i + soff, data[i + soff]);
 						return FALSE;

@@ -258,9 +258,9 @@ void* shadow_multiclient_get_subscriber(rdpShadowMultiClientEvent* event)
 	if (ArrayList_Add(event->subscribers, subscriber) < 0)
 		goto out_free;
 
-	WLog_VRB(TAG, "Get subscriber %p. Wait event %d. %d clients.\n", (void *)subscriber, event->eventid, event->consuming);
+	WLog_VRB(TAG, "Get subscriber %p. Wait event %d. %d clients.\n", (void*) subscriber, event->eventid, event->consuming);
 	(void)_Consume(subscriber, TRUE);
-	WLog_VRB(TAG, "Get subscriber %p. Quit event %d. %d clients.\n", (void *)subscriber, event->eventid, event->consuming);
+	WLog_VRB(TAG, "Get subscriber %p. Quit event %d. %d clients.\n", (void*) subscriber, event->eventid, event->consuming);
 
 	LeaveCriticalSection(&(event->lock));
 

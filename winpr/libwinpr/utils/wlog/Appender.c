@@ -128,7 +128,7 @@ wLogAppender* WLog_Appender_New(wLog* log, DWORD logAppenderType)
 		appender = (wLogAppender*) WLog_UdpAppender_New(log);
 		break;
 	default:
-		fprintf(stderr, "%s: unknown handler type %d\n", __FUNCTION__, logAppenderType);
+		fprintf(stderr, "%s: unknown handler type %"PRIu32"\n", __FUNCTION__, logAppenderType);
 		appender = NULL;
 		break;
 	}

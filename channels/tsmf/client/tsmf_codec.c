@@ -304,7 +304,7 @@ static void tsmf_print_guid(const BYTE* guid)
 #ifdef WITH_DEBUG_TSMF
 	char guidString[37];
 
-	snprintf(guidString, sizeof(guidString), "%02X%02X%02X%02X-%02X%02X-%02X%02X-%02X%02X-%02X%02X%02X%02X%02X%02X",
+	snprintf(guidString, sizeof(guidString), "%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"-%02"PRIX8"%02"PRIX8"-%02"PRIX8"%02"PRIX8"-%02"PRIX8"%02"PRIX8"-%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"%02"PRIX8"",
 			guid[3], guid[2], guid[1], guid[0],
 			guid[5], guid[4],
 			guid[7], guid[6],
@@ -600,7 +600,7 @@ BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, wStream* s)
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 	Stream_Read_UINT32(s, cbFormat);
-	DEBUG_TSMF("cbFormat %d", cbFormat);
+	DEBUG_TSMF("cbFormat %"PRIu32"", cbFormat);
 #ifdef WITH_DEBUG_TSMF
 	winpr_HexDump(TAG, WLOG_DEBUG, Stream_Pointer(s), cbFormat);
 #endif

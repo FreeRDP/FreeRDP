@@ -116,7 +116,7 @@ void* brush_cache_get(rdpBrushCache* brushCache, UINT32 index, UINT32* bpp)
 	{
 		if (index >= brushCache->maxMonoEntries)
 		{
-			WLog_ERR(TAG,  "invalid brush (%d bpp) index: 0x%04X", *bpp, index);
+			WLog_ERR(TAG,  "invalid brush (%"PRIu32" bpp) index: 0x%08"PRIX32"", *bpp, index);
 			return NULL;
 		}
 
@@ -127,7 +127,7 @@ void* brush_cache_get(rdpBrushCache* brushCache, UINT32 index, UINT32* bpp)
 	{
 		if (index >= brushCache->maxEntries)
 		{
-			WLog_ERR(TAG,  "invalid brush (%d bpp) index: 0x%04X", *bpp, index);
+			WLog_ERR(TAG,  "invalid brush (%"PRIu32" bpp) index: 0x%08"PRIX32"", *bpp, index);
 			return NULL;
 		}
 
@@ -137,7 +137,7 @@ void* brush_cache_get(rdpBrushCache* brushCache, UINT32 index, UINT32* bpp)
 
 	if (entry == NULL)
 	{
-		WLog_ERR(TAG,  "invalid brush (%d bpp) at index: 0x%04X", *bpp, index);
+		WLog_ERR(TAG,  "invalid brush (%"PRIu32" bpp) at index: 0x%08"PRIX32"", *bpp, index);
 		return NULL;
 	}
 
@@ -150,7 +150,7 @@ void brush_cache_put(rdpBrushCache* brushCache, UINT32 index, void* entry, UINT3
 	{
 		if (index >= brushCache->maxMonoEntries)
 		{
-			WLog_ERR(TAG,  "invalid brush (%d bpp) index: 0x%04X", bpp, index);
+			WLog_ERR(TAG,  "invalid brush (%"PRIu32" bpp) index: 0x%08"PRIX32"", bpp, index);
 			free(entry);
 			return;
 		}
@@ -164,7 +164,7 @@ void brush_cache_put(rdpBrushCache* brushCache, UINT32 index, void* entry, UINT3
 	{
 		if (index >= brushCache->maxEntries)
 		{
-			WLog_ERR(TAG,  "invalid brush (%d bpp) index: 0x%04X", bpp, index);
+			WLog_ERR(TAG,  "invalid brush (%"PRIu32" bpp) index: 0x%08"PRIX32"", bpp, index);
 			free(entry);
 			return;
 		}

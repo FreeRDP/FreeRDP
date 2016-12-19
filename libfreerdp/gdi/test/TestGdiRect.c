@@ -116,7 +116,7 @@ int test_gdi_FillRect(void)
 				}
 				else
 				{
-					printf("actual:%04X expected:%04X\n", gdi_GetPixel(hdc, x, y), color);
+					printf("actual:%08"PRIX32" expected:%08"PRIX32"\n", gdi_GetPixel(hdc, x, y), color);
 					badPixels++;
 				}
 			}

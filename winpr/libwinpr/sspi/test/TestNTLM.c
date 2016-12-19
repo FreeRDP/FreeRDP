@@ -108,7 +108,7 @@ int test_ntlm_client_init(TEST_NTLM_CLIENT* ntlm, const char* user, const char* 
 
 	if (status != SEC_E_OK)
 	{
-		fprintf(stderr, "QuerySecurityPackageInfo status: %s (0x%04X)\n",
+		fprintf(stderr, "QuerySecurityPackageInfo status: %s (0x%08"PRIX32")\n",
 				GetSecurityStatusString(status), status);
 		return -1;
 	}
@@ -119,7 +119,7 @@ int test_ntlm_client_init(TEST_NTLM_CLIENT* ntlm, const char* user, const char* 
 
 	if (status != SEC_E_OK)
 	{
-		fprintf(stderr, "AcquireCredentialsHandle status: %s (0x%04X)\n",
+		fprintf(stderr, "AcquireCredentialsHandle status: %s (0x%08"PRIX32")\n",
 				GetSecurityStatusString(status), status);
 		return -1;
 	}
@@ -319,7 +319,7 @@ int test_ntlm_server_init(TEST_NTLM_SERVER* ntlm)
 
 	if (status != SEC_E_OK)
 	{
-		fprintf(stderr, "QuerySecurityPackageInfo status: %s (0x%04X)\n",
+		fprintf(stderr, "QuerySecurityPackageInfo status: %s (0x%08"PRIX32")\n",
 				GetSecurityStatusString(status), status);
 		return -1;
 	}
@@ -331,7 +331,7 @@ int test_ntlm_server_init(TEST_NTLM_SERVER* ntlm)
 
 	if (status != SEC_E_OK)
 	{
-		fprintf(stderr, "AcquireCredentialsHandle status: %s (0x%04X)\n",
+		fprintf(stderr, "AcquireCredentialsHandle status: %s (0x%08"PRIX32")\n",
 				GetSecurityStatusString(status), status);
 		return -1;
 	}
@@ -436,7 +436,7 @@ int test_ntlm_server_authenticate(TEST_NTLM_SERVER* ntlm)
 
 	if ((status != SEC_E_OK) && (status != SEC_I_CONTINUE_NEEDED))
 	{
-		fprintf(stderr, "AcceptSecurityContext status: %s (0x%04X)\n",
+		fprintf(stderr, "AcceptSecurityContext status: %s (0x%08"PRIX32")\n",
 				GetSecurityStatusString(status), status);
 		return -1; /* Access Denied */
 	}
@@ -552,7 +552,7 @@ int TestNTLM(int argc, char* argv[])
 		CopyMemory(pSecBuffer->pvBuffer, TEST_NTLM_NEGOTIATE, pSecBuffer->cbBuffer);
 	}
 
-	fprintf(stderr, "NTLM_NEGOTIATE (length = %d):\n", pSecBuffer->cbBuffer);
+	fprintf(stderr, "NTLM_NEGOTIATE (length = %"PRIu32"):\n", pSecBuffer->cbBuffer);
 	winpr_HexDump("sspi.test", WLOG_DEBUG, (BYTE*) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
 	/**
 	 * Server <- Negotiate Message
@@ -610,7 +610,7 @@ int TestNTLM(int argc, char* argv[])
 											&AuthNtlmMessage, sizeof(SecPkgContext_AuthNtlmMessage));
 	}
 
-	fprintf(stderr, "NTLM_CHALLENGE (length = %d):\n", pSecBuffer->cbBuffer);
+	fprintf(stderr, "NTLM_CHALLENGE (length = %"PRIu32"):\n", pSecBuffer->cbBuffer);
 	winpr_HexDump("sspi.test", WLOG_DEBUG, (BYTE*) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
 	/**
 	 * Client <- Challenge Message
@@ -642,7 +642,7 @@ int TestNTLM(int argc, char* argv[])
 		CopyMemory(pSecBuffer->pvBuffer, TEST_NTLM_AUTHENTICATE, pSecBuffer->cbBuffer);
 	}
 
-	fprintf(stderr, "NTLM_AUTHENTICATE (length = %d):\n", pSecBuffer->cbBuffer);
+	fprintf(stderr, "NTLM_AUTHENTICATE (length = %"PRIu32"):\n", pSecBuffer->cbBuffer);
 	winpr_HexDump("sspi.test", WLOG_DEBUG, (BYTE*) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
 	/**
 	 * Server <- Authenticate Message

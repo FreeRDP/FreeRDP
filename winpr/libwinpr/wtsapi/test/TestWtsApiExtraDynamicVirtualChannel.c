@@ -19,7 +19,7 @@ int TestWtsApiExtraDynamicVirtualChannel(int argc, char* argv[])
 
 	if (hVirtualChannel == INVALID_HANDLE_VALUE)
 	{
-		printf("WTSVirtualChannelOpen failed: %d\n", (int) GetLastError());
+		printf("WTSVirtualChannelOpen failed: %"PRIu32"\n", GetLastError());
 		return -1;
 	}
 	printf("WTSVirtualChannelOpen opend");
@@ -28,7 +28,7 @@ int TestWtsApiExtraDynamicVirtualChannel(int argc, char* argv[])
 
 	if (!bSuccess)
 	{
-		printf("WTSVirtualChannelWrite failed: %d\n", (int) GetLastError());
+		printf("WTSVirtualChannelWrite failed: %"PRIu32"\n", GetLastError());
 		return -1;
 	}
 	printf("WTSVirtualChannelWrite written");
@@ -38,7 +38,7 @@ int TestWtsApiExtraDynamicVirtualChannel(int argc, char* argv[])
 
 	if (!bSuccess)
 	{
-		printf("WTSVirtualChannelRead failed: %d\n", (int) GetLastError());
+		printf("WTSVirtualChannelRead failed: %"PRIu32"\n", GetLastError());
 		return -1;
 	}
 	printf("WTSVirtualChannelRead read");

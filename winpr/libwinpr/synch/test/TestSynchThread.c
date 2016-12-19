@@ -28,7 +28,7 @@ int TestSynchThread(int argc, char *argv[])
 
 	if (WAIT_TIMEOUT != rc)
 	{
-		printf("Timed WaitForSingleObject on running thread failed with %d\n", rc);
+		printf("Timed WaitForSingleObject on running thread failed with %"PRIu32"\n", rc);
 		return -3;
 	}
 
@@ -37,7 +37,7 @@ int TestSynchThread(int argc, char *argv[])
 
 	if (WAIT_OBJECT_0 != rc)
 	{
-		printf("WaitForSingleObject on thread failed with %d\n", rc);
+		printf("WaitForSingleObject on thread failed with %"PRIu32"\n", rc);
 		return -2;
 	}
 
@@ -46,7 +46,7 @@ int TestSynchThread(int argc, char *argv[])
 
 	if (WAIT_OBJECT_0 != rc)
 	{
-		printf("Timed WaitForSingleObject on dead thread failed with %d\n", rc);
+		printf("Timed WaitForSingleObject on dead thread failed with %"PRIu32"\n", rc);
 		return -5;
 	}
 
@@ -70,7 +70,7 @@ int TestSynchThread(int argc, char *argv[])
 
 	if (WAIT_TIMEOUT != rc)
 	{
-		printf("Timed WaitForSingleObject on running thread failed with %d\n", rc);
+		printf("Timed WaitForSingleObject on running thread failed with %"PRIu32"\n", rc);
 		return -3;
 	}
 
@@ -79,7 +79,7 @@ int TestSynchThread(int argc, char *argv[])
 
 	if (WAIT_OBJECT_0 != rc)
 	{
-		printf("WaitForSingleObject on thread failed with %d\n", rc);
+		printf("WaitForSingleObject on thread failed with %"PRIu32"\n", rc);
 		return -2;
 	}
 
@@ -88,7 +88,7 @@ int TestSynchThread(int argc, char *argv[])
 
 	if (WAIT_OBJECT_0 != rc)
 	{
-		printf("Timed WaitForSingleObject on dead thread failed with %d\n", rc);
+		printf("Timed WaitForSingleObject on dead thread failed with %"PRIu32"\n", rc);
 		return -5;
 	}
 

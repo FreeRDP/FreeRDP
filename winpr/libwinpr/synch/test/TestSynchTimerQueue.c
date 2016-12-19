@@ -36,7 +36,7 @@ VOID CALLBACK TimerRoutine(PVOID lpParam, BOOLEAN TimerOrWaitFired)
 
 	apcData->FireCount++;
 
-	printf("TimerRoutine: TimerId: %d FireCount: %d ActualTime: %d ExpectedTime: %d Discrepancy: %d\n",
+	printf("TimerRoutine: TimerId: %"PRIu32" FireCount: %"PRIu32" ActualTime: %"PRIu32" ExpectedTime: %"PRIu32" Discrepancy: %"PRIu32"\n",
 			apcData->TimerId, apcData->FireCount, TimerTime, expectedTime, TimerTime - expectedTime);
 
 	Sleep(50);
@@ -58,7 +58,7 @@ int TestSynchTimerQueue(int argc, char* argv[])
 
 	if (!hTimerQueue)
 	{
-		printf("CreateTimerQueue failed (%u)\n", GetLastError());
+		printf("CreateTimerQueue failed (%"PRIu32")\n", GetLastError());
 		return -1;
 	}
 
@@ -73,14 +73,14 @@ int TestSynchTimerQueue(int argc, char* argv[])
 
 		if (!(apcData[index].CompletionEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 		{
-			printf("Failed to create apcData[%u] event (%u)\n", index, GetLastError());
+			printf("Failed to create apcData[%"PRIu32"] event (%"PRIu32")\n", index, GetLastError());
 			return -1;
 		}
 
 		if (!CreateTimerQueueTimer(&hTimers[index], hTimerQueue, (WAITORTIMERCALLBACK) TimerRoutine,
 				&apcData[index], apcData[index].DueTime, apcData[index].Period, 0))
 		{
-			printf("CreateTimerQueueTimer failed (%u)\n", GetLastError());
+			printf("CreateTimerQueueTimer failed (%"PRIu32")\n", GetLastError());
 			return -1;
 		}
 	}
@@ -89,7 +89,7 @@ int TestSynchTimerQueue(int argc, char* argv[])
 	{
 		if (WaitForSingleObject(apcData[index].CompletionEvent, 20000) != WAIT_OBJECT_0)
 		{
-			printf("Failed to wait for timer queue timer #%u (%u)\n", index, GetLastError());
+			printf("Failed to wait for timer queue timer #%"PRIu32" (%"PRIu32")\n", index, GetLastError());
 			return -1;
 		}
 	}
@@ -102,7 +102,7 @@ int TestSynchTimerQueue(int argc, char* argv[])
 		 */
 		if (!DeleteTimerQueueTimer(hTimerQueue, hTimers[index], INVALID_HANDLE_VALUE))
 		{
-			printf("DeleteTimerQueueTimer failed (%u)\n", GetLastError());
+			printf("DeleteTimerQueueTimer failed (%"PRIu32")\n", GetLastError());
 			return -1;
 		}
 		CloseHandle(apcData[index].CompletionEvent);
@@ -110,7 +110,7 @@ int TestSynchTimerQueue(int argc, char* argv[])
 
 	if (!DeleteTimerQueue(hTimerQueue))
 	{
-		printf("DeleteTimerQueue failed (%u)\n", GetLastError());
+		printf("DeleteTimerQueue failed (%"PRIu32")\n", GetLastError());
 		return -1;
 	}
 

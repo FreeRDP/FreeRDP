@@ -115,7 +115,7 @@ static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 	
 	if (status != noErr)
 	{
-		WLog_DBG(TAG, "Failed to create a new Audio Queue. Status code: %d", status);
+		WLog_DBG(TAG, "Failed to create a new Audio Queue. Status code: %"PRId32"", status);
 	}
 	
 	UInt32 dataFormatSize = sizeof (recorderState.dataFormat);
@@ -212,7 +212,7 @@ void mf_peer_rdpsnd_input_callback (void                                *inUserD
 	
 	if (status != noErr)
 	{
-		WLog_DBG(TAG, "AudioQueueEnqueueBuffer() returned status = %d", status);
+		WLog_DBG(TAG, "AudioQueueEnqueueBuffer() returned status = %"PRId32"", status);
 	}
 	
 }

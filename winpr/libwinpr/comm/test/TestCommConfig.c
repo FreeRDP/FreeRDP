@@ -90,12 +90,12 @@ int TestCommConfig(int argc, char* argv[])
 	success = GetCommState(hComm, &dcb);
 	if (!success)
 	{
-		fprintf(stderr, "GetCommState failure: GetLastError() = Ox%x\n", (int) GetLastError());
+		fprintf(stderr, "GetCommState failure: GetLastError() = Ox%x\n", GetLastError());
 		return EXIT_FAILURE;
 	}
 
-	fprintf(stderr, "BaudRate: %d ByteSize: %d Parity: %d StopBits: %d\n",
-		(int) dcb.BaudRate, (int) dcb.ByteSize, (int) dcb.Parity, (int) dcb.StopBits);
+	fprintf(stderr, "BaudRate: %"PRIu32" ByteSize: %"PRIu8" Parity: %"PRIu8" StopBits: %"PRIu8"\n",
+		dcb.BaudRate, dcb.ByteSize, dcb.Parity, dcb.StopBits);
 
 	ZeroMemory(&commProp, sizeof(COMMPROP));
 	if (!GetCommProperties(hComm, &commProp))
@@ -125,7 +125,7 @@ int TestCommConfig(int argc, char* argv[])
 
 	if (!success)
 	{
-		fprintf(stderr, "SetCommState failure: GetLastError() = 0x%x\n", (int) GetLastError());
+		fprintf(stderr, "SetCommState failure: GetLastError() = 0x%x\n", GetLastError());
 		return EXIT_FAILURE;
 	}
 
@@ -133,14 +133,14 @@ int TestCommConfig(int argc, char* argv[])
 
 	if (!success)
 	{
-		fprintf(stderr, "GetCommState failure: GetLastError() = 0x%x\n", (int) GetLastError());
+		fprintf(stderr, "GetCommState failure: GetLastError() = 0x%x\n", GetLastError());
 		return 0;
 	}
 
 	if ((dcb.BaudRate != CBR_57600) || (dcb.ByteSize != 8) || (dcb.Parity != NOPARITY) || (dcb.StopBits != ONESTOPBIT))
 	{
-		fprintf(stderr, "Got an unexpeted value among: BaudRate: %d ByteSize: %d Parity: %d StopBits: %d\n",
-			(int) dcb.BaudRate, (int) dcb.ByteSize, (int) dcb.Parity, (int) dcb.StopBits);
+		fprintf(stderr, "Got an unexpeted value among: BaudRate: %"PRIu32" ByteSize: %"PRIu8" Parity: %"PRIu8" StopBits: %"PRIu8"\n",
+			dcb.BaudRate, dcb.ByteSize, dcb.Parity, dcb.StopBits);
 	}
 
 	CloseHandle(hComm);

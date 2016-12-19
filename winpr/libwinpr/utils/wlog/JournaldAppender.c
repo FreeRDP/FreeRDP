@@ -107,7 +107,7 @@ static BOOL WLog_JournaldAppender_WriteMessage(wLog* log, wLogAppender* appender
 	case WLOG_OFF:
 		return TRUE;
 	default:
-		fprintf(stderr, "%s: unknown level %d\n", __FUNCTION__, message->Level);
+		fprintf(stderr, "%s: unknown level %"PRIu32"\n", __FUNCTION__, message->Level);
 		return FALSE;
 	}
 

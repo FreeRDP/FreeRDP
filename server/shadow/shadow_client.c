@@ -60,7 +60,7 @@ static INLINE BOOL shadow_client_rdpgfx_new_surface(rdpShadowClient* client)
 
 	if (error)
 	{
-		WLog_ERR(TAG, "CreateSurface failed with error %u", error);
+		WLog_ERR(TAG, "CreateSurface failed with error %"PRIu32"", error);
 		return FALSE;
 	}
 
@@ -68,7 +68,7 @@ static INLINE BOOL shadow_client_rdpgfx_new_surface(rdpShadowClient* client)
 
 	if (error)
 	{
-		WLog_ERR(TAG, "MapSurfaceToOutput failed with error %u", error);
+		WLog_ERR(TAG, "MapSurfaceToOutput failed with error %"PRIu32"", error);
 		return FALSE;
 	}
 
@@ -85,7 +85,7 @@ static INLINE BOOL shadow_client_rdpgfx_release_surface(rdpShadowClient* client)
 
 	if (error)
 	{
-		WLog_ERR(TAG, "DeleteSurface failed with error %u", error);
+		WLog_ERR(TAG, "DeleteSurface failed with error %"PRIu32"", error);
 		return FALSE;
 	}
 
@@ -106,7 +106,7 @@ static INLINE BOOL shadow_client_rdpgfx_reset_graphic(rdpShadowClient* client)
 
 	if (error)
 	{
-		WLog_ERR(TAG, "ResetGraphics failed with error %u", error);
+		WLog_ERR(TAG, "ResetGraphics failed with error %"PRIu32"", error);
 		return FALSE;
 	}
 
@@ -237,7 +237,7 @@ static void shadow_client_message_free(wMessage* message)
 			break;
 
 		default:
-			WLog_ERR(TAG, "Unknown message id: %u", message->id);
+			WLog_ERR(TAG, "Unknown message id: %"PRIu32"", message->id);
 			free(message->wParam);
 			break;
 	}
@@ -342,7 +342,7 @@ static BOOL shadow_client_post_connect(freerdp_peer* peer)
 		settings->NSCodec =
 		    FALSE; /* NSCodec compressor does not support fragmentation yet */
 
-	WLog_INFO(TAG, "Client from %s is activated (%dx%d@%d)",
+	WLog_INFO(TAG, "Client from %s is activated (%"PRIu32"x%"PRIu32"@%"PRIu32")",
 	          peer->hostname, settings->DesktopWidth,
 	          settings->DesktopHeight, settings->ColorDepth);
 
@@ -350,7 +350,7 @@ static BOOL shadow_client_post_connect(freerdp_peer* peer)
 	if (shadow_client_recalc_desktop_size(client))
 	{
 		peer->update->DesktopResize(peer->update->context);
-		WLog_INFO(TAG, "Client from %s is resized (%dx%d@%d)",
+		WLog_INFO(TAG, "Client from %s is resized (%"PRIu32"x%"PRIu32"@%"PRIu32")",
 		          peer->hostname, settings->DesktopWidth,
 		          settings->DesktopHeight, settings->ColorDepth);
 	}
@@ -714,17 +714,22 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client,
 	RDPGFX_START_FRAME_PDU cmdstart;
 	RDPGFX_END_FRAME_PDU cmdend;
 	SYSTEMTIME sTime;
+
 	context = (rdpContext*) client;
 	update = context->update;
 	settings = context->settings;
 	server = client->server;
 	encoder = client->encoder;
+
 	cmdstart.frameId = shadow_encoder_create_frame_id(encoder);
 	GetSystemTime(&sTime);
 	cmdstart.timestamp = sTime.wHour << 22 | sTime.wMinute << 16 |
 	                     sTime.wSecond << 10 | sTime.wMilliseconds;
+
 	cmdend.frameId = cmdstart.frameId;
+
 	cmd.surfaceId = 0;
+	cmd.codecId = 0;
 	cmd.contextId = 0;
 	cmd.format = PIXEL_FORMAT_BGRX32;
 	cmd.left = nXSrc;
@@ -733,6 +738,9 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client,
 	cmd.bottom = cmd.top + nHeight;
 	cmd.width = nWidth;
 	cmd.height = nHeight;
+	cmd.length = 0;
+	cmd.data = NULL;
+	cmd.extra = NULL;
 
 	if (settings->GfxH264)
 	{
@@ -766,7 +774,7 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client,
 
 		if (error)
 		{
-			WLog_ERR(TAG, "SurfaceFrameCommand failed with error %u", error);
+			WLog_ERR(TAG, "SurfaceFrameCommand failed with error %"PRIu32"", error);
 			return FALSE;
 		}
 	}
@@ -1304,7 +1312,7 @@ static BOOL shadow_client_send_resize(rdpShadowClient* client,
 	EnterCriticalSection(&(client->lock));
 	region16_clear(&(client->invalidRegion));
 	LeaveCriticalSection(&(client->lock));
-	WLog_INFO(TAG, "Client from %s is resized (%dx%d@%d)",
+	WLog_INFO(TAG, "Client from %s is resized (%"PRIu32"x%"PRIu32"@%"PRIu32")",
 	          peer->hostname, settings->DesktopWidth, settings->DesktopHeight,
 	          settings->ColorDepth);
 	return TRUE;
@@ -1437,7 +1445,7 @@ static int shadow_client_subsystem_process_message(rdpShadowClient* client,
 			}
 
 		default:
-			WLog_ERR(TAG, "Unknown message id: %u", message->id);
+			WLog_ERR(TAG, "Unknown message id: %"PRIu32"", message->id);
 			break;
 	}
 

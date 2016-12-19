@@ -17,7 +17,7 @@ int TestBacktrace(int argc, char* argv[])
 	if (msg)
 	{
 		for (x=0; x<used; x++)
-			printf("%lu: %s\n", (unsigned long)x, msg[x]);
+			printf("%"PRIuz": %s\n", x, msg[x]);
 		rc = 0;
 	}
 	winpr_backtrace_symbols_fd(stack, fileno(stdout));

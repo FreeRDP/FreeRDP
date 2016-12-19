@@ -43,7 +43,7 @@ static int update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT3
 	Stream_Read_UINT8(s, cmd->bpp);
 	if ((cmd->bpp < 1) || (cmd->bpp > 32))
 	{
-		WLog_ERR(TAG, "invalid bpp value %d", cmd->bpp);
+		WLog_ERR(TAG, "invalid bpp value %"PRIu32"", cmd->bpp);
 		return FALSE;
 	}
 
@@ -77,7 +77,7 @@ static int update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s, UINT3
 	Stream_Read_UINT16(s, marker->frameAction);
 	Stream_Read_UINT32(s, marker->frameId);
 
-	WLog_Print(update->log, WLOG_DEBUG, "SurfaceFrameMarker: action: %s (%d) id: %d",
+	WLog_Print(update->log, WLOG_DEBUG, "SurfaceFrameMarker: action: %s (%"PRIu32") id: %"PRIu32"",
 			(!marker->frameAction) ? "Begin" : "End",
 			marker->frameAction, marker->frameId);
 
@@ -115,7 +115,7 @@ int update_recv_surfcmds(rdpUpdate* update, UINT32 size, wStream* s)
 				break;
 
 			default:
-				WLog_ERR(TAG, "unknown cmdType 0x%X", cmdType);
+				WLog_ERR(TAG, "unknown cmdType 0x%04"PRIX16"", cmdType);
 				return -1;
 		}
 

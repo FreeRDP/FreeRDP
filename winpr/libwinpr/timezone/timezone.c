@@ -2155,7 +2155,7 @@ static TIME_ZONE_RULE_ENTRY* winpr_get_current_time_zone_rule(TIME_ZONE_RULE_ENT
 	{
 		if ((rules[i].TicksStart >= windows_time) && (windows_time >= rules[i].TicksEnd))
 		{
-			/*WLog_ERR(TAG,  "Got rule %d from table at %p with count %u", i, rules, count);*/
+			/*WLog_ERR(TAG,  "Got rule %d from table at %p with count %"PRIu32"", i, (void*) rules, count);*/
 			return &rules[i];
 		}
 	}
@@ -2189,7 +2189,7 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 	if (dtz!= NULL)
 	{
 		int status;
-		WLog_DBG(TAG, "tz: Bias=%d sn='%s' dln='%s'",
+		WLog_DBG(TAG, "tz: Bias=%"PRId32" sn='%s' dln='%s'",
 			dtz->Bias, dtz->StandardName, dtz->DaylightName);
 
 		tz->Bias = dtz->Bias;
@@ -2235,7 +2235,7 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 	}
 
 	/* could not detect timezone, use computed bias from tm_gmtoff */
-	WLog_DBG(TAG, "tz not found, using computed bias %d.", tz->Bias);
+	WLog_DBG(TAG, "tz not found, using computed bias %"PRId32".", tz->Bias);
 out_error:
 	free(dtz);
 	memcpy(tz->StandardName, L"Client Local Time", sizeof(tz->StandardName));

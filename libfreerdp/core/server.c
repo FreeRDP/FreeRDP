@@ -152,7 +152,7 @@ static BOOL wts_read_drdynvc_capabilities_response(rdpPeerChannel* channel,
 
 	Stream_Seek_UINT8(channel->receiveData); /* Pad (1 byte) */
 	Stream_Read_UINT16(channel->receiveData, Version);
-	DEBUG_DVC("Version: %d", Version);
+	DEBUG_DVC("Version: %"PRIu16"", Version);
 	channel->vcm->drdynvc_state = DRDYNVC_STATE_READY;
 	return TRUE;
 }
@@ -169,13 +169,13 @@ static BOOL wts_read_drdynvc_create_response(rdpPeerChannel* channel,
 
 	if ((INT32) CreationStatus < 0)
 	{
-		DEBUG_DVC("ChannelId %d creation failed (%d)", channel->channelId,
+		DEBUG_DVC("ChannelId %"PRIu32" creation failed (%"PRId32")", channel->channelId,
 		          (INT32) CreationStatus);
 		channel->dvc_open_state = DVC_OPEN_STATE_FAILED;
 	}
 	else
 	{
-		DEBUG_DVC("ChannelId %d creation succeeded", channel->channelId);
+		DEBUG_DVC("ChannelId %"PRIu32" creation succeeded", channel->channelId);
 		channel->dvc_open_state = DVC_OPEN_STATE_SUCCEEDED;
 	}
 
@@ -240,7 +240,7 @@ static BOOL wts_read_drdynvc_data(rdpPeerChannel* channel, wStream* s,
 
 static void wts_read_drdynvc_close_response(rdpPeerChannel* channel)
 {
-	DEBUG_DVC("ChannelId %d close response", channel->channelId);
+	DEBUG_DVC("ChannelId %"PRIu32" close response", channel->channelId);
 	channel->dvc_open_state = DVC_OPEN_STATE_CLOSED;
 }
 
@@ -277,7 +277,7 @@ static BOOL wts_read_drdynvc_pdu(rdpPeerChannel* channel)
 			return FALSE;
 
 		length -= value;
-		DEBUG_DVC("Cmd %d ChannelId %d length %d", Cmd, ChannelId, length);
+		DEBUG_DVC("Cmd %d ChannelId %"PRIu32" length %"PRIu32"", Cmd, ChannelId, length);
 		dvc = wts_get_dvc_channel_by_id(channel->vcm, ChannelId);
 
 		if (dvc)
@@ -304,7 +304,7 @@ static BOOL wts_read_drdynvc_pdu(rdpPeerChannel* channel)
 		}
 		else
 		{
-			DEBUG_DVC("ChannelId %d not exists.", ChannelId);
+			DEBUG_DVC("ChannelId %"PRIu32" not exists.", ChannelId);
 		}
 	}
 	else

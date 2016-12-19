@@ -280,19 +280,19 @@ int TestClientRdpFile(int argc, char* argv[])
 
 	if (file->UseMultiMon != 0)
 	{
-		printf("UseMultiMon mismatch: Actual: %d, Expected: %d\n", file->UseMultiMon, 0);
+		printf("UseMultiMon mismatch: Actual: %"PRIu32", Expected: 0\n", file->UseMultiMon);
 		return -1;
 	}
 
 	if (file->ScreenModeId != 2)
 	{
-		printf("ScreenModeId mismatch: Actual: %d, Expected: %d\n", file->ScreenModeId, 2);
+		printf("ScreenModeId mismatch: Actual: %"PRIu32", Expected: 2\n", file->ScreenModeId);
 		return -1;
 	}
 
 	if (file->GatewayProfileUsageMethod != 1)
 	{
-		printf("GatewayProfileUsageMethod mismatch: Actual: %d, Expected: %d\n", file->GatewayProfileUsageMethod, 1);
+		printf("GatewayProfileUsageMethod mismatch: Actual: %"PRIu32", Expected: 1\n", file->GatewayProfileUsageMethod);
 		return -1;
 	}
 
@@ -312,19 +312,19 @@ int TestClientRdpFile(int argc, char* argv[])
 
 	if (file->UseMultiMon != 0)
 	{
-		printf("UseMultiMon mismatch: Actual: %d, Expected: %d\n", file->UseMultiMon, 0);
+		printf("UseMultiMon mismatch: Actual: %"PRIu32", Expected: 0\n", file->UseMultiMon);
 		return -1;
 	}
 
 	if (file->ScreenModeId != 2)
 	{
-		printf("ScreenModeId mismatch: Actual: %d, Expected: %d\n", file->ScreenModeId, 2);
+		printf("ScreenModeId mismatch: Actual: %"PRIu32", Expected: 2\n", file->ScreenModeId);
 		return -1;
 	}
 
 	if (file->GatewayProfileUsageMethod != 1)
 	{
-		printf("GatewayProfileUsageMethod mismatch: Actual: %d, Expected: %d\n", file->GatewayProfileUsageMethod, 1);
+		printf("GatewayProfileUsageMethod mismatch: Actual: %"PRIu32", Expected: 1\n", file->GatewayProfileUsageMethod);
 		return -1;
 	}
 
@@ -369,7 +369,7 @@ int TestClientRdpFile(int argc, char* argv[])
 			}
 			else if (line->flags & RDP_FILE_LINE_FLAG_TYPE_INTEGER)
 			{
-				printf("line %02d: name: %s value: %d, %s\n",
+				printf("line %02d: name: %s value: %"PRIu32", %s\n",
 					line->index, line->name, line->iValue,
 					(line->flags & RDP_FILE_LINE_FLAG_STANDARD) ? "standard" : "non-standard");
 			}

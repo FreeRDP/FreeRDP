@@ -74,8 +74,8 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(void)
 		{
 			if (out_c[i] != out_sse[i])
 			{
-				printf("optimized->YCoCgRToRGB FAIL[%d]: 0x%08x -> C 0x%08x vs optimized 0x%08x\n", i,
-				       in[i + 1], out_c[i], out_sse[i]);
+				printf("optimized->YCoCgRToRGB FAIL[%"PRIu32"]: 0x%08"PRIx32" -> C 0x%08"PRIx32" vs optimized 0x%08"PRIx32"\n",
+					   i, in[i + 1], out_c[i], out_sse[i]);
 				result = FALSE;
 			}
 		}
@@ -84,9 +84,8 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(void)
 		{
 			if (out_c_inv[i] != out_sse_inv[i])
 			{
-				printf("optimized->YCoCgRToRGB inverted FAIL[%d]: 0x%08x -> C 0x%08x vs optimized 0x%08x\n",
-				       i,
-				       in[i + 1], out_c_inv[i], out_sse_inv[i]);
+				printf("optimized->YCoCgRToRGB inverted FAIL[%"PRIu32"]: 0x%08"PRIu32" -> C 0x%08"PRIx32" vs optimized 0x%08"PRIx32"\n",
+				       i, in[i + 1], out_c_inv[i], out_sse_inv[i]);
 				result = FALSE;
 			}
 		}

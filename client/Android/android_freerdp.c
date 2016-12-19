@@ -67,7 +67,7 @@ static void android_OnChannelConnectedEventHandler(
 	if (!context || !e)
 	{
 		WLog_FATAL(TAG, "%s(context=%p, EventArgs=%p",
-		           __FUNCTION__, context, e);
+		           __FUNCTION__, (void*) context, (void*) e);
 		return;
 	}
 
@@ -102,7 +102,7 @@ static void android_OnChannelDisconnectedEventHandler(
 	if (!context || !e)
 	{
 		WLog_FATAL(TAG, "%s(context=%p, EventArgs=%p",
-		           __FUNCTION__, context, e);
+		           __FUNCTION__, (void*) context, (void*) e);
 		return;
 	}
 
@@ -551,7 +551,7 @@ static int android_freerdp_run(freerdp* instance)
 	const rdpSettings* settings = instance->context->settings;
 	rdpContext* context = instance->context;
 	BOOL async_input = settings->AsyncInput;
-	WLog_DBG(TAG, "AsyncInput=%d", settings->AsyncInput);
+	WLog_DBG(TAG, "AsyncInput=%"PRIu8"", settings->AsyncInput);
 
 	if (async_input)
 	{
@@ -588,8 +588,7 @@ static int android_freerdp_run(freerdp* instance)
 
 		if ((status == WAIT_FAILED))
 		{
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with %u [%08lX]",
-			         (unsigned)status, GetLastError());
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with %"PRIu32" [%08lX]", status, GetLastError());
 			break;
 		}
 
@@ -661,7 +660,7 @@ static void* android_thread_func(void* param)
 		goto fail;
 
 fail:
-	WLog_DBG(TAG, "Session ended with %08lX", status);
+	WLog_DBG(TAG, "Session ended with %08"PRIX32"", status);
 
 	if (status == CHANNEL_RC_OK)
 		freerdp_callback("OnDisconnected", "(J)V", (jlong)instance);
@@ -738,7 +737,7 @@ static jlong JNICALL jni_freerdp_new(JNIEnv* env, jclass cls, jobject context)
 	if (!contextClass || !fileClass)
 	{
 		WLog_FATAL(TAG, "Failed to load class references %s=%p, %s=%p",
-		           JAVA_CONTEXT_CLASS, contextClass, JAVA_FILE_CLASS, fileClass);
+		           JAVA_CONTEXT_CLASS, (void*) contextClass, JAVA_FILE_CLASS, (void*) fileClass);
 		return (jlong)NULL;
 	}
 
@@ -866,7 +865,7 @@ static jboolean JNICALL jni_freerdp_connect(JNIEnv* env, jclass cls,
 	if (!inst || !inst->context)
 	{
 		WLog_FATAL(TAG, "%s(env=%p, cls=%p, instance=%d", __FUNCTION__,
-		           env, cls, instance);
+		           (void*) env, (void*) cls, instance);
 		return JNI_FALSE;
 	}
 
@@ -892,7 +891,7 @@ static jboolean JNICALL jni_freerdp_disconnect(JNIEnv* env, jclass cls,
 	if (!inst || !inst->context || !cls || !env)
 	{
 		WLog_FATAL(TAG, "%s(env=%p, cls=%p, instance=%d", __FUNCTION__,
-		           env, cls, instance);
+		           (void*) env, (void*) cls, instance);
 		return JNI_FALSE;
 	}
 
@@ -929,7 +928,7 @@ static jboolean JNICALL jni_freerdp_update_graphics(
 	if (!env || !cls || !inst)
 	{
 		WLog_FATAL(TAG, "%s(env=%p, cls=%p, instance=%d", __FUNCTION__,
-		           env, cls, instance);
+		           (void*) env, (void*) cls, instance);
 		return JNI_FALSE;
 	}
 
@@ -1004,7 +1003,7 @@ static jboolean JNICALL jni_freerdp_send_key_event(
 		return JNI_FALSE;
 	}
 
-	WLog_DBG(TAG, "send_key_event: %d, %d", (int)scancode, flags);
+	WLog_DBG(TAG, "send_key_event: %"PRIu32", %d", scancode, flags);
 	return JNI_TRUE;
 }
 

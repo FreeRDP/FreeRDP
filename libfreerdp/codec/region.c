@@ -236,7 +236,7 @@ void region16_print(const REGION16 *region)
 	int currentBandY = -1;
 
 	rects = region16_rects(region, &nbRects);
-	WLog_DBG(TAG,  "nrects=%d", nbRects);
+	WLog_DBG(TAG,  "nrects=%"PRIu32"", nbRects);
 
 	for (i = 0; i < nbRects; i++, rects++)
 	{
@@ -246,7 +246,7 @@ void region16_print(const REGION16 *region)
 			WLog_DBG(TAG,  "band %d: ", currentBandY);
 		}
 
-		WLog_DBG(TAG,  "(%d,%d-%d,%d)", rects->left, rects->top, rects->right, rects->bottom);
+		WLog_DBG(TAG,  "(%"PRIu16",%"PRIu16"-%"PRIu16",%"PRIu16")", rects->left, rects->top, rects->right, rects->bottom);
 	}
 }
 

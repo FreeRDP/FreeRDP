@@ -62,7 +62,7 @@ static UINT rail_send(railPlugin* rail, wStream* s)
 	if (status != CHANNEL_RC_OK)
 	{
 		Stream_Free(s, TRUE);
-		WLog_ERR(TAG,  "pVirtualChannelWriteEx failed with %s [%08X]",
+		WLog_ERR(TAG,  "pVirtualChannelWriteEx failed with %s [%08"PRIX32"]",
 		         WTSErrorToString(status), status);
 	}
 
@@ -179,14 +179,14 @@ static UINT rail_send_client_sysparam(RailClientContext* context,
 
 	if ((error = rail_write_client_sysparam_order(s, sysparam)))
 	{
-		WLog_ERR(TAG, "rail_write_client_sysparam_order failed with error %u!", error);
+		WLog_ERR(TAG, "rail_write_client_sysparam_order failed with error %"PRIu32"!", error);
 		Stream_Free(s, TRUE);
 		return error;
 	}
 
 	if ((error = rail_send_pdu(rail, s, RDP_RAIL_ORDER_SYSPARAM)))
 	{
-		WLog_ERR(TAG, "rail_send_pdu failed with error %u!", error);
+		WLog_ERR(TAG, "rail_send_pdu failed with error %"PRIu32"!", error);
 	}
 
 	Stream_Free(s, TRUE);
@@ -209,7 +209,7 @@ static UINT rail_client_system_param(RailClientContext* context,
 
 		if ((error = rail_send_client_sysparam(context, sysparam)))
 		{
-			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %u!", error);
+			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %"PRIu32"!", error);
 			return error;
 		}
 	}
@@ -220,7 +220,7 @@ static UINT rail_client_system_param(RailClientContext* context,
 
 		if ((error = rail_send_client_sysparam(context, sysparam)))
 		{
-			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %u!", error);
+			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %"PRIu32"!", error);
 			return error;
 		}
 	}
@@ -231,7 +231,7 @@ static UINT rail_client_system_param(RailClientContext* context,
 
 		if ((error = rail_send_client_sysparam(context, sysparam)))
 		{
-			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %u!", error);
+			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %"PRIu32"!", error);
 			return error;
 		}
 	}
@@ -242,7 +242,7 @@ static UINT rail_client_system_param(RailClientContext* context,
 
 		if ((error = rail_send_client_sysparam(context, sysparam)))
 		{
-			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %u!", error);
+			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %"PRIu32"!", error);
 			return error;
 		}
 	}
@@ -253,7 +253,7 @@ static UINT rail_client_system_param(RailClientContext* context,
 
 		if ((error = rail_send_client_sysparam(context, sysparam)))
 		{
-			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %u!", error);
+			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %"PRIu32"!", error);
 			return error;
 		}
 	}
@@ -264,7 +264,7 @@ static UINT rail_client_system_param(RailClientContext* context,
 
 		if ((error = rail_send_client_sysparam(context, sysparam)))
 		{
-			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %u!", error);
+			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %"PRIu32"!", error);
 			return error;
 		}
 	}
@@ -275,7 +275,7 @@ static UINT rail_client_system_param(RailClientContext* context,
 
 		if ((error = rail_send_client_sysparam(context, sysparam)))
 		{
-			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %u!", error);
+			WLog_ERR(TAG, "rail_send_client_sysparam failed with error %"PRIu32"!", error);
 			return error;
 		}
 	}
@@ -558,7 +558,7 @@ static VOID VCAPITYPE rail_virtual_channel_open_event_ex(LPVOID lpUserParam, DWO
 		case CHANNEL_EVENT_DATA_RECEIVED:
 			if ((error = rail_virtual_channel_event_data_received(rail, pData, dataLength,
 			             totalLength, dataFlags)))
-				WLog_ERR(TAG, "rail_virtual_channel_event_data_received failed with error %u!",
+				WLog_ERR(TAG, "rail_virtual_channel_event_data_received failed with error %"PRIu32"!",
 				         error);
 
 			break;
@@ -610,7 +610,7 @@ static void* rail_virtual_channel_client_thread(void* arg)
 
 			if ((error = rail_order_recv(rail, data)))
 			{
-				WLog_ERR(TAG, "rail_order_recv failed with error %d!", error);
+				WLog_ERR(TAG, "rail_order_recv failed with error %"PRIu32"!", error);
 				break;
 			}
 		}
@@ -638,7 +638,7 @@ static UINT rail_virtual_channel_event_connected(railPlugin* rail, LPVOID pData,
 
 	if (status != CHANNEL_RC_OK)
 	{
-		WLog_ERR(TAG, "pVirtualChannelOpen failed with %s [%08X]",
+		WLog_ERR(TAG, "pVirtualChannelOpen failed with %s [%08"PRIX32"]",
 		         WTSErrorToString(status), status);
 		return status;
 	}
@@ -677,7 +677,7 @@ static UINT rail_virtual_channel_event_disconnected(railPlugin* rail)
 	    && (WaitForSingleObject(rail->thread, INFINITE) == WAIT_FAILED))
 	{
 		rc = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %u", rc);
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"", rc);
 		return rc;
 	}
 
@@ -689,7 +689,7 @@ static UINT rail_virtual_channel_event_disconnected(railPlugin* rail)
 
 	if (CHANNEL_RC_OK != rc)
 	{
-		WLog_ERR(TAG, "pVirtualChannelCloseEx failed with %s [%08X]",
+		WLog_ERR(TAG, "pVirtualChannelCloseEx failed with %s [%08"PRIX32"]",
 		         WTSErrorToString(rc), rc);
 		return rc;
 	}
@@ -727,14 +727,14 @@ static VOID VCAPITYPE rail_virtual_channel_init_event_ex(LPVOID lpUserParam, LPV
 	{
 		case CHANNEL_EVENT_CONNECTED:
 			if ((error = rail_virtual_channel_event_connected(rail, pData, dataLength)))
-				WLog_ERR(TAG, "rail_virtual_channel_event_connected failed with error %u!",
+				WLog_ERR(TAG, "rail_virtual_channel_event_connected failed with error %"PRIu32"!",
 				         error);
 
 			break;
 
 		case CHANNEL_EVENT_DISCONNECTED:
 			if ((error = rail_virtual_channel_event_disconnected(rail)))
-				WLog_ERR(TAG, "rail_virtual_channel_event_disconnected failed with error %u!",
+				WLog_ERR(TAG, "rail_virtual_channel_event_disconnected failed with error %"PRIu32"!",
 				         error);
 
 			break;
@@ -825,7 +825,7 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 
 	if (CHANNEL_RC_OK != rc)
 	{
-		WLog_ERR(TAG, "failed with %s [%08X]",
+		WLog_ERR(TAG, "failed with %s [%08"PRIX32"]",
 		         WTSErrorToString(rc), rc);
 		goto error_out;
 	}
