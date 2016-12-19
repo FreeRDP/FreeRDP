@@ -78,7 +78,7 @@ void profiler_print(PROFILER* profiler)
 {
 	double elapsed_sec = stopwatch_get_elapsed_time_in_seconds(profiler->stopwatch);
 	double avg_sec = elapsed_sec / (double) profiler->stopwatch->count;
-	WLog_INFO(TAG,  "| %-30.30s| %10du | %9f | %9f |",
+	WLog_INFO(TAG,  "| %-30.30s| %10"PRIu32" | %9f | %9f |",
 			  profiler->name, profiler->stopwatch->count, elapsed_sec, avg_sec);
 }
 
