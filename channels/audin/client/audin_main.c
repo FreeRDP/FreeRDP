@@ -312,7 +312,19 @@ static UINT audin_receive_wave_data(const BYTE* data, int size, void* user_data)
 {
 	UINT error;
 	wStream* out;
+	AUDIN_PLUGIN* audin;
 	AUDIN_CHANNEL_CALLBACK* callback = (AUDIN_CHANNEL_CALLBACK*) user_data;
+
+	if (!callback)
+		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
+
+	audin = (AUDIN_PLUGIN*)callback->plugin;
+
+	if (!audin)
+		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
+
+	if (!audin->attached)
+		return CHANNEL_RC_OK;
 
 	if ((error = audin_send_incoming_data_pdu((IWTSVirtualChannelCallback*) callback)))
 	{
