@@ -307,13 +307,22 @@ FREERDP_API BOOL freerdp_shall_disconnect(freerdp* instance);
 FREERDP_API BOOL freerdp_disconnect(freerdp* instance);
 FREERDP_API BOOL freerdp_reconnect(freerdp* instance);
 
-FREERDP_API UINT freerdp_channel_add_init_handle_data(rdpChannelHandles* handles, void* pInitHandle, void* pUserData);
-FREERDP_API void* freerdp_channel_get_init_handle_data(rdpChannelHandles* handles, void* pInitHandle);
-FREERDP_API void freerdp_channel_remove_init_handle_data(rdpChannelHandles* handles, void* pInitHandle);
+FREERDP_API UINT freerdp_channel_add_init_handle_data(rdpChannelHandles* handles, void* pInitHandle,
+        void* pUserData);
+FREERDP_API void* freerdp_channel_get_init_handle_data(rdpChannelHandles* handles,
+        void* pInitHandle);
+FREERDP_API void freerdp_channel_remove_init_handle_data(rdpChannelHandles* handles,
+        void* pInitHandle);
 
-FREERDP_API UINT freerdp_channel_add_open_handle_data(rdpChannelHandles* handles, DWORD openHandle, void* pUserData);
-FREERDP_API void* freerdp_channel_get_open_handle_data(rdpChannelHandles* handles, DWORD openHandle);
-FREERDP_API void freerdp_channel_remove_open_handle_data(rdpChannelHandles* handles, DWORD openHandle);
+FREERDP_API UINT freerdp_channel_add_open_handle_data(rdpChannelHandles* handles, DWORD openHandle,
+        void* pUserData);
+FREERDP_API void* freerdp_channel_get_open_handle_data(rdpChannelHandles* handles,
+        DWORD openHandle);
+FREERDP_API void freerdp_channel_remove_open_handle_data(rdpChannelHandles* handles,
+        DWORD openHandle);
+
+FREERDP_API UINT freerdp_channels_attach(freerdp* instance);
+FREERDP_API UINT freerdp_channels_detach(freerdp* instance);
 
 FREERDP_API BOOL freerdp_get_fds(freerdp* instance, void** rfds, int* rcount,
                                  void** wfds, int* wcount);

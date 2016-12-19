@@ -706,7 +706,8 @@ static UINT drdynvc_send(drdynvcPlugin* drdynvc, wStream* s)
 	if (status != CHANNEL_RC_OK)
 	{
 		Stream_Free(s, TRUE);
-		WLog_ERR(TAG, "VirtualChannelWriteEx failed with %s [%08"PRIX32"]", WTSErrorToString(status), status);
+		WLog_ERR(TAG, "VirtualChannelWriteEx failed with %s [%08"PRIX32"]", WTSErrorToString(status),
+		         status);
 	}
 
 	return status;
@@ -1073,7 +1074,7 @@ static UINT drdynvc_order_recv(drdynvcPlugin* drdynvc, wStream* s)
 	Cmd = (value & 0xf0) >> 4;
 	Sp = (value & 0x0c) >> 2;
 	cbChId = (value & 0x03) >> 0;
-	WLog_DBG(TAG, "order_recv: Cmd=0x%x, Sp=%d cbChId=%d", Cmd, Sp,cbChId);
+	WLog_DBG(TAG, "order_recv: Cmd=0x%x, Sp=%d cbChId=%d", Cmd, Sp, cbChId);
 
 	switch (Cmd)
 	{
@@ -1379,6 +1380,64 @@ static UINT drdynvc_virtual_channel_event_terminated(drdynvcPlugin* drdynvc)
 	return CHANNEL_RC_OK;
 }
 
+static UINT drdynvc_virtual_channel_event_attached(drdynvcPlugin* drdynvc)
+{
+	int i;
+	DVCMAN* dvcman;
+
+	if (!drdynvc)
+		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
+
+	dvcman = (DVCMAN*) drdynvc->channel_mgr;
+
+	if (!dvcman)
+		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
+
+	for (i = 0; i < dvcman->num_plugins; i++)
+	{
+		UINT error;
+		IWTSPlugin* pPlugin = dvcman->plugins[i];
+
+		if (pPlugin->Attached)
+			if ((error = pPlugin->Attached(pPlugin)))
+			{
+				WLog_ERR(TAG, "Attach failed with error %"PRIu32"!", error);
+				return error;
+			}
+	}
+
+	return CHANNEL_RC_OK;
+}
+
+static UINT drdynvc_virtual_channel_event_detached(drdynvcPlugin* drdynvc)
+{
+	int i;
+	DVCMAN* dvcman;
+
+	if (!drdynvc)
+		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
+
+	dvcman = (DVCMAN*) drdynvc->channel_mgr;
+
+	if (!dvcman)
+		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
+
+	for (i = 0; i < dvcman->num_plugins; i++)
+	{
+		UINT error;
+		IWTSPlugin* pPlugin = dvcman->plugins[i];
+
+		if (pPlugin->Detached)
+			if ((error = pPlugin->Detached(pPlugin)))
+			{
+				WLog_ERR(TAG, "Detach failed with error %"PRIu32"!", error);
+				return error;
+			}
+	}
+
+	return CHANNEL_RC_OK;
+}
+
 static VOID VCAPITYPE drdynvc_virtual_channel_init_event_ex(LPVOID lpUserParam, LPVOID pInitHandle,
         UINT event, LPVOID pData, UINT dataLength)
 {
@@ -1409,6 +1468,21 @@ static VOID VCAPITYPE drdynvc_virtual_channel_init_event_ex(LPVOID lpUserParam, 
 			if ((error =  drdynvc_virtual_channel_event_terminated(drdynvc)))
 				WLog_ERR(TAG, "drdynvc_virtual_channel_event_terminated failed with error %"PRIu32"", error);
 
+			break;
+
+		case CHANNEL_EVENT_ATTACHED:
+			if ((error =  drdynvc_virtual_channel_event_attached(drdynvc)))
+				WLog_ERR(TAG, "drdynvc_virtual_channel_event_attached failed with error %"PRIu32"", error);
+
+			break;
+
+		case CHANNEL_EVENT_DETACHED:
+			if ((error =  drdynvc_virtual_channel_event_detached(drdynvc)))
+				WLog_ERR(TAG, "drdynvc_virtual_channel_event_detached failed with error %"PRIu32"", error);
+
+			break;
+
+		default:
 			break;
 	}
 

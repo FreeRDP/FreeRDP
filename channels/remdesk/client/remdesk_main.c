@@ -1015,6 +1015,11 @@ static VOID VCAPITYPE remdesk_virtual_channel_init_event_ex(LPVOID lpUserParam, 
 		case CHANNEL_EVENT_TERMINATED:
 			remdesk_virtual_channel_event_terminated(remdesk);
 			break;
+
+		case CHANNEL_EVENT_ATTACHED:
+		case CHANNEL_EVENT_DETACHED:
+		default:
+			break;
 	}
 
 	if (error && remdesk->rdpcontext)

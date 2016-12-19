@@ -29,8 +29,14 @@
 typedef struct _drdynvc_client_context DrdynvcClientContext;
 
 typedef int (*pcDrdynvcGetVersion)(DrdynvcClientContext* context);
-typedef UINT (*pcDrdynvcOnChannelConnected)(DrdynvcClientContext* context, const char* name, void* pInterface);
-typedef UINT (*pcDrdynvcOnChannelDisconnected)(DrdynvcClientContext* context, const char* name, void* pInterface);
+typedef UINT(*pcDrdynvcOnChannelConnected)(DrdynvcClientContext* context, const char* name,
+        void* pInterface);
+typedef UINT(*pcDrdynvcOnChannelDisconnected)(DrdynvcClientContext* context, const char* name,
+        void* pInterface);
+typedef UINT(*pcDrdynvcOnChannelAttached)(DrdynvcClientContext* context, const char* name,
+        void* pInterface);
+typedef UINT(*pcDrdynvcOnChannelDetached)(DrdynvcClientContext* context, const char* name,
+        void* pInterface);
 
 struct _drdynvc_client_context
 {
@@ -40,6 +46,8 @@ struct _drdynvc_client_context
 	pcDrdynvcGetVersion GetVersion;
 	pcDrdynvcOnChannelConnected OnChannelConnected;
 	pcDrdynvcOnChannelDisconnected OnChannelDisconnected;
+	pcDrdynvcOnChannelAttached OnChannelAttached;
+	pcDrdynvcOnChannelDetached OnChannelDetached;
 };
 
 #endif /* FREERDP_CHANNEL_CLIENT_DRDYNVC_H */

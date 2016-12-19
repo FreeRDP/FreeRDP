@@ -182,6 +182,36 @@ static UINT freerdp_drdynvc_on_channel_disconnected(DrdynvcClientContext*
 	return status;
 }
 
+static UINT freerdp_drdynvc_on_channel_attached(DrdynvcClientContext*
+        context,
+        const char* name, void* pInterface)
+{
+	UINT status = CHANNEL_RC_OK;
+	ChannelAttachedEventArgs e;
+	rdpChannels* channels = (rdpChannels*) context->custom;
+	freerdp* instance = channels->instance;
+	EventArgsInit(&e, "freerdp");
+	e.name = name;
+	e.pInterface = pInterface;
+	PubSub_OnChannelAttached(instance->context->pubSub, instance->context, &e);
+	return status;
+}
+
+static UINT freerdp_drdynvc_on_channel_detached(DrdynvcClientContext*
+        context,
+        const char* name, void* pInterface)
+{
+	UINT status = CHANNEL_RC_OK;
+	ChannelDetachedEventArgs e;
+	rdpChannels* channels = (rdpChannels*) context->custom;
+	freerdp* instance = channels->instance;
+	EventArgsInit(&e, "freerdp");
+	e.name = name;
+	e.pInterface = pInterface;
+	PubSub_OnChannelDetached(instance->context->pubSub, instance->context, &e);
+	return status;
+}
+
 /**
  * go through and inform all the libraries that we are initialized
  * called only from main thread
@@ -214,6 +244,122 @@ UINT freerdp_channels_pre_connect(rdpChannels* channels, freerdp* instance)
 	return error;
 }
 
+UINT freerdp_channels_attach(freerdp* instance)
+{
+	UINT error = CHANNEL_RC_OK;
+	int index;
+	char* name = NULL;
+	char* hostname;
+	int hostnameLength;
+	rdpChannels* channels;
+	CHANNEL_CLIENT_DATA* pChannelClientData;
+	channels = instance->context->channels;
+	channels->connected = 1;
+	hostname = instance->settings->ServerHostname;
+	hostnameLength = (int) strlen(hostname);
+
+	for (index = 0; index < channels->clientDataCount; index++)
+	{
+		ChannelConnectedEventArgs e;
+		CHANNEL_OPEN_DATA* pChannelOpenData = NULL;
+		pChannelClientData = &channels->clientDataList[index];
+
+		if (pChannelClientData->pChannelInitEventProc)
+		{
+			pChannelClientData->pChannelInitEventProc(
+			    pChannelClientData->pInitHandle, CHANNEL_EVENT_ATTACHED, hostname, hostnameLength);
+		}
+		else if (pChannelClientData->pChannelInitEventProcEx)
+		{
+			pChannelClientData->pChannelInitEventProcEx(pChannelClientData->lpUserParam,
+			        pChannelClientData->pInitHandle, CHANNEL_EVENT_ATTACHED, hostname, hostnameLength);
+		}
+
+		if (getChannelError(instance->context) != CHANNEL_RC_OK)
+			goto fail;
+
+		pChannelOpenData = &channels->openDataList[index];
+		name = (char*) malloc(9);
+
+		if (!name)
+		{
+			error = CHANNEL_RC_NO_MEMORY;
+			goto fail;
+		}
+
+		CopyMemory(name, pChannelOpenData->name, 8);
+		name[8] = '\0';
+		EventArgsInit(&e, "freerdp");
+		e.name = name;
+		e.pInterface = pChannelOpenData->pInterface;
+		PubSub_OnChannelAttached(instance->context->pubSub, instance->context, &e);
+		free(name);
+		name = NULL;
+	}
+
+fail:
+	free(name);
+	return error;
+}
+
+UINT freerdp_channels_detach(freerdp* instance)
+{
+	UINT error = CHANNEL_RC_OK;
+	int index;
+	char* name = NULL;
+	char* hostname;
+	int hostnameLength;
+	rdpChannels* channels;
+	CHANNEL_CLIENT_DATA* pChannelClientData;
+	channels = instance->context->channels;
+	channels->connected = 1;
+	hostname = instance->settings->ServerHostname;
+	hostnameLength = (int) strlen(hostname);
+
+	for (index = 0; index < channels->clientDataCount; index++)
+	{
+		ChannelConnectedEventArgs e;
+		CHANNEL_OPEN_DATA* pChannelOpenData;
+		pChannelClientData = &channels->clientDataList[index];
+
+		if (pChannelClientData->pChannelInitEventProc)
+		{
+			pChannelClientData->pChannelInitEventProc(
+			    pChannelClientData->pInitHandle, CHANNEL_EVENT_DETACHED, hostname, hostnameLength);
+		}
+		else if (pChannelClientData->pChannelInitEventProcEx)
+		{
+			pChannelClientData->pChannelInitEventProcEx(pChannelClientData->lpUserParam,
+			        pChannelClientData->pInitHandle, CHANNEL_EVENT_DETACHED, hostname, hostnameLength);
+		}
+
+		if (getChannelError(instance->context) != CHANNEL_RC_OK)
+			goto fail;
+
+		pChannelOpenData = &channels->openDataList[index];
+		name = (char*) malloc(9);
+
+		if (!name)
+		{
+			error = CHANNEL_RC_NO_MEMORY;
+			goto fail;
+		}
+
+		CopyMemory(name, pChannelOpenData->name, 8);
+		name[8] = '\0';
+		EventArgsInit(&e, "freerdp");
+		e.name = name;
+		e.pInterface = pChannelOpenData->pInterface;
+		PubSub_OnChannelDetached(instance->context->pubSub, instance->context, &e);
+		free(name);
+		name = NULL;
+	}
+
+fail:
+	free(name);
+	return error;
+}
+
 /**
  * go through and inform all the libraries that we are connected
  * this will tell the libraries that its ok to call MyVirtualChannelOpen
@@ -234,7 +380,7 @@ UINT freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 	for (index = 0; index < channels->clientDataCount; index++)
 	{
 		ChannelConnectedEventArgs e;
-		CHANNEL_OPEN_DATA* pChannelOpenData = NULL;
+		CHANNEL_OPEN_DATA* pChannelOpenData;
 		pChannelClientData = &channels->clientDataList[index];
 
 		if (pChannelClientData->pChannelInitEventProc)
@@ -279,6 +425,8 @@ UINT freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 		channels->drdynvc->OnChannelConnected = freerdp_drdynvc_on_channel_connected;
 		channels->drdynvc->OnChannelDisconnected =
 		    freerdp_drdynvc_on_channel_disconnected;
+		channels->drdynvc->OnChannelAttached = freerdp_drdynvc_on_channel_attached;
+		channels->drdynvc->OnChannelDetached = freerdp_drdynvc_on_channel_detached;
 	}
 
 fail:
