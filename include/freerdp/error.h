@@ -135,7 +135,7 @@ extern "C" {
 * The value can hold one of the defined error codes below OR an error according to errno
 */
 
-extern int connectErrorCode;
+FREERDP_API extern int connectErrorCode;
 
 #define ERRORSTART 10000
 #define PREECONNECTERROR ERRORSTART + 1
