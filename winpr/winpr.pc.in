@@ -2,7 +2,7 @@ prefix=@CMAKE_INSTALL_PREFIX@
 exec_prefix=@CMAKE_INSTALL_PREFIX@
 libdir=@CMAKE_INSTALL_FULL_LIBDIR@
 includedir=${prefix}/@WINPR_INCLUDE_DIR@
-libs=-lwinpr
+libs=-lwinpr@WINPR_API_VERSION@
 
 Name: WinPR
 Description: WinPR: Windows Portable Runtime
