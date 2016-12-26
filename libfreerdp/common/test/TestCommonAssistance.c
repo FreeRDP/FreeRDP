@@ -1,6 +1,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
+#include <winpr/ssl.h>
 
 #include <freerdp/assistance.h>
 
@@ -180,6 +181,8 @@ int test_msrsc_incident_file_type2()
 
 int TestCommonAssistance(int argc, char* argv[])
 {
+	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
+
 	if (test_msrsc_incident_file_type1() != 0)
 	{
 		printf("test_msrsc_incident_file_type1 failed\n");

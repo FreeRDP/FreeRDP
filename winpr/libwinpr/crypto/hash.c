@@ -49,8 +49,6 @@ const EVP_MD* winpr_openssl_get_evp_md(int md)
 {
 	const EVP_MD* evp = NULL;
 
-	OpenSSL_add_all_digests();
-
 	switch (md)
 	{
 		case WINPR_MD_MD2:
