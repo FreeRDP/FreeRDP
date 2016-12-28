@@ -34,9 +34,8 @@
 static WINPR_TLS void* g_pInterface = NULL;
 static WINPR_TLS rdpChannels* g_channels = NULL; /* use only for VirtualChannelInit hack */
 
-static UINT32 g_OpenHandleSeq =
-    1; /* use global counter to ensure uniqueness across channel manager instances */
-static rdpChannelHandles g_ChannelHandles = { NULL, NULL };
+static volatile LONG g_OpenHandleSeq = 1; /* use global counter to ensure uniqueness across channel manager instances */
+static WINPR_TLS rdpChannelHandles g_ChannelHandles = { NULL, NULL };
 
 static CHANNEL_OPEN_DATA* freerdp_channels_find_channel_open_data_by_name(
     rdpChannels* channels, const char* name)
@@ -600,7 +599,7 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInitEx(LPVOID lpUserParam, LPVOID cl
 	{
 		pChannelDef = &pChannel[index];
 		pChannelOpenData = &channels->openDataList[channels->openDataCount];
-		pChannelOpenData->OpenHandle = ++channels->openHandleSequence;
+		pChannelOpenData->OpenHandle = InterlockedIncrement(&g_OpenHandleSeq);
 		pChannelOpenData->channels = channels;
 		pChannelOpenData->lpUserParam = lpUserParam;
 		HashTable_Add(channels->openHandles, (void*)(UINT_PTR) pChannelOpenData->OpenHandle,
@@ -630,7 +629,6 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInit(LPVOID* ppInitHandle,
 {
 	INT index;
 	void* pInterface;
-	DWORD OpenHandle;
 	CHANNEL_DEF* channel;
 	rdpSettings* settings;
 	PCHANNEL_DEF pChannelDef;
@@ -689,11 +687,10 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInit(LPVOID* ppInitHandle,
 	{
 		pChannelDef = &pChannel[index];
 		pChannelOpenData = &channels->openDataList[channels->openDataCount];
-		OpenHandle = g_OpenHandleSeq++;
-		pChannelOpenData->OpenHandle = OpenHandle;
+		pChannelOpenData->OpenHandle = InterlockedIncrement(&g_OpenHandleSeq);
 		pChannelOpenData->channels = channels;
-		freerdp_channel_add_open_handle_data(&g_ChannelHandles, OpenHandle, (void*) channels);
-		HashTable_Add(channels->openHandles, (void*)(UINT_PTR) OpenHandle,
+		freerdp_channel_add_open_handle_data(&g_ChannelHandles, pChannelOpenData->OpenHandle, (void*) channels);
+		HashTable_Add(channels->openHandles, (void*)(UINT_PTR) pChannelOpenData->OpenHandle,
 		              (void*) pChannelOpenData);
 		pChannelOpenData->flags = 1; /* init */
 		strncpy(pChannelOpenData->name, pChannelDef->name, CHANNEL_NAME_LEN);
