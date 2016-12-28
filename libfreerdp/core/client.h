@@ -111,7 +111,6 @@ struct rdp_channels
 	DrdynvcClientContext* drdynvc;
 	CRITICAL_SECTION channelsLock;
 
-	int openHandleSequence;
 	wHashTable* openHandles;
 };
 
