@@ -305,7 +305,12 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName,
 	/* channel add-in */
 
 	if (dwFlags & FREERDP_ADDIN_CHANNEL_STATIC)
-		entry = freerdp_load_dynamic_addin(pszFileName, NULL, "VirtualChannelEntry");
+	{
+		if (dwFlags & FREERDP_ADDIN_CHANNEL_ENTRYEX)
+			entry = freerdp_load_dynamic_addin(pszFileName, NULL, "VirtualChannelEntryEx");
+		else
+			entry = freerdp_load_dynamic_addin(pszFileName, NULL, "VirtualChannelEntry");
+	}
 	else if (dwFlags & FREERDP_ADDIN_CHANNEL_DYNAMIC)
 		entry = freerdp_load_dynamic_addin(pszFileName, NULL, "DVCPluginEntry");
 	else if (dwFlags & FREERDP_ADDIN_CHANNEL_DEVICE)
@@ -334,9 +339,6 @@ PVIRTUALCHANNELENTRY freerdp_load_channel_addin_entry(LPCSTR pszName,
 
 	if (freerdp_load_static_channel_addin_entry)
 		entry = freerdp_load_static_channel_addin_entry(pszName, pszSubsystem, pszType, dwFlags);
-
-	if (dwFlags & FREERDP_ADDIN_CHANNEL_ENTRYEX)
-		return entry; /* don't warn, don't try dynamic entries for VirtualChannelEntryEx */
 
 	if (!entry)
 		entry = freerdp_load_dynamic_channel_addin_entry(pszName, pszSubsystem, pszType, dwFlags);
