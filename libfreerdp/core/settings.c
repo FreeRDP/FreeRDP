@@ -481,7 +481,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->RemoteAppNumIconCaches = 3;
 	settings->RemoteAppNumIconCacheEntries = 12;
 	settings->VirtualChannelChunkSize = CHANNEL_CHUNK_LENGTH;
-	settings->MultifragMaxRequestSize = 0xFFFF;
+	settings->MultifragMaxRequestSize = (flags & FREERDP_SETTINGS_SERVER_MODE) ?
+	                                    0 : 0xFFFF;
 	settings->GatewayUseSameCredentials = FALSE;
 	settings->GatewayBypassLocal = FALSE;
 	settings->GatewayRpcTransport = TRUE;

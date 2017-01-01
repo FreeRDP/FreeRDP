@@ -2477,7 +2477,7 @@ static BOOL rdp_write_multifragment_update_capability_set(wStream* s,
 	if (!Stream_EnsureRemainingCapacity(s, 32))
 		return FALSE;
 
-	if (settings->ServerMode)
+	if (settings->ServerMode && settings->MultifragMaxRequestSize == 0)
 	{
 		/**
 		 * In server mode we prefer to use the highest useful request size that
