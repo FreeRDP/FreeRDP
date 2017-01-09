@@ -28,6 +28,7 @@
 #include <winpr/print.h>
 #include <winpr/stream.h>
 #include <winpr/winsock.h>
+#include <winpr/crypto.h>
 
 #include <freerdp/log.h>
 #include <freerdp/error.h>

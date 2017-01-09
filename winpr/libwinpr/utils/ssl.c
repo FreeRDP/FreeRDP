@@ -26,6 +26,7 @@
 #include <winpr/synch.h>
 #include <winpr/ssl.h>
 #include <winpr/thread.h>
+#include <winpr/crypto.h>
 
 #ifdef WITH_OPENSSL
 

@@ -21,6 +21,7 @@
 #include <winpr/path.h>
 #include <winpr/cmdline.h>
 #include <winpr/sysinfo.h>
+#include <winpr/crypto.h>
 
 #ifdef WITH_OPENSSL
 #include <openssl/conf.h>
