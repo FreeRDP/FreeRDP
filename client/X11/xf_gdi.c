@@ -378,8 +378,8 @@ static BOOL xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 			else
 			{
 				Pixmap pattern = xf_mono_bitmap_new(xfc, 8, 8, brush->data);
-				XSetBackground(xfc->display, xfc->gc, backColor);
-				XSetForeground(xfc->display, xfc->gc, foreColor);
+				XSetBackground(xfc->display, xfc->gc, foreColor);
+				XSetForeground(xfc->display, xfc->gc, backColor);
 				XSetFillStyle(xfc->display, xfc->gc, FillOpaqueStippled);
 				XSetStipple(xfc->display, xfc->gc, pattern);
 				XSetTSOrigin(xfc->display, xfc->gc, brush->x, brush->y);
