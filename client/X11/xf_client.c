@@ -1410,7 +1410,7 @@ static BOOL xf_auto_reconnect(freerdp* instance)
 	while (TRUE)
 	{
 		/* Quit retrying if max retries has been exceeded */
-		if (numRetries++ >= maxRetries)
+		if ((maxRetries > 0) && (numRetries++ >= maxRetries))
 		{
 			return FALSE;
 		}
