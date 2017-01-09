@@ -1738,9 +1738,10 @@ static VOID VCAPITYPE rdpdr_virtual_channel_init_event_ex(LPVOID lpUserParam, LP
 			rdpdr_virtual_channel_event_terminated(rdpdr);
 			break;
 
+		case CHANNEL_EVENT_ATTACHED:
+		case CHANNEL_EVENT_DETACHED:
 		default:
 			WLog_ERR(TAG, "unknown event %"PRIu32"!", event);
-			error = ERROR_INVALID_DATA;
 			break;
 	}
 

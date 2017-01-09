@@ -74,6 +74,8 @@ struct rdpsnd_plugin
 	AUDIO_FORMAT* ClientFormats;
 	UINT16 NumberOfClientFormats;
 
+	BOOL attached;
+
 	BOOL expectingWave;
 	BYTE waveData[4];
 	UINT16 waveDataSize;
@@ -740,6 +742,9 @@ static UINT rdpsnd_recv_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 	Stream_Read_UINT8(s, msgType); /* msgType */
 	Stream_Seek_UINT8(s); /* bPad */
 	Stream_Read_UINT16(s, BodySize);
+
+	if (!rdpsnd->attached)
+		goto out;
 
 	//WLog_ERR(TAG,  "msgType %"PRIu8" BodySize %"PRIu16"", msgType, BodySize);
 
@@ -1445,6 +1450,17 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_init_event_ex(LPVOID lpUserParam, L
 			rdpsnd_virtual_channel_event_terminated(plugin);
 			plugin = NULL;
 			break;
+
+		case CHANNEL_EVENT_ATTACHED:
+			plugin->attached = TRUE;
+			break;
+
+		case CHANNEL_EVENT_DETACHED:
+			plugin->attached = FALSE;
+			break;
+
+		default:
+			break;
 	}
 
 	if (error && plugin && plugin->rdpcontext)
@@ -1474,6 +1490,7 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 		return FALSE;
 	}
 
+	rdpsnd->attached = TRUE;
 #if !defined(_WIN32) && !defined(ANDROID)
 	{
 		sigset_t mask;
@@ -1497,9 +1514,7 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 	rdpsnd->log = WLog_Get("com.freerdp.channels.rdpsnd.client");
 	CopyMemory(&(rdpsnd->channelEntryPoints), pEntryPoints,
 	           sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX));
-
 	rdpsnd->InitHandle = pInitHandle;
-
 	rc = rdpsnd->channelEntryPoints.pVirtualChannelInitEx(rdpsnd, NULL, pInitHandle,
 	        &rdpsnd->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000,
 	        rdpsnd_virtual_channel_init_event_ex);

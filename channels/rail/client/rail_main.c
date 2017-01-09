@@ -742,6 +742,11 @@ static VOID VCAPITYPE rail_virtual_channel_init_event_ex(LPVOID lpUserParam, LPV
 		case CHANNEL_EVENT_TERMINATED:
 			rail_virtual_channel_event_terminated(rail);
 			break;
+
+		case CHANNEL_EVENT_ATTACHED:
+		case CHANNEL_EVENT_DETACHED:
+		default:
+			break;
 	}
 
 	if (error && rail->rdpcontext)
