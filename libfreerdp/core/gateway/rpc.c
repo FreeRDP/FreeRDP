@@ -27,6 +27,7 @@
 #include <winpr/tchar.h>
 #include <winpr/synch.h>
 #include <winpr/dsparse.h>
+#include <winpr/crypto.h>
 
 #include <freerdp/log.h>
 
