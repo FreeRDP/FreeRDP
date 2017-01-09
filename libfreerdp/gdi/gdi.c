@@ -698,7 +698,7 @@ static BOOL gdi_line_to(rdpContext* context, const LINE_TO_ORDER* lineTo)
 	HGDI_PEN hPen;
 	rdpGdi* gdi = context->gdi;
 
-	if (!gdi_decode_color(gdi, lineTo->backColor, &color, NULL))
+	if (!gdi_decode_color(gdi, lineTo->penColor, &color, NULL))
 		return FALSE;
 
 	if (!(hPen = gdi_CreatePen(lineTo->penStyle, lineTo->penWidth, color,
