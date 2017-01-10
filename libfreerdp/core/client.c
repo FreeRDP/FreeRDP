@@ -259,7 +259,7 @@ UINT freerdp_channels_attach(freerdp* instance)
 
 	for (index = 0; index < channels->clientDataCount; index++)
 	{
-		ChannelConnectedEventArgs e;
+		ChannelAttachedEventArgs e;
 		CHANNEL_OPEN_DATA* pChannelOpenData = NULL;
 		pChannelClientData = &channels->clientDataList[index];
 
@@ -317,7 +317,7 @@ UINT freerdp_channels_detach(freerdp* instance)
 
 	for (index = 0; index < channels->clientDataCount; index++)
 	{
-		ChannelConnectedEventArgs e;
+		ChannelDetachedEventArgs e;
 		CHANNEL_OPEN_DATA* pChannelOpenData;
 		pChannelClientData = &channels->clientDataList[index];
 
