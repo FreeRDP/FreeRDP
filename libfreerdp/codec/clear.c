@@ -932,7 +932,8 @@ static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* clear,
 
 		if ((nWidth * nHeight) > glyphEntry->count)
 		{
-			WLog_ERR(TAG, "(nWidth %"PRIu32" * nHeight %"PRIu32") > glyphEntry->count %"PRIu32"", nWidth, nHeight,
+			WLog_ERR(TAG, "(nWidth %"PRIu32" * nHeight %"PRIu32") > glyphEntry->count %"PRIu32"", nWidth,
+			         nHeight,
 			         glyphEntry->count);
 			return FALSE;
 		}
