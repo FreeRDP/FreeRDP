@@ -33,6 +33,46 @@
 
 #define TAG FREERDP_TAG("codec.clear")
 
+#define CLEARCODEC_FLAG_GLYPH_INDEX	0x01
+#define CLEARCODEC_FLAG_GLYPH_HIT	0x02
+#define CLEARCODEC_FLAG_CACHE_RESET	0x04
+
+#define CLEARCODEC_VBAR_SIZE 32768
+#define CLEARCODEC_VBAR_SHORT_SIZE 16384
+
+struct _CLEAR_GLYPH_ENTRY
+{
+	UINT32 size;
+	UINT32 count;
+	UINT32* pixels;
+};
+typedef struct _CLEAR_GLYPH_ENTRY CLEAR_GLYPH_ENTRY;
+
+struct _CLEAR_VBAR_ENTRY
+{
+	UINT32 size;
+	UINT32 count;
+	BYTE* pixels;
+};
+typedef struct _CLEAR_VBAR_ENTRY CLEAR_VBAR_ENTRY;
+
+struct _CLEAR_CONTEXT
+{
+	BOOL Compressor;
+	NSC_CONTEXT* nsc;
+	UINT32 seqNumber;
+	BYTE* TempBuffer;
+	UINT32 TempSize;
+	UINT32 nTempStep;
+	UINT32 TempFormat;
+	UINT32 format;
+	CLEAR_GLYPH_ENTRY GlyphCache[4000];
+	UINT32 VBarStorageCursor;
+	CLEAR_VBAR_ENTRY VBarStorage[CLEARCODEC_VBAR_SIZE];
+	UINT32 ShortVBarStorageCursor;
+	CLEAR_VBAR_ENTRY ShortVBarStorage[CLEARCODEC_VBAR_SHORT_SIZE];
+};
+
 static const UINT32 CLEAR_LOG2_FLOOR[256] =
 {
 	0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
@@ -301,6 +341,33 @@ static BOOL clear_decompress_subcode_rlex(wStream* s,
 	return TRUE;
 }
 
+static BOOL clear_resize_buffer(CLEAR_CONTEXT* clear, UINT32 width, UINT32 height)
+{
+	UINT32 size;
+
+	if (!clear)
+		return FALSE;
+
+	size = ((width + 16) * (height + 16) * GetBytesPerPixel(clear->format));
+
+	if (size > clear->TempSize)
+	{
+		BYTE* tmp = (BYTE*) realloc(clear->TempBuffer, size);
+
+		if (!tmp)
+		{
+			WLog_ERR(TAG, "clear->TempBuffer realloc failed for %"PRIu32" bytes",
+			         size);
+			return FALSE;
+		}
+
+		clear->TempSize = size;
+		clear->TempBuffer = tmp;
+	}
+
+	return TRUE;
+}
+
 static BOOL clear_decompress_residual_data(CLEAR_CONTEXT* clear,
         wStream* s,
         UINT32 residualByteCount,
@@ -327,6 +394,10 @@ static BOOL clear_decompress_residual_data(CLEAR_CONTEXT* clear,
 	suboffset = 0;
 	pixelIndex = 0;
 	pixelCount = nWidth * nHeight;
+
+	if (!clear_resize_buffer(clear, nWidth, nHeight))
+		return FALSE;
+
 	dstBuffer = clear->TempBuffer;
 
 	while (suboffset < residualByteCount)
@@ -467,19 +538,8 @@ static BOOL clear_decompress_subcodecs_data(CLEAR_CONTEXT* clear, wStream* s,
 			return FALSE;
 		}
 
-		if ((width * height * GetBytesPerPixel(clear->format)) >
-		    clear->TempSize)
-		{
-			clear->TempSize = (width * height * GetBytesPerPixel(clear->format));
-			clear->TempBuffer = (BYTE*) realloc(clear->TempBuffer, clear->TempSize);
-
-			if (!clear->TempBuffer)
-			{
-				WLog_ERR(TAG, "clear->TempBuffer realloc failed for %"PRIu32" bytes",
-				         clear->TempSize);
-				return FALSE;
-			}
-		}
+		if (!clear_resize_buffer(clear, width, height))
+			return FALSE;
 
 		switch (subcodecId)
 		{
@@ -954,15 +1014,15 @@ static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* clear,
 		if (glyphEntry->count > glyphEntry->size)
 		{
 			BYTE* tmp;
-			glyphEntry->size = glyphEntry->count;
-			tmp = realloc(glyphEntry->pixels, glyphEntry->size * bpp);
+			tmp = realloc(glyphEntry->pixels, glyphEntry->count * bpp);
 
 			if (!tmp)
 			{
-				WLog_ERR(TAG, "glyphEntry->pixels realloc %"PRIu32" failed!", glyphEntry->size * bpp);
+				WLog_ERR(TAG, "glyphEntry->pixels realloc %"PRIu32" failed!", glyphEntry->count * bpp);
 				return FALSE;
 			}
 
+			glyphEntry->size = glyphEntry->count;
 			glyphEntry->pixels = (UINT32*)tmp;
 		}
 
@@ -1158,8 +1218,8 @@ CLEAR_CONTEXT* clear_context_new(BOOL Compressor)
 	if (!updateContextFormat(clear, PIXEL_FORMAT_BGRX32))
 		goto error_nsc;
 
-	clear->TempSize = 512 * 512 * 4;
-	clear->TempBuffer = (BYTE*) malloc(clear->TempSize);
+	if (!clear_resize_buffer(clear, 512, 512))
+		goto error_nsc;
 
 	if (!clear->TempBuffer)
 		goto error_nsc;
