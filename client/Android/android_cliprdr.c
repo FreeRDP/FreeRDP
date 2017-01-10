@@ -436,7 +436,7 @@ static UINT android_cliprdr_server_format_data_response(
 		data = (void*) ClipboardGetData(afc->clipboard, formatId, &size);
 		attached = jni_attach_thread(&env);
 		jdata = jniNewStringUTF(env, data, size);
-		freerdp_callback("OnRemoteClipboardChanged", "(ILjava/lang/String;)V", instance,
+		freerdp_callback("OnRemoteClipboardChanged", "(JLjava/lang/String;)V", (jlong)instance,
 		                 jdata);
 		(*env)->DeleteLocalRef(env, jdata);
 
