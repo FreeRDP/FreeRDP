@@ -530,6 +530,12 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 			}
 			else /* NoAlpha */
 			{
+				const UINT32 color = GetColor(TempFormat, 0, 0, 0, 0xFF);
+
+				if (!freerdp_image_fill(pTempData, TempFormat, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight,
+				                        color))
+					return FALSE;
+
 				status = planar_decompress_plane_rle(planes[0], rleSizes[0],
 				                                     pTempData, nTempStep, nXDst, nYDst, nSrcWidth, nSrcHeight, 2,
 				                                     vFlip); /* RedPlane */
