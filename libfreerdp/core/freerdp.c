@@ -51,7 +51,8 @@
 
 /* connectErrorCode is 'extern' in error.h. See comment there.*/
 
-UINT freerdp_channel_add_init_handle_data(rdpChannelHandles* handles, void* pInitHandle, void* pUserData)
+UINT freerdp_channel_add_init_handle_data(rdpChannelHandles* handles, void* pInitHandle,
+        void* pUserData)
 {
 	if (!handles->init)
 		handles->init = ListDictionary_New(TRUE);
@@ -89,9 +90,10 @@ void freerdp_channel_remove_init_handle_data(rdpChannelHandles* handles, void* p
 	}
 }
 
-UINT freerdp_channel_add_open_handle_data(rdpChannelHandles* handles, DWORD openHandle, void* pUserData)
+UINT freerdp_channel_add_open_handle_data(rdpChannelHandles* handles, DWORD openHandle,
+        void* pUserData)
 {
-	void* pOpenHandle = (void*) (size_t) openHandle;
+	void* pOpenHandle = (void*)(size_t) openHandle;
 
 	if (!handles->open)
 		handles->open = ListDictionary_New(TRUE);
@@ -114,14 +116,14 @@ UINT freerdp_channel_add_open_handle_data(rdpChannelHandles* handles, DWORD open
 void* freerdp_channel_get_open_handle_data(rdpChannelHandles* handles, DWORD openHandle)
 {
 	void* pUserData = NULL;
-	void* pOpenHandle = (void*) (size_t) openHandle;
+	void* pOpenHandle = (void*)(size_t) openHandle;
 	pUserData = ListDictionary_GetItemValue(handles->open, pOpenHandle);
 	return pUserData;
 }
 
 void freerdp_channel_remove_open_handle_data(rdpChannelHandles* handles, DWORD openHandle)
 {
-	void* pOpenHandle = (void*) (size_t) openHandle;
+	void* pOpenHandle = (void*)(size_t) openHandle;
 	ListDictionary_Remove(handles->open, pOpenHandle);
 
 	if (ListDictionary_Count(handles->open) < 1)
@@ -798,6 +800,13 @@ void freerdp_set_last_error(rdpContext* context, UINT32 lastError)
 	if (lastError)
 		WLog_ERR(TAG, "freerdp_set_last_error %s [0x%08"PRIX32"]",
 		         freerdp_get_last_error_name(lastError), lastError);
+
+	if (context->LastError != 0)
+	{
+		WLog_ERR(TAG, "TODO: Trying to set error code %s, but %s already set!",
+		         freerdp_get_last_error_name(lastError),
+		         freerdp_get_last_error_name(context->LastError));
+	}
 
 	context->LastError = lastError;
 
