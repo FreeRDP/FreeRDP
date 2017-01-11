@@ -1289,9 +1289,11 @@ static UINT cliprdr_send_format_list(wfClipboard* clipboard)
 
 	for (index = 0; index < numFormats; index++)
 	{
-		GetClipboardFormatNameA(formats[index].formatId, formatName,
-		                        sizeof(formatName));
-		formats[index].formatName = _strdup(formatName);
+		if(GetClipboardFormatNameA(formats[index].formatId, formatName,
+		                        sizeof(formatName)))
+		{
+			formats[index].formatName = _strdup(formatName);
+		}
 	}
 
 	formatList.numFormats = numFormats;
