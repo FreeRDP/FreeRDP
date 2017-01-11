@@ -490,6 +490,8 @@ static BOOL xf_event_KeyPress(xfContext* xfc, XEvent* event, BOOL app)
 static BOOL xf_event_KeyRelease(xfContext* xfc, XEvent* event, BOOL app)
 {
 	XEvent nextEvent;
+	KeySym keysym;
+	char str[256];
 
 	if (XPending(xfc->display))
 	{
@@ -503,7 +505,8 @@ static BOOL xf_event_KeyRelease(xfContext* xfc, XEvent* event, BOOL app)
 		}
 	}
 
-	xf_keyboard_key_release(xfc, event->xkey.keycode);
+	XLookupString((XKeyEvent*) event, str, sizeof(str), &keysym, NULL);
+	xf_keyboard_key_release(xfc, event->xkey.keycode, keysym);
 	return TRUE;
 }
 

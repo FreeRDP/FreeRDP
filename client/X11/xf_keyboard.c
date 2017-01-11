@@ -43,6 +43,9 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
 
+static BOOL firstPressRightCtrl = TRUE;
+static BOOL ungrabKeyboardWithRightCtrl = TRUE;
+
 BOOL xf_keyboard_action_script_init(xfContext* xfc)
 {
 	FILE* keyScript;
@@ -160,12 +163,15 @@ void xf_keyboard_key_press(xfContext* xfc, BYTE keycode, KeySym keysym)
 	xf_keyboard_send_key(xfc, TRUE, keycode);
 }
 
-void xf_keyboard_key_release(xfContext* xfc, BYTE keycode)
+void xf_keyboard_key_release(xfContext* xfc, BYTE keycode, KeySym keysym)
 {
 	if (keycode < 8)
 		return;
 
 	xfc->KeyboardState[keycode] = FALSE;
+	
+	xf_keyboard_handle_special_keys_release(xfc, keysym);
+	
 	xf_keyboard_send_key(xfc, FALSE, keycode);
 }
 
@@ -458,6 +464,24 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 	XF_MODIFIER_KEYS mod = { 0 };
 	xk_keyboard_get_modifier_keys(xfc, &mod);
 
+	// remember state of RightCtrl to ungrab keyboard if next action is release of RightCtrl
+	// do not return anything such that the key could be used by client if ungrab is not the goal
+	if (keysym == XK_Control_R)
+	{
+		if (mod.RightCtrl && firstPressRightCtrl)
+		{
+			// Right Ctrl is pressed, getting ready to ungrab
+			ungrabKeyboardWithRightCtrl = TRUE;
+			firstPressRightCtrl = FALSE;
+		}
+	}
+	else
+	{
+		// some other key has been pressed, abort ungrabbing
+		if (ungrabKeyboardWithRightCtrl)
+			ungrabKeyboardWithRightCtrl = FALSE;
+	}
+	
 	if (!xf_keyboard_execute_action_script(xfc, &mod, keysym))
 	{
 		return TRUE;
@@ -565,6 +589,33 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 #endif /* WITH_XRENDER defined */
 #endif /* pinch/zoom/pan simulation */
 	return FALSE;
+}
+
+void xf_keyboard_handle_special_keys_release(xfContext* xfc, KeySym keysym)
+{
+	if (keysym != XK_Control_R)
+		return;
+	
+	firstPressRightCtrl = TRUE;
+	
+	if (!ungrabKeyboardWithRightCtrl)
+		return;
+	
+	// all requirements for ungrab are fulfilled, ungrabbing now
+	XF_MODIFIER_KEYS mod = { 0 };
+	xk_keyboard_get_modifier_keys(xfc, &mod);
+	
+	if (!mod.RightCtrl)
+	{
+		if (!xfc->fullscreen)
+		{
+			xf_toggle_control(xfc);
+		}
+		XUngrabKeyboard(xfc->display, CurrentTime);
+	}
+	
+	// ungrabbed
+	ungrabKeyboardWithRightCtrl = FALSE;
 }
 
 BOOL xf_keyboard_set_indicators(rdpContext* context, UINT16 led_flags)
