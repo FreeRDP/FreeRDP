@@ -1058,6 +1058,8 @@ static BOOL gdi_init_primary(rdpGdi* gdi, UINT32 stride, UINT32 format,
 
 	if (stride > 0)
 		gdi->stride = stride;
+	else
+		gdi->stride = gdi->width * GetBytesPerPixel(gdi->dstFormat);
 
 	if (!gdi->primary)
 		goto fail_primary;
