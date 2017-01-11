@@ -489,8 +489,8 @@ static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_60[] =
 	{ 635240628000000000ULL, 634926132000000000ULL, 60, { 0, 9, 4, 5, 23, 59 }, { 0, 3, 4, 5, 23, 59 }, },
 	{ 635555988000000000ULL, 635241492000000000ULL, 60, { 0, 10, 4, 4, 23, 59 }, { 0, 3, 4, 5, 23, 59 }, },
 	{ 635871348000000000ULL, 635556852000000000ULL, 60, { 0, 10, 4, 4, 23, 59 }, { 0, 3, 5, 5, 23, 59 }, },
-	{ 636187572000000000ULL, 635872212000000000ULL, 60, { 0, 10, 4, 3, 23, 59 }, { 0, 3, 6, 5, 1, 0 }, },
-	{ 3155378292000000000ULL, 636188436000000000ULL, 60, { 0, 10, 4, 4, 23, 59 }, { 0, 3, 6, 5, 1, 0 }, }
+	{ 636187572000000000ULL, 635872212000000000ULL, 60, { 0, 10, 6, 5, 1, 0 }, { 0, 3, 6, 5, 1, 0 }, },
+	{ 3155378292000000000ULL, 636188436000000000ULL, 60, { 0, 10, 6, 5, 1, 0 }, { 0, 3, 6, 5, 1, 0 }, }
 };
 
 static const TIME_ZONE_RULE_ENTRY TimeZoneRuleTable_62[] =
@@ -1573,7 +1573,7 @@ const WINDOWS_TZID_ENTRY WindowsTimeZoneIdTable[] =
 	{ "Arabic Standard Time", "Asia/Baghdad" },
 	{ "Argentina Standard Time", "America/Buenos_Aires America/Argentina/La_Rioja America/Argentina/Rio_Gallegos America/Argentina/Salta America/Argentina/San_Juan America/Argentina/San_Luis America/Argentina/Tucuman America/Argentina/Ushuaia America/Catamarca America/Cordoba America/Jujuy America/Mendoza" },
 	{ "Argentina Standard Time", "America/Buenos_Aires" },
-	{ "Astrakhan Standard Time", "Europe/Astrakhan Europe/Ulyanovsk" },
+	{ "Astrakhan Standard Time", "Europe/Astrakhan Europe/Saratov Europe/Ulyanovsk" },
 	{ "Astrakhan Standard Time", "Europe/Astrakhan" },
 	{ "Atlantic Standard Time", "America/Halifax America/Glace_Bay America/Goose_Bay America/Moncton" },
 	{ "Atlantic Standard Time", "America/Halifax" },
@@ -1626,6 +1626,7 @@ const WINDOWS_TZID_ENTRY WindowsTimeZoneIdTable[] =
 	{ "Central European Standard Time", "Europe/Skopje" },
 	{ "Central European Standard Time", "Europe/Warsaw" },
 	{ "Central European Standard Time", "Europe/Zagreb" },
+	{ "Central Pacific Standard Time", "Antarctica/Casey" },
 	{ "Central Pacific Standard Time", "Antarctica/Macquarie" },
 	{ "Central Pacific Standard Time", "Etc/GMT-11" },
 	{ "Central Pacific Standard Time", "Pacific/Efate" },
@@ -1896,7 +1897,6 @@ const WINDOWS_TZID_ENTRY WindowsTimeZoneIdTable[] =
 	{ "Venezuela Standard Time", "America/Caracas" },
 	{ "Vladivostok Standard Time", "Asia/Vladivostok Asia/Ust-Nera" },
 	{ "Vladivostok Standard Time", "Asia/Vladivostok" },
-	{ "W. Australia Standard Time", "Antarctica/Casey" },
 	{ "W. Australia Standard Time", "Australia/Perth" },
 	{ "W. Central Africa Standard Time", "Africa/Algiers" },
 	{ "W. Central Africa Standard Time", "Africa/Bangui" },
@@ -1933,7 +1933,7 @@ const WINDOWS_TZID_ENTRY WindowsTimeZoneIdTable[] =
 	{ "West Asia Standard Time", "Antarctica/Mawson" },
 	{ "West Asia Standard Time", "Asia/Ashgabat" },
 	{ "West Asia Standard Time", "Asia/Dushanbe" },
-	{ "West Asia Standard Time", "Asia/Oral Asia/Aqtau Asia/Aqtobe" },
+	{ "West Asia Standard Time", "Asia/Oral Asia/Aqtau Asia/Aqtobe Asia/Atyrau" },
 	{ "West Asia Standard Time", "Asia/Tashkent Asia/Samarkand" },
 	{ "West Asia Standard Time", "Asia/Tashkent" },
 	{ "West Asia Standard Time", "Etc/GMT-5" },
