@@ -491,6 +491,7 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
                                      const RDPGFX_SURFACE_COMMAND* cmd)
 {
 	UINT status = CHANNEL_RC_OK;
+	UINT32 color;
 	gdiGfxSurface* surface;
 	RECTANGLE_16 invalidRect;
 	surface = (gdiGfxSurface*) context->GetSurfaceData(context, cmd->surfaceId);
@@ -499,10 +500,11 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 		return ERROR_INTERNAL_ERROR;
 
 	WLog_WARN(TAG, "TODO gdi_SurfaceCommand_Alpha: status: %"PRIu32"", status);
-
 	/* fill with green for now to distinguish from the rest */
+	color = GetColor(surface->format, 0x00, 0xFF, 0x00, 0xFF);
+
 	if (!freerdp_image_fill(surface->data, surface->format, surface->scanline,
-	                        cmd->left, cmd->top, cmd->width, cmd->height, 0x00FF00))
+	                        cmd->left, cmd->top, cmd->width, cmd->height, color))
 		return ERROR_INTERNAL_ERROR;
 
 	invalidRect.left = cmd->left;
@@ -768,7 +770,9 @@ static UINT gdi_SolidFill(RdpgfxClientContext* context,
 	b = solidFill->fillPixel.B;
 	g = solidFill->fillPixel.G;
 	r = solidFill->fillPixel.R;
-	a = solidFill->fillPixel.XA;
+	/* a = solidFill->fillPixel.XA;
+	 * Ignore alpha channel, this is a solid fill. */
+	a = 0xFF;
 	color = GetColor(surface->format, r, g, b, a);
 
 	for (index = 0; index < solidFill->fillRectCount; index++)
@@ -780,8 +784,11 @@ static UINT gdi_SolidFill(RdpgfxClientContext* context,
 		invalidRect.top = rect->top;
 		invalidRect.right = rect->right;
 		invalidRect.bottom = rect->bottom;
-		freerdp_image_fill(surface->data, surface->format, surface->scanline,
-		                   rect->left, rect->top, nWidth, nHeight, color);
+
+		if (!freerdp_image_fill(surface->data, surface->format, surface->scanline,
+		                        rect->left, rect->top, nWidth, nHeight, color))
+			return ERROR_INTERNAL_ERROR;
+
 		region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion),
 		                    &invalidRect);
 	}
@@ -834,12 +841,15 @@ static UINT gdi_SurfaceToSurface(RdpgfxClientContext* context,
 	for (index = 0; index < surfaceToSurface->destPtsCount; index++)
 	{
 		destPt = &surfaceToSurface->destPts[index];
-		freerdp_image_copy(surfaceDst->data, surfaceDst->format,
-		                   surfaceDst->scanline,
-		                   destPt->x, destPt->y, nWidth, nHeight,
-		                   surfaceSrc->data, surfaceSrc->format,
-		                   surfaceSrc->scanline,
-		                   rectSrc->left, rectSrc->top, NULL, FREERDP_FLIP_NONE);
+
+		if (!freerdp_image_copy(surfaceDst->data, surfaceDst->format,
+		                        surfaceDst->scanline,
+		                        destPt->x, destPt->y, nWidth, nHeight,
+		                        surfaceSrc->data, surfaceSrc->format,
+		                        surfaceSrc->scanline,
+		                        rectSrc->left, rectSrc->top, NULL, FREERDP_FLIP_NONE))
+			return ERROR_INTERNAL_ERROR;
+
 		invalidRect.left = destPt->x;
 		invalidRect.top = destPt->y;
 		invalidRect.right = destPt->x + rectSrc->right;
@@ -892,9 +902,14 @@ static UINT gdi_SurfaceToCache(RdpgfxClientContext* context,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	freerdp_image_copy(cacheEntry->data, cacheEntry->format, cacheEntry->scanline,
-	                   0, 0, cacheEntry->width, cacheEntry->height, surface->data,
-	                   surface->format, surface->scanline, rect->left, rect->top, NULL, FREERDP_FLIP_NONE);
+	if (!freerdp_image_copy(cacheEntry->data, cacheEntry->format, cacheEntry->scanline,
+	                        0, 0, cacheEntry->width, cacheEntry->height, surface->data,
+	                        surface->format, surface->scanline, rect->left, rect->top, NULL, FREERDP_FLIP_NONE))
+	{
+		free(cacheEntry);
+		return ERROR_INTERNAL_ERROR;
+	}
+
 	context->SetCacheSlotData(context, surfaceToCache->cacheSlot,
 	                          (void*) cacheEntry);
 	return CHANNEL_RC_OK;
@@ -926,9 +941,13 @@ static UINT gdi_CacheToSurface(RdpgfxClientContext* context,
 	for (index = 0; index < cacheToSurface->destPtsCount; index++)
 	{
 		destPt = &cacheToSurface->destPts[index];
-		freerdp_image_copy(surface->data, surface->format, surface->scanline,
-		                   destPt->x, destPt->y, cacheEntry->width, cacheEntry->height,
-		                   cacheEntry->data, cacheEntry->format, cacheEntry->scanline, 0, 0, NULL, FREERDP_FLIP_NONE);
+
+		if (!freerdp_image_copy(surface->data, surface->format, surface->scanline,
+		                        destPt->x, destPt->y, cacheEntry->width, cacheEntry->height,
+		                        cacheEntry->data, cacheEntry->format, cacheEntry->scanline,
+		                        0, 0, NULL, FREERDP_FLIP_NONE))
+			return ERROR_INTERNAL_ERROR;
+
 		invalidRect.left = destPt->x;
 		invalidRect.top = destPt->y;
 		invalidRect.right = destPt->x + cacheEntry->width - 1;
