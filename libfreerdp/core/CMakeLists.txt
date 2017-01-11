@@ -104,6 +104,8 @@ set(${MODULE_PREFIX}_SRCS
 	rdp.h
 	tcp.c
 	tcp.h
+	proxy.c
+	proxy.h
 	tpdu.c
 	tpdu.h
 	tpkt.c

@@ -1850,6 +1850,12 @@ UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
 		case FreeRDP_GatewayCredentialsSource:
 			return settings->GatewayCredentialsSource;
 
+		case FreeRDP_ProxyType:
+			return settings->ProxyType;
+
+		case FreeRDP_ProxyPort:
+			return settings->ProxyPort;
+
 		case FreeRDP_RemoteAppNumIconCaches:
 			return settings->RemoteAppNumIconCaches;
 
@@ -2142,6 +2148,14 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 
 		case FreeRDP_GatewayCredentialsSource:
 			settings->GatewayCredentialsSource = param;
+			break;
+
+		case FreeRDP_ProxyType:
+			settings->ProxyType = param;
+			break;
+
+		case FreeRDP_ProxyPort:
+			settings->ProxyPort = param;
 			break;
 
 		case FreeRDP_RemoteAppNumIconCaches:
@@ -2473,6 +2487,9 @@ char* freerdp_get_param_string(rdpSettings* settings, int id)
 		case FreeRDP_GatewayDomain:
 			return settings->GatewayDomain;
 
+		case FreeRDP_ProxyHostname:
+			return settings->ProxyHostname;
+
 		case FreeRDP_RemoteApplicationName:
 			return settings->RemoteApplicationName;
 
@@ -2678,6 +2695,10 @@ int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 
 		case FreeRDP_GatewayDomain:
 			tmp = &settings->GatewayDomain;
+			break;
+
+		case FreeRDP_ProxyHostname:
+			tmp = &settings->ProxyHostname;
 			break;
 
 		case FreeRDP_RemoteApplicationName:

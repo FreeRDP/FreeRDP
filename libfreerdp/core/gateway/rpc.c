@@ -37,6 +37,7 @@
 #include <valgrind/memcheck.h>
 #endif
 
+#include "../proxy.h"
 #include "http.h"
 #include "ntlm.h"
 #include "ncacn_http.h"
@@ -759,9 +760,12 @@ int rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 	rdpRpc* rpc = channel->rpc;
 	rdpContext* context = rpc->context;
 	rdpSettings* settings = context->settings;
+	const char *peerHostname = settings->GatewayHostname;
+	UINT16 peerPort = settings->GatewayPort;
+	BOOL isProxyConnection = proxy_prepare(settings, &peerHostname, &peerPort, TRUE);
 
-	sockfd = freerdp_tcp_connect(context, settings, settings->GatewayHostname,
-					settings->GatewayPort, timeout);
+	sockfd = freerdp_tcp_connect(context, settings, peerHostname,
+					peerPort, timeout);
 
 	if (sockfd < 1)
 		return -1;
@@ -782,6 +786,11 @@ int rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 
 	if (!BIO_set_nonblock(bufferedBio, TRUE))
 		return -1;
+
+	if (isProxyConnection) {
+		if (!proxy_connect(settings, bufferedBio, settings->GatewayHostname, settings->GatewayPort))
+			return -1;
+	}
 
 	channel->bio = bufferedBio;
 

@@ -670,6 +670,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		CHECKED_STRDUP(GatewayUsername); /* 1987 */
 		CHECKED_STRDUP(GatewayPassword); /* 1988 */
 		CHECKED_STRDUP(GatewayDomain); /* 1989 */
+		CHECKED_STRDUP(ProxyHostname); /* 2016 */
 		CHECKED_STRDUP(RemoteApplicationName); /* 2113 */
 		CHECKED_STRDUP(RemoteApplicationIcon); /* 2114 */
 		CHECKED_STRDUP(RemoteApplicationProgram); /* 2115 */

@@ -23,6 +23,7 @@
 #include "config.h"
 #endif
 
+#include <ctype.h>
 #include <assert.h>
 
 #include <winpr/crt.h>
@@ -82,6 +83,7 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "gd", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Gateway domain" },
 	{ "gt", COMMAND_LINE_VALUE_REQUIRED, "<rpc|http|auto>", NULL, NULL, -1, NULL, "Gateway transport type" },
 	{ "gateway-usage-method", COMMAND_LINE_VALUE_REQUIRED, "<direct|detect>", NULL, NULL, -1, "gum", "Gateway usage method" },
+	{ "proxy", COMMAND_LINE_VALUE_REQUIRED, "[<protocol>://]<host>:<port>", NULL, NULL, -1, NULL, "Proxy (see also environment variable below)" },
 	{ "load-balance-info", COMMAND_LINE_VALUE_REQUIRED, "<info string>", NULL, NULL, -1, NULL, "Load balance info" },
 	{ "app", COMMAND_LINE_VALUE_REQUIRED, "<executable path> or <||alias>", NULL, NULL, -1, NULL, "Remote application program" },
 	{ "app-name", COMMAND_LINE_VALUE_REQUIRED, "<app name>", NULL, NULL, -1, NULL, "Remote application name for user interface" },
@@ -294,6 +296,16 @@ BOOL freerdp_client_print_command_line_help(int argc, char** argv)
 	printf("Multimedia Redirection: /multimedia:sys:alsa\n");
 	printf("USB Device Redirection: /usb:id,dev:054c:0268\n");
 	printf("\n");
+
+	printf("For Gateways, the https_proxy environment variable is respected:\n");
+#ifdef _WIN32
+	printf("    set HTTPS_PROXY=http://proxy.contoso.com:3128/\n");
+#else
+	printf("    export https_proxy=http://proxy.contoso.com:3128/\n");
+#endif
+	printf("    xfreerdp /g:rdp.contoso.com ...\n");
+	printf("\n");
+
 	printf("More documentation is coming, in the meantime consult source files\n");
 	printf("\n");
 	return TRUE;
@@ -1776,6 +1788,45 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			settings->GatewayEnabled = TRUE;
 			settings->GatewayUseSameCredentials = TRUE;
 			freerdp_set_gateway_usage_method(settings, TSC_PROXY_MODE_DIRECT);
+		}
+		CommandLineSwitchCase(arg, "proxy")
+		{
+			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+			{
+				p = strstr(arg->Value, "://");
+				if (p) {
+					*p = '\0';
+					if (!strcmp("http", arg->Value)) {
+						settings->ProxyType = PROXY_TYPE_HTTP;
+					} else {
+						WLog_ERR(TAG, "Only HTTP proxys supported by now");
+						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					}
+					arg->Value = p + 3;
+				}
+
+				p = strchr(arg->Value, ':');
+
+				if (p)
+				{
+					length = (int) (p - arg->Value);
+					if (!isdigit(p[1])) {
+						WLog_ERR(TAG, "Could not parse proxy port");
+						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					}
+					settings->ProxyPort = atoi(&p[1]);
+					settings->ProxyHostname = (char*) malloc(length + 1);
+					strncpy(settings->ProxyHostname, arg->Value, length);
+					settings->ProxyHostname[length] = '\0';
+
+					settings->ProxyType = PROXY_TYPE_HTTP;
+				}
+			}
+			else
+			{
+				WLog_ERR(TAG, "Option http-proxy needs argument.");
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			}
 		}
 		CommandLineSwitchCase(arg, "gu")
 		{

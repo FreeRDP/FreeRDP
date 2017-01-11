@@ -34,6 +34,7 @@
 #include <freerdp/utils/ringbuffer.h>
 
 #include "rdg.h"
+#include "../proxy.h"
 #include "../rdp.h"
 #include "../../crypto/opensslcompat.h"
 
@@ -901,11 +902,14 @@ BOOL rdg_tls_out_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int tim
 	BIO* socketBio = NULL;
 	BIO* bufferedBio = NULL;
 	rdpSettings* settings = rdg->settings;
+	const char *peerHostname = settings->GatewayHostname;
+	UINT16 peerPort = settings->GatewayPort;
+	BOOL isProxyConnection = proxy_prepare(settings, &peerHostname, &peerPort, TRUE);
 
 	assert(hostname != NULL);
 
-	sockfd = freerdp_tcp_connect(rdg->context, settings, settings->GatewayHostname,
-					settings->GatewayPort, timeout);
+	sockfd = freerdp_tcp_connect(rdg->context, settings, peerHostname,
+					peerPort, timeout);
 
 	if (sockfd < 1)
 	{
@@ -931,6 +935,11 @@ BOOL rdg_tls_out_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int tim
 
 	bufferedBio = BIO_push(bufferedBio, socketBio);
 	status = BIO_set_nonblock(bufferedBio, TRUE);
+
+	if (isProxyConnection) {
+		if (!proxy_connect(settings, bufferedBio, settings->GatewayHostname, settings->GatewayPort))
+			return FALSE;
+	}
 
 	if (!status)
 	{
@@ -958,11 +967,20 @@ BOOL rdg_tls_in_connect(rdpRdg* rdg, const char* hostname, UINT16 port, int time
 	BIO* socketBio = NULL;
 	BIO* bufferedBio = NULL;
 	rdpSettings* settings = rdg->settings;
+	const char *peerHostname = settings->GatewayHostname;
+	int peerPort = settings->GatewayPort;
+	BOOL isProxyConnection = FALSE;
 
 	assert(hostname != NULL);
 
-	sockfd = freerdp_tcp_connect(rdg->context, settings, settings->GatewayHostname,
-					settings->GatewayPort, timeout);
+	if (settings->ProxyType) {
+		peerHostname = settings->ProxyHostname;
+		peerPort = settings->ProxyPort;
+		isProxyConnection = TRUE;
+	}
+
+	sockfd = freerdp_tcp_connect(rdg->context, settings, peerHostname,
+					peerPort, timeout);
 
 	if (sockfd < 1)
 		return FALSE;
