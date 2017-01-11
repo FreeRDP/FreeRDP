@@ -1056,7 +1056,9 @@ static BOOL gdi_init_primary(rdpGdi* gdi, UINT32 stride, UINT32 format,
 	if (format > 0)
 		gdi->dstFormat = format;
 
-	gdi->stride = stride;
+	if (stride > 0) {
+		gdi->stride = stride;
+	}
 
 	if (!gdi->primary)
 		goto fail_primary;
@@ -1133,6 +1135,18 @@ BOOL gdi_resize_ex(rdpGdi* gdi, UINT32 width, UINT32 height,
 
 	if (gdi->drawing == gdi->primary)
 		gdi->drawing = NULL;
+
+	if (stride == 0) 
+	{
+		if (format == 0) 
+		{
+			stride = width * GetBytesPerPixel(gdi->dstFormat);
+		}
+		else 
+		{
+			stride = width * GetBytesPerPixel(format);	
+		}
+	}
 
 	gdi->width = width;
 	gdi->height = height;
