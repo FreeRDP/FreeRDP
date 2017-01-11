@@ -1056,8 +1056,7 @@ static BOOL gdi_init_primary(rdpGdi* gdi, UINT32 stride, UINT32 format,
 	if (format > 0)
 		gdi->dstFormat = format;
 
-	if (stride > 0)
-		gdi->stride = stride;
+	gdi->stride = stride;
 
 	if (!gdi->primary)
 		goto fail_primary;
