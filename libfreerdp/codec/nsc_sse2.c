@@ -74,7 +74,7 @@ static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context,
 
 		for (x = 0; x < context->width; x += 8)
 		{
-			switch (context->pixel_format)
+			switch (context->format)
 			{
 				case PIXEL_FORMAT_BGRX32:
 					b_val = _mm_set_epi16(*(src + 28), *(src + 24), *(src + 20), *(src + 16),
