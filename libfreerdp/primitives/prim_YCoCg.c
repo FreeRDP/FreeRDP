@@ -26,11 +26,6 @@
 
 #include "prim_internal.h"
 
-#ifndef MINMAX
-#define MINMAX(_v_, _l_, _h_) \
-	((_v_) < (_l_) ? (_l_) : ((_v_) > (_h_) ? (_h_) : (_v_)))
-#endif /* !MINMAX */
-
 /* ------------------------------------------------------------------------- */
 static pstatus_t general_YCoCgToRGB_8u_AC4R(
     const BYTE* pSrc, INT32 srcStep,
@@ -67,8 +62,8 @@ static pstatus_t general_YCoCgToRGB_8u_AC4R(
 			R  = T + Co;
 			G  = Y + Cg;
 			B  = T - Co;
-			dptr = (*writePixel)(dptr, formatSize, DstFormat, MINMAX(R, 0, 255),
-			                     MINMAX(G, 0, 255), MINMAX(B, 0, 255), A);
+			dptr = (*writePixel)(dptr, formatSize, DstFormat, CLIP(R),
+			                     CLIP(G), CLIP(B), A);
 		}
 
 		sptr += srcPad;

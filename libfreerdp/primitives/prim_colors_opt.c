@@ -172,20 +172,20 @@ static pstatus_t sse2_yCbCrToRGB_16s16s_P3P3(
 			/* (y + HIWORD(cr*22986)) >> 3 */
 			r = _mm_add_epi16(y, _mm_mulhi_epi16(cr, r_cr));
 			r = _mm_srai_epi16(r, 3);
-			/* r_buf[i] = MINMAX(r, 0, 255); */
+			/* r_buf[i] = CLIP(r); */
 			_mm_between_epi16(r, zero, max);
 			_mm_store_si128(r_buf + i, r);
 			/* (y + HIWORD(cb*-5636) + HIWORD(cr*-11698)) >> 3 */
 			g = _mm_add_epi16(y, _mm_mulhi_epi16(cb, g_cb));
 			g = _mm_add_epi16(g, _mm_mulhi_epi16(cr, g_cr));
 			g = _mm_srai_epi16(g, 3);
-			/* g_buf[i] = MINMAX(g, 0, 255); */
+			/* g_buf[i] = CLIP(g); */
 			_mm_between_epi16(g, zero, max);
 			_mm_store_si128(g_buf + i, g);
 			/* (y + HIWORD(cb*28999)) >> 3 */
 			b = _mm_add_epi16(y, _mm_mulhi_epi16(cb, b_cb));
 			b = _mm_srai_epi16(b, 3);
-			/* b_buf[i] = MINMAX(b, 0, 255); */
+			/* b_buf[i] = CLIP(b); */
 			_mm_between_epi16(b, zero, max);
 			_mm_store_si128(b_buf + i, b);
 		}
@@ -517,20 +517,20 @@ static pstatus_t neon_yCbCrToRGB_16s16s_P3P3(
 			/* (y + HIWORD(cr*22986)) >> 3 */
 			int16x8_t r = vaddq_s16(y, vshrq_n_s16(vqdmulhq_s16(cr, r_cr), 1));
 			r = vshrq_n_s16(r, 3);
-			/* r_buf[i] = MINMAX(r, 0, 255); */
+			/* r_buf[i] = CLIP(r); */
 			r = vminq_s16(vmaxq_s16(r, zero), max);
 			vst1q_s16((INT16*)&r_buf[i], r);
 			/* (y + HIWORD(cb*-5636) + HIWORD(cr*-11698)) >> 3 */
 			int16x8_t g = vaddq_s16(y, vshrq_n_s16(vqdmulhq_s16(cb, g_cb), 1));
 			g = vaddq_s16(g, vshrq_n_s16(vqdmulhq_s16(cr, g_cr), 1));
 			g = vshrq_n_s16(g, 3);
-			/* g_buf[i] = MINMAX(g, 0, 255); */
+			/* g_buf[i] = CLIP(g); */
 			g = vminq_s16(vmaxq_s16(g, zero), max);
 			vst1q_s16((INT16*)&g_buf[i], g);
 			/* (y + HIWORD(cb*28999)) >> 3 */
 			int16x8_t b = vaddq_s16(y, vshrq_n_s16(vqdmulhq_s16(cb, b_cb), 1));
 			b = vshrq_n_s16(b, 3);
-			/* b_buf[i] = MINMAX(b, 0, 255); */
+			/* b_buf[i] = CLIP(b); */
 			b = vminq_s16(vmaxq_s16(b, zero), max);
 			vst1q_s16((INT16*)&b_buf[i], b);
 		}
