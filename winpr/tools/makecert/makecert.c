@@ -1073,14 +1073,15 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 				break;
 			}
 
-			length = new_len;
 			x509_str = new_str;
 
-			status = BIO_read(bio, &x509_str[offset], length);
+			status = BIO_read(bio, &x509_str[offset], new_len);
+
 
 			if (status < 0)
 				break;
 
+			length = length + new_len;
 			offset += status;
 		}
 
