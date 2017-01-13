@@ -109,8 +109,6 @@ const EVP_CIPHER* winpr_openssl_get_evp_cipher(int cipher)
 {
 	const EVP_CIPHER* evp = NULL;
 
-	OpenSSL_add_all_ciphers();
-
 	switch (cipher)
 	{
 		case WINPR_CIPHER_NULL:

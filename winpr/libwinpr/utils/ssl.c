@@ -258,6 +258,8 @@ static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVO
 	SSL_load_error_strings();
 	/* SSL_library_init() always returns "1" */
 	SSL_library_init();
+	OpenSSL_add_all_digests();
+	OpenSSL_add_all_ciphers();
 	g_winpr_openssl_initialized_by_winpr = TRUE;
 	return TRUE;
 }

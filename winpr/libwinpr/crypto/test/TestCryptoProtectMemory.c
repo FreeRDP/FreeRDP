@@ -2,6 +2,7 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/crypto.h>
+#include <winpr/ssl.h>
 #include <winpr/wlog.h>
 
 static const char* SECRET_PASSWORD_TEST = "MySecretPassword123!";
@@ -24,6 +25,7 @@ int TestCryptoProtectMemory(int argc, char* argv[])
 	}
 	CopyMemory(pCipherText, pPlainText, cbPlainText);
 	ZeroMemory(&pCipherText[cbPlainText], (cbCipherText - cbPlainText));
+	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 
 	if (!CryptProtectMemory(pCipherText, cbCipherText, CRYPTPROTECTMEMORY_SAME_PROCESS))
 	{

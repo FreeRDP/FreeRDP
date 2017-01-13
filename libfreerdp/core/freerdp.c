@@ -37,6 +37,7 @@
 #include <winpr/string.h>
 #include <winpr/stream.h>
 #include <winpr/wtsapi.h>
+#include <winpr/ssl.h>
 #include <winpr/debug.h>
 
 #include <freerdp/freerdp.h>
@@ -877,6 +878,7 @@ freerdp* freerdp_new()
 	if (!instance)
 		return NULL;
 
+	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 	instance->ContextSize = sizeof(rdpContext);
 	instance->SendChannelData = freerdp_send_channel_data;
 	instance->ReceiveChannelData = freerdp_channels_data;

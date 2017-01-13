@@ -2,6 +2,7 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/crypto.h>
+#include <winpr/ssl.h>
 
 static const char* TEST_MD5_DATA = "test";
 static const BYTE* TEST_MD5_HASH = (BYTE*) "\x09\x8f\x6b\xcd\x46\x21\xd3\x73\xca\xde\x4e\x83\x26\x27\xb4\xf6";
@@ -267,6 +268,8 @@ out:
 
 int TestCryptoHash(int argc, char* argv[])
 {
+	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
+
 	if (!test_crypto_hash_md5())
 		return -1;
 
