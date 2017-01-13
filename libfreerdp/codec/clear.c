@@ -1197,8 +1197,6 @@ BOOL clear_context_reset(CLEAR_CONTEXT* clear)
 		return FALSE;
 
 	clear->seqNumber = 0;
-	clear->VBarStorageCursor = 0;
-	clear->ShortVBarStorageCursor = 0;
 	return TRUE;
 }
 CLEAR_CONTEXT* clear_context_new(BOOL Compressor)
