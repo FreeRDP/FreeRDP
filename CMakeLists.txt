@@ -67,6 +67,7 @@ include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
 include(GNUInstallDirsWrapper)
 include(CMakePackageConfigHelpers)
+include(InstallFreeRDPMan)
 
 # Soname versioning
 set(BUILD_NUMBER 0)

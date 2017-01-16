@@ -139,6 +139,10 @@ export NO_BRP_CHECK_RPATH true
 %{INSTALL_PREFIX}/%{_lib}/*.so.*
 %{INSTALL_PREFIX}/bin/
 %{INSTALL_PREFIX}/share/man/man1/xfreerdp.1*
+%{INSTALL_PREFIX}/share/man/man1/freerdp-shadow-cli.1*
+%{INSTALL_PREFIX}/share/man/man1/winpr-makecert.1*
+%{INSTALL_PREFIX}/share/man/man1/winpr-hash.1*
+%{INSTALL_PREFIX}/share/man/man1/wlfreerdp.1*
 %{INSTALL_PREFIX}/share/man/man7/wlog.7*
 
 %files devel

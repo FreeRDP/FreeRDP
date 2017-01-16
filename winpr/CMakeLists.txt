@@ -176,14 +176,7 @@ if(BUILD_TESTING)
 	add_subdirectory(test)
 endif()
 
-if(WITH_MANPAGES)
-	if(OPENBSD)
-	    install(FILES wlog.7 DESTINATION man/man7)
-	else()
-	    install(FILES wlog.7 DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/man/man7)
-	endif()
-endif(WITH_MANPAGES)
-
+install_freerdp_man(wlog.7 7)
 # Exporting
 
 if(${CMAKE_VERSION} VERSION_GREATER "2.8.10")
