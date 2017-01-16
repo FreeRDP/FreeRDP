@@ -316,7 +316,7 @@ static INLINE BYTE YUV2B(INT32 Y, INT32 U, INT32 V)
 	return CLIP(b8);
 }
 
-static pstatus_t general_YUV444ToRGB_8u_P3AC4R(
+static pstatus_t general_YUV444ToRGB_8u_P3AC4R_general(
     const BYTE* pSrc[3], const UINT32 srcStep[3],
     BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
     const prim_size_t* roi)
@@ -350,6 +350,54 @@ static pstatus_t general_YUV444ToRGB_8u_P3AC4R(
 	return PRIMITIVES_SUCCESS;
 }
 
+static pstatus_t general_YUV444ToRGB_8u_P3AC4R_BGRX(
+    const BYTE* pSrc[3], const UINT32 srcStep[3],
+    BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
+    const prim_size_t* roi)
+{
+	UINT32 x, y;
+	UINT32 nWidth, nHeight;
+	const DWORD formatSize = GetBytesPerPixel(DstFormat);
+	nWidth = roi->width;
+	nHeight = roi->height;
+
+	for (y = 0; y < nHeight; y++)
+	{
+		const BYTE* pY = pSrc[0] + y * srcStep[0];
+		const BYTE* pU = pSrc[1] + y * srcStep[1];
+		const BYTE* pV = pSrc[2] + y * srcStep[2];
+		BYTE* pRGB = pDst + y * dstStep;
+
+		for (x = 0; x < nWidth; x++)
+		{
+			const BYTE Y = pY[x];
+			const INT32 U = pU[x];
+			const INT32 V = pV[x];
+			const BYTE r = YUV2R(Y, U, V);
+			const BYTE g = YUV2G(Y, U, V);
+			const BYTE b = YUV2B(Y, U, V);
+			pRGB = writePixelBGRX(pRGB, formatSize, DstFormat, r, g, b, 0xFF);
+		}
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
+static pstatus_t general_YUV444ToRGB_8u_P3AC4R(
+    const BYTE* pSrc[3], const UINT32 srcStep[3],
+    BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
+    const prim_size_t* roi)
+{
+	switch (DstFormat)
+	{
+		case PIXEL_FORMAT_BGRA32:
+		case PIXEL_FORMAT_BGRX32:
+			return general_YUV444ToRGB_8u_P3AC4R_BGRX(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
+
+		default:
+			return general_YUV444ToRGB_8u_P3AC4R_general(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
+	}
+}
 /**
  * | R |    ( | 256     0    403 | |    Y    | )
  * | G | = (  | 256   -48   -120 | | U - 128 |  ) >> 8
