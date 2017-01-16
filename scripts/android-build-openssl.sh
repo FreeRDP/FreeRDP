@@ -45,9 +45,8 @@ function build {
 	BASE=$(pwd)
 	DST_DIR=$BUILD_DST/$DST_PREFIX
 	common_run cd $BUILD_SRC
-	common_run git am $(dirname "${BASH_SOURCE[0]}")/0001-64bit-architecture-support.patch
 	common_run git clean -xdf
-	common_run ./Configure --openssldir=$DST_DIR $CONFIG shared
+	common_run ./Configure --config=$SCRIPT_PATH/openssl-mips64.conf --openssldir=$DST_DIR $CONFIG shared
 	common_run make CALC_VERSIONS="SHLIB_COMPAT=; SHLIB_SOVER=" depend
 	common_run make CALC_VERSIONS="SHLIB_COMPAT=; SHLIB_SOVER=" build_libs
 
@@ -77,7 +76,7 @@ do
 			$ARCH "arm-linux-androideabi-" "arch-arm"
 		 ;;
 	 "armeabi-v7a")
-		 build "android-armv7" "arm-linux-androideabi-" \
+		 build "android-armeabi" "arm-linux-androideabi-" \
 			$ARCH "arm-linux-androideabi-" "arch-arm"
 		 ;;
 	 "mips")

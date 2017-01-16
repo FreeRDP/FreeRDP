@@ -1,5 +1,8 @@
 #!/bin/bash
 
+SCRIPT_PATH=$(dirname "${BASH_SOURCE[0]}")
+SCRIPT_PATH=$(realpath "$SCRIPT_PATH")
+
 if [ -z $BUILD_ARCH ]; then
 	BUILD_ARCH="armeabi armeabi-v7a mips mips64 x86 x86_64 arm64-v8a"
 fi
