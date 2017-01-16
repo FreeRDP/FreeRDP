@@ -338,6 +338,8 @@ endif()
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/shadow")
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp-shadow.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp-shadow${FREERDP_VERSION_MAJOR}.pc @ONLY)
+configure_file(freerdp-shadow-cli.1.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp-shadow-cli.1)
+
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp-shadow${FREERDP_VERSION_MAJOR}.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 
 if(${CMAKE_VERSION} VERSION_GREATER "2.8.10")
