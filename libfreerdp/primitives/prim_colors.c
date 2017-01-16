@@ -470,7 +470,7 @@ static INLINE fkt_writeScanline getScanlineWriteFunction(DWORD format)
 }
 
 /* ------------------------------------------------------------------------- */
-static pstatus_t general_RGBToRGB_16s8u_P3AC4R(
+static pstatus_t general_RGBToRGB_16s8u_P3AC4R_general(
     const INT16* const pSrc[3],	/* 16-bit R,G, and B arrays */
     UINT32 srcStep,			/* bytes between rows in source data */
     BYTE* pDst,			/* 32-bit interleaved ARGB (ABGR?) data */
@@ -498,6 +498,51 @@ static pstatus_t general_RGBToRGB_16s8u_P3AC4R(
 	return PRIMITIVES_SUCCESS;
 }
 
+static pstatus_t general_RGBToRGB_16s8u_P3AC4R_BGRX(
+    const INT16* const pSrc[3],	/* 16-bit R,G, and B arrays */
+    UINT32 srcStep,			/* bytes between rows in source data */
+    BYTE* pDst,			/* 32-bit interleaved ARGB (ABGR?) data */
+    UINT32 dstStep,			/* bytes between rows in dest data */
+    UINT32 DstFormat,
+    const prim_size_t* roi)	/* region of interest */
+{
+	const INT16* r  = pSrc[0];
+	const INT16* g  = pSrc[1];
+	const INT16* b  = pSrc[2];
+	UINT32 y;
+	const DWORD srcAdd = srcStep / sizeof(INT16);
+	const DWORD formatSize = GetBytesPerPixel(DstFormat);
+
+	for (y = 0; y < roi->height; ++y)
+	{
+		writeScanlineBGRX(pDst, formatSize, DstFormat, r, g, b, roi->width);
+		pDst += dstStep;
+		r += srcAdd;
+		g += srcAdd;
+		b += srcAdd;
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
+static pstatus_t general_RGBToRGB_16s8u_P3AC4R(
+    const INT16* const pSrc[3],	/* 16-bit R,G, and B arrays */
+    UINT32 srcStep,			/* bytes between rows in source data */
+    BYTE* pDst,			/* 32-bit interleaved ARGB (ABGR?) data */
+    UINT32 dstStep,			/* bytes between rows in dest data */
+    UINT32 DstFormat,
+    const prim_size_t* roi)	/* region of interest */
+{
+	switch (DstFormat)
+	{
+		case PIXEL_FORMAT_BGRA32:
+		case PIXEL_FORMAT_BGRX32:
+			return general_RGBToRGB_16s8u_P3AC4R_BGRX(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
+
+		default:
+			return general_RGBToRGB_16s8u_P3AC4R_general(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
+	}
+}
 /* ------------------------------------------------------------------------- */
 void primitives_init_colors(primitives_t* prims)
 {
