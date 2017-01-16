@@ -39,3 +39,4 @@ target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/Wayland")
+configure_file(wlfreerdp.1.in ${CMAKE_CURRENT_BINARY_DIR}/wlfreerdp.1)
