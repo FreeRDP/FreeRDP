@@ -844,16 +844,9 @@ static INLINE int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progres
 	progressive_rfx_decode_component(progressive, &shiftCr, tile->crData,
 	                                 tile->crLen,
 	                                 pSrcDst[2], pCurrent[2], pSign[2], diff); /* Cr */
-
-	if (!progressive->invert)
-		prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * 2,
-		                               tile->data, PIXEL_FORMAT_BGRX32,
-		                               64 * 4, &roi_64x64);
-	else
-		prims->yCbCrToBGR_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * 2,
-		                               tile->data, PIXEL_FORMAT_BGRX32,
-		                               64 * 4, &roi_64x64);
-
+	prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * 2,
+	                               tile->data, PIXEL_FORMAT_BGRX32,
+	                               64 * 4, &roi_64x64);
 	BufferPool_Return(progressive->bufferPool, pBuffer);
 	return 1;
 }
@@ -1266,15 +1259,9 @@ static INLINE int progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* progr
 	if (status < 0)
 		return -1;
 
-	if (!progressive->invert)
-		prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * 2,
-		                               tile->data, PIXEL_FORMAT_BGRX32,
-		                               64 * 4, &roi_64x64);
-	else
-		prims->yCbCrToBGR_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * 2,
-		                               tile->data, PIXEL_FORMAT_BGRX32,
-		                               64 * 4, &roi_64x64);
-
+	prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * 2,
+	                               tile->data, PIXEL_FORMAT_BGRX32,
+	                               64 * 4, &roi_64x64);
 	BufferPool_Return(progressive->bufferPool, pBuffer);
 	return 1;
 }
@@ -1572,7 +1559,6 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
 	REGION16 clippingRects, updateRegion;
 	PROGRESSIVE_SURFACE_CONTEXT* surface;
 	PROGRESSIVE_BLOCK_REGION* region;
-	progressive->invert = FREERDP_PIXEL_FORMAT_IS_ABGR(DstFormat) ? TRUE : FALSE;
 	surface = (PROGRESSIVE_SURFACE_CONTEXT*) progressive_get_surface_data(
 	              progressive, surfaceId);
 

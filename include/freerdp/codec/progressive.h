@@ -208,8 +208,6 @@ struct _PROGRESSIVE_CONTEXT
 {
 	BOOL Compressor;
 
-	BOOL invert;
-
 	wBufferPool* bufferPool;
 
 	UINT32 cRects;
