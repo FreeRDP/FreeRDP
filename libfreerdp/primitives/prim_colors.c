@@ -31,7 +31,6 @@
 #define MINMAX(_v_, _l_, _h_) \
 	((_v_) < (_l_) ? (_l_) : ((_v_) > (_h_) ? (_h_) : (_v_)))
 #endif /* !MINMAX */
-
 /* ------------------------------------------------------------------------- */
 static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(
     const INT16* pSrc[3], UINT32 srcStep,
@@ -60,23 +59,8 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(
 			R = ((INT16)(((Cr * 1.402525f) + Y + 16.0f)) >> 5);
 			G = ((INT16)((Y - (Cb * 0.343730f) - (Cr * 0.714401f) + 16.0f)) >> 5);
 			B = ((INT16)(((Cb * 1.769905f) + Y + 16.0f)) >> 5);
-
-			if (R < 0)
-				R = 0;
-			else if (R > 255)
-				R = 255;
-
-			if (G < 0)
-				G = 0;
-			else if (G > 255)
-				G = 255;
-
-			if (B < 0)
-				B = 0;
-			else if (B > 255)
-				B = 255;
-
-			pRGB = (*writePixel)(pRGB, formatSize, DstFormat, R, G, B, 0xFF);
+			pRGB = (*writePixel)(pRGB, formatSize, DstFormat, CLIP(R), CLIP(G),
+			                     CLIP(B), 0xFF);
 			pY++;
 			pCb++;
 			pCr++;
@@ -118,23 +102,8 @@ static pstatus_t general_yCbCrToBGR_16s8u_P3AC4R(
 			R = ((INT16)(((Cr * 1.402525f) + Y + 16.0f)) >> 5);
 			G = ((INT16)((Y - (Cb * 0.343730f) - (Cr * 0.714401f) + 16.0f)) >> 5);
 			B = ((INT16)(((Cb * 1.769905f) + Y + 16.0f)) >> 5);
-
-			if (R < 0)
-				R = 0;
-			else if (R > 255)
-				R = 255;
-
-			if (G < 0)
-				G = 0;
-			else if (G > 255)
-				G = 255;
-
-			if (B < 0)
-				B = 0;
-			else if (B > 255)
-				B = 255;
-
-			pRGB = (*writePixel)(pRGB, formatSize, DstFormat, R, G, B, 0xFF);
+			pRGB = (*writePixel)(pRGB, formatSize, DstFormat, CLIP(R), CLIP(G),
+			                     CLIP(B), 0xFF);
 			pY++;
 			pCb++;
 			pCr++;
@@ -196,9 +165,9 @@ static pstatus_t general_yCbCrToRGB_16s16s_P3P3(
 			 * r = y + cr*1.403f;
 			 * g = y - cb*0.344f - cr*0.714f;
 			 * b = y + cb*1.770f;
-			 * y_r_buf[i]  = MINMAX(r>>5, 0, 255);
-			 * cb_g_buf[i] = MINMAX(g>>5, 0, 255);
-			 * cr_b_buf[i] = MINMAX(b>>5, 0, 255);
+			 * y_r_buf[i]  = CLIP(r>>5);
+			 * cb_g_buf[i] = CLIP(g>>5);
+			 * cr_b_buf[i] = CLIP(b>>5);
 			 */
 			/*
 			 * We scale the factors by << 16 into 32-bit integers in order to
@@ -214,9 +183,9 @@ static pstatus_t general_yCbCrToRGB_16s16s_P3P3(
 			r = y + cr * 91947;
 			g = y - cb * 22544 - cr * 46792;
 			b = y + cb * 115998;
-			*rptr++ = MINMAX(r >> 21, 0, 255);
-			*gptr++ = MINMAX(g >> 21, 0, 255);
-			*bptr++ = MINMAX(b >> 21, 0, 255);
+			*rptr++ = CLIP(r >> 21);
+			*gptr++ = CLIP(g >> 21);
+			*bptr++ = CLIP(b >> 21);
 		}
 
 		yptr  += srcbump;

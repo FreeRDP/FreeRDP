@@ -88,25 +88,36 @@ static INLINE fkt_writePixel getPixelWriteFunction(DWORD format)
 {
 	switch (format)
 	{
-	    case PIXEL_FORMAT_ARGB32:
-	    case PIXEL_FORMAT_XRGB32:
-		    return writePixelXRGB;
+		case PIXEL_FORMAT_ARGB32:
+		case PIXEL_FORMAT_XRGB32:
+			return writePixelXRGB;
 
-	    case PIXEL_FORMAT_ABGR32:
-	    case PIXEL_FORMAT_XBGR32:
-		    return writePixelXBGR;
+		case PIXEL_FORMAT_ABGR32:
+		case PIXEL_FORMAT_XBGR32:
+			return writePixelXBGR;
 
-	    case PIXEL_FORMAT_RGBA32:
-	    case PIXEL_FORMAT_RGBX32:
-		    return writePixelRGBX;
+		case PIXEL_FORMAT_RGBA32:
+		case PIXEL_FORMAT_RGBX32:
+			return writePixelRGBX;
 
-	    case PIXEL_FORMAT_BGRA32:
-	    case PIXEL_FORMAT_BGRX32:
-		    return writePixelBGRX;
+		case PIXEL_FORMAT_BGRA32:
+		case PIXEL_FORMAT_BGRX32:
+			return writePixelBGRX;
 
-	    default:
-		    return writePixelGeneric;
+		default:
+			return writePixelGeneric;
 	}
+}
+
+static INLINE BYTE CLIP(INT32 X)
+{
+	if (X > 255L)
+		return 255L;
+
+	if (X < 0L)
+		return 0L;
+
+	return X;
 }
 
 /* Function prototypes for all the init/deinit routines. */

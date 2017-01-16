@@ -108,7 +108,6 @@ set(CODEC_SRCS
 	codec/rfx_constants.h
 	codec/rfx_decode.c
 	codec/rfx_decode.h
-	codec/rfx_differential.c
 	codec/rfx_differential.h
 	codec/rfx_dwt.c
 	codec/rfx_dwt.h

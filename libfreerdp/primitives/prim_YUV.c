@@ -25,17 +25,6 @@
 #include <freerdp/codec/color.h>
 #include "prim_internal.h"
 
-static INLINE BYTE CLIP(INT32 X)
-{
-	if (X > 255L)
-		return 255L;
-
-	if (X < 0L)
-		return 0L;
-
-	return X;
-}
-
 /**
  * @brief general_YUV420CombineToYUV444
  *
