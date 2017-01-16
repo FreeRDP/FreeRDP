@@ -32,7 +32,49 @@
 	((_v_) < (_l_) ? (_l_) : ((_v_) > (_h_) ? (_h_) : (_v_)))
 #endif /* !MINMAX */
 /* ------------------------------------------------------------------------- */
-static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(
+static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_BGRX(
+    const INT16* pSrc[3], UINT32 srcStep,
+    BYTE* pDst, UINT32 DstFormat, UINT32 dstStep,
+    const prim_size_t* roi)
+{
+	UINT32 x, y;
+	INT16 R, G, B;
+	float Y, Cb, Cr;
+	BYTE* pRGB = pDst;
+	const INT16* pY  = pSrc[0];
+	const INT16* pCb = pSrc[1];
+	const INT16* pCr = pSrc[2];
+	int srcPad = (srcStep - (roi->width * 2)) / 2;
+	int dstPad = (dstStep - (roi->width * 4)) / 4;
+	const DWORD formatSize = GetBytesPerPixel(DstFormat);
+
+	for (y = 0; y < roi->height; y++)
+	{
+		for (x = 0; x < roi->width; x++)
+		{
+			Y = (float)(pY[0] + 4096);
+			Cb = (float)(pCb[0]);
+			Cr = (float)(pCr[0]);
+			R = ((INT16)(((Cr * 1.402525f) + Y + 16.0f)) >> 5);
+			G = ((INT16)((Y - (Cb * 0.343730f) - (Cr * 0.714401f) + 16.0f)) >> 5);
+			B = ((INT16)(((Cb * 1.769905f) + Y + 16.0f)) >> 5);
+			pRGB = writePixelBGRX(pRGB, formatSize, DstFormat, CLIP(R), CLIP(G),
+			                      CLIP(B), 0xFF);
+			pY++;
+			pCb++;
+			pCr++;
+		}
+
+		pY += srcPad;
+		pCb += srcPad;
+		pCr += srcPad;
+		pRGB += dstPad;
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
+static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(
     const INT16* pSrc[3], UINT32 srcStep,
     BYTE* pDst, UINT32 DstFormat, UINT32 dstStep,
     const prim_size_t* roi)
@@ -73,6 +115,21 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(
 	}
 
 	return PRIMITIVES_SUCCESS;
+}
+
+static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(
+    const INT16* pSrc[3], UINT32 srcStep,
+    BYTE* pDst, UINT32 DstFormat, UINT32 dstStep,
+    const prim_size_t* roi)
+{
+	switch (DstFormat)
+	{
+		case PIXEL_FORMAT_BGRX32:
+			return general_yCbCrToRGB_16s8u_P3AC4R_BGRX(pSrc, srcStep, pDst, DstFormat, dstStep, roi);
+
+		default:
+			return general_yCbCrToRGB_16s8u_P3AC4R_general(pSrc, srcStep, pDst, DstFormat, dstStep, roi);
+	}
 }
 
 static pstatus_t general_yCbCrToBGR_16s8u_P3AC4R(
