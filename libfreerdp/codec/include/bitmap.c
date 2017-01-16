@@ -24,8 +24,8 @@
 /**
  * Write a foreground/background image to a destination buffer.
  */
-static BYTE* WRITEFGBGIMAGE(BYTE* pbDest, UINT32 rowDelta,
-                            BYTE bitmask, PIXEL fgPel, INT32 cBits)
+static INLINE BYTE* WRITEFGBGIMAGE(BYTE* pbDest, UINT32 rowDelta,
+                                   BYTE bitmask, PIXEL fgPel, INT32 cBits)
 {
 	PIXEL xorPixel;
 	DESTREADPIXEL(xorPixel, pbDest - rowDelta);
@@ -167,8 +167,8 @@ static BYTE* WRITEFGBGIMAGE(BYTE* pbDest, UINT32 rowDelta,
  * Write a foreground/background image to a destination buffer
  * for the first line of compressed data.
  */
-static BYTE* WRITEFIRSTLINEFGBGIMAGE(BYTE* pbDest, BYTE bitmask,
-                                     PIXEL fgPel, UINT32 cBits)
+static INLINE BYTE* WRITEFIRSTLINEFGBGIMAGE(BYTE* pbDest, BYTE bitmask,
+        PIXEL fgPel, UINT32 cBits)
 {
 	if (bitmask & g_MaskBit0)
 	{
@@ -292,9 +292,9 @@ static BYTE* WRITEFIRSTLINEFGBGIMAGE(BYTE* pbDest, BYTE bitmask,
 /**
  * Decompress an RLE compressed bitmap.
  */
-static void RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer,
-                          BYTE* pbDestBuffer,
-                          UINT32 rowDelta, UINT32 width, UINT32 height)
+static INLINE void RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer,
+                                 BYTE* pbDestBuffer,
+                                 UINT32 rowDelta, UINT32 width, UINT32 height)
 {
 	const BYTE* pbSrc = pbSrcBuffer;
 	const BYTE* pbEnd = pbSrcBuffer + cbSrcBuffer;
