@@ -1442,13 +1442,7 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_init_event_ex(LPVOID lpUserParam, L
 			break;
 
 		case CHANNEL_EVENT_TERMINATED:
-			if (plugin->thread != NULL)
-				if ((error = rdpsnd_virtual_channel_event_disconnected(plugin)))
-					WLog_ERR(TAG,
-					         "rdpsnd_virtual_channel_event_disconnected failed with error %"PRIu32"!", error);
-
 			rdpsnd_virtual_channel_event_terminated(plugin);
-			plugin = NULL;
 			break;
 
 		case CHANNEL_EVENT_ATTACHED:
