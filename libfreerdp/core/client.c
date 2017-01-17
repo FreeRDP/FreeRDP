@@ -989,13 +989,15 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelWriteEx(LPVOID pInitHandle, DWORD op
 	if (!channels)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
 
+	/* If a channel is not connected do not send the data but ignore it.
+	 * Return success to allow terminating channel threads to end gracefully. */
+	if (!channels->connected)
+		return CHANNEL_RC_OK;
+
 	pChannelOpenData = HashTable_GetItemValue(channels->openHandles, (void*)(UINT_PTR) openHandle);
 
 	if (!pChannelOpenData)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
-
-	if (!channels->connected)
-		return CHANNEL_RC_NOT_CONNECTED;
 
 	if (!pData)
 		return CHANNEL_RC_NULL_DATA;
