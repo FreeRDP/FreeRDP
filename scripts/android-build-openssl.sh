@@ -55,7 +55,8 @@ function build {
 		common_run mkdir -p $DST_DIR
 	fi
 
-	common_run ${CROSS_COMPILE}gcc --sysroot=${CROSS_SYSROOT} -shared -o $DST_DIR/libfreerdp-openssl.so -Wl,-whole-archive libcrypto.a libssl.a -Wl,-no-whole-archive
+	SONAME=libfreerdp-openssl.so
+	common_run ${CROSS_COMPILE}gcc --sysroot=${CROSS_SYSROOT} -shared -fPIC -Wl,-soname,$SONAME -o $DST_DIR/$SONAME -Wl,-whole-archive libcrypto.a libssl.a -Wl,-no-whole-archive
 	common_run cd $BASE
 }
 
