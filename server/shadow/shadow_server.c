@@ -453,12 +453,18 @@ int shadow_server_start(rdpShadowServer* server)
 	server->screen = shadow_screen_new(server);
 
 	if (!server->screen)
+	{
+		WLog_ERR(TAG, "screen_new failed");
 		return -1;
+	}
 
 	server->capture = shadow_capture_new(server);
 
 	if (!server->capture)
+	{
+		WLog_ERR(TAG, "capture_new failed");
 		return -1;
+	}
 
 	if (!server->ipcSocket)
 		status = server->listener->Open(server->listener, NULL, (UINT16) server->port);
@@ -466,7 +472,10 @@ int shadow_server_start(rdpShadowServer* server)
 		status = server->listener->OpenLocal(server->listener, server->ipcSocket);
 
 	if (!status)
+	{
+		WLog_ERR(TAG, "Problem creating listener. (Port already used or insufficient permissions?)");
 		return -1;
+	}
 
 	if (!(server->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
 				shadow_server_thread, (void*) server, 0, NULL)))

@@ -1,0 +1,116 @@
+.de URL
+\\$2 \(laURL: \\$1 \(ra\\$3
+..
+.if \n[.g] .mso www.tmac))
+.TH winpr\-makecert 1 2017-01-11 "@FREERDP_VERSION_FULL@" "FreeRDP"
+.SH NAME
+winpr\-makecert \- A tool to create X.509 certificates.
+.SH SYNOPSIS
+.B winpr\-makecert
+[\fB-rdp\fP]
+[\fB-silent\fP]
+[\fB-live\fP]
+[\fB-format\fP { \fIcrt\fP | \fIpem\fP | \fIpfx\fP }]
+[\fB-p\fP password]
+[\fB-n\fP common_name]
+[\fB-y\fP years]
+[\fB-m\fP months]
+[\fB-len\fP lenth]
+[\fB-#\fP serial]
+[\fB-a\fP { \fImd5\fP | \fIsha1\fP | \fIsha256\fP | \fIs384\fP | \fIsha512\fP }]
+[\fB-path\fP outputpath] 
+[outputname]
+.SH DESCRIPTION
+.B winpr-makecert
+is a tool for generating X.509 certificates modeled after the Windows command
+MakeCert. winpr-makecert aims to be command line compatible with MakeCert
+however not all options are supported or implemented yet.
+
+Unimplemented features are not described here. They are marked as "Unsupported"
+in winpr-makecerts help.
+
+In contrast to it's Windows counterpart winpr\-makecert does, unless the
+\fB\-live\fP option is given, always creates and save a certificate.
+If \fIoutputname\fP isn't set it is tried to determine the host name of the
+computer the command is run on.
+.br
+\fBWarning:\fP if the file already exists it will be overwritten without asking.
+
+Without further options the generated certificates have the following properties:
+
+* 2048 bit long
+.br
+* sha256 as hash algorithm
+.br
+* the detected host name is used as common name
+.br
+* a time stamp is used as serial number
+.br
+* validity period of one year
+.br
+* saved in the current working directory in crt format
+.SH OPTIONS
+.IP "-rdp"
+Dummy parameter. Can be used to quickly generate a certificate with default
+properties without specifying any further parameters.
+.IP "-silent"
+Don't print the generated certificate to stdout.
+.IP "-f format"
+Three formats are supported: crt, pem and pfx.
+.br
+\fIcrt\fP outputs the key and the certificate in a separate file each with the file
+endings .key and .crt.
+.br
+\fIpem\fP outputs the key and certificate into a single file with the file ending pem.
+.br
+And \fIpfx\fP outputs key and certificate into a  pkcs12 file with the ending .pfx.
+.IP "-p password"
+Password to use if the pfx format is used as format.
+.IP "-live"
+Don't write the key/certificate to disk. When used from the command line this
+can be thought as "dummy" mode.
+.IP "-n common_name"
+The common name to use in the certificate.
+.IP "-m months"
+Validity period in months.
+.IP "-y years"
+Validity period in years. If months and years are specified the specified
+month parameter will take precedence.
+.IP "-len length"
+Key length in bits to use.
+.IP "-a { \fImd5\fP | \fIsha1\fP | \fIsha256\fP | \fIs384\fP | \fIsha512\fP }"
+The hashing algorithm to use.
+.IP "-# serial"
+The serial number to use for the certificate.
+.IP "-path"
+A directory where the certificate should be created in.
+.IP "outputname"
+The base name of the created file(s). A suffix, the format specific suffix is
+appended to this name.
+.SH EXAMPLES
+winpr-makecert -rdp
+
+Creates a certificate with the default properties, saved to a file in the
+current working directory in crt format named like the host. If the host is
+named freerdp the created files are called freerdp.key and freerdp.crt. 
+
+
+winpr-makecert -len 4096 -a sha384 -path /tmp -# 22 -m 144 -y 1 -format crt mycert
+
+The command above creates the file /tmp/mycert.pem containing a key and a
+certificate with a length of 4096. It will use sha384 as hash algorithm.
+The certificate has the serial number 22 and is valid for 12 years (144 months).
+.SH EXIT STATUS
+.TP
+.B 0
+Successful program execution.
+.TP
+.B 1
+Otherweise.
+
+.SH SEE ALSO
+
+.URL  "https://msdn.microsoft.com/library/windows/desktop/aa386968.aspx" "MakeCert help page" 
+
+.SH AUTHOR
+FreeRDP <team@freerdp.com>

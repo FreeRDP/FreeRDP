@@ -36,6 +36,7 @@ static BOOL g_MessagePump = FALSE;
 #endif
 
 #include <freerdp/server/shadow.h>
+#define TAG SERVER_TAG("shadow")
 
 int main(int argc, char** argv)
 {
@@ -52,6 +53,7 @@ int main(int argc, char** argv)
 	if (!server)
 	{
 		status = -1;
+		WLog_ERR(TAG, "Server new failed");
 		goto fail_server_new;
 	}
 
@@ -70,14 +72,21 @@ int main(int argc, char** argv)
 	if ((status = shadow_server_parse_command_line(server, argc, argv)) < 0)
 	{
 		shadow_server_command_line_status_print(server, argc, argv, status);
+		WLog_ERR(TAG, "Problem parsing the command line.");
 		goto fail_parse_command_line;
 	}
 
 	if ((status = shadow_server_init(server)) < 0)
+	{
+		WLog_ERR(TAG, "Server initialization failed.");
 		goto fail_server_init;
+	}
 
 	if ((status = shadow_server_start(server)) < 0)
+	{
+		WLog_ERR(TAG, "Failed to start server.");
 		goto fail_server_start;
+	}
 
 	if (g_MessagePump)
 	{

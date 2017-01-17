@@ -50,3 +50,5 @@ if (WITH_DEBUG_SYMBOLS AND MSVC)
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Tools")
+configure_file(winpr-hash.1.in ${CMAKE_CURRENT_BINARY_DIR}/winpr-hash.1)
+install_freerdp_man(${CMAKE_CURRENT_BINARY_DIR}/winpr-hash.1 1)
