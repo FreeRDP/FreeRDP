@@ -27,7 +27,7 @@ MakeCert. winpr-makecert aims to be command line compatible with MakeCert
 however not all options are supported or implemented yet.
 
 Unimplemented features are not described here. They are marked as "Unsupported"
-in in winpr-makecerts help.
+in winpr-makecerts help.
 
 In contrast to it's Windows counterpart winpr\-makecert does, unless the
 \fB\-live\fP option is given, always creates and save a certificate.

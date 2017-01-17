@@ -27,12 +27,12 @@ freerdp\-shadow\-cli \- A utility for sharing a X display via RDP.
 can be used to share a running X display like with VNC but by using the RDP
 instead. It is also possibly to share only parts (rect) of the display.
 .SH OPTIONS
-.IP /ipc-socket:<icp-socket>
-If this option is set an icp socket with the path \fIicp-socket\fP is used
+.IP /ipc-socket:<ipc-socket>
+If this option is set an ipc socket with the path \fIipc-socket\fP is used
 instead of a TCP socket.
 .IP /port:<port>
 Set the port to use. Default is 3389.
-This option is ignored if icp-socket is used.
+This option is ignored if ipc-socket is used.
 .IP /monitors:<1,2,3,...>
 Select the monitor(s) to share.
 .IP /rect:<x,y,w,h>      
