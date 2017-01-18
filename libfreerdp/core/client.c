@@ -612,7 +612,6 @@ UINT freerdp_channels_disconnect(rdpChannels* channels, freerdp* instance)
 {
 	UINT error = CHANNEL_RC_OK;
 	int index;
-	char* name;
 	CHANNEL_OPEN_DATA* pChannelOpenData;
 	CHANNEL_CLIENT_DATA* pChannelClientData;
 
@@ -625,7 +624,7 @@ UINT freerdp_channels_disconnect(rdpChannels* channels, freerdp* instance)
 	/* tell all libraries we are shutting down */
 	for (index = 0; index < channels->clientDataCount; index++)
 	{
-		char* name[9];
+		char name[9];
 		ChannelDisconnectedEventArgs e;
 		pChannelClientData = &channels->clientDataList[index];
 
