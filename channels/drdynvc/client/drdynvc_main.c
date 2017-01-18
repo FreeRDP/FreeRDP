@@ -720,7 +720,7 @@ static UINT drdynvc_send(drdynvcPlugin* drdynvc, wStream* s)
 			WLog_Print(drdynvc->log, WLOG_ERROR, "VirtualChannelWriteEx failed with %s [%08"PRIX32"]",
 			           WTSErrorToString(status),
 			           status);
-			break;
+			return status;
 	}
 }
 
