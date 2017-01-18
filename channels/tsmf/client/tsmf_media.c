@@ -455,6 +455,26 @@ static BOOL tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 		event.framePixFmt = sample->pixfmt;
 		event.frameWidth = sample->stream->width;
 		event.frameHeight = sample->stream->height;
+		event.x = presentation->x;
+		event.y = presentation->y;
+		event.width = presentation->width;
+		event.height = presentation->height;
+
+		if (presentation->nr_rects > 0)
+		{
+			event.numVisibleRects = presentation->nr_rects;
+			event.visibleRects = (RECTANGLE_16*) calloc(1, event.numVisibleRects * sizeof(RECTANGLE_16));
+
+			if (!event.visibleRects)
+			{
+				WLog_ERR(TAG, "can't allocate memory for copy rectangles");
+				return FALSE;
+			}
+
+			memcpy(event.visibleRects, presentation->rects, presentation->nr_rects * sizeof(RDP_RECT));
+			presentation->nr_rects = 0;
+		}
+
 #if 0
 		/* Dump a .ppm image for every 30 frames. Assuming the frame is in YUV format, we
 		   extract the Y values to create a grayscale image. */
@@ -486,6 +506,9 @@ static BOOL tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 			tsmf->FrameEvent(tsmf, &event);
 
 		free(event.frameData);
+
+		if (event.visibleRects != NULL)
+			free(event.visibleRects);
 	}
 
 	return TRUE;
@@ -718,7 +741,6 @@ static void* tsmf_stream_ack_func(void* arg)
 	TSMF_STREAM* stream = (TSMF_STREAM*) arg;
 	UINT error = CHANNEL_RC_OK;
 	DEBUG_TSMF("in %"PRIu32"", stream->stream_id);
-
 	hdl[0] = stream->stopEvent;
 	hdl[1] = Queue_Event(stream->sample_ack_list);
 
@@ -1109,6 +1131,10 @@ BOOL tsmf_presentation_set_geometry_info(TSMF_PRESENTATION* presentation,
 	presentation->width = width;
 	presentation->height = height;
 	tmp_rects = realloc(presentation->rects, sizeof(RDP_RECT) * num_rects);
+
+	if (!tmp_rects && num_rects)
+		return FALSE;
+
 	presentation->nr_rects = num_rects;
 	presentation->rects = tmp_rects;
 	CopyMemory(presentation->rects, rects, sizeof(RDP_RECT) * num_rects);
@@ -1231,14 +1257,14 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id,
 		goto error_sample_ack_list;
 
 	stream->sample_ack_list->object.fnObjectFree = tsmf_sample_free;
-	stream->play_thread = CreateThread(NULL, 0,
-	                                   (LPTHREAD_START_ROUTINE) tsmf_stream_playback_func, stream, 0, NULL);
+	stream->play_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) tsmf_stream_playback_func,
+	                                   stream, CREATE_SUSPENDED, NULL);
 
 	if (!stream->play_thread)
 		goto error_play_thread;
 
-	stream->ack_thread = CreateThread(NULL, 0,
-	                                  (LPTHREAD_START_ROUTINE)tsmf_stream_ack_func, stream, 0, NULL);
+	stream->ack_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)tsmf_stream_ack_func, stream,
+	                                  CREATE_SUSPENDED, NULL);
 
 	if (!stream->ack_thread)
 		goto error_ack_thread;
@@ -1271,6 +1297,12 @@ error_ready:
 error_stopEvent:
 	free(stream);
 	return NULL;
+}
+
+void tsmf_stream_start_threads(TSMF_STREAM* stream)
+{
+	ResumeThread(stream->play_thread);
+	ResumeThread(stream->ack_thread);
 }
 
 TSMF_STREAM* tsmf_stream_find_by_id(TSMF_PRESENTATION* presentation,
