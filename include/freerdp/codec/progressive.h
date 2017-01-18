@@ -138,6 +138,9 @@ struct _RFX_PROGRESSIVE_TILE
 	UINT32 y;
 	UINT32 width;
 	UINT32 height;
+	UINT32 format;
+	UINT32 stride;
+
 	BYTE* data;
 	BYTE* current;
 
@@ -213,6 +216,8 @@ struct _PROGRESSIVE_CONTEXT
 	UINT32 cRects;
 	RFX_RECT* rects;
 
+	UINT32 format;
+
 	UINT32 cTiles;
 	RFX_PROGRESSIVE_TILE** tiles;
 
@@ -226,6 +231,7 @@ struct _PROGRESSIVE_CONTEXT
 	RFX_PROGRESSIVE_CODEC_QUANT quantProgValFull;
 
 	wHashTable* SurfaceContexts;
+	wLog* log;
 };
 
 #ifdef __cplusplus
