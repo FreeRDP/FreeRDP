@@ -468,7 +468,7 @@ static BOOL tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 			if (!event.visibleRects)
 			{
 				WLog_ERR(TAG, "can't allocate memory for copy rectangles");
-				return;
+				return FALSE;
 			}
 
 			memcpy(event.visibleRects, presentation->rects, presentation->nr_rects * sizeof(RDP_RECT));
@@ -1132,11 +1132,8 @@ BOOL tsmf_presentation_set_geometry_info(TSMF_PRESENTATION* presentation,
 	presentation->height = height;
 	tmp_rects = realloc(presentation->rects, sizeof(RDP_RECT) * num_rects);
 
-	if (!num_rects)
-		presentation->rects = NULL;
-
 	if (!tmp_rects && num_rects)
-		return;
+		return FALSE;
 
 	presentation->nr_rects = num_rects;
 	presentation->rects = tmp_rects;
