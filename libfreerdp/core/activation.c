@@ -365,11 +365,13 @@ BOOL rdp_server_accept_client_control_pdu(rdpRdp* rdp, wStream* s)
 BOOL rdp_server_accept_client_font_list_pdu(rdpRdp* rdp, wStream* s)
 {
 	rdpSettings *settings = rdp->settings;
+	freerdp_peer *peer = rdp->context->peer;
 
 	if (!rdp_recv_client_font_list_pdu(s))
 		return FALSE;
 
-	if (settings->SupportMonitorLayoutPdu && settings->MonitorCount)
+	if (settings->SupportMonitorLayoutPdu && settings->MonitorCount && peer->AdjustMonitorsLayout &&
+			peer->AdjustMonitorsLayout(peer))
 	{
 		/* client supports the monitorLayout PDU, let's send him the monitors if any */
 		wStream *st;
@@ -386,8 +388,6 @@ BOOL rdp_server_accept_client_font_list_pdu(rdpRdp* rdp, wStream* s)
 		}
 
 		r = rdp_send_data_pdu(rdp, st, DATA_PDU_TYPE_MONITOR_LAYOUT, 0);
-		Stream_Free(st, TRUE);
-
 		if (!r)
 			return FALSE;
 	}
