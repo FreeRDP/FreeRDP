@@ -71,7 +71,6 @@ static BOOL xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	BYTE* data;
 	Pixmap pixmap;
 	XImage* image;
-	UINT32 SrcFormat;
 	rdpGdi* gdi;
 	xfContext* xfc = (xfContext*) context;
 	gdi = context->gdi;
@@ -93,10 +92,9 @@ static BOOL xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 				return FALSE;
 			}
 
-			SrcFormat = bitmap->format;
 			freerdp_image_copy(data, gdi->dstFormat, 0, 0, 0,
 			                   bitmap->width, bitmap->height,
-			                   bitmap->data, SrcFormat,
+			                   bitmap->data, bitmap->format,
 			                   0, 0, 0, &context->gdi->palette, FREERDP_FLIP_NONE);
 			_aligned_free(bitmap->data);
 			bitmap->data = data;
@@ -490,7 +488,7 @@ BOOL xf_register_graphics(rdpGraphics* graphics)
 UINT32 xf_get_local_color_format(xfContext* xfc, BOOL aligned)
 {
 	UINT32 DstFormat;
-	BOOL invert = !(aligned ^ xfc->invert);
+	BOOL invert = xfc->invert;
 
 	if (!xfc)
 		return 0;
@@ -505,9 +503,9 @@ UINT32 xf_get_local_color_format(xfContext* xfc, BOOL aligned)
 			DstFormat = (!invert) ? PIXEL_FORMAT_RGB24 : PIXEL_FORMAT_BGR24;
 	}
 	else if (xfc->depth == 16)
-		DstFormat = (!invert) ? PIXEL_FORMAT_RGB16 : PIXEL_FORMAT_BGR16;
+		DstFormat = PIXEL_FORMAT_RGB16;
 	else if (xfc->depth == 15)
-		DstFormat = (!invert) ? PIXEL_FORMAT_RGB16 : PIXEL_FORMAT_BGR16;
+		DstFormat = PIXEL_FORMAT_RGB15;
 	else
 		DstFormat = (!invert) ? PIXEL_FORMAT_RGBX32 : PIXEL_FORMAT_BGRX32;
 
