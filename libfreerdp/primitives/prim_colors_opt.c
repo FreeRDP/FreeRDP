@@ -356,7 +356,7 @@ static pstatus_t sse2_RGBToYCbCr_16s16s_P3P3(
 #define XMM_ALL_ONES \
 	_mm_set1_epi32(0xFFFFFFFFU)
 
-pstatus_t sse2_RGBToRGB_16s8u_P3AC4R(
+static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_BGRX(
     const INT16* const pSrc[3],	/* 16-bit R,G, and B arrays */
     UINT32 srcStep,			/* bytes between rows in source data */
     BYTE* pDst,				/* 32-bit interleaved ARGB (ABGR?) data */
@@ -388,9 +388,6 @@ pstatus_t sse2_RGBToRGB_16s8u_P3AC4R(
 		                                      dstStep, DstFormat, roi);
 	}
 
-	// TODO: Need to update SSE code to allow color conversion!!!
-	return generic->RGBToRGB_16s8u_P3AC4R(pSrc, srcStep, pDst,
-	                                      dstStep, DstFormat, roi);
 	out = (BYTE*) pDst;
 	srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 	dstbump = (dstStep - (roi->width * sizeof(UINT32)));
@@ -453,11 +450,31 @@ pstatus_t sse2_RGBToRGB_16s8u_P3AC4R(
 
 	return PRIMITIVES_SUCCESS;
 }
+
+static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R(
+    const INT16* const pSrc[3],	/* 16-bit R,G, and B arrays */
+    UINT32 srcStep,			/* bytes between rows in source data */
+    BYTE* pDst,				/* 32-bit interleaved ARGB (ABGR?) data */
+    UINT32 dstStep,			/* bytes between rows in dest data */
+    UINT32 DstFormat,
+    const prim_size_t* roi)
+{
+	switch (DstFormat)
+	{
+		case PIXEL_FORMAT_BGRA32:
+		case PIXEL_FORMAT_BGRX32:
+			return sse2_RGBToRGB_16s8u_P3AC4R_BGRX(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
+
+		default:
+			return generic->RGBToRGB_16s8u_P3AC4R(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
+	}
+}
+
 #endif /* WITH_SSE2 */
 
 /*---------------------------------------------------------------------------*/
 #ifdef WITH_NEON
-static pstatus_t neon_yCbCrToRGB_16s16s_P3P3(
+static pstatus_t neon_yCbCrToRGB_16s16s_P3P3_BGRX(
     const INT16* pSrc[3],
     int srcStep,
     INT16* pDst[3],
@@ -544,6 +561,25 @@ static pstatus_t neon_yCbCrToRGB_16s16s_P3P3(
 	}
 
 	return PRIMITIVES_SUCCESS;
+}
+
+static pstatus_t neon_RGBToRGB_16s8u_P3AC4R(
+    const INT16* const pSrc[3],	/* 16-bit R,G, and B arrays */
+    UINT32 srcStep,			/* bytes between rows in source data */
+    BYTE* pDst,				/* 32-bit interleaved ARGB (ABGR?) data */
+    UINT32 dstStep,			/* bytes between rows in dest data */
+    UINT32 DstFormat,
+    const prim_size_t* roi)
+{
+	switch (DstFormat)
+	{
+		case PIXEL_FORMAT_BGRA32:
+		case PIXEL_FORMAT_BGRX32:
+			return neon_RGBToRGB_16s8u_P3AC4R_BGRX(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
+
+		default:
+			return generic->RGBToRGB_16s8u_P3AC4R(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
+	}
 }
 #endif /* WITH_NEON */
 

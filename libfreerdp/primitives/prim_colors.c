@@ -134,6 +134,7 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(
 {
 	switch (DstFormat)
 	{
+		case PIXEL_FORMAT_BGRA32:
 		case PIXEL_FORMAT_BGRX32:
 			return general_yCbCrToRGB_16s8u_P3AC4R_BGRX(pSrc, srcStep, pDst, DstFormat, dstStep, roi);
 

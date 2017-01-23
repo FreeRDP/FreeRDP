@@ -549,8 +549,8 @@ static INLINE BYTE RGB2U(INT32 R, INT32 G, INT32 B)
 
 static INLINE BYTE RGB2V(INT32 R, INT32 G, INT32 B)
 {
-	const INT32 v = (128L * (R) - 116L * (G) -  12L * (B));
-	const INT32 v8 = (v >> 8L) + 128L;
+	const INT32 v = (128L / 4 * (R) - 116L / 4 * (G) -  12L / 4 * (B));
+	const INT32 v8 = (v >> 6L) + 128L;
 	return CLIP(v8);
 }
 
