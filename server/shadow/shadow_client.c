@@ -594,21 +594,19 @@ static BOOL shadow_client_surface_frame_acknowledge(rdpShadowClient* client,
         UINT32 frameId)
 {
 	shadow_client_common_frame_acknowledge(client, frameId);
+	/*
+	 * Reset queueDepth for legacy none RDPGFX acknowledge
+	 */
+	client->encoder->queueDepth = QUEUE_DEPTH_UNAVAILABLE;
 	return TRUE;
 }
 
 static UINT shadow_client_rdpgfx_frame_acknowledge(RdpgfxServerContext* context,
         RDPGFX_FRAME_ACKNOWLEDGE_PDU* frameAcknowledge)
 {
-	shadow_client_common_frame_acknowledge((rdpShadowClient*)context->custom,
-	                                       frameAcknowledge->frameId);
-	return CHANNEL_RC_OK;
-}
-static UINT shadow_client_rdpgfx_qoe_frame_acknowledge(RdpgfxServerContext*
-        context, RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU* qoeFrameAcknowledge)
-{
-	shadow_client_common_frame_acknowledge((rdpShadowClient*)context->custom,
-	                                       qoeFrameAcknowledge->frameId);
+	rdpShadowClient* client = (rdpShadowClient*)context->custom;
+	shadow_client_common_frame_acknowledge(client, frameAcknowledge->frameId);
+	client->encoder->queueDepth = frameAcknowledge->queueDepth;
 	return CHANNEL_RC_OK;
 }
 
@@ -1602,8 +1600,6 @@ static void* shadow_client_thread(rdpShadowClient* client)
 					    !gfxstatus.gfxOpened)
 					{
 						client->rdpgfx->FrameAcknowledge = shadow_client_rdpgfx_frame_acknowledge;
-						client->rdpgfx->QoeFrameAcknowledge =
-						    shadow_client_rdpgfx_qoe_frame_acknowledge;
 						client->rdpgfx->CapsAdvertise = shadow_client_rdpgfx_caps_advertise;
 
 						if (!client->rdpgfx->Open(client->rdpgfx))

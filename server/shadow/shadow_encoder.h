@@ -56,6 +56,7 @@ struct rdp_shadow_encoder
 	BOOL frameAck;
 	UINT32 frameId;
 	UINT32 lastAckframeId;
+	UINT32 queueDepth;
 };
 
 #ifdef __cplusplus
