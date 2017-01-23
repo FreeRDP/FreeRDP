@@ -532,7 +532,7 @@ static UINT rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 		ack.queueDepth = QUEUE_DEPTH_UNAVAILABLE;
 
 		if ((error = rdpgfx_send_frame_acknowledge_pdu(callback, &ack)))
-			WLog_ERR(TAG, "rdpgfx_send_frame_acknowledge_pdu failed with error %"PRIu32"", error);
+			WLog_DBG(TAG, "rdpgfx_send_frame_acknowledge_pdu failed with error %"PRIu32"", error);
 	}
 
 	return error;
@@ -578,14 +578,13 @@ static UINT rdpgfx_recv_wire_to_surface_1_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 	pdu.bitmapData = Stream_Pointer(s);
 	Stream_Seek(s, pdu.bitmapDataLength);
 	WLog_DBG(TAG,
-		"RecvWireToSurface1Pdu: surfaceId: %"PRIu16" codecId: %s (0x%04"PRIX16") pixelFormat: 0x%02"PRIX8" "
-		"destRect: left: %"PRIu16" top: %"PRIu16" right: %"PRIu16" bottom: %"PRIu16" bitmapDataLength: %"PRIu32"",
-		pdu.surfaceId, rdpgfx_get_codec_id_string(pdu.codecId),
-		pdu.codecId, pdu.pixelFormat,
-		pdu.destRect.left, pdu.destRect.top,
-		pdu.destRect.right, pdu.destRect.bottom,
-		pdu.bitmapDataLength);
-
+	         "RecvWireToSurface1Pdu: surfaceId: %"PRIu16" codecId: %s (0x%04"PRIX16") pixelFormat: 0x%02"PRIX8" "
+	         "destRect: left: %"PRIu16" top: %"PRIu16" right: %"PRIu16" bottom: %"PRIu16" bitmapDataLength: %"PRIu32"",
+	         pdu.surfaceId, rdpgfx_get_codec_id_string(pdu.codecId),
+	         pdu.codecId, pdu.pixelFormat,
+	         pdu.destRect.left, pdu.destRect.top,
+	         pdu.destRect.right, pdu.destRect.bottom,
+	         pdu.bitmapDataLength);
 	cmd.surfaceId = pdu.surfaceId;
 	cmd.codecId = pdu.codecId;
 	cmd.contextId = 0;
