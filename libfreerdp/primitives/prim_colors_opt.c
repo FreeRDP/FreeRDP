@@ -474,11 +474,9 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R(
 
 /*---------------------------------------------------------------------------*/
 #ifdef WITH_NEON
-static pstatus_t neon_yCbCrToRGB_16s16s_P3P3_BGRX(
-    const INT16* pSrc[3],
-    int srcStep,
-    INT16* pDst[3],
-    int dstStep,
+static pstatus_t neon_yCbCrToRGB_16s16s_P3P3(
+    const INT16* pSrc[3],  INT32 srcStep,
+    INT16* pDst[3],  INT32 dstStep,
     const prim_size_t* roi)	/* region of interest */
 {
 	/* TODO: If necessary, check alignments and call the general version. */
@@ -563,24 +561,6 @@ static pstatus_t neon_yCbCrToRGB_16s16s_P3P3_BGRX(
 	return PRIMITIVES_SUCCESS;
 }
 
-static pstatus_t neon_RGBToRGB_16s8u_P3AC4R(
-    const INT16* const pSrc[3],	/* 16-bit R,G, and B arrays */
-    UINT32 srcStep,			/* bytes between rows in source data */
-    BYTE* pDst,				/* 32-bit interleaved ARGB (ABGR?) data */
-    UINT32 dstStep,			/* bytes between rows in dest data */
-    UINT32 DstFormat,
-    const prim_size_t* roi)
-{
-	switch (DstFormat)
-	{
-		case PIXEL_FORMAT_BGRA32:
-		case PIXEL_FORMAT_BGRX32:
-			return neon_RGBToRGB_16s8u_P3AC4R_BGRX(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
-
-		default:
-			return generic->RGBToRGB_16s8u_P3AC4R(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
-	}
-}
 #endif /* WITH_NEON */
 
 
