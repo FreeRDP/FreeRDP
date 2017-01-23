@@ -224,7 +224,7 @@ static INLINE INT32 planar_decompress_plane_rle(const BYTE* pSrcData, UINT32 Src
 }
 
 static INLINE BOOL writeLine(BYTE** ppRgba, UINT32 DstFormat, UINT32 width, const BYTE** ppR,
-                      const BYTE** ppG, const BYTE** ppB, const BYTE** ppA)
+                             const BYTE** ppG, const BYTE** ppB, const BYTE** ppA)
 {
 	UINT32 x;
 
@@ -1121,7 +1121,7 @@ BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context,
 	UINT32 size;
 	BYTE* dstp;
 	UINT32 planeSize;
-	UINT32 dstSizes[4];
+	UINT32 dstSizes[4] = { 0 };
 	BYTE FormatHeader = 0;
 
 	if (!context || !context->rlePlanesBuffer)
