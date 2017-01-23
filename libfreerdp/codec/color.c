@@ -384,11 +384,11 @@ BOOL freerdp_image_copy_from_pointer_data(
 	}
 }
 
-static BOOL overlapping(const BYTE* pDstData, UINT32 nXDst, UINT32 nYDst,
-                        UINT32 nDstStep, UINT32 dstBytesPerPixel,
-                        const BYTE* pSrcData, UINT32 nXSrc, UINT32 nYSrc,
-                        UINT32 nSrcStep, UINT32 srcBytesPerPixel,
-                        UINT32 nWidth, UINT32 nHeight)
+static INLINE BOOL overlapping(const BYTE* pDstData, UINT32 nXDst, UINT32 nYDst,
+                               UINT32 nDstStep, UINT32 dstBytesPerPixel,
+                               const BYTE* pSrcData, UINT32 nXSrc, UINT32 nYSrc,
+                               UINT32 nSrcStep, UINT32 srcBytesPerPixel,
+                               UINT32 nWidth, UINT32 nHeight)
 {
 	const BYTE* pDstStart = &pDstData[nXDst * dstBytesPerPixel + nYDst * nDstStep];
 	const BYTE* pDstEnd = pDstStart + nHeight * nDstStep;
@@ -416,7 +416,7 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 	const UINT32 copyDstWidth = nWidth * dstByte;
 	const UINT32 xSrcOffset = nXSrc * srcByte;
 	const UINT32 xDstOffset = nXDst * dstByte;
-	BOOL vSrcVFlip = flags & FREERDP_FLIP_VERTICAL;
+	const BOOL vSrcVFlip = flags & FREERDP_FLIP_VERTICAL;
 	UINT32 srcVOffset = 0;
 	INT32 srcVMultiplier = 1;
 	UINT32 dstVOffset = 0;
@@ -556,16 +556,20 @@ BOOL freerdp_image_fill(BYTE* pDstData, DWORD DstFormat,
                         UINT32 nWidth, UINT32 nHeight, UINT32 color)
 {
 	UINT32 x, y;
+	const UINT32 bpp = GetBytesPerPixel(DstFormat);
+	BYTE* pFirstDstLine = &pDstData[nYDst * nDstStep];
+	BYTE* pFirstDstLineXOffset = &pFirstDstLine[nXDst * bpp];
 
-	for (y = 0; y < nHeight; y++)
+	for (x = 0; x < nWidth; x++)
 	{
-		BYTE* pDstLine = &pDstData[(y + nYDst) * nDstStep];
+		BYTE* pDst = &pFirstDstLine[(x + nXDst) * bpp];
+		WriteColor(pDst, DstFormat, color);
+	}
 
-		for (x = 0; x < nWidth; x++)
-		{
-			BYTE* pDst = &pDstLine[(x + nXDst) * GetBytesPerPixel(DstFormat)];
-			WriteColor(pDst, DstFormat, color);
-		}
+	for (y = 1; y < nHeight; y++)
+	{
+		BYTE* pDstLine = &pDstData[(y + nYDst) * nDstStep + nXDst * bpp];
+		memcpy(pDstLine, pFirstDstLineXOffset, nWidth * bpp);
 	}
 
 	return TRUE;

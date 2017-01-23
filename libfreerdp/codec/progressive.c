@@ -34,6 +34,7 @@
 #include "rfx_differential.h"
 #include "rfx_quantization.h"
 #include "rfx_rlgr.h"
+#include "progressive.h"
 
 #define TAG FREERDP_TAG("codec.progressive")
 
@@ -745,12 +746,12 @@ static INLINE int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progres
 	const primitives_t* prims = primitives_get();
 	tile->pass = 1;
 	diff = tile->flags & RFX_TILE_DIFFERENCE;
-	WLog_DBG(TAG,
-	         "ProgressiveTile%s: quantIdx Y: %"PRIu8" Cb: %"PRIu8" Cr: %"PRIu8" xIdx: %"PRIu16" yIdx: %"PRIu16" flags: 0x%02"PRIX8" quality: %"PRIu8" yLen: %"PRIu16" cbLen: %"PRIu16" crLen: %"PRIu16" tailLen: %"PRIu16"",
-	         (tile->blockType == PROGRESSIVE_WBT_TILE_FIRST) ? "First" : "Simple",
-	         tile->quantIdxY, tile->quantIdxCb, tile->quantIdxCr,
-	         tile->xIdx, tile->yIdx, tile->flags, tile->quality, tile->yLen,
-	         tile->cbLen, tile->crLen, tile->tailLen);
+	WLog_Print(progressive->log, WLOG_DEBUG,
+	           "ProgressiveTile%s: quantIdx Y: %"PRIu8" Cb: %"PRIu8" Cr: %"PRIu8" xIdx: %"PRIu16" yIdx: %"PRIu16" flags: 0x%02"PRIX8" quality: %"PRIu8" yLen: %"PRIu16" cbLen: %"PRIu16" crLen: %"PRIu16" tailLen: %"PRIu16"",
+	           (tile->blockType == PROGRESSIVE_WBT_TILE_FIRST) ? "First" : "Simple",
+	           tile->quantIdxY, tile->quantIdxCb, tile->quantIdxCr,
+	           tile->xIdx, tile->yIdx, tile->flags, tile->quality, tile->yLen,
+	           tile->cbLen, tile->crLen, tile->tailLen);
 	region = &(progressive->region);
 
 	if (tile->quantIdxY >= region->numQuant)
@@ -844,16 +845,9 @@ static INLINE int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progres
 	progressive_rfx_decode_component(progressive, &shiftCr, tile->crData,
 	                                 tile->crLen,
 	                                 pSrcDst[2], pCurrent[2], pSign[2], diff); /* Cr */
-
-	if (!progressive->invert)
-		prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * 2,
-		                               tile->data, PIXEL_FORMAT_BGRX32,
-		                               64 * 4, &roi_64x64);
-	else
-		prims->yCbCrToBGR_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * 2,
-		                               tile->data, PIXEL_FORMAT_BGRX32,
-		                               64 * 4, &roi_64x64);
-
+	prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * 2,
+	                               tile->data, tile->format,
+	                               tile->stride, &roi_64x64);
 	BufferPool_Return(progressive->bufferPool, pBuffer);
 	return 1;
 }
@@ -1106,12 +1100,12 @@ static INLINE int progressive_rfx_upgrade_component(PROGRESSIVE_CONTEXT* progres
 		if (srlLen)
 			pSrlLen = (int)((((float) aSrlLen) / ((float) srlLen)) * 100.0f);
 
-		WLog_INFO(TAG,
-		          "RAW: %"PRIu32"/%"PRIu32" %d%% (%"PRIu32"/%"PRIu32":%"PRIu32")\tSRL: %"PRIu32"/%"PRIu32" %d%% (%"PRIu32"/%"PRIu32":%"PRIu32")",
-		          aRawLen, rawLen, pRawLen, state.raw->position, rawLen * 8,
-		          (rawLen * 8) - state.raw->position,
-		          aSrlLen, srlLen, pSrlLen, state.srl->position, srlLen * 8,
-		          (srlLen * 8) - state.srl->position);
+		WLog_Print(progressive->log, WLOG_INFO,
+		           "RAW: %"PRIu32"/%"PRIu32" %d%% (%"PRIu32"/%"PRIu32":%"PRIu32")\tSRL: %"PRIu32"/%"PRIu32" %d%% (%"PRIu32"/%"PRIu32":%"PRIu32")",
+		           aRawLen, rawLen, pRawLen, state.raw->position, rawLen * 8,
+		           (rawLen * 8) - state.raw->position,
+		           aSrlLen, srlLen, pSrlLen, state.srl->position, srlLen * 8,
+		           (srlLen * 8) - state.srl->position);
 		return -1;
 	}
 
@@ -1152,11 +1146,11 @@ static INLINE int progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* progr
 	static const prim_size_t roi_64x64 = { 64, 64 };
 	const primitives_t* prims = primitives_get();
 	tile->pass++;
-	WLog_DBG(TAG,
-	         "ProgressiveTileUpgrade: pass: %"PRIu16" quantIdx Y: %"PRIu8" Cb: %"PRIu8" Cr: %"PRIu8" xIdx: %"PRIu16" yIdx: %"PRIu16" quality: %"PRIu8" ySrlLen: %"PRIu16" yRawLen: %"PRIu16" cbSrlLen: %"PRIu16" cbRawLen: %"PRIu16" crSrlLen: %"PRIu16" crRawLen: %"PRIu16"",
-	         tile->pass, tile->quantIdxY, tile->quantIdxCb, tile->quantIdxCr, tile->xIdx,
-	         tile->yIdx, tile->quality, tile->ySrlLen, tile->yRawLen, tile->cbSrlLen,
-	         tile->cbRawLen, tile->crSrlLen, tile->crRawLen);
+	WLog_Print(progressive->log, WLOG_DEBUG,
+	           "ProgressiveTileUpgrade: pass: %"PRIu16" quantIdx Y: %"PRIu8" Cb: %"PRIu8" Cr: %"PRIu8" xIdx: %"PRIu16" yIdx: %"PRIu16" quality: %"PRIu8" ySrlLen: %"PRIu16" yRawLen: %"PRIu16" cbSrlLen: %"PRIu16" cbRawLen: %"PRIu16" crSrlLen: %"PRIu16" crRawLen: %"PRIu16"",
+	           tile->pass, tile->quantIdxY, tile->quantIdxCb, tile->quantIdxCr, tile->xIdx,
+	           tile->yIdx, tile->quality, tile->ySrlLen, tile->yRawLen, tile->cbSrlLen,
+	           tile->cbRawLen, tile->crSrlLen, tile->crRawLen);
 	region = &(progressive->region);
 
 	if (tile->quantIdxY >= region->numQuant)
@@ -1191,13 +1185,13 @@ static INLINE int progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* progr
 	quantProgCr = &(quantProg->crQuantValues);
 
 	if (!progressive_rfx_quant_cmp_equal(quantY, &(tile->yQuant)))
-		WLog_WARN(TAG, "non-progressive quantY has changed!");
+		WLog_Print(progressive->log, WLOG_WARN, "non-progressive quantY has changed!");
 
 	if (!progressive_rfx_quant_cmp_equal(quantCb, &(tile->cbQuant)))
-		WLog_WARN(TAG, "non-progressive quantCb has changed!");
+		WLog_Print(progressive->log, WLOG_WARN, "non-progressive quantCb has changed!");
 
 	if (!progressive_rfx_quant_cmp_equal(quantCr, &(tile->crQuant)))
-		WLog_WARN(TAG, "non-progressive quantCr has changed!");
+		WLog_Print(progressive->log, WLOG_WARN, "non-progressive quantCr has changed!");
 
 	progressive_rfx_quant_add(quantY, quantProgY, &yBitPos);
 	progressive_rfx_quant_add(quantCb, quantProgCb, &cbBitPos);
@@ -1266,15 +1260,9 @@ static INLINE int progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* progr
 	if (status < 0)
 		return -1;
 
-	if (!progressive->invert)
-		prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * 2,
-		                               tile->data, PIXEL_FORMAT_BGRX32,
-		                               64 * 4, &roi_64x64);
-	else
-		prims->yCbCrToBGR_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * 2,
-		                               tile->data, PIXEL_FORMAT_BGRX32,
-		                               64 * 4, &roi_64x64);
-
+	prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * 2,
+	                               tile->data, tile->format,
+	                               tile->stride, &roi_64x64);
 	BufferPool_Return(progressive->bufferPool, pBuffer);
 	return 1;
 }
@@ -1307,8 +1295,7 @@ static INLINE int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive,
 		blockType = *((UINT16*) &block[boffset + 0]); /* blockType (2 bytes) */
 		blockLen = *((UINT32*) &block[boffset + 2]); /* blockLen (4 bytes) */
 		boffset += 6;
-
-		//WLog_DBG(TAG, "%s", progressive_get_block_type_string(blockType));
+		WLog_Print(progressive->log, WLOG_DEBUG, "%s", progressive_get_block_type_string(blockType));
 
 		if ((blocksLen - offset) < blockLen)
 			return -1003;
@@ -1369,6 +1356,8 @@ static INLINE int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive,
 				tile->height = 64;
 				tile->x = tile->xIdx * 64;
 				tile->y = tile->yIdx * 64;
+				tile->format = progressive->format;
+				tile->stride = GetBytesPerPixel(tile->format) * tile->width;
 				tile->flags &= 1;
 				break;
 
@@ -1426,6 +1415,8 @@ static INLINE int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive,
 				tile->height = 64;
 				tile->x = tile->xIdx * 64;
 				tile->y = tile->yIdx * 64;
+				tile->format = progressive->format;
+				tile->stride = GetBytesPerPixel(tile->format) * tile->width;
 				break;
 
 			case PROGRESSIVE_WBT_TILE_UPGRADE:
@@ -1496,11 +1487,12 @@ static INLINE int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive,
 				tile->height = 64;
 				tile->x = tile->xIdx * 64;
 				tile->y = tile->yIdx * 64;
+				tile->format = progressive->format;
+				tile->stride = GetBytesPerPixel(tile->format) * tile->width;
 				break;
 
 			default:
 				return -1039;
-				break;
 		}
 
 		if (boffset != blockLen)
@@ -1515,8 +1507,9 @@ static INLINE int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive,
 
 	if (count != region->numTiles)
 	{
-		WLog_WARN(TAG, "numTiles inconsistency: actual: %"PRIu32", expected: %"PRIu16"\n", count,
-		          region->numTiles);
+		WLog_Print(progressive->log, WLOG_WARN,
+		           "numTiles inconsistency: actual: %"PRIu32", expected: %"PRIu16"\n", count,
+		           region->numTiles);
 	}
 
 	for (index = 0; index < region->numTiles; index++)
@@ -1572,7 +1565,6 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
 	REGION16 clippingRects, updateRegion;
 	PROGRESSIVE_SURFACE_CONTEXT* surface;
 	PROGRESSIVE_BLOCK_REGION* region;
-	progressive->invert = FREERDP_PIXEL_FORMAT_IS_ABGR(DstFormat) ? TRUE : FALSE;
 	surface = (PROGRESSIVE_SURFACE_CONTEXT*) progressive_get_surface_data(
 	              progressive, surfaceId);
 
@@ -1582,6 +1574,7 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
 	blocks = pSrcData;
 	blocksLen = SrcSize;
 	region = &(progressive->region);
+	progressive->format = DstFormat;
 
 	while ((blocksLen - offset) >= 6)
 	{
@@ -1603,7 +1596,7 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
 		switch (blockType)
 		{
 			case PROGRESSIVE_WBT_SYNC:
-				WLog_DBG(TAG, "ProgressiveSync");
+				WLog_Print(progressive->log, WLOG_DEBUG, "ProgressiveSync");
 				sync.blockType = blockType;
 				sync.blockLen = blockLen;
 
@@ -1635,8 +1628,9 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
 				frameBegin.regionCount = (UINT32) * ((UINT16*) &block[boffset +
 				                                     4]); /* regionCount (2 bytes) */
 				boffset += 6;
-				WLog_DBG(TAG, "ProgressiveFrameBegin: frameIndex: %"PRIu32" regionCount: %"PRIu16"",
-				         frameBegin.frameIndex, frameBegin.regionCount);
+				WLog_Print(progressive->log, WLOG_DEBUG,
+				           "ProgressiveFrameBegin: frameIndex: %"PRIu32" regionCount: %"PRIu16"",
+				           frameBegin.frameIndex, frameBegin.regionCount);
 				/**
 				 * If the number of elements specified by the regionCount field is
 				 * larger than the actual number of elements in the regions field,
@@ -1645,7 +1639,7 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
 				break;
 
 			case PROGRESSIVE_WBT_FRAME_END:
-				WLog_DBG(TAG, "ProgressiveFrameEnd");
+				WLog_Print(progressive->log, WLOG_DEBUG, "ProgressiveFrameEnd");
 				frameEnd.blockType = blockType;
 				frameEnd.blockLen = blockLen;
 
@@ -1669,12 +1663,10 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
 				if (context.tileSize != 64)
 					return -1010;
 
-				WLog_DBG(TAG, "ProgressiveContext: flags: 0x%02"PRIX8"", context.flags);
+				WLog_Print(progressive->log, WLOG_DEBUG, "ProgressiveContext: flags: 0x%02"PRIX8"", context.flags);
 
 				if (!(context.flags & RFX_SUBBAND_DIFFING))
-				{
-					WLog_WARN(TAG, "RFX_SUBBAND_DIFFING is not set");
-				}
+					WLog_Print(progressive->log, WLOG_WARN, "RFX_SUBBAND_DIFFING is not set");
 
 				break;
 
@@ -1802,15 +1794,13 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
 				if (!region->tiles)
 					return -1;
 
-				WLog_DBG(TAG,
-				         "ProgressiveRegion: numRects: %"PRIu16" numTiles: %"PRIu16" tileDataSize: %"PRIu32" flags: 0x%02"PRIX8" numQuant: %"PRIu8" numProgQuant: %"PRIu8"",
-				         region->numRects, region->numTiles, region->tileDataSize, region->flags,
-				         region->numQuant, region->numProgQuant);
+				WLog_Print(progressive->log, WLOG_DEBUG,
+				           "ProgressiveRegion: numRects: %"PRIu16" numTiles: %"PRIu16" tileDataSize: %"PRIu32" flags: 0x%02"PRIX8" numQuant: %"PRIu8" numProgQuant: %"PRIu8"",
+				           region->numRects, region->numTiles, region->tileDataSize, region->flags,
+				           region->numQuant, region->numProgQuant);
 
 				if (!(region->flags & RFX_DWT_REDUCE_EXTRAPOLATE))
-				{
-					WLog_WARN(TAG, "RFX_DWT_REDUCE_EXTRAPOLATE is not set");
-				}
+					WLog_Print(progressive->log, WLOG_WARN, "RFX_DWT_REDUCE_EXTRAPOLATE is not set");
 
 				boxLeft = surface->gridWidth;
 				boxTop = surface->gridHeight;
@@ -1837,8 +1827,9 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
 					if (idxBottom > boxBottom)
 						boxBottom = idxBottom;
 
-					WLog_DBG(TAG, "rect[%"PRIu16"]: x: %"PRIu16" y: %"PRIu16" w: %"PRIu16" h: %"PRIu16"",
-					         index, rect->x, rect->y, rect->width, rect->height);
+					WLog_Print(progressive->log, WLOG_DEBUG,
+					           "rect[%"PRIu16"]: x: %"PRIu16" y: %"PRIu16" w: %"PRIu16" h: %"PRIu16"",
+					           index, rect->x, rect->y, rect->width, rect->height);
 				}
 
 				status = progressive_process_tiles(progressive, &block[boffset],
@@ -1921,9 +1912,9 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
 
 			if (!freerdp_image_copy(pDstData, DstFormat, nDstStep,
 			                        rect->left, rect->top,
-			                        width, height,
-			                        tile->data, PIXEL_FORMAT_BGRX32,
-			                        64 * 4, nXSrc, nYSrc, NULL, FREERDP_FLIP_NONE))
+			                        width, height, tile->data, tile->format,
+			                        tile->stride,
+			                        nXSrc, nYSrc, NULL, FREERDP_FLIP_NONE))
 			{
 				rc = -42;
 				break;
@@ -1992,15 +1983,12 @@ PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor)
 		progressive->quantProgValFull.quality = 100;
 		progressive->SurfaceContexts = HashTable_New(TRUE);
 		progressive_context_reset(progressive);
+		progressive->log = WLog_Get(TAG);
 	}
 
 	return progressive;
 cleanup:
-	free(progressive->rects);
-	free(progressive->tiles);
-	free(progressive->quantVals);
-	free(progressive->quantProgVals);
-	free(progressive);
+	progressive_context_free(progressive);
 	return NULL;
 }
 
@@ -2019,17 +2007,22 @@ void progressive_context_free(PROGRESSIVE_CONTEXT* progressive)
 	free(progressive->tiles);
 	free(progressive->quantVals);
 	free(progressive->quantProgVals);
-	count = HashTable_GetKeys(progressive->SurfaceContexts, &pKeys);
 
-	for (index = 0; index < count; index++)
+	if (progressive->SurfaceContexts)
 	{
-		surface = (PROGRESSIVE_SURFACE_CONTEXT*) HashTable_GetItemValue(
-		              progressive->SurfaceContexts, (void*) pKeys[index]);
-		progressive_surface_context_free(surface);
+		count = HashTable_GetKeys(progressive->SurfaceContexts, &pKeys);
+
+		for (index = 0; index < count; index++)
+		{
+			surface = (PROGRESSIVE_SURFACE_CONTEXT*) HashTable_GetItemValue(
+			              progressive->SurfaceContexts, (void*) pKeys[index]);
+			progressive_surface_context_free(surface);
+		}
+
+		free(pKeys);
+		HashTable_Free(progressive->SurfaceContexts);
 	}
 
-	free(pKeys);
-	HashTable_Free(progressive->SurfaceContexts);
 	free(progressive);
 }
 
