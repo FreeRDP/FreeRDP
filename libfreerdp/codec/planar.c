@@ -250,18 +250,32 @@ static INLINE BOOL writeLine(BYTE** ppRgba, UINT32 DstFormat, UINT32 width, cons
 				*(*ppRgba)++ = *(*ppB)++;
 				*(*ppRgba)++ = *(*ppG)++;
 				*(*ppRgba)++ = *(*ppR)++;
-				*(*ppRgba)++ = *(*ppA)++;
+				*(*ppRgba)++ = 0xFF;
 			}
 
 			return TRUE;
 
 		default:
-			for (x = 0; x < width; x++)
+			if (ppA)
 			{
-				BYTE alpha = (ppA) ? *(*ppA)++ : 0xFF;
-				UINT32 color = GetColor(DstFormat, *(*ppR)++, *(*ppG)++, *(*ppB)++, alpha);
-				WriteColor(*ppRgba, DstFormat, color);
-				*ppRgba += GetBytesPerPixel(DstFormat);
+				for (x = 0; x < width; x++)
+				{
+					BYTE alpha = *(*ppA)++;
+					UINT32 color = GetColor(DstFormat, *(*ppR)++, *(*ppG)++, *(*ppB)++, alpha);
+					WriteColor(*ppRgba, DstFormat, color);
+					*ppRgba += GetBytesPerPixel(DstFormat);
+				}
+			}
+			else
+			{
+				const BYTE alpha = 0xFF;
+
+				for (x = 0; x < width; x++)
+				{
+					UINT32 color = GetColor(DstFormat, *(*ppR)++, *(*ppG)++, *(*ppB)++, alpha);
+					WriteColor(*ppRgba, DstFormat, color);
+					*ppRgba += GetBytesPerPixel(DstFormat);
+				}
 			}
 
 			return TRUE;
