@@ -575,7 +575,7 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			{
 				WLog_ERR(TAG,
 				         "peer_recv_callback: CONNECTION_STATE_LICENSING - license_send_valid_client_error_packet() fail");
-				return FALSE;
+				return -1;
 			}
 
 			rdp_server_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE);
@@ -585,7 +585,9 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 		case CONNECTION_STATE_CAPABILITIES_EXCHANGE:
 			if (!rdp->AwaitCapabilities)
 			{
-				IFCALL(client->Capabilities, client);
+
+				if (client->Capabilities && !client->Capabilities(client))
+					return -1;
 
 				if (!rdp_send_demand_active(rdp))
 				{
