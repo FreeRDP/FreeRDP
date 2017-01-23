@@ -254,7 +254,6 @@ UINT freerdp_channels_attach(freerdp* instance)
 	rdpChannels* channels;
 	CHANNEL_CLIENT_DATA* pChannelClientData;
 	channels = instance->context->channels;
-	channels->connected = 1;
 	hostname = instance->settings->ServerHostname;
 	hostnameLength = (int) strlen(hostname);
 
@@ -312,7 +311,6 @@ UINT freerdp_channels_detach(freerdp* instance)
 	rdpChannels* channels;
 	CHANNEL_CLIENT_DATA* pChannelClientData;
 	channels = instance->context->channels;
-	channels->connected = 1;
 	hostname = instance->settings->ServerHostname;
 	hostnameLength = (int) strlen(hostname);
 
@@ -373,7 +371,7 @@ UINT freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 	char* hostname;
 	int hostnameLength;
 	CHANNEL_CLIENT_DATA* pChannelClientData;
-	channels->connected = 1;
+	channels->connected = TRUE;
 	hostname = instance->settings->ServerHostname;
 	hostnameLength = (int) strlen(hostname);
 
@@ -618,7 +616,6 @@ UINT freerdp_channels_disconnect(rdpChannels* channels, freerdp* instance)
 	if (!channels->connected)
 		return 0;
 
-	channels->connected = 0;
 	freerdp_channels_check_fds(channels, instance);
 
 	/* tell all libraries we are shutting down */
@@ -651,6 +648,7 @@ UINT freerdp_channels_disconnect(rdpChannels* channels, freerdp* instance)
 		PubSub_OnChannelDisconnected(instance->context->pubSub, instance->context, &e);
 	}
 
+	channels->connected = FALSE;
 	return error;
 }
 
@@ -988,15 +986,13 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelWriteEx(LPVOID pInitHandle, DWORD op
 	if (!channels)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
 
-	/* If a channel is not connected do not send the data but ignore it.
-	 * Return success to allow terminating channel threads to end gracefully. */
-	if (!channels->connected)
-		return CHANNEL_RC_OK;
-
 	pChannelOpenData = HashTable_GetItemValue(channels->openHandles, (void*)(UINT_PTR) openHandle);
 
 	if (!pChannelOpenData)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
+
+	if (!channels->connected)
+		return CHANNEL_RC_NOT_CONNECTED;
 
 	if (!pData)
 		return CHANNEL_RC_NULL_DATA;
