@@ -275,7 +275,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 		surface->image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
 		                              ZPixmap, 0, (char*) surface->stage,
 		                              surface->gdi.width, surface->gdi.height,
-		                              xfc->scanline_pad, surface->gdi.scanline);
+		                              xfc->scanline_pad, surface->stageScanline);
 	}
 
 	surface->gdi.outputMapped = FALSE;

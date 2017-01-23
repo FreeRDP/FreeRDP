@@ -972,7 +972,7 @@ static BOOL xf_gdi_surface_update_frame(xfContext* xfc, UINT16 tx, UINT16 ty,
 
 static BOOL xf_gdi_update_screen(xfContext* xfc,
                                  const SURFACE_BITS_COMMAND* cmd,
-                                 const BYTE* pSrcData)
+                                 const BYTE* pSrcData, UINT32 scanline)
 {
 	BOOL ret = FALSE;
 	XImage* image;
@@ -983,7 +983,8 @@ static BOOL xf_gdi_update_screen(xfContext* xfc,
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 	image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
-	                     (char*) pSrcData, cmd->width, cmd->height, xfc->scanline_pad, 0);
+	                     (char*) pSrcData, cmd->width, cmd->height,
+	                     xfc->scanline_pad, scanline);
 
 	if (image)
 	{
@@ -1005,14 +1006,12 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 	xfContext* xfc = (xfContext*) context;
 	BOOL ret = FALSE;
 	DWORD format;
-	DWORD stride;
 	rdpGdi* gdi;
 
 	if (!context || !cmd || !context->gdi)
 		return FALSE;
 
 	gdi = context->gdi;
-	stride = cmd->width * GetBytesPerPixel(gdi->dstFormat);
 	xf_lock_x11(xfc, FALSE);
 
 	switch (cmd->codecID)
@@ -1020,18 +1019,16 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 		case RDP_CODEC_ID_REMOTEFX:
 			if (!rfx_process_message(context->codecs->rfx, cmd->bitmapData,
 			                         cmd->bitmapDataLength, 0, 0,
-			                         gdi->primary_buffer, gdi->dstFormat, stride,
+			                         gdi->primary_buffer, gdi->dstFormat, gdi->stride,
 			                         gdi->height, NULL))
 				goto fail;
 
 			break;
 
 		case RDP_CODEC_ID_NSCODEC:
-			format = gdi->dstFormat;
-
 			if (!nsc_process_message(context->codecs->nsc, cmd->bpp, cmd->width,
 			                         cmd->height, cmd->bitmapData, cmd->bitmapDataLength,
-			                         gdi->primary_buffer, format, stride,
+			                         gdi->primary_buffer, gdi->dstFormat, gdi->stride,
 			                         0, 0, cmd->width, cmd->height, FREERDP_FLIP_VERTICAL))
 				goto fail;
 
@@ -1041,10 +1038,10 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 			pSrcData = cmd->bitmapData;
 			format = gdi_get_pixel_format(cmd->bpp);
 
-			if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, stride,
-			                        0, 0,
-			                        cmd->width, cmd->height, pSrcData,
-			                        format, 0, 0, 0, &xfc->context.gdi->palette, FREERDP_FLIP_VERTICAL))
+			if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, gdi->stride,
+			                        0, 0, cmd->width, cmd->height,
+			                        pSrcData, format, 0, 0, 0,
+			                        &xfc->context.gdi->palette, FREERDP_FLIP_VERTICAL))
 				goto fail;
 
 			break;
@@ -1055,7 +1052,7 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 			goto fail;
 	}
 
-	ret = xf_gdi_update_screen(xfc, cmd, gdi->primary_buffer);
+	ret = xf_gdi_update_screen(xfc, cmd, gdi->primary_buffer, gdi->stride);
 fail:
 	xf_unlock_x11(xfc, FALSE);
 	return ret;
