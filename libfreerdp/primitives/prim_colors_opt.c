@@ -450,7 +450,6 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_BGRX(
 
 	return PRIMITIVES_SUCCESS;
 }
-
 static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R(
     const INT16* const pSrc[3],	/* 16-bit R,G, and B arrays */
     UINT32 srcStep,			/* bytes between rows in source data */
@@ -469,7 +468,6 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R(
 			return generic->RGBToRGB_16s8u_P3AC4R(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
 	}
 }
-
 #endif /* WITH_SSE2 */
 
 /*---------------------------------------------------------------------------*/

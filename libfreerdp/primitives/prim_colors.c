@@ -34,7 +34,7 @@
 /* ------------------------------------------------------------------------- */
 static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_BGRX(
     const INT16* pSrc[3], UINT32 srcStep,
-    BYTE* pDst, UINT32 DstFormat, UINT32 dstStep,
+    BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
     const prim_size_t* roi)
 {
 	UINT32 x, y;
@@ -51,23 +51,19 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_BGRX(
 		for (x = 0; x < roi->width; x++)
 		{
 			INT16 R, G, B;
-			const INT64 divisor = 20;
-			const INT64 Y = (pY[0] + 4096);
-			const INT64 Cb = (pCb[0]);
-			const INT64 Cr = (pCr[0]);
-			const INT64 CrR = Cr * (INT64)(1.402525f * (1 << divisor));
-			const INT64 CrG = Cr * (INT64)(0.714401f * (1 << divisor));
-			const INT64 CbG = Cb * (INT64)(0.343730f * (1 << divisor));
-			const INT64 CbB = Cb * (INT64)(1.769905f * (1 << divisor));
-			const INT64 Ytmp = (Y + 16) << divisor;
-			R = ((INT16)((CrR + Ytmp) >> divisor) >> 5);
-			G = ((INT16)((Ytmp - CbG - CrG) >> divisor) >> 5);
-			B = ((INT16)((CbB + Ytmp) >> divisor) >> 5);
+			const INT32 divisor = 16;
+			const INT32 Y = ((*pY++) + 4096) << divisor;
+			const INT32 Cb = (*pCb++);
+			const INT32 Cr = (*pCr++);
+			const INT32 CrR = Cr * (INT32)(1.402525f * (1 << divisor));
+			const INT32 CrG = Cr * (INT32)(0.714401f * (1 << divisor));
+			const INT32 CbG = Cb * (INT32)(0.343730f * (1 << divisor));
+			const INT32 CbB = Cb * (INT32)(1.769905f * (1 << divisor));
+			R = ((INT16)((CrR + Y) >> divisor) >> 5);
+			G = ((INT16)((Y - CbG - CrG) >> divisor) >> 5);
+			B = ((INT16)((CbB + Y) >> divisor) >> 5);
 			pRGB = writePixelBGRX(pRGB, formatSize, DstFormat, CLIP(R), CLIP(G),
 			                      CLIP(B), 0xFF);
-			pY++;
-			pCb++;
-			pCr++;
 		}
 
 		pY += srcPad;
@@ -81,7 +77,7 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_BGRX(
 
 static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(
     const INT16* pSrc[3], UINT32 srcStep,
-    BYTE* pDst, UINT32 DstFormat, UINT32 dstStep,
+    BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
     const prim_size_t* roi)
 {
 	UINT32 x, y;
@@ -99,23 +95,19 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(
 		for (x = 0; x < roi->width; x++)
 		{
 			INT16 R, G, B;
-			const INT64 divisor = 20;
-			const INT64 Y = (pY[0] + 4096);
-			const INT64 Cb = (pCb[0]);
-			const INT64 Cr = (pCr[0]);
-			const INT64 CrR = Cr * (INT64)(1.402525f * (1 << divisor));
-			const INT64 CrG = Cr * (INT64)(0.714401f * (1 << divisor));
-			const INT64 CbG = Cb * (INT64)(0.343730f * (1 << divisor));
-			const INT64 CbB = Cb * (INT64)(1.769905f * (1 << divisor));
-			const INT64 Ytmp = (Y + 16) << divisor;
-			R = ((INT16)((CrR + Ytmp) >> divisor) >> 5);
-			G = ((INT16)((Ytmp - CbG - CrG) >> divisor) >> 5);
-			B = ((INT16)((CbB + Ytmp) >> divisor) >> 5);
+			const INT32 divisor = 16;
+			const INT32 Y = ((*pY++) + 4096) << divisor;
+			const INT32 Cb = (*pCb++);
+			const INT32 Cr = (*pCr++);
+			const INT32 CrR = Cr * (INT32)(1.402525f * (1 << divisor));
+			const INT32 CrG = Cr * (INT32)(0.714401f * (1 << divisor));
+			const INT32 CbG = Cb * (INT32)(0.343730f * (1 << divisor));
+			const INT32 CbB = Cb * (INT32)(1.769905f * (1 << divisor));
+			R = ((INT16)((CrR + Y) >> divisor) >> 5);
+			G = ((INT16)((Y - CbG - CrG) >> divisor) >> 5);
+			B = ((INT16)((CbB + Y) >> divisor) >> 5);
 			pRGB = (*writePixel)(pRGB, formatSize, DstFormat, CLIP(R), CLIP(G),
 			                     CLIP(B), 0xFF);
-			pY++;
-			pCb++;
-			pCr++;
 		}
 
 		pY += srcPad;
@@ -129,17 +121,17 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(
 
 static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(
     const INT16* pSrc[3], UINT32 srcStep,
-    BYTE* pDst, UINT32 DstFormat, UINT32 dstStep,
+    BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
     const prim_size_t* roi)
 {
 	switch (DstFormat)
 	{
 		case PIXEL_FORMAT_BGRA32:
 		case PIXEL_FORMAT_BGRX32:
-			return general_yCbCrToRGB_16s8u_P3AC4R_BGRX(pSrc, srcStep, pDst, DstFormat, dstStep, roi);
+			return general_yCbCrToRGB_16s8u_P3AC4R_BGRX(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
 
 		default:
-			return general_yCbCrToRGB_16s8u_P3AC4R_general(pSrc, srcStep, pDst, DstFormat, dstStep, roi);
+			return general_yCbCrToRGB_16s8u_P3AC4R_general(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
 	}
 }
 
