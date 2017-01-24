@@ -72,19 +72,22 @@ defined(__OpenBSD__) || defined(__DragonFly__)
 #include <sys/sysctl.h>
 #endif
 
-static DWORD GetProcessorArchitecture()
+static DWORD GetProcessorArchitecture(void)
 {
 	DWORD cpuArch = PROCESSOR_ARCHITECTURE_UNKNOWN;
-#if defined(_M_AMD64)
-	cpuArch = PROCESSOR_ARCHITECTURE_AMD64;
+#if defined(_M_ARM)
+	cpuArch = PROCESSOR_ARCHITECTURE_ARM;
 #elif defined(_M_IX86)
 	cpuArch = PROCESSOR_ARCHITECTURE_INTEL;
-#elif defined(_M_ARM)
-	cpuArch = PROCESSOR_ARCHITECTURE_ARM;
-#elif defined(_M_IA64)
-	cpuArch = PROCESSOR_ARCHITECTURE_IA64;
+#elif defined(_M_MIPS64)
+	/* Needs to be before __mips__ since the compiler defines both */
+	cpuArch = PROCESSOR_ARCHITECTURE_MIPS64;
 #elif defined(_M_MIPS)
 	cpuArch = PROCESSOR_ARCHITECTURE_MIPS;
+#elif defined(_M_ARM64)
+	cpuArch = PROCESSOR_ARCHITECTURE_ARM64;
+#elif defined(_M_AMD64)
+	cpuArch = PROCESSOR_ARCHITECTURE_AMD64;
 #elif defined(_M_PPC)
 	cpuArch = PROCESSOR_ARCHITECTURE_PPC;
 #elif defined(_M_ALPHA)
@@ -93,7 +96,7 @@ static DWORD GetProcessorArchitecture()
 	return cpuArch;
 }
 
-static DWORD GetNumberOfProcessors()
+static DWORD GetNumberOfProcessors(void)
 {
 	DWORD numCPUs = 1;
 	/* TODO: iOS */
@@ -130,19 +133,21 @@ static DWORD GetNumberOfProcessors()
 	return numCPUs;
 }
 
-static DWORD GetSystemPageSize()
+static DWORD GetSystemPageSize(void)
 {
 	DWORD dwPageSize = 0;
 	long sc_page_size = -1;
-
 #if defined(_SC_PAGESIZE)
+
 	if (sc_page_size < 0)
 		sc_page_size = sysconf(_SC_PAGESIZE);
-#endif
 
+#endif
 #if defined(_SC_PAGE_SIZE)
+
 	if (sc_page_size < 0)
 		sc_page_size = sysconf(_SC_PAGE_SIZE);
+
 #endif
 
 	if (sc_page_size > 0)
@@ -241,7 +246,8 @@ VOID GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime)
 	lpSystemTimeAsFileTime->dwHighDateTime = time64.HighPart;
 }
 
-BOOL GetSystemTimeAdjustment(PDWORD lpTimeAdjustment, PDWORD lpTimeIncrement, PBOOL lpTimeAdjustmentDisabled)
+BOOL GetSystemTimeAdjustment(PDWORD lpTimeAdjustment, PDWORD lpTimeIncrement,
+                             PBOOL lpTimeAdjustmentDisabled)
 {
 	return FALSE;
 }
@@ -283,9 +289,10 @@ DWORD GetTickCount(void)
 BOOL GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 {
 #ifdef _UWP
+
 	/* Windows 10 Version Info */
 	if ((lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOA)) ||
-		(lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOEXA)))
+	    (lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOEXA)))
 	{
 		lpVersionInformation->dwMajorVersion = 10;
 		lpVersionInformation->dwMinorVersion = 0;
@@ -305,10 +312,12 @@ BOOL GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 
 		return TRUE;
 	}
+
 #else
+
 	/* Windows 7 SP1 Version Info */
 	if ((lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOA)) ||
-		(lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOEXA)))
+	    (lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOEXA)))
 	{
 		lpVersionInformation->dwMajorVersion = 6;
 		lpVersionInformation->dwMinorVersion = 1;
@@ -328,8 +337,8 @@ BOOL GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 
 		return TRUE;
 	}
-#endif
 
+#endif
 	return FALSE;
 }
 
@@ -356,7 +365,7 @@ BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 	dot = strchr(hostname, '.');
 
 	if (dot)
-		length = (int) (dot - hostname);
+		length = (int)(dot - hostname);
 
 	if (*lpnSize <= (DWORD) length)
 	{
@@ -371,7 +380,6 @@ BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 	CopyMemory(lpBuffer, hostname, length);
 	lpBuffer[length] = '\0';
 	*lpnSize = length;
-
 	return TRUE;
 }
 
@@ -493,31 +501,31 @@ ULONGLONG winpr_GetTickCount64(void)
 #define E_BITS_AVX      (E_BIT_XMM|E_BIT_YMM)
 
 static void cpuid(
-	unsigned info,
-	unsigned* eax,
-	unsigned* ebx,
-	unsigned* ecx,
-	unsigned* edx)
+    unsigned info,
+    unsigned* eax,
+    unsigned* ebx,
+    unsigned* ecx,
+    unsigned* edx)
 {
 #ifdef __GNUC__
 	*eax = *ebx = *ecx = *edx = 0;
 	__asm volatile
 	(
-		/* The EBX (or RBX register on x86_64) is used for the PIC base address
-		 * and must not be corrupted by our inline assembly.
-		 */
+	    /* The EBX (or RBX register on x86_64) is used for the PIC base address
+	     * and must not be corrupted by our inline assembly.
+	     */
 #ifdef _M_IX86
-		"mov %%ebx, %%esi;"
-		"cpuid;"
-		"xchg %%ebx, %%esi;"
+	    "mov %%ebx, %%esi;"
+	    "cpuid;"
+	    "xchg %%ebx, %%esi;"
 #else
-		"mov %%rbx, %%rsi;"
-		"cpuid;"
-		"xchg %%rbx, %%rsi;"
+	    "mov %%rbx, %%rsi;"
+	    "cpuid;"
+	    "xchg %%rbx, %%rsi;"
 #endif
-	: "=a"(*eax), "=S"(*ebx), "=c"(*ecx), "=d"(*edx)
-			: "0"(info)
-		);
+	    : "=a"(*eax), "=S"(*ebx), "=c"(*ecx), "=d"(*edx)
+	    : "0"(info)
+	);
 #elif defined(_MSC_VER)
 	int a[4];
 	__cpuid(a, info);
@@ -597,8 +605,7 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 	BOOL ret = FALSE;
 #ifdef _M_ARM
 #ifdef __linux__
-	unsigned caps;
-	caps = GetARMCPUCaps();
+	const unsigned caps = GetARMCPUCaps();
 
 	switch (ProcessorFeature)
 	{
@@ -731,11 +738,9 @@ DWORD GetTickCountPrecise(void)
 #ifdef _WIN32
 	LARGE_INTEGER freq;
 	LARGE_INTEGER current;
-
 	QueryPerformanceFrequency(&freq);
 	QueryPerformanceCounter(&current);
-
-	return (DWORD) (current.QuadPart * 1000LL / freq.QuadPart);
+	return (DWORD)(current.QuadPart * 1000LL / freq.QuadPart);
 #else
 	return GetTickCount();
 #endif
@@ -793,6 +798,7 @@ BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 			{
 				unsigned a81, b81, c81, d81;
 				cpuid(0x80000001, &a81, &b81, &c81, &d81);
+
 				if (c81 & C81_BIT_LZCNT)
 					ret = TRUE;
 			}
