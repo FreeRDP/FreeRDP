@@ -37,26 +37,6 @@
 
 #include "rfx_decode.h"
 
-/* stride is bytes between rows in the output buffer. */
-static void rfx_decode_format_rgb(const INT16* r_buf, const INT16* g_buf,
-                                  const INT16* b_buf, UINT32 pixel_format,
-                                  BYTE* dst_buf, UINT32 stride)
-{
-	primitives_t* prims = primitives_get();
-	const INT16* r = r_buf;
-	const INT16* g = g_buf;
-	const INT16* b = b_buf;
-	const INT16* pSrc[3];
-	static const prim_size_t roi_64x64 = { 64, 64 };
-	BYTE* dst = dst_buf;
-	pSrc[0] = r;
-	pSrc[1] = g;
-	pSrc[2] = b;
-	prims->RGBToRGB_16s8u_P3AC4R(
-	    (const INT16**) pSrc, 64 * sizeof(INT16),
-	    dst, stride, pixel_format, &roi_64x64);
-}
-
 static void rfx_decode_component(RFX_CONTEXT* context,
                                  const UINT32* quantization_values,
                                  const BYTE* data, int size, INT16* buffer)
