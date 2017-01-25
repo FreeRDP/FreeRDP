@@ -128,6 +128,7 @@ option(WITH_DEBUG_XV "Print XVideo debug messages" ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_RINGBUFFER "Enable Ringbuffer debug messages" ${DEFAULT_DEBUG_OPTION})
 
 option(WITH_DEBUG_SYMBOLS "Pack debug symbols to installer" OFF)
+option(WITH_CCACHE "Use ccache support if available" ON)
 
 if(ANDROID)
 include(ConfigOptionsAndroid)
