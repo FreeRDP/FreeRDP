@@ -11,6 +11,12 @@ function build {
 	PATH=$ANDROID_NDK:$PATH
 	MAKE="make PATH=$PATH OS=android NDKROOT=$ANDROID_NDK TARGET=android-$2 NDKLEVEL=$2 ARCH=$1 -j libraries"
 	common_run git clean -xdf
+	common_run export QUIET_AR="$CCACHE "
+	common_run export QUIET_ASM="$CCACHE "
+	common_run export QUIET_CC="$CCACHE "
+	common_run export QUIET_CCAR="$CCACHE "
+	common_run export QUIET_CXX="$CCACHE "
+
 	common_run $MAKE
 	# Install creates a non optimal directory layout, fix that
 	common_run $MAKE PREFIX=$BUILD_SRC/libs/$1 install
