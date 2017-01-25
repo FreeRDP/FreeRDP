@@ -70,6 +70,7 @@ bool uwac_default_error_handler(UwacDisplay* display, UwacReturnCode code, const
 	va_list args;
 	va_start(args, msg);
 	vfprintf(stderr, "%s", args);
+	va_end(args);
 	return false;
 }
 
