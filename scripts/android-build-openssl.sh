@@ -30,7 +30,7 @@ function build {
 
 	common_run export CROSS_SYSROOT=$ANDROID_NDK/platforms/android-$NDK_TARGET/$PLATFORM_PREFIX
 	common_run export ANDROID_DEV=$ANDROID_NDK/platforms/android-$NDK_TARGET/$PLATFORM_PREFIX/usr
-	common_run export CROSS_COMPILE=$ARCH_PREFIX
+	common_run export CROSS_COMPILE="$CCACHE $ARCH_PREFIX"
 	common_run export PATH=$ANDROID_NDK/toolchains/$TOOLCHAIN_PREFIX$COMPILER/prebuilt/$HOST_PLATFORM/bin/:$ORG_PATH
 
 	echo "CONFIG=$CONFIG"
