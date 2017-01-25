@@ -230,7 +230,10 @@ rdpShadowCapture* shadow_capture_new(rdpShadowServer* server)
 	capture->server = server;
 
 	if (!InitializeCriticalSectionAndSpinCount(&(capture->lock), 4000))
+	{
+		free(capture);
 		return NULL;
+	}
 
 	return capture;
 }

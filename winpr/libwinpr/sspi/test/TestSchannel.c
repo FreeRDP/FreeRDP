@@ -437,6 +437,7 @@ static void* schannel_test_server_thread(void* arg)
 	if (!(lpTokenOut = (BYTE*) malloc(cbMaxToken)))
 	{
 		printf("Memory allocation failed\n");
+		free(lpTokenIn);
 		return NULL;
 	}
 	fContextReq = ASC_REQ_STREAM |
