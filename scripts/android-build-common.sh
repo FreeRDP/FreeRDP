@@ -11,6 +11,10 @@ if [ -z $NDK_TARGET ]; then
 	NDK_TARGET=21
 fi
 
+if [ -z $CCACHE ]; then
+	CCACHE=$(which ccache)
+fi
+
 if [ -z $ANDROID_NDK ]; then
 	ANDROID_NDK="missing"
 fi
