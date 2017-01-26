@@ -501,10 +501,12 @@ BOOL xf_register_graphics(rdpGraphics* graphics)
 UINT32 xf_get_local_color_format(xfContext* xfc, BOOL aligned)
 {
 	UINT32 DstFormat;
-	BOOL invert = xfc->invert;
+	BOOL invert = FALSE;
 
 	if (!xfc)
 		return 0;
+
+	invert = xfc->invert;
 
 	if (xfc->depth == 32)
 		DstFormat = (!invert) ? PIXEL_FORMAT_RGBA32 : PIXEL_FORMAT_BGRA32;

@@ -908,10 +908,12 @@ static BOOL xf_cliprdr_process_property_notify(xfClipboard* clipboard,
         XEvent* xevent)
 {
 	xfCliprdrFormat* format;
-	xfContext* xfc = clipboard->xfc;
+	xfContext* xfc = NULL;
 
 	if (!clipboard)
 		return TRUE;
+
+	xfc = clipboard->xfc;
 
 	if (xevent->xproperty.atom != clipboard->property_atom)
 		return FALSE; /* Not cliprdr-related */

@@ -2216,11 +2216,11 @@ static UINT wf_cliprdr_server_format_data_response(CliprdrClientContext*
 	HANDLE hMem;
 	wfClipboard* clipboard;
 
-	if (formatDataResponse->msgFlags != CB_RESPONSE_OK)
-		return E_FAIL;
-
 	if (!context || !formatDataResponse)
 		return ERROR_INTERNAL_ERROR;
+
+	if (formatDataResponse->msgFlags != CB_RESPONSE_OK)
+		return E_FAIL;
 
 	clipboard = (wfClipboard*) context->custom;
 
@@ -2442,11 +2442,11 @@ static UINT wf_cliprdr_server_file_contents_response(CliprdrClientContext*
 {
 	wfClipboard* clipboard;
 
-	if (fileContentsResponse->msgFlags != CB_RESPONSE_OK)
-		return E_FAIL;
-
 	if (!context || !fileContentsResponse)
 		return ERROR_INTERNAL_ERROR;
+
+	if (fileContentsResponse->msgFlags != CB_RESPONSE_OK)
+		return E_FAIL;
 
 	clipboard = (wfClipboard*) context->custom;
 

@@ -788,9 +788,6 @@ rdpShadowServer* shadow_server_new()
 
 	server->settings = freerdp_settings_new(FREERDP_SETTINGS_SERVER_MODE);
 
-	if (!server)
-		return NULL;
-
 	return server;
 }
 

@@ -314,13 +314,13 @@ int tsmf_window_resize(TSMFGstreamerDecoder* decoder, int x, int y, int width,
 {
 	struct X11Handle* hdl;
 
+	if (!decoder)
+		return -1;
+
 	if (decoder->media_type != TSMF_MAJOR_TYPE_VIDEO)
 	{
 		return -3;
 	}
-
-	if (!decoder)
-		return -1;
 
 	if (!decoder->platform)
 		return -1;
@@ -469,11 +469,11 @@ int tsmf_window_destroy(TSMFGstreamerDecoder* decoder)
 	struct X11Handle* hdl;
 	decoder->ready = FALSE;
 
-	if (decoder->media_type != TSMF_MAJOR_TYPE_VIDEO)
-		return -3;
-
 	if (!decoder)
 		return -1;
+
+	if (decoder->media_type != TSMF_MAJOR_TYPE_VIDEO)
+		return -3;
 
 	if (!decoder->platform)
 		return -1;
