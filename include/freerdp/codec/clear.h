@@ -32,7 +32,7 @@ typedef struct _CLEAR_CONTEXT CLEAR_CONTEXT;
 extern "C" {
 #endif
 
-FREERDP_API int clear_compress(CLEAR_CONTEXT* clear, BYTE* pSrcData,
+FREERDP_API int clear_compress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,
                                UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize);
 
 FREERDP_API INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData,

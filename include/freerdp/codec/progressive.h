@@ -36,7 +36,7 @@ extern "C" {
 #endif
 
 FREERDP_API int progressive_compress(PROGRESSIVE_CONTEXT* progressive,
-                                     BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize);
+                                    const BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize);
 
 FREERDP_API INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
         const BYTE* pSrcData, UINT32 SrcSize,
