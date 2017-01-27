@@ -858,10 +858,12 @@ int transport_check_fds(rdpTransport* transport)
 	int recv_status;
 	wStream* received;
 	DWORD now = GetTickCount();
-	DWORD dueDate = now + transport->settings->MaxTimeInCheckLoop;
+	DWORD dueDate = 0;
 
 	if (!transport)
 		return -1;
+
+	dueDate = now + transport->settings->MaxTimeInCheckLoop;
 
 	if (transport->haveMoreBytesToRead)
 	{

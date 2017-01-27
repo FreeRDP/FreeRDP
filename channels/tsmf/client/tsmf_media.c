@@ -176,10 +176,12 @@ static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 	TSMF_STREAM* s;
 	TSMF_SAMPLE* sample;
 	BOOL pending = FALSE;
-	TSMF_PRESENTATION* presentation = stream->presentation;
+	TSMF_PRESENTATION* presentation = NULL;
 
 	if (!stream)
 		return NULL;
+
+	presentation = stream->presentation;
 
 	if (Queue_Count(stream->sample_list) < 1)
 		return NULL;
