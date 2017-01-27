@@ -32,7 +32,7 @@
 extern "C" {
 #endif
 
-FREERDP_API int freerdp_bitmap_compress(char* in_data, int width, int height,
+FREERDP_API int freerdp_bitmap_compress(const char* in_data, int width, int height,
 		wStream* s, int bpp, int byte_limit, int start_line, wStream* temp_s, int e);
 
 #ifdef __cplusplus

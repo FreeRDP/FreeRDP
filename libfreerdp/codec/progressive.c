@@ -1928,7 +1928,7 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
 	return rc;
 }
 
-int progressive_compress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData,
+int progressive_compress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData,
                          UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize)
 {
 	return 1;

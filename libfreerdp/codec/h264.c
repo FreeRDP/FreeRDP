@@ -36,7 +36,7 @@
  * Dummy subsystem
  */
 
-static int dummy_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
+static int dummy_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize,
                             UINT32 plane)
 {
 	return -1;
@@ -1521,7 +1521,7 @@ static BOOL avc_yuv_to_rgb(H264_CONTEXT* h264, const RECTANGLE_16* regionRects,
 	return TRUE;
 }
 
-INT32 avc420_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
+INT32 avc420_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize,
                         BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep,
                         UINT32 nDstWidth, UINT32 nDstHeight,
                         RECTANGLE_16* regionRects, UINT32 numRegionRects)
@@ -1546,7 +1546,7 @@ INT32 avc420_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 	return 1;
 }
 
-INT32 avc420_compress(H264_CONTEXT* h264, BYTE* pSrcData, DWORD SrcFormat,
+INT32 avc420_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
                       UINT32 nSrcStep, UINT32 nSrcWidth, UINT32 nSrcHeight,
                       BYTE** ppDstData, UINT32* pDstSize)
 {
@@ -1598,7 +1598,7 @@ error_1:
 	return status;
 }
 
-INT32 avc444_compress(H264_CONTEXT* h264, BYTE* pSrcData, DWORD SrcFormat,
+INT32 avc444_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
                       UINT32 nSrcStep, UINT32 nSrcWidth, UINT32 nSrcHeight,
                       BYTE* op, BYTE** ppDstData, UINT32* pDstSize,
                       BYTE** ppAuxDstData, UINT32* pAuxDstSize)
@@ -1764,9 +1764,9 @@ static double avg(UINT64* count, double old, double size)
 
 INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op,
                         RECTANGLE_16* regionRects, UINT32 numRegionRects,
-                        BYTE* pSrcData, UINT32 SrcSize,
+                        const BYTE* pSrcData, UINT32 SrcSize,
                         RECTANGLE_16* auxRegionRects, UINT32 numAuxRegionRect,
-                        BYTE* pAuxSrcData, UINT32 AuxSrcSize,
+                        const BYTE* pAuxSrcData, UINT32 AuxSrcSize,
                         BYTE* pDstData, DWORD DstFormat,
                         UINT32 nDstStep, UINT32 nDstWidth, UINT32 nDstHeight)
 {

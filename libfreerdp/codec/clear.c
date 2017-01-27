@@ -1185,7 +1185,7 @@ fail:
 	return rc;
 }
 
-int clear_compress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
+int clear_compress(CLEAR_CONTEXT* clear, const BYTE* pSrcData, UINT32 SrcSize,
                    BYTE** ppDstData, UINT32* pDstSize)
 {
 	WLog_ERR(TAG, "TODO: %s not implemented!", __FUNCTION__);
