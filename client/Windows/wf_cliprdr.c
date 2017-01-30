@@ -572,7 +572,7 @@ static HRESULT STDMETHODCALLTYPE CliprdrDataObject_GetData(
 	if (!pFormatEtc || !pMedium || !instance)
 		return E_INVALIDARG;
 
-	clipboard = clipboard = (wfClipboard*) instance->m_pData;
+	clipboard = (wfClipboard*) instance->m_pData;
 
 	if (!clipboard)
 		return E_INVALIDARG;
