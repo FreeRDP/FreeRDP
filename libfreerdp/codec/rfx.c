@@ -91,8 +91,6 @@ static void rfx_profiler_create(RFX_CONTEXT* context)
 	                "rfx_quantization_decode");
 	PROFILER_CREATE(context->priv->prof_rfx_dwt_2d_decode, "rfx_dwt_2d_decode");
 	PROFILER_CREATE(context->priv->prof_rfx_ycbcr_to_rgb, "prims->yCbCrToRGB");
-	PROFILER_CREATE(context->priv->prof_rfx_decode_format_rgb,
-	                "rfx_decode_format_rgb");
 	PROFILER_CREATE(context->priv->prof_rfx_encode_rgb, "rfx_encode_rgb");
 	PROFILER_CREATE(context->priv->prof_rfx_encode_component,
 	                "rfx_encode_component");
@@ -116,7 +114,6 @@ static void rfx_profiler_free(RFX_CONTEXT* context)
 	PROFILER_FREE(context->priv->prof_rfx_quantization_decode);
 	PROFILER_FREE(context->priv->prof_rfx_dwt_2d_decode);
 	PROFILER_FREE(context->priv->prof_rfx_ycbcr_to_rgb);
-	PROFILER_FREE(context->priv->prof_rfx_decode_format_rgb);
 	PROFILER_FREE(context->priv->prof_rfx_encode_rgb);
 	PROFILER_FREE(context->priv->prof_rfx_encode_component);
 	PROFILER_FREE(context->priv->prof_rfx_rlgr_encode);
@@ -137,7 +134,6 @@ static void rfx_profiler_print(RFX_CONTEXT* context)
 	PROFILER_PRINT(context->priv->prof_rfx_quantization_decode);
 	PROFILER_PRINT(context->priv->prof_rfx_dwt_2d_decode);
 	PROFILER_PRINT(context->priv->prof_rfx_ycbcr_to_rgb);
-	PROFILER_PRINT(context->priv->prof_rfx_decode_format_rgb);
 	PROFILER_PRINT(context->priv->prof_rfx_encode_rgb);
 	PROFILER_PRINT(context->priv->prof_rfx_encode_component);
 	PROFILER_PRINT(context->priv->prof_rfx_rlgr_encode);
@@ -708,7 +704,8 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context,
 		Stream_Read_UINT16(s, rect->y); /* y (2 bytes) */
 		Stream_Read_UINT16(s, rect->width); /* width (2 bytes) */
 		Stream_Read_UINT16(s, rect->height); /* height (2 bytes) */
-		WLog_Print(context->priv->log, WLOG_DEBUG, "rect %d (x,y=%"PRIu16",%"PRIu16" w,h=%"PRIu16" %"PRIu16").", i,
+		WLog_Print(context->priv->log, WLOG_DEBUG,
+		           "rect %d (x,y=%"PRIu16",%"PRIu16" w,h=%"PRIu16" %"PRIu16").", i,
 		           rect->x, rect->y,
 		           rect->width, rect->height);
 	}
