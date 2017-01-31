@@ -2080,7 +2080,7 @@ static UINT32 TEST_XRGB_IMAGE[4096] =
 };
 
 static int test_bmp_cmp_count(const BYTE* mem1, const BYTE* mem2, int size,
-			      int channel, int margin)
+                              int channel, int margin)
 {
 	int error;
 	int count = 0;
@@ -2107,7 +2107,7 @@ static int test_bmp_cmp_count(const BYTE* mem1, const BYTE* mem2, int size,
 }
 
 static int test_bmp_cmp_dump(const BYTE* actual, const BYTE* expected, int size,
-			     int channel, int margin)
+                             int channel, int margin)
 {
 	int x, y;
 	int error[3];
@@ -2155,7 +2155,7 @@ static int test_bmp_cmp_dump(const BYTE* actual, const BYTE* expected, int size,
 }
 
 static void test_fill_bitmap_channel(BYTE* data, int width, int height,
-				     BYTE value, int nChannel)
+                                     BYTE value, int nChannel)
 {
 	int x, y;
 	BYTE* pChannel;
@@ -2299,8 +2299,8 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 	if (1)
 	{
 		status = prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**) pYCbCr, 64 * 2,
-					       actual, PIXEL_FORMAT_BGRA32,
-					       64 * 4, &roi_64x64);
+		                                        actual, 64 * 4, PIXEL_FORMAT_BGRA32,
+		                                        &roi_64x64);
 	}
 	else
 	{
@@ -2312,9 +2312,9 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 		CopyMemory(pSrcDst[1], pYCbCr[1], 4096 * 2);
 		CopyMemory(pSrcDst[2], pYCbCr[2], 4096 * 2);
 		prims->yCbCrToRGB_16s16s_P3P3((const INT16**) pSrcDst, 64 * 2,
-					      pSrcDst, 64 * 2, &roi_64x64);
+		                              pSrcDst, 64 * 2, &roi_64x64);
 		prims->RGBToRGB_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * 2,
-					     actual, 64 * 4, PIXEL_FORMAT_BGRA32, &roi_64x64);
+		                             actual, 64 * 4, PIXEL_FORMAT_BGRA32, &roi_64x64);
 		_aligned_free(pSrcDst[0]);
 		_aligned_free(pSrcDst[1]);
 		_aligned_free(pSrcDst[2]);
