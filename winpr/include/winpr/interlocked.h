@@ -25,6 +25,10 @@
 #include <winpr/wtypes.h>
 #include <winpr/platform.h>
 
+#ifdef WINPR_MONO_CONFLICT
+#define InterlockedCompareExchange64 winpr_InterlockedCompareExchange64
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
