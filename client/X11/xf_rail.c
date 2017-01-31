@@ -217,12 +217,9 @@ void xf_rail_invalidate_region(xfContext* xfc, REGION16* invalidRegion)
 				updateRect.right = extents->right - appWindow->x;
 				updateRect.bottom = extents->bottom - appWindow->y;
 
-				if (appWindow)
-				{
-					xf_UpdateWindowArea(xfc, appWindow, updateRect.left, updateRect.top,
-					                    updateRect.right - updateRect.left,
-					                    updateRect.bottom - updateRect.top);
-				}
+				xf_UpdateWindowArea(xfc, appWindow, updateRect.left, updateRect.top,
+				                    updateRect.right - updateRect.left,
+				                    updateRect.bottom - updateRect.top);
 			}
 		}
 	}
