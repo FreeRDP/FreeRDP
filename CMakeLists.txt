@@ -163,6 +163,10 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "BSD")
 	endif()
 endif()
 
+if(WINPR_MONO_CONFLICT)
+	add_definitions(-DWINPR_MONO_CONFLICT)
+endif()
+
 # Configure MSVC Runtime
 if(MSVC)
 	include(MSVCRuntime)
