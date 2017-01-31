@@ -91,7 +91,7 @@ BOOL rfx_decode_rgb(RFX_CONTEXT* context, RFX_TILE* tile, BYTE* rgb_buffer,
 	                     pSrcDst[2]); /* CrData */
 	PROFILER_ENTER(context->priv->prof_rfx_ycbcr_to_rgb);
 
-	if (prims->yCbCrToRGB_16s8u_P3AC4R(pSrcDst, 64 * sizeof(INT16),
+	if (prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**)pSrcDst, 64 * sizeof(INT16),
 	                                   rgb_buffer, stride, context->pixel_format, &roi_64x64) != PRIMITIVES_SUCCESS)
 		rc = FALSE;
 
