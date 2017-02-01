@@ -509,10 +509,9 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 			else if (vSrcVFlip)
 			{
 				int half = nHeight / 2;
-				int curHeight = nHeight - 1;
+				BYTE* topLine = pDstData;
 				BYTE* tmpBuf = (BYTE*)_aligned_malloc(nDstStep, 16);
-				BYTE * topLine = pDstData;
-				BYTE * bottomLine = pDstData + (nDstStep * curHeight);
+				BYTE* bottomLine = pDstData + (nDstStep * (nHeight - 1));
 
 				for (y = 0; y < half; ++y)
 				{
