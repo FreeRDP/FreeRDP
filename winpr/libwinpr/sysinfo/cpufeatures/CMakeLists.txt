@@ -1,7 +1,8 @@
 # WinPR: Windows Portable Runtime
 # libwinpr-sysinfo cmake build script
 #
-# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2017 Armin Novak <armin.novak@thincast.com>
+# Copyright 2017 Thincast Technologies GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,17 +16,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if(ANDROID)
-	add_subdirectory(cpufeatures)
-endif()
-
-winpr_module_add(sysinfo.c)
-
-if((NOT WIN32) AND (NOT APPLE) AND (NOT ANDROID) AND (NOT OPENBSD))
-	winpr_library_add(rt)
-endif()
-
-if(BUILD_TESTING)
-	add_subdirectory(test)
-endif()
+winpr_module_add(cpu-features.c cpu-features.h)
 

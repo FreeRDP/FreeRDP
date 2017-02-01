@@ -846,8 +846,8 @@ static INLINE int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progres
 	                                 tile->crLen,
 	                                 pSrcDst[2], pCurrent[2], pSign[2], diff); /* Cr */
 	prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * 2,
-	                               tile->data, tile->format,
-	                               tile->stride, &roi_64x64);
+	                               tile->data, tile->stride, tile->format,
+	                               &roi_64x64);
 	BufferPool_Return(progressive->bufferPool, pBuffer);
 	return 1;
 }
@@ -1261,8 +1261,8 @@ static INLINE int progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* progr
 		return -1;
 
 	prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * 2,
-	                               tile->data, tile->format,
-	                               tile->stride, &roi_64x64);
+	                               tile->data, tile->stride, tile->format,
+	                               &roi_64x64);
 	BufferPool_Return(progressive->bufferPool, pBuffer);
 	return 1;
 }

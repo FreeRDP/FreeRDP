@@ -44,6 +44,8 @@ extern "C" {
 #define PROCESSOR_ARCHITECTURE_AMD64			9
 #define PROCESSOR_ARCHITECTURE_IA32_ON_WIN64		10
 #define PROCESSOR_ARCHITECTURE_NEUTRAL			11
+#define PROCESSOR_ARCHITECTURE_ARM64			12
+#define PROCESSOR_ARCHITECTURE_MIPS64			13
 #define PROCESSOR_ARCHITECTURE_UNKNOWN			0xFFFF
 
 #define PROCESSOR_INTEL_386				386
@@ -189,7 +191,8 @@ WINPR_API VOID GetLocalTime(LPSYSTEMTIME lpSystemTime);
 WINPR_API BOOL SetLocalTime(CONST SYSTEMTIME* lpSystemTime);
 
 WINPR_API VOID GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime);
-WINPR_API BOOL GetSystemTimeAdjustment(PDWORD lpTimeAdjustment, PDWORD lpTimeIncrement, PBOOL lpTimeAdjustmentDisabled);
+WINPR_API BOOL GetSystemTimeAdjustment(PDWORD lpTimeAdjustment, PDWORD lpTimeIncrement,
+                                       PBOOL lpTimeAdjustmentDisabled);
 
 WINPR_API BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature);
 
