@@ -441,6 +441,7 @@ static DWORD client_cli_accept_certificate(rdpSettings* settings)
 	while (1)
 	{
 		printf("Do you trust the above certificate? (Y/T/N) ");
+		fflush(stdout);
 		answer = fgetc(stdin);
 
 		if (feof(stdin))
