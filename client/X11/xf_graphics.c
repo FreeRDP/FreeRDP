@@ -62,7 +62,29 @@ BOOL xf_decode_color(xfContext* xfc, const UINT32 srcColor, XColor* color)
 	if (!settings)
 		return FALSE;
 
-	SrcFormat = gdi_get_pixel_format(settings->ColorDepth);
+	switch (settings->ColorDepth)
+	{
+		case 32:
+		case 24:
+			SrcFormat = PIXEL_FORMAT_BGR24;
+			break;
+
+		case 16:
+			SrcFormat = PIXEL_FORMAT_RGB16;
+			break;
+
+		case 15:
+			SrcFormat = PIXEL_FORMAT_RGB15;
+			break;
+
+		case 8:
+			SrcFormat = PIXEL_FORMAT_RGB8;
+			break;
+
+		default:
+			return FALSE;
+	}
+
 	SplitColor(srcColor, SrcFormat, &r, &g, &b, &a, &gdi->palette);
 	color->blue = (unsigned short)(b << 8);
 	color->green = (unsigned short)(g << 8);
