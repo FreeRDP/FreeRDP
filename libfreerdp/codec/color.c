@@ -505,9 +505,24 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 					        &srcLine[xSrcOffset], copyDstWidth);
 				}
 			}
-			/* Source and destination are equal... */
-			else
+			/* Source and destination are equal... - maybe a in-place flip is required */
+			else if (vSrcVFlip)
 			{
+				int half = nHeight / 2;
+				int curHeight = nHeight - 1;
+				BYTE* tmpBuf = (BYTE*)_aligned_malloc(nDstStep, 16);
+				BYTE * topLine = pDstData;
+				BYTE * bottomLine = pDstData + (nDstStep * curHeight);
+
+				for (y = 0; y < half; ++y)
+				{
+					CopyMemory(tmpBuf, topLine, nDstStep);
+					CopyMemory(topLine, bottomLine, nDstStep);
+					CopyMemory(bottomLine, tmpBuf, nDstStep);
+					topLine += nDstStep;
+					bottomLine -= nDstStep;
+				}
+				_aligned_free(tmpBuf);
 			}
 		}
 		else

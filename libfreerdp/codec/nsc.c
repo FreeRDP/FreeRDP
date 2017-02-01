@@ -405,6 +405,9 @@ BOOL nsc_process_message(NSC_CONTEXT* context, UINT16 bpp,
 	context->decode(context);
 	PROFILER_EXIT(context->priv->prof_nsc_decode);
 
+	if (!pDstData)
+		pDstData = context->BitmapData;
+
 	if (!freerdp_image_copy(pDstData, DstFormat, nDstStride, nXDst, nYDst,
 	                        width, height, context->BitmapData,
 	                        PIXEL_FORMAT_BGRA32, 0, 0, 0, NULL, flip))
