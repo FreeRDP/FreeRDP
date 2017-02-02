@@ -299,7 +299,13 @@ extern "C" {
  *
  * Do not compile trionan.c if you disable this.
  */
-#if !defined(TRIO_FEATURE_FLOAT)
+
+/*
+ * temporary workaround for ARM64 compiler bug:
+ * https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=214380
+ */
+
+#if !defined(TRIO_FEATURE_FLOAT) && !defined(__aarch64__)
 # define TRIO_FEATURE_FLOAT 1
 #endif
 
