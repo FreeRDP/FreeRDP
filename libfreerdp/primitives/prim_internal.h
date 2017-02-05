@@ -28,6 +28,15 @@
 #include <freerdp/primitives.h>
 #include <freerdp/api.h>
 
+
+#ifdef __GNUC__
+#define PRIM_ALIGN_128 __attribute__((aligned(16)))
+#else
+#ifdef _WIN32
+#define PRIM_ALIGN_128 __declspec(align(16))
+#endif
+#endif
+
 /* Use lddqu for unaligned; load for 16-byte aligned. */
 #define LOAD_SI128(_ptr_) \
 	(((ULONG_PTR) (_ptr_) & 0x0f) \

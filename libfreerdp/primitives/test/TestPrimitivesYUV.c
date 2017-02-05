@@ -83,8 +83,8 @@ static void get_size(UINT32* width, UINT32* height)
 	winpr_RAND((BYTE*)width, sizeof(*width));
 	winpr_RAND((BYTE*)height, sizeof(*height));
 	// TODO: Algorithm only works on even resolutions...
-	*width = (*width % 64) << 1;
-	*height = (*height % 64 << 1);
+	*width = (*width % 64 + 1) << 1;
+	*height = (*height % 64 + 1) << 1;
 }
 
 static BOOL check_padding(const BYTE* psrc, size_t size, size_t padding,
@@ -567,14 +567,20 @@ int TestPrimitivesYUV(int argc, char* argv[])
 
 	for (x = 0; x < 10; x++)
 	{
-		if (!TestPrimitiveYUV(TRUE))
+		if (!TestPrimitiveYUV(TRUE)) {
+			printf("TestPrimitiveYUV (444) failed.\n");
 			goto end;
+		}
 
-		if (!TestPrimitiveYUV(FALSE))
+		if (!TestPrimitiveYUV(FALSE)) {
+			printf("TestPrimitiveYUV (420) failed.\n");
 			goto end;
+		}
 
-		if (!TestPrimitiveYUVCombine())
+		if (!TestPrimitiveYUVCombine()) {
+			printf("TestPrimitiveYUVCombine failed.\n");
 			goto end;
+		}
 	}
 
 	rc = 0;

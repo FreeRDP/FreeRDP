@@ -1,11 +1,24 @@
-/** function for converting YUV420p data to the RGB format (but without any special upconverting)
- * It's completely written in nasm-x86-assembly for intel processors supporting SSSE3 and higher.
- * The target dstStep (6th parameter) must be a multiple of 16.
- * srcStep[0] must be (target dstStep) / 4 or bigger and srcStep[1] the next multiple of four
- * of the half of srcStep[0] or bigger
+/**
+ * FreeRDP: A Remote Desktop Protocol Implementation
+ * Optimized YUV/RGB conversion operations
+ *
+ * Copyright 2014 Thomas Erbesdobler
+ * Copyright 2016-2017 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2016-2017 Norbert Federa <norbert.federa@thincast.com>
+ * Copyright 2016-2017 Thincast Technologies GmbH
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
-#include <stdio.h>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -25,10 +38,15 @@ static primitives_t* generic = NULL;
 #include <emmintrin.h>
 #include <tmmintrin.h>
 
-static pstatus_t ssse3_YUV420ToRGB_8u_P3AC4R_BGRX(
-    const BYTE** pSrc, const UINT32* srcStep,
-    BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
-    const prim_size_t* roi)
+
+/****************************************************************************/
+/* SSSE3 YUV420 -> RGB conversion                                           */
+/****************************************************************************/
+
+static pstatus_t ssse3_YUV420ToRGB_BGRX(
+	const BYTE** pSrc, const UINT32* srcStep,
+	BYTE* pDst, UINT32 dstStep, UINT32 dstFormat,
+	const prim_size_t* roi)
 {
 	UINT32 lastRow, lastCol;
 	BYTE* UData, *VData, *YData;
@@ -321,20 +339,268 @@ static pstatus_t ssse3_YUV420ToRGB_8u_P3AC4R_BGRX(
 	_aligned_free(buffer);
 	return PRIMITIVES_SUCCESS;
 }
-static pstatus_t ssse3_YUV420ToRGB_8u_P3AC4R(const BYTE** pSrc, const UINT32* srcStep,
-        BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
-        const prim_size_t* roi)
+
+static pstatus_t ssse3_YUV420ToRGB(
+	const BYTE** pSrc, const UINT32* srcStep,
+	BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
+	const prim_size_t* roi)
 {
 	switch (DstFormat)
 	{
 		case PIXEL_FORMAT_BGRX32:
 		case PIXEL_FORMAT_BGRA32:
-			return ssse3_YUV420ToRGB_8u_P3AC4R_BGRX(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
+			return ssse3_YUV420ToRGB_BGRX(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
 
 		default:
 			return generic->YUV420ToRGB_8u_P3AC4R(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
 	}
 }
+
+
+
+
+/****************************************************************************/
+/* SSSE3 RGB -> YUV420 conversion                                          **/
+/****************************************************************************/
+
+
+/**
+ * Note (nfedera):
+ * The used forward transformation factors from RGB to YUV are based on the
+ * values specified in [Rec. ITU-R BT.709-6] Section 3:
+ * http://www.itu.int/rec/R-REC-BT.709-6-201506-I/en
+ *
+ * Y =  0.21260 * R + 0.71520 * G + 0.07220 * B +   0;
+ * U = -0.11457 * R - 0.38543 * G + 0.50000 * B + 128;
+ * V =  0.50000 * R - 0.45415 * G - 0.04585 * B + 128;
+ *
+ * The most accurate integer artmethic approximation when using 8-bit signed
+ * integer factors with 16-bit signed integer intermediate results is:
+ *
+ * Y = ( ( 27 * R + 92 * G +  9 * B) >> 7 );
+ * U = ( (-15 * R - 49 * G + 64 * B) >> 7 ) + 128;
+ * V = ( ( 64 * R - 58 * G -  6 * B) >> 7 ) + 128;
+ *
+ */
+
+PRIM_ALIGN_128 static const BYTE bgrx_y_factors[] = {
+	   9,  92,  27,   0,   9,  92,  27,   0,   9,  92,  27,   0,   9,  92,  27,   0
+};
+PRIM_ALIGN_128 static const BYTE bgrx_u_factors[] = {
+	  64, -49, -15,   0,  64, -49, -15,   0,  64, -49, -15,   0,  64, -49, -15,   0
+};
+PRIM_ALIGN_128 static const BYTE bgrx_v_factors[] = {
+	  -6, -58,  64,   0,  -6, -58,  64,   0,  -6, -58,  64,   0,  -6, -58,  64,   0
+};
+
+PRIM_ALIGN_128 static const BYTE const_buf_128b[] = {
+	 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128
+};
+
+/*
+TODO:
+RGB[AX] can simply be supported using the following factors. And instead of loading the
+globals directly the functions below could be passed pointers to the correct vectors
+depending on the source picture format.
+
+PRIM_ALIGN_128 static const BYTE rgbx_y_factors[] = {
+	  27,  92,   9,   0,  27,  92,   9,   0,  27,  92,   9,   0,  27,  92,   9,   0
+};
+PRIM_ALIGN_128 static const BYTE rgbx_u_factors[] = {
+	 -15, -49,  64,   0, -15, -49,  64,   0, -15, -49,  64,   0, -15, -49,  64,   0
+};
+PRIM_ALIGN_128 static const BYTE rgbx_v_factors[] = {
+	  64, -58,  -6,   0,  64, -58,  -6,   0,  64, -58,  -6,   0,  64, -58,  -6,   0
+};
+*/
+
+
+/* compute the luma (Y) component from a single rgb source line */
+
+static INLINE void ssse3_RGBToYUV420_BGRX_Y(
+	const BYTE* src, BYTE* dst, UINT32 width)
+{
+	UINT32 x;
+	__m128i y_factors, x0, x1, x2, x3;
+	const __m128i* argb = (const __m128i*) src;
+	__m128i* ydst = (__m128i*) dst;
+
+	y_factors = _mm_load_si128((__m128i*)bgrx_y_factors);
+
+	for (x = 0; x < width; x += 16)
+	{
+		/* store 16 rgba pixels in 4 128 bit registers */
+		x0 = _mm_load_si128(argb++); // 1st 4 pixels
+		x1 = _mm_load_si128(argb++); // 2nd 4 pixels
+		x2 = _mm_load_si128(argb++); // 3rd 4 pixels
+		x3 = _mm_load_si128(argb++); // 4th 4 pixels
+
+		/* multiplications and subtotals */
+		x0 = _mm_maddubs_epi16(x0, y_factors);
+		x1 = _mm_maddubs_epi16(x1, y_factors);
+		x2 = _mm_maddubs_epi16(x2, y_factors);
+		x3 = _mm_maddubs_epi16(x3, y_factors);
+
+		/* the total sums */
+		x0 = _mm_hadd_epi16(x0, x1);
+		x2 = _mm_hadd_epi16(x2, x3);
+
+		/* shift the results */
+		x0 = _mm_srli_epi16(x0, 7);
+		x2 = _mm_srli_epi16(x2, 7);
+
+		/* pack the 16 words into bytes */
+		x0 = _mm_packus_epi16(x0, x2);
+
+		/* save to y plane */
+		_mm_storeu_si128(ydst++, x0);
+	}
+}
+
+/* compute the chrominance (UV) components from two rgb source lines */
+
+static INLINE void ssse3_RGBToYUV420_BGRX_UV(
+	const BYTE* src1, const BYTE* src2,
+	BYTE* dst1, BYTE* dst2, UINT32 width)
+{
+	UINT32 x;
+	__m128i vector128, u_factors, v_factors, x0, x1, x2, x3, x4, x5;
+
+	const __m128i* rgb1 = (const __m128i*)src1;
+	const __m128i* rgb2 = (const __m128i*)src2;
+
+	__m64* udst = (__m64*)dst1;
+	__m64* vdst = (__m64*)dst2;
+
+	vector128 = _mm_load_si128((__m128i*)const_buf_128b);
+	u_factors = _mm_load_si128((__m128i*)bgrx_u_factors);
+	v_factors = _mm_load_si128((__m128i*)bgrx_v_factors);
+
+	for (x = 0; x < width; x += 16)
+	{
+		/* subsample 16x2 pixels into 16x1 pixels */
+		x0 = _mm_load_si128(rgb1++);
+		x4 = _mm_load_si128(rgb2++);
+		x0 = _mm_avg_epu8(x0, x4);
+
+		x1 = _mm_load_si128(rgb1++);
+		x4 = _mm_load_si128(rgb2++);
+		x1 = _mm_avg_epu8(x1, x4);
+
+		x2 = _mm_load_si128(rgb1++);
+		x4 = _mm_load_si128(rgb2++);
+		x2 = _mm_avg_epu8(x2, x4);
+
+		x3 = _mm_load_si128(rgb1++);
+		x4 = _mm_load_si128(rgb2++);
+		x3 = _mm_avg_epu8(x3, x4);
+
+		// subsample these 16x1 pixels into 8x1 pixels */
+
+		/**
+		 * shuffle controls
+		 * c = a[0],a[2],b[0],b[2] == 10 00 10 00 = 0x88
+		 * c = a[1],a[3],b[1],b[3] == 11 01 11 01 = 0xdd
+		 */
+
+		x4 = _mm_castps_si128( _mm_shuffle_ps(_mm_castsi128_ps(x0), _mm_castsi128_ps(x1), 0x88) );
+		x0 = _mm_castps_si128( _mm_shuffle_ps(_mm_castsi128_ps(x0), _mm_castsi128_ps(x1), 0xdd) );
+		x0 = _mm_avg_epu8(x0, x4);
+
+		x4 = _mm_castps_si128( _mm_shuffle_ps(_mm_castsi128_ps(x2), _mm_castsi128_ps(x3), 0x88) );
+		x1 = _mm_castps_si128( _mm_shuffle_ps(_mm_castsi128_ps(x2), _mm_castsi128_ps(x3), 0xdd) );
+		x1 = _mm_avg_epu8(x1, x4);
+
+		/* multiplications and subtotals */
+		x2 = _mm_maddubs_epi16(x0, u_factors);
+		x3 = _mm_maddubs_epi16(x1, u_factors);
+
+		x4 = _mm_maddubs_epi16(x0, v_factors);
+		x5 = _mm_maddubs_epi16(x1, v_factors);
+
+		/* the total sums */
+		x0 = _mm_hadd_epi16(x2, x3);
+		x1 = _mm_hadd_epi16(x4, x5);
+
+		/* shift the results */
+		x0 = _mm_srai_epi16(x0, 7);
+		x1 = _mm_srai_epi16(x1, 7);
+
+		/* pack the 16 words into bytes */
+		x0 = _mm_packs_epi16(x0, x1);
+
+		/* add 128 */
+		x0 = _mm_add_epi8(x0, vector128);
+
+		/* the lower 8 bytes go to the u plane */
+		_mm_storel_pi(udst++, _mm_castsi128_ps(x0));
+
+		/* the upper 8 bytes go to the v plane */
+		_mm_storeh_pi(vdst++, _mm_castsi128_ps(x0));
+	}
+}
+
+static pstatus_t ssse3_RGBToYUV420_BGRX(
+	const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
+	BYTE* pDst[3], UINT32 dstStep[3],
+	const prim_size_t* roi)
+{
+	UINT32 y;
+	const BYTE* argb = pSrc;
+	BYTE* ydst = pDst[0];
+	BYTE* udst = pDst[1];
+	BYTE* vdst = pDst[2];
+
+	if (roi->height < 1 || roi->width < 1)
+	{
+		return !PRIMITIVES_SUCCESS;
+	}
+
+	if (roi->width % 16 || (unsigned long)pSrc % 16 || srcStep % 16)
+	{
+		return generic->RGBToYUV420_8u_P3AC4R(pSrc, srcFormat, srcStep, pDst, dstStep, roi);
+	}
+
+	for (y = 0; y < roi->height-1; y+=2)
+	{
+		const BYTE* line1 = argb;
+		const BYTE* line2 = argb + srcStep;
+
+		ssse3_RGBToYUV420_BGRX_UV(line1, line2, udst, vdst, roi->width);
+		ssse3_RGBToYUV420_BGRX_Y(line1, ydst, roi->width);
+		ssse3_RGBToYUV420_BGRX_Y(line2, ydst + dstStep[0], roi->width);
+
+		argb += 2 * srcStep;
+		ydst += 2 * dstStep[0];
+		udst += 1 * dstStep[1];
+		vdst += 1 * dstStep[2];
+	}
+
+	if (roi->height & 1)
+	{
+		/* pass the same last line of an odd height twice for UV */
+		ssse3_RGBToYUV420_BGRX_UV(argb, argb, udst, vdst, roi->width);
+		ssse3_RGBToYUV420_BGRX_Y(argb, ydst, roi->width);
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
+static pstatus_t ssse3_RGBToYUV420(
+	const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
+	BYTE* pDst[3], UINT32 dstStep[3],
+	const prim_size_t* roi)
+{
+	switch (srcFormat)
+	{
+		case PIXEL_FORMAT_BGRX32:
+		case PIXEL_FORMAT_BGRA32:
+			return ssse3_RGBToYUV420_BGRX(pSrc, srcFormat, srcStep, pDst, dstStep, roi);
+		default:
+			return generic->RGBToYUV420_8u_P3AC4R(pSrc, srcFormat, srcStep, pDst, dstStep, roi);
+	}
+}
+
 
 #endif
 
@@ -347,7 +613,8 @@ void primitives_init_YUV_opt(primitives_t* prims)
 	if (IsProcessorFeaturePresentEx(PF_EX_SSSE3)
 	    && IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
 	{
-		prims->YUV420ToRGB_8u_P3AC4R = ssse3_YUV420ToRGB_8u_P3AC4R;
+		prims->RGBToYUV420_8u_P3AC4R = ssse3_RGBToYUV420;
+		prims->YUV420ToRGB_8u_P3AC4R = ssse3_YUV420ToRGB;
 	}
 
 #endif
