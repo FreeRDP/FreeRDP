@@ -322,13 +322,41 @@ static const BYTE GDI_BS_HATCHED_PATTERNS[] =
 INLINE BOOL gdi_decode_color(rdpGdi* gdi, const UINT32 srcColor,
                              UINT32* color, UINT32* format)
 {
-	UINT32 SrcFormat = gdi_get_pixel_format(gdi->context->settings->ColorDepth);
+	UINT32 SrcFormat;
+	UINT32 ColorDepth;
+
+	if (!gdi || !color || !gdi->context || !gdi->context->settings)
+		return FALSE;
+
+	ColorDepth = gdi->context->settings->ColorDepth;
+
+	switch (ColorDepth)
+	{
+		case 32:
+		case 24:
+			SrcFormat = PIXEL_FORMAT_BGR24;
+			break;
+
+		case 16:
+			SrcFormat = PIXEL_FORMAT_RGB16;
+			break;
+
+		case 15:
+			SrcFormat = PIXEL_FORMAT_RGB15;
+			break;
+
+		case 8:
+			SrcFormat = PIXEL_FORMAT_RGB8;
+			break;
+
+		default:
+			return FALSE;
+	}
 
 	if (format)
-		*format = SrcFormat;
+		*format = gdi->dstFormat;
 
-	*color = ConvertColor(srcColor, SrcFormat,
-	                      gdi->dstFormat, &gdi->palette);
+	*color = ConvertColor(srcColor, SrcFormat, gdi->dstFormat, &gdi->palette);
 	return TRUE;
 }
 
@@ -340,12 +368,12 @@ INLINE DWORD gdi_rop3_code(BYTE code)
 
 UINT32 gdi_get_pixel_format(UINT32 bitsPerPixel)
 {
-	UINT32 format = PIXEL_FORMAT_XBGR32;
+	UINT32 format;
 
 	switch (bitsPerPixel)
 	{
 		case 32:
-			format = PIXEL_FORMAT_ABGR32;
+			format = PIXEL_FORMAT_BGRA32;
 			break;
 
 		case 24:
@@ -362,6 +390,11 @@ UINT32 gdi_get_pixel_format(UINT32 bitsPerPixel)
 
 		case 8:
 			format = PIXEL_FORMAT_RGB8;
+			break;
+
+		default:
+			WLog_ERR(TAG, "Unsupported color depth %"PRIu32, bitsPerPixel);
+			format = 0;
 			break;
 	}
 
