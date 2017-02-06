@@ -393,6 +393,7 @@ UINT32 gdi_get_pixel_format(UINT32 bitsPerPixel)
 			break;
 
 		default:
+			WLog_ERR(TAG, "Unsupported color depth %"PRIu32, bitsPerPixel);
 			format = 0;
 			break;
 	}
