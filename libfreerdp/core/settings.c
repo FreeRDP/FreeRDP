@@ -680,6 +680,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		CHECKED_STRDUP(RemoteApplicationCmdLine); /* 2118 */
 		CHECKED_STRDUP(ImeFileName); /* 2628 */
 		CHECKED_STRDUP(DrivesToRedirect); /* 4290 */
+		CHECKED_STRDUP(ActionScript);
 		/**
 		  * Manual Code
 		  */
@@ -1080,6 +1081,7 @@ void freerdp_settings_free(rdpSettings* settings)
 	free(settings->DrivesToRedirect);
 	free(settings->WindowTitle);
 	free(settings->WmClass);
+	free(settings->ActionScript);
 	freerdp_target_net_addresses_free(settings);
 	freerdp_device_collection_free(settings);
 	freerdp_static_channel_collection_free(settings);

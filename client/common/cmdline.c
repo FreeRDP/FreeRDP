@@ -187,6 +187,7 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "scale", COMMAND_LINE_VALUE_REQUIRED, "<scale amount (%%)>", "100", NULL, -1, NULL, "Scaling factor of the display (value of 100, 140, or 180)" },
 	{ "scale-desktop", COMMAND_LINE_VALUE_REQUIRED, "<scale amount (%%)>", "100", NULL, -1, NULL, "Scaling factor for desktop applications (value between 100 and 500)" },
 	{ "scale-device", COMMAND_LINE_VALUE_REQUIRED, "<scale amount (%%)>", "100", NULL, -1, NULL, "Scaling factor for app store applications (100, 140, or 180)" },
+	{ "action-script", COMMAND_LINE_VALUE_REQUIRED, "<file name>", "/usr/share/freerdp/action.sh", NULL, -1, NULL, "Action script" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
@@ -2505,6 +2506,12 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 				WLog_ERR(TAG, "scale:  invalid device scale factor (%d)", deviceScaleFactor);
 				return COMMAND_LINE_ERROR;
 			}
+		}
+		CommandLineSwitchCase(arg, "action-script")
+		{
+			free (settings->ActionScript);
+			if (!(settings->ActionScript = _strdup(arg->Value)))
+				return COMMAND_LINE_ERROR_MEMORY;
 		}
 		CommandLineSwitchDefault(arg)
 		{

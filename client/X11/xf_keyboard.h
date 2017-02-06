@@ -25,8 +25,6 @@
 #include "xf_client.h"
 #include "xfreerdp.h"
 
-#define XF_ACTION_SCRIPT "~/.config/freerdp/action.sh"
-
 struct _XF_MODIFIER_KEYS
 {
 	BOOL Shift;

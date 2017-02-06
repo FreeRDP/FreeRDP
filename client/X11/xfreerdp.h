@@ -171,7 +171,7 @@ struct xf_context
 	XModifierKeymap* modifierMap;
 	wArrayList* keyCombinations;
 	wArrayList* xevents;
-	char* actionScript;
+	BOOL actionScriptExists;
 
 	XSetWindowAttributes attribs;
 	BOOL complex_regions;
