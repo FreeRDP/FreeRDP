@@ -58,9 +58,11 @@ set(WINPR_API_VERSION "${WINPR_VERSION_MAJOR}")
 if(NOT IOS)
 	check_include_files(stdbool.h WINPR_HAVE_STDBOOL_H)
 	check_include_files(stdint.h WINPR_HAVE_STDINT_H)
+	check_include_files(inttypes.h WINPR_HAVE_INTTYPES_H)
 else(NOT IOS)
 	set(WINPR_HAVE_STDBOOL_H 1)
 	set(WINPR_HAVE_STDINT_H 1)
+	set(WINPR_HAVE_INTTYPES_H 1)
 endif(NOT IOS)
 
 if(FREERDP_BUILD)
@@ -174,14 +176,7 @@ if(BUILD_TESTING)
 	add_subdirectory(test)
 endif()
 
-if(WITH_MANPAGES)
-	if(OPENBSD)
-	    install(FILES wlog.1 DESTINATION man/man1)
-	else()
-	    install(FILES wlog.1 DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/man/man1)
-	endif()
-endif(WITH_MANPAGES)
-
+install_freerdp_man(wlog.7 7)
 # Exporting
 
 if(${CMAKE_VERSION} VERSION_GREATER "2.8.10")

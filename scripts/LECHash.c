@@ -89,14 +89,14 @@ main()
 	for (i = 0; i < 512; i++)
 	{
 		if (i == 511)
-			printf("0x%04x };\n", HashTable[i]);
+			printf("0x%04"PRIx16" };\n", HashTable[i]);
 		else
-			printf("0x%04x, ", HashTable[i]);
+			printf("0x%04"PRIx16", ", HashTable[i]);
 	}
 
 	for (i = 0; i < 293; i++)
 		if (i != getvalue(HuffCodeLEC[i]))
-			printf("Fail :( at %d : 0x%04x\n", i, HuffCodeLEC[i]);
+			printf("Fail :( at %d : 0x%04"PRIx16"\n", i, HuffCodeLEC[i]);
 
 	return 0;
 }

@@ -363,7 +363,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 				width = monitor->right - monitor->left;
 				height = monitor->bottom - monitor->top;
 
-				WLog_INFO(TAG, "      %s [%d] %dx%d\t+%d+%d",
+				WLog_INFO(TAG, "      %s [%d] %dx%d\t+%"PRId32"+%"PRId32"",
 					(monitor->flags == 1) ? "*" : " ", index,
 					width, height, monitor->left, monitor->top);
 			}
@@ -453,12 +453,18 @@ int shadow_server_start(rdpShadowServer* server)
 	server->screen = shadow_screen_new(server);
 
 	if (!server->screen)
+	{
+		WLog_ERR(TAG, "screen_new failed");
 		return -1;
+	}
 
 	server->capture = shadow_capture_new(server);
 
 	if (!server->capture)
+	{
+		WLog_ERR(TAG, "capture_new failed");
 		return -1;
+	}
 
 	if (!server->ipcSocket)
 		status = server->listener->Open(server->listener, NULL, (UINT16) server->port);
@@ -466,7 +472,10 @@ int shadow_server_start(rdpShadowServer* server)
 		status = server->listener->OpenLocal(server->listener, server->ipcSocket);
 
 	if (!status)
+	{
+		WLog_ERR(TAG, "Problem creating listener. (Port already used or insufficient permissions?)");
 		return -1;
+	}
 
 	if (!(server->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
 				shadow_server_thread, (void*) server, 0, NULL)))
@@ -778,9 +787,6 @@ rdpShadowServer* shadow_server_new()
 	server->authentication = FALSE;
 
 	server->settings = freerdp_settings_new(FREERDP_SETTINGS_SERVER_MODE);
-
-	if (!server)
-		return NULL;
 
 	return server;
 }

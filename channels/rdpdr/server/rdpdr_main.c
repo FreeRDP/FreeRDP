@@ -123,7 +123,7 @@ static UINT rdpdr_server_receive_announce_response(RdpdrServerContext* context,
 	Stream_Read_UINT16(s, VersionMinor); /* VersionMinor (2 bytes) */
 	Stream_Read_UINT32(s, ClientId); /* ClientId (4 bytes) */
 	WLog_DBG(TAG,
-	         "Client Announce Response: VersionMajor: 0x%04X VersionMinor: 0x%04X ClientId: 0x%04X",
+	         "Client Announce Response: VersionMajor: 0x%08"PRIX16" VersionMinor: 0x%04"PRIX16" ClientId: 0x%08"PRIX32"",
 	         VersionMajor, VersionMinor, ClientId);
 	context->priv->ClientId = ClientId;
 	return CHANNEL_RC_OK;
@@ -152,7 +152,7 @@ static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext*
 
 	if (UnicodeFlag > 1) /* must be 0x00000000 or 0x00000001 */
 	{
-		WLog_ERR(TAG, "invalid UnicodeFlag value: 0x%08X", UnicodeFlag);
+		WLog_ERR(TAG, "invalid UnicodeFlag value: 0x%08"PRIX32"", UnicodeFlag);
 		return ERROR_INVALID_DATA;
 	}
 
@@ -165,7 +165,7 @@ static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext*
 	{
 		if ((ComputerNameLen % 2) || ComputerNameLen > 512 || ComputerNameLen < 2)
 		{
-			WLog_ERR(TAG, "invalid unicode computer name length: %u", ComputerNameLen);
+			WLog_ERR(TAG, "invalid unicode computer name length: %"PRIu32"", ComputerNameLen);
 			return ERROR_INVALID_DATA;
 		}
 	}
@@ -173,7 +173,7 @@ static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext*
 	{
 		if (ComputerNameLen > 256 || ComputerNameLen < 1)
 		{
-			WLog_ERR(TAG, "invalid ascii computer name length: %u", ComputerNameLen);
+			WLog_ERR(TAG, "invalid ascii computer name length: %"PRIu32"", ComputerNameLen);
 			return ERROR_INVALID_DATA;
 		}
 	}
@@ -565,7 +565,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext*
 	if ((error = rdpdr_server_write_general_capability_set(context, s)))
 	{
 		WLog_ERR(TAG,
-		         "rdpdr_server_write_general_capability_set failed with error %lu!", error);
+		         "rdpdr_server_write_general_capability_set failed with error %"PRIu32"!", error);
 		return error;
 	}
 
@@ -573,7 +573,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext*
 	{
 		if ((error = rdpdr_server_write_drive_capability_set(context, s)))
 		{
-			WLog_ERR(TAG, "rdpdr_server_write_drive_capability_set failed with error %lu!",
+			WLog_ERR(TAG, "rdpdr_server_write_drive_capability_set failed with error %"PRIu32"!",
 			         error);
 			return error;
 		}
@@ -583,7 +583,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext*
 	{
 		if ((error = rdpdr_server_write_port_capability_set(context, s)))
 		{
-			WLog_ERR(TAG, "rdpdr_server_write_port_capability_set failed with error %lu!",
+			WLog_ERR(TAG, "rdpdr_server_write_port_capability_set failed with error %"PRIu32"!",
 			         error);
 			return error;
 		}
@@ -594,7 +594,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext*
 		if ((error = rdpdr_server_write_printer_capability_set(context, s)))
 		{
 			WLog_ERR(TAG,
-			         "rdpdr_server_write_printer_capability_set failed with error %lu!", error);
+			         "rdpdr_server_write_printer_capability_set failed with error %"PRIu32"!", error);
 			return error;
 		}
 	}
@@ -604,7 +604,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext*
 		if ((error = rdpdr_server_write_smartcard_capability_set(context, s)))
 		{
 			WLog_ERR(TAG,
-			         "rdpdr_server_write_printer_capability_set failed with error %lu!", error);
+			         "rdpdr_server_write_printer_capability_set failed with error %"PRIu32"!", error);
 			return error;
 		}
 	}
@@ -643,7 +643,7 @@ static UINT rdpdr_server_receive_core_capability_response(
 	{
 		if ((status = rdpdr_server_read_capability_set_header(s, &capabilityHeader)))
 		{
-			WLog_ERR(TAG, "rdpdr_server_read_capability_set_header failed with error %lu!",
+			WLog_ERR(TAG, "rdpdr_server_read_capability_set_header failed with error %"PRIu32"!",
 			         status);
 			return status;
 		}
@@ -654,7 +654,7 @@ static UINT rdpdr_server_receive_core_capability_response(
 				if ((status = rdpdr_server_read_general_capability_set(context, s,
 				              &capabilityHeader)))
 				{
-					WLog_ERR(TAG, "rdpdr_server_read_general_capability_set failed with error %lu!",
+					WLog_ERR(TAG, "rdpdr_server_read_general_capability_set failed with error %"PRIu32"!",
 					         status);
 					return status;
 				}
@@ -665,7 +665,7 @@ static UINT rdpdr_server_receive_core_capability_response(
 				if ((status = rdpdr_server_read_printer_capability_set(context, s,
 				              &capabilityHeader)))
 				{
-					WLog_ERR(TAG, "rdpdr_server_read_printer_capability_set failed with error %lu!",
+					WLog_ERR(TAG, "rdpdr_server_read_printer_capability_set failed with error %"PRIu32"!",
 					         status);
 					return status;
 				}
@@ -676,7 +676,7 @@ static UINT rdpdr_server_receive_core_capability_response(
 				if ((status = rdpdr_server_read_port_capability_set(context, s,
 				              &capabilityHeader)))
 				{
-					WLog_ERR(TAG, "rdpdr_server_read_port_capability_set failed with error %lu!",
+					WLog_ERR(TAG, "rdpdr_server_read_port_capability_set failed with error %"PRIu32"!",
 					         status);
 					return status;
 				}
@@ -687,7 +687,7 @@ static UINT rdpdr_server_receive_core_capability_response(
 				if ((status = rdpdr_server_read_drive_capability_set(context, s,
 				              &capabilityHeader)))
 				{
-					WLog_ERR(TAG, "rdpdr_server_read_drive_capability_set failed with error %lu!",
+					WLog_ERR(TAG, "rdpdr_server_read_drive_capability_set failed with error %"PRIu32"!",
 					         status);
 					return status;
 				}
@@ -699,14 +699,14 @@ static UINT rdpdr_server_receive_core_capability_response(
 				              &capabilityHeader)))
 				{
 					WLog_ERR(TAG,
-					         "rdpdr_server_read_smartcard_capability_set failed with error %lu!", status);
+					         "rdpdr_server_read_smartcard_capability_set failed with error %"PRIu32"!", status);
 					return status;
 				}
 
 				break;
 
 			default:
-				WLog_DBG(TAG, "Unknown capabilityType %d", capabilityHeader.CapabilityType);
+				WLog_DBG(TAG, "Unknown capabilityType %"PRIu16"", capabilityHeader.CapabilityType);
 				Stream_Seek(s, capabilityHeader.CapabilityLength -
 				            RDPDR_CAPABILITY_HEADER_LENGTH);
 				return ERROR_INVALID_DATA;
@@ -777,7 +777,7 @@ static UINT rdpdr_server_receive_device_list_announce_request(
 	}
 
 	Stream_Read_UINT32(s, DeviceCount); /* DeviceCount (4 bytes) */
-	WLog_DBG(TAG, "DeviceCount: %d", DeviceCount);
+	WLog_DBG(TAG, "DeviceCount: %"PRIu32"", DeviceCount);
 
 	for (i = 0; i < DeviceCount; i++)
 	{
@@ -801,7 +801,7 @@ static UINT rdpdr_server_receive_device_list_announce_request(
 		}
 
 		DeviceData = Stream_Pointer(s);
-		WLog_DBG(TAG, "Device %d Name: %s Id: 0x%04X DataLength: %d",
+		WLog_DBG(TAG, "Device %d Name: %s Id: 0x%08"PRIX32" DataLength: %"PRIu32"",
 		         i, PreferredDosName, DeviceId, DeviceDataLength);
 
 		switch (DeviceType)
@@ -869,7 +869,7 @@ static UINT rdpdr_server_receive_device_list_remove_request(
 	}
 
 	Stream_Read_UINT32(s, DeviceCount); /* DeviceCount (4 bytes) */
-	WLog_DBG(TAG, "DeviceCount: %d", DeviceCount);
+	WLog_DBG(TAG, "DeviceCount: %"PRIu32"", DeviceCount);
 
 	for (i = 0; i < DeviceCount; i++)
 	{
@@ -880,7 +880,7 @@ static UINT rdpdr_server_receive_device_list_remove_request(
 		}
 
 		Stream_Read_UINT32(s, DeviceId); /* DeviceId (4 bytes) */
-		WLog_DBG(TAG, "Device %d Id: 0x%04X", i, DeviceId);
+		WLog_DBG(TAG, "Device %d Id: 0x%08"PRIX32"", i, DeviceId);
 		DeviceType = 0; /* TODO: Save the device type on the announce request. */
 
 		switch (DeviceType)
@@ -949,13 +949,13 @@ static UINT rdpdr_server_receive_device_io_completion(RdpdrServerContext*
 	Stream_Read_UINT32(s, deviceId);
 	Stream_Read_UINT32(s, completionId);
 	Stream_Read_UINT32(s, ioStatus);
-	WLog_DBG(TAG, "deviceId=%d, completionId=0x%x, ioStatus=0x%x", deviceId,
+	WLog_DBG(TAG, "deviceId=%"PRIu32", completionId=0x%"PRIx32", ioStatus=0x%"PRIx32"", deviceId,
 	         completionId, ioStatus);
 	irp = rdpdr_server_dequeue_irp(context, completionId);
 
 	if (!irp)
 	{
-		WLog_ERR(TAG, "IRP not found for completionId=0x%x", completionId);
+		WLog_ERR(TAG, "IRP not found for completionId=0x%"PRIx32"", completionId);
 		return ERROR_INTERNAL_ERROR;
 	}
 
@@ -1009,7 +1009,7 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
                                      RDPDR_HEADER* header)
 {
 	UINT error = CHANNEL_RC_OK;
-	WLog_DBG(TAG, "RdpdrServerReceivePdu: Component: 0x%04X PacketId: 0x%04X",
+	WLog_DBG(TAG, "RdpdrServerReceivePdu: Component: 0x%04"PRIX16" PacketId: 0x%04"PRIX16"",
 	         header->Component, header->PacketId);
 	winpr_HexDump(TAG, WLOG_DEBUG, Stream_Buffer(s), Stream_Length(s));
 
@@ -1020,7 +1020,7 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
 			case PAKID_CORE_CLIENTID_CONFIRM:
 				if ((error = rdpdr_server_receive_announce_response(context, s, header)))
 				{
-					WLog_ERR(TAG, "rdpdr_server_receive_announce_response failed with error %lu!",
+					WLog_ERR(TAG, "rdpdr_server_receive_announce_response failed with error %"PRIu32"!",
 					         error);
 					return error;
 				}
@@ -1030,7 +1030,7 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
 			case PAKID_CORE_CLIENT_NAME:
 				if ((error = rdpdr_server_receive_client_name_request(context, s, header)))
 				{
-					WLog_ERR(TAG, "rdpdr_server_receive_client_name_request failed with error %lu!",
+					WLog_ERR(TAG, "rdpdr_server_receive_client_name_request failed with error %"PRIu32"!",
 					         error);
 					return error;
 				}
@@ -1038,13 +1038,13 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
 				if ((error = rdpdr_server_send_core_capability_request(context)))
 				{
 					WLog_ERR(TAG,
-					         "rdpdr_server_send_core_capability_request failed with error %lu!", error);
+					         "rdpdr_server_send_core_capability_request failed with error %"PRIu32"!", error);
 					return error;
 				}
 
 				if ((error = rdpdr_server_send_client_id_confirm(context)))
 				{
-					WLog_ERR(TAG, "rdpdr_server_send_client_id_confirm failed with error %lu!",
+					WLog_ERR(TAG, "rdpdr_server_send_client_id_confirm failed with error %"PRIu32"!",
 					         error);
 					return error;
 				}
@@ -1055,14 +1055,14 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
 				if ((error = rdpdr_server_receive_core_capability_response(context, s, header)))
 				{
 					WLog_ERR(TAG,
-					         "rdpdr_server_receive_core_capability_response failed with error %lu!", error);
+					         "rdpdr_server_receive_core_capability_response failed with error %"PRIu32"!", error);
 					return error;
 				}
 
 				if (context->priv->UserLoggedOnPdu)
 					if ((error = rdpdr_server_send_user_logged_on(context)))
 					{
-						WLog_ERR(TAG, "rdpdr_server_send_user_logged_on failed with error %lu!", error);
+						WLog_ERR(TAG, "rdpdr_server_send_user_logged_on failed with error %"PRIu32"!", error);
 						return error;
 					}
 
@@ -1073,7 +1073,7 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
 				             header)))
 				{
 					WLog_ERR(TAG,
-					         "rdpdr_server_receive_device_list_announce_request failed with error %lu!",
+					         "rdpdr_server_receive_device_list_announce_request failed with error %"PRIu32"!",
 					         error);
 					return error;
 				}
@@ -1090,7 +1090,7 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
 				if ((error = rdpdr_server_receive_device_io_completion(context, s, header)))
 				{
 					WLog_ERR(TAG,
-					         "rdpdr_server_receive_device_io_completion failed with error %lu!", error);
+					         "rdpdr_server_receive_device_io_completion failed with error %"PRIu32"!", error);
 					return error;
 				}
 
@@ -1101,7 +1101,7 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
 				             header)))
 				{
 					WLog_ERR(TAG,
-					         "rdpdr_server_receive_device_io_completion failed with error %lu!", error);
+					         "rdpdr_server_receive_device_io_completion failed with error %"PRIu32"!", error);
 					return error;
 				}
 
@@ -1127,7 +1127,7 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
 	}
 	else
 	{
-		WLog_WARN(TAG, "Unknown RDPDR_HEADER.Component: 0x%04X", header->Component);
+		WLog_WARN(TAG, "Unknown RDPDR_HEADER.Component: 0x%04"PRIX16"", header->Component);
 		return ERROR_INVALID_DATA;
 	}
 
@@ -1151,7 +1151,7 @@ static void* rdpdr_server_thread(void* arg)
 	buffer = NULL;
 	BytesReturned = 0;
 	ChannelEvent = NULL;
-	freerdp_channel_init_thread_context(context->rdpcontext);
+
 	s = Stream_New(NULL, 4096);
 
 	if (!s)
@@ -1176,7 +1176,7 @@ static void* rdpdr_server_thread(void* arg)
 
 	if ((error = rdpdr_server_send_announce_request(context)))
 	{
-		WLog_ERR(TAG, "rdpdr_server_send_announce_request failed with error %lu!",
+		WLog_ERR(TAG, "rdpdr_server_send_announce_request failed with error %"PRIu32"!",
 		         error);
 		goto out_stream;
 	}
@@ -1189,7 +1189,7 @@ static void* rdpdr_server_thread(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %"PRIu32"!", error);
 			goto out_stream;
 		}
 
@@ -1198,7 +1198,7 @@ static void* rdpdr_server_thread(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", error);
 			goto out_stream;
 		}
 
@@ -1226,7 +1226,7 @@ static void* rdpdr_server_thread(void* arg)
 
 				if ((error = rdpdr_server_receive_pdu(context, s, &header)))
 				{
-					WLog_ERR(TAG, "rdpdr_server_receive_pdu failed with error %lu!", error);
+					WLog_ERR(TAG, "rdpdr_server_receive_pdu failed with error %"PRIu32"!", error);
 					goto out_stream;
 				}
 			}
@@ -1295,7 +1295,7 @@ static UINT rdpdr_server_stop(RdpdrServerContext* context)
 		if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", error);
 			return error;
 		}
 
@@ -1384,7 +1384,7 @@ static UINT rdpdr_server_send_device_create_request(
 	BOOL status;
 	wStream* s;
 	WLog_DBG(TAG,
-	         "RdpdrServerSendDeviceCreateRequest: deviceId=%d, path=%s, desiredAccess=0x%x createOptions=0x%x createDisposition=0x%x",
+	         "RdpdrServerSendDeviceCreateRequest: deviceId=%"PRIu32", path=%s, desiredAccess=0x%"PRIx32" createOptions=0x%"PRIx32" createDisposition=0x%"PRIx32"",
 	         deviceId, path, desiredAccess, createOptions, createDisposition);
 	/* Compute the required Unicode size. */
 	pathLength = (strlen(path) + 1) * sizeof(WCHAR);
@@ -1431,7 +1431,7 @@ static UINT rdpdr_server_send_device_close_request(
 	ULONG written;
 	BOOL status;
 	wStream* s;
-	WLog_DBG(TAG, "RdpdrServerSendDeviceCloseRequest: deviceId=%d, fileId=%d",
+	WLog_DBG(TAG, "RdpdrServerSendDeviceCloseRequest: deviceId=%"PRIu32", fileId=%"PRIu32"",
 	         deviceId, fileId);
 	s = Stream_New(NULL, 128);
 
@@ -1468,7 +1468,7 @@ static UINT rdpdr_server_send_device_read_request(
 	BOOL status;
 	wStream* s;
 	WLog_DBG(TAG,
-	         "RdpdrServerSendDeviceReadRequest: deviceId=%d, fileId=%d, length=%d, offset=%d",
+	         "RdpdrServerSendDeviceReadRequest: deviceId=%"PRIu32", fileId=%"PRIu32", length=%"PRIu32", offset=%"PRIu32"",
 	         deviceId, fileId, length, offset);
 	s = Stream_New(NULL, 128);
 
@@ -1509,7 +1509,7 @@ static UINT rdpdr_server_send_device_write_request(
 	BOOL status;
 	wStream* s;
 	WLog_DBG(TAG,
-	         "RdpdrServerSendDeviceWriteRequest: deviceId=%d, fileId=%d, length=%d, offset=%d",
+	         "RdpdrServerSendDeviceWriteRequest: deviceId=%"PRIu32", fileId=%"PRIu32", length=%"PRIu32", offset=%"PRIu32"",
 	         deviceId, fileId, length, offset);
 	s = Stream_New(NULL, 64 + length);
 
@@ -1550,7 +1550,7 @@ static UINT rdpdr_server_send_device_query_directory_request(
 	BOOL status;
 	wStream* s;
 	WLog_DBG(TAG,
-	         "RdpdrServerSendDeviceQueryDirectoryRequest: deviceId=%d, fileId=%d, path=%s",
+	         "RdpdrServerSendDeviceQueryDirectoryRequest: deviceId=%"PRIu32", fileId=%"PRIu32", path=%s",
 	         deviceId, fileId, path);
 	/* Compute the required Unicode size. */
 	pathLength = path ? (strlen(path) + 1) * sizeof(WCHAR) : 0;
@@ -1602,7 +1602,7 @@ static UINT rdpdr_server_send_device_file_rename_request(
 	BOOL status;
 	wStream* s;
 	WLog_DBG(TAG,
-	         "RdpdrServerSendDeviceFileNameRequest: deviceId=%d, fileId=%d, path=%s",
+	         "RdpdrServerSendDeviceFileNameRequest: deviceId=%"PRIu32", fileId=%"PRIu32", path=%s",
 	         deviceId, fileId, path);
 	/* Compute the required Unicode size. */
 	pathLength = path ? (strlen(path) + 1) * sizeof(WCHAR) : 0;
@@ -1665,7 +1665,7 @@ static UINT rdpdr_server_drive_create_directory_callback2(
     UINT32 completionId, UINT32 ioStatus)
 {
 	WLog_DBG(TAG,
-	         "RdpdrServerDriveCreateDirectoryCallback2: deviceId=%d, completionId=%d, ioStatus=0x%x",
+	         "RdpdrServerDriveCreateDirectoryCallback2: deviceId=%"PRIu32", completionId=%"PRIu32", ioStatus=0x%"PRIx32"",
 	         deviceId, completionId, ioStatus);
 	/* Invoke the create directory completion routine. */
 	context->OnDriveCreateDirectoryComplete(context, irp->CallbackData, ioStatus);
@@ -1686,7 +1686,7 @@ static UINT rdpdr_server_drive_create_directory_callback1(
 	UINT32 fileId;
 	UINT8 information;
 	WLog_DBG(TAG,
-	         "RdpdrServerDriveCreateDirectoryCallback1: deviceId=%d, completionId=%d, ioStatus=0x%x",
+	         "RdpdrServerDriveCreateDirectoryCallback1: deviceId=%"PRIu32", completionId=%"PRIu32", ioStatus=0x%"PRIx32"",
 	         deviceId, completionId, ioStatus);
 
 	if (ioStatus != STATUS_SUCCESS)
@@ -1776,7 +1776,7 @@ static UINT rdpdr_server_drive_delete_directory_callback2(
     UINT32 completionId, UINT32 ioStatus)
 {
 	WLog_DBG(TAG,
-	         "RdpdrServerDriveDeleteDirectoryCallback2: deviceId=%d, completionId=%d, ioStatus=0x%x",
+	         "RdpdrServerDriveDeleteDirectoryCallback2: deviceId=%"PRIu32", completionId=%"PRIu32", ioStatus=0x%"PRIx32"",
 	         deviceId, completionId, ioStatus);
 	/* Invoke the delete directory completion routine. */
 	context->OnDriveDeleteDirectoryComplete(context, irp->CallbackData, ioStatus);
@@ -1797,7 +1797,7 @@ static UINT rdpdr_server_drive_delete_directory_callback1(
 	UINT32 fileId;
 	UINT8 information;
 	WLog_DBG(TAG,
-	         "RdpdrServerDriveDeleteDirectoryCallback1: deviceId=%d, completionId=%d, ioStatus=0x%x",
+	         "RdpdrServerDriveDeleteDirectoryCallback1: deviceId=%"PRIu32", completionId=%"PRIu32", ioStatus=0x%"PRIx32"",
 	         deviceId, completionId, ioStatus);
 
 	if (ioStatus != STATUS_SUCCESS)
@@ -1890,7 +1890,7 @@ static UINT rdpdr_server_drive_query_directory_callback2(
 	UINT32 length;
 	FILE_DIRECTORY_INFORMATION fdi;
 	WLog_DBG(TAG,
-	         "RdpdrServerDriveQueryDirectoryCallback2: deviceId=%d, completionId=%d, ioStatus=0x%x",
+	         "RdpdrServerDriveQueryDirectoryCallback2: deviceId=%"PRIu32", completionId=%"PRIu32", ioStatus=0x%"PRIx32"",
 	         deviceId, completionId, ioStatus);
 
 	if (Stream_GetRemainingLength(s) < 4)
@@ -1906,7 +1906,7 @@ static UINT rdpdr_server_drive_query_directory_callback2(
 		if ((error = rdpdr_server_read_file_directory_information(s, &fdi)))
 		{
 			WLog_ERR(TAG,
-			         "rdpdr_server_read_file_directory_information failed with error %lu!", error);
+			         "rdpdr_server_read_file_directory_information failed with error %"PRIu32"!", error);
 			return error;
 		}
 	}
@@ -1964,7 +1964,7 @@ static UINT rdpdr_server_drive_query_directory_callback1(
 {
 	UINT32 fileId;
 	WLog_DBG(TAG,
-	         "RdpdrServerDriveQueryDirectoryCallback1: deviceId=%d, completionId=%d, ioStatus=0x%x",
+	         "RdpdrServerDriveQueryDirectoryCallback1: deviceId=%"PRIu32", completionId=%"PRIu32", ioStatus=0x%"PRIx32"",
 	         deviceId, completionId, ioStatus);
 
 	if (ioStatus != STATUS_SUCCESS)
@@ -2057,7 +2057,7 @@ static UINT rdpdr_server_drive_open_file_callback(RdpdrServerContext* context,
 	UINT32 fileId;
 	UINT8 information;
 	WLog_DBG(TAG,
-	         "RdpdrServerDriveOpenFileCallback: deviceId=%d, completionId=%d, ioStatus=0x%x",
+	         "RdpdrServerDriveOpenFileCallback: deviceId=%"PRIu32", completionId=%"PRIu32", ioStatus=0x%"PRIx32"",
 	         deviceId, completionId, ioStatus);
 
 	if (Stream_GetRemainingLength(s) < 5)
@@ -2130,7 +2130,7 @@ static UINT rdpdr_server_drive_read_file_callback(RdpdrServerContext* context,
 	UINT32 length;
 	char* buffer = NULL;
 	WLog_DBG(TAG,
-	         "RdpdrServerDriveReadFileCallback: deviceId=%d, completionId=%d, ioStatus=0x%x",
+	         "RdpdrServerDriveReadFileCallback: deviceId=%"PRIu32", completionId=%"PRIu32", ioStatus=0x%"PRIx32"",
 	         deviceId, completionId, ioStatus);
 
 	if (Stream_GetRemainingLength(s) < 4)
@@ -2212,7 +2212,7 @@ static UINT rdpdr_server_drive_write_file_callback(RdpdrServerContext* context,
 {
 	UINT32 length;
 	WLog_DBG(TAG,
-	         "RdpdrServerDriveWriteFileCallback: deviceId=%d, completionId=%d, ioStatus=0x%x",
+	         "RdpdrServerDriveWriteFileCallback: deviceId=%"PRIu32", completionId=%"PRIu32", ioStatus=0x%"PRIx32"",
 	         deviceId, completionId, ioStatus);
 
 	if (Stream_GetRemainingLength(s) < 5)
@@ -2287,7 +2287,7 @@ static UINT rdpdr_server_drive_close_file_callback(RdpdrServerContext* context,
         UINT32 ioStatus)
 {
 	WLog_DBG(TAG,
-	         "RdpdrServerDriveCloseFileCallback: deviceId=%d, completionId=%d, ioStatus=0x%x",
+	         "RdpdrServerDriveCloseFileCallback: deviceId=%"PRIu32", completionId=%"PRIu32", ioStatus=0x%"PRIx32"",
 	         deviceId, completionId, ioStatus);
 	/* Invoke the close file completion routine. */
 	context->OnDriveCloseFileComplete(context, irp->CallbackData, ioStatus);
@@ -2345,7 +2345,7 @@ static UINT rdpdr_server_drive_delete_file_callback2(RdpdrServerContext*
         UINT32 ioStatus)
 {
 	WLog_DBG(TAG,
-	         "RdpdrServerDriveDeleteFileCallback2: deviceId=%d, completionId=%d, ioStatus=0x%x",
+	         "RdpdrServerDriveDeleteFileCallback2: deviceId=%"PRIu32", completionId=%"PRIu32", ioStatus=0x%"PRIx32"",
 	         deviceId, completionId, ioStatus);
 	/* Invoke the delete file completion routine. */
 	context->OnDriveDeleteFileComplete(context, irp->CallbackData, ioStatus);
@@ -2366,7 +2366,7 @@ static UINT rdpdr_server_drive_delete_file_callback1(RdpdrServerContext*
 	UINT32 fileId;
 	UINT8 information;
 	WLog_DBG(TAG,
-	         "RdpdrServerDriveDeleteFileCallback1: deviceId=%d, completionId=%d, ioStatus=0x%x",
+	         "RdpdrServerDriveDeleteFileCallback1: deviceId=%"PRIu32", completionId=%"PRIu32", ioStatus=0x%"PRIx32"",
 	         deviceId, completionId, ioStatus);
 
 	if (ioStatus != STATUS_SUCCESS)
@@ -2456,7 +2456,7 @@ static UINT rdpdr_server_drive_rename_file_callback3(RdpdrServerContext*
         UINT32 ioStatus)
 {
 	WLog_DBG(TAG,
-	         "RdpdrServerDriveRenameFileCallback3: deviceId=%d, completionId=%d, ioStatus=0x%x",
+	         "RdpdrServerDriveRenameFileCallback3: deviceId=%"PRIu32", completionId=%"PRIu32", ioStatus=0x%"PRIx32"",
 	         deviceId, completionId, ioStatus);
 	/* Destroy the IRP. */
 	rdpdr_server_irp_free(irp);
@@ -2474,7 +2474,7 @@ static UINT rdpdr_server_drive_rename_file_callback2(RdpdrServerContext*
 {
 	UINT32 length;
 	WLog_DBG(TAG,
-	         "RdpdrServerDriveRenameFileCallback2: deviceId=%d, completionId=%d, ioStatus=0x%x",
+	         "RdpdrServerDriveRenameFileCallback2: deviceId=%"PRIu32", completionId=%"PRIu32", ioStatus=0x%"PRIx32"",
 	         deviceId, completionId, ioStatus);
 
 	if (Stream_GetRemainingLength(s) < 5)
@@ -2516,7 +2516,7 @@ static UINT rdpdr_server_drive_rename_file_callback1(RdpdrServerContext*
 	UINT32 fileId;
 	UINT8 information;
 	WLog_DBG(TAG,
-	         "RdpdrServerDriveRenameFileCallback1: deviceId=%d, completionId=%d, ioStatus=0x%x",
+	         "RdpdrServerDriveRenameFileCallback1: deviceId=%"PRIu32", completionId=%"PRIu32", ioStatus=0x%"PRIx32"",
 	         deviceId, completionId, ioStatus);
 
 	if (ioStatus != STATUS_SUCCESS)

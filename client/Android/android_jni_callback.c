@@ -23,16 +23,14 @@
 static JavaVM* jVM;
 static jobject jLibFreeRDPObject;
 
-static const char *jLibFreeRDPPath = JAVA_LIBFREERDP_CLASS;
+static const char* jLibFreeRDPPath = JAVA_LIBFREERDP_CLASS;
 
-void jni_load_class(JNIEnv *env, const char *path, jobject *objptr)
+static void jni_load_class(JNIEnv* env, const char* path, jobject* objptr)
 {
 	jclass class;
 	jmethodID method;
 	jobject object;
-
 	WLog_DBG(TAG, "jni_load_class: %s", path);
-
 	class = (*env)->FindClass(env, path);
 
 	if (!class)
@@ -58,17 +56,15 @@ void jni_load_class(JNIEnv *env, const char *path, jobject *objptr)
 	}
 
 	(*objptr) = (*env)->NewGlobalRef(env, object);
-
 finish:
-	while(0);
+
+	while (0);
 }
 
 jint init_callback_environment(JavaVM* vm, JNIEnv* env)
 {
 	jVM = vm;
-
 	jni_load_class(env, jLibFreeRDPPath, &jLibFreeRDPObject);
-
 	return JNI_VERSION_1_6;
 }
 
@@ -78,12 +74,12 @@ jboolean jni_attach_thread(JNIEnv** env)
 	if ((*jVM)->GetEnv(jVM, (void**) env, JNI_VERSION_1_4) != JNI_OK)
 	{
 		WLog_DBG(TAG, "android_java_callback: attaching current thread");
-
 		(*jVM)->AttachCurrentThread(jVM, env, NULL);
 
 		if ((*jVM)->GetEnv(jVM, (void**) env, JNI_VERSION_1_4) != JNI_OK)
 		{
-			WLog_ERR(TAG, "android_java_callback: failed to obtain current JNI environment");
+			WLog_ERR(TAG,
+			         "android_java_callback: failed to obtain current JNI environment");
 		}
 
 		return JNI_TRUE;
@@ -99,17 +95,15 @@ void jni_detach_thread()
 }
 
 /* callback with void result */
-void java_callback_void(jobject obj, const char * callback, const char* signature, va_list args)
+static void java_callback_void(jobject obj, const char* callback,
+                               const char* signature, va_list args)
 {
 	jclass jObjClass;
 	jmethodID jCallback;
 	jboolean attached;
-	JNIEnv *env;
-
+	JNIEnv* env;
 	WLog_DBG(TAG, "java_callback: %s (%s)", callback, signature);
-
 	attached = jni_attach_thread(&env);
-
 	jObjClass = (*env)->GetObjectClass(env, obj);
 
 	if (!jObjClass)
@@ -127,26 +121,23 @@ void java_callback_void(jobject obj, const char * callback, const char* signatur
 	}
 
 	(*env)->CallStaticVoidMethodV(env, jObjClass, jCallback, args);
-
 finish:
-	if(attached == JNI_TRUE)
+
+	if (attached == JNI_TRUE)
 		jni_detach_thread();
 }
 
 /* callback with bool result */
-jboolean java_callback_bool(jobject obj, const char * callback,
-			    const char* signature, va_list args)
+static jboolean java_callback_bool(jobject obj, const char* callback,
+                                   const char* signature, va_list args)
 {
 	jclass jObjClass;
 	jmethodID jCallback;
 	jboolean attached;
 	jboolean res = JNI_FALSE;
-	JNIEnv *env;
-
+	JNIEnv* env;
 	WLog_DBG(TAG, "java_callback: %s (%s)", callback, signature);
-
 	attached = jni_attach_thread(&env);
-
 	jObjClass = (*env)->GetObjectClass(env, obj);
 
 	if (!jObjClass)
@@ -164,27 +155,25 @@ jboolean java_callback_bool(jobject obj, const char * callback,
 	}
 
 	res = (*env)->CallStaticBooleanMethodV(env, jObjClass, jCallback, args);
-
 finish:
-	if(attached == JNI_TRUE)
+
+	if (attached == JNI_TRUE)
 		jni_detach_thread();
 
 	return res;
 }
 
 /* callback with int result */
-jint java_callback_int(jobject obj, const char * callback, const char* signature, va_list args)
+static jint java_callback_int(jobject obj, const char* callback,
+                              const char* signature, va_list args)
 {
 	jclass jObjClass;
 	jmethodID jCallback;
 	jboolean attached;
 	jint res = -1;
-	JNIEnv *env;
-
+	JNIEnv* env;
 	WLog_DBG(TAG, "java_callback: %s (%s)", callback, signature);
-
 	attached = jni_attach_thread(&env);
-
 	jObjClass = (*env)->GetObjectClass(env, obj);
 
 	if (!jObjClass)
@@ -202,9 +191,9 @@ jint java_callback_int(jobject obj, const char * callback, const char* signature
 	}
 
 	res = (*env)->CallStaticIntMethodV(env, jObjClass, jCallback, args);
-
 finish:
-	if(attached == JNI_TRUE)
+
+	if (attached == JNI_TRUE)
 		jni_detach_thread();
 
 	return res;
@@ -212,7 +201,7 @@ finish:
 
 
 /* callback to freerdp class */
-void freerdp_callback(const char * callback, const char * signature, ...)
+void freerdp_callback(const char* callback, const char* signature, ...)
 {
 	va_list vl;
 	va_start(vl, signature);
@@ -220,7 +209,8 @@ void freerdp_callback(const char * callback, const char * signature, ...)
 	va_end(vl);
 }
 
-jboolean freerdp_callback_bool_result(const char * callback, const char * signature, ...)
+jboolean freerdp_callback_bool_result(const char* callback,
+                                      const char* signature, ...)
 {
 	va_list vl;
 	va_start(vl, signature);
@@ -229,10 +219,11 @@ jboolean freerdp_callback_bool_result(const char * callback, const char * signat
 	return res;
 }
 
-jint freerdp_callback_int_result(const char * callback, const char * signature, ...)
+jint freerdp_callback_int_result(const char* callback, const char* signature,
+                                 ...)
 {
 	va_list vl;
- 	va_start(vl, signature);
+	va_start(vl, signature);
 	jint res = java_callback_int(jLibFreeRDPObject, callback, signature, vl);
 	va_end(vl);
 	return res;

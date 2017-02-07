@@ -35,6 +35,7 @@
 #include <openssl/rsa.h>
 
 #include "certificate.h"
+#include "../crypto/opensslcompat.h"
 
 #define TAG "com.freerdp.core"
 
@@ -399,16 +400,11 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
 		const BYTE* sigdata, int sigdatalen, wStream* s, UINT32 siglen)
 {
 	int i, sum;
-	WINPR_MD5_CTX md5ctx;
 	BYTE sig[TSSK_KEY_LENGTH];
 	BYTE encsig[TSSK_KEY_LENGTH + 8];
 	BYTE md5hash[WINPR_MD5_DIGEST_LENGTH];
 
-	if (!winpr_MD5_Init(&md5ctx))
-            return FALSE;
-	if (!winpr_MD5_Update(&md5ctx, sigdata, sigdatalen))
-            return FALSE;
-	if (!winpr_MD5_Final(&md5ctx, md5hash, sizeof(md5hash)))
+	if (!winpr_Digest(WINPR_MD_MD5, sigdata, sigdatalen, md5hash, sizeof(md5hash)))
             return FALSE;
 	Stream_Read(s, encsig, siglen);
 
@@ -463,10 +459,10 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 {
 	UINT32 dwSigAlgId;
 	UINT32 dwKeyAlgId;
-	UINT32 wPublicKeyBlobType;
-	UINT32 wPublicKeyBlobLen;
-	UINT32 wSignatureBlobType;
-	UINT32 wSignatureBlobLen;
+	UINT16 wPublicKeyBlobType;
+	UINT16 wPublicKeyBlobLen;
+	UINT16 wSignatureBlobType;
+	UINT16 wSignatureBlobLen;
 	BYTE* sigdata;
 	int sigdatalen;
 
@@ -480,7 +476,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 
 	if (!((dwSigAlgId == SIGNATURE_ALG_RSA) && (dwKeyAlgId == KEY_EXCHANGE_ALG_RSA)))
 	{
-		WLog_ERR(TAG, "unsupported signature or key algorithm, dwSigAlgId=%d dwKeyAlgId=%d",
+		WLog_ERR(TAG, "unsupported signature or key algorithm, dwSigAlgId=%"PRIu32" dwKeyAlgId=%"PRIu32"",
 				 dwSigAlgId, dwKeyAlgId);
 		return FALSE;
 	}
@@ -489,14 +485,17 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 
 	if (wPublicKeyBlobType != BB_RSA_KEY_BLOB)
 	{
-		WLog_ERR(TAG, "unsupported public key blob type %d", wPublicKeyBlobType);
+		WLog_ERR(TAG, "unsupported public key blob type %"PRIu16"", wPublicKeyBlobType);
 		return FALSE;
 	}
 
 	Stream_Read_UINT16(s, wPublicKeyBlobLen);
 
 	if (Stream_GetRemainingLength(s) < wPublicKeyBlobLen)
+	{
+		WLog_ERR(TAG, "not enough bytes for public key(len=%"PRIu16")", wPublicKeyBlobLen);
 		return FALSE;
+	}
 
 	if (!certificate_process_server_public_key(certificate, s, wPublicKeyBlobLen))
 	{
@@ -512,7 +511,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 
 	if (wSignatureBlobType != BB_RSA_SIGNATURE_BLOB)
 	{
-		WLog_ERR(TAG, "unsupported blob signature %d", wSignatureBlobType);
+		WLog_ERR(TAG, "unsupported blob signature %"PRIu16"", wSignatureBlobType);
 		return FALSE;
 	}
 
@@ -520,13 +519,13 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 
 	if (Stream_GetRemainingLength(s) < wSignatureBlobLen)
 	{
-		WLog_ERR(TAG, "not enought bytes for signature(len=%d)", wSignatureBlobLen);
+		WLog_ERR(TAG, "not enough bytes for signature(len=%"PRIu16")", wSignatureBlobLen);
 		return FALSE;
 	}
 
 	if (wSignatureBlobLen != 72)
 	{
-		WLog_ERR(TAG, "invalid signature length (got %d, expected %d)", wSignatureBlobLen, 64);
+		WLog_ERR(TAG, "invalid signature length (got %"PRIu16", expected 72)", wSignatureBlobLen);
 		return FALSE;
 	}
 
@@ -573,7 +572,7 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 		if (Stream_GetRemainingLength(s) < certLength)
 			return FALSE;
 
-		DEBUG_CERTIFICATE("X.509 Certificate #%d, length:%d", i + 1, certLength);
+		DEBUG_CERTIFICATE("X.509 Certificate #%d, length:%"PRIu32"", i + 1, certLength);
 		certificate->x509_cert_chain->array[i].data = (BYTE*) malloc(certLength);
 
 		if (!certificate->x509_cert_chain->array[i].data)
@@ -590,7 +589,7 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 			
 			ret = certificate_read_x509_certificate(&certificate->x509_cert_chain->array[i], &cert_info);
 			
-			DEBUG_LICENSE("modulus length:%d", (int) cert_info.ModulusLength);
+			DEBUG_LICENSE("modulus length:%"PRIu32"", cert_info.ModulusLength);
 
 			free(cert_info.Modulus);
 
@@ -608,7 +607,7 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 			if (!certificate_read_x509_certificate(&certificate->x509_cert_chain->array[i], &certificate->cert_info))
 				return FALSE;
 
-			DEBUG_CERTIFICATE("modulus length:%d", (int) certificate->cert_info.ModulusLength);
+			DEBUG_CERTIFICATE("modulus length:%"PRIu32"", certificate->cert_info.ModulusLength);
 		}
 	}
 
@@ -652,7 +651,7 @@ BOOL certificate_read_server_certificate(rdpCertificate* certificate, BYTE* serv
 			break;
 
 		default:
-			WLog_ERR(TAG, "invalid certificate chain version:%d", dwVersion & CERT_CHAIN_VERSION_MASK);
+			WLog_ERR(TAG, "invalid certificate chain version:%"PRIu32"", dwVersion & CERT_CHAIN_VERSION_MASK);
 			ret = FALSE;
 			break;
 	}
@@ -667,6 +666,9 @@ rdpRsaKey* key_new_from_content(const char *keycontent, const char *keyfile)
 	BIO* bio = NULL;
 	RSA* rsa = NULL;
 	rdpRsaKey* key = NULL;
+	const BIGNUM *rsa_e = NULL;
+	const BIGNUM *rsa_n = NULL;
+	const BIGNUM *rsa_d = NULL;
 
 	key = (rdpRsaKey*) calloc(1, sizeof(rdpRsaKey));
 	if (!key)
@@ -700,30 +702,32 @@ rdpRsaKey* key_new_from_content(const char *keycontent, const char *keyfile)
 			goto out_free_rsa;
 	}
 
-	if (BN_num_bytes(rsa->e) > 4)
+	RSA_get0_key(rsa, &rsa_n, &rsa_e, &rsa_d);
+
+	if (BN_num_bytes(rsa_e) > 4)
 	{
 		WLog_ERR(TAG, "RSA public exponent too large in %s", keyfile);
 		goto out_free_rsa;
 	}
 
-	key->ModulusLength = BN_num_bytes(rsa->n);
+	key->ModulusLength = BN_num_bytes(rsa_n);
 	key->Modulus = (BYTE*) malloc(key->ModulusLength);
 
 	if (!key->Modulus)
 		goto out_free_rsa;
 
-	BN_bn2bin(rsa->n, key->Modulus);
+	BN_bn2bin(rsa_n, key->Modulus);
 	crypto_reverse(key->Modulus, key->ModulusLength);
-	key->PrivateExponentLength = BN_num_bytes(rsa->d);
+	key->PrivateExponentLength = BN_num_bytes(rsa_d);
 	key->PrivateExponent = (BYTE*) malloc(key->PrivateExponentLength);
 
 	if (!key->PrivateExponent)
 		goto out_free_modulus;
 
-	BN_bn2bin(rsa->d, key->PrivateExponent);
+	BN_bn2bin(rsa_d, key->PrivateExponent);
 	crypto_reverse(key->PrivateExponent, key->PrivateExponentLength);
 	memset(key->exponent, 0, sizeof(key->exponent));
-	BN_bn2bin(rsa->e, key->exponent + sizeof(key->exponent) - BN_num_bytes(rsa->e));
+	BN_bn2bin(rsa_e, key->exponent + sizeof(key->exponent) - BN_num_bytes(rsa_e));
 	crypto_reverse(key->exponent, sizeof(key->exponent));
 	RSA_free(rsa);
 	return key;

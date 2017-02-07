@@ -79,12 +79,12 @@ static void audin_pulse_context_state_callback(pa_context* context, void* userda
 
 		case PA_CONTEXT_FAILED:
 		case PA_CONTEXT_TERMINATED:
-			DEBUG_DVC("state %d", (int)state);
+			DEBUG_DVC("state %d", state);
 			pa_threaded_mainloop_signal (pulse->mainloop, 0);
 			break;
 
 		default:
-			DEBUG_DVC("state %d", (int)state);
+			DEBUG_DVC("state %d", state);
 			break;
 	}
 }
@@ -257,7 +257,7 @@ static UINT audin_pulse_set_format(IAudinDevice* device, audinFormat* format, UI
 			bs = (format->nBlockAlign - 4 * format->nChannels) * 4;
 			pulse->frames_per_packet = (pulse->frames_per_packet * format->nChannels * 2 /
 				bs + 1) * bs / (format->nChannels * 2);
-			DEBUG_DVC("aligned FramesPerPacket=%d",
+			DEBUG_DVC("aligned FramesPerPacket=%"PRIu32"",
 				pulse->frames_per_packet);
 			break;
 	}
@@ -283,12 +283,12 @@ static void audin_pulse_stream_state_callback(pa_stream* stream, void* userdata)
 
 		case PA_STREAM_FAILED:
 		case PA_STREAM_TERMINATED:
-			DEBUG_DVC("state %d", (int)state);
+			DEBUG_DVC("state %d", state);
 			pa_threaded_mainloop_signal(pulse->mainloop, 0);
 			break;
 
 		default:
-			DEBUG_DVC("state %d", (int)state);
+			DEBUG_DVC("state %d", state);
 			break;
 	}
 }
@@ -318,7 +318,7 @@ static void audin_pulse_stream_request_callback(pa_stream* stream, size_t length
 	pa_stream_peek(stream, &data, &length);
 	frames = length / pulse->bytes_per_frame;
 
-	DEBUG_DVC("length %d frames %d", (int) length, frames);
+	DEBUG_DVC("length %"PRIdz" frames %d", length, frames);
 
 	src = (const BYTE*) data;
 	while (frames > 0)
@@ -558,7 +558,7 @@ UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEn
 
 	if ((error = audin_pulse_parse_addin_args(pulse, args)))
 	{
-		WLog_ERR(TAG, "audin_pulse_parse_addin_args failed with error %lu!", error);
+		WLog_ERR(TAG, "audin_pulse_parse_addin_args failed with error %"PRIu32"!", error);
 		goto error_out;
 	}
 
@@ -598,7 +598,7 @@ UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEn
 
 	if ((error = pEntryPoints->pRegisterAudinDevice(pEntryPoints->plugin, (IAudinDevice*) pulse)))
 	{
-		WLog_ERR(TAG, "RegisterAudinDevice failed with error %lu!", error);
+		WLog_ERR(TAG, "RegisterAudinDevice failed with error %"PRIu32"!", error);
 		goto error_out;
 	}
 

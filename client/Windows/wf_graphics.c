@@ -243,7 +243,7 @@ static BOOL wf_Pointer_New(rdpContext* context, const rdpPointer* pointer)
 		if (!freerdp_image_copy_from_pointer_data(pdata, gdi->dstFormat, 0, 0, 0,
 		        pointer->width, pointer->height,
 		        pointer->xorMaskData, pointer->lengthXorMask,
-		        pointer->andMaskData, pointer->lengthAndMask, pointer->xorBpp, &gdi->palette, FREERDP_FLIP_NONE))
+		        pointer->andMaskData, pointer->lengthAndMask, pointer->xorBpp, &gdi->palette))
 		{
 			_aligned_free(pdata);
 			goto fail;
@@ -318,6 +318,14 @@ static BOOL wf_Pointer_SetDefault(rdpContext* context)
 	return TRUE;
 }
 
+static BOOL wf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
+{
+	if (!context)
+		return FALSE;
+
+	return TRUE;
+}
+
 BOOL wf_register_pointer(rdpGraphics* graphics)
 {
 	wfContext* wfc;
@@ -334,6 +342,7 @@ BOOL wf_register_pointer(rdpGraphics* graphics)
 	pointer.Set = wf_Pointer_Set;
 	pointer.SetNull = wf_Pointer_SetNull;
 	pointer.SetDefault = wf_Pointer_SetDefault;
+	pointer.SetPosition = wf_Pointer_SetPosition;
 	graphics_register_pointer(graphics, &pointer);
 	return TRUE;
 }

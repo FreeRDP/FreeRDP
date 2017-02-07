@@ -31,13 +31,13 @@ static LRESULT CALLBACK TestWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 			{
 				PWTSSESSION_NOTIFICATION pNotification = (PWTSSESSION_NOTIFICATION) lParam;
 
-				printf("WM_WTSSESSION_CHANGE: %s SessionId: %d\n",
+				printf("WM_WTSSESSION_CHANGE: %s SessionId: %"PRIu32"\n",
 						WM_WTS_STRINGS[wParam], (int) pNotification->dwSessionId);
 			}
 			break;
 
 		default:
-			printf("TestWndProc: uMsg: 0x%04X\n", uMsg);
+			printf("TestWndProc: uMsg: 0x%08"PRIX32"\n", uMsg);
 			return DefWindowProc(hwnd, uMsg, wParam, lParam);
 			break;
 	}

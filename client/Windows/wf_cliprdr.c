@@ -572,7 +572,7 @@ static HRESULT STDMETHODCALLTYPE CliprdrDataObject_GetData(
 	if (!pFormatEtc || !pMedium || !instance)
 		return E_INVALIDARG;
 
-	clipboard = clipboard = (wfClipboard*) instance->m_pData;
+	clipboard = (wfClipboard*) instance->m_pData;
 
 	if (!clipboard)
 		return E_INVALIDARG;
@@ -1289,9 +1289,11 @@ static UINT cliprdr_send_format_list(wfClipboard* clipboard)
 
 	for (index = 0; index < numFormats; index++)
 	{
-		GetClipboardFormatNameA(formats[index].formatId, formatName,
-		                        sizeof(formatName));
-		formats[index].formatName = _strdup(formatName);
+		if(GetClipboardFormatNameA(formats[index].formatId, formatName,
+		                        sizeof(formatName)))
+		{
+			formats[index].formatName = _strdup(formatName);
+		}
 	}
 
 	formatList.numFormats = numFormats;
@@ -1660,8 +1662,7 @@ static BOOL wf_cliprdr_get_file_contents(WCHAR* file_name, BYTE* buffer,
 
 	if (!ReadFile(hFile, buffer, nRequested, &nGet, NULL))
 	{
-		DWORD err = GetLastError();
-		DEBUG_CLIPRDR("ReadFile failed with 0x%x.", err);
+		DEBUG_CLIPRDR("ReadFile failed with 0x%08lX.", GetLastError());
 		goto error;
 	}
 
@@ -2215,11 +2216,11 @@ static UINT wf_cliprdr_server_format_data_response(CliprdrClientContext*
 	HANDLE hMem;
 	wfClipboard* clipboard;
 
-	if (formatDataResponse->msgFlags != CB_RESPONSE_OK)
-		return E_FAIL;
-
 	if (!context || !formatDataResponse)
 		return ERROR_INTERNAL_ERROR;
+
+	if (formatDataResponse->msgFlags != CB_RESPONSE_OK)
+		return E_FAIL;
 
 	clipboard = (wfClipboard*) context->custom;
 
@@ -2441,11 +2442,11 @@ static UINT wf_cliprdr_server_file_contents_response(CliprdrClientContext*
 {
 	wfClipboard* clipboard;
 
-	if (fileContentsResponse->msgFlags != CB_RESPONSE_OK)
-		return E_FAIL;
-
 	if (!context || !fileContentsResponse)
 		return ERROR_INTERNAL_ERROR;
+
+	if (fileContentsResponse->msgFlags != CB_RESPONSE_OK)
+		return E_FAIL;
 
 	clipboard = (wfClipboard*) context->custom;
 

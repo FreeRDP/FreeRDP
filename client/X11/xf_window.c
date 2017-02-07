@@ -129,8 +129,7 @@ void xf_SendClientEvent(xfContext* xfc, Window window, Atom atom,
 		xevent.xclient.data.l[i] = va_arg(argp, int);
 	}
 
-	DEBUG_X11("Send ClientMessage Event: wnd=0x%04X",
-	          (unsigned int) xevent.xclient.window);
+	DEBUG_X11("Send ClientMessage Event: wnd=0x%04lX", (unsigned long) xevent.xclient.window);
 	XSendEvent(xfc->display, RootWindowOfScreen(xfc->screen), False,
 	           SubstructureRedirectMask | SubstructureNotifyMask, &xevent);
 	XSync(xfc->display, False);
@@ -238,7 +237,7 @@ BOOL xf_GetWindowProperty(xfContext* xfc, Window window, Atom property,
 
 	if (actual_type == None)
 	{
-		WLog_INFO(TAG, "Property %lu does not exist", property);
+		WLog_INFO(TAG, "Property %lu does not exist", (unsigned long) property);
 		return FALSE;
 	}
 
@@ -654,7 +653,7 @@ int xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow)
 		else
 		{
 			class = malloc(sizeof("RAIL:00000000"));
-			sprintf_s(class, sizeof("RAIL:00000000"), "RAIL:%08X", appWindow->windowId);
+			sprintf_s(class, sizeof("RAIL:00000000"), "RAIL:%08"PRIX32"", appWindow->windowId);
 			class_hints->res_class = class;
 		}
 

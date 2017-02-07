@@ -34,7 +34,7 @@ static BOOL check8(const BYTE* src, UINT32 length, UINT32 offset, BYTE value)
 	{
 		if (src[offset + i] != value)
 		{
-			printf("SET8U FAILED: off=%d len=%d dest[%d]=0x%02x\n",
+			printf("SET8U FAILED: off=%"PRIu32" len=%"PRIu32" dest[%"PRIu32"]=0x%02"PRIx8"\n",
 				   offset, length, i + offset, src[i + offset]);
 			return FALSE;
 		}
@@ -111,7 +111,7 @@ static BOOL check32s(const INT32* src, UINT32 length, UINT32 offset, INT32 value
 	{
 		if (src[offset + i] != value)
 		{
-			printf("SET8U FAILED: off=%d len=%d dest[%d]=0x%08x\n",
+			printf("SET8U FAILED: off=%"PRIu32" len=%"PRIu32" dest[%"PRIu32"]=0x%08"PRIx32"\n",
 				   offset, length, i + offset, src[i + offset]);
 			return FALSE;
 		}
@@ -170,7 +170,7 @@ static BOOL check32u(const UINT32* src, UINT32 length, UINT32 offset, UINT32 val
 	{
 		if (src[offset + i] != value)
 		{
-			printf("SET8U FAILED: off=%d len=%d dest[%d]=0x%08x\n",
+			printf("SET8U FAILED: off=%"PRIu32" len=%"PRIu32" dest[%"PRIu32"]=0x%08"PRIx32"\n",
 				   offset, length, i + offset, src[i + offset]);
 			return FALSE;
 		}

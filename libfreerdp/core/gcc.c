@@ -396,7 +396,7 @@ BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, int length)
 				break;
 
 			default:
-				WLog_ERR(TAG,  "Unknown GCC client data block: 0x%04X", type);
+				WLog_ERR(TAG,  "Unknown GCC client data block: 0x%04"PRIX16"", type);
 				Stream_Seek(s, blockLength - 4);
 				break;
 		}
@@ -406,7 +406,7 @@ BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, int length)
 		if (endPos != (begPos + blockLength))
 		{
 			WLog_ERR(TAG,
-			         "Error parsing GCC client data block 0x%04X: Actual Offset: %d Expected Offset: %d",
+			         "Error parsing GCC client data block 0x%04"PRIX16": Actual Offset: %d Expected Offset: %d",
 			         type, endPos, begPos + blockLength);
 		}
 
@@ -530,7 +530,7 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, int length)
 				break;
 
 			default:
-				WLog_ERR(TAG,  "gcc_read_server_data_blocks: ignoring type=%hu", type);
+				WLog_ERR(TAG,  "gcc_read_server_data_blocks: ignoring type=%"PRIu16"", type);
 				break;
 		}
 
@@ -1110,7 +1110,7 @@ BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 			break;
 
 		default:
-			WLog_ERR(TAG, "Received unknown encryption method %08X",
+			WLog_ERR(TAG, "Received unknown encryption method %08"PRIX32"",
 			         serverEncryptionMethod);
 			return FALSE;
 	}
@@ -1118,7 +1118,7 @@ BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 	if (settings->UseRdpSecurityLayer
 	    && !(settings->EncryptionMethods & serverEncryptionMethod))
 	{
-		WLog_WARN(TAG, "Server uses non-advertised encryption method 0x%08X",
+		WLog_WARN(TAG, "Server uses non-advertised encryption method 0x%08"PRIX32"",
 		          serverEncryptionMethod);
 		/* FIXME: Should we return FALSE; in this case ?? */
 	}
@@ -1158,14 +1158,14 @@ BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 			break;
 
 		default:
-			WLog_ERR(TAG, "Received unknown encryption level %08X",
+			WLog_ERR(TAG, "Received unknown encryption level 0x%08"PRIX32"",
 			         settings->EncryptionLevel);
 	}
 
 	if (!validCryptoConfig)
 	{
 		WLog_ERR(TAG,
-		         "Received invalid cryptographic configuration (level=0x%08X method=0x%08X)",
+		         "Received invalid cryptographic configuration (level=0x%08"PRIX32" method=0x%08"PRIX32")",
 		         settings->EncryptionLevel, settings->EncryptionMethods);
 		return FALSE;
 	}
@@ -1265,7 +1265,6 @@ const BYTE tssk_exponent[] =
 
 BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 {
-	WINPR_MD5_CTX md5;
 	BYTE* sigData;
 	int expLen, keyLen, sigDataLen;
 	BYTE encryptedSignature[TSSK_KEY_LENGTH];
@@ -1313,7 +1312,7 @@ BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 			break;
 
 		default:
-			WLog_ERR(TAG, "Invalid server encryption level 0x%08X",
+			WLog_ERR(TAG, "Invalid server encryption level 0x%08"PRIX32"",
 			         settings->EncryptionLevel);
 			WLog_ERR(TAG, "Switching to encryption level CLIENT-COMPATIBLE");
 			settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
@@ -1474,13 +1473,7 @@ BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 	Stream_Write_UINT16(s, sizeof(encryptedSignature) + 8); /* wSignatureBlobLen */
 	memcpy(signature, initial_signature, sizeof(initial_signature));
 
-	if (!winpr_MD5_Init(&md5))
-		return FALSE;
-
-	if (!winpr_MD5_Update(&md5, sigData, sigDataLen))
-		return FALSE;
-
-	if (!winpr_MD5_Final(&md5, signature, sizeof(signature)))
+	if (!winpr_Digest(WINPR_MD_MD5, sigData, sigDataLen, signature, sizeof(signature)))
 		return FALSE;
 
 	crypto_rsa_private_encrypt(signature, sizeof(signature), TSSK_KEY_LENGTH,
@@ -1582,7 +1575,7 @@ BOOL gcc_read_server_network_data(wStream* s, rdpMcs* mcs)
 
 	if (channelCount != mcs->channelCount)
 	{
-		WLog_ERR(TAG,  "requested %d channels, got %d instead",
+		WLog_ERR(TAG,  "requested %"PRIu32" channels, got %"PRIu16" instead",
 		         mcs->channelCount, channelCount);
 
 		/* we ensure that the response is not bigger than the request */
@@ -1708,7 +1701,7 @@ BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 
 	if (monitorCount > settings->MonitorDefArraySize)
 	{
-		WLog_ERR(TAG, "too many announced monitors(%d), clamping to %d", monitorCount,
+		WLog_ERR(TAG, "too many announced monitors(%"PRIu32"), clamping to %"PRIu32"", monitorCount,
 		         settings->MonitorDefArraySize);
 		monitorCount = settings->MonitorDefArraySize;
 	}

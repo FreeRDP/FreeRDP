@@ -51,7 +51,7 @@ static BOOL test_ClearDecompressExample(UINT32 nr, const BYTE* pSrcData,
 	status = clear_decompress(clear, pSrcData, SrcSize, 128, 128,
 	                          pDstData, PIXEL_FORMAT_XRGB32, 0, 1, 1, 128, 128,
 	                          NULL);
-	printf("clear_decompress example %lu status: %d\n", nr, status);
+	printf("clear_decompress example %"PRIu32" status: %d\n", nr, status);
 	fflush(stdout);
 	clear_context_free(clear);
 #if 0
@@ -60,7 +60,7 @@ static BOOL test_ClearDecompressExample(UINT32 nr, const BYTE* pSrcData,
 		return FALSE;
 
 #else
-	fprintf(stderr, "%s: TODO Test %lu not working!!!\n", __FUNCTION__, nr);
+	fprintf(stderr, "%s: TODO Test %"PRIu32" not working!!!\n", __FUNCTION__, nr);
 #endif
 	return TRUE;
 }

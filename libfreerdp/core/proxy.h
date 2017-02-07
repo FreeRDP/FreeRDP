@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * RemoteFX Codec Library - Differential Encoding
+ * HTTP proxy support
  *
- * Copyright 2011 Vic Lee
+ * Copyright 2014 Christian Plattner <ccpp@gmx.at>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,37 +17,15 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
+#ifndef __HTTP_PROXY_H
+#define __HTTP_PROXY_H
+
+#include "freerdp/settings.h"
+#include <openssl/bio.h>
+
+BOOL proxy_prepare(rdpSettings* settings, const char** lpPeerHostname, UINT16* lpPeerPort,
+                   BOOL isHTTPS);
+BOOL proxy_parse_uri(rdpSettings* settings, const char* uri);
+BOOL proxy_connect(rdpSettings* settings, BIO* bio, const char* hostname, UINT16 port);
+
 #endif
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "rfx_differential.h"
-
-void rfx_differential_decode(INT16* buffer, int size)
-{
-	INT16* ptr = buffer;
-	INT16* end = &buffer[size - 1];
-
-	while (ptr != end)
-	{
-		ptr[1] += ptr[0];
-		ptr++;
-	}
-}
-
-void rfx_differential_encode(INT16* buffer, int size)
-{
-	INT16 n1, n2;
-	INT16* dst;
-
-	for (n1 = *buffer, dst = buffer + 1; size > 1; dst++, size--)
-	{
-		n2 = *dst;
-		*dst -= n1;
-		n1 = n2;
-	}
-}

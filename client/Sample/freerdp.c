@@ -138,7 +138,7 @@ static void* tf_client_thread_proc(freerdp* instance)
 
 		if (status == WAIT_FAILED)
 		{
-			WLog_ERR(TAG, "%s: WaitForMultipleObjects failed with %lu", __FUNCTION__,
+			WLog_ERR(TAG, "%s: WaitForMultipleObjects failed with %"PRIu32"", __FUNCTION__,
 			         status);
 			break;
 		}

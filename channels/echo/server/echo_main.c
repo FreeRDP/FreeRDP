@@ -83,7 +83,7 @@ static UINT echo_server_open_channel(echo_server* echo)
 		if (WaitForSingleObject(hEvent, 1000) == WAIT_FAILED)
 		{
 			Error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", Error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", Error);
 			return Error;
 		}
 
@@ -117,17 +117,16 @@ static void* echo_server_thread_func(void* arg)
 	echo_server* echo = (echo_server*) arg;
 	UINT error;
 	DWORD status;
-	freerdp_channel_init_thread_context(echo->context.rdpcontext);
 
 	if ((error = echo_server_open_channel(echo)))
 	{
 		UINT error2 = 0;
-		WLog_ERR(TAG, "echo_server_open_channel failed with error %lu!", error);
+		WLog_ERR(TAG, "echo_server_open_channel failed with error %"PRIu32"!", error);
 		IFCALLRET(echo->context.OpenResult, error2, &echo->context,
 		          ECHO_SERVER_OPEN_RESULT_NOTSUPPORTED);
 
 		if (error2)
-			WLog_ERR(TAG, "echo server's OpenResult callback failed with error %lu",
+			WLog_ERR(TAG, "echo server's OpenResult callback failed with error %"PRIu32"",
 			         error2);
 
 		goto out;
@@ -159,7 +158,7 @@ static void* echo_server_thread_func(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %"PRIu32"", error);
 			break;
 		}
 
@@ -169,7 +168,7 @@ static void* echo_server_thread_func(void* arg)
 			          ECHO_SERVER_OPEN_RESULT_CLOSED);
 
 			if (error)
-				WLog_ERR(TAG, "OpenResult failed with error %lu!", error);
+				WLog_ERR(TAG, "OpenResult failed with error %"PRIu32"!", error);
 
 			break;
 		}
@@ -181,7 +180,7 @@ static void* echo_server_thread_func(void* arg)
 			          ECHO_SERVER_OPEN_RESULT_ERROR);
 
 			if (error)
-				WLog_ERR(TAG, "OpenResult failed with error %lu!", error);
+				WLog_ERR(TAG, "OpenResult failed with error %"PRIu32"!", error);
 
 			break;
 		}
@@ -195,7 +194,7 @@ static void* echo_server_thread_func(void* arg)
 			          ECHO_SERVER_OPEN_RESULT_OK);
 
 			if (error)
-				WLog_ERR(TAG, "OpenResult failed with error %lu!", error);
+				WLog_ERR(TAG, "OpenResult failed with error %"PRIu32"!", error);
 
 			break;
 		}
@@ -218,7 +217,7 @@ static void* echo_server_thread_func(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %"PRIu32"", error);
 			break;
 		}
 
@@ -251,7 +250,7 @@ static void* echo_server_thread_func(void* arg)
 
 		if (error)
 		{
-			WLog_ERR(TAG, "Response failed with error %lu!", error);
+			WLog_ERR(TAG, "Response failed with error %"PRIu32"!", error);
 			break;
 		}
 	}
@@ -316,7 +315,7 @@ static UINT echo_server_close(echo_server_context* context)
 		if (WaitForSingleObject(echo->thread, INFINITE) == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"", error);
 			return error;
 		}
 

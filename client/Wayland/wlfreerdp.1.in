@@ -1,0 +1,38 @@
+.de URL
+\\$2 \(laURL: \\$1 \(ra\\$3
+..
+.if \n[.g] .mso www.tmac))
+.TH wlfreerdp 1 2017-01-12 "@FREERDP_VERSION_FULL@" "FreeRDP"
+.SH NAME
+wlfreerdp \- FreeRDP wayland client
+.SH SYNOPSIS
+.B wlfreerdp
+[file]
+[\fIdefault_client_options\fP]
+[\fB/v\fP:<server>[:port]]
+[\fB/version\fP]
+[\fB/help\fP]
+.SH DESCRIPTION
+.B wlfreerdp
+is a wayland Remote Desktop Protocol (RDP) client which is part of the FreeRDP project. A RDP server is built-in to many editions of Windows. Alternative servers included xrdp and VRDP (VirtualBox).  
+.SH OPTIONS
+The wayland client also supports a lot of the \fIdefault client options\fP which are not described here. For details on those see the xfreerdp(1) man page.
+.IP \fB/v:\fP\fI<server>[:port]\fP
+The server hostname or IP, and optionally the port, to connect to.
+.IP /version
+Print the version and exit.
+.IP /help
+Print the help and exit.
+.SH EXIT STATUS
+.TP
+.B 0
+Successful program execution.
+.TP
+.B not 0
+On failure.
+
+.SH SEE ALSO
+xfreerdp(1) wlog(7)
+
+.SH AUTHOR
+FreeRDP <team@freerdp.com>

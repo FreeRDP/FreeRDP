@@ -495,7 +495,7 @@ void winpr_log_backtrace(const char* tag, DWORD level, DWORD size)
 	if (msg)
 	{
 		for (x=0; x<used; x++)
-			WLog_LVL(tag, level, "%lu: %s\n", (unsigned long)x, msg[x]);
+			WLog_LVL(tag, level, "%"PRIuz": %s\n", x, msg[x]);
 	}
 	winpr_backtrace_free(stack);
 }
@@ -535,7 +535,7 @@ char* winpr_strerror(DWORD dw, char* dmsg, size_t size)
 		free(msg);
 #endif
 	} else {
-		_snprintf(dmsg, size, "FAILURE: %08X", GetLastError());
+		_snprintf(dmsg, size, "FAILURE: 0x%08"PRIX32"", GetLastError());
 	}
 #else /* defined(_WIN32) */
 	_snprintf(dmsg, size, "%s", strerror(dw));

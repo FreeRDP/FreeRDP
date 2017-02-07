@@ -23,7 +23,29 @@
 #include <freerdp/codec/rfx.h>
 #include <freerdp/api.h>
 
-FREERDP_LOCAL void rfx_differential_decode(INT16* buffer, int size);
-FREERDP_LOCAL void rfx_differential_encode(INT16* buffer, int size);
+static INLINE void rfx_differential_decode(INT16* buffer, int size)
+{
+	INT16* ptr = buffer;
+	INT16* end = &buffer[size - 1];
+
+	while (ptr != end)
+	{
+		ptr[1] += ptr[0];
+		ptr++;
+	}
+}
+
+static INLINE void rfx_differential_encode(INT16* buffer, int size)
+{
+	INT16 n1, n2;
+	INT16* dst;
+
+	for (n1 = *buffer, dst = buffer + 1; size > 1; dst++, size--)
+	{
+		n2 = *dst;
+		*dst -= n1;
+		n1 = n2;
+	}
+}
 
 #endif /* __RFX_DIFFERENTIAL_H */

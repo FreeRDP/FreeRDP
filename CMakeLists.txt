@@ -67,6 +67,7 @@ include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
 include(GNUInstallDirsWrapper)
 include(CMakePackageConfigHelpers)
+include(InstallFreeRDPMan)
 
 # Soname versioning
 set(BUILD_NUMBER 0)
@@ -105,6 +106,12 @@ endif()
 if(CMAKE_CROSSCOMPILING)
 	SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM BOTH)
 endif(CMAKE_CROSSCOMPILING)
+
+find_program(CCACHE ccache)
+if(CCACHE AND WITH_CCACHE)
+	set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ${CCACHE})
+	set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ${CCACHE})
+endif(CCACHE AND WITH_CCACHE)
 
 include(GetGitRevisionDescription)
 git_get_exact_tag(GIT_REVISION --tags --always)
@@ -756,6 +763,7 @@ endif()
 
 if(OPENSSL_FOUND)
 	add_definitions("-DWITH_OPENSSL")
+	message(STATUS "Using OpenSSL Version: ${OPENSSL_VERSION}")
 endif()
 
 if(MBEDTLS_FOUND)
@@ -766,15 +774,21 @@ if (TARGET_ARCH MATCHES "sparc")
 	set(HAVE_ALIGNED_REQUIRED 1)
 endif()
 
-# Path to put FreeRDP data
-set(FREERDP_DATA_PATH "${CMAKE_INSTALL_PREFIX}/share/freerdp${FREERDP_VERSION_MAJOR}")
-
-# Path to put plugins
-
-set(FREERDP_LIBRARY_PATH "${CMAKE_INSTALL_LIBDIR}")
-
-set(FREERDP_PLUGIN_PATH "${CMAKE_INSTALL_LIBDIR}/freerdp${FREERDP_VERSION_MAJOR}")
-set(FREERDP_ADDIN_PATH "${FREERDP_PLUGIN_PATH}")
+# Android expects all libraries to be loadable
+# without paths.
+if (ANDROID)
+	set(FREERDP_DATA_PATH "share")
+	set(FREERDP_INSTALL_PREFIX ".")
+	set(FREERDP_LIBRARY_PATH ".")
+	set(FREERDP_PLUGIN_PATH ".")
+	set(FREERDP_ADDIN_PATH ".")
+else (ANDROID)
+	set(FREERDP_DATA_PATH "${CMAKE_INSTALL_PREFIX}/share/freerdp${FREERDP_VERSION_MAJOR}")
+	set(FREERDP_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
+	set(FREERDP_LIBRARY_PATH "${CMAKE_INSTALL_LIBDIR}")
+	set(FREERDP_PLUGIN_PATH "${CMAKE_INSTALL_LIBDIR}/freerdp${FREERDP_VERSION_MAJOR}")
+	set(FREERDP_ADDIN_PATH "${FREERDP_PLUGIN_PATH}")
+endif(ANDROID)
 
 # Path to put extensions
 set(FREERDP_EXTENSION_PATH "${CMAKE_INSTALL_FULL_LIBDIR}/freerdp${FREERDP_VERSION_MAJOR}/extensions")

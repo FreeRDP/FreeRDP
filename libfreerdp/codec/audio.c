@@ -65,7 +65,7 @@ UINT32 rdpsnd_compute_audio_time_length(AUDIO_FORMAT* format, int size)
 		}
 		else
 		{
-			WLog_ERR(TAG,  "rdpsnd_compute_audio_time_length: unknown format %d", format->wFormatTag);
+			WLog_ERR(TAG,  "rdpsnd_compute_audio_time_length: unknown format %"PRIu16"", format->wFormatTag);
 		}
 	}
 
@@ -115,8 +115,8 @@ char* rdpsnd_get_audio_tag_string(UINT16 wFormatTag)
 
 void rdpsnd_print_audio_format(AUDIO_FORMAT* format)
 {
-	WLog_INFO(TAG,  "%s:\t wFormatTag: 0x%04X nChannels: %d nSamplesPerSec: %d nAvgBytesPerSec: %d "
-			 "nBlockAlign: %d wBitsPerSample: %d cbSize: %d",
+	WLog_INFO(TAG,  "%s:\t wFormatTag: 0x%04"PRIX16" nChannels: %"PRIu16" nSamplesPerSec: %"PRIu32" "
+	        "nAvgBytesPerSec: %"PRIu32" nBlockAlign: %"PRIu16" wBitsPerSample: %"PRIu16" cbSize: %"PRIu16"",
 			 rdpsnd_get_audio_tag_string(format->wFormatTag), format->wFormatTag,
 			 format->nChannels, format->nSamplesPerSec, format->nAvgBytesPerSec,
 			 format->nBlockAlign, format->wBitsPerSample, format->cbSize);
@@ -129,7 +129,7 @@ void rdpsnd_print_audio_formats(AUDIO_FORMAT* formats, UINT16 count)
 
 	if (formats)
 	{
-		WLog_INFO(TAG,  "AUDIO_FORMATS (%d) ={", count);
+		WLog_INFO(TAG,  "AUDIO_FORMATS (%"PRIu16") ={", count);
 
 		for (index = 0; index < (int) count; index++)
 		{

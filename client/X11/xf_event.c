@@ -163,8 +163,8 @@ static BOOL xf_event_execute_action_script(xfContext* xfc, XEvent* event)
 	if (!match)
 		return FALSE;
 
-	sprintf_s(command, sizeof(command), "%s xevent %s %d",
-	          xfc->actionScript, xeventName, (int) xfc->window->handle);
+	sprintf_s(command, sizeof(command), "%s xevent %s %lu",
+	          xfc->actionScript, xeventName, (unsigned long) xfc->window->handle);
 	actionScript = popen(command, "r");
 
 	if (!actionScript)
@@ -348,18 +348,12 @@ BOOL xf_generic_ButtonPress(xfContext* xfc, int x, int y, int button,
 
 		case 6:		/* wheel left */
 			wheel = TRUE;
-
-			if (xfc->context.settings->HasHorizontalWheel)
-				flags = PTR_FLAGS_HWHEEL | PTR_FLAGS_WHEEL_NEGATIVE | 0x0078;
-
+			flags = PTR_FLAGS_HWHEEL | PTR_FLAGS_WHEEL_NEGATIVE | 0x0078;
 			break;
 
 		case 7:		/* wheel right */
 			wheel = TRUE;
-
-			if (xfc->context.settings->HasHorizontalWheel)
-				flags = PTR_FLAGS_HWHEEL | 0x0078;
-
+			flags = PTR_FLAGS_HWHEEL | 0x0078;
 			break;
 
 		default:
@@ -496,6 +490,8 @@ static BOOL xf_event_KeyPress(xfContext* xfc, XEvent* event, BOOL app)
 static BOOL xf_event_KeyRelease(xfContext* xfc, XEvent* event, BOOL app)
 {
 	XEvent nextEvent;
+	KeySym keysym;
+	char str[256];
 
 	if (XPending(xfc->display))
 	{
@@ -509,7 +505,8 @@ static BOOL xf_event_KeyRelease(xfContext* xfc, XEvent* event, BOOL app)
 		}
 	}
 
-	xf_keyboard_key_release(xfc, event->xkey.keycode);
+	XLookupString((XKeyEvent*) event, str, sizeof(str), &keysym, NULL);
+	xf_keyboard_key_release(xfc, event->xkey.keycode, keysym);
 	return TRUE;
 }
 
@@ -982,8 +979,8 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 	xf_event_execute_action_script(xfc, event);
 
 	if (event->type != MotionNotify)
-		DEBUG_X11("%s Event(%d): wnd=0x%04X", X11_EVENT_STRINGS[event->type],
-		          event->type, (UINT32) event->xany.window);
+		DEBUG_X11("%s Event(%d): wnd=0x%08lX", X11_EVENT_STRINGS[event->type],
+		          event->type, (unsigned long) event->xany.window);
 
 	switch (event->type)
 	{

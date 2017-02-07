@@ -157,7 +157,6 @@ struct rdp_rdp
 	int encrypt_checksum_use_count;
 	WINPR_CIPHER_CTX* fips_encrypt;
 	WINPR_CIPHER_CTX* fips_decrypt;
-	WINPR_HMAC_CTX* fips_hmac;
 	UINT32 sec_flags;
 	BOOL do_crypt;
 	BOOL do_crypt_license;

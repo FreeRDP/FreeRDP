@@ -8,6 +8,8 @@
 
 #include <freerdp/codec/progressive.h>
 
+#include "../progressive.h"
+
 /**
  * Microsoft Progressive Codec Sample Data
  * (available under NDA only)

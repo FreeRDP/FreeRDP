@@ -375,12 +375,12 @@ static void touch_handle_down(void *data, struct wl_touch *wl_touch,
 
 	input->touch_focus = wl_surface_get_user_data(surface);
 	if (!input->touch_focus) {
-		DBG("Failed to find to touch focus for surface %p\n", surface);
+		DBG("Failed to find to touch focus for surface %p\n", (void*) surface);
 		return;
 	}
 
 	if (surface != input->touch_focus->main_surface->surface) {
-		DBG("Ignoring input event from subsurface %p\n", surface);
+		DBG("Ignoring input event from subsurface %p\n", (void*) surface);
 		input->touch_focus = NULL;
 		return;
 	}

@@ -67,7 +67,6 @@ struct _NSC_CONTEXT
 	UINT16 height;
 	BYTE* BitmapData;
 	UINT32 BitmapDataLength;
-	UINT32 pixel_format;
 
 	BYTE* Planes;
 	UINT32 PlaneByteCount[4];

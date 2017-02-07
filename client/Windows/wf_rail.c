@@ -143,20 +143,20 @@ void PrintRailWindowState(WINDOW_ORDER_INFO* orderInfo,
                           WINDOW_STATE_ORDER* windowState)
 {
 	if (orderInfo->fieldFlags & WINDOW_ORDER_STATE_NEW)
-		WLog_INFO(TAG, "WindowCreate: WindowId: 0x%04X", orderInfo->windowId);
+		WLog_INFO(TAG, "WindowCreate: WindowId: 0x%08X", orderInfo->windowId);
 	else
-		WLog_INFO(TAG, "WindowUpdate: WindowId: 0x%04X", orderInfo->windowId);
+		WLog_INFO(TAG, "WindowUpdate: WindowId: 0x%08X", orderInfo->windowId);
 
 	WLog_INFO(TAG, "{");
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_OWNER)
 	{
-		WLog_INFO(TAG, "\tOwnerWindowId: 0x%04X", windowState->ownerWindowId);
+		WLog_INFO(TAG, "\tOwnerWindowId: 0x%08X", windowState->ownerWindowId);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_STYLE)
 	{
-		WLog_INFO(TAG, "\tStyle: 0x%04X ExtendedStyle: 0x%04X",
+		WLog_INFO(TAG, "\tStyle: 0x%08X ExtendedStyle: 0x%08X",
 		          windowState->style, windowState->extendedStyle);
 		PrintWindowStyles(windowState->style);
 		PrintExtendedWindowStyles(windowState->extendedStyle);
@@ -164,7 +164,7 @@ void PrintRailWindowState(WINDOW_ORDER_INFO* orderInfo,
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_SHOW)
 	{
-		WLog_INFO(TAG, "\tShowState: %d", windowState->showState);
+		WLog_INFO(TAG, "\tShowState: %u", windowState->showState);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_TITLE)
@@ -172,7 +172,7 @@ void PrintRailWindowState(WINDOW_ORDER_INFO* orderInfo,
 		char* title = NULL;
 		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) windowState->titleInfo.string,
 		                   windowState->titleInfo.length / 2, &title, 0, NULL, NULL);
-		WLog_INFO(TAG, "\tTitleInfo: %s (length = %d)", title,
+		WLog_INFO(TAG, "\tTitleInfo: %s (length = %hu)", title,
 		          windowState->titleInfo.length);
 		free(title);
 	}
@@ -185,18 +185,18 @@ void PrintRailWindowState(WINDOW_ORDER_INFO* orderInfo,
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE)
 	{
-		WLog_INFO(TAG, "\tClientAreaWidth: %d ClientAreaHeight: %d",
+		WLog_INFO(TAG, "\tClientAreaWidth: %u ClientAreaHeight: %u",
 		          windowState->clientAreaWidth, windowState->clientAreaHeight);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_RP_CONTENT)
 	{
-		WLog_INFO(TAG, "\tRPContent: %d", windowState->RPContent);
+		WLog_INFO(TAG, "\tRPContent: %u", windowState->RPContent);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ROOT_PARENT)
 	{
-		WLog_INFO(TAG, "\tRootParentHandle: 0x%04X", windowState->rootParentHandle);
+		WLog_INFO(TAG, "\tRootParentHandle: 0x%08X", windowState->rootParentHandle);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET)
@@ -213,7 +213,7 @@ void PrintRailWindowState(WINDOW_ORDER_INFO* orderInfo,
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE)
 	{
-		WLog_INFO(TAG, "\tWindowWidth: %d WindowHeight: %d",
+		WLog_INFO(TAG, "\tWindowWidth: %u WindowHeight: %u",
 		          windowState->windowWidth, windowState->windowHeight);
 	}
 
@@ -221,12 +221,12 @@ void PrintRailWindowState(WINDOW_ORDER_INFO* orderInfo,
 	{
 		UINT32 index;
 		RECTANGLE_16* rect;
-		WLog_INFO(TAG, "\tnumWindowRects: %d", windowState->numWindowRects);
+		WLog_INFO(TAG, "\tnumWindowRects: %u", windowState->numWindowRects);
 
 		for (index = 0; index < windowState->numWindowRects; index++)
 		{
 			rect = &windowState->windowRects[index];
-			WLog_INFO(TAG, "\twindowRect[%d]: left: %d top: %d right: %d bottom: %d",
+			WLog_INFO(TAG, "\twindowRect[%u]: left: %hu top: %hu right: %hu bottom: %hu",
 			          index, rect->left, rect->top, rect->right, rect->bottom);
 		}
 	}
@@ -241,12 +241,12 @@ void PrintRailWindowState(WINDOW_ORDER_INFO* orderInfo,
 	{
 		UINT32 index;
 		RECTANGLE_16* rect;
-		WLog_INFO(TAG, "\tnumVisibilityRects: %d", windowState->numVisibilityRects);
+		WLog_INFO(TAG, "\tnumVisibilityRects: %u", windowState->numVisibilityRects);
 
 		for (index = 0; index < windowState->numVisibilityRects; index++)
 		{
 			rect = &windowState->visibilityRects[index];
-			WLog_INFO(TAG, "\tvisibilityRect[%d]: left: %d top: %d right: %d bottom: %d",
+			WLog_INFO(TAG, "\tvisibilityRect[%u]: left: %hu top: %hu right: %hu bottom: %hu",
 			          index, rect->left, rect->top, rect->right, rect->bottom);
 		}
 	}
@@ -260,17 +260,17 @@ static void PrintRailIconInfo(WINDOW_ORDER_INFO* orderInfo, ICON_INFO* iconInfo)
 	WLog_INFO(TAG, "{");
 	WLog_INFO(TAG, "\tbigIcon: %s",
 	          (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ICON_BIG) ? "true" : "false");
-	WLog_INFO(TAG, "\tcacheEntry; 0x%04X", iconInfo->cacheEntry);
-	WLog_INFO(TAG, "\tcacheId: 0x%04X", iconInfo->cacheId);
-	WLog_INFO(TAG, "\tbpp: %d", iconInfo->bpp);
-	WLog_INFO(TAG, "\twidth: %d", iconInfo->width);
-	WLog_INFO(TAG, "\theight: %d", iconInfo->height);
-	WLog_INFO(TAG, "\tcbColorTable: %d", iconInfo->cbColorTable);
-	WLog_INFO(TAG, "\tcbBitsMask: %d", iconInfo->cbBitsMask);
-	WLog_INFO(TAG, "\tcbBitsColor: %d", iconInfo->cbBitsColor);
-	WLog_INFO(TAG, "\tcolorTable: %p", iconInfo->colorTable);
-	WLog_INFO(TAG, "\tbitsMask: %p", iconInfo->bitsMask);
-	WLog_INFO(TAG, "\tbitsColor: %p", iconInfo->bitsColor);
+	WLog_INFO(TAG, "\tcacheEntry; 0x%08X", iconInfo->cacheEntry);
+	WLog_INFO(TAG, "\tcacheId: 0x%08X", iconInfo->cacheId);
+	WLog_INFO(TAG, "\tbpp: %u", iconInfo->bpp);
+	WLog_INFO(TAG, "\twidth: %u", iconInfo->width);
+	WLog_INFO(TAG, "\theight: %u", iconInfo->height);
+	WLog_INFO(TAG, "\tcbColorTable: %u", iconInfo->cbColorTable);
+	WLog_INFO(TAG, "\tcbBitsMask: %u", iconInfo->cbBitsMask);
+	WLog_INFO(TAG, "\tcbBitsColor: %u", iconInfo->cbBitsColor);
+	WLog_INFO(TAG, "\tcolorTable: %p", (void*) iconInfo->colorTable);
+	WLog_INFO(TAG, "\tbitsMask: %p", (void*) iconInfo->bitsMask);
+	WLog_INFO(TAG, "\tbitsColor: %p", (void*) iconInfo->bitsColor);
 	WLog_INFO(TAG, "}");
 }
 
@@ -845,7 +845,7 @@ void wf_rail_register_update_callbacks(rdpUpdate* update)
 static UINT wf_rail_server_execute_result(RailClientContext* context,
         RAIL_EXEC_RESULT_ORDER* execResult)
 {
-	WLog_DBG(TAG, "RailServerExecuteResult: 0x%04X", execResult->rawResult);
+	WLog_DBG(TAG, "RailServerExecuteResult: 0x%08X", execResult->rawResult);
 	return CHANNEL_RC_OK;
 }
 

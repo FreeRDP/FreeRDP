@@ -101,7 +101,7 @@ rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreenCache, UINT32 index)
 
 	if (index >= offscreenCache->maxEntries)
 	{
-		WLog_ERR(TAG,  "invalid offscreen bitmap index: 0x%04X", index);
+		WLog_ERR(TAG,  "invalid offscreen bitmap index: 0x%08"PRIX32"", index);
 		return NULL;
 	}
 
@@ -109,7 +109,7 @@ rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreenCache, UINT32 index)
 
 	if (!bitmap)
 	{
-		WLog_ERR(TAG,  "invalid offscreen bitmap at index: 0x%04X", index);
+		WLog_ERR(TAG,  "invalid offscreen bitmap at index: 0x%08"PRIX32"", index);
 		return NULL;
 	}
 
@@ -121,7 +121,7 @@ void offscreen_cache_put(rdpOffscreenCache* offscreenCache, UINT32 index,
 {
 	if (index >= offscreenCache->maxEntries)
 	{
-		WLog_ERR(TAG,  "invalid offscreen bitmap index: 0x%04X", index);
+		WLog_ERR(TAG,  "invalid offscreen bitmap index: 0x%08"PRIX32"", index);
 		return;
 	}
 
@@ -135,7 +135,7 @@ void offscreen_cache_delete(rdpOffscreenCache* offscreenCache, UINT32 index)
 
 	if (index >= offscreenCache->maxEntries)
 	{
-		WLog_ERR(TAG,  "invalid offscreen bitmap index (delete): 0x%04X", index);
+		WLog_ERR(TAG,  "invalid offscreen bitmap index (delete): 0x%08"PRIX32"", index);
 		return;
 	}
 

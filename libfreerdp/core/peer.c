@@ -244,8 +244,7 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 static BOOL freerdp_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 {
 	rdpTransport* transport = client->context->rdp->transport;
-	rfds[*rcount] = (void*)(long)(BIO_get_fd(transport->frontBio, NULL));
-	(*rcount)++;
+	transport_get_fds(transport, rfds, rcount);
 	return TRUE;
 }
 
@@ -255,6 +254,11 @@ static HANDLE freerdp_peer_get_event_handle(freerdp_peer* client)
 	rdpTransport* transport = client->context->rdp->transport;
 	BIO_get_event(transport->frontBio, &hEvent);
 	return hEvent;
+}
+
+static DWORD freerdp_peer_get_event_handles(freerdp_peer* client, HANDLE* events, DWORD count)
+{
+	return transport_get_event_handles(client->context->rdp->transport, events, count);
 }
 
 static BOOL freerdp_peer_check_fds(freerdp_peer* peer)
@@ -282,7 +286,7 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s)
 		return FALSE;
 
 #ifdef WITH_DEBUG_RDP
-	WLog_DBG(TAG, "recv %s Data PDU (0x%02X), length: %d",
+	WLog_DBG(TAG, "recv %s Data PDU (0x%02"PRIX8"), length: %"PRIu16"",
 	         type < ARRAYSIZE(DATA_PDU_TYPE_STRINGS) ? DATA_PDU_TYPE_STRINGS[type] : "???", type, length);
 #endif
 
@@ -341,7 +345,7 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s)
 			break;
 
 		default:
-			WLog_ERR(TAG, "Data PDU type %d", type);
+			WLog_ERR(TAG, "Data PDU type %"PRIu8"", type);
 			break;
 	}
 
@@ -356,7 +360,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 	UINT16 pduLength;
 	UINT16 pduSource;
 	UINT16 channelId;
-	UINT16 securityFlags;
+	UINT16 securityFlags = 0;
 	rdp = client->context->rdp;
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
@@ -410,7 +414,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 				break;
 
 			default:
-				WLog_ERR(TAG, "Client sent pduType %d", pduType);
+				WLog_ERR(TAG, "Client sent pduType %"PRIu16"", pduType);
 				return -1;
 		}
 	}
@@ -442,7 +446,7 @@ static int peer_recv_fastpath_pdu(freerdp_peer* client, wStream* s)
 
 	if ((length == 0) || (length > Stream_GetRemainingLength(s)))
 	{
-		WLog_ERR(TAG, "incorrect FastPath PDU header length %d", length);
+		WLog_ERR(TAG, "incorrect FastPath PDU header length %"PRIu16"", length);
 		return -1;
 	}
 
@@ -571,7 +575,7 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			{
 				WLog_ERR(TAG,
 				         "peer_recv_callback: CONNECTION_STATE_LICENSING - license_send_valid_client_error_packet() fail");
-				return FALSE;
+				return -1;
 			}
 
 			rdp_server_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE);
@@ -581,7 +585,9 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 		case CONNECTION_STATE_CAPABILITIES_EXCHANGE:
 			if (!rdp->AwaitCapabilities)
 			{
-				IFCALL(client->Capabilities, client);
+
+				if (client->Capabilities && !client->Capabilities(client))
+					return -1;
 
 				if (!rdp_send_demand_active(rdp))
 				{
@@ -806,6 +812,7 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 		client->Initialize = freerdp_peer_initialize;
 		client->GetFileDescriptor = freerdp_peer_get_fds;
 		client->GetEventHandle = freerdp_peer_get_event_handle;
+		client->GetEventHandles = freerdp_peer_get_event_handles;
 		client->CheckFileDescriptor = freerdp_peer_check_fds;
 		client->Close = freerdp_peer_close;
 		client->Disconnect = freerdp_peer_disconnect;

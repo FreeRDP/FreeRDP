@@ -2502,7 +2502,7 @@ static void *update_message_proxy_thread(void *arg)
 
 	if (!update || !update->queue)
 	{
-		WLog_ERR(TAG, "update=%p, update->queue=%p", update, update ? update->queue : NULL);
+		WLog_ERR(TAG, "update=%p, update->queue=%p", (void*) update, (void*) (update ? update->queue : NULL));
 		ExitThread(-1);
 		return NULL;
 	}

@@ -26,33 +26,29 @@
 
 #include "prim_internal.h"
 
-#ifndef MINMAX
-#define MINMAX(_v_, _l_, _h_) \
-	((_v_) < (_l_) ? (_l_) : ((_v_) > (_h_) ? (_h_) : (_v_)))
-#endif /* !MINMAX */
-
 /* ------------------------------------------------------------------------- */
 static pstatus_t general_YCoCgToRGB_8u_AC4R(
-		const BYTE* pSrc, INT32 srcStep,
-		BYTE* pDst, UINT32 DstFormat, INT32 dstStep,
-		UINT32 width, UINT32 height,
-		UINT8 shift,
-		BOOL withAlpha)
+    const BYTE* pSrc, INT32 srcStep,
+    BYTE* pDst, UINT32 DstFormat, INT32 dstStep,
+    UINT32 width, UINT32 height,
+    UINT8 shift,
+    BOOL withAlpha)
 {
 	BYTE A;
 	UINT32 x, y;
 	BYTE* dptr = pDst;
 	const BYTE* sptr = pSrc;
 	INT16 Cg, Co, Y, T, R, G, B;
+	const DWORD formatSize = GetBytesPerPixel(DstFormat);
+	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat);
 	int cll = shift - 1;  /* -1 builds in the /2's */
 	UINT32 srcPad = srcStep - (width * 4);
-	UINT32 dstPad = dstStep - (width * GetBytesPerPixel(DstFormat));
+	UINT32 dstPad = dstStep - (width * formatSize);
 
 	for (y = 0; y < height; y++)
 	{
 		for (x = 0; x < width; x++)
 		{
-			UINT32 color;
 			/* Note: shifts must be done before sign-conversion. */
 			Cg = (INT16)((INT8)((*sptr++) << cll));
 			Co = (INT16)((INT8)((*sptr++) << cll));
@@ -66,12 +62,8 @@ static pstatus_t general_YCoCgToRGB_8u_AC4R(
 			R  = T + Co;
 			G  = Y + Cg;
 			B  = T - Co;
-
-			color = GetColor(DstFormat,
-					 MINMAX(R, 0, 255), MINMAX(G, 0, 255),
-					 MINMAX(B, 0, 255), A);
-			WriteColor(dptr, DstFormat, color);
-			dptr += GetBytesPerPixel(DstFormat);
+			dptr = (*writePixel)(dptr, formatSize, DstFormat, CLIP(R),
+			                     CLIP(G), CLIP(B), A);
 		}
 
 		sptr += srcPad;

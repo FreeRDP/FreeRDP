@@ -28,7 +28,7 @@
 #include <openssl/bn.h>
 #include <openssl/x509v3.h>
 
-#if defined(OPENSSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER >= 0x0090800f)
+#if OPENSSL_VERSION_NUMBER >= 0x0090800f
 #define D2I_X509_CONST const
 #else
 #define D2I_X509_CONST

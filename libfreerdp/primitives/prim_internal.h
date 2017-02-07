@@ -28,11 +28,106 @@
 #include <freerdp/primitives.h>
 #include <freerdp/api.h>
 
+
+#ifdef __GNUC__
+#define PRIM_ALIGN_128 __attribute__((aligned(16)))
+#else
+#ifdef _WIN32
+#define PRIM_ALIGN_128 __declspec(align(16))
+#endif
+#endif
+
 /* Use lddqu for unaligned; load for 16-byte aligned. */
 #define LOAD_SI128(_ptr_) \
 	(((ULONG_PTR) (_ptr_) & 0x0f) \
 	 ? _mm_lddqu_si128((__m128i *) (_ptr_)) \
 	 : _mm_load_si128((__m128i *) (_ptr_)))
+
+static INLINE BYTE* writePixelBGRX(BYTE* dst, DWORD formatSize, UINT32 format,
+                                   BYTE R, BYTE G, BYTE B, BYTE A)
+{
+	*dst++ = B;
+	*dst++ = G;
+	*dst++ = R;
+	*dst++ = A;
+	return dst;
+}
+
+static INLINE BYTE* writePixelRGBX(BYTE* dst, DWORD formatSize, UINT32 format,
+                                   BYTE R, BYTE G, BYTE B, BYTE A)
+{
+	*dst++ = R;
+	*dst++ = G;
+	*dst++ = B;
+	*dst++ = A;
+	return dst;
+}
+
+static INLINE BYTE* writePixelXBGR(BYTE* dst, DWORD formatSize, UINT32 format,
+                                   BYTE R, BYTE G, BYTE B, BYTE A)
+{
+	*dst++ = A;
+	*dst++ = B;
+	*dst++ = G;
+	*dst++ = R;
+	return dst;
+}
+
+static INLINE BYTE* writePixelXRGB(BYTE* dst, DWORD formatSize, UINT32 format,
+                                   BYTE R, BYTE G, BYTE B, BYTE A)
+{
+	*dst++ = A;
+	*dst++ = R;
+	*dst++ = G;
+	*dst++ = B;
+	return dst;
+}
+
+static INLINE BYTE* writePixelGeneric(BYTE* dst, DWORD formatSize, UINT32 format,
+                                      BYTE R, BYTE G, BYTE B, BYTE A)
+{
+	UINT32 color = GetColor(format, R, G, B, A);
+	WriteColor(dst, format, color);
+	return dst + formatSize;
+}
+
+typedef BYTE* (*fkt_writePixel)(BYTE*, DWORD, UINT32, BYTE, BYTE, BYTE, BYTE);
+
+static INLINE fkt_writePixel getPixelWriteFunction(DWORD format)
+{
+	switch (format)
+	{
+		case PIXEL_FORMAT_ARGB32:
+		case PIXEL_FORMAT_XRGB32:
+			return writePixelXRGB;
+
+		case PIXEL_FORMAT_ABGR32:
+		case PIXEL_FORMAT_XBGR32:
+			return writePixelXBGR;
+
+		case PIXEL_FORMAT_RGBA32:
+		case PIXEL_FORMAT_RGBX32:
+			return writePixelRGBX;
+
+		case PIXEL_FORMAT_BGRA32:
+		case PIXEL_FORMAT_BGRX32:
+			return writePixelBGRX;
+
+		default:
+			return writePixelGeneric;
+	}
+}
+
+static INLINE BYTE CLIP(INT32 X)
+{
+	if (X > 255L)
+		return 255L;
+
+	if (X < 0L)
+		return 0L;
+
+	return X;
+}
 
 /* Function prototypes for all the init/deinit routines. */
 FREERDP_LOCAL void primitives_init_copy(primitives_t* prims);

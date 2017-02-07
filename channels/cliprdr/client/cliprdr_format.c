@@ -80,7 +80,7 @@ UINT cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 
 		if ((formatList.numFormats * 36) != dataLen)
 		{
-			WLog_ERR(TAG, "Invalid short format list length: %d", dataLen);
+			WLog_ERR(TAG, "Invalid short format list length: %"PRIu32"", dataLen);
 			return ERROR_INTERNAL_ERROR;
 		}
 
@@ -218,13 +218,13 @@ UINT cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 		}
 	}
 
-	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatList: numFormats: %d",
+	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatList: numFormats: %"PRIu32"",
 			formatList.numFormats);
 
 	if (context->ServerFormatList)
 	{
 		if ((error = context->ServerFormatList(context, &formatList)))
-			WLog_ERR(TAG, "ServerFormatList failed with error %d", error);
+			WLog_ERR(TAG, "ServerFormatList failed with error %"PRIu32"", error);
 	}
 
 error_out:
@@ -265,7 +265,7 @@ UINT cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, wStream* s, UI
 
 	IFCALLRET(context->ServerFormatListResponse, error, context, &formatListResponse);
 	if (error)
-		WLog_ERR(TAG, "ServerFormatListResponse failed with error %lu!", error);
+		WLog_ERR(TAG, "ServerFormatListResponse failed with error %"PRIu32"!", error);
 
 	return error;
 }
@@ -298,7 +298,7 @@ UINT cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* s, UIN
 
 	IFCALLRET(context->ServerFormatDataRequest, error, context, &formatDataRequest);
 	if (error)
-		WLog_ERR(TAG, "ServerFormatDataRequest failed with error %lu!", error);
+		WLog_ERR(TAG, "ServerFormatDataRequest failed with error %"PRIu32"!", error);
 
 	return error;
 }
@@ -332,7 +332,7 @@ UINT cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UI
 
 	IFCALLRET(context->ServerFormatDataResponse, error, context, &formatDataResponse);
 	if (error)
-		WLog_ERR(TAG, "ServerFormatDataResponse failed with error %lu!", error);
+		WLog_ERR(TAG, "ServerFormatDataResponse failed with error %"PRIu32"!", error);
 
 	return error;
 }

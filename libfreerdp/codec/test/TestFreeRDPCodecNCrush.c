@@ -29,11 +29,11 @@ int test_NCrushCompressBells()
 	DstSize = sizeof(OutputBuffer);
 	ZeroMemory(OutputBuffer, sizeof(OutputBuffer));
 	status = ncrush_compress(ncrush, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
-	printf("status: %d Flags: 0x%04X DstSize: %d\n", status, Flags, DstSize);
+	printf("status: %d Flags: 0x%08"PRIX32" DstSize: %"PRIu32"\n", status, Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
-		printf("NCrushCompressBells: output size mismatch: Actual: %d, Expected: %d\n", DstSize, expectedSize);
+		printf("NCrushCompressBells: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n", DstSize, expectedSize);
 		printf("Actual\n");
 		BitDump(__FUNCTION__, WLOG_INFO, pDstData, DstSize * 8, 0);
 		printf("Expected\n");
@@ -71,11 +71,11 @@ int test_NCrushDecompressBells()
 	Flags = PACKET_COMPRESSED | 2;
 	expectedSize = sizeof(TEST_BELLS_DATA) - 1;
 	status = ncrush_decompress(ncrush, pSrcData, SrcSize, &pDstData, &DstSize, Flags);
-	printf("Flags: 0x%04X DstSize: %d\n", Flags, DstSize);
+	printf("Flags: 0x%08"PRIX32" DstSize: %"PRIu32"\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
-		printf("NCrushDecompressBells: output size mismatch: Actual: %d, Expected: %d\n", DstSize, expectedSize);
+		printf("NCrushDecompressBells: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n", DstSize, expectedSize);
 		return -1;
 	}
 

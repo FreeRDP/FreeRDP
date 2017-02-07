@@ -390,7 +390,7 @@ static IUDEVICE* udevman_get_udevice_by_UsbDevice(IUDEVMAN* idevman, UINT32 UsbD
 		return (IUDEVICE*) pdev;
 	}
 
-	WLog_ERR(TAG, "0x%x ERROR!!", UsbDevice);
+	WLog_ERR(TAG, "0x%"PRIx32" ERROR!!", UsbDevice);
 	return NULL;
 }
 

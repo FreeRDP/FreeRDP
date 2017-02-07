@@ -490,31 +490,25 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 
 	if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
-		rdp->fips_encrypt = winpr_Cipher_New( WINPR_CIPHER_DES_EDE3_CBC,
-							WINPR_ENCRYPT,
-							rdp->fips_encrypt_key,
-							fips_ivec);
+		rdp->fips_encrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC,
+		                                     WINPR_ENCRYPT,
+		                                     rdp->fips_encrypt_key,
+		                                     fips_ivec);
 		if (!rdp->fips_encrypt)
 		{
 			WLog_ERR(TAG, "unable to allocate des3 encrypt key");
 			goto end;
 		}
 		rdp->fips_decrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC,
-						     WINPR_DECRYPT,
-						     rdp->fips_decrypt_key,
-						     fips_ivec);
+		                                     WINPR_DECRYPT,
+		                                     rdp->fips_decrypt_key,
+		                                     fips_ivec);
 		if (!rdp->fips_decrypt)
 		{
 			WLog_ERR(TAG, "unable to allocate des3 decrypt key");
 			goto end;
 		}
 
-		rdp->fips_hmac = calloc(1, sizeof(WINPR_HMAC_CTX));
-		if (!rdp->fips_hmac)
-		{
-			WLog_ERR(TAG, "unable to allocate fips hmac");
-			goto end;
-		}
 		ret = TRUE;
 		goto end;
 	}
@@ -636,12 +630,6 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 			goto end;
 		}
 
-		rdp->fips_hmac = calloc(1, sizeof(WINPR_HMAC_CTX));
-		if (!rdp->fips_hmac)
-		{
-			WLog_ERR(TAG, "unable to allocate fips hmac");
-			goto end;
-		}
 		ret = TRUE;
 		goto end;
 	}
@@ -785,7 +773,7 @@ BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s)
 		{
 			if (channelId == rdp->mcs->messageChannelId)
 			{
-				UINT16 securityFlags;
+				UINT16 securityFlags = 0;
 
 				if (!rdp_read_security_header(s, &securityFlags))
 					return FALSE;
@@ -1012,7 +1000,7 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 			 (nego->RequestedProtocols & PROTOCOL_TLS) ? 1 : 0,
 			 (nego->RequestedProtocols == PROTOCOL_RDP) ? 1 : 0
 			);
-	WLog_INFO(TAG, "Server Security: NLA:%d TLS:%d RDP:%d",
+	WLog_INFO(TAG, "Server Security: NLA:%"PRId32" TLS:%"PRId32" RDP:%"PRId32"",
 			 settings->NlaSecurity, settings->TlsSecurity, settings->RdpSecurity);
 
 	if ((settings->NlaSecurity) && (nego->RequestedProtocols & PROTOCOL_NLA))

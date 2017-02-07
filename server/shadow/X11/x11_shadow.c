@@ -368,7 +368,7 @@ static void x11_shadow_message_free(UINT32 id, SHADOW_MSG_OUT* msg)
 			break;
 
 		default:
-			WLog_ERR(TAG, "Unknown message id: %u", id);
+			WLog_ERR(TAG, "Unknown message id: %"PRIu32"", id);
 			free(msg);
 			break;
 	}
@@ -837,7 +837,7 @@ static int x11_shadow_subsystem_process_message(x11ShadowSubsystem* subsystem,
 			break;
 
 		default:
-			WLog_ERR(TAG, "Unknown message id: %u", message->id);
+			WLog_ERR(TAG, "Unknown message id: %"PRIu32"", message->id);
 			break;
 	}
 
@@ -1297,7 +1297,7 @@ static int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 	virtualScreen->right = subsystem->width;
 	virtualScreen->bottom = subsystem->height;
 	virtualScreen->flags = 1;
-	WLog_INFO(TAG, "X11 Extensions: XFixes: %d Xinerama: %d XDamage: %d XShm: %d",
+	WLog_INFO(TAG, "X11 Extensions: XFixes: %"PRId32" Xinerama: %"PRId32" XDamage: %"PRId32" XShm: %"PRId32"",
 	          subsystem->use_xfixes, subsystem->use_xinerama, subsystem->use_xdamage,
 	          subsystem->use_xshm);
 	return 1;

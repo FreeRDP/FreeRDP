@@ -133,51 +133,48 @@ HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lIniti
 	semaphore->sem = (winpr_sem_t*) NULL;
 	semaphore->ops = &ops;
 
-	if (semaphore)
-	{
 #ifdef WINPR_PIPE_SEMAPHORE
 
-		if (pipe(semaphore->pipe_fd) < 0)
-		{
-			WLog_ERR(TAG, "failed to create semaphore");
-			free(semaphore);
-			return NULL;
-		}
-
-		while (lInitialCount > 0)
-		{
-			if (write(semaphore->pipe_fd[1], "-", 1) != 1)
-			{
-				close(semaphore->pipe_fd[0]);
-				close(semaphore->pipe_fd[1]);
-				free(semaphore);
-				return NULL;
-			}
-
-			lInitialCount--;
-		}
-
-#else
-		semaphore->sem = (winpr_sem_t*) malloc(sizeof(winpr_sem_t));
-		if (!semaphore->sem)
-		{
-			WLog_ERR(TAG, "failed to allocate semaphore memory");
-			free(semaphore);
-			return NULL;
-		}
-#if defined __APPLE__
-		if (semaphore_create(mach_task_self(), semaphore->sem, SYNC_POLICY_FIFO, lMaximumCount) != KERN_SUCCESS)
-#else
-		if (sem_init(semaphore->sem, 0, lMaximumCount) == -1)
-#endif
-		{
-			WLog_ERR(TAG, "failed to create semaphore");
-			free(semaphore->sem);
-			free(semaphore);
-			return NULL;
-		}
-#endif
+	if (pipe(semaphore->pipe_fd) < 0)
+	{
+		WLog_ERR(TAG, "failed to create semaphore");
+		free(semaphore);
+		return NULL;
 	}
+
+	while (lInitialCount > 0)
+	{
+		if (write(semaphore->pipe_fd[1], "-", 1) != 1)
+		{
+			close(semaphore->pipe_fd[0]);
+			close(semaphore->pipe_fd[1]);
+			free(semaphore);
+			return NULL;
+		}
+
+		lInitialCount--;
+	}
+
+#else
+	semaphore->sem = (winpr_sem_t*) malloc(sizeof(winpr_sem_t));
+	if (!semaphore->sem)
+	{
+		WLog_ERR(TAG, "failed to allocate semaphore memory");
+		free(semaphore);
+		return NULL;
+	}
+#if defined __APPLE__
+	if (semaphore_create(mach_task_self(), semaphore->sem, SYNC_POLICY_FIFO, lMaximumCount) != KERN_SUCCESS)
+#else
+	if (sem_init(semaphore->sem, 0, lMaximumCount) == -1)
+#endif
+	{
+		WLog_ERR(TAG, "failed to create semaphore");
+		free(semaphore->sem);
+		free(semaphore);
+		return NULL;
+	}
+#endif
 
 	WINPR_HANDLE_SET_TYPE_AND_MODE(semaphore, HANDLE_TYPE_SEMAPHORE, WINPR_FD_READ);
 	handle = (HANDLE) semaphore;
@@ -236,7 +233,7 @@ BOOL ReleaseSemaphore(HANDLE hSemaphore, LONG lReleaseCount, LPLONG lpPreviousCo
 		return TRUE;
 	}
 
-	WLog_ERR(TAG, "calling %s on a handle that is not a semaphore");
+	WLog_ERR(TAG, "calling %s on a handle that is not a semaphore", __FUNCTION__);
 	return FALSE;
 }
 

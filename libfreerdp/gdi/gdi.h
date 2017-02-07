@@ -46,7 +46,7 @@ static INLINE BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, UINT32 x, UINT32 y)
 	else
 	{
 		WLog_ERR(FREERDP_TAG("gdi"),
-		         "gdi_get_bitmap_pointer: requesting invalid pointer: (%d,%d) in %dx%d",
+		         "gdi_get_bitmap_pointer: requesting invalid pointer: (%"PRIu32",%"PRIu32") in %"PRIu32"x%"PRIu32"",
 		         x, y, hBmp->width, hBmp->height);
 		return 0;
 	}

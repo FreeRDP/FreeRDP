@@ -233,7 +233,7 @@ static void android_event_cursor_free(ANDROID_EVENT_CURSOR* event)
 	free(event);
 }
 
-ANDROID_EVENT* android_event_disconnect_new()
+ANDROID_EVENT* android_event_disconnect_new(void)
 {
 	ANDROID_EVENT* event;
 	event = (ANDROID_EVENT*) calloc(1, sizeof(ANDROID_EVENT));

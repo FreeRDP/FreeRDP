@@ -64,7 +64,7 @@ int xf_list_monitors(xfContext* xfc)
 
 			for (i = 0; i < nmonitors; i++)
 			{
-				printf("      %s [%d] %dx%d\t+%d+%d\n",
+				printf("      %s [%d] %hdx%hd\t+%hd+%hd\n",
 				       (i == 0) ? "*" : " ", i,
 				       screen[i].width, screen[i].height,
 				       screen[i].x_org, screen[i].y_org);
@@ -87,8 +87,8 @@ int xf_list_monitors(xfContext* xfc)
 	}
 
 	screen = ScreenOfDisplay(display, DefaultScreen(display));
-	printf("      * [0] %dx%d\t+%d+%d\n", WidthOfScreen(screen),
-	       HeightOfScreen(screen), 0, 0);
+	printf("      * [0] %dx%d\t+0+0\n", WidthOfScreen(screen),
+	       HeightOfScreen(screen));
 	XCloseDisplay(display);
 #endif
 	return 0;

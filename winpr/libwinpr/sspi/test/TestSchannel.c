@@ -262,8 +262,8 @@ int schannel_send(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phCont
 	Message.pBuffers = Buffers;
 	ioBufferLength = Message.pBuffers[0].cbBuffer + Message.pBuffers[1].cbBuffer + Message.pBuffers[2].cbBuffer;
 	status = table->EncryptMessage(phContext, 0, &Message, 0);
-	printf("EncryptMessage status: 0x%08X\n", status);
-	printf("EncryptMessage output: cBuffers: %d [0]: %u / %u [1]: %u / %u [2]: %u / %u [3]: %u / %u\n", Message.cBuffers,
+	printf("EncryptMessage status: 0x%08"PRIX32"\n", status);
+	printf("EncryptMessage output: cBuffers: %"PRIu32" [0]: %"PRIu32" / %"PRIu32" [1]: %"PRIu32" / %"PRIu32" [2]: %"PRIu32" / %"PRIu32" [3]: %"PRIu32" / %"PRIu32"\n", Message.cBuffers,
 		   Message.pBuffers[0].cbBuffer, Message.pBuffers[0].BufferType,
 		   Message.pBuffers[1].cbBuffer, Message.pBuffers[1].BufferType,
 		   Message.pBuffers[2].cbBuffer, Message.pBuffers[2].BufferType,
@@ -272,7 +272,7 @@ int schannel_send(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phCont
 	if (status != SEC_E_OK)
 		return -1;
 
-	printf("Client > Server (%d)\n", ioBufferLength);
+	printf("Client > Server (%"PRIu32")\n", ioBufferLength);
 	winpr_HexDump("sspi.test", WLOG_DEBUG, ioBuffer, ioBufferLength);
 
 	if (!WriteFile(hPipe, ioBuffer, ioBufferLength, &NumberOfBytesWritten, NULL))
@@ -323,8 +323,8 @@ int schannel_recv(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phCont
 	Message.cBuffers = 4;
 	Message.pBuffers = Buffers;
 	status = table->DecryptMessage(phContext, &Message, 0, NULL);
-	printf("DecryptMessage status: 0x%08X\n", status);
-	printf("DecryptMessage output: cBuffers: %d [0]: %u / %u [1]: %u / %u [2]: %u / %u [3]: %u / %u\n", Message.cBuffers,
+	printf("DecryptMessage status: 0x%08"PRIX32"\n", status);
+	printf("DecryptMessage output: cBuffers: %"PRIu32" [0]: %"PRIu32" / %"PRIu32" [1]: %"PRIu32" / %"PRIu32" [2]: %"PRIu32" / %"PRIu32" [3]: %"PRIu32" / %"PRIu32"\n", Message.cBuffers,
 		   Message.pBuffers[0].cbBuffer, Message.pBuffers[0].BufferType,
 		   Message.pBuffers[1].cbBuffer, Message.pBuffers[1].BufferType,
 		   Message.pBuffers[2].cbBuffer, Message.pBuffers[2].BufferType,
@@ -333,7 +333,7 @@ int schannel_recv(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phCont
 	if (status != SEC_E_OK)
 		return -1;
 
-	printf("Decrypted Message (%d)\n", Message.pBuffers[1].cbBuffer);
+	printf("Decrypted Message (%"PRIu32")\n", Message.pBuffers[1].cbBuffer);
 	winpr_HexDump("sspi.test", WLOG_DEBUG, (BYTE*) Message.pBuffers[1].pvBuffer, Message.pBuffers[1].cbBuffer);
 
 	if (memcmp(Message.pBuffers[1].pvBuffer, test_LastDummyMessage, sizeof(test_LastDummyMessage)) == 0)
@@ -376,7 +376,7 @@ static void* schannel_test_server_thread(void* arg)
 
 	if (status != SEC_E_OK)
 	{
-		printf("QuerySecurityPackageInfo failure: 0x%08X\n", status);
+		printf("QuerySecurityPackageInfo failure: 0x%08"PRIX32"\n", status);
 		return NULL;
 	}
 
@@ -423,7 +423,7 @@ static void* schannel_test_server_thread(void* arg)
 
 	if (status != SEC_E_OK)
 	{
-		printf("AcquireCredentialsHandle failure: 0x%08X\n", status);
+		printf("AcquireCredentialsHandle failure: 0x%08"PRIX32"\n", status);
 		return NULL;
 	}
 
@@ -437,6 +437,7 @@ static void* schannel_test_server_thread(void* arg)
 	if (!(lpTokenOut = (BYTE*) malloc(cbMaxToken)))
 	{
 		printf("Memory allocation failed\n");
+		free(lpTokenIn);
 		return NULL;
 	}
 	fContextReq = ASC_REQ_STREAM |
@@ -483,7 +484,7 @@ static void* schannel_test_server_thread(void* arg)
 
 		if ((status != SEC_E_OK) && (status != SEC_I_CONTINUE_NEEDED) && (status != SEC_E_INCOMPLETE_MESSAGE))
 		{
-			printf("AcceptSecurityContext unexpected status: 0x%08X\n", status);
+			printf("AcceptSecurityContext unexpected status: 0x%08"PRIX32"\n", status);
 			return NULL;
 		}
 
@@ -496,9 +497,9 @@ static void* schannel_test_server_thread(void* arg)
 		else if (status == SEC_E_INCOMPLETE_MESSAGE)
 			printf("AcceptSecurityContext status: SEC_E_INCOMPLETE_MESSAGE\n");
 
-		printf("Server cBuffers: %u pBuffers[0]: %u type: %u\n",
+		printf("Server cBuffers: %"PRIu32" pBuffers[0]: %"PRIu32" type: %"PRIu32"\n",
 			   SecBufferDesc_out.cBuffers, SecBufferDesc_out.pBuffers[0].cbBuffer, SecBufferDesc_out.pBuffers[0].BufferType);
-		printf("Server Input cBuffers: %d pBuffers[0]: %u type: %u pBuffers[1]: %u type: %u\n", SecBufferDesc_in.cBuffers,
+		printf("Server Input cBuffers: %"PRIu32" pBuffers[0]: %"PRIu32" type: %"PRIu32" pBuffers[1]: %"PRIu32" type: %"PRIu32"\n", SecBufferDesc_in.cBuffers,
 			   SecBufferDesc_in.pBuffers[0].cbBuffer, SecBufferDesc_in.pBuffers[0].BufferType,
 			   SecBufferDesc_in.pBuffers[1].cbBuffer, SecBufferDesc_in.pBuffers[1].BufferType);
 
@@ -517,7 +518,7 @@ static void* schannel_test_server_thread(void* arg)
 
 			if (pSecBuffer->cbBuffer > 0)
 			{
-				printf("Server > Client (%d)\n", pSecBuffer->cbBuffer);
+				printf("Server > Client (%"PRIu32")\n", pSecBuffer->cbBuffer);
 				winpr_HexDump("sspi.test", WLOG_DEBUG, (BYTE*) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
 
 				if (!WriteFile(g_ClientWritePipe, pSecBuffer->pvBuffer, pSecBuffer->cbBuffer, &NumberOfBytesWritten, NULL))
@@ -644,7 +645,7 @@ int TestSchannel(int argc, char* argv[])
 
 	if (status != SEC_E_OK)
 	{
-		printf("QuerySecurityPackageInfo failure: 0x%08X\n", status);
+		printf("QuerySecurityPackageInfo failure: 0x%08"PRIX32"\n", status);
 		return -1;
 	}
 
@@ -664,7 +665,7 @@ int TestSchannel(int argc, char* argv[])
 
 	if (status != SEC_E_OK)
 	{
-		printf("AcquireCredentialsHandle failure: 0x%08X\n", status);
+		printf("AcquireCredentialsHandle failure: 0x%08"PRIX32"\n", status);
 		return -1;
 	}
 
@@ -673,7 +674,7 @@ int TestSchannel(int argc, char* argv[])
 
 	if (status != SEC_E_OK)
 	{
-		printf("QueryCredentialsAttributes SECPKG_ATTR_SUPPORTED_ALGS failure: 0x%08X\n", status);
+		printf("QueryCredentialsAttributes SECPKG_ATTR_SUPPORTED_ALGS failure: 0x%08"PRIX32"\n", status);
 		return -1;
 	}
 
@@ -682,12 +683,12 @@ int TestSchannel(int argc, char* argv[])
 	 * 0x660E 0x6610 0x6801 0x6603 0x6601 0x8003 0x8004
 	 * 0x800C 0x800D 0x800E 0x2400 0xAA02 0xAE06 0x2200 0x2203
 	 */
-	printf("SupportedAlgs: %d\n", SupportedAlgs.cSupportedAlgs);
+	printf("SupportedAlgs: %"PRIu32"\n", SupportedAlgs.cSupportedAlgs);
 
 	for (index = 0; index < SupportedAlgs.cSupportedAlgs; index++)
 	{
 		algId = SupportedAlgs.palgSupportedAlgs[index];
-		printf("\t0x%04X CLASS: %d TYPE: %d SID: %d\n", algId,
+		printf("\t0x%08"PRIX32" CLASS: %"PRIu32" TYPE: %"PRIu32" SID: %"PRIu32"\n", algId,
 			   ((GET_ALG_CLASS(algId)) >> 13), ((GET_ALG_TYPE(algId)) >> 9), GET_ALG_SID(algId));
 	}
 
@@ -697,24 +698,24 @@ int TestSchannel(int argc, char* argv[])
 
 	if (status != SEC_E_OK)
 	{
-		printf("QueryCredentialsAttributes SECPKG_ATTR_CIPHER_STRENGTHS failure: 0x%08X\n", status);
+		printf("QueryCredentialsAttributes SECPKG_ATTR_CIPHER_STRENGTHS failure: 0x%08"PRIX32"\n", status);
 		return -1;
 	}
 
 	/* CipherStrengths: Minimum: 40 Maximum: 256 */
-	printf("CipherStrengths: Minimum: %d Maximum: %d\n",
+	printf("CipherStrengths: Minimum: %"PRIu32" Maximum: %"PRIu32"\n",
 		   CipherStrengths.dwMinimumCipherStrength, CipherStrengths.dwMaximumCipherStrength);
 	ZeroMemory(&SupportedProtocols, sizeof(SecPkgCred_SupportedProtocols));
 	status = table->QueryCredentialsAttributes(&credentials, SECPKG_ATTR_SUPPORTED_PROTOCOLS, &SupportedProtocols);
 
 	if (status != SEC_E_OK)
 	{
-		printf("QueryCredentialsAttributes SECPKG_ATTR_SUPPORTED_PROTOCOLS failure: 0x%08X\n", status);
+		printf("QueryCredentialsAttributes SECPKG_ATTR_SUPPORTED_PROTOCOLS failure: 0x%08"PRIX32"\n", status);
 		return -1;
 	}
 
 	/* SupportedProtocols: 0x208A0 */
-	printf("SupportedProtocols: 0x%04X\n", SupportedProtocols.grbitProtocol);
+	printf("SupportedProtocols: 0x%08"PRIX32"\n", SupportedProtocols.grbitProtocol);
 	fContextReq = ISC_REQ_STREAM |
 				  ISC_REQ_SEQUENCE_DETECT | ISC_REQ_REPLAY_DETECT |
 				  ISC_REQ_CONFIDENTIALITY | ISC_RET_EXTENDED_ERROR |
@@ -751,7 +752,7 @@ int TestSchannel(int argc, char* argv[])
 		}
 
 		g_ClientWait = TRUE;
-		printf("NumberOfBytesRead: %d\n", NumberOfBytesRead);
+		printf("NumberOfBytesRead: %"PRIu32"\n", NumberOfBytesRead);
 		SecBuffer_in[0].BufferType = SECBUFFER_TOKEN;
 		SecBuffer_in[0].pvBuffer = lpTokenIn;
 		SecBuffer_in[0].cbBuffer = NumberOfBytesRead;
@@ -772,7 +773,7 @@ int TestSchannel(int argc, char* argv[])
 
 		if ((status != SEC_E_OK) && (status != SEC_I_CONTINUE_NEEDED) && (status != SEC_E_INCOMPLETE_MESSAGE))
 		{
-			printf("InitializeSecurityContext unexpected status: 0x%08X\n", status);
+			printf("InitializeSecurityContext unexpected status: 0x%08"PRIX32"\n", status);
 			return -1;
 		}
 
@@ -785,9 +786,9 @@ int TestSchannel(int argc, char* argv[])
 		else if (status == SEC_E_INCOMPLETE_MESSAGE)
 			printf("InitializeSecurityContext status: SEC_E_INCOMPLETE_MESSAGE\n");
 
-		printf("Client Output cBuffers: %d pBuffers[0]: %d type: %d\n",
+		printf("Client Output cBuffers: %"PRIu32" pBuffers[0]: %"PRIu32" type: %"PRIu32"\n",
 			   SecBufferDesc_out.cBuffers, SecBufferDesc_out.pBuffers[0].cbBuffer, SecBufferDesc_out.pBuffers[0].BufferType);
-		printf("Client Input cBuffers: %d pBuffers[0]: %d type: %d pBuffers[1]: %d type: %d\n", SecBufferDesc_in.cBuffers,
+		printf("Client Input cBuffers: %"PRIu32" pBuffers[0]: %"PRIu32" type: %"PRIu32" pBuffers[1]: %"PRIu32" type: %"PRIu32"\n", SecBufferDesc_in.cBuffers,
 			   SecBufferDesc_in.pBuffers[0].cbBuffer, SecBufferDesc_in.pBuffers[0].BufferType,
 			   SecBufferDesc_in.pBuffers[1].cbBuffer, SecBufferDesc_in.pBuffers[1].BufferType);
 
@@ -797,7 +798,7 @@ int TestSchannel(int argc, char* argv[])
 
 			if (pSecBuffer->cbBuffer > 0)
 			{
-				printf("Client > Server (%d)\n", pSecBuffer->cbBuffer);
+				printf("Client > Server (%"PRIu32")\n", pSecBuffer->cbBuffer);
 				winpr_HexDump("sspi.test", WLOG_DEBUG, (BYTE*) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
 
 				if (!WriteFile(g_ServerWritePipe, pSecBuffer->pvBuffer, pSecBuffer->cbBuffer, &NumberOfBytesWritten, NULL))

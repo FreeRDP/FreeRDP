@@ -15,6 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+if(ANDROID)
+	add_subdirectory(cpufeatures)
+endif()
+
 winpr_module_add(sysinfo.c)
 
 if((NOT WIN32) AND (NOT APPLE) AND (NOT ANDROID) AND (NOT OPENBSD))

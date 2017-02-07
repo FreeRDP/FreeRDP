@@ -27,6 +27,7 @@
 #include <winpr/tchar.h>
 #include <winpr/synch.h>
 #include <winpr/dsparse.h>
+#include <winpr/crypto.h>
 
 #include <freerdp/log.h>
 
@@ -36,6 +37,7 @@
 #include <valgrind/memcheck.h>
 #endif
 
+#include "../proxy.h"
 #include "http.h"
 #include "ntlm.h"
 #include "ncacn_http.h"
@@ -118,15 +120,15 @@ const RPC_SECURITY_PROVIDER_INFO RPC_SECURITY_PROVIDER_INFO_TABLE[] =
 
 void rpc_pdu_header_print(rpcconn_hdr_t* header)
 {
-	WLog_INFO(TAG,  "rpc_vers: %d", header->common.rpc_vers);
-	WLog_INFO(TAG,  "rpc_vers_minor: %d", header->common.rpc_vers_minor);
+	WLog_INFO(TAG,  "rpc_vers: %"PRIu8"", header->common.rpc_vers);
+	WLog_INFO(TAG,  "rpc_vers_minor: %"PRIu8"", header->common.rpc_vers_minor);
 
 	if (header->common.ptype > PTYPE_RTS)
-		WLog_INFO(TAG,  "ptype: %s (%d)", "PTYPE_UNKNOWN", header->common.ptype);
+		WLog_INFO(TAG,  "ptype: %s (%"PRIu8")", "PTYPE_UNKNOWN", header->common.ptype);
 	else
-		WLog_INFO(TAG,  "ptype: %s (%d)", PTYPE_STRINGS[header->common.ptype], header->common.ptype);
+		WLog_INFO(TAG,  "ptype: %s (%"PRIu8")", PTYPE_STRINGS[header->common.ptype], header->common.ptype);
 
-	WLog_INFO(TAG,  "pfc_flags (0x%02X) = {", header->common.pfc_flags);
+	WLog_INFO(TAG,  "pfc_flags (0x%02"PRIX8") = {", header->common.pfc_flags);
 
 	if (header->common.pfc_flags & PFC_FIRST_FRAG)
 		WLog_INFO(TAG,  " PFC_FIRST_FRAG");
@@ -150,19 +152,19 @@ void rpc_pdu_header_print(rpcconn_hdr_t* header)
 		WLog_INFO(TAG,  " PFC_OBJECT_UUID");
 
 	WLog_INFO(TAG,  " }");
-	WLog_INFO(TAG,  "packed_drep[4]: %02X %02X %02X %02X",
+	WLog_INFO(TAG,  "packed_drep[4]: %02"PRIX8" %02"PRIX8" %02"PRIX8" %02"PRIX8"",
 			 header->common.packed_drep[0], header->common.packed_drep[1],
 			 header->common.packed_drep[2], header->common.packed_drep[3]);
-	WLog_INFO(TAG,  "frag_length: %d", header->common.frag_length);
-	WLog_INFO(TAG,  "auth_length: %d", header->common.auth_length);
-	WLog_INFO(TAG,  "call_id: %d", header->common.call_id);
+	WLog_INFO(TAG,  "frag_length: %"PRIu16"", header->common.frag_length);
+	WLog_INFO(TAG,  "auth_length: %"PRIu16"", header->common.auth_length);
+	WLog_INFO(TAG,  "call_id: %"PRIu32"", header->common.call_id);
 
 	if (header->common.ptype == PTYPE_RESPONSE)
 	{
-		WLog_INFO(TAG,  "alloc_hint: %d", header->response.alloc_hint);
-		WLog_INFO(TAG,  "p_cont_id: %d", header->response.p_cont_id);
-		WLog_INFO(TAG,  "cancel_count: %d", header->response.cancel_count);
-		WLog_INFO(TAG,  "reserved: %d", header->response.reserved);
+		WLog_INFO(TAG,  "alloc_hint: %"PRIu32"", header->response.alloc_hint);
+		WLog_INFO(TAG,  "p_cont_id: %"PRIu16"", header->response.p_cont_id);
+		WLog_INFO(TAG,  "cancel_count: %"PRIu8"", header->response.cancel_count);
+		WLog_INFO(TAG,  "reserved: %"PRIu8"", header->response.reserved);
 	}
 }
 
@@ -298,7 +300,7 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 			break;
 
 		default:
-			WLog_ERR(TAG, "Unknown PTYPE: 0x%04X", header->common.ptype);
+			WLog_ERR(TAG, "Unknown PTYPE: 0x%02"PRIX8"", header->common.ptype);
 			return FALSE;
 	}
 
@@ -320,7 +322,7 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 	auth_pad_length = sec_trailer->auth_pad_length;
 
 #if 0
-	WLog_DBG(TAG, "sec_trailer: type: %d level: %d pad_length: %d reserved: %d context_id: %d",
+	WLog_DBG(TAG, "sec_trailer: type: %"PRIu8" level: %"PRIu8" pad_length: %"PRIu8" reserved: %"PRIu8" context_id: %"PRIu32"",
 			sec_trailer->auth_type, sec_trailer->auth_level,
 			sec_trailer->auth_pad_length, sec_trailer->auth_reserved,
 			sec_trailer->auth_context_id);
@@ -334,7 +336,7 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 
 	if ((frag_length - (sec_trailer_offset + 8)) != auth_length)
 	{
-		WLog_ERR(TAG, "invalid auth_length: actual: %d, expected: %d", auth_length,
+		WLog_ERR(TAG, "invalid auth_length: actual: %"PRIu32", expected: %"PRIu32"", auth_length,
 				 (frag_length - (sec_trailer_offset + 8)));
 	}
 
@@ -758,9 +760,12 @@ int rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 	rdpRpc* rpc = channel->rpc;
 	rdpContext* context = rpc->context;
 	rdpSettings* settings = context->settings;
+	const char *peerHostname = settings->GatewayHostname;
+	UINT16 peerPort = settings->GatewayPort;
+	BOOL isProxyConnection = proxy_prepare(settings, &peerHostname, &peerPort, TRUE);
 
-	sockfd = freerdp_tcp_connect(context, settings, settings->GatewayHostname,
-					settings->GatewayPort, timeout);
+	sockfd = freerdp_tcp_connect(context, settings, peerHostname,
+					peerPort, timeout);
 
 	if (sockfd < 1)
 		return -1;
@@ -781,6 +786,11 @@ int rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 
 	if (!BIO_set_nonblock(bufferedBio, TRUE))
 		return -1;
+
+	if (isProxyConnection) {
+		if (!proxy_connect(settings, bufferedBio, settings->GatewayHostname, settings->GatewayPort))
+			return -1;
+	}
 
 	channel->bio = bufferedBio;
 

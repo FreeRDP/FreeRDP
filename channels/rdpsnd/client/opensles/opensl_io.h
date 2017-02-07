@@ -6,14 +6,14 @@ All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name of the <organization> nor the
-      names of its contributors may be used to endorse or promote products
-      derived from this software without specific prior written permission.
+	* Redistributions of source code must retain the above copyright
+	  notice, this list of conditions and the following disclaimer.
+	* Redistributions in binary form must reproduce the above copyright
+	  notice, this list of conditions and the following disclaimer in the
+	  documentation and/or other materials provided with the distribution.
+	* Neither the name of the <organization> nor the
+	  names of its contributors may be used to endorse or promote products
+	  derived from this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -35,70 +35,75 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <winpr/synch.h>
 
+#include <freerdp/api.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct opensl_stream {
-  // engine interfaces
-  SLObjectItf engineObject;
-  SLEngineItf engineEngine;
+typedef struct opensl_stream
+{
+	// engine interfaces
+	SLObjectItf engineObject;
+	SLEngineItf engineEngine;
 
-  // output mix interfaces
-  SLObjectItf outputMixObject;
+	// output mix interfaces
+	SLObjectItf outputMixObject;
 
-  // buffer queue player interfaces
-  SLObjectItf bqPlayerObject;
-  SLPlayItf bqPlayerPlay;
+	// buffer queue player interfaces
+	SLObjectItf bqPlayerObject;
+	SLPlayItf bqPlayerPlay;
 	SLVolumeItf bqPlayerVolume;
-  SLAndroidSimpleBufferQueueItf bqPlayerBufferQueue;
-  SLEffectSendItf bqPlayerEffectSend;
+	SLAndroidSimpleBufferQueueItf bqPlayerBufferQueue;
+	SLEffectSendItf bqPlayerEffectSend;
 
-  unsigned int outchannels;
-  unsigned int sr;
+	unsigned int outchannels;
+	unsigned int sr;
 
 	unsigned int queuesize;
-	wQueue *queue;
+	wQueue* queue;
 } OPENSL_STREAM;
 
-  /*
-  Open the audio device with a given sampling rate (sr), output channels and IO buffer size
-  in frames. Returns a handle to the OpenSL stream
-  */
-  OPENSL_STREAM* android_OpenAudioDevice(int sr, int outchannels, int bufferframes);
-  /* 
-  Close the audio device 
-  */
-  void android_CloseAudioDevice(OPENSL_STREAM *p);
-  /*
-  Write a buffer to the OpenSL stream *p, of size samples. Returns the number of samples written.
-  */
-  int android_AudioOut(OPENSL_STREAM *p, const short *buffer, int size);
-	/*
-	 * Set the volume input level.
-	 */
-	void android_SetInputVolume(OPENSL_STREAM *p, int level);
-	/* 
-	 * Get the current output mute setting.
-	 */
-	int android_GetOutputMute(OPENSL_STREAM *p);
-	/*
-	 * Change the current output mute setting.
-	 */
-	void android_SetOutputMute(OPENSL_STREAM *p, BOOL mute);
-	/*
-	 * Get the current output volume level.
-	 */
-	int android_GetOutputVolume(OPENSL_STREAM *p);
-	/*
-	 * Get the maximum output volume level.
-	 */
-	int android_GetOutputVolumeMax(OPENSL_STREAM *p);
+/*
+Open the audio device with a given sampling rate (sr), output channels and IO buffer size
+in frames. Returns a handle to the OpenSL stream
+*/
+FREERDP_LOCAL OPENSL_STREAM* android_OpenAudioDevice(int sr, int outchannels,
+        int bufferframes);
+/*
+Close the audio device
+*/
+FREERDP_LOCAL void android_CloseAudioDevice(OPENSL_STREAM* p);
+/*
+Write a buffer to the OpenSL stream *p, of size samples. Returns the number of samples written.
+*/
+FREERDP_LOCAL int android_AudioOut(OPENSL_STREAM* p, const short* buffer,
+                                   int size);
+/*
+ * Set the volume input level.
+ */
+FREERDP_LOCAL void android_SetInputVolume(OPENSL_STREAM* p, int level);
+/*
+ * Get the current output mute setting.
+ */
+FREERDP_LOCAL int android_GetOutputMute(OPENSL_STREAM* p);
+/*
+ * Change the current output mute setting.
+ */
+FREERDP_LOCAL BOOL android_SetOutputMute(OPENSL_STREAM* p, BOOL mute);
+/*
+ * Get the current output volume level.
+ */
+FREERDP_LOCAL int android_GetOutputVolume(OPENSL_STREAM* p);
+/*
+ * Get the maximum output volume level.
+ */
+FREERDP_LOCAL int android_GetOutputVolumeMax(OPENSL_STREAM* p);
 
-	/*
-	 * Set the volume output level.
-	 */
-	void android_SetOutputVolume(OPENSL_STREAM *p, int level);
+/*
+ * Set the volume output level.
+ */
+FREERDP_LOCAL BOOL android_SetOutputVolume(OPENSL_STREAM* p, int level);
 #ifdef __cplusplus
 };
 #endif

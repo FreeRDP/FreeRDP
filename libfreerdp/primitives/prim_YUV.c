@@ -1,7 +1,11 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
+ * Generic YUV/RGB conversion operations
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015-2017 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2015-2017 Vic Lee
+ * Copyright 2015-2017 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,17 +27,7 @@
 #include <freerdp/types.h>
 #include <freerdp/primitives.h>
 #include <freerdp/codec/color.h>
-
-static INLINE BYTE CLIP(INT32 X)
-{
-	if (X > 255L)
-		return 255L;
-
-	if (X < 0L)
-		return 0L;
-
-	return X;
-}
+#include "prim_internal.h"
 
 /**
  * @brief general_YUV420CombineToYUV444
@@ -232,9 +226,9 @@ static pstatus_t general_YUV444SplitToYUV420(
 		{
 			/* Filter */
 			const INT32 u = pSrcU[2 * x] + pSrcU[2 * x + 1] + pSrcU1[2 * x]
-					+ pSrcU1[2 * x + 1];
+			                + pSrcU1[2 * x + 1];
 			const INT32 v = pSrcV[2 * x] + pSrcV[2 * x + 1] + pSrcV1[2 * x]
-					+ pSrcV1[2 * x + 1];
+			                + pSrcV1[2 * x + 1];
 			pU[x] = CLIP(u / 4L);
 			pV[x] = CLIP(v / 4L);
 		}
@@ -326,23 +320,15 @@ static INLINE BYTE YUV2B(INT32 Y, INT32 U, INT32 V)
 	return CLIP(b8);
 }
 
-static INLINE BYTE* writePixel(BYTE* dst, UINT32 format, BYTE Y, BYTE U, BYTE V)
-{
-	const BYTE r = YUV2R(Y, U, V);
-	const BYTE g = YUV2G(Y, U, V);
-	const BYTE b = YUV2B(Y, U, V);
-	UINT32 color = GetColor(format, r, g, b, 0xFF);
-	WriteColor(dst, format, color);
-	return dst + GetBytesPerPixel(format);
-}
-
-static pstatus_t general_YUV444ToRGB_8u_P3AC4R(
+static pstatus_t general_YUV444ToRGB_8u_P3AC4R_general(
     const BYTE* pSrc[3], const UINT32 srcStep[3],
     BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
     const prim_size_t* roi)
 {
 	UINT32 x, y;
 	UINT32 nWidth, nHeight;
+	const DWORD formatSize = GetBytesPerPixel(DstFormat);
+	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat);
 	nWidth = roi->width;
 	nHeight = roi->height;
 
@@ -358,13 +344,64 @@ static pstatus_t general_YUV444ToRGB_8u_P3AC4R(
 			const BYTE Y = pY[x];
 			const INT32 U = pU[x];
 			const INT32 V = pV[x];
-			pRGB = writePixel(pRGB, DstFormat, Y, U, V);
+			const BYTE r = YUV2R(Y, U, V);
+			const BYTE g = YUV2G(Y, U, V);
+			const BYTE b = YUV2B(Y, U, V);
+			pRGB = (*writePixel)(pRGB, formatSize, DstFormat, r, g, b, 0xFF);
 		}
 	}
 
 	return PRIMITIVES_SUCCESS;
 }
 
+static pstatus_t general_YUV444ToRGB_8u_P3AC4R_BGRX(
+    const BYTE* pSrc[3], const UINT32 srcStep[3],
+    BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
+    const prim_size_t* roi)
+{
+	UINT32 x, y;
+	UINT32 nWidth, nHeight;
+	const DWORD formatSize = GetBytesPerPixel(DstFormat);
+	nWidth = roi->width;
+	nHeight = roi->height;
+
+	for (y = 0; y < nHeight; y++)
+	{
+		const BYTE* pY = pSrc[0] + y * srcStep[0];
+		const BYTE* pU = pSrc[1] + y * srcStep[1];
+		const BYTE* pV = pSrc[2] + y * srcStep[2];
+		BYTE* pRGB = pDst + y * dstStep;
+
+		for (x = 0; x < nWidth; x++)
+		{
+			const BYTE Y = pY[x];
+			const INT32 U = pU[x];
+			const INT32 V = pV[x];
+			const BYTE r = YUV2R(Y, U, V);
+			const BYTE g = YUV2G(Y, U, V);
+			const BYTE b = YUV2B(Y, U, V);
+			pRGB = writePixelBGRX(pRGB, formatSize, DstFormat, r, g, b, 0xFF);
+		}
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
+static pstatus_t general_YUV444ToRGB_8u_P3AC4R(
+    const BYTE* pSrc[3], const UINT32 srcStep[3],
+    BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
+    const prim_size_t* roi)
+{
+	switch (DstFormat)
+	{
+		case PIXEL_FORMAT_BGRA32:
+		case PIXEL_FORMAT_BGRX32:
+			return general_YUV444ToRGB_8u_P3AC4R_BGRX(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
+
+		default:
+			return general_YUV444ToRGB_8u_P3AC4R_general(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
+	}
+}
 /**
  * | R |    ( | 256     0    403 | |    Y    | )
  * | G | = (  | 256   -48   -120 | | U - 128 |  ) >> 8
@@ -387,6 +424,8 @@ static pstatus_t general_YUV420ToRGB_8u_P3AC4R(
 	BYTE* pRGB = pDst;
 	UINT32 nWidth, nHeight;
 	UINT32 lastRow, lastCol;
+	const DWORD formatSize = GetBytesPerPixel(DstFormat);
+	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat);
 	pY = pSrc[0];
 	pU = pSrc[1];
 	pV = pSrc[2];
@@ -408,6 +447,10 @@ static pstatus_t general_YUV420ToRGB_8u_P3AC4R(
 
 		for (x = 0; x < halfWidth;)
 		{
+			BYTE r;
+			BYTE g;
+			BYTE b;
+
 			if (++x == halfWidth)
 				lastCol <<= 1;
 
@@ -415,18 +458,24 @@ static pstatus_t general_YUV420ToRGB_8u_P3AC4R(
 			V = *pV++;
 			/* 1st pixel */
 			Y = *pY++;
-			pRGB = writePixel(pRGB, DstFormat, Y, U, V);
+			r = YUV2R(Y, U, V);
+			g = YUV2G(Y, U, V);
+			b = YUV2B(Y, U, V);
+			pRGB = (*writePixel)(pRGB, formatSize, DstFormat, r, g, b, 0xFF);
 
 			/* 2nd pixel */
 			if (!(lastCol & 0x02))
 			{
 				Y = *pY++;
-				pRGB = writePixel(pRGB, DstFormat, Y, U, V);
+				r = YUV2R(Y, U, V);
+				g = YUV2G(Y, U, V);
+				b = YUV2B(Y, U, V);
+				pRGB = (*writePixel)(pRGB, formatSize, DstFormat, r, g, b, 0xFF);
 			}
 			else
 			{
 				pY++;
-				pRGB += GetBytesPerPixel(DstFormat);
+				pRGB += formatSize;
 				lastCol >>= 1;
 			}
 		}
@@ -441,6 +490,10 @@ static pstatus_t general_YUV420ToRGB_8u_P3AC4R(
 
 		for (x = 0; x < halfWidth;)
 		{
+			BYTE r;
+			BYTE g;
+			BYTE b;
+
 			if (++x == halfWidth)
 				lastCol <<= 1;
 
@@ -448,18 +501,24 @@ static pstatus_t general_YUV420ToRGB_8u_P3AC4R(
 			V = *pV++;
 			/* 3rd pixel */
 			Y = *pY++;
-			pRGB = writePixel(pRGB, DstFormat, Y, U, V);
+			r = YUV2R(Y, U, V);
+			g = YUV2G(Y, U, V);
+			b = YUV2B(Y, U, V);
+			pRGB = (*writePixel)(pRGB, formatSize, DstFormat, r, g, b, 0xFF);
 
 			/* 4th pixel */
 			if (!(lastCol & 0x02))
 			{
 				Y = *pY++;
-				pRGB = writePixel(pRGB, DstFormat, Y, U, V);
+				r = YUV2R(Y, U, V);
+				g = YUV2G(Y, U, V);
+				b = YUV2B(Y, U, V);
+				pRGB = (*writePixel)(pRGB, formatSize, DstFormat, r, g, b, 0xFF);
 			}
 			else
 			{
 				pY++;
-				pRGB += GetBytesPerPixel(DstFormat);
+				pRGB += formatSize;
 				lastCol >>= 1;
 			}
 		}
@@ -521,7 +580,6 @@ static pstatus_t general_RGBToYUV444_8u_P3AC4R(
 			BYTE B, G, R;
 			const UINT32 color = ReadColor(&pRGB[x * bpp], SrcFormat);
 			SplitColor(color, SrcFormat, &R, &G, &B, NULL, NULL);
-
 			pY[x] = RGB2Y(R, G, B);
 			pU[x] = RGB2U(R, G, B);
 			pV[x] = RGB2V(R, G, B);
@@ -563,11 +621,9 @@ static pstatus_t general_RGBToYUV420_8u_P3AC4R(
 			const UINT32 val2x = (x * 2);
 			const UINT32 val2x1 = val2x + 1;
 			BYTE B, G, R;
-
 			/* 1st pixel */
 			color = ReadColor(&pRGB[val2x * bpp], SrcFormat);
 			SplitColor(color, SrcFormat, &R, &G, &B, NULL, NULL);
-
 			Ba = B;
 			Ga = G;
 			Ra = R;

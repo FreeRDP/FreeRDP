@@ -73,7 +73,7 @@ static UINT remdesk_read_channel_header(wStream* s,
 
 	if ((ChannelNameLen % 2) != 0)
 	{
-		WLog_ERR(TAG, "(ChannelNameLen % 2) != 0!");
+		WLog_ERR(TAG, "(ChannelNameLen %% 2) != 0!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -135,7 +135,7 @@ static UINT remdesk_write_ctl_header(wStream* s, REMDESK_CTL_HEADER* ctlHeader)
 	if ((error = remdesk_write_channel_header(s,
 	             (REMDESK_CHANNEL_HEADER*) ctlHeader)))
 	{
-		WLog_ERR(TAG, "remdesk_write_channel_header failed with error %lu!", error);
+		WLog_ERR(TAG, "remdesk_write_channel_header failed with error %"PRIu32"!", error);
 		return error;
 	}
 
@@ -173,7 +173,7 @@ static UINT remdesk_send_ctl_result_pdu(RemdeskServerContext* context,
 	if ((error = remdesk_prepare_ctl_header(&(pdu.ctlHeader), REMDESK_CTL_RESULT,
 	                                        4)))
 	{
-		WLog_ERR(TAG, "remdesk_prepare_ctl_header failed with error %lu!", error);
+		WLog_ERR(TAG, "remdesk_prepare_ctl_header failed with error %"PRIu32"!", error);
 		return error;
 	}
 
@@ -187,7 +187,7 @@ static UINT remdesk_send_ctl_result_pdu(RemdeskServerContext* context,
 
 	if ((error = remdesk_write_ctl_header(s, &(pdu.ctlHeader))))
 	{
-		WLog_ERR(TAG, "remdesk_write_ctl_header failed with error %lu!", error);
+		WLog_ERR(TAG, "remdesk_write_ctl_header failed with error %"PRIu32"!", error);
 		goto out;
 	}
 
@@ -195,7 +195,7 @@ static UINT remdesk_send_ctl_result_pdu(RemdeskServerContext* context,
 	Stream_SealLength(s);
 
 	if ((error = remdesk_virtual_channel_write(context, s)))
-		WLog_ERR(TAG, "remdesk_virtual_channel_write failed with error %lu!", error);
+		WLog_ERR(TAG, "remdesk_virtual_channel_write failed with error %"PRIu32"!", error);
 
 out:
 	Stream_Free(s, TRUE);
@@ -216,7 +216,7 @@ static UINT remdesk_send_ctl_version_info_pdu(RemdeskServerContext* context)
 	if ((error = remdesk_prepare_ctl_header(&(pdu.ctlHeader),
 	                                        REMDESK_CTL_VERSIONINFO, 8)))
 	{
-		WLog_ERR(TAG, "remdesk_prepare_ctl_header failed with error %lu!", error);
+		WLog_ERR(TAG, "remdesk_prepare_ctl_header failed with error %"PRIu32"!", error);
 		return error;
 	}
 
@@ -232,7 +232,7 @@ static UINT remdesk_send_ctl_version_info_pdu(RemdeskServerContext* context)
 
 	if ((error = remdesk_write_ctl_header(s, &(pdu.ctlHeader))))
 	{
-		WLog_ERR(TAG, "remdesk_write_ctl_header failed with error %lu!", error);
+		WLog_ERR(TAG, "remdesk_write_ctl_header failed with error %"PRIu32"!", error);
 		goto out;
 	}
 
@@ -241,7 +241,7 @@ static UINT remdesk_send_ctl_version_info_pdu(RemdeskServerContext* context)
 	Stream_SealLength(s);
 
 	if ((error = remdesk_virtual_channel_write(context, s)))
-		WLog_ERR(TAG, "remdesk_virtual_channel_write failed with error %lu!", error);
+		WLog_ERR(TAG, "remdesk_virtual_channel_write failed with error %"PRIu32"!", error);
 
 out:
 	Stream_Free(s, TRUE);
@@ -317,7 +317,7 @@ static UINT remdesk_recv_ctl_remote_control_desktop_pdu(
 	free(pdu.raConnectionString);
 
 	if ((error = remdesk_send_ctl_result_pdu(context, 0)))
-		WLog_ERR(TAG, "remdesk_send_ctl_result_pdu failed with error %lu!", error);
+		WLog_ERR(TAG, "remdesk_send_ctl_result_pdu failed with error %"PRIu32"!", error);
 
 	return error;
 }
@@ -433,7 +433,7 @@ static UINT remdesk_recv_ctl_verify_password_pdu(RemdeskServerContext* context,
 	WLog_INFO(TAG, "ExpertBlob: %s", pdu.expertBlob);
 
 	if ((error = remdesk_send_ctl_result_pdu(context, 0)))
-		WLog_ERR(TAG, "remdesk_send_ctl_result_pdu failed with error %lu!", error);
+		WLog_ERR(TAG, "remdesk_send_ctl_result_pdu failed with error %"PRIu32"!", error);
 
 	return error;
 }
@@ -456,7 +456,7 @@ static UINT remdesk_recv_ctl_pdu(RemdeskServerContext* context, wStream* s,
 	}
 
 	Stream_Read_UINT32(s, msgType); /* msgType (4 bytes) */
-	WLog_INFO(TAG, "msgType: %d", msgType);
+	WLog_INFO(TAG, "msgType: %"PRIu32"", msgType);
 
 	switch (msgType)
 	{
@@ -464,7 +464,7 @@ static UINT remdesk_recv_ctl_pdu(RemdeskServerContext* context, wStream* s,
 			if ((error = remdesk_recv_ctl_remote_control_desktop_pdu(context, s, header)))
 			{
 				WLog_ERR(TAG,
-				         "remdesk_recv_ctl_remote_control_desktop_pdu failed with error %lu!", error);
+				         "remdesk_recv_ctl_remote_control_desktop_pdu failed with error %"PRIu32"!", error);
 				return error;
 			}
 
@@ -473,7 +473,7 @@ static UINT remdesk_recv_ctl_pdu(RemdeskServerContext* context, wStream* s,
 		case REMDESK_CTL_AUTHENTICATE:
 			if ((error = remdesk_recv_ctl_authenticate_pdu(context, s, header)))
 			{
-				WLog_ERR(TAG, "remdesk_recv_ctl_authenticate_pdu failed with error %lu!",
+				WLog_ERR(TAG, "remdesk_recv_ctl_authenticate_pdu failed with error %"PRIu32"!",
 				         error);
 				return error;
 			}
@@ -486,7 +486,7 @@ static UINT remdesk_recv_ctl_pdu(RemdeskServerContext* context, wStream* s,
 		case REMDESK_CTL_VERSIONINFO:
 			if ((error = remdesk_recv_ctl_version_info_pdu(context, s, header)))
 			{
-				WLog_ERR(TAG, "remdesk_recv_ctl_version_info_pdu failed with error %lu!",
+				WLog_ERR(TAG, "remdesk_recv_ctl_version_info_pdu failed with error %"PRIu32"!",
 				         error);
 				return error;
 			}
@@ -499,7 +499,7 @@ static UINT remdesk_recv_ctl_pdu(RemdeskServerContext* context, wStream* s,
 		case REMDESK_CTL_VERIFY_PASSWORD:
 			if ((error = remdesk_recv_ctl_verify_password_pdu(context, s, header)))
 			{
-				WLog_ERR(TAG, "remdesk_recv_ctl_verify_password_pdu failed with error %lu!",
+				WLog_ERR(TAG, "remdesk_recv_ctl_verify_password_pdu failed with error %"PRIu32"!",
 				         error);
 				return error;
 			}
@@ -519,7 +519,7 @@ static UINT remdesk_recv_ctl_pdu(RemdeskServerContext* context, wStream* s,
 			break;
 
 		default:
-			WLog_ERR(TAG, "remdesk_recv_control_pdu: unknown msgType: %d", msgType);
+			WLog_ERR(TAG, "remdesk_recv_control_pdu: unknown msgType: %"PRIu32"", msgType);
 			error = ERROR_INVALID_DATA;
 			break;
 	}
@@ -538,13 +538,13 @@ static UINT remdesk_server_receive_pdu(RemdeskServerContext* context,
 	UINT error = CHANNEL_RC_OK;
 	REMDESK_CHANNEL_HEADER header;
 #if 0
-	WLog_INFO(TAG, "RemdeskReceive: %d", Stream_GetRemainingLength(s));
+	WLog_INFO(TAG, "RemdeskReceive: %"PRIuz"", Stream_GetRemainingLength(s));
 	winpr_HexDump(Stream_Pointer(s), Stream_GetRemainingLength(s));
 #endif
 
 	if ((error = remdesk_read_channel_header(s, &header)))
 	{
-		WLog_ERR(TAG, "remdesk_read_channel_header failed with error %lu!", error);
+		WLog_ERR(TAG, "remdesk_read_channel_header failed with error %"PRIu32"!", error);
 		return error;
 	}
 
@@ -552,7 +552,7 @@ static UINT remdesk_server_receive_pdu(RemdeskServerContext* context,
 	{
 		if ((error = remdesk_recv_ctl_pdu(context, s, &header)))
 		{
-			WLog_ERR(TAG, "remdesk_recv_ctl_pdu failed with error %lu!", error);
+			WLog_ERR(TAG, "remdesk_recv_ctl_pdu failed with error %"PRIu32"!", error);
 			return error;
 		}
 	}
@@ -592,7 +592,7 @@ static void* remdesk_server_thread(void* arg)
 	RemdeskServerContext* context;
 	UINT error;
 	context = (RemdeskServerContext*) arg;
-	freerdp_channel_init_thread_context(context->rdpcontext);
+
 	buffer = NULL;
 	BytesReturned = 0;
 	ChannelEvent = NULL;
@@ -626,7 +626,7 @@ static void* remdesk_server_thread(void* arg)
 
 	if ((error = remdesk_send_ctl_version_info_pdu(context)))
 	{
-		WLog_ERR(TAG, "remdesk_send_ctl_version_info_pdu failed with error %lu!",
+		WLog_ERR(TAG, "remdesk_send_ctl_version_info_pdu failed with error %"PRIu32"!",
 		         error);
 		goto out;
 	}
@@ -638,7 +638,7 @@ static void* remdesk_server_thread(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu", error);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %"PRIu32"", error);
 			break;
 		}
 
@@ -647,7 +647,7 @@ static void* remdesk_server_thread(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"", error);
 			break;
 		}
 
@@ -684,7 +684,7 @@ static void* remdesk_server_thread(void* arg)
 
 				if ((error = remdesk_server_receive_pdu(context, s)))
 				{
-					WLog_ERR(TAG, "remdesk_server_receive_pdu failed with error %lu!", error);
+					WLog_ERR(TAG, "remdesk_server_receive_pdu failed with error %"PRIu32"!", error);
 					break;
 				}
 
@@ -751,7 +751,7 @@ static UINT remdesk_server_stop(RemdeskServerContext* context)
 	if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
 	{
 		error = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", error);
 		return error;
 	}
 

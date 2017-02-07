@@ -105,7 +105,7 @@ static UINT rdpsnd_server_recv_waveconfirm(RdpsndServerContext* context,
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_ERR(TAG, "not enought data in stream!");
+		WLog_ERR(TAG, "not enough data in stream!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -115,7 +115,7 @@ static UINT rdpsnd_server_recv_waveconfirm(RdpsndServerContext* context,
 	IFCALLRET(context->ConfirmBlock, error,  context, confirmBlockNum, timestamp);
 
 	if (error)
-		WLog_ERR(TAG, "context->ConfirmBlock failed with error %lu", error);
+		WLog_ERR(TAG, "context->ConfirmBlock failed with error %"PRIu32"", error);
 
 	return error;
 }
@@ -132,13 +132,13 @@ static UINT rdpsnd_server_recv_quality_mode(RdpsndServerContext* context,
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_ERR(TAG, "not enought data in stream!");
+		WLog_ERR(TAG, "not enough data in stream!");
 		return ERROR_INVALID_DATA;
 	}
 
 	Stream_Read_UINT16(s, quality);
 	Stream_Seek_UINT16(s); // reserved
-	WLog_DBG(TAG,  "Client requested sound quality: %#0X", quality);
+	WLog_DBG(TAG,  "Client requested sound quality: 0x%04"PRIX16"", quality);
 	return CHANNEL_RC_OK;
 }
 
@@ -157,7 +157,7 @@ static UINT rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 
 	if (Stream_GetRemainingLength(s) < 20)
 	{
-		WLog_ERR(TAG, "not enought data in stream!");
+		WLog_ERR(TAG, "not enough data in stream!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -173,7 +173,7 @@ static UINT rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 	/* this check is only a guess as cbSize can influence the size of a format record */
 	if (Stream_GetRemainingLength(s) < context->num_client_formats * 18)
 	{
-		WLog_ERR(TAG, "not enought data in stream!");
+		WLog_ERR(TAG, "not enough data in stream!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -196,7 +196,7 @@ static UINT rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 	{
 		if (Stream_GetRemainingLength(s) < 18)
 		{
-			WLog_ERR(TAG, "not enought data in stream!");
+			WLog_ERR(TAG, "not enough data in stream!");
 			error = ERROR_INVALID_DATA;
 			goto out_free;
 		}
@@ -246,14 +246,14 @@ static void* rdpsnd_server_thread(void* arg)
 	RdpsndServerContext* context;
 	UINT error = CHANNEL_RC_OK;
 	context = (RdpsndServerContext*)arg;
-	freerdp_channel_init_thread_context(context->rdpcontext);
+
 	nCount = 0;
 	events[nCount++] = context->priv->channelEvent;
 	events[nCount++] = context->priv->StopEvent;
 
 	if ((error = rdpsnd_server_send_formats(context, context->priv->rdpsnd_pdu)))
 	{
-		WLog_ERR(TAG, "rdpsnd_server_send_formats failed with error %lu", error);
+		WLog_ERR(TAG, "rdpsnd_server_send_formats failed with error %"PRIu32"", error);
 		goto out;
 	}
 
@@ -264,7 +264,7 @@ static void* rdpsnd_server_thread(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %"PRIu32"!", error);
 			break;
 		}
 
@@ -273,7 +273,7 @@ static void* rdpsnd_server_thread(void* arg)
 		if (status == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", error);
 			break;
 		}
 
@@ -282,7 +282,7 @@ static void* rdpsnd_server_thread(void* arg)
 
 		if ((error = rdpsnd_server_handle_messages(context)))
 		{
-			WLog_ERR(TAG, "rdpsnd_server_handle_messages failed with error %lu", error);
+			WLog_ERR(TAG, "rdpsnd_server_handle_messages failed with error %"PRIu32"", error);
 			break;
 		}
 	}
@@ -555,7 +555,7 @@ static UINT rdpsnd_server_send_samples(RdpsndServerContext* context,
 		{
 			if ((error = rdpsnd_server_send_audio_pdu(context, wTimestamp)))
 			{
-				WLog_ERR(TAG, "rdpsnd_server_send_audio_pdu failed with error %lu", error);
+				WLog_ERR(TAG, "rdpsnd_server_send_audio_pdu failed with error %"PRIu32"", error);
 				break;
 			}
 		}
@@ -616,7 +616,7 @@ static UINT rdpsnd_server_close(RdpsndServerContext* context)
 		}
 		else if ((error = rdpsnd_server_send_audio_pdu(context, 0)))
 		{
-			WLog_ERR(TAG, "rdpsnd_server_send_audio_pdu failed with error %lu", error);
+			WLog_ERR(TAG, "rdpsnd_server_send_audio_pdu failed with error %"PRIu32"", error);
 		}
 	}
 
@@ -663,7 +663,7 @@ static UINT rdpsnd_server_start(RdpsndServerContext* context)
 	                            &bytesReturned) || (bytesReturned != sizeof(HANDLE)))
 	{
 		WLog_ERR(TAG,
-		         "error during WTSVirtualChannelQuery(WTSVirtualEventHandle) or invalid returned size(%d)",
+		         "error during WTSVirtualChannelQuery(WTSVirtualEventHandle) or invalid returned size(%"PRIu32")",
 		         bytesReturned);
 
 		if (buffer)
@@ -742,7 +742,7 @@ static UINT rdpsnd_server_stop(RdpsndServerContext* context)
 			if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
 			{
 				error = GetLastError();
-				WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+				WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", error);
 				return error;
 			}
 
@@ -912,7 +912,7 @@ UINT rdpsnd_server_handle_messages(RdpsndServerContext* context)
 
 	/* when here we have the header + the body */
 #ifdef WITH_DEBUG_SND
-	WLog_DBG(TAG,  "message type %d", priv->msgType);
+	WLog_DBG(TAG,  "message type %"PRIu8"", priv->msgType);
 #endif
 	priv->expectedBytes = 4;
 	priv->waitingHeader = TRUE;
@@ -942,7 +942,7 @@ UINT rdpsnd_server_handle_messages(RdpsndServerContext* context)
 			break;
 
 		default:
-			WLog_ERR(TAG,  "UNKOWN MESSAGE TYPE!! (%#0X)", priv->msgType);
+			WLog_ERR(TAG,  "UNKNOWN MESSAGE TYPE!! (0x%02"PRIX8")", priv->msgType);
 			ret = ERROR_INVALID_DATA;
 			break;
 	}

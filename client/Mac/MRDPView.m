@@ -194,7 +194,7 @@ DWORD mac_client_thread(void* param)
 		if (settings->AsyncInput)
 		{
 			if (!(inputThread = CreateThread(NULL, 0,
-			(LPTHREAD_START_ROUTINE) mac_client_input_thread, context, 0, NULL)))
+			                                 (LPTHREAD_START_ROUTINE) mac_client_input_thread, context, 0, NULL)))
 			{
 				WLog_ERR(TAG,  "failed to create async input thread");
 				goto disconnect;
@@ -203,7 +203,7 @@ DWORD mac_client_thread(void* param)
 		else
 		{
 			if (!(inputEvent = freerdp_get_message_queue_event_handle(instance,
-			FREERDP_INPUT_MESSAGE_QUEUE)))
+			                   FREERDP_INPUT_MESSAGE_QUEUE)))
 			{
 				WLog_ERR(TAG, "failed to get input event handle");
 				goto disconnect;
@@ -221,7 +221,7 @@ DWORD mac_client_thread(void* param)
 			if (!settings->AsyncTransport)
 			{
 				if (!(nCountTmp = freerdp_get_event_handles(context, &events[nCount],
-				16 - nCount)))
+				                  16 - nCount)))
 				{
 					WLog_ERR(TAG, "freerdp_get_event_handles failed");
 					break;
@@ -965,9 +965,13 @@ BOOL mac_post_connect(freerdp* instance)
 BOOL mac_authenticate(freerdp* instance, char** username, char** password,
                       char** domain)
 {
+	mfContext* mfc = (mfContext*) instance->context;
+	MRDPView* view = (MRDPView*) mfc->view;
 	PasswordDialog* dialog = [PasswordDialog new];
-	dialog.serverHostname = [NSString stringWithCString:
-	                         instance->settings->ServerHostname encoding:NSUTF8StringEncoding];
+	dialog.serverHostname = [NSString stringWithFormat:@"%@:%u",
+	                         [NSString stringWithCString:instance->settings->ServerHostname encoding:
+	                          NSUTF8StringEncoding],
+	                         instance->settings->ServerPort];
 
 	if (*username)
 		dialog.username = [NSString stringWithCString:*username encoding:
@@ -977,11 +981,15 @@ BOOL mac_authenticate(freerdp* instance, char** username, char** password,
 		dialog.password = [NSString stringWithCString:*password encoding:
 		                   NSUTF8StringEncoding];
 
-	[dialog performSelectorOnMainThread:@selector(runModal) withObject:nil waitUntilDone:TRUE];
+	if (*domain)
+		dialog.domain = [NSString stringWithCString:*domain encoding:
+		                 NSUTF8StringEncoding];
 
+	[dialog performSelectorOnMainThread:@selector(runModal:) withObject:[view
+	        window] waitUntilDone:TRUE];
 	BOOL ok = dialog.modalCode;
 
-	if (ok) 
+	if (ok)
 	{
 		const char* submittedUsername = [dialog.username cStringUsingEncoding:
 		                                 NSUTF8StringEncoding];
@@ -991,6 +999,10 @@ BOOL mac_authenticate(freerdp* instance, char** username, char** password,
 		                                 NSUTF8StringEncoding];
 		*password = malloc((strlen(submittedPassword) + 1) * sizeof(char));
 		strcpy(*password, submittedPassword);
+		const char* submittedDomain = [dialog.domain cStringUsingEncoding:
+		                               NSUTF8StringEncoding];
+		*domain = malloc((strlen(submittedDomain) + 1) * sizeof(char));
+		strcpy(*domain, submittedDomain);
 	}
 
 	return ok;

@@ -30,7 +30,7 @@ function build {
 
 	common_run export CROSS_SYSROOT=$ANDROID_NDK/platforms/android-$NDK_TARGET/$PLATFORM_PREFIX
 	common_run export ANDROID_DEV=$ANDROID_NDK/platforms/android-$NDK_TARGET/$PLATFORM_PREFIX/usr
-	common_run export CROSS_COMPILE=$ARCH_PREFIX
+	common_run export CROSS_COMPILE="$CCACHE $ARCH_PREFIX"
 	common_run export PATH=$ANDROID_NDK/toolchains/$TOOLCHAIN_PREFIX$COMPILER/prebuilt/$HOST_PLATFORM/bin/:$ORG_PATH
 
 	echo "CONFIG=$CONFIG"
@@ -45,9 +45,8 @@ function build {
 	BASE=$(pwd)
 	DST_DIR=$BUILD_DST/$DST_PREFIX
 	common_run cd $BUILD_SRC
-	common_run git am $(dirname "${BASH_SOURCE[0]}")/0001-64bit-architecture-support.patch
 	common_run git clean -xdf
-	common_run ./Configure --openssldir=$DST_DIR $CONFIG shared
+	common_run ./Configure --config=$SCRIPT_PATH/openssl-mips64.conf --openssldir=$DST_DIR $CONFIG no-shared 
 	common_run make CALC_VERSIONS="SHLIB_COMPAT=; SHLIB_SOVER=" depend
 	common_run make CALC_VERSIONS="SHLIB_COMPAT=; SHLIB_SOVER=" build_libs
 
@@ -56,8 +55,8 @@ function build {
 		common_run mkdir -p $DST_DIR
 	fi
 
-	common_run cp -L libssl.so $DST_DIR
-	common_run cp -L libcrypto.so $DST_DIR
+	SONAME=libfreerdp-openssl.so
+	common_run ${CROSS_COMPILE}gcc --sysroot=${CROSS_SYSROOT} -shared -fPIC -Wl,-soname,$SONAME -o $DST_DIR/$SONAME -Wl,-whole-archive libcrypto.a libssl.a -Wl,-no-whole-archive
 	common_run cd $BASE
 }
 
@@ -77,7 +76,7 @@ do
 			$ARCH "arm-linux-androideabi-" "arch-arm"
 		 ;;
 	 "armeabi-v7a")
-		 build "android-armv7" "arm-linux-androideabi-" \
+		 build "android-armeabi" "arm-linux-androideabi-" \
 			$ARCH "arm-linux-androideabi-" "arch-arm"
 		 ;;
 	 "mips")

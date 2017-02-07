@@ -131,8 +131,8 @@ static int rdpsnd_alsa_set_hw_params(rdpsndAlsaPlugin* alsa)
 
 	if (alsa->period_size > buffer_size_max)
 	{
-		WLog_ERR(TAG, "Warning: requested sound buffer size %d, got %d instead\n",
-				 (int) alsa->buffer_size, (int) buffer_size_max);
+		WLog_ERR(TAG, "Warning: requested sound buffer size %lu, got %lu instead\n",
+				 alsa->buffer_size, buffer_size_max);
 		alsa->period_size = (buffer_size_max / 8);
 	}
 
@@ -686,7 +686,7 @@ UINT freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS p
 	{
 		if ((error = rdpsnd_alsa_parse_addin_args((rdpsndDevicePlugin *) alsa, args)))
 		{
-			WLog_ERR(TAG, "rdpsnd_alsa_parse_addin_args failed with error %lu", error);
+			WLog_ERR(TAG, "rdpsnd_alsa_parse_addin_args failed with error %"PRIu32"", error);
 			goto error_parse_args;
 		}
 	}

@@ -22,8 +22,12 @@
  * Define GOOGLE_PROFILER if you want gperftools included.
  */
 
-#ifndef __MEASURE_H_INCLUDED__
-#define __MEASURE_H_INCLUDED__
+#ifndef TEST_MEASURE_H_INCLUDED
+#define TEST_MEASURE_H_INCLUDED
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <time.h>
 

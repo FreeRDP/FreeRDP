@@ -33,7 +33,7 @@ int TestInitializeSecurityContext(int argc, char* argv[])
 
 	if (status != SEC_E_OK)
 	{
-		printf("QuerySecurityPackageInfo status: 0x%08X\n", status);
+		printf("QuerySecurityPackageInfo status: 0x%08"PRIX32"\n", status);
 		return -1;
 	}
 
@@ -61,7 +61,7 @@ int TestInitializeSecurityContext(int argc, char* argv[])
 
 	if (status != SEC_E_OK)
 	{
-		printf("AcquireCredentialsHandle status: 0x%08X\n", status);
+		printf("AcquireCredentialsHandle status: 0x%08"PRIX32"\n", status);
 		sspi_GlobalFinish();
 		return -1;
 	}
@@ -89,16 +89,16 @@ int TestInitializeSecurityContext(int argc, char* argv[])
 
 	if (status != SEC_I_CONTINUE_NEEDED)
 	{
-		printf("InitializeSecurityContext status: 0x%08X\n", status);
+		printf("InitializeSecurityContext status: 0x%08"PRIX32"\n", status);
 		sspi_GlobalFinish();
 		return -1;
 	}
 
-	printf("cBuffers: %d ulVersion: %d\n", output_SecBuffer_desc.cBuffers, output_SecBuffer_desc.ulVersion);
+	printf("cBuffers: %"PRIu32" ulVersion: %"PRIu32"\n", output_SecBuffer_desc.cBuffers, output_SecBuffer_desc.ulVersion);
 
 	p_SecBuffer = &output_SecBuffer_desc.pBuffers[0];
 
-	printf("BufferType: 0x%04X cbBuffer: %d\n", p_SecBuffer->BufferType, p_SecBuffer->cbBuffer);
+	printf("BufferType: 0x%08"PRIX32" cbBuffer: %"PRIu32"\n", p_SecBuffer->BufferType, p_SecBuffer->cbBuffer);
 
 	table->FreeCredentialsHandle(&credentials);
 

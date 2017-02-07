@@ -629,7 +629,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 		}
 	}
 
-	CommLog_Print(WLOG_WARN, _T("unsupported IoControlCode=[0x%lX] %s (remote serial driver: %s)"),
+	CommLog_Print(WLOG_WARN, _T("unsupported IoControlCode=[0x%08"PRIX32"] %s (remote serial driver: %s)"),
 		dwIoControlCode, _comm_serial_ioctl_name(dwIoControlCode), pServerSerialDriver->name);
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED); /* => STATUS_NOT_IMPLEMENTED */
 	return FALSE;
@@ -673,14 +673,14 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 	if (lpBytesReturned && *lpBytesReturned != nOutBufferSize)
 	{
 		/* This might be a hint for a bug, especially when result==TRUE */
-		CommLog_Print(WLOG_WARN, "lpBytesReturned=%ld and nOutBufferSize=%ld are different!", *lpBytesReturned, nOutBufferSize);
+		CommLog_Print(WLOG_WARN, "lpBytesReturned=%"PRIu32" and nOutBufferSize=%"PRIu32" are different!", *lpBytesReturned, nOutBufferSize);
 	}
 
 	if (pComm->permissive)
 	{
 		if (!result)
 		{
-			CommLog_Print(WLOG_WARN, "[permissive]: whereas it failed, made to succeed IoControlCode=[0x%lX] %s, last-error: 0x%lX",
+			CommLog_Print(WLOG_WARN, "[permissive]: whereas it failed, made to succeed IoControlCode=[0x%08"PRIX32"] %s, last-error: 0x%08"PRIX32"",
 				dwIoControlCode, _comm_serial_ioctl_name(dwIoControlCode), GetLastError());
 		}
 

@@ -135,10 +135,14 @@ export NO_BRP_CHECK_RPATH true
 %dir %{INSTALL_PREFIX}/share/
 %dir %{INSTALL_PREFIX}/share/man/
 %dir %{INSTALL_PREFIX}/share/man/man1
+%dir %{INSTALL_PREFIX}/share/man/man7
 %{INSTALL_PREFIX}/%{_lib}/*.so.*
 %{INSTALL_PREFIX}/bin/
 %{INSTALL_PREFIX}/share/man/man1/xfreerdp.1*
-%{INSTALL_PREFIX}/share/man/man1/wlog.1*
+%{INSTALL_PREFIX}/share/man/man1/freerdp-shadow-cli.1*
+%{INSTALL_PREFIX}/share/man/man1/winpr-makecert.1*
+%{INSTALL_PREFIX}/share/man/man1/winpr-hash.1*
+%{INSTALL_PREFIX}/share/man/man7/wlog.7*
 
 %files devel
 %defattr(-,root,root)

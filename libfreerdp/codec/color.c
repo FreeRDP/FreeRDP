@@ -127,7 +127,7 @@ BOOL freerdp_image_copy_from_monochrome(BYTE* pDstData, UINT32 DstFormat,
 		}
 	}
 
-	return 1;
+	return TRUE;
 }
 
 static INLINE UINT32 freerdp_image_inverted_pointer_color(UINT32 x, UINT32 y,
@@ -188,22 +188,22 @@ BOOL freerdp_image_copy_from_pointer_data(
 	andStep += (andStep % 2);
 
 	if (!xorMask || (xorMaskLength == 0))
-		return -1;
+		return FALSE;
 
 	switch (xorBpp)
 	{
 		case 1:
 			if (!andMask || (andMaskLength == 0))
-				return -1;
+				return FALSE;
 
 			xorStep = (nWidth + 7) / 8;
 			xorStep += (xorStep % 2);
 
 			if (xorStep * nHeight > xorMaskLength)
-				return -1;
+				return FALSE;
 
 			if (andStep * nHeight > andMaskLength)
-				return -1;
+				return FALSE;
 
 			for (y = 0; y < nHeight; y++)
 			{
@@ -257,7 +257,7 @@ BOOL freerdp_image_copy_from_pointer_data(
 				}
 			}
 
-			return 1;
+			return TRUE;
 
 		case 8:
 		case 16:
@@ -269,18 +269,18 @@ BOOL freerdp_image_copy_from_pointer_data(
 
 				if (xorBpp == 8 && !palette)
 				{
-					WLog_ERR(TAG, "null palette in convertion from %d bpp to %d bpp",
+					WLog_ERR(TAG, "null palette in conversion from %"PRIu32" bpp to %"PRIu32" bpp",
 					         xorBpp, dstBitsPerPixel);
-					return -1;
+					return FALSE;
 				}
 
 				if (xorStep * nHeight > xorMaskLength)
-					return -1;
+					return FALSE;
 
 				if (andMask)
 				{
 					if (andStep * nHeight > andMaskLength)
-						return -1;
+						return FALSE;
 				}
 
 				for (y = 0; y < nHeight; y++)
@@ -374,21 +374,21 @@ BOOL freerdp_image_copy_from_pointer_data(
 					}
 				}
 
-				return 1;
+				return TRUE;
 			}
 
 		default:
-			WLog_ERR(TAG, "failed to convert from %d bpp to %d bpp",
+			WLog_ERR(TAG, "failed to convert from %"PRIu32" bpp to %"PRIu32" bpp",
 			         xorBpp, dstBitsPerPixel);
-			return -1;
+			return FALSE;
 	}
 }
 
-static BOOL overlapping(const BYTE* pDstData, UINT32 nXDst, UINT32 nYDst,
-                        UINT32 nDstStep, UINT32 dstBytesPerPixel,
-                        const BYTE* pSrcData, UINT32 nXSrc, UINT32 nYSrc,
-                        UINT32 nSrcStep, UINT32 srcBytesPerPixel,
-                        UINT32 nWidth, UINT32 nHeight)
+static INLINE BOOL overlapping(const BYTE* pDstData, UINT32 nXDst, UINT32 nYDst,
+                               UINT32 nDstStep, UINT32 dstBytesPerPixel,
+                               const BYTE* pSrcData, UINT32 nXSrc, UINT32 nYSrc,
+                               UINT32 nSrcStep, UINT32 srcBytesPerPixel,
+                               UINT32 nWidth, UINT32 nHeight)
 {
 	const BYTE* pDstStart = &pDstData[nXDst * dstBytesPerPixel + nYDst * nDstStep];
 	const BYTE* pDstEnd = pDstStart + nHeight * nDstStep;
@@ -416,8 +416,7 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 	const UINT32 copyDstWidth = nWidth * dstByte;
 	const UINT32 xSrcOffset = nXSrc * srcByte;
 	const UINT32 xDstOffset = nXDst * dstByte;
-	BOOL vSrcVFlip = flags & FREERDP_FLIP_VERTICAL;
-	BOOL vSrcHFlip = flags & FREERDP_FLIP_HORIZONTAL;
+	const BOOL vSrcVFlip = flags & FREERDP_FLIP_VERTICAL;
 	UINT32 srcVOffset = 0;
 	INT32 srcVMultiplier = 1;
 	UINT32 dstVOffset = 0;
@@ -438,7 +437,7 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
 		srcVMultiplier = -1;
 	}
 
-	if (SrcFormat == DstFormat)
+	if (AreColorFormatsEqualNoAlpha(SrcFormat, DstFormat))
 	{
 		INT32 y;
 
@@ -557,16 +556,20 @@ BOOL freerdp_image_fill(BYTE* pDstData, DWORD DstFormat,
                         UINT32 nWidth, UINT32 nHeight, UINT32 color)
 {
 	UINT32 x, y;
+	const UINT32 bpp = GetBytesPerPixel(DstFormat);
+	BYTE* pFirstDstLine = &pDstData[nYDst * nDstStep];
+	BYTE* pFirstDstLineXOffset = &pFirstDstLine[nXDst * bpp];
 
-	for (y = 0; y < nHeight; y++)
+	for (x = 0; x < nWidth; x++)
 	{
-		BYTE* pDstLine = &pDstData[(y + nYDst) * nDstStep];
+		BYTE* pDst = &pFirstDstLine[(x + nXDst) * bpp];
+		WriteColor(pDst, DstFormat, color);
+	}
 
-		for (x = 0; x < nWidth; x++)
-		{
-			BYTE* pDst = &pDstLine[(x + nXDst) * GetBytesPerPixel(DstFormat)];
-			WriteColor(pDst, DstFormat, color);
-		}
+	for (y = 1; y < nHeight; y++)
+	{
+		BYTE* pDstLine = &pDstData[(y + nYDst) * nDstStep + nXDst * bpp];
+		memcpy(pDstLine, pFirstDstLineXOffset, nWidth * bpp);
 	}
 
 	return TRUE;

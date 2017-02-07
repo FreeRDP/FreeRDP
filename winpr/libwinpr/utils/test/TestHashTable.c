@@ -29,7 +29,7 @@ int test_hash_table_pointer()
 
 	if (count != 3)
 	{
-		printf("HashTable_Count: Expected : %d, Actual: %d\n", 3, count);
+		printf("HashTable_Count: Expected : 3, Actual: %d\n", count);
 		return -1;
 	}
 
@@ -39,7 +39,7 @@ int test_hash_table_pointer()
 
 	if (count != 2)
 	{
-		printf("HashTable_Count: Expected : %d, Actual: %d\n", 2, count);
+		printf("HashTable_Count: Expected : 2, Actual: %d\n", count);
 		return -1;
 	}
 
@@ -49,7 +49,7 @@ int test_hash_table_pointer()
 
 	if (count != 1)
 	{
-		printf("HashTable_Count: Expected : %d, Actual: %d\n", 1, count);
+		printf("HashTable_Count: Expected : 1, Actual: %d\n", count);
 		return -1;
 	}
 
@@ -59,7 +59,7 @@ int test_hash_table_pointer()
 
 	if (count != 0)
 	{
-		printf("HashTable_Count: Expected : %d, Actual: %d\n", 0, count);
+		printf("HashTable_Count: Expected : 0, Actual: %d\n", count);
 		return -1;
 	}
 
@@ -71,7 +71,7 @@ int test_hash_table_pointer()
 
 	if (count != 3)
 	{
-		printf("HashTable_Count: Expected : %d, Actual: %d\n", 3, count);
+		printf("HashTable_Count: Expected : 3, Actual: %d\n", count);
 		return -1;
 	}
 
@@ -111,19 +111,19 @@ int test_hash_table_pointer()
 
 	if (!HashTable_Contains(table, key2))
 	{
-		printf("HashTable_Contains: Expected : %d, Actual: %d\n", TRUE, FALSE);
+		printf("HashTable_Contains: Expected : TRUE, Actual: FALSE\n");
 		return -1;
 	}
 
 	if (!HashTable_Remove(table, key2))
 	{
-		printf("HashTable_Remove: Expected : %d, Actual: %d\n", TRUE, FALSE);
+		printf("HashTable_Remove: Expected : TRUE, Actual: FALSE\n");
 		return -1;
 	}
 
 	if (HashTable_Remove(table, key2))
 	{
-		printf("HashTable_Remove: Expected : %d, Actual: %d\n", FALSE, TRUE);
+		printf("HashTable_Remove: Expected : FALSE, Actual: TRUE\n");
 		return -1;
 	}
 
@@ -133,7 +133,7 @@ int test_hash_table_pointer()
 
 	if (count != 0)
 	{
-		printf("HashTable_Count: Expected : %d, Actual: %d\n", 0, count);
+		printf("HashTable_Count: Expected : 0, Actual: %d\n", count);
 		return -1;
 	}
 
@@ -168,7 +168,7 @@ int test_hash_table_string()
 
 	if (count != 3)
 	{
-		printf("HashTable_Count: Expected : %d, Actual: %d\n", 3, count);
+		printf("HashTable_Count: Expected : 3, Actual: %d\n", count);
 		return -1;
 	}
 
@@ -178,7 +178,7 @@ int test_hash_table_string()
 
 	if (count != 2)
 	{
-		printf("HashTable_Count: Expected : %d, Actual: %d\n", 2, count);
+		printf("HashTable_Count: Expected : 3, Actual: %d\n", count);
 		return -1;
 	}
 
@@ -188,7 +188,7 @@ int test_hash_table_string()
 
 	if (count != 1)
 	{
-		printf("HashTable_Count: Expected : %d, Actual: %d\n", 1, count);
+		printf("HashTable_Count: Expected : 1, Actual: %d\n", count);
 		return -1;
 	}
 
@@ -198,7 +198,7 @@ int test_hash_table_string()
 
 	if (count != 0)
 	{
-		printf("HashTable_Count: Expected : %d, Actual: %d\n", 0, count);
+		printf("HashTable_Count: Expected : 0, Actual: %d\n", count);
 		return -1;
 	}
 
@@ -210,7 +210,7 @@ int test_hash_table_string()
 
 	if (count != 3)
 	{
-		printf("HashTable_Count: Expected : %d, Actual: %d\n", 3, count);
+		printf("HashTable_Count: Expected : 3, Actual: %d\n", count);
 		return -1;
 	}
 
@@ -250,19 +250,19 @@ int test_hash_table_string()
 
 	if (!HashTable_Contains(table, key2))
 	{
-		printf("HashTable_Contains: Expected : %d, Actual: %d\n", TRUE, FALSE);
+		printf("HashTable_Contains: Expected : TRUE, Actual: FALSE\n");
 		return -1;
 	}
 
 	if (!HashTable_Remove(table, key2))
 	{
-		printf("HashTable_Remove: Expected : %d, Actual: %d\n", TRUE, FALSE);
+		printf("HashTable_Remove: Expected : TRUE, Actual: FALSE\n");
 		return -1;
 	}
 
 	if (HashTable_Remove(table, key2))
 	{
-		printf("HashTable_Remove: Expected : %d, Actual: %d\n", FALSE, TRUE);
+		printf("HashTable_Remove: Expected : FALSE, Actual: TRUE\n");
 		return -1;
 	}
 
@@ -272,7 +272,7 @@ int test_hash_table_string()
 
 	if (count != 0)
 	{
-		printf("HashTable_Count: Expected : %d, Actual: %d\n", 0, count);
+		printf("HashTable_Count: Expected : 0, Actual: %d\n", count);
 		return -1;
 	}
 

@@ -28,7 +28,7 @@ int TestWtsApiWaitSystemEvent(int argc, char* argv[])
 
 	if (!bSuccess)
 	{
-		printf("WTSWaitSystemEvent failed: %d\n", (int) GetLastError());
+		printf("WTSWaitSystemEvent failed: %"PRIu32"\n", GetLastError());
 		return -1;
 	}
 

@@ -10,3 +10,4 @@
 !/Wayland
 !/CMakeLists.txt
 !*.in
+Wayland/wlfreerdp.1

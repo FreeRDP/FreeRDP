@@ -155,7 +155,7 @@ DWORD WINAPI wf_rdpsnd_directsound_thread(LPVOID lpParam)
 			lLockSize = dwReadPos - lastPos;//dscbd.dwBufferBytes;
 			if (lLockSize < 0) lLockSize += dscbd.dwBufferBytes;
 
-			//WLog_DBG(TAG, "Last, read, lock = [%d, %d, %d]\n", lastPos, dwReadPos, lLockSize);
+			//WLog_DBG(TAG, "Last, read, lock = [%"PRIu32", %"PRIu32", %"PRId32"]\n", lastPos, dwReadPos, lLockSize);
 
 			if (lLockSize == 0)
 			{

@@ -112,7 +112,7 @@ UINT rdpei_server_init(RdpeiServerContext *context)
 
 	if (!WTSVirtualChannelQuery(priv->channelHandle, WTSVirtualEventHandle, &buffer, &bytesReturned) || (bytesReturned != sizeof(HANDLE)))
 	{
-		WLog_ERR(TAG, "WTSVirtualChannelQuery failed or invalid invalid returned size(%d)!", bytesReturned);
+		WLog_ERR(TAG, "WTSVirtualChannelQuery failed or invalid invalid returned size(%"PRIu32")!", bytesReturned);
 		if (buffer)
 			WTSFreeMemory(buffer);
 		goto out_close;
@@ -165,7 +165,7 @@ static UINT read_cs_ready_message(RdpeiServerContext *context, wStream *s)
 	UINT error = CHANNEL_RC_OK;
 	if (Stream_GetRemainingLength(s) < 10)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -179,13 +179,13 @@ static UINT read_cs_ready_message(RdpeiServerContext *context, wStream *s)
 	case RDPINPUT_PROTOCOL_V101:
 		break;
 	default:
-		WLog_ERR(TAG, "unhandled RPDEI protocol version 0x%x", context->clientVersion);
+		WLog_ERR(TAG, "unhandled RPDEI protocol version 0x%"PRIx32"", context->clientVersion);
 		break;
 	}
 
 	IFCALLRET(context->onClientReady, error, context);
 	if (error)
-		WLog_ERR(TAG, "context->onClientReady failed with error %lu", error);
+		WLog_ERR(TAG, "context->onClientReady failed with error %"PRIu32"", error);
 
 	return error;
 }
@@ -199,7 +199,7 @@ static UINT read_touch_contact_data(RdpeiServerContext *context, wStream *s, RDP
 {
 	if (Stream_GetRemainingLength(s) < 1)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -271,7 +271,7 @@ static UINT read_touch_frame(RdpeiServerContext *context, wStream *s, RDPINPUT_T
 	{
 		if ((error = read_touch_contact_data(context, s, contact)))
 		{
-			WLog_ERR(TAG, "read_touch_contact_data failed with error %lu!", error);
+			WLog_ERR(TAG, "read_touch_contact_data failed with error %"PRIu32"!", error);
 			frame->contactCount = i;
 			touch_frame_reset(frame);
 			return error;
@@ -311,7 +311,7 @@ static UINT read_touch_event(RdpeiServerContext *context, wStream *s)
 	{
 		if ((error = read_touch_frame(context, s, frame)))
 		{
-			WLog_ERR(TAG, "read_touch_contact_data failed with error %lu!", error);
+			WLog_ERR(TAG, "read_touch_contact_data failed with error %"PRIu32"!", error);
 			event->frameCount = i;
 			goto out_cleanup;
 		}
@@ -320,7 +320,7 @@ static UINT read_touch_event(RdpeiServerContext *context, wStream *s)
 
 	IFCALLRET(context->onTouchEvent, error, context, event);
 	if (error)
-		WLog_ERR(TAG, "context->onTouchEvent failed with error %lu", error);
+		WLog_ERR(TAG, "context->onTouchEvent failed with error %"PRIu32"", error);
 
 out_cleanup:
 	touch_event_reset(event);
@@ -339,7 +339,7 @@ static UINT read_dismiss_hovering_contact(RdpeiServerContext *context, wStream *
 
 	if (Stream_GetRemainingLength(s) < 1)
 	{
-		WLog_ERR(TAG, "Not enought data!");
+		WLog_ERR(TAG, "Not enough data!");
 		return ERROR_INVALID_DATA;
 	}
 
@@ -347,7 +347,7 @@ static UINT read_dismiss_hovering_contact(RdpeiServerContext *context, wStream *
 
 	IFCALLRET(context->onTouchReleased, error, context, contactId);
 	if (error)
-		WLog_ERR(TAG, "context->onTouchReleased failed with error %lu", error);
+		WLog_ERR(TAG, "context->onTouchReleased failed with error %"PRIu32"", error);
 
 	return error;
 }
@@ -391,7 +391,7 @@ UINT rdpei_server_handle_messages(RdpeiServerContext *context) {
 
 		if (pduLen < RDPINPUT_HEADER_LENGTH)
 		{
-			WLog_ERR(TAG, "invalid pduLength %d", pduLen);
+			WLog_ERR(TAG, "invalid pduLength %"PRIu32"", pduLen);
 			return ERROR_INVALID_DATA;
 		}
 		priv->expectedBytes = pduLen - RDPINPUT_HEADER_LENGTH;
@@ -414,13 +414,13 @@ UINT rdpei_server_handle_messages(RdpeiServerContext *context) {
 	case EVENTID_CS_READY:
 		if (priv->automataState != STATE_WAITING_CLIENT_READY)
 		{
-			WLog_ERR(TAG, "not expecting a CS_READY packet in this state(%d)", (int)priv->automataState);
+			WLog_ERR(TAG, "not expecting a CS_READY packet in this state(%d)", priv->automataState);
 			return ERROR_INVALID_STATE;
 		}
 
 		if ((error = read_cs_ready_message(context, s)))
 		{
-			WLog_ERR(TAG, "read_cs_ready_message failed with error %lu", error);
+			WLog_ERR(TAG, "read_cs_ready_message failed with error %"PRIu32"", error);
 			return error;
 		}
 		break;
@@ -428,19 +428,19 @@ UINT rdpei_server_handle_messages(RdpeiServerContext *context) {
 	case EVENTID_TOUCH:
 		if ((error = read_touch_event(context, s)))
 		{
-			WLog_ERR(TAG, "read_touch_event failed with error %lu", error);
+			WLog_ERR(TAG, "read_touch_event failed with error %"PRIu32"", error);
 			return error;
 		}
 		break;
 	case EVENTID_DISMISS_HOVERING_CONTACT:
 		if ((error = read_dismiss_hovering_contact(context, s)))
 		{
-			WLog_ERR(TAG, "read_dismiss_hovering_contact failed with error %lu", error);
+			WLog_ERR(TAG, "read_dismiss_hovering_contact failed with error %"PRIu32"", error);
 			return error;
 		}
 		break;
 	default:
-		WLog_ERR(TAG, "unexpected message type 0x%x", priv->currentMsgType);
+		WLog_ERR(TAG, "unexpected message type 0x%"PRIx16"", priv->currentMsgType);
 	}
 
 	Stream_SetPosition(s, 0);
@@ -462,7 +462,7 @@ UINT rdpei_server_send_sc_ready(RdpeiServerContext *context, UINT32 version)
 
 	if (priv->automataState != STATE_INITIAL)
 	{
-		WLog_ERR(TAG, "called from unexpected state %d", (int)priv->automataState);
+		WLog_ERR(TAG, "called from unexpected state %d", priv->automataState);
 		return ERROR_INVALID_STATE;
 	}
 
@@ -507,7 +507,7 @@ UINT rdpei_server_suspend(RdpeiServerContext *context)
 	case STATE_WAITING_FRAME:
 		break;
 	default:
-		WLog_ERR(TAG, "called from unexpected state %d", (int)priv->automataState);
+		WLog_ERR(TAG, "called from unexpected state %d", priv->automataState);
 		return ERROR_INVALID_STATE;
 	}
 
@@ -551,7 +551,7 @@ UINT rdpei_server_resume(RdpeiServerContext *context)
 	case STATE_SUSPENDED:
 		break;
 	default:
-		WLog_ERR(TAG, "called from unexpected state %d", (int)priv->automataState);
+		WLog_ERR(TAG, "called from unexpected state %d", priv->automataState);
 		return ERROR_INVALID_STATE;
 	}
 

@@ -14,7 +14,7 @@ For the Android port some additional dependencies need to be fulfilled:
 
 * for JNI
 - CMake >= 3.0
-- Android NDK (>= r9) (and <= 10e if build with OpenH264)
+- Android NDK (>= r9)
 
 * for the Java GUI
 - Android SDK
@@ -44,6 +44,15 @@ Currently the default script builds for:
 
 When the script is finished the libraries are ready for android studio to
 be picked up in client/Android/Studio/freeRDPCore/src/main/jniLibs
+
+The default configuration build configuration can be found in
+./scripts/android-build.conf and is configured to provide debug builds.
+They are limited to API level 21 and above.
+
+If release binaries (and old android API support) are required, build 32 bit architectures with
+./scripts/android-build-freerdp.sh --ndk <ANDROID_NDK> --sdk <ANDROID_SDK> --conf ./scripts/android-build-32.conf
+and 64 bit architectures with
+./scripts/android-build-freerdp.sh --ndk <ANDROID_NDK> --sdk <ANDROID_SDK> --conf ./scripts/android-build-32.conf
 
 Building the APK (Android Studio)
 ================

@@ -225,7 +225,7 @@ int nla_client_init(rdpNla* nla)
 
 		if (!identity)
 		{
-			WLog_ERR(TAG, "NLA identity=%p", identity);
+			WLog_ERR(TAG, "NLA identity=%p", (void*) identity);
 			return -1;
 		}
 
@@ -286,7 +286,7 @@ int nla_client_init(rdpNla* nla)
 
 	if (nla->status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "QuerySecurityPackageInfo status %s [%08X]",
+		WLog_ERR(TAG, "QuerySecurityPackageInfo status %s [0x%08"PRIX32"]",
 			GetSecurityStatusString(nla->status), nla->status);
 		return -1;
 	}
@@ -298,7 +298,7 @@ int nla_client_init(rdpNla* nla)
 
 	if (nla->status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "AcquireCredentialsHandle status %s [%08X]",
+		WLog_ERR(TAG, "AcquireCredentialsHandle status %s [0x%08"PRIX32"]",
 			 GetSecurityStatusString(nla->status), nla->status);
 		return -1;
 	}
@@ -345,7 +345,7 @@ int nla_client_begin(rdpNla* nla)
 			SECURITY_NATIVE_DREP, NULL, 0, &nla->context,
 			&nla->outputBufferDesc, &nla->pfContextAttr, &nla->expiration);
 
-	WLog_VRB(TAG, " InitializeSecurityContext status %s [%08X]",
+	WLog_VRB(TAG, " InitializeSecurityContext status %s [0x%08"PRIX32"]",
 		   GetSecurityStatusString(nla->status), nla->status);
 
 	if ((nla->status == SEC_I_COMPLETE_AND_CONTINUE) || (nla->status == SEC_I_COMPLETE_NEEDED))
@@ -357,7 +357,7 @@ int nla_client_begin(rdpNla* nla)
 			status = nla->table->CompleteAuthToken(&nla->context, &nla->outputBufferDesc);
 			if (status != SEC_E_OK)
 			{
-				WLog_WARN(TAG, "CompleteAuthToken status %s [%08X]",
+				WLog_WARN(TAG, "CompleteAuthToken status %s [0x%08"PRIX32"]",
 					  GetSecurityStatusString(status), status);
 				return -1;
 			}
@@ -422,7 +422,7 @@ int nla_client_recv(rdpNla* nla)
 				SECURITY_NATIVE_DREP, &nla->inputBufferDesc,
 				0, &nla->context, &nla->outputBufferDesc, &nla->pfContextAttr, &nla->expiration);
 
-		WLog_VRB(TAG, "InitializeSecurityContext  %s [%08X]",
+		WLog_VRB(TAG, "InitializeSecurityContext  %s [0x%08"PRIX32"]",
 			   GetSecurityStatusString(nla->status), nla->status);
 
 		free(nla->inputBuffer.pvBuffer);
@@ -436,7 +436,7 @@ int nla_client_recv(rdpNla* nla)
 				status = nla->table->CompleteAuthToken(&nla->context, &nla->outputBufferDesc);
 				if (status != SEC_E_OK)
 				{
-					WLog_WARN(TAG, "CompleteAuthToken status %s [%08X]",
+					WLog_WARN(TAG, "CompleteAuthToken status %s [0x%08"PRIX32"]",
 						  GetSecurityStatusString(status), status);
 					return -1;
 				}
@@ -455,7 +455,7 @@ int nla_client_recv(rdpNla* nla)
 			nla->status = nla->table->QueryContextAttributes(&nla->context, SECPKG_ATTR_SIZES, &nla->ContextSizes);
 			if (nla->status != SEC_E_OK)
 			{
-				WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure %s [%08X]",
+				WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure %s [0x%08"PRIX32"]",
 					 GetSecurityStatusString(nla->status), nla->status);
 				return -1;
 			}
@@ -490,7 +490,7 @@ int nla_client_recv(rdpNla* nla)
 
 		if (nla->status != SEC_E_OK)
 		{
-			WLog_ERR(TAG, "Could not verify public key echo %s [%08X]",
+			WLog_ERR(TAG, "Could not verify public key echo %s [0x%08"PRIX32"]",
 				 GetSecurityStatusString(nla->status), nla->status);
 			return -1;
 		}
@@ -500,7 +500,7 @@ int nla_client_recv(rdpNla* nla)
 
 		if (nla->status != SEC_E_OK)
 		{
-			WLog_ERR(TAG, "nla_encrypt_ts_credentials status %s [%08X]",
+			WLog_ERR(TAG, "nla_encrypt_ts_credentials status %s [0x%08"PRIX32"]",
 				 GetSecurityStatusString(nla->status), nla->status);
 			return -1;
 		}
@@ -515,14 +515,14 @@ int nla_client_recv(rdpNla* nla)
 		nla->table->FreeCredentialsHandle(&nla->credentials);
 		if (nla->status != SEC_E_OK)
 		{
-			WLog_ERR(TAG, "FreeCredentialsHandle status %s [%08X]",
+			WLog_ERR(TAG, "FreeCredentialsHandle status %s [0x%08"PRIX32"]",
 				  GetSecurityStatusString(nla->status), nla->status);
 		}
 
 		nla->status = nla->table->FreeContextBuffer(nla->pPackageInfo);
 		if (nla->status != SEC_E_OK)
 		{
-			WLog_ERR(TAG, "FreeContextBuffer status %s [%08X]",
+			WLog_ERR(TAG, "FreeContextBuffer status %s [0x%08"PRIX32"]",
 				  GetSecurityStatusString(nla->status), nla->status);
 		}
 
@@ -627,7 +627,7 @@ int nla_server_init(rdpNla* nla)
 
 	if (nla->status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "QuerySecurityPackageInfo status %s [%08X]",
+		WLog_ERR(TAG, "QuerySecurityPackageInfo status %s [0x%08"PRIX32"]",
 			 GetSecurityStatusString(nla->status), nla->status);
 		return -1;
 	}
@@ -638,7 +638,7 @@ int nla_server_init(rdpNla* nla)
 
 	if (nla->status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "AcquireCredentialsHandle status %s [%08X]",
+		WLog_ERR(TAG, "AcquireCredentialsHandle status %s [0x%08"PRIX32"]",
 			 GetSecurityStatusString(nla->status), nla->status);
 		return -1;
 	}
@@ -719,7 +719,7 @@ int nla_server_authenticate(rdpNla* nla)
 				&nla->inputBufferDesc, nla->fContextReq, SECURITY_NATIVE_DREP, &nla->context,
 				&nla->outputBufferDesc, &nla->pfContextAttr, &nla->expiration);
 
-		WLog_VRB(TAG, "AcceptSecurityContext status %s [%08X]",
+		WLog_VRB(TAG, "AcceptSecurityContext status %s [0x%08"PRIX32"]",
 			   GetSecurityStatusString(nla->status), nla->status);
 		nla->negoToken.pvBuffer = nla->outputBuffer.pvBuffer;
 		nla->negoToken.cbBuffer = nla->outputBuffer.cbBuffer;
@@ -739,7 +739,7 @@ int nla_server_authenticate(rdpNla* nla)
 
 				if (status != SEC_E_OK)
 				{
-					WLog_WARN(TAG, "CompleteAuthToken status %s [%08X]",
+					WLog_WARN(TAG, "CompleteAuthToken status %s [0x%08"PRIX32"]",
 						  GetSecurityStatusString(status), status);
 					return -1;
 				}
@@ -773,7 +773,7 @@ int nla_server_authenticate(rdpNla* nla)
 			nla->status  = nla->table->QueryContextAttributes(&nla->context, SECPKG_ATTR_SIZES, &nla->ContextSizes);
 			if (nla->status != SEC_E_OK)
 			{
-				WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure %s [%08X]",
+				WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure %s [0x%08"PRIX32"]",
 					 GetSecurityStatusString(nla->status), nla->status);
 				return -1;
 			}
@@ -781,7 +781,7 @@ int nla_server_authenticate(rdpNla* nla)
 			nla->status = nla_decrypt_public_key_echo(nla);
 			if (nla->status != SEC_E_OK)
 			{
-				WLog_ERR(TAG, "Error: could not verify client's public key echo %s [%08X]",
+				WLog_ERR(TAG, "Error: could not verify client's public key echo %s [0x%08"PRIX32"]",
 					 GetSecurityStatusString(nla->status), nla->status);
 				return -1;
 			}
@@ -815,7 +815,7 @@ int nla_server_authenticate(rdpNla* nla)
 					break;
 			}
 
-			WLog_ERR(TAG, "AcceptSecurityContext status %s [%08X]",
+			WLog_ERR(TAG, "AcceptSecurityContext status %s [0x%08"PRIX32"]",
 				 GetSecurityStatusString(nla->status), nla->status);
 			nla_send(nla);
 			return -1; /* Access Denied */
@@ -847,7 +847,7 @@ int nla_server_authenticate(rdpNla* nla)
 	nla->status = nla_decrypt_ts_credentials(nla);
 	if (nla->status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "Could not decrypt TSCredentials status %s [%08X]",
+		WLog_ERR(TAG, "Could not decrypt TSCredentials status %s [0x%08"PRIX32"]",
 			 GetSecurityStatusString(nla->status), nla->status);
 		return -1;
 	}
@@ -856,7 +856,7 @@ int nla_server_authenticate(rdpNla* nla)
 
 	if (nla->status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "ImpersonateSecurityContext status %s [%08X]",
+		WLog_ERR(TAG, "ImpersonateSecurityContext status %s [0x%08"PRIX32"]",
 			 GetSecurityStatusString(nla->status), nla->status);
 		return -1;
 	}
@@ -866,7 +866,7 @@ int nla_server_authenticate(rdpNla* nla)
 
 		if (nla->status != SEC_E_OK)
 		{
-			WLog_ERR(TAG, "RevertSecurityContext status %s [%08X]",
+			WLog_ERR(TAG, "RevertSecurityContext status %s [0x%08"PRIX32"]",
 				 GetSecurityStatusString(nla->status), nla->status);
 			return -1;
 		}
@@ -875,7 +875,7 @@ int nla_server_authenticate(rdpNla* nla)
 	nla->status = nla->table->FreeContextBuffer(nla->pPackageInfo);
 	if (nla->status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "DeleteSecurityContext status %s [%08X]",
+		WLog_ERR(TAG, "DeleteSecurityContext status %s [0x%08"PRIX32"]",
 			  GetSecurityStatusString(nla->status), nla->status);
 		return -1;
 	}
@@ -967,7 +967,7 @@ SECURITY_STATUS nla_encrypt_public_key_echo(rdpNla* nla)
 
 	if (status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "EncryptMessage status %s [%08X]",
+		WLog_ERR(TAG, "EncryptMessage status %s [0x%08"PRIX32"]",
 			 GetSecurityStatusString(status), status);
 		return status;
 	}
@@ -998,7 +998,7 @@ SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla)
 	signature_length = nla->pubKeyAuth.cbBuffer - nla->PublicKey.cbBuffer;
 	if (signature_length < 0 || signature_length > nla->ContextSizes.cbSecurityTrailer)
 	{
-		WLog_ERR(TAG, "unexpected pubKeyAuth buffer size: %lu", nla->pubKeyAuth.cbBuffer);
+		WLog_ERR(TAG, "unexpected pubKeyAuth buffer size: %"PRIu32"", nla->pubKeyAuth.cbBuffer);
 		return SEC_E_INVALID_TOKEN;
 	}
 
@@ -1024,7 +1024,7 @@ SECURITY_STATUS nla_decrypt_public_key_echo(rdpNla* nla)
 
 	if (status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "DecryptMessage failure %s [%08X]",
+		WLog_ERR(TAG, "DecryptMessage failure %s [%08"PRIX32"]",
 			 GetSecurityStatusString(status), status);
 		return status;
 	}
@@ -1321,7 +1321,7 @@ SECURITY_STATUS nla_encrypt_ts_credentials(rdpNla* nla)
 
 	if (status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "EncryptMessage failure %s [%08X]",
+		WLog_ERR(TAG, "EncryptMessage failure %s [0x%08"PRIX32"]",
 			 GetSecurityStatusString(status), status);
 		return status;
 	}
@@ -1370,7 +1370,7 @@ SECURITY_STATUS nla_decrypt_ts_credentials(rdpNla* nla)
 
 	if (status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "DecryptMessage failure %s [%08X]",
+		WLog_ERR(TAG, "DecryptMessage failure %s [0x%08"PRIX32"]",
 			 GetSecurityStatusString(status), status);
 		return status;
 	}
@@ -1583,7 +1583,7 @@ int nla_recv_pdu(rdpNla* nla, wStream* s)
 
 	if (nla->errorCode)
 	{
-		WLog_ERR(TAG, "SPNEGO failed with NTSTATUS: %08X", nla->errorCode);
+		WLog_ERR(TAG, "SPNEGO failed with NTSTATUS: 0x%08"PRIX32"", nla->errorCode);
 		freerdp_set_last_error(nla->instance->context, nla->errorCode);
 		return -1;
 	}
@@ -1630,19 +1630,19 @@ void nla_buffer_print(rdpNla* nla)
 {
 	if (nla->negoToken.cbBuffer > 0)
 	{
-		WLog_DBG(TAG, "NLA.negoToken (length = %d):", (int) nla->negoToken.cbBuffer);
+		WLog_DBG(TAG, "NLA.negoToken (length = %"PRIu32"):", nla->negoToken.cbBuffer);
 		winpr_HexDump(TAG, WLOG_DEBUG, nla->negoToken.pvBuffer, nla->negoToken.cbBuffer);
 	}
 
 	if (nla->pubKeyAuth.cbBuffer > 0)
 	{
-		WLog_DBG(TAG, "NLA.pubKeyAuth (length = %d):", (int) nla->pubKeyAuth.cbBuffer);
+		WLog_DBG(TAG, "NLA.pubKeyAuth (length = %"PRIu32"):", nla->pubKeyAuth.cbBuffer);
 		winpr_HexDump(TAG, WLOG_DEBUG, nla->pubKeyAuth.pvBuffer, nla->pubKeyAuth.cbBuffer);
 	}
 
 	if (nla->authInfo.cbBuffer > 0)
 	{
-		WLog_DBG(TAG, "NLA.authInfo (length = %d):", (int) nla->authInfo.cbBuffer);
+		WLog_DBG(TAG, "NLA.authInfo (length = %"PRIu32"):", nla->authInfo.cbBuffer);
 		winpr_HexDump(TAG, WLOG_DEBUG, nla->authInfo.pvBuffer, nla->authInfo.cbBuffer);
 	}
 }
@@ -1819,7 +1819,7 @@ void nla_free(rdpNla* nla)
 		status = nla->table->DeleteSecurityContext(&nla->context);
 		if (status != SEC_E_OK)
 		{
-			WLog_WARN(TAG, "DeleteSecurityContext status %s [%08X]",
+			WLog_WARN(TAG, "DeleteSecurityContext status %s [0x%08"PRIX32"]",
 				  GetSecurityStatusString(status), status);
 		}
 	}

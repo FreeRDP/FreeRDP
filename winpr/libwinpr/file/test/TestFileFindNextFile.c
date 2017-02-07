@@ -77,7 +77,7 @@ int TestFileFindNextFile(int argc, char* argv[])
 
 	if (!status)
 	{
-		_tprintf(_T("FindNextFile failure: Expected: TRUE, Actual: %d\n"), status);
+		_tprintf(_T("FindNextFile failure: Expected: TRUE, Actual: %")_T(PRId32)_T("\n"), status);
 		return -1;
 	}
 
@@ -92,7 +92,7 @@ int TestFileFindNextFile(int argc, char* argv[])
 
 	if (status)
 	{
-		_tprintf(_T("FindNextFile failure: Expected: FALSE, Actual: %d\n"), status);
+		_tprintf(_T("FindNextFile failure: Expected: FALSE, Actual: %")_T(PRId32)_T("\n"), status);
 		return -1;
 	}
 

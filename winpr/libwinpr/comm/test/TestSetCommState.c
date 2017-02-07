@@ -42,7 +42,7 @@ static BOOL test_fParity(HANDLE hComm)
 	result = GetCommState(hComm, &dcb);
 	if (!result)
 	{
-		fprintf(stderr, "GetCommState failure: 0x%x\n", GetLastError());
+		fprintf(stderr, "GetCommState failure: 0x%08"PRIx32"\n", GetLastError());
 		return FALSE;
 	}
 
@@ -51,7 +51,7 @@ static BOOL test_fParity(HANDLE hComm)
 	result = SetCommState(hComm, &dcb);
 	if (!result)
 	{
-		fprintf(stderr, "SetCommState failure: 0x%x\n", GetLastError());
+		fprintf(stderr, "SetCommState failure: 0x%08"PRIx32"\n", GetLastError());
 		return FALSE;
 	}
 
@@ -59,13 +59,13 @@ static BOOL test_fParity(HANDLE hComm)
 	result = GetCommState(hComm, &dcb);
 	if (!result)
 	{
-		fprintf(stderr, "GetCommState failure: 0x%x\n", GetLastError());
+		fprintf(stderr, "GetCommState failure: 0x%08"PRIx32"\n", GetLastError());
 		return FALSE;
 	}
 
 	if (!dcb.fParity)
 	{
-		fprintf(stderr, "unexpected fParity: %d instead of TRUE\n", dcb.fParity);
+		fprintf(stderr, "unexpected fParity: %"PRIu32" instead of TRUE\n", dcb.fParity);
 		return FALSE;
 	}
 
@@ -74,7 +74,7 @@ static BOOL test_fParity(HANDLE hComm)
 	result = SetCommState(hComm, &dcb);
 	if (!result)
 	{
-		fprintf(stderr, "SetCommState failure: 0x%x\n", GetLastError());
+		fprintf(stderr, "SetCommState failure: 0x%08"PRIx32"\n", GetLastError());
 		return FALSE;
 	}
 
@@ -82,13 +82,13 @@ static BOOL test_fParity(HANDLE hComm)
 	result = GetCommState(hComm, &dcb);
 	if (!result)
 	{
-		fprintf(stderr, "GetCommState failure: 0x%x\n", GetLastError());
+		fprintf(stderr, "GetCommState failure: 0x%08"PRIx32"\n", GetLastError());
 		return FALSE;
 	}
 
 	if (dcb.fParity)
 	{
-		fprintf(stderr, "unexpected fParity: %d instead of FALSE\n", dcb.fParity);
+		fprintf(stderr, "unexpected fParity: %"PRIu32" instead of FALSE\n", dcb.fParity);
 		return FALSE;
 	}
 
@@ -97,7 +97,7 @@ static BOOL test_fParity(HANDLE hComm)
 	result = SetCommState(hComm, &dcb);
 	if (!result)
 	{
-		fprintf(stderr, "SetCommState failure: 0x%x\n", GetLastError());
+		fprintf(stderr, "SetCommState failure: 0x%08"PRIx32"\n", GetLastError());
 		return FALSE;
 	}
 
@@ -105,13 +105,13 @@ static BOOL test_fParity(HANDLE hComm)
 	result = GetCommState(hComm, &dcb);
 	if (!result)
 	{
-		fprintf(stderr, "GetCommState failure: 0x%x\n", GetLastError());
+		fprintf(stderr, "GetCommState failure: 0x%08"PRIx32"\n", GetLastError());
 		return FALSE;
 	}
 
 	if (!dcb.fParity)
 	{
-		fprintf(stderr, "unexpected fParity: %d instead of TRUE\n", dcb.fParity);
+		fprintf(stderr, "unexpected fParity: %"PRIu32" instead of TRUE\n", dcb.fParity);
 		return FALSE;
 	}
 

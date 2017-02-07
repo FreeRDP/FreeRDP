@@ -569,12 +569,12 @@ void rdp_print_errinfo(UINT32 code)
 	{
 		if (code == errInfo->code)
 		{
-			WLog_INFO(TAG,  "%s (0x%08X):%s", errInfo->name, code, errInfo->info);
+			WLog_INFO(TAG,  "%s (0x%08"PRIX32"):%s", errInfo->name, code, errInfo->info);
 			return;
 		}
 
 		errInfo++;
 	}
 
-	WLog_ERR(TAG,  "ERRINFO_UNKNOWN 0x%08X: Unknown error.", code);
+	WLog_ERR(TAG,  "ERRINFO_UNKNOWN 0x%08"PRIX32": Unknown error.", code);
 }

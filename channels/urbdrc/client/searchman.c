@@ -166,8 +166,8 @@ static void searchman_list_show(USB_SEARCHMAN* self)
 	{
 		usb = self->get_next(self);
 		WLog_DBG(TAG,  "  USB %d: ", num++);
-		WLog_DBG(TAG,  "	idVendor: 0x%04X", usb->idVendor);
-		WLog_DBG(TAG,  "	idProduct: 0x%04X", usb->idProduct);
+		WLog_DBG(TAG,  "	idVendor: 0x%04"PRIX16"", usb->idVendor);
+		WLog_DBG(TAG,  "	idProduct: 0x%04"PRIX16"", usb->idProduct);
 	}
 
 	WLog_DBG(TAG,  "================= END ===============");

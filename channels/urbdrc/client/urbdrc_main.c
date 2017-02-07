@@ -58,10 +58,10 @@ static int func_hardware_id_format(IUDEVICE* pdev, char(*HardwareIds)[DEVICE_HAR
 	idProduct = (UINT16)pdev->query_device_descriptor(pdev, ID_PRODUCT);
 	bcdDevice = (UINT16)pdev->query_device_descriptor(pdev, BCD_DEVICE);
 	
-	sprintf_s(str, sizeof(str), "USB\\VID_%04X&PID_%04X", idVendor, idProduct);	
+	sprintf_s(str, sizeof(str), "USB\\VID_%04"PRIX16"&PID_%04"PRIX16"", idVendor, idProduct);
 	strcpy(HardwareIds[1], str);	
 	
-	sprintf_s(str, sizeof(str), "%s&REV_%04X", HardwareIds[1], bcdDevice);	
+	sprintf_s(str, sizeof(str), "%s&REV_%04"PRIX16"", HardwareIds[1], bcdDevice);
 	strcpy(HardwareIds[0], str);
 
 	return 0;
@@ -78,11 +78,11 @@ static int func_compat_id_format(IUDEVICE* pdev, char (*CompatibilityIds)[DEVICE
 
 	if(!(pdev->isCompositeDevice(pdev)))
 	{
-		sprintf_s(str, sizeof(str),"USB\\Class_%02X", bDeviceClass);		
+		sprintf_s(str, sizeof(str),"USB\\Class_%02"PRIX8"", bDeviceClass);
 		strcpy(CompatibilityIds[2], str);
-		sprintf_s(str, sizeof(str),"%s&SubClass_%02X", CompatibilityIds[2], bDeviceSubClass);
+		sprintf_s(str, sizeof(str),"%s&SubClass_%02"PRIX8"", CompatibilityIds[2], bDeviceSubClass);
 		strcpy(CompatibilityIds[1], str);
-		sprintf_s(str, sizeof(str),"%s&Prot_%02X", CompatibilityIds[1], bDeviceProtocol);
+		sprintf_s(str, sizeof(str),"%s&Prot_%02"PRIX8"", CompatibilityIds[1], bDeviceProtocol);
 		strcpy(CompatibilityIds[0], str);
 	}
 	else
@@ -162,11 +162,11 @@ static int func_container_id_generate(IUDEVICE* pdev, char* strContainerId)
 		p = path;
 
 	ZeroMemory(containerId, sizeof(containerId));
-	sprintf_s((char*)containerId, sizeof(containerId), "%04X%04X%s", idVendor, idProduct, p);
+	sprintf_s((char*)containerId, sizeof(containerId), "%04"PRIX16"%04"PRIX16"%s", idVendor, idProduct, p);
 
 	/* format */
 	sprintf_s(strContainerId, DEVICE_CONTAINER_STR_SIZE,
-		"{%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+		"{%02"PRIx8"%02"PRIx8"%02"PRIx8"%02"PRIx8"-%02"PRIx8"%02"PRIx8"-%02"PRIx8"%02"PRIx8"-%02"PRIx8"%02"PRIx8"-%02"PRIx8"%02"PRIx8"%02"PRIx8"%02"PRIx8"%02"PRIx8"%02"PRIx8"}",
 		containerId[0], containerId[1],containerId[2], containerId[3],
 		containerId[4], containerId[5], containerId[6], containerId[7],
 		containerId[8], containerId[9], containerId[10], containerId[11],
@@ -184,7 +184,7 @@ static int func_instance_id_generate(IUDEVICE* pdev, char* strInstanceId)
 
 	/* format */
 	sprintf_s(strInstanceId, DEVICE_INSTANCE_STR_SIZE,
-		"%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+		"%02"PRIx8"%02"PRIx8"%02"PRIx8"%02"PRIx8"-%02"PRIx8"%02"PRIx8"-%02"PRIx8"%02"PRIx8"-%02"PRIx8"%02"PRIx8"-%02"PRIx8"%02"PRIx8"%02"PRIx8"%02"PRIx8"%02"PRIx8"%02"PRIx8"",
 		instanceId[0], instanceId[1],instanceId[2], instanceId[3],
 		instanceId[4], instanceId[5], instanceId[6], instanceId[7],
 		instanceId[8], instanceId[9], instanceId[10], instanceId[11],
@@ -471,7 +471,7 @@ static UINT urbdrc_exchange_capabilities(URBDRC_CHANNEL_CALLBACK* callback, char
 			break;
 
 		default:
-			WLog_ERR(TAG, "unknown FunctionId 0x%X", FunctionId);
+			WLog_ERR(TAG, "unknown FunctionId 0x%"PRIX32"", FunctionId);
 			error = ERROR_NOT_FOUND;
 			break;
 	}
@@ -568,7 +568,7 @@ static void *urbdrc_search_usb_device(void *arg) {
         if (status == WAIT_FAILED)
         {
             error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+            WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", error);
             return 0;
         }
 
@@ -667,7 +667,7 @@ static void *urbdrc_search_usb_device(void *arg) {
 				if (sdev->idVendor == idVendor &&
 				    sdev->idProduct == idProduct)
 				{
-					WLog_VRB(TAG, "Searchman Found Device: %04x:%04x",
+					WLog_VRB(TAG, "Searchman Found Device: %04"PRIx16":%04"PRIx16"",
 					    sdev->idVendor, sdev->idProduct);
 					found = 1;
 					break;
@@ -767,10 +767,11 @@ static void* urbdrc_search_usb_device(void* arg)
 	HANDLE mon_fd;
 	int numobj, timeout;
 	int busnum, devnum;
-	int success = 0, error, on_close = 0, found = 0;
+	int success = 0, on_close = 0, found = 0;
 	WLog_VRB(TAG, "");
 	channel_mgr = urbdrc->listener_callback->channel_mgr;
-    DWORD status;
+	DWORD status;
+	DWORD dwError;
 
 	/* init usb monitor */
 	struct udev* udev;
@@ -812,36 +813,36 @@ static void* urbdrc_search_usb_device(void* arg)
 
         status = WaitForMultipleObjects(numobj, listobj, FALSE, INFINITE);
 
-        if (status == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
-            goto out;
-        }
+	if (status == WAIT_FAILED)
+	{
+		dwError = GetLastError();
+		WLog_ERR(TAG, "WaitForMultipleObjects failed with error %"PRIu32"!", dwError);
+		goto out;
+	}
 
-        status = WaitForSingleObject(searchman->term_event, 0);
+	status = WaitForSingleObject(searchman->term_event, 0);
 
-        if (status == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
-            goto out;
-        }
+	if (status == WAIT_FAILED)
+	{
+		dwError = GetLastError();
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", dwError);
+		goto out;
+	}
 
-        if (status == WAIT_OBJECT_0)
-		{
-			sem_post(&searchman->sem_term);
-            goto out;
-		}
+	if (status == WAIT_OBJECT_0)
+	{
+		sem_post(&searchman->sem_term);
+		goto out;
+	}
 
-        status = WaitForSingleObject(mon_fd, 0);
+	status = WaitForSingleObject(mon_fd, 0);
 
-        if (status == WAIT_FAILED)
-        {
-            error = GetLastError();
-            WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
-            goto out;
-        }
+	if (status == WAIT_FAILED)
+	{
+		dwError = GetLastError();
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", dwError);
+		goto out;
+	}
 
 
         if (status == WAIT_OBJECT_0)
@@ -882,7 +883,7 @@ static void* urbdrc_search_usb_device(void* arg)
 						if (sdev->idVendor == idVendor &&
 							sdev->idProduct == idProduct)
 						{
-							WLog_VRB(TAG, "Searchman Find Device: %04x:%04x ",
+							WLog_VRB(TAG, "Searchman Find Device: %04"PRIx16":%04"PRIx16"",
 									 sdev->idVendor, sdev->idProduct);
 							found = 1;
 							break;
@@ -920,30 +921,30 @@ static void* urbdrc_search_usb_device(void* arg)
 
 						status = WaitForMultipleObjects(numobj, listobj, FALSE, timeout);
 
-                        if (status == WAIT_FAILED)
-                        {
-                            error = GetLastError();
-                            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
-                            goto out;
-                        }
+						if (status == WAIT_FAILED)
+						{
+							dwError = GetLastError();
+							WLog_ERR(TAG, "WaitForMultipleObjects failed with error %"PRIu32"!", dwError);
+							goto out;
+						}
 
-                        status = WaitForSingleObject(searchman->term_event, 0);
+						status = WaitForSingleObject(searchman->term_event, 0);
 
-                        if (status == WAIT_FAILED)
-                        {
-                            error = GetLastError();
-                            WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
-                            goto out;
-                        }
+						if (status == WAIT_FAILED)
+						{
+							dwError = GetLastError();
+							WLog_ERR(TAG, "WaitForMultipleObjects failed with error %"PRIu32"!", dwError);
+							goto out;
+						}
 
-                        if (status == WAIT_OBJECT_0)
+						if (status == WAIT_OBJECT_0)
 						{
 							CloseHandle(mon_fd);
 							sem_post(&searchman->sem_term);
 							return 0;
 						}
 
-						error = urdbrc_send_virtual_channel_add(dvc_channel, 0);
+						urdbrc_send_virtual_channel_add(dvc_channel, 0);
 
 						if (found == 1)
 							searchman->remove(searchman, sdev->idVendor, sdev->idProduct);
@@ -992,23 +993,23 @@ static void* urbdrc_search_usb_device(void* arg)
 
 					status = WaitForMultipleObjects(numobj, listobj, FALSE, timeout);
 
-                    if (status == WAIT_FAILED)
-                    {
-                        error = GetLastError();
-                        WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
-                        goto out;
-                    }
+					if (status == WAIT_FAILED)
+					{
+						dwError = GetLastError();
+						WLog_ERR(TAG, "WaitForMultipleObjects failed with error %"PRIu32"!", dwError);
+						goto out;
+					}
 
-                    status = WaitForSingleObject(searchman->term_event, 0);
+					status = WaitForSingleObject(searchman->term_event, 0);
 
-                    if (status == WAIT_FAILED)
-                    {
-                        error = GetLastError();
-                        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
-                        goto out;
-                    }
+					if (status == WAIT_FAILED)
+					{
+						dwError = GetLastError();
+						WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", dwError);
+						goto out;
+					}
 
-                    if (status == WAIT_OBJECT_0)
+					if (status == WAIT_OBJECT_0)
 					{
 						CloseHandle(mon_fd);
 						sem_post(&searchman->sem_term);
@@ -1115,7 +1116,7 @@ void* urbdrc_new_device_create(void* arg)
 			break;
 
 		default:
-			WLog_ERR(TAG, "vchannel_status unknown value %d",
+			WLog_ERR(TAG, "vchannel_status unknown value %"PRIu32"",
 					 urbdrc->vchannel_status);
 			break;
 	}
@@ -1183,7 +1184,7 @@ static UINT urbdrc_process_channel_notification(URBDRC_CHANNEL_CALLBACK* callbac
 			break;
 
 		default:
-			WLog_VRB(TAG, "unknown FunctionId 0x%X", FunctionId);
+			WLog_VRB(TAG, "unknown FunctionId 0x%"PRIX32"", FunctionId);
 			error = 1;
 			break;
 	}
@@ -1223,7 +1224,7 @@ static UINT urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 	data_read_UINT32(pBuffer + 0, InterfaceTemp);
 	InterfaceId = (InterfaceTemp & 0x0fffffff);
 	Mask = ((InterfaceTemp & 0xf0000000)>>30);
-	WLog_VRB(TAG, "Size=%d InterfaceId=0x%X Mask=0x%X", cbSize, InterfaceId, Mask);
+	WLog_VRB(TAG, "Size=%"PRIu32" InterfaceId=0x%"PRIX32" Mask=0x%"PRIX32"", cbSize, InterfaceId, Mask);
 
 	switch (InterfaceId)
 	{
@@ -1236,7 +1237,7 @@ static UINT urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 			break;
 
 		default:
-			WLog_VRB(TAG, "InterfaceId 0x%X Start matching devices list", InterfaceId);
+			WLog_VRB(TAG, "InterfaceId 0x%"PRIX32" Start matching devices list", InterfaceId);
 			pthread_t thread;
 			TRANSFER_DATA* transfer_data;
 
@@ -1272,7 +1273,7 @@ static UINT urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 			error = pthread_create(&thread, 0, urbdrc_process_udev_data_transfer, transfer_data);
 			if (error != 0)
 			{
-				WLog_ERR(TAG, "Create Data Transfer Thread got error = %d", error);
+				WLog_ERR(TAG, "Create Data Transfer Thread got error = %"PRIu32"", error);
 				free(transfer_data->pBuffer);
 				free(transfer_data);
 				return ERROR_INVALID_OPERATION;
@@ -1301,7 +1302,7 @@ static UINT urbdrc_on_close(IWTSVirtualChannelCallback * pChannelCallback)
 	int found = 0;
 
 	ChannelId = callback->channel_mgr->GetChannelId(callback->channel);
-	WLog_INFO(TAG, "urbdrc_on_close: channel id %d", ChannelId);
+	WLog_INFO(TAG, "urbdrc_on_close: channel id %"PRIu32"", ChannelId);
 	udevman->loading_lock(udevman);
 	udevman->rewind(udevman);
 

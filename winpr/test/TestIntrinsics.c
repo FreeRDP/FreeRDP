@@ -29,7 +29,7 @@ static INLINE UINT32 lzcnt_s(UINT32 x)
 int test_lzcnt()
 {
 	if (lzcnt_s(0x1) != 31) {
-		fprintf(stderr, "__lzcnt(0x1) != 31: %d\n", __lzcnt(0x1));
+		fprintf(stderr, "__lzcnt(0x1) != 31: %"PRIu32"\n", __lzcnt(0x1));
 		return -1;
 	}
 
@@ -80,7 +80,7 @@ int TestIntrinsics(int argc, char* argv[])
 {
 	g_LZCNT = IsProcessorFeaturePresentEx(PF_EX_LZCNT);
 
-	printf("LZCNT available: %d\n", g_LZCNT);
+	printf("LZCNT available: %"PRId32"\n", g_LZCNT);
 
 	//test_lzcnt16();
 	return test_lzcnt();

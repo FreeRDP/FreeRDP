@@ -172,20 +172,20 @@ static pstatus_t sse2_yCbCrToRGB_16s16s_P3P3(
 			/* (y + HIWORD(cr*22986)) >> 3 */
 			r = _mm_add_epi16(y, _mm_mulhi_epi16(cr, r_cr));
 			r = _mm_srai_epi16(r, 3);
-			/* r_buf[i] = MINMAX(r, 0, 255); */
+			/* r_buf[i] = CLIP(r); */
 			_mm_between_epi16(r, zero, max);
 			_mm_store_si128(r_buf + i, r);
 			/* (y + HIWORD(cb*-5636) + HIWORD(cr*-11698)) >> 3 */
 			g = _mm_add_epi16(y, _mm_mulhi_epi16(cb, g_cb));
 			g = _mm_add_epi16(g, _mm_mulhi_epi16(cr, g_cr));
 			g = _mm_srai_epi16(g, 3);
-			/* g_buf[i] = MINMAX(g, 0, 255); */
+			/* g_buf[i] = CLIP(g); */
 			_mm_between_epi16(g, zero, max);
 			_mm_store_si128(g_buf + i, g);
 			/* (y + HIWORD(cb*28999)) >> 3 */
 			b = _mm_add_epi16(y, _mm_mulhi_epi16(cb, b_cb));
 			b = _mm_srai_epi16(b, 3);
-			/* b_buf[i] = MINMAX(b, 0, 255); */
+			/* b_buf[i] = CLIP(b); */
 			_mm_between_epi16(b, zero, max);
 			_mm_store_si128(b_buf + i, b);
 		}
@@ -356,7 +356,7 @@ static pstatus_t sse2_RGBToYCbCr_16s16s_P3P3(
 #define XMM_ALL_ONES \
 	_mm_set1_epi32(0xFFFFFFFFU)
 
-pstatus_t sse2_RGBToRGB_16s8u_P3AC4R(
+static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_BGRX(
     const INT16* const pSrc[3],	/* 16-bit R,G, and B arrays */
     UINT32 srcStep,			/* bytes between rows in source data */
     BYTE* pDst,				/* 32-bit interleaved ARGB (ABGR?) data */
@@ -388,9 +388,6 @@ pstatus_t sse2_RGBToRGB_16s8u_P3AC4R(
 		                                      dstStep, DstFormat, roi);
 	}
 
-	// TODO: Need to update SSE code to allow color conversion!!!
-	return generic->RGBToRGB_16s8u_P3AC4R(pSrc, srcStep, pDst,
-	                                      dstStep, DstFormat, roi);
 	out = (BYTE*) pDst;
 	srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 	dstbump = (dstStep - (roi->width * sizeof(UINT32)));
@@ -453,15 +450,31 @@ pstatus_t sse2_RGBToRGB_16s8u_P3AC4R(
 
 	return PRIMITIVES_SUCCESS;
 }
+static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R(
+    const INT16* const pSrc[3],	/* 16-bit R,G, and B arrays */
+    UINT32 srcStep,			/* bytes between rows in source data */
+    BYTE* pDst,				/* 32-bit interleaved ARGB (ABGR?) data */
+    UINT32 dstStep,			/* bytes between rows in dest data */
+    UINT32 DstFormat,
+    const prim_size_t* roi)
+{
+	switch (DstFormat)
+	{
+		case PIXEL_FORMAT_BGRA32:
+		case PIXEL_FORMAT_BGRX32:
+			return sse2_RGBToRGB_16s8u_P3AC4R_BGRX(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
+
+		default:
+			return generic->RGBToRGB_16s8u_P3AC4R(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
+	}
+}
 #endif /* WITH_SSE2 */
 
 /*---------------------------------------------------------------------------*/
 #ifdef WITH_NEON
 static pstatus_t neon_yCbCrToRGB_16s16s_P3P3(
-    const INT16* pSrc[3],
-    int srcStep,
-    INT16* pDst[3],
-    int dstStep,
+    const INT16* pSrc[3],  INT32 srcStep,
+    INT16* pDst[3],  INT32 dstStep,
     const prim_size_t* roi)	/* region of interest */
 {
 	/* TODO: If necessary, check alignments and call the general version. */
@@ -517,20 +530,20 @@ static pstatus_t neon_yCbCrToRGB_16s16s_P3P3(
 			/* (y + HIWORD(cr*22986)) >> 3 */
 			int16x8_t r = vaddq_s16(y, vshrq_n_s16(vqdmulhq_s16(cr, r_cr), 1));
 			r = vshrq_n_s16(r, 3);
-			/* r_buf[i] = MINMAX(r, 0, 255); */
+			/* r_buf[i] = CLIP(r); */
 			r = vminq_s16(vmaxq_s16(r, zero), max);
 			vst1q_s16((INT16*)&r_buf[i], r);
 			/* (y + HIWORD(cb*-5636) + HIWORD(cr*-11698)) >> 3 */
 			int16x8_t g = vaddq_s16(y, vshrq_n_s16(vqdmulhq_s16(cb, g_cb), 1));
 			g = vaddq_s16(g, vshrq_n_s16(vqdmulhq_s16(cr, g_cr), 1));
 			g = vshrq_n_s16(g, 3);
-			/* g_buf[i] = MINMAX(g, 0, 255); */
+			/* g_buf[i] = CLIP(g); */
 			g = vminq_s16(vmaxq_s16(g, zero), max);
 			vst1q_s16((INT16*)&g_buf[i], g);
 			/* (y + HIWORD(cb*28999)) >> 3 */
 			int16x8_t b = vaddq_s16(y, vshrq_n_s16(vqdmulhq_s16(cb, b_cb), 1));
 			b = vshrq_n_s16(b, 3);
-			/* b_buf[i] = MINMAX(b, 0, 255); */
+			/* b_buf[i] = CLIP(b); */
 			b = vminq_s16(vmaxq_s16(b, zero), max);
 			vst1q_s16((INT16*)&b_buf[i], b);
 		}
@@ -545,6 +558,7 @@ static pstatus_t neon_yCbCrToRGB_16s16s_P3P3(
 
 	return PRIMITIVES_SUCCESS;
 }
+
 #endif /* WITH_NEON */
 
 

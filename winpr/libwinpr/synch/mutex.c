@@ -85,7 +85,7 @@ BOOL MutexCloseHandle(HANDLE handle)
 			if (msg)
 			{
 				for(i=0; i<used; i++)
-					WLog_ERR(TAG, "%2d: %s", i, msg[i]);
+					WLog_ERR(TAG, "%2"PRIdz": %s", i, msg[i]);
 			}
 			free (msg);
 			winpr_backtrace_free(stack);

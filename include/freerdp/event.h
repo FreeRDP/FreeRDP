@@ -34,60 +34,70 @@ extern "C" {
 #define FREERDP_WINDOW_STATE_ACTIVE		4
 
 DEFINE_EVENT_BEGIN(WindowStateChange)
-	int state;
+int state;
 DEFINE_EVENT_END(WindowStateChange)
 
 DEFINE_EVENT_BEGIN(ResizeWindow)
-	int width;
-	int height;
+int width;
+int height;
 DEFINE_EVENT_END(ResizeWindow)
 
 DEFINE_EVENT_BEGIN(PanningChange)
-	int dx;
-	int dy;
+int dx;
+int dy;
 DEFINE_EVENT_END(PanningChange)
 
 DEFINE_EVENT_BEGIN(ZoomingChange)
-	int dx;
-	int dy;
+int dx;
+int dy;
 DEFINE_EVENT_END(ZoomingChange)
 
 DEFINE_EVENT_BEGIN(LocalResizeWindow)
-	int width;
-	int height;
+int width;
+int height;
 DEFINE_EVENT_END(LocalResizeWindow)
 
 DEFINE_EVENT_BEGIN(EmbedWindow)
-	BOOL embed;
-	void* handle;
+BOOL embed;
+void* handle;
 DEFINE_EVENT_END(EmbedWindow)
 
 DEFINE_EVENT_BEGIN(ErrorInfo)
-	UINT32 code;
+UINT32 code;
 DEFINE_EVENT_END(ErrorInfo)
 
 DEFINE_EVENT_BEGIN(Terminate)
-	int code;
+int code;
 DEFINE_EVENT_END(Terminate)
 
 DEFINE_EVENT_BEGIN(ConnectionResult)
-	int result;
+int result;
 DEFINE_EVENT_END(ConnectionResult)
 
 DEFINE_EVENT_BEGIN(ChannelConnected)
-	const char* name;
-	void* pInterface;
+const char* name;
+void* pInterface;
 DEFINE_EVENT_END(ChannelConnected)
 
 DEFINE_EVENT_BEGIN(ChannelDisconnected)
-	const char* name;
-	void* pInterface;
+const char* name;
+void* pInterface;
 DEFINE_EVENT_END(ChannelDisconnected)
 
+DEFINE_EVENT_BEGIN(ChannelAttached)
+const char* name;
+void* pInterface;
+DEFINE_EVENT_END(ChannelAttached)
+
+DEFINE_EVENT_BEGIN(ChannelDetached)
+const char* name;
+void* pInterface;
+DEFINE_EVENT_END(ChannelDetached)
+
 DEFINE_EVENT_BEGIN(MouseEvent)
-	UINT16 flags;
-	UINT16 x;
-	UINT16 y;
+UINT16 flags;
+UINT16 x;
+UINT16 y;
 DEFINE_EVENT_END(MouseEvent)
 
 #ifdef	__cplusplus

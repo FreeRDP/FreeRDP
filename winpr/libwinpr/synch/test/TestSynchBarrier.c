@@ -74,7 +74,7 @@ static BOOL TestSynchBarrierWithFlags(DWORD dwFlags, DWORD dwThreads, DWORD dwLo
 	p.flags = dwFlags;
 	expectedTrueCount = dwLoops;
 	expectedFalseCount = dwLoops * (dwThreads - 1);
-	printf("%s: >> Testing with flags 0x%08x. Using %u threads performing %u loops\n",
+	printf("%s: >> Testing with flags 0x%08"PRIx32". Using %"PRIu32" threads performing %"PRIu32" loops\n",
 	       __FUNCTION__, dwFlags, dwThreads, dwLoops);
 
 	if (!(threads = calloc(dwThreads, sizeof(HANDLE))))
@@ -106,7 +106,7 @@ static BOOL TestSynchBarrierWithFlags(DWORD dwFlags, DWORD dwThreads, DWORD dwLo
 		if (!(threads[i] = CreateThread(NULL, 0, test_synch_barrier_thread, &p, 0,
 						NULL)))
 		{
-			printf("%s: CreateThread failed for thread #%u with error 0x%08x\n",
+			printf("%s: CreateThread failed for thread #%"PRIu32" with error 0x%08x\n",
 			       __FUNCTION__, i, GetLastError());
 			InterlockedIncrement(&gErrorCount);
 			break;
@@ -126,14 +126,14 @@ static BOOL TestSynchBarrierWithFlags(DWORD dwFlags, DWORD dwThreads, DWORD dwLo
 		{
 			if (WAIT_OBJECT_0 != (dwStatus = WaitForSingleObject(threads[i], INFINITE)))
 			{
-				printf("%s: WaitForSingleObject(thread[%d] unexpectedly returned %u (error = 0x%08x)\n",
+				printf("%s: WaitForSingleObject(thread[%"PRIu32"] unexpectedly returned %"PRIu32" (error = 0x%08x)\n",
 				       __FUNCTION__, i, dwStatus, GetLastError());
 				InterlockedIncrement(&gErrorCount);
 			}
 
 			if (!CloseHandle(threads[i]))
 			{
-				printf("%s: CloseHandle(thread[%d]) failed with error = 0x%08x)\n",
+				printf("%s: CloseHandle(thread[%"PRIu32"]) failed with error = 0x%08x)\n",
 				       __FUNCTION__, i, GetLastError());
 				InterlockedIncrement(&gErrorCount);
 			}
@@ -160,17 +160,17 @@ static BOOL TestSynchBarrierWithFlags(DWORD dwFlags, DWORD dwThreads, DWORD dwLo
 	if (p.falseCount != expectedFalseCount)
 		InterlockedIncrement(&gErrorCount);
 
-	printf("%s: error count:  %d\n", __FUNCTION__, gErrorCount);
-	printf("%s: thread count: %d (expected %u)\n", __FUNCTION__, p.threadCount,
+	printf("%s: error count:  %"PRId32"\n", __FUNCTION__, gErrorCount);
+	printf("%s: thread count: %"PRId32" (expected %"PRIu32")\n", __FUNCTION__, p.threadCount,
 	       dwThreads);
-	printf("%s: true count:   %d (expected %d)\n", __FUNCTION__, p.trueCount,
+	printf("%s: true count:   %"PRId32" (expected %"PRIu32")\n", __FUNCTION__, p.trueCount,
 	       expectedTrueCount);
-	printf("%s: false count:  %d (expected %d)\n", __FUNCTION__, p.falseCount,
+	printf("%s: false count:  %"PRId32" (expected %"PRIu32")\n", __FUNCTION__, p.falseCount,
 	       expectedFalseCount);
 
 	if (gErrorCount > 0)
 	{
-		printf("%s: Error test failed with %d reported errors\n", __FUNCTION__,
+		printf("%s: Error test failed with %"PRId32" reported errors\n", __FUNCTION__,
 		       gErrorCount);
 		return FALSE;
 	}
@@ -186,7 +186,7 @@ int TestSynchBarrier(int argc, char* argv[])
 	DWORD dwMinThreads;
 	DWORD dwNumLoops = 200;
 	GetNativeSystemInfo(&sysinfo);
-	printf("%s: Number of processors: %u\n", __FUNCTION__,
+	printf("%s: Number of processors: %"PRIu32"\n", __FUNCTION__,
 	       sysinfo.dwNumberOfProcessors);
 	dwMinThreads = sysinfo.dwNumberOfProcessors;
 	dwMaxThreads = sysinfo.dwNumberOfProcessors * 4;

@@ -801,7 +801,7 @@ SECURITY_STATUS SEC_ENTRY winpr_AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipa
 
 	if (IsSecurityStatusError(status))
 	{
-		WLog_WARN(TAG, "AcquireCredentialsHandleW status %s [%08X]",
+		WLog_WARN(TAG, "AcquireCredentialsHandleW status %s [0x%08"PRIX32"]",
 			  GetSecurityStatusString(status), status);
 	}
 
@@ -826,7 +826,7 @@ SECURITY_STATUS SEC_ENTRY winpr_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal
 
 	if (IsSecurityStatusError(status))
 	{
-		WLog_WARN(TAG, "AcquireCredentialsHandleA status %s [%08X]",
+		WLog_WARN(TAG, "AcquireCredentialsHandleA status %s [0x%08"PRIX32"]",
 			  GetSecurityStatusString(status), status);
 	}
 
@@ -856,7 +856,7 @@ SECURITY_STATUS SEC_ENTRY winpr_ExportSecurityContext(PCtxtHandle phContext, ULO
 
 	if (IsSecurityStatusError(status))
 	{
-		WLog_WARN(TAG, "ExportSecurityContext status %s [%08X]",
+		WLog_WARN(TAG, "ExportSecurityContext status %s [0x%08"PRIX32"]",
 			  GetSecurityStatusString(status), status);
 	}
 
@@ -886,7 +886,7 @@ SECURITY_STATUS SEC_ENTRY winpr_FreeCredentialsHandle(PCredHandle phCredential)
 
 	if (IsSecurityStatusError(status))
 	{
-		WLog_WARN(TAG, "FreeCredentialsHandle status %s [%08X]",
+		WLog_WARN(TAG, "FreeCredentialsHandle status %s [0x%08"PRIX32"]",
 			  GetSecurityStatusString(status), status);
 	}
 
@@ -916,7 +916,7 @@ SECURITY_STATUS SEC_ENTRY winpr_ImportSecurityContextW(SEC_WCHAR* pszPackage, PS
 
 	if (IsSecurityStatusError(status))
 	{
-		WLog_WARN(TAG, "ImportSecurityContextW status %s [%08X]",
+		WLog_WARN(TAG, "ImportSecurityContextW status %s [0x%08"PRIX32"]",
 			  GetSecurityStatusString(status), status);
 	}
 
@@ -946,7 +946,7 @@ SECURITY_STATUS SEC_ENTRY winpr_ImportSecurityContextA(SEC_CHAR* pszPackage, PSe
 
 	if (IsSecurityStatusError(status))
 	{
-		WLog_WARN(TAG, "ImportSecurityContextA status %s [%08X]",
+		WLog_WARN(TAG, "ImportSecurityContextA status %s [0x%08"PRIX32"]",
 			  GetSecurityStatusString(status), status);
 	}
 
@@ -976,7 +976,7 @@ SECURITY_STATUS SEC_ENTRY winpr_QueryCredentialsAttributesW(PCredHandle phCreden
 
 	if (IsSecurityStatusError(status))
 	{
-		WLog_WARN(TAG, "QueryCredentialsAttributesW status %s [%08X]",
+		WLog_WARN(TAG, "QueryCredentialsAttributesW status %s [0x%08"PRIX32"]",
 			  GetSecurityStatusString(status), status);
 	}
 
@@ -1006,7 +1006,7 @@ SECURITY_STATUS SEC_ENTRY winpr_QueryCredentialsAttributesA(PCredHandle phCreden
 
 	if (IsSecurityStatusError(status))
 	{
-		WLog_WARN(TAG, "QueryCredentialsAttributesA status %s [%08X]",
+		WLog_WARN(TAG, "QueryCredentialsAttributesA status %s [0x%08"PRIX32"]",
 			  GetSecurityStatusString(status), status);
 	}
 
@@ -1041,7 +1041,7 @@ SECURITY_STATUS SEC_ENTRY winpr_AcceptSecurityContext(PCredHandle phCredential, 
 
 	if (IsSecurityStatusError(status))
 	{
-		WLog_WARN(TAG, "AcceptSecurityContext status %s [%08X]",
+		WLog_WARN(TAG, "AcceptSecurityContext status %s [0x%08"PRIX32"]",
 			  GetSecurityStatusString(status), status);
 	}
 
@@ -1071,7 +1071,7 @@ SECURITY_STATUS SEC_ENTRY winpr_ApplyControlToken(PCtxtHandle phContext, PSecBuf
 
 	if (IsSecurityStatusError(status))
 	{
-		WLog_WARN(TAG, "ApplyControlToken status %s [%08X]",
+		WLog_WARN(TAG, "ApplyControlToken status %s [0x%08"PRIX32"]",
 			  GetSecurityStatusString(status), status);
 	}
 
@@ -1101,7 +1101,7 @@ SECURITY_STATUS SEC_ENTRY winpr_CompleteAuthToken(PCtxtHandle phContext, PSecBuf
 
 	if (IsSecurityStatusError(status))
 	{
-		WLog_WARN(TAG, "CompleteAuthToken status %s [%08X]",
+		WLog_WARN(TAG, "CompleteAuthToken status %s [0x%08"PRIX32"]",
 			  GetSecurityStatusString(status), status);
 	}
 
@@ -1131,7 +1131,7 @@ SECURITY_STATUS SEC_ENTRY winpr_DeleteSecurityContext(PCtxtHandle phContext)
 
 	if (IsSecurityStatusError(status))
 	{
-		WLog_WARN(TAG, "DeleteSecurityContext status %s [%08X]",
+		WLog_WARN(TAG, "DeleteSecurityContext status %s [0x%08"PRIX32"]",
 			  GetSecurityStatusString(status), status);
 	}
 
@@ -1171,7 +1171,7 @@ SECURITY_STATUS SEC_ENTRY winpr_ImpersonateSecurityContext(PCtxtHandle phContext
 
 	if (IsSecurityStatusError(status))
 	{
-		WLog_WARN(TAG, "ImpersonateSecurityContext status %s [%08X]",
+		WLog_WARN(TAG, "ImpersonateSecurityContext status %s [0x%08"PRIX32"]",
 			  GetSecurityStatusString(status), status);
 	}
 
@@ -1206,7 +1206,7 @@ SECURITY_STATUS SEC_ENTRY winpr_InitializeSecurityContextW(PCredHandle phCredent
 
 	if (IsSecurityStatusError(status))
 	{
-		WLog_WARN(TAG, "InitializeSecurityContextW status %s [%08X]",
+		WLog_WARN(TAG, "InitializeSecurityContextW status %s [0x%08"PRIX32"]",
 			  GetSecurityStatusString(status), status);
 	}
 
@@ -1241,7 +1241,7 @@ SECURITY_STATUS SEC_ENTRY winpr_InitializeSecurityContextA(PCredHandle phCredent
 
 	if (IsSecurityStatusError(status))
 	{
-		WLog_WARN(TAG, "InitializeSecurityContextA status %s [%08X]",
+		WLog_WARN(TAG, "InitializeSecurityContextA status %s [0x%08"PRIX32"]",
 			  GetSecurityStatusString(status), status);
 	}
 
@@ -1271,7 +1271,7 @@ SECURITY_STATUS SEC_ENTRY winpr_QueryContextAttributesW(PCtxtHandle phContext, U
 
 	if (IsSecurityStatusError(status))
 	{
-		WLog_WARN(TAG, "QueryContextAttributesW status %s [%08X]",
+		WLog_WARN(TAG, "QueryContextAttributesW status %s [0x%08"PRIX32"]",
 			  GetSecurityStatusString(status), status);
 	}
 
@@ -1301,7 +1301,7 @@ SECURITY_STATUS SEC_ENTRY winpr_QueryContextAttributesA(PCtxtHandle phContext, U
 
 	if (IsSecurityStatusError(status))
 	{
-		WLog_WARN(TAG, "QueryContextAttributesA status %s [%08X]",
+		WLog_WARN(TAG, "QueryContextAttributesA status %s [0x%08"PRIX32"]",
 			  GetSecurityStatusString(status), status);
 	}
 
@@ -1331,7 +1331,7 @@ SECURITY_STATUS SEC_ENTRY winpr_QuerySecurityContextToken(PCtxtHandle phContext,
 
 	if (IsSecurityStatusError(status))
 	{
-		WLog_WARN(TAG, "QuerySecurityContextToken status %s [%08X]",
+		WLog_WARN(TAG, "QuerySecurityContextToken status %s [0x%08"PRIX32"]",
 			  GetSecurityStatusString(status), status);
 	}
 
@@ -1361,7 +1361,7 @@ SECURITY_STATUS SEC_ENTRY winpr_SetContextAttributesW(PCtxtHandle phContext, ULO
 
 	if (IsSecurityStatusError(status))
 	{
-		WLog_WARN(TAG, "SetContextAttributesW status %s [%08X]",
+		WLog_WARN(TAG, "SetContextAttributesW status %s [0x%08"PRIX32"]",
 			  GetSecurityStatusString(status), status);
 	}
 
@@ -1391,7 +1391,7 @@ SECURITY_STATUS SEC_ENTRY winpr_SetContextAttributesA(PCtxtHandle phContext, ULO
 
 	if (IsSecurityStatusError(status))
 	{
-		WLog_WARN(TAG, "SetContextAttributesA status %s [%08X]",
+		WLog_WARN(TAG, "SetContextAttributesA status %s [0x%08"PRIX32"]",
 			  GetSecurityStatusString(status), status);
 	}
 
@@ -1421,7 +1421,7 @@ SECURITY_STATUS SEC_ENTRY winpr_RevertSecurityContext(PCtxtHandle phContext)
 
 	if (IsSecurityStatusError(status))
 	{
-		WLog_WARN(TAG, "RevertSecurityContext status %s [%08X]",
+		WLog_WARN(TAG, "RevertSecurityContext status %s [0x%08"PRIX32"]",
 			  GetSecurityStatusString(status), status);
 	}
 
@@ -1453,7 +1453,7 @@ SECURITY_STATUS SEC_ENTRY winpr_DecryptMessage(PCtxtHandle phContext, PSecBuffer
 
 	if (IsSecurityStatusError(status))
 	{
-		WLog_WARN(TAG, "DecryptMessage status %s [%08X]",
+		WLog_WARN(TAG, "DecryptMessage status %s [0x%08"PRIX32"]",
 			  GetSecurityStatusString(status), status);
 	}
 
@@ -1483,7 +1483,7 @@ SECURITY_STATUS SEC_ENTRY winpr_EncryptMessage(PCtxtHandle phContext, ULONG fQOP
 
 	if (status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "EncryptMessage status %s [%08X]",
+		WLog_ERR(TAG, "EncryptMessage status %s [0x%08"PRIX32"]",
 			 GetSecurityStatusString(status), status);
 	}
 
@@ -1513,7 +1513,7 @@ SECURITY_STATUS SEC_ENTRY winpr_MakeSignature(PCtxtHandle phContext, ULONG fQOP,
 
 	if (IsSecurityStatusError(status))
 	{
-		WLog_WARN(TAG, "MakeSignature status %s [%08X]",
+		WLog_WARN(TAG, "MakeSignature status %s [0x%08"PRIX32"]",
 			  GetSecurityStatusString(status), status);
 	}
 
@@ -1543,7 +1543,7 @@ SECURITY_STATUS SEC_ENTRY winpr_VerifySignature(PCtxtHandle phContext, PSecBuffe
 
 	if (IsSecurityStatusError(status))
 	{
-		WLog_WARN(TAG, "VerifySignature status %s [%08X]",
+		WLog_WARN(TAG, "VerifySignature status %s [0x%08"PRIX32"]",
 			  GetSecurityStatusString(status), status);
 	}
 

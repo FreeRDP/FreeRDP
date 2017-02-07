@@ -1,6 +1,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
+#include <winpr/ssl.h>
 
 #include <freerdp/assistance.h>
 
@@ -99,16 +100,16 @@ int test_msrsc_incident_file_type1()
 	printf("Username: %s\n", file->Username);
 	printf("LHTicket: %s\n", file->LHTicket);
 	printf("RCTicket: %s\n", file->RCTicket);
-	printf("RCTicketEncrypted: %d\n", file->RCTicketEncrypted);
+	printf("RCTicketEncrypted: %"PRId32"\n", file->RCTicketEncrypted);
 	printf("PassStub: %s\n", file->PassStub);
-	printf("DtStart: %d\n", file->DtStart);
-	printf("DtLength: %d\n", file->DtLength);
-	printf("LowSpeed: %d\n", file->LowSpeed);
+	printf("DtStart: %"PRIu32"\n", file->DtStart);
+	printf("DtLength: %"PRIu32"\n", file->DtLength);
+	printf("LowSpeed: %"PRId32"\n", file->LowSpeed);
 
 	printf("RASessionId: %s\n", file->RASessionId);
 	printf("RASpecificParams: %s\n", file->RASpecificParams);
 	printf("MachineAddress: %s\n", file->MachineAddress);
-	printf("MachinePort: %d\n", (int) file->MachinePort);
+	printf("MachinePort: %"PRIu32"\n", file->MachinePort);
 
 	status = freerdp_assistance_decrypt(file, TEST_MSRC_INCIDENT_PASSWORD_TYPE1);
 
@@ -153,16 +154,16 @@ int test_msrsc_incident_file_type2()
 	printf("Username: %s\n", file->Username);
 	printf("LHTicket: %s\n", file->LHTicket);
 	printf("RCTicket: %s\n", file->RCTicket);
-	printf("RCTicketEncrypted: %d\n", file->RCTicketEncrypted);
+	printf("RCTicketEncrypted: %"PRId32"\n", file->RCTicketEncrypted);
 	printf("PassStub: %s\n", file->PassStub);
-	printf("DtStart: %d\n", file->DtStart);
-	printf("DtLength: %d\n", file->DtLength);
-	printf("LowSpeed: %d\n", file->LowSpeed);
+	printf("DtStart: %"PRIu32"\n", file->DtStart);
+	printf("DtLength: %"PRIu32"\n", file->DtLength);
+	printf("LowSpeed: %"PRId32"\n", file->LowSpeed);
 
 	printf("RASessionId: %s\n", file->RASessionId);
 	printf("RASpecificParams: %s\n", file->RASpecificParams);
 	printf("MachineAddress: %s\n", file->MachineAddress);
-	printf("MachinePort: %d\n", (int) file->MachinePort);
+	printf("MachinePort: %"PRIu32"\n", file->MachinePort);
 
 	status = freerdp_assistance_decrypt(file, TEST_MSRC_INCIDENT_PASSWORD_TYPE2);
 
@@ -180,6 +181,8 @@ int test_msrsc_incident_file_type2()
 
 int TestCommonAssistance(int argc, char* argv[])
 {
+	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
+
 	if (test_msrsc_incident_file_type1() != 0)
 	{
 		printf("test_msrsc_incident_file_type1 failed\n");

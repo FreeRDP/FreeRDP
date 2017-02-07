@@ -25,7 +25,7 @@ int TestBufferPool(int argc, char* argv[])
 
 	if (BufferSize != DefaultSize)
 	{
-		printf("BufferPool_GetBufferSize failure: Actual: %d Expected: %d\n", BufferSize, DefaultSize);
+		printf("BufferPool_GetBufferSize failure: Actual: %d Expected: %"PRIu32"\n", BufferSize, DefaultSize);
 		return -1;
 	}
 
@@ -33,7 +33,7 @@ int TestBufferPool(int argc, char* argv[])
 
 	if (BufferSize != DefaultSize)
 	{
-		printf("BufferPool_GetBufferSize failure: Actual: %d Expected: %d\n", BufferSize, DefaultSize);
+		printf("BufferPool_GetBufferSize failure: Actual: %d Expected: %"PRIu32"\n", BufferSize, DefaultSize);
 		return -1;
 	}
 
@@ -41,7 +41,7 @@ int TestBufferPool(int argc, char* argv[])
 
 	if (BufferSize != 2048)
 	{
-		printf("BufferPool_GetBufferSize failure: Actual: %d Expected: %d\n", BufferSize, 2048);
+		printf("BufferPool_GetBufferSize failure: Actual: %d Expected: 2048\n", BufferSize);
 		return -1;
 	}
 
@@ -51,7 +51,7 @@ int TestBufferPool(int argc, char* argv[])
 
 	if (PoolSize != 2)
 	{
-		printf("BufferPool_GetPoolSize failure: Actual: %d Expected: %d\n", PoolSize, 2);
+		printf("BufferPool_GetPoolSize failure: Actual: %"PRIu32" Expected: 2\n", PoolSize);
 		return -1;
 	}
 

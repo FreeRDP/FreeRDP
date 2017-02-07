@@ -30,7 +30,7 @@ static BOOL compareRectangles(const RECTANGLE_16 *src1, const RECTANGLE_16 *src2
 	{
 		if (memcmp(src1, src2, sizeof(RECTANGLE_16)))
 		{
-			fprintf(stderr, "expecting rect %d (%d,%d-%d,%d) and have (%d,%d-%d,%d)\n",
+			fprintf(stderr, "expecting rect %d (%"PRIu16",%"PRIu16"-%"PRIu16",%"PRIu16") and have (%"PRIu16",%"PRIu16"-%"PRIu16",%"PRIu16")\n",
 					i, src2->left, src2->top, src2->right, src2->bottom,
 					src1->left, src1->top, src1->right, src1->bottom
 					);
@@ -710,7 +710,7 @@ static int test_norbert2_case(void) {
 	}
 
 	if (nbRects != 1) {
-		fprintf(stderr, "%s: Error 3 - expected nbRects == 1 but got %d\n", __FUNCTION__, nbRects);
+		fprintf(stderr, "%s: Error 3 - expected nbRects == 1 but got %"PRIu32"\n", __FUNCTION__, nbRects);
 		goto out;
 	}
 
@@ -730,7 +730,7 @@ static int test_norbert2_case(void) {
 	}
 
 	if (nbRects != 2) {
-		fprintf(stderr, "%s: Error 7 - expected nbRects == 2 but got %d\n", __FUNCTION__, nbRects);
+		fprintf(stderr, "%s: Error 7 - expected nbRects == 2 but got %"PRIu32"\n", __FUNCTION__, nbRects);
 		goto out;
 	}
 

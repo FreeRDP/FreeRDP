@@ -481,7 +481,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->RemoteAppNumIconCaches = 3;
 	settings->RemoteAppNumIconCacheEntries = 12;
 	settings->VirtualChannelChunkSize = CHANNEL_CHUNK_LENGTH;
-	settings->MultifragMaxRequestSize = 0xFFFF;
+	settings->MultifragMaxRequestSize = (flags & FREERDP_SETTINGS_SERVER_MODE) ?
+	                                    0 : 0xFFFF;
 	settings->GatewayUseSameCredentials = FALSE;
 	settings->GatewayBypassLocal = FALSE;
 	settings->GatewayRpcTransport = TRUE;
@@ -670,6 +671,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		CHECKED_STRDUP(GatewayUsername); /* 1987 */
 		CHECKED_STRDUP(GatewayPassword); /* 1988 */
 		CHECKED_STRDUP(GatewayDomain); /* 1989 */
+		CHECKED_STRDUP(ProxyHostname); /* 2016 */
 		CHECKED_STRDUP(RemoteApplicationName); /* 2113 */
 		CHECKED_STRDUP(RemoteApplicationIcon); /* 2114 */
 		CHECKED_STRDUP(RemoteApplicationProgram); /* 2115 */

@@ -153,7 +153,7 @@ static UINT printer_process_irp_write(PRINTER_DEVICE* printer_dev, IRP* irp)
 
 	if (error)
 	{
-		WLog_ERR(TAG, "printjob->Write failed with error %lu!", error);
+		WLog_ERR(TAG, "printjob->Write failed with error %"PRIu32"!", error);
 		return error;
 	}
 
@@ -188,7 +188,7 @@ static UINT printer_process_irp(PRINTER_DEVICE* printer_dev, IRP* irp)
 		case IRP_MJ_CREATE:
 			if ((error = printer_process_irp_create(printer_dev, irp)))
 			{
-				WLog_ERR(TAG, "printer_process_irp_create failed with error %lu!", error);
+				WLog_ERR(TAG, "printer_process_irp_create failed with error %"PRIu32"!", error);
 				return error;
 			}
 
@@ -197,7 +197,7 @@ static UINT printer_process_irp(PRINTER_DEVICE* printer_dev, IRP* irp)
 		case IRP_MJ_CLOSE:
 			if ((error = printer_process_irp_close(printer_dev, irp)))
 			{
-				WLog_ERR(TAG, "printer_process_irp_close failed with error %lu!", error);
+				WLog_ERR(TAG, "printer_process_irp_close failed with error %"PRIu32"!", error);
 				return error;
 			}
 
@@ -206,7 +206,7 @@ static UINT printer_process_irp(PRINTER_DEVICE* printer_dev, IRP* irp)
 		case IRP_MJ_WRITE:
 			if ((error = printer_process_irp_write(printer_dev, irp)))
 			{
-				WLog_ERR(TAG, "printer_process_irp_write failed with error %lu!", error);
+				WLog_ERR(TAG, "printer_process_irp_write failed with error %"PRIu32"!", error);
 				return error;
 			}
 
@@ -215,7 +215,7 @@ static UINT printer_process_irp(PRINTER_DEVICE* printer_dev, IRP* irp)
 		case IRP_MJ_DEVICE_CONTROL:
 			if ((error = printer_process_irp_device_control(printer_dev, irp)))
 			{
-				WLog_ERR(TAG, "printer_process_irp_device_control failed with error %lu!",
+				WLog_ERR(TAG, "printer_process_irp_device_control failed with error %"PRIu32"!",
 				         error);
 				return error;
 			}
@@ -237,7 +237,6 @@ static void* printer_thread_func(void* arg)
 	PRINTER_DEVICE* printer_dev = (PRINTER_DEVICE*) arg;
 	HANDLE obj[] = {printer_dev->event, printer_dev->stopEvent};
 	UINT error = CHANNEL_RC_OK;
-	freerdp_channel_init_thread_context(printer_dev->rdpcontext);
 
 	while (1)
 	{
@@ -246,7 +245,7 @@ static void* printer_thread_func(void* arg)
 		if (rc == WAIT_FAILED)
 		{
 			error = GetLastError();
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %lu!", error);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with error %"PRIu32"!", error);
 			break;
 		}
 
@@ -267,7 +266,7 @@ static void* printer_thread_func(void* arg)
 
 		if ((error = printer_process_irp(printer_dev, irp)))
 		{
-			WLog_ERR(TAG, "printer_process_irp failed with error %d!", error);
+			WLog_ERR(TAG, "printer_process_irp failed with error %"PRIu32"!", error);
 			break;
 		}
 	}
@@ -308,7 +307,7 @@ static UINT printer_free(DEVICE* device)
 	if (WaitForSingleObject(printer_dev->thread, INFINITE) == WAIT_FAILED)
 	{
 		error = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"", error);
 		return error;
 	}
 
@@ -442,7 +441,7 @@ UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 	if ((error = pEntryPoints->RegisterDevice(pEntryPoints->devman,
 	             (DEVICE*) printer_dev)))
 	{
-		WLog_ERR(TAG, "RegisterDevice failed with error %d!", error);
+		WLog_ERR(TAG, "RegisterDevice failed with error %"PRIu32"!", error);
 		goto error_out;
 	}
 
@@ -515,7 +514,7 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 		if ((error = printer_register(pEntryPoints, printer)))
 		{
-			WLog_ERR(TAG, "printer_register failed with error %lu!", error);
+			WLog_ERR(TAG, "printer_register failed with error %"PRIu32"!", error);
 			return error;
 		}
 	}
@@ -529,7 +528,7 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 			if ((error = printer_register(pEntryPoints, printer)))
 			{
-				WLog_ERR(TAG, "printer_register failed with error %lu!", error);
+				WLog_ERR(TAG, "printer_register failed with error %"PRIu32"!", error);
 				free(printers);
 				return error;
 			}

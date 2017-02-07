@@ -29,6 +29,7 @@
 #include <winpr/sspi.h>
 #include <winpr/ssl.h>
 #include <winpr/print.h>
+#include <winpr/crypto.h>
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>

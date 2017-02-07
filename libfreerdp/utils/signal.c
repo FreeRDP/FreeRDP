@@ -109,7 +109,7 @@ int freerdp_handle_signals(void)
 	sigset_t orig_set;
 	struct sigaction orig_sigaction;
 	struct sigaction fatal_sigaction;
-	WLog_INFO(TAG, "Registering signal hook...");
+	WLog_DBG(TAG, "Registering signal hook...");
 	sigfillset(&(fatal_sigaction.sa_mask));
 	sigdelset(&(fatal_sigaction.sa_mask), SIGCONT);
 	pthread_sigmask(SIG_BLOCK, &(fatal_sigaction.sa_mask), &orig_set);

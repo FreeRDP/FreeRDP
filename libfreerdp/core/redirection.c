@@ -91,13 +91,13 @@ static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t m
 
 	if ((length % 2) || length < 2 || length > maxLength)
 	{
-		WLog_ERR(TAG,  "rdp_redirection_read_string failure: invalid unicode string length: %lu", length);
+		WLog_ERR(TAG,  "rdp_redirection_read_string failure: invalid unicode string length: %"PRIu32"", length);
 		return FALSE;
 	}
 
 	if (Stream_GetRemainingLength(s) < length)
 	{
-		WLog_ERR(TAG,  "rdp_redirection_read_string failure: insufficient stream length (%lu bytes required)", length);
+		WLog_ERR(TAG,  "rdp_redirection_read_string failure: insufficient stream length (%"PRIu32" bytes required)", length);
 		return FALSE;
 	}
 
@@ -255,7 +255,7 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	Stream_Read_UINT32(s, redirection->sessionID); /* sessionID (4 bytes) */
 	Stream_Read_UINT32(s, redirection->flags); /* redirFlags (4 bytes) */
 
-	WLog_DBG(TAG, "flags: 0x%04X, redirFlags: 0x%04X length: %d, sessionID: 0x%08X",
+	WLog_DBG(TAG, "flags: 0x%04"PRIX16", redirFlags: 0x%08"PRIX32" length: %"PRIu16", sessionID: 0x%08"PRIX32"",
 			   flags, redirection->flags, length, redirection->sessionID);
 
 	rdp_print_redirection_flags(redirection->flags);
@@ -422,7 +422,7 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		if (!redirection->TargetNetAddresses)
 			return FALSE;
 
-		WLog_DBG(TAG, "TargetNetAddressesCount: %d", redirection->TargetNetAddressesCount);
+		WLog_DBG(TAG, "TargetNetAddressesCount: %"PRIu32"", redirection->TargetNetAddressesCount);
 
 		for (i = 0; i < (int) count; i++)
 		{

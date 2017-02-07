@@ -604,7 +604,7 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 			break;
 
 		default:
-			CommLog_Print(WLOG_WARN, "Unexpected fDtrControl value: %d\n",
+			CommLog_Print(WLOG_WARN, "Unexpected fDtrControl value: %"PRIu32"\n",
 			              lpDCB->fDtrControl);
 			return FALSE;
 	}
@@ -659,7 +659,7 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 			break;
 
 		default:
-			CommLog_Print(WLOG_WARN, "Unexpected fRtsControl value: %d\n",
+			CommLog_Print(WLOG_WARN, "Unexpected fRtsControl value: %"PRIu32"\n",
 			              lpDCB->fRtsControl);
 			return FALSE;
 	}
@@ -1301,7 +1301,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess,
 
 	if (dwDesiredAccess != (GENERIC_READ | GENERIC_WRITE))
 	{
-		CommLog_Print(WLOG_WARN, "unexpected access to the device: 0x%lX",
+		CommLog_Print(WLOG_WARN, "unexpected access to the device: 0x%08"PRIX32"",
 		              dwDesiredAccess);
 	}
 
@@ -1316,7 +1316,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess,
 
 	if (lpSecurityAttributes != NULL)
 	{
-		CommLog_Print(WLOG_WARN, "unexpected security attributes, nLength=%lu",
+		CommLog_Print(WLOG_WARN, "unexpected security attributes, nLength=%"PRIu32"",
 		              lpSecurityAttributes->nLength);
 	}
 
@@ -1348,7 +1348,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess,
 
 	if (dwFlagsAndAttributes != 0)
 	{
-		CommLog_Print(WLOG_WARN, "unexpected flags and attributes: 0x%lX",
+		CommLog_Print(WLOG_WARN, "unexpected flags and attributes: 0x%08"PRIX32"",
 		              dwFlagsAndAttributes);
 	}
 

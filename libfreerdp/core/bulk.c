@@ -27,7 +27,7 @@
 
 //#define WITH_BULK_DEBUG		1
 
-const char* bulk_get_compression_flags_string(UINT32 flags)
+static INLINE const char* bulk_get_compression_flags_string(UINT32 flags)
 {
 	flags &= BULK_COMPRESSION_FLAGS_MASK;
 
@@ -55,7 +55,7 @@ UINT32 bulk_compression_level(rdpBulk* bulk)
 {
 	rdpSettings* settings = bulk->context->settings;
 	bulk->CompressionLevel = (settings->CompressionLevel >= PACKET_COMPR_TYPE_RDP61) ?
-							 PACKET_COMPR_TYPE_RDP61 : settings->CompressionLevel;
+	                         PACKET_COMPR_TYPE_RDP61 : settings->CompressionLevel;
 	return bulk->CompressionLevel;
 }
 
@@ -66,7 +66,8 @@ UINT32 bulk_compression_max_size(rdpBulk* bulk)
 	return bulk->CompressionMaxSize;
 }
 
-int bulk_compress_validate(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags)
+static INLINE  int bulk_compress_validate(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize,
+        BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags)
 {
 	int status;
 	BYTE* _pSrcData = NULL;
@@ -87,13 +88,14 @@ int bulk_compress_validate(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE**
 
 	if (_DstSize != SrcSize)
 	{
-		WLog_DBG(TAG, "compression/decompression size mismatch: Actual: %d, Expected: %d", _DstSize, SrcSize);
+		WLog_DBG(TAG, "compression/decompression size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"",
+		         _DstSize, SrcSize);
 		return -1;
 	}
 
 	if (memcmp(_pDstData, pSrcData, SrcSize) != 0)
 	{
-		WLog_DBG(TAG, "compression/decompression input/output mismatch! flags: 0x%04X", _Flags);
+		WLog_DBG(TAG, "compression/decompression input/output mismatch! flags: 0x%08"PRIX32"", _Flags);
 #if 1
 		WLog_DBG(TAG, "Actual:");
 		winpr_HexDump(TAG, WLOG_DEBUG, _pDstData, SrcSize);
@@ -106,7 +108,8 @@ int bulk_compress_validate(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE**
 	return status;
 }
 
-int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32 flags)
+int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData,
+                    UINT32* pDstSize, UINT32 flags)
 {
 	UINT32 type;
 	int status = -1;
@@ -159,11 +162,12 @@ int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstD
 		CompressionRatio = metrics_write_bytes(metrics, UncompressedBytes, CompressedBytes);
 #ifdef WITH_BULK_DEBUG
 		{
-			WLog_DBG(TAG, "Decompress Type: %d Flags: %s (0x%04X) Compression Ratio: %f (%d / %d), Total: %f (%u / %u)",
-					 type, bulk_get_compression_flags_string(flags), flags,
-					 CompressionRatio, CompressedBytes, UncompressedBytes,
-					 metrics->TotalCompressionRatio, (UINT32) metrics->TotalCompressedBytes,
-					 (UINT32) metrics->TotalUncompressedBytes);
+			WLog_DBG(TAG,
+			         "Decompress Type: %"PRIu32" Flags: %s (0x%08"PRIX32") Compression Ratio: %f (%"PRIu32" / %"PRIu32"), Total: %f (%"PRIu64" / %"PRIu64")",
+			         type, bulk_get_compression_flags_string(flags), flags,
+			         CompressionRatio, CompressedBytes, UncompressedBytes,
+			         metrics->TotalCompressionRatio, metrics->TotalCompressedBytes,
+			         metrics->TotalUncompressedBytes);
 		}
 #endif
 	}
@@ -175,7 +179,8 @@ int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstD
 	return status;
 }
 
-int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags)
+int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize,
+                  UINT32* pFlags)
 {
 	int status = -1;
 	rdpMetrics* metrics;
@@ -197,7 +202,7 @@ int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstDat
 	bulk_compression_max_size(bulk);
 
 	if ((bulk->CompressionLevel == PACKET_COMPR_TYPE_8K) ||
-			(bulk->CompressionLevel == PACKET_COMPR_TYPE_64K))
+	    (bulk->CompressionLevel == PACKET_COMPR_TYPE_64K))
 	{
 		mppc_set_compression_level(bulk->mppcSend, bulk->CompressionLevel);
 		status = mppc_compress(bulk->mppcSend, pSrcData, SrcSize, ppDstData, pDstSize, pFlags);
@@ -222,11 +227,12 @@ int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstDat
 		CompressionRatio = metrics_write_bytes(metrics, UncompressedBytes, CompressedBytes);
 #ifdef WITH_BULK_DEBUG
 		{
-			WLog_DBG(TAG, "Compress Type: %d Flags: %s (0x%04X) Compression Ratio: %f (%d / %d), Total: %f (%u / %u)",
-					 bulk->CompressionLevel, bulk_get_compression_flags_string(*pFlags), *pFlags,
-					 CompressionRatio, CompressedBytes, UncompressedBytes,
-					 metrics->TotalCompressionRatio, (UINT32) metrics->TotalCompressedBytes,
-					 (UINT32) metrics->TotalUncompressedBytes);
+			WLog_DBG(TAG,
+			         "Compress Type: %"PRIu32" Flags: %s (0x%08"PRIX32") Compression Ratio: %f (%"PRIu32" / %"PRIu32"), Total: %f (%"PRIu64" / %"PRIu64")",
+			         bulk->CompressionLevel, bulk_get_compression_flags_string(*pFlags), *pFlags,
+			         CompressionRatio, CompressedBytes, UncompressedBytes,
+			         metrics->TotalCompressionRatio, metrics->TotalCompressedBytes,
+			         metrics->TotalUncompressedBytes);
 		}
 #endif
 	}

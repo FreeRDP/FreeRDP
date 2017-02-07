@@ -96,7 +96,7 @@ static INLINE UINT32 lzcnt_s(UINT32 x)
 	return __lzcnt(x);
 }
 
-int rfx_rlgr_decode(const BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 DstSize, int mode)
+int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 DstSize)
 {
 	int vk;
 	int run;
@@ -124,8 +124,8 @@ int rfx_rlgr_decode(const BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT3
 	kr = 1;
 	krp = kr << LSGR;
 
-	if ((mode != 1) && (mode != 3))
-		mode = 1;
+	if ((mode != RLGR1) && (mode != RLGR3))
+		mode = RLGR1;
 
 	if (!pSrcData || !SrcSize)
 		return -1;
@@ -387,7 +387,7 @@ int rfx_rlgr_decode(const BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT3
 				kr = krp >> LSGR;
 			}
 
-			if (mode == 1) /* RLGR1 */
+			if (mode == RLGR1) /* RLGR1 */
 			{
 				if (!code)
 				{
@@ -430,7 +430,7 @@ int rfx_rlgr_decode(const BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT3
 					pOutput++;
 				}
 			}
-			else if (mode == 3) /* RLGR3 */
+			else if (mode == RLGR3) /* RLGR3 */
 			{
 				nIdx = 0;
 
@@ -573,7 +573,7 @@ static void rfx_rlgr_code_gr(RFX_BITSTREAM* bs, int* krp, UINT32 val)
 	}
 }
 
-int rfx_rlgr_encode(RLGR_MODE mode, const INT16* data, int data_size, BYTE* buffer, int buffer_size)
+int rfx_rlgr_encode(RLGR_MODE mode, const INT16* data, UINT32 data_size, BYTE* buffer, UINT32 buffer_size)
 {
 	int k;
 	int kp;

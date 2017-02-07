@@ -1,0 +1,42 @@
+.TH winpr-hash 1 2017-01-11 "@FREERDP_VERSION_FULL@" "FreeRDP"
+.SH NAME
+winpr-hash \- NTLM hashing tool
+.SH SYNOPSIS
+.B winpr-hash
+\fB-u\fP username
+\fB-p\fP password
+[\fB-d\fP domain]
+[\fB-f\fP { \fIdefault\fP | sam }]
+[\fB-v\fP { \fI1\fP | 2 }]
+.SH DESCRIPTION
+.B winpr-hash
+is a small utility that can be used to create a NTLM hash from a username and password pair. The created hash can be outputed as plain hash or in SAM format.
+.SH OPTIONS
+.IP "-u username"
+The username to use.
+.IP "-p password"
+Password to use.
+.IP "-d domain"
+A optional parameter to specify the domain of the user.
+.IP "-f format"
+Specify the output format. The \fIdefault\fP outputs only the plain NTLM
+hash. The second output format available is \fIsam\fP which outputs the
+created hash in a format that it can be used in SAM file:
+
+user:domain::hash:::
+.IP "-v version"
+Version allows it to specify the NTLM version to use. The default is to use version 1. In case
+version 2 is used a domain needs to be specified.
+.SH EXAMPLES
+winpr-hash -u \fIuser\fP -p \fIpassword\fP -d \fIdomain\fP -f \fIsam\fP -v \fI2\fP
+
+Create a version \fI2\fP NTLM hash for \fIuser\fP with \fIdomain\fP and \fIpassword\fP and output it in \fIsam\fP format.
+.SH EXIT STATUS
+.TP
+.B 0
+Successful program execution.
+.TP
+.B 1
+Missing or invalid arguments.
+.SH AUTHOR
+FreeRDP <team@freerdp.com>

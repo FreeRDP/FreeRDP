@@ -456,7 +456,7 @@
 	bicolor_spin = 0; \
 		}
 
-int freerdp_bitmap_compress(char* srcData, int width, int height,
+int freerdp_bitmap_compress(const char* srcData, int width, int height,
 		wStream* s, int bpp, int byte_limit, int start_line, wStream* temp_s, int e)
 {
 	char *line;

@@ -60,7 +60,7 @@ static INLINE BOOL shadow_client_rdpgfx_new_surface(rdpShadowClient* client)
 
 	if (error)
 	{
-		WLog_ERR(TAG, "CreateSurface failed with error %lu", error);
+		WLog_ERR(TAG, "CreateSurface failed with error %"PRIu32"", error);
 		return FALSE;
 	}
 
@@ -68,7 +68,7 @@ static INLINE BOOL shadow_client_rdpgfx_new_surface(rdpShadowClient* client)
 
 	if (error)
 	{
-		WLog_ERR(TAG, "MapSurfaceToOutput failed with error %lu", error);
+		WLog_ERR(TAG, "MapSurfaceToOutput failed with error %"PRIu32"", error);
 		return FALSE;
 	}
 
@@ -85,7 +85,7 @@ static INLINE BOOL shadow_client_rdpgfx_release_surface(rdpShadowClient* client)
 
 	if (error)
 	{
-		WLog_ERR(TAG, "DeleteSurface failed with error %lu", error);
+		WLog_ERR(TAG, "DeleteSurface failed with error %"PRIu32"", error);
 		return FALSE;
 	}
 
@@ -106,7 +106,7 @@ static INLINE BOOL shadow_client_rdpgfx_reset_graphic(rdpShadowClient* client)
 
 	if (error)
 	{
-		WLog_ERR(TAG, "ResetGraphics failed with error %lu", error);
+		WLog_ERR(TAG, "ResetGraphics failed with error %"PRIu32"", error);
 		return FALSE;
 	}
 
@@ -237,7 +237,7 @@ static void shadow_client_message_free(wMessage* message)
 			break;
 
 		default:
-			WLog_ERR(TAG, "Unknown message id: %u", message->id);
+			WLog_ERR(TAG, "Unknown message id: %"PRIu32"", message->id);
 			free(message->wParam);
 			break;
 	}
@@ -342,7 +342,7 @@ static BOOL shadow_client_post_connect(freerdp_peer* peer)
 		settings->NSCodec =
 		    FALSE; /* NSCodec compressor does not support fragmentation yet */
 
-	WLog_INFO(TAG, "Client from %s is activated (%dx%d@%d)",
+	WLog_INFO(TAG, "Client from %s is activated (%"PRIu32"x%"PRIu32"@%"PRIu32")",
 	          peer->hostname, settings->DesktopWidth,
 	          settings->DesktopHeight, settings->ColorDepth);
 
@@ -350,7 +350,7 @@ static BOOL shadow_client_post_connect(freerdp_peer* peer)
 	if (shadow_client_recalc_desktop_size(client))
 	{
 		peer->update->DesktopResize(peer->update->context);
-		WLog_INFO(TAG, "Client from %s is resized (%dx%d@%d)",
+		WLog_INFO(TAG, "Client from %s is resized (%"PRIu32"x%"PRIu32"@%"PRIu32")",
 		          peer->hostname, settings->DesktopWidth,
 		          settings->DesktopHeight, settings->ColorDepth);
 	}
@@ -594,21 +594,19 @@ static BOOL shadow_client_surface_frame_acknowledge(rdpShadowClient* client,
         UINT32 frameId)
 {
 	shadow_client_common_frame_acknowledge(client, frameId);
+	/*
+	 * Reset queueDepth for legacy none RDPGFX acknowledge
+	 */
+	client->encoder->queueDepth = QUEUE_DEPTH_UNAVAILABLE;
 	return TRUE;
 }
 
 static UINT shadow_client_rdpgfx_frame_acknowledge(RdpgfxServerContext* context,
         RDPGFX_FRAME_ACKNOWLEDGE_PDU* frameAcknowledge)
 {
-	shadow_client_common_frame_acknowledge((rdpShadowClient*)context->custom,
-	                                       frameAcknowledge->frameId);
-	return CHANNEL_RC_OK;
-}
-static UINT shadow_client_rdpgfx_qoe_frame_acknowledge(RdpgfxServerContext*
-        context, RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU* qoeFrameAcknowledge)
-{
-	shadow_client_common_frame_acknowledge((rdpShadowClient*)context->custom,
-	                                       qoeFrameAcknowledge->frameId);
+	rdpShadowClient* client = (rdpShadowClient*)context->custom;
+	shadow_client_common_frame_acknowledge(client, frameAcknowledge->frameId);
+	client->encoder->queueDepth = frameAcknowledge->queueDepth;
 	return CHANNEL_RC_OK;
 }
 
@@ -714,17 +712,22 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client,
 	RDPGFX_START_FRAME_PDU cmdstart;
 	RDPGFX_END_FRAME_PDU cmdend;
 	SYSTEMTIME sTime;
+
 	context = (rdpContext*) client;
 	update = context->update;
 	settings = context->settings;
 	server = client->server;
 	encoder = client->encoder;
+
 	cmdstart.frameId = shadow_encoder_create_frame_id(encoder);
 	GetSystemTime(&sTime);
 	cmdstart.timestamp = sTime.wHour << 22 | sTime.wMinute << 16 |
 	                     sTime.wSecond << 10 | sTime.wMilliseconds;
+
 	cmdend.frameId = cmdstart.frameId;
+
 	cmd.surfaceId = 0;
+	cmd.codecId = 0;
 	cmd.contextId = 0;
 	cmd.format = PIXEL_FORMAT_BGRX32;
 	cmd.left = nXSrc;
@@ -733,6 +736,9 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client,
 	cmd.bottom = cmd.top + nHeight;
 	cmd.width = nWidth;
 	cmd.height = nHeight;
+	cmd.length = 0;
+	cmd.data = NULL;
+	cmd.extra = NULL;
 
 	if (settings->GfxH264)
 	{
@@ -766,7 +772,7 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client,
 
 		if (error)
 		{
-			WLog_ERR(TAG, "SurfaceFrameCommand failed with error %lu", error);
+			WLog_ERR(TAG, "SurfaceFrameCommand failed with error %"PRIu32"", error);
 			return FALSE;
 		}
 	}
@@ -1304,7 +1310,7 @@ static BOOL shadow_client_send_resize(rdpShadowClient* client,
 	EnterCriticalSection(&(client->lock));
 	region16_clear(&(client->invalidRegion));
 	LeaveCriticalSection(&(client->lock));
-	WLog_INFO(TAG, "Client from %s is resized (%dx%d@%d)",
+	WLog_INFO(TAG, "Client from %s is resized (%"PRIu32"x%"PRIu32"@%"PRIu32")",
 	          peer->hostname, settings->DesktopWidth, settings->DesktopHeight,
 	          settings->ColorDepth);
 	return TRUE;
@@ -1437,7 +1443,7 @@ static int shadow_client_subsystem_process_message(rdpShadowClient* client,
 			}
 
 		default:
-			WLog_ERR(TAG, "Unknown message id: %u", message->id);
+			WLog_ERR(TAG, "Unknown message id: %"PRIu32"", message->id);
 			break;
 	}
 
@@ -1454,7 +1460,6 @@ static void* shadow_client_thread(rdpShadowClient* client)
 	wMessage pointerAlphaMsg;
 	wMessage audioVolumeMsg;
 	HANDLE events[32];
-	HANDLE ClientEvent;
 	HANDLE ChannelEvent;
 	void* UpdateSubscriber;
 	HANDLE UpdateEvent;
@@ -1497,14 +1502,23 @@ static void* shadow_client_thread(rdpShadowClient* client)
 		goto out;
 
 	UpdateEvent = shadow_multiclient_getevent(UpdateSubscriber);
-	ClientEvent = peer->GetEventHandle(peer);
 	ChannelEvent = WTSVirtualChannelManagerGetEventHandle(client->vcm);
 
 	while (1)
 	{
 		nCount = 0;
 		events[nCount++] = UpdateEvent;
-		events[nCount++] = ClientEvent;
+		{
+			DWORD tmp = peer->GetEventHandles(peer, &events[nCount], 64 - nCount);
+
+			if (tmp == 0)
+			{
+				WLog_ERR(TAG, "Failed to get FreeRDP transport event handles");
+				break;
+			}
+
+			nCount += tmp;
+		}
 		events[nCount++] = ChannelEvent;
 		events[nCount++] = MessageQueue_Event(MsgQueue);
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
@@ -1559,14 +1573,13 @@ static void* shadow_client_thread(rdpShadowClient* client)
 			(void)shadow_multiclient_consume(UpdateSubscriber);
 		}
 
-		if (WaitForSingleObject(ClientEvent, 0) == WAIT_OBJECT_0)
+		if (!peer->CheckFileDescriptor(peer))
 		{
-			if (!peer->CheckFileDescriptor(peer))
-			{
-				WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
-				break;
-			}
-
+			WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
+			break;
+		}
+		else
+		{
 			if (WTSVirtualChannelManagerIsChannelJoined(client->vcm, "drdynvc"))
 			{
 				/* Dynamic channel status may have been changed after processing */
@@ -1587,8 +1600,6 @@ static void* shadow_client_thread(rdpShadowClient* client)
 					    !gfxstatus.gfxOpened)
 					{
 						client->rdpgfx->FrameAcknowledge = shadow_client_rdpgfx_frame_acknowledge;
-						client->rdpgfx->QoeFrameAcknowledge =
-						    shadow_client_rdpgfx_qoe_frame_acknowledge;
 						client->rdpgfx->CapsAdvertise = shadow_client_rdpgfx_caps_advertise;
 
 						if (!client->rdpgfx->Open(client->rdpgfx))

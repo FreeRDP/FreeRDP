@@ -400,7 +400,7 @@ out_parallel_name_error:
 
 	}
 
-	WLog_ERR(TAG, "unknown device type %d", device->Type);
+	WLog_ERR(TAG, "unknown device type %"PRIu32"", device->Type);
 	return NULL;
 }
 
@@ -1678,7 +1678,7 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 			break;
 
 		default:
-			WLog_ERR(TAG,  "freerdp_set_param_bool: unknown id %d (param = %d)", id, param);
+			WLog_ERR(TAG,  "freerdp_set_param_bool: unknown id %d (param = %"PRId32")", id, param);
 			return -1;
 	}
 
@@ -1849,6 +1849,12 @@ UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
 
 		case FreeRDP_GatewayCredentialsSource:
 			return settings->GatewayCredentialsSource;
+
+		case FreeRDP_ProxyType:
+			return settings->ProxyType;
+
+		case FreeRDP_ProxyPort:
+			return settings->ProxyPort;
 
 		case FreeRDP_RemoteAppNumIconCaches:
 			return settings->RemoteAppNumIconCaches;
@@ -2144,6 +2150,14 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 			settings->GatewayCredentialsSource = param;
 			break;
 
+		case FreeRDP_ProxyType:
+			settings->ProxyType = param;
+			break;
+
+		case FreeRDP_ProxyPort:
+			settings->ProxyPort = param;
+			break;
+
 		case FreeRDP_RemoteAppNumIconCaches:
 			settings->RemoteAppNumIconCaches = param;
 			break;
@@ -2301,7 +2315,7 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 			break;
 
 		default:
-			WLog_ERR(TAG, "freerdp_set_param_uint32: unknown id %d (param = %u)", id, param);
+			WLog_ERR(TAG, "freerdp_set_param_uint32: unknown id %d (param = %"PRIu32")", id, param);
 			return -1;
 	}
 
@@ -2333,7 +2347,7 @@ int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 param)
 			break;
 
 		default:
-			WLog_ERR(TAG,  "freerdp_set_param_uint64: unknown id %d (param = %u)", id, (UINT32) param);
+			WLog_ERR(TAG,  "freerdp_set_param_uint64: unknown id %d (param = %"PRIu64")", id, param);
 			return -1;
 	}
 
@@ -2472,6 +2486,9 @@ char* freerdp_get_param_string(rdpSettings* settings, int id)
 
 		case FreeRDP_GatewayDomain:
 			return settings->GatewayDomain;
+
+		case FreeRDP_ProxyHostname:
+			return settings->ProxyHostname;
 
 		case FreeRDP_RemoteApplicationName:
 			return settings->RemoteApplicationName;
@@ -2678,6 +2695,10 @@ int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 
 		case FreeRDP_GatewayDomain:
 			tmp = &settings->GatewayDomain;
+			break;
+
+		case FreeRDP_ProxyHostname:
+			tmp = &settings->ProxyHostname;
 			break;
 
 		case FreeRDP_RemoteApplicationName:

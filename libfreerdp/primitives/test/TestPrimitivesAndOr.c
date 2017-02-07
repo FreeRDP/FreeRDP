@@ -37,8 +37,10 @@ static BOOL test_and_32u_impl(const char* name, __andC_32u_t fkt,
 	{
 		if (dst[i] != (src[i] & val))
 		{
-			printf("AND %s FAIL[%d] 0x%08x&0x%08x=0x%08x, got 0x%08x\n",
-			       name, i, src[i], val, src[i] & val, dst[i]);
+
+			printf("AND %s FAIL[%"PRIuz"] 0x%08"PRIx32"&0x%08"PRIx32"=0x%08"PRIx32", got 0x%08"PRIx32"\n",
+				name, i, src[i], val, (src[i] & val), dst[i]);
+
 			return FALSE;
 		}
 	}
@@ -98,7 +100,7 @@ static BOOL check(const UINT32* src, const UINT32* dst, UINT32 size, UINT32 valu
 	{
 		if (dst[i] != (src[i] | value))
 		{
-			printf("OR-general general FAIL[%d] 0x%08x&0x%08x=0x%08x, got 0x%08x\n",
+			printf("OR-general general FAIL[%"PRIu32"] 0x%08"PRIx32"&0x%08"PRIx32"=0x%08"PRIx32", got 0x%08"PRIx32"\n",
 			       i, src[i], value, src[i] | value, dst[i]);
 			return FALSE;
 		}

@@ -683,7 +683,6 @@ static void* drive_thread_func(void* arg)
 	wMessage message;
 	DRIVE_DEVICE* drive = (DRIVE_DEVICE*) arg;
 	UINT error = CHANNEL_RC_OK;
-	freerdp_channel_init_thread_context(drive->rdpcontext);
 
 	while (1)
 	{
@@ -709,7 +708,7 @@ static void* drive_thread_func(void* arg)
 		if (irp)
 			if ((error = drive_process_irp(drive, irp)))
 			{
-				WLog_ERR(TAG, "drive_process_irp failed with error %lu!", error);
+				WLog_ERR(TAG, "drive_process_irp failed with error %"PRIu32"!", error);
 				break;
 			}
 	}
@@ -754,7 +753,7 @@ static UINT drive_free(DEVICE* device)
 	    && (WaitForSingleObject(drive->thread, INFINITE) == WAIT_FAILED))
 	{
 		error = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %lu", error);
+		WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"", error);
 		return error;
 	}
 
@@ -845,7 +844,7 @@ UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 		if ((error = pEntryPoints->RegisterDevice(pEntryPoints->devman,
 		             (DEVICE*) drive)))
 		{
-			WLog_ERR(TAG, "RegisterDevice failed with error %lu!", error);
+			WLog_ERR(TAG, "RegisterDevice failed with error %"PRIu32"!", error);
 			goto out_error;
 		}
 

@@ -24,10 +24,10 @@
 # (To distribute this file outside of CMake, substitute the full
 #  License text for the above reference.)
 
-if (UNIX)
+if (UNIX AND NOT ANDROID)
   find_package(PkgConfig QUIET)
   pkg_check_modules(_OPENSSL QUIET openssl)
-endif (UNIX)
+endif (UNIX AND NOT ANDROID)
 
 # http://www.slproweb.com/products/Win32OpenSSL.html
 SET(_OPENSSL_ROOT_HINTS
@@ -71,7 +71,15 @@ IF(WIN32)
   endif()
 ENDIF(WIN32)
 
-IF(WIN32 AND NOT CYGWIN)
+IF(ANDROID)
+    FIND_LIBRARY(OPENSSL_LIBRARIES
+      NAMES
+        "freerdp-openssl"
+      ${_OPENSSL_ROOT_HINTS_AND_PATHS}
+      PATH_SUFFIXES
+        "lib"
+    )
+ELSEIF(WIN32 AND NOT CYGWIN)
   # MINGW should go here too
   IF(MSVC)
     # /MD and /MDd are the standard values - if someone wants to use
@@ -230,7 +238,7 @@ ELSE(WIN32 AND NOT CYGWIN)
 
   SET(OPENSSL_LIBRARIES ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY})
 
-ENDIF(WIN32 AND NOT CYGWIN)
+ENDIF(ANDROID)
 
 function(from_hex HEX DEC)
   string(TOUPPER "${HEX}" HEX)

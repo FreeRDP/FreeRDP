@@ -62,11 +62,11 @@ int test_XCrushCompressBells()
 	DstSize = sizeof(OutputBuffer);
 	ZeroMemory(OutputBuffer, sizeof(OutputBuffer));
 	status = xcrush_compress(xcrush, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
-	printf("status: %d Flags: 0x%04X DstSize: %d\n", status, Flags, DstSize);
+	printf("status: %d Flags: 0x%08"PRIX32" DstSize: %"PRIu32"\n", status, Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
-		printf("XCrushCompressBells: output size mismatch: Actual: %d, Expected: %d\n", DstSize, expectedSize);
+		printf("XCrushCompressBells: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n", DstSize, expectedSize);
 		printf("Actual\n");
 		BitDump(__FUNCTION__, WLOG_INFO, pDstData, DstSize * 8, 0);
 		printf("Expected\n");
@@ -107,11 +107,11 @@ int test_XCrushCompressIsland()
 	DstSize = sizeof(OutputBuffer);
 	ZeroMemory(OutputBuffer, sizeof(OutputBuffer));
 	status = xcrush_compress(xcrush, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
-	printf("status: %d Flags: 0x%04X DstSize: %d\n", status, Flags, DstSize);
+	printf("status: %d Flags: 0x%08"PRIX32" DstSize: %"PRIu32"\n", status, Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
-		printf("XCrushCompressIsland: output size mismatch: Actual: %d, Expected: %d\n", DstSize, expectedSize);
+		printf("XCrushCompressIsland: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n", DstSize, expectedSize);
 		printf("Actual\n");
 		BitDump(__FUNCTION__, WLOG_INFO, pDstData, DstSize * 8, 0);
 		printf("Expected\n");

@@ -2,22 +2,37 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/crypto.h>
+#include <winpr/ssl.h>
 
 static const char* TEST_MD5_DATA = "test";
 static const BYTE* TEST_MD5_HASH = (BYTE*) "\x09\x8f\x6b\xcd\x46\x21\xd3\x73\xca\xde\x4e\x83\x26\x27\xb4\xf6";
 
 static BOOL test_crypto_hash_md5(void)
 {
+	BOOL result = FALSE;
 	BYTE hash[WINPR_MD5_DIGEST_LENGTH];
-	WINPR_MD5_CTX ctx;
+	WINPR_DIGEST_CTX* ctx;
 
-	if (!winpr_MD5_Init(&ctx))
+	if (!(ctx = winpr_Digest_New()))
+	{
+		fprintf(stderr, "%s: winpr_Digest_New failed\n", __FUNCTION__);
 		return FALSE;
-	if (!winpr_MD5_Update(&ctx, (BYTE*) TEST_MD5_DATA, strlen(TEST_MD5_DATA)))
-		return FALSE;
-	if (!winpr_MD5_Final(&ctx, hash, sizeof(hash)))
-		return FALSE;
-
+	}
+	if (!winpr_Digest_Init(ctx, WINPR_MD_MD5))
+	{
+		fprintf(stderr, "%s: winpr_Digest_Init failed\n", __FUNCTION__);
+		goto out;
+	}
+	if (!winpr_Digest_Update(ctx, (BYTE*) TEST_MD5_DATA, strlen(TEST_MD5_DATA)))
+	{
+		fprintf(stderr, "%s: winpr_Digest_Update failed\n", __FUNCTION__);
+		goto out;
+	}
+	if (!winpr_Digest_Final(ctx, hash, sizeof(hash)))
+	{
+		fprintf(stderr, "%s: winpr_Digest_Final failed\n", __FUNCTION__);
+		goto out;
+	}
 	if (memcmp(hash, TEST_MD5_HASH, WINPR_MD5_DIGEST_LENGTH) != 0)
 	{
 		char* actual;
@@ -31,10 +46,13 @@ static BOOL test_crypto_hash_md5(void)
 		free(actual);
 		free(expected);
 
-		return FALSE;
+		goto out;
 	}
 
-	return TRUE;
+	result = TRUE;
+out:
+	winpr_Digest_Free(ctx);
+	return result;
 }
 
 static const char* TEST_MD4_DATA = "test";
@@ -42,16 +60,30 @@ static const BYTE* TEST_MD4_HASH = (BYTE*) "\xdb\x34\x6d\x69\x1d\x7a\xcc\x4d\xc2
 
 static BOOL test_crypto_hash_md4(void)
 {
+	BOOL result = FALSE;
 	BYTE hash[WINPR_MD4_DIGEST_LENGTH];
-	WINPR_MD4_CTX ctx;
+	WINPR_DIGEST_CTX* ctx;
 
-	if (!winpr_MD4_Init(&ctx))
+	if (!(ctx = winpr_Digest_New()))
+	{
+		fprintf(stderr, "%s: winpr_Digest_New failed\n", __FUNCTION__);
 		return FALSE;
-	if (!winpr_MD4_Update(&ctx, (BYTE*) TEST_MD4_DATA, strlen(TEST_MD4_DATA)))
-		return FALSE;
-	if (!winpr_MD4_Final(&ctx, hash, sizeof(hash)))
-		return FALSE;
-
+	}
+	if (!winpr_Digest_Init(ctx, WINPR_MD_MD4))
+	{
+		fprintf(stderr, "%s: winpr_Digest_Init failed\n", __FUNCTION__);
+		goto out;
+	}
+	if (!winpr_Digest_Update(ctx, (BYTE*) TEST_MD4_DATA, strlen(TEST_MD4_DATA)))
+	{
+		fprintf(stderr, "%s: winpr_Digest_Update failed\n", __FUNCTION__);
+		goto out;
+	}
+	if (!winpr_Digest_Final(ctx, hash, sizeof(hash)))
+	{
+		fprintf(stderr, "%s: winpr_Digest_Final failed\n", __FUNCTION__);
+		goto out;
+	}
 	if (memcmp(hash, TEST_MD4_HASH, WINPR_MD4_DIGEST_LENGTH) != 0)
 	{
 		char* actual;
@@ -65,10 +97,13 @@ static BOOL test_crypto_hash_md4(void)
 		free(actual);
 		free(expected);
 
-		return FALSE;
+		goto out;
 	}
 
-	return TRUE;
+	result = TRUE;
+out:
+	winpr_Digest_Free(ctx);
+	return result;
 }
 
 static const char* TEST_SHA1_DATA = "test";
@@ -76,15 +111,30 @@ static const BYTE* TEST_SHA1_HASH = (BYTE*) "\xa9\x4a\x8f\xe5\xcc\xb1\x9b\xa6\x1
 
 static BOOL test_crypto_hash_sha1(void)
 {
+	BOOL result = FALSE;
 	BYTE hash[WINPR_SHA1_DIGEST_LENGTH];
-	WINPR_SHA1_CTX ctx;
+	WINPR_DIGEST_CTX* ctx;
 
-	if (!winpr_SHA1_Init(&ctx))
+	if (!(ctx = winpr_Digest_New()))
+	{
+		fprintf(stderr, "%s: winpr_Digest_New failed\n", __FUNCTION__);
 		return FALSE;
-	if (!winpr_SHA1_Update(&ctx, (BYTE*) TEST_SHA1_DATA, strlen(TEST_SHA1_DATA)))
-		return FALSE;
-	if (!winpr_SHA1_Final(&ctx, hash, sizeof(hash)))
-		return FALSE;
+	}
+	if (!winpr_Digest_Init(ctx, WINPR_MD_SHA1))
+	{
+		fprintf(stderr, "%s: winpr_Digest_Init failed\n", __FUNCTION__);
+		goto out;
+	}
+	if (!winpr_Digest_Update(ctx, (BYTE*) TEST_SHA1_DATA, strlen(TEST_SHA1_DATA)))
+	{
+		fprintf(stderr, "%s: winpr_Digest_Update failed\n", __FUNCTION__);
+		goto out;
+	}
+	if (!winpr_Digest_Final(ctx, hash, sizeof(hash)))
+	{
+		fprintf(stderr, "%s: winpr_Digest_Final failed\n", __FUNCTION__);
+		goto out;
+	}
 
 	if (memcmp(hash, TEST_SHA1_HASH, WINPR_MD5_DIGEST_LENGTH) != 0)
 	{
@@ -99,10 +149,13 @@ static BOOL test_crypto_hash_sha1(void)
 		free(actual);
 		free(expected);
 
-		return FALSE;
+		goto out;
 	}
 
-	return TRUE;
+	result = TRUE;
+out:
+	winpr_Digest_Free(ctx);
+	return result;
 }
 
 static const char* TEST_HMAC_MD5_DATA = "Hi There";
@@ -112,14 +165,30 @@ static const BYTE* TEST_HMAC_MD5_HASH = (BYTE*) "\x92\x94\x72\x7a\x36\x38\xbb\x1
 static BOOL test_crypto_hash_hmac_md5(void)
 {
 	BYTE hash[WINPR_MD5_DIGEST_LENGTH];
-	WINPR_HMAC_CTX ctx;
+	WINPR_HMAC_CTX* ctx;
+	BOOL result = FALSE;
 
-	if (!winpr_HMAC_Init(&ctx, WINPR_MD_MD5, TEST_HMAC_MD5_KEY, WINPR_MD5_DIGEST_LENGTH))
+	if (!(ctx = winpr_HMAC_New()))
+	{
+		fprintf(stderr, "%s: winpr_HMAC_New failed\n", __FUNCTION__);
 		return FALSE;
-	if (!winpr_HMAC_Update(&ctx, (BYTE*) TEST_HMAC_MD5_DATA, strlen(TEST_HMAC_MD5_DATA)))
-		return FALSE;
-	if (!winpr_HMAC_Final(&ctx, hash, sizeof(hash)))
-		return FALSE;
+	}
+
+	if (!winpr_HMAC_Init(ctx, WINPR_MD_MD5, TEST_HMAC_MD5_KEY, WINPR_MD5_DIGEST_LENGTH))
+	{
+		fprintf(stderr, "%s: winpr_HMAC_Init failed\n", __FUNCTION__);
+		goto out;
+	}
+	if (!winpr_HMAC_Update(ctx, (BYTE*) TEST_HMAC_MD5_DATA, strlen(TEST_HMAC_MD5_DATA)))
+	{
+		fprintf(stderr, "%s: winpr_HMAC_Update failed\n", __FUNCTION__);
+		goto out;
+	}
+	if (!winpr_HMAC_Final(ctx, hash, sizeof(hash)))
+	{
+		fprintf(stderr, "%s: winpr_HMAC_Final failed\n", __FUNCTION__);
+		goto out;
+	}
 
 	if (memcmp(hash, TEST_HMAC_MD5_HASH, WINPR_MD5_DIGEST_LENGTH) != 0)
 	{
@@ -134,10 +203,13 @@ static BOOL test_crypto_hash_hmac_md5(void)
 		free(actual);
 		free(expected);
 
-		return FALSE;
+		goto out;
 	}
 
-	return TRUE;
+	result = TRUE;
+out:
+	winpr_HMAC_Free(ctx);
+	return result;
 }
 
 static const char* TEST_HMAC_SHA1_DATA = "Hi There";
@@ -147,14 +219,30 @@ static const BYTE* TEST_HMAC_SHA1_HASH = (BYTE*) "\xb6\x17\x31\x86\x55\x05\x72\x
 static BOOL test_crypto_hash_hmac_sha1(void)
 {
 	BYTE hash[WINPR_SHA1_DIGEST_LENGTH];
-	WINPR_HMAC_CTX ctx;
+	WINPR_HMAC_CTX* ctx;
+	BOOL result = FALSE;
 
-	if (!winpr_HMAC_Init(&ctx, WINPR_MD_SHA1, TEST_HMAC_SHA1_KEY, WINPR_SHA1_DIGEST_LENGTH))
+	if (!(ctx = winpr_HMAC_New()))
+	{
+		fprintf(stderr, "%s: winpr_HMAC_New failed\n", __FUNCTION__);
 		return FALSE;
-	if (!winpr_HMAC_Update(&ctx, (BYTE*) TEST_HMAC_SHA1_DATA, strlen(TEST_HMAC_SHA1_DATA)))
-		return FALSE;
-	if (!winpr_HMAC_Final(&ctx, hash, sizeof(hash)))
-		return FALSE;
+	}
+
+	if (!winpr_HMAC_Init(ctx, WINPR_MD_SHA1, TEST_HMAC_SHA1_KEY, WINPR_SHA1_DIGEST_LENGTH))
+	{
+		fprintf(stderr, "%s: winpr_HMAC_Init failed\n", __FUNCTION__);
+		goto out;
+	}
+	if (!winpr_HMAC_Update(ctx, (BYTE*) TEST_HMAC_SHA1_DATA, strlen(TEST_HMAC_SHA1_DATA)))
+	{
+		fprintf(stderr, "%s: winpr_HMAC_Update failed\n", __FUNCTION__);
+		goto out;
+	}
+	if (!winpr_HMAC_Final(ctx, hash, sizeof(hash)))
+	{
+		fprintf(stderr, "%s: winpr_HMAC_Final failed\n", __FUNCTION__);
+		goto out;
+	}
 
 	if (memcmp(hash, TEST_HMAC_SHA1_HASH, WINPR_SHA1_DIGEST_LENGTH) != 0)
 	{
@@ -169,14 +257,19 @@ static BOOL test_crypto_hash_hmac_sha1(void)
 		free(actual);
 		free(expected);
 
-		return FALSE;
+		goto out;
 	}
 
-	return TRUE;
+	result = TRUE;
+out:
+	winpr_HMAC_Free(ctx);
+	return result;
 }
 
 int TestCryptoHash(int argc, char* argv[])
 {
+	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
+
 	if (!test_crypto_hash_md5())
 		return -1;
 

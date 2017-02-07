@@ -20,7 +20,7 @@ import com.freerdp.freerdpcore.services.LibFreeRDP;
 
 public class SessionState implements Parcelable
 {
-	private int instance;
+	private long instance;
 	private BookmarkBase bookmark;
 	private Uri openUri;
 	private BitmapDrawable surface;
@@ -28,7 +28,7 @@ public class SessionState implements Parcelable
 	
 	public SessionState(Parcel parcel)
 	{
-		instance = parcel.readInt();
+		instance = parcel.readLong();
 		bookmark = parcel.readParcelable(null);
 		openUri = parcel.readParcelable(null);
 
@@ -36,7 +36,7 @@ public class SessionState implements Parcelable
 		surface = new BitmapDrawable(bitmap);
 	}
 	
-	public SessionState(int instance, BookmarkBase bookmark)
+	public SessionState(long instance, BookmarkBase bookmark)
 	{
 		this.instance = instance;
 		this.bookmark = bookmark;
@@ -44,7 +44,7 @@ public class SessionState implements Parcelable
 		this.uiEventListener = null;
 	}
 	
-	public SessionState(int instance, Uri openUri)
+	public SessionState(long instance, Uri openUri)
 	{
 		this.instance = instance;
 		this.bookmark = null;
@@ -61,7 +61,7 @@ public class SessionState implements Parcelable
 		LibFreeRDP.connect(instance);
 	}
 	
-	public int getInstance() {
+	public long getInstance() {
 		return instance;
 	}
 	
@@ -108,7 +108,7 @@ public class SessionState implements Parcelable
 
 	@Override
 	public void writeToParcel(Parcel out, int flags) {		
-		out.writeInt(instance);
+		out.writeLong(instance);
 		out.writeParcelable(bookmark, flags);
 		out.writeParcelable(openUri, flags);
 		out.writeParcelable(surface.getBitmap(), flags);

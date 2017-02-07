@@ -96,7 +96,7 @@ static BOOL update_pointer_system(rdpContext* context,
 			break;
 
 		default:
-			WLog_ERR(TAG,  "Unknown system pointer type (0x%08X)", pointer_system->type);
+			WLog_ERR(TAG,  "Unknown system pointer type (0x%08"PRIX32")", pointer_system->type);
 	}
 
 	return TRUE;
@@ -237,7 +237,7 @@ const rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache,
 
 	if (index >= pointer_cache->cacheSize)
 	{
-		WLog_ERR(TAG,  "invalid pointer index:%d", index);
+		WLog_ERR(TAG,  "invalid pointer index:%"PRIu32"", index);
 		return NULL;
 	}
 
@@ -252,7 +252,7 @@ BOOL pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index,
 
 	if (index >= pointer_cache->cacheSize)
 	{
-		WLog_ERR(TAG,  "invalid pointer index:%d", index);
+		WLog_ERR(TAG,  "invalid pointer index:%"PRIu32"", index);
 		return FALSE;
 	}
 

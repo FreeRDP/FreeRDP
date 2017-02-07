@@ -346,7 +346,7 @@ static CLIPRDR_FORMAT* xf_cliprdr_parse_server_format_list(BYTE* data,
 
 	if (*numFormats > MAX_CLIPBOARD_FORMATS)
 	{
-		WLog_ERR(TAG, "unexpectedly large number of formats: %u", *numFormats);
+		WLog_ERR(TAG, "unexpectedly large number of formats: %"PRIu32"", *numFormats);
 		goto error;
 	}
 
@@ -373,7 +373,7 @@ static CLIPRDR_FORMAT* xf_cliprdr_parse_server_format_list(BYTE* data,
 
 		if (formatNameLength == Stream_GetRemainingLength(s))
 		{
-			WLog_ERR(TAG, "missing terminating null byte, %zu bytes left to read",
+			WLog_ERR(TAG, "missing terminating null byte, %"PRIuz" bytes left to read",
 			         formatNameLength);
 			goto error;
 		}
@@ -427,8 +427,8 @@ static CLIPRDR_FORMAT* xf_cliprdr_get_raw_server_formats(xfClipboard* clipboard,
 	else
 	{
 		WLog_ERR(TAG,
-		         "failed to retrieve raw format list: data=%p, length=%lu, format=%d, type=%d (expected=%d)",
-		         data, length, format, type, clipboard->raw_format_list_atom);
+		         "failed to retrieve raw format list: data=%p, length=%lu, format=%d, type=%lu (expected=%lu)",
+		         (void*) data, length, format, (unsigned long) type, (unsigned long) clipboard->raw_format_list_atom);
 	}
 
 	if (data)
@@ -457,13 +457,13 @@ static CLIPRDR_FORMAT* xf_cliprdr_get_formats_from_targets(
 	{
 		if (!data)
 		{
-			WLog_ERR(TAG, "XGetWindowProperty set length = %d but data is NULL", length);
+			WLog_ERR(TAG, "XGetWindowProperty set length = %lu but data is NULL", length);
 			goto out;
 		}
 
 		if (!(formats = (CLIPRDR_FORMAT*) calloc(length, sizeof(CLIPRDR_FORMAT))))
 		{
-			WLog_ERR(TAG, "failed to allocate %d CLIPRDR_FORMAT structs", length);
+			WLog_ERR(TAG, "failed to allocate %lu CLIPRDR_FORMAT structs", length);
 			goto out;
 		}
 	}
@@ -908,10 +908,12 @@ static BOOL xf_cliprdr_process_property_notify(xfClipboard* clipboard,
         XEvent* xevent)
 {
 	xfCliprdrFormat* format;
-	xfContext* xfc = clipboard->xfc;
+	xfContext* xfc = NULL;
 
 	if (!clipboard)
 		return TRUE;
+
+	xfc = clipboard->xfc;
 
 	if (xevent->xproperty.atom != clipboard->property_atom)
 		return FALSE; /* Not cliprdr-related */
@@ -1036,7 +1038,7 @@ UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard)
 	{
 		if (!(formats = (CLIPRDR_FORMAT*) calloc(numFormats, sizeof(CLIPRDR_FORMAT))))
 		{
-			WLog_ERR(TAG, "failed to allocate %d CLIPRDR_FORMAT structs", numFormats);
+			WLog_ERR(TAG, "failed to allocate %"PRIu32" CLIPRDR_FORMAT structs", numFormats);
 			return CHANNEL_RC_NO_MEMORY;
 		}
 	}

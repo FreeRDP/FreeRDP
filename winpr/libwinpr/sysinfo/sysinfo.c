@@ -25,7 +25,11 @@
 #include <winpr/sysinfo.h>
 #include <winpr/platform.h>
 
-#if defined(__linux__) && defined(__GNUC__)
+#if defined(ANDROID)
+#include "cpufeatures/cpu-features.h"
+#endif
+
+#if defined(__linux__)
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -72,19 +76,49 @@ defined(__OpenBSD__) || defined(__DragonFly__)
 #include <sys/sysctl.h>
 #endif
 
-static DWORD GetProcessorArchitecture()
+static DWORD GetProcessorArchitecture(void)
 {
 	DWORD cpuArch = PROCESSOR_ARCHITECTURE_UNKNOWN;
-#if defined(_M_AMD64)
-	cpuArch = PROCESSOR_ARCHITECTURE_AMD64;
-#elif defined(_M_IX86)
-	cpuArch = PROCESSOR_ARCHITECTURE_INTEL;
+#if defined(ANDROID)
+	AndroidCpuFamily family = android_getCpuFamily();
+
+	switch (family)
+	{
+	    case ANDROID_CPU_FAMILY_ARM:
+		    return PROCESSOR_ARCHITECTURE_ARM;
+
+	    case ANDROID_CPU_FAMILY_X86:
+		    return PROCESSOR_ARCHITECTURE_INTEL;
+
+	    case ANDROID_CPU_FAMILY_MIPS:
+		    return PROCESSOR_ARCHITECTURE_MIPS;
+
+	    case ANDROID_CPU_FAMILY_ARM64:
+		    return PROCESSOR_ARCHITECTURE_ARM64;
+
+	    case ANDROID_CPU_FAMILY_X86_64:
+		    return PROCESSOR_ARCHITECTURE_AMD64;
+
+	    case ANDROID_CPU_FAMILY_MIPS64:
+		    return PROCESSOR_ARCHITECTURE_MIPS64;
+
+	    default:
+		    return PROCESSOR_ARCHITECTURE_UNKNOWN;
+	}
+
 #elif defined(_M_ARM)
 	cpuArch = PROCESSOR_ARCHITECTURE_ARM;
-#elif defined(_M_IA64)
-	cpuArch = PROCESSOR_ARCHITECTURE_IA64;
+#elif defined(_M_IX86)
+	cpuArch = PROCESSOR_ARCHITECTURE_INTEL;
+#elif defined(_M_MIPS64)
+	/* Needs to be before __mips__ since the compiler defines both */
+	cpuArch = PROCESSOR_ARCHITECTURE_MIPS64;
 #elif defined(_M_MIPS)
 	cpuArch = PROCESSOR_ARCHITECTURE_MIPS;
+#elif defined(_M_ARM64)
+	cpuArch = PROCESSOR_ARCHITECTURE_ARM64;
+#elif defined(_M_AMD64)
+	cpuArch = PROCESSOR_ARCHITECTURE_AMD64;
 #elif defined(_M_PPC)
 	cpuArch = PROCESSOR_ARCHITECTURE_PPC;
 #elif defined(_M_ALPHA)
@@ -93,11 +127,13 @@ static DWORD GetProcessorArchitecture()
 	return cpuArch;
 }
 
-static DWORD GetNumberOfProcessors()
+static DWORD GetNumberOfProcessors(void)
 {
 	DWORD numCPUs = 1;
+#if defined(ANDROID)
+	return android_getCpuCount();
 	/* TODO: iOS */
-#if defined(__linux__) || defined(__sun) || defined(_AIX)
+#elif defined(__linux__) || defined(__sun) || defined(_AIX)
 	numCPUs = (DWORD) sysconf(_SC_NPROCESSORS_ONLN);
 #elif defined(__MACOSX__) || \
 	defined(__FreeBSD__) || defined(__NetBSD__) || \
@@ -130,19 +166,21 @@ static DWORD GetNumberOfProcessors()
 	return numCPUs;
 }
 
-static DWORD GetSystemPageSize()
+static DWORD GetSystemPageSize(void)
 {
 	DWORD dwPageSize = 0;
 	long sc_page_size = -1;
-
 #if defined(_SC_PAGESIZE)
+
 	if (sc_page_size < 0)
 		sc_page_size = sysconf(_SC_PAGESIZE);
-#endif
 
+#endif
 #if defined(_SC_PAGE_SIZE)
+
 	if (sc_page_size < 0)
 		sc_page_size = sysconf(_SC_PAGE_SIZE);
+
 #endif
 
 	if (sc_page_size > 0)
@@ -199,6 +237,7 @@ void GetSystemTime(LPSYSTEMTIME lpSystemTime)
 
 BOOL SetSystemTime(CONST SYSTEMTIME* lpSystemTime)
 {
+	/* TODO: Implement */
 	return FALSE;
 }
 
@@ -227,6 +266,7 @@ VOID GetLocalTime(LPSYSTEMTIME lpSystemTime)
 
 BOOL SetLocalTime(CONST SYSTEMTIME* lpSystemTime)
 {
+	/* TODO: Implement */
 	return FALSE;
 }
 
@@ -241,8 +281,10 @@ VOID GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime)
 	lpSystemTimeAsFileTime->dwHighDateTime = time64.HighPart;
 }
 
-BOOL GetSystemTimeAdjustment(PDWORD lpTimeAdjustment, PDWORD lpTimeIncrement, PBOOL lpTimeAdjustmentDisabled)
+BOOL GetSystemTimeAdjustment(PDWORD lpTimeAdjustment, PDWORD lpTimeIncrement,
+                             PBOOL lpTimeAdjustmentDisabled)
 {
+	/* TODO: Implement */
 	return FALSE;
 }
 
@@ -283,9 +325,10 @@ DWORD GetTickCount(void)
 BOOL GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 {
 #ifdef _UWP
+
 	/* Windows 10 Version Info */
 	if ((lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOA)) ||
-		(lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOEXA)))
+	    (lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOEXA)))
 	{
 		lpVersionInformation->dwMajorVersion = 10;
 		lpVersionInformation->dwMinorVersion = 0;
@@ -305,10 +348,12 @@ BOOL GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 
 		return TRUE;
 	}
+
 #else
+
 	/* Windows 7 SP1 Version Info */
 	if ((lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOA)) ||
-		(lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOEXA)))
+	    (lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOEXA)))
 	{
 		lpVersionInformation->dwMajorVersion = 6;
 		lpVersionInformation->dwMinorVersion = 1;
@@ -328,8 +373,8 @@ BOOL GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 
 		return TRUE;
 	}
-#endif
 
+#endif
 	return FALSE;
 }
 
@@ -356,7 +401,7 @@ BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 	dot = strchr(hostname, '.');
 
 	if (dot)
-		length = (int) (dot - hostname);
+		length = (int)(dot - hostname);
 
 	if (*lpnSize <= (DWORD) length)
 	{
@@ -371,7 +416,6 @@ BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 	CopyMemory(lpBuffer, hostname, length);
 	lpBuffer[length] = '\0';
 	*lpnSize = length;
-
 	return TRUE;
 }
 
@@ -390,13 +434,13 @@ BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD l
 
 	switch (NameType)
 	{
-		case ComputerNameDnsHostname:
-		case ComputerNameDnsDomain:
-		case ComputerNameDnsFullyQualified:
-		case ComputerNamePhysicalDnsHostname:
-		case ComputerNamePhysicalDnsDomain:
-		case ComputerNamePhysicalDnsFullyQualified:
-			if (*lpnSize <= (DWORD) length)
+	    case ComputerNameDnsHostname:
+	    case ComputerNameDnsDomain:
+	    case ComputerNameDnsFullyQualified:
+	    case ComputerNamePhysicalDnsHostname:
+	    case ComputerNamePhysicalDnsDomain:
+	    case ComputerNamePhysicalDnsFullyQualified:
+		    if (*lpnSize <= (DWORD) length)
 			{
 				*lpnSize = length + 1;
 				SetLastError(ERROR_MORE_DATA);
@@ -408,10 +452,10 @@ BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD l
 
 			CopyMemory(lpBuffer, hostname, length);
 			lpBuffer[length] = '\0';
-			break;
+		    break;
 
-		default:
-			return FALSE;
+	    default:
+		    return FALSE;
 	}
 
 	return TRUE;
@@ -493,31 +537,31 @@ ULONGLONG winpr_GetTickCount64(void)
 #define E_BITS_AVX      (E_BIT_XMM|E_BIT_YMM)
 
 static void cpuid(
-	unsigned info,
-	unsigned* eax,
-	unsigned* ebx,
-	unsigned* ecx,
-	unsigned* edx)
+    unsigned info,
+    unsigned* eax,
+    unsigned* ebx,
+    unsigned* ecx,
+    unsigned* edx)
 {
 #ifdef __GNUC__
 	*eax = *ebx = *ecx = *edx = 0;
 	__asm volatile
 	(
-		/* The EBX (or RBX register on x86_64) is used for the PIC base address
+	    /* The EBX (or RBX register on x86_64) is used for the PIC base address
 		 * and must not be corrupted by our inline assembly.
 		 */
 #ifdef _M_IX86
-		"mov %%ebx, %%esi;"
-		"cpuid;"
-		"xchg %%ebx, %%esi;"
+	    "mov %%ebx, %%esi;"
+	    "cpuid;"
+	    "xchg %%ebx, %%esi;"
 #else
-		"mov %%rbx, %%rsi;"
-		"cpuid;"
-		"xchg %%rbx, %%rsi;"
+	    "mov %%rbx, %%rsi;"
+	    "cpuid;"
+	    "xchg %%rbx, %%rsi;"
 #endif
-	: "=a"(*eax), "=S"(*ebx), "=c"(*ecx), "=d"(*edx)
-			: "0"(info)
-		);
+	    : "=a"(*eax), "=S"(*ebx), "=c"(*ecx), "=d"(*edx)
+	    : "0"(info)
+	);
 #elif defined(_MSC_VER)
 	int a[4];
 	__cpuid(a, info);
@@ -595,86 +639,98 @@ static unsigned GetARMCPUCaps(void)
 BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 {
 	BOOL ret = FALSE;
-#ifdef _M_ARM
-#ifdef __linux__
-	unsigned caps;
-	caps = GetARMCPUCaps();
+#if defined(ANDROID)
+	const uint64_t features = android_getCpuFeatures();
 
 	switch (ProcessorFeature)
 	{
-		case PF_ARM_NEON_INSTRUCTIONS_AVAILABLE:
-		case PF_ARM_NEON:
-			if (caps & HWCAP_NEON)
+	    case PF_ARM_NEON_INSTRUCTIONS_AVAILABLE:
+	    case PF_ARM_NEON:
+		    return features & ANDROID_CPU_ARM_FEATURE_NEON;
+
+	    default:
+		    return FALSE;
+	}
+
+#elif defined(_M_ARM)
+#ifdef __linux__
+	const unsigned caps = GetARMCPUCaps();
+
+	switch (ProcessorFeature)
+	{
+	    case PF_ARM_NEON_INSTRUCTIONS_AVAILABLE:
+	    case PF_ARM_NEON:
+		    if (caps & HWCAP_NEON)
 				ret = TRUE;
 
-			break;
+		    break;
 
-		case PF_ARM_THUMB:
-			if (caps & HWCAP_THUMB)
+	    case PF_ARM_THUMB:
+		    if (caps & HWCAP_THUMB)
 				ret = TRUE;
 
-		case PF_ARM_VFP_32_REGISTERS_AVAILABLE:
-			if (caps & HWCAP_VFPD32)
+	    case PF_ARM_VFP_32_REGISTERS_AVAILABLE:
+		    if (caps & HWCAP_VFPD32)
 				ret = TRUE;
 
-		case PF_ARM_DIVIDE_INSTRUCTION_AVAILABLE:
-			if ((caps & HWCAP_IDIVA) || (caps & HWCAP_IDIVT))
+	    case PF_ARM_DIVIDE_INSTRUCTION_AVAILABLE:
+		    if ((caps & HWCAP_IDIVA) || (caps & HWCAP_IDIVT))
 				ret = TRUE;
 
-		case PF_ARM_VFP3:
-			if (caps & HWCAP_VFPv3)
+	    case PF_ARM_VFP3:
+		    if (caps & HWCAP_VFPv3)
 				ret = TRUE;
 
-			break;
+		    break;
 
-		case PF_ARM_JAZELLE:
-			if (caps & HWCAP_JAVA)
+	    case PF_ARM_JAZELLE:
+		    if (caps & HWCAP_JAVA)
 				ret = TRUE;
 
-			break;
+		    break;
 
-		case PF_ARM_DSP:
-			if (caps & HWCAP_EDSP)
+	    case PF_ARM_DSP:
+		    if (caps & HWCAP_EDSP)
 				ret = TRUE;
 
-			break;
+		    break;
 
-		case PF_ARM_MPU:
-			if (caps & HWCAP_EDSP)
+	    case PF_ARM_MPU:
+		    if (caps & HWCAP_EDSP)
 				ret = TRUE;
 
-			break;
+		    break;
 
-		case PF_ARM_THUMB2:
-			if ((caps & HWCAP_IDIVT) || (caps & HWCAP_VFPv4))
+	    case PF_ARM_THUMB2:
+		    if ((caps & HWCAP_IDIVT) || (caps & HWCAP_VFPv4))
 				ret = TRUE;
 
-			break;
+		    break;
 
-		case PF_ARM_T2EE:
-			if (caps & HWCAP_THUMBEE)
+	    case PF_ARM_T2EE:
+		    if (caps & HWCAP_THUMBEE)
 				ret = TRUE;
 
-			break;
+		    break;
 
-		case PF_ARM_INTEL_WMMX:
-			if (caps & HWCAP_IWMMXT)
+	    case PF_ARM_INTEL_WMMX:
+		    if (caps & HWCAP_IWMMXT)
 				ret = TRUE;
 
-			break;
+		    break;
 
-		default:
-			break;
+	    default:
+		    break;
 	}
 
 #elif defined(__APPLE__) // __linux__
 
 	switch (ProcessorFeature)
 	{
-		case PF_ARM_NEON_INSTRUCTIONS_AVAILABLE:
-		case PF_ARM_NEON:
-			ret = TRUE;
-			break;
+	    case PF_ARM_NEON_INSTRUCTIONS_AVAILABLE:
+	    case PF_ARM_NEON:
+		    ret = TRUE;
+		    break;
 	}
 
 #endif // __linux__
@@ -685,38 +741,38 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 
 	switch (ProcessorFeature)
 	{
-		case PF_MMX_INSTRUCTIONS_AVAILABLE:
-			if (d & D_BIT_MMX)
+	    case PF_MMX_INSTRUCTIONS_AVAILABLE:
+		    if (d & D_BIT_MMX)
 				ret = TRUE;
 
-			break;
+		    break;
 
-		case PF_XMMI_INSTRUCTIONS_AVAILABLE:
-			if (d & D_BIT_SSE)
+	    case PF_XMMI_INSTRUCTIONS_AVAILABLE:
+		    if (d & D_BIT_SSE)
 				ret = TRUE;
 
-			break;
+		    break;
 
-		case PF_XMMI64_INSTRUCTIONS_AVAILABLE:
-			if (d & D_BIT_SSE2)
+	    case PF_XMMI64_INSTRUCTIONS_AVAILABLE:
+		    if (d & D_BIT_SSE2)
 				ret = TRUE;
 
-			break;
+		    break;
 
-		case PF_3DNOW_INSTRUCTIONS_AVAILABLE:
-			if (d & D_BIT_3DN)
+	    case PF_3DNOW_INSTRUCTIONS_AVAILABLE:
+		    if (d & D_BIT_3DN)
 				ret = TRUE;
 
-			break;
+		    break;
 
-		case PF_SSE3_INSTRUCTIONS_AVAILABLE:
-			if (c & C_BIT_SSE3)
+	    case PF_SSE3_INSTRUCTIONS_AVAILABLE:
+		    if (c & C_BIT_SSE3)
 				ret = TRUE;
 
-			break;
+		    break;
 
-		default:
-			break;
+	    default:
+		    break;
 	}
 
 #endif // __GNUC__
@@ -731,11 +787,9 @@ DWORD GetTickCountPrecise(void)
 #ifdef _WIN32
 	LARGE_INTEGER freq;
 	LARGE_INTEGER current;
-
 	QueryPerformanceFrequency(&freq);
 	QueryPerformanceCounter(&current);
-
-	return (DWORD) (current.QuadPart * 1000LL / freq.QuadPart);
+	return (DWORD)(current.QuadPart * 1000LL / freq.QuadPart);
 #else
 	return GetTickCount();
 #endif
@@ -751,35 +805,35 @@ BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 
 	switch (ProcessorFeature)
 	{
-		case PF_EX_ARM_VFP1:
-			if (caps & HWCAP_VFP)
+	    case PF_EX_ARM_VFP1:
+		    if (caps & HWCAP_VFP)
 				ret = TRUE;
 
-			break;
+		    break;
 
-		case PF_EX_ARM_VFP3D16:
-			if (caps & HWCAP_VFPv3D16)
+	    case PF_EX_ARM_VFP3D16:
+		    if (caps & HWCAP_VFPv3D16)
 				ret = TRUE;
 
-			break;
+		    break;
 
-		case PF_EX_ARM_VFP4:
-			if (caps & HWCAP_VFPv4)
+	    case PF_EX_ARM_VFP4:
+		    if (caps & HWCAP_VFPv4)
 				ret = TRUE;
 
-			break;
+		    break;
 
-		case PF_EX_ARM_IDIVA:
-			if (caps & HWCAP_IDIVA)
+	    case PF_EX_ARM_IDIVA:
+		    if (caps & HWCAP_IDIVA)
 				ret = TRUE;
 
-			break;
+		    break;
 
-		case PF_EX_ARM_IDIVT:
-			if (caps & HWCAP_IDIVT)
+	    case PF_EX_ARM_IDIVT:
+		    if (caps & HWCAP_IDIVT)
 				ret = TRUE;
 
-			break;
+		    break;
 	}
 
 #endif // __linux__
@@ -789,47 +843,48 @@ BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 
 	switch (ProcessorFeature)
 	{
-		case PF_EX_LZCNT:
-			{
-				unsigned a81, b81, c81, d81;
+	    case PF_EX_LZCNT:
+	        {
+		        unsigned a81, b81, c81, d81;
 				cpuid(0x80000001, &a81, &b81, &c81, &d81);
+
 				if (c81 & C81_BIT_LZCNT)
 					ret = TRUE;
-			}
-			break;
+	        }
+		    break;
 
-		case PF_EX_3DNOW_PREFETCH:
-			if (c & C_BIT_3DNP)
+	    case PF_EX_3DNOW_PREFETCH:
+		    if (c & C_BIT_3DNP)
 				ret = TRUE;
 
-			break;
+		    break;
 
-		case PF_EX_SSSE3:
-			if (c & C_BIT_SSSE3)
+	    case PF_EX_SSSE3:
+		    if (c & C_BIT_SSSE3)
 				ret = TRUE;
 
-			break;
+		    break;
 
-		case PF_EX_SSE41:
-			if (c & C_BIT_SSE41)
+	    case PF_EX_SSE41:
+		    if (c & C_BIT_SSE41)
 				ret = TRUE;
 
-			break;
+		    break;
 
-		case PF_EX_SSE42:
-			if (c & C_BIT_SSE42)
+	    case PF_EX_SSE42:
+		    if (c & C_BIT_SSE42)
 				ret = TRUE;
 
-			break;
+		    break;
 #if defined(__GNUC__) && defined(__AVX__)
 
-		case PF_EX_AVX:
-		case PF_EX_FMA:
-		case PF_EX_AVX_AES:
-		case PF_EX_AVX_PCLMULQDQ:
-			{
-				/* Check for general AVX support */
-				if ((c & C_BITS_AVX) != C_BITS_AVX)
+	    case PF_EX_AVX:
+	    case PF_EX_FMA:
+	    case PF_EX_AVX_AES:
+	    case PF_EX_AVX_PCLMULQDQ:
+	        {
+		        /* Check for general AVX support */
+		        if ((c & C_BITS_AVX) != C_BITS_AVX)
 					break;
 
 				int e, f;
@@ -840,35 +895,35 @@ BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 				{
 					switch (ProcessorFeature)
 					{
-						case PF_EX_AVX:
-							ret = TRUE;
-							break;
+					    case PF_EX_AVX:
+						    ret = TRUE;
+						    break;
 
-						case PF_EX_FMA:
-							if (c & C_BIT_FMA)
+					    case PF_EX_FMA:
+						    if (c & C_BIT_FMA)
 								ret = TRUE;
 
-							break;
+						    break;
 
-						case PF_EX_AVX_AES:
-							if (c & C_BIT_AES)
+					    case PF_EX_AVX_AES:
+						    if (c & C_BIT_AES)
 								ret = TRUE;
 
-							break;
+						    break;
 
-						case PF_EX_AVX_PCLMULQDQ:
-							if (c & C_BIT_PCLMULQDQ)
+					    case PF_EX_AVX_PCLMULQDQ:
+						    if (c & C_BIT_PCLMULQDQ)
 								ret = TRUE;
 
-							break;
+						    break;
 					}
 				}
-			}
-			break;
+	        }
+		    break;
 #endif //__AVX__
 
-		default:
-			break;
+	    default:
+		    break;
 	}
 
 #endif

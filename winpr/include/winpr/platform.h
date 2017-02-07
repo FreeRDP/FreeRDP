@@ -86,6 +86,15 @@
 #endif
 #endif
 
+/* MIPS64 (_M_MIPS64) */
+
+#if defined(mips64) || defined(__mips64) || \
+	defined(__mips64__) || defined(__MIPS64__)
+#ifndef _M_MIPS64
+#define	 _M_MIPS64	1
+#endif
+#endif
+
 /* PowerPC (_M_PPC) */
 
 #if defined(__ppc__) || defined(__powerpc) || \

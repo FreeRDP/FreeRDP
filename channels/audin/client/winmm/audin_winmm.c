@@ -127,7 +127,7 @@ static DWORD audin_winmm_thread_func(void* arg)
 		rc = waveInPrepareHeader(winmm->hWaveIn, &waveHdr[i], sizeof(waveHdr[i]));
 		if (MMSYSERR_NOERROR != rc)
 		{
-			DEBUG_DVC("waveInPrepareHeader failed. %d", rc);
+			DEBUG_DVC("waveInPrepareHeader failed. %"PRIu32"", rc);
 			if (winmm->rdpcontext)
 				setChannelError(winmm->rdpcontext, ERROR_INTERNAL_ERROR, "audin_winmm_thread_func reported an error");
 		}
@@ -135,7 +135,7 @@ static DWORD audin_winmm_thread_func(void* arg)
 		rc = waveInAddBuffer(winmm->hWaveIn, &waveHdr[i], sizeof(waveHdr[i]));
 		if (MMSYSERR_NOERROR != rc)
 		{
-			DEBUG_DVC("waveInAddBuffer failed. %d", rc);
+			DEBUG_DVC("waveInAddBuffer failed. %"PRIu32"", rc);
 			if (winmm->rdpcontext)
 				setChannelError(winmm->rdpcontext, ERROR_INTERNAL_ERROR, "audin_winmm_thread_func reported an error");
 		}
@@ -144,7 +144,7 @@ static DWORD audin_winmm_thread_func(void* arg)
 	rc = waveInStart(winmm->hWaveIn);
 	if (MMSYSERR_NOERROR != rc)
 	{
-		DEBUG_DVC("waveInStart failed. %d", rc);
+		DEBUG_DVC("waveInStart failed. %"PRIu32"", rc);
 		if (winmm->rdpcontext)
 			setChannelError(winmm->rdpcontext, ERROR_INTERNAL_ERROR, "audin_winmm_thread_func reported an error");
 	}
@@ -161,7 +161,7 @@ static DWORD audin_winmm_thread_func(void* arg)
 	rc = waveInReset(winmm->hWaveIn);
 	if (MMSYSERR_NOERROR != rc)
 	{
-		DEBUG_DVC("waveInReset failed. %d", rc);
+		DEBUG_DVC("waveInReset failed. %"PRIu32"", rc);
 		if (winmm->rdpcontext)
 			setChannelError(winmm->rdpcontext, ERROR_INTERNAL_ERROR, "audin_winmm_thread_func reported an error");
 	}
@@ -171,7 +171,7 @@ static DWORD audin_winmm_thread_func(void* arg)
 		rc = waveInUnprepareHeader(winmm->hWaveIn, &waveHdr[i], sizeof(waveHdr[i]));
 		if (MMSYSERR_NOERROR != rc)
 		{
-			DEBUG_DVC("waveInUnprepareHeader failed. %d", rc);
+			DEBUG_DVC("waveInUnprepareHeader failed. %"PRIu32"", rc);
 			if (winmm->rdpcontext)
 				setChannelError(winmm->rdpcontext, ERROR_INTERNAL_ERROR, "audin_winmm_thread_func reported an error");
 		}
@@ -181,7 +181,7 @@ static DWORD audin_winmm_thread_func(void* arg)
 	rc = waveInClose(winmm->hWaveIn);
 	if (MMSYSERR_NOERROR != rc)
 	{
-		DEBUG_DVC("waveInClose failed. %d", rc);
+		DEBUG_DVC("waveInClose failed. %"PRIu32"", rc);
 		if (winmm->rdpcontext)
 			setChannelError(winmm->rdpcontext, ERROR_INTERNAL_ERROR, "audin_winmm_thread_func reported an error");
 	}
@@ -230,7 +230,7 @@ static UINT audin_winmm_close(IAudinDevice* device)
     if (status == WAIT_FAILED)
     {
         error = GetLastError();
-        WLog_ERR(TAG, "WaitForSingleObject failed with error %lu!", error);
+        WLog_ERR(TAG, "WaitForSingleObject failed with error %"PRIu32"!", error);
         return error;
     }
 
@@ -426,7 +426,7 @@ UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEn
 
 	if ((error = audin_winmm_parse_addin_args(winmm, args)))
 	{
-		WLog_ERR(TAG, "audin_winmm_parse_addin_args failed with error %d!", error);
+		WLog_ERR(TAG, "audin_winmm_parse_addin_args failed with error %"PRIu32"!", error);
 		goto error_out;
 	}
 
@@ -452,7 +452,7 @@ UINT freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEn
 
 	if ((error = pEntryPoints->pRegisterAudinDevice(pEntryPoints->plugin, (IAudinDevice*) winmm)))
 	{
-		WLog_ERR(TAG, "RegisterAudinDevice failed with error %d!", error);
+		WLog_ERR(TAG, "RegisterAudinDevice failed with error %"PRIu32"!", error);
 		goto error_out;
 	}
 

@@ -37,6 +37,8 @@
 #include <winpr/string.h>
 #include <winpr/stream.h>
 #include <winpr/wtsapi.h>
+#include <winpr/ssl.h>
+#include <winpr/debug.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/error.h>
@@ -50,35 +52,86 @@
 
 /* connectErrorCode is 'extern' in error.h. See comment there.*/
 
-/* Thread local storage variables.
- * They need to be initialized in every thread that
- * has to use them. */
-static WINPR_TLS rdpContext* s_TLSContext = NULL;
-
-void freerdp_channel_init_thread_context(rdpContext* context)
+UINT freerdp_channel_add_init_handle_data(rdpChannelHandles* handles, void* pInitHandle,
+        void* pUserData)
 {
-	s_TLSContext = context;
+	if (!handles->init)
+		handles->init = ListDictionary_New(TRUE);
+
+	if (!handles->init)
+	{
+		WLog_ERR(TAG, "ListDictionary_New failed!");
+		return ERROR_NOT_ENOUGH_MEMORY;
+	}
+
+	if (!ListDictionary_Add(handles->init, pInitHandle, pUserData))
+	{
+		WLog_ERR(TAG, "ListDictionary_Add failed!");
+		return ERROR_INTERNAL_ERROR;
+	}
+
+	return CHANNEL_RC_OK;
 }
 
-freerdp* freerdp_channel_get_instance(void)
+void* freerdp_channel_get_init_handle_data(rdpChannelHandles* handles, void* pInitHandle)
 {
-	if (!s_TLSContext)
-		return NULL;
-
-	return s_TLSContext->instance;
+	void* pUserData = NULL;
+	pUserData = ListDictionary_GetItemValue(handles->init, pInitHandle);
+	return pUserData;
 }
 
-rdpContext* freerdp_channel_get_context(void)
+void freerdp_channel_remove_init_handle_data(rdpChannelHandles* handles, void* pInitHandle)
 {
-	return s_TLSContext;
+	ListDictionary_Remove(handles->init, pInitHandle);
+
+	if (ListDictionary_Count(handles->init) < 1)
+	{
+		ListDictionary_Free(handles->init);
+		handles->init = NULL;
+	}
 }
 
-rdpChannels* freerdp_channel_get_channels_context(void)
+UINT freerdp_channel_add_open_handle_data(rdpChannelHandles* handles, DWORD openHandle,
+        void* pUserData)
 {
-	if (!s_TLSContext)
-		return NULL;
+	void* pOpenHandle = (void*)(size_t) openHandle;
 
-	return s_TLSContext->channels;
+	if (!handles->open)
+		handles->open = ListDictionary_New(TRUE);
+
+	if (!handles->open)
+	{
+		WLog_ERR(TAG, "ListDictionary_New failed!");
+		return ERROR_NOT_ENOUGH_MEMORY;
+	}
+
+	if (!ListDictionary_Add(handles->open, pOpenHandle, pUserData))
+	{
+		WLog_ERR(TAG, "ListDictionary_Add failed!");
+		return ERROR_INTERNAL_ERROR;
+	}
+
+	return CHANNEL_RC_OK;
+}
+
+void* freerdp_channel_get_open_handle_data(rdpChannelHandles* handles, DWORD openHandle)
+{
+	void* pUserData = NULL;
+	void* pOpenHandle = (void*)(size_t) openHandle;
+	pUserData = ListDictionary_GetItemValue(handles->open, pOpenHandle);
+	return pUserData;
+}
+
+void freerdp_channel_remove_open_handle_data(rdpChannelHandles* handles, DWORD openHandle)
+{
+	void* pOpenHandle = (void*)(size_t) openHandle;
+	ListDictionary_Remove(handles->open, pOpenHandle);
+
+	if (ListDictionary_Count(handles->open) < 1)
+	{
+		ListDictionary_Free(handles->open);
+		handles->open = NULL;
+	}
 }
 
 /** Creates a new connection based on the settings found in the "instance" parameter
@@ -103,7 +156,6 @@ BOOL freerdp_connect(freerdp* instance)
 	if (!instance)
 		return FALSE;
 
-	freerdp_channel_init_thread_context(instance->context);
 	/* We always set the return code to 0 before we start the connect sequence*/
 	connectErrorCode = 0;
 	freerdp_set_last_error(instance->context, FREERDP_ERROR_SUCCESS);
@@ -139,7 +191,7 @@ BOOL freerdp_connect(freerdp* instance)
 	/* --authonly tests the connection without a UI */
 	if (instance->settings->AuthenticationOnly)
 	{
-		WLog_ERR(TAG, "Authentication only, exit status %d", !status);
+		WLog_ERR(TAG, "Authentication only, exit status %"PRId32"", !status);
 		goto freerdp_connect_finally;
 	}
 
@@ -314,7 +366,7 @@ BOOL freerdp_check_event_handles(rdpContext* context)
 
 	if (!status)
 	{
-		WLog_ERR(TAG, "freerdp_check_fds() failed - %i", status);
+		WLog_ERR(TAG, "freerdp_check_fds() failed - %"PRIi32"", status);
 		return FALSE;
 	}
 
@@ -322,7 +374,7 @@ BOOL freerdp_check_event_handles(rdpContext* context)
 
 	if (!status)
 	{
-		WLog_ERR(TAG, "freerdp_channels_check_fds() failed - %i", status);
+		WLog_ERR(TAG, "freerdp_channels_check_fds() failed - %"PRIi32"", status);
 		return FALSE;
 	}
 
@@ -747,8 +799,15 @@ const char* freerdp_get_last_error_string(UINT32 code)
 void freerdp_set_last_error(rdpContext* context, UINT32 lastError)
 {
 	if (lastError)
-		WLog_ERR(TAG, "freerdp_set_last_error %s [0x%04X]",
+		WLog_ERR(TAG, "freerdp_set_last_error %s [0x%08"PRIX32"]",
 		         freerdp_get_last_error_name(lastError), lastError);
+
+	if (context->LastError != 0)
+	{
+		WLog_ERR(TAG, "TODO: Trying to set error code %s, but %s already set!",
+		         freerdp_get_last_error_name(lastError),
+		         freerdp_get_last_error_name(context->LastError));
+	}
 
 	context->LastError = lastError;
 
@@ -819,6 +878,7 @@ freerdp* freerdp_new()
 	if (!instance)
 		return NULL;
 
+	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 	instance->ContextSize = sizeof(rdpContext);
 	instance->SendChannelData = freerdp_send_channel_data;
 	instance->ReceiveChannelData = freerdp_channels_data;
@@ -853,7 +913,7 @@ BOOL checkChannelErrorEvent(rdpContext* context)
 {
 	if (WaitForSingleObject(context->channelErrorEvent, 0) == WAIT_OBJECT_0)
 	{
-		WLog_ERR(TAG, "%s. Error was %lu", context->errorDescription,
+		WLog_ERR(TAG, "%s. Error was %"PRIu32"", context->errorDescription,
 		         context->channelErrorNum);
 		return FALSE;
 	}
