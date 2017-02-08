@@ -130,7 +130,7 @@ static BOOL tsmf_pulse_open(ITSMFAudioDevice *audio, const char *device)
 		return FALSE;
 	}
 	pa_context_set_state_callback(pulse->context, tsmf_pulse_context_state_callback, pulse);
-	if(tsmf_pulse_connect(pulse))
+	if(!tsmf_pulse_connect(pulse))
 	{
 		WLog_ERR(TAG, "tsmf_pulse_connect failed");
 		return FALSE;
