@@ -37,6 +37,12 @@
 #include <winpr/crt.h>
 #include <winpr/wlog.h>
 
+#if defined __MIPSEL__ && defined _LP64
+#if !defined CMSPAR
+#define CMSPAR    010000000000  /* mark or space (stick) parity */
+#endif
+#endif
+
 /* hard-coded in N_TTY */
 #define TTY_THRESHOLD_THROTTLE		128 /* now based on remaining room */
 #define TTY_THRESHOLD_UNTHROTTLE 	128
