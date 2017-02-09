@@ -1656,7 +1656,7 @@ static BOOL avc444_process_rect(H264_CONTEXT* h264,
 	                  rect->left;
 
 	if (prims->YUV420CombineToYUV444(pYUVMainPoint, piMainStride,
-	                                 NULL, NULL,
+	                                 pYUVAuxPoint, piAuxStride,
 	                                 pYUVDstPoint, piDstStride,
 	                                 &roi) != PRIMITIVES_SUCCESS)
 		return FALSE;
