@@ -67,7 +67,7 @@ static pstatus_t general_YUV420CombineToYUV444(
 	halfWidth = (nWidth) / 2;
 	halfHeight = (nHeight) / 2;
 
-	if (pMainSrc)
+	if (pMainSrc && pMainSrc[0] && pMainSrc[1] && pMainSrc[2])
 	{
 		/* Y data is already here... */
 		/* B1 */
@@ -107,7 +107,7 @@ static pstatus_t general_YUV420CombineToYUV444(
 		}
 	}
 
-	if (!pAuxSrc)
+	if (!pAuxSrc || !pAuxSrc[0] || !pAuxSrc[1] || !pAuxSrc[2])
 		return PRIMITIVES_SUCCESS;
 
 	/* The second half of U and V is a bit more tricky... */
@@ -586,8 +586,8 @@ static pstatus_t general_RGBToYUV444_8u_P3AC4R(
 
 
 static INLINE pstatus_t general_RGBToYUV420_BGRX(
-	const BYTE* pSrc, UINT32 srcStep,
-	BYTE* pDst[3], UINT32 dstStep[3], const prim_size_t* roi)
+    const BYTE* pSrc, UINT32 srcStep,
+    BYTE* pDst[3], UINT32 dstStep[3], const prim_size_t* roi)
 {
 	UINT32 x, y, i, j;
 	size_t x1 = 0, x2 = 4, x3 = srcStep, x4 = srcStep + 4;
@@ -607,7 +607,6 @@ static INLINE pstatus_t general_RGBToYUV420_BGRX(
 			BYTE R, G, B;
 			INT32 Ra, Ga, Ba;
 			UINT32 color;
-
 			/* row 1, pixel 1 */
 			Ba = B = *(src + x1 + 0);
 			Ga = G = *(src + x1 + 1);
@@ -644,10 +643,8 @@ static INLINE pstatus_t general_RGBToYUV420_BGRX(
 			Ba >>= 2;
 			Ga >>= 2;
 			Ra >>= 2;
-
 			*udst++ = RGB2U(Ra, Ga, Ba);
 			*vdst++ = RGB2V(Ra, Ga, Ba);
-
 			ydst += 2;
 			src += 8;
 		}
@@ -679,7 +676,6 @@ static INLINE pstatus_t general_RGBToYUV420_ANY(
 			BYTE R, G, B;
 			INT32 Ra, Ga, Ba;
 			UINT32 color;
-
 			/* row 1, pixel 1 */
 			color = ReadColor(src + x1, srcFormat);
 			SplitColor(color, srcFormat, &R, &G, &B, NULL, NULL);
@@ -724,10 +720,8 @@ static INLINE pstatus_t general_RGBToYUV420_ANY(
 			Ra >>= 2;
 			Ga >>= 2;
 			Ba >>= 2;
-
 			*udst++ = RGB2U(Ra, Ga, Ba);
 			*vdst++ = RGB2V(Ra, Ga, Ba);
-
 			ydst += 2;
 			src += 2 * bpp;
 		}
