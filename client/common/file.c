@@ -284,6 +284,8 @@ static int freerdp_client_rdp_file_set_string(rdpFile* file, const char* name, c
 		tmp = &file->Username;
 	else if (_stricmp(name, "domain") == 0)
 		tmp = &file->Domain;
+	else if (_stricmp(name, "password") == 0)
+		tmp = &file->Password;
 	else if (_stricmp(name, "full address") == 0)
 		tmp = &file->FullAddress;
 	else if (_stricmp(name, "alternate full address") == 0)
@@ -725,6 +727,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 {
 	SETTING_MODIFIED_SET_STRING(file->Domain, settings, Domain);
 	SETTING_MODIFIED_SET_STRING(file->Username, settings, Username);
+	SETTING_MODIFIED_SET_STRING(file->Password, settings, Password);
 	SETTING_MODIFIED_SET(file->ServerPort, settings, ServerPort);
 	SETTING_MODIFIED_SET_STRING(file->FullAddress, settings, ServerHostname);
 	SETTING_MODIFIED_SET(file->DesktopWidth, settings, DesktopWidth);
@@ -893,6 +896,12 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 
 		free(user);
 		free(domain);
+	}
+
+	if (~((size_t)file->Password))
+	{
+		if (freerdp_set_param_string(settings, FreeRDP_Password, file->Password) != 0)
+			return FALSE;
 	}
 
 	if (~((size_t) file->FullAddress))
@@ -1423,6 +1432,7 @@ void freerdp_client_rdp_file_free(rdpFile* file)
 
 		freerdp_client_file_string_check_free(file->Username);
 		freerdp_client_file_string_check_free(file->Domain);
+		freerdp_client_file_string_check_free(file->Password);
 		freerdp_client_file_string_check_free(file->FullAddress);
 		freerdp_client_file_string_check_free(file->AlternateFullAddress);
 		freerdp_client_file_string_check_free(file->UsbDevicesToRedirect);

@@ -2513,20 +2513,22 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 
-	free(settings->Username);
-
-	if (!settings->Domain && user)
+	if (!settings->Username && user)
 	{
-		BOOL ret;
-		free(settings->Domain);
-		ret = freerdp_parse_username(user, &settings->Username, &settings->Domain);
-		free(user);
+		free(settings->Username);
+		if (!settings->Domain && user)
+		{
+			BOOL ret;
+			free(settings->Domain);
 
-		if (!ret)
-			return COMMAND_LINE_ERROR;
+			ret = freerdp_parse_username(user, &settings->Username, &settings->Domain);
+			free(user);
+			if (!ret)
+				return COMMAND_LINE_ERROR;
+		}
+		else
+			settings->Username = user;
 	}
-	else
-		settings->Username = user;
 
 	free(settings->GatewayUsername);
 
