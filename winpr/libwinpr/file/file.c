@@ -353,8 +353,18 @@ static BOOL FileUnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfByte
 	return TRUE;
 }
 
-static BOOL FileSetFileTime(HANDLE hFile, const FILETIME *lpCreationTime,
-		const FILETIME *lpLastAccessTime, const FILETIME *lpLastWriteTime)
+static UINT64 FileTimeToUS(const FILETIME* ft)
+{
+	const UINT64 EPOCH_DIFF = 11644473600ULL * 1000000ULL;
+	UINT64 tmp = ((UINT64)ft->dwHighDateTime) << 32
+	             | ft->dwLowDateTime;
+	tmp /= 10; /* 100ns steps to 1us step */
+	tmp -= EPOCH_DIFF;
+	return tmp;
+}
+
+static BOOL FileSetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
+                            const FILETIME* lpLastAccessTime, const FILETIME* lpLastWriteTime)
 {
 	int rc;
 #if defined(__APPLE__) || defined(ANDROID) || defined(__FreeBSD__)
@@ -365,16 +375,18 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME *lpCreationTime,
 	struct timespec times[2]; /* last access, last modification */
 #endif
 	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
-	const UINT64 EPOCH_DIFF = 11644473600ULL;
 
 	if (!hFile)
 		return FALSE;
 
 #if defined(__APPLE__) || defined(ANDROID) || defined(__FreeBSD__)
 	rc = fstat(fileno(pFile->fp), &buf);
+
 	if (rc < 0)
 		return FALSE;
+
 #endif
+
 	if (!lpLastAccessTime)
 	{
 #if defined(__FreeBSD__) || defined(__APPLE__)
@@ -394,21 +406,16 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME *lpCreationTime,
 	}
 	else
 	{
-		UINT64 tmp = ((UINT64)lpLastAccessTime->dwHighDateTime) << 32
-				| lpLastAccessTime->dwLowDateTime;
-		tmp -= EPOCH_DIFF;
-		tmp /= 10ULL;
-
+		UINT64 tmp = FileTimeToUS(lpLastAccessTime);
 #if defined(ANDROID) || defined(__FreeBSD__) || defined(__APPLE__)
-		tmp /= 10000ULL;
-
-		timevals[0].tv_sec = tmp / 10000ULL;
-		timevals[0].tv_usec = tmp % 10000ULL;
+		timevals[0].tv_sec = tmp / 1000000ULL;
+		timevals[0].tv_usec = tmp % 1000000ULL;
 #else
-		times[0].tv_sec = tmp / 10000000ULL;
-		times[0].tv_nsec = tmp % 10000000ULL;
+		times[0].tv_sec = tmp / 1000000ULL;
+		times[0].tv_nsec = (tmp % 1000000ULL) * 1000ULL;
 #endif
 	}
+
 	if (!lpLastWriteTime)
 	{
 #if defined(__FreeBSD__) || defined(__APPLE__)
@@ -428,19 +435,13 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME *lpCreationTime,
 	}
 	else
 	{
-		UINT64 tmp = ((UINT64)lpLastWriteTime->dwHighDateTime) << 32
-				| lpLastWriteTime->dwLowDateTime;
-		tmp -= EPOCH_DIFF;
-		tmp /= 10ULL;
-
+		UINT64 tmp = FileTimeToUS(lpLastWriteTime);
 #if defined(ANDROID) || defined(__FreeBSD__) || defined(__APPLE__)
-		tmp /= 10000ULL;
-
-		timevals[1].tv_sec = tmp / 10000ULL;
-		timevals[1].tv_usec = tmp % 10000ULL;
+		timevals[1].tv_sec = tmp / 1000000ULL;
+		timevals[1].tv_usec = tmp % 1000000ULL;
 #else
-		times[1].tv_sec = tmp / 10000000ULL;
-		times[1].tv_nsec = tmp % 10000000ULL;
+		times[1].tv_sec = tmp / 1000000ULL;
+		times[1].tv_nsec = (tmp % 1000000ULL) * 1000ULL;
 #endif
 	}
 
@@ -450,11 +451,11 @@ static BOOL FileSetFileTime(HANDLE hFile, const FILETIME *lpCreationTime,
 #else
 	rc = futimens(fileno(pFile->fp), times);
 #endif
+
 	if (rc != 0)
 		return FALSE;
 
 	return TRUE;
-
 }
 
 static HANDLE_OPS fileOps = {
@@ -759,6 +760,8 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 {
 	HANDLE hFile;
 	WCHAR* lpFileNameW = NULL;
+
+
 	
 	ConvertToUnicode(CP_UTF8, 0, lpFileName, -1, &lpFileNameW, 0);
 
