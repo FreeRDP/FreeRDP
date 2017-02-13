@@ -22,18 +22,20 @@
 
 #include <winpr/sysinfo.h>
 #include "prim_test.h"
+#include <freerdp/utils/profiler.h>
 
 /* ------------------------------------------------------------------------- */
-static BOOL test_YCoCgRToRGB_8u_AC4R_func(void)
+static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 {
-	BOOL result = TRUE;
 	pstatus_t status;
-	INT32 ALIGN(out_sse[4098]), ALIGN(out_sse_inv[4098]);
-	INT32 ALIGN(in[4098]);
-	INT32 ALIGN(out_c[4098]), ALIGN(out_c_inv[4098]);
-
+	BYTE* out_sse = NULL;
+	BYTE* in = NULL;
+	BYTE* out_c = NULL;
 	UINT32 i, x;
-	const UINT32 formats[] = {
+	const UINT32 srcStride = width * 4;
+	const UINT32 size = srcStride * height;
+	const UINT32 formats[] =
+	{
 		PIXEL_FORMAT_ARGB32,
 		PIXEL_FORMAT_ABGR32,
 		PIXEL_FORMAT_RGBA32,
@@ -41,86 +43,77 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(void)
 		PIXEL_FORMAT_BGRA32,
 		PIXEL_FORMAT_BGRX32
 	};
+	PROFILER_DEFINE(genericProf);
+	PROFILER_DEFINE(optProf);
+	PROFILER_CREATE(genericProf, "YCoCgRToRGB_8u_AC4R-GENERIC");
+	PROFILER_CREATE(optProf, "YCoCgRToRGB_8u_AC4R-OPT");
+	in = _aligned_malloc(size, 16);
+	out_c = _aligned_malloc(size, 16);
+	out_sse = _aligned_malloc(size, 16);
 
-	winpr_RAND((BYTE*)in, sizeof(in));
+	if (!in || !out_c || !out_sse)
+		goto fail;
 
-	for (x=0; x<sizeof(formats)/sizeof(formats[0]); x++)
+	winpr_RAND(in, sizeof(in));
+
+	for (x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
 	{
-		UINT32 format = formats[x];
-
+		const UINT32 format = formats[x];
+		const UINT32 dstStride = width * GetBytesPerPixel(format);
+		const char* formatName = GetColorFormatName(format);
+		PROFILER_ENTER(genericProf);
 		status = generic->YCoCgToRGB_8u_AC4R(
-				 (const BYTE*)(in + 1), 63 * 4,
-				 (BYTE*) out_c, format, 63 * 4, 63, 61, 2, TRUE);
-		if (status != PRIMITIVES_SUCCESS)
-			return FALSE;
-		status = generic->YCoCgToRGB_8u_AC4R(
-				 (const BYTE*)(in + 1), 63 * 4,
-				 (BYTE*) out_c_inv, format, 63 * 4, 63, 61, 2, TRUE);
-		if (status != PRIMITIVES_SUCCESS)
-			return FALSE;
+		             in, srcStride,
+		             out_c, format, dstStride, width, height, 2, TRUE);
+		PROFILER_EXIT(genericProf);
 
-		status = optimized->YCoCgToRGB_8u_AC4R(
-				 (const BYTE*)(in + 1), 63 * 4,
-				 (BYTE*) out_sse, format, 63 * 4, 63, 61, 2, TRUE);
 		if (status != PRIMITIVES_SUCCESS)
-			return FALSE;
-		status = optimized->YCoCgToRGB_8u_AC4R(
-				 (const BYTE*)(in + 1), 63 * 4,
-				 (BYTE*) out_sse_inv, format, 63 * 4, 63, 61, 2, TRUE);
-		if (status != PRIMITIVES_SUCCESS)
-			return FALSE;
+			goto fail;
 
-		for (i = 0; i < 63 * 61; ++i)
+		PROFILER_ENTER(optProf);
+		status = optimized->YCoCgToRGB_8u_AC4R(
+		             in, srcStride,
+		             out_sse, format, dstStride, width, height, 2, TRUE);
+		PROFILER_EXIT(optProf);
+
+		if (status != PRIMITIVES_SUCCESS)
+			goto fail;
+
+		if (memcmp(out_c, out_sse, dstStride * height) != 0)
 		{
-			if (out_c[i] != out_sse[i])
+			for (i = 0; i < width * height; ++i)
 			{
-				printf("optimized->YCoCgRToRGB FAIL[%"PRIu32"]: 0x%08"PRIx32" -> C 0x%08"PRIx32" vs optimized 0x%08"PRIx32"\n",
-					   i, in[i + 1], out_c[i], out_sse[i]);
-				result = FALSE;
+				const UINT32 c = ReadColor(out_c + 4 * i, format);
+				const UINT32 sse = ReadColor(out_sse + 4 * i, format);
+
+				if (c != sse)
+				{
+					printf("optimized->YCoCgRToRGB FAIL[%s] [%"PRIu32"]: 0x%08"PRIx32" -> C 0x%08"PRIx32" vs optimized 0x%08"PRIx32"\n",
+					       formatName, i, in[i + 1], c, sse);
+					status = -1;
+				}
 			}
 		}
 
-		for (i = 0; i < 63 * 61; ++i)
-		{
-			if (out_c_inv[i] != out_sse_inv[i])
-			{
-				printf("optimized->YCoCgRToRGB inverted FAIL[%"PRIu32"]: 0x%08"PRIu32" -> C 0x%08"PRIx32" vs optimized 0x%08"PRIx32"\n",
-				       i, in[i + 1], out_c_inv[i], out_sse_inv[i]);
-				result = FALSE;
-			}
-		}
+		PROFILER_PRINT(genericProf);
+		PROFILER_PRINT(optProf);
 	}
-	return result;
-}
 
-static int test_YCoCgRToRGB_8u_AC4R_speed(void)
-{
-	INT32 ALIGN(in[4096]);
-	INT32 ALIGN(out[4096]);
-
-	winpr_RAND((BYTE*)in, sizeof(in));
-
-	if (!speed_test("YCoCgToRGB_8u_AC4R", "aligned", g_Iterations,
-			(speed_test_fkt)generic->YCoCgToRGB_8u_AC4R,
-			(speed_test_fkt)optimized->YCoCgToRGB_8u_AC4R,
-			in, 64 * 4, out, 64 * 4, 64, 64, 2, FALSE, FALSE))
-		return FALSE;
-
-	return TRUE;
+fail:
+	PROFILER_FREE(genericProf);
+	PROFILER_FREE(optProf);
+	_aligned_free(in);
+	_aligned_free(out_c);
+	_aligned_free(out_sse);
+	return status == PRIMITIVES_SUCCESS;
 }
 
 int TestPrimitivesYCoCg(int argc, char* argv[])
 {
 	prim_test_setup(FALSE);
 
-	if (!test_YCoCgRToRGB_8u_AC4R_func())
+	if (!test_YCoCgRToRGB_8u_AC4R_func(1920, 1080))
 		return 1;
-
-	if (g_TestPrimitivesPerformance)
-	{
-		if (!test_YCoCgRToRGB_8u_AC4R_speed())
-			return 1;
-	}
 
 	return 0;
 }
