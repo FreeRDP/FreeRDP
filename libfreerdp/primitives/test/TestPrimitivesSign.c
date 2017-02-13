@@ -25,16 +25,19 @@
 static BOOL test_sign16s_func(void)
 {
 	pstatus_t status;
-	INT16 ALIGN(src[TEST_BUFFER_SIZE]);
-	INT16 ALIGN(d1[TEST_BUFFER_SIZE]);
-	INT16 ALIGN(d2[TEST_BUFFER_SIZE]);
-
+	INT16 ALIGN(src[TEST_BUFFER_SIZE + 16]);
+	INT16 ALIGN(d1[TEST_BUFFER_SIZE + 16]);
+	INT16 ALIGN(d2[TEST_BUFFER_SIZE + 16]);
 	winpr_RAND((BYTE*)src, sizeof(src));
-
+	memset(d1, 0, sizeof(d1));
+	memset(d2, 0, sizeof(d2));
 	status = generic->sign_16s(src + 1, d1 + 1, TEST_BUFFER_SIZE);
+
 	if (status != PRIMITIVES_SUCCESS)
 		return FALSE;
+
 	status = optimized->sign_16s(src + 1, d2 + 1, TEST_BUFFER_SIZE);
+
 	if (status != PRIMITIVES_SUCCESS)
 		return FALSE;
 
@@ -42,9 +45,12 @@ static BOOL test_sign16s_func(void)
 		return FALSE;
 
 	status = generic->sign_16s(src + 1, d1 + 2, TEST_BUFFER_SIZE);
+
 	if (status != PRIMITIVES_SUCCESS)
 		return FALSE;
+
 	status = optimized->sign_16s(src + 1, d2 + 2, TEST_BUFFER_SIZE);
+
 	if (status != PRIMITIVES_SUCCESS)
 		return FALSE;
 
@@ -60,15 +66,15 @@ static int test_sign16s_speed(void)
 	winpr_RAND((BYTE*)src, sizeof(src));
 
 	if (!speed_test("sign16s", "aligned", g_Iterations,
-			(speed_test_fkt)generic->sign_16s,
-			(speed_test_fkt)optimized->sign_16s, src + 1, dst + 1,
-			MAX_TEST_SIZE))
+	                (speed_test_fkt)generic->sign_16s,
+	                (speed_test_fkt)optimized->sign_16s, src + 1, dst + 1,
+	                MAX_TEST_SIZE))
 		return FALSE;
 
 	if (!speed_test("sign16s", "unaligned", g_Iterations,
-			(speed_test_fkt)generic->sign_16s,
-			(speed_test_fkt)optimized->sign_16s, src + 1, dst + 2,
-			MAX_TEST_SIZE))
+	                (speed_test_fkt)generic->sign_16s,
+	                (speed_test_fkt)optimized->sign_16s, src + 1, dst + 2,
+	                MAX_TEST_SIZE))
 		return FALSE;
 
 	return TRUE;
