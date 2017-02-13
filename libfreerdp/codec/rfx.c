@@ -1150,6 +1150,7 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length,
 		REGION16 clippingRects;
 		const RECTANGLE_16* updateRects;
 		const DWORD formatSize = GetBytesPerPixel(context->pixel_format);
+		const UINT32 dstWidth = dstStride / formatSize;
 		region16_init(&clippingRects);
 
 		for (i = 0; i < message->numRects; i++)
@@ -1184,6 +1185,12 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length,
 				UINT32 nYSrc = nYDst - updateRect.top;
 				UINT32 nWidth = MIN(64, updateRects[j].right - updateRects[j].left);
 				UINT32 nHeight = MIN(64, updateRects[j].bottom - updateRects[j].top);
+
+				if (nXDst + nWidth > dstWidth)
+					nWidth = MAX(0, dstWidth - nXDst);
+
+				if (nYDst + nHeight > dstHeight)
+					nHeight = MAX(0, dstHeight - nYDst);
 
 				if (!freerdp_image_copy(dst, dstFormat, dstStride,
 				                        nXDst, nYDst, nWidth, nHeight,
