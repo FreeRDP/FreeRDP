@@ -280,47 +280,6 @@ static pstatus_t general_YUV444SplitToYUV420(
 	return PRIMITIVES_SUCCESS;
 }
 
-/**
- * | R |   ( | 256     0    403 | |    Y    | )
- * | G | = ( | 256   -48   -120 | | U - 128 | ) >> 8
- * | B |   ( | 256   475      0 | | V - 128 | )
- */
-static INLINE INT32 C(INT32 Y)
-{
-	return (Y) -   0L;
-}
-
-static INLINE INT32 D(INT32 U)
-{
-	return (U) - 128L;
-}
-
-static INLINE INT32 E(INT32 V)
-{
-	return (V) - 128L;
-}
-
-static INLINE BYTE YUV2R(INT32 Y, INT32 U, INT32 V)
-{
-	const INT32 r = (256L * C(Y) +   0L * D(U) + 403L * E(V));
-	const INT32 r8 = r >> 8L;
-	return CLIP(r8);
-}
-
-static INLINE BYTE YUV2G(INT32 Y, INT32 U, INT32 V)
-{
-	const INT32 g = (256L * C(Y) -  48L * D(U) - 120L * E(V));
-	const INT32 g8 = g >> 8L;
-	return CLIP(g8);
-}
-
-static INLINE BYTE YUV2B(INT32 Y, INT32 U, INT32 V)
-{
-	const INT32 b = (256L * C(Y) + 475L * D(U) +   0L * E(V));
-	const INT32 b8 = b >> 8L;
-	return CLIP(b8);
-}
-
 static pstatus_t general_YUV444ToRGB_8u_P3AC4R_general(
     const BYTE* pSrc[3], const UINT32 srcStep[3],
     BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
@@ -343,8 +302,8 @@ static pstatus_t general_YUV444ToRGB_8u_P3AC4R_general(
 		for (x = 0; x < nWidth; x++)
 		{
 			const BYTE Y = pY[x];
-			const INT32 U = pU[x];
-			const INT32 V = pV[x];
+			const BYTE U = pU[x];
+			const BYTE V = pV[x];
 			const BYTE r = YUV2R(Y, U, V);
 			const BYTE g = YUV2G(Y, U, V);
 			const BYTE b = YUV2B(Y, U, V);
@@ -376,8 +335,8 @@ static pstatus_t general_YUV444ToRGB_8u_P3AC4R_BGRX(
 		for (x = 0; x < nWidth; x++)
 		{
 			const BYTE Y = pY[x];
-			const INT32 U = pU[x];
-			const INT32 V = pV[x];
+			const BYTE U = pU[x];
+			const BYTE V = pV[x];
 			const BYTE r = YUV2R(Y, U, V);
 			const BYTE g = YUV2G(Y, U, V);
 			const BYTE b = YUV2B(Y, U, V);
@@ -589,7 +548,7 @@ static INLINE pstatus_t general_RGBToYUV420_BGRX(
     const BYTE* pSrc, UINT32 srcStep,
     BYTE* pDst[3], UINT32 dstStep[3], const prim_size_t* roi)
 {
-	UINT32 x, y, i, j;
+	UINT32 x, y, i;
 	size_t x1 = 0, x2 = 4, x3 = srcStep, x4 = srcStep + 4;
 	size_t y1 = 0, y2 = 1, y3 = dstStep[0], y4 = dstStep[0] + 1;
 	UINT32 max_x = roi->width - 1;
@@ -606,7 +565,6 @@ static INLINE pstatus_t general_RGBToYUV420_BGRX(
 		{
 			BYTE R, G, B;
 			INT32 Ra, Ga, Ba;
-			UINT32 color;
 			/* row 1, pixel 1 */
 			Ba = B = *(src + x1 + 0);
 			Ga = G = *(src + x1 + 1);
@@ -658,7 +616,7 @@ static INLINE pstatus_t general_RGBToYUV420_ANY(
     BYTE* pDst[3], UINT32 dstStep[3], const prim_size_t* roi)
 {
 	const UINT32 bpp = GetBytesPerPixel(srcFormat);
-	UINT32 x, y, i, j;
+	UINT32 x, y, i;
 	size_t x1 = 0, x2 = bpp, x3 = srcStep, x4 = srcStep + bpp;
 	size_t y1 = 0, y2 = 1, y3 = dstStep[0], y4 = dstStep[0] + 1;
 	UINT32 max_x = roi->width - 1;
