@@ -32,6 +32,5 @@ struct _ERRINFO
 typedef struct _ERRINFO ERRINFO;
 
 FREERDP_LOCAL void rdp_print_errinfo(UINT32 code);
-FREERDP_API ERRINFO* get_error_msg(void);
-FREERDP_API  void clear_error_msg(void);
+
 #endif

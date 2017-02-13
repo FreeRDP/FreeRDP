@@ -559,23 +559,6 @@ const char* freerdp_get_error_info_name(UINT32 code)
 	return "ERRINFO_UNKNOWN";
 }
 
-ERRINFO* errinfo_tmp = NULL;
-
-static void put_error_msg(ERRINFO* errinfo)
-{
-	errinfo_tmp = errinfo;
-}
-
-ERRINFO* get_error_msg(void)
-{
-	return errinfo_tmp;
-}
-
-void clear_error_msg(void)
-{
-	errinfo_tmp = NULL;
-}
-
 void rdp_print_errinfo(UINT32 code)
 {
 	const ERRINFO* errInfo;
@@ -586,7 +569,6 @@ void rdp_print_errinfo(UINT32 code)
 	{
 		if (code == errInfo->code)
 		{
-			put_error_msg(errInfo);
 			WLog_INFO(TAG,  "%s (0x%08"PRIX32"):%s", errInfo->name, code, errInfo->info);
 			return;
 		}
