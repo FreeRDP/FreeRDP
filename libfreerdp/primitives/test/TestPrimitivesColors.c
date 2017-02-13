@@ -17,58 +17,102 @@
 #endif
 
 #include <winpr/sysinfo.h>
+#include <freerdp/utils/profiler.h>
+
 #include "prim_test.h"
 
-static const int RGB_TRIAL_ITERATIONS = 1000;
-static const int YCBCR_TRIAL_ITERATIONS = 1000;
-static const float TEST_TIME = 4.0;
-
 /* ------------------------------------------------------------------------- */
-static BOOL test_RGBToRGB_16s8u_P3AC4R_func(void)
+static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 {
-	INT16 ALIGN(r[4096]), ALIGN(g[4096]), ALIGN(b[4096]);
-	UINT32 ALIGN(out1[4096]);
-	UINT32 ALIGN(out2[4096]);
+	INT16* r;
+	INT16* g;
+	INT16* b;
+	BYTE* out1;
+	BYTE* out2;
 	int i;
 	BOOL failed = FALSE;
-	INT16* ptrs[3];
-	prim_size_t roi = { 64, 64 };
+	const INT16* ptrs[3];
+	const UINT32 rgbStride = roi.width * 2;
+	const UINT32 dstStride = roi.width * 4;
+	PROFILER_DEFINE(genericProf);
+	PROFILER_DEFINE(optProf);
+	PROFILER_CREATE(genericProf, "RGBToRGB_16s8u_P3AC4R-GENERIC");
+	PROFILER_CREATE(optProf, "RGBToRGB_16s8u_P3AC4R-OPTIMIZED");
+	r = _aligned_malloc(rgbStride * roi.height, 16);
+	g = _aligned_malloc(rgbStride * roi.height, 16);
+	b = _aligned_malloc(rgbStride * roi.height, 16);
+	out1 = _aligned_malloc(dstStride * roi.height, 16);
+	out2 = _aligned_malloc(dstStride * roi.height, 16);
 
-	winpr_RAND((BYTE*)r, sizeof(r));
-	winpr_RAND((BYTE*)g, sizeof(g));
-	winpr_RAND((BYTE*)b, sizeof(b));
+	if (!r || !g || !b || !out1 || !out2)
+		goto fail;
 
-	/* clear upper bytes */
-	for (i = 0; i < 4096; ++i)
+#if 0
 	{
-		r[i] &= 0x00FFU;
-		g[i] &= 0x00FFU;
-		b[i] &= 0x00FFU;
-	}
+		UINT32 x, y;
 
+		for (y = 0; y < roi.height; y++)
+		{
+			for (x = 0; x < roi.width; x++)
+			{
+				r[y * roi.width + x] = 0x01;
+				g[y * roi.width + x] = 0x02;
+				b[y * roi.width + x] = 0x04;
+			}
+		}
+	}
+#else
+	winpr_RAND((BYTE*)r, rgbStride * roi.height);
+	winpr_RAND((BYTE*)g, rgbStride * roi.height);
+	winpr_RAND((BYTE*)b, rgbStride * roi.height);
+#endif
 	ptrs[0] = r;
 	ptrs[1] = g;
 	ptrs[2] = b;
-	if (generic->RGBToRGB_16s8u_P3AC4R((const INT16**) ptrs, 64 * 2,
-				      (BYTE*) out1, 64 * 4, PIXEL_FORMAT_RGBA32,
-				       &roi) != PRIMITIVES_SUCCESS)
-		return FALSE;
+	PROFILER_ENTER(genericProf);
 
-	if (optimized->RGBToRGB_16s8u_P3AC4R((const INT16**) ptrs, 64 * 2,
-					 (BYTE*) out2, 64 * 4, PIXEL_FORMAT_RGBA32,
-					  &roi) != PRIMITIVES_SUCCESS)
-		return FALSE;
+	if (generic->RGBToRGB_16s8u_P3AC4R(ptrs, rgbStride,
+	                                   out1, dstStride, DstFormat,
+	                                   &roi) != PRIMITIVES_SUCCESS)
+		goto fail;
 
-	for (i = 0; i < 4096; ++i)
+	PROFILER_EXIT(genericProf);
+	PROFILER_ENTER(optProf);
+
+	if (optimized->RGBToRGB_16s8u_P3AC4R(ptrs, rgbStride,
+	                                     out2, dstStride, DstFormat,
+	                                     &roi) != PRIMITIVES_SUCCESS)
+		goto fail;
+
+	PROFILER_EXIT(optProf);
+
+	if (memcmp(out1, out2, dstStride * roi.height) != 0)
 	{
-		if (out1[i] != out2[i])
+		for (i = 0; i < roi.width * roi.height; ++i)
 		{
-			printf("RGBToRGB-SSE FAIL: out1[%d]=0x%08"PRIx32" out2[%d]=0x%08"PRIx32"\n",
-			       i, out1[i], i, out2[i]);
-			failed = TRUE;
+			const UINT32 o1 = ReadColor(out1 + 4 * i, DstFormat);
+			const UINT32 o2 = ReadColor(out2 + 4 * i, DstFormat);
+
+			if (o1 != o2)
+			{
+				printf("RGBToRGB_16s8u_P3AC4R FAIL: out1[%d]=0x%08"PRIx32" out2[%d]=0x%08"PRIx32"\n",
+				       i, out1[i], i, out2[i]);
+				failed = TRUE;
+			}
 		}
 	}
 
+	printf("Results for %lux%lu [%s]", roi.width, roi.height, GetColorFormatName(DstFormat));
+	PROFILER_PRINT(genericProf);
+	PROFILER_PRINT(optProf);
+fail:
+	PROFILER_FREE(genericProf);
+	PROFILER_FREE(optProf);
+	_aligned_free(r);
+	_aligned_free(g);
+	_aligned_free(b);
+	_aligned_free(out1);
+	_aligned_free(out2);
 	return !failed;
 }
 
@@ -76,11 +120,10 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_func(void)
 static BOOL test_RGBToRGB_16s8u_P3AC4R_speed(void)
 {
 	const prim_size_t roi64x64 = { 64, 64 };
-	INT16 ALIGN(r[4096+1]), ALIGN(g[4096+1]), ALIGN(b[4096+1]);
-	UINT32 ALIGN(dst[4096+1]);
+	INT16 ALIGN(r[4096 + 1]), ALIGN(g[4096 + 1]), ALIGN(b[4096 + 1]);
+	UINT32 ALIGN(dst[4096 + 1]);
 	int i;
 	INT16* ptrs[3];
-
 	winpr_RAND((BYTE*)r, sizeof(r));
 	winpr_RAND((BYTE*)g, sizeof(g));
 	winpr_RAND((BYTE*)b, sizeof(b));
@@ -93,20 +136,20 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_speed(void)
 		b[i] &= 0x00FFU;
 	}
 
-	ptrs[0] = r+1;
-	ptrs[1] = g+1;
-	ptrs[2] = b+1;
+	ptrs[0] = r + 1;
+	ptrs[1] = g + 1;
+	ptrs[2] = b + 1;
 
 	if (!speed_test("RGBToRGB_16s8u_P3AC4R", "aligned", g_Iterations,
-			(speed_test_fkt)generic->RGBToRGB_16s8u_P3AC4R,
-			(speed_test_fkt)optimized->RGBToRGB_16s8u_P3AC4R,
-			(const INT16**) ptrs, 64 * 2, (BYTE*) dst, 64 * 4, &roi64x64))
+	                (speed_test_fkt)generic->RGBToRGB_16s8u_P3AC4R,
+	                (speed_test_fkt)optimized->RGBToRGB_16s8u_P3AC4R,
+	                (const INT16**) ptrs, 64 * 2, (BYTE*) dst, 64 * 4, &roi64x64))
 		return FALSE;
 
 	if (!speed_test("RGBToRGB_16s8u_P3AC4R", "unaligned", g_Iterations,
-			(speed_test_fkt)generic->RGBToRGB_16s8u_P3AC4R,
-			(speed_test_fkt)optimized->RGBToRGB_16s8u_P3AC4R,
-			(const INT16**) ptrs, 64 * 2, ((BYTE*) dst)+1, 64 * 4, &roi64x64))
+	                (speed_test_fkt)generic->RGBToRGB_16s8u_P3AC4R,
+	                (speed_test_fkt)optimized->RGBToRGB_16s8u_P3AC4R,
+	                (const INT16**) ptrs, 64 * 2, ((BYTE*) dst) + 1, 64 * 4, &roi64x64))
 		return FALSE;
 
 	return TRUE;
@@ -124,7 +167,6 @@ static BOOL test_yCbCrToRGB_16s16s_P3P3_func(void)
 	INT16* out1[3];
 	INT16* out2[3];
 	prim_size_t roi = { 64, 64 };
-
 	winpr_RAND((BYTE*)y, sizeof(y));
 	winpr_RAND((BYTE*)cb, sizeof(cb));
 	winpr_RAND((BYTE*)cr, sizeof(cr));
@@ -152,12 +194,13 @@ static BOOL test_yCbCrToRGB_16s16s_P3P3_func(void)
 	out2[0] = r2;
 	out2[1] = g2;
 	out2[2] = b2;
-
 	status = generic->yCbCrToRGB_16s16s_P3P3(in, 64 * 2, out1, 64 * 2, &roi);
+
 	if (status != PRIMITIVES_SUCCESS)
 		return FALSE;
 
 	status = optimized->yCbCrToRGB_16s16s_P3P3(in, 64 * 2, out2, 64 * 2, &roi);
+
 	if (status != PRIMITIVES_SUCCESS)
 		return FALSE;
 
@@ -167,7 +210,8 @@ static BOOL test_yCbCrToRGB_16s16s_P3P3_func(void)
 		    || (ABS(g1[i] - g2[i]) > 1)
 		    || (ABS(b1[i] - b2[i]) > 1))
 		{
-			printf("YCbCrToRGB-SSE FAIL[%d]: %"PRId16",%"PRId16",%"PRId16" vs %"PRId16",%"PRId16",%"PRId16"\n", i,
+			printf("YCbCrToRGB-SSE FAIL[%d]: %"PRId16",%"PRId16",%"PRId16" vs %"PRId16",%"PRId16",%"PRId16"\n",
+			       i,
 			       r1[i], g1[i], b1[i], r2[i], g2[i], b2[i]);
 			return FALSE;
 		}
@@ -185,7 +229,6 @@ static int test_yCbCrToRGB_16s16s_P3P3_speed(void)
 	int i;
 	const INT16* input[3];
 	INT16* output[3];
-
 	winpr_RAND((BYTE*)y, sizeof(y));
 	winpr_RAND((BYTE*)cb, sizeof(cb));
 	winpr_RAND((BYTE*)cr, sizeof(cr));
@@ -206,9 +249,9 @@ static int test_yCbCrToRGB_16s16s_P3P3_speed(void)
 	output[2] = b;
 
 	if (!speed_test("yCbCrToRGB_16s16s_P3P3", "aligned", g_Iterations,
-			(speed_test_fkt)generic->yCbCrToRGB_16s16s_P3P3,
-			(speed_test_fkt)optimized->yCbCrToRGB_16s16s_P3P3,
-			input, 64 * 2, output, 64 * 2, &roi))
+	                (speed_test_fkt)generic->yCbCrToRGB_16s16s_P3P3,
+	                (speed_test_fkt)optimized->yCbCrToRGB_16s16s_P3P3,
+	                input, 64 * 2, output, 64 * 2, &roi))
 		return FALSE;
 
 	return TRUE;
@@ -216,24 +259,44 @@ static int test_yCbCrToRGB_16s16s_P3P3_speed(void)
 
 int TestPrimitivesColors(int argc, char* argv[])
 {
+	const DWORD formats[] =
+	{
+		PIXEL_FORMAT_ARGB32,
+		PIXEL_FORMAT_XRGB32,
+		PIXEL_FORMAT_ABGR32,
+		PIXEL_FORMAT_XBGR32,
+		PIXEL_FORMAT_RGBA32,
+		PIXEL_FORMAT_RGBX32,
+		PIXEL_FORMAT_BGRA32,
+		PIXEL_FORMAT_BGRX32
+	};
+	DWORD x;
+	prim_size_t roi = { 1920, 1080};
 	prim_test_setup(FALSE);
 
-	if (!test_RGBToRGB_16s8u_P3AC4R_func())
-		return 1;
-
-	if (g_TestPrimitivesPerformance)
+	for (x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
 	{
-		if (!test_RGBToRGB_16s8u_P3AC4R_speed())
+		if (!test_RGBToRGB_16s8u_P3AC4R_func(roi, formats[x]))
 			return 1;
-	}
 
-	if (!test_yCbCrToRGB_16s16s_P3P3_func())
-		return 1;
+#if 0
 
-	if (g_TestPrimitivesPerformance)
-	{
-		if (!test_yCbCrToRGB_16s16s_P3P3_speed())
+		if (g_TestPrimitivesPerformance)
+		{
+			if (!test_RGBToRGB_16s8u_P3AC4R_speed())
+				return 1;
+		}
+
+		if (!test_yCbCrToRGB_16s16s_P3P3_func())
 			return 1;
+
+		if (g_TestPrimitivesPerformance)
+		{
+			if (!test_yCbCrToRGB_16s16s_P3P3_speed())
+				return 1;
+		}
+
+#endif
 	}
 
 	return 0;
