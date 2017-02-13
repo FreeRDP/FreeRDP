@@ -103,35 +103,14 @@ static BOOL convert_color(BYTE* dst, UINT32 nDstStep, UINT32 DstFormat,
                           const BYTE* src, UINT32 nSrcStep, UINT32 SrcFormat,
                           UINT32 nDstWidth, UINT32 nDstHeight, const gdiPalette* palette)
 {
-	UINT32 x, y;
-
 	if (nWidth + nXDst > nDstWidth)
 		nWidth = nDstWidth - nXDst;
 
 	if (nHeight + nYDst > nDstHeight)
 		nHeight = nDstHeight - nYDst;
 
-	for (y = 0; y < nHeight; y++)
-	{
-		const BYTE* pSrcLine = &src[y * nSrcStep];
-		BYTE* pDstLine = &dst[(nYDst + y) * nDstStep];
-
-		for (x = 0; x < nWidth; x++)
-		{
-			const BYTE* pSrcPixel =
-			    &pSrcLine[x * GetBytesPerPixel(SrcFormat)];
-			BYTE* pDstPixel =
-			    &pDstLine[(nXDst + x) * GetBytesPerPixel(DstFormat)];
-			UINT32 color = ReadColor(pSrcPixel, SrcFormat);
-			color = ConvertColor(color, SrcFormat,
-			                     DstFormat, palette);
-
-			if (!WriteColor(pDstPixel, DstFormat, color))
-				return FALSE;
-		}
-	}
-
-	return TRUE;
+	return freerdp_image_copy(dst, DstFormat, nDstStep, nXDst, nYDst, nWidth, nHeight,
+	                          src, SrcFormat, nSrcStep, 0, 0, palette, 0);
 }
 
 static BOOL clear_decompress_nscodec(NSC_CONTEXT* nsc, UINT32 width,
