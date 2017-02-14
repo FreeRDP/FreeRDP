@@ -359,25 +359,44 @@ static pstatus_t ssse3_YUV420ToRGB(
 	}
 }
 
-static __m128i* ssse3_YUV444Pixel(__m128i* dst, __m128i Yraw, __m128i Uraw, __m128i Vraw,
-                                  __m128i mapY, __m128i mapUV)
+static __m128i* ssse3_YUV444Pixel(__m128i* dst, __m128i Yraw, __m128i Uraw, __m128i Vraw, UINT8 pos)
 {
+	const __m128i mapY[] =
+	{
+		_mm_set_epi32(0x80800380, 0x80800280, 0x80800180, 0x80800080),
+		_mm_set_epi32(0x80800780, 0x80800680, 0x80800580, 0x80800480),
+		_mm_set_epi32(0x80800B80, 0x80800A80, 0x80800980, 0x80800880),
+		_mm_set_epi32(0x80800F80, 0x80800E80, 0x80800D80, 0x80800C80)
+	};
+	const __m128i mapUV[] =
+	{
+		_mm_set_epi32(0x80038002, 0x80018000, 0x80808080, 0x80808080),
+		_mm_set_epi32(0x80078006, 0x80058004, 0x80808080, 0x80808080),
+		_mm_set_epi32(0x800B800A, 0x80098008, 0x80808080, 0x80808080),
+		_mm_set_epi32(0x800F800E, 0x800D800C, 0x80808080, 0x80808080)
+	};
+	const __m128i mask[] =
+	{
+		_mm_set_epi32(0x80038080, 0x80028080, 0x80018080, 0x80008080),
+		_mm_set_epi32(0x80800380, 0x80800280, 0x80800180, 0x80800080),
+		_mm_set_epi32(0x80808003, 0x80808002, 0x80808001, 0x80808000)
+	};
 	const __m128i c128 = _mm_set1_epi16(128);
 	__m128i BGRX = _mm_set_epi32(0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000);
 	{
 		__m128i C, D, E;
 		/* Load Y values and expand to 32 bit */
 		{
-			C = _mm_shuffle_epi8(Yraw, mapY); /* Reorder and multiply by 256 */
+			C = _mm_shuffle_epi8(Yraw, mapY[pos]); /* Reorder and multiply by 256 */
 		}
 		/* Load U values and expand to 32 bit */
 		{
-			const __m128i U = _mm_shuffle_epi8(Uraw, mapUV); /* Reorder dcba */
+			const __m128i U = _mm_shuffle_epi8(Uraw, mapUV[pos]); /* Reorder dcba */
 			D = _mm_sub_epi16(U, c128); /* D = U - 128 */
 		}
 		/* Load V values and expand to 32 bit */
 		{
-			const __m128i V = _mm_shuffle_epi8(Vraw, mapUV); /* Reorder dcba */
+			const __m128i V = _mm_shuffle_epi8(Vraw, mapUV[pos]); /* Reorder dcba */
 			E = _mm_sub_epi16(V, c128); /* E = V - 128 */
 		}
 		/* Get the R value */
@@ -388,8 +407,7 @@ static __m128i* ssse3_YUV444Pixel(__m128i* dst, __m128i Yraw, __m128i Uraw, __m1
 			const __m128i R32 = _mm_srai_epi32(Rs, 8);
 			const __m128i R16 = _mm_packs_epi32(R32, _mm_setzero_si128());
 			const __m128i R = _mm_packus_epi16(R16, _mm_setzero_si128());
-			const __m128i mask = _mm_set_epi32(0x80038080, 0x80028080, 0x80018080, 0x80008080);
-			const __m128i packed = _mm_shuffle_epi8(R, mask);
+			const __m128i packed = _mm_shuffle_epi8(R, mask[0]);
 			BGRX = _mm_or_si128(BGRX, packed);
 		}
 		/* Get the G value */
@@ -403,8 +421,7 @@ static __m128i* ssse3_YUV444Pixel(__m128i* dst, __m128i Yraw, __m128i Uraw, __m1
 			const __m128i G32 = _mm_srai_epi32(Gs, 8);
 			const __m128i G16 = _mm_packs_epi32(G32, _mm_setzero_si128());
 			const __m128i G = _mm_packus_epi16(G16, _mm_setzero_si128());
-			const __m128i mask = _mm_set_epi32(0x80800380, 0x80800280, 0x80800180, 0x80800080);
-			const __m128i packed = _mm_shuffle_epi8(G, mask);
+			const __m128i packed = _mm_shuffle_epi8(G, mask[1]);
 			BGRX = _mm_or_si128(BGRX, packed);
 		}
 		/* Get the B value */
@@ -415,8 +432,7 @@ static __m128i* ssse3_YUV444Pixel(__m128i* dst, __m128i Yraw, __m128i Uraw, __m1
 			const __m128i B32 = _mm_srai_epi32(Bs, 8);
 			const __m128i B16 = _mm_packs_epi32(B32, _mm_setzero_si128());
 			const __m128i B = _mm_packus_epi16(B16, _mm_setzero_si128());
-			const __m128i mask = _mm_set_epi32(0x80808003, 0x80808002, 0x80808001, 0x80808000);
-			const __m128i packed = _mm_shuffle_epi8(B, mask);
+			const __m128i packed = _mm_shuffle_epi8(B, mask[2]);
 			BGRX = _mm_or_si128(BGRX, packed);
 		}
 	}
@@ -450,26 +466,10 @@ static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R_BGRX(
 			YData += 16;
 			UData += 16;
 			VData += 16;
-			{
-				const __m128i mapY = _mm_set_epi32(0x80800380, 0x80800280, 0x80800180, 0x80800080);
-				const __m128i mapUV = _mm_set_epi32(0x80038002, 0x80018000, 0x80808080, 0x80808080);
-				dst = ssse3_YUV444Pixel(dst, Y, U, V, mapY, mapUV);
-			}
-			{
-				const __m128i mapY = _mm_set_epi32(0x80800780, 0x80800680, 0x80800580, 0x80800480);
-				const __m128i mapUV = _mm_set_epi32(0x80078006, 0x80058004, 0x80808080, 0x80808080);
-				dst = ssse3_YUV444Pixel(dst, Y, U, V, mapY, mapUV);
-			}
-			{
-				const __m128i mapY = _mm_set_epi32(0x80800B80, 0x80800A80, 0x80800980, 0x80800880);
-				const __m128i mapUV = _mm_set_epi32(0x800B800A, 0x80098008, 0x80808080, 0x80808080);
-				dst = ssse3_YUV444Pixel(dst, Y, U, V, mapY, mapUV);
-			}
-			{
-				const __m128i mapY = _mm_set_epi32(0x80800F80, 0x80800E80, 0x80800D80, 0x80800C80);
-				const __m128i mapUV = _mm_set_epi32(0x800F800E, 0x800D800C, 0x80808080, 0x80808080);
-				dst = ssse3_YUV444Pixel(dst, Y, U, V, mapY, mapUV);
-			}
+			dst = ssse3_YUV444Pixel(dst, Y, U, V, 0);
+			dst = ssse3_YUV444Pixel(dst, Y, U, V, 1);
+			dst = ssse3_YUV444Pixel(dst, Y, U, V, 2);
+			dst = ssse3_YUV444Pixel(dst, Y, U, V, 3);
 		}
 
 		for (x = 0; x < pad; x++)
