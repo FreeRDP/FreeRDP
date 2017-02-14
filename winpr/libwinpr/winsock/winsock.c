@@ -923,7 +923,7 @@ int WSAIoctl(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer,
 
 next_ifreq:
 
-#if !defined(__linux__) && !defined(__sun__)
+#if !defined(__linux__) && !defined(__sun__) && !defined(__CYGWIN__)
 		ifreq_len = IFNAMSIZ + ifreq->ifr_addr.sa_len;
 #else
 		ifreq_len = sizeof(*ifreq);
