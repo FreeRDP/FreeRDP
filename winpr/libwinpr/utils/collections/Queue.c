@@ -148,7 +148,7 @@ void Queue_Enqueue(wQueue* queue, void* obj)
 		queue->array = (void**) realloc(queue->array, sizeof(void*) * queue->capacity);
 		ZeroMemory(&(queue->array[old_capacity]), old_capacity * sizeof(void*));
 
-		if (queue->tail < old_capacity)
+		if (queue->tail <= queue->head)
 		{
 			CopyMemory(&(queue->array[old_capacity]), queue->array, queue->tail * sizeof(void*));
 			queue->tail += old_capacity;
