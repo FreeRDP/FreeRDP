@@ -302,9 +302,9 @@ static INLINE void writeScanlineRGB(BYTE* dst, DWORD formatSize, UINT32 DstForma
 
 	for (x = 0; x < width; x++)
 	{
-		const BYTE R = *r++;
-		const BYTE G = *g++;
-		const BYTE B = *b++;
+		const BYTE R = CLIP(*r++);
+		const BYTE G = CLIP(*g++);
+		const BYTE B = CLIP(*b++);
 		*dst++ = R;
 		*dst++ = G;
 		*dst++ = B;
@@ -318,9 +318,9 @@ static INLINE void writeScanlineBGR(BYTE* dst, DWORD formatSize, UINT32 DstForma
 
 	for (x = 0; x < width; x++)
 	{
-		const BYTE R = *r++;
-		const BYTE G = *g++;
-		const BYTE B = *b++;
+		const BYTE R = CLIP(*r++);
+		const BYTE G = CLIP(*g++);
+		const BYTE B = CLIP(*b++);
 		*dst++ = B;
 		*dst++ = G;
 		*dst++ = R;
@@ -334,9 +334,9 @@ static INLINE void writeScanlineBGRX(BYTE* dst, DWORD formatSize, UINT32 DstForm
 
 	for (x = 0; x < width; x++)
 	{
-		const BYTE R = *r++;
-		const BYTE G = *g++;
-		const BYTE B = *b++;
+		const BYTE R = CLIP(*r++);
+		const BYTE G = CLIP(*g++);
+		const BYTE B = CLIP(*b++);
 		*dst++ = B;
 		*dst++ = G;
 		*dst++ = R;
@@ -351,9 +351,9 @@ static INLINE void writeScanlineRGBX(BYTE* dst, DWORD formatSize, UINT32 DstForm
 
 	for (x = 0; x < width; x++)
 	{
-		const BYTE R = *r++;
-		const BYTE G = *g++;
-		const BYTE B = *b++;
+		const BYTE R = CLIP(*r++);
+		const BYTE G = CLIP(*g++);
+		const BYTE B = CLIP(*b++);
 		*dst++ = R;
 		*dst++ = G;
 		*dst++ = B;
@@ -368,9 +368,9 @@ static INLINE void writeScanlineXBGR(BYTE* dst, DWORD formatSize, UINT32 DstForm
 
 	for (x = 0; x < width; x++)
 	{
-		const BYTE R = *r++;
-		const BYTE G = *g++;
-		const BYTE B = *b++;
+		const BYTE R = CLIP(*r++);
+		const BYTE G = CLIP(*g++);
+		const BYTE B = CLIP(*b++);
 		*dst++ = 0xFF;
 		*dst++ = B;
 		*dst++ = G;
@@ -385,9 +385,9 @@ static INLINE void writeScanlineXRGB(BYTE* dst, DWORD formatSize, UINT32 DstForm
 
 	for (x = 0; x < width; x++)
 	{
-		const BYTE R = *r++;
-		const BYTE G = *g++;
-		const BYTE B = *b++;
+		const BYTE R = CLIP(*r++);
+		const BYTE G = CLIP(*g++);
+		const BYTE B = CLIP(*b++);
 		*dst++ = 0xFF;
 		*dst++ = R;
 		*dst++ = G;

@@ -110,5 +110,5 @@ if [ ! -d $BUILD_DST/include ];
 then
 	common_run mkdir -p $BUILD_DST/include
 fi
-common_run cp -L -r $BUILD_SRC/include/openssl $BUILD_DST/include/
+common_run cp -L -R $BUILD_SRC/include/openssl $BUILD_DST/include/
 

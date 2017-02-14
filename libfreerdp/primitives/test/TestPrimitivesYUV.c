@@ -22,7 +22,7 @@ static BOOL similar(const BYTE* src, const BYTE* dst, size_t size)
 	{
 		int diff = src[x] - dst[x];
 
-		if (abs(diff) > 2)
+		if (abs(diff) > 4)
 		{
 			fprintf(stderr, "%"PRIuz" %02"PRIX8" : %02"PRIX8" diff=%d\n", x, src[x], dst[x], abs(diff));
 			return FALSE;
@@ -78,13 +78,14 @@ static BOOL similarRGB(const BYTE* src, const BYTE* dst, size_t size, UINT32 for
 	return TRUE;
 }
 
-static void get_size(UINT32* width, UINT32* height)
+static void get_size(BOOL large, UINT32* width, UINT32* height)
 {
+	UINT32 shift = large ? 8 : 1;
 	winpr_RAND((BYTE*)width, sizeof(*width));
 	winpr_RAND((BYTE*)height, sizeof(*height));
 	// TODO: Algorithm only works on even resolutions...
-	*width = (*width % 64 + 1) << 1;
-	*height = (*height % 64 + 1) << 1;
+	*width = (*width % 64 + 1) << shift;
+	*height = (*height % 64 + 1) << shift;
 }
 
 static BOOL check_padding(const BYTE* psrc, size_t size, size_t padding,
@@ -170,7 +171,7 @@ static void free_padding(void* src, size_t padding)
 
 /* Create 2 pseudo YUV420 frames of same size.
  * Combine them and check, if the data is at the expected position. */
-static BOOL TestPrimitiveYUVCombine(void)
+static BOOL TestPrimitiveYUVCombine(primitives_t* prims, prim_size_t roi)
 {
 	UINT32 x, y, i;
 	UINT32 awidth, aheight;
@@ -186,9 +187,6 @@ static BOOL TestPrimitiveYUVCombine(void)
 	size_t padding = 10000;
 	PROFILER_DEFINE(yuvCombine);
 	PROFILER_DEFINE(yuvSplit);
-	prim_size_t roi;
-	primitives_t* prims = primitives_get();
-	get_size(&roi.width, &roi.height);
 	awidth = roi.width + 16 - roi.width % 16;
 	aheight = roi.height + 16 - roi.height % 16;
 	fprintf(stderr, "Running YUVCombine on frame size %"PRIu32"x%"PRIu32" [%"PRIu32"x%"PRIu32"]\n",
@@ -360,18 +358,16 @@ fail:
 	return rc;
 }
 
-static BOOL TestPrimitiveYUV(BOOL use444)
+static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 {
 	BOOL rc = FALSE;
 	UINT32 x, y;
 	UINT32 awidth, aheight;
 	BYTE* yuv[3] = {0};
 	UINT32 yuv_step[3];
-	prim_size_t roi;
 	BYTE* rgb = NULL;
 	BYTE* rgb_dst = NULL;
 	size_t size;
-	primitives_t* prims = primitives_get();
 	size_t uvsize, uvwidth;
 	size_t padding = 10000;
 	size_t stride;
@@ -390,7 +386,6 @@ static BOOL TestPrimitiveYUV(BOOL use444)
 	PROFILER_DEFINE(rgbToYUV444);
 	PROFILER_DEFINE(yuv420ToRGB);
 	PROFILER_DEFINE(yuv444ToRGB);
-	get_size(&roi.width, &roi.height);
 	/* Buffers need to be 16x16 aligned. */
 	awidth = roi.width + 16 - roi.width % 16;
 	aheight = roi.height + 16 - roi.height % 16;
@@ -457,6 +452,7 @@ static BOOL TestPrimitiveYUV(BOOL use444)
 	for (x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
 	{
 		const UINT32 DstFormat = formats[x];
+		printf("Testing destination color format %s\n", GetColorFormatName(DstFormat));
 
 		if (use444)
 		{
@@ -561,26 +557,73 @@ fail:
 
 int TestPrimitivesYUV(int argc, char* argv[])
 {
+	BOOL large = (argc > 1);
 	UINT32 x;
 	int rc = -1;
 	prim_test_setup(FALSE);
+	primitives_t* prims = primitives_get();
+	primitives_t* generic = primitives_get_generic();
 
 	for (x = 0; x < 10; x++)
 	{
-		if (!TestPrimitiveYUV(TRUE)) {
+		prim_size_t roi;
+		get_size(large, &roi.width, &roi.height);
+		printf("-------------------- GENERIC ------------------------\n");
+
+		if (!TestPrimitiveYUV(generic, roi, TRUE))
+		{
 			printf("TestPrimitiveYUV (444) failed.\n");
 			goto end;
 		}
 
-		if (!TestPrimitiveYUV(FALSE)) {
+		printf("---------------------- END --------------------------\n");
+#if 1
+		printf("------------------- OPTIMIZED -----------------------\n");
+
+		if (!TestPrimitiveYUV(prims, roi, TRUE))
+		{
+			printf("TestPrimitiveYUV (444) failed.\n");
+			goto end;
+		}
+
+		printf("---------------------- END --------------------------\n");
+#endif
+		printf("-------------------- GENERIC ------------------------\n");
+
+		if (!TestPrimitiveYUV(generic, roi, FALSE))
+		{
 			printf("TestPrimitiveYUV (420) failed.\n");
 			goto end;
 		}
 
-		if (!TestPrimitiveYUVCombine()) {
+		printf("---------------------- END --------------------------\n");
+		printf("------------------- OPTIMIZED -----------------------\n");
+
+		if (!TestPrimitiveYUV(prims, roi, FALSE))
+		{
+			printf("TestPrimitiveYUV (420) failed.\n");
+			goto end;
+		}
+
+		printf("---------------------- END --------------------------\n");
+		printf("-------------------- GENERIC ------------------------\n");
+
+		if (!TestPrimitiveYUVCombine(generic, roi))
+		{
 			printf("TestPrimitiveYUVCombine failed.\n");
 			goto end;
 		}
+
+		printf("---------------------- END --------------------------\n");
+		printf("------------------- OPTIMIZED -----------------------\n");
+
+		if (!TestPrimitiveYUVCombine(prims, roi))
+		{
+			printf("TestPrimitiveYUVCombine failed.\n");
+			goto end;
+		}
+
+		printf("---------------------- END --------------------------\n");
 	}
 
 	rc = 0;
