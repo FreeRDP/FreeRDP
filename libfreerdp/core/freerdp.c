@@ -497,7 +497,6 @@ BOOL freerdp_disconnect(freerdp* instance)
 	}
 
 	codecs_free(instance->context->codecs);
-	freerdp_channels_close(instance->context->channels, instance);
 	return rc;
 }
 
@@ -717,6 +716,7 @@ void freerdp_context_free(freerdp* instance)
 	free(instance->context->errorDescription);
 	CloseHandle(instance->context->abortEvent);
 	instance->context->abortEvent = NULL;
+	freerdp_channels_close(instance->context->channels, instance);
 	freerdp_channels_free(instance->context->channels);
 	free(instance->context);
 	instance->context = NULL;
