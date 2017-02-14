@@ -1164,7 +1164,8 @@ BOOL gdi_resize_ex(rdpGdi* gdi, UINT32 width, UINT32 height,
 	if (!gdi || !gdi->primary)
 		return FALSE;
 
-	if (gdi->width == width && gdi->height == height)
+	if (gdi->width == width && gdi->height == height &&
+		(!buffer || gdi->primary_buffer == buffer))
 		return TRUE;
 
 	if (gdi->drawing == gdi->primary)
