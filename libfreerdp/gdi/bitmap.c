@@ -483,9 +483,9 @@ BOOL gdi_BitBlt(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 			hSrcBmp = (HGDI_BITMAP) hdcSrc->selectedObject;
 			hDstBmp = (HGDI_BITMAP) hdcDest->selectedObject;
 
-			if (!freerdp_image_copy(hDstBmp->data, hdcDest->format, hDstBmp->scanline,
+			if (!freerdp_image_copy(hDstBmp->data, hDstBmp->format, hDstBmp->scanline,
 			                        nXDest, nYDest, nWidth, nHeight,
-			                        hSrcBmp->data, hdcSrc->format, hSrcBmp->scanline, nXSrc, nYSrc, palette, FREERDP_FLIP_NONE))
+			                        hSrcBmp->data, hSrcBmp->format, hSrcBmp->scanline, nXSrc, nYSrc, palette, FREERDP_FLIP_NONE))
 				return FALSE;
 
 			break;
@@ -494,9 +494,9 @@ BOOL gdi_BitBlt(HGDI_DC hdcDest, UINT32 nXDest, UINT32 nYDest,
 			hSrcBmp = (HGDI_BITMAP) hdcDest->selectedObject;
 			hDstBmp = (HGDI_BITMAP) hdcDest->selectedObject;
 
-			if (!freerdp_image_copy(hDstBmp->data, hdcDest->format, hDstBmp->scanline,
+			if (!freerdp_image_copy(hDstBmp->data, hDstBmp->format, hDstBmp->scanline,
 			                        nXDest, nYDest, nWidth, nHeight,
-			                        hSrcBmp->data, hdcSrc->format, hSrcBmp->scanline, nXSrc, nYSrc, palette, FREERDP_FLIP_NONE))
+			                        hSrcBmp->data, hSrcBmp->format, hSrcBmp->scanline, nXSrc, nYSrc, palette, FREERDP_FLIP_NONE))
 				return FALSE;
 
 			break;
