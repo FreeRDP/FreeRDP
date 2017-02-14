@@ -1273,6 +1273,11 @@ static H264_CONTEXT_SUBSYSTEM g_Subsystem_OpenH264 =
 #include <libavcodec/avcodec.h>
 #include <libavutil/avutil.h>
 
+/* Fallback support for older libavcodec versions */
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54, 59, 100)
+#define AV_CODEC_ID_H264 CODEC_ID_H264
+#endif
+
 struct _H264_CONTEXT_LIBAVCODEC
 {
 	AVCodec* codec;
@@ -1282,7 +1287,7 @@ struct _H264_CONTEXT_LIBAVCODEC
 };
 typedef struct _H264_CONTEXT_LIBAVCODEC H264_CONTEXT_LIBAVCODEC;
 
-static int libavcodec_decompress(H264_CONTEXT* h264, BYTE* pSrcData,
+static int libavcodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData,
                                  UINT32 SrcSize, UINT32 plane)
 {
 	int status;
@@ -1290,12 +1295,31 @@ static int libavcodec_decompress(H264_CONTEXT* h264, BYTE* pSrcData,
 	AVPacket packet;
 	H264_CONTEXT_LIBAVCODEC* sys = (H264_CONTEXT_LIBAVCODEC*) h264->pSystemData;
 	BYTE** pYUVData = h264->pYUVData[plane];
-	INT32* iStride = h264->iStride[plane];
+	UINT32* iStride = h264->iStride[plane];
 	av_init_packet(&packet);
-	packet.data = pSrcData;
+	packet.data = (BYTE*)pSrcData;
 	packet.size = SrcSize;
+	/* avcodec_decode_video2 is deprecated with libavcodec 57.48.101 */
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(57, 48, 101)
+	status = avcodec_send_packet(sys->codecContext, &packet);
+
+	if (status < 0)
+	{
+		WLog_ERR(TAG, "Failed to decode video frame (status=%d)", status);
+		return -1;
+	}
+
+	do
+	{
+		status = avcodec_receive_frame(sys->codecContext, sys->videoFrame);
+	}
+	while (status == AVERROR(EAGAIN));
+
+	gotFrame = (status == 0);
+#else
 	status = avcodec_decode_video2(sys->codecContext, sys->videoFrame, &gotFrame,
 	                               &packet);
+#endif
 
 	if (status < 0)
 	{
@@ -1338,7 +1362,11 @@ static void libavcodec_uninit(H264_CONTEXT* h264)
 
 	if (sys->videoFrame)
 	{
-		av_free(sys->videoFrame);
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(55, 18, 102)
+		av_frame_free(&sys->videoFrame);
+#else
+		av_free(&sys->videoFrame);
+#endif
 	}
 
 	if (sys->codecParser)
@@ -1368,7 +1396,7 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 
 	h264->pSystemData = (void*) sys;
 	avcodec_register_all();
-	sys->codec = avcodec_find_decoder(CODEC_ID_H264);
+	sys->codec = avcodec_find_decoder(AV_CODEC_ID_H264);
 
 	if (!sys->codec)
 	{
@@ -1395,7 +1423,7 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 		goto EXCEPTION;
 	}
 
-	sys->codecParser = av_parser_init(CODEC_ID_H264);
+	sys->codecParser = av_parser_init(AV_CODEC_ID_H264);
 
 	if (!sys->codecParser)
 	{
@@ -1403,7 +1431,11 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 		goto EXCEPTION;
 	}
 
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(55, 18, 102)
+	sys->videoFrame = av_frame_alloc();
+#else
 	sys->videoFrame = avcodec_alloc_frame();
+#endif
 
 	if (!sys->videoFrame)
 	{
