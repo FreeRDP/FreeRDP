@@ -42,6 +42,13 @@ static int dummy_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 Src
 	return -1;
 }
 
+static int dummy_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstSize,
+                          UINT32 plane)
+{
+	//H264_CONTEXT_X264* sys = (H264_CONTEXT_X264*) h264->pSystemData;
+	return -1;
+}
+
 static void dummy_uninit(H264_CONTEXT* h264)
 {
 }
@@ -56,7 +63,8 @@ static H264_CONTEXT_SUBSYSTEM g_Subsystem_dummy =
 	"dummy",
 	dummy_init,
 	dummy_uninit,
-	dummy_decompress
+	dummy_decompress,
+	dummy_compress
 };
 
 /**
@@ -1353,6 +1361,12 @@ static int libavcodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData,
 	return 1;
 }
 
+static int libavcodec_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstSize,
+                               UINT32 plane)
+{
+	return -1;
+}
+
 static void libavcodec_uninit(H264_CONTEXT* h264)
 {
 	H264_CONTEXT_LIBAVCODEC* sys = (H264_CONTEXT_LIBAVCODEC*) h264->pSystemData;
@@ -1365,7 +1379,7 @@ static void libavcodec_uninit(H264_CONTEXT* h264)
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(55, 18, 102)
 		av_frame_free(&sys->videoFrame);
 #else
-		av_free(&sys->videoFrame);
+		av_free(sys->videoFrame);
 #endif
 	}
 
@@ -1377,7 +1391,11 @@ static void libavcodec_uninit(H264_CONTEXT* h264)
 	if (sys->codecContext)
 	{
 		avcodec_close(sys->codecContext);
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(55, 69, 100)
+		avcodec_free_context(&sys->codecContext);
+#else
 		av_free(sys->codecContext);
+#endif
 	}
 
 	free(sys);
@@ -1454,7 +1472,8 @@ static H264_CONTEXT_SUBSYSTEM g_Subsystem_libavcodec =
 	"libavcodec",
 	libavcodec_init,
 	libavcodec_uninit,
-	libavcodec_decompress
+	libavcodec_decompress,
+	libavcodec_compress
 };
 
 #endif
