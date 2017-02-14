@@ -1600,17 +1600,17 @@ INT32 avc420_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
 	nWidth = (nSrcWidth + 1) & ~1;
 	nHeight = (nSrcHeight + 1) & ~1;
 
-	if (!(pYUVData[0] = (BYTE*) malloc(nWidth * nHeight)))
+	if (!(pYUVData[0] = (BYTE*) _aligned_malloc(nWidth * nHeight, 16)))
 		return -1;
 
 	iStride[0] = nWidth;
 
-	if (!(pYUVData[1] = (BYTE*) malloc(nWidth * nHeight)))
+	if (!(pYUVData[1] = (BYTE*) _aligned_malloc(nWidth * nHeight, 16)))
 		goto error_1;
 
 	iStride[1] = nWidth / 2;
 
-	if (!(pYUVData[2] = (BYTE*) malloc(nWidth * nHeight)))
+	if (!(pYUVData[2] = (BYTE*) _aligned_malloc(nWidth * nHeight, 16)))
 		goto error_2;
 
 	iStride[2] = nWidth / 2;
@@ -1619,13 +1619,13 @@ INT32 avc420_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
 	prims->RGBToYUV420_8u_P3AC4R(pSrcData, SrcFormat, nSrcStep, pYUVData, iStride,
 	                             &roi);
 	status = h264->subsystem->Compress(h264, ppDstData, pDstSize, 0);
-	free(pYUVData[2]);
+	_aligned_free(pYUVData[2]);
 	pYUVData[2] = NULL;
 error_2:
-	free(pYUVData[1]);
+	_aligned_free(pYUVData[1]);
 	pYUVData[1] = NULL;
 error_1:
-	free(pYUVData[0]);
+	_aligned_free(pYUVData[0]);
 	pYUVData[0] = NULL;
 	return status;
 }
@@ -1737,15 +1737,14 @@ static BOOL avc444_combine_yuv(H264_CONTEXT* h264,
 	{
 		for (x = 0; x < 3; x++)
 		{
-			BYTE* ppYUVTmpData;
 			piDstStride[x] = piMainStride[0];
 			piDstSize[x] = piDstStride[x] * padDstHeight;
-			ppYUVTmpData = realloc(ppYUVDstData[x], piDstSize[x]);
+			_aligned_free(ppYUVDstData[x]);
+			ppYUVDstData[x] = _aligned_malloc(piDstSize[x], 16);
 
-			if (!ppYUVTmpData)
+			if (!ppYUVDstData[x])
 				goto fail;
 
-			ppYUVDstData[x] = ppYUVTmpData;
 			memset(ppYUVDstData[x], 0, piDstSize[x]);
 		}
 	}
@@ -1766,9 +1765,9 @@ static BOOL avc444_combine_yuv(H264_CONTEXT* h264,
 
 	return TRUE;
 fail:
-	free(ppYUVDstData[0]);
-	free(ppYUVDstData[1]);
-	free(ppYUVDstData[2]);
+	_aligned_free(ppYUVDstData[0]);
+	_aligned_free(ppYUVDstData[1]);
+	_aligned_free(ppYUVDstData[2]);
 	ppYUVDstData[0] = NULL;
 	ppYUVDstData[1] = NULL;
 	ppYUVDstData[2] = NULL;
@@ -1976,9 +1975,9 @@ void h264_context_free(H264_CONTEXT* h264)
 	if (h264)
 	{
 		h264->subsystem->Uninit(h264);
-		free(h264->pYUV444Data[0]);
-		free(h264->pYUV444Data[1]);
-		free(h264->pYUV444Data[2]);
+		_aligned_free(h264->pYUV444Data[0]);
+		_aligned_free(h264->pYUV444Data[1]);
+		_aligned_free(h264->pYUV444Data[2]);
 		free(h264);
 	}
 }
