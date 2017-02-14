@@ -254,7 +254,9 @@ static BOOL TestPrimitiveYUVCombine(primitives_t* prims, prim_size_t roi)
 	}
 
 	PROFILER_EXIT(yuvCombine);
+	PROFILER_PRINT_HEADER;
 	PROFILER_PRINT(yuvCombine);
+	PROFILER_PRINT_FOOTER;
 
 	for (x = 0; x < 3; x++)
 	{
@@ -282,7 +284,9 @@ static BOOL TestPrimitiveYUVCombine(primitives_t* prims, prim_size_t roi)
 	}
 
 	PROFILER_EXIT(yuvSplit);
+	PROFILER_PRINT_HEADER;
 	PROFILER_PRINT(yuvSplit);
+	PROFILER_PRINT_FOOTER;
 
 	for (x = 0; x < 3; x++)
 	{
@@ -468,7 +472,9 @@ static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 			}
 
 			PROFILER_EXIT(rgbToYUV444);
+			PROFILER_PRINT_HEADER;
 			PROFILER_PRINT(rgbToYUV444);
+			PROFILER_PRINT_FOOTER;
 		}
 		else
 		{
@@ -483,7 +489,9 @@ static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 			}
 
 			PROFILER_EXIT(rgbToYUV420);
+			PROFILER_PRINT_HEADER;
 			PROFILER_PRINT(rgbToYUV420);
+			PROFILER_PRINT_FOOTER;
 		}
 
 		if (!check_padding(rgb, size * sizeof(UINT32), padding, "rgb"))
@@ -507,7 +515,9 @@ static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 			}
 
 			PROFILER_EXIT(yuv444ToRGB);
+			PROFILER_PRINT_HEADER;
 			PROFILER_PRINT(yuv444ToRGB);
+			PROFILER_PRINT_FOOTER;
 		}
 		else
 		{
@@ -521,7 +531,9 @@ static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 			}
 
 			PROFILER_EXIT(yuv420ToRGB);
+			PROFILER_PRINT_HEADER;
 			PROFILER_PRINT(yuv420ToRGB);
+			PROFILER_PRINT_FOOTER;
 		}
 
 		if (!check_padding(rgb_dst, size * sizeof(UINT32), padding, "rgb dst"))

@@ -103,8 +103,10 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 	}
 
 	printf("Results for %lux%lu [%s]", roi.width, roi.height, GetColorFormatName(DstFormat));
+	PROFILER_PRINT_HEADER;
 	PROFILER_PRINT(genericProf);
 	PROFILER_PRINT(optProf);
+	PROFILER_PRINT_FOOTER;
 fail:
 	PROFILER_FREE(genericProf);
 	PROFILER_FREE(optProf);
