@@ -21,6 +21,7 @@
 
 #include <winpr/platform.h>
 
+#ifdef WINPR_DLL
 #if defined _WIN32 || defined __CYGWIN__
 #ifdef WINPR_EXPORTS
 #ifdef __GNUC__
@@ -41,6 +42,9 @@
 #else
 #define WINPR_API
 #endif
+#endif
+#else /* WINPR_DLL */
+#define WINPR_API	
 #endif
 
 /* Thread local storage keyword define */
