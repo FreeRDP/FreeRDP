@@ -178,17 +178,6 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	BOOL status;
 	rdpSettings* settings = rdp->settings;
 
-	if (rdp->settingsCopy)
-	{
-		freerdp_settings_free(rdp->settingsCopy);
-		rdp->settingsCopy = NULL;
-	}
-
-	rdp->settingsCopy = freerdp_settings_clone(settings);
-
-	if (!rdp->settingsCopy)
-		return FALSE;
-
 	nego_init(rdp->nego);
 	nego_set_target(rdp->nego, settings->ServerHostname, settings->ServerPort);
 
@@ -312,12 +301,6 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 BOOL rdp_client_disconnect(rdpRdp* rdp)
 {
 	BOOL status;
-
-	if (rdp->settingsCopy)
-	{
-		freerdp_settings_free(rdp->settingsCopy);
-		rdp->settingsCopy = NULL;
-	}
 
 	status = nego_disconnect(rdp->nego);
 
