@@ -279,10 +279,10 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	if (!client->Initialize(client))
 		goto fail_client_initialize;
 
+	context = (wfPeerContext*) client->context;
+	
 	if (context->socketClose)
 		goto fail_socked_closed;
-
-	context = (wfPeerContext*) client->context;
 
 	wfi = context->info;
 
