@@ -86,9 +86,11 @@ BOOL MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message)
 			goto out;
 		queue->array = new_arr;
 		queue->capacity = new_capacity;
-		ZeroMemory(&(queue->array[old_capacity]), old_capacity * sizeof(wMessage));
 
-		if (queue->tail < old_capacity)
+		ZeroMemory(&(queue->array[old_capacity]), (new_capacity - old_capacity) * sizeof(wMessage));
+
+		/* rearrange wrapped entries */
+		if (queue->tail <= queue->head)
 		{
 			CopyMemory(&(queue->array[old_capacity]), queue->array, queue->tail * sizeof(wMessage));
 			queue->tail += old_capacity;
@@ -99,7 +101,6 @@ BOOL MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message)
 	queue->tail = (queue->tail + 1) % queue->capacity;
 	queue->size++;
 
-	message = &(queue->array[queue->tail]);
 	message->time = (UINT64) GetTickCount();
 
 	if (queue->size > 0)
