@@ -26,17 +26,75 @@
 #include "xf_client.h"
 #include "xfreerdp.h"
 
+#include "xf_gfx.h"
+#include "xf_tsmf.h"
+#include "xf_rail.h"
+#include "xf_cliprdr.h"
+
 void xf_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEventArgs* e)
 {
 	xfContext* xfc = (xfContext*) context;
+	rdpSettings* settings = context->settings;
 
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
 		xfc->rdpei = (RdpeiClientContext*) e->pInterface;
 	}
+	else if (strcmp(e->name, TSMF_DVC_CHANNEL_NAME) == 0)
+	{
+		xf_tsmf_init(xfc, (TsmfClientContext*) e->pInterface);
+	}
+	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
+	{
+		if (settings->SoftwareGdi)
+			gdi_graphics_pipeline_init(context->gdi, (RdpgfxClientContext*) e->pInterface);
+		else
+			xf_graphics_pipeline_init(xfc, (RdpgfxClientContext*) e->pInterface);
+	}
+	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
+	{
+		xf_rail_init(xfc, (RailClientContext*) e->pInterface);
+	}
+	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
+	{
+		xf_cliprdr_init(xfc, (CliprdrClientContext*) e->pInterface);
+	}
+	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
+	{
+		xf_encomsp_init(xfc, (EncomspClientContext*) e->pInterface);
+	}
 }
 
 void xf_OnChannelDisconnectedEventHandler(rdpContext* context, ChannelDisconnectedEventArgs* e)
 {
+	xfContext* xfc = (xfContext*) context;
+	rdpSettings* settings = context->settings;
 
+	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
+	{
+		xfc->rdpei = NULL;
+	}
+	else if (strcmp(e->name, TSMF_DVC_CHANNEL_NAME) == 0)
+	{
+		xf_tsmf_uninit(xfc, (TsmfClientContext*) e->pInterface);
+	}
+	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
+	{
+		if (settings->SoftwareGdi)
+			gdi_graphics_pipeline_uninit(context->gdi, (RdpgfxClientContext*) e->pInterface);
+		else
+			xf_graphics_pipeline_uninit(xfc, (RdpgfxClientContext*) e->pInterface);
+	}
+	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
+	{
+		xf_rail_uninit(xfc, (RailClientContext*) e->pInterface);
+	}
+	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
+	{
+		xf_cliprdr_uninit(xfc, (CliprdrClientContext*) e->pInterface);
+	}
+	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
+	{
+		xf_encomsp_uninit(xfc, (EncomspClientContext*) e->pInterface);
+	}
 }

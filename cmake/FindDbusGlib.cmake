@@ -1,7 +1,7 @@
 # DbusGlib library detection
 #
-# Copyright 2013 Thinstuff Technologies GmbH
-# Copyright 2013 Armin Novak <anovak@thinstuff.at>
+# Copyright 2013 Thincast Technologies GmbH
+# Copyright 2013 Armin Novak <armin.novak@thincast.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,4 +35,8 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(dbus-glib  DEFAULT_MSG
                                   DBUS_GLIB_LIBRARY DBUS_GLIB_INCLUDE_DIR)
 
-mark_as_advanced(DBUS_GLIB_INCLUDE_DIR DBUS_GLIB_LIBRARY )
+if(DBUS_GLIB_LIBRARIES AND DBUS_GLIB_INCLUDE_DIRS)
+          set(DBUS_GLIB_FOUND TRUE)
+endif()
+                                  
+mark_as_advanced(DBUS_GLIB_INCLUDE_DIR DBUS_GLIB_LIBRARY)

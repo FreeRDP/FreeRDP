@@ -27,6 +27,7 @@
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/server/audin.h>
 #include <freerdp/server/rdpsnd.h>
+#include <freerdp/server/encomsp.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -48,13 +49,14 @@ struct test_peer_context
 	BOOL activated;
 	HANDLE event;
 	HANDLE stopEvent;
-	WTSVirtualChannelManager* vcm;
+	HANDLE vcm;
 	void* debug_channel;
 	HANDLE debug_channel_thread;
 	audin_server_context* audin;
 	BOOL audin_open;
 	UINT32 frame_id;
 	RdpsndServerContext* rdpsnd;
+	EncomspServerContext* encomsp;
 };
 typedef struct test_peer_context testPeerContext;
 

@@ -20,31 +20,15 @@ define_channel_client("smartcard")
 set(${MODULE_PREFIX}_SRCS
 	smartcard_main.c
 	smartcard_main.h
+	smartcard_pack.c
+	smartcard_pack.h
 	smartcard_operations.c)
 
-include_directories(${PCSC_INCLUDE_DIR})
+add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "DeviceServiceEntry")
 
-add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DeviceServiceEntry")
 
-set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE freerdp
-	MODULES freerdp-utils)
-	
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE winpr
-	MODULES winpr-crt winpr-synch winpr-thread winpr-interlocked)
+target_link_libraries(${MODULE_NAME} winpr freerdp)
 
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${PCSC_LIBRARIES})
-
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-
-if(NOT STATIC_CHANNELS)
-	install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
-endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")
-

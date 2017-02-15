@@ -18,29 +18,32 @@
 set(MODULE_NAME "winpr-makecert-tool")
 set(MODULE_PREFIX "WINPR_MAKECERT_TOOL")
 
-set(${MODULE_PREFIX}_SRCS
-	makecert.c
-	makecert.h)
+set(${MODULE_PREFIX}_SRCS makecert.c)
 
-include_directories(${ZLIB_INCLUDE_DIRS})
-include_directories(${OPENSSL_INCLUDE_DIR})
+if(OPENSSL_FOUND)
+	winpr_tools_include_directory_add(${OPENSSL_INCLUDE_DIR})
+endif()
 
-add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS}) 
+if(MBEDTLS_FOUND)
+	winpr_tools_include_directory_add(${MBEDTLS_INCLUDE_DIR})
+endif()
 
-set(${MODULE_PREFIX}_LIBS
-	${ZLIB_LIBRARIES}
-	${OPENSSL_LIBRARIES})
 
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE winpr
-	MODULES winpr-crt winpr-utils winpr-sysinfo winpr-file winpr-path)
+winpr_tools_module_add(${${MODULE_PREFIX}_SRCS})
 
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+if(OPENSSL_FOUND)
+	if(WIN32)
+		list(APPEND ${MODULE_PREFIX}_LIBS ${OPENSSL_LIBRARIES})
+	else()
+		# if ${OPENSSL_LIBRARIES} libssl and libcrypto is linked
+		# therefor explicitly link against libcrypto
+		list(APPEND ${MODULE_PREFIX}_LIBS crypto)
+	endif()
+endif()
 
-install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries)
+if(MBEDTLS_FOUND)
+	list(APPEND ${MODULE_PREFIX}_LIBS ${MBEDTLS_LIBRARIES})
+endif()
 
-add_subdirectory(cli)
 
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Tools")
-
+winpr_tools_library_add(${${MODULE_PREFIX}_LIBS} winpr)

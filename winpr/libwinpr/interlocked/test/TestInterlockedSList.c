@@ -6,20 +6,20 @@
 
 typedef struct _PROGRAM_ITEM
 {
-	SLIST_ENTRY ItemEntry;
+    WINPR_SLIST_ENTRY ItemEntry;
 	ULONG Signature;
 } PROGRAM_ITEM, *PPROGRAM_ITEM;
 
 int TestInterlockedSList(int argc, char* argv[])
 {
 	ULONG Count;
-	PSLIST_ENTRY pFirstEntry;
-	PSLIST_ENTRY pListEntry;
-	PSLIST_HEADER pListHead;
+	WINPR_PSLIST_ENTRY pFirstEntry;
+	WINPR_PSLIST_ENTRY pListEntry;
+	WINPR_PSLIST_HEADER pListHead;
 	PPROGRAM_ITEM pProgramItem;
 
 	/* Initialize the list header to a MEMORY_ALLOCATION_ALIGNMENT boundary. */
-	pListHead = (PSLIST_HEADER) _aligned_malloc(sizeof(SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
+	pListHead = (WINPR_PSLIST_HEADER) _aligned_malloc(sizeof(WINPR_SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
 
 	if (!pListHead)
 	{
@@ -56,7 +56,7 @@ int TestInterlockedSList(int argc, char* argv[])
 		}
   
 		pProgramItem = (PPROGRAM_ITEM) pListEntry;
-		printf("Signature is %d\n", (int) pProgramItem->Signature);
+		printf("Signature is %"PRIu32"\n", pProgramItem->Signature);
 
 		/* 
 		 * This example assumes that the SLIST_ENTRY structure is the 

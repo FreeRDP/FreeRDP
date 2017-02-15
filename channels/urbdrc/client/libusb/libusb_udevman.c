@@ -116,9 +116,8 @@ static IUDEVICE* udevman_get_udevice_by_addr(IUDEVMAN* idevman, int bus_number, 
 	}
 
 	idevman->loading_unlock(idevman);
-	LLOGLN(libusb_debug, ("%s: bus:%d dev:%d not exist in udevman", 
-		__func__, bus_number, dev_number));
-
+	WLog_WARN(TAG, "bus:%d dev:%d not exist in udevman",
+			  bus_number, dev_number);
 	return NULL;
 }
 
@@ -206,7 +205,7 @@ static int udevman_register_udevice(IUDEVMAN* idevman, int bus_number, int dev_n
 	}
 	else
 	{
-		fprintf(stderr, "udevman_register_udevice: function error!!");
+		WLog_ERR(TAG,  "udevman_register_udevice: function error!!");
 		return 0;
 	}
 
@@ -270,9 +269,10 @@ static int udevman_unregister_udevice(IUDEVMAN* idevman, int bus_number, int dev
 		if (err != LIBUSB_ERROR_NO_DEVICE)
 		{
 			ret = libusb_reset_device(dev->libusb_handle);
-			if (ret<0){
-				LLOGLN(10, ("libusb_reset_device: ERROR!!ret:%d\n", ret)); 
-			} 
+			if (ret<0)
+			{
+				WLog_ERR(TAG, "libusb_reset_device: ERROR!!ret:%d", ret);
+			}
 		}
 		
 		/* release all interface and  attach kernel driver */
@@ -390,8 +390,7 @@ static IUDEVICE* udevman_get_udevice_by_UsbDevice(IUDEVMAN* idevman, UINT32 UsbD
 		return (IUDEVICE*) pdev;
 	}
 
-	LLOGLN(libusb_debug, ("udevman_get_udevice_by_UsbDevice: 0x%x ERROR!!\n", UsbDevice));
-
+	WLog_ERR(TAG, "0x%"PRIx32" ERROR!!", UsbDevice);
 	return NULL;
 }
 
@@ -550,7 +549,7 @@ static void urbdrc_udevman_parse_addin_args(UDEVMAN* udevman, ADDIN_ARGV* args)
 
 		CommandLineSwitchCase(arg, "dbg")
 		{
-			urbdrc_debug = 0;
+			WLog_SetLogLevel(WLog_Get(TAG), WLOG_TRACE);
 		}
 		CommandLineSwitchCase(arg, "dev")
 		{
@@ -578,8 +577,10 @@ static void urbdrc_udevman_parse_addin_args(UDEVMAN* udevman, ADDIN_ARGV* args)
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 }
 
-#ifdef STATIC_CHANNELS
+#ifdef BUILTIN_CHANNELS
 #define freerdp_urbdrc_client_subsystem_entry	libusb_freerdp_urbdrc_client_subsystem_entry
+#else
+#define freerdp_urbdrc_client_subsystem_entry	FREERDP_API freerdp_urbdrc_client_subsystem_entry
 #endif
 
 int freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS pEntryPoints)
@@ -590,6 +591,8 @@ int freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS p
 	libusb_init(NULL);
 
 	udevman = (PUDEVMAN) malloc(sizeof(UDEVMAN));
+	if (!udevman)
+		return -1;
 	udevman->device_num = 0;
 	udevman->idev = NULL;
 	udevman->head = NULL;
@@ -610,6 +613,8 @@ int freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS p
 	urbdrc_udevman_parse_addin_args(udevman, args);
 
 	pEntryPoints->pRegisterUDEVMAN(pEntryPoints->plugin, (IUDEVMAN*) udevman);
+
+	WLog_DBG(TAG, "UDEVMAN device registered.");
 
 	return 0;
 }

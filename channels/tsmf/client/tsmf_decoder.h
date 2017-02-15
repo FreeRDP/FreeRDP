@@ -26,9 +26,9 @@
 typedef enum _ITSMFControlMsg
 {
 	Control_Pause,
+	Control_Resume,
 	Control_Restart,
-	Control_Flush,
-	Control_EndOfStream
+	Control_Stop
 } ITSMFControlMsg;
 
 typedef struct _ITSMFDecoder ITSMFDecoder;
@@ -36,36 +36,41 @@ typedef struct _ITSMFDecoder ITSMFDecoder;
 struct _ITSMFDecoder
 {
 	/* Set the decoder format. Return true if supported. */
-	BOOL (*SetFormat) (ITSMFDecoder* decoder, TS_AM_MEDIA_TYPE* media_type);
+	BOOL (*SetFormat)(ITSMFDecoder *decoder, TS_AM_MEDIA_TYPE *media_type);
 	/* Decode a sample. */
-	BOOL (*Decode) (ITSMFDecoder* decoder, const BYTE* data, UINT32 data_size, UINT32 extensions);
+	BOOL (*Decode)(ITSMFDecoder *decoder, const BYTE *data, UINT32 data_size, UINT32 extensions);
 	/* Get the decoded data */
-	BYTE* (*GetDecodedData) (ITSMFDecoder* decoder, UINT32* size);
+	BYTE *(*GetDecodedData)(ITSMFDecoder *decoder, UINT32 *size);
 	/* Get the pixel format of decoded video frame */
-	UINT32 (*GetDecodedFormat) (ITSMFDecoder* decoder);
+	UINT32(*GetDecodedFormat)(ITSMFDecoder *decoder);
 	/* Get the width and height of decoded video frame */
-	BOOL (*GetDecodedDimension) (ITSMFDecoder* decoder, UINT32* width, UINT32* height);
+	BOOL (*GetDecodedDimension)(ITSMFDecoder *decoder, UINT32 *width, UINT32 *height);
 	/* Free the decoder */
-	void (*Free) (ITSMFDecoder * decoder);
+	void (*Free)(ITSMFDecoder *decoder);
 	/* Optional Contol function */
-	void (*Control) (ITSMFDecoder * decoder, ITSMFControlMsg control_msg, UINT32 *arg);
+	BOOL (*Control)(ITSMFDecoder *decoder, ITSMFControlMsg control_msg, UINT32 *arg);
 	/* Decode a sample with extended interface. */
-	int (*DecodeEx) (ITSMFDecoder * decoder, const BYTE * data, UINT32 data_size, UINT32 extensions,
-        			UINT64 start_time, UINT64 end_time, UINT64 duration);
+	BOOL (*DecodeEx)(ITSMFDecoder *decoder, const BYTE *data, UINT32 data_size, UINT32 extensions,
+					UINT64 start_time, UINT64 end_time, UINT64 duration);
 	/* Get current play time */
-	UINT64 (*GetRunningTime) (ITSMFDecoder * decoder);
+	UINT64(*GetRunningTime)(ITSMFDecoder *decoder);
 	/* Update Gstreamer Rendering Area */
-	void (*UpdateRenderingArea) (ITSMFDecoder * decoder, int newX, int newY, int newWidth, int newHeight, int numRectangles, RDP_RECT *rectangles);
+	BOOL (*UpdateRenderingArea)(ITSMFDecoder *decoder, int newX, int newY, int newWidth, int newHeight, int numRectangles, RDP_RECT *rectangles);
 	/* Change Gstreamer Audio Volume */
-	void (*ChangeVolume) (ITSMFDecoder * decoder, UINT32 newVolume, UINT32 muted);
+	BOOL (*ChangeVolume)(ITSMFDecoder *decoder, UINT32 newVolume, UINT32 muted);
 	/* Check buffer level */
-	UINT32 (*BufferLevel) (ITSMFDecoder * decoder);
+	BOOL (*BufferLevel)(ITSMFDecoder *decoder);
+	/* Register a callback for frame ack. */
+	BOOL (*SetAckFunc)(ITSMFDecoder *decoder, BOOL (*cb)(void *,BOOL), void *stream);
+	/* Register a callback for stream seek detection. */
+	BOOL (*SetSyncFunc)(ITSMFDecoder *decoder, void (*cb)(void *), void *stream);
 };
 
 #define TSMF_DECODER_EXPORT_FUNC_NAME "TSMFDecoderEntry"
-typedef ITSMFDecoder* (*TSMF_DECODER_ENTRY) (void);
+typedef ITSMFDecoder *(*TSMF_DECODER_ENTRY)(void);
 
-ITSMFDecoder* tsmf_load_decoder(const char* name, TS_AM_MEDIA_TYPE* media_type);
+ITSMFDecoder *tsmf_load_decoder(const char *name, TS_AM_MEDIA_TYPE *media_type);
+BOOL tsmf_check_decoder_available(const char* name);
 
 #endif
 

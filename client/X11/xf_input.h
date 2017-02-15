@@ -28,8 +28,6 @@
 #endif
 
 int xf_input_init(xfContext* xfc, Window window);
-
 int xf_input_handle_event(xfContext* xfc, XEvent* event);
-void xf_process_rdpei_event(xfContext* xfc, wMessage* event);
 
 #endif

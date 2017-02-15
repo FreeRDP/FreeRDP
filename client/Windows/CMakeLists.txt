@@ -23,18 +23,41 @@ set(${MODULE_PREFIX}_SRCS
 	wf_gdi.h
 	wf_event.c
 	wf_event.h
+	wf_channels.c
+	wf_channels.h
 	wf_graphics.c
 	wf_graphics.h
 	wf_cliprdr.c
 	wf_cliprdr.h
-	wf_window.c
-	wf_window.h
 	wf_rail.c
 	wf_rail.h
-	wf_interface.c
-	wf_interface.h
+	wf_client.c
+	wf_client.h
+	wf_floatbar.c
+	wf_floatbar.h
 	wfreerdp.rc
 	resource.h)
+
+# On windows create dll version information.
+# Vendor, product and year are already set in top level CMakeLists.txt
+if (WIN32 AND BUILD_SHARED_LIBS)
+  set (RC_VERSION_MAJOR ${FREERDP_VERSION_MAJOR})
+  set (RC_VERSION_MINOR ${FREERDP_VERSION_MINOR})
+  set (RC_VERSION_BUILD ${FREERDP_VERSION_REVISION})
+  if(WITH_CLIENT_INTERFACE)
+    set (RC_VERSION_FILE "${CMAKE_SHARED_LIBRARY_PREFIX}${MODULE_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}" )
+  else()
+    set (RC_VERSION_FILE "${MODULE_NAME}${CMAKE_EXECUTABLE_SUFFIX}" )
+  endif()
+
+  configure_file(
+    ${CMAKE_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
+    ${CMAKE_CURRENT_BINARY_DIR}/version.rc
+    @ONLY)
+
+  set ( ${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+endif()
+
 
 if(WITH_CLIENT_INTERFACE)
 	if(CLIENT_INTERFACE_SHARED)
@@ -42,31 +65,33 @@ if(WITH_CLIENT_INTERFACE)
 	else()
 		add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 	endif()
-	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION} PREFIX "lib")
+	if (WITH_LIBRARY_VERSIONING)
+	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
+  endif()
+
 else()
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} cli/wfreerdp.c cli/wfreerdp.h)
 	add_executable(${MODULE_NAME} WIN32 ${${MODULE_PREFIX}_SRCS})
+	include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+	set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "wfreerdp")
 endif()
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client)
-
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE winpr
-	MODULES winpr-crt winpr-credui winpr-utils)
-
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE freerdp
-	MODULES freerdp-core freerdp-gdi freerdp-codec freerdp-primitives freerdp-utils)
-
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr freerdp)
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 if(WITH_CLIENT_INTERFACE)
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries)
+	if (WITH_DEBUG_SYMBOLS AND MSVC AND BUILD_SHARED_LIBS)
+		install(FILES ${CMAKE_PDB_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT symbols)
+	endif()
 	add_subdirectory(cli)
 else()
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
+	if (WITH_DEBUG_SYMBOLS AND MSVC)
+		get_target_property(OUTPUT_FILENAME ${MODULE_NAME} OUTPUT_NAME)
+		install(FILES ${CMAKE_PDB_BINARY_DIR}/${OUTPUT_FILENAME}.pdb DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT symbols)
+	endif()
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/Windows")

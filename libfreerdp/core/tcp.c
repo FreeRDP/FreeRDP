@@ -22,16 +22,16 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <time.h>
 #include <errno.h>
 #include <fcntl.h>
 
 #include <winpr/crt.h>
+#include <winpr/platform.h>
+#include <winpr/winsock.h>
 
-#ifndef _WIN32
+#if !defined(_WIN32)
+
 #include <netdb.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
@@ -39,259 +39,1160 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <net/if.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#else
+#include <time.h>
+#include <sys/select.h>
+#endif
+
+#ifdef HAVE_SYS_FILIO_H
+#include <sys/filio.h>
+#endif
+
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
+#ifndef SOL_TCP
+#define SOL_TCP	IPPROTO_TCP
+#endif
+#endif
 
 #ifdef __APPLE__
+#ifndef SOL_TCP
+#define SOL_TCP	IPPROTO_TCP
+#endif
 #ifndef TCP_KEEPIDLE
 #define TCP_KEEPIDLE TCP_KEEPALIVE
 #endif
 #endif
 
 #else
+
+#include <winpr/windows.h>
+
+#include <winpr/crt.h>
+
 #define SHUT_RDWR SD_BOTH
 #define close(_fd) closesocket(_fd)
+
 #endif
 
-#include <freerdp/utils/tcp.h>
-#include <freerdp/utils/uds.h>
+#include <freerdp/log.h>
+
 #include <winpr/stream.h>
 
 #include "tcp.h"
+#include "../crypto/opensslcompat.h"
 
-void tcp_get_ip_address(rdpTcp * tcp)
+#define TAG FREERDP_TAG("core")
+
+/* Simple Socket BIO */
+
+struct _WINPR_BIO_SIMPLE_SOCKET
+{
+	SOCKET socket;
+	HANDLE hEvent;
+};
+typedef struct _WINPR_BIO_SIMPLE_SOCKET WINPR_BIO_SIMPLE_SOCKET;
+
+static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown);
+static int transport_bio_simple_uninit(BIO* bio);
+
+long transport_bio_simple_callback(BIO* bio, int mode, const char* argp, int argi, long argl,
+                                   long ret)
+{
+	return 1;
+}
+
+static int transport_bio_simple_write(BIO* bio, const char* buf, int size)
+{
+	int error;
+	int status = 0;
+	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) BIO_get_data(bio);
+
+	if (!buf)
+		return 0;
+
+	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
+	status = _send(ptr->socket, buf, size, 0);
+
+	if (status <= 0)
+	{
+		error = WSAGetLastError();
+
+		if ((error == WSAEWOULDBLOCK) || (error == WSAEINTR) ||
+		    (error == WSAEINPROGRESS) || (error == WSAEALREADY))
+		{
+			BIO_set_flags(bio, (BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY));
+		}
+		else
+		{
+			BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+		}
+	}
+
+	return status;
+}
+
+static int transport_bio_simple_read(BIO* bio, char* buf, int size)
+{
+	int error;
+	int status = 0;
+	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) BIO_get_data(bio);
+
+	if (!buf)
+		return 0;
+
+	BIO_clear_flags(bio, BIO_FLAGS_READ);
+	WSAResetEvent(ptr->hEvent);
+	status = _recv(ptr->socket, buf, size, 0);
+
+	if (status > 0)
+	{
+		return status;
+	}
+
+	if (status == 0)
+	{
+		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+		return 0;
+	}
+
+	error = WSAGetLastError();
+
+	if ((error == WSAEWOULDBLOCK) || (error == WSAEINTR) ||
+	    (error == WSAEINPROGRESS) || (error == WSAEALREADY))
+	{
+		BIO_set_flags(bio, (BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY));
+	}
+	else
+	{
+		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+	}
+
+	return -1;
+}
+
+static int transport_bio_simple_puts(BIO* bio, const char* str)
+{
+	return 1;
+}
+
+static int transport_bio_simple_gets(BIO* bio, char* str, int size)
+{
+	return 1;
+}
+
+static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
+{
+	int status = -1;
+	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) BIO_get_data(bio);
+
+	if (cmd == BIO_C_SET_SOCKET)
+	{
+		transport_bio_simple_uninit(bio);
+		transport_bio_simple_init(bio, (SOCKET) arg2, (int) arg1);
+		return 1;
+	}
+	else if (cmd == BIO_C_GET_SOCKET)
+	{
+		if (!BIO_get_init(bio) || !arg2)
+			return 0;
+
+		*((ULONG_PTR*) arg2) = (ULONG_PTR) ptr->socket;
+		return 1;
+	}
+	else if (cmd == BIO_C_GET_EVENT)
+	{
+		if (!BIO_get_init(bio) || !arg2)
+			return 0;
+
+		*((ULONG_PTR*) arg2) = (ULONG_PTR) ptr->hEvent;
+		return 1;
+	}
+	else if (cmd == BIO_C_SET_NONBLOCK)
+	{
+#ifndef _WIN32
+		int flags;
+		flags = fcntl((int) ptr->socket, F_GETFL);
+
+		if (flags == -1)
+			return 0;
+
+		if (arg1)
+			fcntl((int) ptr->socket, F_SETFL, flags | O_NONBLOCK);
+		else
+			fcntl((int) ptr->socket, F_SETFL, flags & ~(O_NONBLOCK));
+
+#else
+		/* the internal socket is always non-blocking */
+#endif
+		return 1;
+	}
+	else if (cmd == BIO_C_WAIT_READ)
+	{
+		int timeout = (int) arg1;
+		int sockfd = (int) ptr->socket;
+#ifdef HAVE_POLL_H
+		struct pollfd pollset;
+		pollset.fd = sockfd;
+		pollset.events = POLLIN;
+		pollset.revents = 0;
+
+		do
+		{
+			status = poll(&pollset, 1, timeout);
+		}
+		while ((status < 0) && (errno == EINTR));
+
+#else
+		fd_set rset;
+		struct timeval tv;
+		FD_ZERO(&rset);
+		FD_SET(sockfd, &rset);
+
+		if (timeout)
+		{
+			tv.tv_sec = timeout / 1000;
+			tv.tv_usec = (timeout % 1000) * 1000;
+		}
+
+		do
+		{
+			status = select(sockfd + 1, &rset, NULL, NULL, timeout ? &tv : NULL);
+		}
+		while ((status < 0) && (errno == EINTR));
+
+#endif
+	}
+	else if (cmd == BIO_C_WAIT_WRITE)
+	{
+		int timeout = (int) arg1;
+		int sockfd = (int) ptr->socket;
+#ifdef HAVE_POLL_H
+		struct pollfd pollset;
+		pollset.fd = sockfd;
+		pollset.events = POLLOUT;
+		pollset.revents = 0;
+
+		do
+		{
+			status = poll(&pollset, 1, timeout);
+		}
+		while ((status < 0) && (errno == EINTR));
+
+#else
+		fd_set rset;
+		struct timeval tv;
+		FD_ZERO(&rset);
+		FD_SET(sockfd, &rset);
+
+		if (timeout)
+		{
+			tv.tv_sec = timeout / 1000;
+			tv.tv_usec = (timeout % 1000) * 1000;
+		}
+
+		do
+		{
+			status = select(sockfd + 1, NULL, &rset, NULL, timeout ? &tv : NULL);
+		}
+		while ((status < 0) && (errno == EINTR));
+
+#endif
+	}
+
+	switch (cmd)
+	{
+		case BIO_C_SET_FD:
+			if (arg2)
+			{
+				transport_bio_simple_uninit(bio);
+				transport_bio_simple_init(bio, (SOCKET) * ((int*) arg2), (int) arg1);
+				status = 1;
+			}
+
+			break;
+
+		case BIO_C_GET_FD:
+			if (BIO_get_init(bio))
+			{
+				if (arg2)
+					*((int*) arg2) = (int) ptr->socket;
+
+				status = (int) ptr->socket;
+			}
+
+			break;
+
+		case BIO_CTRL_GET_CLOSE:
+			status = BIO_get_shutdown(bio);
+			break;
+
+		case BIO_CTRL_SET_CLOSE:
+			BIO_set_shutdown(bio, (int) arg1);
+			status = 1;
+			break;
+
+		case BIO_CTRL_DUP:
+			status = 1;
+			break;
+
+		case BIO_CTRL_FLUSH:
+			status = 1;
+			break;
+
+		default:
+			status = 0;
+			break;
+	}
+
+	return status;
+}
+
+static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown)
+{
+	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) BIO_get_data(bio);
+	ptr->socket = socket;
+	BIO_set_shutdown(bio, shutdown);
+	BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+	BIO_set_init(bio, 1);
+	ptr->hEvent = WSACreateEvent();
+
+	if (!ptr->hEvent)
+		return 0;
+
+	/* WSAEventSelect automatically sets the socket in non-blocking mode */
+	if (WSAEventSelect(ptr->socket, ptr->hEvent, FD_READ | FD_ACCEPT | FD_CLOSE))
+	{
+		WLog_ERR(TAG, "WSAEventSelect returned 0x%08X", WSAGetLastError());
+		return 0;
+	}
+
+	return 1;
+}
+
+static int transport_bio_simple_uninit(BIO* bio)
+{
+	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) BIO_get_data(bio);
+
+	if (BIO_get_shutdown(bio))
+	{
+		if (BIO_get_init(bio))
+		{
+			_shutdown(ptr->socket, SD_BOTH);
+			closesocket(ptr->socket);
+			ptr->socket = 0;
+		}
+	}
+
+	if (ptr->hEvent)
+	{
+		CloseHandle(ptr->hEvent);
+		ptr->hEvent = NULL;
+	}
+
+	BIO_set_init(bio, 0);
+	BIO_set_flags(bio, 0);
+	return 1;
+}
+
+static int transport_bio_simple_new(BIO* bio)
+{
+	WINPR_BIO_SIMPLE_SOCKET* ptr;
+	BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+	ptr = (WINPR_BIO_SIMPLE_SOCKET*) calloc(1, sizeof(WINPR_BIO_SIMPLE_SOCKET));
+
+	if (!ptr)
+		return 0;
+
+	BIO_set_data(bio, ptr);
+	return 1;
+}
+
+static int transport_bio_simple_free(BIO* bio)
+{
+	WINPR_BIO_SIMPLE_SOCKET* ptr;
+
+	if (!bio)
+		return 0;
+
+	transport_bio_simple_uninit(bio);
+	ptr = (WINPR_BIO_SIMPLE_SOCKET*) BIO_get_data(bio);
+
+	if (ptr)
+	{
+		BIO_set_data(bio, NULL);
+		free(ptr);
+	}
+
+	return 1;
+}
+
+BIO_METHOD* BIO_s_simple_socket(void)
+{
+	static BIO_METHOD* bio_methods = NULL;
+
+	if (bio_methods == NULL)
+	{
+		if (!(bio_methods = BIO_meth_new(BIO_TYPE_SIMPLE, "SimpleSocket")))
+			return NULL;
+
+		BIO_meth_set_write(bio_methods, transport_bio_simple_write);
+		BIO_meth_set_read(bio_methods, transport_bio_simple_read);
+		BIO_meth_set_puts(bio_methods, transport_bio_simple_puts);
+		BIO_meth_set_gets(bio_methods, transport_bio_simple_gets);
+		BIO_meth_set_ctrl(bio_methods, transport_bio_simple_ctrl);
+		BIO_meth_set_create(bio_methods, transport_bio_simple_new);
+		BIO_meth_set_destroy(bio_methods, transport_bio_simple_free);
+	}
+
+	return bio_methods;
+}
+
+/* Buffered Socket BIO */
+
+struct _WINPR_BIO_BUFFERED_SOCKET
+{
+	BIO* bufferedBio;
+	BOOL readBlocked;
+	BOOL writeBlocked;
+	RingBuffer xmitBuffer;
+};
+typedef struct _WINPR_BIO_BUFFERED_SOCKET WINPR_BIO_BUFFERED_SOCKET;
+
+long transport_bio_buffered_callback(BIO* bio, int mode, const char* argp, int argi, long argl,
+                                     long ret)
+{
+	return 1;
+}
+
+static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
+{
+	int i, ret;
+	int status;
+	int nchunks;
+	int committedBytes;
+	DataChunk chunks[2];
+	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*) BIO_get_data(bio);
+	BIO* next_bio = NULL;
+	ret = num;
+	ptr->writeBlocked = FALSE;
+	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
+
+	/* we directly append extra bytes in the xmit buffer, this could be prevented
+	 * but for now it makes the code more simple.
+	 */
+	if (buf && num && !ringbuffer_write(&ptr->xmitBuffer, (const BYTE*) buf, num))
+	{
+		WLog_ERR(TAG, "an error occurred when writing (num: %d)", num);
+		return -1;
+	}
+
+	committedBytes = 0;
+	nchunks = ringbuffer_peek(&ptr->xmitBuffer, chunks, ringbuffer_used(&ptr->xmitBuffer));
+	next_bio = BIO_next(bio);
+
+	for (i = 0; i < nchunks; i++)
+	{
+		while (chunks[i].size)
+		{
+			status = BIO_write(next_bio, chunks[i].data, chunks[i].size);
+
+			if (status <= 0)
+			{
+				if (!BIO_should_retry(next_bio))
+				{
+					BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+					ret = -1; /* fatal error */
+					goto out;
+				}
+
+				if (BIO_should_write(next_bio))
+				{
+					BIO_set_flags(bio, BIO_FLAGS_WRITE);
+					ptr->writeBlocked = TRUE;
+					goto out; /* EWOULDBLOCK */
+				}
+			}
+
+			committedBytes += status;
+			chunks[i].size -= status;
+			chunks[i].data += status;
+		}
+	}
+
+out:
+	ringbuffer_commit_read_bytes(&ptr->xmitBuffer, committedBytes);
+	return ret;
+}
+
+static int transport_bio_buffered_read(BIO* bio, char* buf, int size)
+{
+	int status;
+	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*) BIO_get_data(bio);
+	BIO* next_bio = BIO_next(bio);
+	ptr->readBlocked = FALSE;
+	BIO_clear_flags(bio, BIO_FLAGS_READ);
+	status = BIO_read(next_bio, buf, size);
+
+	if (status <= 0)
+	{
+		if (!BIO_should_retry(next_bio))
+		{
+			BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+			goto out;
+		}
+
+		BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+
+		if (BIO_should_read(next_bio))
+		{
+			BIO_set_flags(bio, BIO_FLAGS_READ);
+			ptr->readBlocked = TRUE;
+			goto out;
+		}
+	}
+
+out:
+	return status;
+}
+
+static int transport_bio_buffered_puts(BIO* bio, const char* str)
+{
+	return 1;
+}
+
+static int transport_bio_buffered_gets(BIO* bio, char* str, int size)
+{
+	return 1;
+}
+
+static long transport_bio_buffered_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
+{
+	int status = -1;
+	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*) BIO_get_data(bio);
+
+	switch (cmd)
+	{
+		case BIO_CTRL_FLUSH:
+			if (!ringbuffer_used(&ptr->xmitBuffer))
+				status = 1;
+			else
+				status = (transport_bio_buffered_write(bio, NULL, 0) >= 0) ? 1 : -1;
+
+			break;
+
+		case BIO_CTRL_WPENDING:
+			status = ringbuffer_used(&ptr->xmitBuffer);
+			break;
+
+		case BIO_CTRL_PENDING:
+			status = 0;
+			break;
+
+		case BIO_C_READ_BLOCKED:
+			status = (int) ptr->readBlocked;
+			break;
+
+		case BIO_C_WRITE_BLOCKED:
+			status = (int) ptr->writeBlocked;
+			break;
+
+		default:
+			status = BIO_ctrl(BIO_next(bio), cmd, arg1, arg2);
+			break;
+	}
+
+	return status;
+}
+
+static int transport_bio_buffered_new(BIO* bio)
+{
+	WINPR_BIO_BUFFERED_SOCKET* ptr;
+	BIO_set_init(bio, 1);
+	BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+	ptr = (WINPR_BIO_BUFFERED_SOCKET*) calloc(1, sizeof(WINPR_BIO_BUFFERED_SOCKET));
+
+	if (!ptr)
+		return -1;
+
+	BIO_set_data(bio, (void*) ptr);
+
+	if (!ringbuffer_init(&ptr->xmitBuffer, 0x10000))
+		return -1;
+
+	return 1;
+}
+
+static int transport_bio_buffered_free(BIO* bio)
+{
+	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*) BIO_get_data(bio);
+	BIO* next_bio = BIO_next(bio);
+
+	if (next_bio)
+	{
+		BIO_free(next_bio);
+		BIO_set_next(bio, NULL);
+	}
+
+	ringbuffer_destroy(&ptr->xmitBuffer);
+	free(ptr);
+	return 1;
+}
+
+BIO_METHOD* BIO_s_buffered_socket(void)
+{
+	static BIO_METHOD* bio_methods = NULL;
+
+	if (bio_methods == NULL)
+	{
+		if (!(bio_methods = BIO_meth_new(BIO_TYPE_BUFFERED, "BufferedSocket")))
+			return NULL;
+
+		BIO_meth_set_write(bio_methods, transport_bio_buffered_write);
+		BIO_meth_set_read(bio_methods, transport_bio_buffered_read);
+		BIO_meth_set_puts(bio_methods, transport_bio_buffered_puts);
+		BIO_meth_set_gets(bio_methods, transport_bio_buffered_gets);
+		BIO_meth_set_ctrl(bio_methods, transport_bio_buffered_ctrl);
+		BIO_meth_set_create(bio_methods, transport_bio_buffered_new);
+		BIO_meth_set_destroy(bio_methods, transport_bio_buffered_free);
+	}
+
+	return bio_methods;
+}
+
+char* freerdp_tcp_get_ip_address(int sockfd)
 {
 	BYTE* ip;
 	socklen_t length;
+	char ipAddress[32];
 	struct sockaddr_in sockaddr;
-
 	length = sizeof(sockaddr);
+	ZeroMemory(&sockaddr, length);
 
-	if (getsockname(tcp->sockfd, (struct sockaddr*) &sockaddr, &length) == 0)
+	if (getsockname(sockfd, (struct sockaddr*) &sockaddr, &length) == 0)
 	{
-		ip = (BYTE*) (&sockaddr.sin_addr);
-		sprintf_s(tcp->ip_address, sizeof(tcp->ip_address),
-			 "%u.%u.%u.%u", ip[0], ip[1], ip[2], ip[3]);
+		ip = (BYTE*)(&sockaddr.sin_addr);
+		sprintf_s(ipAddress, sizeof(ipAddress), "%"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"", ip[0], ip[1], ip[2],
+		          ip[3]);
 	}
 	else
 	{
-		strncpy(tcp->ip_address, "127.0.0.1", sizeof(tcp->ip_address));
+		strcpy(ipAddress, "127.0.0.1");
 	}
 
-	tcp->ip_address[sizeof(tcp->ip_address) - 1] = 0;
-
-	tcp->settings->IPv6Enabled = 0;
-	tcp->settings->ClientAddress = _strdup(tcp->ip_address);
+	return _strdup(ipAddress);
 }
 
-void tcp_get_mac_address(rdpTcp * tcp)
+static int freerdp_uds_connect(const char* path)
 {
-#ifdef LINUX
-	BYTE* mac;
-	struct ifreq if_req;
-	struct if_nameindex* ni;
+#ifndef _WIN32
+	int status;
+	int sockfd;
+	struct sockaddr_un addr;
+	sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
 
-	ni = if_nameindex();
-	mac = tcp->mac_address;
-
-	while (ni->if_name != NULL)
+	if (sockfd == -1)
 	{
-		if (strcmp(ni->if_name, "lo") != 0)
-			break;
-
-		ni++;
+		WLog_ERR(TAG, "socket");
+		return -1;
 	}
 
-	strncpy(if_req.ifr_name, ni->if_name, IF_NAMESIZE);
+	addr.sun_family = AF_UNIX;
+	strncpy(addr.sun_path, path, sizeof(addr.sun_path));
+	status = connect(sockfd, (struct sockaddr*) &addr, sizeof(addr));
 
-	if (ioctl(tcp->sockfd, SIOCGIFHWADDR, &if_req) != 0)
+	if (status < 0)
 	{
-		fprintf(stderr, "failed to obtain MAC address\n");
-		return;
+		WLog_ERR(TAG, "connect");
+		close(sockfd);
+		return -1;
 	}
 
-	memmove((void*) mac, (void*) &if_req.ifr_ifru.ifru_hwaddr.sa_data[0], 6);
+	return sockfd;
+#else /* ifndef _WIN32 */
+	return -1;
 #endif
-
-	/* fprintf(stderr, "MAC: %02X:%02X:%02X:%02X:%02X:%02X\n",
-		mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]); */
 }
 
-BOOL tcp_connect(rdpTcp* tcp, const char* hostname, UINT16 port)
+static BOOL freerdp_tcp_resolve_hostname(rdpContext* context, const char* hostname)
 {
-	UINT32 option_value;
-	socklen_t option_len;
+	int status;
+	struct addrinfo hints = { 0 };
+	struct addrinfo* result = NULL;
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	status = getaddrinfo(hostname, NULL, &hints, &result);
 
-	if (hostname == NULL)
+	if (status)
+	{
+		if (!freerdp_get_last_error(context))
+			freerdp_set_last_error(context, FREERDP_ERROR_DNS_NAME_NOT_FOUND);
+
+		return FALSE;
+	}
+
+	freeaddrinfo(result);
+	return TRUE;
+}
+
+static BOOL freerdp_tcp_connect_timeout(rdpContext* context, int sockfd,
+                                        struct sockaddr* addr,
+                                        socklen_t addrlen, int timeout)
+{
+	HANDLE handles[2];
+	int status = 0;
+	int count = 0;
+	u_long arg = 0;
+	DWORD tout = (timeout) ? timeout * 1000 : INFINITE;
+	handles[count] = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+	if (!handles[count])
 		return FALSE;
 
-	if (hostname[0] == '/')
-	{
-		tcp->sockfd = freerdp_uds_connect(hostname);
+	status = WSAEventSelect(sockfd, handles[count++], FD_READ | FD_WRITE | FD_CONNECT | FD_CLOSE);
 
-		if (tcp->sockfd < 0)
+	if (status < 0)
+	{
+		WLog_ERR(TAG, "WSAEventSelect failed with %d", WSAGetLastError());
+		return FALSE;
+	}
+
+	handles[count++] = context->abortEvent;
+	status = _connect(sockfd, addr, addrlen);
+
+	if (status < 0)
+	{
+		status = WSAGetLastError();
+
+		switch (status)
+		{
+			case WSAEINPROGRESS:
+			case WSAEWOULDBLOCK:
+				break;
+
+			default:
+				return FALSE;
+		}
+	}
+
+	status = WaitForMultipleObjects(count, handles, FALSE, tout);
+
+	if (WAIT_OBJECT_0 != status)
+	{
+		if (status == WAIT_OBJECT_0 + 1)
+			freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
+
+		return FALSE;
+	}
+
+	status = recv(sockfd, NULL, 0, 0);
+
+	if (status == SOCKET_ERROR)
+	{
+		if (WSAGetLastError() == WSAECONNRESET)
 			return FALSE;
 	}
-	else
+
+	status = WSAEventSelect(sockfd, handles[0], 0);
+	CloseHandle(handles[0]);
+
+	if (status < 0)
 	{
-		tcp->sockfd = freerdp_tcp_connect(hostname, port);
+		WLog_ERR(TAG, "WSAEventSelect failed with %d", WSAGetLastError());
+		return FALSE;
+	}
 
-		if (tcp->sockfd < 0)
-			return FALSE;
+	if (_ioctlsocket(sockfd, FIONBIO, &arg) != 0)
+		return FALSE;
 
-		SetEventFileDescriptor(tcp->event, tcp->sockfd);
+	return TRUE;
+}
 
-		tcp_get_ip_address(tcp);
-		tcp_get_mac_address(tcp);
+static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames,
+                                     UINT32* ports, int count, int port,
+                                     int timeout)
+{
+	int index;
+	int sindex;
+	int status;
+	SOCKET sockfd = -1;
+	SOCKET* sockfds;
+	HANDLE* events;
+	DWORD waitStatus;
+	char port_str[16];
+	struct addrinfo hints;
+	struct addrinfo* addr;
+	struct addrinfo* result;
+	struct addrinfo** addrs;
+	struct addrinfo** results;
+	sprintf_s(port_str, sizeof(port_str) - 1, "%d", port);
+	sockfds = (SOCKET*) calloc(count, sizeof(SOCKET));
+	events = (HANDLE*) calloc(count + 1, sizeof(HANDLE));
+	addrs = (struct addrinfo**) calloc(count, sizeof(struct addrinfo*));
+	results = (struct addrinfo**) calloc(count, sizeof(struct addrinfo*));
 
-		option_value = 1;
-		option_len = sizeof(option_value);
-		setsockopt(tcp->sockfd, IPPROTO_TCP, TCP_NODELAY, (void*) &option_value, option_len);
+	if (!sockfds || !events || !addrs || !results)
+	{
+		free(sockfds);
+		free(events);
+		free(addrs);
+		free(results);
+		return -1;
+	}
 
-		/* receive buffer must be a least 32 K */
-		if (getsockopt(tcp->sockfd, SOL_SOCKET, SO_RCVBUF, (void*) &option_value, &option_len) == 0)
+	for (index = 0; index < count; index++)
+	{
+		ZeroMemory(&hints, sizeof(hints));
+		hints.ai_family = AF_UNSPEC;
+		hints.ai_socktype = SOCK_STREAM;
+
+		if (ports)
+			sprintf_s(port_str, sizeof(port_str) - 1, "%"PRIu32"", ports[index]);
+
+		status = getaddrinfo(hostnames[index], port_str, &hints, &result);
+
+		if (status)
 		{
-			if (option_value < (1024 * 32))
-			{
-				option_value = 1024 * 32;
-				option_len = sizeof(option_value);
-				setsockopt(tcp->sockfd, SOL_SOCKET, SO_RCVBUF, (void*) &option_value, option_len);
-			}
+			continue;
 		}
 
-		tcp_set_keep_alive_mode(tcp);
+		addr = result;
+
+		if ((addr->ai_family == AF_INET6) && (addr->ai_next != 0))
+		{
+			while ((addr = addr->ai_next))
+			{
+				if (addr->ai_family == AF_INET)
+					break;
+			}
+
+			if (!addr)
+				addr = result;
+		}
+
+		sockfds[index] = _socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
+
+		if (sockfds[index] == INVALID_SOCKET)
+		{
+			freeaddrinfo(result);
+			sockfds[index] = 0;
+			continue;
+		}
+
+		addrs[index] = addr;
+		results[index] = result;
 	}
 
-	return TRUE;
-}
-
-int tcp_read(rdpTcp* tcp, BYTE* data, int length)
-{
-	return freerdp_tcp_read(tcp->sockfd, data, length);
-}
-
-int tcp_write(rdpTcp* tcp, BYTE* data, int length)
-{
-	return freerdp_tcp_write(tcp->sockfd, data, length);
-}
-
-int tcp_wait_read(rdpTcp* tcp)
-{
-	return freerdp_tcp_wait_read(tcp->sockfd);
-}
-
-int tcp_wait_write(rdpTcp* tcp)
-{
-	return freerdp_tcp_wait_write(tcp->sockfd);
-}
-
-BOOL tcp_disconnect(rdpTcp* tcp)
-{
-	freerdp_tcp_disconnect(tcp->sockfd);
-	tcp->sockfd = -1;
-
-	return TRUE;
-}
-
-BOOL tcp_set_blocking_mode(rdpTcp* tcp, BOOL blocking)
-{
-#ifndef _WIN32
-	int flags;
-	flags = fcntl(tcp->sockfd, F_GETFL);
-
-	if (flags == -1)
+	for (index = 0; index < count; index++)
 	{
-		fprintf(stderr, "tcp_set_blocking_mode: fcntl failed.\n");
-		return FALSE;
+		if (!sockfds[index])
+			continue;
+
+		sockfd = sockfds[index];
+		addr = addrs[index];
+		/* set socket in non-blocking mode */
+		events[index] = WSACreateEvent();
+
+		if (!events[index])
+		{
+			WLog_ERR(TAG, "WSACreateEvent returned 0x%08X", WSAGetLastError());
+			continue;
+		}
+
+		if (WSAEventSelect(sockfd, events[index], FD_READ | FD_WRITE | FD_CONNECT | FD_CLOSE))
+		{
+			WLog_ERR(TAG, "WSAEventSelect returned 0x%08X", WSAGetLastError());
+			continue;
+		}
+
+		/* non-blocking tcp connect */
+		status = _connect(sockfd, addr->ai_addr, addr->ai_addrlen);
+
+		if (status >= 0)
+		{
+			/* connection success */
+			break;
+		}
 	}
 
-	if (blocking == TRUE)
-		fcntl(tcp->sockfd, F_SETFL, flags & ~(O_NONBLOCK));
-	else
-		fcntl(tcp->sockfd, F_SETFL, flags | O_NONBLOCK);
-#else
-	int status;
-	u_long arg = blocking;
+	events[count] = context->abortEvent;
+	waitStatus = WaitForMultipleObjects(count + 1, events, FALSE, timeout * 1000);
+	sindex = waitStatus - WAIT_OBJECT_0;
 
-	status = ioctlsocket(tcp->sockfd, FIONBIO, &arg);
+	for (index = 0; index < count; index++)
+	{
+		u_long arg = 0;
 
-	if (status != NO_ERROR)
-		fprintf(stderr, "ioctlsocket() failed with error: %ld\n", status);
+		if (!sockfds[index])
+			continue;
 
-	tcp->wsa_event = WSACreateEvent();
-	WSAEventSelect(tcp->sockfd, tcp->wsa_event, FD_READ);
-#endif
+		sockfd = sockfds[index];
 
-	return TRUE;
+		/* set socket in blocking mode */
+		if (WSAEventSelect(sockfd, NULL, 0))
+		{
+			WLog_ERR(TAG, "WSAEventSelect returned 0x%08X", WSAGetLastError());
+			continue;
+		}
+
+		if (_ioctlsocket(sockfd, FIONBIO, &arg))
+		{
+			WLog_ERR(TAG, "_ioctlsocket failed");
+		}
+	}
+
+	if ((sindex >= 0) && (sindex < count))
+	{
+		sockfd = sockfds[sindex];
+	}
+
+	if (sindex == count)
+		freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
+
+	for (index = 0; index < count; index++)
+	{
+		if (results[index])
+			freeaddrinfo(results[index]);
+
+		CloseHandle(events[index]);
+	}
+
+	free(addrs);
+	free(results);
+	free(sockfds);
+	free(events);
+	return sockfd;
 }
 
-BOOL tcp_set_keep_alive_mode(rdpTcp* tcp)
+BOOL freerdp_tcp_set_keep_alive_mode(int sockfd)
 {
 #ifndef _WIN32
-	UINT32 option_value;
-	socklen_t option_len;
+	UINT32 optval;
+	socklen_t optlen;
+	optval = 1;
+	optlen = sizeof(optval);
 
-	option_value = 1;
-	option_len = sizeof(option_value);
-
-	if (setsockopt(tcp->sockfd, SOL_SOCKET, SO_KEEPALIVE, (void*) &option_value, option_len) < 0)
+	if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, (void*) &optval, optlen) < 0)
 	{
-		perror("setsockopt() SOL_SOCKET, SO_KEEPALIVE:");
-		return FALSE;
+		WLog_WARN(TAG, "setsockopt() SOL_SOCKET, SO_KEEPALIVE");
 	}
 
 #ifdef TCP_KEEPIDLE
-	option_value = 5;
-	option_len = sizeof(option_value);
+	optval = 5;
+	optlen = sizeof(optval);
 
-	if (setsockopt(tcp->sockfd, IPPROTO_TCP, TCP_KEEPIDLE, (void*) &option_value, option_len) < 0)
+	if (setsockopt(sockfd, IPPROTO_TCP, TCP_KEEPIDLE, (void*) &optval, optlen) < 0)
 	{
-		perror("setsockopt() IPPROTO_TCP, SO_KEEPIDLE:");
-		return FALSE;
+		WLog_WARN(TAG, "setsockopt() IPPROTO_TCP, TCP_KEEPIDLE");
 	}
-#endif
-#endif
 
+#endif
+#ifdef TCP_KEEPCNT
+	optval = 3;
+	optlen = sizeof(optval);
+
+	if (setsockopt(sockfd, SOL_TCP, TCP_KEEPCNT, (void*) &optval, optlen) < 0)
+	{
+		WLog_WARN(TAG, "setsockopt() SOL_TCP, TCP_KEEPCNT");
+	}
+
+#endif
+#ifdef TCP_KEEPINTVL
+	optval = 2;
+	optlen = sizeof(optval);
+
+	if (setsockopt(sockfd, SOL_TCP, TCP_KEEPINTVL, (void*) &optval, optlen) < 0)
+	{
+		WLog_WARN(TAG, "setsockopt() SOL_TCP, TCP_KEEPINTVL");
+	}
+
+#endif
+#endif
+#if defined(__MACOSX__) || defined(__IOS__)
+	optval = 1;
+	optlen = sizeof(optval);
+
+	if (setsockopt(sockfd, SOL_SOCKET, SO_NOSIGPIPE, (void*) &optval, optlen) < 0)
+	{
+		WLog_WARN(TAG, "setsockopt() SOL_SOCKET, SO_NOSIGPIPE");
+	}
+
+#endif
+#ifdef TCP_USER_TIMEOUT
+	optval = 9000;
+	optlen = sizeof(optval);
+
+	if (setsockopt(sockfd, SOL_TCP, TCP_USER_TIMEOUT, (void*) &optval, optlen) < 0)
+	{
+		WLog_WARN(TAG, "setsockopt() SOL_TCP, TCP_USER_TIMEOUT");
+	}
+
+#endif
 	return TRUE;
 }
 
-int tcp_attach(rdpTcp* tcp, int sockfd)
+int freerdp_tcp_connect(rdpContext* context, rdpSettings* settings,
+                        const char* hostname, int port, int timeout)
 {
-	tcp->sockfd = sockfd;
-	SetEventFileDescriptor(tcp->event, tcp->sockfd);
-	return 0;
-}
+	int status;
+	int sockfd;
+	UINT32 optval;
+	socklen_t optlen;
+	BOOL ipcSocket = FALSE;
+	BOOL useExternalDefinedSocket = FALSE;
 
-HANDLE tcp_get_event_handle(rdpTcp* tcp)
-{
-#ifndef _WIN32
-	return tcp->event;
-#else
-	return (HANDLE) tcp->wsa_event;
-#endif
-}
+	if (!hostname)
+		return -1;
 
-rdpTcp* tcp_new(rdpSettings* settings)
-{
-	rdpTcp* tcp;
+	if (hostname[0] == '/')
+		ipcSocket = TRUE;
 
-	tcp = (rdpTcp*) malloc(sizeof(rdpTcp));
+	if (hostname[0] == '|')
+		useExternalDefinedSocket = TRUE;
 
-	if (tcp != NULL)
+	if (ipcSocket)
 	{
-		ZeroMemory(tcp, sizeof(rdpTcp));
+		sockfd = freerdp_uds_connect(hostname);
 
-		tcp->sockfd = -1;
-		tcp->settings = settings;
-		tcp->event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, tcp->sockfd);
+		if (sockfd < 0)
+			return -1;
+	}
+	else if (useExternalDefinedSocket)
+		sockfd = port;
+	else
+	{
+		sockfd = -1;
+
+		if (!settings->GatewayEnabled)
+		{
+			if (!freerdp_tcp_resolve_hostname(context, hostname) || settings->RemoteAssistanceMode)
+			{
+				if (settings->TargetNetAddressCount > 0)
+				{
+					sockfd = freerdp_tcp_connect_multi(
+					             context,
+					             settings->TargetNetAddresses,
+					             settings->TargetNetPorts,
+					             settings->TargetNetAddressCount,
+					             port, timeout);
+				}
+			}
+		}
+
+		if (sockfd <= 0)
+		{
+			char port_str[16];
+			struct addrinfo hints;
+			struct addrinfo* addr;
+			struct addrinfo* result;
+			ZeroMemory(&hints, sizeof(hints));
+			hints.ai_family = AF_UNSPEC;
+			hints.ai_socktype = SOCK_STREAM;
+			sprintf_s(port_str, sizeof(port_str) - 1, "%d", port);
+			status = getaddrinfo(hostname, port_str, &hints, &result);
+
+			if (status)
+			{
+				if (!freerdp_get_last_error(context))
+					freerdp_set_last_error(context, FREERDP_ERROR_DNS_NAME_NOT_FOUND);
+
+				WLog_ERR(TAG, "getaddrinfo: %s", gai_strerror(status));
+				return -1;
+			}
+
+			addr = result;
+
+			if ((addr->ai_family == AF_INET6) && (addr->ai_next != 0))
+			{
+				while ((addr = addr->ai_next))
+				{
+					if (addr->ai_family == AF_INET)
+						break;
+				}
+
+				if (!addr)
+					addr = result;
+			}
+
+			sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
+
+			if (sockfd < 0)
+			{
+				freeaddrinfo(result);
+				return -1;
+			}
+
+			if (!freerdp_tcp_connect_timeout(context, sockfd, addr->ai_addr,
+			                                 addr->ai_addrlen, timeout))
+			{
+				freeaddrinfo(result);
+				close(sockfd);
+				WLog_ERR(TAG, "failed to connect to %s", hostname);
+				return -1;
+			}
+
+			freeaddrinfo(result);
+		}
 	}
 
-	return tcp;
-}
+	settings->IPv6Enabled = FALSE;
+	free(settings->ClientAddress);
+	settings->ClientAddress = freerdp_tcp_get_ip_address(sockfd);
 
-void tcp_free(rdpTcp* tcp)
-{
-	if (tcp)
+	if (!settings->ClientAddress)
 	{
-		CloseHandle(tcp->event);
-		free(tcp);
+		if (!useExternalDefinedSocket)
+			close(sockfd);
+
+		WLog_ERR(TAG, "Couldn't get socket ip address");
+		return -1;
 	}
+
+	optval = 1;
+	optlen = sizeof(optval);
+
+	if (!ipcSocket && !useExternalDefinedSocket)
+	{
+		if (setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (void*) &optval, optlen) < 0)
+			WLog_ERR(TAG, "unable to set TCP_NODELAY");
+	}
+
+	/* receive buffer must be a least 32 K */
+	if (getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, (void*) &optval, &optlen) == 0)
+	{
+		if (optval < (1024 * 32))
+		{
+			optval = 1024 * 32;
+			optlen = sizeof(optval);
+
+			if (setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, (void*) &optval, optlen) < 0)
+			{
+				close(sockfd);
+				WLog_ERR(TAG, "unable to set receive buffer len");
+				return -1;
+			}
+		}
+	}
+
+	if (!ipcSocket && !useExternalDefinedSocket)
+	{
+		if (!freerdp_tcp_set_keep_alive_mode(sockfd))
+		{
+			close(sockfd);
+			WLog_ERR(TAG, "Couldn't set keep alive mode.");
+			return -1;
+		}
+	}
+
+	if (WaitForSingleObject(context->abortEvent, 0) == WAIT_OBJECT_0)
+	{
+		close(sockfd);
+		return -1;
+	}
+
+	return sockfd;
 }

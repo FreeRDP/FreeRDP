@@ -20,6 +20,8 @@
 #ifndef FREERDP_LOCALE_KEYBOARD_SUN_H
 #define FREERDP_LOCALE_KEYBOARD_SUN_H
 
-DWORD freerdp_detect_solaris_keyboard_layout();
+#include <freerdp/api.h>
+
+FREERDP_LOCAL DWORD freerdp_detect_solaris_keyboard_layout();
 
 #endif /* FREERDP_LOCALE_KEYBOARD_SUN_H */

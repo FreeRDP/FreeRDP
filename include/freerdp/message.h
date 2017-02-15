@@ -54,6 +54,7 @@
 #define Update_SurfaceBits					12
 #define Update_SurfaceFrameMarker				13
 #define Update_SurfaceFrameAcknowledge				14
+#define Update_SetKeyboardIndicators				15
 
 #define FREERDP_UPDATE_BEGIN_PAINT				MakeMessageId(Update, BeginPaint)
 #define FREERDP_UPDATE_	END_PAINT				MakeMessageId(Update, EndPaint)
@@ -69,6 +70,7 @@
 #define FREERDP_UPDATE_SURFACE_BITS				MakeMessageId(Update, SurfaceBits)
 #define FREERDP_UPDATE_SURFACE_FRAME_MARKER			MakeMessageId(Update, SurfaceFrameMarker)
 #define FREERDP_UPDATE_SURFACE_FRAME_ACKNOWLEDGE		MakeMessageId(Update, SurfaceFrameAcknowledge)
+#define FREERDP_UPDATE_SET_KEYBOARD_INDICATORS			MakeMessageId(Update, SetKeyboardIndicators)
 
 /* Primary Update */
 
@@ -229,12 +231,16 @@
 #define Input_UnicodeKeyboardEvent				3
 #define Input_MouseEvent					4
 #define Input_ExtendedMouseEvent				5
+#define Input_FocusInEvent					6
+#define Input_KeyboardPauseEvent				7
 
 #define FREERDP_INPUT_SYNCHRONIZE_EVENT				MakeMessageId(Input, SynchronizeEvent)
 #define FREERDP_INPUT_KEYBOARD_EVENT				MakeMessageId(Input, KeyboardEvent)
 #define FREERDP_INPUT_UNICODE_KEYBOARD_EVENT			MakeMessageId(Input, UnicodeKeyboardEvent)
 #define FREERDP_INPUT_MOUSE_EVENT				MakeMessageId(Input, MouseEvent)
 #define FREERDP_INPUT_EXTENDED_MOUSE_EVENT			MakeMessageId(Input, ExtendedMouseEvent)
+#define FREERDP_INPUT_FOCUS_IN_EVENT				MakeMessageId(Input, FocusInEvent)
+#define FREERDP_INPUT_KEYBOARD_PAUSE_EVENT			MakeMessageId(Input, KeyboardPauseEvent)
 
 /**
  * Static Channel Message Queues
@@ -260,11 +266,18 @@
 #define CliprdrChannel_FormatList				2
 #define CliprdrChannel_DataRequest				3
 #define CliprdrChannel_DataResponse				4
+#define CliprdrChannel_ClipCaps					5
+#define CliprdrChannel_FilecontentsRequest		6
+#define CliprdrChannel_FilecontentsResponse		7
+#define CliprdrChannel_LockClipdata				8
+#define CliprdrChannel_UnLockClipdata			9
+#define CliprdrChannel_TemporaryDirectory		10
 
 #define FREERDP_CLIPRDR_CHANNEL_MONITOR_READY			MakeMessageId(CliprdrChannel, MonitorReady)
 #define FREERDP_CLIPRDR_CHANNEL_FORMAT_LIST			MakeMessageId(CliprdrChannel, FormatList)
 #define FREERDP_CLIPRDR_CHANNEL_DATA_REQUEST			MakeMessageId(CliprdrChannel, DataRequest)
 #define FREERDP_CLIPRDR_CHANNEL_DATA_RESPONSE			MakeMessageId(CliprdrChannel, DataResponse)
+#define FREERDP_CLIPRDR_CHANNEL_CLIP_CAPS			MakeMessageId(CliprdrChannel, ClipCaps)
 
 /**
  * Multimedia Redirection Channel
@@ -303,6 +316,8 @@
 #define RailChannel_ServerExecuteResult				17
 #define RailChannel_ClientGetAppIdRequest			18
 #define RailChannel_ServerGetAppIdResponse			19
+#define RailChannel_ClientHandshakeEx				20
+#define RailChannel_ServerHandshakeEx				21
 
 #define FREERDP_RAIL_CHANNEL_CLIENT_EXECUTE			MakeMessageId(RailChannel, ClientExecute)
 #define FREERDP_RAIL_CHANNEL_CLIENT_ACTIVATE			MakeMessageId(RailChannel, ClientActivate)
@@ -323,6 +338,8 @@
 #define FREERDP_RAIL_CHANNEL_SERVER_EXECUTE_RESULT		MakeMessageId(RailChannel, ServerExecuteResult)
 #define FREERDP_RAIL_CHANNEL_CLIENT_GET_APP_ID_REQUEST		MakeMessageId(RailChannel, ClientGetAppIdRequest)
 #define FREERDP_RAIL_CHANNEL_SERVER_GET_APP_ID_RESPONSE		MakeMessageId(RailChannel, ServerGetAppIdResponse)
+#define FREERDP_RAIL_CHANNEL_CLIENT_HANDSHAKE_EX		MakeMessageId(RailChannel, ClientHandshakeEx)
+#define FREERDP_RAIL_CHANNEL_SERVER_HANDSHAKE_EX		MakeMessageId(RailChannel, ServerHandshakeEx)
 
 /**
  * MultiTouch Input Channel Extension (MS-RDPEDI)

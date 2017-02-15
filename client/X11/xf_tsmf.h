@@ -23,8 +23,7 @@
 #include "xf_client.h"
 #include "xfreerdp.h"
 
-void xf_tsmf_init(xfContext* xfc, long xv_port);
-void xf_tsmf_uninit(xfContext* xfc);
-void xf_process_tsmf_event(xfContext* xfc, wMessage* event);
+int xf_tsmf_init(xfContext* xfc, TsmfClientContext* tsmf);
+int xf_tsmf_uninit(xfContext* xfc, TsmfClientContext* tsmf);
 
 #endif /* __XF_TSMF_H */

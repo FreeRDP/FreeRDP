@@ -181,10 +181,15 @@ typedef struct AUDIO_FORMAT AUDIO_FORMAT;
 #define WAVE_FORMAT_NORRIS			0x1400
 #define WAVE_FORMAT_SOUNDSPACE_MUSICOMPRESS	0x1500
 #define WAVE_FORMAT_DVM				0x2000
+#define WAVE_FORMAT_AAC_MS			0xA106
 
 /**
  * Audio Format Functions
  */
+
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
 FREERDP_API UINT32 rdpsnd_compute_audio_time_length(AUDIO_FORMAT* format, int size);
 
@@ -194,5 +199,9 @@ FREERDP_API void rdpsnd_print_audio_format(AUDIO_FORMAT* format);
 FREERDP_API void rdpsnd_print_audio_formats(AUDIO_FORMAT* formats, UINT16 count);
 
 FREERDP_API void rdpsnd_free_audio_formats(AUDIO_FORMAT* formats, UINT16 count);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif /* FREERDP_CODEC_AUDIO_H */

@@ -28,6 +28,8 @@
 extern "C" {
 #endif
 
+FREERDP_API void mf_scale_mouse_event(void* context, rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
+
 /**
  * Client Interface
  */

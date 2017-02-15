@@ -19,8 +19,8 @@ set(MODULE_NAME "freerdp-channels-server")
 set(MODULE_PREFIX "FREERDP_CHANNELS_SERVER")
 
 set(${MODULE_PREFIX}_SRCS
-	channels.c
-	channels.h)
+	${CMAKE_CURRENT_SOURCE_DIR}/channels.c
+	${CMAKE_CURRENT_SOURCE_DIR}/channels.h)
 	
 foreach(STATIC_MODULE ${CHANNEL_STATIC_SERVER_MODULES})
 	set(STATIC_MODULE_NAME ${${STATIC_MODULE}_SERVER_NAME})
@@ -30,17 +30,12 @@ endforeach()
 
 add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS})
 
-set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION} PREFIX "lib")
+if (WITH_LIBRARY_VERSIONING)
+  set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
+endif()
 
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE freerdp
-	MODULES freerdp-codec freerdp-utils)
 
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE winpr
-	MODULES winpr-crt winpr-synch winpr-interlocked winpr-error)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr freerdp)
 
 set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} PARENT_SCOPE)
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)

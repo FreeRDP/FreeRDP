@@ -5,6 +5,8 @@
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2011 Roman Barabanov <romanbarabanov@gmail.com>
  * Copyright 2011 Vic Lee
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,24 +25,35 @@
 #define FREERDP_CHANNEL_CLIENT_RAIL_MAIN_H
 
 #include <freerdp/rail.h>
+#include <freerdp/svc.h>
+#include <freerdp/addin.h>
 #include <freerdp/settings.h>
-#include <freerdp/utils/debug.h>
-#include <freerdp/utils/svc_plugin.h>
+#include <freerdp/client/rail.h>
 
+#include <winpr/crt.h>
+#include <winpr/wlog.h>
 #include <winpr/stream.h>
 
 #include "../rail_common.h"
 
 struct rail_plugin
 {
-	rdpSvcPlugin plugin;
-	rdpRailOrder* rail_order;
+	CHANNEL_DEF channelDef;
+	CHANNEL_ENTRY_POINTS_FREERDP_EX channelEntryPoints;
+
+	RailClientContext* context;
+
+	wLog* log;
+	HANDLE thread;
+	wStream* data_in;
+	void* InitHandle;
+	DWORD OpenHandle;
+	wMessageQueue* queue;
+	rdpContext* rdpcontext;
 };
 typedef struct rail_plugin railPlugin;
 
-void rail_send_channel_event(void* rail_object, UINT16 event_type, void* param);
-void rail_send_channel_data(void* rail_object, void* data, size_t length);
-
-
+RailClientContext* rail_get_client_interface(railPlugin* rail);
+UINT rail_send_channel_data(railPlugin* rail, void* data, size_t length);
 
 #endif /* FREERDP_CHANNEL_CLIENT_RAIL_MAIN_H */

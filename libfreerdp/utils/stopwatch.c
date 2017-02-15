@@ -55,6 +55,8 @@ STOPWATCH* stopwatch_create()
 #endif
 
 	sw = (STOPWATCH*) malloc(sizeof(STOPWATCH));
+	if (!sw)
+		return NULL;
 	stopwatch_reset(sw);
 
 	return sw;
@@ -92,7 +94,7 @@ double stopwatch_get_elapsed_time_in_seconds(STOPWATCH* stopwatch)
 
 void stopwatch_get_elapsed_time_in_useconds(STOPWATCH* stopwatch, UINT32* sec, UINT32* usec)
 {
-	*sec = stopwatch->elapsed / 1000000;
-	*usec = stopwatch->elapsed % 1000000;
+	*sec = (UINT32) stopwatch->elapsed / 1000000;
+	*usec = (UINT32) stopwatch->elapsed % 1000000;
 }
 

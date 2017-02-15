@@ -36,6 +36,7 @@
 #define FREERDP_ADDIN_CHANNEL_STATIC		0x00001000
 #define FREERDP_ADDIN_CHANNEL_DYNAMIC		0x00002000
 #define FREERDP_ADDIN_CHANNEL_DEVICE		0x00004000
+#define FREERDP_ADDIN_CHANNEL_ENTRYEX		0x00008000
 
 struct _FREERDP_ADDIN
 {
@@ -46,7 +47,8 @@ struct _FREERDP_ADDIN
 };
 typedef struct _FREERDP_ADDIN FREERDP_ADDIN;
 
-typedef void* (*FREERDP_LOAD_CHANNEL_ADDIN_ENTRY_FN)(LPCSTR pszName, LPSTR pszSubsystem, LPSTR pszType, DWORD dwFlags);
+typedef PVIRTUALCHANNELENTRY(*FREERDP_LOAD_CHANNEL_ADDIN_ENTRY_FN)(
+    LPCSTR pszName, LPSTR pszSubsystem, LPSTR pszType, DWORD dwFlags);
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,11 +57,15 @@ extern "C" {
 FREERDP_API LPSTR freerdp_get_library_install_path(void);
 FREERDP_API LPSTR freerdp_get_dynamic_addin_install_path(void);
 
-FREERDP_API int freerdp_register_addin_provider(FREERDP_LOAD_CHANNEL_ADDIN_ENTRY_FN provider, DWORD dwFlags);
+FREERDP_API int freerdp_register_addin_provider(
+    FREERDP_LOAD_CHANNEL_ADDIN_ENTRY_FN provider, DWORD dwFlags);
 
-FREERDP_API void* freerdp_load_dynamic_addin(LPCSTR pszFileName, LPCSTR pszPath, LPCSTR pszEntryName);
-FREERDP_API void* freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName, LPSTR pszSubsystem, LPSTR pszType, DWORD dwFlags);
-FREERDP_API void* freerdp_load_channel_addin_entry(LPCSTR pszName, LPSTR pszSubsystem, LPSTR pszType, DWORD dwFlags);
+FREERDP_API PVIRTUALCHANNELENTRY freerdp_load_dynamic_addin(LPCSTR pszFileName,
+        LPCSTR pszPath, LPCSTR pszEntryName);
+FREERDP_API PVIRTUALCHANNELENTRY freerdp_load_dynamic_channel_addin_entry(
+    LPCSTR pszName, LPSTR pszSubsystem, LPSTR pszType, DWORD dwFlags);
+FREERDP_API PVIRTUALCHANNELENTRY freerdp_load_channel_addin_entry(
+    LPCSTR pszName, LPSTR pszSubsystem, LPSTR pszType, DWORD dwFlags);
 
 #ifdef __cplusplus
 }

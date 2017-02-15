@@ -30,10 +30,12 @@
 
 find_path(XEXT_INCLUDE_DIR NAMES X11/extensions/Xext.h
           PATH_SUFFIXES X11/extensions
+          PATHS /opt/X11/include
           DOC "The Xext include directory"
 )
 
 find_library(XEXT_LIBRARY NAMES Xext
+          PATHS /opt/X11/lib
           DOC "The Xext library"
 )
 

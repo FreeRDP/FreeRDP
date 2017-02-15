@@ -18,7 +18,7 @@ int TestDsCrackNames(int argc, char* argv[])
 
 	if (status != ERROR_SUCCESS)
 	{
-		_tprintf(_T("DsBind: expected ERROR_SUCCESS: 0x%08X\n"), status);
+		_tprintf(_T("DsBind: expected ERROR_SUCCESS: 0x%08")_T(PRIX32)_T("\n"), status);
 		return -1;
 	}
 
@@ -31,9 +31,9 @@ int TestDsCrackNames(int argc, char* argv[])
 		return -1;
 	}
 
-	_tprintf(_T("DsCrackNames: pResult->cItems: %d\n"), pResult->cItems);
+	_tprintf(_T("DsCrackNames: pResult->cItems: %")_T(PRIu32)_T("\n"), pResult->cItems);
 
-	_tprintf(_T("DsCrackNames: pResult->rItems[0]: Domain: %s Name: %s Status: 0x%08X\n"),
+	_tprintf(_T("DsCrackNames: pResult->rItems[0]: Domain: %s Name: %s Status: 0x%08")_T(PRIX32)_T("\n"),
 		pResult->rItems[0].pDomain, pResult->rItems[0].pName, pResult->rItems[0].status);
 
 	status = DsUnBind(&ds);

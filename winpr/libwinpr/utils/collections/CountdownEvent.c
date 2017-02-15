@@ -152,24 +152,39 @@ wCountdownEvent* CountdownEvent_New(DWORD initialCount)
 {
 	wCountdownEvent* countdown = NULL;
 
-	countdown = (wCountdownEvent*) malloc(sizeof(wCountdownEvent));
+	if (!(countdown = (wCountdownEvent*) calloc(1, sizeof(wCountdownEvent))))
+		return NULL;
 
-	if (countdown)
-	{
-		countdown->count = initialCount;
-		countdown->initialCount = initialCount;
-		InitializeCriticalSectionAndSpinCount(&countdown->lock, 4000);
-		countdown->event = CreateEvent(NULL, TRUE, FALSE, NULL);
+	countdown->count = initialCount;
+	countdown->initialCount = initialCount;
 
-		if (countdown->count == 0)
-			SetEvent(countdown->event);
-	}
+	if (!InitializeCriticalSectionAndSpinCount(&countdown->lock, 4000))
+		goto fail_critical_section;
+
+	if (!(countdown->event = CreateEvent(NULL, TRUE, FALSE, NULL)))
+		goto fail_create_event;
+
+	if (countdown->count == 0)
+		if (!SetEvent(countdown->event))
+			goto fail_set_event;
 
 	return countdown;
+
+fail_set_event:
+	CloseHandle(countdown->event);
+fail_create_event:
+	DeleteCriticalSection(&countdown->lock);
+fail_critical_section:
+	free(countdown);
+
+	return NULL;
 }
 
 void CountdownEvent_Free(wCountdownEvent* countdown)
 {
+	if (!countdown)
+		return;
+
 	DeleteCriticalSection(&countdown->lock);
 	CloseHandle(countdown->event);
 

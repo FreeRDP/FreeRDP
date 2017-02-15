@@ -1,104 +1,164 @@
-#!/bin/sh
+#!/bin/bash
 # 
-# Copyright 2013 Thinstuff Technologies GmbH
+# Copyright 2015 Thincast Technologies GmbH
 # 
 # This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
 # If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #
-# This script will download and build openssl for iOS (armv7, armv7s) and i386
-#
+# This script will download and build openssl for iOS and simulator - see ARCHS for architectures built
 
-OPENSSLVERSION="1.0.0e"
-MD5SUM="7040b89c4c58c7a1016c0dfa6e821c86"
-OPENSSLPATCH="../../scripts/OpenSSL-iFreeRDP.diff"
+## Settings
+# openssl version to use
+OPENSSLVERSION="1.0.2h"
+SHA256SUM="1d4007e53aad94a5b2002fe045ee7bb0b3d98f1a47f8b2bc851dcd1c74332919"
+# SDK version to use - if not set latest version found is used
+SDK_VERSION=""
+
+# Minimum SDK version the application supports
+MIN_SDK_VERSION="9.3"
+
+## Defaults
+INSTALLDIR="external"
+
+# Architectures to build
+ARCHS="i386 x86_64 armv7 armv7s arm64"
+
+# Use default SDK version if not set
+if [ -z ${SDK_VERSION} ]; then
+    SDK_VERSION=`xcrun -sdk iphoneos --show-sdk-version`
+fi
+
 CORES=`sysctl hw.ncpu | awk '{print $2}'`
-
 MAKEOPTS="-j $CORES"
 # disable parallell builds since openssl build
 # fails sometimes
 MAKEOPTS=""
 
-cd external
-if [ ! -d openssl ];then
-	mkdir openssl
+DEVELOPER=`xcode-select -print-path`
+if [ ! -d "$DEVELOPER" ]; then
+  echo "xcode path is not set correctly $DEVELOPER does not exist (most likely because of xcode > 4.3)"
+  echo "run"
+  echo "sudo xcode-select -switch <xcode path>"
+  echo "for default installation:"
+  echo "sudo xcode-select -switch /Applications/Xcode.app/Contents/Developer"
+  exit 1
 fi
-cd openssl
-CS=`md5 -q "openssl-$OPENSSLVERSION.tar.gz" 2>/dev/null`
-if [ ! "$CS" = "$MD5SUM" ]; then
-    echo "Downloading OpenSSL Version $OPENSSLVERSION ..."
-    rm -f "openssl-$OPENSSLVERSION.tar.gz"
-    curl -o "openssl-$OPENSSLVERSION.tar.gz" http://www.openssl.org/source/openssl-$OPENSSLVERSION.tar.gz
 
-    CS=`md5 -q "openssl-$OPENSSLVERSION.tar.gz" 2>/dev/null`
-    if [ ! "$CS" = "$MD5SUM" ]; then
-	echo "Download failed or invalid checksum. Have a nice day."
-	exit 1
+function run {
+    "$@"
+    local status=$?
+    if [ $status -ne 0 ]; then
+        echo "error with $@" >&2
+        exit $status
+    fi
+    return $status
+}
+
+# Functions
+function buildArch(){
+    ARCH=$1
+    if [[ "${ARCH}" == "i386" || "${ARCH}" == "x86_64" ]];
+    then
+        PLATFORM="iPhoneSimulator"
+    else
+        run sed -ie "s!static volatile sig_atomic_t intr_signal;!static volatile intr_signal;!" "crypto/ui/ui_openssl.c"
+        PLATFORM="iPhoneOS"
+    fi
+
+    run export CROSS_TOP="${DEVELOPER}/Platforms/${PLATFORM}.platform/Developer"
+    run export CROSS_SDK="${PLATFORM}${SDK_VERSION}.sdk"
+    run export BUILD_TOOLS="${DEVELOPER}"
+    run export CC="${BUILD_TOOLS}/usr/bin/gcc -arch ${ARCH}"
+    if [ ! -z $MIN_SDK_VERSION ]; then
+        run export CC="$CC -miphoneos-version-min=${MIN_SDK_VERSION}"
+    fi
+    echo "Building openssl-${OPENSSLVERSION} for ${PLATFORM} ${SDK_VERSION} ${ARCH} (min SDK set: ${MIN_SDK_VERSION:-"none"})"
+
+    LOGFILE="BuildLog.darwin-${ARCH}.txt"
+    echo -n " Please wait ..."
+    if [[ "$OPENSSLVERSION" =~ 1.0.0. ]]; then
+        run ./Configure BSD-generic32 > "${LOGFILE}" 2>&1
+    elif [ "${ARCH}" == "x86_64" ]; then
+        run ./Configure darwin64-x86_64-cc > "${LOGFILE}" 2>&1
+    elif [ "${ARCH}" == "i386" ]; then
+        run ./Configure iphoneos-cross no-asm > "${LOGFILE}" 2>&1
+    else
+        run ./Configure iphoneos-cross  > "${LOGFILE}" 2>&1
+    fi
+
+    run make ${MAKEOPTS} >> ${LOGFILE} 2>&1
+    echo " Done. Build log saved in ${LOGFILE}"
+    run cp libcrypto.a ../../lib/libcrypto_${ARCH}.a
+    run cp libssl.a ../../lib/libssl_${ARCH}.a
+    run make clean >/dev/null 2>&1
+}
+
+# main
+if [ $# -gt 0 ];then
+    INSTALLDIR=$1
+    if [ ! -d $INSTALLDIR ];then
+        echo "Install directory \"$INSTALLDIR\" does not exist"
+        exit 1
     fi
 fi
 
-rm -rf openssltmp
-mkdir openssltmp
-cd openssltmp
+cd $INSTALLDIR
+if [ ! -d openssl ];then
+    run mkdir openssl
+fi
+run cd openssl
+CS=`shasum -a 256 "openssl-$OPENSSLVERSION.tar.gz" | cut -d ' ' -f1`
+if [ ! "$CS" = "$SHA256SUM" ]; then
+    echo "Downloading OpenSSL Version $OPENSSLVERSION ..."
+    run rm -f "openssl-$OPENSSLVERSION.tar.gz"
+    run curl -o "openssl-$OPENSSLVERSION.tar.gz" https://www.openssl.org/source/openssl-$OPENSSLVERSION.tar.gz
+
+    CS=`shasum -a 256 "openssl-$OPENSSLVERSION.tar.gz" | cut -d ' ' -f1`
+    if [ ! "$CS" = "$SHA256SUM" ]; then
+    echo "Download failed or invalid checksum. Have a nice day."
+    exit 1
+    fi
+fi
+
+# remove old build dir
+run rm -rf openssltmp
+run mkdir openssltmp
+run cd openssltmp
 
 echo "Unpacking OpenSSL ..."
-tar xfz "../openssl-$OPENSSLVERSION.tar.gz"
+run tar xfz "../openssl-$OPENSSLVERSION.tar.gz"
 if [ ! $? = 0 ]; then
     echo "Unpacking failed."
     exit 1
 fi
 echo
 
-echo "Applying iFreeRDP patch ..."
+run cd "openssl-$OPENSSLVERSION"
 
-cd "openssl-$OPENSSLVERSION"
-patch -p1 < "../../$OPENSSLPATCH"
+case `pwd` in
+     *\ * )
+           echo "The build path (`pwd`) contains whitepsaces - fix this."
+           exit 1
+          ;;
+esac
 
-if [ ! $? = 0 ]; then
-    echo "Patch failed."
-    exit 1
-fi
-echo
+# Cleanup old build artifacts
+run rm -rf ../../include
+run mkdir -p ../../include
 
-mkdir -p ../../include/openssl
-rm -f ../../include/openssl/*.h
+run rm -rf ../../lib
+run mkdir -p ../../lib
 
-mkdir -p ../../lib
-rm -f ../../lib/*.a
+for i in ${ARCHS}; do
+    buildArch $i
+done
 
-echo "Copying header hiles ..."
-cp include/openssl/*.h ../../include/openssl/
-echo
-
-echo "Building sim version (for simulator). Please wait ..."
-./Configure darwin-sim-cc >BuildLog.darwin-sim.txt
-make ${MAKEOPTS} >>BuildLog.darwin-sim.txt 2>&1
-echo "Done. Build log saved in BuildLog.darwin-sim.txt"
-cp libcrypto.a ../../lib/libcrypto_sim.a
-cp libssl.a ../../lib/libssl_sim.a
-make clean >/dev/null 2>&1
-echo
-
-echo "Building armv7 version (for iPhone). Please wait ..."
-./Configure darwin-armv7-cc >BuildLog.darwin-armv7.txt
-make ${MAKEOPTS} >>BuildLog.darwin-armv7.txt 2>&1
-echo "Done. Build log saved in BuildLog.darwin-armv7.txt"
-cp libcrypto.a ../../lib/libcrypto_armv7.a
-cp libssl.a ../../lib/libssl_armv7.a
-make clean >/dev/null 2>&1
-echo
-
-echo "Building armv7s version (for iPhone). Please wait ..."
-./Configure darwin-armv7s-cc >BuildLog.darwin-armv7s.txt
-make ${MAKEOPTS} >>BuildLog.darwin-armv7s.txt 2>&1
-echo "Done. Build log saved in BuildLog.darwin-armv7s.txt"
-cp libcrypto.a ../../lib/libcrypto_armv7s.a
-cp libssl.a ../../lib/libssl_armv7s.a
-make clean >/dev/null 2>&1
+echo "Copying header files ..."
+run cp -r include/ ../../include/
 echo
 
 echo "Combining to unversal binary"
-lipo -create ../../lib/libcrypto_sim.a ../../lib/libcrypto_armv7.a ../../lib/libcrypto_armv7s.a -o ../../lib/libcrypto.a
-lipo -create ../../lib/libssl_sim.a ../../lib/libssl_armv7.a ../../lib/libssl_armv7s.a -o ../../lib/libssl.a
+run lipo -create ../../lib/libcrypto_*.a -o ../../lib/libcrypto.a
+run lipo -create ../../lib/libssl_*.a -o ../../lib/libssl.a
 
-echo "Finished. Please verify the contens of the openssl folder in your main project folder"
-
+echo "Finished. Please verify the contens of the openssl folder in \"$INSTALLDIR\""

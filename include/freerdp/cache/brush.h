@@ -61,8 +61,10 @@ struct rdp_brush_cache
 extern "C" {
 #endif
 
-FREERDP_API void* brush_cache_get(rdpBrushCache* brush, UINT32 index, UINT32* bpp);
-FREERDP_API void brush_cache_put(rdpBrushCache* brush, UINT32 index, void* entry, UINT32 bpp);
+FREERDP_API void* brush_cache_get(rdpBrushCache* brush, UINT32 index,
+                                  UINT32* bpp);
+FREERDP_API void brush_cache_put(rdpBrushCache* brush, UINT32 index,
+                                 void* entry, UINT32 bpp);
 
 FREERDP_API void brush_cache_register_callbacks(rdpUpdate* update);
 

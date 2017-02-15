@@ -5,7 +5,7 @@ CMakeCache.txt
 config.h
 install_manifest*.txt
 CTestTestfile.cmake
-freerdp.pc
+*.pc
 Makefile
 Testing
 cmake_install.cmake
@@ -15,8 +15,13 @@ DartConfiguration.tcl
 CMakeCPackOptions.cmake
 _CPack_Packages
 LICENSE.txt
-external/*
+/external/*
 !external/README
+*Config.cmake
+*ConfigVersion.cmake
+include/freerdp/version.h
+include/freerdp/build-config.h
+buildflags.h
 
 *.a.objlist.cmake
 *.a.objlist
@@ -24,20 +29,13 @@ external/*
 *_dummy.c
 *_dummy.c.base
 
-# Packages
-*.zip
-*.exe
-*.sh
-*.deb
-*.rpm
-*.dmg
-*.tar.Z
-*.tar.gz
-
 # Eclipse
 *.project
 *.cproject
 *.settings
+
+nbproject/
+compile_commands.json
 
 # .rdp files
 *.rdp
@@ -47,8 +45,6 @@ external/*
 docs/api
 client/X11/xfreerdp.1
 client/X11/xfreerdp.1.xml
-client/X11/xfreerdp-channels.1.xml
-client/X11/xfreerdp-examples.1.xml
 
 # Mac OS X
 .DS_Store
@@ -65,6 +61,7 @@ Release-*
 *.vcxproj.*
 *.vcproj
 *.vcproj.*
+*.aps
 *.sdf
 *.sln
 *.suo
@@ -74,9 +71,19 @@ Thumbs.db
 ipch
 Debug
 RelWithDebInfo
+*.lib
+*.exp
+*.pdb
+*.dll
+*.ilk
+*.resource.txt
+*.embed.manifest*
+*.intermediate.manifest*
+version.rc
 
 # Binaries
 *.a
+*.o
 *.so
 *.so.*
 *.dylib
@@ -87,9 +94,11 @@ client/X11/xfreerdp
 client/Mac/xcode
 client/Sample/sfreerdp
 client/DirectFB/dfreerdp
+client/Wayland/wlfreerdp
 server/Sample/sfreerdp-server
 server/X11/xfreerdp-server
 xcode
+libfreerdp/codec/test/TestOpenH264ASM
 
 # Other
 *~
@@ -98,6 +107,7 @@ Release
 Win32
 build*/
 *.orig
+*.msrcIncident
 
 default.log
 *Amplifier XE*
@@ -107,3 +117,25 @@ default.log
 *.txt.user
 
 *.autosave
+
+# etags
+TAGS
+
+# generated packages
+*.zip
+*.exe
+*.sh
+*.deb
+*.rpm
+*.dmg
+*.tar.Z
+*.tar.gz
+
+# packaging related files
+!packaging/scripts/prepare_deb_freerdp-nightly.sh
+packaging/deb/freerdp-nightly/freerdp-nightly
+packaging/deb/freerdp-nightly/freerdp-nightly-dev
+packaging/deb/freerdp-nightly/freerdp-nightly-dbg
+
+#
+.idea

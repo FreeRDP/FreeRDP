@@ -3,6 +3,7 @@
  * Synchronization Functions
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Hardening <contact@hardening-consulting.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +26,28 @@
 #include <unistd.h>
 #endif
 
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#else
+#ifndef _WIN32
+#include <sys/select.h>
+#endif
+#endif
+
 #include <assert.h>
+#include <errno.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <winpr/platform.h>
 
 #include "synch.h"
 #include "../thread/thread.h"
 #include <winpr/thread.h>
+#include <winpr/debug.h>
+
+#include "../log.h"
+#define TAG WINPR_TAG("sync.wait")
 
 /**
  * WaitForSingleObject
@@ -43,389 +58,501 @@
 
 #ifndef _WIN32
 
+#include <stdlib.h>
+#include <time.h>
+#include <sys/time.h>
+#include <sys/wait.h>
+
 #include "../handle/handle.h"
 
 #include "../pipe/pipe.h"
+
+/* clock_gettime is not implemented on OSX prior to 10.12 */
+#ifdef __MACH__
+
+#include <mach/mach_time.h>
+
+#define CLOCK_REALTIME 0
+#define CLOCK_MONOTONIC 0
+
+/* clock_gettime is not implemented on OSX prior to 10.12 */
+int _mach_clock_gettime(int clk_id, struct timespec *t);
+
+int 
+_mach_clock_gettime(int clk_id, struct timespec *t)
+{
+	UINT64 time;
+	double seconds;
+	double nseconds;
+	mach_timebase_info_data_t timebase;
+	mach_timebase_info(&timebase);
+	time = mach_absolute_time();
+	nseconds = ((double) time * (double) timebase.numer) / ((double) timebase.denom);
+	seconds = ((double) time * (double) timebase.numer) / ((double) timebase.denom * 1e9);
+	t->tv_sec = seconds;
+	t->tv_nsec = nseconds;
+	return 0;
+}
+
+/* if clock_gettime is declared, then __CLOCK_AVAILABILITY will be defined */
+#ifdef __CLOCK_AVAILABILITY
+/* If we compiled with Mac OSX 10.12 or later, then clock_gettime will be declared
+ * * but it may be NULL at runtime. So we need to check before using it. */
+int _mach_safe_clock_gettime(int clk_id, struct timespec *t);
+
+int
+_mach_safe_clock_gettime(int clk_id, struct timespec *t) {
+        if( clock_gettime ) {
+                    return clock_gettime(clk_id, t);
+                        }
+            return _mach_clock_gettime(clk_id, t);
+}
+
+#define clock_gettime _mach_safe_clock_gettime
+#else
+#define clock_gettime _mach_clock_gettime
+#endif
+
+#endif
+
+
+static long long ts_difftime(const struct timespec *o,
+							 const struct timespec *n)
+{
+	long long oldValue = o->tv_sec * 1000000000LL + o->tv_nsec;
+	long long newValue = n->tv_sec * 1000000000LL + n->tv_nsec;
+	return newValue - oldValue;
+}
+
+/* Drop in replacement for pthread_mutex_timedlock
+ */
+#if !defined(HAVE_PTHREAD_MUTEX_TIMEDLOCK)
+#include <pthread.h>
+
+static int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *timeout)
+{
+	struct timespec timenow;
+	struct timespec sleepytime;
+	unsigned long long diff;
+	int retcode;
+	/* This is just to avoid a completely busy wait */
+	clock_gettime(CLOCK_MONOTONIC, &timenow);
+	diff = ts_difftime(&timenow, timeout);
+	sleepytime.tv_sec = diff / 1000000000LL;
+	sleepytime.tv_nsec = diff % 1000000000LL;
+
+	while ((retcode = pthread_mutex_trylock(mutex)) == EBUSY)
+	{
+		clock_gettime(CLOCK_MONOTONIC, &timenow);
+
+		if (ts_difftime(timeout, &timenow) >= 0)
+		{
+			return ETIMEDOUT;
+		}
+
+		nanosleep(&sleepytime, NULL);
+	}
+
+	return retcode;
+}
+#endif
+
+#ifdef HAVE_POLL_H
+static DWORD handle_mode_to_pollevent(ULONG mode)
+{
+	DWORD event = 0;
+	if (mode & WINPR_FD_READ)
+		event |= POLLIN;
+	if (mode & WINPR_FD_WRITE)
+		event |= POLLOUT;
+
+	return event;
+}
+#endif
 
 static void ts_add_ms(struct timespec *ts, DWORD dwMilliseconds)
 {
 	ts->tv_sec += dwMilliseconds / 1000L;
 	ts->tv_nsec += (dwMilliseconds % 1000L) * 1000000L;
+	ts->tv_sec += ts->tv_nsec / 1000000000L;
+	ts->tv_nsec = ts->tv_nsec % 1000000000L;
+}
 
-	while(ts->tv_nsec >= 1000000000L)
+static int waitOnFd(int fd, ULONG mode, DWORD dwMilliseconds)
+{
+	int status;
+#ifdef HAVE_POLL_H
+	struct pollfd pollfds;
+	pollfds.fd = fd;
+	pollfds.events = handle_mode_to_pollevent(mode);
+	pollfds.revents = 0;
+
+	do
 	{
-		ts->tv_sec ++;
-		ts->tv_nsec -= 1000000000L;
+		status = poll(&pollfds, 1, dwMilliseconds);
 	}
+	while ((status < 0) && (errno == EINTR));
+
+#else
+	struct timeval timeout;
+	fd_set rfds, wfds;
+	fd_set* prfds = NULL;
+	fd_set* pwfds = NULL;
+	fd_set* pefds = NULL;
+	FD_ZERO(&rfds);
+	FD_SET(fd, &rfds);
+	FD_ZERO(&wfds);
+	FD_SET(fd, &wfds);
+	ZeroMemory(&timeout, sizeof(timeout));
+
+	if (mode & WINPR_FD_READ)
+		prfds = &rfds;
+	if (mode & WINPR_FD_WRITE)
+		pwfds = &wfds;
+
+	if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
+	{
+		timeout.tv_sec = dwMilliseconds / 1000;
+		timeout.tv_usec = (dwMilliseconds % 1000) * 1000;
+	}
+
+	do
+	{
+		status = select(fd + 1, prfds, pwfds, pefds, (dwMilliseconds == INFINITE) ? NULL : &timeout);
+	}
+	while (status < 0 && (errno == EINTR));
+
+#endif
+	return status;
 }
 
 DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 {
 	ULONG Type;
-	PVOID Object;
+	WINPR_HANDLE* Object;
 
 	if (!winpr_Handle_GetInfo(hHandle, &Type, &Object))
-		return WAIT_FAILED;
-
-	if (Type == HANDLE_TYPE_THREAD)
 	{
-		int status = 0;
-		WINPR_THREAD* thread;
-		void* thread_status = NULL;
+		WLog_ERR(TAG, "invalid hHandle.");
+		SetLastError(ERROR_INVALID_HANDLE);
+		return WAIT_FAILED;
+	}
 
-		thread = (WINPR_THREAD*) Object;
+	if (Type == HANDLE_TYPE_PROCESS)
+	{
+		WINPR_PROCESS *process;
+		process = (WINPR_PROCESS *) Object;
 
-		if (thread->started)
+		if (process->pid != waitpid(process->pid, &(process->status), 0))
 		{
-			if (dwMilliseconds != INFINITE)
-			{
-#if HAVE_PTHREAD_GNU_EXT
-				struct timespec timeout;
-
-				clock_gettime(CLOCK_REALTIME, &timeout);
-				ts_add_ms(&timeout, dwMilliseconds);
-
-				status = pthread_timedjoin_np(thread->thread, &thread_status, &timeout);
-#else
-				fprintf(stderr, "[ERROR] %s: Thread timeouts not implemented.\n", __func__);
-				assert(0);
-#endif
-			}
-			else
-				status = pthread_join(thread->thread, &thread_status);
-
-			if (status != 0)
-				fprintf(stderr, "WaitForSingleObject: pthread_join failure: [%d] %s\n",
-						status, strerror(status));
-
-			if (thread_status)
-				thread->dwExitCode = ((DWORD) (size_t) thread_status);
+			WLog_ERR(TAG, "waitpid failure [%d] %s", errno, strerror(errno));
+			SetLastError(ERROR_INTERNAL_ERROR);
+			return WAIT_FAILED;
 		}
+
+		process->dwExitCode = (DWORD) process->status;
+		return WAIT_OBJECT_0;
 	}
 	else if (Type == HANDLE_TYPE_MUTEX)
 	{
-		WINPR_MUTEX* mutex;
+		WINPR_MUTEX *mutex;
+		mutex = (WINPR_MUTEX *) Object;
 
-		mutex = (WINPR_MUTEX*) Object;
-
-#if HAVE_PTHREAD_GNU_EXT
 		if (dwMilliseconds != INFINITE)
 		{
+			int status;
 			struct timespec timeout;
+			clock_gettime(CLOCK_MONOTONIC, &timeout);
+			ts_add_ms(&timeout, dwMilliseconds);
+			status = pthread_mutex_timedlock(&mutex->mutex, &timeout);
 
-			clock_gettime(CLOCK_REALTIME, &timeout);
-			ts_add_ms(&timeout, dwMilliseconds);	
-
-			pthread_mutex_timedlock(&mutex->mutex, &timeout);
+			if (ETIMEDOUT == status)
+				return WAIT_TIMEOUT;
 		}
 		else
-#endif
 		{
 			pthread_mutex_lock(&mutex->mutex);
 		}
-	}
-	else if (Type == HANDLE_TYPE_EVENT)
-	{
-		int status;
-		fd_set rfds;
-		WINPR_EVENT* event;
-		struct timeval timeout;
 
-		event = (WINPR_EVENT*) Object;
-
-		FD_ZERO(&rfds);
-		FD_SET(event->pipe_fd[0], &rfds);
-		ZeroMemory(&timeout, sizeof(timeout));
-
-		if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
-		{
-			timeout.tv_usec = dwMilliseconds * 1000;
-		}
-
-		status = select(event->pipe_fd[0] + 1, &rfds, NULL, NULL,
-				(dwMilliseconds == INFINITE) ? NULL : &timeout);
-
-		if (status < 0)
-			return WAIT_FAILED;
-
-		if (status != 1)
-			return WAIT_TIMEOUT;
-	}
-	else if (Type == HANDLE_TYPE_SEMAPHORE)
-	{
-		WINPR_SEMAPHORE* semaphore;
-
-		semaphore = (WINPR_SEMAPHORE*) Object;
-
-#ifdef WINPR_PIPE_SEMAPHORE
-		if (semaphore->pipe_fd[0] != -1)
-		{
-			int status;
-			int length;
-			fd_set rfds;
-			struct timeval timeout;
-
-			FD_ZERO(&rfds);
-			FD_SET(semaphore->pipe_fd[0], &rfds);
-			ZeroMemory(&timeout, sizeof(timeout));
-
-			if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
-			{
-				timeout.tv_usec = dwMilliseconds * 1000;
-			}
-
-			status = select(semaphore->pipe_fd[0] + 1, &rfds, 0, 0,
-					(dwMilliseconds == INFINITE) ? NULL : &timeout);
-
-			if (status < 0)
-				return WAIT_FAILED;
-
-			if (status != 1)
-				return WAIT_TIMEOUT;
-
-			length = read(semaphore->pipe_fd[0], &length, 1);
-
-			if (length != 1)
-				return WAIT_FAILED;
-		}
-#else
-
-#if defined __APPLE__
-		semaphore_wait(*((winpr_sem_t*) semaphore->sem));
-#else
-		sem_wait((winpr_sem_t*) semaphore->sem);
-#endif
-
-#endif
-	}
-	else if (Type == HANDLE_TYPE_TIMER)
-	{
-		WINPR_TIMER* timer;
-
-		timer = (WINPR_TIMER*) Object;
-
-#ifdef HAVE_EVENTFD_H
-		if (timer->fd != -1)
-		{
-			int status;
-			fd_set rfds;
-			UINT64 expirations;
-			struct timeval timeout;
-
-			FD_ZERO(&rfds);
-			FD_SET(timer->fd, &rfds);
-			ZeroMemory(&timeout, sizeof(timeout));
-
-			if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
-			{
-				timeout.tv_usec = dwMilliseconds * 1000;
-			}
-
-			status = select(timer->fd + 1, &rfds, 0, 0,
-					(dwMilliseconds == INFINITE) ? NULL : &timeout);
-
-			if (status < 0)
-				return WAIT_FAILED;
-
-			if (status != 1)
-				return WAIT_TIMEOUT;
-
-			status = read(timer->fd, (void*) &expirations, sizeof(UINT64));
-
-			if (status != 8)
-				return WAIT_TIMEOUT;
-		}
-		else
-		{
-			return WAIT_FAILED;
-		}
-#else
-		return WAIT_FAILED;
-#endif
-	}
-	else if (Type == HANDLE_TYPE_NAMED_PIPE)
-	{
-		int status;
-		fd_set rfds;
-		struct timeval timeout;
-		WINPR_NAMED_PIPE* pipe = (WINPR_NAMED_PIPE*) Object;
-
-		FD_ZERO(&rfds);
-		FD_SET(pipe->clientfd, &rfds);
-		ZeroMemory(&timeout, sizeof(timeout));
-
-		if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
-		{
-			timeout.tv_usec = dwMilliseconds * 1000;
-		}
-
-		status = select(pipe->clientfd + 1, &rfds, NULL, NULL,
-				(dwMilliseconds == INFINITE) ? NULL : &timeout);
-
-		if (status < 0)
-			return WAIT_FAILED;
-
-		if (status != 1)
-			return WAIT_TIMEOUT;
+		return WAIT_OBJECT_0;
 	}
 	else
 	{
-		fprintf(stderr, "WaitForSingleObject: unknown handle type %lu\n", Type);
+		int status;
+		int fd = winpr_Handle_getFd(Object);
+		if (fd < 0)
+		{
+			WLog_ERR(TAG, "winpr_Handle_getFd did not return a fd!");
+			SetLastError(ERROR_INVALID_HANDLE);
+			return WAIT_FAILED;
+		}
+
+
+		status = waitOnFd(fd, Object->Mode, dwMilliseconds);
+
+		if (status < 0)
+		{
+			WLog_ERR(TAG, "waitOnFd() failure [%d] %s", errno, strerror(errno));
+			SetLastError(ERROR_INTERNAL_ERROR);
+			return WAIT_FAILED;
+		}
+
+		if (status != 1)
+			return WAIT_TIMEOUT;
+
+		return winpr_Handle_cleanup(Object);
 	}
 
-	return WAIT_OBJECT_0;
+	SetLastError(ERROR_INTERNAL_ERROR);
+	return WAIT_FAILED;
 }
 
 DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertable)
 {
-	fprintf(stderr, "[ERROR] %s: Function not implemented.\n", __func__);
-	assert(0);
-	return WAIT_OBJECT_0;
-}
-
-DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll, DWORD dwMilliseconds)
-{
-	int fd = -1;
-	int maxfd;
-	int index;
-	int status;
-	fd_set fds;
-	ULONG Type;
-	PVOID Object;
-	struct timeval timeout;
-
-	if (!nCount)
-		return WAIT_FAILED;
-
-	maxfd = 0;
-	FD_ZERO(&fds);
-	ZeroMemory(&timeout, sizeof(timeout));
-
-	if (bWaitAll)
-	{
-		fprintf(stderr, "WaitForMultipleObjects: bWaitAll not yet implemented\n");
-		assert(0);
-	}
-
-	for (index = 0; index < nCount; index++)
-	{
-		if (!winpr_Handle_GetInfo(lpHandles[index], &Type, &Object))
-			return WAIT_FAILED;
-
-		if (Type == HANDLE_TYPE_EVENT)
-		{
-			fd = ((WINPR_EVENT*) Object)->pipe_fd[0];
-		}
-		else if (Type == HANDLE_TYPE_SEMAPHORE)
-		{
-#ifdef WINPR_PIPE_SEMAPHORE
-			fd = ((WINPR_SEMAPHORE*) Object)->pipe_fd[0];
-#else
-			return WAIT_FAILED;
-#endif
-		}
-		else if (Type == HANDLE_TYPE_TIMER)
-		{
-			WINPR_TIMER* timer = (WINPR_TIMER*) Object;
-			fd = timer->fd;
-		}
-		else if (Type == HANDLE_TYPE_NAMED_PIPE)
-		{
-			WINPR_NAMED_PIPE* pipe = (WINPR_NAMED_PIPE*) Object;
-			fd = pipe->clientfd;
-		}
-		else
-		{
-			return WAIT_FAILED;
-		}
-
-		if (fd == -1)
-			return WAIT_FAILED;
-
-		FD_SET(fd, &fds);
-
-		if (fd > maxfd)
-			maxfd = fd;
-	}
-
-	if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
-	{
-		timeout.tv_usec = dwMilliseconds * 1000;
-	}
-
-	status = select(maxfd + 1, &fds, 0, 0,
-			(dwMilliseconds == INFINITE) ? NULL : &timeout);
-
-	if (status < 0)
-		return WAIT_FAILED;
-
-	if (status == 0)
-		return WAIT_TIMEOUT;
-
-	for (index = 0; index < nCount; index++)
-	{
-		winpr_Handle_GetInfo(lpHandles[index], &Type, &Object);
-
-		if (Type == HANDLE_TYPE_EVENT)
-		{
-			fd = ((WINPR_EVENT*) Object)->pipe_fd[0];
-		}
-		else if (Type == HANDLE_TYPE_SEMAPHORE)
-		{
-			fd = ((WINPR_SEMAPHORE*) Object)->pipe_fd[0];
-		}
-		else if (Type == HANDLE_TYPE_TIMER)
-		{
-			WINPR_TIMER* timer = (WINPR_TIMER*) Object;
-			fd = timer->fd;
-		}
-		else if (Type == HANDLE_TYPE_NAMED_PIPE)
-		{
-			WINPR_NAMED_PIPE* pipe = (WINPR_NAMED_PIPE*) Object;
-			fd = pipe->clientfd;
-		}
-
-		if (FD_ISSET(fd, &fds))
-		{
-			if (Type == HANDLE_TYPE_SEMAPHORE)
-			{
-				int length;
-
-				length = read(fd, &length, 1);
-
-				if (length != 1)
-					return WAIT_FAILED;
-			}
-			else if (Type == HANDLE_TYPE_TIMER)
-			{
-				int length;
-				UINT64 expirations;
-
-				length = read(fd, (void*) &expirations, sizeof(UINT64));
-
-				if (length != 8)
-					return WAIT_FAILED;
-			}
-
-			return (WAIT_OBJECT_0 + index);
-		}
-	}
-
+	WLog_ERR(TAG, "%s: Not implemented.", __FUNCTION__);
+	SetLastError(ERROR_NOT_SUPPORTED);
 	return WAIT_FAILED;
 }
 
-DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll, DWORD dwMilliseconds, BOOL bAlertable)
+DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAll, DWORD dwMilliseconds)
 {
-	fprintf(stderr, "[ERROR] %s: Function not implemented.\n", __func__);
-	assert(0);
-	return 0;
+	struct timespec starttime;
+	struct timespec timenow;
+	unsigned long long diff;
+	DWORD signalled;
+	DWORD polled;
+	DWORD *poll_map = NULL;
+	BOOL *signalled_idx = NULL;
+	int fd = -1;
+	int index;
+	int status;
+	ULONG Type;
+	BOOL signal_handled = FALSE;
+	WINPR_HANDLE* Object;
+#ifdef HAVE_POLL_H
+	struct pollfd *pollfds;
+#else
+	int maxfd;
+	fd_set rfds;
+	fd_set wfds;
+	struct timeval timeout;
+#endif
+
+	if (!nCount || (nCount > MAXIMUM_WAIT_OBJECTS))
+	{
+		WLog_ERR(TAG, "invalid handles count(%"PRIu32")", nCount);
+		return WAIT_FAILED;
+	}
+
+	if (bWaitAll)
+	{
+		signalled_idx = alloca(nCount * sizeof(BOOL));
+		memset(signalled_idx, FALSE, nCount * sizeof(BOOL));
+		poll_map = alloca(nCount * sizeof(DWORD));
+		memset(poll_map, 0, nCount * sizeof(DWORD));
+	}
+
+#ifdef HAVE_POLL_H
+	pollfds = alloca(nCount * sizeof(struct pollfd));
+#endif
+	signalled = 0;
+
+	do
+	{
+#ifndef HAVE_POLL_H
+		fd_set* prfds = NULL;
+		fd_set* pwfds = NULL;
+		maxfd = 0;
+
+		FD_ZERO(&rfds);
+		FD_ZERO(&wfds);
+		ZeroMemory(&timeout, sizeof(timeout));
+#endif
+		if (bWaitAll && (dwMilliseconds != INFINITE))
+			clock_gettime(CLOCK_MONOTONIC, &starttime);
+
+		polled = 0;
+
+		for (index = 0; index < nCount; index++)
+		{
+			if (bWaitAll)
+			{
+				if (signalled_idx[index])
+					continue;
+
+				poll_map[polled] = index;
+			}
+
+			if (!winpr_Handle_GetInfo(lpHandles[index], &Type, &Object))
+			{
+				WLog_ERR(TAG, "invalid event file descriptor");
+				SetLastError(ERROR_INVALID_HANDLE);
+				return WAIT_FAILED;
+			}
+
+			fd = winpr_Handle_getFd(Object);
+
+			if (fd == -1)
+			{
+				WLog_ERR(TAG, "invalid file descriptor");
+				SetLastError(ERROR_INVALID_HANDLE);
+				return WAIT_FAILED;
+			}
+
+#ifdef HAVE_POLL_H
+			pollfds[polled].fd = fd;
+			pollfds[polled].events = handle_mode_to_pollevent(Object->Mode);
+			pollfds[polled].revents = 0;
+#else
+			FD_SET(fd, &rfds);
+			FD_SET(fd, &wfds);
+
+			if (Object->Mode & WINPR_FD_READ)
+				prfds = &rfds;
+			if (Object->Mode & WINPR_FD_WRITE)
+				pwfds = &wfds;
+
+			if (fd > maxfd)
+				maxfd = fd;
+
+#endif
+			polled++;
+		}
+
+#ifdef HAVE_POLL_H
+
+		do
+		{
+			status = poll(pollfds, polled, dwMilliseconds);
+		}
+		while (status < 0 && errno == EINTR);
+
+#else
+
+		if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
+		{
+			timeout.tv_sec = dwMilliseconds / 1000;
+			timeout.tv_usec = (dwMilliseconds % 1000) * 1000;
+		}
+
+		do
+		{
+			status = select(maxfd + 1, prfds, pwfds, 0,
+					(dwMilliseconds == INFINITE) ? NULL : &timeout);
+		}
+		while (status < 0 && errno == EINTR);
+
+#endif
+
+		if (status < 0)
+		{
+#ifdef HAVE_POLL_H
+			WLog_ERR(TAG, "poll() handle %d (%"PRIu32") failure [%d] %s", index, nCount, errno,
+					 strerror(errno));
+#else
+			WLog_ERR(TAG, "select() handle %d (%"PRIu32") failure [%d] %s", index, nCount, errno,
+					 strerror(errno));
+#endif
+			winpr_log_backtrace(TAG, WLOG_ERROR, 20);
+			SetLastError(ERROR_INTERNAL_ERROR);
+			return WAIT_FAILED;
+		}
+
+		if (status == 0)
+			return WAIT_TIMEOUT;
+
+		if (bWaitAll && (dwMilliseconds != INFINITE))
+		{
+			clock_gettime(CLOCK_MONOTONIC, &timenow);
+			diff = ts_difftime(&timenow, &starttime);
+
+			if (diff / 1000 > dwMilliseconds)
+				return WAIT_TIMEOUT;
+			else
+				dwMilliseconds -= (diff / 1000);
+		}
+
+		signal_handled = FALSE;
+		for (index = 0; index < polled; index++)
+		{
+			DWORD idx;
+			BOOL signal_set = FALSE;
+
+			if (bWaitAll)
+				idx = poll_map[index];
+			else
+				idx = index;
+
+			if (!winpr_Handle_GetInfo(lpHandles[idx], &Type, &Object))
+			{
+					WLog_ERR(TAG, "invalid hHandle.");
+					SetLastError(ERROR_INVALID_HANDLE);
+					return WAIT_FAILED;
+			}
+
+			fd = winpr_Handle_getFd(lpHandles[idx]);
+
+			if (fd == -1)
+			{
+				WLog_ERR(TAG, "invalid file descriptor");
+				SetLastError(ERROR_INVALID_HANDLE);
+				return WAIT_FAILED;
+			}
+
+#ifdef HAVE_POLL_H
+			signal_set = pollfds[index].revents & pollfds[index].events;
+#else
+			if (Object->Mode & WINPR_FD_READ)
+				signal_set = FD_ISSET(fd, &rfds) ? 1 : 0;
+			if (Object->Mode & WINPR_FD_WRITE)
+				signal_set |= FD_ISSET(fd, &wfds) ? 1 : 0;
+#endif
+			if (signal_set)
+			{
+				DWORD rc = winpr_Handle_cleanup(lpHandles[idx]);
+				if (rc != WAIT_OBJECT_0)
+					return rc;
+
+				if (bWaitAll)
+				{
+					signalled_idx[idx] = TRUE;
+
+					/* Continue checks from last position. */
+					for (; signalled < nCount; signalled++)
+					{
+						if (!signalled_idx[signalled])
+							break;
+					}
+				}
+
+				if (!bWaitAll)
+					return (WAIT_OBJECT_0 + index);
+
+				if (bWaitAll && (signalled >= nCount))
+					return (WAIT_OBJECT_0);
+
+				signal_handled = TRUE;
+			}
+		}
+	}
+	while (bWaitAll || !signal_handled);
+
+	WLog_ERR(TAG, "failed (unknown error)");
+	SetLastError(ERROR_INTERNAL_ERROR);
+	return WAIT_FAILED;
+}
+
+DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAll, DWORD dwMilliseconds, BOOL bAlertable)
+{
+	return WaitForMultipleObjects(nCount, lpHandles, bWaitAll, dwMilliseconds);
 }
 
 DWORD SignalObjectAndWait(HANDLE hObjectToSignal, HANDLE hObjectToWaitOn, DWORD dwMilliseconds, BOOL bAlertable)
 {
-	fprintf(stderr, "[ERROR] %s: Function not implemented.\n", __func__);
-	assert(0);
-	return 0;
+	WLog_ERR(TAG, "%s: Not implemented.", __FUNCTION__);
+	SetLastError(ERROR_NOT_SUPPORTED);
+	return WAIT_FAILED;
 }
 
 #endif
+

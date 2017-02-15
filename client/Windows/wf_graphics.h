@@ -20,12 +20,15 @@
 #ifndef __WF_GRAPHICS_H
 #define __WF_GRAPHICS_H
 
-#include "wf_interface.h"
+#include "wf_client.h"
 
-HBITMAP wf_create_dib(wfContext* wfc, int width, int height, int bpp, BYTE* data, BYTE** pdata);
-wfBitmap* wf_image_new(wfContext* wfc, int width, int height, int bpp, BYTE* data);
+HBITMAP wf_create_dib(wfContext* wfc, UINT32 width, UINT32 height,
+                      UINT32 format, const BYTE* data, BYTE** pdata);
+wfBitmap* wf_image_new(wfContext* wfc, UINT32 width, UINT32 height,
+                       UINT32 format, const BYTE* data);
 void wf_image_free(wfBitmap* image);
 
-void wf_register_graphics(rdpGraphics* graphics);
+BOOL wf_register_pointer(rdpGraphics* graphics);
+BOOL wf_register_graphics(rdpGraphics* graphics);
 
 #endif /* WF_GRAPHICS */

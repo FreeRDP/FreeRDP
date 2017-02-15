@@ -3,6 +3,7 @@
  * RDP Core
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +25,10 @@
 #include "config.h"
 #endif
 
+#include "nla.h"
 #include "mcs.h"
 #include "tpkt.h"
+#include "bulk.h"
 #include "fastpath.h"
 #include "tpdu.h"
 #include "nego.h"
@@ -33,24 +36,28 @@
 #include "update.h"
 #include "license.h"
 #include "errinfo.h"
-#include "extension.h"
+#include "autodetect.h"
+#include "heartbeat.h"
+#include "multitransport.h"
 #include "security.h"
 #include "transport.h"
 #include "connection.h"
 #include "redirection.h"
 #include "capabilities.h"
-#include "channel.h"
+#include "channels.h"
 
 #include <freerdp/freerdp.h>
 #include <freerdp/settings.h>
-#include <freerdp/utils/debug.h>
-#include <freerdp/codec/mppc_dec.h>
-#include <freerdp/codec/mppc_enc.h>
+#include <freerdp/log.h>
+#include <freerdp/api.h>
 
 #include <winpr/stream.h>
+#include <winpr/crypto.h>
 
 /* Security Header Flags */
 #define SEC_EXCHANGE_PKT					0x0001
+#define SEC_TRANSPORT_REQ					0x0002
+#define SEC_TRANSPORT_RSP					0x0004
 #define SEC_ENCRYPT						0x0008
 #define SEC_RESET_SEQNO						0x0010
 #define SEC_IGNORE_SEQNO					0x0020
@@ -60,6 +67,9 @@
 #define SEC_LICENSE_ENCRYPT_SC					0x0200
 #define SEC_REDIRECTION_PKT					0x0400
 #define SEC_SECURE_CHECKSUM					0x0800
+#define SEC_AUTODETECT_REQ					0x1000
+#define SEC_AUTODETECT_RSP					0x2000
+#define SEC_HEARTBEAT						0x4000
 #define SEC_FLAGSHI_VALID					0x8000
 
 #define SEC_PKT_CS_MASK						(SEC_EXCHANGE_PKT | SEC_INFO_PKT)
@@ -76,6 +86,10 @@
 #define PDU_TYPE_DEACTIVATE_ALL					0x6
 #define PDU_TYPE_DATA						0x7
 #define PDU_TYPE_SERVER_REDIRECTION				0xA
+
+#define PDU_TYPE_FLOW_TEST					0x41
+#define PDU_TYPE_FLOW_RESPONSE					0x42
+#define PDU_TYPE_FLOW_STOP					0x43
 
 #define FINALIZE_SC_SYNCHRONIZE_PDU				0x01
 #define FINALIZE_SC_CONTROL_COOPERATE_PDU			0x02
@@ -121,29 +135,31 @@ struct rdp_rdp
 	int state;
 	freerdp* instance;
 	rdpContext* context;
-	struct rdp_mcs* mcs;
-	struct rdp_nego* nego;
-	struct rdp_input* input;
-	struct rdp_update* update;
-	struct rdp_fastpath* fastpath;
-	struct rdp_license* license;
-	struct rdp_redirection* redirection;
-	struct rdp_settings* settings;
-	struct rdp_transport* transport;
-	struct rdp_extension* extension;
-	struct rdp_mppc_dec* mppc_dec;
-	struct rdp_mppc_enc* mppc_enc;
-	struct crypto_rc4_struct* rc4_decrypt_key;
+	rdpNla* nla;
+	rdpMcs* mcs;
+	rdpNego* nego;
+	rdpBulk* bulk;
+	rdpInput* input;
+	rdpUpdate* update;
+	rdpFastPath* fastpath;
+	rdpLicense* license;
+	rdpRedirection* redirection;
+	rdpSettings* settings;
+	rdpTransport* transport;
+	rdpAutoDetect* autodetect;
+	rdpHeartbeat* heartbeat;
+	rdpMultitransport* multitransport;
+	WINPR_RC4_CTX* rc4_decrypt_key;
 	int decrypt_use_count;
 	int decrypt_checksum_use_count;
-	struct crypto_rc4_struct* rc4_encrypt_key;
+	WINPR_RC4_CTX* rc4_encrypt_key;
 	int encrypt_use_count;
 	int encrypt_checksum_use_count;
-	struct crypto_des3_struct* fips_encrypt;
-	struct crypto_des3_struct* fips_decrypt;
-	struct crypto_hmac_struct* fips_hmac;
+	WINPR_CIPHER_CTX* fips_encrypt;
+	WINPR_CIPHER_CTX* fips_decrypt;
 	UINT32 sec_flags;
 	BOOL do_crypt;
+	BOOL do_crypt_license;
 	BOOL do_secure_checksum;
 	BYTE sign_key[16];
 	BYTE decrypt_key[16];
@@ -156,54 +172,82 @@ struct rdp_rdp
 	BYTE fips_decrypt_key[24];
 	UINT32 errorInfo;
 	UINT32 finalize_sc_pdus;
-	BOOL disconnect;
 	BOOL resendFocus;
 	BOOL deactivation_reactivation;
 	BOOL AwaitCapabilities;
+	rdpSettings* settingsCopy;
 };
 
-BOOL rdp_read_security_header(wStream* s, UINT16* flags);
-void rdp_write_security_header(wStream* s, UINT16 flags);
+FREERDP_LOCAL BOOL rdp_read_security_header(wStream* s, UINT16* flags);
+FREERDP_LOCAL void rdp_write_security_header(wStream* s, UINT16 flags);
 
-BOOL rdp_read_share_control_header(wStream* s, UINT16* length, UINT16* type, UINT16* channel_id);
-void rdp_write_share_control_header(wStream* s, UINT16 length, UINT16 type, UINT16 channel_id);
+FREERDP_LOCAL BOOL rdp_read_share_control_header(wStream* s, UINT16* length,
+        UINT16* type, UINT16* channel_id);
+FREERDP_LOCAL void rdp_write_share_control_header(wStream* s, UINT16 length,
+        UINT16 type, UINT16 channel_id);
 
-BOOL rdp_read_share_data_header(wStream* s, UINT16* length, BYTE* type, UINT32* share_id, 
-			BYTE *compressed_type, UINT16 *compressed_len);
+FREERDP_LOCAL BOOL rdp_read_share_data_header(wStream* s, UINT16* length,
+        BYTE* type, UINT32* share_id,
+        BYTE* compressed_type, UINT16* compressed_len);
 
-void rdp_write_share_data_header(wStream* s, UINT16 length, BYTE type, UINT32 share_id);
+FREERDP_LOCAL void rdp_write_share_data_header(wStream* s, UINT16 length,
+        BYTE type, UINT32 share_id);
 
-int rdp_init_stream(rdpRdp* rdp, wStream* s);
-wStream* rdp_send_stream_init(rdpRdp* rdp);
+FREERDP_LOCAL int rdp_init_stream(rdpRdp* rdp, wStream* s);
+FREERDP_LOCAL wStream* rdp_send_stream_init(rdpRdp* rdp);
 
-BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channel_id);
-void rdp_write_header(rdpRdp* rdp, wStream* s, UINT16 length, UINT16 channel_id);
+FREERDP_LOCAL BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length,
+                                   UINT16* channel_id);
+FREERDP_LOCAL void rdp_write_header(rdpRdp* rdp, wStream* s, UINT16 length,
+                                    UINT16 channel_id);
 
-int rdp_init_stream_pdu(rdpRdp* rdp, wStream* s);
-BOOL rdp_send_pdu(rdpRdp* rdp, wStream* s, UINT16 type, UINT16 channel_id);
+FREERDP_LOCAL int rdp_init_stream_pdu(rdpRdp* rdp, wStream* s);
+FREERDP_LOCAL BOOL rdp_send_pdu(rdpRdp* rdp, wStream* s, UINT16 type,
+                                UINT16 channel_id);
 
-wStream* rdp_data_pdu_init(rdpRdp* rdp);
-BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id);
-int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s);
+FREERDP_LOCAL wStream* rdp_data_pdu_init(rdpRdp* rdp);
+FREERDP_LOCAL int rdp_init_stream_data_pdu(rdpRdp* rdp, wStream* s);
+FREERDP_LOCAL BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type,
+                                     UINT16 channel_id);
+FREERDP_LOCAL int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s);
 
-BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channel_id);
+FREERDP_LOCAL BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channelId);
 
-int rdp_send_channel_data(rdpRdp* rdp, int channel_id, BYTE* data, int size);
+FREERDP_LOCAL int rdp_send_channel_data(rdpRdp* rdp, UINT16 channelId,
+                                        BYTE* data, int size);
 
-BOOL rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s);
+FREERDP_LOCAL wStream* rdp_message_channel_pdu_init(rdpRdp* rdp);
+FREERDP_LOCAL BOOL rdp_send_message_channel_pdu(rdpRdp* rdp, wStream* s,
+        UINT16 sec_flags);
+FREERDP_LOCAL int rdp_recv_message_channel_pdu(rdpRdp* rdp, wStream* s,
+        UINT16 securityFlags);
 
-void rdp_set_blocking_mode(rdpRdp* rdp, BOOL blocking);
-int rdp_check_fds(rdpRdp* rdp);
+FREERDP_LOCAL int rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s);
 
-rdpRdp* rdp_new(rdpContext* context);
-void rdp_free(rdpRdp* rdp);
+FREERDP_LOCAL void rdp_read_flow_control_pdu(wStream* s, UINT16* type);
 
+FREERDP_LOCAL BOOL rdp_write_monitor_layout_pdu(wStream* s, UINT32 monitorCount,
+        const rdpMonitor* monitorDefArray);
+
+FREERDP_LOCAL int rdp_recv_callback(rdpTransport* transport, wStream* s,
+                                    void* extra);
+
+FREERDP_LOCAL int rdp_check_fds(rdpRdp* rdp);
+
+FREERDP_LOCAL rdpRdp* rdp_new(rdpContext* context);
+FREERDP_LOCAL void rdp_reset(rdpRdp* rdp);
+FREERDP_LOCAL void rdp_free(rdpRdp* rdp);
+
+#define RDP_TAG FREERDP_TAG("core.rdp")
 #ifdef WITH_DEBUG_RDP
-#define DEBUG_RDP(fmt, ...) DEBUG_CLASS(RDP, fmt, ## __VA_ARGS__)
+#define DEBUG_RDP(...) WLog_DBG(RDP_TAG, __VA_ARGS__)
 #else
-#define DEBUG_RDP(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_RDP(...) do { } while (0)
 #endif
 
 BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, int length, UINT16 securityFlags);
+
+BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo);
+BOOL rdp_send_error_info(rdpRdp* rdp);
 
 #endif /* __RDP_H */

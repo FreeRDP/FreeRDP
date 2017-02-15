@@ -103,7 +103,7 @@
 # if defined(TRIO_PLATFORM_WINCE)
 #  define strcasecmp(x,y) _stricmp(x,y)
 # else
-#  define strcasecmp(x,y) strcmpi(x,y)
+#  define strcasecmp(x,y) _stricmp(x,y)
 # endif
 #endif
 
@@ -160,7 +160,8 @@ struct _trio_string_t
  */
 
 #if !defined(TRIO_EMBED_STRING)
-static TRIO_CONST char rcsid[] = "@(#)$Id: triostr.c,v 1.36 2010/01/26 13:02:02 breese Exp $";
+/* Unused but kept for reference */
+/* static TRIO_CONST char rcsid[] = "@(#)$Id: triostr.c,v 1.36 2010/01/26 13:02:02 breese Exp $"; */
 #endif
 
 /*************************************************************************

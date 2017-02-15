@@ -160,7 +160,7 @@ void per_write_number_of_sets(wStream* s, BYTE number)
 
 BOOL per_read_padding(wStream* s, int length)
 {
-	if (Stream_GetRemainingLength(s) < length)
+	if (((int) Stream_GetRemainingLength(s)) < length)
 		return FALSE;
 
 	Stream_Seek(s, length);
@@ -198,7 +198,9 @@ BOOL per_read_integer(wStream* s, UINT32* integer)
 	if (Stream_GetRemainingLength(s) < length)
 		return FALSE;
 
-	if (length == 1)
+	if (length == 0)
+		*integer = 0;
+	else if (length == 1)
 		Stream_Read_UINT8(s, *integer);
 	else if (length == 2)
 		Stream_Read_UINT16_BE(s, *integer);
@@ -399,7 +401,7 @@ BOOL per_read_octet_string(wStream* s, BYTE* oct_str, int length, int min)
 	if (mlength + min != length)
 		return FALSE;
 
-	if (Stream_GetRemainingLength(s) < length)
+	if (((int) Stream_GetRemainingLength(s)) < length)
 		return FALSE;
 
 	a_oct_str = Stream_Pointer(s);
@@ -453,7 +455,7 @@ BOOL per_read_numeric_string(wStream* s, int min)
 
 	length = (mlength + min + 1) / 2;
 
-	if (Stream_GetRemainingLength(s) < length)
+	if (((int) Stream_GetRemainingLength(s)) < length)
 		return FALSE;
 
 	Stream_Seek(s, length);

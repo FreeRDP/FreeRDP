@@ -3,6 +3,8 @@
  * Dynamic Virtual Channel Extension
  *
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,12 +33,12 @@
 typedef struct _drdynvc_client_context DrdynvcServerContext;
 typedef struct _drdynvc_server_private DrdynvcServerPrivate;
 
-typedef int (*psDrdynvcStart)(DrdynvcServerContext* context);
-typedef int (*psDrdynvcStop)(DrdynvcServerContext* context);
+typedef UINT (*psDrdynvcStart)(DrdynvcServerContext* context);
+typedef UINT (*psDrdynvcStop)(DrdynvcServerContext* context);
 
 struct _drdynvc_client_context
 {
-	WTSVirtualChannelManager* vcm;
+	HANDLE vcm;
 
 	psDrdynvcStart Start;
 	psDrdynvcStop Stop;
@@ -44,7 +46,15 @@ struct _drdynvc_client_context
 	DrdynvcServerPrivate* priv;
 };
 
-FREERDP_API DrdynvcServerContext* drdynvc_server_context_new(WTSVirtualChannelManager* vcm);
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
+FREERDP_API DrdynvcServerContext* drdynvc_server_context_new(HANDLE vcm);
 FREERDP_API void drdynvc_server_context_free(DrdynvcServerContext* context);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif /* FREERDP_CHANNEL_SERVER_DRDYNVC_H */

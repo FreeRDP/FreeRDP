@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+/*
+   Application Settings Layout
+
+   Copyright 2013 Thincast Technologies GmbH, Author: Martin Fleisz
+
+   This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
+   If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+ -->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" xmlns:freerdp="http://schemas.android.com/apk/res-auto" >
+
+    <PreferenceCategory android:title="@string/settings_cat_ui">
+        <CheckBoxPreference android:key="ui.hide_status_bar" android:title="@string/settings_ui_hide_status_bar"/>
+        <CheckBoxPreference android:key="ui.hide_zoom_controls" android:title="@string/settings_ui_hide_zoom_controls"/>
+        <CheckBoxPreference android:key="ui.swap_mouse_buttons" android:title="@string/settings_ui_swap_mouse_buttons"/>
+        <CheckBoxPreference android:key="ui.invert_scrolling" android:title="@string/settings_ui_invert_scrolling"/>
+        <CheckBoxPreference android:key="ui.auto_scroll_touchpointer" android:title="@string/settings_ui_auto_scroll_touchpointer"/>
+        <CheckBoxPreference android:key="ui.ask_on_exit" android:title="@string/settings_ui_ask_on_exit"/>
+    </PreferenceCategory>
+       
+    <PreferenceCategory android:title="@string/settings_cat_power">
+    	<com.freerdp.freerdpcore.utils.IntEditTextPreference android:key="power.disconnect_timeout" android:title="@string/settings_power_disconnect_timeout" android:numeric="integer" android:inputType="number" freerdp:bounds_min="0" freerdp:bounds_max="30" freerdp:bounds_default="5" />                      
+    </PreferenceCategory>
+    
+    <PreferenceCategory android:title="@string/settings_cat_security">
+        <CheckBoxPreference android:key="security.accept_certificates" android:title="@string/settings_security_accept_certificates" />
+        <Preference android:key="security.clear_certificate_cache" android:title="@string/settings_security_clear_certificate_cache" />
+    </PreferenceCategory>
+    
+</PreferenceScreen>

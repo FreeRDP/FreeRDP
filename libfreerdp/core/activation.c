@@ -61,7 +61,7 @@ BOOL rdp_send_server_synchronize_pdu(rdpRdp* rdp)
 	s = rdp_data_pdu_init(rdp);
 
 	rdp_write_synchronize_pdu(s, rdp->settings);
-	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SYNCHRONIZE, rdp->mcs->user_id);
+	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SYNCHRONIZE, rdp->mcs->userId);
 }
 
 BOOL rdp_recv_client_synchronize_pdu(rdpRdp* rdp, wStream* s)
@@ -92,7 +92,7 @@ BOOL rdp_send_client_synchronize_pdu(rdpRdp* rdp)
 
 	rdp_write_synchronize_pdu(s, rdp->settings);
 
-	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SYNCHRONIZE, rdp->mcs->user_id);
+	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SYNCHRONIZE, rdp->mcs->userId);
 }
 
 BOOL rdp_recv_control_pdu(wStream* s, UINT16* action)
@@ -146,7 +146,7 @@ BOOL rdp_send_server_control_cooperate_pdu(rdpRdp* rdp)
 	Stream_Write_UINT16(s, 0); /* grantId (2 bytes) */
 	Stream_Write_UINT32(s, 0); /* controlId (4 bytes) */
 
-	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_CONTROL, rdp->mcs->user_id);
+	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_CONTROL, rdp->mcs->userId);
 }
 
 BOOL rdp_send_server_control_granted_pdu(rdpRdp* rdp)
@@ -156,10 +156,10 @@ BOOL rdp_send_server_control_granted_pdu(rdpRdp* rdp)
 	s = rdp_data_pdu_init(rdp);
 
 	Stream_Write_UINT16(s, CTRLACTION_GRANTED_CONTROL); /* action (2 bytes) */
-	Stream_Write_UINT16(s, rdp->mcs->user_id); /* grantId (2 bytes) */
+	Stream_Write_UINT16(s, rdp->mcs->userId); /* grantId (2 bytes) */
 	Stream_Write_UINT32(s, 0x03EA); /* controlId (4 bytes) */
 
-	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_CONTROL, rdp->mcs->user_id);
+	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_CONTROL, rdp->mcs->userId);
 }
 
 BOOL rdp_send_client_control_pdu(rdpRdp* rdp, UINT16 action)
@@ -169,7 +169,7 @@ BOOL rdp_send_client_control_pdu(rdpRdp* rdp, UINT16 action)
 	s = rdp_data_pdu_init(rdp);
 	rdp_write_client_control_pdu(s, action);
 
-	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_CONTROL, rdp->mcs->user_id);
+	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_CONTROL, rdp->mcs->userId);
 }
 
 void rdp_write_persistent_list_entry(wStream* s, UINT32 key1, UINT32 key2)
@@ -204,7 +204,7 @@ BOOL rdp_send_client_persistent_key_list_pdu(rdpRdp* rdp)
 	s = rdp_data_pdu_init(rdp);
 	rdp_write_client_persistent_key_list_pdu(s, rdp->settings);
 
-	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_BITMAP_CACHE_PERSISTENT_LIST, rdp->mcs->user_id);
+	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_BITMAP_CACHE_PERSISTENT_LIST, rdp->mcs->userId);
 }
 
 BOOL rdp_recv_client_font_list_pdu(wStream* s)
@@ -230,7 +230,7 @@ BOOL rdp_send_client_font_list_pdu(rdpRdp* rdp, UINT16 flags)
 	s = rdp_data_pdu_init(rdp);
 	rdp_write_client_font_list_pdu(s, flags);
 
-	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_FONT_LIST, rdp->mcs->user_id);
+	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_FONT_LIST, rdp->mcs->userId);
 }
 
 BOOL rdp_recv_font_map_pdu(rdpRdp* rdp, wStream* s)
@@ -273,7 +273,7 @@ BOOL rdp_send_server_font_map_pdu(rdpRdp* rdp)
 	Stream_Write_UINT16(s, FONTLIST_FIRST | FONTLIST_LAST); /* mapFlags (2 bytes) */
 	Stream_Write_UINT16(s, 4); /* entrySize (2 bytes) */
 
-	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_FONT_MAP, rdp->mcs->user_id);
+	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_FONT_MAP, rdp->mcs->userId);
 }
 
 BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
@@ -318,7 +318,7 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 		if (rdp_check_fds(rdp) < 0)
 			return FALSE;
 
-		if (rdp->disconnect)
+		if (freerdp_shall_disconnect(rdp->instance))
 			break;
 	}
 
@@ -330,14 +330,16 @@ BOOL rdp_send_deactivate_all(rdpRdp* rdp)
 	wStream* s;
 	BOOL status;
 
-	s = Stream_New(NULL, 1024);
+	if (!(s = Stream_New(NULL, 1024)))
+		return FALSE;
+
 	rdp_init_stream_pdu(rdp, s);
 
 	Stream_Write_UINT32(s, rdp->settings->ShareId); /* shareId (4 bytes) */
 	Stream_Write_UINT16(s, 1); /* lengthSourceDescriptor (2 bytes) */
 	Stream_Write_UINT8(s, 0); /* sourceDescriptor (should be 0x00) */
 
-	status = rdp_send_pdu(rdp, s, PDU_TYPE_DEACTIVATE_ALL, rdp->mcs->user_id);
+	status = rdp_send_pdu(rdp, s, PDU_TYPE_DEACTIVATE_ALL, rdp->mcs->userId);
 
 	Stream_Free(s, TRUE);
 
@@ -362,13 +364,39 @@ BOOL rdp_server_accept_client_control_pdu(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_server_accept_client_font_list_pdu(rdpRdp* rdp, wStream* s)
 {
+	rdpSettings *settings = rdp->settings;
+	freerdp_peer *peer = rdp->context->peer;
+
 	if (!rdp_recv_client_font_list_pdu(s))
 		return FALSE;
+
+	if (settings->SupportMonitorLayoutPdu && settings->MonitorCount && peer->AdjustMonitorsLayout &&
+			peer->AdjustMonitorsLayout(peer))
+	{
+		/* client supports the monitorLayout PDU, let's send him the monitors if any */
+		wStream *st;
+		BOOL r;
+
+		st = rdp_data_pdu_init(rdp);
+		if (!st)
+			return FALSE;
+
+		if (!rdp_write_monitor_layout_pdu(st, settings->MonitorCount, settings->MonitorDefArray))
+		{
+			Stream_Free(st, TRUE);
+			return FALSE;
+		}
+
+		r = rdp_send_data_pdu(rdp, st, DATA_PDU_TYPE_MONITOR_LAYOUT, 0);
+		if (!r)
+			return FALSE;
+	}
 
 	if (!rdp_send_server_font_map_pdu(rdp))
 		return FALSE;
 
-	rdp_server_transition_to_state(rdp, CONNECTION_STATE_ACTIVE);
+	if (rdp_server_transition_to_state(rdp, CONNECTION_STATE_ACTIVE) < 0)
+		return FALSE;
 
 	return TRUE;
 }

@@ -4,4 +4,6 @@
 !/Sample
 !/Windows
 !/X11
+!/shadow
 !/CmakeLists.txt
+!*.in

@@ -44,6 +44,8 @@ extern "C" {
 #define PROCESSOR_ARCHITECTURE_AMD64			9
 #define PROCESSOR_ARCHITECTURE_IA32_ON_WIN64		10
 #define PROCESSOR_ARCHITECTURE_NEUTRAL			11
+#define PROCESSOR_ARCHITECTURE_ARM64			12
+#define PROCESSOR_ARCHITECTURE_MIPS64			13
 #define PROCESSOR_ARCHITECTURE_UNKNOWN			0xFFFF
 
 #define PROCESSOR_INTEL_386				386
@@ -96,28 +98,6 @@ typedef struct _SYSTEM_INFO
 
 WINPR_API void GetSystemInfo(LPSYSTEM_INFO lpSystemInfo);
 WINPR_API void GetNativeSystemInfo(LPSYSTEM_INFO lpSystemInfo);
-
-typedef enum _COMPUTER_NAME_FORMAT
-{
-	ComputerNameNetBIOS,
-	ComputerNameDnsHostname,
-	ComputerNameDnsDomain,
-	ComputerNameDnsFullyQualified,
-	ComputerNamePhysicalNetBIOS,
-	ComputerNamePhysicalDnsHostname,
-	ComputerNamePhysicalDnsDomain,
-	ComputerNamePhysicalDnsFullyQualified,
-	ComputerNameMax
-} COMPUTER_NAME_FORMAT;
-
-WINPR_API BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD lpnSize);
-WINPR_API BOOL GetComputerNameExW(COMPUTER_NAME_FORMAT NameType, LPWSTR lpBuffer, LPDWORD lpnSize);
-
-#ifdef UNICODE
-#define GetComputerNameEx	GetComputerNameExW
-#else
-#define GetComputerNameEx	GetComputerNameExA
-#endif
 
 typedef struct _OSVERSIONINFOA
 {
@@ -205,18 +185,14 @@ typedef struct _OSVERSIONINFOEXW
 #define VER_NT_SERVER				0x0000003
 #define VER_NT_WORKSTATION			0x0000001
 
-WINPR_API BOOL GetVersionExA(LPOSVERSIONINFOA lpVersionInformation);
-WINPR_API BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation);
-
-#ifdef UNICODE
-#define GetVersionEx	GetVersionExW
-#else
-#define GetVersionEx	GetVersionExA
-#endif
+WINPR_API void GetSystemTime(LPSYSTEMTIME lpSystemTime);
+WINPR_API BOOL SetSystemTime(CONST SYSTEMTIME* lpSystemTime);
+WINPR_API VOID GetLocalTime(LPSYSTEMTIME lpSystemTime);
+WINPR_API BOOL SetLocalTime(CONST SYSTEMTIME* lpSystemTime);
 
 WINPR_API VOID GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime);
-
-WINPR_API DWORD GetTickCount(void);
+WINPR_API BOOL GetSystemTimeAdjustment(PDWORD lpTimeAdjustment, PDWORD lpTimeIncrement,
+                                       PBOOL lpTimeAdjustmentDisabled);
 
 WINPR_API BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature);
 
@@ -283,29 +259,76 @@ WINPR_API BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature);
 
 #endif
 
-#if (!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0600))
+#if !defined(_WIN32) || defined(_UWP)
 
-WINPR_API ULONGLONG GetTickCount64(void);
+WINPR_API BOOL GetVersionExA(LPOSVERSIONINFOA lpVersionInformation);
+WINPR_API BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation);
+
+#ifdef UNICODE
+#define GetVersionEx	GetVersionExW
+#else
+#define GetVersionEx	GetVersionExA
+#endif
 
 #endif
+
+#if !defined(_WIN32) || defined(_UWP)
+
+WINPR_API DWORD GetTickCount(void);
+
+typedef enum _COMPUTER_NAME_FORMAT
+{
+	ComputerNameNetBIOS,
+	ComputerNameDnsHostname,
+	ComputerNameDnsDomain,
+	ComputerNameDnsFullyQualified,
+	ComputerNamePhysicalNetBIOS,
+	ComputerNamePhysicalDnsHostname,
+	ComputerNamePhysicalDnsDomain,
+	ComputerNamePhysicalDnsFullyQualified,
+	ComputerNameMax
+} COMPUTER_NAME_FORMAT;
+
+#define MAX_COMPUTERNAME_LENGTH 31
+
+WINPR_API BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD lpnSize);
+WINPR_API BOOL GetComputerNameExW(COMPUTER_NAME_FORMAT NameType, LPWSTR lpBuffer, LPDWORD lpnSize);
+
+#ifdef UNICODE
+#define GetComputerNameEx	GetComputerNameExW
+#else
+#define GetComputerNameEx	GetComputerNameExA
+#endif
+
+#endif
+
+#if (!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0600))
+
+WINPR_API ULONGLONG winpr_GetTickCount64(void);
+#define GetTickCount64 winpr_GetTickCount64
+
+#endif
+
+WINPR_API DWORD GetTickCountPrecise(void);
 
 WINPR_API BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature);
 
 /* extended flags */
-#define PF_EX_3DNOW_PREFETCH		1
-#define PF_EX_SSSE3			2
-#define PF_EX_SSE41			3
-#define PF_EX_SSE42			4
-#define PF_EX_AVX			5
-#define PF_EX_FMA			6
-#define PF_EX_AVX_AES			7
-#define PF_EX_AVX2			8
-#define PF_EX_ARM_VFP1			9
-#define PF_EX_ARM_VFP3D16		10
-#define PF_EX_ARM_VFP4			11
-#define PF_EX_ARM_IDIVA			12
-#define PF_EX_ARM_IDIVT			13
-#define PF_EX_AVX_PCLMULQDQ 14
+#define PF_EX_LZCNT			1
+#define PF_EX_3DNOW_PREFETCH		2
+#define PF_EX_SSSE3			3
+#define PF_EX_SSE41			4
+#define PF_EX_SSE42			5
+#define PF_EX_AVX			6
+#define PF_EX_FMA			7
+#define PF_EX_AVX_AES			8
+#define PF_EX_AVX2			9
+#define PF_EX_ARM_VFP1			10
+#define PF_EX_ARM_VFP3D16		11
+#define PF_EX_ARM_VFP4			12
+#define PF_EX_ARM_IDIVA			13
+#define PF_EX_ARM_IDIVT			14
+#define PF_EX_AVX_PCLMULQDQ		15
 
 /*
  * some "aliases" for the standard defines

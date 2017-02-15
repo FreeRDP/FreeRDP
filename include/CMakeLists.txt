@@ -17,16 +17,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-file(GLOB FREERDP_HEADERS "freerdp/*.h")
-install(FILES ${FREERDP_HEADERS} DESTINATION include/freerdp COMPONENT headers)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp/version.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp/build-config.h.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp/build-config.h)
+set(FREERDP_INSTALL_INCLUDE_DIR include/freerdp${FREERDP_VERSION_MAJOR}/freerdp)
 
-install(DIRECTORY freerdp/cache DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY freerdp/codec DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY freerdp/crypto DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY freerdp/gdi DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY freerdp/locale DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY freerdp/rail DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY freerdp/utils DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY freerdp/client DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY freerdp/server DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY freerdp/channels DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")
+file(GLOB FREERDP_HEADERS "freerdp/*.h")
+install(FILES ${FREERDP_HEADERS} DESTINATION ${FREERDP_INSTALL_INCLUDE_DIR} COMPONENT headers)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp/version.h DESTINATION ${FREERDP_INSTALL_INCLUDE_DIR} COMPONENT headers)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp/build-config.h DESTINATION ${FREERDP_INSTALL_INCLUDE_DIR} COMPONENT headers)
+
+install(DIRECTORY freerdp/cache DESTINATION ${FREERDP_INSTALL_INCLUDE_DIR} COMPONENT headers FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY freerdp/codec DESTINATION ${FREERDP_INSTALL_INCLUDE_DIR} COMPONENT headers FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY freerdp/crypto DESTINATION ${FREERDP_INSTALL_INCLUDE_DIR} COMPONENT headers FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY freerdp/gdi DESTINATION ${FREERDP_INSTALL_INCLUDE_DIR} COMPONENT headers FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY freerdp/locale DESTINATION ${FREERDP_INSTALL_INCLUDE_DIR} COMPONENT headers FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY freerdp/utils DESTINATION ${FREERDP_INSTALL_INCLUDE_DIR} COMPONENT headers FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY freerdp/client DESTINATION ${FREERDP_INSTALL_INCLUDE_DIR} COMPONENT headers FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY freerdp/server DESTINATION ${FREERDP_INSTALL_INCLUDE_DIR} COMPONENT headers FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY freerdp/channels DESTINATION ${FREERDP_INSTALL_INCLUDE_DIR} COMPONENT headers FILES_MATCHING PATTERN "*.h")

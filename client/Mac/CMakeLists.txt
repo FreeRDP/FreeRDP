@@ -1,6 +1,12 @@
 
 project(MacFreeRDP-library)
 
+
+if(${CMAKE_VERSION} GREATER 2.8.12)
+	cmake_policy(SET CMP0026 OLD)
+	cmake_policy(SET CMP0045 OLD)
+endif()
+
 set(MODULE_NAME "MacFreeRDP-library")
 set(MODULE_OUTPUT_NAME "MacFreeRDP")
 set(MODULE_PREFIX "FREERDP_CLIENT_MAC_LIBRARY")
@@ -8,9 +14,10 @@ set(MODULE_PREFIX "FREERDP_CLIENT_MAC_LIBRARY")
 find_library(FOUNDATION_LIBRARY Foundation)
 find_library(COCOA_LIBRARY Cocoa)
 find_library(APPKIT_LIBRARY AppKit)
+find_library(IOKIT_LIBRARY IOKit)
 
 mark_as_advanced(COCOA_LIBRARY FOUNDATION_LIBRARY APPKIT_LIBRARY)
-set(EXTRA_LIBS ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} ${APPKIT_LIBRARY})
+set(EXTRA_LIBS ${COCOA_LIBRARY} ${FOUNDATION_LIBRARY} ${APPKIT_LIBRARY} ${IOKIT_LIBRARY})
 
 set(MACOSX_BUNDLE_INFO_STRING "${MODULE_OUTPUT_NAME}")
 set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.freerdp.mac")
@@ -30,6 +37,8 @@ set(${MODULE_PREFIX}_OBJECTIVE_SOURCES
 	mf_client.m
 	MRDPCursor.m
 	MRDPView.m
+	Keyboard.m
+	Clipboard.m
 	PasswordDialog.m)
 
 list(APPEND ${MODULE_PREFIX}_SOURCES ${${MODULE_PREFIX}_OBJECTIVE_SOURCES})
@@ -39,6 +48,8 @@ set(${MODULE_PREFIX}_HEADERS
 	mf_client.h
 	MRDPCursor.h
 	MRDPView.h
+	Keyboard.h
+	Clipboard.h
 	PasswordDialog.h)
 
 set(${MODULE_PREFIX}_RESOURCES "en.lproj/InfoPlist.strings")
@@ -76,14 +87,7 @@ set_target_properties(${MODULE_NAME} PROPERTIES
 	BUILD_WITH_INSTALL_RPATH 1)  
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${EXTRA_LIBS} freerdp-client)
-
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE freerdp
-	MODULES freerdp-core freerdp-cache freerdp-gdi freerdp-codec freerdp-primitives freerdp-rail freerdp-utils)
-
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE winpr
-	MODULES winpr-input winpr-crt winpr-utils)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr freerdp)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
@@ -113,11 +117,11 @@ if (${BUILD_SHARED_LIBS})
 			COMMENT "Copying ${LIB} to output directory"
 			COMMAND install_name_tool -change "$<TARGET_SONAME_FILE:${LIB}>"
 				"@executable_path/../Frameworks/${MODULE_OUTPUT_NAME}.framework/Contents/$<TARGET_FILE_NAME:${LIB}>"
-				"${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/${MODULE_NAME}"
+				"${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/${MODULE_OUTPUT_NAME}"
 			COMMENT Setting install name for ${LIB}
 			COMMAND "${CMAKE_COMMAND}" -E echo install_name_tool -change "$<TARGET_SONAME_FILE:${LIB}>"
 				"@executable_path/../Frameworks/${MODULE_OUTPUT_NAME}.framework/Contents/$<TARGET_FILE_NAME:${LIB}>"
-				"${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/${MODULE_NAME}")
+				"${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/${MODULE_OUTPUT_NAME}")
 	endforeach()
 
 	# Call install_name_tool to reassign the library install names in dependent libraries

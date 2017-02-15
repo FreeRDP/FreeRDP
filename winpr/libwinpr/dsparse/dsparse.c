@@ -43,7 +43,7 @@
  * DsUnquoteRdnValueW
  */
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(_UWP)
 
 DWORD DsCrackSpnW(LPCWSTR pszSpn, DWORD* pcServiceClass, LPWSTR ServiceClass, DWORD* pcServiceName,
 		LPWSTR ServiceName, DWORD* pcInstanceName, LPWSTR InstanceName, USHORT* pInstancePort)
@@ -73,8 +73,8 @@ DWORD DsMakeSpnA(LPCSTR ServiceClass, LPCSTR ServiceName, LPCSTR InstanceName,
 	if ((*pcSpnLength != 0) && (pszSpn == NULL))
 		return ERROR_INVALID_PARAMETER;
 
-	ServiceClassLength = strlen(ServiceClass);
-	ServiceNameLength = strlen(ServiceName);
+	ServiceClassLength = (DWORD) strlen(ServiceClass);
+	ServiceNameLength = (DWORD) strlen(ServiceName);
 
 	SpnLength = ServiceClassLength + 1 + ServiceNameLength + 1;
 

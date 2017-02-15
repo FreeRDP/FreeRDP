@@ -23,6 +23,7 @@
 typedef struct rdp_update rdpUpdate;
 
 #include <winpr/crt.h>
+#include <winpr/wlog.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/stream.h>
@@ -67,18 +68,11 @@ struct _BITMAP_UPDATE
 	UINT32 count;
 	UINT32 number;
 	BITMAP_DATA* rectangles;
+	BOOL skipCompression;
 };
 typedef struct _BITMAP_UPDATE BITMAP_UPDATE;
 
 /* Palette Updates */
-
-struct _PALETTE_ENTRY
-{
-	BYTE red;
-	BYTE green;
-	BYTE blue;
-};
-typedef struct _PALETTE_ENTRY PALETTE_ENTRY;
 
 struct _PALETTE_UPDATE
 {
@@ -86,13 +80,6 @@ struct _PALETTE_UPDATE
 	PALETTE_ENTRY entries[256];
 };
 typedef struct _PALETTE_UPDATE PALETTE_UPDATE;
-
-struct rdp_palette
-{
-	UINT32 count;
-	PALETTE_ENTRY entries[256];
-};
-typedef struct rdp_palette rdpPalette;
 
 /* Play Sound (System Beep) Updates */
 
@@ -118,6 +105,7 @@ struct _SURFACE_BITS_COMMAND
 	UINT32 height;
 	UINT32 bitmapDataLength;
 	BYTE* bitmapData;
+	BOOL skipCompression;
 };
 typedef struct _SURFACE_BITS_COMMAND SURFACE_BITS_COMMAND;
 
@@ -147,23 +135,32 @@ typedef struct rdp_update_proxy rdpUpdateProxy;
 
 /* Update Interface */
 
-typedef void (*pBeginPaint)(rdpContext* context);
-typedef void (*pEndPaint)(rdpContext* context);
-typedef void (*pSetBounds)(rdpContext* context, rdpBounds* bounds);
+typedef BOOL (*pBeginPaint)(rdpContext* context);
+typedef BOOL (*pEndPaint)(rdpContext* context);
+typedef BOOL (*pSetBounds)(rdpContext* context, const rdpBounds* bounds);
 
-typedef void (*pSynchronize)(rdpContext* context);
-typedef void (*pDesktopResize)(rdpContext* context);
-typedef void (*pBitmapUpdate)(rdpContext* context, BITMAP_UPDATE* bitmap);
-typedef void (*pPalette)(rdpContext* context, PALETTE_UPDATE* palette);
-typedef void (*pPlaySound)(rdpContext* context, PLAY_SOUND_UPDATE* play_sound);
+typedef BOOL (*pSynchronize)(rdpContext* context);
+typedef BOOL (*pDesktopResize)(rdpContext* context);
+typedef BOOL (*pBitmapUpdate)(rdpContext* context, const BITMAP_UPDATE* bitmap);
+typedef BOOL (*pPalette)(rdpContext* context, const PALETTE_UPDATE* palette);
+typedef BOOL (*pPlaySound)(rdpContext* context, const PLAY_SOUND_UPDATE* play_sound);
+typedef BOOL (*pSetKeyboardIndicators)(rdpContext* context, UINT16 led_flags);
 
-typedef void (*pRefreshRect)(rdpContext* context, BYTE count, RECTANGLE_16* areas);
-typedef void (*pSuppressOutput)(rdpContext* context, BYTE allow, RECTANGLE_16* area);
+typedef BOOL (*pRefreshRect)(rdpContext* context, BYTE count, const RECTANGLE_16* areas);
+typedef BOOL (*pSuppressOutput)(rdpContext* context, BYTE allow, const RECTANGLE_16* area);
+typedef BOOL (*pRemoteMonitors)(rdpContext* context, UINT32 count, const MONITOR_DEF *monitors);
 
-typedef void (*pSurfaceCommand)(rdpContext* context, wStream* s);
-typedef void (*pSurfaceBits)(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_command);
-typedef void (*pSurfaceFrameMarker)(rdpContext* context, SURFACE_FRAME_MARKER* surface_frame_marker);
-typedef void (*pSurfaceFrameAcknowledge)(rdpContext* context, UINT32 frameId);
+typedef BOOL (*pSurfaceCommand)(rdpContext* context, wStream* s);
+typedef BOOL (*pSurfaceBits)(rdpContext* context,
+			     const SURFACE_BITS_COMMAND* surfaceBitsCommand);
+typedef BOOL (*pSurfaceFrameMarker)(rdpContext* context,
+				    const SURFACE_FRAME_MARKER* surfaceFrameMarker);
+typedef BOOL (*pSurfaceFrameBits)(rdpContext* context,
+				  const SURFACE_BITS_COMMAND* cmd, BOOL first,
+				  BOOL last, UINT32 frameId);
+typedef BOOL (*pSurfaceFrameAcknowledge)(rdpContext* context, UINT32 frameId);
+
+typedef BOOL (*pSaveSessionInfo)(rdpContext *context, UINT32 type, void *data);
 
 struct rdp_update
 {
@@ -178,7 +175,8 @@ struct rdp_update
 	pBitmapUpdate BitmapUpdate; /* 21 */
 	pPalette Palette; /* 22 */
 	pPlaySound PlaySound; /* 23 */
-	UINT32 paddingB[32 - 24]; /* 24 */
+	pSetKeyboardIndicators SetKeyboardIndicators; /* 24 */
+	UINT32 paddingB[32 - 25]; /* 25 */
 
 	rdpPointerUpdate* pointer; /* 32 */
 	rdpPrimaryUpdate* primary; /* 33 */
@@ -189,15 +187,20 @@ struct rdp_update
 
 	pRefreshRect RefreshRect; /* 48 */
 	pSuppressOutput SuppressOutput; /* 49 */
-	UINT32 paddingD[64 - 50]; /* 50 */
+	pRemoteMonitors RemoteMonitors; /* 50 */
+	UINT32 paddingD[64 - 51]; /* 51 */
 
 	pSurfaceCommand SurfaceCommand; /* 64 */
 	pSurfaceBits SurfaceBits; /* 65 */
 	pSurfaceFrameMarker SurfaceFrameMarker; /* 66 */
-	pSurfaceFrameAcknowledge SurfaceFrameAcknowledge; /* 67 */
-	UINT32 paddingE[80 - 68]; /* 68 */
+	pSurfaceFrameBits SurfaceFrameBits; /* 67 */
+	pSurfaceFrameAcknowledge SurfaceFrameAcknowledge; /* 68 */
+	pSaveSessionInfo SaveSessionInfo; /* 69 */
+	UINT32 paddingE[80 - 70]; /* 70 */
 
 	/* internal */
+
+	wLog* log;
 
 	BOOL dump_rfx;
 	BOOL play_rfx;

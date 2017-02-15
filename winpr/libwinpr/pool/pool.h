@@ -67,12 +67,7 @@ struct _TP_CLEANUP_GROUP
 	void* dummy;
 };
 
-#ifndef _WIN32
-
-PTP_POOL GetDefaultThreadpool(void);
-PTP_CALLBACK_ENVIRON GetDefaultThreadpoolEnvironment(void);
-
-#endif
+PTP_POOL GetDefaultThreadpool();
 
 #endif /* WINPR_POOL_PRIVATE_H */
 

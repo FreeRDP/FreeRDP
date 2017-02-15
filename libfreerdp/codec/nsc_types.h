@@ -26,9 +26,10 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/wlog.h>
 #include <winpr/collections.h>
 
-#include <freerdp/utils/debug.h>
+
 #include <freerdp/utils/profiler.h>
 
 #define ROUND_UP_TO(_b, _n) (_b + ((~(_b & (_n-1)) + 0x1) & (_n-1)))
@@ -36,6 +37,8 @@
 
 struct _NSC_CONTEXT_PRIV
 {
+	wLog* log;
+
 	wBufferPool* PlanePool;
 
 	BYTE* PlaneBuffers[5];		/* Decompressed Plane Buffers in the respective order */

@@ -28,14 +28,25 @@
 # limitations under the License.
 #=============================================================================
 
+if (APPLE)
+	set(CMAKE_FIND_FRAMEWORK_OLD ${CMAKE_FIND_FRAMEWORK})
+	set(CMAKE_FIND_FRAMEWORK LAST)
+endif ()
+
 find_path(X11_INCLUDE_DIR NAMES X11/Xlib.h
           PATH_SUFFIXES X11
+          PATHS /opt/X11/include
           DOC "The X11 include directory"
 )
 
 find_library(X11_LIBRARY NAMES X11
+          PATHS /opt/X11/lib
           DOC "The X11 library"
 )
+
+if(APPLE)
+	set(CMAKE_FIND_FRAMEWORK ${CMAKE_FIND_FRAMEWORK_OLD})
+endif()
 
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(X11 DEFAULT_MSG X11_LIBRARY X11_INCLUDE_DIR)

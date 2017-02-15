@@ -23,6 +23,7 @@
 #include "rdp.h"
 
 #include <freerdp/freerdp.h>
+#include <freerdp/api.h>
 
 #include <winpr/stream.h>
 
@@ -47,45 +48,30 @@
 #define INFO_PASSWORD_IS_SC_PIN		0x00040000
 #define INFO_NOAUDIOPLAYBACK		0x00080000
 #define INFO_USING_SAVED_CREDS		0x00100000
-#define RNS_INFO_AUDIOCAPTURE		0x00200000
-#define RNS_INFO_VIDEO_DISABLE		0x00400000
-#define INFO_CompressionTypeMask	0x00001E00
-#define INFO_PACKET_COMPR_TYPE_8K	0x00000100
-#define INFO_PACKET_COMPR_TYPE_64K	0x00000200
-#define INFO_PACKET_COMPR_TYPE_RDP6	0x00000400
-#define INFO_PACKET_COMPR_TYPE_RDP61	0x00000600
-
-/* Logon Information Types */
-#define INFO_TYPE_LOGON			0x00000000
-#define INFO_TYPE_LOGON_LONG		0x00000001
-#define INFO_TYPE_LOGON_PLAIN_NOTIFY	0x00000002
-#define INFO_TYPE_LOGON_EXTENDED_INF	0x00000003
+#define INFO_AUDIOCAPTURE		0x00200000
+#define INFO_VIDEO_DISABLE		0x00400000
+#define INFO_HIDEF_RAIL_SUPPORTED	0x02000000
 
 /* Extended Logon Info */
 #define LOGON_EX_AUTORECONNECTCOOKIE	0x00000001
 #define LOGON_EX_LOGONERRORS		0x00000002
 
-/* Logon Error Info */
-#define LOGON_FAILED_BAD_PASSWORD	0x00000000
-#define LOGON_FAILED_UPDATE_PASSWORD	0x00000001
-#define LOGON_FAILED_OTHER		0x00000002
-#define LOGON_WARNING			0x00000003
+#define SAVE_SESSION_PDU_VERSION_ONE 0x0001
 
-void rdp_read_system_time(wStream* s, SYSTEM_TIME* system_time);
-void rdp_write_system_time(wStream* s, SYSTEM_TIME* system_time);
-void rdp_get_client_time_zone(wStream* s, rdpSettings* settings);
-BOOL rdp_read_client_time_zone(wStream* s, rdpSettings* settings);
-void rdp_write_client_time_zone(wStream* s, rdpSettings* settings);
-BOOL rdp_read_server_auto_reconnect_cookie(wStream* s, rdpSettings* settings);
-BOOL rdp_read_client_auto_reconnect_cookie(wStream* s, rdpSettings* settings);
-void rdp_write_client_auto_reconnect_cookie(wStream* s, rdpSettings* settings);
-void rdp_write_auto_reconnect_cookie(wStream* s, rdpSettings* settings);
-BOOL rdp_read_extended_info_packet(wStream* s, rdpSettings* settings);
-void rdp_write_extended_info_packet(wStream* s, rdpSettings* settings);
-BOOL rdp_read_info_packet(wStream* s, rdpSettings* settings);
-void rdp_write_info_packet(wStream* s, rdpSettings* settings);
-BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s);
-BOOL rdp_send_client_info(rdpRdp* rdp);
-BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s);
+
+FREERDP_LOCAL BOOL rdp_read_client_auto_reconnect_cookie(rdpRdp* rdp,
+        wStream* s);
+FREERDP_LOCAL void rdp_write_client_auto_reconnect_cookie(rdpRdp* rdp,
+        wStream* s);
+FREERDP_LOCAL void rdp_write_auto_reconnect_cookie(rdpRdp* rdp, wStream* s);
+FREERDP_LOCAL BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s);
+FREERDP_LOCAL void rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s);
+FREERDP_LOCAL BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s);
+FREERDP_LOCAL void rdp_write_info_packet(rdpRdp* rdp, wStream* s);
+FREERDP_LOCAL BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s);
+FREERDP_LOCAL BOOL rdp_send_client_info(rdpRdp* rdp);
+FREERDP_LOCAL BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s);
+FREERDP_LOCAL BOOL rdp_send_save_session_info(rdpContext* context, UINT32 type,
+        void* data);
 
 #endif /* __INFO_H */

@@ -168,9 +168,9 @@
 
 #if defined(__cplusplus)
 # define PREDEF_STANDARD_CXX
-#endif
-#if __cplusplus - 0 >= 199711L
-# define PREDEF_STANDARD_CXX89
+#	if __cplusplus - 0 >= 199711L
+#	 define PREDEF_STANDARD_CXX89
+#	endif
 #endif
 
 #if defined(TRIO_PLATFORM_UNIX)
@@ -313,25 +313,12 @@ typedef void * trio_pointer_t;
 # define TRIO_COMPILER_SUPPORTS_LL
 #endif
 
-#if defined(__CYGWIN__)
-/*
- * Cygwin defines the macros for hosted C99, but does not support certain
- * long double math functions.
- */
-# include <cygwin/version.h>
-# define TRIO_CYGWIN_VERSION_API CYGWIN_VERSION_API_MAJOR * 1000 + \
-   CYGWIN_VERSION_API_MINOR
-/*
- * Please change the version number below when the Cygwin API supports
- * long double math functions (powl, fmodl, etc.)
- */
-# if TRIO_CYGWIN_VERSION_API < 99999999
-#  define TRIO_NO_FLOORL 1
-#  define TRIO_NO_CEILL 1
-#  define TRIO_NO_POWL 1
-#  define TRIO_NO_FMODL 1
-#  define TRIO_NO_LOG10L 1
-# endif
+#if defined(TRIO_PLATFORM_UNIX) && !defined(HAVE_MATH_C99_LONG_DOUBLE)
+# define TRIO_NO_FLOORL 1
+# define TRIO_NO_CEILL 1
+# define TRIO_NO_POWL 1
+# define TRIO_NO_FMODL 1
+# define TRIO_NO_LOG10L 1
 #endif
 
 #endif /* TRIO_TRIODEF_H */

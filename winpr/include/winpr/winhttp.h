@@ -24,7 +24,7 @@
 #include <winpr/wtypes.h>
 #include <winpr/winsock.h>
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(_UWP)
 
 #include <winhttp.h>
 

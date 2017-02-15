@@ -2,7 +2,7 @@
 //  BookmarkGatewaySettingsController.m
 //  FreeRDP
 //
-//  Created by Thinstuff Developer on 4/30/13.
+//  Created by a Thincast Developer on 4/30/13.
 //
 //
 

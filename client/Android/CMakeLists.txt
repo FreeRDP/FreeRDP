@@ -1,7 +1,8 @@
 # FreeRDP: A Remote Desktop Protocol Implementation
 # Android Client
 #
-# Copyright 2013 Bernhard Miklautz <bmiklautz@thinstuff.at>
+# Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2013 Bernhard Miklautz <bernhard.miklautz@thincast.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,26 +16,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if(ANDROID_BUILD_JAVA)
-	if (NOT ANDROID_SDK)
-		message(FATAL_ERROR "ANDROID_SDK not set but required for building the java gui (ANDROID_BUILD_JAVA)")
-	endif()
-	# And isn't shiped with the android ndk/sdk so
-	# we need to find it on the local machine
-  SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER, BOTH)
-	find_program(ANT_COMMAND ant)
-  SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER, ONLY)
+set(MODULE_NAME "freerdp-android")
+set(MODULE_PREFIX "FREERDP_CLIENT_ANDROID")
 
-	if(ANT_COMMAND STREQUAL "ANT_COMMAND-NOTFOUND")
-		message(FATAL_ERROR "ant not found but required to build android java")
-	endif()
+include_directories(.)
 
-	if(ANDROID_BUILD_JAVA_DEBUG)
-		set(ANDROID_BUILD_TYPE "debug")
-	else()
-		set(ANDROID_BUILD_TYPE "release")
-	endif()
-endif(ANDROID_BUILD_JAVA)
+if(CMAKE_COMPILER_IS_GNUCC)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-pointer-sign")
+endif()
 
-add_subdirectory(FreeRDPCore)
-add_subdirectory(aFreeRDP)
+set(${MODULE_PREFIX}_SRCS
+	android_event.c
+	android_event.h
+	android_freerdp.c
+	android_freerdp.h
+	android_jni_utils.c
+	android_jni_utils.h
+	android_jni_callback.c
+	android_jni_callback.h)
+
+if(WITH_CLIENT_CHANNELS)
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS}
+		android_cliprdr.c
+		android_cliprdr.h)
+endif()
+
+add_library(${MODULE_NAME} SHARED ${${MODULE_PREFIX}_SRCS})
+
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr freerdp freerdp-client)
+
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} dl)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} jnigraphics)
+
+set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME ${MODULE_NAME}${FREERDP_API_VERSION})
+
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries EXPORT AndroidTargets)

@@ -227,7 +227,8 @@
  */
 
 #if !defined(TRIO_EMBED_NAN)
-static TRIO_CONST char rcsid[] = "@(#)$Id: trionan.c,v 1.33 2005/05/29 11:57:25 breese Exp $";
+/* Unused but kept for reference */
+/* static TRIO_CONST char rcsid[] = "@(#)$Id: trionan.c,v 1.33 2005/05/29 11:57:25 breese Exp $"; */
 #endif
 
 #if defined(TRIO_FUNC_INTERNAL_MAKE_DOUBLE) \

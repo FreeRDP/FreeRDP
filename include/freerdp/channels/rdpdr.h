@@ -4,6 +4,8 @@
  *
  * Copyright 2010-2011 Vic Lee
  * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,15 +24,22 @@
 #define FREERDP_CHANNEL_RDPDR_H
 
 #include <winpr/nt.h>
+#include <winpr/io.h>
 #include <winpr/crt.h>
 #include <winpr/file.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/stream.h>
 #include <winpr/interlocked.h>
+#include <winpr/collections.h>
 
-#include <freerdp/utils/list.h>
-#include <freerdp/utils/svc_plugin.h>
+#include <freerdp/freerdp.h>
+
+#define RDPDR_DEVICE_IO_REQUEST_LENGTH		24
+#define RDPDR_DEVICE_IO_RESPONSE_LENGTH		16
+
+#define RDPDR_DEVICE_IO_CONTROL_REQ_HDR_LENGTH	32
+#define RDPDR_DEVICE_IO_CONTROL_RSP_HDR_LENGTH	4
 
 /* RDPDR_HEADER.Component */
 enum RDPDR_CTYP
@@ -204,34 +213,40 @@ enum RDPDR_PRINTER_ANNOUNCE_FLAG
 #endif
 
 /* [MS-FSCC] FSCTL Structures */
-enum FSCTL_STRUCTURE
-{
-	FSCTL_CREATE_OR_GET_OBJECT_ID = 0x900c0,
-	FSCTL_GET_REPARSE_POINT = 0x900a8,
-	FSCTL_GET_RETRIEVAL_POINTERS = 0x90073,
-	FSCTL_IS_PATHNAME_VALID = 0x9002c,
-	FSCTL_LMR_SET_LINK_TRACKING_INFORMATION = 0x1400ec,
-	FSCTL_PIPE_PEEK = 0x11400c,
-	FSCTL_PIPE_TRANSCEIVE = 0x11c017,
-	FSCTL_PIPE_WAIT = 0x110018,
-	FSCTL_QUERY_FAT_BPB = 0x90058,
-	FSCTL_QUERY_ALLOCATED_RANGES = 0x940cf,
-	FSCTL_QUERY_ON_DISK_VOLUME_INFO = 0x9013c,
-	FSCTL_QUERY_SPARING_INFO = 0x90138,
-	FSCTL_READ_FILE_USN_DATA = 0x900eb,
-	FSCTL_RECALL_FILE = 0x90117,
-	FSCTL_SET_COMPRESSION = 0x9c040,
-	FSCTL_SET_DEFECT_MANAGEMENT = 0x98134,
-	FSCTL_SET_ENCRYPTION = 0x900D7,
-	FSCTL_SET_OBJECT_ID = 0x90098,
-	FSCTL_SET_OBJECT_ID_EXTENDED = 0x900bc,
-	FSCTL_SET_REPARSE_POINT = 0x900a4,
-	FSCTL_SET_SPARSE = 0x900c4,
-	FSCTL_SET_ZERO_DATA = 0x980c8,
-	FSCTL_SET_ZERO_ON_DEALLOCATION = 0x90194,
-	FSCTL_SIS_COPYFILE = 0x90100,
-	FSCTL_WRITE_USN_CLOSE_RECORD = 0x900ef
-};
+
+#if !defined(_WIN32) || (defined(_WIN32) && (_WIN32_WINNT < 0x0600))
+#define FSCTL_LMR_SET_LINK_TRACKING_INFORMATION		0x1400ec
+#define FSCTL_PIPE_PEEK					0x11400c
+#define FSCTL_PIPE_TRANSCEIVE				0x11c017
+#define FSCTL_PIPE_WAIT					0x110018
+#define FSCTL_QUERY_ON_DISK_VOLUME_INFO			0x9013c
+#define FSCTL_QUERY_SPARING_INFO			0x90138
+#endif
+
+#ifndef _WIN32
+#define FSCTL_CREATE_OR_GET_OBJECT_ID			0x900c0
+#define FSCTL_GET_REPARSE_POINT				0x900a8
+#define FSCTL_GET_RETRIEVAL_POINTERS			0x90073
+#define FSCTL_IS_PATHNAME_VALID				0x9002c
+#define FSCTL_READ_FILE_USN_DATA			0x900eb
+#define FSCTL_RECALL_FILE				0x90117
+#define FSCTL_QUERY_FAT_BPB				0x90058
+#define FSCTL_QUERY_ALLOCATED_RANGES			0x940cf
+#define FSCTL_SET_COMPRESSION				0x9c040
+#define FSCTL_SET_ENCRYPTION				0x900D7
+#define FSCTL_SET_OBJECT_ID				0x90098
+#define FSCTL_SET_OBJECT_ID_EXTENDED			0x900bc
+#define FSCTL_SET_REPARSE_POINT				0x900a4
+#define FSCTL_SET_SPARSE				0x900c4
+#define FSCTL_SET_ZERO_DATA				0x980c8
+#define FSCTL_SIS_COPYFILE				0x90100
+#define FSCTL_WRITE_USN_CLOSE_RECORD			0x900ef
+#endif
+
+#if !defined(_WIN32) || (defined(_WIN32) && (_WIN32_WINNT < 0x0600))
+#define FSCTL_SET_DEFECT_MANAGEMENT			0x98134
+#define FSCTL_SET_ZERO_ON_DEALLOCATION			0x90194
+#endif
 
 /* [MS-FSCC] FileFsAttributeInformation.FileSystemAttributes */
 
@@ -261,11 +276,14 @@ enum FSCTL_STRUCTURE
 #endif
 
 /* [MS-FSCC] FileFsDeviceInformation.DeviceType */
-enum FILE_FS_DEVICE_TYPE
-{
-	FILE_DEVICE_CD_ROM = 0x00000002,
-	FILE_DEVICE_DISK = 0x00000007
-};
+
+#ifndef FILE_DEVICE_CD_ROM
+#define FILE_DEVICE_CD_ROM	0x00000002
+#endif
+
+#ifndef FILE_DEVICE_DISK
+#define FILE_DEVICE_DISK	0x00000007
+#endif
 
 /* [MS-FSCC] FileFsDeviceInformation.Characteristics */
 enum FILE_FS_DEVICE_FLAG
@@ -298,8 +316,9 @@ typedef struct _DEVICE DEVICE;
 typedef struct _IRP IRP;
 typedef struct _DEVMAN DEVMAN;
 
-typedef void (*pcIRPRequest)(DEVICE* device, IRP* irp);
-typedef void (*pcFreeDevice)(DEVICE* device);
+typedef UINT(*pcIRPRequest)(DEVICE* device, IRP* irp);
+typedef UINT(*pcInitDevice)(DEVICE* device);
+typedef UINT(*pcFreeDevice)(DEVICE* device);
 
 struct _DEVICE
 {
@@ -310,14 +329,15 @@ struct _DEVICE
 	wStream* data;
 
 	pcIRPRequest IRPRequest;
+	pcInitDevice Init;
 	pcFreeDevice Free;
 };
 
-typedef void (*pcIRPResponse)(IRP* irp);
+typedef UINT(*pcIRPResponse)(IRP* irp);
 
 struct _IRP
 {
-	SLIST_ENTRY ItemEntry;
+	WINPR_SLIST_ENTRY ItemEntry;
 
 	DEVICE* device;
 	DEVMAN* devman;
@@ -332,16 +352,19 @@ struct _IRP
 
 	pcIRPResponse Complete;
 	pcIRPResponse Discard;
+
+	HANDLE thread;
+	BOOL cancelled;
 };
 
 struct _DEVMAN
 {
-	rdpSvcPlugin* plugin;
+	void* plugin;
 	UINT32 id_sequence;
-	LIST* devices;
+	wListDictionary* devices;
 };
 
-typedef void (*pcRegisterDevice)(DEVMAN* devman, DEVICE* device);
+typedef UINT(*pcRegisterDevice)(DEVMAN* devman, DEVICE* device);
 
 struct _DEVICE_SERVICE_ENTRY_POINTS
 {
@@ -349,10 +372,11 @@ struct _DEVICE_SERVICE_ENTRY_POINTS
 
 	pcRegisterDevice RegisterDevice;
 	RDPDR_DEVICE* device;
+	rdpContext* rdpcontext;
 };
 typedef struct _DEVICE_SERVICE_ENTRY_POINTS DEVICE_SERVICE_ENTRY_POINTS;
 typedef DEVICE_SERVICE_ENTRY_POINTS* PDEVICE_SERVICE_ENTRY_POINTS;
 
-typedef int (*PDEVICE_SERVICE_ENTRY)(PDEVICE_SERVICE_ENTRY_POINTS);
+typedef UINT(*PDEVICE_SERVICE_ENTRY)(PDEVICE_SERVICE_ENTRY_POINTS);
 
 #endif /* FREERDP_CHANNEL_RDPDR_H */

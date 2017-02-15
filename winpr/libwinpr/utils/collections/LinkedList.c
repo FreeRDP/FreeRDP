@@ -124,11 +124,13 @@ void LinkedList_Clear(wLinkedList* list)
  * Adds a new node containing the specified value at the start of the LinkedList.
  */
 
-void LinkedList_AddFirst(wLinkedList* list, void* value)
+BOOL LinkedList_AddFirst(wLinkedList* list, void* value)
 {
 	wLinkedListNode* node;
 
 	node = (wLinkedListNode*) malloc(sizeof(wLinkedListNode));
+	if (!node)
+		return FALSE;
 	node->prev = node->next = NULL;
 	node->value = value;
 
@@ -144,17 +146,20 @@ void LinkedList_AddFirst(wLinkedList* list, void* value)
 	}
 
 	list->count++;
+	return TRUE;
 }
 
 /**
  * Adds a new node containing the specified value at the end of the LinkedList.
  */
 
-void LinkedList_AddLast(wLinkedList* list, void* value)
+BOOL LinkedList_AddLast(wLinkedList* list, void* value)
 {
 	wLinkedListNode* node;
 
 	node = (wLinkedListNode*) malloc(sizeof(wLinkedListNode));
+	if (!node)
+		return FALSE;
 	node->prev = node->next = NULL;
 	node->value = value;
 
@@ -170,13 +175,14 @@ void LinkedList_AddLast(wLinkedList* list, void* value)
 	}
 
 	list->count++;
+	return TRUE;
 }
 
 /**
  * Removes the first occurrence of the specified value from the LinkedList.
  */
 
-void LinkedList_Remove(wLinkedList* list, void* value)
+BOOL LinkedList_Remove(wLinkedList* list, void* value)
 {
 	wLinkedListNode* node;
 
@@ -192,18 +198,21 @@ void LinkedList_Remove(wLinkedList* list, void* value)
 			if (node->next)
 				node->next->prev = node->prev;
 
-			if ((!node->prev) && (!node->next))
-				list->head = list->tail = NULL;
+			if (node == list->head)
+				list->head = node->next;
+
+			if (node == list->tail)
+				list->tail = node->prev;
 
 			free(node);
 
 			list->count--;
-
-			break;
+			return TRUE;
 		}
 
 		node = node->next;
 	}
+	return FALSE;
 }
 
 /**
@@ -297,7 +306,7 @@ BOOL LinkedList_Enumerator_MoveNext(wLinkedList* list)
 {
 	if (list->initial)
 		list->initial = 0;
-	else
+	else if (list->current)
 		list->current = list->current->next;
 
 	if (!list->current)
@@ -314,16 +323,7 @@ wLinkedList* LinkedList_New()
 {
 	wLinkedList* list = NULL;
 
-	list = (wLinkedList*) malloc(sizeof(wLinkedList));
-
-	if (list)
-	{
-		list->count = 0;
-		list->initial = 0;
-		list->head = NULL;
-		list->tail = NULL;
-		list->current = NULL;
-	}
+	list = (wLinkedList*) calloc(1, sizeof(wLinkedList));
 
 	return list;
 }

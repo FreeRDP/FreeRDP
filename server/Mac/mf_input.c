@@ -29,7 +29,11 @@
 #include "mf_input.h"
 #include "mf_info.h"
 
-static const CGKeyCode keymap[256] = {
+#include <freerdp/log.h>
+#define TAG SERVER_TAG("mac")
+
+static const CGKeyCode keymap[256] =
+{
 	0xFF, //0x0
 	kVK_Escape, //0x1
 	kVK_ANSI_1, //0x2
@@ -353,31 +357,11 @@ void mf_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 	CGEventPost(kCGHIDEventTap, kbEvent);
 	CFRelease(kbEvent);
 	CFRelease(source);
-	
-	/*
-	if (flags & KBD_FLAGS_EXTENDED)
-		fprintf(stderr, "extended ");
-	fprintf(stderr, "keypress: down = %d, SCAN=%#0X, VK=%#0X\n", keyDown, code, keymap[code]);
-	*/
 }
 
 void mf_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	/*
-	 INPUT keyboard_event;
-	 
-	 keyboard_event.type = INPUT_KEYBOARD;
-	 keyboard_event.ki.wVk = 0;
-	 keyboard_event.ki.wScan = code;
-	 keyboard_event.ki.dwFlags = KEYEVENTF_UNICODE;
-	 keyboard_event.ki.dwExtraInfo = 0;
-	 keyboard_event.ki.time = 0;
-	 
-	 if (flags & KBD_FLAGS_RELEASE)
-	 keyboard_event.ki.dwFlags |= KEYEVENTF_KEYUP;
-	 
-	 SendInput(1, &keyboard_event, sizeof(INPUT));
-	 */
+
 }
 
 void mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
@@ -412,34 +396,6 @@ void mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 		CFRelease(scroll);
 		CFRelease(source);
 	}
-	/*
-	 ///////////////////////////////////////////////
-	 // We dont support horizontal scrolling yet...
-	 ///////////////////////////////////////////////
-	else if (flags & PTR_FLAGS_)
-	{
-		scroll_y = flags & WheelRotationMask;
-		
-		if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
-		{
-			scroll_y = -(flags & WheelRotationMask) / 392;
-		}
-		else
-		{
-			scroll_y = (flags & WheelRotationMask) / 120;
-		}
-		
-		CGEventSourceRef source = CGEventSourceCreate (kCGEventSourceStateCombinedSessionState);
-		CGEventRef scroll = CGEventCreateScrollWheelEvent(source,
-								  kCGScrollEventUnitLine,
-								  wheelCount,
-								  scroll_y,
-								  scroll_x);
-		CGEventPost(kCGHIDEventTap, scroll);
-		
-		CFRelease(scroll);
-		CFRelease(source);
-	} */
 	else
 	{
 		
@@ -548,56 +504,7 @@ void mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 
 void mf_input_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
-	fprintf(stderr, "Unhandled mouse event!!!\n");
-	/*
-	 if ((flags & PTR_XFLAGS_BUTTON1) || (flags & PTR_XFLAGS_BUTTON2))
-	 {
-	 INPUT mouse_event;
-	 ZeroMemory(&mouse_event, sizeof(INPUT));
-	 
-	 mouse_event.type = INPUT_MOUSE;
-	 
-	 if (flags & PTR_FLAGS_MOVE)
-	 {
-	 float width, height;
-	 wfInfo * wfi;
-	 
-	 wfi = wf_info_get_instance();
-	 //width and height of primary screen (even in multimon setups
-	 width = (float) GetSystemMetrics(SM_CXSCREEN);
-	 height = (float) GetSystemMetrics(SM_CYSCREEN);
-	 
-	 x += wfi->servscreen_xoffset;
-	 y += wfi->servscreen_yoffset;
-	 
-	 //mouse_event.mi.dx = x * (0xFFFF / width);
-	 //mouse_event.mi.dy = y * (0xFFFF / height);
-	 mouse_event.mi.dx = (LONG) ((float) x * (65535.0f / width));
-	 mouse_event.mi.dy = (LONG) ((float) y * (65535.0f / height));
-	 mouse_event.mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
-	 
-	 SendInput(1, &mouse_event, sizeof(INPUT));
-	 }
-	 
-	 mouse_event.mi.dx = mouse_event.mi.dy = mouse_event.mi.dwFlags = 0;
-	 
-	 if (flags & PTR_XFLAGS_DOWN)
-	 mouse_event.mi.dwFlags |= MOUSEEVENTF_XDOWN;
-	 else
-	 mouse_event.mi.dwFlags |= MOUSEEVENTF_XUP;
-	 
-	 if (flags & PTR_XFLAGS_BUTTON1)
-	 mouse_event.mi.mouseData = XBUTTON1;
-	 else if (flags & PTR_XFLAGS_BUTTON2)
-	 mouse_event.mi.mouseData = XBUTTON2;
-	 
-	 SendInput(1, &mouse_event, sizeof(INPUT));
-	 }
-	 else
-	 {
-	 mf_input_mouse_event(input, flags, x, y);
-	 }
-	 */
+
 }
 
 

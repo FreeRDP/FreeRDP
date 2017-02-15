@@ -26,6 +26,9 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <freerdp/log.h>
+
+#define TAG FREERDP_TAG("utils")
 
 #ifndef _WIN32
 #include <sys/time.h>
@@ -49,49 +52,61 @@ int gettimeofday(struct timeval* tp, void* tz)
 
 #define PCAP_MAGIC	0xA1B2C3D4
 
-void pcap_read_header(rdpPcap* pcap, pcap_header* header)
+static BOOL pcap_read_header(rdpPcap* pcap, pcap_header* header)
 {
-	fread((void*) header, sizeof(pcap_header), 1, pcap->fp);
+	return fread((void*) header, sizeof(pcap_header), 1, pcap->fp) == 1;
 }
 
-void pcap_write_header(rdpPcap* pcap, pcap_header* header)
+static BOOL pcap_write_header(rdpPcap* pcap, pcap_header* header)
 {
-	fwrite((void*) header, sizeof(pcap_header), 1, pcap->fp);
+	return fwrite((void*) header, sizeof(pcap_header), 1, pcap->fp) == 1;
 }
 
-void pcap_read_record_header(rdpPcap* pcap, pcap_record_header* record)
+static BOOL pcap_read_record_header(rdpPcap* pcap, pcap_record_header* record)
 {
-	fread((void*) record, sizeof(pcap_record_header), 1, pcap->fp);
+	return fread((void*) record, sizeof(pcap_record_header), 1, pcap->fp) == 1;
 }
 
-void pcap_write_record_header(rdpPcap* pcap, pcap_record_header* record)
+static BOOL pcap_write_record_header(rdpPcap* pcap, pcap_record_header* record)
 {
-	fwrite((void*) record, sizeof(pcap_record_header), 1, pcap->fp);
+	return fwrite((void*) record, sizeof(pcap_record_header), 1, pcap->fp) == 1;
 }
 
-void pcap_read_record(rdpPcap* pcap, pcap_record* record)
+static BOOL pcap_read_record(rdpPcap* pcap, pcap_record* record)
 {
-	pcap_read_record_header(pcap, &record->header);
+	if (!pcap_read_record_header(pcap, &record->header))
+		return FALSE;
+
 	record->length = record->header.incl_len;
 	record->data = malloc(record->length);
-	fread(record->data, record->length, 1, pcap->fp);
+	if (!record->data)
+		return FALSE;
+
+	if (fread(record->data, record->length, 1, pcap->fp) != 1)
+	{
+		free(record->data);
+		record->data = NULL;
+		return FALSE;
+	}
+	return TRUE;
 }
 
-void pcap_write_record(rdpPcap* pcap, pcap_record* record)
+static BOOL pcap_write_record(rdpPcap* pcap, pcap_record* record)
 {
-	pcap_write_record_header(pcap, &record->header);
-	fwrite(record->data, record->length, 1, pcap->fp);
+	return pcap_write_record_header(pcap, &record->header) &&
+			(fwrite(record->data, record->length, 1, pcap->fp) == 1);
 }
 
-void pcap_add_record(rdpPcap* pcap, void* data, UINT32 length)
+BOOL pcap_add_record(rdpPcap* pcap, void* data, UINT32 length)
 {
 	pcap_record* record;
 	struct timeval tp;
 
 	if (pcap->tail == NULL)
 	{
-		pcap->tail = (pcap_record*) malloc(sizeof(pcap_record));
-		ZeroMemory(pcap->tail, sizeof(pcap_record));
+		pcap->tail = (pcap_record*) calloc(1, sizeof(pcap_record));
+		if (!pcap->tail)
+			return FALSE;
 
 		pcap->head = pcap->tail;
 		pcap->record = pcap->head;
@@ -99,8 +114,9 @@ void pcap_add_record(rdpPcap* pcap, void* data, UINT32 length)
 	}
 	else
 	{
-		record = (pcap_record*) malloc(sizeof(pcap_record));
-		ZeroMemory(record, sizeof(pcap_record));
+		record = (pcap_record*) calloc(1, sizeof(pcap_record));
+		if (!record)
+			return FALSE;
 
 		pcap->tail->next = record;
 		pcap->tail = record;
@@ -117,6 +133,7 @@ void pcap_add_record(rdpPcap* pcap, void* data, UINT32 length)
 	gettimeofday(&tp, 0);
 	record->header.ts_sec = tp.tv_sec;
 	record->header.ts_usec = tp.tv_usec;
+	return TRUE;
 }
 
 BOOL pcap_has_next_record(rdpPcap* pcap)
@@ -140,18 +157,13 @@ BOOL pcap_get_next_record_header(rdpPcap* pcap, pcap_record* record)
 
 BOOL pcap_get_next_record_content(rdpPcap* pcap, pcap_record* record)
 {
-	fread(record->data, record->length, 1, pcap->fp);
-	return TRUE;
+	return fread(record->data, record->length, 1, pcap->fp) == 1;
 }
 
 BOOL pcap_get_next_record(rdpPcap* pcap, pcap_record* record)
 {
-	if (pcap_has_next_record(pcap) != TRUE)
-		return FALSE;
-
-	pcap_read_record(pcap, record);
-
-	return TRUE;
+	return pcap_has_next_record(pcap) &&
+			pcap_read_record(pcap, record);
 }
 
 rdpPcap* pcap_open(char* name, BOOL write)
@@ -162,42 +174,47 @@ rdpPcap* pcap_open(char* name, BOOL write)
 
 	if (pcap_fp == NULL)
 	{
-		perror("opening pcap dump");
+		WLog_ERR(TAG, "opening pcap dump");
 		return NULL;
 	}
 
-	pcap = (rdpPcap*) malloc(sizeof(rdpPcap));
+	pcap = (rdpPcap*) calloc(1, sizeof(rdpPcap));
+	if (!pcap)
+		goto fail_close;
 
-	if (pcap != NULL)
+	pcap->name = name;
+	pcap->write = write;
+	pcap->record_count = 0;
+	pcap->fp = pcap_fp;
+
+	if (write)
 	{
-		ZeroMemory(pcap, sizeof(rdpPcap));
-
-		pcap->name = name;
-		pcap->write = write;
-		pcap->record_count = 0;
-		pcap->fp = pcap_fp;
-
-		if (write)
-		{
-			pcap->header.magic_number = 0xA1B2C3D4;
-			pcap->header.version_major = 2;
-			pcap->header.version_minor = 4;
-			pcap->header.thiszone = 0;
-			pcap->header.sigfigs = 0;
-			pcap->header.snaplen = 0xFFFFFFFF;
-			pcap->header.network = 0;
-			pcap_write_header(pcap, &pcap->header);
-		}
-		else
-		{
-			fseek(pcap->fp, 0, SEEK_END);
-			pcap->file_size = (int) ftell(pcap->fp);
-			fseek(pcap->fp, 0, SEEK_SET);
-			pcap_read_header(pcap, &pcap->header);
-		}
+		pcap->header.magic_number = 0xA1B2C3D4;
+		pcap->header.version_major = 2;
+		pcap->header.version_minor = 4;
+		pcap->header.thiszone = 0;
+		pcap->header.sigfigs = 0;
+		pcap->header.snaplen = 0xFFFFFFFF;
+		pcap->header.network = 0;
+		if (!pcap_write_header(pcap, &pcap->header))
+			goto fail;
+	}
+	else
+	{
+		fseek(pcap->fp, 0, SEEK_END);
+		pcap->file_size = (int) ftell(pcap->fp);
+		fseek(pcap->fp, 0, SEEK_SET);
+		if (!pcap_read_header(pcap, &pcap->header))
+			goto fail;
 	}
 
 	return pcap;
+
+fail:
+	free(pcap);
+fail_close:
+	fclose(pcap_fp);
+	return NULL;
 }
 
 void pcap_flush(rdpPcap* pcap)

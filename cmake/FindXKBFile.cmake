@@ -30,10 +30,12 @@
 
 find_path(XKBFILE_INCLUDE_DIR NAMES X11/extensions/XKBfile.h
           PATH_SUFFIXES X11/extensions
+          PATHS /opt/X11/include
           DOC "The XKBFile include directory"
 )
 
 find_library(XKBFILE_LIBRARY NAMES xkbfile
+          PATHS /opt/X11/lib
           DOC "The XKBFile library"
 )
 

@@ -38,6 +38,8 @@ int TestPubSub(int argc, char* argv[])
 	wPubSub* node;
 
 	node = PubSub_New(TRUE);
+	if (!node)
+		return -1;
 
 	PubSub_AddEventTypes(node, Node_Events, NODE_EVENT_COUNT);
 

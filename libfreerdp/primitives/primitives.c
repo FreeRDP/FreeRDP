@@ -2,7 +2,7 @@
  * This code queries processor features and calls the init/deinit routines.
  * vi:ts=4 sw=4
  *
- * Copyright 2011 Martin Fleisz <mfleisz@thinstuff.com>
+ * Copyright 2011 Martin Fleisz <martin.fleisz@thincast.com>
  * (c) Copyright 2012 Hewlett-Packard Development Company, L.P.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -27,55 +27,60 @@
 #include "prim_internal.h"
 
 /* Singleton pointer used throughout the program when requested. */
-static primitives_t* pPrimitives = NULL;
+static primitives_t pPrimitives = { 0 };
+static primitives_t pPrimitivesGeneric = { 0 };
+static BOOL pPrimitivesInitialized = FALSE;
+static BOOL pPrimitivesGenericInitialized = FALSE;
 
 /* ------------------------------------------------------------------------- */
-void primitives_init(void)
+static void primitives_init_generic(void)
 {
-	if (pPrimitives == NULL)
-	{
-		pPrimitives = calloc(1, sizeof(primitives_t));
+	primitives_init_add(&pPrimitivesGeneric);
+	primitives_init_andor(&pPrimitivesGeneric);
+	primitives_init_alphaComp(&pPrimitivesGeneric);
+	primitives_init_copy(&pPrimitivesGeneric);
+	primitives_init_set(&pPrimitivesGeneric);
+	primitives_init_shift(&pPrimitivesGeneric);
+	primitives_init_sign(&pPrimitivesGeneric);
+	primitives_init_colors(&pPrimitivesGeneric);
+	primitives_init_YCoCg(&pPrimitivesGeneric);
+	primitives_init_YUV(&pPrimitivesGeneric);
+	pPrimitivesGenericInitialized = TRUE;
+}
 
-		if (pPrimitives == NULL)
-			return;
-	}
-
+static void primitives_init(void)
+{
 	/* Now call each section's initialization routine. */
-	primitives_init_add(pPrimitives);
-	primitives_init_andor(pPrimitives);
-	primitives_init_alphaComp(pPrimitives);
-	primitives_init_copy(pPrimitives);
-	primitives_init_set(pPrimitives);
-	primitives_init_shift(pPrimitives);
-	primitives_init_sign(pPrimitives);
-	primitives_init_colors(pPrimitives);
+	primitives_init_add_opt(&pPrimitives);
+	primitives_init_andor_opt(&pPrimitives);
+	primitives_init_alphaComp_opt(&pPrimitives);
+	primitives_init_copy_opt(&pPrimitives);
+	primitives_init_set_opt(&pPrimitives);
+	primitives_init_shift_opt(&pPrimitives);
+	primitives_init_sign_opt(&pPrimitives);
+	primitives_init_colors_opt(&pPrimitives);
+	primitives_init_YCoCg_opt(&pPrimitives);
+	primitives_init_YUV_opt(&pPrimitives);
+	pPrimitivesInitialized = TRUE;
 }
 
 /* ------------------------------------------------------------------------- */
 primitives_t* primitives_get(void)
 {
-	if (pPrimitives == NULL)
+	if (!pPrimitivesGenericInitialized)
+		primitives_init_generic();
+
+	if (!pPrimitivesInitialized)
 		primitives_init();
 
-	return pPrimitives;
+	return &pPrimitives;
 }
 
-/* ------------------------------------------------------------------------- */
-void primitives_deinit(void)
+primitives_t* primitives_get_generic(void)
 {
-	if (pPrimitives == NULL)
-		return;
+	if (!pPrimitivesGenericInitialized)
+		primitives_init_generic();
 
-	/* Call each section's de-initialization routine. */
-	primitives_deinit_add(pPrimitives);
-	primitives_deinit_andor(pPrimitives);
-	primitives_deinit_alphaComp(pPrimitives);
-	primitives_deinit_copy(pPrimitives);
-	primitives_deinit_set(pPrimitives);
-	primitives_deinit_shift(pPrimitives);
-	primitives_deinit_sign(pPrimitives);
-	primitives_deinit_colors(pPrimitives);
-
-	free((void*) pPrimitives);
-	pPrimitives = NULL;
+	return &pPrimitivesGeneric;
 }
+

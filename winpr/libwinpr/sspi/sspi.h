@@ -2,7 +2,7 @@
  * WinPR: Windows Portable Runtime
  * Security Support Provider Interface (SSPI)
  *
- * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2012-2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,19 +24,26 @@
 
 #define SCHANNEL_CB_MAX_TOKEN	0x00006000
 
-struct _CREDENTIALS
+#define SSPI_CREDENTIALS_PASSWORD_HASH	0x00000001
+
+#define SSPI_CREDENTIALS_HASH_LENGTH_FACTOR	64
+
+struct _SSPI_CREDENTIALS
 {
+	DWORD flags;
+	ULONG fCredentialUse;
+	SEC_GET_KEY_FN pGetKeyFn;
+	void* pvGetKeyArgument;
 	SEC_WINNT_AUTH_IDENTITY identity;
 };
-typedef struct _CREDENTIALS CREDENTIALS;
+typedef struct _SSPI_CREDENTIALS SSPI_CREDENTIALS;
 
-CREDENTIALS* sspi_CredentialsNew(void);
-void sspi_CredentialsFree(CREDENTIALS* credentials);
+SSPI_CREDENTIALS* sspi_CredentialsNew(void);
+void sspi_CredentialsFree(SSPI_CREDENTIALS* credentials);
 
 PSecBuffer sspi_FindSecBuffer(PSecBufferDesc pMessage, ULONG BufferType);
 
 SecHandle* sspi_SecureHandleAlloc(void);
-void sspi_SecureHandleInit(SecHandle* handle);
 void sspi_SecureHandleInvalidate(SecHandle* handle);
 void* sspi_SecureHandleGetLowerPointer(SecHandle* handle);
 void sspi_SecureHandleSetLowerPointer(SecHandle* handle, void* pointer);
@@ -75,5 +82,9 @@ enum SecurityFunctionTableIndex
 	DecryptMessageIndex = 27,
 	SetContextAttributesIndex = 28
 };
+
+BOOL IsSecurityStatusError(SECURITY_STATUS status);
+
+#include "sspi_winpr.h"
 
 #endif /* WINPR_SSPI_PRIVATE_H */

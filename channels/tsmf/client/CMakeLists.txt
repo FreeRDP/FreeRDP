@@ -38,17 +38,12 @@ include_directories(..)
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
 
-set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE freerdp
-	MODULES freerdp-utils freerdp-common)
 
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+target_link_libraries(${MODULE_NAME} freerdp winpr)
 
-if(NOT STATIC_CHANNELS)
-	install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
+if (WITH_DEBUG_SYMBOLS AND MSVC AND NOT BUILTIN_CHANNELS AND BUILD_SHARED_LIBS)
+	install(FILES ${CMAKE_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${FREERDP_ADDIN_PATH} COMPONENT symbols)
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")
@@ -57,7 +52,7 @@ if(WITH_FFMPEG)
 	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "ffmpeg" "decoder")
 endif()
 
-if(WITH_GSTREAMER)
+if(WITH_GSTREAMER_0_10 OR WITH_GSTREAMER_1_0)
 	set(XRANDR_FEATURE_TYPE "REQUIRED")
 	set(XRANDR_FEATURE_PURPOSE "X11 randr")
 	set(XRANDR_FEATURE_DESCRIPTION "X11 randr extension")
@@ -67,6 +62,10 @@ if(WITH_GSTREAMER)
 	else()
 		message(WARNING "Disabling tsmf gstreamer because XRandR wasn't found")
 	endif()
+endif()
+
+if(WITH_OSS)
+	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "oss" "audio")
 endif()
 
 if(WITH_ALSA)

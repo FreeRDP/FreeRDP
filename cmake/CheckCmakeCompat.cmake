@@ -1,7 +1,7 @@
 # Central location to check for cmake (version) requirements
 #
 #=============================================================================
-# Copyright 2012 Bernhard Miklautz <bmiklautz@thinstuff.com>
+# Copyright 2012 Bernhard Miklautz <bernhard.miklautz@thincast.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,17 +22,11 @@ macro(enable_cmake_compat CMVERSION)
 	endif()
 endmacro()
 
-# Compatibility includes - oder does matter!
+# Compatibility includes - order does matter!
+enable_cmake_compat(2.8.11)
 enable_cmake_compat(2.8.6)
 enable_cmake_compat(2.8.3)
 enable_cmake_compat(2.8.2)
-
-# If MONOLITHIC_BUILD is used with cmake < 2.8.8 build fails
-if (MONOLITHIC_BUILD)
-	if(${CMAKE_VERSION} VERSION_LESS 2.8.8)
-		message(FATAL_ERROR "CMAKE version >= 2.8.8 required for MONOLITHIC_BUILD")
-	endif()
-endif(MONOLITHIC_BUILD)
 
 # GetGitRevisionDescription requires FindGit which was added in version 2.8.2
 # build won't fail but GIT_REVISION is set to n/a

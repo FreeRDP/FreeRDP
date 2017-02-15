@@ -1,55 +1,70 @@
-
 #include <winpr/crt.h>
 #include <winpr/tchar.h>
+#include <winpr/path.h>
+#include <winpr/file.h>
 #include <winpr/wlog.h>
 
 int TestWLog(int argc, char* argv[])
 {
-	wLog* log;
+	wLog* root;
+	wLog* logA;
+	wLog* logB;
 	wLogLayout* layout;
 	wLogAppender* appender;
+	char* tmp_path = NULL;
+	char* wlog_file = NULL;
+	int result = 1;
 
-	log = WLog_New("CONSOLE_LOG_TEST");
+        if (!(tmp_path = GetKnownPath(KNOWN_PATH_TEMP)))
+        {
+                fprintf(stderr, "Failed to get temporary directory!\n");
+		goto out;
+        }
 
-	WLog_SetLogLevel(log, WLOG_INFO);
+	WLog_Init();
 
-	WLog_SetLogAppenderType(log, WLOG_APPENDER_CONSOLE);
-	appender = WLog_GetLogAppender(log);
+	root = WLog_GetRoot();
 
-	layout = WLog_GetLogLayout(log);
-	WLog_Layout_SetPrefixFormat(log, layout, "[%lv:%mn] [%fl|%fn|%ln] - ");
+	WLog_SetLogAppenderType(root, WLOG_APPENDER_BINARY);
 
-	WLog_ConsoleAppender_SetOutputStream(log, (wLogConsoleAppender*) appender, WLOG_CONSOLE_STDERR);
-	WLog_OpenAppender(log);
+	appender = WLog_GetLogAppender(root);
+	if(!WLog_ConfigureAppender(appender, "outputfilename", "test_w.log"))
+		goto out;
+	if(!WLog_ConfigureAppender(appender, "outputfilepath", tmp_path))
+		goto out;
 
-	WLog_Print(log, WLOG_INFO, "this is a test");
-	WLog_Print(log, WLOG_WARN, "this is a %dnd %s", 2, "test");
-	WLog_Print(log, WLOG_ERROR, "this is an error");
-	WLog_Print(log, WLOG_TRACE, "this is a trace output");
+	layout = WLog_GetLogLayout(root);
+	WLog_Layout_SetPrefixFormat(root, layout, "[%lv:%mn] [%fl|%fn|%ln] - ");
 
-	WLog_CloseAppender(log);
-	WLog_Free(log);
+	WLog_OpenAppender(root);
 
-	log = WLog_New("FILE_LOG_TEST");
+	logA = WLog_Get("com.test.ChannelA");
+	logB = WLog_Get("com.test.ChannelB");
 
-	WLog_SetLogLevel(log, WLOG_WARN);
+	WLog_SetLogLevel(logA, WLOG_INFO);
+	WLog_SetLogLevel(logB, WLOG_ERROR);
 
-	WLog_SetLogAppenderType(log, WLOG_APPENDER_FILE);
-	appender = WLog_GetLogAppender(log);
+	WLog_Print(logA, WLOG_INFO, "this is a test");
+	WLog_Print(logA, WLOG_WARN, "this is a %dnd %s", 2, "test");
+	WLog_Print(logA, WLOG_ERROR, "this is an error");
+	WLog_Print(logA, WLOG_TRACE, "this is a trace output");
 
-	layout = WLog_GetLogLayout(log);
-	WLog_Layout_SetPrefixFormat(log, layout, "[%lv:%mn] [%fl|%fn|%ln] - ");
+	WLog_Print(logB, WLOG_INFO, "just some info");
+	WLog_Print(logB, WLOG_WARN, "we're warning a %dnd %s", 2, "time");
+	WLog_Print(logB, WLOG_ERROR, "we've got an error");
+	WLog_Print(logB, WLOG_TRACE, "leaving a trace behind");
 
-	WLog_FileAppender_SetOutputFileName(log, (wLogFileAppender*) appender, "/tmp/wlog_test.log");
-	WLog_OpenAppender(log);
+	WLog_CloseAppender(root);
 
-	WLog_Print(log, WLOG_INFO, "this is a test");
-	WLog_Print(log, WLOG_WARN, "this is a %dnd %s", 2, "test");
-	WLog_Print(log, WLOG_ERROR, "this is an error");
-	WLog_Print(log, WLOG_TRACE, "this is a trace output");
+	WLog_Uninit();
 
-	WLog_CloseAppender(log);
-	WLog_Free(log);
+	if ((wlog_file = GetCombinedPath(tmp_path, "test_w.log")))
+		DeleteFileA(wlog_file);
 
-	return 0;
+	result = 0;
+out:
+	free(wlog_file);
+	free(tmp_path);
+
+	return result;
 }

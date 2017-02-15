@@ -3,6 +3,8 @@
  * T.125 Multipoint Communication Service (MCS) Protocol
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +22,12 @@
 #ifndef __MCS_H
 #define __MCS_H
 
+typedef struct rdp_mcs rdpMcs;
+
 #include "transport.h"
 
 #include <freerdp/crypto/ber.h>
-
+#include <freerdp/api.h>
 #include <freerdp/types.h>
 
 #include <winpr/stream.h>
@@ -50,6 +54,15 @@ enum MCS_Result
 	MCS_Result_unspecified_failure = 14,
 	MCS_Result_user_rejected = 15,
 	MCS_Result_enum_length = 16
+};
+
+enum MCS_Reason
+{
+	MCS_Reason_domain_disconnected = 0,
+	MCS_Reason_provider_initiated = 1,
+	MCS_Reason_token_purged = 2,
+	MCS_Reason_user_requested = 3,
+	MCS_Reason_channel_purged = 4
 };
 
 enum DomainMCSPDU
@@ -112,47 +125,80 @@ typedef struct
 	UINT32 protocolVersion;
 } DomainParameters;
 
+struct rdp_mcs_channel
+{
+	char Name[8];
+	UINT32 options;
+	int ChannelId;
+	BOOL joined;
+	void* handle;
+};
+typedef struct rdp_mcs_channel rdpMcsChannel;
+
 struct rdp_mcs
 {
-	UINT16 user_id;
-	struct rdp_transport* transport;
+	rdpTransport* transport;
+	rdpSettings* settings;
+
+	UINT16 userId;
+	UINT16 baseChannelId;
+	UINT16 messageChannelId;
+
 	DomainParameters domainParameters;
 	DomainParameters targetParameters;
 	DomainParameters minimumParameters;
 	DomainParameters maximumParameters;
 
-	BOOL user_channel_joined;
-	BOOL global_channel_joined;
+	BOOL userChannelJoined;
+	BOOL globalChannelJoined;
+	BOOL messageChannelJoined;
+
+	UINT32 channelCount;
+	UINT32 channelMaxCount;
+	rdpMcsChannel* channels;
 };
-typedef struct rdp_mcs rdpMcs;
 
 #define MCS_SEND_DATA_HEADER_MAX_LENGTH		8
 
 #define MCS_TYPE_CONNECT_INITIAL		0x65
 #define MCS_TYPE_CONNECT_RESPONSE		0x66
 
-void mcs_write_connect_initial(wStream* s, rdpMcs* mcs, wStream* user_data);
-void mcs_write_connect_response(wStream* s, rdpMcs* mcs, wStream* user_data);
+FREERDP_LOCAL BOOL mcs_merge_domain_parameters(DomainParameters*
+        targetParameters, DomainParameters* minimumParameters,
+        DomainParameters* maximumParameters, DomainParameters* pOutParameters);
 
-BOOL mcs_recv_connect_initial(rdpMcs* mcs, wStream* s);
-BOOL mcs_send_connect_initial(rdpMcs* mcs);
-BOOL mcs_recv_connect_response(rdpMcs* mcs, wStream* s);
-BOOL mcs_send_connect_response(rdpMcs* mcs);
-BOOL mcs_recv_erect_domain_request(rdpMcs* mcs, wStream* s);
-BOOL mcs_send_erect_domain_request(rdpMcs* mcs);
-BOOL mcs_recv_attach_user_request(rdpMcs* mcs, wStream* s);
-BOOL mcs_send_attach_user_request(rdpMcs* mcs);
-BOOL mcs_recv_attach_user_confirm(rdpMcs* mcs, wStream* s);
-BOOL mcs_send_attach_user_confirm(rdpMcs* mcs);
-BOOL mcs_recv_channel_join_request(rdpMcs* mcs, wStream* s, UINT16* channel_id);
-BOOL mcs_send_channel_join_request(rdpMcs* mcs, UINT16 channel_id);
-BOOL mcs_recv_channel_join_confirm(rdpMcs* mcs, wStream* s, UINT16* channel_id);
-BOOL mcs_send_channel_join_confirm(rdpMcs* mcs, UINT16 channel_id);
-BOOL mcs_send_disconnect_provider_ultimatum(rdpMcs* mcs);
-BOOL mcs_read_domain_mcspdu_header(wStream* s, enum DomainMCSPDU* domainMCSPDU, UINT16* length);
-void mcs_write_domain_mcspdu_header(wStream* s, enum DomainMCSPDU domainMCSPDU, UINT16 length, BYTE options);
+FREERDP_LOCAL BOOL mcs_write_connect_initial(wStream* s, rdpMcs* mcs,
+        wStream* userData);
+FREERDP_LOCAL BOOL mcs_write_connect_response(wStream* s, rdpMcs* mcs,
+        wStream* userData);
 
-rdpMcs* mcs_new(rdpTransport* transport);
-void mcs_free(rdpMcs* mcs);
+FREERDP_LOCAL BOOL mcs_recv_connect_initial(rdpMcs* mcs, wStream* s);
+FREERDP_LOCAL BOOL mcs_send_connect_initial(rdpMcs* mcs);
+FREERDP_LOCAL BOOL mcs_recv_connect_response(rdpMcs* mcs, wStream* s);
+FREERDP_LOCAL BOOL mcs_send_connect_response(rdpMcs* mcs);
+FREERDP_LOCAL BOOL mcs_recv_erect_domain_request(rdpMcs* mcs, wStream* s);
+FREERDP_LOCAL BOOL mcs_send_erect_domain_request(rdpMcs* mcs);
+FREERDP_LOCAL BOOL mcs_recv_attach_user_request(rdpMcs* mcs, wStream* s);
+FREERDP_LOCAL BOOL mcs_send_attach_user_request(rdpMcs* mcs);
+FREERDP_LOCAL BOOL mcs_recv_attach_user_confirm(rdpMcs* mcs, wStream* s);
+FREERDP_LOCAL BOOL mcs_send_attach_user_confirm(rdpMcs* mcs);
+FREERDP_LOCAL BOOL mcs_recv_channel_join_request(rdpMcs* mcs, wStream* s,
+        UINT16* channelId);
+FREERDP_LOCAL BOOL mcs_send_channel_join_request(rdpMcs* mcs, UINT16 channelId);
+FREERDP_LOCAL BOOL mcs_recv_channel_join_confirm(rdpMcs* mcs, wStream* s,
+        UINT16* channelId);
+FREERDP_LOCAL BOOL mcs_send_channel_join_confirm(rdpMcs* mcs, UINT16 channelId);
+FREERDP_LOCAL BOOL mcs_recv_disconnect_provider_ultimatum(rdpMcs* mcs,
+        wStream* s, int* reason);
+FREERDP_LOCAL BOOL mcs_send_disconnect_provider_ultimatum(rdpMcs* mcs);
+FREERDP_LOCAL BOOL mcs_read_domain_mcspdu_header(wStream* s,
+        enum DomainMCSPDU* domainMCSPDU, UINT16* length);
+FREERDP_LOCAL void mcs_write_domain_mcspdu_header(wStream* s,
+        enum DomainMCSPDU domainMCSPDU, UINT16 length, BYTE options);
+
+FREERDP_LOCAL BOOL mcs_client_begin(rdpMcs* mcs);
+
+FREERDP_LOCAL rdpMcs* mcs_new(rdpTransport* transport);
+FREERDP_LOCAL void mcs_free(rdpMcs* mcs);
 
 #endif /* __MCS_H */

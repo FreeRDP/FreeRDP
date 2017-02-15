@@ -3,6 +3,8 @@
  * X11 Client
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 Thincast Technologies GmbH
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +29,25 @@ typedef struct xf_context xfContext;
 #include "xf_window.h"
 #include "xf_monitor.h"
 #include "xf_channels.h"
+
+#include <freerdp/gdi/gdi.h>
+#include <freerdp/codec/rfx.h>
+#include <freerdp/codec/nsc.h>
+#include <freerdp/codec/clear.h>
+#include <freerdp/codec/color.h>
+#include <freerdp/codec/bitmap.h>
+#include <freerdp/codec/h264.h>
+#include <freerdp/codec/progressive.h>
+#include <freerdp/codec/region.h>
+
+struct xf_FullscreenMonitors
+{
+	UINT32 top;
+	UINT32 bottom;
+	UINT32 left;
+	UINT32 right;
+};
+typedef struct xf_FullscreenMonitors xfFullscreenMonitors;
 
 struct xf_WorkArea
 {
@@ -58,22 +79,27 @@ struct xf_glyph
 };
 typedef struct xf_glyph xfGlyph;
 
+typedef struct xf_clipboard xfClipboard;
+
+/* Value of the first logical button number in X11 which must be */
+/* subtracted to go from a button number in X11 to an index into */
+/* a per-button array.                                           */
+#define BUTTON_BASE Button1
+
+/* Number of buttons that are mapped from X11 to RDP button events. */
+#define NUM_BUTTONS_MAPPED 3
+
 struct xf_context
 {
 	rdpContext context;
 	DEFINE_RDP_CLIENT_COMMON();
 
-	freerdp* instance;
-	rdpSettings* settings;
-
 	GC gc;
-	int bpp;
 	int xfds;
 	int depth;
-	int width;
-	int height;
-	int srcBpp;
+
 	GC gc_mono;
+	BOOL invert;
 	Screen* screen;
 	XImage* image;
 	Pixmap primary;
@@ -87,22 +113,25 @@ struct xf_context
 	int scanline_pad;
 	BOOL big_endian;
 	BOOL fullscreen;
+	BOOL decorations;
 	BOOL grab_keyboard;
 	BOOL unobscured;
 	BOOL debug;
+	HANDLE x11event;
 	xfWindow* window;
+	xfAppWindow* appWindow;
 	xfPointer* pointer;
 	xfWorkArea workArea;
+	xfFullscreenMonitors fullscreenMonitors;
 	int current_desktop;
 	BOOL remote_app;
-	BOOL disconnect;
-	HCLRCONV clrconv;
 	HANDLE mutex;
 	BOOL UseXThreads;
 	BOOL cursorHidden;
 
 	HGDI_DC hdc;
-	BYTE* primary_buffer;
+	UINT32 bitmap_size;
+	BYTE* bitmap_buffer;
 
 	BOOL frame_begin;
 	UINT16 frame_x1;
@@ -110,33 +139,49 @@ struct xf_context
 	UINT16 frame_x2;
 	UINT16 frame_y2;
 
-	int originalWidth;
-	int originalHeight;
-	int currentWidth;
-	int currentHeight;
-	int XInputOpcode;
-	BOOL enableScaling;
+	UINT8 red_shift_l;
+	UINT8 red_shift_r;
+	UINT8 green_shift_l;
+	UINT8 green_shift_r;
+	UINT8 blue_shift_l;
+	UINT8 blue_shift_r;
 
+	int XInputOpcode;
+
+	int savedWidth;
+	int savedHeight;
+	int savedPosX;
+	int savedPosY;
+
+#ifdef WITH_XRENDER
+	int scaledWidth;
+	int scaledHeight;
 	int offset_x;
 	int offset_y;
+#endif
 
 	BOOL focused;
 	BOOL use_xinput;
 	BOOL mouse_active;
 	BOOL suppress_output;
 	BOOL fullscreen_toggle;
-	UINT32 keyboard_layout_id;
-	BOOL pressed_keys[256];
-	XModifierKeymap* modifier_map;
+	BOOL controlToggle;
+	UINT32 KeyboardLayout;
+	BOOL KeyboardState[256];
+	XModifierKeymap* modifierMap;
+	wArrayList* keyCombinations;
+	wArrayList* xevents;
+	char* actionScript;
+
 	XSetWindowAttributes attribs;
 	BOOL complex_regions;
 	VIRTUAL_SCREEN vscreen;
-	BYTE* bmp_codec_none;
-	BYTE* bmp_codec_nsc;
-	void* rfx_context;
-	void* nsc_context;
 	void* xv_context;
-	void* clipboard_context;
+	TsmfClientContext* tsmf;
+	xfClipboard* clipboard;
+	CliprdrClientContext* cliprdr;
+
+	Atom UTF8_STRING;
 
 	Atom _NET_WM_ICON;
 	Atom _MOTIF_WM_HINTS;
@@ -145,8 +190,15 @@ struct xf_context
 
 	Atom _NET_WM_STATE;
 	Atom _NET_WM_STATE_FULLSCREEN;
+	Atom _NET_WM_STATE_MAXIMIZED_HORZ;
+	Atom _NET_WM_STATE_MAXIMIZED_VERT;
 	Atom _NET_WM_STATE_SKIP_TASKBAR;
 	Atom _NET_WM_STATE_SKIP_PAGER;
+
+	Atom _NET_WM_FULLSCREEN_MONITORS;
+
+	Atom _NET_WM_NAME;
+	Atom _NET_WM_PID;
 
 	Atom _NET_WM_WINDOW_TYPE;
 	Atom _NET_WM_WINDOW_TYPE_NORMAL;
@@ -164,11 +216,25 @@ struct xf_context
 
 	/* Channels */
 	RdpeiClientContext* rdpei;
+	RdpgfxClientContext* gfx;
+	EncomspClientContext* encomsp;
+
+	RailClientContext* rail;
+	wHashTable* railWindows;
+
+	BOOL xkbAvailable;
+	BOOL xrenderAvailable;
+
+	/* value to be sent over wire for each logical client mouse button */
+	int button_map[NUM_BUTTONS_MAPPED];
 };
 
-void xf_create_window(xfContext* xfc);
+BOOL xf_create_window(xfContext* xfc);
 void xf_toggle_fullscreen(xfContext* xfc);
-BOOL xf_post_connect(freerdp* instance);
+void xf_toggle_control(xfContext* xfc);
+
+void xf_encomsp_init(xfContext* xfc, EncomspClientContext* encomsp);
+void xf_encomsp_uninit(xfContext* xfc, EncomspClientContext* encomsp);
 
 enum XF_EXIT_CODE
 {
@@ -207,6 +273,7 @@ enum XF_EXIT_CODE
 	XF_EXIT_MEMORY = 129,
 	XF_EXIT_PROTOCOL = 130,
 	XF_EXIT_CONN_FAILED = 131,
+	XF_EXIT_AUTH_FAILURE = 132,
 
 	XF_EXIT_UNKNOWN = 255,
 };
@@ -214,8 +281,8 @@ enum XF_EXIT_CODE
 void xf_lock_x11(xfContext* xfc, BOOL display);
 void xf_unlock_x11(xfContext* xfc, BOOL display);
 
-void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h, BOOL scale);
-void xf_transform_window(xfContext* xfc);
+BOOL xf_picture_transform_required(xfContext* xfc);
+void xf_draw_screen(xfContext* xfc, int x, int y, int w, int h);
 
 FREERDP_API DWORD xf_exit_code_from_disconnect_reason(DWORD reason);
 

@@ -26,23 +26,98 @@
 
 #include <winpr/winpr.h>
 
+#include <winpr/spec.h>
 #include <winpr/string.h>
-#include <winpr/memory.h>
-
-/* Data Alignment */
+#include <winpr/heap.h>
 
 #ifndef _WIN32
+
+#ifndef _rotl
+static INLINE UINT32 _rotl(UINT32 value, int shift) {
+	return (value << shift) | (value >> (32 - shift));
+}
+#endif
+
+#ifndef _rotl64
+static INLINE UINT64 _rotl64(UINT64 value, int shift) {
+	return (value << shift) | (value >> (64 - shift));
+}
+#endif
+
+#ifndef _rotr
+static INLINE UINT32 _rotr(UINT32 value, int shift) {
+	return (value >> shift) | (value << (32 - shift));
+}
+#endif
+
+#ifndef _rotr64
+static INLINE UINT64 _rotr64(UINT64 value, int shift) {
+	return (value >> shift) | (value << (64 - shift));
+}
+#endif
+
+#if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2))
+
+#define _byteswap_ulong(_val)	__builtin_bswap32(_val)
+#define _byteswap_uint64(_val)	__builtin_bswap64(_val)
+
+#else
+
+static INLINE UINT32 _byteswap_ulong(UINT32 _val) {
+	return  (((_val) >> 24) | \
+		(((_val) & 0x00FF0000) >> 8) | \
+		(((_val) & 0x0000FF00) << 8) | \
+		((_val) << 24));
+}
+
+static INLINE UINT64 _byteswap_uint64(UINT64 _val) {
+	return  (((_val) << 56) | \
+		(((_val) << 40) & 0xFF000000000000) | \
+		(((_val) << 24) & 0xFF0000000000) | \
+		(((_val) << 8)  & 0xFF00000000) | \
+		(((_val) >> 8)  & 0xFF000000) | \
+		(((_val) >> 24) & 0xFF0000) | \
+		(((_val) >> 40) & 0xFF00) | \
+		((_val)  >> 56));
+}
+
+#endif
+
+#if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 8))
+
+#define _byteswap_ushort(_val)	__builtin_bswap16(_val)
+
+#else
+
+static INLINE UINT16 _byteswap_ushort(UINT16 _val) {
+	return (((_val) >> 8) | ((_val) << 8));
+}
+
+#endif
+
+
+
+#define CopyMemory(Destination, Source, Length)		memcpy((Destination), (Source), (Length))
+#define MoveMemory(Destination, Source, Length)		memmove((Destination), (Source), (Length))
+#define	FillMemory(Destination, Length, Fill)		memset((Destination), (Fill), (Length))
+#define ZeroMemory(Destination, Length)			memset((Destination), 0, (Length))
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+WINPR_API PVOID SecureZeroMemory(PVOID ptr, SIZE_T cnt);
+
+#ifdef __cplusplus
+}
+#endif
+
+/* Data Alignment */
 
 #ifndef _ERRNO_T_DEFINED
 #define _ERRNO_T_DEFINED
 typedef int errno_t;
 #endif
-
-#define RTL_NUMBER_OF_V1(A)	(sizeof(A) / sizeof((A)[0]))
-#define RTL_NUMBER_OF_V2(A)	RTL_NUMBER_OF_V1(A)
-
-#define ARRAYSIZE(A)		RTL_NUMBER_OF_V2(A)
-#define _ARRAYSIZE(A)		RTL_NUMBER_OF_V1(A)
 
 #ifdef __cplusplus
 extern "C" {

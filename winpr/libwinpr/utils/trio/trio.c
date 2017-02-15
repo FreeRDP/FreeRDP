@@ -901,8 +901,8 @@ typedef struct _trio_userdef_t {
  * Internal Variables
  *
  *************************************************************************/
-
-static TRIO_CONST char rcsid[] = "@(#)$Id: trio.c,v 1.131 2010/09/12 11:08:08 breese Exp $";
+/* Unused but kept for reference */
+/* static TRIO_CONST char rcsid[] = "@(#)$Id: trio.c,v 1.131 2010/09/12 11:08:08 breese Exp $"; */
 
 #if TRIO_FEATURE_FLOAT
 /*

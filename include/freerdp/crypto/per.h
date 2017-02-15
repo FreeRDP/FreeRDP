@@ -24,6 +24,10 @@
 
 #include <winpr/stream.h>
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 FREERDP_API BOOL per_read_length(wStream* s, UINT16* length);
 FREERDP_API void per_write_length(wStream* s, int length);
 FREERDP_API BOOL per_read_choice(wStream* s, BYTE* choice);
@@ -46,5 +50,9 @@ FREERDP_API BOOL per_read_octet_string(wStream* s, BYTE* oct_str, int length, in
 FREERDP_API void per_write_octet_string(wStream* s, BYTE* oct_str, int length, int min);
 FREERDP_API BOOL per_read_numeric_string(wStream* s, int min);
 FREERDP_API void per_write_numeric_string(wStream* s, BYTE* num_str, int length, int min);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif /* FREERDP_CRYPTO_PER_H */

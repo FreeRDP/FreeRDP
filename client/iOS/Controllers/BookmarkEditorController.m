@@ -1,7 +1,7 @@
 /*
  Bookmark editor controller
  
- Copyright 2013 Thinstuff Technologies GmbH, Author: Martin Fleisz
+ Copyright 2013 Thincast Technologies GmbH, Author: Martin Fleisz
  
  This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
  If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -39,11 +39,7 @@
             _bookmark = [bookmark copyWithUUID];
         _params = [_bookmark params];
 
-		// if this is a TSX Connect bookmark - disable server settings
-		if([_bookmark isKindOfClass:NSClassFromString(@"TSXConnectComputerBookmark")])
-			_display_server_settings = NO;
-		else
-			_display_server_settings = YES;
+        _display_server_settings = YES;
     }
     return self;
 }
@@ -348,20 +344,17 @@
     [[self view] endEditing:NO];
     
     // verify that bookmark is complete (only for manual bookmarks)
-    if (![_bookmark isKindOfClass:NSClassFromString(@"TSXConnectComputerBookmark")])
+    if ([[_bookmark label] length] == 0 || [[_params StringForKey:@"hostname"] length] == 0 || [_params intForKey:@"port"] == 0)
     {
-        if ([[_bookmark label] length] == 0 || [[_params StringForKey:@"hostname"] length] == 0 || [_params intForKey:@"port"] == 0)        
-        {
-            BlockAlertView* alertView = [BlockAlertView alertWithTitle:NSLocalizedString(@"Cancel without saving?", @"Incomplete bookmark error title") message:NSLocalizedString(@"Press 'Cancel' to abort!\nPress 'Continue' to specify the required fields!", @"Incomplete bookmark error message")];
-            [alertView setCancelButtonWithTitle:NSLocalizedString(@"Cancel", @"Cancel Button") block:^{
-                // cancel bookmark editing and return to previous view controller
-                [[self navigationController] popViewControllerAnimated:YES];
-            }];
-            [alertView addButtonWithTitle:NSLocalizedString(@"Continue", @"Continue Button") block:nil];
-            [alertView show];
-            return;
-        }        
-    }        
+        BlockAlertView* alertView = [BlockAlertView alertWithTitle:NSLocalizedString(@"Cancel without saving?", @"Incomplete bookmark error title") message:NSLocalizedString(@"Press 'Cancel' to abort!\nPress 'Continue' to specify the required fields!", @"Incomplete bookmark error message")];
+        [alertView setCancelButtonWithTitle:NSLocalizedString(@"Cancel", @"Cancel Button") block:^{
+            // cancel bookmark editing and return to previous view controller
+            [[self navigationController] popViewControllerAnimated:YES];
+        }];
+        [alertView addButtonWithTitle:NSLocalizedString(@"Continue", @"Continue Button") block:nil];
+        [alertView show];
+        return;
+    }
     
     // commit bookmark
     if ([[self delegate] respondsToSelector:@selector(commitBookmark:)])

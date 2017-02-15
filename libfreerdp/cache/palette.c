@@ -25,54 +25,62 @@
 
 #include <winpr/crt.h>
 
+#include <freerdp/log.h>
 #include <freerdp/cache/palette.h>
 
-static void update_gdi_cache_color_table(rdpContext* context,
-		CACHE_COLOR_TABLE_ORDER* cache_color_table)
+#define TAG FREERDP_TAG("cache.palette")
+
+static void* palette_cache_get(rdpPaletteCache* palette, UINT32 index);
+static void palette_cache_put(rdpPaletteCache* palette, UINT32 index, void* entry);
+
+static BOOL update_gdi_cache_color_table(rdpContext* context,
+					 const CACHE_COLOR_TABLE_ORDER* cacheColorTable)
 {
 	UINT32* colorTable;
 	rdpCache* cache = context->cache;
 
 	colorTable = (UINT32*) malloc(sizeof(UINT32) * 256);
-	CopyMemory(colorTable, cache_color_table->colorTable, sizeof(UINT32) * 256);
+	if (!colorTable)
+		return FALSE;
+	CopyMemory(colorTable, cacheColorTable->colorTable, sizeof(UINT32) * 256);
 
-	palette_cache_put(cache->palette, cache_color_table->cacheIndex, (void*) colorTable);
+	palette_cache_put(cache->palette, cacheColorTable->cacheIndex, (void*) colorTable);
+	return TRUE;
 }
 
-void* palette_cache_get(rdpPaletteCache* palette_cache, UINT32 index)
+void* palette_cache_get(rdpPaletteCache* paletteCache, UINT32 index)
 {
 	void* entry;
 
-	if (index >= palette_cache->maxEntries)
+	if (index >= paletteCache->maxEntries)
 	{
-		fprintf(stderr, "invalid color table index: 0x%04X\n", index);
+		WLog_ERR(TAG,  "invalid color table index: 0x%08"PRIX32"", index);
 		return NULL;
 	}
 
-	entry = palette_cache->entries[index].entry;
-	if (entry == NULL)
+	entry = paletteCache->entries[index].entry;
+
+	if (!entry)
 	{
-		fprintf(stderr, "invalid color table at index: 0x%04X\n", index);
+		WLog_ERR(TAG,  "invalid color table at index: 0x%08"PRIX32"", index);
 		return NULL;
 	}
 
 	return entry;
 }
 
-void palette_cache_put(rdpPaletteCache* palette_cache, UINT32 index, void* entry)
+void palette_cache_put(rdpPaletteCache* paletteCache, UINT32 index, void* entry)
 {
-	if (index >= palette_cache->maxEntries)
+	if (index >= paletteCache->maxEntries)
 	{
-		fprintf(stderr, "invalid color table index: 0x%04X\n", index);
-		if (entry)
-			free(entry);
+		WLog_ERR(TAG,  "invalid color table index: 0x%08"PRIX32"", index);
+		free(entry);
 		return;
 	}
 
-	if(NULL == palette_cache->entries[index].entry)
-		free(palette_cache->entries[index].entry);
+	free(paletteCache->entries[index].entry);
 
-	palette_cache->entries[index].entry = entry;
+	paletteCache->entries[index].entry = entry;
 }
 
 void palette_cache_register_callbacks(rdpUpdate* update)
@@ -82,34 +90,30 @@ void palette_cache_register_callbacks(rdpUpdate* update)
 
 rdpPaletteCache* palette_cache_new(rdpSettings* settings)
 {
-	rdpPaletteCache* palette_cache;
+	rdpPaletteCache* paletteCache;
 
-	palette_cache = (rdpPaletteCache*) malloc(sizeof(rdpPaletteCache));
-	ZeroMemory(palette_cache, sizeof(rdpPaletteCache));
+	paletteCache = (rdpPaletteCache*) calloc(1, sizeof(rdpPaletteCache));
 
-	if (palette_cache != NULL)
+	if (paletteCache)
 	{
-		palette_cache->settings = settings;
-		palette_cache->maxEntries = 6;
-		palette_cache->entries = (PALETTE_TABLE_ENTRY*) malloc(sizeof(PALETTE_TABLE_ENTRY) * palette_cache->maxEntries);
-		ZeroMemory(palette_cache->entries, sizeof(PALETTE_TABLE_ENTRY) * palette_cache->maxEntries);
+		paletteCache->settings = settings;
+		paletteCache->maxEntries = 6;
+		paletteCache->entries = (PALETTE_TABLE_ENTRY*) calloc(paletteCache->maxEntries, sizeof(PALETTE_TABLE_ENTRY));
 	}
 
-	return palette_cache;
+	return paletteCache;
 }
 
-void palette_cache_free(rdpPaletteCache* palette_cache)
+void palette_cache_free(rdpPaletteCache* paletteCache)
 {
-	if (palette_cache != NULL)
+	if (paletteCache)
 	{
-		int i;
+		UINT32 i;
 
-		for (i=0; i<palette_cache->maxEntries; i++)
-		{
-			if (palette_cache->entries[i].entry)
-				free(palette_cache->entries[i].entry);
-		}
-		free(palette_cache->entries);
-		free(palette_cache);
+		for (i = 0; i< paletteCache->maxEntries; i++)
+			free(paletteCache->entries[i].entry);
+
+		free(paletteCache->entries);
+		free(paletteCache);
 	}
 }

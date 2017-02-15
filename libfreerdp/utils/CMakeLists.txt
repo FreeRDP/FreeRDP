@@ -19,52 +19,29 @@ set(MODULE_NAME "freerdp-utils")
 set(MODULE_PREFIX "FREERDP_UTILS")
 
 set(${MODULE_PREFIX}_SRCS
-	event.c
-	bitmap.c
-	list.c
 	passphrase.c
 	pcap.c
 	profiler.c
-	rail.c
+	ringbuffer.c
 	signal.c
-	stopwatch.c
-	svc_plugin.c
-	tcp.c
-	time.c
-	uds.c)
+	stopwatch.c)
 
 if(NOT WIN32)
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} msusb.c)
 endif()
 
-add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	SOURCES ${${MODULE_PREFIX}_SRCS})
+freerdp_module_add(${${MODULE_PREFIX}_SRCS})
 
-set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION} PREFIX "lib")
-
-set(${MODULE_PREFIX}_LIBS
-	${CMAKE_THREAD_LIBS_INIT}
-	${CMAKE_DL_LIBS})
+freerdp_library_add(${CMAKE_THREAD_LIBS_INIT})
 
 if(WIN32)
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ws2_32)
+	freerdp_library_add(ws2_32)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES SunOS)
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} rt)
+	freerdp_library_add(rt)
 endif()
 
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE winpr
-	MODULES winpr-crt winpr-synch winpr-thread winpr-utils winpr-path)
-
-if(MONOLITHIC_BUILD)
-	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
-else()
-	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(BUILD_TESTING)
+	add_subdirectory(test)
 endif()
-
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")

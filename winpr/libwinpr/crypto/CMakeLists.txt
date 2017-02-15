@@ -15,34 +15,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "winpr-crypto")
-set(MODULE_PREFIX "WINPR_CRYPTO")
-
-set(${MODULE_PREFIX}_SRCS
+winpr_module_add(
+	hash.c
+	rand.c
+	cipher.c
+	cert.c
 	crypto.c
-	cert.c)
+	crypto.h)
 
-if(MSVC AND (NOT MONOLITHIC_BUILD))
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
+if(OPENSSL_FOUND)
+	winpr_include_directory_add(${OPENSSL_INCLUDE_DIR})
+	winpr_library_add(${OPENSSL_LIBRARIES})
 endif()
 
-add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	SOURCES ${${MODULE_PREFIX}_SRCS})
-
-set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
+if(MBEDTLS_FOUND)
+	winpr_include_directory_add(${MBEDTLS_INCLUDE_DIR})
+	winpr_library_add(${MBEDTLS_LIBRARIES})
+endif()
 
 if(WIN32)
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} crypt32)
+	winpr_library_add(crypt32)
 endif()
-
-if(MONOLITHIC_BUILD)
-
-else()
-	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
-endif()
-
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR")
 
 if(BUILD_TESTING)
 	add_subdirectory(test)

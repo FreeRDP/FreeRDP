@@ -5,6 +5,8 @@
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2011 Roman Barabanov <romanbarabanov@gmail.com>
  * Copyright 2011 Vic Lee
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,22 +42,26 @@ const char* const RAIL_ORDER_TYPE_STRINGS[] =
 	"Language Bar Info",
 	"Get Application ID Request",
 	"Get Application ID Response",
-	"Execute Result"
+	"Execute Result",
+	"",
+	"",
+	"",
+	"",
+	"",
+	""
 };
-
 
 void rail_string_to_unicode_string(char* string, RAIL_UNICODE_STRING* unicode_string)
 {
 	WCHAR* buffer = NULL;
 	int length = 0;
 
-	if (unicode_string->string != NULL)
-		free(unicode_string->string);
+	free(unicode_string->string);
 
 	unicode_string->string = NULL;
 	unicode_string->length = 0;
 
-	if (string == NULL || strlen(string) < 1)
+	if (!string || strlen(string) < 1)
 		return;
 
 	length = ConvertToUnicode(CP_UTF8, 0, string, -1, &buffer, 0) * 2;
@@ -64,13 +70,20 @@ void rail_string_to_unicode_string(char* string, RAIL_UNICODE_STRING* unicode_st
 	unicode_string->length = (UINT16) length;
 }
 
-BOOL rail_read_pdu_header(wStream* s, UINT16* orderType, UINT16* orderLength)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_read_pdu_header(wStream* s, UINT16* orderType, UINT16* orderLength)
 {
 	if (Stream_GetRemainingLength(s) < 4)
-		return FALSE;
+		return ERROR_INVALID_DATA;
+
 	Stream_Read_UINT16(s, *orderType); /* orderType (2 bytes) */
 	Stream_Read_UINT16(s, *orderLength); /* orderLength (2 bytes) */
-	return TRUE;
+
+	return CHANNEL_RC_OK;
 }
 
 void rail_write_pdu_header(wStream* s, UINT16 orderType, UINT16 orderLength)
@@ -79,20 +92,29 @@ void rail_write_pdu_header(wStream* s, UINT16 orderType, UINT16 orderLength)
 	Stream_Write_UINT16(s, orderLength); /* orderLength (2 bytes) */
 }
 
-wStream* rail_pdu_init(int length)
+wStream* rail_pdu_init(size_t length)
 {
 	wStream* s;
 	s = Stream_New(NULL, length + RAIL_PDU_HEADER_LENGTH);
+	if (!s)
+		return NULL;
 	Stream_Seek(s, RAIL_PDU_HEADER_LENGTH);
 	return s;
 }
 
-BOOL rail_read_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_read_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake)
 {
 	if (Stream_GetRemainingLength(s) < 4)
-		return FALSE;
+		return ERROR_INVALID_DATA;
+
 	Stream_Read_UINT32(s, handshake->buildNumber); /* buildNumber (4 bytes) */
-	return TRUE;
+
+	return CHANNEL_RC_OK;
 }
 
 void rail_write_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake)
@@ -100,3 +122,24 @@ void rail_write_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake)
 	Stream_Write_UINT32(s, handshake->buildNumber); /* buildNumber (4 bytes) */
 }
 
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+UINT rail_read_handshake_ex_order(wStream* s, RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
+{
+	if (Stream_GetRemainingLength(s) < 8)
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT32(s, handshakeEx->buildNumber); /* buildNumber (4 bytes) */
+	Stream_Read_UINT32(s, handshakeEx->railHandshakeFlags); /* railHandshakeFlags (4 bytes) */
+
+	return CHANNEL_RC_OK;
+}
+
+void rail_write_handshake_ex_order(wStream* s, RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
+{
+	Stream_Write_UINT32(s, handshakeEx->buildNumber); /* buildNumber (4 bytes) */
+	Stream_Write_UINT32(s, handshakeEx->railHandshakeFlags); /* railHandshakeFlags (4 bytes) */
+}

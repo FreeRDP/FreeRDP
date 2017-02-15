@@ -18,8 +18,11 @@
  */
 
 #import "PasswordDialog.h"
+#import <freerdp/client/cmdline.h>
 
-@interface PasswordDialog ()
+@interface PasswordDialog()
+
+	@property BOOL modalCode;
 
 @end
 
@@ -31,6 +34,8 @@
 @synthesize serverHostname;
 @synthesize username;
 @synthesize password;
+@synthesize domain;
+@synthesize modalCode;
 
 - (id)init
 {
@@ -42,31 +47,74 @@
 	[super windowDidLoad];
 	// Implement this method to handle any initialization after your window controller's window has been loaded from its nib file.
 	[self.window setTitle:self.serverHostname];
-	[messageLabel setStringValue:[NSString stringWithFormat:@"Authenticate to %@", self.serverHostname]];
+	[messageLabel setStringValue:[NSString stringWithFormat:@"Authenticate to %@",
+	                              self.serverHostname]];
+	NSMutableString* domainUser = [[NSMutableString alloc] initWithString:@""];
+
+	if (self.domain != nil
+	    && [[self.domain stringByTrimmingCharactersInSet:[NSCharacterSet
+	            whitespaceCharacterSet]] length] > 0)
+	{
+		[domainUser appendFormat:@"%@\\", self.domain];
+	}
+
 	if (self.username != nil)
 	{
-		[usernameText setStringValue:self.username];
+		[domainUser appendString:self.username];
 		[self.window makeFirstResponder:passwordText];
 	}
+
+	[usernameText setStringValue:domainUser];
 }
 
-- (IBAction)onOK:(NSObject *)sender
+- (IBAction)onOK:(NSObject*)sender
 {
-	self.username = self.usernameText.stringValue;
+	char* submittedUser = NULL;
+	char* submittedDomain = NULL;
+
+	if (freerdp_parse_username([self.usernameText.stringValue cStringUsingEncoding:
+	                            NSUTF8StringEncoding], &submittedUser, &submittedDomain))
+	{
+		self.username = [NSString stringWithCString: submittedUser encoding:
+		                 NSUTF8StringEncoding];
+		self.domain = [NSString stringWithCString: submittedDomain encoding:
+		               NSUTF8StringEncoding];
+	}
+	else
+	{
+		self.username = self.usernameText.stringValue;
+	}
+
 	self.password = self.passwordText.stringValue;
-	[self.window orderOut:nil];
 	[NSApp stopModalWithCode:TRUE];
 }
 
-- (IBAction)onCancel:(NSObject *)sender
+- (IBAction)onCancel:(NSObject*)sender
 {
-	[self.window orderOut:nil];
 	[NSApp stopModalWithCode:FALSE];
 }
 
-- (BOOL)runModal
+- (BOOL)runModal:(NSWindow*)mainWindow
 {
-	return [NSApp runModalForWindow:self.window];
+	if ([mainWindow respondsToSelector:@selector(beginSheet:completionHandler:)])
+	{
+		[mainWindow beginSheet:self.window completionHandler:nil];
+		self.modalCode = [NSApp runModalForWindow: self.window];
+		[mainWindow endSheet: self.window];
+	}
+	else
+	{
+		[NSApp beginSheet: self.window
+		 modalForWindow: mainWindow
+		 modalDelegate: nil
+		 didEndSelector: nil
+		 contextInfo: nil];
+		self.modalCode = [NSApp runModalForWindow: self.window];
+		[NSApp endSheet: self.window];
+	}
+
+	[self.window orderOut:nil];
+	return self.modalCode;
 }
 
 - (void)dealloc
@@ -77,7 +125,7 @@
 	[serverHostname release];
 	[username release];
 	[password release];
-
+	[domain release];
 	[super dealloc];
 }
 

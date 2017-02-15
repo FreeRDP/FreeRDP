@@ -102,6 +102,56 @@
 #define FILE_FLAG_OPEN_NO_RECALL		0x00100000
 #define FILE_FLAG_FIRST_PIPE_INSTANCE		0x00080000
 
+#define PAGE_NOACCESS				0x00000001
+#define PAGE_READONLY				0x00000002
+#define PAGE_READWRITE				0x00000004
+#define PAGE_WRITECOPY				0x00000008
+#define PAGE_EXECUTE				0x00000010
+#define PAGE_EXECUTE_READ			0x00000020
+#define PAGE_EXECUTE_READWRITE			0x00000040
+#define PAGE_EXECUTE_WRITECOPY			0x00000080
+#define PAGE_GUARD				0x00000100
+#define PAGE_NOCACHE				0x00000200
+#define PAGE_WRITECOMBINE			0x00000400
+
+#define MEM_COMMIT				0x00001000
+#define MEM_RESERVE				0x00002000
+#define MEM_DECOMMIT				0x00004000
+#define MEM_RELEASE				0x00008000
+#define MEM_FREE				0x00010000
+#define MEM_PRIVATE				0x00020000
+#define MEM_MAPPED				0x00040000
+#define MEM_RESET				0x00080000
+#define MEM_TOP_DOWN				0x00100000
+#define MEM_WRITE_WATCH				0x00200000
+#define MEM_PHYSICAL				0x00400000
+#define MEM_4MB_PAGES				0x80000000
+#define MEM_IMAGE				SEC_IMAGE
+
+#define SEC_NO_CHANGE				0x00400000
+#define SEC_FILE				0x00800000
+#define SEC_IMAGE				0x01000000
+#define SEC_VLM					0x02000000
+#define SEC_RESERVE				0x04000000
+#define SEC_COMMIT				0x08000000
+#define SEC_NOCACHE				0x10000000
+#define SEC_WRITECOMBINE			0x40000000
+#define SEC_LARGE_PAGES				0x80000000
+
+#define SECTION_MAP_EXECUTE_EXPLICIT		0x00020
+#define SECTION_EXTEND_SIZE			0x00010
+#define SECTION_MAP_READ			0x00004
+#define SECTION_MAP_WRITE			0x00002
+#define SECTION_QUERY				0x00001
+#define SECTION_MAP_EXECUTE			0x00008
+#define SECTION_ALL_ACCESS			0xF001F
+
+#define FILE_MAP_COPY				SECTION_QUERY
+#define FILE_MAP_WRITE				SECTION_MAP_WRITE
+#define FILE_MAP_READ				SECTION_MAP_READ
+#define FILE_MAP_ALL_ACCESS			SECTION_ALL_ACCESS
+#define FILE_MAP_EXECUTE			SECTION_MAP_EXECUTE_EXPLICIT
+
 #define CREATE_NEW				1
 #define CREATE_ALWAYS				2
 #define OPEN_EXISTING				3
@@ -110,6 +160,17 @@
 
 #define FIND_FIRST_EX_CASE_SENSITIVE		0x1
 #define FIND_FIRST_EX_LARGE_FETCH		0x2
+
+#define STD_INPUT_HANDLE  (DWORD)-10
+#define STD_OUTPUT_HANDLE (DWORD)-11
+#define STD_ERROR_HANDLE  (DWORD)-12
+
+#define FILE_BEGIN   0
+#define FILE_CURRENT 1
+#define FILE_END     2
+
+#define LOCKFILE_FAIL_IMMEDIATELY 1
+#define LOCKFILE_EXCLUSIVE_LOCK   2
 
 typedef union _FILE_SEGMENT_ELEMENT
 {
@@ -207,6 +268,8 @@ WINPR_API BOOL FlushFileBuffers(HANDLE hFile);
 
 WINPR_API BOOL SetEndOfFile(HANDLE hFile);
 
+WINPR_API DWORD WINAPI GetFileSize(HANDLE hFile, LPDWORD lpFileSizeHigh);
+
 WINPR_API DWORD SetFilePointer(HANDLE hFile, LONG lDistanceToMove,
 		PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod);
 
@@ -225,6 +288,9 @@ WINPR_API BOOL UnlockFile(HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffse
 WINPR_API BOOL UnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfBytesToUnlockLow,
 		DWORD nNumberOfBytesToUnlockHigh, LPOVERLAPPED lpOverlapped);
 
+WINPR_API BOOL SetFileTime(HANDLE hFile, const FILETIME *lpCreationTime,
+		const FILETIME *lpLastAccessTime, const FILETIME *lpLastWriteTime);
+
 WINPR_API HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData);
 WINPR_API HANDLE FindFirstFileW(LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData);
 
@@ -241,6 +307,13 @@ WINPR_API BOOL FindClose(HANDLE hFindFile);
 WINPR_API BOOL CreateDirectoryA(LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes);
 WINPR_API BOOL CreateDirectoryW(LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes);
 
+WINPR_API BOOL RemoveDirectoryA(LPCSTR lpPathName);
+WINPR_API BOOL RemoveDirectoryW(LPCWSTR lpPathName);
+
+WINPR_API HANDLE GetStdHandle(DWORD nStdHandle);
+WINPR_API BOOL SetStdHandle(DWORD nStdHandle, HANDLE hHandle);
+WINPR_API BOOL SetStdHandleEx(DWORD dwStdHandle, HANDLE hNewHandle, HANDLE* phOldHandle);
+
 #ifdef __cplusplus
 }
 #endif
@@ -252,6 +325,7 @@ WINPR_API BOOL CreateDirectoryW(LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecu
 #define FindFirstFileEx		FindFirstFileExW
 #define FindNextFile		FindNextFileW
 #define CreateDirectory		CreateDirectoryW
+#define RemoveDirectory		RemoveDirectoryW
 #else
 #define CreateFile		CreateFileA
 #define DeleteFile		DeleteFileA
@@ -259,11 +333,78 @@ WINPR_API BOOL CreateDirectoryW(LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecu
 #define FindFirstFileEx		FindFirstFileExA
 #define FindNextFile		FindNextFileA
 #define CreateDirectory		CreateDirectoryA
-#endif
-
+#define RemoveDirectory		RemoveDirectoryA
 #endif
 
 /* Extra Functions */
+
+typedef BOOL (*pcIsFileHandled)(LPCSTR lpFileName);
+typedef HANDLE (*pcCreateFileA)(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+				DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
+
+typedef struct _HANDLE_CREATOR
+{
+	pcIsFileHandled IsHandled;
+	pcCreateFileA CreateFileA;
+} HANDLE_CREATOR, *PHANDLE_CREATOR, *LPHANDLE_CREATOR;
+
+#endif /* _WIN32 */
+
+#ifdef _UWP
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+WINPR_API HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+	DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
+
+WINPR_API HANDLE CreateFileW(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+	DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
+
+WINPR_API DWORD WINAPI GetFileSize(HANDLE hFile, LPDWORD lpFileSizeHigh);
+
+WINPR_API DWORD SetFilePointer(HANDLE hFile, LONG lDistanceToMove,
+	PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod);
+
+WINPR_API HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData);
+WINPR_API HANDLE FindFirstFileW(LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData);
+
+WINPR_API DWORD GetFullPathNameA(LPCSTR lpFileName, DWORD nBufferLength, LPSTR lpBuffer, LPSTR* lpFilePart);
+
+WINPR_API BOOL GetDiskFreeSpaceA(LPCSTR lpRootPathName, LPDWORD lpSectorsPerCluster,
+	LPDWORD lpBytesPerSector, LPDWORD lpNumberOfFreeClusters, LPDWORD lpTotalNumberOfClusters);
+
+WINPR_API BOOL GetDiskFreeSpaceW(LPCWSTR lpRootPathName, LPDWORD lpSectorsPerCluster,
+	LPDWORD lpBytesPerSector, LPDWORD lpNumberOfFreeClusters, LPDWORD lpTotalNumberOfClusters);
+
+WINPR_API DWORD GetLogicalDriveStringsA(DWORD nBufferLength, LPSTR lpBuffer);
+
+WINPR_API DWORD GetLogicalDriveStringsW(DWORD nBufferLength, LPWSTR lpBuffer);
+
+WINPR_API BOOL PathIsDirectoryEmptyA(LPCSTR pszPath);
+
+WINPR_API UINT GetACP(void);
+
+#ifdef UNICODE
+#define CreateFile		CreateFileW
+#define FindFirstFile		FindFirstFileW
+#else
+#define CreateFile		CreateFileA
+#define FindFirstFile		FindFirstFileA
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
+#ifdef UNICODE
+#define FindFirstFile		FindFirstFileW
+#else
+#define FindFirstFile		FindFirstFileA
+#endif
+
+#endif
 
 #define WILDCARD_STAR		0x00000001
 #define WILDCARD_QM		0x00000002
@@ -281,13 +422,16 @@ WINPR_API LPSTR FilePatternFindNextWildcardA(LPCSTR lpPattern, DWORD* pFlags);
 
 WINPR_API int UnixChangeFileMode(const char* filename, int flags);
 
+WINPR_API BOOL IsNamedPipeFileNameA(LPCSTR lpName);
 WINPR_API char* GetNamedPipeNameWithoutPrefixA(LPCSTR lpName);
-WINPR_API char* GetNamedPipeUnixDomainSocketBaseFilePathA();
+WINPR_API char* GetNamedPipeUnixDomainSocketBaseFilePathA(void);
 WINPR_API char* GetNamedPipeUnixDomainSocketFilePathA(LPCSTR lpName);
+
+WINPR_API int GetNamePipeFileDescriptor(HANDLE hNamedPipe);
+WINPR_API HANDLE GetFileHandleForFileDescriptor(int fd);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* WINPR_FILE_H */
-

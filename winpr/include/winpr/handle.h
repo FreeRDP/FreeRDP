@@ -31,15 +31,28 @@
 extern "C" {
 #endif
 
+#define WINPR_FD_READ_BIT				0
+#define WINPR_FD_READ					(1 << WINPR_FD_READ_BIT)
+
+#define WINPR_FD_WRITE_BIT				1
+#define WINPR_FD_WRITE					(1 << WINPR_FD_WRITE_BIT)
+
 #ifndef _WIN32
+
+#define DUPLICATE_CLOSE_SOURCE			0x00000001
+#define DUPLICATE_SAME_ACCESS			0x00000002
 
 #define HANDLE_FLAG_INHERIT			0x00000001
 #define HANDLE_FLAG_PROTECT_FROM_CLOSE		0x00000002
 
 WINPR_API BOOL CloseHandle(HANDLE hObject);
 
-WINPR_API BOOL DuplicateHandle(HANDLE hSourceProcessHandle, HANDLE hSourceHandle, HANDLE hTargetProcessHandle,
-	LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions);
+WINPR_API BOOL DuplicateHandle(HANDLE hSourceProcessHandle,
+				HANDLE hSourceHandle,
+				HANDLE hTargetProcessHandle,
+				LPHANDLE lpTargetHandle,
+				DWORD dwDesiredAccess,
+				BOOL bInheritHandle, DWORD dwOptions);
 
 WINPR_API BOOL GetHandleInformation(HANDLE hObject, LPDWORD lpdwFlags);
 WINPR_API BOOL SetHandleInformation(HANDLE hObject, DWORD dwMask, DWORD dwFlags);

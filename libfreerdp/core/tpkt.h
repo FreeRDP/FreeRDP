@@ -24,11 +24,12 @@
 #include "transport.h"
 
 #include <winpr/stream.h>
+#include <freerdp/api.h>
 
 #define TPKT_HEADER_LENGTH	4
 
-BOOL tpkt_verify_header(wStream* s);
-UINT16 tpkt_read_header(wStream* s);
-void tpkt_write_header(wStream* s, UINT16 length);
+FREERDP_LOCAL BOOL tpkt_verify_header(wStream* s);
+FREERDP_LOCAL UINT16 tpkt_read_header(wStream* s);
+FREERDP_LOCAL void tpkt_write_header(wStream* s, UINT16 length);
 
 #endif /* __TPKT_H */

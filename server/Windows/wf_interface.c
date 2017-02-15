@@ -22,17 +22,25 @@
 #include "config.h"
 #endif
 
-
 #include <winpr/tchar.h>
 #include <winpr/windows.h>
-#include <freerdp/utils/tcp.h>
-#include <freerdp\listener.h>
+#include <winpr/winsock.h>
+
+#include <freerdp/freerdp.h>
+#include <freerdp/listener.h>
+#include <freerdp/constants.h>
+#include <freerdp/channels/wtsvc.h>
+#include <freerdp/channels/channels.h>
+#include <freerdp/build-config.h>
 
 #include "wf_peer.h"
 #include "wf_settings.h"
 #include "wf_info.h"
 
 #include "wf_interface.h"
+
+#define SERVER_KEY "Software\\"FREERDP_VENDOR_STRING"\\" \
+		FREERDP_PRODUCT_STRING"\\Server"
 
 cbCallback cbEvent;
 
@@ -71,6 +79,8 @@ void set_screen_id(int id)
 	wfInfo* wfi;
 
 	wfi = wf_info_get_instance();
+	if (!wfi)
+		return;
 	wfi->screenID = id;
 
 	return;
@@ -87,6 +97,12 @@ DWORD WINAPI wf_server_main_loop(LPVOID lpParam)
 	wfInfo* wfi;
 
 	wfi = wf_info_get_instance();
+	if (!wfi)
+	{
+		WLog_ERR(TAG, "Failed to get instance");
+		return -1;
+	}
+
 	wfi->force_all_disconnect = FALSE;
 
 	ZeroMemory(rfds, sizeof(rfds));
@@ -98,7 +114,7 @@ DWORD WINAPI wf_server_main_loop(LPVOID lpParam)
 
 		if (instance->GetFileDescriptor(instance, rfds, &rcount) != TRUE)
 		{
-			printf("Failed to get FreeRDP file descriptor\n");
+			WLog_ERR(TAG, "Failed to get FreeRDP file descriptor");
 			break;
 		}
 
@@ -118,18 +134,17 @@ DWORD WINAPI wf_server_main_loop(LPVOID lpParam)
 		if (max_fds == 0)
 			break;
 
-		
+
 		select(max_fds + 1, &rfds_set, NULL, NULL, NULL);
 
 		if (instance->CheckFileDescriptor(instance) != TRUE)
 		{
-			printf("Failed to check FreeRDP file descriptor\n");
+			WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
 			break;
 		}
 	}
 
-	printf("wf_server_main_loop terminating\n");
-
+	WLog_INFO(TAG, "wf_server_main_loop terminating");
 	instance->Close(instance);
 
 	return 0;
@@ -143,15 +158,16 @@ BOOL wfreerdp_server_start(wfServer* server)
 	server->instance->PeerAccepted = wf_peer_accepted;
 	instance = server->instance;
 
-	wf_settings_read_dword(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), _T("DefaultPort"), &server->port);
+	wf_settings_read_dword(HKEY_LOCAL_MACHINE, SERVER_KEY,
+				_T("DefaultPort"), &server->port);
 
-	if (instance->Open(instance, NULL, (UINT16) server->port))
-	{
-		server->thread = CreateThread(NULL, 0, wf_server_main_loop, (void*) instance, 0, NULL);
-		return TRUE;
-	}
+	if (!instance->Open(instance, NULL, (UINT16) server->port))
+		return FALSE;
 
-	return FALSE;
+	if (!(server->thread = CreateThread(NULL, 0, wf_server_main_loop, (void*) instance, 0, NULL)))
+		return FALSE;
+
+	return TRUE;
 }
 
 BOOL wfreerdp_server_stop(wfServer* server)
@@ -159,8 +175,9 @@ BOOL wfreerdp_server_stop(wfServer* server)
 	wfInfo* wfi;
 
 	wfi = wf_info_get_instance();
-
-	printf("Stopping server\n");
+	if (!wfi)
+		return FALSE;
+	WLog_INFO(TAG, "Stopping server");
 	wfi->force_all_disconnect = TRUE;
 	server->instance->Close(server->instance);
 	return TRUE;
@@ -168,17 +185,20 @@ BOOL wfreerdp_server_stop(wfServer* server)
 
 wfServer* wfreerdp_server_new()
 {
+	WSADATA wsaData;
 	wfServer* server;
 
-	server = (wfServer*) malloc(sizeof(wfServer));
-	ZeroMemory(server, sizeof(wfServer));
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+		return NULL;
 
-	freerdp_wsa_startup();
+	server = (wfServer*) calloc(1, sizeof(wfServer));
 
 	if (server)
 	{
 		server->port = 3389;
 	}
+
+	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
 
 	cbEvent = NULL;
 
@@ -187,16 +207,12 @@ wfServer* wfreerdp_server_new()
 
 void wfreerdp_server_free(wfServer* server)
 {
-	if (server)
-	{
-		free(server);
-	}
+	free(server);
 
-	freerdp_wsa_cleanup();
+	WSACleanup();
 }
 
-
-FREERDP_API BOOL wfreerdp_server_is_running(wfServer* server)
+BOOL wfreerdp_server_is_running(wfServer* server)
 {
 	DWORD tStatus;
 	BOOL bRet;
@@ -204,7 +220,7 @@ FREERDP_API BOOL wfreerdp_server_is_running(wfServer* server)
 	bRet = GetExitCodeThread(server->thread, &tStatus);
 	if (bRet == 0)
 	{
-		printf("Error in call to GetExitCodeThread\n");
+		WLog_ERR(TAG, "Error in call to GetExitCodeThread");
 		return FALSE;
 	}
 
@@ -213,23 +229,26 @@ FREERDP_API BOOL wfreerdp_server_is_running(wfServer* server)
 	return FALSE;
 }
 
-FREERDP_API UINT32 wfreerdp_server_num_peers()
+UINT32 wfreerdp_server_num_peers()
 {
 	wfInfo* wfi;
 
 	wfi = wf_info_get_instance();
+	if (!wfi)
+		return -1;
 	return wfi->peerCount;
 }
 
-FREERDP_API UINT32 wfreerdp_server_get_peer_hostname(int pId, wchar_t * dstStr)
+UINT32 wfreerdp_server_get_peer_hostname(int pId, wchar_t * dstStr)
 {
 	wfInfo* wfi;
 	freerdp_peer* peer;
 
 	wfi = wf_info_get_instance();
+	if (!wfi)
+		return 0;
 	peer = wfi->peers[pId];
 
-	
 	if (peer)
 	{
 		UINT32 sLen;
@@ -240,21 +259,21 @@ FREERDP_API UINT32 wfreerdp_server_get_peer_hostname(int pId, wchar_t * dstStr)
 	}
 	else
 	{
-		printf("nonexistent peer id=%d\n", pId);
+		WLog_WARN(TAG, "nonexistent peer id=%d", pId);
 		return 0;
 	}
-
 }
 
-FREERDP_API BOOL wfreerdp_server_peer_is_local(int pId)
+BOOL wfreerdp_server_peer_is_local(int pId)
 {
 	wfInfo* wfi;
 	freerdp_peer* peer;
 
 	wfi = wf_info_get_instance();
+	if (!wfi)
+		return FALSE;
 	peer = wfi->peers[pId];
 
-	
 	if (peer)
 	{
 		return peer->local;
@@ -264,15 +283,18 @@ FREERDP_API BOOL wfreerdp_server_peer_is_local(int pId)
 		return FALSE;
 	}
 }
-FREERDP_API BOOL wfreerdp_server_peer_is_connected(int pId)
+
+BOOL wfreerdp_server_peer_is_connected(int pId)
 {
 	wfInfo* wfi;
 	freerdp_peer* peer;
 
 	wfi = wf_info_get_instance();
+	if (!wfi)
+		return FALSE;
 	peer = wfi->peers[pId];
 
-	
+
 	if (peer)
 	{
 		return peer->connected;
@@ -283,15 +305,16 @@ FREERDP_API BOOL wfreerdp_server_peer_is_connected(int pId)
 	}
 }
 
-FREERDP_API BOOL wfreerdp_server_peer_is_activated(int pId)
+BOOL wfreerdp_server_peer_is_activated(int pId)
 {
 	wfInfo* wfi;
 	freerdp_peer* peer;
 
 	wfi = wf_info_get_instance();
+	if (!wfi)
+		return FALSE;
 	peer = wfi->peers[pId];
 
-	
 	if (peer)
 	{
 		return peer->activated;
@@ -302,15 +325,16 @@ FREERDP_API BOOL wfreerdp_server_peer_is_activated(int pId)
 	}
 }
 
-FREERDP_API BOOL wfreerdp_server_peer_is_authenticated(int pId)
+BOOL wfreerdp_server_peer_is_authenticated(int pId)
 {
 	wfInfo* wfi;
 	freerdp_peer* peer;
 
 	wfi = wf_info_get_instance();
+	if (!wfi)
+		return FALSE;
 	peer = wfi->peers[pId];
 
-	
 	if (peer)
 	{
 		return peer->authenticated;
@@ -321,7 +345,7 @@ FREERDP_API BOOL wfreerdp_server_peer_is_authenticated(int pId)
 	}
 }
 
-FREERDP_API void wfreerdp_server_register_callback_event(cbCallback cb)
+void wfreerdp_server_register_callback_event(cbCallback cb)
 {
 	cbEvent = cb;
 }

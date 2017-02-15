@@ -2,6 +2,8 @@
 # FreeRDP cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2016 Inuvika Inc.
+# Copyright 2016 David PHAM-VAN <d.phamvan@inuvika.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,20 +29,15 @@ set(${MODULE_PREFIX}_SRCS
 	rdpdr_capabilities.c
 	rdpdr_capabilities.h)
 
-add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntry")
+add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntryEx")
 
-set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE freerdp
-	MODULES freerdp-utils)
-	
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE winpr
-	MODULES winpr-crt winpr-synch winpr-thread winpr-interlocked)
 
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+target_link_libraries(${MODULE_NAME} winpr freerdp)
+if(APPLE AND (NOT IOS))
+	find_library(CORESERVICES_LIBRARY CoreServices)
+	target_link_libraries(${MODULE_NAME} ${CORESERVICES_LIBRARY})
+endif()
+
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")

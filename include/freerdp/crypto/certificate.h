@@ -35,24 +35,51 @@ typedef struct rdp_certificate_store rdpCertificateStore;
 struct rdp_certificate_data
 {
 	char* hostname;
+	UINT16 port;
+	char* subject;
+	char* issuer;
 	char* fingerprint;
 };
 
 struct rdp_certificate_store
 {
-	FILE* fp;
 	char* path;
 	char* file;
+	char* legacy_file;
 	rdpSettings* settings;
 	rdpCertificateData* certificate_data;
 };
 
-FREERDP_API rdpCertificateData* certificate_data_new(char* hostname, char* fingerprint);
-FREERDP_API void certificate_data_free(rdpCertificateData* certificate_data);
-FREERDP_API rdpCertificateStore* certificate_store_new(rdpSettings* settings);
-FREERDP_API void certificate_data_replace(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data);
-FREERDP_API void certificate_store_free(rdpCertificateStore* certificate_store);
-FREERDP_API int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data);
-FREERDP_API void certificate_data_print(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data);
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
+FREERDP_API rdpCertificateData* certificate_data_new(
+        char* hostname, UINT16 port, char* subject,
+        char* issuer, char* fingerprint);
+FREERDP_API void certificate_data_free(
+        rdpCertificateData* certificate_data);
+FREERDP_API rdpCertificateStore* certificate_store_new(
+        rdpSettings* settings);
+FREERDP_API BOOL certificate_data_replace(
+        rdpCertificateStore* certificate_store,
+        rdpCertificateData* certificate_data);
+FREERDP_API void certificate_store_free(
+        rdpCertificateStore* certificate_store);
+FREERDP_API int certificate_data_match(
+        rdpCertificateStore* certificate_store,
+        rdpCertificateData* certificate_data);
+FREERDP_API BOOL certificate_data_print(
+        rdpCertificateStore* certificate_store,
+        rdpCertificateData* certificate_data);
+FREERDP_API BOOL certificate_get_stored_data(
+        rdpCertificateStore* certificate_store,
+        rdpCertificateData* certificate_data,
+        char** subject, char** issuer,
+        char** fingerprint);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif /* FREERDP_CRYPTO_CERTIFICATE_H */

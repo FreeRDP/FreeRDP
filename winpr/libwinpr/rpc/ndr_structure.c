@@ -43,7 +43,6 @@ void NdrSimpleStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemo
 	 * member_layout<>
 	 * FC_END
 	 */
-
 	/**
 	 * FC_PSTRUCT
 	 * alignment<1>
@@ -52,24 +51,20 @@ void NdrSimpleStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemo
 	 * member_layout<>
 	 * FC_END
 	 */
-
 	unsigned char type;
 	unsigned char alignment;
 	unsigned short memory_size;
-
 	type = pFormat[0];
 	alignment = pFormat[1] + 1;
 	memory_size = *(unsigned short*) &pFormat[2];
-
 	NdrpAlignLength(&(pStubMsg->BufferLength), alignment);
 	NdrpIncrementLength(&(pStubMsg->BufferLength), memory_size);
-
 	pFormat += 4;
 
 	if (*pFormat == FC_PSTRUCT)
 		NdrpEmbeddedPointerBufferSize(pStubMsg, pMemory, pFormat);
 
-	fprintf(stderr, "warning: NdrSimpleStructBufferSize unimplemented\n");
+	WLog_ERR(TAG, "warning: NdrSimpleStructBufferSize unimplemented");
 }
 
 void NdrConformantStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
@@ -81,7 +76,6 @@ void NdrConformantStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* p
 	 * member_layout<>
 	 * FC_END
 	 */
-
 	/**
 	 * FC_CPSTRUCT alignment<1>
 	 * memory_size<2>
@@ -89,8 +83,7 @@ void NdrConformantStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* p
 	 * pointer_layout<>
 	 * member_layout<> FC_END
 	 */
-
-	fprintf(stderr, "warning: NdrConformantStructBufferSize unimplemented\n");
+	WLog_ERR(TAG, "warning: NdrConformantStructBufferSize unimplemented");
 }
 
 void NdrConformantVaryingStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
@@ -103,8 +96,7 @@ void NdrConformantVaryingStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned 
 	 * layout<>
 	 * FC_END
 	 */
-
-	fprintf(stderr, "warning: NdrConformantVaryingStructBufferSize unimplemented\n");
+	WLog_ERR(TAG, "warning: NdrConformantVaryingStructBufferSize unimplemented");
 }
 
 ULONG NdrComplexStructMemberSize(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat)
@@ -165,8 +157,10 @@ ULONG NdrComplexStructMemberSize(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFo
 			case FC_FP:
 			case FC_POINTER:
 				size += sizeof(void*);
+
 				if (*pFormat != FC_POINTER)
 					pFormat += 4;
+
 				break;
 
 			case FC_ALIGNM2:
@@ -195,11 +189,11 @@ ULONG NdrComplexStructMemberSize(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFo
 				break;
 
 			case FC_EMBEDDED_COMPLEX:
-				fprintf(stderr, "warning: NdrComplexStructMemberSize FC_EMBEDDED_COMPLEX unimplemented\n");
+				WLog_ERR(TAG, "warning: NdrComplexStructMemberSize FC_EMBEDDED_COMPLEX unimplemented");
 				break;
 
 			default:
-				fprintf(stderr, "warning: NdrComplexStructMemberSize 0x%02X unimplemented\n", *pFormat);
+				WLog_ERR(TAG, "warning: NdrComplexStructMemberSize 0x%02X unimplemented", *pFormat);
 				break;
 		}
 
@@ -221,12 +215,10 @@ void NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 	 * FC_END
 	 * [pointer_layout<>]
 	 */
-
 	ULONG_PTR MaxCount;
 	unsigned long Offset;
 	unsigned long ActualCount;
 	unsigned char* pMemoryCopy;
-
 	unsigned char type;
 	unsigned char alignment;
 	unsigned short memory_size;
@@ -234,64 +226,55 @@ void NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 	unsigned char* conformant_array_description;
 	unsigned short offset_to_pointer_layout;
 	unsigned short offset_to_conformant_array_description;
-
 	type = pFormat[0];
 	pMemoryCopy = pMemory;
 	pointer_layout = conformant_array_description = NULL;
 
 	if (type != FC_BOGUS_STRUCT)
 	{
-		fprintf(stderr, "error: expected FC_BOGUS_STRUCT, got 0x%02X\n", type);
+		WLog_ERR(TAG, "error: expected FC_BOGUS_STRUCT, got 0x%02X", type);
 		return;
 	}
 
 	alignment = pFormat[1] + 1;
 	memory_size = *(unsigned short*) &pFormat[2];
-
 	NdrpAlignLength(&(pStubMsg->BufferLength), alignment);
 
 	if (!pStubMsg->IgnoreEmbeddedPointers && !pStubMsg->PointerLength)
 	{
 		unsigned long BufferLengthCopy = pStubMsg->BufferLength;
 		int IgnoreEmbeddedPointersCopy = pStubMsg->IgnoreEmbeddedPointers;
-
 		pStubMsg->IgnoreEmbeddedPointers = 1;
 		NdrComplexStructBufferSize(pStubMsg, pMemory, pFormat);
 		pStubMsg->IgnoreEmbeddedPointers = IgnoreEmbeddedPointersCopy;
-
 		pStubMsg->PointerLength = pStubMsg->BufferLength;
 		pStubMsg->BufferLength = BufferLengthCopy;
 	}
 
 	pFormat += 4;
-
 	offset_to_conformant_array_description = *(unsigned short*) &pFormat[0];
 
 	if (offset_to_conformant_array_description)
 		conformant_array_description = (unsigned char*) pFormat + offset_to_conformant_array_description;
-	pFormat += 2;
 
+	pFormat += 2;
 	offset_to_pointer_layout = *(unsigned short*) &pFormat[0];
 
 	if (offset_to_pointer_layout)
 		pointer_layout = (unsigned char*) pFormat + offset_to_pointer_layout;
-	pFormat += 2;
 
+	pFormat += 2;
 	pStubMsg->Memory = pMemory;
 
 	if (conformant_array_description)
 	{
 		ULONG size;
 		unsigned char array_type;
-
 		array_type = conformant_array_description[0];
 		size = NdrComplexStructMemberSize(pStubMsg, pFormat);
-
-		fprintf(stderr, "warning: NdrComplexStructBufferSize array_type: 0x%02X unimplemented\n", array_type);
-
+		WLog_ERR(TAG, "warning: NdrComplexStructBufferSize array_type: 0x%02X unimplemented", array_type);
 		NdrpComputeConformance(pStubMsg, pMemory + size, conformant_array_description);
 		NdrpComputeVariance(pStubMsg, pMemory + size, conformant_array_description);
-
 		MaxCount = pStubMsg->MaxCount;
 		ActualCount = pStubMsg->ActualCount;
 		Offset = pStubMsg->Offset;
@@ -300,14 +283,11 @@ void NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 	if (conformant_array_description)
 	{
 		unsigned char array_type;
-
 		array_type = conformant_array_description[0];
-
 		pStubMsg->MaxCount = MaxCount;
 		pStubMsg->ActualCount = ActualCount;
 		pStubMsg->Offset = Offset;
-
-		fprintf(stderr, "warning: NdrComplexStructBufferSize array_type: 0x%02X unimplemented\n", array_type);
+		WLog_ERR(TAG, "warning: NdrComplexStructBufferSize array_type: 0x%02X unimplemented", array_type);
 	}
 
 	pStubMsg->Memory = pMemoryCopy;

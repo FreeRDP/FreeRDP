@@ -11,7 +11,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing
  * permissions and limitations under the License.
- * 
+ *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -22,22 +22,22 @@
 #include <freerdp/primitives.h>
 
 #include "prim_internal.h"
-#include "prim_add.h"
 
 /* ----------------------------------------------------------------------------
  * 16-bit signed add with saturation (under and over).
  */
-pstatus_t general_add_16s(
-	const INT16 *pSrc1,
-	const INT16 *pSrc2,
-	INT16 *pDst,
-	INT32 len)
+static pstatus_t general_add_16s(
+    const INT16* pSrc1,
+    const INT16* pSrc2,
+    INT16* pDst,
+    UINT32 len)
 {
 	while (len--)
 	{
-		INT32 k = (INT32) (*pSrc1++) + (INT32) (*pSrc2++);
+		INT32 k = (INT32)(*pSrc1++) + (INT32)(*pSrc2++);
+
 		if (k > 32767) *pDst++ = ((INT16) 32767);
-		else if (k < -32768) *pDst++ = ((INT16) -32768);
+		else if (k < -32768) *pDst++ = ((INT16) - 32768);
 		else *pDst++ = (INT16) k;
 	}
 
@@ -46,16 +46,7 @@ pstatus_t general_add_16s(
 
 /* ------------------------------------------------------------------------- */
 void primitives_init_add(
-	primitives_t *prims)
+    primitives_t* prims)
 {
 	prims->add_16s = general_add_16s;
-
-	primitives_init_add_opt(prims);
-}
-
-/* ------------------------------------------------------------------------- */
-void primitives_deinit_add(
-	primitives_t *prims)
-{
-	/* Nothing to do. */
 }

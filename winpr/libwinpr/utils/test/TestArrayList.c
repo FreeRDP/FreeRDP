@@ -12,10 +12,13 @@ int TestArrayList(int argc, char* argv[])
 	const int elemsToInsert = 10;
 
 	arrayList = ArrayList_New(TRUE);
+	if (!arrayList)
+		return -1;
 
 	for (index = 0; index < elemsToInsert; index++)
 	{
-		ArrayList_Add(arrayList, (void*) (size_t) index);
+		if (ArrayList_Add(arrayList, (void*) (size_t) index) < 0)
+			return -1;
 	}
 
 	count = ArrayList_Count(arrayList);
@@ -50,7 +53,7 @@ int TestArrayList(int argc, char* argv[])
 		ArrayList_RemoveAt(arrayList, 0);
 		if (val != index)
 		{
-			printf("ArrayList: shifted %d entries, expected value %d, got %ld\n", index, index, (long int)val);
+			printf("ArrayList: shifted %d entries, expected value %d, got %"PRIdz"\n", index, index, val);
 			return -1;
 		}
 	}

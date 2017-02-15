@@ -9,17 +9,17 @@ int TestGetNativeSystemInfo(int argc, char* argv[])
 	GetNativeSystemInfo(&sysinfo);
 
 	printf("SystemInfo:\n");
-	printf("\twProcessorArchitecture: %d\n", sysinfo.wProcessorArchitecture);
-	printf("\twReserved: %d\n", sysinfo.wReserved);
-	printf("\tdwPageSize: 0x%08lX\n", sysinfo.dwPageSize);
+	printf("\twProcessorArchitecture: %"PRIu16"\n", sysinfo.wProcessorArchitecture);
+	printf("\twReserved: %"PRIu16"\n", sysinfo.wReserved);
+	printf("\tdwPageSize: 0x%08"PRIX32"\n", sysinfo.dwPageSize);
 	printf("\tlpMinimumApplicationAddress: %p\n", sysinfo.lpMinimumApplicationAddress);
 	printf("\tlpMaximumApplicationAddress: %p\n", sysinfo.lpMaximumApplicationAddress);
-	printf("\tdwActiveProcessorMask: 0x%08llX\n", (unsigned long long)sysinfo.dwActiveProcessorMask);
-	printf("\tdwNumberOfProcessors: %ld\n", sysinfo.dwNumberOfProcessors);
-	printf("\tdwProcessorType: %ld\n", sysinfo.dwProcessorType);
-	printf("\tdwAllocationGranularity: %ld\n", sysinfo.dwAllocationGranularity);
-	printf("\twProcessorLevel: %d\n", sysinfo.wProcessorLevel);
-	printf("\twProcessorRevision: %d\n", sysinfo.wProcessorRevision);
+	printf("\tdwActiveProcessorMask: %p\n", (void*) sysinfo.dwActiveProcessorMask);
+	printf("\tdwNumberOfProcessors: %"PRIu32"\n", sysinfo.dwNumberOfProcessors);
+	printf("\tdwProcessorType: %"PRIu32"\n", sysinfo.dwProcessorType);
+	printf("\tdwAllocationGranularity: %"PRIu32"\n", sysinfo.dwAllocationGranularity);
+	printf("\twProcessorLevel: %"PRIu16"\n", sysinfo.wProcessorLevel);
+	printf("\twProcessorRevision: %"PRIu16"\n", sysinfo.wProcessorRevision);
 	printf("\n");
 
 	return 0;

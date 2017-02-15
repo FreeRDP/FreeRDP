@@ -51,7 +51,7 @@ typedef struct _RPC_SYNTAX_IDENTIFIER
 typedef struct _RPC_MESSAGE
 {
 	RPC_BINDING_HANDLE Handle;
-	unsigned long DataRepresentation;
+	ULONG DataRepresentation;
 	void* Buffer;
 	unsigned int BufferLength;
 	unsigned int ProcNum;
@@ -60,7 +60,7 @@ typedef struct _RPC_MESSAGE
 	void* ReservedForRuntime;
 	RPC_MGR_EPV* ManagerEpv;
 	void* ImportContext;
-	unsigned long RpcFlags;
+	ULONG RpcFlags;
 } RPC_MESSAGE, *PRPC_MESSAGE;
 
 typedef void (*RPC_DISPATCH_FUNCTION)(PRPC_MESSAGE Message);
@@ -136,8 +136,8 @@ typedef struct _MIDL_STUB_MESSAGE
 	unsigned char* BufferStart;
 	unsigned char* BufferEnd;
 	unsigned char* BufferMark;
-	unsigned long BufferLength;
-	unsigned long MemorySize;
+	ULONG BufferLength;
+	ULONG MemorySize;
 	unsigned char* Memory;
 	int IsClient;
 	int ReuseBuffer;
@@ -149,8 +149,8 @@ typedef struct _MIDL_STUB_MESSAGE
 	unsigned char uFlags;
 	unsigned short Unused2;
 	ULONG_PTR MaxCount;
-	unsigned long Offset;
-	unsigned long ActualCount;
+	ULONG Offset;
+	ULONG ActualCount;
 	void *(*pfnAllocate)(size_t);
 	void (*pfnFree)(void*);
 	unsigned char* StackTop;
@@ -159,8 +159,8 @@ typedef struct _MIDL_STUB_MESSAGE
 	handle_t SavedHandle;
 	const struct _MIDL_STUB_DESC* StubDesc;
 	struct _FULL_PTR_XLAT_TABLES* FullPtrXlatTables;
-	unsigned long FullPtrRefId;
-	unsigned long PointerLength;
+	ULONG FullPtrRefId;
+	ULONG PointerLength;
 	int fInDontFree : 1;
 	int fDontCallFreeInst : 1;
 	int fInOnlyParam : 1;
@@ -169,17 +169,17 @@ typedef struct _MIDL_STUB_MESSAGE
 	int fHasNewCorrDesc : 1;
 	int fUnused : 10;
 	int fUnused2 : 16;
-	unsigned long dwDestContext;
+	ULONG dwDestContext;
 	void* pvDestContext;
 	//NDR_SCONTEXT* SavedContextHandles;
 	long ParamNumber;
 	struct IRpcChannelBuffer* pRpcChannelBuffer;
 	//PARRAY_INFO pArrayInfo;
-	unsigned long* SizePtrCountArray;
-	unsigned long* SizePtrOffsetArray;
-	unsigned long* SizePtrLengthArray;
+	ULONG* SizePtrCountArray;
+	ULONG* SizePtrOffsetArray;
+	ULONG* SizePtrLengthArray;
 	void* pArgQueue;
-	unsigned long dwStubPhase;
+	ULONG dwStubPhase;
 	void* LowStackMark;
 	//PNDR_ASYNC_MESSAGE pAsyncMsg;
 	//PNDR_CORRELATION_INFO pCorrInfo;
@@ -210,10 +210,10 @@ typedef struct _XMIT_ROUTINE_QUINTUPLE
 	XMIT_HELPER_ROUTINE pfnFreeInst;
 } XMIT_ROUTINE_QUINTUPLE, *PXMIT_ROUTINE_QUINTUPLE;
 
-typedef unsigned long (*USER_MARSHAL_SIZING_ROUTINE)(unsigned long*, unsigned long, void*);
-typedef unsigned char* (*USER_MARSHAL_MARSHALLING_ROUTINE)(unsigned long*, unsigned char*, void*);
-typedef unsigned char* (*USER_MARSHAL_UNMARSHALLING_ROUTINE)(unsigned long*, unsigned char*, void*);
-typedef void (*USER_MARSHAL_FREEING_ROUTINE)(unsigned long*, void*);
+typedef ULONG (*USER_MARSHAL_SIZING_ROUTINE)(ULONG*, ULONG, void*);
+typedef unsigned char* (*USER_MARSHAL_MARSHALLING_ROUTINE)(ULONG*, unsigned char*, void*);
+typedef unsigned char* (*USER_MARSHAL_UNMARSHALLING_ROUTINE)(ULONG*, unsigned char*, void*);
+typedef void (*USER_MARSHAL_FREEING_ROUTINE)(ULONG*, void*);
 
 typedef struct _USER_MARSHAL_ROUTINE_QUADRUPLE
 {
@@ -258,7 +258,7 @@ struct _MIDL_STUB_DESC
         const unsigned char* pFormatTypes;
 
         int fCheckBounds;
-        unsigned long Version;
+        ULONG Version;
         MALLOC_FREE_STRUCT* pMallocFreeStruct;
 
         long MIDLVersion;

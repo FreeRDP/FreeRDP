@@ -22,11 +22,8 @@ set(${MODULE_PREFIX}_SRCS
 
 add_channel_server_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "DVCPluginEntry")
 
-set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE freerdp
-	MODULES freerdp-codec freerdp-utils)
+
+target_link_libraries(${MODULE_NAME} freerdp)
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Server")

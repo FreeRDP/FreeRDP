@@ -54,8 +54,9 @@ static void wf_peer_rdpsnd_activated(RdpsndServerContext* context)
 	wfi = wf_info_get_instance();
 
 	wfi->agreed_format = NULL;
-	printf("Client supports the following %d formats: \n", context->num_client_formats);
-	for(i = 0; i < context->num_client_formats; i++)
+	WLog_DBG(TAG, "Client supports the following %d formats:", context->num_client_formats);
+
+	for (i = 0; i < context->num_client_formats; i++)
 	{
 		//TODO: improve the way we agree on a format
 		for (j = 0; j < context->num_server_formats; j++)
@@ -64,7 +65,7 @@ static void wf_peer_rdpsnd_activated(RdpsndServerContext* context)
 			    (context->client_formats[i].nChannels == context->server_formats[j].nChannels) &&
 			    (context->client_formats[i].nSamplesPerSec == context->server_formats[j].nSamplesPerSec))
 			{
-				printf("agreed on format!\n");
+				WLog_DBG(TAG, "agreed on format!");
 				wfi->agreed_format = (AUDIO_FORMAT*) &context->server_formats[j];
 				break;
 			}
@@ -76,7 +77,7 @@ static void wf_peer_rdpsnd_activated(RdpsndServerContext* context)
 	
 	if (wfi->agreed_format == NULL)
 	{
-		printf("Could not agree on a audio format with the server\n");
+		WLog_ERR(TAG, "Could not agree on a audio format with the server");
 		return;
 	}
 	
@@ -116,7 +117,7 @@ int wf_rdpsnd_lock()
 		break;
 
 	case WAIT_FAILED:
-		printf("wf_rdpsnd_lock failed with 0x%08X\n", GetLastError());
+		WLog_ERR(TAG, "wf_rdpsnd_lock failed with 0x%08lX", GetLastError());
 		return -1;
 		break;
 	}
@@ -132,7 +133,7 @@ int wf_rdpsnd_unlock()
 
 	if (ReleaseMutex(wfi->snd_mutex) == 0)
 	{
-		printf("wf_rdpsnd_unlock failed with 0x%08X\n", GetLastError());
+		WLog_DBG(TAG, "wf_rdpsnd_unlock failed with 0x%08lX", GetLastError());
 		return -1;
 	}
 
@@ -141,12 +142,16 @@ int wf_rdpsnd_unlock()
 
 BOOL wf_peer_rdpsnd_init(wfPeerContext* context)
 {
-	wfInfo* wfi;
+	wfInfo* wfi = wf_info_get_instance();
 	
-	wfi = wf_info_get_instance();
+	if (!wfi)
+		return FALSE;
 
-	wfi->snd_mutex = CreateMutex(NULL, FALSE, NULL);
+	if (!(wfi->snd_mutex = CreateMutex(NULL, FALSE, NULL)))
+		return FALSE;
+
 	context->rdpsnd = rdpsnd_server_context_new(context->vcm);
+	context->rdpsnd->rdpcontext = &context->_p;
 	context->rdpsnd->data = context;
 
 	context->rdpsnd->server_formats = supported_audio_formats;
@@ -160,7 +165,7 @@ BOOL wf_peer_rdpsnd_init(wfPeerContext* context)
 
 	context->rdpsnd->Activated = wf_peer_rdpsnd_activated;
 
-	context->rdpsnd->Initialize(context->rdpsnd);
+	context->rdpsnd->Initialize(context->rdpsnd, TRUE);
 
 	wf_rdpsnd_set_latest_peer(context);
 

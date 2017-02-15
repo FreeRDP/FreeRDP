@@ -50,11 +50,9 @@ PFORMAT_STRING NdrpComputeCount(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 	unsigned char conformance;
 	unsigned char correlation_type;
 	unsigned char correlation_operator;
-
 	correlation_type = pFormat[0];
 	type = correlation_type & 0x0F;
 	conformance = correlation_type & 0xF0;
-
 	correlation_operator = pFormat[1];
 	offset = *(unsigned short*) & pFormat[2];
 
@@ -70,7 +68,7 @@ PFORMAT_STRING NdrpComputeCount(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 	{
 		ptr = pStubMsg->StackTop;
 	}
-	else if (conformance == FC_CONSTANT_CONFORMANCE	)
+	else if (conformance == FC_CONSTANT_CONFORMANCE)
 	{
 		data = offset | ((DWORD) pFormat[1] << 16);
 		*pCount = data;
@@ -107,7 +105,7 @@ PFORMAT_STRING NdrpComputeCount(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 
 		case FC_CALLBACK:
 			{
-				fprintf(stderr, "warning: NdrpComputeConformance FC_CALLBACK unimplemented\n");
+				WLog_ERR(TAG, "warning: NdrpComputeConformance FC_CALLBACK unimplemented");
 			}
 			break;
 	}
@@ -191,10 +189,8 @@ PFORMAT_STRING NdrpComputeConformance(PMIDL_STUB_MESSAGE pStubMsg, unsigned char
 PFORMAT_STRING NdrpComputeVariance(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
 	ULONG_PTR ActualCount = pStubMsg->ActualCount;
-
 	pFormat = NdrpComputeCount(pStubMsg, pMemory, pFormat, &ActualCount);
 	pStubMsg->ActualCount = (ULONG) ActualCount;
-
 	return pFormat;
 }
 

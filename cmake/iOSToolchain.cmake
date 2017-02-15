@@ -36,6 +36,9 @@ set (UNIX True)
 set (APPLE True)
 set (IOS True)
 
+# Required as of cmake 2.8.10
+set (CMAKE_OSX_DEPLOYMENT_TARGET "" CACHE STRING "Force unset of the deployment target for iOS" FORCE)
+
 # Determine the cmake host system version so we know where to find the iOS SDKs
 find_program (CMAKE_UNAME uname /bin /usr/bin /usr/local/bin)
 if (CMAKE_UNAME)
@@ -44,11 +47,10 @@ if (CMAKE_UNAME)
 endif (CMAKE_UNAME)
 
 # Force the compilers to gcc for iOS
-if(NOT CMAKE_C_COMPILER)
-	include (CMakeForceCompiler)
-	CMAKE_FORCE_C_COMPILER (gcc GNU)
-	CMAKE_FORCE_CXX_COMPILER (g++ GNU)
-endif()
+include (CMakeForceCompiler)
+CMAKE_FORCE_C_COMPILER (/usr/bin/clang Apple)
+CMAKE_FORCE_CXX_COMPILER (/usr/bin/clang++ Apple)
+set(CMAKE_AR ar CACHE FILEPATH "" FORCE)
 
 # Skip the platform compiler checks for cross compiling
 #set (CMAKE_CXX_COMPILER_WORKS TRUE)
@@ -69,7 +71,7 @@ set (CMAKE_CXX_OSX_CURRENT_VERSION_FLAG "${CMAKE_C_OSX_CURRENT_VERSION_FLAG}")
 
 # Hidden visibilty is required for cxx on iOS 
 set (CMAKE_C_FLAGS_INIT "")
-set (CMAKE_CXX_FLAGS_INIT "-headerpad_max_install_names -fvisibility=hidden -fvisibility-inlines-hidden")
+set (CMAKE_CXX_FLAGS_INIT "-fvisibility=hidden -fvisibility-inlines-hidden -isysroot ${CMAKE_OSX_SYSROOT}")
 
 set (CMAKE_C_LINK_FLAGS "-Wl,-search_paths_first ${CMAKE_C_LINK_FLAGS}")
 set (CMAKE_CXX_LINK_FLAGS "-Wl,-search_paths_first ${CMAKE_CXX_LINK_FLAGS}")
@@ -131,7 +133,7 @@ if (NOT DEFINED CMAKE_IOS_SDK_ROOT)
 		list (REVERSE _CMAKE_IOS_SDKS)
 		list (GET _CMAKE_IOS_SDKS 0 CMAKE_IOS_SDK_ROOT)
 	else (_CMAKE_IOS_SDKS)
-		message (FATAL_ERROR "No iOS SDK's found in default seach path ${CMAKE_IOS_DEVELOPER_ROOT}. Manually set CMAKE_IOS_SDK_ROOT or install the iOS SDK.")
+		message (FATAL_ERROR "No iOS SDK's found in default search path ${CMAKE_IOS_DEVELOPER_ROOT}. Manually set CMAKE_IOS_SDK_ROOT or install the iOS SDK.")
 	endif (_CMAKE_IOS_SDKS)
 	message (STATUS "Toolchain using default iOS SDK: ${CMAKE_IOS_SDK_ROOT}")
 endif (NOT DEFINED CMAKE_IOS_SDK_ROOT)

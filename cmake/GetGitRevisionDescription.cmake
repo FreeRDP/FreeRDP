@@ -40,6 +40,7 @@ set(__get_git_revision_description YES)
 get_filename_component(_gitdescmoddir ${CMAKE_CURRENT_LIST_FILE} PATH)
 
 function(get_git_head_revision _refspecvar _hashvar)
+
 	set(GIT_PARENT_DIR "${CMAKE_SOURCE_DIR}")
 	set(GIT_DIR "${GIT_PARENT_DIR}/.git")
 	while(NOT EXISTS "${GIT_DIR}")	# .git dir not found, search parent directories
@@ -72,6 +73,34 @@ function(get_git_head_revision _refspecvar _hashvar)
 	set(${_refspecvar} "${HEAD_REF}" PARENT_SCOPE)
 	set(${_hashvar} "${HEAD_HASH}" PARENT_SCOPE)
 endfunction()
+
+function(git_rev_parse _var)
+	if(NOT GIT_FOUND)
+		find_package(Git QUIET)
+	endif()
+	if(NOT GIT_FOUND)
+		set(${_var} "n/a" PARENT_SCOPE)
+		return()
+	endif()
+	get_git_head_revision(refspec hash)
+	if(NOT hash)
+		set(${_var} "n/a" PARENT_SCOPE)
+		return()
+	endif()
+
+	execute_process(COMMAND "${GIT_EXECUTABLE}" rev-parse ${ARGN} ${hash}
+		WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+		RESULT_VARIABLE res
+		OUTPUT_VARIABLE out
+		ERROR_QUIET
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+	if(NOT res EQUAL 0)
+		set(out "n/a")
+	endif()
+
+	set(${_var} "${out}" PARENT_SCOPE)
+endfunction()
+
 
 function(git_describe _var)
 	if(NOT GIT_FOUND)

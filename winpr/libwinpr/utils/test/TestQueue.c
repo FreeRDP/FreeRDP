@@ -11,6 +11,8 @@ int TestQueue(int argc, char* argv[])
 	wQueue* queue;
 
 	queue = Queue_New(TRUE, -1, -1);
+	if (!queue)
+		return -1;
 
 	for (index = 1; index <= 10; index++)
 	{

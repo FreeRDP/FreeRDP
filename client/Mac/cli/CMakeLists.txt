@@ -63,6 +63,7 @@ set_target_properties(${MODULE_NAME} PROPERTIES RESOURCE "${${MODULE_PREFIX}_RES
 
 # Tell the compiler where to look for the FreeRDP framework
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -F../")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -F../")
 
 # Tell XCode where to look for the MacFreeRDP framework
 set_target_properties(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_FRAMEWORK_SEARCH_PATHS

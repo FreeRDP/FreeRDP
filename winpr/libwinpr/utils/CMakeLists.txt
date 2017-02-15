@@ -15,17 +15,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "winpr-utils")
-set(MODULE_PREFIX "WINPR_UTILS")
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(${MODULE_PREFIX}_COLLECTIONS_SRCS
 	collections/Queue.c
 	collections/Stack.c
 	collections/PubSub.c
+	collections/BipBuffer.c
+	collections/BitStream.c
 	collections/Reference.c
 	collections/ArrayList.c
 	collections/Dictionary.c
 	collections/LinkedList.c
+	collections/HashTable.c
 	collections/ListDictionary.c
 	collections/KeyValuePair.c
 	collections/CountdownEvent.c
@@ -34,6 +36,10 @@ set(${MODULE_PREFIX}_COLLECTIONS_SRCS
 	collections/StreamPool.c
 	collections/MessageQueue.c
 	collections/MessagePipe.c)
+	
+set(${MODULE_PREFIX}_LODEPNG_SRCS
+	lodepng/lodepng.c
+	lodepng/lodepng.h)
 
 set(${MODULE_PREFIX}_TRIO_SRCS
 	trio/strio.h
@@ -46,49 +52,102 @@ set(${MODULE_PREFIX}_TRIO_SRCS
 	trio/triostr.c
 	trio/triostr.h)
 
+if (HAVE_SYSLOG_H)
+	set(SYSLOG_SRCS
+		wlog/SyslogAppender.c
+		wlog/SyslogAppender.h
+	)
+endif()
+
+if (LIBSYSTEMD_FOUND)
+	set(JOURNALD_SRCS
+		wlog/JournaldAppender.c
+		wlog/JournaldAppender.h
+	)
+
+	winpr_include_directory_add(${LIBSYSTEMD_INCLUDE_DIR})
+	winpr_library_add(${LIBSYSTEMD_LIBRARY})
+endif()
+	
+set(${MODULE_PREFIX}_WLOG_SRCS
+	wlog/wlog.c
+	wlog/wlog.h
+	wlog/Layout.c
+	wlog/Layout.h
+	wlog/Message.c
+	wlog/Message.h
+	wlog/TextMessage.c
+	wlog/DataMessage.c
+	wlog/DataMessage.h
+	wlog/ImageMessage.c
+	wlog/ImageMessage.h
+	wlog/PacketMessage.c
+	wlog/PacketMessage.h
+	wlog/Appender.c
+	wlog/Appender.h
+	wlog/FileAppender.c
+	wlog/FileAppender.h
+	wlog/BinaryAppender.c
+	wlog/BinaryAppender.h
+	wlog/CallbackAppender.c
+	wlog/CallbackAppender.h
+	wlog/ConsoleAppender.c
+	wlog/ConsoleAppender.h
+	wlog/UdpAppender.c
+	wlog/UdpAppender.h
+	${SYSLOG_SRCS}
+	${JOURNALD_SRCS}
+	)
+
+
 set(${MODULE_PREFIX}_SRCS
+	ini.c
 	sam.c
 	ntlm.c
+	image.c
 	print.c
 	stream.c
+	debug.c
+	winpr.c
 	cmdline.c
-	wlog.c)
+	ssl.c)
 
-set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS}
+if (ANDROID)
+	include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+endif()
+
+winpr_module_add(${${MODULE_PREFIX}_SRCS}
 	${${MODULE_PREFIX}_COLLECTIONS_SRCS}
-	${${MODULE_PREFIX}_TRIO_SRCS})
+	${${MODULE_PREFIX}_LODEPNG_SRCS}
+	${${MODULE_PREFIX}_TRIO_SRCS}
+	${${MODULE_PREFIX}_WLOG_SRCS})
 
-include_directories("trio")
-include_directories(${ZLIB_INCLUDE_DIRS})
-include_directories(${OPENSSL_INCLUDE_DIR})
+winpr_include_directory_add(
+	"lodepng"
+	"trio"
+	".")
+	
+if(OPENSSL_FOUND)
+	winpr_include_directory_add(${OPENSSL_INCLUDE_DIR})
+	winpr_library_add(${OPENSSL_LIBRARIES})
+endif()
 
-add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	SOURCES ${${MODULE_PREFIX}_SRCS})
-
-set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
-
-set(${MODULE_PREFIX}_LIBS
-	${ZLIB_LIBRARIES}
-	${OPENSSL_LIBRARIES})
+if(MBEDTLS_FOUND)
+	winpr_include_directory_add(${MBEDTLS_INCLUDE_DIR})
+	winpr_library_add(${MBEDTLS_LIBRARIES})
+endif()
 
 if(UNIX)
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} m)
+	winpr_library_add(m)
 endif()
 
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
-	MODULE winpr
-	MODULES winpr-crt winpr-synch winpr-sysinfo)
-
-if(MONOLITHIC_BUILD)
-	set(WINPR_LIBS ${WINPR_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
-else()	
-	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(FREEBSD)
+	winpr_library_add(execinfo)
 endif()
 
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR")
+if(WIN32)
+	winpr_library_add(Dbghelp)
+endif()
 
 if(BUILD_TESTING)
 	add_subdirectory(test)

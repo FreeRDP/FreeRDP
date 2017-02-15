@@ -25,20 +25,17 @@ include_directories(..)
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
 
-set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
+target_link_libraries(${MODULE_NAME} freerdp winpr)
 
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE freerdp
-	MODULES freerdp-common freerdp-utils)
-
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-
-if(NOT STATIC_CHANNELS)
-	install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_PLUGIN_PATH})
+if (WITH_DEBUG_SYMBOLS AND MSVC AND NOT BUILTIN_CHANNELS AND BUILD_SHARED_LIBS)
+	install(FILES ${CMAKE_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${FREERDP_ADDIN_PATH} COMPONENT symbols)
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")
+
+if(WITH_OSS)
+	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "oss" "")
+endif()
 
 if(WITH_ALSA)
 	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "alsa" "")
@@ -46,4 +43,16 @@ endif()
 
 if(WITH_PULSE)
 	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "pulse" "")
+endif()
+
+if(WITH_OPENSLES)
+	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "opensles" "")
+endif()
+
+if(WITH_WINMM)
+	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "winmm" "")
+endif()
+
+if(WITH_MACAUDIO)
+	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "mac" "")
 endif()

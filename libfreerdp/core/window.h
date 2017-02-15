@@ -24,13 +24,17 @@
 #include "update.h"
 
 #include <winpr/stream.h>
+#include <freerdp/log.h>
+#include <freerdp/api.h>
 
-BOOL update_recv_altsec_window_order(rdpUpdate* update, wStream* s);
+FREERDP_LOCAL BOOL update_recv_altsec_window_order(rdpUpdate* update,
+        wStream* s);
 
+#define WND_TAG FREERDP_TAG("core.wnd")
 #ifdef WITH_DEBUG_WND
-#define DEBUG_WND(fmt, ...) DEBUG_CLASS(WND, fmt, ## __VA_ARGS__)
+#define DEBUG_WND(...) WLog_DBG(WND_TAG, __VA_ARGS__)
 #else
-#define DEBUG_WND(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_WND(...) do { } while (0)
 #endif
 
 #endif /* __WINDOW_H */

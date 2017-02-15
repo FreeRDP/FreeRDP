@@ -22,7 +22,6 @@
 
 #include <stdlib.h>
 
-#include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
 /*
@@ -84,6 +83,15 @@
 	defined(__mips__) || defined(__MIPS__)
 #ifndef _M_MIPS
 #define	 _M_MIPS	1
+#endif
+#endif
+
+/* MIPS64 (_M_MIPS64) */
+
+#if defined(mips64) || defined(__mips64) || \
+	defined(__mips64__) || defined(__MIPS64__)
+#ifndef _M_MIPS64
+#define	 _M_MIPS64	1
 #endif
 #endif
 
@@ -154,19 +162,28 @@
 
 /* GNU/Linux (__gnu_linux__) */
 
-/* Mac OS X (__MACOSX__) */
+/* Apple Platforms (iOS, Mac OS X) */
 
 #if (defined(__APPLE__) && defined(__MACH__))
+
+#include <TargetConditionals.h>
+
+#if (TARGET_OS_IPHONE == 1) || (TARGET_IPHONE_SIMULATOR == 1)
+
+/* iOS (__IOS__) */
+
+#ifndef __IOS__
+#define __IOS__		1
+#endif
+
+#elif (TARGET_OS_MAC == 1)
+
+/* Mac OS X (__MACOSX__) */
+
 #ifndef __MACOSX__
 #define __MACOSX__	1
 #endif
-#endif
 
-/* iOS (__IOS__)*/
-
-#if (defined(__APPLE__) && defined(TARGET_OS_IPHONE))
-#ifndef __IOS__
-#define __IOS__		1
 #endif
 #endif
 

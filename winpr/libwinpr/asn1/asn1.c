@@ -37,8 +37,7 @@ ASN1module_t ASN1_CreateModule(ASN1uint32_t nVersion, ASN1encodingrule_e eRule,
 	if (!((apfnEncoder) && (apfnDecoder) && (apfnFreeMemory) && (acbStructSize)))
 		return NULL;
 
-	module = (ASN1module_t) malloc(sizeof(struct tagASN1module_t));
-	ZeroMemory(module, sizeof(struct tagASN1module_t));
+	module = (ASN1module_t) calloc(1, sizeof(struct tagASN1module_t));
 
 	if (module)
 	{
@@ -61,8 +60,7 @@ ASN1module_t ASN1_CreateModule(ASN1uint32_t nVersion, ASN1encodingrule_e eRule,
 
 void ASN1_CloseModule(ASN1module_t pModule)
 {
-	if (!pModule)
-		free(pModule);
+	free(pModule);
 }
 
 ASN1error_e ASN1_CreateEncoder(ASN1module_t pModule, ASN1encoding_t* ppEncoderInfo,
@@ -75,13 +73,12 @@ ASN1error_e ASN1_CreateEncoder(ASN1module_t pModule, ASN1encoding_t* ppEncoderIn
 	if (pModule && ppEncoderInfo)
 	{
 		*ppEncoderInfo = 0;
-		encoder = (ASN1encoding_t) malloc(sizeof(struct ASN1encoding_s));
+		encoder = (ASN1encoding_t) calloc(1, sizeof(struct ASN1encoding_s));
 
 		if (encoder)
 		{
-			ZeroMemory(encoder, sizeof(struct ASN1encoding_s));
 			encoder->magic = 0x44434E45;
-			encoder->err = 0;
+			encoder->err = ASN1_SUCCESS;
 			encoder->dwFlags = pModule->dwFlags;
 			encoder->module = pModule;
 
@@ -113,14 +110,15 @@ ASN1error_e ASN1_CreateEncoder(ASN1module_t pModule, ASN1encoding_t* ppEncoderIn
 			{
 LABEL_ENCODER_COMPLETE:
 				*ppEncoderInfo = encoder;
-				return 0;
+				return ASN1_SUCCESS;
 			}
 
 			if (rule & ASN1_BER_RULE)
 			{
 				//if (ASN1BEREncCheck(encoder, 1))
 				{
-					*encoder->buf = 0;
+					if (encoder->buf)
+						*encoder->buf = 0;
 LABEL_SET_BUFFER:
 					if (pParent)
 						pParent[1].version = (ASN1uint32_t) encoder;
@@ -311,6 +309,17 @@ void ASN1_FreeEncoded(ASN1encoding_t pEncoderInfo, void* pBuf)
 void ASN1_FreeDecoded(ASN1decoding_t pDecoderInfo, void* pDataStruct, ASN1uint32_t nPduNum)
 {
 	return;
+}
+
+ASN1error_e ASN1_CreateDecoder(ASN1module_t pModule, ASN1decoding_t* ppDecoderInfo,
+        ASN1octet_t* pbBuf, ASN1uint32_t cbBufSize, ASN1decoding_t pParent)
+{
+        return ASN1_ERR_BADARGS;
+}
+
+ASN1error_e ASN1_Decode(ASN1decoding_t pDecoderInfo,void **ppDataStruct,ASN1uint32_t nPduNum,ASN1uint32_t dwFlags,ASN1octet_t *pbBuf,ASN1uint32_t cbBufSize)
+{
+    return ASN1_ERR_BADARGS;
 }
 
 #endif

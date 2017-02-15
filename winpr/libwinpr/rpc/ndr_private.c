@@ -38,12 +38,12 @@
 
 #include "ndr_private.h"
 
-void NdrpAlignLength(unsigned long* length, unsigned int alignment)
+void NdrpAlignLength(ULONG* length, unsigned int alignment)
 {
 	*length = (*length + alignment - 1) & ~(alignment - 1);
 }
 
-void NdrpIncrementLength(unsigned long* length, unsigned int size)
+void NdrpIncrementLength(ULONG* length, unsigned int size)
 {
 	*length += size;
 }

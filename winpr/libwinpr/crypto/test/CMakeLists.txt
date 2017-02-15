@@ -5,7 +5,12 @@ set(MODULE_PREFIX "TEST_CRYPTO")
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
-	TestCertEnumCertificatesInStore.c)
+	TestCryptoHash.c
+	TestCryptoRand.c
+	TestCryptoCipher.c
+	TestCryptoProtectData.c
+	TestCryptoProtectMemory.c
+	TestCryptoCertEnumCertificatesInStore.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
@@ -17,12 +22,7 @@ if(WIN32)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} secur32 crypt32 cryptui)
 endif()
 
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE winpr
-	MODULES winpr-crt winpr-crypto winpr-utils)
-
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+target_link_libraries(${MODULE_NAME} winpr)
 
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
 
@@ -32,4 +32,3 @@ foreach(test ${${MODULE_PREFIX}_TESTS})
 endforeach()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Test")
-

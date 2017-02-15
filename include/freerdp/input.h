@@ -35,6 +35,7 @@ typedef struct rdp_input rdpInput;
 #define KBD_FLAGS_RELEASE		0x8000
 
 /* Pointer Flags */
+#define PTR_FLAGS_HWHEEL		0x0400
 #define PTR_FLAGS_WHEEL			0x0200
 #define PTR_FLAGS_WHEEL_NEGATIVE	0x0100
 #define PTR_FLAGS_MOVE			0x0800
@@ -62,12 +63,13 @@ typedef struct rdp_input_proxy rdpInputProxy;
 
 /* Input Interface */
 
-typedef void (*pSynchronizeEvent)(rdpInput* input, UINT32 flags);
-typedef void (*pKeyboardEvent)(rdpInput* input, UINT16 flags, UINT16 code);
-typedef void (*pUnicodeKeyboardEvent)(rdpInput* input, UINT16 flags, UINT16 code);
-typedef void (*pMouseEvent)(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
-typedef void (*pExtendedMouseEvent)(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
-typedef void (*pFocusInEvent)(rdpInput* input, UINT16 toggleStates, UINT16 x, UINT16 y);
+typedef BOOL (*pSynchronizeEvent)(rdpInput* input, UINT32 flags);
+typedef BOOL (*pKeyboardEvent)(rdpInput* input, UINT16 flags, UINT16 code);
+typedef BOOL (*pUnicodeKeyboardEvent)(rdpInput* input, UINT16 flags, UINT16 code);
+typedef BOOL (*pMouseEvent)(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
+typedef BOOL (*pExtendedMouseEvent)(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
+typedef BOOL (*pFocusInEvent)(rdpInput* input, UINT16 toggleStates);
+typedef BOOL (*pKeyboardPauseEvent)(rdpInput* input);
 
 struct rdp_input
 {
@@ -81,8 +83,9 @@ struct rdp_input
 	pMouseEvent MouseEvent; /* 19 */
 	pExtendedMouseEvent ExtendedMouseEvent; /* 20 */
 	pFocusInEvent FocusInEvent; /*21 */
+	pKeyboardPauseEvent KeyboardPauseEvent; /* 22 */
 
-	UINT32 paddingB[32 - 22]; /* 22 */
+	UINT32 paddingB[32 - 23]; /* 23 */
 
 	/* Internal */
 
@@ -95,13 +98,14 @@ struct rdp_input
 extern "C" {
 #endif
 
-FREERDP_API void freerdp_input_send_synchronize_event(rdpInput* input, UINT32 flags);
-FREERDP_API void freerdp_input_send_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code);
-FREERDP_API void freerdp_input_send_keyboard_event_ex(rdpInput* input, BOOL down, UINT32 rdp_scancode);
-FREERDP_API void freerdp_input_send_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code);
-FREERDP_API void freerdp_input_send_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
-FREERDP_API void freerdp_input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
-FREERDP_API void freerdp_input_send_focus_in_event(rdpInput* input, UINT16 toggleStates, UINT16 x, UINT16 y);
+FREERDP_API BOOL freerdp_input_send_synchronize_event(rdpInput* input, UINT32 flags);
+FREERDP_API BOOL freerdp_input_send_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code);
+FREERDP_API BOOL freerdp_input_send_keyboard_event_ex(rdpInput* input, BOOL down, UINT32 rdp_scancode);
+FREERDP_API BOOL freerdp_input_send_keyboard_pause_event(rdpInput* input);
+FREERDP_API BOOL freerdp_input_send_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code);
+FREERDP_API BOOL freerdp_input_send_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
+FREERDP_API BOOL freerdp_input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
+FREERDP_API BOOL freerdp_input_send_focus_in_event(rdpInput* input, UINT16 toggleStates);
 
 #ifdef __cplusplus
 }

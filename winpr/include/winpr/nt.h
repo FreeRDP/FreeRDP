@@ -89,7 +89,7 @@
 
 /* Defined in wincred.h, do not redefine */
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(_UWP)
 
 #include <wincred.h>
 
@@ -121,21 +121,6 @@
 #define FACILITY_CLUSTER_ERROR_CODE					0x13
 #define FACILITY_ACPI_ERROR_CODE					0x14
 #define FACILITY_SXS_ERROR_CODE						0x15
-
-//#define DBG_EXCEPTION_HANDLED						((NTSTATUS)0x00010001)
-//#define DBG_CONTINUE							((NTSTATUS)0x00010002)
-#define DBG_REPLY_LATER							((NTSTATUS)0x40010001)
-#define DBG_UNABLE_TO_PROVIDE_HANDLE					((NTSTATUS)0x40010002)
-//#define DBG_TERMINATE_THREAD						((NTSTATUS)0x40010003)
-//#define DBG_TERMINATE_PROCESS						((NTSTATUS)0x40010004)
-//#define DBG_CONTROL_C							((NTSTATUS)0x40010005)
-//#define DBG_PRINTEXCEPTION_C						((NTSTATUS)0x40010006)
-//#define DBG_RIPEXCEPTION						((NTSTATUS)0x40010007)
-//#define DBG_CONTROL_BREAK						((NTSTATUS)0x40010008)
-//#define DBG_COMMAND_EXCEPTION						((NTSTATUS)0x40010009)
-//#define DBG_EXCEPTION_NOT_HANDLED					((NTSTATUS)0x80010001)
-#define DBG_NO_STATE_CHANGE						((NTSTATUS)0xC0010001)
-#define DBG_APP_NOT_IDLE						((NTSTATUS)0xC0010002)
 
 /**
  * NTSTATUS codes
@@ -977,6 +962,7 @@
 #define STATUS_WAIT_FOR_OPLOCK						((NTSTATUS)0x00000367)
 #define STATUS_MOUNT_POINT_NOT_RESOLVED					((NTSTATUS)0xC0000368)
 #define STATUS_INVALID_DEVICE_OBJECT_PARAMETER				((NTSTATUS)0xC0000369)
+/* The following is not a typo. It's the same spelling as in the Microsoft headers */
 #define STATUS_MCA_OCCURED						((NTSTATUS)0xC000036A)
 #define STATUS_DRIVER_BLOCKED_CRITICAL					((NTSTATUS)0xC000036B)
 #define STATUS_DRIVER_BLOCKED						((NTSTATUS)0xC000036C)
@@ -1269,6 +1255,14 @@
 
 /* Defined in winternl.h, always define since we do not include this header */
 
+/* defined in ntstatus.h */
+#if !defined(NTSTATUS_FROM_WIN32) && !defined(INLINE_NTSTATUS_FROM_WIN32)
+static INLINE NTSTATUS NTSTATUS_FROM_WIN32(long x)
+{
+	return x <= 0 ? (NTSTATUS)x : (NTSTATUS) (((x) & 0x0000FFFF) | (0x7 << 16) | 0xC0000000);
+}
+#endif
+
 #ifdef _WIN32
 
 /**
@@ -1280,17 +1274,19 @@
  * http://msdn.microsoft.com/en-us/library/cc231987.aspx
  */
 
-#define _FILE_INFORMATION_CLASS		_WINTERNL_FILE_INFORMATION_CLASS
+#define FILE_INFORMATION_CLASS		_WINTERNL_FILE_INFORMATION_CLASS
+#define _FILE_INFORMATION_CLASS		_WINTERNL__FILE_INFORMATION_CLASS
 #define FileDirectoryInformation	_WINTERNL_FileDirectoryInformation
 
 #include <winternl.h>
 
+#undef FILE_INFORMATION_CLASS
 #undef _FILE_INFORMATION_CLASS
 #undef FileDirectoryInformation
 
 #endif
 
-enum FILE_INFORMATION_CLASS
+typedef enum _FILE_INFORMATION_CLASS
 {
 	FileDirectoryInformation = 1,
 	FileFullDirectoryInformation,
@@ -1332,9 +1328,9 @@ enum FILE_INFORMATION_CLASS
 	FileIdFullDirectoryInformation,
 	FileValidDataLengthInformation,
 	FileShortNameInformation
-};
+} FILE_INFORMATION_CLASS;
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(_UWP)
 
 #define FILE_SUPERSEDE				0x00000000
 #define FILE_OPEN				0x00000001
@@ -1433,13 +1429,21 @@ typedef struct _IO_STATUS_BLOCK
 {
 	union
 	{
+#ifdef _WIN32
+		NTSTATUS Status;
+#else
 		NTSTATUS status;
+#endif
 		PVOID Pointer;
 	};
 	ULONG_PTR Information;
 } IO_STATUS_BLOCK, *PIO_STATUS_BLOCK;
 
 typedef VOID (*PIO_APC_ROUTINE)(PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, ULONG Reserved);
+
+#endif
+
+#if !defined(_WIN32)
 
 typedef struct _PEB PEB;
 typedef struct _PEB* PPEB;
@@ -1529,44 +1533,57 @@ extern "C" {
 
 WINPR_API PTEB NtCurrentTeb(void);
 
-WINPR_API VOID RtlInitAnsiString(PANSI_STRING DestinationString, PCSZ SourceString);
-
-WINPR_API VOID RtlInitUnicodeString(PUNICODE_STRING DestinationString, PCWSTR SourceString);
-
-WINPR_API NTSTATUS RtlAnsiStringToUnicodeString(PUNICODE_STRING DestinationString,
-		PCANSI_STRING SourceString, BOOLEAN AllocateDestinationString);
-
-WINPR_API VOID RtlFreeUnicodeString(PUNICODE_STRING UnicodeString);
-
-WINPR_API ULONG RtlNtStatusToDosError(NTSTATUS status);
-
-WINPR_API VOID InitializeObjectAttributes(POBJECT_ATTRIBUTES InitializedAttributes,
-		PUNICODE_STRING ObjectName, ULONG Attributes, HANDLE RootDirectory,
-		PSECURITY_DESCRIPTOR SecurityDescriptor);
-
-WINPR_API NTSTATUS NtCreateFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess,
-		POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock,
-		PLARGE_INTEGER AllocationSize, ULONG FileAttributes, ULONG ShareAccess,
-		ULONG CreateDisposition, ULONG CreateOptions, PVOID EaBuffer, ULONG EaLength);
-
-WINPR_API NTSTATUS NtOpenFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess,
-		POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock,
-		ULONG ShareAccess, ULONG OpenOptions);
-
-WINPR_API NTSTATUS NtDeviceIoControlFile(HANDLE FileHandle, HANDLE Event,
-		PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock,
-		ULONG IoControlCode, PVOID InputBuffer, ULONG InputBufferLength,
-		PVOID OutputBuffer, ULONG OutputBufferLength);
-
-WINPR_API NTSTATUS NtClose(HANDLE Handle);
-
-WINPR_API NTSTATUS NtWaitForSingleObject(HANDLE Handle, BOOLEAN Alertable, PLARGE_INTEGER Timeout);
-
 #ifdef __cplusplus
 }
 #endif
 
 #endif
 
-#endif /* WINPR_NT_H */
+#ifdef __cplusplus
+extern "C" {
+#endif
 
+WINPR_API VOID _RtlInitAnsiString(PANSI_STRING DestinationString, PCSZ SourceString);
+
+WINPR_API VOID _RtlInitUnicodeString(PUNICODE_STRING DestinationString, PCWSTR SourceString);
+
+WINPR_API NTSTATUS _RtlAnsiStringToUnicodeString(PUNICODE_STRING DestinationString,
+		PCANSI_STRING SourceString, BOOLEAN AllocateDestinationString);
+
+WINPR_API VOID _RtlFreeUnicodeString(PUNICODE_STRING UnicodeString);
+
+WINPR_API ULONG _RtlNtStatusToDosError(NTSTATUS status);
+
+WINPR_API VOID _InitializeObjectAttributes(POBJECT_ATTRIBUTES InitializedAttributes,
+		PUNICODE_STRING ObjectName, ULONG Attributes, HANDLE RootDirectory,
+		PSECURITY_DESCRIPTOR SecurityDescriptor);
+
+WINPR_API NTSTATUS _NtCreateFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess,
+		POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock,
+		PLARGE_INTEGER AllocationSize, ULONG FileAttributes, ULONG ShareAccess,
+		ULONG CreateDisposition, ULONG CreateOptions, PVOID EaBuffer, ULONG EaLength);
+
+WINPR_API NTSTATUS _NtOpenFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess,
+		POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock,
+		ULONG ShareAccess, ULONG OpenOptions);
+
+WINPR_API NTSTATUS _NtReadFile(HANDLE FileHandle, HANDLE Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext,
+		PIO_STATUS_BLOCK IoStatusBlock, PVOID Buffer, ULONG Length, PLARGE_INTEGER ByteOffset, PULONG Key);
+
+WINPR_API NTSTATUS _NtWriteFile(HANDLE FileHandle, HANDLE Event, PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext,
+		PIO_STATUS_BLOCK IoStatusBlock, PVOID Buffer, ULONG Length, PLARGE_INTEGER ByteOffset, PULONG Key);
+
+WINPR_API NTSTATUS _NtDeviceIoControlFile(HANDLE FileHandle, HANDLE Event,
+		PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock,
+		ULONG IoControlCode, PVOID InputBuffer, ULONG InputBufferLength,
+		PVOID OutputBuffer, ULONG OutputBufferLength);
+
+WINPR_API NTSTATUS _NtClose(HANDLE Handle);
+
+WINPR_API NTSTATUS _NtWaitForSingleObject(HANDLE Handle, BOOLEAN Alertable, PLARGE_INTEGER Timeout);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* WINPR_NT_H */

@@ -28,7 +28,8 @@ typedef struct rdp_license rdpLicense;
 #include <freerdp/crypto/certificate.h>
 
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
+#include <freerdp/api.h>
 
 #include <winpr/stream.h>
 
@@ -48,7 +49,6 @@ typedef struct rdp_license rdpLicense;
 #define LICENSE_PKT_MASK			(LICENSE_PKT_CS_MASK | LICENSE_PKT_SC_MASK)
 
 #define LICENSE_PREAMBLE_LENGTH			4
-#define LICENSE_PACKET_HEADER_MAX_LENGTH	(RDP_PACKET_HEADER_MAX_LENGTH + RDP_SECURITY_HEADER_LENGTH + LICENSE_PREAMBLE_LENGTH)
 
 /* Cryptographic Lengths */
 
@@ -148,7 +148,7 @@ typedef struct
 	BYTE* pbCompanyName;
 	UINT32 cbProductId;
 	BYTE* pbProductId;
-} PRODUCT_INFO;
+} LICENSE_PRODUCT_INFO;
 
 typedef struct
 {
@@ -187,7 +187,7 @@ struct rdp_license
 	BYTE SessionKeyBlob[SESSION_KEY_BLOB_LENGTH];
 	BYTE MacSaltKey[MAC_SALT_KEY_LENGTH];
 	BYTE LicensingEncryptionKey[LICENSING_ENCRYPTION_KEY_LENGTH];
-	PRODUCT_INFO* ProductInfo;
+	LICENSE_PRODUCT_INFO* ProductInfo;
 	LICENSE_BLOB* ErrorInfo;
 	LICENSE_BLOB* KeyExchangeList;
 	LICENSE_BLOB* ServerCertificate;
@@ -198,52 +198,63 @@ struct rdp_license
 	LICENSE_BLOB* EncryptedPlatformChallenge;
 	LICENSE_BLOB* EncryptedHardwareId;
 	SCOPE_LIST* ScopeList;
+	UINT32 PacketHeaderLength;
 };
 
-BOOL license_recv(rdpLicense* license, wStream* s);
-BOOL license_send(rdpLicense* license, wStream* s, BYTE type);
-wStream* license_send_stream_init(rdpLicense* license);
+FREERDP_LOCAL int license_recv(rdpLicense* license, wStream* s);
+FREERDP_LOCAL BOOL license_send(rdpLicense* license, wStream* s, BYTE type);
+FREERDP_LOCAL wStream* license_send_stream_init(rdpLicense* license);
 
-void license_generate_randoms(rdpLicense* license);
-void license_generate_keys(rdpLicense* license);
-void license_generate_hwid(rdpLicense* license);
-void license_encrypt_premaster_secret(rdpLicense* license);
-void license_decrypt_platform_challenge(rdpLicense* license);
+FREERDP_LOCAL void license_generate_randoms(rdpLicense* license);
+FREERDP_LOCAL BOOL license_generate_keys(rdpLicense* license);
+FREERDP_LOCAL BOOL license_generate_hwid(rdpLicense* license);
+FREERDP_LOCAL BOOL license_encrypt_premaster_secret(rdpLicense* license);
+FREERDP_LOCAL BOOL license_decrypt_platform_challenge(rdpLicense* license);
 
-PRODUCT_INFO* license_new_product_info(void);
-void license_free_product_info(PRODUCT_INFO* productInfo);
-BOOL license_read_product_info(wStream* s, PRODUCT_INFO* productInfo);
+FREERDP_LOCAL LICENSE_PRODUCT_INFO* license_new_product_info(void);
+FREERDP_LOCAL void license_free_product_info(LICENSE_PRODUCT_INFO* productInfo);
+FREERDP_LOCAL BOOL license_read_product_info(wStream* s,
+        LICENSE_PRODUCT_INFO* productInfo);
 
-LICENSE_BLOB* license_new_binary_blob(UINT16 type);
-void license_free_binary_blob(LICENSE_BLOB* blob);
-BOOL license_read_binary_blob(wStream* s, LICENSE_BLOB* blob);
-void license_write_binary_blob(wStream* s, LICENSE_BLOB* blob);
+FREERDP_LOCAL LICENSE_BLOB* license_new_binary_blob(UINT16 type);
+FREERDP_LOCAL void license_free_binary_blob(LICENSE_BLOB* blob);
+FREERDP_LOCAL BOOL license_read_binary_blob(wStream* s, LICENSE_BLOB* blob);
+FREERDP_LOCAL BOOL license_write_binary_blob(wStream* s, LICENSE_BLOB* blob);
 
-SCOPE_LIST* license_new_scope_list(void);
-void license_free_scope_list(SCOPE_LIST* scopeList);
-BOOL license_read_scope_list(wStream* s, SCOPE_LIST* scopeList);
+FREERDP_LOCAL SCOPE_LIST* license_new_scope_list(void);
+FREERDP_LOCAL void license_free_scope_list(SCOPE_LIST* scopeList);
+FREERDP_LOCAL BOOL license_read_scope_list(wStream* s, SCOPE_LIST* scopeList);
 
-BOOL license_read_license_request_packet(rdpLicense* license, wStream* s);
-BOOL license_read_platform_challenge_packet(rdpLicense* license, wStream* s);
-void license_read_new_license_packet(rdpLicense* license, wStream* s);
-void license_read_upgrade_license_packet(rdpLicense* license, wStream* s);
-BOOL license_read_error_alert_packet(rdpLicense* license, wStream* s);
+FREERDP_LOCAL BOOL license_read_license_request_packet(rdpLicense* license,
+        wStream* s);
+FREERDP_LOCAL BOOL license_read_platform_challenge_packet(rdpLicense* license,
+        wStream* s);
+FREERDP_LOCAL void license_read_new_license_packet(rdpLicense* license,
+        wStream* s);
+FREERDP_LOCAL void license_read_upgrade_license_packet(rdpLicense* license,
+        wStream* s);
+FREERDP_LOCAL BOOL license_read_error_alert_packet(rdpLicense* license,
+        wStream* s);
 
-void license_write_new_license_request_packet(rdpLicense* license, wStream* s);
-void license_send_new_license_request_packet(rdpLicense* license);
+FREERDP_LOCAL BOOL license_write_new_license_request_packet(rdpLicense* license,
+        wStream* s);
+FREERDP_LOCAL BOOL license_send_new_license_request_packet(rdpLicense* license);
 
-void license_write_platform_challenge_response_packet(rdpLicense* license, wStream* s, BYTE* mac_data);
-void license_send_platform_challenge_response_packet(rdpLicense* license);
+FREERDP_LOCAL BOOL license_write_platform_challenge_response_packet(
+    rdpLicense* license, wStream* s, BYTE* mac_data);
+FREERDP_LOCAL BOOL license_send_platform_challenge_response_packet(
+    rdpLicense* license);
 
-BOOL license_send_valid_client_error_packet(rdpLicense* license);
+FREERDP_LOCAL BOOL license_send_valid_client_error_packet(rdpLicense* license);
 
-rdpLicense* license_new(rdpRdp* rdp);
-void license_free(rdpLicense* license);
+FREERDP_LOCAL rdpLicense* license_new(rdpRdp* rdp);
+FREERDP_LOCAL void license_free(rdpLicense* license);
 
+#define LICENSE_TAG FREERDP_TAG("core.license")
 #ifdef WITH_DEBUG_LICENSE
-#define DEBUG_LICENSE(fmt, ...) DEBUG_CLASS(LICENSE, fmt, ## __VA_ARGS__)
+#define DEBUG_LICENSE(...) WLog_DBG(LICENSE_TAG, __VA_ARGS__)
 #else
-#define DEBUG_LICENSE(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_LICENSE(...) do { } while (0)
 #endif
 
 #endif /* __LICENSE_H */

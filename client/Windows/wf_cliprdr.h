@@ -19,15 +19,9 @@
 #ifndef __WF_CLIPRDR_H
 #define __WF_CLIPRDR_H
 
-#include "wf_interface.h"
+#include "wf_client.h"
 
-void wf_cliprdr_init(wfContext* wfc, rdpChannels* channels);
-void wf_cliprdr_uninit(wfContext* wfc);
-void wf_process_cliprdr_event(wfContext* wfc, wMessage* event);
-BOOL wf_cliprdr_process_selection_notify(wfContext* wfc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-BOOL wf_cliprdr_process_selection_request(wfContext* wfc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-BOOL wf_cliprdr_process_selection_clear(wfContext* wfc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-BOOL wf_cliprdr_process_property_notify(wfContext* wfc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-void wf_cliprdr_check_owner(wfContext* wfc);
+BOOL wf_cliprdr_init(wfContext* wfc, CliprdrClientContext* cliprdr);
+BOOL wf_cliprdr_uninit(wfContext* wfc, CliprdrClientContext* cliprdr);
 
 #endif /* __WF_CLIPRDR_H */

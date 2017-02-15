@@ -5,14 +5,23 @@ set(MODULE_PREFIX "TEST_WINPR_UTILS")
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
+	TestIni.c
+	TestVersion.c
+	TestImage.c
+	TestBipBuffer.c
+	TestBacktrace.c
 	TestQueue.c
 	TestPrint.c
 	TestPubSub.c
+	TestStream.c
+	TestBitStream.c
 	TestArrayList.c
 	TestLinkedList.c
 	TestListDictionary.c
 	TestCmdLine.c
 	TestWLog.c
+	TestWLogCallback.c
+	TestHashTable.c
 	TestBufferPool.c
 	TestStreamPool.c
 	TestMessageQueue.c
@@ -22,14 +31,11 @@ create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
 	${${MODULE_PREFIX}_TESTS})
 
+add_definitions(-DTEST_SOURCE_PATH="${CMAKE_CURRENT_SOURCE_DIR}")
+
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE winpr
-	MODULES winpr-crt winpr-thread winpr-utils)
-
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+target_link_libraries(${MODULE_NAME} winpr)
 
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
 

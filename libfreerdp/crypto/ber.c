@@ -24,7 +24,10 @@
 #include <stdio.h>
 #include <winpr/crt.h>
 
+#include <freerdp/log.h>
 #include <freerdp/crypto/ber.h>
+
+#define TAG FREERDP_TAG("crypto")
 
 BOOL ber_read_length(wStream* s, int* length)
 {
@@ -369,7 +372,7 @@ BOOL ber_read_integer(wStream* s, UINT32* value)
 
 	if (!ber_read_universal_tag(s, BER_TAG_INTEGER, FALSE) ||
 		!ber_read_length(s, &length) ||
-		Stream_GetRemainingLength(s) < length)
+		((int) Stream_GetRemainingLength(s)) < length)
 		return FALSE;
 
 	if (value == NULL)
@@ -399,12 +402,12 @@ BOOL ber_read_integer(wStream* s, UINT32* value)
 	}
 	else if (length == 8)
 	{
-		fprintf(stderr, "%s: should implement reading an 8 bytes integer\n", __FUNCTION__);
+		WLog_ERR(TAG,  "should implement reading an 8 bytes integer");
 		return FALSE;
 	}
 	else
 	{
-		fprintf(stderr, "%s: should implement reading an integer with length=%d\n", __FUNCTION__, length);
+		WLog_ERR(TAG,  "should implement reading an integer with length=%d", length);
 		return FALSE;
 	}
 
@@ -448,6 +451,14 @@ int ber_write_integer(wStream* s, UINT32 value)
 		Stream_Write_UINT32_BE(s, value);
 		return 6;
 	}
+	else
+	{
+		/* treat as signed integer i.e. NT/HRESULT error codes */
+		ber_write_universal_tag(s, BER_TAG_INTEGER, FALSE);
+		ber_write_length(s, 4);
+		Stream_Write_UINT32_BE(s, value);
+		return 6;
+	}
 
 	return 0;
 }
@@ -468,6 +479,11 @@ int ber_sizeof_integer(UINT32 value)
 	}
 	else if (value < 0x80000000)
 	{
+		return 6;
+	}
+	else
+	{
+		/* treat as signed integer i.e. NT/HRESULT error codes */
 		return 6;
 	}
 

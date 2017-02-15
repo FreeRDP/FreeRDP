@@ -3,6 +3,8 @@
  * FreeRDP Mac OS X Server (Audio Output)
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +28,15 @@
 #include "mf_info.h"
 #include "mf_rdpsnd.h"
 
+#include <freerdp/log.h>
+#define TAG SERVER_TAG("mac")
+
 AQRecorderState recorderState;
 
 static const AUDIO_FORMAT supported_audio_formats[] =
 {
-	{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, NULL },
-	{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, NULL }
+	{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, 0, NULL },
+	{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, 0, NULL }
 };
 
 static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
@@ -43,9 +48,8 @@ static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 	
 	//we should actually loop through the list of client formats here
 	//and see if we can send the client something that it supports...
-	
-	printf("Client supports the following %d formats: \n", context->num_client_formats);
-	
+	WLog_DBG(TAG, "Client supports the following %d formats: ", context->num_client_formats);
+
 	for (i = 0; i < context->num_client_formats; i++)
 	{
 		/* TODO: improve the way we agree on a format */
@@ -55,7 +59,7 @@ static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 			    (context->client_formats[i].nChannels == context->server_formats[j].nChannels) &&
 			    (context->client_formats[i].nSamplesPerSec == context->server_formats[j].nSamplesPerSec))
 			{
-				printf("agreed on format!\n");
+				WLog_DBG(TAG, "agreed on format!");
 				formatAgreed = TRUE;
 				agreedFormat = (AUDIO_FORMAT*)&context->server_formats[j];
 				break;
@@ -68,10 +72,10 @@ static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 	
 	if (formatAgreed == FALSE)
 	{
-		printf("Could not agree on a audio format with the server\n");
+		WLog_DBG(TAG, "Could not agree on a audio format with the server");
 		return;
 	}
-	
+
 	context->SelectFormat(context, i);
 	context->SetVolume(context, 0x7FFF, 0x7FFF);
 	
@@ -111,9 +115,8 @@ static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 	
 	if (status != noErr)
 	{
-		printf("Failed to create a new Audio Queue. Status code: %d\n", status);
+		WLog_DBG(TAG, "Failed to create a new Audio Queue. Status code: %"PRId32"", status);
 	}
-	
 	
 	UInt32 dataFormatSize = sizeof (recorderState.dataFormat);
 	
@@ -149,6 +152,7 @@ static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 BOOL mf_peer_rdpsnd_init(mfPeerContext* context)
 {
 	context->rdpsnd = rdpsnd_server_context_new(context->vcm);
+	context->rdpsnd->rdpcontext = &context->_p;
 	context->rdpsnd->data = context;
 	
 	context->rdpsnd->server_formats = supported_audio_formats;
@@ -161,7 +165,7 @@ BOOL mf_peer_rdpsnd_init(mfPeerContext* context)
 	
 	context->rdpsnd->Activated = mf_peer_rdpsnd_activated;
 	
-	context->rdpsnd->Initialize(context->rdpsnd);
+	context->rdpsnd->Initialize(context->rdpsnd, TRUE);
 	
 	return TRUE;
 }
@@ -197,7 +201,8 @@ void mf_peer_rdpsnd_input_callback (void                                *inUserD
 		return ;
 	}
 	
-	rState->snd_context->SendSamples(rState->snd_context, inBuffer->mAudioData, inBuffer->mAudioDataByteSize/4);
+	rState->snd_context->SendSamples(rState->snd_context, inBuffer->mAudioData,
+									inBuffer->mAudioDataByteSize/4, (UINT16)(GetTickCount() & 0xffff));
 	
 	status = AudioQueueEnqueueBuffer(
 					 rState->queue,
@@ -207,7 +212,7 @@ void mf_peer_rdpsnd_input_callback (void                                *inUserD
 	
 	if (status != noErr)
 	{
-		printf("AudioQueueEnqueueBuffer() returned status = %d\n", status);
+		WLog_DBG(TAG, "AudioQueueEnqueueBuffer() returned status = %"PRId32"", status);
 	}
 	
 }

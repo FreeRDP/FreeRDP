@@ -22,138 +22,19 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/crypto.h>
 
+#include <freerdp/log.h>
 #include <freerdp/crypto/crypto.h>
 
-CryptoSha1 crypto_sha1_init(void)
-{
-	CryptoSha1 sha1 = malloc(sizeof(*sha1));
-	SHA1_Init(&sha1->sha_ctx);
-	return sha1;
-}
-
-void crypto_sha1_update(CryptoSha1 sha1, const BYTE* data, UINT32 length)
-{
-	SHA1_Update(&sha1->sha_ctx, data, length);
-}
-
-void crypto_sha1_final(CryptoSha1 sha1, BYTE* out_data)
-{
-	SHA1_Final(out_data, &sha1->sha_ctx);
-	free(sha1);
-}
-
-CryptoMd5 crypto_md5_init(void)
-{
-	CryptoMd5 md5 = malloc(sizeof(*md5));
-	MD5_Init(&md5->md5_ctx);
-	return md5;
-}
-
-void crypto_md5_update(CryptoMd5 md5, const BYTE* data, UINT32 length)
-{
-	MD5_Update(&md5->md5_ctx, data, length);
-}
-
-void crypto_md5_final(CryptoMd5 md5, BYTE* out_data)
-{
-	MD5_Final(out_data, &md5->md5_ctx);
-	free(md5);
-}
-
-CryptoRc4 crypto_rc4_init(const BYTE* key, UINT32 length)
-{
-	CryptoRc4 rc4 = malloc(sizeof(*rc4));
-	RC4_set_key(&rc4->rc4_key, length, key);
-	return rc4;
-}
-
-void crypto_rc4(CryptoRc4 rc4, UINT32 length, const BYTE* in_data, BYTE* out_data)
-{
-	RC4(&rc4->rc4_key, length, in_data, out_data);
-}
-
-void crypto_rc4_free(CryptoRc4 rc4)
-{
-	if (rc4)
-		free(rc4);
-}
-
-CryptoDes3 crypto_des3_encrypt_init(const BYTE* key, const BYTE* ivec)
-{
-	CryptoDes3 des3 = malloc(sizeof(*des3));
-	EVP_CIPHER_CTX_init(&des3->des3_ctx);
-	EVP_EncryptInit_ex(&des3->des3_ctx, EVP_des_ede3_cbc(), NULL, key, ivec);
-	EVP_CIPHER_CTX_set_padding(&des3->des3_ctx, 0);
-	return des3;
-}
-
-CryptoDes3 crypto_des3_decrypt_init(const BYTE* key, const BYTE* ivec)
-{
-	CryptoDes3 des3 = malloc(sizeof(*des3));
-	EVP_CIPHER_CTX_init(&des3->des3_ctx);
-	EVP_DecryptInit_ex(&des3->des3_ctx, EVP_des_ede3_cbc(), NULL, key, ivec);
-	EVP_CIPHER_CTX_set_padding(&des3->des3_ctx, 0);
-	return des3;
-}
-
-void crypto_des3_encrypt(CryptoDes3 des3, UINT32 length, const BYTE* in_data, BYTE* out_data)
-{
-	int len;
-	EVP_EncryptUpdate(&des3->des3_ctx, out_data, &len, in_data, length);
-}
-
-void crypto_des3_decrypt(CryptoDes3 des3, UINT32 length, const BYTE* in_data, BYTE* out_data)
-{
-	int len;
-	EVP_DecryptUpdate(&des3->des3_ctx, out_data, &len, in_data, length);
-
-	if (length != len)
-		abort(); /* TODO */
-}
-
-void crypto_des3_free(CryptoDes3 des3)
-{
-	if (des3 == NULL)
-		return;
-	EVP_CIPHER_CTX_cleanup(&des3->des3_ctx);
-	free(des3);
-}
-
-CryptoHmac crypto_hmac_new(void)
-{
-	CryptoHmac hmac = malloc(sizeof(*hmac));
-	HMAC_CTX_init(&hmac->hmac_ctx);
-	return hmac;
-}
-
-void crypto_hmac_sha1_init(CryptoHmac hmac, const BYTE* data, UINT32 length)
-{
-	HMAC_Init_ex(&hmac->hmac_ctx, data, length, EVP_sha1(), NULL);
-}
-
-void crypto_hmac_update(CryptoHmac hmac, const BYTE* data, UINT32 length)
-{
-	HMAC_Update(&hmac->hmac_ctx, data, length);
-}
-
-void crypto_hmac_final(CryptoHmac hmac, BYTE* out_data, UINT32 length)
-{
-	HMAC_Final(&hmac->hmac_ctx, out_data, &length);
-}
-
-void crypto_hmac_free(CryptoHmac hmac)
-{
-	if (hmac == NULL)
-		return;
-
-	HMAC_CTX_cleanup(&hmac->hmac_ctx);
-	free(hmac);
-}
+#define TAG FREERDP_TAG("crypto")
 
 CryptoCert crypto_cert_read(BYTE* data, UINT32 length)
 {
 	CryptoCert cert = malloc(sizeof(*cert));
+	if (!cert)
+		return NULL;
+
 	/* this will move the data pointer but we don't care, we don't use it again */
 	cert->px509 = d2i_X509(NULL, (D2I_X509_CONST BYTE **) &data, length);
 	return cert;
@@ -177,19 +58,17 @@ BOOL crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* Public
 	EVP_PKEY* pkey = NULL;
 
 	pkey = X509_get_pubkey(cert->px509);
-
 	if (!pkey)
 	{
-		fprintf(stderr, "crypto_cert_get_public_key: X509_get_pubkey() failed\n");
+		WLog_ERR(TAG,  "X509_get_pubkey() failed");
 		status = FALSE;
 		goto exit;
 	}
 
 	length = i2d_PublicKey(pkey, NULL);
-
 	if (length < 1)
 	{
-		fprintf(stderr, "crypto_cert_get_public_key: i2d_PublicKey() failed\n");
+		WLog_ERR(TAG,  "i2d_PublicKey() failed");
 		status = FALSE;
 		goto exit;
 	}
@@ -197,6 +76,11 @@ BOOL crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* Public
 	*PublicKeyLength = (DWORD) length;
 	*PublicKey = (BYTE*) malloc(length);
 	ptr = (BYTE*) (*PublicKey);
+	if (!ptr)
+	{
+		status = FALSE;
+		goto exit;
+	}
 
 	i2d_PublicKey(pkey, &ptr);
 
@@ -210,13 +94,16 @@ exit:
 static int crypto_rsa_common(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus, const BYTE* exponent, int exponent_size, BYTE* output)
 {
 	BN_CTX* ctx;
-	int output_length;
+	int output_length = -1;
 	BYTE* input_reverse;
 	BYTE* modulus_reverse;
 	BYTE* exponent_reverse;
-	BIGNUM mod, exp, x, y;
+	BIGNUM *mod, *exp, *x, *y;
 
 	input_reverse = (BYTE*) malloc(2 * key_length + exponent_size);
+	if (!input_reverse)
+		return -1;
+
 	modulus_reverse = input_reverse + key_length;
 	exponent_reverse = modulus_reverse + key_length;
 
@@ -227,28 +114,42 @@ static int crypto_rsa_common(const BYTE* input, int length, UINT32 key_length, c
 	memcpy(input_reverse, input, length);
 	crypto_reverse(input_reverse, length);
 
-	ctx = BN_CTX_new();
-	BN_init(&mod);
-	BN_init(&exp);
-	BN_init(&x);
-	BN_init(&y);
+	if (!(ctx = BN_CTX_new()))
+		goto fail_bn_ctx;
 
-	BN_bin2bn(modulus_reverse, key_length, &mod);
-	BN_bin2bn(exponent_reverse, exponent_size, &exp);
-	BN_bin2bn(input_reverse, length, &x);
-	BN_mod_exp(&y, &x, &exp, &mod, ctx);
+	if (!(mod = BN_new()))
+		goto fail_bn_mod;
 
-	output_length = BN_bn2bin(&y, output);
+	if (!(exp = BN_new()))
+		goto fail_bn_exp;
+
+	if (!(x = BN_new()))
+		goto fail_bn_x;
+
+	if (!(y = BN_new()))
+		goto fail_bn_y;
+
+	BN_bin2bn(modulus_reverse, key_length, mod);
+	BN_bin2bn(exponent_reverse, exponent_size, exp);
+	BN_bin2bn(input_reverse, length, x);
+	BN_mod_exp(y, x, exp, mod, ctx);
+
+	output_length = BN_bn2bin(y, output);
 	crypto_reverse(output, output_length);
 
 	if (output_length < (int) key_length)
 		memset(output + output_length, 0, key_length - output_length);
 
-	BN_free(&y);
-	BN_clear_free(&x);
-	BN_free(&exp);
-	BN_free(&mod);
+	BN_free(y);
+fail_bn_y:
+	BN_clear_free(x);
+fail_bn_x:
+	BN_free(exp);
+fail_bn_exp:
+	BN_free(mod);
+fail_bn_mod:
 	BN_CTX_free(ctx);
+fail_bn_ctx:
 	free(input_reverse);
 
 	return output_length;
@@ -302,11 +203,6 @@ void crypto_reverse(BYTE* data, int length)
 	}
 }
 
-void crypto_nonce(BYTE* nonce, int size)
-{
-	RAND_bytes((void*) nonce, size);
-}
-
 char* crypto_cert_fingerprint(X509* xcert)
 {
 	int i = 0;
@@ -317,17 +213,17 @@ char* crypto_cert_fingerprint(X509* xcert)
 
 	X509_digest(xcert, EVP_sha1(), fp, &fp_len);
 
-	fp_buffer = (char*) malloc(3 * fp_len);
-	ZeroMemory(fp_buffer, 3 * fp_len);
+	fp_buffer = (char*) calloc(3, fp_len);
+	if (!fp_buffer)
+		return NULL;
 
 	p = fp_buffer;
-
 	for (i = 0; i < (int) (fp_len - 1); i++)
 	{
-		sprintf(p, "%02x:", fp[i]);
+		sprintf(p, "%02"PRIx8":", fp[i]);
 		p = &fp_buffer[(i + 1) * 3];
 	}
-	sprintf(p, "%02x", fp[i]);
+	sprintf(p, "%02"PRIx8"", fp[i]);
 
 	return fp_buffer;
 }
@@ -336,13 +232,13 @@ char* crypto_print_name(X509_NAME* name)
 {
 	char* buffer = NULL;
 	BIO* outBIO = BIO_new(BIO_s_mem());
-	
+
 	if (X509_NAME_print_ex(outBIO, name, 0, XN_FLAG_ONELINE) > 0)
 	{
 		unsigned long size = BIO_number_written(outBIO);
-		buffer = malloc(size + 1);
-		ZeroMemory(buffer, size + 1);
-		memset(buffer, 0, size + 1);
+		buffer = calloc(1, size + 1);
+		if (!buffer)
+			return NULL;
 		BIO_read(outBIO, buffer, size);
 	}
 
@@ -359,7 +255,8 @@ char* crypto_cert_subject(X509* xcert)
 char* crypto_cert_subject_common_name(X509* xcert, int* length)
 {
 	int index;
-	BYTE* common_name;
+	BYTE* common_name_raw;
+	char* common_name;
 	X509_NAME* subject_name;
 	X509_NAME_ENTRY* entry;
 	ASN1_STRING* entry_data;
@@ -384,21 +281,23 @@ char* crypto_cert_subject_common_name(X509* xcert, int* length)
 	if (entry_data == NULL)
 		return NULL;
 
-	*length = ASN1_STRING_to_UTF8(&common_name, entry_data);
+	*length = ASN1_STRING_to_UTF8(&common_name_raw, entry_data);
 
 	if (*length < 0)
 		return NULL;
 
+	common_name = _strdup((char*)common_name_raw);
+	OPENSSL_free(common_name_raw);
+
 	return (char*) common_name;
 }
 
-FREERDP_API void crypto_cert_subject_alt_name_free(int count, int *lengths,
-		char** alt_name)
+void crypto_cert_subject_alt_name_free(int count, int *lengths,
+						   char** alt_name)
 {
 	int i;
 
-	if (lengths)
-		free(lengths);
+	free(lengths);
 
 	if (alt_name)
 	{
@@ -432,7 +331,16 @@ char** crypto_cert_subject_alt_name(X509* xcert, int* count, int** lengths)
 	if (num_subject_alt_names)
 	{
 		strings = (char**) malloc(sizeof(char*) * num_subject_alt_names);
+		if (!strings)
+			goto out;
+
 		*lengths = (int*) malloc(sizeof(int) * num_subject_alt_names);
+		if (!*lengths)
+		{
+			free(strings);
+			strings = NULL;
+			goto out;
+		}
 	}
 
 	for (index = 0; index < num_subject_alt_names; ++index)
@@ -455,6 +363,8 @@ char** crypto_cert_subject_alt_name(X509* xcert, int* count, int** lengths)
 		*lengths = NULL ;
 		return NULL;
 	}
+
+out:
 	GENERAL_NAMES_free(subject_alt_names);
 
 	return strings;
@@ -493,7 +403,7 @@ BOOL x509_verify_certificate(CryptoCert cert, char* certificate_store_path)
 
 	if (certificate_store_path != NULL)
 	{
-		X509_LOOKUP_add_dir(lookup, certificate_store_path, X509_FILETYPE_ASN1);
+		X509_LOOKUP_add_dir(lookup, certificate_store_path, X509_FILETYPE_PEM);
 	}
 
 	csc = X509_STORE_CTX_new();
@@ -503,7 +413,7 @@ BOOL x509_verify_certificate(CryptoCert cert, char* certificate_store_path)
 
 	X509_STORE_set_flags(cert_ctx, 0);
 
-	if (!X509_STORE_CTX_init(csc, cert_ctx, xcert, 0))
+	if (!X509_STORE_CTX_init(csc, cert_ctx, xcert, cert->px509chain))
 		goto end;
 
 	if (X509_verify_cert(csc) == 1)
@@ -516,13 +426,24 @@ end:
 	return status;
 }
 
-rdpCertificateData* crypto_get_certificate_data(X509* xcert, char* hostname)
+rdpCertificateData* crypto_get_certificate_data(X509* xcert, char* hostname, UINT16 port)
 {
+	char* issuer;
+	char* subject;
 	char* fp;
 	rdpCertificateData* certdata;
 
 	fp = crypto_cert_fingerprint(xcert);
-	certdata = certificate_data_new(hostname, fp);
+	if (!fp)
+		return NULL;
+
+	issuer = crypto_cert_issuer(xcert);
+	subject = crypto_cert_subject(xcert);
+
+	certdata = certificate_data_new(hostname, port, issuer, subject, fp);
+
+	free(subject);
+	free(issuer);
 	free(fp);
 
 	return certdata;
@@ -537,16 +458,21 @@ void crypto_cert_print_info(X509* xcert)
 	subject = crypto_cert_subject(xcert);
 	issuer = crypto_cert_issuer(xcert);
 	fp = crypto_cert_fingerprint(xcert);
+	if (!fp)
+	{
+		WLog_ERR(TAG,  "error computing fingerprint");
+		goto out_free_issuer;
+	}
 
-	fprintf(stderr, "Certificate details:\n");
-	fprintf(stderr, "\tSubject: %s\n", subject);
-	fprintf(stderr, "\tIssuer: %s\n", issuer);
-	fprintf(stderr, "\tThumbprint: %s\n", fp);
-	fprintf(stderr, "The above X.509 certificate could not be verified, possibly because you do not have "
+	WLog_INFO(TAG,  "Certificate details:");
+	WLog_INFO(TAG,  "\tSubject: %s", subject);
+	WLog_INFO(TAG,  "\tIssuer: %s", issuer);
+	WLog_INFO(TAG,  "\tThumbprint: %s", fp);
+	WLog_INFO(TAG,  "The above X.509 certificate could not be verified, possibly because you do not have "
 			"the CA certificate in your certificate store, or the certificate has expired. "
-			"Please look at the documentation on how to create local certificate store for a private CA.\n");
-
-	free(subject);
-	free(issuer);
+			"Please look at the documentation on how to create local certificate store for a private CA.");
 	free(fp);
+out_free_issuer:
+	free(issuer);
+	free(subject);
 }

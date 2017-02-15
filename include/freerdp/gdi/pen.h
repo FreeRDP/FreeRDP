@@ -23,9 +23,16 @@
 #include <freerdp/api.h>
 #include <freerdp/gdi/gdi.h>
 
-FREERDP_API HGDI_PEN gdi_CreatePen(int fnPenStyle, int nWidth, int crColor);
-FREERDP_API BYTE gdi_GetPenColor_8bpp(HGDI_PEN pen);
-FREERDP_API UINT16 gdi_GetPenColor_16bpp(HGDI_PEN pen);
-FREERDP_API UINT32 gdi_GetPenColor_32bpp(HGDI_PEN pen);
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
+FREERDP_API HGDI_PEN gdi_CreatePen(UINT32 fnPenStyle, UINT32 nWidth,
+                   UINT32 crColor, UINT32 format, const gdiPalette* palette);
+FREERDP_API UINT32 gdi_GetPenColor(HGDI_PEN pen, UINT32 format);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif /* FREERDP_GDI_PEN_H */

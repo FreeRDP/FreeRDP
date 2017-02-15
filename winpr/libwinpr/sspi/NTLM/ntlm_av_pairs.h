@@ -35,7 +35,24 @@ NTLM_AV_PAIR* ntlm_av_pair_get(NTLM_AV_PAIR* pAvPairList, NTLM_AV_ID AvId);
 NTLM_AV_PAIR* ntlm_av_pair_add(NTLM_AV_PAIR* pAvPairList, NTLM_AV_ID AvId, PBYTE Value, UINT16 AvLen);
 NTLM_AV_PAIR* ntlm_av_pair_add_copy(NTLM_AV_PAIR* pAvPairList, NTLM_AV_PAIR* pAvPair);
 
-void ntlm_construct_challenge_target_info(NTLM_CONTEXT* context);
-void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context);
+static INLINE UINT16 ntlm_av_pair_get_id(NTLM_AV_PAIR* pAvPair)
+{
+	UINT16 AvId;
+	Data_Read_UINT16(&pAvPair->AvId, AvId);
+	return AvId;
+}
+
+static INLINE UINT16 ntlm_av_pair_get_len(NTLM_AV_PAIR* pAvPair)
+{
+	UINT16 AvLen;
+	Data_Read_UINT16(&pAvPair->AvLen, AvLen);
+	return AvLen;
+}
+
+#define ntlm_av_pair_set_id(pAvPair, id) Data_Write_UINT16(&pAvPair->AvId, id)
+#define ntlm_av_pair_set_len(pAvPair, len) Data_Write_UINT16(&pAvPair->AvLen, len)
+
+int ntlm_construct_challenge_target_info(NTLM_CONTEXT* context);
+int ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context);
 
 #endif /* WINPR_SSPI_NTLM_AV_PAIRS_H */

@@ -38,12 +38,17 @@
 
 int Stack_Count(wStack* stack)
 {
+	int ret;
+
 	if (stack->synchronized)
-	{
+		EnterCriticalSection(&stack->lock);
 
-	}
+	ret = stack->size;
 
-	return 0;
+	if (stack->synchronized)
+		LeaveCriticalSection(&stack->lock);
+
+	return ret;
 }
 
 /**
@@ -65,7 +70,23 @@ BOOL Stack_IsSynchronized(wStack* stack)
 
 void Stack_Clear(wStack* stack)
 {
+	int index;
 
+	if (stack->synchronized)
+		EnterCriticalSection(&stack->lock);
+
+	for (index = 0; index < stack->size; index++)
+	{
+		if (stack->object.fnObjectFree)
+			stack->object.fnObjectFree(stack->array[index]);
+
+		stack->array[index] = NULL;
+	}
+
+	stack->size = 0;
+
+	if (stack->synchronized)
+		LeaveCriticalSection(&stack->lock);
 }
 
 /**
@@ -74,7 +95,25 @@ void Stack_Clear(wStack* stack)
 
 BOOL Stack_Contains(wStack* stack, void* obj)
 {
-	return FALSE;
+	int i;
+	BOOL found = FALSE;
+
+	if (stack->synchronized)
+		EnterCriticalSection(&stack->lock);
+
+	for (i = 0; i < stack->size; i++)
+	{
+		if (stack->object.fnObjectEquals(stack->array[i], obj))
+		{
+			found = TRUE;
+			break;
+		}
+	}
+
+	if (stack->synchronized)
+		LeaveCriticalSection(&stack->lock);
+
+	return found;
 }
 
 /**
@@ -88,8 +127,15 @@ void Stack_Push(wStack* stack, void* obj)
 
 	if ((stack->size + 1) >= stack->capacity)
 	{
-		stack->capacity *= 2;
-		stack->array = (void**) realloc(stack->array, sizeof(void*) * stack->capacity);
+		int new_cap;
+		void **new_arr;
+
+		new_cap = stack->capacity * 2;
+		new_arr = (void**) realloc(stack->array, sizeof(void*) * new_cap);
+		if (!new_arr)
+			return;
+		stack->array = new_arr;
+		stack->capacity = new_cap;
 	}
 
 	stack->array[(stack->size)++] = obj;
@@ -138,6 +184,12 @@ void* Stack_Peek(wStack* stack)
 	return obj;
 }
 
+
+static BOOL default_stack_equals(void *obj1, void *obj2)
+{
+	return (obj1 == obj2);
+}
+
 /**
  * Construction, Destruction
  */
@@ -146,21 +198,28 @@ wStack* Stack_New(BOOL synchronized)
 {
 	wStack* stack = NULL;
 
-	stack = (wStack*) malloc(sizeof(wStack));
+	stack = (wStack *)calloc(1, sizeof(wStack));
+	if (!stack)
+		return NULL;
 
-	if (stack)
-	{
-		stack->synchronized = synchronized;
+	stack->object.fnObjectEquals = default_stack_equals;
+	stack->synchronized = synchronized;
 
-		if (stack->synchronized)
-			InitializeCriticalSectionAndSpinCount(&stack->lock, 4000);
+	stack->capacity = 32;
+	stack->array = (void**) malloc(sizeof(void*) * stack->capacity);
+	if (!stack->array)
+		goto out_free;
 
-		stack->size = 0;
-		stack->capacity = 32;
-		stack->array = (void**) malloc(sizeof(void*) * stack->capacity);
-	}
+	if (stack->synchronized && !InitializeCriticalSectionAndSpinCount(&stack->lock, 4000))
+			goto out_free_array;
 
 	return stack;
+
+out_free_array:
+	free(stack->array);
+out_free:
+	free(stack);
+	return NULL;
 }
 
 void Stack_Free(wStack* stack)

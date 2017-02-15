@@ -21,107 +21,98 @@
 #include <freerdp/primitives.h>
 
 #include "prim_internal.h"
-#include "prim_shift.h"
-
-
 /* ------------------------------------------------------------------------- */
-pstatus_t general_lShiftC_16s(
-	const INT16 *pSrc,
-	INT32 val,
-	INT16 *pDst,
-	INT32 len)
+static INLINE pstatus_t general_lShiftC_16s(
+    const INT16* pSrc,
+    UINT32 val,
+    INT16* pDst,
+    UINT32 len)
 {
 	if (val == 0) return PRIMITIVES_SUCCESS;
+
 	while (len--) *pDst++ = *pSrc++ << val;
+
 	return PRIMITIVES_SUCCESS;
 }
 
 /* ------------------------------------------------------------------------- */
-pstatus_t general_rShiftC_16s(
-	const INT16 *pSrc,
-	INT32 val,
-	INT16 *pDst,
-	INT32 len)
+static INLINE pstatus_t general_rShiftC_16s(
+    const INT16* pSrc,
+    UINT32 val,
+    INT16* pDst,
+    UINT32 len)
 {
 	if (val == 0) return PRIMITIVES_SUCCESS;
+
 	while (len--) *pDst++ = *pSrc++ >> val;
+
 	return PRIMITIVES_SUCCESS;
 }
 
 /* ------------------------------------------------------------------------- */
-pstatus_t general_lShiftC_16u(
-	const UINT16 *pSrc,
-	INT32 val,
-	UINT16 *pDst,
-	INT32 len)
+static INLINE pstatus_t general_lShiftC_16u(
+    const UINT16* pSrc,
+    UINT32 val,
+    UINT16* pDst,
+    UINT32 len)
 {
 	if (val == 0) return PRIMITIVES_SUCCESS;
+
 	while (len--) *pDst++ = *pSrc++ << val;
+
 	return PRIMITIVES_SUCCESS;
 }
 
 /* ------------------------------------------------------------------------- */
-pstatus_t general_rShiftC_16u(
-	const UINT16 *pSrc,
-	INT32 val,
-	UINT16 *pDst,
-	INT32 len)
+static INLINE pstatus_t general_rShiftC_16u(
+    const UINT16* pSrc,
+    UINT32 val,
+    UINT16* pDst,
+    UINT32 len)
 {
 	if (val == 0) return PRIMITIVES_SUCCESS;
+
 	while (len--) *pDst++ = *pSrc++ >> val;
+
 	return PRIMITIVES_SUCCESS;
 }
 
 /* ------------------------------------------------------------------------- */
-pstatus_t general_shiftC_16s(
-	const INT16 *pSrc,
-	INT32 val,
-	INT16 *pDst,
-	INT32 len)
+static INLINE pstatus_t general_shiftC_16s(
+    const INT16* pSrc,
+    INT32 val,
+    INT16* pDst,
+    UINT32 len)
 {
-	primitives_t *prims;
-
 	if (val == 0) return PRIMITIVES_SUCCESS;
-	prims = primitives_get();
-	if (val < 0) return prims->rShiftC_16s(pSrc, -val, pDst, len);
-	else         return prims->lShiftC_16s(pSrc,  val, pDst, len);
+
+	if (val < 0) return general_rShiftC_16s(pSrc, -val, pDst, len);
+	else         return general_lShiftC_16s(pSrc,  val, pDst, len);
 }
 
 /* ------------------------------------------------------------------------- */
-pstatus_t general_shiftC_16u(
-	const UINT16 *pSrc,
-	INT32 val,
-	UINT16 *pDst,
-	INT32 len)
+static INLINE pstatus_t general_shiftC_16u(
+    const UINT16* pSrc,
+    INT32 val,
+    UINT16* pDst,
+    UINT32 len)
 {
-	primitives_t *prims;
-
 	if (val == 0) return PRIMITIVES_SUCCESS;
-	prims = primitives_get();
-	if (val < 0) return prims->rShiftC_16u(pSrc, -val, pDst, len);
-	else         return prims->lShiftC_16u(pSrc,  val, pDst, len);
+
+	if (val < 0) return general_rShiftC_16u(pSrc, -val, pDst, len);
+	else         return general_lShiftC_16u(pSrc,  val, pDst, len);
 }
 
 /* ------------------------------------------------------------------------- */
 void primitives_init_shift(
-	primitives_t *prims)
+    primitives_t* prims)
 {
 	/* Start with the default. */
 	prims->lShiftC_16s = general_lShiftC_16s;
 	prims->rShiftC_16s = general_rShiftC_16s;
 	prims->lShiftC_16u = general_lShiftC_16u;
 	prims->rShiftC_16u = general_rShiftC_16u;
-
 	/* Wrappers */
 	prims->shiftC_16s  = general_shiftC_16s;
 	prims->shiftC_16u  = general_shiftC_16u;
-
-	primitives_init_shift_opt(prims);
-}
-
-/* ------------------------------------------------------------------------- */
-void primitives_deinit_shift(
-	primitives_t *prims)
-{
-	/* Nothing to do. */
 }

@@ -17,10 +17,10 @@ HRESULT PATH_CCH_ADD_EXTENSION(PWSTR pszPath, size_t cchPath, PCWSTR pszExt)
 	size_t pszPathLength;
 
 	if (!pszPath)
-		return S_FALSE;
+		return E_INVALIDARG;
 
 	if (!pszExt)
-		return S_FALSE;
+		return E_INVALIDARG;
 
 	pszExtLength = lstrlenW(pszExt);
 	pszPathLength = lstrlenW(pszPath);
@@ -45,7 +45,7 @@ HRESULT PATH_CCH_ADD_EXTENSION(PWSTR pszPath, size_t cchPath, PCWSTR pszExt)
 		return S_OK;
 	}
 #endif
-	return S_FALSE;
+	return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
 }
 
 #else
@@ -59,10 +59,10 @@ HRESULT PATH_CCH_ADD_EXTENSION(PSTR pszPath, size_t cchPath, PCSTR pszExt)
 	size_t pszPathLength;
 
 	if (!pszPath)
-		return S_FALSE;
+		return E_INVALIDARG;
 
 	if (!pszExt)
-		return S_FALSE;
+		return E_INVALIDARG;
 
 	pszExtLength = lstrlenA(pszExt);
 	pszPathLength = lstrlenA(pszPath);
@@ -87,7 +87,7 @@ HRESULT PATH_CCH_ADD_EXTENSION(PSTR pszPath, size_t cchPath, PCSTR pszExt)
 		return S_OK;
 	}
 
-	return S_FALSE;
+	return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
 }
 
 #endif

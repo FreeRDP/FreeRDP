@@ -3,6 +3,7 @@
  * Handle Management
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,155 +26,47 @@
 
 #ifndef _WIN32
 
+#include <assert.h>
+#include <pthread.h>
+
 #include "../synch/synch.h"
 #include "../thread/thread.h"
 #include "../pipe/pipe.h"
+#include "../comm/comm.h"
+#include "../security/security.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+
+#include <assert.h>
 
 #include "../handle/handle.h"
 
 BOOL CloseHandle(HANDLE hObject)
 {
 	ULONG Type;
-	PVOID Object;
+	WINPR_HANDLE *Object;
 
 	if (!winpr_Handle_GetInfo(hObject, &Type, &Object))
 		return FALSE;
 
-	if (Type == HANDLE_TYPE_THREAD)
-	{
-		WINPR_THREAD* thread;
+	if (!Object)
+		return FALSE;
 
-		thread = (WINPR_THREAD*) Object;
-		free(thread);
+	if (!Object->ops)
+		return FALSE;
 
-		return TRUE;
-	}
-	else if (Type == HANDLE_TYPE_MUTEX)
-	{
-		WINPR_MUTEX* mutex;
-
-		mutex = (WINPR_MUTEX*) Object;
-
-		pthread_mutex_destroy(&mutex->mutex);
-
-		free(Object);
-
-		return TRUE;
-	}
-	else if (Type == HANDLE_TYPE_EVENT)
-	{
-		WINPR_EVENT* event;
-
-		event = (WINPR_EVENT*) Object;
-
-		if (!event->bAttached)
-		{
-			if (event->pipe_fd[0] != -1)
-			{
-				close(event->pipe_fd[0]);
-				event->pipe_fd[0] = -1;
-			}
-			if (event->pipe_fd[1] != -1)
-			{
-				close(event->pipe_fd[1]);
-				event->pipe_fd[1] = -1;
-			}
-		}
-
-		free(Object);
-
-		return TRUE;
-	}
-	else if (Type == HANDLE_TYPE_SEMAPHORE)
-	{
-		WINPR_SEMAPHORE* semaphore;
-
-		semaphore = (WINPR_SEMAPHORE*) Object;
-
-#ifdef WINPR_PIPE_SEMAPHORE
-
-		if (semaphore->pipe_fd[0] != -1)
-		{
-			close(semaphore->pipe_fd[0]);
-			semaphore->pipe_fd[0] = -1;
-
-			if (semaphore->pipe_fd[1] != -1)
-			{
-				close(semaphore->pipe_fd[1]);
-				semaphore->pipe_fd[1] = -1;
-			}
-		}
-
-#else
-
-#if defined __APPLE__
-		semaphore_destroy(mach_task_self(), *((winpr_sem_t*) semaphore->sem));
-#else
-		sem_destroy((winpr_sem_t*) semaphore->sem);
-#endif
-
-#endif
-		free(Object);
-
-		return TRUE;
-	}
-	else if (Type == HANDLE_TYPE_TIMER)
-	{
-		WINPR_TIMER* timer;
-
-		timer = (WINPR_TIMER*) Object;
-
-#ifdef __linux__
-		if (timer->fd != -1)
-			close(timer->fd);
-#endif
-
-		free(Object);
-
-		return TRUE;
-	}
-	else if (Type == HANDLE_TYPE_ANONYMOUS_PIPE)
-	{
-		WINPR_PIPE* pipe;
-
-		pipe = (WINPR_PIPE*) Object;
-
-		if (pipe->fd != -1)
-		{
-			close(pipe->fd);
-		}
-
-		free(Object);
-
-		return TRUE;
-	}
-	else if (Type == HANDLE_TYPE_NAMED_PIPE)
-	{
-		WINPR_NAMED_PIPE* pipe;
-
-		pipe = (WINPR_NAMED_PIPE*) Object;
-
-		if (pipe->clientfd != -1)
-			close(pipe->clientfd);
-
-		if (pipe->serverfd != -1)
-			close(pipe->serverfd);
-
-		free(Object);
-
-		return TRUE;
-	}
+	if (Object->ops->CloseHandle)
+		return Object->ops->CloseHandle(hObject);
 
 	return FALSE;
 }
 
 BOOL DuplicateHandle(HANDLE hSourceProcessHandle, HANDLE hSourceHandle, HANDLE hTargetProcessHandle,
-	LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions)
+		LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions)
 {
+	*((ULONG_PTR*) lpTargetHandle) = (ULONG_PTR) hSourceHandle;
 	return TRUE;
 }
 

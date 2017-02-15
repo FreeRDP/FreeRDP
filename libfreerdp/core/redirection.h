@@ -20,50 +20,49 @@
 #ifndef __REDIRECTION_H
 #define __REDIRECTION_H
 
+typedef struct rdp_redirection rdpRedirection;
+
 #include "rdp.h"
 
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
+#include <freerdp/api.h>
 
+#include <winpr/wlog.h>
 #include <winpr/stream.h>
-
-struct rdp_string
-{
-	char* ascii;
-	char* unicode;
-	UINT32 length;
-};
-typedef struct rdp_string rdpString;
 
 struct rdp_redirection
 {
 	UINT32 flags;
 	UINT32 sessionID;
-	rdpString tsvUrl;
-	rdpString username;
-	rdpString domain;
-	BYTE* PasswordCookie;
-	DWORD PasswordCookieLength;
-	rdpString targetFQDN;
+	BYTE* TsvUrl;
+	DWORD TsvUrlLength;
+	char* Username;
+	char* Domain;
+	BYTE* Password;
+	DWORD PasswordLength;
+	char* TargetFQDN;
 	BYTE* LoadBalanceInfo;
 	DWORD LoadBalanceInfoLength;
-	rdpString targetNetBiosName;
-	rdpString targetNetAddress;
-	UINT32 targetNetAddressesCount;
-	rdpString* targetNetAddresses;
+	char* TargetNetBiosName;
+	char* TargetNetAddress;
+	UINT32 TargetNetAddressesCount;
+	char** TargetNetAddresses;
 };
-typedef struct rdp_redirection rdpRedirection;
 
-BOOL rdp_recv_redirection_packet(rdpRdp* rdp, wStream* s);
-BOOL rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, wStream* s);
+FREERDP_LOCAL int rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp,
+        wStream* s);
 
-rdpRedirection* redirection_new(void);
-void redirection_free(rdpRedirection* redirection);
+FREERDP_LOCAL int rdp_redirection_apply_settings(rdpRdp* rdp);
 
+FREERDP_LOCAL rdpRedirection* redirection_new(void);
+FREERDP_LOCAL void redirection_free(rdpRedirection* redirection);
+
+#define REDIR_TAG FREERDP_TAG("core.redirection")
 #ifdef WITH_DEBUG_REDIR
-#define DEBUG_REDIR(fmt, ...) DEBUG_CLASS(REDIR, fmt, ## __VA_ARGS__)
+#define DEBUG_REDIR(...) WLog_DBG(REDIR_TAG, __VA_ARGS__)
 #else
-#define DEBUG_REDIR(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_REDIR(...) do { } while (0)
 #endif
 
 #endif /* __REDIRECTION_H */

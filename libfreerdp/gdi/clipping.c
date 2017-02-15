@@ -3,6 +3,8 @@
  * GDI Clipping Functions
  *
  * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2016 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +32,10 @@
 
 #include <freerdp/gdi/region.h>
 
-#include <freerdp/gdi/clipping.h>
+#include "clipping.h"
 
-int gdi_SetClipRgn(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight)
+BOOL gdi_SetClipRgn(HGDI_DC hdc, UINT32 nXLeft, UINT32 nYLeft, UINT32 nWidth,
+                    UINT32 nHeight)
 {
 	return gdi_SetRgn(hdc->clip, nXLeft, nYLeft, nWidth, nHeight);
 }
@@ -52,14 +55,14 @@ HGDI_RGN gdi_GetClipRgn(HGDI_DC hdc)
 /**
  * Set the current clipping region to null.
  * @param hdc device context
- * @return
+ * @return nonzero on success, 0 otherwise
  */
 
-int gdi_SetNullClipRgn(HGDI_DC hdc)
+BOOL gdi_SetNullClipRgn(HGDI_DC hdc)
 {
 	gdi_SetClipRgn(hdc, 0, 0, 0, 0);
-	hdc->clip->null = 1;
-	return 0;
+	hdc->clip->null = TRUE;
+	return TRUE;
 }
 
 /**
@@ -71,22 +74,22 @@ int gdi_SetNullClipRgn(HGDI_DC hdc)
  * @param h height
  * @param srcx source x1
  * @param srcy source y1
- * @return 1 if there is something to draw, 0 otherwise
+ * @return nonzero if there is something to draw, 0 otherwise
  */
 
-int gdi_ClipCoords(HGDI_DC hdc, int *x, int *y, int *w, int *h, int *srcx, int *srcy)
+BOOL gdi_ClipCoords(HGDI_DC hdc, UINT32* x, UINT32* y, UINT32* w, UINT32* h,
+                    UINT32* srcx, UINT32* srcy)
 {
 	GDI_RECT bmp;
 	GDI_RECT clip;
 	GDI_RECT coords;
 	HGDI_BITMAP hBmp;
-
 	int dx = 0;
 	int dy = 0;
-	int draw = 1;
+	BOOL draw = TRUE;
 
 	if (hdc == NULL)
-		return 0;
+		return FALSE;
 
 	hBmp = (HGDI_BITMAP) hdc->selectedObject;
 
@@ -122,13 +125,12 @@ int gdi_ClipCoords(HGDI_DC hdc, int *x, int *y, int *w, int *h, int *srcx, int *
 	gdi_CRgnToRect(*x, *y, *w, *h, &coords);
 
 	if (coords.right >= clip.left && coords.left <= clip.right &&
-		coords.bottom >= clip.top && coords.top <= clip.bottom)
+	    coords.bottom >= clip.top && coords.top <= clip.bottom)
 	{
 		/* coordinates overlap with clipping region */
-
 		if (coords.left < clip.left)
 		{
-			dx = (clip.left - coords.left) + 1;
+			dx = (clip.left - coords.left);
 			coords.left = clip.left;
 		}
 
@@ -137,7 +139,7 @@ int gdi_ClipCoords(HGDI_DC hdc, int *x, int *y, int *w, int *h, int *srcx, int *
 
 		if (coords.top < clip.top)
 		{
-			dy = (clip.top - coords.top) + 1;
+			dy = (clip.top - coords.top);
 			coords.top = clip.top;
 		}
 
@@ -147,31 +149,19 @@ int gdi_ClipCoords(HGDI_DC hdc, int *x, int *y, int *w, int *h, int *srcx, int *
 	else
 	{
 		/* coordinates do not overlap with clipping region */
-
 		coords.left = 0;
 		coords.right = 0;
 		coords.top = 0;
 		coords.bottom = 0;
-		draw = 0;
+		draw = FALSE;
 	}
 
 	if (srcx != NULL)
-	{
-		if (dx > 0)
-		{
-			*srcx += dx - 1;
-		}
-	}
+		*srcx += dx;
 
 	if (srcy != NULL)
-	{
-		if (dy > 0)
-		{
-			*srcy += dy - 1;
-		}
-	}
+		*srcy += dy;
 
 	gdi_RectToCRgn(&coords, x, y, w, h);
-
 	return draw;
 }

@@ -18,16 +18,17 @@
 set(MODULE_NAME "freerdp-core")
 set(MODULE_PREFIX "FREERDP_CORE")
 
-add_definitions(-DEXT_PATH="${FREERDP_EXTENSION_PATH}")
+freerdp_definition_add(-DEXT_PATH="${FREERDP_EXTENSION_PATH}")
 
-include_directories(${OPENSSL_INCLUDE_DIR})
-include_directories(${ZLIB_INCLUDE_DIRS})
+freerdp_include_directory_add(${OPENSSL_INCLUDE_DIR})
 
 set(${MODULE_PREFIX}_GATEWAY_DIR "gateway")
 
 set(${MODULE_PREFIX}_GATEWAY_SRCS
 	${${MODULE_PREFIX}_GATEWAY_DIR}/tsg.c
 	${${MODULE_PREFIX}_GATEWAY_DIR}/tsg.h
+	${${MODULE_PREFIX}_GATEWAY_DIR}/rdg.c
+	${${MODULE_PREFIX}_GATEWAY_DIR}/rdg.h
 	${${MODULE_PREFIX}_GATEWAY_DIR}/rpc.c
 	${${MODULE_PREFIX}_GATEWAY_DIR}/rpc.h
 	${${MODULE_PREFIX}_GATEWAY_DIR}/rpc_bind.c
@@ -48,10 +49,10 @@ set(${MODULE_PREFIX}_GATEWAY_SRCS
 	${${MODULE_PREFIX}_GATEWAY_DIR}/ncacn_http.h)
 
 set(${MODULE_PREFIX}_SRCS
+	bulk.c
+	bulk.h
 	activation.c
 	activation.h
-	extension.c
-	extension.h
 	gcc.c
 	gcc.h
 	mcs.c
@@ -67,6 +68,8 @@ set(${MODULE_PREFIX}_SRCS
 	license.c
 	license.h
 	errinfo.c
+	errbase.c
+	errconnect.c
 	errinfo.h
 	security.c
 	security.h
@@ -75,6 +78,12 @@ set(${MODULE_PREFIX}_SRCS
 	orders.h
 	freerdp.c
 	graphics.c
+	client.c
+	client.h
+	server.c
+	server.h
+	codecs.c
+	metrics.c
 	capabilities.c
 	capabilities.h
 	certificate.c
@@ -83,12 +92,20 @@ set(${MODULE_PREFIX}_SRCS
 	connection.h
 	redirection.c
 	redirection.h
+	autodetect.c
+	autodetect.h
+	heartbeat.c
+	heartbeat.h
+	multitransport.c
+	multitransport.h
 	timezone.c
 	timezone.h
 	rdp.c
 	rdp.h
 	tcp.c
 	tcp.h
+	proxy.c
+	proxy.h
 	tpdu.c
 	tpdu.h
 	tpkt.c
@@ -103,8 +120,8 @@ set(${MODULE_PREFIX}_SRCS
 	update.h
 	message.c
 	message.h
-	channel.c
-	channel.h
+	channels.c
+	channels.h
 	window.c
 	window.h
 	listener.c
@@ -114,37 +131,15 @@ set(${MODULE_PREFIX}_SRCS
 
 set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_GATEWAY_SRCS})
 
-add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	SOURCES ${${MODULE_PREFIX}_SRCS})
-
-set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION} PREFIX "lib")
+freerdp_module_add(${${MODULE_PREFIX}_SRCS})
 
 if(WIN32)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ws2_32)
-else()
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${ZLIB_LIBRARIES})
+	freerdp_library_add(ws2_32)
 endif()
 
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${OPENSSL_LIBRARIES})
+freerdp_library_add(${OPENSSL_LIBRARIES})
 
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
-	MODULE freerdp
-	MODULES freerdp-crypto freerdp-codec freerdp-locale freerdp-common freerdp-utils)
-
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE winpr
-	MODULES winpr-registry winpr-utils winpr-interlocked winpr-dsparse winpr-sspi winpr-rpc winpr-handle winpr-crt)
-
-if(MONOLITHIC_BUILD)
-	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
-else()		
-	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(BUILD_TESTING)
+	add_subdirectory(test)
 endif()
-
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")
-
-

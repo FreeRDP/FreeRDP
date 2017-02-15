@@ -30,10 +30,12 @@
 
 find_path(XDAMAGE_INCLUDE_DIR NAMES X11/extensions/Xdamage.h
           PATH_SUFFIXES X11/extensions
+          PATHS /opt/X11/include
           DOC "The Xdamage include directory"
 )
 
 find_library(XDAMAGE_LIBRARY NAMES Xdamage
+          PATHS /opt/X11/lib
           DOC "The Xdamage library"
 )
 

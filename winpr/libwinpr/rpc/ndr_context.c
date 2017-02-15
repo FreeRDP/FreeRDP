@@ -31,6 +31,9 @@
 #include "ndr_context.h"
 #include "ndr_private.h"
 
+#include "../log.h"
+#define TAG WINPR_TAG("rpc")
+
 void NdrContextHandleBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
 	unsigned char type = *pFormat;
@@ -42,8 +45,7 @@ void NdrContextHandleBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 		 * flag<1>
 		 * offset<2>
 		 */
-
-		fprintf(stderr, "warning: NdrContextHandleBufferSize FC_BIND_PRIMITIVE unimplemented\n");
+		WLog_ERR(TAG, "warning: NdrContextHandleBufferSize FC_BIND_PRIMITIVE unimplemented");
 	}
 	else if (type == FC_BIND_GENERIC)
 	{
@@ -54,8 +56,7 @@ void NdrContextHandleBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 		 * binding_routine_pair_index<1>
 		 * FC_PAD
 		 */
-
-		fprintf(stderr, "warning: NdrContextHandleBufferSize FC_BIND_GENERIC unimplemented\n");
+		WLog_ERR(TAG, "warning: NdrContextHandleBufferSize FC_BIND_GENERIC unimplemented");
 	}
 	else if (type == FC_BIND_CONTEXT)
 	{
@@ -66,7 +67,6 @@ void NdrContextHandleBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 		 * context_rundown_routine_index<1>
 		 * param_num<1>
 		 */
-
 		NdrpAlignLength(&(pStubMsg->BufferLength), 4);
 		NdrpIncrementLength(&(pStubMsg->BufferLength), 20);
 	}

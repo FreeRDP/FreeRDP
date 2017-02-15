@@ -29,6 +29,9 @@
 
 #include "registry_reg.h"
 
+#include "../log.h"
+#define TAG WINPR_TAG("registry")
+
 #define WINPR_HKLM_HIVE		"/etc/winpr/HKLM.reg"
 
 static void reg_print_key(Reg* reg, RegKey* key);
@@ -74,11 +77,9 @@ static char* REG_DATA_TYPE_STRINGS[] =
 static void reg_load_start(Reg* reg)
 {
 	long int file_size;
-
 	fseek(reg->fp, 0, SEEK_END);
 	file_size = ftell(reg->fp);
 	fseek(reg->fp, 0, SEEK_SET);
-
 	reg->line = NULL;
 	reg->next_line = NULL;
 	reg->buffer = NULL;
@@ -87,6 +88,8 @@ static void reg_load_start(Reg* reg)
 		return;
 
 	reg->buffer = (char*) malloc(file_size + 2);
+	if (!reg->buffer)
+		return ;
 
 	if (fread(reg->buffer, file_size, 1, reg->fp) != 1)
 	{
@@ -97,7 +100,6 @@ static void reg_load_start(Reg* reg)
 
 	reg->buffer[file_size] = '\n';
 	reg->buffer[file_size + 1] = '\0';
-
 	reg->next_line = strtok(reg->buffer, "\n");
 }
 
@@ -122,7 +124,6 @@ static RegVal* reg_load_value(Reg* reg, RegKey* key)
 	char* type;
 	char* data;
 	RegVal* value;
-
 	p[0] = reg->line + 1;
 	p[1] = strstr(p[0], "\"=");
 	p[2] = p[1] + 2;
@@ -134,14 +135,18 @@ static RegVal* reg_load_value(Reg* reg, RegKey* key)
 		p[3] = strchr(p[2], ':');
 
 	data = p[3] + 1;
-
 	length = p[1] - p[0];
 	name = (char*) malloc(length + 1);
+	if (!name)
+		return NULL;
 	memcpy(name, p[0], length);
 	name[length] = '\0';
-
 	value = (RegVal*) malloc(sizeof(RegVal));
-
+	if (!value)
+	{
+		free(name);
+		return NULL;
+	}
 	value->name = name;
 	value->type = REG_NONE;
 	value->next = value->prev = NULL;
@@ -164,10 +169,16 @@ static RegVal* reg_load_value(Reg* reg, RegKey* key)
 		p[4] = strchr(data, '"');
 		p[4][0] = '\0';
 		value->data.string = _strdup(data);
+		if (!value->data.string)
+		{
+			free(value);
+			free(name);
+			return NULL;
+		}
 	}
 	else
 	{
-		fprintf(stderr, "unimplemented format: %s\n", REG_DATA_TYPE_STRINGS[value->type]);
+		WLog_ERR(TAG, "unimplemented format: %s", REG_DATA_TYPE_STRINGS[value->type]);
 	}
 
 	if (!key->values)
@@ -206,7 +217,6 @@ static char* reg_load_get_next_line(Reg* reg)
 	reg->line = reg->next_line;
 	reg->next_line = strtok(NULL, "\n");
 	reg->line_length = strlen(reg->line);
-
 	return reg->line;
 }
 
@@ -221,9 +231,9 @@ static void reg_insert_key(Reg* reg, RegKey* key, RegKey* subkey)
 	char* path;
 	char* save;
 	int length;
-
 	path = _strdup(subkey->name);
-
+	if (!path)
+		return;
 	name = strtok_s(path, "\\", &save);
 
 	while (name != NULL)
@@ -233,6 +243,12 @@ static void reg_insert_key(Reg* reg, RegKey* key, RegKey* subkey)
 			length = strlen(name);
 			name += length + 1;
 			subkey->subname = _strdup(name);
+			/* TODO: free allocated memory in error case */
+			if (!subkey->subname)
+			{
+				free(path);
+				return;
+			}
 		}
 
 		name = strtok_s(NULL, "\\", &save);
@@ -247,17 +263,20 @@ static RegKey* reg_load_key(Reg* reg, RegKey* key)
 	int length;
 	char* line;
 	RegKey* subkey;
-
 	p[0] = reg->line + 1;
 	p[1] = strrchr(p[0], ']');
-
 	subkey = (RegKey*) malloc(sizeof(RegKey));
-
+	if (!subkey)
+		return NULL;
 	subkey->values = NULL;
 	subkey->prev = subkey->next = NULL;
-
 	length = p[1] - p[0];
 	subkey->name = (char*) malloc(length + 1);
+	if (!subkey->name)
+	{
+		free(subkey);
+		return NULL;
+	}
 	memcpy(subkey->name, p[0], length);
 	subkey->name[length] = '\0';
 
@@ -319,7 +338,6 @@ static void reg_unload_value(Reg* reg, RegVal* value)
 {
 	if (value->type == REG_DWORD)
 	{
-
 	}
 	else if (value->type == REG_SZ)
 	{
@@ -327,7 +345,7 @@ static void reg_unload_value(Reg* reg, RegVal* value)
 	}
 	else
 	{
-		fprintf(stderr, "unimplemented format: %s\n", REG_DATA_TYPE_STRINGS[value->type]);
+		WLog_ERR(TAG, "unimplemented format: %s", REG_DATA_TYPE_STRINGS[value->type]);
 	}
 
 	free(value);
@@ -337,7 +355,6 @@ static void reg_unload_key(Reg* reg, RegKey* key)
 {
 	RegVal* pValue;
 	RegVal* pValueNext;
-
 	pValue = key->values;
 
 	while (pValue != NULL)
@@ -355,7 +372,6 @@ void reg_unload(Reg* reg)
 {
 	RegKey* pKey;
 	RegKey* pKeyNext;
-
 	pKey = reg->root_key->subkeys;
 
 	while (pKey != NULL)
@@ -371,40 +387,43 @@ void reg_unload(Reg* reg)
 Reg* reg_open(BOOL read_only)
 {
 	Reg* reg;
-
 	reg = (Reg*) malloc(sizeof(Reg));
 
-	if (reg)
+	if (!reg)
+		return NULL;
+
+    reg->read_only = read_only;
+    reg->filename = WINPR_HKLM_HIVE;
+
+    if (reg->read_only)
+    {
+        reg->fp = fopen(reg->filename, "r");
+    }
+    else
+    {
+        reg->fp = fopen(reg->filename, "r+");
+
+        if (!reg->fp)
+            reg->fp = fopen(reg->filename, "w+");
+    }
+
+    if (!reg->fp)
+    {
+        free(reg);
+        return NULL;
+    }
+
+    reg->root_key = (RegKey*) malloc(sizeof(RegKey));
+	if (!reg->root_key)
 	{
-		reg->read_only = read_only;
-		reg->filename = WINPR_HKLM_HIVE;
-
-		if (reg->read_only)
-		{
-			reg->fp = fopen(reg->filename, "r");
-		}
-		else
-		{
-			reg->fp = fopen(reg->filename, "r+");
-
-			if (!reg->fp)
-				reg->fp = fopen(reg->filename, "w+");
-		}
-
-		if (!reg->fp)
-		{
-			free(reg);
-			return NULL;
-		}
-
-		reg->root_key = (RegKey*) malloc(sizeof(RegKey));
-
-		reg->root_key->values = NULL;
-		reg->root_key->subkeys = NULL;
-		reg->root_key->name = "HKEY_LOCAL_MACHINE";
-
-		reg_load(reg);
+		fclose(reg->fp);
+		free(reg);
+		return NULL;
 	}
+    reg->root_key->values = NULL;
+    reg->root_key->subkeys = NULL;
+    reg->root_key->name = "HKEY_LOCAL_MACHINE";
+    reg_load(reg);
 
 	return reg;
 }
@@ -421,29 +440,27 @@ void reg_close(Reg* reg)
 
 void reg_print_value(Reg* reg, RegVal* value)
 {
-	fprintf(stderr, "\"%s\"=", value->name);
+	WLog_INFO(TAG, "\"%s\"=", value->name);
 
 	if (value->type == REG_DWORD)
 	{
-		fprintf(stderr, "dword:%08lX\n", value->data.dword);
+		WLog_INFO(TAG, "dword:%08"PRIX32"", value->data.dword);
 	}
 	else if (value->type == REG_SZ)
 	{
-		fprintf(stderr, "%s\"\n", value->data.string);
+		WLog_INFO(TAG, "%s\"", value->data.string);
 	}
 	else
 	{
-		fprintf(stderr, "unimplemented format: %s\n", REG_DATA_TYPE_STRINGS[value->type]);
+		WLog_ERR(TAG, "unimplemented format: %s", REG_DATA_TYPE_STRINGS[value->type]);
 	}
 }
 
 void reg_print_key(Reg* reg, RegKey* key)
 {
 	RegVal* pValue;
-
 	pValue = key->values;
-
-	fprintf(stderr, "[%s]\n", key->name);
+	WLog_INFO(TAG, "[%s]", key->name);
 
 	while (pValue != NULL)
 	{
@@ -455,7 +472,6 @@ void reg_print_key(Reg* reg, RegKey* key)
 void reg_print(Reg* reg)
 {
 	RegKey* pKey;
-
 	pKey = reg->root_key->subkeys;
 
 	while (pKey != NULL)

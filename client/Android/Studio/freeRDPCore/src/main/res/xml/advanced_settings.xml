@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+/*
+   Advanced Bookmark Settings Layout
+
+   Copyright 2013 Thincast Technologies GmbH, Author: Martin Fleisz
+
+   This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
+   If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+ -->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+    <PreferenceCategory android:title="Advanced">
+        
+    	<CheckBoxPreference android:key="bookmark.enable_gateway_settings" android:title="@string/settings_enable_gateway_settings" />       
+    	<PreferenceScreen android:key="bookmark.gateway_settings" android:title="@string/settings_gateway_settings">
+    	<intent android:action="android.intent.action.VIEW" 
+           		android:targetPackage="*" 
+           		android:targetClass="com.freerdp.freerdpcore.presentation.BookmarkActivity" 
+           		android:data="preferences://gateway_settings" />
+        </PreferenceScreen>
+        
+       <CheckBoxPreference android:key="bookmark.enable_3g_settings" android:title="@string/settings_enable_3g_settings" />      
+       <PreferenceScreen android:key="bookmark.screen_3g" android:title="@string/settings_screen_3g">
+        	<intent android:action="android.intent.action.VIEW" 
+           		android:targetPackage="*" 
+           		android:targetClass="com.freerdp.freerdpcore.presentation.BookmarkActivity" 
+           		android:data="preferences://screen_settings_3g" />
+        </PreferenceScreen>
+        
+        <PreferenceScreen android:key="bookmark.performance_3g" android:title="@string/settings_performance_3g">
+        	<intent android:action="android.intent.action.VIEW" 
+           		android:targetPackage="*" 
+           		android:targetClass="com.freerdp.freerdpcore.presentation.BookmarkActivity" 
+           		android:data="preferences://performance_flags_3g" />
+        </PreferenceScreen>
+        
+        <CheckBoxPreference android:key="bookmark.redirect_sdcard" android:title="@string/settings_redirect_sdcard"/>
+        <com.freerdp.freerdpcore.utils.IntListPreference  android:key="bookmark.redirect_sound" android:title="@string/settings_redirect_sound" android:entries="@array/redirect_sound_array" android:entryValues="@array/redirect_sound_values_array" />
+        <CheckBoxPreference android:key="bookmark.redirect_microphone" android:title="@string/settings_redirect_microphone"/>
+        <com.freerdp.freerdpcore.utils.IntListPreference  android:key="bookmark.security" android:title="@string/settings_security" android:entries="@array/security_array" android:entryValues="@array/security_values_array" />
+        <EditTextPreference android:key="bookmark.remote_program" android:title="@string/settings_remote_program" android:summary="notepad.exe"/>
+        <EditTextPreference android:key="bookmark.work_dir" android:title="@string/settings_work_dir"/>
+        <CheckBoxPreference android:key="bookmark.console_mode" android:title="@string/settings_console_mode"/>
+     
+     </PreferenceCategory>   
+
+</PreferenceScreen>

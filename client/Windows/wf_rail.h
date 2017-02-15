@@ -1,8 +1,7 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Windows RAIL
  *
- * Copyright 2012 Jason Champion <jchampion@zetacentauri.com>
+ * Copyright 2013-2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +15,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef __WF_RAIL_H
 #define __WF_RAIL_H
 
-#include "wf_interface.h"
+typedef struct wf_rail_window wfRailWindow;
 
-void wf_rail_paint(wfContext* wfc, rdpRail* rail, INT32 uleft, INT32 utop, UINT32 uright, UINT32 ubottom);
-void wf_rail_register_callbacks(wfContext* wfc, rdpRail* rail);
-void wf_rail_send_client_system_command(wfContext* wfc, UINT32 windowId, UINT16 command);
-void wf_rail_send_activate(wfContext* wfc, HWND window, BOOL enabled);
-void wf_process_rail_event(wfContext* wfc, rdpChannels* channels, wMessage* event);
-void wf_rail_adjust_position(wfContext* wfc, rdpWindow* window);
-void wf_rail_end_local_move(wfContext* wfc, rdpWindow* window);
+#include "wf_client.h"
+
+#include <freerdp/client/rail.h>
+
+struct wf_rail_window
+{
+	wfContext* wfc;
+
+	HWND hWnd;
+
+	DWORD dwStyle;
+	DWORD dwExStyle;
+
+	int x;
+	int y;
+	int width;
+	int height;
+	char* title;
+};
+
+BOOL wf_rail_init(wfContext* wfc, RailClientContext* rail);
+void wf_rail_uninit(wfContext* wfc, RailClientContext* rail);
+
+void wf_rail_invalidate_region(wfContext* wfc, REGION16* invalidRegion);
 
 #endif

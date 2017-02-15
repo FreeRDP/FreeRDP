@@ -28,6 +28,30 @@
 
 #ifndef _WIN32
 
+#define LOGON32_LOGON_INTERACTIVE		2
+#define LOGON32_LOGON_NETWORK			3
+#define LOGON32_LOGON_BATCH			4
+#define LOGON32_LOGON_SERVICE			5
+#define LOGON32_LOGON_UNLOCK			7
+#define LOGON32_LOGON_NETWORK_CLEARTEXT		8
+#define LOGON32_LOGON_NEW_CREDENTIALS		9
+
+#define LOGON32_PROVIDER_DEFAULT		0
+#define LOGON32_PROVIDER_WINNT35		1
+#define LOGON32_PROVIDER_WINNT40		2
+#define LOGON32_PROVIDER_WINNT50		3
+#define LOGON32_PROVIDER_VIRTUAL		4
+
+typedef struct _QUOTA_LIMITS
+{
+	SIZE_T PagedPoolLimit;
+	SIZE_T NonPagedPoolLimit;
+	SIZE_T MinimumWorkingSetSize;
+	SIZE_T MaximumWorkingSetSize;
+	SIZE_T PagefileLimit;
+	LARGE_INTEGER TimeLimit;
+} QUOTA_LIMITS, *PQUOTA_LIMITS;
+
 typedef enum
 {
 	/* An unknown name type */
@@ -79,6 +103,20 @@ typedef enum
 extern "C" {
 #endif
 
+WINPR_API BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword,
+		DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken);
+
+WINPR_API BOOL LogonUserW(LPCWSTR lpszUsername, LPCWSTR lpszDomain, LPCWSTR lpszPassword,
+		DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken);
+
+WINPR_API BOOL LogonUserExA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword,
+		DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken, PSID* ppLogonSid,
+		PVOID* ppProfileBuffer, LPDWORD pdwProfileLength, PQUOTA_LIMITS pQuotaLimits);
+
+WINPR_API BOOL LogonUserExW(LPCWSTR lpszUsername, LPCWSTR lpszDomain, LPCWSTR lpszPassword,
+		DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken, PSID* ppLogonSid,
+		PVOID* ppProfileBuffer, LPDWORD pdwProfileLength, PQUOTA_LIMITS pQuotaLimits);
+
 WINPR_API BOOL GetUserNameExA(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG nSize);
 WINPR_API BOOL GetUserNameExW(EXTENDED_NAME_FORMAT NameFormat, LPWSTR lpNameBuffer, PULONG nSize);
 
@@ -87,8 +125,12 @@ WINPR_API BOOL GetUserNameExW(EXTENDED_NAME_FORMAT NameFormat, LPWSTR lpNameBuff
 #endif
 
 #ifdef UNICODE
+#define LogonUser	LogonUserW
+#define LogonUserEx	LogonUserExW
 #define GetUserNameEx	GetUserNameExW
 #else
+#define LogonUser	LogonUserA
+#define LogonUserEx	LogonUserExA
 #define GetUserNameEx	GetUserNameExA
 #endif
 

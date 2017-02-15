@@ -29,6 +29,8 @@
 #include <winpr/sam.h>
 #include <winpr/print.h>
 
+#include "../log.h"
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -38,85 +40,98 @@
 #else
 #define WINPR_SAM_FILE		"/etc/winpr/SAM"
 #endif
+#define TAG WINPR_TAG("utils")
 
-WINPR_SAM* SamOpen(BOOL read_only)
+WINPR_SAM* SamOpen(const char* filename, BOOL readOnly)
 {
 	FILE* fp = NULL;
 	WINPR_SAM* sam = NULL;
 
-	if (read_only)
+	if (!filename)
+		filename = WINPR_SAM_FILE;
+
+	if (readOnly)
 	{
-		fp = fopen(WINPR_SAM_FILE, "r");
+		fp = fopen(filename, "r");
 	}
 	else
 	{
-		fp = fopen(WINPR_SAM_FILE, "r+");
+		fp = fopen(filename, "r+");
 
 		if (!fp)
-			fp = fopen(WINPR_SAM_FILE, "w+");
+			fp = fopen(filename, "w+");
 	}
 
 	if (fp)
 	{
 		sam = (WINPR_SAM*) malloc(sizeof(WINPR_SAM));
-		sam->read_only = read_only;
+
+		if (!sam)
+		{
+			fclose(fp);
+			return NULL;
+		}
+
+		sam->readOnly = readOnly;
 		sam->fp = fp;
 	}
 	else
-		printf("Could not open SAM file!\n");
+	{
+		WLog_DBG(TAG, "Could not open SAM file!");
+	}
 
 	return sam;
 }
 
-BOOL SamLookupStart(WINPR_SAM* sam)
+static BOOL SamLookupStart(WINPR_SAM* sam)
 {
-	size_t read_size;
-	long int file_size;
+	size_t readSize;
+	long int fileSize;
 
 	fseek(sam->fp, 0, SEEK_END);
-	file_size = ftell(sam->fp);
+	fileSize = ftell(sam->fp);
 	fseek(sam->fp, 0, SEEK_SET);
 
-	if (file_size < 1)
+	if (fileSize < 1)
 		return FALSE;
 
-	sam->buffer = (char*) malloc(file_size + 2);
+	sam->buffer = (char*) malloc(fileSize + 2);
 
-	read_size = fread(sam->buffer, file_size, 1, sam->fp);
+	if (!sam->buffer)
+		return FALSE;
 
-	if (!read_size)
+	readSize = fread(sam->buffer, fileSize, 1, sam->fp);
+
+	if (!readSize)
 	{
 		if (!ferror(sam->fp))
-			read_size = file_size;
+			readSize = fileSize;
 	}
 
-	if (read_size < 1)
+	if (readSize < 1)
 	{
 		free(sam->buffer);
 		sam->buffer = NULL;
 		return FALSE;
 	}
 
-	sam->buffer[file_size] = '\n';
-	sam->buffer[file_size + 1] = '\0';
-
+	sam->buffer[fileSize] = '\n';
+	sam->buffer[fileSize + 1] = '\0';
 	sam->line = strtok(sam->buffer, "\n");
 
 	return TRUE;
 }
 
-void SamLookupFinish(WINPR_SAM* sam)
+static void SamLookupFinish(WINPR_SAM* sam)
 {
 	free(sam->buffer);
-
 	sam->buffer = NULL;
 	sam->line = NULL;
 }
 
-void HexStrToBin(char* str, BYTE* bin, int length)
+static void HexStrToBin(char* str, BYTE* bin, int length)
 {
 	int i;
-
 	CharUpperBuffA(str, length * 2);
 
 	for (i = 0; i < length; i++)
@@ -137,7 +152,7 @@ void HexStrToBin(char* str, BYTE* bin, int length)
 	}
 }
 
-WINPR_SAM_ENTRY* SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
+BOOL SamReadEntry(WINPR_SAM *sam, WINPR_SAM_ENTRY *entry)
 {
 	char* p[7];
 	int LmHashLength;
@@ -150,20 +165,25 @@ WINPR_SAM_ENTRY* SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 	p[4] = strchr(p[3], ':') + 1;
 	p[5] = strchr(p[4], ':') + 1;
 	p[6] = p[0] + strlen(p[0]);
-
-	entry->UserLength = p[1] - p[0] - 1;
-	entry->DomainLength = p[2] - p[1] - 1;
-
-	LmHashLength = p[3] - p[2] - 1;
-	NtHashLength = p[4] - p[3] - 1;
-
+	entry->UserLength = (UINT32)(p[1] - p[0] - 1);
 	entry->User = (LPSTR) malloc(entry->UserLength + 1);
-	memcpy(entry->User, p[0], entry->UserLength);
+	if (!entry->User)
+		return FALSE;
 	entry->User[entry->UserLength] = '\0';
+	entry->DomainLength = (UINT32)(p[2] - p[1] - 1);
+	LmHashLength = (int)(p[3] - p[2] - 1);
+	NtHashLength = (int)(p[4] - p[3] - 1);
+	memcpy(entry->User, p[0], entry->UserLength);
 
 	if (entry->DomainLength > 0)
 	{
 		entry->Domain = (LPSTR) malloc(entry->DomainLength + 1);
+		if (!entry->Domain)
+		{
+			free(entry->User);
+			entry->User = NULL;
+			return FALSE;
+		}
 		memcpy(entry->Domain, p[1], entry->DomainLength);
 		entry->Domain[entry->DomainLength] = '\0';
 	}
@@ -182,7 +202,7 @@ WINPR_SAM_ENTRY* SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 		HexStrToBin(p[3], (BYTE*) entry->NtHash, 16);
 	}
 
-	return entry;
+	return TRUE;
 }
 
 void SamFreeEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
@@ -199,25 +219,56 @@ void SamFreeEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 	}
 }
 
+void SamResetEntry(WINPR_SAM_ENTRY* entry)
+{
+	if (!entry)
+		return;
+
+	if (entry->UserLength)
+	{
+		free(entry->User);
+		entry->User = NULL;
+	}
+
+	if (entry->DomainLength)
+	{
+		free(entry->Domain);
+		entry->Domain = NULL;
+	}
+
+	ZeroMemory(entry->LmHash, sizeof(entry->LmHash));
+	ZeroMemory(entry->NtHash, sizeof(entry->NtHash));
+}
+
 WINPR_SAM_ENTRY* SamLookupUserA(WINPR_SAM* sam, LPSTR User, UINT32 UserLength, LPSTR Domain, UINT32 DomainLength)
 {
 	int length;
-	BOOL found = 0;
+	BOOL found = FALSE;
 	WINPR_SAM_ENTRY* entry;
 
-	entry = (WINPR_SAM_ENTRY*) malloc(sizeof(WINPR_SAM_ENTRY));
+	entry = (WINPR_SAM_ENTRY*) calloc(1, sizeof(WINPR_SAM_ENTRY));
 
-	SamLookupStart(sam);
+	if (!entry)
+		return NULL;
+
+	if (!SamLookupStart(sam))
+	{
+		free(entry);
+		return NULL;
+	}
 
 	while (sam->line != NULL)
 	{
-		length = strlen(sam->line);
+		length = (int) strlen(sam->line);
 
 		if (length > 1)
 		{
 			if (sam->line[0] != '#')
 			{
-				SamReadEntry(sam, entry);
+				if (!SamReadEntry(sam, entry))
+				{
+					goto out_fail;
+				}
 
 				if (strcmp(User, entry->User) == 0)
 				{
@@ -226,10 +277,11 @@ WINPR_SAM_ENTRY* SamLookupUserA(WINPR_SAM* sam, LPSTR User, UINT32 UserLength, L
 				}
 			}
 		}
-
+		SamResetEntry(entry);
 		sam->line = strtok(NULL, "\n");
 	}
 
+out_fail:
 	SamLookupFinish(sam);
 
 	if (!found)
@@ -244,22 +296,27 @@ WINPR_SAM_ENTRY* SamLookupUserA(WINPR_SAM* sam, LPSTR User, UINT32 UserLength, L
 WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, UINT32 UserLength, LPWSTR Domain, UINT32 DomainLength)
 {
 	int length;
-	BOOL Found = 0;
+	BOOL Found = FALSE;
 	BOOL UserMatch;
 	BOOL DomainMatch;
-	LPWSTR EntryUser;
+	LPWSTR EntryUser = NULL;
 	UINT32 EntryUserLength;
-	LPWSTR EntryDomain;
+	LPWSTR EntryDomain = NULL;
 	UINT32 EntryDomainLength;
 	WINPR_SAM_ENTRY* entry;
 
-	entry = (WINPR_SAM_ENTRY*) malloc(sizeof(WINPR_SAM_ENTRY));
+	if (!(entry = (WINPR_SAM_ENTRY*) calloc(1, sizeof(WINPR_SAM_ENTRY))))
+		return NULL;
 
-	SamLookupStart(sam);
+	if (!SamLookupStart(sam))
+	{
+		free(entry);
+		return NULL;
+	}
 
 	while (sam->line != NULL)
 	{
-		length = strlen(sam->line);
+		length = (int) strlen(sam->line);
 
 		if (length > 1)
 		{
@@ -267,17 +324,19 @@ WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, UINT32 UserLength, 
 			{
 				DomainMatch = 0;
 				UserMatch = 0;
-
-				entry = SamReadEntry(sam, entry);
+				if (!SamReadEntry(sam, entry))
+					goto out_fail;
 
 				if (DomainLength > 0)
 				{
 					if (entry->DomainLength > 0)
 					{
-						EntryDomainLength = strlen(entry->Domain) * 2;
+						EntryDomainLength = (UINT32) strlen(entry->Domain) * 2;
 						EntryDomain = (LPWSTR) malloc(EntryDomainLength + 2);
+						if (!EntryDomain)
+							goto out_fail;
 						MultiByteToWideChar(CP_ACP, 0, entry->Domain, EntryDomainLength / 2,
-								(LPWSTR) EntryDomain, EntryDomainLength / 2);
+											(LPWSTR) EntryDomain, EntryDomainLength / 2);
 
 						if (DomainLength == EntryDomainLength)
 						{
@@ -286,6 +345,7 @@ WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, UINT32 UserLength, 
 								DomainMatch = 1;
 							}
 						}
+
 						free(EntryDomain);
 					}
 					else
@@ -300,10 +360,12 @@ WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, UINT32 UserLength, 
 
 				if (DomainMatch)
 				{
-					EntryUserLength = strlen(entry->User) * 2;
+					EntryUserLength = (UINT32) strlen(entry->User) * 2;
 					EntryUser = (LPWSTR) malloc(EntryUserLength + 2);
+					if (!EntryUser)
+						goto out_fail;
 					MultiByteToWideChar(CP_ACP, 0, entry->User, EntryUserLength / 2,
-							(LPWSTR) EntryUser, EntryUserLength / 2);
+										(LPWSTR) EntryUser, EntryUserLength / 2);
 
 					if (UserLength == EntryUserLength)
 					{
@@ -317,16 +379,18 @@ WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, UINT32 UserLength, 
 
 					if (UserMatch && DomainMatch)
 					{
-						Found = 1;
+						Found = TRUE;
 						break;
 					}
 				}
 			}
 		}
 
+		SamResetEntry(entry);
 		sam->line = strtok(NULL, "\n");
 	}
 
+out_fail:
 	SamLookupFinish(sam);
 
 	if (!Found)

@@ -74,8 +74,15 @@ void ObjectPool_Return(wObjectPool* pool, void* obj)
 
 	if ((pool->size + 1) >= pool->capacity)
 	{
-		pool->capacity *= 2;
-		pool->array = (void**) realloc(pool->array, sizeof(void*) * pool->capacity);
+		int new_cap;
+		void **new_arr;
+
+		new_cap = pool->capacity * 2;
+		new_arr = (void**) realloc(pool->array, sizeof(void*) * new_cap);
+		if (!new_arr)
+			return;
+		pool->array = new_arr;
+		pool->capacity = new_cap;
 	}
 
 	pool->array[(pool->size)++] = obj;
@@ -116,20 +123,23 @@ wObjectPool* ObjectPool_New(BOOL synchronized)
 {
 	wObjectPool* pool = NULL;
 
-	pool = (wObjectPool*) malloc(sizeof(wObjectPool));
+	pool = (wObjectPool*) calloc(1, sizeof(wObjectPool));
 
 	if (pool)
 	{
-		ZeroMemory(pool, sizeof(wObjectPool));
-
+		pool->capacity = 32;
+		pool->size = 0;
+		pool->array = (void**) malloc(sizeof(void*) * pool->capacity);
+		if (!pool->array)
+		{
+			free(pool);
+			return NULL;
+		}
 		pool->synchronized = synchronized;
 
 		if (pool->synchronized)
 			InitializeCriticalSectionAndSpinCount(&pool->lock, 4000);
 
-		pool->size = 0;
-		pool->capacity = 32;
-		pool->array = (void**) malloc(sizeof(void*) * pool->capacity);
 	}
 
 	return pool;

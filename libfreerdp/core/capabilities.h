@@ -25,6 +25,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/settings.h>
+#include <freerdp/api.h>
 
 #include <winpr/stream.h>
 
@@ -98,6 +99,8 @@
 #define INPUT_FLAG_FASTPATH_INPUT		0x0008
 #define INPUT_FLAG_UNICODE			0x0010
 #define INPUT_FLAG_FASTPATH_INPUT2		0x0020
+#define TS_INPUT_FLAG_MOUSE_HWHEEL		0x0100
+#define TS_INPUT_FLAG_QOE_TIMESTAMPS		0x0200
 
 /* Font Support Flags */
 #define FONTSUPPORT_FONTLIST			0x0001
@@ -165,12 +168,13 @@
 #define CLW_ENTROPY_RLGR1			0x01
 #define CLW_ENTROPY_RLGR3			0x04
 
-BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId);
-BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s);
-void rdp_write_demand_active(wStream* s, rdpSettings* settings);
-BOOL rdp_send_demand_active(rdpRdp* rdp);
-BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s);
-void rdp_write_confirm_active(wStream* s, rdpSettings* settings);
-BOOL rdp_send_confirm_active(rdpRdp* rdp);
+FREERDP_LOCAL BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s,
+        UINT16* pChannelId);
+FREERDP_LOCAL BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s);
+FREERDP_LOCAL BOOL rdp_write_demand_active(wStream* s, rdpSettings* settings);
+FREERDP_LOCAL BOOL rdp_send_demand_active(rdpRdp* rdp);
+FREERDP_LOCAL BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s);
+FREERDP_LOCAL BOOL rdp_write_confirm_active(wStream* s, rdpSettings* settings);
+FREERDP_LOCAL BOOL rdp_send_confirm_active(rdpRdp* rdp);
 
 #endif /* __CAPABILITIES_H */

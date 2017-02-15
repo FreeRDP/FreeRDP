@@ -3,6 +3,8 @@
  * Connection Sequence
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,42 +25,47 @@
 
 #include "info.h"
 #include "input.h"
+#include "rdp.h"
 
 #include "connection.h"
 #include "transport.h"
 
 #include <winpr/crt.h>
+#include <winpr/crypto.h>
 
+#include <freerdp/log.h>
 #include <freerdp/error.h>
 #include <freerdp/listener.h>
 
+#define TAG FREERDP_TAG("core.connection")
+
 /**
- *                                      Connection Sequence\n
- *     client                                                                    server\n
- *        |                                                                         |\n
- *        |-----------------------X.224 Connection Request PDU--------------------->|\n
- *        |<----------------------X.224 Connection Confirm PDU----------------------|\n
- *        |-------MCS Connect-Initial PDU with GCC Conference Create Request------->|\n
- *        |<-----MCS Connect-Response PDU with GCC Conference Create Response-------|\n
- *        |------------------------MCS Erect Domain Request PDU-------------------->|\n
- *        |------------------------MCS Attach User Request PDU--------------------->|\n
- *        |<-----------------------MCS Attach User Confirm PDU----------------------|\n
- *        |------------------------MCS Channel Join Request PDU-------------------->|\n
- *        |<-----------------------MCS Channel Join Confirm PDU---------------------|\n
- *        |----------------------------Security Exchange PDU----------------------->|\n
- *        |-------------------------------Client Info PDU-------------------------->|\n
- *        |<---------------------License Error PDU - Valid Client-------------------|\n
- *        |<-----------------------------Demand Active PDU--------------------------|\n
- *        |------------------------------Confirm Active PDU------------------------>|\n
- *        |-------------------------------Synchronize PDU-------------------------->|\n
- *        |---------------------------Control PDU - Cooperate---------------------->|\n
- *        |------------------------Control PDU - Request Control------------------->|\n
- *        |--------------------------Persistent Key List PDU(s)-------------------->|\n
- *        |--------------------------------Font List PDU--------------------------->|\n
- *        |<------------------------------Synchronize PDU---------------------------|\n
- *        |<--------------------------Control PDU - Cooperate-----------------------|\n
- *        |<-----------------------Control PDU - Granted Control--------------------|\n
- *        |<-------------------------------Font Map PDU-----------------------------|\n
+ *                                      Connection Sequence
+ *     client                                                                    server
+ *        |                                                                         |
+ *        |-----------------------X.224 Connection Request PDU--------------------->|
+ *        |<----------------------X.224 Connection Confirm PDU----------------------|
+ *        |-------MCS Connect-Initial PDU with GCC Conference Create Request------->|
+ *        |<-----MCS Connect-Response PDU with GCC Conference Create Response-------|
+ *        |------------------------MCS Erect Domain Request PDU-------------------->|
+ *        |------------------------MCS Attach User Request PDU--------------------->|
+ *        |<-----------------------MCS Attach User Confirm PDU----------------------|
+ *        |------------------------MCS Channel Join Request PDU-------------------->|
+ *        |<-----------------------MCS Channel Join Confirm PDU---------------------|
+ *        |----------------------------Security Exchange PDU----------------------->|
+ *        |-------------------------------Client Info PDU-------------------------->|
+ *        |<---------------------License Error PDU - Valid Client-------------------|
+ *        |<-----------------------------Demand Active PDU--------------------------|
+ *        |------------------------------Confirm Active PDU------------------------>|
+ *        |-------------------------------Synchronize PDU-------------------------->|
+ *        |---------------------------Control PDU - Cooperate---------------------->|
+ *        |------------------------Control PDU - Request Control------------------->|
+ *        |--------------------------Persistent Key List PDU(s)-------------------->|
+ *        |--------------------------------Font List PDU--------------------------->|
+ *        |<------------------------------Synchronize PDU---------------------------|
+ *        |<--------------------------Control PDU - Cooperate-----------------------|
+ *        |<-----------------------Control PDU - Granted Control--------------------|
+ *        |<-------------------------------Font Map PDU-----------------------------|
  *
  */
 
@@ -168,19 +175,31 @@
 
 BOOL rdp_client_connect(rdpRdp* rdp)
 {
+	BOOL status;
 	rdpSettings* settings = rdp->settings;
+
+	if (rdp->settingsCopy)
+	{
+		freerdp_settings_free(rdp->settingsCopy);
+		rdp->settingsCopy = NULL;
+	}
+
+	rdp->settingsCopy = freerdp_settings_clone(settings);
+
+	if (!rdp->settingsCopy)
+		return FALSE;
 
 	nego_init(rdp->nego);
 	nego_set_target(rdp->nego, settings->ServerHostname, settings->ServerPort);
 
 	if (settings->GatewayEnabled)
 	{
-		char* user;
-		char* domain;
-		char* cookie;
+		char* user = NULL;
+		char* domain = NULL;
+		char* cookie = NULL;
 		int user_length = 0;
-		int domain_length;
-		int cookie_length;
+		int domain_length = 0;
+		int cookie_length = 0;
 
 		if (settings->Username)
 		{
@@ -198,6 +217,9 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		cookie_length = domain_length + 1 + user_length;
 		cookie = (char*) malloc(cookie_length + 1);
 
+		if (!cookie)
+			return FALSE;
+
 		CopyMemory(cookie, domain, domain_length);
 		CharUpperBuffA(cookie, domain_length);
 		cookie[domain_length] = '\\';
@@ -207,27 +229,26 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 		cookie[cookie_length] = '\0';
 
-		nego_set_cookie(rdp->nego, cookie);
+		status = nego_set_cookie(rdp->nego, cookie);
 		free(cookie);
-
-		settings->RdpSecurity = TRUE;
-		settings->TlsSecurity = FALSE;
-		settings->NlaSecurity = FALSE;
-		settings->ExtSecurity = FALSE;
-
-		//settings->TlsSecurity = TRUE;
-		//settings->NlaSecurity = TRUE;
 	}
 	else
 	{
-		nego_set_cookie(rdp->nego, settings->Username);
+		status = nego_set_cookie(rdp->nego, settings->Username);
 	}
+
+	if (!status)
+		return FALSE;
 
 	nego_set_send_preconnection_pdu(rdp->nego, settings->SendPreconnectionPdu);
 	nego_set_preconnection_id(rdp->nego, settings->PreconnectionId);
 	nego_set_preconnection_blob(rdp->nego, settings->PreconnectionBlob);
 
 	nego_set_negotiation_enabled(rdp->nego, settings->NegotiateSecurityLayer);
+	nego_set_restricted_admin_mode_required(rdp->nego, settings->RestrictedAdminModeRequired);
+
+	nego_set_gateway_enabled(rdp->nego, settings->GatewayEnabled);
+	nego_set_gateway_bypass_local(rdp->nego, settings->GatewayBypassLocal);
 
 	nego_enable_rdp(rdp->nego, settings->RdpSecurity);
 	nego_enable_tls(rdp->nego, settings->TlsSecurity);
@@ -240,40 +261,49 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	nego_set_cookie_max_length(rdp->nego, settings->CookieMaxLength);
 
 	if (settings->LoadBalanceInfo)
-		nego_set_routing_token(rdp->nego, settings->LoadBalanceInfo, settings->LoadBalanceInfoLength);
+	{
+		if (!nego_set_routing_token(rdp->nego, settings->LoadBalanceInfo, settings->LoadBalanceInfoLength))
+			return FALSE;
+	}
+
+	rdp_client_transition_to_state(rdp, CONNECTION_STATE_NEGO);
 
 	if (!nego_connect(rdp->nego))
 	{
-		fprintf(stderr, "Error: protocol security negotiation or connection failure\n");
+		if (!freerdp_get_last_error(rdp->context))
+			freerdp_set_last_error(rdp->context, FREERDP_ERROR_SECURITY_NEGO_CONNECT_FAILED);
+
+		WLog_ERR(TAG, "Error: protocol security negotiation or connection failure");
 		return FALSE;
 	}
 
-	if ((rdp->nego->selected_protocol & PROTOCOL_TLS) || (rdp->nego->selected_protocol == PROTOCOL_RDP))
+	if ((rdp->nego->SelectedProtocol & PROTOCOL_TLS) || (rdp->nego->SelectedProtocol == PROTOCOL_RDP))
 	{
 		if ((settings->Username != NULL) && ((settings->Password != NULL) ||
 				(settings->RedirectionPassword != NULL && settings->RedirectionPasswordLength > 0)))
 			settings->AutoLogonEnabled = TRUE;
 	}
 
-	rdp_set_blocking_mode(rdp, FALSE);
+	/* everything beyond this point is event-driven and non blocking */
 
-	rdp_client_transition_to_state(rdp, CONNECTION_STATE_NEGO);
-	rdp->finalize_sc_pdus = 0;
+	rdp->transport->ReceiveCallback = rdp_recv_callback;
+	rdp->transport->ReceiveExtra = rdp;
+	transport_set_blocking_mode(rdp->transport, FALSE);
 
-	if (!mcs_send_connect_initial(rdp->mcs))
+	if (rdp->state != CONNECTION_STATE_NLA)
 	{
-		if (!connectErrorCode)
-		{
-			connectErrorCode = MCSCONNECTINITIALERROR;                      
-		}
-		fprintf(stderr, "Error: unable to send MCS Connect Initial\n");
-		return FALSE;
+		if (!mcs_client_begin(rdp->mcs))
+			return FALSE;
 	}
 
 	while (rdp->state != CONNECTION_STATE_ACTIVE)
 	{
 		if (rdp_check_fds(rdp) < 0)
+		{
+			if (!freerdp_get_last_error(rdp->context))
+				freerdp_set_last_error(rdp->context, FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
 			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -281,96 +311,101 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 BOOL rdp_client_disconnect(rdpRdp* rdp)
 {
-	return transport_disconnect(rdp->transport);
+	BOOL status;
+
+	if (rdp->settingsCopy)
+	{
+		freerdp_settings_free(rdp->settingsCopy);
+		rdp->settingsCopy = NULL;
+	}
+
+	status = nego_disconnect(rdp->nego);
+
+	rdp_reset(rdp);
+
+	rdp_client_transition_to_state(rdp, CONNECTION_STATE_INITIAL);
+
+	return status;
 }
 
 BOOL rdp_client_redirect(rdpRdp* rdp)
 {
+	BOOL status;
 	rdpSettings* settings = rdp->settings;
-	rdpRedirection* redirection = rdp->redirection;
 
 	rdp_client_disconnect(rdp);
+	if (rdp_redirection_apply_settings(rdp) != 0)
+		return FALSE;
 
-	/* FIXME: this is a subset of rdp_free */
-	/* --> this should really go into rdp.c */
-	crypto_rc4_free(rdp->rc4_decrypt_key);
-	rdp->rc4_decrypt_key = NULL ;
-	crypto_rc4_free(rdp->rc4_encrypt_key);
-	rdp->rc4_encrypt_key = NULL;
-	crypto_des3_free(rdp->fips_encrypt);
-	rdp->fips_encrypt = NULL ;
-	crypto_des3_free(rdp->fips_decrypt);
-	rdp->fips_decrypt = NULL ;
-	crypto_hmac_free(rdp->fips_hmac);
-	rdp->fips_hmac = NULL ;
-
-	free(settings->ServerRandom);
-	settings->ServerRandom = NULL ;
-	free(settings->ServerCertificate);
-	settings->ServerCertificate = NULL ;
-	free(settings->ClientAddress);
-	settings->ClientAddress = NULL ;
-
-	mppc_enc_free(rdp->mppc_enc);
-	mppc_dec_free(rdp->mppc_dec);
-	mcs_free(rdp->mcs);
-	nego_free(rdp->nego);
-	license_free(rdp->license);
-	transport_free(rdp->transport);
-
-	rdp->transport = transport_new(settings);
-	rdp->license = license_new(rdp);
-	rdp->nego = nego_new(rdp->transport);
-	rdp->mcs = mcs_new(rdp->transport);
-	rdp->mppc_dec = mppc_dec_new();
-	rdp->mppc_enc = mppc_enc_new(PROTO_RDP_50);
-
-	rdp->transport->layer = TRANSPORT_LAYER_TCP;
-	settings->RedirectedSessionId = redirection->sessionID;
-
-	if (redirection->flags & LB_LOAD_BALANCE_INFO)
+	if (settings->RedirectionFlags & LB_LOAD_BALANCE_INFO)
 	{
-		nego_set_routing_token(rdp->nego, redirection->LoadBalanceInfo, redirection->LoadBalanceInfoLength);
+		if (!nego_set_routing_token(rdp->nego, settings->LoadBalanceInfo, settings->LoadBalanceInfoLength))
+			return FALSE;
 	}
 	else
 	{
-		if (redirection->flags & LB_TARGET_NET_ADDRESS)
+		if (settings->RedirectionFlags & LB_TARGET_FQDN)
 		{
 			free(settings->ServerHostname);
-			settings->ServerHostname = _strdup(redirection->targetNetAddress.ascii);
+			settings->ServerHostname = _strdup(settings->RedirectionTargetFQDN);
+			if (!settings->ServerHostname)
+				return FALSE;
 		}
-		else if (redirection->flags & LB_TARGET_FQDN)
+		else if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
 		{
 			free(settings->ServerHostname);
-			settings->ServerHostname = _strdup(redirection->targetFQDN.ascii);
+			settings->ServerHostname = _strdup(settings->TargetNetAddress);
+			if (!settings->ServerHostname)
+				return FALSE;
 		}
-		else if (redirection->flags & LB_TARGET_NETBIOS_NAME)
+		else if (settings->RedirectionFlags & LB_TARGET_NETBIOS_NAME)
 		{
 			free(settings->ServerHostname);
-			settings->ServerHostname = _strdup(redirection->targetNetBiosName.ascii);
+			settings->ServerHostname = _strdup(settings->RedirectionTargetNetBiosName);
+			if (!settings->ServerHostname)
+				return FALSE;
 		}
 	}
 
-	if (redirection->flags & LB_USERNAME)
+	if (settings->RedirectionFlags & LB_USERNAME)
 	{
 		free(settings->Username);
-		settings->Username = _strdup(redirection->username.ascii);
+		settings->Username = _strdup(settings->RedirectionUsername);
+		if (!settings->Username)
+			return FALSE;
 	}
 
-	if (redirection->flags & LB_DOMAIN)
+	if (settings->RedirectionFlags & LB_DOMAIN)
 	{
 		free(settings->Domain);
-		settings->Domain = _strdup(redirection->domain.ascii);
+		settings->Domain = _strdup(settings->RedirectionDomain);
+		if (!settings->Domain)
+			return FALSE;
 	}
 
-	if (redirection->flags & LB_PASSWORD)
-	{
-		settings->RedirectionPassword = redirection->PasswordCookie;
-		settings->RedirectionPasswordLength = redirection->PasswordCookieLength;
-	}
+	status = rdp_client_connect(rdp);
 
-	return rdp_client_connect(rdp);
+	return status;
 }
+
+BOOL rdp_client_reconnect(rdpRdp* rdp)
+{
+	BOOL status;
+	rdpContext* context = rdp->context;
+	rdpChannels* channels = context->channels;
+
+	freerdp_channels_disconnect(channels, context->instance);
+	rdp_client_disconnect(rdp);
+
+	status = rdp_client_connect(rdp);
+
+	if (status)
+		status = (freerdp_channels_post_connect(channels, context->instance) == CHANNEL_RC_OK);
+
+	return status;
+}
+
+static BYTE fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
 
 static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 {
@@ -379,79 +414,140 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	wStream* s;
 	UINT32 length;
 	UINT32 key_len;
-	BYTE crypt_client_random[256 + 8];
-	BYTE client_random[CLIENT_RANDOM_LENGTH];
+	int status = 0;
+	BOOL ret = FALSE;
+	rdpSettings* settings;
+	BYTE* crypt_client_random = NULL;
 
-	if (!rdp->settings->DisableEncryption)
+	settings = rdp->settings;
+
+	if (!settings->UseRdpSecurityLayer)
 	{
 		/* no RDP encryption */
 		return TRUE;
 	}
 
 	/* encrypt client random */
-	ZeroMemory(crypt_client_random, sizeof(crypt_client_random));
-	crypto_nonce(client_random, sizeof(client_random));
-	key_len = rdp->settings->RdpServerCertificate->cert_info.ModulusLength;
-	mod = rdp->settings->RdpServerCertificate->cert_info.Modulus;
-	exp = rdp->settings->RdpServerCertificate->cert_info.exponent;
-	crypto_rsa_public_encrypt(client_random, sizeof(client_random), key_len, mod, exp, crypt_client_random);
+
+	free(settings->ClientRandom);
+
+	settings->ClientRandomLength = CLIENT_RANDOM_LENGTH;
+	settings->ClientRandom = malloc(settings->ClientRandomLength);
+
+	if (!settings->ClientRandom)
+		return FALSE;
+
+	winpr_RAND(settings->ClientRandom, settings->ClientRandomLength);
+	key_len = settings->RdpServerCertificate->cert_info.ModulusLength;
+	mod = settings->RdpServerCertificate->cert_info.Modulus;
+	exp = settings->RdpServerCertificate->cert_info.exponent;
+
+	/*
+	 * client random must be (bitlen / 8) + 8 - see [MS-RDPBCGR] 5.3.4.1
+	 * for details
+	 */
+	crypt_client_random = calloc(1, key_len + 8);
+
+	if (!crypt_client_random)
+		return FALSE;
+
+	crypto_rsa_public_encrypt(settings->ClientRandom, settings->ClientRandomLength, key_len, mod, exp, crypt_client_random);
 
 	/* send crypt client random to server */
 	length = RDP_PACKET_HEADER_MAX_LENGTH + RDP_SECURITY_HEADER_LENGTH + 4 + key_len + 8;
 	s = Stream_New(NULL, length);
 
+	if (!s)
+	{
+		WLog_ERR(TAG, "Stream_New failed!");
+		goto end;
+	}
+
 	rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
-	rdp_write_security_header(s, SEC_EXCHANGE_PKT);
+	rdp_write_security_header(s, SEC_EXCHANGE_PKT | SEC_LICENSE_ENCRYPT_SC);
 	length = key_len + 8;
 
 	Stream_Write_UINT32(s, length);
 	Stream_Write(s, crypt_client_random, length);
 	Stream_SealLength(s);
 
-	if (transport_write(rdp->mcs->transport, s) < 0)
-	{
-		return FALSE;
-	}
-
+	status = transport_write(rdp->mcs->transport, s);
 	Stream_Free(s, TRUE);
 
+	if (status < 0)
+		goto end;
+
+	rdp->do_crypt_license = TRUE;
+
 	/* now calculate encrypt / decrypt and update keys */
-	if (!security_establish_keys(client_random, rdp))
-	{
-		return FALSE;
-	}
+	if (!security_establish_keys(settings->ClientRandom, rdp))
+		goto end;
 
 	rdp->do_crypt = TRUE;
 
-	if (rdp->settings->SaltedChecksum)
+	if (settings->SaltedChecksum)
 		rdp->do_secure_checksum = TRUE;
 
-	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+	if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
-		BYTE fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
-		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->fips_encrypt_key, fips_ivec);
-		rdp->fips_decrypt = crypto_des3_decrypt_init(rdp->fips_decrypt_key, fips_ivec);
+		rdp->fips_encrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC,
+		                                     WINPR_ENCRYPT,
+		                                     rdp->fips_encrypt_key,
+		                                     fips_ivec);
+		if (!rdp->fips_encrypt)
+		{
+			WLog_ERR(TAG, "unable to allocate des3 encrypt key");
+			goto end;
+		}
+		rdp->fips_decrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC,
+		                                     WINPR_DECRYPT,
+		                                     rdp->fips_decrypt_key,
+		                                     fips_ivec);
+		if (!rdp->fips_decrypt)
+		{
+			WLog_ERR(TAG, "unable to allocate des3 decrypt key");
+			goto end;
+		}
 
-		rdp->fips_hmac = crypto_hmac_new();
-		return TRUE;
+		ret = TRUE;
+		goto end;
 	}
 
-	rdp->rc4_decrypt_key = crypto_rc4_init(rdp->decrypt_key, rdp->rc4_key_len);
-	rdp->rc4_encrypt_key = crypto_rc4_init(rdp->encrypt_key, rdp->rc4_key_len);
+	rdp->rc4_decrypt_key = winpr_RC4_New(rdp->decrypt_key, rdp->rc4_key_len);
+	rdp->rc4_encrypt_key = winpr_RC4_New(rdp->encrypt_key, rdp->rc4_key_len);
+	if (!rdp->rc4_decrypt_key || !rdp->rc4_encrypt_key)
+		goto end;
 
-	return TRUE;
+	ret = TRUE;
+end:
+	free(crypt_client_random);
+	if (!ret)
+	{
+		winpr_Cipher_Free(rdp->fips_decrypt);
+		winpr_Cipher_Free(rdp->fips_encrypt);
+		winpr_RC4_Free(rdp->rc4_decrypt_key);
+		winpr_RC4_Free(rdp->rc4_encrypt_key);
+
+		rdp->fips_decrypt = NULL;
+		rdp->fips_encrypt = NULL;
+		rdp->rc4_decrypt_key = NULL;
+		rdp->rc4_encrypt_key = NULL;
+	}
+
+	return ret;
 }
 
 BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 {
-	BYTE client_random[64]; /* Should be only 32 after successful decryption, but on failure might take up to 64 bytes. */
-	BYTE crypt_client_random[256 + 8];
+	BYTE* client_random = NULL;
+	BYTE* crypt_client_random = NULL;
 	UINT32 rand_len, key_len;
 	UINT16 channel_id, length, sec_flags;
 	BYTE* mod;
 	BYTE* priv_exp;
+	BOOL ret = FALSE;
 
-	if (!rdp->settings->DisableEncryption)
+	if (!rdp->settings->UseRdpSecurityLayer)
 	{
 		/* No RDP Security. */
 		return TRUE;
@@ -459,160 +555,195 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 
 	if (!rdp_read_header(rdp, s, &length, &channel_id))
 	{
-		fprintf(stderr, "rdp_server_establish_keys: invalid RDP header\n");
+		WLog_ERR(TAG, "invalid RDP header");
 		return FALSE;
 	}
 
 	if (!rdp_read_security_header(s, &sec_flags))
+	{
+		WLog_ERR(TAG, "invalid security header");
 		return FALSE;
+	}
 
 	if ((sec_flags & SEC_EXCHANGE_PKT) == 0)
 	{
-		fprintf(stderr, "rdp_server_establish_keys: missing SEC_EXCHANGE_PKT in security header\n");
+		WLog_ERR(TAG, "missing SEC_EXCHANGE_PKT in security header");
 		return FALSE;
 	}
+
+	rdp->do_crypt_license = (sec_flags & SEC_LICENSE_ENCRYPT_SC) != 0 ? TRUE : FALSE;
 
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
 	Stream_Read_UINT32(s, rand_len);
 
-	if (Stream_GetRemainingLength(s) < rand_len + 8)  /* include 8 bytes of padding */
+	/* rand_len already includes 8 bytes of padding */
+	if (Stream_GetRemainingLength(s) < rand_len)
 		return FALSE;
 
 	key_len = rdp->settings->RdpServerRsaKey->ModulusLength;
+	client_random = malloc(key_len);
+	if (!client_random)
+		return FALSE;
 
 	if (rand_len != key_len + 8)
 	{
-		fprintf(stderr, "rdp_server_establish_keys: invalid encrypted client random length\n");
-		return FALSE;
+		WLog_ERR(TAG, "invalid encrypted client random length");
+		goto end;
 	}
 
-	ZeroMemory(crypt_client_random, sizeof(crypt_client_random));
+	crypt_client_random = calloc(1, rand_len);
+	if (!crypt_client_random)
+		goto end;
 	Stream_Read(s, crypt_client_random, rand_len);
-	/* 8 zero bytes of padding */
-	Stream_Seek(s, 8);
+
 	mod = rdp->settings->RdpServerRsaKey->Modulus;
 	priv_exp = rdp->settings->RdpServerRsaKey->PrivateExponent;
 	crypto_rsa_private_decrypt(crypt_client_random, rand_len - 8, key_len, mod, priv_exp, client_random);
 
 	/* now calculate encrypt / decrypt and update keys */
 	if (!security_establish_keys(client_random, rdp))
-	{
-		return FALSE;
-	}
+		goto end;
 
 	rdp->do_crypt = TRUE;
 
-	if (rdp->settings->SaltedChecksum)
-		rdp->do_secure_checksum = TRUE;
-
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
-		BYTE fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
-		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->fips_encrypt_key, fips_ivec);
-		rdp->fips_decrypt = crypto_des3_decrypt_init(rdp->fips_decrypt_key, fips_ivec);
+		rdp->fips_encrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC,
+						     WINPR_ENCRYPT,
+						     rdp->fips_encrypt_key,
+						     fips_ivec);
+		if (!rdp->fips_encrypt)
+		{
+			WLog_ERR(TAG, "unable to allocate des3 encrypt key");
+			goto end;
+		}
 
-		rdp->fips_hmac = crypto_hmac_new();
-		return TRUE;
+		rdp->fips_decrypt = winpr_Cipher_New(WINPR_CIPHER_DES_EDE3_CBC,
+						     WINPR_DECRYPT,
+						     rdp->fips_decrypt_key,
+						     fips_ivec);
+		if (!rdp->fips_decrypt)
+		{
+			WLog_ERR(TAG, "unable to allocate des3 decrypt key");
+			goto end;
+		}
+
+		ret = TRUE;
+		goto end;
 	}
 
-	rdp->rc4_decrypt_key = crypto_rc4_init(rdp->decrypt_key, rdp->rc4_key_len);
-	rdp->rc4_encrypt_key = crypto_rc4_init(rdp->encrypt_key, rdp->rc4_key_len);
+	rdp->rc4_decrypt_key = winpr_RC4_New(rdp->decrypt_key, rdp->rc4_key_len);
+	rdp->rc4_encrypt_key = winpr_RC4_New(rdp->encrypt_key, rdp->rc4_key_len);
+	if (!rdp->rc4_decrypt_key || !rdp->rc4_encrypt_key)
+		goto end;
 
-	return TRUE;
-}
+	ret = TRUE;
+end:
+	free(crypt_client_random);
+	free(client_random);
 
-BOOL rdp_client_connect_mcs_connect_response(rdpRdp* rdp, wStream* s)
-{
-	if (!mcs_recv_connect_response(rdp->mcs, s))
+	if (!ret)
 	{
-		fprintf(stderr, "rdp_client_connect_mcs_connect_response: mcs_recv_connect_response failed\n");
-		return FALSE;
+		winpr_Cipher_Free(rdp->fips_encrypt);
+		winpr_Cipher_Free(rdp->fips_decrypt);
+		winpr_RC4_Free(rdp->rc4_encrypt_key);
+		winpr_RC4_Free(rdp->rc4_decrypt_key);
+
+		rdp->fips_encrypt = NULL;
+		rdp->fips_decrypt = NULL;
+		rdp->rc4_encrypt_key = NULL;
+		rdp->rc4_decrypt_key = NULL;
 	}
-
-	if (!mcs_send_erect_domain_request(rdp->mcs))
-		return FALSE;
-
-	if (!mcs_send_attach_user_request(rdp->mcs))
-		return FALSE;
-
-	rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_ATTACH_USER);
-
-	return TRUE;
-}
-
-BOOL rdp_client_connect_mcs_attach_user_confirm(rdpRdp* rdp, wStream* s)
-{
-	if (!mcs_recv_attach_user_confirm(rdp->mcs, s))
-		return FALSE;
-
-	if (!mcs_send_channel_join_request(rdp->mcs, rdp->mcs->user_id))
-		return FALSE;
-
-	rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CHANNEL_JOIN);
-
-	return TRUE;
+	return ret;
 }
 
 BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 {
-	int i;
-	UINT16 channel_id;
-	BOOL all_joined = TRUE;
+	UINT32 i;
+	UINT16 channelId;
+	BOOL allJoined = TRUE;
+	rdpMcs* mcs = rdp->mcs;
 
-	if (!mcs_recv_channel_join_confirm(rdp->mcs, s, &channel_id))
+	if (!mcs_recv_channel_join_confirm(mcs, s, &channelId))
 		return FALSE;
 
-	if (!rdp->mcs->user_channel_joined)
+	if (!mcs->userChannelJoined)
 	{
-		if (channel_id != rdp->mcs->user_id)
+		if (channelId != mcs->userId)
 			return FALSE;
 
-		rdp->mcs->user_channel_joined = TRUE;
+		mcs->userChannelJoined = TRUE;
 
-		if (!mcs_send_channel_join_request(rdp->mcs, MCS_GLOBAL_CHANNEL_ID))
+		if (!mcs_send_channel_join_request(mcs, MCS_GLOBAL_CHANNEL_ID))
 			return FALSE;
 	}
-	else if (!rdp->mcs->global_channel_joined)
+	else if (!mcs->globalChannelJoined)
 	{
-		if (channel_id != MCS_GLOBAL_CHANNEL_ID)
+		if (channelId != MCS_GLOBAL_CHANNEL_ID)
 			return FALSE;
 
-		rdp->mcs->global_channel_joined = TRUE;
+		mcs->globalChannelJoined = TRUE;
 
-		if (rdp->settings->ChannelCount > 0)
+		if (mcs->messageChannelId != 0)
 		{
-			if (!mcs_send_channel_join_request(rdp->mcs, rdp->settings->ChannelDefArray[0].ChannelId))
+			if (!mcs_send_channel_join_request(mcs, mcs->messageChannelId))
 				return FALSE;
 
-			all_joined = FALSE;
+			allJoined = FALSE;
+		}
+		else
+		{
+			if (mcs->channelCount > 0)
+			{
+				if (!mcs_send_channel_join_request(mcs, mcs->channels[0].ChannelId))
+					return FALSE;
+
+				allJoined = FALSE;
+			}
+		}
+	}
+	else if ((mcs->messageChannelId != 0) && !mcs->messageChannelJoined)
+	{
+		if (channelId != mcs->messageChannelId)
+			return FALSE;
+
+		mcs->messageChannelJoined = TRUE;
+
+		if (mcs->channelCount > 0)
+		{
+			if (!mcs_send_channel_join_request(mcs, mcs->channels[0].ChannelId))
+				return FALSE;
+
+			allJoined = FALSE;
 		}
 	}
 	else
 	{
-		for (i = 0; i < rdp->settings->ChannelCount; i++)
+		for (i = 0; i < mcs->channelCount; i++)
 		{
-			if (rdp->settings->ChannelDefArray[i].joined)
+			if (mcs->channels[i].joined)
 				continue;
 
-			if (rdp->settings->ChannelDefArray[i].ChannelId != channel_id)
+			if (mcs->channels[i].ChannelId != channelId)
 				return FALSE;
 
-			rdp->settings->ChannelDefArray[i].joined = TRUE;
+			mcs->channels[i].joined = TRUE;
+
 			break;
 		}
 
-		if (i + 1 < rdp->settings->ChannelCount)
+		if (i + 1 < mcs->channelCount)
 		{
-			if (!mcs_send_channel_join_request(rdp->mcs, rdp->settings->ChannelDefArray[i + 1].ChannelId))
+			if (!mcs_send_channel_join_request(mcs, mcs->channels[i + 1].ChannelId))
 				return FALSE;
 
-			all_joined = FALSE;
+			allJoined = FALSE;
 		}
 	}
 
-	if (rdp->mcs->user_channel_joined && rdp->mcs->global_channel_joined && all_joined)
+	if (mcs->userChannelJoined && mcs->globalChannelJoined && allJoined)
 	{
 		if (!rdp_client_establish_keys(rdp))
 			return FALSE;
@@ -626,15 +757,51 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 	return TRUE;
 }
 
-BOOL rdp_client_connect_license(rdpRdp* rdp, wStream* s)
+BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s)
 {
-	if (!license_recv(rdp->license, s))
-		return FALSE;
+	BYTE* mark;
+	UINT16 length;
+	UINT16 channelId;
+
+	/* If the MCS message channel has been joined... */
+	if (rdp->mcs->messageChannelId != 0)
+	{
+		/* Process any MCS message channel PDUs. */
+		Stream_GetPointer(s, mark);
+
+		if (rdp_read_header(rdp, s, &length, &channelId))
+		{
+			if (channelId == rdp->mcs->messageChannelId)
+			{
+				UINT16 securityFlags = 0;
+
+				if (!rdp_read_security_header(s, &securityFlags))
+					return FALSE;
+
+				if (rdp_recv_message_channel_pdu(rdp, s, securityFlags) == 0)
+					return TRUE;
+			}
+		}
+
+		Stream_SetPointer(s, mark);
+	}
+
+	return FALSE;
+}
+
+int rdp_client_connect_license(rdpRdp* rdp, wStream* s)
+{
+	int status;
+
+	status = license_recv(rdp->license, s);
+
+	if (status < 0)
+		return status;
 
 	if (rdp->license->state == LICENSE_STATE_ABORTED)
 	{
-		fprintf(stderr, "license connection sequence aborted.\n");
-		return FALSE;
+		WLog_ERR(TAG, "license connection sequence aborted.");
+		return -1;
 	}
 
 	if (rdp->license->state == LICENSE_STATE_COMPLETED)
@@ -642,10 +809,10 @@ BOOL rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 		rdp_client_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE);
 	}
 
-	return TRUE;
+	return 0;
 }
 
-BOOL rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
+int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 {
 	BYTE* mark;
 	UINT16 width;
@@ -659,26 +826,29 @@ BOOL rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 	if (!rdp_recv_demand_active(rdp, s))
 	{
 		UINT16 channelId;
+
 		Stream_SetPointer(s, mark);
 		rdp_recv_get_active_header(rdp, s, &channelId);
+
 		/* Was Stream_Seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
 		 * but the headers aren't always that length,
 		 * so that could result in a bad offset.
 		 */
 
-		if (rdp_recv_out_of_sequence_pdu(rdp, s) != TRUE)
-			return FALSE;
-
-		return TRUE;
+		return rdp_recv_out_of_sequence_pdu(rdp, s);
 	}
 
-	if (rdp->disconnect)
-		return TRUE;
+	if (freerdp_shall_disconnect(rdp->instance))
+		return 0;
 
 	if (!rdp_send_confirm_active(rdp))
-		return FALSE;
+		return -1;
 
-	input_register_client_callbacks(rdp->input);
+	if (!input_register_client_callbacks(rdp->input))
+	{
+		WLog_ERR(TAG, "error registering client callbacks");
+		return -1;
+	}
 
 	/**
 	 * The server may request a different desktop size during Deactivation-Reactivation sequence.
@@ -686,7 +856,15 @@ BOOL rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 	 */
 	if (width != rdp->settings->DesktopWidth || height != rdp->settings->DesktopHeight)
 	{
-		IFCALL(rdp->update->DesktopResize, rdp->update->context);
+		BOOL status = TRUE;
+
+		IFCALLRET(rdp->update->DesktopResize, status, rdp->update->context);
+
+		if (!status)
+		{
+			WLog_ERR(TAG, "client desktop resize callback failed");
+			return -1;
+		}
 	}
 
 	rdp_client_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION);
@@ -694,7 +872,7 @@ BOOL rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 	return rdp_client_connect_finalize(rdp);
 }
 
-BOOL rdp_client_connect_finalize(rdpRdp* rdp)
+int rdp_client_connect_finalize(rdpRdp* rdp)
 {
 	/**
 	 * [MS-RDPBCGR] 1.3.1.1 - 8.
@@ -703,13 +881,13 @@ BOOL rdp_client_connect_finalize(rdpRdp* rdp)
 	 */
 
 	if (!rdp_send_client_synchronize_pdu(rdp))
-		return FALSE;
+		return -1;
 
 	if (!rdp_send_client_control_pdu(rdp, CTRLACTION_COOPERATE))
-		return FALSE;
+		return -1;
 
 	if (!rdp_send_client_control_pdu(rdp, CTRLACTION_REQUEST_CONTROL))
-		return FALSE;
+		return -1;
 	/**
 	 * [MS-RDPBCGR] 2.2.1.17
 	 * Client persistent key list must be sent if a bitmap is
@@ -720,13 +898,13 @@ BOOL rdp_client_connect_finalize(rdpRdp* rdp)
 	if (!rdp->deactivation_reactivation && rdp->settings->BitmapCachePersistEnabled)
 	{
 		if (!rdp_send_client_persistent_key_list_pdu(rdp))
-			return FALSE;
+			return -1;
 	}
 
 	if (!rdp_send_client_font_list_pdu(rdp, FONTLIST_FIRST | FONTLIST_LAST))
-		return FALSE;
+		return -1;
 
-	return TRUE;
+	return 0;
 }
 
 int rdp_client_transition_to_state(rdpRdp* rdp, int state)
@@ -741,6 +919,10 @@ int rdp_client_transition_to_state(rdpRdp* rdp, int state)
 
 		case CONNECTION_STATE_NEGO:
 			rdp->state = CONNECTION_STATE_NEGO;
+			break;
+
+		case CONNECTION_STATE_NLA:
+			rdp->state = CONNECTION_STATE_NLA;
 			break;
 
 		case CONNECTION_STATE_MCS_CONNECT:
@@ -805,54 +987,83 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 {
 	BOOL status;
 	rdpSettings* settings = rdp->settings;
+	rdpNego *nego = rdp->nego;
 
 	transport_set_blocking_mode(rdp->transport, TRUE);
 
-	if (!nego_read_request(rdp->nego, s))
+	if (!nego_read_request(nego, s))
 		return FALSE;
 
-	rdp->nego->selected_protocol = 0;
+	nego->SelectedProtocol = 0;
+	WLog_INFO(TAG, "Client Security: NLA:%d TLS:%d RDP:%d",
+			 (nego->RequestedProtocols & PROTOCOL_NLA) ? 1 : 0,
+			 (nego->RequestedProtocols & PROTOCOL_TLS) ? 1 : 0,
+			 (nego->RequestedProtocols == PROTOCOL_RDP) ? 1 : 0
+			);
+	WLog_INFO(TAG, "Server Security: NLA:%"PRId32" TLS:%"PRId32" RDP:%"PRId32"",
+			 settings->NlaSecurity, settings->TlsSecurity, settings->RdpSecurity);
 
-	fprintf(stderr, "Client Security: NLA:%d TLS:%d RDP:%d\n",
-			(rdp->nego->requested_protocols & PROTOCOL_NLA) ? 1 : 0,
-					(rdp->nego->requested_protocols & PROTOCOL_TLS)	? 1 : 0,
-							(rdp->nego->requested_protocols == PROTOCOL_RDP) ? 1: 0);
-
-	fprintf(stderr, "Server Security: NLA:%d TLS:%d RDP:%d\n",
-			settings->NlaSecurity, settings->TlsSecurity, settings->RdpSecurity);
-
-	if ((settings->NlaSecurity) && (rdp->nego->requested_protocols & PROTOCOL_NLA))
+	if ((settings->NlaSecurity) && (nego->RequestedProtocols & PROTOCOL_NLA))
 	{
-		rdp->nego->selected_protocol = PROTOCOL_NLA;
+		nego->SelectedProtocol = PROTOCOL_NLA;
 	}
-	else if ((settings->TlsSecurity) && (rdp->nego->requested_protocols & PROTOCOL_TLS))
+	else if ((settings->TlsSecurity) && (nego->RequestedProtocols & PROTOCOL_TLS))
 	{
-		rdp->nego->selected_protocol = PROTOCOL_TLS;
+		nego->SelectedProtocol = PROTOCOL_TLS;
 	}
-	else if ((settings->RdpSecurity) && (rdp->nego->selected_protocol == PROTOCOL_RDP))
+	else if ((settings->RdpSecurity) && (nego->RequestedProtocols == PROTOCOL_RDP))
 	{
-		rdp->nego->selected_protocol = PROTOCOL_RDP;
+		nego->SelectedProtocol = PROTOCOL_RDP;
 	}
 	else
 	{
-		fprintf(stderr, "Protocol security negotiation failure\n");
+		/*
+		 * when here client and server aren't compatible, we select the right
+		 * error message to return to the client in the nego failure packet
+		 */
+		nego->SelectedProtocol = PROTOCOL_FAILED_NEGO;
+
+		if (settings->RdpSecurity)
+		{
+			WLog_ERR(TAG, "server supports only Standard RDP Security");
+			nego->SelectedProtocol |= SSL_NOT_ALLOWED_BY_SERVER;
+		}
+		else
+		{
+			if (settings->NlaSecurity && !settings->TlsSecurity)
+			{
+				WLog_WARN(TAG, "server supports only NLA Security");
+				nego->SelectedProtocol |= HYBRID_REQUIRED_BY_SERVER;
+			}
+			else
+			{
+				WLog_WARN(TAG, "server supports only a SSL based Security (TLS or NLA)");
+				nego->SelectedProtocol |= SSL_REQUIRED_BY_SERVER;
+			}
+		}
+
+		WLog_ERR(TAG, "Protocol security negotiation failure");
 	}
 
-	fprintf(stderr, "Negotiated Security: NLA:%d TLS:%d RDP:%d\n",
-			(rdp->nego->selected_protocol & PROTOCOL_NLA) ? 1 : 0,
-					(rdp->nego->selected_protocol & PROTOCOL_TLS)	? 1 : 0,
-							(rdp->nego->selected_protocol == PROTOCOL_RDP) ? 1: 0);
+	if (!(nego->SelectedProtocol & PROTOCOL_FAILED_NEGO))
+	{
+		WLog_INFO(TAG, "Negotiated Security: NLA:%d TLS:%d RDP:%d",
+				 (nego->SelectedProtocol & PROTOCOL_NLA) ? 1 : 0,
+				 (nego->SelectedProtocol & PROTOCOL_TLS) ? 1 : 0,
+				 (nego->SelectedProtocol == PROTOCOL_RDP) ? 1: 0
+				);
+	}
 
-	if (!nego_send_negotiation_response(rdp->nego))
+	if (!nego_send_negotiation_response(nego))
 		return FALSE;
 
 	status = FALSE;
 
-	if (rdp->nego->selected_protocol & PROTOCOL_NLA)
+	if (nego->SelectedProtocol & PROTOCOL_NLA)
 		status = transport_accept_nla(rdp->transport);
-	else if (rdp->nego->selected_protocol & PROTOCOL_TLS)
+	else if (nego->SelectedProtocol & PROTOCOL_TLS)
 		status = transport_accept_tls(rdp->transport);
-	else if (rdp->nego->selected_protocol == PROTOCOL_RDP) /* 0 */
+	else if (nego->SelectedProtocol == PROTOCOL_RDP) /* 0 */
 		status = transport_accept_rdp(rdp->transport);
 
 	if (!status)
@@ -867,21 +1078,21 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, wStream* s)
 {
-	int i;
+	UINT32 i;
+	rdpMcs* mcs = rdp->mcs;
 
-	if (!mcs_recv_connect_initial(rdp->mcs, s))
+	if (!mcs_recv_connect_initial(mcs, s))
 		return FALSE;
 
-	fprintf(stderr, "Accepted client: %s\n", rdp->settings->ClientHostname);
-	fprintf(stderr, "Accepted channels:");
+	WLog_INFO(TAG, "Accepted client: %s", rdp->settings->ClientHostname);
+	WLog_INFO(TAG, "Accepted channels:");
 
-	for (i = 0; i < rdp->settings->ChannelCount; i++)
+	for (i = 0; i < mcs->channelCount; i++)
 	{
-		fprintf(stderr, " %s", rdp->settings->ChannelDefArray[i].Name);
+		WLog_INFO(TAG, " %s", mcs->channels[i].Name);
 	}
-	fprintf(stderr, "\n");
 
-	if (!mcs_send_connect_response(rdp->mcs))
+	if (!mcs_send_connect_response(mcs))
 		return FALSE;
 
 	rdp_server_transition_to_state(rdp, CONNECTION_STATE_MCS_CONNECT);
@@ -914,31 +1125,34 @@ BOOL rdp_server_accept_mcs_attach_user_request(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, wStream* s)
 {
-	int i;
-	UINT16 channel_id;
-	BOOL all_joined = TRUE;
+	UINT32 i;
+	UINT16 channelId;
+	BOOL allJoined = TRUE;
+	rdpMcs* mcs = rdp->mcs;
 
-	if (!mcs_recv_channel_join_request(rdp->mcs, s, &channel_id))
+	if (!mcs_recv_channel_join_request(mcs, s, &channelId))
 		return FALSE;
 
-	if (!mcs_send_channel_join_confirm(rdp->mcs, channel_id))
+	if (!mcs_send_channel_join_confirm(mcs, channelId))
 		return FALSE;
 
-	if (channel_id == rdp->mcs->user_id)
-		rdp->mcs->user_channel_joined = TRUE;
-	else if (channel_id == MCS_GLOBAL_CHANNEL_ID)
-		rdp->mcs->global_channel_joined = TRUE;
+	if (channelId == mcs->userId)
+		mcs->userChannelJoined = TRUE;
+	else if (channelId == MCS_GLOBAL_CHANNEL_ID)
+		mcs->globalChannelJoined = TRUE;
+	else if (channelId == mcs->messageChannelId)
+		mcs->messageChannelJoined = TRUE;
 
-	for (i = 0; i < rdp->settings->ChannelCount; i++)
+	for (i = 0; i < mcs->channelCount; i++)
 	{
-		if (rdp->settings->ChannelDefArray[i].ChannelId == channel_id)
-			rdp->settings->ChannelDefArray[i].joined = TRUE;
+		if (mcs->channels[i].ChannelId == channelId)
+			mcs->channels[i].joined = TRUE;
 
-		if (!rdp->settings->ChannelDefArray[i].joined)
-			all_joined = FALSE;
+		if (!mcs->channels[i].joined)
+			allJoined = FALSE;
 	}
 
-	if ((rdp->mcs->user_channel_joined) && (rdp->mcs->global_channel_joined) && all_joined)
+	if ((mcs->userChannelJoined) && (mcs->globalChannelJoined) && (mcs->messageChannelId == 0 || mcs->messageChannelJoined) && allJoined)
 	{
 		rdp_server_transition_to_state(rdp, CONNECTION_STATE_RDP_SECURITY_COMMENCEMENT);
 	}
@@ -954,6 +1168,9 @@ BOOL rdp_server_accept_confirm_active(rdpRdp* rdp, wStream* s)
 	if (!rdp_recv_confirm_active(rdp, s))
 		return FALSE;
 
+	if (rdp->settings->SaltedChecksum)
+		rdp->do_secure_checksum = TRUE;
+
 	rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION);
 
 	if (!rdp_send_server_synchronize_pdu(rdp))
@@ -967,6 +1184,14 @@ BOOL rdp_server_accept_confirm_active(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_server_reactivate(rdpRdp* rdp)
 {
+	freerdp_peer* client = NULL;
+
+	if (rdp->context && rdp->context->peer)
+		client = rdp->context->peer;
+
+	if (client)
+		client->activated = FALSE;
+
 	if (!rdp_send_deactivate_all(rdp))
 		return FALSE;
 
@@ -976,7 +1201,6 @@ BOOL rdp_server_reactivate(rdpRdp* rdp)
 		return FALSE;
 
 	rdp->AwaitCapabilities = TRUE;
-
 	return TRUE;
 }
 
@@ -1062,17 +1286,19 @@ int rdp_server_transition_to_state(rdpRdp* rdp, int state)
 					 * PostConnect should only be called once and should not
 					 * be called after a reactivation sequence.
 					 */
-
 					IFCALLRET(client->PostConnect, client->connected, client);
 
 					if (!client->connected)
 						return -1;
 				}
 
-				IFCALLRET(client->Activate, client->activated, client);
+				if (rdp->state >= CONNECTION_STATE_ACTIVE)
+				{
+					IFCALLRET(client->Activate, client->activated, client);
 
-				if (!client->activated)
-					return -1;
+					if (!client->activated)
+						return -1;
+				}
 			}
 
 			break;

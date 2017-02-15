@@ -54,19 +54,19 @@ struct _FREERDP_DSP_CONTEXT
 
 	ADPCM adpcm;
 
-	void (*resample)(FREERDP_DSP_CONTEXT* context,
+	BOOL (*resample)(FREERDP_DSP_CONTEXT* context,
 		const BYTE* src, int bytes_per_sample,
 		UINT32 schan, UINT32 srate, int sframes,
 		UINT32 rchan, UINT32 rrate);
 
-	void (*decode_ima_adpcm)(FREERDP_DSP_CONTEXT* context,
+	BOOL (*decode_ima_adpcm)(FREERDP_DSP_CONTEXT* context,
 		const BYTE* src, int size, int channels, int block_size);
-	void (*encode_ima_adpcm)(FREERDP_DSP_CONTEXT* context,
+	BOOL (*encode_ima_adpcm)(FREERDP_DSP_CONTEXT* context,
 		const BYTE* src, int size, int channels, int block_size);
 
-	void (*decode_ms_adpcm)(FREERDP_DSP_CONTEXT* context,
+	BOOL (*decode_ms_adpcm)(FREERDP_DSP_CONTEXT* context,
 		const BYTE* src, int size, int channels, int block_size);
-	void (*encode_ms_adpcm)(FREERDP_DSP_CONTEXT* context,
+	BOOL (*encode_ms_adpcm)(FREERDP_DSP_CONTEXT* context,
 		const BYTE* src, int size, int channels, int block_size);
 };
 

@@ -29,12 +29,9 @@ static void isoch_queue_rewind(ISOCH_CALLBACK_QUEUE* queue)
 	queue->curr = queue->head;
 }
 
-static int isoch_queue_has_next(ISOCH_CALLBACK_QUEUE* queue)
+static BOOL isoch_queue_has_next(ISOCH_CALLBACK_QUEUE* queue)
 {
-	if (queue->curr == NULL)
-		return 0;
-	else
-		return 1;
+	return (queue->curr != NULL);
 }
 
 static ISOCH_CALLBACK_DATA* isoch_queue_get_next(ISOCH_CALLBACK_QUEUE* queue)
@@ -51,13 +48,10 @@ static ISOCH_CALLBACK_DATA* isoch_queue_register_data(ISOCH_CALLBACK_QUEUE* queu
 {
 	ISOCH_CALLBACK_DATA* isoch;
 	
-	isoch = (ISOCH_CALLBACK_DATA*) malloc(sizeof(ISOCH_CALLBACK_DATA));
+	isoch = (ISOCH_CALLBACK_DATA*) calloc(1, sizeof(ISOCH_CALLBACK_DATA));
+	if (!isoch)
+		return NULL;
 	
-	isoch->prev = NULL;
-	isoch->next = NULL;
-	
-	isoch->out_data = NULL;
-	isoch->out_size = 0;
 	isoch->device = dev;
 	isoch->callback = callback;
 	
@@ -89,48 +83,50 @@ static int isoch_queue_unregister_data(ISOCH_CALLBACK_QUEUE* queue, ISOCH_CALLBA
 		
 	queue->rewind(queue);
 
-	while (queue->has_next(queue) != 0)
+	while (queue->has_next(queue))
 	{
 		p = queue->get_next(queue);
 
-		if (p == isoch) /* data exists */
+		if (p != isoch)
+			continue;
+
+		/* data exists */
+		/* set previous data to point to next data */
+
+		if (isoch->prev != NULL)
 		{
-			/* set previous data to point to next data */
-
-			if (isoch->prev != NULL)
-			{
-				/* unregistered data is not the head */
-				p = (ISOCH_CALLBACK_DATA*)isoch->prev;
-				p->next = isoch->next;
-			}
-			else
-			{
-				/* unregistered data is the head, update head */
-				queue->head = (ISOCH_CALLBACK_DATA*)isoch->next;
-			}
-
-			/* set next data to point to previous data */
-
-			if (isoch->next != NULL)
-			{
-				/* unregistered data is not the tail */
-				p = (ISOCH_CALLBACK_DATA*)isoch->next;
-				p->prev = isoch->prev;
-			}
-			else
-			{
-				/* unregistered data is the tail, update tail */
-				queue->tail = (ISOCH_CALLBACK_DATA*)isoch->prev;
-			}
-			queue->isoch_num--;
-			
-			/* free data info */
-			isoch->out_data = NULL;
-			
-			if (isoch) zfree(isoch); 
-	
-			return 1; /* unregistration successful */
+			/* unregistered data is not the head */
+			p = (ISOCH_CALLBACK_DATA*)isoch->prev;
+			p->next = isoch->next;
 		}
+		else
+		{
+			/* unregistered data is the head, update head */
+			queue->head = (ISOCH_CALLBACK_DATA*)isoch->next;
+		}
+
+		/* set next data to point to previous data */
+
+		if (isoch->next != NULL)
+		{
+			/* unregistered data is not the tail */
+			p = (ISOCH_CALLBACK_DATA*)isoch->next;
+			p->prev = isoch->prev;
+		}
+		else
+		{
+			/* unregistered data is the tail, update tail */
+			queue->tail = (ISOCH_CALLBACK_DATA*)isoch->prev;
+		}
+		queue->isoch_num--;
+
+		/* free data info */
+		isoch->out_data = NULL;
+
+		if (isoch)
+			zfree(isoch);
+
+		return 1; /* unregistration successful */
 	}
 
 	/* if we reach this point, the isoch wasn't found */
@@ -167,11 +163,9 @@ ISOCH_CALLBACK_QUEUE* isoch_queue_new()
 {
 	ISOCH_CALLBACK_QUEUE* queue;
 	
-	queue = (ISOCH_CALLBACK_QUEUE*) malloc(sizeof(ISOCH_CALLBACK_QUEUE));
-	queue->isoch_num = 0;
-	queue->curr = NULL;
-	queue->head = NULL;
-	queue->tail = NULL;   
+	queue = (ISOCH_CALLBACK_QUEUE*) calloc(1, sizeof(ISOCH_CALLBACK_QUEUE));
+	if (!queue)
+		return NULL;
 	
 	pthread_mutex_init(&queue->isoch_loading, NULL);
 	

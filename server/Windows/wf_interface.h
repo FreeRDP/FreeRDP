@@ -32,6 +32,10 @@
 
 #include <freerdp/server/rdpsnd.h>
 
+#if _WIN32_WINNT >= 0x0602
+#define WITH_DXGI_1_2	1
+#endif
+
 #define WF_SRV_CALLBACK_EVENT_CONNECT 1
 #define WF_SRV_CALLBACK_EVENT_DISCONNECT 2
 #define WF_SRV_CALLBACK_EVENT_ACTIVATE 4
@@ -52,8 +56,6 @@ struct wf_info
 	int servscreen_height;
 	int servscreen_xoffset;
 	int servscreen_yoffset;
-	//int width;
-	//int height;
 
 	int frame_idx;
 	int bitsPerPixel;
@@ -99,7 +101,7 @@ struct wf_peer_context
 	HANDLE socketThread;
 	HANDLE socketSemaphore;
 
-	WTSVirtualChannelManager* vcm;
+	HANDLE vcm;
 	RdpsndServerContext* rdpsnd;
 };
 

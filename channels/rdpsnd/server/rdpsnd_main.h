@@ -27,14 +27,23 @@
 
 #include <freerdp/codec/dsp.h>
 #include <freerdp/channels/wtsvc.h>
+#include <freerdp/channels/log.h>
 #include <freerdp/server/rdpsnd.h>
+
+#define TAG CHANNELS_TAG("rdpsnd.server")
 
 struct _rdpsnd_server_private
 {
+	BOOL ownThread;
 	HANDLE Thread;
 	HANDLE StopEvent;
+	HANDLE channelEvent;
 	void* ChannelHandle;
 
+	BOOL waitingHeader;
+	DWORD expectedBytes;
+	BYTE msgType;
+	wStream* input_stream;
 	wStream* rdpsnd_pdu;
 	BYTE* out_buffer;
 	int out_buffer_size;
@@ -43,6 +52,7 @@ struct _rdpsnd_server_private
 	UINT32 src_bytes_per_sample;
 	UINT32 src_bytes_per_frame;
 	FREERDP_DSP_CONTEXT* dsp_context;
+	CRITICAL_SECTION lock; /* Protect out_buffer and related parameters */
 };
 
 #endif /* FREERDP_CHANNEL_SERVER_RDPSND_MAIN_H */

@@ -52,7 +52,7 @@ struct _ISOCH_CALLBACK_QUEUE
 	
 	/* Isochronous queue service */
 	void (*rewind) (ISOCH_CALLBACK_QUEUE * queue);
-	int (*has_next) (ISOCH_CALLBACK_QUEUE * queue);
+	BOOL (*has_next) (ISOCH_CALLBACK_QUEUE * queue);
 	int (*unregister_data) (ISOCH_CALLBACK_QUEUE* queue, ISOCH_CALLBACK_DATA* isoch);
 	ISOCH_CALLBACK_DATA *(*get_next) (ISOCH_CALLBACK_QUEUE * queue);
 	ISOCH_CALLBACK_DATA *(*register_data) (ISOCH_CALLBACK_QUEUE* queue, 

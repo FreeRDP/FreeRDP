@@ -58,33 +58,57 @@ if(CHANNEL_RDPSND AND WITH_RDPSND_DSOUND)
 		)
 endif()
 
+# On windows create dll version information.
+# Vendor, product and year are already set in top level CMakeLists.txt
+set (RC_VERSION_MAJOR ${FREERDP_VERSION_MAJOR})
+set (RC_VERSION_MINOR ${FREERDP_VERSION_MINOR})
+set (RC_VERSION_BUILD ${FREERDP_VERSION_REVISION})
+if(WITH_SERVER_INTERFACE)
+  set (RC_VERSION_FILE "${CMAKE_SHARED_LIBRARY_PREFIX}${MODULE_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}" )
+else()
+  set (RC_VERSION_FILE "${MODULE_NAME}${CMAKE_EXECUTABLE_SUFFIX}" )
+endif()
+
+configure_file(
+  ${CMAKE_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
+  ${CMAKE_CURRENT_BINARY_DIR}/version.rc
+  @ONLY)
+
+set (${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+
 if(WITH_SERVER_INTERFACE)
 	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
-	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION} PREFIX "lib")
+  if (WITH_LIBRARY_VERSIONING)
+  	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
+  endif()
+  
 else()
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} cli/wfreerdp.c cli/wfreerdp.h)
 	add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 endif()
 
 
-if(WITH_WIN8)		
+if(CMAKE_WINDOWS_VERSION STREQUAL "WIN8")
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} d3d11 dxgi dxguid)
 endif()
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} dsound)
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-server)
-
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE freerdp
-	MODULES freerdp-core freerdp-utils freerdp-codec freerdp-primitives)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-server freerdp)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 if(WITH_SERVER_INTERFACE)
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries)
+
+	if (WITH_DEBUG_SYMBOLS AND MSVC AND BUILD_SHARED_LIBS)
+		install(FILES ${CMAKE_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT symbols)
+	endif()
 else()
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT server)
+
+	if (WITH_DEBUG_SYMBOLS AND MSVC)
+		install(FILES ${CMAKE_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT symbols)
+	endif()
 endif()
 
 if(WITH_SERVER_INTERFACE)

@@ -3,6 +3,8 @@
  * Color Conversion Routines
  *
  * Copyright 2010 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2016 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,934 +29,31 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/api.h>
+#include <freerdp/log.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/codec/color.h>
+#include <freerdp/primitives.h>
 
-int freerdp_get_pixel(BYTE* data, int x, int y, int width, int height, int bpp)
+#define TAG FREERDP_TAG("color")
+
+BYTE* freerdp_glyph_convert(UINT32 width, UINT32 height, const BYTE* data)
 {
-	int start;
-	int shift;
-	UINT16* src16;
-	UINT32* src32;
-	int red, green, blue;
-
-	switch (bpp)
-	{
-		case  1:
-			width = (width + 7) / 8;
-			start = (y * width) + x / 8;
-			shift = x % 8;
-			return (data[start] & (0x80 >> shift)) != 0;
-		case 8:
-			return data[y * width + x];
-		case 15:
-		case 16:
-			src16 = (UINT16*) data;
-			return src16[y * width + x];
-		case 24:
-			data += y * width * 3;
-			data += x * 3;
-			red = data[0];
-			green = data[1];
-			blue = data[2];
-			return RGB24(red, green, blue);
-		case 32:
-			src32 = (UINT32*) data;
-			return src32[y * width + x];
-		default:
-			break;
-	}
-
-	return 0;
-}
-
-void freerdp_set_pixel(BYTE* data, int x, int y, int width, int height, int bpp, int pixel)
-{
-	int start;
-	int shift;
-	int *dst32;
-
-	if (bpp == 1)
-	{
-		width = (width + 7) / 8;
-		start = (y * width) + x / 8;
-		shift = x % 8;
-		if (pixel)
-			data[start] = data[start] | (0x80 >> shift);
-		else
-			data[start] = data[start] & ~(0x80 >> shift);
-	}
-	else if (bpp == 32)
-	{
-		dst32 = (int*) data;
-		dst32[y * width + x] = pixel;
-	}
-}
-
-static INLINE void freerdp_color_split_rgb(UINT32* color, int bpp, BYTE* red, BYTE* green, BYTE* blue, BYTE* alpha, HCLRCONV clrconv)
-{
-	*red = *green = *blue = 0;
-	*alpha = (clrconv->alpha) ? 0xFF : 0x00;
-
-	switch (bpp)
-	{
-		case 32:
-			if (clrconv->alpha)
-			{
-				GetARGB32(*alpha, *red, *green, *blue, *color);
-			}
-			else
-			{
-				GetRGB32(*red, *green, *blue, *color);
-			}
-			break;
-
-		case 24:
-			GetRGB24(*red, *green, *blue, *color);
-			break;
-
-		case 16:
-			GetRGB16(*red, *green, *blue, *color);
-			break;
-
-		case 15:
-			GetRGB15(*red, *green, *blue, *color);
-			break;
-
-		case 8:
-			*color &= 0xFF;
-			*red = clrconv->palette->entries[*color].red;
-			*green = clrconv->palette->entries[*color].green;
-			*blue = clrconv->palette->entries[*color].blue;
-			break;
-
-		case 1:
-			if (*color != 0)
-			{
-				*red = 0xFF;
-				*green = 0xFF;
-				*blue = 0xFF;
-			}
-			break;
-
-		default:
-			break;
-	}
-}
-
-static INLINE void freerdp_color_split_bgr(UINT32* color, int bpp, BYTE* red, BYTE* green, BYTE* blue, BYTE* alpha, HCLRCONV clrconv)
-{
-	*red = *green = *blue = 0;
-	*alpha = (clrconv->alpha) ? 0xFF : 0x00;
-
-	switch (bpp)
-	{
-		case 32:
-			if (clrconv->alpha)
-			{
-				GetABGR32(*alpha, *red, *green, *blue, *color);
-			}
-			else
-			{
-				GetBGR32(*red, *green, *blue, *color);
-			}
-			break;
-
-		case 24:
-			GetBGR24(*red, *green, *blue, *color);
-			break;
-
-		case 16:
-			GetBGR16(*red, *green, *blue, *color);
-			break;
-
-		case 15:
-			GetBGR15(*red, *green, *blue, *color);
-			break;
-
-		case 8:
-			*color &= 0xFF;
-			*red = clrconv->palette->entries[*color].red;
-			*green = clrconv->palette->entries[*color].green;
-			*blue = clrconv->palette->entries[*color].blue;
-			break;
-
-		case 1:
-			if (*color != 0)
-			{
-				*red = 0xFF;
-				*green = 0xFF;
-				*blue = 0xFF;
-			}
-			break;
-
-		default:
-			break;
-	}
-}
-
-static INLINE void freerdp_color_make_rgb(UINT32* color, int bpp, BYTE* red, BYTE* green, BYTE* blue, BYTE* alpha, HCLRCONV clrconv)
-{
-	switch (bpp)
-	{
-		case 32:
-			*color = ARGB32(*alpha, *red, *green, *blue);
-			break;
-
-		case 24:
-			*color = RGB24(*red, *green, *blue);
-			break;
-
-		case 16:
-			if (clrconv->rgb555)
-			{
-				*color = RGB15(*red, *green, *blue);
-			}
-			else
-			{
-				*color = RGB16(*red, *green, *blue);
-			}
-			break;
-
-		case 15:
-			*color = RGB15(*red, *green, *blue);
-			break;
-
-		case 8:
-			*color = RGB24(*red, *green, *blue);
-			break;
-
-		case 1:
-			if ((*red != 0) || (*green != 0) || (*blue != 0))
-				*color = 1;
-			break;
-
-		default:
-			break;
-	}
-}
-
-static INLINE void freerdp_color_make_bgr(UINT32* color, int bpp, BYTE* red, BYTE* green, BYTE* blue, BYTE* alpha, HCLRCONV clrconv)
-{
-	switch (bpp)
-	{
-		case 32:
-			*color = ABGR32(*alpha, *red, *green, *blue);
-			break;
-
-		case 24:
-			*color = BGR24(*red, *green, *blue);
-			break;
-
-		case 16:
-			if (clrconv->rgb555)
-			{
-				*color = BGR15(*red, *green, *blue);
-			}
-			else
-			{
-				*color = BGR16(*red, *green, *blue);
-			}
-			break;
-
-		case 15:
-			*color = BGR15(*red, *green, *blue);
-			break;
-
-		case 8:
-			*color = BGR24(*red, *green, *blue);
-			break;
-
-		case 1:
-			if ((*red != 0) || (*green != 0) || (*blue != 0))
-				*color = 1;
-			break;
-
-		default:
-			break;
-	}
-}
-
-UINT32 freerdp_color_convert_rgb(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
-{
-	BYTE red = 0;
-	BYTE green = 0;
-	BYTE blue = 0;
-	BYTE alpha = 0xFF;
-	UINT32 dstColor = 0;
-
-	freerdp_color_split_rgb(&srcColor, srcBpp, &red, &green, &blue, &alpha, clrconv);
-	freerdp_color_make_rgb(&dstColor, dstBpp, &red, &green, &blue, &alpha, clrconv);
-
-	return dstColor;
-}
-
-UINT32 freerdp_color_convert_bgr(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
-{
-	BYTE red = 0;
-	BYTE green = 0;
-	BYTE blue = 0;
-	BYTE alpha = 0xFF;
-	UINT32 dstColor = 0;
-
-	freerdp_color_split_bgr(&srcColor, srcBpp, &red, &green, &blue, &alpha, clrconv);
-	freerdp_color_make_bgr(&dstColor, dstBpp, &red, &green, &blue, &alpha, clrconv);
-
-	return dstColor;
-}
-
-UINT32 freerdp_color_convert_rgb_bgr(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
-{
-	BYTE red = 0;
-	BYTE green = 0;
-	BYTE blue = 0;
-	BYTE alpha = 0xFF;
-	UINT32 dstColor = 0;
-
-	freerdp_color_split_rgb(&srcColor, srcBpp, &red, &green, &blue, &alpha, clrconv);
-	freerdp_color_make_bgr(&dstColor, dstBpp, &red, &green, &blue, &alpha, clrconv);
-
-	return dstColor;
-}
-
-UINT32 freerdp_color_convert_bgr_rgb(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
-{
-	BYTE red = 0;
-	BYTE green = 0;
-	BYTE blue = 0;
-	BYTE alpha = 0xFF;
-	UINT32 dstColor = 0;
-
-	freerdp_color_split_bgr(&srcColor, srcBpp, &red, &green, &blue, &alpha, clrconv);
-	freerdp_color_make_rgb(&dstColor, dstBpp, &red, &green, &blue, &alpha, clrconv);
-
-	return dstColor;
-}
-
-UINT32 freerdp_color_convert_var(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
-{
-	if (clrconv->invert)
-		return freerdp_color_convert_var_bgr(srcColor, srcBpp, dstBpp, clrconv);
-	else
-		return freerdp_color_convert_var_rgb(srcColor, srcBpp, dstBpp, clrconv);
-}
-
-UINT32 freerdp_color_convert_var_rgb(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
-{
-	if (srcBpp == 8)
-	{
-		BYTE alpha = 0xFF;
-		UINT32 dstColor = 0;
-		PALETTE_ENTRY* entry = &clrconv->palette->entries[srcColor & 0xFF];
-
-		freerdp_color_make_bgr(&dstColor, dstBpp, &entry->red, &entry->green, &entry->blue, &alpha, clrconv);
-
-		return dstColor;
-	}
-
-	if (srcBpp > 16)
-		return freerdp_color_convert_bgr_rgb(srcColor, srcBpp, dstBpp, clrconv);
-	else
-		return freerdp_color_convert_rgb(srcColor, srcBpp, dstBpp, clrconv);
-}
-
-UINT32 freerdp_color_convert_var_bgr(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
-{
-	if (srcBpp == 8)
-	{
-		BYTE alpha = 0xFF;
-		UINT32 dstColor = 0;
-		PALETTE_ENTRY* entry = &clrconv->palette->entries[srcColor & 0xFF];
-
-		freerdp_color_make_rgb(&dstColor, dstBpp, &entry->red, &entry->green, &entry->blue, &alpha, clrconv);
-
-		return dstColor;
-	}
-
-	if (srcBpp > 16)
-		return freerdp_color_convert_bgr(srcColor, srcBpp, dstBpp, clrconv);
-	else
-		return freerdp_color_convert_rgb_bgr(srcColor, srcBpp, dstBpp, clrconv);
-}
-
-BYTE* freerdp_image_convert_8bpp(BYTE* srcData, BYTE* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
-{
-	int i;
-	BYTE red;
-	BYTE green;
-	BYTE blue;
-	UINT32 pixel;
-	BYTE *src8;
-	UINT16 *dst16;
-	UINT32 *dst32;
-
-	if (dstBpp == 8)
-	{
-		if (dstData == NULL)
-			dstData = (BYTE*) malloc(width * height);
-
-		memcpy(dstData, srcData, width * height);
-		return dstData;
-	}
-	else if (dstBpp == 15 || (dstBpp == 16 && clrconv->rgb555))
-	{
-		if (dstData == NULL)
-			dstData = (BYTE*) malloc(width * height * 2);
-
-		dst16 = (UINT16 *) dstData;
-		for (i = width * height; i > 0; i--)
-		{
-			pixel = *srcData;
-			srcData++;
-			red = clrconv->palette->entries[pixel].red;
-			green = clrconv->palette->entries[pixel].green;
-			blue = clrconv->palette->entries[pixel].blue;
-			pixel = (clrconv->invert) ? BGR15(red, green, blue) : RGB15(red, green, blue);
-			*dst16 = pixel;
-			dst16++;
-		}
-		return dstData;
-	}
-	else if (dstBpp == 16)
-	{
-		if (dstData == NULL)
-			dstData = (BYTE*) malloc(width * height * 2);
-
-		dst16 = (UINT16 *) dstData;
-		for (i = width * height; i > 0; i--)
-		{
-			pixel = *srcData;
-			srcData++;
-			red = clrconv->palette->entries[pixel].red;
-			green = clrconv->palette->entries[pixel].green;
-			blue = clrconv->palette->entries[pixel].blue;
-			pixel = (clrconv->invert) ? BGR16(red, green, blue) : RGB16(red, green, blue);
-			*dst16 = pixel;
-			dst16++;
-		}
-		return dstData;
-	}
-	else if (dstBpp == 32)
-	{
-		if (dstData == NULL)
-			dstData = (BYTE*) malloc(width * height * 4);
-
-		src8 = (BYTE*) srcData;
-		dst32 = (UINT32*) dstData;
-		for (i = width * height; i > 0; i--)
-		{
-			pixel = *src8;
-			src8++;
-			red = clrconv->palette->entries[pixel].red;
-			green = clrconv->palette->entries[pixel].green;
-			blue = clrconv->palette->entries[pixel].blue;
-			if (clrconv->alpha)
-			{
-				pixel = (clrconv->invert) ? ARGB32(0xFF, red, green, blue) : ABGR32(0xFF, red, green, blue);
-			}
-			else
-			{
-				pixel = (clrconv->invert) ? RGB32(red, green, blue) : BGR32(red, green, blue);
-			}
-			*dst32 = pixel;
-			dst32++;
-		}
-		return dstData;
-	}
-
-	return srcData;
-}
-
-BYTE* freerdp_image_convert_15bpp(BYTE* srcData, BYTE* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
-{
-	int i;
-	BYTE red;
-	BYTE green;
-	BYTE blue;
-	UINT32 pixel;
-	UINT16 *src16;
-	UINT16 *dst16;
-	UINT32 *dst32;
-
-	if (dstBpp == 15 || (dstBpp == 16 && clrconv->rgb555))
-	{
-		if (dstData == NULL)
-			dstData = (BYTE*) malloc(width * height * 2);
-
-		memcpy(dstData, srcData, width * height * 2);
-
-		return dstData;
-	}
-	else if (dstBpp == 32)
-	{
-		if (dstData == NULL)
-			dstData = (BYTE*) malloc(width * height * 4);
-
-		src16 = (UINT16 *) srcData;
-		dst32 = (UINT32 *) dstData;
-		for (i = width * height; i > 0; i--)
-		{
-			pixel = *src16;
-			src16++;
-			GetBGR15(red, green, blue, pixel);
-			if (clrconv->alpha)
-			{
-				pixel = (clrconv->invert) ? ARGB32(0xFF, red, green, blue) : ABGR32(0xFF, red, green, blue);
-			}
-			else
-			{
-				pixel = (clrconv->invert) ? RGB32(red, green, blue) : BGR32(red, green, blue);
-			}
-			*dst32 = pixel;
-			dst32++;
-		}
-		return dstData;
-	}
-	else if (dstBpp == 16)
-	{
-		if (dstData == NULL)
-			dstData = (BYTE*) malloc(width * height * 2);
-
-		src16 = (UINT16 *) srcData;
-		dst16 = (UINT16 *) dstData;
-		for (i = width * height; i > 0; i--)
-		{
-			pixel = *src16;
-			src16++;
-			GetRGB_555(red, green, blue, pixel);
-			RGB_555_565(red, green, blue);
-			pixel = (clrconv->invert) ? BGR565(red, green, blue) : RGB565(red, green, blue);
-			*dst16 = pixel;
-			dst16++;
-		}
-		return dstData;
-	}
-
-	return srcData;
-}
-
-BYTE* freerdp_image_convert_16bpp(BYTE* srcData, BYTE* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
-{
-	if (srcBpp == 15)
-		return freerdp_image_convert_15bpp(srcData, dstData, width, height, srcBpp, dstBpp, clrconv);
-
-	if (dstBpp == 16)
-	{
-		if (dstData == NULL)
-			dstData = (BYTE*) malloc(width * height * 2);
-
-		if (clrconv->rgb555)
-		{
-			int i;
-			BYTE red, green, blue;
-			UINT16* src16 = (UINT16 *) srcData;
-			UINT16* dst16 = (UINT16 *) dstData;
-
-			for (i = width * height; i > 0; i--)
-			{
-				GetRGB_565(red, green, blue, (*src16));
-				RGB_565_555(red, green, blue);
-				(*dst16) = (clrconv->invert) ? BGR555(red, green, blue) : RGB555(red, green, blue);
-				src16++;
-				dst16++;
-			}
-		}
-		else
-		{
-			memcpy(dstData, srcData, width * height * 2);
-		}
-
-		return dstData;
-	}
-	else if (dstBpp == 24)
-	{
-		int i;
-		BYTE *dst8;
-		UINT16 *src16;
-		BYTE red, green, blue;
-
-		if (dstData == NULL)
-			dstData = (BYTE*) malloc(width * height * 3);
-
-		dst8 = (BYTE*) dstData;
-		src16 = (UINT16*) srcData;
-
-		for (i = width * height; i > 0; i--)
-		{
-			GetBGR16(red, green, blue, *src16);
-			src16++;
-
-			if (clrconv->invert)
-			{
-				*dst8++ = blue;
-				*dst8++ = green;
-				*dst8++ = red;
-			}
-			else
-			{
-				*dst8++ = red;
-				*dst8++ = green;
-				*dst8++ = blue;
-			}
-		}
-		return dstData;
-	}
-	else if (dstBpp == 32)
-	{
-		int i;
-		UINT32 pixel;
-		UINT16* src16;
-		UINT32* dst32;
-		BYTE red, green, blue;
-
-		if (dstData == NULL)
-			dstData = (BYTE*) malloc(width * height * 4);
-
-		src16 = (UINT16*) srcData;
-		dst32 = (UINT32*) dstData;
-
-		if (clrconv->alpha)
-		{
-			if (clrconv->invert)
-			{
-				for (i = width * height; i > 0; i--)
-				{
-					pixel = *src16;
-					src16++;
-					GetBGR16(red, green, blue, pixel);
-					pixel = ARGB32(0xFF, red, green, blue);
-					*dst32 = pixel;
-					dst32++;
-				}
-			}
-			else
-			{
-				for (i = width * height; i > 0; i--)
-				{
-					pixel = *src16;
-					src16++;
-					GetBGR16(red, green, blue, pixel);
-					pixel = ABGR32(0xFF, red, green, blue);
-					*dst32 = pixel;
-					dst32++;
-				}
-			}
-		}
-		else
-		{
-			if (clrconv->invert)
-			{
-				for (i = width * height; i > 0; i--)
-				{
-					pixel = *src16;
-					src16++;
-					GetBGR16(red, green, blue, pixel);
-					pixel = RGB32(red, green, blue);
-					*dst32 = pixel;
-					dst32++;
-				}
-			}
-			else
-			{
-				for (i = width * height; i > 0; i--)
-				{
-					pixel = *src16;
-					src16++;
-					GetBGR16(red, green, blue, pixel);
-					pixel = BGR32(red, green, blue);
-					*dst32 = pixel;
-					dst32++;
-				}
-			}
-		}
-
-		return dstData;
-	}
-
-	return srcData;
-}
-
-BYTE* freerdp_image_convert_24bpp(BYTE* srcData, BYTE* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
-{
-	int i;
-
-	if (dstBpp == 32)
-	{
-		BYTE *dstp;
-		if (dstData == NULL)
-			dstData = (BYTE*) malloc(width * height * 4);
-
-		dstp = dstData;
-		for (i = width * height; i > 0; i--)
-		{
-			*(dstp++) = *(srcData++);
-			*(dstp++) = *(srcData++);
-			*(dstp++) = *(srcData++);
-			*(dstp++) = 0xFF;
-		}
-		return dstData;
-	}
-
-	return srcData;
-}
-
-BYTE* freerdp_image_convert_32bpp(BYTE* srcData, BYTE* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
-{
-	if (dstBpp == 16)
-	{
-		int index;
-		UINT16 *dst16;
-		UINT32 *src32;
-		BYTE red, green, blue;
-
-		if (dstData == NULL)
-			dstData = (BYTE*) malloc(width * height * 2);
-
-		dst16 = (UINT16*) dstData;
-		src32 = (UINT32*) srcData;
-
-		for (index = 0; index < width * height; index++)
-		{
-			GetBGR32(blue, green, red, *src32);
-			*dst16 = (clrconv->invert) ? BGR16(red, green, blue) : RGB16(red, green, blue);
-			src32++;
-			dst16++;
-		}
-		return dstData;
-	}
-	else if (dstBpp == 24)
-	{
-		BYTE *dstp;
-		int index;
-		BYTE red, green, blue;
-
-		if (dstData == NULL)
-			dstData = (BYTE*) malloc(width * height * 3);
-
-		dstp = dstData;
-		for (index = 0; index < width * height; index++)
-		{
-			red = *(srcData++);
-			green = *(srcData++);
-			blue = *(srcData++);
-
-			if (clrconv->invert)
-			{
-				*dstp++ = blue;
-				*dstp++ = green;
-				*dstp++ = red;
-			}
-			else
-			{
-				*dstp++ = red;
-				*dstp++ = green;
-				*dstp++ = blue;
-			}
-
-			srcData++;
-		}
-		return dstData;
-	}
-	else if (dstBpp == 32)
-	{
-		if (clrconv->alpha)
-		{
-			int x, y;
-			BYTE *dstp;
-
-			if (dstData == NULL)
-				dstData = (BYTE*) malloc(width * height * 4);
-
-			memcpy(dstData, srcData, width * height * 4);
-
-			dstp = dstData;
-			for (y = 0; y < height; y++)
-			{
-				for (x = 0; x < width * 4; x += 4)
-				{
-					dstp += 3;
-					*dstp = 0xFF;
-					dstp++;
-				}
-			}
-		}
-		else
-		{
-			if (dstData == NULL)
-				dstData = (BYTE*) malloc(width * height * 4);
-
-			memcpy(dstData, srcData, width * height * 4);
-		}
-
-		return dstData;
-	}
-
-	return srcData;
-}
-
-p_freerdp_image_convert freerdp_image_convert_[5] =
-{
-	NULL,
-	freerdp_image_convert_8bpp,
-	freerdp_image_convert_16bpp,
-	freerdp_image_convert_24bpp,
-	freerdp_image_convert_32bpp
-};
-
-BYTE* freerdp_image_convert(BYTE* srcData, BYTE* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv)
-{
-	p_freerdp_image_convert _p_freerdp_image_convert = freerdp_image_convert_[IBPP(srcBpp)];
-
-	if (_p_freerdp_image_convert != NULL)
-		return _p_freerdp_image_convert(srcData, dstData, width, height, srcBpp, dstBpp, clrconv);
-	else
-		return 0;
-}
-
-void freerdp_bitmap_flip(BYTE * src, BYTE * dst, int scanLineSz, int height)
-{
-	int i;
-
-	BYTE * bottomLine = dst + (scanLineSz * (height - 1));
-	BYTE * topLine = src;
-
-	/* Special processing if called for flip-in-place. */
-	if (src == dst)
-	{
-		/* Allocate a scanline buffer.
-		 * (FIXME: malloc / xfree below should be replaced by "get/put
-		 * scanline buffer from a pool/Q of fixed buffers" to reuse
-		 * fixed size buffers (of max scanline size (or adaptative?) )
-		 * -- would be much faster).
-		 */
-		BYTE * tmpBfr = malloc(scanLineSz);
-		int half = height / 2;
-		/* Flip buffer in place by line permutations through the temp
-		 * scan line buffer.
-		 * Note that if height has an odd number of line, we don't need
-		 * to move the center scanline anyway.
-		 * Also note that in place flipping takes three memcpy() calls
-		 * to process two scanlines while src to distinct dest would
-		 * only requires two memcpy() calls for two scanlines.
-		 */
-		height--;
-		for (i = 0; i < half ; i++)
-		{
-			memcpy(tmpBfr, topLine, scanLineSz);
-			memcpy(topLine, bottomLine, scanLineSz);
-			memcpy(bottomLine, tmpBfr, scanLineSz);
-			topLine += scanLineSz;
-			bottomLine -= scanLineSz;
-			height--;
-		}
-		free(tmpBfr);
-	}
-	/* Flip from source buffer to destination buffer. */
-	else
-	{
-
-		for (i = 0; i < height; i++)
-		{
-			memcpy(bottomLine, topLine, scanLineSz);
-			topLine += scanLineSz;
-			bottomLine -= scanLineSz;
-		}
-	}
-
-}
-
-BYTE* freerdp_image_flip(BYTE* srcData, BYTE* dstData, int width, int height, int bpp)
-{
-	int scanline;
-
-	scanline = width * ((bpp + 7) / 8);
-
-	if (dstData == NULL)
-		dstData = (BYTE*) malloc(width * height * ((bpp + 7) / 8));
-
-	freerdp_bitmap_flip(srcData, dstData, scanline, height);
-	return dstData;
-}
-
-BYTE* freerdp_icon_convert(BYTE* srcData, BYTE* dstData, BYTE* mask, int width, int height, int bpp, HCLRCONV clrconv)
-{
-	BYTE* data;
-	BYTE bmask;
-	UINT32* icon;
-	int x, y, bit;
-	int maskIndex;
-
-	if (bpp == 16)
-	{
-		/* Server sends 16 bpp field, but data is usually 15-bit 555 */
-		bpp = 15;
-	}
-	
-	data = freerdp_image_flip(srcData, dstData, width, height, bpp);
-	dstData = freerdp_image_convert(data, NULL, width, height, bpp, 32, clrconv);
-	free(data);
-
-	/* Read the AND alpha plane */ 
-	if (bpp < 32)
-	{
-		maskIndex = 0;
-		icon = (UINT32*) dstData;
-		
-		for (y = 0; y < height; y++)
-		{
-			for (x = 0; x < width-7; x+=8)
-			{
-				bmask = mask[maskIndex++];
-				
-				for (bit = 0; bit < 8; bit++)
-					if ((bmask & (0x80 >> bit)) == 0)
-					{
-						UINT32 *tmp = (icon + (height - y - 1) * width + x + bit);
-						if (tmp)
-							*tmp |= 0xFF000000;
-					}
-			}
-			
-			if ((width % 8) != 0)
-			{
-				bmask = mask[maskIndex++];
-				
-				for (bit = 0; bit < width % 8; bit++)
-					if ((bmask & (0x80 >> bit)) == 0)
-					{
-						UINT32 *tmp = (icon + (height - y - 1) * width + x + bit);
-						if (tmp)
-							*tmp |= 0xFF000000;
-					}
-			}
-		
-			/* Skip padding */
-			if ((width % 32) != 0)
-				maskIndex += (32 - (width % 32)) / 8;
-		}
-	}
-
-	return dstData;
-}
-
-BYTE* freerdp_glyph_convert(int width, int height, BYTE* data)
-{
-	int x, y;
-	BYTE *srcp;
-	BYTE *dstp;
-	BYTE *dstData;
-	int scanline;
-
+	UINT32 x, y;
+	const BYTE* srcp;
+	BYTE* dstp;
+	BYTE* dstData;
+	UINT32 scanline;
 	/*
 	 * converts a 1-bit-per-pixel glyph to a one-byte-per-pixel glyph:
 	 * this approach uses a little more memory, but provides faster
 	 * means of accessing individual pixels in blitting operations
 	 */
-
 	scanline = (width + 7) / 8;
-	dstData = (BYTE*) malloc(width * height);
-	memset(dstData, 0, width * height);
+	dstData = (BYTE*) _aligned_malloc(width * height, 16);
+
+	if (!dstData)
+		return NULL;
+
+	ZeroMemory(dstData, width * height);
 	dstp = dstData;
 
 	for (y = 0; y < height; y++)
@@ -965,6 +64,7 @@ BYTE* freerdp_glyph_convert(int width, int height, BYTE* data)
 		{
 			if ((*srcp & (0x80 >> (x % 8))) != 0)
 				*dstp = 0xFF;
+
 			dstp++;
 
 			if (((x + 1) % 8 == 0) && x != 0)
@@ -975,199 +75,502 @@ BYTE* freerdp_glyph_convert(int width, int height, BYTE* data)
 	return dstData;
 }
 
-BYTE* freerdp_mono_image_convert(BYTE* srcData, int width, int height, int srcBpp, int dstBpp, UINT32 bgcolor, UINT32 fgcolor, HCLRCONV clrconv)
+BOOL freerdp_image_copy_from_monochrome(BYTE* pDstData, UINT32 DstFormat,
+                                        UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+                                        UINT32 nWidth, UINT32 nHeight,
+                                        const BYTE* pSrcData,
+                                        UINT32 backColor, UINT32 foreColor,
+                                        const gdiPalette* palette)
 {
-	int index;
-	UINT16* dst16;
-	UINT32* dst32;
-	BYTE* dstData;
-	BYTE bitMask;
-	int bitIndex;
-	BYTE redBg, greenBg, blueBg;
-	BYTE redFg, greenFg, blueFg;
+	UINT32 x, y;
+	BOOL vFlip;
+	UINT32 nDstPad;
+	UINT32 monoStep;
+	UINT32 dstBitsPerPixel;
+	UINT32 dstBytesPerPixel;
+	dstBitsPerPixel = GetBitsPerPixel(DstFormat);
+	dstBytesPerPixel = GetBytesPerPixel(DstFormat);
 
-	switch (srcBpp)
+	if (nDstStep == 0)
+		nDstStep = dstBytesPerPixel * nWidth;
+
+	nDstPad = (nDstStep - (nWidth * dstBytesPerPixel));
+	vFlip = FALSE;
+	monoStep = (nWidth + 7) / 8;
+
+	for (y = 0; y < nHeight; y++)
 	{
-		case 8:
-			bgcolor &= 0xFF;
-			redBg = clrconv->palette->entries[bgcolor].red;
-			greenBg = clrconv->palette->entries[bgcolor].green;
-			blueBg = clrconv->palette->entries[bgcolor].blue;
+		const BYTE* monoBits;
+		BYTE* pDstLine = &pDstData[((nYDst + y) * nDstStep)];
+		UINT32 monoBit = 0x80;
 
-			fgcolor &= 0xFF;
-			redFg = clrconv->palette->entries[fgcolor].red;
-			greenFg = clrconv->palette->entries[fgcolor].green;
-			blueFg = clrconv->palette->entries[fgcolor].blue;
-			break;
+		if (!vFlip)
+			monoBits = &pSrcData[monoStep * y];
+		else
+			monoBits = &pSrcData[monoStep * (nHeight - y - 1)];
 
-		case 16:
-			GetRGB16(redBg, greenBg, blueBg, bgcolor);
-			GetRGB16(redFg, greenFg, blueFg, fgcolor);
-			break;
+		for (x = 0; x < nWidth; x++)
+		{
+			BYTE* pDstPixel = &pDstLine[((nXDst + x) * GetBytesPerPixel(DstFormat))];
+			BOOL monoPixel = (*monoBits & monoBit) ? TRUE : FALSE;
 
-		case 15:
-			GetRGB15(redBg, greenBg, blueBg, bgcolor);
-			GetRGB15(redFg, greenFg, blueFg, fgcolor);
-			break;
+			if (!(monoBit >>= 1))
+			{
+				monoBits++;
+				monoBit = 0x80;
+			}
 
-		default:
-			GetRGB32(redBg, greenBg, blueBg, bgcolor);
-			GetRGB32(redFg, greenFg, blueFg, fgcolor);
-			break;
+			if (monoPixel)
+				WriteColor(pDstPixel, DstFormat, backColor);
+			else
+				WriteColor(pDstPixel, DstFormat, foreColor);
+		}
 	}
 
-	if (dstBpp == 16)
+	return TRUE;
+}
+
+static INLINE UINT32 freerdp_image_inverted_pointer_color(UINT32 x, UINT32 y,
+        UINT32 format)
+{
+#if 1
+	/**
+	 * Inverted pointer colors (where individual pixels can change their
+	 * color to accommodate the background behind them) only seem to be
+	 * supported on Windows.
+	 * Using a static replacement color for these pixels (e.g. black)
+	 * might result in invisible pointers depending on the background.
+	 * This function returns either black or white, depending on the
+	 * pixel's position.
+	 */
+	BYTE fill = (x + y) & 1 ? 0x00 : 0xFF;
+#else
+	BYTE fill = 0x00;
+#endif
+	return GetColor(format, fill, fill, fill, 0xFF);
+}
+
+/**
+ * Drawing Monochrome Pointers:
+ * http://msdn.microsoft.com/en-us/library/windows/hardware/ff556143/
+ *
+ * Drawing Color Pointers:
+ * http://msdn.microsoft.com/en-us/library/windows/hardware/ff556138/
+ */
+
+BOOL freerdp_image_copy_from_pointer_data(
+    BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
+    UINT32 nXDst, UINT32 nYDst, UINT32 nWidth, UINT32 nHeight,
+    const BYTE* xorMask, UINT32 xorMaskLength,
+    const BYTE* andMask, UINT32 andMaskLength,
+    UINT32 xorBpp, const gdiPalette* palette)
+{
+	UINT32 x, y;
+	BOOL vFlip;
+	UINT32 nDstPad;
+	UINT32 xorStep;
+	UINT32 andStep;
+	UINT32 xorBit;
+	UINT32 andBit;
+	UINT32 xorPixel;
+	UINT32 andPixel;
+	UINT32 dstBitsPerPixel;
+	UINT32 dstBytesPerPixel;
+	dstBitsPerPixel = GetBitsPerPixel(DstFormat);
+	dstBytesPerPixel = GetBytesPerPixel(DstFormat);
+
+	if (nDstStep <= 0)
+		nDstStep = dstBytesPerPixel * nWidth;
+
+	nDstPad = (nDstStep - (nWidth * dstBytesPerPixel));
+	vFlip = (xorBpp == 1) ? FALSE : TRUE;
+	andStep = (nWidth + 7) / 8;
+	andStep += (andStep % 2);
+
+	if (!xorMask || (xorMaskLength == 0))
+		return FALSE;
+
+	switch (xorBpp)
 	{
-		if (clrconv->rgb555)
-		{
-			if (srcBpp == 16)
+		case 1:
+			if (!andMask || (andMaskLength == 0))
+				return FALSE;
+
+			xorStep = (nWidth + 7) / 8;
+			xorStep += (xorStep % 2);
+
+			if (xorStep * nHeight > xorMaskLength)
+				return FALSE;
+
+			if (andStep * nHeight > andMaskLength)
+				return FALSE;
+
+			for (y = 0; y < nHeight; y++)
 			{
-				/* convert 15-bit colors to 16-bit colors */
-				RGB16_RGB15(redBg, greenBg, blueBg, bgcolor);
-				RGB16_RGB15(redFg, greenFg, blueFg, fgcolor);
+				const BYTE* andBits;
+				const BYTE* xorBits;
+				BYTE* pDstPixel = &pDstData[((nYDst + y) * nDstStep) +
+				                            (nXDst * GetBytesPerPixel(DstFormat))];
+				xorBit = andBit = 0x80;
+
+				if (!vFlip)
+				{
+					xorBits = &xorMask[xorStep * y];
+					andBits = &andMask[andStep * y];
+				}
+				else
+				{
+					xorBits = &xorMask[xorStep * (nHeight - y - 1)];
+					andBits = &andMask[andStep * (nHeight - y - 1)];
+				}
+
+				for (x = 0; x < nWidth; x++)
+				{
+					UINT32 color = 0;
+					xorPixel = (*xorBits & xorBit) ? 1 : 0;
+
+					if (!(xorBit >>= 1))
+					{
+						xorBits++;
+						xorBit = 0x80;
+					}
+
+					andPixel = (*andBits & andBit) ? 1 : 0;
+
+					if (!(andBit >>= 1))
+					{
+						andBits++;
+						andBit = 0x80;
+					}
+
+					if (!andPixel && !xorPixel)
+						color = GetColor(DstFormat, 0, 0, 0, 0xFF); /* black */
+					else if (!andPixel && xorPixel)
+						color = GetColor(DstFormat, 0xFF, 0xFF, 0xFF, 0xFF); /* white */
+					else if (andPixel && !xorPixel)
+						color = GetColor(DstFormat, 0, 0, 0, 0); /* transparent */
+					else if (andPixel && xorPixel)
+						color = freerdp_image_inverted_pointer_color(x, y, DstFormat); /* inverted */
+
+					WriteColor(pDstPixel, DstFormat, color);
+					pDstPixel += GetBytesPerPixel(DstFormat);
+				}
+			}
+
+			return TRUE;
+
+		case 8:
+		case 16:
+		case 24:
+		case 32:
+			{
+				UINT32 xorBytesPerPixel = xorBpp >> 3;
+				xorStep = nWidth * xorBytesPerPixel;
+
+				if (xorBpp == 8 && !palette)
+				{
+					WLog_ERR(TAG, "null palette in conversion from %"PRIu32" bpp to %"PRIu32" bpp",
+					         xorBpp, dstBitsPerPixel);
+					return FALSE;
+				}
+
+				if (xorStep * nHeight > xorMaskLength)
+					return FALSE;
+
+				if (andMask)
+				{
+					if (andStep * nHeight > andMaskLength)
+						return FALSE;
+				}
+
+				for (y = 0; y < nHeight; y++)
+				{
+					const BYTE* xorBits;
+					const BYTE* andBits = NULL;
+					BYTE* pDstPixel = &pDstData[((nYDst + y) * nDstStep) +
+					                            (nXDst * GetBytesPerPixel(DstFormat))];
+					andBit = 0x80;
+
+					if (!vFlip)
+					{
+						if (andMask)
+							andBits = &andMask[andStep * y];
+
+						xorBits = &xorMask[xorStep * y];
+					}
+					else
+					{
+						if (andMask)
+							andBits = &andMask[andStep * (nHeight - y - 1)];
+
+						xorBits = &xorMask[xorStep * (nHeight - y - 1)];
+					}
+
+					for (x = 0; x < nWidth; x++)
+					{
+						UINT32 pixelFormat;
+						UINT32 color;
+						BOOL ignoreAndMask = FALSE;
+
+						if (xorBpp == 32)
+						{
+							pixelFormat = PIXEL_FORMAT_BGRA32;
+							xorPixel = ReadColor(xorBits, pixelFormat);
+
+							if (xorPixel & 0xFF)
+								ignoreAndMask = TRUE;
+							else
+								xorPixel |= 0xFF;
+						}
+						else if (xorBpp == 16)
+						{
+							pixelFormat = PIXEL_FORMAT_RGB15;
+							xorPixel = ReadColor(xorBits, pixelFormat);
+						}
+						else if (xorBpp == 8)
+						{
+							pixelFormat = palette->format;
+							xorPixel = palette->palette[xorBits[0]];
+						}
+						else
+						{
+							pixelFormat = PIXEL_FORMAT_BGR24;
+							xorPixel = ReadColor(xorBits, pixelFormat);
+						}
+
+						xorPixel = ConvertColor(xorPixel,
+						                        pixelFormat,
+						                        PIXEL_FORMAT_ARGB32,
+						                        palette);
+						xorBits += xorBytesPerPixel;
+						andPixel = 0;
+
+						if (andMask)
+						{
+							andPixel = (*andBits & andBit) ? 1 : 0;
+
+							if (!(andBit >>= 1))
+							{
+								andBits++;
+								andBit = 0x80;
+							}
+						}
+
+						/* Ignore the AND mask, if the color format already supplies alpha data. */
+						color = xorPixel;
+
+						if (andPixel && !ignoreAndMask)
+						{
+							if (xorPixel == 0xFF000000) /* black -> transparent */
+								xorPixel = 0x00000000;
+							else if (xorPixel == 0xFFFFFFFF) /* white -> inverted */
+								xorPixel = freerdp_image_inverted_pointer_color(x, y, PIXEL_FORMAT_ARGB32);
+						}
+
+						color = ConvertColor(xorPixel, PIXEL_FORMAT_ARGB32,
+						                     DstFormat, palette);
+						WriteColor(pDstPixel, DstFormat, color);
+						pDstPixel += GetBytesPerPixel(DstFormat);
+					}
+				}
+
+				return TRUE;
+			}
+
+		default:
+			WLog_ERR(TAG, "failed to convert from %"PRIu32" bpp to %"PRIu32" bpp",
+			         xorBpp, dstBitsPerPixel);
+			return FALSE;
+	}
+}
+
+static INLINE BOOL overlapping(const BYTE* pDstData, UINT32 nXDst, UINT32 nYDst,
+                               UINT32 nDstStep, UINT32 dstBytesPerPixel,
+                               const BYTE* pSrcData, UINT32 nXSrc, UINT32 nYSrc,
+                               UINT32 nSrcStep, UINT32 srcBytesPerPixel,
+                               UINT32 nWidth, UINT32 nHeight)
+{
+	const BYTE* pDstStart = &pDstData[nXDst * dstBytesPerPixel + nYDst * nDstStep];
+	const BYTE* pDstEnd = pDstStart + nHeight * nDstStep;
+	const BYTE* pSrcStart = &pSrcData[nXSrc * srcBytesPerPixel + nYSrc * nSrcStep];
+	const BYTE* pSrcEnd = pSrcStart + nHeight * nSrcStep;
+
+	if ((pDstStart >= pSrcStart) && (pDstStart <= pSrcEnd))
+		return TRUE;
+
+	if ((pDstEnd >= pSrcStart) && (pDstEnd <= pSrcEnd))
+		return TRUE;
+
+	return FALSE;
+}
+
+BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat,
+                        UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+                        UINT32 nWidth, UINT32 nHeight,
+                        const BYTE* pSrcData, DWORD SrcFormat,
+                        UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
+                        const gdiPalette* palette, UINT32 flags)
+{
+	const UINT32 dstByte = GetBytesPerPixel(DstFormat);
+	const UINT32 srcByte = GetBytesPerPixel(SrcFormat);
+	const UINT32 copyDstWidth = nWidth * dstByte;
+	const UINT32 xSrcOffset = nXSrc * srcByte;
+	const UINT32 xDstOffset = nXDst * dstByte;
+	const BOOL vSrcVFlip = flags & FREERDP_FLIP_VERTICAL;
+	UINT32 srcVOffset = 0;
+	INT32 srcVMultiplier = 1;
+	UINT32 dstVOffset = 0;
+	INT32 dstVMultiplier = 1;
+
+	if (!pDstData || !pSrcData)
+		return FALSE;
+
+	if (nDstStep == 0)
+		nDstStep = nWidth * GetBytesPerPixel(DstFormat);
+
+	if (nSrcStep == 0)
+		nSrcStep = nWidth * GetBytesPerPixel(SrcFormat);
+
+	if (vSrcVFlip)
+	{
+		srcVOffset = (nHeight - 1) * nSrcStep;
+		srcVMultiplier = -1;
+	}
+
+	if (AreColorFormatsEqualNoAlpha(SrcFormat, DstFormat))
+	{
+		INT32 y;
+
+		if (overlapping(pDstData, nXDst, nYDst, nDstStep, dstByte,
+		                pSrcData, nXSrc, nYSrc, nSrcStep, srcByte,
+		                nWidth, nHeight))
+		{
+			/* Copy down */
+			if (nYDst < nYSrc)
+			{
+				for (y = 0; y < nHeight; y++)
+				{
+					const BYTE* srcLine = &pSrcData[(y + nYSrc) *
+					                                nSrcStep * srcVMultiplier +
+					                                srcVOffset];
+					BYTE* dstLine = &pDstData[(y + nYDst) *
+					                          nDstStep * dstVMultiplier +
+					                          dstVOffset];
+					memcpy(&dstLine[xDstOffset],
+					       &srcLine[xSrcOffset], copyDstWidth);
+				}
+			}
+			/* Copy up */
+			else if (nYDst > nYSrc)
+			{
+				for (y = nHeight - 1; y >= 0; y--)
+				{
+					const BYTE* srcLine = &pSrcData[(y + nYSrc) *
+					                                nSrcStep * srcVMultiplier +
+					                                srcVOffset];
+					BYTE* dstLine = &pDstData[(y + nYDst) *
+					                          nDstStep * dstVMultiplier +
+					                          dstVOffset];
+					memcpy(&dstLine[xDstOffset],
+					       &srcLine[xSrcOffset], copyDstWidth);
+				}
+			}
+			/* Copy left */
+			else if (nXSrc > nXDst)
+			{
+				for (y = 0; y < nHeight; y++)
+				{
+					const BYTE* srcLine = &pSrcData[(y + nYSrc) *
+					                                nSrcStep * srcVMultiplier +
+					                                srcVOffset];
+					BYTE* dstLine = &pDstData[(y + nYDst) *
+					                          nDstStep * dstVMultiplier +
+					                          dstVOffset];
+					memmove(&dstLine[xDstOffset],
+					        &srcLine[xSrcOffset], copyDstWidth);
+				}
+			}
+			/* Copy right */
+			else if (nXSrc < nXDst)
+			{
+				for (y = nHeight - 1; y >= 0; y--)
+				{
+					const BYTE* srcLine = &pSrcData[(y + nYSrc) *
+					                                nSrcStep * srcVMultiplier +
+					                                srcVOffset];
+					BYTE* dstLine = &pDstData[(y + nYDst) *
+					                          nDstStep * dstVMultiplier +
+					                          dstVOffset];
+					memmove(&dstLine[xDstOffset],
+					        &srcLine[xSrcOffset], copyDstWidth);
+				}
+			}
+			/* Source and destination are equal... */
+			else
+			{
 			}
 		}
 		else
 		{
-			if (srcBpp == 15)
+			for (y = 0; y < nHeight; y++)
 			{
-				/* convert 15-bit colors to 16-bit colors */
-				RGB15_RGB16(redBg, greenBg, blueBg, bgcolor);
-				RGB15_RGB16(redFg, greenFg, blueFg, fgcolor);
+				const BYTE* srcLine = &pSrcData[(y + nYSrc) *
+				                                nSrcStep * srcVMultiplier +
+				                                srcVOffset];
+				BYTE* dstLine = &pDstData[(y + nYDst) *
+				                          nDstStep * dstVMultiplier +
+				                          dstVOffset];
+				memcpy(&dstLine[xDstOffset],
+				       &srcLine[xSrcOffset], copyDstWidth);
 			}
 		}
+	}
+	else
+	{
+		UINT32 x, y;
 
-		dstData = (BYTE*) malloc(width * height * 2);
-		dst16 = (UINT16*) dstData;
-
-		for (index = height; index > 0; index--)
+		for (y = 0; y < nHeight; y++)
 		{
-			/* each bit encodes a pixel */
-			bitMask = *srcData;
-			for (bitIndex = 7; bitIndex >= 0; bitIndex--)
+			const BYTE* srcLine = &pSrcData[(y + nYSrc) *
+			                                nSrcStep * srcVMultiplier +
+			                                srcVOffset];
+			BYTE* dstLine = &pDstData[(y + nYDst) *
+			                          nDstStep * dstVMultiplier + dstVOffset];
+
+			for (x = 0; x < nWidth; x++)
 			{
-				if ((bitMask >> bitIndex) & 0x01)
-				{
-					*dst16 = bgcolor;
-				}
-				else
-				{
-					*dst16 = fgcolor;
-				}
-				dst16++;
+				UINT32 dstColor;
+				UINT32 color = ReadColor(&srcLine[(x + nXSrc) * srcByte],
+				                         SrcFormat);
+				dstColor = ConvertColor(color, SrcFormat, DstFormat, palette);
+				WriteColor(&dstLine[(x + nXDst) * dstByte], DstFormat, dstColor);
 			}
-			srcData++;
-		}
-		return dstData;
-	}
-	else if (dstBpp == 32)
-	{
-		dstData = (BYTE*) malloc(width * height * 4);
-		dst32 = (UINT32*) dstData;
-
-		for (index = height; index > 0; index--)
-		{
-			/* each bit encodes a pixel */
-			bitMask = *srcData;
-
-			for (bitIndex = 7; bitIndex >= 0; bitIndex--)
-			{
-				if ((bitMask >> bitIndex) & 0x01)
-				{
-					*dst32 = (clrconv->invert) ? BGR32(redBg, greenBg, blueBg) : RGB32(redBg, greenBg, blueBg);
-				}
-				else
-				{
-					*dst32 = (clrconv->invert) ? BGR32(redFg, greenFg, blueFg) : RGB32(redFg, greenFg, blueFg);
-				}
-				dst32++;
-			}
-			srcData++;
-		}
-		return dstData;
-	}
-
-	return srcData;
-}
-
-void freerdp_alpha_cursor_convert(BYTE* alphaData, BYTE* xorMask, BYTE* andMask, int width, int height, int bpp, HCLRCONV clrconv)
-{
-	int xpixel;
-	int apixel;
-	int i, j, jj;
-
-	for (j = 0; j < height; j++)
-	{
-		jj = (bpp == 1) ? j : (height - 1) - j;
-		for (i = 0; i < width; i++)
-		{
-			xpixel = freerdp_get_pixel(xorMask, i, jj, width, height, bpp);
-			xpixel = freerdp_color_convert_rgb(xpixel, bpp, 32, clrconv);
-			apixel = freerdp_get_pixel(andMask, i, jj, width, height, 1);
-
-			if (apixel != 0)
-			{
-				if ((xpixel & 0xffffff) == 0xffffff)
-				{
-					/* use pattern (not solid black) for xor area */
-					xpixel = (i & 1) == (j & 1);
-					xpixel = xpixel ? 0xFFFFFF : 0;
-					xpixel |= 0xFF000000;
-				}
-				else if (xpixel == 0xFF000000)
-				{
-					xpixel = 0;
-				}
-			}
-
-			freerdp_set_pixel(alphaData, i, j, width, height, 32, xpixel);
 		}
 	}
+
+	return TRUE;
 }
 
-void freerdp_image_swap_color_order(BYTE* data, int width, int height)
+BOOL freerdp_image_fill(BYTE* pDstData, DWORD DstFormat,
+                        UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+                        UINT32 nWidth, UINT32 nHeight, UINT32 color)
 {
-	int x, y;
-	UINT32* pixel;
-	BYTE a, r, g, b;
+	UINT32 x, y;
+	const UINT32 bpp = GetBytesPerPixel(DstFormat);
+	BYTE* pFirstDstLine = &pDstData[nYDst * nDstStep];
+	BYTE* pFirstDstLineXOffset = &pFirstDstLine[nXDst * bpp];
 
-	pixel = (UINT32*) data;
-
-	for (y = 0; y < height; y++)
+	for (x = 0; x < nWidth; x++)
 	{
-		for (x = 0; x < width; x++)
-		{
-			GetARGB32(a, r, g, b, *pixel);
-			*pixel = ABGR32(a, r, g, b);
-			pixel++;
-		}
+		BYTE* pDst = &pFirstDstLine[(x + nXDst) * bpp];
+		WriteColor(pDst, DstFormat, color);
 	}
-}
 
-HCLRCONV freerdp_clrconv_new(UINT32 flags)
-{
-	HCLRCONV clrconv;
-
-	clrconv = (CLRCONV*) malloc(sizeof(CLRCONV));
-	ZeroMemory(clrconv, sizeof(CLRCONV));
-
-	clrconv->alpha = (flags & CLRCONV_ALPHA) ? TRUE : FALSE;
-	clrconv->invert = (flags & CLRCONV_INVERT) ? TRUE : FALSE;
-	clrconv->rgb555 = (flags & CLRCONV_RGB555) ? TRUE : FALSE;
-
-	clrconv->palette = (rdpPalette*) malloc(sizeof(rdpPalette));
-	ZeroMemory(clrconv->palette, sizeof(rdpPalette));
-
-	return clrconv;
-}
-
-void freerdp_clrconv_free(HCLRCONV clrconv)
-{
-	if (clrconv != NULL)
+	for (y = 1; y < nHeight; y++)
 	{
-		if (clrconv->palette != NULL)
-			free(clrconv->palette);
-
-		free(clrconv);
+		BYTE* pDstLine = &pDstData[(y + nYDst) * nDstStep + nXDst * bpp];
+		memcpy(pDstLine, pFirstDstLineXOffset, nWidth * bpp);
 	}
+
+	return TRUE;
 }

@@ -1,0 +1,85 @@
+.de URL
+\\$2 \(laURL: \\$1 \(ra\\$3
+..
+.if \n[.g] .mso www.tmac))
+.TH freerdp\-shadow\-cli 1 2017-01-12 "@FREERDP_VERSION_FULL@" "FreeRDP"
+.SH NAME
+freerdp\-shadow\-cli \- A utility for sharing a X display via RDP.
+.SH SYNOPSIS
+.B freerdp\-shadow\-cli
+[\fB/port:\fP\fI<port number>\fP]
+[\fB/ipc-socket:\fP\fI<ipc-socket>\fP]
+[\fB/monitors:\fP\fI<0,1,2,...>\fP]
+[\fB/rect:\fP\fI<x,y,w,h>\fP]
+[\fB+auth\fP]
+[\fB-may-view\fP]
+[\fB-may-interact\fP]
+[\fB/sec:\fP\fI<rdp|tls|nla|ext>\fP]
+[\fB-sec-rdp\fP]
+[\fB-sec-tls\fP]
+[\fB-sec-nla\fP]
+[\fB-sec-ext\fP]
+[\fB/sam-file:\fP\fI<file>\fP]
+[\fB/version\fP]
+[\fB/help\fP]
+.SH DESCRIPTION
+.B freerdp\-shadow\-cli
+can be used to share a running X display like with VNC but by using the RDP
+instead. It is also possibly to share only parts (rect) of the display.
+.SH OPTIONS
+.IP /ipc-socket:<ipc-socket>
+If this option is set an ipc socket with the path \fIipc-socket\fP is used
+instead of a TCP socket.
+.IP /port:<port>
+Set the port to use. Default is 3389.
+This option is ignored if ipc-socket is used.
+.IP /monitors:<1,2,3,...>
+Select the monitor(s) to share.
+.IP /rect:<x,y,w,h>      
+Select rectangle within monitor to share.
+.IP -auth
+Disable authentication. If authentication is enabled PAM is used with the
+X11 subsystem. Running as root is not necessary, however if run as user only
+the same user that started freerdp\-shadow\-cli can authenticate.
+.br
+\fBWarning\fP: If authentication is disabled \fIeveryone\fP can connect.
+.IP -may-view
+Clients may view without prompt.
+.IP -may-interact
+Clients may interact without prompt.
+.IP /sec:<rdp|tls|nla|ext>
+Force a specific protocol security
+.IP -sec-rdp (default:on)
+Disable RDP security
+.IP -sec-tls (default:on)
+Disable TLS protocol security
+.IP -sec-nla (default:on)
+Disable NLA protocol security
+.IP +sec-ext (default:off)
+Use NLA extended protocol security
+.IP /sam-file:<file>
+NTLM SAM file for NLA authentication
+.IP /version
+Print the version and exit.
+.IP /help
+Print the help and exit.
+
+.SH EXAMPLES
+freerdp-shadow-cli /port:12345
+
+When run as user within a X session (for example from an xterm) a socket on
+12345 is opened and the current display is shared via RDP.
+
+.SH EXIT STATUS
+.TP
+.B 0
+Successful program execution.
+.TP
+.B 1
+Otherweise.
+
+.SH SEE ALSO
+wlog(7)
+
+.SH AUTHOR
+FreeRDP <team@freerdp.com>

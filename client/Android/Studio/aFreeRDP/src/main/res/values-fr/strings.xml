@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_title">aFreeRDP</string>
+    <!-- Search strings -->
+    <string name="search_label">aFreeRDP</string>
+    <string name="search_settings_description">L\'ordinateur distant</string>
+</resources>

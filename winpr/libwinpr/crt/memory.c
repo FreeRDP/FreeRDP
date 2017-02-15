@@ -28,6 +28,17 @@
 
 #ifndef _WIN32
 
+PVOID SecureZeroMemory(PVOID ptr, SIZE_T cnt)
+{
+	volatile BYTE* p = ptr;
 
+	while (cnt--)
+	{
+		*p = 0;
+		p++;
+	}
+
+	return ptr;
+}
 
 #endif

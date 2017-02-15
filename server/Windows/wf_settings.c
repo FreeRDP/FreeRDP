@@ -26,7 +26,7 @@
 
 #include "wf_settings.h"
 
-BOOL wf_settings_read_dword(HKEY key, LPTSTR subkey, LPTSTR name, DWORD* value)
+BOOL wf_settings_read_dword(HKEY key, LPCSTR subkey, LPTSTR name, DWORD* value)
 {
 	HKEY hKey;
 	LONG status;
@@ -34,7 +34,7 @@ BOOL wf_settings_read_dword(HKEY key, LPTSTR subkey, LPTSTR name, DWORD* value)
 	DWORD dwSize;
 	DWORD dwValue;
 
-	status = RegOpenKeyEx(key, subkey, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+	status = RegOpenKeyExA(key, subkey, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
 	if (status == ERROR_SUCCESS)
 	{
@@ -53,7 +53,7 @@ BOOL wf_settings_read_dword(HKEY key, LPTSTR subkey, LPTSTR name, DWORD* value)
 	return FALSE;
 }
 
-BOOL wf_settings_read_string_ascii(HKEY key, LPTSTR subkey, LPTSTR name, char** value)
+BOOL wf_settings_read_string_ascii(HKEY key, LPCSTR subkey, LPTSTR name, char** value)
 {
 	HKEY hKey;
 	int length;
@@ -63,7 +63,7 @@ BOOL wf_settings_read_string_ascii(HKEY key, LPTSTR subkey, LPTSTR name, char** 
 	char* strA;
 	TCHAR* strX = NULL;
 
-	status = RegOpenKeyEx(key, subkey, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
+	status = RegOpenKeyExA(key, subkey, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
 	if (status != ERROR_SUCCESS)
 		return FALSE;
@@ -73,6 +73,8 @@ BOOL wf_settings_read_string_ascii(HKEY key, LPTSTR subkey, LPTSTR name, char** 
 	if (status == ERROR_SUCCESS)
 	{
 		strX = (LPTSTR) malloc(dwSize + sizeof(TCHAR));
+		if (!strX)
+			return FALSE;
 		status = RegQueryValueEx(hKey, name, NULL, &dwType, (BYTE*) strX, &dwSize);
 
 		if (status != ERROR_SUCCESS)

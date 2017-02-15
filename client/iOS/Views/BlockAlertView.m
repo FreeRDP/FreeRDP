@@ -279,10 +279,10 @@ static UIFont *buttonFont = nil;
         button.frame = CGRectMake(xOffset, _height, width, kAlertButtonHeight);
         button.titleLabel.font = buttonFont;
         if (IOS_LESS_THAN_6) {
-#pragma clan diagnostic push
+#pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
             button.titleLabel.minimumFontSize = 10;
-#pragma clan diagnostic pop
+#pragma clang diagnostic pop
         }
         else {
             button.titleLabel.adjustsFontSizeToFitWidth = YES;
