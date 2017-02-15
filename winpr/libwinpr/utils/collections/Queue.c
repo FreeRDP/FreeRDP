@@ -164,9 +164,10 @@ BOOL Queue_Enqueue(wQueue* queue, void* obj)
 
 		queue->capacity = new_capacity;
 		queue->array = newArray;
-		ZeroMemory(&(queue->array[old_capacity]), old_capacity * sizeof(void*));
+		ZeroMemory(&(queue->array[old_capacity]), (new_capacity - old_capacity) * sizeof(void*));
 
-		if (queue->tail < old_capacity)
+		/* rearrange wrapped entries */
+		if (queue->tail <= queue->head)
 		{
 			CopyMemory(&(queue->array[old_capacity]), queue->array, queue->tail * sizeof(void*));
 			queue->tail += old_capacity;
