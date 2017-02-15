@@ -512,6 +512,7 @@ static BOOL freerdp_client_parse_rdp_file_option_ascii(rdpFile* file, char* opti
 static BOOL freerdp_client_parse_rdp_file_buffer_ascii(rdpFile* file, const BYTE* buffer,
         size_t size)
 {
+	BOOL rc = FALSE;
 	int index;
 	int length;
 	char* line;
@@ -572,13 +573,13 @@ static BOOL freerdp_client_parse_rdp_file_buffer_ascii(rdpFile* file, const BYTE
 			{
 				/* integer type */
 				if (!freerdp_client_parse_rdp_file_integer_ascii(file, name, value, index))
-					return FALSE;
+					goto fail;
 			}
 			else if (*type == 's')
 			{
 				/* string type */
 				if (!freerdp_client_parse_rdp_file_string_ascii(file, name, value, index))
-					return FALSE;
+					goto fail;
 			}
 			else if (*type == 'b')
 			{
@@ -591,13 +592,16 @@ static BOOL freerdp_client_parse_rdp_file_buffer_ascii(rdpFile* file, const BYTE
 		index++;
 	}
 
+	rc = TRUE;
+fail:
 	free(copy);
-	return TRUE;
+	return rc;
 }
 
 static BOOL freerdp_client_parse_rdp_file_buffer_unicode(rdpFile* file, const BYTE* buffer,
         size_t size)
 {
+	BOOL rc = FALSE;
 	int index;
 	int length;
 	const WCHAR* line;
@@ -624,7 +628,7 @@ static BOOL freerdp_client_parse_rdp_file_buffer_unicode(rdpFile* file, const BY
 			const WCHAR* end = &line[length - 1];
 
 			if (!freerdp_client_parse_rdp_file_add_line_unicode(file, line, index))
-				return FALSE;
+				goto fail;
 
 			if (beg[0] == '/')
 			{
@@ -656,13 +660,13 @@ static BOOL freerdp_client_parse_rdp_file_buffer_unicode(rdpFile* file, const BY
 			{
 				/* integer type */
 				if (!freerdp_client_parse_rdp_file_integer_unicode(file, name, value, index))
-					return FALSE;
+					goto fail;
 			}
 			else if (*type == 's')
 			{
 				/* string type */
 				if (!freerdp_client_parse_rdp_file_string_unicode(file, name, value, index))
-					return FALSE;
+					goto fail;
 			}
 			else if (*type == 'b')
 			{
@@ -675,8 +679,10 @@ static BOOL freerdp_client_parse_rdp_file_buffer_unicode(rdpFile* file, const BY
 		index++;
 	}
 
+	rc = TRUE;
+fail:
 	free(copy);
-	return TRUE;
+	return rc;
 }
 
 BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, const BYTE* buffer, size_t size)
