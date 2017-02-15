@@ -167,7 +167,7 @@ static RFX_TILE* rfx_decoder_tile_new(void)
 	if (!(tile = (RFX_TILE*) calloc(1, sizeof(RFX_TILE))))
 		return NULL;
 
-	if (!(tile->data = (BYTE*) malloc(4 * 64 * 64)))
+	if (!(tile->data = (BYTE*) _aligned_malloc(4 * 64 * 64, 16)))
 	{
 		free(tile);
 		return NULL;
@@ -182,7 +182,7 @@ static void rfx_decoder_tile_free(RFX_TILE* tile)
 	if (tile)
 	{
 		if (tile->allocated)
-			free(tile->data);
+			_aligned_free(tile->data);
 
 		free(tile);
 	}
