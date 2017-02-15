@@ -86,9 +86,10 @@ BOOL MessageQueue_Dispatch(wMessageQueue* queue, wMessage* message)
 			goto out;
 		queue->array = new_arr;
 		queue->capacity = new_capacity;
-		ZeroMemory(&(queue->array[old_capacity]), old_capacity * sizeof(wMessage));
+		ZeroMemory(&(queue->array[old_capacity]), (new_capacity - old_capacity) * sizeof(wMessage));
 
-		if (queue->tail < old_capacity)
+		/* rearrange wrapped entries */
+		if (queue->tail <= queue->head)
 		{
 			CopyMemory(&(queue->array[old_capacity]), queue->array, queue->tail * sizeof(wMessage));
 			queue->tail += old_capacity;
