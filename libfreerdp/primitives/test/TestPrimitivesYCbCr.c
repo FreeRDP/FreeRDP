@@ -2155,34 +2155,55 @@ static int test_bmp_cmp_dump(const BYTE* actual, const BYTE* expected, int size,
 	return count;
 }
 
-static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_size_t roi)
+static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_size_t roi,
+                                BOOL compare)
 {
 	pstatus_t status = -1;
 	int cnt[3];
 	float err[3];
 	BYTE* actual;
+	BYTE* actual1;
 	BYTE* expected;
 	int margin = 1;
-	const INT16* pYCbCr[3];
+	INT16* pYCbCr[3];
 	const UINT32 srcStride = roi.width * 2;
 	const UINT32 dstStride = roi.width * GetBytesPerPixel(format);
 	const UINT32 srcSize = srcStride * roi.height;
 	const UINT32 dstSize = dstStride * roi.height;
 	PROFILER_DEFINE(prof);
+	PROFILER_DEFINE(prof1);
+	PROFILER_DEFINE(prof2);
 	//return test_YCbCr_pixels();
 	expected = (BYTE*) TEST_XRGB_IMAGE;
 	actual = _aligned_malloc(dstSize, 16);
-	PROFILER_CREATE(prof, "YCbCr");
+	actual1 = _aligned_malloc(dstSize, 16);
+	PROFILER_CREATE(prof, "yCbCrToRGB_16s8u");
+	PROFILER_CREATE(prof1, "yCbCrToRGB16s16s");
+	PROFILER_CREATE(prof2, "RGBToRGB_16s8u");
 
-	if (!actual)
+	if (!actual || !actual1)
 		goto fail;
 
 	ZeroMemory(actual, dstSize);
-	pYCbCr[0] = TEST_Y_COMPONENT;
-	pYCbCr[1] = TEST_CB_COMPONENT;
-	pYCbCr[2] = TEST_CR_COMPONENT;
+	ZeroMemory(actual1, dstSize);
+	pYCbCr[0] = _aligned_malloc(srcSize, 16);
+	pYCbCr[1] = _aligned_malloc(srcSize, 16);
+	pYCbCr[2] = _aligned_malloc(srcSize, 16);
 
-	if (1)
+	if (!pYCbCr[0] || !pYCbCr[1] || !pYCbCr[2])
+		goto fail;
+
+	winpr_RAND((BYTE*)pYCbCr[0], srcSize);
+	winpr_RAND((BYTE*)pYCbCr[1], srcSize);
+	winpr_RAND((BYTE*)pYCbCr[2], srcSize);
+
+	if (compare)
+	{
+		memcpy(pYCbCr[0], TEST_Y_COMPONENT, srcSize);
+		memcpy(pYCbCr[1], TEST_CB_COMPONENT, srcSize);
+		memcpy(pYCbCr[2], TEST_CR_COMPONENT, srcSize);
+	}
+
 	{
 		PROFILER_ENTER(prof);
 		status = prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**) pYCbCr, srcStride,
@@ -2190,7 +2211,7 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 		                                        &roi);
 		PROFILER_EXIT(prof);
 	}
-	else
+
 	{
 		INT16* pSrcDst[3];
 		pSrcDst[0] = _aligned_malloc(srcSize, 16);
@@ -2199,16 +2220,18 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 		CopyMemory(pSrcDst[0], pYCbCr[0], srcSize);
 		CopyMemory(pSrcDst[1], pYCbCr[1], srcSize);
 		CopyMemory(pSrcDst[2], pYCbCr[2], srcSize);
-		PROFILER_ENTER(prof);
+		PROFILER_ENTER(prof1);
 		status = prims->yCbCrToRGB_16s16s_P3P3((const INT16**) pSrcDst, srcStride,
 		                                       pSrcDst, srcStride, &roi);
+		PROFILER_EXIT(prof1);
 
 		if (status != PRIMITIVES_SUCCESS)
 			goto fail2;
 
+		PROFILER_ENTER(prof2);
 		status = prims->RGBToRGB_16s8u_P3AC4R((const INT16**) pSrcDst, srcStride,
-		                                      actual, dstStride, format, &roi);
-		PROFILER_EXIT(prof);
+		                                      actual1, dstStride, format, &roi);
+		PROFILER_EXIT(prof2);
 	fail2:
 		_aligned_free(pSrcDst[0]);
 		_aligned_free(pSrcDst[1]);
@@ -2218,32 +2241,65 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 			goto fail;
 	}
 
-	cnt[2] = test_bmp_cmp_count(actual, expected, dstSize, 2, margin); /* red */
-	err[2] = ((float) cnt[2]) / ((float) dstSize / 4) * 100.0f;
-	cnt[1] = test_bmp_cmp_count(actual, expected, dstSize, 1, margin); /* green */
-	err[1] = ((float) cnt[1]) / ((float) dstSize / 4) * 100.0f;
-	cnt[0] = test_bmp_cmp_count(actual, expected, dstSize, 0, margin); /* blue */
-	err[0] = ((float) cnt[0]) / ((float) dstSize / 4) * 100.0f;
-
-	if (cnt[0] || cnt[1] || cnt[2])
+	if (compare)
 	{
-		printf("Red Error Dump:\n");
-		test_bmp_cmp_dump(actual, expected, dstSize, 2, margin); /* red */
-		printf("Green Error Dump:\n");
-		test_bmp_cmp_dump(actual, expected, dstSize, 1, margin); /* green */
-		printf("Blue Error Dump:\n");
-		test_bmp_cmp_dump(actual, expected, dstSize, 0, margin); /* blue */
-		printf("R: diff: %d (%f%%)\n", cnt[2], err[2]);
-		printf("G: diff: %d (%f%%)\n", cnt[1], err[1]);
-		printf("B: diff: %d (%f%%)\n", cnt[0], err[0]);
+		cnt[2] = test_bmp_cmp_count(actual, expected, dstSize, 2, margin); /* red */
+		err[2] = ((float) cnt[2]) / ((float) dstSize / 4) * 100.0f;
+		cnt[1] = test_bmp_cmp_count(actual, expected, dstSize, 1, margin); /* green */
+		err[1] = ((float) cnt[1]) / ((float) dstSize / 4) * 100.0f;
+		cnt[0] = test_bmp_cmp_count(actual, expected, dstSize, 0, margin); /* blue */
+		err[0] = ((float) cnt[0]) / ((float) dstSize / 4) * 100.0f;
+
+		if (cnt[0] || cnt[1] || cnt[2])
+		{
+			printf("Summary information yCbCrToRGB_16s8u_P3AC4R\n");
+			printf("Red Error Dump:\n");
+			test_bmp_cmp_dump(actual, expected, dstSize, 2, margin); /* red */
+			printf("Green Error Dump:\n");
+			test_bmp_cmp_dump(actual, expected, dstSize, 1, margin); /* green */
+			printf("Blue Error Dump:\n");
+			test_bmp_cmp_dump(actual, expected, dstSize, 0, margin); /* blue */
+			printf("R: diff: %d (%f%%)\n", cnt[2], err[2]);
+			printf("G: diff: %d (%f%%)\n", cnt[1], err[1]);
+			printf("B: diff: %d (%f%%)\n", cnt[0], err[0]);
+		}
+
+		cnt[2] = test_bmp_cmp_count(actual1, expected, dstSize, 2, margin); /* red */
+		err[2] = ((float) cnt[2]) / ((float) dstSize / 4) * 100.0f;
+		cnt[1] = test_bmp_cmp_count(actual1, expected, dstSize, 1, margin); /* green */
+		err[1] = ((float) cnt[1]) / ((float) dstSize / 4) * 100.0f;
+		cnt[0] = test_bmp_cmp_count(actual1, expected, dstSize, 0, margin); /* blue */
+		err[0] = ((float) cnt[0]) / ((float) dstSize / 4) * 100.0f;
+
+		if (cnt[0] || cnt[1] || cnt[2])
+		{
+			printf("Summary information yCbCrToRGB_16s16s_P3P3 & RGBToRGB_16s8u_P3AC4R\n");
+			printf("Red Error Dump:\n");
+			test_bmp_cmp_dump(actual1, expected, dstSize, 2, margin); /* red */
+			printf("Green Error Dump:\n");
+			test_bmp_cmp_dump(actual1, expected, dstSize, 1, margin); /* green */
+			printf("Blue Error Dump:\n");
+			test_bmp_cmp_dump(actual1, expected, dstSize, 0, margin); /* blue */
+			printf("R: diff: %d (%f%%)\n", cnt[2], err[2]);
+			printf("G: diff: %d (%f%%)\n", cnt[1], err[1]);
+			printf("B: diff: %d (%f%%)\n", cnt[0], err[0]);
+		}
 	}
 
 	PROFILER_PRINT_HEADER;
 	PROFILER_PRINT(prof);
+	PROFILER_PRINT(prof1);
+	PROFILER_PRINT(prof2);
 	PROFILER_PRINT_FOOTER;
 fail:
+	_aligned_free((BYTE*)pYCbCr[0]);
+	_aligned_free((BYTE*)pYCbCr[1]);
+	_aligned_free((BYTE*)pYCbCr[2]);
 	_aligned_free(actual);
+	_aligned_free(actual1);
 	PROFILER_FREE(prof);
+	PROFILER_FREE(prof1);
+	PROFILER_FREE(prof2);
 	return status;
 }
 
@@ -2262,30 +2318,105 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 	};
 	const primitives_t* prims = primitives_get();
 	const primitives_t* generics = primitives_get_generic();
-	prim_size_t roi = { 64, 64 };
 	UINT32 x;
 
-	for (x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
+	if (argc < 2)
 	{
-		int rc;
-		printf("----------------------- GENERIC %s -------------------\n",
-		       GetColorFormatName(formats[x]));
-		rc = test_PrimitivesYCbCr(generics, formats[x], roi);
+		{
+			/* Do content comparison. */
+			for (x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
+			{
+				prim_size_t roi = { 64, 64 };
+				int rc;
+				printf("----------------------- GENERIC %s [%"PRIu32"x%"PRIu32"] COMPARE CONTENT ----\n",
+				       GetColorFormatName(formats[x]), roi.width, roi.height);
+				rc = test_PrimitivesYCbCr(generics, formats[x], roi, TRUE);
 
-		if (rc != PRIMITIVES_SUCCESS)
-			return rc;
+				if (rc != PRIMITIVES_SUCCESS)
+					return rc;
 
-		printf("------------------------- END %s ----------------------\n",
-		       GetColorFormatName(formats[x]));
-		printf("---------------------- OPTIMIZED %s -------------------\n",
-		       GetColorFormatName(formats[x]));
-		rc = test_PrimitivesYCbCr(prims, formats[x], roi);
+				printf("------------------------- END %s ----------------------\n",
+				       GetColorFormatName(formats[x]));
+				printf("---------------------- OPTIMIZED %s [%"PRIu32"x%"PRIu32"] COMPARE CONTENT ----\n",
+				       GetColorFormatName(formats[x]), roi.width, roi.height);
+				rc = test_PrimitivesYCbCr(prims, formats[x], roi, TRUE);
 
-		if (rc != PRIMITIVES_SUCCESS)
-			return rc;
+				if (rc != PRIMITIVES_SUCCESS)
+					return rc;
 
-		printf("------------------------- END %s ----------------------\n",
-		       GetColorFormatName(formats[x]));
+				printf("------------------------- END %s ----------------------\n",
+				       GetColorFormatName(formats[x]));
+			}
+		}
+		/* Do random data conversion with random sizes */
+		{
+			prim_size_t roi;
+
+			do
+			{
+				winpr_RAND((BYTE*)&roi.width, sizeof(roi.width));
+				roi.width %= 2048;
+			}
+			while (roi.width < 16);
+
+			do
+			{
+				winpr_RAND((BYTE*)&roi.height, sizeof(roi.height));
+				roi.height %= 2048;
+			}
+			while (roi.height < 16);
+
+			for (x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
+			{
+				int rc;
+				printf("----------------------- GENERIC %s [%"PRIu32"x%"PRIu32"] COMPARE CONTENT ----\n",
+				       GetColorFormatName(formats[x]), roi.width, roi.height);
+				rc = test_PrimitivesYCbCr(generics, formats[x], roi, FALSE);
+
+				if (rc != PRIMITIVES_SUCCESS)
+					return rc;
+
+				printf("------------------------- END %s ----------------------\n",
+				       GetColorFormatName(formats[x]));
+				printf("---------------------- OPTIMIZED %s [%"PRIu32"x%"PRIu32"] COMPARE CONTENT ----\n",
+				       GetColorFormatName(formats[x]), roi.width, roi.height);
+				rc = test_PrimitivesYCbCr(prims, formats[x], roi, FALSE);
+
+				if (rc != PRIMITIVES_SUCCESS)
+					return rc;
+
+				printf("------------------------- END %s ----------------------\n",
+				       GetColorFormatName(formats[x]));
+			}
+		}
+	}
+	/* Do a performance run with full HD */
+	else
+	{
+		prim_size_t roi = { 1928, 1080 };
+
+		for (x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
+		{
+			int rc;
+			printf("----------------------- GENERIC %s [%"PRIu32"x%"PRIu32"] COMPARE CONTENT ----\n",
+			       GetColorFormatName(formats[x]), roi.width, roi.height);
+			rc = test_PrimitivesYCbCr(generics, formats[x], roi, FALSE);
+
+			if (rc != PRIMITIVES_SUCCESS)
+				return rc;
+
+			printf("------------------------- END %s ----------------------\n",
+			       GetColorFormatName(formats[x]));
+			printf("---------------------- OPTIMIZED %s [%"PRIu32"x%"PRIu32"] COMPARE CONTENT ----\n",
+			       GetColorFormatName(formats[x]), roi.width, roi.height);
+			rc = test_PrimitivesYCbCr(prims, formats[x], roi, FALSE);
+
+			if (rc != PRIMITIVES_SUCCESS)
+				return rc;
+
+			printf("------------------------- END %s ----------------------\n",
+			       GetColorFormatName(formats[x]));
+		}
 	}
 
 	return 0;
