@@ -2306,8 +2306,8 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 			{
 				prim_size_t roi = { 64, 64 };
 				int rc;
-				printf("----------------------- GENERIC %s COMPARE CONTENT ----\n",
-				       GetColorFormatName(formats[x]));
+				printf("----------------------- GENERIC %s [%"PRIu32"x%"PRIu32"] COMPARE CONTENT ----\n",
+				       GetColorFormatName(formats[x]), roi.width, roi.height);
 				rc = test_PrimitivesYCbCr(generics, formats[x], roi, TRUE);
 
 				if (rc != PRIMITIVES_SUCCESS)
@@ -2315,8 +2315,8 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 
 				printf("------------------------- END %s ----------------------\n",
 				       GetColorFormatName(formats[x]));
-				printf("---------------------- OPTIMIZED %s COMPARE CONTENT ----\n",
-				       GetColorFormatName(formats[x]));
+				printf("---------------------- OPTIMIZED %s [%"PRIu32"x%"PRIu32"] COMPARE CONTENT ----\n",
+				       GetColorFormatName(formats[x]), roi.width, roi.height);
 				rc = test_PrimitivesYCbCr(prims, formats[x], roi, TRUE);
 
 				if (rc != PRIMITIVES_SUCCESS)
@@ -2326,31 +2326,29 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 				       GetColorFormatName(formats[x]));
 			}
 		}
-
 		/* Do random data conversion with random sizes */
-		for (i = 0; i < 10; i++)
 		{
 			prim_size_t roi;
 
 			do
 			{
 				winpr_RAND((BYTE*)&roi.width, sizeof(roi.width));
-				roi.width %= 4096;
+				roi.width %= 2048;
 			}
 			while (roi.width < 16);
 
 			do
 			{
 				winpr_RAND((BYTE*)&roi.height, sizeof(roi.height));
-				roi.height %= 4096;
+				roi.height %= 2048;
 			}
 			while (roi.height < 16);
 
 			for (x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
 			{
 				int rc;
-				printf("----------------------- GENERIC %s -------------------\n",
-				       GetColorFormatName(formats[x]));
+				printf("----------------------- GENERIC %s [%"PRIu32"x%"PRIu32"] COMPARE CONTENT ----\n",
+				       GetColorFormatName(formats[x]), roi.width, roi.height);
 				rc = test_PrimitivesYCbCr(generics, formats[x], roi, FALSE);
 
 				if (rc != PRIMITIVES_SUCCESS)
@@ -2358,8 +2356,8 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 
 				printf("------------------------- END %s ----------------------\n",
 				       GetColorFormatName(formats[x]));
-				printf("---------------------- OPTIMIZED %s -------------------\n",
-				       GetColorFormatName(formats[x]));
+				printf("---------------------- OPTIMIZED %s [%"PRIu32"x%"PRIu32"] COMPARE CONTENT ----\n",
+				       GetColorFormatName(formats[x]), roi.width, roi.height);
 				rc = test_PrimitivesYCbCr(prims, formats[x], roi, FALSE);
 
 				if (rc != PRIMITIVES_SUCCESS)
@@ -2370,17 +2368,16 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 			}
 		}
 	}
-
 	/* Do a performance run with full HD */
-	for (i = 0; i < 10; i++)
+	else
 	{
 		prim_size_t roi = { 1928, 1080 };
 
 		for (x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
 		{
 			int rc;
-			printf("----------------------- GENERIC %s -------------------\n",
-			       GetColorFormatName(formats[x]));
+			printf("----------------------- GENERIC %s [%"PRIu32"x%"PRIu32"] COMPARE CONTENT ----\n",
+			       GetColorFormatName(formats[x]), roi.width, roi.height);
 			rc = test_PrimitivesYCbCr(generics, formats[x], roi, FALSE);
 
 			if (rc != PRIMITIVES_SUCCESS)
@@ -2388,8 +2385,8 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 
 			printf("------------------------- END %s ----------------------\n",
 			       GetColorFormatName(formats[x]));
-			printf("---------------------- OPTIMIZED %s -------------------\n",
-			       GetColorFormatName(formats[x]));
+			printf("---------------------- OPTIMIZED %s [%"PRIu32"x%"PRIu32"] COMPARE CONTENT ----\n",
+			       GetColorFormatName(formats[x]), roi.width, roi.height);
 			rc = test_PrimitivesYCbCr(prims, formats[x], roi, FALSE);
 
 			if (rc != PRIMITIVES_SUCCESS)

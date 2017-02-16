@@ -132,14 +132,14 @@ int TestPrimitivesYCoCg(int argc, char* argv[])
 			do
 			{
 				winpr_RAND((BYTE*)&w, sizeof(w));
-				w %= 4096;
+				w %= 2048;
 			}
 			while (w < 16);
 
 			do
 			{
 				winpr_RAND((BYTE*)&h, sizeof(h));
-				h %= 4096;
+				h %= 2048;
 			}
 			while (h < 16);
 
