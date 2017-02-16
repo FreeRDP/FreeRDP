@@ -718,6 +718,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_BGRX(
 	const UINT16* pr = (const UINT16*)(pSrc[0]);
 	const UINT16* pg = (const UINT16*)(pSrc[1]);
 	const UINT16* pb = (const UINT16*)(pSrc[2]);
+	const UINT32 pad = roi->width % 16;
 	const __m128i a = _mm_set1_epi32(0xFFFFFFFFU);
 	BYTE* out;
 	UINT32 srcbump, dstbump, y;
@@ -729,7 +730,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_BGRX(
 	{
 		UINT32 x;
 
-		for (x = 0; x < roi->width; x += 16)
+		for (x = 0; x < roi->width - pad; x += 16)
 		{
 			__m128i r, g, b;
 			/* The comments below pretend these are 8-byte registers
@@ -737,25 +738,25 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_BGRX(
 			 */
 			{
 				__m128i R0, R1;
-				R0 = _mm_loadu_si128((__m128i*)pb);
+				R0 = _mm_load_si128((__m128i*)pb);
 				pb += 8;		/* R0 = 00B300B200B100B0 */
-				R1 = _mm_loadu_si128((__m128i*)pb);
+				R1 = _mm_load_si128((__m128i*)pb);
 				pb += 8;		/* R1 = 00B700B600B500B4 */
 				b = _mm_packus_epi16(R0, R1);				/* b = B7B6B5B4B3B2B1B0 */
 			}
 			{
 				__m128i R0, R1;
-				R0 = _mm_loadu_si128((__m128i*)pg);
+				R0 = _mm_load_si128((__m128i*)pg);
 				pg += 8;		/* R1 = 00G300G200G100G0 */
-				R1 = _mm_loadu_si128((__m128i*)pg);
+				R1 = _mm_load_si128((__m128i*)pg);
 				pg += 8;		/* R2 = 00G700G600G500G4 */
 				g = _mm_packus_epi16(R0, R1);				/* g = G7G6G5G4G3G2G1G0 */
 			}
 			{
 				__m128i R0, R1;
-				R0 = _mm_loadu_si128((__m128i*)pr);
+				R0 = _mm_load_si128((__m128i*)pr);
 				pr += 8;		/* R0 = 00R300R200R100R0 */
-				R1 = _mm_loadu_si128((__m128i*)pr);
+				R1 = _mm_load_si128((__m128i*)pr);
 				pr += 8;		/* R3 = 00R700R600R500R4 */
 				r = _mm_packus_epi16(R0, R1);				/* r = R7R6R5R4R3R2R1R0 */
 			}
@@ -790,6 +791,17 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_BGRX(
 			}
 		}
 
+		for (x = 0; x < pad; x++)
+		{
+			const BYTE R = CLIP(*pr++);
+			const BYTE G = CLIP(*pg++);
+			const BYTE B = CLIP(*pb++);
+			*out++ = B;
+			*out++ = G;
+			*out++ = R;
+			*out++ = 0xFF;
+		}
+
 		/* Jump to next row. */
 		pr += srcbump;
 		pg += srcbump;
@@ -810,6 +822,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_RGBX(
 	const UINT16* pr = (const UINT16*)(pSrc[0]);
 	const UINT16* pg = (const UINT16*)(pSrc[1]);
 	const UINT16* pb = (const UINT16*)(pSrc[2]);
+	const UINT32 pad = roi->width % 16;
 	const __m128i a = _mm_set1_epi32(0xFFFFFFFFU);
 	BYTE* out;
 	UINT32 srcbump, dstbump, y;
@@ -821,7 +834,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_RGBX(
 	{
 		UINT32 x;
 
-		for (x = 0; x < roi->width; x += 16)
+		for (x = 0; x < roi->width - pad; x += 16)
 		{
 			__m128i r, g, b;
 			/* The comments below pretend these are 8-byte registers
@@ -829,25 +842,25 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_RGBX(
 			 */
 			{
 				__m128i R0, R1;
-				R0 = _mm_loadu_si128((__m128i*)pb);
+				R0 = _mm_load_si128((__m128i*)pb);
 				pb += 8;		/* R0 = 00B300B200B100B0 */
-				R1 = _mm_loadu_si128((__m128i*)pb);
+				R1 = _mm_load_si128((__m128i*)pb);
 				pb += 8;		/* R1 = 00B700B600B500B4 */
 				b = _mm_packus_epi16(R0, R1);				/* b = B7B6B5B4B3B2B1B0 */
 			}
 			{
 				__m128i R0, R1;
-				R0 = _mm_loadu_si128((__m128i*)pg);
+				R0 = _mm_load_si128((__m128i*)pg);
 				pg += 8;		/* R1 = 00G300G200G100G0 */
-				R1 = _mm_loadu_si128((__m128i*)pg);
+				R1 = _mm_load_si128((__m128i*)pg);
 				pg += 8;		/* R2 = 00G700G600G500G4 */
 				g = _mm_packus_epi16(R0, R1);				/* g = G7G6G5G4G3G2G1G0 */
 			}
 			{
 				__m128i R0, R1;
-				R0 = _mm_loadu_si128((__m128i*)pr);
+				R0 = _mm_load_si128((__m128i*)pr);
 				pr += 8;		/* R0 = 00R300R200R100R0 */
-				R1 = _mm_loadu_si128((__m128i*)pr);
+				R1 = _mm_load_si128((__m128i*)pr);
 				pr += 8;		/* R3 = 00R700R600R500R4 */
 				r = _mm_packus_epi16(R0, R1);				/* r = R7R6R5R4R3R2R1R0 */
 			}
@@ -882,6 +895,17 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_RGBX(
 			}
 		}
 
+		for (x = 0; x < pad; x++)
+		{
+			const BYTE R = CLIP(*pr++);
+			const BYTE G = CLIP(*pg++);
+			const BYTE B = CLIP(*pb++);
+			*out++ = R;
+			*out++ = G;
+			*out++ = B;
+			*out++ = 0xFF;
+		}
+
 		/* Jump to next row. */
 		pr += srcbump;
 		pg += srcbump;
@@ -902,6 +926,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XBGR(
 	const UINT16* pr = (const UINT16*)(pSrc[0]);
 	const UINT16* pg = (const UINT16*)(pSrc[1]);
 	const UINT16* pb = (const UINT16*)(pSrc[2]);
+	const UINT32 pad = roi->width % 16;
 	const __m128i a = _mm_set1_epi32(0xFFFFFFFFU);
 	BYTE* out;
 	UINT32 srcbump, dstbump, y;
@@ -913,7 +938,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XBGR(
 	{
 		UINT32 x;
 
-		for (x = 0; x < roi->width; x += 16)
+		for (x = 0; x < roi->width - pad; x += 16)
 		{
 			__m128i r, g, b;
 			/* The comments below pretend these are 8-byte registers
@@ -921,25 +946,25 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XBGR(
 			 */
 			{
 				__m128i R0, R1;
-				R0 = _mm_loadu_si128((__m128i*)pb);
+				R0 = _mm_load_si128((__m128i*)pb);
 				pb += 8;		/* R0 = 00B300B200B100B0 */
-				R1 = _mm_loadu_si128((__m128i*)pb);
+				R1 = _mm_load_si128((__m128i*)pb);
 				pb += 8;		/* R1 = 00B700B600B500B4 */
 				b = _mm_packus_epi16(R0, R1);				/* b = B7B6B5B4B3B2B1B0 */
 			}
 			{
 				__m128i R0, R1;
-				R0 = _mm_loadu_si128((__m128i*)pg);
+				R0 = _mm_load_si128((__m128i*)pg);
 				pg += 8;		/* R1 = 00G300G200G100G0 */
-				R1 = _mm_loadu_si128((__m128i*)pg);
+				R1 = _mm_load_si128((__m128i*)pg);
 				pg += 8;		/* R2 = 00G700G600G500G4 */
 				g = _mm_packus_epi16(R0, R1);				/* g = G7G6G5G4G3G2G1G0 */
 			}
 			{
 				__m128i R0, R1;
-				R0 = _mm_loadu_si128((__m128i*)pr);
+				R0 = _mm_load_si128((__m128i*)pr);
 				pr += 8;		/* R0 = 00R300R200R100R0 */
-				R1 = _mm_loadu_si128((__m128i*)pr);
+				R1 = _mm_load_si128((__m128i*)pr);
 				pr += 8;		/* R3 = 00R700R600R500R4 */
 				r = _mm_packus_epi16(R0, R1);				/* r = R7R6R5R4R3R2R1R0 */
 			}
@@ -974,6 +999,17 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XBGR(
 			}
 		}
 
+		for (x = 0; x < pad; x++)
+		{
+			const BYTE R = CLIP(*pr++);
+			const BYTE G = CLIP(*pg++);
+			const BYTE B = CLIP(*pb++);
+			*out++ = 0xFF;
+			*out++ = B;
+			*out++ = G;
+			*out++ = R;
+		}
+
 		/* Jump to next row. */
 		pr += srcbump;
 		pg += srcbump;
@@ -995,6 +1031,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XRGB(
 	const UINT16* pg = (const UINT16*)(pSrc[1]);
 	const UINT16* pb = (const UINT16*)(pSrc[2]);
 	const __m128i a = _mm_set1_epi32(0xFFFFFFFFU);
+	const UINT32 pad = roi->width % 16;
 	BYTE* out;
 	UINT32 srcbump, dstbump, y;
 	out = (BYTE*) pDst;
@@ -1005,7 +1042,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XRGB(
 	{
 		UINT32 x;
 
-		for (x = 0; x < roi->width; x += 16)
+		for (x = 0; x < roi->width - pad; x += 16)
 		{
 			__m128i r, g, b;
 			/* The comments below pretend these are 8-byte registers
@@ -1013,25 +1050,25 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XRGB(
 			 */
 			{
 				__m128i R0, R1;
-				R0 = _mm_loadu_si128((__m128i*)pb);
+				R0 = _mm_load_si128((__m128i*)pb);
 				pb += 8;		/* R0 = 00B300B200B100B0 */
-				R1 = _mm_loadu_si128((__m128i*)pb);
+				R1 = _mm_load_si128((__m128i*)pb);
 				pb += 8;		/* R1 = 00B700B600B500B4 */
 				b = _mm_packus_epi16(R0, R1);				/* b = B7B6B5B4B3B2B1B0 */
 			}
 			{
 				__m128i R0, R1;
-				R0 = _mm_loadu_si128((__m128i*)pg);
+				R0 = _mm_load_si128((__m128i*)pg);
 				pg += 8;		/* R1 = 00G300G200G100G0 */
-				R1 = _mm_loadu_si128((__m128i*)pg);
+				R1 = _mm_load_si128((__m128i*)pg);
 				pg += 8;		/* R2 = 00G700G600G500G4 */
 				g = _mm_packus_epi16(R0, R1);				/* g = G7G6G5G4G3G2G1G0 */
 			}
 			{
 				__m128i R0, R1;
-				R0 = _mm_loadu_si128((__m128i*)pr);
+				R0 = _mm_load_si128((__m128i*)pr);
 				pr += 8;		/* R0 = 00R300R200R100R0 */
-				R1 = _mm_loadu_si128((__m128i*)pr);
+				R1 = _mm_load_si128((__m128i*)pr);
 				pr += 8;		/* R3 = 00R700R600R500R4 */
 				r = _mm_packus_epi16(R0, R1);				/* r = R7R6R5R4R3R2R1R0 */
 			}
@@ -1066,6 +1103,17 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XRGB(
 			}
 		}
 
+		for (x = 0; x < pad; x++)
+		{
+			const BYTE R = CLIP(*pr++);
+			const BYTE G = CLIP(*pg++);
+			const BYTE B = CLIP(*pb++);
+			*out++ = 0xFF;
+			*out++ = R;
+			*out++ = G;
+			*out++ = B;
+		}
+
 		/* Jump to next row. */
 		pr += srcbump;
 		pg += srcbump;
@@ -1084,6 +1132,10 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R(
     UINT32 DstFormat,
     const prim_size_t* roi)
 {
+	if (((UINT64)pSrc[0] & 0x0f) || ((UINT64)pSrc[0] & 0x0f) || ((UINT64)pSrc[0] & 0x0f) ||
+	    (srcStep & 0x0f) || ((UINT64)pDst & 0x0f) || (dstStep & 0x0f))
+		return generic->RGBToRGB_16s8u_P3AC4R(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
+
 	switch (DstFormat)
 	{
 		case PIXEL_FORMAT_BGRA32:
