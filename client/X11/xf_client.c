@@ -375,7 +375,7 @@ static BOOL xf_sw_desktop_resize(rdpContext* context)
 	}
 
 	if (!(xfc->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap,
-	                                0, gdi->primary_buffer, gdi->width,
+	                                0, (char*)gdi->primary_buffer, gdi->width,
 	                                gdi->height, xfc->scanline_pad, gdi->stride)))
 	{
 		goto out;

@@ -437,7 +437,6 @@ static BOOL xf_gdi_opaque_rect(rdpContext* context,
                                const OPAQUE_RECT_ORDER* opaque_rect)
 {
 	XColor color;
-	rdpGdi* gdi = context->gdi;
 	xfContext* xfc = (xfContext*) context;
 	BOOL ret = TRUE;
 
@@ -467,7 +466,6 @@ static BOOL xf_gdi_multi_opaque_rect(rdpContext* context,
 	UINT32 i;
 	xfContext* xfc = (xfContext*) context;
 	BOOL ret = TRUE;
-	rdpGdi* gdi = context->gdi;
 	XColor color;
 
 	if (!xf_decode_color(xfc, multi_opaque_rect->color, &color))

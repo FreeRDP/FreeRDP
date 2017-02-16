@@ -625,7 +625,6 @@ static BOOL freerdp_client_parse_rdp_file_buffer_unicode(rdpFile* file, const BY
 		if (length > 1)
 		{
 			const WCHAR* beg = line;
-			const WCHAR* end = &line[length - 1];
 
 			if (!freerdp_client_parse_rdp_file_add_line_unicode(file, line, index))
 				goto fail;

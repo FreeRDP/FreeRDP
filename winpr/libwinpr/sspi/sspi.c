@@ -47,7 +47,6 @@ static SecurityFunctionTableA* g_SspiA = NULL;
 static BOOL ShouldUseNativeSspi(void);
 static BOOL InitializeSspiModule_Native(void);
 #endif
-static void InitializeSspiModule(DWORD flags);
 
 #if defined(WITH_NATIVE_SSPI)
 BOOL ShouldUseNativeSspi(void)
@@ -144,12 +143,6 @@ static BOOL CALLBACK InitializeSspiModuleInt(PINIT_ONCE once, PVOID param, PVOID
 	}
 
 	return TRUE;
-}
-
-void InitializeSspiModule(DWORD flags)
-{
-	BOOL status = FALSE;
-	InitOnceExecuteOnce(&g_Initialized, InitializeSspiModuleInt, &flags, NULL);
 }
 
 const char* GetSecurityStatusString(SECURITY_STATUS status)

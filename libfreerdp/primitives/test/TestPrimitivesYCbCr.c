@@ -2165,7 +2165,7 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 	BYTE* actual1;
 	BYTE* expected;
 	int margin = 1;
-	const INT16* pYCbCr[3];
+	INT16* pYCbCr[3];
 	const UINT32 srcStride = roi.width * 2;
 	const UINT32 dstStride = roi.width * GetBytesPerPixel(format);
 	const UINT32 srcSize = srcStride * roi.height;
@@ -2193,9 +2193,9 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 	if (!pYCbCr[0] || !pYCbCr[1] || !pYCbCr[2])
 		goto fail;
 
-	winpr_RAND(pYCbCr[0], srcSize);
-	winpr_RAND(pYCbCr[1], srcSize);
-	winpr_RAND(pYCbCr[2], srcSize);
+	winpr_RAND((BYTE*)pYCbCr[0], srcSize);
+	winpr_RAND((BYTE*)pYCbCr[1], srcSize);
+	winpr_RAND((BYTE*)pYCbCr[2], srcSize);
 
 	if (compare)
 	{
@@ -2270,9 +2270,9 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 	PROFILER_PRINT(prof2);
 	PROFILER_PRINT_FOOTER;
 fail:
-	_aligned_free(pYCbCr[0]);
-	_aligned_free(pYCbCr[1]);
-	_aligned_free(pYCbCr[2]);
+	_aligned_free((BYTE*)pYCbCr[0]);
+	_aligned_free((BYTE*)pYCbCr[1]);
+	_aligned_free((BYTE*)pYCbCr[2]);
 	_aligned_free(actual);
 	_aligned_free(actual1);
 	PROFILER_FREE(prof);
@@ -2334,14 +2334,14 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 
 			do
 			{
-				winpr_RAND(&roi.width, sizeof(roi.width));
+				winpr_RAND((BYTE*)&roi.width, sizeof(roi.width));
 				roi.width %= 4096;
 			}
 			while (roi.width < 16);
 
 			do
 			{
-				winpr_RAND(&roi.height, sizeof(roi.height));
+				winpr_RAND((BYTE*)&roi.height, sizeof(roi.height));
 				roi.height %= 4096;
 			}
 			while (roi.height < 16);
