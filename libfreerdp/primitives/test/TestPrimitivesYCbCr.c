@@ -2252,12 +2252,34 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 
 		if (cnt[0] || cnt[1] || cnt[2])
 		{
+			printf("Summary information yCbCrToRGB_16s8u_P3AC4R\n");
 			printf("Red Error Dump:\n");
 			test_bmp_cmp_dump(actual, expected, dstSize, 2, margin); /* red */
 			printf("Green Error Dump:\n");
 			test_bmp_cmp_dump(actual, expected, dstSize, 1, margin); /* green */
 			printf("Blue Error Dump:\n");
 			test_bmp_cmp_dump(actual, expected, dstSize, 0, margin); /* blue */
+			printf("R: diff: %d (%f%%)\n", cnt[2], err[2]);
+			printf("G: diff: %d (%f%%)\n", cnt[1], err[1]);
+			printf("B: diff: %d (%f%%)\n", cnt[0], err[0]);
+		}
+
+		cnt[2] = test_bmp_cmp_count(actual1, expected, dstSize, 2, margin); /* red */
+		err[2] = ((float) cnt[2]) / ((float) dstSize / 4) * 100.0f;
+		cnt[1] = test_bmp_cmp_count(actual1, expected, dstSize, 1, margin); /* green */
+		err[1] = ((float) cnt[1]) / ((float) dstSize / 4) * 100.0f;
+		cnt[0] = test_bmp_cmp_count(actual1, expected, dstSize, 0, margin); /* blue */
+		err[0] = ((float) cnt[0]) / ((float) dstSize / 4) * 100.0f;
+
+		if (cnt[0] || cnt[1] || cnt[2])
+		{
+			printf("Summary information yCbCrToRGB_16s16s_P3P3 & RGBToRGB_16s8u_P3AC4R\n");
+			printf("Red Error Dump:\n");
+			test_bmp_cmp_dump(actual1, expected, dstSize, 2, margin); /* red */
+			printf("Green Error Dump:\n");
+			test_bmp_cmp_dump(actual1, expected, dstSize, 1, margin); /* green */
+			printf("Blue Error Dump:\n");
+			test_bmp_cmp_dump(actual1, expected, dstSize, 0, margin); /* blue */
 			printf("R: diff: %d (%f%%)\n", cnt[2], err[2]);
 			printf("G: diff: %d (%f%%)\n", cnt[1], err[1]);
 			printf("B: diff: %d (%f%%)\n", cnt[0], err[0]);
