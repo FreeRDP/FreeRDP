@@ -359,6 +359,87 @@ static pstatus_t ssse3_YUV420ToRGB(
 	}
 }
 
+static __m128i* ssse3_YUV444Pixel(__m128i* dst, __m128i Yraw, __m128i Uraw, __m128i Vraw, UINT8 pos)
+{
+	const __m128i mapY[] =
+	{
+		_mm_set_epi32(0x80800380, 0x80800280, 0x80800180, 0x80800080),
+		_mm_set_epi32(0x80800780, 0x80800680, 0x80800580, 0x80800480),
+		_mm_set_epi32(0x80800B80, 0x80800A80, 0x80800980, 0x80800880),
+		_mm_set_epi32(0x80800F80, 0x80800E80, 0x80800D80, 0x80800C80)
+	};
+	const __m128i mapUV[] =
+	{
+		_mm_set_epi32(0x80038002, 0x80018000, 0x80808080, 0x80808080),
+		_mm_set_epi32(0x80078006, 0x80058004, 0x80808080, 0x80808080),
+		_mm_set_epi32(0x800B800A, 0x80098008, 0x80808080, 0x80808080),
+		_mm_set_epi32(0x800F800E, 0x800D800C, 0x80808080, 0x80808080)
+	};
+	const __m128i mask[] =
+	{
+		_mm_set_epi32(0x80038080, 0x80028080, 0x80018080, 0x80008080),
+		_mm_set_epi32(0x80800380, 0x80800280, 0x80800180, 0x80800080),
+		_mm_set_epi32(0x80808003, 0x80808002, 0x80808001, 0x80808000)
+	};
+	const __m128i c128 = _mm_set1_epi16(128);
+	__m128i BGRX = _mm_set_epi32(0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000);
+	{
+		__m128i C, D, E;
+		/* Load Y values and expand to 32 bit */
+		{
+			C = _mm_shuffle_epi8(Yraw, mapY[pos]); /* Reorder and multiply by 256 */
+		}
+		/* Load U values and expand to 32 bit */
+		{
+			const __m128i U = _mm_shuffle_epi8(Uraw, mapUV[pos]); /* Reorder dcba */
+			D = _mm_sub_epi16(U, c128); /* D = U - 128 */
+		}
+		/* Load V values and expand to 32 bit */
+		{
+			const __m128i V = _mm_shuffle_epi8(Vraw, mapUV[pos]); /* Reorder dcba */
+			E = _mm_sub_epi16(V, c128); /* E = V - 128 */
+		}
+		/* Get the R value */
+		{
+			const __m128i c403 = _mm_set1_epi16(403);
+			const __m128i e403 = _mm_unpackhi_epi16(_mm_mullo_epi16(E, c403), _mm_mulhi_epi16(E, c403));
+			const __m128i Rs = _mm_add_epi32(C, e403);
+			const __m128i R32 = _mm_srai_epi32(Rs, 8);
+			const __m128i R16 = _mm_packs_epi32(R32, _mm_setzero_si128());
+			const __m128i R = _mm_packus_epi16(R16, _mm_setzero_si128());
+			const __m128i packed = _mm_shuffle_epi8(R, mask[0]);
+			BGRX = _mm_or_si128(BGRX, packed);
+		}
+		/* Get the G value */
+		{
+			const __m128i c48 = _mm_set1_epi16(48);
+			const __m128i d48 = _mm_unpackhi_epi16(_mm_mullo_epi16(D, c48), _mm_mulhi_epi16(D, c48));
+			const __m128i c120 = _mm_set1_epi16(120);
+			const __m128i e120 = _mm_unpackhi_epi16(_mm_mullo_epi16(E, c120), _mm_mulhi_epi16(E, c120));
+			const __m128i de = _mm_add_epi32(d48, e120);
+			const __m128i Gs = _mm_sub_epi32(C, de);
+			const __m128i G32 = _mm_srai_epi32(Gs, 8);
+			const __m128i G16 = _mm_packs_epi32(G32, _mm_setzero_si128());
+			const __m128i G = _mm_packus_epi16(G16, _mm_setzero_si128());
+			const __m128i packed = _mm_shuffle_epi8(G, mask[1]);
+			BGRX = _mm_or_si128(BGRX, packed);
+		}
+		/* Get the B value */
+		{
+			const __m128i c475 = _mm_set1_epi16(475);
+			const __m128i d475 = _mm_unpackhi_epi16(_mm_mullo_epi16(D, c475), _mm_mulhi_epi16(D, c475));
+			const __m128i Bs = _mm_add_epi32(C, d475);
+			const __m128i B32 = _mm_srai_epi32(Bs, 8);
+			const __m128i B16 = _mm_packs_epi32(B32, _mm_setzero_si128());
+			const __m128i B = _mm_packus_epi16(B16, _mm_setzero_si128());
+			const __m128i packed = _mm_shuffle_epi8(B, mask[2]);
+			BGRX = _mm_or_si128(BGRX, packed);
+		}
+	}
+	_mm_store_si128(dst++, BGRX);
+	return dst;
+}
+
 static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R_BGRX(
     const BYTE** pSrc, const UINT32* srcStep,
     BYTE* pDst, UINT32 dstStep,
@@ -366,9 +447,7 @@ static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R_BGRX(
 {
 	const UINT32 nWidth = roi->width;
 	const UINT32 nHeight = roi->height;
-	const __m128i c128 = _mm_set1_epi16(128);
-	const __m128i mapY = _mm_set_epi32(0x80800380, 0x80800280, 0x80800180, 0x80800080);
-	const __m128i map = _mm_set_epi32(0x80038002, 0x80018000, 0x80808080, 0x80808080);
+	const UINT32 pad = roi->width % 16;
 	UINT32 y;
 
 	for (y = 0; y < nHeight; y++)
@@ -379,72 +458,29 @@ static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R_BGRX(
 		const BYTE* UData = pSrc[1] + y * srcStep[1];
 		const BYTE* VData = pSrc[2] + y * srcStep[2];
 
-		for (x = 0; x < nWidth; x += 4)
+		for (x = 0; x < nWidth - pad; x += 16)
 		{
-			__m128i BGRX = _mm_set_epi32(0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000);
-			{
-				__m128i C, D, E;
-				/* Load Y values and expand to 32 bit */
-				{
-					const __m128i Yraw = _mm_loadu_si128((__m128i*)YData);
-					C = _mm_shuffle_epi8(Yraw, mapY); /* Reorder and multiply by 256 */
-				}
-				/* Load U values and expand to 32 bit */
-				{
-					const __m128i Uraw = _mm_loadu_si128((__m128i*)UData);
-					const __m128i U = _mm_shuffle_epi8(Uraw, map); /* Reorder dcba */
-					D = _mm_sub_epi16(U, c128); /* D = U - 128 */
-				}
-				/* Load V values and expand to 32 bit */
-				{
-					const __m128i Vraw = _mm_loadu_si128((__m128i*)VData);
-					const __m128i V = _mm_shuffle_epi8(Vraw, map); /* Reorder dcba */
-					E = _mm_sub_epi16(V, c128); /* E = V - 128 */
-				}
-				/* Get the R value */
-				{
-					const __m128i c403 = _mm_set1_epi16(403);
-					const __m128i e403 = _mm_unpackhi_epi16(_mm_mullo_epi16(E, c403), _mm_mulhi_epi16(E, c403));
-					const __m128i Rs = _mm_add_epi32(C, e403);
-					const __m128i R32 = _mm_srai_epi32(Rs, 8);
-					const __m128i R16 = _mm_packs_epi32(R32, _mm_setzero_si128());
-					const __m128i R = _mm_packus_epi16(R16, _mm_setzero_si128());
-					const __m128i mask = _mm_set_epi32(0x80038080, 0x80028080, 0x80018080, 0x80008080);
-					const __m128i packed = _mm_shuffle_epi8(R, mask);
-					BGRX = _mm_or_si128(BGRX, packed);
-				}
-				/* Get the G value */
-				{
-					const __m128i c48 = _mm_set1_epi16(48);
-					const __m128i d48 = _mm_unpackhi_epi16(_mm_mullo_epi16(D, c48), _mm_mulhi_epi16(D, c48));
-					const __m128i c120 = _mm_set1_epi16(120);
-					const __m128i e120 = _mm_unpackhi_epi16(_mm_mullo_epi16(E, c120), _mm_mulhi_epi16(E, c120));
-					const __m128i de = _mm_add_epi32(d48, e120);
-					const __m128i Gs = _mm_sub_epi32(C, de);
-					const __m128i G32 = _mm_srai_epi32(Gs, 8);
-					const __m128i G16 = _mm_packs_epi32(G32, _mm_setzero_si128());
-					const __m128i G = _mm_packus_epi16(G16, _mm_setzero_si128());
-					const __m128i mask = _mm_set_epi32(0x80800380, 0x80800280, 0x80800180, 0x80800080);
-					const __m128i packed = _mm_shuffle_epi8(G, mask);
-					BGRX = _mm_or_si128(BGRX, packed);
-				}
-				/* Get the B value */
-				{
-					const __m128i c475 = _mm_set1_epi16(475);
-					const __m128i d475 = _mm_unpackhi_epi16(_mm_mullo_epi16(D, c475), _mm_mulhi_epi16(D, c475));
-					const __m128i Bs = _mm_add_epi32(C, d475);
-					const __m128i B32 = _mm_srai_epi32(Bs, 8);
-					const __m128i B16 = _mm_packs_epi32(B32, _mm_setzero_si128());
-					const __m128i B = _mm_packus_epi16(B16, _mm_setzero_si128());
-					const __m128i mask = _mm_set_epi32(0x80808003, 0x80808002, 0x80808001, 0x80808000);
-					const __m128i packed = _mm_shuffle_epi8(B, mask);
-					BGRX = _mm_or_si128(BGRX, packed);
-				}
-			}
-			_mm_storeu_si128(dst++, BGRX);
-			YData += 4;
-			UData += 4;
-			VData += 4;
+			__m128i Y = _mm_load_si128((__m128i*)YData);
+			__m128i U = _mm_load_si128((__m128i*)UData);
+			__m128i V = _mm_load_si128((__m128i*)VData);
+			YData += 16;
+			UData += 16;
+			VData += 16;
+			dst = ssse3_YUV444Pixel(dst, Y, U, V, 0);
+			dst = ssse3_YUV444Pixel(dst, Y, U, V, 1);
+			dst = ssse3_YUV444Pixel(dst, Y, U, V, 2);
+			dst = ssse3_YUV444Pixel(dst, Y, U, V, 3);
+		}
+
+		for (x = 0; x < pad; x++)
+		{
+			const BYTE Y = *YData++;
+			const BYTE U = *UData++;
+			const BYTE V = *VData++;
+			const BYTE r = YUV2R(Y, U, V);
+			const BYTE g = YUV2G(Y, U, V);
+			const BYTE b = YUV2B(Y, U, V);
+			dst = (__m128i*)writePixelBGRX((BYTE*)dst, 4, PIXEL_FORMAT_BGRX32, r, g, b, 0xFF);
 		}
 	}
 
@@ -455,7 +491,8 @@ static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R(const BYTE** pSrc, const UINT32* sr
         BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
         const prim_size_t* roi)
 {
-	if (roi->width % 4 != 0)
+	if ((unsigned long)pSrc[0] % 16 || (unsigned long)pSrc[1] % 16 || (unsigned long)pSrc[2] % 16 ||
+	    (unsigned long)pDst % 16 || dstStep % 16 || srcStep[0] % 16 || srcStep[1] % 16 || srcStep[2] % 16)
 		return generic->YUV444ToRGB_8u_P3AC4R(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
 
 	switch (DstFormat)

@@ -23,6 +23,7 @@
 #define FREERDP_CHANNEL_CLIENT_RDPGFX_H
 
 #include <freerdp/channels/rdpgfx.h>
+#include <freerdp/utils/profiler.h>
 
 /**
  * Client Interface
@@ -105,6 +106,8 @@ struct _rdpgfx_client_context
 	pcRdpgfxGetCacheSlotData GetCacheSlotData;
 
 	pcRdpgfxUpdateSurfaces UpdateSurfaces;
+
+	PROFILER_DEFINE(SurfaceProfiler);
 };
 
 #endif /* FREERDP_CHANNEL_CLIENT_RDPGFX_H */

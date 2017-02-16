@@ -700,7 +700,7 @@ static UINT gdi_CreateSurface(RdpgfxClientContext* context,
 	}
 
 	surface->scanline = gfx_align_scanline(surface->width * 4, 16);
-	surface->data = (BYTE*) calloc(1, surface->scanline * surface->height);
+	surface->data = (BYTE*) _aligned_malloc(surface->scanline * surface->height, 16);
 
 	if (!surface->data)
 	{
@@ -731,7 +731,7 @@ static UINT gdi_DeleteSurface(RdpgfxClientContext* context,
 	{
 		region16_uninit(&surface->invalidRegion);
 		codecs = surface->codecs;
-		free(surface->data);
+		_aligned_free(surface->data);
 		free(surface);
 	}
 
@@ -1051,6 +1051,7 @@ void gdi_graphics_pipeline_init(rdpGdi* gdi, RdpgfxClientContext* gfx)
 	gfx->MapSurfaceToOutput = gdi_MapSurfaceToOutput;
 	gfx->MapSurfaceToWindow = gdi_MapSurfaceToWindow;
 	gfx->UpdateSurfaces = gdi_UpdateSurfaces;
+	PROFILER_CREATE(gfx->SurfaceProfiler, "GFX-PROFILER");
 }
 
 void gdi_graphics_pipeline_uninit(rdpGdi* gdi, RdpgfxClientContext* gfx)
@@ -1058,5 +1059,9 @@ void gdi_graphics_pipeline_uninit(rdpGdi* gdi, RdpgfxClientContext* gfx)
 	region16_uninit(&(gdi->invalidRegion));
 	gdi->gfx = NULL;
 	gfx->custom = NULL;
+	PROFILER_PRINT_HEADER;
+	PROFILER_PRINT(gfx->SurfaceProfiler);
+	PROFILER_PRINT_FOOTER;
+	PROFILER_FREE(gfx->SurfaceProfiler);
 }
 

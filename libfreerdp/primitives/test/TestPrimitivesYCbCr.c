@@ -2238,7 +2238,9 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 		printf("B: diff: %d (%f%%)\n", cnt[0], err[0]);
 	}
 
+	PROFILER_PRINT_HEADER;
 	PROFILER_PRINT(prof);
+	PROFILER_PRINT_FOOTER;
 fail:
 	_aligned_free(actual);
 	PROFILER_FREE(prof);

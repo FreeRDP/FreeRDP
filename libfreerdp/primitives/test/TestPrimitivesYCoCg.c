@@ -95,8 +95,10 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 			}
 		}
 
+		PROFILER_PRINT_HEADER;
 		PROFILER_PRINT(genericProf);
 		PROFILER_PRINT(optProf);
+		PROFILER_PRINT_FOOTER;
 	}
 
 fail:

@@ -176,8 +176,9 @@ UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y,
 	return status;
 }
 
-static INLINE UINT32 x11_pad_scanline(UINT32 scanline, UINT32 inPad)
+UINT32 x11_pad_scanline(UINT32 scanline, UINT32 inPad)
 {
+	/* Ensure X11 alignment is met */
 	if (inPad > 0)
 	{
 		const UINT32 align = inPad / 8;
@@ -186,6 +187,10 @@ static INLINE UINT32 x11_pad_scanline(UINT32 scanline, UINT32 inPad)
 		if (align != pad)
 			scanline += pad;
 	}
+
+	/* 16 byte alingment is required for ASM optimized code */
+	if (scanline % 16)
+		scanline += 16 - scanline % 16;
 
 	return scanline;
 }

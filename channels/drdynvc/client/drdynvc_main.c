@@ -1269,6 +1269,21 @@ static void* drdynvc_virtual_channel_client_thread(void* arg)
 		}
 	}
 
+	{
+		/* Disconnect remaining dynamic channels that the server did not.
+		* This is required to properly shut down channels by calling the appropriate
+		* event handlers. */
+		DVCMAN* drdynvcMgr = (DVCMAN*)drdynvc->channel_mgr;
+
+		while (ArrayList_Count(drdynvcMgr->channels) > 0)
+		{
+			IWTSVirtualChannel* channel = (IWTSVirtualChannel*)
+			                              ArrayList_GetItem(drdynvcMgr->channels, 0);
+			const UINT32 ChannelId = drdynvc->channel_mgr->GetChannelId(channel);
+			dvcman_close_channel(drdynvc->channel_mgr, ChannelId);
+		}
+	}
+
 	if (error && drdynvc->rdpcontext)
 		setChannelError(drdynvc->rdpcontext, error,
 		                "drdynvc_virtual_channel_client_thread reported an error");

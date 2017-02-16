@@ -26,6 +26,7 @@
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 #include <freerdp/log.h>
+#include <freerdp/utils/profiler.h>
 
 #include "rdpgfx_common.h"
 
@@ -39,13 +40,12 @@
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s,
-				       RDPGFX_H264_METABLOCK* meta)
+                                       RDPGFX_H264_METABLOCK* meta)
 {
 	UINT32 index;
 	RECTANGLE_16* regionRect;
 	RDPGFX_H264_QUANT_QUALITY* quantQualityVal;
 	UINT error = ERROR_INVALID_DATA;
-
 	meta->regionRects = NULL;
 	meta->quantQualityVals = NULL;
 
@@ -72,7 +72,8 @@ static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s,
 		goto error_out;
 	}
 
-	meta->quantQualityVals = (RDPGFX_H264_QUANT_QUALITY*) malloc(meta->numRegionRects * sizeof(RDPGFX_H264_QUANT_QUALITY));
+	meta->quantQualityVals = (RDPGFX_H264_QUANT_QUALITY*) malloc(meta->numRegionRects * sizeof(
+	                             RDPGFX_H264_QUANT_QUALITY));
 
 	if (!meta->quantQualityVals)
 	{
@@ -86,13 +87,16 @@ static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s,
 	for (index = 0; index < meta->numRegionRects; index++)
 	{
 		regionRect = &(meta->regionRects[index]);
+
 		if ((error = rdpgfx_read_rect16(s, regionRect)))
 		{
 			WLog_ERR(TAG, "rdpgfx_read_rect16 failed with error %"PRIu32"!", error);
 			goto error_out;
 		}
-		WLog_DBG(TAG, "regionRects[%"PRIu32"]: left: %"PRIu16" top: %"PRIu16" right: %"PRIu16" bottom: %"PRIu16"",
-				 index, regionRect->left, regionRect->top, regionRect->right, regionRect->bottom);
+
+		WLog_DBG(TAG,
+		         "regionRects[%"PRIu32"]: left: %"PRIu16" top: %"PRIu16" right: %"PRIu16" bottom: %"PRIu16"",
+		         index, regionRect->left, regionRect->top, regionRect->right, regionRect->bottom);
 	}
 
 	if (Stream_GetRemainingLength(s) < (meta->numRegionRects * 2))
@@ -107,12 +111,12 @@ static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s,
 		quantQualityVal = &(meta->quantQualityVals[index]);
 		Stream_Read_UINT8(s, quantQualityVal->qpVal); /* qpVal (1 byte) */
 		Stream_Read_UINT8(s, quantQualityVal->qualityVal); /* qualityVal (1 byte) */
-
 		quantQualityVal->qp = quantQualityVal->qpVal & 0x3F;
 		quantQualityVal->r = (quantQualityVal->qpVal >> 6) & 1;
 		quantQualityVal->p = (quantQualityVal->qpVal >> 7) & 1;
-		WLog_DBG(TAG, "quantQualityVals[%"PRIu32"]: qp: %"PRIu8" r: %"PRIu8" p: %"PRIu8" qualityVal: %"PRIu8"",
-				 index, quantQualityVal->qp, quantQualityVal->r, quantQualityVal->p, quantQualityVal->qualityVal);
+		WLog_DBG(TAG,
+		         "quantQualityVals[%"PRIu32"]: qp: %"PRIu8" r: %"PRIu8" p: %"PRIu8" qualityVal: %"PRIu8"",
+		         index, quantQualityVal->qp, quantQualityVal->r, quantQualityVal->p, quantQualityVal->qualityVal);
 	}
 
 	return CHANNEL_RC_OK;
@@ -135,7 +139,6 @@ static UINT rdpgfx_decode_AVC420(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 	wStream* s;
 	RDPGFX_AVC420_BITMAP_STREAM h264;
 	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
-
 	s = Stream_New(cmd->data, cmd->length);
 
 	if (!s)
@@ -152,21 +155,19 @@ static UINT rdpgfx_decode_AVC420(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 
 	h264.data = Stream_Pointer(s);
 	h264.length = (UINT32) Stream_GetRemainingLength(s);
-
 	Stream_Free(s, FALSE);
-
 	cmd->extra = (void*) &h264;
 
 	if (context)
 	{
 		IFCALLRET(context->SurfaceCommand, error, context, cmd);
+
 		if (error)
 			WLog_ERR(TAG, "context->SurfaceCommand failed with error %"PRIu32"", error);
 	}
 
 	free(h264.meta.regionRects);
 	free(h264.meta.quantQualityVals);
-
 	return error;
 }
 
@@ -183,7 +184,6 @@ static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 	wStream* s;
 	RDPGFX_AVC444_BITMAP_STREAM h264;
 	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
-
 	s = Stream_New(cmd->data, cmd->length);
 
 	if (!s)
@@ -203,18 +203,20 @@ static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 		return ERROR_INVALID_DATA;
 
 	pos1 = Stream_GetPosition(s);
+
 	if ((error = rdpgfx_read_h264_metablock(gfx, s, &(h264.bitstream[0].meta))))
 	{
 		WLog_ERR(TAG, "rdpgfx_read_h264_metablock failed with error %"PRIu32"!", error);
 		return error;
 	}
-	pos2 = Stream_GetPosition(s);
 
+	pos2 = Stream_GetPosition(s);
 	h264.bitstream[0].data = Stream_Pointer(s);
 
 	if (h264.LC == 0)
 	{
 		tmp = h264.cbAvc420EncodedBitstream1 - pos2 + pos1;
+
 		if (Stream_GetRemainingLength(s) < tmp)
 			return ERROR_INVALID_DATA;
 
@@ -237,12 +239,12 @@ static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 	}
 
 	Stream_Free(s, FALSE);
-
 	cmd->extra = (void*) &h264;
 
 	if (context)
 	{
 		IFCALLRET(context->SurfaceCommand, error, context, cmd);
+
 		if (error)
 			WLog_ERR(TAG, "context->SurfaceCommand failed with error %"PRIu32"", error);
 	}
@@ -251,7 +253,6 @@ static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 	free(h264.bitstream[0].meta.quantQualityVals);
 	free(h264.bitstream[1].meta.regionRects);
 	free(h264.bitstream[1].meta.quantQualityVals);
-
 	return error;
 }
 
@@ -264,34 +265,34 @@ UINT rdpgfx_decode(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	UINT error = CHANNEL_RC_OK;
 	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
+	PROFILER_ENTER(context->SurfaceProfiler);
 
 	switch (cmd->codecId)
 	{
 		case RDPGFX_CODECID_AVC420:
 			if ((error = rdpgfx_decode_AVC420(gfx, cmd)))
-			{
 				WLog_ERR(TAG, "rdpgfx_decode_AVC420 failed with error %"PRIu32"", error);
-				return error;
-			}
+
 			break;
 
 		case RDPGFX_CODECID_AVC444:
 			if ((error = rdpgfx_decode_AVC444(gfx, cmd)))
-			{
 				WLog_ERR(TAG, "rdpgfx_decode_AVC444 failed with error %"PRIu32"", error);
-				return error;
-			}
+
 			break;
 
 		default:
 			if (context)
 			{
 				IFCALLRET(context->SurfaceCommand, error, context, cmd);
+
 				if (error)
 					WLog_ERR(TAG, "context->SurfaceCommand failed with error %"PRIu32"", error);
 			}
+
 			break;
 	}
 
+	PROFILER_EXIT(context->SurfaceProfiler);
 	return error;
 }

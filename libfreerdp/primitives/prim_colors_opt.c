@@ -204,7 +204,7 @@ static pstatus_t sse2_yCbCrToRGB_16s16s_P3P3(
 /*---------------------------------------------------------------------------*/
 static pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(
     const INT16* pSrc[3], UINT32 srcStep,
-    BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
+    BYTE* pDst, UINT32 dstStep,
     const prim_size_t* roi)	/* region of interest */
 {
 	__m128i zero, max, r_cr, g_cb, g_cr, b_cb, c4096;
@@ -212,22 +212,6 @@ static pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(
 	__m128i* d_buf;
 	int srcbump, dstbump, yp, imax;
 	size_t dstPad, yPad, cbPad, crPad;
-
-	if (((ULONG_PTR)(pSrc[0]) & 0x0f)
-	    || ((ULONG_PTR)(pSrc[1]) & 0x0f)
-	    || ((ULONG_PTR)(pSrc[2]) & 0x0f)
-	    || ((ULONG_PTR)(pDst[0]) & 0x0f)
-	    || ((ULONG_PTR)(pDst[1]) & 0x0f)
-	    || ((ULONG_PTR)(pDst[2]) & 0x0f)
-	    || (roi->width & 0x07)
-	    || (srcStep & 127)
-	    || (dstStep & 127))
-	{
-		/* We can't maintain 16-byte alignment. */
-		return generic->yCbCrToRGB_16s8u_P3AC4R(pSrc, srcStep,
-		                                        pDst, dstStep, DstFormat, roi);
-	}
-
 	zero = _mm_setzero_si128();
 	max = _mm_set1_epi16(255);
 	y_buf  = (const __m128i*)(pSrc[0]);
@@ -390,7 +374,7 @@ static pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(
 /*---------------------------------------------------------------------------*/
 static pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(
     const INT16* pSrc[3], UINT32 srcStep,
-    BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
+    BYTE* pDst, UINT32 dstStep,
     const prim_size_t* roi)	/* region of interest */
 {
 	__m128i zero, max, r_cr, g_cb, g_cr, b_cb, c4096;
@@ -398,22 +382,6 @@ static pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(
 	__m128i* d_buf;
 	int srcbump, dstbump, yp, imax;
 	size_t dstPad, yPad, cbPad, crPad;
-
-	if (((ULONG_PTR)(pSrc[0]) & 0x0f)
-	    || ((ULONG_PTR)(pSrc[1]) & 0x0f)
-	    || ((ULONG_PTR)(pSrc[2]) & 0x0f)
-	    || ((ULONG_PTR)(pDst[0]) & 0x0f)
-	    || ((ULONG_PTR)(pDst[1]) & 0x0f)
-	    || ((ULONG_PTR)(pDst[2]) & 0x0f)
-	    || (roi->width & 0x07)
-	    || (srcStep & 127)
-	    || (dstStep & 127))
-	{
-		/* We can't maintain 16-byte alignment. */
-		return generic->yCbCrToRGB_16s8u_P3AC4R(pSrc, srcStep,
-		                                        pDst, dstStep, DstFormat, roi);
-	}
-
 	zero = _mm_setzero_si128();
 	max = _mm_set1_epi16(255);
 	y_buf  = (const __m128i*)(pSrc[0]);
@@ -578,15 +546,28 @@ static pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R(
     BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
     const prim_size_t* roi)	/* region of interest */
 {
+	if (((ULONG_PTR)(pSrc[0]) & 0x0f)
+	    || ((ULONG_PTR)(pSrc[1]) & 0x0f)
+	    || ((ULONG_PTR)(pSrc[2]) & 0x0f)
+	    || ((ULONG_PTR)(pDst) & 0x0f)
+	    || (roi->width & 0x07)
+	    || (srcStep & 127)
+	    || (dstStep & 127))
+	{
+		/* We can't maintain 16-byte alignment. */
+		return generic->yCbCrToRGB_16s8u_P3AC4R(pSrc, srcStep,
+		                                        pDst, dstStep, DstFormat, roi);
+	}
+
 	switch (DstFormat)
 	{
 		case PIXEL_FORMAT_BGRA32:
 		case PIXEL_FORMAT_BGRX32:
-			return sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
+			return sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(pSrc, srcStep, pDst, dstStep, roi);
 
 		case PIXEL_FORMAT_RGBA32:
 		case PIXEL_FORMAT_RGBX32:
-			return sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
+			return sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(pSrc, srcStep, pDst, dstStep, roi);
 
 		default:
 			return generic->yCbCrToRGB_16s8u_P3AC4R(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
