@@ -2318,7 +2318,7 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 	};
 	const primitives_t* prims = primitives_get();
 	const primitives_t* generics = primitives_get_generic();
-	UINT32 x, i;
+	UINT32 x;
 
 	if (argc < 2)
 	{
