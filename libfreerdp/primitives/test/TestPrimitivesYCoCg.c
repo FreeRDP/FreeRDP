@@ -27,7 +27,7 @@
 /* ------------------------------------------------------------------------- */
 static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 {
-	pstatus_t status;
+	pstatus_t status = -1;
 	BYTE* out_sse = NULL;
 	BYTE* in = NULL;
 	BYTE* out_c = NULL;
@@ -45,8 +45,6 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 	};
 	PROFILER_DEFINE(genericProf);
 	PROFILER_DEFINE(optProf);
-	PROFILER_CREATE(genericProf, "YCoCgRToRGB_8u_AC4R-GENERIC");
-	PROFILER_CREATE(optProf, "YCoCgRToRGB_8u_AC4R-OPT");
 	in = _aligned_malloc(size, 16);
 	out_c = _aligned_malloc(size, 16);
 	out_sse = _aligned_malloc(size, 16);
@@ -61,6 +59,8 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 		const UINT32 format = formats[x];
 		const UINT32 dstStride = width * GetBytesPerPixel(format);
 		const char* formatName = GetColorFormatName(format);
+		PROFILER_CREATE(genericProf, "YCoCgRToRGB_8u_AC4R-GENERIC");
+		PROFILER_CREATE(optProf, "YCoCgRToRGB_8u_AC4R-OPT");
 		PROFILER_ENTER(genericProf);
 		status = generic->YCoCgToRGB_8u_AC4R(
 		             in, srcStride,
@@ -68,7 +68,7 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 		PROFILER_EXIT(genericProf);
 
 		if (status != PRIMITIVES_SUCCESS)
-			goto fail;
+			goto loop_fail;
 
 		PROFILER_ENTER(optProf);
 		status = optimized->YCoCgToRGB_8u_AC4R(
@@ -77,7 +77,7 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 		PROFILER_EXIT(optProf);
 
 		if (status != PRIMITIVES_SUCCESS)
-			goto fail;
+			goto loop_fail;
 
 		if (memcmp(out_c, out_sse, dstStride * height) != 0)
 		{
@@ -95,15 +95,21 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 			}
 		}
 
+		printf("--------------------------- [%s] [%"PRIu32"x%"PRIu32"] ---------------------------\n",
+		       formatName, width, height);
 		PROFILER_PRINT_HEADER;
 		PROFILER_PRINT(genericProf);
 		PROFILER_PRINT(optProf);
 		PROFILER_PRINT_FOOTER;
+	loop_fail:
+		PROFILER_FREE(genericProf);
+		PROFILER_FREE(optProf);
+
+		if (status != PRIMITIVES_SUCCESS)
+			goto fail;
 	}
 
 fail:
-	PROFILER_FREE(genericProf);
-	PROFILER_FREE(optProf);
 	_aligned_free(in);
 	_aligned_free(out_c);
 	_aligned_free(out_sse);
@@ -114,6 +120,35 @@ int TestPrimitivesYCoCg(int argc, char* argv[])
 {
 	prim_test_setup(FALSE);
 
+	/* Random resolution tests */
+	if (argc < 2)
+	{
+		UINT32 x;
+
+		for (x = 0; x < 10; x++)
+		{
+			UINT32 w, h;
+
+			do
+			{
+				winpr_RAND((BYTE*)&w, sizeof(w));
+				w %= 4096;
+			}
+			while (w < 16);
+
+			do
+			{
+				winpr_RAND((BYTE*)&h, sizeof(h));
+				h %= 4096;
+			}
+			while (h < 16);
+
+			if (!test_YCoCgRToRGB_8u_AC4R_func(w, h))
+				return 1;
+		}
+	}
+
+	/* Test once with full HD */
 	if (!test_YCoCgRToRGB_8u_AC4R_func(1920, 1080))
 		return 1;
 
