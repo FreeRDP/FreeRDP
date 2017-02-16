@@ -2513,7 +2513,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 
-	if (!settings->Username && user)
+	if (user)
 	{
 		free(settings->Username);
 		if (!settings->Domain && user)
