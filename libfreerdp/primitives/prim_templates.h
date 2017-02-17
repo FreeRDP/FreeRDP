@@ -46,7 +46,7 @@
 #define SSE3_SCD_ROUTINE(_name_, _type_, _fallback_, _op_, _slowWay_) \
 	static pstatus_t _name_(const _type_ *pSrc, UINT32 val, _type_ *pDst, UINT32 len) \
     { \
-	    INT32 shifts; \
+	    INT32 shifts = 0; \
 	    UINT32 offBeatMask; \
 	    const _type_ *sptr = pSrc; \
 	    _type_ *dptr = pDst; \
@@ -190,7 +190,7 @@
 #define SSE3_SCD_PRE_ROUTINE(_name_, _type_, _fallback_, _op_, _slowWay_) \
 	pstatus_t _name_(const _type_ *pSrc, _type_ val, _type_ *pDst, INT32 len) \
     { \
-	    int shifts; \
+	    int shifts = 0; \
 	    UINT32 offBeatMask; \
 	    const _type_ *sptr = pSrc; \
 	    _type_ *dptr = pDst; \
@@ -295,7 +295,7 @@
 #define SSE3_SSD_ROUTINE(_name_, _type_, _fallback_, _op_, _slowWay_) \
 	pstatus_t _name_(const _type_ *pSrc1, const _type_ *pSrc2, _type_ *pDst, UINT32 len) \
     { \
-	    int shifts; \
+	    int shifts = 0; \
 	    UINT32 offBeatMask; \
 	    const _type_ *sptr1 = pSrc1; \
 	    const _type_ *sptr2 = pSrc2; \
