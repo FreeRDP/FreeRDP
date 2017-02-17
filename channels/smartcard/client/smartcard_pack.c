@@ -581,16 +581,17 @@ void smartcard_trace_list_reader_groups_call(SMARTCARD_DEVICE* smartcard,
 
 	if (call->hContext.cbContext > 4)
 	{
-		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG,
+		         "hContext: 0x%02"PRIx8"%02"PRIx8"%02"PRIx8"%02"PRIx8"%02"PRIx8"%02"PRIx8"%02"PRIx8"%02"PRIx8" (%"PRIu32")",
 		         pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
-		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02"PRIx8"%02"PRIx8"%02"PRIx8"%02"PRIx8" (%"PRIu32")",
 		         pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
-	WLog_DBG(TAG, "fmszGroupsIsNULL: %d cchGroups: 0x%08X",
+	WLog_DBG(TAG, "fmszGroupsIsNULL: %"PRId32" cchGroups: 0x%08"PRIx32,
 	         call->fmszGroupsIsNULL, call->cchGroups);
 	WLog_DBG(TAG, "}");
 }
@@ -648,9 +649,9 @@ void smartcard_trace_list_reader_groups_return(SMARTCARD_DEVICE* smartcard,
 	}
 
 	WLog_DBG(TAG, "ListReaderGroups%s_Return {", unicode ? "W" : "A");
-	WLog_DBG(TAG, "ReturnCode: %s (0x%08X)",
+	WLog_DBG(TAG, "ReturnCode: %s (0x%08"PRIx32")",
 	         SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
-	WLog_DBG(TAG, "cBytes: %d msz: %s", ret->cBytes, mszA);
+	WLog_DBG(TAG, "cBytes: %"PRIu32" msz: %s", ret->cBytes, mszA);
 	WLog_DBG(TAG, "}");
 	free(mszA);
 }

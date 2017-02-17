@@ -1343,15 +1343,13 @@ static LONG smartcard_AccessStartedEvent_Decode(SMARTCARD_DEVICE* smartcard,
 static LONG smartcard_AccessStartedEvent_Call(SMARTCARD_DEVICE* smartcard,
         SMARTCARD_OPERATION* operation)
 {
-	LONG status;
-	Long_Return ret;
-	status = ret.ReturnCode = SCARD_S_SUCCESS;
+	LONG status = SCARD_S_SUCCESS;
 
 	if (!smartcard->StartedEvent)
 		smartcard->StartedEvent = SCardAccessStartedEvent();
 
 	if (!smartcard->StartedEvent)
-		status = ret.ReturnCode = SCARD_E_NO_SERVICE;
+		status = SCARD_E_NO_SERVICE;
 
 	return status;
 }
