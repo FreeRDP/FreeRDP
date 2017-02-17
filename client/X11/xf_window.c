@@ -945,6 +945,10 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y,
                          int width, int height)
 {
 	int ax, ay;
+
+        if (appWindow == NULL)
+		return;
+
 	ax = x + appWindow->windowOffsetX;
 	ay = y + appWindow->windowOffsetY;
 

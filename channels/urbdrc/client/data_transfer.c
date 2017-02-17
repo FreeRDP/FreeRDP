@@ -2319,12 +2319,9 @@ void* urbdrc_process_udev_data_transfer(void* arg)
 	pdev = udevman->get_udevice_by_UsbDevice(udevman, UsbDevice);
 	if (pdev == NULL || pdev->isSigToEnd(pdev))
 	{
-		if (transfer_data)
-		{
-			if (transfer_data->pBuffer)
-				zfree(transfer_data->pBuffer);
-			zfree(transfer_data);
-		}
+		if (transfer_data->pBuffer)
+			zfree(transfer_data->pBuffer);
+		zfree(transfer_data);
 		return 0;
 	}
 

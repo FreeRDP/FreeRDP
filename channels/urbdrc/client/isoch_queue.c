@@ -120,11 +120,13 @@ static int isoch_queue_unregister_data(ISOCH_CALLBACK_QUEUE* queue, ISOCH_CALLBA
 		}
 		queue->isoch_num--;
 
-		/* free data info */
-		isoch->out_data = NULL;
-
 		if (isoch)
+		{
+			/* free data info */
+			isoch->out_data = NULL;
+
 			zfree(isoch);
+		}
 
 		return 1; /* unregistration successful */
 	}
