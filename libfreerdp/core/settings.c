@@ -591,6 +591,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!settings->SettingsModified)
 		goto out_fail;
 
+	settings->ActionScript = _strdup("~/.config/freerdp/action.sh");
+
 	return settings;
 out_fail:
 	free(settings->HomePath);
