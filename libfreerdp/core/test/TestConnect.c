@@ -1,5 +1,6 @@
 #include <winpr/sysinfo.h>
 #include <winpr/path.h>
+#include <winpr/crypto.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/client/cmdline.h>
 
@@ -275,7 +276,9 @@ static int testSuccess(int port)
 int TestConnect(int argc, char* argv[])
 {
 	int randomPort;
-	randomPort = 3389 + (random() % 200);
+	int random;
+	winpr_RAND((BYTE*)&random, sizeof(random));
+	randomPort = 3389 + (random % 200);
 
 	/* Test connect to not existing server,
 	 * check if timeout is honored. */
