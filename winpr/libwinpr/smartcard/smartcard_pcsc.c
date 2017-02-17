@@ -763,6 +763,7 @@ char* PCSC_ConvertReaderNameToWinSCard(const char* name)
 	if ((index < 0) || (slot < 0))
 		return NULL;
 
+
 	if (tokens[ctoken] && tokens[ctoken][1] && *(tokens[ctoken][1] - 1) == ')')
 	{
 		while ((*(tokens[ctoken][0]) != '(') && (ctoken > 0))
@@ -788,7 +789,7 @@ char* PCSC_ConvertReaderNameToWinSCard(const char* name)
 	p = tokens[0][0];
 	q = tokens[ctoken][1];
 	length = (q - p);
-	size = length + 16;
+	size = length + 48;
 	nameWinSCard = (char*) malloc(size);
 
 	if (!nameWinSCard)
@@ -801,16 +802,21 @@ char* PCSC_ConvertReaderNameToWinSCard(const char* name)
 	 * and incrementing until available index found.
 	 */
 	index = 0;
-	sprintf_s(nameWinSCard, size, "%.*s %d", length, p, index);
+	sprintf_s(nameWinSCard, size, "%s", p);
 
 	checkAliasName = PCSC_GetReaderNameFromAlias(nameWinSCard);
 	while ((checkAliasName != NULL) && (strcmp(checkAliasName, name) != 0))
 	{
 		index++;
-		sprintf_s(nameWinSCard, size, "%.*s %d", length, p, index);
+		sprintf_s(nameWinSCard, size, "%s", p);
 		checkAliasName = PCSC_GetReaderNameFromAlias(nameWinSCard);
 	}
 
+/*
+	DEBUG: /log-filters:"com.freerdp.channels.smartcard.client":DEBUG
+	AND
+	WLog_ERR(TAG,"ReaderNameWLOGWinSCard: %s\n", nameWinSCard);
+*/
 	return nameWinSCard;
 }
 
