@@ -1,5 +1,6 @@
 #include <winpr/sysinfo.h>
 #include <winpr/path.h>
+#include <winpr/crypto.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/client/cmdline.h>
 
@@ -59,7 +60,7 @@ static int testTimeout(int port)
 		NULL
 	};
 	int rc;
-	snprintf(arg1, 18, "/v:192.0.2.1:%d", port);
+	_snprintf(arg1, 18, "/v:192.0.2.1:%d", port);
 	argv[1] = arg1;
 	start = GetTickCount();
 	rc = runInstance(2, argv, NULL);
@@ -97,7 +98,7 @@ static void* testThread(void* arg)
 	};
 	int rc;
 	struct testThreadArgs* args = arg;
-	snprintf(arg1, 18, "/v:192.0.2.1:%d", args->port);
+	_snprintf(arg1, 18, "/v:192.0.2.1:%d", args->port);
 	argv[1] = arg1;
 	rc = runInstance(2, argv, args->arg);
 
@@ -165,7 +166,7 @@ static int testAbort(int port)
 static int testSuccess(int port)
 {
 	int rc;
-	STARTUPINFO si;
+	STARTUPINFOA si;
 	PROCESS_INFORMATION process;
 	char arg1[] = "/v:127.0.0.1:XXXXX";
 	char* clientArgs[] =
@@ -183,7 +184,7 @@ static int testSuccess(int port)
 	char* wpath = TESTING_SRC_DIRECTORY;
 	char* exe = GetCombinedPath(path, "server");
 	char* wexe = GetCombinedPath(wpath, "server");
-	snprintf(arg1, 18, "/v:127.0.0.1:%d", port);
+	_snprintf(arg1, 18, "/v:127.0.0.1:%d", port);
 	clientArgs[1] = arg1;
 
 	if (!exe || !wexe)
@@ -237,7 +238,7 @@ static int testSuccess(int port)
 		return -2;
 	}
 
-	snprintf(commandLine, commandLineLen, "%s --port=%d", exe, port);
+	_snprintf(commandLine, commandLineLen, "%s --port=%d", exe, port);
 	memset(&si, 0, sizeof(si));
 	si.cb = sizeof(si);
 
@@ -275,7 +276,9 @@ static int testSuccess(int port)
 int TestConnect(int argc, char* argv[])
 {
 	int randomPort;
-	randomPort = 3389 + (random() % 200);
+	int random;
+	winpr_RAND((BYTE*)&random, sizeof(random));
+	randomPort = 3389 + (random % 200);
 
 	/* Test connect to not existing server,
 	 * check if timeout is honored. */
