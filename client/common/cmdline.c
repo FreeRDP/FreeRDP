@@ -2530,21 +2530,24 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			settings->Username = user;
 	}
 
-	free(settings->GatewayUsername);
-
-	if (!settings->GatewayDomain && gwUser)
+	if (gwUser)
 	{
-		BOOL ret;
-		free(settings->GatewayDomain);
-		ret = freerdp_parse_username(gwUser, &settings->GatewayUsername,
-		                             &settings->GatewayDomain);
-		free(gwUser);
+		free(settings->GatewayUsername);
 
-		if (!ret)
-			return COMMAND_LINE_ERROR;
+		if (!settings->GatewayDomain && gwUser)
+		{
+			BOOL ret;
+			free(settings->GatewayDomain);
+			ret = freerdp_parse_username(gwUser, &settings->GatewayUsername,
+						     &settings->GatewayDomain);
+			free(gwUser);
+
+			if (!ret)
+				return COMMAND_LINE_ERROR;
+		}
+		else
+			settings->GatewayUsername = gwUser;
 	}
-	else
-		settings->GatewayUsername = gwUser;
 
 	freerdp_performance_flags_make(settings);
 
