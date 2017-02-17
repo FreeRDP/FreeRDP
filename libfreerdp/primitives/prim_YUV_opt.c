@@ -521,7 +521,7 @@ static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R(const BYTE** pSrc, const UINT32* sr
  * U = -0.11457 * R - 0.38543 * G + 0.50000 * B + 128;
  * V =  0.50000 * R - 0.45415 * G - 0.04585 * B + 128;
  *
- * The most accurate integer artmethic approximation when using 8-bit signed
+ * The most accurate integer arithmetic approximation when using 8-bit signed
  * integer factors with 16-bit signed integer intermediate results is:
  *
  * Y = ( ( 27 * R + 92 * G +  9 * B) >> 7 );
@@ -633,7 +633,8 @@ static INLINE void ssse3_RGBToYUV420_BGRX_UV(
 		x3 = _mm_load_si128(rgb1++);
 		x4 = _mm_load_si128(rgb2++);
 		x3 = _mm_avg_epu8(x3, x4);
-		// subsample these 16x1 pixels into 8x1 pixels */
+		/* subsample these 16x1 pixels into 8x1 pixels */
+
 		/**
 		 * shuffle controls
 		 * c = a[0],a[2],b[0],b[2] == 10 00 10 00 = 0x88
@@ -724,6 +725,165 @@ static pstatus_t ssse3_RGBToYUV420(
 
 		default:
 			return generic->RGBToYUV420_8u_P3AC4R(pSrc, srcFormat, srcStep, pDst, dstStep, roi);
+	}
+}
+
+
+/****************************************************************************/
+/* SSSE3 RGB -> AVC444-YUV conversion                                      **/
+/****************************************************************************/
+
+static INLINE void ssse3_RGBToAVC444YUV_BGRX_ROW(
+	const BYTE* src, BYTE* ydst, BYTE* udst1, BYTE* udst2, BYTE* vdst1, BYTE* vdst2, BOOL isEvenRow, UINT32 width)
+{
+	UINT32 x;
+	__m128i vector128, y_factors, u_factors, v_factors, smask;
+	__m128i x1, x2, x3, x4, y, y1, y2, u, u1, u2, v, v1, v2;
+	const __m128i* argb = (const __m128i*) src;
+	__m128i* py = (__m128i*) ydst;
+	__m64* pu1 = (__m64*) udst1;
+	__m64* pu2 = (__m64*) udst2;
+	__m64* pv1 = (__m64*) vdst1;
+	__m64* pv2 = (__m64*) vdst2;
+	y_factors = _mm_load_si128((__m128i*)bgrx_y_factors);
+	u_factors = _mm_load_si128((__m128i*)bgrx_u_factors);
+	v_factors = _mm_load_si128((__m128i*)bgrx_v_factors);
+	vector128 = _mm_load_si128((__m128i*)const_buf_128b);
+
+	smask = _mm_set_epi8(15, 13, 11, 9, 7, 5, 3, 1, 14, 12, 10, 8, 6, 4, 2, 0);
+
+	for (x = 0; x < width; x += 16)
+	{
+		/* store 16 rgba pixels in 4 128 bit registers */
+		x1 = _mm_load_si128(argb++); // 1st 4 pixels
+		x2 = _mm_load_si128(argb++); // 2nd 4 pixels
+		x3 = _mm_load_si128(argb++); // 3rd 4 pixels
+		x4 = _mm_load_si128(argb++); // 4th 4 pixels
+
+		/* Y: multiplications with subtotals and horizontal sums */
+		y1 = _mm_hadd_epi16(_mm_maddubs_epi16(x1, y_factors), _mm_maddubs_epi16(x2, y_factors));
+		y2 = _mm_hadd_epi16(_mm_maddubs_epi16(x3, y_factors), _mm_maddubs_epi16(x4, y_factors));
+		/* Y: shift the results (logical) */
+		y1 = _mm_srli_epi16(y1, 7);
+		y2 = _mm_srli_epi16(y2, 7);
+		/* Y: pack (unsigned) 16 words into bytes */
+		y = _mm_packus_epi16(y1, y2);
+
+		/* U: multiplications with subtotals and horizontal sums */
+		u1 = _mm_hadd_epi16(_mm_maddubs_epi16(x1, u_factors), _mm_maddubs_epi16(x2, u_factors));
+		u2 = _mm_hadd_epi16(_mm_maddubs_epi16(x3, u_factors), _mm_maddubs_epi16(x4, u_factors));
+		/* U: shift the results (arithmetic) */
+		u1 = _mm_srai_epi16(u1, 7);
+		u2 = _mm_srai_epi16(u2, 7);
+		/* U: pack (signed) 16 words into bytes */
+		u = _mm_packs_epi16(u1, u2);
+		/* U: add 128 */
+		u = _mm_add_epi8(u, vector128);
+
+		/* V: multiplications with subtotals and horizontal sums */
+		v1 = _mm_hadd_epi16(_mm_maddubs_epi16(x1, v_factors), _mm_maddubs_epi16(x2, v_factors));
+		v2 = _mm_hadd_epi16(_mm_maddubs_epi16(x3, v_factors), _mm_maddubs_epi16(x4, v_factors));
+		/* V: shift the results (arithmetic) */
+		v1 = _mm_srai_epi16(v1, 7);
+		v2 = _mm_srai_epi16(v2, 7);
+		/* V: pack (signed) 16 words into bytes */
+		v = _mm_packs_epi16(v1, v2);
+		/* V: add 128 */
+		v = _mm_add_epi8(v, vector128);
+
+
+		/* store y */
+		_mm_storeu_si128(py++, y);
+
+		/* store u and v */
+		if (isEvenRow)
+		{
+			u = _mm_shuffle_epi8(u, smask);
+			v = _mm_shuffle_epi8(v, smask);
+			_mm_storel_pi(pu1++, _mm_castsi128_ps(u));
+			_mm_storeh_pi(pu2++, _mm_castsi128_ps(u));
+			_mm_storel_pi(pv1++, _mm_castsi128_ps(v));
+			_mm_storeh_pi(pv2++, _mm_castsi128_ps(v));
+		}
+		else
+		{
+			_mm_storel_pi(pu1, _mm_castsi128_ps(u));
+			_mm_storeh_pi(pu2, _mm_castsi128_ps(u));
+			_mm_storel_pi(pv1, _mm_castsi128_ps(v));
+			_mm_storeh_pi(pv2, _mm_castsi128_ps(v));
+			pu1 += 2;
+			pu2 += 2;
+			pv1 += 2;
+			pv2 += 2;
+		}
+	}
+}
+
+
+static pstatus_t ssse3_RGBToAVC444YUV_BGRX(
+	const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
+	BYTE* pDst1[3], const UINT32 dst1Step[3],
+	BYTE* pDst2[3], const UINT32 dst2Step[3],
+	const prim_size_t* roi)
+{
+	UINT32 y, numRows;
+	BOOL evenRow = TRUE;
+	BYTE *b1, *b2, *b3, *b4, *b5, *b6, *b7;
+	const BYTE* pMaxSrc = pSrc + (roi->height - 1) * srcStep;
+
+	if (roi->height < 1 || roi->width < 1)
+	{
+		return !PRIMITIVES_SUCCESS;
+	}
+
+	if (roi->width % 16 || (unsigned long)pSrc % 16 || srcStep % 16)
+	{
+		return generic->RGBToAVC444YUV(pSrc, srcFormat, srcStep, pDst1, dst1Step, pDst2, dst2Step, roi);
+	}
+
+	numRows = (roi->height + 1) & ~1;
+
+	for (y = 0; y < numRows; y++, evenRow = !evenRow)
+	{
+		const BYTE *src = y < roi->height ? pSrc + y * srcStep : pMaxSrc;
+		UINT32 i = y >> 1;
+
+		b1  = pDst1[0] + y * dst1Step[0];
+
+		if (evenRow)
+		{
+			b2 = pDst1[1] + i * dst1Step[1];
+			b3 = pDst1[2] + i * dst1Step[2];
+			b6 = pDst2[1] + i * dst2Step[1];
+			b7 = pDst2[2] + i * dst2Step[2];
+			ssse3_RGBToAVC444YUV_BGRX_ROW(src, b1, b2, b6, b3, b7, TRUE, roi->width);
+		}
+		else
+		{
+			b4 = pDst2[0] + dst2Step[0] * ((i & ~7) + i);
+			b5 = b4 + 8 * dst2Step[0];
+			ssse3_RGBToAVC444YUV_BGRX_ROW(src, b1, b4, b4 + 8, b5, b5 + 8, FALSE, roi->width);
+		}
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
+
+static pstatus_t ssse3_RGBToAVC444YUV(
+	const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
+	BYTE* pDst1[3], const UINT32 dst1Step[3],
+	BYTE* pDst2[3], const UINT32 dst2Step[3],
+	const prim_size_t* roi)
+{
+	switch (srcFormat)
+	{
+		case PIXEL_FORMAT_BGRX32:
+		case PIXEL_FORMAT_BGRA32:
+			return ssse3_RGBToAVC444YUV_BGRX(pSrc, srcFormat, srcStep, pDst1, dst1Step, pDst2, dst2Step, roi);
+
+		default:
+			return generic->RGBToAVC444YUV(pSrc, srcFormat, srcStep, pDst1, dst1Step, pDst2, dst2Step, roi);
 	}
 }
 
@@ -1287,6 +1447,7 @@ void primitives_init_YUV_opt(primitives_t* prims)
 	    && IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
 	{
 		prims->RGBToYUV420_8u_P3AC4R = ssse3_RGBToYUV420;
+		prims->RGBToAVC444YUV = ssse3_RGBToAVC444YUV;
 		prims->YUV420ToRGB_8u_P3AC4R = ssse3_YUV420ToRGB;
 		prims->YUV444ToRGB_8u_P3AC4R = ssse3_YUV444ToRGB_8u_P3AC4R;
 	}

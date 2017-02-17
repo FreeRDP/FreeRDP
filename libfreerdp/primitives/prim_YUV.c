@@ -703,7 +703,252 @@ static pstatus_t general_RGBToYUV420_8u_P3AC4R(
 	}
 }
 
+static INLINE pstatus_t general_RGBToAVC444YUV_BGRX(
+	const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
+	BYTE* pDst1[3], const UINT32 dst1Step[3],
+	BYTE* pDst2[3], const UINT32 dst2Step[3],
+	const prim_size_t* roi)
+{
+	/**
+	 * Note:
+	 * Read information in function general_RGBToAVC444YUV_ANY below !
+	 */
 
+	UINT32 x, y, n, numRows, numCols;
+	BOOL evenRow = TRUE;
+	BYTE *b1, *b2, *b3, *b4, *b5, *b6, *b7;
+	const BYTE* pMaxSrc = pSrc + (roi->height - 1) * srcStep;
+
+	numRows = (roi->height + 1) & ~1;
+	numCols = (roi->width + 1) & ~1;
+
+	for (y = 0; y < numRows; y++, evenRow = !evenRow)
+	{
+		const BYTE* src = y < roi->height ? pSrc + y * srcStep : pMaxSrc;
+		UINT32 i = y >> 1;
+
+		b1  = pDst1[0] + y * dst1Step[0];
+
+		if (evenRow)
+		{
+			b2 = pDst1[1] + i * dst1Step[1];
+			b3 = pDst1[2] + i * dst1Step[2];
+			b6 = pDst2[1] + i * dst2Step[1];
+			b7 = pDst2[2] + i * dst2Step[2];
+		}
+		else
+		{
+			n = (i & ~7) + i;
+			b4 = pDst2[0] + dst2Step[0] * n;
+			b5 = b4 + 8 * dst2Step[0];
+		}
+
+		for (x = 0; x < numCols; x += 2)
+		{
+			BYTE R, G, B, Y1, Y2, U1, U2, V1, V2;
+
+			B = src[0];
+			G = src[1];
+			R = src[2];
+
+			Y1 = Y2 = RGB2Y(R, G, B);
+			U1 = U2 = RGB2U(R, G, B);
+			V1 = V2 = RGB2V(R, G, B);
+
+			if (x + 1 < roi->width)
+			{
+				B = src[4];
+				G = src[5];
+				R = src[6];
+				Y2 = RGB2Y(R, G, B);
+				U2 = RGB2U(R, G, B);
+				V2 = RGB2V(R, G, B);
+			}
+
+			*b1++ = Y1;
+			*b1++ = Y2;
+
+			if (evenRow)
+			{
+				*b2++ = U1;
+				*b3++ = V1;
+				*b6++ = U2;
+				*b7++ = V2;
+			}
+			else
+			{
+				*b4++ = U1;
+				*b4++ = U2;
+				*b5++ = V1;
+				*b5++ = V2;
+			}
+
+			src += 8;
+		}
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
+static INLINE pstatus_t general_RGBToAVC444YUV_ANY(
+		const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
+		BYTE* pDst1[3], const UINT32 dst1Step[3],
+		BYTE* pDst2[3], const UINT32 dst2Step[3],
+		const prim_size_t* roi)
+{
+	/**
+	 * Note: According to [MS-RDPEGFX 2.2.4.4 RFX_AVC420_BITMAP_STREAM] the
+	 * width and height of the MPEG-4 AVC/H.264 codec bitstream MUST be aligned
+	 * to a multiple of 16.
+	 * Hence the passed destination YUV420/CHROMA420 buffers must have been
+	 * allocated accordingly !!
+	 */
+
+	/**
+	 * [MS-RDPEGFX 3.3.8.3.2 YUV420p Stream Combination] defines the following "Bx areas":
+	 *
+	 * YUV420 frame (main view):
+	 * B1:  From Y444 all pixels
+	 * B2:  From U444 all pixels in even rows with even columns
+	 * B3:  From V444 all pixels in even rows with even columns
+	 *
+	 * Chroma420 frame (auxillary view):
+	 * B45: From U444 and V444 all pixels from all odd rows
+	 *      (The odd U444 and V444 rows must be interleaved in 8-line blocks in B45 !!!)
+	 * B6:  From U444 all pixels in even rows with odd columns
+	 * B7:  From V444 all pixels in even rows with odd columns
+	 *
+	 * Microsoft's horrible unclear description in MS-RDPEGFX translated to pseudo code looks like this:
+	 *
+	 * for (y = 0; y < fullHeight; y++)
+	 * {
+	 *     for (x = 0; x < fullWidth; x++)
+	 *     {
+	 *         B1[x,y] = Y444[x,y];
+	 *     }
+	 *  }
+	 *
+	 * for (y = 0; y < halfHeight; y++)
+	 * {
+	 *     for (x = 0; x < halfWidth; x++)
+	 *     {
+	 *         B2[x,y] = U444[2 * x,     2 * y];
+	 *         B3[x,y] = V444[2 * x,     2 * y];
+	 *         B6[x,y] = U444[2 * x + 1, 2 * y];
+	 *     	   B7[x,y] = V444[2 * x + 1, 2 * y];
+	 *     }
+	 *  }
+	 *
+	 * for (y = 0; y < halfHeight; y++)
+	 * {
+	 *     yU  = (y / 8) * 16;   // identify first row of correct 8-line U block in B45
+	 *     yU += (y % 8);        // add offset rows in destination block
+	 *     yV  = yU + 8;         // the corresponding v line is always 8 rows ahead
+	 *
+	 *     for (x = 0; x < fullWidth; x++)
+	 *     {
+	 *         B45[x,yU] = U444[x, 2 * y + 1];
+	 *         B45[x,yV] = V444[x, 2 * y + 1];
+	 *     }
+	 *  }
+	 *
+	 */
+
+	const UINT32 bpp = GetBytesPerPixel(srcFormat);
+	UINT32 x, y, n, numRows, numCols;
+	BOOL evenRow = TRUE;
+	BYTE *b1, *b2, *b3, *b4, *b5, *b6, *b7;
+	const BYTE* pMaxSrc = pSrc + (roi->height - 1) * srcStep;
+
+	numRows = (roi->height + 1) & ~1;
+	numCols = (roi->width + 1) & ~1;
+
+	for (y = 0; y < numRows; y++, evenRow = !evenRow)
+	{
+		const BYTE* src = y < roi->height ? pSrc + y * srcStep : pMaxSrc;
+		UINT32 i = y >> 1;
+
+		b1  = pDst1[0] + y * dst1Step[0];
+
+		if (evenRow)
+		{
+			b2 = pDst1[1] + i * dst1Step[1];
+			b3 = pDst1[2] + i * dst1Step[2];
+			b6 = pDst2[1] + i * dst2Step[1];
+			b7 = pDst2[2] + i * dst2Step[2];
+		}
+		else
+		{
+			n = (i & ~7) + i;
+			b4 = pDst2[0] + dst2Step[0] * n;
+			b5 = b4 + 8 * dst2Step[0];
+		}
+
+		for (x = 0; x < numCols; x += 2)
+		{
+			BYTE R, G, B, Y1, Y2, U1, U2, V1, V2;
+			UINT32 color;
+
+			color = ReadColor(src, srcFormat);
+			SplitColor(color, srcFormat, &R, &G, &B, NULL, NULL);
+
+			Y1 = Y2 = RGB2Y(R, G, B);
+			U1 = U2 = RGB2U(R, G, B);
+			V1 = V2 = RGB2V(R, G, B);
+
+			if (x + 1 < roi->width)
+			{
+				color = ReadColor(src + bpp, srcFormat);
+				SplitColor(color, srcFormat, &R, &G, &B, NULL, NULL);
+
+				Y2 = RGB2Y(R, G, B);
+				U2 = RGB2U(R, G, B);
+				V2 = RGB2V(R, G, B);
+			}
+
+			*b1++ = Y1;
+			*b1++ = Y2;
+
+			if (evenRow)
+			{
+				*b2++ = U1;
+				*b3++ = V1;
+				*b6++ = U2;
+				*b7++ = V2;
+			}
+			else
+			{
+				*b4++ = U1;
+				*b4++ = U2;
+				*b5++ = V1;
+				*b5++ = V2;
+			}
+
+			src += 2 * bpp;
+		}
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
+static INLINE pstatus_t general_RGBToAVC444YUV(
+	const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
+	BYTE* pDst1[3], const UINT32 dst1Step[3],
+	BYTE* pDst2[3], const UINT32 dst2Step[3],
+	const prim_size_t* roi)
+{
+	switch (srcFormat)
+	{
+		case PIXEL_FORMAT_BGRA32:
+		case PIXEL_FORMAT_BGRX32:
+			return general_RGBToAVC444YUV_BGRX(pSrc, srcFormat, srcStep, pDst1, dst1Step, pDst2, dst2Step, roi);
+
+		default:
+			return general_RGBToAVC444YUV_ANY(pSrc, srcFormat, srcStep, pDst1, dst1Step, pDst2, dst2Step, roi);
+	}
+
+	return !PRIMITIVES_SUCCESS;
+}
 
 void primitives_init_YUV(primitives_t* prims)
 {
@@ -713,5 +958,6 @@ void primitives_init_YUV(primitives_t* prims)
 	prims->RGBToYUV444_8u_P3AC4R = general_RGBToYUV444_8u_P3AC4R;
 	prims->YUV420CombineToYUV444 = general_YUV420CombineToYUV444;
 	prims->YUV444SplitToYUV420 = general_YUV444SplitToYUV420;
+	prims->RGBToAVC444YUV = general_RGBToAVC444YUV;
 }
 
