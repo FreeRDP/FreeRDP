@@ -79,8 +79,7 @@ static BOOL wf_decode_color(wfContext* wfc, const UINT32 srcColor,
 	if (!gdi || !settings)
 		return FALSE;
 
-	SrcFormat = gdi_get_pixel_format(gdi->context->settings->ColorDepth,
-	                                 FALSE);
+	SrcFormat = gdi_get_pixel_format(gdi->context->settings->ColorDepth);
 
 	if (format)
 		*format = SrcFormat;
@@ -184,7 +183,7 @@ static HBRUSH wf_create_brush(wfContext* wfc, rdpBrush* brush, UINT32 color,
 	{
 		if (brush->bpp > 1)
 		{
-			UINT32 format = gdi_get_pixel_format(bpp, FALSE);
+			UINT32 format = gdi_get_pixel_format(bpp);
 			pattern = wf_create_dib(wfc, 8, 8, format, brush->data, NULL);
 			lbr.lbHatch = (ULONG_PTR) pattern;
 		}

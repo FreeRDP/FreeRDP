@@ -166,7 +166,7 @@ static int testAbort(int port)
 static int testSuccess(int port)
 {
 	int rc;
-	STARTUPINFO si;
+	STARTUPINFOA si;
 	PROCESS_INFORMATION process;
 	char arg1[] = "/v:127.0.0.1:XXXXX";
 	char* clientArgs[] =
