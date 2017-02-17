@@ -469,10 +469,11 @@ int tsmf_window_unmap(TSMFGstreamerDecoder* decoder)
 int tsmf_window_destroy(TSMFGstreamerDecoder* decoder)
 {
 	struct X11Handle* hdl;
-	decoder->ready = FALSE;
 
 	if (!decoder)
 		return -1;
+
+	decoder->ready = FALSE;
 
 	if (decoder->media_type != TSMF_MAJOR_TYPE_VIDEO)
 		return -3;
