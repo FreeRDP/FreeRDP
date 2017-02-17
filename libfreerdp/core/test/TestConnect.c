@@ -59,7 +59,7 @@ static int testTimeout(int port)
 		NULL
 	};
 	int rc;
-	snprintf(arg1, 18, "/v:192.0.2.1:%d", port);
+	_snprintf(arg1, 18, "/v:192.0.2.1:%d", port);
 	argv[1] = arg1;
 	start = GetTickCount();
 	rc = runInstance(2, argv, NULL);
@@ -97,7 +97,7 @@ static void* testThread(void* arg)
 	};
 	int rc;
 	struct testThreadArgs* args = arg;
-	snprintf(arg1, 18, "/v:192.0.2.1:%d", args->port);
+	_snprintf(arg1, 18, "/v:192.0.2.1:%d", args->port);
 	argv[1] = arg1;
 	rc = runInstance(2, argv, args->arg);
 
@@ -183,7 +183,7 @@ static int testSuccess(int port)
 	char* wpath = TESTING_SRC_DIRECTORY;
 	char* exe = GetCombinedPath(path, "server");
 	char* wexe = GetCombinedPath(wpath, "server");
-	snprintf(arg1, 18, "/v:127.0.0.1:%d", port);
+	_snprintf(arg1, 18, "/v:127.0.0.1:%d", port);
 	clientArgs[1] = arg1;
 
 	if (!exe || !wexe)
@@ -237,7 +237,7 @@ static int testSuccess(int port)
 		return -2;
 	}
 
-	snprintf(commandLine, commandLineLen, "%s --port=%d", exe, port);
+	_snprintf(commandLine, commandLineLen, "%s --port=%d", exe, port);
 	memset(&si, 0, sizeof(si));
 	si.cb = sizeof(si);
 
