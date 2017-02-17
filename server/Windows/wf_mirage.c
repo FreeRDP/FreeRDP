@@ -316,7 +316,7 @@ BOOL wf_mirror_driver_cleanup(wfInfo* wfi)
 
 		if (status == 0)
 		{
-			WLog_ERR(TAG, "Failed to release DC!"));
+			WLog_ERR(TAG, "Failed to release DC!");
 		}
 	}
 
