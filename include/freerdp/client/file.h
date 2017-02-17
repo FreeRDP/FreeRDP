@@ -89,6 +89,7 @@ struct rdp_file
 
 	LPSTR Username; /* username */
 	LPSTR Domain; /* domain */
+	LPSTR Password; /*password*/
 	PBYTE Password51; /* password 51 */
 
 	LPSTR FullAddress; /* full address */
