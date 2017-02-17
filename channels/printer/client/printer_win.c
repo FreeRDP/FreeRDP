@@ -186,8 +186,8 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver,
 	rdpWinPrinter* win_printer;
 	wchar_t wname[256];
 	DWORD needed;
+	int status;
 	PRINTER_INFO_2 *prninfo=NULL;
-	size_t charsConverted;
 
 	win_printer = (rdpWinPrinter*) calloc(1, sizeof(rdpWinPrinter));
 	if (!win_printer)
@@ -220,10 +220,10 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver,
 	GetPrinter(win_printer->hPrinter, 2, (LPBYTE) prninfo, needed, &needed);
 
 	if (drivername)
-		win_printer->printer.driver = _wcsdup(drivername);
+		status = ConvertFromUnicode(CP_UTF8, 0, drivername, -1, &win_printer->printer.driver, 0, NULL, NULL);
 	else
-		win_printer->printer.driver = _wcsdup(prninfo->pDriverName);
-	if (!win_printer->printer.driver)
+		status = ConvertFromUnicode(CP_UTF8, 0, prninfo->pDriverName, -1, &win_printer->printer.driver, 0, NULL, NULL);
+	if (!win_printer->printer.driver || (status <= 0))
 	{
 		GlobalFree(prninfo);
 		free(win_printer->printer.name);
