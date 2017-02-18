@@ -412,6 +412,9 @@ static UINT dvcman_close_channel_iface(IWTSVirtualChannel* pChannel)
 	DrdynvcClientContext* context;
 	UINT error = CHANNEL_RC_OK;
 	WLog_INFO(TAG, "close_channel_iface: id=%"PRIu32"", channel->channel_id);
+	
+	if (!channel)
+		return CHANNEL_RC_BAD_CHANNEL;
 
 	if (channel->status == CHANNEL_RC_OK)
 	{
