@@ -84,17 +84,12 @@ BOOL freerdp_image_copy_from_monochrome(BYTE* pDstData, UINT32 DstFormat,
 {
 	UINT32 x, y;
 	BOOL vFlip;
-	UINT32 nDstPad;
 	UINT32 monoStep;
-	UINT32 dstBitsPerPixel;
-	UINT32 dstBytesPerPixel;
-	dstBitsPerPixel = GetBitsPerPixel(DstFormat);
-	dstBytesPerPixel = GetBytesPerPixel(DstFormat);
+	const UINT32 dstBytesPerPixel = GetBytesPerPixel(DstFormat);
 
 	if (nDstStep == 0)
 		nDstStep = dstBytesPerPixel * nWidth;
 
-	nDstPad = (nDstStep - (nWidth * dstBytesPerPixel));
 	vFlip = FALSE;
 	monoStep = (nWidth + 7) / 8;
 
@@ -167,7 +162,6 @@ BOOL freerdp_image_copy_from_pointer_data(
 {
 	UINT32 x, y;
 	BOOL vFlip;
-	UINT32 nDstPad;
 	UINT32 xorStep;
 	UINT32 andStep;
 	UINT32 xorBit;
@@ -182,7 +176,6 @@ BOOL freerdp_image_copy_from_pointer_data(
 	if (nDstStep <= 0)
 		nDstStep = dstBytesPerPixel * nWidth;
 
-	nDstPad = (nDstStep - (nWidth * dstBytesPerPixel));
 	vFlip = (xorBpp == 1) ? FALSE : TRUE;
 	andStep = (nWidth + 7) / 8;
 	andStep += (andStep % 2);
@@ -357,8 +350,6 @@ BOOL freerdp_image_copy_from_pointer_data(
 						}
 
 						/* Ignore the AND mask, if the color format already supplies alpha data. */
-						color = xorPixel;
-
 						if (andPixel && !ignoreAndMask)
 						{
 							if (xorPixel == 0xFF000000) /* black -> transparent */
