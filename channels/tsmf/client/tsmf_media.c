@@ -764,7 +764,7 @@ static void* tsmf_stream_ack_func(void* arg)
 		if (stream->eos)
 		{
 			while ((stream->currentBufferLevel > 0)
-			       || !(tsmf_stream_process_ack(stream, TRUE)))
+			       && !(tsmf_stream_process_ack(stream, TRUE)))
 			{
 				DEBUG_TSMF("END OF STREAM PROCESSING!");
 
