@@ -1434,6 +1434,7 @@ struct rdp_settings
 
 	ALIGN64 BYTE*
 	SettingsModified; /* byte array marking fields that have been modified from their default value */
+	ALIGN64 char* ActionScript;
 };
 typedef struct rdp_settings rdpSettings;
 

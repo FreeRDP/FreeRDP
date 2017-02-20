@@ -53,16 +53,9 @@ BOOL xf_keyboard_action_script_init(xfContext* xfc)
 	char buffer[1024] = { 0 };
 	char command[1024] = { 0 };
 
-	if (xfc->actionScript)
-	{
-		free(xfc->actionScript);
-		xfc->actionScript = NULL;
-	}
+	xfc->actionScriptExists = PathFileExistsA(xfc->context.settings->ActionScript);
 
-	if (PathFileExistsA("/usr/share/freerdp/action.sh"))
-		xfc->actionScript = _strdup("/usr/share/freerdp/action.sh");
-
-	if (!xfc->actionScript)
+	if (!xfc->actionScriptExists)
 		return FALSE;
 
 	xfc->keyCombinations = ArrayList_New(TRUE);
@@ -71,13 +64,12 @@ BOOL xf_keyboard_action_script_init(xfContext* xfc)
 		return FALSE;
 
 	ArrayList_Object(xfc->keyCombinations)->fnObjectFree = free;
-	sprintf_s(command, sizeof(command), "%s key", xfc->actionScript);
+	sprintf_s(command, sizeof(command), "%s key", xfc->context.settings->ActionScript);
 	keyScript = popen(command, "r");
 
 	if (!keyScript)
 	{
-		free(xfc->actionScript);
-		xfc->actionScript = NULL;
+		xfc->actionScriptExists = FALSE;
 		return FALSE;
 	}
 
@@ -89,8 +81,7 @@ BOOL xf_keyboard_action_script_init(xfContext* xfc)
 		if (!keyCombination || ArrayList_Add(xfc->keyCombinations, keyCombination) < 0)
 		{
 			ArrayList_Free(xfc->keyCombinations);
-			free(xfc->actionScript);
-			xfc->actionScript = NULL;
+			xfc->actionScriptExists = FALSE;
 			pclose(keyScript);
 			return FALSE;
 		}
@@ -108,12 +99,7 @@ void xf_keyboard_action_script_free(xfContext* xfc)
 	{
 		ArrayList_Free(xfc->keyCombinations);
 		xfc->keyCombinations = NULL;
-	}
-
-	if (xfc->actionScript)
-	{
-		free(xfc->actionScript);
-		xfc->actionScript = NULL;
+		xfc->actionScriptExists = FALSE;
 	}
 }
 
@@ -380,7 +366,7 @@ static int xf_keyboard_execute_action_script(xfContext* xfc,
 	char command[1024] = { 0 };
 	char combination[1024] = { 0 };
 
-	if (!xfc->actionScript)
+	if (!xfc->actionScriptExists)
 		return 1;
 
 	if ((keysym == XK_Shift_L) || (keysym == XK_Shift_R) ||
@@ -424,7 +410,7 @@ static int xf_keyboard_execute_action_script(xfContext* xfc,
 		return 1;
 
 	sprintf_s(command, sizeof(command), "%s key %s",
-	          xfc->actionScript, combination);
+	          xfc->context.settings->ActionScript, combination);
 	keyScript = popen(command, "r");
 
 	if (!keyScript)
