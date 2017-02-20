@@ -1169,8 +1169,8 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R(
     UINT32 DstFormat,
     const prim_size_t* roi)
 {
-	if (((UINT64)pSrc[0] & 0x0f) || ((UINT64)pSrc[0] & 0x0f) || ((UINT64)pSrc[0] & 0x0f) ||
-	    (srcStep & 0x0f) || ((UINT64)pDst & 0x0f) || (dstStep & 0x0f))
+	if (((ULONG_PTR)pSrc[0] & 0x0f) || ((ULONG_PTR)pSrc[0] & 0x0f) || ((ULONG_PTR)pSrc[0] & 0x0f) ||
+	    (srcStep & 0x0f) || ((ULONG_PTR)pDst & 0x0f) || (dstStep & 0x0f))
 		return generic->RGBToRGB_16s8u_P3AC4R(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
 
 	switch (DstFormat)
