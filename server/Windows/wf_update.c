@@ -35,6 +35,8 @@
 
 #include "wf_update.h"
 
+#define TAG SERVER_TAG("windows")
+
 DWORD WINAPI wf_update_thread(LPVOID lpParam)
 {
 	int index;
@@ -179,7 +181,7 @@ void wf_update_encoder_reset(wfInfo* wfi)
 
 		if (wfi->rfx_context)
 		{
-			rfx_context_reset(wfi->rfx_context);
+			rfx_context_reset(wfi->rfx_context, wfi->servscreen_width, wfi->servscreen_height);
 		}
 		else
 		{
@@ -187,7 +189,7 @@ void wf_update_encoder_reset(wfInfo* wfi)
 			wfi->rfx_context->mode = RLGR3;
 			wfi->rfx_context->width = wfi->servscreen_width;
 			wfi->rfx_context->height = wfi->servscreen_height;
-			rfx_context_set_pixel_format(wfi->rfx_context, RDP_PIXEL_FORMAT_BGRA32);
+			rfx_context_set_pixel_format(wfi->rfx_context, PIXEL_FORMAT_BGRA32);
 			wfi->s = Stream_New(NULL, 0xFFFF);
 		}
 
