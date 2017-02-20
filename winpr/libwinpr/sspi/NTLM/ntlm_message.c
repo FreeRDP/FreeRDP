@@ -183,7 +183,7 @@ void ntlm_free_message_fields_buffer(NTLM_MESSAGE_FIELDS* fields)
 void ntlm_print_message_fields(NTLM_MESSAGE_FIELDS* fields, const char* name)
 {
 	WLog_DBG(TAG, "%s (Len: %"PRIu16" MaxLen: %"PRIu16" BufferOffset: %"PRIu32")",
-			 name, fields->Len, fields->MaxLen, fields->BufferOffset);
+	         name, fields->Len, fields->MaxLen, fields->BufferOffset);
 
 	if (fields->Len > 0)
 		winpr_HexDump(TAG, WLOG_DEBUG, fields->Buffer, fields->Len);
@@ -210,8 +210,8 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	Stream_Read_UINT32(s, message->NegotiateFlags); /* NegotiateFlags (4 bytes) */
 
 	if (!((message->NegotiateFlags & NTLMSSP_REQUEST_TARGET) &&
-			(message->NegotiateFlags & NTLMSSP_NEGOTIATE_NTLM) &&
-			(message->NegotiateFlags & NTLMSSP_NEGOTIATE_UNICODE)))
+	      (message->NegotiateFlags & NTLMSSP_NEGOTIATE_NTLM) &&
+	      (message->NegotiateFlags & NTLMSSP_NEGOTIATE_UNICODE)))
 	{
 		Stream_Free(s, FALSE);
 		return SEC_E_INVALID_TOKEN;
@@ -245,7 +245,8 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	context->NegotiateMessage.BufferType = buffer->BufferType;
 #ifdef WITH_DEBUG_NTLM
 	WLog_DBG(TAG, "NEGOTIATE_MESSAGE (length = %"PRIu32")", context->NegotiateMessage.cbBuffer);
-	winpr_HexDump(TAG, WLOG_DEBUG, context->NegotiateMessage.pvBuffer, context->NegotiateMessage.cbBuffer);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->NegotiateMessage.pvBuffer,
+	              context->NegotiateMessage.cbBuffer);
 	ntlm_print_negotiate_flags(message->NegotiateFlags);
 
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
@@ -420,7 +421,8 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	CopyMemory(context->ChallengeMessage.pvBuffer, StartOffset, length);
 #ifdef WITH_DEBUG_NTLM
 	WLog_DBG(TAG, "CHALLENGE_MESSAGE (length = %d)", length);
-	winpr_HexDump(TAG, WLOG_DEBUG, context->ChallengeMessage.pvBuffer, context->ChallengeMessage.cbBuffer);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->ChallengeMessage.pvBuffer,
+	              context->ChallengeMessage.cbBuffer);
 	ntlm_print_negotiate_flags(context->NegotiateFlags);
 
 	if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
@@ -573,7 +575,8 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 	CopyMemory(context->ChallengeMessage.pvBuffer, Stream_Buffer(s), length);
 #ifdef WITH_DEBUG_NTLM
 	WLog_DBG(TAG, "CHALLENGE_MESSAGE (length = %d)", length);
-	winpr_HexDump(TAG, WLOG_DEBUG, context->ChallengeMessage.pvBuffer, context->ChallengeMessage.cbBuffer);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->ChallengeMessage.pvBuffer,
+	              context->ChallengeMessage.cbBuffer);
 	ntlm_print_negotiate_flags(message->NegotiateFlags);
 
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
@@ -611,10 +614,12 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	if (message->MessageType != MESSAGE_TYPE_AUTHENTICATE)
 		return SEC_E_INVALID_TOKEN;
 
-	if (ntlm_read_message_fields(s, &(message->LmChallengeResponse)) < 0) /* LmChallengeResponseFields (8 bytes) */
+	if (ntlm_read_message_fields(s,
+	                             &(message->LmChallengeResponse)) < 0) /* LmChallengeResponseFields (8 bytes) */
 		return SEC_E_INVALID_TOKEN;
 
-	if (ntlm_read_message_fields(s, &(message->NtChallengeResponse)) < 0) /* NtChallengeResponseFields (8 bytes) */
+	if (ntlm_read_message_fields(s,
+	                             &(message->NtChallengeResponse)) < 0) /* NtChallengeResponseFields (8 bytes) */
 		return SEC_E_INVALID_TOKEN;
 
 	if (ntlm_read_message_fields(s, &(message->DomainName)) < 0) /* DomainNameFields (8 bytes) */
@@ -626,14 +631,16 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	if (ntlm_read_message_fields(s, &(message->Workstation)) < 0) /* WorkstationFields (8 bytes) */
 		return SEC_E_INVALID_TOKEN;
 
-	if (ntlm_read_message_fields(s, &(message->EncryptedRandomSessionKey)) < 0) /* EncryptedRandomSessionKeyFields (8 bytes) */
+	if (ntlm_read_message_fields(s,
+	                             &(message->EncryptedRandomSessionKey)) < 0) /* EncryptedRandomSessionKeyFields (8 bytes) */
 		return SEC_E_INVALID_TOKEN;
 
 	Stream_Read_UINT32(s, message->NegotiateFlags); /* NegotiateFlags (4 bytes) */
-	context->NegotiateKeyExchange = (message->NegotiateFlags & NTLMSSP_NEGOTIATE_KEY_EXCH) ? TRUE : FALSE;
+	context->NegotiateKeyExchange = (message->NegotiateFlags & NTLMSSP_NEGOTIATE_KEY_EXCH) ? TRUE :
+	                                FALSE;
 
 	if ((context->NegotiateKeyExchange && !message->EncryptedRandomSessionKey.Len) ||
-			(!context->NegotiateKeyExchange && message->EncryptedRandomSessionKey.Len))
+	    (!context->NegotiateKeyExchange && message->EncryptedRandomSessionKey.Len))
 		return SEC_E_INVALID_TOKEN;
 
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
@@ -653,10 +660,12 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	if (ntlm_read_message_fields_buffer(s, &(message->Workstation)) < 0) /* Workstation */
 		return SEC_E_INTERNAL_ERROR;
 
-	if (ntlm_read_message_fields_buffer(s, &(message->LmChallengeResponse)) < 0) /* LmChallengeResponse */
+	if (ntlm_read_message_fields_buffer(s,
+	                                    &(message->LmChallengeResponse)) < 0) /* LmChallengeResponse */
 		return SEC_E_INTERNAL_ERROR;
 
-	if (ntlm_read_message_fields_buffer(s, &(message->NtChallengeResponse)) < 0) /* NtChallengeResponse */
+	if (ntlm_read_message_fields_buffer(s,
+	                                    &(message->NtChallengeResponse)) < 0) /* NtChallengeResponse */
 		return SEC_E_INTERNAL_ERROR;
 
 	if (message->NtChallengeResponse.Len > 0)
@@ -682,7 +691,8 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 			Data_Read_UINT32(ntlm_av_pair_get_value_pointer(AvFlags), flags);
 	}
 
-	if (ntlm_read_message_fields_buffer(s, &(message->EncryptedRandomSessionKey)) < 0) /* EncryptedRandomSessionKey */
+	if (ntlm_read_message_fields_buffer(s,
+	                                    &(message->EncryptedRandomSessionKey)) < 0) /* EncryptedRandomSessionKey */
 		return SEC_E_INTERNAL_ERROR;
 
 	if (message->EncryptedRandomSessionKey.Len > 0)
@@ -710,12 +720,12 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 			return SEC_E_INVALID_TOKEN;
 
 		Stream_Read(s, message->MessageIntegrityCheck, 16);
-		PayloadBufferOffset += 16;
 	}
 
 #ifdef WITH_DEBUG_NTLM
 	WLog_DBG(TAG, "AUTHENTICATE_MESSAGE (length = %"PRIu32")", context->AuthenticateMessage.cbBuffer);
-	winpr_HexDump(TAG, WLOG_DEBUG, context->AuthenticateMessage.pvBuffer, context->AuthenticateMessage.cbBuffer);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->AuthenticateMessage.pvBuffer,
+	              context->AuthenticateMessage.cbBuffer);
 
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 		ntlm_print_version_info(&(message->Version));
@@ -853,17 +863,23 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	message->DomainName.BufferOffset = PayloadBufferOffset;
 	message->UserName.BufferOffset = message->DomainName.BufferOffset + message->DomainName.Len;
 	message->Workstation.BufferOffset = message->UserName.BufferOffset + message->UserName.Len;
-	message->LmChallengeResponse.BufferOffset = message->Workstation.BufferOffset + message->Workstation.Len;
-	message->NtChallengeResponse.BufferOffset = message->LmChallengeResponse.BufferOffset + message->LmChallengeResponse.Len;
-	message->EncryptedRandomSessionKey.BufferOffset = message->NtChallengeResponse.BufferOffset + message->NtChallengeResponse.Len;
+	message->LmChallengeResponse.BufferOffset = message->Workstation.BufferOffset +
+	        message->Workstation.Len;
+	message->NtChallengeResponse.BufferOffset = message->LmChallengeResponse.BufferOffset +
+	        message->LmChallengeResponse.Len;
+	message->EncryptedRandomSessionKey.BufferOffset = message->NtChallengeResponse.BufferOffset +
+	        message->NtChallengeResponse.Len;
 	ntlm_populate_message_header((NTLM_MESSAGE_HEADER*) message, MESSAGE_TYPE_AUTHENTICATE);
 	ntlm_write_message_header(s, (NTLM_MESSAGE_HEADER*) message);  /* Message Header (12 bytes) */
-	ntlm_write_message_fields(s, &(message->LmChallengeResponse)); /* LmChallengeResponseFields (8 bytes) */
-	ntlm_write_message_fields(s, &(message->NtChallengeResponse)); /* NtChallengeResponseFields (8 bytes) */
+	ntlm_write_message_fields(s, &
+	                          (message->LmChallengeResponse)); /* LmChallengeResponseFields (8 bytes) */
+	ntlm_write_message_fields(s, &
+	                          (message->NtChallengeResponse)); /* NtChallengeResponseFields (8 bytes) */
 	ntlm_write_message_fields(s, &(message->DomainName)); /* DomainNameFields (8 bytes) */
 	ntlm_write_message_fields(s, &(message->UserName)); /* UserNameFields (8 bytes) */
 	ntlm_write_message_fields(s, &(message->Workstation)); /* WorkstationFields (8 bytes) */
-	ntlm_write_message_fields(s, &(message->EncryptedRandomSessionKey)); /* EncryptedRandomSessionKeyFields (8 bytes) */
+	ntlm_write_message_fields(s, &
+	                          (message->EncryptedRandomSessionKey)); /* EncryptedRandomSessionKeyFields (8 bytes) */
 	Stream_Write_UINT32(s, message->NegotiateFlags); /* NegotiateFlags (4 bytes) */
 
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
@@ -887,7 +903,8 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	ntlm_write_message_fields_buffer(s, &(message->NtChallengeResponse)); /* NtChallengeResponse */
 
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_KEY_EXCH)
-		ntlm_write_message_fields_buffer(s, &(message->EncryptedRandomSessionKey)); /* EncryptedRandomSessionKey */
+		ntlm_write_message_fields_buffer(s,
+		                                 &(message->EncryptedRandomSessionKey)); /* EncryptedRandomSessionKey */
 
 	length = Stream_GetPosition(s);
 
@@ -969,10 +986,11 @@ SECURITY_STATUS ntlm_server_AuthenticateComplete(NTLM_CONTEXT* context)
 
 	if (flags & MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK)
 	{
-		ZeroMemory(&((PBYTE) context->AuthenticateMessage.pvBuffer)[context->MessageIntegrityCheckOffset], 16);
+		ZeroMemory(&((PBYTE) context->AuthenticateMessage.pvBuffer)[context->MessageIntegrityCheckOffset],
+		           16);
 		ntlm_compute_message_integrity_check(context);
 		CopyMemory(&((PBYTE) context->AuthenticateMessage.pvBuffer)[context->MessageIntegrityCheckOffset],
-				   message->MessageIntegrityCheck, 16);
+		           message->MessageIntegrityCheck, 16);
 
 		if (memcmp(context->MessageIntegrityCheck, message->MessageIntegrityCheck, 16) != 0)
 		{

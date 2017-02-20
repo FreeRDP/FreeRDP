@@ -313,7 +313,7 @@ BOOL rdpei_write_4byte_signed(wStream* s, INT32 value)
 		if (negative)
 			byte |= 0x20;
 
-		Stream_Write_UINT8(s, value);
+		Stream_Write_UINT8(s, byte);
 	}
 	else if (value <= 0x1FFF)
 	{

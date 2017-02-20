@@ -94,7 +94,7 @@ int xf_list_monitors(xfContext* xfc)
 	return 0;
 }
 
-BOOL xf_is_monitor_id_active(xfContext* xfc, UINT32 id)
+static BOOL xf_is_monitor_id_active(xfContext* xfc, UINT32 id)
 {
 	int index;
 	rdpSettings* settings = xfc->context.settings;

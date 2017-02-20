@@ -4,6 +4,8 @@
  *
  * Copyright 2011 Vic Lee
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2017 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2017 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,61 +63,61 @@ static INLINE void Stream_Rewind(wStream* s, size_t _offset)
 }
 
 #define _stream_read_n8(_t, _s, _v, _p) do { \
-	_v = \
-	(_t)(*_s->pointer); \
-	if (_p) Stream_Seek(_s, sizeof(_t)); } while (0)
+		_v = \
+		     (_t)(*_s->pointer); \
+		if (_p) Stream_Seek(_s, sizeof(_t)); } while (0)
 
 #define _stream_read_n16_le(_t, _s, _v, _p) do { \
-	_v = \
-	(_t)(*_s->pointer) + \
-	(((_t)(*(_s->pointer + 1))) << 8); \
-	if (_p) Stream_Seek(_s, sizeof(_t)); } while (0)
+		_v = \
+		     (_t)(*_s->pointer) + \
+		     (((_t)(*(_s->pointer + 1))) << 8); \
+		if (_p) Stream_Seek(_s, sizeof(_t)); } while (0)
 
 #define _stream_read_n16_be(_t, _s, _v, _p) do { \
-	_v = \
-	(((_t)(*_s->pointer)) << 8) + \
-	(_t)(*(_s->pointer + 1)); \
-	if (_p) Stream_Seek(_s, sizeof(_t)); } while (0)
+		_v = \
+		     (((_t)(*_s->pointer)) << 8) + \
+		     (_t)(*(_s->pointer + 1)); \
+		if (_p) Stream_Seek(_s, sizeof(_t)); } while (0)
 
 #define _stream_read_n32_le(_t, _s, _v, _p) do { \
-	_v = \
-	(_t)(*_s->pointer) + \
-	(((_t)(*(_s->pointer + 1))) << 8) + \
-	(((_t)(*(_s->pointer + 2))) << 16) + \
-	(((_t)(*(_s->pointer + 3))) << 24); \
-	if (_p) Stream_Seek(_s, sizeof(_t)); } while (0)
+		_v = \
+		     (_t)(*_s->pointer) + \
+		     (((_t)(*(_s->pointer + 1))) << 8) + \
+		     (((_t)(*(_s->pointer + 2))) << 16) + \
+		     (((_t)(*(_s->pointer + 3))) << 24); \
+		if (_p) Stream_Seek(_s, sizeof(_t)); } while (0)
 
 #define _stream_read_n32_be(_t, _s, _v, _p) do { \
-	_v = \
-	(((_t)(*(_s->pointer))) << 24) + \
-	(((_t)(*(_s->pointer + 1))) << 16) + \
-	(((_t)(*(_s->pointer + 2))) << 8) + \
-	(((_t)(*(_s->pointer + 3)))); \
-	if (_p) Stream_Seek(_s, sizeof(_t)); } while (0)
+		_v = \
+		     (((_t)(*(_s->pointer))) << 24) + \
+		     (((_t)(*(_s->pointer + 1))) << 16) + \
+		     (((_t)(*(_s->pointer + 2))) << 8) + \
+		     (((_t)(*(_s->pointer + 3)))); \
+		if (_p) Stream_Seek(_s, sizeof(_t)); } while (0)
 
 #define _stream_read_n64_le(_t, _s, _v, _p) do { \
-	_v = \
-	(_t)(*_s->pointer) + \
-	(((_t)(*(_s->pointer + 1))) << 8) + \
-	(((_t)(*(_s->pointer + 2))) << 16) + \
-	(((_t)(*(_s->pointer + 3))) << 24) + \
-	(((_t)(*(_s->pointer + 4))) << 32) + \
-	(((_t)(*(_s->pointer + 5))) << 40) + \
-	(((_t)(*(_s->pointer + 6))) << 48) + \
-	(((_t)(*(_s->pointer + 7))) << 56); \
-	if (_p) Stream_Seek(_s, sizeof(_t)); } while (0)
+		_v = \
+		     (_t)(*_s->pointer) + \
+		     (((_t)(*(_s->pointer + 1))) << 8) + \
+		     (((_t)(*(_s->pointer + 2))) << 16) + \
+		     (((_t)(*(_s->pointer + 3))) << 24) + \
+		     (((_t)(*(_s->pointer + 4))) << 32) + \
+		     (((_t)(*(_s->pointer + 5))) << 40) + \
+		     (((_t)(*(_s->pointer + 6))) << 48) + \
+		     (((_t)(*(_s->pointer + 7))) << 56); \
+		if (_p) Stream_Seek(_s, sizeof(_t)); } while (0)
 
 #define _stream_read_n64_be(_t, _s, _v, _p) do { \
-	_v = \
-	(((_t)(*(_s->pointer))) << 56) + \
-	(((_t)(*(_s->pointer + 1))) << 48) + \
-	(((_t)(*(_s->pointer + 2))) << 40) + \
-	(((_t)(*(_s->pointer + 3))) << 32) + \
-	(((_t)(*(_s->pointer + 4))) << 24) + \
-	(((_t)(*(_s->pointer + 5))) << 16) + \
-	(((_t)(*(_s->pointer + 6))) << 8) + \
-	(((_t)(*(_s->pointer + 7)))); \
-	if (_p) Stream_Seek(_s, sizeof(_t)); } while (0)
+		_v = \
+		     (((_t)(*(_s->pointer))) << 56) + \
+		     (((_t)(*(_s->pointer + 1))) << 48) + \
+		     (((_t)(*(_s->pointer + 2))) << 40) + \
+		     (((_t)(*(_s->pointer + 3))) << 32) + \
+		     (((_t)(*(_s->pointer + 4))) << 24) + \
+		     (((_t)(*(_s->pointer + 5))) << 16) + \
+		     (((_t)(*(_s->pointer + 6))) << 8) + \
+		     (((_t)(*(_s->pointer + 7)))); \
+		if (_p) Stream_Seek(_s, sizeof(_t)); } while (0)
 
 #define Stream_Read_UINT8(_s, _v) _stream_read_n8(UINT8, _s, _v, TRUE)
 #define Stream_Read_INT8(_s, _v) _stream_read_n8(INT8, _s, _v, TRUE)
@@ -306,6 +308,11 @@ static INLINE void Stream_SealLength(wStream* _s)
 	_s->length = (_s->pointer - _s->buffer);
 }
 
+static INLINE size_t Stream_GetRemainingCapacity(wStream* _s)
+{
+	return (_s->capacity - (_s->pointer - _s->buffer));
+}
+
 static INLINE size_t Stream_GetRemainingLength(wStream* _s)
 {
 	return (_s->length - (_s->pointer - _s->buffer));
@@ -316,9 +323,11 @@ static INLINE void Stream_Clear(wStream* _s)
 	memset(_s->buffer, 0, _s->capacity);
 }
 
-static INLINE BOOL Stream_SafeSeek(wStream* s, size_t size) {
+static INLINE BOOL Stream_SafeSeek(wStream* s, size_t size)
+{
 	if (Stream_GetRemainingLength(s) < size)
 		return FALSE;
+
 	Stream_Seek(s, size);
 	return TRUE;
 }

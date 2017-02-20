@@ -798,7 +798,7 @@ static UINT cliprdr_client_lock_clipboard_data(CliprdrClientContext* context,
 	WLog_Print(cliprdr->log, WLOG_DEBUG,
 	           "ClientLockClipboardData: clipDataId: 0x%08"PRIX32"",
 	           lockClipboardData->clipDataId);
-	return cliprdr_packet_send(cliprdr, s);;
+	return cliprdr_packet_send(cliprdr, s);
 }
 
 /**

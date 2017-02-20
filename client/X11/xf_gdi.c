@@ -306,12 +306,12 @@ static BOOL xf_gdi_dstblt(rdpContext* context, const DSTBLT_ORDER* dstblt)
 	XFillRectangle(xfc->display, xfc->drawing, xfc->gc,
 	               dstblt->nLeftRect, dstblt->nTopRect,
 	               dstblt->nWidth, dstblt->nHeight);
+	ret = TRUE;
 
 	if (xfc->drawing == xfc->primary)
 		ret = gdi_InvalidateRegion(xfc->hdc, dstblt->nLeftRect, dstblt->nTopRect,
 		                           dstblt->nWidth, dstblt->nHeight);
 
-	ret = TRUE;
 fail:
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	xf_unlock_x11(xfc, FALSE);
@@ -394,11 +394,12 @@ static BOOL xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 			goto fail;
 	}
 
+	ret = TRUE;
+
 	if (xfc->drawing == xfc->primary)
 		ret = gdi_InvalidateRegion(xfc->hdc, patblt->nLeftRect, patblt->nTopRect,
 		                           patblt->nWidth, patblt->nHeight);
 
-	ret = TRUE;
 fail:
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	xf_unlock_x11(xfc, FALSE);
@@ -421,13 +422,13 @@ static BOOL xf_gdi_scrblt(rdpContext* context, const SCRBLT_ORDER* scrblt)
 	XCopyArea(xfc->display, xfc->primary, xfc->drawing, xfc->gc, scrblt->nXSrc,
 	          scrblt->nYSrc,
 	          scrblt->nWidth, scrblt->nHeight, scrblt->nLeftRect, scrblt->nTopRect);
+	ret = TRUE;
 
 	if (xfc->drawing == xfc->primary)
 		ret = gdi_InvalidateRegion(xfc->hdc, scrblt->nLeftRect, scrblt->nTopRect,
 		                           scrblt->nWidth, scrblt->nHeight);
 
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
-	ret = TRUE;
 fail:
 	xf_unlock_x11(xfc, FALSE);
 	return ret;
@@ -708,6 +709,7 @@ static BOOL xf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	XCopyArea(xfc->display, bitmap->pixmap, xfc->drawing, xfc->gc,
 	          mem3blt->nXSrc, mem3blt->nYSrc, mem3blt->nWidth, mem3blt->nHeight,
 	          mem3blt->nLeftRect, mem3blt->nTopRect);
+	ret = TRUE;
 
 	if (xfc->drawing == xfc->primary)
 		ret = gdi_InvalidateRegion(xfc->hdc, mem3blt->nLeftRect, mem3blt->nTopRect,
@@ -719,7 +721,6 @@ static BOOL xf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	if (pattern != 0)
 		XFreePixmap(xfc->display, pattern);
 
-	ret = TRUE;
 fail:
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	xf_unlock_x11(xfc, FALSE);

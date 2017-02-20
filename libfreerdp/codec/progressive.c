@@ -38,6 +38,20 @@
 
 #define TAG FREERDP_TAG("codec.progressive")
 
+struct _RFX_PROGRESSIVE_UPGRADE_STATE
+{
+	BOOL nonLL;
+	wBitStream* srl;
+	wBitStream* raw;
+
+	/* SRL state */
+
+	int kp;
+	int nz;
+	BOOL mode;
+};
+typedef struct _RFX_PROGRESSIVE_UPGRADE_STATE RFX_PROGRESSIVE_UPGRADE_STATE;
+
 static const char* progressive_get_block_type_string(UINT16 blockType)
 {
 	switch (blockType)
@@ -539,19 +553,16 @@ static INLINE void progressive_rfx_idwt_y(INT16* pLowBand, int nLowStep,
 				*pX = X2;
 				pX += nDstStep;
 				*pX = X2 + (2 * H0);
-				pX += nDstStep;
 			}
 			else
 			{
 				L0 = *pL;
-				pL += nLowStep;
 				X0 = L0 - H0;
 				*pX = X2;
 				pX += nDstStep;
 				*pX = ((X0 + X2) / 2) + (2 * H0);
 				pX += nDstStep;
 				*pX = X0;
-				pX += nDstStep;
 			}
 		}
 		else
@@ -566,9 +577,7 @@ static INLINE void progressive_rfx_idwt_y(INT16* pLowBand, int nLowStep,
 			*pX = X0;
 			pX += nDstStep;
 			L0 = *pL;
-			pL += nLowStep;
 			*pX = (X0 + L0) / 2;
-			pX += nDstStep;
 		}
 
 		pLowBand++;
@@ -620,14 +629,12 @@ static INLINE void progressive_rfx_dwt_2d_decode_block(INT16* buffer, INT16* tem
 	HH = &buffer[offset];
 	offset += (nBandH * nBandH);
 	LL = &buffer[offset];
-	offset += (nBandL * nBandL);
 	nDstStepX = (nBandL + nBandH);
 	nDstStepY = (nBandL + nBandH);
 	offset = 0;
 	L = &temp[offset];
 	offset += (nBandL * nDstStepX);
 	H = &temp[offset];
-	offset += (nBandH * nDstStepX);
 	LLx = &buffer[0];
 	/* horizontal (LL + HL -> L) */
 	pLowBand[0] = LL;
@@ -852,20 +859,6 @@ static INLINE int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progres
 	return 1;
 }
 
-struct _RFX_PROGRESSIVE_UPGRADE_STATE
-{
-	BOOL nonLL;
-	wBitStream* srl;
-	wBitStream* raw;
-
-	/* SRL state */
-
-	int kp;
-	int nz;
-	BOOL mode;
-};
-typedef struct _RFX_PROGRESSIVE_UPGRADE_STATE RFX_PROGRESSIVE_UPGRADE_STATE;
-
 static INLINE INT16 progressive_rfx_srl_read(RFX_PROGRESSIVE_UPGRADE_STATE* state,
         UINT32 numBits)
 {
@@ -984,13 +977,11 @@ static INLINE int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* s
 {
 	int index;
 	INT16 input;
-	wBitStream* srl;
 	wBitStream* raw;
 
 	if (!numBits)
 		return 1;
 
-	srl = state->srl;
 	raw = state->raw;
 
 	if (!state->nonLL)
@@ -1931,7 +1922,7 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
 int progressive_compress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData,
                          UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize)
 {
-	return 1;
+	return -1;
 }
 
 BOOL progressive_context_reset(PROGRESSIVE_CONTEXT* progressive)

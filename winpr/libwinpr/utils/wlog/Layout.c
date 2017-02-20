@@ -142,7 +142,7 @@ BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 				{
 #if defined __linux__ && !defined ANDROID
 					/* On Linux we prefer to see the LWP id */
-					args[argc++] = (void*)(size_t) syscall(SYS_gettid);;
+					args[argc++] = (void*)(size_t) syscall(SYS_gettid);
 					format[index++] = '%';
 					format[index++] = 'l';
 					format[index++] = 'd';

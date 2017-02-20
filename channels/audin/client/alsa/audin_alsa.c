@@ -138,7 +138,6 @@ static UINT audin_alsa_thread_receive(AudinALSADevice* alsa, BYTE* src,
 		frames = alsa->dsp_context->resampled_frames;
 		DEBUG_DVC("resampled %d frames at %"PRIu32" to %d frames at %"PRIu32"",
 		          size / rbytes_per_frame, alsa->actual_rate, frames, alsa->target_rate);
-		size = frames * tbytes_per_frame;
 		src = alsa->dsp_context->resampled_buffer;
 	}
 
@@ -225,14 +224,11 @@ static void* audin_alsa_thread_func(void* arg)
 	long error;
 	BYTE* buffer;
 	int rbytes_per_frame;
-	int tbytes_per_frame;
 	snd_pcm_t* capture_handle = NULL;
 	AudinALSADevice* alsa = (AudinALSADevice*) arg;
 	DWORD status;
 	DEBUG_DVC("in");
-
 	rbytes_per_frame = alsa->actual_channels * alsa->bytes_per_channel;
-	tbytes_per_frame = alsa->target_channels * alsa->bytes_per_channel;
 	buffer = (BYTE*) calloc(1, rbytes_per_frame * alsa->frames_per_packet);
 
 	if (!buffer)
@@ -502,6 +498,10 @@ static UINT audin_alsa_parse_addin_args(AudinALSADevice* device,
 	        COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
 	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
 	                                    audin_alsa_args, flags, alsa, NULL, NULL);
+
+	if (status < 0)
+		return ERROR_INVALID_PARAMETER;
+
 	arg = audin_alsa_args;
 
 	do

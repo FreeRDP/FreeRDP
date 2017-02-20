@@ -30,15 +30,12 @@
 #include <winpr/stream.h>
 
 /* Protocol Security Negotiation Protocols */
-enum RDP_NEG_PROTOCOLS
-{
-	PROTOCOL_RDP = 0x00000000,
-	PROTOCOL_TLS = 0x00000001,
-	PROTOCOL_NLA = 0x00000002,
-	PROTOCOL_EXT = 0x00000008,
+#define PROTOCOL_RDP	0x00000000
+#define PROTOCOL_TLS	0x00000001
+#define PROTOCOL_NLA	0x00000002
+#define PROTOCOL_EXT	0x00000008
 
-	PROTOCOL_FAILED_NEGO = 0x80000000 /* only used internally, not on the wire */
-};
+#define PROTOCOL_FAILED_NEGO	0x80000000 /* only used internally, not on the wire */
 
 /* Protocol Security Negotiation Failure Codes */
 enum RDP_NEG_FAILURE_FAILURECODES
@@ -147,26 +144,26 @@ FREERDP_LOCAL void nego_free(rdpNego* nego);
 FREERDP_LOCAL void nego_init(rdpNego* nego);
 FREERDP_LOCAL void nego_set_target(rdpNego* nego, char* hostname, int port);
 FREERDP_LOCAL void nego_set_negotiation_enabled(rdpNego* nego,
-	BOOL NegotiateSecurityLayer);
+        BOOL NegotiateSecurityLayer);
 FREERDP_LOCAL void nego_set_restricted_admin_mode_required(rdpNego* nego,
-	BOOL RestrictedAdminModeRequired);
+        BOOL RestrictedAdminModeRequired);
 FREERDP_LOCAL void nego_set_gateway_enabled(rdpNego* nego, BOOL GatewayEnabled);
 FREERDP_LOCAL void nego_set_gateway_bypass_local(rdpNego* nego,
-	BOOL GatewayBypassLocal);
+        BOOL GatewayBypassLocal);
 FREERDP_LOCAL void nego_enable_rdp(rdpNego* nego, BOOL enable_rdp);
 FREERDP_LOCAL void nego_enable_tls(rdpNego* nego, BOOL enable_tls);
 FREERDP_LOCAL void nego_enable_nla(rdpNego* nego, BOOL enable_nla);
 FREERDP_LOCAL void nego_enable_ext(rdpNego* nego, BOOL enable_ext);
 FREERDP_LOCAL BOOL nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken,
-	DWORD RoutingTokenLength);
+        DWORD RoutingTokenLength);
 FREERDP_LOCAL BOOL nego_set_cookie(rdpNego* nego, char* cookie);
 FREERDP_LOCAL void nego_set_cookie_max_length(rdpNego* nego,
-	UINT32 CookieMaxLength);
+        UINT32 CookieMaxLength);
 FREERDP_LOCAL void nego_set_send_preconnection_pdu(rdpNego* nego,
-	BOOL SendPreconnectionPdu);
+        BOOL SendPreconnectionPdu);
 FREERDP_LOCAL void nego_set_preconnection_id(rdpNego* nego,
-	UINT32 PreconnectionId);
+        UINT32 PreconnectionId);
 FREERDP_LOCAL void nego_set_preconnection_blob(rdpNego* nego,
-	char* PreconnectionBlob);
+        char* PreconnectionBlob);
 
 #endif /* __NEGO_H */

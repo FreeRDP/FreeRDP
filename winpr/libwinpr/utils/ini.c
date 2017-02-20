@@ -713,7 +713,6 @@ char* IniFile_WriteBuffer(wIniFile* ini)
 	}
 
 	buffer[offset] = '\0';
-	size += 1;
 
 	return buffer;
 }

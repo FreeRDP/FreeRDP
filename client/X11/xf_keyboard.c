@@ -46,13 +46,12 @@
 static BOOL firstPressRightCtrl = TRUE;
 static BOOL ungrabKeyboardWithRightCtrl = TRUE;
 
-BOOL xf_keyboard_action_script_init(xfContext* xfc)
+static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 {
 	FILE* keyScript;
 	char* keyCombination;
 	char buffer[1024] = { 0 };
 	char command[1024] = { 0 };
-
 	xfc->actionScriptExists = PathFileExistsA(xfc->context.settings->ActionScript);
 
 	if (!xfc->actionScriptExists)
@@ -91,7 +90,7 @@ BOOL xf_keyboard_action_script_init(xfContext* xfc)
 	return xf_event_action_script_init(xfc);
 }
 
-void xf_keyboard_action_script_free(xfContext* xfc)
+static void xf_keyboard_action_script_free(xfContext* xfc)
 {
 	xf_event_action_script_free(xfc);
 
@@ -155,9 +154,7 @@ void xf_keyboard_key_release(xfContext* xfc, BYTE keycode, KeySym keysym)
 		return;
 
 	xfc->KeyboardState[keycode] = FALSE;
-	
 	xf_keyboard_handle_special_keys_release(xfc, keysym);
-	
 	xf_keyboard_send_key(xfc, FALSE, keycode);
 }
 
@@ -356,7 +353,6 @@ static int xf_keyboard_execute_action_script(xfContext* xfc,
 {
 	int index;
 	int count;
-	int exitCode;
 	int status = 1;
 	FILE* keyScript;
 	const char* keyStr;
@@ -424,11 +420,13 @@ static int xf_keyboard_execute_action_script(xfContext* xfc,
 			status = 0;
 	}
 
-	exitCode = pclose(keyScript);
+	if (pclose(keyScript) == -1)
+		status = -1;
+
 	return status;
 }
 
-int xk_keyboard_get_modifier_keys(xfContext* xfc, XF_MODIFIER_KEYS* mod)
+static int xk_keyboard_get_modifier_keys(xfContext* xfc, XF_MODIFIER_KEYS* mod)
 {
 	mod->LeftShift = xf_keyboard_key_pressed(xfc, XK_Shift_L);
 	mod->RightShift = xf_keyboard_key_pressed(xfc, XK_Shift_R);
@@ -467,7 +465,7 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 		if (ungrabKeyboardWithRightCtrl)
 			ungrabKeyboardWithRightCtrl = FALSE;
 	}
-	
+
 	if (!xf_keyboard_execute_action_script(xfc, &mod, keysym))
 	{
 		return TRUE;
@@ -581,25 +579,26 @@ void xf_keyboard_handle_special_keys_release(xfContext* xfc, KeySym keysym)
 {
 	if (keysym != XK_Control_R)
 		return;
-	
+
 	firstPressRightCtrl = TRUE;
-	
+
 	if (!ungrabKeyboardWithRightCtrl)
 		return;
-	
+
 	// all requirements for ungrab are fulfilled, ungrabbing now
 	XF_MODIFIER_KEYS mod = { 0 };
 	xk_keyboard_get_modifier_keys(xfc, &mod);
-	
+
 	if (!mod.RightCtrl)
 	{
 		if (!xfc->fullscreen)
 		{
 			xf_toggle_control(xfc);
 		}
+
 		XUngrabKeyboard(xfc->display, CurrentTime);
 	}
-	
+
 	// ungrabbed
 	ungrabKeyboardWithRightCtrl = FALSE;
 }

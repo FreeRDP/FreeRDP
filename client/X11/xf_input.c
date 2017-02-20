@@ -60,20 +60,17 @@ typedef struct touch_contact
 
 } touchContact;
 
-touchContact contacts[MAX_CONTACTS];
+static touchContact contacts[MAX_CONTACTS];
 
-int active_contacts;
-int lastEvType;
-XIDeviceEvent lastEvent;
-double firstDist = -1.0;
-double lastDist;
+static int active_contacts;
+static int lastEvType;
+static XIDeviceEvent lastEvent;
+static double firstDist = -1.0;
+static double lastDist;
 
-double z_vector;
-double px_vector;
-double py_vector;
-
-int xinput_opcode;
-int scale_cnt;
+static double z_vector;
+static double px_vector;
+static double py_vector;
 
 const char* xf_input_get_class_string(int class)
 {
@@ -207,7 +204,7 @@ int xf_input_init(xfContext* xfc, Window window)
 	return 0;
 }
 
-BOOL xf_input_is_duplicate(XGenericEventCookie* cookie)
+static BOOL xf_input_is_duplicate(XGenericEventCookie* cookie)
 {
 	XIDeviceEvent* event;
 	event = cookie->data;
@@ -224,7 +221,7 @@ BOOL xf_input_is_duplicate(XGenericEventCookie* cookie)
 	return FALSE;
 }
 
-void xf_input_save_last_event(XGenericEventCookie* cookie)
+static void xf_input_save_last_event(XGenericEventCookie* cookie)
 {
 	XIDeviceEvent* event;
 	event = cookie->data;
@@ -235,7 +232,7 @@ void xf_input_save_last_event(XGenericEventCookie* cookie)
 	lastEvent.event_y = event->event_y;
 }
 
-void xf_input_detect_pan(xfContext* xfc)
+static void xf_input_detect_pan(xfContext* xfc)
 {
 	double dx[2];
 	double dy[2];
@@ -325,10 +322,9 @@ void xf_input_detect_pan(xfContext* xfc)
 	}
 }
 
-void xf_input_detect_pinch(xfContext* xfc)
+static void xf_input_detect_pinch(xfContext* xfc)
 {
 	double dist;
-	double zoom;
 	double delta;
 	ZoomingChangeEventArgs e;
 
@@ -347,7 +343,6 @@ void xf_input_detect_pinch(xfContext* xfc)
 	{
 		firstDist = dist;
 		lastDist = firstDist;
-		scale_cnt = 0;
 		z_vector = 0;
 		px_vector = 0;
 		py_vector = 0;
@@ -364,7 +359,6 @@ void xf_input_detect_pinch(xfContext* xfc)
 			delta = -1.0;
 
 		/* compare the current distance to the first one */
-		zoom = (dist / firstDist);
 		z_vector += delta;
 		lastDist = dist;
 
@@ -392,7 +386,7 @@ void xf_input_detect_pinch(xfContext* xfc)
 	}
 }
 
-void xf_input_touch_begin(xfContext* xfc, XIDeviceEvent* event)
+static void xf_input_touch_begin(xfContext* xfc, XIDeviceEvent* event)
 {
 	int i;
 
@@ -410,7 +404,7 @@ void xf_input_touch_begin(xfContext* xfc, XIDeviceEvent* event)
 	}
 }
 
-void xf_input_touch_update(xfContext* xfc, XIDeviceEvent* event)
+static void xf_input_touch_update(xfContext* xfc, XIDeviceEvent* event)
 {
 	int i;
 
@@ -430,7 +424,7 @@ void xf_input_touch_update(xfContext* xfc, XIDeviceEvent* event)
 	}
 }
 
-void xf_input_touch_end(xfContext* xfc, XIDeviceEvent* event)
+static void xf_input_touch_end(xfContext* xfc, XIDeviceEvent* event)
 {
 	int i;
 
@@ -446,7 +440,7 @@ void xf_input_touch_end(xfContext* xfc, XIDeviceEvent* event)
 	}
 }
 
-int xf_input_handle_event_local(xfContext* xfc, XEvent* event)
+static int xf_input_handle_event_local(xfContext* xfc, XEvent* event)
 {
 	XGenericEventCookie* cookie = &event->xcookie;
 	XGetEventData(xfc->display, cookie);
@@ -486,7 +480,7 @@ int xf_input_handle_event_local(xfContext* xfc, XEvent* event)
 	return 0;
 }
 
-char* xf_input_touch_state_string(DWORD flags)
+static char* xf_input_touch_state_string(DWORD flags)
 {
 	if (flags & CONTACT_FLAG_DOWN)
 		return "TouchBegin";
@@ -498,7 +492,7 @@ char* xf_input_touch_state_string(DWORD flags)
 		return "TouchUnknown";
 }
 
-void xf_input_hide_cursor(xfContext* xfc)
+static void xf_input_hide_cursor(xfContext* xfc)
 {
 #ifdef WITH_XCURSOR
 
@@ -526,7 +520,7 @@ void xf_input_hide_cursor(xfContext* xfc)
 #endif
 }
 
-void xf_input_show_cursor(xfContext* xfc)
+static void xf_input_show_cursor(xfContext* xfc)
 {
 #ifdef WITH_XCURSOR
 	xf_lock_x11(xfc, FALSE);
@@ -548,7 +542,7 @@ void xf_input_show_cursor(xfContext* xfc)
 #endif
 }
 
-int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtype)
+static int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtype)
 {
 	int x, y;
 	int touchId;
@@ -583,7 +577,7 @@ int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtype)
 	return 0;
 }
 
-int xf_input_event(xfContext* xfc, XIDeviceEvent* event, int evtype)
+static int xf_input_event(xfContext* xfc, XIDeviceEvent* event, int evtype)
 {
 	xf_input_show_cursor(xfc);
 
@@ -608,7 +602,7 @@ int xf_input_event(xfContext* xfc, XIDeviceEvent* event, int evtype)
 	return 0;
 }
 
-int xf_input_handle_event_remote(xfContext* xfc, XEvent* event)
+static int xf_input_handle_event_remote(xfContext* xfc, XEvent* event)
 {
 	XGenericEventCookie* cookie = &event->xcookie;
 	XGetEventData(xfc->display, cookie);

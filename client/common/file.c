@@ -521,7 +521,7 @@ static BOOL freerdp_client_parse_rdp_file_buffer_ascii(rdpFile* file, const BYTE
 	char* type;
 	char* context;
 	char* d1, *d2;
-	char* beg, *end;
+	char* beg;
 	char* name, *value;
 	char* copy = calloc(1, size + sizeof(BYTE));
 
@@ -539,7 +539,6 @@ static BOOL freerdp_client_parse_rdp_file_buffer_ascii(rdpFile* file, const BYTE
 		if (length > 1)
 		{
 			beg = line;
-			end = &line[length - 1];
 
 			if (!freerdp_client_parse_rdp_file_add_line_ascii(file, line, index))
 				return FALSE;
@@ -1354,12 +1353,13 @@ const char* freerdp_client_rdp_file_get_string_option(rdpFile* file, const char*
 int freerdp_client_rdp_file_set_integer_option(rdpFile* file, const char* name, int value)
 {
 	int index;
-	int length;
-	char* text;
-	rdpFileLine* line;
-	line = freerdp_client_rdp_file_find_line_by_name(file, name);
-	length = _scprintf("%s:i:%d", name, value);
-	text = (char*) malloc(length + 1);
+	const int length = _scprintf("%s:i:%d", name, value);
+	char* text = (char*) malloc(length + 1);
+	rdpFileLine* line = freerdp_client_rdp_file_find_line_by_name(file, name);
+
+	if (!text)
+		return -1;
+
 	sprintf_s(text, length + 1, "%s:i:%d", name, value);
 	text[length] = '\0';
 
@@ -1379,7 +1379,11 @@ int freerdp_client_rdp_file_set_integer_option(rdpFile* file, const char* name, 
 			return -1;
 		}
 
-		line = freerdp_client_rdp_file_find_line_index(file, index);
+		if (!freerdp_client_rdp_file_find_line_index(file, index))
+		{
+			free(text);
+			return -1;
+		}
 
 		if (freerdp_client_rdp_file_set_integer(file, (char*) name, value, index) < 0)
 		{

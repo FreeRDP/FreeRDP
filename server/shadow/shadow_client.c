@@ -2,6 +2,8 @@
  * FreeRDP: A Remote Desktop Protocol Implementation
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2017 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2017 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -700,32 +702,31 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
  * @return TRUE on success
  */
 static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client,
-        BYTE* pSrcData, int nSrcStep, int nXSrc, int nYSrc, int nWidth, int nHeight)
+        const BYTE* pSrcData, int nSrcStep, int nXSrc, int nYSrc, int nWidth, int nHeight)
 {
 	UINT error = CHANNEL_RC_OK;
-	rdpUpdate* update;
-	rdpContext* context;
+	rdpContext* context = (rdpContext*) client;
 	rdpSettings* settings;
-	rdpShadowServer* server;
 	rdpShadowEncoder* encoder;
 	RDPGFX_SURFACE_COMMAND cmd;
 	RDPGFX_START_FRAME_PDU cmdstart;
 	RDPGFX_END_FRAME_PDU cmdend;
 	SYSTEMTIME sTime;
 
-	context = (rdpContext*) client;
-	update = context->update;
+	if (!context || !pSrcData)
+		return FALSE;
+
 	settings = context->settings;
-	server = client->server;
 	encoder = client->encoder;
+
+	if (!settings || !encoder)
+		return FALSE;
 
 	cmdstart.frameId = shadow_encoder_create_frame_id(encoder);
 	GetSystemTime(&sTime);
 	cmdstart.timestamp = sTime.wHour << 22 | sTime.wMinute << 16 |
 	                     sTime.wSecond << 10 | sTime.wMilliseconds;
-
 	cmdend.frameId = cmdstart.frameId;
-
 	cmd.surfaceId = 0;
 	cmd.codecId = 0;
 	cmd.contextId = 0;
@@ -796,16 +797,20 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client,
 	int numMessages;
 	UINT32 frameId = 0;
 	rdpUpdate* update;
-	rdpContext* context;
+	rdpContext* context = (rdpContext*) client;
 	rdpSettings* settings;
-	rdpShadowServer* server;
 	rdpShadowEncoder* encoder;
 	SURFACE_BITS_COMMAND cmd;
-	context = (rdpContext*) client;
+
+	if (!context || !pSrcData)
+		return FALSE;
+
 	update = context->update;
 	settings = context->settings;
-	server = client->server;
 	encoder = client->encoder;
+
+	if (!update || !settings || !encoder)
+		return FALSE;
 
 	if (encoder->frameAck)
 		frameId = shadow_encoder_create_frame_id(encoder);
@@ -944,20 +949,25 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client,
 	UINT32 SrcFormat;
 	BITMAP_DATA* bitmap;
 	rdpUpdate* update;
-	rdpContext* context;
+	rdpContext* context = (rdpContext*) client;
 	rdpSettings* settings;
 	UINT32 maxUpdateSize;
 	UINT32 totalBitmapSize;
 	UINT32 updateSizeEstimate;
 	BITMAP_DATA* bitmapData;
 	BITMAP_UPDATE bitmapUpdate;
-	rdpShadowServer* server;
 	rdpShadowEncoder* encoder;
-	context = (rdpContext*) client;
+
+	if (!context || !pSrcData)
+		return FALSE;
+
 	update = context->update;
 	settings = context->settings;
-	server = client->server;
 	encoder = client->encoder;
+
+	if (!update || !settings || !encoder)
+		return FALSE;
+
 	maxUpdateSize = settings->MultifragMaxRequestSize;
 
 	if (settings->ColorDepth < 32)
@@ -1156,11 +1166,10 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client,
 	BOOL ret = TRUE;
 	int nXSrc, nYSrc;
 	int nWidth, nHeight;
-	rdpContext* context;
+	rdpContext* context = (rdpContext*) client;
 	rdpSettings* settings;
 	rdpShadowServer* server;
 	rdpShadowSurface* surface;
-	rdpShadowEncoder* encoder;
 	REGION16 invalidRegion;
 	RECTANGLE_16 surfaceRect;
 	const RECTANGLE_16* extents;
@@ -1169,11 +1178,21 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client,
 	int index;
 	UINT32 numRects = 0;
 	const RECTANGLE_16* rects;
-	context = (rdpContext*) client;
+
+	if (!context || !pStatus)
+		return FALSE;
+
 	settings = context->settings;
 	server = client->server;
-	encoder = client->encoder;
+
+	if (!settings || !server)
+		return FALSE;
+
 	surface = client->inLobby ? server->lobby : server->surface;
+
+	if (!surface)
+		return FALSE;
+
 	EnterCriticalSection(&(client->lock));
 	region16_init(&invalidRegion);
 	region16_copy(&invalidRegion, &(client->invalidRegion));
@@ -1275,14 +1294,19 @@ out:
 static BOOL shadow_client_send_resize(rdpShadowClient* client,
                                       SHADOW_GFX_STATUS* pStatus)
 {
-	rdpContext* context;
+	rdpContext* context = (rdpContext*) client;
 	rdpSettings* settings;
-	rdpShadowServer* server;
 	freerdp_peer* peer;
-	server = client->server;
-	context = (rdpContext*) client;
+
+	if (!context || !pStatus)
+		return FALSE;
+
 	peer = context->peer;
 	settings = context->settings;
+
+	if (!peer || !settings)
+		return FALSE;
+
 	/**
 	 * Unset client activated flag to avoid sending update message during
 	 * resize. DesktopResize will reactive the client and
@@ -1467,8 +1491,6 @@ static void* shadow_client_thread(rdpShadowClient* client)
 	rdpContext* context;
 	rdpSettings* settings;
 	rdpShadowServer* server;
-	rdpShadowScreen* screen;
-	rdpShadowEncoder* encoder;
 	rdpShadowSubsystem* subsystem;
 	wMessageQueue* MsgQueue = client->MsgQueue;
 	/* This should only be visited in client thread */
@@ -1476,8 +1498,6 @@ static void* shadow_client_thread(rdpShadowClient* client)
 	gfxstatus.gfxOpened = FALSE;
 	gfxstatus.gfxSurfaceCreated = FALSE;
 	server = client->server;
-	screen = server->screen;
-	encoder = client->encoder;
 	subsystem = server->subsystem;
 	context = (rdpContext*) client;
 	peer = context->peer;
@@ -1522,6 +1542,9 @@ static void* shadow_client_thread(rdpShadowClient* client)
 		events[nCount++] = ChannelEvent;
 		events[nCount++] = MessageQueue_Event(MsgQueue);
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+
+		if (status == WAIT_FAILED)
+			break;
 
 		if (WaitForSingleObject(UpdateEvent, 0) == WAIT_OBJECT_0)
 		{
@@ -1733,6 +1756,10 @@ BOOL shadow_client_accepted(freerdp_listener* listener, freerdp_peer* peer)
 {
 	rdpShadowClient* client;
 	rdpShadowServer* server;
+
+	if (!listener || !peer)
+		return FALSE;
+
 	server = (rdpShadowServer*) listener->info;
 	peer->ContextExtra = (void*) server;
 	peer->ContextSize = sizeof(rdpShadowClient);
@@ -1775,13 +1802,14 @@ static void shadow_msg_out_release(wMessage* message)
 static BOOL shadow_client_dispatch_msg(rdpShadowClient* client,
                                        wMessage* message)
 {
+	if (!client || !message)
+		return FALSE;
+
 	/* Add reference when it is posted */
 	shadow_msg_out_addref(message);
 
 	if (MessageQueue_Dispatch(client->MsgQueue, message))
-	{
 		return TRUE;
-	}
 	else
 	{
 		/* Release the reference since post failed */

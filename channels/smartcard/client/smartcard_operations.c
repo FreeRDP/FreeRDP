@@ -7,6 +7,8 @@
  * Copyright 2011 Anthony Tong <atong@trustedcs.com>
  * Copyright 2015 Thincast Technologies GmbH
  * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+ * Copyright 2017 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2017 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1043,7 +1045,7 @@ static LONG smartcard_StatusA_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPER
 	LONG status;
 	Status_Call* call;
 	IRP* irp = operation->irp;
-	operation->call = call = calloc(1, sizeof(State_Call));
+	operation->call = call = calloc(1, sizeof(Status_Call));
 
 	if (!call)
 		return STATUS_NO_MEMORY;
@@ -1100,7 +1102,7 @@ static LONG smartcard_StatusW_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPER
 	LONG status;
 	Status_Call* call;
 	IRP* irp = operation->irp;
-	operation->call = call = calloc(1, sizeof(State_Call));
+	operation->call = call = calloc(1, sizeof(Status_Call));
 
 	if (!call)
 		return STATUS_NO_MEMORY;

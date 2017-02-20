@@ -2,6 +2,8 @@
  * FreeRDP: A Remote Desktop Protocol Implementation
  *
  * Copyright 2011-2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2017 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2017 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +73,7 @@ static int x11_shadow_pam_conv(int num_msg, const struct pam_message** msg,
                                struct pam_response** resp, void* appdata_ptr)
 {
 	int index;
-	int pam_status = PAM_BUF_ERR;
+	int pam_status = PAM_CONV_ERR;
 	SHADOW_PAM_AUTH_DATA* appdata;
 	struct pam_response* response;
 	appdata = (SHADOW_PAM_AUTH_DATA*) appdata_ptr;
@@ -124,7 +126,7 @@ out_fail:
 	memset(response, 0, sizeof(struct pam_response) * num_msg);
 	free(response);
 	*resp = NULL;
-	return PAM_CONV_ERR;
+	return pam_status;
 }
 
 static int x11_shadow_pam_get_service_name(SHADOW_PAM_AUTH_INFO* info)
@@ -376,31 +378,39 @@ static void x11_shadow_message_free(UINT32 id, SHADOW_MSG_OUT* msg)
 
 static int x11_shadow_pointer_position_update(x11ShadowSubsystem* subsystem)
 {
-	SHADOW_MSG_OUT_POINTER_POSITION_UPDATE* msg;
 	UINT32 msgId = SHADOW_MSG_OUT_POINTER_POSITION_UPDATE_ID;
-	rdpShadowClient* client;
 	rdpShadowServer* server;
+	SHADOW_MSG_OUT_POINTER_POSITION_UPDATE templateMsg;
 	int count = 0;
 	int index = 0;
-	msg = (SHADOW_MSG_OUT_POINTER_POSITION_UPDATE*) calloc(1,
-	        sizeof(SHADOW_MSG_OUT_POINTER_POSITION_UPDATE));
+	templateMsg.xPos = subsystem->pointerX;
+	templateMsg.yPos = subsystem->pointerY;
+	templateMsg.Free = x11_shadow_message_free;
 
-	if (!msg)
+	if (!subsystem || !subsystem->server || !subsystem->server->clients)
 		return -1;
 
-	msg->xPos = subsystem->pointerX;
-	msg->yPos = subsystem->pointerY;
-	msg->Free = x11_shadow_message_free;
 	server = subsystem->server;
 	ArrayList_Lock(server->clients);
 
 	for (index = 0; index < ArrayList_Count(server->clients); index++)
 	{
-		client = (rdpShadowClient*)ArrayList_GetItem(server->clients, index);
+		SHADOW_MSG_OUT_POINTER_POSITION_UPDATE* msg;
+		rdpShadowClient* client = (rdpShadowClient*)ArrayList_GetItem(server->clients, index);
 
 		/* Skip the client which send us the latest mouse event */
 		if (client == subsystem->lastMouseClient)
 			continue;
+
+		msg = malloc(sizeof(templateMsg));
+
+		if (!msg)
+		{
+			count = -1;
+			break;
+		}
+
+		memcpy(msg, &templateMsg, sizeof(templateMsg));
 
 		if (shadow_client_post_msg(client, NULL, msgId, (SHADOW_MSG_OUT*) msg, NULL))
 			count++;
@@ -576,12 +586,8 @@ static int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
 	int nHeight;
 	int nSrcStep;
 	int nDstStep;
-	int nSrcPad;
-	int nDstPad;
 	BYTE* pSrcData;
 	BYTE* pDstData;
-	BYTE* pSrcPixel;
-	BYTE* pDstPixel;
 	BYTE A, R, G, B;
 	rdpShadowSurface* surface;
 	surface = subsystem->server->surface;
@@ -632,15 +638,11 @@ static int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
 	nSrcStep = subsystem->cursorWidth * 4;
 	pDstData = surface->data;
 	nDstStep = surface->scanline;
-	nSrcPad = (nSrcStep - (nWidth * 4));
-	nDstPad = (nDstStep - (nWidth * 4));
-	pSrcPixel = &pSrcData[(nYSrc * nSrcStep) + (nXSrc * 4)];
-	pDstPixel = &pDstData[(nYDst * nDstStep) + (nXDst * 4)];
 
 	for (y = 0; y < nHeight; y++)
 	{
-		pSrcPixel = &pSrcData[((nYSrc + y) * nSrcStep) + (nXSrc * 4)];
-		pDstPixel = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4)];
+		const BYTE* pSrcPixel = &pSrcData[((nYSrc + y) * nSrcStep) + (nXSrc * 4)];
+		BYTE* pDstPixel = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4)];
 
 		for (x = 0; x < nWidth; x++)
 		{
@@ -665,9 +667,6 @@ static int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
 			pDstPixel[3] = 0xFF;
 			pDstPixel += 4;
 		}
-
-		pSrcPixel += nSrcPad;
-		pDstPixel += nDstPad;
 	}
 
 	return 1;
@@ -724,7 +723,6 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 	int x, y;
 	int width, height;
 	XImage* image;
-	rdpShadowScreen* screen;
 	rdpShadowServer* server;
 	rdpShadowSurface* surface;
 	RECTANGLE_16 invalidRect;
@@ -732,7 +730,6 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 	const RECTANGLE_16* extents;
 	server = subsystem->server;
 	surface = server->surface;
-	screen = server->screen;
 	count = ArrayList_Count(server->clients);
 
 	if (count < 1)
@@ -782,38 +779,43 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 	XSetErrorHandler(NULL);
 	XSync(subsystem->display, False);
 	XUnlockDisplay(subsystem->display);
-	region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion),
-	                    &invalidRect);
-	region16_intersect_rect(&(surface->invalidRegion), &(surface->invalidRegion),
-	                        &surfaceRect);
 
-	if (!region16_is_empty(&(surface->invalidRegion)))
+	if (status)
 	{
-		extents = region16_extents(&(surface->invalidRegion));
-		x = extents->left;
-		y = extents->top;
-		width = extents->right - extents->left;
-		height = extents->bottom - extents->top;
-		freerdp_image_copy(surface->data, surface->format,
-		                   surface->scanline, x, y, width, height,
-		                   (BYTE*) image->data, PIXEL_FORMAT_BGRX32,
-		                   image->bytes_per_line, x, y, NULL, FREERDP_FLIP_NONE);
-		//x11_shadow_blend_cursor(subsystem);
-		count = ArrayList_Count(server->clients);
-		shadow_subsystem_frame_update((rdpShadowSubsystem*)subsystem);
+		region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion),
+		                    &invalidRect);
+		region16_intersect_rect(&(surface->invalidRegion), &(surface->invalidRegion),
+		                        &surfaceRect);
 
-		if (count == 1)
+		if (!region16_is_empty(&(surface->invalidRegion)))
 		{
-			rdpShadowClient* client;
-			client = (rdpShadowClient*) ArrayList_GetItem(server->clients, 0);
+			extents = region16_extents(&(surface->invalidRegion));
+			x = extents->left;
+			y = extents->top;
+			width = extents->right - extents->left;
+			height = extents->bottom - extents->top;
 
-			if (client)
+			if (!freerdp_image_copy(surface->data, surface->format,
+			                        surface->scanline, x, y, width, height,
+			                        (BYTE*) image->data, PIXEL_FORMAT_BGRX32,
+			                        image->bytes_per_line, x, y, NULL, FREERDP_FLIP_NONE))
+				goto fail_capture;
+
+			//x11_shadow_blend_cursor(subsystem);
+			count = ArrayList_Count(server->clients);
+			shadow_subsystem_frame_update((rdpShadowSubsystem*)subsystem);
+
+			if (count == 1)
 			{
-				subsystem->captureFrameRate = shadow_encoder_preferred_fps(client->encoder);
-			}
-		}
+				rdpShadowClient* client;
+				client = (rdpShadowClient*) ArrayList_GetItem(server->clients, 0);
 
-		region16_clear(&(surface->invalidRegion));
+				if (client)
+					subsystem->captureFrameRate = shadow_encoder_preferred_fps(client->encoder);
+			}
+
+			region16_clear(&(surface->invalidRegion));
+		}
 	}
 
 	if (!subsystem->use_xshm)
@@ -821,6 +823,10 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 
 	return 1;
 fail_capture:
+
+	if (!subsystem->use_xshm && image)
+		XDestroyImage(image);
+
 	XSetErrorHandler(NULL);
 	XSync(subsystem->display, False);
 	XUnlockDisplay(subsystem->display);
@@ -1297,7 +1303,8 @@ static int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 	virtualScreen->right = subsystem->width;
 	virtualScreen->bottom = subsystem->height;
 	virtualScreen->flags = 1;
-	WLog_INFO(TAG, "X11 Extensions: XFixes: %"PRId32" Xinerama: %"PRId32" XDamage: %"PRId32" XShm: %"PRId32"",
+	WLog_INFO(TAG,
+	          "X11 Extensions: XFixes: %"PRId32" Xinerama: %"PRId32" XDamage: %"PRId32" XShm: %"PRId32"",
 	          subsystem->use_xfixes, subsystem->use_xinerama, subsystem->use_xdamage,
 	          subsystem->use_xshm);
 	return 1;

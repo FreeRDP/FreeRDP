@@ -285,10 +285,7 @@ int winpr_image_bitmap_read_buffer(wImage* image, BYTE* buffer, int size)
 		return -1;
 
 	if (!vFlip)
-	{
 		CopyMemory(image->data, pSrcData, bi.biSizeImage);
-		pSrcData += bi.biSizeImage;
-	}
 	else
 	{
 		pDstData = &(image->data[(image->height - 1) * image->scanline]);
