@@ -144,7 +144,6 @@ static BOOL clear_decompress_subcode_rlex(wStream* s,
 	UINT32 x = 0, y = 0;
 	UINT32 i;
 	UINT32 pixelCount;
-	UINT32 nSrcStep;
 	UINT32 bitmapDataOffset;
 	UINT32 pixelIndex;
 	UINT32 numBits;
@@ -308,8 +307,6 @@ static BOOL clear_decompress_subcode_rlex(wStream* s,
 
 		pixelIndex += (suiteDepth + 1);
 	}
-
-	nSrcStep = width * GetBytesPerPixel(DstFormat);
 
 	if (pixelIndex != pixelCount)
 	{
@@ -842,7 +839,7 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear,
 				for (x = 0; x < count; x++)
 				{
 					UINT32 color;
-					color =	ReadColor(&vBarShortEntry->pixels[x * GetBytesPerPixel(clear->format)],
+					color =	ReadColor(&pSrcPixel[x * GetBytesPerPixel(clear->format)],
 					                  clear->format);
 
 					if (!WriteColor(dstBuffer, clear->format, color))
