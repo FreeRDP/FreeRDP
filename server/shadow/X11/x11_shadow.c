@@ -440,7 +440,7 @@ static int x11_shadow_pointer_alpha_update(x11ShadowSubsystem* subsystem)
 
 static int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 {
-	int x, y, n, k;
+	int x = 0, y = 0, n, k;
 	rdpShadowServer* server;
 	rdpShadowSurface* surface;
 	server = subsystem->server;
