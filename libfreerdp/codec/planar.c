@@ -1046,8 +1046,6 @@ static INLINE UINT32 freerdp_bitmap_planar_compress_planes_rle(
 	        outPlanes, &dstSizes[3]))
 		return 0;
 
-	outPlanes += dstSizes[3];
-	outPlanesSize -= dstSizes[3];
 	return 1;
 }
 
