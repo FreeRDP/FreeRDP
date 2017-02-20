@@ -43,8 +43,6 @@ static INLINE INT32 planar_skip_plane_rle(const BYTE* pSrcData, UINT32 SrcSize,
         UINT32 nWidth, UINT32 nHeight)
 {
 	UINT32 x, y;
-	int cRawBytes;
-	int nRunLength;
 	BYTE controlByte;
 	const BYTE* pRLE = pSrcData;
 	const BYTE* pEnd = &pSrcData[SrcSize];
@@ -53,6 +51,9 @@ static INLINE INT32 planar_skip_plane_rle(const BYTE* pSrcData, UINT32 SrcSize,
 	{
 		for (x = 0; x < nWidth;)
 		{
+			int cRawBytes;
+			int nRunLength;
+
 			if (pRLE >= pEnd)
 				return -1;
 
@@ -73,9 +74,7 @@ static INLINE INT32 planar_skip_plane_rle(const BYTE* pSrcData, UINT32 SrcSize,
 
 			pRLE += cRawBytes;
 			x += cRawBytes;
-			cRawBytes = 0;
 			x += nRunLength;
-			nRunLength = 0;
 
 			if (x > nWidth)
 				return -1;
@@ -95,7 +94,6 @@ static INLINE INT32 planar_decompress_plane_rle(const BYTE* pSrcData, UINT32 Src
         UINT32 nChannel, BOOL vFlip)
 {
 	UINT32 x, y;
-	BYTE* dstp;
 	UINT32 pixel;
 	UINT32 cRawBytes;
 	UINT32 nRunLength;
@@ -105,7 +103,6 @@ static INLINE INT32 planar_decompress_plane_rle(const BYTE* pSrcData, UINT32 Src
 	BYTE* currentScanline;
 	BYTE* previousScanline;
 	const BYTE* srcp = pSrcData;
-	dstp = pDstData;
 	previousScanline = NULL;
 
 	if (vFlip)
@@ -123,7 +120,7 @@ static INLINE INT32 planar_decompress_plane_rle(const BYTE* pSrcData, UINT32 Src
 
 	for (y = beg; y != end; y += inc)
 	{
-		dstp = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4) + nChannel];
+		BYTE* dstp = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4) + nChannel];
 		pixel = 0;
 		currentScanline = dstp;
 
@@ -355,7 +352,6 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 	UINT32 rawWidths[4];
 	UINT32 rawHeights[4];
 	BYTE FormatHeader;
-	UINT32 UncompressedSize;
 	const BYTE* planes[4];
 	const UINT32 w = MIN(nSrcWidth, nDstWidth);
 	const UINT32 h = MIN(nSrcHeight, nDstHeight);
@@ -365,7 +361,6 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar,
 		nDstStep = nDstWidth * GetBytesPerPixel(DstFormat);
 
 	srcp = pSrcData;
-	UncompressedSize = nSrcWidth * nSrcHeight * GetBytesPerPixel(DstFormat);
 
 	if (!pDstData)
 	{
