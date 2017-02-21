@@ -1705,6 +1705,16 @@ BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	Stream_Read_UINT32(s, flags); /* flags */
 	Stream_Read_UINT32(s, monitorCount); /* monitorCount */
 
+	/* 2.2.1.3.6 Client Monitor Data -
+	 * monitorCount (4 bytes): A 32-bit, unsigned integer. The number of display
+	 * monitor definitions in the monitorDefArray field (the maximum allowed is 16).
+	 */
+	if (monitorCount > 16)
+	{
+		WLog_ERR(TAG, "announced monitors(%"PRIu32") exceed the 16 limit", monitorCount);
+		return FALSE;
+	}
+
 	if (monitorCount > settings->MonitorDefArraySize)
 	{
 		WLog_ERR(TAG, "too many announced monitors(%"PRIu32"), clamping to %"PRIu32"", monitorCount,
