@@ -40,6 +40,8 @@
 
 #endif
 
+#define TAG SERVER_TAG("windows")
+
 static const AUDIO_FORMAT supported_audio_formats[] =
 {
 	{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, 0, NULL },
