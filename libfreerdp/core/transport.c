@@ -519,7 +519,6 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 	int position;
 	int pduLength;
 	BYTE* header;
-	position = 0;
 	pduLength = 0;
 
 	if (!transport)
