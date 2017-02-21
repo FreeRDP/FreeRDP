@@ -1705,6 +1705,12 @@ BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	Stream_Read_UINT32(s, flags); /* flags */
 	Stream_Read_UINT32(s, monitorCount); /* monitorCount */
 
+	if (monitorCount > 16)
+	{
+		WLog_ERR(TAG, "announced monitors(%"PRIu32") exceed the 16 limit", monitorCount);
+		return FALSE;
+	}
+
 	if (monitorCount > settings->MonitorDefArraySize)
 	{
 		WLog_ERR(TAG, "too many announced monitors(%"PRIu32"), clamping to %"PRIu32"", monitorCount,
