@@ -7,6 +7,8 @@
 #include <Functiondiscoverykeys_devpkey.h>
 #include <Audioclient.h>
 
+#define TAG SERVER_TAG("windows")
+
 //#define REFTIMES_PER_SEC  10000000
 //#define REFTIMES_PER_MILLISEC  10000
 
