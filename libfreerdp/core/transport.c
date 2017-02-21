@@ -59,35 +59,11 @@
 
 static void* transport_client_thread(void* arg);
 
-#ifdef WITH_KRB5_SUPPORT
+#ifdef WITH_KRB5
 
 #include <krb5.h>
 #include <winpr/library.h>
-
-static HMODULE g_KRB5Module = NULL;
-
-struct _KRB5FunctionTable
-{
-	krb5_error_code(* pKrb5_init_context)(krb5_context* m_context);
-	krb5_error_code(*pKrb5_parse_name_flags)(krb5_context m_context, const char* m_address, int m_flags,
-	        krb5_principal* m_principal);
-	krb5_error_code(*pKrb5_cc_cache_match)(krb5_context m_context, krb5_principal m_client,
-	                                       krb5_ccache* m_id);
-	krb5_error_code(*pKrb5_cc_default)(krb5_context m_context, krb5_ccache* m_id);
-	krb5_error_code(*pKrb5_init_creds_init)(krb5_context m_context, krb5_principal m_client,
-	                                        krb5_prompter_fct m_prompter, void* m_prompter_data, krb5_deltat m_start_time,
-	                                        krb5_get_init_creds_opt* m_options, krb5_init_creds_context* m_ctx);
-	krb5_error_code(*pKrb5_init_creds_set_password)(krb5_context m_context,
-	        krb5_init_creds_context m_ctx, const char* m_password);
-	krb5_error_code(*pKrb5_init_creds_get)(krb5_context m_context, krb5_init_creds_context m_ctx);
-	void (*pKrb5_init_creds_free)(krb5_context m_context, krb5_init_creds_context m_ctx);
-	void (*pKrb5_free_context)(krb5_context m_context);
-};
-typedef struct _KRB5FunctionTable KRB5FunctionTable;
-
-static KRB5FunctionTable g_KRB5 = { 0 };
-
-UINT32 transport_krb5_check_account(char* username, char* domain, char* passwd)
+static UINT32 transport_krb5_check_account(char* username, char* domain, char* passwd)
 {
 	krb5_error_code ret;
 	krb5_context context;
@@ -95,112 +71,79 @@ UINT32 transport_krb5_check_account(char* username, char* domain, char* passwd)
 	char address[256];
 	krb5_ccache ccache;
 	krb5_init_creds_context ctx = NULL;
-	memset(address, 0, sizeof(address));
-	strcpy(address, username);
-	strcat(address, "@");
-	strcat(address, domain);
-	g_KRB5Module = LoadLibrary("libkrb5.so.26");
-
-	if (!g_KRB5Module)
-	{
-		g_KRB5Module = LoadLibrary("libkrb5.so");
-	}
-
-	if (!g_KRB5Module)
-	{
-		WLog_ERR(TAG, "Failed to load krb5 module\n");
-	}
-
-	g_KRB5.pKrb5_init_context 		= (void*) GetProcAddress(g_KRB5Module, "krb5_init_context");
-	g_KRB5.pKrb5_parse_name_flags 		= (void*) GetProcAddress(g_KRB5Module, "krb5_parse_name_flags");
-	g_KRB5.pKrb5_cc_cache_match 		= (void*) GetProcAddress(g_KRB5Module, "krb5_cc_cache_match");
-	g_KRB5.pKrb5_cc_default 		= (void*) GetProcAddress(g_KRB5Module, "krb5_cc_default");
-	g_KRB5.pKrb5_init_creds_init 		= (void*) GetProcAddress(g_KRB5Module, "krb5_init_creds_init");
-	g_KRB5.pKrb5_init_creds_set_password 	= (void*) GetProcAddress(g_KRB5Module,
-	        "krb5_init_creds_set_password");
-	g_KRB5.pKrb5_init_creds_get 		= (void*) GetProcAddress(g_KRB5Module, "krb5_init_creds_get");
-	g_KRB5.pKrb5_init_creds_free 		= (void*) GetProcAddress(g_KRB5Module, "krb5_init_creds_free");
-	g_KRB5.pKrb5_free_context 		= (void*) GetProcAddress(g_KRB5Module, "krb5_free_context");
+	_snprintf(address, sizeof(address), "%s@%s", username, domain);
 
 	/* Create a krb5 library context */
-	if ((ret = g_KRB5.pKrb5_init_context(&context)) != 0)
-	{
-		WLog_ERR(TAG, "krb5_init_context failed with error %d\n", (int)ret);
-	}
-
-	if ((ret = g_KRB5.pKrb5_parse_name_flags(context, address, 0, &principal)) != 0)
-	{
-		WLog_ERR(TAG, "krb5_parse_name_flags failed with error %d\n", (int)ret);
-	}
-
+	if ((ret = krb5_init_context(&context)) != 0)
+		WLog_ERR(TAG, "krb5_init_context failed with error %d", (int)ret);
+	else if ((ret = krb5_parse_name_flags(context, address, 0, &principal)) != 0)
+		WLog_ERR(TAG, "krb5_parse_name_flags failed with error %d", (int)ret);
 	/* Find a credential cache with a specified client principal */
-	if ((ret = g_KRB5.pKrb5_cc_cache_match(context, principal, &ccache)) != 0)
+	else if ((ret = krb5_cc_cache_match(context, principal, &ccache)) != 0)
 	{
-		if ((ret = g_KRB5.pKrb5_cc_default(context, &ccache)) != 0)
-		{
-			WLog_ERR(TAG, "krb5 failed to resolve credentials cache with error %d\n", (int)ret);
-		}
+		if ((ret = krb5_cc_default(context, &ccache)) != 0)
+			WLog_ERR(TAG, "krb5 failed to resolve credentials cache with error %d", (int)ret);
 	}
 
+	if (ret != KRB5KDC_ERR_NONE)
+		goto out;
 	/* Create a context for acquiring initial credentials */
-	if ((ret = g_KRB5.pKrb5_init_creds_init(context, principal, NULL, NULL, 0, NULL, &ctx)) != 0)
+	else if ((ret = krb5_init_creds_init(context, principal, NULL, NULL, 0, NULL, &ctx)) != 0)
 	{
-		WLog_WARN(TAG, "krb5_init_creds_init returned error %d\n", (int)ret);
+		WLog_WARN(TAG, "krb5_init_creds_init returned error %d", (int)ret);
 		goto out;
 	}
-
 	/* Set a password for acquiring initial credentials */
-	if ((ret = g_KRB5.pKrb5_init_creds_set_password(context, ctx, passwd)) != 0)
+	else if ((ret = krb5_init_creds_set_password(context, ctx, passwd)) != 0)
 	{
-		WLog_WARN(TAG, "krb5_init_creds_set_password returned error %d\n", ret);
+		WLog_WARN(TAG, "krb5_init_creds_set_password returned error %d", ret);
 		goto out;
 	}
 
 	/* Acquire credentials using an initial credential context */
-	ret = g_KRB5.pKrb5_init_creds_get(context, ctx);
+	ret = krb5_init_creds_get(context, ctx);
+out:
 
 	switch (ret)
 	{
-		case 0:
+		case KRB5KDC_ERR_NONE:
 			break;
 
+		case KRB5_KDC_UNREACH:
 		case KRB5KRB_AP_ERR_BAD_INTEGRITY:
 		case KRB5KRB_AP_ERR_MODIFIED:
 		case KRB5KDC_ERR_PREAUTH_FAILED:
 		case KRB5_GET_IN_TKT_LOOP:
 			WLog_WARN(TAG, "krb5_init_creds_get: Password incorrect");
-
-			if (ctx)
-				g_KRB5.pKrb5_init_creds_free(context, ctx);
-
-			return FREERDP_ERROR_AUTHENTICATION_FAILED;
+			ret = FREERDP_ERROR_AUTHENTICATION_FAILED;
+			break;
 
 		case KRB5KDC_ERR_KEY_EXP:
 			WLog_WARN(TAG, "krb5_init_creds_get: Password has expired");
+			ret = FREERDP_ERROR_CONNECT_PASSWORD_EXPIRED;
+			break;
 
-			if (ctx)
-				g_KRB5.pKrb5_init_creds_free(context, ctx);
+		case KRB5KDC_ERR_CLIENT_REVOKED:
+			ret = FREERDP_ERROR_CONNECT_PASSWORD_CERTAINLY_EXPIRED;
+			break;
 
-			return FREERDP_ERROR_CONNECT_PASSWORD_EXPIRED;
+		case KRB5KDC_ERR_POLICY:
+			ret = FREERDP_ERROR_INSUFFICIENT_PRIVILEGES;
+			break;
 
 		default:
 			WLog_WARN(TAG, "krb5_init_creds_get");
-
-			if (ctx)
-				g_KRB5.pKrb5_init_creds_free(context, ctx);
-
-			return FREERDP_ERROR_CONNECT_TRANSPORT_FAILED;
+			ret = FREERDP_ERROR_CONNECT_TRANSPORT_FAILED;
+			break;
 	}
 
-out:
-
 	if (ctx)
-		g_KRB5.pKrb5_init_creds_free(context, ctx);
+		krb5_init_creds_free(context, ctx);
 
-	g_KRB5.pKrb5_free_context(context);
-	return 0;
+	krb5_free_context(context);
+	return ret;
 }
-#endif /* WITH_KRB5_SUPPORT */
+#endif /* WITH_KRB5 */
 
 static void transport_ssl_cb(SSL* ssl, int where, int ret)
 {
@@ -224,7 +167,7 @@ static void transport_ssl_cb(SSL* ssl, int where, int ret)
 			if (transport->NlaMode)
 			{
 				UINT32 kret = 0;
-#ifdef WITH_KRB5_SUPPORT
+#ifdef WITH_KRB5
 
 				if ((strlen(transport->settings->Domain) != 0) &&
 				    (strncmp(transport->settings->Domain, ".", 1) != 0))
@@ -233,7 +176,7 @@ static void transport_ssl_cb(SSL* ssl, int where, int ret)
 					                                    transport->settings->Password);
 				}
 				else
-#endif /* WITH_KRB5_SUPPORT */
+#endif /* WITH_KRB5 */
 					kret = FREERDP_ERROR_CONNECT_PASSWORD_CERTAINLY_EXPIRED;
 
 				if (!freerdp_get_last_error(transport->context))
