@@ -14,6 +14,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.webkit.WebView;
 
@@ -26,7 +27,7 @@ import java.io.InputStreamReader;
 import java.util.IllegalFormatException;
 import java.util.Locale;
 
-public class AboutActivity extends Activity {
+public class AboutActivity extends AppCompatActivity {
 
     private static final String TAG = "FreeRDPCore.AboutActivity";
 

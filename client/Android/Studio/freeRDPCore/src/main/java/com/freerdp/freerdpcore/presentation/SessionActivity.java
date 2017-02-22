@@ -31,6 +31,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -61,7 +62,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-public class SessionActivity extends ActionBarActivity implements
+public class SessionActivity extends AppCompatActivity implements
         LibFreeRDP.UIEventListener, KeyboardView.OnKeyboardActionListener,
         ScrollView2D.ScrollView2DListener,
         KeyboardMapper.KeyProcessingListener, SessionView.SessionViewListener,

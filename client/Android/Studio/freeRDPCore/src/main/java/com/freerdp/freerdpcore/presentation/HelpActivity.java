@@ -12,6 +12,7 @@ package com.freerdp.freerdpcore.presentation;
 import android.app.Activity;
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.webkit.WebView;
 
@@ -19,7 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Locale;
 
-public class HelpActivity extends Activity {
+public class HelpActivity extends AppCompatActivity {
 
     private static final String TAG = "FreeRDPCore.HelpActivity";
 

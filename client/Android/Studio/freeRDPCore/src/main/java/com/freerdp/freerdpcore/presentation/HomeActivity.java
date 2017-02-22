@@ -15,6 +15,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -45,7 +46,7 @@ import com.freerdp.freerdpcore.utils.SeparatedListAdapter;
 
 import java.util.ArrayList;
 
-public class HomeActivity extends Activity {
+public class HomeActivity extends AppCompatActivity {
     private final static String ADD_BOOKMARK_PLACEHOLDER = "add_bookmark";
     private static final String TAG = "HomeActivity";
     private static final String PARAM_SUPERBAR_TEXT = "superbar_text";
