@@ -112,6 +112,10 @@ out:
 			break;
 
 		case KRB5_KDC_UNREACH:
+			WLog_Print(transport->log, WLOG_WARN, "krb5_init_creds_get: KDC unreachable");
+			ret = FREERDP_ERROR_CONNECT_KDC_UNREACHABLE;
+			break;
+
 		case KRB5KRB_AP_ERR_BAD_INTEGRITY:
 		case KRB5KRB_AP_ERR_MODIFIED:
 		case KRB5KDC_ERR_PREAUTH_FAILED:
@@ -126,7 +130,8 @@ out:
 			break;
 
 		case KRB5KDC_ERR_CLIENT_REVOKED:
-			ret = FREERDP_ERROR_CONNECT_PASSWORD_CERTAINLY_EXPIRED;
+			WLog_Print(transport->log, WLOG_WARN, "krb5_init_creds_get: Password revoked");
+			ret = FREERDP_ERROR_CONNECT_CLIENT_REVOKED;
 			break;
 
 		case KRB5KDC_ERR_POLICY:
