@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
 /*
  Copyright (C) 2007 Google Inc.
 
@@ -21,48 +20,47 @@
     android:layout_width="fill_parent"
     android:layout_height="wrap_content">
 
-	<ImageView
-		android:id="@+id/session_screenshot"
-		android:contentDescription="@+id/session_screenshot"
-		android:layout_width="64dp"
-		android:layout_height="48dp"
-		android:scaleType="fitXY"
-		android:layout_alignParentLeft="true"
-		android:layout_centerVertical="true"
-		android:padding="4dp" />
+    <ImageView
+        android:id="@+id/session_screenshot"
+        android:layout_width="64dp"
+        android:layout_height="48dp"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        android:contentDescription="@+id/session_screenshot"
+        android:padding="4dp"
+        android:scaleType="fitXY" />
 
-    
-    <TextView android:id="@+id/session_text1"
+
+    <TextView
+        android:id="@+id/session_text1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_marginLeft="6dip"
         android:layout_marginTop="6dip"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
         android:layout_toRightOf="@id/session_screenshot"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-		 />
+        android:textAppearance="?android:attr/textAppearanceLarge" />
 
-    <TextView android:id="@+id/session_text2"
+    <TextView
+        android:id="@+id/session_text2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/session_text1"
         android:layout_alignLeft="@id/session_text1"
+        android:layout_below="@id/session_text1"
         android:paddingBottom="4dip"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-		 />
+        android:textAppearance="?android:attr/textAppearanceSmall" />
 
-	<ImageButton
-		android:id="@+id/session_disconnect"
-		android:contentDescription="@+id/session_disconnect"
-	    android:focusable="false"
-	    android:focusableInTouchMode="false"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:layout_centerVertical="true"
-        android:layout_marginTop="9dip"
+    <ImageButton
+        android:id="@+id/session_disconnect"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
         android:layout_marginRight="7dip"
-		android:background="@drawable/button_background"
-		android:src="@drawable/icon_button_cancel"
-	/>
-   
+        android:layout_marginTop="9dip"
+        android:background="@drawable/button_background"
+        android:contentDescription="@+id/session_disconnect"
+        android:focusable="false"
+        android:focusableInTouchMode="false"
+        android:src="@drawable/icon_button_cancel" />
+
 </TwoLineListItem>

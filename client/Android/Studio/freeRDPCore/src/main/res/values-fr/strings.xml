@@ -27,7 +27,7 @@
     <string name="section_bookmarks">"Connexions manuelles"</string>
     <string name="section_active_sessions">"Sessions actives"</string>
     <!-- Search strings -->
-    <string name="search_hint">"Connexion à l'ordinateur"</string>    
+    <string name="search_hint">"Connexion à l'ordinateur"</string>
     <!-- List placeholder labels -->
     <string name="list_placeholder_login">"Se connecter"</string>
     <string name="list_placeholder_no_servers">"Pas de connexion"</string>
@@ -92,7 +92,7 @@
     <string name="settings_performance_3g">"Performance 3G"</string>
     <string name="settings_cat_gateway">Gateway</string>
     <string name="settings_enable_gateway_settings">Enable Gateway</string>
-    <string name="settings_gateway_settings">Gateway Settings</string>    
+    <string name="settings_gateway_settings">Gateway Settings</string>
     <string name="settings_redirect_sdcard">"Redirect SDCard"</string>
     <string name="settings_redirect_sound">Redirect Sound</string>
     <string-array name="redirect_sound_array">

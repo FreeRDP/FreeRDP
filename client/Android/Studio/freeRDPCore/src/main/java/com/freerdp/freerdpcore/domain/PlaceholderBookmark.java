@@ -15,69 +15,62 @@ import android.os.Parcelable;
 
 public class PlaceholderBookmark extends BookmarkBase {
 
-	private String name;
-	
-	public PlaceholderBookmark(Parcel parcel)
-	{
-		super(parcel);
-		type = TYPE_PLACEHOLDER;
-		name = parcel.readString();
-	}
+    public static final Parcelable.Creator<PlaceholderBookmark> CREATOR = new Parcelable.Creator<PlaceholderBookmark>() {
+        public PlaceholderBookmark createFromParcel(Parcel in) {
+            return new PlaceholderBookmark(in);
+        }
 
-	public PlaceholderBookmark() {
-		super();
-		type = TYPE_PLACEHOLDER;
-		name = "";
-	}
+        @Override
+        public PlaceholderBookmark[] newArray(int size) {
+            return new PlaceholderBookmark[size];
+        }
+    };
+    private String name;
 
-	public void setName(String name) {
-		this.name = name;
-	}
-	
-	public String getName() {
-		return name;
-	}
-	
-	public static final Parcelable.Creator<PlaceholderBookmark> CREATOR = new Parcelable.Creator<PlaceholderBookmark>()
-	{
-		public PlaceholderBookmark createFromParcel(Parcel in) {
-			return new PlaceholderBookmark(in);
-		}
+    public PlaceholderBookmark(Parcel parcel) {
+        super(parcel);
+        type = TYPE_PLACEHOLDER;
+        name = parcel.readString();
+    }
 
-		@Override
-		public PlaceholderBookmark[] newArray(int size) {
-			return new PlaceholderBookmark[size];
-		}
-	};
-	
-	@Override
-	public int describeContents() {
-		return 0;
-	}
+    public PlaceholderBookmark() {
+        super();
+        type = TYPE_PLACEHOLDER;
+        name = "";
+    }
 
-	@Override
-	public void writeToParcel(Parcel out, int flags)
-	{
-		super.writeToParcel(out, flags);
-		out.writeString(name);
-	}
+    public String getName() {
+        return name;
+    }
 
-	@Override
-	public void writeToSharedPreferences(SharedPreferences sharedPrefs)
-	{
-		super.writeToSharedPreferences(sharedPrefs);
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	@Override
-	public void readFromSharedPreferences(SharedPreferences sharedPrefs)
-	{
-		super.readFromSharedPreferences(sharedPrefs);
-	}
-	
-	// Cloneable
-	public Object clone()
-	{
-		return super.clone();					
-	}
-	
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel out, int flags) {
+        super.writeToParcel(out, flags);
+        out.writeString(name);
+    }
+
+    @Override
+    public void writeToSharedPreferences(SharedPreferences sharedPrefs) {
+        super.writeToSharedPreferences(sharedPrefs);
+    }
+
+    @Override
+    public void readFromSharedPreferences(SharedPreferences sharedPrefs) {
+        super.readFromSharedPreferences(sharedPrefs);
+    }
+
+    // Cloneable
+    public Object clone() {
+        return super.clone();
+    }
+
 }

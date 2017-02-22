@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- 
+<?xml version="1.0" encoding="utf-8"?><!--
 /*
    Bookmark searchable definition
 
@@ -9,18 +8,15 @@
    If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
  -->
-<searchable
-	xmlns:android="http://schemas.android.com/apk/res/android"
-	android:label="@string/search_label"
+<searchable xmlns:android="http://schemas.android.com/apk/res/android"
     android:hint="@string/search_hint"
-    android:searchMode="queryRewriteFromText"
     android:imeOptions="actionGo"
-
-    android:searchSuggestAuthority="com.freerdp.afreerdp.services.freerdpsuggestionprovider"
-    android:searchSuggestIntentAction="android.intent.action.VIEW"
-    android:searchSuggestSelection=" ? "
-
     android:includeInGlobalSearch="true"
+    android:label="@string/search_label"
+
+    android:searchMode="queryRewriteFromText"
     android:searchSettingsDescription="@string/search_settings_description"
-   	>
-</searchable>
+    android:searchSuggestAuthority="com.freerdp.afreerdp.services.freerdpsuggestionprovider"
+
+    android:searchSuggestIntentAction="android.intent.action.VIEW"
+    android:searchSuggestSelection=" ? "></searchable>

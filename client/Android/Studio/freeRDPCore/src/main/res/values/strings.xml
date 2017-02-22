@@ -62,8 +62,7 @@
     </string-array>
     <!-- This array is used as is in code,
 	do not translate! -->
-    <string-array name="colors_values_array"
-                  translatable="false">
+    <string-array name="colors_values_array" translatable="false">
         <item>8</item>
         <item>15</item>
         <item>16</item>
@@ -89,8 +88,7 @@
     </string-array>
     <!-- This array is used as is in code,
 	do not translate! -->
-    <string-array name="resolutions_values_array"
-                  translatable="false">
+    <string-array name="resolutions_values_array" translatable="false">
         <item>automatic</item>
         <item>fitscreen</item>
         <item>custom</item>
@@ -133,8 +131,7 @@
     </string-array>
     <!-- This array is used as is in code,
 	do not translate! -->
-    <string-array name="redirect_sound_values_array"
-                  translatable="false">
+    <string-array name="redirect_sound_values_array" translatable="false">
         <item>2</item>
         <item>1</item>
         <item>0</item>
@@ -149,8 +146,7 @@
     </string-array>
     <!-- This array is used as is in code,
 	do not translate! -->
-    <string-array name="security_values_array"
-                  translatable="false">
+    <string-array name="security_values_array" translatable="false">
         <item>0</item>
         <item>1</item>
         <item>2</item>
@@ -226,8 +222,7 @@
     </string-array>
     <!-- This array is used as is in code,
 	do not translate! -->
-    <string-array name="debug_values_array"
-                  translatable="false">
+    <string-array name="debug_values_array" translatable="false">
         <item>OFF</item>
         <item>FATAL</item>
         <item>ERROR</item>

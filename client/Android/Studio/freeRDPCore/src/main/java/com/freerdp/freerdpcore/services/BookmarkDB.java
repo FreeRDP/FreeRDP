@@ -9,25 +9,53 @@
 
 package com.freerdp.freerdpcore.services;
 
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.provider.BaseColumns;
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import android.content.Context;
-import android.provider.BaseColumns;
-import android.util.Log;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
-
 public class BookmarkDB extends SQLiteOpenHelper {
+    public static final String ID = BaseColumns._ID;
     private static final int DB_VERSION = 8;
     private static final String DB_NAME = "bookmarks.db";
 
-    public static final String ID = BaseColumns._ID;
-
     public BookmarkDB(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
+    }
+
+    private static List<String> GetColumns(SQLiteDatabase db, String tableName) {
+        List<String> ar = null;
+        Cursor c = null;
+        try {
+            c = db.rawQuery("SELECT * FROM " + tableName + " LIMIT 1", null);
+            if (c != null) {
+                ar = new ArrayList<String>(Arrays.asList(c.getColumnNames()));
+            }
+        } catch (Exception e) {
+            Log.v(tableName, e.getMessage(), e);
+            e.printStackTrace();
+        } finally {
+            if (c != null)
+                c.close();
+        }
+        return ar;
+    }
+
+    private static String joinStrings(List<String> list, String delim) {
+        StringBuilder buf = new StringBuilder();
+        int num = list.size();
+        for (int i = 0; i < num; i++) {
+            if (i != 0)
+                buf.append(delim);
+            buf.append((String) list.get(i));
+        }
+        return buf.toString();
     }
 
     @Override
@@ -192,34 +220,5 @@ public class BookmarkDB extends SQLiteOpenHelper {
 
         db.setTransactionSuccessful();
         db.endTransaction();
-    }
-
-    private static List<String> GetColumns(SQLiteDatabase db, String tableName) {
-        List<String> ar = null;
-        Cursor c = null;
-        try {
-            c = db.rawQuery("SELECT * FROM " + tableName + " LIMIT 1", null);
-            if (c != null) {
-                ar = new ArrayList<String>(Arrays.asList(c.getColumnNames()));
-            }
-        } catch (Exception e) {
-            Log.v(tableName, e.getMessage(), e);
-            e.printStackTrace();
-        } finally {
-            if (c != null)
-                c.close();
-        }
-        return ar;
-    }
-
-    private static String joinStrings(List<String> list, String delim) {
-        StringBuilder buf = new StringBuilder();
-        int num = list.size();
-        for (int i = 0; i < num; i++) {
-            if (i != 0)
-                buf.append(delim);
-            buf.append((String) list.get(i));
-        }
-        return buf.toString();
     }
 }

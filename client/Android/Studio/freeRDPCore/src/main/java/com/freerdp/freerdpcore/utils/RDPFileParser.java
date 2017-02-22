@@ -16,90 +16,76 @@ import java.util.HashMap;
 import java.util.Locale;
 
 public class RDPFileParser {
-	
-	private static final int MAX_ERRORS = 20;
-	private static final int MAX_LINES = 500;
-	
-	private HashMap<String, Object> options;
 
-	private void init()
-	{
-		options = new HashMap<String, Object>(); 
-	}
-	
-	public RDPFileParser()
-	{
-		init();
-	}
-	
-	public RDPFileParser(String filename) throws IOException
-	{
-		init();
-		parse(filename);
-	}
-	
-	public void parse(String filename) throws IOException
-	{
-		BufferedReader br = new BufferedReader(new FileReader(filename));
-		String line = null;
-		
-		int errors = 0;
-		int lines = 0;
-		boolean ok;
-	
-		while ((line = br.readLine()) != null)
-		{
-			lines++; ok = false;
-			
-			if (errors > MAX_ERRORS || lines > MAX_LINES)
-			{
-				br.close();			
-				throw new IOException("Parsing limits exceeded");
-			}
-			
-			String[] fields = line.split(":", 3);
-			
-			if (fields.length == 3)
-			{
-				if (fields[1].equals("s"))
-				{
-					options.put(fields[0].toLowerCase(Locale.ENGLISH), fields[2]);
-					ok = true;
-				}
-				else if (fields[1].equals("i"))
-				{
-					try
-					{
-						Integer i = Integer.parseInt(fields[2]);
-						options.put(fields[0].toLowerCase(Locale.ENGLISH), i);
-						ok = true;
-					}
-					catch (NumberFormatException e) { }
-				}
-				else if (fields[1].equals("b"))
-				{
-					ok = true;
-				}
-			}
-			
-			if (!ok) errors++;
-		}
-		br.close();
-	}
-	
-	public String getString(String optionName)
-	{
-		if (options.get(optionName) instanceof String)
-			return (String) options.get(optionName);
-		else
-			return null;
-	}
+    private static final int MAX_ERRORS = 20;
+    private static final int MAX_LINES = 500;
 
-	public Integer getInteger(String optionName)
-	{
-		if (options.get(optionName) instanceof Integer)
-			return (Integer) options.get(optionName);
-		else
-			return null;
-	}
+    private HashMap<String, Object> options;
+
+    public RDPFileParser() {
+        init();
+    }
+
+    public RDPFileParser(String filename) throws IOException {
+        init();
+        parse(filename);
+    }
+
+    private void init() {
+        options = new HashMap<String, Object>();
+    }
+
+    public void parse(String filename) throws IOException {
+        BufferedReader br = new BufferedReader(new FileReader(filename));
+        String line = null;
+
+        int errors = 0;
+        int lines = 0;
+        boolean ok;
+
+        while ((line = br.readLine()) != null) {
+            lines++;
+            ok = false;
+
+            if (errors > MAX_ERRORS || lines > MAX_LINES) {
+                br.close();
+                throw new IOException("Parsing limits exceeded");
+            }
+
+            String[] fields = line.split(":", 3);
+
+            if (fields.length == 3) {
+                if (fields[1].equals("s")) {
+                    options.put(fields[0].toLowerCase(Locale.ENGLISH), fields[2]);
+                    ok = true;
+                } else if (fields[1].equals("i")) {
+                    try {
+                        Integer i = Integer.parseInt(fields[2]);
+                        options.put(fields[0].toLowerCase(Locale.ENGLISH), i);
+                        ok = true;
+                    } catch (NumberFormatException e) {
+                    }
+                } else if (fields[1].equals("b")) {
+                    ok = true;
+                }
+            }
+
+            if (!ok) errors++;
+        }
+        br.close();
+    }
+
+    public String getString(String optionName) {
+        if (options.get(optionName) instanceof String)
+            return (String) options.get(optionName);
+        else
+            return null;
+    }
+
+    public Integer getInteger(String optionName) {
+        if (options.get(optionName) instanceof Integer)
+            return (Integer) options.get(optionName);
+        else
+            return null;
+    }
 }
