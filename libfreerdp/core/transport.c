@@ -151,37 +151,49 @@ static void transport_ssl_cb(SSL* ssl, int where, int ret)
 
 	if (where | SSL_CB_ALERT)
 	{
-		if (ret == 561)
+		switch (ret)
 		{
-			transport = (rdpTransport*) SSL_get_app_data(ssl);
+			case SSL3_AL_FATAL | SSL_AD_ACCESS_DENIED:
+				{
+					transport = (rdpTransport*) SSL_get_app_data(ssl);
 
-			if (!freerdp_get_last_error(transport->context))
-			{
-				freerdp_set_last_error(transport->context, FREERDP_ERROR_AUTHENTICATION_FAILED);
-			}
-		}
-		else if (ret == 592)
-		{
-			transport = (rdpTransport*) SSL_get_app_data(ssl);
+					if (!freerdp_get_last_error(transport->context))
+					{
+						freerdp_set_last_error(transport->context, FREERDP_ERROR_AUTHENTICATION_FAILED);
+					}
+				}
+				break;
 
-			if (transport->NlaMode)
-			{
-				UINT32 kret = 0;
+			case SSL3_AL_FATAL | SSL_AD_INTERNAL_ERROR:
+				{
+					transport = (rdpTransport*) SSL_get_app_data(ssl);
+
+					if (transport->NlaMode)
+					{
+						UINT32 kret = 0;
 #ifdef WITH_KRB5
 
-				if ((strlen(transport->settings->Domain) != 0) &&
-				    (strncmp(transport->settings->Domain, ".", 1) != 0))
-				{
-					kret = transport_krb5_check_account(transport->settings->Username, transport->settings->Domain,
-					                                    transport->settings->Password);
-				}
-				else
+						if ((strlen(transport->settings->Domain) != 0) &&
+						    (strncmp(transport->settings->Domain, ".", 1) != 0))
+						{
+							kret = transport_krb5_check_account(transport->settings->Username, transport->settings->Domain,
+							                                    transport->settings->Password);
+						}
+						else
 #endif /* WITH_KRB5 */
-					kret = FREERDP_ERROR_CONNECT_PASSWORD_CERTAINLY_EXPIRED;
+							kret = FREERDP_ERROR_CONNECT_PASSWORD_CERTAINLY_EXPIRED;
 
-				if (!freerdp_get_last_error(transport->context))
-					freerdp_set_last_error(transport->context, kret);
-			}
+						if (!freerdp_get_last_error(transport->context))
+							freerdp_set_last_error(transport->context, kret);
+					}
+
+					break;
+
+				default:
+					WLog_WARN(TAG, "Unhandled SSL error (where=%d, ret=%d [%s, %s])", where, ret,
+					          SSL_alert_type_string_long(ret), SSL_alert_desc_string_long(ret));
+					break;
+				}
 		}
 	}
 }
