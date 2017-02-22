@@ -48,6 +48,7 @@ typedef BOOL (*psPeerPostConnect)(freerdp_peer* peer);
 typedef BOOL (*psPeerActivate)(freerdp_peer* peer);
 typedef BOOL (*psPeerLogon)(freerdp_peer* peer, SEC_WINNT_AUTH_IDENTITY* identity, BOOL automatic);
 typedef BOOL (*psPeerAdjustMonitorsLayout)(freerdp_peer* peer);
+typedef BOOL (*psPeerClientCapabilities)(freerdp_peer* peer);
 
 typedef int (*psPeerSendChannelData)(freerdp_peer* peer, UINT16 channelId, BYTE* data, int size);
 typedef int (*psPeerReceiveChannelData)(freerdp_peer* peer, UINT16 channelId, BYTE* data, int size,
@@ -116,6 +117,7 @@ struct rdp_freerdp_peer
 	psPeerHasMoreToRead HasMoreToRead;
 	psPeerGetEventHandles GetEventHandles;
 	psPeerAdjustMonitorsLayout AdjustMonitorsLayout;
+	psPeerClientCapabilities ClientCapabilities;
 };
 
 #ifdef __cplusplus

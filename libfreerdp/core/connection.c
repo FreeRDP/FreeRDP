@@ -1145,10 +1145,15 @@ BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_server_accept_confirm_active(rdpRdp* rdp, wStream* s)
 {
+	freerdp_peer *peer = rdp->context->peer;
+
 	if (rdp->state != CONNECTION_STATE_CAPABILITIES_EXCHANGE)
 		return FALSE;
 
 	if (!rdp_recv_confirm_active(rdp, s))
+		return FALSE;
+
+	if (peer->ClientCapabilities && !peer->ClientCapabilities(peer))
 		return FALSE;
 
 	if (rdp->settings->SaltedChecksum)
