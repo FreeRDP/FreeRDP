@@ -19,6 +19,7 @@ import com.freerdp.freerdpcore.application.GlobalApp;
 import com.freerdp.freerdpcore.application.SessionState;
 import com.freerdp.freerdpcore.domain.BookmarkBase;
 import com.freerdp.freerdpcore.domain.ManualBookmark;
+import com.freerdp.freerdpcore.presentation.ApplicationSettingsActivity;
 
 import java.util.ArrayList;
 
@@ -104,7 +105,7 @@ public class LibFreeRDP {
         return "-" + name;
     }
 
-    public static boolean setConnectionInfo(long inst, BookmarkBase bookmark) {
+    public static boolean setConnectionInfo(Context context, long inst, BookmarkBase bookmark) {
         BookmarkBase.ScreenSettings screenSettings = bookmark.getActiveScreenSettings();
         BookmarkBase.AdvancedSettings advanced = bookmark.getAdvancedSettings();
         BookmarkBase.DebugSettings debug = bookmark.getDebugSettings();
@@ -115,6 +116,10 @@ public class LibFreeRDP {
         args.add(TAG);
         args.add("/gdi:sw");
 
+        final String clientName = ApplicationSettingsActivity.getClientName(context);
+        if (!clientName.isEmpty()) {
+            args.add("/client-hostname:\""+clientName+"\"");
+        }
         String certName = "";
         if (bookmark.getType() != BookmarkBase.TYPE_MANUAL) {
             return false;
@@ -243,8 +248,8 @@ public class LibFreeRDP {
         return freerdp_parse_arguments(inst, arrayArgs);
     }
 
-    public static boolean setConnectionInfo(long inst, Uri openUri) {
-        ArrayList<String> args = new ArrayList<String>();
+    public static boolean setConnectionInfo(Context context, long inst, Uri openUri) {
+        ArrayList<String> args = new ArrayList<>();
 
         // Parse URI from query string. Same key overwrite previous one
         // freerdp://user@ip:port/connect?sound=&rfx=&p=password&clipboard=%2b&themes=-
@@ -252,6 +257,11 @@ public class LibFreeRDP {
         // Now we only support Software GDI
         args.add(TAG);
         args.add("/gdi:sw");
+
+        final String clientName = ApplicationSettingsActivity.getClientName(context);
+        if (!clientName.isEmpty()) {
+            args.add("/client-hostname:\""+clientName+"\"");
+        }
 
         // Parse hostname and port. Set to 'v' argument
         String hostname = openUri.getHost();

@@ -17,6 +17,7 @@ import android.net.Uri;
 import android.util.Log;
 
 import com.freerdp.freerdpcore.domain.BookmarkBase;
+import com.freerdp.freerdpcore.presentation.ApplicationSettingsActivity;
 import com.freerdp.freerdpcore.services.BookmarkDB;
 import com.freerdp.freerdpcore.services.HistoryDB;
 import com.freerdp.freerdpcore.services.LibFreeRDP;
@@ -68,8 +69,8 @@ public class GlobalApp extends Application implements LibFreeRDP.EventListener {
     }
 
     // Disconnect handling for Screen on/off events
-    static public void startDisconnectTimer() {
-        int timeoutMinutes = GlobalSettings.getDisconnectTimeout();
+    public void startDisconnectTimer() {
+        final int timeoutMinutes = ApplicationSettingsActivity.getDisconnectTimeout(this);
         if (timeoutMinutes > 0) {
             // start disconnect timeout...
             disconnectTimer = new Timer();
@@ -119,6 +120,9 @@ public class GlobalApp extends Application implements LibFreeRDP.EventListener {
     public void onCreate() {
         super.onCreate();
 
+        /* Initialize preferences. */
+        ApplicationSettingsActivity.get(this);
+
         bookmarkDB = new BookmarkDB(this);
 
         manualBookmarkGateway = new ManualBookmarkGateway(bookmarkDB);
@@ -126,7 +130,6 @@ public class GlobalApp extends Application implements LibFreeRDP.EventListener {
         historyDB = new HistoryDB(this);
         quickConnectHistoryGateway = new QuickConnectHistoryGateway(historyDB);
 
-        GlobalSettings.init(this);
         ConnectedTo3G = NetworkStateReceiver.isConnectedTo3G(this);
 
         // init screen receiver here (this can't be declared in AndroidManifest - refer to:

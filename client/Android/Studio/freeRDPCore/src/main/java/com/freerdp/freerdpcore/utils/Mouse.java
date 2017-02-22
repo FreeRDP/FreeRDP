@@ -9,7 +9,9 @@
 
 package com.freerdp.freerdpcore.utils;
 
-import com.freerdp.freerdpcore.application.GlobalSettings;
+import android.content.Context;
+
+import com.freerdp.freerdpcore.presentation.ApplicationSettingsActivity;
 
 public class Mouse {
 
@@ -22,15 +24,15 @@ public class Mouse {
     private final static int PTRFLAGS_WHEEL = 0x0200;
     private final static int PTRFLAGS_WHEEL_NEGATIVE = 0x0100;
 
-    public static int getLeftButtonEvent(boolean down) {
-        if (GlobalSettings.getSwapMouseButtons())
+    public static int getLeftButtonEvent(Context context, boolean down) {
+        if (ApplicationSettingsActivity.getSwapMouseButtons(context))
             return (PTRFLAGS_RBUTTON | (down ? PTRFLAGS_DOWN : 0));
         else
             return (PTRFLAGS_LBUTTON | (down ? PTRFLAGS_DOWN : 0));
     }
 
-    public static int getRightButtonEvent(boolean down) {
-        if (GlobalSettings.getSwapMouseButtons())
+    public static int getRightButtonEvent(Context context, boolean down) {
+        if (ApplicationSettingsActivity.getSwapMouseButtons(context))
             return (PTRFLAGS_LBUTTON | (down ? PTRFLAGS_DOWN : 0));
         else
             return (PTRFLAGS_RBUTTON | (down ? PTRFLAGS_DOWN : 0));
@@ -40,11 +42,11 @@ public class Mouse {
         return PTRFLAGS_MOVE;
     }
 
-    public static int getScrollEvent(boolean down) {
+    public static int getScrollEvent(Context context, boolean down) {
         int flags = PTRFLAGS_WHEEL;
 
         // invert scrolling?
-        if (GlobalSettings.getInvertScrolling())
+        if (ApplicationSettingsActivity.getInvertScrolling(context))
             down = !down;
 
         if (down)

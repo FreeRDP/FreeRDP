@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<preference-headers xmlns:android="http://schemas.android.com/apk/res/android">
+    <header
+        android:fragment="com.freerdp.freerdpcore.presentation.ApplicationSettingsActivity$ClientPreferenceFragment"
+        android:icon="@android:drawable/ic_menu_preferences"
+        android:title="@string/settings_cat_client" />
+
+    <header
+        android:fragment="com.freerdp.freerdpcore.presentation.ApplicationSettingsActivity$UiPreferenceFragment"
+        android:icon="@android:drawable/ic_menu_view"
+        android:title="@string/settings_cat_ui" />
+
+    <header
+        android:fragment="com.freerdp.freerdpcore.presentation.ApplicationSettingsActivity$PowerPreferenceFragment"
+        android:icon="@android:drawable/ic_menu_manage"
+        android:title="@string/settings_cat_power" />
+
+    <header
+        android:fragment="com.freerdp.freerdpcore.presentation.ApplicationSettingsActivity$SecurityPreferenceFragment"
+        android:icon="@android:drawable/ic_secure"
+        android:title="@string/settings_cat_security" />
+</preference-headers>

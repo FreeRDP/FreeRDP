@@ -9,7 +9,6 @@
 
 package com.freerdp.freerdpcore.presentation;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -36,7 +35,6 @@ import android.widget.ListView;
 
 import com.freerdp.freerdpcore.R;
 import com.freerdp.freerdpcore.application.GlobalApp;
-import com.freerdp.freerdpcore.application.GlobalSettings;
 import com.freerdp.freerdpcore.domain.BookmarkBase;
 import com.freerdp.freerdpcore.domain.ConnectionReference;
 import com.freerdp.freerdpcore.domain.PlaceholderBookmark;
@@ -236,9 +234,9 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         // if back was pressed - ask the user if he really wants to exit
-        if (GlobalSettings.getAskOnExit()) {
+        if (ApplicationSettingsActivity.getAskOnExit(this)) {
             final CheckBox cb = new CheckBox(this);
-            cb.setChecked(!GlobalSettings.getAskOnExit());
+            cb.setChecked(!ApplicationSettingsActivity.getAskOnExit(this));
             cb.setText(R.string.dlg_dont_show_again);
 
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -247,13 +245,11 @@ public class HomeActivity extends AppCompatActivity {
                     .setView(cb)
                     .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
-                            GlobalSettings.setAskOnExit(!cb.isChecked());
                             finish();
                         }
                     })
                     .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
-                            GlobalSettings.setAskOnExit(!cb.isChecked());
                             dialog.dismiss();
                         }
                     })

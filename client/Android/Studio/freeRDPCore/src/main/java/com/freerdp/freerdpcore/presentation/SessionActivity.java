@@ -30,7 +30,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -48,7 +47,6 @@ import android.widget.ZoomControls;
 
 import com.freerdp.freerdpcore.R;
 import com.freerdp.freerdpcore.application.GlobalApp;
-import com.freerdp.freerdpcore.application.GlobalSettings;
 import com.freerdp.freerdpcore.application.SessionState;
 import com.freerdp.freerdpcore.domain.BookmarkBase;
 import com.freerdp.freerdpcore.domain.ConnectionReference;
@@ -104,8 +102,6 @@ public class SessionActivity extends AppCompatActivity implements
     private int screen_width;
     private int screen_height;
 
-    private boolean autoScrollTouchPointer = GlobalSettings
-            .getAutoScrollTouchPointer();
     private boolean connectCancelledByUser = false;
     private boolean sessionRunning = false;
     private boolean toggleMouseButtons = false;
@@ -197,7 +193,7 @@ public class SessionActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
 
         // show status bar or make fullscreen?
-        if (GlobalSettings.getHideStatusBar()) {
+        if (ApplicationSettingsActivity.getHideStatusBar(this)) {
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                     WindowManager.LayoutParams.FLAG_FULLSCREEN);
         }
@@ -472,7 +468,7 @@ public class SessionActivity extends AppCompatActivity implements
 
         Thread thread = new Thread(new Runnable() {
             public void run() {
-                session.connect();
+                session.connect(getApplicationContext());
             }
         });
         thread.start();
@@ -894,7 +890,7 @@ public class SessionActivity extends AppCompatActivity implements
     @Override
     public int OnVerifiyCertificate(String commonName, String subject, String issuer, String fingerprint, boolean mismatch) {
         // see if global settings says accept all
-        if (GlobalSettings.getAcceptAllCertificates())
+        if (ApplicationSettingsActivity.getAcceptAllCertificates(this))
             return 0;
 
         // this is where the return code of our dialog will be stored
@@ -925,7 +921,7 @@ public class SessionActivity extends AppCompatActivity implements
     @Override
     public int OnVerifyChangedCertificate(String commonName, String subject, String issuer, String fingerprint, String oldSubject, String oldIssuer, String oldFingerprint) {
         // see if global settings says accept all
-        if (GlobalSettings.getAcceptAllCertificates())
+        if (ApplicationSettingsActivity.getAcceptAllCertificates(this))
             return 0;
 
         // this is where the return code of our dialog will be stored
@@ -972,7 +968,7 @@ public class SessionActivity extends AppCompatActivity implements
                                 int oldx, int oldy) {
         zoomControls.setIsZoomInEnabled(!sessionView.isAtMaxZoom());
         zoomControls.setIsZoomOutEnabled(!sessionView.isAtMinZoom());
-        if (!GlobalSettings.getHideZoomControls()
+        if (!ApplicationSettingsActivity.getHideZoomControls(this)
                 && zoomControls.getVisibility() != View.VISIBLE)
             zoomControls.show();
         resetZoomControlsAutoHideTimeout();
@@ -999,8 +995,8 @@ public class SessionActivity extends AppCompatActivity implements
                 session.getInstance(),
                 x,
                 y,
-                toggleMouseButtons ? Mouse.getRightButtonEvent(down) : Mouse
-                        .getLeftButtonEvent(down));
+                toggleMouseButtons ? Mouse.getRightButtonEvent(this, down) : Mouse
+                        .getLeftButtonEvent(this, down));
 
         if (!down)
             toggleMouseButtons = false;
@@ -1019,7 +1015,7 @@ public class SessionActivity extends AppCompatActivity implements
     @Override
     public void onSessionViewScroll(boolean down) {
         LibFreeRDP.sendCursorEvent(session.getInstance(), 0, 0,
-                Mouse.getScrollEvent(down));
+                Mouse.getScrollEvent(this, down));
     }
 
     // ****************************************************************************
@@ -1046,14 +1042,14 @@ public class SessionActivity extends AppCompatActivity implements
     public void onTouchPointerLeftClick(int x, int y, boolean down) {
         Point p = mapScreenCoordToSessionCoord(x, y);
         LibFreeRDP.sendCursorEvent(session.getInstance(), p.x, p.y,
-                Mouse.getLeftButtonEvent(down));
+                Mouse.getLeftButtonEvent(this, down));
     }
 
     @Override
     public void onTouchPointerRightClick(int x, int y, boolean down) {
         Point p = mapScreenCoordToSessionCoord(x, y);
         LibFreeRDP.sendCursorEvent(session.getInstance(), p.x, p.y,
-                Mouse.getRightButtonEvent(down));
+                Mouse.getRightButtonEvent(this, down));
     }
 
     @Override
@@ -1062,7 +1058,7 @@ public class SessionActivity extends AppCompatActivity implements
         LibFreeRDP.sendCursorEvent(session.getInstance(), p.x, p.y,
                 Mouse.getMoveEvent());
 
-        if (autoScrollTouchPointer
+        if (ApplicationSettingsActivity.getAutoScrollTouchPointer(this)
                 && !uiHandler.hasMessages(UIHandler.SCROLLING_REQUESTED)) {
             Log.v(TAG, "Starting auto-scroll");
             uiHandler.sendEmptyMessageDelayed(UIHandler.SCROLLING_REQUESTED,
@@ -1073,7 +1069,7 @@ public class SessionActivity extends AppCompatActivity implements
     @Override
     public void onTouchPointerScroll(boolean down) {
         LibFreeRDP.sendCursorEvent(session.getInstance(), 0, 0,
-                Mouse.getScrollEvent(down));
+                Mouse.getScrollEvent(this, down));
     }
 
     @Override

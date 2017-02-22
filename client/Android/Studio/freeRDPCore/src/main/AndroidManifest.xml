@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.freerdp.freerdpcore"
     android:installLocation="auto"
@@ -30,6 +29,7 @@
             android:theme="@style/Theme.Main">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
@@ -40,10 +40,12 @@
         <activity-alias
             android:name=".presentation.CreateShortcuts"
             android:label="@string/title_create_shortcut"
-            android:targetActivity="com.freerdp.freerdpcore.presentation.ShortcutsActivity">
-            <!--  This intent-filter allows your shortcuts to be created in the launcher. -->
+            android:targetActivity=".presentation.ShortcutsActivity">
+
+            <!-- This intent-filter allows your shortcuts to be created in the launcher. -->
             <intent-filter>
                 <action android:name="android.intent.action.CREATE_SHORTCUT" />
+
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity-alias>
@@ -54,7 +56,9 @@
             android:theme="@style/Theme.Settings">
             <intent-filter>
                 <action android:name="freerdp.intent.action.BOOKMARK" />
+
                 <category android:name="android.intent.category.DEFAULT" />
+
                 <data android:scheme="preferences" />
             </intent-filter>
         </activity>
@@ -62,7 +66,7 @@
             android:name=".presentation.ApplicationSettingsActivity"
             android:label="@string/title_application_settings"
             android:theme="@style/Theme.Settings"
-            android:windowSoftInputMode="stateHidden"></activity>
+            android:windowSoftInputMode="stateHidden" />
         <activity
             android:name=".presentation.SessionActivity"
             android:configChanges="orientation|keyboardHidden|screenSize|keyboard"
@@ -82,11 +86,11 @@
         <activity
             android:name=".presentation.AboutActivity"
             android:label="@string/title_about"
-            android:theme="@style/Theme.Main"></activity>
+            android:theme="@style/Theme.Main" />
         <activity
             android:name=".presentation.HelpActivity"
             android:label="@string/title_help"
-            android:theme="@style/Theme.Main"></activity>
+            android:theme="@style/Theme.Main" />
 
         <receiver
             android:name=".application.NetworkStateReceiver"
@@ -95,6 +99,7 @@
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
             </intent-filter>
         </receiver>
-    </application>
-</manifest>
 
+    </application>
+
+</manifest>

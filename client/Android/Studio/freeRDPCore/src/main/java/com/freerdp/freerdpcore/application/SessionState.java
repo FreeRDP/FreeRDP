@@ -9,6 +9,7 @@
 
 package com.freerdp.freerdpcore.application;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
@@ -58,11 +59,11 @@ public class SessionState implements Parcelable {
         this.uiEventListener = null;
     }
 
-    public void connect() {
+    public void connect(Context context) {
         if (bookmark != null) {
-            LibFreeRDP.setConnectionInfo(instance, bookmark);
+            LibFreeRDP.setConnectionInfo(context, instance, bookmark);
         } else {
-            LibFreeRDP.setConnectionInfo(instance, openUri);
+            LibFreeRDP.setConnectionInfo(context, instance, openUri);
         }
         LibFreeRDP.connect(instance);
     }
