@@ -628,6 +628,13 @@ BOOL freerdp_client_add_static_channel(rdpSettings* settings, int count,
 {
 	int index;
 	ADDIN_ARGV* args;
+
+	if (!settings || !params || !params[0])
+		return FALSE;
+
+	if (freerdp_static_channel_collection_find(settings, params[0]))
+		return TRUE;
+
 	args = (ADDIN_ARGV*) calloc(1, sizeof(ADDIN_ARGV));
 
 	if (!args)
@@ -673,6 +680,13 @@ BOOL freerdp_client_add_dynamic_channel(rdpSettings* settings, int count,
 {
 	int index;
 	ADDIN_ARGV* args;
+
+	if (!settings || !params || !params[0])
+		return FALSE;
+
+	if (freerdp_dynamic_channel_collection_find(settings, params[0]))
+		return TRUE;
+
 	args = (ADDIN_ARGV*) malloc(sizeof(ADDIN_ARGV));
 
 	if (!args)
@@ -2686,7 +2700,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	if (settings->DeviceRedirection)
 	{
 		if (!freerdp_client_load_static_channel_addin(channels, settings, "rdpdr",
-		        settings))
+			settings))
 			return FALSE;
 
 		if (!freerdp_static_channel_collection_find(settings, "rdpsnd"))
@@ -2738,14 +2752,11 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 
 	if (settings->RedirectClipboard)
 	{
-		if (!freerdp_static_channel_collection_find(settings, "cliprdr"))
-		{
-			char* params[1];
-			params[0] = "cliprdr";
+		char* params[1];
+		params[0] = "cliprdr";
 
-			if (!freerdp_client_add_static_channel(settings, 1, (char**) params))
-				return FALSE;
-		}
+		if (!freerdp_client_add_static_channel(settings, 1, (char**) params))
+			return FALSE;
 	}
 
 	if (settings->LyncRdpMode)
@@ -2764,14 +2775,14 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	if (settings->EncomspVirtualChannel)
 	{
 		if (!freerdp_client_load_static_channel_addin(channels, settings, "encomsp",
-		        settings))
+			settings))
 			return FALSE;
 	}
 
 	if (settings->RemdeskVirtualChannel)
 	{
 		if (!freerdp_client_load_static_channel_addin(channels, settings, "remdesk",
-		        settings))
+			settings))
 			return FALSE;
 	}
 
