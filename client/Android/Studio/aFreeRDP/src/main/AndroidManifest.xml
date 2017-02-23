@@ -2,9 +2,7 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.freerdp.afreerdp"
-    android:installLocation="auto"
-    android:versionCode="3"
-    android:versionName="e83f97b">
+    android:installLocation="auto">
 
     <application
         android:name="com.freerdp.afreerdp.application.GlobalApp"

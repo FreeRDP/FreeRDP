@@ -1,13 +1,16 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 25
-    buildToolsVersion "25.0.2"
+    compileSdkVersion = rootProject.ext.compileSdk
+    buildToolsVersion = rootProject.ext.buildToolsVersion
 
     defaultConfig {
         applicationId "com.freerdp.afreerdp"
-        minSdkVersion 14
-        targetSdkVersion 25
+        minSdkVersion rootProject.ext.minSdk
+        targetSdkVersion rootProject.ext.targetSdk
+        vectorDrawables.useSupportLibrary = true
+        versionCode = rootProject.ext.versionCode
+        versionName = rootProject.ext.versionName
     }
 
     buildTypes {
