@@ -6,6 +6,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 
 import com.freerdp.freerdpcore.R;
@@ -45,26 +46,39 @@ public class AboutActivity extends AppCompatActivity {
         }
 
         StringBuilder total = new StringBuilder();
-        try {
-            String filename = ((getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE) ? "about.html" : "about_phone.html";
-            Locale def = Locale.getDefault();
-            String prefix = def.getLanguage().toLowerCase(def);
 
-            String file = prefix + "_about_page/" + filename;
-            InputStream is;
-            try {
-                is = getAssets().open(file);
-                is.close();
-            } catch (IOException e) {
-                Log.e(TAG, "Missing localized asset " + file, e);
-                file = "about_page/" + filename;
-            }
+        String filename = "about_phone.html";
+        if ((getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE) {
+            filename = "about.html";
+        }
+        Locale def = Locale.getDefault();
+        String prefix = def.getLanguage().toLowerCase(def);
+
+        String dir = prefix + "_about_page/";
+        String file = dir + filename;
+        InputStream is;
+        try {
+            is = getAssets().open(file);
+            is.close();
+        } catch (IOException e) {
+            Log.e(TAG, "Missing localized asset " + file, e);
+            dir = "about_page/";
+            file = dir + filename;
+        }
+
+        try {
             BufferedReader r = new BufferedReader(new InputStreamReader(getAssets().open(file)));
-            String line;
-            while ((line = r.readLine()) != null) {
-                total.append(line);
+            try {
+                String line;
+                while ((line = r.readLine()) != null) {
+                    total.append(line);
+                    total.append("\n");
+                }
+            } finally {
+                r.close();
             }
         } catch (IOException e) {
+            Log.e(TAG, "Could not read about page " + file, e);
         }
 
         // append FreeRDP core version to app version
@@ -74,23 +88,15 @@ public class AboutActivity extends AppCompatActivity {
         try {
             about_html = String.format(total.toString(), version, Build.VERSION.RELEASE, Build.MODEL);
         } catch (IllegalFormatException e) {
-            about_html = "Nothing here ;(";
+            about_html = total.toString();
         }
 
-        Locale def = Locale.getDefault();
-        String prefix = def.getLanguage().toLowerCase(def);
+        WebSettings settings = mWebView.getSettings();
+        settings.setDomStorageEnabled(true);
+        settings.setUseWideViewPort(true);
 
-        String base = "file:///android_asset/";
-        String dir = prefix + "_about_page/";
-        try {
-            InputStream is = getAssets().open(dir);
-            is.close();
-            dir = base + dir;
-        } catch (IOException e) {
-            Log.e(TAG, "Missing localized asset " + dir, e);
-        }
-
-        mWebView.loadDataWithBaseURL(dir, about_html, "text/html", null,
+        final String base = "file:///android_asset/" + dir;
+        mWebView.loadDataWithBaseURL(base, about_html, "text/html", null,
                 "about:blank");
     }
 
