@@ -2,8 +2,10 @@ package com.freerdp.freerdpcore.presentation;
 
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.nfc.FormatException;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.text.TextUtilsCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.webkit.WebSettings;
@@ -16,6 +18,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Formatter;
 import java.util.IllegalFormatException;
 import java.util.Locale;
 
@@ -37,14 +40,6 @@ public class AboutActivity extends AppCompatActivity {
     }
 
     private void populate() {
-        // get app version
-        String version;
-        try {
-            version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
-        } catch (PackageManager.NameNotFoundException e) {
-            version = "unknown";
-        }
-
         StringBuilder total = new StringBuilder();
 
         String filename = "about_phone.html";
@@ -82,21 +77,29 @@ public class AboutActivity extends AppCompatActivity {
         }
 
         // append FreeRDP core version to app version
-        version = version + " (" + LibFreeRDP.getVersion() + ")";
-
-        String about_html = "no about ;(";
+        // get app version
+        String version;
         try {
-            about_html = String.format(total.toString(), version, Build.VERSION.RELEASE, Build.MODEL);
-        } catch (IllegalFormatException e) {
-            about_html = total.toString();
+            version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            version = "unknown";
         }
+        version = version + " (" + LibFreeRDP.getVersion() + ")";
 
         WebSettings settings = mWebView.getSettings();
         settings.setDomStorageEnabled(true);
         settings.setUseWideViewPort(true);
+        settings.setLoadWithOverviewMode(true);
+        settings.setSupportZoom(true);
 
         final String base = "file:///android_asset/" + dir;
-        mWebView.loadDataWithBaseURL(base, about_html, "text/html", null,
+
+        final String rawHtml = total.toString();
+        final String html = rawHtml.replaceAll("%AFREERDP_VERSION%", version)
+                .replaceAll("%SYSTEM_VERSION%", Build.VERSION.RELEASE)
+                .replaceAll("%DEVICE_MODEL%", Build.MODEL);
+
+        mWebView.loadDataWithBaseURL(base, html, "text/html", null,
                 "about:blank");
     }
 

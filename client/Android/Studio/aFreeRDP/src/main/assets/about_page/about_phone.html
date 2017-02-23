@@ -1,371 +1,403 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 <html>
 <head>
-    <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0'/>
-    <meta charset="UTF-8">
+	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+	<title></title>
+	<meta name="" content=""/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
 
-    <style type="text/css">
-        @charset "utf-8";
-
-body {
-	font: 100%%/1 Helvetica;
-	background-color:#E9EBF8;
-	height: 100%%; width: 100%%; margin: 0;
-	text-align:center;
-	background-image:url(../background.jpg);
- 	    background-position:center;
- 	    background-size: 15%%;
- 	    background-repeat: no-repeat;
-}
-
-.centered-table {
-  margin-left: auto;
-	margin-right: auto;
-}
-
-#headline{
-
-  background-color:#353639;
-  opacity:0.9;
-
-  color:FFF;
-  text-align:center;
-
-
-	}
-	
-	#footer{
-	padding-top:10px;
-	}
-	
-#footer img{
-	padding top:10 px;
-	}
-#article{
-
-
-background-color:#FFFFFF;
-opacity: 0.8;
-z-index:0;
-margin-bottom:3%%;
-padding-bottom:0.1%%;
-border-radius: 15px;
-border-top-left-radius:0px;
-border-top-right-radius:0px;
-color:#000;
-margin: 10px auto;
-position:relative;
-
-	}
-	
-	
-#introduction_headline{
-  width:inherit;
-  background-color:#353639;
-  opacity:0.9;
-  color:FFF;
-  text-align:center;
-  border-bottom-left-radius:15px;
-  border-bottom-right-radius:15px;
-
-
-	}
-	
-#introduction{
-
-
-background-color:#FFFFFF;
-opacity: 0.8;
-z-index:0;
-margin-bottom:3%%;
-padding-bottom:0.1%%;
-border-radius: 10px;
-color:#000;
-	}
-	
-#container
-{
-	margin-left: auto;
-	margin-right: auto;
-	
-	width:inherit;
-}
-/* ~~ Element/tag selectors ~~ */
-ul, ol, dl { /* Due to variations between browsers, it's best practices to zero padding and margin on lists. For consistency, you can either specify the amounts you want here, or on the list items (LI, DT, DD) they contain. Remember that what you do here will cascade to the .nav list unless you write a more specific selector. */
-	padding: 0;
-	margin: 0;
-}
-h1, h2, h3, h4, h5, h6, p {
-	margin-top: 0;	 /* removing the top margin gets around an issue where margins can escape from their containing div. The remaining bottom margin will hold it away from any elements that follow. */
-	padding-right: 1px;
-	padding-left: 1px; /* adding the padding to the sides of the elements within the divs, instead of the divs themselves, gets rid of any box model math. A nested div with side padding can also be used as an alternate method. */
-}
-a img { /* this selector removes the default blue border displayed in some browsers around an image when it is surrounded by a link */
-	border: none;
-	alignment: right;}
-}
-
-/* ~~ Styling for your site's links must remain in this order - including the group of selectors that create the hover effect. ~~ */
-/*a:link {
-	color:#414958;
-	text-decoration: underline;  unless you style your links to look extremely unique, it's best to provide underlines for quick visual identification */
-
-
-a:hover, a:active, a:focus { /* this group of selectors will give a keyboard navigator the same hover experience as the person using a mouse. */
-	text-decoration: none;}
-
-
-
-	
-	a:link { color:#0000FF; }
-
-
-
-* {
-    -webkit-touch-callout: none;
-    -webkit-user-select: none; /* Disable selection/Copy of UIWebView */
-}
-
-
-
-}
-
-    </style>
+	<style type="text/css">
+		p { border: none; padding: 0in; font-variant: normal; font-family: "Helvetica"; font-style: normal; font-weight: normal; line-height: 140%; text-align: center }
+		td p { border: none; padding: 0in; font-variant: normal; font-family: "Helvetica"; font-style: normal; font-weight: normal; line-height: 140%; text-align: center }
+		h2 { border: none; padding: 0in; direction: inherit; font-variant: normal; color: #ffffff; line-height: 140%; text-align: center }
+		h2.western { font-style: normal }
+		h2.cjk { font-family: "AR PL SungtiL GB"; font-style: normal }
+		h2.ctl { font-family: "Lohit Devanagari"; font-style: normal }
+		h3 { border: none; padding: 0in; direction: inherit; font-variant: normal; color: #ffffff; line-height: 140%; text-align: center }
+		h3.western { font-style: normal }
+		h3.cjk { font-family: "AR PL SungtiL GB"; font-style: normal }
+		h3.ctl { font-family: "Lohit Devanagari"; font-style: normal }
+		h4 { border: none; padding: 0in; direction: inherit; font-variant: normal; color: #ffffff; line-height: 140%; text-align: center; page-break-before: auto; page-break-after: auto }
+		h4.western { font-style: normal }
+		h4.cjk { font-family: "AR PL SungtiL GB"; font-style: normal }
+		h4.ctl { font-family: "Lohit Devanagari"; font-style: normal }
+		pre { direction: inherit; font-variant: normal; line-height: 140%; text-align: center }
+		pre.western { font-size: 8pt; font-style: normal; font-weight: normal }
+		pre.cjk { font-family: "AR PL SungtiL GB", monospace; font-size: 8pt; font-style: normal; font-weight: normal }
+		pre.ctl { font-style: normal; font-weight: normal }
+		a:link { color: #0000ff }
+	</style>
 </head>
-<body>
+<body lang="en-US" link="#0000ff" bgcolor="#e9ebf8" dir="ltr">
+<div id="container" dir="ltr">
+	<h2 class="western"><br/>
+<br/>
+
+	</h2>
+	<div id="introduction_headline" dir="ltr" style="background: #353639">
+		<h2 class="western"><font color="#ffffff">aFreeRDP <br/>
+Remote
+		Desktop Client</font></h2>
+	</div>
+	<p><img src="../FreeRDP_Logo.png" name="Image1" align="bottom" width="25%" border="0"/>
+
+		</p>
+	<div id="introduction" dir="ltr" style="background: #ffffff">
+		<p><font color="#000000"><b>aFreeRDP</b> is an open source client
+		capable of natively using<br/>
+Remote Desktop Protocol (RDP) in
+		order to remotely access your Windows desktop. </font>
+		</p>
+	</div>
+	<div id="article" dir="ltr" style="background: #ffffff">
+		<p style="margin-left: 0.1in; margin-right: 0.1in; margin-top: 0.1in; margin-bottom: 0.1in">
+		<br/>
+<br/>
+
+		</p>
+		<div id="headline" dir="ltr" style="background: #353639">
+			<h3 class="western" align="center" style="margin-left: 0.1in; margin-right: 0.1in; margin-top: 0.1in; margin-bottom: 0.1in">
+			Version Information</h3>
+		</div>
+		<table cellpadding="3" cellspacing="1" align="center">
+			<tr>
+				<td style="border: none; padding: 0in">
+					<p><b>aFreeRDP</b> Version</p>
+				</td>
+				<td style="border: none; padding: 0in">
+					<p>%AFREERDP_VERSION%</p>
+				</td>
+			</tr>
+			<tr>
+				<td style="border: none; padding: 0in">
+					<p>System Version</p>
+				</td>
+				<td style="border: none; padding: 0in">
+					<p>%SYSTEM_VERSION%</p>
+				</td>
+			</tr>
+			<tr>
+				<td style="border: none; padding: 0in">
+					<p>Model</p>
+				</td>
+				<td style="border: none; padding: 0in">
+					<p>%DEVICE_MODEL%</p>
+				</td>
+			</tr>
+		</table>
+		<div id="Section1" dir="ltr" style="background: #353639">
+			<h3 class="western" align="center" style="margin-left: 0.1in; margin-right: 0.1in"><a name="headline"></a>
+			Credits</h3>
+		</div>
+		<p style="margin-top: 0.1in; margin-bottom: 0.1in"><font color="#000000"><b>aFreeRDP</b></font><font color="#000000">
+		is a part of <a href="http://www.freerdp.com/">FreeRDP</a> </font>
+		</p>
+		<div id="Section2" dir="ltr" style="background: #353639">
+			<h3 class="western" align="center" style="margin-left: 0.1in; margin-right: 0.1in; margin-top: 0.1in; margin-bottom: 0.1in"><a name="headline1"></a>
+			Data protection</h3>
+		</div>
+		<p style="margin-top: 0.1in; margin-bottom: 0.1in"><font color="#000000">Details
+		about data collection and usage by <b>aFreeRDP</b> are available at</font></p>
+		<p><a href="http://www.freerdp.com/privacy">http://www.freerdp.com/privacy</a>
+				</p>
+		<div id="Section3" dir="ltr" style="background: #353639">
+			<h3 class="western" align="center" style="margin-left: 0.1in; margin-right: 0.1in; margin-top: 0.1in; margin-bottom: 0.1in"><a name="headline2"></a>
+			Licenses</h3>
+		</div>
+		<div id="Section4" dir="ltr" style="background: #353639">
+			<h4 class="western" align="center" style="margin-left: 0.1in; margin-right: 0.1in; margin-top: 0.1in; margin-bottom: 0.1in"><a name="headline3"></a>
+			<font color="#ffffff">aFreeRDP</font></h4>
+		</div>
+		<pre class="western">This program is free software;
+
+you can redistribute it and/or modify it under the terms
+
+of the Mozilla Public License, v. 2.0.
+
+You can obtain an online version of the License from
+
+<a href="http://mozilla.org/MPL/2.0/">http://mozilla.org/MPL/2.0/</a>. 
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+A copy of the product's source code can be obtained from the FreeRDP GitHub repository at
+
+<a href="https://github.com/FreeRDP/FreeRDP">https://github.com/FreeRDP/FreeRDP</a>.</pre><p style="margin-left: 0.1in; margin-right: 0.1in; margin-top: 0.1in; margin-bottom: 0.1in">
+		<br/>
+<br/>
+
+		</p>
+		<div id="Section5" dir="ltr" style="background: #353639">
+			<h4 class="western" align="center" style="margin-left: 0.1in; margin-right: 0.1in; margin-top: 0.1in; margin-bottom: 0.1in"><a name="headline4"></a>
+			FreeRDP</h4>
+		</div>
+		<pre class="western">Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+
+you may not use this file except in compliance with the License.
+
+You may obtain a copy of the License at
+
+<a href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a> 
+Unless required by applicable law or agreed to in writing, software
+
+distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and
+
+limitations under the License. 
+A copy of the product's source code can be obtained from the FreeRDP GitHub repository at
+
+<a href="https://github.com/FreeRDP/FreeRDP">https://github.com/FreeRDP/FreeRDP</a>.</pre>
+		<div id="Section6" dir="ltr" style="background: #353639">
+			<h4 class="western" align="center" style="margin-left: 0.1in; margin-right: 0.1in; margin-top: 0.1in; margin-bottom: 0.1in"><a name="headline5"></a>
+			OpenSSL</h4>
+		</div>
+		<pre class="western">LICENSE ISSUES
+
+==============
 
 
-<div id="container">
+The OpenSSL toolkit stays under a dual license, i.e. both the conditions of
+
+the OpenSSL License and the original SSLeay license apply to the toolkit.
+
+See below for the actual license texts.
 
 
-    <div id="introduction_headline">
-        <h2>aFreeRDP</br>Remote Desktop Client</h2>
-    </div>
-    <p>
-        <img src="../FreeRDP_Logo.png" width="25%%"></p>
-    <div id="introduction">
+OpenSSL License
 
-        <b>aFreeRDP</b> is an open source client capable of natively using<br>
-        Remote Desktop Protocol (RDP) in order to remotely access your Windows desktop.
-    </div>
+---------------
 
 
-    <div id="article">
-        <div id="headline"><h3>Version Information</h3></div>
-        <p>
-        <table class="centered-table" border=0 cellspacing=1 cellpadding=3>
-            <tr>
-                <td>aFreerdp Version</td>
-                <td>%1$s</td>
-            </tr>
-            <tr>
-                <td>System Version</td>
-                <td>%2$s</td>
-            </tr>
-            <tr>
-                <td>Model</td>
-                <td>%3$s</td>
-            </tr>
-        </table>
-        </p>
-    </div>
-    <div id="article">
+/* ====================================================================
 
-        <div id="headline">
-            <h3>Credits</h3>
-        </div>
-        aFreeRDP is part of <a href="http://www.freerdp.com/">FreeRDP</a>
-    </div>
-    <div id="article">
-        <div id="headline">
-            <h3>Data protection</h3>
-        </div>
-        TODO
+* Copyright (c) 1998-2016 The OpenSSL Project. All rights reserved.
 
-        <div id="headline">
-            <h3>Licenses</h3>
-        </div>
-        <div id="headline">
-            <h4>aFreeRDP</h4>
-        </div>
-        <pre>This program is free software;<br>
-            you can redistribute it and/or modify it under the terms<br>
-            of the Mozilla Public License, v. 2.0.<br>
-            You can obtain an online version of the License from<br>
-            <a href="http://mozilla.org/MPL/2.0/">http://mozilla.org/MPL/2.0/</a>.
-        </pre>
-        <p>
-            This program is distributed in the hope that it will be useful, but WITHOUT ANY
-            WARRANTY;<br>
-            without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-            PURPOSE.
-        </p>
-        <p>
-            A copy of the product's source code can be obtained from the FreeRDP GitHub repository
-            at<br>
-            <a href="https://github.com/FreeRDP/FreeRDP">https://github.com/FreeRDP/FreeRDP</a>.<br/>
-        </p>
-        <div id="headline">
-            <h4>FreeRDP</h4>
-        </div>
-        <pre>
-        Licensed under the Apache License, Version 2.0 (the "License");<br/>
-        you may not use this file except in compliance with the License.<br/>
-        You may obtain a copy of the License at<br/>
-        <br/>
-            </pre>
-        <a href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a>
-        <br/>
-        <pre>
-            Unless required by applicable law or agreed to in writing, software<br>
-            distributed under the License is distributed on an "AS IS" BASIS,<br>
-            WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<br>
-            See the License for the specific language governing permissions and<br>
-            limitations under the License.
-        </pre>
+*
 
-        <p>
-            A copy of the product's source code can be obtained from the FreeRDP GitHub repository
-            at<br>
-            <a href="https://github.com/FreeRDP/FreeRDP">https://github.com/FreeRDP/FreeRDP</a>.<br/>
-        </p>
+* Redistribution and use in source and binary forms, with or without
 
-        <div id="headline">
-            <h4>OpenSSL</h4>
-        </div>
+* modification, are permitted provided that the following conditions
 
-        <p>
-        <div><pre>
-LICENSE ISSUES<br>
-==============<br>
-<br>
-The OpenSSL toolkit stays under a dual license, i.e. both the conditions of<br>
-the OpenSSL License and the original SSLeay license apply to the toolkit.<br>
-See below for the actual license texts.<br>
-<br>
-OpenSSL License<br>
----------------<br>
-<br>
-/* ====================================================================<br>
-* Copyright (c) 1998-2016 The OpenSSL Project. All rights reserved.<br>
-*<br>
-* Redistribution and use in source and binary forms, with or without<br>
-* modification, are permitted provided that the following conditions<br>
-* are met:<br>
-*<br>
-* 1. Redistributions of source code must retain the above copyright<br>
-* notice, this list of conditions and the following disclaimer.<br>
-*<br>
-* 2. Redistributions in binary form must reproduce the above copyright<br>
-* notice, this list of conditions and the following disclaimer in<br>
-* the documentation and/or other materials provided with the<br>
-* distribution.<br>
-*<br>
-* 3. All advertising materials mentioning features or use of this<br>
-* software must display the following acknowledgment:<br>
-* "This product includes software developed by the OpenSSL Project<br>
-* for use in the OpenSSL Toolkit. (http://www.openssl.org/)"<br>
-*<br>
-* 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to<br>
-* endorse or promote products derived from this software without<br>
-* prior written permission. For written permission, please contact<br>
-* openssl-core@openssl.org.<br>
-*<br>
-* 5. Products derived from this software may not be called "OpenSSL"<br>
-* nor may "OpenSSL" appear in their names without prior written<br>
-* permission of the OpenSSL Project.<br>
-*<br>
-* 6. Redistributions of any form whatsoever must retain the following<br>
-* acknowledgment:<br>
-* "This product includes software developed by the OpenSSL Project<br>
-* for use in the OpenSSL Toolkit (http://www.openssl.org/)"<br>
-*<br>
-* THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY<br>
-* EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE<br>
-* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR<br>
-* PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE OpenSSL PROJECT OR<br>
-* ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,<br>
-* SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT<br>
-* NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;<br>
-* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)<br>
-* HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,<br>
-* STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)<br>
-* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED<br>
-* OF THE POSSIBILITY OF SUCH DAMAGE.<br>
-* ====================================================================<br>
-*<br>
-* This product includes cryptographic software written by Eric Young<br>
-* (eay@cryptsoft.com). This product includes software written by Tim<br>
-* Hudson (tjh@cryptsoft.com).<br>
-*<br>
-*/<br>
-<br>
-Original SSLeay License<br>
------------------------<br>
-<br>
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)<br>
-* All rights reserved.<br>
-*<br>
-* This package is an SSL implementation written<br>
-* by Eric Young (eay@cryptsoft.com).<br>
-* The implementation was written so as to conform with Netscapes SSL.<br>
-*<br>
-* This library is free for commercial and non-commercial use as long as<br>
-* the following conditions are aheared to. The following conditions<br>
-* apply to all code found in this distribution, be it the RC4, RSA,<br>
-* lhash, DES, etc., code; not just the SSL code. The SSL documentation<br>
-* included with this distribution is covered by the same copyright terms<br>
-* except that the holder is Tim Hudson (tjh@cryptsoft.com).<br>
-*<br>
-* Copyright remains Eric Young's, and as such any Copyright notices in<br>
-* the code are not to be removed.<br>
-* If this package is used in a product, Eric Young should be given attribution<br>
-* as the author of the parts of the library used.<br>
-* This can be in the form of a textual message at program startup or<br>
-* in documentation (online or textual) provided with the package.<br>
-*<br>
-* Redistribution and use in source and binary forms, with or without<br>
-* modification, are permitted provided that the following conditions<br>
-* are met:<br>
-* 1. Redistributions of source code must retain the copyright<br>
-* notice, this list of conditions and the following disclaimer.<br>
-* 2. Redistributions in binary form must reproduce the above copyright<br>
-* notice, this list of conditions and the following disclaimer in the<br>
-* documentation and/or other materials provided with the distribution.<br>
-* 3. All advertising materials mentioning features or use of this software<br>
-* must display the following acknowledgement:<br>
-* "This product includes cryptographic software written by<br>
-* Eric Young (eay@cryptsoft.com)"<br>
-* The word 'cryptographic' can be left out if the rouines from the library<br>
-* being used are not cryptographic related :-).<br>
-* 4. If you include any Windows specific code (or a derivative thereof) from<br>
-* the apps directory (application code) you must include an acknowledgement:<br>
-* "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"<br>
-*<br>
-* THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND<br>
-* ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE<br>
-* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE<br>
-* ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE<br>
-* FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL<br>
-* DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS<br>
-* OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)<br>
-* HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT<br>
-* LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY<br>
-* OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF<br>
-* SUCH DAMAGE.<br>
-*<br>
-* The licence and distribution terms for any publically available version or<br>
-* derivative of this code cannot be changed. i.e. this code cannot simply be<br>
-* copied and put under another distribution licence<br>
-* [including the GNU Public Licence.]<br>
-*/<br>
-        </pre>
-        </div>
-        </p>
-        <p>
-            A copy of the product's source code can be obtained from the project page at<br>
-            <a href="https://www.openssl.org/">https://www.openssl.org/</a>.<br/>
-        </p>
-    </div>
+* are met:
+
+*
+
+* 1. Redistributions of source code must retain the above copyright
+
+* notice, this list of conditions and the following disclaimer.
+
+*
+
+* 2. Redistributions in binary form must reproduce the above copyright
+
+* notice, this list of conditions and the following disclaimer in
+
+* the documentation and/or other materials provided with the
+
+* distribution.
+
+*
+
+* 3. All advertising materials mentioning features or use of this
+
+* software must display the following acknowledgment:
+
+* &quot;This product includes software developed by the OpenSSL Project
+
+* for use in the OpenSSL Toolkit. (http://www.openssl.org/)&quot;
+
+*
+
+* 4. The names &quot;OpenSSL Toolkit&quot; and &quot;OpenSSL Project&quot; must not be used to
+
+* endorse or promote products derived from this software without
+
+* prior written permission. For written permission, please contact
+
+* openssl-core@openssl.org.
+
+*
+
+* 5. Products derived from this software may not be called &quot;OpenSSL&quot;
+
+* nor may &quot;OpenSSL&quot; appear in their names without prior written
+
+* permission of the OpenSSL Project.
+
+*
+
+* 6. Redistributions of any form whatsoever must retain the following
+
+* acknowledgment:
+
+* &quot;This product includes software developed by the OpenSSL Project
+
+* for use in the OpenSSL Toolkit (http://www.openssl.org/)&quot;
+
+*
+
+* THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+
+* EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+
+* PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE OpenSSL PROJECT OR
+
+* ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+
+* SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+
+* NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+
+* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+
+* HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+
+* STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+
+* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+
+* OF THE POSSIBILITY OF SUCH DAMAGE.
+
+* ====================================================================
+
+*
+
+* This product includes cryptographic software written by Eric Young
+
+* (eay@cryptsoft.com). This product includes software written by Tim
+
+* Hudson (tjh@cryptsoft.com).
+
+*
+
+*/
+
+
+Original SSLeay License
+
+-----------------------
+
+
+/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
+
+* All rights reserved.
+
+*
+
+* This package is an SSL implementation written
+
+* by Eric Young (eay@cryptsoft.com).
+
+* The implementation was written so as to conform with Netscapes SSL.
+
+*
+
+* This library is free for commercial and non-commercial use as long as
+
+* the following conditions are aheared to. The following conditions
+
+* apply to all code found in this distribution, be it the RC4, RSA,
+
+* lhash, DES, etc., code; not just the SSL code. The SSL documentation
+
+* included with this distribution is covered by the same copyright terms
+
+* except that the holder is Tim Hudson (tjh@cryptsoft.com).
+
+*
+
+* Copyright remains Eric Young's, and as such any Copyright notices in
+
+* the code are not to be removed.
+
+* If this package is used in a product, Eric Young should be given attribution
+
+* as the author of the parts of the library used.
+
+* This can be in the form of a textual message at program startup or
+
+* in documentation (online or textual) provided with the package.
+
+*
+
+* Redistribution and use in source and binary forms, with or without
+
+* modification, are permitted provided that the following conditions
+
+* are met:
+
+* 1. Redistributions of source code must retain the copyright
+
+* notice, this list of conditions and the following disclaimer.
+
+* 2. Redistributions in binary form must reproduce the above copyright
+
+* notice, this list of conditions and the following disclaimer in the
+
+* documentation and/or other materials provided with the distribution.
+
+* 3. All advertising materials mentioning features or use of this software
+
+* must display the following acknowledgement:
+
+* &quot;This product includes cryptographic software written by
+
+* Eric Young (eay@cryptsoft.com)&quot;
+
+* The word 'cryptographic' can be left out if the rouines from the library
+
+* being used are not cryptographic related :-).
+
+* 4. If you include any Windows specific code (or a derivative thereof) from
+
+* the apps directory (application code) you must include an acknowledgement:
+
+* &quot;This product includes software written by Tim Hudson (tjh@cryptsoft.com)&quot;
+
+*
+
+* THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
+
+* ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+
+* ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+
+* FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+
+* DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+
+* OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+
+* HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+
+* LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+
+* OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+
+* SUCH DAMAGE.
+
+*
+
+* The licence and distribution terms for any publically available version or
+
+* derivative of this code cannot be changed. i.e. this code cannot simply be
+
+* copied and put under another distribution licence
+
+* [including the GNU Public Licence.]
+
+*/
+A copy of the product's source code can be obtained from the project page at
+
+<a href="https://www.openssl.org/">https://www.openssl.org/</a>.</pre>
+	</div>
 </div>
 </body>
 </html>
