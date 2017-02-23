@@ -31,7 +31,7 @@ if [ $# -le 0 ]; then
 fi
 
 $ASTYLE --lineend=linux --mode=c --indent=tab=4 --pad-header --pad-oper --style=allman --min-conditional-indent=0 \
-							   --indent-switches --indent-cases --indent-preprocessor -k1 --max-code-length=100 \
+							   --indent-switches --indent-cases --indent-preprocessor -k1  \
 							   --indent-col1-comments --delete-empty-lines --break-closing-brackets \
 							   --align-pointer=type --indent-labels -xe --break-after-logical \
 							   --unpad-paren --break-blocks $@
