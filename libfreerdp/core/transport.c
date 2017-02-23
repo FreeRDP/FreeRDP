@@ -59,17 +59,146 @@
 
 static void* transport_client_thread(void* arg);
 
+#ifdef WITH_KRB5
+
+#include <krb5.h>
+#include <winpr/library.h>
+static UINT32 transport_krb5_check_account(rdpTransport* transport, char* username, char* domain,
+        char* passwd)
+{
+	krb5_error_code ret;
+	krb5_context context = NULL;
+	krb5_principal principal = NULL;
+	char address[256];
+	krb5_ccache ccache;
+	krb5_init_creds_context ctx = NULL;
+	_snprintf(address, sizeof(address), "%s@%s", username, domain);
+
+	/* Create a krb5 library context */
+	if ((ret = krb5_init_context(&context)) != 0)
+		WLog_Print(transport->log, WLOG_ERROR, "krb5_init_context failed with error %d", (int)ret);
+	else if ((ret = krb5_parse_name_flags(context, address, 0, &principal)) != 0)
+		WLog_Print(transport->log, WLOG_ERROR, "krb5_parse_name_flags failed with error %d", (int)ret);
+	/* Find a credential cache with a specified client principal */
+	else if ((ret = krb5_cc_cache_match(context, principal, &ccache)) != 0)
+	{
+		if ((ret = krb5_cc_default(context, &ccache)) != 0)
+			WLog_Print(transport->log, WLOG_ERROR, "krb5 failed to resolve credentials cache with error %d",
+			           (int)ret);
+	}
+
+	if (ret != KRB5KDC_ERR_NONE)
+		goto out;
+	/* Create a context for acquiring initial credentials */
+	else if ((ret = krb5_init_creds_init(context, principal, NULL, NULL, 0, NULL, &ctx)) != 0)
+	{
+		WLog_Print(transport->log, WLOG_WARN, "krb5_init_creds_init returned error %d", (int)ret);
+		goto out;
+	}
+	/* Set a password for acquiring initial credentials */
+	else if ((ret = krb5_init_creds_set_password(context, ctx, passwd)) != 0)
+	{
+		WLog_Print(transport->log, WLOG_WARN, "krb5_init_creds_set_password returned error %d", ret);
+		goto out;
+	}
+
+	/* Acquire credentials using an initial credential context */
+	ret = krb5_init_creds_get(context, ctx);
+out:
+
+	switch (ret)
+	{
+		case KRB5KDC_ERR_NONE:
+			break;
+
+		case KRB5_KDC_UNREACH:
+			WLog_Print(transport->log, WLOG_WARN, "krb5_init_creds_get: KDC unreachable");
+			ret = FREERDP_ERROR_CONNECT_KDC_UNREACHABLE;
+			break;
+
+		case KRB5KRB_AP_ERR_BAD_INTEGRITY:
+		case KRB5KRB_AP_ERR_MODIFIED:
+		case KRB5KDC_ERR_PREAUTH_FAILED:
+		case KRB5_GET_IN_TKT_LOOP:
+			WLog_Print(transport->log, WLOG_WARN, "krb5_init_creds_get: Password incorrect");
+			ret = FREERDP_ERROR_AUTHENTICATION_FAILED;
+			break;
+
+		case KRB5KDC_ERR_KEY_EXP:
+			WLog_Print(transport->log, WLOG_WARN, "krb5_init_creds_get: Password has expired");
+			ret = FREERDP_ERROR_CONNECT_PASSWORD_EXPIRED;
+			break;
+
+		case KRB5KDC_ERR_CLIENT_REVOKED:
+			WLog_Print(transport->log, WLOG_WARN, "krb5_init_creds_get: Password revoked");
+			ret = FREERDP_ERROR_CONNECT_CLIENT_REVOKED;
+			break;
+
+		case KRB5KDC_ERR_POLICY:
+			ret = FREERDP_ERROR_INSUFFICIENT_PRIVILEGES;
+			break;
+
+		default:
+			WLog_Print(transport->log, WLOG_WARN, "krb5_init_creds_get");
+			ret = FREERDP_ERROR_CONNECT_TRANSPORT_FAILED;
+			break;
+	}
+
+	if (ctx)
+		krb5_init_creds_free(context, ctx);
+
+	krb5_free_context(context);
+	return ret;
+}
+#endif /* WITH_KRB5 */
 
 static void transport_ssl_cb(SSL* ssl, int where, int ret)
 {
-	rdpTransport* transport;
-
-	if ((where | SSL_CB_ALERT) && (ret == 561))
+	if (where | SSL_CB_ALERT)
 	{
-		transport = (rdpTransport*) SSL_get_app_data(ssl);
+		rdpTransport* transport = (rdpTransport*) SSL_get_app_data(ssl);
 
-		if (!freerdp_get_last_error(transport->context))
-			freerdp_set_last_error(transport->context, FREERDP_ERROR_AUTHENTICATION_FAILED);
+		switch (ret)
+		{
+			case SSL3_AL_FATAL | SSL_AD_ACCESS_DENIED:
+				{
+					if (!freerdp_get_last_error(transport->context))
+					{
+						freerdp_set_last_error(transport->context, FREERDP_ERROR_AUTHENTICATION_FAILED);
+					}
+				}
+				break;
+
+			case SSL3_AL_FATAL | SSL_AD_INTERNAL_ERROR:
+				{
+					if (transport->NlaMode)
+					{
+						UINT32 kret = 0;
+#ifdef WITH_KRB5
+
+						if ((strlen(transport->settings->Domain) != 0) &&
+						    (strncmp(transport->settings->Domain, ".", 1) != 0))
+						{
+							kret = transport_krb5_check_account(transport, transport->settings->Username,
+							                                    transport->settings->Domain,
+							                                    transport->settings->Password);
+						}
+						else
+#endif /* WITH_KRB5 */
+							kret = FREERDP_ERROR_CONNECT_PASSWORD_CERTAINLY_EXPIRED;
+
+						if (!freerdp_get_last_error(transport->context))
+							freerdp_set_last_error(transport->context, kret);
+					}
+
+					break;
+
+				default:
+					WLog_Print(transport->log, WLOG_WARN, "Unhandled SSL error (where=%d, ret=%d [%s, %s])", where, ret,
+					           SSL_alert_type_string_long(ret), SSL_alert_desc_string_long(ret));
+					break;
+				}
+		}
 	}
 }
 
@@ -165,7 +294,7 @@ BOOL transport_connect_tls(rdpTransport* transport)
 
 	if (!transport->frontBio)
 	{
-		WLog_ERR(TAG, "unable to prepend a filtering TLS bio");
+		WLog_Print(transport->log, WLOG_ERROR, "unable to prepend a filtering TLS bio");
 		return FALSE;
 	}
 
@@ -289,14 +418,14 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname,
 		{
 			if (!(transport->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 			{
-				WLog_ERR(TAG, "Failed to create transport stop event");
+				WLog_Print(transport->log, WLOG_ERROR, "Failed to create transport stop event");
 				return FALSE;
 			}
 
 			if (!(transport->thread = CreateThread(NULL, 0,
 			                                       (LPTHREAD_START_ROUTINE) transport_client_thread, transport, 0, NULL)))
 			{
-				WLog_ERR(TAG, "Failed to create transport client thread");
+				WLog_Print(transport->log, WLOG_ERROR, "Failed to create transport client thread");
 				CloseHandle(transport->stopEvent);
 				transport->stopEvent = NULL;
 				return FALSE;
@@ -357,7 +486,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 
 	if (nla_authenticate(transport->nla) < 0)
 	{
-		WLog_ERR(TAG, "client authentication failure");
+		WLog_Print(transport->log, WLOG_ERROR, "client authentication failure");
 		transport_set_nla_mode(transport, FALSE);
 		nla_free(transport->nla);
 		transport->nla = NULL;
@@ -372,32 +501,26 @@ BOOL transport_accept_nla(rdpTransport* transport)
 	return TRUE;
 }
 
-#define WLog_ERR_BIO(tag, biofunc, bio) \
-	transport_bio_error_log(tag, biofunc, bio, __FILE__, __FUNCTION__, __LINE__)
+#define WLog_ERR_BIO(transport, biofunc, bio) \
+	transport_bio_error_log(transport, biofunc, bio, __FILE__, __FUNCTION__, __LINE__)
 
-static void transport_bio_error_log(LPCSTR tag, LPCSTR biofunc, BIO* bio,
+static void transport_bio_error_log(rdpTransport* transport, LPCSTR biofunc, BIO* bio,
                                     LPCSTR file, LPCSTR func, DWORD line)
 {
 	unsigned long sslerr;
 	char* buf;
-	wLog* log;
 	int saveerrno;
 	DWORD level;
 	saveerrno = errno;
-	log = WLog_Get(tag);
-
-	if (!log)
-		return;
-
 	level = WLOG_ERROR;
 
-	if (level < WLog_GetLogLevel(log))
+	if (level < WLog_GetLogLevel(transport->log))
 		return;
 
 	if (ERR_peek_error() == 0)
 	{
 		const char* fmt = "%s returned a system error %d: %s";
-		WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, func, fmt, biofunc,
+		WLog_PrintMessage(transport->log, WLOG_MESSAGE_TEXT, level, line, file, func, fmt, biofunc,
 		                  saveerrno, strerror(saveerrno));
 		return;
 	}
@@ -411,7 +534,7 @@ static void transport_bio_error_log(LPCSTR tag, LPCSTR biofunc, BIO* bio,
 		while ((sslerr = ERR_get_error()))
 		{
 			ERR_error_string_n(sslerr, buf, 120);
-			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, func, fmt, biofunc,
+			WLog_PrintMessage(transport->log, WLOG_MESSAGE_TEXT, level, line, file, func, fmt, biofunc,
 			                  buf);
 		}
 
@@ -441,11 +564,11 @@ int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 				/* something unexpected happened, let's close */
 				if (!transport->frontBio)
 				{
-					WLog_ERR(TAG, "BIO_read: transport->frontBio null");
+					WLog_Print(transport->log, WLOG_ERROR, "BIO_read: transport->frontBio null");
 					return -1;
 				}
 
-				WLog_ERR_BIO(TAG, "BIO_read", transport->frontBio);
+				WLog_ERR_BIO(transport, "BIO_read", transport->frontBio);
 				transport->layer = TRANSPORT_LAYER_CLOSED;
 				return -1;
 			}
@@ -457,7 +580,7 @@ int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 			/* blocking means that we can't continue until we have read the number of requested bytes */
 			if (BIO_wait_read(transport->frontBio, 100) < 0)
 			{
-				WLog_ERR_BIO(TAG, "BIO_wait_read", transport->frontBio);
+				WLog_ERR_BIO(transport, "BIO_wait_read", transport->frontBio);
 				return -1;
 			}
 
@@ -580,7 +703,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 				}
 				else
 				{
-					WLog_ERR(TAG, "Error reading TSRequest!");
+					WLog_Print(transport->log, WLOG_ERROR, "Error reading TSRequest!");
 					return -1;
 				}
 			}
@@ -606,7 +729,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 			/* min and max values according to ITU-T Rec. T.123 (01/2007) section 8 */
 			if (pduLength < 7 || pduLength > 0xFFFF)
 			{
-				WLog_ERR(TAG, "tpkt - invalid pduLength: %d", pduLength);
+				WLog_Print(transport->log, WLOG_ERROR, "tpkt - invalid pduLength: %d", pduLength);
 				return -1;
 			}
 		}
@@ -632,7 +755,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 			 */
 			if (pduLength < 3 || pduLength > 0x8000)
 			{
-				WLog_ERR(TAG, "fast path - invalid pduLength: %d", pduLength);
+				WLog_Print(transport->log, WLOG_ERROR, "fast path - invalid pduLength: %d", pduLength);
 				return -1;
 			}
 		}
@@ -648,7 +771,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 		return status;
 
 	if (Stream_GetPosition(s) >= pduLength)
-		WLog_Packet(WLog_Get(TAG), WLOG_TRACE, Stream_Buffer(s), pduLength,
+		WLog_Packet(transport->log, WLOG_TRACE, Stream_Buffer(s), pduLength,
 		            WLOG_PACKET_INBOUND);
 
 	Stream_SealLength(s);
@@ -678,7 +801,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 
 	if (length > 0)
 	{
-		WLog_Packet(WLog_Get(TAG), WLOG_TRACE, Stream_Buffer(s), length,
+		WLog_Packet(transport->log, WLOG_TRACE, Stream_Buffer(s), length,
 		            WLOG_PACKET_OUTBOUND);
 	}
 
@@ -694,20 +817,20 @@ int transport_write(rdpTransport* transport, wStream* s)
 			 */
 			if (!BIO_should_retry(transport->frontBio))
 			{
-				WLog_ERR_BIO(TAG, "BIO_should_retry", transport->frontBio);
+				WLog_ERR_BIO(transport, "BIO_should_retry", transport->frontBio);
 				goto out_cleanup;
 			}
 
 			/* non-blocking can live with blocked IOs */
 			if (!transport->blocking)
 			{
-				WLog_ERR_BIO(TAG, "BIO_write", transport->frontBio);
+				WLog_ERR_BIO(transport, "BIO_write", transport->frontBio);
 				goto out_cleanup;
 			}
 
 			if (BIO_wait_write(transport->frontBio, 100) < 0)
 			{
-				WLog_ERR_BIO(TAG, "BIO_wait_write", transport->frontBio);
+				WLog_ERR_BIO(transport, "BIO_wait_write", transport->frontBio);
 				status = -1;
 				goto out_cleanup;
 			}
@@ -721,14 +844,14 @@ int transport_write(rdpTransport* transport, wStream* s)
 			{
 				if (BIO_wait_write(transport->frontBio, 100) < 0)
 				{
-					WLog_ERR(TAG, "error when selecting for write");
+					WLog_Print(transport->log, WLOG_ERROR, "error when selecting for write");
 					status = -1;
 					goto out_cleanup;
 				}
 
 				if (BIO_flush(transport->frontBio) < 1)
 				{
-					WLog_ERR(TAG, "error when flushing outputBuffer");
+					WLog_Print(transport->log, WLOG_ERROR, "error when flushing outputBuffer");
 					status = -1;
 					goto out_cleanup;
 				}
@@ -763,7 +886,7 @@ DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events,
 	{
 		if (count < 1)
 		{
-			WLog_ERR(TAG, "%s: provided handles array is too small", __FUNCTION__);
+			WLog_Print(transport->log, WLOG_ERROR, "%s: provided handles array is too small", __FUNCTION__);
 			return 0;
 		}
 
@@ -778,14 +901,15 @@ DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events,
 		{
 			if (nCount > count)
 			{
-				WLog_ERR(TAG, "%s: provided handles array is too small (count=%"PRIu32" nCount=%"PRIu32")",
-				         __FUNCTION__, count, nCount);
+				WLog_Print(transport->log, WLOG_ERROR,
+				           "%s: provided handles array is too small (count=%"PRIu32" nCount=%"PRIu32")",
+				           __FUNCTION__, count, nCount);
 				return 0;
 			}
 
 			if (BIO_get_event(transport->frontBio, &events[1]) != 1)
 			{
-				WLog_ERR(TAG, "%s: error getting the frontBio handle", __FUNCTION__);
+				WLog_Print(transport->log, WLOG_ERROR, "%s: error getting the frontBio handle", __FUNCTION__);
 				return 0;
 			}
 		}
@@ -884,7 +1008,7 @@ int transport_check_fds(rdpTransport* transport)
 		if ((status = transport_read_pdu(transport, transport->ReceiveBuffer)) <= 0)
 		{
 			if (status < 0)
-				WLog_DBG(TAG, "transport_check_fds: transport_read_pdu() - %i", status);
+				WLog_Print(transport->log, WLOG_DEBUG, "transport_check_fds: transport_read_pdu() - %i", status);
 
 			return status;
 		}
@@ -912,8 +1036,8 @@ int transport_check_fds(rdpTransport* transport)
 
 		if (recv_status < 0)
 		{
-			WLog_ERR(TAG, "transport_check_fds: transport->ReceiveCallback() - %i",
-			         recv_status);
+			WLog_Print(transport->log, WLOG_ERROR, "transport_check_fds: transport->ReceiveCallback() - %i",
+			           recv_status);
 			return -1;
 		}
 
@@ -1012,7 +1136,7 @@ static void* transport_client_thread(void* arg)
 	rdpTransport* transport = (rdpTransport*) arg;
 	rdpContext* context = transport->context;
 	rdpRdp* rdp = context->rdp;
-	WLog_DBG(TAG, "Asynchronous transport thread started");
+	WLog_Print(transport->log, WLOG_DEBUG, "Asynchronous transport thread started");
 	nCount = 0;
 	handles[nCount++] = transport->stopEvent;
 	handles[nCount++] = transport->connectedEvent;
@@ -1021,15 +1145,16 @@ static void* transport_client_thread(void* arg)
 	switch (status)
 	{
 		case WAIT_OBJECT_0:
-			WLog_DBG(TAG, "stopEvent triggered");
+			WLog_Print(transport->log, WLOG_DEBUG, "stopEvent triggered");
 			goto out;
 
 		case WAIT_OBJECT_0 + 1:
-			WLog_DBG(TAG, "connectedEvent event triggered");
+			WLog_Print(transport->log, WLOG_DEBUG, "connectedEvent event triggered");
 			break;
 
 		default:
-			WLog_ERR(TAG, "WaitForMultipleObjects failed with status 0x%08"PRIX32"", status);
+			WLog_Print(transport->log, WLOG_ERROR, "WaitForMultipleObjects failed with status 0x%08"PRIX32"",
+			           status);
 			dwExitCode = 1;
 			goto out;
 	}
@@ -1041,7 +1166,7 @@ static void* transport_client_thread(void* arg)
 		if (!(nCountTmp = freerdp_get_event_handles(context, &handles[nCount],
 		                  64 - nCount)))
 		{
-			WLog_ERR(TAG, "freerdp_get_event_handles failed");
+			WLog_Print(transport->log, WLOG_ERROR, "freerdp_get_event_handles failed");
 			break;
 		}
 
@@ -1050,21 +1175,21 @@ static void* transport_client_thread(void* arg)
 
 		if (transport->layer == TRANSPORT_LAYER_CLOSED)
 		{
-			WLog_DBG(TAG, "TRANSPORT_LAYER_CLOSED");
+			WLog_Print(transport->log, WLOG_DEBUG, "TRANSPORT_LAYER_CLOSED");
 			rdp_set_error_info(rdp, ERRINFO_PEER_DISCONNECTED);
 			break;
 		}
 
 		if (status == WAIT_OBJECT_0)
 		{
-			WLog_DBG(TAG, "stopEvent triggered");
+			WLog_Print(transport->log, WLOG_DEBUG, "stopEvent triggered");
 			break;
 		}
 		else if (status > WAIT_OBJECT_0 && status < (WAIT_OBJECT_0 + nCount))
 		{
 			if (!freerdp_check_event_handles(context))
 			{
-				WLog_ERR(TAG, "freerdp_check_event_handles()");
+				WLog_Print(transport->log, WLOG_ERROR, "freerdp_check_event_handles()");
 				rdp_set_error_info(rdp, ERRINFO_PEER_DISCONNECTED);
 				break;
 			}
@@ -1072,9 +1197,9 @@ static void* transport_client_thread(void* arg)
 		else
 		{
 			if (status == WAIT_TIMEOUT)
-				WLog_ERR(TAG, "WaitForMultipleObjects returned WAIT_TIMEOUT");
+				WLog_Print(transport->log, WLOG_ERROR, "WaitForMultipleObjects returned WAIT_TIMEOUT");
 			else
-				WLog_ERR(TAG, "WaitForMultipleObjects returned 0x%08"PRIX32"", status);
+				WLog_Print(transport->log, WLOG_ERROR, "WaitForMultipleObjects returned 0x%08"PRIX32"", status);
 
 			dwExitCode = 1;
 			break;
@@ -1082,7 +1207,7 @@ static void* transport_client_thread(void* arg)
 	}
 
 out:
-	WLog_DBG(TAG, "Terminating transport thread");
+	WLog_Print(transport->log, WLOG_DEBUG, "Terminating transport thread");
 	ExitThread(dwExitCode);
 	return NULL;
 }
@@ -1094,6 +1219,11 @@ rdpTransport* transport_new(rdpContext* context)
 
 	if (!transport)
 		return NULL;
+
+	transport->log = WLog_Get(TAG);
+
+	if (!transport->log)
+		goto out_free_transport;
 
 	transport->context = context;
 	transport->settings = context->settings;

@@ -35,43 +35,55 @@
 /* Protocol-independent codes */
 
 #define ERRCONNECT_PRE_CONNECT_FAILED_STRING \
-		"A configuration error prevented a connection to be established."
+	"A configuration error prevented a connection to be established."
 
 #define ERRCONNECT_CONNECT_UNDEFINED_STRING \
-		"A undefined connection error occurred."
+	"A undefined connection error occurred."
 
 #define ERRCONNECT_POST_CONNECT_FAILED_STRING \
-		"The connection attempt was aborted due to post connect configuration errors."
+	"The connection attempt was aborted due to post connect configuration errors."
 
 #define ERRCONNECT_DNS_ERROR_STRING \
-		"The DNS entry could not be resolved."
+	"The DNS entry could not be resolved."
 
 #define ERRCONNECT_DNS_NAME_NOT_FOUND_STRING \
-		"The DNS host name was not found."
+	"The DNS host name was not found."
 
 #define ERRCONNECT_CONNECT_FAILED_STRING \
-		"The connection failed."
+	"The connection failed."
 
 #define ERRCONNECT_MCS_CONNECT_INITIAL_ERROR_STRING \
-		"The connection failed at initial MCS connect"
+	"The connection failed at initial MCS connect"
 
 #define ERRCONNECT_TLS_CONNECT_FAILED_STRING \
-		"The connection failed at TLS connect."
+	"The connection failed at TLS connect."
 
 #define ERRCONNECT_AUTHENTICATION_FAILED_STRING \
-		"An authentication failure aborted the connection."
+	"An authentication failure aborted the connection."
 
 #define ERRCONNECT_INSUFFICIENT_PRIVILEGES_STRING \
-		"Insufficient privileges to establish a connection."
+	"Insufficient privileges to establish a connection."
 
 #define ERRCONNECT_CONNECT_CANCELLED_STRING \
-		"The connection was cancelled."
+	"The connection was cancelled."
 
 #define ERRCONNECT_SECURITY_NEGO_CONNECT_FAILED_STRING \
-		"The connection failed at negotiating security settings."
+	"The connection failed at negotiating security settings."
 
 #define ERRCONNECT_CONNECT_TRANSPORT_FAILED_STRING \
-		"The connection transport layer failed."
+	"The connection transport layer failed."
+
+#define ERRCONNECT_PASSWORD_EXPIRED_STRING \
+	"The password has expired and must be changed."
+
+#define ERRCONNECT_PASSWORD_CERTAINLY_EXPIRED_STRING \
+	"The password has certainly expired and must be changed."
+
+#define ERRCONNECT_CLIENT_REVOKED_STRING \
+	"The client has been revoked."
+
+#define ERRCONNECT_KDC_UNREACHABLE_STRING \
+	"The KDC is unreachable."
 
 /* Special codes */
 #define ERRCONNECT_SUCCESS_STRING "Success."
@@ -79,29 +91,32 @@
 
 static const ERRINFO ERRCONNECT_CODES[] =
 {
-		ERRCONNECT_DEFINE(SUCCESS),
+	ERRCONNECT_DEFINE(SUCCESS),
 
-		ERRCONNECT_DEFINE(PRE_CONNECT_FAILED),
-		ERRCONNECT_DEFINE(CONNECT_UNDEFINED),
-		ERRCONNECT_DEFINE(POST_CONNECT_FAILED),
-		ERRCONNECT_DEFINE(DNS_ERROR),
-		ERRCONNECT_DEFINE(DNS_NAME_NOT_FOUND),
-		ERRCONNECT_DEFINE(CONNECT_FAILED),
-		ERRCONNECT_DEFINE(MCS_CONNECT_INITIAL_ERROR),
-		ERRCONNECT_DEFINE(TLS_CONNECT_FAILED),
-		ERRCONNECT_DEFINE(AUTHENTICATION_FAILED),
-		ERRCONNECT_DEFINE(INSUFFICIENT_PRIVILEGES),
-		ERRCONNECT_DEFINE(CONNECT_CANCELLED),
-		ERRCONNECT_DEFINE(SECURITY_NEGO_CONNECT_FAILED),
-		ERRCONNECT_DEFINE(CONNECT_TRANSPORT_FAILED),
+	ERRCONNECT_DEFINE(PRE_CONNECT_FAILED),
+	ERRCONNECT_DEFINE(CONNECT_UNDEFINED),
+	ERRCONNECT_DEFINE(POST_CONNECT_FAILED),
+	ERRCONNECT_DEFINE(DNS_ERROR),
+	ERRCONNECT_DEFINE(DNS_NAME_NOT_FOUND),
+	ERRCONNECT_DEFINE(CONNECT_FAILED),
+	ERRCONNECT_DEFINE(MCS_CONNECT_INITIAL_ERROR),
+	ERRCONNECT_DEFINE(TLS_CONNECT_FAILED),
+	ERRCONNECT_DEFINE(AUTHENTICATION_FAILED),
+	ERRCONNECT_DEFINE(INSUFFICIENT_PRIVILEGES),
+	ERRCONNECT_DEFINE(CONNECT_CANCELLED),
+	ERRCONNECT_DEFINE(SECURITY_NEGO_CONNECT_FAILED),
+	ERRCONNECT_DEFINE(CONNECT_TRANSPORT_FAILED),
+	ERRCONNECT_DEFINE(PASSWORD_EXPIRED),
+	ERRCONNECT_DEFINE(PASSWORD_CERTAINLY_EXPIRED),
+	ERRCONNECT_DEFINE(CLIENT_REVOKED),
+	ERRCONNECT_DEFINE(KDC_UNREACHABLE),
 
-		ERRCONNECT_DEFINE(NONE)
+	ERRCONNECT_DEFINE(NONE)
 };
 
 const char* freerdp_get_error_connect_string(UINT32 code)
 {
 	const ERRINFO* errInfo;
-
 	errInfo = &ERRCONNECT_CODES[0];
 
 	while (errInfo->code != ERRCONNECT_NONE)
@@ -120,7 +135,6 @@ const char* freerdp_get_error_connect_string(UINT32 code)
 const char* freerdp_get_error_connect_name(UINT32 code)
 {
 	const ERRINFO* errInfo;
-
 	errInfo = &ERRCONNECT_CODES[0];
 
 	while (errInfo->code != ERRCONNECT_NONE)
