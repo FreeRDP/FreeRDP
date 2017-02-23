@@ -67,7 +67,7 @@ static UINT32 transport_krb5_check_account(rdpTransport* transport, char* userna
         char* passwd)
 {
 	krb5_error_code ret;
-	krb5_context context;
+	krb5_context context = NULL;
 	krb5_principal principal = NULL;
 	char address[256];
 	krb5_ccache ccache;
