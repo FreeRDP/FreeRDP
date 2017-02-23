@@ -318,4 +318,6 @@
     <string name="pref_ringtone_silent">Silent</string>
 
     <string name="pref_title_vibrate">Vibrate</string>
+    <string name="preference_key_h264_3g" translatable="false">bookmark.perf_gfx_h264</string>
+    <string name="preference_key_h264" translatable="false">bookmark.perf_gfx_h264</string>
 </resources>

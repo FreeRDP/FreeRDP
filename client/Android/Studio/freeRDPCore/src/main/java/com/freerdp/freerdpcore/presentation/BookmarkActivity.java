@@ -18,7 +18,10 @@ import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceManager;
+import android.preference.PreferenceScreen;
 import android.util.Log;
+import android.view.View;
 
 import com.freerdp.freerdpcore.R;
 import com.freerdp.freerdpcore.application.GlobalApp;
@@ -26,6 +29,7 @@ import com.freerdp.freerdpcore.domain.BookmarkBase;
 import com.freerdp.freerdpcore.domain.ConnectionReference;
 import com.freerdp.freerdpcore.domain.ManualBookmark;
 import com.freerdp.freerdpcore.services.BookmarkBaseGateway;
+import com.freerdp.freerdpcore.services.LibFreeRDP;
 import com.freerdp.freerdpcore.utils.RDPFileParser;
 
 import java.io.File;
@@ -55,14 +59,15 @@ public class BookmarkActivity extends PreferenceActivity implements
     private static boolean settings_changed = false;
     private static boolean new_bookmark = false;
     private int current_preferences;
-
+    
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        PreferenceManager mgr = getPreferenceManager();
         // init shared preferences for activity
-        getPreferenceManager().setSharedPreferencesName("TEMP");
-        getPreferenceManager().setSharedPreferencesMode(MODE_PRIVATE);
+        mgr.setSharedPreferencesName("TEMP");
+        mgr.setSharedPreferencesMode(MODE_PRIVATE);
 
         if (bookmark == null) {
             // if we have a bookmark id set in the extras we are in edit mode
@@ -112,15 +117,15 @@ public class BookmarkActivity extends PreferenceActivity implements
             // hide gateway settings if we edit a non-manual bookmark
             if (current_preferences == PREFERENCES_ADVANCED
                     && bookmark.getType() != ManualBookmark.TYPE_MANUAL) {
-                getPreferenceScreen().removePreference(
-                        findPreference("bookmark.enable_gateway"));
-                getPreferenceScreen().removePreference(
-                        findPreference("bookmark.gateway"));
+                PreferenceScreen screen = getPreferenceScreen();
+                screen.removePreference(findPreference("bookmark.enable_gateway"));
+                screen.removePreference(findPreference("bookmark.gateway"));
             }
 
+            updateH264Preferences();
+
             // update preferences from bookmark
-            bookmark.writeToSharedPreferences(getPreferenceManager()
-                    .getSharedPreferences());
+            bookmark.writeToSharedPreferences(mgr.getSharedPreferences());
 
             // no settings changed yet
             settings_changed = false;
@@ -168,15 +173,34 @@ public class BookmarkActivity extends PreferenceActivity implements
         }
 
         // update UI with bookmark data
-        SharedPreferences spref = getPreferenceManager().getSharedPreferences();
+        SharedPreferences spref = mgr.getSharedPreferences();
         initSettings(spref);
 
         // register for preferences changed notification
-        getPreferenceManager().getSharedPreferences()
-                .registerOnSharedPreferenceChangeListener(this);
+        mgr.getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
 
         // set the correct component names in our preferencescreen settings
         setIntentComponentNames();
+
+        updateH264Preferences();
+    }
+
+    private void updateH264Preferences() {
+        if (!LibFreeRDP.hasH264Support()) {
+            final int preferenceIdList[] = {
+                    R.string.preference_key_h264,
+                    R.string.preference_key_h264_3g
+            };
+
+            PreferenceManager mgr = getPreferenceManager();
+            for (int id : preferenceIdList) {
+                final String key = getString(id);
+                Preference preference = mgr.findPreference(key);
+                if (preference != null) {
+                    preference.setEnabled(false);
+                }
+            }
+        }
     }
 
     private void updateBookmarkFromFile(ManualBookmark bookmark,
@@ -672,5 +696,4 @@ public class BookmarkActivity extends PreferenceActivity implements
             }
         }
     }
-
 }

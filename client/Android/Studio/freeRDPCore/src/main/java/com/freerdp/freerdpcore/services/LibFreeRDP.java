@@ -26,10 +26,12 @@ import java.util.ArrayList;
 public class LibFreeRDP {
     private static final String TAG = "LibFreeRDP";
     private static EventListener listener;
+    private static boolean mHasH264 = true;
 
     static {
+        final String h264 = "openh264";
         final String[] libraries = {
-                "openh264", "freerdp-openssl", "jpeg", "winpr2",
+                h264, "freerdp-openssl", "jpeg", "winpr2",
                 "freerdp2", "freerdp-client2", "freerdp-android2"};
         final String LD_PATH = System.getProperty("java.library.path");
 
@@ -39,8 +41,15 @@ public class LibFreeRDP {
                 System.loadLibrary(lib);
             } catch (UnsatisfiedLinkError e) {
                 Log.e(TAG, "Failed to load library " + lib + ": " + e.toString());
+                if (lib.equals(h264)) {
+                    mHasH264 = false;
+                }
             }
         }
+    }
+
+    public static boolean hasH264Support() {
+        return mHasH264;
     }
 
     private static native String freerdp_get_jni_version();
@@ -118,7 +127,7 @@ public class LibFreeRDP {
 
         final String clientName = ApplicationSettingsActivity.getClientName(context);
         if (!clientName.isEmpty()) {
-            args.add("/client-hostname:\""+clientName+"\"");
+            args.add("/client-hostname:\"" + clientName + "\"");
         }
         String certName = "";
         if (bookmark.getType() != BookmarkBase.TYPE_MANUAL) {
@@ -260,7 +269,7 @@ public class LibFreeRDP {
 
         final String clientName = ApplicationSettingsActivity.getClientName(context);
         if (!clientName.isEmpty()) {
-            args.add("/client-hostname:\""+clientName+"\"");
+            args.add("/client-hostname:\"" + clientName + "\"");
         }
 
         // Parse hostname and port. Set to 'v' argument

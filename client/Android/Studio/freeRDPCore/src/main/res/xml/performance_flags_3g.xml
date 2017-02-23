@@ -14,6 +14,13 @@
             android:key="bookmark.perf_remotefx_3g"
             android:title="@string/settings_perf_remotefx" />
         <CheckBoxPreference
+            android:key="bookmark.perf_gfx_3g"
+            android:title="@string/settings_perf_gfx" />
+        <CheckBoxPreference
+            android:dependency="bookmark.perf_gfx_3g"
+            android:key="@string/preference_key_h264_3g"
+            android:title="@string/settings_perf_gfx_h264" />
+        <CheckBoxPreference
             android:key="bookmark.perf_wallpaper_3g"
             android:title="@string/settings_perf_wallpaper" />
         <CheckBoxPreference

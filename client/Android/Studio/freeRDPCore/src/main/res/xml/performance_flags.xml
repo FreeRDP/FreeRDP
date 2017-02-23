@@ -18,7 +18,7 @@
             android:title="@string/settings_perf_gfx" />
         <CheckBoxPreference
             android:dependency="bookmark.perf_gfx"
-            android:key="bookmark.perf_gfx_h264"
+            android:key="@string/preference_key_h264"
             android:title="@string/settings_perf_gfx_h264" />
         <CheckBoxPreference
             android:key="bookmark.perf_wallpaper"
