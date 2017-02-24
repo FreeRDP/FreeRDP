@@ -252,13 +252,24 @@ void settings_load_hkey_local_machine(rdpSettings* settings)
 
 BOOL settings_get_computer_name(rdpSettings* settings)
 {
-	DWORD nSize = MAX_COMPUTERNAME_LENGTH + 1;
-	CHAR computerName[MAX_COMPUTERNAME_LENGTH + 1];
+	DWORD nSize = 0;
+	CHAR* computerName;
+
+	if (GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize))
+		return FALSE;
+
+	computerName = calloc(nSize, sizeof(CHAR));
+
+	if (!computerName)
+		return FALSE;
 
 	if (!GetComputerNameExA(ComputerNameNetBIOS, computerName, &nSize))
 		return FALSE;
 
-	settings->ComputerName = _strdup(computerName);
+	if (nSize > MAX_COMPUTERNAME_LENGTH)
+		computerName[MAX_COMPUTERNAME_LENGTH] = '\0';
+
+	settings->ComputerName = computerName;
 
 	if (!settings->ComputerName)
 		return FALSE;
@@ -592,7 +603,6 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		goto out_fail;
 
 	settings->ActionScript = _strdup("~/.config/freerdp/action.sh");
-
 	return settings;
 out_fail:
 	free(settings->HomePath);
