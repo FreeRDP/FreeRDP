@@ -54,12 +54,6 @@ public class GlobalApp extends Application implements LibFreeRDP.EventListener {
     // timer for disconnecting sessions after the screen was turned off
     private static Timer disconnectTimer = null;
 
-    public GlobalApp() {
-        sessionMap = Collections.synchronizedMap(new HashMap<Long, SessionState>());
-
-        LibFreeRDP.setEventListener(this);
-    }
-
     public static ManualBookmarkGateway getManualBookmarkGateway() {
         return manualBookmarkGateway;
     }
@@ -122,6 +116,10 @@ public class GlobalApp extends Application implements LibFreeRDP.EventListener {
 
         /* Initialize preferences. */
         ApplicationSettingsActivity.get(this);
+
+        sessionMap = Collections.synchronizedMap(new HashMap<Long, SessionState>());
+
+        LibFreeRDP.setEventListener(this);
 
         bookmarkDB = new BookmarkDB(this);
 
