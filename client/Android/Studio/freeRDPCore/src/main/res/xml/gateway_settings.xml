@@ -13,6 +13,7 @@
     <PreferenceCategory android:title="@string/settings_cat_gateway">
         <EditTextPreference
             android:key="bookmark.gateway_hostname"
+            android:singleLine="true"
             android:summary="Name or address of the target computer"
             android:title="@string/settings_hostname" />
         <com.freerdp.freerdpcore.utils.IntEditTextPreference
@@ -26,13 +27,16 @@
             freerdp:bounds_min="10" />
         <EditTextPreference
             android:key="bookmark.gateway_username"
+            android:singleLine="true"
             android:title="@string/settings_username" />
         <EditTextPreference
             android:inputType="textPassword"
+            android:singleLine="true"
             android:key="bookmark.gateway_password"
             android:title="@string/settings_password" />
         <EditTextPreference
             android:key="bookmark.gateway_domain"
+            android:singleLine="true"
             android:summary="Optional"
             android:title="@string/settings_domain" />
     </PreferenceCategory>

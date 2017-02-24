@@ -65,10 +65,12 @@
             android:title="@string/settings_security" />
         <EditTextPreference
             android:key="bookmark.remote_program"
+            android:singleLine="true"
             android:summary="notepad.exe"
             android:title="@string/settings_remote_program" />
         <EditTextPreference
             android:key="bookmark.work_dir"
+            android:singleLine="true"
             android:title="@string/settings_work_dir" />
         <CheckBoxPreference
             android:key="bookmark.console_mode"

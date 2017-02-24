@@ -3,6 +3,7 @@
     xmlns:freerdp="http://schemas.android.com/apk/res-auto">
     <com.freerdp.freerdpcore.utils.IntEditTextPreference
         android:inputType="number"
+        android:singleLine="true"
         android:key="@string/preference_key_power_disconnect_timeout"
         android:numeric="integer"
         android:title="@string/settings_power_disconnect_timeout"

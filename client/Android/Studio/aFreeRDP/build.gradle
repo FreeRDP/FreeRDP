@@ -22,7 +22,7 @@ android {
             storeType "jks"
         }
     }
-    
+
     buildTypes {
         release {
             minifyEnabled false

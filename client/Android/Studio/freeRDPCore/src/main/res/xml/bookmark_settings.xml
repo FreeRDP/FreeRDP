@@ -16,10 +16,12 @@
         android:title="@string/settings_cat_host">
         <EditTextPreference
             android:key="bookmark.label"
+            android:singleLine="true"
             android:summary="@string/settings_label"
             android:title="@string/settings_label" />
         <EditTextPreference
             android:key="bookmark.hostname"
+            android:singleLine="true"
             android:summary="Name or address of the target computer"
             android:title="@string/settings_hostname" />
         <com.freerdp.freerdpcore.utils.IntEditTextPreference
