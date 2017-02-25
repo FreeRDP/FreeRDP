@@ -61,7 +61,10 @@ int ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 			return -1;
 
 		if (!GetComputerNameExA(ComputerNameNetBIOS, computerName, &nSize))
+		{
+			free(computerName);
 			return -1;
+		}
 
 		if (nSize > MAX_COMPUTERNAME_LENGTH)
 			computerName[MAX_COMPUTERNAME_LENGTH] = '\0';
@@ -138,7 +141,10 @@ int ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 			return -1;
 
 		if (!GetComputerNameExA(ComputerNameNetBIOS, computerName, &nSize))
+		{
+			free(computerName);
 			return -1;
+		}
 
 		if (nSize > MAX_COMPUTERNAME_LENGTH)
 			computerName[MAX_COMPUTERNAME_LENGTH] = '\0';

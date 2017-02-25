@@ -264,7 +264,10 @@ BOOL settings_get_computer_name(rdpSettings* settings)
 		return FALSE;
 
 	if (!GetComputerNameExA(ComputerNameNetBIOS, computerName, &nSize))
+	{
+		free(computerName);
 		return FALSE;
+	}
 
 	if (nSize > MAX_COMPUTERNAME_LENGTH)
 		computerName[MAX_COMPUTERNAME_LENGTH] = '\0';

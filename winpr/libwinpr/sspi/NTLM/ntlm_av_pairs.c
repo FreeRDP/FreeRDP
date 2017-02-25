@@ -189,7 +189,10 @@ int ntlm_get_target_computer_name(PUNICODE_STRING pName, COMPUTER_NAME_FORMAT ty
 		return -1;
 
 	if (!GetComputerNameExA(ComputerNameNetBIOS, computerName, &nSize))
+	{
+		free(computerName);
 		return -1;
+	}
 
 	if (nSize > MAX_COMPUTERNAME_LENGTH)
 		computerName[MAX_COMPUTERNAME_LENGTH] = '\0';
