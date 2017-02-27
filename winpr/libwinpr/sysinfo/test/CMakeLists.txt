@@ -7,6 +7,7 @@ set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 set(${MODULE_PREFIX}_TESTS
 	TestGetNativeSystemInfo.c
 	TestCPUFeatures.c
+	TestGetComputerName.c
 	TestSystemTime.c
 	TestLocalTime.c)
 
