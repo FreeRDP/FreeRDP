@@ -180,7 +180,8 @@ int ntlm_get_target_computer_name(PUNICODE_STRING pName, COMPUTER_NAME_FORMAT ty
 	DWORD nSize = 0;
 	CHAR* computerName;
 
-	if (GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize))
+	if (GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize) || (GetLastError() != ERROR_MORE_DATA) ||
+	    (nSize < 2))
 		return -1;
 
 	computerName = calloc(nSize, sizeof(CHAR));
