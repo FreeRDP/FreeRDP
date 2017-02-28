@@ -409,15 +409,12 @@ BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 	if (dot)
 		length = (int)(dot - hostname);
 
-	if (*lpnSize <= (DWORD) length)
+	if ((*lpnSize <= (DWORD) length) || !lpBuffer)
 	{
 		SetLastError(ERROR_BUFFER_OVERFLOW);
 		*lpnSize = length + 1;
 		return FALSE;
 	}
-
-	if (!lpBuffer)
-		return FALSE;
 
 	CopyMemory(lpBuffer, hostname, length);
 	lpBuffer[length] = '\0';
@@ -462,18 +459,16 @@ BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD l
 	    case ComputerNamePhysicalDnsHostname:
 	    case ComputerNamePhysicalDnsDomain:
 	    case ComputerNamePhysicalDnsFullyQualified:
-		    if (*lpnSize <= (DWORD) length)
+			if ((*lpnSize <= (DWORD) length) || !lpBuffer)
 			{
 				*lpnSize = length + 1;
 				SetLastError(ERROR_MORE_DATA);
 				return FALSE;
 			}
 
-			if (!lpBuffer)
-				return FALSE;
-
 			CopyMemory(lpBuffer, hostname, length);
 			lpBuffer[length] = '\0';
+			*lpnSize = length;
 		    break;
 
 	    default:
