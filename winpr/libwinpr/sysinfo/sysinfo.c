@@ -394,6 +394,12 @@ BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 	int length;
 	char hostname[256];
 
+	if (!lpnSize)
+	{
+		SetLastError(ERROR_BAD_ARGUMENTS);
+		return FALSE;
+	}
+
 	if (gethostname(hostname, sizeof(hostname)) == -1)
 		return FALSE;
 
@@ -403,15 +409,12 @@ BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 	if (dot)
 		length = (int)(dot - hostname);
 
-	if (*lpnSize <= (DWORD) length)
+	if ((*lpnSize <= (DWORD) length) || !lpBuffer)
 	{
 		SetLastError(ERROR_BUFFER_OVERFLOW);
 		*lpnSize = length + 1;
 		return FALSE;
 	}
-
-	if (!lpBuffer)
-		return FALSE;
 
 	CopyMemory(lpBuffer, hostname, length);
 	lpBuffer[length] = '\0';
@@ -424,8 +427,24 @@ BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD l
 	int length;
 	char hostname[256];
 
+	if (!lpnSize)
+	{
+		SetLastError(ERROR_BAD_ARGUMENTS);
+		return FALSE;
+	}
+
 	if ((NameType == ComputerNameNetBIOS) || (NameType == ComputerNamePhysicalNetBIOS))
-		return GetComputerNameA(lpBuffer, lpnSize);
+	{
+		BOOL rc = GetComputerNameA(lpBuffer, lpnSize);
+
+		if (!rc)
+		{
+			if (GetLastError() == ERROR_BUFFER_OVERFLOW)
+				SetLastError(ERROR_MORE_DATA);
+		}
+
+		return rc;
+	}
 
 	if (gethostname(hostname, sizeof(hostname)) == -1)
 		return FALSE;
@@ -440,18 +459,16 @@ BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD l
 	    case ComputerNamePhysicalDnsHostname:
 	    case ComputerNamePhysicalDnsDomain:
 	    case ComputerNamePhysicalDnsFullyQualified:
-		    if (*lpnSize <= (DWORD) length)
+			if ((*lpnSize <= (DWORD) length) || !lpBuffer)
 			{
 				*lpnSize = length + 1;
 				SetLastError(ERROR_MORE_DATA);
 				return FALSE;
 			}
 
-			if (!lpBuffer)
-				return FALSE;
-
 			CopyMemory(lpBuffer, hostname, length);
 			lpBuffer[length] = '\0';
+			*lpnSize = length;
 		    break;
 
 	    default:
@@ -461,10 +478,32 @@ BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD l
 	return TRUE;
 }
 
-BOOL GetComputerNameExW(COMPUTER_NAME_FORMAT NameType, LPWSTR lpBuffer, LPDWORD nSize)
+BOOL GetComputerNameExW(COMPUTER_NAME_FORMAT NameType, LPWSTR lpBuffer, LPDWORD lpnSize)
 {
-	WLog_ERR(TAG, "GetComputerNameExW unimplemented");
-	return FALSE;
+	BOOL rc;
+	LPSTR lpABuffer = NULL;
+
+	if (!lpnSize)
+	{
+		SetLastError(ERROR_BAD_ARGUMENTS);
+		return FALSE;
+	}
+
+	if (*lpnSize > 0)
+	{
+		lpABuffer = calloc(*lpnSize, sizeof(CHAR));
+
+		if (!lpABuffer)
+			return FALSE;
+	}
+
+	rc = GetComputerNameExA(NameType, lpABuffer, lpnSize);
+
+	if (rc && (*lpnSize > 0))
+		ConvertToUnicode(CP_UTF8, 0, lpABuffer, *lpnSize, &lpBuffer, *lpnSize);
+
+	free(lpABuffer);
+	return rc;
 }
 
 #endif
