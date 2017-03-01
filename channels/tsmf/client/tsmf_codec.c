@@ -255,6 +255,119 @@ static const TSMFMediaTypeMap tsmf_sub_type_map[] =
 
 };
 
+
+#define WaveFormatTag(_arg_) _arg_
+enum name
+ {
+	WAVE_FORMAT_UNKNOWN                 = WaveFormatTag(0x0000), // Microsoft Corporation
+	WAVE_FORMAT_PCM                     = WaveFormatTag(0x0001), // Microsoft PCM format
+	WAVE_FORMAT_MS_ADPCM                = WaveFormatTag(0x0002), // Microsoft ADPCM
+	WAVE_FORMAT_IEEE_FLOAT              = WaveFormatTag(0x0003), // Micrososft 32 bit float format
+	WAVE_FORMAT_VSELP                   = WaveFormatTag(0x0004), // Compaq Computer Corporation
+	WAVE_FORMAT_IBM_CVSD                = WaveFormatTag(0x0005), // IBM Corporation
+	WAVE_FORMAT_ALAW                    = WaveFormatTag(0x0006), // Microsoft Corporation
+	WAVE_FORMAT_MULAW                   = WaveFormatTag(0x0007), // Microsoft Corporation
+	WAVE_FORMAT_OKI_ADPCM               = WaveFormatTag(0x0010), // OKI
+	WAVE_FORMAT_IMA_ADPCM               = WaveFormatTag(0x0011), // Intel Corporation
+	WAVE_FORMAT_MEDIASPACE_ADPCM        = WaveFormatTag(0x0012), // Videologic
+	WAVE_FORMAT_SIERRA_ADPCM            = WaveFormatTag(0x0013), // Sierra Semiconductor Corp
+	WAVE_FORMAT_G723_ADPCM              = WaveFormatTag(0x0014), // Antex Electronics Corporation
+	WAVE_FORMAT_DIGISTD                 = WaveFormatTag(0x0015), // DSP Solutions, Inc.
+	WAVE_FORMAT_DIGIFIX                 = WaveFormatTag(0x0016), // DSP Solutions, Inc.
+	WAVE_FORMAT_DIALOGIC_OKI_ADPCM      = WaveFormatTag(0x0017), // Dialogic Corporation
+	WAVE_FORMAT_MEDIAVISION_ADPCM       = WaveFormatTag(0x0018), // Media Vision, Inc.
+	WAVE_FORMAT_CU_CODEC                = WaveFormatTag(0x0019), // Hewlett-Packard Company
+	WAVE_FORMAT_YAMAHA_ADPCM            = WaveFormatTag(0x0020), // Yamaha Corporation of America
+	WAVE_FORMAT_SONARC                  = WaveFormatTag(0x0021), // Speech Compression
+	WAVE_FORMAT_DSPGROUP_TRUESPEECH     = WaveFormatTag(0x0022), // DSP Group, Inc
+	WAVE_FORMAT_ECHOSC1                 = WaveFormatTag(0x0023), // Echo Speech Corporation
+	WAVE_FORMAT_AUDIOFILE_AF36          = WaveFormatTag(0x0024), // Audiofile, Inc.
+	WAVE_FORMAT_APTX                    = WaveFormatTag(0x0025), // Audio Processing Technology
+	WAVE_FORMAT_AUDIOFILE_AF10          = WaveFormatTag(0x0026), // Audiofile, Inc.
+	WAVE_FORMAT_PROSODY_1612            = WaveFormatTag(0x0027), // Aculab plc
+	WAVE_FORMAT_LRC                     = WaveFormatTag(0x0028), // Merging Technologies S.A.
+	WAVE_FORMAT_DOLBY_AC2               = WaveFormatTag(0x0030), // Dolby Laboratories
+	WAVE_FORMAT_GSM610                  = WaveFormatTag(0x0031), // Microsoft Corporation
+	WAVE_FORMAT_MSNAUDIO                = WaveFormatTag(0x0032), // Microsoft Corporation
+	WAVE_FORMAT_ANTEX_ADPCME            = WaveFormatTag(0x0033), // Antex Electronics Corporation
+	WAVE_FORMAT_CONTROL_RES_VQLPC       = WaveFormatTag(0x0034), // Control Resources Limited
+	WAVE_FORMAT_DIGIREAL                = WaveFormatTag(0x0035), // DSP Solutions, Inc.
+	WAVE_FORMAT_DIGIADPCM               = WaveFormatTag(0x0036), // DSP Solutions, Inc.
+	WAVE_FORMAT_CONTROL_RES_CR10        = WaveFormatTag(0x0037), // Control Resources Limited
+	WAVE_FORMAT_NMS_VBXADPCM            = WaveFormatTag(0x0038), // Natural MicroSystems
+	WAVE_FORMAT_ROLAND_RDAC             = WaveFormatTag(0x0039), // Roland
+	WAVE_FORMAT_ECHOSC3                 = WaveFormatTag(0x003A), // Echo Speech Corporation
+	WAVE_FORMAT_ROCKWELL_ADPCM          = WaveFormatTag(0x003B), // Rockwell International
+	WAVE_FORMAT_ROCKWELL_DIGITALK       = WaveFormatTag(0x003C), // Rockwell International
+	WAVE_FORMAT_XEBEC                   = WaveFormatTag(0x003D), // Xebec Multimedia Solutions Limited
+	WAVE_FORMAT_G721_ADPCM              = WaveFormatTag(0x0040), // Antex Electronics Corporation
+	WAVE_FORMAT_G728_CELP               = WaveFormatTag(0x0041), // Antex Electronics Corporation
+	WAVE_FORMAT_MSG723                  = WaveFormatTag(0x0042), // Microsoft Corporation
+	WAVE_FORMAT_MPEG                    = WaveFormatTag(0x0050), // Microsoft Corporation
+	WAVE_FORMAT_RT24                    = WaveFormatTag(0x0052), // InSoft Inc.
+	WAVE_FORMAT_PAC                     = WaveFormatTag(0x0053), // InSoft Inc.
+	WAVE_FORMAT_MPEGLAYER3              = WaveFormatTag(0x0055), // MPEG 3 Layer 1
+	WAVE_FORMAT_LUCENT_G723             = WaveFormatTag(0x0059), // Lucent Technologies
+	WAVE_FORMAT_CIRRUS                  = WaveFormatTag(0x0060), // Cirrus Logic
+	WAVE_FORMAT_ESPCM                   = WaveFormatTag(0x0061), // ESS Technology
+	WAVE_FORMAT_VOXWARE                 = WaveFormatTag(0x0062), // Voxware Inc
+	WAVE_FORMAT_CANOPUS_ATRAC           = WaveFormatTag(0x0063), // Canopus, Co., Ltd.
+	WAVE_FORMAT_G726_ADPCM              = WaveFormatTag(0x0064), // APICOM
+	WAVE_FORMAT_G722_ADPCM              = WaveFormatTag(0x0065), // APICOM
+	WAVE_FORMAT_DSAT                    = WaveFormatTag(0x0066), // Microsoft Corporation
+	WAVE_FORMAT_DSAT_DISPLAY            = WaveFormatTag(0x0067), // Microsoft Corporation
+	WAVE_FORMAT_VOXWARE_BYTE_ALIGNED    = WaveFormatTag(0x0069), // Voxware Inc.
+	WAVE_FORMAT_VOXWARE_AC8             = WaveFormatTag(0x0070), // Voxware Inc.
+	WAVE_FORMAT_VOXWARE_AC10            = WaveFormatTag(0x0071), // Voxware Inc.
+	WAVE_FORMAT_VOXWARE_AC16            = WaveFormatTag(0x0072), // Voxware Inc.
+	WAVE_FORMAT_VOXWARE_AC20            = WaveFormatTag(0x0073), // Voxware Inc.
+	WAVE_FORMAT_VOXWARE_RT24            = WaveFormatTag(0x0074), // Voxware Inc.
+	WAVE_FORMAT_VOXWARE_RT29            = WaveFormatTag(0x0075), // Voxware Inc.
+	WAVE_FORMAT_VOXWARE_RT29HW          = WaveFormatTag(0x0076), // Voxware Inc.
+	WAVE_FORMAT_VOXWARE_VR12            = WaveFormatTag(0x0077), // Voxware Inc.
+	WAVE_FORMAT_VOXWARE_VR18            = WaveFormatTag(0x0078), // Voxware Inc.
+	WAVE_FORMAT_VOXWARE_TQ40            = WaveFormatTag(0x0079), // Voxware Inc.
+	WAVE_FORMAT_SOFTSOUND               = WaveFormatTag(0x0080), // Softsound, Ltd.
+	WAVE_FORMAT_VOXARE_TQ60             = WaveFormatTag(0x0081), // Voxware Inc.
+	WAVE_FORMAT_MSRT24                  = WaveFormatTag(0x0082), // Microsoft Corporation
+	WAVE_FORMAT_G729A                   = WaveFormatTag(0x0083), // AT&T Laboratories
+	WAVE_FORMAT_MVI_MV12                = WaveFormatTag(0x0084), // Motion Pixels
+	WAVE_FORMAT_DF_G726                 = WaveFormatTag(0x0085), // DataFusion Systems (Pty) (Ltd)
+	WAVE_FORMAT_DF_GSM610               = WaveFormatTag(0x0086), // DataFusion Systems (Pty) (Ltd)
+	WAVE_FORMAT_ONLIVE                  = WaveFormatTag(0x0089), // OnLive! Technologies, Inc.
+	WAVE_FORMAT_SBC24                   = WaveFormatTag(0x0091), // Siemens Business Communications Systems
+	WAVE_FORMAT_DOLBY_AC3_SPDIF         = WaveFormatTag(0x0092), // Sonic Foundry
+	WAVE_FORMAT_ZYXEL_ADPCM             = WaveFormatTag(0x0097), // ZyXEL Communications, Inc.
+	WAVE_FORMAT_PHILIPS_LPCBB           = WaveFormatTag(0x0098), // Philips Speech Processing
+	WAVE_FORMAT_PACKED                  = WaveFormatTag(0x0099), // Studer Professional Audio AG
+	WAVE_FORMAT_RHETOREX_ADPCM          = WaveFormatTag(0x0100), // Rhetorex, Inc.
+	IBM_FORMAT_MULAW                    = WaveFormatTag(0x0101), // IBM mu-law format
+	IBM_FORMAT_ALAW                     = WaveFormatTag(0x0102), // IBM a-law format
+	IBM_FORMAT_ADPCM                    = WaveFormatTag(0x0103), // IBM AVC Adaptive Differential PCM format
+	WAVE_FORMAT_VIVO_G723               = WaveFormatTag(0x0111), // Vivo Software
+	WAVE_FORMAT_VIVO_SIREN              = WaveFormatTag(0x0112), // Vivo Software
+	WAVE_FORMAT_DIGITAL_G723            = WaveFormatTag(0x0123), // Digital Equipment Corporation
+	WAVE_FORMAT_CREATIVE_ADPCM          = WaveFormatTag(0x0200), // Creative Labs, Inc
+	WAVE_FORMAT_CREATIVE_FASTSPEECH8    = WaveFormatTag(0x0202), // Creative Labs, Inc
+	WAVE_FORMAT_CREATIVE_FASTSPEECH10   = WaveFormatTag(0x0203), // Creative Labs, Inc
+	WAVE_FORMAT_QUARTERDECK             = WaveFormatTag(0x0220), // Quarterdeck Corporation
+	WAVE_FORMAT_FM_TOWNS_SND            = WaveFormatTag(0x0300), // Fujitsu Corporation
+	WAVE_FORMAT_BZV_DIGITAL             = WaveFormatTag(0x0400), // Brooktree Corporation
+	WAVE_FORMAT_VME_VMPCM               = WaveFormatTag(0x0680), // AT&T Labs, Inc.
+	WAVE_FORMAT_OLIGSM                  = WaveFormatTag(0x1000), // Ing C. Olivetti & C., S.p.A.
+	WAVE_FORMAT_OLIADPCM                = WaveFormatTag(0x1001), // Ing C. Olivetti & C., S.p.A.
+	WAVE_FORMAT_OLICELP                 = WaveFormatTag(0x1002), // Ing C. Olivetti & C., S.p.A.
+	WAVE_FORMAT_OLISBC                  = WaveFormatTag(0x1003), // Ing C. Olivetti & C., S.p.A.
+	WAVE_FORMAT_OLIOPR                  = WaveFormatTag(0x1004), // Ing C. Olivetti & C., S.p.A.
+	WAVE_FORMAT_LH_CODEC                = WaveFormatTag(0x1100), // Lernout & Hauspie
+	WAVE_FORMAT_NORRIS                  = WaveFormatTag(0x1400), // Norris Communications, Inc.
+	WAVE_FORMAT_SOUNDSPACE_MUSICOMPRESS = WaveFormatTag(0x1500), // AT&T Labs, Inc.
+	WAVE_FORMAT_MPEG_HEAAC				= WaveFormatTag(0x1610), 
+	WAVE_FORMAT_DVM                     = WaveFormatTag(0x2000), // FAST Multimedia AG
+	WAVE_FORMAT_INTERWAV_VSC112         = WaveFormatTag(0x7150), // ?????
+	WAVE_FORMAT_EXTENSIBLE              = WaveFormatTag(0xFFFE), //
+};
+
 static const TSMFMediaTypeMap tsmf_format_type_map[] =
 {
 	/* AED4AB2D-7326-43CB-9464-C879CAB9C43D */
@@ -411,6 +524,114 @@ static UINT32 tsmf_codec_parse_VIDEOINFOHEADER(TS_AM_MEDIA_TYPE* mediatype, wStr
 	return 48;
 }
 
+
+const static int avpriv_mpeg4audio_sample_rates[16] = {
+    96000, 88200, 64000, 48000, 44100, 32000,
+    24000, 22050, 16000, 12000, 11025, 8000, 7350
+};
+
+static int get_sample_rates(int idx){
+	if(idx<0 || idx>sizeof(avpriv_mpeg4audio_sample_rates)/sizeof(avpriv_mpeg4audio_sample_rates[0])){
+		WLog_ERR(TAG, "get_sample_rates: invalid index:%d", idx);
+		return -1;
+	}
+	return avpriv_mpeg4audio_sample_rates[idx];
+}
+
+static UINT32 tsmf_codec_parse_HEAACWAVEINFOHEADER(TS_AM_MEDIA_TYPE* mediatype, wStream* s)
+{
+	/*
+		typedef struct heaacwaveformat_tag {
+		  HEAACWAVEINFO wfInfo;
+		  BYTE          pbAudioSpecificConfig[1];
+		} HEAACWAVEFORMAT, *PHEAACWAVEFORMAT;
+		
+		typedef struct heaacwaveinfo_tag {
+		  WAVEFORMATEX wfx;
+		  WORD         wPayloadType;
+		  WORD         wAudioProfileLevelIndication;
+		  WORD         wStructType;
+		  WORD         wReserved1;
+		  DWORD        dwReserved2;
+		} HEAACWAVEINFO, *PHEAACWAVEINFO;
+	*/
+	UINT16 wPayloadType;
+	UINT16 wAudioProfileLevelIndication;
+	UINT16 wStructType;
+
+	Stream_Read_UINT16(s, wPayloadType);
+	Stream_Read_UINT16(s, wAudioProfileLevelIndication);
+	Stream_Read_UINT16(s, wStructType);
+	Stream_Seek(s, 6);
+	mediatype->ExtraDataSize -= 12;
+	if(mediatype->ExtraDataSize >= 2){
+		BYTE *pbAudioSpecificConfig = Stream_Pointer(s);
+		int audioObjectType = (pbAudioSpecificConfig[0] & 0xF8) >> 3; // 取前5bit
+		int samplingFrequencyIndex = ((pbAudioSpecificConfig[0] & 0x7) << 1) | (pbAudioSpecificConfig[1] >> 7);//取后4bit，结果为3
+		int channelConfiguration = (pbAudioSpecificConfig[1] >> 3) & 0x0F; // 取后4bit
+		int frameLengthFlag = (pbAudioSpecificConfig[1] >> 2) & 0x01;// 取后1bit
+		int dependsOnCoreCoder = (pbAudioSpecificConfig[1] >> 1) & 0x01; // 取后1bit
+		int extensionFlag = pbAudioSpecificConfig[1] & 0x01; // 最后1bit
+		DEBUG_TSMF(" audioObjectType:0x%"PRIx32, audioObjectType);
+		DEBUG_TSMF(" wPayloadType:0x%"PRIx16" wAudioProfileLevelIndication:0x%"PRIx16" wStructType:0x%"PRIx16" audioObjectType:0x%"PRIx32" samplingFrequencyIndex:0x%"PRIx32" channelConfiguration:0x%"PRIx32" frameLengthFlag:0x%"PRIx32" dependsOnCoreCoder:0x%"PRIx32" extensionFlag:0x%"PRIx32, wPayloadType, wAudioProfileLevelIndication, wStructType, audioObjectType, samplingFrequencyIndex, channelConfiguration, frameLengthFlag, dependsOnCoreCoder, extensionFlag);
+		/* ISO/IEC 14496-3
+		Check for the presence of SBR data in the bitstream payload prior to decoding. If no SBR data is found, the output sample rate is equal to that signaled as samplingFrequency in the AudioSpecificConfig(). If SBR data is found the output sample rate is twice that signaled as samplingFrequency in the AudioSpecificConfig
+		*/
+		/* https://technet.microsoft.com/zh-cn/dd742784(v=vs.90).aspx
+		The length of the AudioSpecificConfig() data is 2 bytes for AAC-LC or HE-AAC with implicit signaling of SBR/PS. It is more than 2 bytes for HE-AAC with explicit signaling of SBR/PS. The value of audioObjectType as defined in AudioSpecificConfig() must be 2, indicating AAC-LC. The value of extensionAudioObjectType must be 5 for SBR or 29 for PS.
+		*/
+
+		if(audioObjectType!=2){
+			WLog_ERR(TAG, "wrong audioObjectType!");
+		}else{
+			int bits_to_decode = (mediatype->ExtraDataSize-2) * 8;
+			pbAudioSpecificConfig = Stream_Pointer(s) + 2;
+
+			DEBUG_TSMF("SBR: bits_to_decode() %d", bits_to_decode);
+			if(bits_to_decode >= 16){ // left bits is sbr?!
+				int syncExtensionType;
+				syncExtensionType = (pbAudioSpecificConfig[0]<<3) | (pbAudioSpecificConfig[1]>>5);
+				DEBUG_TSMF("syncExtensionType: 0x%"PRIx32, syncExtensionType);
+				if(syncExtensionType == 0x2b7){
+					int extensionAudioObjectType;
+					extensionAudioObjectType = pbAudioSpecificConfig[1] & 0x1F;
+					DEBUG_TSMF("extensionAudioObjectType: 0x%"PRIx32, extensionAudioObjectType);
+					pbAudioSpecificConfig += 2;
+					bits_to_decode -= 2*8;
+					if(extensionAudioObjectType == 0x05){
+						int sbrPresentFlag;
+						sbrPresentFlag = pbAudioSpecificConfig[0] >> 7;
+						DEBUG_TSMF("sbrPresentFlag: 0x%"PRIx32, sbrPresentFlag);
+						if(sbrPresentFlag == 0x01){
+							int extensionSamplingFrequencyIndex;
+							extensionSamplingFrequencyIndex = (pbAudioSpecificConfig[0] >> 3) & 0xF;
+							DEBUG_TSMF("extensionSamplingFrequencyIndex: 0x%"PRIx32, extensionSamplingFrequencyIndex);
+							int freq = get_sample_rates(extensionSamplingFrequencyIndex);
+							if(freq>0){
+								mediatype->SamplesPerSecond.Numerator = freq;
+							}
+							bits_to_decode -= 5;
+							if(bits_to_decode >= 12){
+								int syncExtensionType;
+								syncExtensionType = (pbAudioSpecificConfig[0] & 0x7) << 8 | pbAudioSpecificConfig[1];
+								DEBUG_TSMF("syncExtensionType: 0x%"PRIx32, syncExtensionType);
+								pbAudioSpecificConfig += 2;
+								bits_to_decode -= 11;
+								if(syncExtensionType == 0x548){
+									int psPresentFlag;
+									psPresentFlag = pbAudioSpecificConfig[0] >> 7;
+									DEBUG_TSMF("psPresentFlag: 0x%"PRIx32, psPresentFlag);
+								}
+							}
+						}
+					}
+				}							
+			}
+		}
+	}	
+	return 12;
+}
+
 static BOOL tsmf_read_format_type(TS_AM_MEDIA_TYPE* mediatype, wStream* s, UINT32 cbFormat)
 {
 	int i, j;
@@ -445,7 +666,8 @@ static BOOL tsmf_read_format_type(TS_AM_MEDIA_TYPE* mediatype, wStream* s, UINT3
 			if (Stream_GetRemainingLength(s) < 18)
 				return FALSE;
 
-			Stream_Seek_UINT16(s);
+			UINT16 wFormatTag;			
+			Stream_Read_UINT16(s, wFormatTag);
 			Stream_Read_UINT16(s, mediatype->Channels);
 			Stream_Read_UINT32(s, mediatype->SamplesPerSecond.Numerator);
 			mediatype->SamplesPerSecond.Denominator = 1;
@@ -454,6 +676,10 @@ static BOOL tsmf_read_format_type(TS_AM_MEDIA_TYPE* mediatype, wStream* s, UINT3
 			Stream_Read_UINT16(s, mediatype->BlockAlign);
 			Stream_Read_UINT16(s, mediatype->BitsPerSample);
 			Stream_Read_UINT16(s, mediatype->ExtraDataSize);
+			
+			if(wFormatTag == WAVE_FORMAT_MPEG_HEAAC){
+				tsmf_codec_parse_HEAACWAVEINFOHEADER(mediatype, s);
+			}		
 
 			if (mediatype->ExtraDataSize > 0)
 			{
