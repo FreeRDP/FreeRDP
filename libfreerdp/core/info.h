@@ -58,16 +58,7 @@
 
 #define SAVE_SESSION_PDU_VERSION_ONE 0x0001
 
-
-FREERDP_LOCAL BOOL rdp_read_client_auto_reconnect_cookie(rdpRdp* rdp,
-        wStream* s);
-FREERDP_LOCAL void rdp_write_client_auto_reconnect_cookie(rdpRdp* rdp,
-        wStream* s);
 FREERDP_LOCAL void rdp_write_auto_reconnect_cookie(rdpRdp* rdp, wStream* s);
-FREERDP_LOCAL BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s);
-FREERDP_LOCAL void rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s);
-FREERDP_LOCAL BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s);
-FREERDP_LOCAL void rdp_write_info_packet(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_send_client_info(rdpRdp* rdp);
 FREERDP_LOCAL BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s);
