@@ -154,13 +154,13 @@ out:
 
 static void transport_ssl_cb(SSL* ssl, int where, int ret)
 {
-	if (where | SSL_CB_ALERT)
+	if (where & SSL_CB_ALERT)
 	{
 		rdpTransport* transport = (rdpTransport*) SSL_get_app_data(ssl);
 
 		switch (ret)
 		{
-			case SSL3_AL_FATAL | SSL_AD_ACCESS_DENIED:
+			case (SSL3_AL_FATAL << 8) | SSL_AD_ACCESS_DENIED:
 				{
 					if (!freerdp_get_last_error(transport->context))
 					{
@@ -169,7 +169,7 @@ static void transport_ssl_cb(SSL* ssl, int where, int ret)
 				}
 				break;
 
-			case SSL3_AL_FATAL | SSL_AD_INTERNAL_ERROR:
+			case (SSL3_AL_FATAL << 8) | SSL_AD_INTERNAL_ERROR:
 				{
 					if (transport->NlaMode)
 					{
@@ -191,6 +191,9 @@ static void transport_ssl_cb(SSL* ssl, int where, int ret)
 							freerdp_set_last_error(transport->context, kret);
 					}
 
+					break;
+
+				case (SSL3_AL_WARNING << 8) | SSL3_AD_CLOSE_NOTIFY:
 					break;
 
 				default:
