@@ -53,6 +53,8 @@
     <string name="settings_cat_screen">Scherminstellingen</string>
     <string name="settings_colors">Kleuren</string>
     <string-array name="colors_array">
+        <item>Pallet (8 Bit)</item>
+        <item>Hoge kleuren (15 Bit)</item>
         <item>Hoge kleuren (16 Bit)</item>
         <item>Ware kleuren (24 Bit)</item>
         <item>Hoogste kwaliteit (32 Bit)</item>
