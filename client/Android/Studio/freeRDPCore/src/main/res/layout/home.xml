@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
 /*
    Main screen layout
 
@@ -11,7 +10,7 @@
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_height="match_parent">
 
     <!-- Dummy item to prevent SuperBarView from receiving focus (and showing the keyboard) -->
 
@@ -23,8 +22,8 @@
 
     <include
         android:id="@+id/superBar"
-        android:layout_alignParentTop="true"
-        layout="@layout/super_bar" />
+        layout="@layout/super_bar"
+        android:layout_alignParentTop="true" />
 
     <ListView
         android:id="@+id/listViewBookmarks"

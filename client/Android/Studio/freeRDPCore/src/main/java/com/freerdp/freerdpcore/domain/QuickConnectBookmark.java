@@ -15,56 +15,50 @@ import android.os.Parcelable;
 
 public class QuickConnectBookmark extends ManualBookmark {
 
-	public QuickConnectBookmark(Parcel parcel)
-	{
-		super(parcel);
-		type = TYPE_QUICKCONNECT;
-	}
+    public static final Parcelable.Creator<QuickConnectBookmark> CREATOR = new Parcelable.Creator<QuickConnectBookmark>() {
+        public QuickConnectBookmark createFromParcel(Parcel in) {
+            return new QuickConnectBookmark(in);
+        }
 
-	public QuickConnectBookmark() {
-		super();
-		type = TYPE_QUICKCONNECT;
-	}
+        @Override
+        public QuickConnectBookmark[] newArray(int size) {
+            return new QuickConnectBookmark[size];
+        }
+    };
 
-	public static final Parcelable.Creator<QuickConnectBookmark> CREATOR = new Parcelable.Creator<QuickConnectBookmark>()
-	{
-		public QuickConnectBookmark createFromParcel(Parcel in) {
-			return new QuickConnectBookmark(in);
-		}
+    public QuickConnectBookmark(Parcel parcel) {
+        super(parcel);
+        type = TYPE_QUICKCONNECT;
+    }
 
-		@Override
-		public QuickConnectBookmark[] newArray(int size) {
-			return new QuickConnectBookmark[size];
-		}
-	};
-	
-	@Override
-	public int describeContents() {
-		return 0;
-	}
+    public QuickConnectBookmark() {
+        super();
+        type = TYPE_QUICKCONNECT;
+    }
 
-	@Override
-	public void writeToParcel(Parcel out, int flags)
-	{
-		super.writeToParcel(out, flags);
-	}
+    @Override
+    public int describeContents() {
+        return 0;
+    }
 
-	@Override
-	public void writeToSharedPreferences(SharedPreferences sharedPrefs)
-	{
-		super.writeToSharedPreferences(sharedPrefs);
-	}
+    @Override
+    public void writeToParcel(Parcel out, int flags) {
+        super.writeToParcel(out, flags);
+    }
 
-	@Override
-	public void readFromSharedPreferences(SharedPreferences sharedPrefs)
-	{
-		super.readFromSharedPreferences(sharedPrefs);
-	}
-	
-	// Cloneable
-	public Object clone()
-	{
-		return super.clone();					
-	}
-	
+    @Override
+    public void writeToSharedPreferences(SharedPreferences sharedPrefs) {
+        super.writeToSharedPreferences(sharedPrefs);
+    }
+
+    @Override
+    public void readFromSharedPreferences(SharedPreferences sharedPrefs) {
+        super.readFromSharedPreferences(sharedPrefs);
+    }
+
+    // Cloneable
+    public Object clone() {
+        return super.clone();
+    }
+
 }

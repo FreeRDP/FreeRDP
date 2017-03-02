@@ -16,35 +16,35 @@ import android.content.IntentFilter;
 import android.net.Uri;
 import android.util.Log;
 
-import java.util.*;
-
-import com.freerdp.freerdpcore.application.SessionState;
 import com.freerdp.freerdpcore.domain.BookmarkBase;
+import com.freerdp.freerdpcore.presentation.ApplicationSettingsActivity;
 import com.freerdp.freerdpcore.services.BookmarkDB;
 import com.freerdp.freerdpcore.services.HistoryDB;
 import com.freerdp.freerdpcore.services.LibFreeRDP;
 import com.freerdp.freerdpcore.services.ManualBookmarkGateway;
 import com.freerdp.freerdpcore.services.QuickConnectHistoryGateway;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+
 public class GlobalApp extends Application implements LibFreeRDP.EventListener {
-    private static Map<Long, SessionState> sessionMap;
-
-    private static final String TAG = "GlobalApp";
-
-    public static boolean ConnectedTo3G = false;
-
     // event notification defines
     public static final String EVENT_TYPE = "EVENT_TYPE";
     public static final String EVENT_PARAM = "EVENT_PARAM";
     public static final String EVENT_STATUS = "EVENT_STATUS";
     public static final String EVENT_ERROR = "EVENT_ERROR";
-
     public static final String ACTION_EVENT_FREERDP = "com.freerdp.freerdp.event.freerdp";
-
     public static final int FREERDP_EVENT_CONNECTION_SUCCESS = 1;
     public static final int FREERDP_EVENT_CONNECTION_FAILURE = 2;
     public static final int FREERDP_EVENT_DISCONNECTED = 3;
-
+    private static final String TAG = "GlobalApp";
+    public static boolean ConnectedTo3G = false;
+    private static Map<Long, SessionState> sessionMap;
     private static BookmarkDB bookmarkDB;
     private static ManualBookmarkGateway manualBookmarkGateway;
 
@@ -53,48 +53,6 @@ public class GlobalApp extends Application implements LibFreeRDP.EventListener {
 
     // timer for disconnecting sessions after the screen was turned off
     private static Timer disconnectTimer = null;
-
-    // TimerTask for disconnecting sessions after screen was turned off
-    private static class DisconnectTask extends TimerTask {
-        @Override
-        public void run() {
-            Log.v("DisconnectTask", "Doing action");
-
-            // disconnect any running rdp session
-            Collection<SessionState> sessions = GlobalApp.getSessions();
-            for (SessionState session : sessions) {
-                LibFreeRDP.disconnect(session.getInstance());
-            }
-        }
-    }
-
-
-    public GlobalApp() {
-        sessionMap = Collections.synchronizedMap(new HashMap<Long, SessionState>());
-
-        LibFreeRDP.setEventListener(this);
-    }
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-
-        bookmarkDB = new BookmarkDB(this);
-
-        manualBookmarkGateway = new ManualBookmarkGateway(bookmarkDB);
-
-        historyDB = new HistoryDB(this);
-        quickConnectHistoryGateway = new QuickConnectHistoryGateway(historyDB);
-
-        GlobalSettings.init(this);
-        ConnectedTo3G = NetworkStateReceiver.isConnectedTo3G(this);
-
-        // init screen receiver here (this can't be declared in AndroidManifest - refer to:
-        // http://thinkandroid.wordpress.com/2010/01/24/handling-screen-off-and-screen-on-intents/
-        IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
-        filter.addAction(Intent.ACTION_SCREEN_OFF);
-        registerReceiver(new ScreenReceiver(), filter);
-    }
 
     public static ManualBookmarkGateway getManualBookmarkGateway() {
         return manualBookmarkGateway;
@@ -105,8 +63,8 @@ public class GlobalApp extends Application implements LibFreeRDP.EventListener {
     }
 
     // Disconnect handling for Screen on/off events
-    static public void startDisconnectTimer() {
-        int timeoutMinutes = GlobalSettings.getDisconnectTimeout();
+    public void startDisconnectTimer() {
+        final int timeoutMinutes = ApplicationSettingsActivity.getDisconnectTimeout(this);
         if (timeoutMinutes > 0) {
             // start disconnect timeout...
             disconnectTimer = new Timer();
@@ -129,7 +87,7 @@ public class GlobalApp extends Application implements LibFreeRDP.EventListener {
         sessionMap.put(Long.valueOf(session.getInstance()), session);
         return session;
     }
-    
+
     static public SessionState createSession(Uri openUri, Context context) {
         SessionState session = new SessionState(LibFreeRDP.newInstance(context), openUri);
         sessionMap.put(Long.valueOf(session.getInstance()), session);
@@ -150,6 +108,33 @@ public class GlobalApp extends Application implements LibFreeRDP.EventListener {
             GlobalApp.sessionMap.remove(instance);
             LibFreeRDP.freeInstance(instance);
         }
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+
+        /* Initialize preferences. */
+        ApplicationSettingsActivity.get(this);
+
+        sessionMap = Collections.synchronizedMap(new HashMap<Long, SessionState>());
+
+        LibFreeRDP.setEventListener(this);
+
+        bookmarkDB = new BookmarkDB(this);
+
+        manualBookmarkGateway = new ManualBookmarkGateway(bookmarkDB);
+
+        historyDB = new HistoryDB(this);
+        quickConnectHistoryGateway = new QuickConnectHistoryGateway(historyDB);
+
+        ConnectedTo3G = NetworkStateReceiver.isConnectedTo3G(this);
+
+        // init screen receiver here (this can't be declared in AndroidManifest - refer to:
+        // http://thinkandroid.wordpress.com/2010/01/24/handling-screen-off-and-screen-on-intents/
+        IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
+        filter.addAction(Intent.ACTION_SCREEN_OFF);
+        registerReceiver(new ScreenReceiver(), filter);
     }
 
     // helper to send FreeRDP notifications
@@ -189,5 +174,19 @@ public class GlobalApp extends Application implements LibFreeRDP.EventListener {
 
     public void OnDisconnected(long instance) {
         Log.v(TAG, "OnDisconnected");
+    }
+
+    // TimerTask for disconnecting sessions after screen was turned off
+    private static class DisconnectTask extends TimerTask {
+        @Override
+        public void run() {
+            Log.v("DisconnectTask", "Doing action");
+
+            // disconnect any running rdp session
+            Collection<SessionState> sessions = GlobalApp.getSessions();
+            for (SessionState session : sessions) {
+                LibFreeRDP.disconnect(session.getInstance());
+            }
+        }
     }
 }

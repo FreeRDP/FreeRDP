@@ -1,107 +1,106 @@
-/*
-   Activity showing information about aFreeRDP and FreeRDP build information
-
-   Copyright 2013 Thincast Technologies GmbH, Author: Martin Fleisz
-
-   This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
-   If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
-*/
-
 package com.freerdp.freerdpcore.presentation;
+
+import android.content.pm.PackageManager;
+import android.content.res.Configuration;
+import android.nfc.FormatException;
+import android.os.Build;
+import android.os.Bundle;
+import android.support.v4.text.TextUtilsCompat;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+
+import com.freerdp.freerdpcore.R;
+import com.freerdp.freerdpcore.services.LibFreeRDP;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Formatter;
 import java.util.IllegalFormatException;
 import java.util.Locale;
 
-import com.freerdp.freerdpcore.services.LibFreeRDP;
+public class AboutActivity extends AppCompatActivity {
+    private static final String TAG = AboutActivity.class.toString();
+    private WebView mWebView;
 
-import android.app.Activity;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.content.res.Configuration;
-import android.os.Build;
-import android.os.Bundle;
-import android.util.Log;
-import android.webkit.WebView;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_about);
+        mWebView = (WebView) findViewById(R.id.activity_about_webview);
+    }
 
-public class AboutActivity extends Activity {
-	
-	private static final String TAG = "FreeRDPCore.AboutActivity";
-	@Override	
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		
-		WebView webview = new WebView(this);
-		setContentView(webview);
+    @Override
+    protected void onResume() {
+        populate();
+        super.onResume();
+    }
 
-		// get app version
-		String version;
-		try
-		{
-			version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;			
-		}
-		catch(NameNotFoundException e)
-		{
-			version = "unknown";			
-		}
-		
-		StringBuilder total = new StringBuilder();
-		try
-		{
-			String filename = ((getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE) ? "about.html" : "about_phone.html";
-			Locale def = Locale.getDefault();
-			String prefix = def.getLanguage().toLowerCase(def);
+    private void populate() {
+        StringBuilder total = new StringBuilder();
 
-			String file = prefix + "_about_page/" + filename;
-			InputStream is;
-			try {
-				is = getAssets().open(file);
-				is.close();
-			} catch (IOException e) {
-				Log.e(TAG, "Missing localized asset " + file, e);
-				file = "about_page/" + filename;
-			} 
-			BufferedReader r = new BufferedReader(new InputStreamReader(getAssets().open("about_page/" + filename)));
-			String line;
-			while ((line = r.readLine()) != null) {
-			    total.append(line);
-			}			
-		}
-		catch(IOException e)
-		{			
-		}
-		
-		// append FreeRDP core version to app version
-		version = version + " (" + LibFreeRDP.getVersion() + ")";
-		
-		String about_html = "no about ;(";
-		try
-		{
-			about_html = String.format(total.toString(), version, Build.VERSION.RELEASE ,Build.MODEL);
-		}
-		catch(IllegalFormatException e)
-		{
-			about_html="Nothing here ;(";
-		}
-		webview.getSettings().setJavaScriptEnabled(true);
-		Locale def = Locale.getDefault();
-		String prefix = def.getLanguage().toLowerCase(def);
+        String filename = "about_phone.html";
+        if ((getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE) {
+            filename = "about.html";
+        }
+        Locale def = Locale.getDefault();
+        String prefix = def.getLanguage().toLowerCase(def);
 
-		String base = "file:///android_asset/"; 
-		String dir = prefix + "_about_page/";
-		String file = dir + about_html;
-		try {
-			InputStream is = getAssets().open(dir);
-			is.close();
-			dir = base + dir;
-		} catch (IOException e) {
-			Log.e(TAG, "Missing localized asset " + dir, e);
-			dir = "file:///android_asset/about_page/";
-		} 
+        String dir = prefix + "_about_page/";
+        String file = dir + filename;
+        InputStream is;
+        try {
+            is = getAssets().open(file);
+            is.close();
+        } catch (IOException e) {
+            Log.e(TAG, "Missing localized asset " + file, e);
+            dir = "about_page/";
+            file = dir + filename;
+        }
 
-		webview.loadDataWithBaseURL(dir, about_html, "text/html", null,
-				"about:blank");
-	}
+        try {
+            BufferedReader r = new BufferedReader(new InputStreamReader(getAssets().open(file)));
+            try {
+                String line;
+                while ((line = r.readLine()) != null) {
+                    total.append(line);
+                    total.append("\n");
+                }
+            } finally {
+                r.close();
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Could not read about page " + file, e);
+        }
+
+        // append FreeRDP core version to app version
+        // get app version
+        String version;
+        try {
+            version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            version = "unknown";
+        }
+        version = version + " (" + LibFreeRDP.getVersion() + ")";
+
+        WebSettings settings = mWebView.getSettings();
+        settings.setDomStorageEnabled(true);
+        settings.setUseWideViewPort(true);
+        settings.setLoadWithOverviewMode(true);
+        settings.setSupportZoom(true);
+
+        final String base = "file:///android_asset/" + dir;
+
+        final String rawHtml = total.toString();
+        final String html = rawHtml.replaceAll("%AFREERDP_VERSION%", version)
+                .replaceAll("%SYSTEM_VERSION%", Build.VERSION.RELEASE)
+                .replaceAll("%DEVICE_MODEL%", Build.MODEL);
+
+        mWebView.loadDataWithBaseURL(base, html, "text/html", null,
+                "about:blank");
+    }
+
 }

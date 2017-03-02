@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- 
+<?xml version="1.0" encoding="utf-8"?><!--
 /*
    Bookmark Settings Layout
 
@@ -9,55 +8,89 @@
    If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
  -->
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" xmlns:freerdp="http://schemas.android.com/apk/res-auto" >
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:freerdp="http://schemas.android.com/apk/res-auto">
 
-    <PreferenceCategory android:key="category.host" android:title="@string/settings_cat_host">
-        <EditTextPreference android:key="bookmark.label" android:title="@string/settings_label" android:summary="@string/settings_label"/>
-        <EditTextPreference android:key="bookmark.hostname" android:title="@string/settings_hostname" android:summary="Name or address of the target computer"/>
-        <com.freerdp.freerdpcore.utils.IntEditTextPreference android:key="bookmark.port" android:title="@string/settings_port" android:summary="RDP Port on the target computer" android:numeric="integer" android:inputType="number" freerdp:bounds_min="10" freerdp:bounds_max="65535" freerdp:bounds_default="3389" />                      
+    <PreferenceCategory
+        android:key="category.host"
+        android:title="@string/settings_cat_host">
+        <EditTextPreference
+            android:key="bookmark.label"
+            android:singleLine="true"
+            android:summary="@string/settings_label"
+            android:title="@string/settings_label" />
+        <EditTextPreference
+            android:key="bookmark.hostname"
+            android:singleLine="true"
+            android:summary="Name or address of the target computer"
+            android:title="@string/settings_hostname" />
+        <com.freerdp.freerdpcore.utils.IntEditTextPreference
+            android:inputType="number"
+            android:key="bookmark.port"
+            android:numeric="integer"
+            android:summary="RDP Port on the target computer"
+            android:title="@string/settings_port"
+            freerdp:bounds_default="3389"
+            freerdp:bounds_max="65535"
+            freerdp:bounds_min="10" />
     </PreferenceCategory>
-    
+
     <PreferenceCategory android:title="@string/settings_cat_credentials">
-        <PreferenceScreen android:key="bookmark.credentials" android:title="@string/settings_credentials">
-        	<intent android:action="android.intent.action.VIEW" 
-           		android:targetPackage="*" 
-           		android:targetClass="com.freerdp.freerdpcore.presentation.BookmarkActivity" 
-           		android:data="preferences://credentials_settings" />            
+        <PreferenceScreen
+            android:key="bookmark.credentials"
+            android:title="@string/settings_credentials">
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:data="preferences://credentials_settings"
+                android:targetClass="com.freerdp.freerdpcore.presentation.BookmarkActivity"
+                android:targetPackage="*" />
         </PreferenceScreen>
     </PreferenceCategory>
-    
-		<PreferenceCategory
-			android:key="category.settings"
-			android:title="@string/settings_cat_settings">
 
-        <PreferenceScreen android:key="bookmark.screen" android:title="@string/settings_screen">
-        	<intent android:action="android.intent.action.VIEW" 
-           		android:targetPackage="*" 
-           		android:targetClass="com.freerdp.freerdpcore.presentation.BookmarkActivity" 
-           		android:data="preferences://screen_settings" />                        
+    <PreferenceCategory
+        android:key="category.settings"
+        android:title="@string/settings_cat_settings">
+
+        <PreferenceScreen
+            android:key="bookmark.screen"
+            android:title="@string/settings_screen">
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:data="preferences://screen_settings"
+                android:targetClass="com.freerdp.freerdpcore.presentation.BookmarkActivity"
+                android:targetPackage="*" />
         </PreferenceScreen>
-        
-        <PreferenceScreen android:key="bookmark.performance" android:title="@string/settings_performance">
-        	<intent android:action="android.intent.action.VIEW" 
-           		android:targetPackage="*" 
-           		android:targetClass="com.freerdp.freerdpcore.presentation.BookmarkActivity" 
-           		android:data="preferences://performance_flags" />
+
+        <PreferenceScreen
+            android:key="bookmark.performance"
+            android:title="@string/settings_performance">
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:data="preferences://performance_flags"
+                android:targetClass="com.freerdp.freerdpcore.presentation.BookmarkActivity"
+                android:targetPackage="*" />
         </PreferenceScreen>
-        
-        <PreferenceScreen android:key="bookmark.advanced" android:title="@string/settings_advanced">
-        	<intent android:action="android.intent.action.VIEW" 
-           		android:targetPackage="*" 
-           		android:targetClass="com.freerdp.freerdpcore.presentation.BookmarkActivity" 
-           		android:data="preferences://advanced_settings" />
+
+        <PreferenceScreen
+            android:key="bookmark.advanced"
+            android:title="@string/settings_advanced">
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:data="preferences://advanced_settings"
+                android:targetClass="com.freerdp.freerdpcore.presentation.BookmarkActivity"
+                android:targetPackage="*" />
         </PreferenceScreen>
-    
-    	<PreferenceScreen android:key="bookmark.debug" android:title="@string/settings_debug">
-        	<intent android:action="android.intent.action.VIEW" 
-           		android:targetPackage="*" 
-           		android:targetClass="com.freerdp.freerdpcore.presentation.BookmarkActivity" 
-           		android:data="preferences://debug_settings" />
+
+        <PreferenceScreen
+            android:key="bookmark.debug"
+            android:title="@string/settings_debug">
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:data="preferences://debug_settings"
+                android:targetClass="com.freerdp.freerdpcore.presentation.BookmarkActivity"
+                android:targetPackage="*" />
         </PreferenceScreen>
-        
-        </PreferenceCategory>
+
+    </PreferenceCategory>
 
 </PreferenceScreen>

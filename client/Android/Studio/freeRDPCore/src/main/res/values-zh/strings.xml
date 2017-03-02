@@ -28,7 +28,7 @@
     <string name="section_bookmarks">手动连接</string>
     <string name="section_active_sessions">活动会话数</string>
     <!-- Search strings -->
-    <string name="search_hint">搜索</string>    
+    <string name="search_hint">搜索</string>
     <!-- List placeholder labels -->
     <string name="list_placeholder_login">登录</string>
     <string name="list_placeholder_no_servers">没有服务</string>
@@ -92,9 +92,9 @@
     <string name="settings_performance_3g">使用3G网络时的连接性能</string>
     <string name="settings_cat_gateway">路由</string>
     <string name="settings_enable_gateway_settings">使用路由</string>
-    <string name="settings_gateway_settings">路由设置</string>    
+    <string name="settings_gateway_settings">路由设置</string>
     <string name="settings_redirect_sdcard">SDCard 重定向</string>
-		<string name="settings_redirect_sound">音频重定向</string>
+    <string name="settings_redirect_sound">音频重定向</string>
     <string-array name="redirect_sound_array">
         <item>不要播放</item>
         <item>在远程主机播放</item>

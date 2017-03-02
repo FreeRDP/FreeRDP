@@ -28,7 +28,7 @@
     <string name="section_bookmarks">Conexión Manual</string>
     <string name="section_active_sessions">Sesiones Activas</string>
     <!-- Search strings -->
-    <string name="search_hint">Connect to Computer</string>    
+    <string name="search_hint">Connect to Computer</string>
     <!-- List placeholder labels -->
     <string name="list_placeholder_login">Login</string>
     <string name="list_placeholder_no_servers">No hay escritorios virtuales</string>
@@ -93,7 +93,7 @@
     <string name="settings_performance_3g">Rendimiento 3G</string>
     <string name="settings_cat_gateway">Gateway</string>
     <string name="settings_enable_gateway_settings">Enable Gateway</string>
-    <string name="settings_gateway_settings">Gateway Settings</string>    
+    <string name="settings_gateway_settings">Gateway Settings</string>
     <string name="settings_redirect_sdcard">Redirect SDCard</string>
     <string name="settings_redirect_sound">Redirect Sound</string>
     <string-array name="redirect_sound_array">

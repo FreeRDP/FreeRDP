@@ -15,15 +15,15 @@ import android.content.Intent;
 import android.util.Log;
 
 public class ScreenReceiver extends BroadcastReceiver {
-	
-	@Override
-	public void onReceive(Context context, Intent intent) 
-	{
-		Log.v("ScreenReceiver", "Received action: " + intent.getAction());
-		if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF))
-			GlobalApp.startDisconnectTimer();
-		else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON))
-			GlobalApp.cancelDisconnectTimer();
-	}
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        GlobalApp app = (GlobalApp) context.getApplicationContext();
+        Log.v("ScreenReceiver", "Received action: " + intent.getAction());
+        if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF))
+            app.startDisconnectTimer();
+        else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON))
+            app.cancelDisconnectTimer();
+    }
 
 }

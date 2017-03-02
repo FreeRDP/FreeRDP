@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- 
+<?xml version="1.0" encoding="utf-8"?><!--
 /*
    Bookmark Screen Settings Layout
 
@@ -9,11 +8,34 @@
    If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
  -->
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" xmlns:freerdp="http://schemas.android.com/apk/res-auto" >
-	<PreferenceCategory android:title="@string/settings_cat_screen">
-	    <com.freerdp.freerdpcore.utils.IntListPreference android:key="bookmark.colors" android:entries="@array/colors_array" android:title="@string/settings_colors" android:summary="Color depth" android:entryValues="@array/colors_values_array" />
-	    <ListPreference android:key="bookmark.resolution" android:entries="@array/resolutions_array" android:title="@string/settings_resolution" android:summary="XXX" android:entryValues="@array/resolutions_values_array" />
-	    <com.freerdp.freerdpcore.utils.IntEditTextPreference android:key="bookmark.width" android:title="@string/settings_width" freerdp:bounds_min="640" freerdp:bounds_max="2048" freerdp:bounds_default="640" />
-	    <com.freerdp.freerdpcore.utils.IntEditTextPreference android:key="bookmark.height" android:title="@string/settings_height" freerdp:bounds_min="480" freerdp:bounds_max="2048" freerdp:bounds_default="480" />
-    </PreferenceCategory>    
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:freerdp="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory android:title="@string/settings_cat_screen">
+        <com.freerdp.freerdpcore.utils.IntListPreference
+            android:entries="@array/colors_array"
+            android:entryValues="@array/colors_values_array"
+            android:key="bookmark.colors"
+            android:summary="Color depth"
+            android:title="@string/settings_colors" />
+        <ListPreference
+            android:entries="@array/resolutions_array"
+            android:entryValues="@array/resolutions_values_array"
+            android:key="bookmark.resolution"
+            android:summary="XXX"
+            android:title="@string/settings_resolution" />
+        <com.freerdp.freerdpcore.utils.IntEditTextPreference
+            android:key="bookmark.width"
+            android:title="@string/settings_width"
+            android:singleLine="true"
+            freerdp:bounds_default="640"
+            freerdp:bounds_max="2048"
+            freerdp:bounds_min="640" />
+        <com.freerdp.freerdpcore.utils.IntEditTextPreference
+            android:key="bookmark.height"
+            android:title="@string/settings_height"
+            android:singleLine="true"
+            freerdp:bounds_default="480"
+            freerdp:bounds_max="2048"
+            freerdp:bounds_min="480" />
+    </PreferenceCategory>
 </PreferenceScreen>

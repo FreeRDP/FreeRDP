@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- 
+<?xml version="1.0" encoding="utf-8"?><!--
 /*
    Bookmark 3G Performance Settings Layout
 
@@ -9,14 +8,35 @@
    If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
  -->
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory android:title="@string/settings_cat_performance">
-        <CheckBoxPreference android:key="bookmark.perf_remotefx_3g" android:title="@string/settings_perf_remotefx"/>
-        <CheckBoxPreference android:key="bookmark.perf_wallpaper_3g" android:title="@string/settings_perf_wallpaper"/>
-        <CheckBoxPreference android:key="bookmark.perf_font_smoothing_3g" android:title="@string/settings_perf_font_smoothing"/>
-        <CheckBoxPreference android:key="bookmark.perf_desktop_composition_3g" android:title="@string/settings_perf_desktop_composition"/>
-        <CheckBoxPreference android:key="bookmark.perf_window_dragging_3g" android:title="@string/settings_perf_full_window_drag"/>
-        <CheckBoxPreference android:key="bookmark.perf_menu_animation_3g" android:title="@string/settings_perf_menu_animation"/>
-        <CheckBoxPreference android:key="bookmark.perf_themes_3g" android:title="@string/settings_perf_theming"/>
+        <CheckBoxPreference
+            android:key="bookmark.perf_remotefx_3g"
+            android:title="@string/settings_perf_remotefx" />
+        <CheckBoxPreference
+            android:key="bookmark.perf_gfx_3g"
+            android:title="@string/settings_perf_gfx" />
+        <CheckBoxPreference
+            android:dependency="bookmark.perf_gfx_3g"
+            android:key="@string/preference_key_h264_3g"
+            android:title="@string/settings_perf_gfx_h264" />
+        <CheckBoxPreference
+            android:key="bookmark.perf_wallpaper_3g"
+            android:title="@string/settings_perf_wallpaper" />
+        <CheckBoxPreference
+            android:key="bookmark.perf_font_smoothing_3g"
+            android:title="@string/settings_perf_font_smoothing" />
+        <CheckBoxPreference
+            android:key="bookmark.perf_desktop_composition_3g"
+            android:title="@string/settings_perf_desktop_composition" />
+        <CheckBoxPreference
+            android:key="bookmark.perf_window_dragging_3g"
+            android:title="@string/settings_perf_full_window_drag" />
+        <CheckBoxPreference
+            android:key="bookmark.perf_menu_animation_3g"
+            android:title="@string/settings_perf_menu_animation" />
+        <CheckBoxPreference
+            android:key="bookmark.perf_themes_3g"
+            android:title="@string/settings_perf_theming" />
     </PreferenceCategory>
 </PreferenceScreen>

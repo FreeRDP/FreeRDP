@@ -10,25 +10,28 @@
 package com.freerdp.freerdpcore.services;
 
 
-import com.freerdp.freerdpcore.application.GlobalApp;
-import com.freerdp.freerdpcore.application.SessionState;
-import com.freerdp.freerdpcore.domain.BookmarkBase;
-import com.freerdp.freerdpcore.domain.ManualBookmark;
-
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.util.Log;
 
+import com.freerdp.freerdpcore.application.GlobalApp;
+import com.freerdp.freerdpcore.application.SessionState;
+import com.freerdp.freerdpcore.domain.BookmarkBase;
+import com.freerdp.freerdpcore.domain.ManualBookmark;
+import com.freerdp.freerdpcore.presentation.ApplicationSettingsActivity;
+
 import java.util.ArrayList;
-import java.util.List;
 
 public class LibFreeRDP {
     private static final String TAG = "LibFreeRDP";
+    private static EventListener listener;
+    private static boolean mHasH264 = true;
 
     static {
+        final String h264 = "openh264";
         final String[] libraries = {
-                "openh264", "freerdp-openssl", "jpeg", "winpr2",
+                h264, "freerdp-openssl", "jpeg", "winpr2",
                 "freerdp2", "freerdp-client2", "freerdp-android2"};
         final String LD_PATH = System.getProperty("java.library.path");
 
@@ -38,8 +41,15 @@ public class LibFreeRDP {
                 System.loadLibrary(lib);
             } catch (UnsatisfiedLinkError e) {
                 Log.e(TAG, "Failed to load library " + lib + ": " + e.toString());
+                if (lib.equals(h264)) {
+                    mHasH264 = false;
+                }
             }
         }
+    }
+
+    public static boolean hasH264Support() {
+        return mHasH264;
     }
 
     private static native String freerdp_get_jni_version();
@@ -73,41 +83,6 @@ public class LibFreeRDP {
 
     private static native boolean freerdp_send_clipboard_data(long inst, String data);
 
-    public static interface EventListener {
-        void OnPreConnect(long instance);
-
-        void OnConnectionSuccess(long instance);
-
-        void OnConnectionFailure(long instance);
-
-        void OnDisconnecting(long instance);
-
-        void OnDisconnected(long instance);
-    }
-
-    public static interface UIEventListener {
-        void OnSettingsChanged(int width, int height, int bpp);
-
-        boolean OnAuthenticate(StringBuilder username, StringBuilder domain, StringBuilder password);
-        boolean OnGatewayAuthenticate(StringBuilder username, StringBuilder domain, StringBuilder
-                password);
-
-        int OnVerifiyCertificate(String commonName, String subject,
-                String issuer, String fingerprint, boolean mismatch);
-
-        int OnVerifyChangedCertificate(String commonName, String subject,
-                String issuer, String fingerprint, String oldSubject,
-                String oldIssuer, String oldFingerprint);
-
-        void OnGraphicsUpdate(int x, int y, int width, int height);
-
-        void OnGraphicsResize(int width, int height, int bpp);
-
-        void OnRemoteClipboardChanged(String data);
-    }
-
-    private static EventListener listener;
-
     public static void setEventListener(EventListener l) {
         listener = l;
     }
@@ -139,7 +114,7 @@ public class LibFreeRDP {
         return "-" + name;
     }
 
-    public static boolean setConnectionInfo(long inst, BookmarkBase bookmark) {
+    public static boolean setConnectionInfo(Context context, long inst, BookmarkBase bookmark) {
         BookmarkBase.ScreenSettings screenSettings = bookmark.getActiveScreenSettings();
         BookmarkBase.AdvancedSettings advanced = bookmark.getAdvancedSettings();
         BookmarkBase.DebugSettings debug = bookmark.getDebugSettings();
@@ -150,6 +125,10 @@ public class LibFreeRDP {
         args.add(TAG);
         args.add("/gdi:sw");
 
+        final String clientName = ApplicationSettingsActivity.getClientName(context);
+        if (!clientName.isEmpty()) {
+            args.add("/client-hostname:\"" + clientName + "\"");
+        }
         String certName = "";
         if (bookmark.getType() != BookmarkBase.TYPE_MANUAL) {
             return false;
@@ -262,7 +241,7 @@ public class LibFreeRDP {
         }
 
         /* 0 ... local
-           1 ... remote 
+           1 ... remote
            2 ... disable */
         args.add("/audio-mode:" + String.valueOf(advanced.getRedirectSound()));
         if (advanced.getRedirectSound() == 0) {
@@ -273,21 +252,26 @@ public class LibFreeRDP {
             args.add("/microphone");
         }
 
-        args.add("/log-level:"+debug.getDebugLevel());
+        args.add("/log-level:" + debug.getDebugLevel());
         String[] arrayArgs = args.toArray(new String[args.size()]);
         return freerdp_parse_arguments(inst, arrayArgs);
     }
-    
-    public static boolean setConnectionInfo(long inst, Uri openUri) {
-        ArrayList<String> args = new ArrayList<String>();
+
+    public static boolean setConnectionInfo(Context context, long inst, Uri openUri) {
+        ArrayList<String> args = new ArrayList<>();
 
         // Parse URI from query string. Same key overwrite previous one
         // freerdp://user@ip:port/connect?sound=&rfx=&p=password&clipboard=%2b&themes=-
-     
+
         // Now we only support Software GDI
         args.add(TAG);
         args.add("/gdi:sw");
-        
+
+        final String clientName = ApplicationSettingsActivity.getClientName(context);
+        if (!clientName.isEmpty()) {
+            args.add("/client-hostname:\"" + clientName + "\"");
+        }
+
         // Parse hostname and port. Set to 'v' argument
         String hostname = openUri.getHost();
         int port = openUri.getPort();
@@ -295,15 +279,15 @@ public class LibFreeRDP {
             hostname = hostname + ((port == -1) ? "" : (":" + String.valueOf(port)));
             args.add("/v:" + hostname);
         }
-        
+
         String user = openUri.getUserInfo();
         if (user != null) {
             args.add("/u:" + user);
         }
-        
-        for (String key: openUri.getQueryParameterNames()) {
+
+        for (String key : openUri.getQueryParameterNames()) {
             String value = openUri.getQueryParameter(key);
-            
+
             if (value.isEmpty()) {
                 // Query: key=
                 // To freerdp argument: /key
@@ -311,11 +295,11 @@ public class LibFreeRDP {
             } else if (value.equals("-") || value.equals("+")) {
                 // Query: key=- or key=+
                 // To freerdp argument: -key or +key
-                args.add(value+key);
+                args.add(value + key);
             } else {
                 // Query: key=value
                 // To freerdp argument: /key:value
-                if (key.equals("drive") && value.equals("sdcard")) { 
+                if (key.equals("drive") && value.equals("sdcard")) {
                     // Special for sdcard redirect
                     String path = android.os.Environment.getExternalStorageDirectory().getPath();
                     value = "sdcard," + path;
@@ -324,7 +308,7 @@ public class LibFreeRDP {
                 args.add("/" + key + ":" + value);
             }
         }
-        
+
         String[] arrayArgs = args.toArray(new String[args.size()]);
         return freerdp_parse_arguments(inst, arrayArgs);
     }
@@ -418,8 +402,8 @@ public class LibFreeRDP {
     }
 
     private static int OnVerifyChangedCertificate(long inst, String commonName, String subject,
-                                           String issuer, String fingerprint, String oldSubject,
-                                           String oldIssuer, String oldFingerprint) {
+                                                  String issuer, String fingerprint, String oldSubject,
+                                                  String oldIssuer, String oldFingerprint) {
         SessionState s = GlobalApp.getSession(inst);
         if (s == null)
             return 0;
@@ -459,5 +443,39 @@ public class LibFreeRDP {
 
     public static String getVersion() {
         return freerdp_get_version();
+    }
+
+    public static interface EventListener {
+        void OnPreConnect(long instance);
+
+        void OnConnectionSuccess(long instance);
+
+        void OnConnectionFailure(long instance);
+
+        void OnDisconnecting(long instance);
+
+        void OnDisconnected(long instance);
+    }
+
+    public static interface UIEventListener {
+        void OnSettingsChanged(int width, int height, int bpp);
+
+        boolean OnAuthenticate(StringBuilder username, StringBuilder domain, StringBuilder password);
+
+        boolean OnGatewayAuthenticate(StringBuilder username, StringBuilder domain, StringBuilder
+                password);
+
+        int OnVerifiyCertificate(String commonName, String subject,
+                                 String issuer, String fingerprint, boolean mismatch);
+
+        int OnVerifyChangedCertificate(String commonName, String subject,
+                                       String issuer, String fingerprint, String oldSubject,
+                                       String oldIssuer, String oldFingerprint);
+
+        void OnGraphicsUpdate(int x, int y, int width, int height);
+
+        void OnGraphicsResize(int width, int height, int bpp);
+
+        void OnRemoteClipboardChanged(String data);
     }
 }

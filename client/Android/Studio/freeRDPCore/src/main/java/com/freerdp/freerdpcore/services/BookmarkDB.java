@@ -9,31 +9,62 @@
 
 package com.freerdp.freerdpcore.services;
 
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.provider.BaseColumns;
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import android.content.Context;
-import android.provider.BaseColumns;
-import android.util.Log;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
-
 public class BookmarkDB extends SQLiteOpenHelper {
+    public static final String ID = BaseColumns._ID;
     private static final int DB_VERSION = 8;
     private static final String DB_NAME = "bookmarks.db";
-
-    public static final String ID = BaseColumns._ID;
+    private static final String DB_TABLE_BOOKMARK = "tbl_manual_bookmarks";
+    private static final String DB_TABLE_SCREEN = "tbl_screen_settings";
+    private static final String DB_TABLE_PERFORMANCE = "tbl_performance_flags";
 
     public BookmarkDB(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
     }
 
+    private static List<String> GetColumns(SQLiteDatabase db, String tableName) {
+        List<String> ar = null;
+        Cursor c = null;
+        try {
+            c = db.rawQuery("SELECT * FROM " + tableName + " LIMIT 1", null);
+            if (c != null) {
+                ar = new ArrayList<String>(Arrays.asList(c.getColumnNames()));
+            }
+        } catch (Exception e) {
+            Log.v(tableName, e.getMessage(), e);
+            e.printStackTrace();
+        } finally {
+            if (c != null)
+                c.close();
+        }
+        return ar;
+    }
+
+    private static String joinStrings(List<String> list, String delim) {
+        StringBuilder buf = new StringBuilder();
+        int num = list.size();
+        for (int i = 0; i < num; i++) {
+            if (i != 0)
+                buf.append(delim);
+            buf.append((String) list.get(i));
+        }
+        return buf.toString();
+    }
+
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String sqlScreenSettings =
-                "CREATE TABLE tbl_screen_settings ("
+        final String sqlScreenSettings =
+                "CREATE TABLE " + DB_TABLE_SCREEN + " ("
                         + ID + " INTEGER PRIMARY KEY, "
                         + "colors INTEGER DEFAULT 16, "
                         + "resolution INTEGER DEFAULT 0, "
@@ -42,8 +73,8 @@ public class BookmarkDB extends SQLiteOpenHelper {
 
         db.execSQL(sqlScreenSettings);
 
-        String sqlPerformanceFlags =
-                "CREATE TABLE tbl_performance_flags ("
+        final String sqlPerformanceFlags =
+                "CREATE TABLE " + DB_TABLE_PERFORMANCE + " ("
                         + ID + " INTEGER PRIMARY KEY, "
                         + "perf_remotefx INTEGER, "
                         + "perf_gfx INTEGER, "
@@ -57,13 +88,13 @@ public class BookmarkDB extends SQLiteOpenHelper {
 
         db.execSQL(sqlPerformanceFlags);
 
-        String sqlManualBookmarks = getManualBookmarksCreationString();
+        final String sqlManualBookmarks = getManualBookmarksCreationString();
         db.execSQL(sqlManualBookmarks);
 
 
         // Insert a test entry
-        String sqlInsertDefaultScreenEntry =
-                "INSERT INTO tbl_screen_settings ("
+        final String sqlInsertDefaultScreenEntry =
+                "INSERT INTO " + DB_TABLE_SCREEN + " ("
                         + "colors, "
                         + "resolution, "
                         + "width, "
@@ -72,8 +103,8 @@ public class BookmarkDB extends SQLiteOpenHelper {
                         + "32, 1, 1024, 768);";
         db.execSQL(sqlInsertDefaultScreenEntry);
 
-        String sqlInsertDefaultPerfFlags =
-                "INSERT INTO tbl_performance_flags ("
+        final String sqlInsertDefaultPerfFlags =
+                "INSERT INTO " + DB_TABLE_PERFORMANCE + " ("
                         + "perf_remotefx, "
                         + "perf_gfx, "
                         + "perf_gfx_h264, "
@@ -87,8 +118,8 @@ public class BookmarkDB extends SQLiteOpenHelper {
                         + "1, 1, 1, 0, 0, 0, 0, 0, 0);";
         db.execSQL(sqlInsertDefaultPerfFlags);
 
-        String sqlInsertDefaultSessionEntry =
-                "INSERT INTO tbl_manual_bookmarks ("
+        final String sqlInsertDefaultSessionEntry =
+                "INSERT INTO " + DB_TABLE_BOOKMARK + " ("
                         + "label, "
                         + "hostname, "
                         + "username, "
@@ -126,7 +157,7 @@ public class BookmarkDB extends SQLiteOpenHelper {
 
     private String getManualBookmarksCreationString() {
         return (
-                "CREATE TABLE IF NOT EXISTS tbl_manual_bookmarks ("
+                "CREATE TABLE IF NOT EXISTS " + DB_TABLE_BOOKMARK + " ("
                         + ID + " INTEGER PRIMARY KEY, "
                         + "label TEXT NOT NULL, "
                         + "hostname TEXT NOT NULL, "
@@ -160,66 +191,78 @@ public class BookmarkDB extends SQLiteOpenHelper {
                         + "console_mode INTEGER, "
                         + "debug_level TEXT DEFAULT 'INFO', "
 
-                        + "FOREIGN KEY(screen_settings) REFERENCES tbl_screen_settings(" + ID + "), "
-                        + "FOREIGN KEY(performance_flags) REFERENCES tbl_performance_flags(" + ID + "), "
-                        + "FOREIGN KEY(screen_3g) REFERENCES tbl_screen_settings(" + ID + "), "
-                        + "FOREIGN KEY(performance_3g) REFERENCES tbl_performance_flags(" + ID + ") "
+                        + "FOREIGN KEY(screen_settings) REFERENCES " + DB_TABLE_SCREEN + "(" + ID + "), "
+                        + "FOREIGN KEY(performance_flags) REFERENCES " + DB_TABLE_PERFORMANCE + "(" + ID + "), "
+                        + "FOREIGN KEY(screen_3g) REFERENCES " + DB_TABLE_SCREEN + "(" + ID + "), "
+                        + "FOREIGN KEY(performance_3g) REFERENCES " + DB_TABLE_PERFORMANCE + "(" + ID + ") "
 
                         + ");");
+    }
+
+    private void recreateDB(SQLiteDatabase db) {
+        db.beginTransaction();
+        try {
+            List<String> tables = new ArrayList<>();
+            Cursor c = db.rawQuery("SELECT name FROM sqlite_master WHERE type='table'", null);
+            try {
+                if (c.moveToFirst()) {
+                    while (!c.isAfterLast()) {
+                        final String name = c.getString(c.getColumnIndex("name"));
+                        tables.add(name);
+                        c.moveToNext();
+                    }
+                }
+            } finally {
+                c.close();
+            }
+            for (String table : tables) {
+                db.execSQL("DROP TABLE IF EXISTS " + table);
+            }
+            onCreate(db);
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    private void upgradeDB(SQLiteDatabase db) {
+        db.beginTransaction();
+        try {
+            // run a table creation with if not exists (we are doing an upgrade, so the table might
+            // not exists yet, it will fail alter and drop)
+            db.execSQL(getManualBookmarksCreationString());
+            // put in a list the existing columns
+            List<String> columns = GetColumns(db, DB_TABLE_BOOKMARK);
+            // backup table
+            db.execSQL("ALTER TABLE " + DB_TABLE_BOOKMARK + " RENAME TO 'temp_" + DB_TABLE_BOOKMARK + "'");
+            // create new table (with new scheme)
+            db.execSQL(getManualBookmarksCreationString());
+            // get the intersection with the new columns, this time columns taken from the upgraded table
+            columns.retainAll(GetColumns(db, DB_TABLE_BOOKMARK));
+            // restore data
+            String cols = joinStrings(columns, ",");
+            db.execSQL(String.format("INSERT INTO %s (%s) SELECT %s from 'temp_%s", DB_TABLE_BOOKMARK, cols, cols, DB_TABLE_BOOKMARK + "'"));
+            // remove backup table
+            db.execSQL("DROP table 'temp_" + DB_TABLE_BOOKMARK + "'");
+
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
     }
 
     // from http://stackoverflow.com/questions/3424156/upgrade-sqlite-database-from-one-version-to-another
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.beginTransaction();
-
-        // run a table creation with if not exists (we are doing an upgrade, so the table might
-        // not exists yet, it will fail alter and drop)
-        db.execSQL(getManualBookmarksCreationString());
-        // put in a list the existing columns
-        List<String> columns = GetColumns(db, "tbl_manual_bookmarks");
-        // backup table
-        db.execSQL("ALTER TABLE tbl_manual_bookmarks RENAME TO 'temp_tbl_manual_bookmarks'");
-        // create new table (with new scheme)
-        db.execSQL(getManualBookmarksCreationString());
-        // get the intersection with the new columns, this time columns taken from the upgraded table
-        columns.retainAll(GetColumns(db, "tbl_manual_bookmarks"));
-        // restore data
-        String cols = joinStrings(columns, ",");
-        db.execSQL(String.format("INSERT INTO %s (%s) SELECT %s from 'temp_%s", "tbl_manual_bookmarks", cols, cols, "tbl_manual_bookmarks'"));
-        // remove backup table
-        db.execSQL("DROP table 'temp_tbl_manual_bookmarks'");
-
-        db.setTransactionSuccessful();
-        db.endTransaction();
-    }
-
-    private static List<String> GetColumns(SQLiteDatabase db, String tableName) {
-        List<String> ar = null;
-        Cursor c = null;
-        try {
-            c = db.rawQuery("SELECT * FROM " + tableName + " LIMIT 1", null);
-            if (c != null) {
-                ar = new ArrayList<String>(Arrays.asList(c.getColumnNames()));
-            }
-        } catch (Exception e) {
-            Log.v(tableName, e.getMessage(), e);
-            e.printStackTrace();
-        } finally {
-            if (c != null)
-                c.close();
+        switch (newVersion) {
+            default:
+                recreateDB(db);
+                break;
         }
-        return ar;
     }
 
-    private static String joinStrings(List<String> list, String delim) {
-        StringBuilder buf = new StringBuilder();
-        int num = list.size();
-        for (int i = 0; i < num; i++) {
-            if (i != 0)
-                buf.append(delim);
-            buf.append((String) list.get(i));
-        }
-        return buf.toString();
+    @Override
+    public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        recreateDB(db);
     }
+
 }

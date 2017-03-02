@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- 
+<?xml version="1.0" encoding="utf-8"?><!--
 /*
    List header layout
 
@@ -9,15 +8,13 @@
    If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
  -->
-<TextView  
-    xmlns:android="http://schemas.android.com/apk/res/android"  
-    android:id="@+id/list_header_title"  
-    android:layout_width="fill_parent"  
-    android:layout_height="wrap_content"  
-    android:paddingTop="2dip"  
-    android:paddingBottom="2dip"  
-    android:paddingLeft="5dip"  
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/list_header_title"
     style="?android:attr/listSeparatorTextViewStyle"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
     android:background="@drawable/separator_background"
-    android:textColor="@color/separator_text_color"
-     /> 
+    android:paddingBottom="2dip"
+    android:paddingLeft="5dip"
+    android:paddingTop="2dip"
+    android:textColor="@color/separator_text_color" />
