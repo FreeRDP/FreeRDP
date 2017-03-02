@@ -25,15 +25,43 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data
-                    android:host="*"
-                    android:pathPattern=".*\\.rdp"
-                    android:scheme="http" />
-                <data
-                    android:host="*"
-                    android:pathPattern=".*\\.rdp"
-                    android:scheme="file" />
-                <data android:mimeType="*/*" />
+                <data android:mimeType="application/rdp" />
+                <data android:mimeType="application/x-rdp" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="rdp" />
+                <data android:scheme="Rdp" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="file" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:scheme="content" />
+                <data android:host="*" />
+
+                <!-- Ugly hack to match all files with a dot in its name.
+                Remove if a better way is found / supported.
+                https://stackoverflow.com/questions/3400072/pathpattern-to-match-file-extension-does-not-work-if-a-period-exists-elsewhere-i/8599921#8599921
+                -->
+                <data android:pathPattern=".*\\.rdp" />
+                <data android:pathPattern=".*\\..*\\.rdp" />
+                <data android:pathPattern=".*\\..*\\..*\\.rdp" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.rdp" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\.rdp" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.rdp" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.rdp" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.rdp" />
+                <data android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\..*\\.rdp" />
             </intent-filter>
         </activity>
 
