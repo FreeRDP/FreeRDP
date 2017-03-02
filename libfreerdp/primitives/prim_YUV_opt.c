@@ -1438,7 +1438,7 @@ static pstatus_t neon_YUV420CombineToYUV444(
 
 		for (; x < halfWidth; x++)
 		{
-			const UINT32 val2x = (x * 2);
+			const UINT32 val2x = 0;
 			const UINT32 val2x1 = val2x + 1;
 			const INT32 up = pU[val2x] * 4;
 			const INT32 vp = pV[val2x] * 4;
