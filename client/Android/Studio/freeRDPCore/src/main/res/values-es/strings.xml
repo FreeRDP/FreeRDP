@@ -53,6 +53,8 @@
     <string name="settings_cat_screen">Configuracion Pantalla</string>
     <string name="settings_colors">Colores</string>
     <string-array name="colors_array">
+        <item>Gama de colores (8 Bit)</item>
+        <item>Calidad Normal (15 Bit)</item>
         <item>Calidad Normal (16 Bit)</item>
         <item>Calidad Optima (24 Bit)</item>
         <item>Calidad maxima (32 Bit)</item>

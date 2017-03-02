@@ -53,6 +53,8 @@
     <string name="settings_cat_screen">显示设置</string>
     <string name="settings_colors">颜色深度</string>
     <string-array name="colors_array">
+        <item>Palette (8 Bit)</item>
+        <item>High Color (15 Bit)</item>
         <item>High Color (16 Bit)</item>
         <item>True Color (24 Bit)</item>
         <item>Highest Quality (32 Bit)</item>

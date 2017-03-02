@@ -52,6 +52,8 @@
     <string name="settings_cat_screen">"Paramètres d'écran"</string>
     <string name="settings_colors">"Couleurs"</string>
     <string-array name="colors_array">
+        <item>"Palette (8 bits)"</item>
+        <item>"Hautes couleurs (15 bits)"</item>
         <item>"Hautes couleurs (16 bits)"</item>
         <item>"Couleurs vraies (24 bits)"</item>
         <item>"Haute qualité (32 bits)"</item>
