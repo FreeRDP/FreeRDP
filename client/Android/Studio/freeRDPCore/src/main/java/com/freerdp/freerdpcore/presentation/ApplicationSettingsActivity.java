@@ -16,12 +16,12 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
 import android.support.v7.app.AlertDialog;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.freerdp.freerdpcore.R;
@@ -70,11 +70,25 @@ public class ApplicationSettingsActivity extends AppCompatPreferenceActivity {
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public static class ClientPreferenceFragment extends PreferenceFragment {
+    public static class ClientPreferenceFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.settings_app_client);
+            SharedPreferences preferences = get(getActivity());
+            preferences.registerOnSharedPreferenceChangeListener(this);
+        }
+
+        @Override
+        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+            final String clientNameKey = getString(R.string.preference_key_client_name);
+
+            get(getActivity());
+            if (key.equals(clientNameKey)) {
+                final String clientNameValue = sharedPreferences.getString(clientNameKey, "");
+                EditTextPreference pref = (EditTextPreference) findPreference(clientNameKey);
+                pref.setText(clientNameValue);
+            }
         }
     }
 
