@@ -432,6 +432,7 @@ BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s)
 	settings->RemoteApplicationMode = ((flags & INFO_RAIL) ? TRUE : FALSE);
 	settings->RemoteConsoleAudio = ((flags & INFO_REMOTECONSOLEAUDIO) ? TRUE : FALSE);
 	settings->CompressionEnabled = ((flags & INFO_COMPRESSION) ? TRUE : FALSE);
+	settings->LogonNotify = ((flags & INFO_LOGONNOTIFY) ? TRUE : FALSE);
 
 	if (flags & INFO_COMPRESSION)
 	{
@@ -628,7 +629,6 @@ void rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	flags = INFO_MOUSE |
 		INFO_UNICODE |
 		INFO_LOGONERRORS |
-		INFO_LOGONNOTIFY |
 		INFO_MAXIMIZESHELL |
 		INFO_ENABLEWINDOWSKEY |
 		INFO_DISABLECTRLALTDEL;
@@ -659,6 +659,9 @@ void rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 		flags |= INFO_COMPRESSION;
 		flags |= ((settings->CompressionLevel << 9) & 0x00001E00);
 	}
+
+	if (settings->LogonNotify)
+		flags |= INFO_LOGONNOTIFY;
 
 	if (settings->Domain)
 	{

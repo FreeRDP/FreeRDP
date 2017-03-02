@@ -193,10 +193,10 @@ static BOOL rdp_read_general_capability_set(wStream* s, UINT16 length,
 	Stream_Seek_UINT16(s); /* remoteUnshareFlag (2 bytes) */
 	Stream_Seek_UINT16(s); /* generalCompressionLevel (2 bytes) */
 	Stream_Read_UINT8(s, refreshRectSupport); /* refreshRectSupport (1 byte) */
-	Stream_Read_UINT8(s,
-	                  suppressOutputSupport); /* suppressOutputSupport (1 byte) */
-	settings->NoBitmapCompressionHeader = (extraFlags & NO_BITMAP_COMPRESSION_HDR) ?
-	                                      TRUE : FALSE;
+	Stream_Read_UINT8(s, suppressOutputSupport); /* suppressOutputSupport (1 byte) */
+
+	settings->NoBitmapCompressionHeader = (extraFlags & NO_BITMAP_COMPRESSION_HDR) ? TRUE : FALSE;
+	settings->LongCredentialsSupported = (extraFlags & LONG_CREDENTIALS_SUPPORTED) ? TRUE : FALSE;
 
 	if (!(extraFlags & FASTPATH_OUTPUT_SUPPORTED))
 		settings->FastPathOutput = FALSE;
@@ -237,7 +237,10 @@ static BOOL rdp_write_general_capability_set(wStream* s, rdpSettings* settings)
 		return FALSE;
 
 	header = rdp_capability_set_start(s);
-	extraFlags = LONG_CREDENTIALS_SUPPORTED;
+	extraFlags = 0;
+
+	if (settings->LongCredentialsSupported)
+		extraFlags |= LONG_CREDENTIALS_SUPPORTED;
 
 	if (settings->NoBitmapCompressionHeader)
 		extraFlags |= NO_BITMAP_COMPRESSION_HDR;

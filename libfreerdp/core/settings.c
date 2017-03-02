@@ -334,6 +334,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->EncryptionMethods = ENCRYPTION_METHOD_NONE;
 	settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
 	settings->CompressionEnabled = TRUE;
+	settings->LogonNotify = TRUE;
 
 	if (settings->ServerMode)
 		settings->CompressionLevel = PACKET_COMPR_TYPE_RDP61;
@@ -505,6 +506,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	settings->GatewayUdpTransport = TRUE;
 	settings->FastPathInput = TRUE;
 	settings->FastPathOutput = TRUE;
+	settings->LongCredentialsSupported = TRUE;
 	settings->FrameAcknowledge = 2;
 	settings->MouseMotion = TRUE;
 	settings->NSCodecColorLossLevel = 3;
