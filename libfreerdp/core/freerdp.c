@@ -867,6 +867,54 @@ void freerdp_set_last_error(rdpContext* context, UINT32 lastError)
 	}
 }
 
+const char* freerdp_get_logon_error_info_type(UINT32 type)
+{
+	switch (type)
+	{
+		case LOGON_MSG_DISCONNECT_REFUSED:
+			return "LOGON_MSG_DISCONNECT_REFUSED";
+
+		case LOGON_MSG_NO_PERMISSION:
+			return "LOGON_MSG_NO_PERMISSION";
+
+		case LOGON_MSG_BUMP_OPTIONS:
+			return "LOGON_MSG_BUMP_OPTIONS";
+
+		case LOGON_MSG_RECONNECT_OPTIONS:
+			return "LOGON_MSG_RECONNECT_OPTIONS";
+
+		case LOGON_MSG_SESSION_TERMINATE:
+			return "LOGON_MSG_SESSION_TERMINATE";
+
+		case LOGON_MSG_SESSION_CONTINUE:
+			return "LOGON_MSG_SESSION_CONTINUE";
+
+		default:
+			return "UNKNOWN";
+	}
+}
+
+const char* freerdp_get_logon_error_info_data(UINT32 data)
+{
+	switch (data)
+	{
+		case LOGON_FAILED_BAD_PASSWORD:
+			return "LOGON_FAILED_BAD_PASSWORD";
+
+		case LOGON_FAILED_UPDATE_PASSWORD:
+			return "LOGON_FAILED_UPDATE_PASSWORD";
+
+		case LOGON_FAILED_OTHER:
+			return "LOGON_FAILED_OTHER";
+
+		case LOGON_WARNING:
+			return "LOGON_WARNING";
+
+		default:
+			return "SESSION_ID";
+	}
+}
+
 /** Allocator function for the rdp_freerdp structure.
  *  @return an allocated structure filled with 0s. Need to be deallocated using freerdp_free()
  */
