@@ -40,9 +40,9 @@ static BOOL CALLBACK init_module(PINIT_ONCE once, PVOID param, PVOID *context)
 	HMODULE kernel32 = LoadLibraryA("kernel32.dll");
 	if (kernel32)
 	{
-		pCreateThreadpoolCleanupGroup = (void*)GetProcAddress(kernel32, "CreateThreadpoolCleanupGroup");
-		pCloseThreadpoolCleanupGroupMembers = (void*)GetProcAddress(kernel32, "CloseThreadpoolCleanupGroupMembers");
-		pCloseThreadpoolCleanupGroup = (void*)GetProcAddress(kernel32, "CloseThreadpoolCleanupGroup");
+		*((FARPROC*)&pCreateThreadpoolCleanupGroup) = GetProcAddress(kernel32, "CreateThreadpoolCleanupGroup");
+		*((FARPROC*)&pCloseThreadpoolCleanupGroupMembers) = GetProcAddress(kernel32, "CloseThreadpoolCleanupGroupMembers");
+		*((FARPROC*)&pCloseThreadpoolCleanupGroup) = GetProcAddress(kernel32, "CloseThreadpoolCleanupGroup");
 	}
 	return TRUE;
 }

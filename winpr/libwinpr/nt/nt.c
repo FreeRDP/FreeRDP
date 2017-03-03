@@ -436,18 +436,18 @@ static BOOL CALLBACK NtdllModuleInit(PINIT_ONCE once, PVOID param, PVOID *contex
 
 	if (NtdllModule)
 	{
-		pRtlInitAnsiString = (RTL_INIT_ANSI_STRING_FN)GetProcAddress(NtdllModule, "RtlInitAnsiString");
-		pRtlInitUnicodeString = (RTL_INIT_UNICODE_STRING_FN)GetProcAddress(NtdllModule, "RtlInitUnicodeString");
-		pRtlAnsiStringToUnicodeString = (RTL_ANSI_STRING_TO_UNICODE_STRING_FN)GetProcAddress(NtdllModule, "RtlAnsiStringToUnicodeString");
-		pRtlFreeUnicodeString = (RTL_FREE_UNICODE_STRING_FN)GetProcAddress(NtdllModule, "RtlFreeUnicodeString");
-		pRtlNtStatusToDosError = (RTL_NT_STATUS_TO_DOS_ERROR_FN)GetProcAddress(NtdllModule, "RtlNtStatusToDosError");
-		pNtCreateFile = (NT_CREATE_FILE_FN)GetProcAddress(NtdllModule, "NtCreateFile");
-		pNtOpenFile = (NT_OPEN_FILE_FN)GetProcAddress(NtdllModule, "NtOpenFile");
-		pNtReadFile = (NT_READ_FILE_FN)GetProcAddress(NtdllModule, "NtReadFile");
-		pNtWriteFile = (NT_WRITE_FILE_FN)GetProcAddress(NtdllModule, "NtWriteFile");
-		pNtDeviceIoControlFile = (NT_DEVICE_IO_CONTROL_FILE_FN)GetProcAddress(NtdllModule, "NtDeviceIoControlFile");
-		pNtClose = (NT_CLOSE_FN)GetProcAddress(NtdllModule, "NtClose");
-		pNtWaitForSingleObject = (NT_WAIT_FOR_SINGLE_OBJECT_FN)GetProcAddress(NtdllModule, "NtWaitForSingleObject");
+		*((FARPROC*)&pRtlInitAnsiString) = GetProcAddress(NtdllModule, "RtlInitAnsiString");
+		*((FARPROC*)&pRtlInitUnicodeString) = GetProcAddress(NtdllModule, "RtlInitUnicodeString");
+		*((FARPROC*)&pRtlAnsiStringToUnicodeString) = GetProcAddress(NtdllModule, "RtlAnsiStringToUnicodeString");
+		*((FARPROC*)&pRtlFreeUnicodeString) = GetProcAddress(NtdllModule, "RtlFreeUnicodeString");
+		*((FARPROC*)&pRtlNtStatusToDosError) = GetProcAddress(NtdllModule, "RtlNtStatusToDosError");
+		*((FARPROC*)&pNtCreateFile) = GetProcAddress(NtdllModule, "NtCreateFile");
+		*((FARPROC*)&pNtOpenFile) = GetProcAddress(NtdllModule, "NtOpenFile");
+		*((FARPROC*)&pNtReadFile) = GetProcAddress(NtdllModule, "NtReadFile");
+		*((FARPROC*)&pNtWriteFile) = GetProcAddress(NtdllModule, "NtWriteFile");
+		*((FARPROC*)&pNtDeviceIoControlFile) = GetProcAddress(NtdllModule, "NtDeviceIoControlFile");
+		*((FARPROC*)&pNtClose) = GetProcAddress(NtdllModule, "NtClose");
+		*((FARPROC*)&pNtWaitForSingleObject) = GetProcAddress(NtdllModule, "NtWaitForSingleObject");
 	}
 	return TRUE;
 }

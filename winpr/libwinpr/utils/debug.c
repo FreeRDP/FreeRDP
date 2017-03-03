@@ -204,7 +204,7 @@ USHORT RtlCaptureStackBackTrace(ULONG FramesToSkip, ULONG FramesToCapture, PVOID
 
 		if (g_NTDLL_Library)
 		{
-			g_pRtlCaptureStackBackTrace = (PRTL_CAPTURE_STACK_BACK_TRACE_FN) GetProcAddress(g_NTDLL_Library, "RtlCaptureStackBackTrace");
+			*((FARPROC*)&g_pRtlCaptureStackBackTrace) = GetProcAddress(g_NTDLL_Library, "RtlCaptureStackBackTrace");
 			g_RtlCaptureStackBackTrace_Available = (g_pRtlCaptureStackBackTrace) ? TRUE : FALSE;
 		}
 		else

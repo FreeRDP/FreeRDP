@@ -296,7 +296,7 @@ static void* thread_launcher(void* arg)
 
 	if (!(fkt = (fkt_t)thread->lpStartAddress))
 	{
-		WLog_ERR(TAG, "Thread function argument is %p", (void *)fkt);
+		WLog_ERR(TAG, "Thread function argument is %p", *(void**)&fkt);
 		goto exit;
 	}
 

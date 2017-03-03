@@ -605,9 +605,9 @@ int nla_server_init(rdpNla* nla)
 		}
 
 #ifdef UNICODE
-		pInitSecurityInterface = (INIT_SECURITY_INTERFACE) GetProcAddress(hSSPI, "InitSecurityInterfaceW");
+		*((FARPROC*)&pInitSecurityInterface) = GetProcAddress(hSSPI, "InitSecurityInterfaceW");
 #else
-		pInitSecurityInterface = (INIT_SECURITY_INTERFACE) GetProcAddress(hSSPI, "InitSecurityInterfaceA");
+		*((FARPROC*)&pInitSecurityInterface) = GetProcAddress(hSSPI, "InitSecurityInterfaceA");
 #endif
 		nla->table = pInitSecurityInterface();
 	}

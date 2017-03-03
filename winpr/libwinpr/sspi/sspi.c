@@ -96,9 +96,9 @@ BOOL InitializeSspiModule_Native(void)
 	if (!g_SspiModule)
 		return FALSE;
 
-	pInitSecurityInterfaceW = (INIT_SECURITY_INTERFACE_W) GetProcAddress(g_SspiModule,
+	*((FARPROC*)&pInitSecurityInterfaceW) = GetProcAddress(g_SspiModule,
 	                          "InitSecurityInterfaceW");
-	pInitSecurityInterfaceA = (INIT_SECURITY_INTERFACE_A) GetProcAddress(g_SspiModule,
+	*((FARPROC*)&pInitSecurityInterfaceA) = GetProcAddress(g_SspiModule,
 	                          "InitSecurityInterfaceA");
 
 	if (pInitSecurityInterfaceW)

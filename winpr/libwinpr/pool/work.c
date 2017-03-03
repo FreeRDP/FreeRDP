@@ -44,11 +44,11 @@ static BOOL CALLBACK init_module(PINIT_ONCE once, PVOID param, PVOID *context)
 	HMODULE kernel32 = LoadLibraryA("kernel32.dll");
 	if (kernel32)
 	{
-		pCreateThreadpoolWork = (void*)GetProcAddress(kernel32, "CreateThreadpoolWork");
-		pCloseThreadpoolWork = (void*)GetProcAddress(kernel32, "CloseThreadpoolWork");
-		pSubmitThreadpoolWork = (void*)GetProcAddress(kernel32, "SubmitThreadpoolWork");
-		pTrySubmitThreadpoolCallback = (void*)GetProcAddress(kernel32, "TrySubmitThreadpoolCallback");
-		pWaitForThreadpoolWorkCallbacks = (void*)GetProcAddress(kernel32, "WaitForThreadpoolWorkCallbacks");
+		*((FARPROC*)&pCreateThreadpoolWork) = GetProcAddress(kernel32, "CreateThreadpoolWork");
+		*((FARPROC*)&pCloseThreadpoolWork) = GetProcAddress(kernel32, "CloseThreadpoolWork");
+		*((FARPROC*)&pSubmitThreadpoolWork) = GetProcAddress(kernel32, "SubmitThreadpoolWork");
+		*((FARPROC*)&pTrySubmitThreadpoolCallback) = GetProcAddress(kernel32, "TrySubmitThreadpoolCallback");
+		*((FARPROC*)&pWaitForThreadpoolWorkCallbacks) = GetProcAddress(kernel32, "WaitForThreadpoolWorkCallbacks");
 	}
 	return TRUE;
 }

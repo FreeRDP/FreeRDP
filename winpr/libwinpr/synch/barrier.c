@@ -67,13 +67,13 @@ static BOOL CALLBACK InitOnce_Barrier(PINIT_ONCE once, PVOID param, PVOID *conte
 	if (!g_Kernel32)
 		return TRUE;
 
-	pfnInitializeSynchronizationBarrier = (fnInitializeSynchronizationBarrier)
+	*((FARPROC*)&pfnInitializeSynchronizationBarrier) =
 			GetProcAddress(g_Kernel32, "InitializeSynchronizationBarrier");
 
-	pfnEnterSynchronizationBarrier = (fnEnterSynchronizationBarrier)
+	*((FARPROC*)&pfnEnterSynchronizationBarrier) =
 			GetProcAddress(g_Kernel32, "EnterSynchronizationBarrier");
 
-	pfnDeleteSynchronizationBarrier = (fnDeleteSynchronizationBarrier)
+	*((FARPROC*)&pfnDeleteSynchronizationBarrier) =
 			GetProcAddress(g_Kernel32, "DeleteSynchronizationBarrier");
 
 	if (pfnInitializeSynchronizationBarrier && pfnEnterSynchronizationBarrier

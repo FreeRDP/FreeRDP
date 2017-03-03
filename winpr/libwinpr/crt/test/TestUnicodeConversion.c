@@ -216,7 +216,7 @@ int convert_utf16_to_utf8(BYTE* lpWideCharStr, BYTE* expected_lpMultiByteStr, in
 		printf("WideCharToMultiByte: unable to allocate memory for test\n");
 		return -1;
 	}
-	lpMultiByteStr[cbMultiByte - 1] = 0xFF; /* should be overwritten if null terminator is inserted properly */
+	lpMultiByteStr[cbMultiByte - 1] = (CHAR)0xFF; /* should be overwritten if null terminator is inserted properly */
 	length = WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR) lpWideCharStr, cchWideChar + 1, lpMultiByteStr, cbMultiByte, NULL, NULL);
 
 	printf("WideCharToMultiByte converted length (BYTE): %d\n", length);
@@ -469,6 +469,7 @@ int TestUnicodeConversion(int argc, char* argv[])
 
 	if (convert_utf16_to_utf8(c_cedilla_UTF16, c_cedilla_UTF8, c_cedilla_cbMultiByte) < 1)
 		return -1;
+
 	
 	/* English */
 
