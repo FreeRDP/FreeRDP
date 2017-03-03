@@ -167,13 +167,11 @@ public class GlobalApp extends Application implements LibFreeRDP.EventListener {
 
     public void OnDisconnecting(long instance) {
         Log.v(TAG, "OnDisconnecting");
-
-        // send disconnect notification
-        sendRDPNotification(FREERDP_EVENT_DISCONNECTED, instance);
     }
 
     public void OnDisconnected(long instance) {
         Log.v(TAG, "OnDisconnected");
+        sendRDPNotification(FREERDP_EVENT_DISCONNECTED, instance);
     }
 
     // TimerTask for disconnecting sessions after screen was turned off
