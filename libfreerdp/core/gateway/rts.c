@@ -432,8 +432,8 @@ int rts_send_CONN_A1_pdu(rdpRpc* rpc)
 	header.Flags = RTS_FLAG_NONE;
 	header.NumberOfCommands = 4;
 	WLog_DBG(TAG, "Sending CONN/A1 RTS PDU");
-	VirtualConnectionCookie = (BYTE*) & (connection->Cookie);
-	OUTChannelCookie = (BYTE*) & (outChannel->Cookie);
+	VirtualConnectionCookie = (BYTE*) &(connection->Cookie);
+	OUTChannelCookie = (BYTE*) &(outChannel->Cookie);
 	ReceiveWindowSize = outChannel->ReceiveWindow;
 	buffer = (BYTE*) malloc(header.frag_length);
 
@@ -479,9 +479,9 @@ int rts_send_CONN_B1_pdu(rdpRpc* rpc)
 	header.Flags = RTS_FLAG_NONE;
 	header.NumberOfCommands = 6;
 	WLog_DBG(TAG, "Sending CONN/B1 RTS PDU");
-	VirtualConnectionCookie = (BYTE*) & (connection->Cookie);
-	INChannelCookie = (BYTE*) & (inChannel->Cookie);
-	AssociationGroupId = (BYTE*) & (connection->AssociationGroupId);
+	VirtualConnectionCookie = (BYTE*) &(connection->Cookie);
+	INChannelCookie = (BYTE*) &(inChannel->Cookie);
+	AssociationGroupId = (BYTE*) &(connection->AssociationGroupId);
 	buffer = (BYTE*) malloc(header.frag_length);
 
 	if (!buffer)
@@ -572,7 +572,7 @@ int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 	WLog_DBG(TAG, "Sending FlowControlAck RTS PDU");
 	BytesReceived = outChannel->BytesReceived;
 	AvailableWindow = outChannel->AvailableWindowAdvertised;
-	ChannelCookie = (BYTE*) & (outChannel->Cookie);
+	ChannelCookie = (BYTE*) &(outChannel->Cookie);
 	outChannel->ReceiverAvailableWindow = outChannel->AvailableWindowAdvertised;
 	buffer = (BYTE*) malloc(header.frag_length);
 
@@ -752,7 +752,7 @@ static int rts_send_OUT_R2_A7_pdu(rdpRpc* rpc)
 	header.Flags = RTS_FLAG_OUT_CHANNEL;
 	header.NumberOfCommands = 3;
 	WLog_DBG(TAG, "Sending OUT_R2/A7 RTS PDU");
-	SuccessorChannelCookie = (BYTE*) & (nextOutChannel->Cookie);
+	SuccessorChannelCookie = (BYTE*) &(nextOutChannel->Cookie);
 	buffer = (BYTE*) malloc(header.frag_length);
 
 	if (!buffer)
@@ -808,9 +808,9 @@ int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
 	header.Flags = RTS_FLAG_RECYCLE_CHANNEL;
 	header.NumberOfCommands = 5;
 	WLog_DBG(TAG, "Sending OUT_R1/A3 RTS PDU");
-	VirtualConnectionCookie = (BYTE*) & (connection->Cookie);
-	PredecessorChannelCookie = (BYTE*) & (outChannel->Cookie);
-	SuccessorChannelCookie = (BYTE*) & (nextOutChannel->Cookie);
+	VirtualConnectionCookie = (BYTE*) &(connection->Cookie);
+	PredecessorChannelCookie = (BYTE*) &(outChannel->Cookie);
+	SuccessorChannelCookie = (BYTE*) &(nextOutChannel->Cookie);
 	ReceiveWindowSize = outChannel->ReceiveWindow;
 	buffer = (BYTE*) malloc(header.frag_length);
 

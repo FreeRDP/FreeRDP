@@ -66,13 +66,16 @@ static char* GetEnvAlloc(LPCSTR lpName)
 
 	if (length > 0)
 	{
-		env = malloc(length + 1);
+		env = malloc(length);
 
 		if (!env)
 			return NULL;
 
-		GetEnvironmentVariableA(lpName, env, length + 1);
-		env[length] = '\0';
+		if (GetEnvironmentVariableA(lpName, env, length) != length - 1)
+		{
+			free(env);
+			return NULL;
+		}
 	}
 
 	return env;
@@ -366,7 +369,7 @@ char* GetEnvironmentPath(char* name)
 		if (!env)
 			return NULL;
 
-		if (GetEnvironmentVariableA(name, env, nSize) != nSize)
+		if (GetEnvironmentVariableA(name, env, nSize) != nSize - 1)
 		{
 			free(env);
 			return NULL;

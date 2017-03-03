@@ -353,6 +353,7 @@ BOOL WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* form
 
 wLogLayout* WLog_Layout_New(wLog* log)
 {
+	LPCSTR prefix = "WLOG_PREFIX";
 	DWORD nSize;
 	char* env = NULL;
 	wLogLayout* layout;
@@ -361,7 +362,7 @@ wLogLayout* WLog_Layout_New(wLog* log)
 	if (!layout)
 		return NULL;
 
-	nSize = GetEnvironmentVariableA("WLOG_PREFIX", NULL, 0);
+	nSize = GetEnvironmentVariableA(prefix, NULL, 0);
 
 	if (nSize)
 	{
@@ -373,7 +374,7 @@ wLogLayout* WLog_Layout_New(wLog* log)
 			return NULL;
 		}
 
-		if (GetEnvironmentVariableA("WLOG_PREFIX", env, nSize) != nSize)
+		if (GetEnvironmentVariableA(prefix, env, nSize) != nSize - 1)
 		{
 			free(env);
 			free(layout);

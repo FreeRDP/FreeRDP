@@ -225,7 +225,6 @@ wLogAppender* WLog_FileAppender_New(wLog* log)
 	LPCSTR name;
 	DWORD nSize;
 	wLogFileAppender* FileAppender;
-	BOOL status;
 	FileAppender = (wLogFileAppender*) calloc(1, sizeof(wLogFileAppender));
 
 	if (!FileAppender)
@@ -244,12 +243,13 @@ wLogAppender* WLog_FileAppender_New(wLog* log)
 
 	if (nSize)
 	{
+		BOOL status;
 		env = (LPSTR) malloc(nSize);
 
 		if (!env)
 			goto error_free;
 
-		if (GetEnvironmentVariableA(name, env, nSize) != nSize)
+		if (GetEnvironmentVariableA(name, env, nSize) != nSize - 1)
 		{
 			free(env);
 			goto error_free;
@@ -267,13 +267,14 @@ wLogAppender* WLog_FileAppender_New(wLog* log)
 
 	if (nSize)
 	{
+		BOOL status = FALSE;
 		env = (LPSTR) malloc(nSize);
 
 		if (!env)
 			goto error_output_file_name;
 
-		GetEnvironmentVariableA(name, env, nSize);
-		status = WLog_FileAppender_SetOutputFileName(FileAppender, env);
+		if (GetEnvironmentVariableA(name, env, nSize) == nSize - 1)
+			status = WLog_FileAppender_SetOutputFileName(FileAppender, env);
 		free(env);
 
 		if (!status)

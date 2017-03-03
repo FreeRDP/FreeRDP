@@ -727,11 +727,12 @@ static void InitializeWtsApiStubs_Env()
 {
 	DWORD nSize;
 	char *env = NULL;
+	LPCSTR wts = "WTSAPI_LIBRARY";
 
 	if (g_WtsApi)
 		return;
 
-	nSize = GetEnvironmentVariableA("WTSAPI_LIBRARY", NULL, 0);
+	nSize = GetEnvironmentVariableA(wts, NULL, 0);
 
 	if (!nSize)
 		return;
@@ -739,7 +740,7 @@ static void InitializeWtsApiStubs_Env()
 	env = (LPSTR) malloc(nSize);
 	if (env)
 	{
-		if (GetEnvironmentVariableA("WTSAPI_LIBRARY", env, nSize))
+		if (GetEnvironmentVariableA(wts, env, nSize) == nSize - 1)
 			LoadAndInitialize(env);
 		free(env);
 	}

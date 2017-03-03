@@ -60,7 +60,7 @@ void proxy_read_environment(rdpSettings* settings, char* envname)
 	if (!envlen)
 		return;
 
-	env = calloc(1, envlen + 1);
+	env = calloc(1, envlen);
 
 	if (!env)
 	{
@@ -68,7 +68,7 @@ void proxy_read_environment(rdpSettings* settings, char* envname)
 		return;
 	}
 
-	if (GetEnvironmentVariableA(envname, env, envlen) == envlen)
+	if (GetEnvironmentVariableA(envname, env, envlen) == envlen - 1)
 		proxy_parse_uri(settings, env);
 
 	free(env);

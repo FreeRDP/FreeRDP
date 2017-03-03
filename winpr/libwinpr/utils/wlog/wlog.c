@@ -538,12 +538,13 @@ BOOL WLog_ParseFilter(wLogFilter* filter, LPCSTR name)
 
 BOOL WLog_ParseFilters(void)
 {
-	BOOL res;
+	LPCSTR filter = "WLOG_FILTER";
+	BOOL res = FALSE;
 	char* env;
 	DWORD nSize;
 	g_Filters = NULL;
 	g_FilterCount = 0;
-	nSize = GetEnvironmentVariableA("WLOG_FILTER", NULL, 0);
+	nSize = GetEnvironmentVariableA(filter, NULL, 0);
 
 	if (nSize < 1)
 		return TRUE;
@@ -553,10 +554,8 @@ BOOL WLog_ParseFilters(void)
 	if (!env)
 		return FALSE;
 
-	if (!GetEnvironmentVariableA("WLOG_FILTER", env, nSize))
-		return FALSE;
-
-	res = WLog_AddStringLogFilters(env);
+	if (GetEnvironmentVariableA(filter, env, nSize) == nSize - 1)
+		res = WLog_AddStringLogFilters(env);
 	free(env);
 	return res;
 }
@@ -684,8 +683,10 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 	}
 	else
 	{
+		LPCSTR level = "WLOG_LEVEL";
+
 		log->Level = WLOG_INFO;
-		nSize = GetEnvironmentVariableA("WLOG_LEVEL", NULL, 0);
+		nSize = GetEnvironmentVariableA(level, NULL, 0);
 
 		if (nSize)
 		{
@@ -694,9 +695,9 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 			if (!env)
 				goto out_fail;
 
-			if (!GetEnvironmentVariableA("WLOG_LEVEL", env, nSize))
+			if (GetEnvironmentVariableA(level, env, nSize) != nSize - 1)
 			{
-				fprintf(stderr, "WLOG_LEVEL environment variable changed in my back !\n");
+				fprintf(stderr, "%s environment variable changed in my back !\n", level);
 				free(env);
 				goto out_fail;
 			}
@@ -750,13 +751,15 @@ wLog* WLog_GetRoot(void)
 
 	if (!g_RootLog)
 	{
+		LPCSTR appender = "WLOG_APPENDER";
+
 		if (!(g_RootLog = WLog_New("", NULL)))
 			return NULL;
 
 		g_RootLog->IsRoot = TRUE;
 		WLog_ParseFilters();
 		logAppenderType = WLOG_APPENDER_CONSOLE;
-		nSize = GetEnvironmentVariableA("WLOG_APPENDER", NULL, 0);
+		nSize = GetEnvironmentVariableA(appender, NULL, 0);
 
 		if (nSize)
 		{
@@ -765,9 +768,9 @@ wLog* WLog_GetRoot(void)
 			if (!env)
 				goto fail;
 
-			if (!GetEnvironmentVariableA("WLOG_APPENDER", env, nSize))
+			if (GetEnvironmentVariableA(appender, env, nSize) != nSize - 1)
 			{
-				fprintf(stderr, "WLOG_APPENDER environment variable modified in my back");
+				fprintf(stderr, "%s environment variable modified in my back", appender);
 				free(env);
 				goto fail;
 			}

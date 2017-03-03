@@ -53,9 +53,10 @@ BOOL ShouldUseNativeSspi(void)
 {
 	BOOL status = FALSE;
 #ifdef _WIN32
+	LPCSTR sspi = "WINPR_NATIVE_SSPI";
 	DWORD nSize;
 	char* env = NULL;
-	nSize = GetEnvironmentVariableA("WINPR_NATIVE_SSPI", NULL, 0);
+	nSize = GetEnvironmentVariableA(sspi, NULL, 0);
 
 	if (!nSize)
 		return TRUE;
@@ -65,7 +66,11 @@ BOOL ShouldUseNativeSspi(void)
 	if (!env)
 		return TRUE;
 
-	nSize = GetEnvironmentVariableA("WINPR_NATIVE_SSPI", env, nSize);
+	if (GetEnvironmentVariableA(sspi, env, nSize) != nSize - 1)
+	{
+		free(env);
+		return TRUE;
+	}
 
 	if (strcmp(env, "0") == 0)
 		status = FALSE;
