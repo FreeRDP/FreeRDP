@@ -45,19 +45,15 @@ extern const char* WLOG_LEVELS[7];
  * Log Layout
  */
 
-void WLog_PrintMessagePrefixVA(wLog* log, wLogMessage* message, const char* format, va_list args)
+static void WLog_PrintMessagePrefixVA(wLog* log, wLogMessage* message, const char* format, va_list args)
 {
 	if (!strchr(format, '%'))
-	{
-		message->PrefixString = (LPSTR) format;
-	}
+		sprintf_s(message->PrefixString, WLOG_MAX_PREFIX_SIZE - 1, format);
 	else
-	{
 		wvsnprintfx(message->PrefixString, WLOG_MAX_PREFIX_SIZE - 1, format, args);
-	}
 }
 
-void WLog_PrintMessagePrefix(wLog* log, wLogMessage* message, const char* format, ...)
+static void WLog_PrintMessagePrefix(wLog* log, wLogMessage* message, const char* format, ...)
 {
 	va_list args;
 	va_start(args, format);
