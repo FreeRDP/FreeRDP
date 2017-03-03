@@ -1177,7 +1177,7 @@ static BOOL update_message_WindowCreate(rdpContext* context, WINDOW_ORDER_INFO* 
 	WINDOW_ORDER_INFO* wParam;
 	WINDOW_STATE_ORDER* lParam;
 
-	if (!context || !context->update || !windowState)
+	if (!context || !context->update || !orderInfo || !windowState)
 		return FALSE;
 
 	wParam = (WINDOW_ORDER_INFO*) malloc(sizeof(WINDOW_ORDER_INFO));
@@ -1205,7 +1205,7 @@ static BOOL	update_message_WindowUpdate(rdpContext* context, WINDOW_ORDER_INFO* 
 	WINDOW_ORDER_INFO* wParam;
 	WINDOW_STATE_ORDER* lParam;
 
-	if (!context || !context->update || !windowState)
+	if (!context || !context->update || !orderInfo || !windowState)
 		return FALSE;
 
 	wParam = (WINDOW_ORDER_INFO*) malloc(sizeof(WINDOW_ORDER_INFO));
@@ -1233,7 +1233,7 @@ static BOOL update_message_WindowIcon(rdpContext* context, WINDOW_ORDER_INFO* or
 	WINDOW_ORDER_INFO* wParam;
 	WINDOW_ICON_ORDER* lParam;
 
-	if (!context || !context->update || !windowIcon)
+	if (!context || !context->update || !orderInfo || !windowIcon)
 		return FALSE;
 
 	wParam = (WINDOW_ORDER_INFO*) malloc(sizeof(WINDOW_ORDER_INFO));
@@ -1303,7 +1303,7 @@ static BOOL update_message_WindowCachedIcon(rdpContext* context, WINDOW_ORDER_IN
 	WINDOW_ORDER_INFO* wParam;
 	WINDOW_CACHED_ICON_ORDER* lParam;
 
-	if (!context || !context->update || !windowCachedIcon)
+	if (!context || !context->update || !orderInfo || !windowCachedIcon)
 		return FALSE;
 
 	wParam = (WINDOW_ORDER_INFO*) malloc(sizeof(WINDOW_ORDER_INFO));
@@ -1348,7 +1348,7 @@ static BOOL update_message_NotifyIconCreate(rdpContext* context, WINDOW_ORDER_IN
 	WINDOW_ORDER_INFO* wParam;
 	NOTIFY_ICON_STATE_ORDER* lParam;
 
-	if (!context || !context->update || !notifyIconState)
+	if (!context || !context->update || !orderInfo || !notifyIconState)
 		return FALSE;
 
 	wParam = (WINDOW_ORDER_INFO*) malloc(sizeof(WINDOW_ORDER_INFO));
@@ -1376,7 +1376,7 @@ static BOOL update_message_NotifyIconUpdate(rdpContext* context, WINDOW_ORDER_IN
 	WINDOW_ORDER_INFO* wParam;
 	NOTIFY_ICON_STATE_ORDER* lParam;
 
-	if (!context || !context->update || !notifyIconState)
+	if (!context || !context->update || !orderInfo || !notifyIconState)
 		return FALSE;
 
 	wParam = (WINDOW_ORDER_INFO*) malloc(sizeof(WINDOW_ORDER_INFO));
@@ -1421,7 +1421,7 @@ static BOOL update_message_MonitoredDesktop(rdpContext* context, WINDOW_ORDER_IN
 	WINDOW_ORDER_INFO* wParam;
 	MONITORED_DESKTOP_ORDER* lParam;
 
-	if (!context || !context->update || !monitoredDesktop)
+	if (!context || !context->update || !orderInfo || !monitoredDesktop)
 		return FALSE;
 
 	wParam = (WINDOW_ORDER_INFO*) malloc(sizeof(WINDOW_ORDER_INFO));

@@ -268,7 +268,7 @@ int rdtk_nine_patch_set_image(rdtkNinePatch* ninePatch, wImage* image)
 			}
 		}
 
-		pixel = (UINT32*) & ((BYTE*) pixel)[scanline];
+		pixel = (UINT32*) &((BYTE*) pixel)[scanline];
 	}
 
 	ninePatch->scaleTop = beg - 1;
@@ -323,7 +323,7 @@ int rdtk_nine_patch_set_image(rdtkNinePatch* ninePatch, wImage* image)
 			}
 		}
 
-		pixel = (UINT32*) & ((BYTE*) pixel)[scanline];
+		pixel = (UINT32*) &((BYTE*) pixel)[scanline];
 	}
 
 	ninePatch->fillTop = beg - 1;

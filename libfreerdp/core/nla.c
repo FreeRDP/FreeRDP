@@ -1493,8 +1493,6 @@ BOOL nla_send(rdpNla* nla)
 	/* [2] authInfo (OCTET STRING) */
 	if (auth_info_length > 0)
 	{
-		length = auth_info_length;
-
 		if (ber_write_sequence_octet_string(s, 2, nla->authInfo.pvBuffer,
 		                                    nla->authInfo.cbBuffer) != auth_info_length)
 			return FALSE;
