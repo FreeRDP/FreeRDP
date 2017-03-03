@@ -81,7 +81,6 @@ int mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** p
 	UINT32 LengthOfMatch;
 	UINT32 accumulator;
 	BYTE* HistoryPtr;
-	UINT32 HistoryOffset;
 	BYTE* HistoryBuffer;
 	BYTE* HistoryBufferEnd;
 	UINT32 HistoryBufferSize;
@@ -108,7 +107,6 @@ int mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** p
 	}
 
 	HistoryPtr = mppc->HistoryPtr;
-	HistoryOffset = mppc->HistoryOffset;
 
 	if (!(flags & PACKET_COMPRESSED))
 	{
@@ -159,8 +157,6 @@ int mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** p
 		/**
 		 * CopyOffset Encoding
 		 */
-		CopyOffset = 0;
-
 		if (CompressionLevel) /* RDP5 */
 		{
 			if ((accumulator & 0xF8000000) == 0xF8000000)
@@ -244,7 +240,6 @@ int mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** p
 		/**
 		 * LengthOfMatch Encoding
 		 */
-		LengthOfMatch = 0;
 		accumulator = bs->accumulator;
 
 		if ((accumulator & 0x80000000) == 0x00000000)
@@ -419,7 +414,6 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppD
 {
 	BYTE* pSrcPtr;
 	BYTE* pSrcEnd;
-	BYTE* pDstEnd;
 	BYTE* MatchPtr;
 	UINT32 DstSize;
 	BYTE* pDstData;
@@ -439,7 +433,6 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppD
 	HistoryBuffer = mppc->HistoryBuffer;
 	HistoryBufferSize = mppc->HistoryBufferSize;
 	CompressionLevel = mppc->CompressionLevel;
-	HistoryPtr = mppc->HistoryPtr;
 	HistoryOffset = mppc->HistoryOffset;
 	*pFlags = 0;
 	PacketFlushed = FALSE;
@@ -471,7 +464,6 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppD
 	BitStream_Attach(bs, pDstData, DstSize);
 	pSrcPtr = pSrcData;
 	pSrcEnd = &(pSrcData[SrcSize - 1]);
-	pDstEnd = &(pDstData[DstSize - 1]);
 
 	while (pSrcPtr < (pSrcEnd - 2))
 	{

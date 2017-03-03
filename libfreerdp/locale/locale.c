@@ -637,9 +637,10 @@ BOOL freerdp_get_system_language_and_country_codes(char* language, char* country
 	DWORD nSize;
 	int underscore;
 	char* env_lang = NULL;
+	LPCSTR lang = "LANG";
 
 	/* LANG = <language>_<country>.<encoding> */
-	nSize = GetEnvironmentVariableA("LANG", NULL, 0);
+	nSize = GetEnvironmentVariableA(lang, NULL, 0);
 
 	if (!nSize)
 		return FALSE; /* LANG environment variable was not set */
@@ -649,7 +650,11 @@ BOOL freerdp_get_system_language_and_country_codes(char* language, char* country
 	if (!env_lang)
 		return FALSE;
 
-	GetEnvironmentVariableA("LANG", env_lang, nSize); /* Get locale from environment variable LANG */
+	if (GetEnvironmentVariableA(lang, env_lang, nSize) != nSize - 1) /* Get locale from environment variable LANG */
+	{
+		free (env_lang);
+		return FALSE;
+	}
 
 	underscore = strcspn(env_lang, "_");
 

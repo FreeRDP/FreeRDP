@@ -60,7 +60,7 @@ void proxy_read_environment(rdpSettings* settings, char* envname)
 	if (!envlen)
 		return;
 
-	env = calloc(1, envlen + 1);
+	env = calloc(1, envlen);
 
 	if (!env)
 	{
@@ -68,8 +68,9 @@ void proxy_read_environment(rdpSettings* settings, char* envname)
 		return;
 	}
 
-	envlen = GetEnvironmentVariableA(envname, env, envlen);
-	proxy_parse_uri(settings, env);
+	if (GetEnvironmentVariableA(envname, env, envlen) == envlen - 1)
+		proxy_parse_uri(settings, env);
+
 	free(env);
 }
 
@@ -169,9 +170,7 @@ BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)
 	wStream* s;
 	char port_str[10], recv_buf[256], *eol;
 	int resultsize;
-
 	_itoa_s(port, port_str, sizeof(port_str), 10);
-
 	s = Stream_New(NULL, 200);
 	Stream_Write(s, "CONNECT ", 8);
 	Stream_Write(s, hostname, strlen(hostname));
@@ -182,7 +181,6 @@ BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)
 	Stream_Write_UINT8(s, ':');
 	Stream_Write(s, port_str, strlen(port_str));
 	Stream_Write(s, CRLF CRLF, 4);
-
 	status = BIO_write(bufferedBio, Stream_Buffer(s), Stream_GetPosition(s));
 
 	if (status != Stream_GetPosition(s))
@@ -193,10 +191,8 @@ BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)
 
 	Stream_Free(s, TRUE);
 	s = NULL;
-
 	/* Read result until CR-LF-CR-LF.
 	 * Keep recv_buf a null-terminated string. */
-
 	memset(recv_buf, '\0', sizeof(recv_buf));
 	resultsize = 0;
 
@@ -242,7 +238,6 @@ BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)
 	}
 
 	*eol = '\0';
-
 	WLog_INFO(TAG, "HTTP Proxy: %s", recv_buf);
 
 	if (strlen(recv_buf) < 12)

@@ -1330,10 +1330,8 @@ static void* rdpgfx_server_thread_func(void* arg)
 	DWORD nCount;
 	void* buffer;
 	HANDLE events[8];
-	DWORD BytesReturned = 0;
 	UINT error = CHANNEL_RC_OK;
 	buffer = NULL;
-	BytesReturned = 0;
 	nCount = 0;
 
 	events[nCount++] = priv->stopEvent;

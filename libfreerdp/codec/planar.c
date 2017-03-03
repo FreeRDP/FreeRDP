@@ -1134,7 +1134,7 @@ BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context,
 		if (!freerdp_bitmap_planar_delta_encode_planes(
 		        context->planes, width, height,
 		        context->deltaPlanes))
-			return NULL;;
+			return NULL;
 
 		if (freerdp_bitmap_planar_compress_planes_rle(
 		        context->deltaPlanes, width, height,
@@ -1150,7 +1150,6 @@ BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context,
 			context->rlePlanes[2] = &context->rlePlanesBuffer[offset];
 			offset += dstSizes[2];
 			context->rlePlanes[3] = &context->rlePlanesBuffer[offset];
-			offset += dstSizes[3];
 			//WLog_DBG(TAG, "R: [%"PRIu32"/%"PRIu32"] G: [%"PRIu32"/%"PRIu32"] B: [%"PRIu32"/%"PRIu32"]",
 			//		dstSizes[1], planeSize, dstSizes[2], planeSize, dstSizes[3], planeSize);
 		}

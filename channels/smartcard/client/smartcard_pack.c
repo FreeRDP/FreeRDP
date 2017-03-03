@@ -2761,7 +2761,7 @@ LONG smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, wS
 			return STATUS_BUFFER_TOO_SMALL;
 		}
 
-		call->rgAtrMasks = calloc(call->cAtrs, sizeof(SCARD_ATRMASK));
+		call->rgAtrMasks = (LocateCards_ATRMask*)calloc(call->cAtrs, sizeof(SCARD_ATRMASK));
 
 		if (!call->rgAtrMasks)
 		{
@@ -2789,7 +2789,7 @@ LONG smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, wS
 
 	if (call->cReaders > 0)
 	{
-		call->rgReaderStates = calloc(call->cReaders, sizeof(SCARD_READERSTATEA));
+		call->rgReaderStates = (ReaderStateA*)calloc(call->cReaders, sizeof(SCARD_READERSTATEA));
 
 		if (!call->rgReaderStates)
 		{

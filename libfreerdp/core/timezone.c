@@ -66,9 +66,9 @@ void rdp_write_system_time(wStream* s, SYSTEMTIME* system_time)
 	Stream_Write_UINT16(s, system_time->wSecond); /* wSecond */
 	Stream_Write_UINT16(s, system_time->wMilliseconds); /* wMilliseconds */
 	DEBUG_TIMEZONE("Time: y=%"PRIu16",m=%"PRIu16",dow=%"PRIu16",d=%"PRIu16", %02"PRIu16":%02"PRIu16":%02"PRIu16".%03"PRIu16"",
-		system_time->wYear, system_time->wMonth, system_time->wDayOfWeek,
-		system_time->wDay, system_time->wHour, system_time->wMinute,
-		system_time->wSecond, system_time->wMilliseconds);
+	               system_time->wYear, system_time->wMonth, system_time->wDayOfWeek,
+	               system_time->wDay, system_time->wHour, system_time->wMinute,
+	               system_time->wSecond, system_time->wMilliseconds);
 }
 
 /**
@@ -89,23 +89,19 @@ BOOL rdp_read_client_time_zone(wStream* s, rdpSettings* settings)
 		return FALSE;
 
 	tz = settings->ClientTimeZone;
+
 	if (!tz)
 		return FALSE;
 
 	Stream_Read_UINT32(s, tz->Bias); /* Bias */
-
 	/* standardName (64 bytes) */
 	Stream_Read(s, tz->StandardName, sizeof(tz->StandardName));
-
 	rdp_read_system_time(s, &tz->StandardDate); /* StandardDate */
 	Stream_Read_UINT32(s, tz->StandardBias); /* StandardBias */
-
 	/* daylightName (64 bytes) */
 	Stream_Read(s, tz->DaylightName, sizeof(tz->DaylightName));
-
 	rdp_read_system_time(s, &tz->DaylightDate); /* DaylightDate */
 	Stream_Read_UINT32(s, tz->DaylightBias); /* DaylightBias */
-
 	return TRUE;
 }
 
@@ -119,23 +115,18 @@ BOOL rdp_read_client_time_zone(wStream* s, rdpSettings* settings)
 BOOL rdp_write_client_time_zone(wStream* s, rdpSettings* settings)
 {
 	LPTIME_ZONE_INFORMATION tz;
-	DWORD rc;
-
 	tz = settings->ClientTimeZone;
+
 	if (!tz)
 		return FALSE;
 
-	rc = GetTimeZoneInformation(tz);
-
+	GetTimeZoneInformation(tz);
 	/* Bias */
 	Stream_Write_UINT32(s, tz->Bias);
-
 	/* standardName (64 bytes) */
 	Stream_Write(s, tz->StandardName, sizeof(tz->StandardName));
-
 	/* StandardDate */
 	rdp_write_system_time(s, &tz->StandardDate);
-
 #ifdef WITH_DEBUG_TIMEZONE
 	WLog_DBG(TIMEZONE_TAG, "bias=%"PRId32"", tz->Bias);
 	WLog_DBG(TIMEZONE_TAG, "StandardName:");
@@ -147,18 +138,14 @@ BOOL rdp_write_client_time_zone(wStream* s, rdpSettings* settings)
 	/* StandardBias */
 	Stream_Write_UINT32(s, tz->StandardBias);
 	DEBUG_TIMEZONE("StandardBias=%"PRId32"", tz->StandardBias);
-
 	/* daylightName (64 bytes) */
 	Stream_Write(s, tz->DaylightName, sizeof(tz->DaylightName));
-
 	/* DaylightDate */
 	rdp_write_system_time(s, &tz->DaylightDate);
-
 	/* Note that DaylightBias is ignored if no valid daylightDate is provided. */
 	/* DaylightBias */
 	Stream_Write_UINT32(s, tz->DaylightBias);
 	DEBUG_TIMEZONE("DaylightBias=%"PRId32"", tz->DaylightBias);
-
 	return TRUE;
 }
 

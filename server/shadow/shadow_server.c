@@ -2,6 +2,8 @@
  * FreeRDP: A Remote Desktop Protocol Implementation
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2017 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2017 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,21 +63,18 @@ static COMMAND_LINE_ARGUMENT_A shadow_args[] =
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
-int shadow_server_print_command_line_help(int argc, char** argv)
+static int shadow_server_print_command_line_help(int argc, char** argv)
 {
 	char* str;
 	int length;
 	COMMAND_LINE_ARGUMENT_A* arg;
-
 	WLog_INFO(TAG, "Usage: %s [options]", argv[0]);
 	WLog_INFO(TAG, "");
-
 	WLog_INFO(TAG, "Syntax:");
 	WLog_INFO(TAG, "    /flag (enables flag)");
 	WLog_INFO(TAG, "    /option:<value> (specifies option with value)");
 	WLog_INFO(TAG, "    +toggle -toggle (enables or disables toggle, where '/' is a synonym of '+')");
 	WLog_INFO(TAG, "");
-
 	arg = shadow_args;
 
 	do
@@ -92,10 +91,12 @@ int shadow_server_print_command_line_help(int argc, char** argv)
 
 			if (arg->Format)
 			{
-				length = (int) (strlen(arg->Name) + strlen(arg->Format) + 2);
+				length = (int)(strlen(arg->Name) + strlen(arg->Format) + 2);
 				str = (char*) malloc(length + 1);
+
 				if (!str)
 					return -1;
+
 				sprintf_s(str, length + 1, "%s:%s", arg->Name, arg->Format);
 				WLog_INFO(TAG, "%-20s", str);
 				free(str);
@@ -111,16 +112,15 @@ int shadow_server_print_command_line_help(int argc, char** argv)
 		{
 			length = (int) strlen(arg->Name) + 32;
 			str = (char*) malloc(length + 1);
+
 			if (!str)
 				return -1;
+
 			sprintf_s(str, length + 1, "%s (default:%s)", arg->Name,
-					arg->Default ? "on" : "off");
-
+			          arg->Default ? "on" : "off");
 			WLog_INFO(TAG, "    %s", arg->Default ? "-" : "+");
-
 			WLog_INFO(TAG, "%-20s", str);
 			free(str);
-
 			WLog_INFO(TAG, "\t%s", arg->Text);
 		}
 	}
@@ -129,7 +129,8 @@ int shadow_server_print_command_line_help(int argc, char** argv)
 	return 1;
 }
 
-int shadow_server_command_line_status_print(rdpShadowServer* server, int argc, char** argv, int status)
+int shadow_server_command_line_status_print(rdpShadowServer* server, int argc, char** argv,
+        int status)
 {
 	if (status == COMMAND_LINE_STATUS_PRINT_VERSION)
 	{
@@ -144,6 +145,7 @@ int shadow_server_command_line_status_print(rdpShadowServer* server, int argc, c
 	{
 		if (shadow_server_print_command_line_help(argc, argv) < 0)
 			return -1;
+
 		return COMMAND_LINE_STATUS_PRINT_HELP;
 	}
 
@@ -161,11 +163,10 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		return 1;
 
 	CommandLineClearArgumentsA(shadow_args);
-
 	flags = COMMAND_LINE_SEPARATOR_COLON;
 	flags |= COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SIGIL_PLUS_MINUS;
-
-	status = CommandLineParseArgumentsA(argc, (const char**) argv, shadow_args, flags, server, NULL, NULL);
+	status = CommandLineParseArgumentsA(argc, (const char**) argv, shadow_args, flags, server, NULL,
+	                                    NULL);
 
 	if (status < 0)
 		return status;
@@ -178,7 +179,6 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			continue;
 
 		CommandLineSwitchStart(arg)
-
 		CommandLineSwitchCase(arg, "port")
 		{
 			server->port = (DWORD) atoi(arg->Value);
@@ -186,6 +186,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		CommandLineSwitchCase(arg, "ipc-socket")
 		{
 			server->ipcSocket = _strdup(arg->Value);
+
 			if (!server->ipcSocket)
 				return -1;
 		}
@@ -203,11 +204,11 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			char* tok[4];
 			int x, y, w, h;
 			char* str = _strdup(arg->Value);
+
 			if (!str)
 				return -1;
 
 			tok[0] = p = str;
-
 			p = strchr(p + 1, ',');
 
 			if (!p)
@@ -218,7 +219,6 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 
 			*p++ = '\0';
 			tok[1] = p;
-
 			p = strchr(p + 1, ',');
 
 			if (!p)
@@ -229,7 +229,6 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 
 			*p++ = '\0';
 			tok[2] = p;
-
 			p = strchr(p + 1, ',');
 
 			if (!p)
@@ -240,7 +239,6 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 
 			*p++ = '\0';
 			tok[3] = p;
-
 			x = atoi(tok[0]);
 			y = atoi(tok[1]);
 			w = atoi(tok[2]);
@@ -318,9 +316,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		}
 		CommandLineSwitchDefault(arg)
 		{
-
 		}
-
 		CommandLineSwitchEnd(arg)
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
@@ -332,13 +328,11 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		int index;
 		int numMonitors;
 		MONITOR_DEF monitors[16];
-
 		numMonitors = shadow_enum_monitors(monitors, 16);
 
 		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 		{
 			/* Select monitors */
-
 			index = atoi(arg->Value);
 
 			if (index < 0)
@@ -359,13 +353,11 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			for (index = 0; index < numMonitors; index++)
 			{
 				monitor = &monitors[index];
-
 				width = monitor->right - monitor->left;
 				height = monitor->bottom - monitor->top;
-
 				WLog_INFO(TAG, "      %s [%d] %dx%d\t+%"PRId32"+%"PRId32"",
-					(monitor->flags == 1) ? "*" : " ", index,
-					width, height, monitor->left, monitor->top);
+				          (monitor->flags == 1) ? "*" : " ", index,
+				          width, height, monitor->left, monitor->top);
 			}
 
 			status = COMMAND_LINE_STATUS_PRINT;
@@ -375,66 +367,67 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 	return status;
 }
 
-void* shadow_server_thread(rdpShadowServer* server)
+static void* shadow_server_thread(rdpShadowServer* server)
 {
+	BOOL running = TRUE;
 	DWORD status;
-	DWORD nCount;
-	HANDLE events[32];
-	HANDLE StopEvent;
-	freerdp_listener* listener;
-	rdpShadowSubsystem* subsystem;
-
-	listener = server->listener;
-	StopEvent = server->StopEvent;
-	subsystem = server->subsystem;
-
+	freerdp_listener* listener = server->listener;
 	shadow_subsystem_start(server->subsystem);
 
-	while (1)
+	while (running)
 	{
-		nCount = listener->GetEventHandles(listener, events, 32);
-		if (0 == nCount)
+		HANDLE events[32];
+		DWORD nCount = 0;
+		events[nCount++] = server->StopEvent;
+		nCount += listener->GetEventHandles(listener, &events[nCount], 32 - nCount);
+
+		if (nCount <= 1)
 		{
 			WLog_ERR(TAG, "Failed to get FreeRDP file descriptor");
 			break;
 		}
 
-		events[nCount++] = server->StopEvent;
-
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
-		if (WaitForSingleObject(server->StopEvent, 0) == WAIT_OBJECT_0)
+		switch (status)
 		{
-			break;
-		}
+			case WAIT_FAILED:
+			case WAIT_OBJECT_0:
+				running = FALSE;
+				break;
 
-		if (!listener->CheckFileDescriptor(listener))
-		{
-			WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
-			break;
-		}
-
+			default:
+				{
+					if (!listener->CheckFileDescriptor(listener))
+					{
+						WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
+						running = FALSE;
+					}
+					else
+					{
 #ifdef _WIN32
-		Sleep(100); /* FIXME: listener event handles */
+						Sleep(100); /* FIXME: listener event handles */
 #endif
+					}
+				}
+				break;
+		}
 	}
 
 	listener->Close(listener);
-
 	shadow_subsystem_stop(server->subsystem);
 
 	/* Signal to the clients that server is being stopped and wait for them
 	 * to disconnect. */
 	if (shadow_client_boardcast_quit(server, 0))
 	{
-		while(ArrayList_Count(server->clients) > 0)
+		while (ArrayList_Count(server->clients) > 0)
 		{
 			Sleep(100);
 		}
 	}
 
 	ExitThread(0);
-
 	return NULL;
 }
 
@@ -443,13 +436,15 @@ int shadow_server_start(rdpShadowServer* server)
 	BOOL status;
 	WSADATA wsaData;
 
+	if (!server)
+		return -1;
+
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
 		return -1;
 
 #ifndef _WIN32
 	signal(SIGPIPE, SIG_IGN);
 #endif
-
 	server->screen = shadow_screen_new(server);
 
 	if (!server->screen)
@@ -478,7 +473,7 @@ int shadow_server_start(rdpShadowServer* server)
 	}
 
 	if (!(server->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
-				shadow_server_thread, (void*) server, 0, NULL)))
+	                                    shadow_server_thread, (void*) server, 0, NULL)))
 	{
 		return -1;
 	}
@@ -488,13 +483,15 @@ int shadow_server_start(rdpShadowServer* server)
 
 int shadow_server_stop(rdpShadowServer* server)
 {
+	if (!server)
+		return -1;
+
 	if (server->thread)
 	{
 		SetEvent(server->StopEvent);
 		WaitForSingleObject(server->thread, INFINITE);
 		CloseHandle(server->thread);
 		server->thread = NULL;
-
 		server->listener->Close(server->listener);
 	}
 
@@ -513,27 +510,28 @@ int shadow_server_stop(rdpShadowServer* server)
 	return 0;
 }
 
-int shadow_server_init_config_path(rdpShadowServer* server)
+static int shadow_server_init_config_path(rdpShadowServer* server)
 {
 #ifdef _WIN32
+
 	if (!server->ConfigPath)
 	{
 		server->ConfigPath = GetEnvironmentSubPath("LOCALAPPDATA", "freerdp");
 	}
-#endif
 
+#endif
 #ifdef __APPLE__
+
 	if (!server->ConfigPath)
 	{
 		char* userLibraryPath;
 		char* userApplicationSupportPath;
-
 		userLibraryPath = GetKnownSubPath(KNOWN_PATH_HOME, "Library");
 
 		if (userLibraryPath)
 		{
 			if (!PathFileExistsA(userLibraryPath) &&
-				!PathMakePathA(userLibraryPath, 0))
+			    !PathMakePathA(userLibraryPath, 0))
 			{
 				WLog_ERR(TAG, "Failed to create directory '%s'", userLibraryPath);
 				free(userLibraryPath);
@@ -545,13 +543,14 @@ int shadow_server_init_config_path(rdpShadowServer* server)
 			if (userApplicationSupportPath)
 			{
 				if (!PathFileExistsA(userApplicationSupportPath) &&
-					!PathMakePathA(userApplicationSupportPath, 0))
+				    !PathMakePathA(userApplicationSupportPath, 0))
 				{
 					WLog_ERR(TAG, "Failed to create directory '%s'", userApplicationSupportPath);
 					free(userLibraryPath);
 					free(userApplicationSupportPath);
 					return -1;
 				}
+
 				server->ConfigPath = GetCombinedPath(userApplicationSupportPath, "freerdp");
 			}
 
@@ -559,23 +558,24 @@ int shadow_server_init_config_path(rdpShadowServer* server)
 			free(userApplicationSupportPath);
 		}
 	}
+
 #endif
 
 	if (!server->ConfigPath)
 	{
 		char* configHome;
-
 		configHome = GetKnownPath(KNOWN_PATH_XDG_CONFIG_HOME);
 
 		if (configHome)
 		{
 			if (!PathFileExistsA(configHome) &&
-				!PathMakePathA(configHome, 0))
+			    !PathMakePathA(configHome, 0))
 			{
 				WLog_ERR(TAG, "Failed to create directory '%s'", configHome);
 				free(configHome);
 				return -1;
 			}
+
 			server->ConfigPath = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, "freerdp");
 			free(configHome);
 		}
@@ -592,7 +592,6 @@ static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 	char* filepath;
 	MAKECERT_CONTEXT* makecert = NULL;
 	BOOL ret = FALSE;
-
 	const char* makecert_argv[6] =
 	{
 		"makecert",
@@ -601,11 +600,10 @@ static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 		"-silent",
 		"-y", "5"
 	};
-
 	int makecert_argc = (sizeof(makecert_argv) / sizeof(char*));
 
 	if (!PathFileExistsA(server->ConfigPath) &&
-		!PathMakePathA(server->ConfigPath, 0))
+	    !PathMakePathA(server->ConfigPath, 0))
 	{
 		WLog_ERR(TAG, "Failed to create directory '%s'", server->ConfigPath);
 		return FALSE;
@@ -615,7 +613,7 @@ static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 		return FALSE;
 
 	if (!PathFileExistsA(filepath) &&
-		!PathMakePathA(filepath, 0))
+	    !PathMakePathA(filepath, 0))
 	{
 		if (!CreateDirectoryA(filepath, 0))
 		{
@@ -626,13 +624,15 @@ static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 
 	server->CertificateFile = GetCombinedPath(filepath, "shadow.crt");
 	server->PrivateKeyFile = GetCombinedPath(filepath, "shadow.key");
+
 	if (!server->CertificateFile || !server->PrivateKeyFile)
 		goto out_fail;
 
 	if ((!PathFileExistsA(server->CertificateFile)) ||
-			(!PathFileExistsA(server->PrivateKeyFile)))
+	    (!PathFileExistsA(server->PrivateKeyFile)))
 	{
 		makecert = makecert_context_new();
+
 		if (!makecert)
 			goto out_fail;
 
@@ -654,20 +654,18 @@ static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 				goto out_fail;
 		}
 	}
+
 	ret = TRUE;
 out_fail:
 	makecert_context_free(makecert);
 	free(filepath);
-
 	return ret;
 }
 
 int shadow_server_init(rdpShadowServer* server)
 {
 	int status;
-
 	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
-
 	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
 
 	if (!(server->clients = ArrayList_New(TRUE)))
@@ -696,7 +694,6 @@ int shadow_server_init(rdpShadowServer* server)
 
 	server->listener->info = (void*) server;
 	server->listener->PeerAccepted = shadow_client_accepted;
-
 	server->subsystem = shadow_subsystem_new();
 
 	if (!server->subsystem)
@@ -738,37 +735,27 @@ int shadow_server_uninit(rdpShadowServer* server)
 		return -1;
 
 	shadow_server_stop(server);
-
 	shadow_subsystem_uninit(server->subsystem);
-
 	shadow_subsystem_free(server->subsystem);
-
 	freerdp_listener_free(server->listener);
 	server->listener = NULL;
-
 	free(server->CertificateFile);
 	server->CertificateFile = NULL;
 	free(server->PrivateKeyFile);
 	server->PrivateKeyFile = NULL;
-
 	free(server->ConfigPath);
 	server->ConfigPath = NULL;
-
 	DeleteCriticalSection(&(server->lock));
-
 	CloseHandle(server->StopEvent);
 	server->StopEvent = NULL;
-
 	ArrayList_Free(server->clients);
 	server->clients = NULL;
-
 	return 1;
 }
 
-rdpShadowServer* shadow_server_new()
+rdpShadowServer* shadow_server_new(void)
 {
 	rdpShadowServer* server;
-
 	server = (rdpShadowServer*) calloc(1, sizeof(rdpShadowServer));
 
 	if (!server)
@@ -777,17 +764,13 @@ rdpShadowServer* shadow_server_new()
 	server->port = 3389;
 	server->mayView = TRUE;
 	server->mayInteract = TRUE;
-
 	server->rfxMode = RLGR3;
 	server->h264RateControlMode = H264_RATECONTROL_VBR;
 	server->h264BitRate = 1000000;
 	server->h264FrameRate = 30;
 	server->h264QP = 0;
-
 	server->authentication = FALSE;
-
 	server->settings = freerdp_settings_new(FREERDP_SETTINGS_SERVER_MODE);
-
 	return server;
 }
 
@@ -798,10 +781,8 @@ void shadow_server_free(rdpShadowServer* server)
 
 	free(server->ipcSocket);
 	server->ipcSocket = NULL;
-
 	freerdp_settings_free(server->settings);
 	server->settings = NULL;
-
 	free(server);
 }
 

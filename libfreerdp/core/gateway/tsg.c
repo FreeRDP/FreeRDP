@@ -181,7 +181,7 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count,
  * );
  */
 
-BOOL TsProxyCreateTunnelWriteRequest(rdpTsg* tsg, PTSG_PACKET tsgPacket)
+static BOOL TsProxyCreateTunnelWriteRequest(rdpTsg* tsg, PTSG_PACKET tsgPacket)
 {
 	int status;
 	UINT32 length;
@@ -291,7 +291,6 @@ BOOL TsProxyCreateTunnelWriteRequest(rdpTsg* tsg, PTSG_PACKET tsgPacket)
 		*((UINT32*) &buffer[offset + 40]) =
 		    packetVersionCaps->tsgCaps->capabilityType; /* SwitchValue (4 bytes) */
 		*((UINT32*) &buffer[offset + 44]) = tsgCapNap->capabilities; /* capabilities (4 bytes) */
-		offset += 48;
 		status = rpc_client_write_call(rpc, buffer, length, TsProxyCreateTunnelOpnum);
 		free(buffer);
 
@@ -302,8 +301,9 @@ BOOL TsProxyCreateTunnelWriteRequest(rdpTsg* tsg, PTSG_PACKET tsgPacket)
 	return TRUE;
 }
 
-BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu, CONTEXT_HANDLE* tunnelContext,
-                                     UINT32* tunnelId)
+static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
+        CONTEXT_HANDLE* tunnelContext,
+        UINT32* tunnelId)
 {
 	BYTE* buffer;
 	UINT32 count;
@@ -629,7 +629,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu, CONTEXT_HANDLE* 
  *
  */
 
-BOOL TsProxyAuthorizeTunnelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* tunnelContext)
+static BOOL TsProxyAuthorizeTunnelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* tunnelContext)
 {
 	UINT32 pad;
 	int status;
@@ -681,7 +681,7 @@ BOOL TsProxyAuthorizeTunnelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* tunnelConte
 	return TRUE;
 }
 
-BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
+static BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 {
 	BYTE* buffer;
 	UINT32 length;
@@ -809,7 +809,8 @@ BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
  * );
  */
 
-BOOL TsProxyMakeTunnelCallWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* tunnelContext, UINT32 procId)
+static BOOL TsProxyMakeTunnelCallWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* tunnelContext,
+        UINT32 procId)
 {
 	int status;
 	BYTE* buffer;
@@ -840,7 +841,7 @@ BOOL TsProxyMakeTunnelCallWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* tunnelContex
 	return TRUE;
 }
 
-BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
+static BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 {
 	BYTE* buffer;
 	UINT32 length;
@@ -1006,7 +1007,7 @@ out:
  * );
  */
 
-BOOL TsProxyCreateChannelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* tunnelContext)
+static BOOL TsProxyCreateChannelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* tunnelContext)
 {
 	int status;
 	UINT32 count;
@@ -1048,8 +1049,9 @@ BOOL TsProxyCreateChannelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* tunnelContext
 	return TRUE;
 }
 
-BOOL TsProxyCreateChannelReadResponse(rdpTsg* tsg, RPC_PDU* pdu, CONTEXT_HANDLE* channelContext,
-                                      UINT32* channelId)
+static BOOL TsProxyCreateChannelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
+        CONTEXT_HANDLE* channelContext,
+        UINT32* channelId)
 {
 	BYTE* buffer;
 	UINT32 offset;
@@ -1079,7 +1081,7 @@ BOOL TsProxyCreateChannelReadResponse(rdpTsg* tsg, RPC_PDU* pdu, CONTEXT_HANDLE*
  * );
  */
 
-BOOL TsProxyCloseChannelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* context)
+static BOOL TsProxyCloseChannelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* context)
 {
 	int status;
 	BYTE* buffer;
@@ -1108,7 +1110,7 @@ BOOL TsProxyCloseChannelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* context)
 	return TRUE;
 }
 
-BOOL TsProxyCloseChannelReadResponse(rdpTsg* tsg, RPC_PDU* pdu, CONTEXT_HANDLE* context)
+static BOOL TsProxyCloseChannelReadResponse(rdpTsg* tsg, RPC_PDU* pdu, CONTEXT_HANDLE* context)
 {
 	BYTE* buffer;
 	WLog_DBG(TAG, "TsProxyCloseChannelReadResponse");
@@ -1134,7 +1136,7 @@ BOOL TsProxyCloseChannelReadResponse(rdpTsg* tsg, RPC_PDU* pdu, CONTEXT_HANDLE* 
  * );
  */
 
-BOOL TsProxyCloseTunnelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* context)
+static BOOL TsProxyCloseTunnelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* context)
 {
 	int status;
 	BYTE* buffer;
@@ -1159,7 +1161,7 @@ BOOL TsProxyCloseTunnelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* context)
 	return TRUE;
 }
 
-BOOL TsProxyCloseTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu, CONTEXT_HANDLE* context)
+static BOOL TsProxyCloseTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu, CONTEXT_HANDLE* context)
 {
 	BYTE* buffer;
 	WLog_DBG(TAG, "TsProxyCloseTunnelReadResponse");
@@ -1187,7 +1189,7 @@ BOOL TsProxyCloseTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu, CONTEXT_HANDLE* c
  * );
  */
 
-BOOL TsProxySetupReceivePipeWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* channelContext)
+static BOOL TsProxySetupReceivePipeWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* channelContext)
 {
 	int status;
 	BYTE* buffer;
@@ -1212,7 +1214,7 @@ BOOL TsProxySetupReceivePipeWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* channelCon
 	return TRUE;
 }
 
-BOOL TsProxySetupReceivePipeReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
+static BOOL TsProxySetupReceivePipeReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 {
 	WLog_DBG(TAG, "TsProxySetupReceivePipeReadResponse");
 	return TRUE;
@@ -1643,7 +1645,7 @@ DWORD tsg_get_event_handles(rdpTsg* tsg, HANDLE* events, DWORD count)
 	return nCount;
 }
 
-BOOL tsg_set_hostname(rdpTsg* tsg, const char* hostname)
+static BOOL tsg_set_hostname(rdpTsg* tsg, const char* hostname)
 {
 	free(tsg->Hostname);
 	tsg->Hostname = NULL;
@@ -1651,7 +1653,7 @@ BOOL tsg_set_hostname(rdpTsg* tsg, const char* hostname)
 	return TRUE;
 }
 
-BOOL tsg_set_machine_name(rdpTsg* tsg, const char* machineName)
+static BOOL tsg_set_machine_name(rdpTsg* tsg, const char* machineName)
 {
 	free(tsg->MachineName);
 	tsg->MachineName = NULL;
@@ -1752,7 +1754,7 @@ BOOL tsg_disconnect(rdpTsg* tsg)
  * @return < 0 on error; 0 if not enough data is available (non blocking mode); > 0 bytes to read
  */
 
-int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
+static int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 {
 	rdpRpc* rpc;
 	int status = 0;
@@ -1803,7 +1805,7 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 	return status;
 }
 
-int tsg_write(rdpTsg* tsg, BYTE* data, UINT32 length)
+static int tsg_write(rdpTsg* tsg, BYTE* data, UINT32 length)
 {
 	int status;
 
@@ -1858,7 +1860,8 @@ void tsg_free(rdpTsg* tsg)
 	}
 }
 
-long transport_bio_tsg_callback(BIO* bio, int mode, const char* argp, int argi, long argl, long ret)
+static long transport_bio_tsg_callback(BIO* bio, int mode, const char* argp, int argi, long argl,
+                                       long ret)
 {
 	return 1;
 }

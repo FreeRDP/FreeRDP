@@ -321,9 +321,6 @@ FREERDP_LOCAL BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port,
                                int timeout);
 FREERDP_LOCAL BOOL tsg_disconnect(rdpTsg* tsg);
 
-FREERDP_LOCAL int tsg_write(rdpTsg* tsg, BYTE* data, UINT32 length);
-FREERDP_LOCAL int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length);
-
 FREERDP_LOCAL int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu);
 
 FREERDP_LOCAL int tsg_check_event_handles(rdpTsg* tsg);

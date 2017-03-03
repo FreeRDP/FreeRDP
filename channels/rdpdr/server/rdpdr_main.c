@@ -1140,7 +1140,6 @@ static void* rdpdr_server_thread(void* arg)
 	DWORD status;
 	DWORD nCount;
 	void* buffer;
-	int position;
 	HANDLE events[8];
 	RDPDR_HEADER header;
 	HANDLE ChannelEvent;
@@ -1215,7 +1214,6 @@ static void* rdpdr_server_thread(void* arg)
 
 		if (BytesReturned >= RDPDR_HEADER_LENGTH)
 		{
-			position = Stream_GetPosition(s);
 			Stream_SetPosition(s, 0);
 			Stream_SetLength(s, BytesReturned);
 

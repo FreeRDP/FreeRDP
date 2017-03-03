@@ -72,6 +72,8 @@ static pfnShadowSubsystemEntry shadow_subsystem_load_static_entry(const char* na
 			if (g_Subsystems[index].name)
 				return g_Subsystems[index].entry;
 		}
+
+		return NULL;
 	}
 
 	for (index = 0; index < g_SubsystemCount; index++)

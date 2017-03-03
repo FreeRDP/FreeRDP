@@ -45,19 +45,15 @@ extern const char* WLOG_LEVELS[7];
  * Log Layout
  */
 
-void WLog_PrintMessagePrefixVA(wLog* log, wLogMessage* message, const char* format, va_list args)
+static void WLog_PrintMessagePrefixVA(wLog* log, wLogMessage* message, const char* format, va_list args)
 {
 	if (!strchr(format, '%'))
-	{
-		message->PrefixString = (LPSTR) format;
-	}
+		sprintf_s(message->PrefixString, WLOG_MAX_PREFIX_SIZE - 1, format);
 	else
-	{
 		wvsnprintfx(message->PrefixString, WLOG_MAX_PREFIX_SIZE - 1, format, args);
-	}
 }
 
-void WLog_PrintMessagePrefix(wLog* log, wLogMessage* message, const char* format, ...)
+static void WLog_PrintMessagePrefix(wLog* log, wLogMessage* message, const char* format, ...)
 {
 	va_list args;
 	va_start(args, format);
@@ -142,7 +138,7 @@ BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 				{
 #if defined __linux__ && !defined ANDROID
 					/* On Linux we prefer to see the LWP id */
-					args[argc++] = (void*)(size_t) syscall(SYS_gettid);;
+					args[argc++] = (void*)(size_t) syscall(SYS_gettid);
 					format[index++] = '%';
 					format[index++] = 'l';
 					format[index++] = 'd';
@@ -353,6 +349,7 @@ BOOL WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* form
 
 wLogLayout* WLog_Layout_New(wLog* log)
 {
+	LPCSTR prefix = "WLOG_PREFIX";
 	DWORD nSize;
 	char* env = NULL;
 	wLogLayout* layout;
@@ -361,7 +358,7 @@ wLogLayout* WLog_Layout_New(wLog* log)
 	if (!layout)
 		return NULL;
 
-	nSize = GetEnvironmentVariableA("WLOG_PREFIX", NULL, 0);
+	nSize = GetEnvironmentVariableA(prefix, NULL, 0);
 
 	if (nSize)
 	{
@@ -373,7 +370,7 @@ wLogLayout* WLog_Layout_New(wLog* log)
 			return NULL;
 		}
 
-		if (GetEnvironmentVariableA("WLOG_PREFIX", env, nSize) != nSize)
+		if (GetEnvironmentVariableA(prefix, env, nSize) != nSize - 1)
 		{
 			free(env);
 			free(layout);

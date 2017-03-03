@@ -216,7 +216,6 @@ void xf_rail_invalidate_region(xfContext* xfc, REGION16* invalidRegion)
 				updateRect.top = extents->top - appWindow->y;
 				updateRect.right = extents->right - appWindow->x;
 				updateRect.bottom = extents->bottom - appWindow->y;
-
 				xf_UpdateWindowArea(xfc, appWindow, updateRect.left, updateRect.top,
 				                    updateRect.right - updateRect.left,
 				                    updateRect.bottom - updateRect.top);
@@ -530,7 +529,6 @@ static BOOL xf_rail_window_delete(rdpContext* context,
 static BOOL xf_rail_window_icon(rdpContext* context,
                                 WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* windowIcon)
 {
-	BOOL bigIcon;
 	xfAppWindow* railWindow;
 	xfContext* xfc = (xfContext*) context;
 	railWindow = (xfAppWindow*) HashTable_GetItemValue(xfc->railWindows,
@@ -539,8 +537,7 @@ static BOOL xf_rail_window_icon(rdpContext* context,
 	if (!railWindow)
 		return FALSE;
 
-	bigIcon = (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ICON_BIG) ? TRUE : FALSE;
-	return TRUE;
+	return (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ICON_BIG) ? TRUE : FALSE;
 }
 
 static BOOL xf_rail_window_cached_icon(rdpContext* context,
@@ -812,7 +809,6 @@ static UINT xf_rail_server_local_move_size(RailClientContext* context,
 			y = localMoveSize->posY;
 			/* FIXME: local keyboard moves not working */
 			return CHANNEL_RC_OK;
-			break;
 
 		case RAIL_WMSZ_KEYSIZE:
 			direction = _NET_WM_MOVERESIZE_SIZE_KEYBOARD;
@@ -820,17 +816,12 @@ static UINT xf_rail_server_local_move_size(RailClientContext* context,
 			y = localMoveSize->posY;
 			/* FIXME: local keyboard moves not working */
 			return CHANNEL_RC_OK;
-			break;
 	}
 
 	if (localMoveSize->isMoveSizeStart)
-	{
 		xf_StartLocalMoveSize(xfc, appWindow, direction, x, y);
-	}
 	else
-	{
 		xf_EndLocalMoveSize(xfc, appWindow);
-	}
 
 	return CHANNEL_RC_OK;
 }

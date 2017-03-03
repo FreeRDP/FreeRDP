@@ -173,7 +173,7 @@ wLogAppender* WLog_JournaldAppender_New(wLog* log)
 {
 	wLogJournaldAppender* appender;
 	DWORD nSize;
-	LPCSTR name;
+	LPCSTR name = "WLOG_JOURNALD_ID";;
 
 	appender = (wLogJournaldAppender*) calloc(1, sizeof(wLogJournaldAppender));
 	if (!appender)
@@ -188,15 +188,15 @@ wLogAppender* WLog_JournaldAppender_New(wLog* log)
 	appender->Set = WLog_JournaldAppender_Set;
 	appender->Free = WLog_JournaldAppender_Free;
 
-	name = "WLOG_JOURNALD_ID";
 	nSize = GetEnvironmentVariableA(name, NULL, 0);
 	if (nSize)
 	{
 		appender->identifier = (LPSTR) malloc(nSize);
 		if (!appender->identifier)
-			goto error_env_malloc;
+			goto error_open;
 
-		GetEnvironmentVariableA(name, appender->identifier, nSize);
+		if (GetEnvironmentVariableA(name, appender->identifier, nSize) != nSize -1)
+			goto error_open;
 
 		if (!WLog_JournaldAppender_Open(log, (wLogAppender *)appender))
 			goto error_open;
@@ -206,7 +206,6 @@ wLogAppender* WLog_JournaldAppender_New(wLog* log)
 
 error_open:
 	free(appender->identifier);
-error_env_malloc:
 	free(appender);
 	return NULL;
 }

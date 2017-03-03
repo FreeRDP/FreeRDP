@@ -7,6 +7,8 @@
  * Copyright 2011 Vic Lee
  * Copyright 2015 Thincast Technologies GmbH
  * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+ * Copyright 2017 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2017 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,9 +169,13 @@ static UINT rail_send_client_sysparam(RailClientContext* context,
 		case SPI_SET_HIGH_CONTRAST:
 			length += sysparam->highContrast.colorSchemeLength + 10;
 			break;
+
+		default:
+			length += 8;
+			break;
 	}
 
-	s = rail_pdu_init(RAIL_SYSPARAM_ORDER_LENGTH + 8);
+	s = rail_pdu_init(length);
 
 	if (!s)
 	{
