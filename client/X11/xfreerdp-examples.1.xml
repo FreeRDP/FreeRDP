@@ -20,7 +20,7 @@
 			</listitem>
 		</varlistentry>
 		<varlistentry>
-			<term><command>xfreerdp /u:JohnDoe /p:Pwd123! /vmconnect:C824F53E-95D2-46C6-9A18-23A5BB403532 /v:192.168. 1.100</command></term>
+			<term><command>xfreerdp /u:JohnDoe /p:Pwd123! /vmconnect:C824F53E-95D2-46C6-9A18-23A5BB403532 /v:192.168.1.100</command></term>
 			<listitem>
 				<para>Establish a connection to host <replaceable>192.168.1.100</replaceable> with user <replaceable>JohnDoe</replaceable>, password <replaceable>Pwd123!</replaceable> and connect to Hyper-V console (use port 2179, disable negotiation) with VMID <replaceable>C824F53E-95D2-46C6-9A18-23A5BB403532</replaceable></para>
 			</listitem>
