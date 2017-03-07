@@ -23,10 +23,16 @@ import java.util.List;
 public class BookmarkDB extends SQLiteOpenHelper {
     public static final String ID = BaseColumns._ID;
     private static final int DB_VERSION = 8;
+    private static final String DB_BACKUP_PREFIX = "temp_";
     private static final String DB_NAME = "bookmarks.db";
     private static final String DB_TABLE_BOOKMARK = "tbl_manual_bookmarks";
     private static final String DB_TABLE_SCREEN = "tbl_screen_settings";
     private static final String DB_TABLE_PERFORMANCE = "tbl_performance_flags";
+    private static final String[] DB_TABLES = {
+            DB_TABLE_BOOKMARK,
+            DB_TABLE_SCREEN,
+            DB_TABLE_PERFORMANCE
+    };
 
     public BookmarkDB(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -61,10 +67,29 @@ public class BookmarkDB extends SQLiteOpenHelper {
         return buf.toString();
     }
 
-    @Override
-    public void onCreate(SQLiteDatabase db) {
+    private void backupTables(SQLiteDatabase db) {
+        for (String table : DB_TABLES) {
+            final String tmpTable = DB_BACKUP_PREFIX + table;
+            final String query = "ALTER TABLE '" + table + "' RENAME TO '" + tmpTable + "'";
+            try {
+                db.execSQL(query);
+            } catch (Exception e) {
+                /* Ignore errors if table does not exist. */
+            }
+        }
+    }
+
+    private void dropOldTables(SQLiteDatabase db) {
+        for (String table : DB_TABLES) {
+            final String tmpTable = DB_BACKUP_PREFIX + table;
+            final String query = "DROP TABLE IF EXISTS '" + tmpTable + "'";
+            db.execSQL(query);
+        }
+    }
+
+    private void createDB(SQLiteDatabase db) {
         final String sqlScreenSettings =
-                "CREATE TABLE " + DB_TABLE_SCREEN + " ("
+                "CREATE TABLE IF NOT EXISTS " + DB_TABLE_SCREEN + " ("
                         + ID + " INTEGER PRIMARY KEY, "
                         + "colors INTEGER DEFAULT 16, "
                         + "resolution INTEGER DEFAULT 0, "
@@ -74,7 +99,7 @@ public class BookmarkDB extends SQLiteOpenHelper {
         db.execSQL(sqlScreenSettings);
 
         final String sqlPerformanceFlags =
-                "CREATE TABLE " + DB_TABLE_PERFORMANCE + " ("
+                "CREATE TABLE IF NOT EXISTS " + DB_TABLE_PERFORMANCE + " ("
                         + ID + " INTEGER PRIMARY KEY, "
                         + "perf_remotefx INTEGER, "
                         + "perf_gfx INTEGER, "
@@ -90,9 +115,64 @@ public class BookmarkDB extends SQLiteOpenHelper {
 
         final String sqlManualBookmarks = getManualBookmarksCreationString();
         db.execSQL(sqlManualBookmarks);
+    }
 
+    private void upgradeTables(SQLiteDatabase db) {
+        for (String table : DB_TABLES) {
+            final String tmpTable = DB_BACKUP_PREFIX + table;
 
-        // Insert a test entry
+            final List<String> newColumns = GetColumns(db, table);
+            List<String> columns = GetColumns(db, tmpTable);
+
+            if (columns != null) {
+                columns.retainAll(newColumns);
+
+                // restore data
+                final String cols = joinStrings(columns, ",");
+                final String query = String.format("INSERT INTO %s (%s) SELECT %s from '%s'", table, cols, cols, tmpTable);
+                db.execSQL(query);
+            }
+        }
+    }
+
+    private void downgradeTables(SQLiteDatabase db) {
+        for (String table : DB_TABLES) {
+            final String tmpTable = DB_BACKUP_PREFIX + table;
+
+            List<String> oldColumns = GetColumns(db, table);
+            final List<String> columns = GetColumns(db, tmpTable);
+
+            if (oldColumns != null) {
+                oldColumns.retainAll(columns);
+
+                // restore data
+                final String cols = joinStrings(oldColumns, ",");
+                final String query = String.format("INSERT INTO %s (%s) SELECT %s from '%s'", table, cols, cols, tmpTable);
+                db.execSQL(query);
+            }
+        }
+    }
+
+    private List<String> getTableNames(SQLiteDatabase db) {
+        final String query = "SELECT name FROM sqlite_master WHERE type='table'";
+        Cursor cursor = db.rawQuery(query, null);
+        List<String> list = new ArrayList<>();
+        try {
+            if (cursor.moveToFirst() && (cursor.getCount() > 0)) {
+                while (!cursor.isAfterLast()) {
+                    final String name = cursor.getString(cursor.getColumnIndex("name"));
+                    list.add(name);
+                    cursor.moveToNext();
+                }
+            }
+        } finally {
+            cursor.close();
+        }
+
+        return list;
+    }
+
+    private void insertDefault(SQLiteDatabase db) {
         final String sqlInsertDefaultScreenEntry =
                 "INSERT INTO " + DB_TABLE_SCREEN + " ("
                         + "colors, "
@@ -155,6 +235,12 @@ public class BookmarkDB extends SQLiteOpenHelper {
         db.execSQL(sqlInsertDefaultSessionEntry);
     }
 
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        createDB(db);
+        insertDefault(db);
+    }
+
     private String getManualBookmarksCreationString() {
         return (
                 "CREATE TABLE IF NOT EXISTS " + DB_TABLE_BOOKMARK + " ("
@@ -200,60 +286,60 @@ public class BookmarkDB extends SQLiteOpenHelper {
     }
 
     private void recreateDB(SQLiteDatabase db) {
-        db.beginTransaction();
-        try {
-            List<String> tables = new ArrayList<>();
-            Cursor c = db.rawQuery("SELECT name FROM sqlite_master WHERE type='table'", null);
-            try {
-                if (c.moveToFirst()) {
-                    while (!c.isAfterLast()) {
-                        final String name = c.getString(c.getColumnIndex("name"));
-                        tables.add(name);
-                        c.moveToNext();
-                    }
-                }
-            } finally {
-                c.close();
-            }
-            for (String table : tables) {
-                db.execSQL("DROP TABLE IF EXISTS " + table);
-            }
-            onCreate(db);
-        } finally {
-            db.endTransaction();
+        for (String table : DB_TABLES) {
+            final String query = "DROP TABLE IF EXISTS '" + table + "'";
+            db.execSQL(query);
         }
+        onCreate(db);
     }
 
     private void upgradeDB(SQLiteDatabase db) {
         db.beginTransaction();
         try {
-            // run a table creation with if not exists (we are doing an upgrade, so the table might
-            // not exists yet, it will fail alter and drop)
-            db.execSQL(getManualBookmarksCreationString());
-            // put in a list the existing columns
-            List<String> columns = GetColumns(db, DB_TABLE_BOOKMARK);
-            // backup table
-            db.execSQL("ALTER TABLE " + DB_TABLE_BOOKMARK + " RENAME TO 'temp_" + DB_TABLE_BOOKMARK + "'");
-            // create new table (with new scheme)
-            db.execSQL(getManualBookmarksCreationString());
-            // get the intersection with the new columns, this time columns taken from the upgraded table
-            columns.retainAll(GetColumns(db, DB_TABLE_BOOKMARK));
-            // restore data
-            String cols = joinStrings(columns, ",");
-            db.execSQL(String.format("INSERT INTO %s (%s) SELECT %s from 'temp_%s", DB_TABLE_BOOKMARK, cols, cols, DB_TABLE_BOOKMARK + "'"));
-            // remove backup table
-            db.execSQL("DROP table 'temp_" + DB_TABLE_BOOKMARK + "'");
+            /* Back up old tables. */
+            dropOldTables(db);
+            backupTables(db);
+            createDB(db);
+            upgradeTables(db);
 
             db.setTransactionSuccessful();
         } finally {
             db.endTransaction();
+            dropOldTables(db);
+        }
+    }
+
+    private void downgradeDB(SQLiteDatabase db) {
+        db.beginTransaction();
+        try {
+            /* Back up old tables. */
+            dropOldTables(db);
+            backupTables(db);
+            createDB(db);
+            downgradeTables(db);
+
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+            dropOldTables(db);
         }
     }
 
     // from http://stackoverflow.com/questions/3424156/upgrade-sqlite-database-from-one-version-to-another
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        switch (newVersion) {
+        switch (oldVersion) {
+            case 0:
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+            case 5:
+            case 6:
+            case 7:
+            case 8:
+                upgradeDB(db);
+                break;
             default:
                 recreateDB(db);
                 break;
@@ -262,7 +348,7 @@ public class BookmarkDB extends SQLiteOpenHelper {
 
     @Override
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        recreateDB(db);
+        downgradeDB(db);
     }
 
 }
