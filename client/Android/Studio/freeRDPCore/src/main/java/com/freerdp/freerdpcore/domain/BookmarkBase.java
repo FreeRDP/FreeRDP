@@ -679,7 +679,27 @@ public class BookmarkBase implements Parcelable, Cloneable {
             asyncUpdate = true;
         }
 
+        private void validate() {
+            final String[] levels = {
+                    "OFF",
+                    "FATAL",
+                    "ERROR",
+                    "WARN",
+                    "INFO",
+                    "DEBUG",
+                    "TRACE"
+            };
+
+            for (String level : levels) {
+                if (level.equalsIgnoreCase(this.debug)) {
+                    return;
+                }
+            }
+
+            this.debug = "INFO";
+        }
         public String getDebugLevel() {
+            validate();
             return debug;
         }
 
