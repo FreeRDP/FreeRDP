@@ -132,7 +132,7 @@ static BOOL tsmf_ffmpeg_init_audio_stream(ITSMFDecoder* decoder, const TS_AM_MED
 #endif
 #else  /* LIBAVCODEC_VERSION_MAJOR < 55 */
 #ifdef AV_CPU_FLAG_SSE2
-	av_set_cpu_flags_mask(AV_CPU_FLAG_SSE2 | AV_CPU_FLAG_MMX2);
+	av_set_cpu_flags_mask(AV_CPU_FLAG_SSE2 | AV_CPU_FLAG_MMXEXT);
 #else
 	av_set_cpu_flags_mask(FF_MM_SSE2 | FF_MM_MMX2);
 #endif
