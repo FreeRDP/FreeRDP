@@ -188,8 +188,8 @@ public class LibFreeRDP {
             args.add("/gfx");
         }
 
-        if (flags.getH264()) {
-            args.add("/gfx-h264");
+        if (flags.getH264() && mHasH264) {
+            args.add("/gfx:AVC444");
         }
 
         args.add(addFlag("wallpaper", flags.getWallpaper()));
@@ -209,7 +209,7 @@ public class LibFreeRDP {
         }
 
         args.add(addFlag("async-channels", debug.getAsyncChannel()));
-        args.add(addFlag("async-transport", debug.getAsyncTransport()));
+        //args.add(addFlag("async-transport", debug.getAsyncTransport()));
         args.add(addFlag("async-input", debug.getAsyncInput()));
         args.add(addFlag("async-update", debug.getAsyncUpdate()));
 

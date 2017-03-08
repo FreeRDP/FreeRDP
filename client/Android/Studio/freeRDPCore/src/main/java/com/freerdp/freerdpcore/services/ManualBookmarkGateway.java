@@ -77,7 +77,7 @@ public class ManualBookmarkGateway extends BookmarkBaseGateway {
 
         Cursor cursor = queryBookmarks("label = '" + pattern + "' OR hostname = '" + pattern + "'", "label");
         BookmarkBase bookmark = null;
-        if (cursor.moveToFirst())
+        if (cursor.moveToFirst() && (cursor.getCount() > 0))
             bookmark = getBookmarkFromCursor(cursor);
 
         cursor.close();
@@ -88,7 +88,7 @@ public class ManualBookmarkGateway extends BookmarkBaseGateway {
         Cursor cursor = queryBookmarks("label LIKE '%" + pattern + "%' OR hostname LIKE '%" + pattern + "%'", "label");
         ArrayList<BookmarkBase> bookmarks = new ArrayList<BookmarkBase>(cursor.getCount());
 
-        if (cursor.moveToFirst()) {
+        if (cursor.moveToFirst() && (cursor.getCount() > 0)) {
             do {
                 bookmarks.add(getBookmarkFromCursor(cursor));
             } while (cursor.moveToNext());

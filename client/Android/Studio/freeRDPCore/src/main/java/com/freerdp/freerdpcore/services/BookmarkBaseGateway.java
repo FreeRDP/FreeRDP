@@ -157,7 +157,7 @@ public abstract class BookmarkBaseGateway {
             Log.e(TAG, "More than one bookmark with the same label found!");
 
         BookmarkBase bookmark = null;
-        if (cursor.moveToFirst())
+        if (cursor.moveToFirst() && (cursor.getCount() > 0))
             bookmark = getBookmarkFromCursor(cursor);
 
         cursor.close();
@@ -168,7 +168,7 @@ public abstract class BookmarkBaseGateway {
         Cursor cursor = queryBookmarks("label LIKE '%" + pattern + "%'", "label");
         ArrayList<BookmarkBase> bookmarks = new ArrayList<BookmarkBase>(cursor.getCount());
 
-        if (cursor.moveToFirst()) {
+        if (cursor.moveToFirst() && (cursor.getCount() > 0)) {
             do {
                 bookmarks.add(getBookmarkFromCursor(cursor));
             } while (cursor.moveToNext());
@@ -182,7 +182,7 @@ public abstract class BookmarkBaseGateway {
         Cursor cursor = queryBookmarks(null, "label");
         ArrayList<BookmarkBase> bookmarks = new ArrayList<BookmarkBase>(cursor.getCount());
 
-        if (cursor.moveToFirst()) {
+        if (cursor.moveToFirst() && (cursor.getCount() > 0)) {
             do {
                 bookmarks.add(getBookmarkFromCursor(cursor));
             } while (cursor.moveToNext());
