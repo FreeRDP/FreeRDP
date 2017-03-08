@@ -435,7 +435,7 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE *data, UI
 			av_free(decoded_frame);
 		}
 #endif
-		if (len> 0)
+		if (len > 0)
 		{
 			src += len;
 			src_size -= len;
