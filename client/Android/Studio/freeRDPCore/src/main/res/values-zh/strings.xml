@@ -169,4 +169,7 @@
     <string name="dlg_msg_clear_cert_cache">是否清除所有的证书缓存？</string>
     <string name="debug_level">Debug Level</string>
     <string name="settings_debug">Debug Settings</string>
+    <string name="preference_title_client">客户机</string>
+    <string name="settings_cat_client">客户机</string>
+    <string name="preference_title_client_name">Client Name</string>
 </resources>
