@@ -23,12 +23,14 @@ ext {
     versionName = properties.get('VERSION_NAME', getVersionName())
 
     println '----------------- Project configuration -------------------'
-    println 'VERSION:      ' + versionCode
-    println 'MIN_SDK:      ' + minSdk
-    println 'TARGET_SDK:   ' + targetSdk
-    println 'COMPILE_SDK:  ' + compileSdk
-    println 'BUILD_TOOLS:  ' + buildToolsVersion
-    println 'VERSION_NAME: ' + versionName
+    println 'VERSION:            ' + versionCode
+    println 'MIN_SDK:            ' + minSdk
+    println 'TARGET_SDK:         ' + targetSdk
+    println 'COMPILE_SDK:        ' + compileSdk
+    println 'BUILD_TOOLS:        ' + buildToolsVersion
+    println 'VERSION_NAME:       ' + versionName
+    println 'RELEASE_STORE_FILE: '+ RELEASE_STORE_FILE
+    println 'RELEASE_KEY_ALIAS:  '+ RELEASE_KEY_ALIAS
     println '-----------------------------------------------------------'
 }
 
@@ -37,7 +39,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.2.3'
+        classpath 'com.android.tools.build:gradle:2.3.0'
     }
 }
 
