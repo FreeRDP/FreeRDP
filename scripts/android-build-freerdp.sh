@@ -82,7 +82,6 @@ common_run mkdir -p $BUILD_SRC
 CMAKE_CMD_ARGS="-DANDROID_NDK=$ANDROID_NDK \
 	-DANDROID_NATIVE_API_LEVEL=android-${NDK_TARGET} \
 	-DCMAKE_TOOLCHAIN_FILE=$SRC_DIR/cmake/AndroidToolchain.cmake \
-	-DCMAKE_INSTALL_PREFIX=$BUILD_DST \
 	-DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE \
 	-DFREERDP_EXTERNAL_PATH=$BUILD_DST"
 
@@ -102,6 +101,8 @@ do
                 --tag $JPEG_TAG
         fi
         CMAKE_CMD_ARGS="$CMAKE_CMD_ARGS -DWITH_JPEG=ON"
+    else
+        CMAKE_CMD_ARGS="$CMAKE_CMD_ARGS -DWITH_JPEG=OFF"
     fi
     if [ $WITH_OPENH264 -ne 0 ];
     then
@@ -115,6 +116,8 @@ do
                 --tag $OPENH264_TAG
         fi
         CMAKE_CMD_ARGS="$CMAKE_CMD_ARGS -DWITH_OPENH264=ON"
+    else
+        CMAKE_CMD_ARGS="$CMAKE_CMD_ARGS -DWITH_OPENH264=OFF"
     fi
     if [ $WITH_OPENSSL -ne 0 ];
     then
@@ -138,8 +141,8 @@ do
 	common_run export ANDROID_NDK=$ANDROID_NDK
 	common_run cmake $CMAKE_CMD_ARGS \
 		-DANDROID_ABI=$ARCH \
-		-DCMAKE_INSTALL_PREFIX=$BUILD_DST \
-		-DCMAKE_INSTALL_LIBDIR=$ARCH \
+		-DCMAKE_INSTALL_PREFIX=$BUILD_DST/$ARCH \
+		-DCMAKE_INSTALL_LIBDIR=. \
 		$SRC_DIR
 	echo $(pwd)
 	common_run cmake --build . --target install
