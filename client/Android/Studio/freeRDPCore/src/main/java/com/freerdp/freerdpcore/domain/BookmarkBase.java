@@ -43,6 +43,7 @@ public class BookmarkBase implements Parcelable, Cloneable {
     private PerformanceFlags performanceFlags;
     private AdvancedSettings advancedSettings;
     private DebugSettings debugSettings;
+
     public BookmarkBase(Parcel parcel) {
         type = parcel.readInt();
         id = parcel.readLong();
@@ -60,6 +61,7 @@ public class BookmarkBase implements Parcelable, Cloneable {
         debugSettings = parcel.readParcelable(DebugSettings.class
                 .getClassLoader());
     }
+
     public BookmarkBase() {
         init();
     }
@@ -278,7 +280,7 @@ public class BookmarkBase implements Parcelable, Cloneable {
         editor.putString("bookmark.debug_level",
                 debugSettings.getDebugLevel());
 
-        editor.commit();
+        editor.apply();
     }
 
     // read from shared preferences
@@ -539,6 +541,39 @@ public class BookmarkBase implements Parcelable, Cloneable {
             height = parcel.readInt();
         }
 
+        private void validate() {
+            switch (colors) {
+                case 32:
+                case 24:
+                case 16:
+                case 15:
+                case 8:
+                    break;
+                default:
+                    colors = 32;
+                    break;
+            }
+
+            if ((width <= 0) || (width > 65536)) {
+                width = 1024;
+            }
+
+            if ((height <= 0) || (height > 65536)) {
+                height = 768;
+            }
+
+            switch(resolution) {
+                case FITSCREEN:
+                case AUTOMATIC:
+                case CUSTOM:
+                case PREDEFINED:
+                    break;
+                default:
+                    resolution = AUTOMATIC;
+                    break;
+            }
+        }
+
         private void init() {
             resolution = AUTOMATIC;
             colors = 16;
@@ -587,22 +622,27 @@ public class BookmarkBase implements Parcelable, Cloneable {
         }
 
         public boolean isPredefined() {
+            validate();
             return (resolution == PREDEFINED);
         }
 
         public boolean isAutomatic() {
+            validate();
             return (resolution == AUTOMATIC);
         }
 
         public boolean isFitScreen() {
+            validate();
             return (resolution == FITSCREEN);
         }
 
         public boolean isCustom() {
+            validate();
             return (resolution == CUSTOM);
         }
 
         public int getWidth() {
+            validate();
             return width;
         }
 
@@ -611,6 +651,7 @@ public class BookmarkBase implements Parcelable, Cloneable {
         }
 
         public int getHeight() {
+            validate();
             return height;
         }
 
@@ -619,6 +660,7 @@ public class BookmarkBase implements Parcelable, Cloneable {
         }
 
         public int getColors() {
+            validate();
             return colors;
         }
 
@@ -698,6 +740,7 @@ public class BookmarkBase implements Parcelable, Cloneable {
 
             this.debug = "INFO";
         }
+
         public String getDebugLevel() {
             validate();
             return debug;
@@ -809,6 +852,29 @@ public class BookmarkBase implements Parcelable, Cloneable {
             workDir = "";
         }
 
+        private void validate() {
+            switch (redirectSound) {
+                case 0:
+                case 1:
+                case 2:
+                    break;
+                default:
+                    redirectSound = 0;
+                    break;
+            }
+
+            switch (security) {
+                case 0:
+                case 1:
+                case 2:
+                case 3:
+                    break;
+                default:
+                    security = 0;
+                    break;
+            }
+        }
+
         public boolean getEnable3GSettings() {
             return enable3GSettings;
         }
@@ -842,6 +908,7 @@ public class BookmarkBase implements Parcelable, Cloneable {
         }
 
         public int getRedirectSound() {
+            validate();
             return redirectSound;
         }
 
@@ -858,6 +925,7 @@ public class BookmarkBase implements Parcelable, Cloneable {
         }
 
         public int getSecurity() {
+            validate();
             return security;
         }
 

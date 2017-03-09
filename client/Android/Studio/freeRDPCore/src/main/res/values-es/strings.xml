@@ -170,4 +170,7 @@
     <string name="dlg_msg_clear_cert_cache">Esta seguro que desea borrar todos los certificados?</string>
     <string name="debug_level">Debug Level</string>
     <string name="settings_debug">Debug Settings</string>
+    <string name="preference_title_client">Cliente</string>
+    <string name="settings_cat_client">Cliente</string>
+    <string name="preference_title_client_name">Identificador del cliente</string>
 </resources>

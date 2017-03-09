@@ -1,0 +1,147 @@
+p {
+    border: none;
+    padding: 0in;
+    font-variant: normal;
+    font-family: "Helvetica";
+    font-style: normal;
+    font-weight: normal;
+    line-height: 100%;
+    text-align: center;
+}
+
+td p {
+    border: none;
+    padding: 0in;
+    font-variant: normal;
+    font-family: "Helvetica";
+    font-style: normal;
+    font-weight: normal;
+    line-height: 100%;
+    text-align: center;
+}
+
+h2 {
+    border: none;
+    padding: 0in;
+    direction: inherit;
+    font-variant: normal;
+    color: #ffffff;
+    line-height: 100%;
+    text-align: center;
+}
+
+h2.western {
+    font-style: normal;
+ }
+
+h2.cjk {
+    font-family: "AR PL SungtiL GB";
+    font-style: normal;
+}
+
+h2.ctl {
+    font-family: "Lohit Devanagari";
+    font-style: normal;
+}
+
+h3 {
+    border: none;
+    padding: 0in;
+    direction: inherit;
+    font-variant: normal;
+    color: #ffffff;
+    line-height: 100%;
+    text-align: center;
+    page-break-before: auto;
+    page-break-after: auto;
+}
+
+h3.western {
+    font-style: normal;
+}
+
+h3.cjk {
+    font-family: "AR PL SungtiL GB";
+    font-style: normal;
+}
+
+h3.ctl {
+    font-family: "Lohit Devanagari";
+    font-style: normal;
+}
+
+h4 {
+    border: none;
+    padding: 0in;
+    direction: inherit;
+    font-variant: normal;
+    color: #ffffff;
+    line-height: 100%;
+    text-align: center;
+    page-break-before: auto;
+    page-break-after: auto;
+}
+
+h4.western {
+    font-style: normal;
+}
+
+h4.cjk {
+    font-family: "AR PL SungtiL GB";
+    font-style: normal;
+}
+
+h4.ctl {
+    font-family: "Lohit Devanagari";
+    font-style: normal;
+}
+
+pre {
+    direction: inherit;
+    font-variant: normal;
+    line-height: 100%;
+    text-align: center;
+    page-break-before: auto;
+    white-space: pre-wrap;       /* css-3 */
+     white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+     white-space: -pre-wrap;      /* Opera 4-6 */
+     white-space: -o-pre-wrap;    /* Opera 7 */
+     word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
+
+pre.western {
+    font-size: 8pt;
+    font-style: normal;
+    font-weight: normal;
+    white-space: pre-wrap;       /* css-3 */
+     white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+     white-space: -pre-wrap;      /* Opera 4-6 */
+     white-space: -o-pre-wrap;    /* Opera 7 */
+     word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
+
+pre.cjk {
+    font-family: "AR PL SungtiL GB", monospace;
+    font-size: 8pt;
+    font-style: normal;
+    font-weight: normal;
+    white-space: pre-wrap;       /* css-3 */
+     white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+     white-space: -pre-wrap;      /* Opera 4-6 */
+     white-space: -o-pre-wrap;    /* Opera 7 */
+     word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
+
+pre.ctl {
+    font-style: normal;
+    font-weight: normal;
+    white-space: pre-wrap;       /* css-3 */
+     white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+     white-space: -pre-wrap;      /* Opera 4-6 */
+     white-space: -o-pre-wrap;    /* Opera 7 */
+     word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
+
+a:link {
+    color: #0000ff
+}
