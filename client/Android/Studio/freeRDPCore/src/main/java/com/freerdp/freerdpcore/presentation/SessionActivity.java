@@ -484,9 +484,19 @@ public class SessionActivity extends AppCompatActivity implements
         keyboardMapper.reset(this);
     }
 
+    private void hideSoftInput() {
+        InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+
+        if (mgr.isActive()) {
+            mgr.toggleSoftInput(InputMethodManager.HIDE_NOT_ALWAYS, 0);
+        } else {
+            mgr.toggleSoftInput(0, InputMethodManager.HIDE_NOT_ALWAYS);
+        }
+    }
+
     // displays either the system or the extended keyboard or non of them
-    private void showKeyboard(boolean showSystemKeyboard,
-                              boolean showExtendedKeyboard) {
+    private void showKeyboard(final boolean showSystemKeyboard,
+                              final boolean showExtendedKeyboard) {
         // no matter what we are doing ... hide the zoom controls
         // TODO: this is not working correctly as hiding the keyboard issues a
         // onScrollChange notification showing the control again ...
@@ -494,24 +504,19 @@ public class SessionActivity extends AppCompatActivity implements
         if (zoomControls.getVisibility() == View.VISIBLE)
             zoomControls.hide();
 
-        InputMethodManager mgr;
+        InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+
         if (showSystemKeyboard) {
             // hide extended keyboard
             keyboardView.setVisibility(View.GONE);
-
             // show system keyboard
-            mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            if (!mgr.isActive(sessionView))
-                Log.e(TAG,
-                        "Failed to show system keyboard: SessionView is not the active view!");
-            mgr.showSoftInput(sessionView, 0);
+            mgr.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
 
             // show modifiers keyboard
             modifiersKeyboardView.setVisibility(View.VISIBLE);
         } else if (showExtendedKeyboard) {
             // hide system keyboard
-            mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            mgr.hideSoftInputFromWindow(sessionView.getWindowToken(), 0);
+            hideSoftInput();
 
             // show extended keyboard
             keyboardView.setKeyboard(specialkeysKeyboard);
@@ -519,8 +524,7 @@ public class SessionActivity extends AppCompatActivity implements
             modifiersKeyboardView.setVisibility(View.VISIBLE);
         } else {
             // hide both
-            mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            mgr.hideSoftInputFromWindow(sessionView.getWindowToken(), 0);
+            hideSoftInput();
             keyboardView.setVisibility(View.GONE);
             modifiersKeyboardView.setVisibility(View.GONE);
 
@@ -798,7 +802,7 @@ public class SessionActivity extends AppCompatActivity implements
         session.setSurface(new BitmapDrawable(bitmap));
 
 		/*
-		 * since sessionView can only be modified from the UI thread any
+         * since sessionView can only be modified from the UI thread any
 		 * modifications to it need to be scheduled
 		 */
         uiHandler.sendEmptyMessage(UIHandler.GRAPHICS_CHANGED);
