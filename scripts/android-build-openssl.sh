@@ -106,9 +106,9 @@ do
 	esac
 done
 
-if [ ! -d $BUILD_DST/include ];
+if [ ! -d $BUILD_DST/$ARCH/include ];
 then
-	common_run mkdir -p $BUILD_DST/include
+	common_run mkdir -p $BUILD_DST/$ARCH/include
 fi
-common_run cp -L -R $BUILD_SRC/include/openssl $BUILD_DST/include/
+common_run cp -L -R $BUILD_SRC/include/openssl $BUILD_DST/$ARCH/include/
 

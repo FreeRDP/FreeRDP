@@ -50,12 +50,12 @@ do
 
 	build $OARCH $NDK_TARGET
 
-	if [ ! -d $BUILD_DST/include ];
+	if [ ! -d $BUILD_DST/$ARCH/include ];
 	then
-		common_run mkdir -p $BUILD_DST/include
+		common_run mkdir -p $BUILD_DST/$ARCH/include
 	fi
 
-	common_run cp -L -r $BUILD_SRC/libs/$OARCH/include/ $BUILD_DST/
+	common_run cp -L -r $BUILD_SRC/libs/$OARCH/include/ $BUILD_DST/$ARCH/
 	if [ ! -d $BUILD_DST/$ARCH ];
 	then
 		common_run mkdir -p $BUILD_DST/$ARCH
