@@ -278,7 +278,7 @@ public class BookmarkBase implements Parcelable, Cloneable {
         editor.putString("bookmark.debug_level",
                 debugSettings.getDebugLevel());
 
-        editor.commit();
+        editor.apply();
     }
 
     // read from shared preferences
@@ -809,6 +809,29 @@ public class BookmarkBase implements Parcelable, Cloneable {
             workDir = "";
         }
 
+        private void validate() {
+            switch(redirectSound) {
+                case 0:
+                case 1:
+                case 2:
+                    break;
+                default:
+                    redirectSound = 0;
+                    break;
+            }
+
+            switch(security) {
+                case 0:
+                case 1:
+                case 2:
+                case 3:
+                    break;
+                default:
+                    security = 0;
+                    break;
+            }
+        }
+
         public boolean getEnable3GSettings() {
             return enable3GSettings;
         }
@@ -842,6 +865,7 @@ public class BookmarkBase implements Parcelable, Cloneable {
         }
 
         public int getRedirectSound() {
+            validate();
             return redirectSound;
         }
 
@@ -858,6 +882,7 @@ public class BookmarkBase implements Parcelable, Cloneable {
         }
 
         public int getSecurity() {
+            validate();
             return security;
         }
 
