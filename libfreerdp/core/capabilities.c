@@ -2232,8 +2232,8 @@ static BOOL rdp_read_window_list_capability_set(wStream* s, UINT16 length,
 		return FALSE;
 
 	Stream_Seek_UINT32(s); /* wndSupportLevel (4 bytes) */
-	Stream_Seek_UINT8(s); /* numIconCaches (1 byte) */
-	Stream_Seek_UINT16(s); /* numIconCacheEntries (2 bytes) */
+	Stream_Read_UINT8(s, settings->RemoteAppNumIconCaches); /* numIconCaches (1 byte) */
+	Stream_Read_UINT16(s, settings->RemoteAppNumIconCacheEntries); /* numIconCacheEntries (2 bytes) */
 	return TRUE;
 }
 
@@ -2244,8 +2244,7 @@ static BOOL rdp_read_window_list_capability_set(wStream* s, UINT16 length,
  * @param settings settings
  */
 
-static BOOL rdp_write_window_list_capability_set(wStream* s,
-        rdpSettings* settings)
+static BOOL rdp_write_window_list_capability_set(wStream* s, rdpSettings* settings)
 {
 	int header;
 	UINT32 wndSupportLevel;
@@ -3913,11 +3912,19 @@ BOOL rdp_write_demand_active(wStream* s, rdpSettings* settings)
 			return FALSE;
 	}
 
+	if (settings->RemoteApplicationMode)
+	{
+		numberCapabilities += 2;
+
+		if (!rdp_write_remote_programs_capability_set(s, settings) ||
+			!rdp_write_window_list_capability_set(s, settings))
+			return FALSE;
+	}
+
 	em = Stream_GetPosition(s);
 	Stream_SetPosition(s, lm); /* go back to lengthCombinedCapabilities */
 	lengthCombinedCapabilities = (em - bm);
-	Stream_Write_UINT16(s,
-	                    lengthCombinedCapabilities); /* lengthCombinedCapabilities (2 bytes) */
+	Stream_Write_UINT16(s, lengthCombinedCapabilities); /* lengthCombinedCapabilities (2 bytes) */
 	Stream_SetPosition(s, bm); /* go back to numberCapabilities */
 	Stream_Write_UINT16(s, numberCapabilities); /* numberCapabilities (2 bytes) */
 #ifdef WITH_DEBUG_CAPABILITIES
