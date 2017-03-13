@@ -181,10 +181,9 @@ static void printer_win_free_printer(rdpPrinter* printer)
 }
 
 static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver,
-	const char* name, const WCHAR* drivername, BOOL is_default)
+	const WCHAR* name, const WCHAR* drivername, BOOL is_default)
 {
 	rdpWinPrinter* win_printer;
-	wchar_t wname[256];
 	DWORD needed;
 	int status;
 	PRINTER_INFO_2 *prninfo=NULL;
@@ -194,7 +193,8 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver,
 		return NULL;
 
 	win_printer->printer.id = win_driver->id_sequence++;
-	win_printer->printer.name = _strdup(name);
+	ConvertFromUnicode(CP_UTF8, 0, name, -1, &win_printer->printer.name, 0, NULL, NULL);
+
 	if (!win_printer->printer.name)
 	{
 		free(win_printer);
@@ -206,8 +206,7 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver,
 	win_printer->printer.FindPrintJob = printer_win_find_printjob;
 	win_printer->printer.Free = printer_win_free_printer;
 
-	swprintf(wname, 256, L"%hs", name);
-	OpenPrinter(wname, &(win_printer->hPrinter), NULL);
+	OpenPrinter(name, &(win_printer->hPrinter), NULL);
 
 	GetPrinter(win_printer->hPrinter, 2, (LPBYTE) prninfo, 0, &needed);
 	prninfo = (PRINTER_INFO_2*) GlobalAlloc(GPTR,needed);
@@ -239,8 +238,7 @@ static rdpPrinter** printer_win_enum_printers(rdpPrinterDriver* driver)
 	rdpPrinter** printers;
 	int num_printers;
 	int i;
-	char pname[1000];
-	size_t charsConverted;
+	char* pname = NULL;
 	PRINTER_INFO_2* prninfo = NULL;
 	DWORD needed, returned;
 
@@ -270,9 +268,8 @@ static rdpPrinter** printer_win_enum_printers(rdpPrinterDriver* driver)
 
 	for (i = 0; i < (int) returned; i++)
 	{
-		wcstombs_s(&charsConverted, pname, 1000, prninfo[i].pPrinterName, _TRUNCATE);
 		printers[num_printers++] = printer_win_new_printer((rdpWinPrinterDriver*)driver,
-			pname, prninfo[i].pDriverName, 0);
+			prninfo[i].pPrinterName, prninfo[i].pDriverName, 0);
 	}
 
 	GlobalFree(prninfo);
