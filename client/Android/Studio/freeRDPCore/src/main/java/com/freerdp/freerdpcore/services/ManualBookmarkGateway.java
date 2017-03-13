@@ -31,43 +31,43 @@ public class ManualBookmarkGateway extends BookmarkBaseGateway {
 
     @Override
     protected String getBookmarkTableName() {
-        return "tbl_manual_bookmarks";
+        return BookmarkDB.DB_TABLE_BOOKMARK;
     }
 
     @Override
     protected void addBookmarkSpecificColumns(BookmarkBase bookmark, ContentValues columns) {
         ManualBookmark bm = (ManualBookmark) bookmark;
-        columns.put("hostname", bm.getHostname());
-        columns.put("port", bm.getPort());
+        columns.put(BookmarkDB.DB_KEY_BOOKMARK_HOSTNAME, bm.getHostname());
+        columns.put(BookmarkDB.DB_KEY_BOOKMARK_PORT, bm.getPort());
 
         // gateway settings
-        columns.put("enable_gateway_settings", bm.getEnableGatewaySettings());
-        columns.put("gateway_hostname", bm.getGatewaySettings().getHostname());
-        columns.put("gateway_port", bm.getGatewaySettings().getPort());
-        columns.put("gateway_username", bm.getGatewaySettings().getUsername());
-        columns.put("gateway_password", bm.getGatewaySettings().getPassword());
-        columns.put("gateway_domain", bm.getGatewaySettings().getDomain());
+        columns.put(BookmarkDB.DB_KEY_BOOKMARK_GW_ENABLE, bm.getEnableGatewaySettings());
+        columns.put(BookmarkDB.DB_KEY_BOOKMARK_GW_HOSTNAME, bm.getGatewaySettings().getHostname());
+        columns.put(BookmarkDB.DB_KEY_BOOKMARK_GW_PORT, bm.getGatewaySettings().getPort());
+        columns.put(BookmarkDB.DB_KEY_BOOKMARK_GW_USERNAME, bm.getGatewaySettings().getUsername());
+        columns.put(BookmarkDB.DB_KEY_BOOKMARK_GW_PASSWORD, bm.getGatewaySettings().getPassword());
+        columns.put(BookmarkDB.DB_KEY_BOOKMARK_GW_DOMAIN, bm.getGatewaySettings().getDomain());
     }
 
     @Override
     protected void addBookmarkSpecificColumns(ArrayList<String> columns) {
-        columns.add("hostname");
-        columns.add("port");
-        columns.add("enable_gateway_settings");
-        columns.add("gateway_hostname");
-        columns.add("gateway_port");
-        columns.add("gateway_username");
-        columns.add("gateway_password");
-        columns.add("gateway_domain");
+        columns.add(BookmarkDB.DB_KEY_BOOKMARK_HOSTNAME);
+        columns.add(BookmarkDB.DB_KEY_BOOKMARK_PORT);
+        columns.add(BookmarkDB.DB_KEY_BOOKMARK_GW_ENABLE);
+        columns.add(BookmarkDB.DB_KEY_BOOKMARK_GW_HOSTNAME);
+        columns.add(BookmarkDB.DB_KEY_BOOKMARK_GW_PORT);
+        columns.add(BookmarkDB.DB_KEY_BOOKMARK_GW_USERNAME);
+        columns.add(BookmarkDB.DB_KEY_BOOKMARK_GW_PASSWORD);
+        columns.add(BookmarkDB.DB_KEY_BOOKMARK_GW_DOMAIN);
     }
 
     @Override
     protected void readBookmarkSpecificColumns(BookmarkBase bookmark, Cursor cursor) {
         ManualBookmark bm = (ManualBookmark) bookmark;
-        bm.setHostname(cursor.getString(cursor.getColumnIndex("hostname")));
-        bm.setPort(cursor.getInt(cursor.getColumnIndex("port")));
+        bm.setHostname(cursor.getString(cursor.getColumnIndex(BookmarkDB.DB_KEY_BOOKMARK_HOSTNAME)));
+        bm.setPort(cursor.getInt(cursor.getColumnIndex(BookmarkDB.DB_KEY_BOOKMARK_PORT)));
 
-        bm.setEnableGatewaySettings(cursor.getInt(cursor.getColumnIndex("enable_gateway_settings")) == 0 ? false : true);
+        bm.setEnableGatewaySettings(cursor.getInt(cursor.getColumnIndex(BookmarkDB.DB_KEY_BOOKMARK_GW_ENABLE)) != 0);
         readGatewaySettings(bm, cursor);
     }
 
@@ -75,7 +75,9 @@ public class ManualBookmarkGateway extends BookmarkBaseGateway {
         if (pattern.length() == 0)
             return null;
 
-        Cursor cursor = queryBookmarks("label = '" + pattern + "' OR hostname = '" + pattern + "'", "label");
+        Cursor cursor = queryBookmarks(BookmarkDB.DB_KEY_BOOKMARK_LABEL + " = '" + pattern +
+                        "' OR " + BookmarkDB.DB_KEY_BOOKMARK_HOSTNAME + " = '" + pattern + "'",
+                BookmarkDB.DB_KEY_BOOKMARK_LABEL);
         BookmarkBase bookmark = null;
         if (cursor.moveToFirst() && (cursor.getCount() > 0))
             bookmark = getBookmarkFromCursor(cursor);
@@ -85,7 +87,9 @@ public class ManualBookmarkGateway extends BookmarkBaseGateway {
     }
 
     public ArrayList<BookmarkBase> findByLabelOrHostnameLike(String pattern) {
-        Cursor cursor = queryBookmarks("label LIKE '%" + pattern + "%' OR hostname LIKE '%" + pattern + "%'", "label");
+        Cursor cursor = queryBookmarks(BookmarkDB.DB_KEY_BOOKMARK_LABEL + " LIKE '%" +
+                pattern + "%' OR " + BookmarkDB.DB_KEY_BOOKMARK_HOSTNAME + " LIKE '%" +
+                pattern + "%'", BookmarkDB.DB_KEY_BOOKMARK_LABEL);
         ArrayList<BookmarkBase> bookmarks = new ArrayList<BookmarkBase>(cursor.getCount());
 
         if (cursor.moveToFirst() && (cursor.getCount() > 0)) {
@@ -100,10 +104,10 @@ public class ManualBookmarkGateway extends BookmarkBaseGateway {
 
     private void readGatewaySettings(ManualBookmark bookmark, Cursor cursor) {
         ManualBookmark.GatewaySettings gatewaySettings = bookmark.getGatewaySettings();
-        gatewaySettings.setHostname(cursor.getString(cursor.getColumnIndex("gateway_hostname")));
-        gatewaySettings.setPort(cursor.getInt(cursor.getColumnIndex("gateway_port")));
-        gatewaySettings.setUsername(cursor.getString(cursor.getColumnIndex("gateway_username")));
-        gatewaySettings.setPassword(cursor.getString(cursor.getColumnIndex("gateway_password")));
-        gatewaySettings.setDomain(cursor.getString(cursor.getColumnIndex("gateway_domain")));
+        gatewaySettings.setHostname(cursor.getString(cursor.getColumnIndex(BookmarkDB.DB_KEY_BOOKMARK_GW_HOSTNAME)));
+        gatewaySettings.setPort(cursor.getInt(cursor.getColumnIndex(BookmarkDB.DB_KEY_BOOKMARK_GW_PORT)));
+        gatewaySettings.setUsername(cursor.getString(cursor.getColumnIndex(BookmarkDB.DB_KEY_BOOKMARK_GW_USERNAME)));
+        gatewaySettings.setPassword(cursor.getString(cursor.getColumnIndex(BookmarkDB.DB_KEY_BOOKMARK_GW_PASSWORD)));
+        gatewaySettings.setDomain(cursor.getString(cursor.getColumnIndex(BookmarkDB.DB_KEY_BOOKMARK_GW_DOMAIN)));
     }
 }
