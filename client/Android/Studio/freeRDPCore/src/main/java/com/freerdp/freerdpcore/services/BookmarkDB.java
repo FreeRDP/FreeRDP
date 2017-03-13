@@ -9,6 +9,7 @@
 
 package com.freerdp.freerdpcore.services;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -25,14 +26,62 @@ public class BookmarkDB extends SQLiteOpenHelper {
     private static final int DB_VERSION = 8;
     private static final String DB_BACKUP_PREFIX = "temp_";
     private static final String DB_NAME = "bookmarks.db";
-    private static final String DB_TABLE_BOOKMARK = "tbl_manual_bookmarks";
-    private static final String DB_TABLE_SCREEN = "tbl_screen_settings";
-    private static final String DB_TABLE_PERFORMANCE = "tbl_performance_flags";
+    static final String DB_TABLE_BOOKMARK = "tbl_manual_bookmarks";
+    static final String DB_TABLE_SCREEN = "tbl_screen_settings";
+    static final String DB_TABLE_PERFORMANCE = "tbl_performance_flags";
     private static final String[] DB_TABLES = {
             DB_TABLE_BOOKMARK,
             DB_TABLE_SCREEN,
             DB_TABLE_PERFORMANCE
     };
+
+    static final String DB_KEY_SCREEN_COLORS = "colors";
+    static final String DB_KEY_SCREEN_RESOLUTION = "resolution";
+    static final String DB_KEY_SCREEN_WIDTH = "width";
+    static final String DB_KEY_SCREEN_HEIGHT = "height";
+
+    static final String DB_KEY_SCREEN_SETTINGS = "screen_settings";
+    static final String DB_KEY_SCREEN_SETTINGS_3G = "screen_3g";
+    static final String DB_KEY_PERFORMANCE_FLAGS = "performance_flags";
+    static final String DB_KEY_PERFORMANCE_FLAGS_3G = "performance_3g";
+
+    static final String DB_KEY_PERFORMANCE_RFX = "perf_remotefx";
+    static final String DB_KEY_PERFORMANCE_GFX = "perf_gfx";
+    static final String DB_KEY_PERFORMANCE_H264 = "perf_gfx_h264";
+    static final String DB_KEY_PERFORMANCE_WALLPAPER = "perf_wallpaper";
+    static final String DB_KEY_PERFORMANCE_THEME = "perf_theming";
+    static final String DB_KEY_PERFORMANCE_DRAG = "perf_full_window_drag";
+    static final String DB_KEY_PERFORMANCE_MENU_ANIMATIONS = "perf_menu_animations";
+    static final String DB_KEY_PERFORMANCE_FONTS = "perf_font_smoothing";
+    static final String DB_KEY_PERFORMANCE_COMPOSITION = "perf_desktop_composition";
+
+    static final String DB_KEY_BOOKMARK_LABEL = "label";
+    static final String DB_KEY_BOOKMARK_HOSTNAME = "hostname";
+    static final String DB_KEY_BOOKMARK_USERNAME = "username";
+    static final String DB_KEY_BOOKMARK_PASSWORD = "password";
+    static final String DB_KEY_BOOKMARK_DOMAIN = "domain";
+    static final String DB_KEY_BOOKMARK_PORT = "port";
+
+    static final String DB_KEY_BOOKMARK_REDIRECT_SDCARD = "redirect_sdcard";
+    static final String DB_KEY_BOOKMARK_REDIRECT_SOUND = "redirect_sound";
+    static final String DB_KEY_BOOKMARK_REDIRECT_MICROPHONE = "redirect_microphone";
+    static final String DB_KEY_BOOKMARK_SECURITY = "security";
+    static final String DB_KEY_BOOKMARK_REMOTE_PROGRAM = "remote_program";
+    static final String DB_KEY_BOOKMARK_WORK_DIR = "work_dir";
+    static final String DB_KEY_BOOKMARK_ASYNC_CHANNEL = "async_channel";
+    static final String DB_KEY_BOOKMARK_ASYNC_TRANSPORT = "async_transport";
+    static final String DB_KEY_BOOKMARK_ASYNC_INPUT = "async_input";
+    static final String DB_KEY_BOOKMARK_ASYNC_UPDATE = "async_update";
+    static final String DB_KEY_BOOKMARK_CONSOLE_MODE = "console_mode";
+    static final String DB_KEY_BOOKMARK_DEBUG_LEVEL = "debug_level";
+
+    static final String DB_KEY_BOOKMARK_GW_ENABLE = "enable_gateway_settings";
+    static final String DB_KEY_BOOKMARK_GW_HOSTNAME = "gateway_hostname";
+    static final String DB_KEY_BOOKMARK_GW_PORT = "gateway_port";
+    static final String DB_KEY_BOOKMARK_GW_USERNAME = "gateway_username";
+    static final String DB_KEY_BOOKMARK_GW_PASSWORD = "gateway_password";
+    static final String DB_KEY_BOOKMARK_GW_DOMAIN = "gateway_domain";
+    static final String DB_KEY_BOOKMARK_3G_ENABLE = "enable_3g_settings";
 
     public BookmarkDB(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -44,7 +93,7 @@ public class BookmarkDB extends SQLiteOpenHelper {
         try {
             c = db.rawQuery("SELECT * FROM " + tableName + " LIMIT 1", null);
             if (c != null) {
-                ar = new ArrayList<String>(Arrays.asList(c.getColumnNames()));
+                ar = new ArrayList<>(Arrays.asList(c.getColumnNames()));
             }
         } catch (Exception e) {
             Log.v(tableName, e.getMessage(), e);
@@ -91,25 +140,25 @@ public class BookmarkDB extends SQLiteOpenHelper {
         final String sqlScreenSettings =
                 "CREATE TABLE IF NOT EXISTS " + DB_TABLE_SCREEN + " ("
                         + ID + " INTEGER PRIMARY KEY, "
-                        + "colors INTEGER DEFAULT 16, "
-                        + "resolution INTEGER DEFAULT 0, "
-                        + "width, "
-                        + "height);";
+                        + DB_KEY_SCREEN_COLORS + " INTEGER DEFAULT 16, "
+                        + DB_KEY_SCREEN_RESOLUTION + " INTEGER DEFAULT 0, "
+                        + DB_KEY_SCREEN_WIDTH + ", "
+                        + DB_KEY_SCREEN_HEIGHT + ");";
 
         db.execSQL(sqlScreenSettings);
 
         final String sqlPerformanceFlags =
                 "CREATE TABLE IF NOT EXISTS " + DB_TABLE_PERFORMANCE + " ("
                         + ID + " INTEGER PRIMARY KEY, "
-                        + "perf_remotefx INTEGER, "
-                        + "perf_gfx INTEGER, "
-                        + "perf_gfx_h264 INTEGER, "
-                        + "perf_wallpaper INTEGER, "
-                        + "perf_theming INTEGER, "
-                        + "perf_full_window_drag INTEGER, "
-                        + "perf_menu_animations INTEGER, "
-                        + "perf_font_smoothing INTEGER, "
-                        + "perf_desktop_composition INTEGER);";
+                        + DB_KEY_PERFORMANCE_RFX + " INTEGER, "
+                        + DB_KEY_PERFORMANCE_GFX + " INTEGER, "
+                        + DB_KEY_PERFORMANCE_H264 + " INTEGER, "
+                        + DB_KEY_PERFORMANCE_WALLPAPER + " INTEGER, "
+                        + DB_KEY_PERFORMANCE_THEME + " INTEGER, "
+                        + DB_KEY_PERFORMANCE_DRAG + " INTEGER, "
+                        + DB_KEY_PERFORMANCE_MENU_ANIMATIONS + " INTEGER, "
+                        + DB_KEY_PERFORMANCE_FONTS + " INTEGER, "
+                        + DB_KEY_PERFORMANCE_COMPOSITION + " INTEGER);";
 
         db.execSQL(sqlPerformanceFlags);
 
@@ -173,66 +222,56 @@ public class BookmarkDB extends SQLiteOpenHelper {
     }
 
     private void insertDefault(SQLiteDatabase db) {
-        final String sqlInsertDefaultScreenEntry =
-                "INSERT INTO " + DB_TABLE_SCREEN + " ("
-                        + "colors, "
-                        + "resolution, "
-                        + "width, "
-                        + "height) "
-                        + "VALUES ( "
-                        + "32, 1, 1024, 768);";
-        db.execSQL(sqlInsertDefaultScreenEntry);
+        ContentValues screenValues = new ContentValues();
+        screenValues.put(DB_KEY_SCREEN_COLORS, 32);
+        screenValues.put(DB_KEY_SCREEN_RESOLUTION, 1);
+        screenValues.put(DB_KEY_SCREEN_WIDTH, 1024);
+        screenValues.put(DB_KEY_SCREEN_HEIGHT, 768);
 
-        final String sqlInsertDefaultPerfFlags =
-                "INSERT INTO " + DB_TABLE_PERFORMANCE + " ("
-                        + "perf_remotefx, "
-                        + "perf_gfx, "
-                        + "perf_gfx_h264, "
-                        + "perf_wallpaper, "
-                        + "perf_theming, "
-                        + "perf_full_window_drag, "
-                        + "perf_menu_animations, "
-                        + "perf_font_smoothing, "
-                        + "perf_desktop_composition) "
-                        + "VALUES ( "
-                        + "1, 1, 1, 0, 0, 0, 0, 0, 0);";
-        db.execSQL(sqlInsertDefaultPerfFlags);
+        final long idScreen = db.insert(DB_TABLE_SCREEN, null, screenValues);
+        final long idScreen3g = db.insert(DB_TABLE_SCREEN, null, screenValues);
 
-        final String sqlInsertDefaultSessionEntry =
-                "INSERT INTO " + DB_TABLE_BOOKMARK + " ("
-                        + "label, "
-                        + "hostname, "
-                        + "username, "
-                        + "password, "
-                        + "domain, "
-                        + "port, "
-                        + "screen_settings, "
-                        + "performance_flags, "
-                        + "screen_3g, "
-                        + "performance_3g, "
-                        + "redirect_sdcard, "
-                        + "redirect_sound, "
-                        + "redirect_microphone, "
-                        + "security, "
-                        + "remote_program, "
-                        + "work_dir, "
-                        + "async_channel, "
-                        + "async_transport, "
-                        + "async_input, "
-                        + "async_update, "
-                        + "console_mode, "
-                        + "debug_level ) "
-                        + "VALUES ( "
-                        + "'Test Server', "
-                        + "'testservice.afreerdp.com', "
-                        + "'', "
-                        + "'', "
-                        + "'', "
-                        + "3389, "
-                        + "1, 1, 2, 2, 0, 0, 0, 0, "
-                        + "'', '', "
-                        + "1, 1, 1, 1, 0, 'INFO');";
-        db.execSQL(sqlInsertDefaultSessionEntry);
+        ContentValues performanceValues = new ContentValues();
+        performanceValues.put(DB_KEY_PERFORMANCE_RFX, 1);
+        performanceValues.put(DB_KEY_PERFORMANCE_GFX, 1);
+        performanceValues.put(DB_KEY_PERFORMANCE_H264, 0);
+        performanceValues.put(DB_KEY_PERFORMANCE_WALLPAPER, 0);
+        performanceValues.put(DB_KEY_PERFORMANCE_THEME, 0);
+        performanceValues.put(DB_KEY_PERFORMANCE_DRAG, 0);
+        performanceValues.put(DB_KEY_PERFORMANCE_MENU_ANIMATIONS, 0);
+        performanceValues.put(DB_KEY_PERFORMANCE_FONTS, 0);
+        performanceValues.put(DB_KEY_PERFORMANCE_COMPOSITION, 0);
+
+        final long idPerformance = db.insert(DB_TABLE_PERFORMANCE, null, performanceValues);
+        final long idPerformance3g = db.insert(DB_TABLE_PERFORMANCE, null, performanceValues);
+
+        ContentValues bookmarkValues = new ContentValues();
+        bookmarkValues.put(DB_KEY_BOOKMARK_LABEL, "Test Server");
+        bookmarkValues.put(DB_KEY_BOOKMARK_HOSTNAME, "testservice.afreerdp.com");
+        bookmarkValues.put(DB_KEY_BOOKMARK_USERNAME, "");
+        bookmarkValues.put(DB_KEY_BOOKMARK_PASSWORD, "");
+        bookmarkValues.put(DB_KEY_BOOKMARK_DOMAIN, "");
+        bookmarkValues.put(DB_KEY_BOOKMARK_PORT, "3389");
+
+        bookmarkValues.put(DB_KEY_SCREEN_SETTINGS, idScreen);
+        bookmarkValues.put(DB_KEY_SCREEN_SETTINGS_3G, idScreen3g);
+        bookmarkValues.put(DB_KEY_PERFORMANCE_FLAGS, idPerformance);
+        bookmarkValues.put(DB_KEY_PERFORMANCE_FLAGS_3G, idPerformance3g);
+
+        bookmarkValues.put(DB_KEY_BOOKMARK_REDIRECT_SDCARD, 0);
+        bookmarkValues.put(DB_KEY_BOOKMARK_REDIRECT_SOUND, 0);
+        bookmarkValues.put(DB_KEY_BOOKMARK_REDIRECT_MICROPHONE, 0);
+        bookmarkValues.put(DB_KEY_BOOKMARK_SECURITY, 0);
+        bookmarkValues.put(DB_KEY_BOOKMARK_REMOTE_PROGRAM, "");
+        bookmarkValues.put(DB_KEY_BOOKMARK_WORK_DIR, "");
+        bookmarkValues.put(DB_KEY_BOOKMARK_ASYNC_CHANNEL, 1);
+        bookmarkValues.put(DB_KEY_BOOKMARK_ASYNC_TRANSPORT, 0);
+        bookmarkValues.put(DB_KEY_BOOKMARK_ASYNC_INPUT, 1);
+        bookmarkValues.put(DB_KEY_BOOKMARK_ASYNC_UPDATE, 1);
+        bookmarkValues.put(DB_KEY_BOOKMARK_CONSOLE_MODE, 0);
+        bookmarkValues.put(DB_KEY_BOOKMARK_DEBUG_LEVEL, "INFO");
+
+        db.insert(DB_TABLE_BOOKMARK, null, bookmarkValues);
     }
 
     @Override
@@ -245,42 +284,42 @@ public class BookmarkDB extends SQLiteOpenHelper {
         return (
                 "CREATE TABLE IF NOT EXISTS " + DB_TABLE_BOOKMARK + " ("
                         + ID + " INTEGER PRIMARY KEY, "
-                        + "label TEXT NOT NULL, "
-                        + "hostname TEXT NOT NULL, "
-                        + "username TEXT NOT NULL, "
-                        + "password TEXT, "
-                        + "domain TEXT, "
-                        + "port TEXT, "
-                        + "screen_settings INTEGER NOT NULL, "
-                        + "performance_flags INTEGER NOT NULL, "
+                        + DB_KEY_BOOKMARK_LABEL + " TEXT NOT NULL, "
+                        + DB_KEY_BOOKMARK_HOSTNAME + " TEXT NOT NULL, "
+                        + DB_KEY_BOOKMARK_USERNAME + " TEXT NOT NULL, "
+                        + DB_KEY_BOOKMARK_PASSWORD + " TEXT, "
+                        + DB_KEY_BOOKMARK_DOMAIN + " TEXT, "
+                        + DB_KEY_BOOKMARK_PORT + " TEXT, "
+                        + DB_KEY_SCREEN_SETTINGS + " INTEGER NOT NULL, "
+                        + DB_KEY_PERFORMANCE_FLAGS + " INTEGER NOT NULL, "
 
-                        + "enable_gateway_settings INTEGER DEFAULT 0, "
-                        + "gateway_hostname TEXT, "
-                        + "gateway_port INTEGER DEFAULT 443, "
-                        + "gateway_username TEXT, "
-                        + "gateway_password TEXT, "
-                        + "gateway_domain TEXT, "
+                        + DB_KEY_BOOKMARK_GW_ENABLE + " INTEGER DEFAULT 0, "
+                        + DB_KEY_BOOKMARK_GW_HOSTNAME + " TEXT, "
+                        + DB_KEY_BOOKMARK_GW_PORT + " INTEGER DEFAULT 443, "
+                        + DB_KEY_BOOKMARK_GW_USERNAME + " TEXT, "
+                        + DB_KEY_BOOKMARK_GW_PASSWORD + " TEXT, "
+                        + DB_KEY_BOOKMARK_GW_DOMAIN + " TEXT, "
 
-                        + "enable_3g_settings INTEGER DEFAULT 0, "
-                        + "screen_3g INTEGER NOT NULL, "
-                        + "performance_3g INTEGER NOT NULL, "
-                        + "redirect_sdcard INTEGER DEFAULT 0, "
-                        + "redirect_sound INTEGER DEFAULT 0, "
-                        + "redirect_microphone INTEGER DEFAULT 0, "
-                        + "security INTEGER, "
-                        + "remote_program TEXT, "
-                        + "work_dir TEXT, "
-                        + "async_channel INTEGER DEFAULT 0, "
-                        + "async_transport INTEGER DEFAULT 0, "
-                        + "async_input INTEGER DEFAULT 0, "
-                        + "async_update INTEGER DEFAULT 0, "
-                        + "console_mode INTEGER, "
-                        + "debug_level TEXT DEFAULT 'INFO', "
+                        + DB_KEY_BOOKMARK_3G_ENABLE + " INTEGER DEFAULT 0, "
+                        + DB_KEY_SCREEN_SETTINGS_3G + " INTEGER NOT NULL, "
+                        + DB_KEY_PERFORMANCE_FLAGS_3G + " INTEGER NOT NULL, "
+                        + DB_KEY_BOOKMARK_REDIRECT_SDCARD + " INTEGER DEFAULT 0, "
+                        + DB_KEY_BOOKMARK_REDIRECT_SOUND + " INTEGER DEFAULT 0, "
+                        + DB_KEY_BOOKMARK_REDIRECT_MICROPHONE + " INTEGER DEFAULT 0, "
+                        + DB_KEY_BOOKMARK_SECURITY + " INTEGER, "
+                        + DB_KEY_BOOKMARK_REMOTE_PROGRAM + " TEXT, "
+                        + DB_KEY_BOOKMARK_WORK_DIR + " TEXT, "
+                        + DB_KEY_BOOKMARK_ASYNC_CHANNEL + " INTEGER DEFAULT 0, "
+                        + DB_KEY_BOOKMARK_ASYNC_TRANSPORT + " INTEGER DEFAULT 0, "
+                        + DB_KEY_BOOKMARK_ASYNC_INPUT + " INTEGER DEFAULT 0, "
+                        + DB_KEY_BOOKMARK_ASYNC_UPDATE + " INTEGER DEFAULT 0, "
+                        + DB_KEY_BOOKMARK_CONSOLE_MODE + " INTEGER, "
+                        + DB_KEY_BOOKMARK_DEBUG_LEVEL + " TEXT DEFAULT 'INFO', "
 
-                        + "FOREIGN KEY(screen_settings) REFERENCES " + DB_TABLE_SCREEN + "(" + ID + "), "
-                        + "FOREIGN KEY(performance_flags) REFERENCES " + DB_TABLE_PERFORMANCE + "(" + ID + "), "
-                        + "FOREIGN KEY(screen_3g) REFERENCES " + DB_TABLE_SCREEN + "(" + ID + "), "
-                        + "FOREIGN KEY(performance_3g) REFERENCES " + DB_TABLE_PERFORMANCE + "(" + ID + ") "
+                        + "FOREIGN KEY(" + DB_KEY_SCREEN_SETTINGS + ") REFERENCES " + DB_TABLE_SCREEN + "(" + ID + "), "
+                        + "FOREIGN KEY(" + DB_KEY_PERFORMANCE_FLAGS + ") REFERENCES " + DB_TABLE_PERFORMANCE + "(" + ID + "), "
+                        + "FOREIGN KEY(" + DB_KEY_SCREEN_SETTINGS_3G + ") REFERENCES " + DB_TABLE_SCREEN + "(" + ID + "), "
+                        + "FOREIGN KEY(" + DB_KEY_PERFORMANCE_FLAGS_3G + ") REFERENCES " + DB_TABLE_PERFORMANCE + "(" + ID + ") "
 
                         + ");");
     }

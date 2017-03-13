@@ -26,6 +26,37 @@ public abstract class BookmarkBaseGateway {
     private final static String TAG = "BookmarkBaseGateway";
     private SQLiteOpenHelper bookmarkDB;
 
+    private static final String JOIN_PREFIX = "join_";
+    private static final String KEY_BOOKMARK_ID = "bookmarkId";
+    private static final String KEY_SCREEN_COLORS = "screenColors";
+    private static final String KEY_SCREEN_COLORS_3G = "screenColors3G";
+    private static final String KEY_SCREEN_RESOLUTION = "screenResolution";
+    private static final String KEY_SCREEN_RESOLUTION_3G = "screenResolution3G";
+    private static final String KEY_SCREEN_WIDTH = "screenWidth";
+    private static final String KEY_SCREEN_WIDTH_3G = "screenWidth3G";
+    private static final String KEY_SCREEN_HEIGHT = "screenHeight";
+    private static final String KEY_SCREEN_HEIGHT_3G = "screenHeight3G";
+
+    private static final String KEY_PERFORMANCE_RFX = "performanceRemoteFX";
+    private static final String KEY_PERFORMANCE_RFX_3G = "performanceRemoteFX3G";
+    private static final String KEY_PERFORMANCE_GFX = "performanceGfx";
+    private static final String KEY_PERFORMANCE_GFX_3G = "performanceGfx3G";
+    private static final String KEY_PERFORMANCE_H264 = "performanceGfxH264";
+    private static final String KEY_PERFORMANCE_H264_3G = "performanceGfxH2643G";
+    private static final String KEY_PERFORMANCE_WALLPAPER = "performanceWallpaper";
+    private static final String KEY_PERFORMANCE_WALLPAPER_3G = "performanceWallpaper3G";
+    private static final String KEY_PERFORMANCE_THEME = "performanceTheming";
+    private static final String KEY_PERFORMANCE_THEME_3G = "performanceTheming3G";
+
+    private static final String KEY_PERFORMANCE_DRAG = "performanceFullWindowDrag";
+    private static final String KEY_PERFORMANCE_DRAG_3G = "performanceFullWindowDrag3G";
+    private static final String KEY_PERFORMANCE_MENU_ANIMATIONS = "performanceMenuAnimations";
+    private static final String KEY_PERFORMANCE_MENU_ANIMATIONS_3G = "performanceMenuAnimations3G";
+    private static final String KEY_PERFORMANCE_FONTS = "performanceFontSmoothing";
+    private static final String KEY_PERFORMANCE_FONTS_3G = "performanceFontSmoothing3G";
+    private static final String KEY_PERFORMANCE_COMPOSITION = "performanceDesktopComposition";
+    private static final String KEY_PERFORMANCE_COMPOSITION_3G = "performanceDesktopComposition3G";
+
     public BookmarkBaseGateway(SQLiteOpenHelper bookmarkDB) {
         this.bookmarkDB = bookmarkDB;
     }
@@ -47,36 +78,36 @@ public abstract class BookmarkBaseGateway {
 
         long rowid;
         ContentValues values = new ContentValues();
-        values.put("label", bookmark.getLabel());
-        values.put("username", bookmark.getUsername());
-        values.put("password", bookmark.getPassword());
-        values.put("domain", bookmark.getDomain());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_LABEL, bookmark.getLabel());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_USERNAME, bookmark.getUsername());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_PASSWORD, bookmark.getPassword());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_DOMAIN, bookmark.getDomain());
         // insert screen and performance settings
         rowid = insertScreenSettings(db, bookmark.getScreenSettings());
-        values.put("screen_settings", rowid);
+        values.put(BookmarkDB.DB_KEY_SCREEN_SETTINGS, rowid);
         rowid = insertPerformanceFlags(db, bookmark.getPerformanceFlags());
-        values.put("performance_flags", rowid);
+        values.put(BookmarkDB.DB_KEY_PERFORMANCE_FLAGS, rowid);
 
         // advanced settings
-        values.put("enable_3g_settings", bookmark.getAdvancedSettings().getEnable3GSettings());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_3G_ENABLE, bookmark.getAdvancedSettings().getEnable3GSettings());
         // insert 3G screen and 3G performance settings
         rowid = insertScreenSettings(db, bookmark.getAdvancedSettings().getScreen3G());
-        values.put("screen_3g", rowid);
+        values.put(BookmarkDB.DB_KEY_SCREEN_SETTINGS_3G, rowid);
         rowid = insertPerformanceFlags(db, bookmark.getAdvancedSettings().getPerformance3G());
-        values.put("performance_3g", rowid);
-        values.put("redirect_sdcard", bookmark.getAdvancedSettings().getRedirectSDCard());
-        values.put("redirect_sound", bookmark.getAdvancedSettings().getRedirectSound());
-        values.put("redirect_microphone", bookmark.getAdvancedSettings().getRedirectMicrophone());
-        values.put("security", bookmark.getAdvancedSettings().getSecurity());
-        values.put("console_mode", bookmark.getAdvancedSettings().getConsoleMode());
-        values.put("remote_program", bookmark.getAdvancedSettings().getRemoteProgram());
-        values.put("work_dir", bookmark.getAdvancedSettings().getWorkDir());
+        values.put(BookmarkDB.DB_KEY_PERFORMANCE_FLAGS_3G, rowid);
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_REDIRECT_SDCARD, bookmark.getAdvancedSettings().getRedirectSDCard());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_REDIRECT_SOUND, bookmark.getAdvancedSettings().getRedirectSound());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_REDIRECT_MICROPHONE, bookmark.getAdvancedSettings().getRedirectMicrophone());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_SECURITY, bookmark.getAdvancedSettings().getSecurity());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_CONSOLE_MODE, bookmark.getAdvancedSettings().getConsoleMode());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_REMOTE_PROGRAM, bookmark.getAdvancedSettings().getRemoteProgram());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_WORK_DIR, bookmark.getAdvancedSettings().getWorkDir());
 
-        values.put("async_channel", bookmark.getDebugSettings().getAsyncChannel());
-        values.put("async_transport", bookmark.getDebugSettings().getAsyncTransport());
-        values.put("async_input", bookmark.getDebugSettings().getAsyncInput());
-        values.put("async_update", bookmark.getDebugSettings().getAsyncUpdate());
-        values.put("debug_level", bookmark.getDebugSettings().getDebugLevel());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_CHANNEL, bookmark.getDebugSettings().getAsyncChannel());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_TRANSPORT, bookmark.getDebugSettings().getAsyncTransport());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_INPUT, bookmark.getDebugSettings().getAsyncInput());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_UPDATE, bookmark.getDebugSettings().getAsyncUpdate());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_DEBUG_LEVEL, bookmark.getDebugSettings().getDebugLevel());
 
         // add any special columns
         addBookmarkSpecificColumns(bookmark, values);
@@ -94,32 +125,32 @@ public abstract class BookmarkBaseGateway {
 
         // bookmark settings
         ContentValues values = new ContentValues();
-        values.put("label", bookmark.getLabel());
-        values.put("username", bookmark.getUsername());
-        values.put("password", bookmark.getPassword());
-        values.put("domain", bookmark.getDomain());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_LABEL, bookmark.getLabel());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_USERNAME, bookmark.getUsername());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_PASSWORD, bookmark.getPassword());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_DOMAIN, bookmark.getDomain());
         // update screen and performance settings settings
         updateScreenSettings(db, bookmark);
         updatePerformanceFlags(db, bookmark);
 
         // advanced settings
-        values.put("enable_3g_settings", bookmark.getAdvancedSettings().getEnable3GSettings());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_3G_ENABLE, bookmark.getAdvancedSettings().getEnable3GSettings());
         // update 3G screen and 3G performance settings settings
         updateScreenSettings3G(db, bookmark);
         updatePerformanceFlags3G(db, bookmark);
-        values.put("redirect_sdcard", bookmark.getAdvancedSettings().getRedirectSDCard());
-        values.put("redirect_sound", bookmark.getAdvancedSettings().getRedirectSound());
-        values.put("redirect_microphone", bookmark.getAdvancedSettings().getRedirectMicrophone());
-        values.put("security", bookmark.getAdvancedSettings().getSecurity());
-        values.put("console_mode", bookmark.getAdvancedSettings().getConsoleMode());
-        values.put("remote_program", bookmark.getAdvancedSettings().getRemoteProgram());
-        values.put("work_dir", bookmark.getAdvancedSettings().getWorkDir());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_REDIRECT_SDCARD, bookmark.getAdvancedSettings().getRedirectSDCard());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_REDIRECT_SOUND, bookmark.getAdvancedSettings().getRedirectSound());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_REDIRECT_MICROPHONE, bookmark.getAdvancedSettings().getRedirectMicrophone());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_SECURITY, bookmark.getAdvancedSettings().getSecurity());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_CONSOLE_MODE, bookmark.getAdvancedSettings().getConsoleMode());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_REMOTE_PROGRAM, bookmark.getAdvancedSettings().getRemoteProgram());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_WORK_DIR, bookmark.getAdvancedSettings().getWorkDir());
 
-        values.put("async_channel", bookmark.getDebugSettings().getAsyncChannel());
-        values.put("async_transport", bookmark.getDebugSettings().getAsyncTransport());
-        values.put("async_input", bookmark.getDebugSettings().getAsyncInput());
-        values.put("async_update", bookmark.getDebugSettings().getAsyncUpdate());
-        values.put("debug_level", bookmark.getDebugSettings().getDebugLevel());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_CHANNEL, bookmark.getDebugSettings().getAsyncChannel());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_TRANSPORT, bookmark.getDebugSettings().getAsyncTransport());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_INPUT, bookmark.getDebugSettings().getAsyncInput());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_UPDATE, bookmark.getDebugSettings().getAsyncUpdate());
+        values.put(BookmarkDB.DB_KEY_BOOKMARK_DEBUG_LEVEL, bookmark.getDebugSettings().getDebugLevel());
 
         addBookmarkSpecificColumns(bookmark, values);
 
@@ -152,7 +183,7 @@ public abstract class BookmarkBaseGateway {
     }
 
     public BookmarkBase findByLabel(String label) {
-        Cursor cursor = queryBookmarks("label = '" + label + "'", "label");
+        Cursor cursor = queryBookmarks(BookmarkDB.DB_KEY_BOOKMARK_LABEL + " = '" + label + "'", BookmarkDB.DB_KEY_BOOKMARK_LABEL);
         if (cursor.getCount() > 1)
             Log.e(TAG, "More than one bookmark with the same label found!");
 
@@ -165,7 +196,7 @@ public abstract class BookmarkBaseGateway {
     }
 
     public ArrayList<BookmarkBase> findByLabelLike(String pattern) {
-        Cursor cursor = queryBookmarks("label LIKE '%" + pattern + "%'", "label");
+        Cursor cursor = queryBookmarks(BookmarkDB.DB_KEY_BOOKMARK_LABEL + " LIKE '%" + pattern + "%'", BookmarkDB.DB_KEY_BOOKMARK_LABEL);
         ArrayList<BookmarkBase> bookmarks = new ArrayList<BookmarkBase>(cursor.getCount());
 
         if (cursor.moveToFirst() && (cursor.getCount() > 0)) {
@@ -179,10 +210,11 @@ public abstract class BookmarkBaseGateway {
     }
 
     public ArrayList<BookmarkBase> findAll() {
-        Cursor cursor = queryBookmarks(null, "label");
-        ArrayList<BookmarkBase> bookmarks = new ArrayList<BookmarkBase>(cursor.getCount());
+        Cursor cursor = queryBookmarks(null, BookmarkDB.DB_KEY_BOOKMARK_LABEL);
+        final int count = cursor.getCount();
+        ArrayList<BookmarkBase> bookmarks = new ArrayList<>(count);
 
-        if (cursor.moveToFirst() && (cursor.getCount() > 0)) {
+        if (cursor.moveToFirst() && (count > 0)) {
             do {
                 bookmarks.add(getBookmarkFromCursor(cursor));
             } while (cursor.moveToNext());
@@ -194,15 +226,22 @@ public abstract class BookmarkBaseGateway {
 
     protected Cursor queryBookmarks(String whereClause, String orderBy) {
         // create tables string
-        String ID = BookmarkDB.ID;
-        String bmTable = getBookmarkTableName();
-        String tables = bmTable + " INNER JOIN tbl_screen_settings AS join_screen_settings ON join_screen_settings." + ID + " = " + bmTable + ".screen_settings" +
-                " INNER JOIN tbl_performance_flags AS join_performance_flags ON join_performance_flags." + ID + " = " + bmTable + ".performance_flags" +
-                " INNER JOIN tbl_screen_settings AS join_screen_3G ON join_screen_3G." + ID + " = " + bmTable + ".screen_3g" +
-                " INNER JOIN tbl_performance_flags AS join_performance_3G ON join_performance_3G." + ID + " = " + bmTable + ".performance_3g";
+        final String ID = BookmarkDB.ID;
+        final String tables = BookmarkDB.DB_TABLE_BOOKMARK + " INNER JOIN " +
+                BookmarkDB.DB_TABLE_SCREEN + " AS " + JOIN_PREFIX + BookmarkDB.DB_KEY_SCREEN_SETTINGS + " ON " + JOIN_PREFIX + BookmarkDB.DB_KEY_SCREEN_SETTINGS + "." +
+                ID + " = " + BookmarkDB.DB_TABLE_BOOKMARK + "." + BookmarkDB.DB_KEY_SCREEN_SETTINGS +
+                " INNER JOIN " + BookmarkDB.DB_TABLE_PERFORMANCE +
+                " AS " + JOIN_PREFIX + BookmarkDB.DB_KEY_PERFORMANCE_FLAGS + " ON " + JOIN_PREFIX + BookmarkDB.DB_KEY_PERFORMANCE_FLAGS + "." + ID + " = " +
+                BookmarkDB.DB_TABLE_BOOKMARK + "." + BookmarkDB.DB_KEY_PERFORMANCE_FLAGS +
+                " INNER JOIN " + BookmarkDB.DB_TABLE_SCREEN +
+                " AS " + JOIN_PREFIX + BookmarkDB.DB_KEY_SCREEN_SETTINGS_3G + " ON " + JOIN_PREFIX + BookmarkDB.DB_KEY_SCREEN_SETTINGS_3G + "." + ID + " = " +
+                BookmarkDB.DB_TABLE_BOOKMARK + "." + BookmarkDB.DB_KEY_SCREEN_SETTINGS_3G +
+                " INNER JOIN " + BookmarkDB.DB_TABLE_PERFORMANCE +
+                " AS " + JOIN_PREFIX + BookmarkDB.DB_KEY_PERFORMANCE_FLAGS_3G + " ON " + JOIN_PREFIX + BookmarkDB.DB_KEY_PERFORMANCE_FLAGS_3G + "." + ID + " = " +
+                BookmarkDB.DB_TABLE_BOOKMARK + "." + BookmarkDB.DB_KEY_PERFORMANCE_FLAGS_3G;
 
         // create columns list
-        ArrayList<String> columns = new ArrayList<String>(10);
+        ArrayList<String> columns = new ArrayList<>();
         addBookmarkColumns(columns);
         addScreenSettingsColumns(columns);
         addPerformanceFlagsColumns(columns);
@@ -210,107 +249,110 @@ public abstract class BookmarkBaseGateway {
         addPerformanceFlags3GColumns(columns);
 
         String[] cols = new String[columns.size()];
+        columns.toArray(cols);
+
         SQLiteDatabase db = getReadableDatabase();
-        return db.rawQuery(SQLiteQueryBuilder.buildQueryString(false, tables, columns.toArray(cols), whereClause, null, null, orderBy, null), null);
+        final String query = SQLiteQueryBuilder.buildQueryString(false, tables, cols, whereClause, null, null, orderBy, null);
+        return db.rawQuery(query, null);
     }
 
     private void addBookmarkColumns(ArrayList<String> columns) {
-        columns.add(getBookmarkTableName() + "." + BookmarkDB.ID + " bookmarkId");
-        columns.add("label");
-        columns.add("username");
-        columns.add("password");
-        columns.add("domain");
+        columns.add(getBookmarkTableName() + "." + BookmarkDB.ID + " " + KEY_BOOKMARK_ID);
+        columns.add(BookmarkDB.DB_KEY_BOOKMARK_LABEL);
+        columns.add(BookmarkDB.DB_KEY_BOOKMARK_USERNAME);
+        columns.add(BookmarkDB.DB_KEY_BOOKMARK_PASSWORD);
+        columns.add(BookmarkDB.DB_KEY_BOOKMARK_DOMAIN);
 
         // advanced settings
-        columns.add("enable_3g_settings");
-        columns.add("redirect_sdcard");
-        columns.add("redirect_sound");
-        columns.add("redirect_microphone");
-        columns.add("security");
-        columns.add("console_mode");
-        columns.add("remote_program");
-        columns.add("work_dir");
+        columns.add(BookmarkDB.DB_KEY_BOOKMARK_3G_ENABLE);
+        columns.add(BookmarkDB.DB_KEY_BOOKMARK_REDIRECT_SDCARD);
+        columns.add(BookmarkDB.DB_KEY_BOOKMARK_REDIRECT_SOUND);
+        columns.add(BookmarkDB.DB_KEY_BOOKMARK_REDIRECT_MICROPHONE);
+        columns.add(BookmarkDB.DB_KEY_BOOKMARK_SECURITY);
+        columns.add(BookmarkDB.DB_KEY_BOOKMARK_CONSOLE_MODE);
+        columns.add(BookmarkDB.DB_KEY_BOOKMARK_REMOTE_PROGRAM);
+        columns.add(BookmarkDB.DB_KEY_BOOKMARK_WORK_DIR);
 
         // debug settings
-        columns.add("debug_level");
-        columns.add("async_channel");
-        columns.add("async_transport");
-        columns.add("async_update");
-        columns.add("async_input");
+        columns.add(BookmarkDB.DB_KEY_BOOKMARK_DEBUG_LEVEL);
+        columns.add(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_CHANNEL);
+        columns.add(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_TRANSPORT);
+        columns.add(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_UPDATE);
+        columns.add(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_INPUT);
 
         addBookmarkSpecificColumns(columns);
     }
 
     private void addScreenSettingsColumns(ArrayList<String> columns) {
-        columns.add("join_screen_settings.colors as screenColors");
-        columns.add("join_screen_settings.resolution as screenResolution");
-        columns.add("join_screen_settings.width as screenWidth");
-        columns.add("join_screen_settings.height as screenHeight");
+        columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_SCREEN_SETTINGS + "." + BookmarkDB.DB_KEY_SCREEN_COLORS + " as " + KEY_SCREEN_COLORS);
+        columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_SCREEN_SETTINGS + "." + BookmarkDB.DB_KEY_SCREEN_RESOLUTION + " as " + KEY_SCREEN_RESOLUTION);
+        columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_SCREEN_SETTINGS + "." + BookmarkDB.DB_KEY_SCREEN_WIDTH + " as " + KEY_SCREEN_WIDTH);
+        columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_SCREEN_SETTINGS + "." + BookmarkDB.DB_KEY_SCREEN_HEIGHT + " as " + KEY_SCREEN_HEIGHT);
     }
 
     private void addPerformanceFlagsColumns(ArrayList<String> columns) {
-        columns.add("join_performance_flags.perf_remotefx as performanceRemoteFX");
-        columns.add("join_performance_flags.perf_gfx as performanceGfx");
-        columns.add("join_performance_flags.perf_gfx_h264 as performanceGfxH264");
-        columns.add("join_performance_flags.perf_wallpaper as performanceWallpaper");
-        columns.add("join_performance_flags.perf_theming as performanceTheming");
-        columns.add("join_performance_flags.perf_full_window_drag as performanceFullWindowDrag");
-        columns.add("join_performance_flags.perf_menu_animations as performanceMenuAnimations");
-        columns.add("join_performance_flags.perf_font_smoothing as performanceFontSmoothing");
-        columns.add("join_performance_flags.perf_desktop_composition performanceDesktopComposition");
+        columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_PERFORMANCE_FLAGS + "." + BookmarkDB.DB_KEY_PERFORMANCE_RFX + " as " + KEY_PERFORMANCE_RFX);
+        columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_PERFORMANCE_FLAGS + "." + BookmarkDB.DB_KEY_PERFORMANCE_GFX + " as " + KEY_PERFORMANCE_GFX);
+        columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_PERFORMANCE_FLAGS + "." + BookmarkDB.DB_KEY_PERFORMANCE_H264 + " as " + KEY_PERFORMANCE_H264);
+        columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_PERFORMANCE_FLAGS + "." + BookmarkDB.DB_KEY_PERFORMANCE_WALLPAPER + " as " + KEY_PERFORMANCE_WALLPAPER);
+        columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_PERFORMANCE_FLAGS + "." + BookmarkDB.DB_KEY_PERFORMANCE_THEME + " as " + KEY_PERFORMANCE_THEME);
+        columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_PERFORMANCE_FLAGS + "." + BookmarkDB.DB_KEY_PERFORMANCE_DRAG + " as " + KEY_PERFORMANCE_DRAG);
+        columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_PERFORMANCE_FLAGS + "." + BookmarkDB.DB_KEY_PERFORMANCE_MENU_ANIMATIONS + " as " + KEY_PERFORMANCE_MENU_ANIMATIONS);
+        columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_PERFORMANCE_FLAGS + "." + BookmarkDB.DB_KEY_PERFORMANCE_FONTS + " as " + KEY_PERFORMANCE_FONTS);
+        columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_PERFORMANCE_FLAGS + "." + BookmarkDB.DB_KEY_PERFORMANCE_COMPOSITION + " " + KEY_PERFORMANCE_COMPOSITION);
     }
 
     private void addScreenSettings3GColumns(ArrayList<String> columns) {
-        columns.add("join_screen_3G.colors as screenColors3G");
-        columns.add("join_screen_3G.resolution as screenResolution3G");
-        columns.add("join_screen_3G.width as screenWidth3G");
-        columns.add("join_screen_3G.height as screenHeight3G");
+        columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_SCREEN_SETTINGS_3G + "." + BookmarkDB.DB_KEY_SCREEN_COLORS + " as " + KEY_SCREEN_COLORS_3G);
+        columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_SCREEN_SETTINGS_3G + "." + BookmarkDB.DB_KEY_SCREEN_RESOLUTION + " as " + KEY_SCREEN_RESOLUTION_3G);
+        columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_SCREEN_SETTINGS_3G + "." + BookmarkDB.DB_KEY_SCREEN_WIDTH + " as " + KEY_SCREEN_WIDTH_3G);
+        columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_SCREEN_SETTINGS_3G + "." + BookmarkDB.DB_KEY_SCREEN_HEIGHT + " as " + KEY_SCREEN_HEIGHT_3G);
     }
 
     private void addPerformanceFlags3GColumns(ArrayList<String> columns) {
-        columns.add("join_performance_3G.perf_remotefx as performanceRemoteFX3G");
-        columns.add("join_performance_3G.perf_gfx as performanceGfx3G");
-        columns.add("join_performance_3G.perf_gfx_h264 as performanceGfxH2643G");
-        columns.add("join_performance_3G.perf_wallpaper as performanceWallpaper3G");
-        columns.add("join_performance_3G.perf_theming as performanceTheming3G");
-        columns.add("join_performance_3G.perf_full_window_drag as performanceFullWindowDrag3G");
-        columns.add("join_performance_3G.perf_menu_animations as performanceMenuAnimations3G");
-        columns.add("join_performance_3G.perf_font_smoothing as performanceFontSmoothing3G");
-        columns.add("join_performance_3G.perf_desktop_composition performanceDesktopComposition3G");
+        columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_PERFORMANCE_FLAGS_3G + "." + BookmarkDB.DB_KEY_PERFORMANCE_RFX + " as " + KEY_PERFORMANCE_RFX_3G);
+        columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_PERFORMANCE_FLAGS_3G + "." + BookmarkDB.DB_KEY_PERFORMANCE_GFX + " as " + KEY_PERFORMANCE_GFX_3G);
+        columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_PERFORMANCE_FLAGS_3G + "." + BookmarkDB.DB_KEY_PERFORMANCE_H264 + " as " + KEY_PERFORMANCE_H264_3G);
+        columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_PERFORMANCE_FLAGS_3G + "." + BookmarkDB.DB_KEY_PERFORMANCE_WALLPAPER + " as " + KEY_PERFORMANCE_WALLPAPER_3G);
+        columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_PERFORMANCE_FLAGS_3G + "." + BookmarkDB.DB_KEY_PERFORMANCE_THEME + " as " + KEY_PERFORMANCE_THEME_3G);
+        columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_PERFORMANCE_FLAGS_3G + "." + BookmarkDB.DB_KEY_PERFORMANCE_DRAG + " as " + KEY_PERFORMANCE_DRAG_3G);
+        columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_PERFORMANCE_FLAGS_3G + "." + BookmarkDB.DB_KEY_PERFORMANCE_MENU_ANIMATIONS + " as " + KEY_PERFORMANCE_MENU_ANIMATIONS_3G);
+        columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_PERFORMANCE_FLAGS_3G + "." + BookmarkDB.DB_KEY_PERFORMANCE_FONTS + " as " + KEY_PERFORMANCE_FONTS_3G);
+        columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_PERFORMANCE_FLAGS_3G + "." + BookmarkDB.DB_KEY_PERFORMANCE_COMPOSITION + " " + KEY_PERFORMANCE_COMPOSITION_3G);
     }
 
     protected BookmarkBase getBookmarkFromCursor(Cursor cursor) {
         BookmarkBase bookmark = createBookmark();
-        bookmark.setId(cursor.getLong(cursor.getColumnIndex("bookmarkId")));
-        bookmark.setLabel(cursor.getString(cursor.getColumnIndex("label")));
-        bookmark.setUsername(cursor.getString(cursor.getColumnIndex("username")));
-        bookmark.setPassword(cursor.getString(cursor.getColumnIndex("password")));
-        bookmark.setDomain(cursor.getString(cursor.getColumnIndex("domain")));
+        bookmark.setId(cursor.getLong(cursor.getColumnIndex(KEY_BOOKMARK_ID)));
+        bookmark.setLabel(cursor.getString(cursor.getColumnIndex(BookmarkDB.DB_KEY_BOOKMARK_LABEL)));
+        bookmark.setUsername(cursor.getString(cursor.getColumnIndex(BookmarkDB.DB_KEY_BOOKMARK_USERNAME)));
+        bookmark.setPassword(cursor.getString(cursor.getColumnIndex(BookmarkDB.DB_KEY_BOOKMARK_PASSWORD)));
+        bookmark.setDomain(cursor.getString(cursor.getColumnIndex(BookmarkDB.DB_KEY_BOOKMARK_DOMAIN)));
         readScreenSettings(bookmark, cursor);
         readPerformanceFlags(bookmark, cursor);
 
         // advanced settings
-        bookmark.getAdvancedSettings().setEnable3GSettings(cursor.getInt(cursor.getColumnIndex("enable_3g_settings")) == 0 ? false : true);
+        bookmark.getAdvancedSettings().setEnable3GSettings(cursor.getInt(cursor.getColumnIndex(BookmarkDB.DB_KEY_BOOKMARK_3G_ENABLE)) != 0);
         readScreenSettings3G(bookmark, cursor);
         readPerformanceFlags3G(bookmark, cursor);
-        bookmark.getAdvancedSettings().setRedirectSDCard(cursor.getInt(cursor.getColumnIndex("redirect_sdcard")) == 0 ? false : true);
-        bookmark.getAdvancedSettings().setRedirectSound(cursor.getInt(cursor.getColumnIndex("redirect_sound")));
-        bookmark.getAdvancedSettings().setRedirectMicrophone(cursor.getInt(cursor.getColumnIndex("redirect_microphone")) == 0 ? false : true);
-        bookmark.getAdvancedSettings().setSecurity(cursor.getInt(cursor.getColumnIndex("security")));
-        bookmark.getAdvancedSettings().setConsoleMode(cursor.getInt(cursor.getColumnIndex("console_mode")) == 0 ? false : true);
-        bookmark.getAdvancedSettings().setRemoteProgram(cursor.getString(cursor.getColumnIndex("remote_program")));
-        bookmark.getAdvancedSettings().setWorkDir(cursor.getString(cursor.getColumnIndex("work_dir")));
+        bookmark.getAdvancedSettings().setRedirectSDCard(cursor.getInt(cursor.getColumnIndex(BookmarkDB.DB_KEY_BOOKMARK_REDIRECT_SDCARD)) != 0);
+        bookmark.getAdvancedSettings().setRedirectSound(cursor.getInt(cursor.getColumnIndex(BookmarkDB.DB_KEY_BOOKMARK_REDIRECT_SOUND)));
+        bookmark.getAdvancedSettings().setRedirectMicrophone(cursor.getInt(cursor.getColumnIndex(BookmarkDB.DB_KEY_BOOKMARK_REDIRECT_MICROPHONE)) != 0);
+        bookmark.getAdvancedSettings().setSecurity(cursor.getInt(cursor.getColumnIndex(BookmarkDB.DB_KEY_BOOKMARK_SECURITY)));
+        bookmark.getAdvancedSettings().setConsoleMode(cursor.getInt(cursor.getColumnIndex(BookmarkDB.DB_KEY_BOOKMARK_CONSOLE_MODE)) != 0);
+        bookmark.getAdvancedSettings().setRemoteProgram(cursor.getString(cursor.getColumnIndex(BookmarkDB.DB_KEY_BOOKMARK_REMOTE_PROGRAM)));
+        bookmark.getAdvancedSettings().setWorkDir(cursor.getString(cursor.getColumnIndex(BookmarkDB.DB_KEY_BOOKMARK_WORK_DIR)));
 
         bookmark.getDebugSettings().setAsyncChannel(
-                cursor.getInt(cursor.getColumnIndex("async_channel")) == 1 ? true : false);
+                cursor.getInt(cursor.getColumnIndex(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_CHANNEL)) == 1);
         bookmark.getDebugSettings().setAsyncTransport(
-                cursor.getInt(cursor.getColumnIndex("async_transport")) == 1 ? true : false);
+                cursor.getInt(cursor.getColumnIndex(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_TRANSPORT)) == 1);
         bookmark.getDebugSettings().setAsyncInput(
-                cursor.getInt(cursor.getColumnIndex("async_input")) == 1 ? true : false);
+                cursor.getInt(cursor.getColumnIndex(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_INPUT)) == 1);
         bookmark.getDebugSettings().setAsyncUpdate(
-                cursor.getInt(cursor.getColumnIndex("async_update")) == 1 ? true : false);
+                cursor.getInt(cursor.getColumnIndex(BookmarkDB.DB_KEY_BOOKMARK_ASYNC_UPDATE)) == 1);
         bookmark.getDebugSettings().setDebugLevel(cursor.getString(cursor.getColumnIndex
-                ("debug_level")));
+                (BookmarkDB.DB_KEY_BOOKMARK_DEBUG_LEVEL)));
 
         readBookmarkSpecificColumns(bookmark, cursor);
 
@@ -319,109 +361,103 @@ public abstract class BookmarkBaseGateway {
 
     private void readScreenSettings(BookmarkBase bookmark, Cursor cursor) {
         BookmarkBase.ScreenSettings screenSettings = bookmark.getScreenSettings();
-        screenSettings.setColors(cursor.getInt(cursor.getColumnIndex("screenColors")));
-        screenSettings.setResolution(cursor.getInt(cursor.getColumnIndex("screenResolution")));
-        screenSettings.setWidth(cursor.getInt(cursor.getColumnIndex("screenWidth")));
-        screenSettings.setHeight(cursor.getInt(cursor.getColumnIndex("screenHeight")));
+        screenSettings.setColors(cursor.getInt(cursor.getColumnIndex(KEY_SCREEN_COLORS)));
+        screenSettings.setResolution(cursor.getInt(cursor.getColumnIndex(KEY_SCREEN_RESOLUTION)));
+        screenSettings.setWidth(cursor.getInt(cursor.getColumnIndex(KEY_SCREEN_WIDTH)));
+        screenSettings.setHeight(cursor.getInt(cursor.getColumnIndex(KEY_SCREEN_HEIGHT)));
     }
 
     private void readPerformanceFlags(BookmarkBase bookmark, Cursor cursor) {
         BookmarkBase.PerformanceFlags perfFlags = bookmark.getPerformanceFlags();
-        perfFlags.setRemoteFX(cursor.getInt(cursor.getColumnIndex("performanceRemoteFX")) == 0 ? false : true);
-        perfFlags.setGfx(cursor.getInt(cursor.getColumnIndex("performanceGfx")) == 0 ? false :
-                true);
-        perfFlags.setH264(cursor.getInt(cursor.getColumnIndex("performanceGfxH264")) == 0 ?
-                false :
-                true);
-        perfFlags.setWallpaper(cursor.getInt(cursor.getColumnIndex("performanceWallpaper")) == 0 ? false : true);
-        perfFlags.setTheming(cursor.getInt(cursor.getColumnIndex("performanceTheming")) == 0 ? false : true);
-        perfFlags.setFullWindowDrag(cursor.getInt(cursor.getColumnIndex("performanceFullWindowDrag")) == 0 ? false : true);
-        perfFlags.setMenuAnimations(cursor.getInt(cursor.getColumnIndex("performanceMenuAnimations")) == 0 ? false : true);
-        perfFlags.setFontSmoothing(cursor.getInt(cursor.getColumnIndex("performanceFontSmoothing")) == 0 ? false : true);
-        perfFlags.setDesktopComposition(cursor.getInt(cursor.getColumnIndex("performanceDesktopComposition")) == 0 ? false : true);
+        perfFlags.setRemoteFX(cursor.getInt(cursor.getColumnIndex(KEY_PERFORMANCE_RFX)) != 0);
+        perfFlags.setGfx(cursor.getInt(cursor.getColumnIndex(KEY_PERFORMANCE_GFX)) != 0);
+        perfFlags.setH264(cursor.getInt(cursor.getColumnIndex(KEY_PERFORMANCE_H264)) != 0);
+        perfFlags.setWallpaper(cursor.getInt(cursor.getColumnIndex(KEY_PERFORMANCE_WALLPAPER)) != 0);
+        perfFlags.setTheming(cursor.getInt(cursor.getColumnIndex(KEY_PERFORMANCE_THEME)) != 0);
+        perfFlags.setFullWindowDrag(cursor.getInt(cursor.getColumnIndex(KEY_PERFORMANCE_DRAG)) != 0);
+        perfFlags.setMenuAnimations(cursor.getInt(cursor.getColumnIndex(KEY_PERFORMANCE_MENU_ANIMATIONS)) != 0);
+        perfFlags.setFontSmoothing(cursor.getInt(cursor.getColumnIndex(KEY_PERFORMANCE_FONTS)) != 0);
+        perfFlags.setDesktopComposition(cursor.getInt(cursor.getColumnIndex(KEY_PERFORMANCE_COMPOSITION)) != 0);
     }
 
     private void readScreenSettings3G(BookmarkBase bookmark, Cursor cursor) {
         BookmarkBase.ScreenSettings screenSettings = bookmark.getAdvancedSettings().getScreen3G();
-        screenSettings.setColors(cursor.getInt(cursor.getColumnIndex("screenColors3G")));
-        screenSettings.setResolution(cursor.getInt(cursor.getColumnIndex("screenResolution3G")));
-        screenSettings.setWidth(cursor.getInt(cursor.getColumnIndex("screenWidth3G")));
-        screenSettings.setHeight(cursor.getInt(cursor.getColumnIndex("screenHeight3G")));
+        screenSettings.setColors(cursor.getInt(cursor.getColumnIndex(KEY_SCREEN_COLORS_3G)));
+        screenSettings.setResolution(cursor.getInt(cursor.getColumnIndex(KEY_SCREEN_RESOLUTION_3G)));
+        screenSettings.setWidth(cursor.getInt(cursor.getColumnIndex(KEY_SCREEN_WIDTH_3G)));
+        screenSettings.setHeight(cursor.getInt(cursor.getColumnIndex(KEY_SCREEN_HEIGHT_3G)));
     }
 
     private void readPerformanceFlags3G(BookmarkBase bookmark, Cursor cursor) {
         BookmarkBase.PerformanceFlags perfFlags = bookmark.getAdvancedSettings().getPerformance3G();
-        perfFlags.setRemoteFX(cursor.getInt(cursor.getColumnIndex("performanceRemoteFX3G")) == 0 ? false : true);
-        perfFlags.setGfx(cursor.getInt(cursor.getColumnIndex("performanceGfx3G")) == 0 ? false :
-                true);
-        perfFlags.setH264(cursor.getInt(cursor.getColumnIndex("performanceGfxH2643G")) == 0 ?
-                false :
-                true);
-        perfFlags.setWallpaper(cursor.getInt(cursor.getColumnIndex("performanceWallpaper3G")) == 0 ? false : true);
-        perfFlags.setTheming(cursor.getInt(cursor.getColumnIndex("performanceTheming3G")) == 0 ? false : true);
-        perfFlags.setFullWindowDrag(cursor.getInt(cursor.getColumnIndex("performanceFullWindowDrag3G")) == 0 ? false : true);
-        perfFlags.setMenuAnimations(cursor.getInt(cursor.getColumnIndex("performanceMenuAnimations3G")) == 0 ? false : true);
-        perfFlags.setFontSmoothing(cursor.getInt(cursor.getColumnIndex("performanceFontSmoothing3G")) == 0 ? false : true);
-        perfFlags.setDesktopComposition(cursor.getInt(cursor.getColumnIndex("performanceDesktopComposition3G")) == 0 ? false : true);
+        perfFlags.setRemoteFX(cursor.getInt(cursor.getColumnIndex(KEY_PERFORMANCE_RFX_3G)) != 0);
+        perfFlags.setGfx(cursor.getInt(cursor.getColumnIndex(KEY_PERFORMANCE_GFX_3G)) != 0);
+        perfFlags.setH264(cursor.getInt(cursor.getColumnIndex(KEY_PERFORMANCE_H264_3G)) != 0);
+        perfFlags.setWallpaper(cursor.getInt(cursor.getColumnIndex(KEY_PERFORMANCE_WALLPAPER_3G)) != 0);
+        perfFlags.setTheming(cursor.getInt(cursor.getColumnIndex(KEY_PERFORMANCE_THEME_3G)) != 0);
+        perfFlags.setFullWindowDrag(cursor.getInt(cursor.getColumnIndex(KEY_PERFORMANCE_DRAG_3G)) != 0);
+        perfFlags.setMenuAnimations(cursor.getInt(cursor.getColumnIndex(KEY_PERFORMANCE_MENU_ANIMATIONS_3G)) != 0);
+        perfFlags.setFontSmoothing(cursor.getInt(cursor.getColumnIndex(KEY_PERFORMANCE_FONTS_3G)) != 0);
+        perfFlags.setDesktopComposition(cursor.getInt(cursor.getColumnIndex(KEY_PERFORMANCE_COMPOSITION_3G)) != 0);
     }
 
     private void fillScreenSettingsContentValues(BookmarkBase.ScreenSettings settings, ContentValues values) {
-        values.put("colors", settings.getColors());
-        values.put("resolution", settings.getResolution());
-        values.put("width", settings.getWidth());
-        values.put("height", settings.getHeight());
+        values.put(BookmarkDB.DB_KEY_SCREEN_COLORS, settings.getColors());
+        values.put(BookmarkDB.DB_KEY_SCREEN_RESOLUTION, settings.getResolution());
+        values.put(BookmarkDB.DB_KEY_SCREEN_WIDTH, settings.getWidth());
+        values.put(BookmarkDB.DB_KEY_SCREEN_HEIGHT, settings.getHeight());
     }
 
     private void fillPerformanceFlagsContentValues(BookmarkBase.PerformanceFlags perfFlags, ContentValues values) {
-        values.put("perf_remotefx", perfFlags.getRemoteFX());
-        values.put("perf_gfx", perfFlags.getGfx());
-        values.put("perf_gfx_h264", perfFlags.getH264());
-        values.put("perf_wallpaper", perfFlags.getWallpaper());
-        values.put("perf_theming", perfFlags.getTheming());
-        values.put("perf_full_window_drag", perfFlags.getFullWindowDrag());
-        values.put("perf_menu_animations", perfFlags.getMenuAnimations());
-        values.put("perf_font_smoothing", perfFlags.getFontSmoothing());
-        values.put("perf_desktop_composition", perfFlags.getDesktopComposition());
+        values.put(BookmarkDB.DB_KEY_PERFORMANCE_RFX, perfFlags.getRemoteFX());
+        values.put(BookmarkDB.DB_KEY_PERFORMANCE_GFX, perfFlags.getGfx());
+        values.put(BookmarkDB.DB_KEY_PERFORMANCE_H264, perfFlags.getH264());
+        values.put(BookmarkDB.DB_KEY_PERFORMANCE_WALLPAPER, perfFlags.getWallpaper());
+        values.put(BookmarkDB.DB_KEY_PERFORMANCE_THEME, perfFlags.getTheming());
+        values.put(BookmarkDB.DB_KEY_PERFORMANCE_DRAG, perfFlags.getFullWindowDrag());
+        values.put(BookmarkDB.DB_KEY_PERFORMANCE_MENU_ANIMATIONS, perfFlags.getMenuAnimations());
+        values.put(BookmarkDB.DB_KEY_PERFORMANCE_FONTS, perfFlags.getFontSmoothing());
+        values.put(BookmarkDB.DB_KEY_PERFORMANCE_COMPOSITION, perfFlags.getDesktopComposition());
     }
 
     private long insertScreenSettings(SQLiteDatabase db, BookmarkBase.ScreenSettings settings) {
         ContentValues values = new ContentValues();
         fillScreenSettingsContentValues(settings, values);
-        return db.insertOrThrow("tbl_screen_settings", null, values);
+        return db.insertOrThrow(BookmarkDB.DB_TABLE_SCREEN, null, values);
     }
 
     private boolean updateScreenSettings(SQLiteDatabase db, BookmarkBase bookmark) {
         ContentValues values = new ContentValues();
         fillScreenSettingsContentValues(bookmark.getScreenSettings(), values);
-        String whereClause = BookmarkDB.ID + " IN " + "(SELECT screen_settings FROM " + getBookmarkTableName() + " WHERE " + BookmarkDB.ID + " =  " + bookmark.getId() + ");";
-        return (db.update("tbl_screen_settings", values, whereClause, null) == 1);
+        String whereClause = BookmarkDB.ID + " IN " + "(SELECT " + BookmarkDB.DB_KEY_SCREEN_SETTINGS + " FROM " + getBookmarkTableName() + " WHERE " + BookmarkDB.ID + " =  " + bookmark.getId() + ");";
+        return (db.update(BookmarkDB.DB_TABLE_SCREEN, values, whereClause, null) == 1);
     }
 
     private boolean updateScreenSettings3G(SQLiteDatabase db, BookmarkBase bookmark) {
         ContentValues values = new ContentValues();
         fillScreenSettingsContentValues(bookmark.getAdvancedSettings().getScreen3G(), values);
-        String whereClause = BookmarkDB.ID + " IN " + "(SELECT screen_3g FROM " + getBookmarkTableName() + " WHERE " + BookmarkDB.ID + " =  " + bookmark.getId() + ");";
-        return (db.update("tbl_screen_settings", values, whereClause, null) == 1);
+        String whereClause = BookmarkDB.ID + " IN " + "(SELECT " + BookmarkDB.DB_KEY_SCREEN_SETTINGS_3G + " FROM " + getBookmarkTableName() + " WHERE " + BookmarkDB.ID + " =  " + bookmark.getId() + ");";
+        return (db.update(BookmarkDB.DB_TABLE_SCREEN, values, whereClause, null) == 1);
     }
 
     private long insertPerformanceFlags(SQLiteDatabase db, BookmarkBase.PerformanceFlags perfFlags) {
         ContentValues values = new ContentValues();
         fillPerformanceFlagsContentValues(perfFlags, values);
-        return db.insertOrThrow("tbl_performance_flags", null, values);
+        return db.insertOrThrow(BookmarkDB.DB_TABLE_PERFORMANCE, null, values);
     }
 
     private boolean updatePerformanceFlags(SQLiteDatabase db, BookmarkBase bookmark) {
         ContentValues values = new ContentValues();
         fillPerformanceFlagsContentValues(bookmark.getPerformanceFlags(), values);
-        String whereClause = BookmarkDB.ID + " IN " + "(SELECT performance_flags FROM " + getBookmarkTableName() + " WHERE " + BookmarkDB.ID + " =  " + bookmark.getId() + ");";
-        return (db.update("tbl_performance_flags", values, whereClause, null) == 1);
+        String whereClause = BookmarkDB.ID + " IN " + "(SELECT " + BookmarkDB.DB_KEY_PERFORMANCE_FLAGS + " FROM " + getBookmarkTableName() + " WHERE " + BookmarkDB.ID + " =  " + bookmark.getId() + ");";
+        return (db.update(BookmarkDB.DB_TABLE_PERFORMANCE, values, whereClause, null) == 1);
     }
 
     private boolean updatePerformanceFlags3G(SQLiteDatabase db, BookmarkBase bookmark) {
         ContentValues values = new ContentValues();
         fillPerformanceFlagsContentValues(bookmark.getAdvancedSettings().getPerformance3G(), values);
-        String whereClause = BookmarkDB.ID + " IN " + "(SELECT performance_3g FROM " + getBookmarkTableName() + " WHERE " + BookmarkDB.ID + " =  " + bookmark.getId() + ");";
-        return (db.update("tbl_performance_flags", values, whereClause, null) == 1);
+        String whereClause = BookmarkDB.ID + " IN " + "(SELECT " + BookmarkDB.DB_KEY_PERFORMANCE_FLAGS_3G + " FROM " + getBookmarkTableName() + " WHERE " + BookmarkDB.ID + " =  " + bookmark.getId() + ");";
+        return (db.update(BookmarkDB.DB_TABLE_PERFORMANCE, values, whereClause, null) == 1);
     }
 
     // safety wrappers
