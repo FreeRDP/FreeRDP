@@ -176,7 +176,7 @@ void* Stack_Peek(wStack* stack)
 		EnterCriticalSection(&stack->lock);
 
 	if (stack->size > 0)
-		obj = stack->array[stack->size];
+		obj = stack->array[stack->size - 1];
 
 	if (stack->synchronized)
 		LeaveCriticalSection(&stack->lock);
