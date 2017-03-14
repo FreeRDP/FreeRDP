@@ -115,6 +115,8 @@ WINPR_API HRESULT PathCchStripPrefixW(PWSTR pszPath, size_t cchPath);
 WINPR_API HRESULT PathCchRemoveFileSpecA(PSTR pszPath, size_t cchPath);
 WINPR_API HRESULT PathCchRemoveFileSpecW(PWSTR pszPath, size_t cchPath);
 
+WINPR_API BOOL PathIsDirectoryEmptyA(LPCSTR pszPath);
+WINPR_API BOOL PathIsDirectoryEmptyW(LPCWSTR pszPath);
 
 #ifdef UNICODE
 #define PathCchAddBackslash		PathCchAddBackslashW
@@ -139,6 +141,7 @@ WINPR_API HRESULT PathCchRemoveFileSpecW(PWSTR pszPath, size_t cchPath);
 #define PathCchStripToRoot		PathCchStripToRootW
 #define PathCchStripPrefix		PathCchStripPrefixW
 #define PathCchRemoveFileSpec		PathCchRemoveFileSpecW
+#define PathIsDirectoryEmpty	PathIsDirectoryEmptyW
 #else
 #define PathCchAddBackslash		PathCchAddBackslashA
 #define PathCchRemoveBackslash		PathCchRemoveBackslashA
@@ -162,6 +165,7 @@ WINPR_API HRESULT PathCchRemoveFileSpecW(PWSTR pszPath, size_t cchPath);
 #define PathCchStripToRoot		PathCchStripToRootA
 #define PathCchStripPrefix		PathCchStripPrefixA
 #define PathCchRemoveFileSpec		PathCchRemoveFileSpecA
+#define PathIsDirectoryEmpty	PathIsDirectoryEmptyA
 #endif
 
 /* Unix-style Paths */

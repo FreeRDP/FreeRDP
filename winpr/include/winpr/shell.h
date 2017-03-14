@@ -37,23 +37,16 @@ WINPR_API BOOL GetUserProfileDirectoryA(HANDLE hToken, LPSTR lpProfileDir, LPDWO
 
 WINPR_API BOOL GetUserProfileDirectoryW(HANDLE hToken, LPWSTR lpProfileDir, LPDWORD lpcchSize);
 
-WINPR_API BOOL PathIsDirectoryEmptyA(LPCSTR pszPath);
-
-WINPR_API BOOL PathIsDirectoryEmptyW(LPCWSTR pszPath);
-
 #ifdef __cplusplus
 }
 #endif
 
 #ifdef UNICODE
 #define GetUserProfileDirectory GetUserProfileDirectoryW
-#define PathIsDirectoryEmpty	PathIsDirectoryEmptyW
 #else
 #define GetUserProfileDirectory GetUserProfileDirectoryA
-#define PathIsDirectoryEmpty	PathIsDirectoryEmptyA
 #endif
 
 #endif
 
 #endif /* WINPR_SHELL_H */
-

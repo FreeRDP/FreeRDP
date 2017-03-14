@@ -48,7 +48,6 @@
 #include <winpr/path.h>
 #include <winpr/file.h>
 #include <winpr/stream.h>
-#include <winpr/shell.h>
 
 #include <freerdp/channels/rdpdr.h>
 
@@ -365,7 +364,7 @@ DRIVE_FILE* drive_file_new(const WCHAR* base_path, const WCHAR* path, UINT32 Pat
 BOOL drive_file_free(DRIVE_FILE* file)
 {
 	if (!file)
-		return;
+		return FALSE;
 
 	if (file->file_handle != INVALID_HANDLE_VALUE)
 	{
@@ -731,7 +730,6 @@ BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYT
                                 const WCHAR* path, UINT32 PathLength, wStream* output)
 {
 	int length;
-	BOOL ret;
 	WCHAR* ent_path;
 
 	if (!file || !path || !output)
