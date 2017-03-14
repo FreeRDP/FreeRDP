@@ -524,7 +524,7 @@ static HANDLE_OPS shmOps = {
 
 static const char* FileGetMode(DWORD dwDesiredAccess, DWORD dwCreationDisposition, BOOL* create)
 {
-	BOOL writeable = dwDesiredAccess & (GENERIC_WRITE | STANDARD_RIGHTS_WRITE | FILE_WRITE_DATA | FILE_APPEND_DATA);
+	BOOL writeable = (dwDesiredAccess & (GENERIC_WRITE | STANDARD_RIGHTS_WRITE | FILE_WRITE_DATA | FILE_APPEND_DATA)) != 0;
 
 	switch(dwCreationDisposition)
 	{
