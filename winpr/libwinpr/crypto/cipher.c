@@ -535,10 +535,19 @@ WINPR_CIPHER_CTX* winpr_Cipher_New(int cipher, int op, const BYTE* key, const BY
 
 	operation = (op == WINPR_ENCRYPT) ? 1 : 0;
 
+	/* The additional EVP_CipherInit_ex call is needed to handle
+	 * EVP_CIPH_FLAG_NON_FIPS_ALLOW flag properly because of bug in OpenSSL.
+	 */
+	if (EVP_CipherInit_ex(octx, evp, NULL, NULL, NULL, operation) != 1)
+	{
+		EVP_CIPHER_CTX_free(octx);
+		return NULL;
+	}
+
 	if (non_fips_allow)
 		EVP_CIPHER_CTX_set_flags(octx, EVP_CIPH_FLAG_NON_FIPS_ALLOW);
 
-	if (EVP_CipherInit_ex(octx, evp, NULL, key, iv, operation) != 1)
+	if (EVP_CipherInit_ex(octx, NULL, NULL, key, iv, operation) != 1)
 	{
 		EVP_CIPHER_CTX_free(octx);
 		return NULL;
