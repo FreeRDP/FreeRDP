@@ -44,6 +44,7 @@
 #include <time.h>
 #include <sys/stat.h>
 
+#include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/path.h>
 #include <winpr/file.h>
@@ -398,12 +399,15 @@ BOOL drive_file_free(DRIVE_FILE* file)
 
 BOOL drive_file_seek(DRIVE_FILE* file, UINT64 Offset)
 {
+	LONG lDistHigh;
+	DWORD dwPtrLow;
+
 	if (!file)
 		return FALSE;
 
-	LONG lDistHigh = Offset >> 32;
+	lDistHigh = Offset >> 32;
 	DEBUG_WSTR("Seek %s", file->fullpath);
-	DWORD dwPtrLow = SetFilePointer(file->file_handle, Offset & 0xFFFFFFFF, &lDistHigh, FILE_BEGIN);
+	dwPtrLow = SetFilePointer(file->file_handle, Offset & 0xFFFFFFFF, &lDistHigh, FILE_BEGIN);
 	return dwPtrLow != INVALID_SET_FILE_POINTER;
 }
 
@@ -574,7 +578,7 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 
 			if (file->file_handle == INVALID_HANDLE_VALUE)
 			{
-				WLog_ERR(TAG, "Unable to create file %s", file->fullpath);
+				WLog_ERR(TAG, "Unable to set file time %s (%d)", file->fullpath, GetLastError());
 				return FALSE;
 			}
 
@@ -626,7 +630,7 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 
 			if (file->file_handle == INVALID_HANDLE_VALUE)
 			{
-				WLog_ERR(TAG, "Unable to truncate %s to %"PRId64"", file->fullpath, size);
+				WLog_ERR(TAG, "Unable to truncate %s to %"PRId64" (%d)", file->fullpath, size, GetLastError());
 				return FALSE;
 			}
 
@@ -691,6 +695,7 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 			}
 
 #ifdef _WIN32
+
 			if (file->file_handle != INVALID_HANDLE_VALUE)
 			{
 				CloseHandle(file->file_handle);
@@ -704,9 +709,6 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 			                MOVEFILE_COPY_ALLOWED | (ReplaceIfExists ? MOVEFILE_REPLACE_EXISTING : 0)))
 			{
 				drive_file_set_fullpath(file, fullpath);
-#ifdef _WIN32
-				file->fd = OPEN(fullpath, O_RDWR | O_BINARY);
-#endif
 			}
 			else
 			{
