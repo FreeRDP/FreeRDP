@@ -424,7 +424,12 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive,
 	{
 		case FileFsVolumeInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232108.aspx */
-			length = ConvertToUnicode(sys_code_page, 0, volumeLabel, -1, &outStr, 0) * 2;
+			if ((length = ConvertToUnicode(sys_code_page, 0, volumeLabel, -1, &outStr, 0) * 2) <= 0)
+			{
+				WLog_ERR(TAG, "ConvertToUnicode failed!");
+				return CHANNEL_RC_NO_MEMORY;
+			}
+
 			Stream_Write_UINT32(output, 17 + length); /* Length */
 
 			if (!Stream_EnsureRemainingCapacity(output, 17 + length))
@@ -463,7 +468,12 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive,
 
 		case FileFsAttributeInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232101.aspx */
-			length = ConvertToUnicode(sys_code_page, 0, diskType, -1, &outStr, 0) * 2;
+			if ((length = ConvertToUnicode(sys_code_page, 0, diskType, -1, &outStr, 0) * 2) <= 0)
+			{
+				WLog_ERR(TAG, "ConvertToUnicode failed!");
+				return CHANNEL_RC_NO_MEMORY;
+			}
+
 			Stream_Write_UINT32(output, 12 + length); /* Length */
 
 			if (!Stream_EnsureRemainingCapacity(output, 12 + length))
@@ -813,7 +823,13 @@ UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 		for (i = 0; i <= length; i++)
 			Stream_Write_UINT8(drive->device.data, name[i] < 0 ? '_' : name[i]);
 
-		ConvertToUnicode(sys_code_page, 0, path, -1, &drive->path, 0);
+		if (ConvertToUnicode(sys_code_page, 0, path, -1, &drive->path, 0) <= 0)
+		{
+			WLog_ERR(TAG, "ConvertToUnicode failed!");
+			error = CHANNEL_RC_NO_MEMORY;
+			goto out_error;
+		}
+
 		drive->files = ListDictionary_New(TRUE);
 
 		if (!drive->files)

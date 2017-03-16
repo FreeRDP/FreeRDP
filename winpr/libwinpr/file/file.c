@@ -805,7 +805,11 @@ BOOL GetDiskFreeSpaceW(LPCWSTR lpwRootPathName, LPDWORD lpSectorsPerCluster,
 	LPSTR lpRootPathName;
 	BOOL ret;
 
-	ConvertFromUnicode(CP_UTF8, 0, lpwRootPathName, -1, &lpRootPathName, 0, NULL, NULL);
+	if (ConvertFromUnicode(CP_UTF8, 0, lpwRootPathName, -1, &lpRootPathName, 0, NULL, NULL) <= 0)
+	{
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		return FALSE;
+	}
 	ret = GetDiskFreeSpaceA(lpRootPathName, lpSectorsPerCluster, lpBytesPerSector,
 													 lpNumberOfFreeClusters, lpTotalNumberOfClusters);
 	free(lpRootPathName);
