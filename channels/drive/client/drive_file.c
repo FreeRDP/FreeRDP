@@ -578,7 +578,7 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 
 			if (file->file_handle == INVALID_HANDLE_VALUE)
 			{
-				WLog_ERR(TAG, "Unable to set file time %s (%d)", file->fullpath, GetLastError());
+				WLog_ERR(TAG, "Unable to set file time %s (%"PRId32")", file->fullpath, GetLastError());
 				return FALSE;
 			}
 
@@ -614,7 +614,7 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 
 			if (!SetFileTime(file->file_handle, pftCreationTime, pftLastAccessTime, pftLastWriteTime))
 			{
-				WLog_ERR(TAG, "Unable to set file time %s to %d", file->fullpath);
+				WLog_ERR(TAG, "Unable to set file time to %s", file->fullpath);
 				return FALSE;
 			}
 
@@ -630,7 +630,7 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 
 			if (file->file_handle == INVALID_HANDLE_VALUE)
 			{
-				WLog_ERR(TAG, "Unable to truncate %s to %"PRId64" (%d)", file->fullpath, size, GetLastError());
+				WLog_ERR(TAG, "Unable to truncate %s to %"PRId64" (%"PRId32")", file->fullpath, size, GetLastError());
 				return FALSE;
 			}
 
@@ -639,7 +639,7 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 			if (SetFilePointer(file->file_handle, liSize.LowPart, &liSize.HighPart,
 			                   FILE_BEGIN) == INVALID_SET_FILE_POINTER)
 			{
-				WLog_ERR(TAG, "Unable to truncate %s to %d (%d)", file->fullpath, size, GetLastError());
+				WLog_ERR(TAG, "Unable to truncate %s to %d (%"PRId32")", file->fullpath, size, GetLastError());
 				return FALSE;
 			}
 
@@ -647,7 +647,7 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 
 			if (SetEndOfFile(file->file_handle) == 0)
 			{
-				WLog_ERR(TAG, "Unable to truncate %s to %d (%d)", file->fullpath, size, GetLastError());
+				WLog_ERR(TAG, "Unable to truncate %s to %d (%"PRId32")", file->fullpath, size, GetLastError());
 				return FALSE;
 			}
 

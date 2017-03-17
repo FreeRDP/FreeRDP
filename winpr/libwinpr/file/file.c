@@ -105,7 +105,7 @@ static BOOL FileSetEndOfFile(HANDLE hFile)
 		return FALSE;
 
 	size = ftell(pFile->fp);
-	errno = 0;
+
 	if (ftruncate(fileno(pFile->fp), size) < 0)
 	{
 		WLog_ERR(TAG, "ftruncate %s failed with %s [0x%08X]",
@@ -171,10 +171,10 @@ static BOOL FileRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		return FALSE;
 
 	file = (WINPR_FILE *)Object;
-	errno = 0;
+	clearerr(file->fp);
 	io_status = fread(lpBuffer, 1, nNumberOfBytesToRead, file->fp);
 
-	if (io_status == 0 && errno != 0)
+	if (io_status == 0 && ferror(file->fp))
 	{
 		status = FALSE;
 
@@ -212,9 +212,9 @@ static BOOL FileWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrit
 
 	file = (WINPR_FILE *)Object;
 
-	errno = 0;
+	clearerr(file->fp);
 	io_status = fwrite(lpBuffer, 1, nNumberOfBytesToWrite, file->fp);
-	if (io_status == 0 && errno != 0)
+	if (io_status == 0 && ferror(file->fp))
 	{
 		SetLastError(map_posix_err(errno));
 		return FALSE;

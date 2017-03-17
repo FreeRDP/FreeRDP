@@ -136,6 +136,9 @@ WCHAR* _wcsrchr(const WCHAR* str, WCHAR c)
 	WCHAR *p;
 	WCHAR ch;
 
+	if (!str)
+		return NULL;
+
 	for (p = (WCHAR *) 0; (ch = *str); str++)
 		if (ch == c)
 			p = (WCHAR *) str;

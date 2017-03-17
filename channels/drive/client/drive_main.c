@@ -124,7 +124,7 @@ static DWORD drive_map_windows_err(DWORD fs_errno)
 
 		default:
 			rc = STATUS_UNSUCCESSFUL;
-			WLog_ERR(TAG, "Error code not found: %d", fs_errno);
+			WLog_ERR(TAG, "Error code not found: %"PRId32"", fs_errno);
 			break;
 	}
 

@@ -525,7 +525,7 @@ BOOL PathIsDirectoryEmptyA(LPCSTR pszPath)
 	int empty = 1;
 
 	DIR *dir = opendir(pszPath);
-	if (dir == NULL) //Not a directory or doesn't exist
+	if (dir == NULL) /* Not a directory or doesn't exist */
 		return 1;
 
 	while ((dp = readdir(dir)) != NULL) {
