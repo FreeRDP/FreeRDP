@@ -19,7 +19,7 @@
 
 #include "opensslcompat.h"
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 
 BIO_METHOD* BIO_meth_new(int type, const char* name)
 {
@@ -41,4 +41,4 @@ void RSA_get0_key(const RSA* r, const BIGNUM** n, const BIGNUM** e, const BIGNUM
 		*d = r->d;
 }
 
-#endif /* OPENSSL < 1.1.0 */
+#endif /* OPENSSL < 1.1.0 || LIBRESSL */

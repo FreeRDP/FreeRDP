@@ -323,7 +323,7 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 		case BIO_CTRL_PUSH:
 			if (next_bio && (next_bio != ssl_rbio))
 			{
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 				SSL_set_bio(tls->ssl, next_bio, next_bio);
 				CRYPTO_add(&(bio->next_bio->references), 1, CRYPTO_LOCK_BIO);
 #else
@@ -346,7 +346,7 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 				if (ssl_rbio != ssl_wbio)
 					BIO_free_all(ssl_wbio);
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 				if (next_bio)
 					CRYPTO_add(&(bio->next_bio->references), -1, CRYPTO_LOCK_BIO);
 				tls->ssl->wbio = tls->ssl->rbio = NULL;
@@ -384,7 +384,7 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 					BIO_push(ssl_rbio, next_bio);
 
 				BIO_set_next(bio, ssl_rbio);
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 				CRYPTO_add(&(ssl_rbio->references), 1, CRYPTO_LOCK_BIO);
 #else
 				BIO_up_ref(ssl_rbio);
@@ -1021,7 +1021,7 @@ BOOL tls_send_alert(rdpTls* tls)
  *        SSL struct is opaqe now
  */
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 	if (tls->alertDescription != TLS_ALERT_DESCRIPTION_CLOSE_NOTIFY)
 	{
 		/**
