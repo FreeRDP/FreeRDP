@@ -303,17 +303,11 @@ BOOL freerdp_image_copy_from_pointer_data(
 					{
 						UINT32 pixelFormat;
 						UINT32 color;
-						BOOL ignoreAndMask = FALSE;
 
 						if (xorBpp == 32)
 						{
 							pixelFormat = PIXEL_FORMAT_BGRA32;
 							xorPixel = ReadColor(xorBits, pixelFormat);
-
-							if (xorPixel & 0xFF)
-								ignoreAndMask = TRUE;
-							else
-								xorPixel |= 0xFF;
 						}
 						else if (xorBpp == 16)
 						{
@@ -349,8 +343,7 @@ BOOL freerdp_image_copy_from_pointer_data(
 							}
 						}
 
-						/* Ignore the AND mask, if the color format already supplies alpha data. */
-						if (andPixel && !ignoreAndMask)
+						if (andPixel)
 						{
 							if (xorPixel == 0xFF000000) /* black -> transparent */
 								xorPixel = 0x00000000;
