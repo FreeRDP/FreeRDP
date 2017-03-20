@@ -30,7 +30,7 @@
 
 #include <openssl/opensslv.h>
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 
 #include <openssl/bio.h>
 #include <openssl/rsa.h>
@@ -59,7 +59,7 @@
 BIO_METHOD* BIO_meth_new(int type, const char* name);
 void RSA_get0_key(const RSA* r, const BIGNUM** n, const BIGNUM** e, const BIGNUM** d);
 
-#endif /* OPENSSL < 1.1.0 */
+#endif /* OPENSSL < 1.1.0 || LIBRESSL */
 #endif /* WITH_OPENSSL */
 
 #endif /* FREERDP_CRYPTO_OPENSSLCOMPAT_H */

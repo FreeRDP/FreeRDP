@@ -45,7 +45,7 @@ static BOOL g_winpr_openssl_initialized_by_winpr = FALSE;
  * set locking callbacks to use OpenSSL in a multi-threaded environment.
  */
 
-#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
 
 #define WINPR_OPENSSL_LOCKING_REQUIRED 1
 
