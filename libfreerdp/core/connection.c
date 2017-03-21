@@ -583,7 +583,14 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 
 	mod = rdp->settings->RdpServerRsaKey->Modulus;
 	priv_exp = rdp->settings->RdpServerRsaKey->PrivateExponent;
-	crypto_rsa_private_decrypt(crypt_client_random, rand_len - 8, key_len, mod, priv_exp, client_random);
+	if (crypto_rsa_private_decrypt(crypt_client_random, rand_len - 8, key_len, mod, priv_exp, client_random) <= 0)
+	{
+		free(client_random);
+		goto end;
+	}
+
+	rdp->settings->ClientRandom = client_random;
+	rdp->settings->ClientRandomLength = 32;
 
 	/* now calculate encrypt / decrypt and update keys */
 	if (!security_establish_keys(client_random, rdp))
@@ -625,7 +632,6 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	ret = TRUE;
 end:
 	free(crypt_client_random);
-	free(client_random);
 
 	if (!ret)
 	{
