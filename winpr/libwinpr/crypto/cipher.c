@@ -515,7 +515,7 @@ mbedtls_cipher_type_t winpr_mbedtls_get_cipher_type(int cipher)
 }
 #endif
 
-WINPR_CIPHER_CTX* winpr_Cipher_New(int cipher, int op, const BYTE* key, const BYTE* iv)
+WINPR_CIPHER_CTX* winpr_Cipher_New(int cipher, int op, const BYTE* key, const BYTE* iv, BOOL non_fips_allow)
 {
 	WINPR_CIPHER_CTX* ctx = NULL;
 
@@ -524,6 +524,9 @@ WINPR_CIPHER_CTX* winpr_Cipher_New(int cipher, int op, const BYTE* key, const BY
 	const EVP_CIPHER* evp;
 	EVP_CIPHER_CTX* octx;
 
+	if (non_fips_allow)
+		EVP_add_cipher(EVP_rc4());
+
 	if (!(evp = winpr_openssl_get_evp_cipher(cipher)))
 		return NULL;
 
@@ -531,6 +534,9 @@ WINPR_CIPHER_CTX* winpr_Cipher_New(int cipher, int op, const BYTE* key, const BY
 		return NULL;
 
 	operation = (op == WINPR_ENCRYPT) ? 1 : 0;
+
+	if (non_fips_allow)
+		EVP_CIPHER_CTX_set_flags(octx, EVP_CIPH_FLAG_NON_FIPS_ALLOW);
 
 	if (EVP_CipherInit_ex(octx, evp, NULL, key, iv, operation) != 1)
 	{

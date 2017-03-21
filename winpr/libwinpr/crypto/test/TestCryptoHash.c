@@ -18,7 +18,7 @@ static BOOL test_crypto_hash_md5(void)
 		fprintf(stderr, "%s: winpr_Digest_New failed\n", __FUNCTION__);
 		return FALSE;
 	}
-	if (!winpr_Digest_Init(ctx, WINPR_MD_MD5))
+	if (!winpr_Digest_Init(ctx, WINPR_MD_MD5, TRUE))
 	{
 		fprintf(stderr, "%s: winpr_Digest_Init failed\n", __FUNCTION__);
 		goto out;
@@ -69,7 +69,7 @@ static BOOL test_crypto_hash_md4(void)
 		fprintf(stderr, "%s: winpr_Digest_New failed\n", __FUNCTION__);
 		return FALSE;
 	}
-	if (!winpr_Digest_Init(ctx, WINPR_MD_MD4))
+	if (!winpr_Digest_Init(ctx, WINPR_MD_MD4, TRUE))
 	{
 		fprintf(stderr, "%s: winpr_Digest_Init failed\n", __FUNCTION__);
 		goto out;
@@ -120,7 +120,7 @@ static BOOL test_crypto_hash_sha1(void)
 		fprintf(stderr, "%s: winpr_Digest_New failed\n", __FUNCTION__);
 		return FALSE;
 	}
-	if (!winpr_Digest_Init(ctx, WINPR_MD_SHA1))
+	if (!winpr_Digest_Init(ctx, WINPR_MD_SHA1, TRUE))
 	{
 		fprintf(stderr, "%s: winpr_Digest_Init failed\n", __FUNCTION__);
 		goto out;
@@ -174,7 +174,7 @@ static BOOL test_crypto_hash_hmac_md5(void)
 		return FALSE;
 	}
 
-	if (!winpr_HMAC_Init(ctx, WINPR_MD_MD5, TEST_HMAC_MD5_KEY, WINPR_MD5_DIGEST_LENGTH))
+	if (!winpr_HMAC_Init(ctx, WINPR_MD_MD5, TEST_HMAC_MD5_KEY, WINPR_MD5_DIGEST_LENGTH, TRUE))
 	{
 		fprintf(stderr, "%s: winpr_HMAC_Init failed\n", __FUNCTION__);
 		goto out;
@@ -228,7 +228,7 @@ static BOOL test_crypto_hash_hmac_sha1(void)
 		return FALSE;
 	}
 
-	if (!winpr_HMAC_Init(ctx, WINPR_MD_SHA1, TEST_HMAC_SHA1_KEY, WINPR_SHA1_DIGEST_LENGTH))
+	if (!winpr_HMAC_Init(ctx, WINPR_MD_SHA1, TEST_HMAC_SHA1_KEY, WINPR_SHA1_DIGEST_LENGTH, TRUE))
 	{
 		fprintf(stderr, "%s: winpr_HMAC_Init failed\n", __FUNCTION__);
 		goto out;

@@ -287,7 +287,7 @@ void ntlm_compute_channel_bindings(NTLM_CONTEXT* context)
 	if (!(md5 = winpr_Digest_New()))
 		return;
 
-	if (!winpr_Digest_Init(md5, WINPR_MD_MD5))
+	if (!winpr_Digest_Init(md5, WINPR_MD_MD5, TRUE))
 		goto out;
 
 	ChannelBindingTokenLength = context->Bindings.BindingsLength - sizeof(SEC_CHANNEL_BINDINGS);

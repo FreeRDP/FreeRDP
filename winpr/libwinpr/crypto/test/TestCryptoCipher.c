@@ -21,7 +21,7 @@ static BOOL test_crypto_cipher_aes_128_cbc()
 
 	/* encrypt */
 
-	if (!(ctx = winpr_Cipher_New(WINPR_CIPHER_AES_128_CBC, WINPR_ENCRYPT, key, iv)))
+	if (!(ctx = winpr_Cipher_New(WINPR_CIPHER_AES_128_CBC, WINPR_ENCRYPT, key, iv, TRUE)))
 	{
 		fprintf(stderr, "%s: winpr_Cipher_New (encrypt) failed\n", __FUNCTION__);
 		return FALSE;
@@ -63,7 +63,7 @@ static BOOL test_crypto_cipher_aes_128_cbc()
 
 	/* decrypt */
 
-	if (!(ctx = winpr_Cipher_New(WINPR_CIPHER_AES_128_CBC, WINPR_DECRYPT, key, iv)))
+	if (!(ctx = winpr_Cipher_New(WINPR_CIPHER_AES_128_CBC, WINPR_DECRYPT, key, iv, TRUE)))
 	{
 		fprintf(stderr, "%s: winpr_Cipher_New (decrypt) failed\n", __FUNCTION__);
 		return FALSE;
