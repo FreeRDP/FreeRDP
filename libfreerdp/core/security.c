@@ -526,6 +526,8 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 			fips_expand_key_bits(client_encrypt_key_t, rdp->fips_encrypt_key);
 			fips_expand_key_bits(client_decrypt_key_t, rdp->fips_decrypt_key);
 		}
+
+		return TRUE;
 	}
 
 	memcpy(pre_master_secret, client_random, 24);
