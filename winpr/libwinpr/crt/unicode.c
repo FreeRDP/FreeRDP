@@ -269,7 +269,7 @@ int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int
 /**
  * ConvertToUnicode is a convenience wrapper for MultiByteToWideChar:
  *
- * If the lpWideCharStr prarameter for the converted string points to NULL
+ * If the lpWideCharStr parameter for the converted string points to NULL
  * or if the cchWideChar parameter is set to 0 this function will automatically
  * allocate the required memory which is guaranteed to be null-terminated
  * after the conversion, even if the source c string isn't.
