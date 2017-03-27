@@ -782,9 +782,7 @@ BOOL SetStdHandleEx(DWORD dwStdHandle, HANDLE hNewHandle, HANDLE* phOldHandle)
 BOOL GetDiskFreeSpaceA(LPCSTR lpRootPathName, LPDWORD lpSectorsPerCluster,
 											 LPDWORD lpBytesPerSector, LPDWORD lpNumberOfFreeClusters, LPDWORD lpTotalNumberOfClusters)
 {
-#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__)
-#define STATVFS statvfs
-#elif defined(ANDROID)
+#if defined(ANDROID)
 #define STATVFS statfs
 #else
 #define STATVFS statvfs

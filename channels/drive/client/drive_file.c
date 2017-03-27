@@ -658,7 +658,7 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 			/* http://msdn.microsoft.com/en-us/library/cc232098.aspx */
 			/* http://msdn.microsoft.com/en-us/library/cc241371.aspx */
 			if (file->is_dir && !PathIsDirectoryEmptyW(file->fullpath))
-				break; // TODO: SetLastError ???
+				break; /* TODO: SetLastError ??? */
 
 			if (Length)
 				Stream_Read_UINT8(input, delete_pending);

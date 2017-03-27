@@ -844,6 +844,10 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 HANDLE FindFirstFileW(LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData)
 {
 	char* utfFileName = NULL;
+	HANDLE h;
+	WCHAR* unicodeFileName;
+	int length;
+
 	LPWIN32_FIND_DATAA fd = (LPWIN32_FIND_DATAA)malloc(sizeof(WIN32_FIND_DATAA));
 	if (!fd)
 	{
@@ -857,18 +861,19 @@ HANDLE FindFirstFileW(LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData)
 		return INVALID_HANDLE_VALUE;
 	}
 
-	HANDLE h = FindFirstFileA(utfFileName, fd);
+	h = FindFirstFileA(utfFileName, fd);
 	free(utfFileName);
 
 	if (h != INVALID_HANDLE_VALUE)
 	{
 		CopyMemory(lpFindFileData, fd, 352);
 
-		WCHAR* unicodeFileName = NULL;
-		int length = ConvertToUnicode(CP_UTF8, 0, fd->cFileName, -1, &unicodeFileName, 0) * 2;
+		unicodeFileName = NULL;
+		length = ConvertToUnicode(CP_UTF8, 0, fd->cFileName, -1, &unicodeFileName, 0) * 2;
 		if (length == 0)
 		{
 			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+			free(fd);
 			return INVALID_HANDLE_VALUE;
 		}
 		CopyMemory(&lpFindFileData->cFileName, unicodeFileName, length);
@@ -897,6 +902,7 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 	char* fullpath;
 	int pathlen;
 	int namelen;
+	UINT64 ft;
 
 	ZeroMemory(lpFindFileData, sizeof(WIN32_FIND_DATAA));
 
@@ -917,7 +923,8 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 
 			pathlen = strlen(pFileSearch->lpPath);
 			fullpath = (char*)malloc(pathlen + namelen + 2);
-			if (fullpath == NULL) {
+			if (fullpath == NULL)
+			{
 				return INVALID_HANDLE_VALUE;
 			}
 			memcpy(fullpath, pFileSearch->lpPath, pathlen);
@@ -926,7 +933,12 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 			fullpath[pathlen+namelen+1] = 0;
 
 			if (lstat(fullpath, &fileStat) != 0)
+			{
+				free(fullpath);
 				return INVALID_HANDLE_VALUE;
+			}
+
+			free(fullpath);
 
 			lpFindFileData->dwFileAttributes = 0;
 
@@ -943,7 +955,6 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 			if (! (fileStat.st_mode & S_IWUSR))
 				lpFindFileData->dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
 
-			UINT64 ft;
 #ifdef _DARWIN_FEATURE_64_BIT_INODE
 			ft = STAT_TIME_TO_FILETIME(fileStat.st_birthtime);
 #else
@@ -973,6 +984,9 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 
 BOOL FindNextFileW(HANDLE hFindFile, LPWIN32_FIND_DATAW lpFindFileData)
 {
+	WCHAR* unicodeFileName;
+	int length;
+
 	LPWIN32_FIND_DATAA fd = (LPWIN32_FIND_DATAA)malloc(sizeof(WIN32_FIND_DATAA));
 	if (!fd)
 	{
@@ -984,11 +998,12 @@ BOOL FindNextFileW(HANDLE hFindFile, LPWIN32_FIND_DATAW lpFindFileData)
 	{
 		CopyMemory(lpFindFileData, fd, 352);
 
-		WCHAR* unicodeFileName = NULL;
-		int length = ConvertToUnicode(CP_UTF8, 0, fd->cFileName, -1, &unicodeFileName, 0) * 2;
+		unicodeFileName = NULL;
+		length = ConvertToUnicode(CP_UTF8, 0, fd->cFileName, -1, &unicodeFileName, 0) * 2;
 		if (length == 0)
 		{
 			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+			free(fd);
 			return FALSE;
 		}
 		CopyMemory(&lpFindFileData->cFileName, unicodeFileName, length);
