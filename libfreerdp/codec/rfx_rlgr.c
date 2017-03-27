@@ -76,6 +76,14 @@
 
 static BOOL g_LZCNT = FALSE;
 
+static INIT_ONCE rfx_rlgr_init_once = INIT_ONCE_STATIC_INIT;
+
+static BOOL CALLBACK rfx_rlgr_init(PINIT_ONCE once, PVOID param, PVOID *context)
+{
+	g_LZCNT = IsProcessorFeaturePresentEx(PF_EX_LZCNT);
+	return TRUE;
+}
+
 static INLINE UINT32 lzcnt_s(UINT32 x)
 {
 	if (!x)
@@ -116,7 +124,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 SrcSize, INT16*
 	wBitStream* bs;
 	wBitStream s_bs;
 
-	g_LZCNT = IsProcessorFeaturePresentEx(PF_EX_LZCNT);
+	InitOnceExecuteOnce(&rfx_rlgr_init_once, rfx_rlgr_init, NULL, NULL);
 
 	k = 1;
 	kp = k << LSGR;

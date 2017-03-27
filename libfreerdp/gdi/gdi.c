@@ -972,8 +972,13 @@ BOOL gdi_surface_frame_marker(rdpContext* context,
 static BOOL gdi_surface_bits(rdpContext* context,
                              const SURFACE_BITS_COMMAND* cmd)
 {
+	BOOL result = FALSE;
 	DWORD format;
 	rdpGdi* gdi;
+	REGION16 region;
+	RECTANGLE_16 cmdRect;
+	UINT32 i, nbRects;
+	const RECTANGLE_16* rects;
 
 	if (!context || !cmd)
 		return FALSE;
@@ -985,6 +990,13 @@ static BOOL gdi_surface_bits(rdpContext* context,
 	           cmd->destLeft, cmd->destTop, cmd->destRight, cmd->destBottom,
 	           cmd->bpp, cmd->codecID, cmd->width, cmd->height, cmd->bitmapDataLength);
 
+	region16_init(&region);
+	cmdRect.left = cmd->destLeft;
+	cmdRect.top = cmd->destTop;
+	cmdRect.right = cmdRect.left + cmd->width;
+	cmdRect.bottom = cmdRect.top + cmd->height;
+
+
 	switch (cmd->codecID)
 	{
 		case RDP_CODEC_ID_REMOTEFX:
@@ -992,12 +1004,11 @@ static BOOL gdi_surface_bits(rdpContext* context,
 			                         cmd->bitmapDataLength,
 			                         cmd->destLeft, cmd->destTop,
 			                         gdi->primary_buffer, gdi->dstFormat,
-			                         gdi->stride, gdi->height, NULL))
+			                         gdi->stride, gdi->height, &region))
 			{
 				WLog_ERR(TAG, "Failed to process RemoteFX message");
-				return FALSE;
+				goto out;
 			}
-
 			break;
 
 		case RDP_CODEC_ID_NSCODEC:
@@ -1008,8 +1019,11 @@ static BOOL gdi_surface_bits(rdpContext* context,
 			                         cmd->bitmapDataLength, gdi->primary_buffer,
 			                         format, gdi->stride, cmd->destLeft, cmd->destTop,
 			                         cmd->width, cmd->height, FREERDP_FLIP_VERTICAL))
-				return FALSE;
-
+			{
+				WLog_ERR(TAG, "Failed to process NSCodec message");
+				goto out;
+			}
+			region16_union_rect(&region, &region, &cmdRect);
 			break;
 
 		case RDP_CODEC_ID_NONE:
@@ -1019,8 +1033,11 @@ static BOOL gdi_surface_bits(rdpContext* context,
 			                        cmd->destLeft, cmd->destTop, cmd->width, cmd->height,
 			                        cmd->bitmapData, format, 0, 0, 0,
 			                        &gdi->palette, FREERDP_FLIP_VERTICAL))
-				return FALSE;
-
+			{
+				WLog_ERR(TAG, "Failed to process nocodec message");
+				goto out;
+			}
+			region16_union_rect(&region, &region, &cmdRect);
 			break;
 
 		default:
@@ -1028,14 +1045,27 @@ static BOOL gdi_surface_bits(rdpContext* context,
 			break;
 	}
 
-	if (!gdi_InvalidateRegion(gdi->primary->hdc, cmd->destLeft, cmd->destTop,
-	                          cmd->width, cmd->height))
+	if (!(rects = region16_rects(&region, &nbRects)))
+		goto out;
+
+	for (i = 0; i < nbRects; i++)
 	{
-		WLog_ERR(TAG, "Failed to update invalid region");
-		return FALSE;
+		UINT32 left = rects[i].left;
+		UINT32 top = rects[i].top;
+		UINT32 width = rects[i].right - rects[i].left;
+		UINT32 height = rects[i].bottom - rects[i].top;
+
+		if (!gdi_InvalidateRegion(gdi->primary->hdc, left, top, width, height))
+		{
+			WLog_ERR(TAG, "Failed to update invalid region");
+			goto out;
+		}
 	}
 
-	return TRUE;
+	result = TRUE;
+out:
+	region16_uninit(&region);
+	return result;
 }
 
 /**
