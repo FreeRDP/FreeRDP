@@ -39,7 +39,7 @@ static BOOL similarRGB(const BYTE* src, const BYTE* dst, size_t size, UINT32 for
 
 	for (x = 0; x < size; x++)
 	{
-		const double maxDiff = 3.0;
+		const double maxDiff = 4.0;
 		UINT32 sColor, dColor;
 		BYTE sR, sG, sB, sA;
 		BYTE dR, dG, dB, dA;
