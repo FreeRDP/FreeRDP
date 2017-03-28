@@ -103,9 +103,8 @@ static BOOL xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	BOOL rc = FALSE;
 	UINT32 depth;
 	BYTE* data;
-	Pixmap pixmap;
-	XImage* image;
 	rdpGdi* gdi;
+	xfBitmap* xbitmap = (xfBitmap*)bitmap;
 	xfContext* xfc = (xfContext*) context;
 
 	if (!context || !bitmap || !context->gdi)
@@ -114,10 +113,10 @@ static BOOL xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	gdi = context->gdi;
 	xf_lock_x11(xfc, FALSE);
 	depth = GetBitsPerPixel(bitmap->format);
-	pixmap = XCreatePixmap(xfc->display, xfc->drawable, bitmap->width,
-	                       bitmap->height, xfc->depth);
+	xbitmap->pixmap = XCreatePixmap(xfc->display, xfc->drawable, bitmap->width,
+	                                bitmap->height, xfc->depth);
 
-	if (!pixmap)
+	if (!xbitmap->pixmap)
 		goto unlock;
 
 	if (bitmap->data)
@@ -143,19 +142,17 @@ static BOOL xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 			bitmap->format = gdi->dstFormat;
 		}
 
-		image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
-		                     ZPixmap, 0, (char*) bitmap->data, bitmap->width, bitmap->height,
-		                     xfc->scanline_pad, 0);
+		xbitmap->image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
+		                              ZPixmap, 0, (char*) bitmap->data, bitmap->width, bitmap->height,
+		                              xfc->scanline_pad, 0);
 
-		if (!image)
+		if (!xbitmap->image)
 			goto unlock;
 
-		XPutImage(xfc->display, pixmap, xfc->gc, image, 0, 0, 0, 0, bitmap->width,
+		XPutImage(xfc->display, xbitmap->pixmap, xfc->gc, xbitmap->image, 0, 0, 0, 0, bitmap->width,
 		          bitmap->height);
-		XFree(image);
 	}
 
-	((xfBitmap*) bitmap)->pixmap = pixmap;
 	rc = TRUE;
 unlock:
 	xf_unlock_x11(xfc, FALSE);
@@ -165,30 +162,38 @@ unlock:
 static void xf_Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 {
 	xfContext* xfc = (xfContext*) context;
+	xfBitmap* xbitmap = (xfBitmap*)bitmap;
+
+	if (!xfc || !xbitmap)
+		return;
+
 	xf_lock_x11(xfc, FALSE);
 
-	if (((xfBitmap*) bitmap)->pixmap != 0)
-		XFreePixmap(xfc->display, ((xfBitmap*) bitmap)->pixmap);
+	if (xbitmap->pixmap != 0)
+		XFreePixmap(xfc->display, xbitmap->pixmap);
+
+	if (xbitmap->image)
+		XFree(xbitmap->image);
 
 	xf_unlock_x11(xfc, FALSE);
 }
 
 static BOOL xf_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 {
-	XImage* image;
 	int width, height;
 	xfContext* xfc = (xfContext*) context;
+	xfBitmap* xbitmap = (xfBitmap*)bitmap;
 	BOOL ret;
+
+	if (!context || !xbitmap)
+		return FALSE;
+
 	width = bitmap->right - bitmap->left + 1;
 	height = bitmap->bottom - bitmap->top + 1;
 	xf_lock_x11(xfc, FALSE);
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
-	image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
-	                     ZPixmap, 0, (char*) bitmap->data, bitmap->width, bitmap->height,
-	                     xfc->scanline_pad, 0);
 	XPutImage(xfc->display, xfc->primary, xfc->gc,
-	          image, 0, 0, bitmap->left, bitmap->top, width, height);
-	XFree(image);
+	          xbitmap->image, 0, 0, bitmap->left, bitmap->top, width, height);
 	ret = gdi_InvalidateRegion(xfc->hdc, bitmap->left, bitmap->top, width, height);
 	xf_unlock_x11(xfc, FALSE);
 	return ret;
