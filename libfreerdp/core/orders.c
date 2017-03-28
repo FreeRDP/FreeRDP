@@ -3501,7 +3501,6 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s,
 
 		case ORDER_TYPE_WINDOW:
 			return update_recv_altsec_window_order(update, s);
-			break;
 
 		case ORDER_TYPE_COMPDESK_FIRST:
 			break;

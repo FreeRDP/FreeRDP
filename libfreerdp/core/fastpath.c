@@ -366,7 +366,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 		case FASTPATH_UPDATETYPE_PALETTE:
 			if (!fastpath_recv_update_common(fastpath, s))
 			{
-				WLog_ERR(TAG, "FASTPATH_UPDATETYPE_ORDERS - fastpath_recv_orders()");
+				WLog_ERR(TAG, "FASTPATH_UPDATETYPE_ORDERS - fastpath_recv_update_common()");
 				return -1;
 			}
 
