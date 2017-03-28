@@ -95,10 +95,10 @@ static void nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, const BYTE* data,
 	UINT16 rw;
 	BYTE ccl;
 	const BYTE* src;
-	BYTE* yplane;
-	BYTE* coplane;
-	BYTE* cgplane;
-	BYTE* aplane;
+	BYTE* yplane = NULL;
+	BYTE* coplane = NULL;
+	BYTE* cgplane = NULL;
+	BYTE* aplane = NULL;
 	INT16 r_val;
 	INT16 g_val;
 	INT16 b_val;
@@ -109,10 +109,6 @@ static void nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, const BYTE* data,
 	tempHeight = ROUND_UP_TO(context->height, 2);
 	rw = (context->ChromaSubsamplingLevel ? tempWidth : context->width);
 	ccl = context->ColorLossLevel;
-	yplane = context->priv->PlaneBuffers[0];
-	coplane = context->priv->PlaneBuffers[1];
-	cgplane = context->priv->PlaneBuffers[2];
-	aplane = context->priv->PlaneBuffers[3];
 
 	for (y = 0; y < context->height; y++)
 	{

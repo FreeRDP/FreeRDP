@@ -194,9 +194,6 @@ static void* named_pipe_single_thread(void* arg)
 	int i;
 	int numPipes;
 	BOOL bSuccess = FALSE;
-#ifndef _WIN32
-	WINPR_NAMED_PIPE* p;
-#endif
 	numPipes = TESTNUMPIPESST;
 	memset(servers, 0, sizeof(servers));
 	memset(clients, 0, sizeof(clients));
@@ -217,7 +214,7 @@ static void* named_pipe_single_thread(void* arg)
 
 	for (i = 0; i < numPipes; i++)
 	{
-		p = (WINPR_NAMED_PIPE*)servers[i];
+		WINPR_NAMED_PIPE* p = (WINPR_NAMED_PIPE*)servers[i];
 
 		if (strcmp(lpszPipeNameSt, p->name))
 		{
@@ -281,7 +278,7 @@ static void* named_pipe_single_thread(void* arg)
 
 	for (i = 0; i < numPipes; i++)
 	{
-		p = servers[i];
+		WINPR_NAMED_PIPE* p = servers[i];
 
 		if (p->clientfd < 1)
 		{
@@ -304,7 +301,6 @@ static void* named_pipe_single_thread(void* arg)
 		ZeroMemory(sndbuf, sizeof(sndbuf));
 		ZeroMemory(rcvbuf, sizeof(rcvbuf));
 		sprintf_s(sndbuf, sizeof(sndbuf), "CLIENT->SERVER ON PIPE #%05d", i);
-		p = servers[i];
 
 		if (!WriteFile(clients[i], sndbuf, sizeof(sndbuf), &dwWritten, NULL) ||
 				dwWritten != sizeof(sndbuf))
@@ -331,7 +327,6 @@ static void* named_pipe_single_thread(void* arg)
 		ZeroMemory(sndbuf, sizeof(sndbuf));
 		ZeroMemory(rcvbuf, sizeof(rcvbuf));
 		sprintf_s(sndbuf, sizeof(sndbuf), "SERVER->CLIENT ON PIPE #%05d", i);
-		p = servers[i];
 
 		if (!WriteFile(servers[i], sndbuf, sizeof(sndbuf), &dwWritten, NULL) ||
 				dwWritten != sizeof(sndbuf))
@@ -430,7 +425,6 @@ static void* named_pipe_single_thread(void* arg)
 		CloseHandle(clients[i]);
 	}
 
-	numPipes = 0;
 	bSuccess = TRUE;
 out:
 

@@ -682,6 +682,8 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 					goto out_fail;
 
 				status = PEM_write_bio_PrivateKey(bio, context->pkey, NULL, NULL, 0, NULL, NULL);
+				if (status < 0)
+					goto out_fail;
 
 				offset = 0;
 				length = 2048;
@@ -1040,6 +1042,12 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 			return -1;
 
 		status = X509_print(bio, context->x509);
+		if (status < 0)
+		{
+			BIO_free(bio);
+			return -1;
+		}
+
 
 		offset = 0;
 		length = 2048;

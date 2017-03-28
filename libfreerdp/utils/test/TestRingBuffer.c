@@ -22,7 +22,7 @@
 
 #include <freerdp/utils/ringbuffer.h>
 
-BOOL test_overlaps(void)
+static BOOL test_overlaps(void)
 {
 	RingBuffer rb;
 	DataChunk chunks[2];
@@ -61,7 +61,6 @@ BOOL test_overlaps(void)
 
 	if (!ringbuffer_write(&rb, &bytes[counter], 6)) /* [56789ab....] */
 		goto error;
-	counter += 6;
 
 	ringbuffer_commit_read_bytes(&rb, 6); /* [......b....] */
 	nchunks = ringbuffer_peek(&rb, chunks, 10);
@@ -222,7 +221,4 @@ int TestRingBuffer(int argc, char* argv[])
 	free(tmpBuf);
 	return 0;
 }
-
-
-
 

@@ -265,7 +265,7 @@ static int test_image_fill_unused_quarters(BYTE* pDstData, int nDstStep, int nWi
 	return 1;
 }
 
-BYTE* test_progressive_load_file(char* path, char* file, UINT32* size)
+static BYTE* test_progressive_load_file(char* path, char* file, UINT32* size)
 {
 	FILE* fp;
 	BYTE* buffer;
@@ -303,7 +303,7 @@ BYTE* test_progressive_load_file(char* path, char* file, UINT32* size)
 	return buffer;
 }
 
-int test_progressive_load_files(char* ms_sample_path, EGFX_SAMPLE_FILE files[3][4][4])
+static int test_progressive_load_files(char* ms_sample_path, EGFX_SAMPLE_FILE files[3][4][4])
 {
 	int imageNo = 0;
 	int quarterNo = 0;
@@ -465,7 +465,6 @@ int test_progressive_load_files(char* ms_sample_path, EGFX_SAMPLE_FILE files[3][
 	passNo = (passNo + 1) % 4;
 	files[imageNo][quarterNo][passNo].buffer = test_progressive_load_file(ms_sample_path,
 	        "compress/enc_2_3_100_sampleimage3.bin", &(files[imageNo][quarterNo][passNo].size));
-	passNo = (passNo + 1) % 4;
 
 	/* check if all test data has been loaded */
 
@@ -484,7 +483,7 @@ int test_progressive_load_files(char* ms_sample_path, EGFX_SAMPLE_FILE files[3][
 	return 1;
 }
 
-BYTE* test_progressive_load_bitmap(char* path, char* file, UINT32* size, int quarter)
+static BYTE* test_progressive_load_bitmap(char* path, char* file, UINT32* size, int quarter)
 {
 	int status;
 	BYTE* buffer;
@@ -515,7 +514,7 @@ BYTE* test_progressive_load_bitmap(char* path, char* file, UINT32* size, int qua
 	return buffer;
 }
 
-int test_progressive_load_bitmaps(char* ms_sample_path, EGFX_SAMPLE_FILE bitmaps[3][4][4])
+static int test_progressive_load_bitmaps(char* ms_sample_path, EGFX_SAMPLE_FILE bitmaps[3][4][4])
 {
 	int imageNo = 0;
 	int quarterNo = 0;
@@ -677,7 +676,6 @@ int test_progressive_load_bitmaps(char* ms_sample_path, EGFX_SAMPLE_FILE bitmaps
 	passNo = (passNo + 1) % 4;
 	bitmaps[imageNo][quarterNo][passNo].buffer = test_progressive_load_bitmap(ms_sample_path,
 	        "decompress/dec_2_3_100_sampleimage3.bmp", &(bitmaps[imageNo][quarterNo][passNo].size), quarterNo);
-	passNo = (passNo + 1) % 4;
 
 	/* check if all test data has been loaded */
 

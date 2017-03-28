@@ -336,6 +336,8 @@ int TestClientRdpFile(int argc, char* argv[])
 	}
 
 	iValue = freerdp_client_rdp_file_get_integer_option(file, "vendor integer");
+	if (iValue != 123)
+		return -1;
 
 	if (freerdp_client_rdp_file_set_integer_option(file, "vendor integer", 456) == -1)
 	{
@@ -344,9 +346,18 @@ int TestClientRdpFile(int argc, char* argv[])
 	}
 
 	iValue = freerdp_client_rdp_file_get_integer_option(file, "vendor integer");
+	if (iValue != 456)
+		return -1;
+
 	sValue = (char*) freerdp_client_rdp_file_get_string_option(file, "vendor string");
+	if (strncmp(sValue, "microsoft", 10) != 0)
+		return -1;
+
 	freerdp_client_rdp_file_set_string_option(file, "vendor string", "apple");
 	sValue = (char*) freerdp_client_rdp_file_get_string_option(file, "vendor string");
+	if (strncmp(sValue, "apple", 6) != 0)
+		return -1;
+
 	freerdp_client_rdp_file_set_string_option(file, "fruits", "banana,oranges");
 
 	if (freerdp_client_rdp_file_set_integer_option(file, "numbers", 123456789) == -1)

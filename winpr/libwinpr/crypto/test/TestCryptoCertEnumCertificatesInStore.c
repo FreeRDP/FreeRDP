@@ -44,6 +44,8 @@ int TestCryptoCertEnumCertificatesInStore(int argc, char* argv[])
 	while ((pCertContext = CertEnumCertificatesInStore(hCertStore, pCertContext)))
 	{
 		status = CertGetNameString(pCertContext, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL, NULL, 0);
+		if (status)
+			return -1;
 
 		pszNameString = (LPTSTR) malloc(status * sizeof(TCHAR));
 		if (!pszNameString)
@@ -53,6 +55,8 @@ int TestCryptoCertEnumCertificatesInStore(int argc, char* argv[])
 		}
 
 		status = CertGetNameString(pCertContext, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL, pszNameString, status);
+		if (status)
+			return -1;
 
 		_tprintf(_T("Certificate #%d: %s\n"), index++, pszNameString);
 

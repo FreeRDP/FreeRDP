@@ -162,7 +162,6 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	sigset_t newSigMask;
 	BOOL restoreSigMask = FALSE;
 
-	pid = 0;
 	numArgs = 0;
 	lpszEnvironmentBlock = NULL;
 
