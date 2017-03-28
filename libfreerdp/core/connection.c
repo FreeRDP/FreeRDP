@@ -573,12 +573,17 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	if (rand_len != key_len + 8)
 	{
 		WLog_ERR(TAG, "invalid encrypted client random length");
+		free(client_random);
 		goto end;
 	}
 
 	crypt_client_random = calloc(1, rand_len);
 	if (!crypt_client_random)
+	{
+		free(client_random);
 		goto end;
+	}
+
 	Stream_Read(s, crypt_client_random, rand_len);
 
 	mod = rdp->settings->RdpServerRsaKey->Modulus;
