@@ -32,7 +32,7 @@
 
 #define TAG CLIENT_TAG("x11")
 
-const char* error_code_names[] =
+static const char* error_code_names[] =
 {
 	"RAIL_EXEC_S_OK",
 	"RAIL_EXEC_E_HOOK_NOT_LOADED",
@@ -43,7 +43,7 @@ const char* error_code_names[] =
 	"RAIL_EXEC_E_SESSION_LOCKED"
 };
 
-const char* movetype_names[] =
+static const char* movetype_names[] =
 {
 	"(invalid)",
 	"RAIL_WMSZ_LEFT",
@@ -529,15 +529,14 @@ static BOOL xf_rail_window_delete(rdpContext* context,
 static BOOL xf_rail_window_icon(rdpContext* context,
                                 WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* windowIcon)
 {
-	xfAppWindow* railWindow;
 	xfContext* xfc = (xfContext*) context;
-	railWindow = (xfAppWindow*) HashTable_GetItemValue(xfc->railWindows,
-	             (void*)(UINT_PTR) orderInfo->windowId);
+	xfAppWindow* railWindow = (xfAppWindow*) HashTable_GetItemValue(xfc->railWindows,
+	                          (void*)(UINT_PTR) orderInfo->windowId);
 
 	if (!railWindow)
 		return FALSE;
 
-	return (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ICON_BIG) ? TRUE : FALSE;
+	return TRUE;
 }
 
 static BOOL xf_rail_window_cached_icon(rdpContext* context,
