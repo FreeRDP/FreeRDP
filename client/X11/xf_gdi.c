@@ -968,29 +968,39 @@ static BOOL xf_gdi_surface_update_frame(xfContext* xfc, UINT16 tx, UINT16 ty,
 	return ret;
 }
 
-static BOOL xf_gdi_update_screen(xfContext* xfc,
-                                 const SURFACE_BITS_COMMAND* cmd,
-                                 const BYTE* pSrcData, UINT32 scanline)
+static BOOL xf_gdi_update_screen(xfContext* xfc, const BYTE* pSrcData,
+                                 UINT32 scanline, const REGION16* pRegion)
 {
 	BOOL ret = FALSE;
 	XImage* image;
+	UINT32 i, nbRects;
+	const RECTANGLE_16* rects;
 
 	if (!xfc || !pSrcData)
 		return FALSE;
 
+	if (!(rects = region16_rects(pRegion, &nbRects)))
+		return TRUE;
+
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
-	image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
-	                     (char*) pSrcData, cmd->width, cmd->height,
-	                     xfc->scanline_pad, scanline);
 
-	if (image)
+	for (i = 0; i < nbRects; i++)
 	{
-		XPutImage(xfc->display, xfc->primary, xfc->gc, image, 0, 0,
-		          cmd->destLeft, cmd->destTop, cmd->width, cmd->height);
+		UINT32 left = rects[i].left;
+		UINT32 top = rects[i].top;
+		UINT32 width = rects[i].right - rects[i].left;
+		UINT32 height = rects[i].bottom - rects[i].top;
+		const BYTE* src = pSrcData + top * scanline + 4 * left;
+
+		image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
+		                     (char*) src, width, height, xfc->scanline_pad, scanline);
+		if (!image)
+			break;
+
+		XPutImage(xfc->display, xfc->primary, xfc->gc, image, 0, 0, left, top, width, height);
 		XFree(image);
-		ret = xf_gdi_surface_update_frame(xfc, cmd->destLeft, cmd->destTop, cmd->width,
-		                                  cmd->height);
+		ret = xf_gdi_surface_update_frame(xfc, left, top, width, height);
 	}
 
 	XSetClipMask(xfc->display, xfc->gc, None);
@@ -1005,20 +1015,30 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 	BOOL ret = FALSE;
 	DWORD format;
 	rdpGdi* gdi;
+	REGION16 region;
+	RECTANGLE_16 cmdRect;
 
 	if (!context || !cmd || !context->gdi)
 		return FALSE;
 
+	region16_init(&region);
+	cmdRect.left = cmd->destLeft;
+	cmdRect.top = cmd->destTop;
+	cmdRect.right = cmdRect.left + cmd->width;
+	cmdRect.bottom = cmdRect.top + cmd->height;
+
+
 	gdi = context->gdi;
+
 	xf_lock_x11(xfc, FALSE);
 
 	switch (cmd->codecID)
 	{
 		case RDP_CODEC_ID_REMOTEFX:
 			if (!rfx_process_message(context->codecs->rfx, cmd->bitmapData,
-			                         cmd->bitmapDataLength, 0, 0,
+			                         cmd->bitmapDataLength, cmd->destLeft, cmd->destTop,
 			                         gdi->primary_buffer, gdi->dstFormat, gdi->stride,
-			                         gdi->height, NULL))
+			                         gdi->height, &region))
 				goto fail;
 
 			break;
@@ -1030,6 +1050,7 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 			                         0, 0, cmd->width, cmd->height, FREERDP_FLIP_VERTICAL))
 				goto fail;
 
+			region16_union_rect(&region, &region, &cmdRect);
 			break;
 
 		case RDP_CODEC_ID_NONE:
@@ -1042,6 +1063,7 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 			                        &xfc->context.gdi->palette, FREERDP_FLIP_VERTICAL))
 				goto fail;
 
+			region16_union_rect(&region, &region, &cmdRect);
 			break;
 
 		default:
@@ -1050,8 +1072,9 @@ static BOOL xf_gdi_surface_bits(rdpContext* context,
 			goto fail;
 	}
 
-	ret = xf_gdi_update_screen(xfc, cmd, gdi->primary_buffer, gdi->stride);
+	ret = xf_gdi_update_screen(xfc, gdi->primary_buffer, gdi->stride, &region);
 fail:
+	region16_uninit(&region);
 	xf_unlock_x11(xfc, FALSE);
 	return ret;
 }
