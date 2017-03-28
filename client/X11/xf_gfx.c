@@ -30,10 +30,9 @@
 
 static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 {
-	UINT16 width, height;
+	UINT rc = ERROR_INTERNAL_ERROR;
 	UINT32 surfaceX, surfaceY;
 	RECTANGLE_16 surfaceRect;
-	const RECTANGLE_16* extents;
 	rdpGdi* gdi;
 	gdi = xfc->context.gdi;
 	surfaceX = surface->gdi.outputOriginX;
@@ -48,9 +47,11 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 
 	if (!region16_is_empty(&surface->gdi.invalidRegion))
 	{
-		extents = region16_extents(&surface->gdi.invalidRegion);
-		width = extents->right - extents->left;
-		height = extents->bottom - extents->top;
+		const RECTANGLE_16* extents = region16_extents(&surface->gdi.invalidRegion);
+		UINT16 width = extents->right - extents->left;
+		UINT16 height = extents->bottom - extents->top;
+		const UINT16 x = surfaceX + extents->left;
+		const UINT16 y = surfaceY + extents->top;
 
 		if (width > surface->gdi.width)
 			width = surface->gdi.width;
@@ -60,11 +61,13 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 
 		if (surface->stage)
 		{
-			freerdp_image_copy(surface->stage, gdi->dstFormat,
-			                   surface->stageScanline, 0, 0,
-			                   surface->gdi.width, surface->gdi.height,
-			                   surface->gdi.data, surface->gdi.format,
-			                   surface->gdi.scanline, 0, 0, NULL, FREERDP_FLIP_NONE);
+			if (!freerdp_image_copy(surface->stage, gdi->dstFormat,
+			                        surface->stageScanline, extents->left, extents->top,
+			                        width, height,
+			                        surface->gdi.data, surface->gdi.format,
+			                        surface->gdi.scanline, extents->left, extents->top,
+			                        NULL, FREERDP_FLIP_NONE))
+				goto fail;
 		}
 
 #ifdef WITH_XRENDER
@@ -73,24 +76,25 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 		    || xfc->context.settings->MultiTouchGestures)
 		{
 			XPutImage(xfc->display, xfc->primary, xfc->gc, surface->image,
-			          extents->left, extents->top, extents->left + surfaceX, extents->top + surfaceY,
-			          width, height);
+			          extents->left, extents->top, x, y, width, height);
 			xf_draw_screen(xfc, extents->left, extents->top, width, height);
 		}
+
 		else
 #endif
 		{
 			XPutImage(xfc->display, xfc->drawable, xfc->gc,
 			          surface->image, extents->left, extents->top,
-			          extents->left + surfaceX, extents->top + surfaceY,
-			          width, height);
+			          x, y, width, height);
 		}
 	}
 
+	rc = CHANNEL_RC_OK;
+fail:
 	region16_clear(&surface->gdi.invalidRegion);
 	XSetClipMask(xfc->display, xfc->gc, None);
 	XSync(xfc->display, False);
-	return 0;
+	return rc;
 }
 
 static UINT xf_UpdateSurfaces(RdpgfxClientContext* context)
@@ -254,7 +258,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 
 	ZeroMemory(surface->gdi.data, size);
 
-	if (gdi->dstFormat == surface->gdi.format)
+	if (AreColorFormatsEqualNoAlpha(gdi->dstFormat, surface->gdi.format))
 	{
 		surface->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
 		                              (char*) surface->gdi.data, surface->gdi.width, surface->gdi.height,
