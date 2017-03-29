@@ -45,320 +45,6 @@ static primitives_t* generic = NULL;
 /****************************************************************************/
 /* SSSE3 YUV420 -> RGB conversion                                           */
 /****************************************************************************/
-
-static pstatus_t ssse3_YUV420ToRGB_BGRX(
-    const BYTE** pSrc, const UINT32* srcStep,
-    BYTE* pDst, UINT32 dstStep, UINT32 dstFormat,
-    const prim_size_t* roi)
-{
-	UINT32 lastRow, lastCol;
-	BYTE* UData, *VData, *YData;
-	UINT32 i, nWidth, nHeight, VaddDst, VaddY, VaddU, VaddV;
-	__m128i r0, r1, r2, r3, r4, r5, r6, r7;
-	__m128i* buffer;
-	/* last_line: if the last (U,V doubled) line should be skipped, set to 10B
-	 * last_column: if it's the last column in a line, set to 10B (for handling line-endings not multiple by four) */
-	buffer = _aligned_malloc(4 * 16, 16);
-	YData = (BYTE*) pSrc[0];
-	UData = (BYTE*) pSrc[1];
-	VData = (BYTE*) pSrc[2];
-	nWidth = roi->width;
-	nHeight = roi->height;
-
-	if ((lastCol = (nWidth & 3)))
-	{
-		switch (lastCol)
-		{
-			case 1:
-				r7 = _mm_set_epi32(0, 0, 0, 0xFFFFFFFF);
-				break;
-
-			case 2:
-				r7 = _mm_set_epi32(0, 0, 0xFFFFFFFF, 0xFFFFFFFF);
-				break;
-
-			case 3:
-				r7 = _mm_set_epi32(0, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF);
-				break;
-		}
-
-		_mm_store_si128(buffer + 3, r7);
-		lastCol = 1;
-	}
-
-	nWidth += 3;
-	nWidth = nWidth >> 2;
-	lastRow = nHeight & 1;
-	nHeight++;
-	nHeight = nHeight >> 1;
-	VaddDst = (dstStep << 1) - (nWidth << 4);
-	VaddY = (srcStep[0] << 1) - (nWidth << 2);
-	VaddU = srcStep[1] - (((nWidth << 1) + 2) & 0xFFFC);
-	VaddV = srcStep[2] - (((nWidth << 1) + 2) & 0xFFFC);
-
-	while (nHeight-- > 0)
-	{
-		if (nHeight == 0)
-			lastRow <<= 1;
-
-		i = 0;
-
-		do
-		{
-			if (!(i & 0x01))
-			{
-				/* Y-, U- and V-data is stored in different arrays.
-				* We start with processing U-data.
-				*
-				* at first we fetch four U-values from its array and shuffle them like this:
-				*	0d0d 0c0c 0b0b 0a0a
-				* we've done two things: converting the values to signed words and duplicating
-				* each value, because always two pixel "share" the same U- (and V-) data */
-				r0 = _mm_cvtsi32_si128(*(UINT32*)UData);
-				r5 = _mm_set_epi32(0x80038003, 0x80028002, 0x80018001, 0x80008000);
-				r0 = _mm_shuffle_epi8(r0, r5);
-				UData += 4;
-				/* then we subtract 128 from each value, so we get D */
-				r3 = _mm_set_epi16(128, 128, 128, 128, 128, 128, 128, 128);
-				r0 = _mm_subs_epi16(r0, r3);
-				/* we need to do two things with our D, so let's store it for later use */
-				r2 = r0;
-				/* now we can multiply our D with 48 and unpack it to xmm4:xmm0
-				 * this is what we need to get G data later on */
-				r4 = r0;
-				r7 = _mm_set_epi16(48, 48, 48, 48, 48, 48, 48, 48);
-				r0 = _mm_mullo_epi16(r0, r7);
-				r4 = _mm_mulhi_epi16(r4, r7);
-				r7 = r0;
-				r0 = _mm_unpacklo_epi16(r0, r4);
-				r4 = _mm_unpackhi_epi16(r7, r4);
-				/* to get B data, we need to prepare a second value, D*475 */
-				r1 = r2;
-				r7 = _mm_set_epi16(475, 475, 475, 475, 475, 475, 475, 475);
-				r1 = _mm_mullo_epi16(r1, r7);
-				r2 = _mm_mulhi_epi16(r2, r7);
-				r7 = r1;
-				r1 = _mm_unpacklo_epi16(r1, r2);
-				r7 = _mm_unpackhi_epi16(r7, r2);
-				/* so we got something like this: xmm7:xmm1
-				 * this pair contains values for 16 pixel:
-				 * aabbccdd
-				 * aabbccdd, but we can only work on four pixel at once, so we need to save upper values */
-				_mm_store_si128(buffer + 1, r7);
-				/* Now we've prepared U-data. Preparing V-data is actually the same, just with other coefficients */
-				r2 = _mm_cvtsi32_si128(*(UINT32*)VData);
-				r2 = _mm_shuffle_epi8(r2, r5);
-				VData += 4;
-				r2 = _mm_subs_epi16(r2, r3);
-				r5 = r2;
-				/* this is also known as E*403, we need it to convert R data */
-				r3 = r2;
-				r7 = _mm_set_epi16(403, 403, 403, 403, 403, 403, 403, 403);
-				r2 = _mm_mullo_epi16(r2, r7);
-				r3 = _mm_mulhi_epi16(r3, r7);
-				r7 = r2;
-				r2 = _mm_unpacklo_epi16(r2, r3);
-				r7 = _mm_unpackhi_epi16(r7, r3);
-				/* and preserve upper four values for future ... */
-				_mm_store_si128(buffer + 2, r7);
-				/* doing this step: E*120 */
-				r3 = r5;
-				r7 = _mm_set_epi16(120, 120, 120, 120, 120, 120, 120, 120);
-				r3 = _mm_mullo_epi16(r3, r7);
-				r5 = _mm_mulhi_epi16(r5, r7);
-				r7 = r3;
-				r3 = _mm_unpacklo_epi16(r3, r5);
-				r7 = _mm_unpackhi_epi16(r7, r5);
-				/* now we complete what we've begun above:
-				 * (48*D) + (120*E) = (48*D +120*E) */
-				r0 = _mm_add_epi32(r0, r3);
-				r4 = _mm_add_epi32(r4, r7);
-				/* and store to memory ! */
-				_mm_store_si128(buffer, r4);
-			}
-			else
-			{
-				/* maybe you've wondered about the conditional above ?
-				 * Well, we prepared UV data for eight pixel in each line, but can only process four
-				 * per loop. So we need to load the upper four pixel data from memory each secound loop! */
-				r1 = _mm_load_si128(buffer + 1);
-				r2 = _mm_load_si128(buffer + 2);
-				r0 = _mm_load_si128(buffer);
-			}
-
-			if (++i == nWidth)
-				lastCol <<= 1;
-
-			/* We didn't produce any output yet, so let's do so!
-			 * Ok, fetch four pixel from the Y-data array and shuffle them like this:
-			 * 00d0 00c0 00b0 00a0, to get signed dwords and multiply by 256 */
-			r4 = _mm_cvtsi32_si128(*(UINT32*)YData);
-			r7 = _mm_set_epi32(0x80800380, 0x80800280, 0x80800180, 0x80800080);
-			r4 = _mm_shuffle_epi8(r4, r7);
-			r5 = r4;
-			r6 = r4;
-			/* no we can perform the "real" conversion itself and produce output! */
-			r4 = _mm_add_epi32(r4, r2);
-			r5 = _mm_sub_epi32(r5, r0);
-			r6 = _mm_add_epi32(r6, r1);
-			/* in the end, we only need bytes for RGB values.
-			 * So, what do we do? right! shifting left makes values bigger and thats always good.
-			 * before we had dwords of data, and by shifting left and treating the result
-			 * as packed words, we get not only signed words, but do also divide by 256
-			 * imagine, data is now ordered this way: ddx0 ccx0 bbx0 aax0, and x is the least
-			 * significant byte, that we don't need anymore, because we've done some rounding */
-			r4 = _mm_slli_epi32(r4, 8);
-			r5 = _mm_slli_epi32(r5, 8);
-			r6 = _mm_slli_epi32(r6, 8);
-			/* one thing we still have to face is the clip() function ...
-			 * we have still signed words, and there are those min/max instructions in SSE2 ...
-			 * the max instruction takes always the bigger of the two operands and stores it in the first one,
-			 * and it operates with signs !
-			 * if we feed it with our values and zeros, it takes the zeros if our values are smaller than
-			 * zero and otherwise our values */
-			r7 = _mm_set_epi32(0, 0, 0, 0);
-			r4 = _mm_max_epi16(r4, r7);
-			r5 = _mm_max_epi16(r5, r7);
-			r6 = _mm_max_epi16(r6, r7);
-			/* the same thing just completely different can be used to limit our values to 255,
-			 * but now using the min instruction and 255s */
-			r7 = _mm_set_epi32(0x00FF0000, 0x00FF0000, 0x00FF0000, 0x00FF0000);
-			r4 = _mm_min_epi16(r4, r7);
-			r5 = _mm_min_epi16(r5, r7);
-			r6 = _mm_min_epi16(r6, r7);
-			/* Now we got our bytes.
-			 * the moment has come to assemble the three channels R,G and B to the xrgb dwords
-			 * on Red channel we just have to and each futural dword with 00FF0000H */
-			//r7=_mm_set_epi32(0x00FF0000,0x00FF0000,0x00FF0000,0x00FF0000);
-			r4 = _mm_and_si128(r4, r7);
-			/* on Green channel we have to shuffle somehow, so we get something like this:
-			 * 00d0 00c0 00b0 00a0 */
-			r7 = _mm_set_epi32(0x80800E80, 0x80800A80, 0x80800680, 0x80800280);
-			r5 = _mm_shuffle_epi8(r5, r7);
-			/* and on Blue channel that one:
-			 * 000d 000c 000b 000a */
-			r7 = _mm_set_epi32(0x8080800E, 0x8080800A, 0x80808006, 0x80808002);
-			r6 = _mm_shuffle_epi8(r6, r7);
-			/* and at last we or it together and get this one:
-			 * xrgb xrgb xrgb xrgb */
-			r4 = _mm_or_si128(r4, r5);
-			r4 = _mm_or_si128(r4, r6);
-
-			/* Only thing to do know is writing data to memory, but this gets a bit more
-			 * complicated if the width is not a multiple of four and it is the last column in line. */
-			if (lastCol & 0x02)
-			{
-				/* let's say, we need to only convert six pixel in width
-				 * Ok, the first 4 pixel will be converted just like every 4 pixel else, but
-				 * if it's the last loop in line, last_column is shifted left by one (curious? have a look above),
-				 * and we land here. Through initialisation a mask was prepared. In this case it looks like
-				 * 0000FFFFH 0000FFFFH 0000FFFFH 0000FFFFH */
-				r6 = _mm_load_si128(buffer + 3);
-				/* we and our output data with this mask to get only the valid pixel */
-				r4 = _mm_and_si128(r4, r6);
-				/* then we fetch memory from the destination array ... */
-				r5 = _mm_lddqu_si128((__m128i*)pDst);
-				/* ... and and it with the inverse mask. We get only those pixel, which should not be updated */
-				r6 = _mm_andnot_si128(r6, r5);
-				/* we only have to or the two values together and write it back to the destination array,
-				 * and only the pixel that should be updated really get changed. */
-				r4 = _mm_or_si128(r4, r6);
-			}
-
-			_mm_storeu_si128((__m128i*)pDst, r4);
-
-			if (!(lastRow & 0x02))
-			{
-				/* Because UV data is the same for two lines, we can process the secound line just here,
-				 * in the same loop. Only thing we need to do is to add some offsets to the Y- and destination
-				 * pointer. These offsets are iStride[0] and the target scanline.
-				 * But if we don't need to process the secound line, like if we are in the last line of processing nine lines,
-				 * we just skip all this. */
-				r4 = _mm_cvtsi32_si128(*(UINT32*)(YData + srcStep[0]));
-				r7 = _mm_set_epi32(0x80800380, 0x80800280, 0x80800180, 0x80800080);
-				r4 = _mm_shuffle_epi8(r4, r7);
-				r5 = r4;
-				r6 = r4;
-				r4 = _mm_add_epi32(r4, r2);
-				r5 = _mm_sub_epi32(r5, r0);
-				r6 = _mm_add_epi32(r6, r1);
-				r4 = _mm_slli_epi32(r4, 8);
-				r5 = _mm_slli_epi32(r5, 8);
-				r6 = _mm_slli_epi32(r6, 8);
-				r7 = _mm_set_epi32(0, 0, 0, 0);
-				r4 = _mm_max_epi16(r4, r7);
-				r5 = _mm_max_epi16(r5, r7);
-				r6 = _mm_max_epi16(r6, r7);
-				r7 = _mm_set_epi32(0x00FF0000, 0x00FF0000, 0x00FF0000, 0x00FF0000);
-				r4 = _mm_min_epi16(r4, r7);
-				r5 = _mm_min_epi16(r5, r7);
-				r6 = _mm_min_epi16(r6, r7);
-				r7 = _mm_set_epi32(0x00FF0000, 0x00FF0000, 0x00FF0000, 0x00FF0000);
-				r4 = _mm_and_si128(r4, r7);
-				r7 = _mm_set_epi32(0x80800E80, 0x80800A80, 0x80800680, 0x80800280);
-				r5 = _mm_shuffle_epi8(r5, r7);
-				r7 = _mm_set_epi32(0x8080800E, 0x8080800A, 0x80808006, 0x80808002);
-				r6 = _mm_shuffle_epi8(r6, r7);
-				r4 = _mm_or_si128(r4, r5);
-				r4 = _mm_or_si128(r4, r6);
-
-				if (lastCol & 0x02)
-				{
-					r6 = _mm_load_si128(buffer + 3);
-					r4 = _mm_and_si128(r4, r6);
-					r5 = _mm_lddqu_si128((__m128i*)(pDst + dstStep));
-					r6 = _mm_andnot_si128(r6, r5);
-					r4 = _mm_or_si128(r4, r6);
-					/* only thing is, we should shift [rbp-42] back here, because we have processed the last column,
-					 * and this "special condition" can be released */
-					lastCol >>= 1;
-				}
-
-				_mm_storeu_si128((__m128i*)(pDst + dstStep), r4);
-			}
-
-			/* after all we have to increase the destination- and Y-data pointer by four pixel */
-			pDst += 16;
-			YData += 4;
-		}
-		while (i < nWidth);
-
-		/* after each line we have to add the scanline to the destination pointer, because
-		 * we are processing two lines at once, but only increasing the destination pointer
-		 * in the first line. Well, we only have one pointer, so it's the easiest way to access
-		 * the secound line with the one pointer and an offset (scanline)
-		 * if we're not converting the full width of the scanline, like only 64 pixel, but the
-		 * output buffer was "designed" for 1920p HD, we have to add the remaining length for each line,
-		 * to get into the next line. */
-		pDst += VaddDst;
-		/* same thing has to be done for Y-data, but with iStride[0] instead of the target scanline */
-		YData += VaddY;
-		/* and again for UV data, but here it's enough to add the remaining length, because
-		 * UV data is the same for two lines and there exists only one "UV line" on two "real lines" */
-		UData += VaddU;
-		VData += VaddV;
-	}
-
-	_aligned_free(buffer);
-	return PRIMITIVES_SUCCESS;
-}
-
-static pstatus_t ssse3_YUV420ToRGB(
-    const BYTE** pSrc, const UINT32* srcStep,
-    BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
-    const prim_size_t* roi)
-{
-	switch (DstFormat)
-	{
-		case PIXEL_FORMAT_BGRX32:
-		case PIXEL_FORMAT_BGRA32:
-			return ssse3_YUV420ToRGB_BGRX(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
-
-		default:
-			return generic->YUV420ToRGB_8u_P3AC4R(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
-	}
-}
-
 static __m128i* ssse3_YUV444Pixel(__m128i* dst, __m128i Yraw, __m128i Uraw, __m128i Vraw, UINT8 pos)
 {
 	/* Visual Studio 2010 doesn't like _mm_set_epi32 in array initializer list */
@@ -460,8 +146,80 @@ static __m128i* ssse3_YUV444Pixel(__m128i* dst, __m128i Yraw, __m128i Uraw, __m1
 			BGRX = _mm_or_si128(BGRX, packed);
 		}
 	}
-	_mm_store_si128(dst++, BGRX);
+	_mm_storeu_si128(dst++, BGRX);
 	return dst;
+}
+
+static pstatus_t ssse3_YUV420ToRGB_BGRX(
+    const BYTE** pSrc, const UINT32* srcStep,
+    BYTE* pDst, UINT32 dstStep,
+    const prim_size_t* roi)
+{
+	const UINT32 nWidth = roi->width;
+	const UINT32 nHeight = roi->height;
+	const UINT32 pad = roi->width % 16;
+	const __m128i duplicate = _mm_set_epi8(7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0);
+	UINT32 y;
+
+	for (y = 0; y < nHeight; y++)
+	{
+		UINT32 x;
+		__m128i* dst = (__m128i*)(pDst + dstStep * y);
+		const BYTE* YData = pSrc[0] + y * srcStep[0];
+		const BYTE* UData = pSrc[1] + (y / 2) * srcStep[1];
+		const BYTE* VData = pSrc[2] + (y / 2) * srcStep[2];
+
+		for (x = 0; x < nWidth - pad; x += 16)
+		{
+			const __m128i Y = _mm_loadu_si128((__m128i*)YData);
+			const __m128i uRaw = _mm_loadu_si128((__m128i*)UData);
+			const __m128i vRaw = _mm_loadu_si128((__m128i*)VData);
+			const __m128i U = _mm_shuffle_epi8(uRaw, duplicate);
+			const __m128i V = _mm_shuffle_epi8(vRaw, duplicate);
+			YData += 16;
+			UData += 8;
+			VData += 8;
+			dst = ssse3_YUV444Pixel(dst, Y, U, V, 0);
+			dst = ssse3_YUV444Pixel(dst, Y, U, V, 1);
+			dst = ssse3_YUV444Pixel(dst, Y, U, V, 2);
+			dst = ssse3_YUV444Pixel(dst, Y, U, V, 3);
+		}
+
+		for (x = 0; x < pad; x++)
+		{
+			const BYTE Y = *YData++;
+			const BYTE U = *UData;
+			const BYTE V = *VData;
+			const BYTE r = YUV2R(Y, U, V);
+			const BYTE g = YUV2G(Y, U, V);
+			const BYTE b = YUV2B(Y, U, V);
+			dst = (__m128i*)writePixelBGRX((BYTE*)dst, 4, PIXEL_FORMAT_BGRX32, r, g, b, 0xFF);
+
+			if (x % 2)
+			{
+				UData++;
+				VData++;
+			}
+		}
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
+static pstatus_t ssse3_YUV420ToRGB(
+    const BYTE** pSrc, const UINT32* srcStep,
+    BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
+    const prim_size_t* roi)
+{
+	switch (DstFormat)
+	{
+		case PIXEL_FORMAT_BGRX32:
+		case PIXEL_FORMAT_BGRA32:
+			return ssse3_YUV420ToRGB_BGRX(pSrc, srcStep, pDst, dstStep, roi);
+
+		default:
+			return generic->YUV420ToRGB_8u_P3AC4R(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
+	}
 }
 
 static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R_BGRX(
@@ -516,7 +274,7 @@ static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R(const BYTE** pSrc, const UINT32* sr
         const prim_size_t* roi)
 {
 	if ((unsigned long)pSrc[0] % 16 || (unsigned long)pSrc[1] % 16 || (unsigned long)pSrc[2] % 16 ||
-	    (unsigned long)pDst % 16 || dstStep % 16 || srcStep[0] % 16 || srcStep[1] % 16 || srcStep[2] % 16)
+	    srcStep[0] % 16 || srcStep[1] % 16 || srcStep[2] % 16)
 		return generic->YUV444ToRGB_8u_P3AC4R(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
 
 	switch (DstFormat)
@@ -658,7 +416,6 @@ static INLINE void ssse3_RGBToYUV420_BGRX_UV(
 		x4 = _mm_load_si128(rgb2++);
 		x3 = _mm_avg_epu8(x3, x4);
 		/* subsample these 16x1 pixels into 8x1 pixels */
-
 		/**
 		 * shuffle controls
 		 * c = a[0],a[2],b[0],b[2] == 10 00 10 00 = 0x88
@@ -758,7 +515,8 @@ static pstatus_t ssse3_RGBToYUV420(
 /****************************************************************************/
 
 static INLINE void ssse3_RGBToAVC444YUV_BGRX_ROW(
-	const BYTE* src, BYTE* ydst, BYTE* udst1, BYTE* udst2, BYTE* vdst1, BYTE* vdst2, BOOL isEvenRow, UINT32 width)
+    const BYTE* src, BYTE* ydst, BYTE* udst1, BYTE* udst2, BYTE* vdst1, BYTE* vdst2, BOOL isEvenRow,
+    UINT32 width)
 {
 	UINT32 x;
 	__m128i vector128, y_factors, u_factors, v_factors, smask;
@@ -773,7 +531,6 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_ROW(
 	u_factors = _mm_load_si128((__m128i*)bgrx_u_factors);
 	v_factors = _mm_load_si128((__m128i*)bgrx_v_factors);
 	vector128 = _mm_load_si128((__m128i*)const_buf_128b);
-
 	smask = _mm_set_epi8(15, 13, 11, 9, 7, 5, 3, 1, 14, 12, 10, 8, 6, 4, 2, 0);
 
 	for (x = 0; x < width; x += 16)
@@ -783,7 +540,6 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_ROW(
 		x2 = _mm_load_si128(argb++); // 2nd 4 pixels
 		x3 = _mm_load_si128(argb++); // 3rd 4 pixels
 		x4 = _mm_load_si128(argb++); // 4th 4 pixels
-
 		/* Y: multiplications with subtotals and horizontal sums */
 		y1 = _mm_hadd_epi16(_mm_maddubs_epi16(x1, y_factors), _mm_maddubs_epi16(x2, y_factors));
 		y2 = _mm_hadd_epi16(_mm_maddubs_epi16(x3, y_factors), _mm_maddubs_epi16(x4, y_factors));
@@ -792,7 +548,6 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_ROW(
 		y2 = _mm_srli_epi16(y2, 7);
 		/* Y: pack (unsigned) 16 words into bytes */
 		y = _mm_packus_epi16(y1, y2);
-
 		/* U: multiplications with subtotals and horizontal sums */
 		u1 = _mm_hadd_epi16(_mm_maddubs_epi16(x1, u_factors), _mm_maddubs_epi16(x2, u_factors));
 		u2 = _mm_hadd_epi16(_mm_maddubs_epi16(x3, u_factors), _mm_maddubs_epi16(x4, u_factors));
@@ -803,7 +558,6 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_ROW(
 		u = _mm_packs_epi16(u1, u2);
 		/* U: add 128 */
 		u = _mm_add_epi8(u, vector128);
-
 		/* V: multiplications with subtotals and horizontal sums */
 		v1 = _mm_hadd_epi16(_mm_maddubs_epi16(x1, v_factors), _mm_maddubs_epi16(x2, v_factors));
 		v2 = _mm_hadd_epi16(_mm_maddubs_epi16(x3, v_factors), _mm_maddubs_epi16(x4, v_factors));
@@ -814,8 +568,6 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_ROW(
 		v = _mm_packs_epi16(v1, v2);
 		/* V: add 128 */
 		v = _mm_add_epi8(v, vector128);
-
-
 		/* store y */
 		_mm_storeu_si128(py++, y);
 
@@ -845,14 +597,14 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_ROW(
 
 
 static pstatus_t ssse3_RGBToAVC444YUV_BGRX(
-	const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
-	BYTE* pDst1[3], const UINT32 dst1Step[3],
-	BYTE* pDst2[3], const UINT32 dst2Step[3],
-	const prim_size_t* roi)
+    const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
+    BYTE* pDst1[3], const UINT32 dst1Step[3],
+    BYTE* pDst2[3], const UINT32 dst2Step[3],
+    const prim_size_t* roi)
 {
 	UINT32 y, numRows;
 	BOOL evenRow = TRUE;
-	BYTE *b1, *b2, *b3, *b4, *b5, *b6, *b7;
+	BYTE* b1, *b2, *b3, *b4, *b5, *b6, *b7;
 	const BYTE* pMaxSrc = pSrc + (roi->height - 1) * srcStep;
 
 	if (roi->height < 1 || roi->width < 1)
@@ -869,9 +621,8 @@ static pstatus_t ssse3_RGBToAVC444YUV_BGRX(
 
 	for (y = 0; y < numRows; y++, evenRow = !evenRow)
 	{
-		const BYTE *src = y < roi->height ? pSrc + y * srcStep : pMaxSrc;
+		const BYTE* src = y < roi->height ? pSrc + y * srcStep : pMaxSrc;
 		UINT32 i = y >> 1;
-
 		b1  = pDst1[0] + y * dst1Step[0];
 
 		if (evenRow)
@@ -895,10 +646,10 @@ static pstatus_t ssse3_RGBToAVC444YUV_BGRX(
 
 
 static pstatus_t ssse3_RGBToAVC444YUV(
-	const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
-	BYTE* pDst1[3], const UINT32 dst1Step[3],
-	BYTE* pDst2[3], const UINT32 dst2Step[3],
-	const prim_size_t* roi)
+    const BYTE* pSrc, UINT32 srcFormat, UINT32 srcStep,
+    BYTE* pDst1[3], const UINT32 dst1Step[3],
+    BYTE* pDst2[3], const UINT32 dst2Step[3],
+    const prim_size_t* roi)
 {
 	switch (srcFormat)
 	{

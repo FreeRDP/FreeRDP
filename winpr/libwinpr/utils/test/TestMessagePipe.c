@@ -5,16 +5,14 @@
 
 static void* message_echo_pipe_client_thread(void* arg)
 {
-	int index;
-	int count;
-	wMessage message;
-	wMessagePipe* pipe;
-
-	count = index = 0;
-	pipe = (wMessagePipe*) arg;
+	int index = 0;
+	wMessagePipe* pipe = (wMessagePipe*) arg;
 
 	while (index < 100)
 	{
+		wMessage message;
+		int count;
+
 		if (!MessageQueue_Post(pipe->In, NULL, 0, (void*) (size_t) index, NULL))
 			break;
 
@@ -42,7 +40,6 @@ static void* message_echo_pipe_client_thread(void* arg)
 
 static void* message_echo_pipe_server_thread(void* arg)
 {
-	int count;
 	wMessage message;
 	wMessagePipe* pipe;
 
@@ -54,8 +51,6 @@ static void* message_echo_pipe_server_thread(void* arg)
 		{
 			if (message.id == WMQ_QUIT)
 				break;
-
-			count = (int) (size_t) message.wParam;
 
 			if (!MessageQueue_Dispatch(pipe->Out, &message))
 				break;

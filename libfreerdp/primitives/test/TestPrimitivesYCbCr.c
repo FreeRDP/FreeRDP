@@ -2110,15 +2110,9 @@ static int test_bmp_cmp_count(const BYTE* mem1, const BYTE* mem2, int size,
 static int test_bmp_cmp_dump(const BYTE* actual, const BYTE* expected, int size,
                              int channel, int margin)
 {
-	int x, y;
 	int error[3];
-	UINT32 pixel = 0;
 	int count = 0;
 	int index = 0;
-	BYTE R, G, B;
-	BYTE eR, eG, eB;
-	INT16 Y, Cb, Cr;
-	R = G = B = eR = eG = eB = 0;
 	size /= 4;
 	actual += channel;
 	expected += channel;
@@ -2127,15 +2121,18 @@ static int test_bmp_cmp_dump(const BYTE* actual, const BYTE* expected, int size,
 	{
 		if (*actual != *expected)
 		{
-			pixel = *((UINT32*) &actual[-channel]);
-			pixel = GetColor(PIXEL_FORMAT_XRGB32, R, G, B, 0xff);
-			pixel = *((UINT32*) &expected[-channel]);
-			pixel = GetColor(PIXEL_FORMAT_XRGB32, eR, eG, eB, 0xFF);
-			Y = TEST_Y_COMPONENT[index];
-			Cb = TEST_CB_COMPONENT[index];
-			Cr = TEST_CR_COMPONENT[index];
-			x = index % 64;
-			y = (index - x) / 64;
+			const UINT32 pixel = *((UINT32*) &actual[-channel]);
+			const UINT32 ePixel = *((UINT32*) &expected[-channel]);
+			const INT16 Y = TEST_Y_COMPONENT[index];
+			const INT16 Cb = TEST_CB_COMPONENT[index];
+			const INT16 Cr = TEST_CR_COMPONENT[index];
+			const int x = index % 64;
+			const int y = (index - x) / 64;
+			BYTE R, G, B;
+			BYTE eR, eG, eB;
+
+			SplitColor(pixel, PIXEL_FORMAT_XRGB32, &R, &G, &B, NULL, NULL);
+			SplitColor(ePixel, PIXEL_FORMAT_XRGB32, &eR, &eG, &eB, NULL, NULL);
 			error[0] = (R > eR) ? R - eR : eR - R;
 			error[1] = (G > eG) ? G - eG : eG - G;
 			error[2] = (B > eB) ? B - eB : eB - B;
@@ -2209,6 +2206,9 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 		status = prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**) pYCbCr, srcStride,
 		                                        actual, dstStride, format,
 		                                        &roi);
+		if (status != PRIMITIVES_SUCCESS)
+			goto fail;
+
 		PROFILER_EXIT(prof);
 	}
 

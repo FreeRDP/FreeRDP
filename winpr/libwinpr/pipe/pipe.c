@@ -378,8 +378,6 @@ BOOL NamedPipeWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 
 	if (!(pipe->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED))
 	{
-		io_status = nNumberOfBytesToWrite;
-
 		if (pipe->clientfd == -1)
 			return FALSE;
 

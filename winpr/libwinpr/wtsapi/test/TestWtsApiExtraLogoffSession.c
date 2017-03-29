@@ -7,9 +7,7 @@ int TestWtsApiExtraLogoffSession(int argc, char* argv[])
 {
 	BOOL bSuccess;
 	HANDLE hServer;
-	DWORD sessionId;
 
-	sessionId = 123;
 	hServer = WTS_CURRENT_SERVER_HANDLE;
 
 	bSuccess = WTSLogoffSession(hServer, WTS_CURRENT_SESSION, FALSE);

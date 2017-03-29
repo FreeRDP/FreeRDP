@@ -14,9 +14,7 @@ int TestInterlockedSList(int argc, char* argv[])
 {
 	ULONG Count;
 	WINPR_PSLIST_ENTRY pFirstEntry;
-	WINPR_PSLIST_ENTRY pListEntry;
 	WINPR_PSLIST_HEADER pListHead;
-	PPROGRAM_ITEM pProgramItem;
 
 	/* Initialize the list header to a MEMORY_ALLOCATION_ALIGNMENT boundary. */
 	pListHead = (WINPR_PSLIST_HEADER) _aligned_malloc(sizeof(WINPR_SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
@@ -32,7 +30,7 @@ int TestInterlockedSList(int argc, char* argv[])
 	/* Insert 10 items into the list. */
 	for (Count = 1; Count <= 10; Count += 1)
 	{
-		pProgramItem = (PPROGRAM_ITEM) _aligned_malloc(sizeof(PROGRAM_ITEM), MEMORY_ALLOCATION_ALIGNMENT);
+		PPROGRAM_ITEM pProgramItem = (PPROGRAM_ITEM) _aligned_malloc(sizeof(PROGRAM_ITEM), MEMORY_ALLOCATION_ALIGNMENT);
 
 		if (!pProgramItem)
 		{
@@ -47,21 +45,22 @@ int TestInterlockedSList(int argc, char* argv[])
 	/* Remove 10 items from the list and display the signature. */
 	for (Count = 10; Count >= 1; Count -= 1)
 	{
-		pListEntry = InterlockedPopEntrySList(pListHead);
+		PPROGRAM_ITEM pProgramItem;
+		WINPR_PSLIST_ENTRY pListEntry = InterlockedPopEntrySList(pListHead);
 
 		if (!pListEntry)
 		{
 			printf("List is empty.\n");
 			return -1;
 		}
-  
+
 		pProgramItem = (PPROGRAM_ITEM) pListEntry;
 		printf("Signature is %"PRIu32"\n", pProgramItem->Signature);
 
-		/* 
-		 * This example assumes that the SLIST_ENTRY structure is the 
-		 * first member of the structure. If your structure does not 
-		 * follow this convention, you must compute the starting address 
+		/*
+		 * This example assumes that the SLIST_ENTRY structure is the
+		 * first member of the structure. If your structure does not
+		 * follow this convention, you must compute the starting address
 		 * of the structure before calling the free function.
 		 */
 
@@ -69,7 +68,6 @@ int TestInterlockedSList(int argc, char* argv[])
 	}
 
 	/* Flush the list and verify that the items are gone. */
-	pListEntry = InterlockedFlushSList(pListHead);
 	pFirstEntry = InterlockedPopEntrySList(pListHead);
 
 	if (pFirstEntry)

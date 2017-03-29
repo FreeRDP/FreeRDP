@@ -48,7 +48,7 @@ int TestInterlockedDList(int argc, char* argv[])
 	{
 		pListEntry = RemoveHeadList(pListHead);
 		pListItem = (PLIST_ITEM) pListEntry;
-		_aligned_free(pListEntry);
+		_aligned_free(pListItem);
 	}
 
 	/* InsertTailList / RemoveTailList */
@@ -66,7 +66,7 @@ int TestInterlockedDList(int argc, char* argv[])
 	{
 		pListEntry = RemoveTailList(pListHead);
 		pListItem = (PLIST_ITEM) pListEntry;
-		_aligned_free(pListEntry);
+		_aligned_free(pListItem);
 	}
 
 	_aligned_free(pListHead);

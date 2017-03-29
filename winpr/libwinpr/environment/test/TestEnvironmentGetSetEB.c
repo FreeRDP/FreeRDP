@@ -23,7 +23,8 @@ int TestEnvironmentGetSetEB(int argc, char* argv[])
 	if (!p)
 		return -1;
 
-	length = GetEnvironmentVariableEBA(lpszEnvironmentBlock,"DISPLAY", p, length);
+	if (GetEnvironmentVariableEBA(lpszEnvironmentBlock,"DISPLAY", p, length) != length - 1)
+		return -1;
 
 	printf("GetEnvironmentVariableA(WINPR_TEST_VARIABLE) = %s\n" , p);
 

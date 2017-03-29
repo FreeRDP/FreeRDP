@@ -7,22 +7,26 @@ int TestClipboardFormats(int argc, char* argv[])
 {
 	UINT32 index;
 	UINT32 count;
-	UINT32 formatId;
 	UINT32* pFormatIds;
 	const char* formatName;
 	wClipboard* clipboard;
 	UINT32 utf8StringFormatId;
+
 	clipboard = ClipboardCreate();
-	formatId = ClipboardRegisterFormat(clipboard, "text/html");
-	formatId = ClipboardRegisterFormat(clipboard, "image/bmp");
-	formatId = ClipboardRegisterFormat(clipboard, "image/png");
+	if (!clipboard)
+		return -1;
+
+	ClipboardRegisterFormat(clipboard, "text/html");
+	ClipboardRegisterFormat(clipboard, "image/bmp");
+	ClipboardRegisterFormat(clipboard, "image/png");
+
 	utf8StringFormatId = ClipboardRegisterFormat(clipboard, "UTF8_STRING");
 	pFormatIds = NULL;
 	count = ClipboardGetRegisteredFormatIds(clipboard, &pFormatIds);
 
 	for (index = 0; index < count; index++)
 	{
-		formatId = pFormatIds[index];
+		UINT32 formatId = pFormatIds[index];
 		formatName = ClipboardGetFormatName(clipboard, formatId);
 		fprintf(stderr, "Format: 0x%08"PRIX32" %s\n", formatId, formatName);
 	}
@@ -72,7 +76,7 @@ int TestClipboardFormats(int argc, char* argv[])
 
 	for (index = 0; index < count; index++)
 	{
-		formatId = pFormatIds[index];
+		UINT32 formatId = pFormatIds[index];
 		formatName = ClipboardGetFormatName(clipboard, formatId);
 		fprintf(stderr, "Format: 0x%08"PRIX32" %s\n", formatId, formatName);
 	}

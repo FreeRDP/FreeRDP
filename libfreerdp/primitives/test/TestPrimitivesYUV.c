@@ -36,10 +36,10 @@ static BOOL similarRGB(const BYTE* src, const BYTE* dst, size_t size, UINT32 for
 {
 	size_t x;
 	const UINT32 bpp = GetBytesPerPixel(format);
-	const BOOL alpha = ColorHasAlpha(format);
 
 	for (x = 0; x < size; x++)
 	{
+		const double maxDiff = 4.0;
 		UINT32 sColor, dColor;
 		BYTE sR, sG, sB, sA;
 		BYTE dR, dG, dB, dA;
@@ -48,30 +48,19 @@ static BOOL similarRGB(const BYTE* src, const BYTE* dst, size_t size, UINT32 for
 		src += bpp;
 		dst += bpp;
 		SplitColor(sColor, format, &sR, &sG, &sB, &sA, NULL);
-		SplitColor(sColor, format, &dR, &dG, &dB, &dA, NULL);
+		SplitColor(dColor, format, &dR, &dG, &dB, &dA, NULL);
 
-		if ((abs(sR - dR) > 2) || (abs(sG - dG) > 2) || (abs(sB - dB) > 2))
+		if ((abs(sR - dR) > maxDiff) || (abs(sG - dG) > maxDiff) || (abs(sB - dB) > maxDiff))
 		{
 			fprintf(stderr, "Color value  mismatch R[%02X %02X], G[%02X %02X], B[%02X %02X] at position %lu",
 			        sR, dR, sG, dG, sA, dA, x);
 			return FALSE;
 		}
 
-		if (alpha)
+		if (dA != 0xFF)
 		{
-			if (abs(sA - dA) > 2)
-			{
-				fprintf(stderr, "Alpha value  mismatch %02X %02X at position %lu", sA, dA, x);
-				return FALSE;
-			}
-		}
-		else
-		{
-			if (dA != 0xFF)
-			{
-				fprintf(stderr, "Invalid destination alpha value %02X at position %lu", dA, x);
-				return FALSE;
-			}
+			fprintf(stderr, "Invalid destination alpha value %02X at position %lu", dA, x);
+			return FALSE;
 		}
 	}
 

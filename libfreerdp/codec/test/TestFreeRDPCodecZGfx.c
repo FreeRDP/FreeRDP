@@ -24,8 +24,9 @@ static const BYTE TEST_FOX_DATA_MULTIPART[] =
 	"\x00\x00\x24\x39\x08\x0E\x91\xF8\xD8\x61\x3D\x1E\x44\x06\x43\x79"
 	"\x9C\x02";
 
-int test_ZGfxCompressFox()
+static int test_ZGfxCompressFox(void)
 {
+	int rc = -1;
 	int status;
 	UINT32 Flags;
 	BYTE* pSrcData;
@@ -36,17 +37,23 @@ int test_ZGfxCompressFox()
 	UINT32 expectedSize;
 
 	zgfx = zgfx_context_new(TRUE);
+	if (!zgfx)
+		return -1;
+
 	SrcSize = sizeof(TEST_FOX_DATA) - 1;
 	pSrcData = (BYTE*) TEST_FOX_DATA;
 	Flags = 0;
 	expectedSize = sizeof(TEST_FOX_DATA_SINGLE) - 1;
 	status = zgfx_compress(zgfx, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
+	if (status < 0)
+		goto fail;
+
 	printf("flags: 0x%08"PRIX32" size: %"PRIu32"\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
 		printf("test_ZGfxCompressFox: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n", DstSize, expectedSize);
-		return -1;
+		goto fail;
 	}
 
 	if (memcmp(pDstData, TEST_FOX_DATA_SINGLE, DstSize) != 0)
@@ -56,15 +63,19 @@ int test_ZGfxCompressFox()
 		BitDump(__FUNCTION__, WLOG_INFO, pDstData, DstSize * 8, 0);
 		printf("Expected\n");
 		BitDump(__FUNCTION__, WLOG_INFO, TEST_FOX_DATA_SINGLE, DstSize * 8, 0);
-		return -1;
+		goto fail;
 	}
 
+	rc = 0;
+
+fail:
 	zgfx_context_free(zgfx);
-	return 0;
+	return rc;
 }
 
-int test_ZGfxDecompressFoxSingle()
+static int test_ZGfxDecompressFoxSingle(void)
 {
+	int rc = -1;
 	int status;
 	UINT32 Flags;
 	BYTE* pSrcData;
@@ -75,17 +86,23 @@ int test_ZGfxDecompressFoxSingle()
 	UINT32 expectedSize;
 
 	zgfx = zgfx_context_new(TRUE);
+	if (!zgfx)
+		return -1;
+
 	SrcSize = sizeof(TEST_FOX_DATA_SINGLE) - 1;
 	pSrcData = (BYTE*) TEST_FOX_DATA_SINGLE;
 	Flags = 0;
 	expectedSize = sizeof(TEST_FOX_DATA) - 1;
 	status = zgfx_decompress(zgfx, pSrcData, SrcSize, &pDstData, &DstSize, Flags);
+	if (status < 0)
+		goto fail;
+
 	printf("flags: 0x%08"PRIX32" size: %"PRIu32"\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
 		printf("test_ZGfxDecompressFoxSingle: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n", DstSize, expectedSize);
-		return -1;
+		goto fail;
 	}
 
 	if (memcmp(pDstData, TEST_FOX_DATA, DstSize) != 0)
@@ -95,15 +112,19 @@ int test_ZGfxDecompressFoxSingle()
 		BitDump(__FUNCTION__, WLOG_INFO, pDstData, DstSize * 8, 0);
 		printf("Expected\n");
 		BitDump(__FUNCTION__, WLOG_INFO, TEST_FOX_DATA, DstSize * 8, 0);
-		return -1;
+		goto fail;
 	}
 
+	rc = 0;
+
+fail:
 	zgfx_context_free(zgfx);
-	return 0;
+	return rc;
 }
 
-int test_ZGfxDecompressFoxMultipart()
+static int test_ZGfxDecompressFoxMultipart(void)
 {
+	int rc = -1;
 	int status;
 	UINT32 Flags;
 	BYTE* pSrcData;
@@ -114,17 +135,23 @@ int test_ZGfxDecompressFoxMultipart()
 	UINT32 expectedSize;
 
 	zgfx = zgfx_context_new(TRUE);
+	if (!zgfx)
+		return -1;
+
 	SrcSize = sizeof(TEST_FOX_DATA_MULTIPART) - 1;
 	pSrcData = (BYTE*) TEST_FOX_DATA_MULTIPART;
 	Flags = 0;
 	expectedSize = sizeof(TEST_FOX_DATA) - 1;
 	status = zgfx_decompress(zgfx, pSrcData, SrcSize, &pDstData, &DstSize, Flags);
+	if (status < 0)
+		goto fail;
+
 	printf("flags: 0x%08"PRIX32" size: %"PRIu32"\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
 		printf("test_ZGfxDecompressFoxSingle: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n", DstSize, expectedSize);
-		return -1;
+		goto fail;
 	}
 
 	if (memcmp(pDstData, TEST_FOX_DATA, DstSize) != 0)
@@ -134,15 +161,19 @@ int test_ZGfxDecompressFoxMultipart()
 		BitDump(__FUNCTION__, WLOG_INFO, pDstData, DstSize * 8, 0);
 		printf("Expected\n");
 		BitDump(__FUNCTION__, WLOG_INFO, TEST_FOX_DATA, DstSize * 8, 0);
-		return -1;
+		goto fail;
 	}
 
+	rc = 0;
+
+fail:
 	zgfx_context_free(zgfx);
 	return 0;
 }
 
-int test_ZGfxCompressConsistent()
+static int test_ZGfxCompressConsistent(void)
 {
+	int rc = -1;
 	int status;
 	UINT32 Flags;
 	BYTE* pSrcData;
@@ -158,22 +189,30 @@ int test_ZGfxCompressConsistent()
 	memset(BigBuffer, 0xaa, sizeof(BigBuffer));
 	memcpy(BigBuffer, TEST_FOX_DATA, sizeof(TEST_FOX_DATA) - 1);
 	zgfx = zgfx_context_new(TRUE);
-	
+	if (!zgfx)
+		return -1;
+
 	/* Compress */
 	expectedSize = SrcSize = sizeof(BigBuffer);
 	pSrcData = (BYTE*) BigBuffer;
 	Flags = 0;
 	status = zgfx_compress(zgfx, pSrcData, SrcSize, &pDstData2, &DstSize2, &Flags);
+	if (status < 0)
+		goto fail;
+
 	printf("Compress: flags: 0x%08"PRIX32" size: %"PRIu32"\n", Flags, DstSize2);
 
 	/* Decompress */
 	status = zgfx_decompress(zgfx, pDstData2, DstSize2, &pDstData, &DstSize, Flags);
+	if (status < 0)
+		goto fail;
+
 	printf("Decompress: flags: 0x%08"PRIX32" size: %"PRIu32"\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
 		printf("test_ZGfxDecompressFoxSingle: output size mismatch: Actual: %"PRIu32", Expected: %"PRIu32"\n", DstSize, expectedSize);
-		return -1;
+		goto fail;
 	}
 
 	if (memcmp(pDstData, BigBuffer, DstSize) != 0)
@@ -191,11 +230,13 @@ int test_ZGfxCompressConsistent()
 		BitDump(__FUNCTION__, WLOG_INFO, pDstData2, 64 * 8, 0);
 		printf("...\n");
 		BitDump(__FUNCTION__, WLOG_INFO, pDstData2 + DstSize2 - 64, 64 * 8, 0);
-		return -1;
+		goto fail;
 	}
 
+	rc = 0;
+fail:
 	zgfx_context_free(zgfx);
-	return 0;
+	return rc;
 }
 
 int TestFreeRDPCodecZGfx(int argc, char* argv[])

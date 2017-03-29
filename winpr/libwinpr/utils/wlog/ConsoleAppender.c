@@ -192,10 +192,9 @@ static BOOL WLog_ConsoleAppender_WritePacketMessage(wLog* log, wLogAppender* app
 #if defined(ANDROID)
 	return FALSE;
 #else
-	int PacketId;
 	char* FullFileName;
 
-	PacketId = g_PacketId++;
+	g_PacketId++;
 
 	if (!appender->PacketMessageContext)
 	{
