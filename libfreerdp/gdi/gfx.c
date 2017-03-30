@@ -100,7 +100,8 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 	UINT16 width, height;
 	UINT32 surfaceX, surfaceY;
 	RECTANGLE_16 surfaceRect;
-	const RECTANGLE_16* extents;
+	const RECTANGLE_16* rects;
+	UINT32 i, nbRects;
 	rdpUpdate* update = gdi->context->update;
 	surfaceX = surface->outputOriginX;
 	surfaceY = surface->outputOriginY;
@@ -111,16 +112,19 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 	region16_intersect_rect(&(surface->invalidRegion),
 	                        &(surface->invalidRegion), &surfaceRect);
 
-	if (!region16_is_empty(&(surface->invalidRegion)))
+	if (!(rects = region16_rects(&surface->invalidRegion, &nbRects)) || !nbRects)
+                return CHANNEL_RC_OK;
+
+	update->BeginPaint(gdi->context);
+
+	for (i = 0; i < nbRects; i++)
 	{
-		extents = region16_extents(&(surface->invalidRegion));
-		nXSrc = extents->left;
-		nYSrc = extents->top;
-		nXDst = surfaceX + extents->left;
-		nYDst = surfaceY + extents->top;
-		width = extents->right - extents->left;
-		height = extents->bottom - extents->top;
-		update->BeginPaint(gdi->context);
+		nXSrc = rects[i].left;
+		nYSrc = rects[i].top;
+		nXDst = surfaceX + nXSrc;
+		nYDst = surfaceY + nYSrc;
+		width = rects[i].right - rects[i].left;
+		height = rects[i].bottom - rects[i].top;
 
 		if (!freerdp_image_copy(gdi->primary_buffer, gdi->primary->hdc->format,
 		                        gdi->stride,
@@ -130,8 +134,9 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 			return CHANNEL_RC_NULL_DATA;
 
 		gdi_InvalidateRegion(gdi->primary->hdc, nXDst, nYDst, width, height);
-		update->EndPaint(gdi->context);
 	}
+
+	update->EndPaint(gdi->context);
 
 	region16_clear(&(surface->invalidRegion));
 	return CHANNEL_RC_OK;
