@@ -979,8 +979,8 @@ static UINT gdi_CacheToSurface(RdpgfxClientContext* context,
 
 		invalidRect.left = destPt->x;
 		invalidRect.top = destPt->y;
-		invalidRect.right = destPt->x + cacheEntry->width - 1;
-		invalidRect.bottom = destPt->y + cacheEntry->height - 1;
+		invalidRect.right = destPt->x + cacheEntry->width;
+		invalidRect.bottom = destPt->y + cacheEntry->height;
 		region16_union_rect(&surface->invalidRegion, &surface->invalidRegion,
 		                    &invalidRect);
 	}
