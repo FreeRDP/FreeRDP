@@ -475,7 +475,7 @@ BOOL WINAPI GetFileAttributesExA(LPCSTR lpFileName, GET_FILEEX_INFO_LEVELS fInfo
 	WIN32_FIND_DATAA findFileData;
 	HANDLE hFind;
 
-	if (!(hFind = FindFirstFileA(lpFileName, &findFileData) == INVALID_HANDLE_VALUE))
+	if ((hFind = FindFirstFileA(lpFileName, &findFileData) != INVALID_HANDLE_VALUE))
 		FindClose(hFind);
 
 	fd->dwFileAttributes = findFileData.dwFileAttributes;
@@ -925,7 +925,8 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 			fullpath = (char*)malloc(pathlen + namelen + 2);
 			if (fullpath == NULL)
 			{
-				return INVALID_HANDLE_VALUE;
+				SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+				return FALSE;
 			}
 			memcpy(fullpath, pFileSearch->lpPath, pathlen);
 			fullpath[pathlen] = '/';
@@ -935,7 +936,8 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 			if (lstat(fullpath, &fileStat) != 0)
 			{
 				free(fullpath);
-				return INVALID_HANDLE_VALUE;
+				SetLastError(map_posix_err(errno));
+				return FALSE;
 			}
 
 			free(fullpath);
@@ -991,7 +993,7 @@ BOOL FindNextFileW(HANDLE hFindFile, LPWIN32_FIND_DATAW lpFindFileData)
 	if (!fd)
 	{
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-		return INVALID_HANDLE_VALUE;
+		return FALSE;
 	}
 
 	if (FindNextFileA(hFindFile, fd))
