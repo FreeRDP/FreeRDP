@@ -34,6 +34,8 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 	UINT32 surfaceX, surfaceY;
 	RECTANGLE_16 surfaceRect;
 	rdpGdi* gdi;
+	UINT32 nbRects, x;
+	const RECTANGLE_16* rects;
 	gdi = xfc->context.gdi;
 	surfaceX = surface->gdi.outputOriginX;
 	surfaceY = surface->gdi.outputOriginY;
@@ -45,27 +47,28 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 
-	if (!region16_is_empty(&surface->gdi.invalidRegion))
+	region16_intersect_rect(&(surface->gdi.invalidRegion),
+	                        &(surface->gdi.invalidRegion), &surfaceRect);
+
+	if (!(rects = region16_rects(&surface->gdi.invalidRegion, &nbRects)))
+		return CHANNEL_RC_OK;
+
+	for (x = 0; x < nbRects; x++)
 	{
-		const RECTANGLE_16* extents = region16_extents(&surface->gdi.invalidRegion);
-		UINT16 width = extents->right - extents->left;
-		UINT16 height = extents->bottom - extents->top;
-		const UINT16 x = surfaceX + extents->left;
-		const UINT16 y = surfaceY + extents->top;
-
-		if (width > surface->gdi.width)
-			width = surface->gdi.width;
-
-		if (height > surface->gdi.height)
-			height = surface->gdi.height;
+		const UINT32 nXSrc = rects[x].left;
+		const UINT32 nYSrc = rects[x].top;
+		const UINT32 width = rects[x].right - nXSrc;
+		const UINT32 height = rects[x].bottom - nYSrc;
+		const UINT32 nXDst = surfaceX + nXSrc;
+		const UINT32 nYDst = surfaceY + nYSrc;
 
 		if (surface->stage)
 		{
 			if (!freerdp_image_copy(surface->stage, gdi->dstFormat,
-			                        surface->stageScanline, extents->left, extents->top,
+			                        surface->stageScanline, nXSrc, nYSrc,
 			                        width, height,
 			                        surface->gdi.data, surface->gdi.format,
-			                        surface->gdi.scanline, extents->left, extents->top,
+			                        surface->gdi.scanline, nXSrc, nYSrc,
 			                        NULL, FREERDP_FLIP_NONE))
 				goto fail;
 		}
@@ -76,16 +79,15 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 		    || xfc->context.settings->MultiTouchGestures)
 		{
 			XPutImage(xfc->display, xfc->primary, xfc->gc, surface->image,
-			          extents->left, extents->top, x, y, width, height);
-			xf_draw_screen(xfc, extents->left, extents->top, width, height);
+			          nXSrc, nYSrc, nXDst, nYDst, width, height);
+			xf_draw_screen(xfc, nXSrc, nYSrc, width, height);
 		}
-
 		else
 #endif
 		{
 			XPutImage(xfc->display, xfc->drawable, xfc->gc,
-			          surface->image, extents->left, extents->top,
-			          x, y, width, height);
+			          surface->image, nXSrc, nYSrc,
+			          nXDst, nYDst, width, height);
 		}
 	}
 
