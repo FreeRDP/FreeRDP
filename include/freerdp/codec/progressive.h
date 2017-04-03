@@ -30,6 +30,7 @@ typedef struct _PROGRESSIVE_CONTEXT PROGRESSIVE_CONTEXT;
 
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/color.h>
+#include <freerdp/codec/region.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,7 +43,7 @@ FREERDP_API INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
         const BYTE* pSrcData, UINT32 SrcSize,
         BYTE* pDstData, UINT32 DstFormat,
         UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
-        UINT32 nWidth, UINT32 nHeight, UINT16 surfaceId);
+        REGION16* invalidRegion, UINT16 surfaceId);
 
 FREERDP_API INT32 progressive_create_surface_context(PROGRESSIVE_CONTEXT*
         progressive, UINT16 surfaceId, UINT32 width, UINT32 height);

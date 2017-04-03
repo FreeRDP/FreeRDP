@@ -561,7 +561,12 @@ static UINT gdi_SurfaceCommand_Progressive(rdpGdi* gdi,
 	INT32 rc;
 	UINT status = CHANNEL_RC_OK;
 	gdiGfxSurface* surface;
-	RECTANGLE_16 invalidRect;
+
+	/**
+	 * Note: Since this comes via a Wire-To-Surface-2 PDU the
+	 * cmd's top/left/right/bottom/width/height members are always zero!
+	 * The update region is determined during decompression.
+	 */
 
 	surface = (gdiGfxSurface*) context->GetSurfaceData(context, cmd->surfaceId);
 	if (!surface)
@@ -583,20 +588,13 @@ static UINT gdi_SurfaceCommand_Progressive(rdpGdi* gdi,
 	rc = progressive_decompress(surface->codecs->progressive, cmd->data,
 	                            cmd->length, surface->data, surface->format,
 	                            surface->scanline, cmd->left, cmd->top,
-	                            cmd->width, cmd->height, cmd->surfaceId);
+	                            &surface->invalidRegion, cmd->surfaceId);
 
 	if (rc < 0)
 	{
 		WLog_ERR(TAG, "progressive_decompress failure: %"PRId32"", rc);
 		return ERROR_INTERNAL_ERROR;
 	}
-
-	invalidRect.left = cmd->left;
-	invalidRect.top = cmd->top;
-	invalidRect.right = cmd->right;
-	invalidRect.bottom = cmd->bottom;
-	region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion),
-	                    &invalidRect);
 
 	if (!gdi->inGfxFrame)
 	{

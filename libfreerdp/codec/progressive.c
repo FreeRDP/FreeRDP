@@ -1530,7 +1530,7 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
                              const BYTE* pSrcData, UINT32 SrcSize,
                              BYTE* pDstData, UINT32 DstFormat,
                              UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
-                             UINT32 nWidth, UINT32 nHeight, UINT16 surfaceId)
+                             REGION16* invalidRegion, UINT16 surfaceId)
 {
 	INT32 rc = 1;
 	INT32 status;
@@ -1910,6 +1910,9 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive,
 				rc = -42;
 				break;
 			}
+
+			if (invalidRegion)
+				region16_union_rect(invalidRegion, invalidRegion, rect);
 		}
 
 		region16_uninit(&updateRegion);
