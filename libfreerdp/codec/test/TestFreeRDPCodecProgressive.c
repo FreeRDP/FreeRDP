@@ -741,7 +741,7 @@ static int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE
 	for (pass = 0; pass < count; pass++)
 	{
 		status = progressive_decompress(progressive, files[pass].buffer, files[pass].size,
-		                                g_DstData, PIXEL_FORMAT_XRGB32, g_DstStep, 0, 0, g_Width, g_Height, 0);
+		                                g_DstData, PIXEL_FORMAT_XRGB32, g_DstStep, 0, 0, NULL, 0);
 		printf("ProgressiveDecompress: status: %d pass: %d\n", status, pass + 1);
 		region = &(progressive->region);
 
