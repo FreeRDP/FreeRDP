@@ -709,6 +709,58 @@ static INLINE uint8x8_t neon_YUV2B(int32x4_t Ch, int32x4_t Cl,
 	return vqmovun_s16(B);
 }
 
+static INLINE BYTE* neon_YuvToRgbPixel(BYTE* pRGB, int16x8_t Y, int16x8_t D, int16x8_t E,
+                                       const uint8_t rPos,  const uint8_t gPos, const uint8_t bPos, const uint8_t aPos)
+{
+	uint8x8x4_t bgrx;
+	const int32x4_t Ch = vmulq_n_s32(vmovl_s16(vget_high_s16(Y)), 256);  /* Y * 256 */
+	const int32x4_t Cl = vmulq_n_s32(vmovl_s16(vget_low_s16(Y)), 256);  /* Y * 256 */
+	const int16x4_t Dh = vget_high_s16(D);
+	const int16x4_t Dl = vget_low_s16(D);
+	const int16x4_t Eh = vget_high_s16(E);
+	const int16x4_t El = vget_low_s16(E);
+	{
+		/* B = (256L * Y + 475 * (U - 128)) >> 8*/
+		const int16x4_t c475 = vdup_n_s16(475);
+		const int32x4_t CDh = vmlal_s16(Ch, Dh, c475);
+		const int32x4_t CDl = vmlal_s16(Cl, Dl, c475);
+		const int32x4_t Bh = vrshrq_n_s32(CDh, 8);
+		const int32x4_t Bl = vrshrq_n_s32(CDl, 8);
+		const int16x8_t B = vcombine_s16(vqmovn_s32(Bl), vqmovn_s32(Bh));
+		bgrx.val[bPos] = vqmovun_s16(B);
+	}
+	{
+		/* G = (256L * Y -  48 * (U - 128) - 120 * (V - 128)) >> 8 */
+		const int16x4_t c48 = vdup_n_s16(48);
+		const int16x4_t c120 = vdup_n_s16(120);
+		const int32x4_t CDh = vmlsl_s16(Ch, Dh, c48);
+		const int32x4_t CDl = vmlsl_s16(Cl, Dl, c48);
+		const int32x4_t CDEh = vmlsl_s16(CDh, Eh, c120);
+		const int32x4_t CDEl = vmlsl_s16(CDl, El, c120);
+		const int32x4_t Gh = vrshrq_n_s32(CDEh, 8);
+		const int32x4_t Gl = vrshrq_n_s32(CDEl, 8);
+		const int16x8_t G = vcombine_s16(vqmovn_s32(Gl), vqmovn_s32(Gh));
+		bgrx.val[gPos] = vqmovun_s16(G);
+	}
+	{
+		/* R = (256 * Y + 403 * (V - 128)) >> 8 */
+		const int16x4_t c403 = vdup_n_s16(403);
+		const int32x4_t CEh = vmlal_s16(Ch, Eh, c403);
+		const int32x4_t CEl = vmlal_s16(Cl, El, c403);
+		const int32x4_t Rh = vrshrq_n_s32(CEh, 8);
+		const int32x4_t Rl = vrshrq_n_s32(CEl, 8);
+		const int16x8_t R = vcombine_s16(vqmovn_s32(Rl), vqmovn_s32(Rh));
+		bgrx.val[rPos] = vqmovun_s16(R);
+	}
+	{
+		/* A */
+		bgrx.val[aPos] = vdup_n_u8(0xFF);
+	}
+	vst4_u8(pRGB, bgrx);
+	pRGB += 32;
+	return pRGB;
+}
+
 static INLINE pstatus_t neon_YUV420ToX(
     const BYTE* pSrc[3], const UINT32 srcStep[3],
     BYTE* pDst, UINT32 dstStep,
@@ -718,6 +770,11 @@ static INLINE pstatus_t neon_YUV420ToX(
 	UINT32 y;
 	const UINT32 nWidth = roi->width;
 	const UINT32 nHeight = roi->height;
+	const DWORD pad = nWidth % 16;
+	const UINT32 yPad = srcStep[0] - roi->width;
+	const UINT32 uPad = srcStep[1] - roi->width / 2;
+	const UINT32 vPad = srcStep[2] - roi->width / 2;
+	const UINT32 dPad = dstStep - roi->width * 4;
 	const int16x8_t c128 = vdupq_n_s16(128);
 
 	for (y = 0; y < nHeight; y += 2)
@@ -731,9 +788,8 @@ static INLINE pstatus_t neon_YUV420ToX(
 		UINT32 x;
 		const BOOL lastY = y >= nHeight - 1;
 
-		for (x = 0; x < nWidth;)
+		for (x = 0; x < nWidth - pad;)
 		{
-			const BOOL lastX = (nWidth - x) < 16;
 			const uint8x8_t Uraw = vld1_u8(pU);
 			const uint8x8x2_t Uu = vzip_u8(Uraw, Uraw);
 			const int16x8_t U1 = vreinterpretq_s16_u16(vmovl_u8(Uu.val[0]));
@@ -743,72 +799,36 @@ static INLINE pstatus_t neon_YUV420ToX(
 			const int16x8_t V1 = vreinterpretq_s16_u16(vmovl_u8(Vu.val[0]));
 			const int16x8_t V2 = vreinterpretq_s16_u16(vmovl_u8(Vu.val[1]));
 			const int16x8_t D1 = vsubq_s16(U1, c128);
-			const int16x4_t D1h = vget_high_s16(D1);
-			const int16x4_t D1l = vget_low_s16(D1);
 			const int16x8_t E1 = vsubq_s16(V1, c128);
-			const int16x4_t E1h = vget_high_s16(E1);
-			const int16x4_t E1l = vget_low_s16(E1);
 			const int16x8_t D2 = vsubq_s16(U2, c128);
-			const int16x4_t D2h = vget_high_s16(D2);
-			const int16x4_t D2l = vget_low_s16(D2);
 			const int16x8_t E2 = vsubq_s16(V2, c128);
-			const int16x4_t E2h = vget_high_s16(E2);
-			const int16x4_t E2l = vget_low_s16(E2);
-			uint8x8x4_t bgrx;
-			bgrx.val[aPos] = vdup_n_u8(0xFF);
 			{
 				const uint8x8_t Y1u = vld1_u8(pY1);
 				const int16x8_t Y1 = vreinterpretq_s16_u16(vmovl_u8(Y1u));
-				const int32x4_t Ch = vmulq_n_s32(vmovl_s16(vget_high_s16(Y1)), 256);  /* Y * 256 */
-				const int32x4_t Cl = vmulq_n_s32(vmovl_s16(vget_low_s16(Y1)), 256);  /* Y * 256 */
-				bgrx.val[rPos] = neon_YUV2R(Ch, Cl, D1h, D1l, E1h, E1l);
-				bgrx.val[gPos] = neon_YUV2G(Ch, Cl, D1h, D1l, E1h, E1l);
-				bgrx.val[bPos] = neon_YUV2B(Ch, Cl, D1h, D1l, E1h, E1l);
-				vst4_u8(pRGB1, bgrx);
-				pRGB1 += 32;
+				pRGB1 = neon_YuvToRgbPixel(pRGB1, Y1, D1, E1, rPos, gPos, bPos, aPos);
 				pY1 += 8;
 				x += 8;
 			}
-
-			if (!lastX)
 			{
 				const uint8x8_t Y1u = vld1_u8(pY1);
 				const int16x8_t Y1 = vreinterpretq_s16_u16(vmovl_u8(Y1u));
-				const int32x4_t Ch = vmulq_n_s32(vmovl_s16(vget_high_s16(Y1)), 256);  /* Y * 256 */
-				const int32x4_t Cl = vmulq_n_s32(vmovl_s16(vget_low_s16(Y1)), 256);  /* Y * 256 */
-				bgrx.val[rPos] = neon_YUV2R(Ch, Cl, D2h, D2l, E2h, E2l);
-				bgrx.val[gPos] = neon_YUV2G(Ch, Cl, D2h, D2l, E2h, E2l);
-				bgrx.val[bPos] = neon_YUV2B(Ch, Cl, D2h, D2l, E2h, E2l);
-				vst4_u8(pRGB1, bgrx);
-				pRGB1 += 32;
+				pRGB1 = neon_YuvToRgbPixel(pRGB1, Y1, D2, E2, rPos, gPos, bPos, aPos);
 				pY1 += 8;
 				x += 8;
 			}
 
 			if (!lastY)
 			{
-				const uint8x8_t Y2u = vld1_u8(pY2);
-				const int16x8_t Y2 = vreinterpretq_s16_u16(vmovl_u8(Y2u));
-				const int32x4_t Ch = vmulq_n_s32(vmovl_s16(vget_high_s16(Y2)), 256);  /* Y * 256 */
-				const int32x4_t Cl = vmulq_n_s32(vmovl_s16(vget_low_s16(Y2)), 256);  /* Y * 256 */
-				bgrx.val[rPos] = neon_YUV2R(Ch, Cl, D1h, D1l, E1h, E1l);
-				bgrx.val[gPos] = neon_YUV2G(Ch, Cl, D1h, D1l, E1h, E1l);
-				bgrx.val[bPos] = neon_YUV2B(Ch, Cl, D1h, D1l, E1h, E1l);
-				vst4_u8(pRGB2, bgrx);
-				pRGB2 += 32;
-				pY2 += 8;
-
-				if (!lastX)
 				{
 					const uint8x8_t Y2u = vld1_u8(pY2);
 					const int16x8_t Y2 = vreinterpretq_s16_u16(vmovl_u8(Y2u));
-					const int32x4_t Ch = vmulq_n_s32(vmovl_s16(vget_high_s16(Y2)), 256);  /* Y * 256 */
-					const int32x4_t Cl = vmulq_n_s32(vmovl_s16(vget_low_s16(Y2)), 256);  /* Y * 256 */
-					bgrx.val[rPos] = neon_YUV2R(Ch, Cl, D2h, D2l, E2h, E2l);
-					bgrx.val[gPos] = neon_YUV2G(Ch, Cl, D2h, D2l, E2h, E2l);
-					bgrx.val[bPos] = neon_YUV2B(Ch, Cl, D2h, D2l, E2h, E2l);
-					vst4_u8(pRGB2, bgrx);
-					pRGB2 += 32;
+					pRGB2 = neon_YuvToRgbPixel(pRGB2, Y2, D1, E1, rPos, gPos, bPos, aPos);
+					pY2 += 8;
+				}
+				{
+					const uint8x8_t Y2u = vld1_u8(pY2);
+					const int16x8_t Y2 = vreinterpretq_s16_u16(vmovl_u8(Y2u));
+					pRGB2 = neon_YuvToRgbPixel(pRGB2, Y2, D2, E2, rPos, gPos, bPos, aPos);
 					pY2 += 8;
 				}
 			}
@@ -816,6 +836,49 @@ static INLINE pstatus_t neon_YUV420ToX(
 			pU += 8;
 			pV += 8;
 		}
+
+		for (; x < nWidth; x++)
+		{
+			const BYTE U = *pU;
+			const BYTE V = *pV;
+			{
+				const BYTE Y = *pY1++;
+				const BYTE r = YUV2R(Y, U, V);
+				const BYTE g = YUV2G(Y, U, V);
+				const BYTE b = YUV2B(Y, U, V);
+				pRGB1[aPos] = 0xFF;
+				pRGB1[rPos] = r;
+				pRGB1[gPos] = g;
+				pRGB1[bPos] = b;
+				pRGB1 += 4;
+			}
+
+			if (!lastY)
+			{
+				const BYTE Y = *pY2++;
+				const BYTE r = YUV2R(Y, U, V);
+				const BYTE g = YUV2G(Y, U, V);
+				const BYTE b = YUV2B(Y, U, V);
+				pRGB2[aPos] = 0xFF;
+				pRGB2[rPos] = r;
+				pRGB2[gPos] = g;
+				pRGB2[bPos] = b;
+				pRGB2 += 4;
+			}
+
+			if (x % 2)
+			{
+				pU++;
+				pV++;
+			}
+		}
+
+		pRGB1 += dPad;
+		pRGB2 += dPad;
+		pY1 += yPad;
+		pY2 += yPad;
+		pU += uPad;
+		pV += vPad;
 	}
 
 	return PRIMITIVES_SUCCESS;
@@ -867,10 +930,6 @@ static INLINE pstatus_t neon_YUV444ToX(
 	const uint8_t* pV = pSrc[2];
 	uint8_t* pRGB = pDst;
 	const int16x8_t c128 = vdupq_n_s16(128);
-	const int16x4_t c48 = vdup_n_s16(48);
-	const int16x4_t c120 = vdup_n_s16(120);
-	const int16x4_t c403 = vdup_n_s16(403);
-	const int16x4_t c475 = vdup_n_s16(475);
 	const DWORD pad = nWidth % 8;
 
 	for (y = 0; y < nHeight; y++)
@@ -887,50 +946,9 @@ static INLINE pstatus_t neon_YUV444ToX(
 			const int16x8_t V = vreinterpretq_s16_u16(vmovl_u8(Vu));
 			/* Do the calculations on Y in 32bit width, the result of 255 * 256 does not fit
 			 * a signed 16 bit value. */
-			const int32x4_t Ch = vmulq_n_s32(vmovl_s16(vget_high_s16(Y)), 256);  /* Y * 256 */
-			const int32x4_t Cl = vmulq_n_s32(vmovl_s16(vget_low_s16(Y)), 256);  /* Y * 256 */
 			const int16x8_t D = vsubq_s16(U, c128);
-			const int16x4_t Dh = vget_high_s16(D);
-			const int16x4_t Dl = vget_low_s16(D);
 			const int16x8_t E = vsubq_s16(V, c128);
-			const int16x4_t Eh = vget_high_s16(E);
-			const int16x4_t El = vget_low_s16(E);
-			uint8x8x4_t bgrx;
-			{
-				/* B = (256L * Y + 475 * (U - 128)) >> 8*/
-				const int32x4_t CDh = vmlal_s16(Ch, Dh, c475);
-				const int32x4_t CDl = vmlal_s16(Cl, Dl, c475);
-				const int32x4_t Bh = vrshrq_n_s32(CDh, 8);
-				const int32x4_t Bl = vrshrq_n_s32(CDl, 8);
-				const int16x8_t B = vcombine_s16(vqmovn_s32(Bl), vqmovn_s32(Bh));
-				bgrx.val[bPos] = vqmovun_s16(B);
-			}
-			{
-				/* G = (256L * Y -  48 * (U - 128) - 120 * (V - 128)) >> 8 */
-				const int32x4_t CDh = vmlsl_s16(Ch, Dh, c48);
-				const int32x4_t CDl = vmlsl_s16(Cl, Dl, c48);
-				const int32x4_t CDEh = vmlsl_s16(CDh, Eh, c120);
-				const int32x4_t CDEl = vmlsl_s16(CDl, El, c120);
-				const int32x4_t Gh = vrshrq_n_s32(CDEh, 8);
-				const int32x4_t Gl = vrshrq_n_s32(CDEl, 8);
-				const int16x8_t G = vcombine_s16(vqmovn_s32(Gl), vqmovn_s32(Gh));
-				bgrx.val[gPos] = vqmovun_s16(G);
-			}
-			{
-				/* R = (256 * Y + 403 * (V - 128)) >> 8 */
-				const int32x4_t CEh = vmlal_s16(Ch, Eh, c403);
-				const int32x4_t CEl = vmlal_s16(Cl, El, c403);
-				const int32x4_t Rh = vrshrq_n_s32(CEh, 8);
-				const int32x4_t Rl = vrshrq_n_s32(CEl, 8);
-				const int16x8_t R = vcombine_s16(vqmovn_s32(Rl), vqmovn_s32(Rh));
-				bgrx.val[rPos] = vqmovun_s16(R);
-			}
-			{
-				/* A */
-				bgrx.val[aPos] = vdup_n_u8(0xFF);
-			}
-			vst4_u8(pRGB, bgrx);
-			pRGB += 32;
+			pRGB = neon_YuvToRgbPixel(pRGB, Y, D, E, rPos, gPos, bPos, aPos);
 			pY += 8;
 			pU += 8;
 			pV += 8;
