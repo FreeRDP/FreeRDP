@@ -469,7 +469,7 @@ BOOL FlushFileBuffers(HANDLE hFile)
 }
 
 BOOL WINAPI GetFileAttributesExA(LPCSTR lpFileName, GET_FILEEX_INFO_LEVELS fInfoLevelId,
-																 LPVOID lpFileInformation)
+                                 LPVOID lpFileInformation)
 {
 	LPWIN32_FILE_ATTRIBUTE_DATA fd = lpFileInformation;
 	WIN32_FIND_DATAA findFileData;
@@ -488,7 +488,7 @@ BOOL WINAPI GetFileAttributesExA(LPCSTR lpFileName, GET_FILEEX_INFO_LEVELS fInfo
 }
 
 BOOL WINAPI GetFileAttributesExW(LPCWSTR lpFileName, GET_FILEEX_INFO_LEVELS fInfoLevelId,
-																 LPVOID lpFileInformation)
+                                 LPVOID lpFileInformation)
 {
 	BOOL ret;
 	LPSTR lpCFileName;
