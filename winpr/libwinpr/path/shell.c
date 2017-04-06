@@ -3,6 +3,7 @@
  * Path Functions
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2016 David PHAM-VAN <d.phamvan@inuvika.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +44,7 @@
 #include <Shlobj.h>
 #else
 #include <errno.h>
+#include <dirent.h>
 #endif
 
 static char* GetPath_XDG_CONFIG_HOME(void);
@@ -505,8 +507,53 @@ BOOL PathFileExistsA(LPCSTR pszPath)
 
 BOOL PathFileExistsW(LPCWSTR pszPath)
 {
-	return FALSE;
+	LPSTR lpFileNameA = NULL;
+	BOOL ret;
+
+	if (ConvertFromUnicode(CP_UTF8, 0, pszPath, -1, &lpFileNameA, 0, NULL, NULL) < 1)
+		return FALSE;
+
+	ret = PathFileExistsA(lpFileNameA);
+	free (lpFileNameA);
+
+	return ret;
 }
+
+BOOL PathIsDirectoryEmptyA(LPCSTR pszPath)
+{
+	struct dirent *dp;
+	int empty = 1;
+
+	DIR *dir = opendir(pszPath);
+	if (dir == NULL) /* Not a directory or doesn't exist */
+		return 1;
+
+	while ((dp = readdir(dir)) != NULL) {
+		if (strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0)
+			continue;    /* Skip . and .. */
+
+		empty = 0;
+		break;
+	}
+	closedir(dir);
+	return empty;
+}
+
+
+BOOL PathIsDirectoryEmptyW(LPCWSTR pszPath)
+{
+	LPSTR lpFileNameA = NULL;
+	BOOL ret;
+
+	if (ConvertFromUnicode(CP_UTF8, 0, pszPath, -1, &lpFileNameA, 0, NULL, NULL) < 1)
+		return FALSE;
+
+	ret = PathIsDirectoryEmptyA(lpFileNameA);
+	free (lpFileNameA);
+
+	return ret;
+}
+
 
 #else
 

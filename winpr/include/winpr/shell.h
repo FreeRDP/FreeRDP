@@ -3,6 +3,7 @@
  * Shell Functions
  *
  * Copyright 2015 Dell Software <Mike.McDonald@software.dell.com>
+ * Copyright 2016 David PHAM-VAN <d.phamvan@inuvika.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,4 +50,3 @@ WINPR_API BOOL GetUserProfileDirectoryW(HANDLE hToken, LPWSTR lpProfileDir, LPDW
 #endif
 
 #endif /* WINPR_SHELL_H */
-

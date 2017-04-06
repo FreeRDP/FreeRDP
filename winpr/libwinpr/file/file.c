@@ -4,6 +4,7 @@
  *
  * Copyright 2015 Thincast Technologies GmbH
  * Copyright 2015 Bernhard Miklautz <bernhard.miklautz@thincast.com>
+ * Copyright 2016 David PHAM-VAN <d.phamvan@inuvika.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +44,13 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+
+#ifdef ANDROID
+#include <sys/vfs.h>
+#else
+#include <sys/statvfs.h>
+#endif
+
 
 static BOOL FileIsHandled(HANDLE handle)
 {
@@ -97,10 +105,12 @@ static BOOL FileSetEndOfFile(HANDLE hFile)
 		return FALSE;
 
 	size = ftell(pFile->fp);
+
 	if (ftruncate(fileno(pFile->fp), size) < 0)
 	{
 		WLog_ERR(TAG, "ftruncate %s failed with %s [0x%08X]",
 			pFile->lpFileName, strerror(errno), errno);
+		SetLastError(map_posix_err(errno));
 		return FALSE;
 	}
 
@@ -161,9 +171,10 @@ static BOOL FileRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		return FALSE;
 
 	file = (WINPR_FILE *)Object;
-	io_status = fread(lpBuffer, nNumberOfBytesToRead, 1, file->fp);
+	clearerr(file->fp);
+	io_status = fread(lpBuffer, 1, nNumberOfBytesToRead, file->fp);
 
-	if (io_status != 1)
+	if (io_status == 0 && ferror(file->fp))
 	{
 		status = FALSE;
 
@@ -172,11 +183,13 @@ static BOOL FileRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 			case EWOULDBLOCK:
 				SetLastError(ERROR_NO_DATA);
 				break;
+			default:
+				SetLastError(map_posix_err(errno));
 		}
 	}
 
 	if (lpNumberOfBytesRead)
-		*lpNumberOfBytesRead = nNumberOfBytesToRead;
+		*lpNumberOfBytesRead = io_status;
 
 	return status;
 }
@@ -199,11 +212,15 @@ static BOOL FileWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrit
 
 	file = (WINPR_FILE *)Object;
 
-	io_status = fwrite(lpBuffer, nNumberOfBytesToWrite, 1, file->fp);
-	if (io_status != 1)
+	clearerr(file->fp);
+	io_status = fwrite(lpBuffer, 1, nNumberOfBytesToWrite, file->fp);
+	if (io_status == 0 && ferror(file->fp))
+	{
+		SetLastError(map_posix_err(errno));
 		return FALSE;
+	}
 
-	*lpNumberOfBytesWritten = nNumberOfBytesToWrite;
+	*lpNumberOfBytesWritten = io_status;
 	return TRUE;
 }
 
@@ -507,7 +524,7 @@ static HANDLE_OPS shmOps = {
 
 static const char* FileGetMode(DWORD dwDesiredAccess, DWORD dwCreationDisposition, BOOL* create)
 {
-	BOOL writeable = dwDesiredAccess & GENERIC_WRITE;
+	BOOL writeable = (dwDesiredAccess & (GENERIC_WRITE | STANDARD_RIGHTS_WRITE | FILE_WRITE_DATA | FILE_APPEND_DATA)) != 0;
 
 	switch(dwCreationDisposition)
 	{
@@ -522,7 +539,7 @@ static const char* FileGetMode(DWORD dwDesiredAccess, DWORD dwCreationDispositio
 		return "rb+";
 	case OPEN_EXISTING:
 		*create = FALSE;
-		return "rb+";
+		return (writeable) ? "rb+" : "rb";
 	case TRUNCATE_EXISTING:
 		*create = FALSE;
 		return "wb+";
@@ -530,6 +547,51 @@ static const char* FileGetMode(DWORD dwDesiredAccess, DWORD dwCreationDispositio
 		*create = FALSE;
 		return "";
 	}
+}
+
+UINT32 map_posix_err(int fs_errno)
+{
+	UINT32 rc;
+
+	/* try to return NTSTATUS version of error code */
+
+	switch (fs_errno)
+	{
+		case 0:
+			rc = STATUS_SUCCESS;
+			break;
+
+		case EPERM:
+		case EACCES:
+			rc = ERROR_ACCESS_DENIED;
+			break;
+
+		case ENOENT:
+			rc = ERROR_FILE_NOT_FOUND;
+			break;
+
+		case EBUSY:
+			rc = ERROR_BUSY_DRIVE;
+			break;
+
+		case EEXIST:
+			rc  = ERROR_FILE_EXISTS;
+			break;
+
+		case EISDIR:
+			rc = STATUS_FILE_IS_A_DIRECTORY;
+			break;
+
+		case ENOTEMPTY:
+			rc = STATUS_DIRECTORY_NOT_EMPTY;
+			break;
+
+		default:
+			rc = STATUS_UNSUCCESSFUL;
+			break;
+	}
+	
+	return rc;
 }
 
 static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
@@ -540,6 +602,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 	const char* mode = FileGetMode(dwDesiredAccess, dwCreationDisposition, &create);
 	int lock = 0;
 	FILE* fp = NULL;
+	struct stat st;
 
 	if (dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED)
 	{
@@ -575,9 +638,21 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 
 	if (create)
 	{
+		if (dwCreationDisposition == CREATE_NEW)
+		{
+			if (stat(pFile->lpFileName, &st) == 0)
+			{
+				SetLastError(ERROR_FILE_EXISTS);
+				free(pFile->lpFileName);
+				free(pFile);
+				return INVALID_HANDLE_VALUE;
+			}
+		}
+
 		fp = fopen(pFile->lpFileName, "ab");
 		if (!fp)
 		{
+			SetLastError(map_posix_err(errno));
 			free(pFile->lpFileName);
 			free(pFile);
 			return INVALID_HANDLE_VALUE;
@@ -594,6 +669,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 	{
 		/* This case can occur when trying to open a
 		 * not existing file without create flag. */
+		SetLastError(map_posix_err(errno));
 		free(pFile->lpFileName);
 		free(pFile);
 		return INVALID_HANDLE_VALUE;
@@ -612,6 +688,7 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 		{
 			WLog_ERR(TAG, "flock failed with %s [0x%08X]",
 				 strerror(errno), errno);
+			SetLastError(map_posix_err(errno));
 			FileCloseHandle(pFile);
 			return INVALID_HANDLE_VALUE;
 		}
@@ -619,6 +696,13 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
 		pFile->bLocked = TRUE;
 	}
 
+	if (fstat(fileno(pFile->fp), &st)==0 && dwFlagsAndAttributes & FILE_ATTRIBUTE_READONLY)
+	{
+			st.st_mode &= ~(S_IWUSR|S_IWGRP|S_IWOTH);
+			fchmod(fileno(pFile->fp), st.st_mode);
+	}
+
+	SetLastError(STATUS_SUCCESS);
 	return pFile;
 }
 
@@ -693,6 +777,41 @@ BOOL SetStdHandle(DWORD nStdHandle, HANDLE hHandle)
 BOOL SetStdHandleEx(DWORD dwStdHandle, HANDLE hNewHandle, HANDLE* phOldHandle)
 {
 	return FALSE;
+}
+
+BOOL GetDiskFreeSpaceA(LPCSTR lpRootPathName, LPDWORD lpSectorsPerCluster,
+											 LPDWORD lpBytesPerSector, LPDWORD lpNumberOfFreeClusters, LPDWORD lpTotalNumberOfClusters)
+{
+#if defined(ANDROID)
+#define STATVFS statfs
+#else
+#define STATVFS statvfs
+#endif
+
+	struct STATVFS svfst;
+	STATVFS(lpRootPathName, &svfst);
+	*lpSectorsPerCluster = svfst.f_frsize;
+	*lpBytesPerSector = 1;
+	*lpNumberOfFreeClusters = svfst.f_bavail;
+	*lpTotalNumberOfClusters = svfst.f_blocks;
+	return TRUE;
+}
+
+BOOL GetDiskFreeSpaceW(LPCWSTR lpwRootPathName, LPDWORD lpSectorsPerCluster,
+											 LPDWORD lpBytesPerSector, LPDWORD lpNumberOfFreeClusters, LPDWORD lpTotalNumberOfClusters)
+{
+	LPSTR lpRootPathName;
+	BOOL ret;
+
+	if (ConvertFromUnicode(CP_UTF8, 0, lpwRootPathName, -1, &lpRootPathName, 0, NULL, NULL) <= 0)
+	{
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		return FALSE;
+	}
+	ret = GetDiskFreeSpaceA(lpRootPathName, lpSectorsPerCluster, lpBytesPerSector,
+													 lpNumberOfFreeClusters, lpTotalNumberOfClusters);
+	free(lpRootPathName);
+	return ret;
 }
 
 #endif /* _WIN32 */

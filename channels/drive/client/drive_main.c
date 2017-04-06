@@ -6,6 +6,7 @@
  * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2015 Thincast Technologies GmbH
  * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+ * Copyright 2016 David PHAM-VAN <d.phamvan@inuvika.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +40,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/path.h>
+#include <winpr/file.h>
 #include <winpr/string.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
@@ -46,6 +48,7 @@
 #include <winpr/environment.h>
 #include <winpr/interlocked.h>
 #include <winpr/collections.h>
+#include <winpr/shell.h>
 
 #include <freerdp/channels/rdpdr.h>
 
@@ -57,7 +60,8 @@ struct _DRIVE_DEVICE
 {
 	DEVICE device;
 
-	char* path;
+	WCHAR* path;
+	UINT32 PathLength;
 	wListDictionary* files;
 
 	HANDLE thread;
@@ -68,37 +72,59 @@ struct _DRIVE_DEVICE
 	rdpContext* rdpcontext;
 };
 
-static UINT32 drive_map_posix_err(int fs_errno)
+static DWORD drive_map_windows_err(DWORD fs_errno)
 {
-	UINT32 rc;
+	DWORD rc;
 
 	/* try to return NTSTATUS version of error code */
 
 	switch (fs_errno)
 	{
-		case EPERM:
-		case EACCES:
+		case STATUS_SUCCESS:
+			rc = STATUS_SUCCESS;
+			break;
+
+		case ERROR_ACCESS_DENIED:
+		case ERROR_SHARING_VIOLATION:
 			rc = STATUS_ACCESS_DENIED;
 			break;
 
-		case ENOENT:
+		case ERROR_FILE_NOT_FOUND:
 			rc = STATUS_NO_SUCH_FILE;
 			break;
 
-		case EBUSY:
+		case ERROR_BUSY_DRIVE:
 			rc = STATUS_DEVICE_BUSY;
 			break;
 
-		case EEXIST:
+		case ERROR_FILE_EXISTS:
+		case ERROR_ALREADY_EXISTS:
 			rc  = STATUS_OBJECT_NAME_COLLISION;
 			break;
 
-		case EISDIR:
-			rc = STATUS_FILE_IS_A_DIRECTORY;
+		case ERROR_INVALID_NAME:
+			rc = STATUS_NO_SUCH_FILE;
+			break;
+
+		case ERROR_INVALID_HANDLE:
+			rc = STATUS_INVALID_HANDLE;
+			break;
+
+		case ERROR_NO_MORE_FILES:
+			rc = STATUS_NO_MORE_FILES;
+			break;
+
+		case ERROR_DIRECTORY:
+			rc = STATUS_NOT_A_DIRECTORY;
+			break;
+
+		case ERROR_PATH_NOT_FOUND:
+			rc = STATUS_OBJECT_PATH_NOT_FOUND;
 			break;
 
 		default:
 			rc = STATUS_UNSUCCESSFUL;
+			WLog_ERR(TAG, "Error code not found: %"PRId32"", fs_errno);
 			break;
 	}
 
@@ -120,53 +146,34 @@ static DRIVE_FILE* drive_get_file_by_id(DRIVE_DEVICE* drive, UINT32 id)
  */
 static UINT drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
 {
-	int status;
 	void* key;
 	UINT32 FileId;
 	DRIVE_FILE* file;
 	BYTE Information;
+	UINT32 FileAttributes;
+	UINT32 SharedAccess;
 	UINT32 DesiredAccess;
 	UINT32 CreateDisposition;
 	UINT32 CreateOptions;
 	UINT32 PathLength;
-	char* path = NULL;
+	const WCHAR* path;
 	Stream_Read_UINT32(irp->input, DesiredAccess);
-	Stream_Seek(irp->input,
-	            16); /* AllocationSize(8), FileAttributes(4), SharedAccess(4) */
+	Stream_Seek(irp->input, 8); /* AllocationSize(8) */
+	Stream_Read_UINT32(irp->input, FileAttributes);
+	Stream_Read_UINT32(irp->input, SharedAccess);
 	Stream_Read_UINT32(irp->input, CreateDisposition);
 	Stream_Read_UINT32(irp->input, CreateOptions);
 	Stream_Read_UINT32(irp->input, PathLength);
-	status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(irp->input),
-	                            PathLength / 2, &path, 0, NULL, NULL);
-
-	if (status < 1)
-	{
-		path = (char*) calloc(1, 1);
-
-		if (!path)
-		{
-			WLog_ERR(TAG, "calloc failed!");
-			return CHANNEL_RC_NO_MEMORY;
-		}
-	}
-
+	path = (WCHAR*) Stream_Pointer(irp->input);
 	FileId = irp->devman->id_sequence++;
-	file = drive_file_new(drive->path, path, FileId,
-	                      DesiredAccess, CreateDisposition, CreateOptions);
+	file = drive_file_new(drive->path, path, PathLength, FileId, DesiredAccess, CreateDisposition,
+	                      CreateOptions, FileAttributes, SharedAccess);
 
 	if (!file)
 	{
-		irp->IoStatus = STATUS_UNSUCCESSFUL;
+		irp->IoStatus = drive_map_windows_err(GetLastError());
 		FileId = 0;
 		Information = 0;
-	}
-	else if (file->err)
-	{
-		FileId = 0;
-		Information = 0;
-		/* map errno to windows result */
-		irp->IoStatus = drive_map_posix_err(file->err);
-		drive_file_free(file);
 	}
 	else
 	{
@@ -175,7 +182,6 @@ static UINT drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
 		if (!ListDictionary_Add(drive->files, key, file))
 		{
 			WLog_ERR(TAG, "ListDictionary_Add failed!");
-			free(path);
 			return ERROR_INTERNAL_ERROR;
 		}
 
@@ -204,7 +210,6 @@ static UINT drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
 
 	Stream_Write_UINT32(irp->output, FileId);
 	Stream_Write_UINT8(irp->output, Information);
-	free(path);
 	return irp->Complete(irp);
 }
 
@@ -227,7 +232,11 @@ static UINT drive_process_irp_close(DRIVE_DEVICE* drive, IRP* irp)
 	else
 	{
 		ListDictionary_Remove(drive->files, key);
-		drive_file_free(file);
+
+		if (drive_file_free(file))
+			irp->IoStatus = STATUS_SUCCESS;
+		else
+			irp->IoStatus = drive_map_windows_err(GetLastError());
 	}
 
 	Stream_Zero(irp->output, 5); /* Padding(5) */
@@ -256,7 +265,7 @@ static UINT drive_process_irp_read(DRIVE_DEVICE* drive, IRP* irp)
 	}
 	else if (!drive_file_seek(file, Offset))
 	{
-		irp->IoStatus = STATUS_UNSUCCESSFUL;
+		irp->IoStatus = drive_map_windows_err(GetLastError());
 		Length = 0;
 	}
 	else
@@ -271,7 +280,7 @@ static UINT drive_process_irp_read(DRIVE_DEVICE* drive, IRP* irp)
 
 		if (!drive_file_read(file, buffer, &Length))
 		{
-			irp->IoStatus = STATUS_UNSUCCESSFUL;
+			irp->IoStatus = drive_map_windows_err(GetLastError());
 			free(buffer);
 			buffer = NULL;
 			Length = 0;
@@ -317,12 +326,12 @@ static UINT drive_process_irp_write(DRIVE_DEVICE* drive, IRP* irp)
 	}
 	else if (!drive_file_seek(file, Offset))
 	{
-		irp->IoStatus = STATUS_UNSUCCESSFUL;
+		irp->IoStatus = drive_map_windows_err(GetLastError());
 		Length = 0;
 	}
 	else if (!drive_file_write(file, Stream_Pointer(irp->input), Length))
 	{
-		irp->IoStatus = STATUS_UNSUCCESSFUL;
+		irp->IoStatus = drive_map_windows_err(GetLastError());
 		Length = 0;
 	}
 
@@ -349,7 +358,7 @@ static UINT drive_process_irp_query_information(DRIVE_DEVICE* drive, IRP* irp)
 	}
 	else if (!drive_file_query_information(file, FsInformationClass, irp->output))
 	{
-		irp->IoStatus = STATUS_UNSUCCESSFUL;
+		irp->IoStatus = drive_map_windows_err(GetLastError());
 	}
 
 	return irp->Complete(irp);
@@ -377,15 +386,16 @@ static UINT drive_process_irp_set_information(DRIVE_DEVICE* drive, IRP* irp)
 	else if (!drive_file_set_information(file, FsInformationClass, Length,
 	                                     irp->input))
 	{
-		irp->IoStatus = STATUS_UNSUCCESSFUL;
+		irp->IoStatus = drive_map_windows_err(GetLastError());
 	}
 
-	if (file && file->is_dir && !dir_empty(file->fullpath))
+	if (file && file->is_dir && !PathIsDirectoryEmptyW(file->fullpath))
 		irp->IoStatus = STATUS_DIRECTORY_NOT_EMPTY;
 
 	Stream_Write_UINT32(irp->output, Length);
 	return irp->Complete(irp);
 }
+
 
 /**
  * Function description
@@ -397,21 +407,29 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive,
 {
 	UINT32 FsInformationClass;
 	wStream* output = irp->output;
-	struct STATVFS svfst;
-	struct STAT st;
 	char* volumeLabel = {"FREERDP"};
 	char* diskType = {"FAT32"};
 	WCHAR* outStr = NULL;
 	int length;
+	DWORD lpSectorsPerCluster;
+	DWORD lpBytesPerSector;
+	DWORD lpNumberOfFreeClusters;
+	DWORD lpTotalNumberOfClusters;
+	WIN32_FILE_ATTRIBUTE_DATA wfad;
 	Stream_Read_UINT32(irp->input, FsInformationClass);
-	STATVFS(drive->path, &svfst);
-	STAT(drive->path, &st);
+	GetDiskFreeSpaceW(drive->path, &lpSectorsPerCluster, &lpBytesPerSector, &lpNumberOfFreeClusters,
+	                  &lpTotalNumberOfClusters);
 
 	switch (FsInformationClass)
 	{
 		case FileFsVolumeInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232108.aspx */
-			length = ConvertToUnicode(sys_code_page, 0, volumeLabel, -1, &outStr, 0) * 2;
+			if ((length = ConvertToUnicode(sys_code_page, 0, volumeLabel, -1, &outStr, 0) * 2) <= 0)
+			{
+				WLog_ERR(TAG, "ConvertToUnicode failed!");
+				return CHANNEL_RC_NO_MEMORY;
+			}
+
 			Stream_Write_UINT32(output, 17 + length); /* Length */
 
 			if (!Stream_EnsureRemainingCapacity(output, 17 + length))
@@ -421,13 +439,10 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive,
 				return CHANNEL_RC_NO_MEMORY;
 			}
 
-			Stream_Write_UINT64(output,
-			                    FILE_TIME_SYSTEM_TO_RDP(st.st_ctime)); /* VolumeCreationTime */
-#ifdef ANDROID
-			Stream_Write_UINT32(output, svfst.f_fsid.__val[0]); /* VolumeSerialNumber */
-#else
-			Stream_Write_UINT32(output, svfst.f_fsid); /* VolumeSerialNumber */
-#endif
+			GetFileAttributesExW(drive->path, GetFileExInfoStandard, &wfad);
+			Stream_Write_UINT32(output, wfad.ftCreationTime.dwLowDateTime); /* VolumeCreationTime */
+			Stream_Write_UINT32(output, wfad.ftCreationTime.dwHighDateTime); /* VolumeCreationTime */
+			Stream_Write_UINT32(output, lpNumberOfFreeClusters & 0xffff); /* VolumeSerialNumber */
 			Stream_Write_UINT32(output, length); /* VolumeLabelLength */
 			Stream_Write_UINT8(output, 0); /* SupportsObjects */
 			/* Reserved(1), MUST NOT be added! */
@@ -445,15 +460,20 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive,
 				return CHANNEL_RC_NO_MEMORY;
 			}
 
-			Stream_Write_UINT64(output, svfst.f_blocks); /* TotalAllocationUnits */
-			Stream_Write_UINT64(output, svfst.f_bavail); /* AvailableAllocationUnits */
-			Stream_Write_UINT32(output, 1); /* SectorsPerAllocationUnit */
-			Stream_Write_UINT32(output, svfst.f_bsize); /* BytesPerSector */
+			Stream_Write_UINT64(output, lpTotalNumberOfClusters); /* TotalAllocationUnits */
+			Stream_Write_UINT64(output, lpNumberOfFreeClusters); /* AvailableAllocationUnits */
+			Stream_Write_UINT32(output, lpSectorsPerCluster); /* SectorsPerAllocationUnit */
+			Stream_Write_UINT32(output, lpBytesPerSector); /* BytesPerSector */
 			break;
 
 		case FileFsAttributeInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232101.aspx */
-			length = ConvertToUnicode(sys_code_page, 0, diskType, -1, &outStr, 0) * 2;
+			if ((length = ConvertToUnicode(sys_code_page, 0, diskType, -1, &outStr, 0) * 2) <= 0)
+			{
+				WLog_ERR(TAG, "ConvertToUnicode failed!");
+				return CHANNEL_RC_NO_MEMORY;
+			}
+
 			Stream_Write_UINT32(output, 12 + length); /* Length */
 
 			if (!Stream_EnsureRemainingCapacity(output, 12 + length))
@@ -466,12 +486,7 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive,
 			                    FILE_CASE_SENSITIVE_SEARCH |
 			                    FILE_CASE_PRESERVED_NAMES |
 			                    FILE_UNICODE_ON_DISK); /* FileSystemAttributes */
-#ifdef ANDROID
-			Stream_Write_UINT32(output, 255); /* MaximumComponentNameLength */
-#else
-			Stream_Write_UINT32(output,
-			                    svfst.f_namemax/*510*/); /* MaximumComponentNameLength */
-#endif
+			Stream_Write_UINT32(output, MAX_PATH); /* MaximumComponentNameLength */
 			Stream_Write_UINT32(output, length); /* FileSystemNameLength */
 			Stream_Write(output, outStr, length); /* FileSystemName (Unicode) */
 			free(outStr);
@@ -487,12 +502,11 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive,
 				return CHANNEL_RC_NO_MEMORY;
 			}
 
-			Stream_Write_UINT64(output, svfst.f_blocks); /* TotalAllocationUnits */
-			Stream_Write_UINT64(output,
-			                    svfst.f_bavail); /* CallerAvailableAllocationUnits */
-			Stream_Write_UINT64(output, svfst.f_bfree); /* AvailableAllocationUnits */
-			Stream_Write_UINT32(output, 1); /* SectorsPerAllocationUnit */
-			Stream_Write_UINT32(output, svfst.f_bsize); /* BytesPerSector */
+			Stream_Write_UINT64(output, lpTotalNumberOfClusters); /* TotalAllocationUnits */
+			Stream_Write_UINT64(output, lpNumberOfFreeClusters); /* CallerAvailableAllocationUnits */
+			Stream_Write_UINT64(output, lpNumberOfFreeClusters); /* AvailableAllocationUnits */
+			Stream_Write_UINT32(output, lpSectorsPerCluster); /* SectorsPerAllocationUnit */
+			Stream_Write_UINT32(output, lpBytesPerSector); /* BytesPerSector */
 			break;
 
 		case FileFsDeviceInformation:
@@ -541,8 +555,7 @@ static UINT drive_process_irp_silent_ignore(DRIVE_DEVICE* drive, IRP* irp)
  */
 static UINT drive_process_irp_query_directory(DRIVE_DEVICE* drive, IRP* irp)
 {
-	char* path = NULL;
-	int status;
+	const WCHAR* path;
 	DRIVE_FILE* file;
 	BYTE InitialQuery;
 	UINT32 PathLength;
@@ -551,16 +564,8 @@ static UINT drive_process_irp_query_directory(DRIVE_DEVICE* drive, IRP* irp)
 	Stream_Read_UINT8(irp->input, InitialQuery);
 	Stream_Read_UINT32(irp->input, PathLength);
 	Stream_Seek(irp->input, 23); /* Padding */
-	status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(irp->input),
-	                            PathLength / 2, &path, 0, NULL, NULL);
 
-	if (status < 1)
-		if (!(path = (char*) calloc(1, 1)))
-		{
-			WLog_ERR(TAG, "calloc failed!");
-			return CHANNEL_RC_NO_MEMORY;
-		}
-
+	path = (WCHAR*) Stream_Pointer(irp->input);
 	file = drive_get_file_by_id(drive, irp->FileId);
 
 	if (file == NULL)
@@ -568,13 +573,12 @@ static UINT drive_process_irp_query_directory(DRIVE_DEVICE* drive, IRP* irp)
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		Stream_Write_UINT32(irp->output, 0); /* Length */
 	}
-	else if (!drive_file_query_directory(file, FsInformationClass, InitialQuery,
-	                                     path, irp->output))
+	else if (!drive_file_query_directory(file, FsInformationClass, InitialQuery, path, PathLength,
+	                                     irp->output))
 	{
-		irp->IoStatus = STATUS_NO_MORE_FILES;
+		irp->IoStatus = drive_map_windows_err(GetLastError());
 	}
 
-	free(path);
 	return irp->Complete(irp);
 }
 
@@ -714,8 +718,7 @@ static void* drive_thread_func(void* arg)
 	}
 
 	if (error && drive->rdpcontext)
-		setChannelError(drive->rdpcontext, error,
-		                "drive_thread_func reported an error");
+		setChannelError(drive->rdpcontext, error, "drive_thread_func reported an error");
 
 	ExitThread((DWORD)error);
 	return NULL;
@@ -820,7 +823,13 @@ UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 		for (i = 0; i <= length; i++)
 			Stream_Write_UINT8(drive->device.data, name[i] < 0 ? '_' : name[i]);
 
-		drive->path = path;
+		if (ConvertToUnicode(sys_code_page, 0, path, -1, &drive->path, 0) <= 0)
+		{
+			WLog_ERR(TAG, "ConvertToUnicode failed!");
+			error = CHANNEL_RC_NO_MEMORY;
+			goto out_error;
+		}
+
 		drive->files = ListDictionary_New(TRUE);
 
 		if (!drive->files)
@@ -830,8 +839,7 @@ UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 			goto out_error;
 		}
 
-		ListDictionary_ValueObject(drive->files)->fnObjectFree =
-		    (OBJECT_FREE_FN) drive_file_free;
+		ListDictionary_ValueObject(drive->files)->fnObjectFree = (OBJECT_FREE_FN) drive_file_free;
 		drive->IrpQueue = MessageQueue_New(NULL);
 
 		if (!drive->IrpQueue)
@@ -848,8 +856,8 @@ UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 			goto out_error;
 		}
 
-		if (!(drive->thread = CreateThread(NULL, 0,
-		                                   (LPTHREAD_START_ROUTINE) drive_thread_func, drive, CREATE_SUSPENDED, NULL)))
+		if (!(drive->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) drive_thread_func, drive,
+		                                   CREATE_SUSPENDED, NULL)))
 		{
 			WLog_ERR(TAG, "CreateThread failed!");
 			goto out_error;

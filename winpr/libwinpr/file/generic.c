@@ -4,6 +4,7 @@
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2014 Hewlett-Packard Development Company, L.P.
+ * Copyright 2016 David PHAM-VAN <d.phamvan@inuvika.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +45,8 @@
 #include <assert.h>
 #include <pthread.h>
 #include <dirent.h>
+#include <libgen.h>
+#include <errno.h>
 
 #include <sys/un.h>
 #include <sys/stat.h>
@@ -172,6 +175,10 @@
  * Asynchronous I/O User Guide:
  * http://code.google.com/p/kernel/wiki/AIOUserGuide
  */
+
+#define EPOCH_DIFF 11644473600LL
+#define STAT_TIME_TO_FILETIME(_t) (((UINT64)(_t) + EPOCH_DIFF) * 10000000LL)
+
 
 static wArrayList *_HandleCreators;
 
@@ -461,6 +468,112 @@ BOOL FlushFileBuffers(HANDLE hFile)
 	return FALSE;
 }
 
+BOOL WINAPI GetFileAttributesExA(LPCSTR lpFileName, GET_FILEEX_INFO_LEVELS fInfoLevelId,
+                                 LPVOID lpFileInformation)
+{
+	LPWIN32_FILE_ATTRIBUTE_DATA fd = lpFileInformation;
+	WIN32_FIND_DATAA findFileData;
+	HANDLE hFind;
+
+	if ((hFind = FindFirstFileA(lpFileName, &findFileData) != INVALID_HANDLE_VALUE))
+		FindClose(hFind);
+
+	fd->dwFileAttributes = findFileData.dwFileAttributes;
+	fd->ftCreationTime = findFileData.ftCreationTime;
+	fd->ftLastAccessTime = findFileData.ftLastAccessTime;
+	fd->ftLastWriteTime = findFileData.ftLastWriteTime;
+	fd->nFileSizeHigh = findFileData.nFileSizeHigh;
+	fd->nFileSizeLow = findFileData.nFileSizeLow;
+	return TRUE;
+}
+
+BOOL WINAPI GetFileAttributesExW(LPCWSTR lpFileName, GET_FILEEX_INFO_LEVELS fInfoLevelId,
+                                 LPVOID lpFileInformation)
+{
+	BOOL ret;
+	LPSTR lpCFileName;
+
+	if (ConvertFromUnicode(CP_UTF8, 0, lpFileName, -1, &lpCFileName, 0, NULL, NULL) <= 0)
+	{
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		return FALSE;
+	}
+
+	ret = GetFileAttributesExA(lpCFileName, fInfoLevelId, lpFileInformation);
+	free(lpCFileName);
+	return ret;
+}
+
+DWORD WINAPI GetFileAttributesA(LPCSTR lpFileName)
+{
+	WIN32_FIND_DATAA findFileData;
+	HANDLE hFind;
+
+	if ((hFind = FindFirstFileA(lpFileName, &findFileData)) == INVALID_HANDLE_VALUE)
+		return INVALID_FILE_ATTRIBUTES;
+
+	FindClose(hFind);
+	return findFileData.dwFileAttributes;
+}
+
+DWORD WINAPI GetFileAttributesW(LPCWSTR lpFileName)
+{
+	DWORD ret;
+	LPSTR lpCFileName;
+
+	if (ConvertFromUnicode(CP_UTF8, 0, lpFileName, -1, &lpCFileName, 0, NULL, NULL) <= 0)
+	{
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		return FALSE;
+	}
+
+	ret = GetFileAttributesA(lpCFileName);
+	free(lpCFileName);
+	return ret;
+}
+
+BOOL SetFileAttributesA(LPCSTR lpFileName, DWORD dwFileAttributes)
+{
+	struct stat st;
+
+	if (stat(lpFileName, &st) != 0)
+	{
+		return FALSE;
+	}
+
+	if (dwFileAttributes & FILE_ATTRIBUTE_READONLY)
+	{
+		st.st_mode &= ~(S_IWUSR | S_IWGRP | S_IWOTH);
+	}
+	else
+	{
+		st.st_mode |= S_IWUSR;
+	}
+
+	if (chmod(lpFileName, st.st_mode) != 0)
+	{
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+BOOL SetFileAttributesW(LPCWSTR lpFileName, DWORD dwFileAttributes)
+{
+	BOOL ret;
+	LPSTR lpCFileName;
+
+	if (ConvertFromUnicode(CP_UTF8, 0, lpFileName, -1, &lpCFileName, 0, NULL, NULL) <= 0)
+	{
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		return FALSE;
+	}
+
+	ret = SetFileAttributesA(lpCFileName,dwFileAttributes);
+	free(lpCFileName);
+	return ret;
+}
+
 BOOL SetEndOfFile(HANDLE hFile)
 {
 	ULONG Type;
@@ -721,20 +834,8 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 		return INVALID_HANDLE_VALUE; /* failed to open directory */
 	}
 
-	while ((pFileSearch->pDirent = readdir(pFileSearch->pDir)) != NULL)
-	{
-		if ((strcmp(pFileSearch->pDirent->d_name, ".") == 0) || (strcmp(pFileSearch->pDirent->d_name, "..") == 0))
-		{
-			/* skip "." and ".." */
-			continue;
-		}
-
-		if (FilePatternMatchA(pFileSearch->pDirent->d_name, pFileSearch->lpPattern))
-		{
-			strcpy(lpFindFileData->cFileName, pFileSearch->pDirent->d_name);
-			return (HANDLE) pFileSearch;
-		}
-	}
+	if (FindNextFileA((HANDLE) pFileSearch, lpFindFileData))
+		return (HANDLE) pFileSearch;
 
 	FindClose(pFileSearch);
 	return INVALID_HANDLE_VALUE;
@@ -742,24 +843,68 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 
 HANDLE FindFirstFileW(LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData)
 {
-	return NULL;
+	char* utfFileName = NULL;
+	HANDLE h;
+	WCHAR* unicodeFileName;
+	int length;
+
+	LPWIN32_FIND_DATAA fd = (LPWIN32_FIND_DATAA)malloc(sizeof(WIN32_FIND_DATAA));
+	if (!fd)
+	{
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		return INVALID_HANDLE_VALUE;
+	}
+
+	if (ConvertFromUnicode(CP_UTF8, 0, lpFileName, -1, &utfFileName, 0, NULL, NULL) <= 0)
+	{
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		return INVALID_HANDLE_VALUE;
+	}
+
+	h = FindFirstFileA(utfFileName, fd);
+	free(utfFileName);
+
+	if (h != INVALID_HANDLE_VALUE)
+	{
+		CopyMemory(lpFindFileData, fd, 352);
+
+		unicodeFileName = NULL;
+		length = ConvertToUnicode(CP_UTF8, 0, fd->cFileName, -1, &unicodeFileName, 0) * 2;
+		if (length == 0)
+		{
+			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+			free(fd);
+			return INVALID_HANDLE_VALUE;
+		}
+		CopyMemory(&lpFindFileData->cFileName, unicodeFileName, length);
+		free(unicodeFileName);
+	}
+
+	return h;
 }
 
 HANDLE FindFirstFileExA(LPCSTR lpFileName, FINDEX_INFO_LEVELS fInfoLevelId, LPVOID lpFindFileData,
 						FINDEX_SEARCH_OPS fSearchOp, LPVOID lpSearchFilter, DWORD dwAdditionalFlags)
 {
-	return NULL;
+	return INVALID_HANDLE_VALUE;
 }
 
 HANDLE FindFirstFileExW(LPCWSTR lpFileName, FINDEX_INFO_LEVELS fInfoLevelId, LPVOID lpFindFileData,
 						FINDEX_SEARCH_OPS fSearchOp, LPVOID lpSearchFilter, DWORD dwAdditionalFlags)
 {
-	return NULL;
+	return INVALID_HANDLE_VALUE;
 }
 
 BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 {
 	WIN32_FILE_SEARCH* pFileSearch;
+	struct stat fileStat;
+	char* fullpath;
+	int pathlen;
+	int namelen;
+	UINT64 ft;
+
+	ZeroMemory(lpFindFileData, sizeof(WIN32_FIND_DATAA));
 
 	if (!hFindFile)
 		return FALSE;
@@ -774,15 +919,103 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 		if (FilePatternMatchA(pFileSearch->pDirent->d_name, pFileSearch->lpPattern))
 		{
 			strcpy(lpFindFileData->cFileName, pFileSearch->pDirent->d_name);
+			namelen = strlen(lpFindFileData->cFileName);
+
+			pathlen = strlen(pFileSearch->lpPath);
+			fullpath = (char*)malloc(pathlen + namelen + 2);
+			if (fullpath == NULL)
+			{
+				SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+				return FALSE;
+			}
+			memcpy(fullpath, pFileSearch->lpPath, pathlen);
+			fullpath[pathlen] = '/';
+			memcpy(fullpath + pathlen + 1, pFileSearch->pDirent->d_name, namelen);
+			fullpath[pathlen+namelen+1] = 0;
+
+			if (lstat(fullpath, &fileStat) != 0)
+			{
+				free(fullpath);
+				SetLastError(map_posix_err(errno));
+				return FALSE;
+			}
+
+			free(fullpath);
+
+			lpFindFileData->dwFileAttributes = 0;
+
+			if (S_ISDIR(fileStat.st_mode))
+				lpFindFileData->dwFileAttributes |= FILE_ATTRIBUTE_DIRECTORY;
+
+			if (lpFindFileData->dwFileAttributes == 0)
+				lpFindFileData->dwFileAttributes = FILE_ATTRIBUTE_ARCHIVE;
+
+			if (pFileSearch->pDirent->d_name[0] == '.' && namelen != 1 &&
+				 (pFileSearch->pDirent->d_name[1] != '.' && namelen != 2))
+				lpFindFileData->dwFileAttributes |= FILE_ATTRIBUTE_HIDDEN;
+
+			if (! (fileStat.st_mode & S_IWUSR))
+				lpFindFileData->dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
+
+#ifdef _DARWIN_FEATURE_64_BIT_INODE
+			ft = STAT_TIME_TO_FILETIME(fileStat.st_birthtime);
+#else
+			ft = STAT_TIME_TO_FILETIME(fileStat.st_ctime);
+#endif
+			lpFindFileData->ftCreationTime.dwHighDateTime = ft >> 32;
+			lpFindFileData->ftCreationTime.dwLowDateTime = ft & 0xFFFFFFFF;
+
+			ft = STAT_TIME_TO_FILETIME(fileStat.st_mtime);
+			lpFindFileData->ftLastWriteTime.dwHighDateTime = ft >> 32;
+			lpFindFileData->ftCreationTime.dwLowDateTime = ft & 0xFFFFFFFF;
+
+			ft = STAT_TIME_TO_FILETIME(fileStat.st_atime);
+			lpFindFileData->ftLastAccessTime.dwHighDateTime = ft >> 32;
+			lpFindFileData->ftLastAccessTime.dwLowDateTime = ft & 0xFFFFFFFF;
+
+			lpFindFileData->nFileSizeHigh = fileStat.st_size >> 32;
+			lpFindFileData->nFileSizeLow = fileStat.st_size & 0xFFFFFFFF;
+
 			return TRUE;
 		}
 	}
 
+	SetLastError(ERROR_NO_MORE_FILES);
 	return FALSE;
 }
 
 BOOL FindNextFileW(HANDLE hFindFile, LPWIN32_FIND_DATAW lpFindFileData)
 {
+	WCHAR* unicodeFileName;
+	int length;
+
+	LPWIN32_FIND_DATAA fd = (LPWIN32_FIND_DATAA)malloc(sizeof(WIN32_FIND_DATAA));
+	if (!fd)
+	{
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		return FALSE;
+	}
+
+	if (FindNextFileA(hFindFile, fd))
+	{
+		CopyMemory(lpFindFileData, fd, 352);
+
+		unicodeFileName = NULL;
+		length = ConvertToUnicode(CP_UTF8, 0, fd->cFileName, -1, &unicodeFileName, 0) * 2;
+		if (length == 0)
+		{
+			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+			free(fd);
+			return FALSE;
+		}
+		CopyMemory(&lpFindFileData->cFileName, unicodeFileName, length);
+		free(unicodeFileName);
+		free(fd);
+
+		return TRUE;
+	}
+
+	free(fd);
 	return FALSE;
 }
 
@@ -816,17 +1049,109 @@ BOOL CreateDirectoryA(LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttribu
 
 BOOL CreateDirectoryW(LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
-	return FALSE;
+	char* utfPathName = NULL;
+	BOOL ret;
+
+	if (ConvertFromUnicode(CP_UTF8, 0, lpPathName, -1, &utfPathName, 0, NULL, NULL) <= 0)
+	{
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		return FALSE;
+	}
+
+	ret = CreateDirectoryA(utfPathName, lpSecurityAttributes);
+	free(utfPathName);
+	return ret;
 }
 
 BOOL RemoveDirectoryA(LPCSTR lpPathName)
 {
-	return (rmdir(lpPathName) == 0);
+	int ret = rmdir(lpPathName);
+	if (ret != 0)
+		SetLastError(map_posix_err(errno));
+	else
+		SetLastError(STATUS_SUCCESS);
+	return ret == 0;
 }
 
 BOOL RemoveDirectoryW(LPCWSTR lpPathName)
 {
-	return FALSE;
+	char* utfPathName = NULL;
+	BOOL ret;
+
+	if (ConvertFromUnicode(CP_UTF8, 0, lpPathName, -1, &utfPathName, 0, NULL, NULL) <= 0)
+	{
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		return FALSE;
+	}
+
+	ret = RemoveDirectoryA(utfPathName);
+	free(utfPathName);
+	return ret;
+}
+
+BOOL MoveFileExA(LPCSTR lpExistingFileName, LPCSTR lpNewFileName, DWORD dwFlags)
+{
+	struct stat st;
+	int ret;
+	ret = stat(lpNewFileName, &st);
+
+	if ((dwFlags & MOVEFILE_REPLACE_EXISTING) == 0)
+	{
+		if (ret == 0)
+		{
+			SetLastError(ERROR_ALREADY_EXISTS);
+			return FALSE;
+		}
+	}
+	else
+	{
+		if (ret == 0 && (st.st_mode & S_IWUSR) == 0)
+		{
+			SetLastError(ERROR_ACCESS_DENIED);
+			return FALSE;
+		}
+	}
+
+	ret = rename(lpExistingFileName, lpNewFileName);
+
+	if (ret != 0)
+		SetLastError(map_posix_err(errno));
+
+	return ret == 0;
+}
+
+BOOL MoveFileExW(LPCWSTR lpExistingFileName, LPCWSTR lpNewFileName, DWORD dwFlags)
+{
+	LPSTR lpCExistingFileName;
+	LPSTR lpCNewFileName;
+	BOOL ret;
+	if (ConvertFromUnicode(CP_UTF8, 0, lpExistingFileName, -1, &lpCExistingFileName, 0, NULL, NULL) <= 0)
+	{
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		return FALSE;
+	}
+
+	if (ConvertFromUnicode(CP_UTF8, 0, lpNewFileName, -1, &lpCNewFileName, 0, NULL, NULL) <= 0)
+	{
+		free(lpCExistingFileName);
+		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		return FALSE;
+	}
+
+	ret = MoveFileExA(lpCExistingFileName, lpCNewFileName, dwFlags);
+	free(lpCNewFileName);
+	free(lpCExistingFileName);
+	return ret;
+}
+
+BOOL MoveFileA(LPCSTR lpExistingFileName, LPCSTR lpNewFileName)
+{
+	return MoveFileExA(lpExistingFileName, lpNewFileName, 0);
+}
+
+BOOL MoveFileW(LPCWSTR lpExistingFileName, LPCWSTR lpNewFileName)
+{
+	return MoveFileExW(lpExistingFileName, lpNewFileName, 0);
 }
 
 #endif
