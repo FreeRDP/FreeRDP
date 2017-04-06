@@ -72,8 +72,13 @@
 
 #include <mach/mach_time.h>
 
+#ifndef CLOCK_REALTIME
 #define CLOCK_REALTIME 0
+#endif
+
+#ifndef CLOCK_MONOTONIC
 #define CLOCK_MONOTONIC 0
+#endif
 
 /* clock_gettime is not implemented on OSX prior to 10.12 */
 int _mach_clock_gettime(int clk_id, struct timespec *t);
