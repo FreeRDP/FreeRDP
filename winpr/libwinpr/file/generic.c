@@ -475,7 +475,7 @@ BOOL WINAPI GetFileAttributesExA(LPCSTR lpFileName, GET_FILEEX_INFO_LEVELS fInfo
 	WIN32_FIND_DATAA findFileData;
 	HANDLE hFind;
 
-	if ((hFind = FindFirstFileA(lpFileName, &findFileData) != INVALID_HANDLE_VALUE))
+	if ((hFind = FindFirstFileA(lpFileName, &findFileData)) != INVALID_HANDLE_VALUE)
 		FindClose(hFind);
 
 	fd->dwFileAttributes = findFileData.dwFileAttributes;
