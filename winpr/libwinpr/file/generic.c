@@ -858,6 +858,7 @@ HANDLE FindFirstFileW(LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData)
 	if (ConvertFromUnicode(CP_UTF8, 0, lpFileName, -1, &utfFileName, 0, NULL, NULL) <= 0)
 	{
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+		free(fd);
 		return INVALID_HANDLE_VALUE;
 	}
 
@@ -1021,22 +1022,19 @@ BOOL FindNextFileW(HANDLE hFindFile, LPWIN32_FIND_DATAW lpFindFileData)
 
 BOOL FindClose(HANDLE hFindFile)
 {
-	WIN32_FILE_SEARCH* pFileSearch;
-	pFileSearch = (WIN32_FILE_SEARCH*) hFindFile;
+	WIN32_FILE_SEARCH* pFileSearch = (WIN32_FILE_SEARCH*) hFindFile;
 
-	if (pFileSearch)
-	{
-		free(pFileSearch->lpPath);
-		free(pFileSearch->lpPattern);
+	if (!pFileSearch || (pFileSearch == INVALID_HANDLE_VALUE))
+		return FALSE;
 
-		if (pFileSearch->pDir)
-			closedir(pFileSearch->pDir);
+	free(pFileSearch->lpPath);
+	free(pFileSearch->lpPattern);
 
-		free(pFileSearch);
-		return TRUE;
-	}
+	if (pFileSearch->pDir)
+		closedir(pFileSearch->pDir);
 
-	return FALSE;
+	free(pFileSearch);
+	return TRUE;
 }
 
 BOOL CreateDirectoryA(LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
