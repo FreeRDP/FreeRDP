@@ -335,11 +335,10 @@ WINPR_DIGEST_CTX* winpr_Digest_New(void)
 	return ctx;
 }
 
-BOOL winpr_Digest_Init(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md)
-{
 #if defined(WITH_OPENSSL)
+BOOL winpr_Digest_Init_Internal(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md, EVP_MD* evp)
+{
 	EVP_MD_CTX* mdctx = (EVP_MD_CTX*) ctx;
-	const EVP_MD* evp = winpr_openssl_get_evp_md(md);
 
 	if (!mdctx || !evp)
 		return FALSE;
@@ -347,7 +346,12 @@ BOOL winpr_Digest_Init(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md)
 	if (EVP_DigestInit_ex(mdctx, evp, NULL) != 1)
 		return FALSE;
 
+	return TRUE;
+}
+
 #elif defined(WITH_MBEDTLS)
+BOOL winpr_Digest_Init_Internal(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md)
+{
 	mbedtls_md_context_t* mdctx = (mbedtls_md_context_t*) ctx;
 	mbedtls_md_type_t md_type = winpr_mbedtls_get_md_type(md);
 	const mbedtls_md_info_t* md_info = mbedtls_md_info_from_type(md_type);
@@ -365,9 +369,31 @@ BOOL winpr_Digest_Init(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md)
 
 	if (mbedtls_md_starts(mdctx) != 0)
 		return FALSE;
-#endif
 
 	return TRUE;
+}
+#endif
+
+BOOL winpr_Digest_Init_MD5_Allow_FIPS(WINPR_DIGEST_CTX* ctx)
+{
+#if defined(WITH_OPENSSL)
+	EVP_MD_CTX* mdctx = (EVP_MD_CTX*) ctx;
+	EVP_MD* evp = EVP_md5();
+	EVP_MD_CTX_set_flags(mdctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
+	winpr_Digest_Init_Internal(ctx, WINPR_MD_MD5, evp);
+#elif defined(WITH_MBEDTLS)
+	winpr_Digest_Init_Internal(ctx, WINPR_MD_MD5);
+#endif
+}
+
+BOOL winpr_Digest_Init(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md)
+{
+#if defined(WITH_OPENSSL)
+	EVP_MD* evp = winpr_openssl_get_evp_md(md);
+	winpr_Digest_Init_Internal(ctx, md, evp);
+#else
+	winpr_Digest_Init_Internal(ctx, md);
+#endif
 }
 
 BOOL winpr_Digest_Update(WINPR_DIGEST_CTX* ctx, const BYTE* input, size_t ilen)
@@ -423,6 +449,28 @@ void winpr_Digest_Free(WINPR_DIGEST_CTX* ctx)
 #endif
 }
 
+BOOL winpr_Digest_MD5_Allow_FIPS(const BYTE* input, size_t ilen, BYTE* output, size_t olen)
+{
+	BOOL result = FALSE;
+        WINPR_DIGEST_CTX *ctx = winpr_Digest_New();
+
+	if (!ctx)
+                return FALSE;
+
+	if (!winpr_Digest_Init_MD5_Allow_FIPS(ctx))
+                goto out;
+        if (!winpr_Digest_Update(ctx, input, ilen))
+                goto out;
+        if (!winpr_Digest_Final(ctx, output, olen))
+                goto out;
+
+        result = TRUE;
+out:
+        winpr_Digest_Free(ctx);
+        return result;
+
+
+}
 BOOL winpr_Digest(int md, const BYTE* input, size_t ilen, BYTE* output, size_t olen)
 {
 	BOOL result = FALSE;

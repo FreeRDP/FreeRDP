@@ -921,6 +921,9 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 		case FreeRDP_ExternalCertificateManagement:
 			return settings->ExternalCertificateManagement;
 
+		case FreeRDP_FIPSMode:
+			return settings->FIPSMode;
+
 		case FreeRDP_Workarea:
 			return settings->Workarea;
 
@@ -1379,6 +1382,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 		case FreeRDP_ExternalCertificateManagement:
 			settings->ExternalCertificateManagement = param;
+			break;
+
+		case FreeRDP_FIPSMode:
+			settings->FIPSMode = param;
 			break;
 
 		case FreeRDP_Workarea:

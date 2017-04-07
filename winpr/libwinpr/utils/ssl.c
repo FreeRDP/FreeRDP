@@ -239,6 +239,7 @@ static BOOL _winpr_openssl_cleanup_locking(void)
 static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVOID* context)
 {
 	DWORD flags = param ? *(PDWORD)param : WINPR_SSL_INIT_DEFAULT;
+	int ret = 0;
 
 	if (flags & WINPR_SSL_INIT_ALREADY_INITIALIZED)
 	{
@@ -270,6 +271,18 @@ static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVO
 		return FALSE;
 #endif
 	g_winpr_openssl_initialized_by_winpr = TRUE;
+	if (flags & WINPR_SSL_INIT_ENABLE_FIPS)
+	{
+		WLog_DBG(TAG, "Ensuring openssl fips mode is ENabled");
+		if (FIPS_mode() != 1)
+		{
+			ret = FIPS_mode_set(1);
+			if (ret != 1)
+				WLog_ERR(TAG, "Openssl fips mode ENable failed!");
+			else
+				WLog_INFO(TAG, "Openssl fips mode ENabled!");
+		}
+	}
 	return TRUE;
 }
 

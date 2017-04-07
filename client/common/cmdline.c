@@ -91,6 +91,7 @@ static COMMAND_LINE_ARGUMENT_A args[] =
 	{ "encryption-methods", COMMAND_LINE_VALUE_REQUIRED, "[40,][56,][128,][FIPS]", NULL, NULL, -1, NULL, "RDP standard security encryption methods" },
 	{ "f", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Fullscreen mode" },
 	{ "fast-path", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Enable fast-path input/output" },
+        { "fipsmode", COMMAND_LINE_VALUE_BOOL, NULL, NULL, NULL, -1, NULL, "Enable FIPS mode" },
 	{ "fonts", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Enable smooth fonts (ClearType)" },
 	{ "frame-ack", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Number of frame acknowledgement" },
 	{ "from-stdin", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Read credentials from stdin, do not use defaults." },
@@ -2766,6 +2767,17 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 
 			if (!(settings->ActionScript = _strdup(arg->Value)))
 				return COMMAND_LINE_ERROR_MEMORY;
+		}
+		/* Enable FIPS Mode, which forces the following and overrides the following(by happening later */
+		/* in the command line processing): */
+		/* 1. Disables NLA Security since NLA in freerdp uses NTLM(no Kerberos support yet) which uses algorithms */
+		/*	not allowed in FIPS for sensitive data. So, we disallow NLA when FIPS is required. */
+		/* 2. Forces the only supported RDP encryption method to be FIPS. */
+		CommandLineSwitchCase(arg, "fipsmode")
+		{
+			settings->FIPSMode = TRUE;
+			settings->NlaSecurity = FALSE;
+			settings->EncryptionMethods = ENCRYPTION_METHOD_FIPS;
 		}
 		CommandLineSwitchDefault(arg)
 		{
