@@ -27,12 +27,25 @@ typedef struct _wClipboard wClipboard;
 
 typedef void* (*CLIPBOARD_SYNTHESIZE_FN)(wClipboard* clipboard, UINT32 formatId, const void* data, UINT32* pSize);
 
+struct _wClipboardFileSizeRequest
+{
+	UINT32 streamId;
+	UINT32 listIndex;
+};
+typedef struct _wClipboardFileSizeRequest wClipboardFileSizeRequest;
+
 typedef struct _wClipboardDelegate wClipboardDelegate;
 
 struct _wClipboardDelegate
 {
 	wClipboard* clipboard;
 	void* custom;
+
+	UINT (*ClientRequestFileSize)(wClipboardDelegate*, const wClipboardFileSizeRequest*);
+	UINT (*ClipboardFileSizeSuccess)(wClipboardDelegate*, const wClipboardFileSizeRequest*,
+			UINT64 fileSize);
+	UINT (*ClipboardFileSizeFailure)(wClipboardDelegate*, const wClipboardFileSizeRequest*,
+			UINT errorCode);
 };
 
 #ifdef __cplusplus

@@ -590,6 +590,66 @@ error:
 	return FALSE;
 }
 
+static UINT posix_file_get_size(const struct posix_file* file, off_t* size)
+{
+	struct stat statbuf;
+
+	if (stat(file->local_name, &statbuf) < 0)
+	{
+		int err = errno;
+		WLog_ERR(TAG, "failed to stat %s: %s", file->local_name, strerror(err));
+		return ERROR_FILE_INVALID;
+	}
+
+	*size = statbuf.st_size;
+
+	return NO_ERROR;
+}
+
+static UINT posix_file_request_size(wClipboardDelegate* delegate,
+		const wClipboardFileSizeRequest* request)
+{
+	UINT error = NO_ERROR;
+	off_t size = 0;
+	struct posix_file* file = NULL;
+
+	if (!delegate || !delegate->clipboard || !request)
+		return ERROR_BAD_ARGUMENTS;
+
+	file = ArrayList_GetItem(delegate->clipboard->localFiles, request->listIndex);
+	if (!file)
+		return ERROR_INDEX_ABSENT;
+
+	error = posix_file_get_size(file, &size);
+
+	if (error)
+		error = delegate->ClipboardFileSizeFailure(delegate, request, error);
+	else
+		error = delegate->ClipboardFileSizeSuccess(delegate, request, size);
+
+	if (error)
+		WLog_WARN(TAG, "failed to report file size result: 0x%08X", error);
+
+	return NO_ERROR;
+}
+
+static UINT dummy_file_size_success(wClipboardDelegate* delegate, const wClipboardFileSizeRequest* request, UINT64 fileSize)
+{
+	return ERROR_NOT_SUPPORTED;
+}
+
+static UINT dummy_file_size_failure(wClipboardDelegate* delegate, const wClipboardFileSizeRequest* request, UINT errorCode)
+{
+	return ERROR_NOT_SUPPORTED;
+}
+
+static void setup_delegate(wClipboardDelegate* delegate)
+{
+	delegate->ClientRequestFileSize = posix_file_request_size;
+	delegate->ClipboardFileSizeSuccess = dummy_file_size_success;
+	delegate->ClipboardFileSizeFailure = dummy_file_size_failure;
+}
+
 BOOL ClipboardInitPosixFileSubsystem(wClipboard* clipboard)
 {
 	if (!clipboard)
@@ -597,6 +657,8 @@ BOOL ClipboardInitPosixFileSubsystem(wClipboard* clipboard)
 
 	if (!register_file_formats_and_synthesizers(clipboard))
 		return FALSE;
+
+	setup_delegate(&clipboard->delegate);
 
 	return TRUE;
 }
