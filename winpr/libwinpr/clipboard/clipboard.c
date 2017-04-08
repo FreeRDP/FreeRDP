@@ -513,6 +513,14 @@ void ClipboardSetOwner(wClipboard* clipboard, UINT64 ownerId)
 	clipboard->ownerId = ownerId;
 }
 
+wClipboardDelegate* ClipboardGetDelegate(wClipboard* clipboard)
+{
+	if (!clipboard)
+		return NULL;
+
+	return &clipboard->delegate;
+}
+
 void ClipboardInitLocalFileSubsystem(wClipboard* clipboard)
 {
 	/*
@@ -559,6 +567,8 @@ wClipboard* ClipboardCreate()
 
 	if (!ClipboardInitFormats(clipboard))
 		goto error_free_formats;
+
+	clipboard->delegate.clipboard = clipboard;
 
 	ClipboardInitLocalFileSubsystem(clipboard);
 

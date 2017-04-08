@@ -27,6 +27,14 @@ typedef struct _wClipboard wClipboard;
 
 typedef void* (*CLIPBOARD_SYNTHESIZE_FN)(wClipboard* clipboard, UINT32 formatId, const void* data, UINT32* pSize);
 
+typedef struct _wClipboardDelegate wClipboardDelegate;
+
+struct _wClipboardDelegate
+{
+	wClipboard* clipboard;
+	void* custom;
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -52,6 +60,8 @@ WINPR_API BOOL ClipboardSetData(wClipboard* clipboard, UINT32 formatId, const vo
 
 WINPR_API UINT64 ClipboardGetOwner(wClipboard* clipboard);
 WINPR_API void ClipboardSetOwner(wClipboard* clipboard, UINT64 ownerId);
+
+WINPR_API wClipboardDelegate* ClipboardGetDelegate(wClipboard* clipboard);
 
 WINPR_API wClipboard* ClipboardCreate();
 WINPR_API void ClipboardDestroy(wClipboard* clipboard);

@@ -64,6 +64,8 @@ struct _wClipboard
 
 	wArrayList* localFiles;
 
+	wClipboardDelegate delegate;
+
 	CRITICAL_SECTION lock;
 };
 
