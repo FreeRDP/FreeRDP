@@ -104,6 +104,10 @@ struct xf_clipboard
 	int xfixes_event_base;
 	int xfixes_error_base;
 	BOOL xfixes_supported;
+
+	/* File clipping */
+	BOOL streams_supported;
+	BOOL file_formats_registered;
 };
 
 UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard);
@@ -1072,6 +1076,11 @@ UINT xf_cliprdr_send_client_capabilities(xfClipboard* clipboard)
 	generalCapabilitySet.capabilitySetLength = 12;
 	generalCapabilitySet.version = CB_CAPS_VERSION_2;
 	generalCapabilitySet.generalFlags = CB_USE_LONG_FORMAT_NAMES;
+
+	if (clipboard->streams_supported && clipboard->file_formats_registered)
+		generalCapabilitySet.generalFlags |=
+			CB_STREAM_FILECLIP_ENABLED | CB_FILECLIP_NO_FILE_PATHS;
+
 	return clipboard->context->ClientCapabilities(clipboard->context,
 	        &capabilities);
 }
@@ -1167,7 +1176,31 @@ static UINT xf_cliprdr_monitor_ready(CliprdrClientContext* context,
 static UINT xf_cliprdr_server_capabilities(CliprdrClientContext* context,
         CLIPRDR_CAPABILITIES* capabilities)
 {
-	//xfClipboard* clipboard = (xfClipboard*) context->custom;
+	UINT32 i;
+	const CLIPRDR_CAPABILITY_SET* caps;
+	const CLIPRDR_GENERAL_CAPABILITY_SET* generalCaps;
+	const BYTE* capsPtr = (const BYTE*) capabilities->capabilitySets;
+	xfClipboard* clipboard = (xfClipboard*) context->custom;
+
+	clipboard->streams_supported = FALSE;
+
+	for (i = 0; i < capabilities->cCapabilitiesSets; i++)
+	{
+		caps = (const CLIPRDR_CAPABILITY_SET*) capsPtr;
+
+		if (caps->capabilitySetType == CB_CAPSTYPE_GENERAL)
+		{
+			generalCaps = (const CLIPRDR_GENERAL_CAPABILITY_SET*) caps;
+
+			if (generalCaps->generalFlags & CB_STREAM_FILECLIP_ENABLED)
+			{
+				clipboard->streams_supported = TRUE;
+			}
+		}
+
+		capsPtr += caps->capabilitySetLength;
+	}
+
 	return CHANNEL_RC_OK;
 }
 
@@ -1677,6 +1710,7 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 	 */
 	if (ClipboardGetFormatId(clipboard->system, "text/uri-list"))
 	{
+		clipboard->file_formats_registered = TRUE;
 		clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "text/uri-list", False);
 		clipboard->clientFormats[n].formatId = CB_FORMAT_TEXTURILIST;
 		clipboard->clientFormats[n].formatName = _strdup("FileGroupDescriptorW");
