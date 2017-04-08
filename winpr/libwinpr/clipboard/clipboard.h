@@ -63,6 +63,7 @@ struct _wClipboard
 	/* clipboard file handling */
 
 	wArrayList* localFiles;
+	UINT32 fileListSequenceNumber;
 
 	wClipboardDelegate delegate;
 

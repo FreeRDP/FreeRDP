@@ -573,6 +573,8 @@ static void* convert_uri_list_to_filedescriptors(wClipboard* clipboard, UINT32 f
 
 	*pSize = ArrayList_Count(clipboard->localFiles) * sizeof(FILEDESCRIPTOR);
 
+	clipboard->fileListSequenceNumber = clipboard->sequenceNumber;
+
 	return descriptors;
 }
 
@@ -631,6 +633,9 @@ static UINT posix_file_request_size(wClipboardDelegate* delegate,
 
 	if (!delegate || !delegate->clipboard || !request)
 		return ERROR_BAD_ARGUMENTS;
+
+	if (delegate->clipboard->sequenceNumber != delegate->clipboard->fileListSequenceNumber)
+		return ERROR_INVALID_STATE;
 
 	file = ArrayList_GetItem(delegate->clipboard->localFiles, request->listIndex);
 	if (!file)
@@ -806,6 +811,9 @@ static UINT posix_file_request_range(wClipboardDelegate* delegate,
 
 	if (!delegate || !delegate->clipboard || !request)
 		return ERROR_BAD_ARGUMENTS;
+
+	if (delegate->clipboard->sequenceNumber != delegate->clipboard->fileListSequenceNumber)
+		return ERROR_INVALID_STATE;
 
 	file = ArrayList_GetItem(delegate->clipboard->localFiles, request->listIndex);
 	if (!file)
