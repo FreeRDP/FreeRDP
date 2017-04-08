@@ -98,9 +98,74 @@ static void free_posix_file(void* the_file)
 	free(file);
 }
 
+static unsigned char hex_to_dec(char c, BOOL* valid)
+{
+	if (('0' <= c) && (c <= '9'))
+		return (c - '0');
+
+	if (('a' <= c) && (c <= 'f'))
+		return (c - 'a') + 10;
+
+	if (('A' <= c) && (c <= 'F'))
+		return (c - 'A') + 10;
+
+	*valid = FALSE;
+	return 0;
+}
+
+static BOOL decode_percent_encoded_byte(const char* str, const char* end, char* value)
+{
+	BOOL valid = TRUE;
+
+	if ((end < str) || (end - str < strlen("%20")))
+		return FALSE;
+
+	*value = 0;
+	*value |= hex_to_dec(str[1], &valid);
+	*value <<= 4;
+	*value |= hex_to_dec(str[2], &valid);
+
+	return valid;
+}
+
 static char* decode_percent_encoded_string(const char* str, size_t len)
 {
-	/* TBD: decode percent-encoded URI into a fresh null-terminated string */
+	char* buffer = NULL;
+	char* next = NULL;
+	const char* cur = str;
+	const char* lim = str + len;
+
+	/* Percent decoding shrinks data length, so len bytes will be enough. */
+	buffer = calloc(len + 1, sizeof(char));
+	if (!buffer)
+		return NULL;
+
+	next = buffer;
+
+	while (cur < lim)
+	{
+		if (*cur != '%')
+		{
+			*next++ = *cur++;
+		}
+		else
+		{
+			if (!decode_percent_encoded_byte(cur, lim, next))
+			{
+				WLog_ERR(TAG, "invalid percent encoding");
+				goto error;
+			}
+
+			cur += strlen("%20");
+			next += 1;
+		}
+	}
+
+	return buffer;
+
+error:
+	free(buffer);
+
 	return NULL;
 }
 
