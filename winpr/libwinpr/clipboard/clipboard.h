@@ -30,7 +30,7 @@ typedef struct _wClipboardSynthesizer wClipboardSynthesizer;
 struct _wClipboardFormat
 {
 	UINT32 formatId;
-	const char* formatName;
+	char* formatName;
 
 	UINT32 numSynthesizers;
 	wClipboardSynthesizer* synthesizers;
