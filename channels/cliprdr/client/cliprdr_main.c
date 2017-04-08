@@ -930,9 +930,6 @@ static UINT cliprdr_client_file_contents_response(CliprdrClientContext* context,
 	wStream* s;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
 
-	if (fileContentsResponse->dwFlags & FILECONTENTS_SIZE)
-		fileContentsResponse->cbRequested = sizeof(UINT64);
-
 	s = cliprdr_packet_new(CB_FILECONTENTS_RESPONSE, fileContentsResponse->msgFlags,
 	                       4 + fileContentsResponse->cbRequested);
 
