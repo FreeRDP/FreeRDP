@@ -28,6 +28,7 @@
 #include <errno.h>
 
 #include <dirent.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -49,6 +50,9 @@ struct posix_file
 	char* local_name;
 	WCHAR* remote_name;
 	BOOL is_directory;
+
+	int fd;
+	off_t offset;
 	off_t size;
 };
 
@@ -60,6 +64,9 @@ static struct posix_file* make_posix_file(const char* local_name, const WCHAR* r
 	file = calloc(1, sizeof(*file));
 	if (!file)
 		return NULL;
+
+	file->fd = -1;
+	file->offset = 0;
 
 	file->local_name = _strdup(local_name);
 	file->remote_name = _wcsdup(remote_name);
@@ -93,6 +100,15 @@ static void free_posix_file(void* the_file)
 
 	if (!file)
 		return;
+
+	if (file->fd >= 0)
+	{
+		if (close(file->fd) < 0)
+		{
+			int err = errno;
+			WLog_WARN(TAG, "failed to close fd %d: %s", file->fd, strerror(err));
+		}
+	}
 
 	free(file->local_name);
 	free(file->remote_name);
@@ -633,6 +649,184 @@ static UINT posix_file_request_size(wClipboardDelegate* delegate,
 	return NO_ERROR;
 }
 
+static UINT posix_file_read_open(struct posix_file* file)
+{
+	struct stat statbuf;
+
+	if (file->fd >= 0)
+		return NO_ERROR;
+
+	file->fd = open(file->local_name, O_RDONLY);
+	if (file->fd < 0)
+	{
+		int err = errno;
+		WLog_ERR(TAG, "failed to open file %s: %s", file->local_name, strerror(err));
+		return ERROR_FILE_NOT_FOUND;
+	}
+
+	if (fstat(file->fd, &statbuf) < 0)
+	{
+		int err = errno;
+		WLog_ERR(TAG, "failed to stat file: %s", strerror(err));
+		return ERROR_FILE_INVALID;
+	}
+
+	file->offset = 0;
+	file->size = statbuf.st_size;
+
+#ifdef WITH_DEBUG_WCLIPBOARD
+	WLog_DBG(TAG, "open file %d -> %s", file->fd, file->local_name);
+	WLog_DBG(TAG, "file %d size: %"PRIu64" bytes", file->fd, file->size);
+#endif
+
+	return NO_ERROR;
+}
+
+static UINT posix_file_read_seek(struct posix_file* file, UINT64 offset)
+{
+	/*
+	 * We should avoid seeking when possible as some filesystems (e.g.,
+	 * an FTP server mapped via FUSE) may not support seeking. We keep
+	 * an accurate account of the current file offset and do not call
+	 * lseek() if the client requests file content sequentially.
+	 */
+	if (file->offset == offset)
+		return NO_ERROR;
+
+#ifdef WITH_DEBUG_WCLIPBOARD
+	WLog_DBG(TAG, "file %d force seeking to %"PRIu64", current %"PRIu64, file->fd,
+		offset, file->offset);
+#endif
+
+	if (lseek(file->fd, offset, SEEK_SET) < 0)
+	{
+		int err = errno;
+		WLog_ERR(TAG, "failed to seek file: %s", strerror(err));
+		return ERROR_SEEK;
+	}
+
+	return NO_ERROR;
+}
+
+static UINT posix_file_read_perform(struct posix_file* file, UINT32 size,
+		BYTE** actual_data, UINT32* actual_size)
+{
+	BYTE* buffer = NULL;
+	ssize_t amount = 0;
+
+#ifdef WITH_DEBUG_WCLIPBOARD
+	WLog_DBG(TAG, "file %d request read %"PRIu32" bytes", file->fd, size);
+#endif
+
+	buffer = malloc(size);
+	if (!buffer)
+	{
+		WLog_ERR(TAG, "failed to allocate %"PRIu32" buffer bytes", size);
+		return ERROR_NOT_ENOUGH_MEMORY;
+	}
+
+	amount = read(file->fd, buffer, size);
+	if (amount < 0)
+	{
+		int err = errno;
+		WLog_ERR(TAG, "failed to read file: %s", strerror(err));
+		goto error;
+	}
+
+	*actual_data = buffer;
+	*actual_size = amount;
+	file->offset += amount;
+
+#ifdef WITH_DEBUG_WCLIPBOARD
+	WLog_DBG(TAG, "file %d actual read %"PRIu32" bytes (offset %"PRIu64")", file->fd,
+		amount, file->offset);
+#endif
+
+	return NO_ERROR;
+
+error:
+	free(buffer);
+
+	return ERROR_READ_FAULT;
+}
+
+static UINT posix_file_read_close(struct posix_file* file)
+{
+	if (file->fd < 0)
+		return NO_ERROR;
+
+	if (file->offset == file->size)
+	{
+#ifdef WITH_DEBUG_WCLIPBOARD
+		WLog_DBG(TAG, "close file %d", file->fd);
+#endif
+		if (close(file->fd) < 0)
+		{
+			int err = errno;
+			WLog_WARN(TAG, "failed to close fd %d: %s", file->fd, strerror(err));
+		}
+		file->fd = -1;
+	}
+
+	return NO_ERROR;
+}
+
+static UINT posix_file_get_range(struct posix_file* file, UINT64 offset, UINT32 size,
+		BYTE** actual_data, UINT32* actual_size)
+{
+	UINT error = NO_ERROR;
+
+	error = posix_file_read_open(file);
+	if (error)
+		goto out;
+
+	error = posix_file_read_seek(file, offset);
+	if (error)
+		goto out;
+
+	error = posix_file_read_perform(file, size, actual_data, actual_size);
+	if (error)
+		goto out;
+
+	error = posix_file_read_close(file);
+	if (error)
+		goto out;
+out:
+	return error;
+}
+
+static UINT posix_file_request_range(wClipboardDelegate* delegate,
+		const wClipboardFileRangeRequest* request)
+{
+	UINT error = 0;
+	BYTE* data = NULL;
+	UINT32 size = 0;
+	UINT64 offset = 0;
+	struct posix_file* file = NULL;
+
+	if (!delegate || !delegate->clipboard || !request)
+		return ERROR_BAD_ARGUMENTS;
+
+	file = ArrayList_GetItem(delegate->clipboard->localFiles, request->listIndex);
+	if (!file)
+		return ERROR_INDEX_ABSENT;
+
+	offset = (((UINT64) request->nPositionHigh) << 32) | ((UINT64) request->nPositionLow);
+	error = posix_file_get_range(file, offset, request->cbRequested, &data, &size);
+
+	if (error)
+		error = delegate->ClipboardFileRangeFailure(delegate, request, error);
+	else
+		error = delegate->ClipboardFileRangeSuccess(delegate, request, data, size);
+
+	if (error)
+		WLog_WARN(TAG, "failed to report file range result: 0x%08X", error);
+
+	free(data);
+
+	return NO_ERROR;
+}
+
 static UINT dummy_file_size_success(wClipboardDelegate* delegate, const wClipboardFileSizeRequest* request, UINT64 fileSize)
 {
 	return ERROR_NOT_SUPPORTED;
@@ -643,11 +837,25 @@ static UINT dummy_file_size_failure(wClipboardDelegate* delegate, const wClipboa
 	return ERROR_NOT_SUPPORTED;
 }
 
+static UINT dummy_file_range_success(wClipboardDelegate* delegate, const wClipboardFileRangeRequest* request, const BYTE* data, UINT32 size)
+{
+	return ERROR_NOT_SUPPORTED;
+}
+
+static UINT dummy_file_range_failure(wClipboardDelegate* delegate, const wClipboardFileRangeRequest* request, UINT errorCode)
+{
+	return ERROR_NOT_SUPPORTED;
+}
+
 static void setup_delegate(wClipboardDelegate* delegate)
 {
 	delegate->ClientRequestFileSize = posix_file_request_size;
 	delegate->ClipboardFileSizeSuccess = dummy_file_size_success;
 	delegate->ClipboardFileSizeFailure = dummy_file_size_failure;
+
+	delegate->ClientRequestFileRange = posix_file_request_range;
+	delegate->ClipboardFileRangeSuccess = dummy_file_range_success;
+	delegate->ClipboardFileRangeFailure = dummy_file_range_failure;
 }
 
 BOOL ClipboardInitPosixFileSubsystem(wClipboard* clipboard)

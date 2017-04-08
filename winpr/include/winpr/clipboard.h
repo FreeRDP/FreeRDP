@@ -34,6 +34,16 @@ struct _wClipboardFileSizeRequest
 };
 typedef struct _wClipboardFileSizeRequest wClipboardFileSizeRequest;
 
+struct _wClipboardFileRangeRequest
+{
+	UINT32 streamId;
+	UINT32 listIndex;
+	UINT32 nPositionLow;
+	UINT32 nPositionHigh;
+	UINT32 cbRequested;
+};
+typedef struct _wClipboardFileRangeRequest wClipboardFileRangeRequest;
+
 typedef struct _wClipboardDelegate wClipboardDelegate;
 
 struct _wClipboardDelegate
@@ -45,6 +55,12 @@ struct _wClipboardDelegate
 	UINT (*ClipboardFileSizeSuccess)(wClipboardDelegate*, const wClipboardFileSizeRequest*,
 			UINT64 fileSize);
 	UINT (*ClipboardFileSizeFailure)(wClipboardDelegate*, const wClipboardFileSizeRequest*,
+			UINT errorCode);
+
+	UINT (*ClientRequestFileRange)(wClipboardDelegate*, const wClipboardFileRangeRequest*);
+	UINT (*ClipboardFileRangeSuccess)(wClipboardDelegate*, const wClipboardFileRangeRequest*,
+			const BYTE* data, UINT32 size);
+	UINT (*ClipboardFileRangeFailure)(wClipboardDelegate*, const wClipboardFileRangeRequest*,
 			UINT errorCode);
 };
 
