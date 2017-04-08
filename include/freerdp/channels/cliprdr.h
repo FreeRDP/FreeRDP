@@ -23,6 +23,8 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
+#include <winpr/shell.h>
+
 #define CLIPRDR_SVC_CHANNEL_NAME	"cliprdr"
 
 /**
@@ -83,33 +85,6 @@ struct _CLIPRDR_MFPICT
 	BYTE* metaFileData;
 };
 typedef struct _CLIPRDR_MFPICT CLIPRDR_MFPICT;
-
-struct _CLIPRDR_FILEDESCRIPTOR
-{
-	DWORD    dwFlags;
-	BYTE     clsid[16];
-	BYTE     sizel[8];
-	BYTE     pointl[8];
-	DWORD    dwFileAttributes;
-	FILETIME ftCreationTime;
-	FILETIME ftLastAccessTime;
-	FILETIME ftLastWriteTime;
-	DWORD    nFileSizeHigh;
-	DWORD    nFileSizeLow;
-	union
-	{
-		WCHAR    w[260];
-		CHAR	 c[520];
-	} cFileName;
-};
-typedef struct _CLIPRDR_FILEDESCRIPTOR CLIPRDR_FILEDESCRIPTOR;
-
-struct _CLIPRDR_FILELIST
-{
-	UINT32 cItems;
-	CLIPRDR_FILEDESCRIPTOR* fileDescriptorArray;
-};
-typedef struct _CLIPRDR_FILELIST CLIPRDR_FILELIST;
 
 /* Clipboard Messages */
 
