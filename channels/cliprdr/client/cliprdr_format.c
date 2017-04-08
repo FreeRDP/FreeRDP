@@ -438,6 +438,8 @@ out:
 	return result;
 }
 
+#define CLIPRDR_MAX_FILE_SIZE (2U * 1024 * 1024 * 1024)
+
 /**
  * Serialize a packed file list.
  *
@@ -472,6 +474,20 @@ UINT cliprdr_serialize_file_list(const FILEDESCRIPTOR* file_descriptor_array,
 		UINT64 lastWriteTime;
 		const FILEDESCRIPTOR* file = &file_descriptor_array[i];
 
+		/*
+		 * There is a known issue with Windows server getting stuck in
+		 * an infinite loop when downloading files that are larger than
+		 * 2 gigabytes. Do not allow clients to send such file lists.
+		 *
+		 * https://support.microsoft.com/en-us/help/2258090
+		 */
+		if ((file->nFileSizeHigh > 0) || (file->nFileSizeLow >= CLIPRDR_MAX_FILE_SIZE))
+		{
+			WLog_ERR(TAG, "cliprdr does not support files over 2 GB");
+			result = ERROR_FILE_TOO_LARGE;
+			goto error;
+		}
+
 		Stream_Write_UINT32(s, file->dwFlags); /* flags (4 bytes) */
 		Stream_Zero(s, 32); /* reserved1 (32 bytes) */
 		Stream_Write_UINT32(s, file->dwFileAttributes); /* fileAttributes (4 bytes) */
@@ -490,6 +506,11 @@ UINT cliprdr_serialize_file_list(const FILEDESCRIPTOR* file_descriptor_array,
 	Stream_GetLength(s, *format_data_length);
 
 	Stream_Free(s, FALSE);
+
+	return result;
+
+error:
+	Stream_Free(s, TRUE);
 
 	return result;
 }
