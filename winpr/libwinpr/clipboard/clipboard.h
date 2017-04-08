@@ -60,6 +60,10 @@ struct _wClipboard
 	UINT32 formatId;
 	UINT32 sequenceNumber;
 
+	/* clipboard file handling */
+
+	wArrayList* localFiles;
+
 	CRITICAL_SECTION lock;
 };
 

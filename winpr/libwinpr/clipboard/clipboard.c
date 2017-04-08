@@ -581,6 +581,9 @@ void ClipboardDestroy(wClipboard* clipboard)
 	if (!clipboard)
 		return;
 
+	ArrayList_Free(clipboard->localFiles);
+	clipboard->localFiles = NULL;
+
 	for (index = 0; index < clipboard->numFormats; index++)
 	{
 		format = &(clipboard->formats[index]);
