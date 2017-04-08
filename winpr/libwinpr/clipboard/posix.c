@@ -21,8 +21,15 @@
 #include "config.h"
 #endif
 
+#define _FILE_OFFSET_BITS 64
+
 #include <stddef.h>
 #include <stdlib.h>
+#include <errno.h>
+
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include <winpr/clipboard.h>
 #include <winpr/collections.h>
@@ -40,11 +47,14 @@ struct posix_file
 {
 	char* local_name;
 	WCHAR* remote_name;
+	BOOL is_directory;
+	off_t size;
 };
 
 static struct posix_file* make_posix_file(const char* local_name, const WCHAR* remote_name)
 {
 	struct posix_file* file = NULL;
+	struct stat statbuf;
 
 	file = calloc(1, sizeof(*file));
 	if (!file)
@@ -55,6 +65,16 @@ static struct posix_file* make_posix_file(const char* local_name, const WCHAR* r
 
 	if (!file->local_name || !file->remote_name)
 		goto error;
+
+	if (stat(local_name, &statbuf))
+	{
+		int err = errno;
+		WLog_ERR(TAG, "failed to stat %s: %s", local_name, strerror(err));
+		goto error;
+	}
+
+	file->is_directory = S_ISDIR(statbuf.st_mode);
+	file->size = statbuf.st_size;
 
 	return file;
 
@@ -85,9 +105,63 @@ static BOOL process_uri_list(const char* data, size_t length, wArrayList* files)
 	return TRUE;
 }
 
+static BOOL convert_local_file_to_filedescriptor(const struct posix_file* file,
+		FILEDESCRIPTOR* descriptor)
+{
+	size_t remote_len = 0;
+
+	descriptor->dwFlags = FD_ATTRIBUTES | FD_FILESIZE | FD_SHOWPROGRESSUI;
+
+	if (file->is_directory)
+	{
+		descriptor->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+		descriptor->nFileSizeLow = 0;
+		descriptor->nFileSizeHigh = 0;
+	}
+	else
+	{
+		descriptor->dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
+		descriptor->nFileSizeLow = (file->size >> 0) & 0xFFFFFFFF;
+		descriptor->nFileSizeHigh = (file->size >> 32) & 0xFFFFFFFF;
+	}
+
+	remote_len = _wcslen(file->remote_name);
+	if (remote_len + 1 > ARRAYSIZE(descriptor->fileName))
+	{
+		WLog_ERR(TAG, "file name too long (%"PRIuz" characters)", remote_len);
+		return FALSE;
+	}
+
+	memcpy(descriptor->fileName, file->remote_name, remote_len * sizeof(WCHAR));
+
+	return TRUE;
+}
+
 static FILEDESCRIPTOR* convert_local_file_list_to_filedescriptors(wArrayList* files)
 {
-	/* TBD: convert `files` into a FILEDESCRIPTOR array */
+	int i;
+	int count = 0;
+	FILEDESCRIPTOR* descriptors = NULL;
+
+	count = ArrayList_Count(files);
+
+	descriptors = calloc(count, sizeof(descriptors[0]));
+	if (!descriptors)
+		goto error;
+
+	for (i = 0; i < count; i++)
+	{
+		const struct posix_file* file = ArrayList_GetItem(files, i);
+
+		if (!convert_local_file_to_filedescriptor(file, &descriptors[i]))
+			goto error;
+	}
+
+	return descriptors;
+
+error:
+	free(descriptors);
+
 	return NULL;
 }
 
