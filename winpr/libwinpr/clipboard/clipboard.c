@@ -23,10 +23,18 @@
 
 #include <winpr/crt.h>
 #include <winpr/collections.h>
+#include <winpr/wlog.h>
 
 #include <winpr/clipboard.h>
 
 #include "clipboard.h"
+
+#ifdef WITH_WCLIPBOARD_POSIX
+#include "posix.h"
+#endif
+
+#include "../log.h"
+#define TAG WINPR_TAG("clipboard")
 
 /**
  * Clipboard (Windows):
@@ -505,6 +513,28 @@ void ClipboardSetOwner(wClipboard* clipboard, UINT64 ownerId)
 	clipboard->ownerId = ownerId;
 }
 
+void ClipboardInitLocalFileSubsystem(wClipboard* clipboard)
+{
+	/*
+	 * There can be only one local file subsystem active.
+	 * Return as soon as initialization succeeds.
+	 */
+
+#ifdef WITH_WCLIPBOARD_POSIX
+	if (ClipboardInitPosixFileSubsystem(clipboard))
+	{
+		WLog_INFO(TAG, "initialized POSIX local file subsystem");
+		return;
+	}
+	else
+	{
+		WLog_WARN(TAG, "failed to initialize POSIX local file subsystem");
+	}
+#endif
+
+	WLog_INFO(TAG, "failed to initialize local file subsystem, file transfer not available");
+}
+
 wClipboard* ClipboardCreate()
 {
 	wClipboard* clipboard;
@@ -529,6 +559,8 @@ wClipboard* ClipboardCreate()
 
 	if (!ClipboardInitFormats(clipboard))
 		goto error_free_formats;
+
+	ClipboardInitLocalFileSubsystem(clipboard);
 
 	return clipboard;
 
