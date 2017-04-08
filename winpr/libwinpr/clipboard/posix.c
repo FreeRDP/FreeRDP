@@ -35,6 +35,7 @@
 
 #include <winpr/clipboard.h>
 #include <winpr/collections.h>
+#include <winpr/file.h>
 #include <winpr/shell.h>
 #include <winpr/string.h>
 #include <winpr/wlog.h>
@@ -186,6 +187,45 @@ error:
 	return NULL;
 }
 
+/*
+ * Note that the function converts a single file name component,
+ * it does not take care of component separators.
+ */
+static WCHAR* convert_local_name_component_to_remote(const char* local_name)
+{
+	WCHAR* remote_name = NULL;
+
+	/*
+	 * Note that local file names are not actually guaranteed to be
+	 * encoded in UTF-8. Filesystems and users can use whatever they
+	 * want. The OS does not care, aside from special treatment of
+	 * '\0' and '/' bytes. But we need to make some decision here.
+	 * Assuming UTF-8 is currently the most sane thing.
+	 */
+	if (!ConvertToUnicode(CP_UTF8, 0, local_name, -1, &remote_name, 0))
+	{
+		WLog_ERR(TAG, "Unicode conversion failed for %s", local_name);
+		goto error;
+	}
+
+	/*
+	 * Some file names are not valid on Windows. Check for these now
+	 * so that we won't get ourselves into a trouble later as such names
+	 * are known to crash some Windows shells when pasted via clipboard.
+	 */
+	if (!ValidFileNameComponent(remote_name))
+	{
+		WLog_ERR(TAG, "invalid file name component: %s", local_name);
+		goto error;
+	}
+
+	return remote_name;
+
+error:
+	free(remote_name);
+	return NULL;
+}
+
 static char* concat_local_name(const char* dir, const char* file)
 {
 	size_t len_dir = 0;
@@ -240,16 +280,9 @@ static BOOL add_directory_entry_to_list(const char* local_dir_name, const WCHAR*
 	if ((strcmp(entry->d_name, ".") == 0) || (strcmp(entry->d_name, "..") == 0))
 		return TRUE;
 
-	/*
-	 * As noted in add_file_to_list(), it is not always correct to assume
-	 * that that file names are encoded in UTF-8. However, this is the
-	 * most sane thing to do at the moment.
-	 */
-	if (!ConvertToUnicode(CP_UTF8, 0, entry->d_name, -1, &remote_base_name, 0))
-	{
-		WLog_ERR(TAG, "Unicode conversion failed for %s", entry->d_name);
+	remote_base_name = convert_local_name_component_to_remote(entry->d_name);
+	if (!remote_base_name)
 		return FALSE;
-	}
 
 	local_name = concat_local_name(local_dir_name, entry->d_name);
 	remote_name = concat_remote_name(remote_dir_name, remote_base_name);
@@ -389,22 +422,15 @@ static BOOL process_file_name(const char* local_name, wArrayList* files)
 	 * Start with the base name of the file. text/uri-list contains the
 	 * exact files selected by the user, and we want the remote files
 	 * to have names relative to that selection.
-	 *
-	 * Note that local file names are not actually guaranteed to be
-	 * encoded in UTF-8. Filesystems and users can use whatever they
-	 * want. The OS does not care, aside from special treatment of
-	 * '\0' and '/' bytes. But we need to make some decision here.
-	 * Assuming UTF-8 is currently the most sane thing.
 	 */
 	base_name = basename(local_name);
-	if (!ConvertToUnicode(CP_UTF8, 0, base_name, -1, &remote_name, 0))
-	{
-		WLog_ERR(TAG, "Unicode conversion failed for %s", base_name);
-		goto out;
-	}
+
+	remote_name = convert_local_name_component_to_remote(base_name);
+	if (!remote_name)
+		return FALSE;
 
 	result = add_file_to_list(local_name, remote_name, files);
-out:
+
 	free(remote_name);
 
 	return result;
