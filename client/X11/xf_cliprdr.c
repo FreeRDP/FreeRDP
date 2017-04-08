@@ -62,6 +62,7 @@ struct xf_clipboard
 	CliprdrClientContext* context;
 
 	wClipboard* system;
+	wClipboardDelegate* delegate;
 
 	Window root_window;
 	Atom clipboard_atom;
@@ -1421,6 +1422,153 @@ static UINT xf_cliprdr_server_format_data_response(CliprdrClientContext*
 	return CHANNEL_RC_OK;
 }
 
+UINT xf_cliprdr_server_file_size_request(xfClipboard* clipboard,
+		const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
+{
+	wClipboardFileSizeRequest request;
+
+	ZeroMemory(&request, sizeof(request));
+
+	request.streamId = fileContentsRequest->streamId;
+	request.listIndex = fileContentsRequest->listIndex;
+
+	if (fileContentsRequest->cbRequested != sizeof(UINT64))
+	{
+		WLog_WARN(TAG, "unexpected FILECONTENTS_SIZE request: %"PRIu32" bytes",
+			fileContentsRequest->cbRequested);
+	}
+
+	return clipboard->delegate->ClientRequestFileSize(clipboard->delegate, &request);
+}
+
+UINT xf_cliprdr_server_file_range_request(xfClipboard* clipboard,
+		const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
+{
+	wClipboardFileRangeRequest request;
+
+	ZeroMemory(&request, sizeof(request));
+
+	request.streamId = fileContentsRequest->streamId;
+	request.listIndex = fileContentsRequest->listIndex;
+	request.nPositionLow = fileContentsRequest->nPositionLow;
+	request.nPositionHigh = fileContentsRequest->nPositionHigh;
+	request.cbRequested = fileContentsRequest->cbRequested;
+
+	return clipboard->delegate->ClientRequestFileRange(clipboard->delegate, &request);
+}
+
+UINT xf_cliprdr_send_file_contents_failure(CliprdrClientContext* context,
+		const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
+{
+	CLIPRDR_FILE_CONTENTS_RESPONSE response;
+
+	ZeroMemory(&response, sizeof(response));
+
+	response.msgFlags = CB_RESPONSE_FAIL;
+	response.streamId = fileContentsRequest->streamId;
+	response.dwFlags = fileContentsRequest->dwFlags;
+
+	return context->ClientFileContentsResponse(context, &response);
+}
+
+UINT xf_cliprdr_server_file_contents_request(CliprdrClientContext* context,
+		CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
+{
+	UINT error = NO_ERROR;
+	xfClipboard* clipboard = context->custom;
+
+	/*
+	 * MS-RDPECLIP 2.2.5.3 File Contents Request PDU (CLIPRDR_FILECONTENTS_REQUEST):
+	 * The FILECONTENTS_SIZE and FILECONTENTS_RANGE flags MUST NOT be set at the same time.
+	 */
+	if ((fileContentsRequest->dwFlags & (FILECONTENTS_SIZE | FILECONTENTS_RANGE)) ==
+		(FILECONTENTS_SIZE | FILECONTENTS_RANGE))
+	{
+		WLog_ERR(TAG, "invalid CLIPRDR_FILECONTENTS_REQUEST.dwFlags");
+
+		return xf_cliprdr_send_file_contents_failure(context, fileContentsRequest);
+	}
+
+	if (fileContentsRequest->dwFlags & FILECONTENTS_SIZE)
+		error = xf_cliprdr_server_file_size_request(clipboard, fileContentsRequest);
+
+	if (fileContentsRequest->dwFlags & FILECONTENTS_RANGE)
+		error = xf_cliprdr_server_file_range_request(clipboard, fileContentsRequest);
+
+	if (error)
+	{
+		WLog_ERR(TAG, "failed to handle CLIPRDR_FILECONTENTS_REQUEST: 0x%08X", error);
+
+		return xf_cliprdr_send_file_contents_failure(context, fileContentsRequest);
+	}
+
+	return CHANNEL_RC_OK;
+}
+
+UINT xf_cliprdr_clipboard_file_size_success(wClipboardDelegate* delegate,
+		const wClipboardFileSizeRequest* request, UINT64 fileSize)
+{
+	CLIPRDR_FILE_CONTENTS_RESPONSE response;
+	xfClipboard* clipboard = delegate->custom;
+
+	ZeroMemory(&response, sizeof(response));
+
+	response.msgFlags = CB_RESPONSE_OK;
+	response.streamId = request->streamId;
+	response.dwFlags = FILECONTENTS_SIZE;
+	response.cbRequested = sizeof(UINT64);
+	response.requestedData = (BYTE*) &fileSize;
+
+	return clipboard->context->ClientFileContentsResponse(clipboard->context, &response);
+}
+
+UINT xf_cliprdr_clipboard_file_size_failure(wClipboardDelegate* delegate,
+		const wClipboardFileSizeRequest* request, UINT errorCode)
+{
+	CLIPRDR_FILE_CONTENTS_RESPONSE response;
+	xfClipboard* clipboard = delegate->custom;
+
+	ZeroMemory(&response, sizeof(response));
+
+	response.msgFlags = CB_RESPONSE_FAIL;
+	response.streamId = request->streamId;
+	response.dwFlags = FILECONTENTS_SIZE;
+
+	return clipboard->context->ClientFileContentsResponse(clipboard->context, &response);
+}
+
+UINT xf_cliprdr_clipboard_file_range_success(wClipboardDelegate* delegate,
+		const wClipboardFileRangeRequest* request, const BYTE* data, UINT32 size)
+{
+	CLIPRDR_FILE_CONTENTS_RESPONSE response;
+	xfClipboard* clipboard = delegate->custom;
+
+	ZeroMemory(&response, sizeof(response));
+
+	response.msgFlags = CB_RESPONSE_OK;
+	response.streamId = request->streamId;
+	response.dwFlags = FILECONTENTS_RANGE;
+	response.cbRequested = size;
+	response.requestedData = (BYTE*) data;
+
+	return clipboard->context->ClientFileContentsResponse(clipboard->context, &response);
+}
+
+UINT xf_cliprdr_clipboard_file_range_failure(wClipboardDelegate* delegate,
+		const wClipboardFileRangeRequest* request, UINT errorCode)
+{
+	CLIPRDR_FILE_CONTENTS_RESPONSE response;
+	xfClipboard* clipboard = delegate->custom;
+
+	ZeroMemory(&response, sizeof(response));
+
+	response.msgFlags = CB_RESPONSE_FAIL;
+	response.streamId = request->streamId;
+	response.dwFlags = FILECONTENTS_RANGE;
+
+	return clipboard->context->ClientFileContentsResponse(clipboard->context, &response);
+}
+
 xfClipboard* xf_clipboard_new(xfContext* xfc)
 {
 	int i;
@@ -1542,6 +1690,14 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 	clipboard->targets[1] = XInternAtom(xfc->display, "TARGETS", FALSE);
 	clipboard->numTargets = 2;
 	clipboard->incr_atom = XInternAtom(xfc->display, "INCR", FALSE);
+
+	clipboard->delegate = ClipboardGetDelegate(clipboard->system);
+	clipboard->delegate->custom = clipboard;
+	clipboard->delegate->ClipboardFileSizeSuccess = xf_cliprdr_clipboard_file_size_success;
+	clipboard->delegate->ClipboardFileSizeFailure = xf_cliprdr_clipboard_file_size_failure;
+	clipboard->delegate->ClipboardFileRangeSuccess = xf_cliprdr_clipboard_file_range_success;
+	clipboard->delegate->ClipboardFileRangeFailure = xf_cliprdr_clipboard_file_range_failure;
+
 	return clipboard;
 
 error:
@@ -1596,6 +1752,7 @@ void xf_cliprdr_init(xfContext* xfc, CliprdrClientContext* cliprdr)
 	cliprdr->ServerFormatListResponse = xf_cliprdr_server_format_list_response;
 	cliprdr->ServerFormatDataRequest = xf_cliprdr_server_format_data_request;
 	cliprdr->ServerFormatDataResponse = xf_cliprdr_server_format_data_response;
+	cliprdr->ServerFileContentsRequest = xf_cliprdr_server_file_contents_request;
 }
 
 void xf_cliprdr_uninit(xfContext* xfc, CliprdrClientContext* cliprdr)
