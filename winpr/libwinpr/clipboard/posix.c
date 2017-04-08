@@ -169,10 +169,71 @@ error:
 	return NULL;
 }
 
+static BOOL add_file_to_list(const char* local_name, const WCHAR* remote_name, wArrayList* files)
+{
+	struct posix_file* file = NULL;
+
+#ifdef WITH_DEBUG_WCLIPBOARD
+	WLog_DBG(TAG, "adding file: %s", local_name);
+#endif
+
+	file = make_posix_file(local_name, remote_name);
+	if (!file)
+		return FALSE;
+
+	if (ArrayList_Add(files, file) < 0)
+	{
+		free_posix_file(file);
+
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static const char* basename(const char* name)
+{
+	const char* c = name;
+	const char* last_name = name;
+
+	while (*c++)
+	{
+		if (*c == '/')
+			last_name = c + 1;
+	}
+
+	return last_name;
+}
+
 static BOOL process_file_name(const char* local_name, wArrayList* files)
 {
-	/* TBD: add file with `local_name` to `files` */
-	return FALSE;
+	BOOL result = FALSE;
+	const char* base_name = NULL;
+	WCHAR* remote_name = NULL;
+
+	/*
+	 * Start with the base name of the file. text/uri-list contains the
+	 * exact files selected by the user, and we want the remote files
+	 * to have names relative to that selection.
+	 *
+	 * Note that local file names are not actually guaranteed to be
+	 * encoded in UTF-8. Filesystems and users can use whatever they
+	 * want. The OS does not care, aside from special treatment of
+	 * '\0' and '/' bytes. But we need to make some decision here.
+	 * Assuming UTF-8 is currently the most sane thing.
+	 */
+	base_name = basename(local_name);
+	if (!ConvertToUnicode(CP_UTF8, 0, base_name, -1, &remote_name, 0))
+	{
+		WLog_ERR(TAG, "Unicode conversion failed for %s", base_name);
+		goto out;
+	}
+
+	result = add_file_to_list(local_name, remote_name, files);
+out:
+	free(remote_name);
+
+	return result;
 }
 
 static BOOL process_uri(const char* uri, size_t uri_len, wArrayList* files)
