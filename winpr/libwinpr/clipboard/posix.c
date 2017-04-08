@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#include <dirent.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -169,6 +170,153 @@ error:
 	return NULL;
 }
 
+static char* concat_local_name(const char* dir, const char* file)
+{
+	size_t len_dir = 0;
+	size_t len_file = 0;
+	char* buffer = NULL;
+
+	len_dir = strlen(dir);
+	len_file = strlen(file);
+
+	buffer = calloc(len_dir + 1 + len_file + 1, sizeof(char));
+	if (!buffer)
+		return NULL;
+
+	memcpy(buffer, dir, len_dir * sizeof(char));
+	buffer[len_dir] = '/';
+	memcpy(buffer + len_dir + 1, file, len_file * sizeof(char));
+
+	return buffer;
+}
+
+static WCHAR* concat_remote_name(const WCHAR* dir, const WCHAR* file)
+{
+	size_t len_dir = 0;
+	size_t len_file = 0;
+	WCHAR* buffer = NULL;
+
+	len_dir = _wcslen(dir);
+	len_file = _wcslen(file);
+
+	buffer = calloc(len_dir + 1 + len_file + 1, sizeof(WCHAR));
+	if (!buffer)
+		return NULL;
+
+	memcpy(buffer, dir, len_dir * sizeof(WCHAR));
+	buffer[len_dir] = L'\\';
+	memcpy(buffer + len_dir + 1, file, len_file * sizeof(WCHAR));
+
+	return buffer;
+}
+
+static BOOL add_file_to_list(const char* local_name, const WCHAR* remote_name, wArrayList* files);
+
+static BOOL add_directory_entry_to_list(const char* local_dir_name, const WCHAR* remote_dir_name,
+		const struct dirent* entry, wArrayList* files)
+{
+	BOOL result = FALSE;
+	char* local_name = NULL;
+	WCHAR* remote_name = NULL;
+	WCHAR* remote_base_name = NULL;
+
+	/* Skip special directory entries. */
+	if ((strcmp(entry->d_name, ".") == 0) || (strcmp(entry->d_name, "..") == 0))
+		return TRUE;
+
+	/*
+	 * As noted in add_file_to_list(), it is not always correct to assume
+	 * that that file names are encoded in UTF-8. However, this is the
+	 * most sane thing to do at the moment.
+	 */
+	if (!ConvertToUnicode(CP_UTF8, 0, entry->d_name, -1, &remote_base_name, 0))
+	{
+		WLog_ERR(TAG, "Unicode conversion failed for %s", entry->d_name);
+		return FALSE;
+	}
+
+	local_name = concat_local_name(local_dir_name, entry->d_name);
+	remote_name = concat_remote_name(remote_dir_name, remote_base_name);
+
+	if (local_name && remote_name)
+		result = add_file_to_list(local_name, remote_name, files);
+
+	free(remote_base_name);
+	free(remote_name);
+	free(local_name);
+
+	return result;
+}
+
+static BOOL do_add_directory_contents_to_list(const char* local_name, const WCHAR* remote_name,
+		DIR* dirp, wArrayList* files)
+{
+	/*
+	 * For some reason POSIX does not require readdir() to be thread-safe.
+	 * However, readdir_r() has really insane interface and is pretty bad
+	 * replacement for it. Fortunately, most C libraries guarantee thread-
+	 * safety of readdir() when it is used for distinct directory streams.
+	 *
+	 * Thus we can use readdir() in multithreaded applications if we are
+	 * sure that it will not corrupt some global data. It would be nice
+	 * to have a compile-time check for this here, but some C libraries
+	 * do not provide a #define because of reasons (I'm looking at you,
+	 * musl). We should not be breaking people's builds because of that,
+	 * so we do nothing and proceed with fingers crossed.
+	 */
+
+	for (;;)
+	{
+		struct dirent* entry = NULL;
+
+		errno = 0;
+		entry = readdir(dirp);
+		if (!entry)
+		{
+			int err = errno;
+			if (!err)
+				break;
+
+			WLog_ERR(TAG, "failed to read directory: %s", strerror(err));
+			return FALSE;
+		}
+
+		if (!add_directory_entry_to_list(local_name, remote_name, entry, files))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+static BOOL add_directory_contents_to_list(const char* local_name, const WCHAR* remote_name,
+		wArrayList* files)
+{
+	BOOL result = FALSE;
+	DIR* dirp = NULL;
+
+#ifdef WITH_DEBUG_WCLIPBOARD
+	WLog_DBG(TAG, "adding directory: %s", local_name);
+#endif
+
+	dirp = opendir(local_name);
+	if (!dirp)
+	{
+		int err = errno;
+		WLog_ERR(TAG, "failed to open directory %s: %s", local_name, strerror(err));
+		goto out;
+	}
+
+	result = do_add_directory_contents_to_list(local_name, remote_name, dirp, files);
+
+	if (closedir(dirp))
+	{
+		int err = errno;
+		WLog_WARN(TAG, "failed to close directory: %s", strerror(err));
+	}
+out:
+	return result;
+}
+
 static BOOL add_file_to_list(const char* local_name, const WCHAR* remote_name, wArrayList* files)
 {
 	struct posix_file* file = NULL;
@@ -186,6 +334,16 @@ static BOOL add_file_to_list(const char* local_name, const WCHAR* remote_name, w
 		free_posix_file(file);
 
 		return FALSE;
+	}
+
+	if (file->is_directory)
+	{
+		/*
+		 * This is effectively a recursive call, but we do not track
+		 * recursion depth, thus filesystem loops can cause a crash.
+		 */
+		if (!add_directory_contents_to_list(local_name, remote_name, files))
+			return FALSE;
 	}
 
 	return TRUE;
