@@ -98,10 +98,98 @@ static void free_posix_file(void* the_file)
 	free(file);
 }
 
+static char* decode_percent_encoded_string(const char* str, size_t len)
+{
+	/* TBD: decode percent-encoded URI into a fresh null-terminated string */
+	return NULL;
+}
+
+static BOOL process_file_name(const char* local_name, wArrayList* files)
+{
+	/* TBD: add file with `local_name` to `files` */
+	return FALSE;
+}
+
+static BOOL process_uri(const char* uri, size_t uri_len, wArrayList* files)
+{
+	BOOL result = FALSE;
+	char* name = NULL;
+
+#ifdef WITH_DEBUG_WCLIPBOARD
+	WLog_DBG(TAG, "processing URI: %.*s", uri_len, uri);
+#endif
+
+	if ((uri_len < strlen("file://")) || strncmp(uri, "file://", strlen("file://")))
+	{
+		WLog_ERR(TAG, "non-'file://' URI schemes are not supported");
+		goto out;
+	}
+
+	name = decode_percent_encoded_string(uri + strlen("file://"), uri_len - strlen("file://"));
+	if (!name)
+		goto out;
+
+	result = process_file_name(name, files);
+out:
+	free(name);
+
+	return result;
+}
+
 static BOOL process_uri_list(const char* data, size_t length, wArrayList* files)
 {
+	const char* cur = data;
+	const char* lim = data + length;
+	const char* start = NULL;
+	const char* stop = NULL;
+
+#ifdef WITH_DEBUG_WCLIPBOARD
+	WLog_DBG(TAG, "processing URI list:\n%.*s", length, data);
+#endif
+
 	ArrayList_Clear(files);
-	/* TBD: parse text/uri-list `data` and store it into `files` */
+
+	/*
+	 * The "text/uri-list" Internet Media Type is specified by RFC 2483.
+	 *
+	 * While the RFCs 2046 and 2483 require the lines of text/... formats
+	 * to be terminated by CRLF sequence, be prepared for those who don't
+	 * read the spec, use plain LFs, and don't leave the trailing CRLF.
+	 */
+
+	while (cur < lim)
+	{
+		BOOL comment = (*cur == '#');
+
+		start = cur;
+		stop = cur;
+
+		for (stop = cur; stop < lim; stop++)
+		{
+			if (*stop == '\r')
+			{
+				if ((stop + 1 < lim) && (*(stop + 1) == '\n'))
+					cur = stop + 2;
+				else
+					cur = stop + 1;
+				break;
+			}
+			if (*stop == '\n')
+			{
+				cur = stop + 1;
+				break;
+			}
+		}
+		if (stop == lim)
+			cur = lim;
+
+		if (comment)
+			continue;
+
+		if (!process_uri(start, stop - start, files))
+			return FALSE;
+	}
+
 	return TRUE;
 }
 
