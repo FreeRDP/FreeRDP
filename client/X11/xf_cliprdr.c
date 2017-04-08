@@ -39,6 +39,7 @@
 #include <freerdp/log.h>
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/channels/channels.h>
+#include <freerdp/channels/cliprdr.h>
 
 #include "xf_cliprdr.h"
 
@@ -591,6 +592,10 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard,
 			size = strlen((char*) data) + 1;
 			srcFormatId = ClipboardGetFormatId(clipboard->system, "text/html");
 			break;
+
+		case CB_FORMAT_TEXTURILIST:
+			srcFormatId = ClipboardGetFormatId(clipboard->system, "text/uri-list");
+			break;
 	}
 
 	SrcSize = (UINT32) size;
@@ -611,6 +616,31 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard,
 	{
 		xf_cliprdr_send_data_response(clipboard, NULL, 0);
 		return;
+	}
+
+	/*
+	 * File lists require a bit of postprocessing to convert them from WinPR's FILDESCRIPTOR
+	 * format to CLIPRDR_FILELIST expected by the server.
+	 *
+	 * We check for "FileGroupDescriptorW" format being registered (i.e., nonzero) in order
+	 * to not process CF_RAW as a file list in case WinPR does not support file transfers.
+	 */
+	if (dstFormatId &&
+		(dstFormatId == ClipboardGetFormatId(clipboard->system, "FileGroupDescriptorW")))
+	{
+		UINT error = NO_ERROR;
+		FILEDESCRIPTOR* file_array = (FILEDESCRIPTOR*) pDstData;
+		UINT32 file_count = DstSize / sizeof(FILEDESCRIPTOR);
+
+		pDstData = NULL;
+		DstSize = 0;
+
+		error = cliprdr_serialize_file_list(file_array, file_count, &pDstData, &DstSize);
+
+		if (error)
+			WLog_ERR(TAG, "failed to serialize CLIPRDR_FILELIST: 0x%08X", error);
+
+		free(file_array);
 	}
 
 	xf_cliprdr_send_data_response(clipboard, pDstData, (int) DstSize);
@@ -1490,6 +1520,22 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 	if (!clipboard->clientFormats[n].formatName)
 		goto error;
 	n++;
+
+	/*
+	 * Existence of registered format IDs for file formats does not guarantee that they are
+	 * in fact supported by wClipboard (as further initialization may have failed after format
+	 * registration). However, they are definitely not supported if there are no registered
+	 * formats. In this case we should not list file formats in TARGETS.
+	 */
+	if (ClipboardGetFormatId(clipboard->system, "text/uri-list"))
+	{
+		clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "text/uri-list", False);
+		clipboard->clientFormats[n].formatId = CB_FORMAT_TEXTURILIST;
+		clipboard->clientFormats[n].formatName = _strdup("FileGroupDescriptorW");
+		if (!clipboard->clientFormats[n].formatName)
+			goto error;
+		n++;
+	}
 
 	clipboard->numClientFormats = n;
 	clipboard->targets[0] = XInternAtom(xfc->display, "TIMESTAMP", FALSE);
