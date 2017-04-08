@@ -1393,6 +1393,7 @@ static UINT xf_cliprdr_server_format_data_response(CliprdrClientContext*
 
 xfClipboard* xf_clipboard_new(xfContext* xfc)
 {
+	int i;
 	int n;
 	rdpChannels* channels;
 	xfClipboard* clipboard;
@@ -1415,19 +1416,18 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 	if (clipboard->clipboard_atom == None)
 	{
 		WLog_ERR(TAG, "unable to get CLIPBOARD atom");
-		free(clipboard);
-		return NULL;
+		goto error;
 	}
 
 	clipboard->property_atom = XInternAtom(xfc->display, "_FREERDP_CLIPRDR", FALSE);
-	clipboard->raw_transfer_atom = XInternAtom(xfc->display, "_FREERDP_CLIPRDR_RAW",
-	                               FALSE);
-	clipboard->raw_format_list_atom = XInternAtom(xfc->display,
-	                                  "_FREERDP_CLIPRDR_FORMATS", FALSE);
+	clipboard->raw_transfer_atom = XInternAtom(xfc->display, "_FREERDP_CLIPRDR_RAW", FALSE);
+	clipboard->raw_format_list_atom =
+		XInternAtom(xfc->display, "_FREERDP_CLIPRDR_FORMATS", FALSE);
 	xf_cliprdr_set_raw_transfer_enabled(clipboard, TRUE);
-	XSelectInput(xfc->display, clipboard->root_window, PropertyChangeMask);
-#ifdef WITH_XFIXES
 
+	XSelectInput(xfc->display, clipboard->root_window, PropertyChangeMask);
+
+#ifdef WITH_XFIXES
 	if (XFixesQueryExtension(xfc->display, &clipboard->xfixes_event_base,
 	                         &clipboard->xfixes_error_base))
 	{
@@ -1453,53 +1453,60 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 	WLog_ERR(TAG,
 	         "Warning: Using clipboard redirection without XFIXES extension is strongly discouraged!");
 #endif
+
 	n = 0;
-	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "_FREERDP_RAW",
-	                                   False);
+
+	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "_FREERDP_RAW", False);
 	clipboard->clientFormats[n].formatId = CF_RAW;
 	n++;
-	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "UTF8_STRING",
-	                                   False);
+
+	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "UTF8_STRING", False);
 	clipboard->clientFormats[n].formatId = CF_UNICODETEXT;
 	n++;
+
 	clipboard->clientFormats[n].atom = XA_STRING;
 	clipboard->clientFormats[n].formatId = CF_TEXT;
 	n++;
-	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "image/png",
-	                                   False);
+
+	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "image/png", False);
 	clipboard->clientFormats[n].formatId = CB_FORMAT_PNG;
 	n++;
-	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "image/jpeg",
-	                                   False);
+
+	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "image/jpeg", False);
 	clipboard->clientFormats[n].formatId = CB_FORMAT_JPEG;
 	n++;
-	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "image/gif",
-	                                   False);
+
+	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "image/gif", False);
 	clipboard->clientFormats[n].formatId = CB_FORMAT_GIF;
 	n++;
-	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "image/bmp",
-	                                   False);
+
+	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "image/bmp", False);
 	clipboard->clientFormats[n].formatId = CF_DIB;
 	n++;
-	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "text/html",
-	                                   False);
+
+	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "text/html", False);
 	clipboard->clientFormats[n].formatId = CB_FORMAT_HTML;
 	clipboard->clientFormats[n].formatName = _strdup("HTML Format");
-
 	if (!clipboard->clientFormats[n].formatName)
-	{
-		ClipboardDestroy(clipboard->system);
-		free(clipboard);
-		return NULL;
-	}
-
+		goto error;
 	n++;
+
 	clipboard->numClientFormats = n;
 	clipboard->targets[0] = XInternAtom(xfc->display, "TIMESTAMP", FALSE);
 	clipboard->targets[1] = XInternAtom(xfc->display, "TARGETS", FALSE);
 	clipboard->numTargets = 2;
 	clipboard->incr_atom = XInternAtom(xfc->display, "INCR", FALSE);
 	return clipboard;
+
+error:
+	for (i = 0; i < n; i++)
+		free(clipboard->clientFormats[i].formatName);
+
+	ClipboardDestroy(clipboard->system);
+
+	free(clipboard);
+
+	return NULL;
 }
 
 void xf_clipboard_free(xfClipboard* clipboard)
