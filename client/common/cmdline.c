@@ -2768,16 +2768,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 			if (!(settings->ActionScript = _strdup(arg->Value)))
 				return COMMAND_LINE_ERROR_MEMORY;
 		}
-		/* Enable FIPS Mode, which forces the following and overrides the following(by happening later */
-		/* in the command line processing): */
-		/* 1. Disables NLA Security since NLA in freerdp uses NTLM(no Kerberos support yet) which uses algorithms */
-		/*	not allowed in FIPS for sensitive data. So, we disallow NLA when FIPS is required. */
-		/* 2. Forces the only supported RDP encryption method to be FIPS. */
 		CommandLineSwitchCase(arg, "fipsmode")
 		{
 			settings->FIPSMode = TRUE;
-			settings->NlaSecurity = FALSE;
-			settings->EncryptionMethods = ENCRYPTION_METHOD_FIPS;
 		}
 		CommandLineSwitchDefault(arg)
 		{
@@ -2832,6 +2825,17 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings,
 		settings->LargePointerFlag = TRUE;
 		settings->FrameMarkerCommandEnabled = TRUE;
 		settings->ColorDepth = 32;
+	}
+
+	/* FIPS Mode forces the following and overrides the following(by happening later */
+	/* in the command line processing): */
+	/* 1. Disables NLA Security since NLA in freerdp uses NTLM(no Kerberos support yet) which uses algorithms */
+	/*      not allowed in FIPS for sensitive data. So, we disallow NLA when FIPS is required. */
+	/* 2. Forces the only supported RDP encryption method to be FIPS. */
+	if (settings->FIPSMode)
+	{
+		settings->NlaSecurity = FALSE;
+		settings->EncryptionMethods = ENCRYPTION_METHOD_FIPS;
 	}
 
 	arg = CommandLineFindArgumentA(args, "port");
