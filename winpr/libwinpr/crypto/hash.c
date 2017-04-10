@@ -380,9 +380,9 @@ BOOL winpr_Digest_Init_MD5_Allow_FIPS(WINPR_DIGEST_CTX* ctx)
 	EVP_MD_CTX* mdctx = (EVP_MD_CTX*) ctx;
 	const EVP_MD* evp = EVP_md5();
 	EVP_MD_CTX_set_flags(mdctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
-	winpr_Digest_Init_Internal(ctx, WINPR_MD_MD5, evp);
+	return winpr_Digest_Init_Internal(ctx, WINPR_MD_MD5, evp);
 #elif defined(WITH_MBEDTLS)
-	winpr_Digest_Init_Internal(ctx, WINPR_MD_MD5);
+	return winpr_Digest_Init_Internal(ctx, WINPR_MD_MD5);
 #endif
 }
 
@@ -390,9 +390,9 @@ BOOL winpr_Digest_Init(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md)
 {
 #if defined(WITH_OPENSSL)
 	const EVP_MD* evp = winpr_openssl_get_evp_md(md);
-	winpr_Digest_Init_Internal(ctx, md, evp);
+	return winpr_Digest_Init_Internal(ctx, md, evp);
 #else
-	winpr_Digest_Init_Internal(ctx, md);
+	return winpr_Digest_Init_Internal(ctx, md);
 #endif
 }
 
