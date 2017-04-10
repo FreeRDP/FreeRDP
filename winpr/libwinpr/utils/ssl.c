@@ -271,8 +271,10 @@ static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVO
 		return FALSE;
 #endif
 	g_winpr_openssl_initialized_by_winpr = TRUE;
+
 	if (flags & WINPR_SSL_INIT_ENABLE_FIPS)
 	{
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
 		WLog_DBG(TAG, "Ensuring openssl fips mode is ENabled");
 		if (FIPS_mode() != 1)
 		{
@@ -282,6 +284,9 @@ static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVO
 			else
 				WLog_INFO(TAG, "Openssl fips mode ENabled!");
 		}
+#else
+		WLog_ERR(TAG, "Openssl fips mode ENable not available on openssl versions less than 1.0.1!");
+#endif
 	}
 	return TRUE;
 }
