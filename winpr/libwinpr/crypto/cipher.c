@@ -46,6 +46,9 @@
 WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOOL override_fips)
 {
 	WINPR_RC4_CTX* ctx = NULL;
+#if defined(WITH_OPENSSL)
+	EVP_CIPHER* evp = NULL;
+#endif
 
 	if (!key || (keylen == 0))
 		return NULL;
@@ -54,7 +57,7 @@ WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOOL overr
 	if (!(ctx = EVP_CIPHER_CTX_new()))
 		return NULL;
 
-	EVP_CIPHER* evp = EVP_rc4();
+	evp = EVP_rc4();
 
 	if (!evp)
 		return NULL;
